@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
+<plist version="0.9">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>dispcalGUI</string>
+	<key>CFBundleGetInfoString</key>
+	<string>v0.2.2b</string>
+	<key>CFBundleIdentifier</key>
+	<string>net.hoech.dispcalGUI</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>dispcalGUI</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.2.2b</string>
+	<key>CFBundleLongVersionString</key>
+	<string>0.2.2b</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>0.2.2</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>© Florian Höch</string>
+</dict>
+</plist>

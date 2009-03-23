@@ -1,0 +1,910 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html id="dispcalGUI" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>dispcalGUI—Display Calibration powered by Argyll CMS and Python</title>
+		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
+		<script type="text/javascript">
+		//<![CDATA[
+			window.onload = function () {
+				var h2 = document.getElementsByTagName("h2");
+				for (var i = 1; i < h2.length; i ++) {
+					var txt = document.createTextNode(i + ". ");
+					h2[i].insertBefore(txt, h2[i].firstChild)
+					h3 = h2[i].parentNode.getElementsByTagName("h3");
+					for (var j = 0; j < h3.length; j ++) {
+						txt = document.createTextNode(i + "." + (j + 1) + " ");
+						h3[j].insertBefore(txt, h3[j].firstChild);
+						h4 = h3[j].parentNode.getElementsByTagName("h4");
+						for (var k = 0; k < h4.length; k ++) {
+							txt = document.createTextNode(i + "." + (j + 1) + "." + (k + 1) + " ");
+							h4[k].insertBefore(txt, h4[k].firstChild);
+						}
+					}
+				}
+			};
+		//]]>
+		</script>
+		<style type="text/css">
+		html#dispcalGUI a {
+			font-family: Verdana, Arial, sans-serif;
+			outline: none;
+			text-decoration: none;
+		}
+		html#dispcalGUI .info a {
+			font-family: Verdana, sans-serif;
+		}
+		html#dispcalGUI a:link, 
+		html#dispcalGUI a:active {
+			color: #006699;
+		}
+		html#dispcalGUI a:visited {
+			color: #666666;
+		}
+		html#dispcalGUI a:hover {
+			color: #0099CC;
+			border-bottom: 1px dotted #0099CC;
+		}
+		html#dispcalGUI a.imagelink:hover {
+			border: none;
+		}
+		html#dispcalGUI {
+			background: silver;
+			color: black;
+			margin: 0;
+			padding: 0;
+		}
+		html#dispcalGUI body {
+			background: white;
+			font: normal 11px Verdana, sans-serif;
+			margin: 0 auto;
+			padding: 0 30px 30px;
+			width: 640px;
+		}
+		code {
+			font: normal 11px Andale Mono, Monaco, monospace;
+		}
+		code.applescript {
+			color: #3d00fb;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+		code.applescript .identifier {
+			color: #699818;
+		}
+		code.applescript .keyword {
+			font-weight: bold;
+		}
+		code.applescript .operator,
+		code.applescript .string {
+			color: black;
+		}
+		strong {
+			color: #666666;
+		}
+		.q {
+			font: bold 11px Verdana, sans-serif;
+			color: #CC6666;
+		}
+		.a {
+			font: bold 11px Verdana, sans-serif;
+			color: #339933;
+		}
+		h1 {
+			background: url(theme/icons/48x48/dispcalGUI.png) no-repeat;
+			height: 48px;
+			line-height: 26px;
+			padding-left: 64px;
+		}
+		html#dispcalGUI h1 {
+			background: white url(theme/header-readme.png) no-repeat;
+			height: 117px;
+			margin: 0 -30px;
+		}
+		html#dispcalGUI h1 a {
+			display: block;
+			height: 117px;
+			text-indent: -9999px;
+		}
+		html#dispcalGUI h1 a:hover {
+			border: none;
+		}
+		html#dispcalGUI h1 span {
+			display: none;
+		}
+		h1 span {
+			display: block;
+			font-size: 11px;
+		}
+		html#dispcalGUI h2, html#dispcalGUI h3, html#dispcalGUI h4 {
+			color: #006699;
+			font-family: Arial, sans-serif;
+			font-weight: normal;
+		}
+		html#dispcalGUI h2 {
+			font-size: 1.5em;
+		}
+		html#dispcalGUI h3 {
+			font-size: 1.3em;
+		}
+		html#dispcalGUI h4 {
+			font-size: 1.1em;
+		}
+		ol, #content ul {
+			/* color: #666666; */
+		}
+		ol {
+			font-family: Verdana, Arial, sans-serif;
+			list-style-position: inside;
+			padding: 0;
+			margin-left: 25px;
+			margin-right: 0;
+		}
+		#content #toc ul {
+			list-style: none;
+		}
+		ol.list {
+			font-family: Verdana, Arial, sans-serif;
+			list-style-position: outside;
+			margin-left: 46px;
+		}
+		#content ul {
+			list-style-type: disc;
+			padding: 0;
+			margin-left: 40px;
+			margin-right: 0;
+		}
+		#content li {
+			padding: 0;
+			margin: 0;
+		}
+		p, #content li, dt, dd {
+			line-height: 1.5em;
+		}
+		p, dl {
+			margin-left: 20px;
+		}
+		dt {
+			color: #666666;
+			font-family: Verdana, Arial, sans-serif;
+			margin-bottom: .25em;
+		}
+		dd {
+			margin-bottom: 1.5em;
+		}
+		dd p {
+			margin-left: 0;
+			margin-top: 0;
+		}
+		#content dd ul {
+			list-style: disc outside;
+			margin-left: 15px;
+		}
+		.info {
+			font-family: Verdana, sans-serif;
+			font-size: 11px;
+			margin-left: 0;
+		}
+		dl.info {
+			overflow: auto;
+			width: 34em;
+		}
+		dl.info dt, dl.info dd {
+			display: block;
+			margin: 0;
+			padding: 0;
+		}
+		dl.info dt {
+			font-family: Verdana, sans-serif;
+			font-weight: bold;
+			float: left;
+			width: 5em;
+		}
+		dl.info dd {
+			float: right;
+			width: 28em;
+		}
+		img {
+			border: 0;
+		}
+		#screenshots span {
+			display: block;
+			float: left;
+			margin-bottom: .5em;
+			margin-right: .5em;
+		}
+		html#dispcalGUI #screenshots span {
+			margin-right: 0;
+		}
+		#screenshots p {
+			margin-bottom: 1em;
+			overflow: auto;
+		}
+		#disclaimer {
+			clear: both;
+		}
+		#quicksetuplink:link {
+			color: #33C033;
+		}
+		#quicksetuplink:hover {
+			color: #66CC66;
+		}
+		</style>
+	</head>
+	<body>
+	
+		<div id="content">
+	
+		<h1><a href="http://hoech.net/dispcalGUI">dispcalGUI</a> <span>Display Calibration powered by Argyll CMS and Python</span></h1>
+		
+		<dl class="info">
+			<dt>Version:</dt>
+				<dd id="version">0.2.2 BETA (<a href="#history">changelog</a>)</dd>
+			<dt>Date:</dt>
+				<dd id="date">2009-01-01</dd>
+			<dt>Author:</dt>
+				<dd>Florian Höch</dd>
+			<dt>License:</dt>
+				<dd><a href="LICENSE.txt">GPL Version 3</a></dd>
+			<dt>OS:</dt>
+				<dd>Linux, Mac OS X, Windows (2000 / XP / Vista / 7)</dd>
+		</dl>
+		
+		<p class="info">Bug reports, questions, comments? Use the <a href="http://sourceforge.net/tracker/?atid=1127028&group_id=257092&func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">help</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">discussion</a> forums.</p>
+		
+		<h2>Table of contents</h2>
+		
+		<ol id="toc">
+			<li><a href="#about">About</a><br />
+				<ul>
+					<li><a href="#screenshots">Screenshots</a></li>
+				</ul>
+			</li>
+			<li><a href="#disclaimer">Disclaimer</a></li>
+			<li><a href="#download">Download</a></li>
+			<li><a href="#quicksetup" id="quicksetuplink">Quick setup guide</a></li>
+			<li><a href="#prerequisites">Prerequisites</a>
+				<ul>
+					<li><a href="#argyll">Argyll CMS</a></li>
+					<li><a href="#prerequisites-unattended">Additional prerequisites for unattended calibration and profiling option under Linux</a></li>
+					<li><a href="#prerequisites-source">Additional prerequisites for using the source code release</a></li>
+				</ul>
+			</li>
+			<li><a href="#build">Building from source</a></li>
+			<li><a href="#install">Installation</a></li>
+			<li><a href="#concept">Basic concept of display calibration</a></li>
+			<li><a href="#usage">Usage</a>
+				<ul>
+					<li><a href="#settingsfile">Settings file</a></li>
+					<li><a href="#presets">Predefined settings (presets)</a></li>
+					<li><a href="#display_instrument">Choosing a display and measurement device</a></li>
+					<li><a href="#settings_calibration">Calibration settings</a></li>
+					<li><a href="#settings_profiling">Profiling settings</a></li>
+					<li><a href="#calibrating">Calibrating / profiling</a></li>
+				</ul>
+			</li>
+			<li><a href="#issues">Known issues / solutions</a></li>
+			<li><a href="#todo">To-Do / planned features</a></li>
+			<li><a href="#thanks">Thanks</a></li>
+			<li><a href="#history">Version history / changelog</a></li>
+		</ol>
+		
+		
+		
+		<div id="about">
+			<h2>About</h2>		
+			
+			<p>dispcalGUI is a GUI frontend for several utilities from the open source 
+			color management system <a href="http://argyllcms.com">Argyll CMS</a> by Graeme Gill, specifically 
+			dispcal, dispread, colprof and dispwin, which when used together allow you to calibrate and 
+			profile your display using a measurement device. Of course, you can do a lot 
+			more with Argyll CMS, but this is not the scope of this document—refer to the 
+			<a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll CMS documentation</a> for in-depth information and usage scenarios.<br />
+			dispcalGUI consists of two windows, a terminal and the GUI. The terminal is used for status messages and keyboard input during calibration. The GUI is used to set options and access functionality.</p>
+			
+			<div id="screenshots">
+				<h3>Screenshots</h3>		
+				
+				<p>
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="Screenshot of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<small>Linux/GNOME</small><br /></span>
+					<span><a href="screenshots/dispcalGUI-screenshot-KDE4.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-KDE4-thumb.png" alt="Screenshot of dispcalGUI running under Linux with KDE4" title="Screenshot of dispcalGUI running under Linux with KDE4" class="opaque" /></a><br />
+					<small>Linux/KDE4</small><br /></span>
+					<span><a href="screenshots/dispcalGUI-screenshot-mac.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-mac-thumb.png" alt="Screenshot of dispcalGUI running under Mac OS X" title="Screenshot of dispcalGUI running under Mac OS X" class="opaque" /></a><br />
+					<small>Mac OS X</small><br /></span>
+					<span><a href="screenshots/dispcalGUI-screenshot-Vista.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-Vista-thumb.png" alt="Screenshot of dispcalGUI running under Windows Vista" title="Screenshot of dispcalGUI running under Windows XP" class="opaque" /></a><br />
+					<small>Windows Vista</small><br /></span>
+					<span><a href="screenshots/dispcalGUI-screenshot-XP.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-XP-thumb.png" alt="Screenshot of dispcalGUI running under Windows XP" title="Screenshot of dispcalGUI running under Windows XP" class="opaque" /></a><br />
+					<small>Windows XP</small><br /></span>
+				</p>
+			</div>
+		</div>
+		
+		<div id="disclaimer">
+			<h2>Disclaimer</h2>
+			
+			<p>This program is free software; you can redistribute it and/or modify it 
+			under the terms of the <a href="LICENSE.txt">GNU General Public License</a> as published by the 
+			<a href="http://fsf.org/">Free Software Foundation</a>; either <a href="LICENSE.txt">version 3 of the License</a>, or (at your 
+			option) any later version.</p>
+
+			<p>This program is distributed in the hope that it will be useful, but 
+			WITHOUT ANY WARRANTY; without even the implied warranty of 
+			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
+			
+			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (JSON library) and <a href="http://wxpython.org/">wxPython</a> (GUI toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X, and a modified version of <a href="http://pyinstaller.python-hosting.com/">pyinstaller</a> (trunk rev. 646) on Linux/Windows (see pyinstaller-trunk/README1ST.txt for a list of changes to the stock version). All of these software packages are © by their respective authors.</p>
+		</div>
+		
+		<div id="download">
+			<h2>Download</h2>
+			
+			<p>If you are updating from dispcalGUI v0.2.1b or earlier, please first uninstall or remove all previous versions.</p>
+			
+			<p>
+				Source Code <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-src.zip">ZIP file</a><br />
+				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86-Install.zip">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">ZIP file</a><br />
+				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">ZIP file</a><br />
+				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Windows.zip">ZIP file</a>
+			</p>
+		</div>
+		
+		<div id="quicksetup">
+			<h2>Quick setup guide</h2>
+		
+			<p>This short guide intends to get you up and running quickly, but if you run into a problem, you should refer to the full <a href="#prerequisites">Prerequisites</a> and <a href="#install">Installation</a> sections.</p>
+			
+			<ol class="list">
+				<li>If you are updating from dispcalGUI v0.2.1b or earlier, please first uninstall or remove all previous versions.</li>
+				<li>Get dispcalGUI: <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86-Install.zip">Linux installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">Mac OS ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Windows installer</a>.</li>
+				<li>Download and unpack the Argyll CMS executables ZIP file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</li>
+				<li>
+					To install your measurement device, connect the device to your computer. If you have a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu before continuing.
+					<ul>
+						<li>If you are under Linux, read “Setting up instrument access” in <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux</a>.</li>
+						<li>If you are under Mac OS X, there is nothing special to do. If you cannot access your device, read <a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a>.</li>
+						<li>
+							If you are under Windows, and if you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
+							<ul>
+								<li>Under Vista...
+									<ul>
+										<li>Select “Locate and install driver software (recommended)”.</li>
+										<li>If a “User Account Control” window pops up, select “Continue”.</li>
+										<li>Select “Don't search online”.</li>
+										<li>Select “I don't have the disc, show me other options”.</li>
+										<li>Select “Browse my computer for driver software (advanced)”.</li>
+									</ul>
+								</li>
+								<li>Under XP...
+									<ul>
+										<li>In the window “Can Windows connect to Windows Update to search for software?” select “No, not this time” and “Next”.</li>
+										<li>Select “Install from a list or specific location (advanced)” then “Next”.</li>
+										<li>Select “Search for the best driver in these locations”, “Include this location in the search” and “Browse...”.</li>
+									</ul>
+								</li>
+								<li>Under 2000...
+									<ul>
+										<li>Select “Next”, then “Search for a suitable driver for my device (recommended)”, and “Next” again.</li>
+										<li>Tick the “Specify a location” box, then select “Next”.</li>
+										<li>In the window “Insert the manufacturer's installation disk” select “Browse...”.</li>
+									</ul>
+								</li>
+								<li>Locate the “argyll\libusbw” subdirectory in your Argyll_VX.X.X directory (under Windows 2000, you also need to select the .inf file that corresponds to your device, then select “Open” and “OK”). Select “Next”.</li>
+								<li>Under Vista, if a “Windows Security” dialog pops up, select “Install this driver software anyway”.</li>
+								<li>A window stating the successful installation of the driver should show. Click “Finish”/“Close”.</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li>Launch the dispcalGUI executable. If it cannot determine the path to your Argyll CMS installation, it will prompt you to select the location manually on first launch.</li>
+				<li>Refer to the <a href="#usage">Usage instructions</a>.</li>
+			</ol>
+		</div>
+		
+		<div id="prerequisites">
+			<h2>Prerequisites</h2>
+		
+			<div id="argyll">
+				<h3>Argyll CMS</h3>
+			
+				<p>To use dispcalGUI, you need to download and install <a href="http://argyllcms.com">Argyll CMS</a> (&gt;= v1.0.0).</p>
+				<p>If you do not know Argyll CMS yet, be sure to look at the 
+				<a href="http://argyllcms.com/doc/ArgyllDoc.html">documentation</a>, specifically 
+				the <a href="http://argyllcms.com/doc/instruments.html">list of supported 
+				instruments</a> and <a href="http://argyllcms.com/doc/Installing.html">installation 
+				instructions</a> (also, please pay attention to the installation instructions for your measurement device).</p>
+				
+				<div>
+					<h4>Instrument access</h4>
+				
+					<p>After installing Argyll CMS, you should make sure that your display(s) and 
+					measurement device are recognized by Argyll. To do that, connect the 
+					instrument, open a shell and enter:</p>
+
+					<p><code>dispcal</code></p>
+					
+					<p>You should get several lines of usage information. Look at the first few lines, 
+					under the options -d and -c the detected displays and measurement devices will 
+					be listed.</p>
+					<p>If you see your display and instrument, you can proceed to <a href="#prerequisites-source">Additional prerequisites</a>
+					(if you downloaded the source code release) or <a href="#install">Installation</a> (if you downloaded
+					the executable release).</p>
+					<p>Otherwise, review the <a href="http://argyllcms.com/doc/Installing.html">Argyll CMS installation 
+				instructions</a>.
+					Under Windows 2000 and XP, if you have an USB instrument with already installed vendor drivers, you might get it to work with Argyll by installing 
+					the <a href="http://libusb-win32.wiki.sourceforge.net">libusb filter drivers</a>—but please note that the recommended way of enabling your instrument is the one outlined in the Argyll CMS documentation under <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing the software on Microsoft Windows</a>.
+					If you really want to try and use your existing drivers along with the libusb filter, make sure to get the correct file, it will have a name similar to 
+					<code>libusb-win32-filter-bin-&lt;version&gt;.exe</code></p>
+				</div>
+				
+				<div>
+					<h4>Video LUT access</h4>
+				
+					<p>Then, you should make sure that the Argyll utilities can access the video LUTs 
+					(Look Up Tables). From a shell, enter:</p>
+					
+					<p><code>dispwin -c<br />
+					dispwin -r</code></p>
+					
+					<p>It will give back some status information wheter video LUT access was successful 
+					or not. Again, refer to the <a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll CMS documentation</a> for troubleshooting, and under Linux, specifically to <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a> and “Fixing access to Video LUTs” therein.</p>
+				</div>
+			</div>
+			
+			<div id="prerequisites-unattended">
+				<h3>Additional prerequisites for unattended calibration and profiling option under Linux</h3>
+				
+				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.2, it is no longer necessary to press a key after calibration to start the measurements for profiling. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active).</p>
+			</div>
+			
+			<div id="prerequisites-source">
+				<h3>Additional prerequisites for using the source code release</h3>
+			
+				<p>If you downloaded the source code release of dispcalGUI, you need...</p>
+				
+				<p>All platforms:<br />
+				- <a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. NOTE for Mac OS X users: You should FIRST install XCode and THEN Python)<br />
+				- <a href="http://wxpython.org/">wxPython</a> GUI toolkit</p>
+				
+				<p>Linux:<br />
+				- xorg/x11 development headers (if not already installed, they should be available through your distribution's packaging system)</p>
+				
+				<p>Mac OS X:<br />
+				- <a href="http://developer.apple.com/TOOLS/xcode/">XCode</a><br />
+				- <a href="http://appscript.sourceforge.net/py-appscript/">py-appscript</a></p>
+				
+				<p>Windows:<br />
+				- a C-compiler (e.g. <a href="http://www.mingw.org">MinGW</a> or <a href="http://www.microsoft.com/germany/Express/product/visualcplusplusexpress.aspx">MS Visual C++ Express</a>)<br />
+				- <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a><br />
+				- <a href="http://sourceforge.net/projects/pywin32/">pywin32</a></p>
+				
+				<p>Note that starting with v0.2b, you need to build the RealDisplaySizeMM module before you can run the source code directly (or, <a href="#build">build the executable</a> which will also take care of it):</p>
+			
+				<ol>
+					<li>Open a shell.</li>
+					<li><code>cd</code> into the dispcalGUI/RealDisplaySizeMM directory.</li>
+					<li>Run <code>python setup.py install</code></li>
+				</ol>
+			</div>
+			
+		</div>
+		
+		<div id="build">
+			<h2>Building from source</h2>
+		
+			<p>This is not absolutely required, because Python is an interpreted language, but if you desire to build your own executable, you may do so using these instructions (after satisfying the above <a href="#prerequisites-source">prerequisites</a>). Please note that the executables tend to get rather large, because the Python framework and dependencies are packed into the executable. This is especially true for Mac OS X (don't think “elephant”—think “whale”).</p>
+			
+			<ol>
+				<li>Open a shell.</li>
+				<li><code>cd</code> into the dispcalGUI directory.</li>
+				<li>Run <code>python Build.py</code> which should create the executable.</li>
+			</ol>
+		</div>
+		
+		<div id="install">
+			<h2>Installation</h2>
+		
+			<p>If you downloaded a executable release for your specific OS, you can start using it right away after installation/unpacking.</p>
+			
+			<p>If you downloaded the source code release, and did not build from source, the main executable will not be 
+			there, instead there will be a python script called <code>dispcalGUI.py</code> which you 
+			can launch either via a shell using</p>
+			
+			<p><code>python &lt;your path to dispcalGUI.py&gt;</code></p>
+			
+			<p>or, if your OS is configured to handle the <code>.py</code> extension automatically, by 
+			double-clicking it. There is also a <code>dispcalGUI.cmd</code> (for Windows), 
+			<code>dispcalGUI.sh</code> (for Linux) or <code>dispcalGUI.command</code> (Mac OS) file included which does the 
+			above.</p>
+		</div>
+		
+		<div id="concept">
+			<h2>Basic concept of display calibration and profiling</h2>
+		
+			<p>If you have previous experience, skip to <a href="#usage">Usage</a>. If you are new to display 
+			calibration, here is a quick outline of the basic concept.</p>
+			
+			<p>First, the display behavior is measured and adjusted to meet 
+			user-definable target characteristics, like brightness, gamma and white point. 
+			This step is generally referred to as calibration. Calibration is done by 
+			adjusting the monitor controls, and the output of the graphics card (via 
+			calibration curves, also called LUT curves [LUT = Look Up Table]) to get as 
+			close as possible to the chosen target.<br />
+			To meet the user-defined target characteristics, it is generally advisable to 
+			get as far as possible by using the monitor controls, and only thereafter by 
+			manipulating the output of the graphics card via LUT curves, to get the best
+			results.</p>
+			
+			<p>Second, the calibrated displays behavior is measured and an ICC profile 
+			describing the response of the display is created.</p>
+			
+			<p>Optionally and for convenience purposes, the calibration is stored in the profile, but both 
+			still need to be used together to get correct results. This can lead to some ambiguity, 
+			because loading the calibration curves from the profile is generally the 
+			responsibility of a third party utility or the OS (currently, the only OS that 
+			applies calibration curves out-of-the-box is Mac OS X), while applications using 
+			the profile to do color transforms usually rely on the calibration being already 
+			loaded. Even non-color-managed applications will benefit from a loaded 
+			calibration because it is stored in the graphics card—it is “global”.
+			But only fully color-managed applications will make use of display 
+			profiles. Regrettably there are several image viewing and editing applications that 
+			only implement half-baked color management by not using the system's display profile (or any display profile at all), but an internal and often unchangeable “default”
+			color space like sRGB, and sending output unaltered to the display after converting to that default colorspace. If the 
+			display's actual response is close to sRGB, you might get pleasing (albeit not
+			accurate) results, but on displays which behave differently, for example wide-color-gamut displays, even mundane colors can 
+			get a strong tendency towards neon.</p>
+		</div>
+		
+		<div id="usage">
+			<h2>Usage</h2>
+		
+			<p>Upon launching dispcalGUI, you will see two windows: A terminal and the GUI. 
+			The terminal is mostly used for status information, and for the interactive part 
+			of display calibration. Through the GUI, you can choose your settings. Closing
+			either window will quit the application, but I strongly recommend closing the 
+			GUI window first so the cleanup routines can run. On most systems, the terminal 
+			window will close automatically afterwards (if you were not running from a manually opened
+			terminal to begin with).<br />
+			Here's a caveat for Linux systems: Because even though this is a GUI application, it still needs a terminal window for the interactive part of display calibration. If not launched from a terminal or a .desktop shortcut with Terminal=true, it will try to find one (currently, it'll search for <code>Terminal</code>, <code>gnome-terminal</code>, <code>konsole</code> and <code>xterm</code>). If that fails, you will get a message box informing you about that. You can then either launch a terminal and run dispcalGUI from there or (preferably) create a <code>.sh</code> script or <code>.desktop</code> file to launch your desired terminal with dispcalGUI (refer to your system's documentation to find out how to do that). Also, feel free to mail me the name of your terminal application if dispcalGUI didn't detect it, so I can add it to the list of terminals that dispcalGUI will search for.</p>
+			
+			<div id="settingsfile">
+				<h3>Settings file</h3>
+				<p>Here, you can load a <code>.cal</code> or <code>.icc/.icm</code> file from a previous 
+				run (the dropdown box will remember up to 25, including the presets). This will set options to 
+				those stored in the file and also load
+				calibration curves (if any) into the video card. If the file contains only a subset of settings, you will get a message showing which settings were loaded.</p>
+				
+				<p>If a calibration file or profile is loaded in this way, its name will
+				show up here to indicate that the settings reflect those in the file.<br />
+				Also, if a calibration is present it will be used as the base when “Just Profiling”.<br />
+				The chosen settings file will stay as long as you do not change any of the 
+				calibration or profiling settings, with one exception: When a <code>.cal</code> file with the same base name as the settings file
+				exists in the same directory, adjusting the quality and profiling controls will not cause unloading of the settings file. This allows you to use an existing calibration with new profiling settings for “Just Profiling”, or to update an existing calibration with different quality and/or profiling settings. If you change settings in other situations, the file will get unloaded (but current settings will be retained—unloading just happens to remind you that the settings no longer match those in the file), and current display profile LUT will be restored (if present, otherwise it will reset to linear).</p>
+
+				<p>When a calibration file is loaded or present, the “Update calibration"
+				checkbox will become available, which takes less time than a calibration from scratch.
+				If an ICC profile with the same base name as the settings file
+				exists in the same directory, the “Update profile” checkbox
+				will also be available. If you place a check in that box,
+				all options and the “Calibrate &amp; profile” and “Just profile” buttons at the 
+				bottom will get grayed out, but don't worry, the “Calibrate"
+				button takes care of the profile in that case.</p>
+			</div>
+			
+			<div id="presets">
+				<h3>Predefined settings (presets)</h3>
+				<p>Starting with dispcalGUI v0.2.2b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
+				<h4>Why has a default gamma of 2.4 been chosen for the presets?</h4>
+				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's LUT curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration, that has been internally calibrated to a different response curve, or your display's response is simply not close to a gamma of 2.4.</p>
+			</div>
+			
+			<div id="display_instrument">
+				<h3>Choosing the display to calibrate and the measurement device</h3>
+		
+				<p>Those can be selected through the drop-down boxes at the top. If you launch
+				dispcalGUI without an instrument connected, you can connect the device afterwards and it should show up in the 
+				drop-down box after a few seconds. If this doesn't work, there's also a menu
+				item “Detect displays and instruments” in the “Extra” menu,
+				but normally you shouldn't need this (if you can't seem to get your instrument to appear in the dropdown, please make
+				sure that Argyll recognizes your instrument before filing a bug report. See <a href="#prerequisites">Prerequisites</a>).</p>
+			</div>
+			
+			<div id="settings_calibration">
+				<h3>Calibration settings</h3>
+			
+				<p>This should be fairly straightforward, at least if you have calibrated a display
+				before. You can also refer to the Argyll CMS <a href="http://argyllcms.com/doc/dispcal.html">dispcal documentation</a>, and you are encouraged to experiment if you have some time to 
+				spare. 
+				I will only explain the not-so-obvious options below.</p>
+				
+				<dl>
+			
+					<dt>Tone curve / gamma</dt>
+						<dd>
+							<p>(Please also refer to the comprehensive Argyll CMS documentaion for <a href="http://argyllcms.com/doc/dispcal.html#g">information about the different tone curves</a>. The following has been quoted from it and slightly altered to fit dispcalGUI's behavior and notation)</p>
+							
+							<p>Relative: The gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve.</p>
+							
+							<p>Absolute: Allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value.</p>
+						</dd>
+					
+					<dt>Black output offset</dt>
+						<dd>
+							<p>(Quoted from the Argyll CMS documentation and slightly altered to fit dispcalGUI's behavior and notation)</p>
+							
+							<p>Real displays do not have a zero black response, while all the target response curves do, so this has to be allowed for in some way. The default way of handling this (equivalent to 0% black output offset) is to offset and scale the input values into the ideal response curve so that zero input gives the actual non-zero display response. This ensures the most visually even progression from display minimum. The other alternative is to allow for this at the output of the ideal response curve, by offsetting and scaling the output values. This will probably give a less progressive response from black, but may better match the responses that other systems provide. A further subtlety is to provide a split between how much of the offset is accounted for as input to the ideal response curve, and how much is accounted for at the output, where a percentage of 0% accounts for it all as input offset, and 100% accounts for all of it as output offset.</p>
+						</dd>
+					
+					<dt>Black point correction</dt>
+						<dd>
+							<p>(Quoted from the Argyll CMS documentation and slightly altered to fit dispcalGUI's behavior and notation)</p>
+						
+							<p>Normally dispcal will attempt to make all colors down the neutral axis (R=G=B) have the same hue as the chosen white point. Near the black point, red, green or blue can only be added, not subtracted from zero, so the process of making the near black colors have the desired hue, will lighten them to some extent. For a device with a good contrast ratio or a black point that has nearly the same hue as the white, this is not a problem. If the device contrast ratio is not so good, and the black hue is noticeably different to that of the chosen white point (which is often the case for LCD type displays), this could have a noticeably detrimental effect on an already limited contrast ratio. Here the amount of black point hue correction can be controlled. By default a factor of 100% will be used, which is usually good for CRT and also by default a factor of 0% is used for LCD type displays, but you can override these with a custom value between 0% (no correction) to 100% (full correction). If less than full correction is chosen, then the resulting calibration curves will have the target white point down most of the curve, but will then cross over to the native or compromise black point.</p>
+						</dd>
+					
+					<dt>Interactive display adjustment</dt>
+						<dd>You will normally want to keep this checked, to be able to use the monitor controls to get closer to the chosen target characteristics.</dd>
+				</dl>
+			</div>		
+			
+			<div id="settings_profiling">
+				<h3>Profiling settings</h3>
+			
+				<dl>
+					<dt>Testchart file</dt>
+						<dd>You can choose the test patches used when profiling the display here. There are some pre-built ones in the <code>ti1</code> folder (which are automatically chosen based on display type and profile type), but you can also use and create your own.</dd>
+			
+					<dt>Profile type</dt>
+						<dd>LUT based = larger, more accurate, but also less compatible (some applications might not be able to use LUT type profiles). L*a*b* is used as PCS (Profile Connection Space), this corresponds to the -al option of dispcal.<br />
+						Matrix based = smaller, somewhat less accurate. This corresponds to the -as option of dispcal (shaper curves and matrix, the default for dispcalGUI as of v0.2b).<br />
+						When choosing LUT-based as profile type, some advanced gamut mapping options become available.<br />
+						Note: LUT-based profiles might be confused with video card LUT curves, but they're two different things. Both LUT-based and matrix-based profiles can include video card LUT curves.</dd>
+			
+					<dt>Profile name</dt>
+						<dd>
+							<p>As long as you do not enter your own text here, the profile name is auto generated from the chosen calibration and profiling options (you can also force this by clicking the small icon with the spinning arrows next to the field). The current auto naming mechanism creates quite verbose names which are not necessarily nice to read, but they can help in identifying  the profile.<br />
+							Also note that the profile name is not only used for the resulting profile, but for all intermediate files as well (filename extensions are added automatically) <em>and</em> all files are stored in a folder of that name. You can choose where this folder is created by clicking the disk icon next to the field (it defaults to your user home directory).<br />
+							Here's an example under Linux, on other platforms some file extensions and the location of the home directory will differ (you can mouse over the filenames to get a tooltip with a short description what the file is for):</p>
+								
+							<p>Chosen profile save path: <code title="User home directory">/home/username</code><br />
+							Profile name: <code>mydisplay</code></p>
+							
+							<p>The following folder will be created: <code>/home/username/mydisplay</code></p>
+							
+							<p>During calibration &amp; profiling the following files will be created:<br />
+							<code><span title="Calibrate and profile, then install profile afterwards">/home/username/mydisplay/mydisplay.all.sh</span><br />
+							<span title="Contains video LUT curves and most settings used for calibration">/home/username/mydisplay/mydisplay.cal</span><br />
+							<span title="Create a profile from the .ti3 measurement file">/home/username/mydisplay/mydisplay.colprof.sh</span><br />
+							<span title="Calibrate and create .cal file">/home/username/mydisplay/mydisplay.dispcal.sh</span><br />
+							<span title="Create a .ti3 file by measuring the .ti1 patches, first loading the .cal file">/home/username/mydisplay/mydisplay.dispread.sh</span><br />
+							<span title="Install the profile">/home/username/mydisplay/mydisplay.dispwin.sh</span><br />
+							<span title="The end result, a display profile">/home/username/mydisplay/mydisplay.icc</span><br />
+							<span title="Contains the measurement patches used to create the .ti3 measurement file">/home/username/mydisplay/mydisplay.ti1</span><br />
+							<span title="Contains the measured display response">/home/username/mydisplay/mydisplay.ti3</span></code></p>
+							
+							<p>(the <code>.sh</code> files can be used to re-run without GUI but same settings from a shell)</p>
+						</dd>
+				</dl>
+			</div>
+			
+			<div id="calibrating">
+				<h3>Calibrating / profiling</h3>
+			
+				<p>After you have set your options, click on one of the three buttons at the bottom
+				to start the actual calibration/profiling process. The GUI will hide during measurements, and should pop up again after they are completed (or after an 
+				error). Pay attention to the output printed to the terminal, it will give you status information and prompt for keyboard input to start measurements and select calibration options (you can always cancel out of running measurements by pressing ESC or Q).</p>
+				
+				<p>When creating or updating a profile, a shortcut to load its LUT curves 
+				automatically on login will be created in your user startup directory (Windows, GNOME and KDE desktop
+				environment loaders are currently implemented, Mac OS X does not need a loader).</p>
+			</div>
+		</div>
+		
+		<div id="issues">
+			<h2>Known issues and solutions</h2>
+			
+			<p><span class="q">Issue:</span> Under Windows Vista, the installed display profile calibration cannot be loaded.<br />
+			<span class="a">Solution:</span> Open the Windows start menu, select "Control Panel", then "Color Management". Under the "Devices" tab, select your display device, then tick "Use my settings for this device".</p>
+			
+			<p><span class="q">Issue:</span> Under Windows Vista, the calibration gets unloaded when a “User Access Control” prompt is shown.<br />
+			<span class="a">Solution:</span> This is really a Windows Vista bug that hopefully gets fixed at some point, and can be remedied by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load LUT curves from current display profile” in the “Extra” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable UAC, open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</p>
+			
+			<p><span class="q">Issue:</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br />
+			<span class="a">Solution:</span> This seems to be a Photoshop bug which shows with LUT-type profiles that have only one rendering intent. To overcome it, select “Advanced...” next to the profile type dropdown, select an existing ICC profile (probably the CMYK press profile you use most often) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To fix an existing profile, choose “Create profile from measurement data...” from the “Extra” menu.</p>
+			
+			<p><span class="q">Issue:</span> Under Linux, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal.<br />
+			<span class="a">Solution:</span> These messages are generated from GTK, I have no influence on them, but they can be safely ignored if the full message is something like “Gtk-Message: (for origin information, set GTK_DEBUG): failed to retrieve property `GtkTreeView::odd-row-color'”. If they really bother you and you don't mind using the shell and editing files by hand, you can get rid of these messages by changing the involved GTK theme file:</p>
+			<ol class="list">
+				<li>Open a shell and type <code>export GTK_DEBUG=1</code></li>
+				<li>Run dispcalGUI and open a file selector.</li>
+				<li>In the familiar message, the path to the involved theme file should now be displayed.</li>
+				<li>Open that theme file in a text editor (you might need elevated rights to be able to edit it) and navigate to the line that was also shown in the message.</li>
+				<li>Replace the color value so that it is no longer a function call, e.g. if the old line was:<br />
+					<code>GtkTreeView::odd-row-color = shade(0.9, @base_color)</code><br />
+					then change it to (look up a suitable color value in the file or specify your own):<br />
+					<code>GtkTreeView::odd-row-color = "#eeeeee"</code>
+				</li>
+				<li>Save the theme file &amp; exit the text editor.</li>
+				<li>Restart dispcalGUI and open a file selector to check if the message is gone.</li>
+				<li>Open a shell and type <code>unset GTK_DEBUG</code></li>
+			</ol>
+			
+			<p><span class="q">Issue:</span> Some text is still in english, even though another language is selected in the menu.<br />
+			<span class="a">Remark:</span> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</p>
+			
+			<p><span class="q">Issue:</span> The application does not look native under Linux with KDE.<br />
+			<span class="a">Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4).</p>
+		</div>
+		
+		<div id="todo">
+			<h2>To-Do / planned features (in no particular order)</h2>
+		
+			<ul>
+				<li>Complete the documentation in the README (partly done)</li>
+				<li>German language README</li>
+				<li>Profile verification (feed XYZ or Lab to display profile, display 
+					corresponding RGB values, measure, output Delta E)</li>
+				<li><del>“Before” / “After” switch when calibration / profiling complete</del> (implemented in v0.2+)</li>
+				<li><del>Store all settings in profile, allow loading of settings from profile in 
+					addition to <code>.cal</code> file</del> (implemented in v0.2+)</li>
+				<li>Document the code (current code documentation severely lacks or is non-existent)</li>
+				<li>Code cleanup (partly done)</li>
+			</ul>
+		</div>
+		
+		<div id="thanks">
+			<h2>Thanks</h2>
+		
+			<p>I would like to thank the following people:<br />
+			Graeme Gill, for creating Argyll CMS.<br />
+			Roberto Quintero (spanish translation).<br />
+			Tommaso Schiavinotto (italian translation).<br />
+			<!--Patrice Vetsel (french translation).<br />-->
+			And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
+		</div>
+		
+		<div id="history">
+			<h2>Version history / changelog</h2>
+			
+			<dl>
+				<dt>v0.2.2b</dt>
+					<dd>
+						<ul>
+							<li>fix: encoding-related issues on all platforms and strange Unicode-related problems with AppleScript and Terminal on Mac OS X 10.4 (<a href="#osx-104-applescript-unicode-peculiarities" onclick="var element = document.getElementById('osx-104-applescript-unicode-peculiarities'); element.style.display = element.style.display == 'block' ? 'none' : 'block'; return false">Details</a>).
+								<div id="osx-104-applescript-unicode-peculiarities" style="display: none">
+									Prerequisites to reproduce Unicode-related issues under Mac OS X 10.4: Terminal closed, or with atleast one window opened. Script inside an AppleScript bundle, the bundle filename contains UTF-8 characters. “main.command” (executable containing shell script) inside Contents/Resources subfolder of the bundle.<br />
+									<br />
+									Not working (messagebox “Resource not found”):
+									<pre><code class="applescript"><span class="keyword">tell</span> application <span class="string">"Terminal"</span>
+	activate
+	do script quoted form <span class="keyword">of</span> <span class="operator">(</span>POSIX path <span class="keyword">of</span> <span class="operator">(</span>path <span class="keyword">to</span> resource <span class="string">"main.command"</span><span class="operator">)</span><span class="operator">)</span>
+<span class="keyword">end tell</span></code></pre>
+									Not working (messagebox “Resource not found”):
+									<pre><code class="applescript"><span class="keyword">tell</span> application <span class="string">"Terminal"</span>
+	activate
+	do script quoted form <span class="keyword">of</span> <span class="operator">(</span>POSIX path <span class="keyword">of</span> <span class="operator">(</span>path <span class="keyword">to</span> resource <span class="string">"main.command"</span><span class="operator">)</span><span class="operator">)</span> in <span class="keyword">first</span> window
+<span class="keyword">end tell</span></code></pre>
+									Not working (message “No such file or directory” printed to Terminal window):
+<pre><code class="applescript">set <span class="identifier">shellscript</span> <span class="keyword">to</span> quoted form <span class="keyword">of</span> <span class="operator">(</span>POSIX path <span class="keyword">of</span> <span class="operator">(</span>path to resource <span class="string">"main.command"</span><span class="operator">)</span><span class="operator">)</span>
+<span class="keyword">tell</span> application <span class="string">"Terminal"</span>
+	activate
+	do script <span class="identifier">shellscript</span>
+<span class="keyword">end tell</span></code></pre>
+									Working:
+									<pre><code class="applescript">set <span class="identifier">shellscript</span> <span class="keyword">to</span> quoted form <span class="keyword">of</span> <span class="operator">(</span>POSIX path <span class="keyword">of</span> <span class="operator">(</span>path to resource <span class="string">"main.command"</span><span class="operator">)</span><span class="operator">)</span>
+<span class="keyword">tell</span> application <span class="string">"Terminal"</span>
+	activate
+	do script <span class="identifier">shellscript</span> in <span class="keyword">first</span> window
+<span class="keyword">end tell</span></code></pre>
+								</div>
+							</li>
+							<li>fix: several actions unexpectedly failing under Windows 7 (dispcalGUI created temporary files via system calls on several occasions, but on Windows, this does not create the file in the user's temp directory as one would expect, but in the ROOT directory e.g. C:\ - a sane method is now being used instead).</li>
+							<li>fix: bug in sorting function caused leading and trailing zeroes of numbers in testchart filenames to get lost, thus failing to load such files.</li>
+							<li>fix: “No module named _md5” error with the binary on some Linux distros (apparently an OpenSSL-related issue, because normally it wouldn't fall back to the legacy _md5 module which is not even built by default in recent Python versions). The fallback _md5 module is now included.</li>
+							<li>fix: calibration was not automatically added &amp; selected in the dropdown menu when only calibrating.</li>
+							<li>fix: dropping a profile which was not created in dispcalGUI onto the application window no longer results in an unhandled error.</li>
+							<li>fix: when trying to load LUT curves from a profile which actually does not contain any, an error message is now shown instead of resetting the LUT to linear and erroneously stating the curves were succesfully loaded.</li>
+							<li>fix: add display device name as device model description when profiling.</li>
+							<li>fix: when creating a new profile from an existing profile, use that profile's device model description if present.</li>
+							<li>fix: also create .app/.sh/.cmd files when creating a new profile from existing measurement data.</li>
+							<li>fix: restore advanced gamut mapping options to default if selecting a profile which does not contain those settings.</li>
+							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for LUT profiles regardless of source profile type.</li>
+							<li>fix: if the screen or instrument that was selected in a previous session is not available, select an available one.</li>
+							<li>fix: the “enable spyder 2” menu item would not allow to select files other than “setup.exe” on Mac OS X.</li>
+							<li>chg: when calibrating &amp; profiling, it is no longer necessary to recalibrate the instrument (and thus have to remove certain instruments like the i1 Pro from the screen, then re-attach) after display calibration and before measuring the test patches for profiling.</li>
+							<li>chg: the previously empty entry at the top of the settings dropdown (settings which are not associated to a profile or .cal file) is now named “&lt;current settings&gt;”.</li>
+							<li>chg: changed settings which are associated to a profile or .cal file are now marked with a leading asterisk in the settings dropdown.</li>
+							<li>chg: default to a gamma of 2.4 (Argyll default).</li>
+							<li>chg: warn before changed settings are discarded.</li>
+							<li>chg: new default profile naming scheme.</li>
+							<li>chg: new default file locations on all platforms.<br />
+							- On Linux, dispcalGUI now adheres to the <a href="http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory Specification</a>—the configuration file is saved as <code>$XDG_CONFIG_HOME/dispcalGUI/dispcalGUI.ini</code> ($XDG_CONFIG_HOME defaults to ~/.config if not set), all files created during calibration/profiling go into <code>$XDG_DATA_HOME/dispcalGUI/storage/</code> ($XDG_DATA_HOME defaults to ~/.local/share if not set) by default, and logfiles into <code>$XDG_DATA_HOME/dispcalGUI/logs/</code><br />
+							Any old (pre v0.2.2b) configuration data is retained in the file <code>~/.dispcalGUI</code> and may be safely deleted after using v0.2.2b or newer for the first time.<br />
+							- On Mac OS, the configuration is saved as <code>~/Library/Application Support/dispcalGUI/dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>~/Library/Application Support/dispcalGUI/storage/</code> by default, and logfiles into <code>~/Library/Application Support/dispcalGUI/logs/</code><br />
+							Any old (pre v0.2.2b) configuration data is retained in the file <code>~/Library/Preferences/dispcalGUI Preferences</code> and may be safely deleted after using v0.2.2b or newer for the first time.<br />
+							- On Windows, the configuration file is saved as <code>%APPDATA%\dispcalGUI\dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>%APPDATA%\dispcalGUI\storage\</code> by default, and logfiles into <code>%APPDATA%\dispcalGUI\logs\</code><br />
+							Any old (pre v0.2.2b) configuration data is retained in the registry key <code>HKEY_CURRENT_USER\Software\dispcalGUI</code>.</li>
+							<li>chg: most pop-up-messages are now also written to the terminal and a logfile.</li>
+							<li>chg: [build/src] removed MS Visual C++ 2008 Redistributable DLLs from the source package. Users who build under Windows will have them anyway as they are installed with Python 2.6, so they are now copied directly from %SystemRoot%\WinSxS (Windows side-by-side assemblies) if possible.</li>
+							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>/usr/local/share/dispcalGUI</code>, <code>/usr/share/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current directory (which is always searched first) and the executable directory (which is always searched last if it differs from the current directory).</li>
+							<li>chg: better error handling. For unhandled exceptions, a message box is shown and an entry is written to the logfile.</li>
+							<li>chg: the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
+							<li>add: logging (also see the change related to file-storage).</li>
+							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
+							<li>add: unattended calibration and profiling, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
+							<li>add: settings and related files can be deleted.</li>
+							<li>add: version and translation information in the about window.</li>
+						</ul>
+					</dd>
+				<dt>2009-01-01</dt>
+					<dd>Linux and sourcecode bugfix update: Creation of the autostart entry failed when the autostart directory did not yet exist.</dd>
+				<dt>2008-12-24 v0.2.1b</dt>
+					<dd>
+						<ul>
+							<li>fix: video LUT access check always returned false when no display profile was set.</li>
+							<li>chg: dispcalGUI now uses the autostart specification from freedesktop.org for the profile loader under Linux when installing profiles. NOTE for users: This also means you should manually remove any autostarts from previous versions, e.g.<br/>
+							<code>rm ~/.gnome2/dispwin-*.sh<br/>
+							rm ~/.kde/Autostart/dispwin-*.sh</code><br/>
+							and then re-install your current profile so the new loader is created. The new loader will be created in $XDG_CONFIG_HOME/autostart/ (if set) or ~/.config/autostart/ (if not set), with the filename dispcalGUI-Calibration-Loader-Display-<strong>x</strong>.desktop, where <strong>x</strong> is the display number.</li>
+							<li>chg: the calibration loader will check if gnome-screensaver is running and if so, exit it before loading the calibration, then start it again to prevent resetting the calibration when activated.</li>
+							<li>chg: .sh/.cmd file in profile folder is no longer created when just installing a profile.</li>
+							<li>add: message box when selecting LUT as profile type with recommendation to use more samples for higher quality profiles.</li>
+							<li>add: default to english locale if translation doesn't exist.</li>
+						</ul>
+					</dd>
+				<dt>2008-12-18 v0.2b</dt>
+					<dd>
+						<ul>
+							<li>fix: no longer possible to introduce invalid value types through a malformed config file (which could lead to dispcalGUI not launching).</li>
+							<li>fix: windows can no longer be moved permanently out of the visible screen area.</li>
+							<li>fix: spaces and special chars in the profile name should work now (should have from the start, but I had some superfluous code which broke it).</li>
+							<li>fix: spaces in the path to dispcalGUI should work now under Linux and Mac OS X too (Windows had no problem)</li>
+							<li>fix: measurement file no longer gets deleted after successful measurement if profile generation fails (was a simple oversight on my side).</li>
+							<li>fix: [cosmetic] logo header now always spans the whole width of the window.</li>
+							<li>fix: [cosmetic] Mac OS X: on first launch, a second, unused, terminal window is no longer opened.</li>
+							<li>fix: windows will now try to adjust its height to fit on small screens (scrollbars might appear).</li>
+							<li>chg: “Calibration file” renamed to “Settings” and moved to the top, is now a dropdown box remembering the last 10 used files. Settings are stored in and loaded from profiles.</li>
+							<li>chg: renamed “Display type” to “Measurement mode” and moved over to measurement device selector.</li>
+							<li>chg: default to “LCD” for measurement mode.</li>
+							<li>chg: default testchart file names are now localized.</li>
+							<li>chg: new default testcharts, four flavours: matrix default (91 patches), LUT default (127 patches), large (512 patches) and massive (3012 patches).</li>
+							<li>chg: testchart selector is now a dropdown box, shows all testchart files in chosen directory plus the default testcharts.</li>
+							<li>chg: [build/src] new and improved build system.</li>
+							<li>chg: [build/src] Python 2.6 is now the recommended version to run and/or build dispcalGUI. Python 2.5 is still supported, but you will not be able to cancel profile or testchart creation through the GUI.</li>
+							<li>chg: externally installed wxGTK is no longer a dependency for executables on Linux.</li>
+							<li>chg: [build] Executables are now completely self-contained. The following paths are searched for additional language files: <code>&lt;user home directory&gt;/dispcalGUI/lang</code>, <code>&lt;dispcalGUI root directory&gt;/lang</code></li>
+							<li>add: all settings now stored in profile whenever possible.</li>
+							<li>add: “Install” button next to settings dropdown to install selected profile.</li>
+							<li>add: dropdown to choose the display to use for LUT access if all of the following applies:<br />
+								- more than one display connected<br />
+								- one of those displays seems to have non-working LUT access (detected on startup)<br />
+								- one of those displays seems to have working LUT access (detected on startup)</li>
+							<li>add: show patch count of selected testchart next to dropdown.</li>
+							<li>add: ability to select an icc profile (if it contains appropriate data) or measurement data file (.ti3) as testchart (converted on-the-fly).</li>
+							<li>add: testchart generator with editing cabability (experimental)<br />
+								- to select patches, click and drag the mouse over table cells, or hold SHIFT (select range) or CTRL/CMD (add/remove single cells/rows to/from selection)<br />
+								- to add a patch, double-click a row label<br />
+								- to delete patches, select them, then hold CTRL or CMD and hit DEL or BACKSPACE (will always delete whole rows even if only single cells selected)<br />
+								- CTRL-C/CTRL-V/CTRL-A = copy/paste/select all</li>
+							<li>add: advanced gamut mapping options for LUT-type profiles, can also be used to overcome an apparent Photoshop CS3 bug under Mac OS X where the brush cursor shows strange artifacts when using LUT-profiles with only one intent (thanks to Klaus Karcher for reporting this).</li>
+							<li>add: ability to generate profile from existing measurement data, even from an existing profile (if it contains appropriate data).</li>
+							<li>add: drag and drop calibration files (.cal), profiles (.icc/.icm), testcharts (.ti1) and measurement data files (.ti3) to the main window to process/select them (does not work very reliably on Mac OS X depending on where you drop the files, and you also get no optical feedback during the drag operation like the changed mouse cursor on Linux/Windows. Your best bet when dropping any files is perhaps the unoccupied area below “Settings”).</li>
+							<li>add: fully movable/resizable measurement window.</li>
+							<li>add: profile and testchart creation can be aborted (when running from source only if using Python >= 2.6).</li>
+							<li>add: “Before” / “After” switch when calibration / profiling complete.</li>
+							<li>add: menu item to enable Spyder 2 from within dispcalGUI.</li>
+							<li>add: <!--french, -->italian and spanish GUI translations (thanks contributors!)</li>
+							<li>Numerous other small fixes/changes.</li>
+						</ul>
+					</dd>
+			
+				<dt>2008-08-21</dt>
+					<dd>Executable-only update for Linux (thanks to Patrice Vetsel for bug report): dispcalGUI is now built against wxGTK 2.8.7.1, which becomes a dependency.</dd>
+			
+				<dt>2008-08-18 v0.1b</dt>
+					<dd>First public release.</dd>
+			</dl>
+		</div>
+		
+		</div>
+		
+	</body>
+</html>

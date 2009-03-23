@@ -1,0 +1,11 @@
+install_dir=`dirname "$0"`
+echo "[Desktop Entry]">"$tmp/dispcalGUI.desktop"
+echo "Version=1.0">>"$tmp/dispcalGUI.desktop"
+echo "Type=Application">>"$tmp/dispcalGUI.desktop"
+echo "Name=dispcalGUI">>"$tmp/dispcalGUI.desktop"
+echo "Exec=\"$install_dir/dispcalGUI\"">>"$tmp/dispcalGUI.desktop"
+echo "Icon=$install_dir/theme/icons/48x48/dispcalGUI.png">>"$tmp/dispcalGUI.desktop"
+echo "Terminal=true">>"$tmp/dispcalGUI.desktop"
+echo "Categories=Graphics">>"$tmp/dispcalGUI.desktop"
+"$install_dir/xdg-desktop-icon.sh" uninstall --novendor "$tmp/dispcalGUI.desktop"
+rm -f "$tmp/dispcalGUI.desktop"
