@@ -222,11 +222,18 @@
 		#disclaimer {
 			clear: both;
 		}
-		#quicksetuplink:link {
+		a#quicksetuplink:link,
+		a#quicksetuplink:visited,
+		html#dispcalGUI a#quicksetuplink:link,
+		html#dispcalGUI a#quicksetuplink:visited {
 			color: #33C033;
 		}
-		#quicksetuplink:hover {
+		a#quicksetuplink:hover,
+		a#quicksetuplink:visited:hover,
+		html#dispcalGUI a#quicksetuplink:hover,
+		html#dispcalGUI a#quicksetuplink:visited:hover {
 			color: #66CC66;
+			border-color: #66CC66;
 		}
 		</style>
 	</head>
@@ -331,7 +338,7 @@
 			WITHOUT ANY WARRANTY; without even the implied warranty of 
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 			
-			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (JSON library) and <a href="http://wxpython.org/">wxPython</a> (GUI toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X, and a modified version of <a href="http://pyinstaller.python-hosting.com/">pyinstaller</a> (trunk rev. 646) on Linux/Windows (see pyinstaller-trunk/README1ST.txt for a list of changes to the stock version). All of these software packages are © by their respective authors.</p>
+			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (JSON library) and <a href="http://wxpython.org/">wxPython</a> (GUI toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X, and a modified version of <a href="http://pyinstaller.python-hosting.com/">pyinstaller</a> (based on trunk rev. 646) on Linux/Windows (see pyinstaller/README1ST.txt for a list of changes to the stock version). All of these software packages are © by their respective authors.</p>
 		</div>
 		
 		<div id="download">
@@ -343,8 +350,10 @@
 				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86-Install.zip">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">ZIP file</a><br />
 				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">ZIP file</a><br />
 				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Windows.zip">ZIP file</a><br />
-				Source Code <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-src.zip">ZIP file</a><br />
-				<a href="http://dispcalgui.svn.sourceforge.net/">Browse the SVN repository of the latest development version</a> (or do a full checkout using svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui/trunk dispcalGUI-trunk)
+				Source Code <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-src.zip">ZIP file</a>
+			</p>
+			<p>
+				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui/trunk dispcalGUI-trunk</code>)
 			</p>
 		</div>
 		
@@ -661,25 +670,25 @@
 			
 					<dt>Profile name</dt>
 						<dd>
-							<p>As long as you do not enter your own text here, the profile name is auto generated from the chosen calibration and profiling options (you can also force this by clicking the small icon with the spinning arrows next to the field). The current auto naming mechanism creates quite verbose names which are not necessarily nice to read, but they can help in identifying  the profile.<br />
-							Also note that the profile name is not only used for the resulting profile, but for all intermediate files as well (filename extensions are added automatically) <em>and</em> all files are stored in a folder of that name. You can choose where this folder is created by clicking the disk icon next to the field (it defaults to your user home directory).<br />
+							<p>As long as you do not enter your own text here, the profile name is auto generated from the chosen calibration and profiling options. The current auto naming mechanism creates quite verbose names which are not necessarily nice to read, but they can help in identifying the profile.<br />
+							Also note that the profile name is not only used for the resulting profile, but for all intermediate files as well (filename extensions are added automatically) <em>and</em> all files are stored in a folder of that name. You can choose where this folder is created by clicking the disk icon next to the field (it defaults to your system's default location for user data).<br />
 							Here's an example under Linux, on other platforms some file extensions and the location of the home directory will differ (you can mouse over the filenames to get a tooltip with a short description what the file is for):</p>
 								
-							<p>Chosen profile save path: <code title="User home directory">/home/username</code><br />
+							<p>Chosen profile save path: <code title="User home directory">~/.local/share/dispcalGUI/storage</code><br />
 							Profile name: <code>mydisplay</code></p>
 							
-							<p>The following folder will be created: <code>/home/username/mydisplay</code></p>
+							<p>The following folder will be created: <code>~/.local/share/dispcalGUI/storage/mydisplay</code></p>
 							
 							<p>During calibration &amp; profiling the following files will be created:<br />
-							<code><span title="Calibrate and profile, then install profile afterwards">/home/username/mydisplay/mydisplay.all.sh</span><br />
-							<span title="Contains video LUT curves and most settings used for calibration">/home/username/mydisplay/mydisplay.cal</span><br />
-							<span title="Create a profile from the .ti3 measurement file">/home/username/mydisplay/mydisplay.colprof.sh</span><br />
-							<span title="Calibrate and create .cal file">/home/username/mydisplay/mydisplay.dispcal.sh</span><br />
-							<span title="Create a .ti3 file by measuring the .ti1 patches, first loading the .cal file">/home/username/mydisplay/mydisplay.dispread.sh</span><br />
-							<span title="Install the profile">/home/username/mydisplay/mydisplay.dispwin.sh</span><br />
-							<span title="The end result, a display profile">/home/username/mydisplay/mydisplay.icc</span><br />
-							<span title="Contains the measurement patches used to create the .ti3 measurement file">/home/username/mydisplay/mydisplay.ti1</span><br />
-							<span title="Contains the measured display response">/home/username/mydisplay/mydisplay.ti3</span></code></p>
+							<code><span title="Calibrate and profile, then install profile afterwards">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.all.sh</span><br />
+							<span title="Contains video LUT curves and most settings used for calibration">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.cal</span><br />
+							<span title="Create a profile from the .ti3 measurement file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.colprof.sh</span><br />
+							<span title="Calibrate and create .cal file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispcal.sh</span><br />
+							<span title="Create a .ti3 file by measuring the .ti1 patches, first loading the .cal file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispread.sh</span><br />
+							<span title="Install the profile">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispwin.sh</span><br />
+							<span title="The end result, a display profile">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.icc</span><br />
+							<span title="Contains the measurement patches used to create the .ti3 measurement file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.ti1</span><br />
+							<span title="Contains the measured display response">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.ti3</span></code></p>
 							
 							<p>(the <code>.sh</code> files can be used to re-run without GUI but same settings from a shell)</p>
 						</dd>
@@ -694,8 +703,7 @@
 				error). Pay attention to the output printed to the terminal, it will give you status information and prompt for keyboard input to start measurements and select calibration options (you can always cancel out of running measurements by pressing ESC or Q).</p>
 				
 				<p>When creating or updating a profile, a shortcut to load its LUT curves 
-				automatically on login will be created in your user startup directory (Windows, GNOME and KDE desktop
-				environment loaders are currently implemented, Mac OS X does not need a loader).</p>
+				automatically on login will be created in your user startup directory (on Windows and Linux, Mac OS X does not need a loader).</p>
 			</div>
 		</div>
 		
