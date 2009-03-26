@@ -3175,7 +3175,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		items = self.calibration_file_ctrl.GetItems()
 		changed = False
 		for j in range(len(items)):
-			if j != sel and items[j][0] == "*":
+			#if j != sel and items[j][0] == "*":
+			if items[j][0] == "*":
 				items[j] = items[j][2:]
 				changed = True
 		if changed:
@@ -4390,7 +4391,8 @@ class DisplayCalibratorGUI(wx.Frame):
 				if len(errors):
 					errors2 = []
 					for line in errors:
-						if line.find("XRandR 1.2 is faulty - falling back to older extensions") < 0: # Ignore the XRandR error
+						if line.strip() and line.find("failed with 'User Aborted'") < 0 and \
+						   line.find("XRandR 1.2 is faulty - falling back to older extensions") < 0:
 							errors2 += [line]
 					if len(errors2):
 						if (retcode != 0 or cmdname == "dispwin"):
@@ -4602,6 +4604,7 @@ class DisplayCalibratorGUI(wx.Frame):
 							if options_dispcal and self.recent_cals[sel] == cal:
 								self.recent_cals.remove(cal)
 								self.calibration_file_ctrl.Delete(sel)
+							safe_print("settings.changed", self.getcfg("settings.changed"))
 							if self.getcfg("settings.changed"):
 								self.settings_discard_changes()
 							if options_dispcal and options_colprof:
@@ -4912,6 +4915,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					# sp.call('clear', shell = True)
 				safe_print("-" * 72)
 				# run colprof
+				self.install_cal = False
 				self.start_worker(self.profile_finish, self.profile, ckwargs = {"profile_path": profile_save_path, "success_msg": self.getlstr("profile.created"), "failure_msg": self.getlstr("error.profile.file_not_created")}, wkwargs = {"apply_calibration": True, "dst_path": profile_save_path, "display_name": display_name}, progress_title = self.getlstr("create_profile"))
 
 	def progress_timer_handler(self, event):
@@ -5289,16 +5293,17 @@ class DisplayCalibratorGUI(wx.Frame):
 				if not os.path.exists(filename + ".cal") and not cal in self.presets: #or not self.calibration_update_cb.GetValue():
 					self.cal_changed()
 					return
-		if not self.updatingctrls and self.calibration_file_ctrl.GetStringSelection()[0] != "*":
-			sel = self.calibration_file_ctrl.GetSelection()
+		if not self.updatingctrls:
 			self.setcfg("settings.changed", 1)
-			if sel > 0:
-				items = self.calibration_file_ctrl.GetItems()
-				items[sel] = "* " + items[sel]
-				self.calibration_file_ctrl.Freeze()
-				self.calibration_file_ctrl.SetItems(items)
-				self.calibration_file_ctrl.SetSelection(sel)
-				self.calibration_file_ctrl.Thaw()
+			if self.calibration_file_ctrl.GetStringSelection()[0] != "*":
+				sel = self.calibration_file_ctrl.GetSelection()
+				if sel > 0:
+					items = self.calibration_file_ctrl.GetItems()
+					items[sel] = "* " + items[sel]
+					self.calibration_file_ctrl.Freeze()
+					self.calibration_file_ctrl.SetItems(items)
+					self.calibration_file_ctrl.SetSelection(sel)
+					self.calibration_file_ctrl.Thaw()
 
 	def testchart_ctrl_handler(self, event):
 		if debug: safe_print("testchart_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
