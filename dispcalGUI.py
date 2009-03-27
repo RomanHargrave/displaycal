@@ -104,7 +104,7 @@ isapp = sys.platform == "darwin" and \
    os.path.exists(os.path.join(exedir, pyname)) and \
    os.path.isfile(os.path.join(exedir, pyname))
 
-data_dirs = [os.getcwd()]
+data_dirs = [os.getcwdu()]
 if sys.platform == "win32":
 	from SendKeys import SendKeys
 	from win32com.shell import shell, shellcon
@@ -580,7 +580,7 @@ def printcmdline(cmd, args = None, fn = None, cwd = None):
 	if args is None:
 		args = []
 	if cwd is None:
-		cwd = os.getcwd()
+		cwd = os.getcwdu()
 	safe_print("  " + cmd, fn = fn)
 	i = 0
 	lines = []
@@ -1373,7 +1373,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		for filename in resfiles:
 			name, ext = os.path.splitext(filename)
 			if ext.lower() in (".png"):
-				self.bitmaps[name.lower()] = wx.Bitmap(get_data_path(os.path.sep.join(filename.split("/"))))
+				self.bitmaps[name.lower()] = wx.Bitmap(get_data_path(os.path.join(*filename.split("/"))))
 
 		self.profile_types = [
 			"LUT",
@@ -4822,7 +4822,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		parts = path.split(os.path.sep)
 		for i in range(len(parts)):
 			parts[i] = unicode(parts[i].encode(enc, "replace"), enc).replace("/", "_").replace("?", "_")
-		return os.path.sep.join(parts)
+		return os.path.join(*parts)
 
 	def create_profile_handler(self, event, path = None):
 		if path is None:
@@ -5848,6 +5848,12 @@ class DisplayCalibratorGUI(wx.Frame):
 		value = self.tcframe.grid.GetCellValue(event.GetRow(), event.GetCol()).replace(",", ".")
 		try:
 			value = float(value)
+		except ValueError, exception:
+			if label in self.ti1.queryv1("DATA_FORMAT").values():
+				value = sample[label]
+			else:
+				value = ""
+		else:
 			if label in ("RGB_R", "RGB_G", "RGB_B"):
 				if value > 100:
 					value = 100.0
@@ -5878,12 +5884,6 @@ class DisplayCalibratorGUI(wx.Frame):
 				patch = self.tcframe.patchsizer.GetItem(event.GetRow()).GetWindow()
 				self.tc_patch_setcolorlabel(patch)
 				patch.Refresh()
-		except Exception, exception:
-			handle_error(traceback.format_exc(), parent = self.tcframe)
-			if label in self.ti1.queryv1("DATA_FORMAT").values():
-				value = sample[label]
-			else:
-				value = ""
 		self.tcframe.grid.SetCellValue(event.GetRow(), event.GetCol(), CGATS.rcut(value, sample.parent.vmaxlen))
 
 	def tc_white_patches_handler(self, event = None):
@@ -7665,7 +7665,7 @@ class DisplayCalibrator(wx.App):
 		self.dist_testcharts = []
 		self.dist_testchart_names = []
 		for filename in resfiles:
-			path, ext = get_data_path(os.path.sep.join(filename.split("/"))), os.path.splitext(filename)[1]
+			path, ext = get_data_path(os.path.join(*filename.split("/"))), os.path.splitext(filename)[1]
 			if (not path or not os.path.isfile(path)):
 				if ext.lower() != ".json": # ignore missing language files, these are handled later
 					handle_error(u"Fatal error: Resource file “%s” not found" % filename, False)
