@@ -104,7 +104,7 @@ isapp = sys.platform == "darwin" and \
    os.path.exists(os.path.join(exedir, pyname)) and \
    os.path.isfile(os.path.join(exedir, pyname))
 
-data_dirs = [os.getcwdu()]
+data_dirs = [os.getcwdu()] if os.getcwdu() != pydir else []
 if sys.platform == "win32":
 	from SendKeys import SendKeys
 	from win32com.shell import shell, shellcon
@@ -116,11 +116,13 @@ if sys.platform == "win32":
 	scale_adjustment_factor = 1.0
 	# environment variable APPDATA will not be defined if using "Run as..."
 	appdata = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_APPDATA)
+	commonappdata = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_APPDATA)
+	commonprogramfiles = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_PROGRAM_FILES_COMMON)
 	confighome = os.path.join(appdata, appname)
 	autostart = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_STARTUP)
 	datahome = os.path.join(appdata, appname)
-	data_dirs += [datahome, os.path.join(os.getenv("COMMONPROGRAMFILES"), 
-		appname)]
+	data_dirs += [datahome, os.path.join(commonappdata, appname), 
+				  os.path.join(commonprogramfiles, appname)]
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:
@@ -4604,7 +4606,6 @@ class DisplayCalibratorGUI(wx.Frame):
 							if options_dispcal and self.recent_cals[sel] == cal:
 								self.recent_cals.remove(cal)
 								self.calibration_file_ctrl.Delete(sel)
-							safe_print("settings.changed", self.getcfg("settings.changed"))
 							if self.getcfg("settings.changed"):
 								self.settings_discard_changes()
 							if options_dispcal and options_colprof:
