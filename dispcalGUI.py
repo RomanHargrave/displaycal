@@ -420,56 +420,17 @@ def listdir(path, rex = None):
 		files = filter(rex.search, files)
 	return files
 
-def abslist(l):
+def floatlist(alist):
 	result = []
-	for v in l:
+	for item in alist:
 		try:
-			result.append(abs(v))
+			result.append(float(item))
 		except ValueError:
-			pass
+			result.append(0.0)
 	return result
 
-def absfloatlist(l):
-	result = []
-	for v in l:
-		try:
-			result.append(abs(float(v)))
-		except ValueError:
-			pass
-	return result
-
-def absintlist(l):
-	result = []
-	for v in l:
-		try:
-			result.append(abs(int(round(float(v)))))
-		except ValueError:
-			pass
-	return result
-
-def floatlist(l):
-	result = []
-	for v in l:
-		try:
-			result.append(float(v))
-		except ValueError:
-			pass
-	return result
-
-def intlist(l):
-	result = []
-	for v in l:
-		try:
-			result.append(int(round(float(v))))
-		except ValueError:
-			pass
-	return result
-
-def strlist(l):
-	result = []
-	for v in l:
-		result.append(str(v))
-	return result
+def strlist(alist):
+	return [str(item) for item in alist]
 
 def extract_cal(ti3_data):
 	if isinstance(ti3_data, (str, unicode)):
@@ -554,17 +515,15 @@ def set_position(window, x = None, y = None, w = None, h = None):
 			window.SetPosition(display_client_rect[0:2]) 
 
 def which(name):
-	try:
-		path = os.getenv("PATH")
-		if path is None:
-			path = os.defpath
-		for cur_dir in path.split(os.pathsep):
-			filename = os.path.join(cur_dir, name)
-			if os.path.exists(filename) and os.path.isfile(filename) and \
-				os.access(filename, os.X_OK):
-				return filename
-	except Exception, exception:
-		pass
+	path = os.getenv("PATH", os.defpath)
+	for cur_dir in path.split(os.pathsep):
+		filename = os.path.join(cur_dir, name)
+		if os.path.isfile(filename):
+			try:
+				if os.access(filename, os.X_OK):
+					return filename
+			except Exception, exception:
+				pass
 	return None
 
 def putenv(varname, value):
@@ -1375,7 +1334,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		for filename in resfiles:
 			name, ext = os.path.splitext(filename)
 			if ext.lower() in (".png"):
-				self.bitmaps[name.lower()] = wx.Bitmap(get_data_path(os.path.join(*filename.split("/"))))
+				self.bitmaps[name.lower()] = wx.Bitmap(get_data_path(os.path.sep.join(filename.split("/"))))
 
 		self.profile_types = [
 			"LUT",
@@ -3696,13 +3655,17 @@ class DisplayCalibratorGUI(wx.Frame):
 					try:
 						profile = ICCP.ICCProfile(filename + ext)
 					except (IOError, ICCP.ICCProfileInvalidError), exception:
-						profile = None
-					if profile:
-						ti3 = StringIO(profile.tags.get("CIED", ""))
+						InfoDialog(self, pos = (-1, 100), msg = self.getlstr("error.testchart.read", self.get_testchart()), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+						return None, None
+					ti3 = StringIO(profile.tags.get("CIED", ""))
 				elif ext.lower() == ".ti1":
 					shutil.copyfile(filename + ext, inoutfile + ".ti1")
 				else: # ti3
-					ti3 = open(filename + ext, "rU")
+					try:
+						ti3 = open(filename + ext, "rU")
+					except Exception, exception:
+						InfoDialog(self, pos = (-1, 100), msg = self.getlstr("error.testchart.read", self.get_testchart()), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+						return None, None
 				if ext.lower() != ".ti1":
 					ti3_lines = [line.strip() for line in ti3]
 					ti3.close()
@@ -4759,7 +4722,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.update_profile_name()
 
 	def profile_save_path_btn_handler(self, event):
-		defaultPath = os.path.join(*self.get_default_path("profile.save_path"))
+		defaultPath = os.path.sep.join(self.get_default_path("profile.save_path"))
 		dlg = wx.DirDialog(self, self.getlstr("dialog.set_profile_save_path", self.get_profile_name()), defaultPath = defaultPath)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
@@ -4823,7 +4786,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		parts = path.split(os.path.sep)
 		for i in range(len(parts)):
 			parts[i] = unicode(parts[i].encode(enc, "replace"), enc).replace("/", "_").replace("?", "_")
-		return os.path.join(*parts)
+		return os.path.sep.join(parts)
 
 	def create_profile_handler(self, event, path = None):
 		if path is None:
@@ -6956,7 +6919,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		for chart in self.testcharts:
 			chart = chart.split(os.pathsep)
 			chart.reverse()
-			self.testcharts[i] = os.path.join(*chart)
+			self.testcharts[i] = os.path.sep.join(chart)
 			self.testchart_names += [self.getlstr(chart[-1])]
 			i += 1
 		return self.testchart_names
@@ -7020,7 +6983,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			parent = self
 		else:
 			parent = None # do not center on parent if not visible
-		defaultPath = os.path.join(*self.get_default_path("argyll.dir"))
+		defaultPath = os.path.sep.join(self.get_default_path("argyll.dir"))
 		dlg = wx.DirDialog(parent, self.getlstr("dialog.set_argyll_bin"), defaultPath = defaultPath, style = wx.DD_DIR_MUST_EXIST)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal() == wx.ID_OK
@@ -7539,7 +7502,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					else:
 						trash(delete_related_files)
 				except Exception, exception:
-					InfoDialog(self, msg = self.getlstr("error.deletion"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+					InfoDialog(self, msg = self.getlstr("error.deletion") + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 				idx = self.recent_cals.index(cal)
 				self.recent_cals.remove(cal)
 				self.calibration_file_ctrl.Delete(idx)
@@ -7666,7 +7629,7 @@ class DisplayCalibrator(wx.App):
 		self.dist_testcharts = []
 		self.dist_testchart_names = []
 		for filename in resfiles:
-			path, ext = get_data_path(os.path.join(*filename.split("/"))), os.path.splitext(filename)[1]
+			path, ext = get_data_path(os.path.sep.join(filename.split("/"))), os.path.splitext(filename)[1]
 			if (not path or not os.path.isfile(path)):
 				if ext.lower() != ".json": # ignore missing language files, these are handled later
 					handle_error(u"Fatal error: Resource file “%s” not found" % filename, False)
