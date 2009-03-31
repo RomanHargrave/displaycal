@@ -43,7 +43,7 @@ import random
 import re
 import shutil
 import subprocess as sp
-import tempfile
+import tempfile26 as tempfile
 import textwrap
 import traceback
 Decimal = decimal.Decimal
