@@ -262,8 +262,8 @@ def setup_logging():
 		os.makedirs(logdir)
 	logging.basicConfig(level = logging.DEBUG,
 		format = "%(asctime)s %(message)s",
-		filename = os.path.join(logdir, "%s-%s-build%s.log" % (appname, 
-			version, build.replace(":", "-"))),
+		filename = os.path.join(logdir, "%s-%s-build%s-%s.log" % (appname, 
+			version, build.replace(":", "-"), strftime("%Y-%m-%d"))),
 		filemode = "a")
 	log("=" * 72)
 	stream = globalconfig["logging.StreamHandler"] = \
