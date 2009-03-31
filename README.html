@@ -247,7 +247,7 @@
 			<dt>Version:</dt>
 				<dd id="version">0.2.2 BETA (<a href="#history">changelog</a>)</dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-01-01</dd>
+				<dd id="date">2009-03-31</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -256,7 +256,7 @@
 				<dd>Linux, Mac OS X, Windows (2000 / XP / Vista / 7)</dd>
 		</dl>
 		
-		<p class="info">Bug reports, questions, comments? Use the <a href="http://sourceforge.net/tracker/?atid=1127028&group_id=257092&func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">help</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">discussion</a> forums.</p>
+		<p class="info">Bug reports, questions, comments? Use the <a href="http://sourceforge.net/tracker/?atid=1127028&group_id=257092&func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">help</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">discussion</a> forums or drop me a mail dispcalGUI ‹at› hoech . net.</p>
 		
 		<h2>Table of contents</h2>
 		
@@ -346,12 +346,15 @@
 			
 			<p>If you are updating from dispcalGUI v0.2.1b or earlier, please first uninstall or remove all previous versions.</p>
 			
+			<h3>Executable releases</h3>
 			<p>
-				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86-Install.zip">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">ZIP file</a><br />
+				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-1.i586.rpm">RPM</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">ZIP file</a><br />
 				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">ZIP file</a><br />
-				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Windows.zip">ZIP file</a><br />
-				Source Code <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-src.zip">ZIP file</a>
+				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Windows.zip">ZIP file</a>
 			</p>
+			
+			<h3>Source code</h3>
+			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-src.zip">ZIP file</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui/trunk dispcalGUI-trunk</code>)
 			</p>
@@ -364,7 +367,7 @@
 			
 			<ol class="list">
 				<li>If you are updating from dispcalGUI v0.2.1b or earlier, please first uninstall or remove all previous versions.</li>
-				<li>Get dispcalGUI: <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86-Install.zip">Linux installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">Mac OS ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Windows installer</a>.</li>
+				<li>Get dispcalGUI: <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-1.i586.rpm">Linux RPM</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">Linux ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">Mac OS ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Windows installer</a>.</li>
 				<li>Download and unpack the Argyll CMS executables ZIP file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</li>
 				<li>
 					To install your measurement device, connect the device to your computer. If you have a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu before continuing.
@@ -512,7 +515,7 @@
 		<div id="install">
 			<h2>Installation</h2>
 		
-			<p>If you downloaded a executable release for your specific OS, you can start using it right away after installation/unpacking.</p>
+			<p>If you downloaded an executable release for your specific OS, you can start using it right away after installing/unpacking. On Linux, if you didn't or couldn't use the RPM file, you may also use the install.sh shellscript included in the zip file to install the executable and documentation to appropriate places on your system and add a menu entry to the desktop menu (for an user install a default prefix of <code>$HOME/.local</code> and for a root install a default prefix of <code>/usr/local</code> is used. You may also specify your own prefix by specifying it as argument to install.sh, e.g. <code>./install.sh /usr</code>).</p>
 			
 			<p>If you downloaded the source code release, and did not build from source, the main executable will not be 
 			there, instead there will be a python script called <code>dispcalGUI.py</code> which you 
@@ -774,7 +777,7 @@
 			<h2>Version history / changelog</h2>
 			
 			<dl>
-				<dt>v0.2.2b</dt>
+				<dt>2009-03-31 v0.2.2b</dt>
 					<dd>
 						<ul>
 							<li>fix: encoding-related issues on all platforms and strange Unicode-related problems with AppleScript and Terminal on Mac OS X 10.4 (<a href="#osx-104-applescript-unicode-peculiarities" onclick="var element = document.getElementById('osx-104-applescript-unicode-peculiarities'); element.style.display = element.style.display == 'block' ? 'none' : 'block'; return false">Details</a>).
@@ -805,9 +808,9 @@
 <span class="keyword">end tell</span></code></pre>
 								</div>
 							</li>
-							<li>fix: several actions unexpectedly failing under Windows 7 (dispcalGUI created temporary files via system calls on several occasions, but on Windows, this does not create the file in the user's temp directory as one would expect, but in the ROOT directory e.g. C:\ - a sane method is now being used instead).</li>
+							<li>fix: (Windows) several actions unexpectedly failing under Windows 7 (dispcalGUI created temporary files via system calls on several occasions, but on Windows, this does not create the file in the user's temp directory as one would expect, but in the ROOT directory e.g. C:\ - a sane method is now being used instead).</li>
 							<li>fix: bug in sorting function caused leading and trailing zeroes of numbers in testchart filenames to get lost, thus failing to load such files.</li>
-							<li>fix: “No module named _md5” error with the binary on some Linux distros (apparently an OpenSSL-related issue, because normally it wouldn't fall back to the legacy _md5 module which is not even built by default in recent Python versions). The fallback _md5 module is now included.</li>
+							<li>fix: (Linux) “No module named _md5” error with the binary on some Linux distros (apparently an OpenSSL-related issue, because normally it wouldn't fall back to the legacy _md5 module which is not even built by default in recent Python versions). The fallback _md5 module is now included.</li>
 							<li>fix: calibration was not automatically added &amp; selected in the dropdown menu when only calibrating.</li>
 							<li>fix: dropping a profile which was not created in dispcalGUI onto the application window no longer results in an unhandled error.</li>
 							<li>fix: when trying to load LUT curves from a profile which actually does not contain any, an error message is now shown instead of resetting the LUT to linear and erroneously stating the curves were succesfully loaded.</li>
@@ -817,7 +820,7 @@
 							<li>fix: restore advanced gamut mapping options to default if selecting a profile which does not contain those settings.</li>
 							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for LUT profiles regardless of source profile type.</li>
 							<li>fix: if the screen or instrument that was selected in a previous session is not available, select an available one.</li>
-							<li>fix: the “enable spyder 2” menu item would not allow to select files other than “setup.exe” on Mac OS X.</li>
+							<li>fix: (Mac) the “enable spyder 2” menu item would not allow to select files other than “setup.exe”.</li>
 							<li>chg: when calibrating &amp; profiling, it is no longer necessary to recalibrate the instrument (and thus have to remove certain instruments like the i1 Pro from the screen, then re-attach) after display calibration and before measuring the test patches for profiling.</li>
 							<li>chg: the previously empty entry at the top of the settings dropdown (settings which are not associated to a profile or .cal file) is now named “&lt;current settings&gt;”.</li>
 							<li>chg: changed settings which are associated to a profile or .cal file are now marked with a leading asterisk in the settings dropdown.</li>
@@ -836,7 +839,8 @@
 							<li>chg: [build/src] <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a> is now a dependency on Windows when running or building from source.</li>
 							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>/usr/local/share/dispcalGUI</code>, <code>/usr/share/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code>, <code>%COMMONAPPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current working directory (which is always searched first if it differs from the executable directory) and the executable directory (which is always searched last).</li>
 							<li>chg: better error handling. For unhandled exceptions, a message box is shown and an entry is written to the logfile.</li>
-							<li>chg: the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
+							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
+							<li>chg: (Linux) there's no longer an installer for the Linux version - please use the RPM instead.</li>
 							<li>add: logging (also see the change related to file-storage).</li>
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
 							<li>add: unattended calibration and profiling, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
@@ -850,7 +854,7 @@
 					<dd>
 						<ul>
 							<li>fix: video LUT access check always returned false when no display profile was set.</li>
-							<li>chg: dispcalGUI now uses the autostart specification from freedesktop.org for the profile loader under Linux when installing profiles. NOTE for users: This also means you should manually remove any autostarts from previous versions, e.g.<br/>
+							<li>chg: (Linux) dispcalGUI now uses the autostart specification from freedesktop.org for the profile loader under Linux when installing profiles. NOTE for users: This also means you should manually remove any autostarts from previous versions, e.g.<br/>
 							<code>rm ~/.gnome2/dispwin-*.sh<br/>
 							rm ~/.kde/Autostart/dispwin-*.sh</code><br/>
 							and then re-install your current profile so the new loader is created. The new loader will be created in $XDG_CONFIG_HOME/autostart/ (if set) or ~/.config/autostart/ (if not set), with the filename dispcalGUI-Calibration-Loader-Display-<strong>x</strong>.desktop, where <strong>x</strong> is the display number.</li>
@@ -869,7 +873,7 @@
 							<li>fix: spaces in the path to dispcalGUI should work now under Linux and Mac OS X too (Windows had no problem)</li>
 							<li>fix: measurement file no longer gets deleted after successful measurement if profile generation fails (was a simple oversight on my side).</li>
 							<li>fix: [cosmetic] logo header now always spans the whole width of the window.</li>
-							<li>fix: [cosmetic] Mac OS X: on first launch, a second, unused, terminal window is no longer opened.</li>
+							<li>fix: [cosmetic] (Mac OS X) on first launch, a second, unused, terminal window is no longer opened.</li>
 							<li>fix: windows will now try to adjust its height to fit on small screens (scrollbars might appear).</li>
 							<li>chg: “Calibration file” renamed to “Settings” and moved to the top, is now a dropdown box remembering the last 10 used files. Settings are stored in and loaded from profiles.</li>
 							<li>chg: renamed “Display type” to “Measurement mode” and moved over to measurement device selector.</li>
@@ -879,7 +883,7 @@
 							<li>chg: testchart selector is now a dropdown box, shows all testchart files in chosen directory plus the default testcharts.</li>
 							<li>chg: [build/src] new and improved build system.</li>
 							<li>chg: [build/src] Python 2.6 is now the recommended version to run and/or build dispcalGUI. Python 2.5 is still supported, but you will not be able to cancel profile or testchart creation through the GUI.</li>
-							<li>chg: externally installed wxGTK is no longer a dependency for executables on Linux.</li>
+							<li>chg: (Linux) externally installed wxGTK is no longer a dependency for executables.</li>
 							<li>chg: [build] Executables are now completely self-contained. The following paths are searched for additional language files: <code>&lt;user home directory&gt;/dispcalGUI/lang</code>, <code>&lt;dispcalGUI root directory&gt;/lang</code></li>
 							<li>add: all settings now stored in profile whenever possible.</li>
 							<li>add: “Install” button next to settings dropdown to install selected profile.</li>
