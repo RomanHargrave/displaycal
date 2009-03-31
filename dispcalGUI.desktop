@@ -11,4 +11,3 @@ Terminal=true
 Categories=Graphics
 Comment[de]=Eine grafische Benutzeroberfläche für die Argyll CMS Anzeigegerätekalibrierungs-Programme
 Comment=A graphical user interface for the Argyll CMS display calibration utilities
-MimeType=application/x-icc;application/x-cgats
