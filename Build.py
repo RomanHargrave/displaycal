@@ -98,8 +98,8 @@ if sys.platform == "darwin": # mac os x
 		sys.exit(retcode)
 
 else: # linux / windows
-			
-	dist_dir = "dispcalGUI"
+
+	dist_dir = os.path.join("dist", "dispcalGUI")
 
 	if not "--copy-only" in sys.argv:
 
@@ -159,9 +159,9 @@ else: # linux / windows
 
 		# build executable
 		if sys.platform == "win32":
-			retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Build.py"), "dispcalGUI--onefile.spec"])
+			retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Build.py"), "dispcalGUI-pyi--onefile.spec"])
 		else:
-			retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Build.py"), "./dispcalGUI--onefile.spec"])
+			retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Build.py"), "./dispcalGUI-pyi--onefile.spec"])
 		if retcode != 0:
 			sys.exit(retcode)
 	
