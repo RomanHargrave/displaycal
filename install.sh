@@ -1,14 +1,21 @@
 install_dir=`dirname "$0"`
-echo "Installing binary to /usr/local/bin..."
-cp -f "$install_dir/dispcalGUI" "/usr/local/bin"
-echo "Installing language files to /usr/local/share/dispcalGUI/lang..."
-mkdir -p "/usr/local/share/dispcalGUI"
-cp -f -r "$install_dir/lang" "/usr/local/share/dispcalGUI"
-echo "Installing documentation to /usr/local/doc/dispcalGUI..."
-mkdir -p "/usr/local/doc/dispcalGUI/theme/icons"
-cp -f -r "$install_dir/LICENSE.txt" "$install_dir/README.html" "$install_dir/screenshots" "/usr/local/doc/dispcalGUI"
-cp -f "$install_dir/theme/header-readme.png" "/usr/local/doc/dispcalGUI/theme"
-cp -f "$install_dir/theme/icons/favicon.ico" "/usr/local/doc/dispcalGUI/theme/icons"
+if [ `whoami` = "root" ]; then
+	prefix=${1:-/usr/local}
+	XDG_DATA_DIRS=$prefix/share/:${XDG_DATA_DIRS:-/usr/local/share/:/usr/share/}
+else
+	prefix=${1:-$HOME/.local}
+fi
+echo "Installing binary to $prefix/bin..."
+mkdir -p "$prefix/bin"
+cp -f "$install_dir/dispcalGUI" "$prefix/bin"
+echo "Installing language files to $prefix/share/dispcalGUI/lang..."
+mkdir -p "$prefix/share/dispcalGUI"
+cp -f -r "$install_dir/lang" "$prefix/share/dispcalGUI"
+echo "Installing documentation to $prefix/share/doc/dispcalGUI..."
+mkdir -p "$prefix/share/doc/dispcalGUI/theme/icons"
+cp -f -r "$install_dir/LICENSE.txt" "$install_dir/README.html" "$install_dir/screenshots" "$prefix/share/doc/dispcalGUI"
+cp -f "$install_dir/theme/header-readme.png" "$prefix/share/doc/dispcalGUI/theme"
+cp -f "$install_dir/theme/icons/favicon.ico" "$prefix/share/doc/dispcalGUI/theme/icons"
 echo "Installing icon resources..."
 xdg-icon-resource install --noupdate --novendor --size 16 "$install_dir/theme/icons/16x16/dispcalGUI.png"
 xdg-icon-resource install --noupdate --novendor --size 22 "$install_dir/theme/icons/22x22/dispcalGUI.png"

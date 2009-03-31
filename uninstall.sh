@@ -1,9 +1,15 @@
-echo "Uninstalling binary from /usr/local/bin..."
-rm -f "/usr/local/bin/dispcalGUI"
-echo "Uninstalling language files from /usr/local/share/dispcalGUI/lang..."
-rm -f -r "$install_dir/lang" "/usr/local/share/dispcalGUI/lang"
-echo "Uninstalling documentation from /usr/local/doc/dispcalGUI..."
-rm -f -r "/usr/local/doc/dispcalGUI"
+if [ `whoami` = "root" ]; then
+	prefix=${1:-/usr/local}
+	XDG_DATA_DIRS=$prefix/share/:${XDG_DATA_DIRS:-/usr/local/share/:/usr/share/}
+else
+	prefix=${1:-$HOME/.local}
+fi
+echo "Uninstalling binary from $prefix/bin..."
+rm -f "$prefix/bin/dispcalGUI"
+echo "Uninstalling language files from $prefix/share/dispcalGUI/lang..."
+rm -f -r "$prefix/share/dispcalGUI/lang"
+echo "Uninstalling documentation from $prefix/share/doc/dispcalGUI..."
+rm -f -r "$prefix/share/doc/dispcalGUI"
 echo "Uninstalling desktop menu entry..."
 xdg-desktop-menu uninstall dispcalGUI.desktop
 echo "Uninstalling icon resources..."
