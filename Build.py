@@ -98,12 +98,12 @@ if sys.platform == "darwin": # mac os x
 		sys.exit(retcode)
 
 else: # linux / windows
+			
+	dist_dir = "dispcalGUI"
 
 	if not "--copy-only" in sys.argv:
 
 		import platform
-			
-		dist_dir = "dispcalGUI"
 
 		build_loaders = False
 		if sys.platform != "win32": # linux
@@ -167,21 +167,20 @@ else: # linux / windows
 	
 	for basename in ("lang", "screenshots", "theme"):
 		if not os.path.exists(os.path.join(dist_dir, basename)):
-			shutil.copytree(basename, os.path.join(dist_dir, basename), ignore = shutil.ignore_patterns(*["Thumbs.db", "16x16", "24x24", "32x32", "48x48", "256x256", "dispcalGUI.icns", "dispcalGUI.ico", "dispcalGUI-install.ico", "header.png", "header-about.png", "*.txt"] + ([] if sys.platform == "win32" else ["dispcalGUI-uninstall.ico"])) if basename == "theme" else None)
-	if not os.path.exists(os.path.join(dist_dir, "README.html")):
-		shutil.copy2("README.html", dist_dir)
-	if not os.path.exists(os.path.join(dist_dir, "LICENSE.txt")):
-		shutil.copy2("LICENSE.txt", dist_dir)
+			shutil.copytree(basename, os.path.join(dist_dir, basename), ignore = shutil.ignore_patterns(*[".svn", "Thumbs.db"] + (["16x16", "22x22", "24x24", "32x32", "48x48", "256x256", "dispcalGUI.icns", "dispcalGUI.ico", "dispcalGUI-install.ico", "header.png", "header-about.png", "*.txt"] + ([] if sys.platform == "win32" else ["dispcalGUI-uninstall.ico"]) if basename == "theme" else [])))
+	for basename in ["README.html", "LICENSE.txt"] + (["dispcalGUI.desktop", "install.sh", "uninstall.sh"] if sys.platform != "win32" else []):
+		if not os.path.exists(os.path.join(dist_dir, basename)):
+			shutil.copy2(basename, dist_dir)
 	if sys.platform != "win32":
-		for size in ("16x16", "24x24", "32x32", "48x48"):
+		for size in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
 			src = os.path.join("theme", "icons", size)
 			dst = os.path.join(dist_dir, src)
 			if not os.path.exists(dst):
 				os.makedirs(dst)
 			if not os.path.exists(os.path.join(dst, "dispcalGUI.png")):
 				shutil.copy2(os.path.join(src, "dispcalGUI.png"), os.path.join(dst, "dispcalGUI.png"))
-			if not os.path.exists(os.path.join(dst, "dispcalGUI-uninstall.png")):
-				shutil.copy2(os.path.join(src, "dispcalGUI-uninstall.png"), os.path.join(dst, "dispcalGUI-uninstall.png"))
+			# if not os.path.exists(os.path.join(dst, "dispcalGUI-uninstall.png")):
+				# shutil.copy2(os.path.join(src, "dispcalGUI-uninstall.png"), os.path.join(dst, "dispcalGUI-uninstall.png"))
 		# if not os.path.exists(os.path.join(dist_dir, "calibrationloader.sh")):
 			# shutil.copy2("calibrationloader.sh", dist_dir)
 			# os.chmod(os.path.join(dist_dir, "calibrationloader.sh"), 0755)
