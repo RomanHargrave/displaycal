@@ -247,7 +247,7 @@
 			<dt>Version:</dt>
 				<dd id="version">0.2.2 BETA (<a href="#history">changelog</a>)</dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-03-31</dd>
+				<dd id="date">2009-04-01</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -256,7 +256,7 @@
 				<dd>Linux, Mac OS X, Windows (2000 / XP / Vista / 7)</dd>
 		</dl>
 		
-		<p class="info">Bug reports, questions, comments? Use the <a href="http://sourceforge.net/tracker/?atid=1127028&group_id=257092&func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">help</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">discussion</a> forums or drop me a mail dispcalGUI ‹at› hoech . net.</p>
+		<p class="info">Bug reports, questions, comments? Use the <a href="http://sourceforge.net/tracker/?atid=1127028&group_id=257092&func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">help</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">discussion</a> forums or drop me a mail dispcalGUI ‹at› hoech . net</p>
 		
 		<h2>Table of contents</h2>
 		
@@ -777,7 +777,7 @@
 			<h2>Version history / changelog</h2>
 			
 			<dl>
-				<dt>2009-03-31 v0.2.2b</dt>
+				<dt>2009-04-01 v0.2.2b</dt>
 					<dd>
 						<ul>
 							<li>fix: encoding-related issues on all platforms and strange Unicode-related problems with AppleScript and Terminal on Mac OS X 10.4 (<a href="#osx-104-applescript-unicode-peculiarities" onclick="var element = document.getElementById('osx-104-applescript-unicode-peculiarities'); element.style.display = element.style.display == 'block' ? 'none' : 'block'; return false">Details</a>).
@@ -835,12 +835,13 @@
 							- On Windows, the configuration file is saved as <code>%APPDATA%\dispcalGUI\dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>%APPDATA%\dispcalGUI\storage\</code> by default, and logfiles into <code>%APPDATA%\dispcalGUI\logs\</code><br />
 							Any old (pre v0.2.2b) configuration data is retained in the registry key <code>HKEY_CURRENT_USER\Software\dispcalGUI</code>.</li>
 							<li>chg: most pop-up-messages are now also written to the terminal and a logfile.</li>
-							<li>chg: [build/src] removed MS Visual C++ 2008 Redistributable DLLs from the source package. Users who build under Windows will have them anyway as they are installed with Python 2.6, so they are now copied directly from %SystemRoot%\WinSxS (Windows side-by-side assemblies) if possible.</li>
+							<li>chg: [build/src] (Windows) removed MS Visual C++ 2008 Redistributable DLLs from the source package. Users who build under Windows will have them anyway as they are installed with Python 2.6, so they are now copied directly from %SystemRoot%\WinSxS (Windows side-by-side assemblies) if possible.</li>
 							<li>chg: [build/src] <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a> is now a dependency on Windows when running or building from source.</li>
-							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>/usr/local/share/dispcalGUI</code>, <code>/usr/share/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code>, <code>%COMMONAPPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current working directory (which is always searched first if it differs from the executable directory) and the executable directory (which is always searched last).</li>
+							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>$XDG_DATA_DIRS/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code>, <code>%COMMONAPPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current working directory (which is always searched first if it differs from the executable directory) and the executable directory (which is always searched last).</li>
 							<li>chg: better error handling. For unhandled exceptions, a message box is shown and an entry is written to the logfile.</li>
 							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
-							<li>chg: (Linux) there's no longer an installer for the Linux version - please use the RPM instead.</li>
+							<li>chg: (Linux) there's no longer an installer for the Linux version - please use the RPM or ZIP release instead.</li>
+							<li>chg: cancelling of certain operations like profile calculation and testchart generation is now also supported when using Python 2.5</li>
 							<li>add: logging (also see the change related to file-storage).</li>
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
 							<li>add: unattended calibration and profiling, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>

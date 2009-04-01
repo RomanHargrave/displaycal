@@ -42,7 +42,7 @@ import os
 import random
 import re
 import shutil
-import subprocess as sp
+import subprocess26 as sp
 import tempfile26 as tempfile
 import textwrap
 import traceback
@@ -4884,7 +4884,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def progress_timer_handler(self, event):
 		keepGoing, skip = self.progress_parent.progress_dlg.Pulse(self.progress_parent.progress_dlg.GetTitle())
-		if pyver >= [2, 6] and not keepGoing and hasattr(self, "subprocess") and self.subprocess.returncode is None:
+		if not keepGoing and hasattr(self, "subprocess") and self.subprocess.poll() is None:
 			try:
 				self.subprocess.terminate()
 			except Exception, exception:
@@ -4916,7 +4916,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		return hasattr(self, "progress_parent") and (self.progress_parent.progress_start_timer.IsRunning() or self.progress_parent.progress_timer.IsRunning())
 
 	def progress_dlg_start(self, progress_title = "", progress_msg = "", parent = None):
-		if pyver >= [2, 6] and hasattr(self, "subprocess") and self.subprocess.returncode is None:
+		if hasattr(self, "subprocess") and self.subprocess.poll() is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT
 		else:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME

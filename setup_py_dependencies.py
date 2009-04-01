@@ -13,6 +13,7 @@ setup(name=name,
 				  'natsort', 
 				  'pyi_md5pickuphelper', 
 				  'safe_print', 
+				  'subprocess26', 
 				  'tempfile26', 
 				  'trash'
 				 ],

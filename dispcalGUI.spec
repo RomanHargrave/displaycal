@@ -50,6 +50,7 @@ mv theme-readme theme
 /usr/lib/python/site-packages/natsort.py
 /usr/lib/python/site-packages/pyi_md5pickuphelper.py
 /usr/lib/python/site-packages/safe_print.py
+/usr/lib/python/site-packages/subprocess26.py
 /usr/lib/python/site-packages/tempfile26.py
 /usr/lib/python/site-packages/trash.py
 /usr/share/dispcalGUI

@@ -18,6 +18,7 @@ if [ ! -x "$install_dir/dispcalGUI" ]; then
 	rm -f "$prefix/lib/python/site-packages/natsort.py"*
 	rm -f "$prefix/lib/python/site-packages/pyi_md5pickuphelper.py"*
 	rm -f "$prefix/lib/python/site-packages/safe_print.py"*
+	rm -f "$prefix/lib/python/site-packages/subprocess26.py"*
 	rm -f "$prefix/lib/python/site-packages/tempfile26.py"*
 	rm -f "$prefix/lib/python/site-packages/trash.py"*
 	rm -f "$prefix/lib/python/site-packages/RealDisplaySizeMM-"*.egg-info

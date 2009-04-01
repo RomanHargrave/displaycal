@@ -19,9 +19,9 @@ else
 	echo "Installing required python modules..."
 	cd "$install_dir/RealDisplaySizeMM"
 	"$prefix/bin/python" setup.py install --prefix=$prefix
-	cd "../demjson"
+	cd ../demjson
 	"$prefix/bin/python" setup.py install --prefix=$prefix
-	cd ".."
+	cd ..
 	"$prefix/bin/python" setup_py_dependencies.py install --prefix=$prefix
 	echo "Installing presets to $prefix/share/dispcalGUI/presets..."
 	cp -f -r "$install_dir/presets" "$prefix/share/dispcalGUI"
