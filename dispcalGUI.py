@@ -4593,7 +4593,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.install_profile(capture_output = True, profile_path = profile_path, skip_cmds = skip_cmds)
 				if debug: safe_print("...profile_finish: install_profile")
 			elif preview:
-				self.load_cal()
+				self.load_cal(silent = True)
 		else:
 			InfoDialog(self, pos = (-1, 100), msg = failure_msg, ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 		self.start_timers(True)
