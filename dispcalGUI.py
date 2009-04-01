@@ -3738,8 +3738,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			args += ["-F"]
 		args += ["-H"]
 		self.options_dispread += args
-		args += [inoutfile]
-		return cmd, args
+		return cmd, self.options_dispread + [inoutfile]
 
 	def prepare_colprof(self, profile_name = None, display_name = None):
 		profile_save_path = self.gettmp()
@@ -4594,7 +4593,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.install_profile(capture_output = True, profile_path = profile_path, skip_cmds = skip_cmds)
 				if debug: safe_print("...profile_finish: install_profile")
 			elif preview:
-				self.preview_handler(preview = False)
+				self.load_cal()
 		else:
 			InfoDialog(self, pos = (-1, 100), msg = failure_msg, ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 		self.start_timers(True)
