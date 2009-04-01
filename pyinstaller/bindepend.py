@@ -90,9 +90,9 @@ excludes = {'KERNEL32.DLL':1,
       'SHLWAPI.DLL':1,
       'URLMON.DLL':1,
       # regex excludes
-      '^/usr/lib':1,
-      '^/lib':1,
-      '^/lib/tls':1,
+      #'^/usr/lib':1,
+      #'^/lib':1,
+      #'^/lib/tls':1,
       '^/System/Library/Frameworks':1,
       }
 
