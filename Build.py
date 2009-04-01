@@ -170,7 +170,15 @@ else: # linux / windows
 			shutil.copytree(basename, os.path.join(dist_dir, basename), ignore = shutil.ignore_patterns(*[".svn", "Thumbs.db"] + (["16x16", "22x22", "24x24", "32x32", "48x48", "256x256", "dispcalGUI.icns", "dispcalGUI.ico", "dispcalGUI-install.ico", "header.png", "header-about.png", "*.txt"] + ([] if sys.platform == "win32" else ["dispcalGUI-uninstall.ico"]) if basename == "theme" else [])))
 	for basename in ["README.html", "LICENSE.txt"] + (["dispcalGUI.desktop", "install.sh", "uninstall.sh"] if sys.platform != "win32" else []):
 		if not os.path.exists(os.path.join(dist_dir, basename)):
-			shutil.copy2(basename, dist_dir)
+			if basename.endswith(".txt"):
+				# convert newlines
+				src = open(basename, "r")
+				tgt = open(os.path.join(dist_dir, basename), "w")
+				tgt.write(src.read())
+				tgt.close()
+				src.close()
+			else:
+				shutil.copy2(basename, dist_dir)
 	if sys.platform != "win32":
 		for size in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
 			src = os.path.join("theme", "icons", size)
