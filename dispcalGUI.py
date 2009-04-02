@@ -396,6 +396,70 @@ def get_ti1_1(cgats):
 		if verbose >= 2: safe_print("Invalid TI1")
 		return None
 
+instruments = {
+	# instrument names from Argyll source spectro/insttypes.c
+	"Xrite DTP92": {
+		"autocal_on_display": None, # None = unknown/not tested
+		"high_res_supported": False,
+		"skip_autocal_supported": None # None = unknown/not tested
+	},
+	"Xrite DTP94": {
+		"autocal_on_display": None, # None = unknown/not tested
+		"high_res_supported": False,
+		"skip_autocal_supported": None # None = unknown/not tested
+	},
+	"GretagMacbeth Spectrolino": {
+		"autocal_on_display": False,
+		"high_res_supported": False,
+		"skip_autocal_supported": True
+	},
+	"GretagMacbeth SpectroScan": {
+		"autocal_on_display": False,
+		"high_res_supported": False,
+		"skip_autocal_supported": True
+	},
+	"GretagMacbeth SpectroScanT": {
+		"autocal_on_display": False,
+		"high_res_supported": False,
+		"skip_autocal_supported": True
+	},
+	"Spectrocam": {
+		"autocal_on_display": None, # None = unknown/not tested
+		"high_res_supported": False,
+		"skip_autocal_supported": None # None = unknown/not tested
+	},
+	"GretagMacbeth i1 Display": {
+		"autocal_on_display": True, # FIXME: Only i1 Display 2
+		"high_res_supported": False,
+		"skip_autocal_supported": False # i1 Display 2 instrument access fails when using -N option
+	},
+	"GretagMacbeth i1 Monitor": {
+		"autocal_on_display": False,
+		"high_res_supported": True,
+		"skip_autocal_supported": True
+	},
+	"GretagMacbeth i1 Pro": {
+		"autocal_on_display": False,
+		"high_res_supported": True,
+		"skip_autocal_supported": True
+	},
+	"Colorimtre HCFR": {
+		"autocal_on_display": None, # None = unknown/not tested
+		"high_res_supported": False,
+		"skip_autocal_supported": None # None = unknown/not tested
+	},
+	"ColorVision Spyder2": {
+		"autocal_on_display": None, # None = unknown/not tested
+		"high_res_supported": False,
+		"skip_autocal_supported": True
+	},
+	"GretagMacbeth Huey": {
+		"autocal_on_display": None, # None = unknown/not tested
+		"high_res_supported": False,
+		"skip_autocal_supported": None # None = unknown/not tested
+	}
+}
+
 cals = {}
 def can_update_cal(path):
 	if not path in cals or cals[path].mtime != os.stat(path).st_mtime:
@@ -1279,6 +1343,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
 		self.options_dispread = []
 		self.options_colprof = []
+		
+		self.dispread_after_dispcal = None
 
 		self.recent_cals = self.getcfg("recent_cals").split(os.pathsep)
 		if not "" in self.recent_cals:
@@ -3522,7 +3588,9 @@ class DisplayCalibratorGUI(wx.Frame):
 		args += ["-p" + self.get_measureframe_dimensions()]
 		if self.measure_darken_background_cb.GetValue():
 			args += ["-F"]
-		args += ["-H"]
+		iname = self.comport_ctrl.GetStringSelection()
+		if iname in instruments and instruments[iname]["high_res_supported"]:
+			args += ["-H"]
 		if calibrate:
 			args += ["-q" + self.get_calibration_quality()]
 			profile_save_path = self.gettmp()
@@ -3736,8 +3804,10 @@ class DisplayCalibratorGUI(wx.Frame):
 		args += ["-p" + self.get_measureframe_dimensions()]
 		if self.measure_darken_background_cb.GetValue():
 			args += ["-F"]
-		args += ["-H"]
-		self.options_dispread += args
+		iname = self.comport_ctrl.GetStringSelection()
+		if iname in instruments and instruments[iname]["high_res_supported"]:
+			args += ["-H"]
+		self.options_dispread = args + self.options_dispread
 		return cmd, self.options_dispread + [inoutfile]
 
 	def prepare_colprof(self, profile_name = None, display_name = None):
@@ -4325,17 +4395,19 @@ class DisplayCalibratorGUI(wx.Frame):
 						os.chmod(appfilename + "/Contents/Resources/main.command", 0755)
 						if last: # the last one in the chain
 							os.remove(allfilename)
-			if cmdname == "dispread" and "-N" in self.options_dispread:
-				try:
-					if sys.platform == "darwin":
-						start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
-					elif sys.platform == "win32":
-						start_new_thread(wsh_sendkeys, (5, appname + exe_ext, " "))
-					else:
-						if which("xte"):
-							start_new_thread(xte_sendkeys, (5, None, "Space"))
-				except Exception, exception:
-					handle_error(traceback.format_exc(), silent = True)
+			if cmdname == "dispread" and self.dispread_after_dispcal:
+				iname = self.comport_ctrl.GetStringSelection()
+				if iname in instruments and (instruments[iname]["skip_autocal_supported"] or instruments[iname]["autocal_on_display"]):
+					try:
+						if sys.platform == "darwin":
+							start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
+						elif sys.platform == "win32":
+							start_new_thread(wsh_sendkeys, (5, appname + exe_ext, " "))
+						else:
+							if which("xte"):
+								start_new_thread(xte_sendkeys, (5, None, "Space"))
+					except Exception, exception:
+						handle_error(traceback.format_exc(), silent = True)
 			elif cmdname in ("dispcal", "dispread") and sys.platform == "darwin":
 				start_new_thread(mac_app_activate, (3, "Terminal"))
 			self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
@@ -4469,15 +4541,20 @@ class DisplayCalibratorGUI(wx.Frame):
 		safe_print("-" * 72)
 		safe_print(self.getlstr("button.calibrate_and_profile").replace("&&", "&"))
 		self.install_cal = True
-		self.options_dispread = ["-N"]
+		iname = self.comport_ctrl.GetStringSelection()
+		if iname in instruments and instruments[iname]["skip_autocal_supported"]:
+			self.options_dispread = ["-N"]
+		self.dispread_after_dispcal = True
+		start_timers = True
 		if self.calibrate():
 			if self.measure(apply_calibration = True):
+				start_timers = False
 				wx.CallAfter(self.start_profile_worker, self.getlstr("calibration_profiling.complete"))
 			else:
 				InfoDialog(self, pos = (-1, 100), msg = self.getlstr("profiling.incomplete"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 		else:
 			InfoDialog(self, pos = (-1, 100), msg = self.getlstr("calibration.incomplete"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
-		self.ShowAll(start_timers = False)
+		self.ShowAll(start_timers = start_timers)
 
 	def start_profile_worker(self, success_msg, apply_calibration = True):
 		self.start_worker(self.profile_finish, self.profile, ckwargs = {"success_msg": success_msg, "failure_msg": self.getlstr("profiling.incomplete")}, wkwargs = {"apply_calibration": apply_calibration }, progress_title = self.getlstr("create_profile"))
@@ -4528,11 +4605,14 @@ class DisplayCalibratorGUI(wx.Frame):
 		safe_print("-" * 72)
 		safe_print(self.getlstr("button.profile"))
 		self.options_dispread = []
+		self.dispread_after_dispcal = False
+		start_timers = True
 		if self.measure(apply_calibration):
+			start_timers = False
 			wx.CallAfter(self.start_profile_worker, self.getlstr("profiling.complete"), apply_calibration)
 		else:
 			InfoDialog(self, pos = (-1, 100), msg = self.getlstr("profiling.incomplete"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
-		self.ShowAll(start_timers = False)
+		self.ShowAll(start_timers = start_timers)
 
 	def profile_finish(self, result, profile_path = None, success_msg = "", failure_msg = "", preview = True, skip_cmds = False):
 		if result:

@@ -247,7 +247,7 @@
 			<dt>Version:</dt>
 				<dd id="version">0.2.2 BETA (<a href="#history">changelog</a>)</dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-04-01</dd>
+				<dd id="date">2009-04-02</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -465,7 +465,7 @@
 			<div id="prerequisites-unattended">
 				<h3>Additional prerequisites for unattended calibration and profiling option under Linux</h3>
 				
-				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.2, it is no longer necessary to press a key after calibration to start the measurements for profiling. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active).</p>
+				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.2, it is no longer necessary to press a key after calibration to start the measurements for profiling with certain instruments. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active). Currently supported are the i1 Display 2, i1 Monitor &amp; Pro, Spectrolino/Spectroscan(T) and Spyder instruments.</p>
 			</div>
 			
 			<div id="prerequisites-source">
@@ -777,7 +777,7 @@
 			<h2>Version history / changelog</h2>
 			
 			<dl>
-				<dt>2009-04-01 v0.2.2b</dt>
+				<dt>2009-04-02 v0.2.2b</dt>
 					<dd>
 						<ul>
 							<li>fix: encoding-related issues on all platforms and strange Unicode-related problems with AppleScript and Terminal on Mac OS X 10.4 (<a href="#osx-104-applescript-unicode-peculiarities" onclick="var element = document.getElementById('osx-104-applescript-unicode-peculiarities'); element.style.display = element.style.display == 'block' ? 'none' : 'block'; return false">Details</a>).
@@ -844,7 +844,7 @@
 							<li>chg: cancelling of certain operations like profile calculation and testchart generation is now also supported when using Python 2.5</li>
 							<li>add: logging (also see the change related to file-storage).</li>
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
-							<li>add: unattended calibration and profiling, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
+							<li>add: unattended calibration and profiling for some instruments, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
 							<li>add: settings and related files can be deleted.</li>
 							<li>add: version and translation information in the about window.</li>
 						</ul>
