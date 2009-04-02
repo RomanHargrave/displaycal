@@ -11,6 +11,7 @@ if [ ! -x "$install_dir/dispcalGUI" ]; then
 	echo "Uninstalling python modules from $prefix/lib/python/site-packages..."
 	rm -f "$prefix/lib/python/site-packages/RealDisplaySizeMM.so"
 	rm -f "$prefix/lib/python/site-packages/argyllRGB2XYZ.py"*
+	rm -f "$prefix/lib/python/site-packages/argyll_instruments.py"*
 	rm -f "$prefix/lib/python/site-packages/CGATS.py"*
 	rm -f "$prefix/lib/python/site-packages/colormath.py"*
 	rm -f "$prefix/lib/python/site-packages/demjson.py"*

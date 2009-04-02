@@ -64,6 +64,7 @@ import ICCProfile
 ICCP = ICCProfile
 import RealDisplaySizeMM as RDSMM
 from argyllRGB2XYZ import argyllRGB2XYZ
+from argyll_instruments import instruments
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
 from natsort import natsort
 import pyi_md5pickuphelper
@@ -395,70 +396,6 @@ def get_ti1_1(cgats):
 	else:
 		if verbose >= 2: safe_print("Invalid TI1")
 		return None
-
-instruments = {
-	# instrument names from Argyll source spectro/insttypes.c
-	"Xrite DTP92": {
-		"autocal_on_display": None, # None = unknown/not tested
-		"high_res_supported": False,
-		"skip_autocal_supported": None # None = unknown/not tested
-	},
-	"Xrite DTP94": {
-		"autocal_on_display": None, # None = unknown/not tested
-		"high_res_supported": False,
-		"skip_autocal_supported": None # None = unknown/not tested
-	},
-	"GretagMacbeth Spectrolino": {
-		"autocal_on_display": False,
-		"high_res_supported": False,
-		"skip_autocal_supported": True
-	},
-	"GretagMacbeth SpectroScan": {
-		"autocal_on_display": False,
-		"high_res_supported": False,
-		"skip_autocal_supported": True
-	},
-	"GretagMacbeth SpectroScanT": {
-		"autocal_on_display": False,
-		"high_res_supported": False,
-		"skip_autocal_supported": True
-	},
-	"Spectrocam": {
-		"autocal_on_display": None, # None = unknown/not tested
-		"high_res_supported": False,
-		"skip_autocal_supported": None # None = unknown/not tested
-	},
-	"GretagMacbeth i1 Display": {
-		"autocal_on_display": True, # FIXME: Only i1 Display 2
-		"high_res_supported": False,
-		"skip_autocal_supported": False # i1 Display 2 instrument access fails when using -N option
-	},
-	"GretagMacbeth i1 Monitor": {
-		"autocal_on_display": False,
-		"high_res_supported": True,
-		"skip_autocal_supported": True
-	},
-	"GretagMacbeth i1 Pro": {
-		"autocal_on_display": False,
-		"high_res_supported": True,
-		"skip_autocal_supported": True
-	},
-	"Colorimtre HCFR": {
-		"autocal_on_display": None, # None = unknown/not tested
-		"high_res_supported": False,
-		"skip_autocal_supported": None # None = unknown/not tested
-	},
-	"ColorVision Spyder2": {
-		"autocal_on_display": None, # None = unknown/not tested
-		"high_res_supported": False,
-		"skip_autocal_supported": True
-	},
-	"GretagMacbeth Huey": {
-		"autocal_on_display": None, # None = unknown/not tested
-		"high_res_supported": False,
-		"skip_autocal_supported": None # None = unknown/not tested
-	}
-}
 
 cals = {}
 def can_update_cal(path):
@@ -4397,7 +4334,7 @@ class DisplayCalibratorGUI(wx.Frame):
 							os.remove(allfilename)
 			if cmdname == "dispread" and self.dispread_after_dispcal:
 				iname = self.comport_ctrl.GetStringSelection()
-				if iname in instruments and (instruments[iname]["skip_autocal_supported"] or instruments[iname]["autocal_on_display"]):
+				if iname in instruments and (instruments[iname]["skip_autocal_supported"] != False or instruments[iname]["autocal_on_display"]):
 					try:
 						if sys.platform == "darwin":
 							start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
@@ -4410,31 +4347,43 @@ class DisplayCalibratorGUI(wx.Frame):
 						handle_error(traceback.format_exc(), silent = True)
 			elif cmdname in ("dispcal", "dispread") and sys.platform == "darwin":
 				start_new_thread(mac_app_activate, (3, "Terminal"))
-			self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
-			self.retcode = retcode = self.subprocess.wait()
-			if capture_output:
-				stdout.seek(0)
-				self.output = output = stdout.readlines()
-				stdout.close()
-				if len(output):
-					self.info_print(unicode("".join(output).strip(), enc, "replace"))
-					if display_output:
-						wx.CallAfter(self.infoframe.Show)
-			if not silent:
-				stderr.seek(0)
-				self.errors = errors = stderr.readlines()
-				stderr.close()
-				if len(errors):
-					errors2 = []
-					for line in errors:
-						if line.strip() and line.find("failed with 'User Aborted'") < 0 and \
-						   line.find("XRandR 1.2 is faulty - falling back to older extensions") < 0:
-							errors2 += [line]
-					if len(errors2):
-						if (retcode != 0 or cmdname == "dispwin"):
-							InfoDialog(parent, pos = (-1, 100), msg =  unicode("".join(errors2).strip(), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
-						else:
-							safe_print(unicode("".join(errors2).strip(), enc, "replace"), fn = fn)
+			tries = 1
+			while tries > 0:
+				self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
+				self.retcode = retcode = self.subprocess.wait()
+				tries -= 1
+				if not silent:
+					stderr.seek(0)
+					errors = stderr.readlines()
+					stderr.close()
+					if len(errors):
+						errors2 = []
+						for line in errors:
+							if "Instrument Access Failed" in line and "-N" in cmdline:
+								cmdline.remove("-N")
+								tries = 1
+								break
+							if line.strip() and line.find("User Aborted") < 0 and \
+							   line.find("XRandR 1.2 is faulty - falling back to older extensions") < 0:
+								errors2 += [line]
+						if len(errors2):
+							self.errors = errors2
+							if (retcode != 0 or cmdname == "dispwin"):
+								InfoDialog(parent, pos = (-1, 100), msg =  unicode("".join(errors2).strip(), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
+							else:
+								safe_print(unicode("".join(errors2).strip(), enc, "replace"), fn = fn)
+					if tries > 0:
+						stderr = Tea(tempfile.SpooledTemporaryFile())
+				if capture_output:
+					stdout.seek(0)
+					self.output = output = stdout.readlines()
+					stdout.close()
+					if len(output):
+						self.info_print(unicode("".join(output).strip(), enc, "replace"))
+						if display_output:
+							wx.CallAfter(self.infoframe.Show)
+					if tries > 0:
+						stdout = tempfile.SpooledTemporaryFile()
 		except Exception, exception:
 			handle_error(traceback.format_exc(), parent = self)
 			retcode = -1
@@ -4542,7 +4491,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		safe_print(self.getlstr("button.calibrate_and_profile").replace("&&", "&"))
 		self.install_cal = True
 		iname = self.comport_ctrl.GetStringSelection()
-		if iname in instruments and instruments[iname]["skip_autocal_supported"]:
+		if iname in instruments and instruments[iname]["skip_autocal_supported"] != False:
 			self.options_dispread = ["-N"]
 		self.dispread_after_dispcal = True
 		start_timers = True

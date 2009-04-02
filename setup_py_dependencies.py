@@ -7,6 +7,7 @@ version = '0.2.2b'
 setup(name=name,
 	  version=version,
 	  py_modules=['argyllRGB2XYZ', 
+				  'argyll_instruments', 
 				  'CGATS', 
 				  'colormath', 
 				  'ICCProfile', 

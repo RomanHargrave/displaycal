@@ -11,7 +11,6 @@ Source: http://dispcalGUI.hoech.net/dispcalGUI-0.2.2b-src.zip
 URL: http://dispcalGUI.hoech.net/
 Packager: Florian Höch <dispcalGUI@hoech.net>
 Requires: python >= 2.5, python-wxGTK >= 2.8.7
-# Requires: python >= 2.5, python-wxGTK >= 2.8.7, xorg-x11-devel, xorg-x11-libX11-devel, xorg-x11-proto-devel
 
 %description
 A graphical user interface for the Argyll CMS display calibration utilities.
@@ -43,6 +42,7 @@ mv theme-readme theme
 %doc theme
 /usr/lib/python/site-packages/RealDisplaySizeMM.so
 /usr/lib/python/site-packages/argyllRGB2XYZ.py
+/usr/lib/python/site-packages/argyll_instruments.py
 /usr/lib/python/site-packages/CGATS.py
 /usr/lib/python/site-packages/colormath.py
 /usr/lib/python/site-packages/demjson.py
