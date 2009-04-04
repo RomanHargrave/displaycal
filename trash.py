@@ -12,7 +12,7 @@ if sys.platform == "win32":
 		   shellcon.FO_DELETE, path, "", shellcon.FOF_ALLOWUNDO | 
 		   shellcon.FOF_NOCONFIRMATION | shellcon.FOF_RENAMEONCOLLISION | 
 		   shellcon.FOF_SILENT, None, None))
-elif sys.platform != "darwin":
+else:
 	from time import strftime
 	from urllib import quote
 	import shutil
