@@ -2,14 +2,18 @@
 # -*- coding: utf-8 -*-
 
 from decimal import Decimal
-
-import struct
-from os import getenv, path
 from hashlib import md5
-from safe_print import safe_print
+from os import getenv, path
+import struct
 from sys import platform
 from time import localtime, mktime, strftime
+if platform == "win32":
+	import win32api
+	import win32gui
+else:
+	import subprocess as sp
 
+from safe_print import safe_print
 
 ##################
 #
@@ -189,6 +193,47 @@ observers = {
 	1: "CIE 1931",
 	2: "CIE 1964"
 }
+
+####################
+#
+# Helper functions
+#
+####################
+
+def get_display_profile(display_no = 0):
+	""" Return ICC Profile for display n or None """
+	profile = None
+	if platform == "win32":
+		display_name = win32api.EnumDisplayDevices(None, display_no).DeviceName
+		dc = win32gui.CreateDC("DISPLAY", display_name, None)
+		filename = win32api.GetICMProfile(dc)
+		if filename:
+			profile = ICCProfile(filename)
+	else:
+		if platform == "darwin":
+			args = ['osascript', '-e', 'tell app "ColorSyncScripting"', '-e', 
+					'set prof to location of (display profile of display %i)' % 
+					(display_no + 1), '-e', 'try', '-e', 'POSIX path of prof', 
+					'-e', 'end try', '-e', 'end tell']
+			p = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+		else:
+			# Linux - read up to 5,000,000 bytes of any X properties
+			p1 = sp.Popen(["xprop", "-display :%i" % display_no, "-len 5000000", 
+						"-root"], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+			p = sp.Popen(["grep", "_ICC_PROFILE"], stdin=p1.stdout, 
+						stdout=sp.PIPE, stderr=sp.PIPE)
+		stdoutdata, stderrdata = [data.strip("\n") for data in p.communicate()]
+		if stdoutdata:
+			if platform == "darwin":
+				filename = unicode(stdoutdata, "UTF-8")
+				profile = ICCProfile(filename)
+			else:
+				stdoutdata = stdoutdata.split("=")[1].strip()
+				bin = "".join([chr(int(part)) for part in stdoutdata.split(", ")])
+				profile = ICCProfile(bin)
+		elif stderrdata:
+			raise IOError(stderrdata)
+	return profile
 
 #######################
 #
