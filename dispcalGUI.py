@@ -72,6 +72,15 @@ from safe_print import safe_print
 from trash import trash
 
 # helper functions
+def indexi(self, value, start = None, stop = None):
+	items = [(item.lower() if isinstance(item, (str, unicode)) else item) for item in self]
+	args = [value.lower()]
+	if start is not None:
+		args += [start]
+	if stop is not None:
+		args += [stop]
+	return items.index(*args)
+
 def replaceunderscore(ex):
 	return u"_", ex.end
 
@@ -957,7 +966,7 @@ class InfoDialog(wx.Dialog):
 			self.Center(wx.VERTICAL)
 		if sys.platform == "darwin" and oparent and \
 		   hasattr(oparent, "app") and (not oparent.app.IsActive() or \
-		   not oparent.app.frame.IsShownOnScreen()):
+		   (hasattr(oparent.app, "frame") and not oparent.app.frame.IsShownOnScreen())):
 			start_new_thread(mac_app_activate, (.25, oparent.app.GetAppName()))
 		if show:
 			self.ShowModalThenDestroy(oparent)
@@ -1053,7 +1062,7 @@ class ConfirmDialog(wx.Dialog):
 			self.Center(wx.VERTICAL)
 		if sys.platform == "darwin" and oparent and \
 		   hasattr(oparent, "app") and (not oparent.app.IsActive() or \
-		   not oparent.app.frame.IsShownOnScreen()):
+		   (hasattr(oparent.app, "frame") and not oparent.app.frame.IsShownOnScreen())):
 			start_new_thread(mac_app_activate, (.25, oparent.app.GetAppName()))
 
 	def OnShow(self, event):
@@ -1616,16 +1625,16 @@ class DisplayCalibratorGUI(wx.Frame):
 					try:
 						if verbose >= 1 and not silent: safe_print(self.getlstr("checking_lut_access", (i + 1)))
 						# load test.cal
-						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-c", get_data_path("test.cal")], capture_output = True, skip_cmds = True)
+						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-c", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
 						# check if LUT == test.cal
-						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-V", get_data_path("test.cal")], capture_output = True, skip_cmds = True)
+						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-V", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
 						retcode = -1
 						for line in self.output:
 							if line.find("IS loaded") >= 0:
 								retcode = 0
 								break
 						# reset LUT & load profile cal (if any)
-						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-c", "-L"], capture_output = True, skip_cmds = True)
+						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-c", "-L"], capture_output = True, skip_cmds = True, silent = True)
 						self.lut_access += [retcode == 0]
 						if verbose >= 1 and not silent:
 							if retcode == 0:
@@ -2883,7 +2892,14 @@ class DisplayCalibratorGUI(wx.Frame):
 						recent_cals += [recent_cal]
 				self.setcfg("recent_cals", os.pathsep.join(recent_cals))
 				self.calibration_file_ctrl.Append(self.getlstr(os.path.basename(cal)))
-			idx = self.recent_cals.index(cal)
+			# the case-sensitive index could fail because of case insensitive file systems
+			# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+			# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+			# (maybe because the user manually renamed the file)
+			try:
+				idx = self.recent_cals.index(cal)
+			except ValueError, exception:
+				idx = indexi(self.recent_cals, cal)
 			self.calibration_file_ctrl.SetSelection(idx)
 			self.calibration_file_ctrl.SetToolTipString(cal)
 			if ext.lower() in (".icc", ".icm"):
@@ -2893,7 +2909,14 @@ class DisplayCalibratorGUI(wx.Frame):
 			profile_exists = os.path.exists(profile_path)
 		else:
 			if cal in self.recent_cals:
-				idx = self.recent_cals.index(cal)
+				# the case-sensitive index could fail because of case insensitive file systems
+				# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+				# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+				# (maybe because the user manually renamed the file)
+				try:
+					idx = self.recent_cals.index(cal)
+				except ValueError, exception:
+					idx = indexi(self.recent_cals, cal)
 				self.recent_cals.remove(cal)
 				self.calibration_file_ctrl.Delete(idx)
 			cal = None
@@ -3151,7 +3174,15 @@ class DisplayCalibratorGUI(wx.Frame):
 			
 	def settings_confirm_discard(self):
 		sel = self.calibration_file_ctrl.GetSelection()
-		self.calibration_file_ctrl.SetSelection(self.recent_cals.index(self.getcfg("calibration.file") or ""))
+		# the case-sensitive index could fail because of case insensitive file systems
+		# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+		# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+		# (maybe because the user manually renamed the file)
+		try:
+			idx = self.recent_cals.index(self.getcfg("calibration.file") or "")
+		except ValueError, exception:
+			idx = indexi(self.recent_cals, self.getcfg("calibration.file") or "")
+		self.calibration_file_ctrl.SetSelection(idx)
 		dlg = ConfirmDialog(self, msg = self.getlstr("warning.discard_changes"), ok = self.getlstr("ok"), cancel = self.getlstr("cancel"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
 		result = dlg.ShowModal()
 		dlg.Destroy()
@@ -4334,7 +4365,7 @@ class DisplayCalibratorGUI(wx.Frame):
 							os.remove(allfilename)
 			if cmdname == "dispread" and self.dispread_after_dispcal:
 				iname = self.comport_ctrl.GetStringSelection()
-				if iname in instruments and (instruments[iname]["skip_autocal_supported"] != False or instruments[iname]["autocal_on_display"]):
+				if iname in instruments and (not instruments[iname]["sensor_cal"] or instruments[iname]["skip_sensor_cal_supported"]):
 					try:
 						if sys.platform == "darwin":
 							start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
@@ -4491,7 +4522,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		safe_print(self.getlstr("button.calibrate_and_profile").replace("&&", "&"))
 		self.install_cal = True
 		iname = self.comport_ctrl.GetStringSelection()
-		if iname in instruments and instruments[iname]["skip_autocal_supported"] != False:
+		if iname in instruments and instruments[iname]["skip_sensor_cal_supported"]:
 			self.options_dispread = ["-N"]
 		self.dispread_after_dispcal = True
 		start_timers = True
@@ -6895,18 +6926,22 @@ class DisplayCalibratorGUI(wx.Frame):
 				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.CIED))
 			ti1_1 = get_ti1_1(ti1)
 			if not ti1_1:
-				if self.getcfg("testchart.file") not in self.testcharts:
-					self.set_testcharts()
-				idx = self.testcharts.index(self.getcfg("testchart.file"))
-				self.testchart_ctrl.SetSelection(idx)
 				InfoDialog(self, msg = self.getlstr("error.testchart.invalid", path), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+				self.set_default_testchart()
 				return
 			if path != self.getcfg("calibration.file"):
 				self.profile_settings_changed()
 			self.setcfg("testchart.file", path)
 			if path not in self.testcharts:
 				self.set_testcharts(path)
-			idx = self.testcharts.index(path)
+			# the case-sensitive index could fail because of case insensitive file systems
+			# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+			# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+			# (maybe because the user manually renamed the file)
+			try:
+				idx = self.testcharts.index(path)
+			except ValueError, exception:
+				idx = indexi(self.testcharts, path)
 			self.testchart_ctrl.SetSelection(idx)
 			self.testchart_ctrl.SetToolTipString(path)
 			if ti1.queryv1("COLOR_REP") and ti1.queryv1("COLOR_REP")[:3] == "RGB":
@@ -6918,6 +6953,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.testchart_patches_amount.SetLabel("")
 		except Exception, exception:
 			InfoDialog(self, msg = self.getlstr("error.testchart.read", path) + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+			self.set_default_testchart()
 		else:
 			if hasattr(self, "tcframe") and self.tcframe.IsShownOnScreen() and (not hasattr(self, "ti1") or self.getcfg("testchart.file") != self.ti1.filename):
 				self.tc_load_cfg_from_ti1()
@@ -7209,7 +7245,14 @@ class DisplayCalibratorGUI(wx.Frame):
 					self.setcfg("recent_cals", os.pathsep.join(recent_cals))
 					self.calibration_file_ctrl.Delete(sel)
 					cal = self.getcfg("calibration.file") or ""
-					idx = self.recent_cals.index(cal)
+					# the case-sensitive index could fail because of case insensitive file systems
+					# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+					# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+					# (maybe because the user manually renamed the file)
+					try:
+						idx = self.recent_cals.index(cal)
+					except ValueError, exception:
+						idx = indexi(self.recent_cals, cal)
 					self.calibration_file_ctrl.SetSelection(idx)
 				InfoDialog(self, msg = self.getlstr("file.missing", path), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 				return
@@ -7364,7 +7407,14 @@ class DisplayCalibratorGUI(wx.Frame):
 							self.recent_cals.remove(self.recent_cals[sel])
 							self.calibration_file_ctrl.Delete(sel)
 							cal = self.getcfg("calibration.file") or ""
-							idx = self.recent_cals.index(cal)
+							# the case-sensitive index could fail because of case insensitive file systems
+							# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+							# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+							# (maybe because the user manually renamed the file)
+							try:
+								idx = self.recent_cals.index(cal)
+							except ValueError, exception:
+								idx = indexi(self.recent_cals, cal)
 							self.calibration_file_ctrl.SetSelection(idx)
 						if "vcgt" in profile.tags:
 							# load calibration into lut
@@ -7377,7 +7427,14 @@ class DisplayCalibratorGUI(wx.Frame):
 						self.recent_cals.remove(self.recent_cals[sel])
 						self.calibration_file_ctrl.Delete(sel)
 						cal = self.getcfg("calibration.file") or ""
-						idx = self.recent_cals.index(cal)
+						# the case-sensitive index could fail because of case insensitive file systems
+						# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+						# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+						# (maybe because the user manually renamed the file)
+						try:
+							idx = self.recent_cals.index(cal)
+						except ValueError, exception:
+							idx = indexi(self.recent_cals, cal)
 						self.calibration_file_ctrl.SetSelection(idx)
 					if "vcgt" in profile.tags:
 						# load calibration into lut
@@ -7474,7 +7531,14 @@ class DisplayCalibratorGUI(wx.Frame):
 					self.recent_cals.remove(self.recent_cals[sel])
 					self.calibration_file_ctrl.Delete(sel)
 					cal = self.getcfg("calibration.file") or ""
-					idx = self.recent_cals.index(cal)
+					# the case-sensitive index could fail because of case insensitive file systems
+					# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+					# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+					# (maybe because the user manually renamed the file)
+					try:
+						idx = self.recent_cals.index(cal)
+					except ValueError, exception:
+						idx = indexi(self.recent_cals, cal)
 					self.calibration_file_ctrl.SetSelection(idx)
 				self.write_cfg()
 				if not silent: InfoDialog(self, msg = self.getlstr("no_settings"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
@@ -7531,7 +7595,14 @@ class DisplayCalibratorGUI(wx.Frame):
 						trash(delete_related_files)
 				except Exception, exception:
 					InfoDialog(self, msg = self.getlstr("error.deletion") + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
-				idx = self.recent_cals.index(cal)
+				# the case-sensitive index could fail because of case insensitive file systems
+				# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
+				# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+				# (maybe because the user manually renamed the file)
+				try:
+					idx = self.recent_cals.index(cal)
+				except ValueError, exception:
+					idx = indexi(self.recent_cals, cal)
 				self.recent_cals.remove(cal)
 				self.calibration_file_ctrl.Delete(idx)
 				self.setcfg("calibration.file", None)
