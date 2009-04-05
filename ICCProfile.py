@@ -218,7 +218,7 @@ def get_display_profile(display_no = 0):
 			p = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
 		else:
 			# Linux - read up to 5,000,000 bytes of any X properties
-			p1 = sp.Popen(["xprop", "-display :%i" % display_no, "-len 5000000", 
+			p1 = sp.Popen(["xprop", "-display", ":%i" % display_no, "-len", "5000000", 
 						"-root"], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
 			p = sp.Popen(["grep", "_ICC_PROFILE"], stdin=p1.stdout, 
 						stdout=sp.PIPE, stderr=sp.PIPE)
