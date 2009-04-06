@@ -3457,7 +3457,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.update_profile_name()
 
 	def trc_ctrl_handler(self, event, cal_changed = True):
-		if event.GetId() == self.trc_textctrl.GetId() and (not self.trc_g_rb.GetValue() or str(float(self.getcfg("trc"))) == self.trc_textctrl.GetValue()):
+		if event.GetId() == self.trc_textctrl.GetId() and (not self.trc_g_rb.GetValue() or stripzeroes(self.getcfg("trc")) == stripzeroes(self.trc_textctrl.GetValue())):
 			event.Skip()
 			return
 		if debug: safe_print("trc_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
