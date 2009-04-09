@@ -10,7 +10,7 @@ Group: Applications/Graphics
 Source: http://dispcalGUI.hoech.net/dispcalGUI-0.2.2b-src.zip
 URL: http://dispcalGUI.hoech.net/
 Packager: Florian Höch <dispcalGUI@hoech.net>
-Requires: python >= 2.5, python-wxGTK >= 2.8.7
+Requires: python >= 2.5, python < 3.0, python-wxGTK >= 2.8.7
 
 %description
 A graphical user interface for the Argyll CMS display calibration utilities.
