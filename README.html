@@ -821,6 +821,7 @@
 							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for LUT profiles regardless of source profile type.</li>
 							<li>fix: if the screen or instrument that was selected in a previous session is not available, select an available one.</li>
 							<li>fix: (Mac) the “enable spyder 2” menu item would not allow to select files other than “setup.exe”.</li>
+							<li>fix: [src] (Mac) if dispcalGUI was installed as application and then run from (separate) source, multiple copies where launched at certain occasions.</li>
 							<li>chg: when calibrating &amp; profiling, it is no longer necessary to recalibrate the instrument (and thus have to remove certain instruments like the i1 Pro from the screen, then re-attach) after display calibration and before measuring the test patches for profiling.</li>
 							<li>chg: the previously empty entry at the top of the settings dropdown (settings which are not associated to a profile or .cal file) is now named “&lt;current settings&gt;”.</li>
 							<li>chg: changed settings which are associated to a profile or .cal file are now marked with a leading asterisk in the settings dropdown.</li>
@@ -846,6 +847,7 @@
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
 							<li>add: unattended calibration and profiling for some instruments, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
 							<li>add: settings and related files can be deleted.</li>
+							<li>add: (Linux, Mac, Vista) profile install scope can be selected (attention: local system scope install is broken with Argyll 1.0.3 under Linux!).</li>
 							<li>add: version and translation information in the about window.</li>
 						</ul>
 					</dd>

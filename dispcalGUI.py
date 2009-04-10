@@ -4,7 +4,7 @@
 """
 dispcalGUI
 
-A graphical user inteface for the Argyll CMS display calibration utilities
+A graphical user interface for the Argyll CMS display calibration utilities
 
 Copyright (C) 2008, 2009 Florian Hoech
 
@@ -96,9 +96,6 @@ def StringIO__init__universal_newlines(self, txt = ""):
 
 StringIO.__init__ = StringIO__init__universal_newlines
 
-if hasattr(sys, "frozen") and sys.frozen and os.getenv("_MEIPASS2"):
-	os.environ["_MEIPASS2"] = os.getenv("_MEIPASS2").replace("/", os.path.sep)
-
 # init
 appname = "dispcalGUI"
 version = "v0.2.2b" # app version string
@@ -111,10 +108,12 @@ exedir = os.path.dirname(sys.executable)
 isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
 isapp = sys.platform == "darwin" and \
    sys.executable.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
-   os.path.exists(os.path.join(exedir, pyname)) and \
    os.path.isfile(os.path.join(exedir, pyname))
 
-data_dirs = [os.getcwdu()] if os.getcwdu() != pydir else []
+if isexe and os.getenv("_MEIPASS2"):
+	os.environ["_MEIPASS2"] = os.getenv("_MEIPASS2").replace("/", os.path.sep)
+
+data_dirs = [os.getcwdu()] if not isexe or os.getcwdu() != pydir else []
 if sys.platform == "win32":
 	from SendKeys import SendKeys
 	from win32com.shell import shell, shellcon
@@ -133,6 +132,8 @@ if sys.platform == "win32":
 	datahome = os.path.join(appdata, appname)
 	data_dirs += [datahome, os.path.join(commonappdata, appname), 
 				  os.path.join(commonprogramfiles, appname)]
+	iccprofiles_home = iccprofiles = os.path.join(shell.SHGetSpecialFolderPath(0, 
+		shellcon.CSIDL_SYSTEM), "spool", "drivers", "color")
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:
@@ -149,28 +150,38 @@ else:
 			"Application Support", appname)
 		data_dirs += [datahome, os.path.join(os.path.sep, "Library", 
 			"Application Support", appname)]
+		iccprofiles = os.path.join(os.path.sep, "Library", 
+			"ColorSync", "Profiles")
+		iccprofiles_home = os.path.join(os.path.expanduser("~"), "Library", 
+			"ColorSync", "Profiles")
 	else:
 		cmdfile_ext = ".sh"
 		scale_adjustment_factor = 1.0
 		xdg_config_home = os.getenv("XDG_CONFIG_HOME",
 		   os.path.join(os.path.expanduser("~"), ".config"))
-		confighome = os.path.join(xdg_config_home, appname)
-		autostart = os.path.join(xdg_config_home, "autostart")
-		datahome = os.path.join(os.getenv("XDG_DATA_HOME",
-		   os.path.join(os.path.expanduser("~"), ".local", "share")), appname)
-		data_dirs += [datahome]
-		data_dirs += [os.path.join(dir_, appname) for dir_ in os.getenv(
+		xdg_data_home = os.getenv("XDG_DATA_HOME",
+		   os.path.join(os.path.expanduser("~"), ".local", "share"))
+		xdg_data_dirs = os.getenv(
 			"XDG_DATA_DIRS", os.pathsep.join((os.path.join("usr", "local", 
 			"share"), os.path.join("usr", "share")))
-			).split(os.pathsep)]
+			).split(os.pathsep)
+		confighome = os.path.join(xdg_config_home, appname)
+		autostart = os.path.join(xdg_config_home, "autostart")
+		datahome = os.path.join(xdg_data_home, appname)
+		data_dirs += [datahome]
+		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
+		iccprofiles = os.path.join(xdg_data_dirs[0], "color", "icc", 
+			"devices", "display")
+		iccprofiles_home = os.path.join(xdg_data_home, "color", "icc", 
+			"devices", "display")
 	exe_ext = ""
 	profile_ext = ".icc"
 if isapp:
 	data_dirs += [os.path.join(pydir, "..", "..", "..")]
 	runtype = ".app"
 else:
-	if ((os.getenv("_MEIPASS2") if hasattr(sys, "frozen") and sys.frozen else None) or pydir) not in data_dirs:
-		data_dirs += [os.getenv("_MEIPASS2", pydir)]
+	if (os.getenv("_MEIPASS2", pydir) if isexe else pydir) not in data_dirs:
+		data_dirs += [os.getenv("_MEIPASS2", pydir) if isexe else pydir]
 	if isexe:
 		runtype = exe_ext
 	else:
@@ -260,7 +271,8 @@ def log(msg, fn = None):
 	if fn is None:
 		fn = logging.info
 	# fn("%s %s" % (get_w3c_dtf_timestamp(), msg))
-	fn(msg)
+	for line in universal_newlines(msg).split("\n"):
+		fn(line)
 	if globalconfig["app"] is not None and \
 	   hasattr(globalconfig["app"], "frame") and \
 	   hasattr(globalconfig["app"].frame, "infoframe"):
@@ -275,7 +287,7 @@ def setup_logging():
 		filename = os.path.join(logdir, "%s-%s-build%s-%s.log" % (appname, 
 			version, build.replace(":", "-"), strftime("%Y-%m-%d"))),
 		filemode = "a")
-	log("=" * 72)
+	log("=" * 80)
 	stream = globalconfig["logging.StreamHandler"] = \
 	   logging.StreamHandler(globalconfig["log"])
 	stream.setLevel(logging.DEBUG)
@@ -535,6 +547,12 @@ def which(name):
 			except Exception, exception:
 				pass
 	return None
+
+def get_sudo():
+	# for name in ["gnomesu", "kdesu", "gksu", "sudo"]:
+		# if which(name):
+			# return name
+	return which("sudo")
 
 def putenv(varname, value):
 	os.environ[varname] = value
@@ -964,7 +982,7 @@ class InfoDialog(wx.Dialog):
 			self.Center(wx.HORIZONTAL)
 		elif pos[1] == -1:
 			self.Center(wx.VERTICAL)
-		if sys.platform == "darwin" and oparent and \
+		if isapp and oparent and \
 		   hasattr(oparent, "app") and (not oparent.app.IsActive() or \
 		   (hasattr(oparent.app, "frame") and not oparent.app.frame.IsShownOnScreen())):
 			start_new_thread(mac_app_activate, (.25, oparent.app.GetAppName()))
@@ -1060,7 +1078,7 @@ class ConfirmDialog(wx.Dialog):
 			self.Center(wx.HORIZONTAL)
 		elif pos[1] == -1:
 			self.Center(wx.VERTICAL)
-		if sys.platform == "darwin" and oparent and \
+		if isapp and oparent and \
 		   hasattr(oparent, "app") and (not oparent.app.IsActive() or \
 		   (hasattr(oparent.app, "frame") and not oparent.app.frame.IsShownOnScreen())):
 			start_new_thread(mac_app_activate, (.25, oparent.app.GetAppName()))
@@ -1184,7 +1202,12 @@ class DisplayCalibratorGUI(wx.Frame):
 	
 	def write_cfg(self):
 		cfgfile = open(os.path.join(confighome, appname + ".ini"), "wb")
-		self.cfg.write(cfgfile)
+		io = StringIO()
+		self.cfg.write(io)
+		io.seek(0)
+		l = io.read().strip("\n").split("\n")
+		l.sort()
+		cfgfile.write("\n".join(l))
 		cfgfile.close()
 
 	def init_defaults(self):
@@ -1228,6 +1251,11 @@ class DisplayCalibratorGUI(wx.Frame):
 			"position.info.y": get_display(self).ClientArea[1] + 40,
 			"position.x": get_display(self).ClientArea[0] + 10,
 			"position.y": get_display(self).ClientArea[1] + 30,
+			"profile.install_scope": "l" if (sys.platform != "win32" and 
+										os.geteuid() == 0) or 
+										(sys.platform == "win32" and 
+										sys.getwindowsversion() >= (6, )) else 
+										"u", # Linux, OSX or Vista and later
 			"profile.name": u" ".join([
 				u"%dn",
 				u"%Y-%m-%d",
@@ -1253,8 +1281,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			"recent_cals": "",
 			"recent_cals_max": 25,
 			"settings.changed": 0,
-			"size.info.w": 640,
-			"size.info.h": 320,
+			"size.info.w": 512,
+			"size.info.h": 384,
 			"tc_white_patches": 4,
 			"tc_single_channel_patches": 0,
 			"tc_gray_patches": 9,
@@ -2964,7 +2992,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.black_output_offset_intctrl.Enable(enable_cal)
 		self.black_point_correction_ctrl.Enable(enable_cal)
 		self.black_point_correction_intctrl.Enable(enable_cal)
-		if self.defaults["calibration.black_point_rate.enabled"]:
+		if hasattr(self, "black_point_rate_ctrl"):
 			self.black_point_rate_ctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100)
 			self.black_point_rate_intctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100)
 		self.interactive_display_adjustment_cb.Enable(enable_cal)
@@ -3040,7 +3068,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.black_point_correction_ctrl.SetValue(int(Decimal(str(self.getcfg("calibration.black_point_correction"))) * 100))
 		self.black_point_correction_intctrl.SetValue(int(Decimal(str(self.getcfg("calibration.black_point_correction"))) * 100))
 
-		if self.defaults["calibration.black_point_rate.enabled"]:
+		if hasattr(self, "black_point_rate_ctrl"):
 			self.black_point_rate_ctrl.SetValue(int(Decimal(str(self.getcfg("calibration.black_point_rate"))) * 100))
 			self.black_point_rate_intctrl.SetValue(int(Decimal(str(self.getcfg("calibration.black_point_rate"))) * 100))
 
@@ -3221,7 +3249,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if float(v) != self.getcfg("calibration.black_point_correction"):
 			self.cal_changed()
 		self.setcfg("calibration.black_point_correction", v)
-		if self.defaults["calibration.black_point_rate.enabled"]:
+		if hasattr(self, "black_point_rate_ctrl"):
 			self.black_point_rate_ctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100)
 			self.black_point_rate_intctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100)
 		self.update_profile_name()
@@ -3869,7 +3897,13 @@ class DisplayCalibratorGUI(wx.Frame):
 				if profile.profileClass != "mntr" or profile.colorSpace != "RGB":
 					InfoDialog(self, msg = self.getlstr("profile.unsupported", (profile.profileClass, profile.colorSpace)), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 					return None, None
-				if install: args += ["-I"]
+				if install:
+					if self.getcfg("profile.install_scope") != "u" and \
+						((sys.platform != "win32" and (os.geteuid() == 0 or get_sudo())) or 
+						(sys.platform == "win32" and 
+						sys.getwindowsversion() >= (6, ))):
+						args += ["-S" + self.getcfg("profile.install_scope")]
+					args += ["-I"]
 				# profcopy = self.make_argyll_compatible_path(os.path.join(self.gettmp(), os.path.basename(profile_path)))
 				# if not os.path.exists(profcopy):
 					# shutil.copyfile(profile_path, profcopy) # copy profile to temp dir
@@ -3895,7 +3929,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if result != wx.ID_OK: return False
 		return True
 
-	def wrapup(self, copy = True, remove = True, dst_path = None, ext_filter = None):
+	def wrapup(self, copy = True, remove = True, dst_path = None, ext_filter = [".app", ".cal", ".cmd", ".command", ".icc", ".icm", ".sh", ".ti1", ".ti3"]):
 		if debug: safe_print("wrapup(copy = %s, remove = %s)" % (copy, remove))
 		if not hasattr(self, "tempdir") or not os.path.exists(self.tempdir) or not os.path.isdir(self.tempdir):
 			return # nothing to do
@@ -4011,6 +4045,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		return result
 
 	def install_cal_handler(self, event = None, cal = None):
+		if not self.check_set_argyll_bin():
+			return
 		if cal is None:
 			cal = self.getcfg("calibration.file")
 		if cal and self.check_file_isfile(cal):
@@ -4072,6 +4108,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.install_profile(capture_output = True, cal = path, install = False, skip_cmds = True)
 
 	def load_profile_cal_handler(self, event):
+		if not self.check_set_argyll_bin():
+			return
 		defaultDir, defaultFile = self.get_default_path("last_cal_or_icc_path")
 		dlg = wx.FileDialog(self, self.getlstr("calibration.load_from_cal_or_profile"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = self.getlstr("filetype.cal_icc") + "|*.cal;*.icc;*.icm", style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 		dlg.Center(wx.BOTH)
@@ -4096,21 +4134,45 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def preview_handler(self, event = None, preview = None):
 		if preview or (preview is None and self.preview.GetValue()):
-			if os.path.splitext(self.cal)[1].lower() in (".icc", ".icm"):
-				self.install_profile(capture_output = True, profile_path = self.cal, install = False, skip_cmds = True, silent = True)
-			else:
-				self.install_profile(capture_output = True, cal = self.cal, install = False, skip_cmds = True, silent = True)
+			cal = self.cal
 		else:
 			cal = self.previous_cal
 			if event and self.cal == cal:
 				cal = False
 			elif not cal:
 				cal = True
-			self.install_profile(capture_output = True, cal = cal, install = False, skip_cmds = True, silent = True)
+		self.install_profile(capture_output = True, cal = cal, install = False, skip_cmds = True, silent = True)
 
 	def install_profile(self, capture_output = False, cal = None, profile_path = None, install = True, skip_cmds = False, silent = False):
 		cmd, args = self.prepare_dispwin(cal, profile_path, install)
 		result = self.exec_cmd(cmd, args, capture_output, low_contrast = False, skip_cmds = skip_cmds, silent = silent)
+		if result is not None and install:
+			result = False
+			for line in self.output:
+				if "Installed" in line:
+					if sys.platform == "darwin" and "-Sl" in args:
+						# the profile has been installed, but we need a little help from applescript to actually make it the default for the current user
+						cmd, args = 'osascript', ['-e', 
+							'set iccProfile to POSIX file "%s"' % 
+							os.path.join(iccprofiles, os.path.basename(args[-1])), '-e', 
+							'tell app "ColorSyncScripting" to set display profile of display %s to iccProfile' % 
+							self.get_display_number().split(",")[0]]
+						result = self.exec_cmd(cmd, args, capture_output = True, low_contrast = False, skip_cmds = True, silent = True)
+					else:
+						result = True
+					break
+			# if "-c" in args:
+				# args.remove("-c")
+			# if "-I" in args:
+				# args.remove("-I")
+			# args.insert(-1, "-V")
+			# result = self.exec_cmd(cmd, args, capture_output = True, low_contrast = False, skip_cmds = True, silent = True)
+			# if result:
+				# result = False
+				# for line in self.output:
+					# if line.find("'%s' IS loaded" % args[-1].encode(enc, "replaceunderscore")) >= 0:
+						# result = True
+						# break
 		if result:
 			if install:
 				if not silent: InfoDialog(self, msg = self.getlstr("profile.install.success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
@@ -4181,7 +4243,8 @@ class DisplayCalibratorGUI(wx.Frame):
 						InfoDialog(self, msg = self.getlstr("calibration.load_success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 		elif not silent:
 			if install:
-				InfoDialog(self, msg = self.getlstr("profile.install.error"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+				if result is not None:
+					InfoDialog(self, msg = self.getlstr("profile.install.error"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 			else:
 				if cal == False:
 					InfoDialog(self, msg = self.getlstr("calibration.reset_error"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
@@ -4194,7 +4257,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.setup_measurement(self.verify_calibration)
 
 	def verify_calibration(self):
-		safe_print("-" * 72)
+		safe_print("-" * 80)
 		safe_print(self.getlstr("calibration.verify"))
 		capture_output = False
 		if capture_output:
@@ -4239,8 +4302,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if verbose >= 1 and event is None: safe_print(self.getlstr("failure"))
 		return False
 
-
-	def exec_cmd(self, cmd, args, capture_output = False, display_output = False, low_contrast = True, skip_cmds = False, silent = False, parent = None):
+	def exec_cmd(self, cmd, args, capture_output = False, display_output = False, low_contrast = True, skip_cmds = False, silent = False, parent = None, asroot = False):
 		if parent is None:
 			parent = self
 		# if capture_output:
@@ -4268,7 +4330,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			else:
 				sp.call('echo -e "\\033[2;37m"', shell = True)
 		if verbose >= 1:
-			if not capture_output:
+			if not silent:
 				safe_print("", fn = fn)
 				if working_dir:
 					safe_print(self.getlstr("working_dir"), fn = fn)
@@ -4287,6 +4349,62 @@ class DisplayCalibratorGUI(wx.Frame):
 				if i == 0 or (item.find(os.path.sep) > -1 and os.path.dirname(item) == working_dir):
 					# strip the path from cmd and all items in the working dir
 					cmdline[i] = os.path.basename(item)
+			sudo = None
+			pwd = None
+			if cmdname == "dispwin" and ("-Sl" in args or "-Sn" in args):
+				asroot = True
+			if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or \
+				(sys.platform == "win32" and sys.getwindowsversion() >= (6, ))):
+				if sys.platform == "win32": # Vista and later
+					pass
+					# for src in (cmd, get_data_path("UAC.manifest")):
+						# tgt = os.path.join(self.gettmp(), os.path.basename(cmd))
+						# if src.endswith(".manifest"):
+							# tgt += ".manifest"
+						# else:
+							# cmdline = [tgt] + cmdline[1:]
+						# if not os.path.exists(tgt):
+							# shutil.copy2(src, tgt)
+				else:
+					sudo = get_sudo()
+			if sudo:
+				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.PIPE)
+				stdout, stderr = sudoproc.communicate()
+				if not "OK" in stdout:
+					sudoproc.stdin.close()
+					# ask for password
+					dlg = ConfirmDialog(parent, msg = self.getlstr("dialog.enter_root_password"), ok = self.getlstr("ok"), cancel = self.getlstr("cancel"), bitmap = self.bitmaps["theme/icons/32x32/dialog-question"])
+					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, "", size = (320, -1), style = wx.TE_PASSWORD)
+					dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, flag = wx.TOP | wx.ALIGN_LEFT, border = 12)
+					dlg.ok.SetDefault()
+					dlg.sizer0.SetSizeHints(dlg)
+					dlg.sizer0.Layout()
+					n = 0
+					while True:
+						result = dlg.ShowModal()
+						pwd = dlg.pwd_txt_ctrl.GetValue()
+						if result != wx.ID_OK:
+							return None
+						sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.PIPE)
+						if sudoproc.poll() is None:
+							stdout, stderr = sudoproc.communicate(pwd)
+						else:
+							stdout, stderr = sudoproc.communicate()
+						if "OK" in stdout:
+							break
+						elif n == 0:
+							dlg.message.SetLabel(self.getlstr("password.incorrect") + "\n" + self.getlstr("dialog.enter_root_password"))
+							dlg.sizer0.SetSizeHints(dlg)
+							dlg.sizer0.Layout()
+						n += 1
+					dlg.Destroy()
+				cmdline.insert(0, sudo)
+				cmdline.insert(1, "-S")
+				# tmpstdout = os.path.join(self.gettmp(), working_basename + ".out")
+				# tmpstderr = os.path.join(self.gettmp(), working_basename + ".err")
+				# cmdline = [sudo, u" ".join(escargs(cmdline)) + ('>"%s" 2>"%s"' % (tmpstdout, tmpstderr))]
+				# if os.path.basename(sudo) in ["gnomesu", "kdesu"]:
+					# cmdline.insert(1, "-c")
 			if silent:
 				stderr = sp.STDOUT
 			else:
@@ -4380,17 +4498,26 @@ class DisplayCalibratorGUI(wx.Frame):
 				start_new_thread(mac_app_activate, (3, "Terminal"))
 			tries = 1
 			while tries > 0:
-				self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
+				self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdin = sp.PIPE if sudo else None, stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
+				if sudo and self.subprocess.poll() is None:
+					if pwd:
+						self.subprocess.communicate(pwd)
+					else:
+						self.subprocess.communicate()
 				self.retcode = retcode = self.subprocess.wait()
 				tries -= 1
 				if not silent:
 					stderr.seek(0)
 					errors = stderr.readlines()
 					stderr.close()
+					# if sudo:
+						# stderr = open(tmpstderr, "r")
+						# errors += stderr.readlines()
+						# stderr.close()
 					if len(errors):
 						errors2 = []
 						for line in errors:
-							if "Instrument Access Failed" in line and "-N" in cmdline:
+							if "Instrument Access Failed" in line and "-N" in args:
 								cmdline.remove("-N")
 								tries = 1
 								break
@@ -4400,7 +4527,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						if len(errors2):
 							self.errors = errors2
 							if (retcode != 0 or cmdname == "dispwin"):
-								InfoDialog(parent, pos = (-1, 100), msg =  unicode("".join(errors2).strip(), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
+								InfoDialog(parent, pos = (-1, 100), msg = unicode("".join(errors2).strip(), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
 							else:
 								safe_print(unicode("".join(errors2).strip(), enc, "replace"), fn = fn)
 					if tries > 0:
@@ -4409,8 +4536,12 @@ class DisplayCalibratorGUI(wx.Frame):
 					stdout.seek(0)
 					self.output = output = stdout.readlines()
 					stdout.close()
+					# if sudo:
+						# stdout = open(tmpstdout, "r")
+						# errors += stdout.readlines()
+						# stdout.close()
 					if len(output):
-						self.info_print(unicode("".join(output).strip(), enc, "replace"))
+						log(unicode("".join(output).strip(), enc, "replace"))
 						if display_output:
 							wx.CallAfter(self.infoframe.Show)
 					if tries > 0:
@@ -4444,7 +4575,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def report(self, report_calibrated = True):
 		if self.check_set_argyll_bin():
-			safe_print("-" * 72)
+			safe_print("-" * 80)
 			if report_calibrated:
 				safe_print(self.getlstr("report.calibrated"))
 			else:
@@ -4475,7 +4606,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.update_profile_name_timer.Start(1000)
 
 	def just_calibrate(self):
-		safe_print("-" * 72)
+		safe_print("-" * 80)
 		safe_print(self.getlstr("button.calibrate"))
 		update = self.profile_update_cb.GetValue()
 		self.install_cal = True
@@ -4518,7 +4649,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.update_profile_name_timer.Start(1000)
 
 	def calibrate_and_profile(self):
-		safe_print("-" * 72)
+		safe_print("-" * 80)
 		safe_print(self.getlstr("button.calibrate_and_profile").replace("&&", "&"))
 		self.install_cal = True
 		iname = self.comport_ctrl.GetStringSelection()
@@ -4582,7 +4713,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.update_profile_name_timer.Start(1000)
 
 	def just_profile(self, apply_calibration):
-		safe_print("-" * 72)
+		safe_print("-" * 80)
 		safe_print(self.getlstr("button.profile"))
 		self.options_dispread = []
 		self.dispread_after_dispcal = False
@@ -4596,9 +4727,8 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def profile_finish(self, result, profile_path = None, success_msg = "", failure_msg = "", preview = True, skip_cmds = False):
 		if result:
-			if not hasattr(self, "install_cal") or not self.install_cal:
+			if not hasattr(self, "previous_cal") or not self.previous_cal:
 				self.previous_cal = self.getcfg("calibration.file")
-			self.install_cal = False
 			if profile_path:
 				profile_save_path = os.path.splitext(profile_path)[0]
 			else:
@@ -4613,12 +4743,14 @@ class DisplayCalibratorGUI(wx.Frame):
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					InfoDialog(self, msg = self.getlstr("profile.invalid"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 					self.start_timers(True)
+					self.previous_cal = None
 					return
 				else:
 					has_cal = "vcgt" in profile.tags
 					if profile.profileClass != "mntr" or profile.colorSpace != "RGB":
 						InfoDialog(self, msg = success_msg, ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 						self.start_timers(True)
+						self.previous_cal = None
 						return
 					if self.getcfg("calibration.file") != profile_path and "cprt" in profile.tags:
 						options_dispcal, options_colprof = self.get_options_from_cprt(profile.tags.cprt)
@@ -4641,11 +4773,27 @@ class DisplayCalibratorGUI(wx.Frame):
 			if preview and has_cal: # show calibration preview checkbox
 				self.preview = wx.CheckBox(dlg, -1, self.getlstr("calibration.preview"))
 				self.preview.SetValue(True)
-				if ext not in (".icc", ".icm") or self.getcfg("calibration.file") != profile_path: self.preview_handler(preview = True)
 				dlg.Bind(wx.EVT_CHECKBOX, self.preview_handler, id = self.preview.GetId())
 				dlg.sizer3.Add(self.preview, flag = wx.TOP | wx.ALIGN_LEFT, border = 12)
+				if (sys.platform != "win32" and (os.geteuid() == 0 or get_sudo())) or \
+					(sys.platform == "win32" and sys.getwindowsversion() >= (6, )): # Linux, OSX or Vista and later
+					self.install_profile_user = wx.RadioButton(dlg, -1, self.getlstr("profile.install_user"), style = wx.RB_GROUP)
+					self.install_profile_user.SetValue(self.getcfg("profile.install_scope") == "u")
+					dlg.Bind(wx.EVT_RADIOBUTTON, self.install_profile_scope_handler, id = self.install_profile_user.GetId())
+					dlg.sizer3.Add(self.install_profile_user, flag = wx.TOP | wx.ALIGN_LEFT, border = 4)
+					self.install_profile_systemwide = wx.RadioButton(dlg, -1, self.getlstr("profile.install_local_system"))
+					self.install_profile_systemwide.SetValue(self.getcfg("profile.install_scope") == "l")
+					dlg.Bind(wx.EVT_RADIOBUTTON, self.install_profile_scope_handler, id = self.install_profile_systemwide.GetId())
+					dlg.sizer3.Add(self.install_profile_systemwide, flag = wx.TOP | wx.ALIGN_LEFT, border = 4)
+					if sys.platform == "darwin":
+						self.install_profile_network = wx.RadioButton(dlg, -1, self.getlstr("profile.install_network"))
+						self.install_profile_network.SetValue(self.getcfg("profile.install_scope") == "n")
+						dlg.Bind(wx.EVT_RADIOBUTTON, self.install_profile_scope_handler, id = self.install_profile_network.GetId())
+						dlg.sizer3.Add(self.install_profile_network, flag = wx.TOP | wx.ALIGN_LEFT, border = 4)
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
+				if ext not in (".icc", ".icm") or self.getcfg("calibration.file") != profile_path: self.preview_handler(preview = True)
+			dlg.ok.SetDefault()
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_OK:
@@ -4653,10 +4801,23 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.install_profile(capture_output = True, profile_path = profile_path, skip_cmds = skip_cmds)
 				if debug: safe_print("...profile_finish: install_profile")
 			elif preview:
-				self.load_cal(silent = True)
+				if self.getcfg("calibration.file"):
+					self.load_cal(silent = True) # load LUT curves from last used .cal file
+				else:
+					self.load_display_profile_cal(None) # load LUT curves from current display profile (if any, and if it contains curves)
 		else:
 			InfoDialog(self, pos = (-1, 100), msg = failure_msg, ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 		self.start_timers(True)
+		self.previous_cal = None
+	
+	def install_profile_scope_handler(self, event):
+		if self.install_profile_systemwide.GetValue():
+			self.setcfg("profile.install_scope", "l")
+		elif sys.platform == "darwin" and self.install_profile_network.GetValue():
+			self.setcfg("profile.install_scope", "n")
+		elif self.install_profile_user.GetValue():
+			self.setcfg("profile.install_scope", "u")
+		if debug: safe_print("profile.install_scope", self.setcfg("profile.install_scope"))
 	
 	def start_timers(self, wrapup = False):
 		if wrapup:
@@ -4834,7 +4995,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			"%pq	" + self.getlstr("profile.quality"),
 			"%pt	" + self.getlstr("profile.type")
 		]
-		if self.defaults["calibration.black_point_rate.enabled"]:
+		if hasattr(self, "black_point_rate_ctrl"):
 			info.insert(9, "%cA	" + self.getlstr("calibration.black_point_rate"))
 		return self.getlstr("profile.name.placeholders") + "\n\n" + "\n".join(info)
 
@@ -4848,6 +5009,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		return os.path.sep.join(parts)
 
 	def create_profile_handler(self, event, path = None):
+		if not self.check_set_argyll_bin():
+			return
 		if path is None:
 			# select measurement data (ti3 or profile)
 			defaultDir, defaultFile = self.get_default_path("last_ti3_path")
@@ -4936,9 +5099,8 @@ class DisplayCalibratorGUI(wx.Frame):
 					# sp.call("cls", shell = True)
 				# else:
 					# sp.call('clear', shell = True)
-				safe_print("-" * 72)
+				safe_print("-" * 80)
 				# run colprof
-				self.install_cal = False
 				self.start_worker(self.profile_finish, self.profile, ckwargs = {"profile_path": profile_save_path, "success_msg": self.getlstr("profile.created"), "failure_msg": self.getlstr("error.profile.file_not_created")}, wkwargs = {"apply_calibration": True, "dst_path": profile_save_path, "display_name": display_name}, progress_title = self.getlstr("create_profile"))
 
 	def progress_timer_handler(self, event):
@@ -5045,7 +5207,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		profile_name = profile_name.replace("%cf", "Offset=" + str(f if f > 0 else 0) + "%")
 		k = int(float(self.get_black_point_correction()) * 100)
 		profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and k < 100 else "") + self.getlstr("neutral") if k > 0 else self.getlstr("native").lower())
-		if self.defaults["calibration.black_point_rate.enabled"]:
+		if hasattr(self, "black_point_rate_ctrl"):
 			profile_name = profile_name.replace("%cA", self.get_black_point_rate())
 		aspects = {
 			"c": self.get_calibration_quality(),
@@ -6139,11 +6301,13 @@ class DisplayCalibratorGUI(wx.Frame):
 			return
 		if not self.tc_check_save_ti1():
 			return
+		if not self.check_set_argyll_bin():
+			return
 		# if sys.platform == "win32":
 			# sp.call("cls", shell = True)
 		# else:
 			# sp.call('clear', shell = True)
-		safe_print("-" * 72)
+		safe_print("-" * 80)
 		safe_print(self.getlstr("testchart.create"))
 		self.start_worker(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_title = self.getlstr("testchart.create"), parent = self.tcframe, progress_start = 500)
 
@@ -7063,6 +7227,11 @@ class DisplayCalibratorGUI(wx.Frame):
 	def set_argyll_bin_handler(self, event):
 		if self.set_argyll_bin():
 			self.check_update_controls()
+			if len(self.displays):
+				if self.getcfg("calibration.file"):
+					self.load_cal(silent = True) # load LUT curves from last used .cal file
+				else:
+					self.load_display_profile_cal(None) # load LUT curves from current display profile (if any, and if it contains curves)
 
 	def check_update_controls(self, event = None, silent = False):
 		displays = list(self.displays)
@@ -7224,6 +7393,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		return options_dispcal, options_colprof
 
 	def load_cal_handler(self, event, path = None, update_profile_name = True, silent = False):
+		if not self.check_set_argyll_bin():
+			return
 		if self.getcfg("settings.changed") and not self.settings_confirm_discard():
 			return
 		if path is None:
@@ -7606,6 +7777,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.recent_cals.remove(cal)
 				self.calibration_file_ctrl.Delete(idx)
 				self.setcfg("calibration.file", None)
+				self.setcfg("settings.changed", 1)
 				recent_cals = []
 				for recent_cal in self.recent_cals:
 					if recent_cal not in self.presets:
