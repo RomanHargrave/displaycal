@@ -1615,7 +1615,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			displays = list(self.displays)
 			if verbose >= 1 and not silent: safe_print(self.getlstr("enumerating_displays_and_comports"))
 			try:
-				p = sp.Popen(os.path.join(self.getcfg("argyll.dir"), "dispcal" + exe_ext).encode(fs_enc), stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.STDOUT)
+				p = sp.Popen(self.get_argyll_util("dispcal").encode(fs_enc), stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.STDOUT)
 				p.stdin.close()
 				arg = None
 				output = p.stdout.readlines()
@@ -1657,16 +1657,16 @@ class DisplayCalibratorGUI(wx.Frame):
 					try:
 						if verbose >= 1 and not silent: safe_print(self.getlstr("checking_lut_access", (i + 1)))
 						# load test.cal
-						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-c", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
+						self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-c", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
 						# check if LUT == test.cal
-						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-V", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
+						self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-V", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
 						retcode = -1
 						for line in self.output:
 							if line.find("IS loaded") >= 0:
 								retcode = 0
 								break
 						# reset LUT & load profile cal (if any)
-						self.exec_cmd(os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext), ["-d%s" % (i +1), "-c", "-L"], capture_output = True, skip_cmds = True, silent = True)
+						self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-c", "-L"], capture_output = True, skip_cmds = True, silent = True)
 						self.lut_access += [retcode == 0]
 						if verbose >= 1 and not silent:
 							if retcode == 0:
@@ -3579,7 +3579,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		return True
 
 	def prepare_dispcal(self, calibrate = True, verify = False):
-		cmd = os.path.join(self.getcfg("argyll.dir"), "dispcal" + exe_ext)
+		cmd = self.get_argyll_util("dispcal")
 		args = []
 		args += ["-v"] # verbose
 		args += ["-d" + self.get_display_number()]
@@ -3675,7 +3675,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if not self.check_create_dir(path, parent): # check directory and in/output file(s)
 			return None, None
 		inoutfile = os.path.join(path, "temp")
-		cmd = os.path.join(self.getcfg("argyll.dir"), "targen" + exe_ext)
+		cmd = self.get_argyll_util("targen")
 		args = []
 		args += ['-v']
 		args += ['-d3']
@@ -3792,7 +3792,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					return None, None
 			cal = calcopy
 		#
-		cmd = os.path.join(self.getcfg("argyll.dir"), "dispread" + exe_ext)
+		cmd = self.get_argyll_util("dispread")
 		args = []
 		args += ["-v"] # verbose
 		args += ["-d" + self.get_display_number()]
@@ -3824,7 +3824,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			InfoDialog(self, pos = (-1, 100), msg = self.getlstr("error.measurement.file_notfile", inoutfile + ".ti3"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 			return None, None
 		#
-		cmd = os.path.join(self.getcfg("argyll.dir"), "colprof" + exe_ext)
+		cmd = self.get_argyll_util("colprof")
 		args = []
 		args += ["-v"] # verbose
 		args += ["-q" + self.get_profile_quality()]
@@ -3869,7 +3869,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		return cmd, args
 
 	def prepare_dispwin(self, cal = None, profile_path = None, install = True):
-		cmd = os.path.join(self.getcfg("argyll.dir"), "dispwin" + exe_ext)
+		cmd = self.get_argyll_util("dispwin")
 		args = []
 		args += ["-v"] # verbose
 		args += ["-d" + self.get_display_number()]
@@ -4331,7 +4331,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
 		if args[-1].find(os.path.sep) > -1:
 			working_dir = os.path.dirname(args[-1])
-			working_basename = os.path.splitext(os.path.basename(args[-1]))[0] if cmdname == "dispwin" else os.path.basename(args[-1]) # last arg is without extension, only for dispwin we need to strip it
+			working_basename = os.path.splitext(os.path.basename(args[-1]))[0] if cmdname == self.get_argyll_utilname("dispwin") else os.path.basename(args[-1]) # last arg is without extension, only for dispwin we need to strip it
 		else:
 			working_dir = None
 		if not capture_output and low_contrast:
@@ -4363,7 +4363,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					# strip the path from cmd and all items in the working dir
 					cmdline[i] = os.path.basename(item)
 			sudo = None
-			if cmdname == "dispwin" and ("-Sl" in args or "-Sn" in args):
+			if cmdname == self.get_argyll_utilname("dispwin") and ("-Sl" in args or "-Sn" in args):
 				asroot = True
 			if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or \
 				(sys.platform == "win32" and sys.getwindowsversion() >= (6, ))):
@@ -4433,7 +4433,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				cmdfilename = os.path.join(working_dir, working_basename + "." + cmdname + cmdfile_ext)
 				allfilename = os.path.join(working_dir, working_basename + ".all" + cmdfile_ext)
 				first = not os.path.exists(allfilename)
-				last = cmdname == "dispwin"
+				last = cmdname == self.get_argyll_utilname("dispwin")
 				cmdfile = open(cmdfilename, "w")
 				allfile = open(allfilename, "a")
 				cmdfiles = Files((cmdfile, allfile))
@@ -4445,7 +4445,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					context.write(u"@echo off\n")
 					context.write((u'PATH %s;%%PATH%%\n' % os.path.dirname(cmd)).encode(enc, "replaceunderscore"))
 					cmdfiles.write(u'pushd "%~dp0"\n'.encode(enc, "replaceunderscore"))
-					if cmdname in ("dispcal", "dispread"):
+					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")):
 						cmdfiles.write(u"color 07\n")
 				else:
 					context.write(u"set +v\n")
@@ -4454,7 +4454,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						cmdfiles.write(u'pushd "`dirname \\"$0\\"`/../../.."\n'.encode(enc, "replaceunderscore"))
 					else:
 						cmdfiles.write(u'pushd "`dirname \\"$0\\"`"\n'.encode(enc, "replaceunderscore"))
-					if cmdname in ("dispcal", "dispread") and sys.platform != "darwin":
+					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform != "darwin":
 						context.write(u'echo -e "\\033[40;2;37m"\n')
 					# if last and sys.platform != "darwin":
 						# context.write(u'gnome_screensaver_running=$(ps -A -f | grep gnome-screensaver | grep -v grep)\n')
@@ -4464,14 +4464,14 @@ class DisplayCalibratorGUI(wx.Frame):
 				cmdfiles.write((u" ".join(escargs(cmdline)) + "\n").encode(enc, "replaceunderscore"))
 				if sys.platform == "win32":
 					cmdfiles.write(u"set exitcode=%errorlevel%\n")
-					if cmdname in ("dispcal", "dispread"):
+					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")):
 						# reset to default commandline shell colors
 						cmdfiles.write(u"color\n")
 					cmdfiles.write(u"popd\n")
 					cmdfiles.write(u"if not %exitcode%==0 exit /B %exitcode%\n")
 				else:
 					cmdfiles.write(u"exitcode=$?\n")
-					if cmdname in ("dispcal", "dispread") and sys.platform != "darwin":
+					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform != "darwin":
 						# reset to default commandline shell colors
 						cmdfiles.write(u'echo -e "\\033[0m"\n')
 					cmdfiles.write(u"popd\n")
@@ -4497,7 +4497,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						os.chmod(appfilename + "/Contents/Resources/main.command", 0755)
 						if last: # the last one in the chain
 							os.remove(allfilename)
-			if cmdname == "dispread" and self.dispread_after_dispcal:
+			if cmdname == self.get_argyll_utilname("dispread") and self.dispread_after_dispcal:
 				iname = self.comport_ctrl.GetStringSelection()
 				if iname in instruments and (not instruments[iname]["sensor_cal"] or instruments[iname]["skip_sensor_cal_supported"]):
 					try:
@@ -4510,7 +4510,7 @@ class DisplayCalibratorGUI(wx.Frame):
 								start_new_thread(xte_sendkeys, (5, None, "Space"))
 					except Exception, exception:
 						handle_error(traceback.format_exc(), silent = True)
-			elif cmdname in ("dispcal", "dispread") and sys.platform == "darwin":
+			elif cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform == "darwin":
 				start_new_thread(mac_app_activate, (3, "Terminal"))
 			tries = 1
 			while tries > 0:
@@ -4542,7 +4542,7 @@ class DisplayCalibratorGUI(wx.Frame):
 								errors2 += [line]
 						if len(errors2):
 							self.errors = errors2
-							if (retcode != 0 or cmdname == "dispwin"):
+							if (retcode != 0 or cmdname == self.get_argyll_utilname("dispwin")):
 								InfoDialog(parent, pos = (-1, 100), msg = unicode("".join(errors2).strip(), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
 							else:
 								safe_print(unicode("".join(errors2).strip(), enc, "replace"), fn = fn)
@@ -7179,12 +7179,39 @@ class DisplayCalibratorGUI(wx.Frame):
 			return True
 		else:
 			return self.set_argyll_bin()
+	
+	def get_argyll_util(self, name, check_dir = None):
+		path = os.getenv("PATH", os.defpath)
+		utils = {
+			"dispcal": ["argyll-dispcal", "dispcal"],
+			"dispread": ["argyll-dispread", "dispread"],
+			"colprof": ["argyll-colprof", "colprof"],
+			"dispwin": ["argyll-dispwin", "dispwin"],
+			"targen": ["argyll-targen", "targen"]
+		}
+		if not check_dir:
+			check_dir = self.getcfg("argyll.dir")
+		if check_dir and not check_dir in path.split(os.pathsep):
+			putenv("PATH", os.pathsep.join([check_dir, path]))
+		found = None
+		for altname in utils[name]:
+			exe = which(altname + exe_ext)
+			if exe:
+				found = exe
+				break
+		if check_dir and not found:
+			putenv("PATH", path)
+		return found
+	
+	def get_argyll_utilname(self, name):
+		found = self.get_argyll_util(name)
+		if found:
+			found = os.path.basename(os.path.splitext(found)[0])
+		return found
 
 	def check_argyll_bin(self, check_dir = None):
 		if debug: safe_print("check_argyll_bin")
-		path = os.getenv("PATH")
-		if not path:
-			path = os.defpath
+		path = os.getenv("PATH", os.defpath)
 		names = [
 			"dispcal",
 			"dispread",
@@ -7200,7 +7227,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				putenv("PATH", os.pathsep.join([check_dir, path]))
 		prev_dir = None
 		for name in names:
-			exe = which(name + exe_ext)
+			exe = self.get_argyll_util(name, check_dir = check_dir)
 			if not exe:
 				if check_dir and path:
 					putenv("PATH", path)
