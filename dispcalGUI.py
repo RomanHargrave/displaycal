@@ -159,6 +159,7 @@ else:
 		scale_adjustment_factor = 1.0
 		xdg_config_home = os.getenv("XDG_CONFIG_HOME",
 		   os.path.join(os.path.expanduser("~"), ".config"))
+		xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg").split(os.pathsep)
 		xdg_data_home = os.getenv("XDG_DATA_HOME",
 		   os.path.join(os.path.expanduser("~"), ".local", "share"))
 		xdg_data_dirs = os.getenv(
@@ -166,7 +167,8 @@ else:
 			"share"), os.path.join("usr", "share")))
 			).split(os.pathsep)
 		confighome = os.path.join(xdg_config_home, appname)
-		autostart = os.path.join(xdg_config_home, "autostart")
+		autostart = os.path.join(xdg_config_dirs[0], "autostart")
+		autostart_home = os.path.join(xdg_config_home, "autostart")
 		datahome = os.path.join(xdg_data_home, appname)
 		data_dirs += [datahome]
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
@@ -1501,6 +1503,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.viewconds_ba[lstr] = v
 			if v not in ("pp", "pe", "pcd", "ob", "cx"):
 				self.viewconds_out_ab[v] = lstr
+
+		self.pwd = None
 
 	def set_testchart_names(self):
 		self.default_testchart_names = []
@@ -4178,7 +4182,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				if not silent: InfoDialog(self, msg = self.getlstr("profile.install.success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 				# try to create autostart script to load LUT curves on login
 				n = self.get_display_number()
-				args = "-d%s -c -L" % n
+				loader_args = "-d%s -c -L" % n
 				if sys.platform == "win32":
 					try:
 						try:
@@ -4208,7 +4212,7 @@ class DisplayCalibratorGUI(wx.Frame):
 							scut.SetIconLocation(sys.executable, 0)
 						else:
 							scut.SetIconLocation(get_data_path(os.path.join("theme", "icons", appname + ".ico")), 0)
-						scut.SetArguments(args)
+						scut.SetArguments(loader_args)
 						scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
 						scut.QueryInterface(pythoncom.IID_IPersistFile).Save(path, 0)
 					except Exception, exception:
@@ -4216,12 +4220,14 @@ class DisplayCalibratorGUI(wx.Frame):
 				elif sys.platform != "darwin":
 					# http://standards.freedesktop.org/autostart-spec/autostart-spec-latest.html
 					name = "%s-Calibration-Loader-Display-%s" % (appname, n)
-					desktopfile_path = os.path.join(autostart, name + ".desktop")
-					# exec_ = '"%s" "%s" %s' % (os.path.join(pydir, "calibrationloader" + cmdfile_ext), cmd, args)
-					exec_ = '"%s" %s' % (cmd, args)
+					desktopfile_path = os.path.join(autostart_home, name + ".desktop")
+					# exec_ = '"%s" "%s" %s' % (os.path.join(pydir, "calibrationloader" + cmdfile_ext), cmd, loader_args)
+					exec_ = '"%s" %s' % (cmd, loader_args)
 					try:
-						if not os.path.exists(autostart):
-							os.makedirs(autostart)
+						# always create user loader, even if we later try to move it to the system-wide location
+						# so that atleast the user loader is present if the move to the system dir fails
+						if not os.path.exists(autostart_home):
+							os.makedirs(autostart_home)
 						desktopfile = open(desktopfile_path, "w")
 						desktopfile.write('[Desktop Entry]\n')
 						desktopfile.write('Version=1.0\n')
@@ -4231,10 +4237,16 @@ class DisplayCalibratorGUI(wx.Frame):
 						desktopfile.write((u'Comment=%s\n' % self.getlstr("calibrationloader.description", n)).encode("UTF-8"))
 						desktopfile.write((u'Exec=%s\n' % exec_).encode("UTF-8"))
 						desktopfile.close()
-						return result
 					except Exception, exception:
 						if not silent: InfoDialog(self, msg = self.getlstr("error.autostart_creation", desktopfile_path) + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
-						return result
+					else:
+						if "-Sl" in args:
+							# copy system-wide loader
+							system_desktopfile_path = os.path.join(autostart, name + ".desktop")
+							if not silent and \
+								(not self.exec_cmd("mkdir", ["-p", autostart], capture_output = True, low_contrast = False, skip_cmds = True, silent = True, asroot = True) or \
+								not self.exec_cmd("mv", ["-f", desktopfile_path, autostart], capture_output = True, low_contrast = False, skip_cmds = True, silent = True, asroot = True)):
+								InfoDialog(self, msg = self.getlstr("error.autostart_creation", system_desktopfile_path), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
 			else:
 				if not silent:
 					if cal == False:
@@ -4250,6 +4262,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					InfoDialog(self, msg = self.getlstr("calibration.reset_error"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 				else:
 					InfoDialog(self, msg = self.getlstr("calibration.load_error"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+		self.pwd = None # do not keep password in memory longer than necessary
 		return result
 
 	def verify_calibration_handler(self, event):
@@ -4350,7 +4363,6 @@ class DisplayCalibratorGUI(wx.Frame):
 					# strip the path from cmd and all items in the working dir
 					cmdline[i] = os.path.basename(item)
 			sudo = None
-			pwd = None
 			if cmdname == "dispwin" and ("-Sl" in args or "-Sn" in args):
 				asroot = True
 			if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or \
@@ -4369,7 +4381,10 @@ class DisplayCalibratorGUI(wx.Frame):
 					sudo = get_sudo()
 			if sudo:
 				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.PIPE)
-				stdout, stderr = sudoproc.communicate()
+				if sudoproc.poll() is None:
+					stdout, stderr = sudoproc.communicate(self.pwd)
+				else:
+					stdout, stderr = sudoproc.communicate()
 				if not "OK" in stdout:
 					sudoproc.stdin.close()
 					# ask for password
@@ -4391,6 +4406,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						else:
 							stdout, stderr = sudoproc.communicate()
 						if "OK" in stdout:
+							self.pwd = pwd
 							break
 						elif n == 0:
 							dlg.message.SetLabel(self.getlstr("password.incorrect") + "\n" + self.getlstr("dialog.enter_root_password"))
@@ -4500,8 +4516,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			while tries > 0:
 				self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdin = sp.PIPE if sudo else None, stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
 				if sudo and self.subprocess.poll() is None:
-					if pwd:
-						self.subprocess.communicate(pwd)
+					if self.pwd:
+						self.subprocess.communicate(self.pwd)
 					else:
 						self.subprocess.communicate()
 				self.retcode = retcode = self.subprocess.wait()
@@ -8061,11 +8077,11 @@ def main():
 	if sys.platform not in ("darwin", "win32"):
 		# Linux: try and fix v0.2.1b calibration loader, because calibrationloader.sh is no longer present in v0.2.2b+
 		desktopfile_name = appname + "-Calibration-Loader-Display-"
-		if os.path.exists(autostart):
-			for filename in os.listdir(autostart):
+		if os.path.exists(autostart_home):
+			for filename in os.listdir(autostart_home):
 				if filename.startswith(desktopfile_name):
 					try:
-						desktopfile_path = os.path.join(autostart, filename)
+						desktopfile_path = os.path.join(autostart_home, filename)
 						cfg = ConfigParser.SafeConfigParser()
 						cfg.optionxform = str
 						cfg.read([desktopfile_path])
