@@ -6,7 +6,7 @@
 	"app.confirm_restore_defaults": "Desea descartar sus cambios y restaurar los valores por defecto?",
 	"app.restart_request": "Por favor reinicie la aplicación.",
 	"argyll.dir": "Directorio de ejecutables de Argyll CMS:",
-	"argyll.dir.invalid": "Los ejecutables de Argyll CMS no se han encontrado!\nPor favor seleccione el directorio que contiene los archivos ejecutables dispcal%s, dispread%s, colprof%s, dispwin%s y targen%s.",
+	"argyll.dir.invalid": "Los ejecutables de Argyll CMS no se han encontrado!\nPor favor seleccione el directorio que contiene los archivos ejecutables dispcal%s, dispread%s, colprof%s, dispwin%s, spyd2en y targen%s.",
 	"button.calibrate": "Solo calibrar",
 	"button.calibrate_and_profile": "Calibrar y perfilar",
 	"button.profile": "Solo perfilar",

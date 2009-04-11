@@ -6,7 +6,7 @@
 	"app.confirm_restore_defaults": "Vuoi davvero perdere le tue modifiche e usare le impostazioni predefinite?",
 	"app.restart_request": "Riavviare l'applicazione, prego.",
 	"argyll.dir": "Directory con gli eseguibili di Argyll CMS:",
-	"argyll.dir.invalid": "Gli eseguibili Argyll CMS non sono stati trovati!\nSeleziona la directory che contiene gli eseguibili dispcal%s, dispread%s, colprof%s, dispwin%s e targen%s.",
+	"argyll.dir.invalid": "Gli eseguibili Argyll CMS non sono stati trovati!\nSeleziona la directory che contiene gli eseguibili dispcal%s, dispread%s, colprof%s, dispwin%s, spyd2en e targen%s.",
 	"button.calibrate": "Calibra solamente",
 	"button.calibrate_and_profile": "Calibra && Crea profilo",
 	"button.profile": "Crea solamente il profilo",
