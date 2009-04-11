@@ -1311,6 +1311,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			"whitepoint.x": 0.345741,
 			"whitepoint.y": 0.358666
 		}
+		
+		self.argyll_version = [0, 0, 0]
 
 		self.lut_access = [] # displays where lut access works
 
@@ -1622,8 +1624,14 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.displays = []
 				self.comports = []
 				self.defaults["calibration.black_point_rate.enabled"] = 0
+				n = 0
 				for line in output:
 					if type(line) in (str, unicode):
+						if n == 0 and "version" in line.lower():
+							try:
+								self.argyll_version = map(int, line[line.lower().find("version")+8:].split("."))
+							except ValueError:
+								safe_print("Warning - unknown Argyll CMS version")
 						line = line.strip().split(None, 1)
 						if len(line) and line[0][0] == "-":
 							arg = line[0]
@@ -1646,6 +1654,7 @@ class DisplayCalibratorGUI(wx.Frame):
 								else:
 									value = value[0]
 								self.comports.append(value)
+						n += 1
 				if verbose >= 1 and not silent: safe_print(self.getlstr("success"))
 			except Exception, exception:
 				handle_error(traceback.format_exc(), parent = self)
@@ -2997,8 +3006,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.black_point_correction_ctrl.Enable(enable_cal)
 		self.black_point_correction_intctrl.Enable(enable_cal)
 		if hasattr(self, "black_point_rate_ctrl"):
-			self.black_point_rate_ctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100)
-			self.black_point_rate_intctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100)
+			self.black_point_rate_ctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
+			self.black_point_rate_intctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
 		self.interactive_display_adjustment_cb.Enable(enable_cal)
 
 		self.testchart_btn.Enable(enable_profile)
@@ -3254,8 +3263,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.cal_changed()
 		self.setcfg("calibration.black_point_correction", v)
 		if hasattr(self, "black_point_rate_ctrl"):
-			self.black_point_rate_ctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100)
-			self.black_point_rate_intctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100)
+			self.black_point_rate_ctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
+			self.black_point_rate_intctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
 		self.update_profile_name()
 
 	def black_point_rate_ctrl_handler(self, event):
@@ -3585,7 +3594,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		args += ["-d" + self.get_display_number()]
 		args += ["-c" + self.get_comport_number()]
 		args += ["-y" + self.get_display_type()] # always specify -y (won't be read from .cal when updating)
-		args += ["-p" + self.get_measureframe_dimensions()]
+		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + self.get_measureframe_dimensions()]
 		if self.measure_darken_background_cb.GetValue():
 			args += ["-F"]
 		iname = self.comport_ctrl.GetStringSelection()
@@ -3655,7 +3664,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if ambient:
 				args += ["-a" + ambient]
 			args += ["-k" + self.get_black_point_correction()]
-			if self.defaults["calibration.black_point_rate.enabled"] and self.black_point_correction_intctrl.GetValue() < 100:
+			if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"] and self.black_point_correction_intctrl.GetValue() < 100:
 				args += ["-A" + self.get_black_point_rate()]
 			black_luminance = self.get_black_luminance()
 			if black_luminance:
@@ -3801,7 +3810,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if apply_calibration:
 			args += ["-k"]
 			args += [cal]
-		args += ["-p" + self.get_measureframe_dimensions()]
+		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + self.get_measureframe_dimensions()]
 		if self.measure_darken_background_cb.GetValue():
 			args += ["-F"]
 		iname = self.comport_ctrl.GetStringSelection()
@@ -5011,7 +5020,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			"%pq	" + self.getlstr("profile.quality"),
 			"%pt	" + self.getlstr("profile.type")
 		]
-		if hasattr(self, "black_point_rate_ctrl"):
+		if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"]:
 			info.insert(9, "%cA	" + self.getlstr("calibration.black_point_rate"))
 		return self.getlstr("profile.name.placeholders") + "\n\n" + "\n".join(info)
 
@@ -5223,7 +5232,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		profile_name = profile_name.replace("%cf", "Offset=" + str(f if f > 0 else 0) + "%")
 		k = int(float(self.get_black_point_correction()) * 100)
 		profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and k < 100 else "") + self.getlstr("neutral") if k > 0 else self.getlstr("native").lower())
-		if hasattr(self, "black_point_rate_ctrl"):
+		if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"]:
 			profile_name = profile_name.replace("%cA", self.get_black_point_rate())
 		aspects = {
 			"c": self.get_calibration_quality(),
@@ -7183,11 +7192,11 @@ class DisplayCalibratorGUI(wx.Frame):
 	def get_argyll_util(self, name, check_dir = None):
 		path = os.getenv("PATH", os.defpath)
 		utils = {
-			"dispcal": ["argyll-dispcal", "dispcal"],
-			"dispread": ["argyll-dispread", "dispread"],
-			"colprof": ["argyll-colprof", "colprof"],
-			"dispwin": ["argyll-dispwin", "dispwin"],
-			"targen": ["argyll-targen", "targen"]
+			"dispcal": ["argyll-dispcal", "dispcal-argyll", "dispcal"],
+			"dispread": ["argyll-dispread", "dispread-argyll", "dispread"],
+			"colprof": ["argyll-colprof", "colprof-argyll", "colprof"],
+			"dispwin": ["argyll-dispwin", "dispwin-argyll", "dispwin"],
+			"targen": ["argyll-targen", "targen-argyll", "targen"]
 		}
 		if not check_dir:
 			check_dir = self.getcfg("argyll.dir")
