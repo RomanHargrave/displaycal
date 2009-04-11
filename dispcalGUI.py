@@ -1241,7 +1241,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			"dimensions.measureframe": "0.5,0.5,1.0",
 			"dimensions.measureframe.unzoomed": "0.5,0.5,1.0",
 			"display.number": 1,
-			"display.type": "l",
+			"measurement_mode": "l",
 			"display_lut.link": 1,
 			"display_lut.number": 1,
 			"gamap_profile": "",
@@ -1362,19 +1362,27 @@ class DisplayCalibratorGUI(wx.Frame):
 		}
 		self.comports = []
 		self.displays = []
-		self.display_types = [
-			"CRT",
-			"LCD"
-		]
 		# left side - internal enumeration, right side - commmandline
-		self.display_types_ab = {
-			0: "c",
-			1: "l"
+		self.measurement_modes_ab = {
+			"color": {
+				0: "c",
+				1: "l"
+			},
+			"spect": {
+				0: "",
+				1: "p"
+			}
 		}
 		# left side - commmandline, right side - internal enumeration
-		self.display_types_ba = {
-			"c": 0,
-			"l": 1
+		self.measurement_modes_ba = {
+			"color": {
+				"c": 0,
+				"l": 1
+			},
+			"spect": {
+				"": 0,
+				"p": 1
+			}
 		}
 
 		self.bitmaps = {"transparent16x16": wx.EmptyBitmap(16, 16, depth = -1)}
@@ -1425,9 +1433,17 @@ class DisplayCalibratorGUI(wx.Frame):
 			"l": {
 				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # LCD shaper / matrix
 				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # LCD lut
+			},
+			"": {
+				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # shaper / matrix
+				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # lut
+			},
+			"p": {
+				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # projector shaper / matrix
+				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # projector lut
 			}
 		}
-		self.defaults["testchart.file"] = get_data_path(os.path.join("ti1", self.testchart_defaults[self.defaults["display.type"]][self.defaults["profile.type"]]))
+		self.defaults["testchart.file"] = get_data_path(os.path.join("ti1", self.testchart_defaults[self.defaults["measurement_mode"]][self.defaults["profile.type"]]))
 		self.set_testchart_names()
 		self.testcharts = []
 		self.testchart_names = []
@@ -1519,10 +1535,10 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def set_testchart_names(self):
 		self.default_testchart_names = []
-		for display_type in self.testchart_defaults:
-			for profile_type in self.testchart_defaults[display_type]:
-				if not self.testchart_defaults[display_type][profile_type] in self.default_testchart_names:
-					self.default_testchart_names += [self.getlstr(self.testchart_defaults[display_type][profile_type])]
+		for measurement_mode in self.testchart_defaults:
+			for profile_type in self.testchart_defaults[measurement_mode]:
+				if not self.testchart_defaults[measurement_mode][profile_type] in self.default_testchart_names:
+					self.default_testchart_names += [self.getlstr(self.testchart_defaults[measurement_mode][profile_type])]
 
 	def init_frame(self):
 		# window frame
@@ -1633,19 +1649,23 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.displays = []
 				self.comports = []
 				self.defaults["calibration.black_point_rate.enabled"] = 0
-				n = 0
+				n = -1
 				for line in output:
 					if type(line) in (str, unicode):
+						n += 1
+						line = line.strip()
 						if n == 0 and "version" in line.lower():
-							version = line[line.lower().find("version")+8:].split(".")
+							version = line[line.lower().find("version")+8:]
+							version = re.findall("(\d+|[^.\d]+)", version)
 							for i in range(len(version)):
 								try:
 									version[i] = int(version[i])
 								except ValueError:
 									version[i] = version[i]
 							self.argyll_version = version
-							if debug: safe_print("Argyll CMS version", "".join(map(str, version)))
-						line = line.strip().split(None, 1)
+							if verbose >= 2: safe_print("Argyll CMS version", repr(version))
+							continue
+						line = line.split(None, 1)
 						if len(line) and line[0][0] == "-":
 							arg = line[0]
 							if arg == "-A":
@@ -1667,7 +1687,6 @@ class DisplayCalibratorGUI(wx.Frame):
 								else:
 									value = value[0]
 								self.comports.append(value)
-						n += 1
 				if verbose >= 1 and not silent: safe_print(self.getlstr("success"))
 			except Exception, exception:
 				handle_error(traceback.format_exc(), parent = self)
@@ -2308,16 +2327,16 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.subsizer.pop()
 			self.AddToSubSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP, border = 8)
 
-		self.display_type_label = wx.StaticText(self.panel, -1, self.getlstr("display.type"))
+		self.measurement_mode_label = wx.StaticText(self.panel, -1, self.getlstr("measurement_mode"))
 		if show_lut_ctrl:
 			borders = wx.RIGHT
 		else:
 			borders = wx.LEFT | wx.RIGHT
-		self.AddToSubSizer(self.display_type_label, flag = borders | wx.ALIGN_CENTER_VERTICAL, border = 8)
+		self.AddToSubSizer(self.measurement_mode_label, flag = borders | wx.ALIGN_CENTER_VERTICAL, border = 8)
 
-		self.display_type_ctrl = wx.ComboBox(self.panel, -1, size = (65, -1), choices = self.display_types, style = wx.CB_READONLY)
-		self.Bind(wx.EVT_COMBOBOX, self.display_type_ctrl_handler, id = self.display_type_ctrl.GetId())
-		self.AddToSubSizer(self.display_type_ctrl, flag = wx.ALIGN_CENTER_VERTICAL)
+		self.measurement_mode_ctrl = wx.ComboBox(self.panel, -1, size = (65, -1), choices = [""] * 2, style = wx.CB_READONLY)
+		self.Bind(wx.EVT_COMBOBOX, self.measurement_mode_ctrl_handler, id = self.measurement_mode_ctrl.GetId())
+		self.AddToSubSizer(self.measurement_mode_ctrl, flag = wx.ALIGN_CENTER_VERTICAL)
 
 
 
@@ -2915,12 +2934,31 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.comport_ctrl.SetSelection(min(len(self.comports) - 1, int(self.getcfg("comport.number")) - 1))
 		self.comport_ctrl.Enable(bool(len(self.comports)))
 		self.comport_ctrl.Thaw()
+		self.update_measurement_modes()
+	
+	def update_measurement_modes(self):
+		measurement_modes = {
+			"color": [
+				"CRT",
+				"LCD"
+			],
+			"spect": [
+				self.getlstr("default"),
+				self.getlstr("projector")
+			]
+		}
+		instrument_type = self.get_instrument_type()
+		self.measurement_mode_ctrl.Freeze()
+		self.measurement_mode_ctrl.SetItems(measurement_modes[instrument_type])
+		self.measurement_mode_ctrl.SetSelection(0 if instrument_type == "spect" else 1)
+		self.measurement_mode_ctrl.Enable()
+		self.measurement_mode_ctrl.Thaw()
 
 	def update_main_controls(self):
 		update_cal = self.calibration_update_cb.GetValue()
 		enable_cal = not(update_cal)
 
-		self.display_type_ctrl.Enable(enable_cal and bool(len(self.displays)))
+		self.measurement_mode_ctrl.Enable(enable_cal and bool(len(self.displays)))
 
 		update_profile = self.profile_update_cb.GetValue()
 		enable_profile = not(update_profile)
@@ -3028,7 +3066,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.profile_quality_ctrl.Enable(enable_profile)
 		self.profile_type_ctrl.Enable(enable_profile)
 
-		self.display_type_ctrl.SetSelection(self.display_types_ba.get(self.getcfg("display.type"), self.display_types_ba.get(self.defaults["display.type"])))
+		self.measurement_mode_ctrl.SetSelection(self.measurement_modes_ba[self.get_instrument_type()].get(self.getcfg("measurement_mode"), self.measurement_modes_ba[self.get_instrument_type()].get(self.defaults["measurement_mode"])))
 
 		self.whitepoint_colortemp_locus_ctrl.SetSelection(self.whitepoint_colortemp_loci_ba.get(self.getcfg("whitepoint.colortemp.locus"), self.whitepoint_colortemp_loci_ba.get(self.defaults["whitepoint.colortemp.locus"])))
 		if self.getcfg("whitepoint.colortemp", False):
@@ -3606,7 +3644,11 @@ class DisplayCalibratorGUI(wx.Frame):
 		args += ["-v"] # verbose
 		args += ["-d" + self.get_display_number()]
 		args += ["-c" + self.get_comport_number()]
-		args += ["-y" + self.get_display_type()] # always specify -y (won't be read from .cal when updating)
+		measurement_mode = self.get_measurement_mode()
+		if measurement_mode in ("c", "l"):
+			args += ["-y" + measurement_mode] # always specify -y (won't be read from .cal when updating)
+		elif measurement_mode == "p" and self.argyll_version >= [1, 1, 0, "_Beta"]:
+			args += ["-p"] # projector mode, Argyll >= 1.1.0_Beta, instrument needs emissive capability
 		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + self.get_measureframe_dimensions()]
 		if self.measure_darken_background_cb.GetValue():
 			args += ["-F"]
@@ -3819,7 +3861,11 @@ class DisplayCalibratorGUI(wx.Frame):
 		args += ["-v"] # verbose
 		args += ["-d" + self.get_display_number()]
 		args += ["-c" + self.get_comport_number()]
-		args += ["-y" + self.get_display_type()]
+		measurement_mode = self.get_measurement_mode()
+		if measurement_mode in ("c", "l"):
+			args += ["-y" + measurement_mode] # always specify -y (won't be read from .cal when updating)
+		elif measurement_mode == "p" and self.argyll_version >= [1, 1, 0, "_Beta"]:
+			args += ["-p"] # projector mode, Argyll >= 1.1.0_Beta, instrument needs emissive capability
 		if apply_calibration:
 			args += ["-k"]
 			args += [cal]
@@ -4872,6 +4918,7 @@ class DisplayCalibratorGUI(wx.Frame):
 	def comport_ctrl_handler(self, event):
 		if debug: safe_print("comport_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
 		self.setcfg("comport.number", self.get_comport_number())
+		self.update_measurement_modes()
 
 	def display_ctrl_handler(self, event):
 		if debug: safe_print("display_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
@@ -4909,16 +4956,20 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.setcfg("display_lut.link", int(link))
 		self.setcfg("display_lut.number", lut_no + 1)
 
-	def display_type_ctrl_handler(self, event):
-		if debug: safe_print("display_type_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
+	def measurement_mode_ctrl_handler(self, event):
+		if debug: safe_print("measurement_mode_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
 		self.set_default_testchart()
-		v = self.get_display_type()
-		cal_changed = v != self.getcfg("display.type") and self.getcfg("calibration.file") not in self.presets
+		v = self.get_measurement_mode()
+		if v == "p" and self.argyll_version < [1, 1, 0, "_Beta"]:
+			self.measurement_mode_ctrl.SetSelection(0)
+			v = ""
+			InfoDialog(self, msg = self.getlstr("projector_mode_unavailable"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
+		cal_changed = v != self.getcfg("measurement_mode") and self.getcfg("calibration.file") not in self.presets
 		if cal_changed:
 			self.cal_changed()
-		self.setcfg("display.type", v)
-		if ((self.get_display_type() == "l" and float(self.get_black_point_correction()) > 0) or (self.get_display_type() == "c" and float(self.get_black_point_correction()) == 0)) and self.getcfg("calibration.black_point_correction_choice.show"):
-			if self.get_display_type() == "l":
+		self.setcfg("measurement_mode", v)
+		if ((self.get_measurement_mode() in ("l", "p") and float(self.get_black_point_correction()) > 0) or (self.get_measurement_mode() == "c" and float(self.get_black_point_correction()) == 0)) and self.getcfg("calibration.black_point_correction_choice.show"):
+			if self.get_measurement_mode() in ("l", "p"):
 				ok = self.getlstr("calibration.turn_off_black_point_correction")
 			else:
 				ok = self.getlstr("calibration.turn_on_black_point_correction")
@@ -4931,7 +4982,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				if self.get_display_type() == "l":
+				if self.get_measurement_mode() in ("l", "p"):
 					v = 0.0
 				else:
 					v = 1.0
@@ -5023,7 +5074,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		info = [
 			"%dn	" + self.getlstr("display"),
 			"%in	" + self.getlstr("instrument"),
-			"%im	" + self.getlstr("display.type"),
+			"%im	" + self.getlstr("measurement_mode"),
 			"%wp	" + self.getlstr("whitepoint"),
 			"%cb	" + self.getlstr("calibration.luminance"),
 			"%cB	" + self.getlstr("calibration.black_luminance"),
@@ -5213,11 +5264,19 @@ class DisplayCalibratorGUI(wx.Frame):
 		instrument = instrument.replace("ColorVision", "")
 		instrument = instrument.replace(" ", "")
 		profile_name = profile_name.replace("%in", instrument)
-		if self.get_display_type() == "c":
+		measurement_mode = self.get_measurement_mode()
+		if measurement_mode == "c":
 			mode = "CRT"
-		else:
+		elif measurement_mode == "l":
 			mode = "LCD"
-		profile_name = profile_name.replace("%im", mode)
+		elif measurement_mode == "p":
+			mode = self.getlstr("projector")
+		else:
+			mode = ""
+		if mode:
+			profile_name = profile_name.replace("%im", mode)
+		else:
+			profile_name = re.sub("%im\W|\W%im", "", profile_name)
 		whitepoint = self.get_whitepoint()
 		if isinstance(whitepoint, str):
 			if whitepoint.find(",") < 0:
@@ -5322,9 +5381,14 @@ class DisplayCalibratorGUI(wx.Frame):
 		if self.ambient_viewcond_adjust_cb.GetValue():
 			return str(stripzeroes(self.ambient_viewcond_adjust_textctrl.GetValue().replace(",", ".")))
 		return None
+	
+	def get_instrument_type(self):
+		# return the instrument type, "color" (colorimeter) or "spect" (spectrophotometer w/ emissive capability)
+		emissive = instruments.get(self.comport_ctrl.GetStringSelection(), {}).get("spectral_supported", False)
+		return "spect" if emissive else "color"
 
-	def get_display_type(self):
-		return self.display_types_ab[self.display_type_ctrl.GetSelection()]
+	def get_measurement_mode(self):
+		return self.measurement_modes_ab[self.get_instrument_type()][self.measurement_mode_ctrl.GetSelection()]
 
 	def get_profile_type(self):
 		return self.profile_types_ab[self.profile_type_ctrl.GetSelection()]
@@ -7088,7 +7152,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			path = self.app.dist_testcharts[self.app.dist_testchart_names.index(os.path.basename(path))]
 			self.setcfg("testchart.file", path)
 		if force or self.getlstr(os.path.basename(path)) in [""] + self.default_testchart_names or ((not os.path.exists(path) or not os.path.isfile(path))):
-			ti1 = self.testchart_defaults[self.get_display_type()][self.get_profile_type()]
+			ti1 = self.testchart_defaults[self.get_measurement_mode()][self.get_profile_type()]
 			path = get_data_path(os.path.join("ti1", ti1))
 			if not path or not os.path.isfile(path):
 				if alert:
@@ -7547,7 +7611,7 @@ class DisplayCalibratorGUI(wx.Frame):
 									self.setcfg("calibration.quality", o[1])
 									continue
 								if o[0] == "y":
-									self.setcfg("display.type", o[1])
+									self.setcfg("measurement_mode", o[1])
 									continue
 								if o[0] in ("t", "T"):
 									self.setcfg("whitepoint.colortemp.locus", o[0])
@@ -7585,9 +7649,12 @@ class DisplayCalibratorGUI(wx.Frame):
 								if o[0] == "B":
 									self.setcfg("calibration.black_luminance", o[1:])
 									continue
-								if o[0] == "p":
+								if o[0] in ("p", "P") and len(o[1:]) >= 5:
 									self.setcfg("dimensions.measureframe", o[1:])
 									self.setcfg("dimensions.measureframe.unzoomed", o[1:])
+									continue
+								if o[0] == "p" and len(o[1:]) == 0:
+									self.setcfg("measurement_mode", "p")
 									continue
 								if o[0] == "F":
 									self.setcfg("measure.darken_background", 1)
@@ -7696,8 +7763,12 @@ class DisplayCalibratorGUI(wx.Frame):
 							InfoDialog(self, msg = self.getlstr("calibration.file.invalid"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 							return
 					elif line[0] == "DEVICE_TYPE":
-						self.setcfg("display.type", value.lower()[0])
-						self.options_dispcal += ["-y" + self.getcfg("display.type")]
+						measurement_mode = value.lower()[0]
+						self.setcfg("measurement_mode", measurement_mode)
+						if measurement_mode in ("c", "l"):
+							self.options_dispcal += ["-y" + measurement_mode]
+						elif measurement_mode == "p" and self.argyll_version >= [1, 1, 0, "_Beta"]:
+							self.options_dispcal += ["-p"]
 					elif line[0] == "NATIVE_TARGET_WHITE":
 						self.setcfg("whitepoint.colortemp", None)
 						self.setcfg("whitepoint.x", None)
