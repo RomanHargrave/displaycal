@@ -843,7 +843,7 @@
 							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
 							<li>chg: (Linux) there's no longer an installer for the Linux version - please use the RPM or ZIP release instead.</li>
 							<li>chg: cancelling of certain operations like profile calculation and testchart generation is now also supported when using Python 2.5</li>
-							<li>add: logging (also see the change related to file-storage).</li>
+							<li>add: logging (also see the change related to file-storage). If the logfile is older than one day, it is renamed and a new one is created, with a maximum of 5 old ones being kept as backup.</li>
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
 							<li>add: unattended calibration and profiling for some instruments, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
 							<li>add: settings and related files can be deleted.</li>

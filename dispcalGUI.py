@@ -287,16 +287,16 @@ def setup_logging():
 	if not os.path.exists(logdir):
 		os.makedirs(logdir)
 	if os.path.exists(logfile):
-		mtime = os.stat(logfile).st_mtime
+		ctime = os.stat(logfile).st_ctime
 	else:
-		mtime = time()
+		ctime = time()
 	logger = logging.getLogger()
 	logger.setLevel(logging.DEBUG)
 	filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount = 5)
 	fileformatter = logging.Formatter("%(asctime)s %(message)s")
 	filehandler.setFormatter(fileformatter)
 	logger.addHandler(filehandler)
-	if time() - mtime > 60 * 60 * 24:
+	if gmtime()[:3] > gmtime(ctime)[:3]:
 		filehandler.doRollover()
 	log("=" * 80)
 	streamhandler = globalconfig["logging.StreamHandler"] = \
