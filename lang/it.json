@@ -74,7 +74,7 @@
 	"display_lut.link": "Collega/Scollega schermo e accesso a LUT",
 	"display_detected": "Rilevato un cambiamento nella configurazione dello schermo.",
 	"display.primary": "(Primario)",
-	"display.type": "Modalità",
+	"measurement_mode": "Modalità",
 	"enumerating_displays_and_comports": "Elenco degli schermi e delle porte di comunicazione in corso...",
 	"error": "Errore",
 	"error.autostart_creation": "La creazione della voce di partenza automatica per far caricare a %s le curve di calibrazione è fallita.",

@@ -74,7 +74,7 @@
 	"display_lut.link": "Enlace/desenlace acceso a pantalla y LUT",
 	"display_detected": "Se ha detectado un cambio en la configuracion de la pantalla.",
 	"display.primary": "(Primaria)",
-	"display.type": "Tipo",
+	"measurement_mode": "Tipo",
 	"enumerating_displays_and_comports": "Enumeranado pantallas y puertos de comunicación...",
 	"error": "Error",
 	"error.autostart_creation": "Creación de la entrada de autoarranque para %s para cargar las curvas de calibración en la entrada ha fallado.",
