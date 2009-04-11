@@ -4043,7 +4043,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if dst_path is None:
 			dst_path = os.path.join(self.getcfg("profile.save_path"), self.get_profile_name(), self.get_profile_name() + profile_ext)
 		cmd, args = self.prepare_colprof(os.path.basename(os.path.splitext(dst_path)[0]), display_name)
-		result = self.exec_cmd(cmd, args, capture_output = "-as" in self.options_colprof, low_contrast = False, skip_cmds = skip_cmds)
+		result = self.exec_cmd(cmd, args, capture_output = "-as" in self.options_colprof and self.argyll_version <= [1, 0, 4], low_contrast = False, skip_cmds = skip_cmds)
 		self.wrapup(result, dst_path = dst_path)
 		if "-as" in self.options_colprof: safe_print(self.getlstr("success") if result else self.getlstr("aborted"))
 		if result:
