@@ -223,7 +223,7 @@ class CGATS(dict):
 			if self.type == 'SECTION':
 				result += ['BEGIN_' + self.key]
 			elif self.parent and self.parent.type == 'ROOT':
-				result += [self.type]
+				result += [self.type.ljust(7)] # Make sure CGATS file identifiers are always a minimum of 7 characters
 				result += ['']
 			# elif self.type == 'FILE':
 				# result += [self.key]
