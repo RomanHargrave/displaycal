@@ -18,7 +18,7 @@
 	"calibration.black_output_offset": "Schwarzausgabeoffset",
 	"calibration.black_luminance": "Schwarzluminanz",
 	"calibration.black_point_correction": "Schwarztonkorrektur",
-	"calibration.black_point_rate": "Verhältnis",
+	"calibration.black_point_rate": "Rate",
 	"calibration.complete": "Kalibrierung abgeschlossen!",
 	"calibration.incomplete": "Die Kalibrierung wurde nicht abgeschlossen.",
 	"calibration.file": "Einstellungen",
