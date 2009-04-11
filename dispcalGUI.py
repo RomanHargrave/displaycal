@@ -3019,8 +3019,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.black_point_correction_ctrl.Enable(enable_cal)
 		self.black_point_correction_intctrl.Enable(enable_cal)
 		if hasattr(self, "black_point_rate_ctrl"):
-			self.black_point_rate_ctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
-			self.black_point_rate_intctrl.Enable(enable_cal and self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
+			self.black_point_rate_ctrl.Enable(enable_cal and self.getcfg("calibration.black_point_correction") < 1 and self.defaults["calibration.black_point_rate.enabled"])
+			self.black_point_rate_intctrl.Enable(enable_cal and self.getcfg("calibration.black_point_correction") < 1 and self.defaults["calibration.black_point_rate.enabled"])
 		self.interactive_display_adjustment_cb.Enable(enable_cal)
 
 		self.testchart_btn.Enable(enable_profile)
@@ -3276,8 +3276,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.cal_changed()
 		self.setcfg("calibration.black_point_correction", v)
 		if hasattr(self, "black_point_rate_ctrl"):
-			self.black_point_rate_ctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
-			self.black_point_rate_intctrl.Enable(self.black_point_correction_intctrl.GetValue() < 100 and self.defaults["calibration.black_point_rate.enabled"])
+			self.black_point_rate_ctrl.Enable(self.getcfg("calibration.black_point_correction") < 1 and self.defaults["calibration.black_point_rate.enabled"])
+			self.black_point_rate_intctrl.Enable(self.getcfg("calibration.black_point_correction") < 1 and self.defaults["calibration.black_point_rate.enabled"])
 		self.update_profile_name()
 
 	def black_point_rate_ctrl_handler(self, event):
@@ -3677,7 +3677,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if ambient:
 				args += ["-a" + ambient]
 			args += ["-k" + self.get_black_point_correction()]
-			if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"] and self.black_point_correction_intctrl.GetValue() < 100:
+			if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"] and float(self.get_black_point_correction()) < 1:
 				args += ["-A" + self.get_black_point_rate()]
 			black_luminance = self.get_black_luminance()
 			if black_luminance:
