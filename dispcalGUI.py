@@ -1628,10 +1628,14 @@ class DisplayCalibratorGUI(wx.Frame):
 				for line in output:
 					if type(line) in (str, unicode):
 						if n == 0 and "version" in line.lower():
-							try:
-								self.argyll_version = map(int, line[line.lower().find("version")+8:].split("."))
-							except ValueError:
-								safe_print("Warning - unknown Argyll CMS version")
+							version = line[line.lower().find("version")+8:].split(".")
+							for i in range(len(version)):
+								try:
+									version[i] = int(version[i])
+								except ValueError:
+									version[i] = version[i]
+							self.argyll_version = version
+							if debug: safe_print("Argyll CMS version", "".join(map(str, version)))
 						line = line.strip().split(None, 1)
 						if len(line) and line[0][0] == "-":
 							arg = line[0]
