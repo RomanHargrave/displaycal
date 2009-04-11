@@ -37,6 +37,7 @@ import decimal
 import getpass
 import locale
 import logging
+import logging.handlers
 import math
 import os
 import random
@@ -49,7 +50,7 @@ import traceback
 Decimal = decimal.Decimal
 from StringIO import StringIO
 from thread import start_new_thread
-from time import gmtime, sleep, strftime, timezone
+from time import gmtime, sleep, strftime, time, timezone
 
 # 3rd party modules
 import demjson
@@ -282,20 +283,27 @@ def log(msg, fn = None):
 
 def setup_logging():
 	logdir = os.path.join(datahome, "logs")
+	logfile = os.path.join(logdir, appname + ".log")
 	if not os.path.exists(logdir):
 		os.makedirs(logdir)
-	logging.basicConfig(level = logging.DEBUG,
-		format = "%(asctime)s %(message)s",
-		filename = os.path.join(logdir, "%s-%s-build%s-%s.log" % (appname, 
-			version, build.replace(":", "-"), strftime("%Y-%m-%d"))),
-		filemode = "a")
+	if os.path.exists(logfile):
+		mtime = os.stat(logfile).st_mtime
+	else:
+		mtime = time()
+	logger = logging.getLogger()
+	logger.setLevel(logging.DEBUG)
+	filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount = 5)
+	fileformatter = logging.Formatter("%(asctime)s %(message)s")
+	filehandler.setFormatter(fileformatter)
+	logger.addHandler(filehandler)
+	if time() - mtime > 60 * 60 * 24:
+		filehandler.doRollover()
 	log("=" * 80)
-	stream = globalconfig["logging.StreamHandler"] = \
+	streamhandler = globalconfig["logging.StreamHandler"] = \
 	   logging.StreamHandler(globalconfig["log"])
-	stream.setLevel(logging.DEBUG)
-	formatter = logging.Formatter("%(message)s")
-	stream.setFormatter(formatter)
-	logging.getLogger("").addHandler(stream)
+	streamformatter = logging.Formatter("%(message)s")
+	streamhandler.setFormatter(streamformatter)
+	logger.addHandler(streamhandler)
 
 _safe_print = safe_print
 def safe_print(*args, **kwargs):
@@ -466,6 +474,7 @@ def extract_cal(ti3_data):
 	for line in ti3:
 		line = line.strip()
 		if line == "CAL":
+			line = "CAL    " # Make sure CGATS file identifiers are always a minimum of 7 characters
 			cal = True
 		if cal:
 			cal_lines += [line]
@@ -484,7 +493,7 @@ def ti3_to_ti1(ti3_data):
 	for line in ti3:
 		line = line.strip()
 		if line == "CTI3":
-			line = 'CTI1'
+			line = 'CTI1   ' # Make sure CGATS file identifiers are always a minimum of 7 characters
 		else:
 			values = line.split()
 			if len(values) > 1:
@@ -3143,7 +3152,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def enable_spyder2_handler(self, event):
 		if self.check_set_argyll_bin():
-			cmd, args = os.path.join(self.getcfg("argyll.dir"), "spyd2en" + exe_ext), ["-v"]
+			cmd, args = self.get_argyll_util("spyd2en"), ["-v"]
 			result = self.exec_cmd(cmd, args, capture_output = True, skip_cmds = True, silent = True)
 			if result:
 				InfoDialog(self, msg = self.getlstr("enable_spyder2_success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
@@ -4049,7 +4058,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		cmd, args = self.prepare_colprof(os.path.basename(os.path.splitext(dst_path)[0]), display_name)
 		result = self.exec_cmd(cmd, args, capture_output = "-as" in self.options_colprof and self.argyll_version <= [1, 0, 4], low_contrast = False, skip_cmds = skip_cmds)
 		self.wrapup(result, dst_path = dst_path)
-		if "-as" in self.options_colprof: safe_print(self.getlstr("success") if result else self.getlstr("aborted"))
+		if "-as" in self.options_colprof and self.argyll_version <= [1, 0, 4]: safe_print(self.getlstr("success") if result else self.getlstr("aborted"))
 		if result:
 			try:
 				profile = ICCP.ICCProfile(dst_path)
@@ -4405,6 +4414,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, "", size = (320, -1), style = wx.TE_PASSWORD)
 					dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, flag = wx.TOP | wx.ALIGN_LEFT, border = 12)
 					dlg.ok.SetDefault()
+					dlg.pwd_txt_ctrl.SetFocus()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
 					n = 0
@@ -4412,6 +4422,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						result = dlg.ShowModal()
 						pwd = dlg.pwd_txt_ctrl.GetValue()
 						if result != wx.ID_OK:
+							safe_print(self.getlstr("aborted"), fn = fn)
 							return None
 						sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.PIPE)
 						if sudoproc.poll() is None:
@@ -4826,9 +4837,9 @@ class DisplayCalibratorGUI(wx.Frame):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				if debug: safe_print("profile_finish: install_profile...")
+				safe_print("-" * 80)
+				safe_print(self.getlstr("profile.install"))
 				self.install_profile(capture_output = True, profile_path = profile_path, skip_cmds = skip_cmds)
-				if debug: safe_print("...profile_finish: install_profile")
 			elif preview:
 				if self.getcfg("calibration.file"):
 					self.load_cal(silent = True) # load LUT curves from last used .cal file
@@ -7071,12 +7082,6 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.tcframe.preview.Thaw()
 		self.tc_set_default_status()
 
-	def OnDropFiles(self, x, y, filenames):
-		safe_print(filenames)
-
-	def dummy(self, *args, **kwargs):
-		pass
-
 	def set_default_testchart(self, alert = True, force = False):
 		path = self.getcfg("testchart.file")
 		if os.path.basename(path) in self.app.dist_testchart_names:
@@ -7200,6 +7205,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			"dispread": ["argyll-dispread", "dispread-argyll", "dispread"],
 			"colprof": ["argyll-colprof", "colprof-argyll", "colprof"],
 			"dispwin": ["argyll-dispwin", "dispwin-argyll", "dispwin"],
+			"spyd2en": ["argyll-spyd2en", "spyd2en-argyll", "spyd2en"],
 			"targen": ["argyll-targen", "targen-argyll", "targen"]
 		}
 		if not check_dir:
@@ -7211,7 +7217,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			exe = which(altname + exe_ext)
 			if exe:
 				found = exe
-				break
+				if (not check_dir or check_dir == os.path.dirname(exe)):
+					break
 		if check_dir and not found:
 			putenv("PATH", path)
 		return found
@@ -7230,13 +7237,14 @@ class DisplayCalibratorGUI(wx.Frame):
 			"dispread",
 			"colprof",
 			"dispwin",
+			"spyd2en",
 			"targen"
 		]
 		if check_dir:
 			putenv("PATH", check_dir)
 		else:
 			check_dir = self.getcfg("argyll.dir")
-			if not check_dir in path.split(os.pathsep):
+			if check_dir and not check_dir in path.split(os.pathsep):
 				putenv("PATH", os.pathsep.join([check_dir, path]))
 		prev_dir = None
 		for name in names:
@@ -7255,8 +7263,10 @@ class DisplayCalibratorGUI(wx.Frame):
 					return False
 			else:
 				prev_dir = cur_dir
-		if not check_dir in path.split(os.pathsep):
+		if check_dir and not check_dir in path.split(os.pathsep):
 			putenv("PATH", os.pathsep.join([check_dir, path]))
+		elif os.getenv("PATH", os.defpath) != path:
+			putenv("PATH", path)
 		if self.getcfg("argyll.dir") != cur_dir:
 			self.setcfg("argyll.dir", cur_dir)
 		if debug: safe_print(" PATH:\n ", "\n  ".join(os.getenv("PATH").split(os.pathsep)))
@@ -7322,6 +7332,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			for line in ti3_lines:
 				line = line.strip()
 				if line == "CAL":
+					line = "CAL    " # Make sure CGATS file identifiers are always a minimum of 7 characters
 					cal_found = True
 				if cal_found:
 					cal_lines += [line]
@@ -8200,3 +8211,4 @@ if __name__ == "__main__":
 		main()
 	except Exception, exception:
 		handle_error(traceback.format_exc())
+		logging.shutdown()
