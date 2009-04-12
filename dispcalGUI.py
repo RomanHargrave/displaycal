@@ -50,7 +50,7 @@ import traceback
 Decimal = decimal.Decimal
 from StringIO import StringIO
 from thread import start_new_thread
-from time import gmtime, sleep, strftime, time, timezone
+from time import gmtime, localtime, sleep, strftime, time, timezone
 
 # 3rd party modules
 import demjson
@@ -284,20 +284,49 @@ def log(msg, fn = None):
 def setup_logging():
 	logdir = os.path.join(datahome, "logs")
 	logfile = os.path.join(logdir, appname + ".log")
+	backupCount = 5
 	if not os.path.exists(logdir):
 		os.makedirs(logdir)
 	if os.path.exists(logfile):
-		ctime = os.stat(logfile).st_ctime
-	else:
-		ctime = time()
+		mtime = localtime(os.stat(logfile).st_mtime)
+		if localtime()[:3] > mtime[:3]:
+			logbackup = logfile + strftime(".%Y-%m-%d", mtime)
+			if os.path.exists(logbackup):
+				try:
+					os.remove(logbackup)
+				except:
+					pass
+			try:
+				os.rename(logfile, logbackup)
+			except:
+				pass
+			# adapted from Python 2.6 
+			# logging.handlers.TimedRotatingFileHandler.getFilesToDelete
+			extMatch = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+			dirName, baseName = os.path.split(logfile)
+			fileNames = os.listdir(dirName)
+			result = []
+			prefix = baseName + "."
+			plen = len(prefix)
+			for fileName in fileNames:
+				if fileName[:plen] == prefix:
+					suffix = fileName[plen:]
+					if extMatch.match(suffix):
+						result.append(os.path.join(dirName, fileName))
+			result.sort()
+			if len(result) > backupCount:
+				for s in result[:len(result) - backupCount]:
+					try:
+						os.remove(s)
+					except:
+						pass
 	logger = logging.getLogger()
 	logger.setLevel(logging.DEBUG)
-	filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount = 5)
+	filehandler = logging.handlers.TimedRotatingFileHandler(logfile, 
+		when = "midnight", backupCount = backupCount)
 	fileformatter = logging.Formatter("%(asctime)s %(message)s")
 	filehandler.setFormatter(fileformatter)
 	logger.addHandler(filehandler)
-	if gmtime()[:3] > gmtime(ctime)[:3]:
-		filehandler.doRollover()
 	log("=" * 80)
 	streamhandler = globalconfig["logging.StreamHandler"] = \
 	   logging.StreamHandler(globalconfig["log"])
@@ -8169,120 +8198,120 @@ def xte_sendkeys(delay = 0, windowname = "", keys = ""):
 		if verbose >= 1: safe_print("Exception in xte_sendkeys:", exception)
 
 def main():
-	setup_logging()
-	if verbose >= 1: safe_print(appname + runtype, version, "build", build)
-	if debug: safe_print("Entering main()...")
-	# read pre-v0.2.2b configuration if present
-	oldcfg = os.path.join(os.path.expanduser("~"), "Library", "Preferences", appname + " Preferences") if sys.platform == "darwin" else os.path.join(os.path.expanduser("~"), "." + appname)
-	if not os.path.exists(confighome):
-		os.makedirs(confighome)
-	if not os.path.exists(os.path.join(confighome, appname + ".ini")):
-		try:
-			if os.path.isfile(oldcfg):
-				oldcfg_file = open(oldcfg, "rb")
-				oldcfg_contents = oldcfg_file.read()
-				oldcfg_file.close()
-				cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
-				cfg_file.write("[Default]\n" + oldcfg_contents)
-				cfg_file.close()
-			elif sys.platform == "win32":
-				key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Software\\" + appname)
-				numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-				cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
-				cfg_file.write("[Default]\n")
-				for i in range(numvalues):
-					name, value, type_ = _winreg.EnumValue(key, i)
-					if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, value)).encode("UTF-8"))
-				cfg_file.close()
-		except Exception, exception:
-			pass
-	# create main data storage dir
-	if not os.path.exists(storage):
-		os.makedirs(storage)
-	if sys.platform not in ("darwin", "win32"):
-		# Linux: try and fix v0.2.1b calibration loader, because calibrationloader.sh is no longer present in v0.2.2b+
-		desktopfile_name = appname + "-Calibration-Loader-Display-"
-		if os.path.exists(autostart_home):
-			for filename in os.listdir(autostart_home):
-				if filename.startswith(desktopfile_name):
-					try:
-						desktopfile_path = os.path.join(autostart_home, filename)
-						cfg = ConfigParser.SafeConfigParser()
-						cfg.optionxform = str
-						cfg.read([desktopfile_path])
-						exec_ = cfg.get("Desktop Entry", "Exec")
-						if exec_.find("calibrationloader.sh") > -1:
-							cfg.set("Desktop Entry", "Exec", re.sub('"[^"]*calibrationloader.sh"\s*', '', exec_, 1))
-							cfgstorage = StringIO()
-							cfg.write(cfgstorage)
-							desktopfile = open(desktopfile_path, "w")
-							cfgstorage.seek(0)
-							desktopfile.write(cfgstorage.read().replace(" = ", "="))
-							desktopfile.close()
-					except Exception, exception:
-						pass
-	# make sure we run inside a terminal
-	if not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty() or "-oc" in sys.argv:
-		terminals_opts = {
-			"Terminal": "-x",
-			"gnome-terminal": "-e",
-			"konsole": "-e",
-			"xterm": "-e"
-		}
-		terminals = terminals_opts.keys()
-		if isapp:
-			me = os.path.join(exedir, pyname)
-			cmd = '"%s"' % me
-			cwd = None
-		elif isexe:
-			me = sys.executable
-			cmd = '"%s"' % me
-			cwd = None
-		else:
-			me = pypath
-			exe = sys.executable
-			if os.path.basename(exe) == "pythonw" + exe_ext:
-				exe = os.path.join(os.path.dirname(exe), "python" + exe_ext)
-			cmd = '"%s" "%s"' % (exe, pypath)
-			cwd = pydir
-		if sys.platform == "win32":
-			cmd = 'start "%s" %s' % (appname, cmd)
-			if debug: safe_print(cmd)
-			retcode = sp.call(cmd.encode(fs_enc), shell = True, cwd = None if cwd is None else cwd.encode(fs_enc))
-		elif sys.platform == "darwin":
-			if debug: safe_print(cmd)
-			retcode = mac_terminal_do_script(cmd)
-		else:
-			stdout = tempfile.SpooledTemporaryFile()
-			retcode = None
-			for terminal in terminals:
-				if which(terminal):
-					if debug: safe_print('%s %s %s' % (terminal, terminals_opts[terminal], cmd))
-					stdout.write('%s %s %s' % (terminal, terminals_opts[terminal], cmd))
-					retcode = sp.call([terminal, terminals_opts[terminal]] + cmd.encode(fs_enc).strip('"').split('" "'), stdout = stdout, stderr = sp.STDOUT, cwd = None if cwd is None else cwd.encode(fs_enc))
-					stdout.write('\n\n')
-					break
-			stdout.seek(0)
-		if retcode != 0:
-			globalconfig["app"] = app = wx.App(redirect = False)
-			if sys.platform == "win32":
-				msg = u'Even though %s is a GUI application, it needs to be run from a command prompt. An attempt to automatically launch the command prompt failed.' % me
-			elif sys.platform == "darwin":
-				msg = u'Even though %s is a GUI application, it needs to be run from Terminal. An attempt to automatically launch Terminal failed.' % me
-			else:
-				if retcode == None:
-					msg = u'Even though %s is a GUI application, it needs to be run from a terminal. An attempt to automatically launch a terminal failed, because none of those known seem to be installed (%s).' % (me, ", ".join(terminals))
-				else:
-					msg = u'Even though %s is a GUI application, it needs to be run from a terminal. An attempt to automatically launch a terminal failed:\n\n%s' % (me, unicode(stdout.read(), enc, "replace"))
-			dlg = handle_error(msg)
-	else:
-		init_languages()
-		globalconfig["app"] = app = DisplayCalibrator(redirect = False) # DON'T redirect stdin/stdout
-		app.MainLoop()
-
-if __name__ == "__main__":
 	try:
-		main()
+		setup_logging()
+		if verbose >= 1: safe_print(appname + runtype, version, "build", build)
+		if debug: safe_print("Entering main()...")
+		# read pre-v0.2.2b configuration if present
+		oldcfg = os.path.join(os.path.expanduser("~"), "Library", "Preferences", appname + " Preferences") if sys.platform == "darwin" else os.path.join(os.path.expanduser("~"), "." + appname)
+		if not os.path.exists(confighome):
+			os.makedirs(confighome)
+		if not os.path.exists(os.path.join(confighome, appname + ".ini")):
+			try:
+				if os.path.isfile(oldcfg):
+					oldcfg_file = open(oldcfg, "rb")
+					oldcfg_contents = oldcfg_file.read()
+					oldcfg_file.close()
+					cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
+					cfg_file.write("[Default]\n" + oldcfg_contents)
+					cfg_file.close()
+				elif sys.platform == "win32":
+					key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Software\\" + appname)
+					numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+					cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
+					cfg_file.write("[Default]\n")
+					for i in range(numvalues):
+						name, value, type_ = _winreg.EnumValue(key, i)
+						if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, value)).encode("UTF-8"))
+					cfg_file.close()
+			except Exception, exception:
+				pass
+		# create main data storage dir
+		if not os.path.exists(storage):
+			os.makedirs(storage)
+		if sys.platform not in ("darwin", "win32"):
+			# Linux: try and fix v0.2.1b calibration loader, because calibrationloader.sh is no longer present in v0.2.2b+
+			desktopfile_name = appname + "-Calibration-Loader-Display-"
+			if os.path.exists(autostart_home):
+				for filename in os.listdir(autostart_home):
+					if filename.startswith(desktopfile_name):
+						try:
+							desktopfile_path = os.path.join(autostart_home, filename)
+							cfg = ConfigParser.SafeConfigParser()
+							cfg.optionxform = str
+							cfg.read([desktopfile_path])
+							exec_ = cfg.get("Desktop Entry", "Exec")
+							if exec_.find("calibrationloader.sh") > -1:
+								cfg.set("Desktop Entry", "Exec", re.sub('"[^"]*calibrationloader.sh"\s*', '', exec_, 1))
+								cfgstorage = StringIO()
+								cfg.write(cfgstorage)
+								desktopfile = open(desktopfile_path, "w")
+								cfgstorage.seek(0)
+								desktopfile.write(cfgstorage.read().replace(" = ", "="))
+								desktopfile.close()
+						except Exception, exception:
+							pass
+		# make sure we run inside a terminal
+		if not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty() or "-oc" in sys.argv:
+			terminals_opts = {
+				"Terminal": "-x",
+				"gnome-terminal": "-e",
+				"konsole": "-e",
+				"xterm": "-e"
+			}
+			terminals = terminals_opts.keys()
+			if isapp:
+				me = os.path.join(exedir, pyname)
+				cmd = '"%s"' % me
+				cwd = None
+			elif isexe:
+				me = sys.executable
+				cmd = '"%s"' % me
+				cwd = None
+			else:
+				me = pypath
+				exe = sys.executable
+				if os.path.basename(exe) == "pythonw" + exe_ext:
+					exe = os.path.join(os.path.dirname(exe), "python" + exe_ext)
+				cmd = '"%s" "%s"' % (exe, pypath)
+				cwd = pydir
+			if sys.platform == "win32":
+				cmd = 'start "%s" %s' % (appname, cmd)
+				if debug: safe_print(cmd)
+				retcode = sp.call(cmd.encode(fs_enc), shell = True, cwd = None if cwd is None else cwd.encode(fs_enc))
+			elif sys.platform == "darwin":
+				if debug: safe_print(cmd)
+				retcode = mac_terminal_do_script(cmd)
+			else:
+				stdout = tempfile.SpooledTemporaryFile()
+				retcode = None
+				for terminal in terminals:
+					if which(terminal):
+						if debug: safe_print('%s %s %s' % (terminal, terminals_opts[terminal], cmd))
+						stdout.write('%s %s %s' % (terminal, terminals_opts[terminal], cmd))
+						retcode = sp.call([terminal, terminals_opts[terminal]] + cmd.encode(fs_enc).strip('"').split('" "'), stdout = stdout, stderr = sp.STDOUT, cwd = None if cwd is None else cwd.encode(fs_enc))
+						stdout.write('\n\n')
+						break
+				stdout.seek(0)
+			if retcode != 0:
+				globalconfig["app"] = app = wx.App(redirect = False)
+				if sys.platform == "win32":
+					msg = u'Even though %s is a GUI application, it needs to be run from a command prompt. An attempt to automatically launch the command prompt failed.' % me
+				elif sys.platform == "darwin":
+					msg = u'Even though %s is a GUI application, it needs to be run from Terminal. An attempt to automatically launch Terminal failed.' % me
+				else:
+					if retcode == None:
+						msg = u'Even though %s is a GUI application, it needs to be run from a terminal. An attempt to automatically launch a terminal failed, because none of those known seem to be installed (%s).' % (me, ", ".join(terminals))
+					else:
+						msg = u'Even though %s is a GUI application, it needs to be run from a terminal. An attempt to automatically launch a terminal failed:\n\n%s' % (me, unicode(stdout.read(), enc, "replace"))
+				dlg = handle_error(msg)
+		else:
+			init_languages()
+			globalconfig["app"] = app = DisplayCalibrator(redirect = False) # DON'T redirect stdin/stdout
+			app.MainLoop()
 	except Exception, exception:
 		handle_error(traceback.format_exc())
 		logging.shutdown()
+
+if __name__ == "__main__":
+	main()
