@@ -5,13 +5,12 @@ if [ `whoami` = "root" ]; then
 else
 	prefix=${1:-$HOME/.local}
 fi
-echo "Removing $prefix/bin/dispcalGUI..."
-rm -f "$prefix/bin/dispcalGUI"
 if [ -e "$install_dir/setup.py" ]; then
-	# python install
-	echo "Removing $prefix/lib/python/site-packages/dispcalGUI..."
-	rm -f -r "$prefix/lib/python/site-packages/dispcalGUI"
-	rm -f "$prefix/lib/python/site-packages/dispcalGUI-"*.egg-info
+	echo "Uninstalling dispcalGUI..."
+	"$prefix/bin/python" "$install_dir/setup.py" uninstall
+else
+	echo "Removing $prefix/bin/dispcalGUI..."
+	rm -f "$prefix/bin/dispcalGUI"
 fi
 echo "Removing $prefix/share/dispcalGUI..."
 rm -f -r "$prefix/share/dispcalGUI"

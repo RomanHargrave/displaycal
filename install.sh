@@ -7,10 +7,8 @@ else
 fi
 echo "Installing dispcalGUI to $prefix/bin..."
 if [ -e "$install_dir/setup.py" ]; then
-	# python install
 	"$prefix/bin/python" "$install_dir/setup.py" install
 else
-	# binary install
 	if [ "$prefix" = "$HOME/.local" ]; then
 		mkdir -p "$HOME/bin"
 		cp -f "$install_dir/dispcalGUI" "$HOME/bin"
