@@ -53,8 +53,8 @@ else:
 
 	if not '--help' in sys.argv[1:] and not '--help-commands' in sys.argv[1:]:
 		call([sys.executable, "setup.py"] + sys.argv[1:] + 
-			["--install-platlib=%s" % pkg_prefix] if "install" in sys.argv[1:] or 
-			"install_lib" in sys.argv[1:] else [], 
+			(["--install-platlib=%s" % pkg_prefix] if "install" in sys.argv[1:] or 
+			"install_lib" in sys.argv[1:] else []), 
 			cwd = os.path.join(os.path.dirname(__file__), "RealDisplaySizeMM"))
 		try:
 			import demjson
