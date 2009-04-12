@@ -6,7 +6,7 @@ from safe_print import safe_print
 
 os.environ['PYTHONPATH'] = os.path.dirname(sys.executable)
 
-pypath = os.path.abspath(sys.argv[0])
+pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 pyver_str = sys.version.split()[0]
 pyver = map(int, pyver_str.split("."))
@@ -16,7 +16,7 @@ pyi = "pyinstaller"
 try:
 	import RealDisplaySizeMM
 except ImportError:
-	retcode = sp.call([sys.executable, "setup.py", "install"], cwd = "RealDisplaySizeMM")
+	retcode = sp.call([sys.executable, "setup.py", "install", "--install-platlib=%s" % pydir], cwd = "RealDisplaySizeMM")
 	if retcode != 0:
 		sys.exit(retcode)
 
@@ -84,18 +84,19 @@ if sys.platform == "darwin": # mac os x
 		f.close()
 
 	# run py2applet
-	args = ["py2applet", "--make-setup", "dispcalGUI.py", "lang", "presets", "test.cal", "theme", "ti1", os.path.join("theme", "icons", "dispcalGUI.icns"), "Info.plist"]
+	# args = ["py2applet", "--make-setup", "dispcalGUI.py", "lang", "presets", "test.cal", "theme", "ti1", os.path.join("theme", "icons", "dispcalGUI.icns"), "Info.plist"]
+	args = ["py2applet", , "dispcalGUI.py", "lang", "presets", "test.cal", "theme", "ti1", os.path.join("theme", "icons", "dispcalGUI.icns"), "Info.plist"]
 	safe_print(*args)
 	retcode = sp.call(args)
 	if retcode != 0:
 		sys.exit(retcode)
 
 	# run py2app
-	args = [sys.executable, "setup.py", "py2app", "-O2"]
-	safe_print(*args)
-	retcode = sp.call(args)
-	if retcode != 0:
-		sys.exit(retcode)
+	# args = [sys.executable, "setup.py", "py2app", "-O2"]
+	# safe_print(*args)
+	# retcode = sp.call(args)
+	# if retcode != 0:
+		# sys.exit(retcode)
 
 else: # linux / windows
 
@@ -107,10 +108,10 @@ else: # linux / windows
 
 		build_loaders = False
 		if sys.platform != "win32": # linux
-			retcode = sp.call([sys.executable, "Make.py"], cwd = os.path.join(os.path.dirname(sys.argv[0]), pyi, "source", "linux"))
+			retcode = sp.call([sys.executable, "Make.py"], cwd = os.path.join(pydir, pyi, "source", "linux"))
 			if retcode != 0:
 				sys.exit(retcode)
-			retcode = sp.call(["make"], cwd = os.path.join(os.path.dirname(sys.argv[0]), pyi, "source", "linux"))
+			retcode = sp.call(["make"], cwd = os.path.join(pydir, pyi, "source", "linux"))
 			if retcode != 0:
 				sys.exit(retcode)
 		else:
@@ -133,35 +134,35 @@ else: # linux / windows
 				"run_7rw.exe"
 			]
 			for bootloader in bootloaders:
-				if not os.path.exists(os.path.join(os.path.dirname(sys.argv[0]), pyi, "support", "loader", bootloader)):
+				if not os.path.exists(os.path.join(pydir, pyi, "support", "loader", bootloader)):
 					build_loaders = True
 					break
 
 		if build_loaders:
 			# run SCons to create the bootloaders then configure PyInstaller
-			retcode = sp.call([os.path.join(os.path.dirname(sys.argv[0]), pyi, "make-win.cmd"), sys.executable, "x64" if platform.architecture()[0] == "64bit" else "x86"], cwd = os.path.join(os.path.dirname(sys.argv[0]), pyi))
+			retcode = sp.call([os.path.join(pydir, pyi, "make-win.cmd"), sys.executable, "x64" if platform.architecture()[0] == "64bit" else "x86"], cwd = os.path.join(pydir, pyi))
 			if retcode != 0:
 				sys.exit(retcode)
 		else:
 			# configure PyInstaller
-			retcode = sp.call([sys.executable, "Configure.py"], cwd = os.path.join(os.path.dirname(sys.argv[0]), pyi))
+			retcode = sp.call([sys.executable, "Configure.py"], cwd = os.path.join(pydir, pyi))
 			if retcode != 0:
 				sys.exit(retcode)
 
 		if "--makespec" in sys.argv:
 			# make spec file. ONLY USE AS TEMPLATE!
 			if sys.platform == "win32":
-				retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Makespec.py"), "-F", "-X", "-o", ".\\", "--icon=" + os.path.join("theme", "icons", "dispcalGUI.ico"), "-v", "winversion.txt", "-n", dist_dir, "dispcalGUI.py"])
+				retcode = sp.call([sys.executable, os.path.join(pydir, pyi, "Makespec.py"), "-F", "-X", "-o", ".\\", "--icon=" + os.path.join("theme", "icons", "dispcalGUI.ico"), "-v", "winversion.txt", "-n", dist_dir, "dispcalGUI.py"])
 			else:
-				retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Makespec.py"), "-F", "-s", "-X", "-o", "./", "-n", dist_dir, "./dispcalGUI.py"])
+				retcode = sp.call([sys.executable, os.path.join(pydir, pyi, "Makespec.py"), "-F", "-s", "-X", "-o", "./", "-n", dist_dir, "./dispcalGUI.py"])
 			if retcode != 0:
 				sys.exit(retcode)
 
 		# build executable
 		if sys.platform == "win32":
-			retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Build.py"), "dispcalGUI-pyi--onefile.spec"])
+			retcode = sp.call([sys.executable, os.path.join(pydir, pyi, "Build.py"), "dispcalGUI-pyi--onefile.spec"])
 		else:
-			retcode = sp.call([sys.executable, os.path.join(os.path.dirname(sys.argv[0]), pyi, "Build.py"), "./dispcalGUI-pyi--onefile.spec"])
+			retcode = sp.call([sys.executable, os.path.join(pydir, pyi, "Build.py"), "./dispcalGUI-pyi--onefile.spec"])
 		if retcode != 0:
 			sys.exit(retcode)
 	

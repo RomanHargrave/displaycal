@@ -20,7 +20,7 @@ def _setup():
 			libraries = ['Xinerama', 'Xrandr', 'Xxf86vm'], 
 			define_macros=[('UNIX', None)])
 	setup(
-		author = 'Florian Höch (adapted from C code of the open-source color management system Argyll CMS by Graeme W. Gill)',
+		author = 'Florian HÃ¶ch (adapted from C code of the open-source color management system Argyll CMS by Graeme W. Gill)',
 		author_email = 'fh@hoech.net',
 		license = 'GPL v3',
 		platforms = ['Linux/Unix with X11', 'Mac OS X', 'Windows 2000 and newer'],

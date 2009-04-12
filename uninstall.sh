@@ -1,34 +1,21 @@
+install_dir=`dirname "$0"`
 if [ `whoami` = "root" ]; then
 	prefix=${1:-/usr/local}
 	XDG_DATA_DIRS=$prefix/share/:${XDG_DATA_DIRS:-/usr/local/share/:/usr/share/}
 else
 	prefix=${1:-$HOME/.local}
 fi
-echo "Uninstalling binary from $prefix/bin..."
+echo "Removing $prefix/bin/dispcalGUI..."
 rm -f "$prefix/bin/dispcalGUI"
-if [ ! -x "$install_dir/dispcalGUI" ]; then
+if [ -e "$install_dir/setup.py" ]; then
 	# python install
-	echo "Uninstalling python modules from $prefix/lib/python/site-packages..."
-	rm -f "$prefix/lib/python/site-packages/RealDisplaySizeMM.so"
-	rm -f "$prefix/lib/python/site-packages/argyllRGB2XYZ.py"*
-	rm -f "$prefix/lib/python/site-packages/argyll_instruments.py"*
-	rm -f "$prefix/lib/python/site-packages/CGATS.py"*
-	rm -f "$prefix/lib/python/site-packages/colormath.py"*
-	rm -f "$prefix/lib/python/site-packages/demjson.py"*
-	rm -f "$prefix/lib/python/site-packages/ICCProfile.py"*
-	rm -f "$prefix/lib/python/site-packages/natsort.py"*
-	rm -f "$prefix/lib/python/site-packages/pyi_md5pickuphelper.py"*
-	rm -f "$prefix/lib/python/site-packages/safe_print.py"*
-	rm -f "$prefix/lib/python/site-packages/subprocess26.py"*
-	rm -f "$prefix/lib/python/site-packages/tempfile26.py"*
-	rm -f "$prefix/lib/python/site-packages/trash.py"*
-	rm -f "$prefix/lib/python/site-packages/RealDisplaySizeMM-"*.egg-info
-	rm -f "$prefix/lib/python/site-packages/demjson-"*.egg-info
-	rm -f "$prefix/lib/python/site-packages/dispcalGUI_py_dependencies-"*.egg-info
+	echo "Removing $prefix/lib/python/site-packages/dispcalGUI..."
+	rm -f -r "$prefix/lib/python/site-packages/dispcalGUI"
+	rm -f "$prefix/lib/python/site-packages/dispcalGUI-"*.egg-info
 fi
-echo "Uninstalling files from $prefix/share/dispcalGUI..."
+echo "Removing $prefix/share/dispcalGUI..."
 rm -f -r "$prefix/share/dispcalGUI"
-echo "Uninstalling documentation from $prefix/share/doc/dispcalGUI..."
+echo "Removing $prefix/share/doc/dispcalGUI..."
 rm -f -r "$prefix/share/doc/dispcalGUI"
 echo "Uninstalling desktop menu entry..."
 xdg-desktop-menu uninstall "$prefix/share/applications/dispcalGUI.desktop"

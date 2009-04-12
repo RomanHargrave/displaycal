@@ -101,7 +101,7 @@ StringIO.__init__ = StringIO__init__universal_newlines
 appname = "dispcalGUI"
 version = "v0.2.2b" # app version string
 
-pypath = os.path.abspath(sys.argv[0])
+pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 pyname, pyext = os.path.splitext(os.path.basename(pypath))
 exedir = os.path.dirname(sys.executable)

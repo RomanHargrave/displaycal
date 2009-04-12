@@ -5,34 +5,22 @@ if [ `whoami` = "root" ]; then
 else
 	prefix=${1:-$HOME/.local}
 fi
-mkdir -p "$prefix/bin"
-mkdir -p "$prefix/share/dispcalGUI"
 echo "Installing dispcalGUI to $prefix/bin..."
-if [ -x "$install_dir/dispcalGUI" ]; then
-	# binary install
-	cp -f "$install_dir/dispcalGUI" "$prefix/bin"
-else
+if [ -e "$install_dir/setup.py" ]; then
 	# python install
-	echo '#!'$prefix'/bin/python'>"$prefix/bin/dispcalGUI"
-	sed -e '1d' "$install_dir/dispcalGUI.py">>"$prefix/bin/dispcalGUI"
-	chmod +x "$prefix/bin/dispcalGUI"
-	echo "Installing required python modules..."
-	cd "$install_dir/RealDisplaySizeMM"
-	"$prefix/bin/python" setup.py install --prefix=$prefix
-	cd ../demjson
-	"$prefix/bin/python" setup.py install --prefix=$prefix
-	cd ..
-	"$prefix/bin/python" setup_py_dependencies.py install --prefix=$prefix
-	echo "Installing presets to $prefix/share/dispcalGUI/presets..."
-	cp -f -r "$install_dir/presets" "$prefix/share/dispcalGUI"
-	echo "Installing theme files to $prefix/share/dispcalGUI/theme..."
-	cp -f -r "$install_dir/theme" "$prefix/share/dispcalGUI"
-	echo "Installing testchart files to $prefix/share/dispcalGUI/ti1..."
-	cp -f -r "$install_dir/ti1" "$prefix/share/dispcalGUI"
-	echo "Installing test.cal to $prefix/share/dispcalGUI..."
-	cp -f "$install_dir/test.cal" "$prefix/share/dispcalGUI"
+	"$prefix/bin/python" "$install_dir/setup.py" install
+else
+	# binary install
+	if [ "$prefix" = "$HOME/.local" ]; then
+		mkdir -p "$HOME/bin"
+		cp -f "$install_dir/dispcalGUI" "$HOME/bin"
+	else
+		mkdir -p "$prefix/bin"
+		cp -f "$install_dir/dispcalGUI" "$prefix/bin"
+	fi
 fi
 echo "Installing language files to $prefix/share/dispcalGUI/lang..."
+mkdir -p "$prefix/share/dispcalGUI"
 cp -f -r "$install_dir/lang" "$prefix/share/dispcalGUI"
 echo "Installing documentation to $prefix/share/doc/dispcalGUI..."
 mkdir -p "$prefix/share/doc/dispcalGUI/theme/icons"

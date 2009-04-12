@@ -489,11 +489,11 @@
 				- <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a><br />
 				- <a href="http://sourceforge.net/projects/pywin32/">pywin32</a></p>
 				
-				<p>Note that starting with v0.2b, you need to build the RealDisplaySizeMM module before you can run the source code directly (or, <a href="#build">build the executable</a> which will also take care of it):</p>
+				<p>Note that starting with v0.2b, you need to build the RealDisplaySizeMM module before you can run from source (or, <a href="#build">build an executable</a> which will also take care of it):</p>
 			
 				<ol>
 					<li>Open a shell.</li>
-					<li><code>cd</code> into the dispcalGUI/RealDisplaySizeMM directory.</li>
+					<li><code>cd</code> into the RealDisplaySizeMM directory.</li>
 					<li>Run <code>python setup.py install</code></li>
 				</ol>
 			</div>
@@ -514,19 +514,35 @@
 		
 		<div id="install">
 			<h2>Installation</h2>
-		
-			<p>If you downloaded an executable release for your specific OS, you can start using it right away after installing/unpacking. On Linux, if you didn't or couldn't use the RPM file, you may also use the install.sh shellscript included in the zip file to install the executable and documentation to appropriate places on your system and add a menu entry to the desktop menu (for an user install a default prefix of <code>$HOME/.local</code> and for a root install a default prefix of <code>/usr/local</code> is used. You may also specify your own prefix by specifying it as argument to install.sh, e.g. <code>./install.sh /usr</code>).</p>
 			
-			<p>If you downloaded the source code release, and did not build from source, the main executable will not be 
-			there, instead there will be a python script called <code>dispcalGUI.py</code> which you 
-			can launch either via a shell using</p>
+			<h3>Linux RPM package</h3>
 			
-			<p><code>python &lt;your path to dispcalGUI.py&gt;</code></p>
+			<p>You may be able to install by opening the file directly (e.g. by double-clicking) in your file manager/desktop environment. The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
 			
-			<p>or, if your OS is configured to handle the <code>.py</code> extension automatically, by 
-			double-clicking it. There is also a <code>dispcalGUI.cmd</code> (for Windows), 
-			<code>dispcalGUI.sh</code> (for Linux) or <code>dispcalGUI.command</code> (Mac OS) file included which does the 
-			above.</p>
+			<h3>Linux executable package (ZIP)</h3>
+			
+			<p>Unpack and then simply run dispcalGUI from the created folder.</p>
+			
+			<h3>Mac OS X executable package (ZIP)</h3>
+			
+			<p>Unpack and then simply run dispcalGUI from the created folder. You may also drop the folder into your "Applications" directory and/or drag the application icon to the dock for easy access.</p>
+			
+			<h3>Windows executable installer</h3>
+			
+			<p>Launch the installer which will guide you trough the required setup steps.</p>
+			
+			<h3>Windows executable package (ZIP)</h3>
+			
+			<p>Unpack and then simply run dispcalGUI from the created folder.</p>
+			
+			<h3>Source code package (all platforms)</h3>
+			
+			<p>With the source code package you have the choice to run directly from source without installation or installing it first.</p>
+			
+			<p>To run directly from source (after satisfying the above <a href="#prerequisites-source">prerequisites</a>), you can launch dispcalGUI.py (on Linux, a <code>chmod +x dispcalGUI.py</code> might be necessary first).</p>
+			
+			<p>To install dispcalGUI to your python installation's site-packages directory, run <code>python setup.py install</code> from a shell. You may then launch dispcalGUI by running <code>dispcalGUI</code> from a shell under Linux and Mac OS X or use <code>&lt;your-python-installation-path&gt;\Scripts\dispcalGUI.cmd</code> on Windows.<br />
+			On Linux, you may alternatively use the included install.sh shellscript to install files to appropriate places on your system (on Linux, a <code>chmod +x install.sh</code> might be necessary first). For an user install a default prefix of <code>$HOME/.local</code> and for a root install a default prefix of <code>/usr/local</code> is used. You may also specify your own prefix by specifying it as argument to install.sh, e.g. <code>./install.sh /usr</code>. The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category.</p>
 		</div>
 		
 		<div id="concept">
@@ -837,6 +853,7 @@
 							Any old (pre v0.2.2b) configuration data is retained in the registry key <code>HKEY_CURRENT_USER\Software\dispcalGUI</code>.</li>
 							<li>chg: [build/src] (Windows) removed MS Visual C++ 2008 Redistributable DLLs from the source package. Users who build under Windows will have them anyway as they are installed with Python 2.6, so they are now copied directly from %SystemRoot%\WinSxS (Windows side-by-side assemblies) if possible.</li>
 							<li>chg: [build/src] <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a> is now a dependency on Windows when running or building from source.</li>
+							<li>chg: [build/src] made dispcalGUI a distutils package, so it can be installed via setup.py.</li>
 							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>$XDG_DATA_DIRS/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code>, <code>%COMMONAPPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current working directory (which is always searched first if it differs from the executable directory) and the executable directory (which is always searched last).</li>
 							<li>chg: better error handling. For unhandled exceptions, a message box is shown and an entry is written to the logfile.</li>
 							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>

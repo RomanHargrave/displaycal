@@ -1,1 +1,1 @@
-@python "%~dp0dispcalGUI.py"
+@python "%~dpn0"

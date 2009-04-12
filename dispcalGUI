@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import dispcalGUI
+try:
+	# running from source directly?
+	main = dispcalGUI.main
+except AttributeError:
+	# running from installed source?
+	from dispcalGUI.dispcalGUI import main
+
+main()
