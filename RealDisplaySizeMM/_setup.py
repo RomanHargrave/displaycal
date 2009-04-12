@@ -19,8 +19,16 @@ def _setup():
 			sources = ['RealDisplaySizeMM.c'], 
 			libraries = ['Xinerama', 'Xrandr', 'Xxf86vm'], 
 			define_macros=[('UNIX', None)])
-	setup(name = 'RealDisplaySizeMM', version='1.0',
+	setup(
+		author = 'Florian Höch (adapted from C code of the open-source color management system Argyll CMS by Graeme W. Gill)',
+		author_email = 'fh@hoech.net',
+		license = 'GPL v3',
+		platforms = ['Linux/Unix with X11', 'Mac OS X', 'Windows 2000 and newer'],
+		url = 'http://hoech.net/',
+		name = 'RealDisplaySizeMM', 
+		version='1.0',
 		description = 'Return the size (in mm) of a given display.',
+		long_description = 'Return the size (in mm) of a given display.',
 		ext_modules = [RealDisplaySizeMM])
 
 if __name__ == '__main__':
