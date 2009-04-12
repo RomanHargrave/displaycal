@@ -822,7 +822,7 @@
 							<li>fix: if the screen or instrument that was selected in a previous session is not available, select an available one.</li>
 							<li>fix: (Mac) the “enable spyder 2” menu item would not allow to select files other than “setup.exe”.</li>
 							<li>fix: [src] (Mac) if dispcalGUI was installed as application and then run from (separate) source, multiple copies where launched at certain occasions.</li>
-							<li>chg: when calibrating &amp; profiling, it is no longer necessary to recalibrate the instrument (and thus have to remove certain instruments like the i1 Pro from the screen, then re-attach) after display calibration and before measuring the test patches for profiling.</li>
+							<li>fix: selecting a different Argyll binary directory than the previous one now actually works.</li>
 							<li>chg: the previously empty entry at the top of the settings dropdown (settings which are not associated to a profile or .cal file) is now named “&lt;current settings&gt;”.</li>
 							<li>chg: changed settings which are associated to a profile or .cal file are now marked with a leading asterisk in the settings dropdown.</li>
 							<li>chg: default to a gamma of 2.4 (Argyll default).</li>
@@ -835,7 +835,6 @@
 							Any old (pre v0.2.2b) configuration data is retained in the file <code>~/Library/Preferences/dispcalGUI Preferences</code> and may be safely deleted after using v0.2.2b or newer for the first time.<br />
 							- On Windows, the configuration file is saved as <code>%APPDATA%\dispcalGUI\dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>%APPDATA%\dispcalGUI\storage\</code> by default, and logfiles into <code>%APPDATA%\dispcalGUI\logs\</code><br />
 							Any old (pre v0.2.2b) configuration data is retained in the registry key <code>HKEY_CURRENT_USER\Software\dispcalGUI</code>.</li>
-							<li>chg: most pop-up-messages are now also written to the terminal and a logfile.</li>
 							<li>chg: [build/src] (Windows) removed MS Visual C++ 2008 Redistributable DLLs from the source package. Users who build under Windows will have them anyway as they are installed with Python 2.6, so they are now copied directly from %SystemRoot%\WinSxS (Windows side-by-side assemblies) if possible.</li>
 							<li>chg: [build/src] <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a> is now a dependency on Windows when running or building from source.</li>
 							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>$XDG_DATA_DIRS/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code>, <code>%COMMONAPPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current working directory (which is always searched first if it differs from the executable directory) and the executable directory (which is always searched last).</li>
@@ -847,9 +846,9 @@
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
 							<li>add: unattended calibration and profiling for some instruments, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
 							<li>add: settings and related files can be deleted.</li>
-							<li>add: (Linux, Mac, Vista) profile install scope can be selected (attention: local system scope install is broken with Argyll 1.0.3 under Linux!).</li>
+							<li>add: (Linux, Mac, Vista) profile install scope can be selected (attention: local system scope install is broken with current Argyll versions under Linux!).</li>
 							<li>add: version and translation information in the about window.</li>
-							<li>add: projector mode when using Argyll CMS 1.1.0 Beta or newer with a spectrophotometer.</li>
+							<li>add: projector mode when using Argyll 1.1.0 Beta or newer with a spectrophotometer.</li>
 						</ul>
 					</dd>
 				<dt>2009-01-01</dt>

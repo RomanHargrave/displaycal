@@ -969,7 +969,7 @@ class InfoDialog(wx.Dialog):
 			self.bitmap = wx.StaticBitmap(self, -1, bitmap, size = (32, 32))
 			self.sizer1.Add(self.bitmap, flag = wx.RIGHT, border = margin)
 
-		if logit: safe_print(msg)
+		# if logit: safe_print(msg)
 		
 		self.sizer1.Add(self.sizer3, flag = wx.ALIGN_LEFT)
 		self.message = wx.StaticText(self, -1, wrap(msg))
@@ -1186,7 +1186,9 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.calpanel.SetScrollRate(0, 20)
 		self.update_controls(update_profile_name = False)
 		if verbose >= 1: safe_print(self.getlstr("success"))
-		self.check_displays_and_ports()
+		self.update_displays()
+		self.update_comports()
+		self.update_profile_name()
 		set_position(self, int(self.getcfg("position.x")), int(self.getcfg("position.y")))
 		wx.CallAfter(self.ShowAll)
 		if len(self.displays):
@@ -1718,16 +1720,6 @@ class DisplayCalibratorGUI(wx.Frame):
 						handle_error(traceback.format_exc(), parent = self)
 						if verbose >= 1 and not silent: safe_print(self.getlstr("failure"))
 					i += 1
-
-	def check_displays_and_ports(self):
-		self.update_displays()
-		self.update_comports()
-		self.update_profile_name()
-		if not len(self.displays):
-			return False
-		if not len(self.comports):
-			return False
-		return True
 
 	def init_gamapframe(self):
 		gamap = self.gamapframe = UndeletableFrame(self, -1, self.getlstr("gamapframe.title"), pos = (-1, 100), style = (wx.DEFAULT_FRAME_STYLE | wx.FRAME_NO_TASKBAR) & ~(wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX))
@@ -7274,7 +7266,13 @@ class DisplayCalibratorGUI(wx.Frame):
 		}
 		if not check_dir:
 			check_dir = self.getcfg("argyll.dir")
-		if check_dir and not check_dir in path.split(os.pathsep):
+		else:
+			check_dir = check_dir.rstrip(os.path.sep)
+		if check_dir:
+			if check_dir in path.split(os.pathsep):
+				path = path.split(os.pathsep)
+				path.remove(check_dir)
+				path = os.pathsep.join(path)
 			putenv("PATH", os.pathsep.join([check_dir, path]))
 		found = None
 		for altname in utils[name]:
@@ -7305,10 +7303,15 @@ class DisplayCalibratorGUI(wx.Frame):
 			"targen"
 		]
 		if check_dir:
+			check_dir = check_dir.rstrip(os.path.sep)
 			putenv("PATH", check_dir)
 		else:
 			check_dir = self.getcfg("argyll.dir")
-			if check_dir and not check_dir in path.split(os.pathsep):
+			if check_dir:
+				if check_dir in path.split(os.pathsep):
+					path = path.split(os.pathsep)
+					path.remove(check_dir)
+					path = os.pathsep.join(path)
 				putenv("PATH", os.pathsep.join([check_dir, path]))
 		prev_dir = None
 		for name in names:

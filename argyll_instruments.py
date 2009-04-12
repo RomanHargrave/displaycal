@@ -109,7 +109,13 @@ instruments = {
 		"sensor_cal": None,
 		"skip_sensor_cal_supported": None
 	},
-	"COM2": { # dummy instrument, just for testing
+	"COM1": { # dummy instrument, just for testing
+		"spectral_supported": True,
+		"high_res_supported": True,
+		"sensor_cal": True,
+		"skip_sensor_cal_supported": True
+	},
+	"/dev/ttyS0": { # dummy instrument, just for testing
 		"spectral_supported": True,
 		"high_res_supported": True,
 		"sensor_cal": True,
