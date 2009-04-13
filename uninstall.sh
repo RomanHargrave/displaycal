@@ -7,10 +7,14 @@ else
 fi
 if [ -e "$install_dir/setup.py" ]; then
 	echo "Uninstalling dispcalGUI..."
-	"$prefix/bin/python" "$install_dir/setup.py" uninstall
+	"$prefix/bin/python" "$install_dir/setup.py" uninstall --prefix=$prefix
 else
 	echo "Removing $prefix/bin/dispcalGUI..."
-	rm -f "$prefix/bin/dispcalGUI"
+	if [ "$prefix" = "$HOME/.local" ]; then
+		rm -f "$HOME/bin/dispcalGUI"
+	else
+		rm -f "$prefix/bin/dispcalGUI"
+	fi
 fi
 echo "Removing $prefix/share/dispcalGUI..."
 rm -f -r "$prefix/share/dispcalGUI"

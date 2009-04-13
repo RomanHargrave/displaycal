@@ -19,9 +19,7 @@ A graphical user interface for the Argyll CMS display calibration utilities.
 %setup -n dispcalGUI-src
 
 %build
-cd RealDisplaySizeMM
-/usr/bin/python setup.py build_ext
-cd ..
+/usr/bin/python setup.py build
 
 %install
 chmod +x install.sh
@@ -40,19 +38,7 @@ mv theme-readme theme
 %doc README.html
 %doc screenshots
 %doc theme
-/usr/lib/python/site-packages/RealDisplaySizeMM.so
-/usr/lib/python/site-packages/argyllRGB2XYZ.py
-/usr/lib/python/site-packages/argyll_instruments.py
-/usr/lib/python/site-packages/CGATS.py
-/usr/lib/python/site-packages/colormath.py
-/usr/lib/python/site-packages/demjson.py
-/usr/lib/python/site-packages/ICCProfile.py
-/usr/lib/python/site-packages/natsort.py
-/usr/lib/python/site-packages/pyi_md5pickuphelper.py
-/usr/lib/python/site-packages/safe_print.py
-/usr/lib/python/site-packages/subprocess26.py
-/usr/lib/python/site-packages/tempfile26.py
-/usr/lib/python/site-packages/trash.py
+/usr/lib/python/site-packages/dispcalGUI*
 /usr/share/dispcalGUI
 /usr/share/applications/dispcalGUI.desktop
 /usr/share/icons/hicolor/16x16/apps/dispcalGUI.png

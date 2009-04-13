@@ -5,10 +5,11 @@ if [ `whoami` = "root" ]; then
 else
 	prefix=${1:-$HOME/.local}
 fi
-echo "Installing dispcalGUI to $prefix/bin..."
 if [ -e "$install_dir/setup.py" ]; then
-	"$prefix/bin/python" "$install_dir/setup.py" install
+	echo "Installing dispcalGUI..."
+	"$prefix/bin/python" "$install_dir/setup.py" install --prefix=$prefix
 else
+	echo "Installing dispcalGUI to $prefix/bin..."
 	if [ "$prefix" = "$HOME/.local" ]; then
 		mkdir -p "$HOME/bin"
 		cp -f "$install_dir/dispcalGUI" "$HOME/bin"
@@ -16,10 +17,10 @@ else
 		mkdir -p "$prefix/bin"
 		cp -f "$install_dir/dispcalGUI" "$prefix/bin"
 	fi
+	echo "Installing language files to $prefix/share/dispcalGUI/lang..."
+	mkdir -p "$prefix/share/dispcalGUI"
+	cp -f -r "$install_dir/lang" "$prefix/share/dispcalGUI"
 fi
-echo "Installing language files to $prefix/share/dispcalGUI/lang..."
-mkdir -p "$prefix/share/dispcalGUI"
-cp -f -r "$install_dir/lang" "$prefix/share/dispcalGUI"
 echo "Installing documentation to $prefix/share/doc/dispcalGUI..."
 mkdir -p "$prefix/share/doc/dispcalGUI/theme/icons"
 cp -f -r "$install_dir/LICENSE.txt" "$install_dir/README.html" "$install_dir/screenshots" "$prefix/share/doc/dispcalGUI"

@@ -85,7 +85,7 @@ if sys.platform == "darwin": # mac os x
 
 	# run py2applet
 	# args = ["py2applet", "--make-setup", "dispcalGUI.py", "lang", "presets", "test.cal", "theme", "ti1", os.path.join("theme", "icons", "dispcalGUI.icns"), "Info.plist"]
-	args = ["py2applet", , "dispcalGUI.py", "lang", "presets", "test.cal", "theme", "ti1", os.path.join("theme", "icons", "dispcalGUI.icns"), "Info.plist"]
+	args = ["py2applet", "dispcalGUI.py", "lang", "presets", "test.cal", "theme", "ti1", os.path.join("theme", "icons", "dispcalGUI.icns"), "Info.plist"]
 	safe_print(*args)
 	retcode = sp.call(args)
 	if retcode != 0:

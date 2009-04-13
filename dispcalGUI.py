@@ -34,6 +34,7 @@ import ConfigParser
 ConfigParser.DEFAULTSECT = "Default"
 import codecs
 import decimal
+from distutils.sysconfig import get_python_lib
 import getpass
 import locale
 import logging
@@ -173,12 +174,14 @@ else:
 		datahome = os.path.join(xdg_data_home, appname)
 		data_dirs += [datahome]
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
+		data_dirs += [os.path.join(get_python_lib(plat_specific = True), appname)]
 		iccprofiles = os.path.join(xdg_data_dirs[0], "color", "icc", 
 			"devices", "display")
 		iccprofiles_home = os.path.join(xdg_data_home, "color", "icc", 
 			"devices", "display")
 	exe_ext = ""
 	profile_ext = ".icc"
+data_dirs += [os.path.join(get_python_lib(), appname)]
 if isapp:
 	data_dirs += [os.path.join(pydir, "..", "..", "..")]
 	runtype = ".app"
