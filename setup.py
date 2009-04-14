@@ -11,6 +11,18 @@ import tempfile
 
 from distutils.sysconfig import get_python_lib
 
+from ez_setup import use_setuptools
+use_setuptools()
+
+try:
+	import setuptools
+	from setuptools import setup, Extension
+	print "using setuptools"
+except ImportError:
+	setuptools = None
+	from distutils.core import setup, Extension
+	print "using distutils"
+
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
@@ -39,9 +51,8 @@ for arg in sys.argv[1:]:
 if not prefix:
 	if sys.platform == "win32":
 		if "--user" in sys.argv[1:]:
-			appdata = os.path.relpath(os.getenv("APPDATA"), os.path.expanduser("~"))
-			prefix = os.path.join(os.path.expanduser("~"), appdata, "Python", 
-				"Python" + sys.version[:3]) # using sys.version in this way is consistent with setuptools
+			prefix = os.path.join(os.getenv("APPDATA"), "Python", 
+				"Python" + sys.version[0] + sys.version[2]) # using sys.version in this way is consistent with setuptools
 		else:
 			prefix = sys.prefix
 	elif sys.platform == "darwin" and not "--user" in sys.argv[1:]:
@@ -63,7 +74,10 @@ if not prefix:
 
 if not scripts:
 	if sys.platform == "win32": #in ("darwin", "win32"):
-		script_prefix = prefix
+		if "--user" in sys.argv[1:]:
+			script_prefix = os.path.join(os.getenv("APPDATA"), "Python")
+		else:
+			script_prefix = prefix
 	else:
 		# Linux/Unix
 		script_prefix = prefix
@@ -82,10 +96,20 @@ if not scripts:
 if sys.platform == "win32" or (sys.platform == "darwin" and not "--user" in sys.argv[1:]): # in ("darwin", "win32"):
 	if "--user" in sys.argv[1:] or prefix != sys.prefix:
 		pkg_prefix = os.path.join(prefix, "site-packages")
+		if sys.platform == "win32" and not share_prefix:
+			share_prefix = os.getenv("APPDATA")
+			# if setuptools:
+				# share_prefix = os.path.join(pkg_prefix, "%(name)s-%(version)s-py%(pyver)s-win32.egg" % {
+					# "name": name, 
+					# "version": version, 
+					# "pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
+				# })
+			# else:
+				# share_prefix = pkg_prefix
 	else:
 		pkg_prefix = get_python_lib()
-	if not share_prefix:
-		share_prefix = pkg_prefix
+		if not share_prefix:
+			share_prefix = pkg_prefix
 	share = os.path.join(share_prefix, name)
 	doc = share # install doc files to package dir
 else:
@@ -143,6 +167,13 @@ if "uninstall" in sys.argv[1:]:
 	paths += [os.path.join(scripts, name)]
 	if sys.platform == "win32":
 		paths += [os.path.join(scripts, name + ".cmd")]
+	if share != pkg:
+		paths += [os.path.join(share, fname) for fname in [
+				"LICENSE.txt",
+				"README.html",
+				"test.cal"
+			]
+		]
 	for path in paths:
 		if os.path.isfile(path):
 			if dry_run:
@@ -160,14 +191,21 @@ if "uninstall" in sys.argv[1:]:
 		}
 	)
 	if share != pkg:
-		paths += glob.glob(share)
+		paths += [os.path.join(share, dir) for dir in [
+				"lang",
+				"presets",
+				"screenshots",
+				"theme",
+				"ti1"
+			]
+		]
 	if doc != pkg and doc != share:
 		paths += glob.glob(doc)
 	for path in paths:
 		# are we in the right place?
 		if not os.path.isfile(os.path.join(path, name + ".py")) and \
 			not os.path.isdir(os.path.join(path, name)) and \
-			not os.path.isdir(os.path.join(path, "theme")):
+			not os.path.isdir(path):
 			continue
 		if dry_run:
 			print path
@@ -179,16 +217,6 @@ if "uninstall" in sys.argv[1:]:
 		print "nothing removed"
 
 else:
-
-	from ez_setup import use_setuptools
-	use_setuptools()
-
-	try:
-		from setuptools import setup, Extension
-		print "using setuptools"
-	except ImportError:
-		from distutils.core import setup, Extension
-		print "using distutils"
 	
 	tempdir = os.path.join(tempfile.gettempdir(), name + "-" + version)
 	
