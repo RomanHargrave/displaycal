@@ -347,4 +347,4 @@ else:
 	if not "-h" in sys.argv[1:] and not "--help" in sys.argv[1:] and \
 		not "--help-commands" in sys.argv[1:] and not "-n" in sys.argv[1:] and \
 		not "--dry-run" in sys.argv[1:] and os.path.exists(tempdir):
-		shutil.rmtree(tempdir, true)
+		shutil.rmtree(tempdir, True)
