@@ -20,7 +20,8 @@ desc = "A graphical user interface for the Argyll CMS display calibration utilit
 
 dry_run = False
 prefix = None
-script_prefix = None
+scripts = None
+share_prefix = None
 
 for arg in sys.argv[1:]:
 	if arg in ("-n", "--dry-run"):
@@ -28,88 +29,93 @@ for arg in sys.argv[1:]:
 	elif arg.startswith("--prefix"):
 		opt, arg = arg.split("=")
 		prefix = arg
-	elif arg.startswith("--exec-prefix"):
+	elif arg.startswith("--install-scripts"):
 		opt, arg = arg.split("=")
-		script_prefix = arg
+		scripts = arg
+	elif arg.startswith("--install-data"):
+		opt, arg = arg.split("=")
+		share_prefix = arg
 
 if not prefix:
 	if sys.platform == "win32":
-		if "--home" in sys.argv[1:]:
-			prefix = os.path.join(os.getenv("APPDATA"), "Python", 
+		if "--user" in sys.argv[1:]:
+			appdata = os.path.relpath(os.getenv("APPDATA"), os.path.expanduser("~"))
+			prefix = os.path.join(os.path.expanduser("~"), appdata, "Python", 
 				"Python" + sys.version[:3]) # using sys.version in this way is consistent with setuptools
 		else:
 			prefix = sys.prefix
-	elif sys.platform == "darwin":
-		if os.geteuid() != 0 or "--home" in sys.argv[1:]:
-			# normal user
-			prefix = os.path.join(os.path.expanduser("~"), "Library", "Python",
-				sys.version[:3]) # using sys.version in this way is consistent with setuptools
-		else:
-			# root
-			prefix = sys.prefix
+	elif sys.platform == "darwin" and not "--user" in sys.argv[1:]:
+		# if "--user" in sys.argv[1:]:
+			# # normal user
+			# prefix = os.path.join(os.path.expanduser("~"), "Library", "Python",
+				# sys.version[:3]) # using sys.version in this way is consistent with setuptools
+		# else:
+			# # root
+		prefix = sys.prefix
 	else:
 		# Linux/Unix
-		if os.geteuid() != 0 or "--home" in sys.argv[1:]:
+		if "--user" in sys.argv[1:]:
 			# normal user
 			prefix = os.path.join(os.path.expanduser("~"), ".local")
 		else:
 			# root
 			prefix = os.path.join(os.path.sep, "usr", "local")
 
-if not script_prefix:
-	if sys.platform in ("darwin", "win32"):
+if not scripts:
+	if sys.platform == "win32": #in ("darwin", "win32"):
 		script_prefix = prefix
 	else:
 		# Linux/Unix
-		if os.geteuid() != 0 or "--home" in sys.argv[1:]:
-			# normal user
-			script_prefix = os.path.expanduser("~")
-		else:
-			# root
-			script_prefix = prefix
+		script_prefix = prefix
+		# if "--user" in sys.argv[1:]:
+			# # normal user
+			# script_prefix = os.path.expanduser("~")
+		# else:
+			# # root
+			# script_prefix = prefix
+	if sys.platform == "win32":
+		scripts = os.path.join(script_prefix, "Scripts")
+	else:
+		# Linux/Unix and Mac OS X
+		scripts = os.path.join(script_prefix, "bin")
 
-if sys.platform == "win32":
-	scripts = os.path.join(script_prefix, "Scripts")
-else:
-	# Linux/Unix and Mac OS X
-	scripts =os.path.join(script_prefix, "bin")
-
-if sys.platform in ("darwin", "win32"):
-	if (sys.platform == "darwin" and os.geteuid() != 0) or \
-		"--home" in sys.argv[1:] or prefix != sys.prefix:
+if sys.platform == "win32" or (sys.platform == "darwin" and not "--user" in sys.argv[1:]): # in ("darwin", "win32"):
+	if "--user" in sys.argv[1:] or prefix != sys.prefix:
 		pkg_prefix = os.path.join(prefix, "site-packages")
 	else:
 		pkg_prefix = get_python_lib()
-	share = os.path.join(pkg_prefix, name)
+	if not share_prefix:
+		share_prefix = pkg_prefix
+	share = os.path.join(share_prefix, name)
 	doc = share # install doc files to package dir
 else:
 	pkg_prefix = get_python_lib(prefix=prefix)
-	if os.geteuid() != 0 or "--home" in sys.argv[1:]:
+	if "--user" in sys.argv[1:]:
 		# normal user
-		xdg_data_home = os.getenv("XDG_DATA_HOME",
-			os.path.join(os.path.expanduser("~"), ".local", "share"))
-		share = os.path.join(xdg_data_home, name)
-		doc = os.path.join(xdg_data_home, "doc", name)
+		if not share_prefix:
+			share_prefix = os.getenv("XDG_DATA_HOME",
+				os.path.join(os.path.expanduser("~"), ".local", "share"))
+		share = os.path.join(share_prefix, name)
+		doc = os.path.join(share_prefix, "doc", name)
 	else:
 		# root
-		xdg_data_dirs = os.getenv(
-			"XDG_DATA_DIRS", 
-			os.pathsep.join(
-				(
-					os.path.join(os.path.sep, "usr", "local", "share"), 
-					os.path.join(os.path.sep, "usr", "share")
+		if not share_prefix:
+			share_prefix = os.getenv(
+				"XDG_DATA_DIRS", 
+				os.pathsep.join(
+					(
+						os.path.join(os.path.sep, "usr", "local", "share"), 
+						os.path.join(os.path.sep, "usr", "share")
+					)
 				)
-			)
-		).split(os.pathsep)
-		share = os.path.join(xdg_data_dirs[0], name)
-		doc = os.path.join(xdg_data_dirs[0], "doc", name)
+			).split(os.pathsep)[0]
+		share = os.path.join(share_prefix, name)
+		doc = os.path.join(share_prefix, "doc", name)
 
 pkg = os.path.join(pkg_prefix, name)
 
 print "prefix:", prefix
-print "pkg_prefix:", pkg_prefix
 print "pkg:", pkg
-print "script_prefix:", script_prefix
 print "scripts:", scripts
 print "share:", share
 print "doc:", doc
@@ -160,7 +166,8 @@ if "uninstall" in sys.argv[1:]:
 	for path in paths:
 		# are we in the right place?
 		if not os.path.isfile(os.path.join(path, name + ".py")) and \
-			not os.path.isdir(os.path.join(path, name)):
+			not os.path.isdir(os.path.join(path, name)) and \
+			not os.path.isdir(os.path.join(path, "theme")):
 			continue
 		if dry_run:
 			print path

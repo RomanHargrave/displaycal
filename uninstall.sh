@@ -1,7 +1,7 @@
 #!/bin/sh
 
 prefix=
-execprefix=
+scripts=
 
 opts=`getopt -o p: --long prefix: -- "$@"`
 eval set -- "$opts"
@@ -10,9 +10,9 @@ while true ; do
 		-p|--prefix)
 			shift;
 			prefix="$1";;
-		--exec-prefix)
+		--install-scripts)
 			shift;
-			execprefix="$1";;
+			scripts="$1";;
 		--)
 			shift;
 			break;;
@@ -30,11 +30,11 @@ if [ x"$prefix" = x"" ]; then
 	fi
 fi
 
-if [ x"$execprefix" = x"" ]; then
+if [ x"$scripts" = x"" ]; then
 	if [ `whoami` = "root" ]; then
-		execprefix="$prefix"
+		scripts="$prefix/bin"
 	else
-		execprefix="$HOME/bin"
+		scripts="$HOME/bin"
 	fi
 fi
 
@@ -42,10 +42,10 @@ src_dir=`dirname "$0"`
 
 if [ -e "$src_dir/setup.py" ]; then
 	echo "Uninstalling dispcalGUI..."
-	"$execprefix/bin/python" "$src_dir/setup.py" uninstall --prefix="$prefix" --exec-prefix="$execprefix"
+	"$prefix/bin/python" "$src_dir/setup.py" uninstall --prefix="$prefix" --install-scripts="$scripts"
 else
-	echo "Removing $execprefix/bin/dispcalGUI..."
-	rm -f "$execprefix/bin/dispcalGUI"
+	echo "Removing $prefix/bin/dispcalGUI..."
+	rm -f "$prefix/bin/dispcalGUI"
 fi
 
 echo "Removing $prefix/share/dispcalGUI..."

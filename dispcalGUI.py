@@ -4281,7 +4281,9 @@ class DisplayCalibratorGUI(wx.Frame):
 						# break
 		if result:
 			if install:
-				if not silent: InfoDialog(self, msg = self.getlstr("profile.install.success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
+				if not silent:
+					if verbose >= 1: safe_print(self.getlstr("success"))
+					InfoDialog(self, msg = self.getlstr("profile.install.success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 				# try to create autostart script to load LUT curves on login
 				n = self.get_display_number()
 				loader_args = "-d%s -c -L" % n
@@ -4357,6 +4359,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						InfoDialog(self, msg = self.getlstr("calibration.load_success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 		elif not silent:
 			if install:
+				if verbose >= 1: safe_print(self.getlstr("failure"))
 				if result is not None:
 					InfoDialog(self, msg = self.getlstr("profile.install.error"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 			else:
