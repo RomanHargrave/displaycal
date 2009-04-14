@@ -1411,9 +1411,13 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.measurement_modes_ba = {
 			"color": {
 				"c": 0,
-				"l": 1
+				"l": 1,
+				"": 0,
+				"p": 1
 			},
 			"spect": {
+				"c": 0,
+				"l": 1,
 				"": 0,
 				"p": 1
 			}
@@ -1721,6 +1725,8 @@ class DisplayCalibratorGUI(wx.Frame):
 								else:
 									value = value[0]
 								self.comports.append(value)
+				if test:
+					self.comports.append("Dummy")
 				if verbose >= 1 and not silent: safe_print(self.getlstr("success"))
 			except Exception, exception:
 				handle_error(traceback.format_exc(), parent = self)
@@ -3997,8 +4003,12 @@ class DisplayCalibratorGUI(wx.Frame):
 					if self.getcfg("profile.install_scope") != "u" and \
 						((sys.platform != "win32" and (os.geteuid() == 0 or get_sudo())) or 
 						(sys.platform == "win32" and 
-						sys.getwindowsversion() >= (6, ))):
-						args += ["-S" + self.getcfg("profile.install_scope")]
+						sys.getwindowsversion() >= (6, )) or test):
+						if ((sys.platform not in ("win32", "darwin") and \
+							self.argyll_version >= [1, 1, 0, "Beta"]) or \
+							sys.platform in ("win32", "darwin") or test):
+								# -S option is broken on Linux with current Argyll releases
+								args += ["-S" + self.getcfg("profile.install_scope")]
 					args += ["-I"]
 				# profcopy = self.make_argyll_compatible_path(os.path.join(self.gettmp(), os.path.basename(profile_path)))
 				# if not os.path.exists(profcopy):
@@ -4886,7 +4896,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				dlg.Bind(wx.EVT_CHECKBOX, self.preview_handler, id = self.preview.GetId())
 				dlg.sizer3.Add(self.preview, flag = wx.TOP | wx.ALIGN_LEFT, border = 12)
 				if (sys.platform != "win32" and (os.geteuid() == 0 or get_sudo())) or \
-					(sys.platform == "win32" and sys.getwindowsversion() >= (6, )): # Linux, OSX or Vista and later
+					(sys.platform == "win32" and sys.getwindowsversion() >= (6, ) or test): # Linux, OSX or Vista and later
 					self.install_profile_user = wx.RadioButton(dlg, -1, self.getlstr("profile.install_user"), style = wx.RB_GROUP)
 					self.install_profile_user.SetValue(self.getcfg("profile.install_scope") == "u")
 					dlg.Bind(wx.EVT_RADIOBUTTON, self.install_profile_scope_handler, id = self.install_profile_user.GetId())
