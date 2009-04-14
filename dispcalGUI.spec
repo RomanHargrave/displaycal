@@ -19,11 +19,11 @@ A graphical user interface for the Argyll CMS display calibration utilities.
 %setup -n dispcalGUI-src
 
 %build
-/usr/bin/python setup.py build
+# handled by install
 
 %install
 chmod +x install.sh
-./install.sh --prefix=/usr --install-scripts=/usr
+./install.sh --prefix=/usr
 
 # prepare additional files for README.html
 mkdir -p theme-readme/icons

@@ -42,7 +42,7 @@ src_dir=`dirname "$0"`
 
 if [ -e "$src_dir/setup.py" ]; then
 	echo "Uninstalling dispcalGUI..."
-	"$prefix/bin/python" "$src_dir/setup.py" uninstall --prefix="$prefix" --install-scripts="$scripts"
+	"$prefix/bin/python" "$src_dir/setup.py" uninstall --exec-prefix="$prefix" --install-scripts="$scripts"
 else
 	echo "Removing $prefix/bin/dispcalGUI..."
 	rm -f "$prefix/bin/dispcalGUI"

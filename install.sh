@@ -42,7 +42,7 @@ src_dir=`dirname "$0"`
 
 if [ -e "$src_dir/setup.py" ]; then
 	echo "Installing dispcalGUI..."
-	"$prefix/bin/python" "$src_dir/setup.py" install --prefix="$prefix" --install-scripts="$scripts"
+	"$prefix/bin/python" "$src_dir/setup.py" install --exec-prefix="$prefix" --install-scripts="$scripts"
 else
 	echo "Installing dispcalGUI to $prefix/bin..."
 	mkdir -p "$prefix/bin"

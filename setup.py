@@ -3,13 +3,9 @@
 
 import glob
 import os
-import re
-import shutil
-from subprocess import call
+import shutil26 as shutil
 import sys
 import tempfile
-
-from distutils.sysconfig import get_python_lib
 
 from ez_setup import use_setuptools
 use_setuptools()
@@ -31,117 +27,120 @@ version = "0.2.2b"
 desc = "A graphical user interface for the Argyll CMS display calibration utilities"
 
 dry_run = False
-prefix = None
+prefix_root = sys.prefix.split(os.path.sep)[0] + os.path.sep
+root = prefix_root
+exec_prefix = None
 scripts = None
-share_prefix = None
+python_lib = None
+site_pkgs = None
+data = None
 
 for arg in sys.argv[1:]:
 	if arg in ("-n", "--dry-run"):
 		dry_run = True
-	elif arg.startswith("--prefix"):
+	elif arg.startswith("--exec-prefix") or arg.startswith("--home"):
 		opt, arg = arg.split("=")
-		prefix = arg
+		exec_prefix = arg
+	elif arg.startswith("--root"):
+		opt, arg = arg.split("=")
+		root = arg
+	elif arg.startswith("--install-lib") or arg.startswith("--install-platlib"):
+		opt, arg = arg.split("=")
+		site_pkgs = arg
 	elif arg.startswith("--install-scripts"):
 		opt, arg = arg.split("=")
 		scripts = arg
 	elif arg.startswith("--install-data"):
 		opt, arg = arg.split("=")
-		share_prefix = arg
+		data = arg
 
-if not prefix:
+if not exec_prefix:
 	if sys.platform == "win32":
-		if "--user" in sys.argv[1:]:
-			prefix = os.path.join(os.getenv("APPDATA"), "Python", 
-				"Python" + sys.version[0] + sys.version[2]) # using sys.version in this way is consistent with setuptools
+		if root != prefix_root:
+			exec_prefix = os.path.join(root, 
+			"Python" + sys.version[0] + sys.version[2])
+			# using sys.version in this way is consistent with setuptools
+		elif "--user" in sys.argv[1:]:
+			exec_prefix = os.path.join(os.getenv("APPDATA"), "Python")
 		else:
-			prefix = sys.prefix
-	elif sys.platform == "darwin" and not "--user" in sys.argv[1:]:
-		# if "--user" in sys.argv[1:]:
-			# # normal user
-			# prefix = os.path.join(os.path.expanduser("~"), "Library", "Python",
-				# sys.version[:3]) # using sys.version in this way is consistent with setuptools
-		# else:
-			# # root
-		prefix = sys.prefix
+			exec_prefix = sys.exec_prefix
+	elif sys.platform == "darwin" and root == prefix_root and not "--user" in sys.argv[1:]:
+		exec_prefix = sys.exec_prefix
 	else:
-		# Linux/Unix
-		if "--user" in sys.argv[1:]:
-			# normal user
-			prefix = os.path.join(os.path.expanduser("~"), ".local")
+		# Linux/Unix (and Mac OS X when using --root or --user)
+		if root != prefix_root:
+			exec_prefix = os.path.join(root, "usr", "local")
+		elif "--user" in sys.argv[1:]:
+			exec_prefix = os.path.join(os.path.expanduser("~"), ".local")
 		else:
-			# root
-			prefix = os.path.join(os.path.sep, "usr", "local")
+			exec_prefix = sys.exec_prefix
 
 if not scripts:
-	if sys.platform == "win32": #in ("darwin", "win32"):
-		if "--user" in sys.argv[1:]:
-			script_prefix = os.path.join(os.getenv("APPDATA"), "Python")
-		else:
-			script_prefix = prefix
-	else:
-		# Linux/Unix
-		script_prefix = prefix
-		# if "--user" in sys.argv[1:]:
-			# # normal user
-			# script_prefix = os.path.expanduser("~")
-		# else:
-			# # root
-			# script_prefix = prefix
 	if sys.platform == "win32":
-		scripts = os.path.join(script_prefix, "Scripts")
+		scripts = os.path.join(exec_prefix, "Scripts")
 	else:
 		# Linux/Unix and Mac OS X
-		scripts = os.path.join(script_prefix, "bin")
+		scripts = os.path.join(exec_prefix, "bin")
 
-if sys.platform == "win32" or (sys.platform == "darwin" and not "--user" in sys.argv[1:]): # in ("darwin", "win32"):
-	if "--user" in sys.argv[1:] or prefix != sys.prefix:
-		pkg_prefix = os.path.join(prefix, "site-packages")
-		if sys.platform == "win32" and not share_prefix:
-			share_prefix = os.getenv("APPDATA")
-			# if setuptools:
-				# share_prefix = os.path.join(pkg_prefix, "%(name)s-%(version)s-py%(pyver)s-win32.egg" % {
-					# "name": name, 
-					# "version": version, 
-					# "pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
-				# })
-			# else:
-				# share_prefix = pkg_prefix
+if sys.platform == "win32":
+	if root == prefix_root and "--user" in sys.argv[1:]:
+		python_lib = os.path.join(exec_prefix, 
+			"Python" + sys.version[0] + sys.version[2])
+			# using sys.version in this way is consistent with setuptools
 	else:
-		pkg_prefix = get_python_lib()
-		if not share_prefix:
-			share_prefix = pkg_prefix
-	share = os.path.join(share_prefix, name)
-	doc = share # install doc files to package dir
+		python_lib = os.path.join(exec_prefix, "Lib")
 else:
-	pkg_prefix = get_python_lib(prefix=prefix)
-	if "--user" in sys.argv[1:]:
-		# normal user
-		if not share_prefix:
-			share_prefix = os.getenv("XDG_DATA_HOME",
-				os.path.join(os.path.expanduser("~"), ".local", "share"))
-		share = os.path.join(share_prefix, name)
-		doc = os.path.join(share_prefix, "doc", name)
+	# Linux/Unix and Mac OS X
+	python_lib = os.path.join(exec_prefix, "lib", "python" + sys.version[:3])
+	# using sys.version in this way is consistent with setuptools
+
+if not site_pkgs:
+	site_pkgs = os.path.join(python_lib, "site-packages")
+
+pkg = os.path.join(site_pkgs, name)
+
+if sys.platform == "win32":
+	if root == prefix_root and ("--user" in sys.argv[1:] or exec_prefix != sys.exec_prefix or (site_pkgs and 
+		site_pkgs != os.path.join(exec_prefix, "Lib", "site-packages"))):
+		if not data:
+			data = os.path.join(os.getenv("APPDATA"), name)
 	else:
-		# root
-		if not share_prefix:
-			share_prefix = os.getenv(
-				"XDG_DATA_DIRS", 
-				os.pathsep.join(
-					(
-						os.path.join(os.path.sep, "usr", "local", "share"), 
-						os.path.join(os.path.sep, "usr", "share")
-					)
+		if not data:
+			if root != prefix_root:
+				data = os.path.join("Lib", "site-packages", name)
+			else:
+				data = os.path.join(site_pkgs, name)
+	doc = data # install doc files to data dir
+elif sys.platform == "darwin" and root == prefix_root and not "--user" in sys.argv[1:]:
+	if not data:
+		data = os.path.join(site_pkgs, name)
+	doc = data # install doc files to data dir
+else:
+	if "--user" in sys.argv[1:]: # also Mac OS X
+		XDG_DATA_HOME = os.getenv("XDG_DATA_HOME",
+			os.path.join(os.path.expanduser("~"), ".local", "share"))
+		if not data:
+			data = os.path.join(XDG_DATA_HOME, name)
+		doc = os.path.join(XDG_DATA_HOME, "doc", name)
+	else:
+		XDG_DATA_DIRS = os.getenv(
+			"XDG_DATA_DIRS", 
+			os.pathsep.join(
+				(
+					os.path.join(os.path.sep, "usr", "local", "share"), 
+					os.path.join(os.path.sep, "usr", "share")
 				)
-			).split(os.pathsep)[0]
-		share = os.path.join(share_prefix, name)
-		doc = os.path.join(share_prefix, "doc", name)
+			)
+		).split(os.pathsep)
+		if not data:
+			data = os.path.join(XDG_DATA_DIRS[0], name)
+		doc = os.path.join(XDG_DATA_DIRS[0], "doc", name)
 
-pkg = os.path.join(pkg_prefix, name)
-
-print "prefix:", prefix
-print "pkg:", pkg
+print "root:", root
+print "exec_prefix:", exec_prefix
 print "scripts:", scripts
-print "share:", share
+print "pkg:", pkg
+print "data:", data
 print "doc:", doc
 
 if "uninstall" in sys.argv[1:]:
@@ -150,71 +149,69 @@ if "uninstall" in sys.argv[1:]:
 
 	if dry_run:
 		print "dry run - nothing will be removed"
+	
 	removed = []
-	# remove package files
-	paths = glob.glob(pkg + 
-		"-%(version)s-py%(pyver)s*.egg" % {
+	
+	paths = glob.glob(pkg) + glob.glob(pkg + "-%(version)s-py%(pyver)s*.egg" % 
+		{
 			"version": version, 
 			"pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
 		}
-	)
-	paths += glob.glob(pkg + 
-		"-%(version)s-py%(pyver)s*.egg-info" % {
+	) + glob.glob(pkg + "-%(version)s-py%(pyver)s*.egg-info" % 
+		{
 			"version": version, 
 			"pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
 		}
-	)
-	paths += [os.path.join(scripts, name)]
+	) + [os.path.join(scripts, name)]
 	if sys.platform == "win32":
 		paths += [os.path.join(scripts, name + ".cmd")]
-	if share != pkg:
-		paths += [os.path.join(share, fname) for fname in [
+	if data != pkg:
+		paths += [os.path.join(data, fname) for fname in [
+				"lang",
+				"presets",
+				"screenshots",
+				"theme",
+				"ti1",
+				"LICENSE.txt",
+				"README.html",
+				"test.cal"
+			]
+		]
+	if doc != pkg and doc != data:
+		paths += [os.path.join(doc, fname) for fname in [
+				"theme",
 				"LICENSE.txt",
 				"README.html",
 				"test.cal"
 			]
 		]
 	for path in paths:
-		if os.path.isfile(path):
+		if os.path.exists(path):
 			if dry_run:
 				print path
 				continue
 			print "removing", path
-			os.remove(path)
+			if os.path.isfile(path):
+				os.remove(path)
+			elif os.path.isdir(path):
+				shutil.rmtree(path, False)
 			removed += [path]
-	# remove package directories
-	paths = glob.glob(pkg)
-	paths += glob.glob(pkg + 
-		"-%(version)s-py%(pyver)s*.egg" % {
-			"version": version, 
-			"pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
-		}
-	)
-	if share != pkg:
-		paths += [os.path.join(share, dir) for dir in [
-				"lang",
-				"presets",
-				"screenshots",
-				"theme",
-				"ti1"
-			]
-		]
-	if doc != pkg and doc != share:
-		paths += glob.glob(doc)
-	for path in paths:
-		# are we in the right place?
-		if not os.path.isfile(os.path.join(path, name + ".py")) and \
-			not os.path.isdir(os.path.join(path, name)) and \
-			not os.path.isdir(path):
-			continue
-		if dry_run:
-			print path
-			continue
-		print "removing", path
-		shutil.rmtree(path, True)
-		removed += [path]
+		while path != os.path.dirname(path):
+			# remove parent directories if empty
+			# could also use os.removedirs(path) but we want some status info
+			path = os.path.dirname(path)
+			if os.path.isdir(path) and len(os.listdir(path)) == 0:
+				if dry_run:
+					print path
+					continue
+				print "removing", path
+				os.rmdir(path)
+				removed += [path]
+	
 	if not removed:
 		print "nothing removed"
+	else:
+		print len(removed), "entries removed"
 
 else:
 	
@@ -245,32 +242,33 @@ else:
 					if os.path.isfile(srcpath):
 						shutil.copy2(srcpath, tmppath)
 					else:
-						shutil.copytree(srcpath, tmppath)
+						shutil.copytree(srcpath, tmppath, 
+							ignore=shutil.ignore_patterns(".svn", "Thumbs.db"))
 		
 		data_files = [
-			(os.path.join(share, "lang"), 
+			(os.path.join(data, "lang"), 
 				[os.path.join(tempdir, "lang", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "lang", "*.json"))]), 
-			(os.path.join(share, "presets"), 
+			(os.path.join(data, "presets"), 
 				[os.path.join(tempdir, "presets", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "presets", "*.icc"))]), 
-			(os.path.join(share, "screenshots"), 
+			(os.path.join(data, "screenshots"), 
 				[os.path.join(tempdir, "screenshots", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "screenshots", "*.png"))]),
-			(os.path.join(share, "theme"), 
+			(os.path.join(data, "theme"), 
 				[os.path.join(tempdir, "theme", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "theme", "*.png"))]), 
-			(os.path.join(share, "theme", "icons"), 
+			(os.path.join(data, "theme", "icons"), 
 				[os.path.join(tempdir, "theme", "icons", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "theme", "icons", "*.icns|*.ico"))]), 
-			(os.path.join(share, "ti1"), 
+			(os.path.join(data, "ti1"), 
 				[os.path.join(tempdir, "ti1", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "ti1", "*.ti1"))]),
 			(doc, [os.path.join(tempdir, "LICENSE.txt")]),
 			(doc, [os.path.join(tempdir, "README.html")]),
 			(doc, [os.path.join(tempdir, "test.cal")])
 		]
-		if doc != share:
+		if doc != data:
 			data_files += [
 				(os.path.join(doc, "theme"), 
 					[os.path.join(tempdir, "theme", "header-readme.png")]), 
@@ -278,7 +276,7 @@ else:
 					[os.path.join(tempdir, "theme", "icons", "favicon.ico")]), 
 			]
 		for dname in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
-			data_files += [(os.path.join(share, "theme", "icons", dname), 
+			data_files += [(os.path.join(data, "theme", "icons", dname), 
 				[os.path.join(tempdir, "theme", "icons", dname, fname) for fname in 
 				glob.glob(os.path.join(tempdir, "theme", "icons", dname, "*.png"))])]
 

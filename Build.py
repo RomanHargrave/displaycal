@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, shutil, subprocess as sp, sys, tempfile
+import os, shutil26 as shutil, subprocess as sp, sys, tempfile
 from safe_print import safe_print
 
 os.environ['PYTHONPATH'] = os.path.dirname(sys.executable)
