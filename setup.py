@@ -3,19 +3,28 @@
 
 import glob
 import os
-import shutil26 as shutil
+import shutil
 import sys
 import tempfile
 
-from ez_setup import use_setuptools
-use_setuptools()
+setuptools = False
 
-try:
-	import setuptools
-	from setuptools import setup, Extension
-	print "using setuptools"
-except ImportError:
-	setuptools = None
+if "--use-distutils" in sys.argv[1:]:
+	sys.argv.remove("--use-distutils")
+else:
+	try:
+		from ez_setup import use_setuptools
+		use_setuptools()
+	except ImportError:
+		pass
+	try:
+		from setuptools import setup, Extension
+		setuptools = True
+		print "using setuptools"
+	except ImportError:
+		pass
+
+if not setuptools:
 	from distutils.core import setup, Extension
 	print "using distutils"
 
@@ -26,69 +35,82 @@ name = "dispcalGUI"
 version = "0.2.2b"
 desc = "A graphical user interface for the Argyll CMS display calibration utilities"
 
-dry_run = False
-prefix_root = sys.prefix.split(os.path.sep)[0] + os.path.sep
-root = prefix_root
-exec_prefix = None
-scripts = None
-python_lib = None
-site_pkgs = None
 data = None
+dry_run = False
+exec_prefix = None
+prefix = None
+prefix_root = sys.prefix.split(os.path.sep)[0] + os.path.sep
+python_lib = None
+scripts = None
+root = prefix_root
+site_pkgs = None
 
 for arg in sys.argv[1:]:
 	if arg in ("-n", "--dry-run"):
 		dry_run = True
-	elif arg.startswith("--exec-prefix") or arg.startswith("--home"):
+	elif arg.startswith("--exec-prefix"):
 		opt, arg = arg.split("=")
 		exec_prefix = arg
-	elif arg.startswith("--root"):
+	elif arg.startswith("--home"):
 		opt, arg = arg.split("=")
-		root = arg
+		prefix = arg
+		exec_prefix = arg
 	elif arg.startswith("--install-lib") or arg.startswith("--install-platlib"):
 		opt, arg = arg.split("=")
 		site_pkgs = arg
-	elif arg.startswith("--install-scripts"):
-		opt, arg = arg.split("=")
-		scripts = arg
 	elif arg.startswith("--install-data"):
 		opt, arg = arg.split("=")
 		data = arg
+	elif arg.startswith("--install-scripts"):
+		opt, arg = arg.split("=")
+		scripts = arg
+	elif arg.startswith("--prefix"):
+		opt, arg = arg.split("=")
+		prefix = arg
+	elif arg.startswith("--root"):
+		opt, arg = arg.split("=")
+		root = arg
 
-if not exec_prefix:
+if not prefix:
 	if sys.platform == "win32":
 		if root != prefix_root:
-			exec_prefix = os.path.join(root, 
+			prefix = os.path.join(root, 
 			"Python" + sys.version[0] + sys.version[2])
 			# using sys.version in this way is consistent with setuptools
 		elif "--user" in sys.argv[1:]:
-			exec_prefix = os.path.join(os.getenv("APPDATA"), "Python")
+			prefix = os.path.join(os.getenv("APPDATA"), "Python")
 		else:
-			exec_prefix = sys.exec_prefix
-	elif sys.platform == "darwin" and root == prefix_root and not "--user" in sys.argv[1:]:
-		exec_prefix = sys.exec_prefix
-	else:
-		# Linux/Unix (and Mac OS X when using --root or --user)
+			prefix = sys.prefix
+	elif sys.platform == "darwin" and (root != prefix_root or not "--user" in sys.argv[1:]):
 		if root != prefix_root:
-			exec_prefix = os.path.join(root, "usr", "local")
-		elif "--user" in sys.argv[1:]:
-			exec_prefix = os.path.join(os.path.expanduser("~"), ".local")
+			prefix = os.path.join(root, "Library", "Frameworks", 
+				"Python.framework", "Versions", sys.version[:3])
 		else:
-			exec_prefix = sys.exec_prefix
+			prefix = sys.prefix
+	else:
+		# Linux/Unix (and Mac OS X when specifying --user)
+		if root != prefix_root or not "--user" in sys.argv[1:]:
+			prefix = os.path.join(root, "usr", "local")
+		elif "--user" in sys.argv[1:]:
+			prefix = os.path.join(os.path.expanduser("~"), ".local")
+
+if not exec_prefix:
+	exec_prefix = prefix
 
 if not scripts:
 	if sys.platform == "win32":
-		scripts = os.path.join(exec_prefix, "Scripts")
+		scripts = os.path.join(prefix, "Scripts")
 	else:
 		# Linux/Unix and Mac OS X
-		scripts = os.path.join(exec_prefix, "bin")
+		scripts = os.path.join(prefix, "bin")
 
 if sys.platform == "win32":
 	if root == prefix_root and "--user" in sys.argv[1:]:
-		python_lib = os.path.join(exec_prefix, 
+		python_lib = os.path.join(prefix, 
 			"Python" + sys.version[0] + sys.version[2])
 			# using sys.version in this way is consistent with setuptools
 	else:
-		python_lib = os.path.join(exec_prefix, "Lib")
+		python_lib = os.path.join(prefix, "Lib")
 else:
 	# Linux/Unix and Mac OS X
 	python_lib = os.path.join(exec_prefix, "lib", "python" + sys.version[:3])
@@ -100,43 +122,53 @@ if not site_pkgs:
 pkg = os.path.join(site_pkgs, name)
 
 if sys.platform == "win32":
-	if root == prefix_root and ("--user" in sys.argv[1:] or exec_prefix != sys.exec_prefix or (site_pkgs and 
-		site_pkgs != os.path.join(exec_prefix, "Lib", "site-packages"))):
-		if not data:
-			data = os.path.join(os.getenv("APPDATA"), name)
-	else:
-		if not data:
-			if root != prefix_root:
-				data = os.path.join("Lib", "site-packages", name)
-			else:
-				data = os.path.join(site_pkgs, name)
-	doc = data # install doc files to data dir
-elif sys.platform == "darwin" and root == prefix_root and not "--user" in sys.argv[1:]:
 	if not data:
-		data = os.path.join(site_pkgs, name)
+		if root != prefix_root:
+			data = os.path.join("Lib", "site-packages", name)
+		elif "--user" in sys.argv[1:] and not setuptools:
+			data = os.path.join("Python" + sys.version[0] + sys.version[2], 
+				"site-packages", name)
+		else:
+			data = name
+	doc = data # install doc files to data dir
+elif sys.platform == "darwin":
+	if not data:
+		if root != prefix_root or not setuptools:
+			data = os.path.join("lib", "python" + sys.version[:3], 
+				"site-packages", name)
+		else:
+			data = name
 	doc = data # install doc files to data dir
 else:
-	if "--user" in sys.argv[1:]: # also Mac OS X
+	# Linux/Unix
+	if root == prefix_root and "--user" in sys.argv[1:]:
 		XDG_DATA_HOME = os.getenv("XDG_DATA_HOME",
 			os.path.join(os.path.expanduser("~"), ".local", "share"))
 		if not data:
 			data = os.path.join(XDG_DATA_HOME, name)
 		doc = os.path.join(XDG_DATA_HOME, "doc", name)
 	else:
-		XDG_DATA_DIRS = os.getenv(
-			"XDG_DATA_DIRS", 
-			os.pathsep.join(
-				(
-					os.path.join(os.path.sep, "usr", "local", "share"), 
-					os.path.join(os.path.sep, "usr", "share")
+		if root == prefix_root:
+			XDG_DATA_DIRS = os.getenv(
+				"XDG_DATA_DIRS", 
+				os.pathsep.join(
+					(
+						os.path.join(os.path.sep, "usr", "local", "share"), 
+						os.path.join(os.path.sep, "usr", "share")
+					)
 				)
-			)
-		).split(os.pathsep)
-		if not data:
-			data = os.path.join(XDG_DATA_DIRS[0], name)
-		doc = os.path.join(XDG_DATA_DIRS[0], "doc", name)
+			).split(os.pathsep)
+			if not data:
+				data = os.path.join(XDG_DATA_DIRS[0], name)
+			doc = os.path.join(XDG_DATA_DIRS[0], "doc", name)
+		else:
+			if not data:
+				data = os.path.join(prefix, "share", name)
+			doc = os.path.join(prefix, "share", "doc", name)
+			
 
 print "root:", root
+print "prefix:", prefix
 print "exec_prefix:", exec_prefix
 print "scripts:", scripts
 print "pkg:", pkg
@@ -152,7 +184,10 @@ if "uninstall" in sys.argv[1:]:
 	
 	removed = []
 	
-	paths = glob.glob(pkg) + glob.glob(pkg + "-%(version)s-py%(pyver)s*.egg" % 
+	paths = [os.path.join(scripts, name)]
+	if sys.platform == "win32":
+		paths += [os.path.join(scripts, name + ".cmd")]
+	paths += glob.glob(pkg) + glob.glob(pkg + "-%(version)s-py%(pyver)s*.egg" % 
 		{
 			"version": version, 
 			"pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
@@ -162,9 +197,7 @@ if "uninstall" in sys.argv[1:]:
 			"version": version, 
 			"pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
 		}
-	) + [os.path.join(scripts, name)]
-	if sys.platform == "win32":
-		paths += [os.path.join(scripts, name + ".cmd")]
+	)
 	if data != pkg:
 		paths += [os.path.join(data, fname) for fname in [
 				"lang",
@@ -181,8 +214,7 @@ if "uninstall" in sys.argv[1:]:
 		paths += [os.path.join(doc, fname) for fname in [
 				"theme",
 				"LICENSE.txt",
-				"README.html",
-				"test.cal"
+				"README.html"
 			]
 		]
 	for path in paths:
@@ -242,8 +274,7 @@ else:
 					if os.path.isfile(srcpath):
 						shutil.copy2(srcpath, tmppath)
 					else:
-						shutil.copytree(srcpath, tmppath, 
-							ignore=shutil.ignore_patterns(".svn", "Thumbs.db"))
+						shutil.copytree(srcpath, tmppath)
 		
 		data_files = [
 			(os.path.join(data, "lang"), 
@@ -264,9 +295,9 @@ else:
 			(os.path.join(data, "ti1"), 
 				[os.path.join(tempdir, "ti1", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "ti1", "*.ti1"))]),
+			(data, [os.path.join(tempdir, "test.cal")]),
 			(doc, [os.path.join(tempdir, "LICENSE.txt")]),
-			(doc, [os.path.join(tempdir, "README.html")]),
-			(doc, [os.path.join(tempdir, "test.cal")])
+			(doc, [os.path.join(tempdir, "README.html")])
 		]
 		if doc != data:
 			data_files += [
@@ -379,5 +410,7 @@ else:
 	
 	if not "-h" in sys.argv[1:] and not "--help" in sys.argv[1:] and \
 		not "--help-commands" in sys.argv[1:] and not "-n" in sys.argv[1:] and \
-		not "--dry-run" in sys.argv[1:] and os.path.exists(tempdir):
+		not "--dry-run" in sys.argv[1:] and not "build" in sys.argv[1:] and \
+		not "install" in sys.argv[1:] and \
+		os.path.exists(tempdir):
 		shutil.rmtree(tempdir, True)

@@ -23,7 +23,7 @@ A graphical user interface for the Argyll CMS display calibration utilities.
 
 %install
 chmod +x install.sh
-./install.sh --prefix=/usr
+./install.sh --prefix=/usr --use-distutils
 
 # prepare additional files for README.html
 mkdir -p theme-readme/icons
@@ -38,7 +38,7 @@ mv theme-readme theme
 %doc README.html
 %doc screenshots
 %doc theme
-/usr/lib/python/site-packages/dispcalGUI*
+/usr/lib/python/site-packages/dispcalGUI
 /usr/share/dispcalGUI
 /usr/share/applications/dispcalGUI.desktop
 /usr/share/icons/hicolor/16x16/apps/dispcalGUI.png

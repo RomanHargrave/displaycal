@@ -2,17 +2,21 @@
 
 prefix=
 scripts=
+usedistutils=
 
-opts=`getopt -o p: --long prefix: -- "$@"`
+opts=`getopt -o p:s:d --long prefix: --long install-scripts: --long use-distutils -- "$@"`
 eval set -- "$opts"
 while true ; do
 	case "$1" in
 		-p|--prefix)
 			shift;
 			prefix="$1";;
-		--install-scripts)
+		-s|--install-scripts)
 			shift;
 			scripts="$1";;
+		-d|--use-distutils)
+			shift;
+			usedistutils="--use-distutils";;
 		--)
 			shift;
 			break;;
@@ -24,10 +28,13 @@ done
 if [ x"$prefix" = x"" ]; then
 	if [ `whoami` = "root" ]; then
 		prefix=/usr/local
-		XDG_DATA_DIRS="$prefix/share/:${XDG_DATA_DIRS:-/usr/local/share/:/usr/share/}"
 	else
 		prefix="$HOME/.local"
 	fi
+fi
+
+if [ `whoami` = "root" ]; then
+	XDG_DATA_DIRS="$prefix/share/:${XDG_DATA_DIRS:-/usr/local/share/:/usr/share/}"
 fi
 
 if [ x"$scripts" = x"" ]; then
@@ -42,7 +49,7 @@ src_dir=`dirname "$0"`
 
 if [ -e "$src_dir/setup.py" ]; then
 	echo "Installing dispcalGUI..."
-	"$prefix/bin/python" "$src_dir/setup.py" install --exec-prefix="$prefix" --install-scripts="$scripts"
+	"$prefix/bin/python" "$src_dir/setup.py" install --prefix="$prefix" --install-scripts="$scripts" $usedistutils
 else
 	echo "Installing dispcalGUI to $prefix/bin..."
 	mkdir -p "$prefix/bin"
