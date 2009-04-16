@@ -271,7 +271,12 @@
 			<li><a href="#quicksetup" id="quicksetuplink">Quick setup guide</a></li>
 			<li><a href="#prerequisites">Prerequisites</a>
 				<ul>
-					<li><a href="#argyll">Argyll CMS</a></li>
+					<li><a href="#argyll">Argyll CMS</a>
+						<ul>
+							<li><a href="#instrument_access">Checking instrument access</a></li>
+							<li><a href="#lut_access">Checking video LUT access</a></li>
+						</ul>
+					</li>
 					<li><a href="#prerequisites-unattended">Additional prerequisites for unattended calibration and profiling option under Linux</a></li>
 					<li><a href="#prerequisites-source">Additional prerequisites for using the source code release</a></li>
 				</ul>
@@ -306,7 +311,7 @@
 			profile your display using a measurement device. Of course, you can do a lot 
 			more with Argyll CMS, but this is not the scope of this document—refer to the 
 			<a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll CMS documentation</a> for in-depth information and usage scenarios.<br />
-			dispcalGUI consists of two windows, a terminal and the GUI. The terminal is used for status messages and keyboard input during calibration. The GUI is used to set options and access functionality.</p>
+			dispcalGUI opens two windows when run, a terminal and the GUI. The terminal is used for status messages and keyboard input during calibration. The GUI is used to set options and access functionality.</p>
 			
 			<div id="screenshots">
 				<h3>Screenshots</h3>		
@@ -344,8 +349,6 @@
 		<div id="download">
 			<h2>Download</h2>
 			
-			<p>If you are updating from dispcalGUI v0.2.1b or earlier, please first uninstall or remove all previous versions.</p>
-			
 			<h3>Executable releases</h3>
 			<p>
 				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-1.i586.rpm">RPM</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">ZIP file</a><br />
@@ -356,7 +359,7 @@
 			<h3>Source code</h3>
 			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-src.zip">ZIP file</a></p>
 			<p>
-				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui/trunk dispcalGUI-trunk</code>)
+				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui/trunk dispcalGUI-trunk</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
 		</div>
 		
@@ -425,8 +428,8 @@
 				instruments</a> and <a href="http://argyllcms.com/doc/Installing.html">installation 
 				instructions</a> (also, please pay attention to the installation instructions for your measurement device).</p>
 				
-				<div>
-					<h4>Instrument access</h4>
+				<div id="instrument_access">
+					<h4>Checking instrument access</h4>
 				
 					<p>After installing Argyll CMS, you should make sure that your display(s) and 
 					measurement device are recognized by Argyll. To do that, connect the 
@@ -437,9 +440,9 @@
 					<p>You should get several lines of usage information. Look at the first few lines, 
 					under the options -d and -c the detected displays and measurement devices will 
 					be listed.</p>
-					<p>If you see your display and instrument, you can proceed to <a href="#prerequisites-source">Additional prerequisites</a>
-					(if you downloaded the source code release) or <a href="#install">Installation</a> (if you downloaded
-					the executable release).</p>
+					
+					<p>If you see your display and instrument, you can proceed to <a href="#lut_access">checking video LUT access</a>.</p>
+					
 					<p>Otherwise, review the <a href="http://argyllcms.com/doc/Installing.html">Argyll CMS installation 
 				instructions</a>.
 					Under Windows 2000 and XP, if you have an USB instrument with already installed vendor drivers, you might get it to work with Argyll by installing 
@@ -448,8 +451,8 @@
 					<code>libusb-win32-filter-bin-&lt;version&gt;.exe</code></p>
 				</div>
 				
-				<div>
-					<h4>Video LUT access</h4>
+				<div id="lut_access">
+					<h4>Checking video LUT access</h4>
 				
 					<p>Then, you should make sure that the Argyll utilities can access the video LUTs 
 					(Look Up Tables). From a shell, enter:</p>
@@ -465,7 +468,22 @@
 			<div id="prerequisites-unattended">
 				<h3>Additional prerequisites for unattended calibration and profiling option under Linux</h3>
 				
-				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.2, it is no longer necessary to press a key after calibration to start the measurements for profiling with certain instruments. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active). Currently supported are the ColorMunki, DTP94, i1 Display 2, i1 Monitor &amp; Pro, Spectrolino/Spectroscan(T) and Spyder instruments.</p>
+				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.2b, when using an instrument that is supported by the new unattended feature (see below), it is no longer necessary to press a key after calibration to start the measurements for profiling. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active). 
+				</p>
+				
+				<p>Unattended calibration and profiling currently supports the following instruments:</p>
+				
+				<ul>
+					<li>X-Rite ColorMunki *</li>
+					<li>X-Rite DTP94</li>
+					<li>X-Rite/GretagMacbeth i1 Display 2</li>
+					<li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro</li>
+					<li>X-Rite/GretagMacbeth Spectrolino/Spectroscan(T)</li>
+					<li>Datacolor/ColorVision Spyder 2</li>
+					<li>Datacolor/ColorVision Spyder 3 *</li>
+				</ul>
+				
+				<p>* only when using Argyll CMS >= 1.1.0 Beta</p>
 			</div>
 			
 			<div id="prerequisites-source">
@@ -475,7 +493,6 @@
 				
 				<p>All platforms:<br />
 				- <a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. NOTE for Mac OS X users: You should FIRST install XCode and THEN Python)<br />
-				- <a href="http://pypi.python.org/pypi/demjson">demjson</a><br />
 				- <a href="http://wxpython.org/">wxPython</a> GUI toolkit</p>
 				
 				<p>Linux:<br />
@@ -490,12 +507,12 @@
 				- <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a><br />
 				- <a href="http://sourceforge.net/projects/pywin32/">pywin32</a></p>
 				
-				<p>Note that starting with v0.2b, you need to build the RealDisplaySizeMM module before you can run from source (or, <a href="#build">build an executable</a> which will also take care of it):</p>
+				<p>Note that starting with v0.2b, you need to build the RealDisplaySizeMM module before you can run from source (or, <a href="#build">build the executable</a> which will also take care of it):</p>
 			
 				<ol>
 					<li>Open a shell.</li>
 					<li><code>cd</code> into the RealDisplaySizeMM directory.</li>
-					<li>Run <code>python setup.py install</code></li>
+					<li>Run <code>python setup.py install --install-platlib=..</code></li>
 				</ol>
 			</div>
 			
@@ -504,7 +521,7 @@
 		<div id="build">
 			<h2>Building from source</h2>
 		
-			<p>This is not absolutely required, because Python is an interpreted language, but if you desire to build your own executable, you may do so using these instructions (after satisfying the above <a href="#prerequisites-source">prerequisites</a>). Please note that the executables tend to get rather large, because the Python framework and dependencies are packed into the executable. This is especially true for Mac OS X (don't think “elephant”—think “whale”).</p>
+			<p>This is not absolutely required, because Python is an interpreted language, but if you desire to build your own executable, you may do so using these instructions (after satisfying the above <a href="#prerequisites-source">prerequisites</a>). Please note that the executables tend to get rather large, because the Python interpreter and dependencies are packed into the executable. This is especially true for Linux and Mac OS X (don't think “elephant”—think “whale”).</p>
 			
 			<ol>
 				<li>Open a shell.</li>
@@ -516,13 +533,16 @@
 		<div id="install">
 			<h2>Installation</h2>
 			
+			<p>If you are updating from dispcalGUI v0.2.1b or earlier, please first uninstall or remove all previous versions.</p>
+			
 			<h3>Linux RPM package</h3>
 			
-			<p>You may be able to install by opening the file directly (e.g. by double-clicking) in your file manager/desktop environment. The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
+			<p>Use <code>rpm -i dispcalGUI-0.2.2b-1.i586.rpm</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
 			
 			<h3>Linux executable package (ZIP)</h3>
 			
-			<p>Unpack and then simply run dispcalGUI from the created folder.</p>
+			<p>Unpack and then simply run dispcalGUI from the created folder (a <code>chmod +x dispcalGUI</code> may be necessary first). You can optionally run the included install.sh shellscript (a <code>chmod +x install.sh</code> may be necessary first) to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefixes by specifying them as options to install.sh, e.g. <code>./install.sh --prefix=/usr --install-scripts=/usr/bin</code>.<br />
+			Please note that installation may require elevated privileges.</p>
 			
 			<h3>Mac OS X executable package (ZIP)</h3>
 			
@@ -538,12 +558,13 @@
 			
 			<h3>Source code package (all platforms)</h3>
 			
-			<p>With the source code package you have the choice to run directly from source without installation or installing it first.</p>
+			<p>You have the choice to run directly from the extracted files or doing an installation and run from there.</p>
 			
-			<p>To run directly from source (after satisfying the above <a href="#prerequisites-source">prerequisites</a>), you can launch dispcalGUI.py (on Linux, a <code>chmod +x dispcalGUI.py</code> might be necessary first).</p>
+			<p>To run directly from source, you can launch dispcalGUI.py (on Linux and Mac OS X, a <code>chmod +x dispcalGUI.py</code> may be necessary first).</p>
 			
-			<p>To install dispcalGUI to your python installation's site-packages directory, run <code>python setup.py install</code> from a shell. You may then launch dispcalGUI by running <code>dispcalGUI</code> from a shell under Linux and Mac OS X or use <code>&lt;your-python-installation-path&gt;\Scripts\dispcalGUI.cmd</code> on Windows.<br />
-			On Linux, you may alternatively use the included install.sh shellscript to install files to appropriate places on your system (on Linux, a <code>chmod +x install.sh</code> might be necessary first). For an user install a default prefix of <code>$HOME/.local</code> and for a root install a default prefix of <code>/usr/local</code> is used. You may also specify your own prefix by specifying it as argument to install.sh, e.g. <code>./install.sh --prefix=/usr --install-scripts=/usr/bin</code>. The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category.</p>
+			<p>To install, run <code>python setup.py install</code> from a shell.
+			On Linux, you can alternatively run the included install.sh shellscript (a <code>chmod +x install.sh</code> may be necessary first) to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefixes by specifying them as options to either setup.py or install.sh, e.g. <code>./install.sh --prefix=/usr --install-scripts=/usr/bin</code>.<br />
+			Please note that installation may require elevated privileges.</p>
 		</div>
 		
 		<div id="concept">
@@ -573,9 +594,8 @@
 			applies calibration curves out-of-the-box is Mac OS X), while applications using 
 			the profile to do color transforms usually rely on the calibration being already 
 			loaded. Even non-color-managed applications will benefit from a loaded 
-			calibration because it is stored in the graphics card—it is “global”.
-			But only fully color-managed applications will make use of display 
-			profiles. Regrettably there are several image viewing and editing applications that 
+			calibration because it is stored in the graphics card—it is “global”. But the calibration alone will not yield accurate colors—only fully color-managed applications will make use of display 
+			profiles and the necessary color transforms. Regrettably there are several image viewing and editing applications that 
 			only implement half-baked color management by not using the system's display profile (or any display profile at all), but an internal and often unchangeable “default”
 			color space like sRGB, and sending output unaltered to the display after converting to that default colorspace. If the 
 			display's actual response is close to sRGB, you might get pleasing (albeit not
@@ -598,7 +618,7 @@
 			<div id="settingsfile">
 				<h3>Settings file</h3>
 				<p>Here, you can load a <code>.cal</code> or <code>.icc/.icm</code> file from a previous 
-				run (the dropdown box will remember up to 25, including the presets). This will set options to 
+				run (the dropdown box will remember up to 15, including the presets). This will set options to 
 				those stored in the file and also load
 				calibration curves (if any) into the video card. If the file contains only a subset of settings, you will get a message showing which settings were loaded.</p>
 				
@@ -623,7 +643,7 @@
 				<h3>Predefined settings (presets)</h3>
 				<p>Starting with dispcalGUI v0.2.2b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
 				<h4>Why has a default gamma of 2.4 been chosen for the presets?</h4>
-				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's LUT curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration, that has been internally calibrated to a different response curve, or your display's response is simply not close to a gamma of 2.4.</p>
+				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's LUT curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons.</p>
 			</div>
 			
 			<div id="display_instrument">
@@ -838,7 +858,7 @@
 							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for LUT profiles regardless of source profile type.</li>
 							<li>fix: if the screen or instrument that was selected in a previous session is not available, select an available one.</li>
 							<li>fix: (Mac) the “enable spyder 2” menu item would not allow to select files other than “setup.exe”.</li>
-							<li>fix: [src] (Mac) if dispcalGUI was installed as application and then run from (separate) source, multiple copies where launched at certain occasions.</li>
+							<li>fix: [src] (Mac) if dispcalGUI was installed as application and then run from (separate) source, multiple copies were launched at certain occasions.</li>
 							<li>fix: selecting a different Argyll binary directory than the previous one now actually works.</li>
 							<li>chg: the previously empty entry at the top of the settings dropdown (settings which are not associated to a profile or .cal file) is now named “&lt;current settings&gt;”.</li>
 							<li>chg: changed settings which are associated to a profile or .cal file are now marked with a leading asterisk in the settings dropdown.</li>
@@ -860,13 +880,15 @@
 							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
 							<li>chg: (Linux) there's no longer an installer for the Linux version - please use the RPM or ZIP release instead.</li>
 							<li>chg: cancelling of certain operations like profile calculation and testchart generation is now also supported when using Python 2.5</li>
-							<li>add: logging (also see the change related to file-storage). If the logfile is older than one day, it is renamed and a new one is created, with a maximum of 5 old ones being kept as backup.</li>
+							<li>chg: when searching for Argyll executables, also search for files with “argyll-” prefix or “-argyll” suffix (thanks to Mark Whitis for bug report).</li>
+							<li>chg: disable measurement mode selection when using a spectrometer.</li>
+							<li>add: logging (also see the change related to file-storage). Logfiles are created per-date. A maximum of 5 old ones is being kept as backup.</li>
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>
 							<li>add: unattended calibration and profiling for some instruments, meaning it is no longer necessary to press a key after calibration to start the measurements for profiling (needs xautomation under Linux).</li>
 							<li>add: settings and related files can be deleted.</li>
-							<li>add: (Linux, Mac, Vista) profile install scope can be selected (attention: local system scope install is broken with current Argyll versions under Linux!).</li>
+							<li>add: (Linux, Mac, Vista) profile install scope can be selected (note: local system scope install is broken with current Argyll versions under Linux).</li>
 							<li>add: version and translation information in the about window.</li>
-							<li>add: projector mode when using Argyll 1.1.0 Beta or newer with a spectrophotometer.</li>
+							<li>add: projector mode when using Argyll 1.1.0 Beta or newer with the X-Rite ColorMunki.</li>
 						</ul>
 					</dd>
 				<dt>2009-01-01</dt>

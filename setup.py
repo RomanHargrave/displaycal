@@ -397,6 +397,7 @@ else:
 			"natsort", 
 			"pyi_md5pickuphelper", 
 			"safe_print", 
+			"shutil26", 
 			"subprocess26", 
 			"tempfile26", 
 			"trash"

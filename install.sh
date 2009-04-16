@@ -2,25 +2,30 @@
 
 prefix=
 scripts=
-usedistutils=
 
-opts=`getopt -o p:s:d --long prefix: --long install-scripts: --long use-distutils -- "$@"`
+opts=`getopt --long prefix: --long install-scripts: --long install-data: --long use-distutils -- "$0" "$@"`
 eval set -- "$opts"
+opts=
 while true ; do
 	case "$1" in
-		-p|--prefix)
+		--prefix)
 			shift;
-			prefix="$1";;
-		-s|--install-scripts)
+			prefix="$1";
+			shift;;
+		--install-scripts)
 			shift;
-			scripts="$1";;
-		-d|--use-distutils)
+			scripts="$1";
+			shift;;
+		--install-data)
+			opts="$opts$1";
 			shift;
-			usedistutils="--use-distutils";;
+			opts="$opts=\"$1\" ";
+			shift;;
 		--)
 			shift;
 			break;;
 		*)
+			opts="$opts$1 ";
 			shift;;
 	esac
 done
@@ -49,7 +54,7 @@ src_dir=`dirname "$0"`
 
 if [ -e "$src_dir/setup.py" ]; then
 	echo "Installing dispcalGUI..."
-	"$prefix/bin/python" "$src_dir/setup.py" install --prefix="$prefix" --install-scripts="$scripts" $usedistutils
+	"$prefix/bin/python" "$src_dir/setup.py" install --prefix="$prefix" --install-scripts="$scripts" $opts
 else
 	echo "Installing dispcalGUI to $prefix/bin..."
 	mkdir -p "$prefix/bin"

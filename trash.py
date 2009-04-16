@@ -41,6 +41,8 @@ def trash(paths):
 		else:
 			# older Linux distros and Mac OS X
 			trashcan = os.path.join(os.path.expanduser("~"), ".Trash")
+		if not os.path.isdir(trashcan):
+			return False
 		for path in paths:
 			if os.path.isdir(trashcan):
 				n = 1
@@ -61,8 +63,9 @@ def trash(paths):
 					info.close()
 				shutil.move(path, dst)
 			else:
-				# if trashcan does not exist, simply delete file/folder
-				if os.path.isdir(path) and not os.path.islink(path):
-					shutil.rmtree(path)
-				else:
-					os.remove(path)
+				# if trashcan does not exist, simply delete file/folder?
+				pass
+				# if os.path.isdir(path) and not os.path.islink(path):
+					# shutil.rmtree(path)
+				# else:
+					# os.remove(path)

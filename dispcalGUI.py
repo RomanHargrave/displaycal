@@ -43,7 +43,7 @@ import math
 import os
 import random
 import re
-import shutil
+import shutil26 as shutil
 import subprocess26 as sp
 import tempfile26 as tempfile
 import textwrap
@@ -1323,8 +1323,9 @@ class DisplayCalibratorGUI(wx.Frame):
 			"profile.save_path": storage, # directory
 			"profile.type": "s",
 			"profile.update": 0,
+			"projector_mode": 0,
 			"recent_cals": "",
-			"recent_cals_max": 25,
+			"recent_cals_max": 15,
 			"settings.changed": 0,
 			"size.info.w": 512,
 			"size.info.h": 384,
@@ -1400,10 +1401,12 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.measurement_modes_ab = {
 			"color": {
 				0: "c",
-				1: "l"
+				1: "l",
+				2: "cp",
+				3: "lp"
 			},
 			"spect": {
-				0: "",
+				0: None,
 				1: "p"
 			}
 		}
@@ -1412,13 +1415,16 @@ class DisplayCalibratorGUI(wx.Frame):
 			"color": {
 				"c": 0,
 				"l": 1,
-				"": 0,
-				"p": 1
+				None: 1,
+				"cp": 2,
+				"lp": 3
 			},
 			"spect": {
 				"c": 0,
-				"l": 1,
-				"": 0,
+				"l": 0,
+				None: 0,
+				"cp": 1,
+				"lp": 1,
 				"p": 1
 			}
 		}
@@ -1464,17 +1470,25 @@ class DisplayCalibratorGUI(wx.Frame):
 			"u": 4
 		}
 		self.testchart_defaults = {
+			None: {
+				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # CRT shaper / matrix
+				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # CRT lut
+			},
 			"c": {
 				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # CRT shaper / matrix
 				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # CRT lut
-				},
+			},
 			"l": {
 				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # LCD shaper / matrix
 				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # LCD lut
 			},
-			"": {
-				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # shaper / matrix
-				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # lut
+			"cp": {
+				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # CRT projector shaper / matrix
+				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # CRT projector lut
+			},
+			"lp": {
+				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # LCD projector shaper / matrix
+				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1", # LCD projector lut
 			},
 			"p": {
 				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1", # projector shaper / matrix
@@ -1726,7 +1740,10 @@ class DisplayCalibratorGUI(wx.Frame):
 									value = value[0]
 								self.comports.append(value)
 				if test:
-					self.comports.append("Dummy")
+					inames = instruments.keys()
+					inames.sort()
+					for iname in inames:
+						self.comports.append(iname)
 				if verbose >= 1 and not silent: safe_print(self.getlstr("success"))
 			except Exception, exception:
 				handle_error(traceback.format_exc(), parent = self)
@@ -2364,7 +2381,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			borders = wx.LEFT | wx.RIGHT
 		self.AddToSubSizer(self.measurement_mode_label, flag = borders | wx.ALIGN_CENTER_VERTICAL, border = 8)
 
-		self.measurement_mode_ctrl = wx.ComboBox(self.panel, -1, size = (65, -1), choices = [""] * 2, style = wx.CB_READONLY)
+		self.measurement_mode_ctrl = wx.ComboBox(self.panel, -1, size = (65, -1), choices = [""] * 4, style = wx.CB_READONLY)
 		self.Bind(wx.EVT_COMBOBOX, self.measurement_mode_ctrl_handler, id = self.measurement_mode_ctrl.GetId())
 		self.AddToSubSizer(self.measurement_mode_ctrl, flag = wx.ALIGN_CENTER_VERTICAL)
 
@@ -2973,22 +2990,35 @@ class DisplayCalibratorGUI(wx.Frame):
 				"LCD"
 			],
 			"spect": [
-				self.getlstr("default"),
-				self.getlstr("projector")
+				self.getlstr("default")
 			]
 		}
 		instrument_type = self.get_instrument_type()
+		instrument_features = self.get_instrument_features()
+		if instrument_features.get("projector_mode"):
+			if instrument_type == "spect":
+				measurement_modes[instrument_type] += [
+					self.getlstr("projector")
+				]
+			else:
+				measurement_modes[instrument_type] += [
+					"CRT-" + self.getlstr("projector"),
+					"LCD-" + self.getlstr("projector")
+				]
 		self.measurement_mode_ctrl.Freeze()
 		self.measurement_mode_ctrl.SetItems(measurement_modes[instrument_type])
-		self.measurement_mode_ctrl.SetSelection(0 if instrument_type == "spect" else 1)
-		self.measurement_mode_ctrl.Enable()
+		measurement_mode = self.getcfg("measurement_mode") or self.defaults["measurement_mode"]
+		if self.getcfg("projector_mode"):
+			measurement_mode += "p"
+		self.measurement_mode_ctrl.SetSelection(min(self.measurement_modes_ba[instrument_type].get(measurement_mode, 0), len(measurement_modes[instrument_type]) - 1))
+		self.measurement_mode_ctrl.Enable(len(measurement_modes[instrument_type]) > 1)
 		self.measurement_mode_ctrl.Thaw()
 
 	def update_main_controls(self):
 		update_cal = self.calibration_update_cb.GetValue()
 		enable_cal = not(update_cal)
 
-		self.measurement_mode_ctrl.Enable(enable_cal and bool(len(self.displays)))
+		self.measurement_mode_ctrl.Enable(enable_cal and bool(len(self.displays)) and bool(len(self.measurement_mode_ctrl.GetItems()) > 1))
 
 		update_profile = self.profile_update_cb.GetValue()
 		enable_profile = not(update_profile)
@@ -3096,9 +3126,13 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.profile_quality_ctrl.Enable(enable_profile)
 		self.profile_type_ctrl.Enable(enable_profile)
 
-		self.measurement_mode_ctrl.SetSelection(self.measurement_modes_ba[self.get_instrument_type()].get(self.getcfg("measurement_mode"), self.measurement_modes_ba[self.get_instrument_type()].get(self.defaults["measurement_mode"])))
+		measurement_mode = self.getcfg("measurement_mode") or self.defaults["measurement_mode"]
+		if self.getcfg("projector_mode"):
+			measurement_mode += "p"
+		self.measurement_mode_ctrl.SetSelection(min(self.measurement_modes_ba[self.get_instrument_type()].get(measurement_mode, 0), len(self.measurement_mode_ctrl.GetItems()) - 1))
 
-		self.whitepoint_colortemp_locus_ctrl.SetSelection(self.whitepoint_colortemp_loci_ba.get(self.getcfg("whitepoint.colortemp.locus"), self.whitepoint_colortemp_loci_ba.get(self.defaults["whitepoint.colortemp.locus"])))
+		self.whitepoint_colortemp_locus_ctrl.SetSelection(self.whitepoint_colortemp_loci_ba.get(self.getcfg("whitepoint.colortemp.locus"), 
+			self.whitepoint_colortemp_loci_ba.get(self.defaults["whitepoint.colortemp.locus"])))
 		if self.getcfg("whitepoint.colortemp", False):
 			self.whitepoint_colortemp_rb.SetValue(True)
 			self.whitepoint_colortemp_textctrl.SetValue(str(self.getcfg("whitepoint.colortemp")))
@@ -3227,7 +3261,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			else:
 				# prompt for setup.exe
 				defaultDir, defaultFile = os.path.expanduser("~"), "setup.exe"
-				dlg = wx.FileDialog(self, self.getlstr("locate_spyder2_setup"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = "*.exe", style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+				dlg = wx.FileDialog(self, self.getlstr("locate_spyder2_setup"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = "*", style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 				dlg.Center(wx.BOTH)
 				result = dlg.ShowModal()
 				path = dlg.GetPath()
@@ -3675,15 +3709,16 @@ class DisplayCalibratorGUI(wx.Frame):
 		args += ["-d" + self.get_display_number()]
 		args += ["-c" + self.get_comport_number()]
 		measurement_mode = self.get_measurement_mode()
-		if measurement_mode in ("c", "l"):
-			args += ["-y" + measurement_mode] # always specify -y (won't be read from .cal when updating)
-		elif measurement_mode == "p" and self.argyll_version >= [1, 1, 0, "_Beta"]:
-			args += ["-p"] # projector mode, Argyll >= 1.1.0_Beta, instrument needs emissive capability
+		instrument_features = self.get_instrument_features()
+		if measurement_mode:
+			if measurement_mode != "p" and not instrument_features.get("spectral"):
+				args += ["-y" + measurement_mode[0]] # always specify -y (won't be read from .cal when updating)
+			if "p" in measurement_mode and instrument_features.get("projector_mode") and self.argyll_version >= [1, 1, 0]: # projector mode, Argyll >= 1.1.0 Beta
+				args += ["-p"]
 		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + self.get_measureframe_dimensions()]
 		if self.measure_darken_background_cb.GetValue():
 			args += ["-F"]
-		iname = self.comport_ctrl.GetStringSelection()
-		if iname in instruments and instruments[iname]["high_res_supported"]:
+		if instrument_features.get("high_res"):
 			args += ["-H"]
 		if calibrate:
 			args += ["-q" + self.get_calibration_quality()]
@@ -3892,18 +3927,19 @@ class DisplayCalibratorGUI(wx.Frame):
 		args += ["-d" + self.get_display_number()]
 		args += ["-c" + self.get_comport_number()]
 		measurement_mode = self.get_measurement_mode()
-		if measurement_mode in ("c", "l"):
-			args += ["-y" + measurement_mode] # always specify -y (won't be read from .cal when updating)
-		elif measurement_mode == "p" and self.argyll_version >= [1, 1, 0, "_Beta"]:
-			args += ["-p"] # projector mode, Argyll >= 1.1.0_Beta, instrument needs emissive capability
+		instrument_features = self.get_instrument_features()
+		if measurement_mode:
+			if measurement_mode != "p" and not instrument_features.get("spectral"):
+				args += ["-y" + measurement_mode[0]] # always specify -y (won't be read from .cal when updating)
+			if "p" in measurement_mode and instrument_features.get("projector_mode") and self.argyll_version >= [1, 1, 0]: # projector mode, Argyll >= 1.1.0 Beta
+				args += ["-p"]
 		if apply_calibration:
 			args += ["-k"]
 			args += [cal]
 		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + self.get_measureframe_dimensions()]
 		if self.measure_darken_background_cb.GetValue():
 			args += ["-F"]
-		iname = self.comport_ctrl.GetStringSelection()
-		if iname in instruments and instruments[iname]["high_res_supported"]:
+		if instrument_features.get("high_res"):
 			args += ["-H"]
 		self.options_dispread = args + self.options_dispread
 		return cmd, self.options_dispread + [inoutfile]
@@ -4005,7 +4041,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						(sys.platform == "win32" and 
 						sys.getwindowsversion() >= (6, )) or test):
 						if ((sys.platform not in ("win32", "darwin") and \
-							self.argyll_version >= [1, 1, 0, "Beta"]) or \
+							self.argyll_version >= [1, 1, 0]) or \
 							sys.platform in ("win32", "darwin") or test):
 								# -S option is broken on Linux with current Argyll releases
 								args += ["-S" + self.getcfg("profile.install_scope")]
@@ -4605,8 +4641,8 @@ class DisplayCalibratorGUI(wx.Frame):
 						if last: # the last one in the chain
 							os.remove(allfilename)
 			if cmdname == self.get_argyll_utilname("dispread") and self.dispread_after_dispcal:
-				iname = self.comport_ctrl.GetStringSelection()
-				if iname in instruments and (not instruments[iname]["sensor_cal"] or instruments[iname]["skip_sensor_cal_supported"]):
+				instrument_features = self.get_instrument_features()
+				if instrument_features and (not instrument_features.get("sensor_cal") or instrument_features.get("skip_sensor_cal")):
 					try:
 						if sys.platform == "darwin":
 							start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
@@ -4775,8 +4811,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		safe_print("-" * 80)
 		safe_print(self.getlstr("button.calibrate_and_profile").replace("&&", "&"))
 		self.install_cal = True
-		iname = self.comport_ctrl.GetStringSelection()
-		if iname in instruments and instruments[iname]["skip_sensor_cal_supported"]:
+		if self.get_instrument_features().get("skip_sensor_cal"):
 			self.options_dispread = ["-N"]
 		self.dispread_after_dispcal = True
 		start_timers = True
@@ -4997,16 +5032,17 @@ class DisplayCalibratorGUI(wx.Frame):
 		if debug: safe_print("measurement_mode_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
 		self.set_default_testchart()
 		v = self.get_measurement_mode()
-		if v == "p" and self.argyll_version < [1, 1, 0, "_Beta"]:
-			self.measurement_mode_ctrl.SetSelection(0)
-			v = ""
+		if v and "p" in v and self.argyll_version < [1, 1, 0]:
+			self.measurement_mode_ctrl.SetSelection(self.measurement_modes_ba[self.get_instrument_type()].get(self.defaults["measurement_mode"], 0))
+			v = None
 			InfoDialog(self, msg = self.getlstr("projector_mode_unavailable"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 		cal_changed = v != self.getcfg("measurement_mode") and self.getcfg("calibration.file") not in self.presets
 		if cal_changed:
 			self.cal_changed()
-		self.setcfg("measurement_mode", v)
-		if ((self.get_measurement_mode() in ("l", "p") and float(self.get_black_point_correction()) > 0) or (self.get_measurement_mode() == "c" and float(self.get_black_point_correction()) == 0)) and self.getcfg("calibration.black_point_correction_choice.show"):
-			if self.get_measurement_mode() in ("l", "p"):
+		self.setcfg("projector_mode", 1 if v and "p" in v else None)
+		self.setcfg("measurement_mode", (v.replace("p", "") if v else None) or None)
+		if ((v in ("l", "lp", "p") and float(self.get_black_point_correction()) > 0) or (v in ("c", "cp") and float(self.get_black_point_correction()) == 0)) and self.getcfg("calibration.black_point_correction_choice.show"):
+			if v in ("l", "lp", "p"):
 				ok = self.getlstr("calibration.turn_off_black_point_correction")
 			else:
 				ok = self.getlstr("calibration.turn_on_black_point_correction")
@@ -5019,13 +5055,13 @@ class DisplayCalibratorGUI(wx.Frame):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				if self.get_measurement_mode() in ("l", "p"):
-					v = 0.0
+				if v in ("l", "lp", "p"):
+					bkpt_corr = 0.0
 				else:
-					v = 1.0
-				if not cal_changed and v != self.getcfg("calibration.black_point_correction"):
+					bkpt_corr = 1.0
+				if not cal_changed and bkpt_corr != self.getcfg("calibration.black_point_correction"):
 					self.cal_changed()
-				self.setcfg("calibration.black_point_correction", v)
+				self.setcfg("calibration.black_point_correction", bkpt_corr)
 				self.update_controls(update_profile_name = False)
 		self.update_profile_name()
 	
@@ -5301,15 +5337,16 @@ class DisplayCalibratorGUI(wx.Frame):
 		instrument = instrument.replace("ColorVision", "")
 		instrument = instrument.replace(" ", "")
 		profile_name = profile_name.replace("%in", instrument)
-		measurement_mode = self.get_measurement_mode()
-		if measurement_mode == "c":
-			mode = "CRT"
-		elif measurement_mode == "l":
-			mode = "LCD"
-		elif measurement_mode == "p":
-			mode = self.getlstr("projector")
-		else:
-			mode = ""
+		measurement_mode = self.get_measurement_mode() or ""
+		mode = ""
+		if "c" in measurement_mode:
+			mode += "CRT"
+		elif "l" in measurement_mode:
+			mode += "LCD"
+		if len(measurement_mode) > 1:
+			mode += "-"
+		if "p" in measurement_mode :
+			mode += self.getlstr("projector")
 		if mode:
 			profile_name = profile_name.replace("%im", mode)
 		else:
@@ -5420,12 +5457,15 @@ class DisplayCalibratorGUI(wx.Frame):
 		return None
 	
 	def get_instrument_type(self):
-		# return the instrument type, "color" (colorimeter) or "spect" (spectrophotometer w/ emissive capability)
-		emissive = instruments.get(self.comport_ctrl.GetStringSelection(), {}).get("spectral_supported", False)
-		return "spect" if emissive else "color"
+		# return the instrument type, "color" (colorimeter) or "spect" (spectrometer)
+		spect = self.get_instrument_features().get("spectral", False)
+		return "spect" if spect else "color"
+	
+	def get_instrument_features(self):
+		return instruments.get(self.comport_ctrl.GetStringSelection(), {})
 
 	def get_measurement_mode(self):
-		return self.measurement_modes_ab[self.get_instrument_type()][self.measurement_mode_ctrl.GetSelection()]
+		return self.measurement_modes_ab[self.get_instrument_type()].get(self.measurement_mode_ctrl.GetSelection())
 
 	def get_profile_type(self):
 		return self.profile_types_ab[self.profile_type_ctrl.GetSelection()]
@@ -7551,7 +7591,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			"k\d+(?:\.\d+)?",
 			"A\d+",
 			"B\d+(?:\.\d+)?",
-			"p\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
+			"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
+			"p",
 			"F\d+(?:\.\d+)?",
 			"H"
 		]
@@ -7702,7 +7743,7 @@ class DisplayCalibratorGUI(wx.Frame):
 									self.setcfg("dimensions.measureframe.unzoomed", o[1:])
 									continue
 								if o[0] == "p" and len(o[1:]) == 0:
-									self.setcfg("measurement_mode", "p")
+									self.setcfg("projector_mode", 1)
 									continue
 								if o[0] == "F":
 									self.setcfg("measure.darken_background", 1)
@@ -7812,11 +7853,9 @@ class DisplayCalibratorGUI(wx.Frame):
 							return
 					elif line[0] == "DEVICE_TYPE":
 						measurement_mode = value.lower()[0]
-						self.setcfg("measurement_mode", measurement_mode)
 						if measurement_mode in ("c", "l"):
+							self.setcfg("measurement_mode", measurement_mode)
 							self.options_dispcal += ["-y" + measurement_mode]
-						elif measurement_mode == "p" and self.argyll_version >= [1, 1, 0, "_Beta"]:
-							self.options_dispcal += ["-p"]
 					elif line[0] == "NATIVE_TARGET_WHITE":
 						self.setcfg("whitepoint.colortemp", None)
 						self.setcfg("whitepoint.x", None)
