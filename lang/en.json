@@ -95,6 +95,7 @@
 	"error.calibration.file_notfile": "“%s” is not a file.",
 	"error.copy_failed": "The file “%s” could not be copied to “%s”.",
 	"error.deletion": "An error occured while deleting.",
+	"error.file.open": "The file “%s” could not be opened.",
 	"error.generic": "An internal error occured.\n\nError code: %s\nError message: %s",
 	"error.measurement.file_missing": "The measurement file “%s” is missing.",
 	"error.measurement.file_not_created": "No measurement file has been created.",

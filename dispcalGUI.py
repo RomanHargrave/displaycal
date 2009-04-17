@@ -49,7 +49,7 @@ import tempfile26 as tempfile
 import textwrap
 import traceback
 Decimal = decimal.Decimal
-from StringIO import StringIO
+from StringIOu import StringIOu as StringIO, universal_newlines
 from thread import start_new_thread
 from time import gmtime, localtime, sleep, strftime, time, timezone
 
@@ -70,7 +70,7 @@ from argyll_instruments import instruments
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
 from natsort import natsort
 import pyi_md5pickuphelper
-from safe_print import safe_print
+from safe_print import safe_print as _safe_print
 from trash import trash
 
 # helper functions
@@ -87,16 +87,6 @@ def replaceunderscore(ex):
 	return u"_", ex.end
 
 codecs.register_error("replaceunderscore", replaceunderscore)
-
-def universal_newlines(txt):
-	return txt.replace("\r\n", "\n").replace("\r", "\n")
-
-StringIO__init__ = StringIO.__init__
-
-def StringIO__init__universal_newlines(self, txt = ""):
-	StringIO__init__(self, universal_newlines(txt))
-
-StringIO.__init__ = StringIO__init__universal_newlines
 
 # init
 appname = "dispcalGUI"
@@ -131,6 +121,7 @@ if sys.platform == "win32":
 	commonprogramfiles = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_PROGRAM_FILES_COMMON)
 	confighome = os.path.join(appdata, appname)
 	autostart = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_STARTUP)
+	autostart_home = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP)
 	datahome = os.path.join(appdata, appname)
 	data_dirs += [datahome, os.path.join(commonappdata, appname), 
 				  os.path.join(commonprogramfiles, appname)]
@@ -197,11 +188,17 @@ enc = "UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or \
    locale.getpreferredencoding() or "ASCII"
 fs_enc = sys.getfilesystemencoding() or enc
 
-debug = "-d" in sys.argv # prints debug messages
-test = "-t" in sys.argv # aid testing new features
-if "-v2" in sys.argv:
+if "-d2" in sys.argv or "--debug=2" in sys.argv:
+	debug = 2
+elif "-d1" in sys.argv or "--debug=1" in sys.argv or \
+	 "-d" in sys.argv or "--debug" in sys.argv:
+	debug = 1
+else:
+	debug = 0 # >= 1 prints debug messages
+test = "-t" in sys.argv or "--test" in sys.argv # aid testing new features
+if "-v2" in sys.argv or "--verbose=2" in sys.argv:
 	verbose = 2
-elif "-v0" in sys.argv:
+elif "-v0" in sys.argv or "--verbose=0" in sys.argv:
 	verbose = 0
 else:
 	verbose = 1 # >= 1 prints some status information
@@ -256,10 +253,15 @@ def get_data_path(relpath, rex = None):
 		curpath = os.path.join(dir_, relpath)
 		if os.path.exists(curpath):
 			if os.path.isdir(curpath):
-				for filename in listdir(curpath, rex):
-					if not filename in intersection:
-						intersection += [filename]
-						paths += [os.path.join(curpath, filename)]
+				try:
+					filelist = listdir(curpath, rex)
+				except Exception, exception:
+					if debug: safe_print("Error - directory '%s' listing failed: %s" % (curpath, str(exception)))
+				else:
+					for filename in filelist:
+						if not filename in intersection:
+							intersection += [filename]
+							paths += [os.path.join(curpath, filename)]
 			else:
 				return curpath
 	return None if len(paths) == 0 else paths
@@ -274,11 +276,11 @@ def get_w3c_dtf_timestamp(time_ = None, timezone_ = None):
 	   strftime("%H:%M", gmtime(abs(timezone_)))
 
 def log(msg, fn = None):
-	if fn is None:
+	if fn is None and logging.root.handlers:
 		fn = logging.info
-	# fn("%s %s" % (get_w3c_dtf_timestamp(), msg))
-	for line in universal_newlines(msg).split("\n"):
-		fn(line)
+	if fn:
+		for line in universal_newlines(msg).split("\n"):
+			fn(line)
 	if globalconfig["app"] is not None and \
 	   hasattr(globalconfig["app"], "frame") and \
 	   hasattr(globalconfig["app"].frame, "infoframe"):
@@ -289,47 +291,65 @@ def setup_logging():
 	logfile = os.path.join(logdir, appname + ".log")
 	backupCount = 5
 	if not os.path.exists(logdir):
-		os.makedirs(logdir)
+		try:
+			os.makedirs(logdir)
+		except Exception, exception:
+			safe_print("Warning - log directory '%s' could not be created: %s" % (logdir, str(exception)))
 	if os.path.exists(logfile):
-		mtime = localtime(os.stat(logfile).st_mtime)
-		if localtime()[:3] > mtime[:3]:
-			logbackup = logfile + strftime(".%Y-%m-%d", mtime)
-			if os.path.exists(logbackup):
-				try:
-					os.remove(logbackup)
-				except:
-					pass
-			try:
-				os.rename(logfile, logbackup)
-			except:
-				pass
-			# adapted from Python 2.6 
-			# logging.handlers.TimedRotatingFileHandler.getFilesToDelete
-			extMatch = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-			dirName, baseName = os.path.split(logfile)
-			fileNames = os.listdir(dirName)
-			result = []
-			prefix = baseName + "."
-			plen = len(prefix)
-			for fileName in fileNames:
-				if fileName[:plen] == prefix:
-					suffix = fileName[plen:]
-					if extMatch.match(suffix):
-						result.append(os.path.join(dirName, fileName))
-			result.sort()
-			if len(result) > backupCount:
-				for s in result[:len(result) - backupCount]:
+		try:
+			logstat = os.stat(logfile)
+		except Exception, exception:
+			safe_print("Warning - os.stat('%s') failed: %s" % (logfile, str(exception)))
+		else:
+			# rollover needed?
+			mtime = localtime(logstat.st_mtime)
+			if localtime()[:3] > mtime[:3]:
+				# do rollover
+				logbackup = logfile + strftime(".%Y-%m-%d", mtime)
+				if os.path.exists(logbackup):
 					try:
-						os.remove(s)
+						os.remove(logbackup)
 					except:
-						pass
+						safe_print("Warning - logfile backup '%s' could not be removed during rollover: %s" % (logbackup, str(exception)))
+				try:
+					os.rename(logfile, logbackup)
+				except:
+					safe_print("Warning - logfile '%s' could not be renamed to '%s' during rollover: %s" % (logfile, os.path.basename(logbackup), str(exception)))
+				# adapted from Python 2.6 
+				# logging.handlers.TimedRotatingFileHandler.getFilesToDelete
+				extMatch = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+				baseName = os.path.basename(logfile)
+				try:
+					fileNames = os.listdir(logdir)
+				except Exception, exception:
+					safe_print("Warning - log directory '%s' listing failed during rollover: %s" % (logdir, str(exception)))
+				else:
+					result = []
+					prefix = baseName + "."
+					plen = len(prefix)
+					for fileName in fileNames:
+						if fileName[:plen] == prefix:
+							suffix = fileName[plen:]
+							if extMatch.match(suffix):
+								result.append(os.path.join(logdir, fileName))
+					result.sort()
+					if len(result) > backupCount:
+						for logbackup in result[:len(result) - backupCount]:
+							try:
+								os.remove(logbackup)
+							except:
+								safe_print("Warning - logfile backup '%s' could not be removed during rollover: %s" % (logbackup, str(exception)))
 	logger = logging.getLogger()
 	logger.setLevel(logging.DEBUG)
-	filehandler = logging.handlers.TimedRotatingFileHandler(logfile, 
-		when = "midnight", backupCount = backupCount)
-	fileformatter = logging.Formatter("%(asctime)s %(message)s")
-	filehandler.setFormatter(fileformatter)
-	logger.addHandler(filehandler)
+	if os.path.exists(logdir):
+		try:
+			filehandler = logging.handlers.TimedRotatingFileHandler(logfile, 
+				when = "midnight", backupCount = backupCount)
+			fileformatter = logging.Formatter("%(asctime)s %(message)s")
+			filehandler.setFormatter(fileformatter)
+			logger.addHandler(filehandler)
+		except Exception, exception:
+			safe_print("Warning - logging to file '%s' not possible: %s" % (logfile, str(exception)))
 	log("=" * 80)
 	streamhandler = globalconfig["logging.StreamHandler"] = \
 	   logging.StreamHandler(globalconfig["log"])
@@ -337,7 +357,6 @@ def setup_logging():
 	streamhandler.setFormatter(streamformatter)
 	logger.addHandler(streamhandler)
 
-_safe_print = safe_print
 def safe_print(*args, **kwargs):
 	_safe_print(*args, **kwargs)
 	kwargs["fn"] = log
@@ -356,7 +375,7 @@ def handle_error(errstr, parent = None, silent = False):
 			dlg.ShowModal()
 			dlg.Destroy()
 		except Exception, exception:
-			safe_print(traceback.format_exc())
+			safe_print("Warning: handle_error():", str(exception))
 
 def _excepthook(type, value, tb):
 	handle_error("".join(traceback.format_exception(type, value, tb)))
@@ -371,23 +390,33 @@ def init_languages():
 		langdirs += [os.path.join(dir_, "lang")]
 	for langdir in langdirs:
 		if os.path.exists(langdir) and os.path.isdir(langdir):
-			langfiles = os.listdir(langdir)
-			for filename in langfiles:
-				name, ext = os.path.splitext(filename)
-				if ext.lower() == ".json" and name.lower() not in ldict:
-					langfile = open(os.path.join(langdir, filename), "rU")
-					try:
-						ltxt = unicode(langfile.read(), "UTF-8")
-						ldict[name.lower()] = demjson.decode(ltxt)
-					except (UnicodeDecodeError, demjson.JSONDecodeError), \
-					   exception:
-						handle_error("Error: Language file '%s': %s" % 
-							(os.path.join(langdir, filename), 
-							str(exception) if type(exception) == 
-							UnicodeDecodeError else 
-							exception.args[0].capitalize())
-							)
-					langfile.close()
+			try:
+				langfiles = os.listdir(langdir)
+			except Exception, exception:
+				safe_print("Warning - directory '%s' listing failed: %s" % (langdir, str(exception)))
+			else:
+				for filename in langfiles:
+					name, ext = os.path.splitext(filename)
+					if ext.lower() == ".json" and name.lower() not in ldict:
+						langfilename = os.path.join(langdir, filename)
+						try:
+							langfile = open(langfilename, "rU")
+							try:
+								ltxt = unicode(langfile.read(), "UTF-8")
+								ldict[name.lower()] = demjson.decode(ltxt)
+							except (UnicodeDecodeError, demjson.JSONDecodeError), \
+							   exception:
+								handle_error("Warning - language file '%s': %s" % 
+									(langfilename, 
+									exception.args[0].capitalize() if type(exception) == 
+									demjson.JSONDecodeError else 
+									str(exception))
+									)
+						except Exception, exception:
+							handle_error("Warning - language file '%s': %s" % 
+								(langfilename, str(exception)))
+						else:
+							langfile.close()
 	if len(ldict) == 0:
 		handle_error("Warning: No valid language files found. The following "
 			"places have been searched:\n%s" % "\n".join(langdirs))
@@ -462,13 +491,18 @@ def get_ti1_1(cgats):
 
 cals = {}
 def can_update_cal(path):
-	if not path in cals or cals[path].mtime != os.stat(path).st_mtime:
+	try:
+		calstat = os.stat(path)
+	except Exception, exception:
+		safe_print("Warning - os.stat('%s') failed: %s" % (path, str(exception)))
+	if not path in cals or cals[path].mtime != calstat.st_mtime:
 		try:
 			cal = CGATS.CGATS(path)
 		except (IOError, CGATS.CGATSInvalidError, 
 			CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 			cals[path] = False
+			safe_print("Warning - couldn't process CGATS file '%s': %s" % (path, str(exception)))
 		else:
 			cals[path] = cal.queryv1("DEVICE_TYPE") in ("CRT", "LCD") and \
 			   not None in (cal.queryv1("TARGET_WHITE_XYZ"), 
@@ -685,34 +719,12 @@ def GetAllChildren(self):
 
 wx.Window.GetAllChildren = GetAllChildren
 
-# facility to disable all subwindows, then restore previous state
-
-def DisableAll(self):
-	children = self.GetAllChildren() + [self]
-	for child in children:
-		child.PrevEnabledState = child.IsEnabled()
-		if debug: safe_print(child.GetName(), child.PrevEnabledState)
-		child.Disable()
-
-wx.Window.DisableAll = DisableAll
-
-def RestoreEnabledState(self):
-	children = self.GetAllChildren() + [self]
-	for child in children:
-		if debug: safe_print(child.GetName(), child.PrevEnabledState)
-		if hasattr(child, "PrevEnabledState") and \
-		   child.IsEnabled() != child.PrevEnabledState:
-			child.Enable(child.PrevEnabledState)
-
-wx.Window.RestoreEnabledState = RestoreEnabledState
-
 # update tooltip string correctly
-def SetToolTipString(self, string):
+def UpdateToolTipString(self, string):
 	wx.Window.SetToolTip(self, None)
-	wx.Window._SetToolTipString(self, string)
+	wx.Window.SetToolTipString(self, string)
 
-wx.Window._SetToolTipString = wx.Window.SetToolTipString
-wx.Window.SetToolTipString = SetToolTipString
+wx.Window.UpdateToolTipString = UpdateToolTipString
 
 # avoid flickering
 def SetBitmapLabelIfNot(self, bitmap):
@@ -747,7 +759,7 @@ def GridGetSelection(self):
 	numrows = self.GetNumberRows()
 	numcols = self.GetNumberCols()
 	# rows
-	rows = self._GetSelectedRows()
+	rows = self.GetSelectedRows()
 	for row in rows:
 		if row > -1 and row < numrows:
 			for i in range(numcols):
@@ -781,7 +793,10 @@ def GridGetSelection(self):
 
 wx.grid.Grid.GetSelection = GridGetSelection
 
-def GridGetSelectedRows(self):
+def GridGetSelectedRowsFromSelection(self):
+	""" Return the number of fully selected rows.
+	Unlike GetSelectedRows, include rows that have been selected
+	by chosing individual cells """
 	sel = self.GetSelection()
 	numcols = self.GetNumberCols()
 	rows = []
@@ -796,10 +811,11 @@ def GridGetSelectedRows(self):
 			rows += [row]
 	return rows
 
-wx.grid.Grid._GetSelectedRows = wx.grid.Grid.GetSelectedRows
-wx.grid.Grid.GetSelectedRows = GridGetSelectedRows
+wx.grid.Grid.GetSelectedRowsFromSelection = GridGetSelectedRowsFromSelection
 
 def GridGetSelectionRows(self):
+	"""  Return the rows a selection spans, 
+	even if not all cells in a row are selected """
 	sel = self.GetSelection()
 	rows = []
 	i = -1
@@ -1189,14 +1205,17 @@ def isSizer(item):
 class DisplayCalibratorGUI(wx.Frame):
 
 	def __init__(self, app):
-		if sys.platform == "win32":
-			sp.call("color 0F", shell = True)
-		else:
-			if sys.platform == "darwin":
-				mac_terminal_set_colors(text = "white", text_bold = "white")
+		try:
+			if sys.platform == "win32":
+				sp.call("color 0F", shell = True)
 			else:
-				sp.call('echo -e "\\033[40;22;37m"', shell = True)
-			sp.call('clear', shell = True)
+				if sys.platform == "darwin":
+					mac_terminal_set_colors(text = "white", text_bold = "white")
+				else:
+					sp.call('echo -e "\\033[40;22;37m"', shell = True)
+				sp.call('clear', shell = True)
+		except Exception, exception:
+			safe_print("Info - could not set terminal colors:", str(exception))
 		self.app = app
 		self.init_cfg()
 		if verbose >= 1: safe_print(self.getlstr("startup"))
@@ -1238,7 +1257,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		try:
 			self.cfg.read([os.path.join(confighome, appname + ".ini")])
 		except Exception, exception:
-			pass
+			safe_print("Warning - could not parse configuration file '%s'" % appname + ".ini")
 		self.cfg.optionxform = str
 		
 		if not self.cfg.has_option(ConfigParser.DEFAULTSECT, "lang"):
@@ -1246,14 +1265,17 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.lang = self.cfg.get(ConfigParser.DEFAULTSECT, "lang")
 	
 	def write_cfg(self):
-		cfgfile = open(os.path.join(confighome, appname + ".ini"), "wb")
-		io = StringIO()
-		self.cfg.write(io)
-		io.seek(0)
-		l = io.read().strip("\n").split("\n")
-		l.sort()
-		cfgfile.write("\n".join(l))
-		cfgfile.close()
+		try:
+			cfgfile = open(os.path.join(confighome, appname + ".ini"), "wb")
+			io = StringIO()
+			self.cfg.write(io)
+			io.seek(0)
+			l = io.read().strip("\n").split("\n")
+			l.sort()
+			cfgfile.write("\n".join(l))
+			cfgfile.close()
+		except Exception, exception:
+			handle_error("Warning - could not write configuration file: %s" % (str(exception)), parent = self)
 
 	def init_defaults(self):
 		# defaults
@@ -1630,7 +1652,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.setcfg("position.y", y)
 		display_client_rect = get_display(self).ClientArea
 		if hasattr(self, "calpanel") and (not hasattr(self, "display_client_rect") or self.display_client_rect != display_client_rect):
-			if verbose >= 2: safe_print("We just moved to this workspace:", display_client_rect)
+			if verbose >= 2: safe_print("We just moved to this workspace:", ", ".join(map(str, display_client_rect)))
 			size = self.GetSize()
 			if sys.platform not in ("darwin", "win32"): # Linux
 				safety_margin = 45
@@ -1693,87 +1715,77 @@ class DisplayCalibratorGUI(wx.Frame):
 		if (silent and self.check_argyll_bin()) or (not silent and self.check_set_argyll_bin()):
 			displays = list(self.displays)
 			if verbose >= 1 and not silent: safe_print(self.getlstr("enumerating_displays_and_comports"))
-			try:
-				p = sp.Popen(self.get_argyll_util("dispcal").encode(fs_enc), stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.STDOUT)
-				p.stdin.close()
-				arg = None
-				output = p.stdout.readlines()
-				self.displays = []
-				self.comports = []
-				self.defaults["calibration.black_point_rate.enabled"] = 0
-				n = -1
-				for line in output:
-					if type(line) in (str, unicode):
-						n += 1
-						line = line.strip()
-						if n == 0 and "version" in line.lower():
-							version = line[line.lower().find("version")+8:]
-							version = re.findall("(\d+|[^.\d]+)", version)
-							for i in range(len(version)):
-								try:
-									version[i] = int(version[i])
-								except ValueError:
-									version[i] = version[i]
-							self.argyll_version = version
-							if verbose >= 2: safe_print("Argyll CMS version", repr(version))
-							continue
-						line = line.split(None, 1)
-						if len(line) and line[0][0] == "-":
-							arg = line[0]
-							if arg == "-A":
-								# Rate of blending from neutral to black point. Default 8.0
-								self.defaults["calibration.black_point_rate.enabled"] = 1
-						elif len(line) > 1 and line[1][0] == "=":
-							value = line[1].strip(" ='")
-							if arg == "-d":
-								match = re.findall("(.+?),? at (-?\d+), (-?\d+), width (\d+), height (\d+)", value)
-								if len(match):
-									display = "%s @ %s, %s, %sx%s" % match[0]
-									if " ".join(value.split()[-2:]) == "(Primary Display)":
-										display += " " + self.getlstr("display.primary")
-									self.displays.append(display)
-							elif arg == "-c":
-								value = value.split(None, 1)
-								if len(value) > 1:
-									value = value[1].strip("()")
-								else:
-									value = value[0]
-								self.comports.append(value)
-				if test:
-					inames = instruments.keys()
-					inames.sort()
-					for iname in inames:
-						self.comports.append(iname)
-				if verbose >= 1 and not silent: safe_print(self.getlstr("success"))
-			except Exception, exception:
-				handle_error(traceback.format_exc(), parent = self)
-				if verbose >= 1 and not silent: safe_print(self.getlstr("failure"))
+			self.exec_cmd(self.get_argyll_util("dispcal"), [], capture_output = True, skip_cmds = True, silent = True, log_output = False)
+			arg = None
+			self.displays = []
+			self.comports = []
+			self.defaults["calibration.black_point_rate.enabled"] = 0
+			n = -1
+			for line in self.output:
+				if type(line) in (str, unicode):
+					n += 1
+					line = line.strip()
+					if n == 0 and "version" in line.lower():
+						version = line[line.lower().find("version")+8:]
+						version = re.findall("(\d+|[^.\d]+)", version)
+						for i in range(len(version)):
+							try:
+								version[i] = int(version[i])
+							except ValueError:
+								version[i] = version[i]
+						self.argyll_version = version
+						if verbose >= 2: safe_print("Argyll CMS version", repr(version))
+						continue
+					line = line.split(None, 1)
+					if len(line) and line[0][0] == "-":
+						arg = line[0]
+						if arg == "-A":
+							# Rate of blending from neutral to black point. Default 8.0
+							self.defaults["calibration.black_point_rate.enabled"] = 1
+					elif len(line) > 1 and line[1][0] == "=":
+						value = line[1].strip(" ='")
+						if arg == "-d":
+							match = re.findall("(.+?),? at (-?\d+), (-?\d+), width (\d+), height (\d+)", value)
+							if len(match):
+								display = "%s @ %s, %s, %sx%s" % match[0]
+								if " ".join(value.split()[-2:]) == "(Primary Display)":
+									display += " " + self.getlstr("display.primary")
+								self.displays.append(display)
+						elif arg == "-c":
+							value = value.split(None, 1)
+							if len(value) > 1:
+								value = value[1].strip("()")
+							else:
+								value = value[0]
+							self.comports.append(value)
+			if test:
+				inames = instruments.keys()
+				inames.sort()
+				for iname in inames:
+					self.comports.append(iname)
+			if verbose >= 1 and not silent: safe_print(self.getlstr("success"))
 			if displays != self.displays:
 				# check lut access
 				i = 0
 				for disp in self.displays:
-					try:
-						if verbose >= 1 and not silent: safe_print(self.getlstr("checking_lut_access", (i + 1)))
-						# load test.cal
-						self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-c", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
-						# check if LUT == test.cal
-						self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-V", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
-						retcode = -1
-						for line in self.output:
-							if line.find("IS loaded") >= 0:
-								retcode = 0
-								break
-						# reset LUT & load profile cal (if any)
-						self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-c", "-L"], capture_output = True, skip_cmds = True, silent = True)
-						self.lut_access += [retcode == 0]
-						if verbose >= 1 and not silent:
-							if retcode == 0:
-								safe_print(self.getlstr("success"))
-							else:
-								safe_print(self.getlstr("failure"))
-					except Exception, exception:
-						handle_error(traceback.format_exc(), parent = self)
-						if verbose >= 1 and not silent: safe_print(self.getlstr("failure"))
+					if verbose >= 1 and not silent: safe_print(self.getlstr("checking_lut_access", (i + 1)))
+					# load test.cal
+					self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-c", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
+					# check if LUT == test.cal
+					self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-V", get_data_path("test.cal")], capture_output = True, skip_cmds = True, silent = True)
+					retcode = -1
+					for line in self.output:
+						if line.find("IS loaded") >= 0:
+							retcode = 0
+							break
+					# reset LUT & load profile cal (if any)
+					self.exec_cmd(self.get_argyll_util("dispwin"), ["-d%s" % (i +1), "-c", "-L"], capture_output = True, skip_cmds = True, silent = True)
+					self.lut_access += [retcode == 0]
+					if verbose >= 1 and not silent:
+						if retcode == 0:
+							safe_print(self.getlstr("success"))
+						else:
+							safe_print(self.getlstr("failure"))
 					i += 1
 
 	def init_gamapframe(self):
@@ -1893,11 +1905,11 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.infoframe.sizer.Add(self.infoframe.btnsizer)
 		self.infoframe.save_as_btn = wx.BitmapButton(self.infoframe.panel, -1, self.bitmaps["theme/icons/16x16/media-floppy"], style = wx.NO_BORDER)
 		self.infoframe.save_as_btn.Bind(wx.EVT_BUTTON, self.info_save_as_handler)
-		self.infoframe.save_as_btn.SetToolTipString(self.getlstr("save_as"))
+		self.infoframe.save_as_btn.UpdateToolTipString(self.getlstr("save_as"))
 		self.infoframe.btnsizer.Add(self.infoframe.save_as_btn, flag = wx.ALL, border = 4)
 		self.infoframe.clear_btn = wx.BitmapButton(self.infoframe.panel, -1, self.bitmaps["theme/icons/16x16/edit-delete"], style = wx.NO_BORDER)
 		self.infoframe.clear_btn.Bind(wx.EVT_BUTTON, self.info_clear_handler)
-		self.infoframe.clear_btn.SetToolTipString(self.getlstr("clear"))
+		self.infoframe.clear_btn.UpdateToolTipString(self.getlstr("clear"))
 		self.infoframe.btnsizer.Add(self.infoframe.clear_btn, flag = wx.ALL, border = 4)
 		self.infoframe.SetMinSize((self.defaults["size.info.w"], self.defaults["size.info.h"]))
 		set_position(self.infoframe, int(self.getcfg("position.info.x")), int(self.getcfg("position.info.y")), int(self.getcfg("size.info.w")), int(self.getcfg("size.info.h")))
@@ -1940,33 +1952,33 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.measureframe.zoommaxbutton = wx.BitmapButton(self.measureframe.panel, -1, self.bitmaps["theme/icons/32x32/zoom-best-fit"], style = wx.NO_BORDER)
 		self.measureframe.Bind(wx.EVT_BUTTON, self.measureframe_zoommax_handler, self.measureframe.zoommaxbutton)
 		self.measureframe.hsizer.Add(self.measureframe.zoommaxbutton, flag = wx.ALIGN_CENTER)
-		self.measureframe.zoommaxbutton.SetToolTipString(self.getlstr("measureframe.zoommax"))
+		self.measureframe.zoommaxbutton.UpdateToolTipString(self.getlstr("measureframe.zoommax"))
 
 		self.measureframe.hsizer.Add((2, 1))
 
 		self.measureframe.zoominbutton = wx.BitmapButton(self.measureframe.panel, -1, self.bitmaps["theme/icons/32x32/zoom-in"], style = wx.NO_BORDER)
 		self.measureframe.Bind(wx.EVT_BUTTON, self.measureframe_zoomin_handler, self.measureframe.zoominbutton)
 		self.measureframe.hsizer.Add(self.measureframe.zoominbutton, flag = wx.ALIGN_CENTER)
-		self.measureframe.zoominbutton.SetToolTipString(self.getlstr("measureframe.zoomin"))
+		self.measureframe.zoominbutton.UpdateToolTipString(self.getlstr("measureframe.zoomin"))
 
 		self.measureframe.hsizer.Add((2, 1))
 
 		self.measureframe.zoomnormalbutton = wx.BitmapButton(self.measureframe.panel, -1, self.bitmaps["theme/icons/32x32/zoom-original"], style = wx.NO_BORDER)
 		self.measureframe.Bind(wx.EVT_BUTTON, self.measureframe_zoomnormal_handler, self.measureframe.zoomnormalbutton)
 		self.measureframe.hsizer.Add(self.measureframe.zoomnormalbutton, flag = wx.ALIGN_CENTER)
-		self.measureframe.zoomnormalbutton.SetToolTipString(self.getlstr("measureframe.zoomnormal"))
+		self.measureframe.zoomnormalbutton.UpdateToolTipString(self.getlstr("measureframe.zoomnormal"))
 
 		self.measureframe.hsizer.Add((2, 1))
 
 		self.measureframe.zoomoutbutton = wx.BitmapButton(self.measureframe.panel, -1, self.bitmaps["theme/icons/32x32/zoom-out"], style = wx.NO_BORDER)
 		self.measureframe.Bind(wx.EVT_BUTTON, self.measureframe_zoomout_handler, self.measureframe.zoomoutbutton)
 		self.measureframe.hsizer.Add(self.measureframe.zoomoutbutton, flag = wx.ALIGN_CENTER)
-		self.measureframe.zoomoutbutton.SetToolTipString(self.getlstr("measureframe.zoomout"))
+		self.measureframe.zoomoutbutton.UpdateToolTipString(self.getlstr("measureframe.zoomout"))
 
 		self.measureframe.centerbutton = wx.BitmapButton(self.measureframe.panel, -1, self.bitmaps["theme/icons/32x32/window-center"], style = wx.NO_BORDER)
 		self.measureframe.Bind(wx.EVT_BUTTON, self.measureframe_center_handler, self.measureframe.centerbutton)
 		self.measureframe.sizer.Add(self.measureframe.centerbutton, flag = wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, border = 10)
-		self.measureframe.centerbutton.SetToolTipString(self.getlstr("measureframe.center"))
+		self.measureframe.centerbutton.UpdateToolTipString(self.getlstr("measureframe.center"))
 
 		self.measureframe.vsizer = wx.BoxSizer(wx.VERTICAL)
 		self.measureframe.sizer.Add(self.measureframe.vsizer, flag = wx.ALIGN_BOTTOM | wx.ALIGN_CENTER_HORIZONTAL)
@@ -2266,7 +2278,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.calibration_file_btn = wx.BitmapButton(self.panel, -1, self.bitmaps["theme/icons/16x16/document-open"], style = wx.NO_BORDER)
 		self.Bind(wx.EVT_BUTTON, self.load_cal_handler, id = self.calibration_file_btn.GetId())
 		self.AddToSubSizer(self.calibration_file_btn, flag = wx.ALIGN_CENTER_VERTICAL)
-		self.calibration_file_btn.SetToolTipString(self.getlstr("calibration.load"))
+		self.calibration_file_btn.UpdateToolTipString(self.getlstr("calibration.load"))
 
 		self.AddToSubSizer((8, 0))
 
@@ -2274,7 +2286,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.delete_calibration_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		self.Bind(wx.EVT_BUTTON, self.delete_calibration_handler, id = self.delete_calibration_btn.GetId())
 		self.AddToSubSizer(self.delete_calibration_btn, flag = wx.ALIGN_CENTER_VERTICAL)
-		self.delete_calibration_btn.SetToolTipString(self.getlstr("delete"))
+		self.delete_calibration_btn.UpdateToolTipString(self.getlstr("delete"))
 
 		self.AddToSubSizer((8, 0))
 
@@ -2282,7 +2294,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.install_profile_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		self.Bind(wx.EVT_BUTTON, self.install_cal_handler, id = self.install_profile_btn.GetId())
 		self.AddToSubSizer(self.install_profile_btn, flag = wx.ALIGN_CENTER_VERTICAL)
-		self.install_profile_btn.SetToolTipString(self.getlstr("profile.install"))
+		self.install_profile_btn.UpdateToolTipString(self.getlstr("profile.install"))
 
 		self.subsizer.pop()
 
@@ -2349,7 +2361,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.display_lut_link_ctrl = wx.BitmapButton(self.panel, -1, self.bitmaps["theme/icons/16x16/stock_lock-open"], style = wx.NO_BORDER)
 			self.Bind(wx.EVT_BUTTON, self.display_lut_link_ctrl_handler, id = self.display_lut_link_ctrl.GetId())
 			self.AddToSubSizer(self.display_lut_link_ctrl, flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border = 8)
-			self.display_lut_link_ctrl.SetToolTipString(self.getlstr("display_lut.link"))
+			self.display_lut_link_ctrl.UpdateToolTipString(self.getlstr("display_lut.link"))
 
 		self.subsizer.pop()
 
@@ -2562,7 +2574,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.ambient_viewcond_adjust_info.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		self.Bind(wx.EVT_BUTTON, self.ambient_viewcond_adjust_info_handler, id = self.ambient_viewcond_adjust_info.GetId())
 		self.AddToSubSizer(self.ambient_viewcond_adjust_info, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 8)
-		self.ambient_viewcond_adjust_info.SetToolTipString(wrap(self.getlstr("calibration.ambient_viewcond_adjust.info"), 76))
+		self.ambient_viewcond_adjust_info.UpdateToolTipString(wrap(self.getlstr("calibration.ambient_viewcond_adjust.info"), 76))
 
 		self.subsizer.pop()
 
@@ -2658,17 +2670,17 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.testchart_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		self.Bind(wx.EVT_BUTTON, self.testchart_btn_handler, id = self.testchart_btn.GetId())
 		self.AddToSubSizer(self.testchart_btn, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 8)
-		self.testchart_btn.SetToolTipString(self.getlstr("testchart.set"))
+		self.testchart_btn.UpdateToolTipString(self.getlstr("testchart.set"))
 
 		self.create_testchart_btn = wx.BitmapButton(self.panel, -1, self.bitmaps["theme/icons/16x16/rgbsquares"], style = wx.NO_BORDER)
 		self.create_testchart_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		self.Bind(wx.EVT_BUTTON, self.create_testchart_btn_handler, id = self.create_testchart_btn.GetId())
 		self.AddToSubSizer(self.create_testchart_btn, flag = wx.ALIGN_CENTER_VERTICAL)
-		self.create_testchart_btn.SetToolTipString(self.getlstr("testchart.edit"))
+		self.create_testchart_btn.UpdateToolTipString(self.getlstr("testchart.edit"))
 
 		self.testchart_patches_amount = wx.StaticText(self.panel, -1, " ", size = (50, -1))
 		self.AddToSubSizer(self.testchart_patches_amount, flag = wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 8)
-		self.testchart_patches_amount.SetToolTipString(self.getlstr("testchart.info"))
+		self.testchart_patches_amount.UpdateToolTipString(self.getlstr("testchart.info"))
 
 		self.subsizer.pop()
 
@@ -2713,19 +2725,19 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.profile_name_textctrl = wx.TextCtrl(self.panel, -1, "")
 		self.Bind(wx.EVT_TEXT, self.profile_name_ctrl_handler, id = self.profile_name_textctrl.GetId())
 		self.AddToSubSizer(self.profile_name_textctrl, 1, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 8)
-		# self.profile_name_textctrl.SetToolTipString(wrap(self.profile_name_info(), 76))
+		# self.profile_name_textctrl.UpdateToolTipString(wrap(self.profile_name_info(), 76))
 
 		self.profile_name_info_btn = wx.BitmapButton(self.panel, -1, self.bitmaps["theme/icons/16x16/dialog-information"], style = wx.NO_BORDER)
 		self.profile_name_info_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		self.Bind(wx.EVT_BUTTON, self.profile_name_info_btn_handler, id = self.profile_name_info_btn.GetId())
 		self.AddToSubSizer(self.profile_name_info_btn, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 8)
-		self.profile_name_info_btn.SetToolTipString(wrap(self.profile_name_info(), 76))
+		self.profile_name_info_btn.UpdateToolTipString(wrap(self.profile_name_info(), 76))
 
 		self.profile_save_path_btn = wx.BitmapButton(self.panel, -1, self.bitmaps["theme/icons/16x16/media-floppy"], style = wx.NO_BORDER)
 		self.profile_save_path_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		self.Bind(wx.EVT_BUTTON, self.profile_save_path_btn_handler, id = self.profile_save_path_btn.GetId())
 		self.AddToSubSizer(self.profile_save_path_btn, flag = wx.ALIGN_CENTER_VERTICAL)
-		self.profile_save_path_btn.SetToolTipString(self.getlstr("profile.set_save_path"))
+		self.profile_save_path_btn.UpdateToolTipString(self.getlstr("profile.set_save_path"))
 
 		self.AddToSubSizer(wx.StaticText(self.panel, -1, "", size = (50, -1)), flag = wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 8)
 
@@ -2742,7 +2754,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		# self.create_profile_name_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
 		# self.Bind(wx.EVT_BUTTON, self.create_profile_name_btn_handler, id = self.create_profile_name_btn.GetId())
 		# self.AddToSubSizer(self.create_profile_name_btn, flag = wx.ALIGN_CENTER_VERTICAL)
-		# self.create_profile_name_btn.SetToolTipString(self.getlstr("profile.name.create"))
+		# self.create_profile_name_btn.UpdateToolTipString(self.getlstr("profile.name.create"))
 
 		# self.AddToSubSizer(wx.StaticText(self.panel, -1, "", size = (50, -1)), flag = wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 8)
 		
@@ -2828,7 +2840,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			catchup_event = wx.FocusEvent(wx.EVT_KILL_FOCUS.typeId, self.last_focused_object.GetId())
 			if debug: safe_print("last_focused_object ID %s %s ProcessEvent TYPE %s %s" % (self.last_focused_object.GetId(), self.last_focused_object.GetName(), catchup_event.GetEventType(), getevttype(catchup_event)))
 			if self.last_focused_object.ProcessEvent(catchup_event):
-				if debug: safe_print(" TRUE")
+				if debug: safe_print("last_focused_object.ProcessEvent(catchup_event) TRUE")
 				event.Skip()
 				event = CustomEvent(event.GetEventType(), event.GetEventObject(), self.last_focused_object)
 		if hasattr(event.GetEventObject, "GetId") and callable(event.GetEventObject.GetId):
@@ -3053,7 +3065,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			except ValueError, exception:
 				idx = indexi(self.recent_cals, cal)
 			self.calibration_file_ctrl.SetSelection(idx)
-			self.calibration_file_ctrl.SetToolTipString(cal)
+			self.calibration_file_ctrl.UpdateToolTipString(cal)
 			if ext.lower() in (".icc", ".icm"):
 				profile_path = cal
 			else:
@@ -3722,8 +3734,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			args += ["-H"]
 		if calibrate:
 			args += ["-q" + self.get_calibration_quality()]
-			profile_save_path = self.gettmp()
-			if not self.check_create_dir(profile_save_path):
+			profile_save_path = self.create_tempdir()
+			if not profile_save_path or not self.check_create_dir(profile_save_path):
 				return None, None
 			inoutfile = self.make_argyll_compatible_path(os.path.join(profile_save_path, self.get_profile_name()))
 			#
@@ -3800,8 +3812,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		return cmd, args
 
 	def prepare_targen(self, parent):
-		path = self.gettmp()
-		if not self.check_create_dir(path, parent): # check directory and in/output file(s)
+		path = self.create_tempdir()
+		if not path or not self.check_create_dir(path, parent): # check directory and in/output file(s)
 			return None, None
 		inoutfile = os.path.join(path, "temp")
 		cmd = self.get_argyll_util("targen")
@@ -3839,8 +3851,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		return cmd, args
 
 	def prepare_dispread(self, apply_calibration = True):
-		profile_save_path = self.gettmp()
-		if not self.check_create_dir(profile_save_path): # check directory and in/output file(s)
+		profile_save_path = self.create_tempdir()
+		if not profile_save_path or not self.check_create_dir(profile_save_path): # check directory and in/output file(s)
 			return None, None
 		inoutfile = self.make_argyll_compatible_path(os.path.join(profile_save_path, self.get_profile_name()))
 		if not os.path.exists(inoutfile + ".ti1"):
@@ -3945,8 +3957,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		return cmd, self.options_dispread + [inoutfile]
 
 	def prepare_colprof(self, profile_name = None, display_name = None):
-		profile_save_path = self.gettmp()
-		if not self.check_create_dir(profile_save_path): # check directory and in/output file(s)
+		profile_save_path = self.create_tempdir()
+		if not profile_save_path or not self.check_create_dir(profile_save_path): # check directory and in/output file(s)
 			return None, None
 		if profile_name is None:
 			profile_name = self.get_profile_name()
@@ -4013,7 +4025,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		elif cal:
 			if not self.check_cal_isfile(cal):
 				return None, None
-			# calcopy = self.make_argyll_compatible_path(os.path.join(self.gettmp(), os.path.basename(cal)))
+			# calcopy = self.make_argyll_compatible_path(os.path.join(self.create_tempdir(), os.path.basename(cal)))
 			# if not os.path.exists(calcopy):
 				# shutil.copyfile(cal, calcopy) # copy cal to temp dir
 				# if not self.check_cal_isfile(calcopy):
@@ -4046,7 +4058,7 @@ class DisplayCalibratorGUI(wx.Frame):
 								# -S option is broken on Linux with current Argyll releases
 								args += ["-S" + self.getcfg("profile.install_scope")]
 					args += ["-I"]
-				# profcopy = self.make_argyll_compatible_path(os.path.join(self.gettmp(), os.path.basename(profile_path)))
+				# profcopy = self.make_argyll_compatible_path(os.path.join(self.create_tempdir(), os.path.basename(profile_path)))
 				# if not os.path.exists(profcopy):
 					# shutil.copyfile(profile_path, profcopy) # copy profile to temp dir
 					# if not self.check_profile_isfile(profcopy):
@@ -4055,10 +4067,14 @@ class DisplayCalibratorGUI(wx.Frame):
 				args += [profile_path]
 		return cmd, args
 
-	def gettmp(self):
-		if not hasattr(self, "tempdir") or not os.path.exists(self.tempdir) or not os.path.isdir(self.tempdir):
+	def create_tempdir(self):
+		if not hasattr(self, "tempdir") or not os.path.exists(self.tempdir):
 			# we create the tempdir once each calibrating/profiling run (deleted automatically after each run)
-			self.tempdir = tempfile.mkdtemp(prefix = appname + u"-")
+			try:
+				self.tempdir = tempfile.mkdtemp(prefix = appname + u"-")
+			except Exception, exception:
+				self.tempdir = None
+				handle_error("Error - could not create temporary directory: " + str(exception), parent = self)
 		return self.tempdir
 
 	def check_overwrite(self, ext = ""):
@@ -4084,12 +4100,15 @@ class DisplayCalibratorGUI(wx.Frame):
 				InfoDialog(self, pos = (-1, 100), msg = self.getlstr("error.dir_creation", (os.path.dirname(dst_path))) + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 				return
 			if dir_created:
-				src_listdir = os.listdir(self.gettmp())
-				if len(src_listdir):
+				try:
+					src_listdir = os.listdir(self.tempdir)
+				except Exception, exception:
+					safe_print("Error - directory '%s' listing failed: %s" % (self.tempdir, str(exception)))
+				else:
 					for basename in src_listdir:
 						name, ext = os.path.splitext(basename)
 						if ext_filter is None or ext.lower() in ext_filter:
-							src = os.path.join(self.gettmp(), basename)
+							src = os.path.join(self.tempdir, basename)
 							dst = os.path.splitext(dst_path)[0]
 							if ext.lower() in (".app", cmdfile_ext): # preserve *.<utility>.[app|cmd|sh]
 								dst += os.path.splitext(name)[1]
@@ -4097,36 +4116,68 @@ class DisplayCalibratorGUI(wx.Frame):
 							if os.path.exists(dst):
 								if os.path.isdir(dst):
 									if debug: safe_print("wrapup.copy: shutil.rmtree('%s', True)" % dst)
-									shutil.rmtree(dst, True)
+									try:
+										shutil.rmtree(dst, True)
+									except Exception, exception:
+										safe_print("Warning - directory '%s' could not be removed: %s" % (dst, str(exception)))
 								else:
 									if debug: safe_print("wrapup.copy: os.remove('%s')" % dst)
-									os.remove(dst)
+									try:
+										os.remove(dst)
+									except Exception, exception:
+										safe_print("Warning - file '%s' could not be removed: %s" % (dst, str(exception)))
 							if remove:
 								if debug: safe_print("wrapup.copy: shutil.move('%s', '%s')" % (src, dst))
-								shutil.move(src, dst)
+								try:
+									shutil.move(src, dst)
+								except Exception, exception:
+									safe_print("Warning - temporary object '%s' could not be moved to '%s': %s" % (src, dst, str(exception)))
 							else:
 								if os.path.isdir(src):
 									if debug: safe_print("wrapup.copy: shutil.copytree('%s', '%s')" % (src, dst))
-									shutil.copytree(src, dst)
+									try:
+										shutil.copytree(src, dst)
+									except Exception, exception:
+										safe_print("Warning - temporary directory '%s' could not be copied to '%s': %s" % (src, dst, str(exception)))
 								else:
 									if debug: safe_print("wrapup.copy: shutil.copyfile('%s', '%s')" % (src, dst))
-									shutil.copyfile(src, dst)
+									try:
+										shutil.copyfile(src, dst)
+									except Exception, exception:
+										safe_print("Warning - temporary file '%s' could not be copied to '%s': %s" % (src, dst, str(exception)))
 		if remove:
-			src_listdir = os.listdir(self.gettmp())
-			if len(src_listdir):
+			try:
+				src_listdir = os.listdir(self.tempdir)
+			except Exception, exception:
+				safe_print("Error - directory '%s' listing failed: %s" % (self.tempdir, str(exception)))
+			else:
 				for basename in src_listdir:
 					name, ext = os.path.splitext(basename)
 					if ext_filter is None or ext.lower() not in ext_filter:
-						src = os.path.join(self.gettmp(), basename)
+						src = os.path.join(self.tempdir, basename)
 						isdir = os.path.isdir(src)
 						if isdir:
 							if debug: safe_print("wrapup.remove: shutil.rmtree('%s', True)" % src)
-							shutil.rmtree(src, True)
+							try:
+								shutil.rmtree(src, True)
+							except Exception, exception:
+								safe_print("Warning - temporary directory '%s' could not be removed: %s" % (src, str(exception)))
 						else:
 							if debug: safe_print("wrapup.remove: os.remove('%s')" % src)
-							os.remove(src)
-			if not os.listdir(self.gettmp()):
-				shutil.rmtree(self.gettmp(), True)
+							try:
+								os.remove(src)
+							except Exception, exception:
+								safe_print("Warning - temporary directory '%s' could not be removed: %s" % (src, str(exception)))
+			try:
+				src_listdir = os.listdir(self.tempdir)
+			except Exception, exception:
+				safe_print("Error - directory '%s' listing failed: %s" % (self.tempdir, str(exception)))
+			else:
+				if not src_listdir:
+					try:
+						shutil.rmtree(self.tempdir, True)
+					except Exception, exception:
+						safe_print("Warning - temporary directory '%s' could not be removed: %s" % (self.tempdir, str(exception)))
 
 	def calibrate(self, remove = False):
 		capture_output = not self.interactive_display_adjustment_cb.GetValue()
@@ -4325,23 +4376,21 @@ class DisplayCalibratorGUI(wx.Frame):
 				loader_args = "-d%s -c -L" % n
 				if sys.platform == "win32":
 					try:
-						try:
-							loader_v01b = os.path.join(shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP), ("dispwin-d%s-c-L" % n) + ".lnk")
-							if os.path.exists(loader_v01b):
+						loader_v01b = os.path.join(autostart_home, ("dispwin-d%s-c-L" % n) + ".lnk")
+						if os.path.exists(loader_v01b):
+							try:
 								# delete v0.1b loader
 								os.remove(loader_v01b)
-						except Exception, exception:
-							# ignore any errors
-							pass
+							except Exception, exception:
+								safe_print("Warning - could not remove old v0.1b calibration loader '%s': %s" % (loader_v01b, str(exception)))
 						name = "%s Calibration Loader (Display %s)" % (appname, n)
-						try:
-							loader_v02b = os.path.join(shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP), name + ".lnk")
-							if os.path.exists(loader_v02b):
+						loader_v02b = os.path.join(autostart_home, name + ".lnk")
+						if os.path.exists(loader_v02b):
+							try:
 								# delete v02.b/v0.2.1b loader
 								os.remove(loader_v02b)
-						except Exception, exception:
-							# ignore any errors
-							pass
+							except Exception, exception:
+								safe_print("Warning - could not remove old v0.2b calibration loader '%s': %s" % (loader_v02b, str(exception)))
 						path = os.path.join(autostart, name + ".lnk")
 						scut = pythoncom.CoCreateInstance(
 							shell.CLSID_ShellLink, None,
@@ -4456,7 +4505,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if verbose >= 1 and event is None: safe_print(self.getlstr("failure"))
 		return False
 
-	def exec_cmd(self, cmd, args, capture_output = False, display_output = False, low_contrast = True, skip_cmds = False, silent = False, parent = None, asroot = False):
+	def exec_cmd(self, cmd, args = [], capture_output = False, display_output = False, low_contrast = True, skip_cmds = False, silent = False, parent = None, asroot = False, log_output = True):
 		if parent is None:
 			parent = self
 		# if capture_output:
@@ -4470,19 +4519,22 @@ class DisplayCalibratorGUI(wx.Frame):
 			if verbose >= 1 and not capture_output: safe_print(self.getlstr("aborted"), fn = fn)
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
-		if args[-1].find(os.path.sep) > -1:
+		if args and args[-1].find(os.path.sep) > -1:
 			working_dir = os.path.dirname(args[-1])
 			working_basename = os.path.splitext(os.path.basename(args[-1]))[0] if cmdname == self.get_argyll_utilname("dispwin") else os.path.basename(args[-1]) # last arg is without extension, only for dispwin we need to strip it
 		else:
 			working_dir = None
 		if not capture_output and low_contrast:
 			# set low contrast colors (gray on black) so it doesn't interfere with measurements
-			if sys.platform == "win32":
-				sp.call("color 07", shell = True)
-			elif sys.platform == "darwin":
-				mac_terminal_set_colors()
-			else:
-				sp.call('echo -e "\\033[2;37m"', shell = True)
+			try:
+				if sys.platform == "win32":
+					sp.call("color 07", shell = True)
+				elif sys.platform == "darwin":
+					mac_terminal_set_colors()
+				else:
+					sp.call('echo -e "\\033[2;37m"', shell = True)
+			except Exception, exception:
+				safe_print("Info - could not set terminal colors:", str(exception))
 		if verbose >= 1:
 			if not silent:
 				safe_print("", fn = fn)
@@ -4496,31 +4548,31 @@ class DisplayCalibratorGUI(wx.Frame):
 				safe_print(self.getlstr("commandline"), fn = fn)
 				printcmdline(os.path.basename(cmd), args, fn = fn, cwd = working_dir)
 				safe_print("", fn = fn)
-		try:
-			cmdline = [cmd] + args
-			for i in range(len(cmdline)):
-				item = cmdline[i]
-				if i == 0 or (item.find(os.path.sep) > -1 and os.path.dirname(item) == working_dir):
-					# strip the path from cmd and all items in the working dir
-					cmdline[i] = os.path.basename(item)
-			sudo = None
-			if cmdname == self.get_argyll_utilname("dispwin") and ("-Sl" in args or "-Sn" in args):
-				asroot = True
-			if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or \
-				(sys.platform == "win32" and sys.getwindowsversion() >= (6, ))):
-				if sys.platform == "win32": # Vista and later
-					pass
-					# for src in (cmd, get_data_path("UAC.manifest")):
-						# tgt = os.path.join(self.gettmp(), os.path.basename(cmd))
-						# if src.endswith(".manifest"):
-							# tgt += ".manifest"
-						# else:
-							# cmdline = [tgt] + cmdline[1:]
-						# if not os.path.exists(tgt):
-							# shutil.copy2(src, tgt)
-				else:
-					sudo = get_sudo()
-			if sudo:
+		cmdline = [cmd] + args
+		for i in range(len(cmdline)):
+			item = cmdline[i]
+			if i == 0 or (item.find(os.path.sep) > -1 and os.path.dirname(item) == working_dir):
+				# strip the path from cmd and all items in the working dir
+				cmdline[i] = os.path.basename(item)
+		sudo = None
+		if cmdname == self.get_argyll_utilname("dispwin") and ("-Sl" in args or "-Sn" in args):
+			asroot = True
+		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or \
+			(sys.platform == "win32" and sys.getwindowsversion() >= (6, ))):
+			if sys.platform == "win32": # Vista and later
+				pass
+				# for src in (cmd, get_data_path("UAC.manifest")):
+					# tgt = os.path.join(self.create_tempdir(), os.path.basename(cmd))
+					# if src.endswith(".manifest"):
+						# tgt += ".manifest"
+					# else:
+						# cmdline = [tgt] + cmdline[1:]
+					# if not os.path.exists(tgt):
+						# shutil.copy2(src, tgt)
+			else:
+				sudo = get_sudo()
+		if sudo:
+			try:
 				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.PIPE)
 				if sudoproc.poll() is None:
 					stdout, stderr = sudoproc.communicate(self.pwd)
@@ -4559,20 +4611,15 @@ class DisplayCalibratorGUI(wx.Frame):
 					dlg.Destroy()
 				cmdline.insert(0, sudo)
 				cmdline.insert(1, "-S")
-				# tmpstdout = os.path.join(self.gettmp(), working_basename + ".out")
-				# tmpstderr = os.path.join(self.gettmp(), working_basename + ".err")
-				# cmdline = [sudo, u" ".join(escargs(cmdline)) + ('>"%s" 2>"%s"' % (tmpstdout, tmpstderr))]
-				# if os.path.basename(sudo) in ["gnomesu", "kdesu"]:
-					# cmdline.insert(1, "-c")
-			if silent:
-				stderr = sp.STDOUT
-			else:
-				stderr = Tea(tempfile.SpooledTemporaryFile())
-			if capture_output:
-				stdout = tempfile.SpooledTemporaryFile()
-			else:
-				stdout = sys.stdout
-			if working_dir and not skip_cmds:
+			except Exception, exception:
+				safe_print("Warning - execution as root not possible:", str(exception))
+			# tmpstdout = os.path.join(self.create_tempdir(), working_basename + ".out")
+			# tmpstderr = os.path.join(self.create_tempdir(), working_basename + ".err")
+			# cmdline = [sudo, u" ".join(escargs(cmdline)) + ('>"%s" 2>"%s"' % (tmpstdout, tmpstderr))]
+			# if os.path.basename(sudo) in ["gnomesu", "kdesu"]:
+				# cmdline.insert(1, "-c")
+		if working_dir and not skip_cmds:
+			try:
 				cmdfilename = os.path.join(working_dir, working_basename + "." + cmdname + cmdfile_ext)
 				allfilename = os.path.join(working_dir, working_basename + ".all" + cmdfile_ext)
 				first = not os.path.exists(allfilename)
@@ -4640,21 +4687,32 @@ class DisplayCalibratorGUI(wx.Frame):
 						os.chmod(appfilename + "/Contents/Resources/main.command", 0755)
 						if last: # the last one in the chain
 							os.remove(allfilename)
-			if cmdname == self.get_argyll_utilname("dispread") and self.dispread_after_dispcal:
-				instrument_features = self.get_instrument_features()
-				if instrument_features and (not instrument_features.get("sensor_cal") or instrument_features.get("skip_sensor_cal")):
-					try:
-						if sys.platform == "darwin":
-							start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
-						elif sys.platform == "win32":
-							start_new_thread(wsh_sendkeys, (5, appname + exe_ext, " "))
-						else:
-							if which("xte"):
-								start_new_thread(xte_sendkeys, (5, None, "Space"))
-					except Exception, exception:
-						handle_error(traceback.format_exc(), silent = True)
-			elif cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform == "darwin":
-				start_new_thread(mac_app_activate, (3, "Terminal"))
+			except Exception, exception:
+				safe_print("Warning - error during shell script creation:", str(exception))
+		if cmdname == self.get_argyll_utilname("dispread") and self.dispread_after_dispcal:
+			instrument_features = self.get_instrument_features()
+			if instrument_features and (not instrument_features.get("sensor_cal") or instrument_features.get("skip_sensor_cal")):
+				try:
+					if sys.platform == "darwin":
+						start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
+					elif sys.platform == "win32":
+						start_new_thread(wsh_sendkeys, (5, appname + exe_ext, " "))
+					else:
+						if which("xte"):
+							start_new_thread(xte_sendkeys, (5, None, "Space"))
+				except Exception, exception:
+					safe_print("Warning - unattended measurements not possible (start_new_thread failed with %s)" % str(exception))
+		elif cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform == "darwin":
+			start_new_thread(mac_app_activate, (3, "Terminal"))
+		try:
+			if silent:
+				stderr = sp.STDOUT
+			else:
+				stderr = Tea(tempfile.SpooledTemporaryFile())
+			if capture_output:
+				stdout = tempfile.SpooledTemporaryFile()
+			else:
+				stdout = sys.stdout
 			tries = 1
 			while tries > 0:
 				self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdin = sp.PIPE if sudo else None, stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
@@ -4699,23 +4757,26 @@ class DisplayCalibratorGUI(wx.Frame):
 						# stdout = open(tmpstdout, "r")
 						# errors += stdout.readlines()
 						# stdout.close()
-					if len(output):
+					if len(output) and log_output:
 						log(unicode("".join(output).strip(), enc, "replace"))
 						if display_output:
 							wx.CallAfter(self.infoframe.Show)
 					if tries > 0:
 						stdout = tempfile.SpooledTemporaryFile()
 		except Exception, exception:
-			handle_error(traceback.format_exc(), parent = self)
+			handle_error("Error: " + str(exception), parent = self)
 			retcode = -1
 		if not capture_output and low_contrast:
 			# reset to higher contrast colors (white on black) for readability
-			if sys.platform == "win32":
-				sp.call("color 0F", shell = True)
-			elif sys.platform == "darwin":
-				mac_terminal_set_colors(text = "white", text_bold = "white")
-			else:
-				sp.call('echo -e "\\033[22;37m"', shell = True)
+			try:
+				if sys.platform == "win32":
+					sp.call("color 0F", shell = True)
+				elif sys.platform == "darwin":
+					mac_terminal_set_colors(text = "white", text_bold = "white")
+				else:
+					sp.call('echo -e "\\033[22;37m"', shell = True)
+			except Exception, exception:
+				safe_print("Info - could not restore terminal colors:", str(exception))
 		if retcode != 0:
 			if verbose >= 1 and not capture_output: safe_print(self.getlstr("aborted"), fn = fn)
 			return False
@@ -4796,7 +4857,9 @@ class DisplayCalibratorGUI(wx.Frame):
 	def call_pending_function(self): # needed for proper display updates under GNOME
 		self.write_cfg()
 		self.measureframe_hide()
-		if debug: safe_print("pending_function_args: ", self.pending_function_args)
+		if debug:
+			safe_print("call_pending_function")
+			safe_print(" pending_function_args: ", self.pending_function_args)
 		wx.CallAfter(self.pending_function, *self.pending_function_args, **self.pending_function_kwargs)
 
 	def calibrate_and_profile_btn_handler(self, event):
@@ -4975,7 +5038,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.setcfg("profile.install_scope", "n")
 		elif self.install_profile_user.GetValue():
 			self.setcfg("profile.install_scope", "u")
-		if debug: safe_print("profile.install_scope", self.setcfg("profile.install_scope"))
+		if debug: safe_print("profile.install_scope", self.getcfg("profile.install_scope"))
 	
 	def start_timers(self, wrapup = False):
 		if wrapup:
@@ -5201,7 +5264,11 @@ class DisplayCalibratorGUI(wx.Frame):
 					return
 				ti3 = StringIO(profile.tags.CIED)
 			else:
-				ti3 = open(path, "rU")
+				try:
+					ti3 = open(path, "rU")
+				except Exception, exception:
+					InfoDialog(self, msg = self.getlstr("error.file.open", path), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+					return
 			ti3_lines = [line.strip() for line in ti3]
 			ti3.close()
 			if not "CAL" in ti3_lines:
@@ -5231,8 +5298,8 @@ class DisplayCalibratorGUI(wx.Frame):
 				profile_name = os.path.basename(os.path.splitext(profile_save_path)[0])
 				# create temporary working dir
 				self.wrapup(False)
-				tmp_working_dir = self.gettmp()
-				if not self.check_create_dir(tmp_working_dir): # check directory and in/output file(s)
+				tmp_working_dir = self.create_tempdir()
+				if not tmp_working_dir or not self.check_create_dir(tmp_working_dir): # check directory and in/output file(s)
 					return
 				# copy ti3 to temp dir
 				ti3_tmp_path = self.make_argyll_compatible_path(os.path.join(tmp_working_dir, profile_name + ".ti3"))
@@ -5256,7 +5323,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						self.options_targen = ["-d3"]
 						if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
 				except Exception, exception:
-					handle_error(traceback.format_exc(), parent = self)
+					handle_error("Error - temporary .ti3 file could not be created: " + str(exception), parent = self)
 					self.wrapup(False)
 					return
 				# if sys.platform == "win32":
@@ -5273,7 +5340,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			try:
 				self.subprocess.terminate()
 			except Exception, exception:
-				handle_error(traceback.format_exc(), parent = self.progress_parent.progress_dlg)
+				handle_error("Error - self.subprocess.terminate() failed: " + str(exception), parent = self.progress_parent.progress_dlg)
 
 	def start_worker(self, consumer, producer, cargs = (), ckwargs = None, wargs = (), wkwargs = None, progress_title = "", progress_msg = "", parent = None, progress_start = 100):
 		if ckwargs is None:
@@ -5317,7 +5384,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		try:
 			result = delayedResult.get()
 		except Exception, exception:
-			handle_error(traceback.format_exc(), parent = self)
+			handle_error("Error - delayedResult.get() failed: " + str(exception), parent = self)
 		self.progress_parent.progress_start_timer.Stop()
 		if hasattr(self.progress_parent, "progress_dlg"):
 			self.progress_parent.progress_timer.Stop()
@@ -5442,7 +5509,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		profile_name = self.make_argyll_compatible_path(profile_name)
 		if profile_name != self.get_profile_name():
 			self.setcfg("profile.name", self.profile_name_textctrl.GetValue())
-			self.profile_name.SetToolTipString(profile_name)
+			self.profile_name.UpdateToolTipString(profile_name)
 			self.profile_name.SetLabel(profile_name)
 
 	def check_profile_name(self, profile_name = None):
@@ -5586,7 +5653,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			try:
 				display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
 			except Exception, exception:
-				handle_error(traceback.format_exc(), parent = self)
+				handle_error("Error - RealDisplaySizeMM() failed: " + str(exception), parent = self)
 			if not len(display_size_mm) or 0 in display_size_mm:
 				ppi_def = 100.0
 				ppi_mac = 72.0
@@ -6103,7 +6170,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		# UnicodeKey
 		# X
 		# Y
-		if debug: safe_print(event.GetKeyCode(), event.GetRawKeyCode(), event.GetUniChar(), event.GetUnicodeKey(), "CTRL/CMD:", event.ControlDown() or event.CmdDown(), "ALT:", event.AltDown(), "SHIFT:", event.ShiftDown())
+		if debug: safe_print("event.KeyCode", event.GetKeyCode(), "event.RawKeyCode", event.GetRawKeyCode(), "event.UniChar", event.GetUniChar(), "event.UnicodeKey", event.GetUnicodeKey(), "CTRL/CMD:", event.ControlDown() or event.CmdDown(), "ALT:", event.AltDown(), "SHIFT:", event.ShiftDown())
 		if (event.ControlDown() or event.CmdDown()): # CTRL (Linux/Mac/Windows) / CMD (Mac)
 			key = event.GetKeyCode()
 			focus = self.tcframe.FindFocus()
@@ -6323,18 +6390,18 @@ class DisplayCalibratorGUI(wx.Frame):
 			multi_values = []
 			for i in range(multi_steps):
 				multi_values += [str(multi_step * i)]
-			if debug: safe_print(multi_values)
+			if debug: safe_print("multi_values", multi_values)
 			if single_channel_patches > 1:
 				single_channel_step = 255.0 / (single_channel_patches - 1)
 				for i in range(single_channel_patches):
-					if debug: safe_print(single_channel_step * i)
+					if debug: safe_print("single_channel_value", single_channel_step * i)
 					if str(single_channel_step * i) in multi_values:
 						if debug: safe_print("DELETE SINGLE", single_channel_step * i)
 						single_channel_patches_total -= 3
 			if gray_patches > 1:
 				gray_step = 255.0 / (gray_patches - 1)
 				for i in range(gray_patches):
-					if debug: safe_print(gray_step * i)
+					if debug: safe_print("gray_value", gray_step * i)
 					if str(gray_step * i) in multi_values:
 						if debug: safe_print("DELETE GRAY", gray_step * i)
 						gray_patches -= 1
@@ -6345,7 +6412,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			single_channel_patches_total -= 2 # black always only once in single channel patches
 		self.tc_white_patches_amount = max(0, white_patches)
 		total_patches += self.tc_white_patches_amount + max(0, single_channel_patches_total) + max(0, gray_patches) + fullspread_patches
-		if debug: safe_print(total_patches)
+		if debug: safe_print("total_patches", total_patches)
 		return total_patches
 
 	def tc_multi_steps_handler(self, event = None):
@@ -6546,10 +6613,16 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.ti1.root.setmodified(False)
 				if not self.IsBeingDeleted():
 					self.tcframe.SetTitle(self.getlstr("testchart.edit").rstrip(".") + ": " + os.path.basename(path))
+			except Exception, exception:
+				handle_error("Error - testchart could not be saved: " + str(exception), parent = self.tcframe)
+			else:
 				if hasattr(self, "ti1_wrl") and self.ti1_wrl != None:
-					wrl = open(os.path.splitext(path)[0] + ".wrl", "wb")
-					wrl.write(self.ti1_wrl)
-					wrl.close()
+					try:
+						wrl = open(os.path.splitext(path)[0] + ".wrl", "wb")
+						wrl.write(self.ti1_wrl)
+						wrl.close()
+					except Exception, exception:
+						handle_error("Warning - VRML file could not be saved: " + str(exception), parent = self.tcframe)
 				if path != self.getcfg("testchart.file"):
 					dlg = ConfirmDialog(self.tcframe, msg = self.getlstr("testchart.confirm_select"), ok = self.getlstr("testchart.select"), cancel = self.getlstr("testchart.dont_select"), bitmap = self.bitmaps["theme/icons/32x32/dialog-question"])
 					result = dlg.ShowModal()
@@ -6562,8 +6635,6 @@ class DisplayCalibratorGUI(wx.Frame):
 				if not self.IsBeingDeleted():
 					self.tcframe.save_btn.Disable()
 				return True
-			except Exception, exception:
-				handle_error(traceback.format_exc(), parent = self.tcframe)
 		return False
 
 	def tc_check_save_ti1(self, clear = True):
@@ -6710,7 +6781,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						B += [patch[2]]
 					elif patch[0] == patch[1] == patch[2] and patch[0] not in gray_channel: # gray
 						gray_channel += [patch[0]]
-					#if debug: safe_print(strpatch)
+					if debug >= 9: safe_print(strpatch)
 					if strpatch not in uniqueRGB:
 						uniqueRGB += [strpatch]
 						if patch[0] not in multi["R"]:
@@ -6758,18 +6829,18 @@ class DisplayCalibratorGUI(wx.Frame):
 								n = int(round(float(str(255.0 / finc))))
 								finc = 255.0 / n
 								n += 1
-								if debug:
+								if debug >= 9:
 									safe_print("inc:", inc)
 									safe_print("n:", n)
 								for i in range(n):
 									v = str(int(round(float(str(i * finc)))))
-									if debug: safe_print(v)
+									if debug >= 9: safe_print("Searching for", v)
 									if [v, "0", "0"] in uniqueRGB and ["0", v, "0"] in uniqueRGB and ["0", "0", v] in uniqueRGB:
 										if not inc in single_inc:
 											single_inc[inc] = 0
 										single_inc[inc] += 1
 									else:
-										if debug: safe_print("Not found!")
+										if debug >= 9: safe_print("Not found!")
 										break
 						single_channel_patches = max(single_inc.values())
 					if debug:
@@ -6799,18 +6870,18 @@ class DisplayCalibratorGUI(wx.Frame):
 								n = int(round(float(str(255.0 / finc))))
 								finc = 255.0 / n
 								n += 1
-								if debug:
+								if debug >= 9:
 									safe_print("inc:", inc)
 									safe_print("n:", n)
 								for i in range(n):
 									v = str(int(round(float(str(i * finc)))))
-									if debug: safe_print(v)
+									if debug >= 9: safe_print("Searching for", v)
 									if [v, v, v] in uniqueRGB:
 										if not inc in gray_inc:
 											gray_inc[inc] = 0
 										gray_inc[inc] += 1
 									else:
-										if debug: safe_print("Not found!")
+										if debug >= 9: safe_print("Not found!")
 										break
 						gray_patches = max(gray_inc.values())
 					if debug:
@@ -6847,7 +6918,7 @@ class DisplayCalibratorGUI(wx.Frame):
 							n = int(round(float(str(255.0 / finc))))
 							finc = 255.0 / n
 							n += 1
-							if debug:
+							if debug >= 9:
 								safe_print("inc:", inc)
 								safe_print("n:", n)
 							for i in range(n):
@@ -6856,20 +6927,20 @@ class DisplayCalibratorGUI(wx.Frame):
 									g = str(int(round(float(str(j * finc)))))
 									for k in range(n):
 										b = str(int(round(float(str(k * finc)))))
-										if debug:
-											safe_print(i, j, k, [r, g, b])
+										if debug >= 9:
+											safe_print("Searching for", i, j, k, [r, g, b])
 										if [r, g, b] in uniqueRGB:
 											if not inc in multi_inc:
 												multi_inc[inc] = 0
 											multi_inc[inc] += 1
 										else:
-											if debug: safe_print("Not found! (b loop)")
+											if debug >= 9: safe_print("Not found! (b loop)")
 											break
 									if [r, g, b] not in uniqueRGB:
-										if debug: safe_print("Not found! (g loop)")
+										if debug >= 9: safe_print("Not found! (g loop)")
 										break
 								if [r, g, b] not in uniqueRGB:
-									if debug: safe_print("Not found! (r loop)")
+									if debug >= 9: safe_print("Not found! (r loop)")
 									break
 					multi_patches = max(multi_inc.values())
 					multi_steps = int(float(str(math.pow(multi_patches, 1 / 3.0))))
@@ -6955,19 +7026,26 @@ class DisplayCalibratorGUI(wx.Frame):
 		cmd, args = self.prepare_targen(parent = self.tcframe)
 		result = self.exec_cmd(cmd, args, low_contrast = False, skip_cmds = True, silent = True, parent = self.tcframe)
 		if result:
-			path = os.path.join(self.gettmp(), "temp.ti1")
-			result = self.check_file_isfile(path, silent = False)
-			if result:
-				try:
-					self.ti1 = CGATS.CGATS(path)
+			self.create_tempdir()
+			if self.tempdir:
+				path = os.path.join(self.tempdir, "temp.ti1")
+				result = self.check_file_isfile(path, silent = False)
+				if result:
+					try:
+						self.ti1 = CGATS.CGATS(path)
+						safe_print(self.getlstr("success"))
+					except Exception, exception:
+						handle_error("Error - testchart file could not be read: " + str(exception), parent = self.tcframe)
+						result = False
 					if self.tcframe.tc_vrml.GetValue():
-						wrl = open(os.path.join(self.gettmp(), "temp.wrl"), "rb")
-						self.ti1_wrl = wrl.read()
-						wrl.close()
-				except Exception, exception:
-					handle_error(str(exception), parent = self.tcframe)
-					result = False
-				safe_print(self.getlstr("success"))
+						try:
+							wrl = open(os.path.join(self.tempdir, "temp.wrl"), "rb")
+							self.ti1_wrl = wrl.read()
+							wrl.close()
+						except Exception, exception:
+							handle_error("Warning - VRML file could not be read: " + str(exception), parent = self.tcframe)
+			else:
+				result = False
 		self.wrapup(False)
 		return result
 
@@ -7282,7 +7360,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			except ValueError, exception:
 				idx = indexi(self.testcharts, path)
 			self.testchart_ctrl.SetSelection(idx)
-			self.testchart_ctrl.SetToolTipString(path)
+			self.testchart_ctrl.UpdateToolTipString(path)
 			if ti1.queryv1("COLOR_REP") and ti1.queryv1("COLOR_REP")[:3] == "RGB":
 				self.options_targen = ["-d3"]
 				if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
@@ -7304,10 +7382,15 @@ class DisplayCalibratorGUI(wx.Frame):
 			path = self.getcfg("testchart.file")
 		if os.path.exists(path):
 			testchart_dir = os.path.dirname(path)
-			for testchart_name in listdir(testchart_dir, "\.(?:icc|icm|ti1|ti3)$"):
-				if testchart_name not in testchart_names:
-					testchart_names += [testchart_name]
-					self.testcharts += [os.pathsep.join((testchart_name, testchart_dir))]
+			try:
+				testcharts = listdir(testchart_dir, "\.(?:icc|icm|ti1|ti3)$")
+			except Exception, exception:
+				safe_print("Error - directory '%s' listing failed: %s" % (testchart_dir, str(exception)))
+			else:
+				for testchart_name in testcharts:
+					if testchart_name not in testchart_names:
+						testchart_names += [testchart_name]
+						self.testcharts += [os.pathsep.join((testchart_name, testchart_dir))]
 		default_testcharts = get_data_path("ti1", "\.(?:icc|icm|ti1|ti3)$")
 		if isinstance(default_testcharts, list):
 			for testchart in default_testcharts:
@@ -7368,6 +7451,8 @@ class DisplayCalibratorGUI(wx.Frame):
 					break
 		if check_dir and not found:
 			putenv("PATH", path)
+		if not found:
+			if verbose >= 2: safe_print("Info: ", "|".join(utils[name]), " not found in ", os.getenv("PATH"))
 		return found
 	
 	def get_argyll_utilname(self, name):
@@ -7377,7 +7462,6 @@ class DisplayCalibratorGUI(wx.Frame):
 		return found
 
 	def check_argyll_bin(self, check_dir = None):
-		if debug: safe_print("check_argyll_bin")
 		path = os.getenv("PATH", os.defpath)
 		names = [
 			"dispcal",
@@ -7404,14 +7488,13 @@ class DisplayCalibratorGUI(wx.Frame):
 			if not exe:
 				if check_dir and path:
 					putenv("PATH", path)
-				if debug: safe_print(" not exe", os.getenv("PATH"))
 				return False
 			cur_dir = os.path.dirname(exe)
 			if prev_dir:
 				if cur_dir != prev_dir:
 					if check_dir and path:
 						putenv("PATH", path)
-					if debug: safe_print(" cur_dir != prev_dir", os.getenv("PATH"))
+					if verbose: safe_print("Warning - Argyll executables are scattered. They should be in same directory.")
 					return False
 			else:
 				prev_dir = cur_dir
@@ -7421,7 +7504,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			putenv("PATH", path)
 		if self.getcfg("argyll.dir") != cur_dir:
 			self.setcfg("argyll.dir", cur_dir)
-		if debug: safe_print(" PATH:\n ", "\n  ".join(os.getenv("PATH").split(os.pathsep)))
+		if debug: safe_print("check_argyll_bin OK")
+		if debug >= 2: safe_print(" PATH:\n ", "\n  ".join(os.getenv("PATH").split(os.pathsep)))
 		return True
 
 	def set_argyll_bin(self):
@@ -7660,7 +7744,11 @@ class DisplayCalibratorGUI(wx.Frame):
 					return
 				cal = StringIO(profile.tags.get("CIED", ""))
 			else:
-				cal = open(path, "rU")
+				try:
+					cal = open(path, "rU")
+				except Exception, exception:
+					InfoDialog(self, msg = self.getlstr("error.file.open", path), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+					return
 			ti3_lines = [line.strip() for line in cal]
 			cal.close()
 			self.setcfg("last_cal_or_icc_path", path)
@@ -7952,7 +8040,12 @@ class DisplayCalibratorGUI(wx.Frame):
 	def delete_calibration_handler(self, event):
 		cal = self.getcfg("calibration.file")
 		if cal and os.path.exists(cal):
-			dircontents = os.listdir(os.path.dirname(cal))
+			caldir =os.path.dirname(cal)
+			try:
+				dircontents = os.listdir(cal)
+			except Exception, exception:
+				InfoDialog(self, msg = self.getlstr("error.deletion") + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+				return
 			self.related_files = {}
 			for entry in dircontents:
 				fn, ext = os.path.splitext(entry)
@@ -8109,15 +8202,18 @@ class DisplayCalibratorGUI(wx.Frame):
 		if not hasattr(self, "tcframe") or self.tc_close_handler():
 			self.write_cfg()
 			self.HideAll()
+			if hasattr(self, "tempdir") and os.path.exists(self.tempdir) and os.path.isdir(self.tempdir):
+				self.wrapup(False)
+			if sys.platform not in ("darwin", "win32"):
+				try:
+					sp.call('echo -e "\\033[0m"', shell = True)
+					sp.call('clear', shell = True)
+				except Exception, exception:
+					safe_print("Info - could not set restore terminal colors:", str(exception))
+			globalconfig["app"] = None
 			self.Destroy()
-		if sys.platform not in ("darwin", "win32"):
-			sp.call('echo -e "\\033[0m"', shell = True)
-			sp.call('clear', shell = True)
 
 	def OnDestroy(self, event):
-		if hasattr(self, "tempdir") and os.path.exists(self.tempdir) and os.path.isdir(self.tempdir):
-			self.wrapup(False)
-		logging.shutdown()
 		event.Skip()
 
 class DisplayCalibrator(wx.App):
@@ -8128,7 +8224,7 @@ class DisplayCalibrator(wx.App):
 			path, ext = get_data_path(os.path.sep.join(filename.split("/"))), os.path.splitext(filename)[1]
 			if (not path or not os.path.isfile(path)):
 				if ext.lower() != ".json": # ignore missing language files, these are handled later
-					handle_error(u"Fatal error: Resource file “%s” not found" % filename, False)
+					handle_error(u"Fatal error: Resource file '%s' not found" % filename, False)
 					return False
 			elif ext.lower() == ".ti1":
 				self.dist_testcharts += [path]
@@ -8147,7 +8243,7 @@ def mac_app_activate(delay = 0, mac_app_name = "Finder"):
 		else:
 			appscript.app(mac_app_name).activate()
 	except Exception, exception:
-		if verbose >= 1: safe_print("Exception in mac_app_activate:", exception)
+		if verbose >= 1: safe_print("Warning - mac_app_activate() failed:", exception)
 
 def mac_terminal_do_script(script = None, do = True):
 	applescript = [
@@ -8186,7 +8282,7 @@ def mac_terminal_do_script(script = None, do = True):
 					terminal.do_script(script, in_ = appscript.app.windows[1]) # Terminal is not yet running, launch & use first window
 				retcode = 0
 		except Exception, exception:
-			if verbose >= 1: safe_print("Exception in mac_terminal_do_script:", exception)
+			if verbose >= 1: safe_print("Error - mac_terminal_do_script() failed:", exception)
 		return retcode
 	else:
 		return args
@@ -8216,7 +8312,7 @@ def mac_terminal_set_colors(background = "black", cursor = "gray", text = "gray"
 				tw.bold_text_color.set(text_bold)
 				retcode = 0
 		except Exception, exception:
-			if verbose >= 1: safe_print("Exception in mac_terminal_set_colors:", exception)
+			if verbose >= 1: safe_print("Info - mac_terminal_set_colors() failed:", exception)
 		return retcode
 	else:
 		return args
@@ -8234,7 +8330,7 @@ def mac_app_sendkeys(delay = 0, mac_app_name = "Finder", keys = ""):
 		else:
 			appscript.app('System Events').keystroke(keys)
 	except Exception, exception:
-		if verbose >= 1: safe_print("Exception in mac_app_sendkeys:", exception)
+		if verbose >= 1: safe_print("Error - mac_app_sendkeys() failed:", exception)
 
 def wsh_sendkeys(delay = 0, windowname = "", keys = ""):
 	try:
@@ -8243,25 +8339,28 @@ def wsh_sendkeys(delay = 0, windowname = "", keys = ""):
 		# win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
 		SendKeys(keys, with_spaces = True, with_tabs = True, with_newlines = True, turn_off_numlock = False)
 	except Exception, exception:
-		if verbose >= 1: safe_print("Exception in wsh_sendkeys:", exception)
+		if verbose >= 1: safe_print("Error - wsh_sendkeys() failed:", exception)
 
 def xte_sendkeys(delay = 0, windowname = "", keys = ""):
 	try:
 		if delay: sleep(delay)
 		sp.call(["xte", "key %s" % keys], stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.PIPE)
 	except Exception, exception:
-		if verbose >= 1: safe_print("Exception in xte_sendkeys:", exception)
+		if verbose >= 1: safe_print("Error - xte_sendkeys() failed:", exception)
 
 def main():
 	try:
+		if debug: safe_print("Entering main()...")
 		setup_logging()
 		if verbose >= 1: safe_print(appname + runtype, version, "build", build)
-		if debug: safe_print("Entering main()...")
 		# read pre-v0.2.2b configuration if present
 		oldcfg = os.path.join(os.path.expanduser("~"), "Library", "Preferences", appname + " Preferences") if sys.platform == "darwin" else os.path.join(os.path.expanduser("~"), "." + appname)
 		if not os.path.exists(confighome):
-			os.makedirs(confighome)
-		if not os.path.exists(os.path.join(confighome, appname + ".ini")):
+			try:
+				os.makedirs(confighome)
+			except Exception, exception:
+				handle_error("Warning - could not create configuration directory '%s'" % confighome)
+		if os.path.exists(confighome) and not os.path.exists(os.path.join(confighome, appname + ".ini")):
 			try:
 				if os.path.isfile(oldcfg):
 					oldcfg_file = open(oldcfg, "rb")
@@ -8280,15 +8379,22 @@ def main():
 						if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, value)).encode("UTF-8"))
 					cfg_file.close()
 			except Exception, exception:
-				pass
+				safe_print("Warning - could not process old configuration:", str(exception))
 		# create main data storage dir
 		if not os.path.exists(storage):
-			os.makedirs(storage)
+			try:
+				os.makedirs(storage)
+			except Exception, exception:
+				handle_error("Warning - could not create storage directory '%s'" % storage)
 		if sys.platform not in ("darwin", "win32"):
 			# Linux: try and fix v0.2.1b calibration loader, because calibrationloader.sh is no longer present in v0.2.2b+
 			desktopfile_name = appname + "-Calibration-Loader-Display-"
 			if os.path.exists(autostart_home):
-				for filename in os.listdir(autostart_home):
+				try:
+					autostarts = os.listdir(autostart_home)
+				except Exception, exception:
+					safe_print("Warning - directory '%s' listing failed: %s" % (autostarts, str(exception)))
+				for filename in autostarts:
 					if filename.startswith(desktopfile_name):
 						try:
 							desktopfile_path = os.path.join(autostart_home, filename)
@@ -8305,7 +8411,7 @@ def main():
 								desktopfile.write(cfgstorage.read().replace(" = ", "="))
 								desktopfile.close()
 						except Exception, exception:
-							pass
+							safe_print("Warning - could not process old calibration loader:", str(exception))
 		# make sure we run inside a terminal
 		if not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty() or "-oc" in sys.argv:
 			terminals_opts = {
@@ -8359,14 +8465,22 @@ def main():
 						msg = u'Even though %s is a GUI application, it needs to be run from a terminal. An attempt to automatically launch a terminal failed, because none of those known seem to be installed (%s).' % (me, ", ".join(terminals))
 					else:
 						msg = u'Even though %s is a GUI application, it needs to be run from a terminal. An attempt to automatically launch a terminal failed:\n\n%s' % (me, unicode(stdout.read(), enc, "replace"))
-				dlg = handle_error(msg)
+				handle_error(msg)
+			else:
+				safe_print("Re-launching instance in terminal")
 		else:
 			init_languages()
 			globalconfig["app"] = app = DisplayCalibrator(redirect = False) # DON'T redirect stdin/stdout
 			app.MainLoop()
 	except Exception, exception:
-		handle_error(traceback.format_exc())
+		handle_error("Fatal error: " + traceback.format_exc())
+	try:
+		logger = logging.getLogger()
+		for handler in logger.handlers:
+			logger.removeHandler(handler)
 		logging.shutdown()
+	except Exception, exception:
+		pass
 
 if __name__ == "__main__":
 	main()

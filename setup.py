@@ -389,6 +389,7 @@ else:
 			"__init__", 
 			"CGATS", 
 			"ICCProfile", 
+			"StringIOu", 
 			"argyllRGB2XYZ", 
 			"argyll_instruments", 
 			"colormath", 

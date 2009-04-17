@@ -95,6 +95,7 @@
 	"error.calibration.file_notfile": "„%s“ ist keine Datei.",
 	"error.copy_failed": "Die Datei „%s“ konnte nicht nach „%s“ kopiert werden.",
 	"error.deletion": "Beim Löschen ist ein Fehler aufgetreten.",
+	"error.file.open": "Die Datei „%s“ konnte nicht geöffnet werden.",
 	"error.generic": "Es ist ein interner Fehler aufgetreten.\n\nFehlernummer: %s\nFehlermeldung: %s",
 	"error.measurement.file_missing": "Die Messwertedatei „%s“ fehlt.",
 	"error.measurement.file_not_created": "Es wurde keine Messwertedatei erstellt.",
