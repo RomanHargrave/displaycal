@@ -20,7 +20,7 @@ def StringIO__init__universal_newlines(self, txt = ""):
 
 StringIO.StringIO.__init__ = StringIO__init__universal_newlines
 
-debug = '-d' in sys.argv
+debug = '-d' in sys.argv[1:]
 
 def rpad(value, width):
 	strval = str(value)

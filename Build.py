@@ -102,7 +102,7 @@ else: # linux / windows
 
 	dist_dir = os.path.join("dist", "dispcalGUI")
 
-	if not "--copy-only" in sys.argv:
+	if not "--copy-only" in sys.argv[1:]:
 
 		import platform
 
@@ -149,7 +149,7 @@ else: # linux / windows
 			if retcode != 0:
 				sys.exit(retcode)
 
-		if "--makespec" in sys.argv:
+		if "--makespec" in sys.argv[1:]:
 			# make spec file. ONLY USE AS TEMPLATE!
 			if sys.platform == "win32":
 				retcode = sp.call([sys.executable, os.path.join(pydir, pyi, "Makespec.py"), "-F", "-X", "-o", ".\\", "--icon=" + os.path.join("theme", "icons", "dispcalGUI.ico"), "-v", "winversion.txt", "-n", dist_dir, "dispcalGUI.py"])

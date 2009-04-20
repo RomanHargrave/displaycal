@@ -177,7 +177,7 @@
 	"overwrite": "Overwrite",
 	"preview": "Preview",
 	"create_and_preview": "Create && Preview",
-	"password.incorrect": "Wrong password. Please try again.",
+	"auth.failed": "Authentification failed.",
 	"patches": "Patches",
 	"profile.advanced_gamap": "Advanced...",
 	"profile.created": "The profile has been successfully created.",

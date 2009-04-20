@@ -83,10 +83,23 @@ def indexi(self, value, start = None, stop = None):
 		args += [stop]
 	return items.index(*args)
 
-def replaceunderscore(ex):
-	return u"_", ex.end
+def asciize(exception):
+	chars = {
+		u"\u00a9": u"(C)", # U+00A9 copyright sign
+		u"\u00ae": u"(R)", # U+00AE registered sign
+		u"\u00b2": u"2", # U+00B2 superscript two
+		u"\u00b3": u"3", # U+00B3 superscript three
+		u"\u00b9": u"1", # U+00B9 superscript one
+		u"\u00d7": u"x", # U+00D7 multiplication sign
+		u"\u2013": u"-", # U+2013 en dash
+		u"\u2014": u"-", # U+2014 em dash
+		u"\u2015": u"-", # U+2015 horizontal bar
+		u"\u2026": u"...", # U+2026 ellipsis
+		u"\u2212": u"-", # U+2212 minus sign
+	}
+	return chars.get(exception.object[exception.start:exception.end], u"_"), exception.end
 
-codecs.register_error("replaceunderscore", replaceunderscore)
+codecs.register_error("asciize", asciize)
 
 # init
 appname = "dispcalGUI"
@@ -184,25 +197,28 @@ else:
 	else:
 		runtype = ".py"
 storage = os.path.join(datahome, "storage")
-enc = "UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or \
-   locale.getpreferredencoding() or "ASCII"
-fs_enc = sys.getfilesystemencoding() or enc
+if "--ascii" in sys.argv[1:]:
+	enc = fs_enc = "ASCII"
+else:
+	enc = "UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or \
+	   locale.getpreferredencoding() or "ASCII"
+	fs_enc = sys.getfilesystemencoding() or enc
 
-if "-d2" in sys.argv or "--debug=2" in sys.argv:
+if "-d2" in sys.argv[1:] or "--debug=2" in sys.argv[1:]:
 	debug = 2
-elif "-d1" in sys.argv or "--debug=1" in sys.argv or \
-	 "-d" in sys.argv or "--debug" in sys.argv:
+elif "-d1" in sys.argv[1:] or "--debug=1" in sys.argv[1:] or \
+	 "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]:
 	debug = 1
 else:
 	debug = 0 # >= 1 prints debug messages
-test = "-t" in sys.argv or "--test" in sys.argv # aid testing new features
-if "-v2" in sys.argv or "--verbose=2" in sys.argv:
+test = "-t" in sys.argv[1:] or "--test" in sys.argv[1:] # aid testing new features
+if "-v2" in sys.argv[1:] or "--verbose=2" in sys.argv[1:]:
 	verbose = 2
-elif "-v0" in sys.argv or "--verbose=0" in sys.argv:
+elif "-v0" in sys.argv[1:] or "--verbose=0" in sys.argv[1:]:
 	verbose = 0
 else:
 	verbose = 1 # >= 1 prints some status information
-tc_use_alternate_preview = "-ap" in sys.argv
+tc_use_alternate_preview = "-ap" in sys.argv[1:]
 build = "%s%s%s" % (
 		strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(pypath).st_mtime)), 
 		"+" if str(timezone)[0] == "-" else "-", 
@@ -4363,7 +4379,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			# if result:
 				# result = False
 				# for line in self.output:
-					# if line.find("'%s' IS loaded" % args[-1].encode(enc, "replaceunderscore")) >= 0:
+					# if line.find("'%s' IS loaded" % args[-1].encode(enc, "asciize")) >= 0:
 						# result = True
 						# break
 		if result:
@@ -4604,7 +4620,7 @@ class DisplayCalibratorGUI(wx.Frame):
 							self.pwd = pwd
 							break
 						elif n == 0:
-							dlg.message.SetLabel(self.getlstr("password.incorrect") + "\n" + self.getlstr("dialog.enter_root_password"))
+							dlg.message.SetLabel(self.getlstr("auth.failed") + "\n" + self.getlstr("dialog.enter_root_password"))
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
 						n += 1
@@ -4633,17 +4649,17 @@ class DisplayCalibratorGUI(wx.Frame):
 					context = cmdfile
 				if sys.platform == "win32":
 					context.write(u"@echo off\n")
-					context.write((u'PATH %s;%%PATH%%\n' % os.path.dirname(cmd)).encode(enc, "replaceunderscore"))
-					cmdfiles.write(u'pushd "%~dp0"\n'.encode(enc, "replaceunderscore"))
+					context.write((u'PATH %s;%%PATH%%\n' % os.path.dirname(cmd)).encode(enc, "asciize"))
+					cmdfiles.write(u'pushd "%~dp0"\n'.encode(enc, "asciize"))
 					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")):
 						cmdfiles.write(u"color 07\n")
 				else:
 					context.write(u"set +v\n")
-					context.write((u'PATH=%s:$PATH\n' % os.path.dirname(cmd)).encode(enc, "replaceunderscore"))
+					context.write((u'PATH=%s:$PATH\n' % os.path.dirname(cmd)).encode(enc, "asciize"))
 					if sys.platform == "darwin" and mac_create_app:
-						cmdfiles.write(u'pushd "`dirname \\"$0\\"`/../../.."\n'.encode(enc, "replaceunderscore"))
+						cmdfiles.write(u'pushd "`dirname \\"$0\\"`/../../.."\n')
 					else:
-						cmdfiles.write(u'pushd "`dirname \\"$0\\"`"\n'.encode(enc, "replaceunderscore"))
+						cmdfiles.write(u'pushd "`dirname \\"$0\\"`"\n')
 					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform != "darwin":
 						context.write(u'echo -e "\\033[40;2;37m"\n')
 					# if last and sys.platform != "darwin":
@@ -4651,7 +4667,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						# context.write(u'if [ "$gnome_screensaver_running" != "" ]; then gnome-screensaver-command --exit; fi\n')
 					os.chmod(cmdfilename, 0755)
 					os.chmod(allfilename, 0755)
-				cmdfiles.write((u" ".join(escargs(cmdline)) + "\n").encode(enc, "replaceunderscore"))
+				cmdfiles.write((u" ".join(escargs(cmdline)) + "\n").encode(enc, "asciize"))
 				if sys.platform == "win32":
 					cmdfiles.write(u"set exitcode=%errorlevel%\n")
 					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")):
@@ -5232,7 +5248,7 @@ class DisplayCalibratorGUI(wx.Frame):
 	def make_argyll_compatible_path(self, path):
 		parts = path.split(os.path.sep)
 		for i in range(len(parts)):
-			parts[i] = unicode(parts[i].encode(enc, "replace"), enc).replace("/", "_").replace("?", "_")
+			parts[i] = unicode(parts[i].encode(enc, "asciize"), enc).replace("/", "_")
 		return os.path.sep.join(parts)
 
 	def create_profile_handler(self, event, path = None):
@@ -5496,7 +5512,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		
 		profile_name = re.sub("(\W?%s)+" % self.getlstr("native").lower(), "\\1", profile_name)
 		
-		return profile_name
+		return re.sub("[\\/:*?\"<>|]+", "_", profile_name)
 
 	def update_profile_name(self, event = None):
 		profile_name = self.create_profile_name()
@@ -8413,7 +8429,7 @@ def main():
 						except Exception, exception:
 							safe_print("Warning - could not process old calibration loader:", str(exception))
 		# make sure we run inside a terminal
-		if not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty() or "-oc" in sys.argv:
+		if not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty() or "-oc" in sys.argv[1:]:
 			terminals_opts = {
 				"Terminal": "-x",
 				"gnome-terminal": "-e",

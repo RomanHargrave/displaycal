@@ -10,7 +10,9 @@ import tempfile
 setuptools = False
 
 if "--use-distutils" in sys.argv[1:]:
+	sys.argv.reverse() # make sure we remove it from the actual arguments and not the scripts path
 	sys.argv.remove("--use-distutils")
+	sys.argv.reverse()
 else:
 	try:
 		from ez_setup import use_setuptools

@@ -177,7 +177,7 @@
 	"overwrite": "Überschreiben",
 	"preview": "Vorschau",
 	"create_and_preview": "Erstellen && Vorschau",
-	"password.incorrect": "Falsches Passwort. Bitte versuchen Sie es erneut.",
+	"auth.failed": "Authentifizierung fehlgeschlagen.",
 	"patches": "Felder",
 	"profile.advanced_gamap": "Erweitert...",
 	"profile.created": "Das Profil wurde erstellt.",
