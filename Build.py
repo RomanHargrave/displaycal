@@ -43,7 +43,15 @@ if sys.platform == "darwin": # mac os x
 		except ImportError:
 			sys.stderr.write("setuptools installation error\n")
 			sys.exit(2)
-
+	
+	# check for appscript
+	try:
+		import appscript
+	except ImportError:
+		retcode = sp.call(["easy_install", "appscript"])
+		if retcode != 0:
+			safe_print("Info: py-appscript not available, falling back to osascript shell command")
+	
 	# check for py2app
 	try:
 		import py2app

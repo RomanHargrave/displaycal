@@ -1057,7 +1057,7 @@ class InfoDialog(wx.Dialog):
 			self.Center(wx.HORIZONTAL)
 		elif pos[1] == -1:
 			self.Center(wx.VERTICAL)
-		if isapp and oparent and \
+		if sys.platform == "darwin" and oparent and \
 		   hasattr(oparent, "app") and (not oparent.app.IsActive() or \
 		   (hasattr(oparent.app, "frame") and not oparent.app.frame.IsShownOnScreen())):
 			start_new_thread(mac_app_activate, (.25, oparent.app.GetAppName()))
@@ -1153,7 +1153,7 @@ class ConfirmDialog(wx.Dialog):
 			self.Center(wx.HORIZONTAL)
 		elif pos[1] == -1:
 			self.Center(wx.VERTICAL)
-		if isapp and oparent and \
+		if sys.platform == "darwin" and oparent and \
 		   hasattr(oparent, "app") and (not oparent.app.IsActive() or \
 		   (hasattr(oparent.app, "frame") and not oparent.app.frame.IsShownOnScreen())):
 			start_new_thread(mac_app_activate, (.25, oparent.app.GetAppName()))
@@ -4718,8 +4718,9 @@ class DisplayCalibratorGUI(wx.Frame):
 							start_new_thread(xte_sendkeys, (5, None, "Space"))
 				except Exception, exception:
 					safe_print("Warning - unattended measurements not possible (start_new_thread failed with %s)" % str(exception))
-		elif cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform == "darwin":
-			start_new_thread(mac_app_activate, (3, "Terminal"))
+		elif cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and \
+			sys.platform == "darwin" and args and not self.IsShownOnScreen():
+			start_new_thread(mac_app_activate, (.25, "Terminal"))
 		try:
 			if silent:
 				stderr = sp.STDOUT
@@ -8245,19 +8246,35 @@ class DisplayCalibrator(wx.App):
 			elif ext.lower() == ".ti1":
 				self.dist_testcharts += [path]
 				self.dist_testchart_names += [os.path.basename(path)]
-		self.SetAppName(appname)
+		if sys.platform == "darwin" and not isapp:
+			self.SetAppName("Python")
+		else:
+			self.SetAppName(appname)
 		self.frame = DisplayCalibratorGUI(self)
 		self.SetTopWindow(self.frame)
 		return True
 
-def mac_app_activate(delay = 0, mac_app_name = "Finder"):
+def mac_app_activate(delay = 0, mac_app_name = "Finder"): # only activate if already running
+	applescript = [
+		'on appIsRunning(appName)',
+			'tell application "System Events" to (name of processes) contains appName',
+		'end appIsRunning',
+		'if appIsRunning("%s") then' % mac_app_name,
+			'tell app "%s" to activate' % mac_app_name,
+		'end if'
+	]
+	args = []
+	for line in applescript:
+		args += ['-e', line]
 	try:
 		if delay: sleep(delay)
 		if appscript is None or mac_app_name == appname:
 			# do not use the appscript method to give focus back to dispcalGUI, it does not work reliably. The osascript method works.
-			sp.call(['osascript', '-e', 'tell app "%s" to activate' % mac_app_name])
+			sp.call(['osascript'] + args)
 		else:
-			appscript.app(mac_app_name).activate()
+			mac_app = appscript.app(mac_app_name)
+			if mac_app.isrunning():
+				appscript.app(mac_app_name).activate()
 	except Exception, exception:
 		if verbose >= 1: safe_print("Warning - mac_app_activate() failed:", exception)
 
