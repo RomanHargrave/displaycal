@@ -105,12 +105,17 @@ codecs.register_error("asciize", asciize)
 appname = "dispcalGUI"
 version = "v0.2.2b" # app version string
 
-pypath = os.path.abspath(__file__)
+isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
+
+if isexe:
+	pypath = os.path.abspath(sys.executable)
+else:
+	pypath = os.path.abspath(__file__)
+
 pydir = os.path.dirname(pypath)
+
 pyname, pyext = os.path.splitext(os.path.basename(pypath))
 exedir = os.path.dirname(sys.executable)
-
-isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
 isapp = sys.platform == "darwin" and \
    sys.executable.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
    os.path.isfile(os.path.join(exedir, pyname))
@@ -8469,8 +8474,9 @@ def main():
 					exe = os.path.join(os.path.dirname(exe), "python" + exe_ext)
 				cmd = '"%s" "%s"' % (exe, pypath)
 				cwd = pydir
+			safe_print("Re-launching instance in terminal")
 			if sys.platform == "win32":
-				cmd = 'start "%s" %s' % (appname, cmd)
+				cmd = 'start "%s" /WAIT %s' % (appname, cmd)
 				if debug: safe_print(cmd)
 				retcode = sp.call(cmd.encode(fs_enc), shell = True, cwd = None if cwd is None else cwd.encode(fs_enc))
 			elif sys.platform == "darwin":
@@ -8499,8 +8505,6 @@ def main():
 					else:
 						msg = u'Even though %s is a GUI application, it needs to be run from a terminal. An attempt to automatically launch a terminal failed:\n\n%s' % (me, unicode(stdout.read(), enc, "replace"))
 				handle_error(msg)
-			else:
-				safe_print("Re-launching instance in terminal")
 		else:
 			init_languages()
 			globalconfig["app"] = app = DisplayCalibrator(redirect = False) # DON'T redirect stdin/stdout
