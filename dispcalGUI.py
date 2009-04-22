@@ -71,7 +71,7 @@ from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
 from natsort import natsort
 import pyi_md5pickuphelper
 from safe_print import safe_print as _safe_print
-from trash import trash
+from trash import trash, TrashcanUnavailableError
 
 # helper functions
 def indexi(self, value, start = None, stop = None):
@@ -3164,21 +3164,22 @@ class DisplayCalibratorGUI(wx.Frame):
 			measurement_mode += "p"
 		self.measurement_mode_ctrl.SetSelection(min(self.measurement_modes_ba[self.get_instrument_type()].get(measurement_mode, 0), len(self.measurement_mode_ctrl.GetItems()) - 1))
 
+		self.whitepoint_colortemp_textctrl.SetValue(str(self.getcfg("whitepoint.colortemp")))
+		self.whitepoint_x_textctrl.ChangeValue(str(self.getcfg("whitepoint.x")))
+		self.whitepoint_y_textctrl.ChangeValue(str(self.getcfg("whitepoint.y")))
 		self.whitepoint_colortemp_locus_ctrl.SetSelection(self.whitepoint_colortemp_loci_ba.get(self.getcfg("whitepoint.colortemp.locus"), 
 			self.whitepoint_colortemp_loci_ba.get(self.defaults["whitepoint.colortemp.locus"])))
 		if self.getcfg("whitepoint.colortemp", False):
 			self.whitepoint_colortemp_rb.SetValue(True)
-			self.whitepoint_colortemp_textctrl.SetValue(str(self.getcfg("whitepoint.colortemp")))
 			self.whitepoint_ctrl_handler(CustomEvent(wx.EVT_RADIOBUTTON.typeId, self.whitepoint_colortemp_rb), False)
 			self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
 		elif self.getcfg("whitepoint.x", False) and self.getcfg("whitepoint.y", False):
 			self.whitepoint_xy_rb.SetValue(True)
-			self.whitepoint_x_textctrl.ChangeValue(str(self.getcfg("whitepoint.x")))
-			self.whitepoint_y_textctrl.ChangeValue(str(self.getcfg("whitepoint.y")))
 			self.whitepoint_ctrl_handler(CustomEvent(wx.EVT_RADIOBUTTON.typeId, self.whitepoint_xy_rb), False)
 			self.whitepoint_colortemp_locus_ctrl.Disable()
 		else:
 			self.whitepoint_native_rb.SetValue(True)
+			# self.whitepoint_ctrl_handler(CustomEvent(wx.EVT_RADIOBUTTON.typeId, self.whitepoint_native_rb), False)
 		self.whitepoint_colortemp_textctrl.Enable(enable_cal and bool(self.getcfg("whitepoint.colortemp", False)))
 		self.whitepoint_x_textctrl.Enable(enable_cal and bool(self.getcfg("whitepoint.x", False)))
 		self.whitepoint_y_textctrl.Enable(enable_cal and bool(self.getcfg("whitepoint.y", False)))
@@ -3818,7 +3819,9 @@ class DisplayCalibratorGUI(wx.Frame):
 				args += ["-a" + ambient]
 			args += ["-k" + self.get_black_point_correction()]
 			if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"] and float(self.get_black_point_correction()) < 1:
-				args += ["-A" + self.get_black_point_rate()]
+				black_point_rate = self.get_black_point_rate()
+				if black_point_rate:
+					args += ["-A" + black_point_rate]
 			black_luminance = self.get_black_luminance()
 			if black_luminance:
 				args += ["-B" + black_luminance]
@@ -5175,14 +5178,11 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def profile_name_ctrl_handler(self, event):
 		if debug: safe_print("profile_name_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
-		self.sanitize_profile_name()
-	
-	def sanitize_profile_name(self):
-		if not self.check_profile_name():
+		oldval = self.profile_name_textctrl.GetValue()
+		if not self.check_profile_name() or len(oldval) > 255:
 			wx.Bell()
 			x = self.profile_name_textctrl.GetInsertionPoint()
-			oldval = self.profile_name_textctrl.GetValue()
-			newval = self.getdefault("profile.name") if oldval == "" else re.sub("[\\/:*?\"<>|]+", "", oldval)
+			newval = self.getdefault("profile.name") if oldval == "" else re.sub("[\\/:*?\"<>|]+", "", oldval)[:255]
 			self.profile_name_textctrl.ChangeValue(newval)
 			self.profile_name_textctrl.SetInsertionPoint(x - (len(oldval) - len(newval)))
 		self.update_profile_name()
@@ -5416,6 +5416,62 @@ class DisplayCalibratorGUI(wx.Frame):
 	def create_profile_name(self):
 		profile_name = self.profile_name_textctrl.GetValue()
 		
+		# values
+		measurement_mode = self.get_measurement_mode()
+		whitepoint = self.get_whitepoint()
+		whitepoint_locus = self.get_whitepoint_locus()
+		luminance = self.get_luminance()
+		black_luminance = self.get_black_luminance()
+		trc = self.get_trc()
+		trc_type = self.get_trc_type()
+		ambient = self.get_ambient()
+		black_output_offset = self.get_black_output_offset()
+		black_point_correction = self.get_black_point_correction()
+		black_point_rate = self.get_black_point_rate()
+		calibration_quality = self.get_calibration_quality()
+		profile_quality = self.get_profile_quality()
+		profile_type = self.get_profile_type()
+		
+		# legacy (pre v0.2.2b) profile name
+		legacy_profile_name = ""
+		if measurement_mode:
+			if "c" in measurement_mode:
+				legacy_profile_name += "crt"
+			elif "l" in measurement_mode:
+				legacy_profile_name += "lcd"
+			if "p" in measurement_mode:
+				if len(measurement_mode) > 1:
+					legacy_profile_name += "-"
+				legacy_profile_name += self.getlstr("projector").lower()
+		if legacy_profile_name:
+			legacy_profile_name += "-"
+		if not whitepoint or whitepoint.find(",") < 0:
+			legacy_profile_name += whitepoint_locus
+			if whitepoint:
+				legacy_profile_name += whitepoint
+		else:
+			legacy_profile_name += "w" + whitepoint
+		if luminance:
+			legacy_profile_name += "-b" + luminance
+		if black_luminance:
+			legacy_profile_name += "-B" + black_luminance
+		legacy_profile_name += "-" + trc_type + trc
+		if ambient:
+			legacy_profile_name += "-a" + ambient
+		legacy_profile_name += "-f" + black_output_offset
+		legacy_profile_name += "-k" + black_point_correction
+		if black_point_rate and float(black_point_correction) < 1:
+			legacy_profile_name += "-A" + black_point_rate
+		legacy_profile_name += "-q" + calibration_quality + profile_quality
+		if profile_type == "l":
+			profile_type = "lut"
+		else:
+			profile_type = "matrix"
+		legacy_profile_name += "-" + profile_type
+		legacy_profile_name += "-" + strftime("%Y%m%d%H%M")
+		profile_name = profile_name.replace("%legacy", legacy_profile_name)
+		
+		# default v0.2.2b profile name
 		display = self.display_ctrl.GetStringSelection()
 		if display:
 			display = display.split(" @")[0]
@@ -5423,24 +5479,25 @@ class DisplayCalibratorGUI(wx.Frame):
 		instrument = self.comport_ctrl.GetStringSelection()
 		instrument = instrument.replace("GretagMacbeth", "")
 		instrument = instrument.replace("X-Rite", "")
+		instrument = instrument.replace("Xrite", "")
 		instrument = instrument.replace("ColorVision", "")
+		instrument = instrument.replace("Datacolor", "")
+		instrument = instrument.replace("Colorimetre", "")
 		instrument = instrument.replace(" ", "")
 		profile_name = profile_name.replace("%in", instrument)
-		measurement_mode = self.get_measurement_mode() or ""
-		mode = ""
-		if "c" in measurement_mode:
-			mode += "CRT"
-		elif "l" in measurement_mode:
-			mode += "LCD"
-		if len(measurement_mode) > 1:
-			mode += "-"
-		if "p" in measurement_mode :
-			mode += self.getlstr("projector")
-		if mode:
+		if measurement_mode:
+			mode = ""
+			if "c" in measurement_mode:
+				mode += "CRT"
+			elif "l" in measurement_mode:
+				mode += "LCD"
+			if "p" in measurement_mode:
+				if len(measurement_mode) > 1:
+					mode += "-"
+				mode += self.getlstr("projector")
 			profile_name = profile_name.replace("%im", mode)
 		else:
 			profile_name = re.sub("%im\W|\W%im", "", profile_name)
-		whitepoint = self.get_whitepoint()
 		if isinstance(whitepoint, str):
 			if whitepoint.find(",") < 0:
 				if self.get_whitepoint_locus() == "t":
@@ -5449,47 +5506,41 @@ class DisplayCalibratorGUI(wx.Frame):
 					whitepoint += "K"
 			else:
 				whitepoint = "x ".join(whitepoint.split(",")) + "y"
-		profile_name = profile_name.replace("%wp", (self.getlstr("native").lower() if whitepoint == None else whitepoint))
-		luminance = self.get_luminance()
+		profile_name = profile_name.replace("%wp", self.getlstr("native").lower() if whitepoint == None else whitepoint)
 		profile_name = profile_name.replace("%cb", self.getlstr("max").lower() if luminance == None else luminance + u"cdm²")
-		black_luminance = self.get_black_luminance()
 		profile_name = profile_name.replace("%cB", self.getlstr("min").lower() if black_luminance == None else black_luminance + u"cdm²")
-		trc = self.get_trc()
 		if trc not in ("l", "709", "s", "240"):
-			if self.get_trc_type() == "g":
-				trc += ""
-			else:
+			if trc_type == "G":
 				trc += " (%s)" % self.getlstr("trc.type.absolute").lower()
 		else:
 			trc = trc.upper().replace("L", u"L").replace("709", "Rec. 709").replace("S", "sRGB").replace("240", "SMPTE240M")
 		profile_name = profile_name.replace("%cg", trc)
-		ambient = self.get_ambient()
 		profile_name = profile_name.replace("%ca", ambient + "lx" if ambient else "")
-		f = int(float(self.get_black_output_offset()) * 100)
-		profile_name = profile_name.replace("%cf", "Offset=" + str(f if f > 0 else 0) + "%")
-		k = int(float(self.get_black_point_correction()) * 100)
+		f = int(float(black_output_offset) * 100)
+		profile_name = profile_name.replace("%cf", str(f if f > 0 else 0) + "%")
+		k = int(float(black_point_correction) * 100)
 		profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and k < 100 else "") + self.getlstr("neutral") if k > 0 else self.getlstr("native").lower())
-		if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"]:
-			profile_name = profile_name.replace("%cA", self.get_black_point_rate())
+		if black_point_rate and float(black_point_correction) < 1:
+			profile_name = profile_name.replace("%cA", black_point_rate)
 		aspects = {
-			"c": self.get_calibration_quality(),
-			"p": self.get_profile_quality()
+			"c": calibration_quality,
+			"p": profile_quality
 		}
 		msgs = {
-			"u": self.getlstr("calibration.quality.ultra"),
-			"h": self.getlstr("calibration.quality.high"),
-			"m": self.getlstr("calibration.quality.medium"),
-			"l": self.getlstr("calibration.quality.low")
+			"u": "UQ", #self.getlstr("calibration.quality.ultra"),
+			"h": "HQ", #self.getlstr("calibration.quality.high"),
+			"m": "MQ", #self.getlstr("calibration.quality.medium"),
+			"l": "LQ", #self.getlstr("calibration.quality.low")
 		}
 		for a in aspects:
-			profile_name = profile_name.replace("%%%sq" % a, msgs[aspects[a]].lower())
+			profile_name = profile_name.replace("%%%sq" % a, msgs[aspects[a]]) #.lower())
 		for q in msgs:
 			pat = re.compile("(" + msgs[q] + ")\W" + msgs[q], re.I)
 			profile_name = re.sub(pat, "\\1", profile_name)
 		if self.get_profile_type() == "l":
 			profile_type = "LUT"
 		else:
-			profile_type = "Matrix"
+			profile_type = "MTX"
 		profile_name = profile_name.replace("%pt", profile_type)
 		directives = (
 			"a",
@@ -5518,7 +5569,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		
 		profile_name = re.sub("(\W?%s)+" % self.getlstr("native").lower(), "\\1", profile_name)
 		
-		return re.sub("[\\/:*?\"<>|]+", "_", profile_name)
+		return re.sub("[\\/:*?\"<>|]+", "_", profile_name)[:255]
 
 	def update_profile_name(self, event = None):
 		profile_name = self.create_profile_name()
@@ -5532,7 +5583,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if profile_name != self.get_profile_name():
 			self.setcfg("profile.name", self.profile_name_textctrl.GetValue())
 			self.profile_name.UpdateToolTipString(profile_name)
-			self.profile_name.SetLabel(profile_name)
+			self.profile_name.SetLabel(profile_name.replace("&", "&&"))
 
 	def check_profile_name(self, profile_name = None):
 		if re.match(re.compile("^[^\\/:*?\"<>|]+$"), profile_name if profile_name is not None else self.create_profile_name()):
@@ -5608,7 +5659,17 @@ class DisplayCalibratorGUI(wx.Frame):
 		elif self.whitepoint_colortemp_rb.GetValue(): # color temperature in kelvin
 			return str(stripzeroes(self.whitepoint_colortemp_textctrl.GetValue().replace(",", ".")))
 		elif self.whitepoint_xy_rb.GetValue():
-			return str(stripzeroes(round(float(self.whitepoint_x_textctrl.GetValue().replace(",", ".")), 6))) + "," + str(stripzeroes(round(float(self.whitepoint_y_textctrl.GetValue().replace(",", ".")), 6)))
+			x = self.whitepoint_x_textctrl.GetValue().replace(",", ".")
+			try:
+				x = round(float(x), 6)
+			except ValueError:
+				pass
+			y = self.whitepoint_y_textctrl.GetValue().replace(",", ".")
+			try:
+				y = round(float(y), 6)
+			except ValueError:
+				pass
+			return str(stripzeroes(x)) + "," + str(stripzeroes(y))
 
 	def get_whitepoint_locus(self):
 		n = self.whitepoint_colortemp_locus_ctrl.GetSelection()
@@ -5635,7 +5696,10 @@ class DisplayCalibratorGUI(wx.Frame):
 		return str(Decimal(self.black_point_correction_ctrl.GetValue()) / 100)
 
 	def get_black_point_rate(self):
-		return str(Decimal(self.black_point_rate_ctrl.GetValue()) / 100)
+		if hasattr(self, "black_point_rate_ctrl") and self.defaults["calibration.black_point_rate.enabled"]:
+			return str(Decimal(self.black_point_rate_ctrl.GetValue()) / 100)
+		else:
+			return None
 
 	def get_trc_type(self):
 		if self.trc_type_ctrl.GetSelection() == 1 and self.trc_g_rb.GetValue():
@@ -8062,11 +8126,11 @@ class DisplayCalibratorGUI(wx.Frame):
 	def delete_calibration_handler(self, event):
 		cal = self.getcfg("calibration.file")
 		if cal and os.path.exists(cal):
-			caldir =os.path.dirname(cal)
+			caldir = os.path.dirname(cal)
 			try:
-				dircontents = os.listdir(cal)
+				dircontents = os.listdir(caldir)
 			except Exception, exception:
-				InfoDialog(self, msg = self.getlstr("error.deletion") + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+				InfoDialog(self, msg = unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 				return
 			self.related_files = {}
 			for entry in dircontents:
@@ -8095,6 +8159,12 @@ class DisplayCalibratorGUI(wx.Frame):
 					for related_file in self.related_files:
 						if self.related_files[related_file]:
 							delete_related_files += [os.path.join(os.path.dirname(cal), related_file)]
+				if sys.platform == "darwin":
+					trashcan = self.getlstr("trashcan.mac")
+				elif sys.platform == "win32":
+					trashcan = self.getlstr("trashcan.windows")
+				else:
+					trashcan = self.getlstr("trashcan.linux")
 				try:
 					if (sys.platform == "darwin" and \
 					   len(delete_related_files) + 1 == len(dircontents) and \
@@ -8104,8 +8174,10 @@ class DisplayCalibratorGUI(wx.Frame):
 						trash([os.path.dirname(cal)])
 					else:
 						trash(delete_related_files)
+				except TrashcanUnavailableError, exception:
+					InfoDialog(self, msg = self.getlstr("error.trashcan_unavailable", trashcan), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 				except Exception, exception:
-					InfoDialog(self, msg = self.getlstr("error.deletion") + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+					InfoDialog(self, msg = self.getlstr("error.deletion", trashcan) + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 				# the case-sensitive index could fail because of case insensitive file systems
 				# e.g. the filename string from the cfg is "C:\Users\Name\AppData\dispcalGUI\storage\MyFile",
 				# but the actual filename is "C:\Users\Name\AppData\dispcalGUI\storage\myfile"

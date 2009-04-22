@@ -17,6 +17,10 @@ else:
 	from urllib import quote
 	import shutil
 
+class TrashcanUnavailableError(Exception):
+	def __str__(self):
+		return self.args[0]
+
 def trash(paths):
 	""" Move files and folders to the trash. If a trashcan facility does not
 	exist, simply delete the files/folders. """
@@ -42,7 +46,7 @@ def trash(paths):
 			# older Linux distros and Mac OS X
 			trashcan = os.path.join(os.path.expanduser("~"), ".Trash")
 		if not os.path.isdir(trashcan):
-			return False
+			raise TrashcanUnavailableError("No such directory: '%s'" % trashcan)
 		for path in paths:
 			if os.path.isdir(trashcan):
 				n = 1
