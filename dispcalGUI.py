@@ -1345,7 +1345,7 @@ class DisplayCalibratorGUI(wx.Frame):
 										sys.getwindowsversion() >= (6, )) else 
 										"u", # Linux, OSX or Vista and later
 			"profile.name": u" ".join([
-				u"%dn",
+				u"%dns",
 				u"%Y-%m-%d",
 				# # u"%in",
 				# # u"%im",
@@ -4715,7 +4715,9 @@ class DisplayCalibratorGUI(wx.Frame):
 				safe_print("Warning - error during shell script creation:", str(exception))
 		if cmdname == self.get_argyll_utilname("dispread") and self.dispread_after_dispcal:
 			instrument_features = self.get_instrument_features()
-			if instrument_features and (not instrument_features.get("sensor_cal") or instrument_features.get("skip_sensor_cal")):
+			# FIXME: -N switch not working as expected in Argyll 1.0.3
+			# if instrument_features and (not instrument_features.get("sensor_cal") or instrument_features.get("skip_sensor_cal")):
+			if instrument_features and not instrument_features.get("sensor_cal"):
 				try:
 					if sys.platform == "darwin":
 						start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
@@ -4728,7 +4730,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					safe_print("Warning - unattended measurements not possible (start_new_thread failed with %s)" % str(exception))
 		elif cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and \
 			sys.platform == "darwin" and args and not self.IsShownOnScreen():
-			start_new_thread(mac_app_activate, (.25, "Terminal"))
+			start_new_thread(mac_app_activate, (3, "Terminal"))
 		try:
 			if silent:
 				stderr = sp.STDOUT
@@ -4899,8 +4901,9 @@ class DisplayCalibratorGUI(wx.Frame):
 		safe_print("-" * 80)
 		safe_print(self.getlstr("button.calibrate_and_profile").replace("&&", "&"))
 		self.install_cal = True
-		if self.get_instrument_features().get("skip_sensor_cal"):
-			self.options_dispread = ["-N"]
+		# FIXME: -N switch not working as expected in Argyll 1.0.3
+		# if self.get_instrument_features().get("skip_sensor_cal"):
+			# self.options_dispread = ["-N"]
 		self.dispread_after_dispcal = True
 		start_timers = True
 		if self.calibrate():
@@ -5231,6 +5234,7 @@ class DisplayCalibratorGUI(wx.Frame):
 	def profile_name_info(self):
 		info = [
 			"%dn	" + self.getlstr("display"),
+			"%dns	" + self.getlstr("display_short"),
 			"%in	" + self.getlstr("instrument"),
 			"%im	" + self.getlstr("measurement_mode"),
 			"%wp	" + self.getlstr("whitepoint"),
@@ -5475,6 +5479,12 @@ class DisplayCalibratorGUI(wx.Frame):
 		display = self.display_ctrl.GetStringSelection()
 		if display:
 			display = display.split(" @")[0]
+			weight = 0
+			for part in re.sub("\([^)]+\)", "", display).split():
+				digits = re.search("\d+", part)
+				if len(part) + (len(digits.group()) * 5 if digits else 0) > weight: # weigh parts with digits higher than those without
+					display_short = part
+			profile_name = profile_name.replace("%dns", display_short)
 		profile_name = profile_name.replace("%dn", display)
 		instrument = self.comport_ctrl.GetStringSelection()
 		instrument = instrument.replace("GretagMacbeth", "")

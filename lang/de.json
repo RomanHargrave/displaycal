@@ -79,6 +79,7 @@
 	"dialog.no_cal_warning": "Das Profil wird die gerade geladenen Kalibrierungskurven enthalten. Wollen Sie fortfahren?",
 	"dialog.ti3_no_cal_info": "Die Messwerte enthalten keine Kalibrierungskurven. Wollen Sie wirklich fortfahren?",
 	"display": "Anzeigegerät",
+	"display_short": "Anzeigegerät (Kurzname)",
 	"display_lut.link": "Anzeigegerät und LUT-Zugriff getrennt oder gemeinsam ändern",
 	"display_detected": "Eine Änderung in der Anzeigegerätekonfiguration wurde erkannt.",
 	"display.primary": "(Primär)",

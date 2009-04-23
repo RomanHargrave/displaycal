@@ -79,6 +79,7 @@
 	"dialog.no_cal_warning": "The profile will contain the current calibration curves. Do you want to continue?",
 	"dialog.ti3_no_cal_info": "The measurement data does not contain calibration curves. Do you really want to continue?",
 	"display": "Display device",
+	"display_short": "Display device (abbreviated)",
 	"display_lut.link": "Link/unlink display and LUT access",
 	"display_detected": "A change in the display device configuration has been detected.",
 	"display.primary": "(Primary)",
