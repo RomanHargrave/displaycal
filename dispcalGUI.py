@@ -8479,12 +8479,12 @@ def main():
 					cfg_file.close()
 			except Exception, exception:
 				safe_print("Warning - could not process old configuration:", str(exception))
-		# create main data storage dir
-		if not os.path.exists(storage):
+		# create main data dir
+		if not os.path.exists(datahome):
 			try:
-				os.makedirs(storage)
+				os.makedirs(datahome)
 			except Exception, exception:
-				handle_error("Warning - could not create storage directory '%s'" % storage)
+				handle_error("Warning - could not create directory '%s'" % datahome)
 		if sys.platform not in ("darwin", "win32"):
 			# Linux: try and fix v0.2.1b calibration loader, because calibrationloader.sh is no longer present in v0.2.2b+
 			desktopfile_name = appname + "-Calibration-Loader-Display-"
@@ -8503,11 +8503,11 @@ def main():
 							exec_ = cfg.get("Desktop Entry", "Exec")
 							if exec_.find("calibrationloader.sh") > -1:
 								cfg.set("Desktop Entry", "Exec", re.sub('"[^"]*calibrationloader.sh"\s*', '', exec_, 1))
-								cfgstorage = StringIO()
-								cfg.write(cfgstorage)
+								cfgio = StringIO()
+								cfg.write(cfgio)
 								desktopfile = open(desktopfile_path, "w")
-								cfgstorage.seek(0)
-								desktopfile.write(cfgstorage.read().replace(" = ", "="))
+								cfgio.seek(0)
+								desktopfile.write(cfgio.read().replace(" = ", "="))
 								desktopfile.close()
 						except Exception, exception:
 							safe_print("Warning - could not process old calibration loader:", str(exception))
