@@ -285,7 +285,7 @@ else:
 			(os.path.join(data, "presets"), 
 				[os.path.join(tempdir, "presets", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "presets", "*.icc"))]), 
-			(os.path.join(data, "screenshots"), 
+			(os.path.join(doc, "screenshots"), 
 				[os.path.join(tempdir, "screenshots", fname) for fname in 
 				glob.glob(os.path.join(tempdir, "screenshots", "*.png"))]),
 			(os.path.join(data, "theme"), 
