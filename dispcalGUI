@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import dispcalGUI
-try:
+if hasattr(dispcalGUI, "main"):
 	# running from source directly?
 	main = dispcalGUI.main
-except AttributeError:
+else:
 	# running from installed source?
 	from dispcalGUI.dispcalGUI import main
 

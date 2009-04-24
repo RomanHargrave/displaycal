@@ -392,7 +392,7 @@ else:
 			"CGATS", 
 			"ICCProfile", 
 			"StringIOu", 
-			"argyllRGB2XYZ", 
+			"argyll_RGB2XYZ", 
 			"argyll_instruments", 
 			"argyll_names", 
 			"colormath", 

@@ -1,9 +1,10 @@
 #!/bin/sh
 
 prefix=
+python="/usr/bin/env python"
 scripts=
 
-opts=`getopt --long prefix: --long install-scripts: --long install-data: --long use-distutils -- "$0" "$@"`
+opts=`getopt --long prefix: --long python: --long install-scripts: --long install-data: --long use-distutils -- "$0" "$@"`
 eval set -- "$opts"
 opts=
 while true ; do
@@ -11,6 +12,10 @@ while true ; do
 		--prefix)
 			shift;
 			prefix="$1";
+			shift;;
+		--python)
+			shift;
+			python="$1";
 			shift;;
 		--install-scripts)
 			shift;
@@ -54,7 +59,7 @@ src_dir=`dirname "$0"`
 
 if [ -e "$src_dir/setup.py" ]; then
 	echo "Uninstalling dispcalGUI..."
-	"$prefix/bin/python" "$src_dir/setup.py" uninstall --prefix="$prefix" --install-scripts="$scripts" $opts
+	$python "$src_dir/setup.py" uninstall --prefix="$prefix" --install-scripts="$scripts" $opts
 else
 	echo "Removing $prefix/bin/dispcalGUI..."
 	rm -f "$prefix/bin/dispcalGUI"

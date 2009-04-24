@@ -65,7 +65,7 @@ import CGATS
 import ICCProfile
 ICCP = ICCProfile
 import RealDisplaySizeMM as RDSMM
-from argyllRGB2XYZ import argyllRGB2XYZ
+from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ
 from argyll_instruments import instruments
 from argyll_names import names as argyll_names, altnames as argyll_altnames
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
@@ -6394,7 +6394,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				elif value < 0:
 					value = 0.0
 				sample[label] = value
-				RGB = argyllRGB2XYZ(*[component / 100.0 for component in (sample["RGB_R"], sample["RGB_G"], sample["RGB_B"])])
+				RGB = argyll_RGB2XYZ(*[component / 100.0 for component in (sample["RGB_R"], sample["RGB_G"], sample["RGB_B"])])
 				sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"] = [component * 100.0 for component in RGB]
 				for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
 					for col in range(self.tcframe.grid.GetNumberCols()):

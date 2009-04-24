@@ -75,7 +75,7 @@ for e in range(3):
 	s["Ynorm"] += icx_ink_table[s["iix"][e]][0][1]
 s["Ynorm"] = 1.0 / s["Ynorm"]
 
-def argyllRGB2XYZ(R, G, B):
+def RGB2XYZ(R, G, B):
 
 	d = (R, G, B)
 
@@ -108,56 +108,56 @@ def argyllRGB2XYZ(R, G, B):
 if __name__ == '__main__':
 	from safe_print import safe_print
 	# 100.00 100.00 100.00 95.106 100.00 108.84 
-	safe_print(argyllRGB2XYZ(1.0, 1.0, 1.0))
+	safe_print(RGB2XYZ(1.0, 1.0, 1.0))
 	# 0.0000 0.0000 0.0000 1.0000 1.0000 1.0000 
-	safe_print(argyllRGB2XYZ(0.0, 0.0, 0.0))
+	safe_print(RGB2XYZ(0.0, 0.0, 0.0))
 	# 50.000 0.0000 0.0000 9.7393 5.5060 1.4095 
-	safe_print(argyllRGB2XYZ(0.5, 0.0, 0.0))
+	safe_print(RGB2XYZ(0.5, 0.0, 0.0))
 	# 100.00 0.0000 0.0000 41.830 22.052 2.9132 
-	safe_print(argyllRGB2XYZ(1.0, 0.0, 0.0))
+	safe_print(RGB2XYZ(1.0, 0.0, 0.0))
 	# 0.0000 50.000 0.0000 8.5782 16.154 3.5261 
-	safe_print(argyllRGB2XYZ(0.0, 0.5, 0.0))
+	safe_print(RGB2XYZ(0.0, 0.5, 0.0))
 	# 50.000 50.000 0.0000 17.318 20.660 3.9356 
-	safe_print(argyllRGB2XYZ(0.5, 0.5, 0.0))
+	safe_print(RGB2XYZ(0.5, 0.5, 0.0))
 	# 100.00 50.000 0.0000 49.408 37.206 5.4393 
-	safe_print(argyllRGB2XYZ(1.0, 0.5, 0.0))
+	safe_print(RGB2XYZ(1.0, 0.5, 0.0))
 	# 0.0000 100.00 0.0000 36.405 71.801 12.802 
-	safe_print(argyllRGB2XYZ(0.0, 1.0, 0.0))
+	safe_print(RGB2XYZ(0.0, 1.0, 0.0))
 	# 50.000 100.00 0.0000 45.145 76.307 13.211 
-	safe_print(argyllRGB2XYZ(0.5, 1.0, 0.0))
+	safe_print(RGB2XYZ(0.5, 1.0, 0.0))
 	# 100.00 100.00 0.0000 77.235 92.853 14.715 
-	safe_print(argyllRGB2XYZ(1.0, 1.0, 0.0))
+	safe_print(RGB2XYZ(1.0, 1.0, 0.0))
 	# 0.0000 0.0000 50.000 4.8252 2.5298 21.147 
-	safe_print(argyllRGB2XYZ(0.0, 0.0, 0.5))
+	safe_print(RGB2XYZ(0.0, 0.0, 0.5))
 	# 50.000 0.0000 50.000 13.564 7.0358 21.557 
-	safe_print(argyllRGB2XYZ(0.5, 0.0, 0.5))
+	safe_print(RGB2XYZ(0.5, 0.0, 0.5))
 	# 100.00 0.0000 50.000 45.655 23.582 23.061 
-	safe_print(argyllRGB2XYZ(1.0, 0.0, 0.5))
+	safe_print(RGB2XYZ(1.0, 0.0, 0.5))
 	# 0.0000 50.000 50.000 12.403 17.684 23.674 
-	safe_print(argyllRGB2XYZ(0.0, 0.5, 0.5))
+	safe_print(RGB2XYZ(0.0, 0.5, 0.5))
 	# 50.000 50.000 50.000 21.143 22.190 24.083 
-	safe_print(argyllRGB2XYZ(0.5, 0.5, 0.5))
+	safe_print(RGB2XYZ(0.5, 0.5, 0.5))
 	# 100.00 50.000 50.000 53.233 38.736 25.587 
-	safe_print(argyllRGB2XYZ(1.0, 0.5, 0.5))
+	safe_print(RGB2XYZ(1.0, 0.5, 0.5))
 	# 0.0000 100.00 50.000 40.230 73.330 32.949 
-	safe_print(argyllRGB2XYZ(0.0, 1.0, 0.5))
+	safe_print(RGB2XYZ(0.0, 1.0, 0.5))
 	# 50.000 100.00 50.000 48.970 77.836 33.359 
-	safe_print(argyllRGB2XYZ(0.5, 1.0, 0.5))
+	safe_print(RGB2XYZ(0.5, 1.0, 0.5))
 	# 100.00 100.00 50.000 81.061 94.383 34.863 
-	safe_print(argyllRGB2XYZ(1.0, 1.0, 0.5))
+	safe_print(RGB2XYZ(1.0, 1.0, 0.5))
 	# 0.0000 0.0000 100.00 18.871 8.1473 95.129 
-	safe_print(argyllRGB2XYZ(0.0, 0.0, 1.0))
+	safe_print(RGB2XYZ(0.0, 0.0, 1.0))
 	# 50.000 0.0000 100.00 27.610 12.653 95.538 
-	safe_print(argyllRGB2XYZ(0.5, 0.0, 1.0))
+	safe_print(RGB2XYZ(0.5, 0.0, 1.0))
 	# 100.00 0.0000 100.00 59.701 29.199 97.042 
-	safe_print(argyllRGB2XYZ(1.0, 0.0, 1.0))
+	safe_print(RGB2XYZ(1.0, 0.0, 1.0))
 	# 0.0000 50.000 100.00 26.449 23.302 97.655 
-	safe_print(argyllRGB2XYZ(0.0, 0.5, 1.0))
+	safe_print(RGB2XYZ(0.0, 0.5, 1.0))
 	# 50.000 50.000 100.00 35.189 27.808 98.065 
-	safe_print(argyllRGB2XYZ(0.5, 0.5, 1.0))
+	safe_print(RGB2XYZ(0.5, 0.5, 1.0))
 	# 100.00 50.000 100.00 67.279 44.354 99.568 
-	safe_print(argyllRGB2XYZ(1.0, 0.5, 1.0))
+	safe_print(RGB2XYZ(1.0, 0.5, 1.0))
 	# 0.0000 100.00 100.00 54.276 78.948 106.93 
-	safe_print(argyllRGB2XYZ(0.0, 1.0, 1.0))
+	safe_print(RGB2XYZ(0.0, 1.0, 1.0))
 	# 50.000 100.00 100.00 63.016 83.454 107.34 
-	safe_print(argyllRGB2XYZ(0.5, 1.0, 1.0))
+	safe_print(RGB2XYZ(0.5, 1.0, 1.0))
