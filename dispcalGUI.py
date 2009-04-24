@@ -4754,6 +4754,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					else:
 						self.subprocess.communicate()
 				self.retcode = retcode = self.subprocess.wait()
+				self.subprocess = None
 				tries -= 1
 				if not silent:
 					stderr.seek(0)
@@ -5367,11 +5368,17 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def progress_timer_handler(self, event):
 		keepGoing, skip = self.progress_parent.progress_dlg.Pulse(self.progress_parent.progress_dlg.GetTitle())
-		if not keepGoing and hasattr(self, "subprocess") and self.subprocess.poll() is None:
-			try:
-				self.subprocess.terminate()
-			except Exception, exception:
-				handle_error("Error - self.subprocess.terminate() failed: " + str(exception), parent = self.progress_parent.progress_dlg)
+		if not keepGoing:
+			if hasattr(self, "subprocess") and self.subprocess:
+				if self.subprocess.poll() is None:
+					try:
+						self.subprocess.terminate()
+					except Exception, exception:
+						handle_error("Error - subprocess.terminate() failed: " + str(exception), parent = self.progress_parent.progress_dlg)
+				elif verbose >= 2:
+					safe_print("Info: Subprocess already exited.")
+			else:
+				self.thread_abort = True
 
 	def start_worker(self, consumer, producer, cargs = (), ckwargs = None, wargs = (), wkwargs = None, progress_title = "", progress_msg = "", parent = None, progress_start = 100):
 		if ckwargs is None:
@@ -5392,6 +5399,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if progress_start < 100:
 			progress_start = 100
 		self.progress_parent.progress_start_timer = wx.CallLater(progress_start, self.progress_dlg_start, progress_title, progress_msg, parent) # show the progress dialog after 1ms
+		self.thread_abort = False
 		self.thread = delayedresult.startWorker(self.generic_consumer, producer, [consumer] + list(cargs), ckwargs, wargs, wkwargs)
 		return True
 
@@ -5399,7 +5407,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		return hasattr(self, "progress_parent") and (self.progress_parent.progress_start_timer.IsRunning() or self.progress_parent.progress_timer.IsRunning())
 
 	def progress_dlg_start(self, progress_title = "", progress_msg = "", parent = None):
-		if hasattr(self, "subprocess") and self.subprocess.poll() is None:
+		if True: # hasattr(self, "subprocess") and self.subprocess and self.subprocess.poll() is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT
 		else:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME
@@ -6861,6 +6869,8 @@ class DisplayCalibratorGUI(wx.Frame):
 				uniqueRGB = []
 				vmaxlen = 4
 				for i in data:
+					if self.thread_abort:
+						return False
 					patch = [round(float(str(v * 2.55)), vmaxlen) for v in (data[i]["RGB_R"], data[i]["RGB_G"], data[i]["RGB_B"])] # normalize to 0...255 range
 					strpatch = [str(int(round(round(v, 1)))) for v in patch]
 					if patch[0] == patch[1] == patch[2] == 255: # white
@@ -6899,21 +6909,33 @@ class DisplayCalibratorGUI(wx.Frame):
 					if debug: 
 						safe_print("R_inc:")
 						for i in R_inc:
+							if self.thread_abort:
+								return False
 							safe_print("%s: x%s" % (i, R_inc[i]))
 						safe_print("G_inc:")
 						for i in G_inc:
+							if self.thread_abort:
+								return False
 							safe_print("%s: x%s" % (i, G_inc[i]))
 						safe_print("B_inc:")
 						for i in B_inc:
+							if self.thread_abort:
+								return False
 							safe_print("%s: x%s" % (i, B_inc[i]))
 					RGB_inc = {"0": 0}
 					for inc in R_inc:
+						if self.thread_abort:
+							return False
 						if inc in G_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = R_inc[inc]
 					for inc in G_inc:
+						if self.thread_abort:
+							return False
 						if inc in R_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = G_inc[inc]
 					for inc in B_inc:
+						if self.thread_abort:
+							return False
 						if inc in R_inc and inc in G_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = B_inc[inc]
 					if False:
@@ -6925,6 +6947,8 @@ class DisplayCalibratorGUI(wx.Frame):
 					else:
 						single_inc = {"0": 0}
 						for inc in RGB_inc:
+							if self.thread_abort:
+								return False
 							if inc != "0":
 								finc = float(inc)
 								n = int(round(float(str(255.0 / finc))))
@@ -6934,6 +6958,8 @@ class DisplayCalibratorGUI(wx.Frame):
 									safe_print("inc:", inc)
 									safe_print("n:", n)
 								for i in range(n):
+									if self.thread_abort:
+										return False
 									v = str(int(round(float(str(i * finc)))))
 									if debug >= 9: safe_print("Searching for", v)
 									if [v, "0", "0"] in uniqueRGB and ["0", v, "0"] in uniqueRGB and ["0", "0", v] in uniqueRGB:
@@ -6956,6 +6982,8 @@ class DisplayCalibratorGUI(wx.Frame):
 					if debug:
 						safe_print("RGB_inc:")
 						for i in RGB_inc:
+							if self.thread_abort:
+								return False
 							safe_print("%s: x%s" % (i, RGB_inc[i]))
 					if False:
 						RGB_inc_max = max(RGB_inc.values())
@@ -6966,6 +6994,8 @@ class DisplayCalibratorGUI(wx.Frame):
 					else:
 						gray_inc = {"0": 0}
 						for inc in RGB_inc:
+							if self.thread_abort:
+								return False
 							if inc != "0":
 								finc = float(inc)
 								n = int(round(float(str(255.0 / finc))))
@@ -6975,6 +7005,8 @@ class DisplayCalibratorGUI(wx.Frame):
 									safe_print("inc:", inc)
 									safe_print("n:", n)
 								for i in range(n):
+									if self.thread_abort:
+										return False
 									v = str(int(round(float(str(i * finc)))))
 									if debug >= 9: safe_print("Searching for", v)
 									if [v, v, v] in uniqueRGB:
@@ -7000,20 +7032,30 @@ class DisplayCalibratorGUI(wx.Frame):
 					B_inc = self.tc_get_increments(multi["B"], vmaxlen)
 					RGB_inc = {"0": 0}
 					for inc in R_inc:
+						if self.thread_abort:
+							return False
 						if inc in G_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = R_inc[inc]
 					for inc in G_inc:
+						if self.thread_abort:
+							return False
 						if inc in R_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = G_inc[inc]
 					for inc in B_inc:
+						if self.thread_abort:
+							return False
 						if inc in R_inc and inc in G_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = B_inc[inc]
 					if debug:
 						safe_print("RGB_inc:")
 						for i in RGB_inc:
+							if self.thread_abort:
+								return False
 							safe_print("%s: x%s" % (i, RGB_inc[i]))
 					multi_inc = {"0": 0}
 					for inc in RGB_inc:
+						if self.thread_abort:
+							return False
 						if inc != "0":
 							finc = float(inc)
 							n = int(round(float(str(255.0 / finc))))
@@ -7023,10 +7065,16 @@ class DisplayCalibratorGUI(wx.Frame):
 								safe_print("inc:", inc)
 								safe_print("n:", n)
 							for i in range(n):
+								if self.thread_abort:
+									return False
 								r = str(int(round(float(str(i * finc)))))
 								for j in range(n):
+									if self.thread_abort:
+										return False
 									g = str(int(round(float(str(j * finc)))))
 									for k in range(n):
+										if self.thread_abort:
+											return False
 										b = str(int(round(float(str(k * finc)))))
 										if debug >= 9:
 											safe_print("Searching for", i, j, k, [r, g, b])
@@ -7102,7 +7150,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.tc_preview(True)
 			return True
 		else:
-			safe_print(self.getlstr("failure"))
+			safe_print(self.getlstr("aborted"))
 			self.tc_update_controls()
 			self.tc_check()
 			self.start_timers()
