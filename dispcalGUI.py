@@ -67,6 +67,7 @@ ICCP = ICCProfile
 import RealDisplaySizeMM as RDSMM
 from argyllRGB2XYZ import argyllRGB2XYZ
 from argyll_instruments import instruments
+from argyll_names import names as argyll_names, altnames as argyll_altnames
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
 from natsort import natsort
 import pyi_md5pickuphelper
@@ -217,7 +218,11 @@ elif "-d1" in sys.argv[1:] or "--debug=1" in sys.argv[1:] or \
 else:
 	debug = 0 # >= 1 prints debug messages
 test = "-t" in sys.argv[1:] or "--test" in sys.argv[1:] # aid testing new features
-if "-v2" in sys.argv[1:] or "--verbose=2" in sys.argv[1:]:
+if "-v4" in sys.argv[1:] or "--verbose=4" in sys.argv[1:]:
+	verbose = 4
+elif "-v3" in sys.argv[1:] or "--verbose=3" in sys.argv[1:]:
+	verbose = 3
+elif "-v2" in sys.argv[1:] or "--verbose=2" in sys.argv[1:]:
 	verbose = 2
 elif "-v0" in sys.argv[1:] or "--verbose=0" in sys.argv[1:]:
 	verbose = 0
@@ -491,23 +496,23 @@ def get_ti1_1(cgats):
 			if ti1_1.queryv1("DATA_FORMAT"):
 				for field in required:
 					if not field in ti1_1.queryv1("DATA_FORMAT").values():
-						if verbose >= 2: safe_print("Missing required field:", 
+						if debug: safe_print("Missing required field:", 
 							field)
 						return None
 				for field in ti1_1.queryv1("DATA_FORMAT").values():
 					if not field in required:
-						if verbose >= 2: safe_print("Unknown field:", field)
+						if debug: safe_print("Unknown field:", field)
 						return None
 			else:
-				if verbose >= 2: safe_print("Missing DATA_FORMAT")
+				if debug: safe_print("Missing DATA_FORMAT")
 				return None
 		else:
-			if verbose >= 2: safe_print("Missing DATA")
+			if debug: safe_print("Missing DATA")
 			return None
 		ti1_1.filename = cgats.filename
 		return ti1_1
 	else:
-		if verbose >= 2: safe_print("Invalid TI1")
+		if debug: safe_print("Invalid TI1")
 		return None
 
 cals = {}
@@ -634,9 +639,10 @@ def set_position(window, x = None, y = None, w = None, h = None):
 			# move to leftmost / topmost coordinates of client area
 			window.SetPosition(display_client_rect[0:2]) 
 
-def which(name):
-	path = os.getenv("PATH", os.defpath)
-	for cur_dir in path.split(os.pathsep):
+def which(name, paths = None):
+	if not paths:
+		paths = os.getenv("PATH", os.defpath).split(os.pathsep)
+	for cur_dir in paths:
 		filename = os.path.join(cur_dir, name)
 		if os.path.isfile(filename):
 			try:
@@ -1405,7 +1411,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		self.options_dispcal = []
 		self.options_targen = []
-		if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
+		if debug: safe_print("Setting targen options:", self.options_targen)
 		self.options_dispread = []
 		self.options_colprof = []
 		
@@ -1748,6 +1754,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					line = line.strip()
 					if n == 0 and "version" in line.lower():
 						version = line[line.lower().find("version")+8:]
+						if verbose >= 2: safe_print("Argyll CMS version", version)
 						version = re.findall("(\d+|[^.\d]+)", version)
 						for i in range(len(version)):
 							try:
@@ -1755,7 +1762,6 @@ class DisplayCalibratorGUI(wx.Frame):
 							except ValueError:
 								version[i] = version[i]
 						self.argyll_version = version
-						if verbose >= 2: safe_print("Argyll CMS version", repr(version))
 						continue
 					line = line.split(None, 1)
 					if len(line) and line[0][0] == "-":
@@ -3870,7 +3876,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if self.tcframe.tc_vrml_device.GetValue():
 				args += ['-W']
 		self.options_targen = list(args)
-		if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
+		if debug: safe_print("Setting targen options:", self.options_targen)
 		args += [inoutfile]
 		return cmd, args
 
@@ -4560,7 +4566,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			except Exception, exception:
 				safe_print("Info - could not set terminal colors:", str(exception))
 		if verbose >= 1:
-			if not silent:
+			if not silent or verbose >= 3:
 				safe_print("", fn = fn)
 				if working_dir:
 					safe_print(self.getlstr("working_dir"), fn = fn)
@@ -4570,13 +4576,13 @@ class DisplayCalibratorGUI(wx.Frame):
 						indent += " "
 					safe_print("", fn = fn)
 				safe_print(self.getlstr("commandline"), fn = fn)
-				printcmdline(os.path.basename(cmd), args, fn = fn, cwd = working_dir)
+				printcmdline(cmd if verbose >= 2 else os.path.basename(cmd), args, fn = fn, cwd = working_dir)
 				safe_print("", fn = fn)
 		cmdline = [cmd] + args
 		for i in range(len(cmdline)):
 			item = cmdline[i]
-			if i == 0 or (item.find(os.path.sep) > -1 and os.path.dirname(item) == working_dir):
-				# strip the path from cmd and all items in the working dir
+			if i > 0 and (item.find(os.path.sep) > -1 and os.path.dirname(item) == working_dir):
+				# strip the path from all items in the working dir
 				cmdline[i] = os.path.basename(item)
 		sudo = None
 		if cmdname == self.get_argyll_utilname("dispwin") and ("-Sl" in args or "-Sn" in args):
@@ -4675,7 +4681,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						# context.write(u'if [ "$gnome_screensaver_running" != "" ]; then gnome-screensaver-command --exit; fi\n')
 					os.chmod(cmdfilename, 0755)
 					os.chmod(allfilename, 0755)
-				cmdfiles.write((u" ".join(escargs(cmdline)) + "\n").encode(enc, "asciize"))
+				cmdfiles.write(u" ".join(escargs(cmdline)).replace(cmd, cmdname).encode(enc, "asciize") + "\n")
 				if sys.platform == "win32":
 					cmdfiles.write(u"set exitcode=%errorlevel%\n")
 					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")):
@@ -4715,9 +4721,8 @@ class DisplayCalibratorGUI(wx.Frame):
 				safe_print("Warning - error during shell script creation:", str(exception))
 		if cmdname == self.get_argyll_utilname("dispread") and self.dispread_after_dispcal:
 			instrument_features = self.get_instrument_features()
-			# FIXME: -N switch not working as expected in Argyll 1.0.3
-			# if instrument_features and (not instrument_features.get("sensor_cal") or instrument_features.get("skip_sensor_cal")):
-			if instrument_features and not instrument_features.get("sensor_cal"):
+			# -N switch not working as expected in Argyll 1.0.3
+			if instrument_features and (not instrument_features.get("sensor_cal") or (instrument_features.get("skip_sensor_cal") and self.argyll_version >= [1, 1, 0])):
 				try:
 					if sys.platform == "darwin":
 						start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
@@ -4791,7 +4796,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					if tries > 0:
 						stdout = tempfile.SpooledTemporaryFile()
 		except Exception, exception:
-			handle_error("Error: " + str(exception), parent = self)
+			handle_error("Error: " + (traceback.format_exc() if debug else str(exception)), parent = self)
 			retcode = -1
 		if not capture_output and low_contrast:
 			# reset to higher contrast colors (white on black) for readability
@@ -4901,9 +4906,9 @@ class DisplayCalibratorGUI(wx.Frame):
 		safe_print("-" * 80)
 		safe_print(self.getlstr("button.calibrate_and_profile").replace("&&", "&"))
 		self.install_cal = True
-		# FIXME: -N switch not working as expected in Argyll 1.0.3
-		# if self.get_instrument_features().get("skip_sensor_cal"):
-			# self.options_dispread = ["-N"]
+		# -N switch not working as expected in Argyll 1.0.3
+		if self.get_instrument_features().get("skip_sensor_cal") and self.argyll_version >= [1, 1, 0]:
+			self.options_dispread = ["-N"]
 		self.dispread_after_dispcal = True
 		start_timers = True
 		if self.calibrate():
@@ -5331,7 +5336,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				ti3_tmp_path = self.make_argyll_compatible_path(os.path.join(tmp_working_dir, profile_name + ".ti3"))
 				self.options_dispcal = []
 				self.options_targen = []
-				if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
+				if debug: safe_print("Setting targen options:", self.options_targen)
 				display_name = None
 				try:
 					if source_ext.lower() == ".ti3":
@@ -5347,7 +5352,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					ti3 = CGATS.CGATS(ti3_tmp_path)
 					if ti3.queryv1("COLOR_REP") and ti3.queryv1("COLOR_REP")[:3] == "RGB":
 						self.options_targen = ["-d3"]
-						if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
+						if debug: safe_print("Setting targen options:", self.options_targen)
 				except Exception, exception:
 					handle_error("Error - temporary .ti3 file could not be created: " + str(exception), parent = self)
 					self.wrapup(False)
@@ -7459,7 +7464,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.testchart_ctrl.UpdateToolTipString(path)
 			if ti1.queryv1("COLOR_REP") and ti1.queryv1("COLOR_REP")[:3] == "RGB":
 				self.options_targen = ["-d3"]
-				if verbose >= 2: safe_print("Setting targen options:", *self.options_targen)
+				if debug: safe_print("Setting targen options:", self.options_targen)
 			if self.testchart_ctrl.IsEnabled():
 				self.testchart_patches_amount.SetLabel(str(ti1.queryv1("NUMBER_OF_SETS")))
 			else:
@@ -7518,90 +7523,61 @@ class DisplayCalibratorGUI(wx.Frame):
 		else:
 			return self.set_argyll_bin()
 	
-	def get_argyll_util(self, name, check_dir = None):
-		path = os.getenv("PATH", os.defpath)
-		utils = {
-			"dispcal": ["argyll-dispcal", "dispcal-argyll", "dispcal"],
-			"dispread": ["argyll-dispread", "dispread-argyll", "dispread"],
-			"colprof": ["argyll-colprof", "colprof-argyll", "colprof"],
-			"dispwin": ["argyll-dispwin", "dispwin-argyll", "dispwin"],
-			"spyd2en": ["argyll-spyd2en", "spyd2en-argyll", "spyd2en"],
-			"targen": ["argyll-targen", "targen-argyll", "targen"]
-		}
-		if not check_dir:
-			check_dir = self.getcfg("argyll.dir")
-		else:
-			check_dir = check_dir.rstrip(os.path.sep)
-		if check_dir:
-			if check_dir in path.split(os.pathsep):
-				path = path.split(os.pathsep)
-				path.remove(check_dir)
-				path = os.pathsep.join(path)
-			putenv("PATH", os.pathsep.join([check_dir, path]))
-		found = None
-		for altname in utils[name]:
-			exe = which(altname + exe_ext)
-			if exe:
-				found = exe
-				if (not check_dir or check_dir == os.path.dirname(exe)):
+	def get_argyll_util(self, name, paths = None):
+		if not paths:
+			paths = os.getenv("PATH", os.defpath).split(os.pathsep)
+			argyll_dir = (self.getcfg("argyll.dir") or "").rstrip(os.path.sep)
+			if argyll_dir:
+				if argyll_dir in paths:
+					paths.remove(argyll_dir)
+				paths = [argyll_dir] + paths
+		elif verbose >= 4:
+			safe_print("Info: Searching for", name, "in", os.pathsep.join(paths))
+		exe = None
+		for path in paths:
+			for altname in argyll_altnames[name]:
+				exe = which(altname + exe_ext, [path])
+				if exe:
 					break
-		if check_dir and not found:
-			putenv("PATH", path)
-		if not found:
-			if verbose >= 2: safe_print("Info: ", "|".join(utils[name]), " not found in ", os.getenv("PATH"))
-		return found
+			if exe:
+				break
+		if verbose >= 4: 
+			if exe:
+				safe_print("Info:", name, "=", exe)
+			else:
+				safe_print("Info:", "|".join(argyll_altnames[name]), "not found in", os.pathsep.join(paths))
+		return exe
 	
-	def get_argyll_utilname(self, name):
-		found = self.get_argyll_util(name)
-		if found:
-			found = os.path.basename(os.path.splitext(found)[0])
-		return found
+	def get_argyll_utilname(self, name, paths = None):
+		exe = self.get_argyll_util(name, paths)
+		if exe:
+			exe = os.path.basename(os.path.splitext(exe)[0])
+		return exe
 
-	def check_argyll_bin(self, check_dir = None):
-		path = os.getenv("PATH", os.defpath)
-		names = [
-			"dispcal",
-			"dispread",
-			"colprof",
-			"dispwin",
-			"spyd2en",
-			"targen"
-		]
-		if check_dir:
-			check_dir = check_dir.rstrip(os.path.sep)
-			putenv("PATH", check_dir)
-		else:
-			check_dir = self.getcfg("argyll.dir")
-			if check_dir:
-				if check_dir in path.split(os.pathsep):
-					path = path.split(os.pathsep)
-					path.remove(check_dir)
-					path = os.pathsep.join(path)
-				putenv("PATH", os.pathsep.join([check_dir, path]))
+	def check_argyll_bin(self, paths = None):
 		prev_dir = None
-		for name in names:
-			exe = self.get_argyll_util(name, check_dir = check_dir)
+		for name in argyll_names:
+			exe = self.get_argyll_util(name, paths)
 			if not exe:
-				if check_dir and path:
-					putenv("PATH", path)
 				return False
 			cur_dir = os.path.dirname(exe)
 			if prev_dir:
 				if cur_dir != prev_dir:
-					if check_dir and path:
-						putenv("PATH", path)
-					if verbose: safe_print("Warning - Argyll executables are scattered. They should be in same directory.")
+					if verbose: safe_print("Warning - the Argyll executables are scattered. They should be in the same directory.")
 					return False
 			else:
 				prev_dir = cur_dir
-		if check_dir and not check_dir in path.split(os.pathsep):
-			putenv("PATH", os.pathsep.join([check_dir, path]))
-		elif os.getenv("PATH", os.defpath) != path:
-			putenv("PATH", path)
-		if self.getcfg("argyll.dir") != cur_dir:
-			self.setcfg("argyll.dir", cur_dir)
+		if verbose >= 2: safe_print("Argyll binary directory:", cur_dir)
 		if debug: safe_print("check_argyll_bin OK")
-		if debug >= 2: safe_print(" PATH:\n ", "\n  ".join(os.getenv("PATH").split(os.pathsep)))
+		if debug >= 2:
+			if not paths:
+				paths = os.getenv("PATH", os.defpath).split(os.pathsep)
+				argyll_dir = (self.getcfg("argyll.dir") or "").rstrip(os.path.sep)
+				if argyll_dir:
+					if argyll_dir in paths:
+						paths.remove(argyll_dir)
+					paths = [argyll_dir] + paths
+			safe_print(" searchpath:\n ", "\n  ".join(paths))
 		return True
 
 	def set_argyll_bin(self):
@@ -7614,9 +7590,12 @@ class DisplayCalibratorGUI(wx.Frame):
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal() == wx.ID_OK
 		if result:
-			path = dlg.GetPath()
-			result = self.check_argyll_bin(path)
-			if not result:
+			path = dlg.GetPath().rstrip(os.path.sep)
+			result = self.check_argyll_bin([path])
+			if result:
+				if verbose >= 2: safe_print("Setting Argyll binary directory:", path)
+				self.setcfg("argyll.dir", path)
+			else:
 				InfoDialog(self, msg = self.getlstr("argyll.dir.invalid", (exe_ext, exe_ext, exe_ext, exe_ext, exe_ext)), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 			self.write_cfg()
 		dlg.Destroy()

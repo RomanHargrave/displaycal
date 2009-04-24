@@ -394,6 +394,7 @@ else:
 			"StringIOu", 
 			"argyllRGB2XYZ", 
 			"argyll_instruments", 
+			"argyll_names", 
 			"colormath", 
 			"demjson", 
 			name, 
