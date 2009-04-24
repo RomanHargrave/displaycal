@@ -34,7 +34,7 @@ pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
 name = "dispcalGUI"
-version = "0.2.2b"
+version = "0.2.5b"
 desc = "A graphical user interface for the Argyll CMS display calibration utilities"
 
 data = None

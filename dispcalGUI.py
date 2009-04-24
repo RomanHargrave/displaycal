@@ -104,7 +104,7 @@ codecs.register_error("asciize", asciize)
 
 # init
 appname = "dispcalGUI"
-version = "v0.2.2b" # app version string
+version = "v0.2.5b" # app version string
 
 isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
 

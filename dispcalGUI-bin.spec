@@ -3,11 +3,11 @@
 #
 Summary: A graphical user interface for the Argyll CMS display calibration utilities
 Name: dispcalGUI-bin
-Version: 0.2.2b
+Version: 0.2.5b
 Release: 1
 License: GPL
 Group: Applications/Graphics
-Source: http://dispcalGUI.hoech.net/dispcalGUI-0.2.2b-Linux-x86.zip
+Source: http://dispcalGUI.hoech.net/dispcalGUI-0.2.5b-Linux-x86.zip
 URL: http://dispcalGUI.hoech.net/
 Packager: Florian Höch <dispcalGUI@hoech.net>
 

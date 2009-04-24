@@ -245,9 +245,9 @@
 		
 		<dl class="info">
 			<dt>Version:</dt>
-				<dd id="version">0.2.2 BETA (<a href="#history">changelog</a>)</dd>
+				<dd id="version">0.2.5 BETA (<a href="#history">changelog</a>)</dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-04-02</dd>
+				<dd id="date">2009-mm-dd</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -351,13 +351,13 @@
 			
 			<h3>Executable releases</h3>
 			<p>
-				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-1.i586.rpm">RPM</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">ZIP file</a><br />
-				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">ZIP file</a><br />
-				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Windows.zip">ZIP file</a>
+				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-1.i586.rpm">RPM</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-Linux-x86.zip">ZIP file</a><br />
+				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-OSX-PPC.zip">ZIP file</a><br />
+				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-Windows.zip">ZIP file</a>
 			</p>
 			
 			<h3>Source code</h3>
-			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-src.zip">ZIP file</a></p>
+			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-src.zip">ZIP file</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui/trunk dispcalGUI-trunk</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
@@ -370,7 +370,7 @@
 			
 			<ol class="list">
 				<li>If you are updating from dispcalGUI v0.2.1b or earlier, please first uninstall or remove all previous versions.</li>
-				<li>Get dispcalGUI: <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-1.i586.rpm">Linux RPM</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Linux-x86.zip">Linux ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-OSX-PPC.zip">Mac OS ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.2b-Setup.exe">Windows installer</a>.</li>
+				<li>Get dispcalGUI: <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-1.i586.rpm">Linux RPM</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-Linux-x86.zip">Linux ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-OSX-PPC.zip">Mac OS ZIP file</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b-Setup.exe">Windows installer</a>.</li>
 				<li>Download and unpack the Argyll CMS executables ZIP file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</li>
 				<li>
 					To install your measurement device, connect the device to your computer. If you have a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu before continuing.
@@ -468,7 +468,7 @@
 			<div id="prerequisites-unattended">
 				<h3>Additional prerequisites for unattended calibration and profiling option under Linux</h3>
 				
-				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.2b, when using an instrument that is supported by the new unattended feature (see below), it is no longer necessary to press a key after calibration to start the measurements for profiling. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active). 
+				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.5b, when using an instrument that is supported by the new unattended feature (see below), it is no longer necessary to press a key after calibration to start the measurements for profiling. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active). 
 				</p>
 				
 				<p>Unattended calibration and profiling currently supports the following instruments:</p>
@@ -537,7 +537,7 @@
 			
 			<h3>Linux RPM package</h3>
 			
-			<p>Use <code>rpm -i dispcalGUI-0.2.2b-1.i586.rpm</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
+			<p>Use <code>rpm -i dispcalGUI-0.2.5b-1.i586.rpm</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
 			
 			<h3>Linux executable package (ZIP)</h3>
 			
@@ -641,7 +641,7 @@
 			
 			<div id="presets">
 				<h3>Predefined settings (presets)</h3>
-				<p>Starting with dispcalGUI v0.2.2b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
+				<p>Starting with dispcalGUI v0.2.5b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
 				<h4>Why has a default gamma of 2.4 been chosen for the presets?</h4>
 				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's LUT curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons.</p>
 			</div>
@@ -814,7 +814,7 @@
 			<h2>Version history / changelog</h2>
 			
 			<dl>
-				<dt>2009-04-02 v0.2.2b</dt>
+				<dt>2009-mm-dd v0.2.5b</dt>
 					<dd>
 						<ul>
 							<li>fix: encoding-related issues on all platforms and strange Unicode-related problems with AppleScript and Terminal on Mac OS X 10.4 (<a href="#osx-104-applescript-unicode-peculiarities" onclick="var element = document.getElementById('osx-104-applescript-unicode-peculiarities'); element.style.display = element.style.display == 'block' ? 'none' : 'block'; return false">Details</a>).
@@ -867,11 +867,11 @@
 							<li>chg: new default profile naming scheme.</li>
 							<li>chg: new default file locations on all platforms.<br />
 							- On Linux, dispcalGUI now adheres to the <a href="http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory Specification</a>—the configuration file is saved as <code>$XDG_CONFIG_HOME/dispcalGUI/dispcalGUI.ini</code> ($XDG_CONFIG_HOME defaults to ~/.config if not set), all files created during calibration/profiling go into <code>$XDG_DATA_HOME/dispcalGUI/storage/</code> ($XDG_DATA_HOME defaults to ~/.local/share if not set) by default, and logfiles into <code>$XDG_DATA_HOME/dispcalGUI/logs/</code><br />
-							Any old (pre v0.2.2b) configuration data is retained in the file <code>~/.dispcalGUI</code> and may be safely deleted after using v0.2.2b or newer for the first time.<br />
+							Any old (pre v0.2.5b) configuration data is retained in the file <code>~/.dispcalGUI</code> and may be safely deleted after using v0.2.5b or newer for the first time.<br />
 							- On Mac OS, the configuration is saved as <code>~/Library/Application Support/dispcalGUI/dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>~/Library/Application Support/dispcalGUI/storage/</code> by default, and logfiles into <code>~/Library/Application Support/dispcalGUI/logs/</code><br />
-							Any old (pre v0.2.2b) configuration data is retained in the file <code>~/Library/Preferences/dispcalGUI Preferences</code> and may be safely deleted after using v0.2.2b or newer for the first time.<br />
+							Any old (pre v0.2.5b) configuration data is retained in the file <code>~/Library/Preferences/dispcalGUI Preferences</code> and may be safely deleted after using v0.2.5b or newer for the first time.<br />
 							- On Windows, the configuration file is saved as <code>%APPDATA%\dispcalGUI\dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>%APPDATA%\dispcalGUI\storage\</code> by default, and logfiles into <code>%APPDATA%\dispcalGUI\logs\</code><br />
-							Any old (pre v0.2.2b) configuration data is retained in the registry key <code>HKEY_CURRENT_USER\Software\dispcalGUI</code>.</li>
+							Any old (pre v0.2.5b) configuration data is retained in the registry key <code>HKEY_CURRENT_USER\Software\dispcalGUI</code>.</li>
 							<li>chg: [build/src] (Windows) removed MS Visual C++ 2008 Redistributable DLLs from the source package. Users who build under Windows will have them anyway as they are installed with Python 2.6, so they are now copied directly from %SystemRoot%\WinSxS (Windows side-by-side assemblies) if possible.</li>
 							<li>chg: [build/src] <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a> is now a dependency on Windows when running or building from source.</li>
 							<li>chg: [build/src] made dispcalGUI a distutils package, so it can be installed via setup.py.</li>

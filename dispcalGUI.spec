@@ -3,11 +3,11 @@
 #
 Summary: A graphical user interface for the Argyll CMS display calibration utilities
 Name: dispcalGUI
-Version: 0.2.2b
+Version: 0.2.5b
 Release: 1
 License: GPL
 Group: Applications/Graphics
-Source: http://dispcalGUI.hoech.net/dispcalGUI-0.2.2b-src.zip
+Source: http://dispcalGUI.hoech.net/dispcalGUI-0.2.5b-src.zip
 URL: http://dispcalGUI.hoech.net/
 Packager: Florian Höch <dispcalGUI@hoech.net>
 Requires: python >= 2.5, python < 3.0, python-wxGTK >= 2.8.7

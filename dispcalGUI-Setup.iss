@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{4714199A-0D66-4E69-97FF-7B54BFF80B88}
 AppName=dispcalGUI
-AppVerName=dispcalGUI 0.2.2b
+AppVerName=dispcalGUI 0.2.5b
 AppPublisherURL=http://dispcalGUI.hoech.net
 AppSupportURL=http://dispcalGUI.hoech.net
 AppUpdatesURL=http://dispcalGUI.hoech.net
@@ -15,16 +15,16 @@ DefaultDirName={pf}\dispcalGUI
 DefaultGroupName=dispcalGUI
 LicenseFile=C:\Eigene Dateien\Entwicklung\dispcalGUI\win32--onefile\dist\dispcalGUI\LICENSE.txt
 OutputDir=C:\Eigene Dateien\Entwicklung\dispcalGUI\win32--onefile\output
-OutputBaseFilename=dispcalGUI-0.2.2b-Setup
+OutputBaseFilename=dispcalGUI-0.2.5b-Setup
 SetupIconFile=C:\Eigene Dateien\Entwicklung\dispcalGUI\src\theme\icons\dispcalGUI.ico
 Compression=lzma
 SolidCompression=true
-VersionInfoVersion=0.2.2
+VersionInfoVersion=0.2.5
 VersionInfoDescription=dispcalGUI Setup
-VersionInfoTextVersion=0.2.2b
+VersionInfoTextVersion=0.2.5b
 WizardImageFile=C:\Eigene Dateien\Entwicklung\dispcalGUI\media\pydispcal-new-install.bmp
 WizardSmallImageFile=C:\Eigene Dateien\Entwicklung\dispcalGUI\media\dispcalGUI.bmp
-AppVersion=0.2.2b
+AppVersion=0.2.5b
 UninstallDisplayIcon={app}\dispcalGUI.exe
 AlwaysShowComponentsList=false
 
