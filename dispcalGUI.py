@@ -104,7 +104,7 @@ codecs.register_error("asciize", asciize)
 
 # init
 appname = "dispcalGUI"
-version = "v0.2.5b" # app version string
+version = "0.2.5b" # app version string
 
 isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
 
@@ -173,10 +173,9 @@ else:
 		   os.path.join(os.path.expanduser("~"), ".config"))
 		xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg").split(os.pathsep)
 		xdg_data_home = os.getenv("XDG_DATA_HOME",
-		   os.path.join(os.path.expanduser("~"), ".local", "share"))
+		   os.path.expandvars("$HOME/.local/share"))
 		xdg_data_dirs = os.getenv(
-			"XDG_DATA_DIRS", os.pathsep.join((os.path.join("usr", "local", 
-			"share"), os.path.join("usr", "share")))
+			"XDG_DATA_DIRS", "/usr/local/share:/usr/share"
 			).split(os.pathsep)
 		confighome = os.path.join(xdg_config_home, appname)
 		autostart = os.path.join(xdg_config_dirs[0], "autostart")
@@ -1405,6 +1404,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			"whitepoint.y": 0.358666
 		}
 		
+		self.argyll_version_string = ""
 		self.argyll_version = [0, 0, 0]
 
 		self.lut_access = [] # displays where lut access works
@@ -1753,15 +1753,16 @@ class DisplayCalibratorGUI(wx.Frame):
 					n += 1
 					line = line.strip()
 					if n == 0 and "version" in line.lower():
-						version = line[line.lower().find("version")+8:]
-						if verbose >= 2: safe_print("Argyll CMS version", version)
-						version = re.findall("(\d+|[^.\d]+)", version)
-						for i in range(len(version)):
+						argyll_version = line[line.lower().find("version")+8:]
+						self.argyll_version_string = argyll_version
+						if verbose >= 2: safe_print("Argyll CMS version", argyll_version)
+						argyll_version = re.findall("(\d+|[^.\d]+)", argyll_version)
+						for i in range(len(argyll_version)):
 							try:
-								version[i] = int(version[i])
+								argyll_version[i] = int(argyll_version[i])
 							except ValueError:
-								version[i] = version[i]
-						self.argyll_version = version
+								argyll_version[i] = argyll_version[i]
+						self.argyll_version = argyll_version
 						continue
 					line = line.split(None, 1)
 					if len(line) and line[0][0] == "-":
@@ -2775,7 +2776,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.AddToSubSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border = 4)
 		
 		self.profile_name = wx.StaticText(self.panel, -1, " ")
-		self.AddToSubSizer(self.profile_name, 1, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 8)
+		self.AddToSubSizer(self.profile_name, 1, flag = wx.RIGHT | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border = 4)
 
 		# self.create_profile_name_btn = wx.BitmapButton(self.panel, -1, self.bitmaps["theme/icons/16x16/stock_refresh"], style = wx.NO_BORDER)
 		# self.create_profile_name_btn.SetBitmapDisabled(self.bitmaps["transparent16x16"])
@@ -4023,17 +4024,21 @@ class DisplayCalibratorGUI(wx.Frame):
 			if options_colprof[i][0] != "-":
 				options_colprof[i] = '"' + options_colprof[i] + '"'
 		if "-d3" in self.options_targen:
-			args += ["-M"]
-			if display_name is None:
-				if self.IsShownOnScreen():
-					display_no = self.displays.index(self.display_ctrl.GetStringSelection())
+			if len(self.displays):
+				args += ["-M"]
+				if display_name is None:
+					if self.IsShownOnScreen():
+						try:
+							display_no = self.displays.index(self.display_ctrl.GetStringSelection())
+						except ValueError:
+							display_no = 0
+					else:
+						display_no = wx.Display.GetFromWindow(self.measureframe)
+					if display_no < 0: # window outside visible area
+						display_no = 0
+					args += [self.displays[display_no].split(" @")[0]]
 				else:
-					display_no = wx.Display.GetFromWindow(self.measureframe)
-				if display_no < 0: # window outside visible area
-					display_no = 0
-				args += [self.displays[display_no].split(" @")[0]]
-			else:
-				args += [display_name]
+					args += [display_name]
 			args += ["-C"]
 			args += ["(c) %s %s. Created with %s and Argyll CMS: dispcal %s colprof %s" % (strftime("%Y"), getpass.getuser(), appname, " ".join(self.options_dispcal), " ".join(options_colprof))]
 		else:
@@ -4079,14 +4084,10 @@ class DisplayCalibratorGUI(wx.Frame):
 					return None, None
 				if install:
 					if self.getcfg("profile.install_scope") != "u" and \
-						((sys.platform != "win32" and (os.geteuid() == 0 or get_sudo())) or 
-						(sys.platform == "win32" and 
-						sys.getwindowsversion() >= (6, )) or test):
-						if ((sys.platform not in ("win32", "darwin") and \
-							self.argyll_version >= [1, 1, 0]) or \
-							sys.platform in ("win32", "darwin") or test):
-								# -S option is broken on Linux with current Argyll releases
-								args += ["-S" + self.getcfg("profile.install_scope")]
+						(((sys.platform == "darwin" or (sys.platform != "win32" and self.argyll_version >= [1, 1, 0])) and (os.geteuid() == 0 or get_sudo())) or 
+						(sys.platform == "win32" and sys.getwindowsversion() >= (6, )) or test):
+							# -S option is broken on Linux with current Argyll releases
+							args += ["-S" + self.getcfg("profile.install_scope")]
 					args += ["-I"]
 				# profcopy = self.make_argyll_compatible_path(os.path.join(self.create_tempdir(), os.path.basename(profile_path)))
 				# if not os.path.exists(profcopy):
@@ -4611,7 +4612,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				if not "OK" in stdout:
 					sudoproc.stdin.close()
 					# ask for password
-					dlg = ConfirmDialog(parent, msg = self.getlstr("dialog.enter_root_password"), ok = self.getlstr("ok"), cancel = self.getlstr("cancel"), bitmap = self.bitmaps["theme/icons/32x32/dialog-question"])
+					dlg = ConfirmDialog(parent, msg = self.getlstr("dialog.enter_password"), ok = self.getlstr("ok"), cancel = self.getlstr("cancel"), bitmap = self.bitmaps["theme/icons/32x32/dialog-question"])
 					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, "", size = (320, -1), style = wx.TE_PASSWORD)
 					dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, flag = wx.TOP | wx.ALIGN_LEFT, border = 12)
 					dlg.ok.SetDefault()
@@ -4634,7 +4635,7 @@ class DisplayCalibratorGUI(wx.Frame):
 							self.pwd = pwd
 							break
 						elif n == 0:
-							dlg.message.SetLabel(self.getlstr("auth.failed") + "\n" + self.getlstr("dialog.enter_root_password"))
+							dlg.message.SetLabel(self.getlstr("auth.failed") + "\n" + self.getlstr("dialog.enter_password"))
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
 						n += 1
@@ -5030,8 +5031,8 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.preview.SetValue(True)
 				dlg.Bind(wx.EVT_CHECKBOX, self.preview_handler, id = self.preview.GetId())
 				dlg.sizer3.Add(self.preview, flag = wx.TOP | wx.ALIGN_LEFT, border = 12)
-				if (sys.platform != "win32" and (os.geteuid() == 0 or get_sudo())) or \
-					(sys.platform == "win32" and sys.getwindowsversion() >= (6, ) or test): # Linux, OSX or Vista and later
+				if ((sys.platform == "darwin" or (sys.platform != "win32" and self.argyll_version >= [1, 1, 0])) and (os.geteuid() == 0 or get_sudo())) or \
+					(sys.platform == "win32" and sys.getwindowsversion() >= (6, )) or test: # Linux, OSX or Vista and later
 					self.install_profile_user = wx.RadioButton(dlg, -1, self.getlstr("profile.install_user"), style = wx.RB_GROUP)
 					self.install_profile_user.SetValue(self.getcfg("profile.install_scope") == "u")
 					dlg.Bind(wx.EVT_RADIOBUTTON, self.install_profile_scope_handler, id = self.install_profile_user.GetId())
@@ -5210,7 +5211,10 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def get_display_number(self):
 		if self.IsShownOnScreen() or not hasattr(self, "pending_function"):
-			display_no = self.displays.index(self.display_ctrl.GetStringSelection())
+			try:
+				display_no = self.displays.index(self.display_ctrl.GetStringSelection())
+			except ValueError:
+				display_no = 0
 		else:
 			display_no = wx.Display.GetFromWindow(self.measureframe)
 		if display_no < 0: # window outside visible area
@@ -5498,16 +5502,21 @@ class DisplayCalibratorGUI(wx.Frame):
 				if len(part) + (len(digits.group()) * 5 if digits else 0) > weight: # weigh parts with digits higher than those without
 					display_short = part
 			profile_name = profile_name.replace("%dns", display_short)
-		profile_name = profile_name.replace("%dn", display)
+			profile_name = profile_name.replace("%dn", display)
+		else:
+			profile_name = re.sub("[-_\s]+%dns?|%dns?[-_\s]*", "", profile_name)
 		instrument = self.comport_ctrl.GetStringSelection()
-		instrument = instrument.replace("GretagMacbeth", "")
-		instrument = instrument.replace("X-Rite", "")
-		instrument = instrument.replace("Xrite", "")
-		instrument = instrument.replace("ColorVision", "")
-		instrument = instrument.replace("Datacolor", "")
-		instrument = instrument.replace("Colorimetre", "")
-		instrument = instrument.replace(" ", "")
-		profile_name = profile_name.replace("%in", instrument)
+		if instrument:
+			instrument = instrument.replace("GretagMacbeth", "")
+			instrument = instrument.replace("X-Rite", "")
+			instrument = instrument.replace("Xrite", "")
+			instrument = instrument.replace("ColorVision", "")
+			instrument = instrument.replace("Datacolor", "")
+			instrument = instrument.replace("Colorimetre", "")
+			instrument = instrument.replace(" ", "")
+			profile_name = profile_name.replace("%in", instrument)
+		else:
+			profile_name = re.sub("[-_\s]+%in|%in[-_\s]*", "", profile_name)
 		if measurement_mode:
 			mode = ""
 			if "c" in measurement_mode:
@@ -5520,7 +5529,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				mode += self.getlstr("projector")
 			profile_name = profile_name.replace("%im", mode)
 		else:
-			profile_name = re.sub("%im\W|\W%im", "", profile_name)
+			profile_name = re.sub("[-_\s]+%im|*%im[-_\s]*", "", profile_name)
 		if isinstance(whitepoint, str):
 			if whitepoint.find(",") < 0:
 				if self.get_whitepoint_locus() == "t":
@@ -8240,40 +8249,41 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.related_files[chk.GetLabel()] = chk.GetValue()
 	
 	def aboutdialog_handler(self, event):
-		if not hasattr(self, "aboutdialog"):
-			self.aboutdialog = AboutDialog(self, -1, self.getlstr("menu.about"), size = (100, 100))
-			items = []
-			items += [wx.StaticBitmap(self.aboutdialog, -1, self.bitmaps["theme/header-about"])]
-			items += [wx.StaticText(self.aboutdialog, -1, "")]
-			items += [wx.StaticText(self.aboutdialog, -1, u"%s © Florian Höch" % appname)]
-			items += [wx.StaticText(self.aboutdialog, -1, u"%s build %s" % (version, build))]
-			items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="hoech.net/%s" % appname, URL="http://www.hoech.net/%s" % appname)]
-			items += [wx.StaticText(self.aboutdialog, -1, "")]
-			items += [wx.StaticText(self.aboutdialog, -1, u"Argyll CMS © Graeme Gill")]
-			items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="ArgyllCMS.com", URL="http://www.argyllcms.com")]
-			items += [wx.StaticText(self.aboutdialog, -1, "")]
-			items += [wx.StaticText(self.aboutdialog, -1, u"%s:" % self.getlstr("translations"))]
-			authors = {}
-			for lcode in ldict:
-				author = ldict[lcode].get("author")
-				lang = ldict[lcode].get("language")
-				if author and lang:
-					if not authors.get(author):
-						authors[author] = []
-					authors[author] += [lang]
-			for author in authors:
-				items += [wx.StaticText(self.aboutdialog, -1, "%s - %s" % (", ".join(authors[author]), author))]
-			items += [wx.StaticText(self.aboutdialog, -1, "")]
-			items += [wx.StaticText(self.aboutdialog, -1, self.getlstr("programming_language_info1"))]
-			items += [wx.StaticText(self.aboutdialog, -1, self.getlstr("programming_language_info2"))]
-			items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="python.org", URL="http://www.python.org")]
-			items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="wxPython.org", URL="http://www.wxpython.org")]
-			items += [wx.StaticText(self.aboutdialog, -1, "")]
-			items += [wx.StaticText(self.aboutdialog, -1, self.getlstr("license_info"))]
-			items += [wx.StaticText(self.aboutdialog, -1, "")]
-			self.aboutdialog.add_items(items)
-			self.aboutdialog.Layout()
-			self.aboutdialog.Center()
+		if hasattr(self, "aboutdialog"):
+			self.aboutdialog.Destroy()
+		self.aboutdialog = AboutDialog(self, -1, self.getlstr("menu.about"), size = (100, 100))
+		items = []
+		items += [wx.StaticBitmap(self.aboutdialog, -1, self.bitmaps["theme/header-about"])]
+		items += [wx.StaticText(self.aboutdialog, -1, "")]
+		items += [wx.StaticText(self.aboutdialog, -1, u"%s %s © Florian Höch" % (appname, version))]
+		items += [wx.StaticText(self.aboutdialog, -1, u"build %s" % build)]
+		items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="%s.hoech.net" % appname, URL="http://%s.hoech.net" % appname)]
+		items += [wx.StaticText(self.aboutdialog, -1, "")]
+		items += [wx.StaticText(self.aboutdialog, -1, u"Argyll CMS %s © Graeme Gill" % self.argyll_version_string)]
+		items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="ArgyllCMS.com", URL="http://www.argyllcms.com")]
+		items += [wx.StaticText(self.aboutdialog, -1, "")]
+		items += [wx.StaticText(self.aboutdialog, -1, u"%s:" % self.getlstr("translations"))]
+		authors = {}
+		for lcode in ldict:
+			author = ldict[lcode].get("author")
+			lang = ldict[lcode].get("language")
+			if author and lang:
+				if not authors.get(author):
+					authors[author] = []
+				authors[author] += [lang]
+		for author in authors:
+			items += [wx.StaticText(self.aboutdialog, -1, "%s - %s" % (", ".join(authors[author]), author))]
+		items += [wx.StaticText(self.aboutdialog, -1, "")]
+		items += [wx.StaticText(self.aboutdialog, -1, "Python " + ".".join(map(str, pyver)))]
+		items += [wx.StaticText(self.aboutdialog, -1, "wxPython " + wx.__version__)]
+		items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="python.org", URL="http://www.python.org")]
+		items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="wxPython.org", URL="http://www.wxpython.org")]
+		items += [wx.StaticText(self.aboutdialog, -1, "")]
+		items += [wx.StaticText(self.aboutdialog, -1, self.getlstr("license_info"))]
+		items += [wx.StaticText(self.aboutdialog, -1, "")]
+		self.aboutdialog.add_items(items)
+		self.aboutdialog.Layout()
+		self.aboutdialog.Center()
 		self.aboutdialog.Show()
 
 	def infoframe_toggle_handler(self, event):
