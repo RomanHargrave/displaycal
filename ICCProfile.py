@@ -457,7 +457,7 @@ class TextDescriptionType(Dict): # ICC v2
 					safe_print("UnicodeDecodeError (non-critical): could not decode '" + tagSignature + "' tag Macintosh part")
 					macDescription = None
 	def __str__(self):
-		for localizedType in ("Unicode", "Macintosh", "ASCII"):
+		for localizedType in ("ASCII", "Macintosh", "Unicode"):
 			if localizedType in self:
 				return self[localizedType]
 
@@ -727,31 +727,31 @@ class ICCProfile:
 		"""
 		Return profile copyright.
 		"""
-		return unicode(self.tags.cprt)
+		return unicode(self.tags.cprt, errors="replace")
 	
 	def getDescription(self):
 		"""
 		Return profile description.
 		"""
-		return unicode(self.tags.desc)
+		return unicode(self.tags.desc, errors="replace")
 	
 	def getDeviceManufacturerDescription(self):
 		"""
 		Return device manufacturer description.
 		"""
-		return unicode(self.tags.dmnd)
+		return unicode(self.tags.dmnd, errors="replace")
 	
 	def getDeviceModelDescription(self):
 		"""
 		Return device model description.
 		"""
-		return unicode(self.tags.dmdd)
+		return unicode(self.tags.dmdd, errors="replace")
 	
 	def getViewingConditionsDescription(self):
 		"""
 		Return viewing conditions description.
 		"""
-		return unicode(self.tags.vued)
+		return unicode(self.tags.vued, errors="replace")
 	
 	def isSame(self, profile):
 		"""
