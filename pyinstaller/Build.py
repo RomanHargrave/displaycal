@@ -1083,6 +1083,9 @@ if __name__ == '__main__':
     parser.add_option('-C', '--configfile',
                       default=os.path.join(HOMEPATH, 'config.dat'),
                       help='Name of generated configfile (default: %default)')
+    parser.add_option('-o', '--buildpath',
+                      default=None,
+                      help='Buildpath')
     opts, args = parser.parse_args()
     if len(args) != 1:
         parser.error('Requires exactly one .spec-file')
