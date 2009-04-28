@@ -541,7 +541,7 @@
 			
 			<h3>Linux executable package (ZIP)</h3>
 			
-			<p>Unpack and then simply run dispcalGUI from the created folder (a <code>chmod +x dispcalGUI</code> may be necessary first). You can optionally run the included install.sh shellscript (a <code>chmod +x install.sh</code> may be necessary first) to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefixes by specifying them as options to install.sh, e.g. <code>./install.sh --prefix=/usr --install-scripts=/usr/bin</code>.<br />
+			<p>Unpack and then simply run dispcalGUI from the created folder (a <code>chmod +x dispcalGUI</code> may be necessary first). You can optionally run the included install.sh shellscript (a <code>chmod +x install.sh</code> may be necessary first) to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefix by giving it as option to install.sh, e.g. <code>./install.sh --prefix=/usr</code>. The default prefix is <code>/usr/local</code> if installing as root (<code>~/.local</code> otherwise).<br />
 			Please note that installation may require elevated privileges.</p>
 			
 			<h3>Mac OS X executable package (ZIP)</h3>
@@ -563,7 +563,7 @@
 			<p>To run directly from source, you can launch dispcalGUI.py (on Linux and Mac OS X, a <code>chmod +x dispcalGUI.py</code> may be necessary first).</p>
 			
 			<p>To install, run <code>python setup.py install</code> from a shell.
-			On Linux, you can alternatively run the included install.sh shellscript (a <code>chmod +x install.sh</code> may be necessary first) to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefix, and/or a specific python version, by giving options to either setup.py or install.sh, e.g. <code>./install.sh --prefix=/usr --python=/usr/bin/python --install-scripts=/usr/bin</code> (default is /usr/local for prefix and scripts, and /usr/bin/env python for the python interpreter. Please note the --python option only works with the install script, to use a specific python version with setup.py, run it with that version e.g. /usr/bin/python setup.py [options]).<br />
+			On Linux, you can alternatively run the included install.sh shellscript (a <code>chmod +x install.sh</code> may be necessary first) to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefix, and/or a specific python version, by giving options to either setup.py or install.sh, e.g. <code>./install.sh --prefix=/usr --python=/usr/bin/python</code>. The default prefix is <code>/usr/local</code> if installing as root (<code>~/.local</code> otherwise), and <code>/usr/bin/env python</code> for the python interpreter. Please note the <code>--python</code> option only works with the install script, to use a specific python version with setup.py, run it with that version, e.g. <code>/usr/bin/python setup.py [options]</code>.<br />
 			Please note that installation may require elevated privileges.</p>
 		</div>
 		
