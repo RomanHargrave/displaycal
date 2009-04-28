@@ -181,8 +181,6 @@
 	"profile.update": "Actualizar perfil",
 	"profiling.complete": "Perfilado completado!",
 	"profiling.incomplete": "El perfilado todavia no ha terminado.",
-	"programming_language_info1": "Escrito en Python",
-	"programming_language_info2": "Usa wxPython GUI toolkit",
 	"quality.ultra.warning": "La calidad Ultra no deberia ser usada nunca, excepto para probar que no deberia ser nunca usada (largo tiempo de procesado!). Quizas deberia escojer calidad media o alta.",
 	"ready": "Listo.",
 	"report.calibrated": "Informe de pantalla calibrada",
