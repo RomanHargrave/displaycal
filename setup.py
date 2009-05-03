@@ -1,421 +1,162 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import glob
+from subprocess import call
 import os
-import shutil
 import sys
-import tempfile
+from time import gmtime, strftime, timezone
 
-setuptools = False
-
-if "--use-distutils" in sys.argv[1:]:
-	sys.argv.reverse() # make sure we remove it from the actual arguments and not the scripts path
-	sys.argv.remove("--use-distutils")
-	sys.argv.reverse()
-else:
-	try:
-		from ez_setup import use_setuptools
-		use_setuptools()
-	except ImportError:
-		pass
-	try:
-		from setuptools import setup, Extension
-		setuptools = True
-		print "using setuptools"
-	except ImportError:
-		pass
-
-if not setuptools:
-	from distutils.core import setup, Extension
-	print "using distutils"
+from dispcalGUI.setup import __doc__
+from dispcalGUI.meta import name, domain, version, version_tuple
 
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
-name = "dispcalGUI"
-version = "0.2.5b"
-desc = "A graphical user interface for the Argyll CMS display calibration utilities"
+def create_appdmg():
+	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", "%s-%s.dmg" % (name, version)), "-volname", name, "-fs", "HFS+", "-srcfolder", os.path.join(pydir, "dist", "py2app", name + "-" + version)])
+	if retcode != 0:
+		sys.exit(retcode)
 
-data = None
-dry_run = False
-exec_prefix = None
-prefix = None
-prefix_root = sys.prefix.split(os.path.sep)[0] + os.path.sep
-python_lib = None
-scripts = None
-root = prefix_root
-site_pkgs = None
+def setup():
 
-for arg in sys.argv[1:]:
-	if arg in ("-n", "--dry-run"):
-		dry_run = True
-	elif arg.startswith("--exec-prefix"):
-		opt, arg = arg.split("=")
-		exec_prefix = arg
-	elif arg.startswith("--home"):
-		opt, arg = arg.split("=")
-		prefix = arg
-		exec_prefix = arg
-	elif arg.startswith("--install-lib") or arg.startswith("--install-platlib"):
-		opt, arg = arg.split("=")
-		site_pkgs = arg
-	elif arg.startswith("--install-data"):
-		opt, arg = arg.split("=")
-		data = arg
-	elif arg.startswith("--install-scripts"):
-		opt, arg = arg.split("=")
-		scripts = arg
-	elif arg.startswith("--prefix"):
-		opt, arg = arg.split("=")
-		prefix = arg
-	elif arg.startswith("--root"):
-		opt, arg = arg.split("=")
-		root = arg
-
-if not prefix:
-	if sys.platform == "win32":
-		if root != prefix_root:
-			prefix = os.path.join(root, 
-			"Python" + sys.version[0] + sys.version[2])
-			# using sys.version in this way is consistent with setuptools
-		elif "--user" in sys.argv[1:]:
-			prefix = os.path.join(os.getenv("APPDATA"), "Python")
+	if "bdist_standalone" in sys.argv[1:]:
+		i = sys.argv.index("bdist_pyi")
+		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
+		if sys.platform == "darwin":
+			bdist_cmd = "py2app"
+		elif sys.platform == "win32":
+			bdist_cmd = "py2exe"
 		else:
-			prefix = sys.prefix
-	elif sys.platform == "darwin" and (root != prefix_root or not "--user" in sys.argv[1:]):
-		if root != prefix_root:
-			prefix = os.path.join(root, "Library", "Frameworks", 
-				"Python.framework", "Versions", sys.version[:3])
-		else:
-			prefix = sys.prefix
-	else:
-		# Linux/Unix (and Mac OS X when specifying --user)
-		if root != prefix_root or not "--user" in sys.argv[1:]:
-			prefix = os.path.join(root, "usr", "local")
-		elif "--user" in sys.argv[1:]:
-			prefix = os.path.join(os.path.expanduser("~"), ".local")
+			bdist_cmd = "bdist_bbfreeze"
+		if not bdist_cmd in sys.argv[:i]:
+			sys.argv.insert(i, bdist_cmd)
 
-if not exec_prefix:
-	exec_prefix = prefix
+	bdist_appdmg = "bdist_appdmg" in sys.argv[1:]
+	purge = "purge" in sys.argv[1:]
+	purge_dist = "purge_dist" in sys.argv[1:]
+	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
+	bdist_pyi = "bdist_pyi" in sys.argv[1:]
+	inno = "inno" in sys.argv[1:]
+	onefile = "-F" in sys.argv[1:] or "-onefile" in sys.argv[1:]
+	suffix = "onefile" if onefile else "onedir"
 
-if not scripts:
-	if sys.platform == "win32":
-		scripts = os.path.join(prefix, "Scripts")
-	else:
-		# Linux/Unix and Mac OS X
-		scripts = os.path.join(prefix, "bin")
+	if purge or purge_dist:
 
-if sys.platform == "win32":
-	if root == prefix_root and "--user" in sys.argv[1:]:
-		python_lib = os.path.join(prefix, 
-			"Python" + sys.version[0] + sys.version[2])
-			# using sys.version in this way is consistent with setuptools
-	else:
-		python_lib = os.path.join(prefix, "Lib")
-else:
-	# Linux/Unix and Mac OS X
-	python_lib = os.path.join(exec_prefix, "lib", "python" + sys.version[:3])
-	# using sys.version in this way is consistent with setuptools
+		# remove the "build", "dispcalGUI.egg-info" and 
+		# "pyinstaller/bincache*" directories and their contents recursively
 
-if not site_pkgs:
-	site_pkgs = os.path.join(python_lib, "site-packages")
+		import glob
+		import shutil
 
-pkg = os.path.join(site_pkgs, name)
+		if dry_run:
+			print "dry run - nothing will be removed"
 
-if sys.platform == "win32":
-	if not data:
-		if root != prefix_root:
-			data = os.path.join("Lib", "site-packages", name)
-		elif "--user" in sys.argv[1:] and not setuptools:
-			data = os.path.join("Python" + sys.version[0] + sys.version[2], 
-				"site-packages", name)
-		else:
-			data = name
-	doc = data # install doc files to data dir
-elif sys.platform == "darwin":
-	if not data:
-		if root != prefix_root or not setuptools:
-			data = os.path.join("lib", "python" + sys.version[:3], 
-				"site-packages", name)
-		else:
-			data = name
-	doc = data # install doc files to data dir
-else:
-	# Linux/Unix
-	if root == prefix_root and "--user" in sys.argv[1:]:
-		XDG_DATA_HOME = os.getenv("XDG_DATA_HOME",
-			os.path.join(os.path.expanduser("~"), ".local", "share"))
-		if not data:
-			data = os.path.join(XDG_DATA_HOME, name)
-		doc = os.path.join(XDG_DATA_HOME, "doc", name)
-	else:
-		if root == prefix_root:
-			XDG_DATA_DIRS = os.getenv(
-				"XDG_DATA_DIRS", 
-				os.pathsep.join(
-					(
-						os.path.join(os.path.sep, "usr", "local", "share"), 
-						os.path.join(os.path.sep, "usr", "share")
-					)
-				)
-			).split(os.pathsep)
-			if not data:
-				data = os.path.join(XDG_DATA_DIRS[0], name)
-			doc = os.path.join(XDG_DATA_DIRS[0], "doc", name)
-		else:
-			if not data:
-				data = os.path.join(prefix, "share", name)
-			doc = os.path.join(prefix, "share", "doc", name)
-			
-
-print "root:", root
-print "prefix:", prefix
-print "exec_prefix:", exec_prefix
-print "scripts:", scripts
-print "pkg:", pkg
-print "data:", data
-print "doc:", doc
-
-if "uninstall" in sys.argv[1:]:
-
-	# quick and dirty uninstall
-
-	if dry_run:
-		print "dry run - nothing will be removed"
-	
-	removed = []
-	
-	paths = [os.path.join(scripts, name)]
-	if sys.platform == "win32":
-		paths += [os.path.join(scripts, name + ".cmd")]
-	paths += glob.glob(pkg) + glob.glob(pkg + "-%(version)s-py%(pyver)s*.egg" % 
-		{
-			"version": version, 
-			"pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
-		}
-	) + glob.glob(pkg + "-%(version)s-py%(pyver)s*.egg-info" % 
-		{
-			"version": version, 
-			"pyver": sys.version[:3] # using sys.version in this way is consistent with setuptools
-		}
-	)
-	if data != pkg:
-		paths += [os.path.join(data, fname) for fname in [
-				"lang",
-				"presets",
-				"screenshots",
-				"theme",
-				"ti1",
-				"LICENSE.txt",
-				"README.html",
-				"test.cal"
-			]
-		]
-	if doc != pkg and doc != data:
-		paths += [os.path.join(doc, fname) for fname in [
-				"theme",
-				"LICENSE.txt",
-				"README.html"
-			]
-		]
-	for path in paths:
-		if os.path.exists(path):
-			if dry_run:
-				print path
-				continue
-			print "removing", path
-			if os.path.isfile(path):
-				os.remove(path)
-			elif os.path.isdir(path):
-				shutil.rmtree(path, False)
-			removed += [path]
-		while path != os.path.dirname(path):
-			# remove parent directories if empty
-			# could also use os.removedirs(path) but we want some status info
-			path = os.path.dirname(path)
-			if os.path.isdir(path) and len(os.listdir(path)) == 0:
+		paths = []
+		if purge:
+			paths += glob.glob(os.path.join(pydir, "build")) + glob.glob(
+			os.path.join(pydir, name + ".egg-info")) + glob.glob(os.path.join(
+			pydir, "pyinstaller", "bincache*"))
+			sys.argv.remove("purge")
+		if purge_dist:
+			paths += glob.glob(os.path.join(pydir, "dist"))
+			sys.argv.remove("purge_dist")
+		for path in paths:
+			if os.path.exists(path):
 				if dry_run:
 					print path
 					continue
-				print "removing", path
-				os.rmdir(path)
-				removed += [path]
+				try:
+					shutil.rmtree(path)
+				except Exception, exception:
+					print exception
+				else:
+					print "removed", path
+		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+			return
 	
-	if not removed:
-		print "nothing removed"
-	else:
-		print len(removed), "entries removed"
-
-else:
+	# convert newlines
+	license = open(os.path.join(pypath, "LICENSE.txt"), "rw")
+	license_txt = license.read()
+	license.seek(0)
+	license.write(license_txt)
+	license.close()
 	
-	tempdir = os.path.join(tempfile.gettempdir(), name + "-" + version)
+	readme_template = open(os.path.join(pypath, "misc", "README.template.html"), "r")
+	readme_html = readme_template.read() % {
+		"timestamp": 
+			strftime("%Y-%m-%dT%H:%M:%S", gmtime()) +
+			("+" if timezone < 0 else "-") +
+			strftime("%H:%M", gmtime(abs(timezone))),
+		"version": version
+	}
+	readme_template.close()
+	readme = open(os.path.join(pypath, "README.html"), "w")
+	readme.write(readme_html)
+	readme.close()
 	
-	if "-h" in sys.argv[1:] or "--help" in sys.argv[1:] or \
-		"--help-commands" in sys.argv[1:] or "-n" in sys.argv[1:] or \
-		"--dry-run" in sys.argv[1:]:
-		data_files = []
-		ext_modules = []
-	else:
-		# copy files to temp dir so known absolute paths can be used (fixes bdist_rpm)
-		for source in [
-			"RealDisplaySizeMM", 
-			"lang", 
-			"presets", 
-			"screenshots", 
-			"theme", 
-			"ti1", 
-			"LICENSE.txt", 
-			"README.html", 
-			"test.cal"
-		]:
-			srcpath = os.path.join(pydir, source)
-			if os.path.exists(srcpath):
-				tmppath = os.path.join(tempdir, source)
-				if not os.path.exists(tmppath):
-					if os.path.isfile(srcpath):
-						shutil.copy2(srcpath, tmppath)
-					else:
-						shutil.copytree(srcpath, tmppath)
-		
-		data_files = [
-			(os.path.join(data, "lang"), 
-				[os.path.join(tempdir, "lang", fname) for fname in 
-				glob.glob(os.path.join(tempdir, "lang", "*.json"))]), 
-			(os.path.join(data, "presets"), 
-				[os.path.join(tempdir, "presets", fname) for fname in 
-				glob.glob(os.path.join(tempdir, "presets", "*.icc"))]), 
-			(os.path.join(doc, "screenshots"), 
-				[os.path.join(tempdir, "screenshots", fname) for fname in 
-				glob.glob(os.path.join(tempdir, "screenshots", "*.png"))]),
-			(os.path.join(data, "theme"), 
-				[os.path.join(tempdir, "theme", fname) for fname in 
-				glob.glob(os.path.join(tempdir, "theme", "*.png"))]), 
-			(os.path.join(data, "theme", "icons"), 
-				[os.path.join(tempdir, "theme", "icons", fname) for fname in 
-				glob.glob(os.path.join(tempdir, "theme", "icons", "*.icns|*.ico"))]), 
-			(os.path.join(data, "ti1"), 
-				[os.path.join(tempdir, "ti1", fname) for fname in 
-				glob.glob(os.path.join(tempdir, "ti1", "*.ti1"))]),
-			(data, [os.path.join(tempdir, "test.cal")]),
-			(doc, [os.path.join(tempdir, "LICENSE.txt")]),
-			(doc, [os.path.join(tempdir, "README.html")])
-		]
-		if doc != data:
-			data_files += [
-				(os.path.join(doc, "theme"), 
-					[os.path.join(tempdir, "theme", "header-readme.png")]), 
-				(os.path.join(doc, "theme", "icons"), 
-					[os.path.join(tempdir, "theme", "icons", "favicon.ico")]), 
-			]
-		for dname in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
-			data_files += [(os.path.join(data, "theme", "icons", dname), 
-				[os.path.join(tempdir, "theme", "icons", dname, fname) for fname in 
-				glob.glob(os.path.join(tempdir, "theme", "icons", dname, "*.png"))])]
+	if bdist_appdmg:
+		i = sys.argv.index("bdist_appdmg")
+		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
+		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+			create_appdmg()
+			return
 
-		if sys.platform == "win32":
-			RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
-				sources = [os.path.join(tempdir, "RealDisplaySizeMM", "RealDisplaySizeMM.c")], 
-				libraries = ["user32", "gdi32"], 
-				define_macros=[("NT", None)])
-		elif sys.platform == "darwin":
-			RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
-				sources = [os.path.join(tempdir, "RealDisplaySizeMM", "RealDisplaySizeMM.c")],
-				extra_link_args = ["-framework Carbon", "-framework Python", "-framework IOKit"], 
-				define_macros=[("__APPLE__", None), ("UNIX", None)])
-		else:
-			RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
-				sources = [os.path.join(tempdir, "RealDisplaySizeMM", "RealDisplaySizeMM.c")], 
-				libraries = ["Xinerama", "Xrandr", "Xxf86vm"], 
-				define_macros=[("UNIX", None)])
-		ext_modules = [RealDisplaySizeMM]
-
-	requires = [
-		"wxPython (>= 2.8.7)"
-	]
-	if sys.platform == "win32":
-		requires += [
-			"SendKeys (>= 0.3)",
-			"pywin32 (>= 213.0)"
-		]
-	elif sys.platform == "darwin":
-		requires += [
-			"appscript (>= 0.19)"
-		]
-	else:
-		pass
-	install_requires = [req.replace("(", "").replace(")", "") for req in requires]
-	try:
-		import wx
-		if wx.__version__ >= "2.8.7":
-			install_requires.remove("wxPython >= 2.8.7")
-	except ImportError:
-		pass
-
-	scripts = [name]
-	if sys.platform == "win32":
-		scripts += [name + ".cmd"]
-
-	setup(
-		author="Florian Höch",
-		author_email="%s@hoech.net" % name,
-		classifiers=[
-			"Development Status :: 4 - Beta",
-			"Environment :: Console",
-			"Intended Audience :: End Users/Desktop",
-			"Intended Audience :: Advanced End Users",
-			"License :: OSI Approved :: GNU General Public License (GPL)",
-			"Operating System :: OS Independent (Written in an interpreted language)",
-			"Programming Language :: Python",
-			"Topic :: Graphics",
-			"User Interface :: Project is a user interface (UI) system",
-			"User Interface :: wxWidgets",
-		],
-		data_files=data_files,
-		description=desc,
-		download_url="http://%(name)s.hoech.net/%(name)s-%(version)s-src.zip" % 
-			{"name": name, "version": version},
-		ext_modules=ext_modules,
-		install_requires=install_requires, # setuptools functionality
-		license="GPL v3",
-		long_description=desc,
-		name=name,
-		package_dir={name: ""},
-		platforms=[
-			"Python >= 2.5 < 3.0", 
-			"Linux/Unix with X11", 
-			"Mac OS X", 
-			"Windows 2000 and newer"
-		],
-		py_modules=[name + "." + fname for fname in [
-			"__init__", 
-			"CGATS", 
-			"ICCProfile", 
-			"StringIOu", 
-			"argyll_RGB2XYZ", 
-			"argyll_instruments", 
-			"argyll_names", 
-			"colormath", 
-			"demjson", 
-			name, 
-			"natsort", 
-			"pyi_md5pickuphelper", 
-			"safe_print", 
-			"shutil26", 
-			"subprocess26", 
-			"tempfile26", 
-			"trash"
-		]],
-		requires=requires,
-		url="http://%s.hoech.net/" % name,
-		scripts=scripts,
-		version=version,
-		zip_safe=False
-	)
+	if bdist_pyi:
+		i = sys.argv.index("bdist_pyi")
+		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
+		if not "build_ext" in sys.argv[:i]:
+			sys.argv.insert(i, "build_ext")
+		if len(sys.argv) < i + 2 or sys.argv[i + 1] not in ("--inplace", "-i"):
+			sys.argv.insert(i + 1, "-i")
 	
-	if not "-h" in sys.argv[1:] and not "--help" in sys.argv[1:] and \
-		not "--help-commands" in sys.argv[1:] and not "-n" in sys.argv[1:] and \
-		not "--dry-run" in sys.argv[1:] and not "build" in sys.argv[1:] and \
-		not "install" in sys.argv[1:] and \
-		os.path.exists(tempdir):
-		shutil.rmtree(tempdir, True)
+	if inno:
+		inno_template_path = os.path.join(pydir, "misc", name + ("-Setup-pyi-onefile.iss" if bdist_pyi else "-Setup.iss"))
+		inno_template = open(inno_template_path, "r")
+		inno_script = inno_template.read().decode("MBCS", "replace") % {
+			"AppVerName": version,
+			"AppPublisherURL": "http://" + domain,
+			"AppSupportURL": "http://" + domain,
+			"AppUpdatesURL": "http://" + domain,
+			"VersionInfoVersion": ".".join(map(str, version_tuple)),
+			"VersionInfoTextVersion": version,
+			"AppVersion": version,
+			}
+		inno_template.close()
+		inno_path = os.path.join("dist", "%s-%s-Setup.iss" % (name, version))
+		if not os.path.exists("dist"):
+			os.makedirs("dist")
+		inno_file = open(inno_path, "w")
+		inno_file.write(inno_script.encode("MBCS", "replace"))
+		inno_file.close()
+		sys.argv.remove("inno")
+		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+			return
+
+	from dispcalGUI.setup import setup
+	setup()
+	
+	if bdist_appdmg:
+		create_appdmg()
+
+	if bdist_pyi:
+
+		# create an executable using pyinstaller
+
+		if sys.platform != "win32": # Linux/Mac OS X
+			retcode = call([sys.executable, "Make.py"], 
+				cwd = os.path.join(pydir, "pyinstaller", "source", "linux"))
+			if retcode != 0:
+				sys.exit(retcode)
+			retcode = call(["make"], cwd = os.path.join(pydir, "pyinstaller", 
+				"source", "linux"))
+			if retcode != 0:
+				sys.exit(retcode)
+		retcode = call([sys.executable, os.path.join(pydir, "pyinstaller", 
+			"Build.py"), "-o", os.path.join(pydir, "build", "pyi.%s-%s" % 
+			(sys.platform, suffix), name + "-" + version), os.path.join(pydir, 
+		"misc", "%s-pyi-%s.spec" % (name, suffix))])
+		if retcode != 0:
+			sys.exit(retcode)
+
+if __name__ == "__main__":
+	setup()
