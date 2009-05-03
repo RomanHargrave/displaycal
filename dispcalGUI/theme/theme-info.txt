@@ -1,0 +1,3 @@
+Default theme
+
+This theme uses some icons from Gnome 2.18 icon theme (http://art.gnome.org/themes/icon/1352) licensed under GPL.
