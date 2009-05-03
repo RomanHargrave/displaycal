@@ -75,22 +75,24 @@ def setup():
 			return
 	
 	# convert newlines
-	license = open(os.path.join(pypath, "LICENSE.txt"), "rw")
-	license_txt = license.read()
-	license.seek(0)
-	license.write(license_txt)
-	license.close()
+	# license = open(os.path.join(pydir, "LICENSE.txt"), "rw")
+	# license_txt = license.read()
+	# license.seek(0)
+	# license.write(license_txt)
+	# license.close()
 	
-	readme_template = open(os.path.join(pypath, "misc", "README.template.html"), "r")
-	readme_html = readme_template.read() % {
-		"timestamp": 
+	readme_template = open(os.path.join(pydir, "misc", "README.template.html"), "r")
+	readme_html = readme_template.read()
+	readme_template.close()
+	for key, val in [
+		("TIMESTAMP", 
 			strftime("%Y-%m-%dT%H:%M:%S", gmtime()) +
 			("+" if timezone < 0 else "-") +
-			strftime("%H:%M", gmtime(abs(timezone))),
-		"version": version
-	}
-	readme_template.close()
-	readme = open(os.path.join(pypath, "README.html"), "w")
+			strftime("%H:%M", gmtime(abs(timezone)))),
+		("VERSION", version)
+	]:
+		readme_html = readme_html.replace("$" + key, val)
+	readme = open(os.path.join(pydir, "README.html"), "w")
 	readme.write(readme_html)
 	readme.close()
 	

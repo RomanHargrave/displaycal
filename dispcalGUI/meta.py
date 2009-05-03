@@ -8,7 +8,7 @@ domain = "dispcalGUI.hoech.net"
 name = "dispcalGUI"
 
 """
-	Play nice with distutils:
+	Play nice with distutils (from distutils.version's StrictVersion):
 
     The following are valid version numbers (shown in the order that
     would be obtained by sorting according to the supplied cmp function):
@@ -33,6 +33,6 @@ name = "dispcalGUI"
         1.3c4
 """
 
-version = "0.2.5.1"
+version = "0.2.5b2"
 
-version_tuple = (0, 2, 5, 1) # only ints allowed and must be exactly 4 values
+version_tuple = (0, 2, 5, 0) # only ints allowed and must be exactly 4 values
