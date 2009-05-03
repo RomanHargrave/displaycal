@@ -336,7 +336,8 @@ class Manifest():
             for publisherPolicy in rootElement.getCEByTN("publisherPolicy"):
                 self.applyPublisherPolicy = (publisherPolicy.getA("apply") or "").lower() == "yes"
             for description in rootElement.getCEByTN("description"):
-                self.description = description.firstChild.wholeText
+				if description.firstChild:
+					self.description = description.firstChild.wholeText
             for trustInfo in rootElement.getCEByTN("trustInfo"):
                 for security in trustInfo.getCEByTN("security"):
                     for requestedPrivileges in security.getCEByTN("requestedPrivileges"):
@@ -466,18 +467,23 @@ class Manifest():
                 docE.aChild(fE)
         return doc
     
-    def toprettyxml(self, indent="  ", newl=os.linesep):
+    def toprettyxml(self, indent="  ", newl=os.linesep, encoding="UTF-8"):
         """ Return the manifest as pretty-printed XML """
         domtree = self.todom()
-        xmlstr = '<?xml standalone="yes"' + \
-            domtree.toprettyxml(indent, newl, "UTF-8").strip(os.linesep)[5:]
+		# WARNING: The XML declaration has to follow the order version-encoding-standalone (standalone being optional),
+		# otherwise if it is embedded in an exe the exe will fail to launch! ('application configuration incorrect')
+        xmlstr = domtree.toprettyxml(indent, newl, encoding).strip(os.linesep).replace('<?xml version="1.0" encoding="UTF-8"?>', 
+			'<?xml version="1.0" encoding="%s" standalone="yes"?>' % encoding)
         domtree.unlink()
         return xmlstr
     
-    def toxml(self):
+    def toxml(self, encoding="UTF-8"):
         """ Return the manifest as XML """
         domtree = self.todom()
-        xmlstr = '<?xml standalone="yes"' + domtree.toxml("UTF-8")[5:]
+		# WARNING: The XML declaration has to follow the order version-encoding-standalone (standalone being optional),
+		# otherwise if it is embedded in an exe the exe will fail to launch! ('application configuration incorrect')
+        xmlstr = domtree.toxml(encoding).replace('<?xml version="1.0" encoding="UTF-8"?>', 
+			'<?xml version="1.0" encoding="%s" standalone="yes"?>' % encoding)
         domtree.unlink()
         return xmlstr
 
@@ -487,19 +493,19 @@ class Manifest():
         UpdateManifestResourcesFromXML(dstpath, self.toprettyxml(), names, 
                                        languages)
     
-    def writeprettyxml(self, filename_or_file, indent="  ", newl=os.linesep):
+    def writeprettyxml(self, filename_or_file, indent="  ", newl=os.linesep, encoding="UTF-8"):
         """ Write the manifest as XML to a file or file object """
         if isinstance(filename_or_file, (str, unicode)):
             filename_or_file = open(filename_or_file, "wb")
-        xmlstr = self.toprettyxml(indent, newl, "UTF-8")
+        xmlstr = self.toprettyxml(indent, newl, encoding)
         filename_or_file.write(xmlstr)
         filename_or_file.close()
     
-    def writexml(self, filename_or_file, indent="  ", newl=os.linesep):
+    def writexml(self, filename_or_file, indent="  ", newl=os.linesep, encoding="UTF-8"):
         """ Write the manifest as XML to a file or file object """
         if isinstance(filename_or_file, (str, unicode)):
             filename_or_file = open(filename_or_file, "wb")
-        xmlstr = self.toxml(indent, newl, "UTF-8")
+        xmlstr = self.toxml(indent, newl, encoding)
         filename_or_file.write(xmlstr)
         filename_or_file.close()
         
