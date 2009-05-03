@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=dispcalGUI
+GenericName=Display Calibration
+GenericName[de]=Anzeigegerätekalibrierung
+Exec=dispcalGUI
+Icon=dispcalGUI.png
+Terminal=true
+Categories=Graphics
+Comment[de]=Eine grafische Benutzeroberfläche für die Argyll CMS Anzeigegerätekalibrierungs-Programme
+Comment=A graphical user interface for the Argyll CMS display calibration utilities

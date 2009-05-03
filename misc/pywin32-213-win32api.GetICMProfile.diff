@@ -1,0 +1,77 @@
+--- setup.py.bak	Mon Feb 16 15:48:30 2009
++++ setup.py	Sat Apr 04 19:31:51 2009
+@@ -1507,7 +1507,7 @@
+            sources = """
+                 win32/src/win32apimodule.cpp win32/src/win32api_display.cpp
+                 """.split(),
+-           libraries="user32 advapi32 shell32 version",
++           libraries="gdi32 user32 advapi32 shell32 version",
+            delay_load_libraries="powrprof",
+            windows_h_version=0x0500,
+         ),
+--- win32\src\win32apimodule.cpp.bak	Thu Feb 12 13:25:20 2009
++++ win32\src\win32apimodule.cpp	Sat Apr 04 19:54:37 2009
+@@ -6181,6 +6181,7 @@
+ 	{"GetComputerName",     PyGetComputerName,  1}, // @pymeth GetComputerName|Returns the local computer name
+ 	{"GetComputerNameEx",   PyGetComputerNameEx,  1}, // @pymeth GetComputerNameEx|Retrieves a NetBIOS or DNS name associated with the local computer
+ 	{"GetComputerObjectName",PyGetComputerObjectName,  1}, // @pymeth GetComputerObjectName|Retrieves the local computer's name in a specified format
++	{"GetICMProfile", 		(PyCFunction)PyGetICMProfile, 1}, // @pymeth GetICMProfile|Returns ICM profile filename for a device context
+ 	{"GetMonitorInfo",		(PyCFunction)PyGetMonitorInfo, METH_VARARGS|METH_KEYWORDS},	// @pymeth GetMonitorInfo|Retrieves information for a monitor by handle
+ 	{"GetUserName",         PyGetUserName,  1},     // @pymeth GetUserName|Returns the current user name.
+ 	{"GetUserNameEx",       PyGetUserNameEx,  1},     // @pymeth GetUserNameEx|Returns the current user name in format specified by Name* constants
+--- win32\src\win32api_display.cpp.bak	Wed Dec 03 17:30:28 2008
++++ win32\src\win32api_display.cpp	Sat Apr 04 20:10:30 2009
+@@ -13,6 +13,7 @@
+ EnumDisplayDevicesfunc pfnEnumDisplayDevices=NULL;
+ EnumDisplayMonitorsfunc pfnEnumDisplayMonitors=NULL;
+ EnumDisplaySettingsExfunc pfnEnumDisplaySettingsEx=NULL;
++GetICMProfilefunc pfnGetICMProfile=NULL;
+ GetMonitorInfofunc pfnGetMonitorInfo=NULL;
+ MonitorFromPointfunc pfnMonitorFromPoint=NULL;
+ MonitorFromRectfunc pfnMonitorFromRect=NULL;
+@@ -481,6 +482,26 @@
+ 		return NULL;
+ 		}
+ 	return ret;
++}
++
++// @pymethod unicode|win32api|GetICMProfile|Retrieves profile for a given device context
++// @rdesc Returns the profile filename
++PyObject *PyGetICMProfile(PyObject *self, PyObject *args, PyObject *kwargs)
++{
++	WCHAR filename[MAX_PATH];
++	DWORD filename_size;
++
++	int handle = 0;
++	if (!PyArg_ParseTuple(args, "|i:get_display_profile", &handle))
++		return NULL;
++
++	filename_size = sizeof(filename);
++
++	if (GetICMProfileW((HDC) handle, &filename_size, filename))
++		return PyWinObject_FromWCHAR(filename);
++
++	Py_INCREF(Py_None);
++	return Py_None;
+ }
+ 
+ // @pymethod dict|win32api|GetMonitorInfo|Retrieves information for a monitor by handle
+--- win32\src\win32api_display.h.bak	Thu Dec 11 09:37:16 2008
++++ win32\src\win32api_display.h	Sat Apr 04 19:46:45 2009
+@@ -13,6 +13,7 @@
+ PyObject *PyEnumDisplayMonitors(PyObject *self, PyObject *args, PyObject *kwargs);
+ PyObject *PyEnumDisplaySettings(PyObject *self, PyObject *args, PyObject *kwargs);
+ PyObject *PyEnumDisplaySettingsEx(PyObject *self, PyObject *args, PyObject *kwargs);
++PyObject *PyGetICMProfile(PyObject *self, PyObject *args, PyObject *kwargs);
+ PyObject *PyGetMonitorInfo(PyObject *self, PyObject *args, PyObject *kwargs);
+ PyObject *PyMonitorFromPoint(PyObject *self, PyObject *args, PyObject *kwargs);
+ PyObject *PyMonitorFromRect(PyObject *self, PyObject *args, PyObject *kwargs);
+@@ -31,6 +32,8 @@
+ extern MonitorFromRectfunc pfnMonitorFromRect;
+ typedef HMONITOR (WINAPI *MonitorFromPointfunc)(POINT,DWORD);
+ extern MonitorFromPointfunc pfnMonitorFromPoint;
++typedef BOOL (WINAPI *GetICMProfilefunc)(HDC);
++extern GetICMProfilefunc pfnGetICMProfile;
+ typedef BOOL (WINAPI *GetMonitorInfofunc)(HMONITOR,LPMONITORINFOEX);
+ extern GetMonitorInfofunc pfnGetMonitorInfo;
+ typedef BOOL (WINAPI *EnumDisplaySettingsExfunc)(LPCTSTR,DWORD,LPDEVMODE,DWORD);
