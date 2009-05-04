@@ -73,28 +73,26 @@ def setup():
 					print "removed", path
 		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
 			return
-	
-	# convert newlines
-	# license = open(os.path.join(pydir, "LICENSE.txt"), "rw")
-	# license_txt = license.read()
-	# license.seek(0)
-	# license.write(license_txt)
-	# license.close()
-	
-	readme_template = open(os.path.join(pydir, "misc", "README.template.html"), "r")
-	readme_html = readme_template.read()
+
+	readme_template_path = os.path.join(pydir, "misc", "README.template.html")
+	readme_template = open(readme_template_path, "rb")
+	readme_template_html = readme_template.read()
 	readme_template.close()
 	for key, val in [
 		("TIMESTAMP", 
-			strftime("%Y-%m-%dT%H:%M:%S", gmtime()) +
+			strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(readme_template_path).st_mtime)) +
 			("+" if timezone < 0 else "-") +
 			strftime("%H:%M", gmtime(abs(timezone)))),
 		("VERSION", version)
 	]:
-		readme_html = readme_html.replace("$" + key, val)
-	readme = open(os.path.join(pydir, "README.html"), "w")
-	readme.write(readme_html)
+		readme_template_html = readme_template_html.replace("$" + key, val)
+	readme = open(os.path.join(pydir, "README.html"), "rb")
+	readme_html = readme.read()
 	readme.close()
+	if readme_html != readme_template_html:
+		readme = open(os.path.join(pydir, "README.html"), "wb")
+		readme.write(readme_template_html)
+		readme.close()
 	
 	if bdist_appdmg:
 		i = sys.argv.index("bdist_appdmg")
