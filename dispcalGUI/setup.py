@@ -44,7 +44,9 @@ def setup():
 
 	print "***", os.path.abspath(sys.argv[0]), " ".join(sys.argv[1:])
 
+	bdist_bbfreeze = "bdist_bbfreeze" in sys.argv[1:]
 	bdist_win = "bdist_msi" in sys.argv[1:] or "bdist_wininst" in sys.argv[1:]
+	debug = 0
 	do_full_install = False
 	do_install = False
 	do_py2app = "py2app" in sys.argv[1:]
@@ -55,13 +57,14 @@ def setup():
 	is_rpm_build = os.path.abspath(sys.argv[0]).endswith(os.path.join(os.path.sep, "rpm", "BUILD", name + "-" + version, os.path.basename(os.path.abspath(sys.argv[0]))))
 	recordfile_name = None # record installed files to this file
 	setuptools = None
-	use_distutils = not do_py2app and ("--use-distutils" in sys.argv[1:] or os.path.exists("use-distutils"))
-	use_setuptools = do_py2app or "--use-setuptools" in sys.argv[1:] or not os.path.exists("use-distutils")
+	use_distutils = not bdist_bbfreeze and not do_py2app and ("--use-distutils" in sys.argv[1:] or os.path.exists("use-distutils"))
+	use_setuptools = bdist_bbfreeze or do_py2app or "--use-setuptools" in sys.argv[1:] or not os.path.exists("use-distutils")
 
 	sys.path.insert(1, os.path.join(os.path.dirname(pydir), "util"))
 
 	if not use_setuptools and use_distutils:
-		open("use-distutils", "w").close()
+		if "--use-distutils" in sys.argv[1:]:
+			open("use-distutils", "w").close()
 	else:
 		if os.path.exists("use-distutils"):
 			os.remove("use-distutils")
@@ -145,7 +148,7 @@ def setup():
 			# sys.argv.append("--record=" + "INSTALLED_FILES")
 
 	if sys.platform in ("darwin", "win32") or "bdist_egg" in sys.argv[1:]:
-		doc = data = "." if do_py2app or do_py2exe or "bdist_bbfreeze" in sys.argv[1:] else name
+		doc = data = "." if do_py2app or do_py2exe or bdist_bbfreeze else name
 		if do_py2app:
 			# dispcalGUI.app/Contents/Resources
 			doc = os.path.join("..", "..", "..")
@@ -320,7 +323,7 @@ def setup():
 		# if sys.platform == "win32":
 			# attrs["scripts"] += [os.path.join("scripts", name + ".cmd")]
 	
-	if "bdist_bbfreeze" in sys.argv[1:]:
+	if bdist_bbfreeze:
 		i = sys.argv.index("bdist_bbfreeze")
 		if not "-d" in sys.argv[i + 1:] and not "--dist-dir" in sys.argv[i + 1:]:
 			sys.argv.insert(i + 1, "--dist-dir=" + os.path.join(pydir, "..", "dist", "bbfreeze"))
@@ -393,30 +396,32 @@ def setup():
 		dist = setup(**attrs)
 		distutils.core._setup_stop_after = None
 		cmd = install(dist).get_finalized_command("install")
-		for attrname in [
-			"base", 
-			"data", 
-			"headers", 
-			"lib", 
-			"libbase", 
-			"platbase", 
-			"platlib", 
-			"prefix", 
-			"purelib", 
-			"root", 
-			"scripts", 
-			"userbase"
-		]:
-			if attrname not in ["prefix", "root"]:
-				attrname = "install_" + attrname
-			if hasattr(cmd, attrname):
-				print attrname, getattr(cmd, attrname)
-		# try:
-			# from ppdir import ppdir
-		# except ImportError:
-			# pass
-		# else:
-			# ppdir(cmd, types=[dict, list, str, tuple, type, unicode])
+		if debug > 0:
+			for attrname in [
+				"base", 
+				"data", 
+				"headers", 
+				"lib", 
+				"libbase", 
+				"platbase", 
+				"platlib", 
+				"prefix", 
+				"purelib", 
+				"root", 
+				"scripts", 
+				"userbase"
+			]:
+				if attrname not in ["prefix", "root"]:
+					attrname = "install_" + attrname
+				if hasattr(cmd, attrname):
+					print attrname, getattr(cmd, attrname)
+		if debug > 1:
+			try:
+				from ppdir import ppdir
+			except ImportError:
+				pass
+			else:
+				ppdir(cmd, types=[dict, list, str, tuple, type, unicode])
 		if not install_data and sys.platform in ("darwin", "win32"):
 			# on Mac OS X and Windows, we want data files in the package dir
 			data_basedir = cmd.install_lib
@@ -537,8 +542,9 @@ def setup():
 						os.remove(path)
 					elif os.path.isdir(path):
 						shutil.rmtree(path, False)
-				except:
-					print "warning - could'nt remove", path
+				except Exception, exception:
+					print "could'nt remove", path
+					print "   ", exception
 				else:
 					print "removed", path
 					removed += [path]
@@ -557,8 +563,9 @@ def setup():
 							continue
 						try:
 							os.rmdir(path)
-						except:
-							print "warning - could'nt remove", path
+						except Exception, exception:
+							print "could'nt remove", path
+							print "   ", exception
 						else:
 							print "removed", path
 							removed += [path]

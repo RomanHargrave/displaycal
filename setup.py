@@ -20,7 +20,7 @@ def create_appdmg():
 def setup():
 
 	if "bdist_standalone" in sys.argv[1:]:
-		i = sys.argv.index("bdist_pyi")
+		i = sys.argv.index("bdist_standalone")
 		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
 		if sys.platform == "darwin":
 			bdist_cmd = "py2app"

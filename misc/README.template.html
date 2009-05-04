@@ -4,27 +4,6 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>dispcalGUI—Display Calibration powered by Argyll CMS and Python</title>
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
-		<script type="text/javascript">
-		//<![CDATA[
-			window.onload = function () {
-				var h2 = document.getElementsByTagName("h2");
-				for (var i = 1; i < h2.length; i ++) {
-					var txt = document.createTextNode(i + ". ");
-					h2[i].insertBefore(txt, h2[i].firstChild)
-					h3 = h2[i].parentNode.getElementsByTagName("h3");
-					for (var j = 0; j < h3.length; j ++) {
-						txt = document.createTextNode(i + "." + (j + 1) + " ");
-						h3[j].insertBefore(txt, h3[j].firstChild);
-						h4 = h3[j].parentNode.getElementsByTagName("h4");
-						for (var k = 0; k < h4.length; k ++) {
-							txt = document.createTextNode(i + "." + (j + 1) + "." + (k + 1) + " ");
-							h4[k].insertBefore(txt, h4[k].firstChild);
-						}
-					}
-				}
-			};
-		//]]>
-		</script>
 		<style type="text/css">
 		html#dispcalGUI a {
 			font-family: Verdana, Arial, sans-serif;
@@ -79,7 +58,7 @@
 			color: black;
 		}
 		strong {
-			color: #666666;
+			color: black;
 		}
 		.q {
 			font: bold 11px Verdana, sans-serif;
@@ -134,28 +113,70 @@
 		}
 		ol {
 			font-family: Verdana, Arial, sans-serif;
-			list-style-position: inside;
 			padding: 0;
-			margin-left: 25px;
+			margin-left: 40px;
 			margin-right: 0;
+		}
+		
+		
+		/* Automatic heading numbering */
+		h1 {
+			counter-reset: hlevel1;
+		}
+		#content div h2:before {
+			counter-increment: hlevel1;
+			content: counter(hlevel1) ". ";
+		}
+		#content div h2 {
+			counter-reset: hlevel2;
+		}
+		#content div h3:before {
+			counter-increment: hlevel2;
+			content: counter(hlevel1) "." counter(hlevel2) ". ";
+		}
+		#content div h3 {
+			counter-reset: hlevel3;
+		}
+		#content div h4:before {
+			counter-increment: hlevel3;
+			content: counter(hlevel1) "." counter(hlevel2) "." counter(hlevel3) ". ";
+		}
+		
+		/* Automatic nested list numbering */
+		/*
+		#content #toc { list-style-type: none; counter-reset: llevel1; }
+		#content #toc > li:before { counter-increment: llevel1; content: counters(llevel1, ".") ". "; }
+		#content #toc > li > ul { list-style-type: none; counter-reset: llevel2; }
+		#content #toc > li > ul > li:before { counter-increment: llevel2; content: counters(llevel1, ".") "." counters(llevel2, ".") ". "; }
+		#content #toc > li > ul > li > ul { list-style-type: none; counter-reset: llevel3; }
+		#content #toc > li > ul > li > ul > li:before { counter-increment: llevel3; content: counters(llevel1, ".") "." counters(llevel2, ".") "." counters(llevel3, ".") ". "; }
+		*/
+		/* Better */
+		#content #toc, #content #toc ul { counter-reset: item }
+		#content #toc li { display: block }
+		#content #toc li:before { content: counters(item, ".") ". "; counter-increment: item }
+		
+		#content #toc {
+			list-style-position: inside;
+			margin-left: 20px;
 		}
 		#content #toc ul {
 			list-style: none;
-		}
-		ol.list {
-			font-family: Verdana, Arial, sans-serif;
-			list-style-position: outside;
-			margin-left: 46px;
+			margin-left: 25px;
 		}
 		#content ul {
 			list-style-type: disc;
 			padding: 0;
-			margin-left: 40px;
+			margin-left: 35px;
 			margin-right: 0;
 		}
 		#content li {
 			padding: 0;
 			margin: 0;
+		}
+		#content ol ul,
+		#content ul ol {
+			margin-left: 20px;
 		}
 		p, #content li, dt, dd {
 			line-height: 1.5em;
@@ -256,7 +277,7 @@
 				<dd>Linux, Mac OS X, Windows (2000 / XP / Vista / 7)</dd>
 		</dl>
 		
-		<p class="info">Bug reports, questions, comments, suggestions? Use the <a href="http://sourceforge.net/tracker/?atid=1127028&amp;group_id=257092&amp;func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">help</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">discussion</a> forums or drop me a mail dispcalGUI ‹at› hoech . net</p>
+		<p class="info">Bug reports, questions, comments, suggestions? Feel free to use the <a href="http://sourceforge.net/tracker/?atid=1127028&amp;group_id=257092&amp;func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">help</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net</p>
 		
 		<h2>Table of contents</h2>
 		
@@ -378,7 +399,7 @@
 		
 			<p>This short guide intends to get you up and running quickly, but if you run into a problem, you should refer to the full <a href="#prerequisites">Prerequisites</a> and <a href="#install">Installation</a> sections.</p>
 			
-			<ol class="list">
+			<ol>
 				<li>It is recommended to first uninstall or remove all previous versions.</li>
 				<li><a href="#download">Get the latest release of dispcalGUI</a> and <a href="#install">install</a>.</li>
 				<li>Download and unpack the Argyll CMS executables ZIP file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</li>
@@ -532,7 +553,7 @@
 			
 				<ol>
 					<li>Open a shell.</li>
-					<li><code>cd</code> into the source directory after unpacking the source.</li>
+					<li><code>cd</code> into the source directory (dispcalGUI-&lt;version&gt;).</li>
 					<li>Run <code>python setup.py build_ext -i</code></li>
 				</ol>
 				
@@ -548,8 +569,8 @@
 			
 			<ol>
 				<li>Open a shell.</li>
-				<li><code>cd</code> into the source directory after unpacking the source.</li>
-				<li>On Mac OS X, py2app is not able to access files inside python "egg" files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in "egg" form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under /Library/Frameworks/Python.framework/Versions/Current/lib). Then, run <code>python util/ez_setup.py -U -Z setuptools</code> which will install setuptools unpacked, thus allowing py2exe to acces all its files.</li>
+				<li>On Mac OS X, py2app is not able to access files inside python "egg" files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in "egg" form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under /Library/Frameworks/Python.framework/Versions/Current/lib). Then, <code>cd</code> into the util directory (dispcalGUI-&lt;version&gt;/util) and run <code>python ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2exe to acces all its files.</li>
+				<li><code>cd</code> into the source directory (dispcalGUI-&lt;version&gt;).</li>
 				<li>Run <code>python setup.py bdist_standalone</code> which should create the executable.</li>
 			</ol>
 		</div>
@@ -595,8 +616,9 @@
 			<div id="install-src">
 				<h3>Source code (all platforms)</h3>
 				
-				<p>Starting with dispcalGUI 0.2.5.1, you can use standard distutils/setuptools commands with setup.py to build, install, and create packages. Run <code>python setup.py --help</code> or <code>python setup.py --help-commands</code> for more information. A few additional commands which are not part of distutils or setuptools (and thus do not appear in the help) are also available:</p>
+				<p>Starting with dispcalGUI 0.2.5.1, you can use standard distutils/setuptools commands with setup.py to build, install, and create packages. <code>sudo python setup.py install</code> will compile the extension modules and do a standard installation. Run <code>python setup.py --help</code> or <code>python setup.py --help-commands</code> for more information. A few additional commands and options which are not part of distutils or setuptools (and thus do not appear in the help) are also available:</p>
 				
+				<h4>Additional setup commands</h4>
 				<dl>
 					<dt>bdist_appdmg (Mac OS X only)</dt>
 						<dd>Creates a DMG of a previously created (by the py2app or bdist_standalone commands) application bundle.</dd>
@@ -612,6 +634,16 @@
 						<dd>Removes the "dist" directory and its contents.</dd>
 					<dt>uninstall</dt>
 						<dd>Uninstalls the package. You can specify the same options as for the "install" command.</dd>
+				</dl>
+				
+				<h4>Additional setup options</h4>
+				<dl>
+					<dt>-n, --dry-run</dt>
+						<dd>Don't actually do anything. Useful in combination with the uninstall command to see which files would be removed.</dd>
+					<dt>--use-distutils</dt>
+						<dd>Force setup to use distutils instead of setuptools. This is useful in combination with the bdist* commands, because it will avoid an artificial dependency on setuptools. This is actually a switch, use it once and the choice is remembered until you specify the "--use-setuptools" switch (see next paragraph).</dd>
+					<dt>--use-setuptools</dt>
+						<dd>Force setup to try and use setuptools instead of distutils (default). This is actually a switch, use it once and the choice is remembered until you specify the "--use-distutils" switch (see above).</dd>
 				</dl>
 			</div>
 		</div>
@@ -810,7 +842,7 @@
 			
 			<p><span class="q">Issue:</span> Under Linux, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal.<br />
 			<span class="a">Solution:</span> These messages are generated from GTK, I have no influence on them, but they can be safely ignored if the full message is something like “Gtk-Message: (for origin information, set GTK_DEBUG): failed to retrieve property `GtkTreeView::odd-row-color'”. If they really bother you and you don't mind using the shell and editing files by hand, you can get rid of these messages by changing the involved GTK theme file:</p>
-			<ol class="list">
+			<ol>
 				<li>Open a shell and type <code>export GTK_DEBUG=1</code></li>
 				<li>Run dispcalGUI and open a file selector.</li>
 				<li>In the familiar message, the path to the involved theme file should now be displayed.</li>
