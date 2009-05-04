@@ -317,8 +317,8 @@ def setup():
 		attrs["zip_safe"] = False
 	else:
 		attrs["scripts"] += [os.path.join("scripts", name)]
-		if sys.platform == "win32":
-			attrs["scripts"] += [os.path.join("scripts", name + ".cmd")]
+		# if sys.platform == "win32":
+			# attrs["scripts"] += [os.path.join("scripts", name + ".cmd")]
 	
 	if "bdist_bbfreeze" in sys.argv[1:]:
 		i = sys.argv.index("bdist_bbfreeze")
