@@ -79,6 +79,8 @@ def setup():
 	readme_template_html = readme_template.read()
 	readme_template.close()
 	for key, val in [
+		("DATE", 
+			strftime("%Y-%m-%d", gmtime(os.stat(readme_template_path).st_mtime))),
 		("TIMESTAMP", 
 			strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(readme_template_path).st_mtime)) +
 			("+" if timezone < 0 else "-") +
