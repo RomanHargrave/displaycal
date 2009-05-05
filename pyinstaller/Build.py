@@ -31,7 +31,6 @@ try:
 except ImportError:
     from md5 import new as md5
 import UserList
-
 import mf
 import archive
 import iu
@@ -420,6 +419,7 @@ class PYZ(Target):
 
     GUTS = (('name',   _check_guts_eq),
             ('level',  _check_guts_eq),
+            ('crypt',  _check_guts_eq),
             ('toc',    _check_guts_toc), # todo: pyc=1
             )
 
@@ -483,7 +483,12 @@ def checkCache(fnm, strip, upx):
     if upx:
         if strip:
             fnm = checkCache(fnm, 1, 0)
-        cmd = "upx --best -q \"%s\"" % cachedfile
+        bestopt = "--best"
+        # FIXME: Linux builds of UPX do not seem to contain LZMA (they assert out)
+        # A better configure-time check is due.
+        if config["hasUPX"] >= (3,) and os.name == "nt":
+            bestopt = "--lzma"
+        cmd = "upx " + bestopt + " -q \"%s\"" % cachedfile
     else:
         if strip:
             cmd = "strip \"%s\"" % cachedfile

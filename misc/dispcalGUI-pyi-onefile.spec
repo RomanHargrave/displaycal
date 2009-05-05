@@ -1,3 +1,5 @@
+from distutils.util import get_platform
+
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "util"))
 
@@ -16,7 +18,7 @@ a = Analysis([os.path.join(HOMEPATH,"support","_mountzlib.py"),
 pyz = PYZ(a.pure,
 	level=5) # zlib compression level 0-9
 exe = EXE(pyz,
-	a.scripts,
+	a.scripts + [("O", "", "OPTION")],
 	a.binaries + Tree(os.path.join(name, "lang"), "lang", [".svn"])
 	+ Tree(os.path.join(name, "presets"), "presets", [".svn"])
 	+ Tree(os.path.join(name, "theme"), "theme", ["*.icns", "*.ico", "*.txt",
@@ -24,7 +26,7 @@ exe = EXE(pyz,
 		"dispcalGUI-uninstall.png"])
 	+ Tree(os.path.join(name, "ti1"), "ti1", [".svn"])
 	+ [("test.cal", os.path.join(name, "test.cal"), "DATA")],
-	name=os.path.join("..", "build", "pyi.%s-onefile" % sys.platform, name + 
+	name=os.path.join("..", "build", "pyi.%s-onefile" % get_platform(), name + 
 		"-" + version, name + (".exe" if sys.platform in ("cygwin", "win32") 
 		else "")),
 	debug=False,
@@ -52,7 +54,7 @@ coll = COLLECT(exe,
 	+ [("README.html", "README.html", "DATA")],
 	strip=sys.platform not in("cygwin", "win32"),
 	upx=False,
-	name=os.path.join("..", "dist", "pyi.%s-onefile" % sys.platform, name + 
+	name=os.path.join("..", "dist", "pyi.%s-onefile" % get_platform(), name + 
 		"-" + version))
 
 os.remove(manifestpath)

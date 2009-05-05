@@ -1,4 +1,4 @@
-This is pyinstaller "dispcalGUI edition", based on trunk rev. 646 
+This is pyinstaller "dispcalGUI edition", based on trunk rev. 659 
 (http://svn.pyinstaller.python-hosting.com/trunk), with the following 
 changes:
 

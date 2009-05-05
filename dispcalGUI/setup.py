@@ -25,7 +25,7 @@ in the root directory of the source tar.gz/zip
 """
 
 from distutils.command.install import install
-from distutils.util import change_root
+from distutils.util import change_root, get_platform
 import distutils.core
 import glob
 import os
@@ -325,8 +325,10 @@ def setup():
 	
 	if bdist_bbfreeze:
 		i = sys.argv.index("bdist_bbfreeze")
+		if not "build" in sys.argv[1:i]:
+			sys.argv.insert(i, "build")
 		if not "-d" in sys.argv[i + 1:] and not "--dist-dir" in sys.argv[i + 1:]:
-			sys.argv.insert(i + 1, "--dist-dir=" + os.path.join(pydir, "..", "dist", "bbfreeze"))
+			sys.argv.insert(i + 1, "--dist-dir=" + os.path.join(pydir, "..", "dist", "bbfreeze." + get_platform()))
 		attrs["setup_requires"] = ["bbfreeze"]
 
 	if bdist_win or setuptools:
@@ -652,7 +654,7 @@ def setup():
 		if do_py2app or do_py2exe:
 			sys.path.insert(1, pydir)
 			i = sys.argv.index("py2app" if do_py2app else "py2exe")
-			if not "build_ext" in sys.argv[:i]:
+			if not "build_ext" in sys.argv[1:i]:
 				sys.argv.insert(i, "build_ext")
 			if len(sys.argv) < i + 2 or sys.argv[i + 1] not in ("--inplace", "-i"):
 				sys.argv.insert(i + 1, "-i")
@@ -668,7 +670,7 @@ def setup():
 				"-%(version)s.%(platform)s-py%(pyversion)s.exe" % 
 				{
 					"version": version, 
-					"platform": sys.platform,
+					"platform": get_platform(),
 					"pyversion": sys.version[:3] # using sys.version in this way is consistent with setuptools
 				}
 			))
