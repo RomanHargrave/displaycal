@@ -1,16 +1,24 @@
 from distutils.util import get_platform
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "util"))
 
 from dispcalGUI.meta import name, version
-from winmanifest import mktempmanifest
-from winversion import mktempver
 
-manifestpath = mktempmanifest(os.path.join("misc", name + 
-	(".exe.VC90.manifest" if hasattr(sys, "version_info") and 
-	sys.version_info[:2] >= (2,6) else ".exe.manifest")))
-versionpath = mktempver(os.path.join("misc", "winversion.txt"))
+if sys.platform in ("cygwin", "win32"):
+	sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "util"))
+	from winmanifest import mktempmanifest
+	from winversion import mktempver
+	manifestpath = mktempmanifest(os.path.join("misc", name + 
+		(".exe.VC90.manifest" if hasattr(sys, "version_info") and 
+		sys.version_info[:2] >= (2,6) else ".exe.manifest")))
+	versionpath = mktempver(os.path.join("misc", "winversion.txt"))
+	additional_opts = {
+		"icon": os.path.join(name, "theme", "icons", name + ".ico"),
+		"manifest": manifestpath,
+		"version": versionpath,
+	}
+else:
+	additional_opts = {}
 
 a = Analysis([os.path.join(HOMEPATH, "support", "_mountzlib.py"), 
 	os.path.join(HOMEPATH, "support", "useUnicode.py"), os.path.join(name, 
@@ -27,10 +35,8 @@ exe = EXE(pyz,
 	strip=sys.platform not in ("cygwin", "win32"),
 	upx=False,
 	console=True,
-	version=versionpath,
-	icon=os.path.join(name, "theme", "icons", name + ".ico"),
-	manifest=manifestpath,
-	append_pkg=False)
+	append_pkg=False,
+	**additional_opts)
 coll = COLLECT(exe,
 	a.binaries + Tree(os.path.join(name, "lang"), "lang", [".svn"])
 	+ Tree(os.path.join(name, "presets"), "presets", [".svn"])
@@ -49,7 +55,8 @@ coll = COLLECT(exe,
 	name=os.path.join("..", "dist", "pyi.%s-py%s-onedir" % (get_platform(), sys.version[:3]), name + 
 		"-" + version))
 
-os.remove(manifestpath)
-os.rmdir(os.path.dirname(manifestpath))
-os.remove(versionpath)
-os.rmdir(os.path.dirname(versionpath))
+if sys.platform in ("cygwin", "win32"):
+	os.remove(manifestpath)
+	os.rmdir(os.path.dirname(manifestpath))
+	os.remove(versionpath)
+	os.rmdir(os.path.dirname(versionpath))
