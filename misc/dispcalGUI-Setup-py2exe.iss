@@ -39,8 +39,8 @@ Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:Ad
 Name: quicklaunchicon; Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 
 [Files]
-Source: py2exe\dispcalGUI-%(AppVersion)s\*; DestDir: {app}; Flags: ignoreversion recursesubdirs
-Source: py2exe\dispcalGUI-%(AppVersion)s\README.html; DestDir: {app}; Flags: ignoreversion isreadme
+Source: py2exe-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\*; DestDir: {app}; Flags: ignoreversion recursesubdirs
+Source: py2exe-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\README.html; DestDir: {app}; Flags: ignoreversion isreadme
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

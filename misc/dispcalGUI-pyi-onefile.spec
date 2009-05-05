@@ -26,7 +26,7 @@ exe = EXE(pyz,
 		"dispcalGUI-uninstall.png"])
 	+ Tree(os.path.join(name, "ti1"), "ti1", [".svn"])
 	+ [("test.cal", os.path.join(name, "test.cal"), "DATA")],
-	name=os.path.join("..", "build", "pyi.%s-onefile" % get_platform(), name + 
+	name=os.path.join("..", "build", "pyi.%s-%s-onefile" % (get_platform(), sys.version[:3]), name + 
 		"-" + version, name + (".exe" if sys.platform in ("cygwin", "win32") 
 		else "")),
 	debug=False,
@@ -54,7 +54,7 @@ coll = COLLECT(exe,
 	+ [("README.html", "README.html", "DATA")],
 	strip=sys.platform not in("cygwin", "win32"),
 	upx=False,
-	name=os.path.join("..", "dist", "pyi.%s-onefile" % get_platform(), name + 
+	name=os.path.join("..", "dist", "pyi.%s-py%s-onefile" % (get_platform(), sys.version[:3]), name + 
 		"-" + version))
 
 os.remove(manifestpath)

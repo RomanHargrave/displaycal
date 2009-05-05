@@ -20,7 +20,7 @@ pyz = PYZ(a.pure,
 exe = EXE(pyz,
 	a.scripts + [("O", "", "OPTION")],
 	exclude_binaries=1,
-	name=os.path.join("..", "build", "pyi.%s-onedir" % get_platform(), name + 
+	name=os.path.join("..", "build", "pyi.%s-%s-onedir" % (get_platform(), sys.version[:3]), name + 
 		"-" + version, name + (".exe" if sys.platform in ("cygwin", "win32") 
 		else "")),
 	debug=False,
@@ -46,7 +46,7 @@ coll = COLLECT(exe,
 	+ [("README.html", "README.html", "DATA")],
 	strip=sys.platform not in("cygwin", "win32"),
 	upx=False,
-	name=os.path.join("..", "dist", "pyi.%s-onedir" % get_platform(), name + 
+	name=os.path.join("..", "dist", "pyi.%s-py%s-onedir" % (get_platform(), sys.version[:3]), name + 
 		"-" + version))
 
 os.remove(manifestpath)

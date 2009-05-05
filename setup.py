@@ -14,7 +14,7 @@ pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
 def create_appdmg():
-	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", "%s-%s.dmg" % (name, version)), "-volname", name, "-fs", "HFS+", "-srcfolder", os.path.join(pydir, "dist", "py2app", name + "-" + version)])
+	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", "%s-%s.dmg" % (name, version)), "-volname", name, "-fs", "HFS+", "-srcfolder", os.path.join(pydir, "dist", "py2app-py" + sys.version[:3], name + "-" + version)])
 	if retcode != 0:
 		sys.exit(retcode)
 
@@ -33,6 +33,8 @@ def setup():
 			sys.argv.insert(i, bdist_cmd)
 	elif "bdist_bbfreeze" in sys.argv[1:]:
 		bdist_cmd = "bdist_bbfreeze"
+	elif "bdist_pyi" in sys.argv[1:]:
+		bdist_cmd = "pyi"
 	elif "py2app" in sys.argv[1:]:
 		bdist_cmd = "py2app"
 	elif "py2exe" in sys.argv[1:]:
@@ -137,9 +139,10 @@ def setup():
 			"VersionInfoVersion": ".".join(map(str, version_tuple)),
 			"VersionInfoTextVersion": version,
 			"AppVersion": version,
+			"PythonVersion": sys.version[:3],
 			}
 		inno_template.close()
-		inno_path = os.path.join("dist", os.path.basename(inno_template_path))
+		inno_path = os.path.join("dist", os.path.basename(inno_template_path).replace(bdist_cmd, "%s.%s-py%s" % (bdist_cmd, get_platform(), sys.version[:3])))
 		if not os.path.exists("dist"):
 			os.makedirs("dist")
 		inno_file = open(inno_path, "w")
@@ -171,8 +174,8 @@ def setup():
 		retcode = call([sys.executable, "-O", os.path.join(pydir, "pyinstaller", 
 			"Configure.py")])
 		retcode = call([sys.executable, "-O", os.path.join(pydir, "pyinstaller", 
-			"Build.py"), "-o", os.path.join(pydir, "build", "pyi.%s-%s" % 
-			(get_platform(), suffix), name + "-" + version), os.path.join(pydir, 
+			"Build.py"), "-o", os.path.join(pydir, "build", "pyi.%s-%s-%s" % 
+			(get_platform(), sys.version[:3], suffix), name + "-" + version), os.path.join(pydir, 
 			"misc", "%s-pyi-%s.spec" % (name, suffix))])
 		if retcode != 0:
 			sys.exit(retcode)
