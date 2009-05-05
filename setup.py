@@ -126,7 +126,7 @@ def setup():
 		if "--onefile" in sys.argv[1:]:
 			sys.argv.remove("--onefile")
 
-	if inno:
+	if inno and sys.platform == "win32":
 		inno_template_path = os.path.join(pydir, "misc", "%s-Setup-%s.iss" % (name, ("pyi-" + suffix if bdist_pyi else bdist_cmd)))
 		inno_template = open(inno_template_path, "r")
 		inno_script = inno_template.read().decode("MBCS", "replace") % {

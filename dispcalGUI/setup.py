@@ -134,10 +134,14 @@ def setup():
 			if arg == "install":
 				do_full_install = True
 			do_install = True
+		elif arg == "-d" and len(sys.argv[1:]) > i:
+			dist_dir = sys.argv[i + 2]
 		else:
 			arg = arg.split("=")
 			if len(arg) == 2:
-				if arg[0] == "--install-data":
+				if arg[0] == "--dist-dir":
+					dist_dir = arg[1]
+				elif arg[0] == "--install-data":
 					install_data = arg[1]
 				elif arg[0] == "--record":
 					recordfile_name = arg[1]
@@ -324,11 +328,6 @@ def setup():
 			# attrs["scripts"] += [os.path.join("scripts", name + ".cmd")]
 	
 	if bdist_bbfreeze:
-		i = sys.argv.index("bdist_bbfreeze")
-		if not "build" in sys.argv[1:i]:
-			sys.argv.insert(i, "build")
-		if not "-d" in sys.argv[i + 1:] and not "--dist-dir" in sys.argv[i + 1:]:
-			sys.argv.insert(i + 1, "--dist-dir=" + os.path.join(pydir, "..", "dist", "bbfreeze." + get_platform()))
 		attrs["setup_requires"] = ["bbfreeze"]
 
 	if bdist_win or setuptools:
@@ -344,6 +343,7 @@ def setup():
 				"argv_emulation": True,
 				"dist_dir": os.path.join(pydir, "..", "dist", "py2app", name + "-" + version),
 				"iconfile": os.path.join(pydir, "theme", "icons", "dispcalGUI.icns"),
+				"optimize": 2,
 				"plist": {
 					"CFBundleDevelopmentRegion": "English",
 					"CFBundleExecutable": name,
@@ -650,7 +650,15 @@ def setup():
 		manifest.close()
 		if os.path.exists("MANIFEST"):
 			os.remove("MANIFEST")
-		
+
+		if bdist_bbfreeze:
+			i = sys.argv.index("bdist_bbfreeze")
+			if not "-d" in sys.argv[i + 1:] and not "--dist-dir" in sys.argv[i + 1:]:
+				dist_dir = os.path.join(pydir, "..", "dist", "bbfreeze." + get_platform())
+				sys.argv.insert(i + 1, "--dist-dir=" + dist_dir)
+			if not "egg_info" in sys.argv[1:i]:
+				sys.argv.insert(i, "egg_info")
+
 		if do_py2app or do_py2exe:
 			sys.path.insert(1, pydir)
 			i = sys.argv.index("py2app" if do_py2app else "py2exe")
@@ -661,9 +669,9 @@ def setup():
 
 		setup(**attrs)
 		
-		if do_py2exe:
+		if (bdist_bbfreeze and sys.platform == "win32") or do_py2exe:
 			from vc90crt import name as vc90crt_name, vc90crt_copy_files
-			vc90crt_copy_files(os.path.join(dist_dir, vc90crt_name))
+			vc90crt_copy_files(os.path.join(dist_dir, vc90crt_name) if do_py2exe else os.path.join(dist_dir, name + "-" + version))
 		
 		if "bdist_wininst" in sys.argv[1:]:
 			exe = os.path.join("dist", name + (
