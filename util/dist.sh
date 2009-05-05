@@ -15,9 +15,5 @@ mv dist/dispcalGUI-*.rpm dist/python2.5
 mkdir -p dist/python2.6
 mv dist/dispcalGUI-*.rpm dist/python2.6
 
-# Source RPM
+# Source RPM and tarball
 ./setup.py bdist_rpm --source-only --use-setuptools > rpm-src.log 2>&1
-
-# Source tarball
-./setup.py sdist --use-setuptools > sdist.log 2>&1
-
