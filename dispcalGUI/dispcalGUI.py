@@ -148,6 +148,7 @@ if sys.platform == "win32":
 	autostart = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_STARTUP)
 	autostart_home = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP)
 	datahome = os.path.join(appdata, appname)
+	logdir = os.path.join(datahome, "logs")
 	data_dirs += [datahome, os.path.join(commonappdata, appname), 
 				  os.path.join(commonprogramfiles, appname)]
 	iccprofiles_home = iccprofiles = os.path.join(shell.SHGetSpecialFolderPath(0, 
@@ -164,8 +165,12 @@ else:
 		cmdfile_ext = ".command"
 		mac_create_app = True
 		scale_adjustment_factor = 1.0
-		confighome = datahome = os.path.join(os.path.expanduser("~"), "Library", 
+		confighome = os.path.join(os.path.expanduser("~"), "Library", 
+			"Preferences", appname)
+		datahome = os.path.join(os.path.expanduser("~"), "Library", 
 			"Application Support", appname)
+		logdir = os.path.join(os.path.expanduser("~"), "Library", 
+			"Logs", appname)
 		data_dirs += [datahome, os.path.join(os.path.sep, "Library", 
 			"Application Support", appname)]
 		iccprofiles = os.path.join(os.path.sep, "Library", 
@@ -187,6 +192,7 @@ else:
 		autostart = os.path.join(xdg_config_dirs[0], "autostart")
 		autostart_home = os.path.join(xdg_config_home, "autostart")
 		datahome = os.path.join(xdg_data_home, appname)
+		logdir = os.path.join(datahome, "logs")
 		data_dirs += [datahome]
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
 		# data_dirs += [os.path.join(get_python_lib(plat_specific = True), appname)]
@@ -324,7 +330,6 @@ def log(msg, fn = None):
 	   globalconfig["app"].frame.info_print(msg)
 
 def setup_logging():
-	logdir = os.path.join(datahome, "logs")
 	logfile = os.path.join(logdir, appname + ".log")
 	backupCount = 5
 	if not os.path.exists(logdir):

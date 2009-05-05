@@ -373,7 +373,7 @@
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-Linux-x86.tar.gz">TAR.GZ</a><br />
+				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-Linux-x86.tar.gz">Tarball</a><br />
 				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION.dmg">DMG</a><br />
 				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-Windows-x86.zip">ZIP</a>
 			</p>
@@ -381,13 +381,12 @@
 			<h3>Python package</h3>
 			<p>This is what you should get if you have a working Python installation with all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.5-1.i586.rpm">RPM for Python 2.5</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.6-1.i586.rpm">RPM for Python 2.6</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.5-linux-i586.tar.gz">TAR.GZ for Python 2.5</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.6-linux-i586.tar.gz">TAR.GZ for Python 2.6</a><br />
-				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.5.exe">Installer for Python 2.5</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.6.exe">Installer for Python 2.6</a>
+				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.5-1.i586.rpm">RPM for Python 2.5</a> (built on openSUSE 11) | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.6-1.i586.rpm">RPM for Python 2.6</a> (built on openSUSE 11)
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need if you want to compile from source and have a working Python installation with all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION.zip">ZIP</a><br />
+			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION.tar.gz">Tarball</a><br />
 			Linux <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-1.src.rpm">RPM</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
@@ -900,7 +899,7 @@
 						<ul>
 							<li>fix: encoding-related issues on all platforms and strange Unicode-related problems with AppleScript and Terminal on Mac OS X 10.4 (<a href="#osx-104-applescript-unicode-peculiarities" onclick="var element = document.getElementById('osx-104-applescript-unicode-peculiarities'); element.style.display = element.style.display == 'block' ? 'none' : 'block'; return false">Details</a>).
 								<div id="osx-104-applescript-unicode-peculiarities" style="display: none">
-									Prerequisites to reproduce Unicode-related issues under Mac OS X 10.4: Terminal closed, or with atleast one window opened. Script inside an AppleScript bundle, the bundle filename contains UTF-8 characters. “main.command” (executable containing shell script) inside Contents/Resources subfolder of the bundle.<br />
+									Prerequisites to reproduce Unicode-related issues under Mac OS X 10.4: Terminal closed, or with atleast one window opened. Script inside an AppleScript bundle, the bundle filename contains UTF-8 characters. “main.command” (executable shell script) inside Contents/Resources subfolder of the bundle.<br />
 									<br />
 									Not working (messagebox “Resource not found”):
 									<pre><code class="applescript"><span class="keyword">tell</span> application <span class="string">"Terminal"</span>
@@ -928,7 +927,7 @@
 							</li>
 							<li>fix: (Windows) several actions unexpectedly failing under Windows 7 (dispcalGUI created temporary files via system calls on several occasions, but on Windows, this does not create the file in the user's temp directory as one would expect, but in the ROOT directory e.g. C:\ - a sane method is now being used instead).</li>
 							<li>fix: bug in sorting function caused leading and trailing zeroes of numbers in testchart filenames to get lost, thus failing to load such files.</li>
-							<li>fix: (Linux) “No module named _md5” error with the binary on some Linux distros (apparently an OpenSSL-related issue, because normally it wouldn't fall back to the legacy _md5 module which is not even built by default in recent Python versions). The fallback _md5 module is now included.</li>
+							<li>fix: (Linux) “No module named _md5” error with the standalone executable on some Linux distros (apparently an OpenSSL-related issue, because normally it wouldn't fall back to the legacy _md5 module which is not even built by default in recent Python versions). The fallback _md5 module is now included.</li>
 							<li>fix: calibration was not automatically added &amp; selected in the dropdown menu when only calibrating.</li>
 							<li>fix: dropping a profile which was not created in dispcalGUI onto the application window no longer results in an unhandled error.</li>
 							<li>fix: when trying to load LUT curves from a profile which actually does not contain any, an error message is now shown instead of resetting the LUT to linear and erroneously stating the curves were succesfully loaded.</li>
@@ -949,7 +948,7 @@
 							<li>chg: new default file locations on all platforms.<br />
 							- On Linux, dispcalGUI now adheres to the <a href="http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory Specification</a>—the configuration file is saved as <code>$XDG_CONFIG_HOME/dispcalGUI/dispcalGUI.ini</code> ($XDG_CONFIG_HOME defaults to ~/.config if not set), all files created during calibration/profiling go into <code>$XDG_DATA_HOME/dispcalGUI/storage/</code> ($XDG_DATA_HOME defaults to ~/.local/share if not set) by default, and logfiles into <code>$XDG_DATA_HOME/dispcalGUI/logs/</code><br />
 							Any old (pre v0.2.5b) configuration data is retained in the file <code>~/.dispcalGUI</code> and may be safely deleted after using v0.2.5b or newer for the first time.<br />
-							- On Mac OS, the configuration is saved as <code>~/Library/Application Support/dispcalGUI/dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>~/Library/Application Support/dispcalGUI/storage/</code> by default, and logfiles into <code>~/Library/Application Support/dispcalGUI/logs/</code><br />
+							- On Mac OS, the configuration is saved as <code>~/Library/Preferences/dispcalGUI/dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>~/Library/Application Support/dispcalGUI/storage/</code> by default, and logfiles into <code>~/Library/Logs/dispcalGUI/</code><br />
 							Any old (pre v0.2.5b) configuration data is retained in the file <code>~/Library/Preferences/dispcalGUI Preferences</code> and may be safely deleted after using v0.2.5b or newer for the first time.<br />
 							- On Windows, the configuration file is saved as <code>%APPDATA%\dispcalGUI\dispcalGUI.ini</code>, all files created during calibration/profiling go into <code>%APPDATA%\dispcalGUI\storage\</code> by default, and logfiles into <code>%APPDATA%\dispcalGUI\logs\</code><br />
 							Any old (pre v0.2.5b) configuration data is retained in the registry key <code>HKEY_CURRENT_USER\Software\dispcalGUI</code>.</li>
@@ -959,9 +958,9 @@
 							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>$XDG_DATA_DIRS/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code>, <code>%COMMONAPPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current working directory (which is always searched first if it differs from the executable directory) and the executable directory (which is always searched last).</li>
 							<li>chg: better error handling. For unhandled exceptions, a message box is shown and an entry is written to the logfile.</li>
 							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
-							<li>chg: (Linux) there's no longer an installer for the Linux version - please use the RPM or python packages instead, or compile from source.</li>
+							<li>chg: (Linux) there's no longer an installer for the Linux version.</li>
 							<li>chg: cancelling of certain operations like profile calculation and testchart generation is now also supported when using Python 2.5</li>
-							<li>chg: when searching for Argyll executables, also search for files with “argyll-” prefix or “-argyll” suffix (thanks to Mark Whitis for bug report).</li>
+							<li>chg: when searching for Argyll executables, also search for files with “argyll-” prefix or “-argyll” suffix (thanks to Mark Whitis for report).</li>
 							<li>chg: disable measurement mode selection when using a spectrometer.</li>
 							<li>add: logging (also see the change related to file-storage). Logfiles are created per-date. A maximum of 5 old ones is being kept as backup.</li>
 							<li>add: placeholders like display name, measurement device, whitepoint etc. can now be used in the profile name.</li>

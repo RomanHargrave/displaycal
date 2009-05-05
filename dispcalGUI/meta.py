@@ -33,6 +33,6 @@ name = "dispcalGUI"
         1.3c4
 """
 
-version = "0.2.5b2"
+version = "0.2.5b"
 
 version_tuple = (0, 2, 5, 0) # only ints allowed and must be exactly 4 values
