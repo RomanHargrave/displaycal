@@ -300,7 +300,7 @@ def setup():
 		"requires": requires,
 		"scripts": [],
 		"url": "http://%s.hoech.net/" % name,
-		"version": version
+		"version": ".".join(map(str, version_tuple)) if do_py2exe else version
 	}
 
 	if setuptools:
@@ -668,8 +668,8 @@ def setup():
 				sys.argv.insert(i + 1, "-i")
 
 		setup(**attrs)
-		
-		if (bdist_bbfreeze and sys.platform == "win32") or do_py2exe:
+
+		if ((bdist_bbfreeze and sys.platform == "win32") or do_py2exe) and sys.version_info[:2] >= (2,6):
 			from vc90crt import name as vc90crt_name, vc90crt_copy_files
 			vc90crt_copy_files(os.path.join(dist_dir, vc90crt_name) if do_py2exe else os.path.join(dist_dir, name + "-" + version))
 		

@@ -1,7 +1,7 @@
 @echo off
 setlocal
 pushd "%SystemRoot%\WinSxS"
-for /D %%a in (. Manifests) do (
+for /D %%a in (. Manifests Policies) do (
 	pushd "%%~a"
 	for /D %%b in (*.VC90.*) do (
 		call :bak "%%~b"
