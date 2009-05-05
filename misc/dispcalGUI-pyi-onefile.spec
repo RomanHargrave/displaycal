@@ -49,9 +49,14 @@ if sys.platform in ("cygwin", "win32"):
 		os.path.join(name, "theme", "icons", name + "-uninstall.ico"), "DATA")]
 elif sys.platform != "darwin":
 	for size in [16, 22, 24, 32, 48, 256]:
-		data_files += [(os.path.join("theme", "icons", size + "x" + size, 
-			name + ".png"), os.path.join(name, "theme", "icons", size + "x" + 
-			size, name + ".png"), "DATA")]
+		data_files += [(os.path.join("theme", "icons", str(size) + "x" + str(size), 
+			name + ".png"), os.path.join(name, "theme", "icons", str(size) + "x" + 
+			str(size), name + ".png"), "DATA")]
+	data_files += [
+		(name + ".desktop", os.path.join("misc", name + ".desktop"), "DATA"),
+		("install.sh", os.path.join("util", "install.sh"), "DATA"),
+		("uninstall.sh", os.path.join("util", "uninstall.sh"), "DATA")
+	]
 coll = COLLECT(exe,
 	data_files
 	+ Tree("screenshots", "screenshots", [".svn", "Thumbs.db"])

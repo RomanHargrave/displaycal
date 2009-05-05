@@ -58,12 +58,12 @@ def setup():
 	recordfile_name = None # record installed files to this file
 	setuptools = None
 	use_distutils = not bdist_bbfreeze and not do_py2app and ("--use-distutils" in sys.argv[1:] or os.path.exists("use-distutils"))
-	use_setuptools = bdist_bbfreeze or do_py2app or "--use-setuptools" in sys.argv[1:] or not os.path.exists("use-distutils")
+	use_setuptools = bdist_bbfreeze or do_py2app or "--use-setuptools" in sys.argv[1:] or not use_distutils
 
 	sys.path.insert(1, os.path.join(os.path.dirname(pydir), "util"))
 
 	if not use_setuptools and use_distutils:
-		if "--use-distutils" in sys.argv[1:]:
+		if "--use-distutils" in sys.argv[1:] and not os.path.exists("use-distutils"):
 			open("use-distutils", "w").close()
 	else:
 		if os.path.exists("use-distutils"):
