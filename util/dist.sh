@@ -6,7 +6,7 @@
 ./setup.py bdist_pyi -F --use-distutils > pyi.log 2>&1
 
 # Python 2.5 RPM
-/usr/local/bin/python2.5 setup.py bdist_rpm --binary-only --use-distutils > rpm-py2.5.log 2>&1
+/usr/bin/python2.5 setup.py bdist_rpm --binary-only --use-distutils > rpm-py2.5.log 2>&1
 mkdir -p dist/python2.5
 mv dist/dispcalGUI-*.rpm dist/python2.5
 
