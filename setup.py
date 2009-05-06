@@ -14,7 +14,7 @@ pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
 def create_appdmg():
-	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", "%s-%s.dmg" % (name, version)), "-volname", name, "-fs", "HFS+", "-srcfolder", os.path.join(pydir, "dist", "py2app-py" + sys.version[:3], name + "-" + version)])
+	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", "%s-%s.dmg" % (name, version)), "-volname", name, "-fs", "HFS+", "-srcfolder", os.path.join(pydir, "dist", "py2app.%s-py%s" % (get_platform(), sys.version[:3]), name + "-" + version)])
 	if retcode != 0:
 		sys.exit(retcode)
 
@@ -139,6 +139,7 @@ def setup():
 			"VersionInfoVersion": ".".join(map(str, version_tuple)),
 			"VersionInfoTextVersion": version,
 			"AppVersion": version,
+			"Platform": get_platform(),
 			"PythonVersion": sys.version[:3],
 			}
 		inno_template.close()

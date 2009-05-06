@@ -169,6 +169,8 @@ def postinstall(prefix=None):
 			print "warning - '%s' not found" % modpath.encode("MBCS", "replace")
 	else:
 		# Linux/Unix
+		if prefix is None:
+			prefix = sys.prefix
 		print "installing icon resources..."
 		for size in [16, 22, 24, 32, 48, 256]:
 			call(["xdg-icon-resource", "install", "--noupdate", "--novendor", "--size", str(size), prefix + ("/share/%s/theme/icons/%sx%s/%s.png" % (name, size, size, name))])
@@ -185,6 +187,8 @@ def postuninstall(prefix=None):
 		pass
 	else:
 		# Linux/Unix
+		if prefix is None:
+			prefix = sys.prefix
 		print "uninstalling desktop menu entry..."
 		call(["xdg-desktop-menu", "uninstall", prefix + ("/share/applications/%s.desktop" % name)])
 		print "uninstalling icon resources..."

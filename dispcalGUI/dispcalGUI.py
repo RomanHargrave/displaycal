@@ -5546,7 +5546,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				mode += self.getlstr("projector")
 			profile_name = profile_name.replace("%im", mode)
 		else:
-			profile_name = re.sub("[-_\s]+%im|*%im[-_\s]*", "", profile_name)
+			profile_name = re.sub("[-_\s]+%im|%im[-_\s]*", "", profile_name)
 		if isinstance(whitepoint, str):
 			if whitepoint.find(",") < 0:
 				if self.get_whitepoint_locus() == "t":

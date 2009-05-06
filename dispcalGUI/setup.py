@@ -341,7 +341,7 @@ def setup():
 		attrs["options"] = {
 			"py2app": {
 				"argv_emulation": True,
-				"dist_dir": os.path.join(pydir, "..", "dist", "py2app-py" + sys.version[:3], name + "-" + version),
+				"dist_dir": os.path.join(pydir, "..", "dist", "py2app.%s-py%s" % (get_platform(), sys.version[:3]), name + "-" + version),
 				"iconfile": os.path.join(pydir, "theme", "icons", "dispcalGUI.icns"),
 				"optimize": 2,
 				"plist": {
@@ -372,7 +372,7 @@ def setup():
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", name + ".ico"))],
 			"other_resources": [(24, 1, manifest_xml)]
 		}]
-		dist_dir = os.path.join(pydir, "..", "dist", "py2exe-py" + sys.version[:3], name + "-" + version)
+		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % (get_platform(), sys.version[:3]), name + "-" + version)
 		attrs["options"] = {
 				"py2exe": {
 						"dist_dir": dist_dir,
