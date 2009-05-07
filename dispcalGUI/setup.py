@@ -600,6 +600,7 @@ def setup():
 				manifest_in += ["include " + os.path.sep.join([pkgdir] + obj.split("/"))]
 		for pymod in attrs.get("py_modules", []):
 			manifest_in += ["include " + os.path.join(*pymod.split("."))]
+		manifest_in += ["include " + os.path.sep.join("dispcalGUI", "theme", "theme-info.txt")]
 		manifest_in += ["recursive-include %s %s" % ("autopackage", "*.apspec")]
 		manifest_in += ["recursive-include %s %s" % ("misc", "*")]
 		manifest_in += ["recursive-exclude %s %s" % ("misc", "warn%s-pyi-*.txt" % name)]
@@ -644,7 +645,8 @@ def setup():
 		manifest_in += ["recursive-include %s %s" % ("theme", "*")]
 		manifest_in += ["recursive-include %s %s" % ("util", "*.cmd *.py *.sh")]
 		if sys.platform == "win32" and not setuptools:
-			manifest_in += ["global-exclude .svn/*"] # needed under Windows
+			manifest_in += ["global-exclude .svn/*"] # (only) needed under Windows
+		manifest_in += ["global-exclude *~"]
 		manifest = open("MANIFEST.in", "w")
 		manifest.write("\n".join(manifest_in))
 		manifest.close()
