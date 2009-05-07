@@ -32,7 +32,7 @@
 # include <X11/extensions/dpms.h>
 # include <X11/extensions/Xinerama.h>
 # include <X11/extensions/Xrandr.h>
-# include <X11/extensions/scrnsaver.h>
+// # include <X11/extensions/scrnsaver.h>
 # include <X11/extensions/dpms.h>
 #endif /* UNIX */
 
