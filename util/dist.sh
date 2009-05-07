@@ -7,3 +7,6 @@
 
 # Python 2.5 RPM
 /usr/bin/python2.5 setup.py bdist_rpm --use-distutils > rpm-py2.5.log 2>&1
+
+# Source tarball
+/usr/bin/python2.5 setup.py sdist --use-setuptools > sdist.log 2>&1
