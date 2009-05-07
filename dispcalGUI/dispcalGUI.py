@@ -8590,7 +8590,7 @@ def main():
 		if not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty() or "-oc" in sys.argv[1:]:
 			terminals_opts = {
 				"Terminal": "-x",
-				"gnome-terminal": "-e",
+				"gnome-terminal": "-x",
 				"konsole": "-e",
 				"xterm": "-e"
 			}
