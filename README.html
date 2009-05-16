@@ -265,10 +265,16 @@
 		<h1><a href="http://hoech.net/dispcalGUI">dispcalGUI</a> <span>Display Calibration powered by Argyll CMS and Python</span></h1>
 		
 		<dl class="info">
-			<dt>Version:</dt>
-				<dd id="version">0.2.5b2 (<a href="#history">changelog</a>)</dd>
+			<dt>Version:<br />
+				&#160;<br />
+				&#160;<br />
+				&#160;</dt>
+				<dd id="version">0.2.5b2 (Linux)<br />
+				0.2.5b2 (Mac OS X)<br />
+				0.2.5b3 (Windows)<br />
+				<a href="#history">Changelog</a></dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-05-07T21:55:57+01:00</dd>
+				<dd id="date">2009-05-16T22:30:58+01:00</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -382,12 +388,12 @@
 			<p>
 				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b2-Linux-x86.tar.gz">Tarball</a><br />
 				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b2.dmg">DMG</a><br />
-				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b2-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b2-Windows-x86.zip">ZIP</a>
+				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b3-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b3-Windows-x86.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b2.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b3.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
@@ -590,10 +596,6 @@
 				<h4>RPM</h4>
 				
 				<p>Use <code>rpm -i dispcalGUI-0.2.5b2-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>.<em>&lt;arch&gt;</em>.rpm</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
-				
-				<!--h4>Windows (Installer)</h4>
-				
-				<p>Launch the installer which will guide you trough the required setup steps.</p-->
 			</div>
 			
 			<div id="install-exe">
@@ -891,7 +893,6 @@
 			Graeme Gill, for creating Argyll CMS.<br />
 			Roberto Quintero (spanish translation).<br />
 			Tommaso Schiavinotto (italian translation).<br />
-			<!--Patrice Vetsel (french translation).<br />-->
 			And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 		</div>
 		
@@ -899,6 +900,13 @@
 			<h2>Version history / changelog</h2>
 			
 			<dl>
+				<dt>2009-05-16 0.2.5b3</dt>
+					<dd>
+						<ul>
+							<li>Fixed calibration loader autostart entry creation ("access denied" error) under Windows Vista and later with User Account Control enabled.</li>
+						</ul>
+					</dd>
+				
 				<dt>2009-05-07 0.2.5b2</dt>
 					<dd>
 						<ul>
@@ -1040,7 +1048,7 @@
 							<li>add: profile and testchart creation can be aborted (when running from source only if using Python >= 2.6).</li>
 							<li>add: “Before” / “After” switch when calibration / profiling complete.</li>
 							<li>add: menu item to enable Spyder 2 from within dispcalGUI.</li>
-							<li>add: <!--french, -->italian and spanish GUI translations (thanks contributors!)</li>
+							<li>add: italian and spanish GUI translations (thanks contributors!)</li>
 							<li>Numerous other small fixes/changes.</li>
 						</ul>
 					</dd>

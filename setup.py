@@ -8,7 +8,7 @@ import os
 import sys
 
 from dispcalGUI.setup import __doc__
-from dispcalGUI.meta import name, domain, version, version_tuple
+from dispcalGUI.meta import name, domain, version, version_lin, version_mac, version_tuple, version_win
 
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
@@ -100,7 +100,7 @@ def setup():
 			("VERSION_MAC", version_mac),
 			("VERSION_WIN", version_win)
 		]:
-			readme_template_html = readme_template_html.replace("$" + key, val)
+			readme_template_html = readme_template_html.replace("${%s}" % key, val)
 		readme = open(os.path.join(pydir, "README.html"), "rb")
 		readme_html = readme.read()
 		readme.close()
