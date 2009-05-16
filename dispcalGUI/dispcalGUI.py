@@ -1362,10 +1362,11 @@ class DisplayCalibratorGUI(wx.Frame):
 			"position.x": get_display(self).ClientArea[0] + 10,
 			"position.y": get_display(self).ClientArea[1] + 30,
 			"profile.install_scope": "l" if (sys.platform != "win32" and 
-										os.geteuid() == 0) or 
-										(sys.platform == "win32" and 
-										sys.getwindowsversion() >= (6, )) else 
-										"u", # Linux, OSX or Vista and later
+										os.geteuid() == 0) # or 
+										# (sys.platform == "win32" and 
+										# sys.getwindowsversion() >= (6, )) 
+										else 
+										"u", # Linux, OSX
 			"profile.name": u" ".join([
 				u"%dns",
 				u"%Y-%m-%d",
@@ -4423,23 +4424,22 @@ class DisplayCalibratorGUI(wx.Frame):
 				n = self.get_display_number()
 				loader_args = "-d%s -c -L" % n
 				if sys.platform == "win32":
+					loader_v01b = os.path.join(autostart_home, ("dispwin-d%s-c-L" % n) + ".lnk")
+					if os.path.exists(loader_v01b):
+						try:
+							# delete v0.1b loader
+							os.remove(loader_v01b)
+						except Exception, exception:
+							safe_print("Warning - could not remove old v0.1b calibration loader '%s': %s" % (loader_v01b, str(exception)))
+					name = "%s Calibration Loader (Display %s)" % (appname, n)
+					loader_v02b = os.path.join(autostart_home, name + ".lnk")
+					if os.path.exists(loader_v02b):
+						try:
+							# delete v02.b/v0.2.1b loader
+							os.remove(loader_v02b)
+						except Exception, exception:
+							safe_print("Warning - could not remove old v0.2b calibration loader '%s': %s" % (loader_v02b, str(exception)))
 					try:
-						loader_v01b = os.path.join(autostart_home, ("dispwin-d%s-c-L" % n) + ".lnk")
-						if os.path.exists(loader_v01b):
-							try:
-								# delete v0.1b loader
-								os.remove(loader_v01b)
-							except Exception, exception:
-								safe_print("Warning - could not remove old v0.1b calibration loader '%s': %s" % (loader_v01b, str(exception)))
-						name = "%s Calibration Loader (Display %s)" % (appname, n)
-						loader_v02b = os.path.join(autostart_home, name + ".lnk")
-						if os.path.exists(loader_v02b):
-							try:
-								# delete v02.b/v0.2.1b loader
-								os.remove(loader_v02b)
-							except Exception, exception:
-								safe_print("Warning - could not remove old v0.2b calibration loader '%s': %s" % (loader_v02b, str(exception)))
-						path = os.path.join(autostart, name + ".lnk")
 						scut = pythoncom.CoCreateInstance(
 							shell.CLSID_ShellLink, None,
 							pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink
@@ -4451,7 +4451,14 @@ class DisplayCalibratorGUI(wx.Frame):
 							scut.SetIconLocation(get_data_path(os.path.join("theme", "icons", appname + ".ico")), 0)
 						scut.SetArguments(loader_args)
 						scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
-						scut.QueryInterface(pythoncom.IID_IPersistFile).Save(path, 0)
+						if "-Sl" in args or sys.getwindowsversion() < (6, ): # Vista and later if using system scope, Windows 2k/XP
+							try:
+								scut.QueryInterface(pythoncom.IID_IPersistFile).Save(os.path.join(autostart, name + ".lnk"), 0)
+							except Exception, exception:
+								pass # try user scope
+							else:
+								return result
+						scut.QueryInterface(pythoncom.IID_IPersistFile).Save(os.path.join(autostart_home, name + ".lnk"), 0)
 					except Exception, exception:
 						if not silent: InfoDialog(self, msg = self.getlstr("error.autostart_creation", "Windows") + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
 				elif sys.platform != "darwin":
