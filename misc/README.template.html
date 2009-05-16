@@ -266,7 +266,10 @@
 		
 		<dl class="info">
 			<dt>Version:</dt>
-				<dd id="version">$VERSION (<a href="#history">changelog</a>)</dd>
+				<dd id="version">$VERSION_LIN (Linux)<br />
+				$VERSION_MAC (Mac OS X)<br />
+				$VERSION_WIN (Windows)<br />
+				<a href="#history">Changelog</a></dd>
 			<dt>Date:</dt>
 				<dd id="date">$TIMESTAMP</dd>
 			<dt>Author:</dt>
@@ -372,17 +375,17 @@
 			
 			<h3>Linux DEB/RPM</h3>
 			<p>
-				<a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.5-fedora10-1.i386.rpm">RPM for Fedora 10 (Python 2.5, x86)</a><br />
-				<a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-py2.5-openSUSE11-1.i586.rpm">RPM for openSUSE 11 (Python 2.5, x86)</a><br />
-				<a href="http://hoech.net/dispcalGUI/dispcalgui_$VERSION-py2.6-ubuntu9-1_i386.deb">DEB for Ubuntu 9 (Python 2.6, x86)</a>
+				<a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION_LIN-py2.5-fedora10-1.i386.rpm">RPM for Fedora 10 (Python 2.5, x86)</a><br />
+				<a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION_LIN-py2.5-openSUSE11-1.i586.rpm">RPM for openSUSE 11 (Python 2.5, x86)</a><br />
+				<a href="http://hoech.net/dispcalGUI/dispcalgui_$VERSION_LIN-py2.6-ubuntu9-1_i386.deb">DEB for Ubuntu 9 (Python 2.6, x86)</a>
 			</p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-Linux-x86.tar.gz">Tarball</a><br />
-				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION.dmg">DMG</a><br />
-				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION-Windows-x86.zip">ZIP</a>
+				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION_LIN-Linux-x86.tar.gz">Tarball</a><br />
+				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION_MAC.dmg">DMG</a><br />
+				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION_WIN-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-$VERSION_WIN-Windows-x86.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
@@ -585,15 +588,11 @@
 				
 				<h4>DEB</h4>
 				
-				<p>Use <code>dpkg -i dispcalgui_$VERSION-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>_<em>&lt;arch&gt;</em>.deb</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install DEB packages.</p>
+				<p>Use <code>dpkg -i dispcalgui_$VERSION_LIN-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>_<em>&lt;arch&gt;</em>.deb</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install DEB packages.</p>
 				
 				<h4>RPM</h4>
 				
-				<p>Use <code>rpm -i dispcalGUI-$VERSION-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>.<em>&lt;arch&gt;</em>.rpm</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
-				
-				<!--h4>Windows (Installer)</h4>
-				
-				<p>Launch the installer which will guide you trough the required setup steps.</p-->
+				<p>Use <code>rpm -i dispcalGUI-$VERSION_LIN-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>.<em>&lt;arch&gt;</em>.rpm</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
 			</div>
 			
 			<div id="install-exe">
@@ -891,7 +890,6 @@
 			Graeme Gill, for creating Argyll CMS.<br />
 			Roberto Quintero (spanish translation).<br />
 			Tommaso Schiavinotto (italian translation).<br />
-			<!--Patrice Vetsel (french translation).<br />-->
 			And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 		</div>
 		
@@ -900,6 +898,13 @@
 			
 			<dl>
 				<dt>$DATE $VERSION</dt>
+					<dd>
+						<ul>
+							<li>Fixed calibration loader autostart entry creation ("access denied" error) under Windows Vista and later with User Account Control enabled.</li>
+						</ul>
+					</dd>
+				
+				<dt>2009-05-07 0.2.5b2</dt>
 					<dd>
 						<ul>
 							<li>Fixed "error: nothing to repeat" when using a spectrometer.</li>
@@ -1040,7 +1045,7 @@
 							<li>add: profile and testchart creation can be aborted (when running from source only if using Python >= 2.6).</li>
 							<li>add: “Before” / “After” switch when calibration / profiling complete.</li>
 							<li>add: menu item to enable Spyder 2 from within dispcalGUI.</li>
-							<li>add: <!--french, -->italian and spanish GUI translations (thanks contributors!)</li>
+							<li>add: italian and spanish GUI translations (thanks contributors!)</li>
 							<li>Numerous other small fixes/changes.</li>
 						</ul>
 					</dd>

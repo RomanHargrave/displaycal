@@ -95,7 +95,10 @@ def setup():
 				strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(readme_template_path).st_mtime)) +
 				("+" if timezone < 0 else "-") +
 				strftime("%H:%M", gmtime(abs(timezone)))),
-			("VERSION", version)
+			("VERSION", version),
+			("VERSION_LIN", version_lin),
+			("VERSION_MAC", version_mac),
+			("VERSION_WIN", version_win)
 		]:
 			readme_template_html = readme_template_html.replace("$" + key, val)
 		readme = open(os.path.join(pydir, "README.html"), "rb")
