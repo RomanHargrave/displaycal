@@ -10,7 +10,7 @@ if sys.platform in ("cygwin", "win32"):
 	from winversion import mktempver
 	manifestpath = mktempmanifest(os.path.join("misc", name + 
 		(".exe.VC90.manifest" if hasattr(sys, "version_info") and 
-		sys.version_info[:2] >= (2,6) else ".exe.manifest")))
+		sys.version_info[:3] == (2,6,1) else ".exe.manifest")))
 	versionpath = mktempver(os.path.join("misc", "winversion.txt"))
 	additional_opts = {
 		"icon": os.path.join(name, "theme", "icons", name + ".ico"),
