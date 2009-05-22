@@ -90,10 +90,15 @@ excludes = {
     'SHLWAPI.DLL':1,
     'URLMON.DLL':1,
     # regex excludes
-    '^/usr/lib':1,
-    '^/lib':1,
-    '^/lib/tls':1,
-    # 
+    r'^/usr/lib':1,
+    r'^/lib':1,
+    # don't include in the bundle the libc and the tls stuff
+    r'^/usr/lib/tls':1,
+    r'^/lib/libc\.so\..*':1,
+    r'^/lib/tls':1,
+    # libGL can reference some hw specific libraries (like nvidia libs)
+    r'/usr/lib/libGL.*':1,
+    #
     '^/System/Library/Frameworks':1,
     # MS assembly excludes
     'Microsoft.Windows.Common-Controls':1,
@@ -430,6 +435,10 @@ def _getImports_otool(pth):
         m = re.search(r"\s+(.*?)\s+\(.*\)", line)
         if m:
             lib = m.group(1)
+            if lib.startswith("@executable_path"):
+                rel_path = lib.replace("@executable_path",".")
+                rel_path = os.path.join(os.path.dirname(pth), rel_path)
+                lib = os.path.abspath(rel_path)
             if os.path.exists(lib):
                 rslt.append(lib)
             else:

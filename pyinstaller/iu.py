@@ -90,7 +90,7 @@ class DirOwner(Owner):
                loadco=marshal.loads, newmod=imp.new_module):
         pth =  _os_path_join(self.path, nm)
         possibles = [(pth, 0, None)]
-        if pathisdir(pth):
+        if pathisdir(pth) and caseOk(pth):
             possibles.insert(0, (_os_path_join(pth, '__init__'), 1, pth))
         py = pyc = None
         for pth, ispkg, pkgpth in possibles:
@@ -170,6 +170,14 @@ if zipimport:
                     mod.__path__ = [_os_path_join(self.path, nm)]
                     subimporter = PathImportDirector(mod.__path__)
                     mod.__importsub__ = subimporter.getmod
+                if self.path.endswith(".egg"):
+                    # Fixup some additional special attribute so that
+                    # pkg_resources works correctly.
+                    # TODO: couldn't we fix these attributes always,
+                    # for all zip files?
+                    mod.__file__ = _os_path_join(
+                        _os_path_join(self.path, nm), "__init__.py")
+                    mod.__loader__ = self.__zip
                 mod.__co__ = co
                 return mod
             except zipimport.ZipImportError:
@@ -365,7 +373,7 @@ class ImportManager:
         if globals:
             __globals_name = globals.get('__name__')
         # first see if we could be importing a relative name
-        debug("importHook(%s, %s, locals, %s)" % (name, __globals_name, fromlist))
+        debug("importHook(%s, %s, locals, %s, %s)" % (name, __globals_name, fromlist, level))
         _sys_modules_get = sys.modules.get
         _self_doimport = self.doimport
         threaded = self.threaded
@@ -373,14 +381,11 @@ class ImportManager:
         # break the name being imported up so we get:
         # a.b.c -> [a, b, c]
         nmparts = namesplit(name)
-        
-        if len(nmparts) and nmparts[0] == "encodings":
-            level = -1
 
         if not globals:
             contexts = [None]
-            if level >= 0:
-                raise ImportError("Relative import requires 'globals'")
+            if level > 0:
+                raise RuntimeError("Relative import requires 'globals'")
         elif level == 0:
             # absolute import, do not try relative
             contexts = [None]
@@ -394,10 +399,10 @@ class ImportManager:
             else:
                 # relative import, do not try absolute
                 if not importernm:
-                    raise ImportError("Relative import requires package")
+                    raise RuntimeError("Relative import requires package")
                 importernm = _string_split(importernm, '.')[:-level]
                 importernm = _string_join('.', importernm)
-                contexts = [None]
+                contexts = []
             if importernm:
                 if hasattr(_sys_modules_get(importernm), '__path__'):
                     # If you use the "from __init__ import" syntax, the package
