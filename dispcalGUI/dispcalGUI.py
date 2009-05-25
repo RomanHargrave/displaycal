@@ -2943,7 +2943,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if ldict[lang]["id"] == event.GetId():
 				self.setcfg("lang", lang)
 				self.write_cfg()
-				InfoDialog(self, msg = self.getlstr("app.restart_request"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"], logit = False)
+				InfoDialog(self, msg = self.getlstr("app.restart_request", lang = lang), ok = self.getlstr("ok", lang = lang), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"], logit = False)
 				break
 
 	def restore_defaults_handler(self, event = None, include = (), exclude = ()):
