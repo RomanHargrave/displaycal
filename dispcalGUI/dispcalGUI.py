@@ -145,8 +145,16 @@ if sys.platform == "win32":
 	commonappdata = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_APPDATA)
 	commonprogramfiles = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_PROGRAM_FILES_COMMON)
 	confighome = os.path.join(appdata, appname)
-	autostart = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_STARTUP)
-	autostart_home = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP)
+	try:
+		autostart = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_STARTUP)
+		# can fail under Vista if directory doesn't exist
+	except Exception, exception:
+		autostart = None
+	try:
+		autostart_home = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP)
+		# can fail under Vista if directory doesn't exist
+	except Exception, exception:
+		autostart_home = None
 	datahome = os.path.join(appdata, appname)
 	logdir = os.path.join(datahome, "logs")
 	data_dirs += [datahome, os.path.join(commonappdata, appname), 
@@ -1262,6 +1270,10 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.app = app
 		self.init_cfg()
 		if verbose >= 1: safe_print(self.getlstr("startup"))
+		if not autostart:
+			safe_print(self.getlstr("warning.autostart_system"))
+		if not autostart_home:
+			safe_print(self.getlstr("warning.autostart_user"))
 		self.init_frame()
 		self.init_defaults()
 		self.init_gamapframe()
@@ -4424,21 +4436,22 @@ class DisplayCalibratorGUI(wx.Frame):
 				n = self.get_display_number()
 				loader_args = "-d%s -c -L" % n
 				if sys.platform == "win32":
-					loader_v01b = os.path.join(autostart_home, ("dispwin-d%s-c-L" % n) + ".lnk")
-					if os.path.exists(loader_v01b):
-						try:
-							# delete v0.1b loader
-							os.remove(loader_v01b)
-						except Exception, exception:
-							safe_print("Warning - could not remove old v0.1b calibration loader '%s': %s" % (loader_v01b, str(exception)))
 					name = "%s Calibration Loader (Display %s)" % (appname, n)
-					loader_v02b = os.path.join(autostart_home, name + ".lnk")
-					if os.path.exists(loader_v02b):
-						try:
-							# delete v02.b/v0.2.1b loader
-							os.remove(loader_v02b)
-						except Exception, exception:
-							safe_print("Warning - could not remove old v0.2b calibration loader '%s': %s" % (loader_v02b, str(exception)))
+					if autostart_home:
+						loader_v01b = os.path.join(autostart_home, ("dispwin-d%s-c-L" % n) + ".lnk")
+						if os.path.exists(loader_v01b):
+							try:
+								# delete v0.1b loader
+								os.remove(loader_v01b)
+							except Exception, exception:
+								safe_print("Warning - could not remove old v0.1b calibration loader '%s': %s" % (loader_v01b, str(exception)))
+						loader_v02b = os.path.join(autostart_home, name + ".lnk")
+						if os.path.exists(loader_v02b):
+							try:
+								# delete v02.b/v0.2.1b loader
+								os.remove(loader_v02b)
+							except Exception, exception:
+								safe_print("Warning - could not remove old v0.2b calibration loader '%s': %s" % (loader_v02b, str(exception)))
 					try:
 						scut = pythoncom.CoCreateInstance(
 							shell.CLSID_ShellLink, None,
@@ -4452,13 +4465,19 @@ class DisplayCalibratorGUI(wx.Frame):
 						scut.SetArguments(loader_args)
 						scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
 						if "-Sl" in args or sys.getwindowsversion() < (6, ): # Vista and later if using system scope, Windows 2k/XP
-							try:
-								scut.QueryInterface(pythoncom.IID_IPersistFile).Save(os.path.join(autostart, name + ".lnk"), 0)
-							except Exception, exception:
-								pass # try user scope
+							if autostart:
+								try:
+									scut.QueryInterface(pythoncom.IID_IPersistFile).Save(os.path.join(autostart, name + ".lnk"), 0)
+								except Exception, exception:
+									pass # try user scope
+								else:
+									return result
 							else:
-								return result
-						scut.QueryInterface(pythoncom.IID_IPersistFile).Save(os.path.join(autostart_home, name + ".lnk"), 0)
+								if not silent: InfoDialog(self, msg = self.getlstr("error.autostart_system"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
+						if autostart_home:
+							scut.QueryInterface(pythoncom.IID_IPersistFile).Save(os.path.join(autostart_home, name + ".lnk"), 0)
+						else:
+							if not silent: InfoDialog(self, msg = self.getlstr("error.autostart_user"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
 					except Exception, exception:
 						if not silent: InfoDialog(self, msg = self.getlstr("error.autostart_creation", "Windows") + "\n\n" + unicode(str(exception), enc, "replace"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
 				elif sys.platform != "darwin":
