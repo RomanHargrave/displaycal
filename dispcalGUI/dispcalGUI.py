@@ -1673,7 +1673,8 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def init_frame(self):
 		# window frame
-		wx.Frame.__init__(self, None, -1, "%s %s build %s" % (appname, version, build), size = wx.Size(480, 748), style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX))
+		wx.Frame.__init__(self, None, -1, "%s %s build %s" % (appname, version, build), size = wx.Size(480, 640), style = wx.DEFAULT_FRAME_STYLE & ~wx.MAXIMIZE_BOX)
+		self.SetMaxSize((968, -1))
 		self.SetIcon(wx.Icon(get_data_path(os.path.join("theme", "icons", "16x16", appname + ".png")), wx.BITMAP_TYPE_PNG))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
@@ -2492,6 +2493,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.whitepoint_colortemp_locus_ctrl = wx.ComboBox(self.calpanel, -1, size = (110, -1), choices = self.whitepoint_colortemp_loci, style = wx.CB_READONLY)
 		self.Bind(wx.EVT_COMBOBOX, self.whitepoint_colortemp_locus_ctrl_handler, id = self.whitepoint_colortemp_locus_ctrl.GetId())
 		self.AddToSubSizer(self.whitepoint_colortemp_locus_ctrl, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 0)
+		
+		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
@@ -2516,6 +2519,8 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		self.whitepoint_y_label = wx.StaticText(self.calpanel, -1, u"y")
 		self.AddToSubSizer(self.whitepoint_y_label, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
+		
+		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
@@ -2681,6 +2686,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.black_point_rate_intctrl = wx.SpinCtrl(self.calpanel, -1, initial = 400, size = (55, -1), min = 5, max = 2000)
 			self.Bind(wx.EVT_TEXT, self.black_point_rate_ctrl_handler, id = self.black_point_rate_intctrl.GetId())
 			self.AddToSubSizer(self.black_point_rate_intctrl, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
+		
+		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
@@ -2702,6 +2709,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.interactive_display_adjustment_cb = wx.CheckBox(self.calpanel, -1, self.getlstr("calibration.interactive_display_adjustment"))
 		self.Bind(wx.EVT_CHECKBOX, self.interactive_display_adjustment_ctrl_handler, id = self.interactive_display_adjustment_cb.GetId())
 		self.AddToSubSizer(self.interactive_display_adjustment_cb, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 10)
+		
+		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
