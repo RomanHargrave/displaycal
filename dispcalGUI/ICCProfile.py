@@ -727,31 +727,31 @@ class ICCProfile:
 		"""
 		Return profile copyright.
 		"""
-		return unicode(self.tags.cprt, errors="replace")
+		return unicode(self.tags.cprt.__str__(), errors="replace")
 	
 	def getDescription(self):
 		"""
 		Return profile description.
 		"""
-		return unicode(self.tags.desc, errors="replace")
+		return unicode(self.tags.desc.__str__(), errors="replace")
 	
 	def getDeviceManufacturerDescription(self):
 		"""
 		Return device manufacturer description.
 		"""
-		return unicode(self.tags.dmnd, errors="replace")
+		return unicode(self.tags.dmnd.__str__(), errors="replace")
 	
 	def getDeviceModelDescription(self):
 		"""
 		Return device model description.
 		"""
-		return unicode(self.tags.dmdd, errors="replace")
+		return unicode(self.tags.dmdd.__str__(), errors="replace")
 	
 	def getViewingConditionsDescription(self):
 		"""
 		Return viewing conditions description.
 		"""
-		return unicode(self.tags.vued, errors="replace")
+		return unicode(self.tags.vued.__str__(), errors="replace")
 	
 	def isSame(self, profile):
 		"""
