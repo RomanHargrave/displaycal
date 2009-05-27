@@ -5,7 +5,7 @@ from decimal import Decimal
 from hashlib import md5
 from os import getenv, path
 import struct
-from sys import platform
+from sys import getfilesystemencoding, platform
 from time import localtime, mktime, strftime
 if platform == "win32":
 	import win32api
@@ -399,7 +399,7 @@ class TextDescriptionType(Dict): # ICC v2
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + ASCIIDescriptionLength].strip("\0\n\r ")
-			if ASCIIDescription: self.ASCII = ASCIIDescription
+			if ASCIIDescription: self.ASCII = unicode(ASCIIDescription, getfilesystemencoding(), errors="replace") # even ASCII description may contain non-ASCII chars, so assume system encoding and convert to unicode, replacing unknown chars
 		unicodeOffset = 12 + ASCIIDescriptionLength
 		unicodeLanguageCode = uInt32Number(tagData[unicodeOffset:unicodeOffset + 4])
 		unicodeDescriptionLength = uInt32Number(tagData[unicodeOffset + 4:unicodeOffset + 8])
@@ -412,24 +412,24 @@ class TextDescriptionType(Dict): # ICC v2
 			unicodeDescription = tagData[unicodeOffset + 8:unicodeOffset + 8 + (unicodeDescriptionLength) * charBytes]
 			try:
 				if charBytes == 1:
-					unicodeDescription = unicode(unicodeDescription)
+					unicodeDescription = unicode(unicodeDescription, errors="replace")
 				else:
 					if unicodeDescription[:2] == "\xfe\xff": # UTF-16 Big Endian
 						unicodeDescription = unicodeDescription[2:]
 						if len(unicodeDescription.split(" ")) == unicodeDescriptionLength - 1:
 							safe_print("Warning (non-critical): '" + tagSignature + "' tag Unicode part starts with UTF-16 big endian BOM, but actual contents seem to be UTF-16 little endian")
-							unicodeDescription = unicode("\0".join(unicodeDescription.split(" ")), "utf-16-le") # fix for fubar'd desc tag
+							unicodeDescription = unicode("\0".join(unicodeDescription.split(" ")), "utf-16-le", errors="replace") # fix for fubar'd desc tag
 						else:
-							unicodeDescription = unicode(unicodeDescription, "utf-16-be")
+							unicodeDescription = unicode(unicodeDescription, "utf-16-be", errors="replace")
 					elif unicodeDescription[:2] == "\xff\xfe": # UTF-16 Little Endian
 						unicodeDescription = unicodeDescription[2:]
 						if unicodeDescription[0] == "\0":
 							safe_print("Warning (non-critical): '" + tagSignature + "' tag Unicode part starts with UTF-16 little endian BOM, but actual contents seem to be UTF-16 big endian")
-							unicodeDescription = unicode(unicodeDescription, "utf-16-be") # fix for fubar'd desc tag
+							unicodeDescription = unicode(unicodeDescription, "utf-16-be", errors="replace") # fix for fubar'd desc tag
 						else:
-							unicodeDescription = unicode(unicodeDescription, "utf-16-le")
+							unicodeDescription = unicode(unicodeDescription, "utf-16-le", errors="replace")
 					else:
-						unicodeDescription = unicode(unicodeDescription, "utf-16-be")
+						unicodeDescription = unicode(unicodeDescription, "utf-16-be", errors="replace")
 				unicodeDescription = unicodeDescription.strip("\0\n\r ")
 				if unicodeDescription:
 					if unicodeDescription.find("\0") < 0: self.Unicode = unicodeDescription
@@ -451,7 +451,7 @@ class TextDescriptionType(Dict): # ICC v2
 				if macOffsetBackup < macOffset:
 					safe_print("Warning (non-critical): '" + tagSignature + "' tag Macintosh part offset points to null bytes")
 				try:
-					macDescription = unicode(tagData[macOffset + 3:macOffset + 3 + macDescriptionLength], "mac-" + encodings["mac"][macScriptCode]).strip("\0\n\r ")
+					macDescription = unicode(tagData[macOffset + 3:macOffset + 3 + macDescriptionLength], "mac-" + encodings["mac"][macScriptCode], errors="replace").strip("\0\n\r ")
 					if macDescription: self.Macintosh = macDescription
 				except UnicodeDecodeError:
 					safe_print("UnicodeDecodeError (non-critical): could not decode '" + tagSignature + "' tag Macintosh part")
@@ -727,31 +727,31 @@ class ICCProfile:
 		"""
 		Return profile copyright.
 		"""
-		return unicode(self.tags.cprt.__str__(), errors="replace")
+		return self.tags.cprt.__str__()
 	
 	def getDescription(self):
 		"""
 		Return profile description.
 		"""
-		return unicode(self.tags.desc.__str__(), errors="replace")
+		return self.tags.desc.__str__()
 	
 	def getDeviceManufacturerDescription(self):
 		"""
 		Return device manufacturer description.
 		"""
-		return unicode(self.tags.dmnd.__str__(), errors="replace")
+		return self.tags.dmnd.__str__()
 	
 	def getDeviceModelDescription(self):
 		"""
 		Return device model description.
 		"""
-		return unicode(self.tags.dmdd.__str__(), errors="replace")
+		return self.tags.dmdd.__str__()
 	
 	def getViewingConditionsDescription(self):
 		"""
 		Return viewing conditions description.
 		"""
-		return unicode(self.tags.vued.__str__(), errors="replace")
+		return self.tags.vued.__str__()
 	
 	def isSame(self, profile):
 		"""
