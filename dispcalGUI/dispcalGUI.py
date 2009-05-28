@@ -1817,6 +1817,12 @@ class DisplayCalibratorGUI(wx.Frame):
 								value = value[1].strip("()")
 							else:
 								value = value[0]
+							value = value.replace("GretagMacbeth", "")
+							value = value.replace("X-Rite", "")
+							value = value.replace("Xrite", "")
+							value = value.replace("ColorVision", "")
+							value = value.replace("Datacolor", "")
+							value = value.replace(" ", "")
 							self.comports.append(value)
 			if test:
 				inames = instruments.keys()
@@ -2491,7 +2497,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.whitepoint_colortemp_label = wx.StaticText(self.calpanel, -1, u"° K")
 		self.AddToSubSizer(self.whitepoint_colortemp_label, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 
-		self.whitepoint_colortemp_locus_ctrl = wx.ComboBox(self.calpanel, -1, size = (110, -1), choices = self.whitepoint_colortemp_loci, style = wx.CB_READONLY)
+		self.whitepoint_colortemp_locus_ctrl = wx.ComboBox(self.calpanel, -1, size = (-1, -1), choices = self.whitepoint_colortemp_loci, style = wx.CB_READONLY)
 		self.Bind(wx.EVT_COMBOBOX, self.whitepoint_colortemp_locus_ctrl_handler, id = self.whitepoint_colortemp_locus_ctrl.GetId())
 		self.AddToSubSizer(self.whitepoint_colortemp_locus_ctrl, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 0)
 		
@@ -2590,7 +2596,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		self.AddToSubSizer((8, 0))
 
-		self.trc_type_ctrl = wx.ComboBox(self.calpanel, -1, size = (100, -1), choices = self.trc_types, style = wx.CB_READONLY)
+		self.trc_type_ctrl = wx.ComboBox(self.calpanel, -1, size = (-1, -1), choices = self.trc_types, style = wx.CB_READONLY)
 		self.Bind(wx.EVT_COMBOBOX, self.trc_type_ctrl_handler, id = self.trc_type_ctrl.GetId())
 		self.AddToSubSizer(self.trc_type_ctrl, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 0)
 
@@ -2768,7 +2774,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		# profile type
 		self.AddToSubSizer(wx.StaticText(self.panel, -1, self.getlstr("profile.type")), flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 8)
-		self.profile_type_ctrl = wx.ComboBox(self.panel, -1, size = (85, -1), choices = self.profile_types, style = wx.CB_READONLY)
+		self.profile_type_ctrl = wx.ComboBox(self.panel, -1, size = (-1, -1), choices = self.profile_types, style = wx.CB_READONLY)
 		self.Bind(wx.EVT_COMBOBOX, self.profile_type_ctrl_handler, id = self.profile_type_ctrl.GetId())
 		self.AddToSubSizer(self.profile_type_ctrl, flag = wx.ALIGN_CENTER_VERTICAL)
 
