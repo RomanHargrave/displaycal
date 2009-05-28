@@ -2439,7 +2439,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		else:
 			self.AddToSubSizer(wx.BoxSizer(wx.HORIZONTAL), 1, flag = wx.ALL | wx.EXPAND, border = 5)
 
-		self.comport_ctrl = wx.ComboBox(self.panel, -1, choices = [], style = wx.CB_READONLY, size = (175, -1))
+		self.comport_ctrl = wx.ComboBox(self.panel, -1, choices = [], style = wx.CB_READONLY, size = (150, -1))
 		self.Bind(wx.EVT_COMBOBOX, self.comport_ctrl_handler, id = self.comport_ctrl.GetId())
 		self.AddToSubSizer(self.comport_ctrl, 1, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 
@@ -2454,7 +2454,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			borders = wx.LEFT | wx.RIGHT
 		self.AddToSubSizer(self.measurement_mode_label, flag = borders | wx.ALIGN_CENTER_VERTICAL, border = 8)
 
-		self.measurement_mode_ctrl = wx.ComboBox(self.panel, -1, size = (65, -1), choices = [""] * 4, style = wx.CB_READONLY)
+		self.measurement_mode_ctrl = wx.ComboBox(self.panel, -1, size = (100, -1), choices = [""] * 4, style = wx.CB_READONLY)
 		self.Bind(wx.EVT_COMBOBOX, self.measurement_mode_ctrl_handler, id = self.measurement_mode_ctrl.GetId())
 		self.AddToSubSizer(self.measurement_mode_ctrl, flag = wx.ALIGN_CENTER_VERTICAL)
 
