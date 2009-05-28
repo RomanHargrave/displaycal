@@ -1270,10 +1270,11 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.app = app
 		self.init_cfg()
 		if verbose >= 1: safe_print(self.getlstr("startup"))
-		if not autostart:
-			safe_print(self.getlstr("warning.autostart_system"))
-		if not autostart_home:
-			safe_print(self.getlstr("warning.autostart_user"))
+		if sys.platform != "darwin":
+			if not autostart:
+				safe_print(self.getlstr("warning.autostart_system"))
+			if not autostart_home:
+				safe_print(self.getlstr("warning.autostart_user"))
 		self.init_frame()
 		self.init_defaults()
 		self.init_gamapframe()
@@ -1747,12 +1748,14 @@ class DisplayCalibratorGUI(wx.Frame):
 		if debug:
 			safe_print("New framesizer min height:", self.framesizer.GetMinSize()[1])
 			safe_print("New framesizer height:", self.framesizer.GetSize()[1])
-		self.SetMinSize((size[0], newheight))
+		self.SetMinSize((self.GetMinSize()[0], newheight))
 		if newheight < fullheight:
 			self.SetMaxSize((size[0], newheight))
 		self.Fit()
 		self.Thaw()
-		self.SetMaxSize((-1, -1)) # re-enable resizing
+		# re-enable resizing - do not use CallAfter, it will cause undesired effects on Mac OS X
+		wx.CallLater(100, self.calpanel.SetMaxSize, (-1, -1))
+		wx.CallLater(100, self.SetMaxSize, (-1, -1))
 
 	def cal_drop_handler(self, path):
 		if not self.is_working():
