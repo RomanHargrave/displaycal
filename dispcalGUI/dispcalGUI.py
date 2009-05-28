@@ -69,7 +69,7 @@ import ICCProfile
 ICCP = ICCProfile
 import RealDisplaySizeMM as RDSMM
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ
-from argyll_instruments import instruments
+from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import names as argyll_names, altnames as argyll_altnames
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
 from meta import author, name as appname, version
@@ -1817,12 +1817,7 @@ class DisplayCalibratorGUI(wx.Frame):
 								value = value[1].strip("()")
 							else:
 								value = value[0]
-							value = value.replace("GretagMacbeth", "")
-							value = value.replace("X-Rite", "")
-							value = value.replace("Xrite", "")
-							value = value.replace("ColorVision", "")
-							value = value.replace("Datacolor", "")
-							value = value.replace(" ", "")
+							value = remove_vendor_names(value)
 							self.comports.append(value)
 			if test:
 				inames = instruments.keys()
@@ -5566,11 +5561,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			profile_name = re.sub("[-_\s]+%dns?|%dns?[-_\s]*", "", profile_name)
 		instrument = self.comport_ctrl.GetStringSelection()
 		if instrument:
-			instrument = instrument.replace("GretagMacbeth", "")
-			instrument = instrument.replace("X-Rite", "")
-			instrument = instrument.replace("Xrite", "")
-			instrument = instrument.replace("ColorVision", "")
-			instrument = instrument.replace("Datacolor", "")
+			instrument = remove_vendor_names(instrument)
 			instrument = instrument.replace("Colorimetre", "")
 			instrument = instrument.replace(" ", "")
 			profile_name = profile_name.replace("%in", instrument)

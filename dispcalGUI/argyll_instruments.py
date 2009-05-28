@@ -19,14 +19,14 @@ instruments = {
 	
 	# A value of None for any of the keys means unknown/not tested
 	
-	"Xrite DTP92": {
+	"DTP92": {
 		"spectral": False,
 		"high_res": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
-	"Xrite DTP94": {
+	"DTP94": {
 		"spectral": False,
 		"high_res": False,
 		"projector_mode": False,
@@ -36,21 +36,21 @@ instruments = {
 				# (dispread -D9 output: "Setting no-sensor_calibrate failed failed
 				# with 'Unsupported function'")
 	},
-	"GretagMacbeth Spectrolino": {
+	"Spectrolino": {
 		"spectral": True,
 		"high_res": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
-	"GretagMacbeth SpectroScan": {
+	"SpectroScan": {
 		"spectral": True,
 		"high_res": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
-	"GretagMacbeth SpectroScanT": {
+	"SpectroScanT": {
 		"spectral": True,
 		"high_res": False,
 		"projector_mode": False,
@@ -64,7 +64,7 @@ instruments = {
 		"sensor_cal": True,
 		"skip_sensor_cal": None
 	},
-	"GretagMacbeth i1 Display": {
+	"i1 Display": {
 		"spectral": False,
 		"high_res": False,
 		"projector_mode": False,
@@ -74,21 +74,21 @@ instruments = {
 				# (dispread -D9 output: "Setting no-sensor_calibrate failed failed
 				# with 'Unsupported function'")
 	},
-	"GretagMacbeth i1 Monitor": {
+	"i1 Monitor": {
 		"spectral": True,
 		"high_res": True,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
-	"GretagMacbeth i1 Pro": {
+	"i1 Pro": {
 		"spectral": True,
 		"high_res": True,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
-	"X-Rite ColorMunki": {
+	"ColorMunki": {
 		"spectral": True,
 		"high_res": None,
 		"projector_mode": True,
@@ -102,21 +102,21 @@ instruments = {
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
-	"ColorVision Spyder2": {
+	"Spyder2": {
 		"spectral": False,
 		"high_res": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
-	"Datacolor Spyder3": {
+	"Spyder3": {
 		"spectral": False,
 		"high_res": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
-	"GretagMacbeth Huey": {
+	"Huey": {
 		"spectral": False,
 		"high_res": False,
 		"projector_mode": False,
@@ -138,3 +138,17 @@ instruments = {
 		"skip_sensor_cal": True
 	}
 }
+
+vendors = [
+	"ColorVision",
+	"Datacolor",
+	"GretagMacbeth",
+	"X-Rite",
+	"Xrite"
+]
+
+def remove_vendor_names(txt):
+	for vendor in vendors:
+		txt = txt.replace(vendor, "")
+	txt = txt.strip()
+	return txt
