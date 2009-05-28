@@ -1673,8 +1673,8 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def init_frame(self):
 		# window frame
-		wx.Frame.__init__(self, None, -1, "%s %s build %s" % (appname, version, build), size = wx.Size(480, 640), style = wx.DEFAULT_FRAME_STYLE & ~wx.MAXIMIZE_BOX)
-		self.SetMaxSize((968, -1))
+		wx.Frame.__init__(self, None, -1, "%s %s build %s" % (appname, version, build), style = wx.DEFAULT_FRAME_STYLE)
+		self.SetMaxSize((-1, -1))
 		self.SetIcon(wx.Icon(get_data_path(os.path.join("theme", "icons", "16x16", appname + ".png")), wx.BITMAP_TYPE_PNG))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
@@ -1752,6 +1752,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.SetMaxSize((size[0], newheight))
 		self.Fit()
 		self.Thaw()
+		self.SetMaxSize((-1, -1)) # re-enable resizing
 
 	def cal_drop_handler(self, path):
 		if not self.is_working():
@@ -2313,7 +2314,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		# logo
 		self.AddToSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.EXPAND)
-		self.headercontainer = wx.ScrolledWindow(self.panel, -1, size = (585, 60), style = wx.VSCROLL)
+		self.headercontainer = wx.ScrolledWindow(self.panel, -1, size = (480, 60), style = wx.VSCROLL) # the width also sets the initial minimal width of the main window
 		self.headercontainer.SetScrollRate(0, 0)
 		self.AddToSubSizer(self.headercontainer, 1)
 
@@ -2439,7 +2440,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		self.comport_ctrl = wx.ComboBox(self.panel, -1, choices = [], style = wx.CB_READONLY, size = (175, -1))
 		self.Bind(wx.EVT_COMBOBOX, self.comport_ctrl_handler, id = self.comport_ctrl.GetId())
-		self.AddToSubSizer(self.comport_ctrl, 1, flag = wx.ALIGN_CENTER_VERTICAL)
+		self.AddToSubSizer(self.comport_ctrl, 1, flag = wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 
 		if show_lut_ctrl:
 			self.subsizer.pop()
@@ -2698,11 +2699,11 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		self.AddToSubSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border = 3)
 
-		self.calibration_quality_ctrl = wx.Slider(self.calpanel, -1, 2, 1, 3, size = (64, -1))
+		self.calibration_quality_ctrl = wx.Slider(self.calpanel, -1, 2, 1, 3, size = (50, -1))
 		self.Bind(wx.EVT_SLIDER, self.calibration_quality_ctrl_handler, id = self.calibration_quality_ctrl.GetId())
 		self.AddToSubSizer(self.calibration_quality_ctrl, 1, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 
-		self.calibration_quality_info = wx.StaticText(self.calpanel, -1, "-", size = (50, -1))
+		self.calibration_quality_info = wx.StaticText(self.calpanel, -1, "-", size = (64, -1))
 		self.AddToSubSizer(self.calibration_quality_info, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 
 		# interactive display adjustment?
@@ -2758,11 +2759,11 @@ class DisplayCalibratorGUI(wx.Frame):
 
 		self.AddToSubSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border = 2)
 
-		self.profile_quality_ctrl = wx.Slider(self.panel, -1, 2, 1, 3, size = (64, -1))
+		self.profile_quality_ctrl = wx.Slider(self.panel, -1, 2, 1, 3, size = (50, -1))
 		self.Bind(wx.EVT_SLIDER, self.profile_quality_ctrl_handler, id = self.profile_quality_ctrl.GetId())
 		self.AddToSubSizer(self.profile_quality_ctrl, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 8)
 
-		self.profile_quality_info = wx.StaticText(self.panel, -1, "-", size = (50, -1))
+		self.profile_quality_info = wx.StaticText(self.panel, -1, "-", size = (64, -1))
 		self.AddToSubSizer(self.profile_quality_info, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 20)
 
 		# profile type
