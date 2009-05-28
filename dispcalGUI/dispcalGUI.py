@@ -1738,6 +1738,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			event.Skip()
 
 	def frame_fit(self, fullheight, virtualheight, height, newheight):
+		self.Bind(wx.EVT_IDLE, self.frame_enableresize_handler)
 		size = self.GetSize()
 		self.Freeze()
 		self.SetMaxSize((size[0], fullheight))
@@ -1751,11 +1752,18 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.SetMinSize((self.GetMinSize()[0], newheight))
 		if newheight < fullheight:
 			self.SetMaxSize((size[0], newheight))
-		self.Fit()
+			self.SetSize((size[0], newheight))
+		# self.Fit()
 		self.Thaw()
-		# re-enable resizing - do not use CallAfter, it will cause undesired effects on Mac OS X
 		wx.CallLater(100, self.calpanel.SetMaxSize, (-1, -1))
-		wx.CallLater(100, self.SetMaxSize, (-1, -1))
+
+	def frame_enableresize_handler(self, event = None):
+		if verbose >= 2:
+			safe_print("Enabling window resize")
+		wx.CallLater(150, self.SetMaxSize, (-1, -1))
+		self.Unbind(wx.EVT_IDLE)
+		if event:
+			event.Skip()
 
 	def cal_drop_handler(self, path):
 		if not self.is_working():
@@ -1826,7 +1834,8 @@ class DisplayCalibratorGUI(wx.Frame):
 				inames = instruments.keys()
 				inames.sort()
 				for iname in inames:
-					self.comports.append(iname)
+					if not iname in self.comports:
+						self.comports.append(iname)
 			if verbose >= 1 and not silent: safe_print(self.getlstr("success"))
 			if displays != self.displays:
 				# check lut access
@@ -2466,7 +2475,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		# calibration settings sizer
 		self.AddToSizer(wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, self.getlstr("calibration.settings")), wx.VERTICAL), 1, flag = wx.RIGHT | wx.LEFT | wx.EXPAND, border = 8)
 		self.calpanel = wx.ScrolledWindow(self.panel, -1, style = wx.VSCROLL)
-		self.AddToSubSizer(self.calpanel, 1, flag = wx.RIGHT | wx.LEFT | wx.EXPAND, border = 5)
+		self.AddToSubSizer(self.calpanel, 1, flag = wx.BOTTOM | wx.RIGHT | wx.LEFT | wx.EXPAND, border = 5)
 		self.calpanel.sizer = wx.FlexGridSizer(0, 2)
 		self.subsizer.append(self.calpanel.sizer)
 		self.calpanel.SetSizer(self.calpanel.sizer)
@@ -2701,7 +2710,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		# calibration quality
 		self.AddToSubSizer(wx.StaticText(self.calpanel, -1, self.getlstr("calibration.quality")), flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 8)
 
-		self.AddToSubSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border = 3)
+		self.AddToSubSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.ALIGN_CENTER_VERTICAL, border = 3)
 
 		self.calibration_quality_ctrl = wx.Slider(self.calpanel, -1, 2, 1, 3, size = (50, -1))
 		self.Bind(wx.EVT_SLIDER, self.calibration_quality_ctrl_handler, id = self.calibration_quality_ctrl.GetId())
