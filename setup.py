@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from ConfigParser import RawConfigParser
 from distutils.util import get_platform
 from subprocess import call
 from time import gmtime, strftime, timezone
+import glob
 import os
 import sys
 
@@ -41,6 +43,7 @@ def setup():
 		bdist_cmd = "py2exe"
 
 	bdist_appdmg = "bdist_appdmg" in sys.argv[1:]
+	bdist_deb = "bdist_deb" in sys.argv[1:]
 	bdist_pyi = "bdist_pyi" in sys.argv[1:]
 	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
 	inno = "inno" in sys.argv[1:]
@@ -54,7 +57,6 @@ def setup():
 		# remove the "build", "dispcalGUI.egg-info" and 
 		# "pyinstaller/bincache*" directories and their contents recursively
 
-		import glob
 		import shutil
 
 		if dry_run:
@@ -119,6 +121,10 @@ def setup():
 			create_appdmg()
 			return
 
+	if bdist_deb:
+		i = sys.argv.index("bdist_deb")
+		sys.argv = sys.argv[:i] + ["bdist_rpm"] + sys.argv[i + 1:]
+
 	if bdist_pyi:
 		i = sys.argv.index("bdist_pyi")
 		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
@@ -161,6 +167,51 @@ def setup():
 	
 	if bdist_appdmg:
 		create_appdmg()
+
+	if bdist_deb:
+		# read setup.cfg
+		cfg = RawConfigParser()
+		cfg.read(os.path.join(pydir, "setup.cfg"))
+		# get dependencies
+		dependencies = [val.strip().split(None, 1) for val in cfg.get("bdist_rpm", "Requires").split(",")]
+		# get maintainer
+		maintainer = cfg.get("bdist_rpm", "maintainer") if cfg.has_option("bdist_rpm", "maintainer") else None
+		# get packager
+		packager = cfg.get("bdist_rpm", "packager") if cfg.has_option("bdist_rpm", "packager") else None
+		# convert dependency format: 'package >= version' to 'package (>= version)'
+		for i in range(len(dependencies)):
+			if len(dependencies[i]) > 1:
+				dependencies[i][1] = "(%s)" % dependencies[i][1]
+			dependencies[i] = " ".join(dependencies[i])
+		for rpm_filename in glob.glob(os.path.join(pydir, "dist", "%s-%s-*.*.rpm" % (name, version))):
+			if rpm_filename.endswith(".src.rpm"):
+				continue
+			# use alien to create deb dir from rpm package
+			retcode = call(["alien", "-c", "-g", "-k", os.path.basename(rpm_filename)], cwd = os.path.join(pydir, "dist"))
+			if retcode != 0:
+				sys.exit(retcode)
+			# control filename
+			control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, version), "debian", "control")
+			# read control file from deb dir
+			control = open(control_filename, "r")
+			lines = [line.rstrip("\n") for line in control.readlines()]
+			control.close()
+			# update control with info from setup.cfg
+			for i in range(len(lines)):
+				if lines[i].startswith("Depends:"):
+					# add dependencies
+					lines[i] += ", " + ", ".join(dependencies)
+				elif lines[i].startswith("Maintainer:") and (maintainer or packager):
+					# set maintainer
+					lines[i] = "Maintainer: " + (maintainer or packager)
+			# write updated control file
+			control = open(control_filename, "w")
+			control.write("\n".join(lines))
+			control.close()
+			# create deb package
+			retcode = call(["./debian/rules", "binary"], cwd = os.path.join(pydir, "dist", "%s-%s" % (name, version)))
+			if retcode != 0:
+				sys.exit(retcode)
 
 	if bdist_pyi:
 

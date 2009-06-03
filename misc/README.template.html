@@ -411,7 +411,7 @@
 				<li>
 					To install your measurement device, connect the device to your computer. If you have a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu before continuing.
 					<ul>
-						<li>If you are under Linux, read “Setting up instrument access” in <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux</a>.</li>
+						<li>If you are under Linux, and cannot access your instrument, read “Setting up instrument access” in <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux</a>.</li>
 						<li>If you are under Mac OS X, there is nothing special to do. If you cannot access your device, read <a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a>.</li>
 						<li>
 							If you are under Windows, and if you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
@@ -628,6 +628,9 @@
 				<dl>
 					<dt>bdist_appdmg (Mac OS X only)</dt>
 						<dd>Creates a DMG of a previously created (by the py2app or bdist_standalone commands) application bundle.</dd>
+					<dt>bdist_deb (Linux/Debian-based)</dt>
+						<dd>Create an installable Debian-Package, much like the standard distutils command bdist_rpm for RPM-Packages. Prerequisites:
+						You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example).</dd>
 					<dt>bdist_pyi (Linux or Windows)</dt>
 						<dd>Uses pyinstaller to create a standalone executable. It has the ability to generate single-file executables (by specifying the -F option) which do not need to be shipped with external files. The drawback is a longer startup time, because the files are extracted to a temporary directory at runtime. Normally, you want to use bdist_standalone instead.</dd>
 					<dt>bdist_standalone</dt>
@@ -891,6 +894,7 @@
 		
 			<p>I would like to thank the following people:<br />
 			Graeme Gill, for creating Argyll CMS.<br />
+			Loïc Guégant (french translation).<br />
 			Roberto Quintero (spanish translation).<br />
 			Tommaso Schiavinotto (italian translation).<br />
 			And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
@@ -901,6 +905,23 @@
 			
 			<dl>
 				<dt>${DATE} ${VERSION}</dt>
+					<dd>
+						<ul>
+							<li>fix: (Windows Vista) application exit on launch if autostart directory did not exist.</li>
+							<li>fix: (cosmetic) added some padding to calibration settings right-hand side so scrollbar won't overlap if shown.</li>
+							<li>fix: "TypeError: coercing to Unicode: need string or buffer, instance found" when calling any of the get*Description() methods of an ICCProfile instance, which caused profile creation from existing profile to fail.</li>
+							<li>chg: (cosmetic) enable auto-sizing (fit to contents) for colortemp locus, trc type and profile type selectors.</li>
+							<li>chg: do not show vendor name in instrument select dropdown (conserve some space).</li>
+							<li>chg: (cosmetic) made the instrument selector a little narrower (needs less space now to display instrument name because the vendor name is stripped) and the measure mode selector a bit wider (to accommodate for projector mode).</li>
+							<li>chg: only try to re-start within Terminal on Mac OS X.</li>
+							<li>chg: show application restart request in the chosen language after changing it.</li>
+							<li>chg: allow resizing/maximizing of main window (a minimal size is forced to prevent layout glitches).</li>
+							<li>chg: (Linux) install from source or RPM/DEB package will try to automatically setup access to your instrument. Some services (PolicyKit/HAL or udev) may need to be restarted to get the updated configuration recognized. If in doubt, a reboot should work in all cases.</li>
+							<li>add: french translation (by Loïc Guégant, thanks!)</li>
+						</ul>
+					</dd>
+				
+				<dt>2009-05-16 0.2.5b3</dt>
 					<dd>
 						<ul>
 							<li>Fixed calibration loader autostart entry creation ("access denied" error) under Windows Vista and later with User Account Control enabled.</li>
