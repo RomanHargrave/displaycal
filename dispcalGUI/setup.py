@@ -225,28 +225,38 @@ def setup():
 					[os.path.join(pydir, "theme", "icons", os.path.basename(fname)) for fname in 
 					glob.glob(os.path.join(pydir, "theme", "icons", "*.icns|*.ico"))])]
 		elif sys.platform != "darwin":
+			# Linux
 			data_files += [(data, [os.path.join(pydir, "..", "misc", name + ".desktop")])]
-			# device configuration / permission stuff for Linux
-			if os.path.isdir("/etc/hotplug"):
-				# USB using hotplug and Serial using udev (older versions of Linux)
-				data_files += [
-					("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", "Argyll")]),
-					("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", "Argyll.usermap")])
-				]
-			if os.path.isdir("/etc/udev/permissions.d"):
-				# Serial instruments using udev (older versions of Linux)
-				data_files += [
-					("/etc/udev/permissions.d", [os.path.join(pydir, "..", "misc", "10-Argyll.permissions")])
-				]
-			data_files += [
-				# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-				("/etc/udev/rules.d", [os.path.join(pydir, "..", "misc", "45-Argyll.rules")]),
-				# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-				("/etc/udev/rules.d", [os.path.join(pydir, "..", "misc", "55-Argyll.rules")]),
+			# device configuration / permission stuff
+			if os.path.isdir("/usr/share/PolicyKit/policy") and os.path.isdir("/usr/share/hal/fdi/policy/10osvendor"):
 				# USB and Serial access using PolicyKit V0.6 + HAL (recent versions of Linux)
-				("/usr/share/PolicyKit/policy", [os.path.join(pydir, "..", "misc", "color-device-file.policy")]),
-				("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(pydir, "..", "misc", "19-color.fdi")])
-			]
+				data_files += [
+					("/usr/share/PolicyKit/policy", [os.path.join(pydir, "..", "misc", "color-device-file.policy")]),
+					("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(pydir, "..", "misc", "19-color.fdi")])
+				]
+			elif os.path.isdir("/etc/udev/rules.d"):
+				if glob.glob("/dev/bus/usb/*/*"):
+					# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
+					data_files += [
+						("/etc/udev/rules.d", [os.path.join(pydir, "..", "misc", "55-Argyll.rules")])
+					]
+				else:
+					# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+					data_files += [
+						("/etc/udev/rules.d", [os.path.join(pydir, "..", "misc", "45-Argyll.rules")])
+					]
+			else:
+				if os.path.isdir("/etc/hotplug"):
+					# USB using hotplug and Serial using udev (older versions of Linux)
+					data_files += [
+						("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", "Argyll")]),
+						("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", "Argyll.usermap")])
+					]
+				if os.path.isdir("/etc/udev/permissions.d"):
+					# Serial instruments using udev (older versions of Linux)
+					data_files += [
+						("/etc/udev/permissions.d", [os.path.join(pydir, "..", "misc", "10-Argyll.permissions")])
+					]
 		for dname in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
 			data_files += [(os.path.join(data, "theme", "icons", dname), 
 				[os.path.join(pydir, "theme", "icons", dname, os.path.basename(fname)) for fname in 
