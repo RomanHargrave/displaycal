@@ -234,7 +234,7 @@ def setup():
 					("/usr/share/PolicyKit/policy", [os.path.join(pydir, "..", "misc", "color-device-file.policy")]),
 					("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(pydir, "..", "misc", "19-color.fdi")])
 				]
-			elif os.path.isdir("/etc/udev/rules.d"):
+			if os.path.isdir("/etc/udev/rules.d"):
 				if glob.glob("/dev/bus/usb/*/*"):
 					# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
 					data_files += [
