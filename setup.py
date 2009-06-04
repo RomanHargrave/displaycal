@@ -7,6 +7,7 @@ from subprocess import call
 from time import gmtime, strftime, timezone
 import glob
 import os
+import shutil
 import sys
 
 from dispcalGUI.setup import __doc__
@@ -45,19 +46,33 @@ def setup():
 	bdist_appdmg = "bdist_appdmg" in sys.argv[1:]
 	bdist_deb = "bdist_deb" in sys.argv[1:]
 	bdist_pyi = "bdist_pyi" in sys.argv[1:]
+	setup_cfg = None
 	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
 	inno = "inno" in sys.argv[1:]
 	onefile = "-F" in sys.argv[1:] or "--onefile" in sys.argv[1:]
 	purge = "purge" in sys.argv[1:]
 	purge_dist = "purge_dist" in sys.argv[1:]
 	suffix = "onefile" if onefile else "onedir"
+	
+	for i in range(len(sys.argv[1:])):
+		n = len(sys.argv) - i - 1
+		arg = sys.argv[n]
+		arg = arg.split("=")
+		if len(arg) == 2:
+			if arg[0] == "--cfg":
+				setup_cfg = arg[1]
+				print sys.argv[1:]
+				sys.argv = sys.argv[:n] + sys.argv[n + 1:]
+				print sys.argv[1:]
+
+	if setup_cfg:
+		shutil.copy2(os.path.join(pydir, "setup.cfg"), os.path.join(pydir, "setup.cfg.backup"))
+		shutil.copy2(os.path.join(pydir, "misc", "setup.%s.cfg" % setup_cfg), os.path.join(pydir, "setup.cfg"))
 
 	if purge or purge_dist:
 
 		# remove the "build", "dispcalGUI.egg-info" and 
 		# "pyinstaller/bincache*" directories and their contents recursively
-
-		import shutil
 
 		if dry_run:
 			print "dry run - nothing will be removed"
@@ -212,6 +227,9 @@ def setup():
 			retcode = call(["./debian/rules", "binary"], cwd = os.path.join(pydir, "dist", "%s-%s" % (name, version)))
 			if retcode != 0:
 				sys.exit(retcode)
+
+	if setup_cfg:
+		shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), os.path.join(pydir, "setup.cfg"))
 
 	if bdist_pyi:
 

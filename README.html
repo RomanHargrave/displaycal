@@ -274,7 +274,7 @@
 				0.2.5b4 (Windows)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-06-03T13:25:16+01:00</dd>
+				<dd id="date">2009-06-04T23:03:26+01:00</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -641,12 +641,16 @@
 						<dd>Removes the "build", "dispcalGUI.egg-info" and "pyinstaller/bincache*" directories and their contents.</dd>
 					<dt>purge_dist</dt>
 						<dd>Removes the "dist" directory and its contents.</dd>
+					<dt>readme</dt>
+						<dd>Creates README.html by parsing misc/README.template.html and substituting placeholders like date and version numbers.</dd>
 					<dt>uninstall</dt>
 						<dd>Uninstalls the package. You can specify the same options as for the "install" command.</dd>
 				</dl>
 				
 				<h4>Additional setup options</h4>
 				<dl>
+					<dt>--cfg=&lt;name&gt;</dt>
+						<dd>Use an alternate setup.cfg tailored for a given Linux distribution. The original setup.cfg is backed up and restored afterwards. The alternate file must exist as misc/setup.&lt;name&gt;.cfg</dd>
 					<dt>-n, --dry-run</dt>
 						<dd>Don't actually do anything. Useful in combination with the uninstall command to see which files would be removed.</dd>
 					<dt>--use-distutils</dt>
@@ -904,7 +908,7 @@
 			<h2>Version history / changelog</h2>
 			
 			<dl>
-				<dt>2009-06-03 0.2.5b4</dt>
+				<dt>2009-06-04 0.2.5b4</dt>
 					<dd>
 						<ul>
 							<li>fix: (Windows Vista) application exit on launch if autostart directory did not exist.</li>
