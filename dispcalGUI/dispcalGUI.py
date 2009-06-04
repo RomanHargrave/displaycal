@@ -77,6 +77,7 @@ from natsort import natsort
 import pyi_md5pickuphelper
 from safe_print import safe_print as _safe_print
 from trash import trash, TrashcanUnavailableError
+# from wxTransparentScrolledWindow import TransparentScrolledWindow
 
 # helper functions
 
@@ -1720,11 +1721,11 @@ class DisplayCalibratorGUI(wx.Frame):
 			vsize = self.calpanel.GetVirtualSize()
 			fullheight = size[1] - self.calpanel.GetSize()[1] + vsize[1]
 			maxheight = None
-			if size[1] > display_client_rect[3] - safety_margin or fullheight > display_client_rect[3] - safety_margin:
+			if size[1] > display_client_rect[3] - safety_margin: # or fullheight > display_client_rect[3] - safety_margin:
 				if verbose >= 2: safe_print("Our full height (w/o scrollbars: %s) is too tall for that workspace! Adjusting..." % fullheight)
 				vsize = self.calpanel.GetSize()
 				maxheight = vsize[1] - (size[1] - display_client_rect[3] + safety_margin)
-			elif size[1] < fullheight:
+			elif not hasattr(self, "display_client_rect"):
 				if verbose >= 2: safe_print("Our full height (w/o scrollbars: %s) fits on that workspace. Adjusting..." % fullheight)
 				maxheight = vsize[1]
 			self.display_client_rect = display_client_rect
@@ -1743,16 +1744,15 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.Freeze()
 		self.SetMaxSize((size[0], fullheight))
 		self.calpanel.SetMaxSize((-1, virtualheight))
-		self.calpanel.SetMinSize((-1, height))
+		self.calpanel.SetMinSize((-1, 64))
 		self.calpanel.SetMaxSize((-1, height))
 		self.calpanel.SetSize((-1, height))
 		if debug:
 			safe_print("New framesizer min height:", self.framesizer.GetMinSize()[1])
 			safe_print("New framesizer height:", self.framesizer.GetSize()[1])
 		self.SetMinSize((self.GetMinSize()[0], newheight))
-		if newheight < fullheight:
-			self.SetMaxSize((size[0], newheight))
-			self.SetSize((size[0], newheight))
+		self.SetMaxSize((size[0], newheight))
+		self.SetSize((size[0], newheight))
 		# self.Fit()
 		self.Thaw()
 		wx.CallLater(100, self.calpanel.SetMaxSize, (-1, -1))
@@ -1760,6 +1760,7 @@ class DisplayCalibratorGUI(wx.Frame):
 	def frame_enableresize_handler(self, event = None):
 		if verbose >= 2:
 			safe_print("Enabling window resize")
+		wx.CallLater(100, self.SetMinSize, (self.GetMinSize()[0], self.GetSize()[1] - self.calpanel.GetSize()[1] + 64))
 		wx.CallLater(150, self.SetMaxSize, (-1, -1))
 		self.Unbind(wx.EVT_IDLE)
 		if event:
@@ -2473,9 +2474,18 @@ class DisplayCalibratorGUI(wx.Frame):
 
 
 		# calibration settings sizer
-		self.AddToSizer(wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, self.getlstr("calibration.settings")), wx.VERTICAL), 1, flag = wx.RIGHT | wx.LEFT | wx.EXPAND, border = 8)
-		self.calpanel = wx.ScrolledWindow(self.panel, -1, style = wx.VSCROLL)
-		self.AddToSubSizer(self.calpanel, 1, flag = wx.BOTTOM | wx.RIGHT | wx.LEFT | wx.EXPAND, border = 5)
+		self.AddToSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border = 4)
+		self.AddToSubSizer(wx.StaticLine(self.panel, -1, size = (8, -1)), 0, flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border = 8)
+		self.AddToSubSizer(wx.StaticText(self.panel, -1, self.getlstr("calibration.settings")), 0, flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, border = 2)
+		self.AddToSubSizer(wx.StaticLine(self.panel, -1), 1, flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border = 8)
+		self.calpanel = wx.ScrolledWindow(self.panel, -1, style = wx.TAB_TRAVERSAL | wx.VSCROLL)
+		self.AddToSizer(self.calpanel, 1, flag = wx.RIGHT | wx.LEFT | wx.EXPAND, border = 18)
+		self.AddToSizer((1, 6))
+		self.AddToSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border = 4)
+		self.AddToSubSizer(wx.StaticLine(self.panel, -1), 1, flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, border = 8)
+		# self.AddToSizer(wx.StaticBoxSizer(wx.StaticBox(self.panel, -1, self.getlstr("calibration.settings")), wx.VERTICAL), 1, flag = wx.RIGHT | wx.LEFT | wx.EXPAND, border = 8)
+		# self.calpanel = TransparentScrolledWindow(self.panel, -1, style = wx.TAB_TRAVERSAL | wx.VSCROLL)
+		# self.AddToSubSizer(self.calpanel, 1, flag = wx.BOTTOM | wx.RIGHT | wx.LEFT | wx.EXPAND, border = 5)
 		self.calpanel.sizer = wx.FlexGridSizer(0, 2)
 		self.subsizer.append(self.calpanel.sizer)
 		self.calpanel.SetSizer(self.calpanel.sizer)
@@ -2508,7 +2518,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.Bind(wx.EVT_COMBOBOX, self.whitepoint_colortemp_locus_ctrl_handler, id = self.whitepoint_colortemp_locus_ctrl.GetId())
 		self.AddToSubSizer(self.whitepoint_colortemp_locus_ctrl, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 0)
 		
-		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
+		self.AddToSubSizer((24, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
@@ -2534,7 +2544,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.whitepoint_y_label = wx.StaticText(self.calpanel, -1, u"y")
 		self.AddToSubSizer(self.whitepoint_y_label, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 		
-		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
+		self.AddToSubSizer((24, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
@@ -2701,7 +2711,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.Bind(wx.EVT_TEXT, self.black_point_rate_ctrl_handler, id = self.black_point_rate_intctrl.GetId())
 			self.AddToSubSizer(self.black_point_rate_intctrl, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 		
-		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
+		self.AddToSubSizer((24, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
@@ -2724,7 +2734,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.Bind(wx.EVT_CHECKBOX, self.interactive_display_adjustment_ctrl_handler, id = self.interactive_display_adjustment_cb.GetId())
 		self.AddToSubSizer(self.interactive_display_adjustment_cb, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 10)
 		
-		self.AddToSubSizer((32, 1)) # padding to avoid overlapping scrollbar
+		self.AddToSubSizer((24, 1)) # padding to avoid overlapping scrollbar
 
 		self.subsizer.pop()
 
