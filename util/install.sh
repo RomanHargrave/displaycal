@@ -39,6 +39,35 @@ src_dir=`dirname "$0"`
 if [ -e "$src_dir/setup.py" ]; then
 	$python "$src_dir/setup.py" install --prefix="$prefix" $opts
 else
+	if [ `whoami` = "root" ]; then
+		echo "Installing measurement device configuration files..."
+		if [ -e "/usr/share/PolicyKit/policy" ] && [ -e "/usr/share/hal/fdi/policy/10osvendor" ]; then
+			# USB and Serial access using PolicyKit V0.6 + HAL (recent versions of Linux)
+			cp -u "misc/color-device-file.policy" "/usr/share/PolicyKit/policy/color-device-file.policy"
+			cp -u "misc/19-color.fdi" "/usr/share/hal/fdi/policy/10osvendor/19-color.fdi"
+		fi
+		if [ -e "/etc/udev/rules.d" ]; then
+			ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
+				# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
+				cp -u "misc/55-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
+			) || (
+				# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+				cp -u "misc/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
+			)
+		else
+			if [ -e "/etc/hotplug"]; then
+				# USB using hotplug and Serial using udev (older versions of Linux)
+				mkdir -p "/etc/hotplug/usb/"
+				cp -u "misc/Argyll" "/etc/hotplug/usb/Argyll"
+				cp -u "misc/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
+			fi
+			if [ -e "/etc/udev/permissions.d" ]; then
+				# Serial instruments using udev (older versions of Linux)
+				cp -u "misc/10-Argyll.permissions" "/etc/udev/permissions.d/10-Argyll.permissions"
+			fi
+		fi
+	fi
+
 	echo "Installing dispcalGUI to $prefix/bin..."
 	mkdir -p "$prefix/bin"
 	cp -f "$src_dir/dispcalGUI" "$prefix/bin"

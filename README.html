@@ -274,7 +274,7 @@
 				0.2.5b4 (Windows)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-06-05T01:53:21+01:00</dd>
+				<dd id="date">2009-06-05T19:40:55+01:00</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -378,15 +378,17 @@
 			
 			<h3>Linux DEB/RPM</h3>
 			<p>
-				<a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-py2.5-fedora10-1.i386.rpm">RPM for Fedora 10 (Python 2.5, x86)</a><br />
+				<a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-py2.5-fedora10-argyll-1.i386.rpm">RPM for Fedora 10 (Python 2.5, x86, for use with the Fedora Argyll CMS package)</a><br />
+				<a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-py2.5-fedora10-1.i386.rpm">RPM for Fedora 10 (Python 2.5, x86, for use with the standalone Argyll CMS executables)</a><br />
 				<a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-py2.5-openSUSE11-1.i586.rpm">RPM for openSUSE 11 (Python 2.5, x86)</a><br />
+				<a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-py2.6-openSUSE11-1.i586.rpm">RPM for openSUSE 11.1 (Python 2.6, x86)</a><br />
 				<a href="http://hoech.net/dispcalGUI/dispcalgui_0.2.5b4-py2.6-ubuntu9-1_i386.deb">DEB for Ubuntu 9 (Python 2.6, x86)</a>
 			</p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Linux (i686) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-Linux-i686.tar.gz">Tarball</a><br />
+				Linux (i686) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-linux-i686.tar.gz">Tarball</a><br />
 				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4.dmg">DMG</a><br />
 				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-win32.zip">ZIP</a>
 			</p>
@@ -407,12 +409,13 @@
 			<ol>
 				<li>It is recommended to first uninstall or remove all previous versions of dispcalGUI.</li>
 				<li><a href="#download">Get the latest release of dispcalGUI</a> and <a href="#install">install</a>.</li>
-				<li>Download and unpack the Argyll CMS executables ZIP file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</li>
+				<li>Download and unpack the Argyll CMS archive file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</li>
+				<li>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</li>
 				<li>
-					To install your measurement device, connect the device to your computer. If you have a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu before continuing.
+					To install your measurement device, connect the device to your computer. If you have a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu before continuing. The instrument should show up in the dropdown menu after a few seconds.
 					<ul>
-						<li>If you are under Linux, and cannot access your instrument, first try a reboot. If that doesn't help, read “Setting up instrument access” in <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux</a>.</li>
-						<li>If you are under Mac OS X, and cannot access your instrument, first try a reboot. If that doesn't help, read <a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a>.</li>
+						<li>If you are under Linux, and cannot access your instrument, first try a reboot. If that doesn't help, read <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>.</li>
+						<li>If you are under Mac OS X, there is nothing special to do for most instruments. If you happen to use the HCFR colorimeter, follow <a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a> to enable it.</li>
 						<li>
 							If you are under Windows, and if you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
 							<ul>
@@ -446,7 +449,6 @@
 						</li>
 					</ul>
 				</li>
-				<li>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</li>
 				<li>Refer to the <a href="#usage">Usage instructions</a>.</li>
 			</ol>
 		</div>
@@ -591,11 +593,11 @@
 				
 				<h4>DEB</h4>
 				
-				<p>Use <code>dpkg -i dispcalgui_0.2.5b4-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>_<em>&lt;arch&gt;</em>.deb</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install DEB packages.</p>
+				<p>Most modern desktop environments allow you to install packages by simply opening them (e.g. by double-clicking). Otherwise run <code>dpkg -i dispcalgui_0.2.5b4-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>_<em>&lt;arch&gt;</em>.deb</code> from a shell. If in doubt, refer to your system's documentation to find out how to install DEB packages. The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category and set up instrument access.</p>
 				
 				<h4>RPM</h4>
 				
-				<p>Use <code>rpm -i dispcalGUI-0.2.5b4-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>.<em>&lt;arch&gt;</em>.rpm</code> to install. You may also be able to install by opening the file in your file manager/desktop environment (e.g. by double-clicking). The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. If in doubt, refer to your system's documentation to find out how to install RPM packages.</p>
+				<p>Most modern desktop environments allow you to install packages by simply opening them (e.g. by double-clicking). Otherwise run <code>rpm -i dispcalGUI-0.2.5b4-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>.<em>&lt;arch&gt;</em>.rpm</code> from a shell. If in doubt, refer to your system's documentation to find out how to install RPM packages. The installation will also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category and set up instrument access.</p>
 			</div>
 			
 			<div id="install-exe">
@@ -603,8 +605,7 @@
 				
 				<h4>Linux</h4>
 				
-				<p>Unpack and then simply run dispcalGUI from the created folder (a <code>chmod +x dispcalGUI</code> may be necessary first). You can optionally run the included install.sh shellscript to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefix by giving it as option to install.sh, e.g. <code>./install.sh --prefix=/usr</code>. The default prefix is <code>/usr/local</code> if installing as superuser or using sudo (<code>~/.local</code> otherwise).<br />
-				Please note that installation may require elevated privileges.</p>
+				<p>Unpack and then simply run dispcalGUI from the created folder (a <code>chmod +x dispcalGUI</code> may be necessary first). You can optionally run the included install.sh shellscript from a terminal to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the "Graphics"/"Other" category. You may also use your own prefix by giving it as option to install.sh, e.g. <code>./install.sh --prefix=/usr</code>. The default prefix is <code>/usr/local</code> if installing as superuser or using sudo, and <code>~/.local</code> if installing as normal user. Installing as superuser or using sudo is required to set up instrument access (if you didn't do it when installing Argyll CMS).</p>
 				
 				<h4>Mac OS X</h4>
 				

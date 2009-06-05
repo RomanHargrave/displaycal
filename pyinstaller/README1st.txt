@@ -1,4 +1,4 @@
-This is pyinstaller "dispcalGUI edition", based on trunk rev. 659 
+This is pyinstaller "dispcalGUI edition", based on trunk rev. 672 
 (http://svn.pyinstaller.python-hosting.com/trunk), with the following 
 changes:
 
@@ -6,8 +6,7 @@ changes:
   support), bindepend.py (additional DLLs added to the exclude list, 
   altered DLL dependency walking code so it doesnt warn when it can't 
   find a DLL that is in the exclude list, and added MS Windows assembly 
-  dependency walking code), iu.py (hack for issue importing encodings 
-  on Python 2.6), Sconstruct, source/windows/run.rc, 
+  dependency walking code), Sconstruct, source/windows/run.rc, 
   source/windows/runw.rc (3x MS VisualStudio C++ 2009 compatibility 
   fixes, only needed to build the bootloaders)
 - commented out win32comgenpy in rthooks.dat because the hook is broken 

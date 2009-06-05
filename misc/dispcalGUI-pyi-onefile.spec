@@ -54,6 +54,13 @@ elif sys.platform != "darwin":
 			str(size), name + ".png"), "DATA")]
 	data_files += [
 		(name + ".desktop", os.path.join("misc", name + ".desktop"), "DATA"),
+		(os.path.join("misc", "color-device-file.policy"), os.path.join("misc", "color-device-file.policy"), "DATA"),
+		(os.path.join("misc", "19-color.fdi"), os.path.join("misc", "19-color.fdi"), "DATA"),
+		(os.path.join("misc", "55-Argyll.rules"), os.path.join("misc", "55-Argyll.rules"), "DATA"),
+		(os.path.join("misc", "45-Argyll.rules"), os.path.join("misc", "45-Argyll.rules"), "DATA"),
+		(os.path.join("misc", "Argyll"), os.path.join("misc", "Argyll"), "DATA"),
+		(os.path.join("misc", "Argyll.usermap"), os.path.join("misc", "Argyll.usermap"), "DATA"),
+		(os.path.join("misc", "10-Argyll.permissions"), os.path.join("misc", "10-Argyll.permissions"), "DATA"),
 		("install.sh", os.path.join("util", "install.sh"), "DATA"),
 		("uninstall.sh", os.path.join("util", "uninstall.sh"), "DATA")
 	]

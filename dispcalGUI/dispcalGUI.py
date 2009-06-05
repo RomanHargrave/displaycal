@@ -8642,7 +8642,7 @@ def main():
 						except Exception, exception:
 							safe_print("Warning - could not process old calibration loader:", str(exception))
 		# make sure we run inside a terminal
-		if (sys.platform == "darwin" and (not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty())) or "-oc" in sys.argv[1:]:
+		if ((sys.platform == "darwin" or (hasattr(sys, "frozen") and sys.frozen)) and (not sys.stdin.isatty() or not sys.stdout.isatty() or not sys.stderr.isatty())) or "-oc" in sys.argv[1:]:
 			terminals_opts = {
 				"Terminal": "-x",
 				"gnome-terminal": "-x",
