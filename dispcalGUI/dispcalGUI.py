@@ -77,7 +77,7 @@ from natsort import natsort
 import pyi_md5pickuphelper
 from safe_print import safe_print as _safe_print
 from trash import trash, TrashcanUnavailableError
-# from wxTransparentScrolledWindow import TransparentScrolledWindow
+from wxFocusScrolledWindow import FocusScrolledWindow
 
 # helper functions
 
@@ -2478,7 +2478,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.AddToSubSizer(wx.StaticLine(self.panel, -1, size = (8, -1)), 0, flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border = 8)
 		self.AddToSubSizer(wx.StaticText(self.panel, -1, self.getlstr("calibration.settings")), 0, flag = wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, border = 2)
 		self.AddToSubSizer(wx.StaticLine(self.panel, -1), 1, flag = wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border = 8)
-		self.calpanel = wx.ScrolledWindow(self.panel, -1, style = wx.TAB_TRAVERSAL | wx.VSCROLL)
+		self.calpanel = FocusScrolledWindow(self.panel, -1, style = wx.TAB_TRAVERSAL | wx.VSCROLL)
 		self.AddToSizer(self.calpanel, 1, flag = wx.RIGHT | wx.LEFT | wx.EXPAND, border = 18)
 		self.AddToSizer((1, 6))
 		self.AddToSizer(wx.BoxSizer(wx.HORIZONTAL), flag = wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border = 4)
@@ -2560,7 +2560,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.Bind(wx.EVT_RADIOBUTTON, self.luminance_ctrl_handler, id = self.luminance_max_rb.GetId())
 		self.AddToSubSizer(self.luminance_max_rb, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 
-		self.luminance_cdm2_rb = wx.RadioButton(self.calpanel, -1, "", (10, 10))
+		self.luminance_cdm2_rb = wx.RadioButton(self.calpanel, -1, self.getlstr("other"), (10, 10))
 		self.Bind(wx.EVT_RADIOBUTTON, self.luminance_ctrl_handler, id = self.luminance_cdm2_rb.GetId())
 		self.AddToSubSizer(self.luminance_cdm2_rb, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 
@@ -2583,7 +2583,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.Bind(wx.EVT_RADIOBUTTON, self.black_luminance_ctrl_handler, id = self.black_luminance_min_rb.GetId())
 		self.AddToSubSizer(self.black_luminance_min_rb, flag = wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 
-		self.black_luminance_cdm2_rb = wx.RadioButton(self.calpanel, -1, "", (10, 10))
+		self.black_luminance_cdm2_rb = wx.RadioButton(self.calpanel, -1, self.getlstr("other"), (10, 10))
 		self.Bind(wx.EVT_RADIOBUTTON, self.black_luminance_ctrl_handler, id = self.black_luminance_cdm2_rb.GetId())
 		self.AddToSubSizer(self.black_luminance_cdm2_rb, flag = wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border = 4)
 

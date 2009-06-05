@@ -912,13 +912,15 @@
 				<dt>${DATE} ${VERSION}</dt>
 					<dd>
 						<ul>
-							<li>fix: (Windows Vista) application exit on launch if autostart directory did not exist.</li>
-							<li>fix: (cosmetic) added some padding to calibration settings right-hand side so scrollbar won't overlap if shown.</li>
 							<li>fix: "TypeError: coercing to Unicode: need string or buffer, instance found" when calling any of the get*Description() methods of an ICCProfile instance, which caused profile creation from existing profile to fail.</li>
+							<li>fix: (Windows Vista) application exit on launch if autostart directory did not exist.</li>
+							<li>fix: tab-key traversal of calibration settings controls.</li>
+							<li>fix: automatically scroll into view focused calibration settings controls if scrollbars are shown.</li>
+							<li>fix: (cosmetic) added some padding to calibration settings right-hand side so scrollbar won't overlap if shown.</li>
 							<li>chg: (cosmetic) enable auto-sizing (fit to contents) for colortemp locus, trc type and profile type selectors.</li>
-							<li>chg: do not show vendor name in instrument select dropdown (conserve some space).</li>
+							<li>chg: (cosmetic) do not show vendor name in instrument select dropdown (conserve some space).</li>
 							<li>chg: (cosmetic) made the instrument selector a little narrower (needs less space now to display instrument name because the vendor name is stripped) and the measure mode selector a bit wider (to accommodate for projector mode).</li>
-							<li>chg: only try to re-start within Terminal on Mac OS X.</li>
+							<li>chg: only try to re-start within terminal if running as standalone executable.</li>
 							<li>chg: show application restart request in the chosen language after changing it.</li>
 							<li>chg: allow resizing/maximizing of main window (a minimal size is forced to prevent layout glitches).</li>
 							<li>chg: (Linux) install from source or RPM/DEB package will try to automatically setup access to your instrument. Some services (PolicyKit/HAL or udev) may need to be restarted to get the updated configuration recognized. If in doubt, a reboot should work in all cases.</li>
