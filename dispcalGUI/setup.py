@@ -640,6 +640,15 @@ def setup():
 		manifest_in += ["recursive-include %s %s" % ("autopackage", "*.apspec")]
 		manifest_in += ["recursive-include %s %s" % ("misc", "*")]
 		manifest_in += ["recursive-exclude %s %s" % ("misc", "warn%s-pyi-*.txt" % name)]
+		if skip_instrument_conf_files:
+			manifest_in += [
+				"exclude misc/Argyll",
+				"recursive-exclude misc *.fdi",
+				"recursive-exclude misc *.permissions",
+				"recursive-exclude misc *.policy",
+				"recursive-exclude misc *.rules",
+				"recursive-exclude misc *.usermap",
+			]
 		manifest_in += ["recursive-include %s %s" % ("pyinstaller", " ".join([
 			"*.c",
 			"*.cfg",

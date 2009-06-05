@@ -9,4 +9,4 @@ version=`python -c "from dispcalGUI import meta;print meta.version"`
 
 # ZIP
 cd dist/pyi.$platform-$python_version-onefile
-zip -9 -r dispcalGUI-$version dispcalGUI-$version
+zip -9 -r dispcalGUI-$version dispcalGUI-$version-$platform
