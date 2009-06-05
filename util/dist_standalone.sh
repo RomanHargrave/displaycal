@@ -5,7 +5,7 @@ python_version=`python -c "import sys;print sys.version[:3]"`
 version=`python -c "from dispcalGUI import meta;print meta.version"`
 
 # Standalone executable
-./setup.py bdist_pyi -F --use-distutils 2>&1 | tee pyi.log
+./setup.py bdist_pyi -F --use-distutils 2>&1 | tee tee dispcalGUI-$version.pyi.$platform-$python_version-onefile.log
 
 # ZIP
 cd dist/pyi.$platform-$python_version-onefile

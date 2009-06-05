@@ -201,6 +201,12 @@ def setup():
 		for rpm_filename in glob.glob(os.path.join(pydir, "dist", "%s-%s-*.*.rpm" % (name, version))):
 			if rpm_filename.endswith(".src.rpm"):
 				continue
+			# remove target directory (and contents) if it already exists
+			target_dir = os.path.join(pydir, "dist", "%s-%s" % (name, version))
+			if os.path.exists(target_dir):
+				shutil.rmtree(target_dir)
+			if os.path.exists(target_dir + ".orig"):
+				shutil.rmtree(target_dir + ".orig")
 			# use alien to create deb dir from rpm package
 			retcode = call(["alien", "-c", "-g", "-k", os.path.basename(rpm_filename)], cwd = os.path.join(pydir, "dist"))
 			if retcode != 0:
@@ -224,7 +230,7 @@ def setup():
 			control.write("\n".join(lines))
 			control.close()
 			# create deb package
-			retcode = call(["./debian/rules", "binary"], cwd = os.path.join(pydir, "dist", "%s-%s" % (name, version)))
+			retcode = call(["./debian/rules", "binary"], cwd = target_dir)
 			if retcode != 0:
 				sys.exit(retcode)
 
