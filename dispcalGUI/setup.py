@@ -57,6 +57,7 @@ def setup():
 	is_rpm_build = os.path.abspath(sys.argv[0]).endswith(os.path.join(os.path.sep, "rpm", "BUILD", name + "-" + version, os.path.basename(os.path.abspath(sys.argv[0]))))
 	recordfile_name = None # record installed files to this file
 	setuptools = None
+	skip_instrument_conf_files = "--skip-instrument-configuration-files" in sys.argv[1:]
 	use_distutils = not bdist_bbfreeze and not do_py2app and ("--use-distutils" in sys.argv[1:] or os.path.exists("use-distutils"))
 	use_setuptools = bdist_bbfreeze or do_py2app or "--use-setuptools" in sys.argv[1:] or not use_distutils
 
@@ -119,6 +120,10 @@ def setup():
 		i = sys.argv.index("uninstall")
 		sys.argv = sys.argv[:i] + ["install"] + sys.argv[i + 1:]
 		install.create_home_path = lambda self: None
+
+	if skip_instrument_conf_files:
+		i = sys.argv.index("--skip-instrument-configuration-files")
+		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
 
 	if "--use-distutils" in sys.argv[1:]:
 		i = sys.argv.index("--use-distutils")
@@ -224,7 +229,7 @@ def setup():
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					[os.path.join(pydir, "theme", "icons", os.path.basename(fname)) for fname in 
 					glob.glob(os.path.join(pydir, "theme", "icons", "*.icns|*.ico"))])]
-		elif sys.platform != "darwin":
+		elif sys.platform != "darwin" and not skip_instrument_conf_files:
 			# Linux
 			data_files += [(data, [os.path.join(pydir, "..", "misc", name + ".desktop")])]
 			# device configuration / permission stuff
