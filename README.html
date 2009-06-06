@@ -16,9 +16,11 @@
 		html#dispcalGUI a:link, 
 		html#dispcalGUI a:active {
 			color: #006699;
+			border-bottom-color: #006699;
 		}
 		html#dispcalGUI a:visited {
 			color: #666666;
+			border-bottom-color: #666666;
 		}
 		html#dispcalGUI a:hover {
 			color: #0099CC;
@@ -156,6 +158,20 @@
 		#content #toc li { display: block }
 		#content #toc li:before { content: counters(item, ".") ". "; counter-increment: item }
 		
+		#content .stepbystep {
+			list-style-type: none; counter-reset: llevel1;
+			margin-left: 20px;
+		}
+		.stepbystep div {
+			font-size: 11px;
+		}
+		.stepbystep div.stdbox div:before {
+			color: #009900;
+			counter-increment: llevel1; content: counters(llevel1, "") " ";
+			font: normal 1.5em Arial, sans-serif;
+			vertical-align: middle;
+		}
+		
 		#content #toc {
 			list-style-position: inside;
 			margin-left: 20px;
@@ -176,7 +192,7 @@
 		}
 		#content ol ul,
 		#content ul ol {
-			margin-left: 20px;
+			margin-left: 15px;
 		}
 		p, #content li, dt, dd {
 			line-height: 1.5em;
@@ -199,6 +215,34 @@
 		#content dd ul {
 			list-style: disc outside;
 			margin-left: 15px;
+		}
+		div.box {
+			background: #F0FEF0;
+			border-color: #E0F0E0;
+			border-radius: 5px;
+			border-style: solid;
+			border-width: 1px;
+			color: #006600;
+			-moz-border-radius: 5px;
+			margin: 3px 0;
+			padding: 3px 5px;
+		}
+		div.optbox {
+			background: #FEF6E0;
+			border-color: #F0E9CC;
+			color: #665533;
+			margin-left: 14px;
+		}
+		span.box {
+			color: #008800;
+			font-weight: bold;
+		}
+		span.optbox {
+			color: #998866;
+		}
+		.box a:link, .box a:visited {
+			border-bottom-style: dotted;
+			border-bottom-width: 1px;
 		}
 		.info {
 			font-family: Verdana, sans-serif;
@@ -274,7 +318,7 @@
 				0.2.5b4 (Windows)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Date:</dt>
-				<dd id="date">2009-06-05T21:54:33+01:00</dd>
+				<dd id="date">2009-06-06T11:31:19+01:00</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -388,7 +432,7 @@
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Linux (i686) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-linux-i686.tar.gz">Tarball</a><br />
+				Linux (x86) <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-linux-i686.tar.gz">Tarball</a><br />
 				Mac OS X <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4.dmg">DMG</a><br />
 				Windows <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-Setup.exe">Installer</a> | <a href="http://hoech.net/dispcalGUI/dispcalGUI-0.2.5b4-win32.zip">ZIP</a>
 			</p>
@@ -406,50 +450,50 @@
 		
 			<p>This short guide intends to get you up and running quickly, but if you run into a problem, you should refer to the full <a href="#prerequisites">Prerequisites</a> and <a href="#install">Installation</a> sections.</p>
 			
-			<ol>
-				<li>It is recommended to first uninstall or remove all previous versions of dispcalGUI.</li>
-				<li><a href="#download">Get the latest release of dispcalGUI</a> and <a href="#install">install</a>.</li>
-				<li>Download and unpack the Argyll CMS archive file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</li>
-				<li>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</li>
-				<li>
-					To install your measurement device, connect the device to your computer. If you have a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu before continuing. The instrument should show up in the dropdown menu after a few seconds.
+			<ol class="stepbystep">
+				<li><div class="box stdbox"><div>It is recommended to first uninstall or remove all previous versions of dispcalGUI.</div></div></li>
+				<li><div class="box stdbox"><div><a href="#download">Get</a> and <a href="#install">install</a> the latest release of dispcalGUI.</div></div></li>
+				<li><div class="box stdbox"><div>Download and unpack the Argyll CMS archive file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</div></div>
+					<div class="box optbox"><span class="box optbox">If you want to use the HCFR colorimeter on Mac OS X:</span> Follow the instructions under <a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a> to enable it.</div></li>
+				<li><div class="box stdbox"><div>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</div></div>
+				<div class="box optbox"><span class="box optbox">If your measurement device is a Spyder 2:</span> Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu, insert the driver CD that came with the instrument and select the setup executable to enable it.</div></li>
+				<li><div class="box stdbox"><div>Connect your measurement device to your computer.</div></div>
+					<div class="box optbox"><span class="box optbox">Driver installation - Windows only:</span> If you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
 					<ul>
-						<li>If you are under Linux, and cannot access your instrument, first try a reboot. If that doesn't help, read <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>.</li>
-						<li>If you are under Mac OS X, there is nothing special to do for most instruments. If you happen to use the HCFR colorimeter, follow <a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a> to enable it.</li>
-						<li>
-							If you are under Windows, and if you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
+						<li>Under Vista...
 							<ul>
-								<li>Under Vista...
-									<ul>
-										<li>Select “Locate and install driver software (recommended)”.</li>
-										<li>If a “User Account Control” window pops up, select “Continue”.</li>
-										<li>Select “Don't search online”.</li>
-										<li>Select “I don't have the disc, show me other options”.</li>
-										<li>Select “Browse my computer for driver software (advanced)”.</li>
-									</ul>
-								</li>
-								<li>Under XP...
-									<ul>
-										<li>In the window “Can Windows connect to Windows Update to search for software?” select “No, not this time” and “Next”.</li>
-										<li>Select “Install from a list or specific location (advanced)” then “Next”.</li>
-										<li>Select “Search for the best driver in these locations”, “Include this location in the search” and “Browse...”.</li>
-									</ul>
-								</li>
-								<li>Under 2000...
-									<ul>
-										<li>Select “Next”, then “Search for a suitable driver for my device (recommended)”, and “Next” again.</li>
-										<li>Tick the “Specify a location” box, then select “Next”.</li>
-										<li>In the window “Insert the manufacturer's installation disk” select “Browse...”.</li>
-									</ul>
-								</li>
-								<li>Locate the “argyll\libusbw” subdirectory in your Argyll_VX.X.X directory (under Windows 2000, you also need to select the .inf file that corresponds to your device, then select “Open” and “OK”). Select “Next”.</li>
-								<li>Under Vista, if a “Windows Security” dialog pops up, select “Install this driver software anyway”.</li>
-								<li>A window stating the successful installation of the driver should show. Click “Finish”/“Close”.</li>
+								<li>Select “Locate and install driver software (recommended)”.</li>
+								<li>If a “User Account Control” window pops up, select “Continue”.</li>
+								<li>Select “Don't search online”.</li>
+								<li>Select “I don't have the disc, show me other options”.</li>
+								<li>Select “Browse my computer for driver software (advanced)”.</li>
 							</ul>
 						</li>
-					</ul>
+						<li>Under XP...
+							<ul>
+								<li>In the window “Can Windows connect to Windows Update to search for software?” select “No, not this time” and “Next”.</li>
+								<li>Select “Install from a list or specific location (advanced)” then “Next”.</li>
+								<li>Select “Search for the best driver in these locations”, “Include this location in the search” and “Browse...”.</li>
+							</ul>
+						</li>
+						<li>Under 2000...
+							<ul>
+								<li>Select “Next”, then “Search for a suitable driver for my device (recommended)”, and “Next” again.</li>
+								<li>Tick the “Specify a location” box, then select “Next”.</li>
+								<li>In the window “Insert the manufacturer's installation disk” select “Browse...”.</li>
+							</ul>
+						</li>
+						<li>Locate the “argyll\libusbw” subdirectory in your Argyll_VX.X.X directory (under Windows 2000, you also need to select the .inf file that corresponds to your device, then select “Open” and “OK”). Select “Next”.</li>
+						<li>Under Vista, if a “Windows Security” dialog pops up, select “Install this driver software anyway”.</li>
+						<li>A window stating the successful installation of the driver should show. Click “Finish”/“Close”.</li>
+					</ul></div>
 				</li>
-				<li>Refer to the <a href="#usage">Usage instructions</a>.</li>
+				<li>
+					<div class="box stdbox"><div>The instrument should show up in the dropdown menu within about 10 seconds.</div></div>
+					<div class="box optbox">If you cannot access your instrument, first try unplugging and reconnecting it, or a reboot.<br />
+						<span class="box optbox">Linux only:</span> If that doesn't help, read <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>.</div>
+				</li>
+				<li><div class="box stdbox"><div>Refer to the <a href="#usage">Usage instructions</a>.</div></div></li>
 			</ol>
 		</div>
 		
@@ -909,7 +953,7 @@
 			<h2>Version history / changelog</h2>
 			
 			<dl>
-				<dt>2009-06-05 0.2.5b4</dt>
+				<dt>2009-06-06 0.2.5b4</dt>
 					<dd>
 						<ul>
 							<li>fix: "TypeError: coercing to Unicode: need string or buffer, instance found" when calling any of the get*Description() methods of an ICCProfile instance, which caused profile creation from existing profile to fail.</li>
