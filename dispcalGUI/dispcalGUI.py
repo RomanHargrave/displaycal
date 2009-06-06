@@ -192,17 +192,24 @@ else:
 		xdg_config_home = os.getenv("XDG_CONFIG_HOME",
 		   os.path.join(os.path.expanduser("~"), ".config"))
 		xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg").split(os.pathsep)
+		xdg_data_home_default = os.path.expandvars("$HOME/.local/share")
 		xdg_data_home = os.getenv("XDG_DATA_HOME",
-		   os.path.expandvars("$HOME/.local/share"))
+		   xdg_data_home_default)
+		xdg_data_dirs_default = "/usr/local/share:/usr/share"
 		xdg_data_dirs = os.getenv(
-			"XDG_DATA_DIRS", "/usr/local/share:/usr/share"
+			"XDG_DATA_DIRS", xdg_data_dirs_default
 			).split(os.pathsep)
+		for xdg_data_dir in xdg_data_dirs_default.split(os.pathsep):
+			if not xdg_data_dir in xdg_data_dirs:
+				xdg_data_dirs += [xdg_data_dir]
 		confighome = os.path.join(xdg_config_home, appname)
 		autostart = os.path.join(xdg_config_dirs[0], "autostart")
 		autostart_home = os.path.join(xdg_config_home, "autostart")
 		datahome = os.path.join(xdg_data_home, appname)
 		logdir = os.path.join(datahome, "logs")
 		data_dirs += [datahome]
+		if not xdg_data_home_default in data_dirs:
+			data_dirs += [xdg_data_home_default]
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
 		# data_dirs += [os.path.join(get_python_lib(plat_specific = True), appname)]
 		iccprofiles = os.path.join(xdg_data_dirs[0], "color", "icc", 
@@ -224,7 +231,7 @@ else:
 		runtype = ".py"
 for dir_ in sys.path:
 	dir_ = os.path.abspath(os.path.join(dir_, appname))
-	if dir_ not in data_dirs and os.path.exists(dir_):
+	if dir_ not in data_dirs and os.path.isdir(dir_):
 		data_dirs += [dir_]
 storage = os.path.join(datahome, "storage")
 if "--ascii" in sys.argv[1:]:
