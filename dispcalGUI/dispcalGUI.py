@@ -2310,13 +2310,15 @@ class DisplayCalibratorGUI(wx.Frame):
 		menubar.Append(extra, "&" + self.getlstr("menu.extra"))
 
 		languages = wx.Menu()
-		for lang in ldict:
-			if self.lang == lang:
+		llist = [(ldict[lcode].get("language"), lcode) for lcode in ldict]
+		llist.sort()
+		for lstr, lcode in llist:
+			if self.lang == lcode:
 				kind = wx.ITEM_RADIO
 			else:
 				kind = wx.ITEM_NORMAL
-			menuitem = languages.Append(-1, "&" + self.getlstr("language", lang = lang), kind = kind)
-			ldict[lang]["id"] = menuitem.GetId() # map numerical event id to language string
+			menuitem = languages.Append(-1, "&" + lstr, kind = kind)
+			ldict[lcode]["id"] = menuitem.GetId() # map numerical event id to language string
 			self.Bind(wx.EVT_MENU, self.set_language_handler, menuitem)
 		menubar.Append(languages, "&" + self.getlstr("menu.language"))
 
@@ -8350,8 +8352,10 @@ class DisplayCalibratorGUI(wx.Frame):
 				if not lauthors.get(lauthor):
 					lauthors[lauthor] = []
 				lauthors[lauthor] += [lang]
-		for lauthor in lauthors:
-			items += [wx.StaticText(self.aboutdialog, -1, "%s - %s" % (", ".join(lauthors[lauthor]), lauthor))]
+		lauthors = [(lauthors[lauthor], lauthor) for lauthor in lauthors]
+		lauthors.sort()
+		for langs, lauthor in lauthors:
+			items += [wx.StaticText(self.aboutdialog, -1, "%s - %s" % (", ".join(langs), lauthor))]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		items += [wx.StaticText(self.aboutdialog, -1, "Python " + ".".join(map(str, pyver)))]
 		items += [wx.StaticText(self.aboutdialog, -1, "wxPython " + wx.__version__)]
