@@ -137,8 +137,9 @@ def setup():
 			return
 
 	if bdist_deb:
+		arch = get_platform().split("-")[1]
 		i = sys.argv.index("bdist_deb")
-		sys.argv = sys.argv[:i] + ["bdist_rpm"] + sys.argv[i + 1:]
+		sys.argv = sys.argv[:i] + ["bdist_rpm", "--force-arch=" + arch] + sys.argv[i + 1:]
 
 	if bdist_pyi:
 		i = sys.argv.index("bdist_pyi")
@@ -198,41 +199,40 @@ def setup():
 			if len(dependencies[i]) > 1:
 				dependencies[i][1] = "(%s)" % dependencies[i][1]
 			dependencies[i] = " ".join(dependencies[i])
-		for rpm_filename in glob.glob(os.path.join(pydir, "dist", "%s-%s-*.*.rpm" % (name, version))):
-			if rpm_filename.endswith(".src.rpm"):
-				continue
-			# remove target directory (and contents) if it already exists
-			target_dir = os.path.join(pydir, "dist", "%s-%s" % (name, version))
-			if os.path.exists(target_dir):
-				shutil.rmtree(target_dir)
-			if os.path.exists(target_dir + ".orig"):
-				shutil.rmtree(target_dir + ".orig")
-			# use alien to create deb dir from rpm package
-			retcode = call(["alien", "-c", "-g", "-k", os.path.basename(rpm_filename)], cwd = os.path.join(pydir, "dist"))
-			if retcode != 0:
-				sys.exit(retcode)
-			# control filename
-			control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, version), "debian", "control")
-			# read control file from deb dir
-			control = open(control_filename, "r")
-			lines = [line.rstrip("\n") for line in control.readlines()]
-			control.close()
-			# update control with info from setup.cfg
-			for i in range(len(lines)):
-				if lines[i].startswith("Depends:"):
-					# add dependencies
-					lines[i] += ", " + ", ".join(dependencies)
-				elif lines[i].startswith("Maintainer:") and (maintainer or packager):
-					# set maintainer
-					lines[i] = "Maintainer: " + (maintainer or packager)
-			# write updated control file
-			control = open(control_filename, "w")
-			control.write("\n".join(lines))
-			control.close()
-			# create deb package
-			retcode = call(["./debian/rules", "binary"], cwd = target_dir)
-			if retcode != 0:
-				sys.exit(retcode)
+		release = 1 # TODO: parse setup.cfg
+		rpm_filename = os.path.join(pydir, "dist", "%s-%s-%s.%s.rpm" % (name, version, release, arch))
+		# remove target directory (and contents) if it already exists
+		target_dir = os.path.join(pydir, "dist", "%s-%s" % (name, version))
+		if os.path.exists(target_dir):
+			shutil.rmtree(target_dir)
+		if os.path.exists(target_dir + ".orig"):
+			shutil.rmtree(target_dir + ".orig")
+		# use alien to create deb dir from rpm package
+		retcode = call(["alien", "-c", "-g", "-k", os.path.basename(rpm_filename)], cwd = os.path.join(pydir, "dist"))
+		if retcode != 0:
+			sys.exit(retcode)
+		# control filename
+		control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, version), "debian", "control")
+		# read control file from deb dir
+		control = open(control_filename, "r")
+		lines = [line.rstrip("\n") for line in control.readlines()]
+		control.close()
+		# update control with info from setup.cfg
+		for i in range(len(lines)):
+			if lines[i].startswith("Depends:"):
+				# add dependencies
+				lines[i] += ", " + ", ".join(dependencies)
+			elif lines[i].startswith("Maintainer:") and (maintainer or packager):
+				# set maintainer
+				lines[i] = "Maintainer: " + (maintainer or packager)
+		# write updated control file
+		control = open(control_filename, "w")
+		control.write("\n".join(lines))
+		control.close()
+		# create deb package
+		retcode = call(["./debian/rules", "binary"], cwd = target_dir)
+		if retcode != 0:
+			sys.exit(retcode)
 
 	if setup_cfg:
 		shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), os.path.join(pydir, "setup.cfg"))
