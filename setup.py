@@ -67,7 +67,8 @@ def setup():
 				sys.argv = sys.argv[:n] + sys.argv[n + 1:]
 
 	if setup_cfg:
-		shutil.copy2(os.path.join(pydir, "setup.cfg"), os.path.join(pydir, "setup.cfg.backup"))
+		if not os.path.exists(os.path.join(pydir, "setup.cfg.backup")):
+			shutil.copy2(os.path.join(pydir, "setup.cfg"), os.path.join(pydir, "setup.cfg.backup"))
 		shutil.copy2(os.path.join(pydir, "misc", "setup.%s.cfg" % setup_cfg), os.path.join(pydir, "setup.cfg"))
 
 	if purge or purge_dist:
