@@ -11,6 +11,6 @@ log=dispcalGUI-$version.pyi.$platform-py$python_version-onefile.log
 $python setup.py bdist_pyi -F --use-distutils 2>&1 | tee $log
 
 # ZIP
-pushd dist/pyi.$platform-py$python_version-onefile
+cd dist/pyi.$platform-py$python_version-onefile
 tar -pczf ../dispcalGUI-$version-$platform.tar.gz dispcalGUI-$version 2>&1 | tee -a $log
-popd
+cd ../..

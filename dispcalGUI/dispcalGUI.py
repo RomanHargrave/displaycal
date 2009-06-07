@@ -22,8 +22,21 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, see <http://www.gnu.org/licenses/>
 """
 
-# version check
 import sys
+
+def _early_excepthook(etype, value, tb):
+	import traceback
+	traceback.print_exception(etype, value, tb)
+	try:
+		import os
+		traceback.print_exception(etype, value, tb, file = open(os.path.join(os.path.expanduser("~"), "dispcalGUI.error.log")))
+	except:
+		pass
+	sys.exit(1)
+
+sys.excepthook = _early_excepthook
+
+# version check
 pyver = map(int, sys.version.split()[0].split("."))
 if pyver < [2, 5] or pyver >= [3]:
 	raise RuntimeError("Need Python version >= 2.5 < 3.0, got %s" % 
@@ -436,8 +449,8 @@ def handle_error(errstr, parent = None, silent = False):
 		except Exception, exception:
 			safe_print("Warning: handle_error():", str(exception))
 
-def _excepthook(type, value, tb):
-	handle_error("".join(traceback.format_exception(type, value, tb)))
+def _excepthook(etype, value, tb):
+	handle_error("".join(traceback.format_exception(etype, value, tb)))
 
 sys.excepthook = _excepthook
 
@@ -4191,11 +4204,13 @@ class DisplayCalibratorGUI(wx.Frame):
 			if result != wx.ID_OK: return False
 		return True
 
-	def wrapup(self, copy = True, remove = True, dst_path = None, ext_filter = [".app", ".cal", ".cmd", ".command", ".icc", ".icm", ".sh", ".ti1", ".ti3"]):
+	def wrapup(self, copy = True, remove = True, dst_path = None, ext_filter = None):
 		if debug: safe_print("wrapup(copy = %s, remove = %s)" % (copy, remove))
 		if not hasattr(self, "tempdir") or not os.path.exists(self.tempdir) or not os.path.isdir(self.tempdir):
 			return # nothing to do
 		if copy:
+			if not ext_filter:
+				ext_filter = [".app", ".cal", ".cmd", ".command", ".icc", ".icm", ".sh", ".ti1", ".ti3"]
 			if dst_path is None:
 				dst_path = os.path.join(self.getcfg("profile.save_path"), self.get_profile_name(), self.get_profile_name() + ".ext")
 			try:
@@ -4755,14 +4770,14 @@ class DisplayCalibratorGUI(wx.Frame):
 					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")):
 						cmdfiles.write(u"color 07\n")
 				else:
-					context.write(u"set +v\n")
+					# context.write(u"set +v\n")
 					context.write((u'PATH=%s:$PATH\n' % os.path.dirname(cmd)).encode(enc, "asciize"))
 					if sys.platform == "darwin" and mac_create_app:
 						cmdfiles.write(u'pushd "`dirname \\"$0\\"`/../../.."\n')
 					else:
 						cmdfiles.write(u'pushd "`dirname \\"$0\\"`"\n')
 					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform != "darwin":
-						context.write(u'echo -e "\\033[40;2;37m"\n')
+						cmdfiles.write(u'echo -e "\\033[40;2;37m" && clear\n')
 					# if last and sys.platform != "darwin":
 						# context.write(u'gnome_screensaver_running=$(ps -A -f | grep gnome-screensaver | grep -v grep)\n')
 						# context.write(u'if [ "$gnome_screensaver_running" != "" ]; then gnome-screensaver-command --exit; fi\n')
@@ -4780,7 +4795,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					cmdfiles.write(u"exitcode=$?\n")
 					if cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and sys.platform != "darwin":
 						# reset to default commandline shell colors
-						cmdfiles.write(u'echo -e "\\033[0m"\n')
+						cmdfiles.write(u'echo -e "\\033[0m" && clear\n')
 					cmdfiles.write(u"popd\n")
 					# if last and sys.platform != "darwin":
 						# cmdfiles.write(u'if [ "$gnome_screensaver_running" != "" ]; then gnome-screensaver; fi\n')
