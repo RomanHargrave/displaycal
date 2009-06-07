@@ -43,6 +43,7 @@ def setup():
 	elif "py2exe" in sys.argv[1:]:
 		bdist_cmd = "py2exe"
 
+	arch = None
 	bdist_appdmg = "bdist_appdmg" in sys.argv[1:]
 	bdist_deb = "bdist_deb" in sys.argv[1:]
 	bdist_pyi = "bdist_pyi" in sys.argv[1:]
@@ -59,11 +60,11 @@ def setup():
 		arg = sys.argv[n]
 		arg = arg.split("=")
 		if len(arg) == 2:
-			if arg[0] == "--cfg":
+			if arg[0] == "--force-arch":
+				arch = arg[1]
+			elif arg[0] == "--cfg":
 				setup_cfg = arg[1]
-				print sys.argv[1:]
 				sys.argv = sys.argv[:n] + sys.argv[n + 1:]
-				print sys.argv[1:]
 
 	if setup_cfg:
 		shutil.copy2(os.path.join(pydir, "setup.cfg"), os.path.join(pydir, "setup.cfg.backup"))
@@ -137,9 +138,12 @@ def setup():
 			return
 
 	if bdist_deb:
-		arch = get_platform().split("-")[1]
+		bdist_args = ["bdist_rpm"]
+		if not arch:
+			arch = get_platform().split("-")[1]
+			bdist_args += ["--force-arch=" + arch]
 		i = sys.argv.index("bdist_deb")
-		sys.argv = sys.argv[:i] + ["bdist_rpm", "--force-arch=" + arch] + sys.argv[i + 1:]
+		sys.argv = sys.argv[:i] + bdist_args + sys.argv[i + 1:]
 
 	if bdist_pyi:
 		i = sys.argv.index("bdist_pyi")
