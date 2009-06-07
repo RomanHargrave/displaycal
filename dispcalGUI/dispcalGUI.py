@@ -57,6 +57,8 @@ from time import gmtime, localtime, sleep, strftime, time, timezone
 # 3rd party modules
 
 import demjson
+import wxversion
+wxversion.select("2.8")
 import wx
 import wx.grid
 import wx.lib.delayedresult as delayedresult
