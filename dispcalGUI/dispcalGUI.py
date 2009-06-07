@@ -116,19 +116,23 @@ codecs.register_error("asciize", asciize)
 
 # init
 
+if "--ascii" in sys.argv[1:]:
+	enc = fs_enc = "ASCII"
+else:
+	enc = "UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or \
+	   locale.getpreferredencoding() or "ASCII"
+	fs_enc = sys.getfilesystemencoding() or enc
+
 isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
 
-if isexe:
-	pypath = os.path.abspath(sys.executable)
-else:
-	pypath = os.path.abspath(__file__)
-
+exe = unicode(sys.executable, fs_enc)
+pypath = exe if isexe else os.path.abspath(unicode(__file__, fs_enc))
 pydir = os.path.dirname(pypath)
 
 pyname, pyext = os.path.splitext(os.path.basename(pypath))
-exedir = os.path.dirname(sys.executable)
+exedir = os.path.dirname(exe)
 isapp = sys.platform == "darwin" and \
-   sys.executable.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
+   exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
    os.path.isfile(os.path.join(exedir, pyname))
 
 if isexe and os.getenv("_MEIPASS2"):
@@ -233,16 +237,10 @@ else:
 	else:
 		runtype = ".py"
 for dir_ in sys.path:
-	dir_ = os.path.abspath(os.path.join(dir_, appname))
+	dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
 	if dir_ not in data_dirs and os.path.isdir(dir_):
 		data_dirs += [dir_]
 storage = os.path.join(datahome, "storage")
-if "--ascii" in sys.argv[1:]:
-	enc = fs_enc = "ASCII"
-else:
-	enc = "UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or \
-	   locale.getpreferredencoding() or "ASCII"
-	fs_enc = sys.getfilesystemencoding() or enc
 
 if "-d2" in sys.argv[1:] or "--debug=2" in sys.argv[1:]:
 	debug = 2
@@ -4504,7 +4502,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						)
 						scut.SetPath(cmd)
 						if isexe:
-							scut.SetIconLocation(sys.executable, 0)
+							scut.SetIconLocation(exe, 0)
 						else:
 							scut.SetIconLocation(get_data_path(os.path.join("theme", "icons", appname + ".ico")), 0)
 						scut.SetArguments(loader_args)
@@ -8666,24 +8664,23 @@ def main():
 			terminals = terminals_opts.keys()
 			if isapp:
 				me = os.path.join(exedir, pyname)
-				cmd = '"%s"' % me
+				cmd = u'"%s"' % me
 				cwd = None
 			elif isexe:
-				me = sys.executable
-				cmd = '"%s"' % me
+				me = exe
+				cmd = u'"%s"' % me
 				cwd = None
 			else:
 				me = pypath
-				exe = sys.executable
 				if os.path.basename(exe) == "pythonw" + exe_ext:
-					exe = os.path.join(os.path.dirname(exe), "python" + exe_ext)
-				cmd = '"%s" "%s"' % (exe, pypath)
-				cwd = pydir
+					python = os.path.join(os.path.dirname(exe), "python" + exe_ext)
+				cmd = u'"%s" "%s"' % (python, pypath)
+				cwd = pydir.encode(fs_enc)
 			safe_print("Re-launching instance in terminal")
 			if sys.platform == "win32":
-				cmd = 'start "%s" /WAIT %s' % (appname, cmd)
+				cmd = u'start "%s" /WAIT %s' % (appname, cmd)
 				if debug: safe_print(cmd)
-				retcode = sp.call(cmd.encode(fs_enc), shell = True, cwd = None if cwd is None else cwd.encode(fs_enc))
+				retcode = sp.call(cmd.encode(fs_enc), shell = True, cwd = cwd)
 			elif sys.platform == "darwin":
 				if debug: safe_print(cmd)
 				retcode = mac_terminal_do_script(cmd)
@@ -8693,8 +8690,8 @@ def main():
 				for terminal in terminals:
 					if which(terminal):
 						if debug: safe_print('%s %s %s' % (terminal, terminals_opts[terminal], cmd))
-						stdout.write('%s %s %s' % (terminal, terminals_opts[terminal], cmd))
-						retcode = sp.call([terminal, terminals_opts[terminal]] + cmd.encode(fs_enc).strip('"').split('" "'), stdout = stdout, stderr = sp.STDOUT, cwd = None if cwd is None else cwd.encode(fs_enc))
+						stdout.write('%s %s %s' % (terminal, terminals_opts[terminal], cmd.encode(fs_enc)))
+						retcode = sp.call([terminal, terminals_opts[terminal]] + cmd.encode(fs_enc).strip('"').split('" "'), stdout = stdout, stderr = sp.STDOUT, cwd = cwd)
 						stdout.write('\n\n')
 						break
 				stdout.seek(0)
