@@ -29,7 +29,7 @@ def _early_excepthook(etype, value, tb):
 	traceback.print_exception(etype, value, tb)
 	try:
 		import os
-		traceback.print_exception(etype, value, tb, file = open(os.path.join(os.path.expanduser("~"), "dispcalGUI.error.log")))
+		traceback.print_exception(etype, value, tb, file = open(os.path.join(os.path.expanduser("~"), "dispcalGUI.error.log"), "w"))
 	except:
 		pass
 	sys.exit(1)
