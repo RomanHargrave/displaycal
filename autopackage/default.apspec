@@ -11,7 +11,7 @@ Summary: A graphical user interface for the Argyll CMS display calibration utili
 Maintainer: Florian Höch <dispcalGUI@hoech.net>
 Packager: Florian Höch <dispcalGUI@hoech.net>
 PackageVersion: 1
-CPUArchitectures: `uname -m`
+CPUArchitectures: x86 x86_64
 AutopackageTarget: 1.0
 Type: Application
 License: GNU General Public License (GPL)
@@ -25,21 +25,21 @@ A graphical user interface for the Argyll CMS display calibration utilities.
 # need to pass arguments to configure, just add them to prepareBuild:
 # prepareBuild --enable-foo --disable-bar
 
-pushd "$source_dir" > /dev/null
-export CC=apgcc
-/usr/bin/python dispcalGUI/setup.py build_ext -i --use-distutils
-popd > /dev/null
+# pushd "$source_dir" > /dev/null
+# export CC=apgcc
+# /usr/bin/python dispcalGUI/setup.py build_ext -i --use-distutils
+# popd > /dev/null
 
 mkdir -p "$build_root/bin"
 cp "$source_dir/scripts/dispcalGUI" "$build_root/bin"
 
 mkdir -p "$build_root/lib/python/site-packages/dispcalGUI"
 cp "$source_dir/dispcalGUI/"*.py "$build_root/lib/python/site-packages/dispcalGUI"
-cp "$source_dir/dispcalGUI/"*.so "$build_root/lib/python/site-packages/dispcalGUI"
+cp "$source_dir/dispcalGUI/"*.so.tar "$build_root/lib/python/site-packages/dispcalGUI"
 
 mkdir -p "$build_root/share"
 pushd "$source_dir" > /dev/null
-tar --exclude=".svn" --exclude="*~" --exclude="*.c" --exclude="*.icns" --exclude="*.ico" --exclude="*.py" --exclude="*.py[co]" --exclude="*.so" -pcf "$build_root/share/dispcalGUI.tar" dispcalGUI
+tar --exclude=".svn" --exclude="*~" --exclude="*.c" --exclude="*.icns" --exclude="*.ico" --exclude="*.py*" --exclude="*.so" --exclude="*.tar" -pcf "$build_root/share/dispcalGUI.tar" dispcalGUI
 popd > /dev/null
 pushd "$build_root/share" > /dev/null
 tar -xf dispcalGUI.tar
@@ -96,7 +96,11 @@ cp "$source_dir/misc/10-Argyll.permissions" "$build_root/etc/udev/permissions.d"
 
 
 [Prepare]
-require '@python.org/python' 2.5 2.6 2.7
+for lib in "libXinerama" "libXrandr" "libXxf86vm" "libpthread" "libc" "libX11" "libXext" "libXrender" "libxcb" "libdl" "libXau" ; do
+	outputTest $lib
+	testForLib $lib.so && outputTestPass || outputTestFail
+done
+require '@python.org/python' 2.5 2.6
 requireAtLeast '@wxpython.org/python-wxgtk:2.8'
 removeOwningPackage "$PREFIX/bin/dispcalGUI"
 
@@ -111,6 +115,16 @@ echo '*' | import
 [Install]
 sed "s|/usr/bin/env python|`which python`|" bin/dispcalGUI > bin/dispcalGUI.new
 mv -f bin/dispcalGUI.new bin/dispcalGUI
+
+python_version=`python -c "import sys;print sys.version[:3]"`
+cd lib/python/site-packages/dispcalGUI
+uname -m | grep "64" && (
+	tar -xf RealDisplaySizeMM.py$python_version.x86_64.so.tar
+) || (
+	tar -xf RealDisplaySizeMM.py$python_version.x86.so.tar
+)
+rm *.tar
+cd ../../../..
 
 python -c "import compileall; compileall.compile_dir('lib/python/site-packages/dispcalGUI')"
 copyFiles lib/python/site-packages/dispcalGUI "`getPythonLibDir`"
