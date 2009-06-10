@@ -49,7 +49,7 @@ else
 		if [ -e "/etc/udev/rules.d" ]; then
 			ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
 				# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-				cp -u "misc/55-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
+				cp -u "misc/92-Argyll.rules" "/etc/udev/rules.d/92-Argyll.rules"
 			) || (
 				# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
 				cp -u "misc/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"

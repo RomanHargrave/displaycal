@@ -244,7 +244,7 @@ def setup():
 				if glob.glob("/dev/bus/usb/*/*"):
 					# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
 					devconf_files += [
-						("/etc/udev/rules.d", [os.path.join(pydir, "..", "misc", "55-Argyll.rules")])
+						("/etc/udev/rules.d", [os.path.join(pydir, "..", "misc", "92-Argyll.rules")])
 					]
 				else:
 					# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
