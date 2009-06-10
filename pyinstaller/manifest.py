@@ -31,7 +31,7 @@ except ImportError, detail:
     hashlib = None
     print 'I: ... file hash calculation unavailable -', detail
 import os.path
-import re
+from glob import glob
 from xml.dom import Node, minidom
 from xml.dom.minidom import Document, Element
 
@@ -197,45 +197,43 @@ class Manifest():
         if os.path.isdir(winsxs):
             manifests = os.path.join(winsxs, "Manifests")
             if os.path.isdir(manifests):
-                assembly_re = re.compile('%s_%s_%s_%s_.*\.manifest' % 
-                                         (re.escape(self.processorArchitecture), 
-                                          re.escape(self.name), 
-                                          re.escape(self.publicKeyToken), 
-                                          re.escape(".".join([str(i) for i in self.version]))), re.I)
-                for nm in os.listdir(manifests):
-                    if assembly_re.match(nm):
-                        manifestnm = os.path.join(manifests, nm)
-                        assemblynm = os.path.splitext(nm)[0]
-                        if not os.path.isfile(manifestnm):
-                            print "W: No such file", manifestnm, "part of assembly", assemblynm
-                            continue
-                        print "I: Found manifest", manifestnm
-                        assemblydir = os.path.join(winsxs, assemblynm)
-                        if not os.path.isdir(assemblydir):
-                            print "W: No such dir", assemblydir
-                            continue
-                        try:
-                            manifest = ManifestFromXMLFile(manifestnm)
-                        except Exception, exc:
-                            print "E:", manifestnm, str(exc)
-                            pass
-                        else:
-                            rfiles = []
-                            for file_ in self.files or manifest.files:
-                                fn = os.path.join(assemblydir, file_.name)
-                                if os.path.isfile(fn):
-                                    rfiles.append(fn)
-                                else:
-                                    print "W: No such file", fn, "part of assembly", assemblynm
-                                    # if any of our files does not exist,
-                                    # the assembly is incomplete
-                                    rfiles = []
-                                    break
-                            if rfiles:
-                                files.append(manifestnm)
-                                files.extend(rfiles)
-                                return files
-                        break
+                for manifestpth in glob(os.path.join(manifests, 
+                                                    '%s_%s_%s_%s_*.manifest' % 
+                                                    (self.processorArchitecture, 
+                                                     self.name, 
+                                                     self.publicKeyToken, 
+                                                     ".".join([str(i) for i in self.version])))):
+                    assemblynm = os.path.basename(os.path.splitext(manifestpth)[0])
+                    if not os.path.isfile(manifestpth):
+                        print "W: No such file", manifestpth, "part of assembly", assemblynm
+                        continue
+                    print "I: Found manifest", manifestpth
+                    assemblydir = os.path.join(winsxs, assemblynm)
+                    if not os.path.isdir(assemblydir):
+                        print "W: No such dir", assemblydir
+                        continue
+                    try:
+                        manifest = ManifestFromXMLFile(manifestpth)
+                    except Exception, exc:
+                        print "E:", manifestpth, str(exc)
+                        pass
+                    else:
+                        rfiles = []
+                        for file_ in self.files or manifest.files:
+                            fn = os.path.join(assemblydir, file_.name)
+                            if os.path.isfile(fn):
+                                rfiles.append(fn)
+                            else:
+                                print "W: No such file", fn, "part of assembly", assemblynm
+                                # if any of our files does not exist,
+                                # the assembly is incomplete
+                                rfiles = []
+                                break
+                        if rfiles:
+                            files.append(manifestpth)
+                            files.extend(rfiles)
+                            return files
+                    break
             else:
                 print "W: No such dir", manifests
         else:
@@ -259,18 +257,18 @@ class Manifest():
             for ext in (".dll", ".manifest"):
                 # private assemblies can have the manifest either as 
                 # separate file or embedded in a DLL
-                manifestnm = os.path.join(path, assemblynm + ext)
-                if not os.path.isfile(manifestnm):
-                    print "W: No such file", manifestnm, "part of assembly", assemblynm
+                manifestpth = os.path.join(path, assemblynm + ext)
+                if not os.path.isfile(manifestpth):
+                    print "W: No such file", manifestpth, "part of assembly", assemblynm
                     continue
-                print "I: Found manifest", manifestnm
+                print "I: Found manifest", manifestpth
                 try:
                     if ext == ".dll":
-                        manifest = ManifestFromResFile(manifestnm, [1])
+                        manifest = ManifestFromResFile(manifestpth, [1])
                     else:
-                        manifest = ManifestFromXMLFile(manifestnm)
+                        manifest = ManifestFromXMLFile(manifestpth)
                 except Exception, exc:
-                    print "E:", manifestnm, str(exc)
+                    print "E:", manifestpth, str(exc)
                     pass
                 else:
                     rfiles = []
@@ -283,10 +281,10 @@ class Manifest():
                             # if any of our files does not exist,
                             # the assembly is incomplete
                             return []
-                    files.append(manifestnm)
+                    files.append(manifestpth)
                     files.extend(rfiles)
                 break
-            if not os.path.isfile(manifestnm):
+            if not os.path.isfile(manifestpth):
                 for file_ in self.files:
                     fn = os.path.join(path, file_.name)
                     if os.path.exists(fn):

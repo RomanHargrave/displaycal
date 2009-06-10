@@ -24,27 +24,23 @@ def __find_files(self):
             # Vista or later
             policies = manifests
         if os.path.isdir(policies):
-            policy_re = re.compile(('%s_policy\.%s\.%s\.+%s_%s_' + ('.*\.manifest' if policies == manifests else '')) % 
-                                   (re.escape(self.processorArchitecture), 
-                                    self.version[0], # major
-                                    self.version[1], # minor
-                                    re.escape(self.name), 
-                                    re.escape(self.publicKeyToken)), re.I)
             redirect = False
-            for nm in os.listdir(policies):
-                policynm = os.path.join(policies, nm)
-                if policy_re.match(nm) and ((policies == manifests and os.path.isfile(policynm)) or (policies != manifests and os.path.isdir(policynm))):
-                    for fn in ([policynm] if policies == manifests else os.listdir(policynm)):
-                        if policies != manifests and not fn.lower().endswith(".policy"):
-                            continue
-                        manifestnm = policynm if policies == manifests else os.path.join(policynm, fn)
+            for policypth in glob(os.path.join(policies, 
+                                              ('%s_policy.%s.%s.%s_%s_' + ('*.manifest' if policies == manifests else '')) % 
+                                              (self.processorArchitecture, 
+                                               self.version[0], # major
+                                               self.version[1], # minor
+                                               self.name, 
+                                               self.publicKeyToken))):
+                if (policies == manifests and os.path.isfile(policypth)) or (policies != manifests and os.path.isdir(policypth)):
+                    for manifestpth in ([policypth] if policies == manifests else glob(os.path.join(policypth, "*.policy"))):
                         try:
-                            policy = ManifestFromXMLFile(manifestnm)
+                            policy = ManifestFromXMLFile(manifestpth)
                         except Exception, exc:
-                            print "E:", manifestnm, str(exc)
+                            print "E:", manifestpth, str(exc)
                             pass
                         else:
-                            print "I: Checking policy for binding redirects:", manifestnm
+                            print "I: Checking policy for binding redirects:", manifestpth
                             for assembly in policy.dependentAssemblies:
                                 if assembly.optional:
                                     continue
@@ -63,45 +59,43 @@ def __find_files(self):
                         if redirect:
                             break
         if os.path.isdir(manifests):
-            assembly_re = re.compile('%s_%s_%s_%s_.*\.manifest' % 
-                                     (re.escape(self.processorArchitecture), 
-                                      re.escape(self.name), 
-                                      re.escape(self.publicKeyToken), 
-                                      re.escape(".".join([str(i) for i in version]))), re.I)
-            for nm in os.listdir(manifests):
-                if assembly_re.match(nm):
-                    manifestnm = os.path.join(manifests, nm)
-                    assemblynm = os.path.splitext(nm)[0]
-                    if not os.path.isfile(manifestnm):
-                        print "W: No such file", manifestnm, "part of assembly", assemblynm
-                        continue
-                    print "I: Found manifest", manifestnm
-                    assemblydir = os.path.join(winsxs, assemblynm)
-                    if not os.path.isdir(assemblydir):
-                        print "W: No such dir", assemblydir
-                        continue
-                    try:
-                        manifest = ManifestFromXMLFile(manifestnm)
-                    except Exception, exc:
-                        print "E:", manifestnm, str(exc)
-                        pass
-                    else:
-                        rfiles = []
-                        for file_ in self.files or manifest.files:
-                            fn = os.path.join(assemblydir, file_.name)
-                            if os.path.isfile(fn):
-                                rfiles.append(fn)
-                            else:
-                                print "W: No such file", fn, "part of assembly", assemblynm
-                                # if any of our files does not exist,
-                                # the assembly is incomplete
-                                rfiles = []
-                                break
-                        if rfiles:
-                            files.append(manifestnm)
-                            files.extend(rfiles)
-                            return files
-                    break
+            for manifestpth in glob(os.path.join(manifests, 
+                                                '%s_%s_%s_%s_*.manifest' % 
+                                                (self.processorArchitecture, 
+                                                 self.name, 
+                                                 self.publicKeyToken, 
+                                                 ".".join([str(i) for i in version])))):
+                assemblynm = os.path.basename(os.path.splitext(manifestpth)[0])
+                if not os.path.isfile(manifestpth):
+                    print "W: No such file", manifestpth, "part of assembly", assemblynm
+                    continue
+                print "I: Found manifest", manifestpth
+                assemblydir = os.path.join(winsxs, assemblynm)
+                if not os.path.isdir(assemblydir):
+                    print "W: No such dir", assemblydir
+                    continue
+                try:
+                    manifest = ManifestFromXMLFile(manifestpth)
+                except Exception, exc:
+                    print "E:", manifestpth, str(exc)
+                    pass
+                else:
+                    rfiles = []
+                    for file_ in self.files or manifest.files:
+                        fn = os.path.join(assemblydir, file_.name)
+                        if os.path.isfile(fn):
+                            rfiles.append(fn)
+                        else:
+                            print "W: No such file", fn, "part of assembly", assemblynm
+                            # if any of our files does not exist,
+                            # the assembly is incomplete
+                            rfiles = []
+                            break
+                    if rfiles:
+                        files.append(manifestpth)
+                        files.extend(rfiles)
+                        return files
+                break
         else:
             print "W: No such dir", manifests
     else:
@@ -125,18 +119,18 @@ def __find_files(self):
         for ext in (".dll", ".manifest"):
             # private assemblies can have the manifest either as 
             # separate file or embedded in a DLL
-            manifestnm = os.path.join(path, assemblynm + ext)
-            if not os.path.isfile(manifestnm):
-                print "W: No such file", manifestnm, "part of assembly", assemblynm
+            manifestpth = os.path.join(path, assemblynm + ext)
+            if not os.path.isfile(manifestpth):
+                print "W: No such file", manifestpth, "part of assembly", assemblynm
                 continue
-            print "I: Found manifest", manifestnm
+            print "I: Found manifest", manifestpth
             try:
                 if ext == ".dll":
-                    manifest = ManifestFromResFile(manifestnm, [1])
+                    manifest = ManifestFromResFile(manifestpth, [1])
                 else:
-                    manifest = ManifestFromXMLFile(manifestnm)
+                    manifest = ManifestFromXMLFile(manifestpth)
             except Exception, exc:
-                print "E:", manifestnm, str(exc)
+                print "E:", manifestpth, str(exc)
                 pass
             else:
                 rfiles = []
@@ -149,10 +143,10 @@ def __find_files(self):
                         # if any of our files does not exist,
                         # the assembly is incomplete
                         return []
-                files.append(manifestnm)
+                files.append(manifestpth)
                 files.extend(rfiles)
             break
-        if not os.path.isfile(manifestnm):
+        if not os.path.isfile(manifestpth):
             for file_ in self.files:
                 fn = os.path.join(path, file_.name)
                 if os.path.exists(fn):
