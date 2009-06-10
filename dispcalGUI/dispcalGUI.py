@@ -32,7 +32,6 @@ def _early_excepthook(etype, value, tb):
 		traceback.print_exception(etype, value, tb, file = open(os.path.join(os.path.expanduser("~"), "dispcalGUI.error.log"), "w"))
 	except:
 		pass
-	sys.exit(1)
 
 sys.excepthook = _early_excepthook
 
@@ -72,7 +71,7 @@ from time import gmtime, localtime, sleep, strftime, time, timezone
 import demjson
 if not hasattr(sys, "frozen") or not sys.frozen:
 	import wxversion
-	wxversion.select("2.8")
+	wxversion.ensureMinimal("2.8")
 import wx
 import wx.grid
 import wx.lib.delayedresult as delayedresult
