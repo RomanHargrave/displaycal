@@ -11,7 +11,7 @@ import shutil
 import sys
 
 from dispcalGUI.setup import __doc__
-from dispcalGUI.meta import name, domain, version, version_lin, version_mac, version_tuple, version_win
+from dispcalGUI.meta import name, domain, version, version_lin, version_mac, version_src, version_tuple, version_win
 
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
@@ -110,6 +110,8 @@ def setup():
 		for key, val in [
 			("DATE", 
 				strftime("%Y-%m-%d", gmtime(os.stat(readme_template_path).st_mtime))),
+			("TIME", 
+				strftime("%H:%M", gmtime(os.stat(readme_template_path).st_mtime))),
 			("TIMESTAMP", 
 				strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(readme_template_path).st_mtime)) +
 				("+" if timezone < 0 else "-") +
@@ -117,7 +119,8 @@ def setup():
 			("VERSION", version),
 			("VERSION_LIN", version_lin),
 			("VERSION_MAC", version_mac),
-			("VERSION_WIN", version_win)
+			("VERSION_WIN", version_win),
+			("VERSION_SRC", version_src)
 		]:
 			readme_template_html = readme_template_html.replace("${%s}" % key, val)
 		readme = open(os.path.join(pydir, "README.html"), "rb")

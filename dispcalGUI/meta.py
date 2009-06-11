@@ -37,5 +37,6 @@ version = "0.2.5b4"
 version_lin = "0.2.5b4" # Linux
 version_mac = "0.2.5b4" # Mac OS X
 version_win = "0.2.5b4" # Windows
+version_src = "0.2.5b4-2"
 
 version_tuple = (0, 2, 5, 0) # only ints allowed and must be exactly 4 values
