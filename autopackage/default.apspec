@@ -12,7 +12,7 @@ Maintainer: Florian Höch <dispcalGUI@hoech.net>
 Packager: Florian Höch <dispcalGUI@hoech.net>
 PackageVersion: 1
 CPUArchitectures: x86 x86_64
-AutopackageTarget: 1.0
+AutopackageTarget: 1.4
 Type: Application
 License: GNU General Public License (GPL)
 
@@ -113,10 +113,11 @@ echo '*' | import
 
 
 [Install]
-sed "s|/usr/bin/env python|`which python`|" bin/dispcalGUI > bin/dispcalGUI.new
-mv -f bin/dispcalGUI.new bin/dispcalGUI
-
 python_version=`python -c "import sys;print sys.version[:3]"`
+
+python=`which python$python_version 2>/dev/null || which python`
+safeSed bin/dispcalGUI "s|/usr/bin/env python|$python|"
+
 cd lib/python/site-packages/dispcalGUI
 uname -m | grep "64" && (
 	tar -xf RealDisplaySizeMM.py$python_version.x86_64.so.tar
