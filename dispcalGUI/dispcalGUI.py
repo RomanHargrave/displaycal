@@ -4311,6 +4311,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if result:
 			cal = os.path.join(self.getcfg("profile.save_path"), self.get_profile_name(), self.get_profile_name() + ".cal")
 			self.setcfg("last_cal_path", cal)
+			self.previous_cal = self.getcfg("calibration.file")
 			if self.profile_update_cb.GetValue():
 				profile_path = os.path.join(self.getcfg("profile.save_path"), self.get_profile_name(), self.get_profile_name() + profile_ext)
 				result = self.check_profile_isfile(profile_path, self.getlstr("error.profile.file_not_created"))
@@ -4323,7 +4324,6 @@ class DisplayCalibratorGUI(wx.Frame):
 				result = self.check_cal_isfile(cal, self.getlstr("error.calibration.file_not_created"))
 				if result:
 					if self.install_cal:
-						self.previous_cal = self.getcfg("calibration.file")
 						self.setcfg("calibration.file", cal)
 						self.update_controls(update_profile_name = False)
 					self.setcfg("last_cal_or_icc_path", cal)
@@ -5462,6 +5462,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					handle_error("Error - temporary .ti3 file could not be created: " + str(exception), parent = self)
 					self.wrapup(False)
 					return
+				self.previous_cal = self.getcfg("calibration.file")
 				# if sys.platform == "win32":
 					# sp.call("cls", shell = True)
 				# else:
