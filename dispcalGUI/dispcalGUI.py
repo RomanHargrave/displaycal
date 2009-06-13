@@ -4848,7 +4848,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						start_new_thread(wsh_sendkeys, (5, appname + exe_ext, " "))
 					else:
 						if which("xte"):
-							start_new_thread(xte_sendkeys, (5, None, "Space"))
+							start_new_thread(xte_sendkeys, (5, None, "space"))
 						elif verbose >= 2:
 							safe_print("Warning - 'xte' commandline tool not found, unattended measurements not possible")
 				except Exception, exception:
@@ -8625,7 +8625,7 @@ def xte_sendkeys(delay = 0, windowname = "", keys = ""):
 		if verbose >= 2:
 			safe_print('Sending key sequence using xte: "%s"' % keys)
 		stdout = tempfile.SpooledTemporaryFile()
-		retcode = sp.call(["xte", "key %s" % keys], stdin = sp.PIPE, stdout = stdout, stderr = sp.STDOUT)
+		retcode = sp.call(["xte", "key %s" % keys], stdin = sp.PIPE, stdout = stdout, stderr = stdout)
 		if verbose >= 2:
 			stdout.seek(0)
 			safe_print(stdout.read())
