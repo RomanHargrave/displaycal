@@ -109,7 +109,7 @@ def indexi(self, value, start = None, stop = None):
 	return items.index(*args)
 
 def asciize(exception):
-	chars = {
+	subst = {
 		u"\u00a9": u"(C)", # U+00A9 copyright sign
 		u"\u00ae": u"(R)", # U+00AE registered sign
 		u"\u00b2": u"2", # U+00B2 superscript two
@@ -122,7 +122,10 @@ def asciize(exception):
 		u"\u2026": u"...", # U+2026 ellipsis
 		u"\u2212": u"-", # U+2212 minus sign
 	}
-	return chars.get(exception.object[exception.start:exception.end], u"_"), exception.end
+	chars = ""
+	for char in exception.object[exception.start:exception.end]:
+		chars += subst.get(char, u"_")
+	return chars, exception.end
 
 codecs.register_error("asciize", asciize)
 
@@ -4375,6 +4378,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			else:
 				profile_path = filename + profile_ext
 			if os.path.exists(profile_path):
+				self.previous_cal = False
 				self.profile_finish(True, profile_path = profile_path, success_msg = self.getlstr("dialog.install_profile", (os.path.basename(profile_path), self.display_ctrl.GetStringSelection())), skip_cmds = True)
 
 	def get_default_path(self, cfg_item_name):
@@ -4822,9 +4826,21 @@ class DisplayCalibratorGUI(wx.Frame):
 				safe_print("Warning - error during shell script creation:", str(exception))
 		if cmdname == self.get_argyll_utilname("dispread") and self.dispread_after_dispcal:
 			instrument_features = self.get_instrument_features()
+			if verbose >= 2:
+				safe_print("Running calibration and profiling in succession, checking instrument for unattended capability...")
+				if instrument_features:
+					safe_print("Instrument needs sensor calibration before use:", "Yes" if instrument_features.get("sensor_cal") else "No")
+					if instrument_features.get("sensor_cal"):
+						safe_print("Instrument can be forced to skip sensor calibration:", "Yes" if instrument_features.get("skip_sensor_cal") and self.argyll_version >= [1, 1, 0] else "No")
+				else:
+					safe_print("Warning - instrument not recognized:", self.comport_ctrl.GetStringSelection())
 			# -N switch not working as expected in Argyll 1.0.3
 			if instrument_features and (not instrument_features.get("sensor_cal") or (instrument_features.get("skip_sensor_cal") and self.argyll_version >= [1, 1, 0])):
+				if verbose >= 2:
+					safe_print("Instrument can be used for unattended calibration and profiling")
 				try:
+					if verbose >= 2:
+						safe_print("Sending 'SPACE' key to automatically start measurements in 5 seconds...")
 					if sys.platform == "darwin":
 						start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
 					elif sys.platform == "win32":
@@ -4832,8 +4848,12 @@ class DisplayCalibratorGUI(wx.Frame):
 					else:
 						if which("xte"):
 							start_new_thread(xte_sendkeys, (5, None, "Space"))
+						elif verbose >= 2:
+							safe_print("Warning - 'xte' commandline tool not found, unattended measurements not possible")
 				except Exception, exception:
 					safe_print("Warning - unattended measurements not possible (start_new_thread failed with %s)" % str(exception))
+			elif verbose >= 2:
+				safe_print("Instrument can not be used for unattended calibration and profiling")
 		elif cmdname in (self.get_argyll_utilname("dispcal"), self.get_argyll_utilname("dispread")) and \
 			sys.platform == "darwin" and args and not self.IsShownOnScreen():
 			start_new_thread(mac_app_activate, (3, "Terminal"))
@@ -5074,6 +5094,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.options_dispread = []
 		self.dispread_after_dispcal = False
 		start_timers = True
+		self.previous_cal = False
 		if self.measure(apply_calibration):
 			start_timers = False
 			wx.CallAfter(self.start_profile_worker, self.getlstr("profiling.complete"), apply_calibration)
@@ -5083,7 +5104,7 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def profile_finish(self, result, profile_path = None, success_msg = "", failure_msg = "", preview = True, skip_cmds = False):
 		if result:
-			if not hasattr(self, "previous_cal") or not self.previous_cal:
+			if not hasattr(self, "previous_cal") or self.previous_cal == False:
 				self.previous_cal = self.getcfg("calibration.file")
 			if profile_path:
 				profile_save_path = os.path.splitext(profile_path)[0]
@@ -5099,14 +5120,14 @@ class DisplayCalibratorGUI(wx.Frame):
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					InfoDialog(self, msg = self.getlstr("profile.invalid"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 					self.start_timers(True)
-					self.previous_cal = None
+					self.previous_cal = False
 					return
 				else:
 					has_cal = "vcgt" in profile.tags
 					if profile.profileClass != "mntr" or profile.colorSpace != "RGB":
 						InfoDialog(self, msg = success_msg, ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 						self.start_timers(True)
-						self.previous_cal = None
+						self.previous_cal = False
 						return
 					if self.getcfg("calibration.file") != profile_path and "cprt" in profile.tags:
 						options_dispcal, options_colprof = self.get_options_from_cprt(profile.tags.cprt)
@@ -5164,7 +5185,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		else:
 			InfoDialog(self, pos = (-1, 100), msg = failure_msg, ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 		self.start_timers(True)
-		self.previous_cal = None
+		self.previous_cal = False
 	
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():
@@ -5462,7 +5483,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					handle_error("Error - temporary .ti3 file could not be created: " + str(exception), parent = self)
 					self.wrapup(False)
 					return
-				self.previous_cal = self.getcfg("calibration.file")
+				self.previous_cal = False
 				# if sys.platform == "win32":
 					# sp.call("cls", shell = True)
 				# else:
@@ -8600,7 +8621,17 @@ def wsh_sendkeys(delay = 0, windowname = "", keys = ""):
 def xte_sendkeys(delay = 0, windowname = "", keys = ""):
 	try:
 		if delay: sleep(delay)
-		sp.call(["xte", "key %s" % keys], stdin = sp.PIPE, stdout = sp.PIPE, stderr = sp.PIPE)
+		if verbose >= 2:
+			safe_print('Sending key sequence using xte: "%s"' % keys)
+		stdout = tempfile.SpooledTemporaryFile()
+		retcode = sp.call(["xte", "key %s" % keys], stdin = sp.PIPE, stdout = stdout, stderr = sp.STDOUT)
+		if verbose >= 2:
+			stdout.seek(0)
+			safe_print(stdout.read())
+		stdout.close()
+		if retcode != 0:
+			if verbose >= 2:
+				safe_print(retcode)
 	except Exception, exception:
 		if verbose >= 1: safe_print("Error - xte_sendkeys() failed:", exception)
 
