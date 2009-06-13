@@ -1822,7 +1822,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					if n == 0 and "version" in line.lower():
 						argyll_version = line[line.lower().find("version")+8:]
 						self.argyll_version_string = argyll_version
-						if verbose >= 2: safe_print("Argyll CMS version", argyll_version)
+						if verbose >= 3: safe_print("Argyll CMS version", argyll_version)
 						argyll_version = re.findall("(\d+|[^.\d]+)", argyll_version)
 						for i in range(len(argyll_version)):
 							try:
@@ -3024,6 +3024,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			if result != wx.ID_OK: return
 		skip = [
 			"argyll.dir",
+			"calibration.black_point_rate.enabled",
 			"gamap_profile",
 			"gamma",
 			"last_cal_path",
@@ -3052,7 +3053,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		for name in self.defaults:
 			if name not in skip and name not in override:
 				if (len(include) == 0 or False in [name.find(item) < 0 for item in include]) and (len(exclude) == 0 or not (False in [name.find(item) < 0 for item in exclude])):
-					if verbose >= 2: safe_print("Restoring %s to %s" % (name, self.defaults[name]))
+					if verbose >= 3: safe_print("Restoring %s to %s" % (name, self.defaults[name]))
 					self.setcfg(name, self.defaults[name])
 		for name in override:
 			if (len(include) == 0 or False in [name.find(item) < 0 for item in include]) and (len(exclude) == 0 or not (False in [name.find(item) < 0 for item in exclude])):
@@ -7742,7 +7743,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					return False
 			else:
 				prev_dir = cur_dir
-		if verbose >= 2: safe_print("Argyll binary directory:", cur_dir)
+		if verbose >= 3: safe_print("Argyll binary directory:", cur_dir)
 		if debug: safe_print("check_argyll_bin OK")
 		if debug >= 2:
 			if not paths:
@@ -7768,7 +7769,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			path = dlg.GetPath().rstrip(os.path.sep)
 			result = self.check_argyll_bin([path])
 			if result:
-				if verbose >= 2: safe_print("Setting Argyll binary directory:", path)
+				if verbose >= 3: safe_print("Setting Argyll binary directory:", path)
 				self.setcfg("argyll.dir", path)
 			else:
 				InfoDialog(self, msg = self.getlstr("argyll.dir.invalid", (exe_ext, exe_ext, exe_ext, exe_ext, exe_ext)), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
@@ -8012,7 +8013,7 @@ class DisplayCalibratorGUI(wx.Frame):
 						# parse options
 						if options_dispcal:
 							# restore defaults
-							self.restore_defaults_handler(include = ("calibration", "measure.darken_background", "profile.update", "trc", "whitepoint"))
+							self.restore_defaults_handler(include = ("calibration", "measure.darken_background", "profile.update", "trc", "whitepoint"), exclude = ("calibration.black_point_correction_choice.show", "measure.darken_background.show_warning", "trc.should_use_viewcond_adjust.show_msg"))
 							self.options_dispcal = ["-" + arg for arg in options_dispcal]
 							for o in options_dispcal:
 								if o[0] == "d":
@@ -8177,7 +8178,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.setcfg("last_cal_path", path)
 
 			# restore defaults
-			self.restore_defaults_handler(include = ("calibration", "profile.update", "trc", "whitepoint"))
+			self.restore_defaults_handler(include = ("calibration", "profile.update", "trc", "whitepoint"), exclude = ("calibration.black_point_correction_choice.show", "trc.should_use_viewcond_adjust.show_msg"))
 
 			self.options_dispcal = []
 			settings = []
