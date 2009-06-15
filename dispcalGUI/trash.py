@@ -17,6 +17,8 @@ else:
 	from urllib import quote
 	import shutil
 
+from osenvu import getenvu, expanduseru
+
 class TrashcanUnavailableError(Exception):
 	def __str__(self):
 		return self.args[0]
@@ -36,15 +38,15 @@ def trash(paths):
 			recycle(path)
 	else:
 		# http://freedesktop.org/wiki/Specifications/trash-spec
-		trashroot = os.path.join(os.getenv("XDG_DATA_HOME",
-		   os.path.join(os.path.expanduser("~"), ".local", "share")), "Trash")
+		trashroot = os.path.join(getenvu("XDG_DATA_HOME",
+		   os.path.join(expanduseru("~"), ".local", "share")), "Trash")
 		trashinfo = os.path.join(trashroot, "info")
 		if os.path.isdir(trashroot):
 			# modern Linux distros
 			trashcan = os.path.join(trashroot, "files")
 		else:
 			# older Linux distros and Mac OS X
-			trashcan = os.path.join(os.path.expanduser("~"), ".Trash")
+			trashcan = os.path.join(expanduseru("~"), ".Trash")
 		if not os.path.isdir(trashcan):
 			raise TrashcanUnavailableError("No such directory: '%s'" % trashcan)
 		for path in paths:

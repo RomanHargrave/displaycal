@@ -28,8 +28,8 @@ def _early_excepthook(etype, value, tb):
 	import traceback
 	traceback.print_exception(etype, value, tb)
 	try:
-		import os
-		traceback.print_exception(etype, value, tb, file = open(os.path.join(os.path.expanduser("~"), "dispcalGUI.error.log"), "w"))
+		from osenvu import expanduseru
+		traceback.print_exception(etype, value, tb, file = open(os.path.join(expanduseru("~"), "dispcalGUI.error.log"), "w"))
 	except:
 		pass
 
@@ -89,6 +89,7 @@ from argyll_names import names as argyll_names, altnames as argyll_altnames
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
 from meta import author, name as appname, version
 from natsort import natsort
+from osenvu import expanduseru, expandvarsu, getenvu, putenvu
 import pyi_md5pickuphelper
 from safe_print import safe_print as _safe_print
 from trash import trash, TrashcanUnavailableError
@@ -134,8 +135,10 @@ codecs.register_error("asciize", asciize)
 if "--ascii" in sys.argv[1:]:
 	enc = fs_enc = "ASCII"
 else:
-	enc = "UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or \
-	   locale.getpreferredencoding() or "ASCII"
+	if sys.platform == "darwin":
+		enc = "UTF-8"
+	else:
+		enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
 	fs_enc = sys.getfilesystemencoding() or enc
 
 isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
@@ -196,29 +199,29 @@ else:
 		cmdfile_ext = ".command"
 		mac_create_app = True
 		scale_adjustment_factor = 1.0
-		confighome = os.path.join(os.path.expanduser("~"), "Library", 
+		confighome = os.path.join(expanduseru("~"), "Library", 
 			"Preferences", appname)
-		datahome = os.path.join(os.path.expanduser("~"), "Library", 
+		datahome = os.path.join(expanduseru("~"), "Library", 
 			"Application Support", appname)
-		logdir = os.path.join(os.path.expanduser("~"), "Library", 
+		logdir = os.path.join(expanduseru("~"), "Library", 
 			"Logs", appname)
 		data_dirs += [datahome, os.path.join(os.path.sep, "Library", 
 			"Application Support", appname)]
 		iccprofiles = os.path.join(os.path.sep, "Library", 
 			"ColorSync", "Profiles")
-		iccprofiles_home = os.path.join(os.path.expanduser("~"), "Library", 
+		iccprofiles_home = os.path.join(expanduseru("~"), "Library", 
 			"ColorSync", "Profiles")
 	else:
 		cmdfile_ext = ".sh"
 		scale_adjustment_factor = 1.0
-		xdg_config_home = os.getenv("XDG_CONFIG_HOME",
-		   os.path.join(os.path.expanduser("~"), ".config"))
-		xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg").split(os.pathsep)
-		xdg_data_home_default = os.path.expandvars("$HOME/.local/share")
-		xdg_data_home = os.getenv("XDG_DATA_HOME",
+		xdg_config_home = getenvu("XDG_CONFIG_HOME",
+		   os.path.join(expanduseru("~"), ".config"))
+		xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", "/etc/xdg").split(os.pathsep)
+		xdg_data_home_default = expandvarsu("$HOME/.local/share")
+		xdg_data_home = getenvu("XDG_DATA_HOME",
 		   xdg_data_home_default)
 		xdg_data_dirs_default = "/usr/local/share:/usr/share"
-		xdg_data_dirs = os.getenv(
+		xdg_data_dirs = getenvu(
 			"XDG_DATA_DIRS", xdg_data_dirs_default
 			).split(os.pathsep)
 		for xdg_data_dir in xdg_data_dirs_default.split(os.pathsep):
@@ -245,14 +248,14 @@ if isapp:
 	data_dirs += [os.path.join(pydir, "..", "..", "..")]
 	runtype = ".app"
 else:
-	if (os.getenv("_MEIPASS2", pydir) if isexe else pydir) not in data_dirs:
-		data_dirs += [os.getenv("_MEIPASS2", pydir) if isexe else pydir]
+	if (getenvu("_MEIPASS2", pydir) if isexe else pydir) not in data_dirs:
+		data_dirs += [getenvu("_MEIPASS2", pydir) if isexe else pydir]
 	if isexe:
 		runtype = exe_ext
 	else:
 		runtype = ".py"
 for dir_ in sys.path:
-	dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
+	dir_ = os.path.abspath(os.path.join(unicode(dir_, enc), appname))
 	if dir_ not in data_dirs and os.path.isdir(dir_):
 		data_dirs += [dir_]
 storage = os.path.join(datahome, "storage")
@@ -689,7 +692,7 @@ def set_position(window, x = None, y = None, w = None, h = None):
 
 def which(name, paths = None):
 	if not paths:
-		paths = os.getenv("PATH", os.defpath).split(os.pathsep)
+		paths = getenvu("PATH", os.defpath).split(os.pathsep)
 	for cur_dir in paths:
 		filename = os.path.join(cur_dir, name)
 		if os.path.isfile(filename):
@@ -705,9 +708,6 @@ def get_sudo():
 		# if which(name):
 			# return name
 	return which("sudo")
-
-def putenv(varname, value):
-	os.environ[varname] = value
 
 def escargs(args):
 	args_out = []
@@ -1360,7 +1360,7 @@ class DisplayCalibratorGUI(wx.Frame):
 	def init_defaults(self):
 		# defaults
 		self.defaults = {
-			"argyll.dir": os.path.expanduser("~"), # directory
+			"argyll.dir": expanduseru("~"), # directory
 			"calibration.ambient_viewcond_adjust": 0,
 			"calibration.ambient_viewcond_adjust.lux": 500.0,
 			"calibration.black_luminance": 0.5,
@@ -3390,7 +3390,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				InfoDialog(self, msg = self.getlstr("enable_spyder2_success"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-information"])
 			else:
 				# prompt for setup.exe
-				defaultDir, defaultFile = os.path.expanduser("~"), "setup.exe"
+				defaultDir, defaultFile = expanduseru("~"), "setup.exe"
 				dlg = wx.FileDialog(self, self.getlstr("locate_spyder2_setup"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = "*", style = wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 				dlg.Center(wx.BOTH)
 				result = dlg.ShowModal()
@@ -4129,10 +4129,10 @@ class DisplayCalibratorGUI(wx.Frame):
 				else:
 					args += [display_name]
 			args += ["-C"]
-			args += ["(c) %s %s. Created with %s and Argyll CMS: dispcal %s colprof %s" % (strftime("%Y"), getpass.getuser(), appname, " ".join(self.options_dispcal), " ".join(options_colprof))]
+			args += [u"(c) %s %s. Created with %s and Argyll CMS: dispcal %s colprof %s" % (strftime("%Y"), unicode(getpass.getuser(), enc, "asciize"), appname, " ".join(self.options_dispcal), " ".join(options_colprof))]
 		else:
 			args += ["-C"]
-			args += ["(c) %s %s. Created with %s and Argyll CMS: colprof %s" % (strftime("%Y"), getpass.getuser(), appname, " ".join(options_colprof))]
+			args += [u"(c) %s %s. Created with %s and Argyll CMS: colprof %s" % (strftime("%Y"), unicode(getpass.getuser(), enc, "asciize"), appname, " ".join(options_colprof))]
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
@@ -4390,7 +4390,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		elif os.path.exists(os.path.dirname(defaultPath)):
 			defaultDir = os.path.dirname(defaultPath)
 		else:
-			defaultDir = os.path.expanduser("~")
+			defaultDir = expanduseru("~")
 		return defaultDir, defaultFile
 
 	def install_profile_handler(self, event):
@@ -7701,7 +7701,7 @@ class DisplayCalibratorGUI(wx.Frame):
 	
 	def get_argyll_util(self, name, paths = None):
 		if not paths:
-			paths = os.getenv("PATH", os.defpath).split(os.pathsep)
+			paths = getenvu("PATH", os.defpath).split(os.pathsep)
 			argyll_dir = (self.getcfg("argyll.dir") or "").rstrip(os.path.sep)
 			if argyll_dir:
 				if argyll_dir in paths:
@@ -7747,7 +7747,7 @@ class DisplayCalibratorGUI(wx.Frame):
 		if debug: safe_print("check_argyll_bin OK")
 		if debug >= 2:
 			if not paths:
-				paths = os.getenv("PATH", os.defpath).split(os.pathsep)
+				paths = getenvu("PATH", os.defpath).split(os.pathsep)
 				argyll_dir = (self.getcfg("argyll.dir") or "").rstrip(os.path.sep)
 				if argyll_dir:
 					if argyll_dir in paths:
@@ -8642,7 +8642,7 @@ def main():
 		setup_logging()
 		if verbose >= 1: safe_print(appname + runtype, version, "build", build)
 		# read pre-v0.2.2b configuration if present
-		oldcfg = os.path.join(os.path.expanduser("~"), "Library", "Preferences", appname + " Preferences") if sys.platform == "darwin" else os.path.join(os.path.expanduser("~"), "." + appname)
+		oldcfg = os.path.join(expanduseru("~"), "Library", "Preferences", appname + " Preferences") if sys.platform == "darwin" else os.path.join(expanduseru("~"), "." + appname)
 		if not os.path.exists(confighome):
 			try:
 				os.makedirs(confighome)
