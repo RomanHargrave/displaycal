@@ -581,7 +581,8 @@ def can_update_cal(path):
 		except (IOError, CGATS.CGATSInvalidError, 
 			CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-			del cals[path]
+			if path in cals:
+				del cals[path]
 			safe_print("Warning - couldn't process CGATS file '%s': %s" % (path, str(exception)))
 		else:
 			if cal.queryv1("DEVICE_TYPE") in ("CRT", "LCD") and \
