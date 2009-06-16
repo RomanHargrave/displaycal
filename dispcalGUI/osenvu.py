@@ -2,23 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import os
-import locale
 import sys
 
-if sys.platform == "darwin":
-	enc = "UTF-8" 
-else:
-	enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
-
 def expanduseru(path):
-	return unicode(os.path.expanduser(path), enc)
+	return unicode(os.path.expanduser(path), sys.getfilesystemencoding())
 
 def expandvarsu(path):
-	return unicode(os.path.expandvars(path), enc)
+	return unicode(os.path.expandvars(path), sys.getfilesystemencoding())
 
 def getenvu(key, default = None):
 	var = os.getenv(key, default)
-	return var if isinstance(var, unicode) else unicode(var, enc)
+	return var if isinstance(var, unicode) else unicode(var, sys.getfilesystemencoding())
 
 def putenvu(key, value):
-	os.environ[key] = value.encode(enc)
+	os.environ[key] = value.encode(sys.getfilesystemencoding())

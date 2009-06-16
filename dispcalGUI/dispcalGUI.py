@@ -256,7 +256,7 @@ else:
 	else:
 		runtype = ".py"
 for dir_ in sys.path:
-	dir_ = os.path.abspath(os.path.join(unicode(dir_, enc), appname))
+	dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
 	if dir_ not in data_dirs and os.path.isdir(dir_):
 		data_dirs += [dir_]
 storage = os.path.join(datahome, "storage")
@@ -574,21 +574,23 @@ def can_update_cal(path):
 		calstat = os.stat(path)
 	except Exception, exception:
 		safe_print("Warning - os.stat('%s') failed: %s" % (path, str(exception)))
+		return False
 	if not path in cals or cals[path].mtime != calstat.st_mtime:
 		try:
 			cal = CGATS.CGATS(path)
 		except (IOError, CGATS.CGATSInvalidError, 
 			CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-			cals[path] = False
+			del cals[path]
 			safe_print("Warning - couldn't process CGATS file '%s': %s" % (path, str(exception)))
 		else:
-			cals[path] = cal.queryv1("DEVICE_TYPE") in ("CRT", "LCD") and \
+			if cal.queryv1("DEVICE_TYPE") in ("CRT", "LCD") and \
 			   not None in (cal.queryv1("TARGET_WHITE_XYZ"), 
 			   cal.queryv1("TARGET_GAMMA"), 
 			   cal.queryv1("BLACK_POINT_CORRECTION"), 
-			   cal.queryv1("QUALITY"))
-	return cals[path]
+			   cal.queryv1("QUALITY")):
+				cals[path] = cal
+	return path in cals and cals[path].mtime == calstat.st_mtime
 
 def listdir(path, rex = None):
 	files = os.listdir(path)
@@ -4131,10 +4133,10 @@ class DisplayCalibratorGUI(wx.Frame):
 				else:
 					args += [display_name]
 			args += ["-C"]
-			args += [u"(c) %s %s. Created with %s and Argyll CMS: dispcal %s colprof %s" % (strftime("%Y"), unicode(getpass.getuser(), enc, "asciize"), appname, " ".join(self.options_dispcal), " ".join(options_colprof))]
+			args += [u"(c) %s %s. Created with %s and Argyll CMS: dispcal %s colprof %s" % (strftime("%Y"), unicode(getpass.getuser(), fs_enc, "asciize"), appname, " ".join(self.options_dispcal), " ".join(options_colprof))]
 		else:
 			args += ["-C"]
-			args += [u"(c) %s %s. Created with %s and Argyll CMS: colprof %s" % (strftime("%Y"), unicode(getpass.getuser(), enc, "asciize"), appname, " ".join(options_colprof))]
+			args += [u"(c) %s %s. Created with %s and Argyll CMS: colprof %s" % (strftime("%Y"), unicode(getpass.getuser(), fs_enc, "asciize"), appname, " ".join(options_colprof))]
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
@@ -7905,7 +7907,12 @@ class DisplayCalibratorGUI(wx.Frame):
 			return None
 
 	def get_options_from_cprt(self, cprt):
-		dispcal = unicode(cprt).split(" dispcal ")
+		if not isinstance(cprt, unicode):
+			if isinstance(cprt, (ICCP.TextDescriptionType, ICCP.MultiLocalizedUnicodeType)):
+				cprt = unicode(cprt)
+			else:
+				cprt = unicode(cprt, fs_enc, "replace")
+		dispcal = cprt.split(" dispcal ")
 		colprof = None
 		if len(dispcal) > 1:
 			dispcal[1] = dispcal[1].split(" colprof ")

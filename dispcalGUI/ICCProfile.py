@@ -5,9 +5,9 @@ from decimal import Decimal
 from hashlib import md5
 from os import getenv, path
 import struct
-from sys import getfilesystemencoding, platform
+import sys
 from time import localtime, mktime, strftime
-if platform == "win32":
+if sys.platform == "win32":
 	import win32api
 	import win32gui
 else:
@@ -203,14 +203,14 @@ observers = {
 def get_display_profile(display_no = 0):
 	""" Return ICC Profile for display n or None """
 	profile = None
-	if platform == "win32":
+	if sys.platform == "win32":
 		display_name = win32api.EnumDisplayDevices(None, display_no).DeviceName
 		dc = win32gui.CreateDC("DISPLAY", display_name, None)
 		filename = win32api.GetICMProfile(dc)
 		if filename:
 			profile = ICCProfile(filename)
 	else:
-		if platform == "darwin":
+		if sys.platform == "darwin":
 			args = ['osascript', '-e', 'tell app "ColorSyncScripting"', '-e', 
 					'set prof to location of (display profile of display %i)' % 
 					(display_no + 1), '-e', 'try', '-e', 'POSIX path of prof', 
@@ -224,7 +224,7 @@ def get_display_profile(display_no = 0):
 						stdout=sp.PIPE, stderr=sp.PIPE)
 		stdoutdata, stderrdata = [data.strip("\n") for data in p.communicate()]
 		if stdoutdata:
-			if platform == "darwin":
+			if sys.platform == "darwin":
 				filename = unicode(stdoutdata, "UTF-8")
 				profile = ICCProfile(filename)
 			else:
@@ -375,6 +375,8 @@ class MultiLocalizedUnicodeType(Dict): # ICC v4
 			self[recordLanguageCode][recordCountryCode] = unicode(tagData[recordOffset:recordOffset + recordLength], "utf-16-be", "replace")
 			records = records[recordSize:]
 	def __str__(self):
+		return unicode(self).encode("ASCII")
+	def __unicode__(self):
 		"""
 		Return tag as string.
 		TO-DO: Needs some work re locales
@@ -399,7 +401,7 @@ class TextDescriptionType(Dict): # ICC v2
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + ASCIIDescriptionLength].strip("\0\n\r ")
-			if ASCIIDescription: self.ASCII = unicode(ASCIIDescription, getfilesystemencoding(), errors="replace") # even ASCII description may contain non-ASCII chars, so assume system encoding and convert to unicode, replacing unknown chars
+			if ASCIIDescription: self.ASCII = unicode(ASCIIDescription, sys.getfilesystemencoding(), errors="replace") # even ASCII description may contain non-ASCII chars, so assume system encoding and convert to unicode, replacing unknown chars
 		unicodeOffset = 12 + ASCIIDescriptionLength
 		unicodeLanguageCode = uInt32Number(tagData[unicodeOffset:unicodeOffset + 4])
 		unicodeDescriptionLength = uInt32Number(tagData[unicodeOffset + 4:unicodeOffset + 8])
@@ -457,6 +459,8 @@ class TextDescriptionType(Dict): # ICC v2
 					safe_print("UnicodeDecodeError (non-critical): could not decode '" + tagSignature + "' tag Macintosh part")
 					macDescription = None
 	def __str__(self):
+		return unicode(self).encode("ASCII")
+	def __unicode__(self):
 		for localizedType in ("ASCII", "Macintosh", "Unicode"):
 			if localizedType in self:
 				return self[localizedType]
@@ -468,6 +472,20 @@ class TextType(str):
 		# return repr(self[8:].strip("\0\n\r "))
 	# def __str__(self):
 		# return str(self[8:].strip("\0\n\r "))
+
+class VideoCardGammaFormula(Dict):
+	def __init__(self, data):
+		self.update({
+			"redGamma": u16Fixed16Number(data[0:4]),
+			"redMin": u16Fixed16Number(data[4:8]),
+			"redMax": u16Fixed16Number(data[8:12]),
+			"greenGamma": u16Fixed16Number(data[12:16]),
+			"greenMin": u16Fixed16Number(data[16:20]),
+			"greenMax": u16Fixed16Number(data[20:24]),
+			"blueGamma": u16Fixed16Number(data[24:28]),
+			"blueMin": u16Fixed16Number(data[28:32]),
+			"blueMax": u16Fixed16Number(data[32:36])
+		})
 
 class VideoCardGammaType(Dict):
 	def __init__(self, tagData):
@@ -502,6 +520,8 @@ class VideoCardGammaType(Dict):
 						self.data[i].append(uInt64Number(data[index:index + entrySize]))
 					j = j + 1
 				i = i + 1
+		elif tagType == 1: # formula
+			self.update(VideoCardGammaFormula(videoCardGamma[4:]))
 	def printNormalizedValues(self, amount = None, digits = 12):
 		"""
 		Normalizes all values in the vcgt to a range of 0.0...1.0 and prints them, e.g.
@@ -589,7 +609,7 @@ class ICCProfile:
 			if type(binaryStringOrFileNameOrFileObject) in (str, unicode):
 				if binaryStringOrFileNameOrFileObject.find("\0") < 0: # filename
 					if not path.exists(binaryStringOrFileNameOrFileObject):
-						if platform == "win32" and binaryStringOrFileNameOrFileObject.find("\\") < 0:
+						if sys.platform == "win32" and binaryStringOrFileNameOrFileObject.find("\\") < 0:
 							binaryStringOrFileNameOrFileObject = getenv("SYSTEMROOT") + "\\system32\\spool\\drivers\\color\\" + binaryStringOrFileNameOrFileObject
 					binaryStringOrFileNameOrFileObject = open(binaryStringOrFileNameOrFileObject, "rb")
 				else: # binary string
@@ -727,31 +747,31 @@ class ICCProfile:
 		"""
 		Return profile copyright.
 		"""
-		return self.tags.cprt.__str__()
+		return unicode(self.tags.cprt)
 	
 	def getDescription(self):
 		"""
 		Return profile description.
 		"""
-		return self.tags.desc.__str__()
+		return unicode(self.tags.desc)
 	
 	def getDeviceManufacturerDescription(self):
 		"""
 		Return device manufacturer description.
 		"""
-		return self.tags.dmnd.__str__()
+		return unicode(self.tags.dmnd)
 	
 	def getDeviceModelDescription(self):
 		"""
 		Return device model description.
 		"""
-		return self.tags.dmdd.__str__()
+		return unicode(self.tags.dmdd)
 	
 	def getViewingConditionsDescription(self):
 		"""
 		Return viewing conditions description.
 		"""
-		return self.tags.vued.__str__()
+		return unicode(self.tags.vued)
 	
 	def isSame(self, profile):
 		"""
