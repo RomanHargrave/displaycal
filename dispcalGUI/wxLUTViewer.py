@@ -3,7 +3,16 @@
 
 import math
 import os
+import sys
 
+if not hasattr(sys, "frozen") or not sys.frozen:
+	import wxversion
+	try:
+		wxversion.ensureMinimal("2.8")
+	except wxversion.AlreadyImportedError:
+		import wx
+		if wx.VERSION < (2, 8):
+			raise
 from wx.lib.plot import _Numeric
 import wx
 import wx.lib.plot as plot

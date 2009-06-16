@@ -355,8 +355,11 @@ def setup():
 		attrs["include_package_data"] = sys.platform in ("darwin", "win32")
 		install_requires = [req.replace("(", "").replace(")", "") for req in requires]
 		try:
+			if not hasattr(sys, "frozen") or not sys.frozen:
+				import wxversion
+				wxversion.ensureMinimal("2.8")
 			import wx
-			if wx.__version__ >= "2.8.7":
+			if wx.VERSION >= (2, 8, 7):
 				install_requires.remove("wxPython >= 2.8.7")
 		except ImportError:
 			pass
