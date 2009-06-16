@@ -12,7 +12,7 @@ def safe_print(*args, **kwargs):
 	encoding and replacing characters not present in the encoding with 
 	question marks silently.
 	Optional keyword arguments:
-	pad:     pad the lines by n chars, or os.getenv('COLUMNS') if True.
+	pad:     pad the lines to n chars, or os.getenv('COLUMNS') if True.
 	padchar: character to use for padding, default a space.
 	sep:     string inserted between values, default a space.
 	end:     string appended after the last value, default a newline.
@@ -46,7 +46,7 @@ def safe_print(*args, **kwargs):
 		if type(arg) not in (str, unicode):
 			arg = str(arg)
 		elif type(arg) == unicode and (file_ is not None or kwargs.get("encoding") is not None):
-			arg = arg.encode(kwargs.get("encoding") or (file_.encoding if file_ not in (sys.stdout, sys.stderr) else ("UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or locale.getpreferredencoding() or "ASCII")), "replace")
+			arg = arg.encode(kwargs.get("encoding") or (file_.encoding if file_ not in (sys.stdout, sys.stderr) and hasattr(file_, "encoding") else ("UTF-8" if sys.platform == "darwin" else sys.stdout.encoding or locale.getpreferredencoding() or "ASCII")), "replace")
 		strargs += [arg]
 	line = sep.join(strargs)
 	if pad is not False:

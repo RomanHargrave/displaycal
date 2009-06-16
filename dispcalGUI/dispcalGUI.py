@@ -162,6 +162,7 @@ if sys.platform == "win32":
 	from win32com.shell import shell, shellcon
 	import _winreg
 	import pythoncom
+	import win32api
 	import win32con
 	btn_width_correction = 20
 	cmdfile_ext = ".cmd"
@@ -440,14 +441,15 @@ def safe_print(*args, **kwargs):
 	_safe_print(*args, **kwargs)
 
 def handle_error(errstr, parent = None, silent = False):
+	if not isinstance(errstr, unicode):
+		errstr = unicode(errstr, fs_enc, "replace")
 	safe_print(errstr)
 	if not silent:
 		try:
 			if globalconfig["app"] is None and parent is None:
 				app = wx.App(redirect = False)
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
-				parent.IsShownOnScreen() else None, errstr if type(errstr) == 
-				unicode else unicode(errstr, enc, "replace"), appname, wx.OK | 
+				parent.IsShownOnScreen() else None, errstr, appname, wx.OK | 
 				wx.ICON_ERROR)
 			dlg.ShowModal()
 			dlg.Destroy()
@@ -4689,6 +4691,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			item = cmdline[i]
 			if i > 0 and (item.find(os.path.sep) > -1 and os.path.dirname(item) == working_dir):
 				# strip the path from all items in the working dir
+				if sys.platform == "win32" and re.search("[^\x00-\x7f]", item):
+					item = win32api.GetShortPathName(item) # avoid problems with encoding
 				cmdline[i] = os.path.basename(item)
 		sudo = None
 		if cmdname == self.get_argyll_utilname("dispwin") and ("-Sl" in args or "-Sn" in args):
@@ -4841,14 +4845,14 @@ class DisplayCalibratorGUI(wx.Frame):
 					safe_print("Instrument can be used for unattended calibration and profiling")
 				try:
 					if verbose >= 2:
-						safe_print("Sending 'SPACE' key to automatically start measurements in 5 seconds...")
+						safe_print("Sending 'SPACE' key to automatically start measurements in 10 seconds...")
 					if sys.platform == "darwin":
-						start_new_thread(mac_app_sendkeys, (5, "Terminal", " "))
+						start_new_thread(mac_app_sendkeys, (10, "Terminal", " "))
 					elif sys.platform == "win32":
-						start_new_thread(wsh_sendkeys, (5, appname + exe_ext, " "))
+						start_new_thread(wsh_sendkeys, (10, appname + exe_ext, " "))
 					else:
 						if which("xte"):
-							start_new_thread(xte_sendkeys, (5, None, "space"))
+							start_new_thread(xte_sendkeys, (10, None, "space"))
 						elif verbose >= 2:
 							safe_print("Warning - 'xte' commandline tool not found, unattended measurements not possible")
 				except Exception, exception:
@@ -4867,6 +4871,8 @@ class DisplayCalibratorGUI(wx.Frame):
 				stdout = tempfile.SpooledTemporaryFile()
 			else:
 				stdout = sys.stdout
+			if sys.platform == "win32" and working_dir:
+				working_dir = win32api.GetShortPathName(working_dir)
 			tries = 1
 			while tries > 0:
 				self.subprocess = sp.Popen([arg.encode(fs_enc) for arg in cmdline], stdin = sp.PIPE if sudo else None, stdout = stdout, stderr = stderr, cwd = None if working_dir is None else working_dir.encode(fs_enc))
@@ -8667,7 +8673,9 @@ def main():
 						if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, value)).encode("UTF-8"))
 					cfg_file.close()
 			except Exception, exception:
-				safe_print("Warning - could not process old configuration:", str(exception))
+				# WindowsError 2 means registry key does not exist, do not show warning in that case
+				if sys.platform != "win32" or not hasattr(exception, "errno") or exception.errno != 2:
+					safe_print("Warning - could not process old configuration:", str(exception))
 		# create main data dir
 		if not os.path.exists(datahome):
 			try:
@@ -8715,14 +8723,18 @@ def main():
 				cwd = None
 			elif isexe:
 				me = exe
-				cmd = u'"%s"' % me
+				cmd = u'"%s"' % win32api.GetShortPathName(exe) if sys.platform == "win32" else exe
 				cwd = None
 			else:
 				me = pypath
 				if os.path.basename(exe) == "pythonw" + exe_ext:
 					python = os.path.join(os.path.dirname(exe), "python" + exe_ext)
-				cmd = u'"%s" "%s"' % (python, pypath)
-				cwd = pydir.encode(fs_enc)
+				if sys.platform == "win32":
+					cmd = u'"%s" "%s"' % tuple([win32api.GetShortPathName(path) for path in (python, pypath)])
+					cwd = win32api.GetShortPathName(pydir)
+				else:
+					cmd = u'"%s" "%s"' % (python, pypath)
+					cwd = pydir.encode(fs_enc)
 			safe_print("Re-launching instance in terminal")
 			if sys.platform == "win32":
 				cmd = u'start "%s" /WAIT %s' % (appname, cmd)

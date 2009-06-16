@@ -6,12 +6,16 @@ import os
 
 if sys.platform == "win32":
 	from win32com.shell import shell, shellcon
+	import win32api
 
 	def recycle(path):
+		path = os.path.join(win32api.GetShortPathName(os.path.split(path)[0]), 
+			os.path.split(path)[1])
 		retcode, aborted = shell.SHFileOperation((0, 
 		   shellcon.FO_DELETE, path, "", shellcon.FOF_ALLOWUNDO | 
 		   shellcon.FOF_NOCONFIRMATION | shellcon.FOF_RENAMEONCOLLISION | 
 		   shellcon.FOF_SILENT, None, None))
+		return retcode == 0
 else:
 	from time import strftime
 	from urllib import quote
@@ -25,17 +29,20 @@ class TrashcanUnavailableError(Exception):
 
 def trash(paths):
 	""" Move files and folders to the trash. If a trashcan facility does not
-	exist, simply delete the files/folders. """
+	exist, simply delete the files/folders. Return the list of successfully 
+	processed paths. """
 	if isinstance(paths, (str, unicode)):
 		paths = [paths]
 	if not isinstance(paths, list):
 		raise TypeError(str(type(paths)) + " is not list")
+	deleted = []
 	if sys.platform == "win32":
 		for path in paths:
 			path = os.path.abspath(path)
 			if not os.path.exists(path):
 				raise IOError("No such file or directory: " + path)
-			recycle(path)
+			if recycle(path):
+				deleted += [path]
 	else:
 		# http://freedesktop.org/wiki/Specifications/trash-spec
 		trashroot = os.path.join(getenvu("XDG_DATA_HOME",
@@ -75,3 +82,5 @@ def trash(paths):
 					# shutil.rmtree(path)
 				# else:
 					# os.remove(path)
+			deleted += [path]
+		return deleted
