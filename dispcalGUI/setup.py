@@ -134,7 +134,8 @@ def setup():
 		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
 
 	for i in range(len(sys.argv[1:])):
-		arg = sys.argv[i + 1]
+		n = len(sys.argv) - i - 1
+		arg = sys.argv[n]
 		if arg in ("install", "install_lib", "install_headers", "install_scripts", "install_data"):
 			if arg == "install":
 				do_full_install = True
@@ -143,7 +144,10 @@ def setup():
 			dist_dir = sys.argv[i + 2]
 		else:
 			arg = arg.split("=")
-			if len(arg) == 2:
+			if arg[0] == "--debug":
+				debug = 1 if len(arg) == 1 else int(arg[1])
+				sys.argv = sys.argv[:n] + sys.argv[n + 1:]
+			elif len(arg) == 2:
 				if arg[0] == "--dist-dir":
 					dist_dir = arg[1]
 				elif arg[0] == "--install-data":
@@ -385,6 +389,7 @@ def setup():
 			"py2app": {
 				"argv_emulation": True,
 				"dist_dir": os.path.join(pydir, "..", "dist", "py2app.%s-py%s" % (get_platform(), sys.version[:3]), name + "-" + version),
+				"excludes": ["Tkconstants", "Tkinter", "tcl"], # numpy.lib.utils imports pydoc, which imports Tkinter, but numpy.lib.utils is not even used by dispcalGUI, so omit all Tk stuff
 				"iconfile": os.path.join(pydir, "theme", "icons", "dispcalGUI.icns"),
 				"optimize": 2,
 				"plist": {
@@ -427,14 +432,23 @@ def setup():
 							"urlmon.dll",
 							"w9xpopen.exe"
 						],
+						"excludes": ["Tkconstants", "Tkinter", "tcl"], # numpy.lib.utils imports pydoc, which imports Tkinter, but numpy.lib.utils is not even used by dispcalGUI, so omit all Tk stuff
 						"bundle_files": 1,
 						"compressed": 1,
 						"optimize": 2
 				}
 		}
+		if debug:
+			attrs["options"]["py2exe"].update({
+				"bundle_files": 3,
+				"compressed": 0,
+				"optimize": 0,
+				"skip_archive": 1
+			})
 		if setuptools:
 			attrs["setup_requires"] = ["py2exe"]
-		attrs["zipfile"] = None
+		if not debug:
+			attrs["zipfile"] = None
 
 	if do_uninstall or do_install or bdist_win:
 		distutils.core._setup_stop_after = "commandline"

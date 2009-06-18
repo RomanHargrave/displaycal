@@ -71,11 +71,20 @@ from time import gmtime, localtime, sleep, strftime, time, timezone
 import demjson
 if not hasattr(sys, "frozen") or not sys.frozen:
 	import wxversion
-	wxversion.ensureMinimal("2.8")
+	try:
+		wxversion.ensureMinimal("2.8")
+	except wxversion.AlreadyImportedError:
+		import wx
+		if wx.VERSION < (2, 8):
+			raise
 import wx
 import wx.grid
 import wx.lib.delayedresult as delayedresult
 import wx.lib.hyperlink
+try:
+	from wxLUTViewer import LUTFrame
+except ImportError:
+	LUTFrame = None
 
 # custom modules
 
@@ -1401,6 +1410,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			"measure.darken_background.show_warning": 1,
 			"position.info.x": get_display(self).ClientArea[0] + 20,
 			"position.info.y": get_display(self).ClientArea[1] + 40,
+			"position.lut_viewer.x": get_display(self).ClientArea[0] + 30,
+			"position.lut_viewer.y": get_display(self).ClientArea[1] + 50,
 			"position.x": get_display(self).ClientArea[0] + 10,
 			"position.y": get_display(self).ClientArea[1] + 30,
 			"profile.install_scope": "l" if (sys.platform != "win32" and 
@@ -1437,6 +1448,8 @@ class DisplayCalibratorGUI(wx.Frame):
 			"settings.changed": 0,
 			"size.info.w": 512,
 			"size.info.h": 384,
+			"size.lut_viewer.w": 512,
+			"size.lut_viewer.h": 580,
 			"tc_white_patches": 4,
 			"tc_single_channel_patches": 0,
 			"tc_gray_patches": 9,
@@ -2304,6 +2317,9 @@ class DisplayCalibratorGUI(wx.Frame):
 		menuitem = extra.Append(-1, "&" + self.getlstr("calibration.load_from_display_profile"))
 		menuitem.Enable(bool(len(self.displays)))
 		self.Bind(wx.EVT_MENU, self.load_display_profile_cal, menuitem)
+		menuitem = extra.Append(-1, "&" + self.getlstr("calibration.show_lut"))
+		menuitem.Enable(bool(LUTFrame))
+		self.Bind(wx.EVT_MENU, self.init_lut_viewer, menuitem)
 		menuitem = extra.Append(-1, "&" + self.getlstr("calibration.reset"))
 		menuitem.Enable(bool(len(self.displays)))
 		self.Bind(wx.EVT_MENU, self.reset_cal, menuitem)
@@ -4443,9 +4459,15 @@ class DisplayCalibratorGUI(wx.Frame):
 				return
 			self.setcfg("last_cal_or_icc_path", path)
 			if os.path.splitext(path)[1].lower() in (".icc", ".icm"):
-				profile = ICCP.ICCProfile(path)
+				try:
+					profile = ICCP.ICCProfile(path)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					InfoDialog(self, msg = self.getlstr("profile.invalid"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+					return
 				if "vcgt" in profile.tags:
 					self.setcfg("last_icc_path", path)
+					if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+						self.show_lut_handler(profile = profile)
 					self.install_profile(capture_output = True, profile_path = path, install = False, skip_cmds = True)
 				else:
 					InfoDialog(self, msg = self.getlstr("profile.no_vcgt"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
@@ -4638,6 +4660,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		return False
 
 	def load_display_profile_cal(self, event = None):
+		if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+			self.show_lut_handler()
 		if self.check_set_argyll_bin():
 			if verbose >= 1 and event is None: safe_print(self.getlstr("calibration.loading_from_display_profile"))
 			if self.install_profile(capture_output = True, cal = True, install = False, skip_cmds = True, silent = event is None):
@@ -5162,6 +5186,13 @@ class DisplayCalibratorGUI(wx.Frame):
 				self.preview.SetValue(True)
 				dlg.Bind(wx.EVT_CHECKBOX, self.preview_handler, id = self.preview.GetId())
 				dlg.sizer3.Add(self.preview, flag = wx.TOP | wx.ALIGN_LEFT, border = 12)
+				if LUTFrame:
+					self.show_lut = wx.CheckBox(dlg, -1, self.getlstr("calibration.show_lut"))
+					dlg.Bind(wx.EVT_CHECKBOX, self.show_lut_handler, id = self.show_lut.GetId())
+					dlg.sizer3.Add(self.show_lut, flag = wx.TOP | wx.ALIGN_LEFT, border = 4)
+					if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+						self.show_lut.SetValue(True)
+					self.init_lut_viewer(profile = profile)
 				if ((sys.platform == "darwin" or (sys.platform != "win32" and self.argyll_version >= [1, 1, 0])) and (os.geteuid() == 0 or get_sudo())) or \
 					(sys.platform == "win32" and sys.getwindowsversion() >= (6, )) or test: # Linux, OSX or Vista and later
 					self.install_profile_user = wx.RadioButton(dlg, -1, self.getlstr("profile.install_user"), style = wx.RB_GROUP)
@@ -5196,6 +5227,64 @@ class DisplayCalibratorGUI(wx.Frame):
 			InfoDialog(self, pos = (-1, 100), msg = failure_msg, ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 		self.start_timers(True)
 		self.previous_cal = False
+		
+	def init_lut_viewer(self, event = None, profile = None):
+		if LUTFrame:
+			if not hasattr(self, "lut_viewer") or not self.lut_viewer:
+				self.lut_viewer = LUTFrame(self, -1, self.getlstr("calibration.lut_viewer.title"), (self.getcfg("position.lut_viewer.x"), self.getcfg("position.lut_viewer.y")), (self.getcfg("size.lut_viewer.w"), self.getcfg("size.lut_viewer.h")))
+				self.lut_viewer.xLabel = self.getlstr("in")
+				self.lut_viewer.yLabel = self.getlstr("out")
+				set_position(self.lut_viewer, self.getcfg("position.lut_viewer.x"), self.getcfg("position.lut_viewer.y"), self.getcfg("size.lut_viewer.w"), self.getcfg("size.lut_viewer.h"))
+				self.lut_viewer.SetIcon(wx.Icon(get_data_path(os.path.join("theme", "icons", "16x16", appname + ".png")), wx.BITMAP_TYPE_PNG))
+				self.lut_viewer.Bind(wx.EVT_MOVE, self.lut_viewer_move_handler)
+				self.lut_viewer.Bind(wx.EVT_SIZE, self.lut_viewer_size_handler)
+				self.lut_viewer.Bind(wx.EVT_CLOSE, self.lut_viewer_close_handler, self.lut_viewer)
+			self.show_lut_handler(profile = profile)
+	
+	def show_lut_handler(self, event = None, profile = None):
+		if hasattr(self, "lut_viewer") and self.lut_viewer:
+			if not profile:
+				path = self.getcfg("calibration.file")
+				if path:
+					name, ext = os.path.splitext(path)
+					if ext.lower() in (".icc", ".icm"):
+						try:
+							profile = ICCP.ICCProfile(path)
+						except (IOError, ICCP.ICCProfileInvalidError), exception:
+							InfoDialog(self, msg = self.getlstr("profile.invalid"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
+							return
+				else:
+					try:
+						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection())
+					except Exception, exception:
+						pass
+			if profile and (not self.lut_viewer.profile or not hasattr(self.lut_viewer.profile, "fileName") or not hasattr(profile, "fileName") or self.lut_viewer.profile.fileName != profile.fileName):
+				self.lut_viewer.LoadProfile(profile)
+			show = bool((hasattr(self, "show_lut") and self.show_lut and self.show_lut.GetValue()) or ((not hasattr(self, "show_lut") or not self.show_lut) and (self.lut_viewer.IsShownOnScreen() or profile)))
+			if show:
+				self.lut_viewer.DrawLUT()
+			self.lut_viewer.Show(show)
+
+	def lut_viewer_move_handler(self, event = None):
+		if self.lut_viewer.IsShownOnScreen() and not self.lut_viewer.IsMaximized() and not self.lut_viewer.IsIconized():
+			x, y = self.lut_viewer.GetScreenPosition()
+			self.setcfg("position.lut_viewer.x", x)
+			self.setcfg("position.lut_viewer.y", y)
+		if event:
+			event.Skip()
+	
+	def lut_viewer_size_handler(self, event = None):
+		if self.lut_viewer.IsShownOnScreen() and not self.lut_viewer.IsMaximized() and not self.lut_viewer.IsIconized():
+			w, h = self.lut_viewer.GetSize()
+			self.setcfg("size.lut_viewer.w", w)
+			self.setcfg("size.lut_viewer.h", h)
+		if event:
+			event.Skip()
+	
+	def lut_viewer_close_handler(self, event = None):
+		self.lut_viewer.Hide()
+		if hasattr(self, "show_lut") and self.show_lut:
+			self.show_lut.SetValue(self.lut_viewer.IsShownOnScreen())
 	
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():
@@ -5228,6 +5317,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		if hasattr(self, "display_lut_ctrl") and bool(int(self.getcfg("display_lut.link"))):
 			self.display_lut_ctrl.SetStringSelection(self.displays[display_no])
 			self.setcfg("display_lut.number", display_no + 1)
+		if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+			self.show_lut_handler()
 
 	def display_lut_ctrl_handler(self, event):
 		if debug: safe_print("display_lut_ctrl_handler ID %s %s TYPE %s %s" % (event.GetId(), getevtobjname(event, self), event.GetEventType(), getevttype(event)))
@@ -8137,6 +8228,8 @@ class DisplayCalibratorGUI(wx.Frame):
 						if "vcgt" in profile.tags:
 							# load calibration into lut
 							self.load_cal(cal = path, silent = True)
+							if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+								self.show_lut_handler(profile = profile)
 							if options_dispcal:
 								return
 							else:
@@ -8166,6 +8259,8 @@ class DisplayCalibratorGUI(wx.Frame):
 						if "vcgt" in profile.tags:
 							# load calibration into lut
 							self.load_cal(cal = path, silent = False)
+							if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+								self.show_lut_handler(profile = profile)
 						if not silent: InfoDialog(self, msg = self.getlstr("no_settings"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 						return
 				elif not "CIED" in profile.tags:
@@ -8186,6 +8281,8 @@ class DisplayCalibratorGUI(wx.Frame):
 					if "vcgt" in profile.tags:
 						# load calibration into lut
 						self.load_cal(cal = path, silent = False)
+						if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+							self.show_lut_handler(profile = profile)
 					if not silent: InfoDialog(self, msg = self.getlstr("no_settings"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 					return
 

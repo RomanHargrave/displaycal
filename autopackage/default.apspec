@@ -102,6 +102,7 @@ for lib in "libXinerama" "libXrandr" "libXxf86vm" "libpthread" "libc" "libX11" "
 done
 require '@python.org/python' 2.5 2.6
 requireAtLeast '@wxpython.org/python-wxgtk:2.8'
+recommendAtLeast '@numpy.scipy.org/numpy:1.1'
 removeOwningPackage "$PREFIX/bin/dispcalGUI"
 
 

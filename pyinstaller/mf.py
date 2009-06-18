@@ -165,7 +165,7 @@ class DirOwner(BaseDirOwner):
     def _modclass(self):
         return PyModule
     def _caseok(self, fn):
-	return caseOk(os.path.join(self.path, fn))
+        return caseOk(os.path.join(self.path, fn))
 
 class PYZOwner(Owner):
     def __init__(self, path, target_platform=None):
@@ -174,8 +174,9 @@ class PYZOwner(Owner):
         Owner.__init__(self, path, target_platform)
     def getmod(self, nm):
         rslt = self.pyz.extract(nm)
-        if rslt:
-            ispkg, co = rslt
+        if not rslt:
+            return None
+        ispkg, co = rslt
         if ispkg:
             return PkgInPYZModule(nm, co, self)
         return PyModule(nm, self.path, co)
@@ -190,7 +191,7 @@ if zipimport:
     #
     # So mf will go into infinite recursion.
     # Instead, we'll reuse the BaseDirOwner logic, simply changing
-    # the template methods. 
+    # the template methods.
     class ZipOwner(BaseDirOwner):
         def __init__(self, path, target_platform=None):
             import zipfile
@@ -489,12 +490,17 @@ class ImportTracker:
             contexts = [None]
         elif level > 0:
             # relative import, do not try absolute
-            contexts = [string.join(string.split(importernm, '.')[:-level], '.')]
+            if self.ispackage(importernm):
+                level -= 1
+            if level > 0:
+                importernm = string.join(string.split(importernm, '.')[:-level], ".")
+            contexts = [importernm, None]
             importernm = None
 
         _all = None
 
         assert contexts
+
         # so contexts is [pkgnm, None] or just [None]
         if nmparts[-1] == '*':
             del nmparts[-1]

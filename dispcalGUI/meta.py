@@ -33,10 +33,10 @@ name = "dispcalGUI"
         1.3c4
 """
 
-version = "0.2.5b5"
-version_lin = "0.2.5b5" # Linux
-version_mac = "0.2.5b5" # Mac OS X
-version_win = "0.2.5b5" # Windows
-version_src = "0.2.5b5"
+version = "0.2.6b"
+version_lin = "0.2.6b" # Linux
+version_mac = "0.2.6b" # Mac OS X
+version_win = "0.2.6b" # Windows
+version_src = "0.2.6b"
 
-version_tuple = (0, 2, 5, 0) # only ints allowed and must be exactly 4 values
+version_tuple = (0, 2, 6, 0) # only ints allowed and must be exactly 4 values

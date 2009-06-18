@@ -950,13 +950,14 @@
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<ul>
-							<li>fix: calibration preview checkbox after “calibrate & profile” now again correctly toggles between previous and new calibration.</li>
+							<li>fix: calibration preview checkbox in the “install profile” dialog should now correctly toggle between previous and new calibration.</li>
 							<li>fix: profiling failed when creating a profile on top of an existing calibration.</li>
 							<li>fix: correctly decode environment variables (should fix a failure when trying to create a profile and the username contains non-ASCII characters).</li>
-							<li>fix: automatic restoration of defaults before loading settings from a profile or cal file should no longer restore “do not show again” info dialogs.</li>
+							<li>fix: automatic restoration of defaults before loading settings from a profile or cal file should no longer restore “do not show again” dialogs.</li>
 							<li>fix (Windows): several errors related to character encoding.</li>
 							<li>chg: unattended calibration and profiling: wait 10 seconds instead of 5 after calibration before trying to start profiling measurements (some instruments seem to need longer to initialize than others, e.g. Spyder 2).</li>
-							<li>chg: instead of requiring wxPython 2.8.x specifically, only ensure a minimal version of 2.8.</li>
+							<li>chg (Python packages and source): instead of requiring wxPython 2.8.x specifically, only ensure a minimal version of 2.8.</li>
+							<li>add: LUT viewer.</li>
 						</ul>
 					</dd>
 				
