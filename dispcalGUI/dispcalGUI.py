@@ -5116,15 +5116,12 @@ class DisplayCalibratorGUI(wx.Frame):
 							self.options_dispcal = ["-" + arg for arg in self.get_options_from_cprt(profile.tags.cprt)[0]]
 				if os.path.exists(filename + ".cal") and can_update_cal(filename + ".cal"):
 					apply_calibration = filename + ".cal"
-			if not apply_calibration:
-				dlg = ConfirmDialog(self, msg = self.getlstr("dialog.no_cal_warning"), ok = self.getlstr("continue"), cancel = self.getlstr("cancel"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
-				result = dlg.ShowModal()
-				dlg.Destroy()
-				if result == wx.ID_OK:
-					apply_calibration = False
-				else:
-					self.update_profile_name_timer.Start(1000)
-					return
+			dlg = ConfirmDialog(self, msg = self.getlstr("dialog.current_cal_warning"), ok = self.getlstr("continue"), cancel = self.getlstr("cancel"), bitmap = self.bitmaps["theme/icons/32x32/dialog-warning"])
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				self.update_profile_name_timer.Start(1000)
+				return
 			self.setup_measurement(self.just_profile, apply_calibration)
 		else:
 			self.update_profile_name_timer.Start(1000)

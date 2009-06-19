@@ -194,7 +194,7 @@ class CGATS(dict):
 	def __setattr__(self, name, value):
 		if name == 'modified':
 			self.setmodified(value)
-		elif name in ('datetime', 'filename', 'key', 'parent', 'root', 'type', 'vmaxlen'):
+		elif name in ('datetime', 'filename', 'key', 'mtime', 'parent', 'root', 'type', 'vmaxlen'):
 			object.__setattr__(self, name, value)
 			self.setmodified()
 		else:

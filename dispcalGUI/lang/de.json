@@ -78,7 +78,7 @@
 	"dialog.set_profile_save_path": "Profilordner „%s“ erzeugen in:",
 	"dialog.set_testchart": "Testform auswählen",
 	"dialog.do_not_show_again": "Diese Meldung nicht erneut anzeigen",
-	"dialog.no_cal_warning": "Das Profil wird die gerade geladenen Kalibrierungskurven enthalten. Wollen Sie fortfahren?",
+	"dialog.current_cal_warning": "Das Profil wird die gerade geladenen Kalibrierungskurven enthalten. Wollen Sie fortfahren?",
 	"dialog.ti3_no_cal_info": "Die Messwerte enthalten keine Kalibrierungskurven. Wollen Sie wirklich fortfahren?",
 	"display": "Anzeigegerät",
 	"display_short": "Anzeigegerät (Kurzname)",

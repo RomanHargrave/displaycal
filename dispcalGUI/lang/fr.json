@@ -76,7 +76,7 @@
 	"dialog.set_profile_save_path": "Créer le répertoire du profil “%s” ici :",
 	"dialog.set_testchart": "Sélectionner le fichier d'une grille de tests",
 	"dialog.do_not_show_again": "Ne plus afficher ce message",
-	"dialog.no_cal_warning": "Le profil contiendra les courbes de calibrage actuelles. Voulez-vous continuer ?",
+	"dialog.current_cal_warning": "Le profil contiendra les courbes de calibrage actuelles. Voulez-vous continuer ?",
 	"dialog.ti3_no_cal_info": "Les données de mesure ne contiennent pas de courbes de calibrage. Voulez-vous réellement continuer ?",
 	"display": "Périphérique d'affichage",
 	"display_short": "Périphérique d'affichage (abrégé)",
