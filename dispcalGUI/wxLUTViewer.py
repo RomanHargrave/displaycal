@@ -9,7 +9,7 @@ if not hasattr(sys, "frozen") or not sys.frozen:
 	import wxversion
 	try:
 		wxversion.ensureMinimal("2.8")
-	except wxversion.AlreadyImportedError:
+	except:
 		import wx
 		if wx.VERSION < (2, 8):
 			raise
@@ -31,9 +31,9 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetEnableGrid(False)
 		self.SetEnablePointLabel(False)
 		self.SetForegroundColour(FGCOLOUR)
-		self.SetFontSizeAxis(8)
-		self.SetFontSizeLegend(8)
-		self.SetFontSizeTitle(8)
+		self.SetFontSizeAxis(9)
+		self.SetFontSizeLegend(9)
+		self.SetFontSizeTitle(9)
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
 		# self.SetXSpec('none')
@@ -353,7 +353,7 @@ class LUTFrame(wx.Frame):
 		self.cbox_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.box_sizer.Add(self.cbox_sizer, flag = wx.ALL | wx.ALIGN_CENTER, border = 8)
 		
-		self.cbox_sizer.Add((16, 0))
+		self.cbox_sizer.Add((20, 0))
 		
 		self.toggle_red = wx.CheckBox(self.box_panel, -1, "R")
 		self.toggle_red.SetForegroundColour(FGCOLOUR)

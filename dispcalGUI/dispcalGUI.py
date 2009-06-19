@@ -73,7 +73,7 @@ if not hasattr(sys, "frozen") or not sys.frozen:
 	import wxversion
 	try:
 		wxversion.ensureMinimal("2.8")
-	except wxversion.AlreadyImportedError:
+	except:
 		import wx
 		if wx.VERSION < (2, 8):
 			raise
