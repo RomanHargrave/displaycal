@@ -31,9 +31,9 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetEnableGrid(False)
 		self.SetEnablePointLabel(False)
 		self.SetForegroundColour(FGCOLOUR)
-		self.SetFontSizeAxis(9)
-		self.SetFontSizeLegend(9)
-		self.SetFontSizeTitle(9)
+		self.SetFontSizeAxis(9 if sys.platform in ("darwin", "win32") else 10)
+		self.SetFontSizeLegend(9 if sys.platform in ("darwin", "win32") else 10)
+		self.SetFontSizeTitle(9 if sys.platform in ("darwin", "win32") else 10)
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
 		# self.SetXSpec('none')
@@ -228,7 +228,9 @@ class LUTCanvas(plot.PlotCanvas):
 		lines = []
 		linear_points = []
 
-		if "entryCount" in vcgt: # table
+		if not vcgt:
+			input = range(0, 256)
+		elif "entryCount" in vcgt: # table
 			input = range(0, vcgt.entryCount)
 			r_points = []
 			g_points = []
@@ -277,6 +279,11 @@ class LUTCanvas(plot.PlotCanvas):
 		# print g_points
 		# print b_points
 
+		linear = [[0, 0], [input[-1], input[-1]]]
+		
+		if not vcgt:
+			r_points = g_points = b_points = linear
+
 		# # scale
 		# for i in range(len(input)):
 			# input[i] *= (len(input) + 1)
@@ -299,8 +306,6 @@ class LUTCanvas(plot.PlotCanvas):
 		# lines += [Plot([[input[-1], 0], [input[-1], input[-1]]], colour=GRIDCOLOUR)] # right
 		# lines += [Plot([[0, 0], [input[-1], 1]], colour=GRIDCOLOUR)] # bottom
 		# lines += [Plot([[0, 0], [0, input[-1]]], colour=GRIDCOLOUR)] # left
-
-		linear = [[0, 0], [input[-1], input[-1]]]
 
 		lines += [Plot(linear, colour=GRIDCOLOUR)] # bottom left to top right
 
@@ -384,14 +389,13 @@ class LUTFrame(wx.Frame):
 		self.profile = profile
 	
 	def DrawLUT(self, event=None):
-		if self.profile:
-			self.client.DrawLUT(self.profile.tags.vcgt, 
-								title=self.profile.getDescription(), 
-								xLabel=self.xLabel,
-								yLabel=self.yLabel,
-								r=self.toggle_red.GetValue() if hasattr(self, "toggle_red") else False, 
-								g=self.toggle_green.GetValue() if hasattr(self, "toggle_green") else False, 
-								b=self.toggle_blue.GetValue() if hasattr(self, "toggle_blue") else False)
+		self.client.DrawLUT(self.profile.tags.vcgt if self.profile else None, 
+							title=self.profile.getDescription() if self.profile else None, 
+							xLabel=self.xLabel,
+							yLabel=self.yLabel,
+							r=self.toggle_red.GetValue() if hasattr(self, "toggle_red") else False, 
+							g=self.toggle_green.GetValue() if hasattr(self, "toggle_green") else False, 
+							b=self.toggle_blue.GetValue() if hasattr(self, "toggle_blue") else False)
 
 	def DrawPointLabel(self, dc, mDataDict):
 		"""This is the fuction that defines how the pointLabels are plotted
