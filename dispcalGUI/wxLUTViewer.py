@@ -265,11 +265,11 @@ class LUTCanvas(plot.PlotCanvas):
 			self._drawPointLabel(self.last_PointLabel) #erase old
 			self.last_PointLabel = None
 		dc = wx.BufferedPaintDC(self.canvas, self._Buffer)
-		if ANTIALIAS:
-			try:
-				dc = wx.GCDC(dc)
-			except:
-				pass
+		# if ANTIALIAS:
+			# try:
+				# dc = wx.GCDC(dc)
+			# except:
+				# pass
 
 	def _setSize(self, width=None, height=None):
 		"""DC width and height."""
@@ -393,6 +393,9 @@ class LUTCanvas(plot.PlotCanvas):
 
 		if not vcgt:
 			input = range(0, 256)
+			for i in input:
+				if not detect_increments:
+					linear_points += [[i, i]]
 		elif "entryCount" in vcgt: # table
 			input = range(0, vcgt.entryCount)
 			r_points = []
@@ -445,7 +448,7 @@ class LUTCanvas(plot.PlotCanvas):
 		linear = [[0, 0], [input[-1], input[-1]]]
 		
 		if not vcgt:
-			r_points = g_points = b_points = linear
+			r_points = g_points = b_points = linear if detect_increments else linear_points
 
 		# # scale
 		# for i in range(len(input)):
