@@ -50,7 +50,7 @@ class PolySpline(plot.PolyLine):
 
 	def draw(self, dc, printerScale, coord= None):
 		colour = self.attributes['colour']
-		width = self.attributes['width'] * printerScale
+		width = self.attributes['width'] * printerScale * SCALE
 		style= self.attributes['style']
 		if not isinstance(colour, wx.Colour):
 			colour = wx.NamedColour(colour)
@@ -75,15 +75,39 @@ class LUTCanvas(plot.PlotCanvas):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
 		self.SetBackgroundColour(BGCOLOUR)
 		self.SetEnableGrid(False)
-		self.SetEnablePointLabel(False)
+		self.SetEnablePointLabel(True)
 		self.SetForegroundColour(FGCOLOUR)
-		self.SetFontSizeAxis((9 if sys.platform in ("darwin", "win32") else 12) * SCALE)
-		self.SetFontSizeLegend((9 if sys.platform in ("darwin", "win32") else 12) * SCALE)
-		self.SetFontSizeTitle((9 if sys.platform in ("darwin", "win32") else 12) * SCALE)
+		self.SetFontSizeAxis(9 if sys.platform in ("darwin", "win32") else 12)
+		self.SetFontSizeLegend(9 if sys.platform in ("darwin", "win32") else 12)
+		self.SetFontSizeTitle(9 if sys.platform in ("darwin", "win32") else 12)
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
 		# self.SetXSpec('none')
 		# self.SetYSpec('none')
+    
+	def SetFontSizeAxis(self, point= 10):
+		"""Set the tick and axis label font size (default is 10 point)"""
+		self._fontSizeAxis= point * SCALE
+
+	def GetFontSizeAxis(self):
+		"""Get current tick and axis label font size in points"""
+		return self._fontSizeAxis / SCALE
+
+	def SetFontSizeTitle(self, point= 15):
+		"""Set Title font size (default is 15 point)"""
+		self._fontSizeTitle= point * SCALE
+
+	def GetFontSizeTitle(self):
+		"""Get current Title font size in points"""
+		return self._fontSizeTitle / SCALE
+
+	def SetFontSizeLegend(self, point= 7):
+		"""Set Legend font size (default is 7 point)"""
+		self._fontSizeLegend= point * SCALE
+
+	def GetFontSizeLegend(self):
+		"""Get current Legend font size in points"""
+		return self._fontSizeLegend / SCALE
 
 	def _Draw(self, graphics, xAxis = None, yAxis = None, dc = None):
 		"""\
@@ -111,7 +135,8 @@ class LUTCanvas(plot.PlotCanvas):
 		dc.SetTextForeground(self.GetForegroundColour())
 		dc.SetTextBackground(self.GetBackgroundColour())
 
-		dc.SetMapMode(wx.MM_TWIPS) # high precision 1/20 pt
+		if SCALE == 20:
+			dc.SetMapMode(wx.MM_TWIPS) # high precision 1/20 pt
 
 		dc.BeginDrawing()
 		# dc.Clear()
@@ -197,8 +222,8 @@ class LUTCanvas(plot.PlotCanvas):
 		# allow for scaling and shifting plotted points
 		scale = (self.plotbox_size-textSize_scale) / (p2-p1)* _Numeric.array((1,-1))
 		shift = -p1*scale + self.plotbox_origin + textSize_shift * _Numeric.array((1,-1))
-		self._pointScale= scale  # make available for mouse events
-		self._pointShift= shift        
+		self._pointScale= scale / SCALE  # make available for mouse events
+		self._pointShift= shift / SCALE       
 		self._drawAxes(dc, p1, p2, scale, shift, xticks, yticks)
 		
 		graphics.scaleAndShift(scale, shift)
@@ -252,8 +277,8 @@ class LUTCanvas(plot.PlotCanvas):
 			(self.width,self.height) = self.canvas.GetClientSize()
 		else:
 			self.width, self.height= width, height
-		self.width *= 20 # high precision
-		self.height *= 20 # high precision
+		self.width *= SCALE # high precision
+		self.height *= SCALE # high precision
 		self.plotbox_size = 0.97*_Numeric.array([self.width, self.height])
 		xo = 0.5*(self.width-self.plotbox_size[0])
 		yo = self.height-0.5*(self.height-self.plotbox_size[1])
@@ -261,24 +286,25 @@ class LUTCanvas(plot.PlotCanvas):
 
 	def _drawAxes(self, dc, p1, p2, scale, shift, xticks, yticks):
 		
-		penWidth= self.printerScale        # increases thickness for printing only
+		penWidth= self.printerScale * SCALE        # increases thickness for printing only
 		dc.SetPen(wx.Pen(self._gridColour, penWidth))
+		
+		x,y,width,height= self._point2ClientCoord(p1,p2)
 		
 		# set length of tick marks--long ones make grid
 		if self._gridEnabled:
-			x,y,width,height= self._point2ClientCoord(p1,p2)
 			if self._gridEnabled == 'Horizontal':
-				yTickLength= width/2.0 +1
-				xTickLength= 3 * self.printerScale
+				yTickLength= (width/2.0 +1) * SCALE
+				xTickLength= 3 * self.printerScale * SCALE
 			elif self._gridEnabled == 'Vertical':
-				yTickLength= 3 * self.printerScale
-				xTickLength= height/2.0 +1
+				yTickLength= 3 * self.printerScale * SCALE
+				xTickLength= (height/2.0 +1) * SCALE
 			else:
-				yTickLength= width/2.0 +1
-				xTickLength= height/2.0 +1
+				yTickLength= (width/2.0 +1) * SCALE
+				xTickLength= (height/2.0 +1) * SCALE
 		else:
-			yTickLength= 3 * SCALE * self.printerScale  # lengthens lines for printing
-			xTickLength= 3 * SCALE * self.printerScale
+			yTickLength= 3 * self.printerScale * SCALE  # lengthens lines for printing
+			xTickLength= 3 * self.printerScale * SCALE
 
 		h = dc.GetCharHeight()
 
@@ -291,6 +317,7 @@ class LUTCanvas(plot.PlotCanvas):
 					dc.DrawLine(pt[0],pt[1],pt[0],pt[1] + d) # draws tick mark d units
 					if text:
 						dc.DrawText(label,pt[0],pt[1]+0.125*h)
+				dc.DrawLine(((width/2.0 +1)) * SCALE + shift[0], scale[1] * lower + shift[1], ((width/2.0 +1)) * SCALE + shift[0], scale[1] * upper + shift[1])
 				a1 = scale*_Numeric.array([lower, y])+shift
 				a2 = scale*_Numeric.array([upper, y])+shift
 				dc.DrawLine(a1[0],a1[1],a2[0],a2[1])  # draws upper and lower axis line
@@ -306,10 +333,13 @@ class LUTCanvas(plot.PlotCanvas):
 					if text:
 						dc.DrawText(label,pt[0]-dc.GetTextExtent(label)[0]-0.125*h,
 									pt[1]-0.75*h)
+				dc.DrawLine(scale[0] * lower + shift[0], shift[1] - ((height/2.0 +1)) * SCALE, scale[0] * upper + shift[0], shift[1] - ((height/2.0 +1)) * SCALE)
 				a1 = scale*_Numeric.array([x, lower])+shift
 				a2 = scale*_Numeric.array([x, upper])+shift
 				dc.DrawLine(a1[0],a1[1],a2[0],a2[1])
 				text = 0    # axis values not drawn on right side
+
+		dc.DrawLine(scale[0] * lower + shift[0], scale[1] * lower + shift[1], scale[0] * upper + shift[0], scale[1] * upper + shift[1])
 
 	def _ticks(self, lower, upper):
 		ideal = (upper-lower)/5.
@@ -336,6 +366,8 @@ class LUTCanvas(plot.PlotCanvas):
 		ticks = []
 		t = -grid*_Numeric.floor(-lower/grid)
 		while t <= upper:
+			if t == -0:
+				t = 0
 			ticks.append( (t, format % (t,)) )
 			if t + grid <= upper:
 				t = t + grid
@@ -353,8 +385,8 @@ class LUTCanvas(plot.PlotCanvas):
 		if not yLabel:
 			yLabel="Out"
 		
-		detect_increments = True
-		Plot = plot.PolyLine
+		detect_increments = False
+		Plot = PolySpline
 
 		lines = []
 		linear_points = []
@@ -431,17 +463,17 @@ class LUTCanvas(plot.PlotCanvas):
 				# for j in range(len(b_points[i])):
 					# b_points[i][j] *= (len(input) + 1)
 
-		lines += [Plot([[input[-1] / 2.0, 0], [input[-1] / 2.0, input[-1]]], colour=GRIDCOLOUR)] # bottom center to top center
-		lines += [Plot([[0, input[-1] / 2.0], [input[-1], input[-1] / 2.0]], colour=GRIDCOLOUR)] # center left to center right
+		# lines += [Plot([[input[-1] / 2.0, 0], [input[-1] / 2.0, input[-1]]], colour=GRIDCOLOUR)] # bottom center to top center
+		# lines += [Plot([[0, input[-1] / 2.0], [input[-1], input[-1] / 2.0]], colour=GRIDCOLOUR)] # center left to center right
 		# lines += [Plot([[0, input[-1]], [input[-1], input[-1]]], colour=GRIDCOLOUR)] # top
 		# lines += [Plot([[input[-1], 0], [input[-1], input[-1]]], colour=GRIDCOLOUR)] # right
 		# lines += [Plot([[0, 0], [input[-1], 1]], colour=GRIDCOLOUR)] # bottom
 		# lines += [Plot([[0, 0], [0, input[-1]]], colour=GRIDCOLOUR)] # left
 
-		lines += [Plot(linear, colour=GRIDCOLOUR)] # bottom left to top right
+		# lines += [Plot(linear, colour=GRIDCOLOUR)] # bottom left to top right
 
 		if r and g and b and r_points == g_points == b_points == (linear if detect_increments else linear_points):
-			lines += [Plot(linear if detect_increments else linear_points, colour=HILITECOLOUR)] # bottom left to top right
+			lines += [Plot(linear if detect_increments else linear_points, legend='R=G=B', colour=HILITECOLOUR)] # bottom left to top right
 		else:
 			if r:
 				# print r_points[0], r_points[-1]
@@ -453,7 +485,10 @@ class LUTCanvas(plot.PlotCanvas):
 				# print b_points[0], b_points[-1]
 				lines += [Plot(b_points, legend='B', colour='#0080FF')]
 
-		self.Draw(plot.PlotGraphics(lines, title, xLabel, yLabel)) #, xAxis=(0, input[-1]), yAxis=(0, input[-1]))
+		if not lines:
+			lines += [Plot([])]
+
+		self.Draw(plot.PlotGraphics(lines, title, xLabel, yLabel), xAxis=(0, input[-1]), yAxis=(0, input[-1]))
 
 class LUTFrame(wx.Frame):
 	def __init__(self, *args, **kwargs):
@@ -541,19 +576,19 @@ class LUTFrame(wx.Frame):
 		dc.SetPen(wx.Pen(wx.BLACK))
 		dc.SetBrush(wx.Brush( wx.BLACK, wx.SOLID ) )
 		
-		sx, sy = mDataDict["scaledXY"] #scaled x,y of closest point
-		dc.DrawRectangle( sx-5,sy-5, 10, 10)  #10by10 square centered on point
+		sx, sy = mDataDict["scaledXY"] / SCALE #scaled x,y of closest point
+		dc.DrawRectangle( sx-3,sy-3, 7, 7)  #10by10 square centered on point
 		px,py = mDataDict["pointXY"]
 		cNum = mDataDict["curveNum"]
 		pntIn = mDataDict["pIndex"]
 		legend = mDataDict["legend"]
 		#make a string to display
-		s = "Crv# %i, '%s', Pt. (%.2f,%.2f), PtInd %i" %(cNum, legend, px, py, pntIn)
-		dc.DrawText(s, sx , sy+1)
+		# s = "Crv# %i, '%s', Pt. (%.2f,%.2f), PtInd %i" %(cNum, legend, px, py, pntIn)
+		# dc.DrawText(s, sx , sy+1)
 		# -----------
 
 	def OnMotion(self, event):
-		self.SetStatusText("%d, %d" % tuple([round(xy) for xy in self.client._getXY(event)]))
+		#self.SetStatusText("%d, %d" % tuple([round(xy) for xy in self.client._getXY(event)]))
 		#show closest point (when enbled)
 		if self.client.GetEnablePointLabel() == True:
 			#make up dict with info for the pointLabel
@@ -561,6 +596,7 @@ class LUTFrame(wx.Frame):
 			dlst= self.client.GetClosestPoint( self.client._getXY(event), pointScaled= True)
 			if dlst != []:    #returns [] if none
 				curveNum, legend, pIndex, pointXY, scaledXY, distance = dlst
+				self.SetStatusText(legend + " " + u" \u2192 ".join([str(point) for point in pointXY]))
 				#make up dictionary to pass to my user function (see DrawPointLabel) 
 				mDataDict= {"curveNum":curveNum, "legend":legend, "pIndex":pIndex,\
 							"pointXY":pointXY, "scaledXY":scaledXY}
