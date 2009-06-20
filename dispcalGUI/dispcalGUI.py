@@ -4484,6 +4484,21 @@ class DisplayCalibratorGUI(wx.Frame):
 				cal = False
 			elif not cal:
 				cal = True
+		if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+			if cal == False: # linear
+				self.lut_viewer.profile = None
+				self.lut_viewer.DrawLUT()
+			else:
+				if cal == True: # display profile
+					try:
+						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection())
+					except Exception, exception:
+						profile = None
+				elif cal.lower().endswith(".icc") or cal.lower().endswith(".icm"):
+					profile = ICCP.ICCProfile(cal)
+				else:
+					profile = None
+				self.show_lut_handler(profile = profile)
 		self.install_profile(capture_output = True, cal = cal, install = False, skip_cmds = True, silent = True)
 
 	def install_profile(self, capture_output = False, cal = None, profile_path = None, install = True, skip_cmds = False, silent = False):
@@ -4646,6 +4661,9 @@ class DisplayCalibratorGUI(wx.Frame):
 				if verbose >= 1 and silent: safe_print(self.getlstr("calibration.loading"))
 				if self.install_profile(capture_output = True, cal = cal, install = False, skip_cmds = True, silent = silent):
 					if verbose >= 1 and silent: safe_print(self.getlstr("success"))
+					if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+						if cal.lower().endswith(".icc") or cal.lower().endswith(".icm"):
+							self.show_lut_handler(profile = ICCP.ICCProfile(cal))
 					return True
 				if verbose >= 1 and silent: safe_print(self.getlstr("failure"))
 		return False
@@ -8232,8 +8250,6 @@ class DisplayCalibratorGUI(wx.Frame):
 						if "vcgt" in profile.tags:
 							# load calibration into lut
 							self.load_cal(cal = path, silent = True)
-							if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
-								self.show_lut_handler(profile = profile)
 							if options_dispcal:
 								return
 							else:
@@ -8263,8 +8279,6 @@ class DisplayCalibratorGUI(wx.Frame):
 						if "vcgt" in profile.tags:
 							# load calibration into lut
 							self.load_cal(cal = path, silent = False)
-							if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
-								self.show_lut_handler(profile = profile)
 						if not silent: InfoDialog(self, msg = self.getlstr("no_settings"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 						return
 				elif not "CIED" in profile.tags:
@@ -8285,8 +8299,6 @@ class DisplayCalibratorGUI(wx.Frame):
 					if "vcgt" in profile.tags:
 						# load calibration into lut
 						self.load_cal(cal = path, silent = False)
-						if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
-							self.show_lut_handler(profile = profile)
 					if not silent: InfoDialog(self, msg = self.getlstr("no_settings"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 					return
 

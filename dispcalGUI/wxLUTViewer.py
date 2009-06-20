@@ -19,10 +19,56 @@ import wx.lib.plot as plot
 
 import ICCProfile as ICCP
 
+ANTIALIAS = True
 BGCOLOUR = "#333333"
 FGCOLOUR = "#999999"
 GRIDCOLOUR = "#444444"
 HILITECOLOUR = "white"
+SCALE = 20.0
+
+class PolySpline(plot.PolyLine):
+	"""Class to define line type and style
+		- All methods except __init__ are private.
+	"""
+
+	_attributes = {'colour': 'black',
+				   'width': 1,
+				   'style': wx.SOLID,
+				   'legend': ''}
+
+	def __init__(self, points, **attr):
+		"""Creates PolyLine object
+			points - sequence (array, tuple or list) of (x,y) points making up line
+			**attr - key word attributes
+				Defaults:
+					'colour'= 'black',          - wx.Pen Colour any wx.NamedColour
+					'width'= 1,                 - Pen width
+					'style'= wx.SOLID,          - wx.Pen style
+					'legend'= ''                - Line Legend to display
+		"""
+		plot.PolyLine.__init__(self, points, **attr)
+
+	def draw(self, dc, printerScale, coord= None):
+		colour = self.attributes['colour']
+		width = self.attributes['width'] * printerScale
+		style= self.attributes['style']
+		if not isinstance(colour, wx.Colour):
+			colour = wx.NamedColour(colour)
+		pen = wx.Pen(colour, width, style)
+		pen.SetCap(wx.CAP_ROUND)
+		dc.SetPen(pen)
+		if coord == None:
+			# points = []
+			# scaled = []
+			# for i in self.scaled:
+				# point = [round(i[0]), round(i[1])]
+				# if point not in points:
+					# points += [point]
+					# scaled += [[i[0], i[1]]]
+			# dc.DrawSpline(scaled)
+			dc.DrawSpline(self.scaled)
+		else:
+			dc.DrawLines(coord) # draw legend line
 
 class LUTCanvas(plot.PlotCanvas):
 	def __init__(self, *args, **kwargs):
@@ -31,9 +77,9 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetEnableGrid(False)
 		self.SetEnablePointLabel(False)
 		self.SetForegroundColour(FGCOLOUR)
-		self.SetFontSizeAxis(9 if sys.platform in ("darwin", "win32") else 10)
-		self.SetFontSizeLegend(9 if sys.platform in ("darwin", "win32") else 10)
-		self.SetFontSizeTitle(9 if sys.platform in ("darwin", "win32") else 10)
+		self.SetFontSizeAxis((9 if sys.platform in ("darwin", "win32") else 12) * SCALE)
+		self.SetFontSizeLegend((9 if sys.platform in ("darwin", "win32") else 12) * SCALE)
+		self.SetFontSizeTitle((9 if sys.platform in ("darwin", "win32") else 12) * SCALE)
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
 		# self.SetXSpec('none')
@@ -56,13 +102,17 @@ class LUTCanvas(plot.PlotCanvas):
 			dc.SetBackground(bbr)
 			dc.SetBackgroundMode(wx.SOLID)
 			dc.Clear()
-			try:
-				dc = wx.GCDC(dc)
-			except:
-				pass
+			if ANTIALIAS:
+				try:
+					dc = wx.GCDC(dc)
+				except:
+					pass
 			
 		dc.SetTextForeground(self.GetForegroundColour())
-		
+		dc.SetTextBackground(self.GetBackgroundColour())
+
+		dc.SetMapMode(wx.MM_TWIPS) # high precision 1/20 pt
+
 		dc.BeginDrawing()
 		# dc.Clear()
 		
@@ -128,12 +178,14 @@ class LUTCanvas(plot.PlotCanvas):
 					   self.plotbox_origin[1]- self.plotbox_size[1])
 			dc.DrawText(graphics.getTitle(),titlePos[0],titlePos[1])
 
+		h = dc.GetCharHeight()
+
 		# draw label text
 		dc.SetFont(self._getFont(self._fontSizeAxis))
 		xLabelPos= (self.plotbox_origin[0]+ lhsW + (self.plotbox_size[0]-lhsW-rhsW)/2.- xLabelWH[0]/2.,
-				 self.plotbox_origin[1]- xLabelWH[1])
+				 self.plotbox_origin[1]- xLabelWH[1] + 0.125 * h)
 		dc.DrawText(graphics.getXLabel(),xLabelPos[0],xLabelPos[1])
-		yLabelPos= (self.plotbox_origin[0],
+		yLabelPos= (self.plotbox_origin[0] - 0.125 * h,
 				 self.plotbox_origin[1]- bottomH- (self.plotbox_size[1]-bottomH-topH)/2.+ yLabelWH[0]/2.)
 		if graphics.getYLabel():  # bug fix for Linux
 			dc.DrawRotatedText(graphics.getYLabel(),yLabelPos[0],yLabelPos[1],90)
@@ -153,7 +205,7 @@ class LUTCanvas(plot.PlotCanvas):
 		graphics.setPrinterScale(self.printerScale)  # thicken up lines and markers if printing
 		
 		# set clipping area so drawing does not occur outside axis box
-		ptx,pty,rectWidth,rectHeight= self._point2ClientCoord(p1, p2)
+		#ptx,pty,rectWidth,rectHeight= self._point2ClientCoord(p1, p2)
 		#dc.SetClippingRegion(ptx,pty,rectWidth,rectHeight)
 		# Draw the lines and markers
 		#start = _time.clock()
@@ -164,6 +216,100 @@ class LUTCanvas(plot.PlotCanvas):
 		dc.EndDrawing()
 
 		self._adjustScrollbars()
+
+	def Clear(self):
+		"""Erase the window."""
+		self.last_PointLabel = None        #reset pointLabel
+		dc = wx.BufferedDC(wx.ClientDC(self.canvas), self._Buffer)
+		bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
+		dc.SetBackground(bbr)
+		dc.SetBackgroundMode(wx.SOLID)
+		dc.Clear()
+		if ANTIALIAS:
+			try:
+				dc = wx.GCDC(dc)
+			except:
+				pass
+		dc.SetTextForeground(self.GetForegroundColour())
+		dc.SetTextBackground(self.GetBackgroundColour())
+		self.last_draw = None
+
+	def OnPaint(self, event):
+		# All that is needed here is to draw the buffer to screen
+		if self.last_PointLabel != None:
+			self._drawPointLabel(self.last_PointLabel) #erase old
+			self.last_PointLabel = None
+		dc = wx.BufferedPaintDC(self.canvas, self._Buffer)
+		if ANTIALIAS:
+			try:
+				dc = wx.GCDC(dc)
+			except:
+				pass
+
+	def _setSize(self, width=None, height=None):
+		"""DC width and height."""
+		if width == None:
+			(self.width,self.height) = self.canvas.GetClientSize()
+		else:
+			self.width, self.height= width, height
+		self.width *= 20 # high precision
+		self.height *= 20 # high precision
+		self.plotbox_size = 0.97*_Numeric.array([self.width, self.height])
+		xo = 0.5*(self.width-self.plotbox_size[0])
+		yo = self.height-0.5*(self.height-self.plotbox_size[1])
+		self.plotbox_origin = _Numeric.array([xo, yo])
+
+	def _drawAxes(self, dc, p1, p2, scale, shift, xticks, yticks):
+		
+		penWidth= self.printerScale        # increases thickness for printing only
+		dc.SetPen(wx.Pen(self._gridColour, penWidth))
+		
+		# set length of tick marks--long ones make grid
+		if self._gridEnabled:
+			x,y,width,height= self._point2ClientCoord(p1,p2)
+			if self._gridEnabled == 'Horizontal':
+				yTickLength= width/2.0 +1
+				xTickLength= 3 * self.printerScale
+			elif self._gridEnabled == 'Vertical':
+				yTickLength= 3 * self.printerScale
+				xTickLength= height/2.0 +1
+			else:
+				yTickLength= width/2.0 +1
+				xTickLength= height/2.0 +1
+		else:
+			yTickLength= 3 * SCALE * self.printerScale  # lengthens lines for printing
+			xTickLength= 3 * SCALE * self.printerScale
+
+		h = dc.GetCharHeight()
+
+		if self._xSpec is not 'none':
+			lower, upper = p1[0],p2[0]
+			text = 1
+			for y, d in [(p1[1], -xTickLength), (p2[1], xTickLength)]:   # miny, maxy and tick lengths
+				for x, label in xticks:
+					pt = scale*_Numeric.array([x, y])+shift
+					dc.DrawLine(pt[0],pt[1],pt[0],pt[1] + d) # draws tick mark d units
+					if text:
+						dc.DrawText(label,pt[0],pt[1]+0.125*h)
+				a1 = scale*_Numeric.array([lower, y])+shift
+				a2 = scale*_Numeric.array([upper, y])+shift
+				dc.DrawLine(a1[0],a1[1],a2[0],a2[1])  # draws upper and lower axis line
+				text = 0  # axis values not drawn on top side
+
+		if self._ySpec is not 'none':
+			lower, upper = p1[1],p2[1]
+			text = 1
+			for x, d in [(p1[0], -yTickLength), (p2[0], yTickLength)]:
+				for y, label in yticks:
+					pt = scale*_Numeric.array([x, y])+shift
+					dc.DrawLine(pt[0],pt[1],pt[0]-d,pt[1])
+					if text:
+						dc.DrawText(label,pt[0]-dc.GetTextExtent(label)[0]-0.125*h,
+									pt[1]-0.75*h)
+				a1 = scale*_Numeric.array([x, lower])+shift
+				a2 = scale*_Numeric.array([x, upper])+shift
+				dc.DrawLine(a1[0],a1[1],a2[0],a2[1])
+				text = 0    # axis values not drawn on right side
 
 	def _ticks(self, lower, upper):
 		ideal = (upper-lower)/5.
@@ -199,21 +345,6 @@ class LUTCanvas(plot.PlotCanvas):
 			ticks.append( (upper, format % (upper,)) )
 		return ticks
 
-	def Clear(self):
-		"""Erase the window."""
-		self.last_PointLabel = None        #reset pointLabel
-		dc = wx.BufferedDC(wx.ClientDC(self.canvas), self._Buffer)
-		bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
-		dc.SetBackground(bbr)
-		dc.SetBackgroundMode(wx.SOLID)
-		dc.Clear()
-		try:
-			dc = wx.GCDC(dc)
-		except:
-			pass
-		dc.SetTextForeground(self.GetForegroundColour())
-		self.last_draw = None
-
 	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, r=True, g=True, b=True):
 		if not title:
 			title = "LUT"
@@ -223,7 +354,7 @@ class LUTCanvas(plot.PlotCanvas):
 			yLabel="Out"
 		
 		detect_increments = True
-		Plot = (plot.PolyLine, plot.PolyMarker)[0]
+		Plot = plot.PolyLine
 
 		lines = []
 		linear_points = []
