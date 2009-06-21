@@ -5277,12 +5277,12 @@ class DisplayCalibratorGUI(wx.Frame):
 							return
 				else:
 					try:
-						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection())
+						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection()) or False
 					except Exception, exception:
 						pass
 			if profile and (not self.lut_viewer.profile or not hasattr(self.lut_viewer.profile, "fileName") or not hasattr(profile, "fileName") or self.lut_viewer.profile.fileName != profile.fileName):
 				self.lut_viewer.LoadProfile(profile)
-			show = bool((hasattr(self, "show_lut") and self.show_lut and self.show_lut.GetValue()) or ((not hasattr(self, "show_lut") or not self.show_lut) and (self.lut_viewer.IsShownOnScreen() or profile)))
+			show = bool((hasattr(self, "show_lut") and self.show_lut and self.show_lut.GetValue()) or ((not hasattr(self, "show_lut") or not self.show_lut) and (self.lut_viewer.IsShownOnScreen() or profile is not None)))
 			if show:
 				self.lut_viewer.DrawLUT()
 			self.lut_viewer.Show(show)
