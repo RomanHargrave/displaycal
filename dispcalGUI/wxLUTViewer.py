@@ -13,67 +13,24 @@ if not hasattr(sys, "frozen") or not sys.frozen:
 		import wx
 		if wx.VERSION < (2, 8):
 			raise
-from wx.lib.plot import _Numeric
+from wxenhancedplot import _Numeric
 import wx
-import wx.lib.plot as plot
+import wxenhancedplot as plot
 
 import ICCProfile as ICCP
 
-ANTIALIAS = True
 BGCOLOUR = "#333333"
 FGCOLOUR = "#999999"
 GRIDCOLOUR = "#444444"
 HILITECOLOUR = "white"
-SCALE = 20.0
-
-class PolySpline(plot.PolyLine):
-	"""Class to define line type and style
-		- All methods except __init__ are private.
-	"""
-
-	_attributes = {'colour': 'black',
-				   'width': 1,
-				   'style': wx.SOLID,
-				   'legend': ''}
-
-	def __init__(self, points, **attr):
-		"""Creates PolyLine object
-			points - sequence (array, tuple or list) of (x,y) points making up line
-			**attr - key word attributes
-				Defaults:
-					'colour'= 'black',          - wx.Pen Colour any wx.NamedColour
-					'width'= 1,                 - Pen width
-					'style'= wx.SOLID,          - wx.Pen style
-					'legend'= ''                - Line Legend to display
-		"""
-		plot.PolyLine.__init__(self, points, **attr)
-
-	def draw(self, dc, printerScale, coord= None):
-		colour = self.attributes['colour']
-		width = self.attributes['width'] * printerScale * SCALE
-		style= self.attributes['style']
-		if not isinstance(colour, wx.Colour):
-			colour = wx.NamedColour(colour)
-		pen = wx.Pen(colour, width, style)
-		pen.SetCap(wx.CAP_ROUND)
-		dc.SetPen(pen)
-		if coord == None:
-			# points = []
-			# scaled = []
-			# for i in self.scaled:
-				# point = [round(i[0]), round(i[1])]
-				# if point not in points:
-					# points += [point]
-					# scaled += [[i[0], i[1]]]
-			# dc.DrawSpline(scaled)
-			dc.DrawSpline(self.scaled)
-		else:
-			dc.DrawLines(coord) # draw legend line
 
 class LUTCanvas(plot.PlotCanvas):
 	def __init__(self, *args, **kwargs):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
 		self.SetBackgroundColour(BGCOLOUR)
+		self.SetEnableAntiAliasing(True)
+		self.SetEnableCenterLines(True)
+		self.SetEnableDiagonals('Bottomleft-Topright')
 		self.SetEnableGrid(False)
 		self.SetEnablePointLabel(True)
 		self.SetForegroundColour(FGCOLOUR)
@@ -82,300 +39,8 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetFontSizeTitle(9 if sys.platform in ("darwin", "win32") else 12)
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
-		# self.SetXSpec('none')
-		# self.SetYSpec('none')
-    
-	def SetFontSizeAxis(self, point= 10):
-		"""Set the tick and axis label font size (default is 10 point)"""
-		self._fontSizeAxis= point * SCALE
-
-	def GetFontSizeAxis(self):
-		"""Get current tick and axis label font size in points"""
-		return self._fontSizeAxis / SCALE
-
-	def SetFontSizeTitle(self, point= 15):
-		"""Set Title font size (default is 15 point)"""
-		self._fontSizeTitle= point * SCALE
-
-	def GetFontSizeTitle(self):
-		"""Get current Title font size in points"""
-		return self._fontSizeTitle / SCALE
-
-	def SetFontSizeLegend(self, point= 7):
-		"""Set Legend font size (default is 7 point)"""
-		self._fontSizeLegend= point * SCALE
-
-	def GetFontSizeLegend(self):
-		"""Get current Legend font size in points"""
-		return self._fontSizeLegend / SCALE
-
-	def _Draw(self, graphics, xAxis = None, yAxis = None, dc = None):
-		"""\
-		Draw objects in graphics with specified x and y axis.
-		graphics- instance of PlotGraphics with list of PolyXXX objects
-		xAxis - tuple with (min, max) axis range to view
-		yAxis - same as xAxis
-		dc - drawing context - doesn't have to be specified.    
-		If it's not, the offscreen buffer is used
-		"""
-
-		if dc == None:
-			# sets new dc and clears it 
-			dc = wx.BufferedDC(wx.ClientDC(self.canvas), self._Buffer)
-			bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
-			dc.SetBackground(bbr)
-			dc.SetBackgroundMode(wx.SOLID)
-			dc.Clear()
-			if ANTIALIAS:
-				try:
-					dc = wx.GCDC(dc)
-				except:
-					pass
-			
-		dc.SetTextForeground(self.GetForegroundColour())
-		dc.SetTextBackground(self.GetBackgroundColour())
-
-		if SCALE == 20:
-			dc.SetMapMode(wx.MM_TWIPS) # high precision 1/20 pt
-
-		dc.BeginDrawing()
-		# dc.Clear()
-		
-		# set font size for every thing but title and legend
-		dc.SetFont(self._getFont(self._fontSizeAxis))
-
-		# sizes axis to axis type, create lower left and upper right corners of plot
-		if xAxis == None or yAxis == None:
-			# One or both axis not specified in Draw
-			p1, p2 = graphics.boundingBox()     # min, max points of graphics
-			if xAxis == None:
-				xAxis = self._axisInterval(self._xSpec, p1[0], p2[0]) # in user units
-			if yAxis == None:
-				yAxis = self._axisInterval(self._ySpec, p1[1], p2[1])
-			# Adjust bounding box for axis spec
-			p1[0],p1[1] = xAxis[0], yAxis[0]     # lower left corner user scale (xmin,ymin)
-			p2[0],p2[1] = xAxis[1], yAxis[1]     # upper right corner user scale (xmax,ymax)
-		else:
-			# Both axis specified in Draw
-			p1= _Numeric.array([xAxis[0], yAxis[0]])    # lower left corner user scale (xmin,ymin)
-			p2= _Numeric.array([xAxis[1], yAxis[1]])     # upper right corner user scale (xmax,ymax)
-
-		self.last_draw = (graphics, _Numeric.array(xAxis), _Numeric.array(yAxis))       # saves most recient values
-
-		# Get ticks and textExtents for axis if required
-		if self._xSpec is not 'none':        
-			xticks = self._xticks(xAxis[0], xAxis[1])
-			xTextExtent = dc.GetTextExtent(xticks[-1][1])# w h of x axis text last number on axis
-		else:
-			xticks = None
-			xTextExtent= (0,0) # No text for ticks
-		if self._ySpec is not 'none':
-			yticks = self._yticks(yAxis[0], yAxis[1])
-			if self.getLogScale()[1]:
-				yTextExtent = dc.GetTextExtent('-2e-2')
-			else:
-				yTextExtentBottom = dc.GetTextExtent(yticks[0][1])
-				yTextExtentTop = dc.GetTextExtent(yticks[-1][1])
-				yTextExtent= (max(yTextExtentBottom[0],yTextExtentTop[0]),
-							  max(yTextExtentBottom[1],yTextExtentTop[1]))
-		else:
-			yticks = None
-			yTextExtent= (0,0) # No text for ticks
-
-		# TextExtents for Title and Axis Labels
-		titleWH, xLabelWH, yLabelWH= self._titleLablesWH(dc, graphics)
-
-		# TextExtents for Legend
-		legendBoxWH, legendSymExt, legendTextExt = self._legendWH(dc, graphics)
-
-		# room around graph area
-		rhsW= max(xTextExtent[0], legendBoxWH[0]) # use larger of number width or legend width
-		lhsW= yTextExtent[0]+ yLabelWH[1]
-		bottomH= max(xTextExtent[1], yTextExtent[1]/2.)+ xLabelWH[1]
-		topH= yTextExtent[1]/2. + titleWH[1]
-		textSize_scale= _Numeric.array([rhsW+lhsW,bottomH+topH]) # make plot area smaller by text size
-		textSize_shift= _Numeric.array([lhsW, bottomH])          # shift plot area by this amount
-
-		# draw title if requested
-		if self._titleEnabled:
-			dc.SetFont(self._getFont(self._fontSizeTitle))
-			titlePos= (self.plotbox_origin[0]+ lhsW + (self.plotbox_size[0]-lhsW-rhsW)/2.- titleWH[0]/2.,
-					   self.plotbox_origin[1]- self.plotbox_size[1])
-			dc.DrawText(graphics.getTitle(),titlePos[0],titlePos[1])
-
-		h = dc.GetCharHeight()
-
-		# draw label text
-		dc.SetFont(self._getFont(self._fontSizeAxis))
-		xLabelPos= (self.plotbox_origin[0]+ lhsW + (self.plotbox_size[0]-lhsW-rhsW)/2.- xLabelWH[0]/2.,
-				 self.plotbox_origin[1]- xLabelWH[1] + 0.125 * h)
-		dc.DrawText(graphics.getXLabel(),xLabelPos[0],xLabelPos[1])
-		yLabelPos= (self.plotbox_origin[0] - 0.125 * h,
-				 self.plotbox_origin[1]- bottomH- (self.plotbox_size[1]-bottomH-topH)/2.+ yLabelWH[0]/2.)
-		if graphics.getYLabel():  # bug fix for Linux
-			dc.DrawRotatedText(graphics.getYLabel(),yLabelPos[0],yLabelPos[1],90)
-
-		# drawing legend makers and text
-		if self._legendEnabled:
-			self._drawLegend(dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt)
-
-		# allow for scaling and shifting plotted points
-		scale = (self.plotbox_size-textSize_scale) / (p2-p1)* _Numeric.array((1,-1))
-		shift = -p1*scale + self.plotbox_origin + textSize_shift * _Numeric.array((1,-1))
-		self._pointScale= scale / SCALE  # make available for mouse events
-		self._pointShift= shift / SCALE       
-		self._drawAxes(dc, p1, p2, scale, shift, xticks, yticks)
-		
-		graphics.scaleAndShift(scale, shift)
-		graphics.setPrinterScale(self.printerScale)  # thicken up lines and markers if printing
-		
-		# set clipping area so drawing does not occur outside axis box
-		#ptx,pty,rectWidth,rectHeight= self._point2ClientCoord(p1, p2)
-		#dc.SetClippingRegion(ptx,pty,rectWidth,rectHeight)
-		# Draw the lines and markers
-		#start = _time.clock()
-		graphics.draw(dc)
-		# print "entire graphics drawing took: %f second"%(_time.clock() - start)
-		# remove the clipping region
-		dc.DestroyClippingRegion()
-		dc.EndDrawing()
-
-		self._adjustScrollbars()
-
-	def Clear(self):
-		"""Erase the window."""
-		self.last_PointLabel = None        #reset pointLabel
-		dc = wx.BufferedDC(wx.ClientDC(self.canvas), self._Buffer)
-		bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
-		dc.SetBackground(bbr)
-		dc.SetBackgroundMode(wx.SOLID)
-		dc.Clear()
-		if ANTIALIAS:
-			try:
-				dc = wx.GCDC(dc)
-			except:
-				pass
-		dc.SetTextForeground(self.GetForegroundColour())
-		dc.SetTextBackground(self.GetBackgroundColour())
-		self.last_draw = None
-
-	def OnPaint(self, event):
-		# All that is needed here is to draw the buffer to screen
-		if self.last_PointLabel != None:
-			self._drawPointLabel(self.last_PointLabel) #erase old
-			self.last_PointLabel = None
-		dc = wx.BufferedPaintDC(self.canvas, self._Buffer)
-		# if ANTIALIAS:
-			# try:
-				# dc = wx.GCDC(dc)
-			# except:
-				# pass
-
-	def _setSize(self, width=None, height=None):
-		"""DC width and height."""
-		if width == None:
-			(self.width,self.height) = self.canvas.GetClientSize()
-		else:
-			self.width, self.height= width, height
-		self.width *= SCALE # high precision
-		self.height *= SCALE # high precision
-		self.plotbox_size = 0.97*_Numeric.array([self.width, self.height])
-		xo = 0.5*(self.width-self.plotbox_size[0])
-		yo = self.height-0.5*(self.height-self.plotbox_size[1])
-		self.plotbox_origin = _Numeric.array([xo, yo])
-
-	def _drawAxes(self, dc, p1, p2, scale, shift, xticks, yticks):
-		
-		penWidth= self.printerScale * SCALE        # increases thickness for printing only
-		dc.SetPen(wx.Pen(self._gridColour, penWidth))
-		
-		x,y,width,height= self._point2ClientCoord(p1,p2)
-		
-		# set length of tick marks--long ones make grid
-		if self._gridEnabled:
-			if self._gridEnabled == 'Horizontal':
-				yTickLength= (width/2.0 +1) * SCALE
-				xTickLength= 3 * self.printerScale * SCALE
-			elif self._gridEnabled == 'Vertical':
-				yTickLength= 3 * self.printerScale * SCALE
-				xTickLength= (height/2.0 +1) * SCALE
-			else:
-				yTickLength= (width/2.0 +1) * SCALE
-				xTickLength= (height/2.0 +1) * SCALE
-		else:
-			yTickLength= 3 * self.printerScale * SCALE  # lengthens lines for printing
-			xTickLength= 3 * self.printerScale * SCALE
-
-		h = dc.GetCharHeight()
-
-		if self._xSpec is not 'none':
-			lower, upper = p1[0],p2[0]
-			text = 1
-			for y, d in [(p1[1], -xTickLength), (p2[1], xTickLength)]:   # miny, maxy and tick lengths
-				for x, label in xticks:
-					pt = scale*_Numeric.array([x, y])+shift
-					dc.DrawLine(pt[0],pt[1],pt[0],pt[1] + d) # draws tick mark d units
-					if text:
-						dc.DrawText(label,pt[0],pt[1]+0.125*h)
-				dc.DrawLine(((width/2.0 +1)) * SCALE + shift[0], scale[1] * lower + shift[1], ((width/2.0 +1)) * SCALE + shift[0], scale[1] * upper + shift[1])
-				a1 = scale*_Numeric.array([lower, y])+shift
-				a2 = scale*_Numeric.array([upper, y])+shift
-				dc.DrawLine(a1[0],a1[1],a2[0],a2[1])  # draws upper and lower axis line
-				text = 0  # axis values not drawn on top side
-
-		if self._ySpec is not 'none':
-			lower, upper = p1[1],p2[1]
-			text = 1
-			for x, d in [(p1[0], -yTickLength), (p2[0], yTickLength)]:
-				for y, label in yticks:
-					pt = scale*_Numeric.array([x, y])+shift
-					dc.DrawLine(pt[0],pt[1],pt[0]-d,pt[1])
-					if text:
-						dc.DrawText(label,pt[0]-dc.GetTextExtent(label)[0]-0.125*h,
-									pt[1]-0.75*h)
-				dc.DrawLine(scale[0] * lower + shift[0], shift[1] - ((height/2.0 +1)) * SCALE, scale[0] * upper + shift[0], shift[1] - ((height/2.0 +1)) * SCALE)
-				a1 = scale*_Numeric.array([x, lower])+shift
-				a2 = scale*_Numeric.array([x, upper])+shift
-				dc.DrawLine(a1[0],a1[1],a2[0],a2[1])
-				text = 0    # axis values not drawn on right side
-
-		dc.DrawLine(scale[0] * lower + shift[0], scale[1] * lower + shift[1], scale[0] * upper + shift[0], scale[1] * upper + shift[1])
-
-	def _ticks(self, lower, upper):
-		ideal = (upper-lower)/5.
-		log = _Numeric.log10(ideal)
-		power = _Numeric.floor(log)
-		fraction = log-power
-		factor = 1.
-		error = fraction
-		for f, lf in self._multiples:
-			e = _Numeric.fabs(fraction-lf)
-			if e < error:
-				error = e
-				factor = f
-		# grid = factor * 10.**power
-		grid = ideal
-		if self._useScientificNotation and (power > 4 or power < -4):
-			format = '%+7.1e'        
-		elif power >= 0:
-			digits = max(1, int(power))
-			format = '%' + `digits`+'.0f'
-		else:
-			digits = -int(power)
-			format = '%'+`digits+2`+'.'+`digits`+'f'
-		ticks = []
-		t = -grid*_Numeric.floor(-lower/grid)
-		while t <= upper:
-			if t == -0:
-				t = 0
-			ticks.append( (t, format % (t,)) )
-			if t + grid <= upper:
-				t = t + grid
-			else:
-				break
-		if t < upper:
-			ticks.append( (upper, format % (upper,)) )
-		return ticks
+		self.SetXSpec(5)
+		self.SetYSpec(5)
 
 	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, r=True, g=True, b=True):
 		if not title:
@@ -386,7 +51,7 @@ class LUTCanvas(plot.PlotCanvas):
 			yLabel="Out"
 		
 		detect_increments = False
-		Plot = PolySpline
+		Plot = plot.PolySpline
 
 		lines = []
 		linear_points = []
@@ -475,18 +140,45 @@ class LUTCanvas(plot.PlotCanvas):
 
 		# lines += [Plot(linear, colour=GRIDCOLOUR)] # bottom left to top right
 
-		if r and g and b and r_points == g_points == b_points == (linear if detect_increments else linear_points):
-			lines += [Plot(linear if detect_increments else linear_points, legend='R=G=B', colour=HILITECOLOUR)] # bottom left to top right
+		legend = []
+		points = []
+		if r:
+			legend += ['R']
+			points += [r_points]
+		if g:
+			legend += ['G']
+			points += [g_points]
+		if b:
+			legend += ['B']
+			points += [b_points]
+		same = True
+		if points:
+			for i in range(1, len(points)):
+				if points[i] != points[0]:
+					same = False
+					break
+		prefix = ('LIN ' if points and points[0] == (linear if detect_increments else linear_points) else '')
+		if len(legend) > 1 and same: # (r_points or linear_points) == (g_points or linear_points) == (b_points or linear_points) == (linear if detect_increments else linear_points):
+			if legend == ['R', 'G']:
+				colour = 'yellow'
+			elif legend == ['R', 'B']:
+				colour = 'magenta'
+			elif legend == ['G', 'B']:
+				colour = 'cyan'
+			else:
+				colour = 'white'
+			# lines += [Plot(linear if detect_increments else linear_points, legend='='.join(legend), colour=colour)] # bottom left to top right
+			lines += [Plot(points[0], legend=prefix + '='.join(legend), colour=colour)] # bottom left to top right
 		else:
 			if r:
 				# print r_points[0], r_points[-1]
-				lines += [Plot(r_points, legend='R', colour='red')]
+				lines += [Plot(r_points, legend=prefix + 'R', colour='red')]
 			if g:
 				# print g_points[0], g_points[-1]
-				lines += [Plot(g_points, legend='G', colour='green')]
+				lines += [Plot(g_points, legend=prefix + 'G', colour='green')]
 			if b:
 				# print b_points[0], b_points[-1]
-				lines += [Plot(b_points, legend='B', colour='#0080FF')]
+				lines += [Plot(b_points, legend=prefix + 'B', colour='#0080FF')]
 
 		if not lines:
 			lines += [Plot([])]
@@ -558,6 +250,7 @@ class LUTFrame(wx.Frame):
 		self.profile = profile
 	
 	def DrawLUT(self, event=None):
+		self.SetStatusText('')
 		self.client.DrawLUT(self.profile.tags.vcgt if self.profile else None, 
 							title=self.profile.getDescription() if self.profile else None, 
 							xLabel=self.xLabel,
@@ -579,19 +272,14 @@ class LUTFrame(wx.Frame):
 		dc.SetPen(wx.Pen(wx.BLACK))
 		dc.SetBrush(wx.Brush( wx.BLACK, wx.SOLID ) )
 		
-		sx, sy = mDataDict["scaledXY"] / SCALE #scaled x,y of closest point
+		sx, sy = mDataDict["scaledXY"] #scaled x,y of closest point
 		dc.DrawRectangle( sx-3,sy-3, 7, 7)  #10by10 square centered on point
 		px,py = mDataDict["pointXY"]
 		cNum = mDataDict["curveNum"]
 		pntIn = mDataDict["pIndex"]
 		legend = mDataDict["legend"]
-		#make a string to display
-		# s = "Crv# %i, '%s', Pt. (%.2f,%.2f), PtInd %i" %(cNum, legend, px, py, pntIn)
-		# dc.DrawText(s, sx , sy+1)
-		# -----------
 
 	def OnMotion(self, event):
-		#self.SetStatusText("%d, %d" % tuple([round(xy) for xy in self.client._getXY(event)]))
 		#show closest point (when enbled)
 		if self.client.GetEnablePointLabel() == True:
 			#make up dict with info for the pointLabel
