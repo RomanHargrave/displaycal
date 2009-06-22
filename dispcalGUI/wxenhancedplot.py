@@ -247,7 +247,8 @@ class PolyLine(PolyPoints):
         pen.SetCap(wx.CAP_BUTT)
         dc.SetPen(pen)
         if coord == None:
-            dc.DrawLines(self.scaled)
+            if len(self.scaled): # bugfix for Mac OS X
+                dc.DrawLines(self.scaled)
         else:
             dc.DrawLines(coord) # draw legend line
 
@@ -289,7 +290,8 @@ class PolySpline(PolyLine):
         pen.SetCap(wx.CAP_ROUND)
         dc.SetPen(pen)
         if coord == None:
-            dc.DrawSpline(self.scaled)
+            if len(self.scaled): # bugfix for Mac OS X
+                dc.DrawSpline(self.scaled)
         else:
             dc.DrawLines(coord) # draw legend line
 
@@ -351,7 +353,8 @@ class PolyMarker(PolyPoints):
         else:
             dc.SetBrush(wx.Brush(colour, fillstyle))
         if coord == None:
-            self._drawmarkers(dc, self.scaled, marker, size)
+            if len(self.scaled): # bugfix for Mac OS X
+                self._drawmarkers(dc, self.scaled, marker, size)
         else:
             self._drawmarkers(dc, coord, marker, size) # draw legend marker
 
@@ -619,6 +622,7 @@ class PlotCanvas(wx.Panel):
         self.last_PointLabel= None
         self._pointLabelFunc= None
         self.canvas.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeave)
+        self._logicalFunction = wx.EQUIV if sys.platform != "darwin" else wx.COPY  # wx.EQUIV == (NOT src) XOR dst -- not supported on Mac OS X
 
         self._useScientificNotation = False
         
@@ -1488,17 +1492,27 @@ class PlotCanvas(wx.Panel):
         """Draws and erases pointLabels"""
         width = self._Buffer.GetWidth()
         height = self._Buffer.GetHeight()
-        tmp_Buffer = wx.EmptyBitmap(width,height)
-        dcs = wx.MemoryDC()
-        dcs.SelectObject(tmp_Buffer)
-        dcs.Clear()
+        if sys.platform != "darwin":
+            tmp_Buffer = wx.EmptyBitmap(width,height)
+            dcs = wx.MemoryDC()
+            dcs.SelectObject(tmp_Buffer)
+            dcs.Clear()
+        else:
+            tmp_Buffer = self._Buffer.GetSubBitmap((0, 0, width, height))
+            dcs = wx.MemoryDC(self._Buffer)
         dcs.BeginDrawing()
         self._pointLabelFunc(dcs,mDataDict)  #custom user pointLabel function
         dcs.EndDrawing()
 
         dc = wx.ClientDC( self.canvas )
         #this will erase if called twice
-        dc.Blit(0, 0, width, height, dcs, 0, 0, wx.EQUIV)  #(NOT src) XOR dst
+        try:
+            dc.Blit(0, 0, width, height, dcs, 0, 0, self._logicalFunction)
+        except Exception, exception:
+            if DEBUG:
+                print exception, self._logicalFunction
+        if sys.platform == "darwin":
+            self._Buffer = tmp_Buffer
         
 
     def _drawLegend(self,dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt):
@@ -2166,6 +2180,8 @@ class TestFrame(wx.Frame):
         self.client.canvas.Bind(wx.EVT_LEFT_DOWN, self.OnMouseLeftDown)
         # Show closest point when enabled
         self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
+        
+        self._logicalFunctionIndex = 0
 
         self.Show(True)
 
@@ -2195,6 +2211,50 @@ class TestFrame(wx.Frame):
 
     def OnMouseLeftDown(self,event):
         s= "Left Mouse Down at Point: (%.4f, %.4f)" % self.client._getXY(event)
+        if DEBUG:
+            logicalFunctions = [
+                wx.AND,
+                wx.AND_INVERT,
+                wx.AND_REVERSE,
+                wx.CLEAR,
+                wx.COPY,
+                wx.EQUIV,
+                wx.INVERT,
+                wx.NAND,
+                wx.NOR,
+                wx.NO_OP,
+                wx.OR,
+                wx.OR_INVERT,
+                wx.OR_REVERSE,
+                wx.SET,
+                wx.SRC_INVERT,
+                wx.XOR
+            ]
+            logicalFunctionNames = [
+                "wx.AND",
+                "wx.AND_INVERT",
+                "wx.AND_REVERSE",
+                "wx.CLEAR",
+                "wx.COPY",
+                "wx.EQUIV",
+                "wx.INVERT",
+                "wx.NAND",
+                "wx.NOR",
+                "wx.NO_OP",
+                "wx.OR",
+                "wx.OR_INVERT",
+                "wx.OR_REVERSE",
+                "wx.SET",
+                "wx.SRC_INVERT",
+                "wx.XOR"
+            ]
+            self._logicalFunctionIndex += 1
+            i = self._logicalFunctionIndex
+            if i > len(logicalFunctions) - 1:
+                i = self._logicalFunctionIndex = 0
+            self.client._logicalFunction = logicalFunctions[i]
+            self.client.Redraw()
+            s+= " Point Label Logical Function: " + logicalFunctionNames[i]
         self.SetStatusText(s)
         event.Skip()            #allows plotCanvas OnMouseLeftDown to be called
 
