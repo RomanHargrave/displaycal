@@ -812,6 +812,7 @@ class PlotCanvas(wx.Panel):
         return self._useScientificNotation
 
     def SetEnableAntiAliasing(self, enableAntiAliasing):
+        """Set True to enable anti-aliasing."""
         self._antiAliasingEnabled = enableAntiAliasing
         self.Redraw()
 
@@ -819,6 +820,7 @@ class PlotCanvas(wx.Panel):
         return self._antiAliasingEnabled
 
     def SetEnableHiRes(self, enableHiRes):
+        """Set True to enable high-resolution mode when using anti-aliasing."""
         self._hiResEnabled = enableHiRes
         self.Redraw()
 
@@ -857,7 +859,7 @@ class PlotCanvas(wx.Panel):
         return self._zoomEnabled
 
     def SetEnableGrid(self, value):
-        """Set True to enable grid."""
+        """Set True, 'Horizontal' or 'Vertical' to enable grid."""
         if value not in [True,False,'Horizontal','Vertical']:
             raise TypeError, "Value should be True, False, Horizontal or Vertical"
         self._gridEnabled= value
@@ -868,7 +870,7 @@ class PlotCanvas(wx.Panel):
         return self._gridEnabled
 
     def SetEnableCenterLines(self, value):
-        """Set True to enable center line(s)."""
+        """Set True, 'Horizontal' or 'Vertical' to enable center line(s)."""
         if value not in [True,False,'Horizontal','Vertical']:
             raise TypeError, "Value should be True, False, Horizontal or Vertical"
         self._centerLinesEnabled= value
@@ -879,7 +881,8 @@ class PlotCanvas(wx.Panel):
         return self._centerLinesEnabled
 
     def SetEnableDiagonals(self, value):
-        """Set True to enable center line(s)."""
+        """Set True, 'Bottomleft-Topright' or 'Bottomright-Topleft' to enable 
+        center line(s)."""
         if value not in [True,False,'Bottomleft-Topright','Bottomright-Topleft']:
             raise TypeError, "Value should be True, False, Bottomleft-Topright or Bottomright-Topleft"
         self._diagonalsEnabled= value
@@ -1511,6 +1514,7 @@ class PlotCanvas(wx.Panel):
         except Exception, exception:
             if DEBUG:
                 print exception, self._logicalFunction
+            pass
         if sys.platform == "darwin":
             self._Buffer = tmp_Buffer
         
@@ -1656,10 +1660,9 @@ class PlotCanvas(wx.Panel):
         penWidth= self.printerScale * SCALE[0]        # increases thickness for printing only
         dc.SetPen(wx.Pen(self._gridColour, penWidth))
         
-        x,y,width,height= self._point2ClientCoord(p1,p2)
-        
         # set length of tick marks--long ones make grid
         if self._gridEnabled:
+            x,y,width,height= self._point2ClientCoord(p1,p2)
             if self._gridEnabled == 'Horizontal':
                 yTickLength= (width/2.0 +1) * SCALE[1]
                 xTickLength= 3 * self.printerScale * SCALE[0]
@@ -1705,9 +1708,15 @@ class PlotCanvas(wx.Panel):
 
         if self._centerLinesEnabled:
             if self._centerLinesEnabled in ('Horizontal', True):
-                dc.DrawLine(scale[0] * p1[1] + shift[0], shift[1] - ((height/2.0 +1)) * SCALE[1], scale[0] * p2[1] + shift[0], shift[1] - ((height/2.0 +1)) * SCALE[1])
+                y1 = scale[1]*p1[1]+shift[1]
+                y2 = scale[1]*p2[1]+shift[1]
+                y = (y1 - y2) / 2.0 + y2
+                dc.DrawLine(scale[0] * p1[0] + shift[0], y, scale[0] * p2[0] + shift[0], y)
             if self._centerLinesEnabled in ('Vertical', True):
-                dc.DrawLine(((width/2.0 +1)) * SCALE[0] + shift[0], scale[1] * p1[0] + shift[1], ((width/2.0 +1)) * SCALE[0] + shift[0], scale[1] * p2[0] + shift[1])
+                x1 = scale[0]*p1[0]+shift[0]
+                x2 = scale[0]*p2[0]+shift[0]
+                x = (x1 - x2) / 2.0 + x2
+                dc.DrawLine(x, scale[1] * p1[1] + shift[1], x, scale[1] * p2[1] + shift[1])
 
         if self._diagonalsEnabled:
             if self._diagonalsEnabled in ('Bottomleft-Topright', True):
@@ -2149,10 +2158,25 @@ class TestFrame(wx.Frame):
         self.Bind(wx.EVT_MENU,self.OnEnableLegend, id=220)
         menu.Append(222, 'Enable &Point Label', 'Show Closest Point', kind=wx.ITEM_CHECK)
         self.Bind(wx.EVT_MENU,self.OnEnablePointLabel, id=222)
-        menu.Append(223, 'Enable Anti-Aliasing', 'Smooth output', kind=wx.ITEM_CHECK)
+        
+        menu.Append(223, 'Enable &Anti-Aliasing', 'Smooth output', kind=wx.ITEM_CHECK)
         self.Bind(wx.EVT_MENU,self.OnEnableAntiAliasing, id=223)
-        menu.Append(224, 'Enable High-Resolution AA', 'Draw in higher resolution', kind=wx.ITEM_CHECK)
+        menu.Append(224, 'Enable &High-Resolution AA', 'Draw in higher resolution', kind=wx.ITEM_CHECK)
         self.Bind(wx.EVT_MENU,self.OnEnableHiRes, id=224)
+        
+        menu.Append(226, 'Enable Center Lines', 'Draw center lines', kind=wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU,self.OnEnableCenterLines, id=226)
+        menu.Append(227, 'Enable Diagonal Lines', 'Draw diagonal lines', kind=wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU,self.OnEnableDiagonals, id=227)
+        
+        menu.Append(231, 'Set Gray Background', 'Change background colour to gray')
+        self.Bind(wx.EVT_MENU,self.OnBackgroundGray, id=231)
+        menu.Append(232, 'Set &White Background', 'Change background colour to white')
+        self.Bind(wx.EVT_MENU,self.OnBackgroundWhite, id=232)
+        menu.Append(233, 'Set Red Label Text', 'Change label text colour to red')
+        self.Bind(wx.EVT_MENU,self.OnForegroundRed, id=233)
+        menu.Append(234, 'Set &Black Label Text', 'Change label text colour to black')
+        self.Bind(wx.EVT_MENU,self.OnForegroundBlack, id=234)
        
         menu.Append(225, 'Scroll Up 1', 'Move View Up 1 Unit')
         self.Bind(wx.EVT_MENU,self.OnScrUp, id=225) 
@@ -2180,7 +2204,7 @@ class TestFrame(wx.Frame):
         self.client.canvas.Bind(wx.EVT_LEFT_DOWN, self.OnMouseLeftDown)
         # Show closest point when enabled
         self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
-        
+
         self._logicalFunctionIndex = 0
 
         self.Show(True)
@@ -2372,6 +2396,28 @@ class TestFrame(wx.Frame):
 
     def OnEnableHiRes(self, event):
         self.client.SetEnableHiRes(event.IsChecked())
+
+    def OnEnableCenterLines(self, event):
+        self.client.SetEnableCenterLines(event.IsChecked())
+
+    def OnEnableDiagonals(self, event):
+        self.client.SetEnableDiagonals(event.IsChecked())
+    
+    def OnBackgroundGray(self, event):
+        self.client.SetBackgroundColour("#CCCCCC")
+        self.client.Redraw()
+    
+    def OnBackgroundWhite(self, event):
+        self.client.SetBackgroundColour("white")
+        self.client.Redraw()
+    
+    def OnForegroundRed(self, event):
+        self.client.SetForegroundColour("red")
+        self.client.Redraw()
+
+    def OnForegroundBlack(self, event):
+        self.client.SetForegroundColour("black")
+        self.client.Redraw()
 
     def OnScrUp(self, event):
         self.client.ScrollUp(1)
