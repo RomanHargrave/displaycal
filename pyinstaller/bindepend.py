@@ -90,8 +90,9 @@ excludes = {
     'SHLWAPI.DLL':1,
     'URLMON.DLL':1,
     # regex excludes
-    r'^/usr/lib':1,
-    r'^/lib':1,
+    #r'^/usr/lib':1,
+    #r'^/lib':1,
+    r'^.*/lib(?!python|wx)[^/]*\.so(?:\.[^/]+)?$':1, # exclude any .so files that have names starting with 'lib', except libpython and libwx
     # don't include in the bundle the libc and the tls stuff
     r'^/usr/lib/tls':1,
     r'^/lib/libc\.so\..*':1,
