@@ -4,6 +4,7 @@
 from decimal import Decimal
 from hashlib import md5
 from os import getenv, path
+import locale
 import struct
 import sys
 from time import localtime, mktime, strftime
@@ -14,6 +15,12 @@ else:
 	import subprocess as sp
 
 from safe_print import safe_print
+
+if sys.platform == "darwin":
+    enc = "UTF-8"
+else:
+    enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
+fs_enc = sys.getfilesystemencoding() or enc
 
 ##################
 #
@@ -401,7 +408,7 @@ class TextDescriptionType(Dict): # ICC v2
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + ASCIIDescriptionLength].strip("\0\n\r ")
-			if ASCIIDescription: self.ASCII = unicode(ASCIIDescription, sys.getfilesystemencoding(), errors="replace") # even ASCII description may contain non-ASCII chars, so assume system encoding and convert to unicode, replacing unknown chars
+			if ASCIIDescription: self.ASCII = unicode(ASCIIDescription, fs_enc, errors="replace") # even ASCII description may contain non-ASCII chars, so assume system encoding and convert to unicode, replacing unknown chars
 		unicodeOffset = 12 + ASCIIDescriptionLength
 		unicodeLanguageCode = uInt32Number(tagData[unicodeOffset:unicodeOffset + 4])
 		unicodeDescriptionLength = uInt32Number(tagData[unicodeOffset + 4:unicodeOffset + 8])
