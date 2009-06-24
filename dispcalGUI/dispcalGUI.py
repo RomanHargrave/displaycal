@@ -4493,6 +4493,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					try:
 						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection())
 					except Exception, exception:
+						safe_print("ICCP.get_display_profile(%s):" % self.display_ctrl.GetSelection(), exception)
 						profile = None
 				elif cal.lower().endswith(".icc") or cal.lower().endswith(".icm"):
 					profile = ICCP.ICCProfile(cal)
@@ -4689,6 +4690,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					try:
 						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection())
 					except Exception, exception:
+						safe_print("ICCP.get_display_profile(%s):" % self.display_ctrl.GetSelection(), exception)
 						profile = None
 					self.show_lut_handler(profile = profile)
 				return True
@@ -5279,7 +5281,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					try:
 						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection()) or False
 					except Exception, exception:
-						pass
+						safe_print("ICCP.get_display_profile(%s):" % self.display_ctrl.GetSelection(), exception)
 			if profile and (not self.lut_viewer.profile or not hasattr(self.lut_viewer.profile, "fileName") or not hasattr(profile, "fileName") or self.lut_viewer.profile.fileName != profile.fileName):
 				self.lut_viewer.LoadProfile(profile)
 			show = bool((hasattr(self, "show_lut") and self.show_lut and self.show_lut.GetValue()) or ((not hasattr(self, "show_lut") or not self.show_lut) and (self.lut_viewer.IsShownOnScreen() or profile is not None)))

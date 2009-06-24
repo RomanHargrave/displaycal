@@ -1968,7 +1968,7 @@ class PlotPrintout(wx.Printout):
 
 
 #----------------------------------------------------------------------
-from wx.lib.embeddedimage import PyEmbeddedImage
+from embeddedimage import PyEmbeddedImage
 
 MagPlus = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAOFJ"
