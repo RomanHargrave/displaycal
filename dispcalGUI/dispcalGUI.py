@@ -39,7 +39,7 @@ sys.excepthook = _early_excepthook
 pyver = map(int, sys.version.split()[0].split(".")[0:2])
 if pyver < [2, 5] or pyver >= [3]:
 	raise RuntimeError("Need Python version >= 2.5 < 3.0, got %s" % 
-	   ".".join(pyver))
+	   sys.version.split()[0])
 
 # standard modules
 
@@ -8564,9 +8564,19 @@ class DisplayCalibratorGUI(wx.Frame):
 		for langs, lauthor in lauthors:
 			items += [wx.StaticText(self.aboutdialog, -1, "%s - %s" % (", ".join(langs), lauthor))]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.StaticText(self.aboutdialog, -1, "Python " + ".".join(map(str, pyver)))]
-		items += [wx.StaticText(self.aboutdialog, -1, "wxPython " + wx.__version__)]
+		match = re.match("([^(]+)\s*(\([^(]+\))?\s*(\[[^[]+\])?", sys.version)
+		if match:
+			pyver_long = match.groups()
+		else:
+			pyver_long = [sys.version]
+		items += [wx.StaticText(self.aboutdialog, -1, "Python " + pyver_long[0].strip())]
+		if len(pyver_long) > 1:
+			for part in pyver_long[1:]:
+				if part:
+					items += [wx.StaticText(self.aboutdialog, -1, part)]
 		items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="python.org", URL="http://www.python.org")]
+		items += [wx.StaticText(self.aboutdialog, -1, "")]
+		items += [wx.StaticText(self.aboutdialog, -1, "wxPython " + wx.version())]
 		items += [wx.lib.hyperlink.HyperLinkCtrl(self.aboutdialog, -1, label="wxPython.org", URL="http://www.wxpython.org")]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		items += [wx.StaticText(self.aboutdialog, -1, self.getlstr("license_info"))]
