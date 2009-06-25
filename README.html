@@ -676,7 +676,7 @@
 					<dt>bdist_pyi (Linux or Windows)</dt>
 						<dd>Uses pyinstaller to create a standalone executable. It has the ability to generate single-file executables (by specifying the -F option) which do not need to be shipped with external files. The drawback is a longer startup time, because the files are extracted to a temporary directory at runtime. Normally, you want to use bdist_standalone instead.</dd>
 					<dt>bdist_standalone</dt>
-						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, py2app is not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under /Library/Frameworks/Python.framework/Versions/Current/lib). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2exe to acces all its files.</dd>
+						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, py2app is not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2exe to acces all its files.</dd>
 					<dt>inno (Windows only)</dt>
 						<dd>Creates an Inno Setup install script for an executable created with the py2exe or bdist_standalone commands.</dd>
 					<dt>purge</dt>
@@ -948,18 +948,18 @@
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2009-06-25 20:23 (UTC) 0.2.6b2 -->
+			<!-- 2009-06-25 21:00 (UTC) 0.2.6b2 -->
 			<dl>
 				<dt>2009-06-25 0.2.6b2</dt>
 					<dd>
 						<ul>
 							<li>fix: Only look at &lt;major&gt;.&lt;minor&gt; during the Python version check (fixes a critical error on Ubuntu 9.10 Beta, where the Python revision number has an unexpected value).</li>
 							<li>fix: The LUT Viewer is now also able to plot curves from *.cal files, and resets to linear if a display without associated profile is selected.</li>
-							<li>fix (Linux): If launched on an X display which is not the main display, the measurement window's location no longer determines the display to use for measurements. This allows non-Xinerama multiscreen configurations to work with dispcalGUI. Note: You need to launch dispcalGUI on the display you want to measure on, e.g. `DISPLAY=:0.1 dispcalGUI`.</li>
+							<li>fix (Linux): If launched on an X display which is not the first display, the measurement window's location no longer determines the display to use for measurements. This allows non-Xinerama multiscreen configurations to work with dispcalGUI. Note: You need to launch dispcalGUI on the display you want to measure on, e.g. `DISPLAY=:0.1 dispcalGUI`.</li>
 							<li>fix (Linux): Get the profile from the correct display when loading a display's LUT curves into the LUT viewer.</li>
 							<li>fix (Linux): Suppress CUPS warnings encountered on some systems when using the LUT Viewer.</li>
-							<li>fix (Mac OS X): Do not offer 'Network' scope during profile installation if /Network/Library/ColorSync/Profiles does not exist.</li>
-							<li>fix (Windows, cosmetic): Made sure the message "Debug: src/helpers.cpp(140): 'CreateActCtx' failed with error 0x0000007b (the filename, directory name, or volume label syntax is incorrect.)" is not shown when launching the standalone Windows executable, by changing the way *.pyd files are bundled (they are now copied to the executable's directory and no longer part to the executable itself).</li>
+							<li>fix (Mac OS X): Do not offer 'Network' scope during profile installation if <code>/Network/Library/ColorSync/Profiles</code> does not exist.</li>
+							<li>fix (Windows, cosmetic): Made sure the message "Debug: src/helpers.cpp(140): 'CreateActCtx' failed with error 0x0000007b (the filename, directory name, or volume label syntax is incorrect.)" is not shown when launching the standalone Windows executable, by changing the way *.pyd files are bundled (they are now copied to the executable's directory and are no longer part of the executable itself).</li>
 						</ul>
 					</dd>
 				
