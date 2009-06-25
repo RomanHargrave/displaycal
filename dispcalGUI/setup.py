@@ -155,6 +155,11 @@ def setup():
 				elif arg[0] == "--record":
 					recordfile_name = arg[1]
 
+	if do_install or do_py2app or do_py2exe:
+		import wxversion
+		wxversion.ensureMinimal("2.8")
+		import wx
+
 	if not recordfile_name and (do_full_install or do_uninstall):
 		recordfile_name = "INSTALLED_FILES"
 		# if not do_uninstall:
@@ -358,15 +363,8 @@ def setup():
 		}
 		attrs["include_package_data"] = sys.platform in ("darwin", "win32")
 		install_requires = [req.replace("(", "").replace(")", "") for req in requires]
-		try:
-			if not hasattr(sys, "frozen") or not sys.frozen:
-				import wxversion
-				wxversion.ensureMinimal("2.8")
-			import wx
-			if wx.VERSION >= (2, 8, 7):
-				install_requires.remove("wxPython >= 2.8.7")
-		except ImportError:
-			pass
+		if wx.VERSION >= (2, 8, 7):
+			install_requires.remove("wxPython >= 2.8.7")
 		attrs["install_requires"] = install_requires
 		attrs["zip_safe"] = False
 	else:
@@ -433,7 +431,7 @@ def setup():
 							"w9xpopen.exe"
 						],
 						"excludes": ["Tkconstants", "Tkinter", "tcl"], # numpy.lib.utils imports pydoc, which imports Tkinter, but numpy.lib.utils is not even used by dispcalGUI, so omit all Tk stuff
-						"bundle_files": 1,
+						"bundle_files": 3 if wx.VERSION >= (2, 8, 10, 1) else 1,
 						"compressed": 1,
 						"optimize": 2
 				}

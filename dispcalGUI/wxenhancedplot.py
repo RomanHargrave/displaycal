@@ -568,13 +568,13 @@ class PlotCanvas(wx.Panel):
         self.MagCursor = wx.CursorFromImage(MagPlus.GetImage())
             
         # Things for printing
-        self.print_data = wx.PrintData()
-        self.print_data.SetPaperId(wx.PAPER_LETTER)
-        self.print_data.SetOrientation(wx.LANDSCAPE)
-        self.pageSetupData= wx.PageSetupDialogData()
-        self.pageSetupData.SetMarginBottomRight((25,25))
-        self.pageSetupData.SetMarginTopLeft((25,25))
-        self.pageSetupData.SetPrintData(self.print_data)
+        #self.print_data = wx.PrintData()
+        #self.print_data.SetPaperId(wx.PAPER_LETTER)
+        #self.print_data.SetOrientation(wx.LANDSCAPE)
+        #self.pageSetupData= wx.PageSetupDialogData()
+        #self.pageSetupData.SetMarginBottomRight((25,25))
+        #self.pageSetupData.SetMarginTopLeft((25,25))
+        #self.pageSetupData.SetPrintData(self.print_data)
         self.printerScale = 1
         self.parent= parent
 
@@ -2110,14 +2110,14 @@ class TestFrame(wx.Frame):
         self.mainmenu = wx.MenuBar()
 
         menu = wx.Menu()
-        menu.Append(200, 'Page Setup...', 'Setup the printer page')
-        self.Bind(wx.EVT_MENU, self.OnFilePageSetup, id=200)
+        #menu.Append(200, 'Page Setup...', 'Setup the printer page')
+        #self.Bind(wx.EVT_MENU, self.OnFilePageSetup, id=200)
         
-        menu.Append(201, 'Print Preview...', 'Show the current plot on page')
-        self.Bind(wx.EVT_MENU, self.OnFilePrintPreview, id=201)
+        #menu.Append(201, 'Print Preview...', 'Show the current plot on page')
+        #self.Bind(wx.EVT_MENU, self.OnFilePrintPreview, id=201)
         
-        menu.Append(202, 'Print...', 'Print the current plot')
-        self.Bind(wx.EVT_MENU, self.OnFilePrint, id=202)
+        #menu.Append(202, 'Print...', 'Print the current plot')
+        #self.Bind(wx.EVT_MENU, self.OnFilePrint, id=202)
         
         menu.Append(203, 'Save Plot...', 'Save current plot')
         self.Bind(wx.EVT_MENU, self.OnSaveFile, id=203)

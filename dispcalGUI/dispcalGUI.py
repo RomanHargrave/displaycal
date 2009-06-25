@@ -36,7 +36,7 @@ def _early_excepthook(etype, value, tb):
 sys.excepthook = _early_excepthook
 
 # version check
-pyver = map(int, sys.version.split()[0].split("."))
+pyver = map(int, sys.version.split()[0].split(".")[0:2])
 if pyver < [2, 5] or pyver >= [3]:
 	raise RuntimeError("Need Python version >= 2.5 < 3.0, got %s" % 
 	   ".".join(pyver))
@@ -81,10 +81,6 @@ import wx
 import wx.grid
 import wx.lib.delayedresult as delayedresult
 import wx.lib.hyperlink
-try:
-	from wxLUTViewer import LUTFrame
-except ImportError:
-	LUTFrame = None
 
 # custom modules
 
@@ -103,6 +99,10 @@ import pyi_md5pickuphelper
 from safe_print import safe_print as _safe_print
 from trash import trash, TrashcanUnavailableError
 from wxFocusScrolledWindow import FocusScrolledWindow
+try:
+	from wxLUTViewer import LUTFrame
+except ImportError:
+	LUTFrame = None
 
 # helper functions
 
@@ -601,6 +601,42 @@ def can_update_cal(path):
 			   cal.queryv1("QUALITY")):
 				cals[path] = cal
 	return path in cals and cals[path].mtime == calstat.st_mtime
+
+def cal_to_fake_profile(cal):
+	if not isinstance(cal, CGATS.CGATS):
+		try:
+			cal = CGATS.CGATS(cal)
+		except (IOError, CGATS.CGATSInvalidError, 
+			CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+			safe_print("Warning - couldn't process CGATS file '%s': %s" % (cal, str(exception)))
+			return None
+	data_format = cal.queryv1("DATA_FORMAT")
+	if data_format:
+		required_fields = ("RGB_I", "RGB_R", "RGB_G", "RGB_B")
+		for field in required_fields:
+			if not field in data_format.values():
+				if debug: safe_print("Missing required field:", field)
+				return None
+		for field in data_format.values():
+			if not field in required_fields:
+				if debug: safe_print("Unknown field:", field)
+				return None
+	entries = cal.queryv(required_fields)
+	profile = ICCP.ICCProfile()
+	profile.fileName = cal.filename
+	profile._tags = ICCP.Dict()
+	profile._tags.desc = os.path.basename(cal.filename)
+	profile._tags.vcgt = ICCP.Dict({
+		"channels": 3,
+		"entryCount": len(entries),
+		"entrySize": 2,
+		"data": [[], [], []]
+	})
+	for n in entries:
+		for i in range(3):
+			profile._tags.vcgt.data[i].append(int(round(entries[n][i + 1] * 65535.0)))
+	return profile
 
 def listdir(path, rex = None):
 	files = os.listdir(path)
@@ -2147,11 +2183,12 @@ class DisplayCalibratorGUI(wx.Frame):
 			self.measureframe_place_n_zoom(*floatlist(self.getcfg("dimensions.measureframe").split(",")))
 		else:
 			self.setcfg("dimensions.measureframe", self.get_measureframe_dimensions())
-			display_no = wx.Display.GetFromWindow(self.measureframe)
-			if display_no < 0 or display_no > wx.Display.GetCount() - 1:
-				display_no = 0
-			self.display_ctrl.SetSelection(display_no)
-			self.display_ctrl_handler(CustomEvent(wx.EVT_COMBOBOX.typeId, self.display_ctrl))
+			if os.getenv("DISPLAY") in (None, ":0.0"):
+				display_no = wx.Display.GetFromWindow(self.measureframe)
+				if display_no < 0 or display_no > wx.Display.GetCount() - 1:
+					display_no = 0
+				self.display_ctrl.SetSelection(display_no)
+				self.display_ctrl_handler(CustomEvent(wx.EVT_COMBOBOX.typeId, self.display_ctrl))
 		wx.CallAfter(self.measureframe.Show, show)
 
 	def measureframe_hide(self):
@@ -4473,6 +4510,8 @@ class DisplayCalibratorGUI(wx.Frame):
 					InfoDialog(self, msg = self.getlstr("profile.no_vcgt"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 			else:
 				self.setcfg("last_cal_path", path)
+				if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+					self.show_lut_handler(profile = cal_to_fake_profile(path))
 				self.install_profile(capture_output = True, cal = path, install = False, skip_cmds = True)
 
 	def preview_handler(self, event = None, preview = None):
@@ -4498,7 +4537,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				elif cal.lower().endswith(".icc") or cal.lower().endswith(".icm"):
 					profile = ICCP.ICCProfile(cal)
 				else:
-					profile = None
+					profile = cal_to_fake_profile(cal)
 				self.show_lut_handler(profile = profile)
 		self.install_profile(capture_output = True, cal = cal, install = False, skip_cmds = True, silent = True)
 
@@ -4663,8 +4702,7 @@ class DisplayCalibratorGUI(wx.Frame):
 				if self.install_profile(capture_output = True, cal = cal, install = False, skip_cmds = True, silent = silent):
 					if verbose >= 1 and silent: safe_print(self.getlstr("success"))
 					if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
-						if cal.lower().endswith(".icc") or cal.lower().endswith(".icm"):
-							self.show_lut_handler(profile = ICCP.ICCProfile(cal))
+						self.show_lut_handler(profile = ICCP.ICCProfile(cal) if cal.lower().endswith(".icc") or cal.lower().endswith(".icm") else cal_to_fake_profile(cal))
 					return True
 				if verbose >= 1 and silent: safe_print(self.getlstr("failure"))
 		return False
@@ -5227,7 +5265,7 @@ class DisplayCalibratorGUI(wx.Frame):
 					self.install_profile_systemwide.SetValue(self.getcfg("profile.install_scope") == "l")
 					dlg.Bind(wx.EVT_RADIOBUTTON, self.install_profile_scope_handler, id = self.install_profile_systemwide.GetId())
 					dlg.sizer3.Add(self.install_profile_systemwide, flag = wx.TOP | wx.ALIGN_LEFT, border = 4)
-					if sys.platform == "darwin":
+					if sys.platform == "darwin" and os.path.isdir("/Network/Library/ColorSync/Profiles"):
 						self.install_profile_network = wx.RadioButton(dlg, -1, self.getlstr("profile.install_network"))
 						self.install_profile_network.SetValue(self.getcfg("profile.install_scope") == "n")
 						dlg.Bind(wx.EVT_RADIOBUTTON, self.install_profile_scope_handler, id = self.install_profile_network.GetId())
@@ -5277,13 +5315,18 @@ class DisplayCalibratorGUI(wx.Frame):
 						except (IOError, ICCP.ICCProfileInvalidError), exception:
 							InfoDialog(self, msg = self.getlstr("profile.invalid"), ok = self.getlstr("ok"), bitmap = self.bitmaps["theme/icons/32x32/dialog-error"])
 							return
+					else:
+						profile = cal_to_fake_profile(path)
 				else:
 					try:
 						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection()) or False
 					except Exception, exception:
 						safe_print("ICCP.get_display_profile(%s):" % self.display_ctrl.GetSelection(), exception)
-			if profile and (not self.lut_viewer.profile or not hasattr(self.lut_viewer.profile, "fileName") or not hasattr(profile, "fileName") or self.lut_viewer.profile.fileName != profile.fileName):
-				self.lut_viewer.LoadProfile(profile)
+			if profile:
+				if not self.lut_viewer.profile or not hasattr(self.lut_viewer.profile, "fileName") or not hasattr(profile, "fileName") or self.lut_viewer.profile.fileName != profile.fileName:
+					self.lut_viewer.LoadProfile(profile)
+			else:
+				self.lut_viewer.profile = None
 			show = bool((hasattr(self, "show_lut") and self.show_lut and self.show_lut.GetValue()) or ((not hasattr(self, "show_lut") or not self.show_lut) and (self.lut_viewer.IsShownOnScreen() or profile is not None)))
 			if show:
 				self.lut_viewer.DrawLUT()
@@ -5313,7 +5356,7 @@ class DisplayCalibratorGUI(wx.Frame):
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():
 			self.setcfg("profile.install_scope", "l")
-		elif sys.platform == "darwin" and self.install_profile_network.GetValue():
+		elif sys.platform == "darwin" and os.path.isdir("/Network/Library/ColorSync/Profiles") and self.install_profile_network.GetValue():
 			self.setcfg("profile.install_scope", "n")
 		elif self.install_profile_user.GetValue():
 			self.setcfg("profile.install_scope", "u")
@@ -5456,11 +5499,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		dlg.Destroy()
 
 	def get_display_number(self):
-		if self.IsShownOnScreen() or not hasattr(self, "pending_function"):
-			try:
-				display_no = self.displays.index(self.display_ctrl.GetStringSelection())
-			except ValueError:
-				display_no = 0
+		if self.IsShownOnScreen() or not hasattr(self, "pending_function") or os.getenv("DISPLAY") not in (None, ":0.0"):
+			display_no = self.display_ctrl.GetSelection()
 		else:
 			display_no = wx.Display.GetFromWindow(self.measureframe)
 		if display_no < 0: # window outside visible area
