@@ -155,7 +155,7 @@ def setup():
 				elif arg[0] == "--record":
 					recordfile_name = arg[1]
 
-	if do_install or do_py2app or do_py2exe:
+	if do_install or do_py2app or do_py2exe or setuptools:
 		import wxversion
 		wxversion.ensureMinimal("2.8")
 		import wx
