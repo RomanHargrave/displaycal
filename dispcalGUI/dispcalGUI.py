@@ -4697,40 +4697,40 @@ class DisplayCalibratorGUI(wx.Frame):
 		if not cal:
 			cal = self.getcfg("calibration.file")
 		if cal:
+			if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+				self.show_lut_handler(profile = ICCP.ICCProfile(cal) if cal.lower().endswith(".icc") or cal.lower().endswith(".icm") else cal_to_fake_profile(cal))
 			if self.check_set_argyll_bin():
 				if verbose >= 1 and silent: safe_print(self.getlstr("calibration.loading"))
 				if self.install_profile(capture_output = True, cal = cal, install = False, skip_cmds = True, silent = silent):
 					if verbose >= 1 and silent: safe_print(self.getlstr("success"))
-					if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
-						self.show_lut_handler(profile = ICCP.ICCProfile(cal) if cal.lower().endswith(".icc") or cal.lower().endswith(".icm") else cal_to_fake_profile(cal))
 					return True
 				if verbose >= 1 and silent: safe_print(self.getlstr("failure"))
 		return False
 
 	def reset_cal(self, event = None):
+		if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+			self.lut_viewer.profile = None
+			self.lut_viewer.DrawLUT()
 		if self.check_set_argyll_bin():
 			if verbose >= 1 and event is None: safe_print(self.getlstr("calibration.resetting"))
 			if self.install_profile(capture_output = True, cal = False, install = False, skip_cmds = True, silent = event is None or (hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen())):
 				if verbose >= 1 and event is None: safe_print(self.getlstr("success"))
-				if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
-					self.lut_viewer.profile = None
-					self.lut_viewer.DrawLUT()
 				return True
 			if verbose >= 1 and event is None: safe_print(self.getlstr("failure"))
 		return False
 
 	def load_display_profile_cal(self, event = None):
+		if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
+			try:
+				profile = ICCP.get_display_profile(self.display_ctrl.GetSelection())
+			except Exception, exception:
+				safe_print("ICCP.get_display_profile(%s):" % self.display_ctrl.GetSelection(), exception)
+				profile = None
+			self.show_lut_handler(profile = profile)
 		if self.check_set_argyll_bin():
 			if verbose >= 1 and event is None: safe_print(self.getlstr("calibration.loading_from_display_profile"))
 			if self.install_profile(capture_output = True, cal = True, install = False, skip_cmds = True, silent = event is None or (hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen())):
 				if verbose >= 1 and event is None: safe_print(self.getlstr("success"))
-				if hasattr(self, "lut_viewer") and self.lut_viewer and self.lut_viewer.IsShownOnScreen():
-					try:
-						profile = ICCP.get_display_profile(self.display_ctrl.GetSelection())
-					except Exception, exception:
-						safe_print("ICCP.get_display_profile(%s):" % self.display_ctrl.GetSelection(), exception)
-						profile = None
-					self.show_lut_handler(profile = profile)
 				return True
 			if verbose >= 1 and event is None: safe_print(self.getlstr("failure"))
 		return False
