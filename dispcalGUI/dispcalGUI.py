@@ -4783,7 +4783,7 @@ class DisplayCalibratorGUI(wx.Frame):
 			item = cmdline[i]
 			if i > 0 and (item.find(os.path.sep) > -1 and os.path.dirname(item) == working_dir):
 				# strip the path from all items in the working dir
-				if sys.platform == "win32" and re.search("[^\x00-\x7f]", item):
+				if sys.platform == "win32" and re.search("[^\x00-\x7f]", item) and os.path.exists(item):
 					item = win32api.GetShortPathName(item) # avoid problems with encoding
 				cmdline[i] = os.path.basename(item)
 		sudo = None

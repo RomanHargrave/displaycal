@@ -316,11 +316,11 @@
 				&#160;</dt>
 				<dd id="version">0.2.6b2 (Linux)<br />
 				0.2.6b2 (Mac OS X)<br />
-				0.2.6b2 (Windows)<br />
-				0.2.6b2 (Source)<br />
+				0.2.6b3 (Windows)<br />
+				0.2.6b3 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2009-06-25</dd>
+				<dd id="date">2009-06-30</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -438,12 +438,12 @@
 			<p>
 				Linux (x86) <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b2-linux-i686.tar.gz">Tarball</a><br />
 				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b2.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b2-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b2-win32.zip">ZIP</a>
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b3-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b3-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b2.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.2.6b3.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the SVN repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
@@ -948,22 +948,30 @@
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2009-06-25 21:00 (UTC) 0.2.6b2 -->
+			<!-- 2009-06-30 08:17 (UTC) 0.2.6b3 -->
 			<dl>
-				<dt>2009-06-25 0.2.6b2</dt>
+				<dt>2009-06-30 0.2.6b3</dt>
+					<dd>
+						<ul>
+							<li>fix (Windows): Fixed a critical bug in the Windows codepath which tried to access non-existent paths when certain settings were used.</li>
+						</ul>
+					</dd>
+					
+				<dt>2009-06-26 0.2.6b2</dt>
 					<dd>
 						<ul>
 							<li>fix: Only look at &lt;major&gt;.&lt;minor&gt; during the Python version check (fixes a critical error on Ubuntu 9.10 Beta, where the Python revision number has an unexpected value).</li>
-							<li>fix: The LUT Viewer is now also able to plot curves from *.cal files, and resets to linear if a display without associated profile is selected.</li>
-							<li>fix (Linux): If launched on an X display which is not the first display, the measurement window's location no longer determines the display to use for measurements. This allows non-Xinerama multiscreen configurations to work with dispcalGUI. Note: You need to launch dispcalGUI on the display you want to measure on, e.g. `DISPLAY=:0.1 dispcalGUI`.</li>
-							<li>fix (Linux): Get the profile from the correct display when loading a display's LUT curves into the LUT viewer.</li>
-							<li>fix (Linux): Suppress CUPS warnings encountered on some systems when using the LUT Viewer.</li>
+							<li>fix: The LUT Viewer is now also able to plot curves from *.cal files.</li>
+							<li>fix (Linux): If launched on an X display which is not the first display, the measurement window's location no longer determines the display which is used for measurements. This allows non-Xinerama multiscreen configurations to work with dispcalGUI. Note: You need to launch dispcalGUI on the display you want to measure, e.g. <code>`DISPLAY=:0.1 dispcalGUI`</code>.</li>
+							<li>fix (Linux): Get the profile from the correct display when loading a display's LUT curves into the LUT Viewer.</li>
+							<li>fix (Linux, cosmetic): Suppress CUPS warnings encountered on some systems when using the LUT Viewer.</li>
 							<li>fix (Mac OS X): Do not offer 'Network' scope during profile installation if <code>/Network/Library/ColorSync/Profiles</code> does not exist.</li>
 							<li>fix (Windows, cosmetic): Made sure the message "Debug: src/helpers.cpp(140): 'CreateActCtx' failed with error 0x0000007b (the filename, directory name, or volume label syntax is incorrect.)" is not shown when launching the standalone Windows executable, by changing the way *.pyd files are bundled (they are now copied to the executable's directory and are no longer part of the executable itself).</li>
+							<li>chg: The LUT Viewer resets to linear if a display without associated profile is selected.</li>
 						</ul>
 					</dd>
 				
-				<dt>2009-06-22</dt>
+				<dt>2009-06-22 0.2.6b</dt>
 					<dd>
 						<ul>
 							<li>fix: calibration preview checkbox in the “install profile” dialog should now correctly toggle between previous and new calibration.</li>

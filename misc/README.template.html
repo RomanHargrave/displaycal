@@ -953,17 +953,25 @@
 				<dt>${DATE} ${VERSION}</dt>
 					<dd>
 						<ul>
+							<li>fix (Windows): Fixed a critical bug in the Windows codepath which tried to access non-existent paths when certain settings were used.</li>
+						</ul>
+					</dd>
+					
+				<dt>2009-06-26 0.2.6b2</dt>
+					<dd>
+						<ul>
 							<li>fix: Only look at &lt;major&gt;.&lt;minor&gt; during the Python version check (fixes a critical error on Ubuntu 9.10 Beta, where the Python revision number has an unexpected value).</li>
-							<li>fix: The LUT Viewer is now also able to plot curves from *.cal files, and resets to linear if a display without associated profile is selected.</li>
-							<li>fix (Linux): If launched on an X display which is not the first display, the measurement window's location no longer determines the display to use for measurements. This allows non-Xinerama multiscreen configurations to work with dispcalGUI. Note: You need to launch dispcalGUI on the display you want to measure on, e.g. `DISPLAY=:0.1 dispcalGUI`.</li>
-							<li>fix (Linux): Get the profile from the correct display when loading a display's LUT curves into the LUT viewer.</li>
-							<li>fix (Linux): Suppress CUPS warnings encountered on some systems when using the LUT Viewer.</li>
+							<li>fix: The LUT Viewer is now also able to plot curves from *.cal files.</li>
+							<li>fix (Linux): If launched on an X display which is not the first display, the measurement window's location no longer determines the display which is used for measurements. This allows non-Xinerama multiscreen configurations to work with dispcalGUI. Note: You need to launch dispcalGUI on the display you want to measure, e.g. <code>`DISPLAY=:0.1 dispcalGUI`</code>.</li>
+							<li>fix (Linux): Get the profile from the correct display when loading a display's LUT curves into the LUT Viewer.</li>
+							<li>fix (Linux, cosmetic): Suppress CUPS warnings encountered on some systems when using the LUT Viewer.</li>
 							<li>fix (Mac OS X): Do not offer 'Network' scope during profile installation if <code>/Network/Library/ColorSync/Profiles</code> does not exist.</li>
 							<li>fix (Windows, cosmetic): Made sure the message "Debug: src/helpers.cpp(140): 'CreateActCtx' failed with error 0x0000007b (the filename, directory name, or volume label syntax is incorrect.)" is not shown when launching the standalone Windows executable, by changing the way *.pyd files are bundled (they are now copied to the executable's directory and are no longer part of the executable itself).</li>
+							<li>chg: The LUT Viewer resets to linear if a display without associated profile is selected.</li>
 						</ul>
 					</dd>
 				
-				<dt>2009-06-22</dt>
+				<dt>2009-06-22 0.2.6b</dt>
 					<dd>
 						<ul>
 							<li>fix: calibration preview checkbox in the “install profile” dialog should now correctly toggle between previous and new calibration.</li>
