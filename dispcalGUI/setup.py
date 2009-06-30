@@ -651,23 +651,24 @@ def setup():
 		for pkg in attrs.get("packages", []):
 			pkgdir = os.path.sep.join(attrs.get("package_dir", {}).get(pkg, pkg).split("/"))
 			manifest_in += ["include " + os.path.join(pkgdir, "*.py")]
+			manifest_in += ["include " + os.path.join(pkgdir, "*.so.tar")]
 			for obj in attrs.get("package_data", {}).get(pkg, []):
 				manifest_in += ["include " + os.path.sep.join([pkgdir] + obj.split("/"))]
 		for pymod in attrs.get("py_modules", []):
 			manifest_in += ["include " + os.path.join(*pymod.split("."))]
 		manifest_in += ["include " + os.path.join("dispcalGUI", "theme", "theme-info.txt")]
 		manifest_in += ["recursive-include %s %s %s" % (os.path.join("dispcalGUI", "theme", "icons"), "*.icns", "*.ico")]
-		manifest_in += ["recursive-include %s %s" % ("autopackage", "*.apspec")]
+		manifest_in += ["recursive-include %s %s" % ("autopackage", "*")]
 		manifest_in += ["recursive-include %s %s" % ("misc", "*")]
-		manifest_in += ["recursive-exclude %s %s" % ("misc", "warn%s-pyi-*.txt" % name)]
+		manifest_in += ["exclude " + os.path.join("misc", "warn%s-pyi-*.txt" % name)]
 		if skip_instrument_conf_files:
 			manifest_in += [
 				"exclude misc/Argyll",
-				"recursive-exclude misc *.fdi",
-				"recursive-exclude misc *.permissions",
-				"recursive-exclude misc *.policy",
-				"recursive-exclude misc *.rules",
-				"recursive-exclude misc *.usermap",
+				"exclude misc/*.fdi",
+				"exclude misc/*.permissions",
+				"exclude misc/*.policy",
+				"exclude misc/*.rules",
+				"exclude misc/*.usermap",
 			]
 		manifest_in += ["recursive-include %s %s" % ("pyinstaller", " ".join([
 			"*.c",
@@ -705,13 +706,19 @@ def setup():
 			"Sconstruct",
 			"rthooks.dat",
 		]]
-		manifest_in += ["recursive-include %s %s" % ("screenshots", "*.png")]
-		manifest_in += ["recursive-include %s %s" % ("scripts", "*")]
+		manifest_in += ["exclude " + os.path.join("pyinstaller", obj) for obj in [
+			os.path.join("support", "useTK.py"),
+			os.path.join("support", "useUnicode.py")
+		]]
+		manifest_in += ["include " + os.path.join("screenshots", "*.png")]
+		manifest_in += ["include " + os.path.join("scripts", "*")]
 		manifest_in += ["recursive-include %s %s" % ("theme", "*")]
 		manifest_in += ["recursive-include %s %s" % ("util", "*.cmd *.py *.sh")]
 		if sys.platform == "win32" and not setuptools:
 			manifest_in += ["global-exclude .svn/*"] # (only) needed under Windows
 		manifest_in += ["global-exclude *~"]
+		manifest_in += ["global-exclude *.backup"]
+		manifest_in += ["global-exclude *.bak"]
 		manifest = open("MANIFEST.in", "w")
 		manifest.write("\n".join(manifest_in))
 		manifest.close()
