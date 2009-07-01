@@ -252,7 +252,7 @@ class LUTFrame(wx.Frame):
 	
 	def DrawLUT(self, event=None):
 		self.SetStatusText('')
-		self.client.DrawLUT(self.profile.tags.vcgt if self.profile else None, 
+		self.client.DrawLUT(self.profile.tags.vcgt if self.profile and "vcgt" in self.profile.tags else None, 
 							title=self.profile.getDescription() if self.profile else None, 
 							xLabel=self.xLabel,
 							yLabel=self.yLabel,
