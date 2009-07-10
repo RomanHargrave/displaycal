@@ -96,17 +96,35 @@ cp "$source_dir/misc/10-Argyll.permissions" "$build_root/etc/udev/permissions.d"
 
 
 [Prepare]
-for lib in "libXinerama" "libXrandr" "libXxf86vm" "libpthread" "libc" "libX11" "libXext" "libXrender" "libxcb" "libdl" "libXau" ; do
-	outputTest $lib
-	testForLib $lib.so && outputTestPass || outputTestFail
-done
+function requireLibs() {
+	pushOptE; set +e;
+	for lib in $*; do
+		outputTest $lib
+		if `testForLib $lib.so`; then
+			outputTestPass
+		else
+			outputTestFail
+			outputFail "Required library not found."
+			popOptE
+			return 1
+		fi
+	done
+	popOptE
+	return 0
+}
+
 require '@python.org/python' 2.5 2.6
+
 requireAtLeast '@wxpython.org/python-wxgtk:2.8'
+
+requireLibs libc libdl libpthread libX11 libXau libXext libXinerama libXrandr libXrender libXxf86vm
+
 testForPythonModule numpy || (
 	testForPythonModule numarray || (
 		testForPythonModule Numeric || recommendAtLeast '@numpy.scipy.org/numpy:1.1'
 	)
 )
+
 removeOwningPackage "$PREFIX/bin/dispcalGUI"
 
 

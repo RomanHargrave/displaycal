@@ -1,6 +1,6 @@
 [Meta]
 RootName: @wxpython.org/python-wxgtk
-DisplayName: wxPythonGTK GUI Toolkit
+DisplayName: wxPython GUI Toolkit (GTK)
 ShortName: python-wxgtk
 Skeleton-Author: Florian Höch <florian.hoech@gmx.de>
 Skeleton-Version: 1
@@ -9,9 +9,16 @@ Skeleton-Version: 1
 Earliest detected version is wxPython 2.5.3.0, where wxversion was introduced.
 
 [Test]
-testForPythonModule wx
-testForPythonModule wxversion
-INTERFACE_VERSIONS=`python -c 'import wxversion; print " ".join([version.split("-")[0] for version in wxversion.getInstalled()])' `
+INTERFACE_VERSIONS=
+# we test for wx and wxversion because even if wxversion is importable it does 
+# NOT mean that wx is importable (the wxPython install might be broken or have 
+# been tampered with, in which case wxversion might still find it, but 
+# importing wx could fail)
+if testForPythonModule wx; then
+	if testForPythonModule wxversion; then
+		INTERFACE_VERSIONS=`python -c 'import wxversion; print " ".join([version.split("-")[0] for version in wxversion.getInstalled()])' `
+	fi
+fi
 SOFTWARE_VERSIONS=$INTERFACE_VERSIONS
 
 # We should probably publish some information about what wx libraries
