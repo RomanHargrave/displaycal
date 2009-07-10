@@ -3,8 +3,8 @@ PyInstaller Manual
 ==================
 :Author: Giovanni Bajo & William Caban (based on Gordon McMillan's manual)
 :Contact: rasky@develer.com
-:Revision: $Rev: 612 $
-:Source URL: $HeadURL: http://svn.pyinstaller.python-hosting.com/trunk/doc/source/Manual.rst $
+:Revision: $Rev: 687 $
+:Source URL: $HeadURL: http://svn.pyinstaller.org/trunk/doc/source/Manual.rst $
 :Copyright: This document has been placed in the public domain.
 
 .. contents::
@@ -590,8 +590,6 @@ the run executables understand are:
 | W spec	| Warning option	| ('W ignore', '', 'OPTION')	| Python 2.1+ only. 											|
 +---------------+-----------------------+-------------------------------+-------------------------------------------------------------------------------------------------------+
 | s		| Use site.py		| ('s', '', 'OPTION')		| The opposite of Python's -S flag. Note that site.py must be in the executable's directory to be used. |
-+---------------+-----------------------+-------------------------------+-------------------------------------------------------------------------------------------------------+
-| f		| Force execvp		| ('f', '', 'OPTION')		| Linux/unix only. Ensures that LD_LIBRARY_PATH is set properly.					|
 +---------------+-----------------------+-------------------------------+-------------------------------------------------------------------------------------------------------+
 
 Advanced users should note that by using set differences and intersections, it
