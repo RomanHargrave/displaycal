@@ -1,0 +1,399 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+Runtime configuration and user settings parser
+"""
+
+import ConfigParser
+from decimal import Decimal
+import os
+import sys
+from time import gmtime, strftime, timezone
+
+if sys.platform == "win32":
+	from win32com.shell import shell, shellcon
+
+from StringIOu import StringIOu as StringIO
+from meta import name as appname
+from options import ascii, debug
+from util_os import expanduseru, expandvarsu, getenvu
+
+# Runtime config
+
+app = None
+
+if ascii:
+	enc = fs_enc = "ASCII"
+else:
+	if sys.platform == "darwin":
+		enc = "UTF-8"
+	else:
+		enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
+	fs_enc = sys.getfilesystemencoding() or enc
+
+exe = unicode(sys.executable, fs_enc)
+exedir = os.path.dirname(exe)
+
+isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
+
+if isexe and os.getenv("_MEIPASS2"):
+	os.environ["_MEIPASS2"] = os.getenv("_MEIPASS2").replace("/", os.path.sep)
+
+data_dirs = []
+
+if sys.platform == "win32":
+	btn_width_correction = 20
+	cmdfile_ext = ".cmd"
+	scale_adjustment_factor = 1.0
+	# environment variable APPDATA will not be defined if using "Run as..."
+	appdata = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_APPDATA)
+	commonappdata = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_APPDATA)
+	commonprogramfiles = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_PROGRAM_FILES_COMMON)
+	confighome = os.path.join(appdata, appname)
+	try:
+		autostart = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_STARTUP)
+		# can fail under Vista if directory doesn't exist
+	except Exception, exception:
+		autostart = None
+	try:
+		autostart_home = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP)
+		# can fail under Vista if directory doesn't exist
+	except Exception, exception:
+		autostart_home = None
+	datahome = os.path.join(appdata, appname)
+	logdir = os.path.join(datahome, "logs")
+	data_dirs += [datahome, os.path.join(commonappdata, appname), 
+				  os.path.join(commonprogramfiles, appname)]
+	iccprofiles_home = iccprofiles = os.path.join(shell.SHGetSpecialFolderPath(0, 
+		shellcon.CSIDL_SYSTEM), "spool", "drivers", "color")
+	exe_ext = ".exe"
+	profile_ext = ".icm"
+else:
+	btn_width_correction = 10
+	if sys.platform == "darwin":
+		cmdfile_ext = ".command"
+		mac_create_app = True
+		scale_adjustment_factor = 1.0
+		confighome = os.path.join(expanduseru("~"), "Library", 
+			"Preferences", appname)
+		datahome = os.path.join(expanduseru("~"), "Library", 
+			"Application Support", appname)
+		logdir = os.path.join(expanduseru("~"), "Library", 
+			"Logs", appname)
+		data_dirs += [datahome, os.path.join(os.path.sep, "Library", 
+			"Application Support", appname)]
+		iccprofiles = os.path.join(os.path.sep, "Library", 
+			"ColorSync", "Profiles")
+		iccprofiles_home = os.path.join(expanduseru("~"), "Library", 
+			"ColorSync", "Profiles")
+	else:
+		cmdfile_ext = ".sh"
+		scale_adjustment_factor = 1.0
+		xdg_config_home = getenvu("XDG_CONFIG_HOME",
+		   os.path.join(expanduseru("~"), ".config"))
+		xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", "/etc/xdg").split(os.pathsep)
+		xdg_data_home_default = expandvarsu("$HOME/.local/share")
+		xdg_data_home = getenvu("XDG_DATA_HOME",
+		   xdg_data_home_default)
+		xdg_data_dirs_default = "/usr/local/share:/usr/share"
+		xdg_data_dirs = getenvu(
+			"XDG_DATA_DIRS", xdg_data_dirs_default
+			).split(os.pathsep)
+		for dir_ in xdg_data_dirs_default.split(os.pathsep):
+			if not dir_ in xdg_data_dirs:
+				xdg_data_dirs += [dir_]
+		confighome = os.path.join(xdg_config_home, appname)
+		autostart = os.path.join(xdg_config_dirs[0], "autostart")
+		autostart_home = os.path.join(xdg_config_home, "autostart")
+		datahome = os.path.join(xdg_data_home, appname)
+		logdir = os.path.join(datahome, "logs")
+		data_dirs += [datahome]
+		if not xdg_data_home_default in data_dirs:
+			data_dirs += [xdg_data_home_default]
+		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
+		del dir_
+		iccprofiles = os.path.join(xdg_data_dirs[0], "color", "icc", 
+			"devices", "display")
+		iccprofiles_home = os.path.join(xdg_data_home, "color", "icc", 
+			"devices", "display")
+	exe_ext = ""
+	profile_ext = ".icc"
+
+storage = os.path.join(datahome, "storage")
+
+resfiles = [
+	"lang/en.json",
+	"theme/header.png",
+	"theme/header-about.png",
+	"theme/icons/32x32/zoom-best-fit.png",
+	"theme/icons/32x32/zoom-in.png",
+	"theme/icons/32x32/zoom-original.png",
+	"theme/icons/32x32/zoom-out.png",
+	"theme/icons/32x32/dialog-error.png",
+	"theme/icons/32x32/dialog-information.png",
+	"theme/icons/32x32/dialog-question.png",
+	"theme/icons/32x32/dialog-warning.png",
+	"theme/icons/32x32/window-center.png",
+	"theme/icons/16x16/dialog-information.png",
+	# "theme/icons/16x16/dialog-warning.png",
+	"theme/icons/16x16/document-open.png",
+	"theme/icons/16x16/edit-delete.png",
+	"theme/icons/16x16/install.png",
+	"theme/icons/16x16/media-floppy.png",
+	"theme/icons/16x16/%s.png" % appname,
+	"theme/icons/16x16/rgbsquares.png",
+	"theme/icons/16x16/stock_lock.png",
+	"theme/icons/16x16/stock_lock-open.png",
+	# "theme/icons/16x16/stock_refresh.png",
+	"ti1/d3-e4-s0-g16-m4-f0-crossover.ti1",
+	"ti1/d3-e4-s0-g52-m4-f0-crossover.ti1",
+	"ti1/d3-e4-s0-g52-m4-f500-crossover.ti1",
+	"ti1/d3-e4-s0-g52-m4-f3000-crossover.ti1",
+	"test.cal"
+]
+
+pypath = None
+pydir = None
+pyname = None
+pyext = None
+isapp = None
+runtype = None
+build = None
+
+bitmaps = {}
+
+def getbitmap(name):
+	if not "wx" in globals():
+		global wx
+		import wx
+	if not name in bitmaps:
+		if name == "transparent16x16":
+			bitmaps[name] = wx.EmptyBitmap(16, 16, depth = -1)
+			dc = wx.MemoryDC()
+			dc.SelectObject(bitmaps[name])
+			dc.SetBackground(wx.Brush("black"))
+			dc.Clear()
+			dc.SelectObject(wx.NullBitmap)
+			bitmaps[name].SetMaskColour("black")
+		else:
+			bitmaps[name] = wx.Bitmap(get_data_path(os.path.sep.join(name.split("/")) + ".png"))
+	return bitmaps[name]
+
+def get_data_path(relpath, rex = None):
+	""" Search data_dirs for relpath and return the full path as string if 
+	relpath is a file, or a list of files in the intersection of searched 
+	directories if relpath is a directory """
+	intersection = []
+	paths = []
+	for dir_ in data_dirs:
+		curpath = os.path.join(dir_, relpath)
+		if os.path.exists(curpath):
+			if os.path.isdir(curpath):
+				try:
+					filelist = listdir_re(curpath, rex)
+				except Exception, exception:
+					if debug: safe_print("Error - directory '%s' listing failed: %s" % (curpath, str(exception)))
+				else:
+					for filename in filelist:
+						if not filename in intersection:
+							intersection += [filename]
+							paths += [os.path.join(curpath, filename)]
+			else:
+				return curpath
+	return None if len(paths) == 0 else paths
+
+def runtimeconfig(pyfile):
+	""" Configure remaining runtime options. Return key, value pairs. 
+	You need to pass in a path to the calling script (e.g. use the __file__ 
+	attribute) """
+	global data_dirs, pypath, pydir, pyname, pyext, isapp, runtype, build
+	pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
+	pydir = os.path.dirname(pypath)
+	pyname, pyext = os.path.splitext(os.path.basename(pypath))
+	isapp = sys.platform == "darwin" and \
+	   exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
+	   os.path.isfile(os.path.join(exedir, pyname))
+	if (not isexe or os.getcwdu() != pydir) and data_dirs[0] != os.getcwdu():
+		data_dirs.insert(0, os.getcwdu())
+	if isapp:
+		appdir = os.path.join(pydir, "..", "..", "..")
+		if appdir not in data_dirs and os.path.isdir(appdir):
+			data_dirs += [os.path.join(pydir, "..", "..", "..")]
+		runtype = ".app"
+	else:
+		if (getenvu("_MEIPASS2", pydir) if isexe else pydir) not in data_dirs:
+			data_dirs += [getenvu("_MEIPASS2", pydir) if isexe else pydir]
+		if isexe:
+			runtype = exe_ext
+		else:
+			runtype = pyext
+	for dir_ in sys.path:
+		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
+		if dir_ not in data_dirs and os.path.isdir(dir_):
+			data_dirs += [dir_]
+	build = "%s%s%s" % (
+		strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(pypath).st_mtime)), 
+		"+" if timezone < 0 else "-", 
+		strftime("%H:%M", gmtime(abs(timezone)))
+	) if pypath and os.path.exists(pypath) else ""
+
+# User settings
+
+cfg = ConfigParser.RawConfigParser()
+cfg.optionxform = str
+
+defaults = {
+	"argyll.dir": expanduseru("~"), # directory
+	"calibration.ambient_viewcond_adjust": 0,
+	"calibration.ambient_viewcond_adjust.lux": 500.0,
+	"calibration.black_luminance": 0.5,
+	"calibration.black_output_offset": 0.0,
+	"calibration.black_point_correction": 0.0,
+	"calibration.black_point_correction_choice.show": 1,
+	"calibration.black_point_rate": 4.0,
+	"calibration.black_point_rate.enabled": 0,
+	"calibration.interactive_display_adjustment": 1,
+	"calibration.luminance": 120.0,
+	"calibration.quality": "m",
+	"calibration.update": 0,
+	"comport.number": 1,
+	"dimensions.measureframe": "0.5,0.5,1.0",
+	"dimensions.measureframe.unzoomed": "0.5,0.5,1.0",
+	"display.number": 1,
+	"measurement_mode": "l",
+	"display_lut.link": 1,
+	"display_lut.number": 1,
+	"gamap_profile": "",
+	"gamap_perceptual": 0,
+	"gamap_saturation": 0,
+	"gamap_src_viewcond": "pp",
+	"gamap_out_viewcond": "mt",
+	"gamma": 2.4,
+	"measure.darken_background": 0,
+	"measure.darken_background.show_warning": 1,
+	"profile.install_scope": "l" if (sys.platform != "win32" and 
+								os.geteuid() == 0) # or 
+								# (sys.platform == "win32" and 
+								# sys.getwindowsversion() >= (6, )) 
+								else 
+								"u", # Linux, OSX
+	"profile.name": u" ".join([
+		u"%dns",
+		u"%Y-%m-%d",
+		u"%cb",
+		u"%wp",
+		u"%cB",
+		u"%ck",
+		u"%cg",
+		u"%cq-%pq",
+		u"%pt"
+	]),
+	"profile.quality": "m",
+	"profile.save_path": storage, # directory
+	"profile.type": "s",
+	"profile.update": 0,
+	"projector_mode": 0,
+	"recent_cals": "",
+	"recent_cals_max": 15,
+	"settings.changed": 0,
+	"size.info.w": 512,
+	"size.info.h": 384,
+	"size.lut_viewer.w": 512,
+	"size.lut_viewer.h": 580,
+	"tc_white_patches": 4,
+	"tc_single_channel_patches": 0,
+	"tc_gray_patches": 9,
+	"tc_multi_steps": 3,
+	"tc_fullspread_patches": 0,
+	"tc_algo": "",
+	"tc_angle": 0.3333,
+	"tc_adaption": 0.0,
+	"tc_precond": 0,
+	"tc_precond_profile": "",
+	"tc_filter": 0,
+	"tc_filter_L": 50,
+	"tc_filter_a": 0,
+	"tc_filter_b": 0,
+	"tc_filter_rad": 255,
+	"tc_vrml": 0,
+	"tc_vrml_lab": 0,
+	"tc_vrml_device": 1,
+	"trc": 2.4,
+	"trc.should_use_viewcond_adjust.show_msg": 1,
+	"trc.type": "g",
+	"whitepoint.colortemp": 5000.0,
+	"whitepoint.colortemp.locus": "t",
+	"whitepoint.x": 0.345741,
+	"whitepoint.y": 0.358666
+}
+
+def getcfg(name, fallback = True):
+	""" Get an option value from the user config """
+	hasdef = name in defaults
+	if hasdef:
+		defval = defaults[name]
+		deftype = type(defval)
+	if cfg.has_option(ConfigParser.DEFAULTSECT, name):
+		value = unicode(cfg.get(ConfigParser.DEFAULTSECT, name), "UTF-8")
+		# check for invalid types and return default if wrong type
+		if name != "trc" and hasdef and deftype in (Decimal, int, float):
+			try:
+				value = deftype(value)
+			except ValueError:
+				value = defval
+		elif (name in ("calibration.file", "testchart.file") or \
+		   name.startswith("last_")) and not os.path.exists(value):
+			if value.split(os.path.sep)[-2:] == ["presets", os.path.basename(value)] or \
+			   value.split(os.path.sep)[-2:] == ["ti1", os.path.basename(value)]:
+				value = os.path.join(os.path.basename(os.path.dirname(value)), os.path.basename(value))
+			else:
+				value = os.path.basename(value)
+			value = get_data_path(value) or (defval if hasdef else None)
+	elif fallback and hasdef:
+		value = defval
+	else:
+		value = None
+	return value
+
+def get_verified_path(cfg_item_name):
+	""" Verify and return dir and filename for a path item from the user cfg """
+	defaultPath = getcfg(cfg_item_name)
+	defaultFile = ""
+	if os.path.exists(defaultPath):
+		defaultDir, defaultFile = os.path.dirname(defaultPath), os.path.basename(defaultPath)
+	elif os.path.exists(os.path.dirname(defaultPath)):
+		defaultDir = os.path.dirname(defaultPath)
+	else:
+		defaultDir = expanduseru("~")
+	return defaultDir, defaultFile
+
+def initcfg():
+	""" Initialize the user config - read in settings, set default language """
+	try:
+		cfg.read([os.path.join(confighome, appname + ".ini")])
+	except Exception, exception:
+		safe_print("Warning - could not parse configuration file '%s'" % appname + ".ini")
+	if not cfg.has_option(ConfigParser.DEFAULTSECT, "lang"):
+		cfg.set(ConfigParser.DEFAULTSECT, "lang", "en")
+
+def setcfg(name, value):
+	""" Get an option value in the user config """
+	if value is None:
+		cfg.remove_option(ConfigParser.DEFAULTSECT, name)
+	else:
+		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
+
+def writecfg():
+	try:
+		cfgfile = open(os.path.join(confighome, appname + ".ini"), "wb")
+		io = StringIO()
+		cfg.write(io)
+		io.seek(0)
+		l = io.read().strip("\n").split("\n")
+		l.sort()
+		cfgfile.write("\n".join(l))
+		cfgfile.close()
+	except Exception, exception:
+		from debughelpers import handle_error
+		handle_error("Warning - could not write configuration file: %s" % (str(exception)))

@@ -21,7 +21,7 @@ else:
 	from urllib import quote
 	import shutil
 
-from osenvu import getenvu, expanduseru
+from util_os import getenvu, expanduseru
 
 class TrashcanUnavailableError(Exception):
 	def __str__(self):

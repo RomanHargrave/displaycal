@@ -656,8 +656,8 @@ def setup():
 				manifest_in += ["include " + os.path.sep.join([pkgdir] + obj.split("/"))]
 		for pymod in attrs.get("py_modules", []):
 			manifest_in += ["include " + os.path.join(*pymod.split("."))]
-		manifest_in += ["include " + os.path.join("dispcalGUI", "theme", "theme-info.txt")]
-		manifest_in += ["recursive-include %s %s %s" % (os.path.join("dispcalGUI", "theme", "icons"), "*.icns", "*.ico")]
+		manifest_in += ["include " + os.path.join(name, "theme", "theme-info.txt")]
+		manifest_in += ["recursive-include %s %s %s" % (os.path.join(name, "theme", "icons"), "*.icns", "*.ico")]
 		manifest_in += ["recursive-include %s %s" % ("autopackage", "*")]
 		manifest_in += ["recursive-include %s %s" % ("misc", "*")]
 		manifest_in += ["exclude " + os.path.join("misc", "warn%s-pyi-*.txt" % name)]
