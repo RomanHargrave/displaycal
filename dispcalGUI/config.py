@@ -17,7 +17,7 @@ if sys.platform == "win32":
 from StringIOu import StringIOu as StringIO
 from meta import name as appname
 from options import ascii, debug
-from util_os import expanduseru, expandvarsu, getenvu
+from util_os import expanduseru, expandvarsu, getenvu, listdir_re
 
 # Runtime config
 

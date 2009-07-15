@@ -102,7 +102,7 @@ from argyll_cgats import cal_to_fake_profile, can_update_cal, extract_cal_from_t
 from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import names as argyll_names, altnames as argyll_altnames
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2RGB, XYZ2xyY
-from config import autostart, autostart_home, btn_width_correction, cmdfile_ext, confighome, runtimeconfig, data_dirs, datahome, defaults, enc, exe, exe_ext, exedir, fs_enc, getbitmap, get_data_path, getcfg, get_verified_path, iccprofiles, iccprofiles_home, initcfg, isexe, profile_ext, resfiles, setcfg, storage, writecfg
+from config import autostart, autostart_home, btn_width_correction, cmdfile_ext, confighome, runtimeconfig, datahome, defaults, enc, exe, exe_ext, exedir, fs_enc, getbitmap, get_data_path, getcfg, get_verified_path, iccprofiles, initcfg, isexe, profile_ext, resfiles, setcfg, storage, writecfg
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log, logbuffer, safe_print, setup_logging
 from meta import author, name as appname, version
