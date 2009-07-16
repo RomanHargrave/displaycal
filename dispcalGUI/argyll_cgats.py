@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import decimal
+Decimal = decimal.Decimal
+
 from StringIOu import StringIOu as StringIO
 from safe_print import safe_print
 import CGATS
@@ -93,6 +96,101 @@ def extract_cal_from_ti3(ti3_data):
 	if isinstance(ti3, file):
 		ti3.close()
 	return "\n".join(cal_lines)
+
+def extract_fix_copy_cal(self, source_filename, target_filename = None):
+	""" Extract the CAL info from a profile's embedded measurement data,
+	try to 'fix it' (add information needed to make the resulting .cal file
+	'updateable') and copy it to target_filename """
+	try:
+		profile = ICCP.ICCProfile(source_filename)
+	except (IOError, ICCP.ICCProfileInvalidError), exception:
+		return exception
+	if "CIED" in profile.tags:
+		cal_lines = []
+		ti3 = StringIO(profile.tags.CIED)
+		ti3_lines = [line.strip() for line in ti3]
+		ti3.close()
+		cal_found = False
+		for line in ti3_lines:
+			line = line.strip()
+			if line == "CAL":
+				line = "CAL    " # Make sure CGATS file identifiers are always a minimum of 7 characters
+				cal_found = True
+			if cal_found:
+				cal_lines += [line]
+				if line == 'DEVICE_CLASS "DISPLAY"':
+					if "cprt" in profile.tags:
+						options_dispcal = get_options_from_cprt(profile.tags.cprt)[0]
+						if options_dispcal:
+							whitepoint = False
+							b = profile.tags.lumi
+							for o in options_dispcal:
+								if o[0] == "y":
+									cal_lines += ['KEYWORD "DEVICE_TYPE"']
+									if o[1] == "c":
+										cal_lines += ['DEVICE_TYPE "CRT"']
+									else:
+										cal_lines += ['DEVICE_TYPE "LCD"']
+									continue
+								if o[0] in ("t", "T"):
+									continue
+								if o[0] == "w":
+									continue
+								if o[0] in ("g", "G"):
+									if o[1:] == "240":
+										trc = "SMPTE240M"
+									elif o[1:] == "709":
+										trc = "REC709"
+									elif o[1:] == "l":
+										trc = "L_STAR"
+									elif o[1:] == "s":
+										trc = "sRGB"
+									else:
+										trc = o[1:]
+										if o[0] == "G":
+											try:
+												trc = 0 - Decimal(trc)
+											except decimal.InvalidOperation, exception:
+												continue
+									cal_lines += ['KEYWORD "TARGET_GAMMA"']
+									cal_lines += ['TARGET_GAMMA "%s"' % trc]
+									continue
+								if o[0] == "f":
+									cal_lines += ['KEYWORD "DEGREE_OF_BLACK_OUTPUT_OFFSET"']
+									cal_lines += ['DEGREE_OF_BLACK_OUTPUT_OFFSET "%s"' % o[1:]]
+									continue
+								if o[0] == "k":
+									cal_lines += ['KEYWORD "BLACK_POINT_CORRECTION"']
+									cal_lines += ['BLACK_POINT_CORRECTION "%s"' % o[1:]]
+									continue
+								if o[0] == "B":
+									cal_lines += ['KEYWORD "TARGET_BLACK_BRIGHTNESS"']
+									cal_lines += ['TARGET_BLACK_BRIGHTNESS "%s"' % o[1:]]
+									continue
+								if o[0] == "q":
+									if o[1] == "l":
+										q = "low"
+									elif o[1] == "m":
+										q = "medium"
+									else:
+										q = "high"
+									cal_lines += ['KEYWORD "QUALITY"']
+									cal_lines += ['QUALITY "%s"' % q]
+									continue
+							if not whitepoint:
+								cal_lines += ['KEYWORD "NATIVE_TARGET_WHITE"']
+								cal_lines += ['NATIVE_TARGET_WHITE ""']
+		if cal_lines:
+			if target_filename:
+				try:
+					f = open(target_filename, "w")
+					f.write("\n".join(cal_lines))
+					f.close()
+				except Exception, exception:
+					return exception
+			return cal_lines
+	else:
+		return None
 
 def ti3_to_ti1(ti3_data):
 	""" Create and return TI1 data converted from TI3.
