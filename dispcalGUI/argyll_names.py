@@ -9,7 +9,9 @@ names = [
 	"spyd2en",
 	"targen"
 ]
+
 prefixes_suffixes = ["argyll"]
+
 altnames = {}
 for name in names:
 	if not name in altnames:
@@ -18,3 +20,16 @@ for name in names:
 		altnames[name] += ["%s-%s" % (prefix_suffix, name)]
 		altnames[name] += ["%s-%s" % (name, prefix_suffix)]
 	altnames[name] += [name]
+
+viewconds = [
+	"pp",
+	"pe",
+	"mt",
+	"mb",
+	"md",
+	"jm",
+	"jd",
+	"pcd",
+	"ob",
+	"cx"
+]

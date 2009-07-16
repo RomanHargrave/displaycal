@@ -7,18 +7,10 @@ Simple CGATS file parser class
 Copyright (C) 2008 Florian Hoech
 """
 
-import StringIO, os, re, sys
+import os, re, sys
+
+from StringIOu import StringIOu as StringIO
 from safe_print import safe_print
-
-def universal_newlines(txt):
-	return txt.replace("\r\n", "\n").replace("\r", "\n")
-
-StringIO__init__ = StringIO.StringIO.__init__
-
-def StringIO__init__universal_newlines(self, txt = ""):
-	StringIO__init__(self, universal_newlines(txt))
-
-StringIO.StringIO.__init__ = StringIO__init__universal_newlines
 
 debug = '-d' in sys.argv[1:]
 
@@ -80,10 +72,10 @@ class CGATS(dict):
 						cgats = open(cgats, 'rU')
 						self.filename = cgats.name
 					else: # assume text
-						cgats = StringIO.StringIO(cgats)
+						cgats = StringIO(cgats)
 				elif isinstance(cgats, file):
 					self.filename = cgats.name
-				elif not isinstance(cgats, StringIO.StringIO):
+				elif not isinstance(cgats, StringIO):
 					raise CGATSInvalidError('Unsupported type:', type(cgats))
 				if self.filename not in ('', None):
 					self.mtime = os.stat(self.filename).st_mtime

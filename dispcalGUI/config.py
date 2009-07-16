@@ -6,7 +6,9 @@ Runtime configuration and user settings parser
 """
 
 import ConfigParser
+ConfigParser.DEFAULTSECT = "Default"
 from decimal import Decimal
+import math
 import os
 import sys
 from time import gmtime, strftime, timezone
@@ -15,8 +17,8 @@ if sys.platform == "win32":
 	from win32com.shell import shell, shellcon
 
 from StringIOu import StringIOu as StringIO
-from meta import name as appname
-from options import ascii, debug
+from meta import name as appname, version
+from options import ascii, debug, verbose
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
 
 # Runtime config
@@ -153,14 +155,6 @@ resfiles = [
 	"test.cal"
 ]
 
-pypath = None
-pydir = None
-pyname = None
-pyext = None
-isapp = None
-runtype = None
-build = None
-
 bitmaps = {}
 
 def getbitmap(name):
@@ -193,7 +187,11 @@ def get_data_path(relpath, rex = None):
 				try:
 					filelist = listdir_re(curpath, rex)
 				except Exception, exception:
-					if debug: safe_print("Error - directory '%s' listing failed: %s" % (curpath, str(exception)))
+					if debug:
+						if not "safe_print" in globals():
+							global safe_print
+							from log import safe_print
+						safe_print("Error - directory '%s' listing failed: %s" % (curpath, str(exception)))
 				else:
 					for filename in filelist:
 						if not filename in intersection:
@@ -204,10 +202,10 @@ def get_data_path(relpath, rex = None):
 	return None if len(paths) == 0 else paths
 
 def runtimeconfig(pyfile):
-	""" Configure remaining runtime options. Return key, value pairs. 
+	""" Configure remaining runtime options. Return a tuple (pypath, pydir, 
+	pyname, pyext, isapp, runtype, build). 
 	You need to pass in a path to the calling script (e.g. use the __file__ 
 	attribute) """
-	global data_dirs, pypath, pydir, pyname, pyext, isapp, runtype, build
 	pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
 	pydir = os.path.dirname(pypath)
 	pyname, pyext = os.path.splitext(os.path.basename(pypath))
@@ -219,11 +217,11 @@ def runtimeconfig(pyfile):
 	if isapp:
 		appdir = os.path.join(pydir, "..", "..", "..")
 		if appdir not in data_dirs and os.path.isdir(appdir):
-			data_dirs += [os.path.join(pydir, "..", "..", "..")]
+			data_dirs.append(os.path.join(pydir, "..", "..", ".."))
 		runtype = ".app"
 	else:
 		if (getenvu("_MEIPASS2", pydir) if isexe else pydir) not in data_dirs:
-			data_dirs += [getenvu("_MEIPASS2", pydir) if isexe else pydir]
+			data_dirs.append(getenvu("_MEIPASS2", pydir) if isexe else pydir)
 		if isexe:
 			runtype = exe_ext
 		else:
@@ -231,12 +229,18 @@ def runtimeconfig(pyfile):
 	for dir_ in sys.path:
 		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
 		if dir_ not in data_dirs and os.path.isdir(dir_):
-			data_dirs += [dir_]
+			data_dirs.append(dir_)
 	build = "%s%s%s" % (
 		strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(pypath).st_mtime)), 
 		"+" if timezone < 0 else "-", 
 		strftime("%H:%M", gmtime(abs(timezone)))
 	) if pypath and os.path.exists(pypath) else ""
+	if verbose >= 1:
+		if not "safe_print" in globals():
+			global safe_print
+			from log import safe_print
+		safe_print(appname + runtype, version, "build", build)
+	return pypath, pydir, pyname, pyext, isapp, runtype, build
 
 # User settings
 
@@ -253,6 +257,7 @@ defaults = {
 	"calibration.black_point_correction_choice.show": 1,
 	"calibration.black_point_rate": 4.0,
 	"calibration.black_point_rate.enabled": 0,
+	"calibration.file": None,
 	"calibration.interactive_display_adjustment": 1,
 	"calibration.luminance": 120.0,
 	"calibration.quality": "m",
@@ -353,8 +358,63 @@ def getcfg(name, fallback = True):
 	elif fallback and hasdef:
 		value = defval
 	else:
+		if not hasdef: 
+			print "Warning - unknown option:", name
 		value = None
 	return value
+	
+def get_display():
+	display = str(getcfg("display.number"))
+	if not getcfg("display_lut.link"):
+		display += "," + str(getcfg("display_lut.number"))
+	return display
+
+def get_total_patches(white_patches = None, single_channel_patches = None, gray_patches = None, multi_steps = None, fullspread_patches = None):
+	if white_patches is None:
+		white_patches = getcfg("tc_white_patches")
+	if single_channel_patches is None:
+		single_channel_patches = getcfg("tc_single_channel_patches")
+	single_channel_patches_total = single_channel_patches * 3
+	if gray_patches is None:
+		gray_patches = getcfg("tc_gray_patches")
+	if gray_patches == 0 and single_channel_patches > 0 and white_patches > 0:
+		gray_patches = 2
+	if multi_steps is None:
+		multi_steps = getcfg("tc_multi_steps")
+	if fullspread_patches is None:
+		fullspread_patches = getcfg("tc_fullspread_patches")
+	total_patches = 0
+	if multi_steps > 1:
+		multi_patches = int(math.pow(multi_steps, 3))
+		total_patches += multi_patches
+		white_patches -= 1 # white always in multi channel patches
+
+		multi_step = 255.0 / (multi_steps - 1)
+		multi_values = []
+		for i in range(multi_steps):
+			multi_values += [str(multi_step * i)]
+		#if debug: safe_print("multi_values", multi_values)
+		if single_channel_patches > 1:
+			single_channel_step = 255.0 / (single_channel_patches - 1)
+			for i in range(single_channel_patches):
+				#if debug: safe_print("single_channel_value", single_channel_step * i)
+				if str(single_channel_step * i) in multi_values:
+					#if debug: safe_print("DELETE SINGLE", single_channel_step * i)
+					single_channel_patches_total -= 3
+		if gray_patches > 1:
+			gray_step = 255.0 / (gray_patches - 1)
+			for i in range(gray_patches):
+				#if debug: safe_print("gray_value", gray_step * i)
+				if str(gray_step * i) in multi_values:
+					#if debug: safe_print("DELETE GRAY", gray_step * i)
+					gray_patches -= 1
+	elif gray_patches > 1:
+		white_patches -= 1 # white always in gray patches
+		single_channel_patches_total -= 3 # black always in gray patches
+	else:
+		single_channel_patches_total -= 2 # black always only once in single channel patches
+	total_patches += max(0, white_patches) + max(0, single_channel_patches_total) + max(0, gray_patches) + fullspread_patches
+	return total_patches
 
 def get_verified_path(cfg_item_name):
 	""" Verify and return dir and filename for a path item from the user cfg """
@@ -369,10 +429,53 @@ def get_verified_path(cfg_item_name):
 	return defaultDir, defaultFile
 
 def initcfg():
-	""" Initialize the user config - read in settings, set default language """
+	""" Initialize the user config - read in settings if cfg file exists, 
+	set default language """
+	global handle_error, safe_print
+	# read pre-v0.2.2b configuration if present
+	if sys.platform == "darwin":
+		oldcfg = os.path.join(expanduseru("~"), "Library", "Preferences", appname + " Preferences")
+	else:
+		oldcfg = os.path.join(expanduseru("~"), "." + appname)
+	if not os.path.exists(confighome):
+		try:
+			os.makedirs(confighome)
+		except Exception, exception:
+			if not "handle_error" in globals():
+				from debughelpers import handle_error
+			handle_error("Warning - could not create configuration directory '%s'" % confighome)
+	if os.path.exists(confighome) and not os.path.exists(os.path.join(confighome, appname + ".ini")):
+		try:
+			if os.path.isfile(oldcfg):
+				oldcfg_file = open(oldcfg, "rb")
+				oldcfg_contents = oldcfg_file.read()
+				oldcfg_file.close()
+				cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
+				cfg_file.write("[Default]\n" + oldcfg_contents)
+				cfg_file.close()
+			elif sys.platform == "win32":
+				key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Software\\" + appname)
+				numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+				cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
+				cfg_file.write("[Default]\n")
+				for i in range(numvalues):
+					name, value, type_ = _winreg.EnumValue(key, i)
+					if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, value)).encode("UTF-8"))
+				cfg_file.close()
+		except Exception, exception:
+			# WindowsError 2 means registry key does not exist, do not show warning in that case
+			if sys.platform != "win32" or not hasattr(exception, "errno") or exception.errno != 2:
+				if not "safe_print" in globals():
+					from log import safe_print
+				safe_print("Warning - could not process old configuration:", str(exception))
+	# read cfg
 	try:
 		cfg.read([os.path.join(confighome, appname + ".ini")])
+		# this won't raise an exception if the file does not exist, only if item
+		# can't be parsed
 	except Exception, exception:
+		if not "safe_print" in globals():
+			from log import safe_print
 		safe_print("Warning - could not parse configuration file '%s'" % appname + ".ini")
 	if not cfg.has_option(ConfigParser.DEFAULTSECT, "lang"):
 		cfg.set(ConfigParser.DEFAULTSECT, "lang", "en")
@@ -395,5 +498,7 @@ def writecfg():
 		cfgfile.write("\n".join(l))
 		cfgfile.close()
 	except Exception, exception:
-		from debughelpers import handle_error
+		if not "handle_error" in globals():
+			global handle_error
+			from debughelpers import handle_error
 		handle_error("Warning - could not write configuration file: %s" % (str(exception)))

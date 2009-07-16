@@ -5,7 +5,7 @@ import os
 
 import demjson
 
-from config import data_dirs, getcfg
+from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
 from log import safe_print
 
@@ -48,6 +48,15 @@ def init():
 	if len(ldict) == 0:
 		handle_error("Warning: No valid language files found. The following "
 			"places have been searched:\n%s" % "\n".join(langdirs))
+	else:
+		defaults.update({
+			"last_cal_path": os.path.join(storage, getstr("unnamed")),
+			"last_cal_or_icc_path": os.path.join(storage, getstr("unnamed")),
+			"last_filedialog_path": os.path.join(storage, getstr("unnamed")),
+			"last_icc_path": os.path.join(storage, getstr("unnamed")),
+			"last_ti1_path": os.path.join(storage, getstr("unnamed")),
+			"last_ti3_path": os.path.join(storage, getstr("unnamed"))
+		})
 
 def getstr(id_str, strvars = None, lcode = None):
 	""" Get a translated string from the dictionary """

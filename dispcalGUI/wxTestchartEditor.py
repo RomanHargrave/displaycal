@@ -3,17 +3,23 @@
 
 import math
 import os
+import re
 import sys
 
 import CGATS
 import ICCProfile as ICCP
+import config
 import lang
+from StringIOu import StringIOu as StringIO
+from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
-from config import enc, btn_width_correction, defaults, getbitmap, getcfg, get_data_path, get_verified_path, setcfg, writecfg
+from colormath import XYZ2RGB
+from config import btn_width_correction, defaults, enc, getbitmap, getcfg, get_data_path, get_total_patches, get_verified_path, setcfg, writecfg
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
+from worker import Worker, check_file_isfile, check_set_argyll_bin
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import ConfirmDialog, InfoDialog
 
@@ -42,6 +48,8 @@ class TestchartEditor(wx.Frame):
 			lang.getstr("tc.i"): "i",
 			lang.getstr("tc.I"): "I"
 		}
+		
+		self.worker = Worker()
 
 		if tc_use_alternate_preview:
 			# splitter
@@ -56,12 +64,12 @@ class TestchartEditor(wx.Frame):
 			p2 = wx.Panel(splitter)
 			p2.droptarget = FileDrop()
 			p2.droptarget.drophandlers = {
-				".icc": self.Parent.ti1_drop_handler,
-				".icm": self.Parent.ti1_drop_handler,
-				".ti1": self.Parent.ti1_drop_handler,
-				".ti3": self.Parent.ti1_drop_handler
+				".icc": (self.Parent or self).ti1_drop_handler,
+				".icm": (self.Parent or self).ti1_drop_handler,
+				".ti1": (self.Parent or self).ti1_drop_handler,
+				".ti3": (self.Parent or self).ti1_drop_handler
 			}
-			p2.droptarget.unsupported_handler = self.Parent.drop_unsupported_handler
+			p2.droptarget.unsupported_handler = (self.Parent or self).drop_unsupported_handler
 			p2.SetDropTarget(p2.droptarget)
 			p2.sizer = wx.BoxSizer(wx.VERTICAL)
 			p2.SetSizer(p2.sizer)
@@ -75,12 +83,12 @@ class TestchartEditor(wx.Frame):
 			panel = self.panel = wx.Panel(self)
 		panel.droptarget = FileDrop()
 		panel.droptarget.drophandlers = {
-			".icc": self.Parent.ti1_drop_handler,
-			".icm": self.Parent.ti1_drop_handler,
-			".ti1": self.Parent.ti1_drop_handler,
-			".ti3": self.Parent.ti1_drop_handler
+			".icc": (self.Parent or self).ti1_drop_handler,
+			".icm": (self.Parent or self).ti1_drop_handler,
+			".ti1": (self.Parent or self).ti1_drop_handler,
+			".ti3": (self.Parent or self).ti1_drop_handler
 		}
-		panel.droptarget.unsupported_handler = self.Parent.drop_unsupported_handler
+		panel.droptarget.unsupported_handler = (self.Parent or self).drop_unsupported_handler
 		panel.SetDropTarget(panel.droptarget)
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -301,6 +309,14 @@ class TestchartEditor(wx.Frame):
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.tc_destroy_handler)
 
 		wx.CallAfter(self.tc_load_cfg_from_ti1)
+
+	def ti1_drop_handler(self, path):
+		if not self.worker.is_working():
+			self.tc_load_cfg_from_ti1(None, path)
+
+	def drop_unsupported_handler(self):
+		if not self.worker.is_working():
+			InfoDialog(self, msg = lang.getstr("error.file_type_unsupported"), ok = lang.getstr("ok"), bitmap = getbitmap("theme/icons/32x32/dialog-error"))
 
 	def tc_grid_cell_left_click_handler(self, event):
 		event.Skip()
@@ -639,40 +655,18 @@ class TestchartEditor(wx.Frame):
 			multi_steps = self.tc_multi_steps.GetValue()
 		if fullspread_patches is None:
 			fullspread_patches = self.tc_fullspread_patches.GetValue()
-		total_patches = 0
-		if multi_steps > 1:
-			multi_patches = int(math.pow(multi_steps, 3))
-			total_patches += multi_patches
-			white_patches -= 1 # white always in multi channel patches
-
-			multi_step = 255.0 / (multi_steps - 1)
-			multi_values = []
-			for i in range(multi_steps):
-				multi_values += [str(multi_step * i)]
-			if debug: safe_print("multi_values", multi_values)
-			if single_channel_patches > 1:
-				single_channel_step = 255.0 / (single_channel_patches - 1)
-				for i in range(single_channel_patches):
-					if debug: safe_print("single_channel_value", single_channel_step * i)
-					if str(single_channel_step * i) in multi_values:
-						if debug: safe_print("DELETE SINGLE", single_channel_step * i)
-						single_channel_patches_total -= 3
-			if gray_patches > 1:
-				gray_step = 255.0 / (gray_patches - 1)
-				for i in range(gray_patches):
-					if debug: safe_print("gray_value", gray_step * i)
-					if str(gray_step * i) in multi_values:
-						if debug: safe_print("DELETE GRAY", gray_step * i)
-						gray_patches -= 1
-		elif gray_patches > 1:
-			white_patches -= 1 # white always in gray patches
-			single_channel_patches_total -= 3 # black always in gray patches
-		else:
-			single_channel_patches_total -= 2 # black always only once in single channel patches
-		self.tc_white_patches_amount = max(0, white_patches)
-		total_patches += self.tc_white_patches_amount + max(0, single_channel_patches_total) + max(0, gray_patches) + fullspread_patches
-		if debug: safe_print("total_patches", total_patches)
-		return total_patches
+		return get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, fullspread_patches)
+	
+	def tc_get_white_patches(self):
+		white_patches = self.tc_white_patches.GetValue()
+		single_channel_patches = self.tc_single_channel_patches.GetValue()
+		gray_patches = self.tc_gray_patches.GetValue()
+		if gray_patches == 0 and single_channel_patches > 0 and white_patches > 0:
+			gray_patches = 2
+		multi_steps = self.tc_multi_steps.GetValue()
+		if multi_steps > 1 or gray_patches > 1: # white always in multi channel or gray patches
+			white_patches -= 1
+		return max(0, white_patches)
 
 	def tc_multi_steps_handler(self, event = None):
 		if event:
@@ -774,7 +768,7 @@ class TestchartEditor(wx.Frame):
 	def tc_check(self, event = None):
 		white_patches = self.tc_white_patches.GetValue()
 		self.tc_amount = self.tc_get_total_patches(white_patches)
-		self.preview_btn.Enable(self.tc_amount - max(0, self.tc_white_patches_amount) >= 8)
+		self.preview_btn.Enable(self.tc_amount - max(0, self.tc_get_white_patches()) >= 8)
 		self.clear_btn.Enable(hasattr(self, "ti1"))
 		self.save_btn.Enable(hasattr(self, "ti1") and self.ti1.modified and os.path.exists(self.ti1.filename))
 		self.save_as_btn.Enable(hasattr(self, "ti1"))
@@ -804,11 +798,11 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_vrml_device", int(self.tc_vrml_device.GetValue()))
 
 	def tc_preview_handler(self, event = None):
-		if self.Parent.is_working():
+		if self.worker.is_working():
 			return
 		if not self.tc_check_save_ti1():
 			return
-		if not self.Parent.check_set_argyll_bin():
+		if not check_set_argyll_bin():
 			return
 		# if sys.platform == "win32":
 			# sp.call("cls", shell = True)
@@ -816,7 +810,8 @@ class TestchartEditor(wx.Frame):
 			# sp.call('clear', shell = True)
 		safe_print("-" * 80)
 		safe_print(lang.getstr("testchart.create"))
-		self.Parent.start_worker(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_title = lang.getstr("testchart.create"), parent = self, progress_start = 500)
+		#self.tc_create()
+		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_title = lang.getstr("testchart.create"), parent = self, progress_start = 500)
 
 	def tc_clear_handler(self, event):
 		self.tc_check_save_ti1()
@@ -887,9 +882,9 @@ class TestchartEditor(wx.Frame):
 					result = dlg.ShowModal()
 					dlg.Destroy()
 					if result == wx.ID_OK:
-						if self.IsBeingDeleted():
-							setcfg("testchart.file", path)
-						else:
+						setcfg("testchart.file", path)
+						writecfg()
+						if self.Parent and hasattr(self.Parent, "set_testchart"):
 							self.Parent.set_testchart(path)
 				if not self.IsBeingDeleted():
 					self.save_btn.Disable()
@@ -942,7 +937,10 @@ class TestchartEditor(wx.Frame):
 	def tc_close_handler(self, event = None):
 		if (not event or self.IsShownOnScreen()) and self.tc_check_save_ti1(False):
 			self.Hide()
-			return True
+			if self.Parent:
+				return True
+			else:
+				self.Destroy()
 
 	def tc_move_handler(self, event = None):
 		if self.IsShownOnScreen() and not self.IsMaximized() and not self.IsIconized():
@@ -956,7 +954,7 @@ class TestchartEditor(wx.Frame):
 		event.Skip()
 
 	def tc_load_cfg_from_ti1(self, event = None, path = None):
-		if self.Parent.is_working():
+		if self.worker.is_working():
 			return
 
 		if path is None:
@@ -988,7 +986,7 @@ class TestchartEditor(wx.Frame):
 			InfoDialog(self, msg = lang.getstr("error.testchart.read", path) + "\n\n" + unicode(str(exception), enc, "replace"), ok = lang.getstr("ok"), bitmap = getbitmap("theme/icons/32x32/dialog-error"))
 			return False
 		safe_print(lang.getstr("testchart.read"))
-		self.Parent.start_worker(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_title = lang.getstr("testchart.read"), parent = self, progress_start = 500)
+		self.worker.start(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_title = lang.getstr("testchart.read"), parent = self, progress_start = 500)
 
 	def tc_load_cfg_from_ti1_worker(self):
 		if test:
@@ -1019,7 +1017,7 @@ class TestchartEditor(wx.Frame):
 				uniqueRGB = []
 				vmaxlen = 4
 				for i in data:
-					if self.Parent.thread_abort:
+					if self.worker.thread_abort:
 						return False
 					patch = [round(float(str(v * 2.55)), vmaxlen) for v in (data[i]["RGB_R"], data[i]["RGB_G"], data[i]["RGB_B"])] # normalize to 0...255 range
 					strpatch = [str(int(round(round(v, 1)))) for v in patch]
@@ -1059,32 +1057,32 @@ class TestchartEditor(wx.Frame):
 					if debug: 
 						safe_print("R_inc:")
 						for i in R_inc:
-							if self.Parent.thread_abort:
+							if self.worker.thread_abort:
 								return False
 							safe_print("%s: x%s" % (i, R_inc[i]))
 						safe_print("G_inc:")
 						for i in G_inc:
-							if self.Parent.thread_abort:
+							if self.worker.thread_abort:
 								return False
 							safe_print("%s: x%s" % (i, G_inc[i]))
 						safe_print("B_inc:")
 						for i in B_inc:
-							if self.Parent.thread_abort:
+							if self.worker.thread_abort:
 								return False
 							safe_print("%s: x%s" % (i, B_inc[i]))
 					RGB_inc = {"0": 0}
 					for inc in R_inc:
-						if self.Parent.thread_abort:
+						if self.worker.thread_abort:
 							return False
 						if inc in G_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = R_inc[inc]
 					for inc in G_inc:
-						if self.Parent.thread_abort:
+						if self.worker.thread_abort:
 							return False
 						if inc in R_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = G_inc[inc]
 					for inc in B_inc:
-						if self.Parent.thread_abort:
+						if self.worker.thread_abort:
 							return False
 						if inc in R_inc and inc in G_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = B_inc[inc]
@@ -1097,7 +1095,7 @@ class TestchartEditor(wx.Frame):
 					else:
 						single_inc = {"0": 0}
 						for inc in RGB_inc:
-							if self.Parent.thread_abort:
+							if self.worker.thread_abort:
 								return False
 							if inc != "0":
 								finc = float(inc)
@@ -1108,7 +1106,7 @@ class TestchartEditor(wx.Frame):
 									safe_print("inc:", inc)
 									safe_print("n:", n)
 								for i in range(n):
-									if self.Parent.thread_abort:
+									if self.worker.thread_abort:
 										return False
 									v = str(int(round(float(str(i * finc)))))
 									if debug >= 9: safe_print("Searching for", v)
@@ -1132,7 +1130,7 @@ class TestchartEditor(wx.Frame):
 					if debug:
 						safe_print("RGB_inc:")
 						for i in RGB_inc:
-							if self.Parent.thread_abort:
+							if self.worker.thread_abort:
 								return False
 							safe_print("%s: x%s" % (i, RGB_inc[i]))
 					if False:
@@ -1144,7 +1142,7 @@ class TestchartEditor(wx.Frame):
 					else:
 						gray_inc = {"0": 0}
 						for inc in RGB_inc:
-							if self.Parent.thread_abort:
+							if self.worker.thread_abort:
 								return False
 							if inc != "0":
 								finc = float(inc)
@@ -1155,7 +1153,7 @@ class TestchartEditor(wx.Frame):
 									safe_print("inc:", inc)
 									safe_print("n:", n)
 								for i in range(n):
-									if self.Parent.thread_abort:
+									if self.worker.thread_abort:
 										return False
 									v = str(int(round(float(str(i * finc)))))
 									if debug >= 9: safe_print("Searching for", v)
@@ -1182,29 +1180,29 @@ class TestchartEditor(wx.Frame):
 					B_inc = self.tc_get_increments(multi["B"], vmaxlen)
 					RGB_inc = {"0": 0}
 					for inc in R_inc:
-						if self.Parent.thread_abort:
+						if self.worker.thread_abort:
 							return False
 						if inc in G_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = R_inc[inc]
 					for inc in G_inc:
-						if self.Parent.thread_abort:
+						if self.worker.thread_abort:
 							return False
 						if inc in R_inc and inc in B_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = G_inc[inc]
 					for inc in B_inc:
-						if self.Parent.thread_abort:
+						if self.worker.thread_abort:
 							return False
 						if inc in R_inc and inc in G_inc and R_inc[inc] == G_inc[inc] == B_inc[inc]:
 							RGB_inc[inc] = B_inc[inc]
 					if debug:
 						safe_print("RGB_inc:")
 						for i in RGB_inc:
-							if self.Parent.thread_abort:
+							if self.worker.thread_abort:
 								return False
 							safe_print("%s: x%s" % (i, RGB_inc[i]))
 					multi_inc = {"0": 0}
 					for inc in RGB_inc:
-						if self.Parent.thread_abort:
+						if self.worker.thread_abort:
 							return False
 						if inc != "0":
 							finc = float(inc)
@@ -1215,15 +1213,15 @@ class TestchartEditor(wx.Frame):
 								safe_print("inc:", inc)
 								safe_print("n:", n)
 							for i in range(n):
-								if self.Parent.thread_abort:
+								if self.worker.thread_abort:
 									return False
 								r = str(int(round(float(str(i * finc)))))
 								for j in range(n):
-									if self.Parent.thread_abort:
+									if self.worker.thread_abort:
 										return False
 									g = str(int(round(float(str(j * finc)))))
 									for k in range(n):
-										if self.Parent.thread_abort:
+										if self.worker.thread_abort:
 											return False
 										b = str(int(round(float(str(k * finc)))))
 										if debug >= 9:
@@ -1303,7 +1301,8 @@ class TestchartEditor(wx.Frame):
 			safe_print(lang.getstr("aborted"))
 			self.tc_update_controls()
 			self.tc_check()
-			self.Parent.start_timers()
+			if self.Parent and hasattr(self.Parent, "start_timers"):
+				self.Parent.start_timers()
 
 	def tc_get_increments(self, channel, vmaxlen = 4):
 		channel.sort()
@@ -1322,13 +1321,13 @@ class TestchartEditor(wx.Frame):
 
 	def tc_create(self):
 		writecfg()
-		cmd, args = self.Parent.prepare_targen(parent = self)
-		result = self.Parent.exec_cmd(cmd, args, low_contrast = False, skip_cmds = True, silent = False, parent = self)
+		cmd, args = self.worker.prepare_targen(parent = self)
+		result = self.worker.exec_cmd(cmd, args, low_contrast = False, skip_cmds = True, silent = False, parent = self)
 		if result:
-			self.Parent.create_tempdir()
-			if self.Parent.tempdir:
-				path = os.path.join(self.Parent.tempdir, "temp.ti1")
-				result = self.Parent.check_file_isfile(path, silent = False)
+			self.worker.create_tempdir()
+			if self.worker.tempdir:
+				path = os.path.join(self.worker.tempdir, "temp.ti1")
+				result = check_file_isfile(path, silent = False)
 				if result:
 					try:
 						self.ti1 = CGATS.CGATS(path)
@@ -1338,14 +1337,14 @@ class TestchartEditor(wx.Frame):
 						result = False
 					if self.tc_vrml.GetValue():
 						try:
-							wrl = open(os.path.join(self.Parent.tempdir, "temp.wrl"), "rb")
+							wrl = open(os.path.join(self.worker.tempdir, "temp.wrl"), "rb")
 							self.ti1_wrl = wrl.read()
 							wrl.close()
 						except Exception, exception:
 							handle_error("Warning - VRML file could not be read: " + str(exception), parent = self)
 			else:
 				result = False
-		self.Parent.wrapup(False)
+		self.worker.wrapup(False)
 		return result
 
 	def tc_preview(self, result):
@@ -1394,7 +1393,8 @@ class TestchartEditor(wx.Frame):
 
 			self.tc_set_default_status()
 			if verbose >= 1: safe_print(lang.getstr("success"))
-		self.Parent.start_timers()
+		if self.Parent and hasattr(self.Parent, "start_timers"):
+			self.Parent.start_timers()
 
 	def tc_add_patch(self, before, sample):
 		if hasattr(self, "preview"):
@@ -1599,3 +1599,15 @@ class TestchartEditor(wx.Frame):
 			self.preview.FitInside()
 			self.preview.Thaw()
 		self.tc_set_default_status()
+
+def main():
+	config.runtimeconfig(os.path.join(os.path.dirname(__file__), appname + ".py"))
+	config.initcfg()
+	lang.init()
+	config.app = wx.App(0)
+	config.app.tcframe = TestchartEditor()
+	config.app.tcframe.Show()
+	config.app.MainLoop()
+
+if __name__ == "__main__":
+	main()

@@ -8,8 +8,9 @@ try:
 	import RealDisplaySizeMM as RDSMM
 except ImportError:
 	RDSMM = None
+import config
 import lang
-from config import btn_width_correction, defaults, getbitmap, getcfg, get_data_path, scale_adjustment_factor, setcfg
+from config import btn_width_correction, defaults, getbitmap, getcfg, get_data_path, scale_adjustment_factor, setcfg, writecfg
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
@@ -101,26 +102,46 @@ class MeasureFrame(InvincibleFrame):
 		InfoDialog(self, msg = lang.getstr("measureframe.info"), ok = lang.getstr("ok"), bitmap = getbitmap("theme/icons/32x32/dialog-information"), logit = False)
 
 	def measure_handler(self, event):
-		self.Parent.call_pending_function()
+		self.save_cfg()
+		if self.Parent and hasattr(self.Parent, "call_pending_function"):
+			self.Parent.call_pending_function()
+
+	def save_cfg(self):
+		setcfg("dimensions.measureframe", self.get_dimensions())
+		if self.Parent and (self.Parent.IsShownOnScreen() or not hasattr(self.Parent, "pending_function") or os.getenv("DISPLAY") not in (None, ":0.0")) and hasattr(self.Parent, "display_ctrl"):
+			display_no = self.Parent.display_ctrl.GetSelection()
+		else:
+			display_no = wx.Display.GetFromWindow(self)
+		if display_no < 0: # window outside visible area
+			display_no = 0
+		setcfg("display.number", display_no + 1)
+		if self.Parent:
+			if hasattr(self.Parent, "display_lut_ctrl"):
+				if bool(int(getcfg("display_lut.link"))):
+					setcfg("display_lut.number", display_no + 1)
 
 	def Show(self, show = True):
 		if debug: safe_print("measureframe.Show", show)
 		if show:
 			self.measure_darken_background_cb.SetValue(bool(int(getcfg("measure.darken_background"))))
-			display_no = self.Parent.display_ctrl.GetSelection()
+			if self.Parent and hasattr(self.Parent, "display_ctrl"):
+				display_no = self.Parent.display_ctrl.GetSelection()
+			else:
+				display_no = wx.Display.GetFromWindow(self)
 			if display_no < 0 or display_no > wx.Display.GetCount() - 1:
 				display_no = 0
 			x, y = wx.Display(display_no).Geometry[:2]
 			self.SetPosition((x, y)) # place measure frame on correct display
 			self.place_n_zoom(*floatlist(getcfg("dimensions.measureframe").split(",")))
 		else:
-			setcfg("dimensions.measureframe", self.get_dimensions())
+			self.save_cfg()
 			if os.getenv("DISPLAY") in (None, ":0.0"):
 				display_no = wx.Display.GetFromWindow(self)
 				if display_no < 0 or display_no > wx.Display.GetCount() - 1:
 					display_no = 0
-				self.Parent.display_ctrl.SetSelection(display_no)
-				self.Parent.display_ctrl_handler(CustomEvent(wx.EVT_COMBOBOX.evtType[0], self.Parent.display_ctrl))
+				if self.Parent and hasattr(self.Parent, "display_ctrl"):
+					self.Parent.display_ctrl.SetSelection(display_no)
+					self.Parent.display_ctrl_handler(CustomEvent(wx.EVT_COMBOBOX.evtType[0], self.Parent.display_ctrl))
 		wx.CallAfter(wx.Frame.Show, self, show)
 
 	def Hide(self):
@@ -224,7 +245,11 @@ class MeasureFrame(InvincibleFrame):
 	def close_handler(self, event):
 		if debug: safe_print("measureframe_close_handler")
 		self.Hide()
-		self.Parent.ShowAll()
+		if self.Parent:
+			self.Parent.Show()
+		else:
+			writecfg()
+			self.Destroy()
 
 	def sizing_handler(self, event):
 		if debug: safe_print("measureframe_sizing_handler")
@@ -257,7 +282,7 @@ class MeasureFrame(InvincibleFrame):
 		try:
 			display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
 		except Exception, exception:
-			handle_error("Error - RealDisplaySizeMM() failed: " + str(exception), parent = self.Parent)
+			handle_error("Error - RealDisplaySizeMM() failed: " + str(exception), parent = self.Parent or self)
 		if not len(display_size_mm) or 0 in display_size_mm:
 			ppi_def = 100.0
 			ppi_mac = 72.0
@@ -327,3 +352,15 @@ class MeasureFrame(InvincibleFrame):
 		measureframe_dimensions = str(measureframe_pos[0]) + "," + str(measureframe_pos[1]) + "," + str(measureframe_scale)
 		if debug: safe_print(" measureframe_dimensions:", measureframe_dimensions)
 		return measureframe_dimensions
+
+def main():
+	config.runtimeconfig(os.path.join(os.path.dirname(__file__), appname + ".py"))
+	config.initcfg()
+	lang.init()
+	config.app = wx.App(0)
+	config.app.measureframe = MeasureFrame()
+	config.app.measureframe.Show()
+	config.app.MainLoop()
+
+if __name__ == "__main__":
+	main()
