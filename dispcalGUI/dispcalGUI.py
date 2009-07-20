@@ -63,7 +63,6 @@ from time import strftime
 
 if sys.platform == "win32":
 	from win32com.shell import shell
-	import _winreg
 	import pythoncom
 	import win32api
 	import win32con
@@ -131,7 +130,18 @@ sys.excepthook = _excepthook
 
 class DisplayCalibratorGUI(wx.Frame):
 
-	def __init__(self, app):
+	def __init__(self):
+		self.dist_testcharts = []
+		self.dist_testchart_names = []
+		for filename in resfiles:
+			path, ext = get_data_path(os.path.sep.join(filename.split("/"))), os.path.splitext(filename)[1]
+			if (not path or not os.path.isfile(path)):
+				if ext.lower() != ".json": # ignore missing language files, these are handled later
+					handle_error(u"Fatal error: Resource file '%s' not found" % filename, False)
+					return False
+			elif ext.lower() == ".ti1":
+				self.dist_testcharts += [path]
+				self.dist_testchart_names += [os.path.basename(path)]
 		try:
 			if sys.platform == "win32":
 				sp.call("color 0F", shell = True)
@@ -143,7 +153,6 @@ class DisplayCalibratorGUI(wx.Frame):
 				sp.call('clear', shell = True)
 		except Exception, exception:
 			safe_print("Info - could not set terminal colors:", str(exception))
-		self.app = app
 		if verbose >= 1: safe_print(lang.getstr("startup"))
 		self.worker = Worker(self)
 		if sys.platform != "darwin":
@@ -173,7 +182,6 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.update_comports()
 		self.update_profile_name()
 		self.SetSaneGeometry(int(getcfg("position.x")), int(getcfg("position.y")))
-		wx.CallAfter(self.Show)
 		if len(self.worker.displays):
 			if getcfg("calibration.file"):
 				self.load_cal(silent = True) # load LUT curves from last used .cal file
@@ -604,16 +612,12 @@ class DisplayCalibratorGUI(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.profile_save_path_btn_handler, menuitem)
 		if sys.platform != "darwin":
 			file_.AppendSeparator()
-		menuitem = file_.Append(-1, "&" + lang.getstr("menuitem.set_argyll_bin"))
-		self.Bind(wx.EVT_MENU, self.set_argyll_bin_handler, menuitem)
-		if sys.platform == "darwin":
-			self.app.SetMacPreferencesMenuItemId(menuitem.GetId())
+		self.menuitem_prefs = file_.Append(-1, "&" + lang.getstr("menuitem.set_argyll_bin"))
+		self.Bind(wx.EVT_MENU, self.set_argyll_bin_handler, self.menuitem_prefs)
 		if sys.platform != "darwin":
 			file_.AppendSeparator()
-		menuitem = file_.Append(-1, "&" + lang.getstr("menuitem.quit") + "\tCtrl+Q")
-		self.Bind(wx.EVT_MENU, self.OnClose, menuitem)
-		if sys.platform == "darwin":
-			self.app.SetMacExitMenuItemId(menuitem.GetId())
+		self.menuitem_quit = file_.Append(-1, "&" + lang.getstr("menuitem.quit") + "\tCtrl+Q")
+		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 		menubar.Append(file_, "&" + lang.getstr("menu.file"))
 
 		extra = wx.Menu()
@@ -672,11 +676,8 @@ class DisplayCalibratorGUI(wx.Frame):
 		menubar.Append(languages, "&" + lang.getstr("menu.language"))
 
 		help = wx.Menu()
-		menuitem = help.Append(-1, "&" + lang.getstr("menu.about"))
-		self.Bind(wx.EVT_MENU, self.aboutdialog_handler, menuitem)
-		if sys.platform == "darwin":
-			self.app.SetMacAboutMenuItemId(menuitem.GetId())
-			self.app.SetMacHelpMenuTitleName(lang.getstr("menu.help"))
+		self.menuitem_about = help.Append(-1, "&" + lang.getstr("menu.about"))
+		self.Bind(wx.EVT_MENU, self.aboutdialog_handler, self.menuitem_about)
 		menubar.Append(help, "&" + lang.getstr("menu.help"))
 
 		self.SetMenuBar(menubar)
@@ -3392,8 +3393,8 @@ class DisplayCalibratorGUI(wx.Frame):
 
 	def set_default_testchart(self, alert = True, force = False):
 		path = getcfg("testchart.file")
-		if os.path.basename(path) in self.app.dist_testchart_names:
-			path = self.app.dist_testcharts[self.app.dist_testchart_names.index(os.path.basename(path))]
+		if os.path.basename(path) in self.dist_testchart_names:
+			path = self.dist_testcharts[self.dist_testchart_names.index(os.path.basename(path))]
 			setcfg("testchart.file", path)
 		if force or lang.getstr(os.path.basename(path)) in [""] + self.default_testchart_names or ((not os.path.exists(path) or not os.path.isfile(path))):
 			ti1 = self.testchart_defaults[self.get_measurement_mode()][self.get_profile_type()]
@@ -4035,7 +4036,6 @@ class DisplayCalibratorGUI(wx.Frame):
 			elif sys.platform != "darwin":
 				sp.call('echo -e "\\033[0m"', shell = True)
 				sp.call('clear', shell = True)
-			config.app = None
 			self.Destroy()
 
 	def OnDestroy(self, event):
@@ -4043,23 +4043,20 @@ class DisplayCalibratorGUI(wx.Frame):
 
 class DisplayCalibrator(wx.App):
 	def OnInit(self):
-		self.dist_testcharts = []
-		self.dist_testchart_names = []
-		for filename in resfiles:
-			path, ext = get_data_path(os.path.sep.join(filename.split("/"))), os.path.splitext(filename)[1]
-			if (not path or not os.path.isfile(path)):
-				if ext.lower() != ".json": # ignore missing language files, these are handled later
-					handle_error(u"Fatal error: Resource file '%s' not found" % filename, False)
-					return False
-			elif ext.lower() == ".ti1":
-				self.dist_testcharts += [path]
-				self.dist_testchart_names += [os.path.basename(path)]
 		if sys.platform == "darwin" and not isapp:
 			self.SetAppName("Python")
 		else:
 			self.SetAppName(appname)
-		self.frame = DisplayCalibratorGUI(self)
+		self.frame = DisplayCalibratorGUI()
+		if not self.frame:
+			return False
 		self.SetTopWindow(self.frame)
+		if sys.platform == "darwin":
+			self.SetMacAboutMenuItemId(self.frame.menuitem_about.GetId())
+			self.SetMacPreferencesMenuItemId(self.frame.menuitem_prefs.GetId())
+			self.SetMacExitMenuItemId(self.frame.menuitem_quit.GetId())
+			self.SetMacHelpMenuTitleName(lang.getstr("menu.help"))
+		self.frame.Show()
 		return True
 
 def main():
@@ -4114,7 +4111,7 @@ def main():
 						break
 				stdout.seek(0)
 			if retcode != 0:
-				config.app = wx.App(redirect = False)
+				app = wx.App(redirect = False)
 				if sys.platform == "win32":
 					msg = u'Even though %s is a GUI application, it needs to be run from a command prompt. An attempt to automatically launch the command prompt failed.' % me
 				elif sys.platform == "darwin":
@@ -4161,8 +4158,8 @@ def main():
 			# init & run
 			initcfg()
 			lang.init()
-			config.app = DisplayCalibrator(redirect = False) # DON'T redirect stdin/stdout
-			config.app.MainLoop()
+			app = DisplayCalibrator(redirect = False) # DON'T redirect stdin/stdout
+			app.MainLoop()
 	except Exception, exception:
 		handle_error("Fatal error: " + traceback.format_exc())
 	try:

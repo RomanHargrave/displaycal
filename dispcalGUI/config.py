@@ -12,6 +12,8 @@ import math
 import os
 import sys
 from time import gmtime, strftime, timezone
+if sys.platform == "win32":
+	import _winreg
 
 if sys.platform == "win32":
 	from win32com.shell import shell, shellcon
@@ -22,8 +24,6 @@ from options import ascii, debug, verbose
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
 
 # Runtime config
-
-app = None
 
 if ascii:
 	enc = fs_enc = "ASCII"
@@ -481,7 +481,7 @@ def initcfg():
 		cfg.set(ConfigParser.DEFAULTSECT, "lang", "en")
 
 def setcfg(name, value):
-	""" Get an option value in the user config """
+	""" Set an option value in the user config """
 	if value is None:
 		cfg.remove_option(ConfigParser.DEFAULTSECT, name)
 	else:
@@ -493,9 +493,9 @@ def writecfg():
 		io = StringIO()
 		cfg.write(io)
 		io.seek(0)
-		l = io.read().strip("\n").split("\n")
-		l.sort()
-		cfgfile.write("\n".join(l))
+		lines = io.read().strip("\n").split("\n")
+		lines.sort()
+		cfgfile.write("\n".join(lines))
 		cfgfile.close()
 	except Exception, exception:
 		if not "handle_error" in globals():

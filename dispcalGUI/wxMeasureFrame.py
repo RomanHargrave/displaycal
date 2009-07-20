@@ -357,10 +357,10 @@ def main():
 	config.runtimeconfig(os.path.join(os.path.dirname(__file__), appname + ".py"))
 	config.initcfg()
 	lang.init()
-	config.app = wx.App(0)
-	config.app.measureframe = MeasureFrame()
-	config.app.measureframe.Show()
-	config.app.MainLoop()
+	app = wx.App(0)
+	app.measureframe = MeasureFrame()
+	app.measureframe.Show()
+	app.MainLoop()
 
 if __name__ == "__main__":
 	main()

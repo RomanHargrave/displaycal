@@ -3,6 +3,7 @@
 
 import decimal
 Decimal = decimal.Decimal
+import os
 
 from StringIOu import StringIOu as StringIO
 from safe_print import safe_print

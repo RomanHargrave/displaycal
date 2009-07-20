@@ -16,14 +16,14 @@ class AboutDialog(wx.Dialog):
 		   wx.RESIZE_BOX | wx.MAXIMIZE_BOX)
 		wx.Dialog.__init__(self, *args, **kwargs)
 
-		self.__set_properties()
+		self.set_properties()
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 
-	def __set_properties(self):
-		_icon = wx.EmptyIcon()
-		self.SetIcon(_icon)
+	def set_properties(self):
+		icon = wx.EmptyIcon()
+		self.SetIcon(icon)
 
 	def Layout(self):
 		self.sizer.SetSizeHints(self)
@@ -115,9 +115,9 @@ class BaseInteractiveDialog(wx.Dialog):
 		elif pos[1] == -1:
 			self.Center(wx.VERTICAL)
 		if sys.platform == "darwin" and oparent and \
-		   hasattr(oparent, "app") and (not oparent.app.IsActive() or \
-		   (hasattr(oparent.app, "frame") and not oparent.app.frame.IsShownOnScreen())):
-			start_new_thread(mac_app_activate, (.25, oparent.app.GetAppName()))
+		   (not wx.GetApp().IsActive() or \
+		   (hasattr(wx.GetApp(), "frame") and not wx.GetApp().frame.IsShownOnScreen())):
+			start_new_thread(mac_app_activate, (.25, wx.GetApp().GetAppName()))
 		if show:
 			self.ok.SetDefault()
 			self.ShowModalThenDestroy(oparent)

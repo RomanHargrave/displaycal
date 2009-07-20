@@ -46,8 +46,8 @@ def handle_error(errstr, parent = None, silent = False):
 			if not "wx" in globals():
 				global wx
 				import wx
-			if config.app is None and parent is None:
-				config.app = wx.App(redirect = False)
+			if wx.GetApp() is None and parent is None:
+				app = wx.App(redirect = False)
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 				parent.IsShownOnScreen() else None, errstr, appname, wx.OK | 
 				wx.ICON_ERROR)

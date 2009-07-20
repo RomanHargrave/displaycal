@@ -256,12 +256,8 @@ class CGATS(dict):
 			result += ['']
 			result += ['NUMBER_OF_SETS %s' % (len(data))]
 			result += ['BEGIN_DATA']
-			# l = []
 			for key in data:
 				result += [' '.join([rpad(data[key][item], data.vmaxlen) for item in data.parent['DATA_FORMAT'].values()])]
-				# l += [[data[key][item] for item in data.parent['DATA_FORMAT'].values()]]
-			# l.sort()
-			# result += [' '.join([str(value) for value in item]) for item in l]
 			result += ['END_DATA']
 		return '\n'.join(result)
 
@@ -477,11 +473,11 @@ class CGATS(dict):
 				for query_key in query:
 					if query_key in item or (type(item) == CGATS and ((query_key == 'NUMBER_OF_FIELDS' and 'DATA_FORMAT' in item) or (query_key == 'NUMBER_OF_SETS' and 'DATA' in item))):
 						if query_value == None and isinstance(query, dict):
-							_query_value = query[query_key]
+							current_query_value = query[query_key]
 						else:
-							_query_value = query_value
-						if _query_value != None:
-							if item[query_key] != _query_value:
+							current_query_value = query_value
+						if current_query_value != None:
+							if item[query_key] != current_query_value:
 								break
 						if get_value:
 							result_n[len(result_n)] = item[query_key]
@@ -534,9 +530,9 @@ class CGATS(dict):
 			key = item.key
 		else:
 			key = item
-		l = len(self) - 1
+		maxindex = len(self) - 1
 		result = dict.pop(self, key)
-		if type(key) == int and key != l:
+		if type(key) == int and key != maxindex:
 			self.moveby1(key + 1, -1)
 			dict.pop(self, len(self) - 1)
 		self.setmodified()

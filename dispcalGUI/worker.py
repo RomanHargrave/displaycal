@@ -394,7 +394,7 @@ def set_argyll_bin(parent = None):
 class Worker():
 	def __init__(self, owner = None):
 		self.owner = owner # owner should be a wxFrame or similar
-		self.__reset()
+		self.reset()
 		self.argyll_version = [0, 0, 0]
 		self.argyll_version_string = ""
 		self.instruments = []
@@ -406,7 +406,7 @@ class Worker():
 		self.options_targen = []
 		self.tempdir = None
 
-	def __reset(self):
+	def reset(self):
 		self.pwd = None
 		self.retcode = -1
 		self.output = []
@@ -510,7 +510,7 @@ class Worker():
 			# fn = self.infoframe.Log
 		# else:
 		fn = None
-		self.__reset()
+		self.reset()
 		if None in [cmd, args]:
 			if verbose >= 1 and not capture_output: safe_print(lang.getstr("aborted"), fn = fn)
 			return False

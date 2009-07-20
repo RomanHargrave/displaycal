@@ -5,6 +5,7 @@ import logging
 import logging.handlers
 import os
 import re
+import sys
 from time import localtime, strftime
 
 from StringIOu import StringIOu as StringIO, universal_newlines
@@ -21,10 +22,14 @@ def log(msg, fn = None):
 	if fn:
 		for line in universal_newlines(msg).split("\n"):
 			fn(line)
-	if config.app is not None and \
-	   hasattr(config.app, "frame") and \
-	   hasattr(config.app.frame, "infoframe"):
-		config.app.frame.infoframe.Log(msg)
+	if "wx" in sys.modules:
+		if not "wx" in globals():
+			global wx
+			import wx
+		if wx.GetApp() is not None and \
+		   hasattr(wx.GetApp(), "frame") and \
+		   hasattr(wx.GetApp().frame, "infoframe"):
+			wx.GetApp().frame.infoframe.Log(msg)
 
 def safe_print(*args, **kwargs):
 	_safe_print(*args, **kwargs)

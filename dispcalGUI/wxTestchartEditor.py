@@ -64,12 +64,12 @@ class TestchartEditor(wx.Frame):
 			p2 = wx.Panel(splitter)
 			p2.droptarget = FileDrop()
 			p2.droptarget.drophandlers = {
-				".icc": (self.Parent or self).ti1_drop_handler,
-				".icm": (self.Parent or self).ti1_drop_handler,
-				".ti1": (self.Parent or self).ti1_drop_handler,
-				".ti3": (self.Parent or self).ti1_drop_handler
+				".icc": self.ti1_drop_handler,
+				".icm": self.ti1_drop_handler,
+				".ti1": self.ti1_drop_handler,
+				".ti3": self.ti1_drop_handler
 			}
-			p2.droptarget.unsupported_handler = (self.Parent or self).drop_unsupported_handler
+			p2.droptarget.unsupported_handler = self.drop_unsupported_handler
 			p2.SetDropTarget(p2.droptarget)
 			p2.sizer = wx.BoxSizer(wx.VERTICAL)
 			p2.SetSizer(p2.sizer)
@@ -83,12 +83,12 @@ class TestchartEditor(wx.Frame):
 			panel = self.panel = wx.Panel(self)
 		panel.droptarget = FileDrop()
 		panel.droptarget.drophandlers = {
-			".icc": (self.Parent or self).ti1_drop_handler,
-			".icm": (self.Parent or self).ti1_drop_handler,
-			".ti1": (self.Parent or self).ti1_drop_handler,
-			".ti3": (self.Parent or self).ti1_drop_handler
+			".icc": self.ti1_drop_handler,
+			".icm": self.ti1_drop_handler,
+			".ti1": self.ti1_drop_handler,
+			".ti3": self.ti1_drop_handler
 		}
-		panel.droptarget.unsupported_handler = (self.Parent or self).drop_unsupported_handler
+		panel.droptarget.unsupported_handler = self.drop_unsupported_handler
 		panel.SetDropTarget(panel.droptarget)
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1604,10 +1604,10 @@ def main():
 	config.runtimeconfig(os.path.join(os.path.dirname(__file__), appname + ".py"))
 	config.initcfg()
 	lang.init()
-	config.app = wx.App(0)
-	config.app.tcframe = TestchartEditor()
-	config.app.tcframe.Show()
-	config.app.MainLoop()
+	app = wx.App(0)
+	app.tcframe = TestchartEditor()
+	app.tcframe.Show()
+	app.MainLoop()
 
 if __name__ == "__main__":
 	main()
