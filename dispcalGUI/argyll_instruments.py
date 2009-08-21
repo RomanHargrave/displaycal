@@ -8,8 +8,8 @@ instruments = {
 	
 	# high_res: Does the instrument support high-res spectral readings?
 	
-	# sensor_cal: Does the instrument need to calibrate its sensor by putting it
-	# on a reference tile or black surface?
+	# sensor_cal: Does the instrument need to calibrate its sensor by putting 
+	# it on a reference tile or black surface?
 	# A value of False for sensor_cal means the instrument can be left
 	# on the display
 	# A value of True for sensor_cal means the instrument must be
@@ -33,8 +33,8 @@ instruments = {
 		"sensor_cal": False,
 		"skip_sensor_cal": False # DTP94 instrument access fails 
 				# when using -N option to skip automatic sensor calibration
-				# (dispread -D9 output: "Setting no-sensor_calibrate failed failed
-				# with 'Unsupported function'")
+				# (dispread -D9 output: "Setting no-sensor_calibrate failed 
+				# failed with 'Unsupported function'")
 	},
 	"Spectrolino": {
 		"spectral": True,
@@ -71,8 +71,8 @@ instruments = {
 		"sensor_cal": False, # FIXME: Only i1 Display 2
 		"skip_sensor_cal": False # i1 Display 2 instrument access fails 
 				# when using -N option to skip automatic sensor calibration
-				# (dispread -D9 output: "Setting no-sensor_calibrate failed failed
-				# with 'Unsupported function'")
+				# (dispread -D9 output: "Setting no-sensor_calibrate failed 
+				# failed with 'Unsupported function'")
 	},
 	"i1 Monitor": {
 		"spectral": True,
@@ -123,14 +123,16 @@ instruments = {
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
-	"Dummy Meter with Hires & Projector Mode": { # dummy instrument, just for testing
+	"Dummy Meter with Hires & Projector Mode": {
+		# dummy instrument, just for testing
 		"spectral": False,
 		"high_res": True,
 		"projector_mode": True,
 		"sensor_cal": False,
 		"skip_sensor_cal": False
 	},
-	"Dummy Spectro with Hires & Projector Mode": { # dummy instrument, just for testing
+	"Dummy Spectro with Hires & Projector Mode": {
+		# dummy instrument, just for testing
 		"spectral": True,
 		"high_res": True,
 		"projector_mode": True,

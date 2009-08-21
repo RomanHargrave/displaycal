@@ -25,6 +25,7 @@ GRIDCOLOUR = "#444444"
 HILITECOLOUR = "white"
 
 class LUTCanvas(plot.PlotCanvas):
+
 	def __init__(self, *args, **kwargs):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
 		self.SetBackgroundColour(BGCOLOUR)
@@ -43,7 +44,8 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetXSpec(5)
 		self.SetYSpec(5)
 
-	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, r=True, g=True, b=True):
+	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, 
+				r=True, g=True, b=True):
 		if not title:
 			title = "LUT"
 		if not xLabel:
@@ -72,22 +74,31 @@ class LUTCanvas(plot.PlotCanvas):
 					linear_points += [[i, i]]
 				if r:
 					n = float(vcgt.data[0][i]) / (vcgt.entryCount + 1)
-					if not detect_increments or not r_points or i == vcgt.entryCount - 1 or n != i:
-						if detect_increments and n != i and len(r_points) == 1 and i > 1 and r_points[-1][0] == r_points[-1][1]:
+					if not detect_increments or not r_points or \
+					   i == vcgt.entryCount - 1 or n != i:
+						if detect_increments and n != i and \
+						   len(r_points) == 1 and i > 1 and \
+						   r_points[-1][0] == r_points[-1][1]:
 							# print "R", i - 1, "=>", i - 1
 							r_points += [[i - 1, i - 1]]
 						r_points += [[i, n]]
 				if g:
 					n = float(vcgt.data[1][i]) / (vcgt.entryCount + 1)
-					if not detect_increments or not g_points or i == vcgt.entryCount - 1 or n != i:
-						if detect_increments and n != i and len(g_points) == 1 and i > 1 and g_points[-1][0] == g_points[-1][1]:
+					if not detect_increments or not g_points or \
+					   i == vcgt.entryCount - 1 or n != i:
+						if detect_increments and n != i and \
+						   len(g_points) == 1 and i > 1 and \
+						   g_points[-1][0] == g_points[-1][1]:
 							# print "G", i - 1, "=>", i - 1
 							g_points += [[i - 1, i - 1]]
 						g_points += [[i, n]]
 				if b:
 					n = float(vcgt.data[2][i]) / (vcgt.entryCount + 1)
-					if not detect_increments or not b_points or i == vcgt.entryCount - 1 or n != i:
-						if detect_increments and n != i and len(b_points) == 1 and i > 1 and b_points[-1][0] == b_points[-1][1]:
+					if not detect_increments or not b_points or \
+					   i == vcgt.entryCount - 1 or n != i:
+						if detect_increments and n != i and \
+						   len(b_points) == 1 and i > 1 and \
+						   b_points[-1][0] == b_points[-1][1]:
 							# print "B", i - 1, "=>", i - 1
 							b_points += [[i - 1, i - 1]]
 						b_points += [[i, n]]
@@ -101,11 +112,17 @@ class LUTCanvas(plot.PlotCanvas):
 				if not detect_increments:
 					linear_points += [[i, i]]
 				if r:
-					r_points += [[float(vcgt["redMin"]) + math.pow(step * i / 100.0, 1.0 / float(vcgt["redGamma"])) * float(vcgt["redMax"]) * 255, i]]
+					r_points += [[float(vcgt["redMin"]) + math.pow(step * i / 
+						100.0, 1.0 / float(vcgt["redGamma"])) * 
+						float(vcgt["redMax"]) * 255, i]]
 				if g:
-					g_points += [[float(vcgt["greenMin"]) + math.pow(step * i / 100.0, 1.0 / float(vcgt["greenGamma"])) * float(vcgt["greenMax"]) * 255, i]]
+					g_points += [[float(vcgt["greenMin"]) + math.pow(step * i / 
+						100.0, 1.0 / float(vcgt["greenGamma"])) * 
+						float(vcgt["greenMax"]) * 255, i]]
 				if b:
-					b_points += [[float(vcgt["blueMin"]) + math.pow(step * i / 100.0, 1.0 / float(vcgt["blueGamma"])) * float(vcgt["blueMax"]) * 255, i]]
+					b_points += [[float(vcgt["blueMin"]) + math.pow(step * i / 
+					100.0, 1.0 / float(vcgt["blueGamma"])) * 
+					float(vcgt["blueMax"]) * 255, i]]
 
 		# print r_points
 		# print g_points
@@ -114,7 +131,10 @@ class LUTCanvas(plot.PlotCanvas):
 		linear = [[0, 0], [input[-1], input[-1]]]
 		
 		if not vcgt:
-			r_points = g_points = b_points = linear if detect_increments else linear_points
+			if detect_increments:
+				r_points = g_points = b_points = linear
+			else:
+				r_points = g_points = b_points = linear_points
 
 		# # scale
 		# for i in range(len(input)):
@@ -132,14 +152,18 @@ class LUTCanvas(plot.PlotCanvas):
 				# for j in range(len(b_points[i])):
 					# b_points[i][j] *= (len(input) + 1)
 
-		# lines += [Plot([[input[-1] / 2.0, 0], [input[-1] / 2.0, input[-1]]], colour=GRIDCOLOUR)] # bottom center to top center
-		# lines += [Plot([[0, input[-1] / 2.0], [input[-1], input[-1] / 2.0]], colour=GRIDCOLOUR)] # center left to center right
-		# lines += [Plot([[0, input[-1]], [input[-1], input[-1]]], colour=GRIDCOLOUR)] # top
-		# lines += [Plot([[input[-1], 0], [input[-1], input[-1]]], colour=GRIDCOLOUR)] # right
-		# lines += [Plot([[0, 0], [input[-1], 1]], colour=GRIDCOLOUR)] # bottom
-		# lines += [Plot([[0, 0], [0, input[-1]]], colour=GRIDCOLOUR)] # left
+		# lines += [Plot([[input[-1] / 2.0, 0], [input[-1] / 2.0, input[-1]]], 
+		# 				 colour=GRIDCOLOUR)]  # bottom center to top center
+		# lines += [Plot([[0, input[-1] / 2.0], [input[-1], input[-1] / 2.0]], 
+		# 				 colour=GRIDCOLOUR)]  # center left to center right
+		# lines += [Plot([[0, input[-1]], [input[-1], input[-1]]], 
+		# 				 colour=GRIDCOLOUR)]  # top
+		# lines += [Plot([[input[-1], 0], [input[-1], input[-1]]], 
+		# 				 colour=GRIDCOLOUR)]  # right
+		# lines += [Plot([[0, 0], [input[-1], 1]], colour=GRIDCOLOUR)]  # bottom
+		# lines += [Plot([[0, 0], [0, input[-1]]], colour=GRIDCOLOUR)]  # left
 
-		# lines += [Plot(linear, colour=GRIDCOLOUR)] # bottom left to top right
+		# lines += [Plot(linear, colour=GRIDCOLOUR)]  # bottom left to top right
 
 		legend = []
 		points = []
@@ -158,8 +182,10 @@ class LUTCanvas(plot.PlotCanvas):
 				if points[i] != points[0]:
 					same = False
 					break
-		prefix = ('LIN ' if points and points[0] == (linear if detect_increments else linear_points) else '')
-		if len(legend) > 1 and same: # (r_points or linear_points) == (g_points or linear_points) == (b_points or linear_points) == (linear if detect_increments else linear_points):
+		prefix = ('LIN ' if points and 
+				  points[0] == (linear if detect_increments else 
+				                linear_points) else '')
+		if len(legend) > 1 and same:
 			if legend == ['R', 'G']:
 				colour = 'yellow'
 			elif legend == ['R', 'B']:
@@ -168,8 +194,9 @@ class LUTCanvas(plot.PlotCanvas):
 				colour = 'cyan'
 			else:
 				colour = 'white'
-			# lines += [Plot(linear if detect_increments else linear_points, legend='='.join(legend), colour=colour)] # bottom left to top right
-			lines += [Plot(points[0], legend=prefix + '='.join(legend), colour=colour)] # bottom left to top right
+			# Bottom left to top right
+			lines += [Plot(points[0], legend=prefix + '='.join(legend), 
+						   colour=colour)]
 		else:
 			if r:
 				# print r_points[0], r_points[-1]
@@ -184,9 +211,12 @@ class LUTCanvas(plot.PlotCanvas):
 		if not lines:
 			lines += [Plot([])]
 
-		self.Draw(plot.PlotGraphics(lines, title, xLabel, yLabel), xAxis=(0, input[-1]), yAxis=(0, input[-1]))
+		self.Draw(plot.PlotGraphics(lines, title, xLabel, yLabel), 
+				  xAxis=(0, input[-1]), yAxis=(0, input[-1]))
+
 
 class LUTFrame(wx.Frame):
+
 	def __init__(self, *args, **kwargs):
 	
 		if len(args) < 3 and not "title" in kwargs:
@@ -210,7 +240,7 @@ class LUTFrame(wx.Frame):
 		
 		self.box_panel = wx.Panel(self)
 		self.box_panel.SetBackgroundColour(BGCOLOUR)
-		self.sizer.Add(self.box_panel, flag = wx.EXPAND)
+		self.sizer.Add(self.box_panel, flag=wx.EXPAND)
 		
 		self.box_sizer = wx.GridSizer(-1, 3)
 		self.box_panel.SetSizer(self.box_sizer)
@@ -218,7 +248,8 @@ class LUTFrame(wx.Frame):
 		self.box_sizer.Add((0, 0))
 		
 		self.cbox_sizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.box_sizer.Add(self.cbox_sizer, flag = wx.ALL | wx.ALIGN_CENTER, border = 8)
+		self.box_sizer.Add(self.cbox_sizer, 
+						   flag=wx.ALL | wx.ALIGN_CENTER, border=8)
 		
 		self.cbox_sizer.Add((20, 0))
 		
@@ -226,7 +257,7 @@ class LUTFrame(wx.Frame):
 		self.toggle_red.SetForegroundColour(FGCOLOUR)
 		self.toggle_red.SetValue(True)
 		self.cbox_sizer.Add(self.toggle_red)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id = self.toggle_red.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_red.GetId())
 		
 		self.cbox_sizer.Add((4, 0))
 		
@@ -234,7 +265,7 @@ class LUTFrame(wx.Frame):
 		self.toggle_green.SetForegroundColour(FGCOLOUR)
 		self.toggle_green.SetValue(True)
 		self.cbox_sizer.Add(self.toggle_green)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id = self.toggle_green.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_green.GetId())
 		
 		self.cbox_sizer.Add((4, 0))
 		
@@ -242,7 +273,7 @@ class LUTFrame(wx.Frame):
 		self.toggle_blue.SetForegroundColour(FGCOLOUR)
 		self.toggle_blue.SetValue(True)
 		self.cbox_sizer.Add(self.toggle_blue)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id = self.toggle_blue.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_blue.GetId())
 
 		self.client.SetPointLabelFunc(self.DrawPointLabel)
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
@@ -252,55 +283,63 @@ class LUTFrame(wx.Frame):
 	
 	def DrawLUT(self, event=None):
 		self.SetStatusText('')
-		self.client.DrawLUT(self.profile.tags.vcgt if self.profile and "vcgt" in self.profile.tags else None, 
-							title=self.profile.getDescription() if self.profile else None, 
+		self.client.DrawLUT(self.profile.tags.vcgt if self.profile and 
+							"vcgt" in self.profile.tags else None, 
+							title=self.profile.getDescription() if 
+								  self.profile else None, 
 							xLabel=self.xLabel,
 							yLabel=self.yLabel,
-							r=self.toggle_red.GetValue() if hasattr(self, "toggle_red") else False, 
-							g=self.toggle_green.GetValue() if hasattr(self, "toggle_green") else False, 
-							b=self.toggle_blue.GetValue() if hasattr(self, "toggle_blue") else False)
+							r=self.toggle_red.GetValue() if 
+							  hasattr(self, "toggle_red") else False, 
+							g=self.toggle_green.GetValue() if 
+							  hasattr(self, "toggle_green") else False, 
+							b=self.toggle_blue.GetValue() if 
+							  hasattr(self, "toggle_blue") else False)
 
 	def DrawPointLabel(self, dc, mDataDict):
-		"""This is the fuction that defines how the pointLabels are plotted
-			dc - DC that will be passed
-			mDataDict - Dictionary of data that you want to use for the pointLabel
-
-			As an example I have decided I want a box at the curve point
-			with some text information about the curve plotted below.
-			Any wxDC method can be used.
 		"""
-		# ----------
+		Draw point labels.
+		
+		dc - DC that will be passed
+		mDataDict - Dictionary of data that you want to use for the pointLabel
+		
+		"""
 		dc.SetPen(wx.Pen(wx.BLACK))
 		dc.SetBrush(wx.Brush( wx.BLACK, wx.SOLID ) )
 		
-		sx, sy = mDataDict["scaledXY"] #scaled x,y of closest point
-		dc.DrawRectangle( sx-3,sy-3, 7, 7)  #10by10 square centered on point
+		sx, sy = mDataDict["scaledXY"]  # Scaled x, y of closest point
+		dc.DrawRectangle(sx - 3, sy - 3, 7, 7)  # 7x7 square centered on point
 		px,py = mDataDict["pointXY"]
 		cNum = mDataDict["curveNum"]
 		pntIn = mDataDict["pIndex"]
 		legend = mDataDict["legend"]
 
 	def OnMotion(self, event):
-		#show closest point (when enbled)
-		if self.client.GetEnablePointLabel() == True:
-			#make up dict with info for the pointLabel
-			#I've decided to mark the closest point on the closest curve
-			dlst= self.client.GetClosestPoint( self.client._getXY(event), pointScaled= True)
-			if dlst != []:    #returns [] if none
+		if self.client.GetEnablePointLabel():
+			# Show closest point (when enbled)
+			# Make up dict with info for the point label
+			dlst = self.client.GetClosestPoint(self.client._getXY(event), 
+											   pointScaled= True)
+			if dlst != []:
 				curveNum, legend, pIndex, pointXY, scaledXY, distance = dlst
-				self.SetStatusText(legend + " " + u" \u2192 ".join([str(point) for point in pointXY]))
-				#make up dictionary to pass to my user function (see DrawPointLabel) 
-				mDataDict= {"curveNum":curveNum, "legend":legend, "pIndex":pIndex,\
-							"pointXY":pointXY, "scaledXY":scaledXY}
-				#pass dict to update the pointLabel
+				self.SetStatusText(legend + " " + 
+								   u" \u2192 ".join([str(point) for point in 
+													 pointXY]))
+				# Make up dictionary to pass to DrawPointLabel
+				mDataDict= {"curveNum": curveNum, "legend": legend, 
+							"pIndex": pIndex, "pointXY": pointXY, 
+							"scaledXY": scaledXY}
+				# Pass dict to update the point label
 				self.client.UpdatePointLabel(mDataDict)
-		event.Skip()           #go to next handler
+		event.Skip() # Go to next handler
 
 class LUTViewer(wx.App):
+
 	def OnInit(self):
 		self.frame = LUTFrame(None, -1)
 		self.frame.Show(True)
 		return True
+
 
 def main():
 

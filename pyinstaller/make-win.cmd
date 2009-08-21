@@ -13,5 +13,4 @@ call "%VS90COMNTOOLS%..\..\VC\vcvarsall" %2
 path %~dp1\Scripts;%~dp1;%PATH%
 pushd "%~dp0"
 scons
-%1 Configure.py
 popd

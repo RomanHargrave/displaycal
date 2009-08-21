@@ -12,7 +12,8 @@ def GetAllChildren(self):
 	allchildren = []
 	for child in children:
 		allchildren += [child]
-		if hasattr(child, "GetAllChildren") and callable(child.GetAllChildren):
+		if hasattr(child, "GetAllChildren") and hasattr(child.GetAllChildren, 
+														"__call__"):
 			allchildren += child.GetAllChildren()
 	return allchildren
 
@@ -28,7 +29,8 @@ def GetDisplay(self):
 
 wx.Window.GetDisplay = GetDisplay
 
-def SetMaxFontSize(self, pointsize = 11):
+
+def SetMaxFontSize(self, pointsize=11):
 	font = self.GetFont()
 	if font.GetPointSize() > pointsize:
 		font.SetPointSize(pointsize)
@@ -36,12 +38,15 @@ def SetMaxFontSize(self, pointsize = 11):
 
 wx.Window.SetMaxFontSize = SetMaxFontSize
 
-def SetSaneGeometry(self, x = None, y = None, w = None, h = None):
-	""" Set a 'sane' window position and/or size (within visible screen area). """
+
+def SetSaneGeometry(self, x=None, y=None, w=None, h=None):
+	"""
+	Set a 'sane' window position and/or size (within visible screen area).
+	"""
 	if not None in (x, y):
-		# first, move to coordinates given
+		# First, move to coordinates given
 		self.SetPosition((x, y))
-	# returns the first display's client area if the window 
+	# Returns the first display's client area if the window 
 	# is completely outside the client area of all displays
 	display_client_rect = self.GetDisplay().ClientArea 
 	if sys.platform not in ("darwin", "win32"): # Linux
@@ -49,22 +54,27 @@ def SetSaneGeometry(self, x = None, y = None, w = None, h = None):
 	else:
 		safety_margin = 20
 	if not None in (w, h):
-		# set given size, but resize if needed to fit inside client area
+		# Set given size, but resize if needed to fit inside client area
 		self.SetSize((min(display_client_rect[2] - safety_margin, w), 
 			min(display_client_rect[3] - safety_margin, h))) 
 	if not None in (x, y):
 		if not display_client_rect.ContainsXY(x, y) or \
 		   not display_client_rect.ContainsRect((x, y, 100, 100)):
-			# if outside client area or near the borders,
+			# If outside client area or near the borders,
 			# move to leftmost / topmost coordinates of client area
 			self.SetPosition(display_client_rect[0:2])
 
 wx.Window.SetSaneGeometry = SetSaneGeometry
 
+
 def GridGetSelectedRowsFromSelection(self):
-	""" Return the number of fully selected rows.
+	"""
+	Return the number of fully selected rows.
+	
 	Unlike GetSelectedRows, include rows that have been selected
-	by chosing individual cells """
+	by chosing individual cells.
+	
+	"""
 	sel = self.GetSelection()
 	numcols = self.GetNumberCols()
 	rows = []
@@ -81,9 +91,11 @@ def GridGetSelectedRowsFromSelection(self):
 
 wx.grid.Grid.GetSelectedRowsFromSelection = GridGetSelectedRowsFromSelection
 
+
 def GridGetSelectionRows(self):
-	""" Return the rows a selection spans, 
-	even if not all cells in a row are selected """
+	"""
+	Return the selected rows, even if not all cells in a row are selected.
+	"""
 	sel = self.GetSelection()
 	rows = []
 	i = -1
@@ -96,38 +108,49 @@ def GridGetSelectionRows(self):
 
 wx.grid.Grid.GetSelectionRows = GridGetSelectionRows
 
+
 def IsSizer(self):
 	""" Check if the window is a sizer """
 	return isinstance(self, wx.Sizer)
 
 wx.Window.IsSizer = IsSizer
 
+
 class CustomEvent(wx.PyEvent):
-	def __init__(self, typeId, object, window = None):
+
+	def __init__(self, typeId, object, window=None):
 		wx.PyEvent.__init__(self, typeId, object.GetId())
 		self.evtType = [typeId]
 		self.typeId = typeId
 		self.object = object
 		self.window = window
+
 	def GetEventObject(self):
 		return self.object
+
 	def GetEventType(self):
 		return self.typeId
+
 	def GetWindow(self):
 		return self.window
 
+
 class CustomGridCellEvent(CustomEvent):
-	def __init__(self, typeId, object, row = -1, col = -1, window = None):
+	def __init__(self, typeId, object, row=-1, col=-1, window=None):
 		CustomEvent.__init__(self, typeId, object, window)
 		self.row = row
 		self.col = col
+
 	def GetRow(self):
 		return self.row
+
 	def GetCol(self):
 		return self.col
 
+
 class FileDrop(wx.FileDropTarget):
-	def __init__(self, drophandlers = None):
+
+	def __init__(self, drophandlers=None):
 		wx.FileDropTarget.__init__(self)
 		if drophandlers is None:
 			drophandlers = {}

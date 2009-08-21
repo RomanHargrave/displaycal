@@ -2,11 +2,20 @@
 # -*- coding: utf-8 -*-
 
 import codecs
+try:
+	from functools import reduce
+except ImportError:
+	# Python < 2.6
+	pass
 
 def asciize(obj):
-	""" Turn several unicode chars into an ASCII representation.
+	"""
+	Turn several unicode chars into an ASCII representation.
+	
 	This function either takes a string or an exception as argument (when used 
-	as error handler for encode or decode) """
+	as error handler for encode or decode).
+	
+	"""
 	subst = {
 		u"\u00a9": "(C)", # U+00A9 copyright sign
 		u"\u00ae": "(R)", # U+00AE registered sign
@@ -30,9 +39,15 @@ def asciize(obj):
 
 codecs.register_error("asciize", asciize)
 
+
 def center(text, width = None):
-	""" Center (mono-spaced) text. If no width is given, the longest line 
-	(after breaking at each newline) is used as max width. """
+	"""
+	Center (mono-spaced) text.
+	
+	If no width is given, the longest line 
+	(after breaking at each newline) is used as max width.
+	
+	"""
 	text = text.split("\n")
 	if width is None:
 		width = 0
@@ -45,11 +60,33 @@ def center(text, width = None):
 		i += 1
 	return "\n".join(text)
 
+
+def universal_newlines(txt):
+	"""
+	Return txt with all new line formats converted to POSIX newlines.
+	
+	"""
+	return txt.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def strtr(txt, replacements):
+	"""
+	String multi-replace, a bit like PHP's strtr.
+	
+	replacements has to be a dict.
+	
+	"""
+	for key in replacements:
+		txt = txt.replace(key, replacements[key])
+	return txt
+
+
 def wrap(text, width = 70):
 	"""
-	A word-wrap function that preserves existing line breaks
-	and most spaces in the text. Expects that existing line
-	breaks are posix newlines (\\n).
+	A word-wrap function that preserves existing line breaks and spaces.
+	
+	Expects that existing line breaks are posix newlines (\\n).
+	
 	"""
 	return reduce(lambda line, word, width=width: '%s%s%s' %
 		(line,

@@ -24,13 +24,19 @@ else:
 from util_os import getenvu, expanduseru
 
 class TrashcanUnavailableError(Exception):
+
 	def __str__(self):
 		return self.args[0]
 
+
 def trash(paths):
-	""" Move files and folders to the trash. If a trashcan facility does not
-	exist, simply delete the files/folders. Return the list of successfully 
-	processed paths. """
+	"""
+	Move files and folders to the trash.
+	
+	If a trashcan facility does not exist, do not touch the files. 
+	Return a list of successfully processed paths.
+	
+	"""
 	if isinstance(paths, (str, unicode)):
 		paths = [paths]
 	if not isinstance(paths, list):
@@ -55,7 +61,7 @@ def trash(paths):
 			# older Linux distros and Mac OS X
 			trashcan = os.path.join(expanduseru("~"), ".Trash")
 		if not os.path.isdir(trashcan):
-			raise TrashcanUnavailableError("No such directory: '%s'" % trashcan)
+			raise TrashcanUnavailableError("Not a directory: '%s'" % trashcan)
 		for path in paths:
 			if os.path.isdir(trashcan):
 				n = 1
@@ -70,7 +76,8 @@ def trash(paths):
 					                         os.path.basename(dst) + 
 											 ".trashinfo"), "w")
 					info.write("[Trash Info]\n")
-					info.write("Path=%s\n" % quote(path.encode(sys.getfilesystemencoding())))
+					info.write("Path=%s\n" % 
+							   quote(path.encode(sys.getfilesystemencoding())))
 					info.write("DeletionDate=" + 
 					           strftime("%Y-%m-%dT%H:%M:%S"))
 					info.close()

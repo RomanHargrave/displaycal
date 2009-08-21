@@ -600,10 +600,13 @@
 				
 				<p>Mac OS X:<br />
 				- <a href="http://developer.apple.com/TOOLS/xcode/">XCode</a><br />
-				- <a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable</p>
+				- <a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable (install setuptools first: <code>sudo python util/ez_setup.py -Z setuptools</code>). NOTE: If you want to use py2app with Python 2.6 you need to install the development version of py2app and modulegraph from SVN:<br />
+					<code>easy_install modulegraph==dev<br />
+					easy_install py2app==dev</code>
+				</p>
 				
 				<p>Windows:<br />
-				- a C-compiler (e.g. <a href="http://www.microsoft.com/germany/Express/product/visualcplusplusexpress.aspx">MS Visual C++ Express</a> or <a href="http://www.mingw.org">MinGW</a>. I'd recommend Visual C++ Express as works out of the box)<br />
+				- a C-compiler (e.g. <a href="http://www.microsoft.com/germany/Express/product/visualcplusplusexpress.aspx">MS Visual C++ Express</a> or <a href="http://www.mingw.org">MinGW</a>. If you're using Python 2.6 I'd recommend Visual C++ Express as it works out of the box)<br />
 				- <a href="http://pypi.python.org/pypi/py2exe/">py2exe</a> if you want to build a standalone executable, alternatively you can use the included pyinstaller (see <a href="#install-src">installation from source</a>, additional setup.py commands)</p>
 				
 				<p>You can run directly from (compiled) source without installation if you want. To do this, you need to build the extension modules “in-place”:</p>
@@ -676,7 +679,7 @@
 					<dt>bdist_pyi (Linux or Windows)</dt>
 						<dd>Uses pyinstaller to create a standalone executable. It has the ability to generate single-file executables (by specifying the -F option) which do not need to be shipped with external files. The drawback is a longer startup time, because the files are extracted to a temporary directory at runtime. Normally, you want to use bdist_standalone instead.</dd>
 					<dt>bdist_standalone</dt>
-						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, py2app is not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2exe to acces all its files.</dd>
+						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, py2app is not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files.</dd>
 					<dt>inno (Windows only)</dt>
 						<dd>Creates an Inno Setup install script for an executable created with the py2exe or bdist_standalone commands.</dd>
 					<dt>purge</dt>
@@ -953,7 +956,7 @@
 				<dt>${DATE} ${VERSION}</dt>
 					<dd>
 						<ul>
-							<li></li>
+							<li>Major code overhaul: A lot of code has been cleaned up and moved around to make the application more modular.</li>
 						</ul>
 					</dd>
 				

@@ -11,13 +11,19 @@ import shutil
 import sys
 
 from dispcalGUI.setup import __doc__
-from dispcalGUI.meta import name, domain, version, version_lin, version_mac, version_src, version_tuple, version_win
+from dispcalGUI.meta import (name, domain, version, version_lin, version_mac, 
+							 version_src, version_tuple, version_win)
 
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
 def create_appdmg():
-	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", "%s-%s.dmg" % (name, version)), "-volname", name, "-fs", "HFS+", "-srcfolder", os.path.join(pydir, "dist", "py2app.%s-py%s" % (get_platform(), sys.version[:3]), name + "-" + version)])
+	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", 
+													  "%s-%s.dmg" % 
+													  (name, version)), 
+					"-volname", name, "-fs", "HFS+", "-srcfolder", 
+					os.path.join(pydir, "dist", "py2app.%s-py%s" % 
+					(get_platform(), sys.version[:3]), name + "-" + version)])
 	if retcode != 0:
 		sys.exit(retcode)
 
@@ -68,8 +74,10 @@ def setup():
 
 	if setup_cfg:
 		if not os.path.exists(os.path.join(pydir, "setup.cfg.backup")):
-			shutil.copy2(os.path.join(pydir, "setup.cfg"), os.path.join(pydir, "setup.cfg.backup"))
-		shutil.copy2(os.path.join(pydir, "misc", "setup.%s.cfg" % setup_cfg), os.path.join(pydir, "setup.cfg"))
+			shutil.copy2(os.path.join(pydir, "setup.cfg"), 
+						 os.path.join(pydir, "setup.cfg.backup"))
+		shutil.copy2(os.path.join(pydir, "misc", "setup.%s.cfg" % setup_cfg), 
+					 os.path.join(pydir, "setup.cfg"))
 
 	if purge or purge_dist:
 
@@ -82,8 +90,8 @@ def setup():
 		paths = []
 		if purge:
 			paths += glob.glob(os.path.join(pydir, "build")) + glob.glob(
-			os.path.join(pydir, name + ".egg-info")) + glob.glob(os.path.join(
-			pydir, "pyinstaller", "bincache*"))
+						os.path.join(pydir, name + ".egg-info")) + glob.glob(
+						os.path.join(pydir, "pyinstaller", "bincache*"))
 			sys.argv.remove("purge")
 		if purge_dist:
 			paths += glob.glob(os.path.join(pydir, "dist"))
@@ -103,26 +111,31 @@ def setup():
 			return
 
 	if "readme" in sys.argv[1:]:
-		readme_template_path = os.path.join(pydir, "misc", "README.template.html")
+		readme_template_path = os.path.join(pydir, "misc", 
+											"README.template.html")
 		readme_template = open(readme_template_path, "rb")
 		readme_template_html = readme_template.read()
 		readme_template.close()
 		for key, val in [
 			("DATE", 
-				strftime("%Y-%m-%d", gmtime(os.stat(readme_template_path).st_mtime))),
+				strftime("%Y-%m-%d", 
+						 gmtime(os.stat(readme_template_path).st_mtime))),
 			("TIME", 
-				strftime("%H:%M", gmtime(os.stat(readme_template_path).st_mtime))),
+				strftime("%H:%M", 
+						 gmtime(os.stat(readme_template_path).st_mtime))),
 			("TIMESTAMP", 
-				strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(readme_template_path).st_mtime)) +
-				("+" if timezone < 0 else "-") +
-				strftime("%H:%M", gmtime(abs(timezone)))),
+				strftime("%Y-%m-%dT%H:%M:%S", 
+						 gmtime(os.stat(readme_template_path).st_mtime)) +
+						 ("+" if timezone < 0 else "-") +
+						 strftime("%H:%M", gmtime(abs(timezone)))),
 			("VERSION", version),
 			("VERSION_LIN", version_lin),
 			("VERSION_MAC", version_mac),
 			("VERSION_WIN", version_win),
 			("VERSION_SRC", version_src)
 		]:
-			readme_template_html = readme_template_html.replace("${%s}" % key, val)
+			readme_template_html = readme_template_html.replace("${%s}" % key, 
+																val)
 		readme = open(os.path.join(pydir, "README.html"), "rb")
 		readme_html = readme.read()
 		readme.close()
@@ -162,7 +175,10 @@ def setup():
 			sys.argv.remove("--onefile")
 
 	if inno and sys.platform == "win32":
-		inno_template_path = os.path.join(pydir, "misc", "%s-Setup-%s.iss" % (name, ("pyi-" + suffix if bdist_pyi else bdist_cmd)))
+		inno_template_path = os.path.join(pydir, "misc", "%s-Setup-%s.iss" % 
+										  (name, ("pyi-" + 
+												  suffix if bdist_pyi else 
+												  bdist_cmd)))
 		inno_template = open(inno_template_path, "r")
 		inno_script = inno_template.read().decode("MBCS", "replace") % {
 			"AppVerName": version,
@@ -176,7 +192,11 @@ def setup():
 			"PythonVersion": sys.version[:3],
 			}
 		inno_template.close()
-		inno_path = os.path.join("dist", os.path.basename(inno_template_path).replace(bdist_cmd, "%s.%s-py%s" % (bdist_cmd, get_platform(), sys.version[:3])))
+		inno_path = os.path.join("dist", 
+								 os.path.basename(inno_template_path).replace(
+									bdist_cmd, "%s.%s-py%s" % 
+									(bdist_cmd, get_platform(), 
+									 sys.version[:3])))
 		if not os.path.exists("dist"):
 			os.makedirs("dist")
 		inno_file = open(inno_path, "w")
@@ -193,22 +213,31 @@ def setup():
 		create_appdmg()
 
 	if bdist_deb:
-		# read setup.cfg
+		# Read setup.cfg
 		cfg = RawConfigParser()
 		cfg.read(os.path.join(pydir, "setup.cfg"))
-		# get dependencies
-		dependencies = [val.strip().split(None, 1) for val in cfg.get("bdist_rpm", "Requires").split(",")]
-		# get maintainer
-		maintainer = cfg.get("bdist_rpm", "maintainer") if cfg.has_option("bdist_rpm", "maintainer") else None
-		# get packager
-		packager = cfg.get("bdist_rpm", "packager") if cfg.has_option("bdist_rpm", "packager") else None
-		# convert dependency format: 'package >= version' to 'package (>= version)'
+		# Get dependencies
+		dependencies = [val.strip().split(None, 1) for val in 
+						cfg.get("bdist_rpm", "Requires").split(",")]
+		# Get maintainer
+		if cfg.has_option("bdist_rpm", "maintainer"):
+			maintainer = cfg.get("bdist_rpm", "maintainer")
+		else:
+			maintainer = None
+		# Get packager
+		if cfg.has_option("bdist_rpm", "packager"):
+			packager = cfg.get("bdist_rpm", "packager")
+		else:
+			packager = None
+		# Convert dependency format:
+		# 'package >= version' to 'package (>= version)'
 		for i in range(len(dependencies)):
 			if len(dependencies[i]) > 1:
 				dependencies[i][1] = "(%s)" % dependencies[i][1]
 			dependencies[i] = " ".join(dependencies[i])
 		release = 1 # TODO: parse setup.cfg
-		rpm_filename = os.path.join(pydir, "dist", "%s-%s-%s.%s.rpm" % (name, version, release, arch))
+		rpm_filename = os.path.join(pydir, "dist", "%s-%s-%s.%s.rpm" % 
+									(name, version, release, arch))
 		# remove target directory (and contents) if it already exists
 		target_dir = os.path.join(pydir, "dist", "%s-%s" % (name, version))
 		if os.path.exists(target_dir):
@@ -216,11 +245,15 @@ def setup():
 		if os.path.exists(target_dir + ".orig"):
 			shutil.rmtree(target_dir + ".orig")
 		# use alien to create deb dir from rpm package
-		retcode = call(["alien", "-c", "-g", "-k", os.path.basename(rpm_filename)], cwd = os.path.join(pydir, "dist"))
+		retcode = call(["alien", "-c", "-g", "-k", 
+						os.path.basename(rpm_filename)], 
+						cwd=os.path.join(pydir, "dist"))
 		if retcode != 0:
 			sys.exit(retcode)
 		# control filename
-		control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, version), "debian", "control")
+		control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, 
+																  version), 
+										"debian", "control")
 		# read control file from deb dir
 		control = open(control_filename, "r")
 		lines = [line.rstrip("\n") for line in control.readlines()]
@@ -230,7 +263,8 @@ def setup():
 			if lines[i].startswith("Depends:"):
 				# add dependencies
 				lines[i] += ", " + ", ".join(dependencies)
-			elif lines[i].startswith("Maintainer:") and (maintainer or packager):
+			elif lines[i].startswith("Maintainer:") and (maintainer or 
+														 packager):
 				# set maintainer
 				lines[i] = "Maintainer: " + (maintainer or packager)
 		# write updated control file
@@ -238,12 +272,13 @@ def setup():
 		control.write("\n".join(lines))
 		control.close()
 		# create deb package
-		retcode = call(["./debian/rules", "binary"], cwd = target_dir)
+		retcode = call(["./debian/rules", "binary"], cwd=target_dir)
 		if retcode != 0:
 			sys.exit(retcode)
 
 	if setup_cfg:
-		shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), os.path.join(pydir, "setup.cfg"))
+		shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), 
+					 os.path.join(pydir, "setup.cfg"))
 
 	if bdist_pyi:
 
@@ -255,15 +290,20 @@ def setup():
 			if retcode != 0:
 				sys.exit(retcode)
 			retcode = call(["make"], cwd = os.path.join(pydir, "pyinstaller", 
-				"source", "linux"))
+														"source", "linux"))
 			if retcode != 0:
 				sys.exit(retcode)
-		retcode = call([sys.executable, "-O", os.path.join(pydir, "pyinstaller", 
-			"Configure.py")])
-		retcode = call([sys.executable, "-O", os.path.join(pydir, "pyinstaller", 
-			"Build.py"), "-o", os.path.join(pydir, "build", "pyi.%s-%s-%s" % 
-			(get_platform(), sys.version[:3], suffix), name + "-" + version), os.path.join(pydir, 
-			"misc", "%s-pyi-%s.spec" % (name, suffix))])
+		retcode = call([sys.executable, "-O", os.path.join(pydir, 
+														   "pyinstaller", 
+														   "Configure.py")])
+		retcode = call([sys.executable, "-O", os.path.join(pydir, 
+														   "pyinstaller", 
+														   "Build.py"), 
+						"-o", os.path.join(pydir, "build", "pyi.%s-%s-%s" % 
+										   (get_platform(), sys.version[:3], 
+										   suffix), name + "-" + version), 
+						os.path.join(pydir, "misc", "%s-pyi-%s.spec" % 
+									 (name, suffix))])
 		if retcode != 0:
 			sys.exit(retcode)
 

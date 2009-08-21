@@ -22,7 +22,29 @@ def exec_statement(stat):
     return txt
 
 def qt4_plugins_dir():
-    return exec_statement("from PyQt4.QtCore import QLibraryInfo; print QLibraryInfo.location(QLibraryInfo.PluginsPath)")
+    import os
+    qt4_plugin_dirs = eval(exec_statement("from PyQt4.QtCore import QCoreApplication; app=QCoreApplication([]); print map(unicode,app.libraryPaths())"))
+    if not qt4_plugin_dirs:
+        print "E: Cannot find PyQt4 plugin directories"
+        return ""
+    for d in qt4_plugin_dirs:
+        if os.path.isdir(d):
+            return str(d)  # must be 8-bit chars for one-file builds
+    print "E: Cannot find existing PyQt4 plugin directory"
+    return ""
+def qt4_phonon_plugins_dir():
+    import os
+    qt4_plugin_dirs = eval(exec_statement("from PyQt4.QtGui import QApplication; app=QApplication([]); app.setApplicationName('pyinstaller'); from PyQt4.phonon import Phonon; v=Phonon.VideoPlayer(Phonon.VideoCategory); print map(unicode,app.libraryPaths())"))
+    if not qt4_plugin_dirs:
+        print "E: Cannot find PyQt4 phonon plugin directories"
+        return ""
+    for d in qt4_plugin_dirs:
+        if os.path.isdir(d):
+            return str(d)  # must be 8-bit chars for one-file builds
+    print "E: Cannot find existing PyQt4 phonon plugin directory"
+    return ""
+def babel_localedata_dir():
+    return exec_statement("import babel.localedata; print babel.localedata._dirname")
 def mpl_data_dir():
     return exec_statement("import matplotlib; print matplotlib._get_data_path()")
 def qwt_numpy_support():

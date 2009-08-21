@@ -1,8 +1,39 @@
 #!/usr/bin/env python
+#
+# Copyright (C) 2009, Florian Hoech
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, 5th Floor, Boston, MA 02110-1301, USA
+
+"""
+resource.py
+
+Read and write resources from/to Win32 PE files.
+
+Commandline usage:
+resource.py <dstpath> <srcpath>
+Updates or adds resources from file <srcpath> in file <dstpath>.
+
+2009-03 Florian Hoech
+
+"""
 
 import os.path
 import pywintypes
 import win32api
+
+silent = False  # True suppresses all messages
 
 LOAD_LIBRARY_AS_DATAFILE = 2
 ERROR_BAD_EXE_FORMAT = 193
@@ -11,60 +42,89 @@ ERROR_RESOURCE_TYPE_NOT_FOUND = 1813
 ERROR_RESOURCE_NAME_NOT_FOUND = 1814
 ERROR_RESOURCE_LANG_NOT_FOUND = 1815
 
-class File():
+
+class File(object):
+
+    """ Win32 PE file class. """
+
     def __init__(self, filename):
         self.filename = filename
     
     def get_resources(self, types=None, names=None, languages=None):
-        """ Get resources.
+        """
+        Get resources.
+        
         types = a list of resource types to search for (None = all)
         names = a list of resource names to search for (None = all)
         languages = a list of resource languages to search for (None = all)
         Return a dict of the form {type_: {name: {language: data}}} which 
-        might also be empty if no matching resources were found."""
+        might also be empty if no matching resources were found.
+        
+        """
         return GetResources(self.filename, types, names, languages)
     
     def update_resources(self, data, type_, names=None, languages=None):
-        """ Update or add resource data.
+        """
+        Update or add resource data.
+        
         type_ = resource type to update
         names = a list of resource names to update (None = all)
-        languages = a list of resource languages to update (None = all)"""
+        languages = a list of resource languages to update (None = all)
+        
+        """
         UpdateResources(self.filename, data, type_, names, languages)
     
     def update_resources_from_datafile(self, srcpath, type_, names=None, 
                                        languages=None):
-        """ Update or add resource data from file srcpath.
+        """
+        Update or add resource data from file srcpath.
+        
         type_ = resource type to update
         names = a list of resource names to update (None = all)
-        languages = a list of resource languages to update (None = all)"""
+        languages = a list of resource languages to update (None = all)
+        
+        """
         UpdateResourcesFromDataFile(self.filename, srcpath, type_, names, 
                                     languages)
     
     def update_resources_from_dict(self, res, types=None, names=None, 
                                    languages=None):
-        """ Update or add resources from resource dict.
+        """
+        Update or add resources from resource dict.
+        
         types = a list of resource types to update (None = all)
         names = a list of resource names to update (None = all)
-        languages = a list of resource languages to update (None = all)"""
+        languages = a list of resource languages to update (None = all)
+        
+        """
         UpdateResourcesFromDict(self.filename, res, types, names, 
                                 languages)
     
     def update_resources_from_resfile(self, srcpath, types=None, names=None, 
                                       languages=None):
-        """ Update or add resources from dll/exe file srcpath.
+        """
+        Update or add resources from dll/exe file srcpath.
+        
         types = a list of resource types to update (None = all)
         names = a list of resource names to update (None = all)
-        languages = a list of resource languages to update (None = all)"""
+        languages = a list of resource languages to update (None = all)
+        
+        """
         UpdateResourcesFromResFile(self.filename, srcpath, types, names, 
                                    languages)
 
+
 def _GetResources(hsrc, types=None, names=None, languages=None):
-    """ Get resources from hsrc.
+    """
+    Get resources from hsrc.
+    
     types = a list of resource types to search for (None = all)
     names = a list of resource names to search for (None = all)
     languages = a list of resource languages to search for (None = all)
     Return a dict of the form {type_: {name: {language: data}}} which 
-    might also be empty if no matching resources were found."""
+    might also be empty if no matching resources were found.
+    
+    """
     res = {}
     try:
         # print "I: Enumerating resource types"
@@ -108,23 +168,33 @@ def _GetResources(hsrc, types=None, names=None, languages=None):
             raise exception
     return res
 
+
 def GetResources(filename, types=None, names=None, languages=None):
-    """ Get resources from dll/exe file.
+    """
+    Get resources from dll/exe file.
+    
     types = a list of resource types to search for (None = all)
     names = a list of resource names to search for (None = all)
     languages = a list of resource languages to search for (None = all)
     Return a dict of the form {type_: {name: {language: data}}} which 
-    might also be empty if no matching resources were found."""
+    might also be empty if no matching resources were found.
+    
+    """
     hsrc = win32api.LoadLibraryEx(filename, 0, LOAD_LIBRARY_AS_DATAFILE)
     res = _GetResources(hsrc, types, names, languages)
     win32api.FreeLibrary(hsrc)
     return res
 
+
 def UpdateResources(dstpath, data, type_, names=None, languages=None):
-    """ Update or add resource data to dll/exe file dstpath.
+    """
+    Update or add resource data in dll/exe file dstpath.
+    
     type_ = resource type to update
     names = a list of resource names to update (None = all)
-    languages = a list of resource languages to update (None = all)"""
+    languages = a list of resource languages to update (None = all)
+    
+    """
     # look for existing resources
     res = GetResources(dstpath, [type_], names, languages)
     # add type_, names and languages not already present in existing resources
@@ -143,29 +213,39 @@ def UpdateResources(dstpath, data, type_, names=None, languages=None):
     for type_ in res:
         for name in res[type_]:
             for language in res[type_][name]:
-                print "I: Updating resource type", type_, "name", name, "language", language
+                if not silent:
+                    print "I: Updating resource type", type_, "name", name, \
+                          "language", language
                 win32api.UpdateResource(hdst, type_, name, data, language)
     win32api.EndUpdateResource(hdst, 0)
 
+
 def UpdateResourcesFromDataFile(dstpath, srcpath, type_, names=None, 
                                 languages=None):
-    """ Update or add resource data from file srcpath to dll/exe file 
-    dstpath.
+    """
+    Update or add resource data from file srcpath in dll/exe file dstpath.
+    
     type_ = resource type to update
     names = a list of resource names to update (None = all)
-    languages = a list of resource languages to update (None = all)"""
+    languages = a list of resource languages to update (None = all)
+    
+    """
     src = open(srcpath, "rb")
     data = src.read()
     src.close()
     UpdateResources(dstpath, data, type_, names, languages)
 
+
 def UpdateResourcesFromDict(dstpath, res, types=None, names=None, 
                             languages=None):
-    """ Update or add resources from resource dict to dll/exe file 
-    dstpath.
+    """
+    Update or add resources from resource dict in dll/exe file dstpath.
+    
     types = a list of resource types to update (None = all)
     names = a list of resource names to update (None = all)
-    languages = a list of resource languages to update (None = all)"""
+    languages = a list of resource languages to update (None = all)
+    
+    """
     for type_ in res:
         if not types or type_ in types:
             for name in res[type_]:
@@ -176,12 +256,16 @@ def UpdateResourcesFromDict(dstpath, res, types=None, names=None,
                                             res[type_][name][language], 
                                             [type_], [name], [language])
 
+
 def UpdateResourcesFromResFile(dstpath, srcpath, types=None, names=None, 
                                languages=None):
-    """ Update or add resources from dll/exe file srcpath to dll/exe file 
-    dstpath.
+    """
+    Update or add resources from dll/exe file srcpath in dll/exe file dstpath.
+    
     types = a list of resource types to update (None = all)
     names = a list of resource names to update (None = all)
-    languages = a list of resource languages to update (None = all)"""
+    languages = a list of resource languages to update (None = all)
+    
+    """
     res = GetResources(srcpath, types, names, languages)
     UpdateResourcesFromDict(dstpath, res)

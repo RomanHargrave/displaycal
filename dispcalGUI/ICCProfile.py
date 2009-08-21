@@ -3,30 +3,26 @@
 
 from decimal import Decimal
 from hashlib import md5
-from os import getenv, path
 import locale
+import os
 import struct
 import sys
 from time import localtime, mktime, strftime
+if sys.platform != "win32":
+	import subprocess as sp
+
 if sys.platform == "win32":
 	import win32api
 	import win32gui
-else:
-	import subprocess as sp
 
 from safe_print import safe_print
+from util_os import getenvu
 
 if sys.platform == "darwin":
-    enc = "UTF-8"
+	enc = "UTF-8"
 else:
-    enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
+	enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
 fs_enc = sys.getfilesystemencoding() or enc
-
-##################
-#
-# text encodings
-#
-##################
 
 encodings = {
 	"mac": {
@@ -149,12 +145,6 @@ encodings = {
 	}
 }
 
-##########
-#
-# Tables
-#
-##########
-
 colorants = {
 	0: {
 		"description": "unknown"
@@ -201,13 +191,7 @@ observers = {
 	2: "CIE 1964"
 }
 
-####################
-#
-# Helper functions
-#
-####################
-
-def get_display_profile(display_no = 0):
+def get_display_profile(display_no=0):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
@@ -222,31 +206,32 @@ def get_display_profile(display_no = 0):
 					'set prof to location of (display profile of display %i)' % 
 					(display_no + 1), '-e', 'try', '-e', 'POSIX path of prof', 
 					'-e', 'end try', '-e', 'end tell']
-			p = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+			tgt_proc = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, 
+								stderr=sp.PIPE)
 		else:
 			# Linux - read up to 8 MB of any X properties
-			p1 = sp.Popen(["xprop", "-display", ":0", "-len", "8388608", 
-						"-root"], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
-			p = sp.Popen(["grep", "-P", r"^_ICC_PROFILE%s\D*=" % ("" if display_no == 0 else "_%s" % display_no)], stdin=p1.stdout, 
-						stdout=sp.PIPE, stderr=sp.PIPE)
-		stdoutdata, stderrdata = [data.strip("\n") for data in p.communicate()]
-		if stdoutdata:
+			src_proc = sp.Popen(["xprop", "-display", ":0", "-len", 
+								 "8388608", "-root"], 
+								stdin=sp.PIPE, 
+								stdout=sp.PIPE, stderr=sp.PIPE)
+			tgt_proc = sp.Popen(["grep", "-P", r"^_ICC_PROFILE%s\D*=" % 
+								 ("" if display_no == 0 else "_%s" % 
+								  display_no)], 
+								stdin=src_proc.stdout, 
+								stdout=sp.PIPE, stderr=sp.PIPE)
+		stdout, stderr = [data.strip("\n") for data in tgt_proc.communicate()]
+		if stdout:
 			if sys.platform == "darwin":
-				filename = unicode(stdoutdata, "UTF-8")
+				filename = unicode(stdout, "UTF-8")
 				profile = ICCProfile(filename)
 			else:
-				stdoutdata = stdoutdata.split("=")[1].strip()
-				bin = "".join([chr(int(part)) for part in stdoutdata.split(", ")])
+				stdout = stdout.split("=")[1].strip()
+				bin = "".join([chr(int(part)) for part in stdout.split(", ")])
 				profile = ICCProfile(bin)
-		elif stderrdata:
-			raise IOError(stderrdata)
+		elif stderr:
+			raise IOError(stderr)
 	return profile
 
-#######################
-#
-# Basic numeric types
-#
-#######################
 
 def dateTimeNumber(binaryString):
 	"""
@@ -259,79 +244,87 @@ def dateTimeNumber(binaryString):
 	8..9   number of minutes (0-59)                    uInt16Number
 	10..11 number of seconds (0-59)                    uInt16Number
 	"""
-	Y, m, d, H, M, S = [uInt16Number(chunk) for chunk in (binaryString[:2], binaryString[2:4], binaryString[4:6], binaryString[6:8], binaryString[8:10], binaryString[10:12])]
+	Y, m, d, H, M, S = [uInt16Number(chunk) for chunk in (binaryString[:2], 
+														  binaryString[2:4], 
+														  binaryString[4:6], 
+														  binaryString[6:8], 
+														  binaryString[8:10], 
+														  binaryString[10:12])]
 	return Y, m, d, H, M, S
+
 
 def s15Fixed16Number(binaryString):
 	return Decimal(str(struct.unpack(">i", binaryString)[0])) / 65536
 
+
 def u16Fixed16Number(binaryString):
 	return Decimal(str(struct.unpack(">I", binaryString)[0])) / 65536
+
 
 def u8Fixed8Number(binaryString):
 	return Decimal(str(struct.unpack(">H", binaryString)[0])) / 256
 
+
 def uInt16Number(binaryString):
 	return struct.unpack(">H", binaryString)[0]
+
 
 def uInt32Number(binaryString):
 	return struct.unpack(">I", binaryString)[0]
 
+
 def uInt64Number(binaryString):
 	return struct.unpack(">Q", binaryString)[0]
+
 
 def uInt8Number(binaryString):
 	return struct.unpack(">H", "\0" + binaryString)[0]
 
-##############
-#
-# Dict class
-#
-##############
 
 class Dict(dict):
-	def __init__(self, dictionary = None):
+
+	def __init__(self, dictionary=None):
 		if dictionary:
 			self.update(dictionary)
+
 	def __getattr__(self, name):
 		return self[name]
+
 	def __setattr__(self, name, value):
 		self[name] = value
 
-#########################
-#
-# Custom helper classes
-#
-#########################
 
 class Colorant(Dict):
+
 	def __init__(self, binaryString):
 		self.type = uInt32Number(binaryString)
 		self.channels = colorants[self.type].channels
 		self.description = colorants[self.type].description
 
+
 class Geometry(Dict):
+
 	def __init__(self, binaryString):
 		self.type = uInt32Number(binaryString)
 		self.description = geometry[self.type]
 
+
 class IlluminantType(Dict):
+
 	def __init__(self, binaryString):
 		self.type = uInt32Number(binaryString)
 		self.description = illuminants[self.type]
 
+
 class Observer(Dict):
+
 	def __init__(self, binaryString):
 		self.type = uInt32Number(binaryString)
 		self.description = observers[self.type]
 
-###############
-#
-# ICC classes
-#
-###############
 
 class ChromacityType(Dict):
+
 	def __init__(self, tagData):
 		deviceChannelsCount = uInt16Number(tagData[8:10])
 		colorant = uInt16Number(tagData[10:12])
@@ -341,10 +334,13 @@ class ChromacityType(Dict):
 		self.colorant = colorant
 		self.channels = []
 		while channels:
-			self.channels.append((u16Fixed16Number(channels[:4]), u16Fixed16Number(channels[4:8])))
+			self.channels.append((u16Fixed16Number(channels[:4]), 
+								  u16Fixed16Number(channels[4:8])))
 			channels = channels[8:]
 
+
 class CurveType(list):
+
 	def __init__(self, tagData):
 		curveEntriesCount = uInt32Number(tagData[8:12])
 		curveEntries = tagData[12:]
@@ -352,11 +348,15 @@ class CurveType(list):
 			self.append(uInt16Number(curveEntries[:2]))
 			curveEntries = curveEntries[2:]
 
+
 class DateTimeType(list):
+
 	def __init__(self, tagData):
 		self += dateTimeNumber(tagData[8:20])
-	
+
+
 class MeasurementType(Dict):
+
 	def __init__(self, tagData):
 		self.update({
 			"observer": Observer(tagData[8:12]),
@@ -366,7 +366,9 @@ class MeasurementType(Dict):
 			"illuminantType": IlluminantType(tagData[32:36])
 		})
 
+
 class MultiLocalizedUnicodeType(Dict): # ICC v4
+
 	def __init__(self, tagData):
 		recordsCount = uInt32Number(tagData[8:12])
 		recordSize = uInt32Number(tagData[12:16]) # 12
@@ -379,76 +381,128 @@ class MultiLocalizedUnicodeType(Dict): # ICC v4
 			recordOffset = uInt32Number(record[8:12])
 			if recordLanguageCode not in self:
 				self[recordLanguageCode] = Dict()
-			self[recordLanguageCode][recordCountryCode] = unicode(tagData[recordOffset:recordOffset + recordLength], "utf-16-be", "replace")
+			self[recordLanguageCode][recordCountryCode] = unicode(
+				tagData[recordOffset:recordOffset + recordLength], 
+				"utf-16-be", "replace")
 			records = records[recordSize:]
+
 	def __str__(self):
 		return unicode(self).encode("ASCII")
+
 	def __unicode__(self):
 		"""
 		Return tag as string.
-		TO-DO: Needs some work re locales
-		(currently if en-UK or en-US is not found, simply the first entry is returned)
 		"""
+		# TODO: Needs some work re locales
+		# (currently if en-UK or en-US is not found, simply the first entry 
+		# is returned)
 		if "en" in self:
 			for countryCode in ("UK", "US"):
 				if countryCode in self["en"]:
 					return self["en"][countryCode]
 		return self.values()[0].values()[0]
 
+
 class SignatureType(str):
+
 	def __init__(self, text):
 		pass
+
 	# def __repr__(self):
 		# return repr(self[8:12].strip("\0\n\r "))
+
 	# def __str__(self):
 		# return str(self[8:12].strip("\0\n\r "))
+
 
 class TextDescriptionType(Dict): # ICC v2
 	def __init__(self, tagData, tagSignature):
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
-			ASCIIDescription = tagData[12:12 + ASCIIDescriptionLength].strip("\0\n\r ")
-			if ASCIIDescription: self.ASCII = unicode(ASCIIDescription, fs_enc, errors="replace") # even ASCII description may contain non-ASCII chars, so assume system encoding and convert to unicode, replacing unknown chars
+			ASCIIDescription = tagData[12:12 + 
+									   ASCIIDescriptionLength].strip("\0\n\r ")
+			if ASCIIDescription:
+				# Even ASCII description may contain non-ASCII chars, so 
+				# assume system encoding and convert to unicode, replacing 
+				# unknown chars
+				self.ASCII = unicode(ASCIIDescription, fs_enc, 
+									 errors="replace")
 		unicodeOffset = 12 + ASCIIDescriptionLength
-		unicodeLanguageCode = uInt32Number(tagData[unicodeOffset:unicodeOffset + 4])
-		unicodeDescriptionLength = uInt32Number(tagData[unicodeOffset + 4:unicodeOffset + 8])
+		unicodeLanguageCode = uInt32Number(
+							  tagData[unicodeOffset:unicodeOffset + 4])
+		unicodeDescriptionLength = uInt32Number(tagData[unicodeOffset + 
+														4:unicodeOffset + 8])
 		if unicodeDescriptionLength:
-			if tagData[unicodeOffset + 8 + unicodeDescriptionLength:unicodeOffset + 8 + unicodeDescriptionLength + 2] == "\0\0":
-				safe_print("Warning (non-critical): '" + tagSignature + "' tag Unicode part seems to be a single-byte string (double-byte string expected)")
+			if tagData[unicodeOffset + 8 + 
+					   unicodeDescriptionLength:unicodeOffset + 8 + 
+					   unicodeDescriptionLength + 2] == "\0\0":
+				safe_print("Warning (non-critical): '%s' tag Unicode part "
+						   "seems to be a single-byte string (double-byte "
+						   "string expected)" % tagSignature)
 				charBytes = 1 # fix for fubar'd desc tag
 			else:
 				charBytes = 2
-			unicodeDescription = tagData[unicodeOffset + 8:unicodeOffset + 8 + (unicodeDescriptionLength) * charBytes]
+			unicodeDescription = tagData[unicodeOffset + 8:unicodeOffset + 8 + 
+										 (unicodeDescriptionLength) * charBytes]
 			try:
 				if charBytes == 1:
-					unicodeDescription = unicode(unicodeDescription, errors="replace")
+					unicodeDescription = unicode(unicodeDescription, 
+												 errors="replace")
 				else:
-					if unicodeDescription[:2] == "\xfe\xff": # UTF-16 Big Endian
+					if unicodeDescription[:2] == "\xfe\xff":
+						# UTF-16 Big Endian
 						unicodeDescription = unicodeDescription[2:]
-						if len(unicodeDescription.split(" ")) == unicodeDescriptionLength - 1:
-							safe_print("Warning (non-critical): '" + tagSignature + "' tag Unicode part starts with UTF-16 big endian BOM, but actual contents seem to be UTF-16 little endian")
-							unicodeDescription = unicode("\0".join(unicodeDescription.split(" ")), "utf-16-le", errors="replace") # fix for fubar'd desc tag
+						if len(unicodeDescription.split(" ")) == \
+						   unicodeDescriptionLength - 1:
+							safe_print("Warning (non-critical): '%s' tag "
+									   "Unicode part starts with UTF-16 big "
+									   "endian BOM, but actual contents seem "
+									   "to be UTF-16 little endian" % 
+									   tagSignature)
+							# fix fubar'd desc tag
+							unicodeDescription = unicode(
+								"\0".join(unicodeDescription.split(" ")), 
+								"utf-16-le", errors="replace")
 						else:
-							unicodeDescription = unicode(unicodeDescription, "utf-16-be", errors="replace")
-					elif unicodeDescription[:2] == "\xff\xfe": # UTF-16 Little Endian
+							unicodeDescription = unicode(unicodeDescription, 
+														 "utf-16-be", 
+														 errors="replace")
+					elif unicodeDescription[:2] == "\xff\xfe":
+						# UTF-16 Little Endian
 						unicodeDescription = unicodeDescription[2:]
 						if unicodeDescription[0] == "\0":
-							safe_print("Warning (non-critical): '" + tagSignature + "' tag Unicode part starts with UTF-16 little endian BOM, but actual contents seem to be UTF-16 big endian")
-							unicodeDescription = unicode(unicodeDescription, "utf-16-be", errors="replace") # fix for fubar'd desc tag
+							safe_print("Warning (non-critical): '%s' tag "
+									   "Unicode part starts with UTF-16 "
+									   "little endian BOM, but actual "
+									   "contents seem to be UTF-16 big "
+									   "endian" % tagSignature)
+							# fix fubar'd desc tag
+							unicodeDescription = unicode(unicodeDescription, 
+														 "utf-16-be", 
+														 errors="replace")
 						else:
-							unicodeDescription = unicode(unicodeDescription, "utf-16-le", errors="replace")
+							unicodeDescription = unicode(unicodeDescription, 
+														 "utf-16-le", 
+														 errors="replace")
 					else:
-						unicodeDescription = unicode(unicodeDescription, "utf-16-be", errors="replace")
+						unicodeDescription = unicode(unicodeDescription, 
+													 "utf-16-be", 
+													 errors="replace")
 				unicodeDescription = unicodeDescription.strip("\0\n\r ")
 				if unicodeDescription:
-					if unicodeDescription.find("\0") < 0: self.Unicode = unicodeDescription
+					if unicodeDescription.find("\0") < 0:
+						self.Unicode = unicodeDescription
 					else:
-						safe_print("Error (non-critical): could not decode '" + tagSignature + "' tag Unicode part - null byte(s) encountered")
+						safe_print("Error (non-critical): could not decode "
+								   "'%s' tag Unicode part - null byte(s) "
+								   "encountered" % tagSignature)
 						#self.Unicode = unicodeDescription
 			except UnicodeDecodeError:
-				safe_print("UnicodeDecodeError (non-critical): could not decode '" + tagSignature + "' tag Unicode part")
+				safe_print("UnicodeDecodeError (non-critical): could not "
+						   "decode '%s' tag Unicode part" % tagSignature)
 				unicodeDescription = None
-		else: charBytes = 1
+		else:
+			charBytes = 1
 		macOffset = unicodeOffset + 8 + unicodeDescriptionLength * charBytes
 		macOffsetBackup = macOffset
 		if tagData[macOffset:macOffset + 5] == "\0\0\0\0\0":
@@ -458,12 +512,20 @@ class TextDescriptionType(Dict): # ICC v2
 			macDescriptionLength = ord(tagData[macOffset + 2])
 			if macDescriptionLength:
 				if macOffsetBackup < macOffset:
-					safe_print("Warning (non-critical): '" + tagSignature + "' tag Macintosh part offset points to null bytes")
+					safe_print("Warning (non-critical): '%s' tag Macintosh "
+							   "part offset points to null bytes" % 
+							   tagSignature)
 				try:
-					macDescription = unicode(tagData[macOffset + 3:macOffset + 3 + macDescriptionLength], "mac-" + encodings["mac"][macScriptCode], errors="replace").strip("\0\n\r ")
-					if macDescription: self.Macintosh = macDescription
+					macDescription = unicode(tagData[macOffset + 3:macOffset + 
+											 3 + macDescriptionLength], 
+											 "mac-" + 
+											 encodings["mac"][macScriptCode], 
+											 errors="replace").strip("\0\n\r ")
+					if macDescription:
+						self.Macintosh = macDescription
 				except UnicodeDecodeError:
-					safe_print("UnicodeDecodeError (non-critical): could not decode '" + tagSignature + "' tag Macintosh part")
+					safe_print("UnicodeDecodeError (non-critical): could not "
+							   "decode '%s' tag Macintosh part" % tagSignature)
 					macDescription = None
 	def __str__(self):
 		return unicode(self).encode("ASCII")
@@ -472,6 +534,7 @@ class TextDescriptionType(Dict): # ICC v2
 			if localizedType in self:
 				return self[localizedType]
 
+
 class TextType(str):
 	def __init__(self, text):
 		pass
@@ -479,6 +542,7 @@ class TextType(str):
 		# return repr(self[8:].strip("\0\n\r "))
 	# def __str__(self):
 		# return str(self[8:].strip("\0\n\r "))
+
 
 class VideoCardGammaFormula(Dict):
 	def __init__(self, data):
@@ -494,7 +558,9 @@ class VideoCardGammaFormula(Dict):
 			"blueMax": u16Fixed16Number(data[32:36])
 		})
 
+
 class VideoCardGammaType(Dict):
+
 	def __init__(self, tagData):
 		reserved = uInt32Number(tagData[4:8])
 		videoCardGamma = tagData[8:]
@@ -518,21 +584,27 @@ class VideoCardGammaType(Dict):
 				while j < entryCount:
 					index = i * entryCount * entrySize + j * entrySize
 					if entrySize == 1:
-						self.data[i].append(uInt8Number(data[index:index + entrySize]))
+						self.data[i].append(uInt8Number(data[index:index + 
+															 entrySize]))
 					elif entrySize == 2:
-						self.data[i].append(uInt16Number(data[index:index + entrySize]))
+						self.data[i].append(uInt16Number(data[index:index + 
+															  entrySize]))
 					elif entrySize == 4:
-						self.data[i].append(uInt32Number(data[index:index + entrySize]))
+						self.data[i].append(uInt32Number(data[index:index + 
+															  entrySize]))
 					elif entrySize == 8:
-						self.data[i].append(uInt64Number(data[index:index + entrySize]))
+						self.data[i].append(uInt64Number(data[index:index + 
+															  entrySize]))
 					j = j + 1
 				i = i + 1
 		elif tagType == 1: # formula
 			self.update(VideoCardGammaFormula(videoCardGamma[4:]))
-	def printNormalizedValues(self, amount = None, digits = 12):
+
+	def printNormalizedValues(self, amount=None, digits=12):
 		"""
-		Normalizes all values in the vcgt to a range of 0.0...1.0 and prints them, e.g.
-		for a 256-entry table with linear values from 0 to 65535:
+		Normalizes and prints all values in the vcgt (range of 0.0...1.0).
+		
+		For a 256-entry table with linear values from 0 to 65535:
 		#   REF            C1             C2             C3
 		001 0.000000000000 0.000000000000 0.000000000000 0.000000000000
 		002 0.003921568627 0.003921568627 0.003921568627 0.003921568627
@@ -541,6 +613,7 @@ class VideoCardGammaType(Dict):
 		You can also specify the amount of values to print (where a value 
 		lesser than the entry count will leave out intermediate values) 
 		and the number of digits.
+		
 		"""
 		if type(amount) != int:
 			amount = self.entryCount
@@ -558,11 +631,18 @@ class VideoCardGammaType(Dict):
 				safe_print("#".ljust(len(str(amount)) + 1) + " ".join(header))
 			if i == 0 or (i + 1) % modulo < 1 or i + 1 == self.entryCount:
 				j = j + 1
-				values = [str(round(channel[i] / 65535.0, digits)).ljust(digits + 2, '0') for channel in self.data]
-				safe_print(str(j).rjust(len(str(amount)), '0'), str(round(i / float(self.entryCount - 1), digits)).ljust(digits + 2, '0'), " ".join(values))
+				values = [str(round(channel[i] / 65535.0, 
+									digits)).ljust(digits + 2, '0') for 
+						  channel in self.data]
+				safe_print(str(j).rjust(len(str(amount)), '0'), 
+						   str(round(i / float(self.entryCount - 1), 
+									 digits)).ljust(digits + 2, '0'), 
+						   " ".join(values))
 			i = i + 1
 
+
 class ViewingConditionsType(Dict):
+
 	def __init__(self, tagData):
 		self.update({
 			"illuminant": XYZNumber(tagData[8:20]),
@@ -570,7 +650,9 @@ class ViewingConditionsType(Dict):
 			"illuminantType": IlluminantType(tagData[32:36])
 		})
 
+
 class XYZNumber(Dict):
+
 	"""
 	Byte
 	Offset Content Encoded as...
@@ -578,65 +660,76 @@ class XYZNumber(Dict):
 	4..7   CIE Y   s15Fixed16Number
 	8..11  CIE Z   s15Fixed16Number
 	"""
+
 	def __init__(self, binaryString):
-		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in (binaryString[:4], binaryString[4:8], binaryString[8:12])]
+		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in 
+								  (binaryString[:4], binaryString[4:8], 
+								   binaryString[8:12])]
+
 
 class XYZType(XYZNumber):
+
 	def __init__(self, tagData):
 		XYZNumber.__init__(self, tagData[8:20])
 
+
 class ICCProfileInvalidError(IOError):
+
 	def __str__(self):
 		return self.args[0]
 
-#####################
-#
-# ICC profile class
-#
-#####################
 
 class ICCProfile:
+
 	"""
-	Returns a new ICCProfile object, optionally initialized with a string 
-	(binary or filename), or a file object.
-	"""
+	Returns a new ICCProfile object. 
 	
-	def __init__(self, binaryStringOrFileNameOrFileObject = None):
+	Optionally initialized with a string (binary or filename), or a file 
+	object.
+	
+	"""
+
+	def __init__(self, profile=None):
 		self.ID = None
 		self._data = None
-		self._fileObject = None
+		self._file = None
 		self._tags = None
 		self.fileName = None
 		self.size = 0
 		
-		if binaryStringOrFileNameOrFileObject:
+		if profile:
 		
 			data = None
 			
-			if type(binaryStringOrFileNameOrFileObject) in (str, unicode):
-				if binaryStringOrFileNameOrFileObject.find("\0") < 0: # filename
-					if not path.exists(binaryStringOrFileNameOrFileObject):
-						if sys.platform == "win32" and binaryStringOrFileNameOrFileObject.find("\\") < 0:
-							binaryStringOrFileNameOrFileObject = getenv("SYSTEMROOT") + "\\system32\\spool\\drivers\\color\\" + binaryStringOrFileNameOrFileObject
-					binaryStringOrFileNameOrFileObject = open(binaryStringOrFileNameOrFileObject, "rb")
+			if type(profile) in (str, unicode):
+				if profile.find("\0") < 0:
+					# filename
+					if not os.path.exists(profile):
+						if sys.platform == "win32" and profile.find("\\") < 0:
+							profile = getenvu("SYSTEMROOT") + \
+								"\\system32\\spool\\drivers\\color\\" + profile
+					profile = open(profile, "rb")
 				else: # binary string
-					data = binaryStringOrFileNameOrFileObject
+					data = profile
 			if not data: # file object
-				self._fileObject = binaryStringOrFileNameOrFileObject
-				self.fileName = self._fileObject.name
-				self._fileObject.seek(0)
-				data = self._fileObject.read(128)
+				self._file = profile
+				self.fileName = self._file.name
+				self._file.seek(0)
+				data = self._file.read(128)
 			
 			if not data or len(data) < 128:
 				raise ICCProfileInvalidError("Not enough data")
 			
 			if data[36:40] != "acsp":
-				raise ICCProfileInvalidError("Profile file signature mismatch - expected 'acsp', found '" + data[36:40] + "'")
+				raise ICCProfileInvalidError("Profile signature mismatch - "
+											 "expected 'acsp', found '" + 
+											 data[36:40] + "'")
 			
 			header = data[:128]
 			self.size = uInt32Number(header[0:4])
 			self.preferredCMM = header[4:8].strip("\0\n\r ")
-			self.version = Decimal(str(ord(header[8:12][0])) + "." + str(ord(header[8:12][1])))
+			self.version = Decimal(str(ord(header[8:12][0])) + "." + 
+								   str(ord(header[8:12][1])))
 			self.profileClass = header[12:16].strip()
 			self.colorSpace = header[16:20].strip()
 			self.connectionColorSpace = header[20:24].strip()
@@ -673,7 +766,7 @@ class ICCProfile:
 	def __getData(self):
 		self.load()
 		return self._data
-	data = property(__getData, doc = "Profile data")
+	data = property(__getData, doc="Profile data")
 	
 	def __getTags(self):
 		if not self._tags:
@@ -689,7 +782,8 @@ class ICCProfile:
 				tagDataSize = uInt32Number(tag[8:12])
 				tagData = self.data[tagDataOffset:tagDataOffset + tagDataSize]
 				if tagSignature in self._tags:
-					safe_print("Error (non-critical): Tag '" + tagSignature + "' already encountered. Skipping...")
+					safe_print("Error (non-critical): Tag '%s' already "
+							   "encountered. Skipping..." % tagSignature)
 				else:
 					self._tagSignature = tagSignature
 					self._rawtags[tagSignature] = tagData
@@ -698,23 +792,31 @@ class ICCProfile:
 					elif tagData[:4] == "curv":
 						self._tags[tagSignature] = CurveType(tagData)
 					elif tagData[:4] == "desc": # ICC v2
-						self._tags[tagSignature] = TextDescriptionType(tagData, tagSignature)
+						self._tags[tagSignature] = TextDescriptionType(
+							tagData, tagSignature)
 					elif tagData[:4] == "dtim":
 						self._tags[tagSignature] = DateTimeType(tagData)
 					elif tagData[:4] == "meas":
 						self._tags[tagSignature] = MeasurementType(tagData)
 					elif tagData[:4] == "mluc": # ICC v4
-						self._tags[tagSignature] = MultiLocalizedUnicodeType(tagData)
+						self._tags[tagSignature] = MultiLocalizedUnicodeType(
+							tagData)
 					elif tagData[:4] == "sig ":
-						self._tags[tagSignature] = SignatureType(tagData[8:12].strip("\0\n\r "))
+						self._tags[tagSignature] = SignatureType(
+							tagData[8:12].strip("\0\n\r "))
 					elif tagData[:4] == "text":
-						self._tags[tagSignature] = TextType(tagData[8:].strip("\0\n\r "))
+						self._tags[tagSignature] = TextType(
+							tagData[8:].strip("\0\n\r "))
 					elif tagData[:4] == "vcgt":
 						# private tag
-						# http://developer.apple.com/documentation/GraphicsImaging/Reference/ColorSync_Manager/Reference/reference.html#//apple_ref/doc/uid/TP30000259-CH3g-C001473
+						# http://developer.apple.com/documentation/
+						# GraphicsImaging/Reference/ColorSync_Manager/
+						# Reference/reference.html#//apple_ref/doc/uid/
+						# TP30000259-CH3g-C001473
 						self._tags[tagSignature] = VideoCardGammaType(tagData)
 					elif tagData[:4] == "view":
-						self._tags[tagSignature] = ViewingConditionsType(tagData)
+						self._tags[tagSignature] = ViewingConditionsType(
+							tagData)
 					elif tagData[:4] == "XYZ ":
 						if tagSignature == "lumi":
 							self._tags[tagSignature] = XYZType(tagData).Y
@@ -725,11 +827,12 @@ class ICCProfile:
 				tagTable = tagTable[12:]
 			self._tagSignature = None
 		return self._tags
-	tags = property(__getTags, doc = "Profile Tag Table")
+	tags = property(__getTags, doc="Profile Tag Table")
 	
 	def calculateID(self):
 		"""
 		Calculates, sets, and returns the profile's ID (checksum).
+		
 		Calling this function always recalculates the checksum on-the-fly, 
 		in contrast to just accessing the ID property.
 		
@@ -738,8 +841,11 @@ class ICCProfile:
 		(bytes 44 to 47), Rendering Intent field (bytes 64 to 67) and 
 		Profile ID field (bytes 84 to 99) in the profile header have been 
 		temporarily replaced with zeros.
+		
 		"""
-		data = self.data[:44] + "\0\0\0\0" + self.data[48:64] + "\0\0\0\0" + self.data[68:84] + "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + self.data[100:self.size]
+		data = self.data[:44] + "\0\0\0\0" + self.data[48:64] + "\0\0\0\0" + \
+			   self.data[68:84] + "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + \
+			   self.data[100:self.size]
 		self.ID = md5(data).digest()
 		return self.ID
 	
@@ -747,8 +853,8 @@ class ICCProfile:
 		"""
 		Closes the associated file object (if any).
 		"""
-		if self._fileObject:
-			self._fileObject.close()
+		if self._file:
+			self._file.close()
 	
 	def getCopyright(self):
 		"""
@@ -782,11 +888,13 @@ class ICCProfile:
 	
 	def isSame(self, profile):
 		"""
-		Returns True if the passed in profile has the same ID 
-		or False otherwise.
+		Compare the ID of profiles.
+		
+		Returns a boolean indicating if the profiles have the same ID.
 		
 		profile can be a ICCProfile instance, a binary string
 		containing profile data, a filename or a file object.
+		
 		"""
 		if not isinstance(profile, self.__class__):
 			profile = self.__class__(profile)
@@ -798,17 +906,19 @@ class ICCProfile:
 	
 	def load(self):
 		"""
-		Loads the profile from the file object (load does nothing if the 
-		profile was passed in as a binary string). Normally, you don't need 
-		to call this method, since the ICCProfile class automatically loads 
-		the profile when necessary.
+		Loads the profile from the file object.
+
+		Normally, you don't need to call this method, since the ICCProfile 
+		class automatically loads the profile when necessary (load does 
+		nothing if the profile was passed in as a binary string).
+		
 		"""
-		if (not self._data or len(self._data) < self.size) and self._fileObject:
-			if self._fileObject.closed:
-				self._fileObject = open(self._fileObject.name, "rb")
-				self._fileObject.seek(len(self._data))
-			self._data += self._fileObject.read(self.size - len(self._data))
-			self._fileObject.close()
+		if (not self._data or len(self._data) < self.size) and self._file:
+			if self._file.closed:
+				self._file = open(self._file.name, "rb")
+				self._file.seek(len(self._data))
+			self._data += self._file.read(self.size - len(self._data))
+			self._file.close()
 	
 	def open(self, path):
 		"""
@@ -816,8 +926,8 @@ class ICCProfile:
 		"""
 		self.__init__(open(path, "rb"))
 	
-	def read(self, binaryStringOrFileNameOrFileObject):
+	def read(self, profile):
 		"""
 		Read profile from binary string, filename or file object.
 		"""
-		self.__init__(binaryStringOrFileNameOrFileObject)
+		self.__init__(profile)

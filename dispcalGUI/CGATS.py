@@ -9,46 +9,73 @@ Copyright (C) 2008 Florian Hoech
 
 import os, re, sys
 
-from StringIOu import StringIOu as StringIO
 from safe_print import safe_print
+from util_io import StringIOu as StringIO
 
-debug = '-d' in sys.argv[1:]
 
 def rpad(value, width):
+	"""
+	Right-pad a value to a given width.
+	
+	value is converted to a string first.
+	
+	"""
 	strval = str(value)
 	i = strval.find(".")
 	if i > -1:
 		strval = str(round(value, width - i - 1)).ljust(width, '0')
 	return strval
 
+
 def rcut(value, width):
+	"""
+	Cut off any chars beyond width on the right-hand side.
+	
+	value is converted to a string first.
+	
+	"""
 	strval = str(value)
 	i = strval.find(".")
 	if i > -1:
 		strval = str(round(value, width - i - 1))
 	return strval
 
+
 class CGATSInvalidError(IOError):
 	def __str__(self):
 		return self.args[0]
+
 
 class CGATSInvalidOperationError(Exception):
 	def __str__(self):
 		return self.args[0]
 
+
 class CGATSKeyError(KeyError):
 	def __str__(self):
 		return self.args[0]
+
 
 class CGATSTypeError(TypeError):
 	def __str__(self):
 		return self.args[0]
 
+
 class CGATSValueError(ValueError):
 	def __str__(self):
 		return self.args[0]
 
+
 class CGATS(dict):
+
+	"""
+	CGATS structure.
+	
+	CGATS files are treated mostly as 'soup', so only basic checking is
+	in place.
+	
+	"""
+	
 	datetime = None
 	filename = None
 	key = None
@@ -59,7 +86,14 @@ class CGATS(dict):
 	type = 'ROOT'
 	vmaxlen = 0
 	
-	def __init__(self, cgats = None):
+	def __init__(self, cgats=None):
+		"""
+		Return a CGATS instance.
+		
+		cgats can be a path, a string holding CGATS data, or a file object.
+		
+		"""
+		
 		self.root = self
 		
 		if cgats:
@@ -68,10 +102,12 @@ class CGATS(dict):
 				raw_lines = cgats
 			else:
 				if isinstance(cgats, (str, unicode)):
-					if cgats.find('\n') < 0 and cgats.find('\r') < 0: # assume filename
+					if cgats.find('\n') < 0 and cgats.find('\r') < 0:
+						# assume filename
 						cgats = open(cgats, 'rU')
 						self.filename = cgats.name
-					else: # assume text
+					else:
+						# assume text
 						cgats = StringIO(cgats)
 				elif isinstance(cgats, file):
 					self.filename = cgats.name
@@ -86,8 +122,9 @@ class CGATS(dict):
 			context = self
 
 			for raw_line in raw_lines:
-				line = re.sub('[^\x09\x20-\x7E\x80-\xFF]', '', raw_line.strip()) # strip control chars and leading/trailing whitespace
-				# if debug: safe_print(line)
+				# strip control chars and leading/trailing whitespace
+				line = re.sub('[^\x09\x20-\x7E\x80-\xFF]', '', 
+								raw_line.strip())
 				comment_offset = line.find('#')
 				if comment_offset >= 0: # strip comment
 					line = line[:comment_offset].strip()
@@ -129,7 +166,9 @@ class CGATS(dict):
 					if values[0] == 'Date:':
 						context.datetime = line
 					else:
-						match = re.match('([^"]+?)(?:\s+("[^"]+"|[^\s]+))?(?:\s*#(.*))?$', line)
+						match = re.match(
+							'([^"]+?)(?:\s+("[^"]+"|[^\s]+))?(?:\s*#(.*))?$', 
+							line)
 						if match:
 							key, value, comment = match.groups()
 							if value != None:
@@ -138,7 +177,6 @@ class CGATS(dict):
 								context.add_data({key: ''})
 				elif line and values[0] not in ('Comment:', 'Date:'):
 					self.add_data(line)
-					# context = self[-1][line]
 					context = self[-1]
 			self.setmodified(False)
 
@@ -186,7 +224,8 @@ class CGATS(dict):
 	def __setattr__(self, name, value):
 		if name == 'modified':
 			self.setmodified(value)
-		elif name in ('datetime', 'filename', 'key', 'mtime', 'parent', 'root', 'type', 'vmaxlen'):
+		elif name in ('datetime', 'filename', 'key', 'mtime', 'parent', 
+					  'root', 'type', 'vmaxlen'):
 			object.__setattr__(self, name, value)
 			self.setmodified()
 		else:
@@ -196,7 +235,8 @@ class CGATS(dict):
 		dict.__setitem__(self, name, value)
 		self.setmodified()
 	
-	def setmodified(self, modified = True):
+	def setmodified(self, modified=True):
+		""" Set 'modified' state on the 'root' object. """
 		if self.root and self.root.modified != modified:
 			object.__setattr__(self.root, 'modified', modified)
 	
@@ -204,7 +244,8 @@ class CGATS(dict):
 		result = []
 		data = None
 		if self.type == 'SAMPLE':
-			result += [' '.join([str(self[item]) for item in self.parent.parent['DATA_FORMAT'].values()])]
+			result += [' '.join([str(self[item]) for item in 
+						self.parent.parent['DATA_FORMAT'].values()])]
 		elif self.type == 'DATA':
 			data = self
 		elif self.type == 'DATA_FORMAT':
@@ -215,7 +256,9 @@ class CGATS(dict):
 			if self.type == 'SECTION':
 				result += ['BEGIN_' + self.key]
 			elif self.parent and self.parent.type == 'ROOT':
-				result += [self.type.ljust(7)] # Make sure CGATS file identifiers are always a minimum of 7 characters
+				result += [self.type.ljust(7)]	# Make sure CGATS file 
+												# identifiers are always 
+												# a minimum of 7 characters
 				result += ['']
 			# elif self.type == 'FILE':
 				# result += [self.key]
@@ -229,7 +272,8 @@ class CGATS(dict):
 						if type(key) == int:
 							result += [str(value)]
 						else:
-							if 'KEYWORDS' in self and key in self['KEYWORDS'].values():
+							if 'KEYWORDS' in self and \
+								key in self['KEYWORDS'].values():
 								result += ['KEYWORD "%s"' % key]
 								result += ['%s "%s"' % (key, value)]
 							elif type(value) in (int, float):
@@ -237,7 +281,8 @@ class CGATS(dict):
 							else:
 								result += ['%s "%s"' % (key, value)]
 				elif key not in ('DATA_FORMAT', 'KEYWORDS'):
-					if (value.type == 'SECTION' and result[-1:] and result[-1:][0][-1] != '\n'):
+					if (value.type == 'SECTION' and result[-1:] and 
+						result[-1:][0][-1] != '\n'):
 						result += ['']
 					result += [str(value)]
 			if self.type == 'SECTION':
@@ -257,11 +302,13 @@ class CGATS(dict):
 			result += ['NUMBER_OF_SETS %s' % (len(data))]
 			result += ['BEGIN_DATA']
 			for key in data:
-				result += [' '.join([rpad(data[key][item], data.vmaxlen) for item in data.parent['DATA_FORMAT'].values()])]
+				result += [' '.join([rpad(data[key][item], data.vmaxlen) for 
+								item in data.parent['DATA_FORMAT'].values()])]
 			result += ['END_DATA']
 		return '\n'.join(result)
 
-	def add_keyword(self, keyword, value = None):
+	def add_keyword(self, keyword, value=None):
+		""" Add a keyword to the list of keyword values. """
 		if self.type in ('DATA', 'DATA_FORMAT', 'KEYWORDS', 'SECTION'):
 			context = self.parent
 		elif self.type == 'SAMPLE':
@@ -279,7 +326,8 @@ class CGATS(dict):
 		if value != None:
 			context[keyword] = value
 
-	def remove_keyword(self, keyword, remove_value = True):
+	def remove_keyword(self, keyword, remove_value=True):
+		""" Remove a keyword from the list of keyword values. """
 		if self.type in ('DATA', 'DATA_FORMAT', 'KEYWORDS', 'SECTION'):
 			context = self.parent
 		elif self.type == 'SAMPLE':
@@ -292,14 +340,18 @@ class CGATS(dict):
 		if remove_value:
 			del context[keyword]
 	
-	def insert(self, key = None, item = None):
-		self.add_data(item, key)
+	def insert(self, key=None, data=None):
+		""" Insert data at index key. Also see add_data method. """
+		self.add_data(data, key)
 	
-	def append(self, item):
-		self.add_data(item)
+	def append(self, data):
+		""" Append data. Also see add_data method. """
+		self.add_data(data)
 	
-	def moveby1(self, start, inc = 1):
-		""" move items beginning from start by icrementing or decrementing key by inc """
+	def moveby1(self, start, inc=1):
+		"""
+		Move items from start by icrementing or decrementing their key by inc.
+		"""
 		r = range(start, len(self) + 1)
 		if inc > 0:
 			r.reverse()
@@ -313,13 +365,21 @@ class CGATS(dict):
 					if key == len(self) - 1:
 						break
 	
-	def add_data(self, data, key = None):
+	def add_data(self, data, key=None):
+		"""
+		Add data to the CGATS structure.
+		
+		data can be a CGATS instance, a dict, a list, a tuple, or a string or
+		unicode instance.
+		
+		"""
 		if self.type == 'DATA':
 			if type(data) in (CGATS, dict, list, tuple):
 				if self.parent['DATA_FORMAT']:
 					fl, il = len(self.parent['DATA_FORMAT']), len(data)
 					if fl != il:
-						raise CGATSTypeError('DATA entries take exactly %s values (%s given)' % (fl, il))
+						raise CGATSTypeError('DATA entries take exactly %s '
+											 'values (%s given)' % (fl, il))
 					dataset = CGATS()
 					i = -1
 					for item in self.parent['DATA_FORMAT'].values():
@@ -331,9 +391,11 @@ class CGATS(dict):
 								raise CGATSKeyError(item)
 						else:
 							value = data[i]
-						if item.upper() in ('INDEX', 'SAMPLE_ID'): # allow alphanumeric INDEX / SAMPLE_ID
+						if item.upper() in ('INDEX', 'SAMPLE_ID'):
+							# allow alphanumeric INDEX / SAMPLE_ID
 							if isinstance(value, (str, unicode)):
-								match = re.match('(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
+								match = re.match(
+									'(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
 								if match:
 									if match.groups()[0]:
 										value = float(value)
@@ -346,7 +408,10 @@ class CGATS(dict):
 							try:
 								value = float(value)
 							except ValueError:
-								raise CGATSValueError('Invalid data type for %s (expected float, got %s)' % (item, type(value)))
+								raise CGATSValueError('Invalid data type for '
+													  '%s (expected float, '
+													  'got %s)' % 
+													  (item, type(value)))
 						dataset[item] = value
 					if type(key) == int:
 						# accept only integer keys.
@@ -360,11 +425,15 @@ class CGATS(dict):
 					dataset.type = 'SAMPLE'
 					self[key] = dataset
 				else:
-					raise CGATSInvalidOperationError('Cannot add to DATA because of missing DATA_FORMAT')
+					raise CGATSInvalidOperationError('Cannot add to DATA '
+						'because of missing DATA_FORMAT')
 			else:
-				raise CGATSTypeError('Invalid data type for %s (expected CGATS, dict, list or tuple, got %s)' % (self.type, type(data)))
+				raise CGATSTypeError('Invalid data type for %s (expected '
+									 'CGATS, dict, list or tuple, got %s)' % 
+									 (self.type, type(data)))
 		elif self.type == 'ROOT':
-			if isinstance(data, (str, unicode)) and data.find('\n') < 0 and data.find('\r') < 0:
+			if isinstance(data, (str, unicode)) and data.find('\n') < 0 and \
+			   data.find('\r') < 0:
 				if type(key) == int:
 					# accept only integer keys.
 					# move existing items
@@ -381,7 +450,9 @@ class CGATS(dict):
 				# self[key][data].type = 'FILE'
 				self[key].type = data
 			else:
-				raise CGATSTypeError('Invalid data type for %s (expected str or unicode without line endings, got %s)' % (self.type, type(data)))
+				raise CGATSTypeError('Invalid data type for %s (expected str '
+									 'or unicode without line endings, got %s)'
+									 % (self.type, type(data)))
 		elif self.type == 'SECTION':
 			if isinstance(data, (str, unicode)):
 				if type(key) == int:
@@ -392,8 +463,10 @@ class CGATS(dict):
 					key = len(self)
 				self[key] = data
 			else:
-				raise CGATSTypeError('Invalid data type for %s (expected str or unicode, got %s)' % (self.type, type(data)))
-		elif self.type in ('DATA_FORMAT', 'KEYWORDS') or (self.parent and self.parent.type == 'ROOT'):
+				raise CGATSTypeError('Invalid data type for %s (expected str'
+					'or unicode, got %s)' % (self.type, type(data)))
+		elif self.type in ('DATA_FORMAT', 'KEYWORDS') or \
+			(self.parent and self.parent.type == 'ROOT'):
 			if type(data) in (CGATS, dict, list, tuple):
 				for var in data:
 					if var in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
@@ -410,41 +483,58 @@ class CGATS(dict):
 							if value != 'KEYWORD':
 								self.add_keyword(value)
 							else:
-								safe_print('Warning: cannot add keyword "KEYWORD"')
+								safe_print('Warning: cannot add keyword '
+											'"KEYWORD"')
 						else:
 							if isinstance(value, (str, unicode)):
-								match = re.match('(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
+								match = re.match(
+									'(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
 								if match:
 									if match.groups()[0]:
 										value = float(value)
 									else:
 										value = int(value)
-									if self.type in ('DATA_FORMAT', 'KEYWORDS'):
-										raise CGATSTypeError('Invalid data type for %s (expected str or unicode, got %s)' % (self.type, type(value)))
+									if self.type in ('DATA_FORMAT', 
+														'KEYWORDS'):
+										raise CGATSTypeError('Invalid data '
+															 'type for %s '
+															 '(expected str '
+															 'or unicode, got '
+															 '%s)' % 
+															 (self.type, 
+															  type(value)))
 							self[key] = value
 			else:
-				raise CGATSTypeError('Invalid data type for %s (expected CGATS, dict, list or tuple, got %s)' % (self.type, type(data)))
+				raise CGATSTypeError('Invalid data type for %s (expected '
+					'CGATS, dict, list or tuple, got %s)' % (self.type, 
+															 type(data)))
 		else:
-			raise CGATSInvalidOperationError('Cannot add data to %s' % self.type)
+			raise CGATSInvalidOperationError('Cannot add data to %s' % 
+											 self.type)
 	
-	def get_NUMBER_OF_FIELDS(self):
+	@property
+	def NUMBER_OF_FIELDS(self):
+		"""Get number of fields"""
 		if 'DATA_FORMAT' in self:
 			return len(self['DATA_FORMAT'])
 		return 0
 	
-	NUMBER_OF_FIELDS = property(get_NUMBER_OF_FIELDS, doc = 'Get number of fields')
-	
-	def get_NUMBER_OF_SETS(self):
+	@property
+	def NUMBER_OF_SETS(self):
+		"""Get number of sets"""
 		if 'DATA' in self:
 			return len(self['DATA'])
 		return 0
-	
-	NUMBER_OF_SETS = property(get_NUMBER_OF_SETS, doc = 'Get number of sets')
 
-	def query(self, query, query_value = None, get_value = False, get_first = False):
-		""" Return CGATS object of items or values where query matches.
+	def query(self, query, query_value = None, get_value = False, 
+				get_first = False):
+		"""
+		Return CGATS object of items or values where query matches.
+		
 		Query can be a dict with key / value pairs, a tuple or a string.
-		Return empty CGATS object if no matching items found. """
+		Return empty CGATS object if no matching items found.
+		
+		"""
 		
 		if not get_first:
 			result = CGATS()
@@ -471,8 +561,11 @@ class CGATS(dict):
 				
 				match_count = 0
 				for query_key in query:
-					if query_key in item or (type(item) == CGATS and ((query_key == 'NUMBER_OF_FIELDS' and 'DATA_FORMAT' in item) or (query_key == 'NUMBER_OF_SETS' and 'DATA' in item))):
-						if query_value == None and isinstance(query, dict):
+					if query_key in item or (type(item) == CGATS and 
+					   ((query_key == 'NUMBER_OF_FIELDS' and 'DATA_FORMAT' in 
+					   item) or (query_key == 'NUMBER_OF_SETS' and 'DATA' in 
+					   item))):
+						if query_value is None and isinstance(query, dict):
 							current_query_value = query[query_key]
 						else:
 							current_query_value = query_value
@@ -490,18 +583,21 @@ class CGATS(dict):
 						result_n = item
 					if result_n != None:
 						if get_first:
-							if get_value and isinstance(result_n, dict) and len(result_n) == 1:
+							if get_value and isinstance(result_n, dict) and \
+							   len(result_n) == 1:
 								return result_n[0]
 							else:
 								return result_n
 						elif len(result_n):
-							if get_value and isinstance(result_n, dict) and len(result_n) == 1:
+							if get_value and isinstance(result_n, dict) and \
+							   len(result_n) == 1:
 								result[n] = result_n[0]
 							else:
 								result[n] = result_n
 				
 				if type(item) == CGATS and item != self:
-					result_n = item.query(query, query_value, get_value, get_first)
+					result_n = item.query(query, query_value, get_value, 
+										  get_first)
 					if result_n != None:
 						if get_first:
 							return result_n
@@ -513,19 +609,24 @@ class CGATS(dict):
 		
 		return result
 	
-	def queryi(self, query, query_value = None):
-		return self.query(query, query_value, get_value = False, get_first = False)
+	def queryi(self, query, query_value=None):
+		""" Query and return matching items. See also query method. """
+		return self.query(query, query_value, get_value=False, get_first=False)
 	
-	def queryi1(self, query, query_value = None):
-		return self.query(query, query_value, get_value = False, get_first = True)
+	def queryi1(self, query, query_value=None):
+		""" Query and return first matching item. See also query method. """
+		return self.query(query, query_value, get_value=False, get_first=True)
 	
-	def queryv(self, query, query_value = None):
-		return self.query(query, query_value, get_value = True, get_first = False)
+	def queryv(self, query, query_value=None):
+		""" Query and return matching values. See also query method. """
+		return self.query(query, query_value, get_value=True, get_first=False)
 	
-	def queryv1(self, query, query_value = None):
-		return self.query(query, query_value, get_value = True, get_first = True)
+	def queryv1(self, query, query_value=None):
+		""" Query and return first matching value. See also query method. """
+		return self.query(query, query_value, get_value=True, get_first=True)
 	
 	def remove(self, item):
+		""" Remove an item from the internal CGATS structure. """
 		if type(item) == CGATS:
 			key = item.key
 		else:

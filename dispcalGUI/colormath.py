@@ -1,7 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import math#, numpy
+import math
+
+try:
+	import Numeric as numpy
+except ImportError:
+	try:
+		import numarray as numpy
+	except ImportError:
+		try:
+			import numpy
+		except ImportError:
+			numpy = None
 
 CIEilluminants = {
 	# en.wikipedia.org/wiki/Standard_illuminant
@@ -56,7 +67,12 @@ rgbspaces = {
 
 def CIEDCCT2xyY(T):
 	"""
-	derived from formula found on brucelindbloom.com
+	Convert from CIE correlated daylight temperature to xyY.
+	
+	T = temperature in Kelvin.
+	
+	Derived from formula found on brucelindbloom.com
+	
 	"""
 	if type(T) == str:
 		T = T.upper()
@@ -78,8 +94,16 @@ def CIEDCCT2xyY(T):
 	yD = -3 * math.pow(xD, 2) + 2.87 * xD - 0.275
 	return xD, yD, 1.0
 
+
 def CIEDCCT2XYZ(T):
+	"""
+	Convert from CIE correlated daylight temperature to XYZ.
+	
+	T = temperature in Kelvin.
+	
+	"""
 	return xyY2XYZ(*CIEDCCT2xyY(T))
+
 
 def get_DBL_MIN():
 	t = "0.0"
@@ -103,21 +127,40 @@ def get_DBL_MIN():
 			DBL_MIN = float(t + str(i))
 	return DBL_MIN
 
+
 DBL_MIN = get_DBL_MIN()
 
-def RGB2XYZ(R, G, B, gamma = None, matrix = None):
+
+def RGB2XYZ(R, G, B, gamma=None, matrix=None):
 	"""
-	formula from brucelindbloom.com
+	Convert from RGB to XYZ.
+	
+	Use optional gamma and matrix (both default to sRGB).
+	
+	Formula from brucelindbloom.com
 	
 	Implementation Notes:
-	1. The transformation matrix [M] is calculated from the RGB reference primaries as discussed here [http://brucelindbloom.com/Eqn_RGB_XYZ_Matrix.html].
-	2. The gamma values for many common RGB color spaces may be found here [http://brucelindbloom.com/WorkingSpaceInfo.html#Specifications].
-	3. Your input RGB values may need to be scaled before using the above. For example, if your values are in the range [0, 255], you must first divide each by 255.0.
+	1. The transformation matrix [M] is calculated from the RGB reference 
+	   primaries as discussed here:
+	   http://brucelindbloom.com/Eqn_RGB_XYZ_Matrix.html
+	2. The gamma values for many common RGB color spaces may be found here:
+	   http://brucelindbloom.com/WorkingSpaceInfo.html#Specifications
+	3. Your input RGB values may need to be scaled before using the above. 
+	   For example, if your values are in the range [0, 255], you must first 
+	   divide each by 255.0.
 	4. The output XYZ values are in the nominal range [0.0, 1.0].
-	5. The XYZ values will be relative to the same reference white as the RGB system. If you want XYZ relative to a different reference white, you must apply a chromatic adaptation transform [http://brucelindbloom.com/Eqn_ChromAdapt.html] to the XYZ color to convert it from the reference white of the RGB system to the desired reference white.
-	6. Sometimes the more complicated special case of sRGB shown above is replaced by a "simplified" version using a straight gamma function with gamma = 2.2.
+	5. The XYZ values will be relative to the same reference white as the 
+	   RGB system. If you want XYZ relative to a different reference white, 
+	   you must apply a chromatic adaptation transform 
+	   [http://brucelindbloom.com/Eqn_ChromAdapt.html] to the XYZ color to 
+	   convert it from the reference white of the RGB system to the desired 
+	   reference white.
+	6. Sometimes the more complicated special case of sRGB shown above is 
+	   replaced by a "simplified" version using a straight gamma function 
+	   with gamma = 2.2.
+	   
 	"""
-	if gamma == None: # default to sRGB trc
+	if gamma is None: # default to sRGB trc
 		if R > 0.04045:
 			R = math.pow((R + 0.055) / 1.055, 2.4)
 		else:
@@ -134,7 +177,7 @@ def RGB2XYZ(R, G, B, gamma = None, matrix = None):
 		R = math.pow(R, gamma)
 		G = math.pow(G, gamma)
 		B = math.pow(B, gamma)
-	if matrix == None: # default to sRGB matrix
+	if matrix is None: # default to sRGB matrix
 		matrix = (
 			(0.412424, 0.212656,  0.0193324),
 			(0.357579, 0.715158,  0.119193),
@@ -145,59 +188,80 @@ def RGB2XYZ(R, G, B, gamma = None, matrix = None):
 	Z = R * matrix[0][2] + G * matrix[1][2] + B * matrix[2][2]
 	return X, Y, Z
 
-def RGB2XYZ_matrix(xr, yr, xg, yg, xb, yb, Xw, Yw, Zw):
+
+def matrix_rgb(xr, yr, xg, yg, xb, yb, Xw, Yw, Zw):
+	""" Create and return an RGB matrix. """
 	Xr, Yr, Zr = xyY2XYZ(xr, yr, 1.0)
 	Xg, Yg, Zg = xyY2XYZ(xg, yg, 1.0)
 	Xb, Yb, Zb = xyY2XYZ(xb, yb, 1.0)
-	matrix = numpy.matrix((
+	mtx = numpy.matrix((
 		(Xr, Yr, Zr),
 		(Xg, Yg, Zg),
 		(Xb, Yb, Zb)
 	)).I
-	Sr = Xw * matrix[0].item(0) + Yw * matrix[1].item(0) + Zw * matrix[2].item(0)
-	Sg = Xw * matrix[0].item(1) + Yw * matrix[1].item(1) + Zw * matrix[2].item(1)
-	Sb = Xw * matrix[0].item(2) + Yw * matrix[1].item(2) + Zw * matrix[2].item(2)
+	Sr = Xw * mtx[0].item(0) + Yw * mtx[1].item(0) + Zw * mtx[2].item(0)
+	Sg = Xw * mtx[0].item(1) + Yw * mtx[1].item(1) + Zw * mtx[2].item(1)
+	Sb = Xw * mtx[0].item(2) + Yw * mtx[1].item(2) + Zw * mtx[2].item(2)
 	return (
 		(Sr * Xr, Sr * Yr, Sr * Zr),
 		(Sg * Xg, Sg * Yg, Sg * Zg),
 		(Sb * Xb, Sb * Yb, Sb * Zb)
 	)
 
+
 def xyY2CCT(x, y, Y):
+	""" Convert from xyY to correlated color temperature. """
 	return XYZ2CCT(*xyY2XYZ(x, y, Y))
+
 
 def xyY2XYZ(x, y, Y):
 	"""
-	formula from brucelindbloom.com
+	Convert from xyY to XYZ.
+	
+	Formula from brucelindbloom.com
 	
 	Implementation Notes:
-	1. Watch out for the case where y = 0. In that case, X = Y = Z = 0 is returned.
+	1. Watch out for the case where y = 0. In that case, X = Y = Z = 0 is 
+	   returned.
 	2. The output XYZ values are in the nominal range [0.0, 1.0].
+	
 	"""
 	if y == 0:
 		return 0, 0, 0
 	X = (x * Y) / y
 	Z = ((1 - x - y) * Y) / y
 	return X, Y, Z
+
+
+def LERP(a,b,c):
+	"""
+	LERP(a,b,c) = linear interpolation macro.
 	
+	Is 'a' when c == 0.0 and 'b' when c == 1.0
+	
+	"""
+	return (b - a) * c + a
+
+
 def XYZ2CCT(X, Y, Z):
 	"""
-	derived from ANSI C implementation by Bruce Lindbloom brucelindbloom.com
+	Convert from XYZ to correlated color temperature.
+	
+	Derived from ANSI C implementation by Bruce Lindbloom brucelindbloom.com
 	
 	Return: correlated color temperature if successful, else None.
-
+	
 	Description:
-		This is an implementation of Robertson's method of computing the correlated color
-		temperature of an XYZ color. It can compute correlated color temperatures in the
-		range [1666.7K, infinity].
-
+	This is an implementation of Robertson's method of computing the 
+	correlated color temperature of an XYZ color. It can compute correlated 
+	color temperatures in the range [1666.7K, infinity].
+	
 	Reference:
-		"Color Science: Concepts and Methods, Quantitative Data and Formulae", Second Edition,
-		Gunter Wyszecki and W. S. Stiles, John Wiley & Sons, 1982, pp. 227, 228.
+	"Color Science: Concepts and Methods, Quantitative Data and Formulae", 
+	Second Edition, Gunter Wyszecki and W. S. Stiles, John Wiley & Sons, 
+	1982, pp. 227, 228.
+	
 	"""
-	# LERP(a,b,c) = linear interpolation macro, is 'a' when c == 0.0 and 'b' when c == 1.0
-	def LERP(a,b,c):
-		return (b - a) * c + a
 	rt = [       # reciprocal temperature (K)
 		 DBL_MIN,  10.0e-6,  20.0e-6,  30.0e-6,  40.0e-6,  50.0e-6,
 		 60.0e-6,  70.0e-6,  80.0e-6,  90.0e-6, 100.0e-6, 125.0e-6,
@@ -226,7 +290,8 @@ def XYZ2CCT(X, Y, Z):
 		[0.22511, 0.33439, -1.4512],
 		[0.23247, 0.33904, -1.7298],
 		[0.24010, 0.34308, -2.0637],
-		[0.24792, 0.34655, -2.4681],	# Note: 0.24792 is a corrected value for the error found in W&S as 0.24702
+		[0.24792, 0.34655, -2.4681],	# Note: 0.24792 is a corrected value 
+										# for the error found in W&S as 0.24702
 		[0.25591, 0.34951, -2.9641],
 		[0.26400, 0.35200, -3.5814],
 		[0.27218, 0.35407, -4.3633],
@@ -247,30 +312,48 @@ def XYZ2CCT(X, Y, Z):
 	i = 0
 	while i < 31:
 		di = (vs - uvt[i][1]) - uvt[i][2] * (us - uvt[i][0])
-		if ((i > 0) and (((di < 0.0) and (dm >= 0.0)) or ((di >= 0.0) and (dm < 0.0)))):
+		if i > 0 and ((di < 0.0 and dm >= 0.0) or (di >= 0.0 and dm < 0.0)):
 			break	# found lines bounding (us, vs) : i-1 and i
 		dm = di
 		i += 1
 	if (i == 31):
-		return None	# bad XYZ input, color temp would be less than minimum of 1666.7 degrees, or too far towards blue
+		# bad XYZ input, color temp would be less than minimum of 1666.7 
+		# degrees, or too far towards blue
+		return None
 	di = di / math.sqrt(1.0 + uvt[i    ][2] * uvt[i    ][2])
 	dm = dm / math.sqrt(1.0 + uvt[i - 1][2] * uvt[i - 1][2])
 	p = dm / (dm - di)	# p = interpolation parameter, 0.0 : i-1, 1.0 : i
 	p = 1.0 / (LERP(rt[i - 1], rt[i], p))
 	return p
 
-def XYZ2RGB(X, Y, Z, gamma = None, matrix = None):
+
+def XYZ2RGB(X, Y, Z, gamma=None, matrix=None):
 	"""
-	formula from brucelindbloom.com
+	Convert from XYZ to RGB.
+	
+	Formula from brucelindbloom.com
 	
 	Implementation Notes:
-	1. The transformation matrix [M] is calculated from the RGB reference primaries as discussed here [http://brucelindbloom.com/Eqn_RGB_XYZ_Matrix.html].
-	2. gamma is the gamma value of the RGB color system used. Many common ones may be found here [http://brucelindbloom.com/WorkingSpaceInfo.html#Specifications].
-	3. The output RGB values are in the nominal range [0.0, 1.0]. You may wish to scale them to some other range. For example, if you want RGB in the range [0, 255], you must multiply each component by 255.0.
-	4. If the input XYZ color is not relative to the same reference white as the RGB system, you must first apply a chromatic adaptation transform [http://brucelindbloom.com/Eqn_ChromAdapt.html] to the XYZ color to convert it from its own reference white to the reference white of the RGB system.
-	5. Sometimes the more complicated special case of sRGB shown above is replaced by a "simplified" version using a straight gamma function with gamma = 2.2.
+	1. The transformation matrix [M] is calculated from the RGB reference 
+	   primaries as discussed here:
+	   http://brucelindbloom.com/Eqn_RGB_XYZ_Matrix.html
+	2. gamma is the gamma value of the RGB color system used. Many common ones 
+	   may be found here:
+	   http://brucelindbloom.com/WorkingSpaceInfo.html#Specifications
+	3. The output RGB values are in the nominal range [0.0, 1.0]. You may wish 
+	   to scale them to some other range. For example, if you want RGB in the 
+	   range [0, 255], you must multiply each component by 255.0.
+	4. If the input XYZ color is not relative to the same reference white as 
+	   the RGB system, you must first apply a chromatic adaptation transform 
+	   [http://brucelindbloom.com/Eqn_ChromAdapt.html] to the XYZ color to 
+	   convert it from its own reference white to the reference white of the 
+	   RGB system.
+	5. Sometimes the more complicated special case of sRGB shown above is 
+	   replaced by a "simplified" version using a straight gamma function with 
+	   gamma = 2.2.
+	
 	"""
-	if matrix == None: # default to sRGB matrix
+	if matrix is None: # default to sRGB matrix
 		matrix = (
 			( 3.24071,  -0.969258,   0.0556352),
 			(-1.53726,   1.87599,   -0.203996),
@@ -279,7 +362,7 @@ def XYZ2RGB(X, Y, Z, gamma = None, matrix = None):
 	R = X * matrix[0][0] + Y * matrix[1][0] + Z * matrix[2][0]
 	G = X * matrix[0][1] + Y * matrix[1][1] + Z * matrix[2][1]
 	B = X * matrix[0][2] + Y * matrix[1][2] + Z * matrix[2][2]
-	if gamma == None: # default to sRGB trc
+	if gamma is None: # default to sRGB trc
 		if (R > 0.0031308):
 			R = 1.055 * math.pow(R, 1.0 / 2.4) - 0.055
 		else:
@@ -304,19 +387,25 @@ def XYZ2RGB(X, Y, Z, gamma = None, matrix = None):
 	B = min(1.0, B)
 	return R, G, B
 
+
 def XYZ2xyY(X, Y, Z):
 	"""
-	formula from brucelindbloom.com
+	Convert from XYZ to xyY.
+	
+	Formula from brucelindbloom.com
 	
 	Implementation Notes:
-	1. Watch out for black, where X = Y = Z = 0. In that case, x and y are set to the chromaticity coordinates of D50.
+	1. Watch out for black, where X = Y = Z = 0. In that case, x and y are set 
+	   to the chromaticity coordinates of D50.
 	2. The output Y value is in the nominal range [0.0, 1.0].
+	
 	"""
 	if X == Y == Z == 0:
 		return CIEDCCT2xyY(5000)[0:2] + (0, )
 	x = X / (X + Y + Z)
 	y = Y / (X + Y + Z)
 	return x, y, Y
+
 
 def test():
 	for i in range(4):
@@ -331,16 +420,22 @@ def test():
 		elif i == 3:
 			XYZ = (0.95106486, 1.0, 1.08844025)
 			wp = " ".join([str(v) for v in XYZ])
-		print "RGB and corresponding XYZ (nominal range 0.0 - 1.0) with whitepoint %s" % wp
+		print ("RGB and corresponding XYZ (nominal range 0.0 - 1.0) with "
+			   "whitepoint %s" % wp)
 		for name in rgbspaces:
 			spc = rgbspaces[name]
 			if i == 0:
 				XYZ = CIEDCCT2XYZ(spc[1])
-			mtx = RGB2XYZ_matrix(spc[2], spc[3], spc[5], spc[6], spc[8], spc[9], *XYZ)
-			print "%s 1.0, 1.0, 1.0 = XYZ" % name, [str(round(v, 4)) for v in RGB2XYZ(1.0, 1.0, 1.0, spc[0], mtx)]
-			print "%s 1.0, 0.0, 0.0 = XYZ" % name, [str(round(v, 4)) for v in RGB2XYZ(1.0, 0.0, 0.0, spc[0], mtx)]
-			print "%s 0.0, 1.0, 0.0 = XYZ" % name, [str(round(v, 4)) for v in RGB2XYZ(0.0, 1.0, 0.0, spc[0], mtx)]
-			print "%s 0.0, 0.0, 1.0 = XYZ" % name, [str(round(v, 4)) for v in RGB2XYZ(0.0, 0.0, 1.0, spc[0], mtx)]
+			mtx = matrix_rgb(spc[2], spc[3], spc[5], spc[6], spc[8], spc[9], 
+							 *XYZ)
+			print "%s 1.0, 1.0, 1.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(1.0, 1.0, 1.0, spc[0], mtx)]
+			print "%s 1.0, 0.0, 0.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(1.0, 0.0, 0.0, spc[0], mtx)]
+			print "%s 0.0, 1.0, 0.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(0.0, 1.0, 0.0, spc[0], mtx)]
+			print "%s 0.0, 0.0, 1.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(0.0, 0.0, 1.0, spc[0], mtx)]
 		print ""
 
 if __name__ == '__main__':

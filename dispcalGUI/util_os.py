@@ -21,18 +21,22 @@ def quote_args(args):
 		args_out += [arg]
 	return args_out
 
+
 def expanduseru(path):
 	""" Unicode version of os.path.expanduser """
 	return unicode(os.path.expanduser(path), fs_enc)
+
 
 def expandvarsu(path):
 	""" Unicode version of os.path.expandvars """
 	return unicode(os.path.expandvars(path), fs_enc)
 
+
 def getenvu(key, default = None):
 	""" Unicode version of os.getenv """
 	var = os.getenv(key, default)
 	return var if isinstance(var, unicode) else unicode(var, fs_enc)
+
 
 def get_sudo():
 	""" Return the full path of the 'sudo' executable """
@@ -40,6 +44,7 @@ def get_sudo():
 		# if which(executable):
 			# return executable
 	return which("sudo")
+
 
 def listdir_re(path, rex = None):
 	""" Filter directory contents through a regular expression """
@@ -49,9 +54,23 @@ def listdir_re(path, rex = None):
 		files = filter(rex.search, files)
 	return files
 
+
 def putenvu(key, value):
 	""" Unicode version of os.putenv (also correctly updates os.environ) """
 	os.environ[key] = value.encode(fs_enc)
+
+
+def relpath(path, start):
+	""" Return a relative version of a path """
+	path = os.path.abspath(path).split(os.path.sep)
+	start = os.path.abspath(start).split(os.path.sep)
+	if path == start:
+		return "."
+	elif path[:len(start)] == start:
+		return os.path.sep.join(path[len(start):])
+	elif start[:len(path)] == path:
+		return os.path.sep.join([".."] * (len(start) - len(path)))
+
 
 def which(executable, paths = None):
 	""" Return the full path of executable """

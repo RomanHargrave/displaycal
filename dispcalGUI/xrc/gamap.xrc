@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource>
+  <object class="wxFrame" name="gamapframe" subclass="dispcalGUI.GamapFrame">
+    <object class="wxBoxSizer">
+      <orient>wxVERTICAL</orient>
+      <object class="sizeritem">
+        <object class="wxPanel" name="panel">
+          <object class="wxBoxSizer">
+            <orient>wxVERTICAL</orient>
+            <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>gamap.profile</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxFilePickerCtrl" name="gamap_profile">
+                    <message>gamap.profile</message>
+                    <wildcard>filetype.icc|*.icc;*.icm</wildcard>
+                    <XRCED>
+                      <events>EVT_FILEPICKER_CHANGED</events>
+                    </XRCED>
+                  </object>
+                  <option>1</option>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+              </object>
+              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="gamap_perceptual_cb">
+                    <label>gamap.perceptual</label>
+                    <XRCED>
+                      <events>EVT_CHECKBOX</events>
+                    </XRCED>
+                  </object>
+                </object>
+              </object>
+              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="gamap_saturation_cb">
+                    <label>gamap.saturation</label>
+                    <XRCED>
+                      <events>EVT_CHECKBOX</events>
+                    </XRCED>
+                  </object>
+                </object>
+                <orient>wxHORIZONTAL</orient>
+              </object>
+              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
+              <object class="wxFlexGridSizer">
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>gamap.src_viewcond</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxComboBox" name="gamap_src_viewcond_ctrl">
+                    <style>wxCB_READONLY</style>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>gamap.out_viewcond</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxComboBox" name="gamap_out_viewcond_ctrl">
+                    <style>wxCB_READONLY</style>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <cols>2</cols>
+                <rows>3</rows>
+                <vgap>8</vgap>
+                <growablecols>1</growablecols>
+              </object>
+              <flag>wxALL|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+          </object>
+        </object>
+        <option>1</option>
+        <flag>wxEXPAND</flag>
+      </object>
+    </object>
+    <pos>-1,100</pos>
+    <title>gamapframe.title</title>
+    <style>wxDEFAULT_FRAME_STYLE|wxFRAME_NO_TASKBAR</style>
+    <XRCED>
+      <events>EVT_CLOSE</events>
+    </XRCED>
+  </object>
+</resource>

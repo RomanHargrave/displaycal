@@ -15,13 +15,4 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-# Contributed by Don Dwiggins
-hiddenimports = ['datetime', 'decimal', 'locale']
-
-try:
-    import hashlib
-    hiddenimports.append('hashlib')
-    del hashlib
-except ImportError:
-    hiddenimports.append('sha')
-
+hiddenimports = ['enthought.block_canvas', 'enthought.block_canvas.cobyla2c', 'enthought.block_canvas.cobyla2c.moduleCobyla', 'enthought.greenlet', 'enthought.greenlet.greenlet', 'enthought.kiva', 'enthought.kiva.agg', 'enthought.kiva.agg._agg', 'enthought.kiva.agg._plat_support', 'enthought.interpolate', 'enthought.interpolate._interpolate', 'enthought.traits', 'enthought.traits.ctraits', 'enthought.traits.protocols', 'enthought.traits.protocols._speedups']

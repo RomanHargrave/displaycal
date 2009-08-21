@@ -42,16 +42,13 @@ void exportWorkpath(char *workpath, char *envvar_name)
     char envvar[_MAX_PATH * 4 + 12];
     char *old_envvar;
 
-    strcpy(envvar, envvar_name);
-    strcat(envvar, "=");
-    strcat(envvar, workpath);
-    envvar[strlen(envvar)-1] = '\0';
+    strcpy(envvar, workpath);
     old_envvar = getenv(envvar_name);
     if (old_envvar) {
         strcat(envvar, ":");
         strcat(envvar, old_envvar);
     }
-    putenv(envvar);
+    setenv(envvar_name, envvar, 1);
     VS("%s\n", envvar);
 }
 
@@ -59,7 +56,7 @@ int main(int argc, char* argv[])
 {
     char thisfile[_MAX_PATH];
     char homepath[_MAX_PATH];
-    char magic_envvar[_MAX_PATH + 12];
+    char framewpath[_MAX_PATH];
     char archivefile[_MAX_PATH + 5];
     TOC *ptoc = NULL;
     int rc = 0;
@@ -90,6 +87,10 @@ int main(int argc, char* argv[])
     strcat(homepath, "/");
     VS("homepath is %s\n", homepath);
 
+    strcpy(framewpath, PI_GetPrefix());
+    strcpy(&framewpath + strlen(framewpath) - 5, "Frameworks");
+    VS("framewpath is %s\n", framewpath);
+
     if (init(homepath, &thisfile[strlen(homepath)], workpath)) {
         /* no pkg there, so try the nonelf configuration */
         strcpy(archivefile, thisfile);
@@ -117,21 +118,22 @@ int main(int argc, char* argv[])
 
         VS("Executing self as child with ");
         /* run the "child" process, then clean up */
-        strcpy(magic_envvar, "_MEIPASS2=");
-        strcat(magic_envvar, workpath);
-        putenv(magic_envvar);
+        setenv("_MEIPASS2", workpath, 1);
 
         /* add workpath to LD_LIBRARY_PATH */
         exportWorkpath(workpath, "LD_LIBRARY_PATH");
 #ifdef __APPLE__
         /* add workpath to DYLD_LIBRARY_PATH */
         exportWorkpath(workpath, "DYLD_LIBRARY_PATH");
-#endif
+        #exportWorkpath(framewpath, "DYLD_FRAMEWORK_PATH");
+	rc = doIt(argc, argv);
+#else
         pid = fork();
         if (pid == 0)
             execvp(thisfile, argv);
         wait(&rc);
         rc = WEXITSTATUS(rc);
+#endif
 
         VS("Back to parent...\n");
         if (strcmp(workpath, homepath) != 0)

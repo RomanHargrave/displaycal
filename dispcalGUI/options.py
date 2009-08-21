@@ -20,7 +20,8 @@ else:
 	debug = 0 # >= 1 prints debug messages
 
 # use alternate patch preview in the testchart editor?
-tc_use_alternate_preview = "-ap" in sys.argv[1:] or "--alternate-preview" in sys.argv[1:]
+tc_use_alternate_preview = "-ap" in sys.argv[1:] or "--alternate-preview" in \
+						   sys.argv[1:]
 
 # test some features even if they are not available
 test = "-t" in sys.argv[1:] or "--test" in sys.argv[1:]

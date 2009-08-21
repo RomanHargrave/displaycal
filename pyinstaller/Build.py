@@ -745,9 +745,18 @@ class EXE(Target):
                     except ValueError:
                         pass
                 resfile = res[0]
-                restype = res[1] if len(res) > 1 else None
-                resname = res[2] if len(res) > 2 else None
-                reslang = res[3] if len(res) > 3 else None
+                if len(res) > 1:
+                    restype = res[1]
+                else:
+                    restype = None
+                if len(res) > 2:
+                    resname = res[2]
+                else:
+                    restype = None
+                if len(res) > 3:
+                    reslang = res[3]
+                else:
+                    restype = None
                 try:
                     resource.UpdateResourcesFromResFile(tmpnm, resfile, 
                                                         [restype or "*"], 

@@ -16,14 +16,18 @@ if sys.platform == "win32":
 	import _winreg
 
 if sys.platform == "win32":
-	from win32com.shell import shell, shellcon
+	from win32com.shell.shell import SHGetSpecialFolderPath
+	from win32com.shell.shellcon import (CSIDL_APPDATA, CSIDL_COMMON_APPDATA, 
+										 CSIDL_COMMON_STARTUP, 
+										 CSIDL_PROGRAM_FILES_COMMON, 
+										 CSIDL_STARTUP, CSIDL_SYSTEM)
 
-from StringIOu import StringIOu as StringIO
 from meta import name as appname, version
 from options import ascii, debug, verbose
+from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
 
-# Runtime config
+# Runtime configuration
 
 if ascii:
 	enc = fs_enc = "ASCII"
@@ -46,20 +50,20 @@ data_dirs = []
 
 if sys.platform == "win32":
 	btn_width_correction = 20
-	cmdfile_ext = ".cmd"
+	script_ext = ".cmd"
 	scale_adjustment_factor = 1.0
 	# environment variable APPDATA will not be defined if using "Run as..."
-	appdata = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_APPDATA)
-	commonappdata = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_APPDATA)
-	commonprogramfiles = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_PROGRAM_FILES_COMMON)
+	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA)
+	commonappdata = SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA)
+	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON)
 	confighome = os.path.join(appdata, appname)
 	try:
-		autostart = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_COMMON_STARTUP)
+		autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP)
 		# can fail under Vista if directory doesn't exist
 	except Exception, exception:
 		autostart = None
 	try:
-		autostart_home = shell.SHGetSpecialFolderPath(0, shellcon.CSIDL_STARTUP)
+		autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP)
 		# can fail under Vista if directory doesn't exist
 	except Exception, exception:
 		autostart_home = None
@@ -67,41 +71,42 @@ if sys.platform == "win32":
 	logdir = os.path.join(datahome, "logs")
 	data_dirs += [datahome, os.path.join(commonappdata, appname), 
 				  os.path.join(commonprogramfiles, appname)]
-	iccprofiles_home = iccprofiles = os.path.join(shell.SHGetSpecialFolderPath(0, 
-		shellcon.CSIDL_SYSTEM), "spool", "drivers", "color")
+	iccprofiles = os.path.join(SHGetSpecialFolderPath(0, CSIDL_SYSTEM), 
+							   "spool", "drivers", "color")
+	iccprofiles_home = iccprofiles
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:
 	btn_width_correction = 10
 	if sys.platform == "darwin":
-		cmdfile_ext = ".command"
+		script_ext = ".command"
 		mac_create_app = True
 		scale_adjustment_factor = 1.0
 		confighome = os.path.join(expanduseru("~"), "Library", 
-			"Preferences", appname)
+								  "Preferences", appname)
 		datahome = os.path.join(expanduseru("~"), "Library", 
-			"Application Support", appname)
+								"Application Support", appname)
 		logdir = os.path.join(expanduseru("~"), "Library", 
-			"Logs", appname)
+							  "Logs", appname)
 		data_dirs += [datahome, os.path.join(os.path.sep, "Library", 
-			"Application Support", appname)]
+											 "Application Support", appname)]
 		iccprofiles = os.path.join(os.path.sep, "Library", 
-			"ColorSync", "Profiles")
+								   "ColorSync", "Profiles")
 		iccprofiles_home = os.path.join(expanduseru("~"), "Library", 
-			"ColorSync", "Profiles")
+										"ColorSync", "Profiles")
 	else:
-		cmdfile_ext = ".sh"
+		script_ext = ".sh"
 		scale_adjustment_factor = 1.0
 		xdg_config_home = getenvu("XDG_CONFIG_HOME",
-		   os.path.join(expanduseru("~"), ".config"))
-		xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", "/etc/xdg").split(os.pathsep)
+								  os.path.join(expanduseru("~"), ".config"))
+		xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", 
+								  "/etc/xdg").split(os.pathsep)
 		xdg_data_home_default = expandvarsu("$HOME/.local/share")
 		xdg_data_home = getenvu("XDG_DATA_HOME",
-		   xdg_data_home_default)
+								xdg_data_home_default)
 		xdg_data_dirs_default = "/usr/local/share:/usr/share"
-		xdg_data_dirs = getenvu(
-			"XDG_DATA_DIRS", xdg_data_dirs_default
-			).split(os.pathsep)
+		xdg_data_dirs = getenvu("XDG_DATA_DIRS", 
+								xdg_data_dirs_default).split(os.pathsep)
 		for dir_ in xdg_data_dirs_default.split(os.pathsep):
 			if not dir_ in xdg_data_dirs:
 				xdg_data_dirs += [dir_]
@@ -116,9 +121,9 @@ else:
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
 		del dir_
 		iccprofiles = os.path.join(xdg_data_dirs[0], "color", "icc", 
-			"devices", "display")
+								   "devices", "display")
 		iccprofiles_home = os.path.join(xdg_data_home, "color", "icc", 
-			"devices", "display")
+										"devices", "display")
 	exe_ext = ""
 	profile_ext = ".icc"
 
@@ -152,18 +157,42 @@ resfiles = [
 	"ti1/d3-e4-s0-g52-m4-f0-crossover.ti1",
 	"ti1/d3-e4-s0-g52-m4-f500-crossover.ti1",
 	"ti1/d3-e4-s0-g52-m4-f3000-crossover.ti1",
-	"test.cal"
+	"test.cal",
+	"xrc/gamap.xrc",
+	"xrc/main.xrc"
 ]
 
 bitmaps = {}
 
 def getbitmap(name):
+	"""
+	Create (if necessary) and return a named bitmap.
+	
+	name has to be a relative path to a png file, omitting the extension, e.g. 
+	'theme/mybitmap' or 'theme/icons/16x16/myicon', which is searched for in 
+	the data directories. If a matching file is not found, a placeholder 
+	bitmap is returned.
+	The special name 'empty' will always return a transparent bitmap of the 
+	given size, e.g. '16x16/empty' or just 'empty' (size defaults to 16x16 
+	if not given).
+	
+	"""
 	if not "wx" in globals():
 		global wx
 		import wx
 	if not name in bitmaps:
-		if name == "transparent16x16":
-			bitmaps[name] = wx.EmptyBitmap(16, 16, depth = -1)
+		parts = name.split("/")
+		if parts[-1] == "empty":
+			w = 16
+			h = 16
+			if len(parts) > 1:
+				size = parts[-2].split("x")
+				if len(size) == 2:
+					try:
+						w, h = map(int, size)
+					except ValueError:
+						pass
+			bitmaps[name] = wx.EmptyBitmap(w, h, depth=-1)
 			dc = wx.MemoryDC()
 			dc.SelectObject(bitmaps[name])
 			dc.SetBackground(wx.Brush("black"))
@@ -171,13 +200,38 @@ def getbitmap(name):
 			dc.SelectObject(wx.NullBitmap)
 			bitmaps[name].SetMaskColour("black")
 		else:
-			bitmaps[name] = wx.Bitmap(get_data_path(os.path.sep.join(name.split("/")) + ".png"))
+			path = get_data_path(os.path.sep.join(parts) + ".png")
+			if path:
+				bitmaps[name] = wx.Bitmap(path)
+			else:
+				w = 32
+				h = 32
+				if len(parts) > 1:
+					size = parts[-2].split("x")
+					if len(size) == 2:
+						try:
+							w, h = map(int, size)
+						except ValueError:
+							pass
+				bitmaps[name] = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, 
+														 size=(w, h))
 	return bitmaps[name]
 
-def get_data_path(relpath, rex = None):
-	""" Search data_dirs for relpath and return the full path as string if 
-	relpath is a file, or a list of files in the intersection of searched 
-	directories if relpath is a directory """
+
+def geticon(size, name):
+	""" Convenience function for getbitmap('theme/icons/<size>/<name>'). """
+	return getbitmap("theme/icons/%(size)sx%(size)s/%(name)s" % 
+					 {"size": size, "name": name})
+
+
+def get_data_path(relpath, rex=None):
+	"""
+	Search data_dirs for relpath and return the path or a file list.
+	
+	If relpath is a file, return the full path, if relpath is a directory,
+	return a list of files in the intersection of searched directories.
+	
+	"""
 	intersection = []
 	paths = []
 	for dir_ in data_dirs:
@@ -187,11 +241,11 @@ def get_data_path(relpath, rex = None):
 				try:
 					filelist = listdir_re(curpath, rex)
 				except Exception, exception:
-					if debug:
-						if not "safe_print" in globals():
-							global safe_print
-							from log import safe_print
-						safe_print("Error - directory '%s' listing failed: %s" % (curpath, str(exception)))
+					if not "safe_print" in globals():
+						global safe_print
+						from log import safe_print
+					safe_print("Error - directory '%s' listing failed: %s" % 
+							   (curpath, str(exception)))
 				else:
 					for filename in filelist:
 						if not filename in intersection:
@@ -201,17 +255,22 @@ def get_data_path(relpath, rex = None):
 				return curpath
 	return None if len(paths) == 0 else paths
 
+
 def runtimeconfig(pyfile):
-	""" Configure remaining runtime options. Return a tuple (pypath, pydir, 
-	pyname, pyext, isapp, runtype, build). 
+	"""
+	Configure and return remaining runtime options.
+	
+	Return a tuple (pypath, pydir, pyname, pyext, isapp, runtype, build). 
 	You need to pass in a path to the calling script (e.g. use the __file__ 
-	attribute) """
+	attribute).
+	
+	"""
 	pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
 	pydir = os.path.dirname(pypath)
 	pyname, pyext = os.path.splitext(os.path.basename(pypath))
 	isapp = sys.platform == "darwin" and \
-	   exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
-	   os.path.isfile(os.path.join(exedir, pyname))
+			exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
+			os.path.isfile(os.path.join(exedir, pyname))
 	if (not isexe or os.getcwdu() != pydir) and data_dirs[0] != os.getcwdu():
 		data_dirs.insert(0, os.getcwdu())
 	if isapp:
@@ -275,14 +334,14 @@ defaults = {
 	"gamap_src_viewcond": "pp",
 	"gamap_out_viewcond": "mt",
 	"gamma": 2.4,
+	"lang": "en",
 	"measure.darken_background": 0,
 	"measure.darken_background.show_warning": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
-								os.geteuid() == 0) # or 
-								# (sys.platform == "win32" and 
-								# sys.getwindowsversion() >= (6, )) 
-								else 
-								"u", # Linux, OSX
+									 os.geteuid() == 0) # or 
+									# (sys.platform == "win32" and 
+									 # sys.getwindowsversion() >= (6, )) 
+								else "u",  # Linux, OSX
 	"profile.name": u" ".join([
 		u"%dns",
 		u"%Y-%m-%d",
@@ -333,15 +392,21 @@ defaults = {
 	"whitepoint.y": 0.358666
 }
 
-def getcfg(name, fallback = True):
-	""" Get an option value from the user config """
+def getcfg(name, fallback=True):
+	"""
+	Get and return an option value from the configuration.
+	
+	If fallback evaluates to True and the option is not set, 
+	return its default value.
+	
+	"""
 	hasdef = name in defaults
 	if hasdef:
 		defval = defaults[name]
 		deftype = type(defval)
 	if cfg.has_option(ConfigParser.DEFAULTSECT, name):
 		value = unicode(cfg.get(ConfigParser.DEFAULTSECT, name), "UTF-8")
-		# check for invalid types and return default if wrong type
+		# Check for invalid types and return default if wrong type
 		if name != "trc" and hasdef and deftype in (Decimal, int, float):
 			try:
 				value = deftype(value)
@@ -349,9 +414,12 @@ def getcfg(name, fallback = True):
 				value = defval
 		elif (name in ("calibration.file", "testchart.file") or \
 		   name.startswith("last_")) and not os.path.exists(value):
-			if value.split(os.path.sep)[-2:] == ["presets", os.path.basename(value)] or \
-			   value.split(os.path.sep)[-2:] == ["ti1", os.path.basename(value)]:
-				value = os.path.join(os.path.basename(os.path.dirname(value)), os.path.basename(value))
+			if value.split(os.path.sep)[-2:] == ["presets", 
+												 os.path.basename(value)] or \
+			   value.split(os.path.sep)[-2:] == ["ti1", 
+												 os.path.basename(value)]:
+				value = os.path.join(os.path.basename(os.path.dirname(value)), 
+									 os.path.basename(value))
 			else:
 				value = os.path.basename(value)
 			value = get_data_path(value) or (defval if hasdef else None)
@@ -362,14 +430,18 @@ def getcfg(name, fallback = True):
 			print "Warning - unknown option:", name
 		value = None
 	return value
-	
+
+
 def get_display():
 	display = str(getcfg("display.number"))
 	if not getcfg("display_lut.link"):
 		display += "," + str(getcfg("display_lut.number"))
 	return display
 
-def get_total_patches(white_patches = None, single_channel_patches = None, gray_patches = None, multi_steps = None, fullspread_patches = None):
+
+def get_total_patches(white_patches=None, single_channel_patches=None, 
+					  gray_patches=None, multi_steps=None, 
+					  fullspread_patches=None):
 	if white_patches is None:
 		white_patches = getcfg("tc_white_patches")
 	if single_channel_patches is None:
@@ -393,48 +465,56 @@ def get_total_patches(white_patches = None, single_channel_patches = None, gray_
 		multi_values = []
 		for i in range(multi_steps):
 			multi_values += [str(multi_step * i)]
-		#if debug: safe_print("multi_values", multi_values)
 		if single_channel_patches > 1:
 			single_channel_step = 255.0 / (single_channel_patches - 1)
 			for i in range(single_channel_patches):
-				#if debug: safe_print("single_channel_value", single_channel_step * i)
 				if str(single_channel_step * i) in multi_values:
-					#if debug: safe_print("DELETE SINGLE", single_channel_step * i)
 					single_channel_patches_total -= 3
 		if gray_patches > 1:
 			gray_step = 255.0 / (gray_patches - 1)
 			for i in range(gray_patches):
-				#if debug: safe_print("gray_value", gray_step * i)
 				if str(gray_step * i) in multi_values:
-					#if debug: safe_print("DELETE GRAY", gray_step * i)
 					gray_patches -= 1
 	elif gray_patches > 1:
-		white_patches -= 1 # white always in gray patches
-		single_channel_patches_total -= 3 # black always in gray patches
+		white_patches -= 1  # white always in gray patches
+		single_channel_patches_total -= 3  # black always in gray patches
 	else:
-		single_channel_patches_total -= 2 # black always only once in single channel patches
-	total_patches += max(0, white_patches) + max(0, single_channel_patches_total) + max(0, gray_patches) + fullspread_patches
+		# black always only once in single channel patches
+		single_channel_patches_total -= 2 
+	total_patches += max(0, white_patches) + \
+					 max(0, single_channel_patches_total) + \
+					 max(0, gray_patches) + fullspread_patches
 	return total_patches
 
+
 def get_verified_path(cfg_item_name):
-	""" Verify and return dir and filename for a path item from the user cfg """
+	""" Verify and return dir and filename for a path from the user cfg """
 	defaultPath = getcfg(cfg_item_name)
 	defaultFile = ""
 	if os.path.exists(defaultPath):
-		defaultDir, defaultFile = os.path.dirname(defaultPath), os.path.basename(defaultPath)
+		defaultDir, defaultFile = (os.path.dirname(defaultPath), 
+								   os.path.basename(defaultPath))
 	elif os.path.exists(os.path.dirname(defaultPath)):
 		defaultDir = os.path.dirname(defaultPath)
 	else:
 		defaultDir = expanduseru("~")
 	return defaultDir, defaultFile
 
+
 def initcfg():
-	""" Initialize the user config - read in settings if cfg file exists, 
-	set default language """
+	"""
+	Initialize the configuration.
+	
+	Read in settings if the configuration file exists, else create the 
+	settings directory if nonexistent.
+	Set the language in the configuration if not set.
+	
+	"""
 	global handle_error, safe_print
 	# read pre-v0.2.2b configuration if present
 	if sys.platform == "darwin":
-		oldcfg = os.path.join(expanduseru("~"), "Library", "Preferences", appname + " Preferences")
+		oldcfg = os.path.join(expanduseru("~"), "Library", "Preferences", 
+							  appname + " Preferences")
 	else:
 		oldcfg = os.path.join(expanduseru("~"), "." + appname)
 	if not os.path.exists(confighome):
@@ -443,49 +523,63 @@ def initcfg():
 		except Exception, exception:
 			if not "handle_error" in globals():
 				from debughelpers import handle_error
-			handle_error("Warning - could not create configuration directory '%s'" % confighome)
-	if os.path.exists(confighome) and not os.path.exists(os.path.join(confighome, appname + ".ini")):
+			handle_error("Warning - could not create configuration directory "
+						 "'%s'" % confighome)
+	if os.path.exists(confighome) and \
+	   not os.path.exists(os.path.join(confighome, appname + ".ini")):
 		try:
 			if os.path.isfile(oldcfg):
 				oldcfg_file = open(oldcfg, "rb")
 				oldcfg_contents = oldcfg_file.read()
 				oldcfg_file.close()
-				cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
+				cfg_file = open(os.path.join(confighome, appname + ".ini"), 
+								"wb")
 				cfg_file.write("[Default]\n" + oldcfg_contents)
 				cfg_file.close()
 			elif sys.platform == "win32":
-				key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "Software\\" + appname)
+				key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, 
+									  "Software\\" + appname)
 				numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-				cfg_file = open(os.path.join(confighome, appname + ".ini"), "wb")
+				cfg_file = open(os.path.join(confighome, appname + ".ini"), 
+								"wb")
 				cfg_file.write("[Default]\n")
 				for i in range(numvalues):
 					name, value, type_ = _winreg.EnumValue(key, i)
-					if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, value)).encode("UTF-8"))
+					if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, 
+												   value)).encode("UTF-8"))
 				cfg_file.close()
 		except Exception, exception:
-			# WindowsError 2 means registry key does not exist, do not show warning in that case
-			if sys.platform != "win32" or not hasattr(exception, "errno") or exception.errno != 2:
+			# WindowsError 2 means registry key does not exist, do not show 
+			# warning in that case
+			if sys.platform != "win32" or not hasattr(exception, "errno") or \
+			   exception.errno != 2:
 				if not "safe_print" in globals():
 					from log import safe_print
-				safe_print("Warning - could not process old configuration:", str(exception))
-	# read cfg
+				safe_print("Warning - could not process old configuration:", 
+						   str(exception))
+	# Read cfg
 	try:
 		cfg.read([os.path.join(confighome, appname + ".ini")])
-		# this won't raise an exception if the file does not exist, only if item
+		# This won't raise an exception if the file does not exist, only if it
 		# can't be parsed
 	except Exception, exception:
 		if not "safe_print" in globals():
 			from log import safe_print
-		safe_print("Warning - could not parse configuration file '%s'" % appname + ".ini")
+		safe_print("Warning - could not parse configuration file '%s'" % 
+				   appname + ".ini")
 	if not cfg.has_option(ConfigParser.DEFAULTSECT, "lang"):
-		cfg.set(ConfigParser.DEFAULTSECT, "lang", "en")
+		import locale
+		lcode, lenc = locale.getdefaultlocale()
+		cfg.set(ConfigParser.DEFAULTSECT, "lang", lcode.split("_")[0].lower())
+
 
 def setcfg(name, value):
-	""" Set an option value in the user config """
+	""" Set an option value in the configuration. """
 	if value is None:
 		cfg.remove_option(ConfigParser.DEFAULTSECT, name)
 	else:
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
+
 
 def writecfg():
 	try:
@@ -501,4 +595,5 @@ def writecfg():
 		if not "handle_error" in globals():
 			global handle_error
 			from debughelpers import handle_error
-		handle_error("Warning - could not write configuration file: %s" % (str(exception)))
+		handle_error("Warning - could not write configuration file: %s" % 
+					 str(exception))

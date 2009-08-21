@@ -10,7 +10,8 @@ from meta import name as appname
 
 wxEventTypes = {}
 
-def getevtobjname(event, window = None):
+def getevtobjname(event, window=None):
+	""" Get and return the event object's name. """
 	try:
 		event_object = event.GetEventObject()
 		if not event_object and window:
@@ -20,7 +21,9 @@ def getevtobjname(event, window = None):
 	except Exception, exception:
 		pass
 
+
 def getevttype(event):
+	""" Get and return the event object's type. """
 	if not wxEventTypes:
 		if not "wx" in globals():
 			global wx
@@ -37,7 +40,9 @@ def getevttype(event):
 	if typeId in wxEventTypes:
 		return wxEventTypes[typeId]
 
-def handle_error(errstr, parent = None, silent = False):
+
+def handle_error(errstr, parent=None, silent=False):
+	""" Log an error string and show an error dialog. """
 	if not isinstance(errstr, unicode):
 		errstr = unicode(errstr, fs_enc, "replace")
 	safe_print(errstr)
@@ -47,10 +52,10 @@ def handle_error(errstr, parent = None, silent = False):
 				global wx
 				import wx
 			if wx.GetApp() is None and parent is None:
-				app = wx.App(redirect = False)
+				app = wx.App(redirect=False)
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
-				parent.IsShownOnScreen() else None, errstr, appname, wx.OK | 
-				wx.ICON_ERROR)
+								   parent.IsShownOnScreen() else None, 
+								   errstr, appname, wx.OK | wx.ICON_ERROR)
 			dlg.ShowModal()
 			dlg.Destroy()
 		except Exception, exception:

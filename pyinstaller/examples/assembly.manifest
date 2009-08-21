@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+Assembly Manifests example
+http://msdn.microsoft.com/en-us/library/aa374219%28VS.85%29.aspx#example
+-->
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" 
 manifestVersion="1.0">
     <assemblyIdentity type="win32" name="Microsoft.Tools.SampleAssembly" version="6.0.0.0" processorArchitecture="x86" publicKeyToken="0000000000000000"/>

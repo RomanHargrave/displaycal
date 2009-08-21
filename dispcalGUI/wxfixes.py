@@ -13,9 +13,14 @@ def SetBitmapLabel(self, bitmap):
 
 wx.BitmapButton.SetBitmapLabel = SetBitmapLabel
 
+
 def BitmapButtonEnable(self, enable = True):
-	""" Replacement for BitmapButton.Enable which circumvents repainting issues 
-	(bitmap does not change on button state change) """
+	"""
+	Replacement for BitmapButton.Enable which circumvents repainting issues
+	
+	(bitmap does not change on button state change)
+	
+	"""
 	wx.Button.Enable(self, enable)
 	if not hasattr(self, "_bitmaplabel"):
 		self._bitmaplabel = self.GetBitmapLabel()
@@ -29,12 +34,17 @@ def BitmapButtonEnable(self, enable = True):
 			self.SetBitmapLabel(self._bitmapdisabled)
 
 def BitmapButtonDisable(self):
-	""" Replacement for BitmapButton.Disable which circumvents repainting issues 
-	(bitmap does not change on button state change) """
+	"""
+	Replacement for BitmapButton.Disable which circumvents repainting issues
+	
+	(bitmap does not change on button state change)
+	
+	"""
 	self.Enable(False)
 
 wx.BitmapButton.Enable = BitmapButtonEnable
 wx.BitmapButton.Disable = BitmapButtonDisable
+
 
 wx.Window._SetToolTipString = wx.Window.SetToolTipString
 
@@ -44,6 +54,7 @@ def SetToolTipString(self, string):
 	wx.Window._SetToolTipString(self, string)
 
 wx.Window.SetToolTipString = SetToolTipString
+
 
 def GridGetSelection(self):
 	""" Return selected rows, cols, block and cells """
@@ -85,10 +96,14 @@ def GridGetSelection(self):
 
 wx.grid.Grid.GetSelection = GridGetSelection
 
+
 wx._ScrolledWindow = wx.ScrolledWindow
 
 class ScrolledWindow(wx._ScrolledWindow):
-	""" ScrolledWindow that scrolls child controls into view on focus.
+
+	"""
+	ScrolledWindow that scrolls child controls into view on focus.
+	
 	OnChildFocus and ScrollChildIntoView borrowed from wx.lib.scrolledpanel.
 	"""
 

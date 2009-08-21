@@ -56,7 +56,7 @@ icx_ink_table = {
 	  [ 0.27, 0.29, 0.31 ],	
 	  [ 0.27, 0.29, 0.31 ] ],	
 	"LLK": [
-	  [ 0.76, 0.72, 0.65 ],			# Very rough - should substiture real numbers
+	  [ 0.76, 0.72, 0.65 ],		# Very rough - should substiture real numbers
 	  [ 0.76, 0.72, 0.65 ] ],	
 	"": [ [ 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0 ] ]
 }
@@ -101,7 +101,8 @@ def RGB2XYZ(R, G, B):
 	# Normalise Y to 1.0, & add black glare
 	for j in range(3):
 		XYZ[j] *= s["Ynorm"]
-		XYZ[j] = XYZ[j] * (1.0 - icx_ink_table["K"][0][j]) + icx_ink_table["K"][0][j]
+		XYZ[j] = XYZ[j] * (1.0 - icx_ink_table["K"][0][j]) + \
+				 icx_ink_table["K"][0][j]
 	
 	return XYZ
 
