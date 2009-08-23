@@ -84,6 +84,7 @@ else:
 		scale_adjustment_factor = 1.0
 		confighome = os.path.join(expanduseru("~"), "Library", 
 								  "Preferences", appname)
+		autostart = autostart_home = None
 		datahome = os.path.join(expanduseru("~"), "Library", 
 								"Application Support", appname)
 		logdir = os.path.join(expanduseru("~"), "Library", 
