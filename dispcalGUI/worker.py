@@ -36,6 +36,7 @@ from debughelpers import handle_error
 from log import log, safe_print
 from meta import name as appname
 from options import debug, test, verbose
+from thread import start_new_thread
 from util_io import Files, StringIOu as StringIO, Tea
 from util_os import getenvu, get_sudo, quote_args, which
 from util_str import asciize
