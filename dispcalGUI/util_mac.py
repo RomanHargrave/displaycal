@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import subprocess as sp
+from time import sleep
 
 try:
 	import appscript
