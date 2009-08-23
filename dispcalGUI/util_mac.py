@@ -7,8 +7,10 @@ try:
 	import appscript
 except ImportError: # we can fall back to osascript shell command
 	appscript = None
-	
+
 from log import safe_print
+from meta import name as appname
+from options import verbose
 
 def mac_app_activate(delay=0, mac_app_name="Finder"):
 	"""
