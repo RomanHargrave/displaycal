@@ -149,7 +149,7 @@ class BaseFrame(wx.Frame):
 				safe_print("[D] Last focused control ID %s %s processing "
 						   "catchup event type %s %s" % 
 						   (self.last_focused_ctrl.GetId(), 
-						    self.last_focused_ctrl.GetName(), 
+							self.last_focused_ctrl.GetName(), 
 							catchup_event.GetEventType(), 
 							getevttype(catchup_event)))
 			if self.last_focused_ctrl.ProcessEvent(catchup_event):
@@ -1445,7 +1445,7 @@ class MainFrame(BaseFrame):
 		self.displays = []
 		for item in self.worker.displays:
 			self.displays += [item.replace("[PRIMARY]", 
-							               lang.getstr("display.primary"))]
+										   lang.getstr("display.primary"))]
 		self.display_ctrl.SetItems(self.displays)
 		display_ctrl_enable = bool(self.worker.displays)
 		display_no = int(getcfg("display.number")) - 1
@@ -2106,7 +2106,7 @@ class MainFrame(BaseFrame):
 	def ambient_viewcond_adjust_ctrl_handler(self, event):
 		if event.GetId() == self.ambient_viewcond_adjust_textctrl.GetId() and \
 		   (not self.ambient_viewcond_adjust_cb.GetValue() or 
-		    str(float(getcfg("calibration.ambient_viewcond_adjust.lux"))) == 
+			str(float(getcfg("calibration.ambient_viewcond_adjust.lux"))) == 
 			self.ambient_viewcond_adjust_textctrl.GetValue()):
 			event.Skip()
 			return
@@ -2422,7 +2422,7 @@ class MainFrame(BaseFrame):
 			event.Skip()
 		if trc in ("240", "709", "s") and not \
 		   (bool(int(getcfg("calibration.ambient_viewcond_adjust"))) and 
-		    getcfg("calibration.ambient_viewcond_adjust.lux")) and \
+			getcfg("calibration.ambient_viewcond_adjust.lux")) and \
 			getcfg("trc.should_use_viewcond_adjust.show_msg"):
 			dlg = InfoDialog(self, 
 							 msg=lang.getstr("trc.should_use_viewcond_adjust"), 
@@ -2477,29 +2477,29 @@ class MainFrame(BaseFrame):
 							   getcfg("profile.name.expanded") + ".cal")
 			setcfg("last_cal_path", cal)
 			self.previous_cal = getcfg("calibration.file")
-			if self.profile_update_cb.GetValue():
-				profile_path = os.path.join(getcfg("profile.save_path"), 
-											getcfg("profile.name.expanded"), 
-											getcfg("profile.name.expanded") + 
-											profile_ext)
-				result = check_profile_isfile(
-					profile_path, 
-					lang.getstr("error.profile.file_not_created"), parent=self)
-				if result:
-					setcfg("calibration.file", profile_path)
-					setcfg("last_cal_or_icc_path", profile_path)
-					setcfg("last_icc_path", profile_path)
-					self.update_controls(update_profile_name=False)
-			else:
-				result = check_cal_isfile(
-					cal, lang.getstr("error.calibration.file_not_created"), 
-					parent=self)
-				if result:
-					if self.install_cal:
-						setcfg("calibration.file", cal)
-						self.update_controls(update_profile_name=False)
-					setcfg("last_cal_or_icc_path", cal)
-					self.load_cal(cal=cal, silent=True)
+			#if self.profile_update_cb.GetValue():
+			profile_path = os.path.join(getcfg("profile.save_path"), 
+										getcfg("profile.name.expanded"), 
+										getcfg("profile.name.expanded") + 
+										profile_ext)
+			result = check_profile_isfile(
+				profile_path, 
+				lang.getstr("error.profile.file_not_created"), parent=self)
+			if result:
+				setcfg("calibration.file", profile_path)
+				self.update_controls(update_profile_name=False)
+				setcfg("last_cal_or_icc_path", profile_path)
+				setcfg("last_icc_path", profile_path)
+			# else:
+				# result = check_cal_isfile(
+					# cal, lang.getstr("error.calibration.file_not_created"), 
+					# parent=self)
+				# if result:
+					# if self.install_cal:
+						# setcfg("calibration.file", cal)
+						# self.update_controls(update_profile_name=False)
+					# setcfg("last_cal_or_icc_path", cal)
+					# self.load_cal(cal=cal, silent=True)
 		return result
 
 	def measure(self, apply_calibration=True):
@@ -3086,14 +3086,13 @@ class MainFrame(BaseFrame):
 		update = self.profile_update_cb.GetValue()
 		self.install_cal = True
 		if self.calibrate(remove=True):
-			InfoDialog(self, pos=(-1, 100), 
-					   msg=lang.getstr("calibration.complete"), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-information"))
-			if update:
-				self.profile_finish(True, 
-									success_msg=lang.getstr(
-										"calibration_profiling.complete"))
+			# InfoDialog(self, pos=(-1, 100), 
+					   # msg=lang.getstr("calibration.complete"), 
+					   # ok=lang.getstr("ok"), 
+					   # bitmap=geticon(32, "dialog-information"))
+			# if update:
+			self.profile_finish(True, 
+								success_msg=lang.getstr("calibration.complete"))
 		else:
 			InfoDialog(self, pos=(-1, 100), 
 					   msg=lang.getstr("calibration.incomplete"), 
@@ -3139,7 +3138,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate_and_profile").replace("&&", 
 																	   "&"))
-		self.install_cal = True
+		self.install_cal = False
 		# -N switch not working as expected in Argyll 1.0.3
 		if self.worker.get_instrument_features().get("skip_sensor_cal") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
@@ -4008,8 +4007,8 @@ class MainFrame(BaseFrame):
 		profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and 
 													k < 100 else "") + 
 												   (lang.getstr("neutral") if 
-												    k > 0 else 
-												    lang.getstr("native")
+													k > 0 else 
+													lang.getstr("native")
 												   ).lower())
 		if black_point_rate and float(black_point_correction) < 1:
 			profile_name = profile_name.replace("%cA", black_point_rate)
@@ -4362,7 +4361,7 @@ class MainFrame(BaseFrame):
 			if hasattr(self, "tcframe") and \
 			   self.tcframe.IsShownOnScreen() and \
 			   (not hasattr(self.tcframe, "ti1") or 
-			    getcfg("testchart.file") != self.tcframe.ti1.filename):
+				getcfg("testchart.file") != self.tcframe.ti1.filename):
 				self.tcframe.tc_load_cfg_from_ti1()
 
 	def get_testchart_names(self, path=None):
@@ -4918,8 +4917,8 @@ class MainFrame(BaseFrame):
 					trashcan = lang.getstr("trashcan.linux")
 				try:
 					if (sys.platform == "darwin" and 
-					    len(delete_related_files) + 1 == len(dircontents) and 
-					    ".DS_Store" in dircontents) or \
+						len(delete_related_files) + 1 == len(dircontents) and 
+						".DS_Store" in dircontents) or \
 					   len(delete_related_files) == len(dircontents):
 						# Delete whole folder
 						trash([os.path.dirname(cal)])
@@ -5153,7 +5152,7 @@ def main():
 						if debug:
 							safe_print("[D] %s %s %s" % 
 									   (terminal, terminals_opts[terminal], 
-									    cmd))
+										cmd))
 						stdout.write('%s %s %s' % 
 									 (terminal, terminals_opts[terminal], 
 									  cmd.encode(fs_enc)))

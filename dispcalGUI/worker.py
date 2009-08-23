@@ -1249,7 +1249,7 @@ class Worker():
 			inoutfile = make_argyll_compatible_path(
 				os.path.join(profile_save_path, 
 							 getcfg("profile.name.expanded")))
-			#
+			args += ["-o"]
 			if getcfg("calibration.update"):
 				cal = getcfg("calibration.file")
 				calcopy = os.path.join(inoutfile + ".cal")
@@ -1315,7 +1315,6 @@ class Worker():
 						if not check_profile_isfile(profilecopy, 
 													parent=self.owner):
 							return None, None
-					args += ["-o"]
 				args += ["-u"]
 		if (calibrate and not getcfg("calibration.update")) or \
 		   (not calibrate and verify):
