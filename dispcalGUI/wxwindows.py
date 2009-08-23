@@ -12,6 +12,9 @@ from util_str import wrap
 from wxaddons import wx
 import localization as lang
 
+if sys.platform == "darwin":
+	from util_mac import mac_app_activate
+
 class AboutDialog(wx.Dialog):
 
 	def __init__(self, *args, **kwargs):
