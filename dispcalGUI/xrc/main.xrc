@@ -351,6 +351,7 @@
                                   <item></item>
                                   <item></item>
                                 </content>
+                                <style>wxCB_READONLY</style>
                                 <XRCED>
                                   <events>EVT_COMBOBOX</events>
                                 </XRCED>
