@@ -7,6 +7,7 @@ import sys
 from config import (btn_width_correction, defaults, getcfg, 
 					geticon, get_verified_path, setcfg)
 from meta import name as appname
+from thread import start_new_thread
 from util_str import wrap
 from wxaddons import wx
 import localization as lang
