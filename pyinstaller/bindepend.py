@@ -86,6 +86,7 @@ excludes = {
     'GLU32.DLL':1,
     'GLUB32.DLL':1,
     'NETAPI32.DLL':1,
+    'MSCOREE.DLL':1,
     'PSAPI.DLL':1,
     'IERTUTIL.DLL':1,
     'POWRPROF.DLL':1,
@@ -541,8 +542,9 @@ def getImports(pth, platform=sys.platform):
             # selectAssemblies in that case, so just warn, return an empty 
             # list and continue.
             if not silent:
-                print 'I: Cannot get binary dependencies for non-PE file:'
-                print 'I:', pth
+                print 'W: Cannot get binary dependencies for file:'
+                print 'W:', pth
+                print 'W:', exception
             return []
     elif platform == 'darwin':
         return _getImports_otool(pth)

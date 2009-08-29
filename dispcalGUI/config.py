@@ -354,6 +354,7 @@ defaults = {
 		u"%cq-%pq",
 		u"%pt"
 	]),
+	"profile.name.expanded": "",
 	"profile.quality": "m",
 	"profile.save_path": storage, # directory
 	"profile.type": "s",

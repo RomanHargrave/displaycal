@@ -388,6 +388,7 @@ class Worker():
 		self.argyll_version_string = ""
 		self.instruments = []
 		self.displays = []
+		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
 		self.options_colprof = []
 		self.options_dispcal = []
@@ -1128,7 +1129,9 @@ class Worker():
 			inoutfile = make_argyll_compatible_path(
 				os.path.join(profile_save_path, 
 							 getcfg("profile.name.expanded")))
-			args += ["-o"]
+			if getcfg("calibration.update") or \
+			   self.dispcal_create_fast_matrix_shaper:
+				args += ["-o"]
 			if getcfg("calibration.update"):
 				cal = getcfg("calibration.file")
 				calcopy = os.path.join(inoutfile + ".cal")

@@ -107,13 +107,15 @@ from trash import trash, TrashcanUnavailableError
 from util_decimal import stripzeros
 from util_io import StringIOu as StringIO
 from util_list import index_fallback_ignorecase, natsort
+if sys.platform == "darwin":
+	from util_mac import (mac_app_activate, mac_terminal_do_script,
+						  mac_terminal_set_colors)
 from util_os import expanduseru, get_sudo, listdir_re, which
 from util_str import strtr, wrap
 from worker import (Worker, check_argyll_bin, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, 
-					get_options_from_cprt, mac_terminal_do_script, 
-					mac_terminal_set_colors, make_argyll_compatible_path, 
+					get_options_from_cprt, make_argyll_compatible_path, 
 					set_argyll_bin)
 try:
 	from wxLUTViewer import LUTFrame
@@ -2477,29 +2479,30 @@ class MainFrame(BaseFrame):
 							   getcfg("profile.name.expanded") + ".cal")
 			setcfg("last_cal_path", cal)
 			self.previous_cal = getcfg("calibration.file")
-			#if self.profile_update_cb.GetValue():
-			profile_path = os.path.join(getcfg("profile.save_path"), 
-										getcfg("profile.name.expanded"), 
-										getcfg("profile.name.expanded") + 
-										profile_ext)
-			result = check_profile_isfile(
-				profile_path, 
-				lang.getstr("error.profile.file_not_created"), parent=self)
-			if result:
-				setcfg("calibration.file", profile_path)
-				self.update_controls(update_profile_name=False)
-				setcfg("last_cal_or_icc_path", profile_path)
-				setcfg("last_icc_path", profile_path)
-			# else:
-				# result = check_cal_isfile(
-					# cal, lang.getstr("error.calibration.file_not_created"), 
-					# parent=self)
-				# if result:
-					# if self.install_cal:
-						# setcfg("calibration.file", cal)
-						# self.update_controls(update_profile_name=False)
-					# setcfg("last_cal_or_icc_path", cal)
-					# self.load_cal(cal=cal, silent=True)
+			if getcfg("calibration.update") or \
+			   self.worker.dispcal_create_fast_matrix_shaper:
+				profile_path = os.path.join(getcfg("profile.save_path"), 
+											getcfg("profile.name.expanded"), 
+											getcfg("profile.name.expanded") + 
+											profile_ext)
+				result = check_profile_isfile(
+					profile_path, 
+					lang.getstr("error.profile.file_not_created"), parent=self)
+				if result:
+					setcfg("calibration.file", profile_path)
+					self.update_controls(update_profile_name=False)
+					setcfg("last_cal_or_icc_path", profile_path)
+					setcfg("last_icc_path", profile_path)
+			else:
+				result = check_cal_isfile(
+					cal, lang.getstr("error.calibration.file_not_created"), 
+					parent=self)
+				if result:
+					## if self.install_cal:
+					setcfg("calibration.file", cal)
+					self.update_controls(update_profile_name=False)
+					setcfg("last_cal_or_icc_path", cal)
+					self.load_cal(cal=cal, silent=True)
 		return result
 
 	def measure(self, apply_calibration=True):
@@ -3083,16 +3086,18 @@ class MainFrame(BaseFrame):
 	def just_calibrate(self):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
-		update = self.profile_update_cb.GetValue()
-		self.install_cal = True
+		## self.install_cal = True
+		self.worker.dispcal_create_fast_matrix_shaper = True
 		if self.calibrate(remove=True):
-			# InfoDialog(self, pos=(-1, 100), 
-					   # msg=lang.getstr("calibration.complete"), 
-					   # ok=lang.getstr("ok"), 
-					   # bitmap=geticon(32, "dialog-information"))
-			# if update:
-			self.profile_finish(True, 
-								success_msg=lang.getstr("calibration.complete"))
+			if getcfg("calibration.update") or \
+			   self.worker.dispcal_create_fast_matrix_shaper:
+				wx.CallAfter(self.profile_finish, True, 
+							 success_msg=lang.getstr("calibration.complete"))
+			else:
+				InfoDialog(self, pos=(-1, 100), 
+						   msg=lang.getstr("calibration.complete"), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-information"))
 		else:
 			InfoDialog(self, pos=(-1, 100), 
 					   msg=lang.getstr("calibration.incomplete"), 
@@ -3138,11 +3143,12 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate_and_profile").replace("&&", 
 																	   "&"))
-		self.install_cal = False
+		## self.install_cal = False
 		# -N switch not working as expected in Argyll 1.0.3
 		if self.worker.get_instrument_features().get("skip_sensor_cal") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			self.worker.options_dispread = ["-N"]
+		self.worker.dispcal_create_fast_matrix_shaper = False
 		self.worker.dispread_after_dispcal = True
 		start_timers = True
 		if self.calibrate():
@@ -4074,7 +4080,7 @@ class MainFrame(BaseFrame):
 					defaults.get("profile.name", ""))
 				profile_name = self.create_profile_name()
 		profile_name = make_argyll_compatible_path(profile_name)
-		if profile_name != getcfg("profile.name.expanded"):
+		if profile_name != self.profile_name.GetLabel():
 			setcfg("profile.name", self.profile_name_textctrl.GetValue())
 			self.profile_name.SetToolTipString(profile_name)
 			self.profile_name.SetLabel(profile_name.replace("&", "&&"))

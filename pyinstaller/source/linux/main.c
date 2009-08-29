@@ -56,7 +56,6 @@ int main(int argc, char* argv[])
 {
     char thisfile[_MAX_PATH];
     char homepath[_MAX_PATH];
-    char framewpath[_MAX_PATH];
     char archivefile[_MAX_PATH + 5];
     TOC *ptoc = NULL;
     int rc = 0;
@@ -86,10 +85,6 @@ int main(int argc, char* argv[])
     strcpy(homepath, PI_GetPrefix());
     strcat(homepath, "/");
     VS("homepath is %s\n", homepath);
-
-    strcpy(framewpath, PI_GetPrefix());
-    strcpy(&framewpath + strlen(framewpath) - 5, "Frameworks");
-    VS("framewpath is %s\n", framewpath);
 
     if (init(homepath, &thisfile[strlen(homepath)], workpath)) {
         /* no pkg there, so try the nonelf configuration */
@@ -125,15 +120,12 @@ int main(int argc, char* argv[])
 #ifdef __APPLE__
         /* add workpath to DYLD_LIBRARY_PATH */
         exportWorkpath(workpath, "DYLD_LIBRARY_PATH");
-        #exportWorkpath(framewpath, "DYLD_FRAMEWORK_PATH");
-	rc = doIt(argc, argv);
-#else
+#endif
         pid = fork();
         if (pid == 0)
             execvp(thisfile, argv);
         wait(&rc);
         rc = WEXITSTATUS(rc);
-#endif
 
         VS("Back to parent...\n");
         if (strcmp(workpath, homepath) != 0)

@@ -1,4 +1,4 @@
-This is pyinstaller "dispcalGUI edition", based on trunk rev. 701 
+This is pyinstaller "dispcalGUI edition", based on trunk rev. 705 
 (http://svn.pyinstaller.org/trunk), with the following changes:
 
 - patched Build.py, Makespec.py (MS Windows manifest and resource support), 

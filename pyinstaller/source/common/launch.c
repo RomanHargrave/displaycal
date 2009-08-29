@@ -652,7 +652,6 @@ int startPython(int argc, char *argv[])
         *PI_Py_FrozenFlag = 1;
 	setRuntimeOptions();
 	PI_Py_SetProgramName(f_archivename); /*XXX*/
-	VS("SetProgramName: %s\n", f_archivename);
 	PI_Py_Initialize();
 
 	/* Set sys.path */
@@ -1040,7 +1039,7 @@ int runScripts()
             PI_PyObject_SetAttrString(__main__, "__file__", __file__);
             Py_DECREF(__file__);
 			/* Run it */
-			rc = PI_PyRun_SimpleString((char *)data);
+			rc = PI_PyRun_SimpleString(data);
 			/* log errors and abort */
 			if (rc != 0) {
 				VS("RC: %d from %s\n", rc, ptoc->name);

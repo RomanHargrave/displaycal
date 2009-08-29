@@ -402,7 +402,7 @@ class Manifest(object):
                         policies = os.path.join(pcfiles, 
                                                 self.getpolicyid(True,
                                                                  language=language) + 
-                                                "_*.manifest")
+                                                ".manifest")
                     for manifestpth in glob(policies):
                         if not os.path.isfile(manifestpth):
                             if not silent:
@@ -526,6 +526,7 @@ class Manifest(object):
                             return []
                 return files
 
+        print "W: Assembly not found"
         return []
 
     def getid(self, language=None, version=None):
@@ -559,7 +560,7 @@ class Manifest(object):
             id.append(language)
         return "_".join(id)
     
-    def getlanguage(self, language=None):
+    def getlanguage(self, language=None, windowsversion=None):
         """
         Get and return the manifest's language as string.
         
@@ -570,10 +571,10 @@ class Manifest(object):
         """
         if not language:
             language = self.language
-        if language in (None, "", "*"):
-            return LANGUAGE_NEUTRAL_NT5
-        elif language == "neutral":
-            return LANGUAGE_NEUTRAL_NT6
+        if language in (None, "", "*", "neutral"):
+            return (LANGUAGE_NEUTRAL_NT5,
+                    LANGUAGE_NEUTRAL_NT6)[(windowsversion or 
+                                           sys.getwindowsversion()) >= (6, )]
         return language
     
     def getpolicyid(self, fuzzy=True, language=None, windowsversion=None):
@@ -613,7 +614,7 @@ class Manifest(object):
             else:
                 id.append(".".join([str(i) for i in self.version]))
         if not language:
-            language = self.getlanguage()
+            language = self.getlanguage(windowsversion=windowsversion)
         if language:
             id.append(language)
         id.append("*")
