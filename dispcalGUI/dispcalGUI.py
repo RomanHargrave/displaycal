@@ -2689,7 +2689,7 @@ class MainFrame(BaseFrame):
 				if cal is True: # display profile
 					try:
 						profile = ICCP.get_display_profile(
-							self.display_ctrl.GetSelection())
+							max(self.display_ctrl.GetSelection(), 0))
 					except Exception, exception:
 						safe_print("ICCP.get_display_profile(%s):" % 
 								   self.display_ctrl.GetSelection(), exception)
@@ -3016,7 +3016,7 @@ class MainFrame(BaseFrame):
 		   self.lut_viewer.IsShownOnScreen():
 			try:
 				profile = ICCP.get_display_profile(
-					self.display_ctrl.GetSelection())
+					max(self.display_ctrl.GetSelection(), 0))
 			except Exception, exception:
 				safe_print("ICCP.get_display_profile(%s):" % 
 						   self.display_ctrl.GetSelection(), exception)
@@ -3447,7 +3447,7 @@ class MainFrame(BaseFrame):
 				else:
 					try:
 						profile = ICCP.get_display_profile(
-							self.display_ctrl.GetSelection()) or False
+							max(self.display_ctrl.GetSelection(), 0)) or False
 					except Exception, exception:
 						safe_print("ICCP.get_display_profile(%s):" % 
 								   self.display_ctrl.GetSelection(), exception)
