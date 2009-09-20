@@ -46,6 +46,15 @@ wx.BitmapButton.Enable = BitmapButtonEnable
 wx.BitmapButton.Disable = BitmapButtonDisable
 
 
+def FindMenuItem(self, label):
+	""" Replacement for wx.Menu.FindItem """
+	for menuitem in self.GetMenuItems():
+		if menuitem.Label == label:
+			return menuitem.GetId()
+
+wx.Menu.FindItem = FindMenuItem
+
+
 wx.Window._SetToolTipString = wx.Window.SetToolTipString
 
 def SetToolTipString(self, string):
