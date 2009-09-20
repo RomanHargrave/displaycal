@@ -13,7 +13,7 @@ import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
 from colormath import XYZ2RGB
-from config import btn_width_correction, defaults, enc, getcfg, geticon, get_data_path, get_total_patches, get_verified_path, setcfg, writecfg
+from config import btn_width_correction, defaults, enc, getcfg, geticon, get_data_path, get_total_patches, get_verified_path, hascfg, setcfg, writecfg
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
@@ -292,8 +292,15 @@ class TestchartEditor(wx.Frame):
 		self.sizer.Layout()
 		if tc_use_alternate_preview:
 			self.SetMinSize((self.GetMinSize()[0], self.GetMinSize()[1] + 150))
+		
+		defaults.update({
+			"position.tcgen.x": self.GetDisplay().ClientArea[0] + 40,
+			"position.tcgen.y": self.GetDisplay().ClientArea[1] + 60,
+			"size.tcgen.w": self.GetMinSize()[0],
+			"size.tcgen.h": self.GetMinSize()[1]
+		})
 
-		if getcfg("position.tcgen.x") and getcfg("position.tcgen.y") and getcfg("size.tcgen.w") and getcfg("size.tcgen.h"):
+		if hascfg("position.tcgen.x") and hascfg("position.tcgen.y") and hascfg("size.tcgen.w") and hascfg("size.tcgen.h"):
 			self.SetSaneGeometry(int(getcfg("position.tcgen.x")), int(getcfg("position.tcgen.y")), int(getcfg("size.tcgen.w")), int(getcfg("size.tcgen.h")))
 		else:
 			self.Center()

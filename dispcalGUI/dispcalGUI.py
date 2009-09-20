@@ -637,40 +637,7 @@ class MainFrame(BaseFrame):
 			"u": 4
 		}
 		
-		self.testchart_defaults = {
-			None: {
-				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # CRT shaper / matrix
-				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT lut
-			},
-			"c": {
-				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # CRT shaper / matrix
-				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT lut
-			},
-			"l": {
-				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # LCD shaper / matrix
-				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # LCD lut
-			},
-			"cp": {
-				# CRT projector shaper / matrix
-				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
-				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT projector lut
-			},
-			"lp": {
-				# LCD projector shaper / matrix
-				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
-				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # LCD projector lut
-			},
-			"p": {
-				# Projector shaper / matrix
-				"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
-				"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # Projector lut
-			}
-		}
-		defaultmmode = defaults["measurement_mode"]
-		defaultptype = defaults["profile.type"]
-		defaultchart = self.testchart_defaults[defaultmmode][defaultptype]
-		defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
-																defaultchart))
+		self.testchart_defaults = config.testchart_defaults
 		self.testcharts = []
 		self.testchart_names = []
 		

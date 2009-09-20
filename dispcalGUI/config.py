@@ -290,6 +290,11 @@ def runtimeconfig(pyfile):
 		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
 		if dir_ not in data_dirs and os.path.isdir(dir_):
 			data_dirs.append(dir_)
+	defaultmmode = defaults["measurement_mode"]
+	defaultptype = defaults["profile.type"]
+	defaultchart = testchart_defaults[defaultmmode][defaultptype]
+	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
+															defaultchart))
 	build = "%s%s%s" % (
 		strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(pypath).st_mtime)), 
 		"+" if timezone < 0 else "-", 
@@ -394,6 +399,36 @@ defaults = {
 	"whitepoint.y": 0.358666
 }
 
+testchart_defaults = {
+	None: {
+		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # CRT shaper / matrix
+		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT lut
+	},
+	"c": {
+		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # CRT shaper / matrix
+		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT lut
+	},
+	"l": {
+		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # LCD shaper / matrix
+		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # LCD lut
+	},
+	"cp": {
+		# CRT projector shaper / matrix
+		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
+		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT projector lut
+	},
+	"lp": {
+		# LCD projector shaper / matrix
+		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
+		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # LCD projector lut
+	},
+	"p": {
+		# Projector shaper / matrix
+		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
+		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # Projector lut
+	}
+}
+
 def getcfg(name, fallback=True):
 	"""
 	Get and return an option value from the configuration.
@@ -433,6 +468,21 @@ def getcfg(name, fallback=True):
 		value = None
 	return value
 
+
+def hascfg(name, fallback=True):
+	"""
+	Check if an option name exists in the configuration.
+	
+	Returns a boolean.
+	If fallback evaluates to True and the name does not exist, 
+	check defaults also.
+	
+	"""
+	if cfg.has_option(ConfigParser.DEFAULTSECT, name):
+		return True
+	elif fallback:
+		return name in defaults
+	return False
 
 def get_display():
 	display = str(getcfg("display.number"))
