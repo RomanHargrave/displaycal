@@ -55,6 +55,7 @@
 	"calibration.preview": "Aperçu du calibrage",
 	"calibration.reset": "Réinitialiser les courbes de la table de correspondance",
 	"calibration.resetting": "Réinitialisation linéaire des courbes de la table de correspondance...",
+	"calibration.show_lut": "Afficher les courbes de la table de correspondance",
 	"calibration.update": "Mettre à jour le calibrage",
 	"calibration.verify": "Vérifier le calibrage",
 	"calibrationloader.description": "Charge les courbes de calibrage à partir du profil ICC pour l'écran %s",

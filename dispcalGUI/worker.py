@@ -18,7 +18,11 @@ if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script,
 						  mac_terminal_set_colors)
 elif sys.platform == "win32":
-	from SendKeys import SendKeys
+	try:
+		from SendKeys import SendKeys
+	except ImportError:
+		import win32com.client
+		SendKeys = None
 	import win32api
 import wx
 import wx.lib.delayedresult as delayedresult
@@ -43,6 +47,13 @@ from util_io import Files, StringIOu as StringIO, Tea
 from util_os import getenvu, get_sudo, quote_args, which
 from util_str import asciize
 from wxwindows import ConfirmDialog, InfoDialog
+
+if sys.platform == "win32" and SendKeys is None:
+	wsh_shell = win32com.client.Dispatch("WScript.Shell")
+	def SendKeys(keys, pause=0.05, with_spaces=False, with_tabs=False, with_newlines=False, 
+				turn_off_numlock=True):
+		wsh_shell.SendKeys(keys)
+
 
 def check_argyll_bin(paths=None):
 	""" Check if the Argyll binaries can be found. """
@@ -576,7 +587,7 @@ class Worker():
 			# with measurements
 			try:
 				if sys.platform == "win32":
-					sp.call("color 07", shell=True)
+					sp.call("color 08", shell=True)
 				elif sys.platform == "darwin":
 					mac_terminal_set_colors()
 				else:
@@ -946,7 +957,7 @@ class Worker():
 			# Reset to higher contrast colors (white on black) for readability
 			try:
 				if sys.platform == "win32":
-					sp.call("color 0F", shell=True)
+					sp.call("color 07", shell=True)
 				elif sys.platform == "darwin":
 					mac_terminal_set_colors(text="white", text_bold="white")
 				else:

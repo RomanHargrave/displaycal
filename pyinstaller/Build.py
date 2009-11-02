@@ -234,6 +234,7 @@ class Analysis(Target):
         if pathex:
             for path in pathex:
                 self.pathex.append(absnormpath(path))
+        sys.pathex = pathex[:]
         self.hookspath = hookspath
         self.excludes = excludes
         self.scripts = TOC()
@@ -277,6 +278,10 @@ class Analysis(Target):
 
     def assemble(self):
         print "running Analysis", os.path.basename(self.out)
+        # Reset seen variable to correctly discover dependencies
+        # if there are multiple Analysis in a single specfile.         
+        bindepend.seen = {}
+        
         paths = self.pathex
         for i in range(len(paths)):
             # FIXME: isn't self.pathex already norm-abs-pathed?

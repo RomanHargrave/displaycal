@@ -424,7 +424,7 @@ class MainFrame(BaseFrame):
 		# Set terminal colors
 		try:
 			if sys.platform == "win32":
-				sp.call("color 0F", shell=True)
+				sp.call("color 07", shell=True)
 			else:
 				if sys.platform == "darwin":
 					mac_terminal_set_colors(text="white", text_bold="white")
@@ -5055,6 +5055,7 @@ class MainApp(wx.App):
 			self.SetAppName("Python")
 		else:
 			self.SetAppName(appname)
+		self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
 		self.frame = MainFrame()
 		self.SetTopWindow(self.frame)
 		if sys.platform == "darwin":
