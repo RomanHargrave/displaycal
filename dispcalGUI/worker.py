@@ -687,10 +687,16 @@ class Worker():
 						if "OK" in stdout:
 							self.pwd = pwd
 							break
-						elif n == 0:
+						else: # if n == 0:
+							errstr = unicode(stderr, enc, "replace")
+							if not silent:
+								safe_print(errstr)
+							else:
+								log(errstr)
 							dlg.message.SetLabel(
-								lang.getstr("auth.failed") + "\n" + 
-								lang.getstr("dialog.enter_password"))
+								# lang.getstr("auth.failed") + "\n" + 
+								# lang.getstr("dialog.enter_password"))
+								errstr)
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
 						n += 1

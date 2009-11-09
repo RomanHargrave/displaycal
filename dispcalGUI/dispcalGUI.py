@@ -3370,7 +3370,7 @@ class MainFrame(BaseFrame):
 		if LUTFrame:
 			if not hasattr(self, "lut_viewer") or not self.lut_viewer:
 				self.lut_viewer = LUTFrame(
-					self, -1, lang.getstr("calibration.lut_viewer.title"), 
+					None, -1, lang.getstr("calibration.lut_viewer.title"), 
 					(getcfg("position.lut_viewer.x"), 
 					 getcfg("position.lut_viewer.y")), 
 					(getcfg("size.lut_viewer.w"), 
@@ -5047,6 +5047,9 @@ class MainFrame(BaseFrame):
 			self.Destroy()
 
 	def OnDestroy(self, event):
+		if hasattr(self, "lut_viewer") and self.lut_viewer:
+			self.lut_viewer.Hide()
+			self.lut_viewer.Destroy()
 		event.Skip()
 
 class MainApp(wx.App):
