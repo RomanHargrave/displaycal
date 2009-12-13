@@ -649,3 +649,6 @@ def writecfg():
 			from debughelpers import handle_error
 		handle_error("Warning - could not write configuration file: %s" % 
 					 str(exception))
+
+pypath, pydir, pyname, pyext, isapp, runtype, build = runtimeconfig(
+	exe if isexe else os.path.join(os.path.dirname(__file__), appname + ".py"))

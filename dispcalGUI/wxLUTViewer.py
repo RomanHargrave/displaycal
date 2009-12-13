@@ -5,14 +5,6 @@ import math
 import os
 import sys
 
-if not hasattr(sys, "frozen") or not sys.frozen:
-	import wxversion
-	try:
-		wxversion.ensureMinimal("2.8")
-	except:
-		import wx
-		if wx.VERSION < (2, 8):
-			raise
 from wxenhancedplot import _Numeric
 import wx
 import wxenhancedplot as plot

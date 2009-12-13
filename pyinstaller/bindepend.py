@@ -47,6 +47,7 @@ darwin = sys.platform[:7] == 'darwin'
 silent = False  # True suppresses all informative messages from the dependency code
 
 if iswin:
+    import traceback
     
     from manifest import RT_MANIFEST, GetManifestResources, Manifest
     try:
@@ -88,6 +89,10 @@ excludes = {
     'NETAPI32.DLL':1,
     'MSCOREE.DLL':1,
     'PSAPI.DLL':1,
+    'MSVCP80.DLL':1,
+    'MSVCR80.DLL':1,
+    'MSVCP90.DLL':1,
+    'MSVCR90.DLL':1,
     'IERTUTIL.DLL':1,
     'POWRPROF.DLL':1,
     'SHLWAPI.DLL':1,
@@ -353,7 +358,7 @@ def getAssemblies(pth):
                         print ("E: Cannot parse manifest resource %s, %s "
                                "from") % (name, language)
                         print "E:", pth
-                        print "E:", exc
+                        print "E:", traceback.format_exc()
                     pass
                 else:
                     if manifest.dependentAssemblies and not silent:
@@ -548,7 +553,7 @@ def getImports(pth, platform=sys.platform):
             if not silent:
                 print 'W: Cannot get binary dependencies for file:'
                 print 'W:', pth
-                print 'W:', exception
+                print 'W:', traceback.format_exc()
             return []
     elif platform == 'darwin':
         return _getImports_otool(pth)

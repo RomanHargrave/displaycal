@@ -472,8 +472,6 @@ class MeasureFrame(InvincibleFrame):
 
 
 def main():
-	config.runtimeconfig(os.path.join(os.path.dirname(__file__), 
-						 appname + ".py"))
 	config.initcfg()
 	lang.init()
 	app = wx.App(0)

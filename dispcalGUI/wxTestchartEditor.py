@@ -1611,8 +1611,6 @@ class TestchartEditor(wx.Frame):
 		self.tc_set_default_status()
 
 def main():
-	config.runtimeconfig(os.path.join(os.path.dirname(__file__), 
-						 appname + ".py"))
 	config.initcfg()
 	lang.init()
 	lang.update_defaults()

@@ -68,7 +68,18 @@ if sys.platform == "win32":
 	import win32api
 	import win32con
 
-if not hasattr(sys, "frozen") or not sys.frozen:
+# Config
+import config
+from config import (autostart, autostart_home, btn_width_correction, build, 
+					script_ext, confighome, datahome, defaults, enc, exe, 
+					exe_ext, exedir, fs_enc, getbitmap, geticon, get_data_path, 
+					get_display, getcfg, get_verified_path, iccprofiles, 
+					initcfg, isapp, isexe, profile_ext, pydir, pyext, pyname, 
+					pypath, resfiles, runtype, setcfg, storage, writecfg)
+
+# wxPython
+
+if not config.isexe and not config.isapp:
 	import wxversion
 	try:
 		wxversion.ensureMinimal("2.8")
@@ -84,7 +95,6 @@ import wx.lib.hyperlink
 
 import CGATS
 import ICCProfile as ICCP
-import config
 import localization as lang
 import pyi_md5pickuphelper
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
@@ -93,12 +103,6 @@ from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2xyY
-from config import (autostart, autostart_home, btn_width_correction, 
-					script_ext, confighome, runtimeconfig, datahome, defaults, 
-					enc, exe, exe_ext, exedir, fs_enc, getbitmap, geticon, 
-					get_data_path, get_display, getcfg, get_verified_path, 
-					iccprofiles, initcfg, isexe, profile_ext, resfiles, 
-					setcfg, storage, writecfg)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import _safe_print, log, logbuffer, safe_print, setup_logging
 from meta import author, name as appname, version
@@ -131,9 +135,6 @@ def _excepthook(etype, value, tb):
 	handle_error("".join(traceback.format_exception(etype, value, tb)))
 
 sys.excepthook = _excepthook
-
-pypath, pydir, pyname, pyext, isapp, runtype, build = runtimeconfig(
-	exe if isexe else __file__)
 
 class BaseFrame(wx.Frame):
 
@@ -3272,6 +3273,7 @@ class MainFrame(BaseFrame):
 							else:
 								setcfg("calibration.file", profile_path)
 								self.update_controls(update_profile_name=False)
+								self.load_cal(silent=True)
 			else:
 				# .cal file
 				has_cal = True
@@ -3396,6 +3398,8 @@ class MainFrame(BaseFrame):
 	def show_lut_handler(self, event=None, profile=None):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			if not profile:
+				profile = self.lut_viewer.profile
+			if not profile:
 				path = getcfg("calibration.file")
 				if path:
 					name, ext = os.path.splitext(path)
@@ -3503,7 +3507,7 @@ class MainFrame(BaseFrame):
 			setcfg("display_lut.number", display_no + 1)
 		if hasattr(self, "lut_viewer") and self.lut_viewer and \
 		   self.lut_viewer.IsShownOnScreen():
-			self.show_lut_handler()
+			self.show_lut_handler(profile=get_display_profile(display_no))
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:

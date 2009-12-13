@@ -89,7 +89,7 @@ except ImportError, detail:
     hashlib = None
     import md5
     import sha
-import os.path
+import os
 from glob import glob
 import re
 import sys
@@ -702,6 +702,9 @@ class Manifest(object):
                 for dependentAssembly in dependency.getCEByTN(
                     "dependentAssembly"):
                     manifest = ManifestFromDOM(dependentAssembly)
+                    if not manifest.name:
+                        # invalid, skip
+                        continue
                     manifest.optional = (dependency.getA("optional") or 
                                          "").lower() == "yes"
                     self.dependentAssemblies.append(manifest)
