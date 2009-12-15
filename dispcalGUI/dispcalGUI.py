@@ -292,8 +292,6 @@ class GamapFrame(BaseFrame):
 		self.set_child_ctrls_as_attrs(self)
 
 		# Bind event handlers
-		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.gamap_profile_handler, 
-				   id=self.gamap_profile.GetId())
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_perceptual_cb_handler, 
 				   id=self.gamap_perceptual_cb.GetId())
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_saturation_cb_handler, 
@@ -325,6 +323,14 @@ class GamapFrame(BaseFrame):
 				InfoDialog(self, msg=lang.getstr("profile.invalid"), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
+			else:
+				# pre-select suitable viewing condition
+				if profile.profileClass == "prtr":
+					self.gamap_src_viewcond_ctrl.SetStringSelection(
+						lang.getstr("gamap.viewconds.pp"))
+				else:
+					self.gamap_src_viewcond_ctrl.SetStringSelection(
+						lang.getstr("gamap.viewconds.mt"))
 		self.gamap_perceptual_cb.Enable(p)
 		self.gamap_saturation_cb.Enable(p)
 		c = self.gamap_perceptual_cb.GetValue() or \
@@ -390,6 +396,8 @@ class GamapFrame(BaseFrame):
 		self.gamap_profile.PickerCtrl.Label = lang.getstr("browse")
 		hsizer.Replace(origpickerctrl, self.gamap_profile)
 		origpickerctrl.Destroy()
+		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.gamap_profile_handler, 
+				   id=self.gamap_profile.GetId())
 		
 		for v in viewconds:
 			lstr = lang.getstr("gamap.viewconds.%s" % v)
