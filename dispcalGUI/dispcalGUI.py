@@ -136,6 +136,9 @@ def _excepthook(etype, value, tb):
 
 sys.excepthook = _excepthook
 
+def swap_dict_keys_values(mydict):
+	return dict([(v, k) for (k, v) in mydict.iteritems()])
+
 class BaseFrame(wx.Frame):
 
 	""" Main frame base class. """
@@ -614,21 +617,37 @@ class MainFrame(BaseFrame):
 		}
 
 		self.profile_types = [
-			"LUT",
-			"Matrix"
+			lang.getstr("profile.type.lut.lab"),
+			lang.getstr("profile.type.shaper_matrix"),
+			lang.getstr("profile.type.single_shaper_matrix"),
+			lang.getstr("profile.type.gamma_matrix"),
+			lang.getstr("profile.type.single_gamma_matrix")
 		]
 		
 		# Left side - internal enumeration, right side - commmandline
 		self.profile_types_ab = {
-			0: "l",
-			1: "s"
+			0: "l"
 		}
 		
+		profile_types_index = 0
+		
+		if sys.platform != "win32" or (self.worker.argyll_version >= (1, 1, 0)
+									   and not "Beta" in self.worker.argyll_version_string
+									   and not "RC1" in self.worker.argyll_version_string
+									   and not "RC2" in self.worker.argyll_version_string):
+										# Windows wants matrix tags in XYZ LUT profiles,
+										# which is satisfied with Argyll > 1.1.0_RC2
+										self.profile_types.insert(1, "XYZ LUT")
+										self.profile_types_ab[1] = "x"
+										profile_types_index += 1
+		
+		self.profile_types_ab[profile_types_index + 1] = "s"
+		self.profile_types_ab[profile_types_index + 2] = "S"
+		self.profile_types_ab[profile_types_index + 3] = "g"
+		self.profile_types_ab[profile_types_index + 4] = "G"
+		
 		# Left side - commmandline, right side - internal enumeration
-		self.profile_types_ba = {
-			"l": 0,
-			"s": 1
-		}
+		self.profile_types_ba = swap_dict_keys_values(self.profile_types_ab)
 		
 		# Left side - commmandline, right side - internal enumeration
 		self.quality_ab = {
@@ -639,12 +658,7 @@ class MainFrame(BaseFrame):
 		}
 		
 		# Left side - commmandline, right side - internal enumeration
-		self.quality_ba = {
-			"l": 1,
-			"m": 2,
-			"h": 3,
-			"u": 4
-		}
+		self.quality_ba = swap_dict_keys_values(self.quality_ab)
 		
 		self.testchart_defaults = config.testchart_defaults
 		self.testcharts = []
@@ -659,12 +673,7 @@ class MainFrame(BaseFrame):
 		}
 		
 		# Left side - .cal file, right side - commmandline
-		self.trc_ba = {
-			"L_STAR": "l",
-			"REC709": "709",
-			"sRGB": "s",
-			"SMPTE240M": "240"
-		}
+		self.trc_ba = swap_dict_keys_values(self.trc_ab)
 		
 		# Left side - internal enumeration, right side - commmandline
 		self.trc_types_ab = {
@@ -673,10 +682,7 @@ class MainFrame(BaseFrame):
 		}
 		
 		# Left side - commmandline, right side - internal enumeration
-		self.trc_types_ba = {
-			"g": 0,
-			"G": 1
-		}
+		self.trc_types_ba = swap_dict_keys_values(self.trc_types_ab)
 		
 		self.trc_presets = [
 			"1.8",

@@ -31,6 +31,15 @@
 # http://msdn.microsoft.com/en-us/library/dd408052%28VS.85%29.aspx
 #
 # Changelog:
+# 2009-12-17  fix: small glitch in toxml / toprettyxml methods (xml declaration
+#                  wasn't replaced when a different encodig than UTF-8 was used)
+#             chg: catch xml.parsers.expat.ExpatError and re-raise as 
+#                  ManifestXMLParseError
+#             chg: support initialize option in parse method also
+#
+# 2009-12-13  fix: fixed os import
+#             fix: skip invalid / empty dependent assemblies
+#
 # 2009-08-21  fix: Corrected assembly searching sequence for localized 
 #                  assemblies
 #             fix: Allow assemblies with no dependent files
@@ -93,6 +102,7 @@ import os
 from glob import glob
 import re
 import sys
+import xml
 from xml.dom import Node, minidom
 from xml.dom.minidom import Document, Element
 
@@ -225,6 +235,10 @@ class File(_File):
 
 
 class InvalidManifestError(Exception):
+    pass
+
+
+class ManifestXMLParseError(InvalidManifestError):
     pass
 
 
@@ -646,16 +660,15 @@ class Manifest(object):
         allowed_names = ("assembly", "assemblyBinding", "configuration", 
                          "dependentAssembly")
         if rootElement.tagName not in allowed_names:
-            raise InvalidManifestError("Invalid root element <" + 
-                                       rootElement.tagName + 
-                                       "> - has to be one of " + 
-                                       repr(allowed_names))
+            raise InvalidManifestError(
+                "Invalid root element <%s> - has to be one of <%s>" % 
+                (rootElement.tagName, ">, <".join(allowed_names)))
         # print "I: loading manifest metadata from element <%s>" % \
               # rootElement.tagName
         if rootElement.tagName == "configuration":
             for windows in rootElement.getCEByTN("windows"):
                 for assemblyBinding in windows.getCEByTN("assemblyBinding"):
-                    self.load_dom(assemblyBinding)
+                    self.load_dom(assemblyBinding, initialize)
         else:
             if initialize:
                 self.__init__()
@@ -726,18 +739,32 @@ class Manifest(object):
                               hashalg=file_.getA("hashalg"),
                               hash=file_.getA("hash"))
     
-    def parse(self, filename_or_file):
+    def parse(self, filename_or_file, initialize=True):
         """ Load manifest from file or file object """
-        self.__init__()
         if isinstance(filename_or_file, (str, unicode)):
-            self.filename = filename_or_file
+            filename = filename_or_file
         else:
-            self.filename = filename_or_file.filename
-        self.load_dom(minidom.parse(filename_or_file), False)
+            filename = filename_or_file.name
+        try:
+            domtree = minidom.parse(filename_or_file)
+        except xml.parsers.expat.ExpatError, e:
+            args = [e.args[0]]
+            if isinstance(filename, unicode):
+                filename = filename.encode(sys.getdefaultencoding(), "replace")
+            args.insert(0, '\n  File "%s"\n   ' % filename)
+            raise ManifestXMLParseError(" ".join(str(arg) for arg in args))
+        if initialize:
+            self.__init__()
+        self.filename = filename
+        self.load_dom(domtree, False)
     
     def parse_string(self, xmlstr, initialize=True):
         """ Load manifest from XML string """
-        self.load_dom(minidom.parseString(xmlstr), initialize)
+        try:
+            domtree = minidom.parseString(xmlstr)
+        except xml.parsers.expat.ExpatError, e:
+            raise ManifestXMLParseError(e)
+        self.load_dom(domtree, initialize)
     
     def same_id(self, manifest, skip_version_check=False):
         """
@@ -872,7 +899,7 @@ class Manifest(object):
         # ('application configuration incorrect')
         xmlstr = domtree.toprettyxml(
             indent, newl, encoding).strip(os.linesep).replace(
-                '<?xml version="1.0" encoding="UTF-8"?>', 
+                '<?xml version="1.0" encoding="%s"?>' % encoding, 
                 '<?xml version="1.0" encoding="%s" standalone="yes"?>' % 
                 encoding)
         domtree.unlink()
@@ -886,7 +913,7 @@ class Manifest(object):
         # if it is embedded in an exe the exe will fail to launch! 
         # ('application configuration incorrect')
         xmlstr = domtree.toxml(encoding).replace(
-            '<?xml version="1.0" encoding="UTF-8"?>', 
+            '<?xml version="1.0" encoding="%s"?>' % encoding, 
             '<?xml version="1.0" encoding="%s" standalone="yes"?>' % encoding)
         domtree.unlink()
         return xmlstr
