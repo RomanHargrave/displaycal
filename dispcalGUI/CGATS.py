@@ -194,7 +194,10 @@ class CGATS(dict):
 				return object.__getattribute__(self.root, name)
 			return object.__getattribute__(self, name)
 		except AttributeError:
-			return self[name]
+			if name in self:
+				return self[name]
+			else:
+				raise
 
 	def __getitem__(self, name):
 		if name == -1:

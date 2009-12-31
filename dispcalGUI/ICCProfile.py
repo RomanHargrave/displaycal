@@ -4,6 +4,7 @@
 from decimal import Decimal
 from hashlib import md5
 import locale
+import math
 import os
 import struct
 import sys
@@ -15,6 +16,7 @@ if sys.platform == "win32":
 	import win32api
 	import win32gui
 
+from ordereddict import OrderedDict
 from safe_print import safe_print
 from util_os import getenvu
 
@@ -257,75 +259,123 @@ def s15Fixed16Number(binaryString):
 	return Decimal(str(struct.unpack(">i", binaryString)[0])) / 65536
 
 
+def s15Fixed16Number_tohex(num):
+	return struct.pack(">i", num * 65536)
+
+
 def u16Fixed16Number(binaryString):
 	return Decimal(str(struct.unpack(">I", binaryString)[0])) / 65536
+
+
+def u16Fixed16Number_tohex(num):
+	return struct.pack(">I", num * 65536)
 
 
 def u8Fixed8Number(binaryString):
 	return Decimal(str(struct.unpack(">H", binaryString)[0])) / 256
 
 
+def u8Fixed8Number_tohex(num):
+	return struct.pack(">H", num * 256)
+
+
 def uInt16Number(binaryString):
 	return struct.unpack(">H", binaryString)[0]
+
+
+def uInt16Number_tohex(num):
+	return struct.pack(">H", num)
 
 
 def uInt32Number(binaryString):
 	return struct.unpack(">I", binaryString)[0]
 
 
+def uInt32Number_tohex(num):
+	return struct.pack(">I", num)
+
+
 def uInt64Number(binaryString):
 	return struct.unpack(">Q", binaryString)[0]
+
+
+def uInt64Number_tohex(num):
+	return struct.pack(">Q", num)
 
 
 def uInt8Number(binaryString):
 	return struct.unpack(">H", "\0" + binaryString)[0]
 
 
-class Dict(dict):
+def uInt8Number_tohex(num):
+	return struct.pack(">H", num)[1]
 
-	def __init__(self, dictionary=None):
-		if dictionary:
-			self.update(dictionary)
+
+class AODict(OrderedDict):
+
+	"""
+	Convenience class for dictionary key access via attributes.
+	
+	Instead of writing aodict[key], you can also write aodict.key
+	
+	"""
+
+	def __init__(self, *args):
+		OrderedDict.__init__(self, *args)
 
 	def __getattr__(self, name):
-		return self[name]
+		try:
+			return object.__getattribute__(self, name)
+		except AttributeError:
+			if name in self:
+				return self[name]
+			else:
+				raise
 
 	def __setattr__(self, name, value):
-		self[name] = value
+		if name in ("_ordered", "_key2index"):
+			object.__setattr__(self, name, value)
+		else:
+			self[name] = value
 
 
-class Colorant(Dict):
+class Colorant(AODict):
 
 	def __init__(self, binaryString):
+		AODict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.channels = colorants[self.type].channels
 		self.description = colorants[self.type].description
 
 
-class Geometry(Dict):
+class Geometry(AODict):
 
 	def __init__(self, binaryString):
+		AODict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = geometry[self.type]
 
 
-class IlluminantType(Dict):
+class IlluminantType(AODict):
 
 	def __init__(self, binaryString):
+		AODict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = illuminants[self.type]
 
 
-class Observer(Dict):
+class Observer(AODict):
 
 	def __init__(self, binaryString):
+		AODict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = observers[self.type]
 
 
-class ChromacityType(Dict):
+class ChromacityType(AODict):
 
 	def __init__(self, tagData):
+		AODict.__init__(self)
 		deviceChannelsCount = uInt16Number(tagData[8:10])
 		colorant = uInt16Number(tagData[10:12])
 		if colorant in colorants:
@@ -355,9 +405,10 @@ class DateTimeType(list):
 		self += dateTimeNumber(tagData[8:20])
 
 
-class MeasurementType(Dict):
+class MeasurementType(AODict):
 
 	def __init__(self, tagData):
+		AODict.__init__(self)
 		self.update({
 			"observer": Observer(tagData[8:12]),
 			"backing": XYZNumber(tagData[12:24]),
@@ -367,9 +418,10 @@ class MeasurementType(Dict):
 		})
 
 
-class MultiLocalizedUnicodeType(Dict): # ICC v4
+class MultiLocalizedUnicodeType(AODict): # ICC v4
 
 	def __init__(self, tagData):
+		AODict.__init__(self)
 		recordsCount = uInt32Number(tagData[8:12])
 		recordSize = uInt32Number(tagData[12:16]) # 12
 		records = tagData[16:16 + recordSize * recordsCount]
@@ -380,7 +432,7 @@ class MultiLocalizedUnicodeType(Dict): # ICC v4
 			recordLength = uInt32Number(record[4:8])
 			recordOffset = uInt32Number(record[8:12])
 			if recordLanguageCode not in self:
-				self[recordLanguageCode] = Dict()
+				self[recordLanguageCode] = AODict()
 			self[recordLanguageCode][recordCountryCode] = unicode(
 				tagData[recordOffset:recordOffset + recordLength], 
 				"utf-16-be", "replace")
@@ -415,8 +467,9 @@ class SignatureType(str):
 		# return str(self[8:12].strip("\0\n\r "))
 
 
-class TextDescriptionType(Dict): # ICC v2
+class TextDescriptionType(AODict): # ICC v2
 	def __init__(self, tagData, tagSignature):
+		AODict.__init__(self)
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + 
@@ -544,8 +597,9 @@ class TextType(str):
 		# return str(self[8:].strip("\0\n\r "))
 
 
-class VideoCardGammaFormula(Dict):
+class VideoCardGammaFormula(AODict):
 	def __init__(self, data):
+		AODict.__init__(self)
 		self.update({
 			"redGamma": u16Fixed16Number(data[0:4]),
 			"redMin": u16Fixed16Number(data[4:8]),
@@ -559,9 +613,10 @@ class VideoCardGammaFormula(Dict):
 		})
 
 
-class VideoCardGammaType(Dict):
+class VideoCardGammaType(AODict):
 
 	def __init__(self, tagData):
+		AODict.__init__(self)
 		reserved = uInt32Number(tagData[4:8])
 		videoCardGamma = tagData[8:]
 		tagType = uInt32Number(videoCardGamma[0:4])
@@ -641,9 +696,10 @@ class VideoCardGammaType(Dict):
 			i = i + 1
 
 
-class ViewingConditionsType(Dict):
+class ViewingConditionsType(AODict):
 
 	def __init__(self, tagData):
+		AODict.__init__(self)
 		self.update({
 			"illuminant": XYZNumber(tagData[8:20]),
 			"surround": XYZNumber(tagData[20:32]),
@@ -651,7 +707,7 @@ class ViewingConditionsType(Dict):
 		})
 
 
-class XYZNumber(Dict):
+class XYZNumber(AODict):
 
 	"""
 	Byte
@@ -662,6 +718,7 @@ class XYZNumber(Dict):
 	"""
 
 	def __init__(self, binaryString):
+		AODict.__init__(self)
 		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in 
 								  (binaryString[:4], binaryString[4:8], 
 								   binaryString[8:12])]
@@ -771,8 +828,11 @@ class ICCProfile:
 	def __getTags(self):
 		if not self._tags:
 			# tag table and tagged element data
-			self._tags = Dict()
-			self._rawtags = Dict()
+			self._tags = AODict()
+			if issubclass(AODict, OrderedDict):
+				self._rawtags = AODict()
+			else:
+				self._rawtags = []
 			tagCount = uInt32Number(self.data[128:132])
 			tagTable = self.data[132:132 + tagCount * 12]
 			while tagTable:
@@ -785,8 +845,10 @@ class ICCProfile:
 					safe_print("Error (non-critical): Tag '%s' already "
 							   "encountered. Skipping..." % tagSignature)
 				else:
-					self._tagSignature = tagSignature
-					self._rawtags[tagSignature] = tagData
+					if isinstance(self._rawtags, list):
+						self._rawtags.append((tagSignature, tagData))
+					else:
+						self._rawtags[tagSignature] = tagData
 					if tagData[:4] == "chrm":
 						self._tags[tagSignature] = ChromacityType(tagData)
 					elif tagData[:4] == "curv":
@@ -825,7 +887,6 @@ class ICCProfile:
 					else:
 						self._tags[tagSignature] = tagData
 				tagTable = tagTable[12:]
-			self._tagSignature = None
 		return self._tags
 	tags = property(__getTags, doc="Profile Tag Table")
 	
@@ -931,3 +992,57 @@ class ICCProfile:
 		Read profile from binary string, filename or file object.
 		"""
 		self.__init__(profile)
+	
+	def write(self, stream_or_filename=None):
+		"""
+		Write profile to stream.
+		
+		This will re-construct the tag table from raw tag data.
+		
+		"""
+		if not stream_or_filename:
+			if self._file:
+				if not self._file.closed:
+					self.close()
+				stream_or_filename = self.fileName
+		if isinstance(stream_or_filename, basestring):
+			stream = open(stream_or_filename, "wb")
+		else:
+			stream = stream_or_filename
+		# Assemble tag table and tag data
+		tagCount = len(self.tags)
+		tagTable = []
+		tagTableSize = tagCount * 12
+		tagsData = []
+		tagsDataOffset = []
+		tagDataOffset = 128 + 4 + tagTableSize
+		for tag in self._rawtags:
+			if isinstance(self._rawtags, list):
+				tagSignature, tagData = tag
+			else:
+				tagSignature = tag
+				tagData = self._rawtags[tagSignature]
+			tagDataSize = len(tagData)
+			# Pad all data with binary zeros so it lies on 4-byte boundaries
+			padding = int(math.ceil(tagDataSize / 4.0)) * 4 - tagDataSize
+			tagData += "\0" * padding
+			tagTable.append(tagSignature)
+			if tagData in tagsData:
+				tagTable.append(uInt32Number_tohex(tagsDataOffset[tagsData.index(tagData)]))
+			else:
+				tagTable.append(uInt32Number_tohex(tagDataOffset))
+			tagsDataOffset.append(tagDataOffset)
+			tagTable.append(uInt32Number_tohex(tagDataSize))
+			if not tagData in tagsData:
+				tagsData.append(tagData)
+				tagDataOffset += tagDataSize + padding
+		# Write header
+		header = uInt32Number_tohex(128 + 4 + tagTableSize + len("".join(tagsData))) + self._data[4:128]
+		stream.write(header)
+		# Write tag table
+		stream.write(uInt32Number_tohex(tagCount))
+		stream.write("".join(tagTable))
+		# Write tag data
+		stream.write("".join(tagsData))
+		if isinstance(stream_or_filename, basestring):
+			stream.close()
