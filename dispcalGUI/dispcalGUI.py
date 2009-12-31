@@ -1339,19 +1339,27 @@ class MainFrame(BaseFrame):
 		skip = [
 			"argyll.dir",
 			"calibration.black_point_rate.enabled",
+			"comport.number",
+			"display.number",
+			"display_lut.link",
+			"display_lut.number",
 			"gamap_profile",
 			"gamma",
+			"lang",
 			"last_cal_path",
 			"last_cal_or_icc_path",
 			"last_filedialog_path",
 			"last_icc_path",
 			"last_ti1_path",
 			"last_ti3_path",
+			"measurement_mode",
+			"profile.name",
 			"profile.save_path",
 			"position.x",
 			"position.y",
 			"position.info.x",
 			"position.info.y",
+			"projector_mode",
 			"recent_cals",
 			"tc_precond_profile"
 		]
@@ -2634,9 +2642,9 @@ class MainFrame(BaseFrame):
 					return
 				if "vcgt" in profile.tags:
 					setcfg("last_icc_path", path)
-					if hasattr(self, "lut_viewer") and self.lut_viewer and \
-					   self.lut_viewer.IsShownOnScreen():
-						self.show_lut_handler(profile=profile)
+					if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
+					   #self.lut_viewer.IsShownOnScreen():
+						self.lut_viewer_load_lut(profile=profile)
 					self.install_profile(capture_output=True, 
 										 profile_path=path, 
 										 install=False, 
@@ -2647,9 +2655,9 @@ class MainFrame(BaseFrame):
 							   bitmap=geticon(32, "dialog-error"))
 			else:
 				setcfg("last_cal_path", path)
-				if hasattr(self, "lut_viewer") and self.lut_viewer and \
-				   self.lut_viewer.IsShownOnScreen():
-					self.show_lut_handler(profile=cal_to_fake_profile(path))
+				if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
+				   #self.lut_viewer.IsShownOnScreen():
+					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
 				self.install_profile(capture_output=True, cal=path, 
 									 install=False, skip_scripts=True)
 
@@ -2953,9 +2961,9 @@ class MainFrame(BaseFrame):
 		if not cal:
 			cal = getcfg("calibration.file")
 		if cal:
-			if hasattr(self, "lut_viewer") and self.lut_viewer and \
-			   self.lut_viewer.IsShownOnScreen():
-				self.show_lut_handler(profile=ICCP.ICCProfile(cal) if 
+			if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
+			   #self.lut_viewer.IsShownOnScreen():
+				self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
 									  cal.lower().endswith(".icc") or 
 									  cal.lower().endswith(".icm") else 
 									  cal_to_fake_profile(cal))
@@ -2973,8 +2981,8 @@ class MainFrame(BaseFrame):
 		return False
 
 	def reset_cal(self, event=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer and \
-		   self.lut_viewer.IsShownOnScreen():
+		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
+		   #self.lut_viewer.IsShownOnScreen():
 			self.lut_viewer.profile = None
 			self.lut_viewer.DrawLUT()
 		if check_set_argyll_bin():
@@ -2994,8 +3002,8 @@ class MainFrame(BaseFrame):
 		return False
 
 	def load_display_profile_cal(self, event=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer and \
-		   self.lut_viewer.IsShownOnScreen():
+		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
+		   #self.lut_viewer.IsShownOnScreen():
 			try:
 				profile = ICCP.get_display_profile(
 					max(self.display_ctrl.GetSelection(), 0))
@@ -3003,7 +3011,7 @@ class MainFrame(BaseFrame):
 				safe_print("ICCP.get_display_profile(%s):" % 
 						   self.display_ctrl.GetSelection(), exception)
 				profile = None
-			self.show_lut_handler(profile=profile)
+			self.lut_viewer_load_lut(profile=profile)
 		if check_set_argyll_bin():
 			if verbose >= 1 and event is None:
 				safe_print(
@@ -3409,7 +3417,7 @@ class MainFrame(BaseFrame):
 									 self.lut_viewer)
 			self.show_lut_handler(profile=profile)
 	
-	def show_lut_handler(self, event=None, profile=None):
+	def lut_viewer_load_lut(self, event=None, profile=None):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			if not profile:
 				profile = self.lut_viewer.profile
@@ -3444,14 +3452,21 @@ class MainFrame(BaseFrame):
 					self.lut_viewer.LoadProfile(profile)
 			else:
 				self.lut_viewer.profile = None
+			if (self.lut_viewer.IsShownOnScreen() or 
+				self.lut_viewer.profile is not None):
+				self.lut_viewer.DrawLUT()
+	
+	def show_lut_handler(self, event=None, profile=None):
+		if hasattr(self, "lut_viewer") and self.lut_viewer:
+			self.lut_viewer_load_lut(event, profile)
 			show = bool((hasattr(self, "show_lut") and self.show_lut and 
 						 self.show_lut.GetValue()) or 
 						((not hasattr(self, "show_lut") or 
 						  not self.show_lut) and 
 						 (self.lut_viewer.IsShownOnScreen() or 
-						  profile is not None)))
-			if show:
-				self.lut_viewer.DrawLUT()
+						  self.lut_viewer.profile is not None)))
+			# if show:
+				# self.lut_viewer.DrawLUT()
 			self.lut_viewer.Show(show)
 
 	def lut_viewer_move_handler(self, event=None):
@@ -3519,9 +3534,9 @@ class MainFrame(BaseFrame):
 		if bool(int(getcfg("display_lut.link"))):
 			self.display_lut_ctrl.SetStringSelection(self.displays[display_no])
 			setcfg("display_lut.number", display_no + 1)
-		if hasattr(self, "lut_viewer") and self.lut_viewer and \
-		   self.lut_viewer.IsShownOnScreen():
-			self.show_lut_handler(profile=get_display_profile(display_no))
+		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
+		   #self.lut_viewer.IsShownOnScreen():
+			self.lut_viewer_load_lut(profile=get_display_profile(display_no))
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
