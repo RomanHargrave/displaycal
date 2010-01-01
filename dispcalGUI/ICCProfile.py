@@ -311,7 +311,17 @@ def uInt8Number_tohex(num):
 	return struct.pack(">H", num)[1]
 
 
-class AODict(OrderedDict):
+def videoCardGamma(tagData):
+	reserved = uInt32Number(tagData[4:8])
+	videoCardGamma = tagData[8:]
+	tagType = uInt32Number(videoCardGamma[0:4])
+	if tagType == 0: # table
+		return VideoCardGammaTableType(videoCardGamma[4:])
+	elif tagType == 1: # formula
+		return VideoCardGammaFormulaType(videoCardGamma[4:])
+
+
+class ADict(dict):
 
 	"""
 	Convenience class for dictionary key access via attributes.
@@ -320,8 +330,8 @@ class AODict(OrderedDict):
 	
 	"""
 
-	def __init__(self, *args):
-		OrderedDict.__init__(self, *args)
+	def __init__(self, *args, **kwargs):
+		dict.__init__(self, *args, **kwargs)
 
 	def __getattr__(self, name):
 		try:
@@ -333,49 +343,58 @@ class AODict(OrderedDict):
 				raise
 
 	def __setattr__(self, name, value):
-		if name in ("_ordered", "_key2index"):
+		self[name] = value
+
+
+class AODict(ADict, OrderedDict):
+
+	def __init__(self, *args, **kwargs):
+		OrderedDict.__init__(self, *args, **kwargs)
+
+	def __setattr__(self, name, value):
+		if name == "_keys":
 			object.__setattr__(self, name, value)
 		else:
 			self[name] = value
 
 
-class Colorant(AODict):
+class Colorant(ADict):
 
 	def __init__(self, binaryString):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.channels = colorants[self.type].channels
 		self.description = colorants[self.type].description
 
 
-class Geometry(AODict):
+class Geometry(ADict):
 
 	def __init__(self, binaryString):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = geometry[self.type]
 
 
-class IlluminantType(AODict):
+class IlluminantType(ADict):
 
 	def __init__(self, binaryString):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = illuminants[self.type]
 
 
-class Observer(AODict):
+class Observer(ADict):
 
 	def __init__(self, binaryString):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = observers[self.type]
 
 
-class ChromacityType(AODict):
+class ChromacityType(ADict):
 
 	def __init__(self, tagData):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		deviceChannelsCount = uInt16Number(tagData[8:10])
 		colorant = uInt16Number(tagData[10:12])
 		if colorant in colorants:
@@ -405,10 +424,10 @@ class DateTimeType(list):
 		self += dateTimeNumber(tagData[8:20])
 
 
-class MeasurementType(AODict):
+class MeasurementType(ADict):
 
 	def __init__(self, tagData):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		self.update({
 			"observer": Observer(tagData[8:12]),
 			"backing": XYZNumber(tagData[12:24]),
@@ -467,9 +486,9 @@ class SignatureType(str):
 		# return str(self[8:12].strip("\0\n\r "))
 
 
-class TextDescriptionType(AODict): # ICC v2
+class TextDescriptionType(ADict): # ICC v2
 	def __init__(self, tagData, tagSignature):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + 
@@ -597,63 +616,10 @@ class TextType(str):
 		# return str(self[8:].strip("\0\n\r "))
 
 
-class VideoCardGammaFormula(AODict):
-	def __init__(self, data):
-		AODict.__init__(self)
-		self.update({
-			"redGamma": u16Fixed16Number(data[0:4]),
-			"redMin": u16Fixed16Number(data[4:8]),
-			"redMax": u16Fixed16Number(data[8:12]),
-			"greenGamma": u16Fixed16Number(data[12:16]),
-			"greenMin": u16Fixed16Number(data[16:20]),
-			"greenMax": u16Fixed16Number(data[20:24]),
-			"blueGamma": u16Fixed16Number(data[24:28]),
-			"blueMin": u16Fixed16Number(data[28:32]),
-			"blueMax": u16Fixed16Number(data[32:36])
-		})
+class VideoCardGammaType(ADict):
 
-
-class VideoCardGammaType(AODict):
-
-	def __init__(self, tagData):
-		AODict.__init__(self)
-		reserved = uInt32Number(tagData[4:8])
-		videoCardGamma = tagData[8:]
-		tagType = uInt32Number(videoCardGamma[0:4])
-		if tagType == 0: # table
-			videoCardGammaTable = videoCardGamma[4:]
-			channels   = uInt16Number(videoCardGammaTable[0:2])
-			entryCount = uInt16Number(videoCardGammaTable[2:4])
-			entrySize  = uInt16Number(videoCardGammaTable[4:6])
-			data = videoCardGammaTable[6:]
-			self.update({
-				"channels": channels,
-				"entryCount": entryCount,
-				"entrySize": entrySize,
-				"data": []
-			})
-			i = 0
-			while i < channels:
-				self.data.append([])
-				j = 0
-				while j < entryCount:
-					index = i * entryCount * entrySize + j * entrySize
-					if entrySize == 1:
-						self.data[i].append(uInt8Number(data[index:index + 
-															 entrySize]))
-					elif entrySize == 2:
-						self.data[i].append(uInt16Number(data[index:index + 
-															  entrySize]))
-					elif entrySize == 4:
-						self.data[i].append(uInt32Number(data[index:index + 
-															  entrySize]))
-					elif entrySize == 8:
-						self.data[i].append(uInt64Number(data[index:index + 
-															  entrySize]))
-					j = j + 1
-				i = i + 1
-		elif tagType == 1: # formula
-			self.update(VideoCardGammaFormula(videoCardGamma[4:]))
+	def __init__(self):
+		ADict.__init__(self)
 
 	def printNormalizedValues(self, amount=None, digits=12):
 		"""
@@ -670,36 +636,110 @@ class VideoCardGammaType(AODict):
 		and the number of digits.
 		
 		"""
-		if type(amount) != int:
-			amount = self.entryCount
-		modulo = 256 / float(amount - 1)
+		if amount is None:
+			if hasattr(self, 'entryCount'):
+				amount = self.entryCount
+			else:
+				amount = 256  # common value
+		values = self.getNormalizedValues(amount)
+		entryCount = len(values)
+		channels = len(values[0])
+		header = ['REF']
+		for k in xrange(channels):
+			header.append('C' + str(k + 1))
+		header = [title.ljust(digits + 2) for title in header]
+		safe_print("#".ljust(len(str(amount)) + 1) + " ".join(header))
+		for i, value in enumerate(values):
+			formatted_values = [str(round(channel, 
+								digits)).ljust(digits + 2, '0') for 
+					  channel in value]
+			safe_print(str(i + 1).rjust(len(str(amount)), '0'), 
+					   str(round(i / float(entryCount - 1), 
+								 digits)).ljust(digits + 2, '0'), 
+					   " ".join(formatted_values))
+
+
+class VideoCardGammaFormulaType(VideoCardGammaType):
+
+	def __init__(self, data):
+		VideoCardGammaType.__init__(self)
+		self.update({
+			"redGamma": u16Fixed16Number(data[0:4]),
+			"redMin": u16Fixed16Number(data[4:8]),
+			"redMax": u16Fixed16Number(data[8:12]),
+			"greenGamma": u16Fixed16Number(data[12:16]),
+			"greenMin": u16Fixed16Number(data[16:20]),
+			"greenMax": u16Fixed16Number(data[20:24]),
+			"blueGamma": u16Fixed16Number(data[24:28]),
+			"blueMin": u16Fixed16Number(data[28:32]),
+			"blueMax": u16Fixed16Number(data[32:36])
+		})
+	
+	def getNormalizedValues(self, amount=None):
+		if amount is None:
+			amount = 256  # common value
+		step = 1.0 / float(amount - 1)
+		rgb = AODict([("red", []), ("green", []), ("blue", [])])
+		for i in xrange(0, amount):
+			for key in rgb:
+				rgb[key] += [float(self[key + "Min"]) + math.pow(step * i / 1.0, 
+								float(self[key + "Gamma"])) * 
+							 float(self[key + "Max"])]
+		return zip(rgb.values())
+
+
+class VideoCardGammaTableType(VideoCardGammaType):
+
+	def __init__(self, data):
+		VideoCardGammaType.__init__(self)
+		channels   = uInt16Number(data[0:2])
+		entryCount = uInt16Number(data[2:4])
+		entrySize  = uInt16Number(data[4:6])
+		self.update({
+			"channels": channels,
+			"entryCount": entryCount,
+			"entrySize": entrySize,
+			"data": []
+		})
 		i = 0
-		j = 0
-		while i < self.entryCount:
-			if i == 0:
-				k = 0
-				header = ['REF']
-				while k < self.channels:
-					k = k + 1
-					header.append('C' + str(k))
-				header = [title.ljust(digits + 2) for title in header]
-				safe_print("#".ljust(len(str(amount)) + 1) + " ".join(header))
-			if i == 0 or (i + 1) % modulo < 1 or i + 1 == self.entryCount:
+		while i < channels:
+			self.data.append([])
+			j = 0
+			while j < entryCount:
+				index = 6 + i * entryCount * entrySize + j * entrySize
+				if entrySize == 1:
+					self.data[i].append(uInt8Number(data[index:index + 
+														 entrySize]))
+				elif entrySize == 2:
+					self.data[i].append(uInt16Number(data[index:index + 
+														  entrySize]))
+				elif entrySize == 4:
+					self.data[i].append(uInt32Number(data[index:index + 
+														  entrySize]))
+				elif entrySize == 8:
+					self.data[i].append(uInt64Number(data[index:index + 
+														  entrySize]))
 				j = j + 1
-				values = [str(round(channel[i] / 65535.0, 
-									digits)).ljust(digits + 2, '0') for 
-						  channel in self.data]
-				safe_print(str(j).rjust(len(str(amount)), '0'), 
-						   str(round(i / float(self.entryCount - 1), 
-									 digits)).ljust(digits + 2, '0'), 
-						   " ".join(values))
 			i = i + 1
+	
+	def getNormalizedValues(self, amount=None):
+		if amount is None:
+			amount = self.entryCount
+		values = zip(*[[entry / 65535.0 for entry in channel] for channel in self.data])
+		if amount <= self.entryCount:
+			step = self.entryCount / float(amount - 1)
+			all = values
+			values = []
+			for i, value in enumerate(all):
+				if i == 0 or (i + 1) % step < 1 or i + 1 == self.entryCount:
+					values += [value]
+		return values
 
 
-class ViewingConditionsType(AODict):
+class ViewingConditionsType(ADict):
 
 	def __init__(self, tagData):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		self.update({
 			"illuminant": XYZNumber(tagData[8:20]),
 			"surround": XYZNumber(tagData[20:32]),
@@ -707,7 +747,7 @@ class ViewingConditionsType(AODict):
 		})
 
 
-class XYZNumber(AODict):
+class XYZNumber(ADict):
 
 	"""
 	Byte
@@ -718,7 +758,7 @@ class XYZNumber(AODict):
 	"""
 
 	def __init__(self, binaryString):
-		AODict.__init__(self)
+		ADict.__init__(self)
 		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in 
 								  (binaryString[:4], binaryString[4:8], 
 								   binaryString[8:12])]
@@ -875,7 +915,7 @@ class ICCProfile:
 						# GraphicsImaging/Reference/ColorSync_Manager/
 						# Reference/reference.html#//apple_ref/doc/uid/
 						# TP30000259-CH3g-C001473
-						self._tags[tagSignature] = VideoCardGammaType(tagData)
+						self._tags[tagSignature] = videoCardGamma(tagData)
 					elif tagData[:4] == "view":
 						self._tags[tagSignature] = ViewingConditionsType(
 							tagData)

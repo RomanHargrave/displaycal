@@ -44,9 +44,9 @@ def cal_to_fake_profile(cal):
 	entries = cal.queryv(required_fields)
 	profile = ICCP.ICCProfile()
 	profile.fileName = cal.filename
-	profile._tags = ICCP.Dict()
+	profile._tags = ICCP.ADict()
 	profile._tags.desc = os.path.basename(cal.filename)
-	profile._tags.vcgt = ICCP.Dict({
+	profile._tags.vcgt = ICCP.ADict({
 		"channels": 3,
 		"entryCount": len(entries),
 		"entrySize": 2,
