@@ -685,7 +685,7 @@ class VideoCardGammaFormulaType(VideoCardGammaType):
 				rgb[key] += [float(self[key + "Min"]) + math.pow(step * i / 1.0, 
 								float(self[key + "Gamma"])) * 
 							 float(self[key + "Max"])]
-		return zip(rgb.values())
+		return zip(*rgb.values())
 
 
 class VideoCardGammaTableType(VideoCardGammaType):
