@@ -611,7 +611,11 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 		return unicode(self).encode(sys.getdefaultencoding())
 
 	def __unicode__(self):
-		for localizedType in ("Unicode", "Macintosh", "ASCII"):
+		if sys.platform == "darwin":
+			localizedTypes = ("Unicode", "Macintosh", "ASCII")
+		else:
+			localizedTypes = ("Unicode", "ASCII", "Macintosh")
+		for localizedType in localizedTypes:
 			if localizedType in self:
 				value = self[localizedType]
 				if not isinstance(value, unicode):
