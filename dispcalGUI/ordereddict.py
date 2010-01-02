@@ -273,7 +273,7 @@ class OrderedDict(dict):
 	def update(self, *args, **kwargs):
 		if len(args) > 1:
 			raise TypeError("update expected at most 1 arguments, got %i" % len(args))
-		for iterable in (args[0], kwargs):
+		for iterable in args + (kwargs, ):
 			if iterable:
 				if hasattr(iterable, "iteritems"):
 					self.update(iterable.iteritems())

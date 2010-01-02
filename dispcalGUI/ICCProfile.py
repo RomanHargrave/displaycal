@@ -9,6 +9,7 @@ import os
 import struct
 import sys
 from time import localtime, mktime, strftime
+from UserString import UserString
 if sys.platform != "win32":
 	import subprocess as sp
 
@@ -203,8 +204,7 @@ def get_display_profile(display_no=0):
 	profile = None
 	if sys.platform == "win32":
 		if not "win32api" in sys.modules or not "win32gui" in sys.modules:
-			import win32api
-			import win32gui
+			raise ImportError('pywin32 not available')
 		display_name = win32api.EnumDisplayDevices(None, display_no).DeviceName
 		dc = win32gui.CreateDC("DISPLAY", display_name, None)
 		filename = win32api.GetICMProfile(dc)
@@ -321,12 +321,11 @@ def uInt8Number_tohex(num):
 
 def videoCardGamma(tagData):
 	reserved = uInt32Number(tagData[4:8])
-	videoCardGamma = tagData[8:]
-	tagType = uInt32Number(videoCardGamma[0:4])
+	tagType = uInt32Number(tagData[8:12])
 	if tagType == 0: # table
-		return VideoCardGammaTableType(videoCardGamma[4:])
+		return VideoCardGammaTableType(tagData)
 	elif tagType == 1: # formula
-		return VideoCardGammaFormulaType(videoCardGamma[4:])
+		return VideoCardGammaFormulaType(tagData)
 
 
 class ADict(dict):
@@ -366,10 +365,21 @@ class AODict(ADict, OrderedDict):
 			self[name] = value
 
 
+class ICCProfileTag(object):
+
+	def __init__(self, tagData):
+		self.tagData = tagData
+
+	def __setattr__(self, name, value):
+		if not isinstance(self, dict) or name in ("_keys", "tagData"):
+			object.__setattr__(self, name, value)
+		else:
+			self[name] = value
+
+
 class Colorant(ADict):
 
 	def __init__(self, binaryString):
-		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.channels = colorants[self.type].channels
 		self.description = colorants[self.type].description
@@ -378,15 +388,13 @@ class Colorant(ADict):
 class Geometry(ADict):
 
 	def __init__(self, binaryString):
-		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = geometry[self.type]
 
 
-class IlluminantType(ADict):
+class Illuminant(ADict):
 
 	def __init__(self, binaryString):
-		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = illuminants[self.type]
 
@@ -394,15 +402,14 @@ class IlluminantType(ADict):
 class Observer(ADict):
 
 	def __init__(self, binaryString):
-		ADict.__init__(self)
 		self.type = uInt32Number(binaryString)
 		self.description = observers[self.type]
 
 
-class ChromacityType(ADict):
+class ChromacityType(ICCProfileTag, ADict):
 
 	def __init__(self, tagData):
-		ADict.__init__(self)
+		ICCProfileTag.__init__(self, tagData)
 		deviceChannelsCount = uInt16Number(tagData[8:10])
 		colorant = uInt16Number(tagData[10:12])
 		if colorant in colorants:
@@ -416,9 +423,10 @@ class ChromacityType(ADict):
 			channels = channels[8:]
 
 
-class CurveType(list):
+class CurveType(ICCProfileTag, list):
 
 	def __init__(self, tagData):
+		ICCProfileTag.__init__(self, tagData)
 		curveEntriesCount = uInt32Number(tagData[8:12])
 		curveEntries = tagData[12:]
 		while curveEntries:
@@ -426,28 +434,30 @@ class CurveType(list):
 			curveEntries = curveEntries[2:]
 
 
-class DateTimeType(list):
+class DateTimeType(ICCProfileTag, list):
 
 	def __init__(self, tagData):
+		ICCProfileTag.__init__(self, tagData)
 		self += dateTimeNumber(tagData[8:20])
 
 
-class MeasurementType(ADict):
+class MeasurementType(ICCProfileTag, ADict):
 
 	def __init__(self, tagData):
-		ADict.__init__(self)
+		ICCProfileTag.__init__(self, tagData)
 		self.update({
 			"observer": Observer(tagData[8:12]),
 			"backing": XYZNumber(tagData[12:24]),
 			"geometry": Geometry(tagData[24:28]),
 			"flare": u16Fixed16Number(tagData[28:32]),
-			"illuminantType": IlluminantType(tagData[32:36])
+			"illuminantType": Illuminant(tagData[32:36])
 		})
 
 
-class MultiLocalizedUnicodeType(AODict): # ICC v4
+class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 
 	def __init__(self, tagData):
+		ICCProfileTag.__init__(self, tagData)
 		AODict.__init__(self)
 		recordsCount = uInt32Number(tagData[8:12])
 		recordSize = uInt32Number(tagData[12:16]) # 12
@@ -482,32 +492,23 @@ class MultiLocalizedUnicodeType(AODict): # ICC v4
 		return self.values()[0].values()[0]
 
 
-class SignatureType(str):
-
-	def __init__(self, text):
-		pass
-
-	# def __repr__(self):
-		# return repr(self[8:12].strip("\0\n\r "))
-
-	# def __str__(self):
-		# return str(self[8:12].strip("\0\n\r "))
-
-
-class TextDescriptionType(ADict): # ICC v2
+class SignatureType(ICCProfileTag, UserString):
 
 	def __init__(self, tagData):
-		ADict.__init__(self)
+		ICCProfileTag.__init__(self, tagData)
+		UserString.__init__(self, tagData[8:12].rstrip("\0"))
+
+
+class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
+
+	def __init__(self, tagData):
+		ICCProfileTag.__init__(self, tagData)
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + 
 									   ASCIIDescriptionLength].strip("\0\n\r ")
 			if ASCIIDescription:
-				# Even ASCII description may contain non-ASCII chars, so 
-				# assume system encoding and convert to unicode, replacing 
-				# unknown chars
-				self.ASCII = unicode(ASCIIDescription, fs_enc, 
-									 errors="replace")
+				self.ASCII = ASCIIDescription
 		unicodeOffset = 12 + ASCIIDescriptionLength
 		unicodeLanguageCode = uInt32Number(
 							  tagData[unicodeOffset:unicodeOffset + 4])
@@ -580,7 +581,6 @@ class TextDescriptionType(ADict): # ICC v2
 			except UnicodeDecodeError:
 				safe_print("UnicodeDecodeError (non-critical): could not "
 						   "decode '%s' Unicode part" % tagData[:4])
-				unicodeDescription = None
 		else:
 			charBytes = 1
 		macOffset = unicodeOffset + 8 + unicodeDescriptionLength * charBytes
@@ -606,36 +606,36 @@ class TextDescriptionType(ADict): # ICC v2
 				except UnicodeDecodeError:
 					safe_print("UnicodeDecodeError (non-critical): could not "
 							   "decode '%s' Macintosh part" % tagData[:4])
-					macDescription = None
 
 	def __str__(self):
 		return unicode(self).encode(sys.getdefaultencoding())
 
 	def __unicode__(self):
-		for localizedType in ("ASCII", "Macintosh", "Unicode"):
+		for localizedType in ("Unicode", "Macintosh", "ASCII"):
 			if localizedType in self:
-				return self[localizedType]
+				value = self[localizedType]
+				if not isinstance(value, unicode):
+					# Even ASCII description may contain non-ASCII chars, so 
+					# assume system encoding and convert to unicode, replacing 
+					# unknown chars
+					value = unicode(value, fs_enc, errors="replace")
+				return value
 
 
-class TextType(str):
+class TextType(ICCProfileTag, UserString):
 
-	def __init__(self, text):
-		pass
-
-	# def __repr__(self):
-		# return repr(self[8:].strip("\0\n\r "))
-
-	# def __str__(self):
-		# return str(self[8:].strip("\0\n\r "))
+	def __init__(self, tagData):
+		ICCProfileTag.__init__(self, tagData)
+		UserString.__init__(self, tagData[8:].rstrip("\0"))
 
 
-class VideoCardGammaType(ADict):
+class VideoCardGammaType(ICCProfileTag, ADict):
 
 	# Private tag
 	# http://developer.apple.com/documentation/GraphicsImaging/Reference/ColorSync_Manager/Reference/reference.html#//apple_ref/doc/uid/TP30000259-CH3g-C001473
 
-	def __init__(self):
-		ADict.__init__(self)
+	def __init__(self, tagData):
+		ICCProfileTag.__init__(self, tagData)
 
 	def printNormalizedValues(self, amount=None, digits=12):
 		"""
@@ -677,8 +677,9 @@ class VideoCardGammaType(ADict):
 
 class VideoCardGammaFormulaType(VideoCardGammaType):
 
-	def __init__(self, data):
-		VideoCardGammaType.__init__(self)
+	def __init__(self, tagData):
+		VideoCardGammaType.__init__(self, tagData)
+		data = tagData[12:]
 		self.update({
 			"redGamma": u16Fixed16Number(data[0:4]),
 			"redMin": u16Fixed16Number(data[4:8]),
@@ -706,8 +707,9 @@ class VideoCardGammaFormulaType(VideoCardGammaType):
 
 class VideoCardGammaTableType(VideoCardGammaType):
 
-	def __init__(self, data):
-		VideoCardGammaType.__init__(self)
+	def __init__(self, tagData):
+		VideoCardGammaType.__init__(self, tagData)
+		data = tagData[12:]
 		channels   = uInt16Number(data[0:2])
 		entryCount = uInt16Number(data[2:4])
 		entrySize  = uInt16Number(data[4:6])
@@ -752,14 +754,14 @@ class VideoCardGammaTableType(VideoCardGammaType):
 		return values
 
 
-class ViewingConditionsType(ADict):
+class ViewingConditionsType(ICCProfileTag, ADict):
 
 	def __init__(self, tagData):
-		ADict.__init__(self)
+		ICCProfileTag.__init__(self, tagData)
 		self.update({
 			"illuminant": XYZNumber(tagData[8:20]),
 			"surround": XYZNumber(tagData[20:32]),
-			"illuminantType": IlluminantType(tagData[32:36])
+			"illuminantType": Illuminant(tagData[32:36])
 		})
 
 
@@ -774,15 +776,15 @@ class XYZNumber(ADict):
 	"""
 
 	def __init__(self, binaryString):
-		ADict.__init__(self)
 		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in 
 								  (binaryString[:4], binaryString[4:8], 
 								   binaryString[8:12])]
 
 
-class XYZType(XYZNumber):
+class XYZType(ICCProfileTag, XYZNumber):
 
 	def __init__(self, tagData):
+		ICCProfileTag.__init__(self, tagData)
 		XYZNumber.__init__(self, tagData[8:20])
 
 
@@ -793,8 +795,8 @@ typeSignature2Type = {
 	"dtim": DateTimeType,
 	"meas": MeasurementType,
 	"mluc": MultiLocalizedUnicodeType,  # ICC v4
-	"sig ": (lambda tagData: SignatureType(tagData[8:12].strip("\0\n\r "))),
-	"text": (lambda tagData: TextType(tagData[8:].strip("\0\n\r "))),
+	"sig ": SignatureType,
+	"text": TextType,
 	"vcgt": videoCardGamma,
 	"view": ViewingConditionsType,
 	"XYZ ": XYZType
@@ -812,18 +814,18 @@ class ICCProfile:
 	"""
 	Returns a new ICCProfile object. 
 	
-	Optionally initialized with a string (binary or filename), or a file 
-	object.
+	Optionally initialized with a string containing binary profile data or 
+	a filename, or a file-like object.
 	
 	"""
 
 	def __init__(self, profile=None):
-		self.ID = None
+		self.ID = "\0" * 16
 		self._data = None
 		self._file = None
-		self._tags = None
+		self._tags = AODict()
 		self.fileName = None
-		self.size = 0
+		self.size = self._size = 0
 		
 		if profile:
 		
@@ -863,7 +865,7 @@ class ICCProfile:
 											 data[36:40] + "'")
 			
 			header = data[:128]
-			self.size = uInt32Number(header[0:4])
+			self.size = self._size = uInt32Number(header[0:4])
 			self.preferredCMM = header[4:8].strip("\0\n\r ")
 			self.version = Decimal(str(ord(header[8:12][0])) + "." + 
 								   str(ord(header[8:12][1])))
@@ -892,7 +894,7 @@ class ICCProfile:
 			self.intent = uInt32Number(header[64:68])
 			self.illuminant = XYZNumber(header[68:80])
 			self.creator = header[80:84].strip("\0\n\r ")
-			if header[84:100] != "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0":
+			if header[84:100] != "\0" * 16:
 				self.ID = header[84:100]
 			
 			self._data = data[:self.size]
@@ -900,44 +902,77 @@ class ICCProfile:
 	def __del__(self):
 		self.close()
 	
-	def _getData(self):
-		self.load()
-		return self._data
-
-	data = property(_getData, doc="Profile data")
-	
-	def _getTags(self):
-		if not self._tags:
-			# tag table and tagged element data
-			self._tags = AODict()
-			if issubclass(AODict, OrderedDict):
-				self._rawtags = AODict()
+	@property
+	def data(self):
+		"""
+		Get raw binary profile data.
+		
+		This will re-assemble the various profile parts (header, 
+		tag table and data) on-the-fly.
+		
+		"""
+		# Assemble tag table and tag data
+		tagCount = len(self.tags)
+		tagTable = []
+		tagTableSize = tagCount * 12
+		tagsData = []
+		tagsDataOffset = []
+		tagDataOffset = 128 + 4 + tagTableSize
+		for tagSignature in self.tags:
+			tagData = self.tags[tagSignature].tagData
+			tagDataSize = len(tagData)
+			# Pad all data with binary zeros so it lies on 4-byte boundaries
+			padding = int(math.ceil(tagDataSize / 4.0)) * 4 - tagDataSize
+			tagData += "\0" * padding
+			tagTable.append(tagSignature)
+			if tagData in tagsData:
+				tagTable.append(uInt32Number_tohex(tagsDataOffset[tagsData.index(tagData)]))
 			else:
-				self._rawtags = []
-			tagCount = uInt32Number(self.data[128:132])
-			tagTable = self.data[132:132 + tagCount * 12]
+				tagTable.append(uInt32Number_tohex(tagDataOffset))
+			tagsDataOffset.append(tagDataOffset)
+			tagTable.append(uInt32Number_tohex(tagDataSize))
+			if not tagData in tagsData:
+				tagsData.append(tagData)
+				tagDataOffset += tagDataSize + padding
+		header = uInt32Number_tohex(128 + 4 + tagTableSize + 
+									len("".join(tagsData))) + self._data[4:84] + self.ID + self._data[100:128]
+		data = "".join([header, uInt32Number_tohex(tagCount), 
+						"".join(tagTable), "".join(tagsData)])
+		return data
+	
+	@property
+	def tags(self):
+		"Profile Tag Table"
+		if not self._tags:
+			self.load()
+			# tag table and tagged element data
+			tagCount = uInt32Number(self._data[128:132])
+			tagTable = self._data[132:132 + tagCount * 12]
+			discard_len = 0
+			tags = {}
 			while tagTable:
 				tag = tagTable[:12]
 				tagSignature = tag[:4]
 				tagDataOffset = uInt32Number(tag[4:8])
 				tagDataSize = uInt32Number(tag[8:12])
-				tagData = self.data[tagDataOffset:tagDataOffset + tagDataSize]
-				typeSignature = tagData[:4]
 				if tagSignature in self._tags:
 					safe_print("Error (non-critical): Tag '%s' already "
 							   "encountered. Skipping..." % tagSignature)
 				else:
-					if isinstance(self._rawtags, list):
-						self._rawtags.append((tagSignature, tagData))
+					if (tagDataOffset, tagDataSize) in tags:
+						self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)]
 					else:
-						self._rawtags[tagSignature] = tagData
-					if typeSignature in typeSignature2Type:
-						tagData = typeSignature2Type[typeSignature](tagData)
-					self._tags[tagSignature] = tagData
+						start = tagDataOffset - discard_len
+						end = tagDataOffset - discard_len + tagDataSize
+						tagData = self._data[start:end]
+						self._data = self._data[:128] + self._data[end:]
+						discard_len += tagDataOffset - 128 - discard_len + tagDataSize
+						typeSignature = tagData[:4]
+						if typeSignature in typeSignature2Type:
+							tagData = typeSignature2Type[typeSignature](tagData)
+						self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)] = tagData
 				tagTable = tagTable[12:]
 		return self._tags
-
-	tags = property(_getTags, doc="Profile Tag Table")
 	
 	def calculateID(self):
 		"""
@@ -963,7 +998,7 @@ class ICCProfile:
 		"""
 		Closes the associated file object (if any).
 		"""
-		if self._file:
+		if self._file and not self._file.closed:
 			self._file.close()
 	
 	def getCopyright(self):
@@ -1023,22 +1058,17 @@ class ICCProfile:
 		nothing if the profile was passed in as a binary string).
 		
 		"""
-		if (not self._data or len(self._data) < self.size) and self._file:
+		if (not self._data or len(self._data) < self._size) and self._file:
 			if self._file.closed:
 				self._file = open(self._file.name, "rb")
 				self._file.seek(len(self._data))
-			self._data += self._file.read(self.size - len(self._data))
+			self._data += self._file.read(self._size - len(self._data))
 			self._file.close()
-	
-	def open(self, path):
-		"""
-		Open profile from file.
-		"""
-		self.__init__(open(path, "rb"))
 	
 	def read(self, profile):
 		"""
 		Read profile from binary string, filename or file object.
+		Same as self.__init__(profile)
 		"""
 		self.__init__(profile)
 	
@@ -1046,7 +1076,8 @@ class ICCProfile:
 		"""
 		Write profile to stream.
 		
-		This will re-construct the tag table from raw tag data.
+		This will re-assemble the various profile parts (header, 
+		tag table and data) on-the-fly.
 		
 		"""
 		if not stream_or_filename:
@@ -1058,40 +1089,6 @@ class ICCProfile:
 			stream = open(stream_or_filename, "wb")
 		else:
 			stream = stream_or_filename
-		# Assemble tag table and tag data
-		tagCount = len(self.tags)
-		tagTable = []
-		tagTableSize = tagCount * 12
-		tagsData = []
-		tagsDataOffset = []
-		tagDataOffset = 128 + 4 + tagTableSize
-		for tag in self._rawtags:
-			if isinstance(self._rawtags, list):
-				tagSignature, tagData = tag
-			else:
-				tagSignature = tag
-				tagData = self._rawtags[tagSignature]
-			tagDataSize = len(tagData)
-			# Pad all data with binary zeros so it lies on 4-byte boundaries
-			padding = int(math.ceil(tagDataSize / 4.0)) * 4 - tagDataSize
-			tagData += "\0" * padding
-			tagTable.append(tagSignature)
-			if tagData in tagsData:
-				tagTable.append(uInt32Number_tohex(tagsDataOffset[tagsData.index(tagData)]))
-			else:
-				tagTable.append(uInt32Number_tohex(tagDataOffset))
-			tagsDataOffset.append(tagDataOffset)
-			tagTable.append(uInt32Number_tohex(tagDataSize))
-			if not tagData in tagsData:
-				tagsData.append(tagData)
-				tagDataOffset += tagDataSize + padding
-		# Write header
-		header = uInt32Number_tohex(128 + 4 + tagTableSize + len("".join(tagsData))) + self._data[4:128]
-		stream.write(header)
-		# Write tag table
-		stream.write(uInt32Number_tohex(tagCount))
-		stream.write("".join(tagTable))
-		# Write tag data
-		stream.write("".join(tagsData))
+		stream.write(self.data)
 		if isinstance(stream_or_filename, basestring):
 			stream.close()
