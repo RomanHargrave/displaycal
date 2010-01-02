@@ -73,7 +73,7 @@ import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
 					script_ext, confighome, datahome, defaults, enc, exe, 
 					exe_ext, exedir, fs_enc, getbitmap, geticon, get_data_path, 
-					get_display, getcfg, get_verified_path, iccprofiles, 
+					get_display, getcfg, get_verified_path, 
 					initcfg, isapp, isexe, profile_ext, pydir, pyext, pyname, 
 					pypath, resfiles, runtype, setcfg, storage, writecfg)
 
@@ -2711,7 +2711,8 @@ class MainFrame(BaseFrame):
 						# for the current user
 						cmd, args = 'osascript', ['-e', 
 							'set iccProfile to POSIX file "%s"' % 
-							os.path.join(iccprofiles, 
+							os.path.join(os.path.join(os.path.sep, "Library", 
+													  "ColorSync", "Profiles"), 
 										 os.path.basename(args[-1])), '-e', 
 										 'tell app "ColorSyncScripting" to set '
 										 'display profile of display %s to '

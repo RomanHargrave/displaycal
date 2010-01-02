@@ -9,7 +9,8 @@ import sys
 if sys.platform == "darwin":
     enc = "UTF-8"
 else:
-    enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
+    enc = sys.stdout.encoding or locale.getpreferredencoding() or \
+		  sys.getdefaultencoding()
 fs_enc = sys.getfilesystemencoding() or enc
 
 def quote_args(args):

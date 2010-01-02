@@ -147,7 +147,7 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 							profile.tags.cprt)[0]
 						if options_dispcal:
 							whitepoint = False
-							b = profile.tags.lumi
+							b = profile.tags.lumi.Y
 							for o in options_dispcal:
 								if o[0] == "y":
 									cal_lines += ['KEYWORD "DEVICE_TYPE"']

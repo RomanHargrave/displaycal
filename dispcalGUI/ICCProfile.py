@@ -13,17 +13,21 @@ if sys.platform != "win32":
 	import subprocess as sp
 
 if sys.platform == "win32":
-	import win32api
-	import win32gui
+	try:
+		import win32api
+		import win32gui
+	except ImportError:
+		pass
 
+from defaultpaths import iccprofiles, iccprofiles_home
 from ordereddict import OrderedDict
 from safe_print import safe_print
-from util_os import getenvu
 
 if sys.platform == "darwin":
 	enc = "UTF-8"
 else:
-	enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
+	enc = sys.stdout.encoding or locale.getpreferredencoding() or \
+		  sys.getdefaultencoding()
 fs_enc = sys.getfilesystemencoding() or enc
 
 encodings = {
@@ -193,10 +197,14 @@ observers = {
 	2: "CIE 1964"
 }
 
+
 def get_display_profile(display_no=0):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
+		if not "win32api" in sys.modules or not "win32gui" in sys.modules:
+			import win32api
+			import win32gui
 		display_name = win32api.EnumDisplayDevices(None, display_no).DeviceName
 		dc = win32gui.CreateDC("DISPLAY", display_name, None)
 		filename = win32api.GetICMProfile(dc)
@@ -458,7 +466,7 @@ class MultiLocalizedUnicodeType(AODict): # ICC v4
 			records = records[recordSize:]
 
 	def __str__(self):
-		return unicode(self).encode("ASCII")
+		return unicode(self).encode(sys.getdefaultencoding())
 
 	def __unicode__(self):
 		"""
@@ -487,7 +495,8 @@ class SignatureType(str):
 
 
 class TextDescriptionType(ADict): # ICC v2
-	def __init__(self, tagData, tagSignature):
+
+	def __init__(self, tagData):
 		ADict.__init__(self)
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
@@ -508,10 +517,10 @@ class TextDescriptionType(ADict): # ICC v2
 			if tagData[unicodeOffset + 8 + 
 					   unicodeDescriptionLength:unicodeOffset + 8 + 
 					   unicodeDescriptionLength + 2] == "\0\0":
-				safe_print("Warning (non-critical): '%s' tag Unicode part "
+				safe_print("Warning (non-critical): '%s' Unicode part "
 						   "seems to be a single-byte string (double-byte "
-						   "string expected)" % tagSignature)
-				charBytes = 1 # fix for fubar'd desc tag
+						   "string expected)" % tagData[:4])
+				charBytes = 1 # fix for fubar'd desc
 			else:
 				charBytes = 2
 			unicodeDescription = tagData[unicodeOffset + 8:unicodeOffset + 8 + 
@@ -526,12 +535,12 @@ class TextDescriptionType(ADict): # ICC v2
 						unicodeDescription = unicodeDescription[2:]
 						if len(unicodeDescription.split(" ")) == \
 						   unicodeDescriptionLength - 1:
-							safe_print("Warning (non-critical): '%s' tag "
+							safe_print("Warning (non-critical): '%s' "
 									   "Unicode part starts with UTF-16 big "
 									   "endian BOM, but actual contents seem "
 									   "to be UTF-16 little endian" % 
-									   tagSignature)
-							# fix fubar'd desc tag
+									   tagData[:4])
+							# fix fubar'd desc
 							unicodeDescription = unicode(
 								"\0".join(unicodeDescription.split(" ")), 
 								"utf-16-le", errors="replace")
@@ -543,12 +552,12 @@ class TextDescriptionType(ADict): # ICC v2
 						# UTF-16 Little Endian
 						unicodeDescription = unicodeDescription[2:]
 						if unicodeDescription[0] == "\0":
-							safe_print("Warning (non-critical): '%s' tag "
+							safe_print("Warning (non-critical): '%s' "
 									   "Unicode part starts with UTF-16 "
 									   "little endian BOM, but actual "
 									   "contents seem to be UTF-16 big "
-									   "endian" % tagSignature)
-							# fix fubar'd desc tag
+									   "endian" % tagData[:4])
+							# fix fubar'd desc
 							unicodeDescription = unicode(unicodeDescription, 
 														 "utf-16-be", 
 														 errors="replace")
@@ -566,27 +575,26 @@ class TextDescriptionType(ADict): # ICC v2
 						self.Unicode = unicodeDescription
 					else:
 						safe_print("Error (non-critical): could not decode "
-								   "'%s' tag Unicode part - null byte(s) "
-								   "encountered" % tagSignature)
-						#self.Unicode = unicodeDescription
+								   "'%s' Unicode part - null byte(s) "
+								   "encountered" % tagData[:4])
 			except UnicodeDecodeError:
 				safe_print("UnicodeDecodeError (non-critical): could not "
-						   "decode '%s' tag Unicode part" % tagSignature)
+						   "decode '%s' Unicode part" % tagData[:4])
 				unicodeDescription = None
 		else:
 			charBytes = 1
 		macOffset = unicodeOffset + 8 + unicodeDescriptionLength * charBytes
 		macOffsetBackup = macOffset
 		if tagData[macOffset:macOffset + 5] == "\0\0\0\0\0":
-			macOffset += 5 # fix for fubar'd desc tag
+			macOffset += 5  # fix for fubar'd desc
 		if len(tagData) > macOffset + 2:
 			macScriptCode = uInt16Number(tagData[macOffset:macOffset + 2])
 			macDescriptionLength = ord(tagData[macOffset + 2])
 			if macDescriptionLength:
 				if macOffsetBackup < macOffset:
-					safe_print("Warning (non-critical): '%s' tag Macintosh "
+					safe_print("Warning (non-critical): '%s' Macintosh "
 							   "part offset points to null bytes" % 
-							   tagSignature)
+							   tagData[:4])
 				try:
 					macDescription = unicode(tagData[macOffset + 3:macOffset + 
 											 3 + macDescriptionLength], 
@@ -597,10 +605,12 @@ class TextDescriptionType(ADict): # ICC v2
 						self.Macintosh = macDescription
 				except UnicodeDecodeError:
 					safe_print("UnicodeDecodeError (non-critical): could not "
-							   "decode '%s' tag Macintosh part" % tagSignature)
+							   "decode '%s' Macintosh part" % tagData[:4])
 					macDescription = None
+
 	def __str__(self):
-		return unicode(self).encode("ASCII")
+		return unicode(self).encode(sys.getdefaultencoding())
+
 	def __unicode__(self):
 		for localizedType in ("ASCII", "Macintosh", "Unicode"):
 			if localizedType in self:
@@ -608,15 +618,21 @@ class TextDescriptionType(ADict): # ICC v2
 
 
 class TextType(str):
+
 	def __init__(self, text):
 		pass
+
 	# def __repr__(self):
 		# return repr(self[8:].strip("\0\n\r "))
+
 	# def __str__(self):
 		# return str(self[8:].strip("\0\n\r "))
 
 
 class VideoCardGammaType(ADict):
+
+	# Private tag
+	# http://developer.apple.com/documentation/GraphicsImaging/Reference/ColorSync_Manager/Reference/reference.html#//apple_ref/doc/uid/TP30000259-CH3g-C001473
 
 	def __init__(self):
 		ADict.__init__(self)
@@ -770,6 +786,21 @@ class XYZType(XYZNumber):
 		XYZNumber.__init__(self, tagData[8:20])
 
 
+typeSignature2Type = {
+	"chrm": ChromacityType,
+	"curv": CurveType,
+	"desc": TextDescriptionType,  # ICC v2
+	"dtim": DateTimeType,
+	"meas": MeasurementType,
+	"mluc": MultiLocalizedUnicodeType,  # ICC v4
+	"sig ": (lambda tagData: SignatureType(tagData[8:12].strip("\0\n\r "))),
+	"text": (lambda tagData: TextType(tagData[8:].strip("\0\n\r "))),
+	"vcgt": videoCardGamma,
+	"view": ViewingConditionsType,
+	"XYZ ": XYZType
+}
+
+
 class ICCProfileInvalidError(IOError):
 
 	def __str__(self):
@@ -801,10 +832,19 @@ class ICCProfile:
 			if type(profile) in (str, unicode):
 				if profile.find("\0") < 0:
 					# filename
-					if not os.path.exists(profile):
-						if sys.platform == "win32" and profile.find("\\") < 0:
-							profile = getenvu("SYSTEMROOT") + \
-								"\\system32\\spool\\drivers\\color\\" + profile
+					if not os.path.isfile(profile) and \
+					   not os.path.sep in profile and \
+					   not os.path.altsep in profile:
+						for path in iccprofiles_home + filter(lambda x: 
+							x not in iccprofiles_home, iccprofiles):
+							if os.path.isdir(path):
+								for path, dirs, files in os.walk(path):
+									path = os.path.join(path, profile)
+									if os.path.isfile(path):
+										profile = path
+										break
+								if os.path.isfile(path):
+									break
 					profile = open(profile, "rb")
 				else: # binary string
 					data = profile
@@ -860,12 +900,13 @@ class ICCProfile:
 	def __del__(self):
 		self.close()
 	
-	def __getData(self):
+	def _getData(self):
 		self.load()
 		return self._data
-	data = property(__getData, doc="Profile data")
+
+	data = property(_getData, doc="Profile data")
 	
-	def __getTags(self):
+	def _getTags(self):
 		if not self._tags:
 			# tag table and tagged element data
 			self._tags = AODict()
@@ -881,6 +922,7 @@ class ICCProfile:
 				tagDataOffset = uInt32Number(tag[4:8])
 				tagDataSize = uInt32Number(tag[8:12])
 				tagData = self.data[tagDataOffset:tagDataOffset + tagDataSize]
+				typeSignature = tagData[:4]
 				if tagSignature in self._tags:
 					safe_print("Error (non-critical): Tag '%s' already "
 							   "encountered. Skipping..." % tagSignature)
@@ -889,46 +931,13 @@ class ICCProfile:
 						self._rawtags.append((tagSignature, tagData))
 					else:
 						self._rawtags[tagSignature] = tagData
-					if tagData[:4] == "chrm":
-						self._tags[tagSignature] = ChromacityType(tagData)
-					elif tagData[:4] == "curv":
-						self._tags[tagSignature] = CurveType(tagData)
-					elif tagData[:4] == "desc": # ICC v2
-						self._tags[tagSignature] = TextDescriptionType(
-							tagData, tagSignature)
-					elif tagData[:4] == "dtim":
-						self._tags[tagSignature] = DateTimeType(tagData)
-					elif tagData[:4] == "meas":
-						self._tags[tagSignature] = MeasurementType(tagData)
-					elif tagData[:4] == "mluc": # ICC v4
-						self._tags[tagSignature] = MultiLocalizedUnicodeType(
-							tagData)
-					elif tagData[:4] == "sig ":
-						self._tags[tagSignature] = SignatureType(
-							tagData[8:12].strip("\0\n\r "))
-					elif tagData[:4] == "text":
-						self._tags[tagSignature] = TextType(
-							tagData[8:].strip("\0\n\r "))
-					elif tagData[:4] == "vcgt":
-						# private tag
-						# http://developer.apple.com/documentation/
-						# GraphicsImaging/Reference/ColorSync_Manager/
-						# Reference/reference.html#//apple_ref/doc/uid/
-						# TP30000259-CH3g-C001473
-						self._tags[tagSignature] = videoCardGamma(tagData)
-					elif tagData[:4] == "view":
-						self._tags[tagSignature] = ViewingConditionsType(
-							tagData)
-					elif tagData[:4] == "XYZ ":
-						if tagSignature == "lumi":
-							self._tags[tagSignature] = XYZType(tagData).Y
-						else:
-							self._tags[tagSignature] = XYZType(tagData)
-					else:
-						self._tags[tagSignature] = tagData
+					if typeSignature in typeSignature2Type:
+						tagData = typeSignature2Type[typeSignature](tagData)
+					self._tags[tagSignature] = tagData
 				tagTable = tagTable[12:]
 		return self._tags
-	tags = property(__getTags, doc="Profile Tag Table")
+
+	tags = property(_getTags, doc="Profile Tag Table")
 	
 	def calculateID(self):
 		"""

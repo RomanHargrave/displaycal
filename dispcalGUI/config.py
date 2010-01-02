@@ -22,6 +22,14 @@ if sys.platform == "win32":
 										 CSIDL_PROGRAM_FILES_COMMON, 
 										 CSIDL_STARTUP, CSIDL_SYSTEM)
 
+if sys.platform == "win32":
+	from defaultpaths import appdata, commonappdata, commonprogramfiles
+elif sys.platform == "darwin":
+	from defaultpaths import appsupport, appsupport_home, prefs_home
+else:
+	from defaultpaths import (xdg_config_home, xdg_data_home, 
+							 xdg_data_home_default, xdg_data_dirs)
+from defaultpaths import autostart, autostart_home
 from meta import name as appname, version
 from options import ascii, debug, verbose
 from util_io import StringIOu as StringIO
@@ -35,7 +43,8 @@ else:
 	if sys.platform == "darwin":
 		enc = "UTF-8"
 	else:
-		enc = sys.stdout.encoding or locale.getpreferredencoding() or "ASCII"
+		enc = sys.stdout.encoding or locale.getpreferredencoding() or \
+			  sys.getdefaultencoding()
 	fs_enc = sys.getfilesystemencoding() or enc
 
 exe = unicode(sys.executable, fs_enc)
@@ -52,28 +61,11 @@ if sys.platform == "win32":
 	btn_width_correction = 20
 	script_ext = ".cmd"
 	scale_adjustment_factor = 1.0
-	# environment variable APPDATA will not be defined if using "Run as..."
-	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA)
-	commonappdata = SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA)
-	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON)
 	confighome = os.path.join(appdata, appname)
-	try:
-		autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP)
-		# can fail under Vista if directory doesn't exist
-	except Exception, exception:
-		autostart = None
-	try:
-		autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP)
-		# can fail under Vista if directory doesn't exist
-	except Exception, exception:
-		autostart_home = None
 	datahome = os.path.join(appdata, appname)
 	logdir = os.path.join(datahome, "logs")
 	data_dirs += [datahome, os.path.join(commonappdata, appname), 
 				  os.path.join(commonprogramfiles, appname)]
-	iccprofiles = os.path.join(SHGetSpecialFolderPath(0, CSIDL_SYSTEM), 
-							   "spool", "drivers", "color")
-	iccprofiles_home = iccprofiles
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:
@@ -82,38 +74,15 @@ else:
 		script_ext = ".command"
 		mac_create_app = True
 		scale_adjustment_factor = 1.0
-		confighome = os.path.join(expanduseru("~"), "Library", 
-								  "Preferences", appname)
-		autostart = autostart_home = None
-		datahome = os.path.join(expanduseru("~"), "Library", 
-								"Application Support", appname)
+		confighome = os.path.join(prefs_home, appname)
+		datahome = os.path.join(appsupport_home, appname)
 		logdir = os.path.join(expanduseru("~"), "Library", 
 							  "Logs", appname)
-		data_dirs += [datahome, os.path.join(os.path.sep, "Library", 
-											 "Application Support", appname)]
-		iccprofiles = os.path.join(os.path.sep, "Library", 
-								   "ColorSync", "Profiles")
-		iccprofiles_home = os.path.join(expanduseru("~"), "Library", 
-										"ColorSync", "Profiles")
+		data_dirs += [datahome, os.path.join(appsupport, appname)]
 	else:
 		script_ext = ".sh"
 		scale_adjustment_factor = 1.0
-		xdg_config_home = getenvu("XDG_CONFIG_HOME",
-								  os.path.join(expanduseru("~"), ".config"))
-		xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", 
-								  "/etc/xdg").split(os.pathsep)
-		xdg_data_home_default = expandvarsu("$HOME/.local/share")
-		xdg_data_home = getenvu("XDG_DATA_HOME",
-								xdg_data_home_default)
-		xdg_data_dirs_default = "/usr/local/share:/usr/share"
-		xdg_data_dirs = getenvu("XDG_DATA_DIRS", 
-								xdg_data_dirs_default).split(os.pathsep)
-		for dir_ in xdg_data_dirs_default.split(os.pathsep):
-			if not dir_ in xdg_data_dirs:
-				xdg_data_dirs += [dir_]
 		confighome = os.path.join(xdg_config_home, appname)
-		autostart = os.path.join(xdg_config_dirs[0], "autostart")
-		autostart_home = os.path.join(xdg_config_home, "autostart")
 		datahome = os.path.join(xdg_data_home, appname)
 		logdir = os.path.join(datahome, "logs")
 		data_dirs += [datahome]
@@ -121,10 +90,6 @@ else:
 			data_dirs += [xdg_data_home_default]
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
 		del dir_
-		iccprofiles = os.path.join(xdg_data_dirs[0], "color", "icc", 
-								   "devices", "display")
-		iccprofiles_home = os.path.join(xdg_data_home, "color", "icc", 
-										"devices", "display")
 	exe_ext = ""
 	profile_ext = ".icc"
 
