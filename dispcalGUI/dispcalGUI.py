@@ -615,39 +615,6 @@ class MainFrame(BaseFrame):
 				"p": 1
 			}
 		}
-
-		self.profile_types = [
-			lang.getstr("profile.type.lut.lab"),
-			lang.getstr("profile.type.shaper_matrix"),
-			lang.getstr("profile.type.single_shaper_matrix"),
-			lang.getstr("profile.type.gamma_matrix"),
-			lang.getstr("profile.type.single_gamma_matrix")
-		]
-		
-		# Left side - internal enumeration, right side - commmandline
-		self.profile_types_ab = {
-			0: "l"
-		}
-		
-		profile_types_index = 0
-		
-		if sys.platform != "win32" or (self.worker.argyll_version >= (1, 1, 0)
-									   and not "Beta" in self.worker.argyll_version_string
-									   and not "RC1" in self.worker.argyll_version_string
-									   and not "RC2" in self.worker.argyll_version_string):
-										# Windows wants matrix tags in XYZ LUT profiles,
-										# which is satisfied with Argyll > 1.1.0_RC2
-										self.profile_types.insert(1, "XYZ LUT")
-										self.profile_types_ab[1] = "x"
-										profile_types_index += 1
-		
-		self.profile_types_ab[profile_types_index + 1] = "s"
-		self.profile_types_ab[profile_types_index + 2] = "S"
-		self.profile_types_ab[profile_types_index + 3] = "g"
-		self.profile_types_ab[profile_types_index + 4] = "G"
-		
-		# Left side - commmandline, right side - internal enumeration
-		self.profile_types_ba = swap_dict_keys_values(self.profile_types_ab)
 		
 		# Left side - commmandline, right side - internal enumeration
 		self.quality_ab = {
@@ -934,6 +901,41 @@ class MainFrame(BaseFrame):
 			lang.getstr("trc.type.absolute")
 		]
 		self.trc_type_ctrl.SetItems(self.trc_types)
+
+		self.profile_types = [
+			lang.getstr("profile.type.lut.lab"),
+			lang.getstr("profile.type.shaper_matrix"),
+			lang.getstr("profile.type.single_shaper_matrix"),
+			lang.getstr("profile.type.gamma_matrix"),
+			lang.getstr("profile.type.single_gamma_matrix")
+		]
+		self.profile_types_ab = {}
+		profile_types_index = 0
+		if self.worker.argyll_version >= [1, 1, 0] \
+		   and not "Beta" in self.worker.argyll_version_string \
+		   and not "RC1" in self.worker.argyll_version_string \
+		   and not "RC2" in self.worker.argyll_version_string:
+			self.profile_types.insert(profile_types_index, 
+									  lang.getstr("profile.type.lut_matrix.xyz"))
+			self.profile_types_ab[profile_types_index] = "X"  # XYZ LUT + accurate matrix
+			profile_types_index += 1
+		if sys.platform != "win32" or (self.worker.argyll_version >= [1, 1, 0]
+									   and not "Beta" in self.worker.argyll_version_string
+									   and not "RC1" in self.worker.argyll_version_string
+									   and not "RC2" in self.worker.argyll_version_string):
+										# Windows wants matrix tags in XYZ LUT profiles,
+										# which is satisfied with Argyll > 1.1.0_RC2
+										self.profile_types.insert(profile_types_index, 
+																  lang.getstr("profile.type.lut_rg_swapped_matrix.xyz"))
+										self.profile_types_ab[profile_types_index] = "x"  # XYZ LUT + dummy matrix (R <-> G swapped)
+										profile_types_index += 1
+		self.profile_type_ctrl.SetItems(self.profile_types)
+		self.profile_types_ab[profile_types_index] = "l"
+		self.profile_types_ab[profile_types_index + 1] = "s"
+		self.profile_types_ab[profile_types_index + 2] = "S"
+		self.profile_types_ab[profile_types_index + 3] = "g"
+		self.profile_types_ab[profile_types_index + 4] = "G"
+		self.profile_types_ba = swap_dict_keys_values(self.profile_types_ab)
 		
 		self.default_testchart_names = []
 		for measurement_mode in self.testchart_defaults:
@@ -1221,7 +1223,6 @@ class MainFrame(BaseFrame):
 				  id=self.profile_quality_ctrl.GetId())
 
 		# Profile type
-		self.profile_type_ctrl.SetItems(self.profile_types)
 		self.Bind(wx.EVT_COMBOBOX, self.profile_type_ctrl_handler, 
 				  id=self.profile_type_ctrl.GetId())
 
@@ -3204,7 +3205,7 @@ class MainFrame(BaseFrame):
 							# get dispcal options if present
 							self.worker.options_dispcal = [
 								"-" + arg for arg in 
-								get_options_from_cprt(profile.tags.cprt)[0]]
+								get_options_from_cprt(profile.getCopyright())[0]]
 				if os.path.exists(filename + ".cal") and \
 				   can_update_cal(filename + ".cal"):
 					apply_calibration = filename + ".cal"
@@ -3280,7 +3281,7 @@ class MainFrame(BaseFrame):
 					   "cprt" in profile.tags:
 						(options_dispcal, 
 						 options_colprof) = get_options_from_cprt(
-							profile.tags.cprt)
+							profile.getCopyright())
 						if options_dispcal or options_colprof:
 							cal = profile_save_path + ".cal"
 							sel = self.calibration_file_ctrl.GetSelection()
@@ -3650,7 +3651,7 @@ class MainFrame(BaseFrame):
 											 getevtobjname(event, self), 
 											 event.GetEventType(), 
 											 getevttype(event)))
-		lut_profile = self.get_profile_type() in ("l", "x")
+		lut_profile = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(lut_profile)
 		v = self.get_profile_type()
 		if v != getcfg("profile.type"):
@@ -3667,8 +3668,7 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result == wx.ID_OK:
 				testchart = "d3-e4-s0-g52-m4-f500-crossover.ti1"
-				self.testchart_defaults["c"]["l"] = testchart
-				self.testchart_defaults["l"]["l"] = testchart
+				self.testchart_defaults[self.get_measurement_mode()][self.get_profile_type()] = testchart
 				self.set_testchart(get_data_path(os.path.join("ti1", 
 															  testchart)))
 
@@ -3854,7 +3854,7 @@ class MainFrame(BaseFrame):
 							# Get dispcal options if present
 							self.worker.options_dispcal = [
 								"-" + arg for arg in 
-								get_options_from_cprt(profile.tags.cprt)[0]]
+								get_options_from_cprt(profile.getCopyright())[0]]
 						if "dmdd" in profile.tags:
 							display_name = profile.getDeviceModelDescription()
 					ti3 = CGATS.CGATS(ti3_tmp_path)
@@ -4527,7 +4527,7 @@ class MainFrame(BaseFrame):
 				setcfg("last_icc_path", path)
 				if "cprt" in profile.tags:
 					(options_dispcal, 
-					 options_colprof) = get_options_from_cprt(profile.tags.cprt)
+					 options_colprof) = get_options_from_cprt(profile.getCopyright())
 					if options_dispcal or options_colprof:
 						if debug:
 							safe_print("[D] options_dispcal:", options_dispcal)

@@ -3,10 +3,6 @@
 
 from itertools import izip, imap
 
-
-missing = object()
-
-
 def is_nan(obj):
 	"""
 	Return boolean indicating if obj is considered not a number.
@@ -30,6 +26,8 @@ class OrderedDict(dict):
 	
 	"""
 	
+	missing = object()
+	
 	def __init__(self, *args, **kwargs):
 		self._keys = []
 		if args or kwargs:
@@ -43,7 +41,7 @@ class OrderedDict(dict):
 		"""
 		Delete a range of keys.
 		"""
-		for key in self._keys[i:j]:
+		for key in iter(self._keys[i:j]):
 			del self[key]
 	
 	def __eq__(self, other):
@@ -103,7 +101,7 @@ class OrderedDict(dict):
 		"""
 		Set a range of keys.
 		"""
-		for key in self._keys[i:j]:
+		for key in iter(self._keys[i:j]):
 			dict.__delitem__(self, key)
 		self._keys[i:j] = self.__class__(iterable).keys()
 		self.update(iterable)
@@ -226,17 +224,14 @@ class OrderedDict(dict):
 			key = self._keys[-1]
 		else:
 			key = self._keys[0]
-		value = self[key]
-		del self[key]
-		return key, value
+		return key, self.pop(key)
 	
 	def rename(self, key, name):
 		"""
 		Rename a key in-place.
 		"""
 		i = self.index(key)
-		value = self[key]
-		del self[key]
+		value = self.pop(key)
 		self.insert(i, name, value)
 	
 	def reverse(self):
@@ -248,7 +243,7 @@ class OrderedDict(dict):
 	def setdefault(self, key, value=None):
 		if not key in self:
 			self[key] = value
-		return self.get(key, value)
+		return self[key]
 	
 	def setslice(self, key1, key2, iterable):
 		"""
@@ -277,6 +272,9 @@ class OrderedDict(dict):
 			if iterable:
 				if hasattr(iterable, "iteritems"):
 					self.update(iterable.iteritems())
+				elif hasattr(iterable, "keys"):
+					for key in iterable.keys():
+						self[key] = iterable[key]
 				else:
 					for key, val in iterable:
 						self[key] = val

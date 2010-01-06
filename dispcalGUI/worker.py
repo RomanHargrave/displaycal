@@ -1365,7 +1365,7 @@ class Worker():
 					if "cprt" in profile.tags:
 						# Get dispcal options if present
 						self.options_dispcal = ["-" + arg for arg in 
-							get_options_from_cprt(profile.tags.cprt)[0]]
+							get_options_from_cprt(profile.getCopyright())[0]]
 				else:
 					ti3 = StringIO("")
 				ti3_lines = [line.strip() for line in ti3]

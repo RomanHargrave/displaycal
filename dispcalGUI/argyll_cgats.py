@@ -144,7 +144,7 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 				if line == 'DEVICE_CLASS "DISPLAY"':
 					if "cprt" in profile.tags:
 						options_dispcal = get_options_from_cprt(
-							profile.tags.cprt)[0]
+							profile.getCopyright())[0]
 						if options_dispcal:
 							whitepoint = False
 							b = profile.tags.lumi.Y

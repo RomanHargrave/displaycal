@@ -393,6 +393,10 @@ testchart_defaults = {
 		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # Projector lut
 	}
 }
+for _measurement_mode in testchart_defaults:
+	testchart_defaults[_measurement_mode]["x"] = \
+		testchart_defaults[_measurement_mode]["X"] = \
+			testchart_defaults[_measurement_mode]["l"]
 
 def getcfg(name, fallback=True):
 	"""
