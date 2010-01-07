@@ -278,6 +278,7 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 defaults = {
+	"adaptive_mode": 0,
 	"argyll.dir": expanduseru("~"), # directory
 	"calibration.ambient_viewcond_adjust": 0,
 	"calibration.ambient_viewcond_adjust.lux": 500.0,

@@ -204,8 +204,9 @@ def get_display_profile(display_no=0):
 	profile = None
 	if sys.platform == "win32":
 		if not "win32api" in sys.modules or not "win32gui" in sys.modules:
-			raise ImportError('pywin32 not available')
-		display_name = win32api.EnumDisplayDevices(None, display_no).DeviceName
+			raise ImportError("pywin32 not available")
+		monitor = win32api.EnumDisplayMonitors(None, None)[display_no][0]
+		display_name = win32api.GetMonitorInfo(monitor)["Device"]
 		dc = win32gui.CreateDC("DISPLAY", display_name, None)
 		filename = win32api.GetICMProfile(dc)
 		if filename:
@@ -377,6 +378,12 @@ class ICCProfileTag(object):
 			self[name] = value
 
 
+class Text(ICCProfileTag, UserString, str):
+
+	def __init__(self, seq):
+		UserString.__init__(self, seq)
+
+
 class Colorant(ADict):
 
 	def __init__(self, binaryString):
@@ -492,11 +499,10 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 		return self.values()[0].values()[0]
 
 
-class SignatureType(ICCProfileTag, UserString):
-
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
-		UserString.__init__(self, tagData[8:12].rstrip("\0"))
+def SignatureType(tagData):
+	tag = Text(tagData[8:12].rstrip("\0"))
+	tag.tagData = tagData
+	return tag
 
 
 class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
@@ -626,11 +632,10 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 				return value
 
 
-class TextType(ICCProfileTag, UserString):
-
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
-		UserString.__init__(self, tagData[8:].rstrip("\0"))
+def TextType(tagData):
+	tag = Text(tagData[8:].rstrip("\0"))
+	tag.tagData = tagData
+	return tag
 
 
 class VideoCardGammaType(ICCProfileTag, ADict):

@@ -588,12 +588,18 @@ class MainFrame(BaseFrame):
 			"color": {
 				0: "c",
 				1: "l",
-				2: "cp",
-				3: "lp"
+				2: "cV",
+				3: "lV",
+				4: "cp",
+				5: "lp",
+				6: "cpV",
+				7: "lpV"
 			},
 			"spect": {
 				0: None,
-				1: "p"
+				1: "V",
+				2: "p",
+				3: "pV"
 			}
 		}
 		
@@ -603,16 +609,26 @@ class MainFrame(BaseFrame):
 				"c": 0,
 				"l": 1,
 				None: 1,
-				"cp": 2,
-				"lp": 3
+				"cV": 2,
+				"lV": 3,
+				"cp": 4,
+				"lp": 5,
+				"cpV": 6,
+				"lpV": 7
 			},
 			"spect": {
 				"c": 0,
 				"l": 0,
 				None: 0,
-				"cp": 1,
-				"lp": 1,
-				"p": 1
+				"V": 1,
+				"cV": 1,
+				"lV": 1,
+				"p": 2,
+				"cp": 2,
+				"lp": 2,
+				"pV": 3,
+				"cpV": 3,
+				"lpV": 3
 			}
 		}
 		
@@ -902,6 +918,19 @@ class MainFrame(BaseFrame):
 		]
 		self.trc_type_ctrl.SetItems(self.trc_types)
 
+		self.update_profile_type_ctrl()
+
+		self.default_testchart_names = []
+		for measurement_mode in self.testchart_defaults:
+			for profile_type in self.testchart_defaults[measurement_mode]:
+				chart = self.testchart_defaults[measurement_mode][profile_type]
+				if not chart in self.default_testchart_names:
+					self.default_testchart_names += [lang.getstr(chart)]
+		
+		self.profile_name_info_btn.SetToolTipString(
+			wrap(self.profile_name_info(), 72))
+	
+	def update_profile_type_ctrl(self):
 		self.profile_types = [
 			lang.getstr("profile.type.lut.lab"),
 			lang.getstr("profile.type.shaper_matrix"),
@@ -911,20 +940,25 @@ class MainFrame(BaseFrame):
 		]
 		self.profile_types_ab = {}
 		profile_types_index = 0
-		if self.worker.argyll_version >= [1, 1, 0] \
-		   and not "Beta" in self.worker.argyll_version_string \
-		   and not "RC1" in self.worker.argyll_version_string \
-		   and not "RC2" in self.worker.argyll_version_string:
+		if self.worker.argyll_version[0:3] > [1, 1, 0] or (
+		   self.worker.argyll_version[0:3] == [1, 1, 0] 
+		   and not "Beta" in self.worker.argyll_version_string 
+		   and not "RC1" in self.worker.argyll_version_string 
+		   and not "RC2" in self.worker.argyll_version_string 
+		   and not "RC3" in self.worker.argyll_version_string):
 			self.profile_types.insert(profile_types_index, 
 									  lang.getstr("profile.type.lut_matrix.xyz"))
+										# Argyll 1.1.0_RC3 had a bug when using -aX
+										# which was fixed in 1.1.0_RC4
 			self.profile_types_ab[profile_types_index] = "X"  # XYZ LUT + accurate matrix
 			profile_types_index += 1
-		if sys.platform != "win32" or (self.worker.argyll_version >= [1, 1, 0]
+		if sys.platform != "win32" or (self.worker.argyll_version[0:3] > [1, 1, 0] or (
+									   self.worker.argyll_version[0:3] == [1, 1, 0] 
 									   and not "Beta" in self.worker.argyll_version_string
 									   and not "RC1" in self.worker.argyll_version_string
-									   and not "RC2" in self.worker.argyll_version_string):
+									   and not "RC2" in self.worker.argyll_version_string)):
 										# Windows wants matrix tags in XYZ LUT profiles,
-										# which is satisfied with Argyll > 1.1.0_RC2
+										# which is satisfied with Argyll >= 1.1.0_RC3
 										self.profile_types.insert(profile_types_index, 
 																  lang.getstr("profile.type.lut_rg_swapped_matrix.xyz"))
 										self.profile_types_ab[profile_types_index] = "x"  # XYZ LUT + dummy matrix (R <-> G swapped)
@@ -936,16 +970,6 @@ class MainFrame(BaseFrame):
 		self.profile_types_ab[profile_types_index + 3] = "g"
 		self.profile_types_ab[profile_types_index + 4] = "G"
 		self.profile_types_ba = swap_dict_keys_values(self.profile_types_ab)
-		
-		self.default_testchart_names = []
-		for measurement_mode in self.testchart_defaults:
-			for profile_type in self.testchart_defaults[measurement_mode]:
-				chart = self.testchart_defaults[measurement_mode][profile_type]
-				if not chart in self.default_testchart_names:
-					self.default_testchart_names += [lang.getstr(chart)]
-		
-		self.profile_name_info_btn.SetToolTipString(
-			wrap(self.profile_name_info(), 72))
 
 	def init_measureframe(self):
 		""" Create & initialize the measurement window and its controls. """
@@ -1440,11 +1464,10 @@ class MainFrame(BaseFrame):
 			self.displays += [item.replace("[PRIMARY]", 
 										   lang.getstr("display.primary"))]
 		self.display_ctrl.SetItems(self.displays)
-		display_ctrl_enable = bool(self.worker.displays)
 		display_no = int(getcfg("display.number")) - 1
 		self.display_ctrl.SetSelection(
 			min(max(0, len(self.worker.displays) - 1), display_no))
-		self.display_ctrl.Enable(display_ctrl_enable)
+		self.display_ctrl.Enable(len(self.worker.displays) > 1)
 		display_lut_sizer = self.display_ctrl.GetContainingSizer()
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
 		comport_sizer = self.comport_ctrl.GetContainingSizer()
@@ -1488,12 +1511,13 @@ class MainFrame(BaseFrame):
 		self.comport_ctrl.SetSelection(
 			min(max(0, len(self.worker.instruments) - 1), 
 				int(getcfg("comport.number")) - 1))
-		self.comport_ctrl.Enable(bool(self.worker.instruments))
+		self.comport_ctrl.Enable(len(self.worker.instruments) > 1)
 		self.comport_ctrl.Thaw()
 		self.update_measurement_modes()
 	
 	def update_measurement_modes(self):
 		""" Update the measurement mode control. """
+		measurement_mode = getcfg("measurement_mode")
 		measurement_modes = {
 			"color": [
 				"CRT",
@@ -1505,7 +1529,9 @@ class MainFrame(BaseFrame):
 		}
 		instrument_type = self.get_instrument_type()
 		instrument_features = self.worker.get_instrument_features()
-		if instrument_features.get("projector_mode"):
+		if instrument_features.get("projector_mode") and \
+		   self.worker.argyll_version >= [1, 1, 0]:
+			# Projector mode introduced in Argyll 1.1.0 Beta
 			if instrument_type == "spect":
 				measurement_modes[instrument_type] += [
 					lang.getstr("projector")
@@ -1515,16 +1541,35 @@ class MainFrame(BaseFrame):
 					"CRT-" + lang.getstr("projector"),
 					"LCD-" + lang.getstr("projector")
 				]
+			if getcfg("projector_mode"):
+				measurement_mode += "p"
+		if instrument_features.get("adaptive_mode") and (
+		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
+		   self.worker.argyll_version[0:3] == [1, 1, 0] and
+		   not "Beta" in self.worker.argyll_version_string and
+		   not "RC1" in self.worker.argyll_version_string and
+		   not "RC2" in self.worker.argyll_version_string)):
+			# Adaptive mode introduced in Argyll 1.1.0 RC3
+			for key in iter(measurement_modes):
+				instrument_modes = list(measurement_modes[key])
+				for i, mode in reversed(zip(xrange(0, len(instrument_modes)), 
+										    instrument_modes)):
+					if mode == lang.getstr("default"):
+						mode = lang.getstr("measurement_mode.adaptive")
+					else:
+						mode = "%s %s" % (mode,
+										  lang.getstr("measurement_mode.adaptive"))
+					measurement_modes[key].insert(i + 1, mode)
+			if getcfg("adaptive_mode"):
+				measurement_mode += "V"
 		self.measurement_mode_ctrl.Freeze()
 		self.measurement_mode_ctrl.SetItems(measurement_modes[instrument_type])
-		measurement_mode = getcfg("measurement_mode")
-		if getcfg("projector_mode"):
-			measurement_mode += "p"
 		self.measurement_mode_ctrl.SetSelection(
 			min(self.measurement_modes_ba[instrument_type].get(measurement_mode, 
 															   0), 
 				len(measurement_modes[instrument_type]) - 1))
 		self.measurement_mode_ctrl.Enable(
+			bool(self.worker.instruments) and 
 			len(measurement_modes[instrument_type]) > 1)
 		self.measurement_mode_ctrl.Thaw()
 
@@ -1537,7 +1582,7 @@ class MainFrame(BaseFrame):
 		enable_cal = not(update_cal)
 
 		self.measurement_mode_ctrl.Enable(
-			enable_cal and bool(self.worker.displays) and 
+			enable_cal and bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 
 		update_profile = self.profile_update_cb.GetValue()
@@ -1665,6 +1710,8 @@ class MainFrame(BaseFrame):
 		measurement_mode = getcfg("measurement_mode")
 		if getcfg("projector_mode"):
 			measurement_mode += "p"
+		if getcfg("adaptive_mode"):
+			measurement_mode += "V"
 		self.measurement_mode_ctrl.SetSelection(
 			min(self.measurement_modes_ba[self.get_instrument_type()].get(
 					measurement_mode, 0), 
@@ -1808,7 +1855,7 @@ class MainFrame(BaseFrame):
 			self.profile_quality_info.SetLabel(
 				lang.getstr("calibration.quality.ultra"))
 
-		enable_gamap = self.get_profile_type() in ("l", "x")
+		enable_gamap = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
 
 		if hasattr(self, "gamapframe"):
@@ -3538,7 +3585,7 @@ class MainFrame(BaseFrame):
 			setcfg("display_lut.number", display_no + 1)
 		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
 		   #self.lut_viewer.IsShownOnScreen():
-			self.lut_viewer_load_lut(profile=get_display_profile(display_no))
+			self.lut_viewer_load_lut(profile=ICCP.get_display_profile(display_no))
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -3576,7 +3623,7 @@ class MainFrame(BaseFrame):
 				lut_no = self.display_ctrl.GetSelection()
 		self.display_lut_ctrl.SetSelection(lut_no)
 		self.display_lut_ctrl.Enable(not link and 
-									 self.display_lut_ctrl.GetCount() > 0)
+									 self.display_lut_ctrl.GetCount() > 1)
 		setcfg("display_lut.link", int(link))
 		setcfg("display_lut.number", lut_no + 1)
 
@@ -3597,18 +3644,32 @@ class MainFrame(BaseFrame):
 			InfoDialog(self, msg=lang.getstr("projector_mode_unavailable"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
+		if v and "V" in v and self.worker.argyll_version < [1, 1, 0] or (
+			 self.worker.argyll_version[0:3] == [1, 1, 0] and (
+			 "Beta" in self.worker.argyll_version_string or 
+			 "RC1" in self.worker.argyll_version_string or 
+			 "RC2" in self.worker.argyll_version_string)):
+			# adaptive emissive mode was added in RC3
+			self.measurement_mode_ctrl.SetSelection(
+				self.measurement_modes_ba[self.get_instrument_type()].get(
+					defaults["measurement_mode"], 0))
+			v = None
+			InfoDialog(self, msg=lang.getstr("adaptive_mode_unavailable"), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-information"))
 		cal_changed = v != getcfg("measurement_mode") and \
 					  getcfg("calibration.file") not in self.presets
 		if cal_changed:
 			self.cal_changed()
 		setcfg("projector_mode", 1 if v and "p" in v else None)
-		setcfg("measurement_mode", (v.replace("p", "") if v else None) or None)
-		if ((v in ("l", "lp", "p") and 
+		setcfg("adaptive_mode", 1 if v and "V" in v else None)
+		setcfg("measurement_mode", (v.replace("p", "").replace("V", "") if v else None) or None)
+		if ((v in ("l", "lp", "p", "pV", "lpV") and 
 			 float(self.get_black_point_correction()) > 0) or 
-			(v in ("c", "cp") and 
+			(v in ("c", "cp", "cpV") and 
 			 float(self.get_black_point_correction()) == 0)) and \
 		   getcfg("calibration.black_point_correction_choice.show"):
-			if v in ("l", "lp", "p"):
+			if v in ("l", "lp", "p", "pV", "lpV"):
 				ok = lang.getstr("calibration.turn_off_black_point_correction")
 			else:
 				ok = lang.getstr("calibration.turn_on_black_point_correction")
@@ -3629,7 +3690,7 @@ class MainFrame(BaseFrame):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				if v in ("l", "lp", "p"):
+				if v in ("l", "lp", "p", "pV", "lpV"):
 					bkpt_corr = 0.0
 				else:
 					bkpt_corr = 1.0
@@ -3913,6 +3974,10 @@ class MainFrame(BaseFrame):
 				if len(measurement_mode) > 1:
 					legacy_profile_name += "-"
 				legacy_profile_name += lang.getstr("projector").lower()
+			if "V" in measurement_mode:
+				if len(measurement_mode) > 1:
+					legacy_profile_name += "-"
+				legacy_profile_name += lang.getstr("measurement_mode.adaptive").lower()
 		if legacy_profile_name:
 			legacy_profile_name += "-"
 		if not whitepoint or whitepoint.find(",") < 0:
@@ -3944,14 +4009,16 @@ class MainFrame(BaseFrame):
 		# default v0.2.2b profile name
 		display = self.display_ctrl.GetStringSelection()
 		if display:
-			display = display.split(" @")[0]
-			weight = 0
+			display_short = display = display.split(" @")[0]
+			maxweight = 0
 			for part in re.sub("\([^)]+\)", "", display).split():
 				digits = re.search("\d+", part)
-				if len(part) + (len(digits.group()) * 5 if digits else 0) > \
-				   weight:
+				chars = re.sub("\d+", "", part)
+				weight = len(chars) + (len(digits.group()) * 5 if digits else 0)
+				if chars and weight > maxweight:
 					# Weigh parts with digits higher than those without
 					display_short = part
+					maxweight = weight
 			profile_name = profile_name.replace("%dns", display_short)
 			profile_name = profile_name.replace("%dn", display)
 		else:
@@ -3974,6 +4041,10 @@ class MainFrame(BaseFrame):
 				if len(measurement_mode) > 1:
 					mode += "-"
 				mode += lang.getstr("projector")
+			if "V" in measurement_mode:
+				if len(measurement_mode) > 1:
+					mode += "-"
+				mode += lang.getstr("measurement_mode.adaptive")
 			profile_name = profile_name.replace("%im", mode)
 		else:
 			profile_name = re.sub("[-_\s]+%im|%im[-_\s]*", "", profile_name)
@@ -4283,6 +4354,8 @@ class MainFrame(BaseFrame):
 		if os.path.basename(path) in self.dist_testchart_names:
 			path = self.dist_testcharts[
 				self.dist_testchart_names.index(os.path.basename(path))]
+			if debug:
+				safe_print("[D] set_default_testchart testchart.file:", path)
 			setcfg("testchart.file", path)
 		if force or lang.getstr(os.path.basename(path)) in [""] + \
 		   self.default_testchart_names or not os.path.isfile(path):
@@ -4336,6 +4409,8 @@ class MainFrame(BaseFrame):
 				return
 			if path != getcfg("calibration.file"):
 				self.profile_settings_changed()
+			if debug:
+				safe_print("[D] set_testchart testchart.file:", path)
 			setcfg("testchart.file", path)
 			if path not in self.testcharts:
 				self.set_testcharts(path)
@@ -4358,9 +4433,10 @@ class MainFrame(BaseFrame):
 			else:
 				self.testchart_patches_amount.SetLabel("")
 		except Exception, exception:
+			error = traceback.format_exc() if debug else exception
 			InfoDialog(self, 
 					   msg=lang.getstr("error.testchart.read", path) + 
-						   "\n\n" + unicode(str(exception), enc, "replace"), 
+						   "\n\n" + unicode(str(error), enc, "replace"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			self.set_default_testchart()
@@ -4431,6 +4507,10 @@ class MainFrame(BaseFrame):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
 			self.update_black_point_rate_ctrl()
+			self.update_profile_type_ctrl()
+			self.profile_type_ctrl.SetSelection(
+				self.profile_types_ba.get(getcfg("profile.type"), 
+				self.profile_types_ba.get(defaults["profile.type"])))
 			if hasattr(self, "aboutdialog"):
 				self.aboutdialog.Destroy()
 				del self.aboutdialog
@@ -4627,6 +4707,9 @@ class MainFrame(BaseFrame):
 								if o[0] == "F":
 									setcfg("measure.darken_background", 1)
 									continue
+								if o[0] == "V":
+									setcfg("adaptive_mode", 1)
+									continue
 						if options_colprof:
 							# restore defaults
 							self.restore_defaults_handler(
@@ -4654,6 +4737,8 @@ class MainFrame(BaseFrame):
 									continue
 						setcfg("calibration.file", path)
 						if "CTI3" in ti3_lines:
+							if debug:
+								safe_print("[D] load_cal_handler testchart.file:", path)
 							setcfg("testchart.file", path)
 						self.update_controls(
 							update_profile_name=update_profile_name)
@@ -4859,6 +4944,8 @@ class MainFrame(BaseFrame):
 			else:
 				setcfg("calibration.file", path)
 				if "CTI3" in ti3_lines:
+					if debug:
+						safe_print("[D] load_cal_handler testchart.file:", path)
 					setcfg("testchart.file", path)
 				self.update_controls(update_profile_name=update_profile_name)
 				writecfg()

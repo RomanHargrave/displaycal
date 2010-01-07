@@ -23,6 +23,7 @@ elif sys.platform == "win32":
 	except ImportError:
 		import win32com.client
 		SendKeys = None
+	import pywintypes
 	import win32api
 import wx
 import wx.lib.delayedresult as delayedresult
@@ -53,6 +54,16 @@ if sys.platform == "win32" and SendKeys is None:
 	def SendKeys(keys, pause=0.05, with_spaces=False, with_tabs=False, with_newlines=False, 
 				turn_off_numlock=True):
 		wsh_shell.SendKeys(keys)
+
+DD_ATTACHED_TO_DESKTOP = 0x01
+DD_MULTI_DRIVER        = 0x02
+DD_PRIMARY_DEVICE      = 0x04
+DD_MIRRORING_DRIVER    = 0x08
+DD_VGA_COMPATIBLE      = 0x10
+DD_REMOVABLE           = 0x20
+DD_DISCONNECT          = 0x2000000  # WINVER >= 5
+DD_REMOTE              = 0x4000000  # WINVER >= 5
+DD_MODESPRUNED         = 0x8000000  # WINVER >= 5
 
 
 def check_argyll_bin(paths=None):
@@ -247,11 +258,12 @@ def get_options_from_cprt(cprt):
 		"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
 		"p",
 		"F\d+(?:\.\d+)?",
-		"H"
+		"H",
+		"V"  # Argyll >= 1.1.0_RC3 i1pro adaptive mode
 	]
 	re_options_colprof = [
 		"q[lmh]",
-		"a[lxgsGS]",
+		"a[lxXgsGS]",
 		's\s+["\'][^"\']+?["\']',
 		'S\s+["\'][^"\']+?["\']',
 		"c(?:%s)" % "|".join(viewconds),
@@ -393,12 +405,8 @@ class Worker():
 		Create and return a new worker instance.
 		"""
 		self.owner = owner # owner should be a wxFrame or similar
-		self.reset()
-		self.argyll_bin_dir = None
-		self.argyll_version = [0, 0, 0]
-		self.argyll_version_string = ""
-		self.instruments = []
-		self.displays = []
+		self.clear_argyll_info()
+		self.clear_cmd_output()
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
 		self.options_colprof = []
@@ -406,10 +414,50 @@ class Worker():
 		self.options_dispread = []
 		self.options_targen = []
 		self.tempdir = None
-
-	def reset(self):
+	
+	def add_measurement_features(self, args):
+		measurement_mode = getcfg("measurement_mode")
+		instrument_features = self.get_instrument_features()
+		if measurement_mode:
+			if not instrument_features.get("spectral"):
+				# Always specify -y for colorimeters (won't be read from .cal 
+				# when updating)
+				args += ["-y" + measurement_mode[0]]
+		if getcfg("projector_mode") and \
+		   instrument_features.get("projector_mode") and \
+		   self.argyll_version >= [1, 1, 0]:
+			# Projector mode, Argyll >= 1.1.0 Beta
+			args += ["-p"]
+		if getcfg("adaptive_mode") and \
+		   instrument_features.get("adaptive_mode") and \
+		   self.argyll_version[0:3] > [1, 1, 0] or (
+			self.argyll_version[0:3] == [1, 1, 0] and 
+			not "Beta" in self.argyll_version_string and 
+			not "RC1" in self.argyll_version_string and 
+			not "RC2" in self.argyll_version_string):
+			# Adaptive mode, Argyll >= 1.1.0 RC3
+			args += ["-V"]
+		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
+				 getcfg("dimensions.measureframe")]
+		if bool(int(getcfg("measure.darken_background"))):
+			args += ["-F"]
+		if instrument_features.get("high_res"):
+			args += ["-H"]
+	
+	def clear_argyll_info(self):
 		"""
-		Reset any output from the last run command.
+		Clear Argyll CMS version, detected displays and instruments.
+		"""
+		self.argyll_bin_dir = None
+		self.argyll_version = [0, 0, 0]
+		self.argyll_version_string = ""
+		self.displays = []
+		self.instruments = []
+		self.lut_access = []
+
+	def clear_cmd_output(self):
+		"""
+		Clear any output from the last run command.
 		"""
 		self.pwd = None
 		self.retcode = -1
@@ -437,9 +485,11 @@ class Worker():
 		like black point rate, and checks LUT access for each display.
 		
 		"""
+		displays = list(self.displays)
+		lut_access = list(self.lut_access)
+		self.clear_argyll_info()
 		if (silent and check_argyll_bin()) or (not silent and 
 											   check_set_argyll_bin()):
-			displays = list(self.displays)
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			cmd = get_argyll_util("dispcal")
@@ -447,10 +497,12 @@ class Worker():
 			self.exec_cmd(cmd, [], capture_output=True, 
 						  skip_scripts=True, silent=True, log_output=False)
 			arg = None
-			self.displays = []
-			self.instruments = []
 			defaults["calibration.black_point_rate.enabled"] = 0
 			n = -1
+			if sys.platform == "win32":
+				monitors = []
+				for monitor in win32api.EnumDisplayMonitors(None, None):
+					monitors.append(win32api.GetMonitorInfo(monitor[0]))
 			for line in self.output:
 				if type(line) in (str, unicode):
 					n += 1
@@ -483,6 +535,22 @@ class Worker():
 											   "width (\d+), height (\d+)", 
 											   value)
 							if len(match):
+								if sys.platform == "win32":
+									i = 0
+									device = None
+									while True:
+										try:
+											device = win32api.EnumDisplayDevices(
+												monitors[len(self.displays)]["Device"], i)
+										except pywintypes.error:
+											break
+										else:
+											if device.StateFlags & \
+											   DD_ATTACHED_TO_DESKTOP:
+												break
+										i += 1
+									if device:
+										match[0] = (device.DeviceString,) + match[0][1:]
 								display = "%s @ %s, %s, %sx%s" % match[0]
 								if " ".join(value.split()[-2:]) == \
 								   "(Primary Display)":
@@ -506,7 +574,6 @@ class Worker():
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
 			if displays != self.displays:
 				# Check lut access
-				self.lut_access = [] # displays where lut access works
 				i = 0
 				dispwin = get_argyll_util("dispwin")
 				for disp in self.displays:
@@ -538,6 +605,8 @@ class Worker():
 						else:
 							safe_print(lang.getstr("failure"))
 					i += 1
+			else:
+				self.lut_access = lut_access
 
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
@@ -567,7 +636,7 @@ class Worker():
 			# fn = self.infoframe.Log
 		# else:
 		fn = None
-		self.reset()
+		self.clear_cmd_output()
 		if None in [cmd, args]:
 			if verbose >= 1 and not capture_output:
 				safe_print(lang.getstr("aborted"), fn=fn)
@@ -891,11 +960,11 @@ class Worker():
 			tries = 1
 			cmdline = [arg.encode(fs_enc) for arg in cmdline]
 			stdin = sp.PIPE if sudo else None
-			cwd = None if working_dir is None else working_dir.encode(fs_enc)
+			working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 			while tries > 0:
 				self.subprocess = sp.Popen(cmdline, stdin=stdin, 
 										   stdout=stdout, stderr=stderr, 
-										   cwd=cwd)
+										   cwd=working_dir)
 				if sudo and self.subprocess.poll() is None:
 					if self.pwd:
 						self.subprocess.communicate(self.pwd)
@@ -956,6 +1025,9 @@ class Worker():
 					if tries > 0:
 						stdout = tempfile.SpooledTemporaryFile()
 		except Exception, exception:
+			if debug:
+				safe_print('[D] cmdline:', cmdline)
+				safe_print('[D] working_dir:', working_dir)
 			handle_error("Error: " + (traceback.format_exc() if debug else 
 									  str(exception)), parent=self.owner)
 			self.retcode = -1
@@ -1063,7 +1135,7 @@ class Worker():
 		args += ["-v"] # verbose
 		args += ["-q" + getcfg("profile.quality")]
 		args += ["-a" + getcfg("profile.type")]
-		if getcfg("profile.type") in ["l", "x"]:
+		if getcfg("profile.type") in ["l", "x", "X"]:
 			if getcfg("gamap_perceptual"):
 				gamap = "s"
 			elif getcfg("gamap_saturation"):
@@ -1118,25 +1190,7 @@ class Worker():
 		args += ["-v"] # verbose
 		args += ["-d" + config.get_display()]
 		args += ["-c%s" % getcfg("comport.number")]
-		measurement_mode = getcfg("measurement_mode")
-		instrument_features = self.get_instrument_features()
-		if measurement_mode:
-			if measurement_mode != "p" and \
-			   not instrument_features.get("spectral"):
-				# Always specify -y for colorimeters (won't be read from .cal 
-				# when updating)
-				args += ["-y" + measurement_mode[0]]
-			if "p" in measurement_mode and \
-			   instrument_features.get("projector_mode") and \
-			   self.argyll_version >= [1, 1, 0]:
-				# Projector mode, Argyll >= 1.1.0 Beta
-				args += ["-p"]
-		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
-				 getcfg("dimensions.measureframe")]
-		if bool(int(getcfg("measure.darken_background"))):
-			args += ["-F"]
-		if instrument_features.get("high_res"):
-			args += ["-H"]
+		self.add_measurement_features(args)
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
 			profile_save_path = self.create_tempdir()
@@ -1395,28 +1449,10 @@ class Worker():
 		args += ["-v"] # verbose
 		args += ["-d" + config.get_display()]
 		args += ["-c%s" % getcfg("comport.number")]
-		measurement_mode = getcfg("measurement_mode")
-		instrument_features = self.get_instrument_features()
-		if measurement_mode:
-			if measurement_mode != "p" and not \
-			   instrument_features.get("spectral"):
-				# Always specify -y for colorimeters (won't be read from .cal 
-				# when updating)
-				args += ["-y" + measurement_mode[0]]
-			if "p" in measurement_mode and \
-			   instrument_features.get("projector_mode") and \
-			   self.argyll_version >= [1, 1, 0]:
-				# Projector mode, Argyll >= 1.1.0 Beta
-				args += ["-p"]
+		self.add_measurement_features(args)
 		if apply_calibration:
 			args += ["-k"]
 			args += [cal]
-		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
-				 getcfg("dimensions.measureframe")]
-		if bool(int(getcfg("measure.darken_background"))):
-			args += ["-F"]
-		if instrument_features.get("high_res"):
-			args += ["-H"]
 		self.options_dispread = args + self.options_dispread
 		return cmd, self.options_dispread + [inoutfile]
 

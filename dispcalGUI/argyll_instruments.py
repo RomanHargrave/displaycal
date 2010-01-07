@@ -22,6 +22,7 @@ instruments = {
 	"DTP92": {
 		"spectral": False,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
@@ -29,6 +30,7 @@ instruments = {
 	"DTP94": {
 		"spectral": False,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": False,
 		"skip_sensor_cal": False # DTP94 instrument access fails 
@@ -39,6 +41,7 @@ instruments = {
 	"Spectrolino": {
 		"spectral": True,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
@@ -46,6 +49,7 @@ instruments = {
 	"SpectroScan": {
 		"spectral": True,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
@@ -53,6 +57,7 @@ instruments = {
 	"SpectroScanT": {
 		"spectral": True,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
@@ -60,6 +65,7 @@ instruments = {
 	"Spectrocam": {
 		"spectral": True,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": None
@@ -67,6 +73,7 @@ instruments = {
 	"i1 Display": {
 		"spectral": False,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": False, # FIXME: Only i1 Display 2
 		"skip_sensor_cal": False # i1 Display 2 instrument access fails 
@@ -74,9 +81,10 @@ instruments = {
 				# (dispread -D9 output: "Setting no-sensor_calibrate failed 
 				# failed with 'Unsupported function'")
 	},
-	"i1 Monitor": {
+	"i1 Monitor": {  # like i1Pro
 		"spectral": True,
 		"high_res": True,
+		"adaptive_mode": True,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
@@ -84,6 +92,7 @@ instruments = {
 	"i1 Pro": {
 		"spectral": True,
 		"high_res": True,
+		"adaptive_mode": True,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
@@ -91,6 +100,7 @@ instruments = {
 	"ColorMunki": {
 		"spectral": True,
 		"high_res": None,
+		"adaptive_mode": False,
 		"projector_mode": True,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
@@ -98,6 +108,7 @@ instruments = {
 	"Colorimtre HCFR": {
 		"spectral": False,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
@@ -105,6 +116,7 @@ instruments = {
 	"Spyder2": {
 		"spectral": False,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
@@ -112,6 +124,7 @@ instruments = {
 	"Spyder3": {
 		"spectral": False,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
@@ -119,22 +132,43 @@ instruments = {
 	"Huey": {
 		"spectral": False,
 		"high_res": False,
+		"adaptive_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
-	"Dummy Meter with Hires & Projector Mode": {
+	"Dummy Meter / Hires & Projector": {
 		# dummy instrument, just for testing
 		"spectral": False,
 		"high_res": True,
+		"adaptive_mode": False,
 		"projector_mode": True,
 		"sensor_cal": False,
 		"skip_sensor_cal": False
 	},
-	"Dummy Spectro with Hires & Projector Mode": {
+	"Dummy Spectro / Hires & Projector": {
 		# dummy instrument, just for testing
 		"spectral": True,
 		"high_res": True,
+		"adaptive_mode": False,
+		"projector_mode": True,
+		"sensor_cal": True,
+		"skip_sensor_cal": True
+	},
+	"Dummy Meter / Adaptive, Hires & Projector": {
+		# dummy instrument, just for testing
+		"spectral": False,
+		"high_res": True,
+		"adaptive_mode": True,
+		"projector_mode": True,
+		"sensor_cal": False,
+		"skip_sensor_cal": False
+	},
+	"Dummy Spectro / Adaptive, Hires & Projector": {
+		# dummy instrument, just for testing
+		"spectral": True,
+		"high_res": True,
+		"adaptive_mode": True,
 		"projector_mode": True,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
