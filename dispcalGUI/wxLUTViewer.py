@@ -62,10 +62,11 @@ class LUTCanvas(plot.PlotCanvas):
 			g_points = []
 			b_points = []
 			for i in input:
+				j = i * (255.0 / (vcgt.entryCount - 1))
 				if not detect_increments:
-					linear_points += [[i, i]]
+					linear_points += [[j, j]]
 				if r:
-					n = float(vcgt.data[0][i]) / (vcgt.entryCount + 1)
+					n = float(vcgt.data[0][i]) / math.pow(256, vcgt.entrySize) * 255
 					if not detect_increments or not r_points or \
 					   i == vcgt.entryCount - 1 or n != i:
 						if detect_increments and n != i and \
@@ -73,9 +74,9 @@ class LUTCanvas(plot.PlotCanvas):
 						   r_points[-1][0] == r_points[-1][1]:
 							# print "R", i - 1, "=>", i - 1
 							r_points += [[i - 1, i - 1]]
-						r_points += [[i, n]]
+						r_points += [[j, n]]
 				if g:
-					n = float(vcgt.data[1][i]) / (vcgt.entryCount + 1)
+					n = float(vcgt.data[1][i]) / math.pow(256, vcgt.entrySize) * 255
 					if not detect_increments or not g_points or \
 					   i == vcgt.entryCount - 1 or n != i:
 						if detect_increments and n != i and \
@@ -83,9 +84,9 @@ class LUTCanvas(plot.PlotCanvas):
 						   g_points[-1][0] == g_points[-1][1]:
 							# print "G", i - 1, "=>", i - 1
 							g_points += [[i - 1, i - 1]]
-						g_points += [[i, n]]
+						g_points += [[j, n]]
 				if b:
-					n = float(vcgt.data[2][i]) / (vcgt.entryCount + 1)
+					n = float(vcgt.data[2][i]) / math.pow(256, vcgt.entrySize) * 255
 					if not detect_increments or not b_points or \
 					   i == vcgt.entryCount - 1 or n != i:
 						if detect_increments and n != i and \
@@ -93,7 +94,7 @@ class LUTCanvas(plot.PlotCanvas):
 						   b_points[-1][0] == b_points[-1][1]:
 							# print "B", i - 1, "=>", i - 1
 							b_points += [[i - 1, i - 1]]
-						b_points += [[i, n]]
+						b_points += [[j, n]]
 		else: # formula
 			input = range(0, 256)
 			step = 100.0 / 255.0
@@ -104,21 +105,30 @@ class LUTCanvas(plot.PlotCanvas):
 				if not detect_increments:
 					linear_points += [[i, i]]
 				if r:
-					r_points += [[float(vcgt["redMin"]) + math.pow(step * i / 
-						100.0, 1.0 / float(vcgt["redGamma"])) * 
-						float(vcgt["redMax"]) * 255, i]]
+					vmin = float(vcgt["redMin"]) * 255
+					v = math.pow(step * i / 100.0, float(vcgt["redGamma"]))
+					vmax = float(vcgt["redMax"]) * 255
+					r_points += [[i, vmin + v * (vmax - vmin)]]
 				if g:
-					g_points += [[float(vcgt["greenMin"]) + math.pow(step * i / 
-						100.0, 1.0 / float(vcgt["greenGamma"])) * 
-						float(vcgt["greenMax"]) * 255, i]]
+					vmin = float(vcgt["greenMin"]) * 255
+					v = math.pow(step * i / 100.0, float(vcgt["greenGamma"]))
+					vmax = float(vcgt["greenMax"]) * 255
+					g_points += [[i, vmin + v * (vmax - vmin)]]
 				if b:
-					b_points += [[float(vcgt["blueMin"]) + math.pow(step * i / 
-					100.0, 1.0 / float(vcgt["blueGamma"])) * 
-					float(vcgt["blueMax"]) * 255, i]]
+					vmin = float(vcgt["blueMin"]) * 255
+					v = math.pow(step * i / 100.0, float(vcgt["blueGamma"]))
+					vmax = float(vcgt["blueMax"]) * 255
+					b_points += [[i, vmin + v * (vmax - vmin)]]
 
-		# print r_points
-		# print g_points
-		# print b_points
+		# print 'RED'
+		# for point in r_points:
+			# print point
+		# print 'GREEN'
+		# for point in g_points:
+			# print point
+		# print 'BLUE'
+		# for point in b_points:
+			# print point
 
 		linear = [[0, 0], [input[-1], input[-1]]]
 		
@@ -204,7 +214,7 @@ class LUTCanvas(plot.PlotCanvas):
 			lines += [Plot([])]
 
 		self.Draw(plot.PlotGraphics(lines, title, xLabel, yLabel), 
-				  xAxis=(0, input[-1]), yAxis=(0, input[-1]))
+				  xAxis=(0, 255), yAxis=(0, 255))
 
 
 class LUTFrame(wx.Frame):

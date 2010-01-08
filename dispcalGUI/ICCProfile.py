@@ -199,6 +199,10 @@ observers = {
 }
 
 
+def Property(func):
+	return property(**func()) 
+
+
 def get_display_profile(display_no=0):
 	""" Return ICC Profile for display n or None """
 	profile = None
@@ -277,7 +281,7 @@ def u16Fixed16Number(binaryString):
 
 
 def u16Fixed16Number_tohex(num):
-	return struct.pack(">I", num * 65536)
+	return struct.pack(">I", int(num * 65536))
 
 
 def u8Fixed8Number(binaryString):
@@ -285,7 +289,7 @@ def u8Fixed8Number(binaryString):
 
 
 def u8Fixed8Number_tohex(num):
-	return struct.pack(">H", num * 256)
+	return struct.pack(">H", int(num * 256))
 
 
 def uInt16Number(binaryString):
@@ -320,13 +324,49 @@ def uInt8Number_tohex(num):
 	return struct.pack(">H", num)[1]
 
 
-def videoCardGamma(tagData):
+def videoCardGamma(tagData, tagSignature):
 	reserved = uInt32Number(tagData[4:8])
 	tagType = uInt32Number(tagData[8:12])
 	if tagType == 0: # table
-		return VideoCardGammaTableType(tagData)
+		return VideoCardGammaTableType(tagData, tagSignature)
 	elif tagType == 1: # formula
-		return VideoCardGammaFormulaType(tagData)
+		return VideoCardGammaFormulaType(tagData, tagSignature)
+
+
+
+
+class CRInterpolation(object):
+
+	"""
+	Catmull-Rom interpolation.
+	Curve passes through the points exactly, with neighbouring points influencing curvature.
+	points[] should be at least 3 points long.
+	"""
+
+	def __init__(self, points):
+		self.points = points
+
+	def __call__(self, pos):
+		lbound = int(math.floor(pos) - 1)
+		ubound = int(math.ceil(pos) + 1)
+		t = pos % 1.0
+		if abs((lbound + 1) - pos) < 0.0001:
+			# sitting on a datapoint, so just return that
+			return self.points[lbound + 1]
+		if lbound < 0:
+			p = self.points[:ubound + 1]
+			# extend to the left linearly
+			while len(p) < 4:
+				p.insert(0, p[0] - (p[1] - p[0]))
+		else:
+			p = self.points[lbound:ubound + 1]
+			# extend to the right linearly
+			while len(p) < 4:
+				p.append(p[-1] - (p[-2] - p[-1]))
+		t2 = t * t
+		return 0.5 * ((2 * p[1]) + (-p[0] + p[2]) * t + 
+					  ((2 * p[0]) - (5 * p[1]) + (4 * p[2]) - p[3]) * t2 +
+					  (-p[0] + (3 * p[1]) - (3 * p[2]) + p[3]) * (t2 * t))
 
 
 class ADict(dict):
@@ -368,14 +408,31 @@ class AODict(ADict, OrderedDict):
 
 class ICCProfileTag(object):
 
-	def __init__(self, tagData):
+	def __init__(self, tagData, tagSignature):
 		self.tagData = tagData
+		self.tagSignature = tagSignature
 
 	def __setattr__(self, name, value):
-		if not isinstance(self, dict) or name in ("_keys", "tagData"):
+		if not isinstance(self, dict) or name in ("_keys", "tagData", 
+												  "tagSignature"):
 			object.__setattr__(self, name, value)
 		else:
 			self[name] = value
+	
+	def __repr__(self):
+		"""
+		t.__repr__() <==> repr(t)
+		"""
+		if isinstance(self, ADict):
+			return ADict.__repr__(self)
+		elif isinstance(self, UserString):
+			return UserString.__repr__(self)
+		elif isinstance(self, list):
+			return list.__repr__(self)
+		else:
+			if not self:
+				return "%s.%s()" % (self.__class__.__module__, self.__class__.__name__)
+			return "%s.%s(%r)" % (self.__class__.__module__, self.__class__.__name__, self.tagData)
 
 
 class Text(ICCProfileTag, UserString, str):
@@ -415,8 +472,8 @@ class Observer(ADict):
 
 class ChromacityType(ICCProfileTag, ADict):
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		deviceChannelsCount = uInt16Number(tagData[8:10])
 		colorant = uInt16Number(tagData[10:12])
 		if colorant in colorants:
@@ -432,26 +489,31 @@ class ChromacityType(ICCProfileTag, ADict):
 
 class CurveType(ICCProfileTag, list):
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		curveEntriesCount = uInt32Number(tagData[8:12])
 		curveEntries = tagData[12:]
-		while curveEntries:
-			self.append(uInt16Number(curveEntries[:2]))
-			curveEntries = curveEntries[2:]
+		if curveEntriesCount == 1:
+			# gamma
+			self.append(u8Fixed8Number(curveEntries[:2]))
+		else:
+			# curve
+			while curveEntries:
+				self.append(uInt16Number(curveEntries[:2]))
+				curveEntries = curveEntries[2:]
 
 
 class DateTimeType(ICCProfileTag, list):
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		self += dateTimeNumber(tagData[8:20])
 
 
 class MeasurementType(ICCProfileTag, ADict):
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		self.update({
 			"observer": Observer(tagData[8:12]),
 			"backing": XYZNumber(tagData[12:24]),
@@ -463,8 +525,8 @@ class MeasurementType(ICCProfileTag, ADict):
 
 class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		AODict.__init__(self)
 		recordsCount = uInt32Number(tagData[8:12])
 		recordSize = uInt32Number(tagData[12:16]) # 12
@@ -499,16 +561,17 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 		return self.values()[0].values()[0]
 
 
-def SignatureType(tagData):
+def SignatureType(tagData, tagSignature):
 	tag = Text(tagData[8:12].rstrip("\0"))
 	tag.tagData = tagData
+	tag.tagSignature = tagSignature
 	return tag
 
 
 class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + 
@@ -632,9 +695,10 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 				return value
 
 
-def TextType(tagData):
+def TextType(tagData, tagSignature):
 	tag = Text(tagData[8:].rstrip("\0"))
 	tag.tagData = tagData
+	tag.tagSignature = tagSignature
 	return tag
 
 
@@ -643,8 +707,8 @@ class VideoCardGammaType(ICCProfileTag, ADict):
 	# Private tag
 	# http://developer.apple.com/documentation/GraphicsImaging/Reference/ColorSync_Manager/Reference/reference.html#//apple_ref/doc/uid/TP30000259-CH3g-C001473
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 
 	def printNormalizedValues(self, amount=None, digits=12):
 		"""
@@ -686,8 +750,8 @@ class VideoCardGammaType(ICCProfileTag, ADict):
 
 class VideoCardGammaFormulaType(VideoCardGammaType):
 
-	def __init__(self, tagData):
-		VideoCardGammaType.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		VideoCardGammaType.__init__(self, tagData, tagSignature)
 		data = tagData[12:]
 		self.update({
 			"redGamma": u16Fixed16Number(data[0:4]),
@@ -710,14 +774,41 @@ class VideoCardGammaFormulaType(VideoCardGammaType):
 			for key in rgb:
 				rgb[key] += [float(self[key + "Min"]) + math.pow(step * i / 1.0, 
 								float(self[key + "Gamma"])) * 
-							 float(self[key + "Max"])]
+							 float(self[key + "Max"] - self[key + "Min"])]
 		return zip(*rgb.values())
+	
+	def getTableType(self, entryCount=256, entrySize=2):
+		"""
+		Return gamma as table type.
+		"""
+		maxValue = math.pow(256, entrySize) - 1
+		tagData = [self.tagData[:8], 
+				   uInt32Number_tohex(0),  # type 0 = table
+				   uInt16Number_tohex(3),  # channels
+				   uInt16Number_tohex(entryCount),
+				   uInt16Number_tohex(entrySize)]
+		int2hex = {
+			1: uInt8Number_tohex,
+			2: uInt16Number_tohex,
+			4: uInt32Number_tohex,
+			8: uInt64Number_tohex
+		}
+		for key in ("red", "green", "blue"):
+			for i in xrange(0, entryCount):
+				vmin = float(self[key + "Min"])
+				vmax = float(self[key + "Max"])
+				gamma = float(self[key + "Gamma"])
+				v = (vmin + 
+					 math.pow(1.0 / (entryCount - 1) * i, gamma) * 
+					 float(vmax - vmin))
+				tagData.append(int2hex[entrySize](round(v * maxValue)))
+		return VideoCardGammaTableType("".join(tagData), self.tagSignature)
 
 
 class VideoCardGammaTableType(VideoCardGammaType):
 
-	def __init__(self, tagData):
-		VideoCardGammaType.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		VideoCardGammaType.__init__(self, tagData, tagSignature)
 		data = tagData[12:]
 		channels   = uInt16Number(data[0:2])
 		entryCount = uInt16Number(data[2:4])
@@ -728,24 +819,20 @@ class VideoCardGammaTableType(VideoCardGammaType):
 			"entrySize": entrySize,
 			"data": []
 		})
+		hex2int = {
+			1: uInt8Number,
+			2: uInt16Number,
+			4: uInt32Number,
+			8: uInt64Number
+		}
 		i = 0
 		while i < channels:
 			self.data.append([])
 			j = 0
 			while j < entryCount:
 				index = 6 + i * entryCount * entrySize + j * entrySize
-				if entrySize == 1:
-					self.data[i].append(uInt8Number(data[index:index + 
-														 entrySize]))
-				elif entrySize == 2:
-					self.data[i].append(uInt16Number(data[index:index + 
-														  entrySize]))
-				elif entrySize == 4:
-					self.data[i].append(uInt32Number(data[index:index + 
-														  entrySize]))
-				elif entrySize == 8:
-					self.data[i].append(uInt64Number(data[index:index + 
-														  entrySize]))
+				self.data[i].append(hex2int[entrySize](data[index:index + 
+															entrySize]))
 				j = j + 1
 			i = i + 1
 	
@@ -761,12 +848,128 @@ class VideoCardGammaTableType(VideoCardGammaType):
 				if i == 0 or (i + 1) % step < 1 or i + 1 == self.entryCount:
 					values += [value]
 		return values
+	
+	def getFormulaType(self):
+		"""
+		Return formula representing gamma value at 50% input.
+		"""
+		maxValue = math.pow(256, self.entrySize) - 1
+		tagData = [self.tagData[:8], 
+				   uInt32Number_tohex(1)]  # type 1 = formula
+		for channel in self.data:
+			l = (len(channel) - 1) / 2.0
+			floor = float(channel[int(math.floor(l))])
+			ceil = float(channel[int(math.ceil(l))])
+			vmin = channel[0] / maxValue
+			vmax = channel[-1] / maxValue
+			v = (vmin + ((floor + ceil) / 2.0) * (vmax - vmin)) / maxValue
+			gamma = (math.log(v) / math.log(.5))
+			print vmin, gamma, vmax
+			tagData.append(u16Fixed16Number_tohex(gamma))
+			tagData.append(u16Fixed16Number_tohex(vmin))
+			tagData.append(u16Fixed16Number_tohex(vmax))
+		return VideoCardGammaFormulaType("".join(tagData), self.tagSignature)
+	
+	def resize(self, length=128):
+		data = [[], [], []]
+		for i, channel in enumerate(self.data):
+			for j in xrange(0, length):
+				j *= (len(channel) - 1) / float(length - 1)
+				if int(j) != j:
+					floor = channel[int(math.floor(j))]
+					ceil = channel[min(int(math.ceil(j)), len(channel) - 1)]
+					interpolated = xrange(floor, ceil + 1)
+					fraction = j - int(j)
+					index = int(round(fraction * (ceil - floor)))
+					v = interpolated[index]
+				else:
+					v = channel[int(j)]
+				data[i].append(v)
+		self.data = data
+		self.entryCount = len(data[0])
+	
+	def resized(self, length=128):
+		resized = self.__class__(self.tagData, self.tagSignature)
+		resized.resize(length)
+		return resized
+	
+	def smooth_cr(self, length=64):
+		"""
+		Smooth video LUT curves (Catmull-Rom).
+		"""
+		resized = self.resized(length)
+		for i in xrange(0, len(self.data)):
+			step = float(length - 1) / (len(self.data[i]) - 1)
+			interpolation = CRInterpolation(resized.data[i])
+			for j in xrange(0, len(self.data[i])):
+				self.data[i][j] = int(round(interpolation(j * step)))
+	
+	def smooth_avg(self, passes=1, window=None):
+		"""
+		Smooth video LUT curves (moving average).
+		
+		passses   Number of passes
+		window    Tuple or list containing weighting factors. Its length
+		          determines the size of the window to use.
+		          Defaults to (1.0, 1.0, 1.0)
+		
+		"""
+		if not window or len(window) < 3 or len(window) % 2 != 1:
+			window = (1.0, 1.0, 1.0)
+		for x in xrange(0, passes):
+			data = [[], [], []]
+			for i, channel in enumerate(self.data):
+				for j, v in enumerate(channel):
+					tmpwindow = window
+					while j > 0 and j < len(channel) - 1 and len(tmpwindow) >= 3:
+						tl = (len(tmpwindow) - 1) / 2
+						# print j, tl, tmpwindow
+						if tl > 0 and j - tl >= 0 and j + tl <= len(channel) - 1:
+							windowslice = channel[j - tl:j + tl + 1]
+							windowsize = 0
+							for k, weight in enumerate(tmpwindow):
+								windowsize += float(weight) * windowslice[k]
+							v = int(round(windowsize / sum(tmpwindow)))
+							break
+						else:
+							tmpwindow = tmpwindow[1:-1]
+					data[i].append(v)
+			self.data = data
+			self.entryCount = len(data[0])
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			tagData = ["vcgt", "\0" * 4,
+					   uInt32Number_tohex(0),  # type 0 = table
+					   uInt16Number_tohex(len(self.data)),  # channels
+					   uInt16Number_tohex(self.entryCount),
+					   uInt16Number_tohex(self.entrySize)]
+			int2hex = {
+				1: uInt8Number_tohex,
+				2: uInt16Number_tohex,
+				4: uInt32Number_tohex,
+				8: uInt64Number_tohex
+			}
+			for channel in self.data:
+				for i in xrange(0, self.entryCount):
+					tagData.append(int2hex[self.entrySize](channel[i]))
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
 
 
 class ViewingConditionsType(ICCProfileTag, ADict):
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		self.update({
 			"illuminant": XYZNumber(tagData[8:20]),
 			"surround": XYZNumber(tagData[20:32]),
@@ -792,8 +995,8 @@ class XYZNumber(ADict):
 
 class XYZType(ICCProfileTag, XYZNumber):
 
-	def __init__(self, tagData):
-		ICCProfileTag.__init__(self, tagData)
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
 		XYZNumber.__init__(self, tagData[8:20])
 
 
@@ -978,8 +1181,10 @@ class ICCProfile:
 						discard_len += tagDataOffset - 128 - discard_len + tagDataSize
 						typeSignature = tagData[:4]
 						if typeSignature in typeSignature2Type:
-							tagData = typeSignature2Type[typeSignature](tagData)
-						self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)] = tagData
+							tag = typeSignature2Type[typeSignature](tagData, tagSignature)
+						else:
+							tag = ICCProfileTag(tagData, tagSignature)
+						self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)] = tag
 				tagTable = tagTable[12:]
 		return self._tags
 	
