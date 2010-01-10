@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from decimal import Decimal
 import math
 import os
 import sys
@@ -15,6 +16,15 @@ BGCOLOUR = "#333333"
 FGCOLOUR = "#999999"
 GRIDCOLOUR = "#444444"
 HILITECOLOUR = "white"
+
+def float2dec(f, digits=10):
+	parts = str(f).split(".")
+	if len(parts) > 1:
+		if parts[1][:digits] == "9" * digits:
+			f = math.ceil(f)
+		elif parts[1][:digits] == "0" * digits:
+			f = math.floor(f)
+	return Decimal(str(f))
 
 class LUTCanvas(plot.PlotCanvas):
 
@@ -66,7 +76,7 @@ class LUTCanvas(plot.PlotCanvas):
 				if not detect_increments:
 					linear_points += [[j, j]]
 				if r:
-					n = float(vcgt.data[0][i]) / math.pow(256, vcgt.entrySize) * 255
+					n = float(vcgt.data[0][i]) / (math.pow(256, vcgt.entrySize) - 1) * 255
 					if not detect_increments or not r_points or \
 					   i == vcgt.entryCount - 1 or n != i:
 						if detect_increments and n != i and \
@@ -76,7 +86,7 @@ class LUTCanvas(plot.PlotCanvas):
 							r_points += [[i - 1, i - 1]]
 						r_points += [[j, n]]
 				if g:
-					n = float(vcgt.data[1][i]) / math.pow(256, vcgt.entrySize) * 255
+					n = float(vcgt.data[1][i]) / (math.pow(256, vcgt.entrySize) - 1) * 255
 					if not detect_increments or not g_points or \
 					   i == vcgt.entryCount - 1 or n != i:
 						if detect_increments and n != i and \
@@ -86,7 +96,7 @@ class LUTCanvas(plot.PlotCanvas):
 							g_points += [[i - 1, i - 1]]
 						g_points += [[j, n]]
 				if b:
-					n = float(vcgt.data[2][i]) / math.pow(256, vcgt.entrySize) * 255
+					n = float(vcgt.data[2][i]) / (math.pow(256, vcgt.entrySize) - 1) * 255
 					if not detect_increments or not b_points or \
 					   i == vcgt.entryCount - 1 or n != i:
 						if detect_increments and n != i and \
@@ -102,23 +112,24 @@ class LUTCanvas(plot.PlotCanvas):
 			g_points = []
 			b_points = []
 			for i in input:
+				# float2dec(v) fixes miniscule deviations in the calculated gamma
 				if not detect_increments:
-					linear_points += [[i, i]]
+					linear_points += [[i, (i)]]
 				if r:
-					vmin = float(vcgt["redMin"]) * 255
-					v = math.pow(step * i / 100.0, float(vcgt["redGamma"]))
-					vmax = float(vcgt["redMax"]) * 255
-					r_points += [[i, vmin + v * (vmax - vmin)]]
+					vmin = vcgt["redMin"] * 255
+					v = float2dec(math.pow(step * i / 100.0, vcgt["redGamma"]))
+					vmax = vcgt["redMax"] * 255
+					r_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
 				if g:
-					vmin = float(vcgt["greenMin"]) * 255
-					v = math.pow(step * i / 100.0, float(vcgt["greenGamma"]))
-					vmax = float(vcgt["greenMax"]) * 255
-					g_points += [[i, vmin + v * (vmax - vmin)]]
+					vmin = vcgt["greenMin"] * 255
+					v = float2dec(math.pow(step * i / 100.0, vcgt["greenGamma"]))
+					vmax = vcgt["greenMax"] * 255
+					g_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
 				if b:
-					vmin = float(vcgt["blueMin"]) * 255
-					v = math.pow(step * i / 100.0, float(vcgt["blueGamma"]))
-					vmax = float(vcgt["blueMax"]) * 255
-					b_points += [[i, vmin + v * (vmax - vmin)]]
+					vmin = vcgt["blueMin"] * 255
+					v = float2dec(math.pow(step * i / 100.0, vcgt["blueGamma"]))
+					vmax = vcgt["blueMax"] * 255
+					b_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
 
 		# print 'RED'
 		# for point in r_points:

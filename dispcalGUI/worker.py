@@ -525,8 +525,7 @@ class Worker():
 					if len(line) and line[0][0] == "-":
 						arg = line[0]
 						if arg == "-A":
-							# Rate of blending from neutral to black point. 
-							# Default 8.0
+							# Rate of blending from neutral to black point.
 							defaults["calibration.black_point_rate.enabled"] = 1
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
@@ -540,6 +539,9 @@ class Worker():
 									device = None
 									while True:
 										try:
+											## The ordering will work as long
+											## as Argyll continues using
+											## EnumDisplayMonitors
 											device = win32api.EnumDisplayDevices(
 												monitors[len(self.displays)]["Device"], i)
 										except pywintypes.error:
@@ -554,8 +556,7 @@ class Worker():
 								display = "%s @ %s, %s, %sx%s" % match[0]
 								if " ".join(value.split()[-2:]) == \
 								   "(Primary Display)":
-									display += u" [PRIMARY]" # + \
-											   # lang.getstr("display.primary")
+									display += u" [PRIMARY]"
 								self.displays.append(display)
 						elif arg == "-c":
 							value = value.split(None, 1)
