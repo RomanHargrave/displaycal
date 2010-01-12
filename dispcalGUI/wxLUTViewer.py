@@ -66,19 +66,19 @@ class LUTCanvas(plot.PlotCanvas):
 			for i in input:
 				if not detect_increments:
 					linear_points += [[i, i]]
-		elif "entryCount" in vcgt: # table
-			input = range(0, vcgt.entryCount)
+		elif "data" in vcgt: # table
+			input = range(0, vcgt['entryCount'])
 			r_points = []
 			g_points = []
 			b_points = []
 			for i in input:
-				j = i * (255.0 / (vcgt.entryCount - 1))
+				j = i * (255.0 / (vcgt['entryCount'] - 1))
 				if not detect_increments:
 					linear_points += [[j, j]]
 				if r:
-					n = float(vcgt.data[0][i]) / (math.pow(256, vcgt.entrySize) - 1) * 255
+					n = float(vcgt['data'][0][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
 					if not detect_increments or not r_points or \
-					   i == vcgt.entryCount - 1 or n != i:
+					   i == vcgt['entryCount'] - 1 or n != i:
 						if detect_increments and n != i and \
 						   len(r_points) == 1 and i > 1 and \
 						   r_points[-1][0] == r_points[-1][1]:
@@ -86,9 +86,9 @@ class LUTCanvas(plot.PlotCanvas):
 							r_points += [[i - 1, i - 1]]
 						r_points += [[j, n]]
 				if g:
-					n = float(vcgt.data[1][i]) / (math.pow(256, vcgt.entrySize) - 1) * 255
+					n = float(vcgt['data'][1][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
 					if not detect_increments or not g_points or \
-					   i == vcgt.entryCount - 1 or n != i:
+					   i == vcgt['entryCount'] - 1 or n != i:
 						if detect_increments and n != i and \
 						   len(g_points) == 1 and i > 1 and \
 						   g_points[-1][0] == g_points[-1][1]:
@@ -96,9 +96,9 @@ class LUTCanvas(plot.PlotCanvas):
 							g_points += [[i - 1, i - 1]]
 						g_points += [[j, n]]
 				if b:
-					n = float(vcgt.data[2][i]) / (math.pow(256, vcgt.entrySize) - 1) * 255
+					n = float(vcgt['data'][2][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
 					if not detect_increments or not b_points or \
-					   i == vcgt.entryCount - 1 or n != i:
+					   i == vcgt['entryCount'] - 1 or n != i:
 						if detect_increments and n != i and \
 						   len(b_points) == 1 and i > 1 and \
 						   b_points[-1][0] == b_points[-1][1]:
@@ -262,14 +262,20 @@ class LUTFrame(wx.Frame):
 		
 		self.cbox_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.box_sizer.Add(self.cbox_sizer, 
-						   flag=wx.ALL | wx.ALIGN_CENTER, border=8)
+						   flag=wx.ALL | wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL, 
+						   border=8)
+		
+		self.curve_select = wx.Choice(self.box_panel, -1, size=(75, -1), 
+									  choices=[])
+		self.cbox_sizer.Add(self.curve_select, flag=wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHOICE, self.DrawLUT, id=self.curve_select.GetId())
 		
 		self.cbox_sizer.Add((20, 0))
 		
 		self.toggle_red = wx.CheckBox(self.box_panel, -1, "R")
 		self.toggle_red.SetForegroundColour(FGCOLOUR)
 		self.toggle_red.SetValue(True)
-		self.cbox_sizer.Add(self.toggle_red)
+		self.cbox_sizer.Add(self.toggle_red, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_red.GetId())
 		
 		self.cbox_sizer.Add((4, 0))
@@ -277,7 +283,7 @@ class LUTFrame(wx.Frame):
 		self.toggle_green = wx.CheckBox(self.box_panel, -1, "G")
 		self.toggle_green.SetForegroundColour(FGCOLOUR)
 		self.toggle_green.SetValue(True)
-		self.cbox_sizer.Add(self.toggle_green)
+		self.cbox_sizer.Add(self.toggle_green, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_green.GetId())
 		
 		self.cbox_sizer.Add((4, 0))
@@ -285,7 +291,7 @@ class LUTFrame(wx.Frame):
 		self.toggle_blue = wx.CheckBox(self.box_panel, -1, "B")
 		self.toggle_blue.SetForegroundColour(FGCOLOUR)
 		self.toggle_blue.SetValue(True)
-		self.cbox_sizer.Add(self.toggle_blue)
+		self.cbox_sizer.Add(self.toggle_blue, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_blue.GetId())
 
 		self.client.SetPointLabelFunc(self.DrawPointLabel)
@@ -293,13 +299,53 @@ class LUTFrame(wx.Frame):
 
 	def LoadProfile(self, profile):
 		self.profile = profile
+		curves = []
+		if 'vcgt' in profile.tags:
+			curves.append('vcgt')
+		if 'rTRC' in profile.tags and \
+		   'gTRC' in profile.tags and \
+		   'bTRC' in profile.tags:
+			curves.append('[rgb]TRC')
+		selection = self.curve_select.GetSelection()
+		if curves and selection < 0 or selection > len(curves) - 1:
+			selection = 0
+		self.curve_select.SetItems(curves)
+		self.curve_select.Enable(bool(curves))
+		self.curve_select.SetSelection(selection)
 	
 	def DrawLUT(self, event=None):
 		self.SetStatusText('')
-		self.client.DrawLUT(self.profile.tags.vcgt if self.profile and 
-							"vcgt" in self.profile.tags else None, 
-							title=self.profile.getDescription() if 
-								  self.profile else None, 
+		curves = None
+		if self.profile:
+			if self.curve_select.GetStringSelection() == 'vcgt':
+				# vcgt
+				curves = self.profile.tags['vcgt']
+			elif self.curve_select.GetStringSelection() == '[rgb]TRC':
+				# [rgb]TRC
+				if len(self.profile.tags['rTRC']) == 1:
+					# gamma
+					curves = {
+						'redMin': Decimal('0.0'),
+						'redGamma': self.profile.tags['rTRC'][0],
+						'redMax': Decimal('1.0'),
+						'greenMin': Decimal('0.0'),
+						'greenGamma': self.profile.tags['gTRC'][0],
+						'greenMax': Decimal('1.0'),
+						'blueMin': Decimal('0.0'),
+						'blueGamma': self.profile.tags['bTRC'][0],
+						'blueMax': Decimal('1.0')
+					}
+				else:
+					# curves
+					curves = {
+						'data': [self.profile.tags['rTRC'],
+								 self.profile.tags['gTRC'],
+								 self.profile.tags['bTRC']],
+						'entryCount': len(self.profile.tags['rTRC']),
+						'entrySize': 2
+					}
+		self.client.DrawLUT(curves, title=self.profile.getDescription() if 
+										  self.profile else None, 
 							xLabel=self.xLabel,
 							yLabel=self.yLabel,
 							r=self.toggle_red.GetValue() if 
