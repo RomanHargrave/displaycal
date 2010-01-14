@@ -93,7 +93,7 @@ def init(set_wx_locale=False):
 					 "places have been searched:\n%s" % "\n".join(langdirs))
 	# else:
 		# update_defaults()
-	# lcode = getcfg("lang")
+	# lcode = getcode()
 	# if not lcode in ldict:
 		# # fall back to english
 		# lcode = "en"
@@ -117,10 +117,21 @@ def update_defaults():
 	})
 
 
+def getcode():
+	""" Get language code from config """
+	lcode = getcfg("lang")
+	if not lcode in ldict:
+		# fall back to default
+		lcode = defaults["lang"]
+	if not lcode in ldict:
+		# fall back to english
+		lcode = "en"
+	return lcode
+
 def getstr(id_str, strvars=None, lcode=None):
 	""" Get a translated string from the dictionary """
 	if not lcode:
-		lcode = getcfg("lang")
+		lcode = getcode()
 	if not lcode in ldict or not id_str in ldict[lcode]:
 		# fall back to english
 		lcode = "en"
@@ -139,14 +150,13 @@ def getstr(id_str, strvars=None, lcode=None):
 
 
 def gettext(text):
-	if not catalog and "en" in ldict:
-		for id_str in ldict["en"]:
-			lstr = ldict["en"][id_str]
+	if not catalog and defaults["lang"] in ldict:
+		for id_str in ldict[defaults["lang"]]:
+			lstr = ldict[defaults["lang"]][id_str]
 			catalog[lstr] = {}
 			catalog[lstr].id_str = id_str
-	lcode = getcfg("lang")
-	if catalog and text in catalog and not lcode in catalog[text] and \
-	   lcode in ldict:
+	lcode = getcode()
+	if catalog and text in catalog and not lcode in catalog[text]:
 		catalog[text][lcode] = ldict[lcode].get(catalog[text].id_str, text)
 	return catalog.get(text, {}).get(lcode, text)
 

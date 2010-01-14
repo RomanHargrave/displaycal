@@ -8,6 +8,7 @@ Runtime configuration and user settings parser
 import ConfigParser
 ConfigParser.DEFAULTSECT = "Default"
 from decimal import Decimal
+import locale
 import math
 import os
 import sys
@@ -365,6 +366,9 @@ defaults = {
 	"whitepoint.x": 0.345741,
 	"whitepoint.y": 0.358666
 }
+lcode, lenc = locale.getdefaultlocale()
+if lcode:
+	defaults["lang"] = lcode.split("_")[0].lower()
 
 testchart_defaults = {
 	"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # shaper / matrix
@@ -390,25 +394,31 @@ def getcfg(name, fallback=True):
 		defval = defaults[name]
 		deftype = type(defval)
 	if cfg.has_option(ConfigParser.DEFAULTSECT, name):
-		value = unicode(cfg.get(ConfigParser.DEFAULTSECT, name), "UTF-8")
-		# Check for invalid types and return default if wrong type
-		if name != "trc" and hasdef and deftype in (Decimal, int, float):
-			try:
-				value = deftype(value)
-			except ValueError:
-				value = defval
-		elif (name in ("calibration.file", "testchart.file") or \
-		   name.startswith("last_")) and not os.path.exists(value):
-			if value.split(os.path.sep)[-2:] == ["presets", 
-												 os.path.basename(value)] or \
-			   value.split(os.path.sep)[-2:] == ["ti1", 
-												 os.path.basename(value)]:
-				value = os.path.join(os.path.basename(os.path.dirname(value)), 
-									 os.path.basename(value))
-			else:
-				value = os.path.basename(value)
-			value = get_data_path(value) or (defval if hasdef else None)
-	elif fallback and hasdef:
+		try:
+			value = unicode(cfg.get(ConfigParser.DEFAULTSECT, name), "UTF-8")
+		except UnicodeDecodeError:
+			pass
+		else:
+			# Check for invalid types and return default if wrong type
+			if (name != "trc" or value not in ("240", "709", "l", "s")) and \
+			   hasdef and deftype in (Decimal, int, float):
+				try:
+					value = deftype(value)
+				except ValueError:
+					value = defval
+			elif (name in ("calibration.file", "testchart.file") or \
+			   name.startswith("last_")) and not os.path.exists(value):
+				if value.split(os.path.sep)[-2:] == ["presets", 
+													 os.path.basename(value)] or \
+				   value.split(os.path.sep)[-2:] == ["ti1", 
+													 os.path.basename(value)]:
+					value = os.path.join(os.path.basename(os.path.dirname(value)), 
+										 os.path.basename(value))
+				else:
+					value = os.path.basename(value)
+				value = get_data_path(value) or (defval if hasdef else None)
+			return value
+	if fallback and hasdef:
 		value = defval
 	else:
 		if not hasdef: 
@@ -507,7 +517,6 @@ def initcfg():
 	
 	Read in settings if the configuration file exists, else create the 
 	settings directory if nonexistent.
-	Set the language in the configuration if not set.
 	
 	"""
 	global handle_error, safe_print
@@ -567,10 +576,6 @@ def initcfg():
 			from log import safe_print
 		safe_print("Warning - could not parse configuration file '%s'" % 
 				   appname + ".ini")
-	if not cfg.has_option(ConfigParser.DEFAULTSECT, "lang"):
-		import locale
-		lcode, lenc = locale.getdefaultlocale()
-		cfg.set(ConfigParser.DEFAULTSECT, "lang", lcode.split("_")[0].lower())
 
 
 def setcfg(name, value):

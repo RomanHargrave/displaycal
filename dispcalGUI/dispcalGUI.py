@@ -1004,7 +1004,7 @@ class MainFrame(BaseFrame):
 			menuitem = languages.Append(-1, "&" + lstr, kind=wx.ITEM_RADIO)
 			menuitem.SetBitmap(
 				flagart.catalog[lcode.upper().replace("EN", "US")].Bitmap)
-			if getcfg("lang") == lcode:
+			if lang.getcode() == lcode:
 				menuitem.Check()
 				font = menuitem.Font
 				font.SetWeight(wx.BOLD)
@@ -1243,7 +1243,7 @@ class MainFrame(BaseFrame):
 			if lang.ldict[lcode].menuitem_id == event.GetId():
 				# Get the previously marked menu item
 				menuitem = menubar.FindItemById(
-					lang.ldict[getcfg("lang")].menuitem_id)
+					lang.ldict[lang.getcode()].menuitem_id)
 				if hasattr(self, "tcframe"):
 					if not self.tcframe.tc_close_handler():
 						# Do not change language, mark previous menu item
