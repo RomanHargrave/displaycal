@@ -89,6 +89,7 @@
 	"elapsed_time": "Elapsed time",
 	"measurement_mode": "Mode",
 	"measurement_mode.adaptive": "Adaptive",
+	"measurement_mode.highres": "HiRes",
 	"enumerating_displays_and_comports": "Enumerating display devices and communication ports...",
 	"error": "Error",
 	"error.autostart_creation": "Creation of the autostart entry for %s to load the calibration curves on login has failed.",

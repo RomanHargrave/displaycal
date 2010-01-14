@@ -6,7 +6,11 @@ instruments = {
 	
 	# spectral: Does the instrument support spectral readings?
 	
-	# high_res: Does the instrument support high-res spectral readings?
+	# adaptive_mode: Does the instrument support adaptive emissive readings?
+	
+	# highres_mode: Does the instrument support high-res spectral readings?
+	
+	# projector_mode: Does the instrument support a special projector mode?
 	
 	# sensor_cal: Does the instrument need to calibrate its sensor by putting 
 	# it on a reference tile or black surface?
@@ -21,16 +25,16 @@ instruments = {
 	
 	"DTP92": {
 		"spectral": False,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
 	"DTP94": {
 		"spectral": False,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": False,
 		"skip_sensor_cal": False # DTP94 instrument access fails 
@@ -40,40 +44,40 @@ instruments = {
 	},
 	"Spectrolino": {
 		"spectral": True,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
 	"SpectroScan": {
 		"spectral": True,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
 	"SpectroScanT": {
 		"spectral": True,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
 	"Spectrocam": {
 		"spectral": True,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": None
 	},
 	"i1 Display": {
 		"spectral": False,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": False, # FIXME: Only i1 Display 2
 		"skip_sensor_cal": False # i1 Display 2 instrument access fails 
@@ -83,56 +87,56 @@ instruments = {
 	},
 	"i1 Monitor": {  # like i1Pro
 		"spectral": True,
-		"high_res": True,
 		"adaptive_mode": True,
+		"highres_mode": True,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
 	"i1 Pro": {
 		"spectral": True,
-		"high_res": True,
 		"adaptive_mode": True,
+		"highres_mode": True,
 		"projector_mode": False,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
 	"ColorMunki": {
 		"spectral": True,
-		"high_res": None,
 		"adaptive_mode": False,
+		"highres_mode": None,
 		"projector_mode": True,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
 	},
 	"Colorimtre HCFR": {
 		"spectral": False,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
 	"Spyder2": {
 		"spectral": False,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
 	"Spyder3": {
 		"spectral": False,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
 	},
 	"Huey": {
 		"spectral": False,
-		"high_res": False,
 		"adaptive_mode": False,
+		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": None,
 		"skip_sensor_cal": None
@@ -140,8 +144,8 @@ instruments = {
 	"Dummy Meter / Hires & Projector": {
 		# dummy instrument, just for testing
 		"spectral": False,
-		"high_res": True,
 		"adaptive_mode": False,
+		"highres_mode": True,
 		"projector_mode": True,
 		"sensor_cal": False,
 		"skip_sensor_cal": False
@@ -149,8 +153,8 @@ instruments = {
 	"Dummy Spectro / Hires & Projector": {
 		# dummy instrument, just for testing
 		"spectral": True,
-		"high_res": True,
 		"adaptive_mode": False,
+		"highres_mode": True,
 		"projector_mode": True,
 		"sensor_cal": True,
 		"skip_sensor_cal": True
@@ -158,8 +162,8 @@ instruments = {
 	"Dummy Meter / Adaptive, Hires & Projector": {
 		# dummy instrument, just for testing
 		"spectral": False,
-		"high_res": True,
 		"adaptive_mode": True,
+		"highres_mode": True,
 		"projector_mode": True,
 		"sensor_cal": False,
 		"skip_sensor_cal": False
@@ -167,8 +171,8 @@ instruments = {
 	"Dummy Spectro / Adaptive, Hires & Projector": {
 		# dummy instrument, just for testing
 		"spectral": True,
-		"high_res": True,
 		"adaptive_mode": True,
+		"highres_mode": True,
 		"projector_mode": True,
 		"sensor_cal": True,
 		"skip_sensor_cal": True

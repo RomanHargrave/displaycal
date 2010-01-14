@@ -257,7 +257,7 @@ def runtimeconfig(pyfile):
 			data_dirs.append(dir_)
 	defaultmmode = defaults["measurement_mode"]
 	defaultptype = defaults["profile.type"]
-	defaultchart = testchart_defaults[defaultmmode][defaultptype]
+	defaultchart = testchart_defaults.get(defaultptype, testchart_defaults["s"])
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart))
 	build = "%s%s%s" % (
@@ -278,7 +278,6 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 defaults = {
-	"adaptive_mode": 0,
 	"argyll.dir": expanduseru("~"), # directory
 	"calibration.ambient_viewcond_adjust": 0,
 	"calibration.ambient_viewcond_adjust.lux": 500.0,
@@ -298,6 +297,9 @@ defaults = {
 	"dimensions.measureframe.unzoomed": "0.5,0.5,1.0",
 	"display.number": 1,
 	"measurement_mode": "l",
+	"measurement_mode.adaptive": 0,
+	"measurement_mode.highres": 0,
+	"measurement_mode.projector": 0,
 	"display_lut.link": 1,
 	"display_lut.number": 1,
 	"gamap_profile": "",
@@ -330,7 +332,6 @@ defaults = {
 	"profile.save_path": storage, # directory
 	"profile.type": "s",
 	"profile.update": 0,
-	"projector_mode": 0,
 	"recent_cals": "",
 	"recent_cals_max": 15,
 	"settings.changed": 0,
@@ -366,38 +367,15 @@ defaults = {
 }
 
 testchart_defaults = {
-	None: {
-		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # CRT shaper / matrix
-		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT lut
-	},
-	"c": {
-		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # CRT shaper / matrix
-		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT lut
-	},
-	"l": {
-		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # LCD shaper / matrix
-		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # LCD lut
-	},
-	"cp": {
-		# CRT projector shaper / matrix
-		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
-		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # CRT projector lut
-	},
-	"lp": {
-		# LCD projector shaper / matrix
-		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
-		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # LCD projector lut
-	},
-	"p": {
-		# Projector shaper / matrix
-		"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",
-		"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # Projector lut
-	}
+	"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # shaper / matrix
+	"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # lut
 }
-for _measurement_mode in testchart_defaults:
-	testchart_defaults[_measurement_mode]["x"] = \
-		testchart_defaults[_measurement_mode]["X"] = \
-			testchart_defaults[_measurement_mode]["l"]
+for key in ("G", "S", "g"):
+	testchart_defaults[key] = testchart_defaults["s"]
+for key in ("X", "x"):
+	testchart_defaults[key] = testchart_defaults["l"]
+del key
+
 
 def getcfg(name, fallback=True):
 	"""

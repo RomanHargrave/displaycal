@@ -506,8 +506,8 @@ class MainFrame(BaseFrame):
 		self.headerbitmap = self.panel.FindWindowByName("headerbitmap")
 		self.headerbitmap.SetBitmap(getbitmap("theme/header"))
 		self.calpanel.SetScrollRate(0, 20)
-		self.update_controls(update_profile_name=False)
 		self.update_comports()
+		self.update_controls(update_profile_name=False)
 		self.update_profile_name()
 		self.SetSaneGeometry(int(getcfg("position.x")), 
 							 int(getcfg("position.y")))
@@ -581,55 +581,6 @@ class MainFrame(BaseFrame):
 		self.whitepoint_colortemp_loci_ba = {
 			"t": 0,
 			"T": 1
-		}
-		
-		# Left side - internal enumeration, right side - commmandline
-		self.measurement_modes_ab = {
-			"color": {
-				0: "c",
-				1: "l",
-				2: "cV",
-				3: "lV",
-				4: "cp",
-				5: "lp",
-				6: "cpV",
-				7: "lpV"
-			},
-			"spect": {
-				0: None,
-				1: "V",
-				2: "p",
-				3: "pV"
-			}
-		}
-		
-		# Left side - commmandline, right side - internal enumeration
-		self.measurement_modes_ba = {
-			"color": {
-				"c": 0,
-				"l": 1,
-				None: 1,
-				"cV": 2,
-				"lV": 3,
-				"cp": 4,
-				"lp": 5,
-				"cpV": 6,
-				"lpV": 7
-			},
-			"spect": {
-				"c": 0,
-				"l": 0,
-				None: 0,
-				"V": 1,
-				"cV": 1,
-				"lV": 1,
-				"p": 2,
-				"cp": 2,
-				"lp": 2,
-				"pV": 3,
-				"cpV": 3,
-				"lpV": 3
-			}
 		}
 		
 		# Left side - commmandline, right side - internal enumeration
@@ -921,11 +872,10 @@ class MainFrame(BaseFrame):
 		self.update_profile_type_ctrl()
 
 		self.default_testchart_names = []
-		for measurement_mode in self.testchart_defaults:
-			for profile_type in self.testchart_defaults[measurement_mode]:
-				chart = self.testchart_defaults[measurement_mode][profile_type]
-				if not chart in self.default_testchart_names:
-					self.default_testchart_names += [lang.getstr(chart)]
+		for profile_type in self.testchart_defaults:
+			chart = self.testchart_defaults[profile_type]
+			if not chart in self.default_testchart_names:
+				self.default_testchart_names += [lang.getstr(chart)]
 		
 		self.profile_name_info_btn.SetToolTipString(
 			wrap(self.profile_name_info(), 72))
@@ -1378,13 +1328,15 @@ class MainFrame(BaseFrame):
 			"last_ti1_path",
 			"last_ti3_path",
 			"measurement_mode",
+			"measurement_mode.adaptive",
+			"measurement_mode.highres",
+			"measurement_mode.projector",
 			"profile.name",
 			"profile.save_path",
 			"position.x",
 			"position.y",
 			"position.info.x",
 			"position.info.y",
-			"projector_mode",
 			"recent_cals",
 			"tc_precond_profile"
 		]
@@ -1517,31 +1469,31 @@ class MainFrame(BaseFrame):
 	
 	def update_measurement_modes(self):
 		""" Update the measurement mode control. """
-		measurement_mode = getcfg("measurement_mode")
-		measurement_modes = {
-			"color": [
-				"CRT",
-				"LCD"
-			],
-			"spect": [
-				lang.getstr("default")
-			]
-		}
 		instrument_type = self.get_instrument_type()
+		measurement_mode = getcfg("measurement_mode")
+		if self.get_instrument_type() == "spect":
+			measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
+		measurement_modes = dict({instrument_type: ["CRT", "LCD"] if 
+												   instrument_type == "color" 
+												   else [lang.getstr("default")]})
+		measurement_modes_ab = dict({instrument_type: ["c", "l"] if 
+													  instrument_type == "color" 
+													  else [None]})
 		instrument_features = self.worker.get_instrument_features()
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			# Projector mode introduced in Argyll 1.1.0 Beta
 			if instrument_type == "spect":
-				measurement_modes[instrument_type] += [
-					lang.getstr("projector")
-				]
+				measurement_modes[instrument_type] += [lang.getstr("projector")]
+				measurement_modes_ab[instrument_type] += ["p"]
 			else:
 				measurement_modes[instrument_type] += [
 					"CRT-" + lang.getstr("projector"),
 					"LCD-" + lang.getstr("projector")
 				]
-			if getcfg("projector_mode"):
+				measurement_modes_ab[instrument_type] += ["cp"]
+				measurement_modes_ab[instrument_type] += ["lp"]
+			if getcfg("measurement_mode.projector",):
 				measurement_mode += "p"
 		if instrument_features.get("adaptive_mode") and (
 		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
@@ -1560,8 +1512,32 @@ class MainFrame(BaseFrame):
 						mode = "%s %s" % (mode,
 										  lang.getstr("measurement_mode.adaptive"))
 					measurement_modes[key].insert(i + 1, mode)
-			if getcfg("adaptive_mode"):
+					modesig = measurement_modes_ab[key][i]
+					measurement_modes_ab[key].insert(i + 1, (modesig or "") + "V")
+			if getcfg("measurement_mode.adaptive"):
 				measurement_mode += "V"
+		if instrument_features.get("highres_mode"):
+			for key in iter(measurement_modes):
+				instrument_modes = list(measurement_modes[key])
+				for i, mode in reversed(zip(xrange(0, len(instrument_modes)), 
+											instrument_modes)):
+					if mode == lang.getstr("default"):
+						mode = lang.getstr("measurement_mode.highres")
+					else:
+						mode = "%s %s" % (mode,
+										  lang.getstr("measurement_mode.highres"))
+					measurement_modes[key].insert(i + 1, mode)
+					modesig = measurement_modes_ab[key][i]
+					measurement_modes_ab[key].insert(i + 1, (modesig or "") + "H")
+			if getcfg("measurement_mode.highres"):
+				measurement_mode += "H"
+		self.measurement_modes_ab = dict(zip(measurement_modes_ab.keys(), 
+											 [dict(zip(range(len(measurement_modes_ab[key])), 
+													   measurement_modes_ab[key])) 
+													   for key in measurement_modes_ab]))
+		self.measurement_modes_ba = dict(zip(measurement_modes_ab.keys(), 
+											 [swap_dict_keys_values(self.measurement_modes_ab[key]) 
+											  for key in measurement_modes_ab]))
 		self.measurement_mode_ctrl.Freeze()
 		self.measurement_mode_ctrl.SetItems(measurement_modes[instrument_type])
 		self.measurement_mode_ctrl.SetSelection(
@@ -1708,10 +1684,24 @@ class MainFrame(BaseFrame):
 		self.profile_type_ctrl.Enable(enable_profile)
 
 		measurement_mode = getcfg("measurement_mode")
-		if getcfg("projector_mode"):
+		if self.get_instrument_type() == "spect":
+			measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
+		instrument_features = self.worker.get_instrument_features()
+		if instrument_features.get("projector_mode") and \
+		   self.worker.argyll_version >= [1, 1, 0] and \
+		   getcfg("measurement_mode.projector"):
 			measurement_mode += "p"
-		if getcfg("adaptive_mode"):
+		if instrument_features.get("adaptive_mode") and (
+		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
+		   self.worker.argyll_version[0:3] == [1, 1, 0] and
+		   not "Beta" in self.worker.argyll_version_string and
+		   not "RC1" in self.worker.argyll_version_string and
+		   not "RC2" in self.worker.argyll_version_string)) and \
+		   getcfg("measurement_mode.adaptive"):
 			measurement_mode += "V"
+		if instrument_features.get("highres_mode") and \
+		   getcfg("measurement_mode.highres"):
+			measurement_mode += "H"
 		self.measurement_mode_ctrl.SetSelection(
 			min(self.measurement_modes_ba[self.get_instrument_type()].get(
 					measurement_mode, 0), 
@@ -2718,11 +2708,10 @@ class MainFrame(BaseFrame):
 				cal = False
 			elif not cal:
 				cal = True
-		if hasattr(self, "lut_viewer") and self.lut_viewer and \
-		   self.lut_viewer.IsShownOnScreen():
+		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
+		   #self.lut_viewer.IsShownOnScreen():
 			if cal is False: # linear
-				self.lut_viewer.profile = None
-				self.lut_viewer.DrawLUT()
+				profile = None
 			else:
 				if cal is True: # display profile
 					try:
@@ -2737,7 +2726,7 @@ class MainFrame(BaseFrame):
 					profile = ICCP.ICCProfile(cal)
 				else:
 					profile = cal_to_fake_profile(cal)
-				self.show_lut_handler(profile=profile)
+			self.lut_viewer_load_lut(profile=profile)
 		self.install_profile(capture_output=True, cal=cal, install=False, 
 							 skip_scripts=True, silent=True)
 
@@ -3464,10 +3453,6 @@ class MainFrame(BaseFrame):
 				self.lut_viewer.Bind(wx.EVT_CLOSE, 
 									 self.lut_viewer_close_handler, 
 									 self.lut_viewer)
-			self.show_lut_handler(profile=profile)
-	
-	def lut_viewer_load_lut(self, event=None, profile=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			if not profile:
 				profile = self.lut_viewer.profile
 			if not profile:
@@ -3493,6 +3478,10 @@ class MainFrame(BaseFrame):
 					except Exception, exception:
 						safe_print("ICCP.get_display_profile(%s):" % 
 								   self.display_ctrl.GetSelection(), exception)
+			self.show_lut_handler(profile=profile)
+	
+	def lut_viewer_load_lut(self, event=None, profile=None):
+		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			if profile:
 				if not self.lut_viewer.profile or \
 				   not hasattr(self.lut_viewer.profile, "fileName") or \
@@ -3501,13 +3490,14 @@ class MainFrame(BaseFrame):
 					self.lut_viewer.LoadProfile(profile)
 			else:
 				self.lut_viewer.profile = None
-			if (self.lut_viewer.IsShownOnScreen() or 
-				self.lut_viewer.profile is not None):
-				self.lut_viewer.DrawLUT()
+			# if (self.lut_viewer.IsShownOnScreen() or 
+			#	self.lut_viewer.profile is not None):
+			self.lut_viewer.DrawLUT()
 	
 	def show_lut_handler(self, event=None, profile=None):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
-			self.lut_viewer_load_lut(event, profile)
+			if profile:
+				self.lut_viewer_load_lut(event, profile)
 			show = bool((hasattr(self, "show_lut") and self.show_lut and 
 						 self.show_lut.GetValue()) or 
 						((not hasattr(self, "show_lut") or 
@@ -3627,7 +3617,7 @@ class MainFrame(BaseFrame):
 		setcfg("display_lut.link", int(link))
 		setcfg("display_lut.number", lut_no + 1)
 
-	def measurement_mode_ctrl_handler(self, event):
+	def measurement_mode_ctrl_handler(self, event=None):
 		if debug:
 			safe_print("[D] measurement_mode_ctrl_handler called for ID %s %s "
 					   "event type %s %s" % (event.GetId(), 
@@ -3661,18 +3651,21 @@ class MainFrame(BaseFrame):
 					  getcfg("calibration.file") not in self.presets
 		if cal_changed:
 			self.cal_changed()
-		setcfg("projector_mode", 1 if v and "p" in v else None)
-		setcfg("adaptive_mode", 1 if v and "V" in v else None)
-		setcfg("measurement_mode", (v.replace("p", "").replace("V", "") if v else None) or None)
-		if ((v in ("l", "lp", "p", "pV", "lpV") and 
+		setcfg("measurement_mode.adaptive", 1 if v and "V" in v else None)
+		setcfg("measurement_mode.highres", 1 if v and "H" in v else None)
+		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
+		setcfg("measurement_mode", (strtr(v, {"V": "", 
+											  "H": "", 
+											  "p": ""}) if v else None) or None)
+		if v and ((("l" in v or "p" in v) and 
 			 float(self.get_black_point_correction()) > 0) or 
-			(v in ("c", "cp", "cpV") and 
+			("c" in v and 
 			 float(self.get_black_point_correction()) == 0)) and \
 		   getcfg("calibration.black_point_correction_choice.show"):
-			if v in ("l", "lp", "p", "pV", "lpV"):
-				ok = lang.getstr("calibration.turn_off_black_point_correction")
-			else:
+			if "c" in v:
 				ok = lang.getstr("calibration.turn_on_black_point_correction")
+			else:
+				ok = lang.getstr("calibration.turn_off_black_point_correction")
 			title = "calibration.black_point_correction_choice_dialogtitle"
 			msg = "calibration.black_point_correction_choice"
 			cancel = "calibration.keep_black_point_correction"
@@ -3690,10 +3683,10 @@ class MainFrame(BaseFrame):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				if v in ("l", "lp", "p", "pV", "lpV"):
-					bkpt_corr = 0.0
-				else:
+				if "c" in v:
 					bkpt_corr = 1.0
+				else:
+					bkpt_corr = 0.0
 				if not cal_changed and \
 				   bkpt_corr != getcfg("calibration.black_point_correction"):
 					self.cal_changed()
@@ -3729,7 +3722,7 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result == wx.ID_OK:
 				testchart = "d3-e4-s0-g52-m4-f500-crossover.ti1"
-				self.testchart_defaults[self.get_measurement_mode()][self.get_profile_type()] = testchart
+				self.testchart_defaults[self.get_profile_type()] = testchart
 				self.set_testchart(get_data_path(os.path.join("ti1", 
 															  testchart)))
 
@@ -4105,7 +4098,7 @@ class MainFrame(BaseFrame):
 		for q in msgs:
 			pat = re.compile("(" + msgs[q] + ")\W" + msgs[q], re.I)
 			profile_name = re.sub(pat, "\\1", profile_name)
-		if self.get_profile_type() == "l":
+		if self.get_profile_type() in ("l", "x", "X"):
 			profile_type = "LUT"
 		else:
 			profile_type = "MTX"
@@ -4359,8 +4352,7 @@ class MainFrame(BaseFrame):
 			setcfg("testchart.file", path)
 		if force or lang.getstr(os.path.basename(path)) in [""] + \
 		   self.default_testchart_names or not os.path.isfile(path):
-			ti1 = self.testchart_defaults[
-				self.get_measurement_mode()][self.get_profile_type()]
+			ti1 = self.testchart_defaults[self.get_profile_type()]
 			path = get_data_path(os.path.join("ti1", ti1))
 			if not path or not os.path.isfile(path):
 				if alert:
@@ -4701,14 +4693,17 @@ class MainFrame(BaseFrame):
 									setcfg("dimensions.measureframe.unzoomed", 
 										   o[1:])
 									continue
+								if o[0] == "V":
+									setcfg("measurement_mode.adaptive", 1)
+									continue
+								if o[0] == "H":
+									setcfg("measurement_mode.highres", 1)
+									continue
 								if o[0] == "p" and len(o[1:]) == 0:
-									setcfg("projector_mode", 1)
+									setcfg("measurement_mode.projector", 1)
 									continue
 								if o[0] == "F":
 									setcfg("measure.darken_background", 1)
-									continue
-								if o[0] == "V":
-									setcfg("adaptive_mode", 1)
 									continue
 						if options_colprof:
 							# restore defaults

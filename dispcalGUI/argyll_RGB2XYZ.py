@@ -3,6 +3,9 @@
 
 import math
 
+import colormath
+
+# from xcolorants.c
 icx_ink_table = {
 	"C": [
 	  [ 0.12, 0.18, 0.48 ],	
@@ -71,21 +74,36 @@ s = {
 }
 
 s["Ynorm"] = 0.0
-for e in range(3):
+for e in xrange(3):
 	s["Ynorm"] += icx_ink_table[s["iix"][e]][0][1]
 s["Ynorm"] = 1.0 / s["Ynorm"]
 
-def RGB2XYZ(R, G, B):
 
+def XYZ_denormalize_remove_glare(X, Y, Z):
+	XYZ = [X, Y, Z]
+	# De-Normalise Y from 1.0, & remove black glare
+	for j in xrange(3):
+		XYZ[j] = (XYZ[j] - icx_ink_table["K"][0][j]) / (1.0 - icx_ink_table["K"][0][j])
+		XYZ[j] /= s["Ynorm"]
+	return tuple(XYZ)
+
+
+def XYZ_normalize_add_glare(X, Y, Z):
+	XYZ = [X, Y, Z]
+	# Normalise Y to 1.0, & add black glare
+	for j in xrange(3):
+		XYZ[j] *= s["Ynorm"]
+		XYZ[j] = XYZ[j] * (1.0 - icx_ink_table["K"][0][j]) + \
+				 icx_ink_table["K"][0][j]
+	return tuple(XYZ)
+
+
+def RGB2XYZ(R, G, B):  # from xcolorants.c -> icxColorantLu_to_XYZ
 	d = (R, G, B)
-
 	# We assume a simple additive model with gamma
-
 	XYZ = [0.0, 0.0, 0.0]
-
-	for e in range(3):
+	for e in xrange(3):
 		v = d[e]
-			
 		if (v < 0.0):
 			v = 0.0
 		elif (v > 1.0):
@@ -94,17 +112,31 @@ def RGB2XYZ(R, G, B):
 			v /= 12.92
 		else:
 			v = math.pow((0.055 + v) / 1.055, 2.4)		# Gamma
-
-		for j in range(3):
+		for j in xrange(3):
 			XYZ[j] += v * icx_ink_table[s["iix"][e]][0][j]
+	return XYZ_normalize_add_glare(*XYZ)
 
-	# Normalise Y to 1.0, & add black glare
-	for j in range(3):
-		XYZ[j] *= s["Ynorm"]
-		XYZ[j] = XYZ[j] * (1.0 - icx_ink_table["K"][0][j]) + \
-				 icx_ink_table["K"][0][j]
-	
-	return XYZ
+
+def XYZ2RGB(X, Y, Z):
+	# RGB = [0.0, 0.0, 0.0]
+	# for e in xrange(3):
+		# c = []
+		# cc = []
+		# for j in xrange(3):
+			# v = XYZ[j]
+			# c += [round(v / icx_ink_table[s["iix"][e]][0][j], 10)]
+			# cc += [round(icx_ink_table[s["iix"][e]][0][j] / v, 10)]
+		# if c[0] == c[1] == c[2]:  # primary color
+			# v = c[0]
+			# v = math.pow(v, 1.0 / 2.4)
+			# v = v * 1.055 - 0.055
+			# RGB[e] = v
+			# break
+		# for j in xrange(3):  # white
+			# v = cc[j]
+			# RGB[j] += v
+	return colormath.XYZ2RGB(*XYZ_denormalize_remove_glare(X, Y, Z))
+
 
 if __name__ == '__main__':
 	from safe_print import safe_print

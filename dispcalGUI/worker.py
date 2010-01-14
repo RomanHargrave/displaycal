@@ -423,25 +423,26 @@ class Worker():
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
 				args += ["-y" + measurement_mode[0]]
-		if getcfg("projector_mode") and \
+		if getcfg("measurement_mode.projector") and \
 		   instrument_features.get("projector_mode") and \
 		   self.argyll_version >= [1, 1, 0]:
 			# Projector mode, Argyll >= 1.1.0 Beta
 			args += ["-p"]
-		if getcfg("adaptive_mode") and \
+		if getcfg("measurement_mode.adaptive") and \
 		   instrument_features.get("adaptive_mode") and \
-		   self.argyll_version[0:3] > [1, 1, 0] or (
+		   (self.argyll_version[0:3] > [1, 1, 0] or (
 			self.argyll_version[0:3] == [1, 1, 0] and 
 			not "Beta" in self.argyll_version_string and 
 			not "RC1" in self.argyll_version_string and 
-			not "RC2" in self.argyll_version_string):
+			not "RC2" in self.argyll_version_string)):
 			# Adaptive mode, Argyll >= 1.1.0 RC3
 			args += ["-V"]
 		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
 				 getcfg("dimensions.measureframe")]
-		if bool(int(getcfg("measure.darken_background"))):
+		if getcfg("measure.darken_background"):
 			args += ["-F"]
-		if instrument_features.get("high_res"):
+		if getcfg("measurement_mode.highres") and \
+		   instrument_features.get("highres_mode"):
 			args += ["-H"]
 	
 	def clear_argyll_info(self):
