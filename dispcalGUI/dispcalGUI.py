@@ -636,7 +636,7 @@ class MainFrame(BaseFrame):
 		Controls are initialized in a separate step (see init_controls).
 		
 		"""
-		self.SetTitle("%s %s build %s" % (appname, version, build))
+		self.SetTitle("%s %s %s" % (appname, version, build))
 		self.SetMaxSize((-1, -1))
 		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
 										  ".png"))
@@ -5030,16 +5030,18 @@ class MainFrame(BaseFrame):
 		items += [wx.StaticBitmap(self.aboutdialog, -1, 
 								  getbitmap("theme/header-about"))]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.StaticText(self.aboutdialog, -1, u"%s %s © %s" % (appname, 
-																	   version, 
+		items += [wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
 																	   author))]
-		items += [wx.StaticText(self.aboutdialog, -1, u"build %s" % build)]
+		items += [wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
+																   build))]
 		items += [wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label="%s.hoech.net" % appname, 
 			URL="http://%s.hoech.net" % appname)]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		items += [wx.StaticText(
-			self.aboutdialog, -1, u"Argyll CMS %s © Graeme Gill" % 
+			self.aboutdialog, -1, u"Argyll CMS © Graeme Gill")]
+		items += [wx.StaticText(
+			self.aboutdialog, -1, u"%s" % 
 								  self.worker.argyll_version_string)]
 		items += [wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label="ArgyllCMS.com", 

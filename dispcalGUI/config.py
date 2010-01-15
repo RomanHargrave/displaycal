@@ -31,7 +31,7 @@ else:
 	from defaultpaths import (xdg_config_home, xdg_data_home, 
 							 xdg_data_home_default, xdg_data_dirs)
 from defaultpaths import autostart, autostart_home
-from meta import name as appname, version
+from meta import name as appname, lastmod, version
 from options import ascii, debug, verbose
 from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
@@ -261,17 +261,12 @@ def runtimeconfig(pyfile):
 	defaultchart = testchart_defaults.get(defaultptype, testchart_defaults["s"])
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart))
-	build = "%s%s%s" % (
-		strftime("%Y-%m-%dT%H:%M:%S", gmtime(os.stat(pypath).st_mtime)), 
-		"+" if timezone < 0 else "-", 
-		strftime("%H:%M", gmtime(abs(timezone)))
-	) if pypath and os.path.exists(pypath) else ""
 	if verbose >= 1:
 		if not "safe_print" in globals():
 			global safe_print
 			from log import safe_print
-		safe_print(appname + runtype, version, "build", build)
-	return pypath, pydir, pyname, pyext, isapp, runtype, build
+		safe_print(appname + runtype, version, lastmod)
+	return pypath, pydir, pyname, pyext, isapp, runtype, lastmod
 
 # User settings
 

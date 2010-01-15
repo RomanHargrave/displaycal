@@ -73,11 +73,16 @@ def strtr(txt, replacements):
 	"""
 	String multi-replace, a bit like PHP's strtr.
 	
-	replacements has to be a dict.
+	replacements can be a dict or a list.
+	If it is a list, all items are replaced with the empty string ("").
 	
 	"""
-	for key in replacements:
-		txt = txt.replace(key, replacements[key])
+	if hasattr(replacements, "iteritems"):
+		replacements = replacements.iteritems()
+	else:
+		replacements = zip(replacements, [""] * len(replacements))
+	for srch, sub in replacements:
+		txt = txt.replace(srch, sub)
 	return txt
 
 

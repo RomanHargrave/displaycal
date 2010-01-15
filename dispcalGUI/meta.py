@@ -32,6 +32,8 @@
 
 """
 
+from __version__ import LASTMOD as lastmod, VERSION, VERSION_STRING
+
 author = u"Florian Höch"
 author_ascii = "Florian Hoech"
 description = (u"A graphical user interface for the Argyll CMS display "
@@ -39,10 +41,10 @@ description = (u"A graphical user interface for the Argyll CMS display "
 domain = "dispcalGUI.hoech.net"
 name = "dispcalGUI"
 
-version = "0.2.7b"
-version_lin = "0.2.7b" # Linux
-version_mac = "0.2.7b" # Mac OS X
-version_win = "0.2.7b" # Windows
-version_src = "0.2.7b"
+version = VERSION_STRING
+version_lin = VERSION_STRING # Linux
+version_mac = VERSION_STRING # Mac OS X
+version_win = VERSION_STRING # Windows
+version_src = VERSION_STRING
 
-version_tuple = (0, 2, 7, 0) # only ints allowed and must be exactly 4 values
+version_tuple = VERSION # only ints allowed and must be exactly 4 values
