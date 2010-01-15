@@ -91,19 +91,6 @@ def init(set_wx_locale=False):
 	if len(ldict) == 0:
 		handle_error("Warning: No language files found. The following "
 					 "places have been searched:\n%s" % "\n".join(langdirs))
-	# else:
-		# update_defaults()
-	# lcode = getcode()
-	# if not lcode in ldict:
-		# # fall back to english
-		# lcode = "en"
-	# if lcode in ldict:
-		# if set_wx_locale:
-			# import wx
-			# wx.Locale(getattr(wx, "LANGUAGE_" + ldict[lcode]["language_name"]))
-			# import __builtin__
-			# __builtin__.__dict__['_'] = wx.GetTranslation
-		#locale.setlocale(locale.LC_ALL, ldict[lcode]["language_name"])
 
 
 def update_defaults():
@@ -128,6 +115,7 @@ def getcode():
 		lcode = "en"
 	return lcode
 
+
 def getstr(id_str, strvars=None, lcode=None):
 	""" Get a translated string from the dictionary """
 	if not lcode:
@@ -136,8 +124,6 @@ def getstr(id_str, strvars=None, lcode=None):
 		# fall back to english
 		lcode = "en"
 	if lcode in ldict and id_str in ldict[lcode]:
-		# if locale.getdefaultlocale()[0].split("_")[0].lower() != lcode:
-			# locale.setlocale(locale.LC_ALL, ldict[lcode]["language_name"])
 		lstr = ldict[lcode][id_str]
 		if strvars:
 			if type(strvars) not in (list, tuple):

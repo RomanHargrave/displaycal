@@ -45,7 +45,7 @@ from meta import name as appname
 from options import debug, test, verbose
 from thread import start_new_thread
 from util_io import Files, StringIOu as StringIO, Tea
-from util_os import getenvu, get_sudo, quote_args, which
+from util_os import getenvu, quote_args, which
 from util_str import asciize
 from wxwindows import ConfirmDialog, InfoDialog
 
@@ -346,8 +346,8 @@ def sendkeys(delay=0, target="", keys=""):
 	elif sys.platform == "win32":
 		try:
 			if delay: sleep(delay)
-			# hwnd = win32gui.FindWindowEx(0, 0, 0, target)
-			# win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
+			## hwnd = win32gui.FindWindowEx(0, 0, 0, target)
+			## win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
 			SendKeys(keys, with_spaces=True, with_tabs=True, 
 					 with_newlines=True, turn_off_numlock=False)
 		except Exception, exception:
@@ -634,9 +634,9 @@ class Worker():
 		"""
 		if parent is None:
 			parent = self.owner
-		# if capture_output:
-			# fn = self.infoframe.Log
-		# else:
+		## if capture_output:
+			## fn = self.infoframe.Log
+		## else:
 		fn = None
 		self.clear_cmd_output()
 		if None in [cmd, args]:
@@ -706,17 +706,8 @@ class Worker():
 			if sys.platform == "win32":
 				# Vista and later
 				pass
-				# for src in (cmd, get_data_path("UAC.manifest")):
-					# tgt = os.path.join(self.create_tempdir(), 
-					# 					 os.path.basename(cmd))
-					# if src.endswith(".manifest"):
-						# tgt += ".manifest"
-					# else:
-						# cmdline = [tgt] + cmdline[1:]
-					# if not os.path.exists(tgt):
-						# shutil.copy2(src, tgt)
 			else:
-				sudo = get_sudo()
+				sudo = which("sudo")
 		if sudo:
 			try:
 				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], stdin=sp.PIPE, 
@@ -741,7 +732,6 @@ class Worker():
 					dlg.pwd_txt_ctrl.SetFocus()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
-					n = 0
 					while True:
 						result = dlg.ShowModal()
 						pwd = dlg.pwd_txt_ctrl.GetValue()
@@ -758,33 +748,24 @@ class Worker():
 						if "OK" in stdout:
 							self.pwd = pwd
 							break
-						else: # if n == 0:
+						else:
 							errstr = unicode(stderr, enc, "replace")
 							if not silent:
 								safe_print(errstr)
 							else:
 								log(errstr)
 							dlg.message.SetLabel(
-								# lang.getstr("auth.failed") + "\n" + 
-								# lang.getstr("dialog.enter_password"))
-								errstr)
+								lang.getstr("auth.failed") + ":\n" + 
+								errstr +
+								lang.getstr("dialog.enter_password"))
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
-						n += 1
 					dlg.Destroy()
 				cmdline.insert(0, sudo)
 				cmdline.insert(1, "-S")
 			except Exception, exception:
 				safe_print("Warning - execution as root not possible:", 
 						   str(exception))
-			# tmpstdout = os.path.join(self.create_tempdir(), 
-			# 						   working_basename + ".out")
-			# tmpstderr = os.path.join(self.create_tempdir(), 
-			# 						   working_basename + ".err")
-			# cmdline = [sudo, u" ".join(quote_args(cmdline)) + 
-			# 			 ('>"%s" 2>"%s"' % (tmpstdout, tmpstderr))]
-			# if os.path.basename(sudo) in ["gnomesu", "kdesu"]:
-				# cmdline.insert(1, "-c")
 		if working_dir and not skip_scripts:
 			try:
 				cmdfilename = os.path.join(working_dir, working_basename + 
@@ -810,7 +791,6 @@ class Worker():
 								   get_argyll_utilname("dispread")):
 						cmdfiles.write("color 07\n")
 				else:
-					# context.write("set +v\n")
 					context.write(('PATH=%s:$PATH\n' % 
 								   os.path.dirname(cmd)).encode(enc, 
 																"asciize"))
@@ -823,13 +803,6 @@ class Worker():
 								   get_argyll_utilname("dispread")) and \
 					   sys.platform != "darwin":
 						cmdfiles.write('echo -e "\\033[40;2;37m" && clear\n')
-					# if last and sys.platform != "darwin":
-						# context.write('gnome_screensaver_running=$(ps -A -f '
-						# 				'| grep gnome-screensaver | grep -v '
-						# 				'grep)\n')
-						# context.write('if [ "$gnome_screensaver_running" != '
-						# 				'"" ]; then gnome-screensaver-command '
-						# 				'--exit; fi\n')
 					os.chmod(cmdfilename, 0755)
 					os.chmod(allfilename, 0755)
 				cmdfiles.write(u" ".join(quote_args(cmdline)).replace(cmd, 
@@ -850,9 +823,6 @@ class Worker():
 						# reset to default commandline shell colors
 						cmdfiles.write('echo -e "\\033[0m" && clear\n')
 					cmdfiles.write("popd\n")
-					# if last and sys.platform != "darwin":
-						# cmdfiles.write('if [ "$gnome_screensaver_running" != '
-						# 				 '"" ]; then gnome-screensaver; fi\n')
 					cmdfiles.write("if [ $exitcode -ne 0 ]; "
 								   "then exit $exitcode; fi\n")
 				cmdfiles.close()
@@ -979,10 +949,6 @@ class Worker():
 					stderr.seek(0)
 					errors = stderr.readlines()
 					stderr.close()
-					# if sudo:
-						# stderr = open(tmpstderr, "r")
-						# errors += stderr.readlines()
-						# stderr.close()
 					if len(errors):
 						errors2 = []
 						for line in errors:
@@ -1014,10 +980,6 @@ class Worker():
 					self.output = [re.sub("^\.{4,}\s*$", "", line) for line in 
 								   stdout.readlines()]
 					stdout.close()
-					# if sudo:
-						# stdout = open(tmpstdout, "r")
-						# errors += stdout.readlines()
-						# stdout.close()
 					if len(self.output) and log_output:
 						log(unicode("".join(self.output).strip(), enc, 
 							"replace"))
@@ -1049,8 +1011,6 @@ class Worker():
 			if verbose >= 1 and not capture_output:
 				safe_print(lang.getstr("aborted"), fn=fn)
 			return False
-		# else:
-			# if verbose >= 1 and not capture_output: safe_print("", fn=fn)
 		return True
 
 	def generic_consumer(self, delayedResult, consumer, *args, **kwargs):
@@ -1480,14 +1440,6 @@ class Worker():
 		elif cal:
 			if not check_cal_isfile(cal, parent=self.owner):
 				return None, None
-			# calcopy = make_argyll_compatible_path(
-			# 	os.path.join(self.create_tempdir(), os.path.basename(cal)))
-			# if not os.path.exists(calcopy):
-				# # Copy cal to temp dir
-				# shutil.copyfile(cal, calcopy)
-				# if not check_cal_isfile(calcopy, parent=self.owner):
-					# return None, None
-			# cal = calcopy
 			args += [cal]
 		else:
 			if cal is None:
@@ -1520,22 +1472,13 @@ class Worker():
 						(((sys.platform == "darwin" or 
 						   (sys.platform != "win32" and 
 							self.argyll_version >= [1, 1, 0])) and 
-						  (os.geteuid() == 0 or get_sudo())) or 
+						  (os.geteuid() == 0 or which("sudo"))) or 
 						 (sys.platform == "win32" and 
 						  sys.getwindowsversion() >= (6, )) or test):
 							# -S option is broken on Linux with current Argyll 
 							# releases
 							args += ["-S" + getcfg("profile.install_scope")]
 					args += ["-I"]
-				# profcopy = make_argyll_compatible_path(
-				# 	os.path.join(self.create_tempdir(), 
-				# 				 os.path.basename(profile_path)))
-				# if not os.path.exists(profcopy):
-					# # Copy profile to temp dir
-					# shutil.copyfile(profile_path, profcopy) 
-					# if not check_profile_isfile(profcopy, parent=self.owner):
-						# return None, None
-				# profile_path = profcopy
 				args += [profile_path]
 		return cmd, args
 
@@ -1590,10 +1533,6 @@ class Worker():
 	def progress_timer_handler(self, event):
 		keepGoing, skip = self.progress_parent.progress_dlg.Pulse(
 			self.progress_parent.progress_dlg.GetTitle())
-		# for child in self.progress_parent.progress_dlg.GetChildren():
-			# if isinstance(child, wx.StaticText):
-				# child.Label = child.Label.replace("Elapsed time", 
-												  # lang.getstr("elapsed_time"))
 		if not keepGoing:
 			if hasattr(self, "subprocess") and self.subprocess:
 				if self.subprocess.poll() is None:
@@ -1610,11 +1549,7 @@ class Worker():
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
 						   parent=None):
-		if True: # hasattr(self, "subprocess") and self.subprocess and \
-		   # self.subprocess.poll() is None:
-			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT
-		else:
-			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME
+		style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT
 		self.progress_parent.progress_dlg = wx.ProgressDialog(progress_title, 
 															  progress_msg, 
 															  parent=parent, 

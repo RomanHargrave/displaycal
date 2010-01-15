@@ -39,14 +39,6 @@ def getenvu(key, default = None):
 	return var if isinstance(var, unicode) else unicode(var, fs_enc)
 
 
-def get_sudo():
-	""" Return the full path of the 'sudo' executable """
-	# for executable in ["gnomesu", "kdesu", "gksu", "sudo"]:
-		# if which(executable):
-			# return executable
-	return which("sudo")
-
-
 def listdir_re(path, rex = None):
 	""" Filter directory contents through a regular expression """
 	files = os.listdir(path)

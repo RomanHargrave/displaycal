@@ -442,6 +442,7 @@ def hascfg(name, fallback=True):
 		return name in defaults
 	return False
 
+
 def get_display():
 	display = str(getcfg("display.number"))
 	if not getcfg("display_lut.link"):

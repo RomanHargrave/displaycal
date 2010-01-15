@@ -82,7 +82,6 @@ class LUTCanvas(plot.PlotCanvas):
 						if detect_increments and n != i and \
 						   len(r_points) == 1 and i > 1 and \
 						   r_points[-1][0] == r_points[-1][1]:
-							# print "R", i - 1, "=>", i - 1
 							r_points += [[i - 1, i - 1]]
 						r_points += [[j, n]]
 				if g:
@@ -92,7 +91,6 @@ class LUTCanvas(plot.PlotCanvas):
 						if detect_increments and n != i and \
 						   len(g_points) == 1 and i > 1 and \
 						   g_points[-1][0] == g_points[-1][1]:
-							# print "G", i - 1, "=>", i - 1
 							g_points += [[i - 1, i - 1]]
 						g_points += [[j, n]]
 				if b:
@@ -102,7 +100,6 @@ class LUTCanvas(plot.PlotCanvas):
 						if detect_increments and n != i and \
 						   len(b_points) == 1 and i > 1 and \
 						   b_points[-1][0] == b_points[-1][1]:
-							# print "B", i - 1, "=>", i - 1
 							b_points += [[i - 1, i - 1]]
 						b_points += [[j, n]]
 		else: # formula
@@ -131,16 +128,6 @@ class LUTCanvas(plot.PlotCanvas):
 					vmax = vcgt["blueMax"] * 255
 					b_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
 
-		# print 'RED'
-		# for point in r_points:
-			# print point
-		# print 'GREEN'
-		# for point in g_points:
-			# print point
-		# print 'BLUE'
-		# for point in b_points:
-			# print point
-
 		linear = [[0, 0], [input[-1], input[-1]]]
 		
 		if not vcgt:
@@ -148,35 +135,6 @@ class LUTCanvas(plot.PlotCanvas):
 				r_points = g_points = b_points = linear
 			else:
 				r_points = g_points = b_points = linear_points
-
-		# # scale
-		# for i in range(len(input)):
-			# input[i] *= (len(input) + 1)
-		# for i in range(len(r_points)):
-			# if r:
-				# for j in range(len(r_points[i])):
-					# r_points[i][j] *= (len(input) + 1)
-		# for i in range(len(g_points)):
-			# if g:
-				# for j in range(len(g_points[i])):
-					# g_points[i][j] *= (len(input) + 1)
-		# for i in range(len(b_points)):
-			# if b:
-				# for j in range(len(b_points[i])):
-					# b_points[i][j] *= (len(input) + 1)
-
-		# lines += [Plot([[input[-1] / 2.0, 0], [input[-1] / 2.0, input[-1]]], 
-		# 				 colour=GRIDCOLOUR)]  # bottom center to top center
-		# lines += [Plot([[0, input[-1] / 2.0], [input[-1], input[-1] / 2.0]], 
-		# 				 colour=GRIDCOLOUR)]  # center left to center right
-		# lines += [Plot([[0, input[-1]], [input[-1], input[-1]]], 
-		# 				 colour=GRIDCOLOUR)]  # top
-		# lines += [Plot([[input[-1], 0], [input[-1], input[-1]]], 
-		# 				 colour=GRIDCOLOUR)]  # right
-		# lines += [Plot([[0, 0], [input[-1], 1]], colour=GRIDCOLOUR)]  # bottom
-		# lines += [Plot([[0, 0], [0, input[-1]]], colour=GRIDCOLOUR)]  # left
-
-		# lines += [Plot(linear, colour=GRIDCOLOUR)]  # bottom left to top right
 
 		legend = []
 		points = []
@@ -212,13 +170,10 @@ class LUTCanvas(plot.PlotCanvas):
 						   colour=colour)]
 		else:
 			if r:
-				# print r_points[0], r_points[-1]
 				lines += [Plot(r_points, legend=prefix + 'R', colour='red')]
 			if g:
-				# print g_points[0], g_points[-1]
 				lines += [Plot(g_points, legend=prefix + 'G', colour='green')]
 			if b:
-				# print b_points[0], b_points[-1]
 				lines += [Plot(b_points, legend=prefix + 'B', colour='#0080FF')]
 
 		if not lines:

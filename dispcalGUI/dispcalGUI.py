@@ -39,8 +39,8 @@ sys.excepthook = _early_excepthook
 
 # Python version check
 
-pyver = map(int, sys.version.split()[0].split(".")[0:2])
-if pyver < [2, 5] or pyver >= [3]:
+pyver = sys.version_info[:2]
+if pyver < (2, 5) or pyver >= (3, ):
 	raise RuntimeError("Need Python version >= 2.5 < 3.0, got %s" % 
 					   sys.version.split()[0])
 
@@ -114,7 +114,7 @@ from util_list import index_fallback_ignorecase, natsort
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script,
 						  mac_terminal_set_colors)
-from util_os import expanduseru, get_sudo, listdir_re, which
+from util_os import expanduseru, listdir_re, which
 from util_str import strtr, wrap
 from worker import (Worker, check_argyll_bin, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
@@ -391,7 +391,6 @@ class GamapFrame(BaseFrame):
 		# Create the profile picker ctrl dynamically to get translated strings
 		origpickerctrl = self.FindWindowByName("gamap_profile")
 		hsizer = origpickerctrl.GetContainingSizer()
-		#hsizer.Remove(hsizer.GetItem(origpickerctrl))
 		self.gamap_profile = wx.FilePickerCtrl(
 			self.panel, -1, "", message=lang.getstr("gamap.profile"), 
 			wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm",
@@ -536,10 +535,6 @@ class MainFrame(BaseFrame):
 		# We do this after all initialization because the log.log() function 
 		# expects the window to be fully created and accessible via 
 		# wx.GetApp().frame.infoframe
-		# logger = logging.getLogger()
-		# for handler in logger.handlers:
-			# if handler.__class__ == logging.StreamHandler:
-				# logger.removeHandler(handler)
 		logbuffer.seek(0)
 		self.infoframe.log_txt.SetValue("".join(line for line in logbuffer))
 
@@ -1201,8 +1196,6 @@ class MainFrame(BaseFrame):
 				  id=self.profile_type_ctrl.GetId())
 
 		# Advanced (gamut mapping)
-		# self.gamap_btn.SetInitialSize((self.gamap_btn.GetSize()[0] + 
-									   # btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.gamap_btn_handler, 
 				  id=self.gamap_btn.GetId())
 
@@ -1219,17 +1212,10 @@ class MainFrame(BaseFrame):
 		# Main buttons
 		# ============
 		
-		# self.calibrate_btn.SetInitialSize((self.calibrate_btn.GetSize()[0] + 
-										   # btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.calibrate_btn_handler, 
 				  id=self.calibrate_btn.GetId())
-		# self.calibrate_and_profile_btn.SetInitialSize(
-			# (self.calibrate_and_profile_btn.GetSize()[0] + 
-			 # btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.calibrate_and_profile_btn_handler, 
 				  id=self.calibrate_and_profile_btn.GetId())
-		# self.profile_btn.SetInitialSize((self.profile_btn.GetSize()[0] + 
-										 # btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.profile_btn_handler, 
 				  id=self.profile_btn.GetId())
 
@@ -1288,11 +1274,6 @@ class MainFrame(BaseFrame):
 				if hasattr(self, "profile_name_tooltip_window"):
 					self.profile_name_tooltip_window.Destroy()
 					del self.profile_name_tooltip_window
-				# InfoDialog(self, msg=lang.getstr("app.restart_request", 
-				# 								   lcode=lcode), 
-				# 			 ok=lang.getstr("ok", lcode=lcode), 
-				# 			 bitmap=geticon(32, "dialog-information"), 
-				#			 logit=False)
 				break
 	
 	def update_layout(self):
@@ -2526,7 +2507,6 @@ class MainFrame(BaseFrame):
 					cal, lang.getstr("error.calibration.file_not_created"), 
 					parent=self)
 				if result:
-					## if self.install_cal:
 					setcfg("calibration.file", cal)
 					self.update_controls(update_profile_name=False)
 					setcfg("last_cal_or_icc_path", cal)
@@ -2763,6 +2743,7 @@ class MainFrame(BaseFrame):
 					else:
 						result = True
 					break
+			## Verify if LUT is actually loaded?
 			# if "-c" in args:
 				# args.remove("-c")
 			# if "-I" in args:
@@ -2872,8 +2853,7 @@ class MainFrame(BaseFrame):
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-warning"))
 				elif sys.platform != "darwin":
-					# http://standards.freedesktop.org/
-					# autostart-spec/autostart-spec-latest.html
+					# http://standards.freedesktop.org/autostart-spec/autostart-spec-latest.html
 					name = "%s-Calibration-Loader-Display-%s" % (appname, n)
 					desktopfile_path = os.path.join(autostart_home, 
 													name + ".desktop")
@@ -2999,8 +2979,7 @@ class MainFrame(BaseFrame):
 		if not cal:
 			cal = getcfg("calibration.file")
 		if cal:
-			if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
-			   #self.lut_viewer.IsShownOnScreen():
+			if hasattr(self, "lut_viewer") and self.lut_viewer:
 				self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
 									  cal.lower().endswith(".icc") or 
 									  cal.lower().endswith(".icm") else 
@@ -3019,8 +2998,7 @@ class MainFrame(BaseFrame):
 		return False
 
 	def reset_cal(self, event=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
-		   #self.lut_viewer.IsShownOnScreen():
+		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			self.lut_viewer.profile = None
 			self.lut_viewer.DrawLUT()
 		if check_set_argyll_bin():
@@ -3040,8 +3018,7 @@ class MainFrame(BaseFrame):
 		return False
 
 	def load_display_profile_cal(self, event=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
-		   #self.lut_viewer.IsShownOnScreen():
+		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			try:
 				profile = ICCP.get_display_profile(
 					max(self.display_ctrl.GetSelection(), 0))
@@ -3114,7 +3091,6 @@ class MainFrame(BaseFrame):
 	def just_calibrate(self):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
-		## self.install_cal = True
 		self.worker.dispcal_create_fast_matrix_shaper = True
 		if self.calibrate(remove=True):
 			if getcfg("calibration.update") or \
@@ -3171,7 +3147,6 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate_and_profile").replace("&&", 
 																	   "&"))
-		## self.install_cal = False
 		# -N switch not working as expected in Argyll 1.0.3
 		if self.worker.get_instrument_features().get("skip_sensor_cal") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
@@ -3365,7 +3340,7 @@ class MainFrame(BaseFrame):
 				if ((sys.platform == "darwin" or (sys.platform != "win32" and 
 												  self.worker.argyll_version >= 
 												  [1, 1, 0])) and 
-					(os.geteuid() == 0 or get_sudo())) or \
+					(os.geteuid() == 0 or which("sudo"))) or \
 					(sys.platform == "win32" and 
 					 sys.getwindowsversion() >= (6, )) or test:
 					# Linux, OSX or Vista and later
@@ -3490,8 +3465,6 @@ class MainFrame(BaseFrame):
 					self.lut_viewer.LoadProfile(profile)
 			else:
 				self.lut_viewer.profile = None
-			# if (self.lut_viewer.IsShownOnScreen() or 
-			#	self.lut_viewer.profile is not None):
 			self.lut_viewer.DrawLUT()
 	
 	def show_lut_handler(self, event=None, profile=None):
@@ -3504,8 +3477,6 @@ class MainFrame(BaseFrame):
 						  not self.show_lut) and 
 						 (self.lut_viewer.IsShownOnScreen() or 
 						  self.lut_viewer.profile is not None)))
-			# if show:
-				# self.lut_viewer.DrawLUT()
 			self.lut_viewer.Show(show)
 
 	def lut_viewer_move_handler(self, event=None):
@@ -3573,8 +3544,7 @@ class MainFrame(BaseFrame):
 		if bool(int(getcfg("display_lut.link"))):
 			self.display_lut_ctrl.SetStringSelection(self.displays[display_no])
 			setcfg("display_lut.number", display_no + 1)
-		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
-		   #self.lut_viewer.IsShownOnScreen():
+		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			self.lut_viewer_load_lut(profile=ICCP.get_display_profile(display_no))
 
 	def display_lut_ctrl_handler(self, event):
@@ -4088,10 +4058,10 @@ class MainFrame(BaseFrame):
 			"p": profile_quality
 		}
 		msgs = {
-			"u": "UQ",  # lang.getstr("calibration.quality.ultra"),
-			"h": "HQ",  # lang.getstr("calibration.quality.high"),
-			"m": "MQ",  # lang.getstr("calibration.quality.medium"),
-			"l": "LQ",  # lang.getstr("calibration.quality.low")
+			"u": "UQ", 
+			"h": "HQ", 
+			"m": "MQ", 
+			"l": "LQ"
 		}
 		for a in aspects:
 			profile_name = profile_name.replace("%%%sq" % a, msgs[aspects[a]])
