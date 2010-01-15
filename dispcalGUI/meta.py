@@ -32,7 +32,12 @@
 
 """
 
-from __version__ import LASTMOD as lastmod, VERSION, VERSION_STRING
+try:
+	from __version__ import LASTMOD as lastmod, VERSION, VERSION_STRING
+except ImportError:
+	lastmod = "0000-00-00T00:00:00.0Z"
+	VERSION = (0, 0, 0, 0)
+	VERSION_STRING = ".".join(str(n) for n in VERSION)
 
 author = u"Florian Höch"
 author_ascii = "Florian Hoech"
