@@ -86,10 +86,11 @@ else:
 		scale_adjustment_factor = 1.0
 		confighome = os.path.join(xdg_config_home, appname)
 		datahome = os.path.join(xdg_data_home, appname)
+		datahome_default = os.path.join(xdg_data_home_default, appname)
 		logdir = os.path.join(datahome, "logs")
 		data_dirs += [datahome]
-		if not xdg_data_home_default in data_dirs:
-			data_dirs += [xdg_data_home_default]
+		if not datahome_default in data_dirs:
+			data_dirs += [datahome_default]
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
 		del dir_
 	exe_ext = ""
@@ -239,20 +240,22 @@ def runtimeconfig(pyfile):
 	isapp = sys.platform == "darwin" and \
 			exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
 			os.path.isfile(os.path.join(exedir, pyname))
-	if (not isexe or os.getcwdu() != pydir) and data_dirs[0] != os.getcwdu():
-		data_dirs.insert(0, os.getcwdu())
 	if isapp:
 		appdir = os.path.join(pydir, "..", "..", "..")
 		if appdir not in data_dirs and os.path.isdir(appdir):
-			data_dirs.append(os.path.join(pydir, "..", "..", ".."))
+			data_dirs.insert(0, os.path.join(pydir, "..", "..", ".."))
 		runtype = ".app"
+	elif isexe:
+		if getenvu("_MEIPASS2", pydir) not in data_dirs:
+			data_dirs.insert(0, getenvu("_MEIPASS2", pydir))
+		runtype = exe_ext
 	else:
-		if (getenvu("_MEIPASS2", pydir) if isexe else pydir) not in data_dirs:
-			data_dirs.append(getenvu("_MEIPASS2", pydir) if isexe else pydir)
-		if isexe:
-			runtype = exe_ext
-		else:
-			runtype = pyext
+		data_dirs.insert(0, os.path.abspath(os.path.join(pydir, "..")))
+		runtype = pyext
+	if pydir not in data_dirs:
+		data_dirs.insert(0, pydir)
+	if (not isexe or os.getcwdu() != pydir) and data_dirs[0] != os.getcwdu():
+		data_dirs.insert(0, os.getcwdu())
 	for dir_ in sys.path:
 		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
 		if dir_ not in data_dirs and os.path.isdir(dir_):

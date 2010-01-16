@@ -5118,8 +5118,12 @@ class MainFrame(BaseFrame):
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org")]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.StaticText(self.aboutdialog, -1, 
-								lang.getstr("license_info"))]
+		items += [wx.lib.hyperlink.HyperLinkCtrl(
+			self.aboutdialog, -1, label="README", 
+			URL=get_data_path("README.html"))]
+		items += [wx.lib.hyperlink.HyperLinkCtrl(
+			self.aboutdialog, -1, label=lang.getstr("license_info"), 
+			URL=get_data_path("LICENSE.txt"))]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.Layout()

@@ -122,6 +122,9 @@ def setup():
 			if os.path.basename(pathname).lower() in ("gdiplus.dll", 
 													  "mfc90.dll"):
 				return 0
+			if os.path.basename(pathname).lower() in ("powrprof.dll", ) or \
+			   os.path.basename(pathname).lower().startswith("api-ms-win-"):
+				return 1
 			return origIsSystemDLL(pathname)
 		py2exe.build_exe.isSystemDLL = isSystemDLL
 

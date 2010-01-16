@@ -150,7 +150,7 @@
 	"initializing_gui": "Initialisation de l'interface graphique utilisateur...",
 	"instrument": "Instrument/Port",
 	"instrument.place_on_screen": "1. Cliquez sur Valider. Après 1 à 3 secondes, la fenêtre de mesure va apparaître.\n2. Placez l'instrument sur la fenêtre de mesure.\n3. Appuyez sur Échap, Q ou CTRL^C pour abandonner, toute autre touche pour commencer la mesure.",
-	"license_info": "Sous licence GPL.",
+	"license_info": "Sous licence GPL",
 	"locale.set": "Paramétrage local : %s",
 	"lut_access": "Accès à la table de correspondance",
 	"max": "Max",

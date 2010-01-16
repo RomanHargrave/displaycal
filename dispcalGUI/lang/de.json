@@ -156,7 +156,7 @@
 	"initializing_gui": "Initialisiere GUI...",
 	"instrument": "Messgerät/Port",
 	"instrument.place_on_screen": "1. Klicken Sie OK. Nach 1-3 Sekunden erscheint die Messfläche.\n2. Setzen Sie das Messgerät auf die Messfläche.\n3. Drücken Sie eine beliebige Taste, um die Messung zu starten oder ESC, um die Messung abzubrechen.",
-	"license_info": "Lizensiert unter der GPL.",
+	"license_info": "Lizensiert unter der GPL",
 	"locale.set": "Setze Lokalisierung: %s",
 	"lut_access": "LUT-Zugriff",
 	"max": "Max",
