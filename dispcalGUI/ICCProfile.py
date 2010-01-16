@@ -212,6 +212,7 @@ def _winreg_get_display_profile(monkey, current_user=False):
 	filename = None
 	try:
 		if current_user:
+			# Vista / Windows 7 ONLY
 			subkey = "\\".join(["Software", "Microsoft", "Windows NT", 
 								"CurrentVersion", "ICM", "ProfileAssociations", 
 								"Display"] + monkey)
@@ -225,8 +226,18 @@ def _winreg_get_display_profile(monkey, current_user=False):
 		numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		for i in range(numvalues):
 			name, value, type_ = _winreg.EnumValue(key, i)
-			## print i, name, repr(value)
+			## print i, name, repr(value), type_
 			if name == "ICMProfile":
+				if type_ == _winreg.REG_BINARY:
+					# Win2k/XP
+					# convert to list of strings
+					value = value.decode('utf-16').split("\0")
+					while "" in value:
+						value.remove("")
+				elif type_ == _winreg.REG_MULTI_SZ:
+					# Vista / Windows 7
+					# nothing to be done, _winreg returns a list of strings
+					pass
 				if value:
 					filename = value[-1]  # last one in the list is active
 				else:
@@ -237,7 +248,7 @@ def _winreg_get_display_profile(monkey, current_user=False):
 				filename = None
 	except Exception, exception:
 		pass
-	## print filename
+	## print repr(filename)
 	return filename
 
 
