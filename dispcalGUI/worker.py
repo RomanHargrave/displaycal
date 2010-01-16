@@ -315,7 +315,7 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 			ispath = True
 		if re.search("[\^!$%&()[\]\s]", item):
 			item = '"' + item + '"'
-		if item[0] != "-" and len(lines) and i < len(args) - 1:
+		if not item.startswith("-") and len(lines) and i < len(args) - 1:
 			lines[-1] += "\n      " + item
 		else:
 			lines.append(item)
@@ -380,20 +380,26 @@ def set_argyll_bin(parent=None):
 	dlg = wx.DirDialog(parent, lang.getstr("dialog.set_argyll_bin"), 
 					   defaultPath=defaultPath, style=wx.DD_DIR_MUST_EXIST)
 	dlg.Center(wx.BOTH)
-	result = dlg.ShowModal() == wx.ID_OK
-	if result:
-		path = dlg.GetPath().rstrip(os.path.sep)
-		result = check_argyll_bin([path])
+	result = False
+	while not result:
+		result = dlg.ShowModal() == wx.ID_OK
 		if result:
-			if verbose >= 3:
-				safe_print("Setting Argyll binary directory:", path)
-			setcfg("argyll.dir", path)
+			path = dlg.GetPath().rstrip(os.path.sep)
+			result = check_argyll_bin([path])
+			if result:
+				if verbose >= 3:
+					safe_print("Setting Argyll binary directory:", path)
+				setcfg("argyll.dir", path)
+				writecfg()
+				break
+			else:
+				InfoDialog(parent, msg=path + "\n\n" + 
+									   lang.getstr("argyll.dir.invalid", 
+												   (exe_ext, ) * 6), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
 		else:
-			InfoDialog(parent, msg=lang.getstr("argyll.dir.invalid", 
-											 (exe_ext, ) * 6), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
-		writecfg()
+			break
 	dlg.Destroy()
 	return result
 
@@ -1194,12 +1200,14 @@ class Worker():
 					rslt = extract_fix_copy_cal(cal, calcopy)
 					if isinstance(rslt, ICCP.ICCProfileInvalidError):
 						InfoDialog(self.owner, 
-								   msg=lang.getstr("profile.invalid"), 
+								   msg=lang.getstr("profile.invalid") + 
+									   "\n" + cal, 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"))
 					elif isinstance(rslt, Exception):
 						InfoDialog(self.owner, 
 								   msg=lang.getstr("cal_extraction_failed") + 
+									   "\n" + cal + 
 									   "\n\n" + unicode(str(rslt), enc, 
 														"replace"), 
 								   ok=lang.getstr("ok"), 
@@ -1454,7 +1462,8 @@ class Worker():
 				try:
 					profile = ICCP.ICCProfile(profile_path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self.owner, msg=lang.getstr("profile.invalid"), 
+					InfoDialog(self.owner, msg=lang.getstr("profile.invalid") + 
+											   "\n" + profile_path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return None, None
@@ -1463,7 +1472,8 @@ class Worker():
 					InfoDialog(self.owner, 
 							   msg=lang.getstr("profile.unsupported", 
 											   (profile.profileClass, 
-											    profile.colorSpace)), 
+											    profile.colorSpace)) + 
+								   "\n" + profile_path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return None, None

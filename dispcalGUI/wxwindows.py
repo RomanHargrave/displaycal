@@ -6,6 +6,7 @@ import sys
 
 from config import (btn_width_correction, defaults, getcfg, 
 					geticon, get_verified_path, setcfg)
+from log import log
 from meta import name as appname
 from thread import start_new_thread
 from util_str import wrap
@@ -52,6 +53,8 @@ class BaseInteractiveDialog(wx.Dialog):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 show=True, logit=True):
+		if logit:
+			log(msg)
 		oparent = parent
 		if oparent:
 			gparent = oparent.GetGrandParent()

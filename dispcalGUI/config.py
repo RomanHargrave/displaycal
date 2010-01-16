@@ -23,6 +23,7 @@ if sys.platform == "win32":
 										 CSIDL_PROGRAM_FILES_COMMON, 
 										 CSIDL_STARTUP, CSIDL_SYSTEM)
 
+from argyll_names import viewconds
 if sys.platform == "win32":
 	from defaultpaths import appdata, commonappdata, commonprogramfiles
 elif sys.platform == "darwin":
@@ -273,6 +274,20 @@ def runtimeconfig(pyfile):
 cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
+valid_values = {
+	"calibration.quality": ["l", "m", "h", "u"],
+	"measurement_mode": [None, "c", "l"],
+	"gamap_src_viewcond": viewconds,
+	"gamap_out_viewcond": ["mt", "mb", "md", "jm", "jd"],
+	"profile.install_scope": ["l", "u"],
+	"profile.quality": ["l", "m", "h", "u"],
+	"profile.type": ["g", "G", "l", "s", "S", "x", "X"],
+	"tc_algo": ["", "t", "r", "R", "q", "Q", "i", "I"],  # Q = Argyll >= 1.1.0
+	"trc": ["240", "709", "l", "s"],
+	"trc.type": ["g", "G"],
+	"whitepoint.colortemp.locus": ["t", "T"]
+}
+
 defaults = {
 	"argyll.dir": expanduseru("~"), # directory
 	"calibration.ambient_viewcond_adjust": 0,
@@ -292,19 +307,19 @@ defaults = {
 	"dimensions.measureframe": "0.5,0.5,1.0",
 	"dimensions.measureframe.unzoomed": "0.5,0.5,1.0",
 	"display.number": 1,
+	"display_lut.link": 1,
+	"display_lut.number": 1,
+	"gamap_src_viewcond": "pp",
+	"gamap_out_viewcond": "mt",
+	"gamap_profile": "",
+	"gamap_perceptual": 0,
+	"gamap_saturation": 0,
+	"gamma": 2.4,
+	"lang": "en",
 	"measurement_mode": "l",
 	"measurement_mode.adaptive": 0,
 	"measurement_mode.highres": 0,
 	"measurement_mode.projector": 0,
-	"display_lut.link": 1,
-	"display_lut.number": 1,
-	"gamap_profile": "",
-	"gamap_perceptual": 0,
-	"gamap_saturation": 0,
-	"gamap_src_viewcond": "pp",
-	"gamap_out_viewcond": "mt",
-	"gamma": 2.4,
-	"lang": "en",
 	"measure.darken_background": 0,
 	"measure.darken_background.show_warning": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
@@ -335,24 +350,24 @@ defaults = {
 	"size.info.h": 384,
 	"size.lut_viewer.w": 512,
 	"size.lut_viewer.h": 580,
-	"tc_white_patches": 4,
-	"tc_single_channel_patches": 0,
-	"tc_gray_patches": 9,
-	"tc_multi_steps": 3,
-	"tc_fullspread_patches": 0,
+	"tc_adaption": 0.0,
 	"tc_algo": "",
 	"tc_angle": 0.3333,
-	"tc_adaption": 0.0,
-	"tc_precond": 0,
-	"tc_precond_profile": "",
 	"tc_filter": 0,
 	"tc_filter_L": 50,
 	"tc_filter_a": 0,
 	"tc_filter_b": 0,
 	"tc_filter_rad": 255,
+	"tc_fullspread_patches": 0,
+	"tc_gray_patches": 9,
+	"tc_multi_steps": 3,
+	"tc_precond": 0,
+	"tc_precond_profile": "",
+	"tc_single_channel_patches": 0,
 	"tc_vrml": 0,
 	"tc_vrml_lab": 0,
 	"tc_vrml_device": 1,
+	"tc_white_patches": 4,
 	"trc": 2.4,
 	"trc.should_use_viewcond_adjust.show_msg": 1,
 	"trc.type": "g",
@@ -395,14 +410,16 @@ def getcfg(name, fallback=True):
 			pass
 		else:
 			# Check for invalid types and return default if wrong type
-			if (name != "trc" or value not in ("240", "709", "l", "s")) and \
+			if (name != "trc" or value not in valid_values["trc"]) and \
 			   hasdef and deftype in (Decimal, int, float):
 				try:
 					value = deftype(value)
 				except ValueError:
 					value = defval
-			elif (name in ("calibration.file", "testchart.file") or \
-			   name.startswith("last_")) and not os.path.exists(value):
+			elif (name.endswith("file") or 
+				  name.startswith("last_")) and not os.path.exists(value):
+				if debug:
+					print "%s does not exist: %s" % (name, value),
 				if value.split(os.path.sep)[-2:] == ["presets", 
 													 os.path.basename(value)] or \
 				   value.split(os.path.sep)[-2:] == ["ti1", 
@@ -412,11 +429,22 @@ def getcfg(name, fallback=True):
 				else:
 					value = os.path.basename(value)
 				value = get_data_path(value) or (defval if hasdef else None)
+				if debug:
+					print "- falling back to", value
+			elif name in valid_values and value not in valid_values[name]:
+				if debug:
+					print "Invalid config value for %s: %s" % (name, value),
+				if hasdef:
+					value = defval
+				else:
+					value = None
+				if debug:
+					print "- falling back to", value
 			return value
-	if fallback and hasdef:
+	if hasdef and fallback:
 		value = defval
 	else:
-		if not hasdef: 
+		if debug and not hasdef: 
 			print "Warning - unknown option:", name
 		value = None
 	return value

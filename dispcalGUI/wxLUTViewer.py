@@ -63,9 +63,9 @@ class LUTCanvas(plot.PlotCanvas):
 
 		if not vcgt:
 			input = range(0, 256)
-			for i in input:
-				if not detect_increments:
-					linear_points += [[i, i]]
+			# for i in input:
+				# if not detect_increments:
+					# linear_points += [[i, i]]
 		elif "data" in vcgt: # table
 			input = range(0, vcgt['entryCount'])
 			r_points = []
@@ -253,19 +253,29 @@ class LUTFrame(wx.Frame):
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
 
 	def LoadProfile(self, profile):
+		if not profile:
+			profile = ICCP.ICCProfile()
+			profile._tags = ICCP.ADict()
+			profile._tags.desc = ""
+			profile._tags.vcgt = ICCP.ADict({
+				"channels": 3,
+				"entryCount": 256,
+				"entrySize": 1,
+				"data": [range(0, 256), range(0, 256), range(0, 256)]
+			})
 		self.profile = profile
 		curves = []
-		if 'vcgt' in profile.tags:
-			curves.append('vcgt')
+		## if 'vcgt' in profile.tags:
+		curves.append('vcgt')
 		if 'rTRC' in profile.tags and \
 		   'gTRC' in profile.tags and \
 		   'bTRC' in profile.tags:
 			curves.append('[rgb]TRC')
 		selection = self.curve_select.GetSelection()
-		if curves and selection < 0 or selection > len(curves) - 1:
+		if curves and (selection < 0 or selection > len(curves) - 1):
 			selection = 0
 		self.curve_select.SetItems(curves)
-		self.curve_select.Enable(bool(curves))
+		self.curve_select.Enable(len(curves) > 1)
 		self.curve_select.SetSelection(selection)
 	
 	def DrawLUT(self, event=None):
@@ -273,10 +283,11 @@ class LUTFrame(wx.Frame):
 		curves = None
 		if self.profile:
 			if self.curve_select.GetStringSelection() == 'vcgt':
-				# vcgt
-				curves = self.profile.tags['vcgt']
+				if 'vcgt' in self.profile.tags:
+					curves = self.profile.tags['vcgt']
+				else:
+					curves = None
 			elif self.curve_select.GetStringSelection() == '[rgb]TRC':
-				# [rgb]TRC
 				if len(self.profile.tags['rTRC']) == 1:
 					# gamma
 					curves = {
@@ -299,6 +310,9 @@ class LUTFrame(wx.Frame):
 						'entryCount': len(self.profile.tags['rTRC']),
 						'entrySize': 2
 					}
+		self.toggle_red.Enable(bool(curves))
+		self.toggle_green.Enable(bool(curves))
+		self.toggle_blue.Enable(bool(curves))
 		self.client.DrawLUT(curves, title=self.profile.getDescription() if 
 										  self.profile else None, 
 							xLabel=self.xLabel,

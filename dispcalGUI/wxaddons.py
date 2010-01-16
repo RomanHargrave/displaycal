@@ -159,6 +159,7 @@ class FileDrop(wx.FileDropTarget):
 
 	def OnDropFiles(self, x, y, filenames):
 		self._files = {}
+		self._filenames = filenames
 
 		for filename in filenames:
 			name, ext = os.path.splitext(filename)

@@ -53,6 +53,15 @@ class TestchartEditor(wx.Frame):
 		}
 		
 		self.worker = Worker()
+		
+		self.droptarget = FileDrop()
+		self.droptarget.drophandlers = {
+			".icc": self.ti1_drop_handler,
+			".icm": self.ti1_drop_handler,
+			".ti1": self.ti1_drop_handler,
+			".ti3": self.ti1_drop_handler
+		}
+		self.droptarget.unsupported_handler = self.drop_unsupported_handler
 
 		if tc_use_alternate_preview:
 			# splitter
@@ -65,15 +74,7 @@ class TestchartEditor(wx.Frame):
 			p1.SetSizer(p1.sizer)
 
 			p2 = wx.Panel(splitter)
-			p2.droptarget = FileDrop()
-			p2.droptarget.drophandlers = {
-				".icc": self.ti1_drop_handler,
-				".icm": self.ti1_drop_handler,
-				".ti1": self.ti1_drop_handler,
-				".ti3": self.ti1_drop_handler
-			}
-			p2.droptarget.unsupported_handler = self.drop_unsupported_handler
-			p2.SetDropTarget(p2.droptarget)
+			p2.SetDropTarget(self.droptarget)
 			p2.sizer = wx.BoxSizer(wx.VERTICAL)
 			p2.SetSizer(p2.sizer)
 
@@ -84,15 +85,7 @@ class TestchartEditor(wx.Frame):
 			panel = self.panel = p1
 		else:
 			panel = self.panel = wx.Panel(self)
-		panel.droptarget = FileDrop()
-		panel.droptarget.drophandlers = {
-			".icc": self.ti1_drop_handler,
-			".icm": self.ti1_drop_handler,
-			".ti1": self.ti1_drop_handler,
-			".ti3": self.ti1_drop_handler
-		}
-		panel.droptarget.unsupported_handler = self.drop_unsupported_handler
-		panel.SetDropTarget(panel.droptarget)
+		panel.SetDropTarget(self.droptarget)
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		panel.SetSizer(self.sizer)
@@ -327,7 +320,9 @@ class TestchartEditor(wx.Frame):
 
 	def drop_unsupported_handler(self):
 		if not self.worker.is_working():
-			InfoDialog(self, msg = lang.getstr("error.file_type_unsupported"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
+			files = self.droptarget._filenames
+			InfoDialog(self, msg = lang.getstr("error.file_type_unsupported") +
+								 "\n\n" + "\n".join(files), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
 
 	def tc_grid_cell_left_click_handler(self, event):
 		event.Skip()
@@ -752,7 +747,7 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_vrml_lab", int(self.tc_vrml_lab.GetValue()))
 		if hasattr(self, "ti1") and self.tc_vrml.GetValue():
 			self.tc_vrml.SetValue(False)
-			InfoDialog(self, msg = lang.getstr("testchart.vrml_denied"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
+			InfoDialog(self, msg = lang.getstr("testchart.vrml_denied"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"), logit=False)
 
 	def tc_update_controls(self):
 		self.tc_algo.SetStringSelection(self.tc_algos_ab.get(getcfg("tc_algo"), self.tc_algos_ab.get(defaults["tc_algo"])))

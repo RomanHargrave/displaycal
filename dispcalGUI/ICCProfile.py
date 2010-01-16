@@ -10,19 +10,24 @@ import struct
 import sys
 from time import localtime, mktime, strftime
 from UserString import UserString
-if sys.platform != "win32":
+if sys.platform == "win32":
+	import _winreg
+else:
 	import subprocess as sp
 
 if sys.platform == "win32":
 	try:
+		import pywintypes
 		import win32api
-		import win32gui
+		## import win32gui
 	except ImportError:
 		pass
 
 from defaultpaths import iccprofiles, iccprofiles_home
 from ordereddict import OrderedDict
 from safe_print import safe_print
+
+DD_ATTACHED_TO_DESKTOP = 0x01
 
 if sys.platform == "darwin":
 	enc = "UTF-8"
@@ -200,19 +205,76 @@ observers = {
 
 
 def Property(func):
-	return property(**func()) 
+	return property(**func())
+
+
+def _winreg_get_display_profile(monkey, current_user=False):
+	filename = None
+	try:
+		if current_user:
+			subkey = "\\".join(["Software", "Microsoft", "Windows NT", 
+								"CurrentVersion", "ICM", "ProfileAssociations", 
+								"Display"] + monkey)
+			key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, subkey)
+			## print "HKEY_CURRENT_USER", subkey
+		else:
+			subkey = "\\".join(["SYSTEM", "CurrentControlSet", "Control", 
+								"Class"] + monkey)
+			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey)
+			## print "HKEY_LOCAL_MACHINE", subkey
+		numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+		for i in range(numvalues):
+			name, value, type_ = _winreg.EnumValue(key, i)
+			## print i, name, repr(value)
+			if name == "ICMProfile":
+				if value:
+					filename = value[-1]  # last one in the list is active
+				else:
+					# fall back to sRGB
+					filename = os.path.join(iccprofiles[0], 
+											"sRGB Color Space Profile.icm")
+			elif name == "UsePerUserProfiles" and not value:
+				filename = None
+	except Exception, exception:
+		pass
+	## print filename
+	return filename
 
 
 def get_display_profile(display_no=0):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
-		if not "win32api" in sys.modules or not "win32gui" in sys.modules:
+		if not "win32api" in sys.modules: ## or not "win32gui" in sys.modules:
 			raise ImportError("pywin32 not available")
-		monitor = win32api.EnumDisplayMonitors(None, None)[display_no][0]
-		display_name = win32api.GetMonitorInfo(monitor)["Device"]
-		dc = win32gui.CreateDC("DISPLAY", display_name, None)
-		filename = win32api.GetICMProfile(dc)
+		monitor = win32api.EnumDisplayMonitors(None, None)
+		moninfo = win32api.GetMonitorInfo(monitor[display_no][0])
+		display_name = moninfo["Device"]
+		# via GetICMProfile - not dynamic, will not reflect runtime changes
+		## dc = win32gui.CreateDC("DISPLAY", display_name, None)
+		## filename = win32api.GetICMProfile(dc)
+		## win32gui.ReleaseDC(None, dc)
+		# via registry
+		i = 0
+		device = None
+		while True:
+			try:
+				device = win32api.EnumDisplayDevices(display_name, i)
+			except pywintypes.error, exception:
+				break
+			else:
+				if device.StateFlags & DD_ATTACHED_TO_DESKTOP:
+					break
+			i += 1
+		filename = None
+		if device:
+			monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
+			## print monkey
+			# current user
+			filename = _winreg_get_display_profile(monkey, True)
+			if not filename:
+				# system
+				filename = _winreg_get_display_profile(monkey)
 		if filename:
 			profile = ICCProfile(filename)
 	else:

@@ -323,7 +323,7 @@ class GamapFrame(BaseFrame):
 				profile = ICCP.ICCProfile(v)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				p = False
-				InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+				InfoDialog(self, msg=lang.getstr("profile.invalid") + "\n" + v, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 			else:
@@ -506,8 +506,7 @@ class MainFrame(BaseFrame):
 		self.headerbitmap.SetBitmap(getbitmap("theme/header"))
 		self.calpanel.SetScrollRate(0, 20)
 		self.update_comports()
-		self.update_controls(update_profile_name=False)
-		self.update_profile_name()
+		self.update_controls()
 		self.SetSaneGeometry(int(getcfg("position.x")), 
 							 int(getcfg("position.y")))
 		if verbose >= 1:
@@ -813,7 +812,9 @@ class MainFrame(BaseFrame):
 		
 		"""
 		if not self.worker.is_working():
-			InfoDialog(self, msg=lang.getstr("error.file_type_unsupported"), 
+			files = self.droptarget._filenames
+			InfoDialog(self, msg=lang.getstr("error.file_type_unsupported") +
+								 "\n\n" + "\n".join(files), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 
@@ -1884,7 +1885,8 @@ class MainFrame(BaseFrame):
 			if result:
 				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
 						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-information"))
+						   bitmap=geticon(32, "dialog-information"),
+						   logit=False)
 			else:
 				# prompt for setup.exe
 				defaultDir, defaultFile = expanduseru("~"), "setup.exe"
@@ -1910,12 +1912,14 @@ class MainFrame(BaseFrame):
 						InfoDialog(self, 
 								   msg=lang.getstr("enable_spyder2_success"), 
 								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"))
+								   bitmap=geticon(32, "dialog-information"),
+								   logit=False)
 					else:
 						InfoDialog(self, 
 								   msg=lang.getstr("enable_spyder2_failure"), 
 								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
+								   bitmap=geticon(32, "dialog-error"),
+								   logit=False)
 
 	def use_separate_lut_access_handler(self, event):
 		self.use_separate_lut_access = not self.use_separate_lut_access
@@ -2542,7 +2546,8 @@ class MainFrame(BaseFrame):
 			try:
 				profile = ICCP.ICCProfile(dst_path)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+				InfoDialog(self, msg=lang.getstr("profile.invalid") + "\n" + 
+									 dst_path, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return False
@@ -2562,7 +2567,8 @@ class MainFrame(BaseFrame):
 				try:
 					profile = ICCP.ICCProfile(cal)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + cal, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -2570,7 +2576,8 @@ class MainFrame(BaseFrame):
 				   profile.colorSpace != "RGB":
 					InfoDialog(self, msg=lang.getstr("profile.unsupported", 
 													 (profile.profileClass, 
-													  profile.colorSpace)), 
+													  profile.colorSpace)) +
+										 "\n" + cal, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -2654,7 +2661,8 @@ class MainFrame(BaseFrame):
 				try:
 					profile = ICCP.ICCProfile(path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -2668,7 +2676,8 @@ class MainFrame(BaseFrame):
 										 install=False, 
 										 skip_scripts=True)
 				else:
-					InfoDialog(self, msg=lang.getstr("profile.no_vcgt"), 
+					InfoDialog(self, msg=lang.getstr("profile.no_vcgt") + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 			else:
@@ -2699,7 +2708,8 @@ class MainFrame(BaseFrame):
 							max(self.display_ctrl.GetSelection(), 0))
 					except Exception, exception:
 						safe_print("ICCP.get_display_profile(%s):" % 
-								   self.display_ctrl.GetSelection(), exception)
+								   max(self.display_ctrl.GetSelection(), 0), 
+								   exception)
 						profile = None
 				elif cal.lower().endswith(".icc") or \
 					 cal.lower().endswith(".icm"):
@@ -2766,7 +2776,8 @@ class MainFrame(BaseFrame):
 					InfoDialog(self, 
 							   msg=lang.getstr("profile.install.success"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-information"))
+							   bitmap=geticon(32, "dialog-information"),
+							   logit=False)
 				# try to create autostart script to load LUT curves on login
 				n = get_display()
 				loader_args = "-d%s -c -L" % n
@@ -2819,7 +2830,12 @@ class MainFrame(BaseFrame):
 											os.path.join(autostart, 
 														 name + ".lnk"), 0)
 								except Exception, exception:
-									pass  # try user scope
+									log(lang.getstr(
+										   "error.autostart_creation", 
+										   autostart) + "\n\n" + 
+										   unicode(str(exception), enc, 
+												   "replace"))
+									# try user scope
 								else:
 									return result
 							else:
@@ -2847,7 +2863,7 @@ class MainFrame(BaseFrame):
 							InfoDialog(self, 
 									   msg=lang.getstr(
 										   "error.autostart_creation", 
-										   "Windows") + "\n\n" + 
+										   autostart_home) + "\n\n" + 
 										   unicode(str(exception), enc, 
 												   "replace"), 
 									   ok=lang.getstr("ok"), 
@@ -2924,29 +2940,31 @@ class MainFrame(BaseFrame):
 						InfoDialog(self, 
 								   msg=lang.getstr("calibration.reset_success"), 
 								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"))
+								   bitmap=geticon(32, "dialog-information"),
+								   logit=False)
 					else:
 						InfoDialog(self, 
 								   msg=lang.getstr("calibration.load_success"), 
 								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"))
+								   bitmap=geticon(32, "dialog-information"),
+								   logit=False)
 		elif not silent:
 			if install:
 				if verbose >= 1: safe_print(lang.getstr("failure"))
 				if result is not None:
 					InfoDialog(self, msg=lang.getstr("profile.install.error"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
+							   bitmap=geticon(32, "dialog-error"), logit=False)
 			else:
 				if cal is False:
 					InfoDialog(self, 
 							   msg=lang.getstr("calibration.reset_error"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
+							   bitmap=geticon(32, "dialog-error"), logit=False)
 				else:
 					InfoDialog(self, msg=lang.getstr("calibration.load_error"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
+							   bitmap=geticon(32, "dialog-error"), logit=False)
 		self.worker.pwd = None  # don't keep password in memory
 		return result
 
@@ -2999,7 +3017,7 @@ class MainFrame(BaseFrame):
 
 	def reset_cal(self, event=None):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
-			self.lut_viewer.profile = None
+			self.lut_viewer.LoadProfile(None)
 			self.lut_viewer.DrawLUT()
 		if check_set_argyll_bin():
 			if verbose >= 1 and event is None:
@@ -3092,9 +3110,11 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
 		self.worker.dispcal_create_fast_matrix_shaper = True
+		start_timers = True
 		if self.calibrate(remove=True):
 			if getcfg("calibration.update") or \
 			   self.worker.dispcal_create_fast_matrix_shaper:
+				start_timers = False
 				wx.CallAfter(self.profile_finish, True, 
 							 success_msg=lang.getstr("calibration.complete"))
 			else:
@@ -3107,7 +3127,7 @@ class MainFrame(BaseFrame):
 					   msg=lang.getstr("calibration.incomplete"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
-		self.Show()
+		self.Show(start_timers=start_timers)
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
@@ -3206,7 +3226,8 @@ class MainFrame(BaseFrame):
 					try:
 						profile = ICCP.ICCProfile(cal)
 					except (IOError, ICCP.ICCProfileInvalidError), exception:
-						InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+						InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + path, 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"))
 						self.update_profile_name_timer.Start(1000)
@@ -3272,7 +3293,8 @@ class MainFrame(BaseFrame):
 				try:
 					profile = ICCP.ICCProfile(profile_path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + profile_path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					self.start_timers(True)
@@ -3440,7 +3462,8 @@ class MainFrame(BaseFrame):
 						except (IOError, ICCP.ICCProfileInvalidError), \
 							   exception:
 							InfoDialog(self, 
-									   msg=lang.getstr("profile.invalid"), 
+									   msg=lang.getstr("profile.invalid") + 
+										   "\n" + path, 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-error"))
 							return
@@ -3464,7 +3487,7 @@ class MainFrame(BaseFrame):
 				   self.lut_viewer.profile.fileName != profile.fileName:
 					self.lut_viewer.LoadProfile(profile)
 			else:
-				self.lut_viewer.profile = None
+				self.lut_viewer.LoadProfile(None)
 			self.lut_viewer.DrawLUT()
 	
 	def show_lut_handler(self, event=None, profile=None):
@@ -3790,13 +3813,15 @@ class MainFrame(BaseFrame):
 				try:
 					profile = ICCP.ICCProfile(path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
 				if profile.tags.get("CIED", "")[0:4] != "CTI3":
 					InfoDialog(self, 
-							   msg=lang.getstr("profile.no_embedded_ti3"), 
+							   msg=lang.getstr("profile.no_embedded_ti3") + 
+								   "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -4283,7 +4308,8 @@ class MainFrame(BaseFrame):
 				try:
 					profile = ICCP.ICCProfile(path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -4291,7 +4317,8 @@ class MainFrame(BaseFrame):
 							 line in StringIO(profile.tags.get("CIED", ""))]
 				if not "CTI3" in ti3_lines:
 					InfoDialog(self, 
-							   msg=lang.getstr("profile.no_embedded_ti3"), 
+							   msg=lang.getstr("profile.no_embedded_ti3") + 
+								   "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -4541,7 +4568,8 @@ class MainFrame(BaseFrame):
 				try:
 					profile = ICCP.ICCProfile(path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid"), 
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -4549,7 +4577,8 @@ class MainFrame(BaseFrame):
 				   profile.colorSpace != "RGB":
 					InfoDialog(self, msg=lang.getstr("profile.unsupported", 
 													 (profile.profileClass, 
-													  profile.colorSpace)), 
+													  profile.colorSpace)) + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
@@ -4722,7 +4751,7 @@ class MainFrame(BaseFrame):
 							msg = lang.getstr("settings_loaded.profile")
 
 						if not silent:
-							InfoDialog(self, msg=msg, ok=lang.getstr("ok"), 
+							InfoDialog(self, msg=msg + "\n" + path, ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-information"))
 						return
 					else:
@@ -4744,7 +4773,8 @@ class MainFrame(BaseFrame):
 							# load calibration into lut
 							self.load_cal(cal=path, silent=False)
 						if not silent:
-							InfoDialog(self, msg=lang.getstr("no_settings"), 
+							InfoDialog(self, msg=lang.getstr("no_settings") + 
+												 "\n" + path, 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-error"))
 						return
@@ -4768,7 +4798,8 @@ class MainFrame(BaseFrame):
 						# load calibration into lut
 						self.load_cal(cal=path, silent=False)
 					if not silent:
-						InfoDialog(self, msg=lang.getstr("no_settings"), 
+						InfoDialog(self, msg=lang.getstr("no_settings") + 
+											 "\n" + path, 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"))
 					return
@@ -4794,7 +4825,8 @@ class MainFrame(BaseFrame):
 						if value != "DISPLAY":
 							InfoDialog(self, 
 									   msg=lang.getstr(
-										   "calibration.file.invalid"), 
+										   "calibration.file.invalid") + 
+										   "\n" + path, 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-error"))
 							return
@@ -4903,7 +4935,8 @@ class MainFrame(BaseFrame):
 					self.calibration_file_ctrl.SetSelection(idx)
 				writecfg()
 				if not silent:
-					InfoDialog(self, msg=lang.getstr("no_settings"), 
+					InfoDialog(self, msg=lang.getstr("no_settings") + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 			else:
@@ -4919,7 +4952,8 @@ class MainFrame(BaseFrame):
 				self.load_cal(silent=True)
 				if not silent:
 					InfoDialog(self, msg=lang.getstr("settings_loaded", 
-													 ", ".join(settings)), 
+													 ", ".join(settings)) + 
+										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-information"))
 
