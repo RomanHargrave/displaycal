@@ -32,7 +32,7 @@ else:
 	from defaultpaths import (xdg_config_home, xdg_data_home, 
 							 xdg_data_home_default, xdg_data_dirs)
 from defaultpaths import autostart, autostart_home
-from meta import name as appname, lastmod, version
+from meta import name as appname, build, lastmod, version
 from options import ascii, debug, verbose
 from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
@@ -234,43 +234,63 @@ def runtimeconfig(pyfile):
 	attribute).
 	
 	"""
+	if debug or verbose >= 1:
+		if not "safe_print" in globals():
+			global safe_print
+			from log import safe_print
 	pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
 	pydir = os.path.dirname(pypath)
 	pyname, pyext = os.path.splitext(os.path.basename(pypath))
 	isapp = sys.platform == "darwin" and \
 			exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
 			os.path.isfile(os.path.join(exedir, pyname))
+	if debug:
+		safe_print("[D] cwd:", os.getcwdu())
 	if isapp:
-		appdir = os.path.join(pydir, "..", "..", "..")
+		if pydir.split(os.path.sep)[-1] == "site-packages.zip":
+			pydir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
+	elif data_dirs[0] != os.getcwdu():
+		data_dirs.insert(0, os.getcwdu())
+	if debug:
+		safe_print("[D] pydir:", pydir)
+	if pydir not in data_dirs:
+		data_dirs.append(pydir)
+	if isapp:
+		appdir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
+		if debug:
+			safe_print("[D] appdir:", appdir)
 		if appdir not in data_dirs and os.path.isdir(appdir):
-			data_dirs.insert(0, os.path.join(pydir, "..", "..", ".."))
+			data_dirs.append(appdir)
 		runtype = ".app"
 	elif isexe:
+		if debug:
+			safe_print("[D] _MEIPASS2 or pydir:", getenvu("_MEIPASS2", pydir))
 		if getenvu("_MEIPASS2", pydir) not in data_dirs:
-			data_dirs.insert(0, getenvu("_MEIPASS2", pydir))
+			data_dirs.append(getenvu("_MEIPASS2", pydir))
 		runtype = exe_ext
 	else:
-		data_dirs.insert(0, os.path.abspath(os.path.join(pydir, "..")))
+		## pydir_parent = os.path.abspath(os.path.join(pydir, ".."))
+		## if debug:
+		## 	safe_print("[D] pydir parent:", pydir_parent)
+		## if pydir_parent not in data_dirs:
+			## data_dirs.append(pydir_parent)
 		runtype = pyext
-	if pydir not in data_dirs:
-		data_dirs.insert(0, pydir)
-	if (not isexe or os.getcwdu() != pydir) and data_dirs[0] != os.getcwdu():
-		data_dirs.insert(0, os.getcwdu())
 	for dir_ in sys.path:
 		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
 		if dir_ not in data_dirs and os.path.isdir(dir_):
 			data_dirs.append(dir_)
+			if debug:
+				safe_print("[D] from sys.path:", dir_)
+	if debug:
+		safe_print("[D] Data files search paths:\n[D]", "\n[D] ".join(data_dirs))
 	defaultmmode = defaults["measurement_mode"]
 	defaultptype = defaults["profile.type"]
 	defaultchart = testchart_defaults.get(defaultptype, testchart_defaults["s"])
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart))
 	if verbose >= 1:
-		if not "safe_print" in globals():
-			global safe_print
-			from log import safe_print
-		safe_print(appname + runtype, version, lastmod)
-	return pypath, pydir, pyname, pyext, isapp, runtype, lastmod
+		safe_print(appname + runtype, version, build)
+	return pypath, pydir, pyname, pyext, isapp, runtype, build
 
 # User settings
 

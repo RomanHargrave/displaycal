@@ -213,6 +213,7 @@
 	"profile.type": "Profile type",
 	"profile.type.gamma_matrix": "Gamma + matrix",
 	"profile.type.lut.lab": "L*a*b* LUT",
+	"profile.type.lut.xyz": "XYZ LUT",
 	"profile.type.lut_rg_swapped_matrix.xyz": "XYZ LUT + R <-> G swapped matrix",
 	"profile.type.lut_matrix.xyz": "XYZ LUT + matrix",
 	"profile.type.shaper_matrix": "Curves + matrix",

@@ -33,7 +33,8 @@
 """
 
 try:
-	from __version__ import LASTMOD as lastmod, VERSION, VERSION_STRING
+	from __version__ import (BUILD_DATE as build, LASTMOD as lastmod, VERSION, 
+							 VERSION_STRING)
 except ImportError:
 	lastmod = "0000-00-00T00:00:00.0Z"
 	VERSION = (0, 0, 0, 0)

@@ -1,140 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resource>
   <object class="wxFrame" name="mainframe" subclass="dispcalGUI.DisplayCalibratorGUI">
-    <object class="wxMenuBar" name="menu">
-      <object class="wxMenu" name="menu.file">
-        <object class="wxMenuItem" name="calibration.load">
-          <label>calibration.load</label>
-          <accel>CTRL+O</accel>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="testchart.set">
-          <label>testchart.set</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="testchart.edit">
-          <label>testchart.edit</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="profile.set_save_path">
-          <label>profile.set_save_path</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <label>menu.file</label>
-      </object>
-      <object class="wxMenu" name="menu.extra">
-        <object class="wxMenuItem" name="create_profile">
-          <label>create_profile</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="install_display_profile">
-          <label>install_display_profile</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="calibration.load_from_cal_or_profile">
-          <label>calibration.load_from_cal_or_profile</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="calibration.load_from_display_profile">
-          <label>calibration.load_from_display_profile</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="calibration.show_lut">
-          <label>calibration.show_lut</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="calibration.reset">
-          <label>calibration.reset</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="report.calibrated">
-          <label>report.calibrated</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="report.uncalibrated">
-          <label>report.uncalibrated</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="calibration.verify">
-          <label>calibration.verify</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="detect_displays_and_ports">
-          <label>detect_displays_and_ports</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="wxMenuItem" name="use_separate_lut_access">
-          <label>use_separate_lut_access</label>
-          <checkable>1</checkable>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="enable_spyder2">
-          <label>enable_spyder2</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="restore_defaults">
-          <label>restore_defaults</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="infoframe.toggle">
-          <label>infoframe.toggle</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <label>menu.extra</label>
-      </object>
-      <object class="wxMenu" name="menu.language">
-        <label>menu.language</label>
-      </object>
-      <object class="wxMenu" name="menu.help">
-        <object class="wxMenuItem" name="menu.about">
-          <label>menu.about</label>
-          <XRCED>
-            <events>EVT_MENU</events>
-          </XRCED>
-        </object>
-        <label>menu.help</label>
-      </object>
-    </object>
     <object class="wxBoxSizer">
       <object class="sizeritem">
         <object class="wxPanel" name="panel">
@@ -1042,7 +908,7 @@
                         <object class="sizeritem">
                           <object class="wxStaticText" name="testchart_patches_amount">
                             <size>50,-1</size>
-                            <label> </label>
+                            <label>0</label>
                             <tooltip>testchart.info</tooltip>
                           </object>
                           <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>

@@ -34,7 +34,9 @@ def mac_app_activate(delay=0, mac_app_name="Finder"):
 		if appscript is None or mac_app_name == appname:
 			# Do not use the appscript method to give focus back to 
 			# dispcalGUI, it doesn't work reliably. The osascript method works.
-			sp.call(['osascript'] + args)
+			p = sp.Popen(['osascript'] + args, stdin=sp.PIPE, stdout=sp.PIPE, 
+						 stderr=sp.PIPE)
+			p.communicate()
 		else:
 			mac_app = appscript.app(mac_app_name)
 			if mac_app.isrunning():
@@ -79,7 +81,10 @@ def mac_terminal_do_script(script=None, do=True):
 		retcode = -1
 		try:
 			if appscript is None:
-				retcode = sp.call(['osascript'] + args)
+				p = sp.Popen(['osascript'] + args, stdin=sp.PIPE, stdout=sp.PIPE, 
+							 stderr=sp.PIPE)
+				p.communicate()
+				retcode = p.wait()
 			else:
 				terminal = appscript.app("Terminal")
 				if terminal.isrunning():
@@ -120,7 +125,10 @@ def mac_terminal_set_colors(background="black", cursor="gray", text="gray",
 		retcode = -1
 		try:
 			if appscript is None:
-				retcode = sp.call(['osascript'] + args)
+				p = sp.Popen(['osascript'] + args, stdin=sp.PIPE, stdout=sp.PIPE, 
+							 stderr=sp.PIPE)
+				p.communicate()
+				retcode = p.wait()
 			else:
 				tw = appscript.app("Terminal").windows[1]
 				tw.background_color.set(background)

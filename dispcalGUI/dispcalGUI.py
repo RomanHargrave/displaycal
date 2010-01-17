@@ -192,7 +192,7 @@ class BaseFrame(wx.Frame):
 		"""
 		
 		# Menus
-		menubar = self.GetMenuBar()
+		menubar = self.menubar if hasattr(self, "menubar") else self.GetMenuBar()
 		if menubar:
 			for menu, label in menubar.GetMenus():
 				menu_pos = menubar.FindMenu(label)
@@ -211,6 +211,9 @@ class BaseFrame(wx.Frame):
 										item.Accel.ToString()
 						else:
 							item.Text = lang.getstr(label)
+			if sys.platform == "darwin":
+				wx.GetApp().SetMacHelpMenuTitleName(lang.getstr("menu.help"))
+			self.SetMenuBar(menubar)
 		
 		# Controls and labels
 		for child in self.GetAllChildren():
@@ -498,8 +501,8 @@ class MainFrame(BaseFrame):
 		self.update_menus()
 		self.init_controls()
 		self.setup_language()
-		self.update_displays()
 		BaseFrame.update_layout(self)
+		self.update_displays()
 		# Add the header bitmap after layout so it won't stretch the window 
 		# further than necessary
 		self.headerbitmap = self.panel.FindWindowByName("headerbitmap")
@@ -892,23 +895,28 @@ class MainFrame(BaseFrame):
 		   and not "RC1" in self.worker.argyll_version_string 
 		   and not "RC2" in self.worker.argyll_version_string 
 		   and not "RC3" in self.worker.argyll_version_string):
+			# Argyll 1.1.0_RC3 had a bug when using -aX
+			# which was fixed in 1.1.0_RC4
 			self.profile_types.insert(profile_types_index, 
 									  lang.getstr("profile.type.lut_matrix.xyz"))
-										# Argyll 1.1.0_RC3 had a bug when using -aX
-										# which was fixed in 1.1.0_RC4
 			self.profile_types_ab[profile_types_index] = "X"  # XYZ LUT + accurate matrix
 			profile_types_index += 1
-		if sys.platform != "win32" or (self.worker.argyll_version[0:3] > [1, 1, 0] or (
-									   self.worker.argyll_version[0:3] == [1, 1, 0] 
-									   and not "Beta" in self.worker.argyll_version_string
-									   and not "RC1" in self.worker.argyll_version_string
-									   and not "RC2" in self.worker.argyll_version_string)):
-										# Windows wants matrix tags in XYZ LUT profiles,
-										# which is satisfied with Argyll >= 1.1.0_RC3
-										self.profile_types.insert(profile_types_index, 
-																  lang.getstr("profile.type.lut_rg_swapped_matrix.xyz"))
-										self.profile_types_ab[profile_types_index] = "x"  # XYZ LUT + dummy matrix (R <-> G swapped)
-										profile_types_index += 1
+		if self.worker.argyll_version[0:3] > [1, 1, 0] or (
+		   self.worker.argyll_version[0:3] == [1, 1, 0] 
+		   and not "Beta" in self.worker.argyll_version_string
+		   and not "RC1" in self.worker.argyll_version_string
+		   and not "RC2" in self.worker.argyll_version_string):
+			# Windows wants matrix tags in XYZ LUT profiles,
+			# which is satisfied with Argyll >= 1.1.0_RC3
+			self.profile_types.insert(profile_types_index, 
+									  lang.getstr("profile.type.lut_rg_swapped_matrix.xyz"))
+			self.profile_types_ab[profile_types_index] = "x"  # XYZ LUT + dummy matrix (R <-> G swapped)
+			profile_types_index += 1
+		elif sys.platform != "win32":
+			self.profile_types.insert(profile_types_index, 
+									  lang.getstr("profile.type.lut.xyz"))
+			self.profile_types_ab[profile_types_index] = "x"  # XYZ LUT
+			profile_types_index += 1
 		self.profile_type_ctrl.SetItems(self.profile_types)
 		self.profile_types_ab[profile_types_index] = "l"
 		self.profile_types_ab[profile_types_index + 1] = "s"
@@ -923,9 +931,11 @@ class MainFrame(BaseFrame):
 
 	def init_menus(self):
 		""" Initialize the menus and menuitem event handlers. """
-		menubar = self.GetMenuBar()
+		res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+														 "mainmenu.xrc")))
+		self.menubar = res.LoadMenuBar("menu")  ##self.GetMenuBar()
 		
-		file_ = menubar.GetMenu(menubar.FindMenu("menu.file"))
+		file_ = self.menubar.GetMenu(self.menubar.FindMenu("menu.file"))
 		menuitem = file_.FindItemById(file_.FindItem("calibration.load"))
 		self.Bind(wx.EVT_MENU, self.load_cal_handler, menuitem)
 		menuitem = file_.FindItemById(file_.FindItem("testchart.set"))
@@ -944,7 +954,7 @@ class MainFrame(BaseFrame):
 		self.menuitem_quit = file_.Append(-1, "&menuitem.quit\tCtrl+Q")
 		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 
-		extra = menubar.GetMenu(menubar.FindMenu("menu.extra"))
+		extra = self.menubar.GetMenu(self.menubar.FindMenu("menu.extra"))
 		self.menuitem_create_profile = extra.FindItemById(
 			extra.FindItem("create_profile"))
 		self.Bind(wx.EVT_MENU, self.create_profile_handler, 
@@ -992,7 +1002,7 @@ class MainFrame(BaseFrame):
 		menuitem = extra.FindItemById(extra.FindItem("infoframe.toggle"))
 		self.Bind(wx.EVT_MENU, self.infoframe_toggle_handler, menuitem)
 
-		languages = menubar.GetMenu(menubar.FindMenu("menu.language"))
+		languages = self.menubar.GetMenu(self.menubar.FindMenu("menu.language"))
 		llist = [(lang.ldict[lcode].get("language", ""), lcode) for lcode in 
 				 lang.ldict]
 		llist.sort()
@@ -1009,9 +1019,15 @@ class MainFrame(BaseFrame):
 			lang.ldict[lcode].menuitem_id = menuitem.GetId()
 			self.Bind(wx.EVT_MENU, self.set_language_handler, menuitem)
 
-		help = menubar.GetMenu(menubar.FindMenu("menu.help"))
+		help = self.menubar.GetMenu(self.menubar.FindMenu("menu.help"))
 		self.menuitem_about = help.FindItemById(help.FindItem("menu.about"))
 		self.Bind(wx.EVT_MENU, self.aboutdialog_handler, self.menuitem_about)
+		
+		if sys.platform == "darwin":
+			wx.GetApp().SetMacAboutMenuItemId(self.menuitem_about.GetId())
+			wx.GetApp().SetMacPreferencesMenuItemId(self.menuitem_prefs.GetId())
+			wx.GetApp().SetMacExitMenuItemId(self.menuitem_quit.GetId())
+			wx.GetApp().SetMacHelpMenuTitleName(lang.getstr("menu.help"))
 	
 	def update_menus(self):
 		"""
@@ -1225,11 +1241,11 @@ class MainFrame(BaseFrame):
 		Set a new language globally and on-the-fly.
 		
 		"""
-		menubar = self.GetMenuBar()
+		##menubar = self.GetMenuBar()
 		for lcode in lang.ldict:
 			if lang.ldict[lcode].menuitem_id == event.GetId():
 				# Get the previously marked menu item
-				menuitem = menubar.FindItemById(
+				menuitem = self.menubar.FindItemById(
 					lang.ldict[lang.getcode()].menuitem_id)
 				if hasattr(self, "tcframe"):
 					if not self.tcframe.tc_close_handler():
@@ -1243,7 +1259,7 @@ class MainFrame(BaseFrame):
 				font.SetWeight(wx.NORMAL)
 				menuitem.SetFont(font)
 				# Set the currently marked menu item's font weight to bold
-				menuitem = menubar.FindItemById(lang.ldict[lcode].menuitem_id)
+				menuitem = self.menubar.FindItemById(lang.ldict[lcode].menuitem_id)
 				font = menuitem.Font
 				font.SetWeight(wx.BOLD)
 				menuitem.SetFont(font)
@@ -5117,13 +5133,18 @@ class MainFrame(BaseFrame):
 		items += [wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org")]
-		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.lib.hyperlink.HyperLinkCtrl(
-			self.aboutdialog, -1, label="README", 
-			URL=get_data_path("README.html"))]
-		items += [wx.lib.hyperlink.HyperLinkCtrl(
-			self.aboutdialog, -1, label=lang.getstr("license_info"), 
-			URL=get_data_path("LICENSE.txt"))]
+		readme = get_data_path("README.html")
+		license = get_data_path("LICENSE.txt")
+		if isinstance(readme, basestring) or isinstance(license, basestring):
+			items += [wx.StaticText(self.aboutdialog, -1, "")]
+		if isinstance(readme, basestring):
+			items += [wx.lib.hyperlink.HyperLinkCtrl(
+				self.aboutdialog, -1, label="README", 
+				URL=readme)]
+		if isinstance(license, basestring):
+			items += [wx.lib.hyperlink.HyperLinkCtrl(
+				self.aboutdialog, -1, label=lang.getstr("license_info"), 
+				URL=license)]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.Layout()
@@ -5187,11 +5208,6 @@ class MainApp(wx.App):
 		self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
 		self.frame = MainFrame()
 		self.SetTopWindow(self.frame)
-		if sys.platform == "darwin":
-			self.SetMacAboutMenuItemId(self.frame.menuitem_about.GetId())
-			self.SetMacPreferencesMenuItemId(self.frame.menuitem_prefs.GetId())
-			self.SetMacExitMenuItemId(self.frame.menuitem_quit.GetId())
-			self.SetMacHelpMenuTitleName(lang.getstr("menu.help"))
 		self.frame.Show()
 		return True
 

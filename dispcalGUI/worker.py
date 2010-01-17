@@ -332,12 +332,13 @@ def sendkeys(delay=0, target="", keys=""):
 		mac_app_activate(delay, target)
 		try:
 			if appscript is None:
-				sp.call([
+				p = sp.Popen([
 					'osascript',
 					'-e', 'tell application "System Events"',
 					'-e', 'keystroke "%s"' % keys,
 					'-e', 'end tell'
-				])
+				], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+				p.communicate()
 			else:
 				appscript.app('System Events').keystroke(keys)
 		except Exception, exception:
@@ -358,16 +359,14 @@ def sendkeys(delay=0, target="", keys=""):
 			if delay: sleep(delay)
 			if verbose >= 2:
 				safe_print('Sending key sequence using xte: "%s"' % keys)
-			stdout = tempfile.SpooledTemporaryFile()
-			retcode = sp.call(["xte", "key %s" % keys], stdin=sp.PIPE, 
-							  stdout=stdout, stderr=stdout)
+			p = sp.Popen(["xte", "key %s" % keys], stdin=sp.PIPE, 
+							  stdout=sp.PIPE, stderr=sp.PIPE)
+			stdout, stderr = p.communicate()
 			if verbose >= 2:
-				stdout.seek(0)
-				safe_print(stdout.read())
-			stdout.close()
-			if retcode != 0:
+				safe_print(stdout)
+			if p.returncode != 0:
 				if verbose >= 2:
-					safe_print(retcode)
+					safe_print(p.returncode)
 		except Exception, exception:
 			if verbose >= 1:
 				safe_print("Error - sendkeys() failed:", exception)
@@ -851,7 +850,9 @@ class Worker():
 												   cmdname + 
 												   ".app").encode(fs_enc)
 						cmdargs = ['osacompile'] + script + [appfilename]
-						sp.call(cmdargs)
+						p = sp.Popen(cmdargs, stdin=sp.PIPE, stdout=sp.PIPE, 
+									 stderr=sp.PIPE)
+						p.communicate()
 						shutil.move(cmdfilename, appfilename + 
 									"/Contents/Resources/main.command")
 						os.chmod(appfilename + 
@@ -860,7 +861,9 @@ class Worker():
 						appfilename = os.path.join(
 							working_dir,  working_basename + ".all.app")
 						cmdargs = ['osacompile'] + script + [appfilename]
-						sp.call(cmdargs)
+						p = sp.Popen(cmdargs, stdin=sp.PIPE, stdout=sp.PIPE, 
+									 stderr=sp.PIPE)
+						p.communicate()
 						shutil.copyfile(allfilename, appfilename + 
 										"/Contents/Resources/main.command")
 						os.chmod(appfilename + 
