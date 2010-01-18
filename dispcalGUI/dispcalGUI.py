@@ -3295,11 +3295,20 @@ class MainFrame(BaseFrame):
 								ok=lang.getstr("continue"), 
 								cancel=lang.getstr("cancel"), 
 								bitmap=geticon(32, "dialog-warning"))
+			dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
+									   lang.getstr("calibration.reset"))
+			dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
+						   border=12)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
 			result = dlg.ShowModal()
+			reset_cal = dlg.reset_cal_ctrl.GetValue()
 			dlg.Destroy()
-			if result != wx.ID_OK:
+			if result == wx.ID_CANCEL:
 				self.update_profile_name_timer.Start(1000)
 				return
+			if reset_cal:
+				self.reset_cal()
 			self.setup_measurement(self.just_profile, apply_calibration)
 		else:
 			self.update_profile_name_timer.Start(1000)

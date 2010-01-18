@@ -1009,6 +1009,7 @@
 							<li>Support for Argyll &gt;= 1.1.0 RC3 adaptive emissive measurement mode with i1 Pro.</li>
 							<li>More profile types (XYZ LUT on Windows only selectable if using Argyll &gt;= 1.1.0 RC3)</li>
 							<li>Optionally create a fast matrix/shaper profile when just calibrating.</li>
+							<li>Added “Reset LUT curves” checkbox in the dialog shown when just profiling.</li>
 							<li>LUT Viewer: Capability to show a matrix profile's rTRC/gTRC/bTRC curves.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
@@ -1023,7 +1024,7 @@
 							<li>Show file paths in most dialogs involving file processing.</li>
 							<li>ReadMe and license are now links in the About dialog.</li>
 							<li>Linux: Updated udev rules to those provided with Argyll 1.1.0. Removed obsolete permissions and policy files.</li>
-							<li>Windows: Get name of selected display via additional Windows API calls (should yield more descriptive display names than "DISPLAY1", "DISPLAY2" etc.)</li>
+							<li>Windows: Get name of selected display via additional Windows API calls (should yield more descriptive display names than “DISPLAY1”, “DISPLAY2” etc.)</li>
 							<li>Windows: Use default command prompt text color, and a darker variant only when doing measurements.</li>
 							<li>dispcalGUI version now corresponds to SVN revision number, split into its digit components. Build system (setup.py) uses SVN to generate version information.</li>
 						</ul>
@@ -1044,6 +1045,7 @@
 						<h3>Known issues in this release:</h3>
 						<ul>
 							<li>Linux: You can't interact with the combobox or the checkboxes in the LUT Viewer while a profile installation dialog is shown.</li>
+							<li>Enabling the Spyder 2 colorimeter might fail when not running as root/with administrator privileges, depending on where Argyll is installed.</li>
 						</ul>
 					</dd>
 				
