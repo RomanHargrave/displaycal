@@ -44,6 +44,8 @@ def getevttype(event):
 def handle_error(errstr, parent=None, silent=False):
 	""" Log an error string and show an error dialog. """
 	if not isinstance(errstr, unicode):
+		if not isinstance(errstr, str):
+			errstr = str(errstr)
 		errstr = unicode(errstr, fs_enc, "replace")
 	safe_print(errstr)
 	if not silent:

@@ -976,7 +976,8 @@ class TestchartEditor(wx.Frame):
 					ti1.filename = path
 			else: # icc or icm profile
 				profile = ICCP.ICCProfile(path)
-				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.CIED))
+				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.get("CIED", "") or 
+											 profile.tags.get("targ", "")))
 				ti1.filename = filename + ".ti1"
 			ti1_1 = verify_ti1_rgb_xyz(ti1)
 			if ti1_1:

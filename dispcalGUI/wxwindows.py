@@ -163,7 +163,7 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
-				 size=(400, -1)):
+				 size=(400, -1), alt=None):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
 									   logit=False)
@@ -172,12 +172,22 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 		margin = 12
 
+		if alt:
+			self.alt = wx.Button(self, -1, alt)
+			self.alt.SetInitialSize((self.alt.GetSize()[0] + 
+			   btn_width_correction, -1))
+			self.sizer2.Prepend((margin, margin))
+			self.sizer2.Prepend(self.alt)
+			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.alt.GetId())
+
 		self.cancel = wx.Button(self, wx.ID_CANCEL, cancel)
 		self.cancel.SetInitialSize((self.cancel.GetSize()[0] + 
 		   btn_width_correction, -1))
 		self.sizer2.Prepend((margin, margin))
 		self.sizer2.Prepend(self.cancel)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
+		
+		self.Fit()
 
 	def OnClose(self, event):
 		if event.GetEventObject() == self:

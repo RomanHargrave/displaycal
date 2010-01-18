@@ -21,6 +21,8 @@
 	"calibration.black_point_correction": "Black point correction",
 	"calibration.black_point_rate": "Rate",
 	"calibration.complete": "Calibration complete!",
+	"calibration.create_fast_matrix_shaper_choice": "Do you want to create a fast matrix shaper profile from calibration measurements or just calibrate?",
+	"calibration.create_fast_matrix_shaper": "Create matrix profile",
 	"calibration.incomplete": "Calibration has not been finished.",
 	"calibration.file": "Settings",
 	"calibration.file.invalid": "The chosen settings file is invalid.",

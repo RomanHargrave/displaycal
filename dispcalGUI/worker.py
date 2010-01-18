@@ -33,7 +33,7 @@ import config
 import localization as lang
 import subprocess26 as sp
 import tempfile26 as tempfile
-from argyll_cgats import extract_fix_copy_cal
+from argyll_cgats import extract_fix_copy_cal, ti3_to_ti1
 from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
@@ -41,7 +41,7 @@ from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg,
 					geticon, get_data_path, get_verified_path, setcfg, writecfg)
 from debughelpers import handle_error
 from log import log, safe_print
-from meta import name as appname
+from meta import name as appname, version
 from options import debug, test, verbose
 from thread import start_new_thread
 from util_io import Files, StringIOu as StringIO, Tea
@@ -237,6 +237,9 @@ def get_options_from_cprt(cprt):
 		dispcal = dispcal[1][0]
 	else:
 		dispcal = None
+		colprof = cprt.split(" colprof ")
+		if len(colprof) > 1:
+			colprof = colprof[1]
 	re_options_dispcal = [
 		"v",
 		"d\d+(?:,\d+)?",
@@ -1124,25 +1127,22 @@ class Worker():
 		for i in range(len(options_colprof)):
 			if options_colprof[i][0] != "-":
 				options_colprof[i] = '"' + options_colprof[i] + '"'
+		args += ["-C"]
+		args += [u"(c) %s %s. Created with %s %s and Argyll CMS %s:" % 
+				 (strftime("%Y"), unicode(getpass.getuser(), fs_enc, 
+										  "asciize"), appname, version, 
+				  self.argyll_version_string)]
 		if "-d3" in self.options_targen:
+			# only add display desc and dispcal options if creating RGB profile
 			if len(self.displays):
-				args += ["-M"]
+				args.insert(-2, "-M")
 				if display_name is None:
-					args += [self.get_display_name()]
+					args.insert(-2, self.get_display_name())
 				else:
-					args += [display_name]
-			args += ["-C"]
-			args += [u"(c) %s %s. Created with %s and Argyll CMS: dispcal %s "
-					  "colprof %s" % (strftime("%Y"), unicode(getpass.getuser(), 
-									  fs_enc, "asciize"), appname, 
-									  " ".join(self.options_dispcal), 
-									  " ".join(options_colprof))]
-		else:
-			args += ["-C"]
-			args += [u"(c) %s %s. Created with %s and Argyll CMS: colprof %s" % 
-					 (strftime("%Y"), unicode(getpass.getuser(), fs_enc, 
-											  "asciize"), 
-					  appname, " ".join(options_colprof))]
+					args.insert(-2, display_name)
+			if self.options_dispcal:
+				args[-1] += u" dispcal %s" % " ".join(self.options_dispcal)
+		args[-1] += u" colprof %s" % " ".join(options_colprof)
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
@@ -1318,7 +1318,8 @@ class Worker():
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"))
 						return None, None
-					ti3 = StringIO(profile.tags.get("CIED", ""))
+					ti3 = StringIO(profile.tags.get("CIED", "") or 
+								   profile.tags.get("targ", ""))
 				elif ext.lower() == ".ti1":
 					shutil.copyfile(filename + ext, inoutfile + ".ti1")
 				else: # ti3
@@ -1389,7 +1390,8 @@ class Worker():
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					profile = None
 				if profile:
-					ti3 = StringIO(profile.tags.get("CIED", ""))
+					ti3 = StringIO(profile.tags.get("CIED", "") or 
+								   profile.tags.get("targ", ""))
 					if "cprt" in profile.tags:
 						# Get dispcal options if present
 						self.options_dispcal = ["-" + arg for arg in 

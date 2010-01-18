@@ -50,6 +50,7 @@ import ConfigParser
 ConfigParser.DEFAULTSECT = "Default"
 import decimal
 Decimal = decimal.Decimal
+import getpass
 import logging
 import math
 import os
@@ -2518,6 +2519,22 @@ class MainFrame(BaseFrame):
 					profile_path, 
 					lang.getstr("error.profile.file_not_created"), parent=self)
 				if result:
+					if self.worker.dispcal_create_fast_matrix_shaper:
+						# we need to set options to cprt
+						try:
+							profile = ICCP.ICCProfile(profile_path)
+							profile.tags.cprt = ICCP.TextType(str(
+								"text\0\0\0\0"
+								"(c) %s %s. Created with %s %s and Argyll CMS %s: "
+								"dispcal %s\0" % (strftime("%Y"), 
+												  getpass.getuser(), appname, 
+												  version, 
+												  self.worker.argyll_version_string,
+												  " ".join(self.worker.options_dispcal))),
+								"cprt")
+							profile.write()
+						except Exception, exception:
+							handle_error(str(exception))
 					setcfg("calibration.file", profile_path)
 					self.update_controls(update_profile_name=False)
 					setcfg("last_cal_or_icc_path", profile_path)
@@ -3122,6 +3139,17 @@ class MainFrame(BaseFrame):
 
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
+		dlg = ConfirmDialog(self, 
+							msg=lang.getstr("calibration.create_fast_matrix_shaper_choice"),
+							ok=lang.getstr("calibration.create_fast_matrix_shaper"), 
+							alt=lang.getstr("button.calibrate"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-question"))
+		result = dlg.ShowModal()
+		dlg.Destroy()
+		if result == wx.ID_CANCEL:
+			return
+		self.worker.dispcal_create_fast_matrix_shaper = result == wx.ID_OK
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".cal"):
 			self.setup_measurement(self.just_calibrate)
@@ -3131,7 +3159,6 @@ class MainFrame(BaseFrame):
 	def just_calibrate(self):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
-		self.worker.dispcal_create_fast_matrix_shaper = True
 		start_timers = True
 		if self.calibrate(remove=True):
 			if getcfg("calibration.update") or \
@@ -3837,14 +3864,16 @@ class MainFrame(BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
-				if profile.tags.get("CIED", "")[0:4] != "CTI3":
+				if (profile.tags.get("CIED", "") or 
+					profile.tags.get("targ", ""))[0:4] != "CTI3":
 					InfoDialog(self, 
 							   msg=lang.getstr("profile.no_embedded_ti3") + 
 								   "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
-				ti3 = StringIO(profile.tags.CIED)
+				ti3 = StringIO(profile.tags.get("CIED", "") or 
+							   profile.tags.get("targ", ""))
 			else:
 				try:
 					ti3 = open(path, "rU")
@@ -3916,7 +3945,8 @@ class MainFrame(BaseFrame):
 						# Binary mode because we want to avoid automatic 
 						# newlines conversion
 						ti3 = open(ti3_tmp_path, "wb") 
-						ti3.write(profile.tags.CIED)
+						ti3.write(profile.tags.get("CIED", "") or 
+								  profile.tags.get("targ", ""))
 						ti3.close()
 						if "cprt" in profile.tags:
 							# Get dispcal options if present
@@ -4334,7 +4364,8 @@ class MainFrame(BaseFrame):
 							   bitmap=geticon(32, "dialog-error"))
 					return
 				ti3_lines = [line.strip() for 
-							 line in StringIO(profile.tags.get("CIED", ""))]
+							 line in StringIO(profile.tags.get("CIED", "") or 
+											  profile.tags.get("targ", ""))]
 				if not "CTI3" in ti3_lines:
 					InfoDialog(self, 
 							   msg=lang.getstr("profile.no_embedded_ti3") + 
@@ -4407,7 +4438,8 @@ class MainFrame(BaseFrame):
 					ti1 = CGATS.CGATS(path)
 			else: # icc or icm profile
 				profile = ICCP.ICCProfile(path)
-				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.CIED))
+				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.get("CIED", "") or 
+											 profile.tags.get("targ", "")))
 			ti1_1 = verify_ti1_rgb_xyz(ti1)
 			if not ti1_1:
 				InfoDialog(self, 
@@ -4602,7 +4634,8 @@ class MainFrame(BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
-				cal = StringIO(profile.tags.get("CIED", ""))
+				cal = StringIO(profile.tags.get("CIED", "") or 
+							   profile.tags.get("targ", ""))
 			else:
 				try:
 					cal = open(path, "rU")
@@ -4798,7 +4831,7 @@ class MainFrame(BaseFrame):
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-error"))
 						return
-				elif not "CIED" in profile.tags:
+				elif not "CIED" in profile.tags and not "targ" in profile.tags:
 					sel = self.calibration_file_ctrl.GetSelection()
 					if len(self.recent_cals) > sel and \
 					   self.recent_cals[sel] == path:

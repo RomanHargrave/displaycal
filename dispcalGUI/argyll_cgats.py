@@ -127,9 +127,10 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 		profile = ICCP.ICCProfile(source_filename)
 	except (IOError, ICCP.ICCProfileInvalidError), exception:
 		return exception
-	if "CIED" in profile.tags:
+	if "CIED" in profile.tags or "targ" in profile.tags:
 		cal_lines = []
-		ti3 = StringIO(profile.tags.CIED)
+		ti3 = StringIO(profile.tags.get("CIED", "") or 
+					   profile.tags.get("targ", ""))
 		ti3_lines = [line.strip() for line in ti3]
 		ti3.close()
 		cal_found = False

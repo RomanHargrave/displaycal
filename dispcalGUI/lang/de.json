@@ -21,6 +21,8 @@
 	"calibration.black_point_correction": "Schwarztonkorrektur",
 	"calibration.black_point_rate": "Rate",
 	"calibration.complete": "Kalibrierung abgeschlossen!",
+	"calibration.create_fast_matrix_shaper_choice": "Möchten Sie aus den Messwerten der Kalibrierung ein einfaches Matrix-Profil erstellen oder nur kalibrieren?",
+	"calibration.create_fast_matrix_shaper": "Matrix-Profil erstellen",
 	"calibration.incomplete": "Die Kalibrierung wurde nicht abgeschlossen.",
 	"calibration.file": "Einstellungen",
 	"calibration.file.invalid": "Die gewählte Einstellungsdatei ist ungültig.",
