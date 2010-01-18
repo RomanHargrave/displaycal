@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resource>
-  <object class="wxFrame" name="mainframe" subclass="dispcalGUI.DisplayCalibratorGUI">
+  <object class="wxFrame" name="mainframe" subclass="dispcalGUI.MainFrame">
     <object class="wxBoxSizer">
       <object class="sizeritem">
         <object class="wxPanel" name="panel">
@@ -276,7 +276,7 @@
             </object>
             <object class="sizeritem">
               <object class="wxScrolledWindow" name="calpanel">
-                <object class="wxFlexGridSizer" name="black_point_correction_label">
+                <object class="wxFlexGridSizer">
                   <cols>2</cols>
                   <rows>0</rows>
                   <object class="sizeritem">
@@ -708,6 +708,8 @@
                     <object class="wxStaticText" name="black_point_correction_label">
                       <label>calibration.black_point_correction</label>
                     </object>
+                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>8</border>
                   </object>
                   <object class="sizeritem">
                     <object class="wxBoxSizer">

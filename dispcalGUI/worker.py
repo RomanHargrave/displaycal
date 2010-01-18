@@ -715,14 +715,14 @@ class Worker():
 				sudo = which("sudo")
 		if sudo:
 			try:
-				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], stdin=sp.PIPE, 
-									stdout=sp.PIPE, stderr=sp.PIPE)
-				if sudoproc.poll() is None:
-					stdout, stderr = sudoproc.communicate(self.pwd)
-				else:
-					stdout, stderr = sudoproc.communicate()
+				pwdproc = sp.Popen('echo "%s"' % (self.pwd or ""), shell=True, 
+								   stdin=sp.PIPE, stdout=sp.PIPE, 
+								   stderr=sp.STDOUT)
+				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
+									stdin=pwdproc.stdout, stdout=sp.PIPE, 
+									stderr=sp.PIPE)
+				stdout, stderr = sudoproc.communicate()
 				if not "OK" in stdout:
-					sudoproc.stdin.close()
 					# ask for password
 					dlg = ConfirmDialog(
 						parent, msg=lang.getstr("dialog.enter_password"), 
@@ -743,25 +743,25 @@ class Worker():
 						if result != wx.ID_OK:
 							safe_print(lang.getstr("aborted"), fn=fn)
 							return None
+						pwdproc = sp.Popen('echo "%s"' % pwd, shell=True, 
+										   stdin=sp.PIPE, stdout=sp.PIPE, 
+										   stderr=sp.STDOUT)
 						sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
-											stdin=sp.PIPE, stdout=sp.PIPE, 
-											stderr=sp.PIPE)
-						if sudoproc.poll() is None:
-							stdout, stderr = sudoproc.communicate(pwd)
-						else:
-							stdout, stderr = sudoproc.communicate()
+											stdin=pwdproc.stdout, 
+											stdout=sp.PIPE, stderr=sp.PIPE)
+						stdout, stderr = sudoproc.communicate()
 						if "OK" in stdout:
 							self.pwd = pwd
 							break
 						else:
 							errstr = unicode(stderr, enc, "replace")
-							if not silent:
-								safe_print(errstr)
-							else:
-								log(errstr)
+							##if not silent:
+								##safe_print(errstr)
+							##else:
+								##log(errstr)
 							dlg.message.SetLabel(
-								lang.getstr("auth.failed") + ":\n" + 
-								errstr +
+								lang.getstr("auth.failed") + "\n" + 
+								##errstr +
 								lang.getstr("dialog.enter_password"))
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
@@ -940,17 +940,18 @@ class Worker():
 				working_dir = win32api.GetShortPathName(working_dir)
 			tries = 1
 			cmdline = [arg.encode(fs_enc) for arg in cmdline]
-			stdin = sp.PIPE if sudo else None
+			if sudo:
+				pwdproc = sp.Popen('echo "%s"' % self.pwd, shell=True, 
+								   stdin=sp.PIPE, stdout=sp.PIPE, 
+								   stderr=sp.STDOUT)
+				stdin = pwdproc.stdout
+			else:
+				stdin=sp.PIPE
 			working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 			while tries > 0:
 				self.subprocess = sp.Popen(cmdline, stdin=stdin, 
 										   stdout=stdout, stderr=stderr, 
 										   cwd=working_dir)
-				if sudo and self.subprocess.poll() is None:
-					if self.pwd:
-						self.subprocess.communicate(self.pwd)
-					else:
-						self.subprocess.communicate()
 				self.retcode = self.subprocess.wait()
 				self.subprocess = None
 				tries -= 1

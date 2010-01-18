@@ -27,7 +27,7 @@ if sys.platform == "win32":
 				CSIDL_SYSTEM: getenvu("SystemRoot")
 			}.get(nFolder)
 
-from util_os import expanduseru, getenvu
+from util_os import expanduseru, expandvarsu, getenvu
 
 if sys.platform == "win32":
 	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA)
@@ -77,6 +77,6 @@ else:
 	autostart_home = os.path.join(xdg_config_home, "autostart")
 	iccprofiles = [os.path.join(xdg_data_dirs[0], "color", "icc")]
 	iccprofiles_home = [os.path.join(xdg_data_home, "color", "icc")]
-	iccprofiles_display = os.path.join(iccprofiles, "devices", "display")
-	iccprofiles_display_home = os.path.join(iccprofiles_home, "devices", 
+	iccprofiles_display = os.path.join(iccprofiles[0], "devices", "display")
+	iccprofiles_display_home = os.path.join(iccprofiles_home[0], "devices", 
 											"display")

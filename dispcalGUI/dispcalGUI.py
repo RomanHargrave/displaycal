@@ -2703,13 +2703,18 @@ class MainFrame(BaseFrame):
 					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
 				self.install_profile(capture_output=True, cal=path, 
 									 install=False, skip_scripts=True)
+	
+	def preview_show_lut_handler(self, event=None):
+		if not self.lut_viewer.IsShownOnScreen():
+			self.preview_handler(install=False)
+		self.lut_viewer.Show(not self.lut_viewer.IsShownOnScreen())
 
-	def preview_handler(self, event=None, preview=None):
+	def preview_handler(self, event=None, preview=None, install=True):
 		if preview or (preview is None and self.preview.GetValue()):
 			cal = self.cal
 		else:
 			cal = self.previous_cal
-			if event and self.cal == cal:
+			if self.cal == cal:
 				cal = False
 			elif not cal:
 				cal = True
@@ -2733,8 +2738,9 @@ class MainFrame(BaseFrame):
 				else:
 					profile = cal_to_fake_profile(cal)
 			self.lut_viewer_load_lut(profile=profile)
-		self.install_profile(capture_output=True, cal=cal, install=False, 
-							 skip_scripts=True, silent=True)
+		if install:
+			self.install_profile(capture_output=True, cal=cal, install=False, 
+								 skip_scripts=True, silent=True)
 
 	def install_profile(self, capture_output=False, cal=None, 
 						profile_path=None, install=True, skip_scripts=False, 
@@ -2966,8 +2972,8 @@ class MainFrame(BaseFrame):
 								   logit=False)
 		elif not silent:
 			if install:
-				if verbose >= 1: safe_print(lang.getstr("failure"))
 				if result is not None:
+					if verbose >= 1: safe_print(lang.getstr("failure"))
 					InfoDialog(self, msg=lang.getstr("profile.install.error"), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"), logit=False)
@@ -3167,7 +3173,7 @@ class MainFrame(BaseFrame):
 		if debug:
 			safe_print("[D] Calling pending function with args:", 
 					   self.pending_function_args)
-		wx.CallAfter(self.pending_function, *self.pending_function_args, 
+		wx.CallLater(100, self.pending_function, *self.pending_function_args, 
 					 **self.pending_function_kwargs)
 
 	def calibrate_and_profile_btn_handler(self, event):
@@ -3367,7 +3373,7 @@ class MainFrame(BaseFrame):
 					self.show_lut = wx.CheckBox(dlg, -1, 
 												lang.getstr(
 													"calibration.show_lut"))
-					dlg.Bind(wx.EVT_CHECKBOX, self.show_lut_handler, 
+					dlg.Bind(wx.EVT_CHECKBOX, self.preview_show_lut_handler, 
 							 id=self.show_lut.GetId())
 					dlg.sizer3.Add(self.show_lut, flag=wx.TOP | wx.ALIGN_LEFT, 
 								   border=4)
@@ -3508,14 +3514,11 @@ class MainFrame(BaseFrame):
 	
 	def show_lut_handler(self, event=None, profile=None):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
-			if profile:
-				self.lut_viewer_load_lut(event, profile)
+			self.lut_viewer_load_lut(event, profile)
 			show = bool((hasattr(self, "show_lut") and self.show_lut and 
 						 self.show_lut.GetValue()) or 
 						((not hasattr(self, "show_lut") or 
-						  not self.show_lut) and 
-						 (self.lut_viewer.IsShownOnScreen() or 
-						  self.lut_viewer.profile is not None)))
+						  not self.show_lut)))
 			self.lut_viewer.Show(show)
 
 	def lut_viewer_move_handler(self, event=None):
@@ -4015,7 +4018,8 @@ class MainFrame(BaseFrame):
 		if display:
 			display_short = display = display.split(" @")[0]
 			maxweight = 0
-			for part in re.sub("\([^)]+\)", "", display).split():
+			for part in re.findall('\w+(?:\s*\d+)?', re.sub("\([^)]+\)", "", 
+															display)):
 				digits = re.search("\d+", part)
 				chars = re.sub("\d+", "", part)
 				weight = len(chars) + (len(digits.group()) * 5 if digits else 0)
