@@ -752,7 +752,7 @@
                       </object>
                       <object class="sizeritem">
                         <object class="wxSlider" name="black_point_rate_ctrl">
-                          <size>64,-1</size>
+                          <size>75,-1</size>
                           <value>400</value>
                           <min>5</min>
                           <max>2000</max>
@@ -760,10 +760,12 @@
                             <events>EVT_SLIDER</events>
                           </XRCED>
                         </object>
+                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                        <border>4</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxSpinCtrl" name="black_point_rate_intctrl">
-                          <size>55,-1</size>
+                          <size>65,-1</size>
                           <value>400</value>
                           <min>5</min>
                           <max>2000</max>
