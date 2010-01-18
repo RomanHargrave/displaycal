@@ -240,6 +240,8 @@ def get_options_from_cprt(cprt):
 		colprof = cprt.split(" colprof ")
 		if len(colprof) > 1:
 			colprof = colprof[1]
+		else:
+			colprof = None
 	re_options_dispcal = [
 		"v",
 		"d\d+(?:,\d+)?",
