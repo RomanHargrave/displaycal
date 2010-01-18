@@ -73,9 +73,6 @@ def which(executable, paths = None):
 		filename = os.path.join(cur_dir, executable)
 		if os.path.isfile(filename):
 			try:
-				# make sure file is not a symlink that points into nirvana
-				fd = open(filename, "rb")
-				fd.close()
 				# make sure file is actually executable
 				if os.access(filename, os.X_OK):
 					return filename
