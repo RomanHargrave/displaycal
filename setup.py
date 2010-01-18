@@ -156,8 +156,9 @@ def setup():
 					props = " "
 				print item.upper()[0] + props.upper()[0] + " " * 5, pth
 				mod = True
-				mtime = os.stat(pth).st_mtime
-				timestamp = time.gmtime(mtime)
+				if item.upper()[0] != "D":
+					mtime = os.stat(pth).st_mtime
+					timestamp = time.gmtime(mtime)
 			schedule = entry.getElementsByTagName("schedule")
 			if schedule:
 				schedule = schedule[0].firstChild.wholeText.strip()

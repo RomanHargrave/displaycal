@@ -157,6 +157,10 @@
 			counter-increment: hlevel3;
 			content: counter(hlevel1) "." counter(hlevel2) "." counter(hlevel3) ". ";
 		}
+		#content div#history h3:before,
+		#content div#history h4:before {
+			content: "";
+		}
 		
 		/* Automatic nested list numbering */
 		/*
@@ -399,6 +403,7 @@
 			<li><a href="#todo">To-Do / planned features</a></li>
 			<li><a href="#thanks">Thanks</a></li>
 			<li><a href="#history">Version history / changelog</a></li>
+			<li><a href="#definitions">Definitions</a></li>
 		</ol>
 		
 		
@@ -663,7 +668,7 @@
 				
 				<h3>Linux Autopackage (.package)</h3>
 				
-				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) using your system's package management software. To install the autopackage, follow “<a href="http://autopackage.org/docs/howto-install/">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
+				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
 				
 				<!--h4>Debian package (.deb)</h4>
 				
@@ -677,9 +682,9 @@
 			<div id="install-exe">
 				<h3>Standalone executable</h3>
 				
-				<h4>Linux</h4>
+				<!--h4>Linux</h4>
 				
-				<p>Unpack and then simply run dispcalGUI from the created folder. You can optionally run the included install.sh shellscript from a terminal to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the “Graphics/Other” category. You may also use your own prefix by giving it as option to install.sh, e.g. <code>./install.sh --prefix=/usr</code>. The default prefix is <code>/usr/local</code> if installing as superuser or using sudo, and <code>~/.local</code> if installing as normal user. Installing as superuser or using sudo is required to set up instrument access (if you didn't do it when installing Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym>).</p>
+				<p>Unpack and then simply run dispcalGUI from the created folder. You can optionally run the included install.sh shellscript from a terminal to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the “Graphics/Other” category. You may also use your own prefix by giving it as option to install.sh, e.g. <code>./install.sh --prefix=/usr</code>. The default prefix is <code>/usr/local</code> if installing as superuser or using sudo, and <code>~/.local</code> if installing as normal user. Installing as superuser or using sudo is required to set up instrument access (if you didn't do it when installing Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym>).</p-->
 				
 				<h4>Mac OS X</h4>
 				
@@ -969,15 +974,15 @@
 			<h2>To-Do / planned features (in no particular order)</h2>
 		
 			<ul>
-				<li>Complete the documentation in the README (partly done)</li>
+				<li><del>Complete the documentation in the README</del></li>
 				<li>German language README</li>
 				<li>Profile verification (feed XYZ or Lab to display profile, display 
 					corresponding RGB values, measure, output Delta E)</li>
 				<li><del>“Before” / “After” switch when calibration / profiling complete</del> (implemented in v0.2+)</li>
 				<li><del>Store all settings in profile, allow loading of settings from profile in 
 					addition to <code>.cal</code> file</del> (implemented in v0.2+)</li>
-				<li>Document the code (current code documentation severely lacks or is non-existent)</li>
-				<li>Code cleanup (partly done)</li>
+				<li><del>Document the code</del> (code documentation could still be enhanced, for now it'll do)</li>
+				<li><del>Code cleanup</del> (mostly done)</li>
 			</ul>
 		</div>
 		
@@ -996,10 +1001,49 @@
 			<h2>Version history / changelog</h2>
 			<!-- ${DATE} ${TIME} (UTC) ${VERSION} -->
 			<dl>
-				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
+				<dt>${DATE} ${TIME} (UTC)</dt>
 					<dd>
+						<h3>${VERSION}</h3>
+						<h4>Features added in this release:</h4>
 						<ul>
-							<li>Major code overhaul: A lot of code has been cleaned up and moved around to make the application more modular.</li>
+							<li>Support for Argyll &gt;= 1.1.0 RC3 adaptive emissive measurement mode with i1 Pro.</li>
+							<li>More profile types (XYZ LUT on Windows only selectable if using Argyll &gt;= 1.1.0 RC3)</li>
+							<li>Optionally create a fast matrix/shaper profile when just calibrating.</li>
+							<li>LUT Viewer: Capability to show a matrix profile's rTRC/gTRC/bTRC curves.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>When restoring defaults, selected display/instrument/measurement mode, language and profile name are retained.</li>
+							<li>Only enable display/instrument selector if more than one device detected respectively.</li>
+							<li>Changed i1 Pro highres measurement mode from implicit to user choice.</li>
+							<li>Gamut mapping window: When selecting a source profile, pre-select a source viewing condition based on profile class (monitor or printer).</li>
+							<li>Updated defaults and presets to Argyll 1.1.0 values (namely black output offset).</li>
+							<li>Enhanced short display name placeholder (%dns) for profile name - should not yield single numbers or model name without model no any more (or atleast less likely).</li>
+							<li>Log messages from most informational and all error dialogs.</li>
+							<li>Show file paths in most dialogs involving file processing.</li>
+							<li>ReadMe and license are now links in the About dialog.</li>
+							<li>Linux: Updated udev rules to those provided with Argyll 1.1.0. Removed obsolete permissions and policy files.</li>
+							<li>Windows: Get name of selected display via additional Windows API calls (should yield more descriptive display names than "DISPLAY1", "DISPLAY2" etc.)</li>
+							<li>Windows: Use default command prompt text color, and a darker variant only when doing measurements.</li>
+							<li>dispcalGUI version now corresponds to SVN revision number, split into its digit components. Build system (setup.py) uses SVN to generate version information.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>LUT Viewer: When no display is selected (i.e. when Argyll binaries are not found), it will now try to get the profile of the 1st display.</li>
+							<li>LUT Viewer: Reflect changes to the LUT while it was hidden.</li>
+							<li>LUT Viewer: Check if profile actually has a 'vcgt' tag before trying to access it. If not present, clear canvas and disable R/G/B checkboxes.</li>
+							<li>Loading of calibration upon initial preview in profile installation dialog if profile does not contain calibration/profiling settings in 'cprt' tag.</li>
+							<li>Detect if Argyll executables are broken symlinks that point to nowhere.</li>
+							<li>Do not show failure message if user cancels profile installation via the password dialog when installing in system scope.</li>
+							<li>In some cases, values read from the configuration file were not correctly validated.</li>
+							<li>colprof output is no longer swallowed when creating a matrix profile with Argyll versions &lt;= 1.0.4.</li>
+							<li>Linux/Mac OS X: When installing a profile in local system scope, the password was not accepted under newer Linux distros and also Mac OS X &gt; 10.4.11</li>
+							<li>Mac OS X: Suppress spurious AppleScript messages.</li>
+							<li>Windows: Get display profile via registry instead of Windows API because the latter does not reflect runtime changes to profile associations (you still need to refresh the LUT Viewer when changing profile associations outside of dispcalGUI while it is running).</li>
+						</ul>
+						<h3>Known issues in this release:</h3>
+						<ul>
+							<li>Linux: You can't interact with the combobox or the checkboxes in the LUT Viewer while a profile installation dialog is shown.</li>
 						</ul>
 					</dd>
 				
@@ -1010,7 +1054,7 @@
 						</ul>
 					</dd>
 				
-				<dt>2009-06-30 0.2.6b3</dt>
+				<dt>2009-06-30 0.2.6b3 (SVN r239)</dt>
 					<dd>
 						<ul>
 							<li>fix (Windows): Fixed a critical bug in the Windows codepath which tried to access non-existent paths when certain settings were used.</li>

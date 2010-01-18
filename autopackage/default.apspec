@@ -68,11 +68,11 @@ done
 mkdir -p "$build_root/share/applications"
 cp "$source_dir/misc/dispcalGUI.desktop" "$build_root/share/applications"
 
-mkdir -p "$build_root/share/PolicyKit/policy"
-cp "$source_dir/misc/color-device-file.policy" "$build_root/share/PolicyKit/policy"
+# mkdir -p "$build_root/share/PolicyKit/policy"
+# cp "$source_dir/misc/color-device-file.policy" "$build_root/share/PolicyKit/policy"
 
-mkdir -p "$build_root/share/hal/fdi/policy/10osvendor"
-cp "$source_dir/misc/19-color.fdi" "$build_root/share/hal/fdi/policy/10osvendor"
+# mkdir -p "$build_root/share/hal/fdi/policy/10osvendor"
+# cp "$source_dir/misc/19-color.fdi" "$build_root/share/hal/fdi/policy/10osvendor"
 
 mkdir -p "$build_root/etc/udev/rules.d"
 cp "$source_dir/misc/92-Argyll.rules" "$build_root/etc/udev/rules.d"
@@ -82,8 +82,8 @@ mkdir -p "$build_root/etc/hotplug/usb"
 cp "$source_dir/misc/Argyll" "$build_root/etc/hotplug/usb"
 cp "$source_dir/misc/Argyll.usermap" "$build_root/etc/hotplug/usb"
 
-mkdir -p "$build_root/etc/udev/permissions.d"
-cp "$source_dir/misc/10-Argyll.permissions" "$build_root/etc/udev/permissions.d"
+# mkdir -p "$build_root/etc/udev/permissions.d"
+# cp "$source_dir/misc/10-Argyll.permissions" "$build_root/etc/udev/permissions.d"
 
 
 [BuildUnprepare]
@@ -159,11 +159,11 @@ installIcon share/icons/hicolor
 installMenuItem "Graphics" share/applications/dispcalGUI.desktop
 
 if [ `whoami` = "root" ]; then
-	if [ -e "/usr/share/PolicyKit/policy" ] && [ -e "/usr/share/hal/fdi/policy/10osvendor" ]; then
-		# USB and Serial access using PolicyKit V0.6 + HAL (recent versions of Linux)
-		copyFile "share/PolicyKit/policy/color-device-file.policy" "/usr/share/PolicyKit/policy/color-device-file.policy"
-		copyFile "share/hal/fdi/policy/10osvendor/19-color.fdi" "/usr/share/hal/fdi/policy/10osvendor/19-color.fdi"
-	fi
+	# if [ -e "/usr/share/PolicyKit/policy" ] && [ -e "/usr/share/hal/fdi/policy/10osvendor" ]; then
+		# # USB and Serial access using PolicyKit V0.6 + HAL (recent versions of Linux)
+		# copyFile "share/PolicyKit/policy/color-device-file.policy" "/usr/share/PolicyKit/policy/color-device-file.policy"
+		# copyFile "share/hal/fdi/policy/10osvendor/19-color.fdi" "/usr/share/hal/fdi/policy/10osvendor/19-color.fdi"
+	# fi
 	if [ -e "/etc/udev/rules.d" ]; then
 		ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
 			# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
@@ -178,10 +178,10 @@ if [ `whoami` = "root" ]; then
 			copyFile "etc/hotplug/usb/Argyll" "/etc/hotplug/usb/Argyll"
 			copyFile "etc/hotplug/usb/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
 		fi
-		if [ -e "/etc/udev/permissions.d" ]; then
-			# Serial instruments using udev (older versions of Linux)
-			copyFile "etc/udev/permissions.d/10-Argyll.permissions" "/etc/udev/permissions.d/10-Argyll.permissions"
-		fi
+		# if [ -e "/etc/udev/permissions.d" ]; then
+			# # Serial instruments using udev (older versions of Linux)
+			# copyFile "etc/udev/permissions.d/10-Argyll.permissions" "/etc/udev/permissions.d/10-Argyll.permissions"
+		# fi
 	fi
 fi
 

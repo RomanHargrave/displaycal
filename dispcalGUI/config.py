@@ -316,7 +316,7 @@ defaults = {
 	"calibration.ambient_viewcond_adjust": 0,
 	"calibration.ambient_viewcond_adjust.lux": 500.0,
 	"calibration.black_luminance": 0.5,
-	"calibration.black_output_offset": 0.0,
+	"calibration.black_output_offset": 1.0,
 	"calibration.black_point_correction": 0.0,
 	"calibration.black_point_correction_choice.show": 1,
 	"calibration.black_point_rate": 4.0,
