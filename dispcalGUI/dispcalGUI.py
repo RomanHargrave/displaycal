@@ -444,7 +444,7 @@ class MainFrame(BaseFrame):
 				if sys.platform == "darwin":
 					mac_terminal_set_colors(text="white", text_bold="white")
 				else:
-					sp.call('echo -e "\\033[40;22;37m"', shell=True)
+					print "\x1b[40;22;37m"
 				sp.call('clear', shell=True)
 		except Exception, exception:
 			# Not being able to change terminal colors is not a big
@@ -2648,27 +2648,6 @@ class MainFrame(BaseFrame):
 			setcfg("last_cal_or_icc_path", path)
 			self.install_cal_handler(cal=path)
 
-	def load_cal_cal_handler(self, event):
-		defaultDir, defaultFile = get_verified_path("last_cal_path")
-		dlg = wx.FileDialog(self, lang.getstr("calibration.load_from_cal"), 
-							defaultDir=defaultDir, defaultFile=defaultFile, 
-							wildcard=lang.getstr("filetype.cal") + "|*.cal", 
-							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-		dlg.Center(wx.BOTH)
-		result = dlg.ShowModal()
-		path = dlg.GetPath()
-		dlg.Destroy()
-		if result == wx.ID_OK:
-			if not os.path.exists(path):
-				InfoDialog(self, msg=lang.getstr("file.missing", path), 
-						   ok=lang.getstr("ok"), bitmap=geticon(32, 
-																"dialog-error"))
-				return
-			setcfg("last_cal_path", path)
-			setcfg("last_cal_or_icc_path", path)
-			self.install_profile(capture_output=True, cal=path, install=False, 
-								 skip_scripts=True)
-
 	def load_profile_cal_handler(self, event):
 		if not check_set_argyll_bin():
 			return
@@ -2690,10 +2669,14 @@ class MainFrame(BaseFrame):
 						   bitmap=geticon(32, "dialog-error"))
 				return
 			setcfg("last_cal_or_icc_path", path)
+			if verbose >= 1:
+				safe_print(lang.getstr("calibration.loading"))
+				safe_print(path)
 			if os.path.splitext(path)[1].lower() in (".icc", ".icm"):
 				try:
 					profile = ICCP.ICCProfile(path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					if verbose >= 1: safe_print(lang.getstr("failure"))
 					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
 										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
@@ -2701,33 +2684,37 @@ class MainFrame(BaseFrame):
 					return
 				if "vcgt" in profile.tags:
 					setcfg("last_icc_path", path)
-					if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
-					   #self.lut_viewer.IsShownOnScreen():
-						self.lut_viewer_load_lut(profile=profile)
-					self.install_profile(capture_output=True, 
-										 profile_path=path, 
-										 install=False, 
-										 skip_scripts=True)
+					if self.install_profile(capture_output=True, 
+											profile_path=path, 
+											install=False, 
+											skip_scripts=True, silent=True):
+						if hasattr(self, "lut_viewer") and self.lut_viewer:
+							self.lut_viewer_load_lut(profile=profile)
+						if verbose >= 1: safe_print(lang.getstr("success"))
+					else:
+						if verbose >= 1: safe_print(lang.getstr("failure"))
 				else:
+					if verbose >= 1: safe_print(lang.getstr("failure"))
 					InfoDialog(self, msg=lang.getstr("profile.no_vcgt") + 
 										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 			else:
 				setcfg("last_cal_path", path)
-				if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
-				   #self.lut_viewer.IsShownOnScreen():
-					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
-				self.install_profile(capture_output=True, cal=path, 
-									 install=False, skip_scripts=True)
+				if self.install_profile(capture_output=True, cal=path, 
+										install=False, skip_scripts=True, 
+										silent=True):
+					if hasattr(self, "lut_viewer") and self.lut_viewer:
+						self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
+					if verbose >= 1: safe_print(lang.getstr("success"))
+				else:
+					if verbose >= 1: safe_print(lang.getstr("failure"))
 	
 	def preview_show_lut_handler(self, event=None):
-		if not self.lut_viewer.IsShownOnScreen():
-			self.preview_handler(install=False)
 		self.lut_viewer.Show(not self.lut_viewer.IsShownOnScreen())
 
-	def preview_handler(self, event=None, preview=None, install=True):
-		if preview or (preview is None and self.preview.GetValue()):
+	def preview_handler(self, event=None, preview=False):
+		if preview or self.preview.GetValue():
 			cal = self.cal
 		else:
 			cal = self.previous_cal
@@ -2735,29 +2722,36 @@ class MainFrame(BaseFrame):
 				cal = False
 			elif not cal:
 				cal = True
-		if hasattr(self, "lut_viewer") and self.lut_viewer: #and \
-		   #self.lut_viewer.IsShownOnScreen():
-			if cal is False: # linear
-				profile = None
+		if cal is False: # linear
+			profile = None
+		else:
+			if cal is True: # display profile
+				try:
+					profile = ICCP.get_display_profile(
+						max(self.display_ctrl.GetSelection(), 0))
+				except Exception, exception:
+					safe_print("ICCP.get_display_profile(%s):" % 
+							   max(self.display_ctrl.GetSelection(), 0), 
+							   exception)
+					profile = None
+			elif cal.lower().endswith(".icc") or \
+				 cal.lower().endswith(".icm"):
+				profile = ICCP.ICCProfile(cal)
 			else:
-				if cal is True: # display profile
-					try:
-						profile = ICCP.get_display_profile(
-							max(self.display_ctrl.GetSelection(), 0))
-					except Exception, exception:
-						safe_print("ICCP.get_display_profile(%s):" % 
-								   max(self.display_ctrl.GetSelection(), 0), 
-								   exception)
-						profile = None
-				elif cal.lower().endswith(".icc") or \
-					 cal.lower().endswith(".icm"):
-					profile = ICCP.ICCProfile(cal)
-				else:
-					profile = cal_to_fake_profile(cal)
-			self.lut_viewer_load_lut(profile=profile)
-		if install:
-			self.install_profile(capture_output=True, cal=cal, install=False, 
-								 skip_scripts=True, silent=True)
+				profile = cal_to_fake_profile(cal)
+		if profile:
+			if verbose >= 1:
+				safe_print(lang.getstr("calibration.loading"))
+				safe_print(profile.fileName)
+		else:
+			if verbose >= 1: safe_print(lang.getstr("calibration.resetting"))
+		if self.install_profile(capture_output=True, cal=cal, install=False, 
+								skip_scripts=True, silent=True):
+			if hasattr(self, "lut_viewer") and self.lut_viewer:
+				self.lut_viewer_load_lut(profile=profile)
+			if verbose >= 1: safe_print(lang.getstr("success"))
+		else:
+			if verbose >= 1: safe_print(lang.getstr("failure"))
 
 	def install_profile(self, capture_output=False, cal=None, 
 						profile_path=None, install=True, skip_scripts=False, 
@@ -3036,68 +3030,71 @@ class MainFrame(BaseFrame):
 		if not cal:
 			cal = getcfg("calibration.file")
 		if cal:
-			if hasattr(self, "lut_viewer") and self.lut_viewer:
-				self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
-									  cal.lower().endswith(".icc") or 
-									  cal.lower().endswith(".icm") else 
-									  cal_to_fake_profile(cal))
 			if check_set_argyll_bin():
-				if verbose >= 1 and silent:
+				if verbose >= 1: ## and silent:
 					safe_print(lang.getstr("calibration.loading"))
+					safe_print(cal)
 				if self.install_profile(capture_output=True, cal=cal, 
 										install=False, skip_scripts=True, 
 										silent=silent):
+					if hasattr(self, "lut_viewer") and self.lut_viewer:
+						self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
+												 cal.lower().endswith(".icc") or 
+												 cal.lower().endswith(".icm") else 
+												 cal_to_fake_profile(cal))
 					if verbose >= 1 and silent:
 						safe_print(lang.getstr("success"))
 					return True
-				if verbose >= 1 and silent:
+				if verbose >= 1: ## and silent:
 					safe_print(lang.getstr("failure"))
 		return False
 
 	def reset_cal(self, event=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer:
-			self.lut_viewer.LoadProfile(None)
-			self.lut_viewer.DrawLUT()
 		if check_set_argyll_bin():
-			if verbose >= 1 and event is None:
+			if verbose >= 1: ## and event is None:
 				safe_print(lang.getstr("calibration.resetting"))
 			if self.install_profile(capture_output=True, cal=False, 
 									install=False, skip_scripts=True, 
-									silent=event is None or (
-										hasattr(self, "lut_viewer") and 
-										self.lut_viewer and 
-										self.lut_viewer.IsShownOnScreen())):
-				if verbose >= 1 and event is None:
+									silent=True): ## event is None or (
+										## hasattr(self, "lut_viewer") and 
+										## self.lut_viewer and 
+										## self.lut_viewer.IsShownOnScreen())):
+				if hasattr(self, "lut_viewer") and self.lut_viewer:
+					self.lut_viewer.LoadProfile(None)
+					self.lut_viewer.DrawLUT()
+				if verbose >= 1: ## and event is None:
 					safe_print(lang.getstr("success"))
 				return True
-			if verbose >= 1 and event is None:
+			if verbose >= 1: ## and event is None:
 				safe_print(lang.getstr("failure"))
 		return False
 
 	def load_display_profile_cal(self, event=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer:
-			try:
-				profile = ICCP.get_display_profile(
-					max(self.display_ctrl.GetSelection(), 0))
-			except Exception, exception:
-				safe_print("ICCP.get_display_profile(%s):" % 
-						   self.display_ctrl.GetSelection(), exception)
-				profile = None
-			self.lut_viewer_load_lut(profile=profile)
+		try:
+			profile = ICCP.get_display_profile(
+				max(self.display_ctrl.GetSelection(), 0))
+		except Exception, exception:
+			safe_print("ICCP.get_display_profile(%s):" % 
+					   self.display_ctrl.GetSelection(), exception)
+			profile = None
 		if check_set_argyll_bin():
-			if verbose >= 1 and event is None:
+			if verbose >= 1: ## and event is None:
 				safe_print(
 					lang.getstr("calibration.loading_from_display_profile"))
+				if profile:
+					safe_print(profile.fileName)
 			if self.install_profile(capture_output=True, cal=True, 
 									install=False, skip_scripts=True, 
-									silent=event is None or (
-										hasattr(self, "lut_viewer") and 
-										self.lut_viewer and 
-										self.lut_viewer.IsShownOnScreen())):
-				if verbose >= 1 and event is None:
+									silent=True): ## event is None or (
+										## hasattr(self, "lut_viewer") and 
+										## self.lut_viewer and 
+										## self.lut_viewer.IsShownOnScreen())):
+				if hasattr(self, "lut_viewer") and self.lut_viewer:
+					self.lut_viewer_load_lut(profile=profile)
+				if verbose >= 1: ## and event is None:
 					safe_print(lang.getstr("success"))
 				return True
-			if verbose >= 1 and event is None:
+			if verbose >= 1: ## and event is None:
 				safe_print(lang.getstr("failure"))
 		return False
 
@@ -3266,30 +3263,7 @@ class MainFrame(BaseFrame):
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3") and \
 		   self.check_overwrite(profile_ext):
-			cal = getcfg("calibration.file")
 			apply_calibration = False
-			if cal:
-				filename, ext = os.path.splitext(cal)
-				if ext.lower() in (".icc", ".icm"):
-					self.worker.options_dispcal = []
-					try:
-						profile = ICCP.ICCProfile(cal)
-					except (IOError, ICCP.ICCProfileInvalidError), exception:
-						InfoDialog(self, msg=lang.getstr("profile.invalid") + 
-										 "\n" + path, 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-						self.update_profile_name_timer.Start(1000)
-						return
-					else:
-						if "cprt" in profile.tags:
-							# get dispcal options if present
-							self.worker.options_dispcal = [
-								"-" + arg for arg in 
-								get_options_from_cprt(profile.getCopyright())[0]]
-				if os.path.exists(filename + ".cal") and \
-				   can_update_cal(filename + ".cal"):
-					apply_calibration = filename + ".cal"
 			dlg = ConfirmDialog(self, 
 								msg=lang.getstr("dialog.current_cal_warning"), 
 								ok=lang.getstr("continue"), 
@@ -3309,6 +3283,30 @@ class MainFrame(BaseFrame):
 				return
 			if reset_cal:
 				self.reset_cal()
+			else:
+				cal = getcfg("calibration.file")
+				if cal:
+					filename, ext = os.path.splitext(cal)
+					if ext.lower() in (".icc", ".icm"):
+						self.worker.options_dispcal = []
+						try:
+							profile = ICCP.ICCProfile(cal)
+						except (IOError, ICCP.ICCProfileInvalidError), exception:
+							InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+											 "\n" + path, 
+									   ok=lang.getstr("ok"), 
+									   bitmap=geticon(32, "dialog-error"))
+							self.update_profile_name_timer.Start(1000)
+							return
+						else:
+							if "cprt" in profile.tags:
+								# get dispcal options if present
+								self.worker.options_dispcal = [
+									"-" + arg for arg in 
+									get_options_from_cprt(profile.getCopyright())[0]]
+					if os.path.exists(filename + ".cal") and \
+					   can_update_cal(filename + ".cal"):
+						apply_calibration = filename + ".cal"
 			self.setup_measurement(self.just_profile, apply_calibration)
 		else:
 			self.update_profile_name_timer.Start(1000)
@@ -3540,8 +3538,8 @@ class MainFrame(BaseFrame):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			if profile:
 				if not self.lut_viewer.profile or \
-				   not hasattr(self.lut_viewer.profile, "fileName") or \
-				   not hasattr(profile, "fileName") or \
+				   not self.lut_viewer.profile.fileName or \
+				   not profile.fileName or \
 				   self.lut_viewer.profile.fileName != profile.fileName:
 					self.lut_viewer.LoadProfile(profile)
 			else:
@@ -4056,16 +4054,17 @@ class MainFrame(BaseFrame):
 		display = self.display_ctrl.GetStringSelection()
 		if display:
 			display_short = display = display.split(" @")[0]
-			maxweight = 0
-			for part in re.findall('\w+(?:\s*\d+)?', re.sub("\([^)]+\)", "", 
-															display)):
-				digits = re.search("\d+", part)
-				chars = re.sub("\d+", "", part)
-				weight = len(chars) + (len(digits.group()) * 5 if digits else 0)
-				if chars and weight > maxweight:
-					# Weigh parts with digits higher than those without
-					display_short = part
-					maxweight = weight
+			if len(display_short) > 10:
+				maxweight = 0
+				for part in re.findall('[^\s_]+(?:\s*\d+)?', re.sub("\([^)]+\)", "", 
+																	display)):
+					digits = re.search("\d+", part)
+					chars = re.sub("\d+", "", part)
+					weight = len(chars) + (len(digits.group()) * 5 if digits else 0)
+					if chars and weight > maxweight:
+						# Weigh parts with digits higher than those without
+						display_short = part
+						maxweight = weight
 			profile_name = profile_name.replace("%dns", display_short)
 			profile_name = profile_name.replace("%dn", display)
 		else:
@@ -4833,7 +4832,7 @@ class MainFrame(BaseFrame):
 							self.calibration_file_ctrl.SetSelection(idx)
 						if "vcgt" in profile.tags:
 							# load calibration into lut
-							self.load_cal(cal=path, silent=False)
+							self.load_cal(cal=path, silent=True)
 						if not silent:
 							InfoDialog(self, msg=lang.getstr("no_settings") + 
 												 "\n" + path, 
@@ -4858,7 +4857,7 @@ class MainFrame(BaseFrame):
 						self.calibration_file_ctrl.SetSelection(idx)
 					if "vcgt" in profile.tags:
 						# load calibration into lut
-						self.load_cal(cal=path, silent=False)
+						self.load_cal(cal=path, silent=True)
 					if not silent:
 						InfoDialog(self, msg=lang.getstr("no_settings") + 
 											 "\n" + path, 
@@ -5235,8 +5234,8 @@ class MainFrame(BaseFrame):
 			if sys.platform == "win32":
 				sp.call("color", shell=True)
 			elif sys.platform != "darwin":
-				sp.call('echo -e "\\033[0m"', shell=True)
-				sp.call('clear', shell=True)
+				print "\x1b[0m"
+				## sp.call('clear', shell=True)
 			self.Destroy()
 
 	def OnDestroy(self, event):

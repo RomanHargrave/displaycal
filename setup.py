@@ -13,6 +13,7 @@ import subprocess as sp
 import sys
 import time
 
+from dispcalGUI.util_os import which
 from dispcalGUI.util_str import strtr
 
 pypath = os.path.abspath(__file__)
@@ -96,6 +97,8 @@ def setup():
 				setup_cfg = arg[1]
 				sys.argv = sys.argv[:n] + sys.argv[n + 1:]
 	
+	lastmod_time = 0
+	
 	non_build_args = filter(lambda arg: arg in sys.argv[1:], 
 							["bdist_appdmg", "clean", "purge", "purge_dist", 
 							 "uninstall", "-h", "--help", "--help-commands", 
@@ -109,7 +112,8 @@ def setup():
 							 "--requires", "--obsoletes", "--quiet", "-q", 
 							 "--verbose", "-v"])
 
-	if os.path.isdir(os.path.join(pydir, ".svn")) and (
+	if os.path.isdir(os.path.join(pydir, ".svn")) and (which("svn") or
+													   which("svn.exe")) and (
 		not sys.argv[1:] or len(non_build_args) < len(sys.argv[1:])):
 		print "Trying to get SVN version information..."
 		svnversion = None
@@ -126,7 +130,6 @@ def setup():
 		print "Trying to get SVN information..."
 		mod = False
 		lastmod = ""
-		lastmod_time = 0
 		entries = []
 		args = ["svn", "status", "--xml"]
 		while not entries:
@@ -134,6 +137,7 @@ def setup():
 				p = Popen(args, stdout=sp.PIPE, cwd=pydir)
 			except Exception, exception:
 				print "...failed:", exception
+				break
 			else:
 				xml = p.communicate()[0]
 				xml = minidom.parseString(xml)

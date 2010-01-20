@@ -672,7 +672,7 @@ class Worker():
 				elif sys.platform == "darwin":
 					mac_terminal_set_colors()
 				else:
-					sp.call('echo -e "\\033[2;37m"', shell=True)
+					print "\x1b[2;37m"
 			except Exception, exception:
 				safe_print("Info - could not set terminal colors:", 
 						   str(exception))
@@ -1018,7 +1018,7 @@ class Worker():
 				elif sys.platform == "darwin":
 					mac_terminal_set_colors(text="white", text_bold="white")
 				else:
-					sp.call('echo -e "\\033[22;37m"', shell=True)
+					print "\x1b[22;37m"
 			except Exception, exception:
 				safe_print("Info - could not restore terminal colors:", 
 						   str(exception))
@@ -1574,7 +1574,7 @@ class Worker():
 															  style=style)
 		for child in self.progress_parent.progress_dlg.GetChildren():
 			if isinstance(child, wx.Button):
-				child.Label = lang.getstr(child.Label.lower())
+				child.Label = lang.getstr("cancel")
 			elif isinstance(child, wx.StaticText) and \
 				 "Elapsed time" in child.Label:
 				child.Label = lang.getstr("elapsed_time")
