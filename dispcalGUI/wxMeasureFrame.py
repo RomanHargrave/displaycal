@@ -27,6 +27,8 @@ class MeasureFrame(InvincibleFrame):
 	
 	"""
 
+	exitcode = 0
+
 	def __init__(self, parent=None, id=-1):
 		InvincibleFrame.__init__(self, parent, id, 
 								 lang.getstr("measureframe.title"), 
@@ -156,30 +158,31 @@ class MeasureFrame(InvincibleFrame):
 		self.save_cfg()
 		if self.Parent and hasattr(self.Parent, "call_pending_function"):
 			self.Parent.call_pending_function()
+		else:
+			MeasureFrame.exitcode = 1
+			self.Close()
 
 	def save_cfg(self):
 		"""
 		Save the configuration after the window has changed.
 		
-		This is used internally and should normally not need to because
+		This is used internally and should normally not need to be
 		called explicitly.
 		
 		"""
 		setcfg("dimensions.measureframe", self.get_dimensions())
-		if self.Parent and (self.Parent.IsShownOnScreen() or not 
-							hasattr(self.Parent, "pending_function") or 
-							os.getenv("DISPLAY") not in (None, ":0.0")) and \
-						   hasattr(self.Parent, "display_ctrl"):
-			display_no = self.Parent.display_ctrl.GetSelection()
+		if os.getenv("DISPLAY") not in (None, ":0.0"):
+			display = os.getenv("DISPLAY").split(":")
+			display = display.pop().split(".")
+			try:
+				display_no = int(display.pop())
+			except ValueError:
+				display_no = getcfg("display.number") - 1
 		else:
 			display_no = wx.Display.GetFromWindow(self)
 		if display_no < 0: # window outside visible area
 			display_no = 0
 		setcfg("display.number", display_no + 1)
-		if self.Parent:
-			if hasattr(self.Parent, "display_lut_ctrl"):
-				if bool(int(getcfg("display_lut.link"))):
-					setcfg("display_lut.number", display_no + 1)
 
 	def Show(self, show=True):
 		if show:
@@ -367,10 +370,19 @@ class MeasureFrame(InvincibleFrame):
 		This function is used internally.
 		
 		"""
-		display_no = wx.Display.GetFromWindow(self)
-		if display_no < 0 or display_no > wx.Display.GetCount() - 1:
-			display_no = 0
-		display_rect = wx.Display(display_no).Geometry
+		if os.getenv("DISPLAY") not in (None, ":0.0"):
+			display = os.getenv("DISPLAY").split(":")
+			display = display.pop().split(".")
+			try:
+				display_no = int(display.pop())
+			except ValueError:
+				display_no = getcfg("display.number") - 1
+			display_rect = wx.Display(0).Geometry
+		else:
+			display_no = wx.Display.GetFromWindow(self)
+			if display_no < 0 or display_no > wx.Display.GetCount() - 1:
+				display_no = 0
+			display_rect = wx.Display(display_no).Geometry
 		display_size = display_rect[2:]
 		display_size_mm = []
 		try:
@@ -481,3 +493,5 @@ def main():
 
 if __name__ == "__main__":
 	main()
+	sys.exit(MeasureFrame.exitcode)
+

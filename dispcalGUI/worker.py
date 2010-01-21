@@ -1043,6 +1043,22 @@ class Worker():
 			# Do not destroy, will crash on Linux
 			self.progress_parent.progress_dlg.Hide()
 		wx.CallAfter(consumer, result, *args, **kwargs)
+
+	def get_display(self):
+		display_no = min(len(self.displays), getcfg("display.number")) - 1
+		display = str(display_no + 1)
+		if (self.has_separate_lut_access() or 
+			getcfg("use_separate_lut_access")) and (
+		   		not getcfg("display_lut.link") or 
+		   		(display_no > -1 and not self.lut_access[display_no])):
+			display_lut_no = min(len(self.displays), 
+									 getcfg("display_lut.number")) - 1
+			if display_lut_no > -1 and not self.lut_access[display_lut_no]:
+				for display_lut_no, disp in enumerate(self.lut_access):
+					if disp:
+						break
+			display += "," + str(display_lut_no + 1)
+		return display
 	
 	def get_display_name(self):
 		""" Return name of currently configured display """
@@ -1162,7 +1178,7 @@ class Worker():
 		cmd = get_argyll_util("dispcal")
 		args = []
 		args += ["-v"] # verbose
-		args += ["-d" + config.get_display()]
+		args += ["-d" + self.get_display()]
 		args += ["-c%s" % getcfg("comport.number")]
 		self.add_measurement_features(args)
 		if calibrate:
@@ -1425,7 +1441,7 @@ class Worker():
 		cmd = get_argyll_util("dispread")
 		args = []
 		args += ["-v"] # verbose
-		args += ["-d" + config.get_display()]
+		args += ["-d" + self.get_display()]
 		args += ["-c%s" % getcfg("comport.number")]
 		self.add_measurement_features(args)
 		if apply_calibration:
@@ -1449,7 +1465,7 @@ class Worker():
 		cmd = get_argyll_util("dispwin")
 		args = []
 		args += ["-v"]
-		args += ["-d" + config.get_display()]
+		args += ["-d" + self.get_display()]
 		args += ["-c"]
 		if cal is True:
 			args += ["-L"]
@@ -1577,8 +1593,7 @@ class Worker():
 				child.Label = lang.getstr("cancel")
 			elif isinstance(child, wx.StaticText) and \
 				 "Elapsed time" in child.Label:
-				child.Label = lang.getstr("elapsed_time")
-				child.GetContainingSizer().Layout()
+				child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
 		self.progress_parent.progress_dlg.SetSize((400, -1))
 		self.progress_parent.progress_dlg.Center()
 		self.progress_parent.progress_timer.Start(50)

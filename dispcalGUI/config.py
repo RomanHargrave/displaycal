@@ -394,6 +394,7 @@ defaults = {
 	"trc": 2.4,
 	"trc.should_use_viewcond_adjust.show_msg": 1,
 	"trc.type": "g",
+	"use_separate_lut_access": 0,
 	"whitepoint.colortemp": 5000.0,
 	"whitepoint.colortemp.locus": "t",
 	"whitepoint.x": 0.345741,
@@ -487,13 +488,6 @@ def hascfg(name, fallback=True):
 	elif fallback:
 		return name in defaults
 	return False
-
-
-def get_display():
-	display = str(getcfg("display.number"))
-	if not getcfg("display_lut.link"):
-		display += "," + str(getcfg("display_lut.number"))
-	return display
 
 
 def get_total_patches(white_patches=None, single_channel_patches=None, 

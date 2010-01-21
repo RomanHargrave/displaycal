@@ -163,15 +163,6 @@
 		}
 		
 		/* Automatic nested list numbering */
-		/*
-		#content #toc { list-style-type: none; counter-reset: llevel1; }
-		#content #toc > li:before { counter-increment: llevel1; content: counters(llevel1, ".") ". "; }
-		#content #toc > li > ul { list-style-type: none; counter-reset: llevel2; }
-		#content #toc > li > ul > li:before { counter-increment: llevel2; content: counters(llevel1, ".") "." counters(llevel2, ".") ". "; }
-		#content #toc > li > ul > li > ul { list-style-type: none; counter-reset: llevel3; }
-		#content #toc > li > ul > li > ul > li:before { counter-increment: llevel3; content: counters(llevel1, ".") "." counters(llevel2, ".") "." counters(llevel3, ".") ". "; }
-		*/
-		/* Better */
 		#content #toc, #content #toc ul { counter-reset: item }
 		#content #toc li { display: block }
 		#content #toc li:before { content: counters(item, ".") ". "; counter-increment: item }
@@ -258,10 +249,10 @@
 		span.optbox {
 			color: #998866;
 		}
-		/* .box a:link, .box a:visited {
+		.box a:link, .box a:visited {
 			border-bottom-style: dotted;
 			border-bottom-width: 1px;
-		} */
+		}
 		.info {
 			font-family: Verdana, sans-serif;
 			font-size: 11px;
@@ -349,13 +340,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.0.1 (Linux)<br />
-				0.3.0.1 (Mac OS X)<br />
-				0.3.0.1 (Windows)<br />
-				0.3.0.1 (Source)<br />
+				<dd id="version">0.3.0.2 (Linux)<br />
+				0.3.0.2 (Mac OS X)<br />
+				0.3.0.2 (Windows)<br />
+				0.3.0.2 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-01-20 23:32 (UTC)</dd>
+				<dd id="date">2010-01-21 23:38 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -377,12 +368,7 @@
 			<li><a href="#quicksetup" id="quicksetuplink">Quick setup guide</a></li>
 			<li><a href="#prerequisites">Prerequisites</a>
 				<ul>
-					<li><a href="#argyll">Argyll <acronym title="Color Management System">CMS</acronym></a>
-						<ul>
-							<li><a href="#instrument_access">Checking instrument access</a></li>
-							<li><a href="#lut_access">Checking video <acronym title="Look Up Table">LUT</acronym> access</a></li>
-						</ul>
-					</li>
+					<li><a href="#argyll">Argyll CMS</a></li>
 					<li><a href="#prerequisites-unattended">Additional prerequisites for unattended calibration and profiling</a></li>
 					<li><a href="#prerequisites-source">Additional prerequisites for using the non-standalone release and source code</a></li>
 				</ul>
@@ -399,6 +385,7 @@
 					<li><a href="#calibrating">Calibrating / profiling</a></li>
 				</ul>
 			</li>
+			<li><a href="#menu">Menu commands</a></li>
 			<li><a href="#issues">Known issues / solutions</a></li>
 			<li><a href="#todo">To-Do / planned features</a></li>
 			<li><a href="#thanks">Thanks</a></li>
@@ -412,11 +399,11 @@
 			<h2>About</h2>		
 			
 			<p>dispcalGUI is a <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> frontend for several utilities from the open source 
-			color management system <a href="http://argyllcms.com">Argyll <acronym title="Color Management System">CMS</acronym></a> by Graeme Gill, specifically 
+			color management system <a href="http://argyllcms.com">Argyll CMS</a> by Graeme Gill, specifically 
 			dispcal, dispread, colprof and dispwin, which when used together allow you to calibrate and 
 			profile your display using a measurement device. Of course, you can do a lot 
-			more with Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym>, but this is not the scope of this document—refer to the 
-			<a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll <acronym title="Color Management System">CMS</acronym> documentation</a> for in-depth information and usage scenarios.<br />
+			more with Argyll CMS, but this is not the scope of this document—refer to the 
+			<a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll CMS documentation</a> for in-depth information and usage scenarios.<br />
 			dispcalGUI opens two windows when run, a terminal and the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym>. The terminal is used for status messages and keyboard input during calibration. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> is used to set options and access functionality.</p>
 			
 			<div id="screenshots">
@@ -449,7 +436,7 @@
 			WITHOUT ANY WARRANTY; without even the implied warranty of 
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 			
-			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[5]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll <acronym title="Color Management System">CMS</acronym></a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> on all platforms, <a href="http://pypi.python.org/pypi/bbfreeze">bbfreeze</a> on Linux/Windows, <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X, <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows, or an included, modified version of <a href="http://pyinstaller.org/">pyinstaller</a> trunk on Linux/Windows (see pyinstaller/README1ST.txt for a list of changes to the stock version). All of these software packages are © by their respective authors.</p>
+			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[5]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> on all platforms, <a href="http://pypi.python.org/pypi/bbfreeze">bbfreeze</a> on Linux/Windows, <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X, <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows, or an included, modified version of <a href="http://pyinstaller.org/">pyinstaller</a> trunk on Linux/Windows (see pyinstaller/README1ST.txt for a list of changes to the stock version). All of these software packages are © by their respective authors.</p>
 		</div>
 		
 		<div id="download">
@@ -457,29 +444,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
-			
-			<!--h3>Linux packages</h3>
-			<p>Packages for various distributions. Please note these are likely to be replaced by the universal Autopackage with the next release.</p>
-			<p>
-				<a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1-py2.5-fedora10-argyll-1.i686.rpm">Package for Fedora 10 (Python 2.5, x86, for use with the Fedora Argyll <acronym title="Color Management System">CMS</acronym> package)</a><br />
-				<a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1-py2.5-fedora10-1.i686.rpm">Package for Fedora 10 (Python 2.5, x86, for use with the standalone Argyll <acronym title="Color Management System">CMS</acronym> executables)</a><br />
-				<a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1-py2.5-openSUSE11-1.i686.rpm">Package for openSUSE 11 (Python 2.5, x86)</a><br />
-				<a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1-py2.6-openSUSE11-1.i686.rpm">Package for openSUSE 11.1 (Python 2.6, x86)</a><br />
-				<a href="http://dispcalGUI.hoech.net/dispcalgui_0.3.0.1-py2.6-ubuntu9-1_i686.deb">Package for Ubuntu 9 (Python 2.6, x86)</a>
-			</p-->
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.2.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
-			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>. <!--Linux users should preferably get the Autopackage install instead, <em>unless</em> they want to run dispcalGUI on a system where they can't install software, or from removable media (like an USB stick).--></p>
+			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				<!--Linux (x86) <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1-linux-i686.tar.gz">Tarball</a><br /-->
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.2.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.2-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.2-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.1.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.2.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
@@ -492,14 +468,15 @@
 			
 			<ol class="stepbystep">
 				<li><div class="box stdbox"><div><a href="#download">Get</a> and <a href="#install">install</a> the latest release of dispcalGUI. It is recommended to first remove all previous versions.</div></div></li>
-				<li><div class="box stdbox"><div>Download and unpack the Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> archive file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</div></div>
-					<div class="box optbox"><span class="box optbox">If you want to use the HCFR colorimeter on Mac OS X:</span> Follow the instructions under <a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll <acronym title="Color Management System">CMS</acronym> on Mac OS X</a> to enable it.</div></li>
-				<li><div class="box stdbox"><div>Launch dispcalGUI. If it cannot determine the path to the Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> binaries, it will prompt you to select the location manually on first launch.</div></div>
-				<div class="box optbox"><span class="box optbox">If your measurement device is a Spyder 2:</span> Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu, insert the driver CD that came with the instrument and select the setup executable to enable it.</div></li>
+				<li><div class="box stdbox"><div>Download and unpack the Argyll CMS archive file: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</div></div>
+					<div class="box optbox"><span class="box optbox">If you want to use the HCFR colorimeter on Mac OS X:</span> Follow the instructions under <a href="http://argyllcms.com/doc/Installing_OSX.html">installing Argyll CMS on Mac OS X</a> to enable it.</div>
+					<div class="box optbox"><span class="box optbox">If you use Windows Vista/7 64-bit:</span> Read <a href="#issue-win64-driversigenforcement">installing Argyll USB drivers on Windows Vista/7 64-bit</a></div></li>
+				<li><div class="box stdbox"><div>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</div></div>
+				<div class="box optbox"><span class="box optbox">If your measurement device is a Spyder 2:</span> Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu. If you don't have the spyder software installed or its location cannot be determined, you will be prompted to select the setup executable that came with the instrument's installation media to enable it.</div></li>
 				<li><div class="box stdbox"><div>Connect your measurement device to your computer.</div></div>
-					<div class="box optbox"><span class="box optbox">Driver installation - Windows only:</span> If you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll <acronym title="Color Management System">CMS</acronym> on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
+					<div class="box optbox"><span class="box optbox">Driver installation - Windows only:</span> If you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
 					<ul>
-						<li>Under Vista...
+						<li>Under Windows Vista/7...
 							<ul>
 								<li>Select “Locate and install driver software (recommended)”.</li>
 								<li>If a “User Account Control” window pops up, select “Continue”.</li>
@@ -522,15 +499,15 @@
 								<li>In the window “Insert the manufacturer's installation disk” select “Browse...”.</li>
 							</ul>
 						</li>
-						<li>Locate the “argyll\libusbw” subdirectory in your Argyll_VX.X.X directory (under Windows 2000, you also need to select the .inf file that corresponds to your device, then select “Open” and “OK”). Select “Next”.</li>
-						<li>Under Vista, if a “Windows Security” dialog pops up, select “Install this driver software anyway”.</li>
+						<li>Locate the “libusbw” subdirectory in your Argyll_VX.X.X directory (under Windows 2000, you also need to select the .inf file that corresponds to your device, then select “Open” and “OK”). Select “Next”.</li>
+						<li>Under Windows Vista/7, if a “Windows Security” dialog pops up, select “Install this driver software anyway”.</li>
 						<li>A window stating the successful installation of the driver should show. Click “Finish”/“Close”.</li>
 					</ul></div>
 				</li>
 				<li>
 					<div class="box stdbox"><div>The instrument should show up in the dropdown menu within about 10 seconds.</div></div>
 					<div class="box optbox">If you cannot access your instrument, first try unplugging and reconnecting it, or a reboot.<br />
-						<span class="box optbox">Linux only:</span> If that doesn't help, read <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll <acronym title="Color Management System">CMS</acronym> on Linux: Setting up instrument access</a>.</div>
+						<span class="box optbox">Linux only:</span> If that doesn't help, read <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>.</div>
 				</li>
 				<li><div class="box stdbox"><div>Refer to the <a href="#usage">Usage instructions</a>.</div></div></li>
 			</ol>
@@ -540,49 +517,14 @@
 			<h2>Prerequisites</h2>
 		
 			<div id="argyll">
-				<h3>Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym></h3>
+				<h3>Argyll CMS</h3>
 			
-				<p>To use dispcalGUI, you need to download and install <a href="http://argyllcms.com">Argyll <acronym title="Color Management System">CMS</acronym></a> (&gt;= v1.0.0).</p>
-				<p>If you do not know Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> yet, be sure to look at the 
+				<p>To use dispcalGUI, you need to download and install <a href="http://argyllcms.com">Argyll CMS</a> (&gt;= v1.0.0).</p>
+				<p>If you do not know Argyll CMS yet, be sure to look at the 
 				<a href="http://argyllcms.com/doc/ArgyllDoc.html">documentation</a>, specifically 
 				the <a href="http://argyllcms.com/doc/instruments.html">list of supported 
 				instruments</a> and <a href="http://argyllcms.com/doc/Installing.html">installation 
 				instructions</a> (also, please pay attention to the installation instructions for your measurement device).</p>
-				
-				<div id="instrument_access">
-					<h4>Checking instrument access</h4>
-				
-					<p>After installing Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym>, you should make sure that your display(s) and 
-					measurement device are recognized by Argyll. To do that, connect the 
-					instrument, open a shell and enter:</p>
-
-					<p><code>dispcal</code></p>
-					
-					<p>You should get several lines of usage information. Look at the first few lines, 
-					under the options -d and -c the detected displays and measurement devices will 
-					be listed.</p>
-					
-					<p>If you see your display and instrument, you can proceed to <a href="#lut_access">checking video <acronym title="Look Up Table">LUT</acronym> access</a>.</p>
-					
-					<p>Otherwise, review the <a href="http://argyllcms.com/doc/Installing.html">Argyll <acronym title="Color Management System">CMS</acronym> installation 
-				instructions</a>.
-					Under Windows 2000 and XP, if you have an USB instrument with already installed vendor drivers, you might get it to work with Argyll by installing 
-					the <a href="http://sourceforge.net/projects/libusb-win32/">libusb-win32 filter drivers</a>—but please note that the recommended way of enabling your instrument is the one outlined in the Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> documentation under <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing the software on Microsoft Windows</a>.
-					If you really want to try and use your existing drivers along with the libusb filter, make sure to get the correct file, it will have a name similar to 
-					<code>libusb-win32-filter-bin-&lt;version&gt;.exe</code></p>
-				</div>
-				
-				<div id="lut_access">
-					<h4>Checking video <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> access</h4>
-				
-					<p>Then, you should make sure that the Argyll utilities can access the video LUTs. From a shell, enter:</p>
-					
-					<p><code>dispwin -c<br />
-					dispwin -r</code></p>
-					
-					<p>It will give back some status information wheter video <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> access was successful 
-					or not. Again, refer to the <a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll <acronym title="Color Management System">CMS</acronym> documentation</a> for troubleshooting, and under Linux, specifically to <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a> and “Fixing access to Video LUTs” therein.</p>
-				</div>
 			</div>
 			
 			<div id="prerequisites-unattended">
@@ -603,7 +545,7 @@
 					<li>Datacolor/ColorVision Spyder 3 *</li>
 				</ul>
 				
-				<p>* only when using Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> >= 1.1.0 Beta</p>
+				<p>* only when using Argyll CMS >= 1.1.0 Beta</p>
 			</div>
 			
 			<div id="prerequisites-source">
@@ -612,7 +554,7 @@
 				<p>You can <a href="#install">skip</a> this section if you downloaded a standalone executable of dispcalGUI for your operating system and do not want to install any of the python package releases or compile from source.</p>
 				
 				<p>All platforms:<br />
-				- <a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. Mac OS X users: If you want to compile dispcalGUI yourself, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)<br />
+				- <a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. Mac OS X users: If you want to compile dispcalGUI from source, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)<br />
 				- <a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit</p>
 				
 				<p>Mac OS X:<br />
@@ -663,28 +605,13 @@
 			<p>It is recommended to first remove all previous versions.</p>
 			
 			<div id="install-pkg">
-			
-				<!--h3>Linux packages</h3-->
-				
 				<h3>Linux Autopackage (.package)</h3>
 				
-				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
-				
-				<!--h4>Debian package (.deb)</h4>
-				
-				<p>Most modern desktop environments allow you to install packages by simply opening them (e.g. by double-clicking). Otherwise run <code>dpkg -i dispcalgui_0.3.0.1-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>_<em>&lt;arch&gt;</em>.deb</code> from a shell. If in doubt, refer to your system's documentation to find out how to install Debian packages. The installation will also add a menu entry for dispcalGUI to the desktop menu under the “Graphics/Other” category and set up instrument access.</p>
-				
-				<h4>RPM package (.rpm)</h4>
-				
-				<p>Most modern desktop environments allow you to install packages by simply opening them (e.g. by double-clicking). Otherwise run <code>rpm -i dispcalGUI-0.3.0.1-py<em>&lt;python-version&gt;</em>-<em>&lt;distribution&gt;</em>-<em>&lt;release&gt;</em>.<em>&lt;arch&gt;</em>.rpm</code> from a shell. If in doubt, refer to your system's documentation to find out how to install RPM packages. The installation will also add a menu entry for dispcalGUI to the desktop menu under the “Graphics/Other” category and set up instrument access.</p-->
+				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) and optionally numpy (enables the LUT viewer) and xautomation (enables <a href="#prerequisites-unattended">unattended calibration &amp; profiling</a> for some instruments) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
 			</div>
 			
 			<div id="install-exe">
 				<h3>Standalone executable</h3>
-				
-				<!--h4>Linux</h4>
-				
-				<p>Unpack and then simply run dispcalGUI from the created folder. You can optionally run the included install.sh shellscript from a terminal to install files to appropriate places on your system and also add a menu entry for dispcalGUI to the desktop menu under the “Graphics/Other” category. You may also use your own prefix by giving it as option to install.sh, e.g. <code>./install.sh --prefix=/usr</code>. The default prefix is <code>/usr/local</code> if installing as superuser or using sudo, and <code>~/.local</code> if installing as normal user. Installing as superuser or using sudo is required to set up instrument access (if you didn't do it when installing Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym>).</p-->
 				
 				<h4>Mac OS X</h4>
 				
@@ -798,7 +725,7 @@
 				
 				<p>If a calibration file or profile is loaded in this way, its name will
 				show up here to indicate that the settings reflect those in the file.<br />
-				Also, if a calibration is present it will be used as the base when “Just Profiling”.<br />
+				Also, if a calibration is present it can be used as the base when “Just Profiling”.<br />
 				The chosen settings file will stay as long as you do not change any of the 
 				calibration or profiling settings, with one exception: When a <code>.cal</code> file with the same base name as the settings file
 				exists in the same directory, adjusting the quality and profiling controls will not cause unloading of the settings file. This allows you to use an existing calibration with new profiling settings for “Just Profiling”, or to update an existing calibration with different quality and/or profiling settings. If you change settings in other situations, the file will get unloaded (but current settings will be retained—unloading just happens to remind you that the settings no longer match those in the file), and current display profile <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> will be restored (if present, otherwise it will reset to linear).</p>
@@ -828,51 +755,57 @@
 				drop-down box after a few seconds. If this doesn't work, there's also a menu
 				item “Detect displays and instruments” in the “Extra” menu,
 				but normally you shouldn't need this (if you can't seem to get your instrument to appear in the dropdown, please make
-				sure that Argyll recognizes your instrument before filing a bug report. See <a href="#prerequisites">Prerequisites</a>).</p>
+				sure that Argyll recognizes your instrument before filing a bug report).</p>
 			</div>
 			
 			<div id="settings_calibration">
 				<h3>Calibration settings</h3>
-			
-				<p>This should be fairly straightforward, at least if you have calibrated a display
-				before. You can also refer to the Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> <a href="http://argyllcms.com/doc/dispcal.html">dispcal documentation</a>, and you are encouraged to experiment if you have some time to 
-				spare. 
-				I will only explain the not-so-obvious options below.</p>
 				
 				<dl>
-			
-					<dt>Tone curve / gamma</dt>
+					<dt>White point</dt>
 						<dd>
-							<p>(Please also refer to the comprehensive Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> documentaion for <a href="http://argyllcms.com/doc/dispcal.html#g">information about the different tone curves</a>. The following has been quoted from it and slightly altered to fit dispcalGUI's behavior and notation)</p>
+							<p>Allows setting the target white point locus to the equivalent of a daylight or black body spectrum of the given temperature in degrees Kelvin, or as chromaticity co-ordinates. By default the white point target will be the native white of the display, and it's color temperature and delta E to the daylight spectrum locus will be shown during monitor adjustment, and adjustments will be recommended to put the display white point directly on the Daylight locus. If a daylight color temperature is given, then this will become the target of the adjustment, and the recommended adjustments will be those needed to make the monitor white point meet the target. Typical  values might be 5000 for matching printed output, or 6500, which gives a brighter, bluer look. A white point temperature different to that native to the display may limit the maximum brightness possible.</p>
+						</dd>
+					
+					<dt>White level</dt>
+						<dd>
+							<p>Set the target brightness of white in cd/m<sup>2</sup>. If this number cannot be reached, the brightest output possible is chosen, consistent with matching the white point target. Note that many of the instruments are not particularly accurate when assessing the absolute display brightness in cd/m<sup>2</sup>. NOTE that some LCD screens behave a little strangely near their absolute white point, and may therefore exhibit odd behavior at values just below white. It may be advisable in such cases to set a brightness slightly less than the maximum such a display is capable of.</p>
+						</dd>
+					
+					<dt>Black level</dt>
+						<dd>
+							<p>Set the target brightness of black in cd/m<sup>2</sup>. Setting too high a value may give strange results as it interacts with trying to achieve the target “advertised” gamma curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
+						</dd>
+					
+					<dt>Tone curve / gamma</dt>
+						<dd>							
+							<p>The target response curve gamma is normally an exponential curve (output = input<sup>gamma</sup>), and defaults to 2.4 (which is typical of a CRT type displays real response). Four pre-defined curves can be used as well: the sRGB colorspace response curve, which is an exponent curve with a straight segment at the dark end and an overall response of approximately gamma 2.2, the L* curve, which is the response of the CIE L*a*b* perceptual colorspace, the Rec. 709 video standard response curve and the SMPTE 240M video standard response curve.</p>
 							
-							<p>Relative: The gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve.</p>
-							
-							<p>Absolute: Allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value.</p>
+							<p>For gamma values, you can also specify wheter it should be interpreted relative, meaning the gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve, or absolute, which allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value.</p>
 						</dd>
 					
 					<dt>Black output offset</dt>
-						<dd>
-							<p>(Quoted from the Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> documentation and slightly altered to fit dispcalGUI's behavior and notation)</p>
-							
+						<dd>							
 							<p>Real displays do not have a zero black response, while all the target response curves do, so this has to be allowed for in some way. The default way of handling this (equivalent to 100% black output offset) is to allow for this at the output of the ideal response curve, by offsetting and scaling the output values. This defined a curve that will match the responses that many other systems provide and may be a better match to the natural response of the display, but will give a less visually even response from black. The other alternative is to offset and scale the input values into the ideal response curve so that zero input gives the actual non-zero display response. This ensures the most visually even progression from display minimum, but might be hard to achieve since it is different to the naturally response of a display. A subtlety is to provide a split between how much of the offset is accounted for as input to the ideal response curve, and how much is accounted for at the output, where the degree is 0.0 accounts for it all as input offset, and 100% accounts for all of it as output offset.</p>
 						</dd>
 					
 					<dt>Black point correction</dt>
-						<dd>
-							<p>(Quoted from the Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> documentation and slightly altered to fit dispcalGUI's behavior and notation)</p>
-						
+						<dd>						
 							<p>Normally dispcal will attempt to make all colors down the neutral axis (R=G=B) have the same hue as the chosen white point. Near the black point, red, green or blue can only be added, not subtracted from zero, so the process of making the near black colors have the desired hue, will lighten them to some extent. For a device with a good contrast ratio or a black point that has nearly the same hue as the white, this is not a problem. If the device contrast ratio is not so good, and the black hue is noticeably different to that of the chosen white point (which is often the case for LCD type displays), this could have a noticeably detrimental effect on an already limited contrast ratio. Here the amount of black point hue correction can be controlled. By default a factor of 100% will be used, which is usually good for CRT and also by default a factor of 0% is used for LCD type displays, but you can override these with a custom value between 0% (no correction) to 100% (full correction). If less than full correction is chosen, then the resulting calibration curves will have the target white point down most of the curve, but will then cross over to the native or compromise black point.</p>
 						</dd>
 					
 					<dt>Black point correction rate</dt>
-						<dd>
-							<p>(Quoted from the Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> documentation and slightly altered to fit dispcalGUI's behavior and notation)</p>
-							
+						<dd>							
 							<p>If the black point is not being set completely to the same hue as the white point (ie. because the factor is less than 100%), then the resulting calibration curves will have the target white point down most of the curve, but will then blend over to the native or compromise black point that is blacker, but not of the right hue. The rate of this blend can be controlled. The default value 400, which results in a target that switches from the white point target to the black, moderately close to the black point. While this typically gives a good visual result with the target neutral hue being maintained to the point where the crossover to the black hue is not visible, it may be asking too much of some displays (typically LCD type displays), and there may be some visual effects due to inconsistent color with viewing angle. For this situation a smaller value may give a better visual result (e.g. try values of 300 or 200. A value of 100 will set a pure linear blend from white point to black point). If there is too much coloration near black, try a larger value, e.g. 600 or 800.</p>
 						</dd>
 					
+					<dt>Calibration quality</dt>
+						<dd>							
+							<p>Determines how much time and effort to go to in calibrating the display. The higher the quality, the more test readings will be done, the more refinement passes will be done, the tighter will be the accuracy tolerance, and the more detailed will be the calibration of the display. The result will ultimately be limited by the accuracy of the instrument, the repeatability of the display and instrument, and the resolution of the video LUT entries and digital or analogue output (RAMDAC).</p>
+						</dd>
+					
 					<dt>Interactive display adjustment</dt>
-						<dd>You will normally want to keep this checked, to be able to use the monitor controls to get closer to the chosen target characteristics.</dd>
+						<dd>Turning this off skips straight to calibration measurements instead of giving you the opportunity to alter the display's contrast, brightness and white point controls first. You will normally want to keep this checked, to be able to use the controls to get closer to the chosen target characteristics.</dd>
 				</dl>
 			</div>		
 			
@@ -881,13 +814,16 @@
 			
 				<dl>
 					<dt>Testchart file</dt>
-						<dd>You can choose the test patches used when profiling the display here. There are some pre-built ones in the <code>ti1</code> folder (which are automatically chosen based on display type and profile type), but you can also use and create your own.</dd>
+						<dd>You can choose the test patches used when profiling the display here. There are some pre-built ones in the <code>ti1</code> folder (which are automatically chosen based on display type and profile type), but you can also use and create your own using the built-in testchart editor (click on the colored patches next to the testchart file selector or choose “Edit testchart...” from the “File” menu to launch it).</dd>
+						
+					<dt>Profile quality</dt>
+						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Color Look Up Table">cLUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> profiles), it sets the main lookup table size, and hence quality in the resulting profile. It is highly recommended that medium quality be used as a starting point, and other settings only tried after this has been evaluated. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
 			
 					<dt>Profile type</dt>
 						<dd>
 							<p>Generally you can differentiate between two types of profiles: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based and matrix based.</p>
 							
-							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="definition_CMM">[1]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS</acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
+							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[1]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS</acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
 							
 							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> type profiles, or certain variations of them).
 							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS >= 1.1.0 RC4 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped R ↔ G matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
@@ -934,20 +870,112 @@
 			</div>
 		</div>
 		
+		<div id="menu">
+			<h2>Menu commands</h2>
+			
+			<div id="menu-file">
+				<h3>“File” menu</h3>
+			
+				<dl>
+					<dt>Load settings...</dt>
+						<dd>Loads settings from a profile created by dispcalGUI, or a calibration file, as described under “<a href="#settingsfile">settings file</a>”.</dd>
+						
+					<dt>Choose testchart file...</dt>
+						<dd>Loads a testchart <code>.ti1</code> file used for profiling (existing profiles created with Argyll CMS or dispcalGUI can also be selected as source).</dd>
+						
+					<dt>Edit testchart...</dt>
+						<dd>Opens the testchart editor/creator.</dd>
+						
+					<dt>Choose save path...</dt>
+						<dd>Allows you to select a directory to store the files created by dispcalGUI during calibration/profiling.</dd>
+						
+					<dt>Locate Argyll CMS executables...</dt>
+						<dd>Normally dispcalGUI will look and use for the Argyll CMS binaries on your system's the PATH variable, but you may specify a different location.</dd>
+				</dl>
+			</div>
+			
+			<div id="menu-extra">
+				<h3>“Extra” menu</h3>
+			
+				<dl>
+					<dt>Create profile from measurement data...</dt>
+						<dd>Allows you to create a profile from existing <code>.ti3</code> measurement data (existing profiles created with Argyll CMS or dispcalGUI can also be selected as source).</dd>
+						
+					<dt>Install display device profile...</dt>
+						<dd>Select an existing profile for installation.</dd>
+						
+					<dt>Load LUT curves from calibration file or profile...</dt>
+						<dd>Unlike “load settings....” from the “file” menu, loads just calibration curves into the video card.</dd>
+						
+					<dt>Load LUT curves from current display device profile</dt>
+						<dd>Tries to determine the profile associated to the currently selected display and loads its calibration curves from the 'vcgt' tag.</dd>
+						
+					<dt>Show LUT curves</dt>
+						<dd>Shows the LUT Viewer, which graphs calibration curves.</dd>
+						
+					<dt>Reset LUT curves</dt>
+						<dd>Resets any video card LUT curves to linear, such that input = output.</dd>
+						
+					<dt>Report on calibrated display device</dt>
+						<dd>Does some quick measurements, <em>not</em> first resetting any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
+						
+					<dt>Report on calibrated display device</dt>
+						<dd>Does some quick measurements, first resetting any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card LUT bit depth.</dd>
+						
+					<dt>Verify calibration</dt>
+						<dd>Run verify pass on the display as it is currently setup (currently installed LUT curves). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
+						
+					<dt>Detect displays and instruments</dt>
+						<dd>Normally dispcalGUI will automatically detect changes in display setup or instrument configuration, but as it may take a few seconds for changes to be recognized, you can instantly run the detection using this menu entry.</dd>
+						
+					<dt>Use separate video LUT acccess</dt>
+						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video LUT hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally dispcalGUI will automatically detect if separate video LUT access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
+						
+					<dt>Enable Spyder 2 colorimeter...</dt>
+						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
+The purchaser of a Spyder 2 instrument should have received a copy of this firmware along with their instrument from the original vendor, as part of the instrument setup files.<br />
+On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on the users machine, the firmware pattern can usually be located from there. If the vendors drivers have not been installed, or the user does not wish to install them, or no vendors drivers are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. If your Linux system is not running automount, or your automount is setup to mount CDROM's somewhere other than /media, /mnt/cdrom, /media/cdrom or /cdrom, then you will have to mount the CDROM manually, and select the path to the CDROM setup/setup.exe file.
+</dd>
+
+					<dt>Restore defaults</dt>
+						<dd>Restore all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
+						
+					<dt>Show/hide information window</dt>
+						<dd>Shows/hides the informational log window.</dd>
+				</dl>
+			</div>
+			
+			<div id="menu-lang">
+				<h3>“Language” menu</h3>
+			
+				<p>Allows you to select one of the available localizations.</p>
+			</div>
+		</div>
+		
 		<div id="issues">
 			<h2>Known issues and solutions</h2>
 			
-			<p><span class="q">Issue:</span> Under Windows Vista, the installed display profile calibration cannot be loaded.<br />
+			<p id="issue-win64-driversigenforcement"><span class="q">Issue:</span> Under Windows Vista/7 64-bit, driver signature enforcement prevents the installation of unsigned Argyll USB drivers.<br />
+			<span class="a">Solution:</span> A safe method is to self sign the drivers and put your system in test mode. The procedure for doing this is a little complicated though, and beyond the scope of this documentation. You might want to refer to “<a href="http://nil-techno.blogspot.com/2008/08/installing-unsigned-drivers-on-vista-64.html">installing unsigned drivers on Vista 64</a>”. If you take this path then make sure you sign the libusb0.sys and libusb0_x86.sys files in the Argyll_VX.X.X/libusbw directory <strong>before</strong> you install the device, otherwise you will have to remove &amp; delete the driver using device manager, and also manually delete the libusb0 and libusb0_x86 .sys and .dll files from Windows\system32, Windows\System32\drivers and Windows\SysWOW64 and start again.<br />
+			If you don't want/can't sign the driver files or enable test mode, another workaround is to allow loading unsigned drivers by pressing F8 when the system boots, and selecting the boot option to “Disable Driver Signature Enforcement”. Note that you have to do this <strong>every time</strong> you boot and want to use the USB instruments (you may still get a warning about an unsigned driver not being loaded after plugging the instrument in, booting or installing the driver, but take these messages with a grain of salt, and check in device manager and also whether the instruments are actually accessible).</p>
+			
+			<p><span class="q">Issue:</span> Under Windows Vista/7, the installed display profile calibration cannot be loaded.<br />
 			<span class="a">Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management”. Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</p>
 			
-			<p><span class="q">Issue:</span> Under Windows Vista, the calibration gets unloaded when a “User Access Control” prompt is shown.<br />
-			<span class="a">Solution:</span> This is really a Windows Vista bug that hopefully gets fixed at some point, and can be remedied by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Extra” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym>, open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</p>
+			<p><span class="q">Issue:</span> Under Windows Vista/7, the calibration gets unloaded when a “User Access Control” prompt is shown.<br />
+			<span class="a">Solution:</span> This is really a Windows Vista/7 bug that hopefully gets fixed at some point, and can be remedied by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Extra” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym>, open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</p>
+			
+			<p><span class="q">Issue:</span> Under Windows, enabling the Spyder 2 colorimeter might fail when not running as administrator.<br />
+			<span class="a">Solution:</span> Run dispcalGUI as admin. Right-click the executable and choose “Run as administrator...”</p>
 			
 			<p><span class="q">Issue:</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br />
-			<span class="a">Solution:</span> This seems to be a Photoshop bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. To overcome it, select “Advanced...” next to the profile type dropdown, select an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (probably the CMYK press profile you use most often) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To fix an existing profile, choose “Create profile from measurement data...” from the “Extra” menu.</p>
+			<span class="a">Solution:</span> This seems to be a Photoshop bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (probably the source profile you use most often) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, choose “Create profile from measurement data...” from the “Extra” menu. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</p>				
+				
+			<p><span class="q">Issue:</span> No video LUT access under Linux/X11 (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br />
+			<span class="a">Solution:</span> Please refer to <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a> and “Fixing access to Video LUTs” therein.</p>
 			
-			<p><span class="q">Issue:</span> Under Linux, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal.<br />
-			<span class="a">Solution:</span> These messages are generated from GTK, I have no influence on them, but they can be safely ignored if the full message is something like “Gtk-Message: (for origin information, set GTK_DEBUG): failed to retrieve property `GtkTreeView::odd-row-color'”. If they really bother you and you don't mind using the shell and editing files by hand, you can get rid of these messages by changing the involved GTK theme file:</p>
+			<p><span class="q">Issue:</span> Under <em>some</em> Linux distributions, with <em>some</em> GTK themes, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal.<br />
+			<span class="a">Solution:</span> These messages are generated from GTK and hint to certain unsupported features in a GTK theme file, I have no influence on them, but they can be safely ignored if the full message is something like “Gtk-Message: (for origin information, set GTK_DEBUG): failed to retrieve property `GtkTreeView::odd-row-color'”. If they really bother you and you don't mind using the shell and editing files by hand, you can get rid of these messages by changing the involved GTK theme file:</p>
 			<ol>
 				<li>Open a shell and type <code>export GTK_DEBUG=1</code></li>
 				<li>Run dispcalGUI and open a file selector.</li>
@@ -990,7 +1018,7 @@
 			<h2>Thanks</h2>
 		
 			<p>I would like to thank the following people:<br />
-			Graeme Gill, for creating Argyll <acronym title="Color Management System">CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym>.<br />
+			Graeme Gill, for creating Argyll CMS.<br />
 			Loïc Guégant (french translation).<br />
 			Roberto Quintero (spanish translation).<br />
 			Tommaso Schiavinotto (italian translation).<br />
@@ -999,15 +1027,15 @@
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-01-20 23:32 (UTC) 0.3.0.1 -->
+			<!-- 2010-01-21 23:38 (UTC) 0.3.0.2 -->
 			<dl>
-				<dt>2010-01-20 23:32 (UTC)</dt>
+				<dt>2010-01-21 23:38 (UTC)</dt>
 					<dd>
-						<h3>0.3.0.1</h3>
+						<h3>0.3.0.2</h3>
 						<h4>Features added in this release:</h4>
 						<ul>
-							<li>Support for Argyll &gt;= 1.1.0 RC3 adaptive emissive measurement mode with i1 Pro.</li>
-							<li>More profile types (XYZ LUT on Windows only selectable if using Argyll &gt;= 1.1.0 RC3)</li>
+							<li>Support for Argyll &gt;= 1.1.0 RC3 adaptive emissive measurement mode with the i1 Pro spectrometer.</li>
+							<li>All of Argyll's profile types are now selectable (XYZ LUT on Windows only if using Argyll &gt;= 1.1.0 RC3)</li>
 							<li>Optionally create a fast matrix/shaper profile when just calibrating.</li>
 							<li>Added “Reset LUT curves” checkbox in the dialog shown when just profiling.</li>
 							<li>LUT Viewer: Capability to show a matrix profile's rTRC/gTRC/bTRC curves.</li>
@@ -1017,34 +1045,39 @@
 							<li>When restoring defaults, selected display/instrument/measurement mode, language and profile name are retained.</li>
 							<li>Only enable display/instrument selector if more than one device detected respectively.</li>
 							<li>Changed i1 Pro highres measurement mode from implicit to user choice.</li>
-							<li>Gamut mapping window: When selecting a source profile, pre-select a source viewing condition based on profile class (monitor or printer).</li>
-							<li>Updated defaults and presets to Argyll 1.1.0 values (namely black output offset).</li>
-							<li>Enhanced short display name placeholder (%dns) for profile name - should not yield single numbers or model name without model number any more (or atleast less likely).</li>
+							<li>Gamut mapping: When selecting a source profile, pre-select a source viewing condition based on profile class (monitor or printer).</li>
+							<li>Updated defaults and presets to Argyll 1.1.0 values (i.e. black output offset).</li>
+							<li>Short display name placeholder (%dns) for profile name should not yield single numbers or model name without model number any more (or atleast less likely).</li>
 							<li>Log messages from most informational and all error dialogs.</li>
 							<li>Show file paths in most dialogs involving file processing.</li>
-							<li>ReadMe and license are now links in the About dialog.</li>
+							<li>ReadMe and license are now linked in the “About” dialog.</li>
+							<li>Documentation in the ReadMe has been updated and is now more or less complete for the main application. Testchart editor docs are still missing.</li>
+							<li>Added information how to install Argyll USB drivers on Windows Vista/7 64-bit to the “known issues and solutions” section in the ReadMe.</li>
+							<li>Moved information how to fix video LUT access under Linux/X11 to the “known issues and solutions” section in the ReadMe.</li>
 							<li>Linux: Updated udev rules to those provided with Argyll 1.1.0. Removed obsolete permissions and policy files.</li>
-							<li>Windows: Get name of selected display via additional Windows API calls (should yield more descriptive display names than “DISPLAY1”, “DISPLAY2” etc.)</li>
+							<li>Linux: In multi-display setups using separate X screens, it should no longer be necessary to launch dispcalGUI on the display to be measured.</li>
+							<li>Windows: Get names of displays via additional Windows API calls (should yield more descriptive names than “DISPLAY1”, “DISPLAY2” etc.)</li>
 							<li>Windows: Use default command prompt text color, and a darker variant only when doing measurements.</li>
 							<li>dispcalGUI version now corresponds to SVN revision number, split into its digit components. Build system (setup.py) uses SVN to generate version information.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>LUT Viewer: When no display is selected (i.e. when Argyll binaries are not found), it will now try to get the profile of the 1st display.</li>
-							<li>LUT Viewer: Reflect changes to the LUT while it was hidden.</li>
-							<li>LUT Viewer: Check if profile actually has a 'vcgt' tag before trying to access it. If not present, clear canvas and disable R/G/B checkboxes.</li>
-							<li>Loading of calibration upon initial preview in profile installation dialog if profile does not contain calibration/profiling settings in 'cprt' tag.</li>
+							<li>LUT Viewer: When no display is selected (i.e. when Argyll binaries are not found), it will now try to show the vcgt of the 1st display's profile.</li>
+							<li>LUT Viewer: When hiding the viewer and loading different LUT curves, those changes were not reflected when showing the viewer again.</li>
+							<li>LUT Viewer: Check if a profile actually contains a 'vcgt' tag. If not, clear canvas and disable R/G/B checkboxes.</li>
+							<li>Fixed selection of display used for video LUT access.</li>
+							<li>Loading of calibration upon initial preview in profile installation dialog if profile does not contain dispcalGUI settings.</li>
 							<li>Do not show failure message if user cancels profile installation via the password dialog when installing in system scope.</li>
 							<li>In some cases, values read from the configuration file were not correctly validated.</li>
 							<li>colprof output is no longer swallowed when creating a matrix profile with Argyll versions &lt;= 1.0.4.</li>
-							<li>Linux/Mac OS X: When installing a profile in local system scope, the password was not accepted under newer Linux distros and also Mac OS X &gt; 10.4.11</li>
+							<li>Linux/Mac OS X: Enabling the Spyder 2 colorimeter might need elevated privileges.</li>
+							<li>Linux/Mac OS X: When installing a profile in local system scope, the necessary password was not accepted under newer Linux distros and also Mac OS X &gt; 10.4.11</li>
 							<li>Mac OS X: Suppress spurious AppleScript messages.</li>
 							<li>Windows: Get display profile via registry instead of Windows API because the latter does not reflect runtime changes to profile associations (you still need to refresh the LUT Viewer when changing profile associations outside of dispcalGUI while it is running).</li>
 						</ul>
 						<h3>Known issues in this release:</h3>
 						<ul>
-							<li>Linux: You can't interact with the combobox or the checkboxes in the LUT Viewer while a profile installation dialog is shown.</li>
-							<li>Enabling the Spyder 2 colorimeter might fail when not running as root/with administrator privileges, depending on where Argyll is installed.</li>
+							<li>Linux: You can't interact with the drop-down menu or the checkboxes in the LUT Viewer while a profile installation dialog is shown.</li>
 						</ul>
 					</dd>
 				

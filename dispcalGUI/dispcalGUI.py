@@ -74,7 +74,7 @@ import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
 					script_ext, confighome, datahome, defaults, enc, exe, 
 					exe_ext, exedir, fs_enc, getbitmap, geticon, get_data_path, 
-					get_display, getcfg, get_verified_path, 
+					getcfg, get_verified_path, 
 					initcfg, isapp, isexe, profile_ext, pydir, pyext, pyname, 
 					pypath, resfiles, runtype, setcfg, storage, writecfg)
 
@@ -126,7 +126,8 @@ try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
 	LUTFrame = None
-from wxMeasureFrame import MeasureFrame
+if sys.platform in ("darwin", "win32") or isexe:
+	from wxMeasureFrame import MeasureFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
@@ -497,7 +498,8 @@ class MainFrame(BaseFrame):
 		self.init_frame()
 		self.init_defaults()
 		self.init_infoframe()
-		self.init_measureframe()
+		if sys.platform in ("darwin", "win32") or isexe:
+			self.init_measureframe()
 		self.init_menus()
 		self.update_menus()
 		self.init_controls()
@@ -630,7 +632,8 @@ class MainFrame(BaseFrame):
 			"6500.0"
 		]
 		
-		self.use_separate_lut_access = False or test
+		setcfg("use_separate_lut_access", 
+			   self.worker.has_separate_lut_access() or test)
 
 	def init_frame(self):
 		"""
@@ -1284,8 +1287,9 @@ class MainFrame(BaseFrame):
 				self.infoframe.Destroy()
 				self.init_infoframe()
 				self.log()
-				self.measureframe.Destroy()
-				self.init_measureframe()
+				if sys.platform in ("darwin", "win32") or isexe:
+					self.measureframe.Destroy()
+					self.init_measureframe()
 				if hasattr(self, "lut_viewer"):
 					self.lut_viewer.Destroy()
 					del self.lut_viewer
@@ -1423,22 +1427,24 @@ class MainFrame(BaseFrame):
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
 		comport_sizer = self.comport_ctrl.GetContainingSizer()
 		use_lut_ctrl = self.worker.has_separate_lut_access() or \
-					   self.use_separate_lut_access
+					   getcfg("use_separate_lut_access")
 		menubar = self.GetMenuBar()
 		extra = menubar.GetMenu(menubar.FindMenu(lang.getstr("menu.extra")))
 		menuitem = extra.FindItemById(
 			extra.FindItem(lang.getstr("use_separate_lut_access")))
 		menuitem.Check(use_lut_ctrl)
 		if use_lut_ctrl:
-			display_lut_no = int(getcfg("display_lut.number")) - 1
 			self.display_lut_ctrl.Clear()
-			i = 0
-			for disp in self.displays:
+			for i, disp in enumerate(self.displays):
 				if self.worker.lut_access[i]:
 					self.display_lut_ctrl.Append(disp)
-				i += 1
-			self.display_lut_ctrl.SetSelection(
-				min(max(0, len(self.worker.lut_access) - 1), display_lut_no))
+			display_lut_no = min(len(self.displays), 
+								 getcfg("display_lut.number")) - 1
+			if display_lut_no > -1 and not self.worker.lut_access[display_lut_no]:
+				for display_lut_no, disp in enumerate(self.worker.lut_access):
+					if disp:
+						break
+			self.display_lut_ctrl.SetSelection(display_lut_no)
 			self.display_lut_link_ctrl_handler(CustomEvent(
 				wx.EVT_BUTTON.evtType[0], self.display_lut_link_ctrl), 
 				bool(int(getcfg("display_lut.link"))))
@@ -1898,7 +1904,8 @@ class MainFrame(BaseFrame):
 		if check_set_argyll_bin():
 			cmd, args = get_argyll_util("spyd2en"), ["-v"]
 			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-										  skip_scripts=True, silent=True)
+										  skip_scripts=True, silent=True,
+										  asroot=True)
 			if result:
 				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
 						   ok=lang.getstr("ok"), 
@@ -1924,7 +1931,8 @@ class MainFrame(BaseFrame):
 					result = self.worker.exec_cmd(cmd, args + [path], 
 												  capture_output=True, 
 												  skip_scripts=True, 
-												  silent=True)
+												  silent=True,
+												  asroot=True)
 					if result:
 						InfoDialog(self, 
 								   msg=lang.getstr("enable_spyder2_success"), 
@@ -1939,7 +1947,8 @@ class MainFrame(BaseFrame):
 								   logit=False)
 
 	def use_separate_lut_access_handler(self, event):
-		self.use_separate_lut_access = not self.use_separate_lut_access
+		setcfg("use_separate_lut_access", 
+			   int(not bool(getcfg("use_separate_lut_access"))))
 		self.update_displays()
 	
 	def profile_update_ctrl_handler(self, event):
@@ -2777,7 +2786,7 @@ class MainFrame(BaseFrame):
 										 'tell app "ColorSyncScripting" to set '
 										 'display profile of display %s to '
 										 'iccProfile' % 
-										 get_display().split(",")[0]]
+										 self.worker.get_display().split(",")[0]]
 						result = self.worker.exec_cmd(cmd, args, 
 													  capture_output=True, 
 													  low_contrast=False, 
@@ -2812,7 +2821,7 @@ class MainFrame(BaseFrame):
 							   bitmap=geticon(32, "dialog-information"),
 							   logit=False)
 				# try to create autostart script to load LUT curves on login
-				n = get_display()
+				n = self.worker.get_display()
 				loader_args = "-d%s -c -L" % n
 				if sys.platform == "win32":
 					name = "%s Calibration Loader (Display %s)" % (appname, n)
@@ -3180,9 +3189,42 @@ class MainFrame(BaseFrame):
 		writecfg()
 		self.worker.wrapup(False)
 		self.HideAll()
-		self.measureframe.Show()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
+		if sys.platform in ("darwin", "win32") or isexe:
+			self.measureframe.Show()
+		else:
+			wx.CallAfter(self.measureframe_subprocess)
+	
+	def measureframe_subprocess(self):
+		args = u'DISPLAY=:0.%s "%s" "%s"'.encode(fs_enc) % (
+				getcfg("display.number") - 1, sys.executable, 
+				os.path.join(pydir, "wxMeasureFrame.py"))
+		returncode = -1
+		try:
+			p = sp.Popen(args, 
+						 shell=True, 
+						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+		except Exception, exception:
+			stderr = str(exception)
+		else:
+			stdout, stderr = p.communicate()
+			returncode = p.returncode
+			config.initcfg()
+			self.display_ctrl.SetSelection(
+				max(0, getcfg("display.number") - 1))
+			self.display_ctrl_handler(
+				CustomEvent(wx.EVT_COMBOBOX.evtType[0], 
+							self.display_ctrl))
+		if returncode != 1:
+			self.Show(start_timers=True)
+		if stderr and stderr.strip():
+			InfoDialog(self, pos=(-1, 100), 
+					   msg=stderr, 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"))
+		elif returncode == 1:
+			self.call_pending_function()
 
 	def set_pending_function(self, pending_function, *pending_function_args, 
 							 **pending_function_kwargs):
@@ -3193,7 +3235,8 @@ class MainFrame(BaseFrame):
 	def call_pending_function(self):
 		# Needed for proper display updates under GNOME
 		writecfg()
-		self.measureframe.Hide()
+		if sys.platform in ("darwin", "win32") or isexe:
+			self.measureframe.Hide()
 		if debug:
 			safe_print("[D] Calling pending function with args:", 
 					   self.pending_function_args)
@@ -3617,9 +3660,14 @@ class MainFrame(BaseFrame):
 									   getevttype(event)))
 		display_no = self.display_ctrl.GetSelection()
 		setcfg("display.number", display_no + 1)
-		if bool(int(getcfg("display_lut.link"))):
+		if bool(int(getcfg("display_lut.link"))) and display_no > -1:
 			self.display_lut_ctrl.SetStringSelection(self.displays[display_no])
-			setcfg("display_lut.number", display_no + 1)
+			try:
+				i = self.displays.index(
+					self.display_lut_ctrl.GetStringSelection())
+			except ValueError:
+				i = min(0, self.display_ctrl.GetSelection())
+			setcfg("display_lut.number", i + 1)
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			self.lut_viewer_load_lut(profile=ICCP.get_display_profile(display_no))
 
@@ -3633,7 +3681,7 @@ class MainFrame(BaseFrame):
 		try:
 			i = self.displays.index(self.display_lut_ctrl.GetStringSelection())
 		except ValueError:
-			i = self.display_ctrl.GetSelection()
+			i = min(0, self.display_ctrl.GetSelection())
 		setcfg("display_lut.number", i + 1)
 
 	def display_lut_link_ctrl_handler(self, event, link=None):
@@ -3656,7 +3704,7 @@ class MainFrame(BaseFrame):
 				lut_no = self.displays.index(
 					self.display_lut_ctrl.GetStringSelection())
 			except ValueError:
-				lut_no = self.display_ctrl.GetSelection()
+				lut_no = min(0, self.display_ctrl.GetSelection())
 		self.display_lut_ctrl.SetSelection(lut_no)
 		self.display_lut_ctrl.Enable(not link and 
 									 self.display_lut_ctrl.GetCount() > 1)
@@ -5235,7 +5283,7 @@ class MainFrame(BaseFrame):
 				sp.call("color", shell=True)
 			elif sys.platform != "darwin":
 				print "\x1b[0m"
-				## sp.call('clear', shell=True)
+				sp.call('clear', shell=True)
 			self.Destroy()
 
 	def OnDestroy(self, event):
