@@ -193,7 +193,7 @@ def app_update_check(parent=None):
 					 msg=lang.getstr("check_update.uptodate",
 									 appname),
 					 ok=lang.getstr("ok"), 
-					 bitmap=geticon(32, "dialog-information"))
+					 bitmap=geticon(32, "dialog-information"), print_=True)
 
 
 class BaseFrame(wx.Frame):
@@ -1985,7 +1985,7 @@ class MainFrame(BaseFrame):
 				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-information"),
-						   logit=False)
+						   log=False)
 			else:
 				# prompt for setup.exe
 				defaultDir, defaultFile = expanduseru("~"), "setup.exe"
@@ -2013,13 +2013,13 @@ class MainFrame(BaseFrame):
 								   msg=lang.getstr("enable_spyder2_success"), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-information"),
-								   logit=False)
+								   log=False)
 					else:
 						InfoDialog(self, 
 								   msg=lang.getstr("enable_spyder2_failure"), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"),
-								   logit=False)
+								   log=False)
 
 	def use_separate_lut_access_handler(self, event):
 		setcfg("use_separate_lut_access", 
@@ -2050,7 +2050,7 @@ class MainFrame(BaseFrame):
 		if q == "u":
 			InfoDialog(self, msg=lang.getstr("quality.ultra.warning"), 
 					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-warning"), logit=False)
+					   bitmap=geticon(32, "dialog-warning"), log=False)
 
 	def profile_quality_ctrl_handler(self, event):
 		if debug:
@@ -2279,7 +2279,7 @@ class MainFrame(BaseFrame):
 		InfoDialog(self, 
 				   msg=lang.getstr("calibration.ambient_viewcond_adjust.info"), 
 				   ok=lang.getstr("ok"), 
-				   bitmap=geticon(32, "dialog-information"), logit=False)
+				   bitmap=geticon(32, "dialog-information"), log=False)
 
 	def black_luminance_ctrl_handler(self, event):
 		if event.GetId() == self.black_luminance_textctrl.GetId() and (not 
@@ -2553,7 +2553,7 @@ class MainFrame(BaseFrame):
 							 msg=lang.getstr("trc.should_use_viewcond_adjust"), 
 							 ok=lang.getstr("ok"), 
 							 bitmap=geticon(32, "dialog-information"), 
-							 show=False, logit=False)
+							 show=False, log=False)
 			chk = wx.CheckBox(dlg, -1, lang.getstr("dialog.do_not_show_again"))
 			dlg.Bind(wx.EVT_CHECKBOX, self.should_use_viewcond_adjust_handler, 
 					 id=chk.GetId())
@@ -2897,7 +2897,7 @@ class MainFrame(BaseFrame):
 							   msg=lang.getstr("profile.install.success"), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-information"),
-							   logit=False)
+							   log=False)
 				# try to create autostart script to load LUT curves on login
 				n = self.worker.get_display()
 				loader_args = "-d%s -c -L" % n
@@ -3061,30 +3061,30 @@ class MainFrame(BaseFrame):
 								   msg=lang.getstr("calibration.reset_success"), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-information"),
-								   logit=False)
+								   log=False)
 					else:
 						InfoDialog(self, 
 								   msg=lang.getstr("calibration.load_success"), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-information"),
-								   logit=False)
+								   log=False)
 		elif not silent:
 			if install:
 				if result is not None:
 					if verbose >= 1: safe_print(lang.getstr("failure"))
 					InfoDialog(self, msg=lang.getstr("profile.install.error"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"), logit=False)
+							   bitmap=geticon(32, "dialog-error"), log=False)
 			else:
 				if cal is False:
 					InfoDialog(self, 
 							   msg=lang.getstr("calibration.reset_error"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"), logit=False)
+							   bitmap=geticon(32, "dialog-error"), log=False)
 				else:
 					InfoDialog(self, msg=lang.getstr("calibration.load_error"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"), logit=False)
+							   bitmap=geticon(32, "dialog-error"), log=False)
 		self.worker.pwd = None  # don't keep password in memory
 		return result
 

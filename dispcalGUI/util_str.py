@@ -17,19 +17,19 @@ def asciize(obj):
 	
 	"""
 	subst = {
-		u"\u00a9": "(C)", # U+00A9 copyright sign
-		u"\u00ae": "(R)", # U+00AE registered sign
-		u"\u00b2": "2", # U+00B2 superscript two
-		u"\u00b3": "3", # U+00B3 superscript three
-		u"\u00b9": "1", # U+00B9 superscript one
-		u"\u00d7": "x", # U+00D7 multiplication sign
-		u"\u2013": "-", # U+2013 en dash
-		u"\u2014": "-", # U+2014 em dash
-		u"\u2015": "-", # U+2015 horizontal bar
-		u"\u2026": "...", # U+2026 ellipsis
-		u"\u2212": "-", # U+2212 minus sign
+		u"\u00a9": u"(C)", # U+00A9 copyright sign
+		u"\u00ae": u"(R)", # U+00AE registered sign
+		u"\u00b2": u"2", # U+00B2 superscript two
+		u"\u00b3": u"3", # U+00B3 superscript three
+		u"\u00b9": u"1", # U+00B9 superscript one
+		u"\u00d7": u"x", # U+00D7 multiplication sign
+		u"\u2013": u"-", # U+2013 en dash
+		u"\u2014": u"-", # U+2014 em dash
+		u"\u2015": u"-", # U+2015 horizontal bar
+		u"\u2026": u"...", # U+2026 ellipsis
+		u"\u2212": u"-", # U+2212 minus sign
 	}
-	chars = ""
+	chars = u""
 	if isinstance(obj, Exception):
 		for char in obj.object[obj.start:obj.end]:
 			chars += subst.get(char, u"_")

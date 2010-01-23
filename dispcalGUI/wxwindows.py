@@ -6,7 +6,7 @@ import sys
 
 from config import (btn_width_correction, defaults, getcfg, 
 					geticon, get_verified_path, setcfg)
-from log import log
+from log import log as log_, safe_print
 from meta import name as appname
 from thread import start_new_thread
 from util_str import wrap
@@ -52,9 +52,11 @@ class BaseInteractiveDialog(wx.Dialog):
 	
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 show=True, logit=True):
-		if logit:
-			log(msg)
+				 show=True, log=True, print_=False):
+		if print_:
+			safe_print(msg, log=False)
+		if log:
+			log_(msg)
 		oparent = parent
 		if oparent:
 			gparent = oparent.GetGrandParent()
@@ -166,7 +168,7 @@ class ConfirmDialog(BaseInteractiveDialog):
 				 size=(400, -1), alt=None):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
-									   logit=False)
+									   log=False)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
@@ -203,9 +205,9 @@ class InfoDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 show=True, logit=True):
+				 show=True, log=True, print_=False):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
-									   bitmap, pos, size, show, logit)
+									   bitmap, pos, size, show, log, print_)
 
 
 class InvincibleFrame(wx.Frame):

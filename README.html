@@ -364,13 +364,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.0.3 (Linux)<br />
-				0.3.0.3 (Mac OS X)<br />
-				0.3.0.3 (Windows)<br />
-				0.3.0.3 (Source)<br />
+				<dd id="version">0.3.0.4 (Linux)<br />
+				0.3.0.4 (Mac OS X)<br />
+				0.3.0.4 (Windows)<br />
+				0.3.0.4 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-01-23 18:58 (UTC)</dd>
+				<dd id="date">2010-01-23 20:34 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -468,18 +468,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.3.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.4.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.3.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.3-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.3-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.4.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.4-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.4-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.3.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.4.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
@@ -1063,11 +1063,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-01-23 18:58 (UTC) 0.3.0.3 -->
+			<!-- 2010-01-23 20:34 (UTC) 0.3.0.4 -->
 			<dl>
-				<dt>2010-01-23 18:58 (UTC)</dt>
+				<dt>2010-01-23 20:34 (UTC)</dt>
 					<dd>
-						<h3>0.3.0.3</h3>
+						<h3>0.3.0.4</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Support for Argyll &gt;= 1.1.0 RC3 adaptive emissive measurement mode with the i1 Pro spectrometer.</li>
@@ -1108,6 +1108,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Do not show failure message if user cancels profile installation via the password dialog when installing in system scope.</li>
 							<li>In some cases, values read from the configuration file were not correctly validated (would only show with deliberately altered or broken config file).</li>
 							<li>colprof output is no longer swallowed when creating a matrix profile with Argyll versions &lt;= 1.0.4.</li>
+							<li>Linux: Fall back to ASCII if detected encoding is not UTF-8 to fix profile install issues.</li>
 							<li>Linux/Mac OS X: Enabling the Spyder 2 colorimeter might need elevated privileges.</li>
 							<li>Linux/Mac OS X: When installing a profile in local system scope, the necessary password was not accepted under newer Linux distros and also Mac OS X &gt; 10.4.11</li>
 							<li>Mac OS X (cosmetic): Suppress spurious AppleScript messages.</li>

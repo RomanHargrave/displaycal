@@ -291,13 +291,19 @@ def make_argyll_compatible_path(path):
 	
 	This is currently only effective under Windows to make sure that any 
 	unicode 'division' slashes in the profile name are replaced with 
-	underscores.
+	underscores, and under Linux if the encoding is not UTF-8 everything is 
+	forced to ASCII to prevent problems when installing profiles.
 	
 	"""
+	if sys.platform not in ("darwin", "win32") and \
+	   fs_enc.upper() not in ("UTF8", "UTF-8"):
+		make_compat_enc = "ASCII"
+	else:
+		make_compat_enc = enc
 	parts = path.split(os.path.sep)
 	for i in range(len(parts)):
-		parts[i] = unicode(parts[i].encode(enc, "asciize"), enc).replace("/", 
-																		 "_")
+		parts[i] = unicode(parts[i].encode(make_compat_enc, "asciize"), 
+						   make_compat_enc).replace("/", "_")
 	return os.path.sep.join(parts)
 
 

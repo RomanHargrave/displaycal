@@ -1108,6 +1108,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Do not show failure message if user cancels profile installation via the password dialog when installing in system scope.</li>
 							<li>In some cases, values read from the configuration file were not correctly validated (would only show with deliberately altered or broken config file).</li>
 							<li>colprof output is no longer swallowed when creating a matrix profile with Argyll versions &lt;= 1.0.4.</li>
+							<li>Linux: Fall back to ASCII if detected encoding is not UTF-8 to fix profile install issues.</li>
 							<li>Linux/Mac OS X: Enabling the Spyder 2 colorimeter might need elevated privileges.</li>
 							<li>Linux/Mac OS X: When installing a profile in local system scope, the necessary password was not accepted under newer Linux distros and also Mac OS X &gt; 10.4.11</li>
 							<li>Mac OS X (cosmetic): Suppress spurious AppleScript messages.</li>

@@ -152,7 +152,7 @@ class MeasureFrame(InvincibleFrame):
 		InfoDialog(self, msg=lang.getstr("measureframe.info"), 
 				   ok=lang.getstr("ok"), 
 				   bitmap=geticon(32, "dialog-information"), 
-				   logit=False)
+				   log=False)
 
 	def measure_handler(self, event):
 		self.save_cfg()

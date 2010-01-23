@@ -68,7 +68,7 @@
 	"check_update": "Auf Programmaktualisierung überprüfen...",
 	"check_update.fail": "Programmaktualisierungsüberprüfung fehlgeschlagen:",
 	"check_update.new_version": "Es ist eine Programmaktualisierung verfügbar: %s",
-	"check_update.uptodate": "% ist auf dem neuesten Stand.",
+	"check_update.uptodate": "%s ist auf dem neuesten Stand.",
 	"connection.fail": "Verbindungs-Fehler (%s)",
 	"connection.fail.http": "HTTP-Fehler %s",
 	"check_update.fail.version": "Versionsdatei vom Server %s konnte nicht korrekt interpretiert werden.",

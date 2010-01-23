@@ -747,7 +747,7 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_vrml_lab", int(self.tc_vrml_lab.GetValue()))
 		if hasattr(self, "ti1") and self.tc_vrml.GetValue():
 			self.tc_vrml.SetValue(False)
-			InfoDialog(self, msg = lang.getstr("testchart.vrml_denied"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"), logit=False)
+			InfoDialog(self, msg = lang.getstr("testchart.vrml_denied"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"), log=False)
 
 	def tc_update_controls(self):
 		self.tc_algo.SetStringSelection(self.tc_algos_ab.get(getcfg("tc_algo"), self.tc_algos_ab.get(defaults["tc_algo"])))
