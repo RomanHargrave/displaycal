@@ -73,16 +73,40 @@
 		code.applescript .string {
 			color: black;
 		}
-		strong {
+		/* strong {
 			color: black;
+		} */
+		#issues ul {
+			margin-bottom: 1.5em;
 		}
 		.q {
-			font: bold 11px Verdana, sans-serif;
-			color: #CC6666;
+			background: #FEF0E0;
+			border: 1px solid #F0E0E0;
+			border-bottom: none;
+			border-radius: 5px 5px 0 0;
+			display: block;
+			color: #CC0000;
+			padding: 3px 5px;
+			-moz-border-radius: 5px 5px 0 0;
+		}
+		.q br {
+			display: none;
+		}
+		.q span {
+			font-weight: bold;
 		}
 		.a {
-			font: bold 11px Verdana, sans-serif;
-			color: #339933;
+			background: #F0FEF0;
+			border: 1px solid #E0F0E0;
+			border-radius: 0 0 5px 5px;
+			border-top: none;
+			color: #006600;
+			display: block;
+			padding: 3px 5px;
+			-moz-border-radius: 0 0 5px 5px;
+		}
+		.a span {
+			font-weight: bold;
 		}
 		h1 {
 			background: url(theme/icons/48x48/dispcalGUI.png) no-repeat;
@@ -203,10 +227,10 @@
 		#content ul ol {
 			margin-left: 15px;
 		}
-		p, #content li, dt, dd {
+		div.p, p, #content li, dt, dd {
 			line-height: 1.5em;
 		}
-		p, dl {
+		div.p, p, dl {
 			margin-left: 20px;
 		}
 		dt {
@@ -890,7 +914,7 @@
 						<dd>Allows you to select a directory to store the files created by dispcalGUI during calibration/profiling.</dd>
 						
 					<dt>Locate Argyll CMS executables...</dt>
-						<dd>Normally dispcalGUI will look and use for the Argyll CMS binaries on your system's the PATH variable, but you may specify a different location.</dd>
+						<dd>Normally dispcalGUI will look for and use the Argyll CMS binaries using your system's PATH variable, but you may specify a different location.</dd>
 				</dl>
 			</div>
 			
@@ -955,27 +979,39 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		<div id="issues">
 			<h2>Known issues and solutions</h2>
 			
-			<p id="issue-win64-driversigenforcement"><span class="q">Issue:</span> Under Windows Vista/7 64-bit, driver signature enforcement prevents the installation of unsigned Argyll USB drivers.<br />
-			<span class="a">Solution:</span> A safe method is to self sign the drivers and put your system in test mode. The procedure for doing this is a little complicated though, and beyond the scope of this documentation. You might want to refer to “<a href="http://nil-techno.blogspot.com/2008/08/installing-unsigned-drivers-on-vista-64.html">installing unsigned drivers on Vista 64</a>”. If you take this path then make sure you sign the libusb0.sys and libusb0_x86.sys files in the Argyll_VX.X.X/libusbw directory <strong>before</strong> you install the device, otherwise you will have to remove &amp; delete the driver using device manager, and also manually delete the libusb0 and libusb0_x86 .sys and .dll files from Windows\system32, Windows\System32\drivers and Windows\SysWOW64 and start again.<br />
-			If you don't want/can't sign the driver files or enable test mode, another workaround is to allow loading unsigned drivers by pressing F8 when the system boots, and selecting the boot option to “Disable Driver Signature Enforcement”. Note that you have to do this <strong>every time</strong> you boot and want to use the USB instruments (you may still get a warning about an unsigned driver not being loaded after plugging the instrument in, booting or installing the driver, but take these messages with a grain of salt, and check in device manager and also whether the instruments are actually accessible).</p>
+			<ul>
+				<li><a href="#issue-win64-driversigenforcement">Under Windows Vista/7 64-bit, driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
+				<li><a href="#issue-win-calload">Under Windows Vista/7, the installed display profile calibration cannot be loaded</a></li>
+				<li><a href="#issue-win-uac">Under Windows Vista, the calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
+				<li><a href="#issue-win-spyder2">Under Windows, enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
+				<li><a href="#issue-mac-pscursor">Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush)</a></li>
+				<li><a href="#issue-linux-lutaccess">No video LUT access under Linux/X11 (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
+				<li><a href="#issue-linux-gtktheme">Under <em>some</em> Linux distributions, with <em>some</em> GTK themes, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal</a></li>
+				<li><a href="#issue-english">Some text is still in english, even though another language is selected in the menu</a></li>
+				<li><a href="#issue-linux-kdeqt">The application does not look native under Linux with KDE</a></li>
+			</ul>
 			
-			<p><span class="q">Issue:</span> Under Windows Vista/7, the installed display profile calibration cannot be loaded.<br />
-			<span class="a">Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management”. Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</p>
+			<p id="issue-win64-driversigenforcement"><span class="q"><span>Issue:</span> Under Windows Vista/7 64-bit, driver signature enforcement prevents the installation of unsigned Argyll USB drivers.<br /></span>
+			<span class="a"><span>Solution:</span> Beginning with Argyll CMS &gt;= 1.1.0, you may use one of the following workarounds. One method is to self sign the drivers and put your system in test mode. The procedure for doing this is a little complicated though, and beyond the scope of this documentation. You might want to refer to “<a href="http://nil-techno.blogspot.com/2008/08/installing-unsigned-drivers-on-vista-64.html">installing unsigned drivers on Vista 64</a>”. If you take this path then make sure you sign the libusb0.sys and libusb0_x86.sys files in the Argyll_VX.X.X/libusbw directory <strong>before</strong> you install the device, otherwise you will have to remove &amp; delete the driver using device manager, and also manually delete the libusb0 and libusb0_x86 .sys and .dll files from Windows\system32, Windows\System32\drivers and Windows\SysWOW64 and start again.<br />
+			If you don't want/can't sign the driver files or enable test mode, another workaround is to allow loading unsigned drivers by pressing F8 when the system boots, and selecting the boot option to “Disable Driver Signature Enforcement”. Note that you have to do this <strong>every time</strong> you boot and want to use the USB instruments (you may still get a warning about an unsigned driver not being loaded after plugging the instrument in, booting or installing the driver, but take these messages with a grain of salt, and check in device manager and also whether the instruments are actually accessible).</span></p>
 			
-			<p><span class="q">Issue:</span> Under Windows Vista/7, the calibration gets unloaded when a “User Access Control” prompt is shown.<br />
-			<span class="a">Solution:</span> This is really a Windows Vista/7 bug that hopefully gets fixed at some point, and can be remedied by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Extra” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym>, open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</p>
+			<p id="issue-win-calload"><span class="q"><span>Issue:</span> Under Windows Vista/7, the installed display profile calibration cannot be loaded.<br /></span>
+			<span class="a"><span>Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management”. Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
 			
-			<p><span class="q">Issue:</span> Under Windows, enabling the Spyder 2 colorimeter might fail when not running as administrator.<br />
-			<span class="a">Solution:</span> Run dispcalGUI as admin. Right-click the executable and choose “Run as administrator...”</p>
+			<p id="issue-win-uac"><span class="q"><span>Issue:</span> Under Windows Vista, the calibration gets unloaded when a “User Access Control” prompt is shown.<br /></span>
+			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Extra” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
 			
-			<p><span class="q">Issue:</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br />
-			<span class="a">Solution:</span> This seems to be a Photoshop bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (probably the source profile you use most often) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, choose “Create profile from measurement data...” from the “Extra” menu. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</p>				
+			<p id="issue-win-spyder2"><span class="q"><span>Issue:</span> Under Windows, enabling the Spyder 2 colorimeter might fail when not running as administrator.<br /></span>
+			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click the executable and choose “Run as administrator...”</span></p>
+			
+			<p id="issue-mac-pscursor"><span class="q"><span>Issue:</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
+			<span class="a"><span>Solution:</span> This seems to be a Photoshop bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (probably the source profile you use most often) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, choose “Create profile from measurement data...” from the “Extra” menu. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
 				
-			<p><span class="q">Issue:</span> No video LUT access under Linux/X11 (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br />
-			<span class="a">Solution:</span> Please refer to <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a> and “Fixing access to Video LUTs” therein.</p>
+			<p id="issue-linux-lutaccess"><span class="q"><span>Issue:</span> No video LUT access under Linux/X11 (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
+			<span class="a"><span>Solution:</span> Please refer to <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a> and “Fixing access to Video LUTs” therein.</span></p>
 			
-			<p><span class="q">Issue:</span> Under <em>some</em> Linux distributions, with <em>some</em> GTK themes, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal.<br />
-			<span class="a">Solution:</span> These messages are generated from GTK and hint to certain unsupported features in a GTK theme file, I have no influence on them, but they can be safely ignored if the full message is something like “Gtk-Message: (for origin information, set GTK_DEBUG): failed to retrieve property `GtkTreeView::odd-row-color'”. If they really bother you and you don't mind using the shell and editing files by hand, you can get rid of these messages by changing the involved GTK theme file:</p>
+			<div id="issue-linux-gtktheme" class="p"><span class="q"><span>Issue:</span> Under <em>some</em> Linux distributions, with <em>some</em> GTK themes, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal.<br /></span>
+			<div class="a"><span>Solution:</span> These messages are generated from GTK and hint to certain unsupported features in a GTK theme file, I have no influence on them, but they can be safely ignored if the full message is something like “Gtk-Message: (for origin information, set GTK_DEBUG): failed to retrieve property `GtkTreeView::odd-row-color'”. If they really bother you and you don't mind using the shell and editing files by hand, you can get rid of these messages by changing the involved GTK theme file:
 			<ol>
 				<li>Open a shell and type <code>export GTK_DEBUG=1</code></li>
 				<li>Run dispcalGUI and open a file selector.</li>
@@ -989,13 +1025,13 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li>Save the theme file &amp; exit the text editor.</li>
 				<li>Restart dispcalGUI and open a file selector to check if the message is gone.</li>
 				<li>Open a shell and type <code>unset GTK_DEBUG</code></li>
-			</ol>
+			</ol></div></div>
 			
-			<p><span class="q">Issue:</span> Some text is still in english, even though another language is selected in the menu.<br />
-			<span class="a">Remark:</span> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</p>
+			<p id="issue-english"><span class="q"><span>Issue:</span> Some text is still in english, even though another language is selected in the menu.<br /></span>
+			<span class="a"><span>Remark:</span> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</span></p>
 			
-			<p><span class="q">Issue:</span> The application does not look native under Linux with KDE.<br />
-			<span class="a">Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4).</p>
+			<p id="issue-linux-kdeqt"><span class="q"><span>Issue:</span> The application does not look native under Linux with KDE.<br /></span>
+			<span class="a"><span>Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4).</span></p>
 		</div>
 		
 		<div id="todo">
@@ -1032,48 +1068,50 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC)</dt>
 					<dd>
 						<h3>${VERSION}</h3>
-						<h4>Features added in this release:</h4>
+						<h4>Added in this release:</h4>
 						<ul>
 							<li>Support for Argyll &gt;= 1.1.0 RC3 adaptive emissive measurement mode with the i1 Pro spectrometer.</li>
-							<li>All of Argyll's profile types are now selectable (XYZ LUT on Windows only if using Argyll &gt;= 1.1.0 RC3)</li>
+							<li>All of Argyll's profile types are now available (XYZ LUT on Windows only if using Argyll &gt;= 1.1.0 RC3).</li>
 							<li>Optionally create a fast matrix/shaper profile when just calibrating.</li>
-							<li>Added “Reset LUT curves” checkbox in the dialog shown when just profiling.</li>
+							<li>“Reset LUT curves” checkbox in the dialog shown when just profiling.</li>
+							<li>Information how to install Argyll &gt;= 1.1.0 USB drivers on Windows Vista/7 64-bit to the “known issues and solutions” section in the ReadMe.</li>
+							<li>ReadMe, license, bug tracker and support forum can now be accessed from the “Help” menu.</li>
+							<li>“Check for update...” in the help menu (launches a web browser and displays the dispcalGUI homepage if a new version is found).</li>
+							<li>LUT Viewer: Capability to show the actual curves from the video card.</li>
 							<li>LUT Viewer: Capability to show a matrix profile's rTRC/gTRC/bTRC curves.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>When restoring defaults, selected display/instrument/measurement mode, language and profile name are retained.</li>
-							<li>Only enable display/instrument selector if more than one device detected respectively.</li>
+							<li>The display/instrument selector is only enabled if more than one device detected respectively.</li>
 							<li>Changed i1 Pro highres measurement mode from implicit to user choice.</li>
 							<li>Gamut mapping: When selecting a source profile, pre-select a source viewing condition based on profile class (monitor or printer).</li>
 							<li>Updated defaults and presets to Argyll 1.1.0 values (i.e. black output offset).</li>
 							<li>Short display name placeholder (%dns) for profile name should not yield single numbers or model name without model number any more (or atleast less likely).</li>
 							<li>Log messages from most informational and all error dialogs.</li>
 							<li>Show file paths in most dialogs involving file processing.</li>
-							<li>ReadMe and license are now linked in the “About” dialog.</li>
-							<li>Documentation in the ReadMe has been updated and is now more or less complete for the main application. Testchart editor docs are still missing.</li>
-							<li>Added information how to install Argyll USB drivers on Windows Vista/7 64-bit to the “known issues and solutions” section in the ReadMe.</li>
+							<li>Documentation in the ReadMe has been updated and is now more or less complete for the main application (testchart editor docs are still to be done). Setup instructions have also been streamlined.</li>
 							<li>Moved information how to fix video LUT access under Linux/X11 to the “known issues and solutions” section in the ReadMe.</li>
 							<li>Linux: Updated udev rules to those provided with Argyll 1.1.0. Removed obsolete permissions and policy files.</li>
-							<li>Linux: In multi-display setups using separate X screens, it should no longer be necessary to launch dispcalGUI on the display to be measured.</li>
+							<li>Linux: In multi-display setups using separate X screens, it should no longer be necessary to launch dispcalGUI on the display you want to measure.</li>
 							<li>Windows: Get names of displays via additional Windows API calls (should yield more descriptive names than “DISPLAY1”, “DISPLAY2” etc.)</li>
-							<li>Windows: Use default command prompt text color, and a darker variant only when doing measurements.</li>
+							<li>Windows (cosmetic): Use default command prompt text color, and a darker variant only when doing measurements.</li>
 							<li>dispcalGUI version now corresponds to SVN revision number, split into its digit components. Build system (setup.py) uses SVN to generate version information.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>LUT Viewer: When no display is selected (i.e. when Argyll binaries are not found), it will now try to show the vcgt of the 1st display's profile.</li>
 							<li>LUT Viewer: When hiding the viewer and loading different LUT curves, those changes were not reflected when showing the viewer again.</li>
-							<li>LUT Viewer: Check if a profile actually contains a 'vcgt' tag. If not, clear canvas and disable R/G/B checkboxes.</li>
-							<li>Fixed selection of display used for video LUT access.</li>
+							<li>LUT Viewer: If a profile does not contain a 'vcgt' tag, clear canvas and disable R/G/B checkboxes.</li>
+							<li>Selection of display used for video LUT access not working correctly.</li>
 							<li>Loading of calibration upon initial preview in profile installation dialog if profile does not contain dispcalGUI settings.</li>
 							<li>Do not show failure message if user cancels profile installation via the password dialog when installing in system scope.</li>
-							<li>In some cases, values read from the configuration file were not correctly validated.</li>
+							<li>In some cases, values read from the configuration file were not correctly validated (would only show with deliberately altered or broken config file).</li>
 							<li>colprof output is no longer swallowed when creating a matrix profile with Argyll versions &lt;= 1.0.4.</li>
 							<li>Linux/Mac OS X: Enabling the Spyder 2 colorimeter might need elevated privileges.</li>
 							<li>Linux/Mac OS X: When installing a profile in local system scope, the necessary password was not accepted under newer Linux distros and also Mac OS X &gt; 10.4.11</li>
-							<li>Mac OS X: Suppress spurious AppleScript messages.</li>
-							<li>Windows: Get display profile via registry instead of Windows API because the latter does not reflect runtime changes to profile associations (you still need to refresh the LUT Viewer when changing profile associations outside of dispcalGUI while it is running).</li>
+							<li>Mac OS X (cosmetic): Suppress spurious AppleScript messages.</li>
+							<li>Windows: Get display profile via registry instead of Windows API because the latter does not reflect runtime changes to profile associations (you still need to refresh the LUT Viewer when changing profile associations <em>outside</em> of dispcalGUI while it is running).</li>
 						</ul>
 						<h3>Known issues in this release:</h3>
 						<ul>

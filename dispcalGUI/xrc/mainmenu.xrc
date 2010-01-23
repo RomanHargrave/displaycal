@@ -33,6 +33,10 @@
         <object class="wxMenuItem" name="calibration.show_lut">
           <label>calibration.show_lut</label>
         </object>
+        <object class="wxMenuItem" name="calibration.show_actual_lut">
+          <label>calibration.show_actual_lut</label>
+          <checkable>1</checkable>
+        </object>
         <object class="wxMenuItem" name="calibration.reset">
           <label>calibration.reset</label>
         </object>
@@ -73,6 +77,23 @@
       <object class="wxMenu" name="menu.help">
         <object class="wxMenuItem" name="menu.about">
           <label>menu.about</label>
+        </object>
+        <object class="wxMenuItem" name="readme">
+          <label>readme</label>
+        </object>
+        <object class="wxMenuItem" name="license">
+          <label>license</label>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="help_support">
+          <label>help_support</label>
+        </object>
+        <object class="wxMenuItem" name="bug_report">
+          <label>bug_report</label>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="check_update">
+          <label>check_update</label>
         </object>
         <label>menu.help</label>
       </object>

@@ -44,8 +44,9 @@ def safe_print(*args, **kwargs):
 	Print and log safely, avoiding any UnicodeDe-/EncodingErrors.
 	"""
 	_safe_print(*args, **kwargs)
-	kwargs["fn"] = log
-	_safe_print(*args, **kwargs)
+	if kwargs.get("log") is not False:
+		kwargs["fn"] = log
+		_safe_print(*args, **kwargs)
 
 
 def setup_logging():

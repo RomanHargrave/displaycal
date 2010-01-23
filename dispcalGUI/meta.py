@@ -34,10 +34,10 @@
 
 try:
 	from __version__ import (BUILD_DATE as build, LASTMOD as lastmod, VERSION, 
-							 VERSION_STRING)
+							 VERSION_BASE, VERSION_STRING)
 except ImportError:
 	build = lastmod = "0000-00-00T00:00:00.0Z"
-	VERSION = (0, 0, 0, 0)
+	VERSION = VERSION_BASE = (0, 0, 0, 0)
 	VERSION_STRING = ".".join(str(n) for n in VERSION)
 
 author = u"Florian Höch"

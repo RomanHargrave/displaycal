@@ -4,6 +4,7 @@
 import locale
 import os
 import re
+import subprocess as sp
 import sys
 
 if sys.platform == "darwin":
@@ -37,6 +38,29 @@ def getenvu(key, default = None):
 	""" Unicode version of os.getenv """
 	var = os.getenv(key, default)
 	return var if isinstance(var, unicode) else unicode(var, fs_enc)
+
+
+def launch_file(filepath):
+	"""
+	Open a file with its assigned default app.
+	
+	Return tuple(returncode, stdout, stderr) or None if functionality not available
+	
+	"""
+	p = None
+	kwargs = dict(stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+	if sys.platform == "darwin":
+		p = sp.Popen(['open', filepath], **kwargs)
+	elif sys.platform == "win32":
+		# for win32, we could use os.startfile, but then we'd not be able
+		# to return exitcode/stdout/stderr (does it matter?)
+		kwargs["shell"] = True
+		p = sp.Popen('start "" /B "%s"' % filepath, **kwargs)
+	elif which('xdg-open'):
+		p = sp.Popen(['xdg-open', filepath], **kwargs)
+	if p:
+		stdout, stderr = p.communicate()
+		return p.returncode, stdout, stderr
 
 
 def listdir_re(path, rex = None):

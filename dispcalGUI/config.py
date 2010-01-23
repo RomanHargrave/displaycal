@@ -339,6 +339,7 @@ defaults = {
 	"gamap_saturation": 0,
 	"gamma": 2.4,
 	"lang": "en",
+	"lut_viewer.show_actual_lut": 0,
 	"measurement_mode": "l",
 	"measurement_mode.adaptive": 0,
 	"measurement_mode.highres": 0,

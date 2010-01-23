@@ -51,13 +51,16 @@ ConfigParser.DEFAULTSECT = "Default"
 import decimal
 Decimal = decimal.Decimal
 import getpass
+import httplib
 import logging
 import math
 import os
 import re
 import shutil26 as shutil
+import socket
 import subprocess26 as sp
 import tempfile26 as tempfile
+import threading
 import traceback
 from time import strftime
 
@@ -106,7 +109,7 @@ from argyll_names import (names as argyll_names, altnames as argyll_altnames,
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2xyY
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import _safe_print, log, logbuffer, safe_print, setup_logging
-from meta import author, name as appname, version
+from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
 from trash import trash, TrashcanUnavailableError
 from util_decimal import stripzeros
@@ -115,7 +118,7 @@ from util_list import index_fallback_ignorecase, natsort
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script,
 						  mac_terminal_set_colors)
-from util_os import expanduseru, listdir_re, which
+from util_os import expanduseru, launch_file, listdir_re, which
 from util_str import strtr, wrap
 from worker import (Worker, check_argyll_bin, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
@@ -138,8 +141,60 @@ def _excepthook(etype, value, tb):
 
 sys.excepthook = _excepthook
 
+
 def swap_dict_keys_values(mydict):
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
+
+
+def app_update_check(parent=None):
+	safe_print(lang.getstr("check_update"))
+	conn = httplib.HTTPConnection(domain)
+	try:
+		conn.request("GET", "/VERSION")
+		resp = conn.getresponse()
+	except (socket.error, httplib.HTTPException), exception:
+		safe_print(lang.getstr("failure"), log=False)
+		wx.CallAfter(InfoDialog, parent, 
+					 msg=" ".join([lang.getstr("check_update.fail"),
+								   lang.getstr("connection.fail", 
+											   " ".join([str(arg) for 
+														 arg in exception.args]))]),
+					 ok=lang.getstr("ok"), 
+					 bitmap=geticon(32, "dialog-error"))
+		return
+	if resp.status != httplib.OK:
+		safe_print(lang.getstr("failure"), log=False)
+		wx.CallAfter(InfoDialog, parent, 
+					 msg=" ".join([lang.getstr("check_update.fail"),
+								   lang.getstr("connection.fail.http", 
+											   " ".join([str(resp.status),
+														 resp.reason,
+														 domain + "/VERSION"]))]),
+					 ok=lang.getstr("ok"), 
+					 bitmap=geticon(32, "dialog-error"))
+		return
+	data = resp.read()
+	try:
+		newversion_tuple = tuple(int(n) for n in data.split("."))
+	except ValueError:
+		safe_print(lang.getstr("failure"), log=False)
+		wx.CallAfter(InfoDialog, parent, 
+					 msg=lang.getstr("check_update.fail.version",
+									 domain),
+					 ok=lang.getstr("ok"), 
+					 bitmap=geticon(32, "dialog-error"))
+		return
+	if newversion_tuple > VERSION_BASE:
+		safe_print(lang.getstr("check_update.new_version", 
+							   ".".join(str(n) for n in newversion_tuple)))
+		launch_file("http://" + domain)
+	else:
+		wx.CallAfter(InfoDialog, parent, 
+					 msg=lang.getstr("check_update.uptodate",
+									 appname),
+					 ok=lang.getstr("ok"), 
+					 bitmap=geticon(32, "dialog-information"))
+
 
 class BaseFrame(wx.Frame):
 
@@ -978,6 +1033,10 @@ class MainFrame(BaseFrame):
 		self.menuitem_show_lut = extra.FindItemById(
 			extra.FindItem("calibration.show_lut"))
 		self.Bind(wx.EVT_MENU, self.init_lut_viewer, self.menuitem_show_lut)
+		self.menuitem_show_actual_lut = extra.FindItemById(
+			extra.FindItem("calibration.show_actual_lut"))
+		self.Bind(wx.EVT_MENU, self.lut_viewer_show_actual_lut_handler, 
+							   self.menuitem_show_actual_lut)
 		self.menuitem_lut_reset = extra.FindItemById(
 			extra.FindItem("calibration.reset"))
 		self.Bind(wx.EVT_MENU, self.reset_cal, self.menuitem_lut_reset)
@@ -1026,6 +1085,18 @@ class MainFrame(BaseFrame):
 		help = self.menubar.GetMenu(self.menubar.FindMenu("menu.help"))
 		self.menuitem_about = help.FindItemById(help.FindItem("menu.about"))
 		self.Bind(wx.EVT_MENU, self.aboutdialog_handler, self.menuitem_about)
+		self.menuitem_readme = help.FindItemById(help.FindItem("readme"))
+		self.menuitem_readme.Enable(isinstance(get_data_path("README.html"), basestring))
+		self.Bind(wx.EVT_MENU, self.readme_handler, self.menuitem_readme)
+		self.menuitem_license = help.FindItemById(help.FindItem("license"))
+		self.menuitem_license.Enable(isinstance(get_data_path("LICENSE.txt"), basestring))
+		self.Bind(wx.EVT_MENU, self.license_handler, self.menuitem_license)
+		menuitem = help.FindItemById(help.FindItem("help_support"))
+		self.Bind(wx.EVT_MENU, self.help_support_handler, menuitem)
+		menuitem = help.FindItemById(help.FindItem("bug_report"))
+		self.Bind(wx.EVT_MENU, self.bug_report_handler, menuitem)
+		menuitem = help.FindItemById(help.FindItem("check_update"))
+		self.Bind(wx.EVT_MENU, self.app_update_check_handler, menuitem)
 		
 		if sys.platform == "darwin":
 			wx.GetApp().SetMacAboutMenuItemId(self.menuitem_about.GetId())
@@ -1045,6 +1116,10 @@ class MainFrame(BaseFrame):
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays))
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
+		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
+											 self.worker.argyll_version >= [1, 1, 0] and 
+											 not "Beta" in self.worker.argyll_version_string)
+		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")))
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays))
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 						bool(self.worker.instruments))
@@ -1950,6 +2025,15 @@ class MainFrame(BaseFrame):
 		setcfg("use_separate_lut_access", 
 			   int(not bool(getcfg("use_separate_lut_access"))))
 		self.update_displays()
+
+	def lut_viewer_show_actual_lut_handler(self, event):
+		show_actual_lut = self.menuitem_show_actual_lut.IsChecked()
+		setcfg("lut_viewer.show_actual_lut", int(show_actual_lut))
+		if hasattr(self, "current_cal"):
+			profile = self.current_cal
+		else:
+			profile = None
+		self.lut_viewer_load_lut(profile=profile)
 	
 	def profile_update_ctrl_handler(self, event):
 		if debug:
@@ -2697,8 +2781,7 @@ class MainFrame(BaseFrame):
 											profile_path=path, 
 											install=False, 
 											skip_scripts=True, silent=True):
-						if hasattr(self, "lut_viewer") and self.lut_viewer:
-							self.lut_viewer_load_lut(profile=profile)
+						self.lut_viewer_load_lut(profile=profile)
 						if verbose >= 1: safe_print(lang.getstr("success"))
 					else:
 						if verbose >= 1: safe_print(lang.getstr("failure"))
@@ -2713,14 +2796,10 @@ class MainFrame(BaseFrame):
 				if self.install_profile(capture_output=True, cal=path, 
 										install=False, skip_scripts=True, 
 										silent=True):
-					if hasattr(self, "lut_viewer") and self.lut_viewer:
-						self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
+					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
 					if verbose >= 1: safe_print(lang.getstr("success"))
 				else:
 					if verbose >= 1: safe_print(lang.getstr("failure"))
-	
-	def preview_show_lut_handler(self, event=None):
-		self.lut_viewer.Show(not self.lut_viewer.IsShownOnScreen())
 
 	def preview_handler(self, event=None, preview=False):
 		if preview or self.preview.GetValue():
@@ -2756,8 +2835,7 @@ class MainFrame(BaseFrame):
 			if verbose >= 1: safe_print(lang.getstr("calibration.resetting"))
 		if self.install_profile(capture_output=True, cal=cal, install=False, 
 								skip_scripts=True, silent=True):
-			if hasattr(self, "lut_viewer") and self.lut_viewer:
-				self.lut_viewer_load_lut(profile=profile)
+			self.lut_viewer_load_lut(profile=profile)
 			if verbose >= 1: safe_print(lang.getstr("success"))
 		else:
 			if verbose >= 1: safe_print(lang.getstr("failure"))
@@ -3046,11 +3124,10 @@ class MainFrame(BaseFrame):
 				if self.install_profile(capture_output=True, cal=cal, 
 										install=False, skip_scripts=True, 
 										silent=silent):
-					if hasattr(self, "lut_viewer") and self.lut_viewer:
-						self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
-												 cal.lower().endswith(".icc") or 
-												 cal.lower().endswith(".icm") else 
-												 cal_to_fake_profile(cal))
+					self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
+											 cal.lower().endswith(".icc") or 
+											 cal.lower().endswith(".icm") else 
+											 cal_to_fake_profile(cal))
 					if verbose >= 1 and silent:
 						safe_print(lang.getstr("success"))
 					return True
@@ -3068,9 +3145,7 @@ class MainFrame(BaseFrame):
 										## hasattr(self, "lut_viewer") and 
 										## self.lut_viewer and 
 										## self.lut_viewer.IsShownOnScreen())):
-				if hasattr(self, "lut_viewer") and self.lut_viewer:
-					self.lut_viewer.LoadProfile(None)
-					self.lut_viewer.DrawLUT()
+				self.lut_viewer_load_lut(profile=None)
 				if verbose >= 1: ## and event is None:
 					safe_print(lang.getstr("success"))
 				return True
@@ -3098,8 +3173,7 @@ class MainFrame(BaseFrame):
 										## hasattr(self, "lut_viewer") and 
 										## self.lut_viewer and 
 										## self.lut_viewer.IsShownOnScreen())):
-				if hasattr(self, "lut_viewer") and self.lut_viewer:
-					self.lut_viewer_load_lut(profile=profile)
+				self.lut_viewer_load_lut(profile=profile)
 				if verbose >= 1: ## and event is None:
 					safe_print(lang.getstr("success"))
 				return True
@@ -3450,7 +3524,7 @@ class MainFrame(BaseFrame):
 					self.show_lut = wx.CheckBox(dlg, -1, 
 												lang.getstr(
 													"calibration.show_lut"))
-					dlg.Bind(wx.EVT_CHECKBOX, self.preview_show_lut_handler, 
+					dlg.Bind(wx.EVT_CHECKBOX, self.show_lut_handler, 
 							 id=self.show_lut.GetId())
 					dlg.sizer3.Add(self.show_lut, flag=wx.TOP | wx.ALIGN_LEFT, 
 								   border=4)
@@ -3549,9 +3623,7 @@ class MainFrame(BaseFrame):
 				self.lut_viewer.Bind(wx.EVT_CLOSE, 
 									 self.lut_viewer_close_handler, 
 									 self.lut_viewer)
-			if not profile:
-				profile = self.lut_viewer.profile
-			if not profile:
+			if not profile and not hasattr(self, "current_cal"):
 				path = getcfg("calibration.file")
 				if path:
 					name, ext = os.path.splitext(path)
@@ -3577,25 +3649,47 @@ class MainFrame(BaseFrame):
 								   self.display_ctrl.GetSelection(), exception)
 			self.show_lut_handler(profile=profile)
 	
-	def lut_viewer_load_lut(self, event=None, profile=None):
-		if hasattr(self, "lut_viewer") and self.lut_viewer:
+	def lut_viewer_load_lut(self, event=None, profile=None, force_draw=False):
+		if LUTFrame:
+			self.current_cal = profile
+		if hasattr(self, "lut_viewer") and self.lut_viewer and \
+		   (self.lut_viewer.IsShownOnScreen() or force_draw):
+			if getcfg("lut_viewer.show_actual_lut") and \
+			   self.worker.argyll_version >= [1, 1, 0] and \
+			   not "Beta" in self.worker.argyll_version_string:
+				tmp = self.worker.create_tempdir()
+				cmd, args = (get_argyll_util("dispwin"), 
+							 ["-s", os.path.join(tmp, "LUT")])
+				result = self.worker.exec_cmd(cmd, args, capture_output=True, 
+											  skip_scripts=True, silent=True)
+				if result:
+					profile = cal_to_fake_profile(args[-1])
+					force_update = True
+				else:
+					pass  ## getlstr("calibration.load_error")
+				self.worker.wrapup(copy=False)
+			else:
+				force_update = False
 			if profile:
-				if not self.lut_viewer.profile or \
+				if force_update or not self.lut_viewer.profile or \
 				   not self.lut_viewer.profile.fileName or \
 				   not profile.fileName or \
 				   self.lut_viewer.profile.fileName != profile.fileName:
 					self.lut_viewer.LoadProfile(profile)
+					self.lut_viewer.DrawLUT()
 			else:
 				self.lut_viewer.LoadProfile(None)
-			self.lut_viewer.DrawLUT()
+				self.lut_viewer.DrawLUT()
 	
 	def show_lut_handler(self, event=None, profile=None):
+		show = bool((hasattr(self, "show_lut") and self.show_lut and 
+					 self.show_lut.GetValue()) or 
+					((not hasattr(self, "show_lut") or 
+					  not self.show_lut)))
+		if not profile and hasattr(self, "current_cal"):
+			profile = self.current_cal
+		self.lut_viewer_load_lut(event, profile, force_draw=show)
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
-			self.lut_viewer_load_lut(event, profile)
-			show = bool((hasattr(self, "show_lut") and self.show_lut and 
-						 self.show_lut.GetValue()) or 
-						((not hasattr(self, "show_lut") or 
-						  not self.show_lut)))
 			self.lut_viewer.Show(show)
 
 	def lut_viewer_move_handler(self, event=None):
@@ -3668,8 +3762,7 @@ class MainFrame(BaseFrame):
 			except ValueError:
 				i = min(0, self.display_ctrl.GetSelection())
 			setcfg("display_lut.number", i + 1)
-		if hasattr(self, "lut_viewer") and self.lut_viewer:
-			self.lut_viewer_load_lut(profile=ICCP.get_display_profile(display_no))
+		self.lut_viewer_load_lut(profile=ICCP.get_display_profile(display_no))
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -4585,7 +4678,7 @@ class MainFrame(BaseFrame):
 
 	def set_argyll_bin_handler(self, event):
 		if set_argyll_bin():
-			self.check_update_controls()
+			self.check_update_controls() or self.update_menus()
 			if len(self.worker.displays):
 				if getcfg("calibration.file"):
 					# Load LUT curves from last used .cal file
@@ -4596,6 +4689,13 @@ class MainFrame(BaseFrame):
 					self.load_display_profile_cal(None)
 
 	def check_update_controls(self, event=None, silent=False):
+		"""
+		Update controls and menuitems when changes in displays or instruments
+		are detected.
+		
+		Return True if update was needed and carried out, False otherwise.
+		
+		"""
 		argyll_bin_dir = self.worker.argyll_bin_dir
 		argyll_version = list(self.worker.argyll_version)
 		displays = list(self.worker.displays)
@@ -4621,6 +4721,8 @@ class MainFrame(BaseFrame):
 		   comports != self.worker.instruments:
 			self.update_menus()
 			self.update_main_controls()
+			return True
+		return False
 
 	def plugplay_timer_handler(self, event):
 		if debug:
@@ -5226,23 +5328,30 @@ class MainFrame(BaseFrame):
 		items += [wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org")]
-		readme = get_data_path("README.html")
-		license = get_data_path("LICENSE.txt")
-		if isinstance(readme, basestring) or isinstance(license, basestring):
-			items += [wx.StaticText(self.aboutdialog, -1, "")]
-		if isinstance(readme, basestring):
-			items += [wx.lib.hyperlink.HyperLinkCtrl(
-				self.aboutdialog, -1, label="README", 
-				URL=readme)]
-		if isinstance(license, basestring):
-			items += [wx.lib.hyperlink.HyperLinkCtrl(
-				self.aboutdialog, -1, label=lang.getstr("license_info"), 
-				URL=license)]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.Layout()
 		self.aboutdialog.Center()
 		self.aboutdialog.Show()
+	
+	def readme_handler(self, event):
+		launch_file(get_data_path("README.html"))
+	
+	def license_handler(self, event):
+		launch_file(get_data_path("LICENSE.txt"))
+	
+	def help_support_handler(self, event):
+		launch_file("http://sourceforge.net/projects/dispcalgui/support")
+	
+	def bug_report_handler(self, event):
+		launch_file("http://sourceforge.net/tracker/?group_id=257092&atid=1127028")
+	
+	def app_update_check_handler(self, event):
+		if not hasattr(self, "app_update_check") or \
+		   not self.app_update_check.isAlive():
+			self.app_update_check = threading.Thread(target=app_update_check, 
+													 args=(self, ))
+			self.app_update_check.start()
 
 	def infoframe_toggle_handler(self, event):
 		self.infoframe.Show(not self.infoframe.IsShownOnScreen())
