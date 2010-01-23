@@ -3659,7 +3659,10 @@ class MainFrame(BaseFrame):
 			   not "Beta" in self.worker.argyll_version_string:
 				tmp = self.worker.create_tempdir()
 				cmd, args = (get_argyll_util("dispwin"), 
-							 ["-s", os.path.join(tmp, "LUT")])
+							 ["-d" + self.worker.get_display(), "-s", 
+							  os.path.join(tmp, 
+										   self.display_ctrl.GetStringSelection() or 
+										   "LUT")])
 				result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 											  skip_scripts=True, silent=True)
 				if result:
