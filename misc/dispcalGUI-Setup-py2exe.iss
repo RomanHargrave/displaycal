@@ -30,6 +30,7 @@ AlwaysShowComponentsList=false
 
 [Languages]
 Name: english; MessagesFile: compiler:Default.isl
+Name: french; MessagesFile: compiler:Languages\French.isl
 Name: german; MessagesFile: compiler:Languages\German.isl
 Name: italian; MessagesFile: compiler:Languages\Italian.isl
 Name: spanish; MessagesFile: compiler:Languages\Spanish.isl

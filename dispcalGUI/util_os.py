@@ -47,20 +47,18 @@ def launch_file(filepath):
 	Return tuple(returncode, stdout, stderr) or None if functionality not available
 	
 	"""
-	p = None
+	retcode = None
 	kwargs = dict(stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
 	if sys.platform == "darwin":
-		p = sp.Popen(['open', filepath], **kwargs)
+		retcode = sp.call(['open', filepath], **kwargs)
 	elif sys.platform == "win32":
 		# for win32, we could use os.startfile, but then we'd not be able
-		# to return exitcode/stdout/stderr (does it matter?)
+		# to return exitcode (does it matter?)
 		kwargs["shell"] = True
-		p = sp.Popen('start "" /B "%s"' % filepath, **kwargs)
+		retcode = sp.call('start "" /B "%s"' % filepath, **kwargs)
 	elif which('xdg-open'):
-		p = sp.Popen(['xdg-open', filepath], **kwargs)
-	if p:
-		stdout, stderr = p.communicate()
-		return p.returncode, stdout, stderr
+		retcode = sp.call(['xdg-open', filepath], **kwargs)
+	return retcode
 
 
 def listdir_re(path, rex = None):
