@@ -4,10 +4,6 @@
 import os
 import sys
 
-try:
-	import RealDisplaySizeMM as RDSMM
-except ImportError:
-	RDSMM = None
 import config
 import localization as lang
 from config import (btn_width_correction, defaults, getcfg, geticon, 
@@ -19,6 +15,96 @@ from options import debug
 from util_list import floatlist, strlist
 from wxaddons import CustomEvent, wx
 from wxwindows import ConfirmDialog, InfoDialog, InvincibleFrame
+try:
+	import RealDisplaySizeMM as RDSMM
+except ImportError, exception:
+	RDSMM = None
+	handle_error("Error - couldn't import RealDisplaySizeMM: " + 
+				 str(exception), silent=True)
+
+def get_default_size():
+	"""
+	Get and return the default size for the window in pixels.
+	
+	The default size is always equivalent to 100 x 100 mm according 
+	to the display's size as returned by the RealDisplaySizeMM function, 
+	which uses the same code as Argyll to determine that size.
+	
+	This function is used internally.
+	
+	"""
+	if getcfg("display_lut.link"):
+		display_no = getcfg("display.number") - 1
+	else:
+		display_no = getcfg("display_lut.number") - 1
+	display_size = wx.Display(get_display_number(display_no)).Geometry[2:]
+	display_size_mm = []
+	if RDSMM:
+		try:
+			display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
+		except Exception, exception:
+			handle_error("Error - RealDisplaySizeMM() failed: " + 
+						 str(exception), silent=True)
+		else:
+			display_size_mm = floatlist(display_size_mm)
+	if debug:
+		safe_print("[D]  display_size_mm:", display_size_mm)
+	if not len(display_size_mm) or 0 in display_size_mm:
+		ppi_def = 100.0
+		ppi_mac = 72.0
+		method = 1
+		if method == 0:
+			# use configurable screen diagonal
+			inch = 20.0
+			mm = inch * 25.4
+			f = mm / math.sqrt(math.pow(display_size[0], 2) + \
+				math.pow(display_size[1], 2))
+			w_mm = math.sqrt(math.pow(mm, 2) - \
+				   math.pow(display_size[1] * f, 2))
+			h_mm = math.sqrt(math.pow(mm, 2) - \
+				   math.pow(display_size[0] * f, 2))
+			display_size_mm = w_mm, h_mm
+		elif method == 1:
+			# use the first display
+			display_size_1st = wx.DisplaySize()
+			display_size_mm = list(wx.DisplaySizeMM())
+			if sys.platform == "darwin":
+				display_size_mm[0] /= (ppi_def / ppi_mac)
+				display_size_mm[1] /= (ppi_def / ppi_mac)
+			if display_no > 0:
+				display_size_mm[0] = display_size[0] / (
+					display_size_1st[0] / display_size_mm[0])
+				display_size_mm[1] = display_size[1] / (
+					display_size_1st[1] / display_size_mm[1])
+		else:
+			# use assumed ppi
+			display_size_mm = (display_size[0] / ppi_def * 25.4, 
+							   display_size[1] / ppi_def * 25.4)
+	px_per_mm = (display_size[0] / display_size_mm[0],
+			     display_size[1] / display_size_mm[1])
+	if debug:
+		safe_print("[D]  H px_per_mm:", px_per_mm[0])
+		safe_print("[D]  V px_per_mm:", px_per_mm[1])
+	return round(100.0 * max(px_per_mm))
+
+
+def get_display_number(display_no):
+	""" Translate from Argyll display index to wx display index """
+	try:
+		display = getcfg("displays").split(os.pathsep)[display_no]
+	except IndexError:
+		pass
+	else:
+		for i in xrange(wx.Display.GetCount()):
+			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
+			if display.find("@ " + geometry) > -1:
+				if debug:
+					safe_print("[D] Found display %s at index %i" % 
+							   (geometry, i))
+				display_no = i
+				break
+	return display_no
+
 
 class MeasureFrame(InvincibleFrame):
 
@@ -40,6 +126,7 @@ class MeasureFrame(InvincibleFrame):
 		if icon:
 			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
+		self.Bind(wx.EVT_MOVE, self.move_handler, self)
 		self.Bind(wx.EVT_SIZE, self.size_handler, self)
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.GridSizer(3, 1)
@@ -121,6 +208,7 @@ class MeasureFrame(InvincibleFrame):
 		# all controls
 		self.SetMinSize((min_size, min_size))
 		self.SetMaxSize((20000, 20000))
+		self.display_no = wx.Display.GetFromWindow(self)
 
 	def measure_darken_background_ctrl_handler(self, event):
 		if self.measure_darken_background_cb.GetValue() and \
@@ -155,34 +243,11 @@ class MeasureFrame(InvincibleFrame):
 				   log=False)
 
 	def measure_handler(self, event):
-		self.save_cfg()
 		if self.Parent and hasattr(self.Parent, "call_pending_function"):
 			self.Parent.call_pending_function()
 		else:
-			MeasureFrame.exitcode = 1
+			MeasureFrame.exitcode = 255
 			self.Close()
-
-	def save_cfg(self):
-		"""
-		Save the configuration after the window has changed.
-		
-		This is used internally and should normally not need to be
-		called explicitly.
-		
-		"""
-		setcfg("dimensions.measureframe", self.get_dimensions())
-		if os.getenv("DISPLAY") not in (None, ":0.0"):
-			display = os.getenv("DISPLAY").split(":")
-			display = display.pop().split(".")
-			try:
-				display_no = int(display.pop())
-			except ValueError:
-				display_no = getcfg("display.number") - 1
-		else:
-			display_no = wx.Display.GetFromWindow(self)
-		if display_no < 0: # window outside visible area
-			display_no = 0
-		setcfg("display.number", display_no + 1)
 
 	def Show(self, show=True):
 		if show:
@@ -191,24 +256,20 @@ class MeasureFrame(InvincibleFrame):
 			if self.Parent and hasattr(self.Parent, "display_ctrl"):
 				display_no = self.Parent.display_ctrl.GetSelection()
 			else:
-				display_no = wx.Display.GetFromWindow(self)
+				display_no = getcfg('display.number') - 1
 			if display_no < 0 or display_no > wx.Display.GetCount() - 1:
 				display_no = 0
+			else:
+				display_no = get_display_number(display_no)
 			x, y = wx.Display(display_no).Geometry[:2]
 			self.SetPosition((x, y)) # place measure frame on correct display
 			self.place_n_zoom(
 				*floatlist(getcfg("dimensions.measureframe").split(",")))
+			self.display_no = wx.Display.GetFromWindow(self)
 		else:
-			self.save_cfg()
-			if os.getenv("DISPLAY") in (None, ":0.0"):
-				display_no = wx.Display.GetFromWindow(self)
-				if display_no < 0 or display_no > wx.Display.GetCount() - 1:
-					display_no = 0
-				if self.Parent and hasattr(self.Parent, "display_ctrl"):
-					self.Parent.display_ctrl.SetSelection(display_no)
-					self.Parent.display_ctrl_handler(
-						CustomEvent(wx.EVT_COMBOBOX.evtType[0], 
-									self.Parent.display_ctrl))
+			setcfg("dimensions.measureframe", self.get_dimensions())
+			if self.Parent and hasattr(self.Parent, "get_set_display"):
+				self.Parent.get_set_display()
 		wx.CallAfter(wx.Frame.Show, self, show)
 
 	def Hide(self):
@@ -224,8 +285,8 @@ class MeasureFrame(InvincibleFrame):
 		
 		"""
 		if debug: safe_print("[D] measureframe.place_n_zoom")
-		cur_x, cur_y, cur_scale = floatlist(self.get_dimensions().split(","))
 		if None in (x, y, scale):
+			cur_x, cur_y, cur_scale = floatlist(self.get_dimensions().split(","))
 			if x is None:
 				x = cur_x
 			if y is None:
@@ -242,13 +303,13 @@ class MeasureFrame(InvincibleFrame):
 		scale /= scale_adjustment_factor
 		if debug: safe_print("[D]  scale / scale_adjustment_factor:", scale)
 		display = self.GetDisplay()
-		display_client_rect = display.ClientArea
+		display_client_rect = display.GetRealClientArea()
 		if debug: safe_print("[D]  display_client_rect:", display_client_rect)
 		display_client_size = display_client_rect[2:]
 		if debug: safe_print("[D]  display_client_size:", display_client_size)
 		measureframe_min_size = list(self.GetMinSize())
 		if debug: safe_print("[D]  measureframe_min_size:", measureframe_min_size)
-		default_measureframe_size = self.get_default_size()
+		default_measureframe_size = get_default_size()
 		size = [min(display_client_size[0], 
 								 default_measureframe_size * scale), 
 							 min(display_client_size[1], 
@@ -282,11 +343,12 @@ class MeasureFrame(InvincibleFrame):
 		wx.CallAfter(self.SetPosition, measureframe_pos)
 
 	def zoomin_handler(self, event):
+		if debug: safe_print("[D] measureframe_zoomin_handler")
 		# We can't use self.get_dimensions() here because if we are near 
 		# fullscreen, next magnification step will be larger than normal
 		display = self.GetDisplay()
 		display_size = display.Geometry[2:]
-		default_measureframe_size = self.get_default_size()
+		default_measureframe_size = get_default_size()
 		size = floatlist(self.GetSize())
 		x, y = None, None
 		self.place_n_zoom(x, y, scale=(display_size[0] / 
@@ -295,11 +357,12 @@ class MeasureFrame(InvincibleFrame):
 									   size[0]) + .125)
 
 	def zoomout_handler(self, event):
+		if debug: safe_print("[D] measureframe_zoomout_handler")
 		# We can't use self.get_dimensions() here because if we are 
 		# fullscreen, scale will be 50, thus changes won't be visible quickly
 		display = self.GetDisplay()
 		display_size = display.Geometry[2:]
-		default_measureframe_size = self.get_default_size()
+		default_measureframe_size = get_default_size()
 		size = floatlist(self.GetSize())
 		x, y = None, None
 		self.place_n_zoom(x, y, scale=(display_size[0] / 
@@ -308,15 +371,17 @@ class MeasureFrame(InvincibleFrame):
 									   size[0]) - .125)
 
 	def zoomnormal_handler(self, event):
+		if debug: safe_print("[D] measureframe_zoomnormal_handler")
 		x, y = None, None
 		scale = floatlist(defaults["dimensions.measureframe"].split(","))[2]
 		self.place_n_zoom(x, y, scale=scale)
 
 	def zoommax_handler(self, event):
+		if debug: safe_print("[D] measureframe_zoommax_handler")
 		display = self.GetDisplay()
-		display_client_rect = display.ClientArea
+		display_client_rect = display.GetRealClientArea()
 		if debug: safe_print("[D]  display_client_rect:", display_client_rect)
-		display_client_size = display.ClientArea[2:]
+		display_client_size = display_client_rect[2:]
 		if debug: safe_print("[D]  display_client_size:", display_client_size)
 		size = self.GetSize()
 		if debug: safe_print(" size:", size)
@@ -328,10 +393,12 @@ class MeasureFrame(InvincibleFrame):
 			self.place_n_zoom(x=.5, y=.5, scale=50.0)
 
 	def center_handler(self, event):
+		if debug: safe_print("[D] measureframe_center_handler")
 		x, y = floatlist(defaults["dimensions.measureframe"].split(","))[:2]
 		self.place_n_zoom(x, y)
 
 	def close_handler(self, event):
+		if debug: safe_print("[D] measureframe_close_handler")
 		self.Hide()
 		if self.Parent:
 			self.Parent.Show()
@@ -339,10 +406,26 @@ class MeasureFrame(InvincibleFrame):
 			writecfg()
 			self.Destroy()
 
+	def move_handler(self, event):
+		if not self.IsShownOnScreen():
+			return
+		display_no = wx.Display.GetFromWindow(self)
+		if display_no != self.display_no:
+			self.display_no = display_no
+			geometry = "%i, %i, %ix%i" % tuple(self.GetDisplay().Geometry)
+			for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+				if display.find("@ " + geometry) > -1:
+					if debug:
+						safe_print("[D] Found display %s at index %i" % 
+								   (geometry, i))
+					setcfg("display.number", i + 1)
+					break
+
 	def size_handler(self, event):
 		if debug: safe_print("[D] measureframe_size_handler")
 		display = self.GetDisplay()
-		display_client_size = display.ClientArea[2:]
+		display_client_rect = display.GetRealClientArea()
+		display_client_size = display_client_rect[2:]
 		size = self.GetSize()
 		if debug:
 			safe_print("[D]  display_client_size:", display_client_size)
@@ -359,70 +442,6 @@ class MeasureFrame(InvincibleFrame):
 			if debug: wx.CallAfter(self.get_dimensions)
 		event.Skip()
 
-	def get_default_size(self):
-		"""
-		Get and return the default size for the window in pixels.
-		
-		The default size is always equivalent to 100 x 100 mm according 
-		to the display's size as returned by the RealDisplaySizeMM function, 
-		which uses the same code as Argyll to determine that size.
-		
-		This function is used internally.
-		
-		"""
-		if os.getenv("DISPLAY") not in (None, ":0.0"):
-			display = os.getenv("DISPLAY").split(":")
-			display = display.pop().split(".")
-			try:
-				display_no = int(display.pop())
-			except ValueError:
-				display_no = getcfg("display.number") - 1
-			display_rect = wx.Display(0).Geometry
-		else:
-			display_no = wx.Display.GetFromWindow(self)
-			if display_no < 0 or display_no > wx.Display.GetCount() - 1:
-				display_no = 0
-			display_rect = wx.Display(display_no).Geometry
-		display_size = display_rect[2:]
-		display_size_mm = []
-		try:
-			display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
-		except Exception, exception:
-			handle_error("Error - RealDisplaySizeMM() failed: " + 
-						 str(exception), parent=self.Parent or self)
-		if not len(display_size_mm) or 0 in display_size_mm:
-			ppi_def = 100.0
-			ppi_mac = 72.0
-			method = 1
-			if method == 0:
-				# use configurable screen diagonal
-				inch = 20.0
-				mm = inch * 25.4
-				f = mm / math.sqrt(math.pow(display_size[0], 2) + \
-					math.pow(display_size[1], 2))
-				w_mm = math.sqrt(math.pow(mm, 2) - \
-					   math.pow(display_size[1] * f, 2))
-				h_mm = math.sqrt(math.pow(mm, 2) - \
-					   math.pow(display_size[0] * f, 2))
-				display_size_mm = w_mm, h_mm
-			elif method == 1:
-				# use the first display
-				display_size_1st = wx.DisplaySize()
-				display_size_mm = list(wx.DisplaySizeMM())
-				if sys.platform == "darwin":
-					display_size_mm[0] /= (ppi_def / ppi_mac)
-					display_size_mm[1] /= (ppi_def / ppi_mac)
-				if display_no > 0:
-					display_size_mm[0] = display_size[0] / (
-						display_size_1st[0] / display_size_mm[0])
-					display_size_mm[1] = display_size[1] / (
-						display_size_1st[1] / display_size_mm[1])
-			else:
-				# use assumed ppi
-				display_size_mm = (display_size[0] / ppi_def * 25.4, 
-								   display_size[1] / ppi_def * 25.4)
-		return round(100.0 * display_size[0] / display_size_mm[0])
-
 	def get_dimensions(self):
 		"""
 		Calculate and return the relative dimensions from the pixel values.
@@ -434,11 +453,11 @@ class MeasureFrame(InvincibleFrame):
 		display = self.GetDisplay()
 		display_rect = display.Geometry
 		display_size = display_rect[2:]
-		display_client_rect = display.ClientArea
+		display_client_rect = display.GetRealClientArea()
 		display_client_size = display_client_rect[2:]
 		if debug: safe_print("[D]  display_size:", display_size)
 		if debug: safe_print("[D]  display_client_size:", display_client_size)
-		default_measureframe_size = self.get_default_size()
+		default_measureframe_size = get_default_size()
 		if debug:
 			safe_print("[D]  default_measureframe_size:", 
 					   default_measureframe_size)

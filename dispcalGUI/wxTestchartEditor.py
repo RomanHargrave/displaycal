@@ -176,7 +176,8 @@ class TestchartEditor(wx.Frame):
 		self.Bind(wx.EVT_CHECKBOX, self.tc_precond_handler, id = self.tc_precond.GetId())
 		hsizer.Add(self.tc_precond, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		self.tc_precond_profile = wx.FilePickerCtrl(panel, -1, "", message = lang.getstr("tc.precond"), wildcard = lang.getstr("filetype.icc_mpp") + "|*.icc;*.icm;*.mpp")
-		self.tc_precond_profile.PickerCtrl.Label = lang.getstr("browse")
+		if sys.platform in ("darwin", "win32"):
+			self.tc_precond_profile.PickerCtrl.Label = lang.getstr("browse")
 		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.tc_precond_profile_handler, id = self.tc_precond_profile.GetId())
 		hsizer.Add(self.tc_precond_profile, 1, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 

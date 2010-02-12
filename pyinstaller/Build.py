@@ -234,7 +234,7 @@ class Analysis(Target):
         if pathex:
             for path in pathex:
                 self.pathex.append(absnormpath(path))
-        sys.pathex = pathex[:]
+        sys.pathex = self.pathex[:]
         self.hookspath = hookspath
         self.excludes = excludes
         self.scripts = TOC()
@@ -741,7 +741,15 @@ class EXE(Target):
             if self.versrsrc:
                 versionInfo.SetVersion(tmpnm, self.versrsrc)
             if self.manifest:
-                manifest.UpdateManifestResourcesFromXMLFile(tmpnm, self.manifest, [1])
+                if isinstance(self.manifest, manifest.Manifest):
+                    # Manifest instance
+                    manifest.UpdateManifestResourcesFromXML(tmpnm, self.manifest.toprettyxml(), [1])
+                elif "<" in self.manifest:
+                    # Assume XML string
+                    manifest.UpdateManifestResourcesFromXML(tmpnm, self.manifest, [1])
+                else:
+                    # Assume filename
+                    manifest.UpdateManifestResourcesFromXMLFile(tmpnm, self.manifest, [1])
             for res in self.resources:
                 res = res.split(",")
                 for i in range(len(res[1:])):

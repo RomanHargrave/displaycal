@@ -39,6 +39,7 @@
 	"calibration_profiling.complete": "Calibration and profiling complete!",
 	"calibration.settings": "Calibration settings",
 	"calibration.quality": "Calibration quality",
+	"calibration.quality.verylow": "Very low",
 	"calibration.quality.low": "Low",
 	"calibration.quality.medium": "Medium",
 	"calibration.quality.high": "High",

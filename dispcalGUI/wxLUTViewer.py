@@ -267,9 +267,12 @@ class LUTFrame(wx.Frame):
 		curves = []
 		## if 'vcgt' in profile.tags:
 		curves.append('vcgt')
-		if 'rTRC' in profile.tags and \
-		   'gTRC' in profile.tags and \
-		   'bTRC' in profile.tags:
+		if 'rTRC' in profile.tags and isinstance(profile.tags.rTRC, 
+												 ICCP.CurveType) and \
+		   'gTRC' in profile.tags and isinstance(profile.tags.gTRC, 
+												 ICCP.CurveType) and \
+		   'bTRC' in profile.tags and isinstance(profile.tags.bTRC, 
+												 ICCP.CurveType):
 			curves.append('[rgb]TRC')
 		selection = self.curve_select.GetSelection()
 		if curves and (selection < 0 or selection > len(curves) - 1):
@@ -288,7 +291,9 @@ class LUTFrame(wx.Frame):
 				else:
 					curves = None
 			elif self.curve_select.GetStringSelection() == '[rgb]TRC':
-				if len(self.profile.tags['rTRC']) == 1:
+				if len(self.profile.tags['rTRC']) == 1 and \
+				   len(self.profile.tags['gTRC']) == 1 and \
+				   len(self.profile.tags['bTRC']) == 1:
 					# gamma
 					curves = {
 						'redMin': Decimal('0.0'),

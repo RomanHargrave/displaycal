@@ -15,8 +15,6 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
-#if defined(UNIX) && !defined(__APPLE__)
-#endif
 
 #ifdef __APPLE__	/* Assume OSX Carbon */
 # include <Carbon/Carbon.h>
@@ -32,7 +30,6 @@
 # include <X11/extensions/dpms.h>
 # include <X11/extensions/Xinerama.h>
 # include <X11/extensions/Xrandr.h>
-// # include <X11/extensions/scrnsaver.h>
 # include <X11/extensions/dpms.h>
 #endif /* UNIX */
 
@@ -94,8 +91,7 @@ typedef struct {
 
 // END disppath
 
-static void free_disppaths(disppath **paths) {
-}
+void free_disppaths(disppath **paths);
 
 /* ----------------------------------------------- */
 /* Dealing with locating displays */
@@ -133,9 +129,7 @@ static BOOL CALLBACK MonitorEnumProc(
 	}
 
 	/* Add the display to the list */
-	debugrr("Add the display to the list\n");
 	if (disps == NULL) {
-		debugrr("disps == NULL\n");
 		if ((disps = (disppath **)calloc(sizeof(disppath *), 1 + 1)) == NULL) {
 			debugrr("get_displays failed on malloc\n");
 			return FALSE;
@@ -178,8 +172,6 @@ static BOOL CALLBACK MonitorEnumProc(
 
 /* Dynamically linked function support */
 
-int dyn_inited = 0;
-
 BOOL (WINAPI* pEnumDisplayDevices)(PVOID,DWORD,PVOID,DWORD) = NULL;
 
 #if !defined(NTDDI_LONGHORN) || NTDDI_VERSION < NTDDI_LONGHORN
@@ -195,20 +187,27 @@ BOOL (WINAPI* pWcsDisassociateColorProfileFromDevice)(WCS_PROFILE_MANAGEMENT_SCO
 #endif  /* NTDDI_VERSION < NTDDI_LONGHORN */
 
 /* See if we can get the wanted function calls */
-static void setup_dyn_calls() {
+/* return nz if OK */
+static int setup_dyn_calls() {
+	static int dyn_inited = 0;
 
 	if (dyn_inited == 0) {
+		dyn_inited = 1;
 
 		/* EnumDisplayDevicesA was left out of lib32.lib on earlier SDK's ... */
 		pEnumDisplayDevices = (BOOL (WINAPI*)(PVOID,DWORD,PVOID,DWORD)) GetProcAddress(LoadLibrary("USER32"), "EnumDisplayDevicesA");
+		if (pEnumDisplayDevices == NULL)
+			dyn_inited = 0;
 
 		/* Vista calls */
 #if !defined(NTDDI_LONGHORN) || NTDDI_VERSION < NTDDI_LONGHORN
 		pWcsAssociateColorProfileWithDevice = (BOOL (WINAPI*)(WCS_PROFILE_MANAGEMENT_SCOPE,PCWSTR,PCWSTR)) GetProcAddress(LoadLibrary("mscms"), "WcsAssociateColorProfileWithDevice");
 		pWcsDisassociateColorProfileFromDevice = (BOOL (WINAPI*)(WCS_PROFILE_MANAGEMENT_SCOPE,PCWSTR,PCWSTR)) GetProcAddress(LoadLibrary("mscms"), "WcsDisassociateColorProfileFromDevice");
+		/* These are checked individually */
 #endif  /* NTDDI_VERSION < NTDDI_LONGHORN */
 	}
-	dyn_inited = 1;
+
+	return dyn_inited;
 }
 
 /* Simple up conversion from char string to wchar string */
@@ -219,7 +218,7 @@ static unsigned short *char2wchar(char *s) {
 	unsigned short *w, *wp;
 
 	if ((w = malloc(sizeof(unsigned short) * (strlen(s) + 1))) == NULL)
-		return NULL;//w;
+		return w;
 
 	for (cp = (unsigned char *)s, wp = w; ; cp++, wp++) {
 		*wp = *cp;		/* Zero extend */
@@ -234,8 +233,14 @@ static unsigned short *char2wchar(char *s) {
 
 
 #if defined(UNIX) && !defined(__APPLE__)
+/* Hack to notice if the error handler has been triggered */
+/* when a function doesn't return a value. */
+
+int g_error_handler_triggered = 0;
+
 /* A noop X11 error handler */
 int null_error_handler(Display *disp, XErrorEvent *ev) {
+	 g_error_handler_triggered = 1;
 	return 0;
 }
 #endif	/* X11 */
@@ -250,8 +255,15 @@ disppath **get_displays() {
 	char buf[200];
 	int i, j;
 
-	setup_dyn_calls();
+	if (setup_dyn_calls() == 0) {
+		debugrr("Dynamic linking to EnumDisplayDevices or Vista AssociateColorProfile failed\n");
+		free_disppaths(disps);
+		return NULL;
+	}
 
+	/* Create an initial list of monitors */
+	/* (It might be better to call pEnumDisplayDevices(NULL, i ..) instead ??, */
+	/* then we can use the StateFlags to distingish monitors not attached to the desktop etc.) */
 	if (EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)&disps) == 0) {
 		debugrr("EnumDisplayMonitors failed\n");
 		free_disppaths(disps);
@@ -559,7 +571,8 @@ disppath **get_displays() {
 					return NULL;
 				}
 	
-				if (outi->connection == RR_Disconnected) {
+				if (outi->connection == RR_Disconnected||
+					outi->crtc == None) {
 					continue;
 				}
 
@@ -570,7 +583,7 @@ disppath **get_displays() {
 					debugrr("Checking XRandR 1.2 VideoLUT access\n");
 					if ((crtcgam = XRRGetCrtcGamma(mydisplay, outi->crtc)) == NULL
 					 || crtcgam->size == 0) {
-						//fprintf(stderr,"XRandR 1.2 is faulty - falling back to older extensions\n");
+						
 						if (crtcgam != NULL)
 							XRRFreeGamma(crtcgam);
 						free_disppaths(disps);
@@ -697,33 +710,45 @@ disppath **get_displays() {
 						int ret_format;
 						long ret_len = 0, ret_togo;
 						unsigned char *atomv = NULL;
+						int ii;
+						char *keys[] = {		/* Possible keys that may be used */
+							"EDID_DATA",
+							"EDID",
+							""
+						};
 
-						/* Get the atom for the EDID data */
-						if ((edid_atom = XInternAtom(mydisplay, "EDID_DATA", True)) == None) {
-							debugrr2((errout, "Unable to intern atom 'EDID_DATA'\n"));
-						} else {
-
-							/* Get the EDID_DATA */
-							if (XRRGetOutputProperty(mydisplay, scrnres->outputs[j], edid_atom,
-							            0, 0x7ffffff, False, False, XA_INTEGER, 
-   		                            &ret_type, &ret_format, &ret_len, &ret_togo, &atomv) == Success
-						            && (ret_len == 128 || ret_len == 256)) {
-								if ((disps[ndisps]->edid = malloc(sizeof(unsigned char) * ret_len)) == NULL) {
-									debugrr("get_displays failed on malloc\n");
-									XRRFreeCrtcInfo(crtci);
-									XRRFreeScreenResources(scrnres);
-									XCloseDisplay(mydisplay);
-									free_disppaths(disps);
-									return NULL;
-								}
-								memcpy(disps[ndisps]->edid, atomv, ret_len);
-								disps[ndisps]->edid_len = ret_len;
-								XFree(atomv);
-								debugrr2((errout, "Got EDID for display\n"));
+						/* Try each key in turn */
+						for (ii = 0; keys[ii][0] != '\000'; ii++) {
+							/* Get the atom for the EDID data */
+							if ((edid_atom = XInternAtom(mydisplay, keys[ii], True)) == None) {
+								debugrr2((errout, "Unable to intern atom '%s'\n",keys[ii]));
+								/* Try the next key */
 							} else {
-								debugrr2((errout, "Failed to get EDID for display\n"));
+
+								/* Get the EDID_DATA */
+								if (XRRGetOutputProperty(mydisplay, scrnres->outputs[j], edid_atom,
+								            0, 0x7ffffff, False, False, XA_INTEGER, 
+   		                            &ret_type, &ret_format, &ret_len, &ret_togo, &atomv) == Success
+							            && (ret_len == 128 || ret_len == 256)) {
+									if ((disps[ndisps]->edid = malloc(sizeof(unsigned char) * ret_len)) == NULL) {
+										debugrr("get_displays failed on malloc\n");
+										XRRFreeCrtcInfo(crtci);
+										XRRFreeScreenResources(scrnres);
+										XCloseDisplay(mydisplay);
+										free_disppaths(disps);
+										return NULL;
+									}
+									memcpy(disps[ndisps]->edid, atomv, ret_len);
+									disps[ndisps]->edid_len = ret_len;
+									XFree(atomv);
+									debugrr2((errout, "Got EDID for display\n"));
+									break;
+								}
+								/* Try the next key */
 							}
 						}
+						if (keys[ii][0] == '\000')
+							debugrr2((errout, "Failed to get EDID for display\n"));
 					}
 		
 					jj++;			/* Next enabled index */
@@ -742,6 +767,12 @@ disppath **get_displays() {
 
 	if (disps == NULL) {	/* Use Older style identification */
 		debugrr("get_displays checking for Xinerama\n");
+
+		if (XSetErrorHandler(null_error_handler) == 0) {
+			debugrr("get_displays failed on XSetErrorHandler\n");
+			XCloseDisplay(mydisplay);
+			return NULL;
+		}
 
 		if (XineramaQueryExtension(mydisplay, &evb, &erb) != 0
 		 && XineramaIsActive(mydisplay)) {
@@ -867,21 +898,12 @@ disppath **get_displays() {
 			if (XF86VidModeQueryExtension(mydisplay, &evb, &erb) != 0) {
 				/* Some propietary multi-screen drivers (ie. TwinView & MergeFB) */
 				/* don't implement the XVidMode extension properly. */
-				if (XSetErrorHandler(null_error_handler) == 0) {
-					debugrr("get_displays failed on XSetErrorHandler\n");
-					if (xai != NULL)
-						XFree(xai);
-					free_disppaths(disps);
-					XCloseDisplay(mydisplay);
-					return NULL;
-				}
 				monitor.model = NULL;
 				if (XF86VidModeGetMonitor(mydisplay, disps[i]->uscreen, &monitor) != 0
 				 && monitor.model != NULL && monitor.model[0] != '\000')
 					sprintf(desc1, "%s",monitor.model);
 				else
 					sprintf(desc1,"Screen %d",i+1);
-				XSetErrorHandler(NULL);
 			} else
 				sprintf(desc1,"Screen %d",i+1);
 
@@ -894,6 +916,7 @@ disppath **get_displays() {
 				return NULL;
 			}
 		}
+		XSetErrorHandler(NULL);
 	}
 
 	/* Put the screen given by the display name at the top */
@@ -915,6 +938,28 @@ disppath **get_displays() {
 }
 
 // END get_displays
+
+/* Free a whole list of display paths */
+void free_disppaths(disppath **disps) {
+	if (disps != NULL) {
+		int i;
+		for (i = 0; ; i++) {
+			if (disps[i] == NULL)
+				break;
+
+			if (disps[i]->name != NULL)
+				free(disps[i]->name);
+			if (disps[i]->description != NULL)
+				free(disps[i]->description);
+#if defined(UNIX) && !defined(__APPLE__)
+			if (disps[i]->edid != NULL)
+				free(disps[i]->edid);
+#endif
+			free(disps[i]);
+		}
+		free(disps);
+	}
+}
 
 // START get_a_display
 
@@ -954,7 +999,7 @@ disppath *get_a_display(int ix) {
 	}
 #if defined(UNIX) && !defined(__APPLE__)
 	if (paths[i]->edid != NULL) {
-		if ((rv->edid = malloc(sizeof(unsigned char) * 128)) == NULL) {
+		if ((rv->edid = malloc(sizeof(unsigned char) * paths[i]->edid_len)) == NULL) {
 			debugrr("get_displays failed on malloc\n");
 			free(rv);
 			free_disppaths(paths);
@@ -985,12 +1030,9 @@ static size_mm real_screen_size_mm(int ix) {
 	CGSize sz;				/* Display size in mm */
 #endif
 #if defined(UNIX) && !defined(__APPLE__)
-	char *name;			/* Display path (ie. '\\.\DISPLAY1') */
-	char *pp, *bname;
+	char *pp, *bname;		/* base display name */
 	Display *mydisplay;
 	int myscreen;			/* Usual or virtual screen with Xinerama */
-	unsigned char *edid;	/* 128 or 256 bytes of monitor EDID, NULL if none */
-	int edid_len;			/* 128 or 256 */
 #endif
 
 	size_mm.width_mm = 0;
@@ -1012,37 +1054,26 @@ static size_mm real_screen_size_mm(int ix) {
 	size_mm.height_mm = sz.height;
 #endif
 #if defined(UNIX) && !defined(__APPLE__)
+	/* Create the base display name (in case of Xinerama, XRandR) */
 	if ((bname = strdup(disp->name)) == NULL) return size_mm;
 	if ((pp = strrchr(bname, ':')) != NULL) {
 		if ((pp = strchr(pp, '.')) != NULL) {
 			sprintf(pp,".%d",disp->screen);
 		}
 	}
+
 	/* open the display */
 	mydisplay = XOpenDisplay(bname);
 	if(!mydisplay) {
 		debugr2((errout,"Unable to open display '%s'\n",bname));
-		//dispwin_del(p);
 		free(bname);
 		return size_mm;
 	}
 	free(bname);
 	debugr("Opened display OK\n");
-	if ((name = strdup(disp->name)) == NULL) {
-		debugr2((errout,"Malloc failed\n"));
-		//dispwin_del(p);
-		return size_mm;
-	}
+
 	myscreen = disp->screen;
-	if (disp->edid != NULL) {
-		if ((edid = malloc(sizeof(unsigned char) * 128)) == NULL) {
-			debugr2((errout,"Malloc failed\n"));
-			//dispwin_del(p);
-			return size_mm;
-		}
-		edid_len = disp->edid_len;
-		memcpy(edid, disp->edid, edid_len);
-	}
+	
 	size_mm.width_mm = DisplayWidthMM(mydisplay, myscreen);
 	size_mm.height_mm = DisplayHeightMM(mydisplay, myscreen);
 #endif

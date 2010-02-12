@@ -55,6 +55,11 @@ def handle_error(errstr, parent=None, silent=False):
 				import wx
 			if wx.GetApp() is None and parent is None:
 				app = wx.App(redirect=False)
+			try:
+				parent.IsShownOnScreen()
+			except:
+				# If the parent is still being constructed, we can't use it
+				parent = None
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 								   parent.IsShownOnScreen() else None, 
 								   errstr, appname, wx.OK | wx.ICON_ERROR)

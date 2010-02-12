@@ -134,7 +134,7 @@
 			display: block;
 			font-size: 11px;
 		}
-		html#dispcalGUI h2, html#dispcalGUI h3, html#dispcalGUI h4 {
+		html#dispcalGUI h2, html#dispcalGUI h3, html#dispcalGUI h4, .h {
 			color: #006699;
 			font-family: Arial, sans-serif;
 			font-weight: normal;
@@ -364,13 +364,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.0.6 (Linux)<br />
-				0.3.0.6 (Mac OS X)<br />
-				0.3.0.6 (Windows)<br />
-				0.3.0.6 (Source)<br />
+				<dd id="version">0.3.0.7 (Linux)<br />
+				0.3.0.7 (Mac OS X)<br />
+				0.3.0.7 (Windows)<br />
+				0.3.0.7 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-01-23 23:24 (UTC)</dd>
+				<dd id="date">2010-02-12 20:13 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -412,7 +412,7 @@
 			<li><a href="#menu">Menu commands</a></li>
 			<li><a href="#issues">Known issues / solutions</a></li>
 			<li><a href="#todo">To-Do / planned features</a></li>
-			<li><a href="#thanks">Thanks</a></li>
+			<li><a href="#thanks">Thanks and acknowledgements</a></li>
 			<li><a href="#history">Version history / changelog</a></li>
 			<li><a href="#definitions">Definitions</a></li>
 		</ol>
@@ -422,7 +422,7 @@
 		<div id="about">
 			<h2>About</h2>		
 			
-			<p>dispcalGUI is a <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> frontend for several utilities from the open source 
+			<p>dispcalGUI is a graphical frontend for several utilities from the open source 
 			color management system <a href="http://argyllcms.com">Argyll CMS</a> by Graeme Gill, specifically 
 			dispcal, dispread, colprof and dispwin, which when used together allow you to calibrate and 
 			profile your display using a measurement device. Of course, you can do a lot 
@@ -468,18 +468,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.6.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.7.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.6.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.6-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.6-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.7.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.7-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.7-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.6.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.7.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
@@ -569,7 +569,7 @@
 					<li>Datacolor/ColorVision Spyder 3 *</li>
 				</ul>
 				
-				<p>* only when using Argyll CMS >= 1.1.0 Beta</p>
+				<p>* only when using Argyll CMS >= 1.1.0</p>
 			</div>
 			
 			<div id="prerequisites-source">
@@ -850,7 +850,7 @@
 							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[1]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS</acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
 							
 							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> type profiles, or certain variations of them).
-							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS >= 1.1.0 RC4 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped R ↔ G matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
+							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS >= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped R ↔ G matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
 							
 							<p>Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-based profiles might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves, but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-based and matrix-based profiles can include video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves.</p>
 						</dd>
@@ -1051,7 +1051,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		</div>
 		
 		<div id="thanks">
-			<h2>Thanks</h2>
+			<h2>Thanks and acknowledgements</h2>
 		
 			<p>I would like to thank the following people:<br />
 			Graeme Gill, for creating Argyll CMS.<br />
@@ -1059,19 +1059,23 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			Roberto Quintero (spanish translation).<br />
 			Tommaso Schiavinotto (italian translation).<br />
 			And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
+			
+			<p><span class="h">Acknowledgements</span><br />
+			Part of the comprehensive Argyll CMS documentation has been used in this document, and was only slightly altered to better fit dispcalGUI's behavior and notations.</p>
 		</div>
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-01-23 23:24 (UTC) 0.3.0.6 -->
+			<!-- 2010-02-12 20:13 (UTC) 0.3.0.7 -->
 			<dl>
-				<dt>2010-01-23 23:24 (UTC)</dt>
+				<dt>2010-02-12 20:13 (UTC)</dt>
 					<dd>
-						<h3>0.3.0.6</h3>
+						<h3>0.3.0.7</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Support for Argyll &gt;= 1.1.0 RC3 adaptive emissive measurement mode with the i1 Pro spectrometer.</li>
-							<li>All of Argyll's profile types are now available (XYZ LUT on Windows only if using Argyll &gt;= 1.1.0 RC3).</li>
+							<li>Support for Argyll &gt;= 1.1.0 adaptive emissive measurement mode with the i1 Pro spectrometer.</li>
+							<li>All of Argyll's profile types are now available (XYZ LUT on Windows only if using Argyll &gt;= 1.1.0).</li>
+							<li>Support for “very low” calibration quality.</li>
 							<li>Optionally create a fast matrix/shaper profile when just calibrating.</li>
 							<li>“Reset LUT curves” checkbox in the dialog shown when just profiling.</li>
 							<li>Information how to install Argyll &gt;= 1.1.0 USB drivers on Windows Vista/7 64-bit to the “known issues and solutions” section in the ReadMe.</li>

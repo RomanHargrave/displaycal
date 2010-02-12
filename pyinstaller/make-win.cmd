@@ -1,11 +1,11 @@
 @echo off
-echo "USAGE %~0 some-python-version"
+echo USAGE %~0 some-python-version
 if "%VS90COMNTOOLS%"=="" (
 	echo ERROR: VS90COMNTOOLS is not set or empty. Make sure Visual C++ 2008 is installed.
 	exit /B 1
 )
-if not exist "%~dp1\Scripts\scons.bat" (
-	echo ERROR: %~dp1\Scripts\scons.bat does not exist. Make sure SCons is installed.
+if not exist "%~dp1Scripts\scons.bat" (
+	echo ERROR: %~dp1Scripts\scons.bat does not exist. Make sure SCons is installed.
 	exit /B 2
 )
 setlocal

@@ -6,6 +6,24 @@ import sys
 
 from wxfixes import wx
 
+def GetRealClientArea(self):
+	""" Return the real (non-overlapping) client area of a display """
+	# need to fix overlapping ClientArea on some Linux multi-display setups
+	# the client area must be always smaller than the geometry
+	clientarea = list(self.ClientArea)
+	if self.Geometry[0] > clientarea[0]:
+		clientarea[0] = self.Geometry[0]
+	if self.Geometry[1] > clientarea[1]:
+		clientarea[1] = self.Geometry[1]
+	if self.Geometry[2] < clientarea[2]:
+		clientarea[2] = self.Geometry[2]
+	if self.Geometry[3] < clientarea[3]:
+		clientarea[3] = self.Geometry[3]
+	return wx.Rect(*clientarea)
+
+wx.Display.GetRealClientArea = GetRealClientArea
+
+
 def GetAllChildren(self):
 	""" Get children of window and its subwindows """
 	children = self.GetChildren()

@@ -135,7 +135,7 @@ class Path:
 
 def main(scripts, configfile=None, name=None, tk=0, freeze=0, console=1, debug=0,
          strip=0, upx=0, comserver=0, ascii=0, workdir=None,
-         pathex=[], version_file=None, icon_file=None, manifest_file=None, resources=[], crypt=None):
+         pathex=[], version_file=None, icon_file=None, manifest=None, resources=[], crypt=None):
 
     try:
         config = eval(open(configfile, 'r').read())
@@ -168,8 +168,13 @@ def main(scripts, configfile=None, name=None, tk=0, freeze=0, console=1, debug=0
         exe_options = "%s, version='%s'" % (exe_options, quote_win_filepath(version_file))
     if icon_file:
         exe_options = "%s, icon='%s'" % (exe_options, quote_win_filepath(icon_file))
-    if manifest_file:
-        exe_options = "%s, manifest='%s'" % (exe_options, quote_win_filepath(manifest_file))
+    if manifest:
+		if "<" in manifest:
+			# Assume XML string
+			exe_options = "%s, manifest='%s'" % (exe_options, manifest.replace("'", "\\'"))
+		else:
+			# Assume filename
+			exe_options = "%s, manifest='%s'" % (exe_options, quote_win_filepath(manifest))
     if resources:
         for i in range(len(resources)):
             resources[i] = quote_win_filepath(resources[i])
@@ -291,8 +296,8 @@ if __name__ == '__main__':
                       "extract the icon with the specified id "
                       "from file.exe and add it to the final executable")
     g.add_option("-m", "--manifest", type="string",
-                 dest="manifest_file", metavar="FILE",
-                 help="add manifest FILE to the exe "
+                 dest="manifest", metavar="FILE or XML",
+                 help="add manifest FILE or XML to the exe "
                       "(Windows only)")
     g.add_option("-r", "--resource", type="string", default=[], dest="resources",
                  metavar="FILE[,TYPE[,NAME[,LANGUAGE]]]", action="append",

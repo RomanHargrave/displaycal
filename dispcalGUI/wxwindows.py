@@ -73,19 +73,13 @@ class BaseInteractiveDialog(wx.Dialog):
 				wx.CallAfter(self.__init__, oparent, id, title, msg, ok, 
 				   bitmap, pos, size)
 				return
-			if not oparent.IsShownOnScreen():
-				# Do not center on parent if not visible
-				parent = None 
-			else:
-				pos = list(pos)
-				i = 0
-				for coord in pos:
-					if coord > -1:
-						pos[i] += parent.GetScreenPosition()[i]
-					i += 1
-				pos = tuple(pos)
-		else:
-			parent = None
+			pos = list(pos)
+			i = 0
+			for coord in pos:
+				if coord > -1:
+					pos[i] += parent.GetScreenPosition()[i]
+				i += 1
+			pos = tuple(pos)
 		wx.Dialog.__init__(self, parent, id, title, pos, size)
 		self.SetPosition(pos)  # yes, this is needed
 		

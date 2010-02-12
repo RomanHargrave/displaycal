@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from codecs import EncodedFile
 import logging
 import logging.handlers
 import os
@@ -15,7 +16,7 @@ from util_io import StringIOu as StringIO
 from util_str import universal_newlines
 import config
 
-logbuffer = StringIO()
+logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
 def log(msg, fn=None):
 	"""

@@ -290,7 +290,7 @@ def get_display_profile(display_no=0):
 			profile = ICCProfile(filename)
 	else:
 		if sys.platform == "darwin":
-			args = ['osascript', '-e', 'tell app "ColorSyncScripting"', '-e', 
+			args = ['osascript', '-e', 'tell app "Image Events"', '-e', 
 					'set prof to location of (display profile of display %i)' % 
 					(display_no + 1), '-e', 'try', '-e', 'POSIX path of prof', 
 					'-e', 'end try', '-e', 'end tell']
@@ -316,7 +316,7 @@ def get_display_profile(display_no=0):
 				stdout = stdout.split("=")[1].strip()
 				bin = "".join([chr(int(part)) for part in stdout.split(", ")])
 				profile = ICCProfile(bin)
-		elif stderr:
+		elif stderr and tgt_proc.wait() != 0:
 			raise IOError(stderr)
 	return profile
 
@@ -512,6 +512,9 @@ class Text(ICCProfileTag, UserString, str):
 
 	def __init__(self, seq):
 		UserString.__init__(self, seq)
+
+	def __unicode__(self):
+		return unicode(self.data, fs_enc, errors="replace")
 
 
 class Colorant(ADict):

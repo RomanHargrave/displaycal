@@ -30,6 +30,7 @@ import distutils.core
 import glob
 import os
 import shutil
+import subprocess as sp
 import sys
 from types import StringType
 
@@ -93,6 +94,7 @@ def setup():
 		print "using distutils"
 	
 	if do_py2exe:
+		import py2exe
 		# ModuleFinder can't handle runtime changes to __path__, but win32com 
 		# uses them
 		try:
@@ -109,12 +111,6 @@ def setup():
 		except ImportError:
 			# no build path setup, no worries.
 			pass
-	
-	try:
-		import py2exe
-	except ImportError:
-		if do_py2exe:
-			raise
 	
 	if do_py2exe:
 		origIsSystemDLL = py2exe.build_exe.isSystemDLL
@@ -255,7 +251,7 @@ def setup():
 			(data, [os.path.join(pydir, "test.cal")])
 		]
 		if sys.platform == "win32":
-			if py2exe:
+			if do_py2exe:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					[os.path.join(pydir, "theme", "icons", name + 
 					 "-uninstall.ico")])]
@@ -328,10 +324,32 @@ def setup():
 			libraries = ["user32", "gdi32"], 
 			define_macros=[("NT", None)])
 	elif sys.platform == "darwin":
+		if "build" in sys.argv[1:] or "build_ext" in sys.argv[1:] or \
+		   "install" in sys.argv[1:] or "install_lib" in sys.argv[1:]:
+			p = sp.Popen([sys.executable, '-c', '''import os
+from distutils.core import setup, Extension
+
+setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM", 
+	  sources = [os.path.join("%(name)s", "RealDisplaySizeMM.c")],
+	  extra_link_args = ["-framework Carbon", "-framework CoreFoundation", 
+					     "-framework Python", "-framework IOKit"], 
+	  define_macros=[("__APPLE__", None), ("UNIX", None)])])''' % {"name": name}, 
+						  ] + sys.argv[1:], stdout = sp.PIPE, stderr = sp.STDOUT)
+			lines = []
+			while True:
+				o = p.stdout.readline()
+				if o == '' and p.poll() != None:
+					break
+				if o[0:4] == 'gcc ':
+					lines += [o]
+				print o.rstrip()
+			if len(lines):
+				os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.3'
+				sp.call(lines[-1], shell = True)  # fix the library
 		RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
 			sources = [os.path.join(name, "RealDisplaySizeMM.c")],
-			extra_link_args = ["-framework Carbon", "-framework Python", 
-							   "-framework IOKit"], 
+			extra_link_args = ["-framework Carbon", "-framework CoreFoundation", 
+							   "-framework Python", "-framework IOKit"], 
 			define_macros=[("__APPLE__", None), ("UNIX", None)])
 	else:
 		RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 

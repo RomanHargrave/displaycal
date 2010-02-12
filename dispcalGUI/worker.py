@@ -249,7 +249,7 @@ def get_options_from_cprt(cprt):
 		"m",
 		"o",
 		"u",
-		"q[lmh]",
+		"q[vlmh]",
 		"y[cl]",
 		"[tT](?:\d+(?:\.\d+)?)?",
 		"w\d+(?:\.\d+)?,\d+(?:\.\d+)?",
@@ -299,7 +299,7 @@ def make_argyll_compatible_path(path):
 	   fs_enc.upper() not in ("UTF8", "UTF-8"):
 		make_compat_enc = "ASCII"
 	else:
-		make_compat_enc = enc
+		make_compat_enc = fs_enc
 	parts = path.split(os.path.sep)
 	for i in range(len(parts)):
 		parts[i] = unicode(parts[i].encode(make_compat_enc, "asciize"), 
@@ -1011,10 +1011,14 @@ class Worker():
 						stdout = tempfile.SpooledTemporaryFile()
 		except Exception, exception:
 			if debug:
-				safe_print('[D] cmdline:', cmdline)
 				safe_print('[D] working_dir:', working_dir)
-			handle_error("Error: " + (traceback.format_exc() if debug else 
-									  str(exception)), parent=self.owner)
+			errmsg = (" ".join(cmdline).decode(fs_enc) + "\n" + 
+						 "Error: " + (traceback.format_exc() if debug else 
+									  str(exception)))
+			if capture_output:
+				log(errmsg)
+			else:
+				handle_error(errmsg, parent=self.owner, silent=silent)
 			self.retcode = -1
 		if not capture_output and low_contrast:
 			# Reset to higher contrast colors (white on black) for readability

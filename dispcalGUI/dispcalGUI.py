@@ -56,9 +56,9 @@ import logging
 import math
 import os
 import re
-import shutil26 as shutil
+import shutil
 import socket
-import subprocess26 as sp
+import subprocess as sp
 import tempfile26 as tempfile
 import threading
 import traceback
@@ -386,6 +386,8 @@ class GamapFrame(BaseFrame):
 				InfoDialog(self, msg=lang.getstr("profile.invalid") + "\n" + v, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
+				self.gamap_profile.SetPath("")
+				v = None
 			else:
 				# pre-select suitable viewing condition
 				if profile.profileClass == "prtr":
@@ -403,7 +405,7 @@ class GamapFrame(BaseFrame):
 		if v != getcfg("gamap_profile") and self.Parent and \
 		   hasattr(self.Parent, "profile_settings_changed"):
 			self.Parent.profile_settings_changed()
-		setcfg("gamap_profile", v)
+		setcfg("gamap_profile", v or None)
 
 	def gamap_perceptual_cb_handler(self, event=None):
 		v = self.gamap_perceptual_cb.GetValue()
@@ -449,15 +451,16 @@ class GamapFrame(BaseFrame):
 		BaseFrame.setup_language(self)
 		
 		# Create the profile picker ctrl dynamically to get translated strings
-		origpickerctrl = self.FindWindowByName("gamap_profile")
-		hsizer = origpickerctrl.GetContainingSizer()
-		self.gamap_profile = wx.FilePickerCtrl(
-			self.panel, -1, "", message=lang.getstr("gamap.profile"), 
-			wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm",
-			name="gamap_profile")
-		self.gamap_profile.PickerCtrl.Label = lang.getstr("browse")
-		hsizer.Replace(origpickerctrl, self.gamap_profile)
-		origpickerctrl.Destroy()
+		if sys.platform in ("darwin", "win32"):
+			origpickerctrl = self.FindWindowByName("gamap_profile")
+			hsizer = origpickerctrl.GetContainingSizer()
+			self.gamap_profile = wx.FilePickerCtrl(
+				self.panel, -1, "", message=lang.getstr("gamap.profile"), 
+				wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm",
+				name="gamap_profile")
+			self.gamap_profile.PickerCtrl.Label = lang.getstr("browse")
+			hsizer.Replace(origpickerctrl, self.gamap_profile)
+			origpickerctrl.Destroy()
 		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.gamap_profile_handler, 
 				   id=self.gamap_profile.GetId())
 		
@@ -596,7 +599,9 @@ class MainFrame(BaseFrame):
 		# expects the window to be fully created and accessible via 
 		# wx.GetApp().frame.infoframe
 		logbuffer.seek(0)
-		self.infoframe.log_txt.SetValue("".join(line for line in logbuffer))
+		self.infoframe.log_txt.SetValue("".join(line.decode("UTF-8", 
+															"replace") 
+												for line in logbuffer))
 
 	def init_defaults(self):
 		""" Initialize GUI-specific defaults. """
@@ -640,10 +645,11 @@ class MainFrame(BaseFrame):
 		
 		# Left side - commmandline, right side - internal enumeration
 		self.quality_ab = {
-			1: "l",
-			2: "m",
-			3: "h",
-			4: "u"
+			1: "v",
+			2: "l",
+			3: "m",
+			4: "h",
+			5: "u"
 		}
 		
 		# Left side - commmandline, right side - internal enumeration
@@ -1493,10 +1499,9 @@ class MainFrame(BaseFrame):
 		for item in self.worker.displays:
 			self.displays += [item.replace("[PRIMARY]", 
 										   lang.getstr("display.primary"))]
+		setcfg("displays", os.pathsep.join(self.worker.displays))
 		self.display_ctrl.SetItems(self.displays)
-		display_no = int(getcfg("display.number")) - 1
-		self.display_ctrl.SetSelection(
-			min(max(0, len(self.worker.displays) - 1), display_no))
+		self.get_set_display()
 		self.display_ctrl.Enable(len(self.worker.displays) > 1)
 		display_lut_sizer = self.display_ctrl.GetContainingSizer()
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
@@ -1542,10 +1547,10 @@ class MainFrame(BaseFrame):
 		self.comport_ctrl.SetItems(self.worker.instruments)
 		self.comport_ctrl.SetSelection(
 			min(max(0, len(self.worker.instruments) - 1), 
-				int(getcfg("comport.number")) - 1))
+				max(0, int(getcfg("comport.number")) - 1)))
 		self.comport_ctrl.Enable(len(self.worker.instruments) > 1)
 		self.comport_ctrl.Thaw()
-		self.update_measurement_modes()
+		self.comport_ctrl_handler()
 	
 	def update_measurement_modes(self):
 		""" Update the measurement mode control. """
@@ -1893,11 +1898,14 @@ class MainFrame(BaseFrame):
 		self.calibration_quality_ctrl.SetValue(q)
 		if q == 1:
 			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.low"))
+				lang.getstr("calibration.quality.verylow"))
 		elif q == 2:
 			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.medium"))
+				lang.getstr("calibration.quality.low"))
 		elif q == 3:
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.quality.medium"))
+		elif q == 4:
 			self.calibration_quality_info.SetLabel(
 				lang.getstr("calibration.quality.high"))
 
@@ -1910,7 +1918,7 @@ class MainFrame(BaseFrame):
 
 		q = self.quality_ba.get(getcfg("profile.quality"), 
 								self.quality_ba.get(
-									defaults["profile.quality"]))
+									defaults["profile.quality"])) - 1
 		self.profile_quality_ctrl.SetValue(q)
 		if q == 1:
 			self.profile_quality_info.SetLabel(
@@ -2138,7 +2146,10 @@ class MainFrame(BaseFrame):
 												event.GetEventType(), 
 												getevttype(event)))
 		q = self.get_calibration_quality()
-		if q == "l":
+		if q == "v":
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.quality.verylow"))
+		elif q == "l":
 			self.calibration_quality_info.SetLabel(
 				lang.getstr("calibration.quality.low"))
 		elif q == "m":
@@ -2818,9 +2829,9 @@ class MainFrame(BaseFrame):
 					profile = ICCP.get_display_profile(
 						max(self.display_ctrl.GetSelection(), 0))
 				except Exception, exception:
-					safe_print("ICCP.get_display_profile(%s):" % 
-							   max(self.display_ctrl.GetSelection(), 0), 
-							   exception)
+					_safe_print("ICCP.get_display_profile(%s):" % 
+								max(self.display_ctrl.GetSelection(), 0), 
+								exception, fn=log)
 					profile = None
 			elif cal.lower().endswith(".icc") or \
 				 cal.lower().endswith(".icm"):
@@ -2830,7 +2841,8 @@ class MainFrame(BaseFrame):
 		if profile:
 			if verbose >= 1:
 				safe_print(lang.getstr("calibration.loading"))
-				safe_print(profile.fileName)
+				if profile.fileName:
+					safe_print(profile.fileName)
 		else:
 			if verbose >= 1: safe_print(lang.getstr("calibration.resetting"))
 		if self.install_profile(capture_output=True, cal=cal, install=False, 
@@ -3158,14 +3170,14 @@ class MainFrame(BaseFrame):
 			profile = ICCP.get_display_profile(
 				max(self.display_ctrl.GetSelection(), 0))
 		except Exception, exception:
-			safe_print("ICCP.get_display_profile(%s):" % 
-					   self.display_ctrl.GetSelection(), exception)
+			_safe_print("ICCP.get_display_profile(%s):" % 
+						self.display_ctrl.GetSelection(), exception, fn=log)
 			profile = None
 		if check_set_argyll_bin():
 			if verbose >= 1: ## and event is None:
 				safe_print(
 					lang.getstr("calibration.loading_from_display_profile"))
-				if profile:
+				if profile and profile.fileName:
 					safe_print(profile.fileName)
 			if self.install_profile(capture_output=True, cal=True, 
 									install=False, skip_scripts=True, 
@@ -3271,9 +3283,19 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(self.measureframe_subprocess)
 	
 	def measureframe_subprocess(self):
-		args = u'DISPLAY=:0.%s "%s" "%s"'.encode(fs_enc) % (
-				getcfg("display.number") - 1, sys.executable, 
-				os.path.join(pydir, "wxMeasureFrame.py"))
+		args = u'"%s" "%s"'.encode(fs_enc) % (sys.executable, 
+											  os.path.join(pydir, 
+											  			   "wxMeasureFrame.py"))
+		if wx.Display.GetCount() == 1:
+			display = os.getenv("DISPLAY", ":0.0").split(":")
+			host = display[0]
+			if len(display) > 1:
+				xserver = display[1].split(".")[0]
+			else:
+				xserver = "0"
+			args = "DISPLAY=%s:%s.%s %s" % (host, xserver,
+											getcfg("display.number") - 1,
+											args)
 		returncode = -1
 		try:
 			p = sp.Popen(args, 
@@ -3285,20 +3307,21 @@ class MainFrame(BaseFrame):
 			stdout, stderr = p.communicate()
 			returncode = p.returncode
 			config.initcfg()
-			self.display_ctrl.SetSelection(
-				max(0, getcfg("display.number") - 1))
-			self.display_ctrl_handler(
-				CustomEvent(wx.EVT_COMBOBOX.evtType[0], 
-							self.display_ctrl))
-		if returncode != 1:
+			self.get_set_display()
+		if returncode != 255:
 			self.Show(start_timers=True)
-		if stderr and stderr.strip():
-			InfoDialog(self, pos=(-1, 100), 
-					   msg=stderr, 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
-		elif returncode == 1:
+			if stderr and stderr.strip():
+				safe_print(stderr.strip())
+		else:
 			self.call_pending_function()
+	
+	def get_set_display(self):
+		self.display_ctrl.SetSelection(
+			min(max(0, len(self.worker.displays) - 1), 
+				max(0, getcfg("display.number") - 1)))
+		self.display_ctrl_handler(
+			CustomEvent(wx.EVT_COMBOBOX.evtType[0], 
+						self.display_ctrl))
 
 	def set_pending_function(self, pending_function, *pending_function_args, 
 							 **pending_function_kwargs):
@@ -3645,8 +3668,9 @@ class MainFrame(BaseFrame):
 						profile = ICCP.get_display_profile(
 							max(self.display_ctrl.GetSelection(), 0)) or False
 					except Exception, exception:
-						safe_print("ICCP.get_display_profile(%s):" % 
-								   self.display_ctrl.GetSelection(), exception)
+						_safe_print("ICCP.get_display_profile(%s):" % 
+									self.display_ctrl.GetSelection(), 
+									exception, fn=log)
 			self.show_lut_handler(profile=profile)
 	
 	def lut_viewer_load_lut(self, event=None, profile=None, force_draw=False):
@@ -3738,14 +3762,15 @@ class MainFrame(BaseFrame):
 		self.plugplay_timer.Stop()
 		self.update_profile_name_timer.Stop()
 
-	def comport_ctrl_handler(self, event):
-		if debug:
+	def comport_ctrl_handler(self, event=None):
+		if debug and event:
 			safe_print("[D] comport_ctrl_handler called for ID %s %s event "
 					   "type %s %s" % (event.GetId(), 
 									   getevtobjname(event, self), 
 									   event.GetEventType(), 
 									   getevttype(event)))
-		setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
+		if self.comport_ctrl.GetSelection() > -1:
+			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
 
 	def display_ctrl_handler(self, event):
@@ -3756,16 +3781,23 @@ class MainFrame(BaseFrame):
 									   event.GetEventType(), 
 									   getevttype(event)))
 		display_no = self.display_ctrl.GetSelection()
-		setcfg("display.number", display_no + 1)
-		if bool(int(getcfg("display_lut.link"))) and display_no > -1:
-			self.display_lut_ctrl.SetStringSelection(self.displays[display_no])
+		profile = None
+		if display_no > -1:
+			setcfg("display.number", display_no + 1)
+			if bool(int(getcfg("display_lut.link"))):
+				self.display_lut_ctrl.SetStringSelection(self.displays[display_no])
+				try:
+					i = self.displays.index(
+						self.display_lut_ctrl.GetStringSelection())
+				except ValueError:
+					i = min(0, self.display_ctrl.GetSelection())
+				setcfg("display_lut.number", i + 1)
 			try:
-				i = self.displays.index(
-					self.display_lut_ctrl.GetStringSelection())
-			except ValueError:
-				i = min(0, self.display_ctrl.GetSelection())
-			setcfg("display_lut.number", i + 1)
-		self.lut_viewer_load_lut(profile=ICCP.get_display_profile(display_no))
+				profile = ICCP.get_display_profile(display_no)
+			except Exception, exception:
+				_safe_print("ICCP.get_display_profile(%s):" % display_no, 
+							exception, fn=log)
+		self.lut_viewer_load_lut(profile=profile)
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -3791,6 +3823,8 @@ class MainFrame(BaseFrame):
 		bitmap_unlink = geticon(16, "stock_lock-open")
 		if link is None:
 			link = not bool(int(getcfg("display_lut.link")))
+		link = self.display_ctrl.GetCount() == 1 or (link and 
+			self.display_lut_ctrl.GetCount() > 1)
 		if link:
 			self.display_lut_link_ctrl.SetBitmapLabel(bitmap_link)
 			lut_no = self.display_ctrl.GetSelection()
@@ -4288,7 +4322,8 @@ class MainFrame(BaseFrame):
 			"u": "UQ", 
 			"h": "HQ", 
 			"m": "MQ", 
-			"l": "LQ"
+			"l": "LQ", 
+			"v": "VLQ"
 		}
 		for a in aspects:
 			profile_name = profile_name.replace("%%%sq" % a, msgs[aspects[a]])
@@ -4453,7 +4488,7 @@ class MainFrame(BaseFrame):
 		return self.quality_ab[self.calibration_quality_ctrl.GetValue()]
 
 	def get_profile_quality(self):
-		return self.quality_ab[self.profile_quality_ctrl.GetValue()]
+		return self.quality_ab[self.profile_quality_ctrl.GetValue() + 1]
 
 	def profile_settings_changed(self):
 		cal = getcfg("calibration.file")
@@ -5082,6 +5117,8 @@ class MainFrame(BaseFrame):
 						settings += [lang.getstr("calibration.luminance")]
 					elif line[0] == "TARGET_GAMMA":
 						setcfg("trc", None)
+						if value in ("L_STAR", "REC709", "SMPTE240M", "sRGB"):
+							setcfg("trc.type", "g")
 						if value == "L_STAR":
 							setcfg("trc", "l")
 						elif value == "REC709":
@@ -5102,7 +5139,7 @@ class MainFrame(BaseFrame):
 							except ValueError:
 								continue
 						self.worker.options_dispcal += [
-							"-" + getcfg("trc.type") + getcfg("trc")]
+							"-" + getcfg("trc.type") + str(getcfg("trc"))]
 						settings += [lang.getstr("trc")]
 					elif line[0] == "DEGREE_OF_BLACK_OUTPUT_OFFSET":
 						setcfg("calibration.black_output_offset", 
@@ -5411,6 +5448,12 @@ class MainApp(wx.App):
 		else:
 			self.SetAppName(appname)
 		self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
+		wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
+						  "LANGUAGE_ENGLISH")
+		self.locale = wx.Locale(wx_lang)
+		if debug:
+			safe_print("[D]", lang.getstr("language_name"), wx_lang, 
+					   self.locale.GetLocale())
 		self.frame = MainFrame()
 		self.SetTopWindow(self.frame)
 		self.frame.Show()

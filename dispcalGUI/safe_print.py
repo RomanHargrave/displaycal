@@ -59,10 +59,9 @@ def safe_print(*args, **kwargs):
 				encoding = file_.encoding
 			elif sys.platform == "darwin":
 				encoding = "UTF-8"
-			elif sys.stdout.encoding:
-				encoding = sys.stdout.encoding
 			else:
-				encoding = locale.getpreferredencoding() or \
+				encoding = locale.getlocale()[1] or sys.stdout.encoding or \
+						   locale.getpreferredencoding() or \
 						   sys.getdefaultencoding()
 			arg = arg.encode(encoding, "replace")
 		strargs += [arg]
@@ -92,7 +91,8 @@ if __name__ == '__main__':
 	if sys.platform == "darwin":
 		enc = "UTF-8"
 	else:
-		enc = sys.stdout.encoding or locale.getpreferredencoding() or \
+		enc = locale.getlocale()[1] or sys.stdout.encoding or \
+			  locale.getpreferredencoding() or \
 			  sys.getdefaultencoding()
 	fs_enc = sys.getfilesystemencoding() or enc
 	for arg in sys.argv[1:]:

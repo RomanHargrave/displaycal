@@ -799,7 +799,7 @@
                           <size>50,-1</size>
                           <value>2</value>
                           <min>1</min>
-                          <max>3</max>
+                          <max>4</max>
                           <XRCED>
                             <events>EVT_SLIDER</events>
                           </XRCED>

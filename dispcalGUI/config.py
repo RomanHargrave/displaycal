@@ -201,6 +201,8 @@ def get_data_path(relpath, rex=None):
 	return a list of files in the intersection of searched directories.
 	
 	"""
+	if not relpath:
+		return None
 	intersection = []
 	paths = []
 	for dir_ in data_dirs:
@@ -301,7 +303,7 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 valid_values = {
-	"calibration.quality": ["l", "m", "h", "u"],
+	"calibration.quality": ["v", "l", "m", "h", "u"],
 	"measurement_mode": [None, "c", "l"],
 	"gamap_src_viewcond": viewconds,
 	"gamap_out_viewcond": ["mt", "mb", "md", "jm", "jd"],
@@ -335,6 +337,7 @@ defaults = {
 	"display.number": 1,
 	"display_lut.link": 1,
 	"display_lut.number": 1,
+	"displays": "",
 	"gamap_src_viewcond": "pp",
 	"gamap_out_viewcond": "mt",
 	"gamap_profile": "",
@@ -444,19 +447,18 @@ def getcfg(name, fallback=True):
 					value = deftype(value)
 				except ValueError:
 					value = defval
-			elif (name.endswith("file") or 
-				  name.startswith("last_")) and not os.path.exists(value):
+			elif name == "trc.type" and getcfg("trc") in valid_values["trc"]:
+				value = "g"
+			elif value and name.endswith("file") and not os.path.exists(value):
 				if debug:
 					print "%s does not exist: %s" % (name, value),
-				if value.split(os.path.sep)[-2:] == ["presets", 
-													 os.path.basename(value)] or \
-				   value.split(os.path.sep)[-2:] == ["ti1", 
-													 os.path.basename(value)]:
-					value = os.path.join(os.path.basename(os.path.dirname(value)), 
-										 os.path.basename(value))
-				else:
-					value = os.path.basename(value)
-				value = get_data_path(value) or (defval if hasdef else None)
+				if value.split(os.path.sep)[-3:-2] == [appname] and (
+				   value.split(os.path.sep)[-2:-1] == ["presets"] or 
+				   value.split(os.path.sep)[-2:-1] == ["ti1"]):
+					value = os.path.join(*value.split(os.path.sep)[-2:])
+					value = get_data_path(value)
+				if not value and hasdef:
+					value = defval
 				if debug:
 					print "- falling back to", value
 			elif name in valid_values and value not in valid_values[name]:
