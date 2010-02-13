@@ -521,7 +521,7 @@ class Worker():
 				for monitor in win32api.EnumDisplayMonitors(None, None):
 					monitors.append(win32api.GetMonitorInfo(monitor[0]))
 			for line in self.output:
-				if type(line) in (str, unicode):
+				if isinstance(line, unicode):
 					n += 1
 					line = line.strip()
 					if n == 0 and "version" in line.lower():
@@ -569,7 +569,7 @@ class Worker():
 												break
 										i += 1
 									if device:
-										match[0] = (device.DeviceString,) + match[0][1:]
+										match[0] = (device.DeviceString.decode(fs_enc, "replace"),) + match[0][1:]
 								display = "%s @ %s, %s, %sx%s" % match[0]
 								if " ".join(value.split()[-2:]) == \
 								   "(Primary Display)":
@@ -982,11 +982,10 @@ class Worker():
 							   line.find("User Aborted") < 0 and \
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
-								errors2 += [line]
+								errors2 += [line.decode(enc, "replace")]
 						if len(errors2):
 							self.errors = errors2
-							errstr = unicode("".join(errors2).strip(), 
-											 enc, "replace")
+							errstr = "".join(errors2).strip()
 							if (self.retcode != 0 or 
 								cmdname == get_argyll_utilname("dispwin")):
 								InfoDialog(parent, pos=(-1, 100), 
@@ -998,12 +997,12 @@ class Worker():
 						stderr = Tea(tempfile.SpooledTemporaryFile())
 				if capture_output:
 					stdout.seek(0)
-					self.output = [re.sub("^\.{4,}\s*$", "", line) for line in 
-								   stdout.readlines()]
+					self.output = [re.sub("^\.{4,}\s*$", "", 
+										  line.decode(enc, "replace")) 
+								   for line in stdout.readlines()]
 					stdout.close()
 					if len(self.output) and log_output:
-						log(unicode("".join(self.output).strip(), enc, 
-							"replace"))
+						log("".join(self.output).strip())
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
