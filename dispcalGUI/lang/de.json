@@ -267,6 +267,7 @@
 	"tc.r": "Geräte-Farbraum (zufällig)",
 	"tc.R": "Wahrnehmungsorientiert (zufällig)",
 	"tc.q": "Geräte-Farbraum füllend (quasi-zufällig)",
+	"tc.Q": "Wahrnehmungsorientiert füllend (quasi-zufällig)",
 	"tc.i": "Kubisches Raster (Geräte-Farbraum)",
 	"tc.I": "Kubisches Raster (wahrnehmungsorientiert)",
 	"tc.adaption": "Anpassung",

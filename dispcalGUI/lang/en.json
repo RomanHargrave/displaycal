@@ -267,6 +267,7 @@
 	"tc.r": "Device space random",
 	"tc.R": "Perceptual space random",
 	"tc.q": "Device space filling quasi-random",
+	"tc.Q": "Perceptual space filling quasi-random",
 	"tc.i": "Device space body centered cubic grid",
 	"tc.I": "Perceptual space body centered cubic grid",
 	"tc.adaption": "Adaption",

@@ -218,6 +218,32 @@ def get_argyll_utilname(name, paths=None):
 	return exe
 
 
+def get_argyll_version(name, silent=False):
+	"""
+	Determine version of a certain Argyll utility.
+	
+	"""
+	argyll_version = [0, 0, 0]
+	if (silent and check_argyll_bin()) or (not silent and 
+										   check_set_argyll_bin()):
+		cmd = get_argyll_util(get_argyll_utilname(name))
+		p = sp.Popen([cmd], stdin=None, stdout=sp.PIPE, stderr=sp.STDOUT)
+		for i, line in enumerate((p.communicate()[0] or "").splitlines()):
+			if isinstance(line, basestring):
+				line = line.strip()
+				if i == 0 and "version" in line.lower():
+					argyll_version_string = line[line.lower().find("version")+8:]
+					argyll_version = re.findall("(\d+|[^.\d]+)", 
+												argyll_version_string)
+					for i in range(len(argyll_version)):
+						try:
+							argyll_version[i] = int(argyll_version[i])
+						except ValueError:
+							argyll_version[i] = argyll_version[i]
+					break
+	return argyll_version
+
+
 def get_options_from_cprt(cprt):
 	"""
 	Extract options used for dispcal and colprof from profile copyright.

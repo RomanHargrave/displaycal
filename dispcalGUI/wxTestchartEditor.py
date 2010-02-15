@@ -19,9 +19,14 @@ from log import safe_print
 from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
 from util_io import StringIOu as StringIO
-from worker import Worker, check_file_isfile, check_set_argyll_bin
+from worker import Worker, check_file_isfile, check_set_argyll_bin, get_argyll_version
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import ConfirmDialog, InfoDialog
+
+
+def swap_dict_keys_values(mydict):
+	return dict([(v, k) for (k, v) in mydict.iteritems()])
+
 
 class TestchartEditor(wx.Frame):
 	def __init__(self, parent = None, id = -1):
@@ -41,18 +46,13 @@ class TestchartEditor(wx.Frame):
 			"i": lang.getstr("tc.i"),
 			"I": lang.getstr("tc.I")
 		}
-
-		self.tc_algos_ba = {
-			lang.getstr("tc.ofp"): "",
-			lang.getstr("tc.t"): "t",
-			lang.getstr("tc.r"): "r",
-			lang.getstr("tc.R"): "R",
-			lang.getstr("tc.q"): "q",
-			lang.getstr("tc.i"): "i",
-			lang.getstr("tc.I"): "I"
-		}
 		
 		self.worker = Worker()
+		
+		if get_argyll_version("targen") >= [1, 1, 0]:
+			self.tc_algos_ab["Q"] = lang.getstr("tc.Q")
+
+		self.tc_algos_ba = swap_dict_keys_values(self.tc_algos_ab)
 		
 		self.droptarget = FileDrop()
 		self.droptarget.drophandlers = {
@@ -701,7 +701,7 @@ class TestchartEditor(wx.Frame):
 		tc_algo = self.tc_algos_ba[self.tc_algo.GetStringSelection()]
 		self.tc_adaption_slider.Enable(tc_algo_enable and tc_algo == "")
 		self.tc_adaption_intctrl.Enable(tc_algo_enable and tc_algo == "")
-		tc_precond_enable = (tc_algo in ("I", "R", "t") or (tc_algo == "" and self.tc_adaption_slider.GetValue() > 0))
+		tc_precond_enable = (tc_algo in ("I", "Q", "R", "t") or (tc_algo == "" and self.tc_adaption_slider.GetValue() > 0))
 		self.tc_precond.Enable(tc_algo_enable and tc_precond_enable and bool(getcfg("tc_precond_profile")))
 		if not tc_precond_enable:
 			self.tc_precond.SetValue(False)
@@ -791,7 +791,7 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_algo", tc_algo)
 		setcfg("tc_angle", self.tc_angle_intctrl.GetValue() / 10000.0)
 		setcfg("tc_adaption", self.tc_adaption_intctrl.GetValue() / 100.0)
-		tc_precond_enable = tc_algo in ("I", "R", "t") or (tc_algo == "" and self.tc_adaption_slider.GetValue() > 0)
+		tc_precond_enable = tc_algo in ("I", "Q", "R", "t") or (tc_algo == "" and self.tc_adaption_slider.GetValue() > 0)
 		if tc_precond_enable:
 			setcfg("tc_precond", int(self.tc_precond.GetValue()))
 		setcfg("tc_precond_profile", self.tc_precond_profile.GetPath())
