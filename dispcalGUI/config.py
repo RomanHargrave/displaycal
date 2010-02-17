@@ -148,7 +148,7 @@ def getbitmap(name):
 	"""
 	if not "wx" in globals():
 		global wx
-		import wx
+		from wxaddons import wx
 	if not name in bitmaps:
 		parts = name.split("/")
 		if parts[-1] == "empty":

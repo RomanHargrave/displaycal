@@ -1,7 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
+import wxversion
+minVersion = "2.8"
+if not getattr(sys, "frozen", False):
+	try:
+		wxversion.ensureMinimal(minVersion)
+	except Exception, exception:
+		print exception
 import wx
+if wx.__version__ < minVersion:
+	versions = "\n".join(["      " + ver for ver in wxversion.getInstalled()])
+	app = wx.PySimpleApp()
+	result = wx.MessageBox("This application requires a version of wxPython "
+						   "greater than or equal to %s, but a matching version "
+						   "was not found.\n\n"
+						   "You currently have these version(s) installed:\n%s\n\n"
+						   "Would you like to download a new version of wxPython?\n"
+						   % (minVersion, versions),
+						   "wxPython Upgrade Needed", style=wx.YES_NO)
+	if result == wx.YES:
+		import webbrowser
+		webbrowser.open(wxversion.UPDATE_URL)
+	app.MainLoop()
+	sys.exit()
 import wx.grid
 
 wx.BitmapButton._SetBitmapLabel = wx.BitmapButton.SetBitmapLabel

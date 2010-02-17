@@ -81,20 +81,6 @@ from config import (autostart, autostart_home, btn_width_correction, build,
 					initcfg, isapp, isexe, profile_ext, pydir, pyext, pyname, 
 					pypath, resfiles, runtype, setcfg, storage, writecfg)
 
-# wxPython
-
-if not config.isexe and not config.isapp:
-	import wxversion
-	try:
-		wxversion.ensureMinimal("2.8")
-	except:
-		import wx
-		if wx.VERSION < (2, 8):
-			raise
-from wx import xrc
-from wx.lib.art import flagart
-import wx.lib.hyperlink
-
 # Custom modules
 
 import CGATS
@@ -135,6 +121,11 @@ from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
 					   LogWindow, TooltipWindow)
+
+# wxPython
+from wx import xrc
+from wx.lib.art import flagart
+import wx.lib.hyperlink
 
 def _excepthook(etype, value, tb):
 	handle_error("".join(traceback.format_exception(etype, value, tb)))
@@ -3357,6 +3348,8 @@ class MainFrame(BaseFrame):
 		if self.worker.get_instrument_features().get("skip_sensor_cal") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			self.worker.options_dispread = ["-N"]
+		else:
+			self.worker.options_dispread = []
 		self.worker.dispcal_create_fast_matrix_shaper = False
 		self.worker.dispread_after_dispcal = True
 		start_timers = True

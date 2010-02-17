@@ -33,7 +33,7 @@ def log(msg, fn=None):
 	if "wx" in sys.modules:
 		if not "wx" in globals():
 			global wx
-			import wx
+			from wxaddons import wx
 		if wx.GetApp() is not None and \
 		   hasattr(wx.GetApp(), "frame") and \
 		   hasattr(wx.GetApp().frame, "infoframe"):

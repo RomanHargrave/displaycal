@@ -27,7 +27,7 @@ def getevttype(event):
 	if not wxEventTypes:
 		if not "wx" in globals():
 			global wx
-			import wx
+			from wxaddons import wx
 		try:
 			for name in dir(wx):
 				if name.find("EVT_") == 0:
@@ -52,7 +52,7 @@ def handle_error(errstr, parent=None, silent=False):
 		try:
 			if not "wx" in globals():
 				global wx
-				import wx
+				from wxaddons import wx
 			if wx.GetApp() is None and parent is None:
 				app = wx.App(redirect=False)
 			try:

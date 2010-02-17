@@ -25,7 +25,7 @@ elif sys.platform == "win32":
 		SendKeys = None
 	import pywintypes
 	import win32api
-import wx
+from wxaddons import wx
 import wx.lib.delayedresult as delayedresult
 
 import ICCProfile as ICCP

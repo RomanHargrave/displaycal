@@ -364,13 +364,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.0.7 (Linux)<br />
-				0.3.0.7 (Mac OS X)<br />
-				0.3.0.8 (Windows)<br />
-				0.3.0.8 (Source)<br />
+				<dd id="version">0.3.1.0 (Linux)<br />
+				0.3.1.0 (Mac OS X)<br />
+				0.3.1.0 (Windows)<br />
+				0.3.1.0 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-02-13 16:36 (UTC)</dd>
+				<dd id="date">2010-02-17 15:53 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -468,18 +468,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.7.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.1.0.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.7.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.8-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.8-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.1.0.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.1.0-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.1.0-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.0.8.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.1.0.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
 			</p>
@@ -498,7 +498,7 @@
 				<li><div class="box stdbox"><div>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</div></div>
 				<div class="box optbox"><span class="box optbox">If your measurement device is a Spyder 2:</span> Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu. If you don't have the spyder software installed or its location cannot be determined, you will be prompted to select the setup executable that came with the instrument's installation media to enable it.</div></li>
 				<li><div class="box stdbox"><div>Connect your measurement device to your computer.</div></div>
-					<div class="box optbox"><span class="box optbox">Driver installation - Windows only:</span> If you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” or “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
+					<div class="box optbox"><span class="box optbox">Driver installation - Windows only:</span> If you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” (if you are using vendor drivers) or “Updating Argyll drivers” (if you use a prior version of the Argyll drivers) in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
 					<ul>
 						<li>Under Windows Vista/7...
 							<ul>
@@ -737,8 +737,7 @@
 			either window will quit the application, but I strongly recommend closing the 
 			<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> window first so the cleanup routines can run. On most systems, the terminal 
 			window will close automatically afterwards (if you were not running from a manually opened
-			terminal to begin with).<br />
-			Here's a caveat for Linux systems: Because even though this is a <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> application, it still needs a terminal window for the interactive part of display calibration. If not launched from a terminal or a .desktop shortcut with Terminal=true, it will try to find one (currently, it'll search for <code>Terminal</code>, <code>gnome-terminal</code>, <code>konsole</code> and <code>xterm</code>). If that fails, you will get a message box informing you about that. You can then either launch a terminal and run dispcalGUI from there or (preferably) create a <code>.sh</code> script or <code>.desktop</code> file to launch your desired terminal with dispcalGUI (refer to your system's documentation to find out how to do that). Also, feel free to mail me the name of your terminal application if dispcalGUI didn't detect it, so I can add it to the list of terminals that dispcalGUI will search for.</p>
+			terminal to begin with).</p>
 			
 			<div id="settingsfile">
 				<h3>Settings file</h3>
@@ -1066,8 +1065,27 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-02-13 16:36 (UTC) 0.3.0.8 -->
+			<!-- 2010-02-17 15:53 (UTC) 0.3.1.0 -->
 			<dl>
+				<dt>2010-02-17 15:53 (UTC)</dt>
+					<dd>
+						<h3>0.3.1.0</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Running “Calibrate &amp; profile” several times in succession no longer fails on the 2nd and subsequent runs.</li>
+							<li>Linux: Missing wxPython version check for the measurement window subprocess.</li>
+						</ul>
+					</dd>
+				
+				<dt>2010-02-15 17:27 (UTC)</dt>
+					<dd>
+						<h3>0.3.0.9</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Test chart editor: Support for Argyll 1.1.0 perceptual space-filling quasi-random test patch distribution.</li>
+						</ul>
+					</dd>
+				
 				<dt>2010-02-13 16:36 (UTC)</dt>
 					<dd>
 						<h3>0.3.0.8</h3>

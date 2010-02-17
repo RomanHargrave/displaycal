@@ -165,9 +165,7 @@ def setup():
 					recordfile_name = arg[1]
 
 	if do_install or do_py2app or do_py2exe or setuptools:
-		import wxversion
-		wxversion.ensureMinimal("2.8")
-		import wx
+		from wxfixes import minVersion as wxMinVersion, wx
 
 	if not recordfile_name and (do_full_install or do_uninstall):
 		recordfile_name = "INSTALLED_FILES"
@@ -359,7 +357,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 	ext_modules = [RealDisplaySizeMM]
 
 	requires = [
-		"wxPython (>= 2.8.7)"
+		"wxPython (>= %s)" % wxMinVersion
 	]
 	if sys.platform == "win32":
 		requires += [
@@ -427,8 +425,8 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		attrs["include_package_data"] = sys.platform in ("darwin", "win32")
 		install_requires = [req.replace("(", "").replace(")", "") for req in 
 							requires]
-		if wx.VERSION >= (2, 8, 7):
-			install_requires.remove("wxPython >= 2.8.7")
+		if wx.__version__ >= wxMinVersion:
+			install_requires.remove("wxPython >= " + wxMinVersion)
 		attrs["install_requires"] = install_requires
 		attrs["zip_safe"] = False
 	else:

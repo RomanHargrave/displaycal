@@ -6,8 +6,8 @@ import math
 import os
 import sys
 
+from wxaddons import wx
 from wxenhancedplot import _Numeric
-import wx
 import wxenhancedplot as plot
 
 import ICCProfile as ICCP
