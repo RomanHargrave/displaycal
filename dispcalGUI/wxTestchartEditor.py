@@ -1022,6 +1022,8 @@ class TestchartEditor(wx.Frame):
 					"G": [],
 					"B": []
 				}
+				if multi_steps is None:
+					multi_steps = 0
 				uniqueRGB = []
 				vmaxlen = 4
 				for i in data:
@@ -1046,8 +1048,11 @@ class TestchartEditor(wx.Frame):
 						G += [patch[1]]
 					elif patch[0] == patch[1] == 0 and patch[2] not in B: # blue
 						B += [patch[2]]
-					elif patch[0] == patch[1] == patch[2] and patch[0] not in gray_channel: # gray
-						gray_channel += [patch[0]]
+					elif patch[0] == patch[1] == patch[2]: # gray
+						if patch[0] not in gray_channel:
+							gray_channel += [patch[0]]
+					elif multi_steps == 0:
+						multi_steps = None
 					if debug >= 9: safe_print("[D]", strpatch)
 					if strpatch not in uniqueRGB:
 						uniqueRGB += [strpatch]
