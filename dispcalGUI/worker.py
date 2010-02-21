@@ -1604,7 +1604,10 @@ class Worker():
 			self.progress_parent.progress_dlg.GetTitle())
 		if not keepGoing:
 			if hasattr(self, "subprocess") and self.subprocess:
-				if self.subprocess.poll() is None:
+				if (hasattr(self.subprocess, "poll") and 
+					self.subprocess.poll() is None) or \
+				   (hasattr(self.subprocess, "isalive") and 
+				    self.subprocess.isalive()):
 					try:
 						self.subprocess.terminate()
 					except Exception, exception:

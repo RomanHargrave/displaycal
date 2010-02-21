@@ -2239,58 +2239,112 @@ class MainFrame(BaseFrame):
 		self.update_profile_name()
 	
 	def ambient_measure_handler(self, event):
-		event.Skip()
 		if not check_set_argyll_bin():
 			return
-		cmd = get_argyll_util("spotread")
-		args = ["-v", "-c%s" % getcfg("comport.number"), "-a", "-x"]
-		measurement_mode = getcfg("measurement_mode")
-		instrument_features = self.worker.get_instrument_features()
-		if measurement_mode and not instrument_features.get("spectral"):
-			# Always specify -y for colorimeters
-			args += ["-y" + measurement_mode[0]]
-		child = wexpect.spawn(cmd, args)
-		if instrument_features.get("sensor_cal"):
-			dlg = ConfirmDialog(self, msg=lang.getstr("instrument.calibrate"), 
+		self.worker.start(self.ambient_measure_process, 
+						  self.ambient_measure_process, 
+						  ckwargs={"event_id": event.GetId(),
+								   "phase": "instcal_prepare"}, 
+						  wkwargs={"phase": "init"},
+						  progress_title=lang.getstr("instrument.initializing"))
+	
+	def ambient_measure_process(self, result=None, event_id=None, phase=None):
+		if self.worker.thread_abort:
+			return
+		if phase == "init":
+			cmd = get_argyll_util("spotread")
+			args = ["-v", "-c%s" % getcfg("comport.number"), "-a", "-x"]
+			measurement_mode = getcfg("measurement_mode")
+			instrument_features = self.worker.get_instrument_features()
+			if measurement_mode and not instrument_features.get("spectral"):
+				# Always specify -y for colorimeters
+				args += ["-y" + measurement_mode[0]]
+			result = wexpect.spawn(cmd, args)
+			if not result or not result.isalive():
+				return
+			if self.worker.get_instrument_features().get("sensor_cal"):
+				return result
+			else:
+				phase = "measure_init"
+		if phase is not None and (not result or not result.isalive()):
+			InfoDialog(self,
+					   msg=lang.getstr("error"), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"), log=False)
+			return
+		if phase == "instcal_prepare":
+			if self.worker.get_instrument_features().get("sensor_cal"):
+				dlg = ConfirmDialog(self, msg=lang.getstr("instrument.calibrate"), 
+									ok=lang.getstr("ok"), 
+									cancel=lang.getstr("cancel"), 
+									bitmap=geticon(32, "dialog-information"))
+				dlg_result = dlg.ShowModal()
+				dlg.Destroy()
+				if dlg_result != wx.ID_OK:
+					return False
+				self.worker.start(self.ambient_measure_process, 
+								  self.ambient_measure_process, 
+								  ckwargs={"event_id": event_id, 
+										   "phase": "measure_prepare"}, 
+								  wkwargs={"result": result, 
+										   "phase": "instcal"},
+								  progress_title=lang.getstr("instrument.calibrating"))
+				return
+			else:
+				phase = "measure_prepare"
+		elif phase == "instcal":
+			# the only optional phase
+			result.send(" ")
+			phase = "measure_init"
+		pat = "Hit ESC or Q to exit, any other key to take a reading:"
+		if phase == "measure_init":
+			result.expect(pat)
+			if self.worker.thread_abort:
+				return
+			return result
+		elif phase == "measure_prepare":
+			dlg = ConfirmDialog(self, msg=lang.getstr("instrument.measure_ambient"), 
 								ok=lang.getstr("ok"), 
 								cancel=lang.getstr("cancel"), 
 								bitmap=geticon(32, "dialog-information"))
-			result = dlg.ShowModal()
+			dlg_result = dlg.ShowModal()
 			dlg.Destroy()
-			if result != wx.ID_OK:
+			if dlg_result != wx.ID_OK:
 				return False
-			child.send(" ")
-		pat = "Hit ESC or Q to exit, any other key to take a reading:"
-		child.expect(pat)
-		dlg = ConfirmDialog(self, msg=lang.getstr("instrument.measure_ambient"), 
-							ok=lang.getstr("ok"), 
-							cancel=lang.getstr("cancel"), 
-							bitmap=geticon(32, "dialog-information"))
-		result = dlg.ShowModal()
-		dlg.Destroy()
-		if result != wx.ID_OK:
-			return False
-		child.send(" ")
-		child.expect("Place instrument")
-		data = child.before if isinstance(child.before, basestring) else ""
-		data = re.sub("[^\t\n\r\x20-\x7f]", "", data).strip()
-		safe_print(os.linesep.join([line.strip() for line in data.splitlines()]))
-		child.expect(pat)
-		child.send("q")
-		child.expect(":")
-		child.send("q")
-		sleep(.05)
-		if child.isalive():
-			child.terminate(force=True)
+			self.worker.start(self.ambient_measure_process, 
+							  self.ambient_measure_process, 
+							  ckwargs={"event_id": event_id}, 
+							  wkwargs={"result": result, 
+									   "phase": "measure"},
+							  progress_title=lang.getstr("ambient.measure"))
+			return
+		elif phase == "measure":
+			result.send(" ")
+			result.expect("Place instrument")
+			if self.worker.thread_abort:
+				return
+			data = result.before if isinstance(result.before, basestring) else ""
+			data = re.sub("[^\t\n\r\x20-\x7f]", "", data).strip()
+			safe_print(os.linesep.join([line.strip() for line in data.splitlines()]))
+			result.expect(pat)
+			result.send("q")
+			result.expect(":")
+			result.send("q")
+			sleep(.05)
+			if result.isalive():
+				result.terminate(force=True)
+			return data
+		# finish
+		# result = data
 		if getcfg("whitepoint.colortemp.locus") == "T":
 			K = re.search("Planckian temperature += (\d+(?:\.\d+))K", 
-						  data, re.I)
+						  result, re.I)
 		else:
 			K = re.search("Daylight temperature += (\d+(?:\.\d+))K", 
-						  data, re.I)
-		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", data, re.I)
-		set_whitepoint = event.GetId() == self.whitepoint_measure_btn.GetId()
-		set_ambient = event.GetId() == self.ambient_measure_btn.GetId()
+						  result, re.I)
+		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
+		set_whitepoint = event_id == self.whitepoint_measure_btn.GetId()
+		set_ambient = event_id == self.ambient_measure_btn.GetId()
 		if set_whitepoint and not set_ambient:
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
 								ok=lang.getstr("yes"), 
@@ -2309,7 +2363,7 @@ class MainFrame(BaseFrame):
 			if K and len(K.groups()) == 1:
 				self.whitepoint_colortemp_textctrl.SetValue(K.groups()[0])
 			Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
-							data)
+							result)
 			if Yxy and len(Yxy.groups()) == 3:
 				Y, x, y = Yxy.groups()
 				self.whitepoint_x_textctrl.SetValue(x)
