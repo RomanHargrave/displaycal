@@ -62,7 +62,7 @@ import subprocess as sp
 import tempfile26 as tempfile
 import threading
 import traceback
-from time import strftime
+from time import sleep, strftime
 
 # 3rd party modules
 
@@ -87,6 +87,7 @@ import CGATS
 import ICCProfile as ICCP
 import localization as lang
 import pyi_md5pickuphelper
+import wexpect
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
 						  extract_cal_from_ti3, ti3_to_ti1, verify_ti1_rgb_xyz)
 from argyll_instruments import instruments, remove_vendor_names
@@ -1194,6 +1195,8 @@ class MainFrame(BaseFrame):
 										self.whitepoint_ctrl_handler)
 		self.whitepoint_y_textctrl.Bind(wx.EVT_KILL_FOCUS, 
 										self.whitepoint_ctrl_handler)
+		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler, 
+				  id=self.whitepoint_measure_btn.GetId())
 
 		# White luminance
 		self.Bind(wx.EVT_RADIOBUTTON, self.luminance_ctrl_handler, 
@@ -1239,6 +1242,8 @@ class MainFrame(BaseFrame):
 			geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.ambient_viewcond_adjust_info_handler, 
 				  id=self.ambient_viewcond_adjust_info.GetId())
+		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler,
+				  id=self.ambient_measure_btn.GetId())
 
 		# Black level output offset
 		self.Bind(wx.EVT_SLIDER, self.black_output_offset_ctrl_handler, 
@@ -1639,6 +1644,9 @@ class MainFrame(BaseFrame):
 
 		update_profile = self.profile_update_cb.GetValue()
 		enable_profile = not(update_profile)
+
+		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments))
+		self.ambient_measure_btn.Enable(bool(self.worker.instruments))
 
 		self.calibrate_btn.Enable(bool(self.worker.displays) and 
 								  True in self.worker.lut_access and 
@@ -2229,6 +2237,95 @@ class MainFrame(BaseFrame):
 			self.cal_changed()
 		setcfg("calibration.black_output_offset", v)
 		self.update_profile_name()
+	
+	def ambient_measure_handler(self, event):
+		event.Skip()
+		if not check_set_argyll_bin():
+			return
+		cmd = get_argyll_util("spotread")
+		args = ["-v", "-c%s" % getcfg("comport.number"), "-a", "-x"]
+		measurement_mode = getcfg("measurement_mode")
+		instrument_features = self.worker.get_instrument_features()
+		if measurement_mode and not instrument_features.get("spectral"):
+			# Always specify -y for colorimeters
+			args += ["-y" + measurement_mode[0]]
+		child = wexpect.spawn(cmd, args)
+		if instrument_features.get("sensor_cal"):
+			dlg = ConfirmDialog(self, msg=lang.getstr("instrument.calibrate"), 
+								ok=lang.getstr("ok"), 
+								cancel=lang.getstr("cancel"), 
+								bitmap=geticon(32, "dialog-information"))
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return False
+			child.send(" ")
+		pat = "Hit ESC or Q to exit, any other key to take a reading:"
+		child.expect(pat)
+		dlg = ConfirmDialog(self, msg=lang.getstr("instrument.measure_ambient"), 
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-information"))
+		result = dlg.ShowModal()
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return False
+		child.send(" ")
+		child.expect("Place instrument")
+		data = child.before if isinstance(child.before, basestring) else ""
+		data = re.sub("[^\t\n\r\x20-\x7f]", "", data).strip()
+		safe_print(os.linesep.join([line.strip() for line in data.splitlines()]))
+		child.expect(pat)
+		child.send("q")
+		child.expect(":")
+		child.send("q")
+		sleep(.05)
+		if child.isalive():
+			child.terminate(force=True)
+		if getcfg("whitepoint.colortemp.locus") == "T":
+			K = re.search("Planckian temperature += (\d+(?:\.\d+))K", 
+						  data, re.I)
+		else:
+			K = re.search("Daylight temperature += (\d+(?:\.\d+))K", 
+						  data, re.I)
+		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", data, re.I)
+		set_whitepoint = event.GetId() == self.whitepoint_measure_btn.GetId()
+		set_ambient = event.GetId() == self.ambient_measure_btn.GetId()
+		if set_whitepoint and not set_ambient:
+			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
+								ok=lang.getstr("yes"), 
+								cancel=lang.getstr("no"), 
+								bitmap=geticon(32, "dialog-question"))
+			set_ambient = dlg.ShowModal() == wx.ID_OK
+			dlg.Destroy()
+		if set_ambient and not set_whitepoint:
+			dlg = ConfirmDialog(self, msg=lang.getstr("whitepoint.set"), 
+								ok=lang.getstr("yes"), 
+								cancel=lang.getstr("no"), 
+								bitmap=geticon(32, "dialog-question"))
+			set_whitepoint = dlg.ShowModal() == wx.ID_OK
+			dlg.Destroy()
+		if set_whitepoint:
+			if K and len(K.groups()) == 1:
+				self.whitepoint_colortemp_textctrl.SetValue(K.groups()[0])
+			Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
+							data)
+			if Yxy and len(Yxy.groups()) == 3:
+				Y, x, y = Yxy.groups()
+				self.whitepoint_x_textctrl.SetValue(x)
+				self.whitepoint_y_textctrl.SetValue(y)
+				if not getcfg("whitepoint.colortemp", False):
+					self.whitepoint_xy_rb.SetValue(True)
+					self.whitepoint_ctrl_handler(
+						CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
+									self.whitepoint_xy_rb))
+		if set_ambient:
+			if lux and len(lux.groups()) == 1:
+				self.ambient_viewcond_adjust_textctrl.SetValue(lux.groups()[0])
+				self.ambient_viewcond_adjust_cb.SetValue(True)
+				self.ambient_viewcond_adjust_ctrl_handler(
+						CustomEvent(wx.EVT_CHECKBOX.evtType[0], 
+									self.ambient_viewcond_adjust_cb))
 
 	def ambient_viewcond_adjust_ctrl_handler(self, event):
 		if event.GetId() == self.ambient_viewcond_adjust_textctrl.GetId() and \

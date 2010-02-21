@@ -100,6 +100,7 @@ storage = os.path.join(datahome, "storage")
 
 resfiles = [
 	"lang/en.json",
+	"theme/brace-r.png",
 	"theme/header.png",
 	"theme/header-about.png",
 	"theme/icons/32x32/zoom-best-fit.png",
@@ -128,7 +129,8 @@ resfiles = [
 	"ti1/d3-e4-s0-g52-m4-f3000-crossover.ti1",
 	"test.cal",
 	"xrc/gamap.xrc",
-	"xrc/main.xrc"
+	"xrc/main.xrc",
+	"xrc/mainmenu.xrc"
 ]
 
 bitmaps = {}

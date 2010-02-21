@@ -499,6 +499,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 					"msvcm90.dll", 
 					"msvcp90.dll", 
 					"msvcr90.dll", 
+					"mswsock.dll",
 					"urlmon.dll",
 					"w9xpopen.exe"
 				],
@@ -508,7 +509,9 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 				"excludes": ["Tkconstants", "Tkinter", "tcl"], 
 				"bundle_files": 3 if wx.VERSION >= (2, 8, 10, 1) else 1,
 				"compressed": 1,
-				"optimize": 2
+				"optimize": 0  # 0 = don’t optimize (generate .pyc)
+							   # 1 = normal optimization (like python -O) 
+							   # 2 = extra optimization (like python -OO)
 			}
 		}
 		if debug:
@@ -520,8 +523,8 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			})
 		if setuptools:
 			attrs["setup_requires"] = ["py2exe"]
-		if not debug:
-			attrs["zipfile"] = None
+		# if not debug:
+			# attrs["zipfile"] = None
 
 	if do_uninstall or do_install or bdist_win:
 		distutils.core._setup_stop_after = "commandline"

@@ -212,10 +212,10 @@
                               <object class="wxComboBox" name="measurement_mode_ctrl">
                                 <size>100,-1</size>
                                 <content>
-                                  <item></item>
-                                  <item></item>
-                                  <item></item>
-                                  <item></item>
+                                  <item/>
+                                  <item/>
+                                  <item/>
+                                  <item/>
                                 </content>
                                 <style>wxCB_READONLY</style>
                                 <XRCED>
@@ -283,126 +283,146 @@
                     <object class="wxStaticText" name="whitepoint_label">
                       <label>whitepoint</label>
                     </object>
-                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <flag>wxTOP|wxRIGHT|wxALIGN_TOP</flag>
                     <border>8</border>
                   </object>
                   <object class="sizeritem">
                     <object class="wxBoxSizer">
                       <orient>wxHORIZONTAL</orient>
                       <object class="sizeritem">
-                        <object class="wxRadioButton" name="whitepoint_native_rb">
-                          <pos>10,10</pos>
-                          <label>native</label>
-                          <value>1</value>
-                          <style>wxRB_GROUP</style>
-                          <XRCED>
-                            <events>EVT_RADIOBUTTON</events>
-                          </XRCED>
+                        <object class="wxBoxSizer">
+                          <orient>wxVERTICAL</orient>
+                          <object class="sizeritem">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxRadioButton" name="whitepoint_native_rb">
+                                  <pos>10,10</pos>
+                                  <label>native</label>
+                                  <value>1</value>
+                                  <style>wxRB_GROUP</style>
+                                  <XRCED>
+                                    <events>EVT_RADIOBUTTON</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxRadioButton" name="whitepoint_colortemp_rb">
+                                  <pos>10,10</pos>
+                                  <label>whitepoint.colortemp</label>
+                                  <XRCED>
+                                    <events>EVT_RADIOBUTTON</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxComboBox" name="whitepoint_colortemp_textctrl">
+                                  <XRCED>
+                                    <events>EVT_COMBOBOX|EVT_KILL_FOCUS</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>0</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxStaticText">
+                                  <label>° K</label>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxComboBox" name="whitepoint_colortemp_locus_ctrl">
+                                  <style>wxCB_READONLY</style>
+                                  <XRCED>
+                                    <events>EVT_COMBOBOX</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>0</border>
+                              </object>
+                              <orient>wxHORIZONTAL</orient>
+                            </object>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
+                          </object>
+                          <object class="sizeritem">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxRadioButton" name="whitepoint_xy_rb">
+                                  <label>whitepoint.xy</label>
+                                  <XRCED>
+                                    <events>EVT_RADIOBUTTON</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxTextCtrl" name="whitepoint_x_textctrl">
+                                  <size>70,-1</size>
+                                  <XRCED>
+                                    <events>EVT_KILL_FOCUS</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>0</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxStaticText">
+                                  <label>x</label>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxTextCtrl" name="whitepoint_y_textctrl">
+                                  <size>70,-1</size>
+                                  <XRCED>
+                                    <events>EVT_KILL_FOCUS</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>0</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxStaticText">
+                                  <label>y</label>
+                                </object>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>4</border>
+                              </object>
+                              <orient>wxHORIZONTAL</orient>
+                            </object>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
+                          </object>
                         </object>
-                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
                       </object>
                       <object class="sizeritem">
-                        <object class="wxRadioButton" name="whitepoint_colortemp_rb">
-                          <pos>10,10</pos>
-                          <label>whitepoint.colortemp</label>
-                          <XRCED>
-                            <events>EVT_RADIOBUTTON</events>
-                          </XRCED>
+                        <object class="wxStaticBitmap">
+                          <bitmap>../theme/brace-r.png</bitmap>
                         </object>
                         <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
+                        <border>8</border>
                       </object>
                       <object class="sizeritem">
-                        <object class="wxComboBox" name="whitepoint_colortemp_textctrl">
-                          <XRCED>
-                            <events>EVT_COMBOBOX|EVT_KILL_FOCUS</events>
-                          </XRCED>
+                        <object class="wxButton" name="whitepoint_measure_btn">
+                          <label>measure</label>
                         </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>0</border>
-                      </object>
-                      <object class="sizeritem">
-                        <object class="wxStaticText">
-                          <label>° K</label>
-                        </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
-                      </object>
-                      <object class="sizeritem">
-                        <object class="wxComboBox" name="whitepoint_colortemp_locus_ctrl">
-                          <style>wxCB_READONLY</style>
-                          <XRCED>
-                            <events>EVT_COMBOBOX</events>
-                          </XRCED>
-                        </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>0</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="spacer">
                         <size>24,1</size>
                       </object>
                     </object>
-                    <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                    <border>4</border>
                   </object>
-                  <object class="spacer">
-                    <size>1,1</size>
-                  </object>
-                  <object class="sizeritem">
-                    <object class="wxBoxSizer">
-                      <orient>wxHORIZONTAL</orient>
-                      <object class="sizeritem">
-                        <object class="wxRadioButton" name="whitepoint_xy_rb">
-                          <label>whitepoint.xy</label>
-                          <XRCED>
-                            <events>EVT_RADIOBUTTON</events>
-                          </XRCED>
-                        </object>
-                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
-                      </object>
-                      <object class="sizeritem">
-                        <object class="wxTextCtrl" name="whitepoint_x_textctrl">
-                          <size>70,-1</size>
-                          <XRCED>
-                            <events>EVT_KILL_FOCUS</events>
-                          </XRCED>
-                        </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>0</border>
-                      </object>
-                      <object class="sizeritem">
-                        <object class="wxStaticText">
-                          <label>x</label>
-                        </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
-                      </object>
-                      <object class="sizeritem">
-                        <object class="wxTextCtrl" name="whitepoint_y_textctrl">
-                          <size>70,-1</size>
-                          <XRCED>
-                            <events>EVT_KILL_FOCUS</events>
-                          </XRCED>
-                        </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>0</border>
-                      </object>
-                      <object class="sizeritem">
-                        <object class="wxStaticText">
-                          <label>y</label>
-                        </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
-                      </object>
-                      <object class="spacer">
-                        <size>24,1</size>
-                      </object>
-                    </object>
-                    <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                    <border>4</border>
-                  </object>
+                  
+                  
+                  
                   <object class="sizeritem">
                     <object class="wxStaticText" name="luminance_label">
                       <label>calibration.luminance</label>
@@ -655,6 +675,12 @@
                         </object>
                         <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                         <border>8</border>
+                      </object>
+                      <object class="sizeritem">
+                        <object class="wxButton" name="ambient_measure_btn">
+                          <label>measure</label>
+                        </object>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                     </object>
                     <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
