@@ -760,7 +760,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_fullspread_patches.SetValue(getcfg("tc_fullspread_patches"))
 		self.tc_angle_slider.SetValue(getcfg("tc_angle") * 10000)
 		self.tc_angle_handler(self.tc_angle_slider)
-		self.tc_adaption_slider.SetValue(getcfg("tc_adaption") * 10000)
+		self.tc_adaption_slider.SetValue(getcfg("tc_adaption") * 100)
 		self.tc_adaption_handler(self.tc_adaption_slider)
 		self.tc_precond_profile.SetPath(getcfg("tc_precond_profile"))
 		self.tc_filter.SetValue(bool(int(getcfg("tc_filter"))))
