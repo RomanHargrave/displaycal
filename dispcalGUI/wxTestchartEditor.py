@@ -211,14 +211,13 @@ class TestchartEditor(wx.Frame):
 		# diagnostic VRML files
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag = wx.ALL & ~(wx.BOTTOM | wx.TOP), border = 12 + border)
-		self.tc_vrml = wx.CheckBox(panel, -1, lang.getstr("tc.vrml"), name = "tc_vrml")
-		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml.GetId())
-		hsizer.Add(self.tc_vrml, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
-		self.tc_vrml_lab = wx.RadioButton(panel, -1, lang.getstr("tc.vrml.lab"), name = "tc_vrml_lab", style = wx.RB_GROUP)
-		self.Bind(wx.EVT_RADIOBUTTON, self.tc_vrml_handler, id = self.tc_vrml_lab.GetId())
+		self.tc_vrml_label = wx.StaticText(panel, -1, lang.getstr("tc.vrml"), name = "tc_vrml_label")
+		hsizer.Add(self.tc_vrml_label, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
+		self.tc_vrml_lab = wx.CheckBox(panel, -1, lang.getstr("tc.vrml.lab"), name = "tc_vrml_lab", style = wx.RB_GROUP)
+		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_lab.GetId())
 		hsizer.Add(self.tc_vrml_lab, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
-		self.tc_vrml_device = wx.RadioButton(panel, -1, lang.getstr("tc.vrml.device"), name = "tc_vrml_device")
-		self.Bind(wx.EVT_RADIOBUTTON, self.tc_vrml_handler, id = self.tc_vrml_device.GetId())
+		self.tc_vrml_device = wx.CheckBox(panel, -1, lang.getstr("tc.vrml.device"), name = "tc_vrml_device")
+		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_device.GetId())
 		hsizer.Add(self.tc_vrml_device, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
 
 		# buttons
@@ -375,9 +374,10 @@ class TestchartEditor(wx.Frame):
 					if self.grid.GetColLabelValue(col) == label:
 						self.grid.SetCellValue(row + 1, col, str(round(data[label], 4)))
 			self.tc_grid_setcolorlabel(row + 1)
-			self.tc_vrml.SetValue(False)
+			self.tc_vrml_device.SetValue(False)
+			self.tc_vrml_lab.SetValue(False)
 			self.ti1_wrl = None
-			self.save_btn.Enable(self.ti1.modified and os.path.exists(self.ti1.filename))
+			self.tc_save_check()
 			if hasattr(self, "preview"):
 				self.preview.Freeze()
 				self.tc_add_patch(row + 1, self.ti1.queryv1("DATA")[row + 1])
@@ -592,9 +592,10 @@ class TestchartEditor(wx.Frame):
 						if self.grid.GetColLabelValue(col) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
 			self.tc_grid_setcolorlabel(event.GetRow())
-			self.tc_vrml.SetValue(False)
+			self.tc_vrml_device.SetValue(False)
+			self.tc_vrml_lab.SetValue(False)
 			self.ti1_wrl = None
-			self.save_btn.Enable(self.ti1.modified and os.path.exists(self.ti1.filename))
+			self.tc_save_check()
 			if hasattr(self, "preview"):
 				patch = self.patchsizer.GetItem(event.GetRow()).GetWindow()
 				self.tc_patch_setcolorlabel(patch)
@@ -743,11 +744,17 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_filter_rad", self.tc_filter_rad.GetValue())
 
 	def tc_vrml_handler(self, event = None):
-		setcfg("tc_vrml", int(self.tc_vrml.GetValue()))
+		if get_argyll_version("targen") < [1, 1, 0]:
+			if event.GetId() == self.tc_vrml_device.GetId():
+				self.tc_vrml_lab.SetValue(False)
+			else:
+				self.tc_vrml_device.SetValue(False)
 		setcfg("tc_vrml_device", int(self.tc_vrml_device.GetValue()))
 		setcfg("tc_vrml_lab", int(self.tc_vrml_lab.GetValue()))
-		if hasattr(self, "ti1") and self.tc_vrml.GetValue():
-			self.tc_vrml.SetValue(False)
+		if hasattr(self, "ti1") and (self.tc_vrml_device.GetValue() or
+									 self.tc_vrml_lab.GetValue()):
+			self.tc_vrml_device.SetValue(False)
+			self.tc_vrml_lab.SetValue(False)
 			InfoDialog(self, msg = lang.getstr("testchart.vrml_denied"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"), log=False)
 
 	def tc_update_controls(self):
@@ -768,7 +775,6 @@ class TestchartEditor(wx.Frame):
 		self.tc_filter_a.SetValue(getcfg("tc_filter_a"))
 		self.tc_filter_b.SetValue(getcfg("tc_filter_b"))
 		self.tc_filter_rad.SetValue(getcfg("tc_filter_rad"))
-		self.tc_vrml.SetValue(bool(int(getcfg("tc_vrml"))))
 		self.tc_vrml_lab.SetValue(bool(int(getcfg("tc_vrml_lab"))))
 		self.tc_vrml_device.SetValue(bool(int(getcfg("tc_vrml_device"))))
 
@@ -777,9 +783,14 @@ class TestchartEditor(wx.Frame):
 		self.tc_amount = self.tc_get_total_patches(white_patches)
 		self.preview_btn.Enable(self.tc_amount - max(0, self.tc_get_white_patches()) >= 8)
 		self.clear_btn.Enable(hasattr(self, "ti1"))
-		self.save_btn.Enable(hasattr(self, "ti1") and self.ti1.modified and os.path.exists(self.ti1.filename))
+		self.tc_save_check()
 		self.save_as_btn.Enable(hasattr(self, "ti1"))
 		self.tc_set_default_status()
+	
+	def tc_save_check(self):
+		self.save_btn.Enable(hasattr(self, "ti1") and self.ti1.modified and 
+							 os.path.exists(self.ti1.filename) and 
+							 get_data_path(os.path.join("ti1", os.path.basename(self.ti1.filename))) != self.ti1.filename)
 
 	def tc_save_cfg(self):
 		setcfg("tc_white_patches", self.tc_white_patches.GetValue())
@@ -800,7 +811,6 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_filter_a", self.tc_filter_a.GetValue())
 		setcfg("tc_filter_b", self.tc_filter_b.GetValue())
 		setcfg("tc_filter_rad", self.tc_filter_rad.GetValue())
-		setcfg("tc_vrml", int(self.tc_vrml.GetValue()))
 		setcfg("tc_vrml_lab", int(self.tc_vrml_lab.GetValue()))
 		setcfg("tc_vrml_device", int(self.tc_vrml_device.GetValue()))
 
@@ -849,7 +859,7 @@ class TestchartEditor(wx.Frame):
 	def tc_save_as_handler(self, event = None, path = None):
 		if path is None or not os.path.exists(path):
 			path = None
-			defaultDir, defaultFile = get_verified_path("last_ti1_path")
+			defaultDir, defaultFile = get_verified_path("last_ti1_path")[0], os.path.basename(getcfg("last_ti1_path"))
 			dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = lang.getstr("filetype.ti1") + "|*.ti1", style = wx.SAVE | wx.OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
@@ -878,12 +888,14 @@ class TestchartEditor(wx.Frame):
 				handle_error("Error - testchart could not be saved: " + str(exception), parent = self)
 			else:
 				if hasattr(self, "ti1_wrl") and self.ti1_wrl != None:
-					try:
-						wrl = open(os.path.splitext(path)[0] + ".wrl", "wb")
-						wrl.write(self.ti1_wrl)
-						wrl.close()
-					except Exception, exception:
-						handle_error("Warning - VRML file could not be saved: " + str(exception), parent = self)
+					for vrml_type in self.ti1_wrl:
+						wrlsuffix = "%s.wrl" % vrml_type
+						try:
+							wrl = open(os.path.splitext(path)[0] + wrlsuffix, "wb")
+							wrl.write(self.ti1_wrl[vrml_type])
+							wrl.close()
+						except Exception, exception:
+							handle_error("Warning - VRML file could not be saved: " + str(exception), parent = self)
 				if path != getcfg("testchart.file"):
 					dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
 					result = dlg.ShowModal()
@@ -891,8 +903,8 @@ class TestchartEditor(wx.Frame):
 					if result == wx.ID_OK:
 						setcfg("testchart.file", path)
 						writecfg()
-						if self.Parent and hasattr(self.Parent, "set_testchart"):
-							self.Parent.set_testchart(path)
+				if self.Parent and hasattr(self.Parent, "set_testchart"):
+					self.Parent.set_testchart(path)
 				if not self.IsBeingDeleted():
 					self.save_btn.Disable()
 				return True
@@ -1003,10 +1015,10 @@ class TestchartEditor(wx.Frame):
 			gray_patches = None
 			multi_steps = None
 		else:
-			white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES")
-			single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS")
-			gray_patches = self.ti1.queryv1("COMP_GREY_STEPS")
-			multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS")
+			white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or 0
+			single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
+			gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or 0
+			multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or 0
 		fullspread_patches = self.ti1.queryv1("NUMBER_OF_SETS")
 
 		if None in (white_patches, single_channel_patches, gray_patches, multi_steps):
@@ -1306,7 +1318,8 @@ class TestchartEditor(wx.Frame):
 			writecfg()
 
 			self.tc_update_controls()
-			self.tc_vrml.SetValue(False)
+			self.tc_vrml_device.SetValue(False)
+			self.tc_vrml_lab.SetValue(False)
 			self.ti1_wrl = None
 			self.tc_preview(True)
 			return True
@@ -1334,6 +1347,7 @@ class TestchartEditor(wx.Frame):
 
 	def tc_create(self):
 		writecfg()
+		self.argyll_version = get_argyll_version("targen")
 		cmd, args = self.worker.prepare_targen()
 		result = self.worker.exec_cmd(cmd, args, low_contrast = False, skip_scripts = True, silent = False, parent = self)
 		if result:
@@ -1348,13 +1362,21 @@ class TestchartEditor(wx.Frame):
 					except Exception, exception:
 						handle_error("Error - testchart file could not be read: " + str(exception), parent = self)
 						result = False
-					if self.tc_vrml.GetValue():
-						try:
-							wrl = open(os.path.join(self.worker.tempdir, "temp.wrl"), "rb")
-							self.ti1_wrl = wrl.read()
-							wrl.close()
-						except Exception, exception:
-							handle_error("Warning - VRML file could not be read: " + str(exception), parent = self)
+					self.ti1_wrl = {}
+					for ctrl in (self.tc_vrml_device, 
+								 self.tc_vrml_lab):
+						if ctrl.GetValue():
+							vrml_type = "l" if ctrl.Name == "tc_vrml_lab" else "d"
+							if self.argyll_version >= [1, 1, 0]:
+								wrlname = "temp%s.wrl" % vrml_type
+							else:
+								wrlname = "temp.wrl"
+							try:
+								wrl = open(os.path.join(self.worker.tempdir, wrlname), "rb")
+								self.ti1_wrl[vrml_type] = wrl.read()
+								wrl.close()
+							except Exception, exception:
+								handle_error("Warning - VRML file could not be read: " + str(exception), parent = self)
 			else:
 				result = False
 		self.worker.wrapup(False)
@@ -1585,7 +1607,8 @@ class TestchartEditor(wx.Frame):
 		return
 
 	def tc_delete_rows(self, rows):
-		self.tc_vrml.SetValue(False)
+		self.tc_vrml_device.SetValue(False)
+		self.tc_vrml_lab.SetValue(False)
 		self.ti1_wrl = None
 		self.grid.Freeze()
 		if hasattr(self, "preview"):
@@ -1605,7 +1628,7 @@ class TestchartEditor(wx.Frame):
 		self.grid.SetGridCursor(row, 0)
 		self.grid.MakeCellVisible(row, 0)
 		self.grid.Thaw()
-		self.save_btn.Enable(self.ti1.modified and os.path.exists(self.ti1.filename))
+		self.tc_save_check()
 		if hasattr(self, "preview"):
 			self.preview.Layout()
 			self.preview.FitInside()
