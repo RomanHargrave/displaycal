@@ -252,7 +252,8 @@ def setup():
 			if do_py2exe:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					[os.path.join(pydir, "theme", "icons", name + 
-					 "-uninstall.ico")])]
+					 "-uninstall.ico")]), 
+					(data, [sys.executable])]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					[os.path.join(pydir, "theme", "icons", 
@@ -747,9 +748,9 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 						".cfg"]
 		for datadir, datafiles in attrs.get("data_files", []):
 			for datafile in datafiles:
-				manifest_in += ["include " + 
+				manifest_in += ["include " + (
 								relpath(os.path.sep.join(datafile.split("/")), 
-										basedir)]
+										basedir) or datafile)]
 		for extmod in attrs.get("ext_modules", []):
 			manifest_in += ["include " + os.path.sep.join(src.split("/")) 
 							for src in extmod.sources]

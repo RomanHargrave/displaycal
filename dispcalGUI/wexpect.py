@@ -1937,14 +1937,21 @@ class Wtty:
         si = GetStartupInfo()
         si.dwFlags = STARTF_USESHOWWINDOW
         si.wShowWindow = SW_HIDE
-        exe = win32api.GetShortPathName(os.path.join(os.path.dirname(sys.executable), 'py.exe') if getattr(sys, 'frozen', False) else sys.executable)
-        path = os.path.join(os.path.dirname(sys.executable), 'wexpect.py') if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
+        dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__))
+        spath = [dirname]
+        pyargs = ['-c']
+        if getattr(sys, 'frozen', False):
+            spath.append(os.path.join(dirname, 'library.zip'))
+            pyargs.insert(0, '-S')  # skip 'import site'
+        exe = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else sys.executable, ' '.join(pyargs), 
+                                "import sys; sys.path = %r + sys.path; import wexpect; wexpect.main()" % spath)
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
-        commandLine = exe + ' "' + path + '" ' + ' "' + ' '.join(args) + '" ' \
+        commandLine = exe + ' "' + ' '.join(args) + '" ' \
                       + str(pid) + ' ' + str(tid) + ' spawn'
                      
-        self.__oproc, _, self.__opid, self.__otid = CreateProcess(None, commandLine, None, None, 0, 
+        ## print 'commandLine:', repr(commandLine)
+        self.__oproc, _, self.__opid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
                                                                   CREATE_NEW_CONSOLE, env, None, si)
             
    
@@ -2277,7 +2284,7 @@ class ConsoleReader:
             try:
                 si = GetStartupInfo()
          
-                self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, 0, 
+                self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
                                                                              0, None, None, si)
             except Exception, e:
                 log_error(e)
@@ -2621,12 +2628,18 @@ def split_command_line(command_line):
         arg_list.append(arg)
     return arg_list
     
-if __name__ == '__main__':
+def main():
     try:
+        ## print 'sys.argv:', sys.argv
         if sys.argv[-1] == 'spawn':
+            if sys.argv[1] == '-c':
+                sys.argv = sys.argv[1:]
             if len(sys.argv) == 4:
                 ConsoleReader(sys.argv[1], sys.argv[2], sys.argv[3])
             elif len(sys.argv) == 5:
                 ConsoleReader(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])          
     except Exception, e:
         log_error(e)
+    
+if __name__ == '__main__':
+    main()
