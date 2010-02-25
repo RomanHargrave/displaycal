@@ -284,7 +284,8 @@ class LogWindow(InvincibleFrame):
 			event.Skip()
 
 	def OnSaveAs(self, event):
-		defaultDir, defaultFile = get_verified_path("last_filedialog_path")
+		defaultDir, defaultFile = (get_verified_path("last_filedialog_path")[0], 
+								   os.path.basename(getcfg("last_filedialog_path")))
 		dlg = wx.FileDialog(self, lang.getstr("save_as"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
 							wildcard=lang.getstr("filetype.log") + "|*.log", 
