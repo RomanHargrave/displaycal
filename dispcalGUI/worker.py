@@ -458,6 +458,8 @@ class Worker():
 		self.tempdir = None
 	
 	def add_measurement_features(self, args):
+		args += ["-d" + self.get_display()]
+		args += ["-c%s" % getcfg("comport.number")]
 		measurement_mode = getcfg("measurement_mode")
 		instrument_features = self.get_instrument_features()
 		if measurement_mode:
@@ -1213,8 +1215,6 @@ class Worker():
 		cmd = get_argyll_util("dispcal")
 		args = []
 		args += ["-v"] # verbose
-		args += ["-d" + self.get_display()]
-		args += ["-c%s" % getcfg("comport.number")]
 		self.add_measurement_features(args)
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
@@ -1476,13 +1476,16 @@ class Worker():
 		cmd = get_argyll_util("dispread")
 		args = []
 		args += ["-v"] # verbose
-		args += ["-d" + self.get_display()]
-		args += ["-c%s" % getcfg("comport.number")]
 		self.add_measurement_features(args)
+		# -N switch not working as expected in Argyll 1.0.3
+		if self.dispread_after_dispcal and \
+		   self.get_instrument_features().get("skip_sensor_cal") and \
+		   self.argyll_version >= [1, 1, 0]:
+			args += ["-N"]
 		if apply_calibration:
 			args += ["-k"]
 			args += [cal]
-		self.options_dispread = args + self.options_dispread
+		self.options_dispread = list(args)
 		return cmd, self.options_dispread + [inoutfile]
 
 	def prepare_dispwin(self, cal=None, profile_path=None, install=True):
