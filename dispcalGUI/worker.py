@@ -1593,11 +1593,10 @@ class Worker():
 											getcfg("tc_filter_rad"))]
 		else:
 			args += ['-f0']
-		if getcfg("tc_vrml"):
-			if getcfg("tc_vrml_lab"):
-				args += ['-w']
-			if getcfg("tc_vrml_device"):
-				args += ['-W']
+		if getcfg("tc_vrml_lab"):
+			args += ['-w']
+		if getcfg("tc_vrml_device"):
+			args += ['-W']
 		self.options_targen = list(args)
 		args += [inoutfile]
 		return cmd, args
