@@ -244,23 +244,18 @@ def ti3_to_ti1(ti3_data):
 			line = 'CTI1   '  # Make sure CGATS file identifiers are 
 							  # always a minimum of 7 characters
 		else:
-			values = line.split()
+			values = line.split(None, 1)
 			if len(values) > 1:
-				if len(values) == 2:
-					values[1] = values[1].strip('"')
-					if values[0] == "DESCRIPTOR":
-						values[1] = ("Argyll Calibration Target chart "
-									 "information 1")
-					elif values[0] == "ORIGINATOR":
-						values[1] = "Argyll targen"
-					elif values[0] == "COLOR_REP":
-						values[1] = values[1].split('_')[0]
 				if "DEVICE_CLASS" in values or "LUMINANCE_XYZ_CDM2" in values:
 					continue
-				if len(values) > 2:
-					line = " ".join(values)
-				else:
-					line = '%s "%s"' % tuple(values)
+				if values[0] == "DESCRIPTOR":
+					values[1] = ('"Argyll Calibration Target chart '
+								 'information 1"')
+				elif values[0] == "ORIGINATOR":
+					values[1] = '"Argyll targen"'
+				elif values[0] == "COLOR_REP":
+					values[1] = '"%s"' % values[1].strip('"').split('_')[0]
+				line = " ".join(values)
 		ti1_lines += [line]
 		if line == 'END_DATA':
 			break
