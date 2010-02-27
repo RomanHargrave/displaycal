@@ -83,6 +83,7 @@ try:
         import fcntl
     else:
         try:
+            import pywintypes
             from win32console import *
             from win32process import *
             from win32con import *
@@ -1887,15 +1888,13 @@ a pipe and attatches directly to the child console to
 write and perform other operations.  See wexpect for 
 usage."""
 
-WTTY_SPAWN_TIMEOUT = 5
-
 #TODO: 
     # signal
     # unit tests
     # console screen reset by new process?
 class Wtty:
 
-    def __init__(self):
+    def __init__(self, timeout=30):
         self.__currentReadCo = PyCOORDType(0, 0)
         self.__consSize = [80, 16000]
         self.__parentPid = 0
@@ -1904,6 +1903,8 @@ class Wtty:
         self.__otid = 0
         self.__switch = True
         self.__childProcess = None
+        self.timeout = timeout
+        self.processList = []
             
     def spawn(self, command, args=[], env=None):
         """Spawns spawner.py with correct arguments."""
@@ -1914,7 +1915,7 @@ class Wtty:
         while True:
             msg = GetMessage(0, 0, 0)
             childPid = msg[1][2]
-            if childPid or time.time() > ts + WTTY_SPAWN_TIMEOUT:
+            if childPid or time.time() > ts + self.timeout:
                 break
             time.sleep(.1)
         
@@ -1923,6 +1924,7 @@ class Wtty:
         
         self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, 0, childPid)
         
+        self.processList = GetConsoleProcessList()
         winHandle = int(GetConsoleWindow())
         
         self.__switch = True
@@ -1950,7 +1952,6 @@ class Wtty:
         commandLine = exe + ' "' + ' '.join(args) + '" ' \
                       + str(pid) + ' ' + str(tid) + ' spawn'
                      
-        ## print 'commandLine:', repr(commandLine)
         self.__oproc, _, self.__opid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
                                                                   CREATE_NEW_CONSOLE, env, None, si)
             
@@ -1988,7 +1989,10 @@ class Wtty:
             return
         
         FreeConsole()
-        AttachConsole(self.__parentPid)
+        if len(self.processList) > 1:
+            AttachConsole(self.__parentPid)
+        else:
+            AllocConsole()
         #AttachConsole(ATTACH_PARENT_PROCESS) ### Only works once?
         
         self.__consin = None
@@ -2308,7 +2312,12 @@ class ConsoleReader:
                 cursorPos = consinfo['CursorPosition']
                 
                 if GetExitCodeProcess(parent) != STILL_ACTIVE or GetExitCodeProcess(self.__childProcess) != STILL_ACTIVE:
-                    TerminateProcess(self.__childProcess, 0)
+                    try:
+                        TerminateProcess(self.__childProcess, 0)
+                    except pywintypes.error, e:
+                        if e.args[0] != 5:
+                            # 5 = access denied
+                            log_error(e)
                     sys.exit()
                 
                 if cursorPos.Y > 8000:
@@ -2541,10 +2550,13 @@ class searcher_re (object):
         return best_index
 
 def log_error(e):
+    if isinstance(e, Exception):
+        e = traceback.format_exc()     
     print e
-    # fout = open('pexpect_error.txt', 'a')
-    # fout.write(str(e) + '\n')
-    # fout.close()        
+    if os.access(os.getcwdu(), os.W_OK):
+        fout = open('pexpect_error.txt', 'a')
+        fout.write(str(e) + '\n')
+        fout.close()   
         
 def which (filename):
 
@@ -2630,7 +2642,6 @@ def split_command_line(command_line):
     
 def main():
     try:
-        ## print 'sys.argv:', sys.argv
         if sys.argv[-1] == 'spawn':
             if sys.argv[1] == '-c':
                 sys.argv = sys.argv[1:]
