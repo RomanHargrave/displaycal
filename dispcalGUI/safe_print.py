@@ -60,7 +60,11 @@ def safe_print(*args, **kwargs):
 			elif sys.platform == "darwin":
 				encoding = "UTF-8"
 			else:
-				encoding = locale.getlocale()[1] or sys.stdout.encoding or \
+				if sys.platform == "win32" and sys.version_info >= (2, 6):
+					encoding = locale.getlocale()[1]
+				else:
+					encoding = None
+				encoding = encoding or sys.stdout.encoding or \
 						   locale.getpreferredencoding() or \
 						   sys.getdefaultencoding()
 			arg = arg.encode(encoding, "replace")
