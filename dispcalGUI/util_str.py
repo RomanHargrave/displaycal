@@ -2,11 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import codecs
+import locale
+import sys
 try:
 	from functools import reduce
 except ImportError:
 	# Python < 2.6
 	pass
+
+if sys.platform == "darwin":
+	enc = "UTF-8"
+else:
+	enc = locale.getlocale()[1] or sys.stdout.encoding or \
+		  locale.getpreferredencoding() or \
+		  sys.getdefaultencoding()
+fs_enc = sys.getfilesystemencoding() or enc
 
 def asciize(obj):
 	"""
@@ -67,6 +77,43 @@ def universal_newlines(txt):
 	
 	"""
 	return txt.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def safe_basestring(obj):
+	"""
+	Return a unicode or string representation of obj
+	
+	Return obj if isinstance(obj, basestring). Otherwise, return unicode(obj), 
+	string(obj), or repr(obj), whichever succeeds first.
+	
+	"""
+	if not isinstance(obj, basestring):
+		try:
+			obj = unicode(obj)
+		except UnicodeDecodeError:
+			try:
+				obj = str(obj)
+			except UnicodeEncodeError:
+				obj = repr(obj)
+	return obj
+
+
+def safe_str(obj, enc=enc, errors="replace"):
+	""" Return string representation of obj """
+	obj = safe_basestring(obj)
+	if isinstance(obj, unicode):
+		return obj.encode(enc, errors)
+	else:
+		return obj
+
+
+def safe_unicode(obj, enc=enc, errors="replace"):
+	""" Return unicode representation of obj """
+	obj = safe_basestring(obj)
+	if isinstance(obj, unicode):
+		return obj
+	else:
+		return obj.decode(enc, errors)
 
 
 def strtr(txt, replacements):
