@@ -123,10 +123,6 @@ resfiles = [
 	"theme/icons/16x16/stock_lock.png",
 	"theme/icons/16x16/stock_lock-open.png",
 	# "theme/icons/16x16/stock_refresh.png",
-	"ti1/d3-e4-s0-g16-m4-f0-crossover.ti1",
-	"ti1/d3-e4-s0-g52-m4-f0-crossover.ti1",
-	"ti1/d3-e4-s0-g52-m4-f500-crossover.ti1",
-	"ti1/d3-e4-s0-g52-m4-f3000-crossover.ti1",
 	"test.cal",
 	"xrc/gamap.xrc",
 	"xrc/main.xrc",
@@ -292,7 +288,8 @@ def runtimeconfig(pyfile):
 		safe_print("[D] Data files search paths:\n[D]", "\n[D] ".join(data_dirs))
 	defaultmmode = defaults["measurement_mode"]
 	defaultptype = defaults["profile.type"]
-	defaultchart = testchart_defaults.get(defaultptype, testchart_defaults["s"])
+	defaultchart = testchart_defaults.get(defaultptype, 
+										  testchart_defaults["s"])[None]
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart))
 	if verbose >= 1:
@@ -371,7 +368,7 @@ defaults = {
 		u"%pt"
 	]),
 	"profile.name.expanded": "",
-	"profile.quality": "m",
+	"profile.quality": "h",
 	"profile.save_path": storage, # directory
 	"profile.type": "s",
 	"profile.update": 0,
@@ -382,7 +379,7 @@ defaults = {
 	"size.info.h": 384,
 	"size.lut_viewer.w": 512,
 	"size.lut_viewer.h": 580,
-	"tc_adaption": 0.0,
+	"tc_adaption": 0.1,
 	"tc_algo": "",
 	"tc_angle": 0.3333,
 	"tc_filter": 0,
@@ -396,7 +393,6 @@ defaults = {
 	"tc_precond": 0,
 	"tc_precond_profile": "",
 	"tc_single_channel_patches": 0,
-	"tc_vrml": 0,
 	"tc_vrml_lab": 0,
 	"tc_vrml_device": 1,
 	"tc_white_patches": 4,
@@ -414,14 +410,19 @@ if lcode:
 	defaults["lang"] = lcode.split("_")[0].lower()
 
 testchart_defaults = {
-	"s": "d3-e4-s0-g16-m4-f0-crossover.ti1",  # shaper / matrix
-	"l": "d3-e4-s0-g52-m4-f0-crossover.ti1",  # lut
+	"s": {None: "d3-e4-s0-g9-m3-f0-crossover.ti1"},  # shaper + matrix
+	"l": {None: "d3-e4-s0-g49-m0-f0-cubic4-crossover.ti1"},  # lut
+	"g": {None: "d3-e4-s3-g3-m0-f0.ti1"}  # gamma + matrix
 }
-for key in ("G", "S", "g"):
-	testchart_defaults[key] = testchart_defaults["s"]
-for key in ("X", "x"):
-	testchart_defaults[key] = testchart_defaults["l"]
-del key
+
+def _init_testcharts():
+	for testcharts in testchart_defaults.values():
+		for chart in testcharts.values():
+			resfiles.append(os.path.join("ti1", chart))
+	testchart_defaults["G"] = testchart_defaults["g"]
+	testchart_defaults["S"] = testchart_defaults["s"]
+	for key in ("X", "x"):
+		testchart_defaults[key] = testchart_defaults["l"]
 
 
 def getcfg(name, fallback=True):
@@ -652,5 +653,6 @@ def writecfg():
 		handle_error("Warning - could not write configuration file: %s" % 
 					 str(exception))
 
+_init_testcharts()
 pypath, pydir, pyname, pyext, isapp, runtype, build = runtimeconfig(
 	exe if isexe else os.path.join(os.path.dirname(__file__), appname + ".py"))

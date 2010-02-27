@@ -928,10 +928,11 @@ class MainFrame(BaseFrame):
 		self.update_profile_type_ctrl()
 
 		self.default_testchart_names = []
-		for profile_type in self.testchart_defaults:
-			chart = self.testchart_defaults[profile_type]
-			if not chart in self.default_testchart_names:
-				self.default_testchart_names += [lang.getstr(chart)]
+		for testcharts in self.testchart_defaults.values():
+			for chart in testcharts.values():
+				chart = lang.getstr(chart)
+				if not chart in self.default_testchart_names:
+					self.default_testchart_names += [chart]
 		
 		self.profile_name_info_btn.SetToolTipString(
 			wrap(self.profile_name_info(), 72))
@@ -1673,9 +1674,6 @@ class MainFrame(BaseFrame):
 		if cal and check_file_isfile(cal, parent=self):
 			filename, ext = os.path.splitext(cal)
 			if not cal in self.recent_cals:
-				if len(self.recent_cals) > getcfg("recent_cals_max"):
-					self.recent_cals.remove(self.recent_cals[len(self.presets)])
-					self.calibration_file_ctrl.Delete(len(self.presets))
 				self.recent_cals.append(cal)
 				recent_cals = []
 				for recent_cal in self.recent_cals:
@@ -1915,9 +1913,13 @@ class MainFrame(BaseFrame):
 		if self.set_default_testchart() is None:
 			self.set_testchart()
 
-		q = self.quality_ba.get(getcfg("profile.quality"), 
-								self.quality_ba.get(
-									defaults["profile.quality"])) - 1
+		simple_gamma_model = self.get_profile_type() in ("g", "G")
+		if simple_gamma_model:
+			q = 3
+		else:
+			q = self.quality_ba.get(getcfg("profile.quality"), 
+									self.quality_ba.get(
+										defaults["profile.quality"])) - 1
 		self.profile_quality_ctrl.SetValue(q)
 		if q == 1:
 			self.profile_quality_info.SetLabel(
@@ -1931,6 +1933,7 @@ class MainFrame(BaseFrame):
 		elif q == 4:
 			self.profile_quality_info.SetLabel(
 				lang.getstr("calibration.quality.ultra"))
+		self.profile_quality_ctrl.Enable(not simple_gamma_model)
 
 		enable_gamap = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
@@ -2066,7 +2069,10 @@ class MainFrame(BaseFrame):
 											 getevtobjname(event, self), 
 											 event.GetEventType(), 
 											 getevttype(event)))
+		oldq = getcfg("profile.quality")
 		q = self.get_profile_quality()
+		if q == oldq:
+			return
 		if q == "l":
 			self.profile_quality_info.SetLabel(
 				lang.getstr("calibration.quality.low"))
@@ -2079,11 +2085,11 @@ class MainFrame(BaseFrame):
 		if q == "u":
 			self.profile_quality_info.SetLabel(lang.getstr(
 				"calibration.quality.ultra"))
-		if q != getcfg("profile.quality"):
-			self.profile_settings_changed()
+		self.profile_settings_changed()
 		setcfg("profile.quality", q)
 		self.update_profile_name()
-		self.set_default_testchart(False)
+		self.set_default_testchart(False, force=True)
+		wx.CallAfter(self.check_testchart_patches_amount)
 
 	def calibration_file_ctrl_handler(self, event):
 		if debug:
@@ -3401,15 +3407,15 @@ class MainFrame(BaseFrame):
 				wx.CallAfter(self.profile_finish, True, 
 							 success_msg=lang.getstr("calibration.complete"))
 			else:
-				InfoDialog(self, pos=(-1, 100), 
-						   msg=lang.getstr("calibration.complete"), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-information"))
+				wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+							 msg=lang.getstr("calibration.complete"), 
+							 ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, "dialog-information"))
 		else:
-			InfoDialog(self, pos=(-1, 100), 
-					   msg=lang.getstr("calibration.incomplete"), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
+			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+						 msg=lang.getstr("calibration.incomplete"), 
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
@@ -3495,12 +3501,6 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate_and_profile").replace("&&", 
 																	   "&"))
-		# -N switch not working as expected in Argyll 1.0.3
-		if self.worker.get_instrument_features().get("skip_sensor_cal") and \
-		   self.worker.argyll_version >= [1, 1, 0]:
-			self.worker.options_dispread = ["-N"]
-		else:
-			self.worker.options_dispread = []
 		self.worker.dispcal_create_fast_matrix_shaper = False
 		self.worker.dispread_after_dispcal = True
 		start_timers = True
@@ -3510,15 +3510,15 @@ class MainFrame(BaseFrame):
 				wx.CallAfter(self.start_profile_worker, 
 							 lang.getstr("calibration_profiling.complete"))
 			else:
-				InfoDialog(self, pos=(-1, 100), 
-						   msg=lang.getstr("profiling.incomplete"), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
+				wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+							 msg=lang.getstr("profiling.incomplete"), 
+							 ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, "dialog-error"))
 		else:
-			InfoDialog(self, pos=(-1, 100), 
-					   msg=lang.getstr("calibration.incomplete"), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
+			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+						 msg=lang.getstr("calibration.incomplete"), 
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
 	def start_profile_worker(self, success_msg, apply_calibration=True):
@@ -3598,7 +3598,6 @@ class MainFrame(BaseFrame):
 	def just_profile(self, apply_calibration):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.profile"))
-		self.worker.options_dispread = []
 		self.worker.dispread_after_dispcal = False
 		start_timers = True
 		self.previous_cal = False
@@ -3607,10 +3606,10 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(self.start_profile_worker, 
 						 lang.getstr("profiling.complete"), apply_calibration)
 		else:
-			InfoDialog(self, pos=(-1, 100), 
-					   msg=lang.getstr("profiling.incomplete"), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
+			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+						 msg=lang.getstr("profiling.incomplete"), 
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
 	def profile_finish(self, result, profile_path=None, success_msg="", 
@@ -3992,7 +3991,6 @@ class MainFrame(BaseFrame):
 											 getevtobjname(event, self), 
 											 event.GetEventType(), 
 											 getevttype(event)))
-		self.set_default_testchart()
 		v = self.get_measurement_mode()
 		if v and "p" in v and self.worker.argyll_version < [1, 1, 0]:
 			self.measurement_mode_ctrl.SetSelection(
@@ -4073,24 +4071,46 @@ class MainFrame(BaseFrame):
 											 getevtobjname(event, self), 
 											 event.GetEventType(), 
 											 getevttype(event)))
-		lut_profile = self.get_profile_type() in ("l", "x", "X")
-		self.gamap_btn.Enable(lut_profile)
 		v = self.get_profile_type()
+		self.gamap_btn.Enable(v in ("l", "x", "X"))
+		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v != getcfg("profile.type"):
 			self.profile_settings_changed()
 		setcfg("profile.type", v)
 		self.update_profile_name()
-		self.set_default_testchart()
-		if lut_profile and int(self.testchart_patches_amount.GetLabel()) < 500:
+		self.set_default_testchart(force=True)
+		self.check_testchart_patches_amount
+	
+	def check_testchart_patches_amount(self):
+		recommended = {"G": 9,
+					   "g": 11,
+					   "l": 238,
+					   "lh": 124,
+					   "S": 48,
+					   "s": 48,
+					   "X": 238,
+					   "Xh": 124,
+					   "x": 238,
+					   "xh": 124}
+		# lower quality actually needs *higher* patchcount while high quality
+		# can get away with fewer patches and still improved result
+		recommended = recommended.get(self.get_profile_type() + 
+									  self.get_profile_quality(), 
+									  recommended[self.get_profile_type()])
+		patches = int(self.testchart_patches_amount.GetLabel())
+		if recommended > patches:
+			self.profile_quality_ctrl.Disable()
 			dlg = ConfirmDialog(
 				self, msg=lang.getstr("profile.testchart_recommendation"), 
 				ok=lang.getstr("OK"), cancel=lang.getstr("cancel"), 
 				bitmap=geticon(32, "dialog-question"))
 			result = dlg.ShowModal()
+			self.profile_quality_ctrl.Enable()
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				testchart = "d3-e4-s0-g52-m4-f500-crossover.ti1"
-				self.testchart_defaults[self.get_profile_type()] = testchart
+				testchart = self.testchart_defaults[self.get_profile_type()].get(
+					self.get_profile_quality(), 
+					self.testchart_defaults[self.get_profile_type()][None])
 				self.set_testchart(get_data_path(os.path.join("ti1", 
 															  testchart)))
 
@@ -4153,7 +4173,8 @@ class MainFrame(BaseFrame):
 			"%ck	" + lang.getstr("calibration.black_point_correction"),
 			"%cq	" + lang.getstr("calibration.quality"),
 			"%pq	" + lang.getstr("profile.quality"),
-			"%pt	" + lang.getstr("profile.type")
+			"%pt	" + lang.getstr("profile.type"),
+			"%tpa	" + lang.getstr("testchart.info")
 		]
 		if defaults["calibration.black_point_rate.enabled"]:
 			info.insert(9, "%cA	" + lang.getstr("calibration.black_point_rate"))
@@ -4474,11 +4495,19 @@ class MainFrame(BaseFrame):
 		for q in msgs:
 			pat = re.compile("(" + msgs[q] + ")\W" + msgs[q], re.I)
 			profile_name = re.sub(pat, "\\1", profile_name)
-		if self.get_profile_type() in ("l", "x", "X"):
-			profile_type = "LUT"
-		else:
-			profile_type = "MTX"
-		profile_name = profile_name.replace("%pt", profile_type)
+		profile_type = {
+			"G": "1xGamma+MTX",
+			"g": "3xGamma+MTX",
+			"l": "LabLUT",
+			"S": "1xCurve+MTX",
+			"s": "3xCurve+MTX",
+			"X": "XYZLUT+MTX",
+			"x": "XYZLUT"
+		}.get(self.get_profile_type())
+		if profile_type:
+			profile_name = profile_name.replace("%pt", profile_type)
+		profile_name = profile_name.replace("%tpa", 
+											self.testchart_patches_amount.GetLabel())
 		directives = (
 			"a",
 			"A",
@@ -4663,6 +4692,7 @@ class MainFrame(BaseFrame):
 									   event.GetEventType(), 
 									   getevttype(event)))
 		self.set_testchart(self.testcharts[self.testchart_ctrl.GetSelection()])
+		wx.CallAfter(self.check_testchart_patches_amount)
 
 	def testchart_btn_handler(self, event, path=None):
 		if path is None:
@@ -4731,7 +4761,9 @@ class MainFrame(BaseFrame):
 			setcfg("testchart.file", path)
 		if force or lang.getstr(os.path.basename(path)) in [""] + \
 		   self.default_testchart_names or not os.path.isfile(path):
-			ti1 = self.testchart_defaults[self.get_profile_type()]
+			ti1 = self.testchart_defaults[self.get_profile_type()].get(
+				self.get_profile_quality(), 
+				self.testchart_defaults[self.get_profile_type()][None])
 			path = get_data_path(os.path.join("ti1", ti1))
 			if not path or not os.path.isfile(path):
 				if alert:
@@ -4915,8 +4947,6 @@ class MainFrame(BaseFrame):
 						 silent=False):
 		if not check_set_argyll_bin():
 			return
-		if getcfg("settings.changed") and not self.settings_confirm_discard():
-			return
 		if path is None:
 			defaultDir, defaultFile = get_verified_path("last_cal_or_icc_path")
 			dlg = wx.FileDialog(self, lang.getstr("dialog.load_cal"), 
@@ -4928,6 +4958,8 @@ class MainFrame(BaseFrame):
 			if dlg.ShowModal() == wx.ID_OK:
 				path = dlg.GetPath()
 			dlg.Destroy()
+		if getcfg("settings.changed") and not self.settings_confirm_discard():
+			return
 		if path:
 			if not os.path.exists(path):
 				sel = self.calibration_file_ctrl.GetSelection()

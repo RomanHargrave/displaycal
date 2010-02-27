@@ -892,63 +892,6 @@
                     <rows>0</rows>
                     <growablecols>1</growablecols>
                     <object class="sizeritem">
-                      <object class="wxStaticText" name="testchart_label">
-                        <label>testchart.file</label>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxBoxSizer">
-                        <orient>wxHORIZONTAL</orient>
-                        <object class="sizeritem">
-                          <object class="wxComboBox" name="testchart_ctrl">
-                            <style>wxCB_READONLY</style>
-                            <XRCED>
-                              <events>EVT_COMBOBOX</events>
-                            </XRCED>
-                          </object>
-                          <option>1</option>
-                          <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                          <border>8</border>
-                        </object>
-                        <object class="sizeritem">
-                          <object class="wxBitmapButton" name="testchart_btn">
-                            <bitmap>../theme/icons/16x16/document-open.png</bitmap>
-                            <tooltip>testchart.set</tooltip>
-                            <style>wxNO_BORDER</style>
-                            <XRCED>
-                              <events>EVT_BUTTON</events>
-                            </XRCED>
-                          </object>
-                          <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                          <border>8</border>
-                        </object>
-                        <object class="sizeritem">
-                          <object class="wxBitmapButton" name="create_testchart_btn">
-                            <bitmap>../theme/icons/16x16/rgbsquares.png</bitmap>
-                            <tooltip>testchart.edit</tooltip>
-                            <style>wxNO_BORDER</style>
-                            <XRCED>
-                              <events>EVT_BUTTON</events>
-                            </XRCED>
-                          </object>
-                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                        </object>
-                        <object class="sizeritem">
-                          <object class="wxStaticText" name="testchart_patches_amount">
-                            <size>50,-1</size>
-                            <label>0</label>
-                            <tooltip>testchart.info</tooltip>
-                          </object>
-                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                          <border>8</border>
-                        </object>
-                      </object>
-                      <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>5</border>
-                    </object>
-                    <object class="sizeritem">
                       <object class="wxStaticText" name="profile_quality_label">
                         <label>profile.quality</label>
                       </object>
@@ -1008,6 +951,63 @@
                       </object>
                       <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>2</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="testchart_label">
+                        <label>testchart.file</label>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxBoxSizer">
+                        <orient>wxHORIZONTAL</orient>
+                        <object class="sizeritem">
+                          <object class="wxComboBox" name="testchart_ctrl">
+                            <style>wxCB_READONLY</style>
+                            <XRCED>
+                              <events>EVT_COMBOBOX</events>
+                            </XRCED>
+                          </object>
+                          <option>1</option>
+                          <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>8</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxBitmapButton" name="testchart_btn">
+                            <bitmap>../theme/icons/16x16/document-open.png</bitmap>
+                            <tooltip>testchart.set</tooltip>
+                            <style>wxNO_BORDER</style>
+                            <XRCED>
+                              <events>EVT_BUTTON</events>
+                            </XRCED>
+                          </object>
+                          <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>8</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxBitmapButton" name="create_testchart_btn">
+                            <bitmap>../theme/icons/16x16/rgbsquares.png</bitmap>
+                            <tooltip>testchart.edit</tooltip>
+                            <style>wxNO_BORDER</style>
+                            <XRCED>
+                              <events>EVT_BUTTON</events>
+                            </XRCED>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="testchart_patches_amount">
+                            <size>50,-1</size>
+                            <label>0</label>
+                            <tooltip>testchart.info</tooltip>
+                          </object>
+                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>8</border>
+                        </object>
+                      </object>
+                      <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>5</border>
                     </object>
                     <object class="sizeritem">
                       <object class="wxStaticText" name="profile_name_label">
