@@ -98,7 +98,7 @@ def safe_basestring(obj):
 	return obj
 
 
-def safe_str(obj, enc=enc, errors="replace"):
+def safe_str(obj, enc=fs_enc, errors="replace"):
 	""" Return string representation of obj """
 	obj = safe_basestring(obj)
 	if isinstance(obj, unicode):
@@ -107,7 +107,7 @@ def safe_str(obj, enc=enc, errors="replace"):
 		return obj
 
 
-def safe_unicode(obj, enc=enc, errors="replace"):
+def safe_unicode(obj, enc=fs_enc, errors="replace"):
 	""" Return unicode representation of obj """
 	obj = safe_basestring(obj)
 	if isinstance(obj, unicode):
