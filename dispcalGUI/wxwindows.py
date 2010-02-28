@@ -9,7 +9,7 @@ from config import (btn_width_correction, defaults, getcfg,
 from log import log as log_, safe_print
 from meta import name as appname
 from thread import start_new_thread
-from util_str import wrap
+from util_str import safe_unicode, wrap
 from wxaddons import wx
 import localization as lang
 
@@ -316,7 +316,7 @@ class LogWindow(InvincibleFrame):
 				file_.writelines(self.log_txt.GetValue())
 				file_.close()
 			except Exception, exception:
-				InfoDialog(self, msg=unicode(str(exception), enc, "replace"), 
+				InfoDialog(self, msg=safe_unicode(exception), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 

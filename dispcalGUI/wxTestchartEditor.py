@@ -19,6 +19,7 @@ from log import safe_print
 from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
 from util_io import StringIOu as StringIO
+from util_str import safe_unicode
 from worker import Worker, check_file_isfile, check_set_argyll_bin, get_argyll_version
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import ConfirmDialog, InfoDialog
@@ -885,7 +886,7 @@ class TestchartEditor(wx.Frame):
 				if not self.IsBeingDeleted():
 					self.SetTitle(lang.getstr("testchart.edit").rstrip(".") + ": " + os.path.basename(path))
 			except Exception, exception:
-				handle_error("Error - testchart could not be saved: " + str(exception), parent = self)
+				handle_error(u"Error - testchart could not be saved: " + safe_unicode(exception), parent = self)
 			else:
 				if hasattr(self, "ti1_wrl") and self.ti1_wrl != None:
 					for vrml_type in self.ti1_wrl:
@@ -895,7 +896,7 @@ class TestchartEditor(wx.Frame):
 							wrl.write(self.ti1_wrl[vrml_type])
 							wrl.close()
 						except Exception, exception:
-							handle_error("Warning - VRML file could not be saved: " + str(exception), parent = self)
+							handle_error(u"Warning - VRML file could not be saved: " + safe_unicode(exception), parent = self)
 				if path != getcfg("testchart.file"):
 					dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
 					result = dlg.ShowModal()
@@ -1003,7 +1004,7 @@ class TestchartEditor(wx.Frame):
 				InfoDialog(self, msg = lang.getstr("error.testchart.invalid", path), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
 				return False
 		except Exception, exception:
-			InfoDialog(self, msg = lang.getstr("error.testchart.read", path) + "\n\n" + unicode(str(exception), enc, "replace"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
+			InfoDialog(self, msg = lang.getstr("error.testchart.read", path) + "\n\n" + safe_unicode(exception), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
 			return False
 		safe_print(lang.getstr("testchart.read"))
 		self.worker.start(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_title = lang.getstr("testchart.read"), parent = self, progress_start = 500)
@@ -1360,7 +1361,7 @@ class TestchartEditor(wx.Frame):
 						self.ti1 = CGATS.CGATS(path)
 						safe_print(lang.getstr("success"))
 					except Exception, exception:
-						handle_error("Error - testchart file could not be read: " + str(exception), parent = self)
+						handle_error(u"Error - testchart file could not be read: " + safe_unicode(exception), parent = self)
 						result = False
 					self.ti1_wrl = {}
 					for ctrl in (self.tc_vrml_device, 
@@ -1376,7 +1377,7 @@ class TestchartEditor(wx.Frame):
 								self.ti1_wrl[vrml_type] = wrl.read()
 								wrl.close()
 							except Exception, exception:
-								handle_error("Warning - VRML file could not be read: " + str(exception), parent = self)
+								handle_error(u"Warning - VRML file could not be read: " + safe_unicode(exception), parent = self)
 			else:
 				result = False
 		self.worker.wrapup(False)

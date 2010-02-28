@@ -46,7 +46,7 @@ from options import debug, test, verbose
 from thread import start_new_thread
 from util_io import Files, StringIOu as StringIO, Tea
 from util_os import getenvu, quote_args, which
-from util_str import asciize
+from util_str import asciize, safe_unicode
 from wxwindows import ConfirmDialog, InfoDialog
 
 if sys.platform == "win32" and SendKeys is None:
@@ -106,7 +106,7 @@ def check_create_dir(path, parent=None):
 		except Exception, exception:
 			InfoDialog(parent, pos=(-1, 100), 
 					   msg=lang.getstr("error.dir_creation", path) + "\n\n" + 
-						   unicode(str(exception), enc, "replace"), 
+						   safe_unicode(exception), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			return False
@@ -518,8 +518,8 @@ class Worker():
 				self.tempdir = tempfile.mkdtemp(prefix=appname + u"-")
 			except Exception, exception:
 				self.tempdir = None
-				handle_error("Error - couldn't create temporary directory: " + 
-							 str(exception), parent=self.owner)
+				handle_error(u"Error - couldn't create temporary directory: " + 
+							 safe_unicode(exception), parent=self.owner)
 		return self.tempdir
 
 	def enumerate_displays_and_ports(self, silent=False):
@@ -681,6 +681,8 @@ class Worker():
 		## if capture_output:
 			## fn = self.infoframe.Log
 		## else:
+		if not capture_output:
+			capture_output = not sys.stdin.isatty()
 		fn = None
 		self.clear_cmd_output()
 		if None in [cmd, args]:
@@ -709,7 +711,7 @@ class Worker():
 					print "\x1b[2;37m"
 			except Exception, exception:
 				safe_print("Info - could not set terminal colors:", 
-						   str(exception))
+						   safe_unicode(exception))
 		if verbose >= 1:
 			if not silent or verbose >= 3:
 				safe_print("", fn=fn)
@@ -809,7 +811,7 @@ class Worker():
 				cmdline.insert(1, "-S")
 			except Exception, exception:
 				safe_print("Warning - execution as root not possible:", 
-						   str(exception))
+						   safe_unicode(exception))
 		if working_dir and not skip_scripts:
 			try:
 				cmdfilename = os.path.join(working_dir, working_basename + 
@@ -911,7 +913,7 @@ class Worker():
 							os.remove(allfilename)
 			except Exception, exception:
 				safe_print("Warning - error during shell script creation:", 
-						   str(exception))
+						   safe_unicode(exception))
 		if cmdname == get_argyll_utilname("dispread") and \
 		   self.dispread_after_dispcal:
 			instrument_features = self.get_instrument_features()
@@ -955,9 +957,9 @@ class Worker():
 									   "found, unattended measurements not "
 									   "possible")
 				except Exception, exception:
-					safe_print("Warning - unattended measurements not "
-							   "possible (start_new_thread failed with %s)" % 
-							   str(exception))
+					safe_print(u"Warning - unattended measurements not "
+							   u"possible (start_new_thread failed with %s)" % 
+							   safe_unicode(exception))
 			elif verbose >= 2:
 				safe_print("Instrument can not be used for unattended "
 						   "calibration and profiling")
@@ -985,12 +987,14 @@ class Worker():
 								   stderr=sp.STDOUT)
 				stdin = pwdproc.stdout
 			else:
-				stdin=None
+				stdin=sp.PIPE ##None
 			working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 			while tries > 0:
 				self.subprocess = sp.Popen(cmdline, stdin=stdin, 
 										   stdout=stdout, stderr=stderr, 
 										   cwd=working_dir)
+				if not sudo:
+					self.subprocess.stdin.close()
 				self.retcode = self.subprocess.wait()
 				self.subprocess = None
 				tries -= 1
@@ -1040,8 +1044,7 @@ class Worker():
 			if debug:
 				safe_print('[D] working_dir:', working_dir)
 			errmsg = (" ".join(cmdline).decode(fs_enc) + "\n" + 
-						 "Error: " + (traceback.format_exc() if debug else 
-									  str(exception)))
+					  safe_unicode(traceback.format_exc()))
 			if capture_output:
 				log(errmsg)
 			else:
@@ -1058,7 +1061,7 @@ class Worker():
 					print "\x1b[22;37m"
 			except Exception, exception:
 				safe_print("Info - could not restore terminal colors:", 
-						   str(exception))
+						   safe_unicode(exception))
 		if self.retcode != 0:
 			if verbose >= 1 and not capture_output:
 				safe_print(lang.getstr("aborted"), fn=fn)
@@ -1072,8 +1075,8 @@ class Worker():
 		try:
 			result = delayedResult.get()
 		except Exception, exception:
-			handle_error("Error - delayedResult.get() failed: " + 
-						 traceback.format_exc(), parent=self.owner)
+			handle_error(u"Error - delayedResult.get() failed: " + 
+						 safe_unicode(traceback.format_exc()), parent=self.owner)
 		self.progress_parent.progress_start_timer.Stop()
 		if hasattr(self.progress_parent, "progress_dlg"):
 			self.progress_parent.progress_timer.Stop()
@@ -1245,8 +1248,7 @@ class Worker():
 							InfoDialog(self.owner, pos=(-1, 100), 
 									   msg=lang.getstr("error.copy_failed", 
 													   (cal, calcopy)) + 
-										   "\n\n" + unicode(str(exception), 
-															enc, "replace"), 
+										   "\n\n" + safe_unicode(exception), 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-error"))
 							return None, None
@@ -1287,8 +1289,7 @@ class Worker():
 									   msg=lang.getstr("error.copy_failed", 
 													   (profile_path, 
 													    profilecopy)) + 
-										   "\n\n" + unicode(str(exception), 
-															enc, "replace"), 
+										   "\n\n" + safe_unicode(exception), 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-error"))
 							return None, None
@@ -1402,7 +1403,7 @@ class Worker():
 				InfoDialog(self.owner, pos=(-1, 100), 
 						   msg=lang.getstr("error.testchart.creation_failed", 
 										   inoutfile + ".ti1") + "\n\n" + 
-							   unicode(str(exception), enc, "replace"), 
+							   safe_unicode(exception), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return None, None
@@ -1427,7 +1428,7 @@ class Worker():
 						InfoDialog(self.owner, pos=(-1, 100), 
 								   msg=lang.getstr("error.copy_failed", 
 												   (cal, calcopy)) + "\n\n" + 
-									   unicode(str(exception), enc, "replace"), 
+									   safe_unicode(exception), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"))
 						return None, None
@@ -1466,8 +1467,7 @@ class Worker():
 				except Exception, exception:
 					InfoDialog(self.owner, pos=(-1, 100), 
 							   msg=lang.getstr("error.cal_extraction", (cal)) + 
-								   "\n\n" + unicode(str(exception), enc, 
-													"replace"), 
+								   "\n\n" + safe_unicode(exception), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return None, None
@@ -1613,8 +1613,8 @@ class Worker():
 					try:
 						self.subprocess.terminate()
 					except Exception, exception:
-						handle_error("Error - subprocess.terminate() "
-									 "failed: " + str(exception), 
+						handle_error(u"Error - subprocess.terminate() "
+									 u"failed: " + safe_unicode(exception), 
 									 parent=self.progress_parent.progress_dlg)
 				elif verbose >= 2:
 					safe_print("Info: Subprocess already exited.")
@@ -1702,8 +1702,7 @@ class Worker():
 				InfoDialog(self.owner, pos=(-1, 100), 
 						   msg=lang.getstr("error.dir_creation", 
 										   (os.path.dirname(dst_path))) + 
-							   "\n\n" + unicode(str(exception), enc, 
-												"replace"), 
+							   "\n\n" + safe_unicode(exception), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
@@ -1711,8 +1710,9 @@ class Worker():
 				try:
 					src_listdir = os.listdir(self.tempdir)
 				except Exception, exception:
-					safe_print("Error - directory '%s' listing failed: %s" % 
-							   (self.tempdir, str(exception)))
+					safe_print(u"Error - directory '%s' listing failed: %s" % 
+							   tuple(safe_unicode(s) for s in (self.tempdir, 
+															   exception)))
 				else:
 					for basename in src_listdir:
 						name, ext = os.path.splitext(basename)
@@ -1732,9 +1732,11 @@ class Worker():
 									try:
 										shutil.rmtree(dst, True)
 									except Exception, exception:
-										safe_print("Warning - directory '%s' "
-												   "could not be removed: %s" % 
-												   (dst, str(exception)))
+										safe_print(u"Warning - directory '%s' "
+												   u"could not be removed: %s" % 
+												   tuple(safe_unicode(s) 
+														 for s in (dst, 
+																   exception)))
 								else:
 									if debug:
 										safe_print("[D] wrapup.copy: "
@@ -1742,9 +1744,11 @@ class Worker():
 									try:
 										os.remove(dst)
 									except Exception, exception:
-										safe_print("Warning - file '%s' could "
-												   "not be removed: %s" % 
-												   (dst, str(exception)))
+										safe_print(u"Warning - file '%s' could "
+												   u"not be removed: %s" % 
+												   tuple(safe_unicode(s) 
+														 for s in (dst, 
+																   exception)))
 							if remove:
 								if debug:
 									safe_print("[D] wrapup.copy: "
@@ -1753,10 +1757,11 @@ class Worker():
 								try:
 									shutil.move(src, dst)
 								except Exception, exception:
-									safe_print("Warning - temporary object "
-											   "'%s' could not be moved to "
-											   "'%s': %s" % (src, dst, 
-															 str(exception)))
+									safe_print(u"Warning - temporary object "
+											   u"'%s' could not be moved to "
+											   u"'%s': %s" % 
+											   tuple(safe_unicode(s) for s in 
+													 (src, dst, exception)))
 							else:
 								if os.path.isdir(src):
 									if debug:
@@ -1766,10 +1771,12 @@ class Worker():
 									try:
 										shutil.copytree(src, dst)
 									except Exception, exception:
-										safe_print("Warning - temporary "
-												   "directory '%s' could not "
-												   "be copied to '%s': %s" % 
-												   (src, dst, str(exception)))
+										safe_print(u"Warning - temporary "
+												   u"directory '%s' could not "
+												   u"be copied to '%s': %s" % 
+												   tuple(safe_unicode(s) 
+														 for s in 
+														 (src, dst, exception)))
 								else:
 									if debug:
 										safe_print("[D] wrapup.copy: "
@@ -1778,16 +1785,19 @@ class Worker():
 									try:
 										shutil.copyfile(src, dst)
 									except Exception, exception:
-										safe_print("Warning - temporary file "
-												   "'%s' could not be copied "
-												   "to '%s': %s" % 
-												   (src, dst, str(exception)))
+										safe_print(u"Warning - temporary file "
+												   u"'%s' could not be copied "
+												   u"to '%s': %s" % 
+												   tuple(safe_unicode(s) 
+														 for s in 
+														 (src, dst, exception)))
 		if remove:
 			try:
 				src_listdir = os.listdir(self.tempdir)
 			except Exception, exception:
-				safe_print("Error - directory '%s' listing failed: %s" % 
-						   (self.tempdir, str(exception)))
+				safe_print(u"Error - directory '%s' listing failed: %s" % 
+						   tuple(safe_unicode(s) for s in (self.tempdir, 
+														   exception)))
 			else:
 				for basename in src_listdir:
 					name, ext = os.path.splitext(basename)
@@ -1801,9 +1811,10 @@ class Worker():
 							try:
 								shutil.rmtree(src, True)
 							except Exception, exception:
-								safe_print("Warning - temporary directory "
-										   "'%s' could not be removed: %s" % 
-										   (src, str(exception)))
+								safe_print(u"Warning - temporary directory "
+										   u"'%s' could not be removed: %s" % 
+										   tuple(safe_unicode(s) for s in 
+												 (src, exception)))
 						else:
 							if debug:
 								safe_print("[D] wrapup.remove: os.remove('%s')" % 
@@ -1811,19 +1822,22 @@ class Worker():
 							try:
 								os.remove(src)
 							except Exception, exception:
-								safe_print("Warning - temporary directory "
-										   "'%s' could not be removed: %s" % 
-										   (src, str(exception)))
+								safe_print(u"Warning - temporary directory "
+										   u"'%s' could not be removed: %s" % 
+										   tuple(safe_unicode(s) for s in 
+												 (src, exception)))
 			try:
 				src_listdir = os.listdir(self.tempdir)
 			except Exception, exception:
-				safe_print("Error - directory '%s' listing failed: %s" % 
-						   (self.tempdir, str(exception)))
+				safe_print(u"Error - directory '%s' listing failed: %s" % 
+						   tuple(safe_unicode(s) for s in (self.tempdir, 
+														   exception)))
 			else:
 				if not src_listdir:
 					try:
 						shutil.rmtree(self.tempdir, True)
 					except Exception, exception:
-						safe_print("Warning - temporary directory '%s' could "
-								   "not be removed: %s" % (self.tempdir, 
-														   str(exception)))
+						safe_print(u"Warning - temporary directory '%s' could "
+								   u"not be removed: %s" % 
+								   tuple(safe_unicode(s) for s in 
+										 (self.tempdir, exception)))

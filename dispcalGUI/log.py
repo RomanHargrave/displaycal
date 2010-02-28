@@ -13,7 +13,7 @@ from config import logdir
 from meta import name as appname
 from safe_print import safe_print as _safe_print
 from util_io import StringIOu as StringIO
-from util_str import universal_newlines
+from util_str import safe_unicode, universal_newlines
 import config
 
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
@@ -60,14 +60,14 @@ def setup_logging():
 		try:
 			os.makedirs(logdir)
 		except Exception, exception:
-			safe_print("Warning - log directory '%s' could not be created: %s" 
-					   % (logdir, str(exception)))
+			safe_print(u"Warning - log directory '%s' could not be created: %s" 
+					   % tuple(safe_unicode(s) for s in (logdir, exception)))
 	if os.path.exists(logfile):
 		try:
 			logstat = os.stat(logfile)
 		except Exception, exception:
-			safe_print("Warning - os.stat('%s') failed: %s" % (logfile, 
-															   str(exception)))
+			safe_print(u"Warning - os.stat('%s') failed: %s" % 
+					   tuple(safe_unicode(s) for s in (logfile, exception)))
 		else:
 			# rollover needed?
 			mtime = localtime(logstat.st_mtime)
@@ -78,16 +78,18 @@ def setup_logging():
 					try:
 						os.remove(logbackup)
 					except:
-						safe_print("Warning - logfile backup '%s' could not "
-								   "be removed during rollover: %s" % 
-								   (logbackup, str(exception)))
+						safe_print(u"Warning - logfile backup '%s' could not "
+								   u"be removed during rollover: %s" % 
+								   tuple(safe_unicode(s) for s in (logbackup, 
+																   exception)))
 				try:
 					os.rename(logfile, logbackup)
 				except:
-					safe_print("Warning - logfile '%s' could not be renamed "
-							   "to '%s' during rollover: %s" % 
-							   (logfile, os.path.basename(logbackup), 
-							    str(exception)))
+					safe_print(u"Warning - logfile '%s' could not be renamed "
+							   u"to '%s' during rollover: %s" % 
+							   tuple(safe_unicode(s) for s in 
+									 (logfile, os.path.basename(logbackup), 
+									  exception)))
 				# Adapted from Python 2.6's 
 				# logging.handlers.TimedRotatingFileHandler.getFilesToDelete
 				extMatch = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -95,9 +97,10 @@ def setup_logging():
 				try:
 					fileNames = os.listdir(logdir)
 				except Exception, exception:
-					safe_print("Warning - log directory '%s' listing failed "
-							   "during rollover: %s" % (logdir, 
-														str(exception)))
+					safe_print(u"Warning - log directory '%s' listing failed "
+							   u"during rollover: %s" % 
+							   tuple(safe_unicode(s) for s in (logdir, 
+															   exception)))
 				else:
 					result = []
 					prefix = baseName + "."
@@ -113,10 +116,11 @@ def setup_logging():
 							try:
 								os.remove(logbackup)
 							except:
-								safe_print("Warning - logfile backup '%s' "
-										   "could not be removed during "
-										   "rollover: %s" % (logbackup, 
-															 str(exception)))
+								safe_print(u"Warning - logfile backup '%s' "
+										   u"could not be removed during "
+										   u"rollover: %s" % 
+										   tuple(safe_unicode(s) for s in 
+												 (logbackup, exception)))
 	logger = logging.getLogger()
 	logger.setLevel(logging.DEBUG)
 	if os.path.exists(logdir):
@@ -127,8 +131,8 @@ def setup_logging():
 			filehandler.setFormatter(fileformatter)
 			logger.addHandler(filehandler)
 		except Exception, exception:
-			safe_print("Warning - logging to file '%s' not possible: %s" % 
-					   (logfile, str(exception)))
+			safe_print(u"Warning - logging to file '%s' not possible: %s" % 
+					   tuple(safe_unicode(s) for s in (logfile, exception)))
 	log("=" * 80)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")

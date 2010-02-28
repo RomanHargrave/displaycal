@@ -7,6 +7,7 @@ import config
 from config import fs_enc
 from log import logbuffer, safe_print
 from meta import name as appname
+from util_str import safe_unicode
 
 wxEventTypes = {}
 
@@ -41,13 +42,10 @@ def getevttype(event):
 		return wxEventTypes[typeId]
 
 
-def handle_error(errstr, parent=None, silent=False):
+def handle_error(error, parent=None, silent=False):
 	""" Log an error string and show an error dialog. """
-	if not isinstance(errstr, unicode):
-		if not isinstance(errstr, str):
-			errstr = str(errstr)
-		errstr = unicode(errstr, fs_enc, "replace")
-	safe_print(errstr)
+	error = safe_unicode(error)
+	safe_print(error)
 	if not silent:
 		try:
 			if not "wx" in globals():
@@ -62,8 +60,8 @@ def handle_error(errstr, parent=None, silent=False):
 				parent = None
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 								   parent.IsShownOnScreen() else None, 
-								   errstr, appname, wx.OK | wx.ICON_ERROR)
+								   error, appname, wx.OK | wx.ICON_ERROR)
 			dlg.ShowModal()
 			dlg.Destroy()
 		except Exception, exception:
-			safe_print("Warning: handle_error():", str(exception))
+			safe_print("Warning: handle_error():", safe_unicode(exception))

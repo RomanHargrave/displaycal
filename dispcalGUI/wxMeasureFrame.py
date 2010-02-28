@@ -13,14 +13,15 @@ from log import safe_print
 from meta import name as appname
 from options import debug
 from util_list import floatlist, strlist
+from util_str import safe_unicode
 from wxaddons import CustomEvent, wx
 from wxwindows import ConfirmDialog, InfoDialog, InvincibleFrame
 try:
 	import RealDisplaySizeMM as RDSMM
 except ImportError, exception:
 	RDSMM = None
-	handle_error("Error - couldn't import RealDisplaySizeMM: " + 
-				 str(exception), silent=True)
+	handle_error(u"Error - couldn't import RealDisplaySizeMM: " + 
+				 safe_unicode(exception), silent=True)
 
 def get_default_size():
 	"""
@@ -43,8 +44,8 @@ def get_default_size():
 		try:
 			display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
 		except Exception, exception:
-			handle_error("Error - RealDisplaySizeMM() failed: " + 
-						 str(exception), silent=True)
+			handle_error(u"Error - RealDisplaySizeMM() failed: " + 
+						 safe_unicode(exception), silent=True)
 		else:
 			display_size_mm = floatlist(display_size_mm)
 	if debug:

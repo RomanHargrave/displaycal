@@ -106,7 +106,7 @@ if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script,
 						  mac_terminal_set_colors)
 from util_os import expanduseru, launch_file, listdir_re, which
-from util_str import strtr, wrap
+from util_str import safe_str, safe_unicode, strtr, wrap
 from worker import (Worker, check_argyll_bin, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, 
@@ -129,7 +129,7 @@ from wx.lib.art import flagart
 import wx.lib.hyperlink
 
 def _excepthook(etype, value, tb):
-	handle_error("".join(traceback.format_exception(etype, value, tb)))
+	handle_error("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
 
 sys.excepthook = _excepthook
 
@@ -2786,7 +2786,7 @@ class MainFrame(BaseFrame):
 								"cprt")
 							profile.write()
 						except Exception, exception:
-							handle_error(str(exception))
+							handle_error(exception)
 					setcfg("calibration.file", profile_path)
 					self.update_controls(update_profile_name=False)
 					setcfg("last_cal_or_icc_path", profile_path)
@@ -3072,9 +3072,10 @@ class MainFrame(BaseFrame):
 								# delete v0.1b loader
 								os.remove(loader_v01b)
 							except Exception, exception:
-								safe_print("Warning - could not remove old "
-										   "v0.1b calibration loader '%s': %s" 
-										   % (loader_v01b, str(exception)))
+								safe_print(u"Warning - could not remove old "
+										   u"v0.1b calibration loader '%s': %s" 
+										   % tuple(safe_unicode(s) for s in 
+												   (loader_v01b, exception)))
 						loader_v02b = os.path.join(autostart_home, 
 												   name + ".lnk")
 						if os.path.exists(loader_v02b):
@@ -3082,9 +3083,10 @@ class MainFrame(BaseFrame):
 								# delete v02.b/v0.2.1b loader
 								os.remove(loader_v02b)
 							except Exception, exception:
-								safe_print("Warning - could not remove old "
-										   "v0.2b calibration loader '%s': %s" 
-										   % (loader_v02b, str(exception)))
+								safe_print(u"Warning - could not remove old "
+										   u"v0.2b calibration loader '%s': %s" 
+										   % tuple(safe_unicode(s) for s in 
+												   (loader_v02b, exception)))
 					try:
 						scut = pythoncom.CoCreateInstance(
 							shell.CLSID_ShellLink, 
@@ -3113,8 +3115,7 @@ class MainFrame(BaseFrame):
 									log(lang.getstr(
 										   "error.autostart_creation", 
 										   autostart) + "\n\n" + 
-										   unicode(str(exception), enc, 
-												   "replace"))
+										   safe_unicode(exception))
 									# try user scope
 								else:
 									return result
@@ -3144,8 +3145,7 @@ class MainFrame(BaseFrame):
 									   msg=lang.getstr(
 										   "error.autostart_creation", 
 										   autostart_home) + "\n\n" + 
-										   unicode(str(exception), enc, 
-												   "replace"), 
+										   safe_unicode(exception), 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-warning"))
 				elif sys.platform != "darwin":
@@ -3182,8 +3182,7 @@ class MainFrame(BaseFrame):
 									   msg=lang.getstr(
 										   "error.autostart_creation", 
 										   desktopfile_path) + "\n\n" + 
-										   unicode(str(exception), enc, 
-												   "replace"), 
+										   safe_unicode(exception), 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-warning"))
 					else:
@@ -3450,7 +3449,7 @@ class MainFrame(BaseFrame):
 						 shell=True, 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
 		except Exception, exception:
-			stderr = str(exception)
+			stderr = safe_str(exception)
 		else:
 			stdout, stderr = p.communicate()
 			returncode = p.returncode
@@ -4310,8 +4309,8 @@ class MainFrame(BaseFrame):
 					   ti3.queryv1("COLOR_REP")[:3] == "RGB":
 						self.worker.options_targen = ["-d3"]
 				except Exception, exception:
-					handle_error("Error - temporary .ti3 file could not be "
-								 "created: " + str(exception), parent=self)
+					handle_error(u"Error - temporary .ti3 file could not be "
+								 u"created: " + safe_unicode(exception), parent=self)
 					self.worker.wrapup(False)
 					return
 				self.previous_cal = False
@@ -4840,7 +4839,7 @@ class MainFrame(BaseFrame):
 			error = traceback.format_exc() if debug else exception
 			InfoDialog(self, 
 					   msg=lang.getstr("error.testchart.read", path) + 
-						   "\n\n" + unicode(str(error), enc, "replace"), 
+						   "\n\n" + safe_unicode(error), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			self.set_default_testchart()
@@ -4862,8 +4861,9 @@ class MainFrame(BaseFrame):
 				testcharts = listdir_re(testchart_dir, 
 										"\.(?:icc|icm|ti1|ti3)$")
 			except Exception, exception:
-				safe_print("Error - directory '%s' listing failed: %s" % 
-						   (testchart_dir, str(exception)))
+				safe_print(u"Error - directory '%s' listing failed: %s" % 
+						   tuple(safe_unicode(s) for s in (testchart_dir, 
+														   exception)))
 			else:
 				for testchart_name in testcharts:
 					if testchart_name not in testchart_names:
@@ -5391,7 +5391,7 @@ class MainFrame(BaseFrame):
 			try:
 				dircontents = os.listdir(caldir)
 			except Exception, exception:
-				InfoDialog(self, msg=unicode(str(exception), enc, "replace"), 
+				InfoDialog(self, msg=safe_unicode(exception), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
@@ -5453,8 +5453,7 @@ class MainFrame(BaseFrame):
 				except Exception, exception:
 					InfoDialog(self, 
 							   msg=lang.getstr("error.deletion", trashcan) + 
-								   "\n\n" + unicode(str(exception), enc, 
-													"replace"), 
+								   "\n\n" + safe_unicode(exception), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 				# The case-sensitive index could fail because of 
@@ -5745,8 +5744,9 @@ def main():
 					try:
 						autostarts = os.listdir(autostart_home)
 					except Exception, exception:
-						safe_print("Warning - directory '%s' listing failed: "
-								   "%s" % (autostarts, str(exception)))
+						safe_print(u"Warning - directory '%s' listing failed: "
+								   u"%s" % tuple(safe_unicode(s) for s in 
+												 (autostarts, exception)))
 					for filename in autostarts:
 						if filename.startswith(desktopfile_name):
 							try:
@@ -5771,14 +5771,14 @@ def main():
 							except Exception, exception:
 								safe_print("Warning - could not process old "
 										   "calibration loader:", 
-										   str(exception))
+										   safe_unicode(exception))
 			# Initialize & run
 			initcfg()
 			lang.init()
 			app = MainApp(redirect=False)  # Don't redirect stdin/stdout
 			app.MainLoop()
 	except Exception, exception:
-		handle_error("Fatal error: " + traceback.format_exc())
+		handle_error(u"Fatal error: " + safe_unicode(traceback.format_exc()))
 	try:
 		logger = logging.getLogger()
 		for handler in logger.handlers:

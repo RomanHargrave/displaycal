@@ -36,6 +36,7 @@ from meta import name as appname, build, lastmod, version
 from options import ascii, debug, verbose
 from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
+from util_str import safe_unicode
 
 # Runtime configuration
 
@@ -213,8 +214,8 @@ def get_data_path(relpath, rex=None):
 					if not "safe_print" in globals():
 						global safe_print
 						from log import safe_print
-					safe_print("Error - directory '%s' listing failed: %s" % 
-							   (curpath, str(exception)))
+					safe_print(u"Error - directory '%s' listing failed: %s" % 
+							   tuple(safe_unicode(s) for s in (curpath, exception)))
 				else:
 					for filename in filelist:
 						if not filename in intersection:
@@ -615,7 +616,7 @@ def initcfg():
 				if not "safe_print" in globals():
 					from log import safe_print
 				safe_print("Warning - could not process old configuration:", 
-						   str(exception))
+						   safe_unicode(exception))
 	# Read cfg
 	try:
 		cfg.read([os.path.join(confighome, appname + ".ini")])
@@ -650,8 +651,8 @@ def writecfg():
 		if not "handle_error" in globals():
 			global handle_error
 			from debughelpers import handle_error
-		handle_error("Warning - could not write configuration file: %s" % 
-					 str(exception))
+		handle_error(u"Warning - could not write configuration file: %s" % 
+					 safe_unicode(exception))
 
 _init_testcharts()
 pypath, pydir, pyname, pyext, isapp, runtype, build = runtimeconfig(

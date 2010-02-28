@@ -8,6 +8,7 @@ import os
 from options import debug
 from safe_print import safe_print
 from util_io import StringIOu as StringIO
+from util_str import safe_unicode
 import CGATS
 import ICCProfile as ICCP
 
@@ -27,8 +28,8 @@ def cal_to_fake_profile(cal):
 		except (IOError, CGATS.CGATSInvalidError, 
 			CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-			safe_print("Warning - couldn't process CGATS file '%s': %s" % 
-					   (cal, str(exception)))
+			safe_print(u"Warning - couldn't process CGATS file '%s': %s" % 
+					   tuple(safe_unicode(s) for s in (cal, exception)))
 			return None
 	data_format = cal.queryv1("DATA_FORMAT")
 	if data_format:
@@ -64,8 +65,8 @@ def can_update_cal(path):
 	try:
 		calstat = os.stat(path)
 	except Exception, exception:
-		safe_print("Warning - os.stat('%s') failed: %s" % 
-					(path, str(exception)))
+		safe_print(u"Warning - os.stat('%s') failed: %s" % 
+				   tuple(safe_unicode(s) for s in (path, exception)))
 		return False
 	if not path in cals or cals[path].mtime != calstat.st_mtime:
 		try:
@@ -75,8 +76,8 @@ def can_update_cal(path):
 			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 			if path in cals:
 				del cals[path]
-			safe_print("Warning - couldn't process CGATS file '%s': %s" % 
-					   (path, str(exception)))
+			safe_print(u"Warning - couldn't process CGATS file '%s': %s" % 
+					   tuple(safe_unicode(s) for s in (path, exception)))
 		else:
 			if cal.queryv1("DEVICE_TYPE") in ("CRT", "LCD") and not None in \
 			   (cal.queryv1("TARGET_WHITE_XYZ"), 

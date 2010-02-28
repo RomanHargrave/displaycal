@@ -10,6 +10,7 @@ import demjson
 from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
 from log import safe_print
+from util_str import safe_unicode
 
 class TranslationDict(dict):
 
@@ -53,14 +54,16 @@ class TranslationDict(dict):
 				except (UnicodeDecodeError, 
 						demjson.JSONDecodeError), exception:
 					handle_error(
-						"Warning - language file '%s': %s" % 
-						(self.path, 
-						exception.args[0].capitalize() if 
-						type(exception) == demjson.JSONDecodeError 
-						else str(exception)))
+						u"Warning - language file '%s': %s" % 
+						tuple(safe_unicode(s) for s in 
+							  (self.path, exception.args[0].capitalize() if 
+										  isinstance(exception, 
+													 demjson.JSONDecodeError)
+										  else exception)))
 			except Exception, exception:
-				handle_error("Warning - language file '%s': %s" % 
-							 (self.path, str(exception)))
+				handle_error(u"Warning - language file '%s': %s" % 
+							 tuple(safe_unicode(s) for s in (self.path, 
+															 exception)))
 			else:
 				langfile.close()
 
@@ -80,8 +83,8 @@ def init(set_wx_locale=False):
 			try:
 				langfiles = os.listdir(langdir)
 			except Exception, exception:
-				safe_print("Warning - directory '%s' listing failed: %s" % 
-						   (langdir, str(exception)))
+				safe_print(u"Warning - directory '%s' listing failed: %s" % 
+						   tuple(safe_unicode(s) for s in (langdir, exception)))
 			else:
 				for filename in langfiles:
 					name, ext = os.path.splitext(filename)
@@ -129,7 +132,7 @@ def getstr(id_str, strvars=None, lcode=None):
 			if type(strvars) not in (list, tuple):
 				strvars = (strvars, )
 			if lstr.count("%s") == len(strvars):
-				lstr %= strvars
+				lstr %= tuple(safe_unicode(s) for s in strvars)
 		return lstr
 	else:
 		return id_str
