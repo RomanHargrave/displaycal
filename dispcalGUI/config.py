@@ -451,6 +451,10 @@ def getcfg(name, fallback=True):
 					value = deftype(value)
 				except ValueError:
 					value = defval
+			elif name == "profile.quality" and getcfg("profile.type") in ("g", 
+																		  "G"):
+				# default to high quality for gamma + matrix
+				value = "h"
 			elif name == "trc.type" and getcfg("trc") in valid_values["trc"]:
 				value = "g"
 			elif value and name.endswith("file") and not os.path.exists(value):

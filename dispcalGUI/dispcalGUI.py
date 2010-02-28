@@ -4073,6 +4073,10 @@ class MainFrame(BaseFrame):
 		v = self.get_profile_type()
 		self.gamap_btn.Enable(v in ("l", "x", "X"))
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
+		if v in ("g", "G"):
+			self.profile_quality_ctrl.SetValue(3)
+			self.profile_quality_info.SetLabel(
+				lang.getstr("calibration.quality.high"))
 		if v != getcfg("profile.type"):
 			self.profile_settings_changed()
 		setcfg("profile.type", v)
@@ -4104,7 +4108,8 @@ class MainFrame(BaseFrame):
 				ok=lang.getstr("OK"), cancel=lang.getstr("cancel"), 
 				bitmap=geticon(32, "dialog-question"))
 			result = dlg.ShowModal()
-			self.profile_quality_ctrl.Enable()
+			self.profile_quality_ctrl.Enable(self.get_profile_type() not in 
+											 ("g", "G"))
 			dlg.Destroy()
 			if result == wx.ID_OK:
 				testchart = self.testchart_defaults[self.get_profile_type()].get(
@@ -4346,7 +4351,7 @@ class MainFrame(BaseFrame):
 		black_point_correction = self.get_black_point_correction()
 		black_point_rate = self.get_black_point_rate()
 		calibration_quality = self.get_calibration_quality()
-		profile_quality = self.get_profile_quality()
+		profile_quality = getcfg("profile.quality")
 		profile_type = self.get_profile_type()
 		
 		# legacy (pre v0.2.2b) profile name
