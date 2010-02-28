@@ -147,10 +147,10 @@ def setup():
 					if "info" in args:
 						break
 					args = ["svn", "info", "-R", "--xml"]
+		timestamp = None
 		for entry in iter(entries):
 			pth = entry.getAttribute("path")
 			mtime = 0
-			timestamp = None
 			if "status" in args:
 				status = entry.getElementsByTagName("wc-status")
 				item = status[0].getAttribute("item")
@@ -163,7 +163,9 @@ def setup():
 				mod = True
 				if item.upper()[0] != "D":
 					mtime = os.stat(pth).st_mtime
-					timestamp = time.gmtime(mtime)
+					if mtime > lastmod_time:
+						lastmod_time = mtime
+						timestamp = time.gmtime(mtime)
 			schedule = entry.getElementsByTagName("schedule")
 			if schedule:
 				schedule = schedule[0].firstChild.wholeText.strip()
@@ -171,22 +173,24 @@ def setup():
 					print schedule.upper()[0] + " " * 6, pth
 					mod = True
 					mtime = os.stat(pth).st_mtime
-					timestamp = time.gmtime(mtime)
+					if mtime > lastmod_time:
+						lastmod_time = mtime
+						timestamp = time.gmtime(mtime)
 			lmdate = entry.getElementsByTagName("date")
 			if lmdate:
 				lmdate = lmdate[0].firstChild.wholeText.strip()
-				if not mtime:
-					dateparts = lmdate.split(".")  # split off milliseconds
-					mtime = time.mktime(time.strptime(dateparts[0], 
-														  "%Y-%m-%dT%H:%M:%S"))
-					mtime += float("." + strtr(dateparts[1], "Z"))
+				dateparts = lmdate.split(".")  # split off milliseconds
+				mtime = time.mktime(time.strptime(dateparts[0], 
+													  "%Y-%m-%dT%H:%M:%S"))
+				mtime += float("." + strtr(dateparts[1], "Z"))
+				if mtime > lastmod_time:
+					lastmod_time = mtime
 					timestamp = time.localtime(mtime)
-			if mtime > lastmod_time:
-				lastmod = strftime("%Y-%m-%dT%H:%M:%S", timestamp) + \
-						  str(round(mtime - int(mtime), 6))[1:] + \
-						  "Z"
-				lastmod_time = mtime
-				## print lmdate, lastmod, pth
+		if timestamp:
+			lastmod = strftime("%Y-%m-%dT%H:%M:%S", timestamp) + \
+					  str(round(mtime - int(mtime), 6))[1:] + \
+					  "Z"
+			## print lmdate, lastmod, pth
 		
 		if not dry_run:
 			print "Generating __version__.py"
