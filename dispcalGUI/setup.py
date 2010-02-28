@@ -479,7 +479,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		attrs["setup_requires"] = ["py2app"]
 
 	if do_py2exe:
-		from winmanifest import getmanifestxml
+		from winmanifest_util import getmanifestxml
 		manifest_xml = getmanifestxml(os.path.join(pydir, "..", "misc", 
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
@@ -887,7 +887,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 												  # "pyinstaller"))
 				
 				# from icon import CopyIcons
-				# from manifest import UpdateManifestResourcesFromXMLFile
+				# from winmanifest import UpdateManifestResourcesFromXMLFile
 				# from versionInfo import SetVersion
 				# from winmanifest import mktempmanifest
 				# from winversion import mktempver

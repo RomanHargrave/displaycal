@@ -5,14 +5,12 @@ import os
 import shutil
 import sys
 
-sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pyinstaller"))
-
-import manifest
+import winmanifest
 
 name = "Microsoft.VC90.CRT"
 
 def vc90crt_find_files():
-	return manifest.Manifest(
+	return winmanifest.Manifest(
 		processorArchitecture = "x86",
 		name = name,
 		publicKeyToken = "1fc8b3b9a1e18e3b",

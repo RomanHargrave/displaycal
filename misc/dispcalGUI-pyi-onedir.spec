@@ -9,7 +9,7 @@ wxversion.ensureMinimal("2.8")
 
 if sys.platform in ("cygwin", "win32"):
 	sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "util"))
-	from winmanifest import mktempmanifest
+	from winmanifest_util import mktempmanifest
 	from winversion import mktempver
 	manifestpath = mktempmanifest(os.path.join("misc", name + 
 		(".exe.VC90.manifest" if hasattr(sys, "version_info") and 

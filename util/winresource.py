@@ -17,12 +17,12 @@
 # Foundation, Inc., 51 Franklin Street, 5th Floor, Boston, MA 02110-1301, USA
 
 """
-resource.py
+winresource.py
 
 Read and write resources from/to Win32 PE files.
 
 Commandline usage:
-resource.py <dstpath> <srcpath>
+winresource.py <dstpath> <srcpath>
 Updates or adds resources from file <srcpath> in file <dstpath>.
 
 2009-03 Florian Hoech
