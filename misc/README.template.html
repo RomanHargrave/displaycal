@@ -73,9 +73,6 @@
 		code.applescript .string {
 			color: black;
 		}
-		/* strong {
-			color: black;
-		} */
 		#issues ul {
 			margin-bottom: 1.5em;
 		}
@@ -147,9 +144,6 @@
 		}
 		html#dispcalGUI h4 {
 			font-size: 1.1em;
-		}
-		ol, #content ul {
-			/* color: #666666; */
 		}
 		ol {
 			font-family: Verdana, Arial, sans-serif;
@@ -248,6 +242,7 @@
 		#content dd ul {
 			list-style: disc outside;
 			margin-left: 15px;
+			margin-bottom: 1em;
 		}
 		div.box {
 			background: #F0FEF0;
@@ -460,7 +455,7 @@
 			WITHOUT ANY WARRANTY; without even the implied warranty of 
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 			
-			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[5]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> on all platforms, <a href="http://pypi.python.org/pypi/bbfreeze">bbfreeze</a> on Linux/Windows, <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X, <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows, or an included, modified version of <a href="http://pyinstaller.org/">pyinstaller</a> trunk on Linux/Windows (see pyinstaller/README1ST.txt for a list of changes to the stock version). All of these software packages are © by their respective authors.</p>
+			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[5]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
 		</div>
 		
 		<div id="download">
@@ -481,7 +476,7 @@
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-${VERSION_SRC}.tar.gz">Tarball</a></p>
 			<p>
-				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the code is in constant flow, things may break from one hour to the other. Use at your own risk. 
+				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
 		</div>
 		
@@ -577,38 +572,48 @@
 				
 				<p>You can <a href="#install">skip</a> this section if you downloaded a standalone executable of dispcalGUI for your operating system and do not want to install any of the python package releases or compile from source.</p>
 				
-				<p>All platforms:<br />
-				- <a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. Mac OS X users: If you want to compile dispcalGUI from source, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)<br />
-				- <a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit</p>
+				<p>All platforms:</p>
+				<ul>
+					<li><a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. Mac OS X users: If you want to compile dispcalGUI from source, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
+					<li><a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit</li>
+				</ul>
 				
-				<p>Mac OS X:<br />
-				- <a href="http://appscript.sourceforge.net/py-appscript/">py-appscript</a></p>
+				<p>Mac OS X:</p>
+				<ul>
+					<li><a href="http://appscript.sourceforge.net/py-appscript/">py-appscript</a></li>
+				</ul>
 				
-				<p>Windows:<br />
-				- <a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a><br />
-				- <a href="http://sourceforge.net/projects/pywin32/">pywin32</a></p>
+				<p>Windows:</p>
+				<ul>
+					<li><a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a></li>
+					<li><a href="http://sourceforge.net/projects/pywin32/">pywin32</a></li>
+				</ul>
 				
-				<p>Optional for all platforms:<br />
-				- <a href="http://numpy.scipy.org/">NumPy</a> (when installed, it enables the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> Viewer)</p>
+				<p>Optional for all platforms:</p>
+				<ul>
+					<li><a href="http://numpy.scipy.org/">NumPy</a> (when installed, it enables the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> Viewer)</li>
+				</ul>
 				
 				<h4>Additional prerequisites for compiling</h4>
 				
 				<p>You can <a href="#install">skip</a> this section if you downloaded a python package of dispcalGUI for your operating system and do not want to compile from source.</p>
 				
-				<p>Linux:<br />
-				- GCC and development headers for Python + X11 + Xrandr + Xinerama + Xxf86vm if not already installed, they should be available through your distribution's packaging system.<br />
-				- <a href="http://pypi.python.org/pypi/bbfreeze/">bbfreeze</a> if you want to build a standalone executable (optional), alternatively you can use the included pyinstaller (see <a href="#install-src">installation from source</a>, additional setup.py commands)</p>
+				<p>Linux:</p>
+				<ul>
+					<li>GCC and development headers for Python + X11 + Xrandr + Xinerama + Xxf86vm if not already installed, they should be available through your distribution's packaging system</li>
+				</ul>
 				
-				<p>Mac OS X:<br />
-				- <a href="http://developer.apple.com/TOOLS/xcode/">XCode</a><br />
-				- <a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable (install setuptools first: <code>sudo python util/ez_setup.py -Z setuptools</code>). NOTE: If you want to use py2app with Python 2.6 you need to install the development version of py2app and modulegraph from <acronym title="Subversion">SVN<sup><a href="#definition_JSON">[5]</a></sup></acronym>:<br />
-					<code>easy_install modulegraph==dev<br />
-					easy_install py2app==dev</code>
-				</p>
+				<p>Mac OS X:</p>
+				<ul>
+					<li><a href="http://developer.apple.com/TOOLS/xcode/">XCode</a></li>
+					<li><a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable (install setuptools first: <code>sudo python util/ez_setup.py -Z setuptools</code>)</li>
+				</ul>
 				
-				<p>Windows:<br />
-				- a C-compiler (e.g. <a href="http://www.microsoft.com/germany/Express/product/visualcplusplusexpress.aspx">MS Visual C++ Express</a> or <a href="http://www.mingw.org">MinGW</a>. If you're using Python 2.6 I'd recommend Visual C++ Express as it works out of the box)<br />
-				- <a href="http://pypi.python.org/pypi/py2exe/">py2exe</a> if you want to build a standalone executable, alternatively you can use the included pyinstaller (see <a href="#install-src">installation from source</a>, additional setup.py commands)</p>
+				<p>Windows:</p>
+				<ul>
+					<li>a C-compiler (e.g. <a href="http://www.microsoft.com/germany/Express/product/visualcplusplusexpress.aspx">MS Visual C++ Express</a> or <a href="http://www.mingw.org">MinGW</a>. If you're using Python 2.6 I'd recommend Visual C++ Express as it works out of the box)</li>
+					<li><a href="http://pypi.python.org/pypi/py2exe/">py2exe</a> if you want to build a standalone executable</li>
+				</ul>
 				
 				<p>You can run directly from (compiled) source without installation if you want. To do this, you need to build the extension modules “in-place”:</p>
 			
@@ -662,14 +667,12 @@
 					<dt>bdist_deb (Linux/Debian-based)</dt>
 						<dd>Create an installable Debian (.deb) package, much like the standard distutils command bdist_rpm for RPM packages. Prerequisites:
 						You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example).</dd>
-					<dt>bdist_pyi (Linux or Windows)</dt>
-						<dd>Uses pyinstaller to create a standalone executable. It has the ability to generate single-file executables (by specifying the -F option) which do not need to be shipped with external files. The drawback is a longer startup time, because the files are extracted to a temporary directory at runtime. Normally, you want to use bdist_standalone instead.</dd>
 					<dt>bdist_standalone</dt>
 						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, py2app is not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files.</dd>
 					<dt>inno (Windows only)</dt>
 						<dd>Creates an Inno Setup install script for an executable created with the py2exe or bdist_standalone commands.</dd>
 					<dt>purge</dt>
-						<dd>Removes the <code>build</code>, <code>dispcalGUI.egg-info</code> and <code>pyinstaller/bincache*</code> directories and their contents.</dd>
+						<dd>Removes the <code>build</code>, <code>dispcalGUI.egg-info</code> directories and their contents.</dd>
 					<dt>purge_dist</dt>
 						<dd>Removes the <code>dist</code> directory and its contents.</dd>
 					<dt>readme</dt>
@@ -716,7 +719,7 @@
 			still need to be used together to get correct results. This can lead to some ambiguity, 
 			because loading the calibration curves from the profile is generally the 
 			responsibility of a third party utility or the OS (currently, the only OS that 
-			applies calibration curves out-of-the-box is Mac OS X), while applications using 
+			applies calibration curves out-of-the-box is Mac OS X—for other OS's, dispcalGUI takes care of creating an appropriate loader), while applications using 
 			the profile to do color transforms usually rely on the calibration being already 
 			loaded. Even non-color-managed applications will benefit from a loaded 
 			calibration because it is stored in the graphics card—it is “global”. But the calibration alone will not yield accurate colors—only fully color-managed applications will make use of display 
@@ -741,8 +744,8 @@
 			
 			<div id="settingsfile">
 				<h3>Settings file</h3>
-				<p>Here, you can load a <code>.cal</code> or <code>.icc/.icm</code> file from a previous 
-				run (the dropdown box will remember up to 15, including the presets). This will set options to 
+				<p>Here, you can load a calibration (<code>.cal</code>) or ICC profile (<code>.icc</code> / <code>.icm</code>) file from a previous 
+				run. This will set options to 
 				those stored in the file and also load
 				calibration curves (if any) into the video card. If the file contains only a subset of settings, you will get a message showing which settings were loaded.</p>
 				
@@ -767,7 +770,7 @@
 				<h3>Predefined settings (presets)</h3>
 				<p>Starting with dispcalGUI v0.2.5b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
 				<h4>Why has a default gamma of 2.4 been chosen for the presets?</h4>
-				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons.</p>
+				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons. You can run “Report on uncalibrated display device” from the “Extra” menu to measure the approximated overall gamma among other info.</p>
 			</div>
 			
 			<div id="display_instrument">
@@ -788,11 +791,17 @@
 					<dt>White point</dt>
 						<dd>
 							<p>Allows setting the target white point locus to the equivalent of a daylight or black body spectrum of the given temperature in degrees Kelvin, or as chromaticity co-ordinates. By default the white point target will be the native white of the display, and it's color temperature and delta E to the daylight spectrum locus will be shown during monitor adjustment, and adjustments will be recommended to put the display white point directly on the Daylight locus. If a daylight color temperature is given, then this will become the target of the adjustment, and the recommended adjustments will be those needed to make the monitor white point meet the target. Typical  values might be 5000 for matching printed output, or 6500, which gives a brighter, bluer look. A white point temperature different to that native to the display may limit the maximum brightness possible.</p>
+							
+							<p>If you want to find out the current uncalibrated whitepoint of your display, you can run “Report on uncalibrated display device” from the “Extra” menu to measure it.</p>
+							
+							<p>If you want to adjust the whitepoint to the chromaticities of your ambient lighting, or those of a viewing booth as used in prepress and photography, and your measurement device has ambient measuring capability (e.g. like the i1 Pro or i1display2 with their respective ambient measurement heads), you can use the “Measure” button next to the whitepoint settings. If you want to measure ambient lighting, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation.</p>
 						</dd>
 					
 					<dt>White level</dt>
 						<dd>
 							<p>Set the target brightness of white in cd/m<sup>2</sup>. If this number cannot be reached, the brightest output possible is chosen, consistent with matching the white point target. Note that many of the instruments are not particularly accurate when assessing the absolute display brightness in cd/m<sup>2</sup>. NOTE that some LCD screens behave a little strangely near their absolute white point, and may therefore exhibit odd behavior at values just below white. It may be advisable in such cases to set a brightness slightly less than the maximum such a display is capable of.</p>
+							
+							<p>If you want to find out the current uncalibrated white level of your display, you can run “Report on uncalibrated display device” from the “Extra” menu to measure it.</p>
 						</dd>
 					
 					<dt>Black level</dt>
@@ -804,7 +813,19 @@
 						<dd>							
 							<p>The target response curve gamma is normally an exponential curve (output = input<sup>gamma</sup>), and defaults to 2.4 (which is typical of a CRT type displays real response). Four pre-defined curves can be used as well: the sRGB colorspace response curve, which is an exponent curve with a straight segment at the dark end and an overall response of approximately gamma 2.2, the L* curve, which is the response of the CIE L*a*b* perceptual colorspace, the Rec. 709 video standard response curve and the SMPTE 240M video standard response curve.</p>
 							
-							<p>For gamma values, you can also specify wheter it should be interpreted relative, meaning the gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve, or absolute, which allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value.</p>
+							<p>Note that a real display can't reproduce any of these ideal curves, since it will have a non-zero black point, whereas all the ideal curves assume zero light at zero input. For gamma values, you can also specify wheter it should be interpreted relative, meaning the gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve, or absolute, which allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value. To allow for the non-zero black level of a real display, by default the target curve values will be offset so that zero input gives the actual black level of the display (output offset). This ensures that the target curve better corresponds to the typical natural behavior of displays, but it may not be the most visually even progression from display minimum. This behavior can be changed using the black output offset option (see further below).</p>
+
+							<p>Also note that many color spaces are encoded with, and labelled as having a gamma of approximately 2.2 (ie. sRGB, REC 709, SMPTE 240M, Macintosh OS X 10.6), but are actually intended to be displayed on a display with a typical CRT gamma of 2.4 viewed in a darkened environment. This is because this 2.2 gamma is a source gamma encoding in bright viewing conditions such as a television studio, while typical display viewing conditions are quite dark by comparison, and a contrast expansion of (approx.) gamma 1.1 is desirable to make the images look as intended. So if you are displaying images encoded to the sRGB standard, or displaying video through the calibration, just setting the gamma curve to sRGB or REC 709 (respectively) is probably not what you want! What you probably want to do, is to set the gamma curve to about gamma 2.4, so that the contrast range is expanded appropriately, or alternatively use sRGB or REC 709 or a gamma of 2.2 but also specify the actual ambient viewing conditions via a light level in Lux, so that an appropriate contrast enhancement can be made during calibration. If your instrument is capable of measuring ambient light levels, then you can do so.<br />
+							[For in-depth technical information about sRGB, see “<a href="http://www.color.org/sRGB.xalter">A Standard Default Color Space for the Internet: sRGB</a>” at the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> website for details of how it is intended to be used]</p>
+							
+							<p>If you're wondering what gamma value you should use, you can run “Report on uncalibrated display device” from the “Extra” menu to measure the approximated overall gamma among other info. Setting the gamma to the reported value can then help to reduce calibration artifacts like banding, because the adjustments needed for the video card's LUT curves should not be as strong as if a gamma further away from the display's native response was chosen.</p>
+						</dd>
+					
+					<dt>Ambient light level</dt>
+						<dd>						
+							<p>As explained for the tone curve settings, often colors are encoded in a situation with viewing conditions that are quite different to the viewing conditions of a typical display, with the expectation that this difference in viewing conditions will be allowed for in the way the display is calibrated. The ambient light level option is a way of doing this. By default calibration will not make any allowances for viewing conditions, but will calibrate to the specified response curve, but if the ambient light level is entered or measured (which you may also do during the interactive display controls portion of the calibration), an appropriate viewing conditions adjustment will be performed. For a gamma value or sRGB, the original viewing conditions will be assumed to be that of the sRGB standard viewing conditions, while for REC 709 and SMPTE 240M they will be assumed to be television studio viewing conditions. By specifying or measuring the ambient lighting for your display, a viewing conditions adjustment based on the CIECAM02 color appearance model will be made for the brightness of your display and the contrast it makes with your ambient light levels.</p>
+							
+							<p>Please note your measurement device needs ambient measuring capability (e.g. like the i1 Pro or i1display2 with their respective ambient measurement heads) to measure the ambient light level.</p>
 						</dd>
 					
 					<dt>Black output offset</dt>
@@ -837,10 +858,43 @@
 			
 				<dl>
 					<dt>Testchart file</dt>
-						<dd>You can choose the test patches used when profiling the display here. There are some pre-built ones in the <code>ti1</code> folder (which are automatically chosen based on display type and profile type), but you can also use and create your own using the built-in testchart editor (click on the colored patches next to the testchart file selector or choose “Edit testchart...” from the “File” menu to launch it).</dd>
+						<dd>You can choose the test patches used when profiling the display here. The default ones are automatically chosen based on profile quality and type, but you can also use and create your own using the built-in testchart editor (click on the colored patches next to the testchart file selector or choose “Edit testchart...” from the “File” menu to launch it).</dd>
 						
+					<dt>Testchart editor</dt>
+						<dd>
+							<p>Normally you will not need or want to create your own test charts, but allowing you to do so ensures maximum flexibility when characterizing a display.</p>
+							
+							<p>You can enter the amount of patches to be generated for each patch type (white, gray, single channel, iterative and multidimensional cube steps). The iterative algorythm can be tuned if more than zero patches are to be generated. What follows is a quick description of the several available iterative algorythms, with “device space” meaning in this case RGB coordinates, and “perceptual space” meaning the (assumed) XYZ numbers of those RGB coordinates. The assumed XYZ numbers can be influenced by providing a previous profile, thus allowing optimized test point placement.</p>
+							
+							<ul>
+								<li>Optimized Farthest Point Sampling (OFPS) will optimize the point locations to minimize the distance from any point in device space to the nearest sample point</li>
+								<li>Incremental Far Point Distribution incrementally searches for test points that are as far away as possible from any existing points</li>
+								<li>Device space random chooses test points with an even random distribution in device space</li>
+								<li>Perceptual space random chooses test points with an even random distribution in perceptual space</li>
+								<li>Device space filling quasi-random chooses test points with a quasi-random, space filling distribution in device space</li>
+								<li>Perceptual space filling quasi-random chooses test points with a quasi-random, space filling distribution in perceptual space</li>
+								<li>Device space body centered cubic grid chooses test points with body centered cubic distribution in device space</li>
+								<li>Perceptual space body centered cubic grid chooses test points with body centered cubic distribution in perceptual space</li>
+							</ul>
+							
+							<p>You can set the degree of adaptation to the known device characteristics used by the default full spread OFPS algorithm. A preconditioning profile should be provided if adaptation is set above a low level. By default the adaptation is 10% (low), and should be set to 100% (maximum) if a profile is provided. But, if for instance, the preconditioning profile doesn't represent the device behavior very well, a lower adaption than 100% might be appropriate.</p>
+							
+							<p>For the body centered grid distributions, the angle parameter sets the overall angle that the grid distribution has.</p>
+							
+							<p>The “limit samples to sphere” option is used to define an L*a*b* sphere to filter the test points through. Only test points within the sphere (defined by it's center and radius) will be in the generated testchart. This can be good for targeting supplemental test points at a troublesome area of a device. The accuracy of the L*a*b* target will be best when a reasonably accurate preconditioning profile for the device is chosen. Note that the actual number of points generated can be hard to predict, and will depend on the type of generation used. If the OFPS, device and perceptual space random and device space filling quasi-random methods are used, then the target number of points will be achieved. All other means of generating points will generate a smaller number of test points than expected. For this reason, the device space filling quasi-random method is probably the easiest to use.</p>
+							
+							<p>Controls for the spreadsheet-like patch editor are as follows:</p>
+							<ul>
+								<li>To select patches, click and drag the mouse over table cells, or hold SHIFT (select range) or CTRL/CMD (add/remove single cells/rows to/from selection)</li>
+								<li>To add a patch below an existing one, double-click a row label</li>
+								<li>To delete patches, select them, then hold CTRL (Linux, Windows) or CMD (Mac OS X) and hit DEL or BACKSPACE (will always delete whole rows even if only single cells are selected)</li>
+								<li>CTRL-C/CTRL-V/CTRL-A = copy/paste/select all</li>
+							</ul>
+							<p>If you want to insert a certain amount of patches generated in a spreadsheet application (as RGB coordinates in the range 0.0-100.0 per channel), the easiest way to do this is probably to copy the values from the spreadsheet app, entering the testchart editor, generating a corresponding amount of patches and then overwriting them by doing CTRL-A, CTRL-V.</p>
+						</dd>
+					
 					<dt>Profile quality</dt>
-						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Color Look Up Table">cLUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> profiles), it sets the main lookup table size, and hence quality in the resulting profile. It is highly recommended that medium quality be used as a starting point, and other settings only tried after this has been evaluated. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
+						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Color Look Up Table">cLUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> profiles), it sets the main lookup table size, and hence quality in the resulting profile. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
 			
 					<dt>Profile type</dt>
 						<dd>
@@ -852,6 +906,17 @@
 							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS >= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped R ↔ G matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
 							
 							<p>Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-based profiles might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves, but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-based and matrix-based profiles can include video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves.</p>
+						</dd>
+						
+					<dt>Advanced gamut mapping options</dt>
+						<dd>
+							<p>Normally, profiles created by dispcalGUI only incorporate the colorimetric rendering intent, which means colors outside the display's gamut will be clipped to the next in-gamut color. LUT-type profiles can also have gamut mapping by implementing perceptual and/or saturation rendering intents. You can choose if and which of those you want after clicking “Advanced...”, by specifying a source profile and marking the appropriate checkboxes. Note that a input, output, display or device colororspace profile should be specified as source, not a non-device colorspace, device link, abstract or named color profile. You can also choose viewing conditions which describe the intended use of both the source and the display profile that is to be generated. An appropriate source viewing condition is chosen automatically based on the source profile type.</p>
+							
+							<p>For more information on why a source gamut is needed, see “<a href="http://argyllcms.com/doc/iccgamutmapping.html">About ICC profiles and Gamut Mapping</a>” in the Argyll CMS documentation.</p>
+							
+							<p>One strategy for getting the best perceptual results with display profiles is as follows: Select a CMYK profile as source for gamut mapping. Then, when converting from another RGB profile to the display profile, use relative colorimetric intent, and if converting from a CMYK profile, use the perceptual intent.<br />
+							Another approach which especially helps limited-gamut displays is to choose one of the larger (gamut-wise) source profiles you usually work with for gamut mapping, and then always use perceptual intent when converting to the display profile.<br />
+							Please note that not all applications support setting a rendering intent for display profiles and might default to colorimetric (e.g. Photoshop normally uses relative colorimetric with black point compensation, but can use different intents via custom soft proofing settings).</p>
 						</dd>
 			
 					<dt>Profile name</dt>
@@ -940,9 +1005,9 @@
 						<dd>Resets any video card LUT curves to linear, such that input = output.</dd>
 						
 					<dt>Report on calibrated display device</dt>
-						<dd>Does some quick measurements, <em>not</em> first resetting any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
+						<dd>Does some quick measurements, keeping any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
 						
-					<dt>Report on calibrated display device</dt>
+					<dt>Report on uncalibrated display device</dt>
 						<dd>Does some quick measurements, first resetting any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card LUT bit depth.</dd>
 						
 					<dt>Verify calibration</dt>
@@ -979,58 +1044,48 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<h2>Known issues and solutions</h2>
 			
 			<ul>
-				<li><a href="#issue-win64-driversigenforcement">Under Windows Vista/7 64-bit, driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
-				<li><a href="#issue-win-calload">Under Windows Vista/7, the installed display profile calibration cannot be loaded</a></li>
-				<li><a href="#issue-win-uac">Under Windows Vista, the calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
-				<li><a href="#issue-win-spyder2">Under Windows, enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
-				<li><a href="#issue-mac-pscursor">Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush)</a></li>
-				<li><a href="#issue-linux-lutaccess">No video LUT access under Linux/X11 (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
-				<li><a href="#issue-linux-gtktheme">Under <em>some</em> Linux distributions, with <em>some</em> GTK themes, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal</a></li>
-				<li><a href="#issue-english">Some text is still in english, even though another language is selected in the menu</a></li>
-				<li><a href="#issue-linux-kdeqt">The application does not look native under Linux with KDE</a></li>
+				<li><a href="#issue-redgreenswapped">General: Wacky image colors (red and green swapped)</a></li>
+				<li><a href="#issue-win-photoshop-monprofdefect">Photoshop: “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</a></li>
+				<li><a href="#issue-win64-driversigenforcement">MS Windows Vista and 7, 64-bit: Driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
+				<li><a href="#issue-win-calload">MS Windows Vista and 7: The installed display profile calibration cannot be loaded</a></li>
+				<li><a href="#issue-win-uac">MS Windows Vista: The calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
+				<li><a href="#issue-win-spyder2">MS Windows: Enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
+				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
+				<li><a href="#issue-linux-lutaccess">Linux: No video LUT access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
+				<li><a href="#issue-linux-kdeqt">Linux (KDE): The application does not look native</a></li>
+				<li><a href="#issue-english">General: Some text is still in english, even though another language is selected</a></li>
 			</ul>
 			
-			<p id="issue-win64-driversigenforcement"><span class="q"><span>Issue:</span> Under Windows Vista/7 64-bit, driver signature enforcement prevents the installation of unsigned Argyll USB drivers.<br /></span>
+			<p id="issue-redgreenswapped"><span class="q"><span>General:</span> Wacky image colors (red and green swapped)<br /></span>
+			<span class="a"><span>Solution:</span> This happens when you created a “XYZ LUT + R ↔ G swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Extra” menu and select the profile you had the issue with.</span></p>
+			
+			<p id="issue-win-photoshop-monprofdefect"><span class="q"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”<br /></span>
+			<span class="a"><span>Solution:</span> If you see a similar message when launching Photoshop, with the options “use profile regardless” and “ignore profile”, I'd try to “use profile regardless” as I've seen this message appearing even with perfectly good profiles. The exact cause of this issue is still unbeknownst to me, and there is quite a lot, sometimes contradicting information to be found about this or similar issues on the web. <a href="http://kb2.adobe.com/cps/328/328054.html">Adobe has some information</a>, but it seems rather outdated. If you can shed light on this issue, I'd be interested to hear about it.</span></p>
+			
+			<p id="issue-win64-driversigenforcement"><span class="q"><span>MS Windows Vista and 7, 64-bit:</span> Driver signature enforcement prevents the installation of unsigned Argyll USB drivers<br /></span>
 			<span class="a"><span>Solution:</span> Beginning with Argyll CMS &gt;= 1.1.0, you may use one of the following workarounds. One method is to self sign the drivers and put your system in test mode. The procedure for doing this is a little complicated though, and beyond the scope of this documentation. You might want to refer to “<a href="http://nil-techno.blogspot.com/2008/08/installing-unsigned-drivers-on-vista-64.html">installing unsigned drivers on Vista 64</a>”. If you take this path then make sure you sign the libusb0.sys and libusb0_x86.sys files in the Argyll_VX.X.X/libusbw directory <strong>before</strong> you install the device, otherwise you will have to remove &amp; delete the driver using device manager, and also manually delete the libusb0 and libusb0_x86 .sys and .dll files from Windows\system32, Windows\System32\drivers and Windows\SysWOW64 and start again.<br />
 			If you don't want/can't sign the driver files or enable test mode, another workaround is to allow loading unsigned drivers by pressing F8 when the system boots, and selecting the boot option to “Disable Driver Signature Enforcement”. Note that you have to do this <strong>every time</strong> you boot and want to use the USB instruments (you may still get a warning about an unsigned driver not being loaded after plugging the instrument in, booting or installing the driver, but take these messages with a grain of salt, and check in device manager and also whether the instruments are actually accessible).</span></p>
 			
-			<p id="issue-win-calload"><span class="q"><span>Issue:</span> Under Windows Vista/7, the installed display profile calibration cannot be loaded.<br /></span>
+			<p id="issue-win-calload"><span class="q"><span>MS Windows Vista and 7:</span> The installed display profile calibration cannot be loaded<br /></span>
 			<span class="a"><span>Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management”. Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
 			
-			<p id="issue-win-uac"><span class="q"><span>Issue:</span> Under Windows Vista, the calibration gets unloaded when a “User Access Control” prompt is shown.<br /></span>
+			<p id="issue-win-uac"><span class="q"><span>MS Windows Vista:</span> The calibration gets unloaded when a “User Access Control” prompt is shown.<br /></span>
 			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Extra” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
 			
-			<p id="issue-win-spyder2"><span class="q"><span>Issue:</span> Under Windows, enabling the Spyder 2 colorimeter might fail when not running as administrator.<br /></span>
-			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click the executable and choose “Run as administrator...”</span></p>
+			<p id="issue-win-spyder2"><span class="q"><span>MS Windows:</span> Enabling the Spyder 2 colorimeter might fail when not running as administrator<br /></span>
+			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
 			
-			<p id="issue-mac-pscursor"><span class="q"><span>Issue:</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
-			<span class="a"><span>Solution:</span> This seems to be a Photoshop bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (probably the source profile you use most often) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, choose “Create profile from measurement data...” from the “Extra” menu. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
+			<p id="issue-mac-pscursor"><span class="q"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
+			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Extra” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
 				
-			<p id="issue-linux-lutaccess"><span class="q"><span>Issue:</span> No video LUT access under Linux/X11 (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
-			<span class="a"><span>Solution:</span> Please refer to <a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a> and “Fixing access to Video LUTs” therein.</span></p>
+			<p id="issue-linux-lutaccess"><span class="q"><span>Linux:</span> No video LUT access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
+			<span class="a"><span>Solution:</span> Please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein.</span></p>
 			
-			<div id="issue-linux-gtktheme" class="p"><span class="q"><span>Issue:</span> Under <em>some</em> Linux distributions, with <em>some</em> GTK themes, when opening a file selector, “Gtk-Message: ...” strings appear in the terminal.<br /></span>
-			<div class="a"><span>Solution:</span> These messages are generated from GTK and hint to certain unsupported features in a GTK theme file, I have no influence on them, but they can be safely ignored if the full message is something like “Gtk-Message: (for origin information, set GTK_DEBUG): failed to retrieve property `GtkTreeView::odd-row-color'”. If they really bother you and you don't mind using the shell and editing files by hand, you can get rid of these messages by changing the involved GTK theme file:
-			<ol>
-				<li>Open a shell and type <code>export GTK_DEBUG=1</code></li>
-				<li>Run dispcalGUI and open a file selector.</li>
-				<li>In the familiar message, the path to the involved theme file should now be displayed.</li>
-				<li>Open that theme file in a text editor (you might need elevated rights to be able to edit it) and navigate to the line that was also shown in the message.</li>
-				<li>Replace the color value so that it is no longer a function call, e.g. if the old line was:<br />
-					<code>GtkTreeView::odd-row-color = shade(0.9, @base_color)</code><br />
-					then change it to (look up a suitable color value in the file or specify your own):<br />
-					<code>GtkTreeView::odd-row-color = "#eeeeee"</code>
-				</li>
-				<li>Save the theme file &amp; exit the text editor.</li>
-				<li>Restart dispcalGUI and open a file selector to check if the message is gone.</li>
-				<li>Open a shell and type <code>unset GTK_DEBUG</code></li>
-			</ol></div></div>
-			
-			<p id="issue-english"><span class="q"><span>Issue:</span> Some text is still in english, even though another language is selected in the menu.<br /></span>
-			<span class="a"><span>Remark:</span> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</span></p>
-			
-			<p id="issue-linux-kdeqt"><span class="q"><span>Issue:</span> The application does not look native under Linux with KDE.<br /></span>
+			<p id="issue-linux-kdeqt"><span class="q"><span>Linux (KDE):</span> The application does not look native<br /></span>
 			<span class="a"><span>Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4).</span></p>
+			
+			<p id="issue-english"><span class="q"><span>General:</span> Some text is still in english, even though another language is selected in the menu.<br /></span>
+			<span class="a"><span>Solution:</span> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</span></p>
 		</div>
 		
 		<div id="todo">
@@ -1070,6 +1125,37 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC)</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Capability to set whitepoint or ambient light level for viewing condition adjustment by measuring ambient light.</li>
+							<li>Profile name %tpa placeholder (test patch amount).</li>
+							<li>Documentation for ambient light level viewing conditions adjustment, advanced profiling options (gamut mapping) and testchart editor in the ReadMe. Also a few additions to the existing whitepoint/white level and tone curve documentation (mostly taken from the Argyll CMS documentation).</li>
+							<li>Two entries to the <a href="#issues">known issues &amp; solutions</a> section in the ReadMe (swapped colors and Photoshop “Monitor profile appears to be defective”).</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><strong>New improved testcharts and presets, with lower patch counts:</strong> 12 patches default for gamma+matrix profiles, 48 patches default for curves+matrix profiles (former chart had 91 patches), 124 patches default for LUT profiles which should actually be usable this time around when coupled with a profile quality setting of “high”, unlike its predecessor with 127 patches which yielded mediocre results at best (but for increased accuracy, the new 238-patch “extended” testchart is recommended). 396 and 2386-patch charts (the new “large” and “massive” quantity) are also included.</li>
+							<li>Default to high profile quality (and force for gamma+matrix profiles, as there is no processing penalty like for curves+matrix or LUT profiles).</li>
+							<li>Removed limit for remembered settings files.</li>
+							<li>When calibration or profiling measurements fail, first show the main application window, then the error message (small dialog boxes are sometimes hard to spot on big screens if the application context is missing).</li>
+							<li>Moved profile quality, type and advanced settings above testchart selector (this order is more logical, as profile quality and type influences testchart selection).</li>
+							<li>Testchart editor: Default to adaption of 10% for testchart creation using optimized farthest point sampling (OFPS). Support both device and Lab diagnostic VRML files when creating testcharts using Argyll >= 1.1.0. No longer calculate the amount of white/gray/single color patches or multidimensional cube steps if info is missing in TI1 file (calculations take way too long for little added benefit).</li>
+							<li>Cleaned up the <a href="#issues">known issues &amp; solutions</a> section in the ReadMe.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Wrong value for adaption settings in testchart editor being stored.</li>
+							<li>Linux (cosmetic): Incorrect special characters in console window when using non-english locale under certain configurations (regression of a change introduced in 0.3.0.7).</li>
+							<li>Non-critical: File information in Argyll CGATS TI1 to TI3 conversion.</li>
+							<li>Testchart editor: Do not allow overwriting of predefined testcharts when saving. Correctly remember last used filename when “saving as...”.</li>
+							<li>Log window: Correctly remember last used filename when saving.</li>
+							<li>Typo in the ReadMe (the second “Report on calibrated display device” entry under “<a href="#menu">Menu commands</a>” should have been “Report on <strong>un</strong>calibrated display device”).</li>
+						</ul>
+					</dd>
+				
+				<dt>2010-02-17 15:53 (UTC)</dt>
+					<dd>
+						<h3>0.3.1.0</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Running “Calibrate &amp; profile” several times in succession no longer fails on the 2nd and subsequent runs.</li>
@@ -1091,7 +1177,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>0.3.0.8</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li><a href="https://sourceforge.net/tracker/?func=detail&aid=2951168&group_id=257092&atid=1127028">#2951168</a> Windows: Critical bug with win32 API calls to get the display name returning 8-bit characters where only ASCII was expected.</li>
+							<li><a href="https://sourceforge.net/tracker/?func=detail&amp;aid=2951168&amp;group_id=257092&amp;atid=1127028">#2951168</a> Windows: Critical bug with win32 API calls to get the display name returning 8-bit characters where only ASCII was expected.</li>
 						</ul>
 					</dd>
 				
