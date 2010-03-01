@@ -2265,14 +2265,21 @@ class MainFrame(BaseFrame):
 			if measurement_mode and not instrument_features.get("spectral"):
 				# Always specify -y for colorimeters
 				args += ["-y" + measurement_mode[0]]
-			result = wexpect.spawn(cmd, args)
+			try:
+				result = wexpect.spawn(cmd, args)
+			except Exception, exception:
+				return exception
 			if not result or not result.isalive():
 				return
 			if self.worker.get_instrument_features().get("sensor_cal"):
 				return result
 			else:
 				phase = "measure_init"
-		if phase is not None and (not result or not result.isalive()):
+		if phase is not None and (not result or isinstance(result, 
+														   Exception) or 
+								  not result.isalive()):
+			if isinstance(result, Exception):
+				log(safe_unicode(result))
 			InfoDialog(self,
 					   msg=lang.getstr("error"), 
 					   ok=lang.getstr("ok"), 
@@ -2300,11 +2307,17 @@ class MainFrame(BaseFrame):
 				phase = "measure_prepare"
 		elif phase == "instcal":
 			# the only optional phase
-			result.send(" ")
+			try:
+				result.send(" ")
+			except Exception, exception:
+				return exception
 			phase = "measure_init"
 		pat = "Hit ESC or Q to exit, any other key to take a reading:"
 		if phase == "measure_init":
-			result.expect(pat)
+			try:
+				result.expect(pat)
+			except Exception, exception:
+				return exception
 			if self.worker.thread_abort:
 				return
 			return result
@@ -2325,20 +2338,29 @@ class MainFrame(BaseFrame):
 							  progress_title=lang.getstr("ambient.measure"))
 			return
 		elif phase == "measure":
-			result.send(" ")
-			result.expect("Place instrument")
+			try:
+				result.send(" ")
+				result.expect("Place instrument")
+			except Exception, exception:
+				return exception
 			if self.worker.thread_abort:
 				return
 			data = result.before if isinstance(result.before, basestring) else ""
 			data = re.sub("[^\t\n\r\x20-\x7f]", "", data).strip()
 			safe_print(os.linesep.join([line.strip() for line in data.splitlines()]))
-			result.expect(pat)
-			result.send("q")
-			result.expect(":")
-			result.send("q")
+			try:
+				result.expect(pat)
+				result.send("q")
+				result.expect(":")
+				result.send("q")
+			except Exception, exception:
+				return exception
 			sleep(.05)
-			if result.isalive():
-				result.terminate(force=True)
+			try:
+				if result.isalive():
+					result.terminate(force=True)
+			except Exception, exception:
+				log(safe_unicode(exception))
 			return data
 		# finish
 		# result = data
