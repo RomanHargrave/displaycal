@@ -987,14 +987,12 @@ class Worker():
 								   stderr=sp.STDOUT)
 				stdin = pwdproc.stdout
 			else:
-				stdin=sp.PIPE ##None
+				stdin = None
 			working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 			while tries > 0:
 				self.subprocess = sp.Popen(cmdline, stdin=stdin, 
 										   stdout=stdout, stderr=stderr, 
 										   cwd=working_dir)
-				if not sudo:
-					self.subprocess.stdin.close()
 				self.retcode = self.subprocess.wait()
 				self.subprocess = None
 				tries -= 1
