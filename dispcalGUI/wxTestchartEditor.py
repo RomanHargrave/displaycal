@@ -904,7 +904,7 @@ class TestchartEditor(wx.Frame):
 					if result == wx.ID_OK:
 						setcfg("testchart.file", path)
 						writecfg()
-				if self.Parent and hasattr(self.Parent, "set_testchart"):
+				if path == getcfg("testchart.file") and self.Parent and hasattr(self.Parent, "set_testchart"):
 					self.Parent.set_testchart(path)
 				if not self.IsBeingDeleted():
 					self.save_btn.Disable()
@@ -1404,6 +1404,7 @@ class TestchartEditor(wx.Frame):
 			for i in range(grid.GetNumberCols() - 1):
 				grid.SetColSize(i, colwidth)
 			grid.SetColSize(grid.GetNumberCols() - 1, 20)
+			self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
 			grid.AppendRows(self.tc_amount)
 			grid.SetRowLabelSize(colwidth)
 			attr = wx.grid.GridCellAttr()
