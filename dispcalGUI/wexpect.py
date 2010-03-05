@@ -1944,6 +1944,7 @@ class Wtty:
         pyargs = ['-c']
         if getattr(sys, 'frozen', False):
             spath.append(os.path.join(dirname, 'library.zip'))
+            spath.append(os.path.join(dirname, 'lib', 'library.zip'))
             pyargs.insert(0, '-S')  # skip 'import site'
         exe = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else sys.executable, ' '.join(pyargs), 
                                 "import sys; sys.path = %r + sys.path; import wexpect; wexpect.main()" % spath)

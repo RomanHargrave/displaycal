@@ -524,8 +524,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			})
 		if setuptools:
 			attrs["setup_requires"] = ["py2exe"]
-		# if not debug:
-			# attrs["zipfile"] = None
+		attrs["zipfile"] = os.path.join("lib", "library.zip")
 
 	if do_uninstall or do_install or bdist_win:
 		distutils.core._setup_stop_after = "commandline"
@@ -867,6 +866,8 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			if do_py2exe:
 				vc90crt_copy_files(os.path.join(dist_dir, 
 												vc90crt_name))
+				vc90crt_copy_files(os.path.join(dist_dir, 
+												"lib"))
 			else:
 				vc90crt_copy_files(os.path.join(dist_dir, 
 												name + "-" + version))
