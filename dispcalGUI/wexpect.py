@@ -89,6 +89,7 @@ try:
             from win32con import *
             from win32gui import *
             import win32api
+            import win32event
             import win32file
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
@@ -1772,7 +1773,10 @@ class spawn_windows (spawn_unix, object):
         s = self.wtty.read_nonblocking(timeout, size)
         
         if s == '':
-            raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
+            if timeout is None:
+                time.sleep(.1)
+            else:
+                raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
         
         if self.logfile is not None:
             self.logfile.write (s)
@@ -1841,12 +1845,9 @@ class spawn_windows (spawn_unix, object):
         may have printed output then called exit(); but, technically, the child
         is still alive until its output is read."""
         
-        if self.isalive():
-            pid, status = os.waitpid(self.pid, 0)
-        else:
-            raise ExceptionPexpect ('Cannot wait for dead child process.')
-
-        self.status = status
+        self.exitstatus = GetExitCodeProcess(self.pid)
+        
+        return self.exitstatus
         
     def isalive(self):
         """Determines if the child is still alive."""
@@ -1915,22 +1916,28 @@ class Wtty:
         while True:
             msg = GetMessage(0, 0, 0)
             childPid = msg[1][2]
-            if childPid or time.time() > ts + self.timeout:
-                break
+            if childPid:
+                try:
+                    self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, False, childPid)
+                except pywintypes.error, e:
+                    log_error(childPid)
+                    log_error(e)
+                    if time.time() > ts + self.timeout:
+                        break
+                else:
+                    break
             time.sleep(.1)
         
-        if childPid == 0:
+        if not self.__childProcess:
             raise ExceptionPexpect ('The process ' + args[0] + ' could not be started.') 
         
-        self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, 0, childPid)
-        
-        self.processList = GetConsoleProcessList()
         winHandle = int(GetConsoleWindow())
         
         self.__switch = True
         
         if winHandle != 0:
             self.__parentPid = GetWindowThreadProcessId(winHandle)[1]    
+            self.processList = GetConsoleProcessList()
         else:
             self.switchTo(False)
             self.__switch = False
@@ -1946,7 +1953,7 @@ class Wtty:
             spath.append(os.path.join(dirname, 'library.zip'))
             spath.append(os.path.join(dirname, 'lib', 'library.zip'))
             pyargs.insert(0, '-S')  # skip 'import site'
-        exe = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else sys.executable, ' '.join(pyargs), 
+        exe = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else os.path.join(os.path.dirname(sys.executable), 'python.exe'), ' '.join(pyargs), 
                                 "import sys; sys.path = %r + sys.path; import wexpect; wexpect.main()" % spath)
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
@@ -2149,7 +2156,7 @@ class Wtty:
                     time.sleep(.2)
             
                 start = time.clock()
-                s = self.readConsoleToCursor()
+                s = self.readConsoleToCursor().replace('\04', ' ')
                 
                 if len(s) != 0:
                     self.switchBack()
@@ -2552,12 +2559,17 @@ class searcher_re (object):
 
 def log_error(e):
     if isinstance(e, Exception):
-        e = traceback.format_exc()     
+        e = traceback.format_exc()
     print e
     if os.access(os.getcwdu(), os.W_OK):
         fout = open('pexpect_error.txt', 'a')
         fout.write(str(e) + '\n')
         fout.close()   
+
+def _excepthook(etype, value, tb):
+	log_error('\n'.join(traceback.format_exception(etype, value, tb)))
+
+sys.excepthook = _excepthook
         
 def which (filename):
 
