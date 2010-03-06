@@ -431,6 +431,7 @@ class spawn_unix (object):
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = True # File-like object.
+        self.ocwd = os.getcwdu()
         self.cwd = cwd
         self.env = env
         self.__irix_hack = (sys.platform.lower().find('irix')>=0) # This flags if we are running on irix
@@ -580,6 +581,8 @@ class spawn_unix (object):
                 os.execv(self.command, self.args)
             else:
                 os.execvpe(self.command, self.args, self.env)
+            if self.cwd is not None:
+                os.chdir(self.ocwd)
 
         # Parent
         self.terminated = False
@@ -1635,6 +1638,7 @@ class spawn_windows (spawn_unix, object):
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = True # File-like object.
+        self.ocwd = os.getcwdu()
         self.cwd = cwd
         self.env = env
 
@@ -1705,6 +1709,10 @@ class spawn_windows (spawn_unix, object):
             os.chdir(self.cwd)
         
         self.child_fd = self.wtty.spawn(self.command, self.args, self.env)
+        
+        if self.cwd is not None:
+            os.chdir(self.ocwd)
+            
         self.terminated = False
         self.closed = False
         self.pid = self.wtty.getpid()
@@ -1920,8 +1928,8 @@ class Wtty:
                 try:
                     self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, False, childPid)
                 except pywintypes.error, e:
-                    log_error(childPid)
-                    log_error(e)
+                    #log_error(childPid)
+                    #log_error(e)
                     if time.time() > ts + self.timeout:
                         break
                 else:
@@ -1953,13 +1961,12 @@ class Wtty:
             spath.append(os.path.join(dirname, 'library.zip'))
             spath.append(os.path.join(dirname, 'lib', 'library.zip'))
             pyargs.insert(0, '-S')  # skip 'import site'
-        exe = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else os.path.join(os.path.dirname(sys.executable), 'python.exe'), ' '.join(pyargs), 
-                                "import sys; sys.path = %r + sys.path; import wexpect; wexpect.main()" % spath)
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
-        commandLine = exe + ' "' + ' '.join(args) + '" ' \
-                      + str(pid) + ' ' + str(tid) + ' spawn'
+        commandLine = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else os.path.join(os.path.dirname(sys.executable), 'python.exe'), ' '.join(pyargs), 
+                                        "import sys; sys.path = %r + sys.path; args = %r; import wexpect; wexpect.ConsoleReader(wexpect.join_args(args), %i, %i)" % (spath, args, pid, tid))
                      
+        #print commandLine
         self.__oproc, _, self.__opid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
                                                                   CREATE_NEW_CONSOLE, env, None, si)
             
@@ -1996,11 +2003,12 @@ class Wtty:
         if not self.__switch:
             return
         
-        FreeConsole()
-        if len(self.processList) > 1:
-            AttachConsole(self.__parentPid)
-        else:
-            AllocConsole()
+        if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+            FreeConsole()
+            if len(self.processList) > 1:
+                AttachConsole(self.__parentPid)
+            else:
+                AllocConsole()
         #AttachConsole(ATTACH_PARENT_PROCESS) ### Only works once?
         
         self.__consin = None
@@ -2115,8 +2123,7 @@ class Wtty:
                 strlist.append('\r')
             elif ord(c) == 9689:
                 strlist.append('\n')
-            elif ord(c) == 9830:
-                #u'\4' == ord( 9830)
+            elif ord(c) == 0:
                 if strlist[-1:] != ['\r\n']:
                     strlist.append('\r\n')
             else:
@@ -2156,7 +2163,7 @@ class Wtty:
                     time.sleep(.2)
             
                 start = time.clock()
-                s = self.readConsoleToCursor().replace('\04', ' ')
+                s = self.readConsoleToCursor()
                 
                 if len(s) != 0:
                     self.switchBack()
@@ -2188,7 +2195,7 @@ class Wtty:
         self.__currentReadCo.X = 0
         self.__currentReadCo.Y = 0
         writelen = self.__consSize[0] * self.__consSize[1]
-        self.__consout.FillConsoleOutputCharacter(u'\4', writelen, orig)
+        self.__consout.FillConsoleOutputCharacter(u'\0', writelen, orig)
         
     
     def setecho(self, state):
@@ -2361,7 +2368,7 @@ class ConsoleReader:
         size = PyCOORDType(80, 16000)
         consout.SetConsoleScreenBufferSize(size)
         pos = consout.GetConsoleScreenBufferInfo()['CursorPosition']
-        consout.FillConsoleOutputCharacter(u'\4', size.X * size.Y, pos)   
+        consout.FillConsoleOutputCharacter(u'\0', size.X * size.Y, pos)   
     
     def suspendThread(self):
         """Pauses the main thread of the child process."""
@@ -2563,7 +2570,8 @@ def log_error(e):
     if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
         print e
     if os.access(os.getcwdu(), os.W_OK):
-        fout = open('pexpect_error.txt', 'a')
+        dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__))
+        fout = open(os.path.join(dirname, 'pexpect_error.txt'), 'a')
         fout.write(str(e) + '\n')
         fout.close()   
 
@@ -2598,6 +2606,16 @@ def which (filename):
         if os.access(f, os.X_OK):
             return f
     return None
+
+def join_args(args):
+    """Joins arguments into a command line. It quotes all arguments that contain
+    spaces or any of the characters ^!$%&()[]"""
+    commandline = []
+    for arg in args:
+        if re.search('[\^!$%&()[\]\s]', arg):
+			arg = '"%s"' % arg
+        commandline.append(arg)
+    return ' '.join(commandline)
 
 def split_command_line(command_line):
 
