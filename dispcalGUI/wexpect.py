@@ -2560,7 +2560,8 @@ class searcher_re (object):
 def log_error(e):
     if isinstance(e, Exception):
         e = traceback.format_exc()
-    print e
+    if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        print e
     if os.access(os.getcwdu(), os.W_OK):
         fout = open('pexpect_error.txt', 'a')
         fout.write(str(e) + '\n')
