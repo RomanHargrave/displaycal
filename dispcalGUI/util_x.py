@@ -13,4 +13,4 @@ def get_display():
 		display, screen = tuple(int(n) for n in display[1].split("."))
 	else:
 		display, screen = 0, 0
-	return host, server, display
+	return hostname, display, screen
