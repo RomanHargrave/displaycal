@@ -89,8 +89,8 @@ try:
             from win32con import *
             from win32gui import *
             import win32api
-            import win32event
             import win32file
+            import winerror
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
 except ImportError, e:
@@ -582,6 +582,7 @@ class spawn_unix (object):
             else:
                 os.execvpe(self.command, self.args, self.env)
             if self.cwd is not None:
+                # Restore the original working dir
                 os.chdir(self.ocwd)
 
         # Parent
@@ -1711,11 +1712,12 @@ class spawn_windows (spawn_unix, object):
         self.child_fd = self.wtty.spawn(self.command, self.args, self.env)
         
         if self.cwd is not None:
+            # Restore the original working dir
             os.chdir(self.ocwd)
             
         self.terminated = False
         self.closed = False
-        self.pid = self.wtty.getpid()
+        self.pid = self.wtty.pid
 
     def fileno (self):   # File-like object.
         """There is no child fd."""
@@ -1782,7 +1784,9 @@ class spawn_windows (spawn_unix, object):
         
         if s == '':
             if timeout is None:
-                time.sleep(.1)
+                # Do not raise TIMEOUT because we might be waiting for EOF
+                # sleep to keep CPU utilization down
+                time.sleep(.05)
             else:
                 raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
         
@@ -1853,14 +1857,30 @@ class spawn_windows (spawn_unix, object):
         may have printed output then called exit(); but, technically, the child
         is still alive until its output is read."""
         
-        self.exitstatus = GetExitCodeProcess(self.pid)
+        if not self.isalive():
+            raise ExceptionPexpect ('Cannot wait for dead child process.')
+        
+        # We can't use os.waitpid under Windows because of 'permission denied' 
+        # exception? Perhaps if not running as admin (or UAC enabled under 
+        # Vista/7). Simply loop and wait for child to exit.
+        while self.isalive():
+            time.sleep(.05)  # Keep CPU utilization down
         
         return self.exitstatus
         
     def isalive(self):
         """Determines if the child is still alive."""
         
-        return self.wtty.isalive()
+        if self.terminated:
+            return False
+        
+        if self.wtty.isalive():
+            return True
+        else:
+            self.exitstatus = GetExitCodeProcess(self.wtty.getchild())
+            self.status = (self.pid, self.exitstatus << 8)  # left-shift exit status by 8 bits like os.waitpid
+            self.terminated = True
+            return False
 
     def getwinsize(self):
         """This returns the terminal window size of the child tty. The return
@@ -1912,8 +1932,11 @@ class Wtty:
         self.__otid = 0
         self.__switch = True
         self.__childProcess = None
-        self.timeout = timeout
+        self.console = False
+        self.pid = None
         self.processList = []
+        # We need a timeout for connecting to the child process
+        self.timeout = timeout
             
     def spawn(self, command, args=[], env=None):
         """Spawns spawner.py with correct arguments."""
@@ -1924,17 +1947,19 @@ class Wtty:
         while True:
             msg = GetMessage(0, 0, 0)
             childPid = msg[1][2]
+            # Sometimes GetMessage returns a bogus PID, so keep calling it
+            # until we can successfully connect to the child or timeout is
+            # reached
             if childPid:
                 try:
                     self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, False, childPid)
                 except pywintypes.error, e:
-                    #log_error(childPid)
-                    #log_error(e)
                     if time.time() > ts + self.timeout:
                         break
                 else:
+                    self.pid = childPid
                     break
-            time.sleep(.1)
+            time.sleep(.05)
         
         if not self.__childProcess:
             raise ExceptionPexpect ('The process ' + args[0] + ' could not be started.') 
@@ -1945,6 +1970,10 @@ class Wtty:
         
         if winHandle != 0:
             self.__parentPid = GetWindowThreadProcessId(winHandle)[1]    
+            self.console = True
+            # If the original process had a console, record a list of attached
+            # processes so we can check if we need to reattach/reallocate the 
+            # console later
             self.processList = GetConsoleProcessList()
         else:
             self.switchTo(False)
@@ -1954,15 +1983,25 @@ class Wtty:
         si = GetStartupInfo()
         si.dwFlags = STARTF_USESHOWWINDOW
         si.wShowWindow = SW_HIDE
+        # Determine the directory of wexpect.py or, if we are running 'frozen'
+        # (eg. py2exe deployment), of the packed executable
         dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__))
         spath = [dirname]
         pyargs = ['-c']
         if getattr(sys, 'frozen', False):
+            # If we are running 'frozen', add library.zip and lib\library.zip
+            # to sys.path
+            # py2exe: Needs appropriate 'zipfile' option in setup script and 
+            # 'bundle_files' 3
             spath.append(os.path.join(dirname, 'library.zip'))
             spath.append(os.path.join(dirname, 'lib', 'library.zip'))
             pyargs.insert(0, '-S')  # skip 'import site'
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
+        # If we are running 'frozen', expect python.exe in the same directory
+        # as the packed executable.
+        # py2exe: The python executable can be included via setup script by 
+        # adding it to 'data_files'
         commandLine = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else os.path.join(os.path.dirname(sys.executable), 'python.exe'), ' '.join(pyargs), 
                                         "import sys; sys.path = %r + sys.path; args = %r; import wexpect; wexpect.ConsoleReader(wexpect.join_args(args), %i, %i)" % (spath, args, pid, tid))
                      
@@ -2003,11 +2042,16 @@ class Wtty:
         if not self.__switch:
             return
         
-        if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        if self.console:
+            # If we originally had a console, re-attach it (or allocate a new one)
+            # If we didn't have a console to begin with, there's no need to
+            # re-attach/allocate
             FreeConsole()
             if len(self.processList) > 1:
+                # Our original console is still present, re-attach
                 AttachConsole(self.__parentPid)
             else:
+                # Our original console has been free'd, allocate a new one
                 AllocConsole()
         #AttachConsole(ATTACH_PARENT_PROCESS) ### Only works once?
         
@@ -2025,9 +2069,8 @@ class Wtty:
                                        
         return PyConsoleScreenBufferType(consout)    
     
-    def getpid(self):
-        """Returns a handle to the child process for use with
-        os.waitpid()."""
+    def getchild(self):
+        """Returns a handle to the child process."""
     
         return self.__childProcess
      
@@ -2195,6 +2238,8 @@ class Wtty:
         self.__currentReadCo.X = 0
         self.__currentReadCo.Y = 0
         writelen = self.__consSize[0] * self.__consSize[1]
+        # Use NUL as fill char because it displays as whitespace
+        # (if we interact() with the child)
         self.__consout.FillConsoleOutputCharacter(u'\0', writelen, orig)
         
     
@@ -2330,8 +2375,11 @@ class ConsoleReader:
                     try:
                         TerminateProcess(self.__childProcess, 0)
                     except pywintypes.error, e:
-                        if e.args[0] != 5:
-                            # 5 = access denied
+                        # 'Access denied' happens always? Perhaps if not 
+                        # running as admin (or UAC enabled under Vista/7). 
+                        # Don't log. Child process will exit regardless when 
+                        # calling sys.exit
+                        if e.args[0] != winerror.ERROR_ACCESS_DENIED:
                             log_error(e)
                     sys.exit()
                 
@@ -2368,6 +2416,8 @@ class ConsoleReader:
         size = PyCOORDType(80, 16000)
         consout.SetConsoleScreenBufferSize(size)
         pos = consout.GetConsoleScreenBufferInfo()['CursorPosition']
+        # Use NUL as fill char because it displays as whitespace
+        # (if we interact() with the child)
         consout.FillConsoleOutputCharacter(u'\0', size.X * size.Y, pos)   
     
     def suspendThread(self):
@@ -2566,19 +2616,25 @@ class searcher_re (object):
 
 def log_error(e):
     if isinstance(e, Exception):
+        # Get the full traceback
         e = traceback.format_exc()
     if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        # Only try to print if stdout is a tty, otherwise we might get
+        # an 'invalid handle' exception
         print e
-    if os.access(os.getcwdu(), os.W_OK):
-        dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__))
+    # Log to the script (or packed executable if running 'frozen') directory
+    # if it is writable (packed executable might be installed to a location 
+    # where we don't have write access)
+    dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__))
+    if os.access(dirname, os.W_OK):
         fout = open(os.path.join(dirname, 'pexpect_error.txt'), 'a')
         fout.write(str(e) + '\n')
         fout.close()   
 
-def _excepthook(etype, value, tb):
-	log_error('\n'.join(traceback.format_exception(etype, value, tb)))
+def excepthook(etype, value, tb):
+	log_error(''.join(traceback.format_exception(etype, value, tb)))
 
-sys.excepthook = _excepthook
+sys.excepthook = excepthook
         
 def which (filename):
 
@@ -2671,18 +2727,3 @@ def split_command_line(command_line):
     if arg != '':
         arg_list.append(arg)
     return arg_list
-    
-def main():
-    try:
-        if sys.argv[-1] == 'spawn':
-            if sys.argv[1] == '-c':
-                sys.argv = sys.argv[1:]
-            if len(sys.argv) == 4:
-                ConsoleReader(sys.argv[1], sys.argv[2], sys.argv[3])
-            elif len(sys.argv) == 5:
-                ConsoleReader(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])          
-    except Exception, e:
-        log_error(e)
-    
-if __name__ == '__main__':
-    main()
