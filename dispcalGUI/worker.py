@@ -33,6 +33,7 @@ import config
 import localization as lang
 import subprocess26 as sp
 import tempfile26 as tempfile
+import wexpect
 from argyll_cgats import extract_fix_copy_cal, ti3_to_ti1
 from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
@@ -46,7 +47,7 @@ from options import debug, test, verbose
 from thread import start_new_thread
 from util_io import Files, StringIOu as StringIO, Tea
 from util_os import getenvu, quote_args, which
-from util_str import asciize, safe_unicode
+from util_str import asciize, safe_unicode, wrap
 from wxwindows import ConfirmDialog, InfoDialog
 
 if sys.platform == "win32" and SendKeys is None:
@@ -682,7 +683,7 @@ class Worker():
 			## fn = self.infoframe.Log
 		## else:
 		if not capture_output:
-			capture_output = not sys.stdin.isatty()
+			capture_output = not sys.stdout.isatty()
 		fn = None
 		self.clear_cmd_output()
 		if None in [cmd, args]:
@@ -746,6 +747,10 @@ class Worker():
 		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
 														  "-Sn" in args):
 			asroot = True
+		interact = sys.platform == "win32" and not sys.stdout.isatty() and \
+				   args and cmdname in (get_argyll_utilname("dispcal"), 
+										get_argyll_utilname("dispread"), 
+										get_argyll_utilname("spotread"))
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
 					    sys.getwindowsversion() >= (6, ))):
@@ -808,7 +813,8 @@ class Worker():
 							dlg.sizer0.Layout()
 					dlg.Destroy()
 				cmdline.insert(0, sudo)
-				cmdline.insert(1, "-S")
+				if not interact:
+					cmdline.insert(1, "-S")
 			except Exception, exception:
 				safe_print("Warning - execution as root not possible:", 
 						   safe_unicode(exception))
@@ -969,37 +975,65 @@ class Worker():
 			 self.owner.IsShownOnScreen():
 			start_new_thread(mac_app_activate, (3, "Terminal"))
 		try:
-			if silent:
-				stderr = sp.STDOUT
-			else:
-				stderr = Tea(tempfile.SpooledTemporaryFile())
-			if capture_output:
-				stdout = tempfile.SpooledTemporaryFile()
-			else:
-				stdout = sys.stdout
+			if not interact:
+				if silent:
+					stderr = sp.STDOUT
+				else:
+					stderr = Tea(tempfile.SpooledTemporaryFile())
+				if capture_output:
+					stdout = tempfile.SpooledTemporaryFile()
+				elif sys.stdout.isatty():
+					stdout = sys.stdout
+				else:
+					stdout = sp.PIPE
+				if sudo:
+					pwdproc = sp.Popen('echo "%s"' % self.pwd, shell=True, 
+									   stdin=sp.PIPE, stdout=sp.PIPE, 
+									   stderr=sp.STDOUT)
+					stdin = pwdproc.stdout
+				elif sys.stdin.isatty():
+					stdin = None
+				else:
+					stdin = sp.PIPE
+				if sys.platform == "win32":
+					startupinfo = sp.STARTUPINFO()
+					startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+					startupinfo.wShowWindow = sp.SW_HIDE
+				else:
+					startupinfo = None
 			if sys.platform == "win32" and working_dir:
 				working_dir = win32api.GetShortPathName(working_dir)
 			tries = 1
 			cmdline = [arg.encode(fs_enc) for arg in cmdline]
-			if sudo:
-				pwdproc = sp.Popen('echo "%s"' % self.pwd, shell=True, 
-								   stdin=sp.PIPE, stdout=sp.PIPE, 
-								   stderr=sp.STDOUT)
-				stdin = pwdproc.stdout
-			else:
-				stdin = None
 			working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 			while tries > 0:
-				self.subprocess = sp.Popen(cmdline, stdin=stdin, 
-										   stdout=stdout, stderr=stderr, 
-										   cwd=working_dir)
-				self.retcode = self.subprocess.wait()
+				if interact:
+					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
+													cwd=working_dir)
+					self.subprocess.interact()
+					self.subprocess.expect(wexpect.EOF, timeout=None)
+					stdout = StringIO(os.linesep.join(
+						line.rstrip() for line in wrap(self.subprocess.before, 
+													   80).splitlines()))
+					stderr = StringIO()
+					if sys.platform == "win32" and not sys.stdout.isatty():
+						wexpect.FreeConsole()
+					if self.subprocess.isalive():
+						self.subprocess.wait()
+					self.retcode = self.subprocess.exitstatus
+				else:
+					self.subprocess = sp.Popen(cmdline, stdin=stdin, 
+											   stdout=stdout, stderr=stderr, 
+											   cwd=working_dir, 
+											   startupinfo=startupinfo)
+					self.retcode = self.subprocess.wait()
 				self.subprocess = None
 				tries -= 1
 				if not silent:
 					stderr.seek(0)
 					errors = stderr.readlines()
-					stderr.close()
+					if not capture_output or stderr is not stdout:
+						stderr.close()
 					if len(errors):
 						errors2 = []
 						for line in errors:
@@ -1023,7 +1057,7 @@ class Worker():
 										   bitmap=geticon(32, "dialog-warning"))
 							else:
 								safe_print(errstr, fn=fn)
-					if tries > 0:
+					if tries > 0 and not interact:
 						stderr = Tea(tempfile.SpooledTemporaryFile())
 				if capture_output:
 					stdout.seek(0)
@@ -1036,7 +1070,7 @@ class Worker():
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
-					if tries > 0:
+					if tries > 0 and not interact:
 						stdout = tempfile.SpooledTemporaryFile()
 		except Exception, exception:
 			if debug:
