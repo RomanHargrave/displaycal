@@ -1970,7 +1970,10 @@ class Wtty:
         
         if winHandle != 0:
             self.__parentPid = GetWindowThreadProcessId(winHandle)[1]    
-            self.console = True
+            # Do we have a console attached? Do not rely on winHandle, because
+            # it will also be non-zero if we didn't have a console, and then 
+            # spawned a child process! Using sys.stdout.isatty() seems safe
+            self.console = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
             # If the original process had a console, record a list of attached
             # processes so we can check if we need to reattach/reallocate the 
             # console later
