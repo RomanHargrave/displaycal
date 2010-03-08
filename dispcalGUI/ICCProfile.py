@@ -252,7 +252,8 @@ def _winreg_get_display_profile(monkey, current_user=False):
 	return filename
 
 
-def get_display_profile(display_no=0):
+def get_display_profile(display_no=0, x_hostname="", x_display=0, 
+						x_screen=0):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
@@ -290,34 +291,42 @@ def get_display_profile(display_no=0):
 			profile = ICCProfile(filename)
 	else:
 		if sys.platform == "darwin":
-			args = ['osascript', '-e', 'tell app "Image Events"', '-e', 
-					'set prof to location of (display profile of display %i)' % 
-					(display_no + 1), '-e', 'try', '-e', 'POSIX path of prof', 
-					'-e', 'end try', '-e', 'end tell']
-			tgt_proc = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, 
-								stderr=sp.PIPE)
+			options = ["Image Events", "ColorSyncScripting"]
 		else:
-			# Linux - read up to 8 MB of any X properties
-			src_proc = sp.Popen(["xprop", "-display", ":0", "-len", 
-								 "8388608", "-root"], 
-								stdin=sp.PIPE, 
-								stdout=sp.PIPE, stderr=sp.PIPE)
-			tgt_proc = sp.Popen(["grep", "-P", r"^_ICC_PROFILE%s\D*=" % 
-								 ("" if display_no == 0 else "_%s" % 
-								  display_no)], 
-								stdin=src_proc.stdout, 
-								stdout=sp.PIPE, stderr=sp.PIPE)
-		stdout, stderr = [data.strip("\n") for data in tgt_proc.communicate()]
-		if stdout:
+			options = ["_ICC_DEVICE_PROFILE", "_ICC_PROFILE"]
+		for option in options:
 			if sys.platform == "darwin":
-				filename = unicode(stdout, "UTF-8")
-				profile = ICCProfile(filename)
+				args = ['osascript', '-e', 'tell app "%s"' % option, '-e', 
+						'set prof to location of (display profile of display %i)' % 
+						(display_no + 1), '-e', 'try', '-e', 'POSIX path of prof', 
+						'-e', 'end try', '-e', 'end tell']
+				tgt_proc = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, 
+									stderr=sp.PIPE)
 			else:
-				stdout = stdout.split("=")[1].strip()
-				bin = "".join([chr(int(part)) for part in stdout.split(", ")])
-				profile = ICCProfile(bin)
-		elif stderr and tgt_proc.wait() != 0:
-			raise IOError(stderr)
+				# Linux - read up to 8 MB of any X properties
+				atom = "%s%s" % (option, "" if display_no == 0 else 
+									   "_%s" % display_no)
+				tgt_proc = sp.Popen(["xprop", "-display", "%s:%s.%s" % 
+														  (x_hostname, 
+														   x_display, 
+														   x_screen), 
+									 "-len", "8388608", "-root", "-notype", 
+									 atom], stdin=sp.PIPE, stdout=sp.PIPE, 
+									stderr=sp.PIPE)
+			stdout, stderr = [data.strip("\n") for data in tgt_proc.communicate()]
+			if stdout:
+				if sys.platform == "darwin":
+					filename = unicode(stdout, "UTF-8")
+					profile = ICCProfile(filename)
+				else:
+					raw = [item.strip() for item in stdout.split("=")]
+					if raw[0] == atom and len(raw) == 2:
+						bin = "".join([chr(int(part)) for part in raw[1].split(", ")])
+						profile = ICCProfile(bin)
+			elif stderr and tgt_proc.wait() != 0:
+				raise IOError(stderr)
+			if profile:
+				break
 	return profile
 
 
