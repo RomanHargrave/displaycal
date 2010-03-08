@@ -107,6 +107,7 @@ if sys.platform == "darwin":
 						  mac_terminal_set_colors)
 from util_os import expanduseru, launch_file, listdir_re, which
 from util_str import safe_str, safe_unicode, strtr, wrap
+import util_x
 from worker import (Worker, check_argyll_bin, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, 
@@ -2995,14 +2996,7 @@ class MainFrame(BaseFrame):
 			profile = None
 		else:
 			if cal is True: # display profile
-				try:
-					profile = ICCP.get_display_profile(
-						max(self.display_ctrl.GetSelection(), 0))
-				except Exception, exception:
-					_safe_print("ICCP.get_display_profile(%s):" % 
-								max(self.display_ctrl.GetSelection(), 0), 
-								exception, fn=log)
-					profile = None
+				profile = self.get_display_profile()
 			elif cal.lower().endswith(".icc") or \
 				 cal.lower().endswith(".icm"):
 				profile = ICCP.ICCProfile(cal)
@@ -3335,13 +3329,7 @@ class MainFrame(BaseFrame):
 		return False
 
 	def load_display_profile_cal(self, event=None):
-		try:
-			profile = ICCP.get_display_profile(
-				max(self.display_ctrl.GetSelection(), 0))
-		except Exception, exception:
-			_safe_print("ICCP.get_display_profile(%s):" % 
-						self.display_ctrl.GetSelection(), exception, fn=log)
-			profile = None
+		profile = self.get_display_profile()
 		if check_set_argyll_bin():
 			if verbose >= 1: ## and event is None:
 				safe_print(
@@ -3456,13 +3444,8 @@ class MainFrame(BaseFrame):
 											  os.path.join(pydir, 
 											  			   "wxMeasureFrame.py"))
 		if wx.Display.GetCount() == 1:
-			display = os.getenv("DISPLAY", ":0.0").split(":")
-			host = display[0]
-			if len(display) > 1:
-				xserver = display[1].split(".")[0]
-			else:
-				xserver = "0"
-			args = "DISPLAY=%s:%s.%s %s" % (host, xserver,
+			x_hostname, x_display, x_screen = util_x.get_display()
+			args = "DISPLAY=%s:%s.%s %s" % (x_hostname, x_display,
 											getcfg("display.number") - 1,
 											args)
 		returncode = -1
@@ -3828,13 +3811,7 @@ class MainFrame(BaseFrame):
 					else:
 						profile = cal_to_fake_profile(path)
 				else:
-					try:
-						profile = ICCP.get_display_profile(
-							max(self.display_ctrl.GetSelection(), 0)) or False
-					except Exception, exception:
-						_safe_print("ICCP.get_display_profile(%s):" % 
-									self.display_ctrl.GetSelection(), 
-									exception, fn=log)
+					profile = self.get_display_profile() or False
 			self.show_lut_handler(profile=profile)
 	
 	def lut_viewer_load_lut(self, event=None, profile=None, force_draw=False):
@@ -3956,11 +3933,7 @@ class MainFrame(BaseFrame):
 				except ValueError:
 					i = min(0, self.display_ctrl.GetSelection())
 				setcfg("display_lut.number", i + 1)
-			try:
-				profile = ICCP.get_display_profile(display_no)
-			except Exception, exception:
-				_safe_print("ICCP.get_display_profile(%s):" % display_no, 
-							exception, fn=log)
+			profile = self.get_display_profile(display_no)
 		self.lut_viewer_load_lut(profile=profile)
 
 	def display_lut_ctrl_handler(self, event):
@@ -4685,6 +4658,16 @@ class MainFrame(BaseFrame):
 
 	def get_calibration_quality(self):
 		return self.quality_ab[self.calibration_quality_ctrl.GetValue()]
+	
+	def get_display_profile(self, display_no=None):
+		if display_no is None:
+			display_no = max(self.display_ctrl.GetSelection(), 0)
+		try:
+			return ICCP.get_display_profile(display_no)
+		except Exception, exception:
+			_safe_print("ICCP.get_display_profile(%s):" % display_no, 
+						exception, fn=log)
+			return None
 
 	def get_profile_quality(self):
 		return self.quality_ab[self.profile_quality_ctrl.GetValue() + 1]
