@@ -226,8 +226,7 @@ class LogWindow(InvincibleFrame):
 								 lang.getstr("infoframe.title"), 
 								 pos=(int(getcfg("position.info.x")), 
 									  int(getcfg("position.info.y"))), 
-								 style=wx.DEFAULT_FRAME_STYLE | 
-									   wx.FRAME_TOOL_WINDOW)
+								 style=wx.DEFAULT_FRAME_STYLE)
 		self.last_visible = False
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
