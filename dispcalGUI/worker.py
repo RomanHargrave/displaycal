@@ -227,8 +227,8 @@ def get_argyll_version(name, silent=False):
 	argyll_version = [0, 0, 0]
 	if (silent and check_argyll_bin()) or (not silent and 
 										   check_set_argyll_bin()):
-		cmd = get_argyll_util(get_argyll_utilname(name))
-		p = sp.Popen([cmd], stdin=None, stdout=sp.PIPE, stderr=sp.STDOUT)
+		cmd = get_argyll_util(name)
+		p = sp.Popen([cmd.encode(fs_enc)], stdin=None, stdout=sp.PIPE, stderr=sp.STDOUT)
 		for i, line in enumerate((p.communicate()[0] or "").splitlines()):
 			if isinstance(line, basestring):
 				line = line.strip()
