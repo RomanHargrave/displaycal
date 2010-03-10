@@ -34,53 +34,68 @@ def get_default_size():
 	This function is used internally.
 	
 	"""
-	if getcfg("display_lut.link"):
-		display_no = getcfg("display.number") - 1
+	display_sizes = []
+	display_sizes_mm = []
+	for display_no in xrange(len(getcfg("displays").split(os.pathsep))):
+		display_size = wx.Display(get_display_number(display_no)).Geometry[2:]
+		display_size_mm = []
+		if RDSMM:
+			try:
+				display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
+			except Exception, exception:
+				handle_error(u"Error - RealDisplaySizeMM() failed: " + 
+							 safe_unicode(exception), silent=True)
+			else:
+				display_size_mm = floatlist(display_size_mm)
+		if debug:
+			safe_print("[D]  display_size_mm:", display_size_mm)
+		if not len(display_size_mm) or 0 in display_size_mm:
+			ppi_def = 100.0
+			ppi_mac = 72.0
+			method = 1
+			if method == 0:
+				# use configurable screen diagonal
+				inch = 20.0
+				mm = inch * 25.4
+				f = mm / math.sqrt(math.pow(display_size[0], 2) + \
+					math.pow(display_size[1], 2))
+				w_mm = math.sqrt(math.pow(mm, 2) - \
+					   math.pow(display_size[1] * f, 2))
+				h_mm = math.sqrt(math.pow(mm, 2) - \
+					   math.pow(display_size[0] * f, 2))
+				display_size_mm = w_mm, h_mm
+			elif method == 1:
+				# use the first display
+				display_size_1st = wx.DisplaySize()
+				display_size_mm = list(wx.DisplaySizeMM())
+				if sys.platform == "darwin":
+					display_size_mm[0] /= (ppi_def / ppi_mac)
+					display_size_mm[1] /= (ppi_def / ppi_mac)
+				if display_no > 0:
+					display_size_mm[0] = display_size[0] / (
+						display_size_1st[0] / display_size_mm[0])
+					display_size_mm[1] = display_size[1] / (
+						display_size_1st[1] / display_size_mm[1])
+			else:
+				# use assumed ppi
+				display_size_mm = (display_size[0] / ppi_def * 25.4, 
+								   display_size[1] / ppi_def * 25.4)
+		display_sizes += [display_size]
+		display_sizes_mm += [display_size_mm]
+	if sum(mm[0] for mm in display_sizes_mm) / \
+				 len(display_sizes_mm) == display_sizes_mm[0][0] and \
+	   sum(mm[1] for mm in display_sizes_mm) / \
+				 len(display_sizes_mm) == display_sizes_mm[0][1]:
+		# display_size_mm is the same for all screens, use the 1st one
+		display_size = display_sizes[0]
+		display_size_mm = display_sizes_mm[0]
 	else:
-		display_no = getcfg("display_lut.number") - 1
-	display_size = wx.Display(get_display_number(display_no)).Geometry[2:]
-	display_size_mm = []
-	if RDSMM:
-		try:
-			display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
-		except Exception, exception:
-			handle_error(u"Error - RealDisplaySizeMM() failed: " + 
-						 safe_unicode(exception), silent=True)
+		if getcfg("display_lut.link"):
+			display_no = getcfg("display.number") - 1
 		else:
-			display_size_mm = floatlist(display_size_mm)
-	if debug:
-		safe_print("[D]  display_size_mm:", display_size_mm)
-	if not len(display_size_mm) or 0 in display_size_mm:
-		ppi_def = 100.0
-		ppi_mac = 72.0
-		method = 1
-		if method == 0:
-			# use configurable screen diagonal
-			inch = 20.0
-			mm = inch * 25.4
-			f = mm / math.sqrt(math.pow(display_size[0], 2) + \
-				math.pow(display_size[1], 2))
-			w_mm = math.sqrt(math.pow(mm, 2) - \
-				   math.pow(display_size[1] * f, 2))
-			h_mm = math.sqrt(math.pow(mm, 2) - \
-				   math.pow(display_size[0] * f, 2))
-			display_size_mm = w_mm, h_mm
-		elif method == 1:
-			# use the first display
-			display_size_1st = wx.DisplaySize()
-			display_size_mm = list(wx.DisplaySizeMM())
-			if sys.platform == "darwin":
-				display_size_mm[0] /= (ppi_def / ppi_mac)
-				display_size_mm[1] /= (ppi_def / ppi_mac)
-			if display_no > 0:
-				display_size_mm[0] = display_size[0] / (
-					display_size_1st[0] / display_size_mm[0])
-				display_size_mm[1] = display_size[1] / (
-					display_size_1st[1] / display_size_mm[1])
-		else:
-			# use assumed ppi
-			display_size_mm = (display_size[0] / ppi_def * 25.4, 
-							   display_size[1] / ppi_def * 25.4)
+			display_no = getcfg("display_lut.number") - 1
+		display_size = display_sizes[display_no]
+		display_size_mm = display_sizes_mm[display_no]
 	px_per_mm = (display_size[0] / display_size_mm[0],
 			     display_size[1] / display_size_mm[1])
 	if debug:
@@ -492,8 +507,12 @@ class MeasureFrame(InvincibleFrame):
 			elif measureframe_pos[1] != 0:
 				if display_size[1] - size[1] < measureframe_pos[1]:
 					measureframe_pos[1] = display_size[1] - size[1]
+				if sys.platform in ("darwin", "win32"):
+					titlebar = 0  # size already includes window decorations
+				else:
+					titlebar = 25  # assume titlebar height of 25px
 				measureframe_pos[1] = 1.0 / ((display_size[1] - size[1]) / 
-											 (measureframe_pos[1]))
+											 (measureframe_pos[1] + titlebar))
 		if debug: safe_print("[D]  scale:", scale)
 		if debug: safe_print("[D]  measureframe_pos:", measureframe_pos)
 		measureframe_dimensions = ",".join(str(n) for n in 
