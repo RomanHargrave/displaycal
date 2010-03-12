@@ -13,28 +13,16 @@ def _intversion(version):
 
 import wxversion
 minVersion = "2.8.8.0"
-minVersion_info = _intversion(minVersion.split("."))
 if not getattr(sys, "frozen", False):
-	try:
-		_minVersion = minVersion[:3]
-		for version in wxversion.getInstalled():
-			version = version.split("-")[0]
-			if _intversion(version.split(".")) >= minVersion_info:
-				_minVersion = version
-				break
-		wxversion.ensureMinimal(_minVersion)
-	except Exception, exception:
-		print exception
+	wxversion.ensureMinimal(minVersion[:3])
 import wx
-if _intversion(wx.__version__.split(".")) < minVersion_info:
-	versions = "\n".join(["      " + ver for ver in wxversion.getInstalled()])
+if _intversion(wx.__version__.split(".")) < _intversion(minVersion.split(".")):
 	app = wx.PySimpleApp()
 	result = wx.MessageBox("This application requires a version of wxPython "
-						   "greater than or equal to %s, but a matching version "
-						   "was not found.\n\n"
-						   "You currently have these version(s) installed:\n%s\n\n"
+						   "greater than or equal to %s, but your most recent "
+						   "version is %s.\n\n"
 						   "Would you like to download a new version of wxPython?\n"
-						   % (minVersion, versions),
+						   % (minVersion, wx.__version__),
 						   "wxPython Upgrade Needed", style=wx.YES_NO)
 	if result == wx.YES:
 		import webbrowser

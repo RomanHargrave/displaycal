@@ -1127,13 +1127,14 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><strong>Profile verification by measurements</strong>.</li>
+							<li><strong>Profile verification by measurements.</strong> TI1 and TI3 files can be measured.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Testchart editor: Do not automatically select a saved testchart (regression of a change in 0.3.3.5). Do not show empty rows when creating a testchart using an algorythm that does not create the expected number of rows.</li>
+							<li>Bumped wxPython version check to 2.8.8.0 so a proper error message is displayed if wxPython is too old.</li>
 							<li>Linux: When using TwinView or Xinerama, the size of the measurement window was sometimes not correct.</li>
-							<li>Linux: Failure in get_argyll_version if Argyll utilities have alternate names (eg. argyll-targen instead of targen), which could prevent being able to open the testchart editor.</li>
+							<li>Linux: Failure in get_argyll_version if Argyll utilities have alternate names (eg. argyll-targen instead of targen), which could prevent being able to open the testchart editor (regression of a change in 0.3.3.5).</li>
 							<li>Mac OS X 10.4: Fall back to ColorSyncScripting if Image Events does not return a display profile.</li>
 						</ul>
 						<h4>Changed in this release:</h4>

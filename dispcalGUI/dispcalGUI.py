@@ -1132,6 +1132,8 @@ class MainFrame(BaseFrame):
 						bool(self.worker.instruments))
 		self.menuitem_calibration_verify.Enable(bool(self.worker.displays) and 
 						bool(self.worker.instruments))
+		self.menuitem_profile_verify.Enable(bool(self.worker.displays) and 
+						bool(self.worker.instruments))
 
 	def init_controls(self):
 		"""
