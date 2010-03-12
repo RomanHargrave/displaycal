@@ -65,6 +65,11 @@ rgbspaces = {
 	"Wide Gamut RGB":   [2.2,  "D50", 0.7350, 0.2650, 0.258187, 0.1150, 0.8260, 0.724938, 0.1570, 0.0180, 0.016875]
 }
 
+
+def cbrt(x):
+	return math.pow(x, 1.0 / 3.0) if x >= 0 else -math.pow(-x, 1.0 / 3.0)
+
+
 def CIEDCCT2xyY(T):
 	"""
 	Convert from CIE correlated daylight temperature to xyY.
@@ -129,6 +134,55 @@ def get_DBL_MIN():
 
 
 DBL_MIN = get_DBL_MIN()
+
+
+def Lab2XYZ(L, a, b, whitepoint=None):
+	"""
+	based on formula
+	http://brucelindbloom.com/Eqn_Lab_to_XYZ.html
+	
+	whitepoint can be a color temperature in Kelvin or an array containing 
+	reference XYZ values. It defaults to D50
+	
+	Implementation Notes:
+	The output XYZ values are in the nominal range [0.0, 1.0].
+	
+	"""
+	fy = (L + 16) / 116.0
+	fx = a / 500.0 + fy
+	fz = fy - b / 200.0
+	
+	E = 0.008856
+	K = 903.3
+	
+	if math.pow(fx, 3.0) > E:
+		xr = math.pow(fx, 3.0)
+	else:
+		xr = (116.0 * fx - 16) / K
+	
+	if L > K * E:
+		yr = math.pow((L + 16) / 116.0, 3.0)
+	else:
+		yr = L / K
+	
+	if math.pow(fz, 3.0) > E:
+		zr = math.pow(fz, 3.0)
+	else:
+		zr = (116.0 * fz - 16) / K
+	
+	if whitepoint:
+		if isinstance(whitepoint, (float, int)):
+			Xr, Yr, Zr = CIEDCCT2XYZ(whitepoint)
+		else:
+			Xr, Yr, Zr = whitepoint
+	else:
+		Xr, Yr, Zr = 0.96422, 1.0, 0.82521  # Observer = 2°, Illuminant = D50
+	
+	X = xr * Xr
+	Y = yr * Yr
+	Z = zr * Zr
+	
+	return X, Y, Z
 
 
 def RGB2XYZ(R, G, B, gamma=None, matrix=None):
@@ -325,6 +379,64 @@ def XYZ2CCT(X, Y, Z):
 	p = dm / (dm - di)	# p = interpolation parameter, 0.0 : i-1, 1.0 : i
 	p = 1.0 / (LERP(rt[i - 1], rt[i], p))
 	return p
+
+
+def XYZ2Lab(X, Y, Z, Xr, Yr, Zr):
+	"""
+	based on formula from www.brucelindbloom.com
+	Xr, Yr, Zr = reference whitepoint -or- Xr = reference color temperature in 
+	Kelvin
+	
+	"""
+	if Yr is None or Zr is None:
+		if Xr is None:
+			Xr = "D50"
+		if isinstance(Xr, basestring):
+			if Xr == "A":
+				Xr = 109.828
+				Yr = 35.547
+			elif Xr == "B":
+				Xr = 99.072
+				Yr = 85.223
+			elif Xr == "C":
+				Xr = 98.041
+				Yr = 118.103
+			elif Xr == "D55":
+				Xr = 95.642
+				Zr = 92.085
+			elif Xr == "D65":
+				Xr = 95.0467
+				Yr = 108.8969
+			elif Xr == "D75":
+				Xr = 94.939
+				Yr = 122.558
+			elif Xr == "E":
+				Xr = 100
+				Yr = 100
+			else:
+				Xr = 96.422
+				Zr = 82.521
+			Yr = 100
+		else:
+			xyY = CIEDCCT2xyY(Xr, true)
+			XYZ = xyY2XYZ(xyY[0], xyY[1], xyY[2])
+			Xr = XYZ[0]
+			Yr = XYZ[1]
+			Zr = XYZ[2]
+
+	E = 0.008856
+	K = 903.3
+	xr = X / Xr
+	yr = Y / Yr
+	zr = Z / Zr
+	fx = cbrt(xr) if xr > E else (K * xr + 16) / 116.0
+	fy = cbrt(yr) if yr > E else (K * yr + 16) / 116.0
+	fz = cbrt(zr) if zr > E else (K * zr + 16) / 116.0
+	L = 116 * fy - 16
+	a = 500 * (fx - fy)
+	b = 200 * (fy - fz)
+	
+	return L, a, b
 
 
 def XYZ2RGB(X, Y, Z, gamma=None, matrix=None):
