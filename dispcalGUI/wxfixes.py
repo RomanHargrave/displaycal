@@ -3,15 +3,30 @@
 
 import sys
 
+def _intversion(version):
+	for i, digit in enumerate(version):
+		try:
+			version[i] = int(digit)
+		except ValueError:
+			pass
+	return version
+
 import wxversion
-minVersion = "2.8"
+minVersion = "2.8.8.0"
+minVersion_info = _intversion(minVersion.split("."))
 if not getattr(sys, "frozen", False):
 	try:
-		wxversion.ensureMinimal(minVersion)
+		_minVersion = minVersion[:3]
+		for version in wxversion.getInstalled():
+			version = version.split("-")[0]
+			if _intversion(version.split(".")) >= minVersion_info:
+				_minVersion = version
+				break
+		wxversion.ensureMinimal(_minVersion)
 	except Exception, exception:
 		print exception
 import wx
-if wx.__version__ < minVersion:
+if _intversion(wx.__version__.split(".")) < minVersion_info:
 	versions = "\n".join(["      " + ver for ver in wxversion.getInstalled()])
 	app = wx.PySimpleApp()
 	result = wx.MessageBox("This application requires a version of wxPython "
