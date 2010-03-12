@@ -265,6 +265,43 @@ def ti3_to_ti1(ti3_data):
 	return "\n".join(ti1_lines)
 
 
+def verify_cgats(cgats, required, ignore_unknown=False):
+	"""
+	Verify and return a CGATS instance or None on failure.
+	
+	Verify if a CGATS instance has a section with all required fields. 
+	Return the section as CGATS instance on success, None on failure.
+	
+	If ignore_unknown evaluates to True, ignore fields which are not required.
+	Otherwise, the CGATS data must contain only the required fields, no more,
+	no less.
+	"""
+	cgats_1 = cgats.queryi1(required)
+	if cgats_1 and cgats_1.parent and cgats_1.parent.parent:
+		cgats_1 = cgats_1.parent.parent
+		if cgats_1.queryv1("NUMBER_OF_SETS"):
+			if cgats_1.queryv1("DATA_FORMAT"):
+				for field in required:
+					if not field in cgats_1.queryv1("DATA_FORMAT").values():
+						if debug: safe_print("[D] Missing required field:", field)
+						return None
+				if not ignore_unknown:
+					for field in cgats_1.queryv1("DATA_FORMAT").values():
+						if not field in required:
+							if debug: safe_print("[D] Unknown field:", field)
+							return None
+			else:
+				if debug: safe_print("[D] Missing DATA_FORMAT")
+				return None
+		else:
+			if debug: safe_print("[D] Missing DATA")
+			return None
+		cgats_1.filename = cgats.filename
+		return cgats_1
+	else:
+		if debug: safe_print("[D] Invalid Argyll CGATS format")
+		return None
+
 def verify_ti1_rgb_xyz(cgats):
 	"""
 	Verify and return a CGATS instance or None on failure.
@@ -274,29 +311,5 @@ def verify_ti1_rgb_xyz(cgats):
 	None on failure.
 	
 	"""
-	required = ("SAMPLE_ID", "RGB_R", "RGB_B", "RGB_G", "XYZ_X", "XYZ_Y", 
-				"XYZ_Z")
-	ti1_1 = cgats.queryi1(required)
-	if ti1_1 and ti1_1.parent and ti1_1.parent.parent:
-		ti1_1 = ti1_1.parent.parent
-		if ti1_1.queryv1("NUMBER_OF_SETS"):
-			if ti1_1.queryv1("DATA_FORMAT"):
-				for field in required:
-					if not field in ti1_1.queryv1("DATA_FORMAT").values():
-						if debug: safe_print("[D] Missing required field:", field)
-						return None
-				for field in ti1_1.queryv1("DATA_FORMAT").values():
-					if not field in required:
-						if debug: safe_print("[D] Unknown field:", field)
-						return None
-			else:
-				if debug: safe_print("[D] Missing DATA_FORMAT")
-				return None
-		else:
-			if debug: safe_print("[D] Missing DATA")
-			return None
-		ti1_1.filename = cgats.filename
-		return ti1_1
-	else:
-		if debug: safe_print("[D] Invalid TI1")
-		return None
+	return verify_cgats(cgats, ("SAMPLE_ID", "RGB_R", "RGB_B", "RGB_G", 
+								"XYZ_X", "XYZ_Y", "XYZ_Z"))
