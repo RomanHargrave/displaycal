@@ -49,6 +49,9 @@
         <object class="wxMenuItem" name="calibration.verify">
           <label>calibration.verify</label>
         </object>
+        <object class="wxMenuItem" name="profile.verify">
+          <label>profile.verify</label>
+        </object>
         <object class="separator"/>
         <object class="wxMenuItem" name="detect_displays_and_ports">
           <label>detect_displays_and_ports</label>

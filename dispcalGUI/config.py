@@ -293,6 +293,8 @@ def runtimeconfig(pyfile):
 										  testchart_defaults["s"])[None]
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart))
+	defaults["profile_verification_chart"] = get_data_path(os.path.join("ti1", 
+															"verify.ti1"))
 	if verbose >= 1:
 		safe_print(appname + runtype, version, build)
 	return pypath, pydir, pyname, pyext, isapp, runtype, build
@@ -552,17 +554,18 @@ def get_total_patches(white_patches=None, single_channel_patches=None,
 	return total_patches
 
 
-def get_verified_path(cfg_item_name):
-	""" Verify and return dir and filename for a path from the user cfg """
-	defaultPath = getcfg(cfg_item_name)
+def get_verified_path(cfg_item_name, path=None):
+	""" Verify and return dir and filename for a path from the user cfg,
+	or a given path """
+	defaultPath = path or getcfg(cfg_item_name)
+	defaultDir = expanduseru("~")
 	defaultFile = ""
-	if os.path.exists(defaultPath):
-		defaultDir, defaultFile = (os.path.dirname(defaultPath), 
-								   os.path.basename(defaultPath))
-	elif os.path.exists(os.path.dirname(defaultPath)):
-		defaultDir = os.path.dirname(defaultPath)
-	else:
-		defaultDir = expanduseru("~")
+	if defaultPath:
+		if os.path.exists(defaultPath):
+			defaultDir, defaultFile = (os.path.dirname(defaultPath), 
+									   os.path.basename(defaultPath))
+		elif os.path.exists(os.path.dirname(defaultPath)):
+			defaultDir = os.path.dirname(defaultPath)
 	return defaultDir, defaultFile
 
 

@@ -1693,11 +1693,11 @@ class spawn_windows (spawn_unix, object):
             self.command = command    
             
         #On windows this segment of code seems to disallow .exe files and the like.
-        # command_with_path = which(self.command)
-        # if command_with_path is None:
-           # raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
-        # self.command = command_with_path
-        # self.args[0] = self.command
+        command_with_path = which(self.command)
+        if command_with_path is None:
+           raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
+        self.command = command_with_path
+        self.args[0] = self.command
 
         self.name = '<' + ' '.join (self.args) + '>'
 
@@ -1988,7 +1988,9 @@ class Wtty:
         si.wShowWindow = SW_HIDE
         # Determine the directory of wexpect.py or, if we are running 'frozen'
         # (eg. py2exe deployment), of the packed executable
-        dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__))
+        dirname = os.path.dirname(sys.executable 
+                                  if getattr(sys, 'frozen', False) else 
+                                  os.path.abspath(__file__))
         spath = [dirname]
         pyargs = ['-c']
         if getattr(sys, 'frozen', False):
@@ -2005,8 +2007,13 @@ class Wtty:
         # as the packed executable.
         # py2exe: The python executable can be included via setup script by 
         # adding it to 'data_files'
-        commandLine = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') if getattr(sys, 'frozen', False) else os.path.join(os.path.dirname(sys.executable), 'python.exe'), ' '.join(pyargs), 
-                                        "import sys; sys.path = %r + sys.path; args = %r; import wexpect; wexpect.ConsoleReader(wexpect.join_args(args), %i, %i)" % (spath, args, pid, tid))
+        commandLine = '"%s" %s "%s"' % (os.path.join(dirname, 'python.exe') 
+                                        if getattr(sys, 'frozen', False) else 
+                                        os.path.join(os.path.dirname(sys.executable), 'python.exe'), 
+                                        ' '.join(pyargs), 
+                                        "import sys; sys.path = %r + sys.path;"
+                                        "args = %r; import wexpect;"
+                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i)" % (spath, args, pid, tid))
                      
         #print commandLine
         self.__oproc, _, self.__opid, self.__otid = CreateProcess(None, commandLine, None, None, False, 

@@ -196,6 +196,9 @@ def setup():
 		name: [
 			"lang/*.json",
 			"presets/*.icc",
+			"report/*.css",
+			"report/*.html",
+			"report/*.js",
 			"theme/*.png",
 			"theme/icons/16x16/*.png",
 			"theme/icons/22x22/*.png",
@@ -234,6 +237,18 @@ def setup():
 				[os.path.join(pydir, "presets", os.path.basename(fname)) 
 				 for fname in 
 				 glob.glob(os.path.join(pydir, "presets", "*.icc"))]),
+			(os.path.join(data, "report"), 
+				[os.path.join(pydir, "report", os.path.basename(fname)) 
+				 for fname in 
+				 glob.glob(os.path.join(pydir, "report", "*.css"))]),
+			(os.path.join(data, "report"), 
+				[os.path.join(pydir, "report", os.path.basename(fname)) 
+				 for fname in 
+				 glob.glob(os.path.join(pydir, "report", "*.html"))]),
+			(os.path.join(data, "report"), 
+				[os.path.join(pydir, "report", os.path.basename(fname)) 
+				 for fname in 
+				 glob.glob(os.path.join(pydir, "report", "*.js"))]),
 			(os.path.join(data, "theme"), 
 				[os.path.join(pydir, "theme", os.path.basename(fname)) 
 				 for fname in 

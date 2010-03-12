@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<style type="text/css" media="screen,projection,tv">
+		@import "compare.css";
+	</style>
+	<style type="text/css" media="screen,projection,tv">
+		@import "compare-dark-light.css";
+	</style>
+	<style type="text/css" media="screen,projection,tv" title="Dark">
+		@import "compare-dark.css";
+	</style>
+	<style type="text/css" media="screen,projection,tv" title="Dark/Light">
+		@import "compare-dark-light.css";
+	</style>
+	<style type="text/css" media="screen,projection,tv" title="Light">
+		@import "compare-light.css";
+	</style>
+	<style type="text/css" media="screen,projection,tv" title="Light/Dark">
+		@import "compare-light-dark.css";
+	</style>
+	<style type="text/css" media="print">
+		@import "report.css";
+	</style>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Profile Verification Report</title>
+	<script type="text/javascript" src="jsapi-packages-p.js"></script>
+	<script type="text/javascript">
+		//<![CDATA[
+			jsapi.math.color.XYZ2rgb = function (X, Y, Z) {
+				var var_X = X / 100;
+				var var_Y = Y / 100;
+				var var_Z = Z / 100;
+				// sRGB Bradford-adapted to D50, http://brucelindbloom.com/Eqn_RGB_XYZ_Matrix.html
+				var var_R = var_X * 3.1338561 + var_Y * -1.6168667 + var_Z * -0.4906146;
+				var var_G = var_X * -0.9787684 + var_Y * 1.9161415 + var_Z * 0.0334540;
+				var var_B = var_X * 0.0719453 + var_Y * -0.2289914 + var_Z * 1.4052427;
+				if (var_R > 0.0031308) {
+					var_R = 1.055 * Math.pow(var_R, 0.4166666666666667) - 0.055;
+				} else {
+					var_R = 12.92 * var_R;
+				}
+				if (var_G > 0.0031308) {
+					var_G = 1.055 * Math.pow(var_G, 0.4166666666666667) - 0.055;
+				} else {
+					var_G = 12.92 * var_G;
+				}
+				if (var_B > 0.0031308) {
+					var_B = 1.055 * Math.pow(var_B, 0.4166666666666667) - 0.055;
+				} else {
+					var_B = 12.92 * var_B;
+				}
+				var R, G, B;
+				R = Math.max(0, Math.round(var_R * 255));
+				G = Math.max(0, Math.round(var_G * 255));
+				B = Math.max(0, Math.round(var_B * 255));
+				return [R, G, B];
+			}
+			jsapi.math.color.XYZ2Lab = function (X, Y, Z, Xr, Yr, Zr) {
+				if (!Xr || !Yr || !Zr) {
+					// D50
+					Xr = 96.422;
+					Zr = 82.521;
+					Yr = 100;
+				}
+				var E = 0.008856,
+					K = 903.3,
+					xr = X / Xr,
+					yr = Y / Yr,
+					zr = Z / Zr,
+					fx = xr > E ? jsapi.math.cbrt(xr) : (K * xr + 16) / 116,
+					fy = yr > E ? jsapi.math.cbrt(yr) : (K * yr + 16) / 116,
+					fz = zr > E ? jsapi.math.cbrt(zr) : (K * zr + 16) / 116,
+					L = 116 * fy - 16,
+					a = 500 * (fx - fy),
+					b = 200 * (fy - fz);
+				return [L, a, b];
+			}
+		//]]>
+	</script>
+	<script type="text/javascript" src="compare.constants.js"></script>
+	<script type="text/javascript" src="compare.variables.js"></script>
+	<script type="text/javascript" src="compare.functions.js"></script>
+	<script type="text/javascript" src="compare.init.js"></script>
+</head>
+<body>
+	<h1><span class="r"></span><span class="g"></span><span class="b"></span>Profile Verification Report</h1>
+	<div><noscript><p class="error">JavaScript is required!</p></noscript></div>
+	<form action="#" id="F_data">
+		<div>
+			<input type="hidden" name="FF_display" value="${DISPLAY}" />
+			<input type="hidden" name="FF_profile" value="${PROFILE}" />
+			<input type="hidden" name="FF_testchart" value="${TESTCHART}" />
+			<input type="hidden" name="FF_datetime" value="${DATETIME}" />
+			<input type="hidden" name="FF_data_in" value="${MEASURED}" />
+			<input type="hidden" name="FF_data_ref" value="${REF}" />
+		</div>
+	</form>
+	<form action="#" id="F_out">
+		<div id="report" class="fieldset process">
+			<h2 id="reporttitle" class="legend">Report</h2>
+			<p id="delta_calc_method">
+				Delta E Calculation Method for Overview:
+				<select name="FF_delta_calc_method" id="FF_delta_calc_method" onchange="compare()">
+					<option value="CIE76">CIE 1976</option>
+					<option value="CIE94">CIE 1994</option>
+					<option value="CIE00">CIE 2000</option>
+				</select>
+			</p>
+			<div id="result"></div>
+			<p>
+				<input type="hidden" name="FF_strip_name" />
+				<input type="hidden" name="FF_data_out" id="FF_data_out" />
+			</p>
+		</div>
+	</form>
+</body>
+</html>

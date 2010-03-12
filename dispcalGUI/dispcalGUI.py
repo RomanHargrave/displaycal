@@ -48,6 +48,7 @@ if pyver < (2, 5) or pyver >= (3, ):
 
 import ConfigParser
 ConfigParser.DEFAULTSECT = "Default"
+import codecs
 import decimal
 Decimal = decimal.Decimal
 import getpass
@@ -1052,6 +1053,10 @@ class MainFrame(BaseFrame):
 			extra.FindItem("calibration.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_calibration_handler, 
 				  self.menuitem_calibration_verify)
+		self.menuitem_profile_verify = extra.FindItemById(
+			extra.FindItem("profile.verify"))
+		self.Bind(wx.EVT_MENU, self.verify_profile_handler, 
+				  self.menuitem_profile_verify)
 		menuitem = extra.FindItemById(
 			extra.FindItem("detect_displays_and_ports"))
 		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
@@ -3288,6 +3293,198 @@ class MainFrame(BaseFrame):
 		self.worker.wrapup(False)
 		self.Show()
 
+	def verify_profile_handler(self, event):
+		if not check_set_argyll_bin():
+			return
+			
+		# select measurement data (ti1 or ti3)
+		defaultDir, defaultFile = get_verified_path("profile_verification_chart")
+		dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_chart"), 
+							defaultDir=defaultDir, defaultFile=defaultFile, 
+							wildcard=lang.getstr("filetype.ti1") + 
+									 "|*.ti1;*.ti3", 
+							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		if result == wx.ID_OK:
+			chart = dlg.GetPath()
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		
+		# select profile
+		profile = None
+		path = getcfg("calibration.file")
+		if path:
+			try:
+				profile = ICCP.ICCProfile(path)
+			except ICCP.ICCProfileInvalidError, exception:
+				pass
+		if not profile:
+			profile = self.get_display_profile()
+			if profile:
+				path = profile.fileName
+			else:
+				path = None
+		if not profile:
+			defaultDir, defaultFile = get_verified_path(path)
+			dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_profile"), 
+								defaultDir=defaultDir, defaultFile=defaultFile, 
+								wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			if result == wx.ID_OK:
+				path = dlg.GetPath()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
+			try:
+				profile = ICCP.ICCProfile(path)
+			except ICCP.ICCProfileInvalidError, exception:
+				InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+								 "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+		
+		# let the user choose a location for the result
+		defaultFile = "verify_" + strftime("%Y-%m-%d_%H-%M.html")
+		defaultDir = get_verified_path(None, 
+									   os.path.join(getcfg("profile.save_path"), 
+									   defaultFile))[0]
+		dlg = wx.FileDialog(self, lang.getstr("save_as"), 
+							defaultDir, defaultFile, wildcard="*.html", 
+							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		if result == wx.ID_OK:
+			save_path = os.path.splitext(dlg.GetPath())[0] + ".html"
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		# check if file(s) already exist
+		if os.path.exists(save_path):
+				dlg = ConfirmDialog(
+					self, msg=lang.getstr("dialog.confirm_overwrite", 
+										  save_path), 
+					ok=lang.getstr("overwrite"), 
+					cancel=lang.getstr("cancel"), 
+					bitmap=geticon(32, "dialog-warning"))
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result != wx.ID_OK:
+					return
+		
+		# lookup test patches
+		ti3_ref = None
+		if os.path.splitext(chart)[1].lower() == ".ti1":
+			ti1 = CGATS.CGATS(chart)
+			ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
+		else:
+			cgats = self.worker.ti3_lookup_to_ti1(chart, profile)
+			if cgats:
+				ti1, ti3_ref = cgats
+		if not ti3_ref:
+			return
+		
+		# setup for measurement
+		self.setup_measurement(self.verify_profile, ti1, profile, ti3_ref, 
+							   save_path, chart)
+
+	def verify_profile(self, ti1, profile, ti3_ref, save_path, chart):
+		safe_print("-" * 80)
+		safe_print(lang.getstr("profile.verify"))
+		
+		# setup temp dir
+		temp = self.worker.create_tempdir()
+		
+		# filenames
+		name, ext = os.path.splitext(os.path.basename(save_path))
+		ti1_path = os.path.join(temp, name + ".ti1")
+		profile_path = os.path.join(temp, name + ".icc")
+		
+		# write ti1 to temp dir
+		ti1_file = open(ti1_path, "w")
+		ti1_file.write(str(ti1))
+		ti1_file.close()
+		
+		# write profile to temp dir
+		profile.write(profile_path)
+		
+		# load calibration from profile
+		self.worker.exec_cmd(get_argyll_util("dispwin"), ["-c", profile_path], 
+							 skip_scripts=True)
+		
+		# measure
+		cmd = get_argyll_util("dispread")
+		args = ["-v"]
+		self.worker.add_measurement_features(args)
+		args += [os.path.splitext(ti1_path)[0]]
+		result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
+		if result:
+			ti3_measured = CGATS.CGATS(args[-1] + ".ti3")
+			# make the device values match
+			for i in ti3_measured[0]["DATA"]:
+				for color in ("RGB_R", "RGB_G", "RGB_B"):
+					ti3_ref[0]["DATA"][i][color] = ti3_measured[0]["DATA"][i][color]
+		
+		# cleanup
+		self.worker.wrapup(False)
+		
+		self.Show()
+		
+		if not result:
+			return
+		
+		# read report template
+		report_html_template_path = get_data_path(os.path.join("report", 
+															   "report.html"))
+		report_html_template = codecs.open(report_html_template_path, "r", 
+										   "UTF-8")
+		report_html = report_html_template.read()
+		report_html_template.close()
+		
+		# create report
+		report_html = report_html.replace("${DISPLAY}", 
+										  self.display_ctrl.GetStringSelection())
+		report_html = report_html.replace("${PROFILE}", 
+										  profile.getDescription())
+		report_html = report_html.replace("${TESTCHART}", 
+										  os.path.basename(chart))
+		report_html = report_html.replace("${DATETIME}", 
+										  strftime("%Y-%m-%d %H:%M:%S"))
+		report_html = report_html.replace("${REF}", 
+										  str(ti3_ref).replace('"', "&quot;"))
+		report_html = report_html.replace("${MEASURED}", 
+										  str(ti3_measured).replace('"', 
+																	"&quot;"))
+		for include in ("compare.css", "compare-dark-light.css", 
+						"compare-dark.css", "compare-light.css", 
+						"compare-light-dark.css", "report.css", 
+						"jsapi-packages-p.js", "compare.constants.js", 
+						"compare.variables.js", "compare.functions.js", 
+						"compare.init.js"):
+			path = get_data_path(os.path.join("report", include))
+			f = codecs.open(path, "r", "UTF-8")
+			if include.endswith(".js"):
+				report_html = report_html.replace('src="%s">' % include, 
+												  ">/*<![CDATA[*/\n" + 
+												  f.read() + 
+												  "\n/*]]>*/")
+			else:
+				report_html = report_html.replace('@import "%s"' % include, 
+												  f.read())
+			f.close()
+		
+		# write report
+		report_html_file = codecs.open(save_path, "w", "UTF-8")
+		report_html_file.write(report_html)
+		report_html_file.close()
+		
+		# show report
+		launch_file(save_path)
+
 	def load_cal(self, cal=None, silent=False):
 		if not cal:
 			cal = getcfg("calibration.file")
@@ -3430,7 +3627,10 @@ class MainFrame(BaseFrame):
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
 		writecfg()
-		self.worker.wrapup(False)
+		if pending_function_kwargs.get("wrapup", True):
+			self.worker.wrapup(False)
+		if "wrapup" in pending_function_kwargs:
+			del pending_function_kwargs["wrapup"]
 		self.HideAll()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
@@ -4249,7 +4449,7 @@ class MainFrame(BaseFrame):
 								os.path.basename(source_filename) + 
 								profile_ext, 
 								wildcard=lang.getstr("filetype.icc") + 
-										 "|*%s" % profile_ext, 
+										 "|*.icc;*.icm", 
 								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			result = dlg.ShowModal()

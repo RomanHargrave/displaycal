@@ -1,0 +1,357 @@
+* {
+	font-family: Verdana, Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+}
+a {
+	outline: none;
+	text-decoration: none;
+}
+a:link,
+a:active {
+	color: #006699;
+}
+a:visited {
+	color: #666666;
+}
+a:hover,
+a:visited:hover {
+	border-bottom: 1px dotted #0099CC;
+	color: #0099CC;
+	text-decoration: none;
+}
+a, button, button:active, button:hover {
+	outline: none;
+}
+html {
+	background: #e8e8e8;
+	border-top: 4px solid #666666;
+}
+body {
+	background: white;
+	border-radius: 14px;
+	-moz-border-radius: 14px;
+	-webkit-border-radius: 14px;
+	font-size: 11px;
+	margin: 17px auto;
+	padding: 15px 20px;
+	width: 900px;
+}
+button {
+	background: #cccccc;
+	border: 1px solid #999999;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	color: #666666;
+	font: normal 1em Verdana, Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	padding: 2px 6px;
+}
+button:active,
+button:active:hover,
+button:active:focus {
+	background: #cccccc;
+	border-color: #333333;
+}
+button.disabled {
+	background: #dddddd;
+	border-color: #cccccc;
+	color: #cccccc;
+}
+button:hover, 
+button.hover {
+	background: #333333;
+	border-color: #333333;
+	color: #b9b9b9;
+}
+button.disabled:hover, 
+button.disabled.hover,
+button.disabled:focus,
+button.disabled.focus {
+	background: #dddddd;
+	border-color: #cccccc;
+	color: #cccccc;
+}
+h2 {
+	color: #333333;
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-size: 20px;
+	margin-bottom: 9px;
+}
+.docs {
+	padding: 2px 14px 0 14px;
+}
+.docs h2 {
+	font-weight: lighter;
+}
+h3 {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+}
+p {
+	line-height: 18px;
+}
+fieldset, div.fieldset {
+	border-style: solid;
+	border-top-width: 25px;
+	border-width: 4px;
+	border-radius: 6px;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	margin: 10px 0 0 0;
+	padding: 10px;
+}
+div.fieldset {
+	border-top-width: 4px;
+	padding-top: 31px;
+	position: relative;
+}
+legend, h2.legend {
+	border-top-style: solid;
+	border-top-width: 4px;
+	display: block;
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-size: 10px;
+	font-weight: bold;
+	line-height: 12px;
+	margin: 0;
+	padding: 3px 0 7px;
+	text-transform: uppercase;
+}
+h2.legend {
+	left: 0;
+	margin-top: 0;
+	padding: 0px 10px 7px;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+form,
+fieldset.login, fieldset.files, fieldset.proof, fieldset.variables, fieldset.process,
+div.login, div.files, div.proof, div.variables, div.process {
+	clear: both;
+}
+#F_out {
+	margin-bottom: 20px;
+}
+.login p.user,
+.login p.pwd,
+.login p.login {
+	display: inline;
+}
+.login p.logout {
+	margin-bottom: 0;
+}
+.login br {
+	display: none;
+}
+.login input[type=text],
+.login input[type=password] {
+	margin: 0 10px 0 5px;
+}
+.login input[type=checkbox] {
+	margin: 0 5px 0 10px;
+	vertical-align: middle; /*text-bottom;*/
+}
+fieldset.login, div.login {
+	padding-bottom: 1.75em;
+}
+fieldset.measurement, fieldset.reference, div.measurement, div.reference {
+	overflow: hidden;
+	width: 417px;
+}
+fieldset.measurement, div.measurement {
+	float: left;
+}
+fieldset.reference, div.reference {
+	float: right;
+}
+.proof p {
+	clear: both;
+	margin: 10px 0;
+	overflow: auto;
+}
+.proof br {
+	display: none;
+}
+.proof label {
+	float: left;
+	line-height: 1.7em;
+	width: 150px;
+}
+.proof input {
+	width: 580px;
+}
+.proof button.save {
+	margin-left: 150px;
+}
+form {
+	margin: 0;
+}
+h1 {
+	/* border-style: solid;
+	border-width: 4px; */
+	border: none;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	font: lighter 12px Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	margin: 0;
+	padding: 12px;
+	position: relative;
+	text-indent: .5em;
+	z-index: 1;
+}
+#logo {
+	background: #393939;
+	margin-bottom: -8px;
+	padding: 15px 9px 4px;
+	position: relative;
+	z-index: 2;
+}
+h1 span {
+	display: block;
+	float: left;
+	height: .75em;
+	margin: .25em .5em .35em 0;
+	width: .75em;
+}
+h1 span.r {
+	margin-left: .5em;
+	background: #f00000;
+}
+h1 span.g {
+	background: #00f000;
+}
+h1 span.b {
+	background: #0000f0;
+	margin-right: 11px;
+}
+hr {
+	border: 1px dotted silver;
+}
+label.disabled {
+	color: silver;
+}
+noscript p, p.error, p.success {
+	margin: 20px 14px 10px 14px;
+}
+.error, .success {
+	font-weight: bold;
+}
+.error {
+	color: red;
+}
+.success {
+	color: green;
+}
+.fileinput {
+	position: relative;
+}
+input.file {
+	cursor: default;
+	height: 30px;
+	left: 0;
+	margin: 0;
+	position: absolute;
+	text-align: right;
+	top: -9px;
+	width: 80px;
+	filter:alpha(opacity: 0);
+	opacity: 0;
+	-moz-opacity: 0;
+}
+input, select, textarea {
+	font: normal 1em Verdana, Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+}
+input, select {
+	margin-right: 5px;
+}
+input[type=text], input[type=password], select, textarea {
+	background: #f9f9f9;
+	border: 1px solid #999999;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	padding: 2px;
+}
+input[type=text]:hover, 
+input[type=text]:focus, 
+input[type=password]:hover, 
+input[type=password]:focus, 
+select:hover, 
+select:focus, 
+textarea:hover,
+textarea:focus {
+	background: white;
+	border-color: #333333;
+}
+select {
+	padding: 1px;
+}
+select,
+fieldset.measurement input[type=text], fieldset.reference input[type=text], div.measurement input[type=text], div.reference input[type=text] {
+	width: 220px;
+}
+textarea {
+	width: 99.4%;
+}
+
+/* quick report */
+#report {
+	display: none;
+}
+#result {
+	margin-bottom: 18px;
+}
+h3 {
+	font-size: 1.5em;
+	font-weight: normal;
+	margin-bottom: .5em;
+}
+table {
+	border: none;
+	border-spacing: 0;
+	width: 100%;
+}
+td, th {
+	border: none;
+	border-bottom: 1px solid silver;
+	padding: .125em .25em .125em 0;
+	text-align: center;
+}
+table.info td, table.info th, td.first-row, th.first-row {
+	text-align: left;
+}
+table.info th {
+	width: 15em;
+}
+td.patch {
+	border-left: none;
+	border-right: none;
+	padding: 0;
+	width: 1.75em;
+}
+div.patch {
+	/* height: 1.5em; */
+	padding: .125em .25em .125em 0;
+	width: 1.75em;
+}
+.big {
+	font-size: 1.25em;
+}
+.ok {
+	color: #339900;
+}
+.warn {
+	color: #FF9900;
+	font-weight: bold;
+}
+.ko {
+	color: red;
+	font-weight: bold;
+}
+.hidden {
+	color: white;
+	visibility: hidden;
+}
+td.ok, td.ko {
+	line-height: 1em;
+}

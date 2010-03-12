@@ -1125,6 +1125,27 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC)</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><strong>Profile verification by measurements</strong>.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Testchart editor: Do not automatically select a saved testchart (regression of a change in 0.3.3.5). Do not show empty rows when creating a testchart using an algorythm that does not create the expected number of rows.</li>
+							<li>Linux: When using TwinView or Xinerama, the size of the measurement window was sometimes not correct.</li>
+							<li>Linux: Failure in get_argyll_version if Argyll utilities have alternate names (eg. argyll-targen instead of targen), which could prevent being able to open the testchart editor.</li>
+							<li>Mac OS X 10.4: Fall back to ColorSyncScripting if Image Events does not return a display profile.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Linux: Info window no longer stays always on top.</li>
+							<li>Linux: When getting the current profile for a display, also look at the _ICC_DEVICE_PROFILE atom (see draft <a href="http://www.oyranos.org/wiki/index.php?title=ICC_Profiles_in_X_Specification_0.4">ICC Profiles in X Specification 0.4</a>).</li>
+						</ul>
+					</dd>
+					
+				<dt>2010-03-02 20:12 (UTC)</dt>
+					<dd>
+						<h3>0.3.3.6</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Linux/Mac OS X: 'tcgetattr failed' when trying to calibrate or profile.</li>

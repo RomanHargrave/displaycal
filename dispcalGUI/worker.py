@@ -28,16 +28,18 @@ elif sys.platform == "win32":
 from wxaddons import wx
 import wx.lib.delayedresult as delayedresult
 
+import CGATS
 import ICCProfile as ICCP
 import config
 import localization as lang
 import subprocess26 as sp
 import tempfile26 as tempfile
 import wexpect
-from argyll_cgats import extract_fix_copy_cal, ti3_to_ti1
+from argyll_cgats import extract_fix_copy_cal, ti3_to_ti1, verify_cgats
 from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
+from colormath import Lab2XYZ
 from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg, 
 					geticon, get_data_path, get_verified_path, setcfg, writecfg)
 from debughelpers import handle_error
@@ -974,6 +976,8 @@ class Worker():
 			 sys.platform == "darwin" and args and self.owner and not \
 			 self.owner.IsShownOnScreen():
 			start_new_thread(mac_app_activate, (3, "Terminal"))
+		cmdline = [arg.encode(fs_enc) for arg in cmdline]
+		working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 		try:
 			if not interact:
 				if silent:
@@ -1004,8 +1008,6 @@ class Worker():
 			if sys.platform == "win32" and working_dir:
 				working_dir = win32api.GetShortPathName(working_dir)
 			tries = 1
-			cmdline = [arg.encode(fs_enc) for arg in cmdline]
-			working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 			while tries > 0:
 				if interact:
 					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
@@ -1709,6 +1711,256 @@ class Worker():
 												list(cargs), ckwargs, wargs, 
 												wkwargs)
 		return True
+	
+	def ti1_lookup_to_ti3(self, ti1, profile):
+		"""
+		Read TI1 (filename or CGATS instance), lookup device->pcs values 
+		absolute colorimetrically through profile using Argyll's icclu 
+		utility and return TI3 (CGATS instance)
+		
+		"""
+		
+		# ti1
+		if isinstance(ti1, basestring):
+			ti1 = CGATS.CGATS(ti1)
+		if not isinstance(ti1, CGATS.CGATS):
+			raise TypeError('Wrong type for ti1, needs to be CGATS.CGATS instance')
+		ti1_filename = ti1.filename
+		ti1 = verify_cgats(ti1, ("RGB_R", "RGB_B", "RGB_G"), True)
+		if not ti1:
+			InfoDialog(self, msg=lang.getstr("error.testchart.invalid", 
+											 ti1_filename), 
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+			return False
+		
+		# profile
+		if isinstance(profile, basestring):
+			profile = ICCP.ICCProfile(profile)
+		if not isinstance(profile, ICCP.ICCProfile):
+			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
+		
+		# determine pcs for lookup
+		color_rep = profile.connectionColorSpace
+		if color_rep == 'LAB':
+			pcs = 'l'
+		elif color_rep == 'XYZ':
+			pcs = 'X'
+		else:
+			raise ValueError('Unknown color representation ' + color_rep)
+		
+		# get profile color space
+		colorspace = profile.colorSpace
+		
+		# read device values from ti1
+		data = ti1.queryv1("DATA")
+		device_data = data.queryv(('RGB_R', 'RGB_G', 'RGB_B'))
+
+		# lookup device->pcs values through profile using icclu
+		icclu = get_argyll_util("icclu").encode(fs_enc)
+		cwd = self.create_tempdir()
+		profile.write(os.path.join(cwd, "temp.icc"))
+		p = sp.Popen([icclu, '-ff', '-ia', '-p' + pcs, '-s100', "temp.icc"], 
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
+		for rgb in device_data.values():
+			p.stdin.write(' '.join(str(n) for n in rgb.values()) + '\n')
+		p.stdin.write('\n')
+		odata = p.stdout.readlines()
+		p.stdout.close()
+		self.wrapup(False)
+
+		# write output ti3
+		ofile = StringIO()
+		ofile.write('CTI3\n')
+		ofile.write('\n')
+		ofile.write('DESCRIPTOR "Argyll Calibration Target chart information 3"\n')
+		ofile.write('KEYWORD "DEVICE_CLASS"\n')
+		ofile.write('DEVICE_CLASS "' + ('DISPLAY' if colorspace == 'RGB' else 'OUTPUT') + '"\n')
+		include_sample_name = False
+		i = 0
+		for line in odata:
+			line = line.strip().split('->')
+			line = ''.join(line).split()
+			if line[-1] == '(clip)':
+				line.pop()
+			if i == 0:
+				icolor = line[3].strip('[]').upper()
+				if icolor == 'RGB':
+					olabel = 'RGB_R RGB_G RGB_B'
+				elif icolor == 'CMYK':
+					olabel = 'CMYK_C CMYK_M CMYK_Y CMYK_K'
+				else:
+					raise ValueError('Unknown color representation ' + icolor)
+				ocolor = line[-1].strip('[]')
+				if ocolor == 'LAB':
+					ilabel = 'LAB_L LAB_A LAB_B'
+				elif ocolor == 'XYZ':
+					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
+				else:
+					raise ValueError('Unknown color representation ' + ocolor)
+				ofile.write('KEYWORD "COLOR_REP"\n')
+				ofile.write('COLOR_REP "' + icolor + '_' + ocolor + '"\n')
+				
+				ofile.write('\n')
+				ofile.write('NUMBER_OF_FIELDS ')
+				if include_sample_name:
+					ofile.write(str(2 + len(icolor) + len(ocolor)) + '\n')
+				else:
+					ofile.write(str(1 + len(icolor) + len(ocolor)) + '\n')
+				ofile.write('BEGIN_DATA_FORMAT\n')
+				ofile.write('SAMPLE_ID ')
+				if include_sample_name:
+					ofile.write('SAMPLE_NAME ' + olabel + ' ' + ilabel + '\n')
+				else:
+					ofile.write(olabel + ' ' + ilabel + '\n')
+				ofile.write('END_DATA_FORMAT\n')
+				ofile.write('\n')
+				ofile.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
+				ofile.write('BEGIN_DATA\n')
+			i += 1
+			pcs = line[5:-1]
+			if color_rep == 'XYZ':
+				# Need to scale XYZ, Lab is already scaled
+				pcs = [str(float(n) * 100.0) for n in pcs]
+			if include_sample_name:
+				ofile.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(pcs) + '\n')
+			else:
+				ofile.write(str(i) + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(pcs) + '\n')
+		ofile.write('END_DATA\n')
+		ofile.seek(0)
+		return CGATS.CGATS(ofile)
+	
+	def ti3_lookup_to_ti1(self, ti3, profile):
+		"""
+		Read TI3 (filename or CGATS instance), lookup pcs->device values 
+		absolute colorimetrically through profile using Argyll's icclu 
+		utility and return TI1 and compatible TI3 (CGATS instances)
+		
+		"""
+		
+		# ti3
+		if isinstance(ti3, basestring):
+			ti3 = CGATS.CGATS(ti3)
+		if not isinstance(ti3, CGATS.CGATS):
+			raise TypeError('Wrong type for ti3, needs to be CGATS.CGATS instance')
+		ti3_filename = ti3.filename
+		ti3v = verify_cgats(ti3, ("XYZ_X", "XYZ_Y", "XYZ_Z"), True)
+		if not ti3v:
+			ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
+		if not ti3v:
+			InfoDialog(self, msg=lang.getstr("error.testchart.invalid", 
+											 ti3_filename), 
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+			return False
+		
+		# profile
+		if isinstance(profile, basestring):
+			profile = ICCP.ICCProfile(profile)
+		if not isinstance(profile, ICCP.ICCProfile):
+			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
+			
+		# determine pcs for lookup
+		color_rep = ti3v.queryv1("COLOR_REP").split('_')
+		if len(color_rep) > 1:
+			color_rep = color_rep[1]
+		else:
+			color_rep = color_rep[0]
+		if color_rep == 'LAB':
+			pcs = 'l'
+			required = ("LAB_L", "LAB_A", "LAB_B")
+		elif color_rep == 'XYZ':
+			pcs = 'X'
+			required = ("XYZ_X", "XYZ_Y", "XYZ_Z")
+		else:
+			raise ValueError('Unknown color representation ' + color_rep)
+
+		# get profile color space
+		colorspace = profile.colorSpace
+
+		# read pcs values from ti3
+		data = ti3v.queryv1("DATA")
+		pcs_data = data.queryv(required)
+
+		# lookup pcs->device values through profile.icc using xicclu
+		icclu = get_argyll_util("icclu").encode(fs_enc)
+		cwd = self.create_tempdir()
+		profile.write(os.path.join(cwd, "temp.icc"))
+		p = sp.Popen([icclu, '-fb', '-ia', '-p' + pcs, '-s100', "temp.icc"], 
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
+		for pcs in pcs_data.values():
+			p.stdin.write(' '.join(str(n) for n in pcs.values()) + '\n')
+		p.stdin.write('\n')
+		odata = p.stdout.readlines()
+		p.stdout.close()
+		self.wrapup(False)
+		
+		# write output ti1/ti3
+		ti1out = StringIO()
+		ti3out = StringIO()
+		ofiles = Files([ti1out, ti3out], 'w')
+		ofiles.files[0].write('CTI1\n')
+		ofiles.files[1].write('CTI3\n')
+		ofiles.write('\n')
+		ofiles.files[0].write('DESCRIPTOR "Argyll Calibration Target chart information 1"\n')
+		ofiles.files[1].write('DESCRIPTOR "Argyll Calibration Target chart information 3"\n')
+		ofiles.files[1].write('KEYWORD "DEVICE_CLASS"\n')
+		ofiles.files[1].write('DEVICE_CLASS "' + ('DISPLAY' if colorspace == 'RGB' else 'OUTPUT') + '"\n')
+		include_sample_name = False
+		i = 0
+		for line in odata:
+			line = line.strip().split('->')
+			line = ''.join(line).split()
+			if line[-1] == '(clip)':
+				line.pop()
+			if i == 0:
+				icolor = line[3].strip('[]').upper()
+				if icolor == 'LAB':
+					##ilabel = 'LAB_L LAB_A LAB_B'
+					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
+				elif icolor == 'XYZ':
+					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
+				else:
+					raise ValueError('Unknown color representation ' + icolor)
+				ocolor = line[-1].strip('[]')
+				if ocolor == 'RGB':
+					olabel = 'RGB_R RGB_G RGB_B'
+				elif ocolor == 'CMYK':
+					olabel = 'CMYK_C CMYK_M CMYK_Y CMYK_K'
+				else:
+					raise ValueError('Unknown color representation ' + ocolor)
+				ofiles.write('KEYWORD "COLOR_REP"\n')
+				ofiles.files[0].write('COLOR_REP "' + ocolor + '"\n')
+				ofiles.files[1].write('COLOR_REP "' + ocolor + '_' + icolor + '"\n')
+				ofiles.write('\n')
+				ofiles.write('NUMBER_OF_FIELDS ')
+				if include_sample_name:
+					ofiles.write(str(2 + len(icolor) + len(ocolor)) + '\n')
+				else:
+					ofiles.write(str(1 + len(icolor) + len(ocolor)) + '\n')
+				ofiles.write('BEGIN_DATA_FORMAT\n')
+				ofiles.write('SAMPLE_ID ')
+				if include_sample_name:
+					ofiles.write('SAMPLE_NAME ' + olabel + ' ' + ilabel + '\n')
+				else:
+					ofiles.write(olabel + ' ' + ilabel + '\n')
+				ofiles.write('END_DATA_FORMAT\n')
+				ofiles.write('\n')
+				ofiles.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
+				ofiles.write('BEGIN_DATA\n')
+			i += 1
+			pcs = line[:3]
+			if color_rep == 'XYZ' or color_rep == 'LAB':
+				if color_rep == 'LAB':
+					pcs = Lab2XYZ(*[float(n) for n in pcs])
+				# Need to scale XYZ
+				pcs = [str(round(float(n) * 100.0, 3 if n >= 0.1 else 4)) for n in pcs]
+			if include_sample_name:
+				ofiles.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[5:-1]) + ' ' + ' '.join(pcs) + '\n')
+			else:
+				ofiles.write(str(i) + ' ' + ' '.join(line[5:-1]) + ' ' + ' '.join(pcs) + '\n')
+		ofiles.write('END_DATA\n')
+		ofiles.seek(0)
+		return tuple(CGATS.CGATS(ofile) for ofile in ofiles)
+
 
 	def wrapup(self, copy=True, remove=True, dst_path=None, ext_filter=None):
 		"""
