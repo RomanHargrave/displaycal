@@ -3311,6 +3311,7 @@ class MainFrame(BaseFrame):
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
+		setcfg("profile_verification_chart", chart)
 		
 		# select profile
 		profile = None
@@ -3378,13 +3379,18 @@ class MainFrame(BaseFrame):
 		
 		# lookup test patches
 		ti3_ref = None
-		if os.path.splitext(chart)[1].lower() == ".ti1":
-			ti1 = CGATS.CGATS(chart)
-			ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
-		else:
-			cgats = self.worker.ti3_lookup_to_ti1(chart, profile)
-			if cgats:
-				ti1, ti3_ref = cgats
+		try:
+			if chart.lower().endswith(".ti1"):
+				ti1 = CGATS.CGATS(chart)
+				ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
+			else:
+				cgats = self.worker.ti3_lookup_to_ti1(chart, profile)
+				if cgats:
+					ti1, ti3_ref = cgats
+		except Exception, exception:
+			InfoDialog(self, msg=safe_unicode(exception), 
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+			return
 		if not ti3_ref:
 			return
 		
@@ -3405,7 +3411,15 @@ class MainFrame(BaseFrame):
 		profile_path = os.path.join(temp, name + ".icc")
 		
 		# write ti1 to temp dir
-		ti1_file = open(ti1_path, "w")
+		try:
+			ti1_file = open(ti1_path, "w")
+		except (IOError, OSError), exception:
+			InfoDialog(self, msg=lang.getstr("error.file.create", 
+											 ti1_path), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"))
+			self.worker.wrapup(False)
+			return
 		ti1_file.write(str(ti1))
 		ti1_file.close()
 		
@@ -3424,10 +3438,11 @@ class MainFrame(BaseFrame):
 		result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		if result:
 			ti3_measured = CGATS.CGATS(args[-1] + ".ti3")
-			# make the device values match
-			for i in ti3_measured[0]["DATA"]:
-				for color in ("RGB_R", "RGB_G", "RGB_B"):
-					ti3_ref[0]["DATA"][i][color] = ti3_measured[0]["DATA"][i][color]
+			if not chart.lower().endswith(".ti1"):
+				# make the device values match
+				for i in ti3_measured[0]["DATA"]:
+					for color in ("RGB_R", "RGB_G", "RGB_B"):
+						ti3_ref[0]["DATA"][i][color] = ti3_measured[0]["DATA"][i][color]
 		
 		# cleanup
 		self.worker.wrapup(False)
@@ -3440,14 +3455,27 @@ class MainFrame(BaseFrame):
 		# read report template
 		report_html_template_path = get_data_path(os.path.join("report", 
 															   "report.html"))
-		report_html_template = codecs.open(report_html_template_path, "r", 
+		if not report_html_template_path:
+			InfoDialog(self, msg=lang.getstr("file.missing", 
+											 report_html_template_path), 
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+			return
+		try:
+			report_html_template = codecs.open(report_html_template_path, "r", 
 										   "UTF-8")
+		except (IOError, OSError), exception:
+			InfoDialog(self, msg=lang.getstr("error.file.open", 
+											 report_html_template_path), 
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+			return
 		report_html = report_html_template.read()
 		report_html_template.close()
 		
 		# create report
 		report_html = report_html.replace("${DISPLAY}", 
 										  self.display_ctrl.GetStringSelection())
+		report_html = report_html.replace("${INSTRUMENT}", 
+										  self.comport_ctrl.GetStringSelection())
 		report_html = report_html.replace("${PROFILE}", 
 										  profile.getDescription())
 		report_html = report_html.replace("${TESTCHART}", 
@@ -3466,7 +3494,20 @@ class MainFrame(BaseFrame):
 						"compare.variables.js", "compare.functions.js", 
 						"compare.init.js"):
 			path = get_data_path(os.path.join("report", include))
-			f = codecs.open(path, "r", "UTF-8")
+			if not path:
+				InfoDialog(self, msg=lang.getstr("file.missing", 
+												 path), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+			try:
+				f = codecs.open(path, "r", "UTF-8")
+			except (IOError, OSError), exception:
+				InfoDialog(self, msg=lang.getstr("error.file.open", 
+												 path), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
 			if include.endswith(".js"):
 				report_html = report_html.replace('src="%s">' % include, 
 												  ">/*<![CDATA[*/\n" + 
@@ -3478,7 +3519,14 @@ class MainFrame(BaseFrame):
 			f.close()
 		
 		# write report
-		report_html_file = codecs.open(save_path, "w", "UTF-8")
+		try:
+			report_html_file = codecs.open(save_path, "w", "UTF-8")
+		except (IOError, OSError), exception:
+			InfoDialog(self, msg=lang.getstr("error.file.create", 
+											 save_path), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"))
+			return
 		report_html_file.write(report_html)
 		report_html_file.close()
 		

@@ -1725,19 +1725,21 @@ class Worker():
 			ti1 = CGATS.CGATS(ti1)
 		if not isinstance(ti1, CGATS.CGATS):
 			raise TypeError('Wrong type for ti1, needs to be CGATS.CGATS instance')
+		required = ("RGB_R", "RGB_B", "RGB_G")
 		ti1_filename = ti1.filename
-		ti1 = verify_cgats(ti1, ("RGB_R", "RGB_B", "RGB_G"), True)
+		ti1 = verify_cgats(ti1, required, True)
 		if not ti1:
-			InfoDialog(self, msg=lang.getstr("error.testchart.invalid", 
-											 ti1_filename), 
-					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
-			return False
+			raise ValueError(lang.getstr("error.testchart.invalid", 
+										 ti1_filename))
 		
 		# profile
 		if isinstance(profile, basestring):
 			profile = ICCP.ICCProfile(profile)
 		if not isinstance(profile, ICCP.ICCProfile):
 			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
+		if "chad" in profile.tags:
+			# profiles with chromatic adaption tag currently not supported
+			raise ValueError(lang.getstr("profile.unsupported.chad"))
 		
 		# determine pcs for lookup
 		color_rep = profile.connectionColorSpace
@@ -1753,7 +1755,13 @@ class Worker():
 		
 		# read device values from ti1
 		data = ti1.queryv1("DATA")
-		device_data = data.queryv(('RGB_R', 'RGB_G', 'RGB_B'))
+		if not data:
+			raise ValueError(lang.getstr("error.testchart.invalid", 
+										 ti1_filename))
+		device_data = data.queryv(required)
+		if not device_data:
+			raise ValueError(lang.getstr("error.testchart.missing_fields", 
+										 (ti1_filename, ", ".join(required))))
 
 		# lookup device->pcs values through profile using icclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
@@ -1820,7 +1828,7 @@ class Worker():
 			pcs = line[5:-1]
 			if color_rep == 'XYZ':
 				# Need to scale XYZ, Lab is already scaled
-				pcs = [str(float(n) * 100.0) for n in pcs]
+				pcs = [str(round(float(n) * 100.0, 3 if n >= 0.1 else 4)) for n in pcs]
 			if include_sample_name:
 				ofile.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(pcs) + '\n')
 			else:
@@ -1847,19 +1855,24 @@ class Worker():
 		if not ti3v:
 			ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
 		if not ti3v:
-			InfoDialog(self, msg=lang.getstr("error.testchart.invalid", 
-											 ti3_filename), 
-					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
-			return False
+			raise ValueError(lang.getstr("error.testchart.invalid", 
+										 ti3_filename))
 		
 		# profile
 		if isinstance(profile, basestring):
 			profile = ICCP.ICCProfile(profile)
 		if not isinstance(profile, ICCP.ICCProfile):
 			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
+		if "chad" in profile.tags:
+			# profiles with chromatic adaption tag currently not supported
+			raise ValueError(lang.getstr("profile.unsupported.chad"))
 			
 		# determine pcs for lookup
-		color_rep = ti3v.queryv1("COLOR_REP").split('_')
+		color_rep = ti3v.queryv1("COLOR_REP")
+		if not color_rep:
+			raise ValueError(lang.getstr("error.testchart.invalid", 
+										 ti3_filename))
+		color_rep = color_rep.split('_')
 		if len(color_rep) > 1:
 			color_rep = color_rep[1]
 		else:
@@ -1878,7 +1891,13 @@ class Worker():
 
 		# read pcs values from ti3
 		data = ti3v.queryv1("DATA")
+		if not data:
+			raise ValueError(lang.getstr("error.testchart.invalid", 
+										 ti3_filename))
 		pcs_data = data.queryv(required)
+		if not pcs_data:
+			raise ValueError(lang.getstr("error.testchart.missing_fields", 
+										 (ti3_filename, ", ".join(required))))
 
 		# lookup pcs->device values through profile.icc using xicclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)

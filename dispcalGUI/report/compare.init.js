@@ -1,5 +1,5 @@
-if (jsapi.useragent.opera && jsapi.useragent.opera < 8) alert("Diese Seite funktioniert nicht mit Opera vor Version 8!");
-else if (jsapi.useragent.msie && jsapi.useragent.mac) alert("Diese Seite funktioniert nicht mit Mac-Versionen des Internet Explorers! Verwenden Sie einen Mozilla-basierten Browser oder Safari in einer aktuellen Version.");
+if (jsapi.useragent.opera && jsapi.useragent.opera < 8) alert("Your version of Opera is too old. Please upgrade to Opera 8 or newer.");
+else if (jsapi.useragent.msie && jsapi.useragent.mac) alert("Internet Explorer is not supported under Mac OS. Please use a different browser like Mozilla Firefox or Safari.");
 		
 var data_ref, data_in,
 	duplicates,
@@ -7,7 +7,5 @@ var data_ref, data_in,
 	fields_header = [];
 		
 window.onload = function() {
-	memorize("in");
-	memorize("ref");
 	analyze()
 };

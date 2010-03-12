@@ -148,7 +148,6 @@ p.generate_report = function() {
 	else if (this.data_format.indexOf('CMYK_C') > -1 && this.data_format.indexOf('CMYK_M') > -1 && this.data_format.indexOf('CMYK_Y') > -1 && this.data_format.indexOf('CMYK_K') > -1)
 		id = 'CMYK';
 	var e = document.forms['F_data'].elements,
-		fogra_info = this.header['FOGRA_INFO2_DE'] || this.header['FOGRA_INFO2_EN'],
 		criteria = comparison_criteria[this.header['ID'] && comparison_criteria[this.header['ID'][0][1]] ? this.header['ID'][0][1] : id],
 		fields_match = criteria.fields_match,
 		fields_extract_i = criteria.fields_match.slice().concat(criteria.fields_compare),
@@ -180,22 +179,10 @@ p.generate_report = function() {
 			|| this.data_format.indexof("XYZ_Z", true) < 0);
 	
 	this.display = e['FF_display'].value;
+	this.instrument = e['FF_instrument'].value;
 	this.profile = e['FF_profile'].value;
 	this.testchart = e['FF_testchart'].value;
 	this.datetime = e['FF_datetime'].value;
-	if (fogra_info) this.instrumentation  = fogra_info[0][1].replace(/[\w\W]*(?:Messbedingungen|Measurement conditions):\s*/g, '');
-	else if (this.header['INSTRUMENTATION'])  this.instrumentation  = this.header['INSTRUMENTATION'][0][1].replace(/^"|"$/g, '');
-	if (fogra_info) this.output_condition = fogra_info[0][1].replace(/\s*(?:Druckbedingung|Printing condition):\s*/g, '').replace(/\s*(?:Messbedingungen|Measurement conditions):[\w\W]*/g, '');
-	else if (this.header['PRINT_CONDITIONS']) this.output_condition = this.header['PRINT_CONDITIONS'][0][1].replace(/^"|"$/g, '');
-	else if (this.header['OUTPUT_CONDITION']) this.output_condition = this.header['OUTPUT_CONDITION'][0][1].replace(/^"|"$/g, '');
-	var en_de = {
-	};
-	if (this.instrumentation) {
-		for (var word in en_de) this.instrumentation = this.instrumentation.replace(new RegExp("(^|\\W)" + word + "(\\W|$)", "g"), "$1" + en_de[word] + "$2");
-	};
-	if (this.output_condition) {
-		for (var word in en_de) this.output_condition = this.output_condition.replace(new RegExp("(^|\\W)" + word + "(\\W|$)", "g"), "$1" + en_de[word] + "$2");
-	};
 	document.getElementById('reporttitle').innerHTML =  'Report – ' + criteria.strip_name;
 	this.report_html = [
 		'	<h2>Profile Verification Report – ' + criteria.strip_name + '</h2>',
@@ -203,6 +190,10 @@ p.generate_report = function() {
 		'		<tr>',
 		'			<th>Device:</th>',
 		'			<td>' + this.display + '</td>',
+		'		</tr>',
+		'		<tr>',
+		'			<th>Instrument:</th>',
+		'			<td>' + this.instrument + '</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Profile:</th>',
@@ -220,10 +211,6 @@ p.generate_report = function() {
 	];
 	var result_start = this.report_html.length;
 	this.report_html = this.report_html.concat([
-		(this.instrumentation ?
-		'	<h3>Instrumentation</h3>' +
-		'	<p>' + this.instrumentation + '</p>' : ''
-		),
 		'	<div class="summary">',
 		'	<h3>Summary ' + criteria.name + '</h3>',
 		'	<table>',
@@ -495,10 +482,6 @@ function comma2point(txt) {
 	return decimal(txt)
 };
 
-function point2comma(txt) {
-	return decimal(txt, "\\.", ",")
-};
-
 function decimal(txt, sr, re) {
 	if (!sr) sr = "\\,";
 	if (!re) re = ".";
@@ -542,25 +525,20 @@ function analyze(which) {
 		fields_header_selected=[],
 		e,fv,i,v,s;
 	
-	check_deletable();
-	
 	if (!trim(f["F_data"].elements["FF_data_in"].value) || !trim(f["F_data"].elements["FF_data_ref"].value)) return;
 	
 	if (!get_data(which)) {
-		form_element_set_disabled(document.getElementById('B_extract'), true);
 		if (which == "r" || !which) {
 			if (trim(f['F_data'].elements['FF_data_ref'].value)) {
 				if (!data_ref.data_format.length) set_status("Reference data: No or invalid data format.");
 				else if (!data_ref.data.length) set_status("Reference data: No or invalid values.")
 			};
-			form_element_set_disabled(document.getElementById('B_debug_r'), true)
 		};
 		if (which == "i" || !which) {
 			if (trim(f['F_data'].elements['FF_data_in'].value)) {
 				if (!data_in.data_format.length) set_status("Measurement data: No or invalid data format.");
 				else if (!data_in.data.length) set_status("Measurement data: No or invalid values.")
 			};
-			form_element_set_disabled(document.getElementById('B_debug_i'), true)
 		}
 	};
 	
@@ -617,10 +595,7 @@ function analyze(which) {
 	
 	if (data_ref.data_format.length && data_ref.data.length && data_in.data_format.length && data_in.data.length) {
 		compare();
-		form_element_set_disabled(document.getElementById('B_extract'), false);
 	};
-	if (data_ref.data_format.length && data_ref.data.length) form_element_set_disabled(document.getElementById('B_debug_r'), false);
-	if (data_in.data_format.length && data_in.data.length) form_element_set_disabled(document.getElementById('B_debug_i'), false)
 };
 
 function get_data(which) {
@@ -645,10 +620,6 @@ function get_data(which) {
 	return true
 };
 
-function debug(d) {
-	document.forms["F_out"].elements["FF_data_out"].value = d == "i" ? data_in.toString() : data_ref.toString()
-};
-
 function compare() {
 	form_elements_set_disabled(null, true);
 	duplicates = 'list';
@@ -663,14 +634,12 @@ function compare() {
 		alert("Error parsing variable:\n" + e + "\nUsing default values.")
 	};
 	document.forms["F_out"].target = "_blank";
-	setvid(document.forms["F_out"]);
 	var report = data_out.generate_report();
 	document.forms["F_out"].elements['FF_strip_name'].value = report[2].strip_name;
 	document.getElementById('result').innerHTML = report[1];
 	document.getElementById('report').style.display = "block";
 	fe["FF_data_out"].value = report[1];
 	form_elements_set_disabled(null, false);
-	check_deletable();
 	return true
 };
 
@@ -1069,60 +1038,4 @@ function set_status(str, append) {
 function set_progress(str, cur_num, max_num) {
 	p = Math.ceil(100 / max_num * cur_num);
 	set_status(str + p + "% " + "|".repeat(p / 2))
-};
-
-function loadfile(id) {
-	var f = document.forms["F_data"];
-	f.elements["FF_data_" + id + "_filename"].value = f.elements["FF_data_" + id + "_select"].value;
-	empty();
-	f.elements["FF_action"].value = "load_" + id;
-	setvid(f);
-	forget(id);
-	f.submit()
-};
-
-function empty() {
-	var e = document.forms["F_data"].elements;
-	e["FF_data_in"].value = "";
-	e["FF_data_ref"].value = ""
-};
-
-function setvid(f) {
-};
-
-function memorize(id) {
-};
-
-function forget(id) {
-};
-
-function basename(path) {
-	return path.split(/[\/\\]/).pop()
-};
-
-function check_deletable() {
-}
-
-function setCookie(id, val, expires) {
-	var expdate = new Date()
-	if (expires) {
-		expires = (typeof expires == "string") ? Date.parse(expires) : expires.getTime()
-		expdate.setTime(expires)
-	};
-	document.cookie = id + "=" + encodeURIComponent(val) + (expires ? "; expires=" + expdate.toGMTString() : "")
-};
-
-function selectfile(which) {
-	document.forms['F_data'].elements['FILE_data_' + which].click()
-};
-
-function hoverfile(which, hover) {
-	if (hover) {
-		if (!jsapi.dom.attributeHasWord(document.forms['F_data'].elements['B_' + which + '_upload'], "class", "hover"))
-			jsapi.dom.attributeAddWord(document.forms['F_data'].elements['B_' + which + '_upload'], "class", "hover");
-	}
-	else {
-		if (jsapi.dom.attributeHasWord(document.forms['F_data'].elements['B_' + which + '_upload'], "class", "hover"))
-			jsapi.dom.attributeRemoveWord(document.forms['F_data'].elements['B_' + which + '_upload'], "class", "hover");
-	}
 };
