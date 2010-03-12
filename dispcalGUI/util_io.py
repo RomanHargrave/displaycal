@@ -12,7 +12,7 @@ class Files():
 	Read and/or write from/to several files at once.
 	"""
 
-	def __init__(self, files, mode = "r"):
+	def __init__(self, files, mode="r"):
 		"""
 		Return a Files object.
 		
@@ -22,10 +22,13 @@ class Files():
 		"""
 		self.files = []
 		for item in files:
-			if isinstance(item, (str, unicode)):
+			if isinstance(item, basestring):
 				self.files.append(open(item, mode))
-			elif isinstance(item, file):
+			else:
 				self.files.append(item)
+	
+	def __iter__(self):
+		return iter(self.files)
 
 	def seek(self, pos):
 		for item in self.files:
@@ -46,7 +49,7 @@ class StringIOu(StringIO):
 	StringIO which converts all new line formats in buf to POSIX newlines.
 	"""
 
-	def __init__(self, buf = ''):
+	def __init__(self, buf=''):
 		StringIO.__init__(self, universal_newlines(buf))
 
 
