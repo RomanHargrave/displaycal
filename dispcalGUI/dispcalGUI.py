@@ -3445,6 +3445,7 @@ class MainFrame(BaseFrame):
 				for i in ti3_measured[0]["DATA"]:
 					for color in ("RGB_R", "RGB_G", "RGB_B"):
 						ti3_ref[0]["DATA"][i][color] = ti3_measured[0]["DATA"][i][color]
+			ti3_measured = ti3_measured[0]
 		
 		# cleanup
 		self.worker.wrapup(False)

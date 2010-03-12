@@ -3,8 +3,6 @@
 <head>
 	<style type="text/css" media="screen,projection,tv">
 		@import "compare.css";
-	</style>
-	<style type="text/css" media="screen,projection,tv">
 		@import "compare-dark-light.css";
 	</style>
 	<style type="text/css" media="screen,projection,tv" title="Dark">
@@ -56,26 +54,6 @@
 				B = Math.max(0, Math.round(var_B * 255));
 				return [R, G, B];
 			}
-			jsapi.math.color.XYZ2Lab = function (X, Y, Z, Xr, Yr, Zr) {
-				if (!Xr || !Yr || !Zr) {
-					// D50
-					Xr = 96.422;
-					Zr = 82.521;
-					Yr = 100;
-				}
-				var E = 0.008856,
-					K = 903.3,
-					xr = X / Xr,
-					yr = Y / Yr,
-					zr = Z / Zr,
-					fx = xr > E ? jsapi.math.cbrt(xr) : (K * xr + 16) / 116,
-					fy = yr > E ? jsapi.math.cbrt(yr) : (K * yr + 16) / 116,
-					fz = zr > E ? jsapi.math.cbrt(zr) : (K * zr + 16) / 116,
-					L = 116 * fy - 16,
-					a = 500 * (fx - fy),
-					b = 200 * (fy - fz);
-				return [L, a, b];
-			}
 		//]]>
 	</script>
 	<script type="text/javascript" src="compare.constants.js"></script>
@@ -97,7 +75,7 @@
 			<input type="hidden" name="FF_data_ref" value="${REF}" />
 		</div>
 	</form>
-	<form action="#" id="F_out">
+	<form action="#" id="F_out" onsubmit="return false">
 		<div id="report" class="fieldset process">
 			<h2 id="reporttitle" class="legend">Report</h2>
 			<p id="delta_calc_method">
@@ -107,6 +85,10 @@
 					<option value="CIE94">CIE 1994</option>
 					<option value="CIE00">CIE 2000</option>
 				</select>
+			</p>
+			<p>
+				<button onclick="plaintext('ref')">Open reference data in new window</button>
+				<button onclick="plaintext('in')">Open measurement data in new window</button>
 			</p>
 			<div id="result"></div>
 			<p>

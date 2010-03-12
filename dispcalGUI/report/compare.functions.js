@@ -1039,3 +1039,15 @@ function set_progress(str, cur_num, max_num) {
 	p = Math.ceil(100 / max_num * cur_num);
 	set_status(str + p + "% " + "|".repeat(p / 2))
 };
+
+function plaintext(which) {
+	var e = document.forms['F_data'].elements;
+	if (which == 'ref') 
+		var f = 'FF_data_ref';
+	else
+		var f = 'FF_data_in';
+	var win = window.open('', f.replace(/FF_data_/, ''));
+	win.document.open('text/plain');
+	win.document.write(e[f].value);
+	win.document.close();
+};

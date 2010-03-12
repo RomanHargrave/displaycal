@@ -1933,9 +1933,8 @@ class Worker():
 			if i == 0:
 				icolor = line[3].strip('[]').upper()
 				if icolor == 'LAB':
-					##ilabel = 'LAB_L LAB_A LAB_B'
-					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
-				elif icolor == 'XYZ':
+					icolor == 'XYZ'
+				if icolor == 'XYZ':
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
 					raise ValueError('Unknown color representation ' + icolor)
