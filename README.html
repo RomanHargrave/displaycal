@@ -359,13 +359,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.6.0 (Linux)<br />
-				0.3.6.0 (Mac OS X)<br />
-				0.3.6.0 (Windows)<br />
-				0.3.6.0 (Source)<br />
+				<dd id="version">0.3.6.1 (Linux)<br />
+				0.3.6.1 (Mac OS X)<br />
+				0.3.6.1 (Windows)<br />
+				0.3.6.1 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-03-13 01:22 (UTC)</dd>
+				<dd id="date">2010-03-13 06:00 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -463,18 +463,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.0.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.1.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.0.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.0-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.0-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.1.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.1-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.1-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.0.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.1.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -1013,6 +1013,11 @@
 					<dt>Verify calibration</dt>
 						<dd>Run verify pass on the display as it is currently setup (currently installed LUT curves). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
 						
+					<dt>Verify profile</dt>
+						<dd>Do verification measurements to assess the display chain's (profile - graphics card and LUT curves - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain. To do the former, you have to select a TI1 file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled.<br />
+						To perform a check on the soft proofing capabilities, you have to provide a TI3 file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the TI3 file.<br />
+						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if set. Otherwise, a file dialog will appear to choose a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the measurement and reference data, which can be examined as plain text directly from the report at the click of a button.</dd>
+						
 					<dt>Detect displays and instruments</dt>
 						<dd>Normally dispcalGUI will automatically detect changes in display setup or instrument configuration, but as it may take a few seconds for changes to be recognized, you can instantly run the detection using this menu entry.</dd>
 						
@@ -1095,7 +1100,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li>Get rid of the terminal and implement a proper GUI for the interactive part of calibration</li>
 				<li><del>Complete the documentation in the README</del></li>
 				<li>German language README</li>
-				<li><del>Profile verification (feed XYZ or Lab to display profile, display 
+				<li><del>Profile verification (feed XYZ or L*a*b* to display profile, display 
 					corresponding RGB values, measure, output Delta E)</del> (implemented in v0.3.6+)</li>
 				<li><del>“Before” / “After” switch when calibration / profiling complete</del> (implemented in v0.2+)</li>
 				<li><del>Store all settings in profile, allow loading of settings from profile in 
@@ -1121,11 +1126,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-03-13 01:22 (UTC) 0.3.6.0 -->
+			<!-- 2010-03-13 06:00 (UTC) 0.3.6.1 -->
 			<dl>
-				<dt>2010-03-13 01:22 (UTC)</dt>
+				<dt>2010-03-13 06:00 (UTC)</dt>
 					<dd>
-						<h3>0.3.6.0</h3>
+						<h3>0.3.6.1</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><strong>Profile verification by measurements.</strong> TI1 and TI3 files can be measured.</li>
@@ -1175,7 +1180,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Removed limit for remembered settings files.</li>
 							<li>When calibration or profiling measurements fail, first show the main application window, then the error message (small dialog boxes are sometimes hard to spot on big screens if the application context is missing).</li>
 							<li>Moved profile quality, type and advanced settings above testchart selector (this order is more logical, as profile quality and type influences testchart selection).</li>
-							<li>Testchart editor: Default to adaption of 10% for testchart creation using optimized farthest point sampling (OFPS). Support both device and Lab diagnostic VRML files when creating testcharts using Argyll >= 1.1.0. No longer calculate the amount of white/gray/single color patches or multidimensional cube steps if info is missing in TI1 file (calculations take way too long for little added benefit).</li>
+							<li>Testchart editor: Default to adaption of 10% for testchart creation using optimized farthest point sampling (OFPS). Support both device and L*a*b* diagnostic VRML files when creating testcharts using Argyll >= 1.1.0. No longer calculate the amount of white/gray/single color patches or multidimensional cube steps if info is missing in TI1 file (calculations take way too long for little added benefit).</li>
 							<li>Cleaned up the <a href="#issues">known issues &amp; solutions</a> section in the ReadMe.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>

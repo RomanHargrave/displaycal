@@ -1013,6 +1013,11 @@
 					<dt>Verify calibration</dt>
 						<dd>Run verify pass on the display as it is currently setup (currently installed LUT curves). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
 						
+					<dt>Verify profile</dt>
+						<dd>Do verification measurements to assess the display chain's (profile - graphics card and LUT curves - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain. To do the former, you have to select a TI1 file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled.<br />
+						To perform a check on the soft proofing capabilities, you have to provide a TI3 file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the TI3 file.<br />
+						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if set. Otherwise, a file dialog will appear to choose a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the measurement and reference data, which can be examined as plain text directly from the report at the click of a button.</dd>
+						
 					<dt>Detect displays and instruments</dt>
 						<dd>Normally dispcalGUI will automatically detect changes in display setup or instrument configuration, but as it may take a few seconds for changes to be recognized, you can instantly run the detection using this menu entry.</dd>
 						
@@ -1095,7 +1100,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li>Get rid of the terminal and implement a proper GUI for the interactive part of calibration</li>
 				<li><del>Complete the documentation in the README</del></li>
 				<li>German language README</li>
-				<li><del>Profile verification (feed XYZ or Lab to display profile, display 
+				<li><del>Profile verification (feed XYZ or L*a*b* to display profile, display 
 					corresponding RGB values, measure, output Delta E)</del> (implemented in v0.3.6+)</li>
 				<li><del>“Before” / “After” switch when calibration / profiling complete</del> (implemented in v0.2+)</li>
 				<li><del>Store all settings in profile, allow loading of settings from profile in 
@@ -1175,7 +1180,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Removed limit for remembered settings files.</li>
 							<li>When calibration or profiling measurements fail, first show the main application window, then the error message (small dialog boxes are sometimes hard to spot on big screens if the application context is missing).</li>
 							<li>Moved profile quality, type and advanced settings above testchart selector (this order is more logical, as profile quality and type influences testchart selection).</li>
-							<li>Testchart editor: Default to adaption of 10% for testchart creation using optimized farthest point sampling (OFPS). Support both device and Lab diagnostic VRML files when creating testcharts using Argyll >= 1.1.0. No longer calculate the amount of white/gray/single color patches or multidimensional cube steps if info is missing in TI1 file (calculations take way too long for little added benefit).</li>
+							<li>Testchart editor: Default to adaption of 10% for testchart creation using optimized farthest point sampling (OFPS). Support both device and L*a*b* diagnostic VRML files when creating testcharts using Argyll >= 1.1.0. No longer calculate the amount of white/gray/single color patches or multidimensional cube steps if info is missing in TI1 file (calculations take way too long for little added benefit).</li>
 							<li>Cleaned up the <a href="#issues">known issues &amp; solutions</a> section in the ReadMe.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>

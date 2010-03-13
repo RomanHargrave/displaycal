@@ -72,6 +72,7 @@ if sys.platform == "win32":
 	import pythoncom
 	import win32api
 	import win32con
+import jspacker
 
 # Config
 import config
@@ -3493,13 +3494,13 @@ class MainFrame(BaseFrame):
 		for include in ("compare.css", "compare-dark-light.css", 
 						"compare-dark.css", "compare-light.css", 
 						"compare-light-dark.css", "report.css", 
-						"jsapi-packages-p.js", "compare.constants.js", 
-						"compare.variables.js", "compare.functions.js", 
-						"compare.init.js"):
+						"jsapi-packages.js", "jsapi-patches.js", 
+						"compare.constants.js", "compare.variables.js", 
+						"compare.functions.js", "compare.init.js"):
 			path = get_data_path(os.path.join("report", include))
 			if not path:
 				InfoDialog(self, msg=lang.getstr("file.missing", 
-												 path), 
+												 include), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
@@ -3512,9 +3513,12 @@ class MainFrame(BaseFrame):
 						   bitmap=geticon(32, "dialog-error"))
 				return
 			if include.endswith(".js"):
+				packer = jspacker.JavaScriptPacker()
 				report_html = report_html.replace('src="%s">' % include, 
 												  ">/*<![CDATA[*/\n" + 
-												  f.read().strip() + 
+												  packer.pack(f.read(), 
+															  62, 
+															  True).strip() + 
 												  "\n/*]]>*/")
 			else:
 				report_html = report_html.replace('@import "%s";' % include, 

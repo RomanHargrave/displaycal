@@ -1,7 +1,7 @@
 var p;
 
 // Array methods
-p=Array.prototype
+p=Array.prototype;
 p.indexof = function(v, ignore_case) {
 	for (var i=0; i<this.length; i++) if (ignore_case?(this[i]+"").toUpperCase()==(v+"").toUpperCase():this[i]==v) return i;
 	return -1
@@ -9,7 +9,7 @@ p.indexof = function(v, ignore_case) {
 if (!p.indexOf) p.indexOf = p.indexof;
 
 // Object methods
-p=Object.prototype
+p=Object.prototype;
 p.clone = function() {
 	var o = new this.constructor();
 	for (var i in this) {
@@ -331,7 +331,7 @@ p.generate_report = function() {
 				break;
 			case DELTA_H_AVG:
 				result[j].sum = jsapi.math.avg(result[j].H);
-				break
+				break;
 			case DELTA_H_MED:
 				result[j].sum = jsapi.math.median(result[j].H);
 				break;
@@ -362,7 +362,7 @@ p.generate_report = function() {
 						break;
 				};
 				if (matched) {
-					result[j].finalmatch = result[j].matches[k]
+					result[j].finalmatch = result[j].matches[k];
 					break;
 				};
 			};
@@ -402,12 +402,12 @@ p.generate_report = function() {
 				rgb[1] = Math.round(rgb[1]);
 			}
 			else rgb = [255, 0, 0];
-		}
+		};
 		for (var l = 0; l < actual_rgb_html.length; l ++) {
 			bar_html.push('<span style="display: block; width: ' + (10 * result[j].sum.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em .25em .125em 0;">&#160;</span>');
-		}
+		};
 		this.report_html.push('			<td><span class="' + (rules[j][3] ? (Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'na') + '">' + result[j].sum.accuracy(2) + '</span></td><td style="padding: 0;">' + bar_html.join('') + '</td><td class="' + (!rules[j][3] || Math.abs(result[j].sum) <= rules[j][3] ? ((Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok">OK <span class="checkmark">✔</span>' : (rules[j][3] ? 'warn">OK' : 'na">')) + '<span class="' + (rules[j][4] && Math.abs(result[j].sum) <= rules[j][4] ? 'checkmark' : 'hidden') + (rules[j][4] ? '">✔' : '">')) : 'ko">NOT OK <span class="checkmark">✘') + '</span></td>');
-		this.report_html.push('		</tr>')
+		this.report_html.push('		</tr>');
 	};
 	this.report_html.push('	</table>');
 	
@@ -489,7 +489,7 @@ p.generate_report = function() {
 			else rgb = [255, 0, 0];
 			bar_html.push('<span style="display: block; width: ' + (10 * actual.actual_DE.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em .25em .125em 0;">&#160;</span>');
 			this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + target.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[o] + 1).join('</td><td>') + '</td><td>' + target[fields_extract_indexes_i[o + 1]] + '</td><td>' + target[fields_extract_indexes_i[o + 2]] + '</td><td>' + target[fields_extract_indexes_i[o + 3]] + '</td><td class="patch"><div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div></td><td class="patch"><div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div></td><td>' + actual[fields_extract_indexes_i[o + 1]] + '</td><td>' + actual[fields_extract_indexes_i[o + 2]] + '</td><td>' + actual[fields_extract_indexes_i[o + 3]] + '</td><td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td><td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td style="padding: 0;">' + bar_html.join('') + '</td>');
-			this.report_html.push('		</tr>')
+			this.report_html.push('		</tr>');
 			dupescount = 0;
 		}
 		else dupescount++;
@@ -630,7 +630,7 @@ function analyze(which) {
 		errortxt += "Reference data is missing the following fields: " + data_ref_format_missing_fields.join(", ") + ".\n"
 	};
 	if (errortxt) {
-		alert(errortxt + "Measurements and reference data must contain atleast: " + fields_extract_i.join(", "))
+		alert(errortxt + "Measurements and reference data must contain atleast: " + fields_extract_i.join(", "));
 		return
 	};
 	data_in.data = data_ref.data.concat(data_in.data);
@@ -1088,7 +1088,7 @@ function plaintext(which) {
 		var f = 'FF_data_ref';
 	else
 		var f = 'FF_data_in';
-	var win = window.open('', f.replace(/FF_data_/, ''));
+	var win = window.open();
 	win.document.open('text/plain');
 	win.document.write(e[f].value);
 	win.document.close();
