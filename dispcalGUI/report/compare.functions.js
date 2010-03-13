@@ -183,9 +183,8 @@ p.generate_report = function() {
 	this.profile = e['FF_profile'].value;
 	this.testchart = e['FF_testchart'].value;
 	this.datetime = e['FF_datetime'].value;
-	document.getElementById('reporttitle').innerHTML =  'Report – ' + criteria.strip_name;
 	this.report_html = [
-		'	<h2>Profile Verification Report – ' + criteria.strip_name + '</h2>',
+		'	<h2>Profile Verification Report</h2>',
 		'	<table class="info">',
 		'		<tr>',
 		'			<th>Device:</th>',
@@ -220,7 +219,7 @@ p.generate_report = function() {
 	]);
 	for (var j=0; j<rules.length; j++) {
 		this.report_html.push('		<tr>');
-		this.report_html.push('			<td class="first-row">' + rules[j][0] + ' (' + rules[j][5] + ')</td><td>&lt;= ' + rules[j][3] + '</td><td>&lt;= ' + rules[j][4] + '</td><td class="patch">');
+		this.report_html.push('			<td class="first-row">' + rules[j][0] + ' (' + rules[j][5] + ')</td><td>' + (rules[j][3] ? '&lt;= ' + rules[j][3] : '') + '</td><td>' + (rules[j][4] ? '&lt;= ' + rules[j][4] : '') + '</td><td class="patch">');
 		result[j] = {
 			E: [],
 			L: [],
@@ -285,24 +284,63 @@ p.generate_report = function() {
 			case DELTA_E_AVG:
 				result[j].sum = jsapi.math.avg(result[j].E);
 				break;
+			case DELTA_E_MED:
+				result[j].sum = jsapi.math.median(result[j].E);
+				break;
+			case DELTA_E_MAD:
+				result[j].sum = jsapi.math.mad(result[j].E);
+				break;
+			case DELTA_E_STDDEV:
+				result[j].sum = jsapi.math.stddev(result[j].E);
+				break;
+				
 			case DELTA_L_MAX:
 				result[j].sum = jsapi.math.absmax(result[j].L);
 				break;
 			case DELTA_L_AVG:
 				result[j].sum = jsapi.math.avg(result[j].L);
 				break;
+			case DELTA_L_MED:
+				result[j].sum = jsapi.math.median(result[j].L);
+				break;
+			case DELTA_L_MAD:
+				result[j].sum = jsapi.math.mad(result[j].L);
+				break;
+			case DELTA_L_STDDEV:
+				result[j].sum = jsapi.math.stddev(result[j].L);
+				break;
+				
 			case DELTA_C_MAX:
 				result[j].sum = jsapi.math.absmax(result[j].C);
 				break;
 			case DELTA_C_AVG:
 				result[j].sum = jsapi.math.avg(result[j].C);
 				break;
+			case DELTA_C_MED:
+				result[j].sum = jsapi.math.median(result[j].C);
+				break;
+			case DELTA_C_MAD:
+				result[j].sum = jsapi.math.mad(result[j].C);
+				break;
+			case DELTA_C_STDDEV:
+				result[j].sum = jsapi.math.stddev(result[j].C);
+				break;
+				
 			case DELTA_H_MAX:
 				result[j].sum = jsapi.math.absmax(result[j].H);
 				break;
 			case DELTA_H_AVG:
 				result[j].sum = jsapi.math.avg(result[j].H);
 				break
+			case DELTA_H_MED:
+				result[j].sum = jsapi.math.median(result[j].H);
+				break;
+			case DELTA_H_MAD:
+				result[j].sum = jsapi.math.mad(result[j].H);
+				break;
+			case DELTA_H_STDDEV:
+				result[j].sum = jsapi.math.stddev(result[j].H);
+				break;
 		};
 		if (result[j].matches.length) {
 			matched = false;
@@ -349,29 +387,33 @@ p.generate_report = function() {
 		this.report_html.push('			</td>');
 		this.report_html.push('			<td class="patch">' + target_rgb_html.join('') + '</td>');
 		this.report_html.push('			<td class="patch">' + actual_rgb_html.join('') + '</td>');
-		var bar_html = [],
-			rgb = [0, 255, 0],
-			step = 255 / (rules[j][3] + rules[j][3] / 2);
-		if (result[j].sum < rules[j][3]) {
-			rgb[0] += Math.min(step * result[j].sum, 255);
-			rgb[1] -= Math.min(step * result[j].sum, 255);
-			var maxrg = Math.max(rgb[0], rgb[1]);
-			rgb[0] *= (255 / maxrg);
-			rgb[1] *= (255 / maxrg);
-			rgb[0] = Math.round(rgb[0]);
-			rgb[1] = Math.round(rgb[1]);
+		var bar_html = [];
+		if (!rules[j][3]) rgb = [204, 204, 204];
+		else {
+			var rgb = [0, 255, 0],
+				step = 255 / (rules[j][3] + rules[j][3] / 2);
+			if (result[j].sum < rules[j][3]) {
+				rgb[0] += Math.min(step * result[j].sum, 255);
+				rgb[1] -= Math.min(step * result[j].sum, 255);
+				var maxrg = Math.max(rgb[0], rgb[1]);
+				rgb[0] *= (255 / maxrg);
+				rgb[1] *= (255 / maxrg);
+				rgb[0] = Math.round(rgb[0]);
+				rgb[1] = Math.round(rgb[1]);
+			}
+			else rgb = [255, 0, 0];
 		}
-		else rgb = [255, 0, 0];
 		for (var l = 0; l < actual_rgb_html.length; l ++) {
 			bar_html.push('<span style="display: block; width: ' + (10 * result[j].sum.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em .25em .125em 0;">&#160;</span>');
 		}
-		this.report_html.push('			<td><span class="' + (Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) + '">' + result[j].sum.accuracy(2) + '</span></td><td style="padding: 0;">' + bar_html.join('') + '</td><td class="' + (Math.abs(result[j].sum) <= rules[j][3] ? ((Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok">OK <span class="checkmark">✔</span>' : 'warn">OK') + '<span class="' + (Math.abs(result[j].sum) <= rules[j][4] ? 'checkmark' : 'hidden') + '">✔') : 'ko">NOT OK <span class="checkmark">✘') + '</span></td>');
+		this.report_html.push('			<td><span class="' + (rules[j][3] ? (Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'na') + '">' + result[j].sum.accuracy(2) + '</span></td><td style="padding: 0;">' + bar_html.join('') + '</td><td class="' + (!rules[j][3] || Math.abs(result[j].sum) <= rules[j][3] ? ((Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok">OK <span class="checkmark">✔</span>' : (rules[j][3] ? 'warn">OK' : 'na">')) + '<span class="' + (rules[j][4] && Math.abs(result[j].sum) <= rules[j][4] ? 'checkmark' : 'hidden') + (rules[j][4] ? '">✔' : '">')) : 'ko">NOT OK <span class="checkmark">✘') + '</span></td>');
 		this.report_html.push('		</tr>')
 	};
 	this.report_html.push('	</table>');
 	
 	var pass, overachieve;
 	for (var j=0; j<result.length; j++) {
+		if (!rules[j][3] && !rules[j][4]) continue;
 		if (isNaN(result[j].sum) || Math.abs(result[j].sum) > rules[j][3]) pass = false;
 		if (isNaN(result[j].sum) || Math.abs(result[j].sum) > rules[j][4]) overachieve = false;
 		if (rules[j][5] == delta_calc_method) for (var k=0; k<result[j].matches.length; k++) {

@@ -214,9 +214,6 @@ select {
 #report {
 	display: none;
 }
-#result {
-	margin-bottom: 18px;
-}
 h3 {
 	font-size: 1.5em;
 	font-weight: normal;
@@ -270,4 +267,13 @@ div.patch {
 }
 td.ok, td.ko {
 	line-height: 1em;
+}
+#options {
+	display: inline-block;
+	width: 345px;
+}
+#functions {
+	display: inline-block;
+	text-align: right;
+	width: 520px;
 }

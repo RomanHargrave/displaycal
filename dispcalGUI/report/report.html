@@ -25,6 +25,37 @@
 	<script type="text/javascript" src="jsapi-packages-p.js"></script>
 	<script type="text/javascript">
 		//<![CDATA[
+			function sortNumber(a, b) {
+				return a - b;
+			};
+			jsapi.math.median = function () {
+				// http://en.wikipedia.org/wiki/Median
+				var a = jsapi.array.flat(arguments), median,
+					sorted = a.sort(sortNumber);
+				if (sorted.length % 2 == 0) median = (sorted[sorted.length / 2] + sorted[sorted.length / 2 + 1]) / 2;
+				else median = sorted[(sorted.length + 1) / 2];
+				return median
+			};
+			jsapi.math.mad = function () {
+				// http://en.wikipedia.org/wiki/Median_absolute_deviation
+				var a = jsapi.array.flat(arguments), median = jsapi.math.median(a),
+					sorted = a.sort(sortNumber);
+				for (var i = 0; i < sorted.length; i++) 
+					sorted[i] = Math.abs(sorted[i] - median);
+				return jsapi.math.median(sorted);
+			};
+			jsapi.math.stddev = function () {
+				// http://en.wikipedia.org/wiki/Standard_deviation
+				// http://jsfromhell.com/array/average
+				return Math.sqrt(jsapi.math.variance(jsapi.array.flat(arguments)));
+			};
+			jsapi.math.variance = function () {
+				// http://jsfromhell.com/array/average
+				var a = jsapi.array.flat(arguments);
+				for (var m, s = 0, l = a.length; l--; s += a[l]);
+				for (m = s / a.length, l = a.length, s = 0; l--; s += Math.pow(a[l] - m, 2));
+				return s / a.length;
+			};
 			jsapi.math.color.XYZ2rgb = function (X, Y, Z) {
 				var var_X = X / 100;
 				var var_Y = Y / 100;
@@ -53,7 +84,7 @@
 				G = Math.max(0, Math.round(var_G * 255));
 				B = Math.max(0, Math.round(var_B * 255));
 				return [R, G, B];
-			}
+			};
 		//]]>
 	</script>
 	<script type="text/javascript" src="compare.constants.js"></script>
@@ -62,7 +93,7 @@
 	<script type="text/javascript" src="compare.init.js"></script>
 </head>
 <body>
-	<h1><span class="r"></span><span class="g"></span><span class="b"></span>Profile Verification Report</h1>
+	<h1><span class="r"></span><span class="g"></span><span class="b"></span>Profile Verification</h1>
 	<div><noscript><p class="error">JavaScript is required!</p></noscript></div>
 	<form action="#" id="F_data">
 		<div>
@@ -78,23 +109,21 @@
 	<form action="#" id="F_out" onsubmit="return false">
 		<div id="report" class="fieldset process">
 			<h2 id="reporttitle" class="legend">Report</h2>
-			<p id="delta_calc_method">
-				Delta E Calculation Method for Overview:
+			<p id="options">
+				Delta E formula for overview:
 				<select name="FF_delta_calc_method" id="FF_delta_calc_method" onchange="compare()">
 					<option value="CIE76">CIE 1976</option>
 					<option value="CIE94">CIE 1994</option>
 					<option value="CIE00">CIE 2000</option>
 				</select>
 			</p>
-			<p>
+			<p id="functions">
 				<button onclick="plaintext('ref')">Open reference data in new window</button>
 				<button onclick="plaintext('in')">Open measurement data in new window</button>
-			</p>
-			<div id="result"></div>
-			<p>
 				<input type="hidden" name="FF_strip_name" />
 				<input type="hidden" name="FF_data_out" id="FF_data_out" />
 			</p>
+			<div id="result"></div>
 		</div>
 	</form>
 </body>

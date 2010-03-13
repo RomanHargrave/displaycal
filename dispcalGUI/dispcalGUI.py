@@ -3514,11 +3514,11 @@ class MainFrame(BaseFrame):
 			if include.endswith(".js"):
 				report_html = report_html.replace('src="%s">' % include, 
 												  ">/*<![CDATA[*/\n" + 
-												  f.read() + 
+												  f.read().strip() + 
 												  "\n/*]]>*/")
 			else:
-				report_html = report_html.replace('@import "%s"' % include, 
-												  f.read())
+				report_html = report_html.replace('@import "%s";' % include, 
+												  f.read().strip())
 			f.close()
 		
 		# write report

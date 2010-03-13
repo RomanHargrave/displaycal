@@ -1725,7 +1725,7 @@ class Worker():
 			ti1 = CGATS.CGATS(ti1)
 		if not isinstance(ti1, CGATS.CGATS):
 			raise TypeError('Wrong type for ti1, needs to be CGATS.CGATS instance')
-		required = ("RGB_R", "RGB_B", "RGB_G")
+		required = ("RGB_R", "RGB_G", "RGB_B")
 		ti1_filename = ti1.filename
 		ti1 = verify_cgats(ti1, required, True)
 		if not ti1:
@@ -1933,7 +1933,7 @@ class Worker():
 			if i == 0:
 				icolor = line[3].strip('[]').upper()
 				if icolor == 'LAB':
-					icolor == 'XYZ'
+					icolor = 'XYZ'
 				if icolor == 'XYZ':
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
