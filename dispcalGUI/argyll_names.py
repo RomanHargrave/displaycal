@@ -9,12 +9,13 @@ names = [
 	"icclu",
 	"spotread",
 	"spyd2en",
-	"targen"
+	"targen",
+	"txt2ti3"
 ]
 
 prefixes_suffixes = ["argyll"]
 
-altnames = {}
+altnames = {"txt2ti3": ["logo2cgats"]}
 for name in names:
 	if not name in altnames:
 		altnames[name] = []

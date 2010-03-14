@@ -95,7 +95,7 @@ from argyll_cgats import (cal_to_fake_profile, can_update_cal,
 from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
-from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2xyY
+from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, XYZ2xyY
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import _safe_print, log, logbuffer, safe_print, setup_logging
 from meta import (author, name as appname, domain, version, VERSION_BASE)
@@ -3304,8 +3304,8 @@ class MainFrame(BaseFrame):
 		defaultDir, defaultFile = get_verified_path("profile_verification_chart")
 		dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_chart"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
-							wildcard=lang.getstr("filetype.ti1") + 
-									 "|*.ti1;*.ti3", 
+							wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
+									 "|*.ti1;*.ti3;*.txt", 
 							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
@@ -3387,6 +3387,16 @@ class MainFrame(BaseFrame):
 				ti1 = CGATS.CGATS(chart)
 				ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
 			else:
+				if chart.lower().endswith(".txt"):
+					tempchart = os.path.join(self.worker.create_tempdir(), 
+											 os.path.basename(chart))
+					shutil.copyfile(chart, tempchart)
+					if self.worker.exec_cmd(get_argyll_util("txt2ti3"), 
+											[tempchart, 
+											 os.path.splitext(tempchart)[0]], 
+											low_contrast=False, 
+											skip_scripts=True):
+						chart = os.path.splitext(tempchart)[0] + ".ti3"
 				cgats = self.worker.ti3_lookup_to_ti1(chart, profile)
 				if cgats:
 					ti1, ti3_ref = cgats
@@ -3441,12 +3451,6 @@ class MainFrame(BaseFrame):
 		result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		if result:
 			ti3_measured = CGATS.CGATS(args[-1] + ".ti3")
-			if not chart.lower().endswith(".ti1"):
-				# make the device values match
-				for i in ti3_measured[0]["DATA"]:
-					for color in ("RGB_R", "RGB_G", "RGB_B"):
-						ti3_ref[0]["DATA"][i][color] = ti3_measured[0]["DATA"][i][color]
-			ti3_measured = ti3_measured[0]
 		
 		# cleanup
 		self.worker.wrapup(False)
@@ -3455,6 +3459,26 @@ class MainFrame(BaseFrame):
 		
 		if not result:
 			return
+		
+		if not chart.lower().endswith(".ti1"):
+			# make the device values match
+			for i in ti3_measured[0].DATA:
+				for color in ("RGB_R", "RGB_G", "RGB_B"):
+					ti3_ref[0].DATA[i][color] = ti3_measured[0].DATA[i][color]
+		
+		# add Lab values if not yet present
+		for data in (ti3_ref, ti3_measured):
+			if not "LAB_L" in data[0].DATA_FORMAT.values() and \
+			   not "LAB_A" in data[0].DATA_FORMAT.values() and \
+			   not "LAB_B" in data[0].DATA_FORMAT.values():
+				labels = ("LAB_L", "LAB_A", "LAB_B")
+				data[0].DATA_FORMAT.add_data(labels)
+				for i in data[0].DATA:
+					Lab = XYZ2Lab(*[data[0].DATA[i][color] for color in ("XYZ_X", "XYZ_Y", "XYZ_Z")])
+					for j, color in enumerate(labels):
+						data[0].DATA[i][color] = Lab[j]
+		
+		ti3_measured = ti3_measured[0]  # strip CAL part from measured data
 		
 		# read report template
 		report_html_template_path = get_data_path(os.path.join("report", 
@@ -4443,7 +4467,7 @@ class MainFrame(BaseFrame):
 			defaultDir, defaultFile = get_verified_path("last_ti3_path")
 			dlg = wx.FileDialog(self, lang.getstr("create_profile"), 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
-								wildcard=lang.getstr("filetype.ti3") + 
+								wildcard=lang.getstr("filetype.icc_ti3") + 
 										 "|*.icc;*.icm;*.ti3", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)

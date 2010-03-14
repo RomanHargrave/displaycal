@@ -1,7 +1,7 @@
 var comparison_criteria = { // values MUST pass these criteria
 	'RGB': {
 		fields_match: ['RGB_R', 'RGB_G', 'RGB_B'],
-		fields_compare: ['XYZ_X', 'XYZ_Y', 'XYZ_Z'],
+		fields_compare: ['LAB_L', 'LAB_A', 'LAB_B'],
 		strip_name: "RGB",
 		name: "",
 		passtext: "Nominal tolerance passed",

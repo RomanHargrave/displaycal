@@ -1742,11 +1742,11 @@ class Worker():
 			raise ValueError(lang.getstr("profile.unsupported.chad"))
 		
 		# determine pcs for lookup
-		color_rep = profile.connectionColorSpace
+		color_rep = profile.connectionColorSpace.upper()
 		if color_rep == 'LAB':
 			pcs = 'l'
 		elif color_rep == 'XYZ':
-			pcs = 'X'
+			pcs = 'x'
 		else:
 			raise ValueError('Unknown color representation ' + color_rep)
 		
@@ -1828,7 +1828,7 @@ class Worker():
 			pcs = line[5:-1]
 			if color_rep == 'XYZ':
 				# Need to scale XYZ, Lab is already scaled
-				pcs = [str(round(float(n) * 100.0, 3 if n >= 0.1 else 4)) for n in pcs]
+				pcs = [str(round(float(n) * 100.0, 5 - len(str(int(abs(float(n))))))) for n in pcs]
 			if include_sample_name:
 				ofile.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(pcs) + '\n')
 			else:
@@ -1881,7 +1881,7 @@ class Worker():
 			pcs = 'l'
 			required = ("LAB_L", "LAB_A", "LAB_B")
 		elif color_rep == 'XYZ':
-			pcs = 'X'
+			pcs = 'x'
 			required = ("XYZ_X", "XYZ_Y", "XYZ_Z")
 		else:
 			raise ValueError('Unknown color representation ' + color_rep)
@@ -1933,8 +1933,8 @@ class Worker():
 			if i == 0:
 				icolor = line[3].strip('[]').upper()
 				if icolor == 'LAB':
-					icolor = 'XYZ'
-				if icolor == 'XYZ':
+					ilabel = 'LAB_L LAB_A LAB_B'
+				elif icolor == 'XYZ':
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
 					raise ValueError('Unknown color representation ' + icolor)
@@ -1966,11 +1966,9 @@ class Worker():
 				ofiles.write('BEGIN_DATA\n')
 			i += 1
 			pcs = line[:3]
-			if color_rep == 'XYZ' or color_rep == 'LAB':
-				if color_rep == 'LAB':
-					pcs = Lab2XYZ(*[float(n) for n in pcs])
+			if color_rep == 'XYZ':
 				# Need to scale XYZ
-				pcs = [str(round(float(n) * 100.0, 3 if n >= 0.1 else 4)) for n in pcs]
+				pcs = [str(round(float(n) * 100.0, 5 - len(str(int(abs(float(n))))))) for n in pcs]
 			if include_sample_name:
 				ofiles.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[5:-1]) + ' ' + ' '.join(pcs) + '\n')
 			else:

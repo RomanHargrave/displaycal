@@ -305,8 +305,11 @@ class CGATS(dict):
 			result += ['NUMBER_OF_SETS %s' % (len(data))]
 			result += ['BEGIN_DATA']
 			for key in data:
-				result += [' '.join([rpad(data[key][item], data.vmaxlen) for 
-								item in data.parent['DATA_FORMAT'].values()])]
+				result += [' '.join([rpad(data[key][item], 
+										  data.vmaxlen + 
+										  (1 if data[key][item] < 0 else 0)) 
+									 for item in 
+									 data.parent['DATA_FORMAT'].values()])]
 			result += ['END_DATA']
 		return '\n'.join(result)
 
@@ -405,9 +408,6 @@ class CGATS(dict):
 									else:
 										value = int(value)
 						elif item.upper() not in ('SAMPLE_NAME', 'SAMPLE_LOC'):
-							if isinstance(value, (str, unicode)):
-								if len(value) > self.vmaxlen:
-									self.vmaxlen = len(value)
 							try:
 								value = float(value)
 							except ValueError:
@@ -415,6 +415,10 @@ class CGATS(dict):
 													  '%s (expected float, '
 													  'got %s)' % 
 													  (item, type(value)))
+							if isinstance(value, float):
+								lencheck = len(str(abs(value)))
+								if lencheck > self.vmaxlen:
+									self.vmaxlen = lencheck
 						dataset[item] = value
 					if type(key) == int:
 						# accept only integer keys.

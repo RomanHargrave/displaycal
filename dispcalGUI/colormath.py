@@ -381,7 +381,7 @@ def XYZ2CCT(X, Y, Z):
 	return p
 
 
-def XYZ2Lab(X, Y, Z, Xr, Yr, Zr):
+def XYZ2Lab(X, Y, Z, Xr=None, Yr=None, Zr=None):
 	"""
 	based on formula from www.brucelindbloom.com
 	Xr, Yr, Zr = reference whitepoint -or- Xr = reference color temperature in 
