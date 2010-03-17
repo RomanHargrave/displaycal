@@ -1015,60 +1015,62 @@ class MainFrame(BaseFrame):
 		self.menuitem_quit = file_.Append(-1, "&menuitem.quit\tCtrl+Q")
 		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 
-		extra = self.menubar.GetMenu(self.menubar.FindMenu("menu.extra"))
-		self.menuitem_create_profile = extra.FindItemById(
-			extra.FindItem("create_profile"))
+		options = self.menubar.GetMenu(self.menubar.FindMenu("menu.options"))
+		self.menuitem_create_profile = options.FindItemById(
+			options.FindItem("create_profile"))
 		self.Bind(wx.EVT_MENU, self.create_profile_handler, 
 				  self.menuitem_create_profile)
-		self.menuitem_install_display_profile = extra.FindItemById(
-			extra.FindItem("install_display_profile"))
+		self.menuitem_install_display_profile = options.FindItemById(
+			options.FindItem("install_display_profile"))
 		self.Bind(wx.EVT_MENU, self.install_profile_handler, 
 				  self.menuitem_install_display_profile)
-		self.menuitem_load_lut_from_cal_or_profile = extra.FindItemById(
-			extra.FindItem("calibration.load_from_cal_or_profile"))
+		self.menuitem_load_lut_from_cal_or_profile = options.FindItemById(
+			options.FindItem("calibration.load_from_cal_or_profile"))
 		self.Bind(wx.EVT_MENU, self.load_profile_cal_handler, 
 				  self.menuitem_load_lut_from_cal_or_profile)
-		self.menuitem_load_lut_from_display_profile = extra.FindItemById(
-			extra.FindItem("calibration.load_from_display_profile"))
+		self.menuitem_load_lut_from_display_profile = options.FindItemById(
+			options.FindItem("calibration.load_from_display_profile"))
 		self.Bind(wx.EVT_MENU, self.load_display_profile_cal, 
 				  self.menuitem_load_lut_from_display_profile)
-		self.menuitem_show_lut = extra.FindItemById(
-			extra.FindItem("calibration.show_lut"))
-		self.Bind(wx.EVT_MENU, self.init_lut_viewer, self.menuitem_show_lut)
-		self.menuitem_show_actual_lut = extra.FindItemById(
-			extra.FindItem("calibration.show_actual_lut"))
-		self.Bind(wx.EVT_MENU, self.lut_viewer_show_actual_lut_handler, 
-							   self.menuitem_show_actual_lut)
-		self.menuitem_lut_reset = extra.FindItemById(
-			extra.FindItem("calibration.reset"))
+		self.menuitem_lut_reset = options.FindItemById(
+			options.FindItem("calibration.reset"))
 		self.Bind(wx.EVT_MENU, self.reset_cal, self.menuitem_lut_reset)
-		self.menuitem_report_calibrated = extra.FindItemById(
-			extra.FindItem("report.calibrated"))
-		self.Bind(wx.EVT_MENU, self.report_calibrated_handler, 
-				  self.menuitem_report_calibrated)
-		self.menuitem_report_uncalibrated = extra.FindItemById(
-			extra.FindItem("report.uncalibrated"))
+		menuitem = options.FindItemById(
+			options.FindItem("detect_displays_and_ports"))
+		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
+		menuitem = options.FindItemById(
+			options.FindItem("use_separate_lut_access"))
+		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, menuitem)
+		menuitem = options.FindItemById(options.FindItem("restore_defaults"))
+		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
+		
+		tools = self.menubar.GetMenu(self.menubar.FindMenu("menu.tools"))
+		self.menuitem_report_uncalibrated = tools.FindItemById(
+			tools.FindItem("report.uncalibrated"))
 		self.Bind(wx.EVT_MENU, self.report_uncalibrated_handler, 
 			self.menuitem_report_uncalibrated)
-		self.menuitem_calibration_verify = extra.FindItemById(
-			extra.FindItem("calibration.verify"))
+		self.menuitem_report_calibrated = tools.FindItemById(
+			tools.FindItem("report.calibrated"))
+		self.Bind(wx.EVT_MENU, self.report_calibrated_handler, 
+				  self.menuitem_report_calibrated)
+		self.menuitem_calibration_verify = tools.FindItemById(
+			tools.FindItem("calibration.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_calibration_handler, 
 				  self.menuitem_calibration_verify)
-		self.menuitem_profile_verify = extra.FindItemById(
-			extra.FindItem("profile.verify"))
+		self.menuitem_profile_verify = tools.FindItemById(
+			tools.FindItem("profile.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_profile_handler, 
 				  self.menuitem_profile_verify)
-		menuitem = extra.FindItemById(
-			extra.FindItem("detect_displays_and_ports"))
-		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
-		menuitem = extra.FindItemById(
-			extra.FindItem("use_separate_lut_access"))
-		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, menuitem)
-		menuitem = extra.FindItemById(extra.FindItem("enable_spyder2"))
+		menuitem = tools.FindItemById(tools.FindItem("enable_spyder2"))
 		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, menuitem)
-		menuitem = extra.FindItemById(extra.FindItem("restore_defaults"))
-		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
-		menuitem = extra.FindItemById(extra.FindItem("infoframe.toggle"))
+		self.menuitem_show_lut = tools.FindItemById(
+			tools.FindItem("calibration.show_lut"))
+		self.Bind(wx.EVT_MENU, self.init_lut_viewer, self.menuitem_show_lut)
+		self.menuitem_show_actual_lut = tools.FindItemById(
+			tools.FindItem("calibration.show_actual_lut"))
+		self.Bind(wx.EVT_MENU, self.lut_viewer_show_actual_lut_handler, 
+							   self.menuitem_show_actual_lut)
+		menuitem = tools.FindItemById(tools.FindItem("infoframe.toggle"))
 		self.Bind(wx.EVT_MENU, self.infoframe_toggle_handler, menuitem)
 
 		languages = self.menubar.GetMenu(self.menubar.FindMenu("menu.language"))
@@ -1515,9 +1517,9 @@ class MainFrame(BaseFrame):
 		use_lut_ctrl = self.worker.has_separate_lut_access() or \
 					   getcfg("use_separate_lut_access")
 		menubar = self.GetMenuBar()
-		extra = menubar.GetMenu(menubar.FindMenu(lang.getstr("menu.extra")))
-		menuitem = extra.FindItemById(
-			extra.FindItem(lang.getstr("use_separate_lut_access")))
+		options = menubar.GetMenu(menubar.FindMenu(lang.getstr("menu.options")))
+		menuitem = options.FindItemById(
+			options.FindItem(lang.getstr("use_separate_lut_access")))
 		menuitem.Check(use_lut_ctrl)
 		if use_lut_ctrl:
 			self.display_lut_ctrl.Clear()
@@ -3352,6 +3354,33 @@ class MainFrame(BaseFrame):
 						   bitmap=geticon(32, "dialog-error"))
 				return
 		
+		# lookup test patches
+		ti3_ref = None
+		try:
+			if chart.lower().endswith(".ti1"):
+				ti1 = CGATS.CGATS(chart)
+				ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
+			else:
+				if chart.lower().endswith(".txt"):
+					tempchart = os.path.join(self.worker.create_tempdir(), 
+											 os.path.basename(chart))
+					shutil.copyfile(chart, tempchart)
+					if self.worker.exec_cmd(get_argyll_util("txt2ti3"), 
+											["-d", tempchart, 
+											 os.path.splitext(tempchart)[0]], 
+											low_contrast=False, 
+											skip_scripts=True):
+						chart = os.path.splitext(tempchart)[0] + ".ti3"
+				cgats = self.worker.ti3_lookup_to_ti1(chart, profile)
+				if cgats:
+					ti1, ti3_ref = cgats
+		except Exception, exception:
+			InfoDialog(self, msg=safe_unicode(exception), 
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+			return
+		if not ti3_ref:
+			return
+		
 		# let the user choose a location for the result
 		defaultFile = "verify_" + strftime("%Y-%m-%d_%H-%M.html")
 		defaultDir = get_verified_path(None, 
@@ -3379,33 +3408,6 @@ class MainFrame(BaseFrame):
 				dlg.Destroy()
 				if result != wx.ID_OK:
 					return
-		
-		# lookup test patches
-		ti3_ref = None
-		try:
-			if chart.lower().endswith(".ti1"):
-				ti1 = CGATS.CGATS(chart)
-				ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
-			else:
-				if chart.lower().endswith(".txt"):
-					tempchart = os.path.join(self.worker.create_tempdir(), 
-											 os.path.basename(chart))
-					shutil.copyfile(chart, tempchart)
-					if self.worker.exec_cmd(get_argyll_util("txt2ti3"), 
-											[tempchart, 
-											 os.path.splitext(tempchart)[0]], 
-											low_contrast=False, 
-											skip_scripts=True):
-						chart = os.path.splitext(tempchart)[0] + ".ti3"
-				cgats = self.worker.ti3_lookup_to_ti1(chart, profile)
-				if cgats:
-					ti1, ti3_ref = cgats
-		except Exception, exception:
-			InfoDialog(self, msg=safe_unicode(exception), 
-					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
-			return
-		if not ti3_ref:
-			return
 		
 		# setup for measurement
 		self.setup_measurement(self.verify_profile, ti1, profile, ti3_ref, 
@@ -3440,7 +3442,8 @@ class MainFrame(BaseFrame):
 		profile.write(profile_path)
 		
 		# load calibration from profile
-		self.worker.exec_cmd(get_argyll_util("dispwin"), ["-c", profile_path], 
+		self.worker.exec_cmd(*self.worker.prepare_dispwin(
+								profile_path=profile_path, install=False), 
 							 skip_scripts=True)
 		
 		# measure
@@ -3450,7 +3453,8 @@ class MainFrame(BaseFrame):
 		args += [os.path.splitext(ti1_path)[0]]
 		result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		if result:
-			ti3_measured = CGATS.CGATS(args[-1] + ".ti3")
+			# get item 0 of the ti3 to strip the CAL part from the measured data
+			ti3_measured = CGATS.CGATS(args[-1] + ".ti3")[0]
 		
 		# cleanup
 		self.worker.wrapup(False)
@@ -3462,23 +3466,40 @@ class MainFrame(BaseFrame):
 		
 		if not chart.lower().endswith(".ti1"):
 			# make the device values match
-			for i in ti3_measured[0].DATA:
+			for i in ti3_measured.DATA:
 				for color in ("RGB_R", "RGB_G", "RGB_B"):
-					ti3_ref[0].DATA[i][color] = ti3_measured[0].DATA[i][color]
+					ti3_ref.DATA[i][color] = ti3_measured.DATA[i][color]
 		
-		# add Lab values if not yet present
-		for data in (ti3_ref, ti3_measured):
-			if not "LAB_L" in data[0].DATA_FORMAT.values() and \
-			   not "LAB_A" in data[0].DATA_FORMAT.values() and \
-			   not "LAB_B" in data[0].DATA_FORMAT.values():
-				labels = ("LAB_L", "LAB_A", "LAB_B")
-				data[0].DATA_FORMAT.add_data(labels)
-				for i in data[0].DATA:
-					Lab = XYZ2Lab(*[data[0].DATA[i][color] for color in ("XYZ_X", "XYZ_Y", "XYZ_Z")])
-					for j, color in enumerate(labels):
-						data[0].DATA[i][color] = Lab[j]
+		# create a 'joined' ti3 from ref ti3, with XYZ values from measured ti3
+		# this makes sure CMYK data in the original ref will be present in
+		# the newly joined ti3
+		ti3_joined = CGATS.CGATS(str(ti3_ref))[0]
+		# add XYZ to DATA_FORMAT if not yet present
+		labels_xyz = ("XYZ_X", "XYZ_Y", "XYZ_Z")
+		if not "XYZ_X" in ti3_joined.DATA_FORMAT.values() and \
+		   not "XYZ_Y" in ti3_joined.DATA_FORMAT.values() and \
+		   not "XYZ_Z" in ti3_joined.DATA_FORMAT.values():
+			ti3_joined.DATA_FORMAT.add_data(labels_xyz)
+		# set XYZ in joined ti3 to XYZ of measurements
+		for i in ti3_measured.DATA:
+			for color in labels_xyz:
+				ti3_joined.DATA[i][color] = ti3_measured.DATA[i][color]
 		
-		ti3_measured = ti3_measured[0]  # strip CAL part from measured data
+		# set Lab values
+		labels_Lab = ("LAB_L", "LAB_A", "LAB_B")
+		for data in (ti3_ref, ti3_joined):
+			if not "LAB_L" in data.DATA_FORMAT.values() and \
+			   not "LAB_A" in data.DATA_FORMAT.values() and \
+			   not "LAB_B" in data.DATA_FORMAT.values():
+				# add Lab fields to DATA_FORMAT if not present
+				data.DATA_FORMAT.add_data(labels_Lab)
+			if "XYZ_X" in data.DATA_FORMAT.values() and \
+			   "XYZ_Y" in data.DATA_FORMAT.values() and \
+			   "XYZ_Z" in data.DATA_FORMAT.values():
+				for i in data.DATA:
+					Lab = XYZ2Lab(*[data.DATA[i][color] for color in labels_xyz])
+					for j, color in enumerate(labels_Lab):
+						data.DATA[i][color] = Lab[j]
 		
 		# read report template
 		report_html_template_path = get_data_path(os.path.join("report", 
@@ -3513,7 +3534,7 @@ class MainFrame(BaseFrame):
 		report_html = report_html.replace("${REF}", 
 										  str(ti3_ref).replace('"', "&quot;"))
 		report_html = report_html.replace("${MEASURED}", 
-										  str(ti3_measured).replace('"', 
+										  str(ti3_joined).replace('"', 
 																	"&quot;"))
 		for include in ("compare.css", "compare-dark-light.css", 
 						"compare-dark.css", "compare-light.css", 
@@ -3723,7 +3744,14 @@ class MainFrame(BaseFrame):
 											  os.path.join(pydir, 
 											  			   "wxMeasureFrame.py"))
 		if wx.Display.GetCount() == 1:
-			x_hostname, x_display, x_screen = util_x.get_display()
+			try:
+				x_hostname, x_display, x_screen = util_x.get_display()
+			except ValueError, exception:
+				InfoDialog(self, msg=safe_unicode(exception), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				self.Show(start_timers=True)
+				return
 			args = "DISPLAY=%s:%s.%s %s" % (x_hostname, x_display,
 											getcfg("display.number") - 1,
 											args)

@@ -21,12 +21,12 @@
 		@import "report.css";
 	</style>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Profile Verification Report</title>
+	<title>Profile Verification | ${PROFILE} | ${DATETIME}</title>
 	<script type="text/javascript" src="jsapi-packages.js"></script>
 	<script type="text/javascript" src="jsapi-patches.js"></script>
+	<script type="text/javascript" src="compare.functions.js"></script>
 	<script type="text/javascript" src="compare.constants.js"></script>
 	<script type="text/javascript" src="compare.variables.js"></script>
-	<script type="text/javascript" src="compare.functions.js"></script>
 	<script type="text/javascript" src="compare.init.js"></script>
 </head>
 <body>
@@ -46,19 +46,22 @@
 	<form action="#" id="F_out" onsubmit="return false">
 		<div id="report" class="fieldset process">
 			<h2 id="reporttitle" class="legend">Report</h2>
-			<p id="options">
+			<p class="options">
+				Evaluation criteria:
+				<select name="FF_criteria" id="FF_criteria" onchange="compare()">
+				</select>
+			</p>
+			<p class="functions">
+				<button onclick="plaintext('ref')">View raw reference data</button>
+				<button onclick="plaintext('in')">View raw measurement data</button>
+			</p>
+			<p class="options">
 				Delta E formula for overview:
 				<select name="FF_delta_calc_method" id="FF_delta_calc_method" onchange="compare()">
 					<option value="CIE76">CIE 1976</option>
 					<option value="CIE94">CIE 1994</option>
 					<option value="CIE00">CIE 2000</option>
 				</select>
-			</p>
-			<p id="functions">
-				<button onclick="plaintext('ref')">Open reference data in new window</button>
-				<button onclick="plaintext('in')">Open measurement data in new window</button>
-				<input type="hidden" name="FF_strip_name" />
-				<input type="hidden" name="FF_data_out" id="FF_data_out" />
 			</p>
 			<div id="result"></div>
 		</div>

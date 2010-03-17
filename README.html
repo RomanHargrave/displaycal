@@ -359,13 +359,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.6.3 (Linux)<br />
-				0.3.6.3 (Mac OS X)<br />
-				0.3.6.3 (Windows)<br />
-				0.3.6.3 (Source)<br />
+				<dd id="version">0.3.6.4 (Linux)<br />
+				0.3.6.4 (Mac OS X)<br />
+				0.3.6.4 (Windows)<br />
+				0.3.6.4 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-03-14 00:22 (UTC)</dd>
+				<dd id="date">2010-03-17 18:50 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -463,18 +463,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.3.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.4.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.3.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.3-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.3-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.4.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.4-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.4-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.3.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.6.4.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -491,7 +491,7 @@
 					<div class="box optbox"><span class="box optbox">If you want to use the HCFR colorimeter on Mac OS X:</span> Follow the instructions under <a href="http://argyllcms.com/doc/Installing_OSX.html">installing Argyll CMS on Mac OS X</a> to enable it.</div>
 					<div class="box optbox"><span class="box optbox">If you use Windows Vista/7 64-bit:</span> Read <a href="#issue-win64-driversigenforcement">installing Argyll USB drivers on Windows Vista/7 64-bit</a></div></li>
 				<li><div class="box stdbox"><div>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</div></div>
-				<div class="box optbox"><span class="box optbox">If your measurement device is a Spyder 2:</span> Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Extra” menu. If you don't have the spyder software installed or its location cannot be determined, you will be prompted to select the setup executable that came with the instrument's installation media to enable it.</div></li>
+				<div class="box optbox"><span class="box optbox">If your measurement device is a Spyder 2:</span> Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Tools” menu. If you don't have the spyder software installed or its location cannot be determined, you will be prompted to select the setup executable that came with the instrument's installation media to enable it.</div></li>
 				<li><div class="box stdbox"><div>Connect your measurement device to your computer.</div></div>
 					<div class="box optbox"><span class="box optbox">Driver installation - Windows only:</span> If you already have drivers for your measurement device installed, read “Adding Argyll drivers to existing drivers” (if you are using vendor drivers) or “Updating Argyll drivers” (if you use a prior version of the Argyll drivers) in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>. If this is a fresh install, a “Found new hardware” dialog should appear:
 					<ul>
@@ -770,7 +770,7 @@
 				<h3>Predefined settings (presets)</h3>
 				<p>Starting with dispcalGUI v0.2.5b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
 				<h4>Why has a default gamma of 2.4 been chosen for the presets?</h4>
-				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons. You can run “Report on uncalibrated display device” from the “Extra” menu to measure the approximated overall gamma among other info.</p>
+				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons. You can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info.</p>
 			</div>
 			
 			<div id="display_instrument">
@@ -779,7 +779,7 @@
 				<p>Those can be selected through the drop-down boxes at the top. If you launch
 				dispcalGUI without an instrument connected, you can connect the device afterwards and it should show up in the 
 				drop-down box after a few seconds. If this doesn't work, there's also a menu
-				item “Detect displays and instruments” in the “Extra” menu,
+				item “Detect displays and instruments” in the “Options” menu,
 				but normally you shouldn't need this (if you can't seem to get your instrument to appear in the dropdown, please make
 				sure that Argyll recognizes your instrument before filing a bug report).</p>
 			</div>
@@ -792,7 +792,7 @@
 						<dd>
 							<p>Allows setting the target white point locus to the equivalent of a daylight or black body spectrum of the given temperature in degrees Kelvin, or as chromaticity co-ordinates. By default the white point target will be the native white of the display, and it's color temperature and delta E to the daylight spectrum locus will be shown during monitor adjustment, and adjustments will be recommended to put the display white point directly on the Daylight locus. If a daylight color temperature is given, then this will become the target of the adjustment, and the recommended adjustments will be those needed to make the monitor white point meet the target. Typical  values might be 5000 for matching printed output, or 6500, which gives a brighter, bluer look. A white point temperature different to that native to the display may limit the maximum brightness possible.</p>
 							
-							<p>If you want to find out the current uncalibrated whitepoint of your display, you can run “Report on uncalibrated display device” from the “Extra” menu to measure it.</p>
+							<p>If you want to find out the current uncalibrated whitepoint of your display, you can run “Report on uncalibrated display device” from the “Tools” menu to measure it.</p>
 							
 							<p>If you want to adjust the whitepoint to the chromaticities of your ambient lighting, or those of a viewing booth as used in prepress and photography, and your measurement device has ambient measuring capability (e.g. like the i1 Pro or i1display2 with their respective ambient measurement heads), you can use the “Measure” button next to the whitepoint settings. If you want to measure ambient lighting, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation.</p>
 						</dd>
@@ -801,7 +801,7 @@
 						<dd>
 							<p>Set the target brightness of white in cd/m<sup>2</sup>. If this number cannot be reached, the brightest output possible is chosen, consistent with matching the white point target. Note that many of the instruments are not particularly accurate when assessing the absolute display brightness in cd/m<sup>2</sup>. NOTE that some LCD screens behave a little strangely near their absolute white point, and may therefore exhibit odd behavior at values just below white. It may be advisable in such cases to set a brightness slightly less than the maximum such a display is capable of.</p>
 							
-							<p>If you want to find out the current uncalibrated white level of your display, you can run “Report on uncalibrated display device” from the “Extra” menu to measure it.</p>
+							<p>If you want to find out the current uncalibrated white level of your display, you can run “Report on uncalibrated display device” from the “Tools” menu to measure it.</p>
 						</dd>
 					
 					<dt>Black level</dt>
@@ -818,7 +818,7 @@
 							<p>Also note that many color spaces are encoded with, and labelled as having a gamma of approximately 2.2 (ie. sRGB, REC 709, SMPTE 240M, Macintosh OS X 10.6), but are actually intended to be displayed on a display with a typical CRT gamma of 2.4 viewed in a darkened environment. This is because this 2.2 gamma is a source gamma encoding in bright viewing conditions such as a television studio, while typical display viewing conditions are quite dark by comparison, and a contrast expansion of (approx.) gamma 1.1 is desirable to make the images look as intended. So if you are displaying images encoded to the sRGB standard, or displaying video through the calibration, just setting the gamma curve to sRGB or REC 709 (respectively) is probably not what you want! What you probably want to do, is to set the gamma curve to about gamma 2.4, so that the contrast range is expanded appropriately, or alternatively use sRGB or REC 709 or a gamma of 2.2 but also specify the actual ambient viewing conditions via a light level in Lux, so that an appropriate contrast enhancement can be made during calibration. If your instrument is capable of measuring ambient light levels, then you can do so.<br />
 							[For in-depth technical information about sRGB, see “<a href="http://www.color.org/sRGB.xalter">A Standard Default Color Space for the Internet: sRGB</a>” at the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> website for details of how it is intended to be used]</p>
 							
-							<p>If you're wondering what gamma value you should use, you can run “Report on uncalibrated display device” from the “Extra” menu to measure the approximated overall gamma among other info. Setting the gamma to the reported value can then help to reduce calibration artifacts like banding, because the adjustments needed for the video card's LUT curves should not be as strong as if a gamma further away from the display's native response was chosen.</p>
+							<p>If you're wondering what gamma value you should use, you can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info. Setting the gamma to the reported value can then help to reduce calibration artifacts like banding, because the adjustments needed for the video card's LUT curves should not be as strong as if a gamma further away from the display's native response was chosen.</p>
 						</dd>
 					
 					<dt>Ambient light level</dt>
@@ -982,8 +982,8 @@
 				</dl>
 			</div>
 			
-			<div id="menu-extra">
-				<h3>“Extra” menu</h3>
+			<div id="menu-options">
+				<h3>“Options” menu</h3>
 			
 				<dl>
 					<dt>Create profile from measurement data...</dt>
@@ -998,31 +998,38 @@
 					<dt>Load LUT curves from current display device profile</dt>
 						<dd>Tries to determine the profile associated to the currently selected display and loads its calibration curves from the 'vcgt' tag.</dd>
 						
-					<dt>Show LUT curves</dt>
-						<dd>Shows the LUT Viewer, which graphs calibration curves.</dd>
-						
 					<dt>Reset LUT curves</dt>
 						<dd>Resets any video card LUT curves to linear, such that input = output.</dd>
-						
-					<dt>Report on calibrated display device</dt>
-						<dd>Does some quick measurements, keeping any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
-						
-					<dt>Report on uncalibrated display device</dt>
-						<dd>Does some quick measurements, first resetting any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card LUT bit depth.</dd>
-						
-					<dt>Verify calibration</dt>
-						<dd>Run verify pass on the display as it is currently setup (currently installed LUT curves). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
-						
-					<dt>Verify profile</dt>
-						<dd>Do verification measurements to assess the display chain's (profile - graphics card and LUT curves - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain. To do the former, you have to select a TI1 file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled.<br />
-						To perform a check on the soft proofing capabilities, you have to provide a TI3 file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the TI3 file.<br />
-						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if set. Otherwise, a file dialog will appear to choose a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the measurement and reference data, which can be examined as plain text directly from the report at the click of a button.</dd>
 						
 					<dt>Detect displays and instruments</dt>
 						<dd>Normally dispcalGUI will automatically detect changes in display setup or instrument configuration, but as it may take a few seconds for changes to be recognized, you can instantly run the detection using this menu entry.</dd>
 						
 					<dt>Use separate video LUT acccess</dt>
 						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video LUT hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally dispcalGUI will automatically detect if separate video LUT access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
+
+					<dt>Restore defaults</dt>
+						<dd>Restore all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
+				</dl>
+			</div>
+			
+			<div id="menu-tools">
+				<h3>“Tools” menu</h3>
+			
+				<dl>
+						
+					<dt>Report on uncalibrated display device</dt>
+						<dd>Does some quick measurements, first resetting any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card LUT bit depth.</dd>
+						
+					<dt>Report on calibrated display device</dt>
+						<dd>Does some quick measurements, keeping any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
+						
+					<dt>Verify calibration</dt>
+						<dd>Run verify pass on the display as it is currently setup (currently installed LUT curves). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
+						
+					<dt>Verify profile</dt>
+						<dd>Do verification measurements to assess the display chain's (profile - graphics card and LUT curves - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain. To do the former, you have to select a TI1 file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled.<br />
+						To perform a check on the soft proofing capabilities, you have to provide a TI3 file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the TI3 file.<br />
+						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if set. Otherwise, a file dialog will appear to choose a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the measurement and reference data, which can be examined as plain text directly from the report at the click of a button.</dd>
 						
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1030,8 +1037,11 @@ The purchaser of a Spyder 2 instrument should have received a copy of this firmw
 On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on the users machine, the firmware pattern can usually be located from there. If the vendors drivers have not been installed, or the user does not wish to install them, or no vendors drivers are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. If your Linux system is not running automount, or your automount is setup to mount CDROM's somewhere other than /media, /mnt/cdrom, /media/cdrom or /cdrom, then you will have to mount the CDROM manually, and select the path to the CDROM setup/setup.exe file.
 </dd>
 
-					<dt>Restore defaults</dt>
-						<dd>Restore all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
+					<dt>Show LUT curves</dt>
+						<dd>Shows the LUT Viewer, which graphs calibration curves.</dd>
+						
+					<dt>Show actual LUT curves from video card</dt>
+						<dd>When this menu entry is checked, the LUT viewer will show the actual LUT curves from the video card instead of showing the curves of the currently active profile.</dd>
 						
 					<dt>Show/hide information window</dt>
 						<dd>Shows/hides the informational log window.</dd>
@@ -1062,7 +1072,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			</ul>
 			
 			<p id="issue-redgreenswapped"><span class="q"><span>General:</span> Wacky image colors (red and green swapped)<br /></span>
-			<span class="a"><span>Solution:</span> This happens when you created a “XYZ LUT + R ↔ G swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Extra” menu and select the profile you had the issue with.</span></p>
+			<span class="a"><span>Solution:</span> This happens when you created a “XYZ LUT + R ↔ G swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Options” menu and select the profile you had the issue with.</span></p>
 			
 			<p id="issue-win-photoshop-monprofdefect"><span class="q"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”<br /></span>
 			<span class="a"><span>Solution:</span> If you see a similar message when launching Photoshop, with the options “use profile regardless” and “ignore profile”, I'd try to “use profile regardless” as I've seen this message appearing even with perfectly good profiles. The exact cause of this issue is still unbeknownst to me, and there is quite a lot, sometimes contradicting information to be found about this or similar issues on the web. <a href="http://kb2.adobe.com/cps/328/328054.html">Adobe has some information</a>, but it seems rather outdated. If you can shed light on this issue, I'd be interested to hear about it.</span></p>
@@ -1075,13 +1085,13 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<span class="a"><span>Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management”. Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
 			
 			<p id="issue-win-uac"><span class="q"><span>MS Windows Vista:</span> The calibration gets unloaded when a “User Access Control” prompt is shown.<br /></span>
-			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Extra” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
+			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
 			
 			<p id="issue-win-spyder2"><span class="q"><span>MS Windows:</span> Enabling the Spyder 2 colorimeter might fail when not running as administrator<br /></span>
 			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
 			
 			<p id="issue-mac-pscursor"><span class="q"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
-			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Extra” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
+			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
 				
 			<p id="issue-linux-lutaccess"><span class="q"><span>Linux:</span> No video LUT access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
 			<span class="a"><span>Solution:</span> Please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein.</span></p>
@@ -1126,22 +1136,27 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-03-14 00:22 (UTC) 0.3.6.3 -->
+			<!-- 2010-03-17 18:50 (UTC) 0.3.6.4 -->
 			<dl>
-				<dt>2010-03-14 00:22 (UTC)</dt>
+				<dt>2010-03-17 18:50 (UTC)</dt>
 					<dd>
-						<h3>0.3.6.3</h3>
+						<h3>0.3.6.4</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Profile verification: Text files (*.txt) containing measurement data can now be selected in addition to TI1 and TI3 files.</li>
+							<li>Profile verification: CGATS-compatible text files (*.txt) containing measurement data can now be selected in addition to TI1 and TI3 files.</li>
+							<li>Profile verification report: Depending on the chart used, you can now choose among different evaluation criteria from within the report. Also added Fogra Media Wedge V3 tolerance values for CMYK testcharts.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Linux: Error handling when parsing the DISPLAY environment variable, which could fail on some systems (Xubuntu 8.10).</li>
 							<li>Profile verification: Error 'Unknown color representation Lab' when trying to verify a L*a*b* LUT profile.</li>
+							<li>Profile verification: Wrong XYZ scaling when reading from TI3 files containing XYZ, but no L*a*b* values.</li>
+							<li>Profile verification: When measuring a display other than the first one, the calibration curves were erroneously still loaded to the 1st display.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li>Profile verification: Show nominal and actual measured values as L*a*b* instead of XYZ. Reduced visible decimals in report to increase readability.</li>
+							<li>Profile verification report: Show nominal and actual measured values as L*a*b* instead of XYZ. Reduced visible decimals in report to increase readability.</li>
+							<li>Split the cramped “Extra” menu into “Options” and “Tools”.</li>
 						</ul>
 					</dd>
 					

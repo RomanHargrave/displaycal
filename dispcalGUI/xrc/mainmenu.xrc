@@ -17,7 +17,7 @@
         </object>
         <label>menu.file</label>
       </object>
-      <object class="wxMenu" name="menu.extra">
+      <object class="wxMenu" name="menu.options">
         <object class="wxMenuItem" name="create_profile">
           <label>create_profile</label>
         </object>
@@ -30,27 +30,8 @@
         <object class="wxMenuItem" name="calibration.load_from_display_profile">
           <label>calibration.load_from_display_profile</label>
         </object>
-        <object class="wxMenuItem" name="calibration.show_lut">
-          <label>calibration.show_lut</label>
-        </object>
-        <object class="wxMenuItem" name="calibration.show_actual_lut">
-          <label>calibration.show_actual_lut</label>
-          <checkable>1</checkable>
-        </object>
         <object class="wxMenuItem" name="calibration.reset">
           <label>calibration.reset</label>
-        </object>
-        <object class="wxMenuItem" name="report.calibrated">
-          <label>report.calibrated</label>
-        </object>
-        <object class="wxMenuItem" name="report.uncalibrated">
-          <label>report.uncalibrated</label>
-        </object>
-        <object class="wxMenuItem" name="calibration.verify">
-          <label>calibration.verify</label>
-        </object>
-        <object class="wxMenuItem" name="profile.verify">
-          <label>profile.verify</label>
         </object>
         <object class="separator"/>
         <object class="wxMenuItem" name="detect_displays_and_ports">
@@ -61,18 +42,42 @@
           <checkable>1</checkable>
         </object>
         <object class="separator"/>
+        <object class="wxMenuItem" name="restore_defaults">
+          <label>restore_defaults</label>
+        </object>
+        <label>menu.options</label>
+      </object>
+      <object class="wxMenu" name="menu.tools">
+        <object class="wxMenuItem" name="report.uncalibrated">
+          <label>report.uncalibrated</label>
+        </object>
+        <object class="wxMenuItem" name="report.calibrated">
+          <label>report.calibrated</label>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="calibration.verify">
+          <label>calibration.verify</label>
+        </object>
+        <object class="wxMenuItem" name="profile.verify">
+          <label>profile.verify</label>
+        </object>
+        <object class="separator"/>
         <object class="wxMenuItem" name="enable_spyder2">
           <label>enable_spyder2</label>
         </object>
         <object class="separator"/>
-        <object class="wxMenuItem" name="restore_defaults">
-          <label>restore_defaults</label>
+        <object class="wxMenuItem" name="calibration.show_lut">
+          <label>calibration.show_lut</label>
+        </object>
+        <object class="wxMenuItem" name="calibration.show_actual_lut">
+          <label>calibration.show_actual_lut</label>
+          <checkable>1</checkable>
         </object>
         <object class="separator"/>
         <object class="wxMenuItem" name="infoframe.toggle">
           <label>infoframe.toggle</label>
         </object>
-        <label>menu.extra</label>
+        <label>menu.tools</label>
       </object>
       <object class="wxMenu" name="menu.language">
         <label>menu.language</label>

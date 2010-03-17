@@ -748,6 +748,29 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 
 	jsapi.math.color = {};
 
+/*
+	<jsapi>
+		<author>2007 Florian Hoech</author>
+		<file>jsapi.math.color.cmyk2rgb.js</file>
+		<dependencies>
+			jsapi.math.color.js
+		</dependencies>
+	</jsapi>
+*/
+
+	jsapi.math.color.cmyk2rgb = function(C, M, Y, K) {
+		// http://www.easyrgb.com/math.php?MATH=M14
+		C = ( C * ( 1 - K ) + K );
+		M = ( M * ( 1 - K ) + K );
+		Y = ( Y * ( 1 - K ) + K );
+		// http://www.easyrgb.com/math.php?MATH=M12
+		var R, G, B;
+		R = Math.round(( 1 - C ) * 255);
+		G = Math.round(( 1 - M ) * 255);
+		B = Math.round(( 1 - Y ) * 255);
+		return [R, G, B]
+	};
+
 /* ##### jsapi.math.color.CIEDCorColorTemp2xyY.js ##### */
 
 /*

@@ -240,6 +240,7 @@ td.patch {
 	border-left: none;
 	border-right: none;
 	padding: 0;
+	vertical-align: top;
 	width: 1.75em;
 }
 div.patch {
@@ -268,12 +269,17 @@ div.patch {
 td.ok, td.ko {
 	line-height: 1em;
 }
-#options {
+.options {
 	display: inline-block;
-	width: 345px;
+	margin: 6px 0 10px;
+	width: 430px;
 }
-#functions {
+.functions {
 	display: inline-block;
+	margin: 6px 0 10px;
 	text-align: right;
-	width: 520px;
+	width: 430px;
+}
+.statonly {
+	color: gray;
 }

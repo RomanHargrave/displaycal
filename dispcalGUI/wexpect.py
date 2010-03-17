@@ -2644,7 +2644,7 @@ def log_error(e):
 def excepthook(etype, value, tb):
 	log_error(''.join(traceback.format_exception(etype, value, tb)))
 
-sys.excepthook = excepthook
+#sys.excepthook = excepthook
         
 def which (filename):
 

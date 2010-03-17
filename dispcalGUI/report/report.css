@@ -1,4 +1,4 @@
-.docs, #F_data, #reporttitle, #options, #functions, #footer {
+.docs, #F_data, #reporttitle, .options, .functions, #footer {
 	display: none;
 }
 
@@ -141,3 +141,6 @@ p.signature {
 	END
 	http://www.positioniseverything.net/easyclearing.html
 */
+.statonly {
+	color: gray;
+}
