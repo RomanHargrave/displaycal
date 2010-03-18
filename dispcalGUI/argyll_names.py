@@ -15,14 +15,23 @@ names = [
 
 prefixes_suffixes = ["argyll"]
 
-altnames = {"txt2ti3": ["logo2cgats"]}
+altnames = {"txt2ti3": ["logo2cgats"], 
+			"icclu": ["xicclu"]}
+
+def add_prefixes_suffixes(name, altname):
+	for prefix_suffix in prefixes_suffixes:
+		altnames[name] += ["%s-%s" % (altname, prefix_suffix)]
+		altnames[name] += ["%s-%s" % (prefix_suffix, altname)]
+
 for name in names:
 	if not name in altnames:
 		altnames[name] = []
-	for prefix_suffix in prefixes_suffixes:
-		altnames[name] += ["%s-%s" % (prefix_suffix, name)]
-		altnames[name] += ["%s-%s" % (name, prefix_suffix)]
+	_altnames = list(altnames[name])
+	for altname in _altnames:
+		add_prefixes_suffixes(name, altname)
 	altnames[name] += [name]
+	add_prefixes_suffixes(name, name)
+	altnames[name].reverse()
 
 viewconds = [
 	"pp",
