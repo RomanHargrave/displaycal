@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from decimal import Decimal
 from hashlib import md5
 import locale
 import math
@@ -351,7 +350,7 @@ def dateTimeNumber(binaryString):
 
 
 def s15Fixed16Number(binaryString):
-	return Decimal(str(struct.unpack(">i", binaryString)[0])) / 65536
+	return struct.unpack(">i", binaryString)[0] / 65536.0
 
 
 def s15Fixed16Number_tohex(num):
@@ -359,7 +358,7 @@ def s15Fixed16Number_tohex(num):
 
 
 def u16Fixed16Number(binaryString):
-	return Decimal(str(struct.unpack(">I", binaryString)[0])) / 65536
+	return struct.unpack(">I", binaryString)[0] / 65536.0
 
 
 def u16Fixed16Number_tohex(num):
@@ -367,7 +366,7 @@ def u16Fixed16Number_tohex(num):
 
 
 def u8Fixed8Number(binaryString):
-	return Decimal(str(struct.unpack(">H", binaryString)[0])) / 256
+	return struct.unpack(">H", binaryString)[0] / 256.0
 
 
 def u8Fixed8Number_tohex(num):
@@ -644,6 +643,16 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 				if countryCode in self["en"]:
 					return self["en"][countryCode]
 		return self.values()[0].values()[0]
+
+
+class s15Fixed16ArrayType(ICCProfileTag, list):
+
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		data = self.tagData[8:]
+		while data:
+			self.append(s15Fixed16Number(data[0:4]))
+			data = data[4:]
 
 
 def SignatureType(tagData, tagSignature):
@@ -1062,7 +1071,7 @@ class ViewingConditionsType(ICCProfileTag, ADict):
 		})
 
 
-class XYZNumber(ADict):
+class XYZNumber(AODict):
 
 	"""
 	Byte
@@ -1073,6 +1082,7 @@ class XYZNumber(ADict):
 	"""
 
 	def __init__(self, binaryString):
+		AODict.__init__(self)
 		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in 
 								  (binaryString[:4], binaryString[4:8], 
 								   binaryString[8:12])]
@@ -1085,6 +1095,22 @@ class XYZType(ICCProfileTag, XYZNumber):
 		XYZNumber.__init__(self, tagData[8:20])
 
 
+class chromaticAdaptionTag(s15Fixed16ArrayType):
+	
+	def __init__(self, tagData, tagSignature):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		data = self.tagData[8:]
+		while data:
+			if len(self) == 0 or len(self[-1]) == 3:
+				self.append([])
+			self[-1].append(s15Fixed16Number(data[0:4]))
+			data = data[4:]
+
+
+tagSignature2Tag = {
+	"chad": chromaticAdaptionTag
+}
+
 typeSignature2Type = {
 	"chrm": ChromacityType,
 	"curv": CurveType,
@@ -1092,6 +1118,7 @@ typeSignature2Type = {
 	"dtim": DateTimeType,
 	"meas": MeasurementType,
 	"mluc": MultiLocalizedUnicodeType,  # ICC v4
+	"sf32": s15Fixed16ArrayType,
 	"sig ": SignatureType,
 	"text": TextType,
 	"vcgt": videoCardGamma,
@@ -1164,7 +1191,7 @@ class ICCProfile:
 			header = data[:128]
 			self.size = self._size = uInt32Number(header[0:4])
 			self.preferredCMM = header[4:8].strip("\0\n\r ")
-			self.version = Decimal(str(ord(header[8:12][0])) + "." + 
+			self.version = float(str(ord(header[8:12][0])) + "." + 
 								   str(ord(header[8:12][1])))
 			self.profileClass = header[12:16].strip()
 			self.colorSpace = header[16:20].strip()
@@ -1265,7 +1292,9 @@ class ICCProfile:
 						self._data = self._data[:128] + self._data[end:]
 						discard_len += tagDataOffset - 128 - discard_len + tagDataSize
 						typeSignature = tagData[:4]
-						if typeSignature in typeSignature2Type:
+						if tagSignature in tagSignature2Tag:
+							tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
+						elif typeSignature in typeSignature2Type:
 							tag = typeSignature2Type[typeSignature](tagData, tagSignature)
 						else:
 							tag = ICCProfileTag(tagData, tagSignature)
