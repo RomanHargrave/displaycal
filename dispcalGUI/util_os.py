@@ -15,10 +15,11 @@ else:
 fs_enc = sys.getfilesystemencoding() or enc
 
 def quote_args(args):
-	""" Quote commandline arguments where needed """
+	""" Quote commandline arguments where needed. It quotes all arguments that 
+	contain spaces or any of the characters ^!$%&()[]{}=;'+,`~ """
 	args_out = []
 	for arg in args:
-		if re.search("[\^!$%&()[\]\s]", arg):
+		if re.search("[\^!$%&()[\]{}=;'+,`~\s]", arg):
 			arg = '"' + arg + '"'
 		args_out += [arg]
 	return args_out

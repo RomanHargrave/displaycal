@@ -2675,10 +2675,10 @@ def which (filename):
 
 def join_args(args):
     """Joins arguments into a command line. It quotes all arguments that contain
-    spaces or any of the characters ^!$%&()[]"""
+    spaces or any of the characters ^!$%&()[]{}=;'+,`~"""
     commandline = []
     for arg in args:
-        if re.search('[\^!$%&()[\]\s]', arg):
+        if re.search('[\^!$%&()[\]{}=;\'+,`~\s]', arg):
 			arg = '"%s"' % arg
         commandline.append(arg)
     return ' '.join(commandline)
