@@ -1,0 +1,78 @@
+h1 span {
+	display: block;
+	float: left;
+	height: .75em;
+	margin: .25em .5em .35em 0;
+	width: .75em;
+}
+h1 span.r {
+	margin-left: .5em;
+	background: #f00000;
+}
+h1 span.g {
+	background: #00f000;
+}
+h1 span.b {
+	background: #0000f0;
+	margin-right: 11px;
+}
+h3 {
+	font-size: 1.5em;
+	font-weight: normal;
+	margin-bottom: .5em;
+}
+table {
+	border: none;
+	border-spacing: 0;
+	width: 100%;
+}
+td, th {
+	border: none;
+	border-bottom: 1px solid silver;
+	padding: .125em .25em .125em 0;
+	text-align: center;
+}
+table.info td, table.info th, td.first-column, th.first-column {
+	text-align: left;
+}
+table.info th {
+	width: 15em;
+}
+td.patch {
+	border-left: none;
+	border-right: none;
+	padding: 0;
+	vertical-align: top;
+	width: 1.75em;
+}
+.overview td.patch {
+	border-bottom: none;
+}
+.overview tr.last-row td.patch {
+	border-bottom: 1px solid silver;
+}
+div.patch {
+	padding: .125em .25em .125em 0;
+	width: 1.75em;
+}
+.ok {
+	color: #339900;
+}
+.warn {
+	color: #FF9900;
+	font-weight: bold;
+}
+.ko {
+	color: red;
+	font-weight: bold;
+}
+.hidden {
+	color: white;
+	visibility: hidden;
+}
+td.ok, td.ko {
+	line-height: 1em;
+}
+.statonly {
+	color: gray;
+}
