@@ -70,6 +70,59 @@ def cbrt(x):
 	return math.pow(x, 1.0 / 3.0) if x >= 0 else -math.pow(-x, 1.0 / 3.0)
 
 
+def adapt(XS, YS, ZS, whitepoint_source=None, whitepoint_destination=None, MA=None):
+	# chromatic adaption
+	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
+	# MA = adaption matrix or predefined choice ('bradford', 'vonkries' or 'xyzscaling'),
+	# defaults to 'bradford'
+	if not MA:
+		MA = 'bradford';
+	if isinstance(MA, basestring):
+		if MA.lower() == 'xyzscaling':
+			MA = [[1, 0, 0],
+				  [0, 1, 0],
+				  [0, 0, 1]]
+		elif MA.lower() == 'vonkries':
+			MA = [[ 0.40024,  0.70760, -0.08081],
+				  [-0.22630,  1.16532,  0.04570],
+				  [ 0.00000,  0.00000,  0.91822]]
+		else:
+			MA = [[ 0.89510,  0.26640, -0.16140],
+				  [-0.75020,  1.71350,  0.03670],
+				  [ 0.03890, -0.06850,  1.02960]]
+	if not isinstance(MA, Matrix3x3):
+		MA = Matrix3x3(MA)
+	if isinstance(whitepoint_source, (list, tuple)):
+		XYZWS = whitepoint_source
+	elif whitepoint_source:
+		XYZWS = CIEDCCT2XYZ(whitepoint_source)
+	else:
+		XYZWS = 0.96422, 1.0, 0.82521  # Observer= 2°, Illuminant= D50
+	XWS = XYZWS[0]
+	YWS = XYZWS[1]
+	ZWS = XYZWS[2]
+	ps = XWS * MA[0][0] + YWS * MA[0][1] + ZWS * MA[0][2]
+	ys = XWS * MA[1][0] + YWS * MA[1][1] + ZWS * MA[1][2]
+	bs = XWS * MA[2][0] + YWS * MA[2][1] + ZWS * MA[2][2]
+	if isinstance(whitepoint_destination, (list, tuple)):
+		XYZWD = whitepoint_destination
+	elif whitepoint_source:
+		XYZWD = CIEDCCT2XYZ(whitepoint_destination)
+	else:
+		XYZWD = 0.96422, 1.0, 0.82521  # Observer= 2°, Illuminant= D50
+	XWD = XYZWD[0]
+	YWD = XYZWD[1]
+	ZWD = XYZWD[2]
+	pd = XWD * MA[0][0] + YWD * MA[0][1] + ZWD * MA[0][2]
+	yd = XWD * MA[1][0] + YWD * MA[1][1] + ZWD * MA[1][2]
+	bd = XWD * MA[2][0] + YWD * MA[2][1] + ZWD * MA[2][2]
+	M = MA.inverted() * [[pd/ps, 0, 0], [0, yd/ys, 0], [0, 0, bd/bs]] * MA
+	XD = XS * M[0][0] + YS * M[0][1] + ZS * M[0][2]
+	YD = XS * M[1][0] + YS * M[1][1] + ZS * M[1][2]
+	ZD = XS * M[2][0] + YS * M[2][1] + ZS * M[2][2]
+	return XD, YD, ZD
+
+
 def CIEDCCT2xyY(T):
 	"""
 	Convert from CIE correlated daylight temperature to xyY.
@@ -517,6 +570,102 @@ def XYZ2xyY(X, Y, Z):
 	x = X / (X + Y + Z)
 	y = Y / (X + Y + Z)
 	return x, y, Y
+
+
+class Matrix3x3(list):
+	
+	""" Simple 3x3 matrix """
+	
+	def __init__(self, matrix):
+		if len(matrix) != 3:
+			raise ValueError('Invalid number of rows for 3x3 matrix: %i' % len(matrix))
+		while len(self):
+			self.pop()
+		for row in matrix:
+			if len(row) != 3:
+				raise ValueError('Invalid number of columns for 3x3 matrix: %i' % len(row))
+			self.append([]);
+			for column in row:
+				self[-1].append(column)
+	
+	def __add__(self, matrix):
+		return self.__class__([[self[0][0] + matrix[0][0],
+								self[0][1] + matrix[0][1],
+								self[0][2] + matrix[0][2]],
+							   [self[1][0] + matrix[1][0],
+								self[1][1] + matrix[1][1],
+								self[1][2] + matrix[1][2]],
+							   [self[2][0] + matrix[2][0],
+								self[2][1] + matrix[2][1],
+								self[2][2] + matrix[2][2]]])
+	
+	def __iadd__(self, matrix):
+		# inplace
+		self.__init__(self.__add__(matrix))
+		return self
+	
+	def __imul__(self, matrix):
+		# inplace
+		self.__init__(self.__mul__(matrix))
+		return self
+	
+	def __mul__(self, matrix):
+		return self.__class__([[self[0][0]*matrix[0][0] + self[0][1]*matrix[1][0] + self[0][2]*matrix[2][0],
+								self[0][0]*matrix[0][1] + self[0][1]*matrix[1][1] + self[0][2]*matrix[2][1],
+								self[0][0]*matrix[0][2] + self[0][1]*matrix[1][2] + self[0][2]*matrix[2][2]],
+							   [self[1][0]*matrix[0][0] + self[1][1]*matrix[1][0] + self[1][2]*matrix[2][0],
+								self[1][0]*matrix[0][1] + self[1][1]*matrix[1][1] + self[1][2]*matrix[2][1],
+								self[1][0]*matrix[0][2] + self[1][1]*matrix[1][2] + self[1][2]*matrix[2][2]],
+							   [self[2][0]*matrix[0][0] + self[2][1]*matrix[1][0] + self[2][2]*matrix[2][0],
+								self[2][0]*matrix[0][1] + self[2][1]*matrix[1][1] + self[2][2]*matrix[2][1],
+								self[2][0]*matrix[0][2] + self[2][1]*matrix[1][2] + self[2][2]*matrix[2][2]]])
+	
+	def adjoint(self):
+		return self.cofactors().transposed()
+	
+	def cofactors(self):
+		return self.__class__([[(self[1][1]*self[2][2] - self[1][2]*self[2][1]),
+								-1 * (self[1][0]*self[2][2] - self[1][2]*self[2][0]),
+								(self[1][0]*self[2][1] - self[1][1]*self[2][0])],
+							   [-1 * (self[0][1]*self[2][2] - self[0][2]*self[2][1]),
+								(self[0][0]*self[2][2] - self[0][2]*self[2][0]),
+								-1 * (self[0][0]*self[2][1] -self[0][1]*self[2][0])],
+							   [(self[0][1]*self[1][2] - self[0][2]*self[1][1]),
+								-1 * (self[0][0]*self[1][2] - self[1][0]*self[0][2]),
+								(self[0][0]*self[1][1] - self[0][1]*self[1][0])]])
+	
+	def determinant(self):
+		return ((self[0][0]*self[1][1]*self[2][2] + 
+				 self[1][0]*self[2][1]*self[0][2] + 
+				 self[0][1]*self[1][2]*self[2][0]) - 
+				(self[2][0]*self[1][1]*self[0][2] + 
+				 self[1][0]*self[0][1]*self[2][2] + 
+				 self[2][1]*self[1][2]*self[0][0]))
+	
+	def invert(self):
+		# inplace
+		self.__init__(self.inverted())
+	
+	def inverted(self):
+		determinant = self.determinant()
+		matrix = self.adjoint()
+		return self.__class__([[matrix[0][0] / determinant,
+								matrix[0][1] / determinant,
+								matrix[0][2] / determinant],
+							   [matrix[1][0] / determinant,
+								matrix[1][1] / determinant,
+								matrix[1][2] / determinant],
+							   [matrix[2][0] / determinant,
+								matrix[2][1] / determinant,
+								matrix[2][2] / determinant]])
+								
+	def transpose(self):
+		self.__init__(self.transposed())
+	
+	def transposed(self):
+		return self.__class__([[self[0][0], self[1][0], self[2][0]],
+							   [self[0][1], self[1][1], self[2][1]],
+							   [self[0][2], self[1][2], self[2][2]]])
 
 
 def test():
