@@ -29,14 +29,107 @@ jsapi.math.variance = function () {
 	for (m = s / a.length, l = a.length, s = 0; l--; s += Math.pow(a[l] - m, 2));
 	return s / a.length;
 };
-jsapi.math.color.XYZ2rgb = function (X, Y, Z) {
+jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_destination, MA) {
+	// chromatic adaption
+	// based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
+	// MA = adaption matrix or predefined choice ('bradford', 'vonkries' or 'xyzscaling'),
+	// defaults to 'bradford'
+	if (!MA) MA = 'bradford';
+	if (typeof MA == 'string') {
+		switch (MA.toLowerCase()) {
+			case 'xyzscaling':
+				MA = [[1, 0, 0],
+					  [0, 1, 0],
+					  [0, 0, 1]];
+				break;
+			case 'vonkries':
+				MA = [[0.4002400,  0.7076000, -0.0808100],
+					  [-0.2263000,  1.1653200,  0.0457000],
+					  [0.0000000,  0.0000000,  0.9182200]];
+				break;
+			case 'bradford':
+			default:
+				MA = [[0.8951000,  0.2664000, -0.1614000],
+					  [-0.7502000,  1.7135000,  0.0367000],
+					  [0.0389000, -0.0685000,  1.0296000]];
+		}
+	};
+	if (MA.constructor != jsapi.math.Matrix3x3) MA = new jsapi.math.Matrix3x3(MA);
+	var XYZWS = (whitepoint_source 
+					? (whitepoint_source.constructor == Array 
+						? whitepoint_source 
+						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint_source)) 
+					: [0.96422, 1, 0.82521]), // Observer= 2°, Illuminant= D50
+		XWS = XYZWS[0], YWS = XYZWS[1], ZWS = XYZWS[2],
+		ps = XWS * MA[0][0] + YWS * MA[0][1] + ZWS * MA[0][2],
+		ys = XWS * MA[1][0] + YWS * MA[1][1] + ZWS * MA[1][2],
+		bs = XWS * MA[2][0] + YWS * MA[2][1] + ZWS * MA[2][2],
+		XYZWD = (whitepoint_destination 
+					? (whitepoint_destination.constructor == Array 
+						? whitepoint_destination 
+						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint_destination)) 
+					: [0.96422, 1, 0.82521]), // Observer= 2°, Illuminant= D50
+		XWD = XYZWD[0], YWD = XYZWD[1], ZWD = XYZWD[2],
+		pd = XWD * MA[0][0] + YWD * MA[0][1] + ZWD * MA[0][2],
+		yd = XWD * MA[1][0] + YWD * MA[1][1] + ZWD * MA[1][2],
+		bd = XWD * MA[2][0] + YWD * MA[2][1] + ZWD * MA[2][2],
+		M = MA.invert().multiply([[pd/ps, 0, 0], [0, yd/ys, 0], [0, 0, bd/bs]]).multiply(MA),
+		XD = XS * M[0][0] + YS * M[0][1] + ZS * M[0][2],
+		YD = XS * M[1][0] + YS * M[1][1] + ZS * M[1][2],
+		ZD = XS * M[2][0] + YS * M[2][1] + ZS * M[2][2];
+	return [XD, YD, ZD];
+};
+jsapi.math.color.Lab2rgb = function (L, a, b, Lab_whitepoint, rgb_whitepoint) {
+	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, Lab_whitepoint);
+	return jsapi.math.color.XYZ2rgb(XYZ[0], XYZ[1], XYZ[2], rgb_whitepoint)
+};
+jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint) {
+	// based on http://www.easyrgb.com/math.php?MATH=M8
+	// whitepoint can be a color temperature in Kelvin or an array containing XYZ values
+	var var_Y = ( L + 16 ) / 116;
+	var var_X = a / 500 + var_Y;
+	var var_Z = var_Y - b / 200;
+	
+	if ( Math.pow(var_Y, 3) > 0.008856 ) var_Y = Math.pow(var_Y, 3);
+	else                      var_Y = ( var_Y - 16 / 116 ) / 7.787;
+	if ( Math.pow(var_X, 3) > 0.008856 ) var_X = Math.pow(var_X, 3);
+	else                      var_X = ( var_X - 16 / 116 ) / 7.787;
+	if ( Math.pow(var_Z, 3) > 0.008856 ) var_Z = Math.pow(var_Z, 3);
+	else                      var_Z = ( var_Z - 16 / 116 ) / 7.787;
+	
+	var ref_XYZ = (whitepoint 
+					? (whitepoint.constructor == Array 
+						? whitepoint 
+						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint, true)) 
+					: [96.422, 100, 82.521]), // Observer= 2°, Illuminant= D50
+	X = ref_XYZ[0] * var_X,
+	Y = ref_XYZ[1] * var_Y,
+	Z = ref_XYZ[2] * var_Z;
+	
+	return [X, Y, Z]
+};
+jsapi.math.color.XYZ2rgb = function (X, Y, Z, whitepoint) {
 	var var_X = X / 100;
 	var var_Y = Y / 100;
 	var var_Z = Z / 100;
-	// sRGB Bradford-adapted to D50, http://brucelindbloom.com/Eqn_RGB_XYZ_Matrix.html
-	var var_R = var_X * 3.1338561 + var_Y * -1.6168667 + var_Z * -0.4906146;
-	var var_G = var_X * -0.9787684 + var_Y * 1.9161415 + var_Z * 0.0334540;
-	var var_B = var_X * 0.0719453 + var_Y * -0.2289914 + var_Z * 1.4052427;
+	
+	var xr = 0.6400, yr = 0.3300, // sRGB red primary
+		xg = 0.3000, yg = 0.6000, // sRGB green primary
+		xb = 0.1500, yb = 0.0600, // sRGB blue primary
+		XYZw = (whitepoint 
+					? (whitepoint.constructor == Array 
+						? whitepoint 
+						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint, true)) 
+					: [95.047, 100, 108.883]), // Observer= 2°, Illuminant= D65
+		Xw = XYZw[0] / 100, 
+		Yw = XYZw[1] / 100, 
+		Zw = XYZw[2] / 100,
+		matrix = jsapi.math.color.matrix_rgb(xr, yr, xg, yg, xb, yb, Xw, Yw, Zw).invert();
+	
+	var var_R = var_X * matrix[0][0] + var_Y * matrix[1][0] + var_Z * matrix[2][0];
+	var var_G = var_X * matrix[0][1] + var_Y * matrix[1][1] + var_Z * matrix[2][1];
+	var var_B = var_X * matrix[0][2] + var_Y * matrix[1][2] + var_Z * matrix[2][2];
+		
 	if (var_R > 0.0031308) {
 		var_R = 1.055 * Math.pow(var_R, 0.4166666666666667) - 0.055;
 	} else {
@@ -57,4 +150,107 @@ jsapi.math.color.XYZ2rgb = function (X, Y, Z) {
 	G = Math.max(0, Math.round(var_G * 255));
 	B = Math.max(0, Math.round(var_B * 255));
 	return [R, G, B];
+};
+jsapi.math.color.matrix_rgb = function (xr, yr, xg, yg, xb, yb, Xw, Yw, Zw) {
+	// Create and return an RGB matrix
+	var XYZr = jsapi.math.color.xyY2XYZ(xr, yr, 1.0),
+		XYZg = jsapi.math.color.xyY2XYZ(xg, yg, 1.0),
+		XYZb = jsapi.math.color.xyY2XYZ(xb, yb, 1.0),
+		Xr = XYZr[0], Yr = XYZr[1], Zr = XYZr[2],
+		Xg = XYZg[0], Yg = XYZg[1], Zg = XYZg[2],
+		Xb = XYZb[0], Yb = XYZb[1], Zb = XYZb[2],
+		mtx = new jsapi.math.Matrix3x3([[Xr, Yr, Zr],
+										 [Xg, Yg, Zg],
+										 [Xb, Yb, Zb]]).invert(),
+		Sr = Xw * mtx[0][0] + Yw * mtx[1][0] + Zw * mtx[2][0],
+		Sg = Xw * mtx[0][1] + Yw * mtx[1][1] + Zw * mtx[2][1],
+		Sb = Xw * mtx[0][2] + Yw * mtx[1][2] + Zw * mtx[2][2];
+	return new jsapi.math.Matrix3x3([[Sr * Xr, Sr * Yr, Sr * Zr],
+									  [Sg * Xg, Sg * Yg, Sg * Zg],
+									  [Sb * Xb, Sb * Yb, Sb * Zb]]);
+};
+jsapi.math.Matrix3x3 = function (matrix) {
+	for (var i=0; i<matrix.length; i++) {
+		this[i] = [];
+		for (var j=0; j<matrix[i].length; j++) {
+			this[i][j] = matrix[i][j];
+		}
+	};
+	this.length = matrix.length;
+};
+jsapi.math.Matrix3x3.prototype = {
+	add: function (matrix) {
+		return new jsapi.math.Matrix3x3([[this[0][0] + matrix[0][0],
+										   this[0][1] + matrix[0][1],
+										   this[0][2] + matrix[0][2]],
+										  [this[1][0] + matrix[1][0],
+										   this[1][1] + matrix[1][1],
+										   this[1][2] + matrix[1][2]],
+										  [this[2][0] + matrix[2][0],
+										   this[2][1] + matrix[2][1],
+										   this[2][2] + matrix[2][2]]]);
+	},
+	adjoint: function () {
+		return this.cofactors().transpose();
+		
+	},
+	cofactors: function () {
+		return new jsapi.math.Matrix3x3([
+					[(this[1][1]*this[2][2] - this[1][2]*this[2][1]),
+					 -1 * (this[1][0]*this[2][2] - this[1][2]*this[2][0]),
+					 (this[1][0]*this[2][1] - this[1][1]*this[2][0])],
+					[-1 * (this[0][1]*this[2][2] - this[0][2]*this[2][1]),
+					 (this[0][0]*this[2][2] - this[0][2]*this[2][0]),
+					 -1 * (this[0][0]*this[2][1] -this[0][1]*this[2][0])],
+					[(this[0][1]*this[1][2] - this[0][2]*this[1][1]),
+					 -1 * (this[0][0]*this[1][2] - this[1][0]*this[0][2]),
+					 (this[0][0]*this[1][1] - this[0][1]*this[1][0])]]);
+	},
+	determinant: function () {
+		return ((this[0][0]*this[1][1]*this[2][2] + 
+				 this[1][0]*this[2][1]*this[0][2] + 
+				 this[0][1]*this[1][2]*this[2][0]) - 
+				(this[2][0]*this[1][1]*this[0][2] + 
+				 this[1][0]*this[0][1]*this[2][2] + 
+				 this[2][1]*this[1][2]*this[0][0]));
+	},
+	invert: function () {
+		var determinant = this.determinant(),
+			matrix = this.adjoint();
+		return new jsapi.math.Matrix3x3([[matrix[0][0] / determinant,
+										   matrix[0][1] / determinant,
+										   matrix[0][2] / determinant],
+										  [matrix[1][0] / determinant,
+										   matrix[1][1] / determinant,
+										   matrix[1][2] / determinant],
+										  [matrix[2][0] / determinant,
+										   matrix[2][1] / determinant,
+										   matrix[2][2] / determinant]]);
+	},
+	multiply: function (matrix) {
+		return new jsapi.math.Matrix3x3([[this[0][0]*matrix[0][0] + this[0][1]*matrix[1][0] + this[0][2]*matrix[2][0],
+										   this[0][0]*matrix[0][1] + this[0][1]*matrix[1][1] + this[0][2]*matrix[2][1],
+										   this[0][0]*matrix[0][2] + this[0][1]*matrix[1][2] + this[0][2]*matrix[2][2]],
+										 
+										  [this[1][0]*matrix[0][0] + this[1][1]*matrix[1][0] + this[1][2]*matrix[2][0],
+										   this[1][0]*matrix[0][1] + this[1][1]*matrix[1][1] + this[1][2]*matrix[2][1],
+										   this[1][0]*matrix[0][2] + this[1][1]*matrix[1][2] + this[1][2]*matrix[2][2]],
+										 
+										  [this[2][0]*matrix[0][0] + this[2][1]*matrix[1][0] + this[2][2]*matrix[2][0],
+										   this[2][0]*matrix[0][1] + this[2][1]*matrix[1][1] + this[2][2]*matrix[2][1],
+										   this[2][0]*matrix[0][2] + this[2][1]*matrix[1][2] + this[2][2]*matrix[2][2]]]);
+	},
+	transpose: function () {
+		return new jsapi.math.Matrix3x3([[this[0][0], this[1][0], this[2][0]],
+										  [this[0][1], this[1][1], this[2][1]],
+										  [this[0][2], this[1][2], this[2][2]]]);
+	},
+	toString: function () {
+		var str = '[';
+		for (var i=0; i<this.length; i++) {
+			if (i > 0) str += ', ';
+			str += '[' + this[i].join(', ') + ']';
+		};
+		return str + ']';
+	}
 };
