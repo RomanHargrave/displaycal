@@ -1,0 +1,27 @@
+#F_data, #reporttitle, .options, .functions {
+	display: none;
+}
+body {
+	font: normal .75em Helvetica, Arial, "Liberation Sans", FreeSans, sans-serif;
+	padding: 1em;
+}
+h1 {
+	background: #333333;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	color: white;
+	display: block;
+	font-size: 1em;
+	font-weight: normal;
+	margin: 0 auto .5em;
+	padding: .5em .25em;
+	width: 17em;
+}
+h2 {
+	font-weight: lighter;
+	font-size: 2em;
+}
+p {
+	line-height: 1.5em;
+}
