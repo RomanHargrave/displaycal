@@ -244,7 +244,6 @@
 	"profile.type.single_shaper_matrix": "Single curve + matrix",
 	"profile.quality": "Profile quality",
 	"profile.unsupported": "Unsupported profile type (%s) and/or colorspace (%s).",
-	"profile.unsupported.chad": "The profile contains chromatic adaption information. Such profiles are currently unsupported.",
 	"profile.update": "Update profile",
 	"profile.verify": "Verify profile",
 	"profile_verification_choose_chart": "Please choose the testchart to measure:",

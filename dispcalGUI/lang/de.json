@@ -245,7 +245,6 @@
 	"profile.type.single_shaper_matrix": "Einzelne Kurve + Matrix",
 	"profile.quality": "Profilqualität",
 	"profile.unsupported": "Nicht unterstützter Profil-Typ (%s) und/oder -Farbraum (%s).",
-	"profile.unsupported.chad": "Das Profil enthält Angaben zur chromatischen Adaption. Derartige Profile werden zur Zeit nicht unterstützt.",
 	"profile.update": "Profil aktualisieren",
 	"profile.verify": "Profil überprüfen",
 	"profile_verification_choose_chart": "Bitte wählen Sie die zu messende Testform:",
