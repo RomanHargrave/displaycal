@@ -87,6 +87,7 @@ from config import (autostart, autostart_home, btn_width_correction, build,
 
 import CGATS
 import ICCProfile as ICCP
+import colormath
 import localization as lang
 import pyi_md5pickuphelper
 import wexpect
@@ -3359,7 +3360,7 @@ class MainFrame(BaseFrame):
 		try:
 			if chart.lower().endswith(".ti1"):
 				ti1 = CGATS.CGATS(chart)
-				ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
+				ti1, ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
 			else:
 				if chart.lower().endswith(".txt"):
 					tempchart = os.path.join(self.worker.create_tempdir(), 
@@ -3464,11 +3465,13 @@ class MainFrame(BaseFrame):
 		if not result:
 			return
 		
+		offset = len(ti3_measured.DATA) - len(ti3_ref.DATA)
 		if not chart.lower().endswith(".ti1"):
 			# make the device values match
-			for i in ti3_measured.DATA:
+			for i in ti3_ref.DATA:
 				for color in ("RGB_R", "RGB_G", "RGB_B"):
-					ti3_ref.DATA[i][color] = ti3_measured.DATA[i][color]
+					ti3_ref.DATA[i][color] = ti3_measured.DATA[i + offset][color]
+		adapt = not chart.lower().endswith(".ti1")
 		
 		# create a 'joined' ti3 from ref ti3, with XYZ values from measured ti3
 		# this makes sure CMYK data in the original ref will be present in
@@ -3481,22 +3484,65 @@ class MainFrame(BaseFrame):
 		   not "XYZ_Z" in ti3_joined.DATA_FORMAT.values():
 			ti3_joined.DATA_FORMAT.add_data(labels_xyz)
 		# set XYZ in joined ti3 to XYZ of measurements
-		for i in ti3_measured.DATA:
+		for i in ti3_joined.DATA:
 			for color in labels_xyz:
-				ti3_joined.DATA[i][color] = ti3_measured.DATA[i][color]
+				ti3_joined.DATA[i][color] = ti3_measured.DATA[i + offset][color]
+		
+		wtpt_ref = tuple(n * 100 for n in profile.tags.wtpt.values())
+		if "chad" in profile.tags:
+			X, Y, Z = wtpt_ref
+			M = colormath.Matrix3x3(profile.tags.chad).inverted()
+			X = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
+			Y = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
+			Z = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
+			wtpt_ref = X, Y, Z
+			
+		wtpt_measured = ti3_measured.queryi({'RGB_R': 100,
+										  'RGB_G': 100,
+										  'RGB_B': 100})
+		if wtpt_measured:
+			X = Y = Z = 0
+			for i in wtpt_measured:
+				X += wtpt_measured[i]["XYZ_X"]
+				Y += wtpt_measured[i]["XYZ_Y"]
+				Z += wtpt_measured[i]["XYZ_Z"]
+			l = len(wtpt_measured)
+			wtpt_measured = X / l, Y / l, Z / l
 		
 		# set Lab values
 		labels_Lab = ("LAB_L", "LAB_A", "LAB_B")
 		for data in (ti3_ref, ti3_joined):
-			if not "LAB_L" in data.DATA_FORMAT.values() and \
-			   not "LAB_A" in data.DATA_FORMAT.values() and \
-			   not "LAB_B" in data.DATA_FORMAT.values():
-				# add Lab fields to DATA_FORMAT if not present
-				data.DATA_FORMAT.add_data(labels_Lab)
 			if "XYZ_X" in data.DATA_FORMAT.values() and \
 			   "XYZ_Y" in data.DATA_FORMAT.values() and \
 			   "XYZ_Z" in data.DATA_FORMAT.values():
+				if not "LAB_L" in data.DATA_FORMAT.values() and \
+				   not "LAB_A" in data.DATA_FORMAT.values() and \
+				   not "LAB_B" in data.DATA_FORMAT.values():
+					# add Lab fields to DATA_FORMAT if not present
+					data.DATA_FORMAT.add_data(labels_Lab)
 				for i in data.DATA:
+					##if "chad" in profile.tags and wtpt_measured and data is ti3_joined:
+					if adapt and data is ti3_joined:
+						# we need to adapt the measured values to D50
+						X, Y, Z = [data.DATA[i][color] for color in labels_xyz]
+						#print X, Y, Z, '->',
+						##L, a, b = colormath.XYZ2Lab(X, Y, Z, *wtpt_measured)
+						##X, Y, Z = [n * 100 for n in colormath.Lab2XYZ(L, a, b)]
+						if "chad" in profile.tags:
+							# We have a (non-Argyll) profile with chromatic 
+							# adaption tag
+							M = profile.tags.chad
+							X = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
+							Y = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
+							Z = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
+						else:
+							# We have a profile without chromatic 
+							# adaption tag
+							X, Y, Z = colormath.adapt(X, Y, Z, profile.tags.wtpt.values(), "D50")
+						#print X, Y, Z
+						data.DATA[i]["XYZ_X"] = X
+						data.DATA[i]["XYZ_Y"] = Y
+						data.DATA[i]["XYZ_Z"] = Z
 					Lab = XYZ2Lab(*[data.DATA[i][color] for color in labels_xyz])
 					for j, color in enumerate(labels_Lab):
 						data.DATA[i][color] = Lab[j]
@@ -3527,6 +3573,7 @@ class MainFrame(BaseFrame):
 										  self.comport_ctrl.GetStringSelection())
 		report_html = report_html.replace("${PROFILE}", 
 										  profile.getDescription())
+		report_html = report_html.replace("${WHITEPOINT}", "%f, %f, %f" % wtpt_ref)
 		report_html = report_html.replace("${TESTCHART}", 
 										  os.path.basename(chart))
 		report_html = report_html.replace("${DATETIME}", 
@@ -3536,9 +3583,9 @@ class MainFrame(BaseFrame):
 		report_html = report_html.replace("${MEASURED}", 
 										  str(ti3_joined).replace('"', 
 																	"&quot;"))
-		for include in ("compare.css", "compare-dark-light.css", 
+		for include in ("base.css", "compare.css", "compare-dark-light.css", 
 						"compare-dark.css", "compare-light.css", 
-						"compare-light-dark.css", "report.css", 
+						"compare-light-dark.css", "print.css", 
 						"jsapi-packages.js", "jsapi-patches.js", 
 						"compare.constants.js", "compare.variables.js", 
 						"compare.functions.js", "compare.init.js"):

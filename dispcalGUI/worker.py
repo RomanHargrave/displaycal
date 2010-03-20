@@ -30,6 +30,7 @@ import wx.lib.delayedresult as delayedresult
 
 import CGATS
 import ICCProfile as ICCP
+import colormath
 import config
 import localization as lang
 import subprocess26 as sp
@@ -45,6 +46,7 @@ from debughelpers import handle_error
 from log import log, safe_print
 from meta import name as appname, version
 from options import debug, test, verbose
+from ordereddict import OrderedDict
 from thread import start_new_thread
 from util_io import Files, StringIOu as StringIO, Tea
 from util_os import getenvu, quote_args, which
@@ -352,12 +354,11 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 			if os.path.dirname(item) == cwd:
 				item = os.path.basename(item)
 			ispath = True
-		if re.search("[\^!$%&()[\]\s]", item):
-			item = '"' + item + '"'
-		if not item.startswith("-") and len(lines) and i < len(args) - 1:
-			lines[-1] += "\n      " + item
-		else:
-			lines.append(item)
+		item = quote_args([item])[0]
+		##if not item.startswith("-") and len(lines) and i < len(args) - 1:
+			##lines[-1] += "\n      " + item
+		##else:
+		lines.append(item)
 		i += 1
 	for line in lines:
 		safe_print(textwrap.fill(line, 80, expand_tabs = False, 
@@ -1737,8 +1738,7 @@ class Worker():
 		if not isinstance(profile, ICCP.ICCProfile):
 			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
 		if "chad" in profile.tags:
-			# profiles with chromatic adaption tag currently not supported
-			raise ValueError(lang.getstr("profile.unsupported.chad"))
+			M = colormath.Matrix3x3(profile.tags.chad).inverted()
 		
 		# determine pcs for lookup
 		if not pcs:
@@ -1758,6 +1758,16 @@ class Worker():
 		if not data:
 			raise ValueError(lang.getstr("error.testchart.invalid", 
 										 ti1_filename))
+		white = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
+		if not data.queryi(white):  # add white patch
+			if pcs == 'l':
+				white.update({'LAB_L': 100, 'LAB_A': 0, 'LAB_B': 0})
+			else:
+				white.update({'XYZ_X': 95.1065, 'XYZ_Y': 100, 'XYZ_Z': 108.844})
+			for label in data.parent.DATA_FORMAT.values():
+				if not label in white:
+					white.update({label: '0'})
+			data.insert(0, white)
 		device_data = data.queryv(required)
 		if not device_data:
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
@@ -1824,17 +1834,32 @@ class Worker():
 				ofile.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
 				ofile.write('BEGIN_DATA\n')
 			i += 1
-			cie = line[5:-1]
+			cie = [float(n) for n in line[5:-1]]
+			if "chad" in profile.tags:
+				# We have a (non-Argyll) profile with chromatic adaption tag, 
+				# we need to undo the adaption for the expected values
+				if pcs == 'l':
+					cie = colormath.Lab2XYZ(*cie)
+				X, Y, Z = cie
+				#print X, Y, Z, '->',
+				X = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
+				Y = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
+				Z = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
+				#print X, Y, Z
+				cie = X, Y, Z
+				if pcs == 'l':
+					cie = colormath.XYZ2Lab(*[n * 100 for n in cie])
 			if pcs == 'x':
 				# Need to scale XYZ, Lab is already scaled
-				cie = [str(round(float(n) * 100.0, 5 - len(str(int(abs(float(n) * 100.0)))))) for n in cie]
+				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) for n in cie]
+			cie = [str(n) for n in cie]
 			if include_sample_name:
 				ofile.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(cie) + '\n')
 			else:
 				ofile.write(str(i) + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(cie) + '\n')
 		ofile.write('END_DATA\n')
 		ofile.seek(0)
-		return CGATS.CGATS(ofile)[0]
+		return ti1, CGATS.CGATS(ofile)[0]
 	
 	def ti3_lookup_to_ti1(self, ti3, profile):
 		"""
@@ -1864,9 +1889,10 @@ class Worker():
 			profile = ICCP.ICCProfile(profile)
 		if not isinstance(profile, ICCP.ICCProfile):
 			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
-		if "chad" in profile.tags:
-			# profiles with chromatic adaption tag currently not supported
-			raise ValueError(lang.getstr("profile.unsupported.chad"))
+		
+		# For profiles with chromatic adaption tag, it is better to adapt 
+		# measured instead of expected values to minimize roundtrip error
+		adapt = not "chad" in profile.tags
 			
 		# determine pcs for lookup
 		color_rep = ti3v.queryv1("COLOR_REP")
@@ -1900,34 +1926,45 @@ class Worker():
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti3_filename, ", ".join(required))))
 		idata = []
-		for cie in cie_data.values():
-			cie_values = cie.values()
+		wp = [n * 100.0 for n in profile.tags.wtpt.values()]
+		if color_rep == 'LAB':
+			wp = colormath.XYZ2Lab(*wp)
+			wp = OrderedDict((('L', wp[0]), ('a', wp[1]), ('b', wp[2])))
+		else:
+			wp = OrderedDict((('X', wp[0]), ('Y', wp[1]), ('Z', wp[2])))
+		for cie in [wp] + cie_data.values():  # first patch = whitepoint
+			cie = cie.values()
 			if color_rep == 'XYZ':
 				# assume scale 0...100 in ti3, we need to convert to 0...1
-				cie_values = [n / 100.0 for n in cie_values]
-			idata.append(' '.join(str(n) for n in cie_values))
+				cie = [n / 100.0 for n in cie]
+			##if adapt:
+				### We need to adapt the expected values from (assumed) D50 to 
+				### the profile whitepoint
+				##if pcs == 'l':
+					##cie = colormath.Lab2XYZ(*cie)
+				##X, Y, Z = cie
+				###print X, Y, Z, '->',
+				##X, Y, Z = colormath.adapt(X, Y, Z, "D50", profile.tags.wtpt.values())
+				###print X, Y, Z
+				##cie = X, Y, Z
+				##if pcs == 'l':
+					##cie = colormath.XYZ2Lab(*[n * 100 for n in cie])
+			idata.append(' '.join(str(n) for n in cie))
 
 		# lookup cie->device values through profile.icc using xicclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
 		profile.write(os.path.join(cwd, "temp.icc"))
-		p = sp.Popen([icclu, '-fb', '-ia', '-p' + pcs, '-s100', "temp.icc"], 
+		p = sp.Popen([icclu, '-fb', '-ir' if adapt else '-ia', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		self.wrapup(False)
 		
 		# write output ti1/ti3
 		ti1out = StringIO()
-		##ti3out = StringIO()
-		##ofiles = Files([ti1out, ti3out], 'w')
-		ofiles = Files([ti1out], 'w')
-		ofiles.files[0].write('CTI1\n')
-		##ofiles.files[1].write('CTI3\n')
-		ofiles.write('\n')
-		ofiles.files[0].write('DESCRIPTOR "Argyll Calibration Target chart information 1"\n')
-		##ofiles.files[1].write('DESCRIPTOR "Argyll Calibration Target chart information 3"\n')
-		##ofiles.files[1].write('KEYWORD "DEVICE_CLASS"\n')
-		##ofiles.files[1].write('DEVICE_CLASS "' + ('DISPLAY' if colorspace == 'RGB' else 'OUTPUT') + '"\n')
+		ti1out.write('CTI1\n')
+		ti1out.write('\n')
+		ti1out.write('DESCRIPTOR "Argyll Calibration Target chart information 1"\n')
 		include_sample_name = False
 		i = 0
 		for line in odata:
@@ -1946,8 +1983,6 @@ class Worker():
 				ocolor = line[-1].strip('[]')
 				if ocolor == 'RGB':
 					olabel = 'RGB_R RGB_G RGB_B'
-				elif ocolor == 'CMYK':
-					olabel = 'CMYK_C CMYK_M CMYK_Y CMYK_K'
 				else:
 					raise ValueError('Unknown color representation ' + ocolor)
 				olabels = olabel.split()
@@ -1961,43 +1996,47 @@ class Worker():
 				   not required[1] in ti3v.DATA_FORMAT.values() and \
 				   not required[2] in ti3v.DATA_FORMAT.values():
 					ti3v.DATA_FORMAT.add_data(required)
-				ofiles.write('KEYWORD "COLOR_REP"\n')
-				ofiles.files[0].write('COLOR_REP "' + ocolor + '"\n')
-				##ofiles.files[1].write('COLOR_REP "' + ocolor + '_' + icolor + '"\n')
-				ofiles.write('\n')
-				ofiles.write('NUMBER_OF_FIELDS ')
+				ti1out.write('KEYWORD "COLOR_REP"\n')
+				ti1out.write('COLOR_REP "' + ocolor + '"\n')
+				ti1out.write('\n')
+				ti1out.write('NUMBER_OF_FIELDS ')
 				if include_sample_name:
-					ofiles.write(str(2 + len(icolor) + len(ocolor)) + '\n')
+					ti1out.write(str(2 + len(icolor) + len(ocolor)) + '\n')
 				else:
-					ofiles.write(str(1 + len(icolor) + len(ocolor)) + '\n')
-				ofiles.write('BEGIN_DATA_FORMAT\n')
-				ofiles.write('SAMPLE_ID ')
+					ti1out.write(str(1 + len(icolor) + len(ocolor)) + '\n')
+				ti1out.write('BEGIN_DATA_FORMAT\n')
+				ti1out.write('SAMPLE_ID ')
 				if include_sample_name:
-					ofiles.write('SAMPLE_NAME ' + olabel + ' ' + ilabel + '\n')
+					ti1out.write('SAMPLE_NAME ' + olabel + ' ' + ilabel + '\n')
 				else:
-					ofiles.write(olabel + ' ' + ilabel + '\n')
-				ofiles.write('END_DATA_FORMAT\n')
-				ofiles.write('\n')
-				ofiles.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
-				ofiles.write('BEGIN_DATA\n')
-			i += 1
-			cie = line[:3]
+					ti1out.write(olabel + ' ' + ilabel + '\n')
+				ti1out.write('END_DATA_FORMAT\n')
+				ti1out.write('\n')
+				ti1out.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
+				ti1out.write('BEGIN_DATA\n')
+				# set whitepoint patch to RGB 100
+				device = '100.00 100.00 100.00'.split()
+			else:
+				device = line[5:-1]
+			cie = ([wp] + cie_data.values())[i].values() ##[float(n) for n in line[:3]]
 			if pcs == 'x':
 				# Need to scale XYZ
-				cie = [str(round(float(n) * 100.0, 5 - len(str(int(abs(float(n) * 100.0)))))) for n in cie]
+				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) for n in cie]
+			cie = [str(n) for n in cie]
 			if include_sample_name:
-				ofiles.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[5:-1]) + ' ' + ' '.join(cie) + '\n')
+				ti1out.write(str(i + 1) + ' ' + data[i][1].strip('"') + ' ' + ' '.join(device) + ' ' + ' '.join(cie) + '\n')
 			else:
-				ofiles.write(str(i) + ' ' + ' '.join(line[5:-1]) + ' ' + ' '.join(cie) + '\n')
-			# set device values in ti3
-			for n, v in enumerate(olabels):
-				ti3v.DATA[i - 1][v] = float(line[5 + n])
-			# set PCS values in ti3
-			for n, v in enumerate(cie):
-				ti3v.DATA[i - 1][required[n]] = float(v)
-		ofiles.write('END_DATA\n')
-		ofiles.seek(0)
-		##return tuple(CGATS.CGATS(ofile) for ofile in ofiles)
+				ti1out.write(str(i + 1) + ' ' + ' '.join(device) + ' ' + ' '.join(cie) + '\n')
+			if i > 0:  # don't include whitepoint patch in ti3
+				# set device values in ti3
+				for n, v in enumerate(olabels):
+					ti3v.DATA[i - 1][v] = float(line[5 + n])
+				# set PCS values in ti3
+				for n, v in enumerate(cie):
+					ti3v.DATA[i - 1][required[n]] = float(v)
+			i += 1
+		ti1out.write('END_DATA\n')
+		ti1out.seek(0)
 		return CGATS.CGATS(ti1out), ti3v
 
 
