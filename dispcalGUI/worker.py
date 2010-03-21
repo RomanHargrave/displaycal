@@ -1850,7 +1850,7 @@ class Worker():
 				if pcs == 'l':
 					cie = colormath.XYZ2Lab(*[n * 100 for n in cie])
 			if pcs == 'x':
-				# Need to scale XYZ, Lab is already scaled
+				# Need to scale XYZ coming from icclu, Lab is already scaled
 				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) for n in cie]
 			cie = [str(n) for n in cie]
 			if include_sample_name:
@@ -2019,9 +2019,9 @@ class Worker():
 			else:
 				device = line[5:-1]
 			cie = ([wp] + cie_data.values())[i].values() ##[float(n) for n in line[:3]]
-			if pcs == 'x':
-				# Need to scale XYZ
-				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) for n in cie]
+			##if pcs == 'x':
+				### Need to scale XYZ coming from icclu, Lab is already scaled
+				##cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) for n in cie]
 			cie = [str(n) for n in cie]
 			if include_sample_name:
 				ti1out.write(str(i + 1) + ' ' + data[i][1].strip('"') + ' ' + ' '.join(device) + ' ' + ' '.join(cie) + '\n')
