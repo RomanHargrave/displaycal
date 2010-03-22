@@ -18,6 +18,8 @@ def get_display():
 		display = display_screen[0]
 		if len(display_screen) > 1:
 			screen = display_screen[1]
+		else:
+			screen = 0
 	else:
 		display, screen = 0, 0
 	return hostname, display, screen
