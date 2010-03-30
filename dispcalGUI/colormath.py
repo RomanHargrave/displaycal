@@ -70,19 +70,21 @@ def cbrt(x):
 	return math.pow(x, 1.0 / 3.0) if x >= 0 else -math.pow(-x, 1.0 / 3.0)
 
 
-def adapt(XS, YS, ZS, whitepoint_source=None, whitepoint_destination=None, MA=None):
+def adapt(XS, YS, ZS, whitepoint_source=None, whitepoint_destination=None, matrix=None):
 	# chromatic adaption
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
-	# MA = adaption matrix or predefined choice ('bradford', 'vonkries' or 'xyzscaling'),
+	# matrix = adaption matrix or predefined choice ('bradford', 'vonkries' or 'xyzscaling'),
 	# defaults to 'bradford'
-	if not MA:
-		MA = 'bradford';
-	if isinstance(MA, basestring):
-		if MA.lower() == 'xyzscaling':
+	if matrix:
+		MA = matrix
+	else:
+		matrix = 'bradford';
+	if isinstance(matrix, basestring):
+		if matrix.lower() == 'xyzscaling':
 			MA = [[1, 0, 0],
 				  [0, 1, 0],
 				  [0, 0, 1]]
-		elif MA.lower() == 'vonkries':
+		elif matrix.lower() == 'vonkries':
 			MA = [[ 0.40024,  0.70760, -0.08081],
 				  [-0.22630,  1.16532,  0.04570],
 				  [ 0.00000,  0.00000,  0.91822]]
@@ -106,7 +108,7 @@ def adapt(XS, YS, ZS, whitepoint_source=None, whitepoint_destination=None, MA=No
 	bs = XWS * MA[2][0] + YWS * MA[2][1] + ZWS * MA[2][2]
 	if isinstance(whitepoint_destination, (list, tuple)):
 		XYZWD = whitepoint_destination
-	elif whitepoint_source:
+	elif whitepoint_destination:
 		XYZWD = CIEDCCT2XYZ(whitepoint_destination)
 	else:
 		XYZWD = 0.96422, 1.0, 0.82521  # Observer= 2°, Illuminant= D50
