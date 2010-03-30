@@ -143,6 +143,88 @@ if (!Number.prototype.toFixed) {
 	}
 };
 
+/* ##### Array.prototype.indexOf.js ##### */
+
+/*
+	http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:indexOf
+
+	 Summary
+
+	Returns the first index at which a given element can be found in the array, or -1 if it is not present.
+	Method of Array
+	Implemented in: 	JavaScript 1.6 (Gecko 1.8b2 and later)
+	ECMAScript Edition: 	none
+
+	 Syntax
+
+	var index = array.indexOf(searchElement[, fromIndex]);
+
+	 Parameters
+
+	searchElement 
+	    Element to locate in the array. 
+	fromIndex 
+	    The index at which to begin the search. Defaults to 0, i.e. the whole array will be searched. If the index is greater than or equal to the length of the array, -1 is returned, i.e. the array will not be searched. If negative, it is taken as the offset from the end of the array. Note that even when the index is negative, the array is still searched from front to back. If the calculated index is less than 0, the whole array will be searched. 
+
+	 Description
+
+	indexOf compares searchElement to elements of the Array using strict equality (the same method used by the ===, or triple-equals, operator).
+
+	 Compatibility
+
+	indexOf is a JavaScript extension to the ECMA-262 standard; as such it may not be present in other implementations of the standard. You can work around this by inserting the following code at the beginning of your scripts, allowing use of indexOf in ECMA-262 implementations which do not natively support it. This algorithm is exactly the one used in Firefox and SpiderMonkey.
+
+	Again, note that this implementation aims for absolute compatibility with indexOf in Firefox and the SpiderMonkey JavaScript engine, including in cases where the index passed to indexOf is not an integer value. If you intend to use this in real-world applications, you may not need all of the code to calculate from.
+
+	 Example: Using indexOf
+
+	The following example uses indexOf to locate values in an array.
+
+	var array = [2, 5, 9];
+	var index = array.indexOf(2);
+	// index is 0
+	index = array.indexOf(7);
+	// index is -1
+
+	 Example: Finding all the occurrences of an element
+
+	The following example uses indexOf to find all the indices of an element in a given array, using push to add them to another array as they are found.
+
+	var indices = [];
+	var idx = array.indexOf(element)
+	while (idx != -1)
+	{
+	  indices.push(idx);
+	  idx = array.indexOf(element, idx + 1);
+	}
+*/
+
+// NOTE: semicolons added where necessary to make compatible with JavaScript compressors
+
+if (!Array.prototype.indexOf)
+{
+  Array.prototype.indexOf = function(elt /*, from*/)
+  {
+    var len = this.length;
+
+    var from = Number(arguments[1]) || 0;
+    from = (from < 0)
+         ? Math.ceil(from)
+         : Math.floor(from);
+    if (from < 0)
+      from += len;
+
+    for (; from < len; from++)
+    {
+      if (from in this &&
+          this[from] === elt)
+        return from
+    };
+    return -1
+  }
+};
+
+
 /* ##### jsapi.js ##### */
 
 /*
@@ -955,6 +1037,88 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 		return jsapi.math.color.XYZ2rgb(XYZ[0], XYZ[1], XYZ[2])
 	};
 
+/* ##### jsapi.math.color.XYZ2CorColorTemp.js ##### */
+	
+/*
+	<jsapi>
+		<author>2007 Florian Hoech</author>
+		<file>jsapi.math.color.XYZ2CorColorTemp.js</file>
+		<dependencies>
+			jsapi.math.color.js
+		</dependencies>
+	</jsapi>
+*/
+
+	jsapi.math.color.XYZ2CorColorTemp = function(x, y, z) {
+		// derived from ANSI C implementation by Bruce Lindbloom www.brucelindbloom.com
+		
+		// LERP(a,b,c) = linear interpolation macro, is 'a' when c == 0.0 and 'b' when c == 1.0
+		function LERP(a,b,c) {
+			return (b - a) * c + a
+		};
+		
+		var rt = [       // reciprocal temperature (K)
+			 Number.MIN_VALUE,  10.0e-6,  20.0e-6,  30.0e-6,  40.0e-6,  50.0e-6,
+			 60.0e-6,  70.0e-6,  80.0e-6,  90.0e-6, 100.0e-6, 125.0e-6,
+			150.0e-6, 175.0e-6, 200.0e-6, 225.0e-6, 250.0e-6, 275.0e-6,
+			300.0e-6, 325.0e-6, 350.0e-6, 375.0e-6, 400.0e-6, 425.0e-6,
+			450.0e-6, 475.0e-6, 500.0e-6, 525.0e-6, 550.0e-6, 575.0e-6,
+			600.0e-6
+		];
+		
+		var uvt = [
+			[0.18006, 0.26352, -0.24341],
+			[0.18066, 0.26589, -0.25479],
+			[0.18133, 0.26846, -0.26876],
+			[0.18208, 0.27119, -0.28539],
+			[0.18293, 0.27407, -0.30470],
+			[0.18388, 0.27709, -0.32675],
+			[0.18494, 0.28021, -0.35156],
+			[0.18611, 0.28342, -0.37915],
+			[0.18740, 0.28668, -0.40955],
+			[0.18880, 0.28997, -0.44278],
+			[0.19032, 0.29326, -0.47888],
+			[0.19462, 0.30141, -0.58204],
+			[0.19962, 0.30921, -0.70471],
+			[0.20525, 0.31647, -0.84901],
+			[0.21142, 0.32312, -1.0182],
+			[0.21807, 0.32909, -1.2168],
+			[0.22511, 0.33439, -1.4512],
+			[0.23247, 0.33904, -1.7298],
+			[0.24010, 0.34308, -2.0637],
+			[0.24792, 0.34655, -2.4681],	// Note: 0.24792 is a corrected value for the error found in W&S as 0.24702
+			[0.25591, 0.34951, -2.9641],
+			[0.26400, 0.35200, -3.5814],
+			[0.27218, 0.35407, -4.3633],
+			[0.28039, 0.35577, -5.3762],
+			[0.28863, 0.35714, -6.7262],
+			[0.29685, 0.35823, -8.5955],
+			[0.30505, 0.35907, -11.324],
+			[0.31320, 0.35968, -15.628],
+			[0.32129, 0.36011, -23.325],
+			[0.32931, 0.36038, -40.770],
+			[0.33724, 0.36051, -116.45]
+		];
+		
+		var us, vs, p, di, dm, i;
+	
+		if ((x < 1e-20) && (y < 1e-20) && (z < 1e-20)) return -1;	// protect against possible divide-by-zero failure
+	
+		us = (4 * x) / (x + 15 * y + 3 * z);
+		vs = (6 * y) / (x + 15 * y + 3 * z);
+		dm = 0;
+		for (i = 0; i < 31; i++) {
+			di = (vs - uvt[i][1]) - uvt[i][2] * (us - uvt[i][0]);
+			if ((i > 0) && (((di < 0) && (dm >= 0)) || ((di >= 0) && (dm < 0)))) break;	// found lines bounding (us, vs) : i-1 and i
+			dm = di
+		};
+		if (i == 31) return -1;	// bad XYZ input, color temp would be less than minimum of 1666.7 degrees, or too far towards blue
+		di = di / Math.sqrt(1 + uvt[i    ][2] * uvt[i    ][2]);
+		dm = dm / Math.sqrt(1 + uvt[i - 1][2] * uvt[i - 1][2]);
+		p = dm / (dm - di);	// p = interpolation parameter, 0.0 : i-1, 1.0 : i
+		return 1 / (LERP(rt[i - 1], rt[i], p));
+	};
+
 /* ##### jsapi.math.color.XYZ2Lab.js ##### */
 
 /*
@@ -1198,6 +1362,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			E: dE,
 			L: dL,
 			C: dC,
-			H: dH
+			H: dH,
+			a: a1 - a2,
+			b: b1 - b2
 		};
 	};

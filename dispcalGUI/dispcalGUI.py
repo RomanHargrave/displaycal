@@ -3308,7 +3308,7 @@ class MainFrame(BaseFrame):
 		dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_chart"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
 							wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
-									 "|*.ti1;*.ti3;*.txt", 
+									 "|*.cgats;*.ti1;*.ti3;*.txt", 
 							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
@@ -3357,24 +3357,27 @@ class MainFrame(BaseFrame):
 		
 		# lookup test patches
 		ti3_ref = None
+		rgb_labels = ('RGB_R', 'RGB_G', 'RGB_B')
+		scale = 1.0
 		try:
-			if chart.lower().endswith(".ti1"):
-				ti1 = CGATS.CGATS(chart)
-				ti1, ti3_ref = self.worker.ti1_lookup_to_ti3(ti1, profile)
+			cgats = CGATS.CGATS(chart, True, 'CTI1')
+			cgats[0].type = 'CTI1'
+			rgb = cgats.queryi(rgb_labels)
+			if rgb:
+				for i in rgb:
+					for label in rgb_labels:
+						if rgb[i][label] > 100:
+							scale = 2.55
+							break
+				if scale > 1.0:
+					for i in rgb:
+						for label in rgb_labels:
+							rgb[i][label] = rgb[i][label] / scale
+				cgats[0].COLOR_REP = 'RGB'
+				ti1, ti3_ref = self.worker.ti1_lookup_to_ti3(cgats, profile, "l")
 			else:
-				if chart.lower().endswith(".txt"):
-					tempchart = os.path.join(self.worker.create_tempdir(), 
-											 os.path.basename(chart))
-					shutil.copyfile(chart, tempchart)
-					if self.worker.exec_cmd(get_argyll_util("txt2ti3"), 
-											["-d", tempchart, 
-											 os.path.splitext(tempchart)[0]], 
-											low_contrast=False, 
-											skip_scripts=True):
-						chart = os.path.splitext(tempchart)[0] + ".ti3"
-				cgats = self.worker.ti3_lookup_to_ti1(chart, profile)
-				if cgats:
-					ti1, ti3_ref = cgats
+				ti1, ti3_ref = self.worker.ti3_lookup_to_ti1(cgats, profile)
+			##print ti3_ref
 		except Exception, exception:
 			InfoDialog(self, msg=safe_unicode(exception), 
 					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
@@ -3443,9 +3446,9 @@ class MainFrame(BaseFrame):
 		profile.write(profile_path)
 		
 		# load calibration from profile
-		self.worker.exec_cmd(*self.worker.prepare_dispwin(
-								profile_path=profile_path, install=False), 
-							 skip_scripts=True)
+		cmd, args = self.worker.prepare_dispwin(profile_path=profile_path, 
+												install=False)
+		self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		
 		# measure
 		cmd = get_argyll_util("dispread")
@@ -3471,12 +3474,14 @@ class MainFrame(BaseFrame):
 			for i in ti3_ref.DATA:
 				for color in ("RGB_R", "RGB_G", "RGB_B"):
 					ti3_ref.DATA[i][color] = ti3_measured.DATA[i + offset][color]
-		adapt = not chart.lower().endswith(".ti1")
+		
+		adaption_matrix = "Bradford"
 		
 		# create a 'joined' ti3 from ref ti3, with XYZ values from measured ti3
 		# this makes sure CMYK data in the original ref will be present in
 		# the newly joined ti3
 		ti3_joined = CGATS.CGATS(str(ti3_ref))[0]
+		ti3_joined.LUMINANCE_XYZ_CDM2 = ti3_measured.LUMINANCE_XYZ_CDM2
 		# add XYZ to DATA_FORMAT if not yet present
 		labels_xyz = ("XYZ_X", "XYZ_Y", "XYZ_Z")
 		if not "XYZ_X" in ti3_joined.DATA_FORMAT.values() and \
@@ -3488,26 +3493,27 @@ class MainFrame(BaseFrame):
 			for color in labels_xyz:
 				ti3_joined.DATA[i][color] = ti3_measured.DATA[i + offset][color]
 		
-		wtpt_ref = tuple(n * 100 for n in profile.tags.wtpt.values())
+		wtpt_profile = tuple(n * 100 for n in profile.tags.wtpt.values())
 		if "chad" in profile.tags:
-			X, Y, Z = wtpt_ref
+			# undo chromatic adaption of profile whitepoint
+			X, Y, Z = wtpt_profile
 			M = colormath.Matrix3x3(profile.tags.chad).inverted()
 			X = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
 			Y = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
 			Z = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
-			wtpt_ref = X, Y, Z
-			
-		wtpt_measured = ti3_measured.queryi({'RGB_R': 100,
-										  'RGB_G': 100,
-										  'RGB_B': 100})
-		if wtpt_measured:
-			X = Y = Z = 0
-			for i in wtpt_measured:
-				X += wtpt_measured[i]["XYZ_X"]
-				Y += wtpt_measured[i]["XYZ_Y"]
-				Z += wtpt_measured[i]["XYZ_Z"]
-			l = len(wtpt_measured)
-			wtpt_measured = X / l, Y / l, Z / l
+			# normalize so that Y = 100
+			wtpt_profile = tuple((n / Y) * 100 for n in (X, Y, Z))
+		
+		wtpt_measured = tuple(float(n) for n in ti3_joined.LUMINANCE_XYZ_CDM2.split())
+		# normalize so that Y = 100
+		wtpt_measured_norm = tuple((n / wtpt_measured[1]) * 100 for n in wtpt_measured)
+		
+		white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
+		white = ti3_joined.queryi(white_rgb)
+		for i in white:
+			white[i].update({'XYZ_X': wtpt_measured_norm[0], 
+							 'XYZ_Y': wtpt_measured_norm[1], 
+							 'XYZ_Z': wtpt_measured_norm[2]})
 		
 		# set Lab values
 		labels_Lab = ("LAB_L", "LAB_A", "LAB_B")
@@ -3520,32 +3526,22 @@ class MainFrame(BaseFrame):
 				   not "LAB_B" in data.DATA_FORMAT.values():
 					# add Lab fields to DATA_FORMAT if not present
 					data.DATA_FORMAT.add_data(labels_Lab)
-				for i in data.DATA:
-					##if "chad" in profile.tags and wtpt_measured and data is ti3_joined:
-					if adapt and data is ti3_joined:
-						# we need to adapt the measured values to D50
+					has_Lab = False
+				else:
+					has_Lab = True
+				if data is ti3_joined or not has_Lab:
+					for i in data.DATA:
 						X, Y, Z = [data.DATA[i][color] for color in labels_xyz]
-						#print X, Y, Z, '->',
-						##L, a, b = colormath.XYZ2Lab(X, Y, Z, *wtpt_measured)
-						##X, Y, Z = [n * 100 for n in colormath.Lab2XYZ(L, a, b)]
-						if "chad" in profile.tags:
-							# We have a (non-Argyll) profile with chromatic 
-							# adaption tag
-							M = profile.tags.chad
-							X = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
-							Y = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
-							Z = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
-						else:
-							# We have a profile without chromatic 
-							# adaption tag
-							X, Y, Z = colormath.adapt(X, Y, Z, profile.tags.wtpt.values(), "D50")
-						#print X, Y, Z
-						data.DATA[i]["XYZ_X"] = X
-						data.DATA[i]["XYZ_Y"] = Y
-						data.DATA[i]["XYZ_Z"] = Z
-					Lab = XYZ2Lab(*[data.DATA[i][color] for color in labels_xyz])
-					for j, color in enumerate(labels_Lab):
-						data.DATA[i][color] = Lab[j]
+						if data is ti3_joined:
+							# we need to adapt the measured values to D50
+							#print X, Y, Z, '->',
+							X, Y, Z = [n * 100 for n in 
+									   colormath.adapt(X, Y, Z, wtpt_measured_norm, 
+													   matrix=adaption_matrix)]
+							#print X, Y, Z
+						Lab = XYZ2Lab(X, Y, Z)
+						for j, color in enumerate(labels_Lab):
+							data.DATA[i][color] = Lab[j]
 		
 		# read report template
 		report_html_template_path = get_data_path(os.path.join("report", 
@@ -3571,17 +3567,24 @@ class MainFrame(BaseFrame):
 										  self.display_ctrl.GetStringSelection())
 		report_html = report_html.replace("${INSTRUMENT}", 
 										  self.comport_ctrl.GetStringSelection())
+		report_html = report_html.replace("${WHITEPOINT}", 
+										  "%f %f %f" % wtpt_measured)
+		report_html = report_html.replace("${WHITEPOINT_NORMALIZED}", 
+										  "%f %f %f" % wtpt_measured_norm)
 		report_html = report_html.replace("${PROFILE}", 
 										  profile.getDescription())
-		report_html = report_html.replace("${WHITEPOINT}", "%f, %f, %f" % wtpt_ref)
+		report_html = report_html.replace("${PROFILE_WHITEPOINT}", 
+										  "%f %f %f" % wtpt_profile)
 		report_html = report_html.replace("${TESTCHART}", 
 										  os.path.basename(chart))
+		report_html = report_html.replace("${ADAPTION}", 
+										  str(adaption_matrix))
 		report_html = report_html.replace("${DATETIME}", 
 										  strftime("%Y-%m-%d %H:%M:%S"))
 		report_html = report_html.replace("${REF}", 
-										  str(ti3_ref).replace('"', "&quot;"))
+										  str(ti3_ref).decode(enc, "replace").replace('"', "&quot;"))
 		report_html = report_html.replace("${MEASURED}", 
-										  str(ti3_joined).replace('"', 
+										  str(ti3_joined).decode(enc, "replace").replace('"', 
 																	"&quot;"))
 		for include in ("base.css", "compare.css", "compare-dark-light.css", 
 						"compare-dark.css", "compare-light.css", 

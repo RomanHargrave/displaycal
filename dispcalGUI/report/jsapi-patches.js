@@ -1,6 +1,15 @@
 function sortNumber(a, b) {
 	return a - b;
 };
+jsapi.array.flat = function(a) {
+	var r = [];
+	for (var i = 0; i < a.length; i ++) {
+		if (a[i] != null && a[i].constructor == Array) r = r.concat(jsapi.array.flat(a[i]));
+		else r.push(a[i])
+	};
+	return r
+};
+jsapi.array.flat._args = [Array];
 jsapi.math.median = function () {
 	// http://en.wikipedia.org/wiki/Median
 	var a = jsapi.array.flat(arguments), median,

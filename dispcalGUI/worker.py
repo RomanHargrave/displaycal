@@ -432,9 +432,18 @@ def set_argyll_bin(parent=None):
 				writecfg()
 				break
 			else:
+				not_found = []
+				for name in argyll_names:
+					if not get_argyll_util(name, [path]):
+						not_found.append((" " + 
+										  lang.getstr("or") + 
+										  " ").join(filter(lambda altname: not "argyll" in altname, 
+														   [altname + exe_ext 
+														    for altname in 
+															argyll_altnames[name]])))
 				InfoDialog(parent, msg=path + "\n\n" + 
-									   lang.getstr("argyll.dir.invalid", 
-												   (exe_ext, ) * 6), 
+								   lang.getstr("argyll.dir.invalid", 
+											   ", ".join(not_found)), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 		else:
@@ -1724,7 +1733,8 @@ class Worker():
 		if isinstance(ti1, basestring):
 			ti1 = CGATS.CGATS(ti1)
 		if not isinstance(ti1, CGATS.CGATS):
-			raise TypeError('Wrong type for ti1, needs to be CGATS.CGATS instance')
+			raise TypeError('Wrong type for ti1, needs to be CGATS.CGATS '
+							'instance')
 		required = ("RGB_R", "RGB_G", "RGB_B")
 		ti1_filename = ti1.filename
 		ti1 = verify_cgats(ti1, required, True)
@@ -1736,9 +1746,8 @@ class Worker():
 		if isinstance(profile, basestring):
 			profile = ICCP.ICCProfile(profile)
 		if not isinstance(profile, ICCP.ICCProfile):
-			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
-		if "chad" in profile.tags:
-			M = colormath.Matrix3x3(profile.tags.chad).inverted()
+			raise TypeError('Wrong type for profile, needs to be '
+							'ICCP.ICCProfile instance')
 		
 		# determine pcs for lookup
 		if not pcs:
@@ -1758,20 +1767,34 @@ class Worker():
 		if not data:
 			raise ValueError(lang.getstr("error.testchart.invalid", 
 										 ti1_filename))
-		white = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
-		if not data.queryi(white):  # add white patch
-			if pcs == 'l':
-				white.update({'LAB_L': 100, 'LAB_A': 0, 'LAB_B': 0})
-			else:
-				white.update({'XYZ_X': 95.1065, 'XYZ_Y': 100, 'XYZ_Z': 108.844})
-			for label in data.parent.DATA_FORMAT.values():
-				if not label in white:
-					white.update({label: '0'})
-			data.insert(0, white)
 		device_data = data.queryv(required)
 		if not device_data:
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti1_filename, ", ".join(required))))
+		# make sure the first four patches are white so the whitepoint can be
+		# averaged
+		white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
+		white = dict(white_rgb)
+		for label in data.parent.DATA_FORMAT.values():
+			if not label in white:
+				if label.upper() == 'LAB_L':
+					value = 100
+				elif label.upper() in ('LAB_A', 'LAB_B'):
+					value = 0
+				elif label.upper() == 'XYZ_X':
+					value = 95.1065
+				elif label.upper() == 'XYZ_Y':
+					value = 100
+				elif label.upper() == 'XYZ_Z':
+					value = 108.844
+				else:
+					value = '0'
+				white.update({label: value})
+		white_added_count = 0
+		while len(data.queryi(white_rgb)) < 4:  # add white patches
+			data.insert(0, white)
+			white_added_count += 1
+		safe_print("Added %i white patch(es)" % white_added_count)
 		idata = []
 		for rgb in device_data.values():
 			idata.append(' '.join(str(n) for n in rgb.values()))
@@ -1780,7 +1803,7 @@ class Worker():
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
 		profile.write(os.path.join(cwd, "temp.icc"))
-		p = sp.Popen([icclu, '-ff', '-ia', '-p' + pcs, '-s100', "temp.icc"], 
+		p = sp.Popen([icclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		self.wrapup(False)
@@ -1791,7 +1814,8 @@ class Worker():
 		ofile.write('\n')
 		ofile.write('DESCRIPTOR "Argyll Calibration Target chart information 3"\n')
 		ofile.write('KEYWORD "DEVICE_CLASS"\n')
-		ofile.write('DEVICE_CLASS "' + ('DISPLAY' if colorspace == 'RGB' else 'OUTPUT') + '"\n')
+		ofile.write('DEVICE_CLASS "' + ('DISPLAY' if colorspace == 'RGB' else 
+										'OUTPUT') + '"\n')
 		include_sample_name = False
 		i = 0
 		for line in odata:
@@ -1835,28 +1859,17 @@ class Worker():
 				ofile.write('BEGIN_DATA\n')
 			i += 1
 			cie = [float(n) for n in line[5:-1]]
-			if "chad" in profile.tags:
-				# We have a (non-Argyll) profile with chromatic adaption tag, 
-				# we need to undo the adaption for the expected values
-				if pcs == 'l':
-					cie = colormath.Lab2XYZ(*cie)
-				X, Y, Z = cie
-				#print X, Y, Z, '->',
-				X = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
-				Y = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
-				Z = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
-				#print X, Y, Z
-				cie = X, Y, Z
-				if pcs == 'l':
-					cie = colormath.XYZ2Lab(*[n * 100 for n in cie])
 			if pcs == 'x':
 				# Need to scale XYZ coming from icclu, Lab is already scaled
-				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) for n in cie]
+				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) 
+					   for n in cie]
 			cie = [str(n) for n in cie]
 			if include_sample_name:
-				ofile.write(str(i) + ' ' + data[i-1][1].strip('"') + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(cie) + '\n')
+				ofile.write(str(i) + ' ' + data[i - 1][1].strip('"') + ' ' + 
+							' '.join(line[:3]) + ' ' + ' '.join(cie) + '\n')
 			else:
-				ofile.write(str(i) + ' ' + ' '.join(line[:3]) + ' ' + ' '.join(cie) + '\n')
+				ofile.write(str(i) + ' ' + ' '.join(line[:3]) + ' ' + 
+							' '.join(cie) + '\n')
 		ofile.write('END_DATA\n')
 		ofile.seek(0)
 		return ti1, CGATS.CGATS(ofile)[0]
@@ -1873,37 +1886,31 @@ class Worker():
 		if isinstance(ti3, basestring):
 			ti3 = CGATS.CGATS(ti3)
 		if not isinstance(ti3, CGATS.CGATS):
-			raise TypeError('Wrong type for ti3, needs to be CGATS.CGATS instance')
+			raise TypeError('Wrong type for ti3, needs to be CGATS.CGATS '
+							'instance')
 		ti3_filename = ti3.filename
-		ti3v = verify_cgats(ti3, ("XYZ_X", "XYZ_Y", "XYZ_Z"), True)
-		if not ti3v:
-			ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
-		if not ti3v:
-			raise ValueError(lang.getstr("error.testchart.missing_fields", 
+		ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
+		if ti3v:
+			color_rep = 'LAB'
+		else:
+			ti3v = verify_cgats(ti3, ("XYZ_X", "XYZ_Y", "XYZ_Z"), True)
+			if ti3v:
+				color_rep = 'XYZ'
+			else:
+				raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti3_filename, 
-										  "XYZ_X, XYZ_Y, XYZ_Z / "
-										  "LAB_L, LAB_A, LAB_B")))
+										  "XYZ_X, XYZ_Y, XYZ_Z " +
+										  lang.getstr("or") + 
+										  " LAB_L, LAB_A, LAB_B")))
 		
 		# profile
 		if isinstance(profile, basestring):
 			profile = ICCP.ICCProfile(profile)
 		if not isinstance(profile, ICCP.ICCProfile):
-			raise TypeError('Wrong type for profile, needs to be ICCP.ICCProfile instance')
-		
-		# For profiles with chromatic adaption tag, it is better to adapt 
-		# measured instead of expected values to minimize roundtrip error
-		adapt = not "chad" in profile.tags
+			raise TypeError('Wrong type for profile, needs to be '
+							'ICCP.ICCProfile instance')
 			
 		# determine pcs for lookup
-		color_rep = ti3v.queryv1("COLOR_REP")
-		if not color_rep:
-			raise ValueError(lang.getstr("error.testchart.invalid", 
-										 ti3_filename))
-		color_rep = color_rep.split('_')
-		if len(color_rep) > 1:
-			color_rep = color_rep[1]
-		else:
-			color_rep = color_rep[0]
 		if color_rep == 'LAB':
 			pcs = 'l'
 			required = ("LAB_L", "LAB_A", "LAB_B")
@@ -1926,36 +1933,28 @@ class Worker():
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti3_filename, ", ".join(required))))
 		idata = []
+		# make sure the first four patches are white so the whitepoint can be
+		# averaged
 		wp = [n * 100.0 for n in profile.tags.wtpt.values()]
 		if color_rep == 'LAB':
 			wp = colormath.XYZ2Lab(*wp)
 			wp = OrderedDict((('L', wp[0]), ('a', wp[1]), ('b', wp[2])))
 		else:
 			wp = OrderedDict((('X', wp[0]), ('Y', wp[1]), ('Z', wp[2])))
-		for cie in [wp] + cie_data.values():  # first patch = whitepoint
+		wp = [wp] * 4
+		safe_print("Added 4 white patches")
+		for cie in wp + cie_data.values():  # first four patches = white
 			cie = cie.values()
 			if color_rep == 'XYZ':
 				# assume scale 0...100 in ti3, we need to convert to 0...1
 				cie = [n / 100.0 for n in cie]
-			##if adapt:
-				### We need to adapt the expected values from (assumed) D50 to 
-				### the profile whitepoint
-				##if pcs == 'l':
-					##cie = colormath.Lab2XYZ(*cie)
-				##X, Y, Z = cie
-				###print X, Y, Z, '->',
-				##X, Y, Z = colormath.adapt(X, Y, Z, "D50", profile.tags.wtpt.values())
-				###print X, Y, Z
-				##cie = X, Y, Z
-				##if pcs == 'l':
-					##cie = colormath.XYZ2Lab(*[n * 100 for n in cie])
 			idata.append(' '.join(str(n) for n in cie))
 
 		# lookup cie->device values through profile.icc using xicclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
 		profile.write(os.path.join(cwd, "temp.icc"))
-		p = sp.Popen([icclu, '-fb', '-ir' if adapt else '-ia', '-p' + pcs, '-s100', "temp.icc"], 
+		p = sp.Popen([icclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		self.wrapup(False)
@@ -2014,26 +2013,25 @@ class Worker():
 				ti1out.write('\n')
 				ti1out.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
 				ti1out.write('BEGIN_DATA\n')
-				# set whitepoint patch to RGB 100
+			if i < len(wp):
 				device = '100.00 100.00 100.00'.split()
 			else:
 				device = line[5:-1]
-			cie = ([wp] + cie_data.values())[i].values() ##[float(n) for n in line[:3]]
-			##if pcs == 'x':
-				### Need to scale XYZ coming from icclu, Lab is already scaled
-				##cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) for n in cie]
+			cie = (wp + cie_data.values())[i].values()
 			cie = [str(n) for n in cie]
 			if include_sample_name:
-				ti1out.write(str(i + 1) + ' ' + data[i][1].strip('"') + ' ' + ' '.join(device) + ' ' + ' '.join(cie) + '\n')
+				ti1out.write(str(i + 1) + ' ' + data[i][1].strip('"') + ' ' + 
+							 ' '.join(device) + ' ' + ' '.join(cie) + '\n')
 			else:
-				ti1out.write(str(i + 1) + ' ' + ' '.join(device) + ' ' + ' '.join(cie) + '\n')
-			if i > 0:  # don't include whitepoint patch in ti3
+				ti1out.write(str(i + 1) + ' ' + ' '.join(device) + ' ' + 
+							 ' '.join(cie) + '\n')
+			if i > len(wp) - 1:  # don't include whitepoint patches in ti3
 				# set device values in ti3
 				for n, v in enumerate(olabels):
-					ti3v.DATA[i - 1][v] = float(line[5 + n])
+					ti3v.DATA[i - len(wp)][v] = float(line[5 + n])
 				# set PCS values in ti3
 				for n, v in enumerate(cie):
-					ti3v.DATA[i - 1][required[n]] = float(v)
+					ti3v.DATA[i - len(wp)][required[n]] = float(v)
 			i += 1
 		ti1out.write('END_DATA\n')
 		ti1out.seek(0)

@@ -63,11 +63,7 @@ function dataset(src) {
 	this.decimal = ".";
 	this.id = "RGB";
 	var e = document.forms['F_data'].elements;
-	this.display = e['FF_display'].value;
-	this.instrument = e['FF_instrument'].value;
-	this.profile = e['FF_profile'].value;
 	this.testchart = e['FF_testchart'].value;
-	this.datetime = e['FF_datetime'].value;
 	this.id = basename(splitext(this.testchart)[0]).toUpperCase();
 	if (src) {
 		this.src = src;
@@ -77,6 +73,8 @@ function dataset(src) {
 			_data_regexp2 = /\sEND_DATA(?=\s|$)/i,
 			_header_regexp1 = /(^|\s)BEGIN_(\w+)\s+([\s\S]*?)\s+END_\2(?=\s|$)/gi,
 			_header_regexp2 = /(^|\s)BEGIN_(\w+)\s+([\s\S]*?)\s+END_\2(?=\s|$)/i,
+			data_begin,
+			data_end,
 			data_format = src.match(_data_format_regexp),
 			i,v;
 		if (data_format && data_format[2]) {
@@ -154,31 +152,39 @@ p.header_set_field = function(name, value, mode) {
 p.toString = function() {
 	return (this.header.length?this.header_get()+"\n":"") + "NUMBER_OF_FIELDS\t" + this.data_format.length + "\nBEGIN_DATA_FORMAT\n" + fromarray(this.data_format, 1) + "\nEND_DATA_FORMAT\nNUMBER_OF_SETS\t" + this.data.length + "\nBEGIN_DATA\n" + decimal(fromarray(this.data), this.decimal == "." ? "\\," : "\\." , this.decimal) + "\nEND_DATA"
 };
-p.generate_report = function() {
+p.generate_report = function(set_delta_calc_method) {
 	var f = document.forms,
 		e = f['F_data'].elements,
-		criteria = comparison_criteria[f['F_out'].elements['FF_criteria'].value],
-		fields_match = window.fields_match, // criteria.fields_match,
-		fields_extract_i = fields_match.slice().concat(criteria.fields_compare),
-		rules = criteria.rules,
+		criteria = comparison_criteria[f['F_out'].elements['FF_criteria'].value];
+	if (set_delta_calc_method !== false) f['F_out'].elements['FF_delta_calc_method'].selectedIndex = ['CIE76', 'CIE94', 'CIE00'].indexOf(criteria.delta_calc_method);
+	var rules = criteria.rules,
 		result = [],
 		delta,
 		matched,
 		target,
+		target_Lab,
 		target_rgb,
+		target_rgb_html,
 		actual,
+		actual_Lab,
 		actual_rgb,
 		actual_rgb_html,
-		wp = this.testchart.match(/\.ti3$/i) ? [96.422, 100, 82.521] : e['FF_whitepoint'].value.split(/,\s*/),
-		dupes,
-		dupescount = 0,
+		D50 = [96.422, 100, 82.521],
+		profile_wp = e['FF_profile_whitepoint'].value.split(/\s+/),
+		profile_wp_round = [],
+		wp = e['FF_whitepoint'].value.split(/\s+/),
+		wp_round = [],
+		wp_norm = e['FF_whitepoint_normalized'].value.split(/\s+/),
+		wp_norm_round = [],
+		colortemp,
+		colortemp_assumed,
+		wp_assumed,
 		n = 0,
 		o = fields_match.length - 1, // offset for CIE values
-		devlen = fields_match.length > 4 ? 2 : o, // length for device values, if RGB + CMYK, just use RGB
+		devlen = fields_match.length > 4 ? 2 : o, // length for device values, if RGB + CMYK, just use RGB (TODO: it depends on the order of the comparison_criteria keys if RGB is first, but this is assumed - need to make sure it is really the case!)
 		missing_data,
 		delta_calc_method = f['F_out'].elements['FF_delta_calc_method'].value,
 		patch_number_html,
-		target_rgb_html,
 		warn_deviation = criteria.warn_deviation,
 		no_Lab = (this.data_format.indexof("LAB_L", true) < 0
 				|| this.data_format.indexof("LAB_A", true) < 0
@@ -187,26 +193,66 @@ p.generate_report = function() {
 				|| this.data_format.indexof("XYZ_Y", true) < 0
 				|| this.data_format.indexof("XYZ_Z", true) < 0);
 	
-	for (var i=0; i<wp.length; i++) wp[i] = parseFloat(wp[i]);
+	for (var i=0; i<profile_wp.length; i++) {
+		profile_wp[i] = parseFloat(profile_wp[i]);
+		profile_wp_round[i] = profile_wp[i].accuracy(2)
+	};
+	for (var i=0; i<wp.length; i++) {
+		wp[i] = parseFloat(wp[i]);
+		wp_round[i] = wp[i].accuracy(2)
+	};
+	for (var i=0; i<wp_norm.length; i++) {
+		wp_norm[i] = parseFloat(wp_norm[i]);
+		wp_norm_round[i] = wp_norm[i].accuracy(2)
+	};
+	
+	colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(wp_norm[0], wp_norm[1], wp_norm[2]));
+	colortemp_assumed = Math.round(colortemp / 100) * 100;
+	wp_assumed = jsapi.math.color.CIEDCorColorTemp2XYZ(colortemp_assumed);
+	for (var i=0; i<wp_assumed.length; i++) wp_assumed[i] = wp_assumed[i] * 100;
 	
 	this.report_html = [
 		'	<h2>Profile Verification Report</h2>',
 		'	<table class="info">',
 		'		<tr>',
 		'			<th>Device:</th>',
-		'			<td>' + this.display + '</td>',
+		'			<td>' + e['FF_display'].value + '</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Instrument:</th>',
-		'			<td>' + this.instrument + '</td>',
+		'			<td>' + e['FF_instrument'].value + '</td>',
+		'		</tr>',
+		'		<tr>',
+		'			<th>Measured luminance:</th>',
+		'			<td>' + wp[1].accuracy(1) + ' cd/m²</td>',
+		'		</tr>',
+		'		<tr>',
+		'			<th>Measured whitepoint XYZ (normalized):</th>',
+		'			<td>' + wp_round.join(' ') + ' (' + wp_norm_round.join(' ') + ')</td>',
+		'		</tr>',
+		'		<tr>',
+		'			<th>Correlated color temperature:</th>',
+		'			<td>' + colortemp + '° K</td>',
+		'		</tr>',
+		'		<tr>',
+		'			<th>Assumed target whitepoint:</th>',
+		'			<td>' + colortemp_assumed + '° K</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Profile:</th>',
-		'			<td>' + this.profile + '</td>',
+		'			<td>' + e['FF_profile'].value + '</td>',
 		'		</tr>',
+		/* '		<tr>',
+		'			<th>Profile whitepoint XYZ (normalized):</th>',
+		'			<td>' + profile_wp_round.join(', ') + '</td>',
+		'		</tr>', */
 		'		<tr>',
 		'			<th>Testchart:</th>',
 		'			<td>' + this.testchart + '</td>',
+		'		</tr>',
+		'		<tr>',
+		'			<th>Chromatic adaption:</th>',
+		'			<td>' + e['FF_adaption'].value + '</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Evaluation criteria:</th>',
@@ -214,7 +260,7 @@ p.generate_report = function() {
 		'		</tr>',
 		'		<tr>',
 		'			<th>Date:</th>',
-		'			<td>' + this.datetime + '</td>',
+		'			<td>' + e['FF_datetime'].value + '</td>',
 		'		</tr>',
 		'	</table>'
 	];
@@ -229,12 +275,14 @@ p.generate_report = function() {
 	]);
 	for (var j=0; j<rules.length; j++) {
 		this.report_html.push('		<tr>');
-		this.report_html.push('			<td class="first-column' + (!rules[j][3] ? ' statonly' : '' ) + '">' + rules[j][0] + '</td><td>' + (rules[j][3] ? '&lt;= ' + rules[j][3] : '') + '</td><td>' + (rules[j][4] ? '&lt;= ' + rules[j][4] : '') + '</td><td class="patch">');
+		this.report_html.push('			<td class="first-column' + (!rules[j][3] ? ' statonly' : '' ) + '">' + rules[j][0] + '</td><td>' + (rules[j][3] ? '&lt;= ' + rules[j][3] : '') + '</td><td>' + (rules[j][4] ? '&lt;= ' + rules[j][4] : '') + '</td><td class="patch sample_id">');
 		result[j] = {
 			E: [],
 			L: [],
 			C: [],
 			H: [],
+			a: [],
+			b: [],
 			matches: [],
 			sum: null
 		};
@@ -242,8 +290,8 @@ p.generate_report = function() {
 		actual_rgb_html = [];
 		target_rgb_html = [];
 		if (rules[j][2].indexOf("_MAX") < 0) {
-			for (var k=0; k<rules[j][1].length; k++) {
-				patch_number_html.push('<div class="patch">&#160;</div>');
+			for (var k=0; k<rules[j][1].length; k++) if (rules[j][1].length > 1) {
+				patch_number_html.push('<div class="patch sample_id">&#160;</div>');
 				if (rules[j][1][k].length == 4) // Assume CMYK
 					target_rgb = jsapi.math.color.cmyk2rgb(rules[j][1][k][0] / 100, rules[j][1][k][1] / 100, rules[j][1][k][2] / 100, rules[j][1][k][3] / 100);
 				else 
@@ -252,32 +300,31 @@ p.generate_report = function() {
 				actual_rgb_html.push('<div class="patch" style="color: red; position: relative;"><span style="position: absolute;">\u2716</span>&#160;</div>');
 			}
 		};
+		var silent = false;
 		for (var i=0, n=0; i<this.data.length; i++) {
-			dupes = this.data[i][fields_extract_indexes_i[o + 3] + 1];
-			if (dupescount == dupes) {
 				n++;
-				target = this.data[i-dupes];
+				target = data_ref.data[i];
 				actual = this.data[i];
 				matched = false;
 				if (rules[j][1].length) {
 					for (var k=0; k<rules[j][1].length; k++) {
-						var current = this.data[i].slice(fields_extract_indexes_i[0], fields_extract_indexes_i[o] + 1);
 						if (fields_match.join(',').indexOf('RGB') == 0) 
-							var current_rgb = current.slice(0, 3),
-								current_cmyk = current.slice(3);
+							var current_rgb = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[0] + 3),
+								current_cmyk = actual.slice(fields_extract_indexes_i[3], fields_extract_indexes_i[7]);
 						else 
-							var current_rgb = current.slice(4),
-								current_cmyk = current.slice(0, 4);
+							var current_rgb = actual.slice(fields_extract_indexes_i[4], fields_extract_indexes_i[7]),
+								current_cmyk = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[4]);
 						if ((rules[j][1][k].length == 3 && current_rgb.join(',') == rules[j][1][k].join(',')) || (rules[j][1][k].length == 4 && current_cmyk.join(',') == rules[j][1][k].join(','))) {
+							// if (silent || !confirm('rules[j]: ' + rules[j] + '\nrules[j][1][k]: ' + rules[j][1][k] + '\nthis.data[' + i + ']: ' + this.data[i] + '\ncurrent_rgb: ' + current_rgb + '\ncurrent_cmyk: ' + current_cmyk)) silent = true;
 							if (rules[j][2].indexOf("_MAX") < 0) {
-								if (rules[j][1].length || rules[j][2].indexOf('_MAX') > -1) patch_number_html[k] = ('<div class="patch">' + n.fill(String(number_of_sets).length) + '</div>');
+								if (rules[j][1].length || rules[j][2].indexOf('_MAX') > -1) patch_number_html[k] = ('<div class="patch sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 								if (no_Lab && !no_XYZ) {
-									target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]]);
+									target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]);
 									actual_rgb = jsapi.math.color.XYZ2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]);
 								}
 								else {
-									target_rgb = jsapi.math.color.Lab2rgb(target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]], null, wp);
-									actual_rgb = jsapi.math.color.Lab2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]], null, wp);
+									target_rgb = jsapi.math.color.Lab2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]], null, D50);
+									actual_rgb = jsapi.math.color.Lab2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]], null, D50);
 								}
 								target_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 								actual_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
@@ -288,7 +335,7 @@ p.generate_report = function() {
 				}
 				else matched = true;
 				if (matched) {
-					target_Lab = [target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]]];
+					target_Lab = [target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]];
 					actual_Lab = [actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]];
 					if (no_Lab && !no_XYZ) {
 						target_Lab = jsapi.math.color.XYZ2Lab(target_Lab[0], target_Lab[1], target_Lab[2]);
@@ -299,15 +346,61 @@ p.generate_report = function() {
 					result[j].L.push(delta.L);
 					result[j].C.push(delta.C);
 					result[j].H.push(delta.H);
-					if (rules[j][1].length || rules[j][2].indexOf('_MAX') > -1) result[j].matches.push([i-dupes, i, n])
-				};
-				dupescount = 0;
-			}
-			else dupescount++;
+					result[j].a.push(delta.a);
+					result[j].b.push(delta.b);
+					if (rules[j][1].length || rules[j][2].indexOf('_MAX') > -1) result[j].matches.push([i, i, n])
+				}
 		};
 		this.report_html = this.report_html.concat(patch_number_html);
 		var number_of_sets = n;
-		if (!rules[j][1].length || result[j].matches.length >= rules[j][1].length) switch (rules[j][2]) {
+		if (rules[j][1].length == 1) {
+			switch (rules[j][1][0]) {
+				case 'WHITEPOINT':
+					target_Lab = jsapi.math.color.XYZ2Lab(wp_assumed[0], wp_assumed[1], wp_assumed[2]);
+					actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
+					// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
+					delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
+					result[j].E.push(delta.E);
+					result[j].L.push(delta.L);
+					result[j].C.push(delta.C);
+					result[j].H.push(delta.H);
+					result[j].a.push(delta.a);
+					result[j].b.push(delta.b);
+			}
+		};
+		if (!rules[j][1].length || rules[j][1][0] == 'WHITEPOINT' || result[j].matches.length >= rules[j][1].length) switch (rules[j][2]) {
+			case DELTA_A_MAX:
+				result[j].sum = jsapi.math.absmax(result[j].a);
+				break;
+			case DELTA_A_AVG:
+				result[j].sum = jsapi.math.avg(result[j].a);
+				break;
+			case DELTA_A_MED:
+				result[j].sum = jsapi.math.median(result[j].a);
+				break;
+			case DELTA_A_MAD:
+				result[j].sum = jsapi.math.mad(result[j].a);
+				break;
+			case DELTA_A_STDDEV:
+				result[j].sum = jsapi.math.stddev(result[j].a);
+				break;
+				
+			case DELTA_B_MAX:
+				result[j].sum = jsapi.math.absmax(result[j].b);
+				break;
+			case DELTA_B_AVG:
+				result[j].sum = jsapi.math.avg(result[j].b);
+				break;
+			case DELTA_B_MED:
+				result[j].sum = jsapi.math.median(result[j].b);
+				break;
+			case DELTA_B_MAD:
+				result[j].sum = jsapi.math.mad(result[j].b);
+				break;
+			case DELTA_B_STDDEV:
+				result[j].sum = jsapi.math.stddev(result[j].b);
+				break;
+				
 			case DELTA_E_MAX:
 				result[j].sum = jsapi.math.absmax(result[j].E);
 				break;
@@ -371,11 +464,12 @@ p.generate_report = function() {
 			case DELTA_H_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].H);
 				break;
-		};
+		}
+		else missing_data = true;
 		if (result[j].matches.length) {
 			matched = false;
 			for (var k=0; k<result[j].matches.length; k++) {
-				target = this.data[result[j].matches[k][0]];
+				target = data_ref.data[result[j].matches[k][0]];
 				actual = this.data[result[j].matches[k][1]];
 				switch (rules[j][2]) {
 					case DELTA_E_MAX:
@@ -397,14 +491,14 @@ p.generate_report = function() {
 				};
 			};
 			if (matched) {
-				this.report_html.push('<div class="patch">' + result[j].finalmatch[2].fill(String(number_of_sets).length) + '</div>');
+				this.report_html.push('<div class="patch sample_id">' + result[j].finalmatch[2].fill(String(number_of_sets).length) + '</div>');
 				if (no_Lab && !no_XYZ) {
-					target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]]);
+					target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]);
 					actual_rgb = jsapi.math.color.XYZ2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]);
 				}
 				else {
-					target_rgb = jsapi.math.color.Lab2rgb(target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]], null, wp);
-					actual_rgb = jsapi.math.color.Lab2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]], null, wp);
+					target_rgb = jsapi.math.color.Lab2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]], null, D50);
+					actual_rgb = jsapi.math.color.Lab2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]], null, D50);
 				}
 				target_rgb_html.push('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 				actual_rgb_html.push('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
@@ -422,8 +516,8 @@ p.generate_report = function() {
 			if (!rules[j][3]) rgb = [204, 204, 204];
 			else {
 				var rgb = [0, 255, 0],
-					step = 255 / (rules[j][3] + rules[j][3] / 2);
-				if (Math.abs(result[j].sum) < rules[j][3]) {
+					step = 255 / (rules[j][3] + rules[j][3] / 2.5);
+				if (Math.abs(result[j].sum) <= rules[j][3]) {
 					rgb[0] += Math.min(step * Math.abs(result[j].sum), 255);
 					rgb[1] -= Math.min(step * Math.abs(result[j].sum), 255);
 					var maxrg = Math.max(rgb[0], rgb[1]);
@@ -438,7 +532,6 @@ p.generate_report = function() {
 				bar_html.push('<span style="display: block; width: ' + (10 * Math.abs(result[j].sum).accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em .25em .125em 0;">&#160;</span>');
 			};
 		};
-		if (!missing_data) missing_data = result[j].sum == null;
 		this.report_html.push('			<td><span class="' + (result[j].sum != null && rules[j][3] ? (Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'statonly') + '">' + (result[j].sum != null ? result[j].sum.accuracy(2) : '') + '</span></td><td style="padding: 0;">' + bar_html.join('') + '</td><td class="' + (result[j].sum != null && (!rules[j][3] || Math.abs(result[j].sum) <= rules[j][3]) ? ((Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok">OK <span class="checkmark">✔</span>' : (result[j].sum != null && rules[j][3] ? 'warn">OK \u26a0' : 'na">')) + '<span class="' + (rules[j][4] && Math.abs(result[j].sum) <= rules[j][4] ? 'checkmark' : 'hidden') + (rules[j][4] ? '">✔' : '">')) : 'ko">' + (result[j].sum != null ? 'NOT OK' : '') + ' <span class="checkmark">\u2716') + '</span></td>');
 		this.report_html.push('		</tr>');
 	};
@@ -482,57 +575,52 @@ p.generate_report = function() {
 	this.report_html.push('		<tr>');
 	this.report_html.push('			<th>&#160;</th><th>' + fields_match.slice(0, devlen + 1).join('</th><th>').replace(/\w+?_/g, '') + '</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>&#160;</th><th>&#160;</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>ΔL*</th><th>ΔC*</th><th>ΔH*</th><th>ΔE*</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
-	dupescount = 0;
 	for (var i=0, n=0; i<this.data.length; i++) {
-		dupes = this.data[i][fields_extract_indexes_i[o + 3] + 1];
-		if (dupescount == dupes) {
-			n++;
-			target = this.data[i-dupes];
-			actual = this.data[i];
-			target_Lab = [target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]]];
-			actual_Lab = [actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]];
-			if (no_Lab && !no_XYZ) {
-				target_Lab = jsapi.math.color.XYZ2Lab(target_Lab[0], target_Lab[1], target_Lab[2]);
-				actual_Lab = jsapi.math.color.XYZ2Lab(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
-				target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]]);
-				actual_rgb = jsapi.math.color.XYZ2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]);
-			}
-			else {
-				target_rgb = jsapi.math.color.Lab2rgb(target[fields_extract_indexes_i[o + 1]], target[fields_extract_indexes_i[o + 2]], target[fields_extract_indexes_i[o + 3]], null, wp);
-				actual_rgb = jsapi.math.color.Lab2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]], null, wp);
-			}
-			delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
-			this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
-			var bar_html = [],
-				rgb = [0, 255, 0];
-			if (actual.tolerance_DE == null)
-				actual.tolerance_DE = 5;
-			if (actual.actual_DE == null)
-				actual.actual_DE = delta.E;
-			var step = 255 / (actual.tolerance_DE + actual.tolerance_DE / 2);
-			if (actual.actual_DE < actual.tolerance_DE) {
-				rgb[0] += Math.min(step * actual.actual_DE, 255);
-				rgb[1] -= Math.min(step * actual.actual_DE, 255);
-				var maxrg = Math.max(rgb[0], rgb[1]);
-				rgb[0] *= (255 / maxrg);
-				rgb[1] *= (255 / maxrg);
-				rgb[0] = Math.round(rgb[0]);
-				rgb[1] = Math.round(rgb[1]);
-			}
-			else rgb = [255, 0, 0];
-			bar_html.push('<span style="display: block; width: ' + (10 * actual.actual_DE.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em .25em .125em 0;">&#160;</span>');
-			var device = target.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[devlen] + 1);
-			for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
-			this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_Lab[0].accuracy(2) + '</td><td>' + target_Lab[1].accuracy(2) + '</td><td>' + target_Lab[2].accuracy(2) + '</td><td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_Lab[0].accuracy(2) + '</td><td>' + actual_Lab[1].accuracy(2) + '</td><td>' + actual_Lab[2].accuracy(2) + '</td><td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td><td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td style="padding: 0;">' + bar_html.join('') + '</td>');
-			this.report_html.push('		</tr>');
-			dupescount = 0;
+		n++;
+		target = data_ref.data[i];
+		actual = this.data[i];
+		target_Lab = [target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]];
+		actual_Lab = [actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]];
+		if (no_Lab && !no_XYZ) {
+			target_Lab = jsapi.math.color.XYZ2Lab(target_Lab[0], target_Lab[1], target_Lab[2]);
+			actual_Lab = jsapi.math.color.XYZ2Lab(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
+			target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]);
+			actual_rgb = jsapi.math.color.XYZ2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]);
 		}
-		else dupescount++;
+		else {
+			target_rgb = jsapi.math.color.Lab2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]], null, D50);
+			actual_rgb = jsapi.math.color.Lab2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]], null, D50);
+		}
+		delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
+		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
+		var bar_html = [],
+			rgb = [0, 255, 0];
+		if (actual.tolerance_DE == null)
+			actual.tolerance_DE = 5;
+		if (actual.actual_DE == null)
+			actual.actual_DE = delta.E;
+		var step = 255 / (actual.tolerance_DE + actual.tolerance_DE / 2.5);
+		if (actual.actual_DE <= actual.tolerance_DE) {
+			rgb[0] += Math.min(step * actual.actual_DE, 255);
+			rgb[1] -= Math.min(step * actual.actual_DE, 255);
+			var maxrg = Math.max(rgb[0], rgb[1]);
+			rgb[0] *= (255 / maxrg);
+			rgb[1] *= (255 / maxrg);
+			rgb[0] = Math.round(rgb[0]);
+			rgb[1] = Math.round(rgb[1]);
+		}
+		else rgb = [255, 0, 0];
+		bar_html.push('<span style="display: block; width: ' + (10 * actual.actual_DE.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em .25em .125em 0;">&#160;</span>');
+		var device = target.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[devlen] + 1);
+		for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
+		if (typeof actual_Lab[2] != 'number') alert(actual);
+		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_Lab[0].accuracy(2) + '</td><td>' + target_Lab[1].accuracy(2) + '</td><td>' + target_Lab[2].accuracy(2) + '</td><td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_Lab[0].accuracy(2) + '</td><td>' + actual_Lab[1].accuracy(2) + '</td><td>' + actual_Lab[2].accuracy(2) + '</td><td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td><td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td style="padding: 0;">' + bar_html.join('') + '</td>');
+		this.report_html.push('		</tr>');
 	};
 	this.report_html.push('	</table>');
 	this.report_html.push('	</div>');
 	
-	return [this.result_html.join('\n'), this.report_html.join('\n'), criteria]
+	return this.report_html.join('\n')
 };
 
 function trim(txt) {
@@ -565,12 +653,6 @@ function decimal(txt, sr, re) {
 	return txt.replace(new RegExp("((^|\\s)\\-?\\d+)"+sr+"(\\d+(?=\\s|$))", "g"), "$1"+re+"$3")
 };
 
-function is_decimal(str) {
-	str+="";
-	if (str.search(/^[\+\-]/)>-1) str=str.substr(1);
-	return str.search(/[^\d\.]/)<0
-};
-
 function toarray(txt, level) {
 	txt=comma2point(compact(cr2lf(txt)));
 	if (!txt) return [];
@@ -581,8 +663,9 @@ function toarray(txt, level) {
 		txt=txt.split("\n");
 		for (var i=0; i<txt.length; i++) {
 			txt[i]=txt[i].split(/\s+/);
-			for (var j=0; j<txt[i].length; j++) if (is_decimal(txt[i][j])) {
-				txt[i][j]=parseFloat(txt[i][j])
+			for (var j=0; j<txt[i].length; j++) {
+				parsed=parseFloat(txt[i][j]);
+				if (!isNaN(parsed)) txt[i][j]=parsed;
 			}
 		}
 	};
@@ -598,9 +681,7 @@ function fromarray(array, level) {
 
 function analyze(which) {
 	var f=document.forms,
-		fields_extract_selected=[],
-		fields_header_selected=[],
-		e=f['F_out'].elements,fv,i,v,s;
+		e=f['F_out'].elements,fv,i,j,v,s;
 	
 	if (!trim(f["F_data"].elements["FF_data_in"].value) || !trim(f["F_data"].elements["FF_data_ref"].value)) return;
 	
@@ -619,7 +700,7 @@ function analyze(which) {
 		}
 	};
 	
-	var _criteria = [], fields_match = [];
+	var _criteria = [];
 	for (var id in comparison_criteria) {
 		if (comparison_criteria[id] && comparison_criteria[id].name && _criteria.indexOf(comparison_criteria[id]) < 0) {
 			for (var i=0; i<comparison_criteria[id].fields_match.length; i++) {
@@ -633,42 +714,39 @@ function analyze(which) {
 			}
 		}
 	};
-	window.fields_match = fields_match;
 	for (var i=0; i<_criteria.length; i++) {
 		e['FF_criteria'].options[i] = new Option(_criteria[i].name, _criteria[i].id, data_ref.id == _criteria[i].id, data_ref.id == _criteria[i].id)
 	};
 	
 	var criteria = comparison_criteria[e['FF_criteria'].value],
+		fields_extract_r = fields_match.slice().concat(criteria.fields_compare),
 		fields_extract_i = fields_match.slice().concat(criteria.fields_compare);
 	
-	for (i=0; i<data_ref.header.length; i++) {
-		v=compact(fromarray(data_ref.header[i], 1), true).replace(/\n/g, " ");
-		if (!fields_header[v]) {
-			fields_header.push(fields_header[v]=data_ref.header[i]);
+	for (i=0; i<fields_extract_i.length; i++) {
+		for (j=0; j<data_in.data_format.length; j++) {
+			if (data_in.data_format[j]==fields_extract_i[i]) {
+				fields_extract_indexes_i.push(j);
+				break
+			}
 		}
 	};
-	for (i=0; i<data_in.header.length; i++) {
-		v=compact(fromarray(data_in.header[i], 1), true).replace(/\n/g, " ");
-		if (!fields_header[v]) {
-			fields_header.push(fields_header[v]=data_in.header[i]);
+	for (i=0; i<fields_extract_r.length; i++) {
+		for (j=0; j<data_ref.data_format.length; j++) {
+			if (data_ref.data_format[j]==fields_extract_r[i]) {
+				fields_extract_indexes_r.push(j);
+				break
+			}
 		}
 	};
 	
-	if (data_in.data.length && data_ref.data.length) {
-		duplicates = 'first';
-		var _data_in = extract();
-		data_in = data_ref;
-		data_ref = extract();
-		data_in = _data_in;
-		if (data_in.data.length != data_ref.data.length) {
-			alert("Different amount of sets in measurements and reference data.");
-			return false
-		};
+	if (data_in.data.length && data_ref.data.length && data_in.data.length != data_ref.data.length) {
+		alert("Different amount of sets in measurements and reference data.");
+		return false
 	};
 	var data_in_format_missing_fields = [], data_ref_format_missing_fields = [], errortxt = "";
 	for (i = 0; i < fields_extract_i.length; i ++) {
-		if (data_in.data_format.indexof(fields_extract_i[i]) < 0) data_in_format_missing_fields.push(fields_extract_i[i]);
-		if (data_ref.data_format.indexof(fields_extract_i[i]) < 0) data_ref_format_missing_fields.push(fields_extract_i[i]);
+		if (data_in.data_format.indexOf(fields_extract_i[i]) < 0) data_in_format_missing_fields.push(fields_extract_i[i]);
+		if (data_ref.data_format.indexOf(fields_extract_i[i]) < 0) data_ref_format_missing_fields.push(fields_extract_i[i]);
 	};
 	if (data_in_format_missing_fields.length) {
 		errortxt += "Measurement data is missing the following fields: " + data_in_format_missing_fields.join(", ") + ".\n"
@@ -680,7 +758,6 @@ function analyze(which) {
 		alert(errortxt + "Measurements and reference data must contain atleast: " + fields_extract_i.join(", "));
 		return
 	};
-	data_in.data = data_ref.data.concat(data_in.data);
 	
 	if (data_ref.data_format.length && data_ref.data.length && data_in.data_format.length && data_in.data.length) {
 		compare();
@@ -709,10 +786,8 @@ function get_data(which) {
 	return true
 };
 
-function compare() {
+function compare(set_delta_calc_method) {
 	form_elements_set_disabled(null, true);
-	duplicates = 'list';
-	window.data_out = extract();
 	var fe = document.forms["F_out"].elements, fe2 = document.forms["F_data"].elements;
 	if (fe2["FF_variables"]) try {
 		eval(fe2["FF_variables"].value);
@@ -722,148 +797,11 @@ function compare() {
 	catch (e) {
 		alert("Error parsing variable:\n" + e + "\nUsing default values.")
 	};
-	var report = data_out.generate_report();
-	document.getElementById('result').innerHTML = report[1];
+	var report = data_in.generate_report(set_delta_calc_method);
+	document.getElementById('result').innerHTML = report;
 	document.getElementById('report').style.display = "block";
 	form_elements_set_disabled(null, false);
 	return true
-};
-
-function extract() {
-	
-	set_status("Extracting... 0%");
-	
-	var f=document.forms,
-		e=f['F_out'].elements,
-		data_out = [],
-		debug = false,
-		decimal_comma = false,
-		duplicates_count = true,
-		indexfield,
-		fields_extract_r = [],
-		fields_extract_indexes_r = [],
-		fields_match_indexes_i = [],
-		fields_match_indexes_r = [],
-		t1 = new Date().getTime(),
-		t2,
-		i,j,k,m,v,tmp;
-	
-	var criteria = comparison_criteria[e['FF_criteria'].value],
-		fields_match = window.fields_match,
-		fields_extract_i = fields_match.slice().concat(criteria.fields_compare);
-	
-	fields_extract_indexes_i = [];
-	
-	var _data_out = new dataset();
-	_data_out.device = data_ref.device;
-	
-	for (i=0; i<fields_extract_i.length; i++) {
-		for (j=0; j<data_in.data_format.length; j++) {
-			if (data_in.data_format[j]==fields_extract_i[i]) {
-				fields_extract_indexes_i.push(j);
-				break
-			}
-		}
-	};
-	for (i=0; i<fields_extract_r.length; i++) {
-		for (j=0; j<data_ref.data_format.length; j++) {
-			if (data_ref.data_format[j]==fields_extract_r[i]) {
-				fields_extract_indexes_r.push(j);
-				break
-			}
-		}
-	};
-	
-	for (i=0; i<fields_match.length; i++) {
-		for (j=0; j<data_in.data_format.length; j++) {
-			if (data_in.data_format[j].toUpperCase()==fields_match[i].toUpperCase()) {
-				fields_match_indexes_i.push(j);
-				break
-			}
-		}
-	};
-	for (i=0; i<fields_match.length; i++) {
-		for (j=0; j<data_ref.data_format.length; j++) {
-			if (data_ref.data_format[j].toUpperCase()==fields_match[i].toUpperCase()) {
-				fields_match_indexes_r.push(j);
-				break
-			}
-		}
-	};
-	
-	for (i=0; i<data_ref.data.length; i++) { // rows in data_ref.data
-		if (fields_match.length) for (j=0; j<data_in.data.length; j++) { // rows in data_in.data
-			for (k=0; k<fields_match.length; k++) {
-				if (data_in.data[j][fields_match_indexes_i[k]]!=data_ref.data[i][fields_match_indexes_r[k]]) break
-			};
-			if (k==fields_match.length) { // hit
-				m = data_out_add(m, data_out, fields_extract_indexes_r, i, data_ref, indexfield, _data_out, fields_extract_indexes_i, data_in, j);
-				if (duplicates == "first" && !duplicates_count) break
-			}
-		}
-		else {
-			m = data_out_add(m, data_out, fields_extract_indexes_r, i, data_ref, indexfield, _data_out, fields_extract_indexes_i, data_in, i);
-			data_out[i]=fromarray(data_out[i])
-		};
-			
-		t2 = new Date().getTime();
-		if (t2 - t1 > 500) {
-			t1 = t2;
-			set_progress("Extracting... ", i + 1, data_ref.data.length * 2)
-		}
-	};
-	
-	if (fields_match.length) for (i=0; i<data_out.length; i++) {
-		if (data_out[i].length) {
-			if (duplicates=="list") {
-				for (j=0; j<data_out[i].length; j++) { // rows
-					if (duplicates_count) data_out[i][j].push(data_out[i].length-1)
-				};
-			}
-			else {
-				if (duplicates=="average") {
-					v=[];
-					for (j=0; j<data_out[i].length; j++) { // rows
-						for (k=0; k<_data_out.data_format.length; k++) { // columns
-							if (!is_decimal(data_out[i][j][k]) || _data_out.data_format[k]==indexfield) {
-								if (!v[k]) v[k]=data_out[i][j][k]
-							}
-							else {
-								tmp = parseFloat(data_out[i][j][k]);
-								if (!v[k]) v[k]=0;
-								v[k] += tmp
-							}
-						};
-					};
-					for (k=0; k<_data_out.data_format.length; k++) if (is_decimal(v[k]) && _data_out.data_format[k]!=indexfield) {
-						v[k]=(v[k]/data_out[i].length).accuracy(10)
-					}
-				}
-				else v=data_out[i][duplicates=="last"?data_out[i].length-1:0];
-				if (duplicates_count) v.push(data_out[i].length-1);
-				data_out[i]=[v]
-			}
-		};
-		data_out[i]=fromarray(data_out[i]);
-			
-		t2 = new Date().getTime();
-		if (t2 - t1 > 500 || i == data_out.length - 1) {
-			t1 = t2;
-			set_progress("Extracting... ", data_ref.data.length + i + 1, data_ref.data.length * 2)
-		}
-	};
-	
-	if (duplicates_count) {
-		_data_out.header_set_field("KEYWORD", "\"DUPLICATES\"", "append");
-		_data_out.data_format.push("DUPLICATES")
-	};
-	
-	_data_out.data = toarray(data_out.join("\n"));
-	_data_out.decimal = decimal_comma?",":".";
-	
-	set_status("");
-	
-	return _data_out
 };
 
 function form_element_set_disabled(form_element, disabled) {
@@ -886,45 +824,13 @@ function form_elements_set_disabled(form, disabled) {
 	}
 };
 
-function data_out_add(m, data_out, fields_extract_indexes_r, i, data_ref, indexfield, _data_out, fields_extract_indexes_i, data_in, j) {
-	var k, n, v;
-	if (m!=i) {
-		m=i;
-		data_out.push([])
-	};
-	data_out[data_out.length-1][data_out[data_out.length-1].length]=[];
-	for (k=0; k<fields_extract_indexes_r.length; k++) {
-		v=data_ref.data[i][fields_extract_indexes_r[k]];
-		if ((n=data_ref.data_format[fields_extract_indexes_r[k]])==indexfield) {
-			if (_data_out.data_format.length<fields_extract_indexes_r.length+fields_extract_indexes_i.length) _data_out.data_format.unshift(n);
-			data_out[data_out.length-1][data_out[data_out.length-1].length-1].unshift(v)
-		}
-		else {
-			if (_data_out.data_format.length<fields_extract_indexes_r.length+fields_extract_indexes_i.length) _data_out.data_format.push(n);
-			data_out[data_out.length-1][data_out[data_out.length-1].length-1].push(v)
-		}
-	};
-	for (k=0; k<fields_extract_indexes_i.length; k++) {
-		v=data_in.data[j][fields_extract_indexes_i[k]];
-		if ((n=data_in.data_format[fields_extract_indexes_i[k]])==indexfield) {
-			if (_data_out.data_format.length<fields_extract_indexes_r.length+fields_extract_indexes_i.length) _data_out.data_format.unshift(n);
-			data_out[data_out.length-1][data_out[data_out.length-1].length-1].unshift(v)
-		}
-		else {
-			if (_data_out.data_format.length<fields_extract_indexes_r.length+fields_extract_indexes_i.length) _data_out.data_format.push(n);
-			data_out[data_out.length-1][data_out[data_out.length-1].length-1].push(v)
-		}
-	};
-	return m
-};
-
 function set_status(str, append) {
 	if (append) window.status += str;
 	else window.status = str
 };
 
 function set_progress(str, cur_num, max_num) {
-	p = Math.ceil(100 / max_num * cur_num);
+	var p = Math.ceil(100 / max_num * cur_num);
 	set_status(str + p + "% " + "|".repeat(p / 2))
 };
 

@@ -7,14 +7,6 @@ legend, h2.legend {
 	border-color: #202020;
 	color: #b9b9b9;
 }
-fieldset:hover, div.fieldset:hover {
-	border-color: #cccccc;
-}
-fieldset:hover legend, div.fieldset:hover h2.legend {
-	background: #cccccc;
-	border-color: #cccccc;
-	color: #666666;
-}
 h1 {
 	background: #bbbbbb;
 	border-color: #cccccc;

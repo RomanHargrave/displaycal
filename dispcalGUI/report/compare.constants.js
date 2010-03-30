@@ -1,4 +1,14 @@
-var DELTA_E_MAX = 'DELTA_E_MAX',
+var DELTA_A_MAX = 'DELTA_A_MAX',
+	DELTA_A_AVG = 'DELTA_A_AVG',
+	DELTA_A_MED = 'DELTA_A_MED', // Median
+	DELTA_A_MAD = 'DELTA_A_MAD', // Median absolute deviation
+	DELTA_A_STDDEV = 'DELTA_A_STDDEV', // Standard deviation
+	DELTA_B_MAX = 'DELTA_B_MAX',
+	DELTA_B_AVG = 'DELTA_B_AVG',
+	DELTA_B_MED = 'DELTA_B_MED', // Median
+	DELTA_B_MAD = 'DELTA_B_MAD', // Median absolute deviation
+	DELTA_B_STDDEV = 'DELTA_B_STDDEV', // Standard deviation
+	DELTA_E_MAX = 'DELTA_E_MAX',
 	DELTA_E_AVG = 'DELTA_E_AVG',
 	DELTA_E_MED = 'DELTA_E_MED', // Median
 	DELTA_E_MAD = 'DELTA_E_MAD', // Median absolute deviation

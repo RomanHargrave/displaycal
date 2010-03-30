@@ -10,6 +10,7 @@ from wxaddons import wx
 from wxenhancedplot import _Numeric
 import wxenhancedplot as plot
 
+import localization as lang
 import ICCProfile as ICCP
 
 BGCOLOUR = "#333333"
@@ -220,7 +221,7 @@ class LUTFrame(wx.Frame):
 						   flag=wx.ALL | wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL, 
 						   border=8)
 		
-		self.curve_select = wx.Choice(self.box_panel, -1, size=(75, -1), 
+		self.curve_select = wx.Choice(self.box_panel, -1, size=(-1, -1), 
 									  choices=[])
 		self.cbox_sizer.Add(self.curve_select, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHOICE, self.DrawLUT, id=self.curve_select.GetId())
@@ -265,15 +266,14 @@ class LUTFrame(wx.Frame):
 			})
 		self.profile = profile
 		curves = []
-		## if 'vcgt' in profile.tags:
-		curves.append('vcgt')
+		curves.append(lang.getstr('vcgt'))
 		if 'rTRC' in profile.tags and isinstance(profile.tags.rTRC, 
 												 ICCP.CurveType) and \
 		   'gTRC' in profile.tags and isinstance(profile.tags.gTRC, 
 												 ICCP.CurveType) and \
 		   'bTRC' in profile.tags and isinstance(profile.tags.bTRC, 
 												 ICCP.CurveType):
-			curves.append('[rgb]TRC')
+			curves.append(lang.getstr('[rgb]TRC'))
 		selection = self.curve_select.GetSelection()
 		if curves and (selection < 0 or selection > len(curves) - 1):
 			selection = 0
@@ -285,12 +285,12 @@ class LUTFrame(wx.Frame):
 		self.SetStatusText('')
 		curves = None
 		if self.profile:
-			if self.curve_select.GetStringSelection() == 'vcgt':
+			if self.curve_select.GetSelection() == 0:
 				if 'vcgt' in self.profile.tags:
 					curves = self.profile.tags['vcgt']
 				else:
 					curves = None
-			elif self.curve_select.GetStringSelection() == '[rgb]TRC':
+			elif self.curve_select.GetSelection() == 1:
 				if len(self.profile.tags['rTRC']) == 1 and \
 				   len(self.profile.tags['gTRC']) == 1 and \
 				   len(self.profile.tags['bTRC']) == 1:

@@ -244,6 +244,10 @@
 			margin-left: 15px;
 			margin-bottom: 1em;
 		}
+		#content dd ul ul {
+			list-style: circle outside;
+			margin-bottom: 0;
+		}
 		div.box {
 			background: #F0FEF0;
 			border-color: #E0F0E0;
@@ -345,13 +349,17 @@
 			display: block;
 			margin: 0;
 		}
+		#definitions dd span {
+			display: block;
+			overflow: auto;
+		}
 		</style>
 	</head>
 	<body>
 	
 		<div id="content">
 	
-		<h1><a href="http://dispcalGUI.hoech.net">dispcalGUI</a> <span>Display Calibration powered by Argyll <acronym>CMS<sup><a href="#definition_CMS">[1]</a></sup></acronym> and Python</span></h1>
+		<h1><a href="http://dispcalGUI.hoech.net">dispcalGUI</a> <span>Display Calibration powered by Argyll <acronym>CMS<sup><a href="#definition_CMS">[2]</a></sup></acronym> and Python</span></h1>
 		
 		<dl class="info">
 			<dt>Versions:<br />
@@ -423,7 +431,7 @@
 			profile your display using a measurement device. Of course, you can do a lot 
 			more with Argyll CMS, but this is not the scope of this document—refer to the 
 			<a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll CMS documentation</a> for in-depth information and usage scenarios.<br />
-			dispcalGUI opens two windows when run, a terminal and the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym>. The terminal is used for status messages and keyboard input during calibration. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> is used to set options and access functionality.</p>
+			dispcalGUI opens two windows when run, a terminal and the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>. The terminal is used for status messages and keyboard input during calibration. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> is used to set options and access functionality.</p>
 			
 			<div id="screenshots">
 				<h3>Screenshots</h3>		
@@ -455,7 +463,7 @@
 			WITHOUT ANY WARRANTY; without even the implied warranty of 
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 			
-			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[5]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
+			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[6]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
 		</div>
 		
 		<div id="download">
@@ -476,7 +484,7 @@
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-${VERSION_SRC}.tar.gz">Tarball</a></p>
 			<p>
-				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN</acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
+				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
 		</div>
 		
@@ -564,7 +572,7 @@
 					<li>Datacolor/ColorVision Spyder 3 *</li>
 				</ul>
 				
-				<p>* only when using Argyll CMS >= 1.1.0</p>
+				<p>* Argyll CMS &gt;= 1.1.0</p>
 			</div>
 			
 			<div id="prerequisites-source">
@@ -575,7 +583,7 @@
 				<p>All platforms:</p>
 				<ul>
 					<li><a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. Mac OS X users: If you want to compile dispcalGUI from source, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
-					<li><a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> toolkit</li>
+					<li><a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> toolkit</li>
 				</ul>
 				
 				<p>Mac OS X:</p>
@@ -591,7 +599,7 @@
 				
 				<p>Optional for all platforms:</p>
 				<ul>
-					<li><a href="http://numpy.scipy.org/">NumPy</a> (when installed, it enables the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> Viewer)</li>
+					<li><a href="http://numpy.scipy.org/">NumPy</a> (when installed, it enables the curve viewer)</li>
 				</ul>
 				
 				<h4>Additional prerequisites for compiling</h4>
@@ -615,12 +623,12 @@
 					<li><a href="http://pypi.python.org/pypi/py2exe/">py2exe</a> if you want to build a standalone executable</li>
 				</ul>
 				
-				<p>You can run directly from (compiled) source without installation if you want. To do this, you need to build the extension modules “in-place”:</p>
+				<p id="runsource">You can run directly from (compiled) source without installation if you want. To do this, you need to build the extension modules “in-place”:</p>
 			
 				<ol>
 					<li>Open a shell.</li>
 					<li><code>cd</code> into the source directory (dispcalGUI-&lt;version&gt;).</li>
-					<li>Run <code>python setup.py build_ext -i</code></li>
+					<li>Run <code>python setup.py build_ext -i</code> (on Linux, you can also untar RealDisplaySizeMM.py<code>&lt;PYTHON_VERSION&gt;</code>.<code>&lt;PLATFORM&gt;</code>.so.tar inside the dispcalGUI directory instead)</li>
 				</ol>
 				
 				<p>You can then run <code>python dispcalGUI/dispcalGUI.py</code> in the same directory.</p>
@@ -636,7 +644,7 @@
 			<div id="install-pkg">
 				<h3>Linux Autopackage (.package)</h3>
 				
-				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) and optionally numpy (enables the LUT viewer) and xautomation (enables <a href="#prerequisites-unattended">unattended calibration &amp; profiling</a> for some instruments) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
+				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) and optionally numpy (enables the curve viewer) and xautomation (enables <a href="#prerequisites-unattended">unattended calibration &amp; profiling</a> for some instruments) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
 			</div>
 			
 			<div id="install-exe">
@@ -657,6 +665,8 @@
 			
 			<div id="install-src">
 				<h3>Source code (all platforms)</h3>
+				
+				<p>See the “Prerequisites” section to <a href="#runsource">run directly from source without installation</a>.</p>
 				
 				<p>Starting with dispcalGUI 0.2.5b, you can use standard distutils/setuptools commands with setup.py to build, install, and create packages. <code>sudo python setup.py install</code> will compile the extension modules and do a standard installation. Run <code>python setup.py --help</code> or <code>python setup.py --help-commands</code> for more information. A few additional commands and options which are not part of distutils or setuptools (and thus do not appear in the help) are also available:</p>
 				
@@ -705,14 +715,14 @@
 			user-definable target characteristics, like brightness, gamma and white point. 
 			This step is generally referred to as calibration. Calibration is done by 
 			adjusting the monitor controls, and the output of the graphics card (via 
-			calibration curves, also called <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves) to get as 
+			calibration curves, also called <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> curves, but please note the <a href="#difference_lutcurves_lutprofile">difference between these curves and so-called LUT profiles</a>) to get as 
 			close as possible to the chosen target.<br />
 			To meet the user-defined target characteristics, it is generally advisable to 
 			get as far as possible by using the monitor controls, and only thereafter by 
-			manipulating the output of the graphics card via <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves, to get the best
+			manipulating the output of the video card via calibration curves, which are loaded into the so-called video card gamma table, to get the best
 			results.</p>
 			
-			<p>Second, the calibrated displays behavior is measured and an <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile 
+			<p>Second, the calibrated displays behavior is measured and an <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile 
 			describing the response of the display is created.</p>
 			
 			<p>Optionally and for convenience purposes, the calibration is stored in the profile, but both 
@@ -734,11 +744,11 @@
 		<div id="usage">
 			<h2>Usage</h2>
 		
-			<p>Upon launching dispcalGUI, you will see two windows: A terminal and the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym>. 
+			<p>Upon launching dispcalGUI, you will see two windows: A terminal and the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>. 
 			The terminal is mostly used for status information, and for the interactive part 
-			of display calibration. Through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym>, you can choose your settings. Closing
+			of display calibration. Through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>, you can choose your settings. Closing
 			either window will quit the application, but I strongly recommend closing the 
-			<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> window first so the cleanup routines can run. On most systems, the terminal 
+			<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> window first so the cleanup routines can run. On most systems, the terminal 
 			window will close automatically afterwards (if you were not running from a manually opened
 			terminal to begin with).</p>
 			
@@ -754,11 +764,11 @@
 				Also, if a calibration is present it can be used as the base when “Just Profiling”.<br />
 				The chosen settings file will stay as long as you do not change any of the 
 				calibration or profiling settings, with one exception: When a <code>.cal</code> file with the same base name as the settings file
-				exists in the same directory, adjusting the quality and profiling controls will not cause unloading of the settings file. This allows you to use an existing calibration with new profiling settings for “Just Profiling”, or to update an existing calibration with different quality and/or profiling settings. If you change settings in other situations, the file will get unloaded (but current settings will be retained—unloading just happens to remind you that the settings no longer match those in the file), and current display profile <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> will be restored (if present, otherwise it will reset to linear).</p>
+				exists in the same directory, adjusting the quality and profiling controls will not cause unloading of the settings file. This allows you to use an existing calibration with new profiling settings for “Just Profiling”, or to update an existing calibration with different quality and/or profiling settings. If you change settings in other situations, the file will get unloaded (but current settings will be retained—unloading just happens to remind you that the settings no longer match those in the file), and current display profile's calibration curves will be restored (if present, otherwise they will reset to linear).</p>
 
 				<p>When a calibration file is loaded or present, the “Update calibration”
 				checkbox will become available, which takes less time than a calibration from scratch.
-				If an <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile with the same base name as the settings file
+				If an <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile with the same base name as the settings file
 				exists in the same directory, the “Update profile” checkbox
 				will also be available. If you place a check in that box,
 				all options and the “Calibrate &amp; profile” and “Just profile” buttons at the 
@@ -770,7 +780,7 @@
 				<h3>Predefined settings (presets)</h3>
 				<p>Starting with dispcalGUI v0.2.5b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
 				<h4>Why has a default gamma of 2.4 been chosen for the presets?</h4>
-				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the graphics card's <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons. You can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info.</p>
+				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the video card's gamma tables via calibration curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons. You can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info.</p>
 			</div>
 			
 			<div id="display_instrument">
@@ -806,19 +816,19 @@
 					
 					<dt>Black level</dt>
 						<dd>
-							<p>Set the target brightness of black in cd/m<sup>2</sup>. Setting too high a value may give strange results as it interacts with trying to achieve the target “advertised” gamma curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
+							<p>Set the target brightness of black in cd/m<sup>2</sup>. Setting too high a value may give strange results as it interacts with trying to achieve the target “advertised” tone curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
 						</dd>
 					
 					<dt>Tone curve / gamma</dt>
 						<dd>							
-							<p>The target response curve gamma is normally an exponential curve (output = input<sup>gamma</sup>), and defaults to 2.4 (which is typical of a CRT type displays real response). Four pre-defined curves can be used as well: the sRGB colorspace response curve, which is an exponent curve with a straight segment at the dark end and an overall response of approximately gamma 2.2, the L* curve, which is the response of the CIE L*a*b* perceptual colorspace, the Rec. 709 video standard response curve and the SMPTE 240M video standard response curve.</p>
+							<p>The target response curve is normally an exponential curve (output = input<sup>gamma</sup>), and defaults to 2.4 (which is typical of a CRT type displays real response). Four pre-defined curves can be used as well: the sRGB colorspace response curve, which is an exponent curve with a straight segment at the dark end and an overall response of approximately gamma 2.2, the L* curve, which is the response of the CIE L*a*b* perceptual colorspace, the Rec. 709 video standard response curve and the SMPTE 240M video standard response curve.</p>
 							
 							<p>Note that a real display can't reproduce any of these ideal curves, since it will have a non-zero black point, whereas all the ideal curves assume zero light at zero input. For gamma values, you can also specify wheter it should be interpreted relative, meaning the gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve, or absolute, which allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value. To allow for the non-zero black level of a real display, by default the target curve values will be offset so that zero input gives the actual black level of the display (output offset). This ensures that the target curve better corresponds to the typical natural behavior of displays, but it may not be the most visually even progression from display minimum. This behavior can be changed using the black output offset option (see further below).</p>
 
 							<p>Also note that many color spaces are encoded with, and labelled as having a gamma of approximately 2.2 (ie. sRGB, REC 709, SMPTE 240M, Macintosh OS X 10.6), but are actually intended to be displayed on a display with a typical CRT gamma of 2.4 viewed in a darkened environment. This is because this 2.2 gamma is a source gamma encoding in bright viewing conditions such as a television studio, while typical display viewing conditions are quite dark by comparison, and a contrast expansion of (approx.) gamma 1.1 is desirable to make the images look as intended. So if you are displaying images encoded to the sRGB standard, or displaying video through the calibration, just setting the gamma curve to sRGB or REC 709 (respectively) is probably not what you want! What you probably want to do, is to set the gamma curve to about gamma 2.4, so that the contrast range is expanded appropriately, or alternatively use sRGB or REC 709 or a gamma of 2.2 but also specify the actual ambient viewing conditions via a light level in Lux, so that an appropriate contrast enhancement can be made during calibration. If your instrument is capable of measuring ambient light levels, then you can do so.<br />
-							[For in-depth technical information about sRGB, see “<a href="http://www.color.org/sRGB.xalter">A Standard Default Color Space for the Internet: sRGB</a>” at the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> website for details of how it is intended to be used]</p>
+							[For in-depth technical information about sRGB, see “<a href="http://www.color.org/sRGB.xalter">A Standard Default Color Space for the Internet: sRGB</a>” at the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> website for details of how it is intended to be used]</p>
 							
-							<p>If you're wondering what gamma value you should use, you can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info. Setting the gamma to the reported value can then help to reduce calibration artifacts like banding, because the adjustments needed for the video card's LUT curves should not be as strong as if a gamma further away from the display's native response was chosen.</p>
+							<p>If you're wondering what gamma value you should use, you can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info. Setting the gamma to the reported value can then help to reduce calibration artifacts like banding, because the adjustments needed for the video card's gamma table should not be as strong as if a gamma further away from the display's native response was chosen.</p>
 						</dd>
 					
 					<dt>Ambient light level</dt>
@@ -845,7 +855,7 @@
 					
 					<dt>Calibration quality</dt>
 						<dd>							
-							<p>Determines how much time and effort to go to in calibrating the display. The higher the quality, the more test readings will be done, the more refinement passes will be done, the tighter will be the accuracy tolerance, and the more detailed will be the calibration of the display. The result will ultimately be limited by the accuracy of the instrument, the repeatability of the display and instrument, and the resolution of the video LUT entries and digital or analogue output (RAMDAC).</p>
+							<p>Determines how much time and effort to go to in calibrating the display. The higher the quality, the more test readings will be done, the more refinement passes will be done, the tighter will be the accuracy tolerance, and the more detailed will be the calibration of the display. The result will ultimately be limited by the accuracy of the instrument, the repeatability of the display and instrument, and the resolution of the video card gamma table entries and digital or analogue output (RAMDAC).</p>
 						</dd>
 					
 					<dt>Interactive display adjustment</dt>
@@ -894,18 +904,18 @@
 						</dd>
 					
 					<dt>Profile quality</dt>
-						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Color Look Up Table">cLUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> profiles), it sets the main lookup table size, and hence quality in the resulting profile. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
+						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>), it sets the main lookup table size, and hence quality in the resulting profile. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
 			
 					<dt>Profile type</dt>
 						<dd>
-							<p>Generally you can differentiate between two types of profiles: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based and matrix based.</p>
+							<p>Generally you can differentiate between two types of profiles: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based and matrix based.</p>
 							
-							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[1]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS</acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
+							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[2]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS</acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
 							
-							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> type profiles, or certain variations of them).
-							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS >= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped R ↔ G matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
+							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> type profiles, or certain variations of them).
+							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS &gt;= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped R ↔ G matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
 							
-							<p>Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-based profiles might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves, but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-based and matrix-based profiles can include video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves.</p>
+							<p id="difference_lutcurves_lutprofile">Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based profiles (which contain three-dimensional LUTs) might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> (calibration) curves (one-dimensional LUTs), but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based and matrix-based profiles may include calibration curves which can be loaded into a video card's gamma table hardware.</p>
 						</dd>
 						
 					<dt>Advanced gamut mapping options</dt>
@@ -932,7 +942,7 @@
 							
 							<p>During calibration &amp; profiling the following files will be created:<br />
 							<code><span title="Calibrate and profile, then install profile afterwards">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.all.sh</span><br />
-							<span title="Contains video LUT curves and most settings used for calibration">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.cal</span><br />
+							<span title="Contains calibration curves and most settings used for calibration">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.cal</span><br />
 							<span title="Create a profile from the .ti3 measurement file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.colprof.sh</span><br />
 							<span title="Calibrate and create .cal file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispcal.sh</span><br />
 							<span title="Create a .ti3 file by measuring the .ti1 patches, first loading the .cal file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispread.sh</span><br />
@@ -941,19 +951,21 @@
 							<span title="Contains the measurement patches used to create the .ti3 measurement file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.ti1</span><br />
 							<span title="Contains the measured display response">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.ti3</span></code></p>
 							
-							<p>(the <code>.sh</code> files can be used to re-run without <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> but same settings from a shell)</p>
+							<p>(the <code>.sh</code> files can be used to re-run without <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> but same settings from a shell)</p>
 						</dd>
 				</dl>
 			</div>
 			
 			<div id="calibrating">
 				<h3>Calibrating / profiling</h3>
+				
+				<p>If you are unclear about the difference between calibration and profiling (also called characterisation), see “<a href="http://www.argyllcms.com/doc/calvschar.html">Calibration vs. Characterization</a>” in the Argyll CMS documentation.</p>
 			
 				<p>After you have set your options, click on one of the three buttons at the bottom
-				to start the actual calibration/profiling process. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
+				to start the actual calibration/profiling process. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
 				error). Pay attention to the output printed to the terminal, it will give you status information and prompt for keyboard input to start measurements and select calibration options (you can always cancel out of running measurements by pressing ESC or Q).</p>
 				
-				<p>When creating or updating a profile, a shortcut to load its <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves 
+				<p>When installing a profile after creating or updating it, a shortcut to load its calibration curves 
 				automatically on login will be created in your user startup directory (on Windows and Linux, Mac OS X does not need a loader).</p>
 			</div>
 		</div>
@@ -990,25 +1002,25 @@
 						<dd>Allows you to create a profile from existing <code>.ti3</code> measurement data (existing profiles created with Argyll CMS or dispcalGUI can also be selected as source).</dd>
 						
 					<dt>Install display device profile...</dt>
-						<dd>Select an existing profile for installation.</dd>
+						<dd>Install an existing profile for the currently selected display.</dd>
 						
-					<dt>Load LUT curves from calibration file or profile...</dt>
-						<dd>Unlike “load settings....” from the “file” menu, loads just calibration curves into the video card.</dd>
+					<dt>Load calibration curves from calibration file or profile...</dt>
+						<dd>Unlike “load settings....” from the “file” menu, loads just calibration curves for the currently selected display into the video card without changing settings.</dd>
 						
-					<dt>Load LUT curves from current display device profile</dt>
+					<dt>Load calibration curves from current display device profile</dt>
 						<dd>Tries to determine the profile associated to the currently selected display and loads its calibration curves from the 'vcgt' tag.</dd>
 						
-					<dt>Reset LUT curves</dt>
-						<dd>Resets any video card LUT curves to linear, such that input = output.</dd>
+					<dt>Reset video card gamma table</dt>
+						<dd>Resets the video card gamma table for the currently selected display to linear, clearing any calibration curves, such that input = output.</dd>
 						
 					<dt>Detect displays and instruments</dt>
 						<dd>Normally dispcalGUI will automatically detect changes in display setup or instrument configuration, but as it may take a few seconds for changes to be recognized, you can instantly run the detection using this menu entry.</dd>
 						
-					<dt>Use separate video LUT acccess</dt>
-						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video LUT hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally dispcalGUI will automatically detect if separate video LUT access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
+					<dt>Use separate video card gamma table acccess</dt>
+						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video card gamma table hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally dispcalGUI will automatically detect if separate video card gamma table access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
 
 					<dt>Restore defaults</dt>
-						<dd>Restore all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
+						<dd>Restores all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
 				</dl>
 			</div>
 			
@@ -1018,18 +1030,19 @@
 				<dl>
 						
 					<dt>Report on uncalibrated display device</dt>
-						<dd>Does some quick measurements, first resetting any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card LUT bit depth.</dd>
+						<dd>Does some quick measurements on the currently selected display, first resetting the video card gamma table, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card gamma table bit depth.</dd>
 						
 					<dt>Report on calibrated display device</dt>
-						<dd>Does some quick measurements, keeping any video card LUT curves, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
+						<dd>Does some quick measurements on the currently selected display, keeping the video card gamma table, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
 						
 					<dt>Verify calibration</dt>
-						<dd>Run verify pass on the display as it is currently setup (currently installed LUT curves). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
+						<dd>Run verify measurements on the selected display as it is currently setup (ie. video card gamma table). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
 						
 					<dt>Verify profile</dt>
-						<dd>Do verification measurements to assess the display chain's (profile - graphics card and LUT curves - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain. To do the former, you have to select a TI1 file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled.<br />
-						To perform a check on the soft proofing capabilities, you have to provide a TI3 file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the TI3 file.<br />
-						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if set. Otherwise, a file dialog will appear to choose a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the measurement and reference data, which can be examined as plain text directly from the report at the click of a button.</dd>
+						<dd>Do verification measurements to assess the display chain's (profile - video card and the calibration curves in its gamma table - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain. To do the former, you have to select a <acronym title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></acronym> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled.<br />
+						To perform a check on the soft proofing capabilities, you have to provide a CGATS reference file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the reference file.<br />
+						<br />
+						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if any. Otherwise, a file dialog will appear to choose a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the reference and measurement data, which consists of device RGB numbers, original measured XYZ values, and D50-adapted L*a*b* values computed from the XYZ numbers, and which can be examined as plain text directly from the report at the click of a button.</dd>
 						
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1037,11 +1050,11 @@ The purchaser of a Spyder 2 instrument should have received a copy of this firmw
 On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on the users machine, the firmware pattern can usually be located from there. If the vendors drivers have not been installed, or the user does not wish to install them, or no vendors drivers are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. If your Linux system is not running automount, or your automount is setup to mount CDROM's somewhere other than /media, /mnt/cdrom, /media/cdrom or /cdrom, then you will have to mount the CDROM manually, and select the path to the CDROM setup/setup.exe file.
 </dd>
 
-					<dt>Show LUT curves</dt>
-						<dd>Shows the LUT Viewer, which graphs calibration curves.</dd>
+					<dt>Show curves</dt>
+						<dd>Shows the curve viewer, which graphs calibration and profile tone response curves. Please note that if profile tone response curves are graphed and the selected profile is a table-based (LUT) profile, the displayed curves will be from the additional (and optional) matrix 'rTRC'/'gTRC'/'bTRC' tags, <strong>not</strong> the lookup table!</dd>
 						
-					<dt>Show actual LUT curves from video card</dt>
-						<dd>When this menu entry is checked, the LUT viewer will show the actual LUT curves from the video card instead of showing the curves of the currently active profile.</dd>
+					<dt>Show actual calibration curves from video card gamma table</dt>
+						<dd>When this menu entry is checked, the curve viewer will show the actual calibration curves from the video card gamma table instead of showing the curves of the currently active profile.</dd>
 						
 					<dt>Show/hide information window</dt>
 						<dd>Shows/hides the informational log window.</dd>
@@ -1066,7 +1079,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li><a href="#issue-win-uac">MS Windows Vista: The calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
 				<li><a href="#issue-win-spyder2">MS Windows: Enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
 				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
-				<li><a href="#issue-linux-lutaccess">Linux: No video LUT access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
+				<li><a href="#issue-linux-lutaccess">Linux: No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
 				<li><a href="#issue-linux-kdeqt">Linux (KDE): The application does not look native</a></li>
 				<li><a href="#issue-english">General: Some text is still in english, even though another language is selected</a></li>
 			</ul>
@@ -1085,15 +1098,15 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<span class="a"><span>Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management”. Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
 			
 			<p id="issue-win-uac"><span class="q"><span>MS Windows Vista:</span> The calibration gets unloaded when a “User Access Control” prompt is shown.<br /></span>
-			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[8]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
+			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
 			
 			<p id="issue-win-spyder2"><span class="q"><span>MS Windows:</span> Enabling the Spyder 2 colorimeter might fail when not running as administrator<br /></span>
 			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
 			
 			<p id="issue-mac-pscursor"><span class="q"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
-			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[7]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
+			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
 				
-			<p id="issue-linux-lutaccess"><span class="q"><span>Linux:</span> No video LUT access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
+			<p id="issue-linux-lutaccess"><span class="q"><span>Linux:</span> No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
 			<span class="a"><span>Solution:</span> Please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein.</span></p>
 			
 			<p id="issue-linux-kdeqt"><span class="q"><span>Linux (KDE):</span> The application does not look native<br /></span>
@@ -1143,14 +1156,42 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Profile verification: CGATS-compatible text files (*.txt) containing measurement data can now be selected in addition to TI1 and TI3 files.</li>
+							<li>“Very large” testchart with 912 patches.</li>
+							<li>Profile verification: Support (non-Argyll) profiles which use chromatic adaption.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Improved error message when Argyll binaries are not found (only files not found are now shown, together with alternatives). Automatically fall back to xicclu if icclu is not found (eg. Ubuntu's Argyll 1.0.3 package doesn't contain icclu).</li>
+							<li>Fixed 'invalid syntax' error when running under Python 2.5.</li>
+							<li>Profile verification report: Fixed a parsing error when reference or measurement data contained numbers in exponential notation.</li>
+							<li>Linux: Unhandled exception if DISPLAY environment variable is in the format <code>[host]:displaynumber</code> instead of <code>[host]:displaynumber.screennumber</code> (eg. <code>:0</code> instead of <code>:0.0</code>).</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Profile verification: Lookup device values relative colorimetrically and adapt the measured values to D50 before comparison (using Bradford matrix), so that the measured whitepoint corresponds to L*a*b* 100 0 0. Please note that verification results obtained with reference files measured in earlier versions of dispcalGUI should not be compared to those obtained via this new approach if the display whitepoint is not D50, as the results are likely to be different as an effect of the relative lookup and the chromatic adaption.</li>
+							<li>Profile verification: Improved support for non-Argyll CGATS text files. Handling is as follows:
+								<ul>
+									<li>If the file contains RGB_R RGB_G RGB_B fields, it is handled like a Argyll *.ti1 (testchart) file—any XYZ or Lab data is ignored and the RGB numbers are sent to the display and measured. Afterwards, the measured values are compared to the expected values, which are obtained by sending the RGB numbers through the profile. If RGB values above 100 are found, a range of 0-255 is assumed. Otherwise, a range of 0-100 (like Argyll *.ti1) is assumed.</li>
+									<li>If the file doesn't contain RGB_R RGB_G RGB_B fields, but XYZ_X XYZ_Y XYZ_Z or LAB_L LAB_A LAB_B, it is handled like a Argyll measurement data (*.ti3) file—the values are used to lookup corresponding RGB numbers through the profile and these are then sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or Lab values.</li>
+								</ul>
+							</li>
+							<li>Profile verification report: Show measured whitepoint and assumed target color temperature (based on closest daylight temperature), and use them to calculate the Delta E for the whitepoint. A few performance improvements when processing large datasets with several hundred or thousand measurements.</li>
+							<li>GUI and ReadMe: Changed all occurences of the term “LUT curves” to “calibration curves” and also changed all occurences of the term “video LUT” to “video card gamma table” to better distinguish from “LUT profile”. Also renamed the “LUT viewer” to curve viewer as a more accurate description of its functionality.</li>
+						</ul>
+					</dd>
+					
+				<dt>2010-03-17 18:50 (UTC)</dt>
+					<dd>
+						<h3>0.3.6.4</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Profile verification: CGATS-compatible text files (*.txt) containing measurement data can now be selected in addition to Argyll testchart (*.ti1) and measurement data (*.ti3) files.</li>
 							<li>Profile verification report: Depending on the chart used, you can now choose among different evaluation criteria from within the report. Also added Fogra Media Wedge V3 tolerance values for CMYK testcharts.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Linux: Error handling when parsing the DISPLAY environment variable, which could fail on some systems (Xubuntu 8.10).</li>
 							<li>Profile verification: Error 'Unknown color representation Lab' when trying to verify a L*a*b* LUT profile.</li>
-							<li>Profile verification: Wrong XYZ scaling when reading from TI3 files containing XYZ, but no L*a*b* values.</li>
+							<li>Profile verification: Wrong XYZ scaling when reading from *.ti3 files containing XYZ, but no L*a*b* values.</li>
 							<li>Profile verification: When measuring a display other than the first one, the calibration curves were erroneously still loaded to the 1st display.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
@@ -1159,13 +1200,13 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Split the cramped “Extra” menu into “Options” and “Tools”.</li>
 						</ul>
 					</dd>
-					
+				
 				<dt>2010-03-13 06:31 (UTC)</dt>
 					<dd>
 						<h3>0.3.6.2</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><strong>Profile verification by measurements.</strong> TI1 and TI3 files can be measured.</li>
+							<li><strong>Profile verification by measurements.</strong> Argyll testchart (*.ti1) and measurement data (*.ti3) files can be measured.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
@@ -1212,7 +1253,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Removed limit for remembered settings files.</li>
 							<li>When calibration or profiling measurements fail, first show the main application window, then the error message (small dialog boxes are sometimes hard to spot on big screens if the application context is missing).</li>
 							<li>Moved profile quality, type and advanced settings above testchart selector (this order is more logical, as profile quality and type influences testchart selection).</li>
-							<li>Testchart editor: Default to adaption of 10% for testchart creation using optimized farthest point sampling (OFPS). Support both device and L*a*b* diagnostic VRML files when creating testcharts using Argyll >= 1.1.0. No longer calculate the amount of white/gray/single color patches or multidimensional cube steps if info is missing in TI1 file (calculations take way too long for little added benefit).</li>
+							<li>Testchart editor: Default to adaption of 10% for testchart creation using optimized farthest point sampling (OFPS). Support both device and L*a*b* diagnostic VRML files when creating testcharts using Argyll &gt;= 1.1.0. No longer calculate the amount of white/gray/single color patches or multidimensional cube steps if info is missing in testchart file (calculations take way too long for little added benefit).</li>
 							<li>Cleaned up the <a href="#issues">known issues &amp; solutions</a> section in the ReadMe.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
@@ -1263,12 +1304,12 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>All of Argyll's profile types are now available (XYZ LUT on Windows only if using Argyll &gt;= 1.1.0).</li>
 							<li>Support for “very low” calibration quality.</li>
 							<li>Optionally create a fast matrix/shaper profile when just calibrating.</li>
-							<li>“Reset LUT curves” checkbox in the dialog shown when just profiling.</li>
+							<li>“Reset video card gamma table” checkbox in the dialog shown when just profiling.</li>
 							<li>Information how to install Argyll &gt;= 1.1.0 USB drivers on Windows Vista/7 64-bit to the “known issues and solutions” section in the ReadMe.</li>
 							<li>ReadMe, license, bug tracker and support forum can now be accessed from the “Help” menu.</li>
 							<li>“Check for update...” in the help menu (launches a web browser and displays the dispcalGUI homepage if a new version is found).</li>
-							<li>LUT Viewer: Capability to show the actual curves from the video card.</li>
-							<li>LUT Viewer: Capability to show a matrix profile's rTRC/gTRC/bTRC curves.</li>
+							<li>Curve viewer: Capability to show the actual curves from the video card.</li>
+							<li>Curve viewer: Capability to show a matrix profile's rTRC/gTRC/bTRC curves.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
@@ -1281,7 +1322,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Log messages from most informational and all error dialogs.</li>
 							<li>Show file paths in most dialogs involving file processing.</li>
 							<li>Documentation in the ReadMe has been updated and is now more or less complete for the main application (testchart editor docs are still to be done). Setup instructions have also been streamlined.</li>
-							<li>Moved information how to fix video LUT access under Linux/X11 to the “known issues and solutions” section in the ReadMe.</li>
+							<li>Moved information how to fix video card gamma table access under Linux/X11 to the “known issues and solutions” section in the ReadMe.</li>
 							<li>Linux: Updated udev rules to those provided with Argyll 1.1.0. Removed obsolete permissions and policy files.</li>
 							<li>Linux: In multi-display setups using separate X screens, it should no longer be necessary to launch dispcalGUI on the display you want to measure.</li>
 							<li>Windows: Get names of displays via additional Windows API calls (should yield more descriptive names than “DISPLAY1”, “DISPLAY2” etc.)</li>
@@ -1290,10 +1331,10 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>LUT Viewer: When no display is selected (i.e. when Argyll binaries are not found), it will now try to show the vcgt of the 1st display's profile.</li>
-							<li>LUT Viewer: When hiding the viewer and loading different LUT curves, those changes were not reflected when showing the viewer again.</li>
-							<li>LUT Viewer: If a profile does not contain a 'vcgt' tag, clear canvas and disable R/G/B checkboxes.</li>
-							<li>Selection of display used for video LUT access not working correctly.</li>
+							<li>Curve viewer: When no display is selected (i.e. when Argyll binaries are not found), it will now try to show the vcgt of the 1st display's profile.</li>
+							<li>Curve viewer: When hiding the viewer and loading different calibration curves, those changes were not reflected when showing the viewer again.</li>
+							<li>Curve viewer: If a profile does not contain a 'vcgt' tag, clear canvas and disable R/G/B checkboxes.</li>
+							<li>Selection of display used for video card gamma table access not working correctly.</li>
 							<li>Loading of calibration upon initial preview in profile installation dialog if profile does not contain dispcalGUI settings.</li>
 							<li>Do not show failure message if user cancels profile installation via the password dialog when installing in system scope.</li>
 							<li>In some cases, values read from the configuration file were not correctly validated (would only show with deliberately altered or broken config file).</li>
@@ -1302,11 +1343,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Linux/Mac OS X: Enabling the Spyder 2 colorimeter might need elevated privileges.</li>
 							<li>Linux/Mac OS X: When installing a profile in local system scope, the necessary password was not accepted under newer Linux distros and also Mac OS X &gt; 10.4.11</li>
 							<li>Mac OS X (cosmetic): Suppress spurious AppleScript messages.</li>
-							<li>Windows: Get display profile via registry instead of Windows API because the latter does not reflect runtime changes to profile associations (you still need to refresh the LUT Viewer when changing profile associations <em>outside</em> of dispcalGUI while it is running).</li>
+							<li>Windows: Get display profile via registry instead of Windows API because the latter does not reflect runtime changes to profile associations (you still need to refresh the curve viewer when changing profile associations <em>outside</em> of dispcalGUI while it is running).</li>
 						</ul>
 						<h3>Known issues in this release:</h3>
 						<ul>
-							<li>Linux: You can't interact with the drop-down menu or the checkboxes in the LUT Viewer while a profile installation dialog is shown.</li>
+							<li>Linux: You can't interact with the drop-down menu or the checkboxes in the curve viewer while a profile installation dialog is shown.</li>
 						</ul>
 					</dd>
 				
@@ -1328,13 +1369,13 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 					<dd>
 						<ul>
 							<li>fix: Only look at &lt;major&gt;.&lt;minor&gt; during the Python version check (fixes a critical error on Ubuntu 9.10 Beta, where the Python revision number has an unexpected value).</li>
-							<li>fix: The <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> Viewer is now also able to plot curves from *.cal files.</li>
+							<li>fix: The curve viewer is now also able to plot calibration curves from *.cal files.</li>
 							<li>fix (Linux): If launched on an X display which is not the first display, the measurement window's location no longer determines the display which is used for measurements. This allows non-Xinerama multiscreen configurations to work with dispcalGUI. Note: You need to launch dispcalGUI on the display you want to measure, e.g. <code>`DISPLAY=:0.1 dispcalGUI`</code>.</li>
-							<li>fix (Linux): Get the profile from the correct display when loading a display's <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves into the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> Viewer.</li>
-							<li>fix (Linux, cosmetic): Suppress CUPS warnings encountered on some systems when using the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> Viewer.</li>
+							<li>fix (Linux): Get the profile from the correct display when loading a display's calibration curves into the curve viewer.</li>
+							<li>fix (Linux, cosmetic): Suppress CUPS warnings encountered on some systems when using the curve viewer.</li>
 							<li>fix (Mac OS X): Do not offer 'Network' scope during profile installation if <code>/Network/Library/ColorSync/Profiles</code> does not exist.</li>
 							<li>fix (Windows, cosmetic): Made sure the message "Debug: src/helpers.cpp(140): 'CreateActCtx' failed with error 0x0000007b (the filename, directory name, or volume label syntax is incorrect.)" is not shown when launching the standalone Windows executable, by changing the way *.pyd files are bundled (they are now copied to the executable's directory and are no longer part of the executable itself).</li>
-							<li>chg: The <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> Viewer resets to linear if a display without associated profile is selected.</li>
+							<li>chg: The curve viewer resets to linear if a display without associated profile is selected.</li>
 						</ul>
 					</dd>
 				
@@ -1348,7 +1389,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>fix (Windows): several errors related to character encoding.</li>
 							<li>chg: unattended calibration and profiling: wait 10 seconds instead of 5 after calibration before trying to start profiling measurements (some instruments seem to need longer to initialize than others, e.g. Spyder 2).</li>
 							<li>chg (Python packages and source): instead of requiring wxPython 2.8.x specifically, only ensure a minimal version of 2.8.</li>
-							<li>add: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> viewer.</li>
+							<li>add: Curve viewer.</li>
 						</ul>
 					</dd>
 				
@@ -1433,12 +1474,12 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>fix: (Linux) “No module named _md5” error with the standalone executable on some Linux distros (apparently an OpenSSL-related issue, because normally it wouldn't fall back to the legacy _md5 module which is not even built by default in recent Python versions). The fallback _md5 module is now included.</li>
 							<li>fix: calibration was not automatically added &amp; selected in the dropdown menu when only calibrating.</li>
 							<li>fix: dropping a profile which was not created in dispcalGUI onto the application window no longer results in an unhandled error.</li>
-							<li>fix: when trying to load <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> curves from a profile which actually does not contain any, an error message is now shown instead of resetting the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> to linear and erroneously stating the curves were succesfully loaded.</li>
+							<li>fix: when trying to load calibration curves from a profile which actually does not contain any, an error message is now shown instead of resetting the video card gamma table to linear and erroneously stating the curves were succesfully loaded.</li>
 							<li>fix: add display device name as device model description when profiling.</li>
 							<li>fix: when creating a new profile from an existing profile, use that profile's device model description if present.</li>
 							<li>fix: also create .app/.sh/.cmd files when creating a new profile from existing measurement data.</li>
 							<li>fix: restore advanced gamut mapping options to default if selecting a profile which does not contain those settings.</li>
-							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> profiles regardless of source profile type.</li>
+							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> profiles regardless of source profile type.</li>
 							<li>fix: if the screen or instrument that was selected in a previous session is not available, select an available one.</li>
 							<li>fix: (Mac) the “enable spyder 2” menu item would not allow to select files other than “setup.exe”.</li>
 							<li>fix: [src] (Mac) if dispcalGUI was installed as application and then run from (separate) source, multiple copies were launched at certain occasions.</li>
@@ -1479,14 +1520,14 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>2008-12-24 0.2.1b</dt>
 					<dd>
 						<ul>
-							<li>fix: video <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> access check always returned false when no display profile was set.</li>
+							<li>fix: video card gamma table access check always returned false when no display profile was set.</li>
 							<li>chg: (Linux) dispcalGUI now uses the autostart specification from freedesktop.org for the profile loader under Linux when installing profiles. NOTE for users: This also means you should manually remove any autostarts from previous versions, e.g.<br/>
 							<code>rm ~/.gnome2/dispwin-*.sh<br/>
 							rm ~/.kde/Autostart/dispwin-*.sh</code><br/>
 							and then re-install your current profile so the new loader is created. The new loader will be created in $XDG_CONFIG_HOME/autostart/ (if set) or ~/.config/autostart/ (if not set), with the filename dispcalGUI-Calibration-Loader-Display-<strong>x</strong>.desktop, where <strong>x</strong> is the display number.</li>
 							<li>chg: the calibration loader will check if gnome-screensaver is running and if so, exit it before loading the calibration, then start it again to prevent resetting the calibration when activated.</li>
 							<li>chg: .sh/.cmd file in profile folder is no longer created when just installing a profile.</li>
-							<li>add: message box when selecting <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> as profile type with recommendation to use more samples for higher quality profiles.</li>
+							<li>add: message box when selecting <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> as profile type with recommendation to use more samples for higher quality profiles.</li>
 							<li>add: default to english locale if translation doesn't exist.</li>
 						</ul>
 					</dd>
@@ -1505,18 +1546,18 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>chg: renamed “Display type” to “Measurement mode” and moved over to measurement device selector.</li>
 							<li>chg: default to “LCD” for measurement mode.</li>
 							<li>chg: default testchart file names are now localized.</li>
-							<li>chg: new default testcharts, four flavours: matrix default (91 patches), <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> default (127 patches), large (512 patches) and massive (3012 patches).</li>
+							<li>chg: new default testcharts, four flavours: matrix default (91 patches), <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> default (127 patches), large (512 patches) and massive (3012 patches).</li>
 							<li>chg: testchart selector is now a dropdown box, shows all testchart files in chosen directory plus the default testcharts.</li>
 							<li>chg: [build/src] new and improved build system.</li>
-							<li>chg: [build/src] Python 2.6 is now the recommended version to run and/or build dispcalGUI. Python 2.5 is still supported, but you will not be able to cancel profile or testchart creation through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym>.</li>
+							<li>chg: [build/src] Python 2.6 is now the recommended version to run and/or build dispcalGUI. Python 2.5 is still supported, but you will not be able to cancel profile or testchart creation through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>.</li>
 							<li>chg: (Linux) externally installed wxGTK is no longer a dependency for executables.</li>
 							<li>chg: [build] Executables are now completely self-contained. The following paths are searched for additional language files: <code>&lt;user home directory&gt;/dispcalGUI/lang</code>, <code>&lt;dispcalGUI root directory&gt;/lang</code></li>
 							<li>add: all settings now stored in profile whenever possible.</li>
 							<li>add: “Install” button next to settings dropdown to install selected profile.</li>
-							<li>add: dropdown to choose the display to use for <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> access if all of the following applies:<br />
+							<li>add: dropdown to choose the display to use for video card gamma table access if all of the following applies:<br />
 								- more than one display connected<br />
-								- one of those displays seems to have non-working <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> access (detected on startup)<br />
-								- one of those displays seems to have working <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym> access (detected on startup)</li>
+								- one of those displays seems to have non-working video card gamma table access (detected on startup)<br />
+								- one of those displays seems to have working video card gamma table access (detected on startup)</li>
 							<li>add: show patch count of selected testchart next to dropdown.</li>
 							<li>add: ability to select an icc profile (if it contains appropriate data) or measurement data file (.ti3) as testchart (converted on-the-fly).</li>
 							<li>add: testchart generator with editing cabability (experimental)<br />
@@ -1524,14 +1565,14 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 								- to add a patch, double-click a row label<br />
 								- to delete patches, select them, then hold CTRL or CMD and hit DEL or BACKSPACE (will always delete whole rows even if only single cells selected)<br />
 								- CTRL-C/CTRL-V/CTRL-A = copy/paste/select all</li>
-							<li>add: advanced gamut mapping options for <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-type profiles, can also be used to overcome an apparent Photoshop CS3 bug under Mac OS X where the brush cursor shows strange artifacts when using <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[2]</a></sup></acronym>-profiles with only one intent (thanks to Klaus Karcher for reporting this).</li>
+							<li>add: advanced gamut mapping options for <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles, can also be used to overcome an apparent Photoshop CS3 bug under Mac OS X where the brush cursor shows strange artifacts when using <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-profiles with only one intent (thanks to Klaus Karcher for reporting this).</li>
 							<li>add: ability to generate profile from existing measurement data, even from an existing profile (if it contains appropriate data).</li>
 							<li>add: drag and drop calibration files (.cal), profiles (.icc/.icm), testcharts (.ti1) and measurement data files (.ti3) to the main window to process/select them (does not work very reliably on Mac OS X depending on where you drop the files, and you also get no optical feedback during the drag operation like the changed mouse cursor on Linux/Windows. Your best bet when dropping any files is perhaps the unoccupied area below “Settings”).</li>
 							<li>add: fully movable/resizable measurement window.</li>
-							<li>add: profile and testchart creation can be aborted (when running from source only if using Python >= 2.6).</li>
+							<li>add: profile and testchart creation can be aborted (when running from source only if using Python &gt;= 2.6).</li>
 							<li>add: “Before” / “After” switch when calibration / profiling complete.</li>
 							<li>add: menu item to enable Spyder 2 from within dispcalGUI.</li>
-							<li>add: italian and spanish <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[3]</a></sup></acronym> translations (thanks contributors!)</li>
+							<li>add: italian and spanish <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> translations (thanks contributors!)</li>
 							<li>Numerous other small fixes/changes.</li>
 						</ul>
 					</dd>
@@ -1547,20 +1588,24 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		<div id="definitions">
 			<h2>Definitions</h2>
 			<dl>
-				<dt>[1] <span id="definition_CMM">CMM</span> / <span id="definition_CMS">CMS</span></dt>
+				<dt id="definition_CGATS">[1] CGATS</dt>
+					<dd><span>Graphic Arts Technologies Standards, CGATS.5 Data Exchange Format (ANSI CGATS.5-1993 Annex J)</span></dd>
+				<dt>[2] <span id="definition_CMM">CMM</span> / <span id="definition_CMS">CMS</span></dt>
 					<dd>Color Management Module / Color Management System</dd>
-				<dt id="definition_LUT">[2] LUT</dt>
-					<dd>Look Up Table — <a href="http://en.wikipedia.org/wiki/Lookup_table">en.wikipedia.org/wiki/Lookup_table</a></dd>
-				<dt id="definition_GUI">[3] GUI</dt>
-					<dd>Graphical User Interface</dd>
-				<dt id="definition_GPL">[4] GPL</dt>
+				<dt id="definition_GPL">[3] GPL</dt>
 					<dd>GNU General Public License — <a href="http://gnu.org/licenses/gpl.html">gnu.org/licenses/gpl.html</a></dd>
-				<dt id="definition_JSON">[5] JSON</dt>
-					<dd>JavaScript Object Notation, a lightweight data-interchange format — <a href="http://json.org">json.org</a></dd>
-				<dt id="definition_SVN">[6] SVN</dt>
-					<dd>Subversion, a version-control system — <a href="http://subversion.tigris.org">subversion.tigris.org</a></dd>
-				<dt id="definition_ICC">[7] ICC</dt>
+				<dt id="definition_GUI">[4] GUI</dt>
+					<dd>Graphical User Interface</dd>
+				<dt id="definition_ICC">[5] ICC</dt>
 					<dd>International Color Consortium — <a href="http://color.org">color.org</a></dd>
+				<dt id="definition_JSON">[6] JSON</dt>
+					<dd>JavaScript Object Notation, a lightweight data-interchange format — <a href="http://json.org">json.org</a></dd>
+				<dt id="definition_LUT">[7] LUT</dt>
+					<dd>Look Up Table — <a href="http://en.wikipedia.org/wiki/Lookup_table">en.wikipedia.org/wiki/Lookup_table</a></dd>
+				<dt id="definition_SVN">[8] SVN</dt>
+					<dd>Subversion, a version-control system — <a href="http://subversion.tigris.org">subversion.tigris.org</a></dd>
+				<dt id="definition_UAC">[9] UAC</dt>
+					<dd>User Account Control — <a href="http://en.wikipedia.org/wiki/User_Account_Control">en.wikipedia.org/wiki/User_Account_Control</a></dd>
 			</dl>
 		</div>
 		

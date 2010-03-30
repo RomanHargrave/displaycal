@@ -1,16 +1,35 @@
 var CRITERIA_RULES_NEUTRAL = [
 		// description, [[R, G, B],...], DELTA_[E|L|C|H]_[MAX|MED|MAD|AVG|STDDEV], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
-		["Average ΔE*76", [], DELTA_E_AVG, 3, 2, CIE76],
-		["Maximum ΔE*76", [], DELTA_E_MAX, 6, 5, CIE76],
-		["Median ΔE*76", [], DELTA_E_MED, null, null, CIE76],
-		["Median absolute deviation ΔE*76", [], DELTA_E_MAD, null, null, CIE76],
-		["Standard deviation ΔE*76", [], DELTA_E_STDDEV, null, null, CIE76],
+		["Whitepoint ΔE*76", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE76],
+		["Whitepoint ΔE*94", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE94],
+		["Whitepoint ΔE*00", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE00],
+		["Average ΔE*76", [], DELTA_E_AVG, null, null, CIE76],
+		["Average ΔE*94", [], DELTA_E_AVG, null, null, CIE94],
 		["Average ΔE*00", [], DELTA_E_AVG, null, null, CIE00],
+		["Maximum ΔE*76", [], DELTA_E_MAX, null, null, CIE76],
+		["Maximum ΔE*94", [], DELTA_E_MAX, null, null, CIE94],
 		["Maximum ΔE*00", [], DELTA_E_MAX, null, null, CIE00],
+		["Median ΔE*76", [], DELTA_E_MED, null, null, CIE76],
+		["Median ΔE*94", [], DELTA_E_MED, null, null, CIE94],
 		["Median ΔE*00", [], DELTA_E_MED, null, null, CIE00],
+		["Median absolute deviation ΔE*76", [], DELTA_E_MAD, null, null, CIE76],
+		["Median absolute deviation ΔE*94", [], DELTA_E_MAD, null, null, CIE94],
 		["Median absolute deviation ΔE*00", [], DELTA_E_MAD, null, null, CIE00],
+		["Standard deviation ΔE*76", [], DELTA_E_STDDEV, null, null, CIE76],
+		["Standard deviation ΔE*94", [], DELTA_E_STDDEV, null, null, CIE94],
 		["Standard deviation ΔE*00", [], DELTA_E_STDDEV, null, null, CIE00]
 	],
+	CRITERIA_RULES_DEFAULT = CRITERIA_RULES_NEUTRAL.clone();
+
+CRITERIA_RULES_DEFAULT[0][3] = 2; // Whitepoint ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[0][4] = 1; // Whitepoint ΔE*76 recommended
+CRITERIA_RULES_DEFAULT[3][3] = 3; // Average ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[3][4] = 1.5; // Average ΔE*76 recommended
+CRITERIA_RULES_DEFAULT[6][3] = 6; // Maximum ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[6][4] = 3; // Maximum ΔE*76 recommended
+
+var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
+	CRITERIA_RULES_CMYK = CRITERIA_RULES_DEFAULT.clone(),
 	CRITERIA_DEFAULT = {
 		fields_compare: ['LAB_L', 'LAB_A', 'LAB_B'],
 		name: "Default",
@@ -21,7 +40,22 @@ var CRITERIA_RULES_NEUTRAL = [
 		delta_calc_method: CIE76, // delta calculation method for overview
 		warn_deviation: 3,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
-		rules: CRITERIA_RULES_NEUTRAL.clone()
+		rules: CRITERIA_RULES_DEFAULT
+	},
+	CRITERIA_CMYK = {
+		fields_match: ['CMYK_C', 'CMYK_M', 'CMYK_Y', 'CMYK_K'],
+		fields_compare: ['LAB_L', 'LAB_A', 'LAB_B'],
+		id: "CMYK",
+		name: "CMYK",
+		strip_name: "CMYK",
+		passtext: "Nominal tolerance passed",
+		failtext: "Nominal tolerance exceeded",
+		passrecommendedtext: "Recommended tolerance passed",
+		failrecommendedtext: null,
+		delta_calc_method: CIE76, // delta calculation method for overview
+		warn_deviation: 3,
+			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
+		rules: CRITERIA_RULES_CMYK
 	},
 	CRITERIA_ISO12647_7 = {
 		fields_match: ['CMYK_C', 'CMYK_M', 'CMYK_Y', 'CMYK_K'],
@@ -33,7 +67,7 @@ var CRITERIA_RULES_NEUTRAL = [
 		delta_calc_method: CIE76, // delta calculation method for overview
 		warn_deviation: 5,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
-		rules: CRITERIA_RULES_NEUTRAL.concat([
+		rules: CRITERIA_RULES_CMYK.concat([
 			// description, [[C, M, Y, K],...], DELTA_[E|L|C|H]_[MAX|AVG], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
 			["Paper white ΔE*76", [[0, 0, 0, 0]], DELTA_E_MAX, 3, 1, CIE76],
 			/* ["Average ΔE*", [], DELTA_E_AVG, 3, 2, CIE76],
@@ -59,49 +93,34 @@ var CRITERIA_RULES_NEUTRAL = [
 				[10, 6, 6, 0]
 			], DELTA_H_AVG, 1.5, 0.5, CIE76]
 		])
-	};
-
-CRITERIA_DEFAULT.rules[5][3] = 1.5;
-CRITERIA_DEFAULT.rules[5][4] = 1;
-CRITERIA_DEFAULT.rules[6][3] = 4;
-CRITERIA_DEFAULT.rules[6][4] = 3;
-
-var CRITERIA_FOGRA_MEDIAWEDGE_3 = CRITERIA_ISO12647_7,
+	},
+	CRITERIA_FOGRA_MEDIAWEDGE_3 = CRITERIA_ISO12647_7,
 	comparison_criteria = { // values MUST pass these criteria
 		RGB: CRITERIA_DEFAULT.clone(),
-		CMYK: CRITERIA_DEFAULT.clone(),
+		CMYK: CRITERIA_CMYK,
 		FOGRA_MW3: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA28_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA29_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA30_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA31_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA32_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA39_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA40_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA41_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA42_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA43_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3,
-		FOGRA44_MW3_SUBSET: CRITERIA_FOGRA_MEDIAWEDGE_3
 	};
+
+for (var i=27; i<=47; i++) {
+	comparison_criteria['1x_MW2_FOGRA' + i + 'L_SB'] = CRITERIA_FOGRA_MEDIAWEDGE_3;
+	comparison_criteria['2x_MW2_FOGRA' + i + 'L_SB'] = CRITERIA_FOGRA_MEDIAWEDGE_3;
+	comparison_criteria['FOGRA' + i + '_MW2_SUBSET'] = CRITERIA_FOGRA_MEDIAWEDGE_3;
+	comparison_criteria['FOGRA' + i + '_MW3_SUBSET'] = CRITERIA_FOGRA_MEDIAWEDGE_3;
+};
 	
 CRITERIA_FOGRA_MEDIAWEDGE_3.id = 'FOGRA_MW3';
 CRITERIA_FOGRA_MEDIAWEDGE_3.name = "Fogra Media Wedge V3";
 CRITERIA_FOGRA_MEDIAWEDGE_3.strip_name = "Ugra/Fogra Media Wedge CMYK V3.0";
 
-comparison_criteria.CMYK.id = 'CMYK';
-comparison_criteria.CMYK.fields_match = ['CMYK_C', 'CMYK_M', 'CMYK_Y', 'CMYK_K'];
-comparison_criteria.CMYK.name = "CMYK default",
-comparison_criteria.CMYK.strip_name = "CMYK";
-
 comparison_criteria.RGB.id = 'RGB';
 comparison_criteria.RGB.fields_match = ['RGB_R', 'RGB_G', 'RGB_B'];
-comparison_criteria.RGB.name = "RGB default",
+comparison_criteria.RGB.name = "RGB",
 comparison_criteria.RGB.strip_name = "RGB";
 
 comparison_criteria.VERIFY = comparison_criteria.RGB.clone();
 comparison_criteria.VERIFY.id = 'VERIFY';
-comparison_criteria.VERIFY.name = "RGB default + gray balance";
-comparison_criteria.VERIFY.rules = CRITERIA_DEFAULT.rules.concat(
+comparison_criteria.VERIFY.name = "RGB + gray balance";
+comparison_criteria.VERIFY.rules = CRITERIA_RULES_VERIFY.concat(
 	[
 		["RGB gray balance average ΔC*76", [
 			[12.5, 12.5, 12.5],
@@ -128,8 +147,8 @@ comparison_criteria.VERIFY.rules = CRITERIA_DEFAULT.rules.concat(
 
 comparison_criteria.VERIFY_EXTENDED = comparison_criteria.RGB.clone();
 comparison_criteria.VERIFY_EXTENDED.id = 'VERIFY_EXTENDED';
-comparison_criteria.VERIFY_EXTENDED.name = "RGB default + gray balance (extended)";
-comparison_criteria.VERIFY_EXTENDED.rules = CRITERIA_DEFAULT.rules.concat(
+comparison_criteria.VERIFY_EXTENDED.name = "RGB + gray balance (extended)";
+comparison_criteria.VERIFY_EXTENDED.rules = CRITERIA_RULES_VERIFY.concat(
 	[
 		["RGB gray balance average ΔC*76", [
 			[ 5,  5,  5],

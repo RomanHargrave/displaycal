@@ -40,8 +40,11 @@
 			<input type="hidden" name="FF_display" value="${DISPLAY}" />
 			<input type="hidden" name="FF_instrument" value="${INSTRUMENT}" />
 			<input type="hidden" name="FF_profile" value="${PROFILE}" />
+			<input type="hidden" name="FF_profile_whitepoint" value="${PROFILE_WHITEPOINT}" />
 			<input type="hidden" name="FF_whitepoint" value="${WHITEPOINT}" />
+			<input type="hidden" name="FF_whitepoint_normalized" value="${WHITEPOINT_NORMALIZED}" />
 			<input type="hidden" name="FF_testchart" value="${TESTCHART}" />
+			<input type="hidden" name="FF_adaption" value="${ADAPTION}" />
 			<input type="hidden" name="FF_datetime" value="${DATETIME}" />
 			<input type="hidden" name="FF_data_in" value="${MEASURED}" />
 			<input type="hidden" name="FF_data_ref" value="${REF}" />
@@ -61,7 +64,7 @@
 			</p>
 			<p class="options">
 				Delta E formula for overview:
-				<select name="FF_delta_calc_method" id="FF_delta_calc_method" onchange="compare()">
+				<select name="FF_delta_calc_method" id="FF_delta_calc_method" onchange="compare(false)">
 					<option value="CIE76">CIE 1976</option>
 					<option value="CIE94">CIE 1994</option>
 					<option value="CIE00">CIE 2000</option>

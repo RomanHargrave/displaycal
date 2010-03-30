@@ -31,12 +31,13 @@ td, th {
 	border-bottom: 1px solid silver;
 	padding: .125em .25em .125em 0;
 	text-align: center;
+	white-space: nowrap;
 }
 table.info td, table.info th, td.first-column, th.first-column {
 	text-align: left;
 }
 table.info th {
-	width: 15em;
+	padding-right: 1em;
 }
 td.patch {
 	border-left: none;
@@ -55,11 +56,15 @@ div.patch {
 	padding: .125em .25em .125em 0;
 	width: 1.75em;
 }
+td.patch.sample_id,
+div.patch.sample_id {
+	width: auto;
+}
 .ok {
 	color: #339900;
 }
 .warn {
-	color: #FF9900;
+	color: #FF3300;
 	font-weight: bold;
 }
 .ko {
