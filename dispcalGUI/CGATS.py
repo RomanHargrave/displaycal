@@ -86,14 +86,22 @@ class CGATS(dict):
 	type = 'ROOT'
 	vmaxlen = 0
 	
-	def __init__(self, cgats=None):
+	def __init__(self, cgats=None, normalize_fields=False, file_identifier="CTI3"):
 		"""
 		Return a CGATS instance.
 		
 		cgats can be a path, a string holding CGATS data, or a file object.
 		
+		If normalize_fields evaluates to True, convert all KEYWORDs and all 
+		fields in DATA_FORMAT to UPPERCASE and SampleId or SampleName to
+		SAMPLE_ID or SAMPLE_NAME respectively
+		
+		file_identifier is used as fallback if no file identifier is present
+		
 		"""
 		
+		self.normalize_fields = normalize_fields
+		self.file_identifier = file_identifier
 		self.root = self
 		
 		if cgats:
@@ -101,7 +109,7 @@ class CGATS(dict):
 			if isinstance(cgats, list):
 				raw_lines = cgats
 			else:
-				if isinstance(cgats, (str, unicode)):
+				if isinstance(cgats, basestring):
 					if cgats.find('\n') < 0 and cgats.find('\r') < 0:
 						# assume filename
 						cgats = open(cgats, 'rU')
@@ -128,6 +136,7 @@ class CGATS(dict):
 				comment_offset = line.find('#')
 				if comment_offset >= 0: # strip comment
 					line = line[:comment_offset].strip()
+				##print line
 				values = [value.strip('"') for value in line.split()]
 				if line == 'BEGIN_DATA_FORMAT':
 					context['DATA_FORMAT'] = CGATS()
@@ -159,9 +168,9 @@ class CGATS(dict):
 					context = context.parent
 				elif context.type in ('DATA_FORMAT', 'DATA'):
 					if len(values):
-						context.add_data(values)
+						context = context.add_data(values)
 				elif context.type == 'SECTION':
-					context.add_data(line)
+					context = context.add_data(line)
 				elif len(values) > 1:
 					if values[0] == 'Date:':
 						context.datetime = line
@@ -172,12 +181,11 @@ class CGATS(dict):
 						if match:
 							key, value, comment = match.groups()
 							if value != None:
-								context.add_data({key: value.strip('"')})
+								context = context.add_data({key: value.strip('"')})
 							else:
-								context.add_data({key: ''})
+								context = context.add_data({key: ''})
 				elif line and values[0] not in ('Comment:', 'Date:'):
-					self.add_data(line)
-					context = self[-1]
+					context = self.add_data(line)
 			self.setmodified(False)
 
 	def __delattr__(self, name):
@@ -205,7 +213,7 @@ class CGATS(dict):
 		elif name in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
 			return object.__getattribute__(self, name)
 		elif name in self:
-			if str(name).upper() in ('INDEX', 'SAMPLE_ID'):
+			if str(name).upper() in ('INDEX', 'SAMPLE_ID', 'SAMPLEID'):
 				if type(self.get(name)) not in (int, float):
 					return self.get(name)
 				if str(name).upper() == 'INDEX':
@@ -227,8 +235,9 @@ class CGATS(dict):
 	def __setattr__(self, name, value):
 		if name == 'modified':
 			self.setmodified(value)
-		elif name in ('datetime', 'filename', 'key', 'mtime', 'parent', 
-					  'root', 'type', 'vmaxlen'):
+		elif name in ('datetime', 'filename', 'file_identifier', 'key', 
+					  'mtime', 'normalize_fields', 'parent', 'root', 'type', 
+					  'vmaxlen'):
 			object.__setattr__(self, name, value)
 			self.setmodified()
 		else:
@@ -379,6 +388,7 @@ class CGATS(dict):
 		unicode instance.
 		
 		"""
+		context = self
 		if self.type == 'DATA':
 			if type(data) in (CGATS, dict, list, tuple):
 				if self.parent['DATA_FORMAT']:
@@ -397,9 +407,12 @@ class CGATS(dict):
 								raise CGATSKeyError(item)
 						else:
 							value = data[i]
-						if item.upper() in ('INDEX', 'SAMPLE_ID'):
+						if item.upper() in ('INDEX', 'SAMPLE_ID', 'SAMPLEID'):
+							if self.root.normalize_fields and \
+							   item.upper() == 'SAMPLEID':
+								item = 'SAMPLE_ID'
 							# allow alphanumeric INDEX / SAMPLE_ID
-							if isinstance(value, (str, unicode)):
+							if isinstance(value, basestring):
 								match = re.match(
 									'(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
 								if match:
@@ -407,7 +420,8 @@ class CGATS(dict):
 										value = float(value)
 									else:
 										value = int(value)
-						elif item.upper() not in ('SAMPLE_NAME', 'SAMPLE_LOC'):
+						elif item.upper() not in ('SAMPLE_NAME', 'SAMPLE_LOC',
+												  'SAMPLENAME'):
 							try:
 								value = float(value)
 							except ValueError:
@@ -419,6 +433,9 @@ class CGATS(dict):
 								lencheck = len(str(abs(value)))
 								if lencheck > self.vmaxlen:
 									self.vmaxlen = lencheck
+						elif self.root.normalize_fields and \
+							 item.upper() == 'SAMPLENAME':
+							item = 'SAMPLE_NAME'
 						dataset[item] = value
 					if type(key) == int:
 						# accept only integer keys.
@@ -439,7 +456,7 @@ class CGATS(dict):
 									 'CGATS, dict, list or tuple, got %s)' % 
 									 (self.type, type(data)))
 		elif self.type == 'ROOT':
-			if isinstance(data, (str, unicode)) and data.find('\n') < 0 and \
+			if isinstance(data, basestring) and data.find('\n') < 0 and \
 			   data.find('\r') < 0:
 				if type(key) == int:
 					# accept only integer keys.
@@ -456,12 +473,16 @@ class CGATS(dict):
 				# self[key][data].parent = self[key]
 				# self[key][data].type = 'FILE'
 				self[key].type = data
+				context = self[key]
+			elif not len(self):
+				context = self.add_data(self.file_identifier)  # create root element
+				context = context.add_data(data, key)
 			else:
 				raise CGATSTypeError('Invalid data type for %s (expected str '
 									 'or unicode without line endings, got %s)'
 									 % (self.type, type(data)))
 		elif self.type == 'SECTION':
-			if isinstance(data, (str, unicode)):
+			if isinstance(data, basestring):
 				if type(key) == int:
 					# accept only integer keys.
 					# move existing items
@@ -486,6 +507,13 @@ class CGATS(dict):
 								key, value = var, data[var]
 						else:
 							key, value = len(self), var
+						if self.root.normalize_fields:
+							if isinstance(value, basestring):
+								value = value.upper()
+							if value == 'SAMPLEID':
+								value = 'SAMPLE_ID'
+							elif value == 'SAMPLENAME':
+								value = 'SAMPLE_NAME'
 						if var == 'KEYWORD':
 							if value != 'KEYWORD':
 								self.add_keyword(value)
@@ -493,7 +521,7 @@ class CGATS(dict):
 								safe_print('Warning: cannot add keyword '
 											'"KEYWORD"')
 						else:
-							if isinstance(value, (str, unicode)):
+							if isinstance(value, basestring):
 								match = re.match(
 									'(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
 								if match:
@@ -518,6 +546,7 @@ class CGATS(dict):
 		else:
 			raise CGATSInvalidOperationError('Cannot add data to %s' % 
 											 self.type)
+		return context
 	
 	@property
 	def NUMBER_OF_FIELDS(self):
