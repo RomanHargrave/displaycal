@@ -200,6 +200,9 @@ class BaseFrame(wx.Frame):
 		wx.Frame.__init__(self, *args, **kwargs)
 
 	def focus_handler(self, event):
+		if debug and hasattr(self, "last_focused_ctrl"):
+				safe_print("[D] Last focused control: %s" %
+						   self.last_focused_ctrl)
 		if hasattr(self, "last_focused_ctrl") and self.last_focused_ctrl and \
 		   self.last_focused_ctrl != event.GetEventObject():
 			catchup_event = wx.FocusEvent(wx.EVT_KILL_FOCUS.evtType[0], 
@@ -219,8 +222,11 @@ class BaseFrame(wx.Frame):
 				event = CustomEvent(event.GetEventType(), 
 									event.GetEventObject(), 
 									self.last_focused_ctrl)
-		if hasattr(event.GetEventObject, "GetId") and \
-		   callable(event.GetEventObject.GetId):
+		if hasattr(event.GetEventObject(), "GetId") and \
+		   callable(event.GetEventObject().GetId):
+		   	if debug:
+					safe_print("[D] Setting last focused control to %s " %
+							   event.GetEventObject())
 			self.last_focused_ctrl = event.GetEventObject()
 		if debug:
 			if hasattr(event, "GetWindow") and event.GetWindow():
@@ -3451,6 +3457,7 @@ class MainFrame(BaseFrame):
 		self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		
 		# measure
+		self.worker.dispread_after_dispcal = False
 		cmd = get_argyll_util("dispread")
 		args = ["-v"]
 		self.worker.add_measurement_features(args)

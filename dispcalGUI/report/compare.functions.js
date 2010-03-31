@@ -516,7 +516,7 @@ p.generate_report = function(set_delta_calc_method) {
 			if (!rules[j][3]) rgb = [204, 204, 204];
 			else {
 				var rgb = [0, 255, 0],
-					step = 255 / (rules[j][3] + rules[j][3] / 2.5);
+					step = 255 / (rules[j][3] + rules[j][3] / 2);
 				if (Math.abs(result[j].sum) <= rules[j][3]) {
 					rgb[0] += Math.min(step * Math.abs(result[j].sum), 255);
 					rgb[1] -= Math.min(step * Math.abs(result[j].sum), 255);
@@ -599,7 +599,7 @@ p.generate_report = function(set_delta_calc_method) {
 			actual.tolerance_DE = 5;
 		if (actual.actual_DE == null)
 			actual.actual_DE = delta.E;
-		var step = 255 / (actual.tolerance_DE + actual.tolerance_DE / 2.5);
+		var step = 255 / (actual.tolerance_DE + actual.tolerance_DE / 2);
 		if (actual.actual_DE <= actual.tolerance_DE) {
 			rgb[0] += Math.min(step * actual.actual_DE, 255);
 			rgb[1] -= Math.min(step * actual.actual_DE, 255);

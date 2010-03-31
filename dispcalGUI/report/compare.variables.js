@@ -26,7 +26,7 @@ CRITERIA_RULES_DEFAULT[0][4] = 1; // Whitepoint ΔE*76 recommended
 CRITERIA_RULES_DEFAULT[3][3] = 3; // Average ΔE*76 nominal
 CRITERIA_RULES_DEFAULT[3][4] = 1.5; // Average ΔE*76 recommended
 CRITERIA_RULES_DEFAULT[6][3] = 6; // Maximum ΔE*76 nominal
-CRITERIA_RULES_DEFAULT[6][4] = 3; // Maximum ΔE*76 recommended
+CRITERIA_RULES_DEFAULT[6][4] = 4; // Maximum ΔE*76 recommended
 
 var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
 	CRITERIA_RULES_CMYK = CRITERIA_RULES_DEFAULT.clone(),
@@ -38,7 +38,7 @@ var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
 		passrecommendedtext: "Recommended tolerance passed",
 		failrecommendedtext: null,
 		delta_calc_method: CIE76, // delta calculation method for overview
-		warn_deviation: 3,
+		warn_deviation: 5,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
 		rules: CRITERIA_RULES_DEFAULT
 	},
@@ -53,7 +53,7 @@ var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
 		passrecommendedtext: "Recommended tolerance passed",
 		failrecommendedtext: null,
 		delta_calc_method: CIE76, // delta calculation method for overview
-		warn_deviation: 3,
+		warn_deviation: 5,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
 		rules: CRITERIA_RULES_CMYK
 	},
