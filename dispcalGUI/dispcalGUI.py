@@ -1087,7 +1087,7 @@ class MainFrame(BaseFrame):
 		for lstr, lcode in llist:
 			menuitem = languages.Append(-1, "&" + lstr, kind=wx.ITEM_RADIO)
 			menuitem.SetBitmap(
-				flagart.catalog[lcode.upper().replace("EN", "US")].Bitmap)
+				flagart.catalog[lcode.upper().replace("EN", "US")].getBitmap())
 			if lang.getcode() == lcode:
 				menuitem.Check()
 				font = menuitem.Font
@@ -3366,8 +3366,7 @@ class MainFrame(BaseFrame):
 		rgb_labels = ('RGB_R', 'RGB_G', 'RGB_B')
 		scale = 1.0
 		try:
-			cgats = CGATS.CGATS(chart, True, 'CTI1')
-			cgats[0].type = 'CTI1'
+			cgats = CGATS.CGATS(chart, True)
 			rgb = cgats.queryi(rgb_labels)
 			if rgb:
 				for i in rgb:
@@ -3379,6 +3378,7 @@ class MainFrame(BaseFrame):
 					for i in rgb:
 						for label in rgb_labels:
 							rgb[i][label] = rgb[i][label] / scale
+				cgats[0].type = 'CTI1'
 				cgats[0].COLOR_REP = 'RGB'
 				ti1, ti3_ref = self.worker.ti1_lookup_to_ti3(cgats, profile, "l")
 			else:

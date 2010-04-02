@@ -13,7 +13,7 @@ def _intversion(version):
 	return intversion
 
 import wxversion
-minVersion = "2.8.8.0".split(".")
+minVersion = "2.8.6.0".split(".")
 if not getattr(sys, "frozen", False):
 	wxversion.ensureMinimal(".".join(minVersion[:2]))
 import wx
