@@ -259,6 +259,8 @@ def runtimeconfig(pyfile):
 	if sys.platform not in ("darwin", "win32"):
 		data_dirs.append(os.path.join(os.path.sep, "usr", "share", "doc", 
 									  appname))
+		data_dirs.append(os.path.join(os.path.sep, "usr", "share", "doc", 
+									  appname + "-" + version))
 	if isapp:
 		appdir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
 		if debug:
