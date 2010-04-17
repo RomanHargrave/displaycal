@@ -237,16 +237,27 @@ def _winreg_get_display_profile(monkey, current_user=False):
 					# Vista / Windows 7
 					# nothing to be done, _winreg returns a list of strings
 					pass
-				if value:
-					filename = value[-1]  # last one in the list is active
+				if isinstance(value, list):
+					while value:
+						# last existing file in the list is active
+						if os.path.isfile(os.path.join(iccprofiles[0], 
+													   value[-1])):
+							filename = value[-1]
+							break
+						value = value[:-1]
 				else:
-					# fall back to sRGB
-					filename = os.path.join(iccprofiles[0], 
-											"sRGB Color Space Profile.icm")
+					if os.path.isfile(os.path.join(iccprofiles[0], 
+												   value)):
+						filename = value
 			elif name == "UsePerUserProfiles" and not value:
 				filename = None
+				break
 	except Exception, exception:
-		pass
+		raise
+	if not filename and not current_user:
+		# fall back to sRGB
+		filename = os.path.join(iccprofiles[0], 
+								"sRGB Color Space Profile.icm")
 	## print repr(filename)
 	return filename
 
