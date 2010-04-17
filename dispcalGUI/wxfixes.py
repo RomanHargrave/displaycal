@@ -76,11 +76,25 @@ wx.BitmapButton.Disable = BitmapButtonDisable
 
 def FindMenuItem(self, label):
 	""" Replacement for wx.Menu.FindItem """
+	label = GTKMenuItemGetFixedLabel(label)
 	for menuitem in self.GetMenuItems():
-		if menuitem.Label == label:
+		if GTKMenuItemGetFixedLabel(menuitem.Label) == label:
 			return menuitem.GetId()
 
 wx.Menu.FindItem = FindMenuItem
+
+
+def GTKMenuItemGetFixedLabel(label):
+	if sys.platform not in ("darwin", "win32"):
+		# The underscore is a special character under GTK, like the 
+		# ampersand on Mac OS X and Windows
+		# Recent wxPython versions already do the right thing, but we need
+		# this workaround for older releases
+		if "__" in label:
+			label = label.replace("__", "_")
+		while label and label[0] == "_":
+			label = label[1:]
+	return label
 
 
 wx.Window._SetToolTipString = wx.Window.SetToolTipString

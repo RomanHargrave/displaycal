@@ -124,6 +124,7 @@ if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
+from wxfixes import GTKMenuItemGetFixedLabel
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
 					   LogWindow, TooltipWindow)
 
@@ -258,13 +259,15 @@ class BaseFrame(wx.Frame):
 				if not hasattr(menu, "_Label"):
 					# Backup un-translated label
 					menu._Label = label
-				menubar.SetMenuLabel(menu_pos, "&" + lang.getstr(menu._Label))
+				menubar.SetMenuLabel(menu_pos, "&" + lang.getstr(
+									 GTKMenuItemGetFixedLabel(menu._Label)))
 				if not hasattr(menu, "_Items"):
 					# Backup un-translated labels
 					menu._Items = [(item, item.Label) for item in 
 								   menu.GetMenuItems()]
 				for item, label in menu._Items:
 					if item.Label:
+						label = GTKMenuItemGetFixedLabel(label)
 						if item.Accel:
 							item.Text = lang.getstr(label) + "\t" + \
 										item.Accel.ToString()
