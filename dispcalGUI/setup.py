@@ -47,6 +47,7 @@ def setup():
 	print "***", os.path.abspath(sys.argv[0]), " ".join(sys.argv[1:])
 
 	bdist_bbfreeze = "bdist_bbfreeze" in sys.argv[1:]
+	bdist_dumb = "bdist_dumb" in sys.argv[1:]
 	bdist_win = "bdist_msi" in sys.argv[1:] or "bdist_wininst" in sys.argv[1:]
 	debug = 0
 	do_full_install = False
@@ -425,7 +426,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		"requires": requires,
 		"scripts": [],
 		"url": "http://%s.hoech.net/" % name,
-		"version": ".".join(map(str, version_tuple)) if do_py2exe else version
+		"version": version
 	}
 
 	if setuptools:
@@ -540,7 +541,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			attrs["setup_requires"] = ["py2exe"]
 		attrs["zipfile"] = os.path.join("lib", "library.zip")
 
-	if do_uninstall or do_install or bdist_win:
+	if do_uninstall or do_install or bdist_win or bdist_dumb:
 		distutils.core._setup_stop_after = "commandline"
 		dist = setup(**attrs)
 		distutils.core._setup_stop_after = None
