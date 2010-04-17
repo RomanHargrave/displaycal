@@ -77,14 +77,14 @@ def setup_logging():
 				if os.path.exists(logbackup):
 					try:
 						os.remove(logbackup)
-					except:
+					except Exception, exception:
 						safe_print(u"Warning - logfile backup '%s' could not "
 								   u"be removed during rollover: %s" % 
 								   tuple(safe_unicode(s) for s in (logbackup, 
 																   exception)))
 				try:
 					os.rename(logfile, logbackup)
-				except:
+				except Exception, exception:
 					safe_print(u"Warning - logfile '%s' could not be renamed "
 							   u"to '%s' during rollover: %s" % 
 							   tuple(safe_unicode(s) for s in 
@@ -115,7 +115,7 @@ def setup_logging():
 						for logbackup in result[:len(result) - backupCount]:
 							try:
 								os.remove(logbackup)
-							except:
+							except Exception, exception:
 								safe_print(u"Warning - logfile backup '%s' "
 										   u"could not be removed during "
 										   u"rollover: %s" % 
