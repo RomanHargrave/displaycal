@@ -31,6 +31,7 @@ class LUTCanvas(plot.PlotCanvas):
 
 	def __init__(self, *args, **kwargs):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
+		self.canvas.Bind(wx.EVT_LEAVE_WINDOW, None)
 		self.SetBackgroundColour(BGCOLOUR)
 		self.SetEnableAntiAliasing(True)
 		self.SetEnableHiRes(True)
@@ -63,16 +64,16 @@ class LUTCanvas(plot.PlotCanvas):
 		linear_points = []
 
 		if not vcgt:
-			input = range(0, 256)
-			# for i in input:
+			irange = range(0, 256)
+			# for i in irange:
 				# if not detect_increments:
 					# linear_points += [[i, i]]
 		elif "data" in vcgt: # table
-			input = range(0, vcgt['entryCount'])
+			irange = range(0, vcgt['entryCount'])
 			r_points = []
 			g_points = []
 			b_points = []
-			for i in input:
+			for i in irange:
 				j = i * (255.0 / (vcgt['entryCount'] - 1))
 				if not detect_increments:
 					linear_points += [[j, j]]
@@ -104,38 +105,44 @@ class LUTCanvas(plot.PlotCanvas):
 							b_points += [[i - 1, i - 1]]
 						b_points += [[j, n]]
 		else: # formula
-			input = range(0, 256)
+			irange = range(0, 256)
 			step = 100.0 / 255.0
 			r_points = []
 			g_points = []
 			b_points = []
-			for i in input:
+			for i in irange:
 				# float2dec(v) fixes miniscule deviations in the calculated gamma
 				if not detect_increments:
 					linear_points += [[i, (i)]]
 				if r:
-					vmin = vcgt["redMin"] * 255
+					vmin = float2dec(vcgt["redMin"] * 255)
 					v = float2dec(math.pow(step * i / 100.0, vcgt["redGamma"]))
-					vmax = vcgt["redMax"] * 255
+					vmax = float2dec(vcgt["redMax"] * 255)
 					r_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
 				if g:
-					vmin = vcgt["greenMin"] * 255
+					vmin = float2dec(vcgt["greenMin"] * 255)
 					v = float2dec(math.pow(step * i / 100.0, vcgt["greenGamma"]))
-					vmax = vcgt["greenMax"] * 255
+					vmax = float2dec(vcgt["greenMax"] * 255)
 					g_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
 				if b:
-					vmin = vcgt["blueMin"] * 255
+					vmin = float2dec(vcgt["blueMin"] * 255)
 					v = float2dec(math.pow(step * i / 100.0, vcgt["blueGamma"]))
-					vmax = vcgt["blueMax"] * 255
+					vmax = float2dec(vcgt["blueMax"] * 255)
 					b_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
 
-		linear = [[0, 0], [input[-1], input[-1]]]
+		self.entryCount = irange[-1] + 1
+		
+		linear = [[0, 0], [irange[-1], irange[-1]]]
 		
 		if not vcgt:
 			if detect_increments:
 				r_points = g_points = b_points = linear
 			else:
 				r_points = g_points = b_points = linear_points
+		
+		self.r_unique = len(set(round(y) for x, y in r_points))
+		self.g_unique = len(set(round(y) for x, y in g_points))
+		self.b_unique = len(set(round(y) for x, y in b_points))
 
 		legend = []
 		points = []
@@ -154,9 +161,9 @@ class LUTCanvas(plot.PlotCanvas):
 				if points[i] != points[0]:
 					same = False
 					break
-		prefix = ('LIN ' if points and 
-				  points[0] == (linear if detect_increments else 
-				                linear_points) else '')
+		suffix = ((', ' + lang.getstr('linear').capitalize()) if points and 
+					points[0] == (linear if detect_increments else 
+								  linear_points) else '')
 		if len(legend) > 1 and same:
 			if legend == ['R', 'G']:
 				colour = 'yellow'
@@ -167,15 +174,21 @@ class LUTCanvas(plot.PlotCanvas):
 			else:
 				colour = 'white'
 			# Bottom left to top right
-			lines += [Plot(points[0], legend=prefix + '='.join(legend), 
+			lines += [Plot(points[0], legend='='.join(legend) + suffix, 
 						   colour=colour)]
 		else:
 			if r:
-				lines += [Plot(r_points, legend=prefix + 'R', colour='red')]
+				lines += [Plot(r_points, legend='R' + suffix, colour='red')]
 			if g:
-				lines += [Plot(g_points, legend=prefix + 'G', colour='green')]
+				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
+							g_points == (linear if detect_increments else 
+										  linear_points) else '')
+				lines += [Plot(g_points, legend='G' + suffix, colour='green')]
 			if b:
-				lines += [Plot(b_points, legend=prefix + 'B', colour='#0080FF')]
+				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
+							b_points == (linear if detect_increments else 
+										  linear_points) else '')
+				lines += [Plot(b_points, legend='B' + suffix, colour='#0080FF')]
 
 		if not lines:
 			lines += [Plot([])]
@@ -280,7 +293,46 @@ class LUTFrame(wx.Frame):
 		self.curve_select.SetItems(curves)
 		self.curve_select.Enable(len(curves) > 1)
 		self.curve_select.SetSelection(selection)
-	
+
+	def add_tone_values(self, legend):
+		if self.profile and self.curve_select.GetSelection() == 0 and \
+		   'vcgt' in self.profile.tags:
+			colorants = legend[0]
+			if 'R' in colorants or 'G' in colorants or 'B' in colorants:
+				legend.append(lang.getstr("tone_values"))
+			if '=' in colorants:
+				unique = []
+				if 'R' in colorants:
+					unique.append(self.client.r_unique)
+				if 'G' in colorants:
+					unique.append(self.client.g_unique)
+				if 'B' in colorants:
+					unique.append(self.client.b_unique)
+				unique = min(unique)
+				legend[-1] += " %.1f%% (%i/%i)" % (unique / 
+												   (self.client.entryCount / 
+													100.0), unique, 
+												   self.client.entryCount)
+			else:
+				if 'R' in colorants:
+					legend[-1] += " %.1f%% (%i/%i)" % (self.client.r_unique / 
+													   (self.client.entryCount / 
+														100.0), 
+													   self.client.r_unique, 
+													   self.client.entryCount)
+				if 'G' in colorants:
+					legend[-1] += " %.1f%% (%i/%i)" % (self.client.g_unique / 
+													   (self.client.entryCount / 
+														100.0), 
+													   self.client.g_unique, 
+													   self.client.entryCount)
+				if 'B' in colorants:
+					legend[-1] += " %.1f%% (%i/%i)" % (self.client.b_unique / 
+													   (self.client.entryCount / 
+														100.0), 
+													   self.client.b_unique, 
+													   self.client.entryCount)
+
 	def DrawLUT(self, event=None):
 		self.SetStatusText('')
 		curves = None
@@ -296,15 +348,15 @@ class LUTFrame(wx.Frame):
 				   len(self.profile.tags['bTRC']) == 1:
 					# gamma
 					curves = {
-						'redMin': Decimal('0.0'),
+						'redMin': 0.0,
 						'redGamma': self.profile.tags['rTRC'][0],
-						'redMax': Decimal('1.0'),
-						'greenMin': Decimal('0.0'),
+						'redMax': 1.0,
+						'greenMin': 0.0,
 						'greenGamma': self.profile.tags['gTRC'][0],
-						'greenMax': Decimal('1.0'),
-						'blueMin': Decimal('0.0'),
+						'greenMax': 1.0,
+						'blueMin': 0.0,
 						'blueGamma': self.profile.tags['bTRC'][0],
-						'blueMax': Decimal('1.0')
+						'blueMax': 1.0
 					}
 				else:
 					# curves
@@ -318,6 +370,12 @@ class LUTFrame(wx.Frame):
 		self.toggle_red.Enable(bool(curves))
 		self.toggle_green.Enable(bool(curves))
 		self.toggle_blue.Enable(bool(curves))
+		if self.client.last_PointLabel != None:
+			pointXY = self.client.last_PointLabel["pointXY"]
+			self.client._drawPointLabel(self.client.last_PointLabel) #erase old
+			self.client.last_PointLabel = None
+		else:
+			pointXY = (127.5, 127.5)
 		self.client.DrawLUT(curves, title=self.profile.getDescription() if 
 										  self.profile else None, 
 							xLabel=self.xLabel,
@@ -328,6 +386,7 @@ class LUTFrame(wx.Frame):
 							  hasattr(self, "toggle_green") else False, 
 							b=self.toggle_blue.GetValue() if 
 							  hasattr(self, "toggle_blue") else False)
+		wx.CallLater(125, self.OnMotion, pointXY)
 
 	def DrawPointLabel(self, dc, mDataDict):
 		"""
@@ -342,29 +401,37 @@ class LUTFrame(wx.Frame):
 		
 		sx, sy = mDataDict["scaledXY"]  # Scaled x, y of closest point
 		dc.DrawRectangle(sx - 3, sy - 3, 7, 7)  # 7x7 square centered on point
-		px,py = mDataDict["pointXY"]
-		cNum = mDataDict["curveNum"]
-		pntIn = mDataDict["pIndex"]
-		legend = mDataDict["legend"]
+		##px,py = mDataDict["pointXY"]
+		##cNum = mDataDict["curveNum"]
+		##pntIn = mDataDict["pIndex"]
+		##legend = mDataDict["legend"]
 
 	def OnMotion(self, event):
+		if isinstance(event, wx.MouseEvent):
+			xy = self.client._getXY(event)
+		else:
+			xy = event
 		if self.client.GetEnablePointLabel():
 			# Show closest point (when enbled)
 			# Make up dict with info for the point label
-			dlst = self.client.GetClosestPoint(self.client._getXY(event), 
-											   pointScaled= True)
+			dlst = self.client.GetClosestPoint(xy, pointScaled=True)
 			if dlst != []:
 				curveNum, legend, pIndex, pointXY, scaledXY, distance = dlst
-				self.SetStatusText(legend + " " + 
-								   u" \u2192 ".join([str(point) for point in 
-													 pointXY]))
+				legend = legend.split(", ")
+				if self.profile and self.curve_select.GetSelection() == 0 and \
+				   'vcgt' in self.profile.tags:
+					pointXY = [int(round(point)) for point in pointXY]
+				legend[0] += " " + u" \u2192 ".join([str(point) for point in pointXY])
+				self.add_tone_values(legend)
+				self.SetStatusText(", ".join(legend))
 				# Make up dictionary to pass to DrawPointLabel
 				mDataDict= {"curveNum": curveNum, "legend": legend, 
 							"pIndex": pIndex, "pointXY": pointXY, 
 							"scaledXY": scaledXY}
 				# Pass dict to update the point label
 				self.client.UpdatePointLabel(mDataDict)
-		event.Skip() # Go to next handler
+		if isinstance(event, wx.MouseEvent):
+			event.Skip() # Go to next handler
 
 class LUTViewer(wx.App):
 
