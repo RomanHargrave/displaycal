@@ -1,4 +1,14 @@
-var CRITERIA_RULES_NEUTRAL = [
+var CRITERIA_GRAYSCALE = window.CRITERIA_GRAYSCALE || [
+		[12.5, 12.5, 12.5],
+		[25, 25, 25],
+		[37.5, 37.5, 37.5],
+		[50, 50, 50],
+		[62.5, 62.5, 62.5],
+		[75, 75, 75],
+		[87.5, 87.5, 87.5],
+		[100, 100, 100]
+	],
+	CRITERIA_RULES_NEUTRAL = [
 		// description, [[R, G, B],...], DELTA_[E|L|C|H]_[MAX|MED|MAD|AVG|STDDEV], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
 		["Whitepoint ΔE*76", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE76],
 		["Whitepoint ΔE*94", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE94],
@@ -122,77 +132,7 @@ comparison_criteria.VERIFY.id = 'VERIFY';
 comparison_criteria.VERIFY.name = "RGB + gray balance";
 comparison_criteria.VERIFY.rules = CRITERIA_RULES_VERIFY.concat(
 	[
-		["RGB gray balance average ΔC*76", [
-			[12.5, 12.5, 12.5],
-			[25, 25, 25],
-			[37.5, 37.5, 37.5],
-			[50, 50, 50],
-			[62.5, 62.5, 62.5],
-			[75, 75, 75],
-			[87.5, 87.5, 87.5],
-			[100, 100, 100]
-		], DELTA_C_AVG, 1.0, 0.5, CIE76],
-		["RGB gray balance maximum ΔC*76", [
-			[12.5, 12.5, 12.5],
-			[25, 25, 25],
-			[37.5, 37.5, 37.5],
-			[50, 50, 50],
-			[62.5, 62.5, 62.5],
-			[75, 75, 75],
-			[87.5, 87.5, 87.5],
-			[100, 100, 100]
-		], DELTA_C_MAX, 2.0, 1.0, CIE76]
-	]
-);
-
-comparison_criteria.VERIFY_EXTENDED = comparison_criteria.RGB.clone();
-comparison_criteria.VERIFY_EXTENDED.id = 'VERIFY_EXTENDED';
-comparison_criteria.VERIFY_EXTENDED.name = "RGB + gray balance (extended)";
-comparison_criteria.VERIFY_EXTENDED.rules = CRITERIA_RULES_VERIFY.concat(
-	[
-		["RGB gray balance average ΔC*76", [
-			[ 5,  5,  5],
-			[10, 10, 10],
-			[15, 15, 15],
-			[20, 20, 20],
-			[25, 25, 25],
-			[30, 30, 30],
-			[35, 35, 35],
-			[40, 40, 40],
-			[45, 45, 45],
-			[50, 50, 50],
-			[55, 55, 55],
-			[60, 60, 60],
-			[65, 65, 65],
-			[70, 70, 70],
-			[75, 75, 75],
-			[80, 80, 80],
-			[85, 85, 85],
-			[90, 90, 90],
-			[95, 95, 95],
-			[100, 100, 100]
-		], DELTA_C_AVG, 1.0, 0.5, CIE76],
-		["RGB gray balance maximum ΔC*76", [
-			[ 5,  5,  5],
-			[10, 10, 10],
-			[15, 15, 15],
-			[20, 20, 20],
-			[25, 25, 25],
-			[30, 30, 30],
-			[35, 35, 35],
-			[40, 40, 40],
-			[45, 45, 45],
-			[50, 50, 50],
-			[55, 55, 55],
-			[60, 60, 60],
-			[65, 65, 65],
-			[70, 70, 70],
-			[75, 75, 75],
-			[80, 80, 80],
-			[85, 85, 85],
-			[90, 90, 90],
-			[95, 95, 95],
-			[100, 100, 100]
-		], DELTA_C_MAX, 2.0, 1.0, CIE76]
+		["RGB gray balance (>= 1% luminance) average ΔC*76", CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
+		["RGB gray balance (>= 1% luminance) combined Δa*76 and Δb*76 range", CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE76]
 	]
 );

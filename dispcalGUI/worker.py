@@ -1806,6 +1806,76 @@ class Worker():
 		p = sp.Popen([icclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
+		if p.wait() != 0:
+			# error
+			raise IOError(''.join(odata))
+		
+		# treat r=g=b specially: set expected a=b=0
+		gray = []
+		igray = []
+		igray_idx = []
+		for i, line in enumerate(odata):
+			line = line.strip().split('->')
+			line = ''.join(line).split()
+			if line[-1] == '(clip)':
+				line.pop()
+			r, g, b = [float(n) for n in line[:3]]
+			if r == g == b < 100:
+				# if grayscale and not white
+				cie = [float(n) for n in line[5:-1]]
+				if pcs == 'x':
+					# Need to scale XYZ coming from icclu, Lab is already scaled
+					cie = colormath.XYZ2Lab(*[n * 100.0 for n in cie])
+				cie = (cie[0], 0, 0)  # set a=b=0
+				igray.append("%s %s %s" % cie)
+				igray_idx.append(i)
+				if pcs == 'x':
+					cie = colormath.Lab2XYZ(*cie)
+					luminance = cie[1]
+				else:
+					luminance = colormath.Lab2XYZ(*cie)[1]
+				if luminance * 100.0 >= 1:
+					# only add if luminance is greater or equal 1% because 
+					# dark tones fluctuate too much
+					gray.append((r, g, b))
+				if False:  # NEVER?
+					# set cie in odata to a=b=0
+					line[5:-1] = [str(n) for n in cie]
+					odata[i] = ' -> '.join([' '.join(line[:4]), line[4], 
+											' '.join(line[5:])])
+		
+		if igray and False:  # NEVER?
+			# lookup cie->device values for grays through profile using icclu
+			gray = []
+			icclu = get_argyll_util("icclu").encode(fs_enc)
+			cwd = self.create_tempdir()
+			profile.write(os.path.join(cwd, "temp.icc"))
+			p = sp.Popen([icclu, '-fb', '-ir', '-pl', '-s100', "temp.icc"], 
+						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
+						 cwd=cwd)
+			ogray = p.communicate('\n'.join(igray))[0].splitlines()
+			if p.wait() != 0:
+				# error
+				raise IOError(''.join(odata))
+			for i, line in enumerate(ogray):
+				line = line.strip().split('->')
+				line = ''.join(line).split()
+				if line[-1] == '(clip)':
+					line.pop()
+				cie = [float(n) for n in line[:3]]
+				rgb = [float(n) for n in line[5:-1]]
+				if colormath.Lab2XYZ(cie[0], 0, 0)[1] * 100.0 >= 1:
+					# only add if luminance is greater or equal 1% because 
+					# dark tones fluctuate too much
+					gray.append(rgb)
+				# update values in ti1 and data for ti3
+				for n, channel in enumerate(("R", "G", "B")):
+					data[igray_idx[i] + 
+						 white_added_count]["RGB_" + channel] = rgb[n]
+				oline = odata[igray_idx[i]].strip().split('->', 1)
+				odata[igray_idx[i]] = ' [RGB] ->'.join([' '.join(line[5:-1])] + 
+													   oline[1:])
+		
 		self.wrapup(False)
 
 		# write output ti3
@@ -1872,7 +1942,7 @@ class Worker():
 							' '.join(cie) + '\n')
 		ofile.write('END_DATA\n')
 		ofile.seek(0)
-		return ti1, CGATS.CGATS(ofile)[0]
+		return ti1, CGATS.CGATS(ofile)[0], map(list, gray)
 	
 	def ti3_lookup_to_ti1(self, ti3, profile):
 		"""
@@ -1957,6 +2027,9 @@ class Worker():
 		p = sp.Popen([icclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
+		if p.wait() != 0:
+			# error
+			raise IOError(''.join(odata))
 		self.wrapup(False)
 		
 		# write output ti1/ti3

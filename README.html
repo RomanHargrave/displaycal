@@ -353,7 +353,35 @@
 			display: block;
 			overflow: auto;
 		}
+		#history dt {
+			cursor: help;
+		}
+		#history dt + dd {
+			display: none;
+		}
+		#history dt:first-child + dd {
+			display: block;
+		}
 		</style>
+		<script type="text/javascript">
+		//<![CDATA[
+		
+		window.onload = function () {
+			var history = document.getElementById('history'),
+				dt = history.getElementsByTagName('dt'),
+				dd = history.getElementsByTagName('dd');
+			
+			for (var i = 0; i < dt.length; i ++) {
+				if (i == 0) dd[i].style.display = 'block';
+				dt[i].onclick = function () {
+					dd[this.i].style.display = dd[this.i].style.display == 'block' ? 'none' : 'block';
+				};
+				dt[i].i = i;
+			}
+		}
+		
+		//]]>
+		</script>
 	</head>
 	<body>
 	
@@ -367,20 +395,20 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.8.1 (Linux)<br />
-				0.3.8.0 (Mac OS X)<br />
-				0.3.8.0 (Windows)<br />
-				0.3.8.1 (Source)<br />
+				<dd id="version">0.3.8.8 (Linux)<br />
+				0.3.8.8 (Mac OS X)<br />
+				0.3.8.8 (Windows)<br />
+				0.3.8.8 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-04-02 11:34 (UTC)</dd>
+				<dd id="date">2010-04-20 22:46 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
 				<dd><a href="LICENSE.txt"><acronym title="GNU General Public License">GPL</acronym> Version 3</a></dd>
 		</dl>
 		
-		<p class="info">Bug reports, questions, comments, suggestions? Feel free to use the <a href="http://sourceforge.net/tracker/?atid=1127028&amp;group_id=257092&amp;func=browse">issue tracker</a>, <a href="https://sourceforge.net/forum/forum.php?forum_id=932493">support</a> and <a href="https://sourceforge.net/forum/forum.php?forum_id=932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net</p>
+		<p class="info">Bug reports, questions, comments, suggestions? Feel free to use the <a href="http://sourceforge.net/tracker/?group_id=257092&amp;atid=1127028">issue tracker</a>, <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932493">support</a> and <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net</p>
 		
 		<h2>Table of contents</h2>
 		
@@ -471,18 +499,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.1.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.8.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.0.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.0-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.0-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.8.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.8-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.8-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.1.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.8.8.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -1051,7 +1079,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 </dd>
 
 					<dt>Show curves</dt>
-						<dd>Shows the curve viewer, which graphs calibration and profile tone response curves. Please note that if profile tone response curves are graphed and the selected profile is a table-based (LUT) profile, the displayed curves will be from the additional (and optional) matrix 'rTRC'/'gTRC'/'bTRC' tags, <strong>not</strong> the lookup table!</dd>
+						<dd>Shows the curve viewer, which graphs calibration and profile tone response curves and also shows the percentage and amount of tone values for calibration curves. Please note that if profile tone response curves are graphed and the selected profile is a table-based (LUT) profile, the displayed curves will be from the additional (and optional) matrix 'rTRC'/'gTRC'/'bTRC' tags, <strong>not</strong> the lookup table!</dd>
 						
 					<dt>Show actual calibration curves from video card gamma table</dt>
 						<dd>When this menu entry is checked, the curve viewer will show the actual calibration curves from the video card gamma table instead of showing the curves of the currently active profile.</dd>
@@ -1079,7 +1107,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li><a href="#issue-win-uac">MS Windows Vista: The calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
 				<li><a href="#issue-win-spyder2">MS Windows: Enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
 				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
-				<li><a href="#issue-linux-lutaccess">Linux: No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
+				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
 				<li><a href="#issue-linux-kdeqt">Linux (KDE): The application does not look native</a></li>
 				<li><a href="#issue-english">General: Some text is still in english, even though another language is selected</a></li>
 			</ul>
@@ -1106,8 +1134,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<p id="issue-mac-pscursor"><span class="q"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
 			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
 				
-			<p id="issue-linux-lutaccess"><span class="q"><span>Linux:</span> No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
-			<span class="a"><span>Solution:</span> Please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein.</span></p>
+			<p id="issue-linux-lutaccess"><span class="q"><span>Linux/Windows:</span> No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
+			<span class="a"><span>Solution:</span> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein. Under Windows, please see <a href="#issue-win-calload">calibration cannot be loaded</a> if you are under Windows 7 and make sure you have a recent driver for your video card installed.</span></p>
 			
 			<p id="issue-linux-kdeqt"><span class="q"><span>Linux (KDE):</span> The application does not look native<br /></span>
 			<span class="a"><span>Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4).</span></p>
@@ -1149,18 +1177,29 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-04-02 11:34 (UTC) 0.3.8.1 -->
+			<!-- 2010-04-20 22:46 (UTC) 0.3.8.8 -->
 			<dl>
-				<dt>2010-04-02 11:34 (UTC)</dt>
+				<dt>2010-04-20 22:46 (UTC) 0.3.8.8</dt>
 					<dd>
-						<h3>0.3.8.1</h3>
+						<h3>0.3.8.8</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Show percentage and amount of tone values for calibration curves in the curve viewer.</li>
+							<li>Profile verification: Offer gray balance verification for all RGB charts containing grayscales (R=G=B).</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Fixed rare unhandled exception (local variable referenced before assignment) if logfile couldn't be renamed or removed during rollover.</li>
+							<li>Correctly determine display profile under Windows Vista and 7. Fall back to sRGB if no display profile set.</li>
+						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li>Profile verification: Only verify ΔC average of grayscales (R=G=B) if their luminance is atleast 1% of the white luminance. Also look at combined Δa and Δb range instead of ΔC max.</li>
 							<li>Made compatible with wxPython 2.8.6.0.</li>
 						</ul>
 					</dd>
 
-				<dt>2010-03-31 15:24 (UTC)</dt>
+				<dt>2010-03-31 15:24 (UTC) 0.3.8.0</dt>
 					<dd>
 						<h3>0.3.8.0</h3>
 						<h4>Added in this release:</h4>
@@ -1190,7 +1229,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 					
-				<dt>2010-03-17 18:50 (UTC)</dt>
+				<dt>2010-03-17 18:50 (UTC) 0.3.6.4</dt>
 					<dd>
 						<h3>0.3.6.4</h3>
 						<h4>Added in this release:</h4>
@@ -1211,7 +1250,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 				
-				<dt>2010-03-13 06:31 (UTC)</dt>
+				<dt>2010-03-13 06:31 (UTC) 0.3.6.2</dt>
 					<dd>
 						<h3>0.3.6.2</h3>
 						<h4>Added in this release:</h4>
@@ -1233,7 +1272,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 					
-				<dt>2010-03-02 20:12 (UTC)</dt>
+				<dt>2010-03-02 20:12 (UTC) 0.3.3.6</dt>
 					<dd>
 						<h3>0.3.3.6</h3>
 						<h4>Fixed in this release:</h4>
@@ -1246,7 +1285,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 					
-				<dt>2010-03-01 06:27 (UTC)</dt>
+				<dt>2010-03-01 06:27 (UTC) 0.3.3.5</dt>
 					<dd>
 						<h3>0.3.3.5</h3>
 						<h4>Added in this release:</h4>
@@ -1277,7 +1316,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 				
-				<dt>2010-02-17 15:53 (UTC)</dt>
+				<dt>2010-02-17 15:53 (UTC) 0.3.1.0</dt>
 					<dd>
 						<h3>0.3.1.0</h3>
 						<h4>Fixed in this release:</h4>
@@ -1287,7 +1326,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 				
-				<dt>2010-02-15 17:27 (UTC)</dt>
+				<dt>2010-02-15 17:27 (UTC) 0.3.0.9</dt>
 					<dd>
 						<h3>0.3.0.9</h3>
 						<h4>Added in this release:</h4>
@@ -1296,7 +1335,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 				
-				<dt>2010-02-13 16:36 (UTC)</dt>
+				<dt>2010-02-13 16:36 (UTC) 0.3.0.8</dt>
 					<dd>
 						<h3>0.3.0.8</h3>
 						<h4>Fixed in this release:</h4>
@@ -1305,7 +1344,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 					</dd>
 				
-				<dt>2010-02-12 20:13 (UTC)</dt>
+				<dt>2010-02-12 20:13 (UTC) 0.3.0.7</dt>
 					<dd>
 						<h3>0.3.0.7</h3>
 						<h4>Added in this release:</h4>

@@ -3383,9 +3383,10 @@ class MainFrame(BaseFrame):
 							rgb[i][label] = rgb[i][label] / scale
 				cgats[0].type = 'CTI1'
 				cgats[0].COLOR_REP = 'RGB'
-				ti1, ti3_ref = self.worker.ti1_lookup_to_ti3(cgats, profile, "l")
+				ti1, ti3_ref, gray = self.worker.ti1_lookup_to_ti3(cgats, profile, "l")
 			else:
 				ti1, ti3_ref = self.worker.ti3_lookup_to_ti1(cgats, profile)
+				gray = None
 			##print ti3_ref
 		except Exception, exception:
 			InfoDialog(self, msg=safe_unicode(exception), 
@@ -3424,9 +3425,9 @@ class MainFrame(BaseFrame):
 		
 		# setup for measurement
 		self.setup_measurement(self.verify_profile, ti1, profile, ti3_ref, 
-							   save_path, chart)
+							   save_path, chart, gray)
 
-	def verify_profile(self, ti1, profile, ti3_ref, save_path, chart):
+	def verify_profile(self, ti1, profile, ti3_ref, save_path, chart, gray):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("profile.verify"))
 		
@@ -3596,6 +3597,8 @@ class MainFrame(BaseFrame):
 		report_html = report_html.replace("${MEASURED}", 
 										  str(ti3_joined).decode(enc, "replace").replace('"', 
 																	"&quot;"))
+		report_html = report_html.replace("${GRAYSCALE}", 
+										  repr(gray) if gray else 'null')
 		for include in ("base.css", "compare.css", "compare-dark-light.css", 
 						"compare-dark.css", "compare-light.css", 
 						"compare-light-dark.css", "print.css", 

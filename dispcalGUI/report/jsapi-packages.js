@@ -1226,7 +1226,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 				CIE 2000: p1 becomes kL (lightness) weighting factor, p2 becomes kC (chroma) weighting factor and p3 becomes kH (hue) weighting factor
 					(all three default to 1 if not set)
 		*/
-		for (i = 0; i < 6; i ++) if (typeof arguments[i] != "number" || isNaN(arguments[i])) return NaN;
+		for (var i = 0; i < 6; i ++) if (typeof arguments[i] != "number" || isNaN(arguments[i])) return NaN;
 		if (typeof method == "string") method = method.toLowerCase();
 		switch (method) {
 			case "94":

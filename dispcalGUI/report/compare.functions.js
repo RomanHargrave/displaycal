@@ -64,7 +64,7 @@ function dataset(src) {
 	this.id = "RGB";
 	var e = document.forms['F_data'].elements;
 	this.testchart = e['FF_testchart'].value;
-	this.id = basename(splitext(this.testchart)[0]).toUpperCase();
+	this.id = splitext(basename(this.testchart).replace(/^verify_extended\.ti1$/g, 'verify.ti1'))[0].toUpperCase();
 	if (src) {
 		this.src = src;
 		src=cr2lf(src);
@@ -300,6 +300,11 @@ p.generate_report = function(set_delta_calc_method) {
 				actual_rgb_html.push('<div class="patch" style="color: red; position: relative;"><span style="position: absolute;">\u2716</span>&#160;</div>');
 			}
 		};
+		if (rules[j][1].length) {
+			for (var k=0; k<rules[j][1].length; k++) {
+				for (var l=0; l<rules[j][1][k].length; l++) if (!isNaN(rules[j][1][k][l])) rules[j][1][k][l] = rules[j][1][k][l].accuracy(2);
+			}
+		};
 		var silent = false;
 		for (var i=0, n=0; i<this.data.length; i++) {
 				n++;
@@ -314,10 +319,12 @@ p.generate_report = function(set_delta_calc_method) {
 						else 
 							var current_rgb = actual.slice(fields_extract_indexes_i[4], fields_extract_indexes_i[7]),
 								current_cmyk = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[4]);
+						for (var l=0; l<current_rgb.length; l++) current_rgb[l] = current_rgb[l].accuracy(2);
+						for (var l=0; l<current_cmyk.length; l++) current_cmyk[l] = current_cmyk[l].accuracy(2);
 						if ((rules[j][1][k].length == 3 && current_rgb.join(',') == rules[j][1][k].join(',')) || (rules[j][1][k].length == 4 && current_cmyk.join(',') == rules[j][1][k].join(','))) {
 							// if (silent || !confirm('rules[j]: ' + rules[j] + '\nrules[j][1][k]: ' + rules[j][1][k] + '\nthis.data[' + i + ']: ' + this.data[i] + '\ncurrent_rgb: ' + current_rgb + '\ncurrent_cmyk: ' + current_cmyk)) silent = true;
 							if (rules[j][2].indexOf("_MAX") < 0) {
-								if (rules[j][1].length || rules[j][2].indexOf('_MAX') > -1) patch_number_html[k] = ('<div class="patch sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
+								if (rules[j][1].length) patch_number_html[k] = ('<div class="patch sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 								if (no_Lab && !no_XYZ) {
 									target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]);
 									actual_rgb = jsapi.math.color.XYZ2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]);
@@ -381,8 +388,15 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_A_MAD:
 				result[j].sum = jsapi.math.mad(result[j].a);
 				break;
+			case DELTA_A_RANGE:
+				result[j].sum = Math.abs(jsapi.math.max(result[j].a) - jsapi.math.min(result[j].a));
+				break;
 			case DELTA_A_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].a);
+				break;
+				
+			case DELTA_A_B_RANGE:
+				result[j].sum = Math.abs(jsapi.math.absmax(result[j].a)) + Math.abs(jsapi.math.absmax(result[j].b));
 				break;
 				
 			case DELTA_B_MAX:
@@ -396,6 +410,9 @@ p.generate_report = function(set_delta_calc_method) {
 				break;
 			case DELTA_B_MAD:
 				result[j].sum = jsapi.math.mad(result[j].b);
+				break;
+			case DELTA_B_RANGE:
+				result[j].sum = Math.abs(jsapi.math.max(result[j].b) - jsapi.math.min(result[j].b));
 				break;
 			case DELTA_B_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].b);
@@ -413,6 +430,9 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_E_MAD:
 				result[j].sum = jsapi.math.mad(result[j].E);
 				break;
+			case DELTA_E_RANGE:
+				result[j].sum = Math.abs(jsapi.math.max(result[j].E) - jsapi.math.min(result[j].E));
+				break;
 			case DELTA_E_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].E);
 				break;
@@ -428,6 +448,9 @@ p.generate_report = function(set_delta_calc_method) {
 				break;
 			case DELTA_L_MAD:
 				result[j].sum = jsapi.math.mad(result[j].L);
+				break;
+			case DELTA_L_RANGE:
+				result[j].sum = Math.abs(jsapi.math.max(result[j].L) - jsapi.math.min(result[j].L));
 				break;
 			case DELTA_L_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].L);
@@ -445,6 +468,9 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_C_MAD:
 				result[j].sum = jsapi.math.mad(result[j].C);
 				break;
+			case DELTA_C_RANGE:
+				result[j].sum = Math.abs(jsapi.math.max(result[j].C) - jsapi.math.min(result[j].C));
+				break;
 			case DELTA_C_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].C);
 				break;
@@ -460,6 +486,9 @@ p.generate_report = function(set_delta_calc_method) {
 				break;
 			case DELTA_H_MAD:
 				result[j].sum = jsapi.math.mad(result[j].H);
+				break;
+			case DELTA_H_RANGE:
+				result[j].sum = Math.abs(jsapi.math.max(result[j].H) - jsapi.math.min(result[j].H));
 				break;
 			case DELTA_H_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].H);
@@ -573,7 +602,7 @@ p.generate_report = function(set_delta_calc_method) {
 	this.report_html.push('			<th>#</th><th colspan="' + fields_match.slice(0, devlen + 1).length + '">Device Values</th><th colspan="3">Nominal Values</th><th colspan="2">&#160;</th><th colspan="3">Measured Values</th><th colspan="4">ΔE*' + delta_calc_method.substr(3) + '</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
 	this.report_html.push('		<tr>');
-	this.report_html.push('			<th>&#160;</th><th>' + fields_match.slice(0, devlen + 1).join('</th><th>').replace(/\w+?_/g, '') + '</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>&#160;</th><th>&#160;</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>ΔL*</th><th>ΔC*</th><th>ΔH*</th><th>ΔE*</th><th>&#160;</th>');
+	this.report_html.push('			<th>&#160;</th><th>' + fields_match.slice(0, devlen + 1).join('</th><th>').replace(/\w+?_/g, '') + '</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>&#160;</th><th>&#160;</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>ΔL*</th><th>Δa*</th><th>Δb*</th><th>ΔC*</th><th>ΔH*</th><th>ΔE*</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
 	for (var i=0, n=0; i<this.data.length; i++) {
 		n++;
@@ -614,7 +643,7 @@ p.generate_report = function(set_delta_calc_method) {
 		var device = target.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[devlen] + 1);
 		for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
 		if (typeof actual_Lab[2] != 'number') alert(actual);
-		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_Lab[0].accuracy(2) + '</td><td>' + target_Lab[1].accuracy(2) + '</td><td>' + target_Lab[2].accuracy(2) + '</td><td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_Lab[0].accuracy(2) + '</td><td>' + actual_Lab[1].accuracy(2) + '</td><td>' + actual_Lab[2].accuracy(2) + '</td><td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td><td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td style="padding: 0;">' + bar_html.join('') + '</td>');
+		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_Lab[0].accuracy(2) + '</td><td>' + target_Lab[1].accuracy(2) + '</td><td>' + target_Lab[2].accuracy(2) + '</td><td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_Lab[0].accuracy(2) + '</td><td>' + actual_Lab[1].accuracy(2) + '</td><td>' + actual_Lab[2].accuracy(2) + '</td><td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td><td class="' + (actual.actual_Da != null ? (actual.actual_Da.accuracy(2) < actual.tolerance_Da ? 'ok' : (actual.actual_Da.accuracy(2) == actual.tolerance_Da ? 'warn' : 'ko')) : 'info') + '">' + delta.a.accuracy(2) + '</td><td class="' + (actual.actual_Db != null ? (actual.actual_Db.accuracy(2) < actual.tolerance_Db ? 'ok' : (actual.actual_Db.accuracy(2) == actual.tolerance_Db ? 'warn' : 'ko')) : 'info') + '">' + delta.b.accuracy(2) + '</td><td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td style="padding: 0;">' + bar_html.join('') + '</td>');
 		this.report_html.push('		</tr>');
 	};
 	this.report_html.push('	</table>');
