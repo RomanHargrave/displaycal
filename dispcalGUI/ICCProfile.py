@@ -210,7 +210,7 @@ def Property(func):
 def _winreg_get_display_profile(monkey, current_user=False):
 	filename = None
 	try:
-		if current_user:
+		if current_user and sys.getwindowsversion() >= (6, ):
 			# Vista / Windows 7 ONLY
 			subkey = "\\".join(["Software", "Microsoft", "Windows NT", 
 								"CurrentVersion", "ICM", "ProfileAssociations", 
@@ -231,13 +231,13 @@ def _winreg_get_display_profile(monkey, current_user=False):
 					# Win2k/XP
 					# convert to list of strings
 					value = value.decode('utf-16').split("\0")
-					while "" in value:
-						value.remove("")
 				elif type_ == _winreg.REG_MULTI_SZ:
 					# Vista / Windows 7
 					# nothing to be done, _winreg returns a list of strings
 					pass
 				if isinstance(value, list):
+					while "" in value:
+						value.remove("")
 					while value:
 						# last existing file in the list is active
 						if os.path.isfile(os.path.join(iccprofiles[0], 
