@@ -194,6 +194,7 @@ def setup():
 	# (package_data will be ignored when using py2exe)
 	package_data = {
 		name: [
+			"argyll_instruments.json",
 			"lang/*.json",
 			"presets/*.icc",
 			"report/*.css",
@@ -229,6 +230,7 @@ def setup():
 	if sys.platform not in ("darwin", "win32") or do_py2app or do_py2exe:
 		# Linux/Unix or py2app/py2exe
 		data_files += [
+			(data, [os.path.join(pydir, "argyll_instruments.json")]), 
 			(os.path.join(data, "lang"), 
 				[os.path.join(pydir, "lang", os.path.basename(fname)) 
 				 for fname in 

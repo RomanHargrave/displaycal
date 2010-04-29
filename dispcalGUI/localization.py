@@ -9,63 +9,9 @@ import demjson
 
 from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
+from jsondict import JSONDict
 from log import safe_print
 from util_str import safe_unicode
-
-class TranslationDict(dict):
-
-	"""
-	Translation dictionary with key -> translated string mappings.
-	
-	The actual translations are loaded from the source JSON file when they
-	are accessed.
-	
-	"""
-
-	def __init__(self, path):
-		dict.__init__(self)
-		self.loaded = False
-		self.path = path
-	
-	def __contains__(self, key):
-		self.load()
-		return dict.__contains__(self, key)
-
-	def __getitem__(self, name):
-		self.load()
-		return dict.__getitem__(self, name)
-
-	def __iter__(self):
-		self.load()
-		return dict.__iter__(self)
-	
-	def get(self, name, fallback=None):
-		self.load()
-		return dict.get(self, name, fallback)
-
-	def load(self):
-		if not self.loaded:
-			self.loaded = True
-			try:
-				langfile = open(self.path, "rU")
-				try:
-					ltxt = unicode(langfile.read(), "UTF-8")
-					self.update(demjson.decode(ltxt))
-				except (UnicodeDecodeError, 
-						demjson.JSONDecodeError), exception:
-					handle_error(
-						u"Warning - language file '%s': %s" % 
-						tuple(safe_unicode(s) for s in 
-							  (self.path, exception.args[0].capitalize() if 
-										  isinstance(exception, 
-													 demjson.JSONDecodeError)
-										  else exception)))
-			except Exception, exception:
-				handle_error(u"Warning - language file '%s': %s" % 
-							 tuple(safe_unicode(s) for s in (self.path, 
-															 exception)))
-			else:
-				langfile.close()
 
 
 def init(set_wx_locale=False):
@@ -90,7 +36,7 @@ def init(set_wx_locale=False):
 					name, ext = os.path.splitext(filename)
 					if ext.lower() == ".json" and name.lower() not in ldict:
 						path = os.path.join(langdir, filename)
-						ldict[name.lower()] = TranslationDict(path)
+						ldict[name.lower()] = JSONDict(path)
 	if len(ldict) == 0:
 		handle_error("Warning: No language files found. The following "
 					 "places have been searched:\n%s" % "\n".join(langdirs))

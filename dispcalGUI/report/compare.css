@@ -140,7 +140,7 @@ h1 {
 	z-index: 1;
 }
 label.disabled {
-	color: silver;
+	color: gray;
 }
 p.error {
 	color: red;
@@ -175,4 +175,10 @@ select:focus {
 	margin: 6px 0 10px;
 	text-align: right;
 	width: 430px;
+}
+input[type=checkbox] {
+	vertical-align: middle;
+}
+label[for=FF_gray_balance_cal_only] {
+	display: none;
 }

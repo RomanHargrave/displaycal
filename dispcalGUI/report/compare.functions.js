@@ -64,7 +64,7 @@ function dataset(src) {
 	this.id = "RGB";
 	var e = document.forms['F_data'].elements;
 	this.testchart = e['FF_testchart'].value;
-	this.id = splitext(basename(this.testchart).replace(/^verify_extended\.ti1$/g, 'verify.ti1'))[0].toUpperCase();
+	this.id = window.CRITERIA_GRAYSCALE ? 'VERIFY' : splitext(basename(this.testchart))[0].toUpperCase();
 	if (src) {
 		this.src = src;
 		src=cr2lf(src);
@@ -191,7 +191,8 @@ p.generate_report = function(set_delta_calc_method) {
 				|| this.data_format.indexof("LAB_B", true) < 0),
 		no_XYZ = (this.data_format.indexof("XYZ_X", true) < 0
 				|| this.data_format.indexof("XYZ_Y", true) < 0
-				|| this.data_format.indexof("XYZ_Z", true) < 0);
+				|| this.data_format.indexof("XYZ_Z", true) < 0),
+		gray_balance_cal_only = f['F_out'].elements['FF_gray_balance_cal_only'].checked;
 	
 	for (var i=0; i<profile_wp.length; i++) {
 		profile_wp[i] = parseFloat(profile_wp[i]);
@@ -273,6 +274,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'			<th class="first-column">Criteria</th><th>Nominal</th><th>Recommended</th><th>#</th><th colspan="2">&#160;</th><th>Actual</th><th>&#160;</th><th>Result</th>',
 		'		</tr>'
 	]);
+	var seen = [];
 	for (var j=0; j<rules.length; j++) {
 		this.report_html.push('		<tr>');
 		this.report_html.push('			<td class="first-column' + (!rules[j][3] ? ' statonly' : '' ) + '">' + rules[j][0] + '</td><td>' + (rules[j][3] ? '&lt;= ' + rules[j][3] : '') + '</td><td>' + (rules[j][4] ? '&lt;= ' + rules[j][4] : '') + '</td><td class="patch sample_id">');
@@ -290,7 +292,7 @@ p.generate_report = function(set_delta_calc_method) {
 		actual_rgb_html = [];
 		target_rgb_html = [];
 		if (rules[j][2].indexOf("_MAX") < 0) {
-			for (var k=0; k<rules[j][1].length; k++) if (rules[j][1].length > 1) {
+			for (var k=0; k<rules[j][1].length; k++) if (rules[j][1].length > 1 && seen.indexOf(rules[j][1].join(',')) < 0) {
 				patch_number_html.push('<div class="patch sample_id">&#160;</div>');
 				if (rules[j][1][k].length == 4) // Assume CMYK
 					target_rgb = jsapi.math.color.cmyk2rgb(rules[j][1][k][0] / 100, rules[j][1][k][1] / 100, rules[j][1][k][2] / 100, rules[j][1][k][3] / 100);
@@ -323,7 +325,7 @@ p.generate_report = function(set_delta_calc_method) {
 						for (var l=0; l<current_cmyk.length; l++) current_cmyk[l] = current_cmyk[l].accuracy(2);
 						if ((rules[j][1][k].length == 3 && current_rgb.join(',') == rules[j][1][k].join(',')) || (rules[j][1][k].length == 4 && current_cmyk.join(',') == rules[j][1][k].join(','))) {
 							// if (silent || !confirm('rules[j]: ' + rules[j] + '\nrules[j][1][k]: ' + rules[j][1][k] + '\nthis.data[' + i + ']: ' + this.data[i] + '\ncurrent_rgb: ' + current_rgb + '\ncurrent_cmyk: ' + current_cmyk)) silent = true;
-							if (rules[j][2].indexOf("_MAX") < 0) {
+							if (rules[j][2].indexOf("_MAX") < 0 && seen.indexOf(rules[j][1].join(',')) < 0) {
 								if (rules[j][1].length) patch_number_html[k] = ('<div class="patch sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 								if (no_Lab && !no_XYZ) {
 									target_rgb = jsapi.math.color.XYZ2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]);
@@ -348,6 +350,17 @@ p.generate_report = function(set_delta_calc_method) {
 						target_Lab = jsapi.math.color.XYZ2Lab(target_Lab[0], target_Lab[1], target_Lab[2]);
 						actual_Lab = jsapi.math.color.XYZ2Lab(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
 					}
+					if (gray_balance_cal_only) {
+						if (fields_match.join(',').indexOf('RGB') == 0) 
+							var current_rgb = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[0] + 3);
+						else 
+							var current_rgb = actual.slice(fields_extract_indexes_i[4], fields_extract_indexes_i[7]);
+						for (var l=0; l<current_rgb.length; l++) current_rgb[l] = current_rgb[l].accuracy(2);
+						if (current_rgb[0] == current_rgb[1] && current_rgb[1] == current_rgb[2]) {
+							target_Lab[0] = actual_Lab[0]; // set L to measured value
+							target_Lab[1] = target_Lab[2] = 0; // set a=b=0
+						}
+					};
 					delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
 					result[j].E.push(delta.E);
 					result[j].L.push(delta.L);
@@ -563,6 +576,7 @@ p.generate_report = function(set_delta_calc_method) {
 		};
 		this.report_html.push('			<td><span class="' + (result[j].sum != null && rules[j][3] ? (Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'statonly') + '">' + (result[j].sum != null ? result[j].sum.accuracy(2) : '') + '</span></td><td style="padding: 0;">' + bar_html.join('') + '</td><td class="' + (result[j].sum != null && (!rules[j][3] || Math.abs(result[j].sum) <= rules[j][3]) ? ((Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok">OK <span class="checkmark">✔</span>' : (result[j].sum != null && rules[j][3] ? 'warn">OK \u26a0' : 'na">')) + '<span class="' + (rules[j][4] && Math.abs(result[j].sum) <= rules[j][4] ? 'checkmark' : 'hidden') + (rules[j][4] ? '">✔' : '">')) : 'ko">' + (result[j].sum != null ? 'NOT OK' : '') + ' <span class="checkmark">\u2716') + '</span></td>');
 		this.report_html.push('		</tr>');
+		if (rules[j][1] && rules[j][1].length > 1) seen.push(rules[j][1].join(','));
 	};
 	this.report_html.push('	</table>');
 	
@@ -620,6 +634,17 @@ p.generate_report = function(set_delta_calc_method) {
 			target_rgb = jsapi.math.color.Lab2rgb(target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]], null, D50);
 			actual_rgb = jsapi.math.color.Lab2rgb(actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]], null, D50);
 		}
+		if (gray_balance_cal_only) {
+			if (fields_match.join(',').indexOf('RGB') == 0) 
+				var current_rgb = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[0] + 3);
+			else 
+				var current_rgb = actual.slice(fields_extract_indexes_i[4], fields_extract_indexes_i[7]);
+			for (var l=0; l<current_rgb.length; l++) current_rgb[l] = current_rgb[l].accuracy(2);
+			if (current_rgb[0] == current_rgb[1] && current_rgb[1] == current_rgb[2]) {
+				target_Lab[0] = actual_Lab[0]; // set L to measured value
+				target_Lab[1] = target_Lab[2] = 0; // set a=b=0
+			}
+		};
 		delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
 		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
 		var bar_html = [],
@@ -840,7 +865,10 @@ function form_element_set_disabled(form_element, disabled) {
 	if (disabled && !jsapi.dom.attributeHasWord(form_element, "class", "disabled")) jsapi.dom.attributeAddWord(form_element, "class", "disabled");
 	else if (!disabled && jsapi.dom.attributeHasWord(form_element, "class", "disabled")) jsapi.dom.attributeRemoveWord(form_element, "class", "disabled");
 	var labels = document.getElementsByTagName("LABEL");
-	for (var i=0; i<labels.length; i++) if (labels[i].getAttribute("for") == form_element.id) labels[i].className=disabled
+	for (var i=0; i<labels.length; i++) if (labels[i].getAttribute("for") == form_element.id) {
+		if (labels[i].getAttribute("for") == "FF_gray_balance_cal_only") labels[i].style.display = disabled ? "none" : "inline";
+		labels[i].className=disabled;
+	}
 };
 
 function form_elements_set_disabled(form, disabled) {
@@ -848,7 +876,10 @@ function form_elements_set_disabled(form, disabled) {
 	if (form) for (var j=0; j<form.elements.length; j++) form_element_set_disabled(form.elements[j], disabled);
 	else {
 		for (var i=0; i<document.forms.length; i++) {
-			for (var j=0; j<document.forms[i].elements.length; j++) form_element_set_disabled(document.forms[i].elements[j], disabled)
+			for (var j=0; j<document.forms[i].elements.length; j++) {
+				if (document.forms[i].elements[j].name == "FF_gray_balance_cal_only") form_element_set_disabled(document.forms[i].elements[j], disabled || !window.CRITERIA_GRAYSCALE);
+				else form_element_set_disabled(document.forms[i].elements[j], disabled);
+			}
 		}
 	}
 };

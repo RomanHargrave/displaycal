@@ -300,38 +300,49 @@ class LUTFrame(wx.Frame):
 			colorants = legend[0]
 			if 'R' in colorants or 'G' in colorants or 'B' in colorants:
 				legend.append(lang.getstr("tone_values"))
-			if '=' in colorants:
+				if '=' in colorants:
+					unique = []
+					if 'R' in colorants:
+						unique.append(self.client.r_unique)
+					if 'G' in colorants:
+						unique.append(self.client.g_unique)
+					if 'B' in colorants:
+						unique.append(self.client.b_unique)
+					unique = min(unique)
+					legend[-1] += " %.1f%% (%i/%i)" % (unique / 
+													   (self.client.entryCount / 
+														100.0), unique, 
+													   self.client.entryCount)
+				else:
+					if 'R' in colorants:
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.r_unique / 
+														   (self.client.entryCount / 
+															100.0), 
+														   self.client.r_unique, 
+														   self.client.entryCount)
+					if 'G' in colorants:
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.g_unique / 
+														   (self.client.entryCount / 
+															100.0), 
+														   self.client.g_unique, 
+														   self.client.entryCount)
+					if 'B' in colorants:
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.b_unique / 
+														   (self.client.entryCount / 
+															100.0), 
+														   self.client.b_unique, 
+														   self.client.entryCount)
 				unique = []
-				if 'R' in colorants:
-					unique.append(self.client.r_unique)
-				if 'G' in colorants:
-					unique.append(self.client.g_unique)
-				if 'B' in colorants:
-					unique.append(self.client.b_unique)
-				unique = min(unique)
-				legend[-1] += " %.1f%% (%i/%i)" % (unique / 
-												   (self.client.entryCount / 
-													100.0), unique, 
-												   self.client.entryCount)
-			else:
-				if 'R' in colorants:
-					legend[-1] += " %.1f%% (%i/%i)" % (self.client.r_unique / 
-													   (self.client.entryCount / 
-														100.0), 
-													   self.client.r_unique, 
-													   self.client.entryCount)
-				if 'G' in colorants:
-					legend[-1] += " %.1f%% (%i/%i)" % (self.client.g_unique / 
-													   (self.client.entryCount / 
-														100.0), 
-													   self.client.g_unique, 
-													   self.client.entryCount)
-				if 'B' in colorants:
-					legend[-1] += " %.1f%% (%i/%i)" % (self.client.b_unique / 
-													   (self.client.entryCount / 
-														100.0), 
-													   self.client.b_unique, 
-													   self.client.entryCount)
+				unique.append(self.client.r_unique)
+				unique.append(self.client.g_unique)
+				unique.append(self.client.b_unique)
+				if not 0 in unique:
+					unique = min(unique)
+					legend[-1] += ", %s %.1f%% (%i/%i)" % (lang.getstr("grayscale"), 
+														   unique / 
+														   (self.client.entryCount / 
+															100.0), unique, 
+														   self.client.entryCount)
 
 	def DrawLUT(self, event=None):
 		self.SetStatusText('')

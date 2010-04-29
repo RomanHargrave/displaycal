@@ -1,14 +1,4 @@
-var CRITERIA_GRAYSCALE = window.CRITERIA_GRAYSCALE || [
-		[12.5, 12.5, 12.5],
-		[25, 25, 25],
-		[37.5, 37.5, 37.5],
-		[50, 50, 50],
-		[62.5, 62.5, 62.5],
-		[75, 75, 75],
-		[87.5, 87.5, 87.5],
-		[100, 100, 100]
-	],
-	CRITERIA_RULES_NEUTRAL = [
+var CRITERIA_RULES_NEUTRAL = [
 		// description, [[R, G, B],...], DELTA_[E|L|C|H]_[MAX|MED|MAD|AVG|STDDEV], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
 		["Whitepoint ΔE*76", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE76],
 		["Whitepoint ΔE*94", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE94],
@@ -127,12 +117,15 @@ comparison_criteria.RGB.fields_match = ['RGB_R', 'RGB_G', 'RGB_B'];
 comparison_criteria.RGB.name = "RGB",
 comparison_criteria.RGB.strip_name = "RGB";
 
-comparison_criteria.VERIFY = comparison_criteria.RGB.clone();
-comparison_criteria.VERIFY.id = 'VERIFY';
-comparison_criteria.VERIFY.name = "RGB + gray balance";
-comparison_criteria.VERIFY.rules = CRITERIA_RULES_VERIFY.concat(
-	[
-		["RGB gray balance (>= 1% luminance) average ΔC*76", CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
-		["RGB gray balance (>= 1% luminance) combined Δa*76 and Δb*76 range", CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE76]
-	]
-);
+if (window.CRITERIA_GRAYSCALE) {
+	comparison_criteria.VERIFY = comparison_criteria.RGB.clone();
+	comparison_criteria.VERIFY.id = 'VERIFY';
+	comparison_criteria.VERIFY.name = "RGB + gray balance";
+	comparison_criteria.VERIFY.rules = CRITERIA_RULES_VERIFY.concat(
+		[
+			["RGB gray balance (>= 1% luminance) average ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
+			["RGB gray balance (>= 1% luminance) combined Δa*76 and Δb*76 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE76],
+			["RGB gray balance (>= 1% luminance) maximum ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE76]
+		]
+	);
+};

@@ -131,7 +131,7 @@
 			display: block;
 			font-size: 11px;
 		}
-		html#dispcalGUI h2, html#dispcalGUI h3, html#dispcalGUI h4, .h {
+		html#dispcalGUI h2, html#dispcalGUI h3, html#dispcalGUI h4, html#dispcalGUI h5, .h {
 			color: #006699;
 			font-family: Arial, sans-serif;
 			font-weight: normal;
@@ -143,6 +143,9 @@
 			font-size: 1.3em;
 		}
 		html#dispcalGUI h4 {
+			font-size: 1.1em;
+		}
+		html#dispcalGUI h5 {
 			font-size: 1.1em;
 		}
 		ol {
@@ -174,6 +177,13 @@
 		#content div h4:before {
 			counter-increment: hlevel3;
 			content: counter(hlevel1) "." counter(hlevel2) "." counter(hlevel3) ". ";
+		}
+		#content div h4 {
+			counter-reset: hlevel4;
+		}
+		#content div h5:before {
+			counter-increment: hlevel4;
+			content: counter(hlevel1) "." counter(hlevel2) "." counter(hlevel3) "." counter(hlevel4) ". ";
 		}
 		#content div#history h3:before,
 		#content div#history h4:before {
@@ -419,6 +429,7 @@
 				</ul>
 			</li>
 			<li><a href="#disclaimer">Disclaimer</a></li>
+			<li><a href="#widegamut">A note about colorimeters, wide-gamut displays and dispcalGUI</a></li>
 			<li><a href="#download">Download</a></li>
 			<li><a href="#quicksetup" id="quicksetuplink">Quick setup guide</a></li>
 			<li><a href="#prerequisites">Prerequisites</a>
@@ -447,8 +458,6 @@
 			<li><a href="#history">Version history / changelog</a></li>
 			<li><a href="#definitions">Definitions</a></li>
 		</ol>
-		
-		
 		
 		<div id="about">
 			<h2>About</h2>		
@@ -492,6 +501,12 @@
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 			
 			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://pypi.python.org/pypi/appscript">appscript</a> (AppleScript library, only on Mac OS X), <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[6]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
+		</div>
+		
+		<div id="widegamut">
+			<h2>A note about colorimeters, wide-gamut displays and dispcalGUI</h2>
+			
+			<p>Colorimeters need a correction matrix in hardware or software to obtain correct measurements from wide-gamut displays. The latter is currently not supported by dispcalGUI, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. contains a correction matrix in hardware), you will need a spectrometer to accurately measure such a screen.</p>
 		</div>
 		
 		<div id="download">
@@ -1067,10 +1082,44 @@
 						<dd>Run verify measurements on the selected display as it is currently setup (ie. video card gamma table). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
 						
 					<dt>Verify profile</dt>
-						<dd>Do verification measurements to assess the display chain's (profile - video card and the calibration curves in its gamma table - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain. To do the former, you have to select a <acronym title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></acronym> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled.<br />
+						<dd><p>Do verification measurements to assess the display chain's (profile - video card and the calibration curves in its gamma table - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain.<br />
+						To do the former, you have to select a <acronym title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></acronym> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled. If a RGB testchart with gray patches (R=G=B) is measured, like the default and extended verification charts, you also have the option to evaluate the graybalance through the calibration only, by placing a check in the corresponding box on the report.<br />
 						To perform a check on the soft proofing capabilities, you have to provide a CGATS reference file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the reference file.<br />
 						<br />
-						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if any. Otherwise, a file dialog will appear to choose a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the reference and measurement data, which consists of device RGB numbers, original measured XYZ values, and D50-adapted L*a*b* values computed from the XYZ numbers, and which can be examined as plain text directly from the report at the click of a button.</dd>
+						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if any. Otherwise, a file dialog will appear to allow choosing a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the reference and measurement data, which consists of device RGB numbers, original measured XYZ values, and D50-adapted L*a*b* values computed from the XYZ numbers, and which can be examined as plain text directly from the report at the click of a button.</p>
+						
+						<h4>How were the nominal and recommended aim values chosen?</h4>
+						
+						<p>The nominal tolerances, with the whitepoint, average, maximum and gray balance stemming from <a href="http://www.fogra.org/mediawedge/">UGRA/Fogra Media Wedge</a> and <a href="http://www.ugra.ch/ugra-display-analysis-and-certification-tool.phtml">UDACT</a> aim values, are pretty generous, so I've included somewhat stricter 'recommended' numbers which I've chosen more or less arbitrarily to provide a bit 'extra safety margin'.<br />
+						For reports generated from reference files that contain CMYK numbers in addition to L*a*b* or XYZ values, you can also select the official Fogra Media Wedge V3 aim values for paper white, CMYK solids and CMY grey, if the chart contains the right CMYK combinations.</p>
+						
+						<h4>How are the results of the profile verification report to be interpreted?</h4>
+						
+						<p>This depends on the chart that was measured. The explanation in the first paragraph sums it up pretty well: If you have calibrated and profiled your display, and want to check how well the profile fits a set of measurements (profile accuracy), or if you want to know if your display has drifted and needs to be re-calibrated/re-profiled, you select a chart containing RGB numbers for the verification. Note that directly after profiling, accuracy can be expected to be high if the profile characterizes the display well, which will usually be the case if the display behaviour is not very non-linear, in which case creating a LUT profile instead of a 'curves + matrix' one, or increasing the number of measured patches for LUT profiles, can help.<br />
+						If you want to know how well your profile can simulate another colorspace (softproofing), select a reference file containing L*a*b* or XYZ values, like one of the <a href="http://www.fogra.org/mediawedge/">Fogra Media Wedge</a> subsets (be warned though, only wide-gamut displays will handle a larger offset printing colorspace like FOGRA39 or similar well enough).<br />
+						In both cases, you should check that atleast the nominal tolerances are not exceeded. For a bit 'extra safety margin', look at the recommended values instead.<br />
+						Note that both tests are 'closed-loop' and will not tell you an 'absolute' truth in terms of 'color quality' or 'color accuracy' as they will not show if your instrument measures wrong (a profile created from wrong measurements will usually still verify great against other wrong measurements if they don't fluctuate too much) or does not cope with your display well (which is especially true for colorimeters and wide-gamut screens, as such combinations need a correction matrix in hardware or software to obtain accurate results - this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain great verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a 'known good' reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
+						
+						<h4>How are profiles evaluated against the measured values?</h4>
+						
+						<p>Different softwares use different methods (which are not always disclosed in detail) to compare and evaluate measurements. This section aims to give interested users a better insight how dispcalGUI's profile verification feature works.</p>
+						
+						<h5>General</h5>
+						
+						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/icclu.html">icclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files). Then, the original RGB values from the testchart, or the looked up RGB values for a reference file are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the unchanged RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, using a user-selectable ΔE (delta E) formula for the overview, and all implemented formulas for the summary.</p>
+						
+						<h5>How is the whitepoint ΔE calculated?</h5>
+		
+						<p>In a report, the correlated color temperature and assumed target whitepoint, as well as the whitepoint ΔE, do warrant some further explanations: The whitepoint ΔE is calculated as difference between the measured whitepoint's and the assumed target whitepoint's normalized XYZ values, which are first converted to L*a*b* (reference white D50). The assumed target whitepoint color temperature shown is simply the rounded correlated color temparature (100K threshold) calculated from the measured XYZ values. The XYZ values for the assumed target whitepoint are obtained by calculating the chromaticity (xy) coordinates of a CIE D illuminant of that color temperature and converting them to XYZ. You can find all the used formulas on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a>.</p>
+						
+						<h5>How is the gray balance 'range' evaluated?</h5>
+						
+						<p>The gray balance 'range' uses a combined delta a/delta b absolute deviation (e.g. if max delta a = -0.5 and max delta b = 0.7, the range is 1.2). Because results in the extreme darks can be problematic due to lack of instrument accuracy and other effects like a black point which has a different chromaticity than the whitepoint, all gray balance checks in dispcalGUI only take into account gray patches with a minimum measured luminance of 1% (i.e. if white luminance = 120 cd/m², then only patches with at least 1.2 cd/m² will be taken into account).</p>
+						
+						<h5>What does the 'evaluate gray balance through calibration only' checkbox on a report actually do?</h5>
+						
+						<p>It sets the nominal (target) L* value to the measured L* value and a*=b*=0, so the profile is effectively ignored and only the calibration (if any) will influence the results of the gray balance checks. Note that this option will not make a difference for a 'single curve + matrix' profile, as the single curve effectively already achieves a similar thing (the L* values can be different, but they are ignored for the gray balance checks and only influence the overall result).</p>
+						</dd>
 						
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1184,17 +1233,20 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Show percentage and amount of tone values for calibration curves in the curve viewer.</li>
-							<li>Profile verification: Offer gray balance verification for all RGB charts containing grayscales (R=G=B).</li>
+							<li>Show percentage and amount of tone values per channel (+ grayscales) for calibration curves in the curve viewer.</li>
+							<li>Profile verification: Enabled gray balance evaluation for all RGB charts containing grayscales (R=G=B). Added option to verify graybalance through calibration only (sets the target L* of each grayscale patch to the measured L* and target a*=b*=0).</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Fixed potential unhandled exception if a JSON language file is malformed.</li>
 							<li>Fixed rare unhandled exception (local variable referenced before assignment) if logfile couldn't be renamed or removed during rollover.</li>
-							<li>Correctly determine display profile under Windows Vista and 7. Fall back to sRGB if no display profile set.</li>
+							<li>Correctly determine system display profile under Windows Vista and 7. Fall back to sRGB if no display profile set.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li>Profile verification: Only verify ΔC average of grayscales (R=G=B) if their luminance is atleast 1% of the white luminance. Also look at combined Δa and Δb range instead of ΔC max.</li>
+							<li>Enhanced the documentation of the profile verification feature.</li>
+							<li>Moved instrument feature details to separate JSON configuration file.</li>
+							<li>Profile verification: Only evaluate grayscales (R=G=B) if their luminance is atleast 1% of the white luminance. Also look at combined Δa and Δb range.</li>
 							<li>Made compatible with wxPython 2.8.6.0.</li>
 						</ul>
 					</dd>

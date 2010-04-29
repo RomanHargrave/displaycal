@@ -165,6 +165,7 @@
 	"gamap.viewconds.pcd": "Photo CD - original scene outdoors",
 	"gamap.viewconds.ob": "Original scene - Bright Outdoors",
 	"gamap.viewconds.cx": "Cut Sheet Transparencies on a viewing box",
+	"grayscale": "grayscale",
 	"help_support": "Help and support...",
 	"error.file_type_unsupported": "Unsupported filetype.",
 	"in": "In",

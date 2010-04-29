@@ -7,5 +7,8 @@ var data_ref, data_in,
 	fields_match = [];
 		
 window.onload = function() {
+	if (document.all) document.getElementById("FF_gray_balance_cal_only").onmouseup = function () {
+		setTimeout(document.getElementById("FF_gray_balance_cal_only").blur, 50);  // needed to trigger onchange for IE
+	};
 	analyze()
 };

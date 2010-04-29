@@ -1104,10 +1104,14 @@ class MainFrame(BaseFrame):
 		self.menuitem_about = help.FindItemById(help.FindItem("menu.about"))
 		self.Bind(wx.EVT_MENU, self.aboutdialog_handler, self.menuitem_about)
 		self.menuitem_readme = help.FindItemById(help.FindItem("readme"))
-		self.menuitem_readme.Enable(isinstance(get_data_path("README.html"), basestring))
+		self.menuitem_readme.Enable(isinstance(get_data_path("README.html"), 
+											   basestring))
 		self.Bind(wx.EVT_MENU, self.readme_handler, self.menuitem_readme)
 		self.menuitem_license = help.FindItemById(help.FindItem("license"))
-		self.menuitem_license.Enable(isinstance(get_data_path("LICENSE.txt"), basestring))
+		self.menuitem_license.Enable(isinstance(get_data_path("LICENSE.txt"), 
+												basestring) or 
+									 isinstance(get_data_path("LICENSE.txt.gz"), 
+												basestring))
 		self.Bind(wx.EVT_MENU, self.license_handler, self.menuitem_license)
 		menuitem = help.FindItemById(help.FindItem("help_support"))
 		self.Bind(wx.EVT_MENU, self.help_support_handler, menuitem)
@@ -5933,7 +5937,10 @@ class MainFrame(BaseFrame):
 		launch_file(get_data_path("README.html"))
 	
 	def license_handler(self, event):
-		launch_file(get_data_path("LICENSE.txt"))
+		license = get_data_path("LICENSE.txt")
+		if not license:
+			license = get_data_path("LICENSE.txt.gz")
+		launch_file(license)
 	
 	def help_support_handler(self, event):
 		launch_file("http://sourceforge.net/projects/dispcalgui/support")
@@ -6004,7 +6011,7 @@ class MainApp(wx.App):
 			self.SetAppName(appname)
 		self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
 		wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
-						  "LANGUAGE_ENGLISH")
+						  wx.LANGUAGE_ENGLISH)
 		self.locale = wx.Locale(wx_lang)
 		if debug:
 			safe_print("[D]", lang.getstr("language_name"), wx_lang, 

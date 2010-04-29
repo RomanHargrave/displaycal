@@ -166,6 +166,7 @@
 	"gamap.viewconds.pcd": "Photo CD - Außenaufnahme",
 	"gamap.viewconds.ob": "Außenaufnahme in hellem Licht",
 	"gamap.viewconds.cx": "Dias auf Leuchtkasten",
+	"grayscale": "Graustufen",
 	"help_support": "Hilfe und Unterstützung...",
 	"error.file_type_unsupported": "Nicht unterstützter Dateityp.",
 	"in": "Eingabe",
