@@ -3461,7 +3461,8 @@ class MainFrame(BaseFrame):
 		# calculate amount of calibration grayscale tone values
 		cal_entrycount = 256
 		if "vcgt" in profile.tags:
-			rgb = []
+			rgb = [[], [], []]
+			vcgt = profile.tags.vcgt
 			if "data" in vcgt:
 				# table
 				cal_entrycount = vcgt['entryCount']
@@ -3631,8 +3632,10 @@ class MainFrame(BaseFrame):
 										  str(ti3_joined).decode(enc, 
 																 "replace").replace('"', 
 																					"&quot;"))
-		report_html = report_html.replace("${CAL_ENTRYCOUNT}", cal_entrycount)
-		report_html = report_html.replace("${CAL_RGBLEVELS}", repr(cal_rgblevels))
+		report_html = report_html.replace("${CAL_ENTRYCOUNT}", 
+										  str(cal_entrycount))
+		report_html = report_html.replace("${CAL_RGBLEVELS}", 
+										  repr(cal_rgblevels))
 		report_html = report_html.replace("${GRAYSCALE}", 
 										  repr(gray) if gray else 'null')
 		for include in ("base.css", "compare.css", "compare-dark-light.css", 

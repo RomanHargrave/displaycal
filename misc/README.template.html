@@ -1305,11 +1305,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Fixed unhandled exception (local variable referenced before assignment) if trying to view calibration curves of an output with no video card gamma table access.</li>
 							<li>Fixed an unicode error after creating a profile verification report in a path containing unicode characters and a few other unrelated (potential) unicode errors.</li>
 							<li>Fixed potential unhandled exception if a JSON language file is malformed.</li>
+							<li>Fixed unhandled exception (local variable referenced before assignment) if trying to view calibration curves of an output with no video card gamma table access.</li>
 							<li>Fixed rare unhandled exception (local variable referenced before assignment) if logfile couldn't be renamed or removed during rollover.</li>
-							<li>Fail more gracefully if temp directory couldn't be created.</li>
+							<li>Fail more gracefully (omit traceback from error message) if temp directory couldn't be created.</li>
 							<li>Correctly determine system display profile under Windows Vista and 7 if no user profile set. Fall back to sRGB if no display profile set.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
