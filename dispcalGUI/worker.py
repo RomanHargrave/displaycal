@@ -772,7 +772,9 @@ class Worker():
 				sudo = which("sudo")
 		if sudo:
 			try:
-				pwdproc = sp.Popen('echo "%s"' % (self.pwd or ""), shell=True, 
+				pwdproc = sp.Popen('echo "%s"' % (self.pwd or 
+												  "").encode(enc), 
+								   shell=True, 
 								   stdin=sp.PIPE, stdout=sp.PIPE, 
 								   stderr=sp.STDOUT)
 				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
@@ -800,7 +802,8 @@ class Worker():
 						if result != wx.ID_OK:
 							safe_print(lang.getstr("aborted"), fn=fn)
 							return None
-						pwdproc = sp.Popen('echo "%s"' % pwd, shell=True, 
+						pwdproc = sp.Popen('echo "%s"' % pwd.encode(enc), 
+										   shell=True, 
 										   stdin=sp.PIPE, stdout=sp.PIPE, 
 										   stderr=sp.STDOUT)
 						sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
@@ -999,8 +1002,9 @@ class Worker():
 					stdout = sys.stdout
 				else:
 					stdout = sp.PIPE
-				if sudo:
-					pwdproc = sp.Popen('echo "%s"' % self.pwd, shell=True, 
+				if sudo and isinstance(self.pwd, basestring):
+					pwdproc = sp.Popen('echo "%s"' % self.pwd.encode(enc), 
+									   shell=True, 
 									   stdin=sp.PIPE, stdout=sp.PIPE, 
 									   stderr=sp.STDOUT)
 					stdin = pwdproc.stdout
@@ -1802,9 +1806,12 @@ class Worker():
 		# lookup device->cie values through profile using icclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
+		if not cwd:
+			raise OSError()
 		profile.write(os.path.join(cwd, "temp.icc"))
 		p = sp.Popen([icclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
-					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
+					 cwd=cwd.encode(fs_enc))
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		if p.wait() != 0:
 			# error
@@ -1849,10 +1856,12 @@ class Worker():
 			gray = []
 			icclu = get_argyll_util("icclu").encode(fs_enc)
 			cwd = self.create_tempdir()
+			if not cwd:
+				raise OSError()
 			profile.write(os.path.join(cwd, "temp.icc"))
 			p = sp.Popen([icclu, '-fb', '-ir', '-pl', '-s100', "temp.icc"], 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
-						 cwd=cwd)
+						 cwd=cwd.encode(fs_enc))
 			ogray = p.communicate('\n'.join(igray))[0].splitlines()
 			if p.wait() != 0:
 				# error
@@ -2023,9 +2032,12 @@ class Worker():
 		# lookup cie->device values through profile.icc using xicclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
+		if not cwd:
+			raise OSError()
 		profile.write(os.path.join(cwd, "temp.icc"))
 		p = sp.Popen([icclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
-					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd)
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
+					 cwd=cwd.encode(fs_enc))
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		if p.wait() != 0:
 			# error

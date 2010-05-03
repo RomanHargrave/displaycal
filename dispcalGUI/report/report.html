@@ -31,7 +31,9 @@
 	<script type="text/javascript" src="compare.constants.js"></script>
 	<script type="text/javascript">
 	//<![CDATA[
-	window.CRITERIA_GRAYSCALE = ${GRAYSCALE}
+	var CAL_ENTRYCOUNT = ${CAL_ENTRYCOUNT};
+	window.CAL_RGBLEVELS = ${CAL_RGBLEVELS};
+	window.CRITERIA_GRAYSCALE = ${GRAYSCALE};
 	//]]>
 	</script>
 	<script type="text/javascript" src="compare.variables.js"></script>
@@ -62,7 +64,7 @@
 				Evaluation criteria:
 				<select name="FF_criteria" id="FF_criteria" onchange="compare()">
 				</select><br />
-				<label for="FF_gray_balance_cal_only" class="disabled">Evaluate gray balance through calibration only: <input type="checkbox" name="FF_gray_balance_cal_only" id="FF_gray_balance_cal_only" disabled="disabled" onchange="compare()" /></label>
+				<label for="FF_gray_balance_cal_only" class="disabled">Evaluate gray balance through calibration only: <input type="checkbox" name="FF_gray_balance_cal_only" id="FF_gray_balance_cal_only" checked="checked" disabled="disabled" onchange="compare()" /></label>
 			</p>
 			<p class="functions">
 				<button onclick="plaintext('ref')">View raw reference data</button>

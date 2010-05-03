@@ -102,7 +102,7 @@ from log import _safe_print, log, logbuffer, safe_print, setup_logging
 from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
 from trash import trash, TrashcanUnavailableError
-from util_decimal import stripzeros
+from util_decimal import float2dec, stripzeros
 from util_io import StringIOu as StringIO
 from util_list import index_fallback_ignorecase, natsort
 if sys.platform == "darwin":
@@ -3437,6 +3437,8 @@ class MainFrame(BaseFrame):
 		
 		# setup temp dir
 		temp = self.worker.create_tempdir()
+		if not temp:
+			return
 		
 		# filenames
 		name, ext = os.path.splitext(os.path.basename(save_path))
@@ -3455,6 +3457,31 @@ class MainFrame(BaseFrame):
 			return
 		ti1_file.write(str(ti1))
 		ti1_file.close()
+		
+		# calculate amount of calibration grayscale tone values
+		cal_entrycount = 256
+		if "vcgt" in profile.tags:
+			rgb = []
+			if "data" in vcgt:
+				# table
+				cal_entrycount = vcgt['entryCount']
+				for i in range(0, cal_entrycount):
+					for j in range(0, 3):
+						rgb[j] += [float(vcgt['data'][j][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255]
+			else:
+				# formula
+				step = 100.0 / 255.0
+				for i in range(0, cal_entrycount):
+					# float2dec(v) fixes miniscule deviations in the calculated gamma
+					for j, name in enumerate(("red", "green", "blue")):
+						vmin = float2dec(vcgt[name + "Min"] * 255)
+						v = float2dec(math.pow(step * i / 100.0, vcgt[name + "Gamma"]))
+						vmax = float2dec(vcgt[name + "Max"] * 255)
+						rgb[j] += [float2dec(vmin + v * (vmax - vmin), 8)]
+			cal_rgblevels = [len(set(round(n) for n in channel)) for channel in rgb]
+		else:
+			# should never happen
+			cal_rgblevels = [0, 0, 0]
 		
 		# write profile to temp dir
 		profile.write(profile_path)
@@ -3597,10 +3624,15 @@ class MainFrame(BaseFrame):
 		report_html = report_html.replace("${DATETIME}", 
 										  strftime("%Y-%m-%d %H:%M:%S"))
 		report_html = report_html.replace("${REF}", 
-										  str(ti3_ref).decode(enc, "replace").replace('"', "&quot;"))
+										  str(ti3_ref).decode(enc, 
+															  "replace").replace('"', 
+																				 "&quot;"))
 		report_html = report_html.replace("${MEASURED}", 
-										  str(ti3_joined).decode(enc, "replace").replace('"', 
-																	"&quot;"))
+										  str(ti3_joined).decode(enc, 
+																 "replace").replace('"', 
+																					"&quot;"))
+		report_html = report_html.replace("${CAL_ENTRYCOUNT}", cal_entrycount)
+		report_html = report_html.replace("${CAL_RGBLEVELS}", repr(cal_rgblevels))
 		report_html = report_html.replace("${GRAYSCALE}", 
 										  repr(gray) if gray else 'null')
 		for include in ("base.css", "compare.css", "compare-dark-light.css", 
@@ -3807,9 +3839,9 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(self.measureframe_subprocess)
 	
 	def measureframe_subprocess(self):
-		args = u'"%s" "%s"'.encode(fs_enc) % (sys.executable, 
-											  os.path.join(pydir, 
-											  			   "wxMeasureFrame.py"))
+		args = (u'"%s" "%s"' % (exe, 
+								os.path.join(pydir, 
+											 "wxMeasureFrame.py"))).encode(fs_enc)
 		if wx.Display.GetCount() == 1:
 			try:
 				x_hostname, x_display, x_screen = util_x.get_display()
@@ -4193,10 +4225,13 @@ class MainFrame(BaseFrame):
 			self.current_cal = profile
 		if hasattr(self, "lut_viewer") and self.lut_viewer and \
 		   (self.lut_viewer.IsShownOnScreen() or force_draw):
+			force_update = False
 			if getcfg("lut_viewer.show_actual_lut") and \
 			   self.worker.argyll_version >= [1, 1, 0] and \
 			   not "Beta" in self.worker.argyll_version_string:
 				tmp = self.worker.create_tempdir()
+				if not tmp:
+					return
 				cmd, args = (get_argyll_util("dispwin"), 
 							 ["-d" + self.worker.get_display(), "-s", 
 							  os.path.join(tmp, 
@@ -4210,8 +4245,6 @@ class MainFrame(BaseFrame):
 				else:
 					pass  ## getlstr("calibration.load_error")
 				self.worker.wrapup(copy=False)
-			else:
-				force_update = False
 			if profile:
 				if force_update or not self.lut_viewer.profile or \
 				   not self.lut_viewer.profile.fileName or \

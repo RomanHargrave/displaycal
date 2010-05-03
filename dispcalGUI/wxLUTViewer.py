@@ -6,10 +6,10 @@ import math
 import os
 import sys
 
+from util_decimal import float2dec
 from wxaddons import wx
 from wxenhancedplot import _Numeric
 import wxenhancedplot as plot
-
 import localization as lang
 import ICCProfile as ICCP
 
@@ -17,15 +17,6 @@ BGCOLOUR = "#333333"
 FGCOLOUR = "#999999"
 GRIDCOLOUR = "#444444"
 HILITECOLOUR = "white"
-
-def float2dec(f, digits=10):
-	parts = str(f).split(".")
-	if len(parts) > 1:
-		if parts[1][:digits] == "9" * digits:
-			f = math.ceil(f)
-		elif parts[1][:digits] == "0" * digits:
-			f = math.floor(f)
-	return Decimal(str(f))
 
 class LUTCanvas(plot.PlotCanvas):
 

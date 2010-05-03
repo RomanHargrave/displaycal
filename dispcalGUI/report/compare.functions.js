@@ -49,6 +49,9 @@ p.lead=function(ln) {
 
 // String methods
 p=String.prototype;
+p.accuracy = function() {
+	return this
+};
 p.repeat = function(n) {
 	var str="";
 	for (var i=0; i<n; i++) str+=this;
@@ -277,7 +280,7 @@ p.generate_report = function(set_delta_calc_method) {
 	var seen = [];
 	for (var j=0; j<rules.length; j++) {
 		this.report_html.push('		<tr>');
-		this.report_html.push('			<td class="first-column' + (!rules[j][3] ? ' statonly' : '' ) + '">' + rules[j][0] + '</td><td>' + (rules[j][3] ? '&lt;= ' + rules[j][3] : '') + '</td><td>' + (rules[j][4] ? '&lt;= ' + rules[j][4] : '') + '</td><td class="patch sample_id">');
+		this.report_html.push('			<td class="first-column' + (!rules[j][3] ? ' statonly' : '' ) + '">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '') + '</td><td' + (!rules[j][3] ? ' class="statonly"' : '' ) + '>' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '') + '</td><td class="patch sample_id">');
 		result[j] = {
 			E: [],
 			L: [],
@@ -375,6 +378,19 @@ p.generate_report = function(set_delta_calc_method) {
 		var number_of_sets = n;
 		if (rules[j][1].length == 1) {
 			switch (rules[j][1][0]) {
+				case 'CAL_REDLEVELS':
+					result[j].sum = (window.CAL_RGBLEVELS[0] / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + window.CAL_RGBLEVELS[0] + '/' + CAL_ENTRYCOUNT + ')';
+					break;
+				case 'CAL_GREENLEVELS':
+					result[j].sum = (window.CAL_RGBLEVELS[1] / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + window.CAL_RGBLEVELS[1] + '/' + CAL_ENTRYCOUNT + ')';
+					break;
+				case 'CAL_BLUELEVELS':
+					result[j].sum = (window.CAL_RGBLEVELS[2] / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + window.CAL_RGBLEVELS[2] + '/' + CAL_ENTRYCOUNT + ')';
+					break;
+				case 'CAL_GRAYLEVELS':
+					var cal_graylevels = Math.min(CAL_RGBLEVELS[0], CAL_RGBLEVELS[1], CAL_RGBLEVELS[2]);
+					result[j].sum = (cal_graylevels / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + cal_graylevels + '/' + CAL_ENTRYCOUNT + ')';
+					break;
 				case 'WHITEPOINT':
 					target_Lab = jsapi.math.color.XYZ2Lab(wp_assumed[0], wp_assumed[1], wp_assumed[2]);
 					actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
@@ -386,6 +402,7 @@ p.generate_report = function(set_delta_calc_method) {
 					result[j].H.push(delta.H);
 					result[j].a.push(delta.a);
 					result[j].b.push(delta.b);
+					break;
 			}
 		};
 		if (!rules[j][1].length || rules[j][1][0] == 'WHITEPOINT' || result[j].matches.length >= rules[j][1].length) switch (rules[j][2]) {
@@ -507,7 +524,7 @@ p.generate_report = function(set_delta_calc_method) {
 				result[j].sum = jsapi.math.stddev(result[j].H);
 				break;
 		}
-		else missing_data = true;
+		else if (!rules[j][1].length || (rules[j][1][0] + '').indexOf('LEVELS') < 0) missing_data = true;
 		if (result[j].matches.length) {
 			matched = false;
 			for (var k=0; k<result[j].matches.length; k++) {
@@ -546,7 +563,7 @@ p.generate_report = function(set_delta_calc_method) {
 				actual_rgb_html.push('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
 			};
 		}
-		else if (!target_rgb_html.length) {
+		if (!target_rgb_html.length) {
 			target_rgb_html.push('<div class="patch">&#160;</div>');
 			actual_rgb_html.push('<div class="patch">&#160;</div>');
 		};
@@ -554,7 +571,7 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html.push('			<td class="patch">' + target_rgb_html.join('') + '</td>');
 		this.report_html.push('			<td class="patch">' + actual_rgb_html.join('') + '</td>');
 		var bar_html = [];
-		if (result[j].sum != null) {
+		if (result[j].sum != null && (!rules[j][1].length || (rules[j][1][0] + '').indexOf('LEVELS') < 0)) {
 			if (!rules[j][3]) rgb = [204, 204, 204];
 			else {
 				var rgb = [0, 255, 0],
@@ -582,8 +599,9 @@ p.generate_report = function(set_delta_calc_method) {
 	
 	var pass, overachieve;
 	for (var j=0; j<result.length; j++) {
-		if (!rules[j][3] && !rules[j][4]) continue;
+		if (!rules[j][3]) continue;
 		if (missing_data || isNaN(result[j].sum) || Math.abs(result[j].sum) > rules[j][3]) pass = false;
+		if (!rules[j][4]) continue;
 		if (missing_data || isNaN(result[j].sum) || Math.abs(result[j].sum) > rules[j][4]) overachieve = false;
 		if (rules[j][5] == delta_calc_method) for (var k=0; k<result[j].matches.length; k++) {
 			if (rules[j][2].indexOf('_E_') > -1) {
@@ -866,7 +884,7 @@ function form_element_set_disabled(form_element, disabled) {
 	else if (!disabled && jsapi.dom.attributeHasWord(form_element, "class", "disabled")) jsapi.dom.attributeRemoveWord(form_element, "class", "disabled");
 	var labels = document.getElementsByTagName("LABEL");
 	for (var i=0; i<labels.length; i++) if (labels[i].getAttribute("for") == form_element.id) {
-		if (labels[i].getAttribute("for") == "FF_gray_balance_cal_only") labels[i].style.display = disabled ? "none" : "inline";
+		if (labels[i].getAttribute("for") == "FF_gray_balance_cal_only") labels[i].style.display = disabled || document.forms['F_out'].elements['FF_criteria'].value != 'VERIFY' ? "none" : "inline";
 		labels[i].className=disabled;
 	}
 };

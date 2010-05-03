@@ -48,6 +48,7 @@ def launch_file(filepath):
 	Return tuple(returncode, stdout, stderr) or None if functionality not available
 	
 	"""
+	filepath = filepath.encode(fs_enc)
 	retcode = None
 	kwargs = dict(stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
 	if sys.platform == "darwin":

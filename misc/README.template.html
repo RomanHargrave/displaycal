@@ -2,7 +2,7 @@
 <html id="dispcalGUI" xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>dispcalGUI—Display Calibration powered by Argyll CMS and Python</title>
+		<title>dispcalGUI—Open Source Display Calibration and Profiling powered by Argyll CMS</title>
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<style type="text/css">
 		html#dispcalGUI a {
@@ -448,10 +448,21 @@
 					<li><a href="#display_instrument">Choosing a display and measurement device</a></li>
 					<li><a href="#settings_calibration">Calibration settings</a></li>
 					<li><a href="#settings_profiling">Profiling settings</a></li>
-					<li><a href="#calibrating">Calibrating / profiling</a></li>
+					<li><a href="#calibrating">Calibrating / profiling</a>
+						<ul>
+							<li><a href="#adjusting">Adjusting a display before calibration</a>
+						</ul>
+					</li>
 				</ul>
 			</li>
-			<li><a href="#menu">Menu commands</a></li>
+			<li><a href="#menu">Menu commands</a>
+				<ul>
+					<li><a href="#menu-file">File menu</a></li>
+					<li><a href="#menu-options">Options menu</a></li>
+					<li><a href="#menu-tools">Tools menu</a></li>
+					<li><a href="#menu-lang">Language menu</a></li>
+				</ul>
+			</li>
 			<li><a href="#issues">Known issues / solutions</a></li>
 			<li><a href="#todo">To-Do / planned features</a></li>
 			<li><a href="#thanks">Thanks and acknowledgements</a></li>
@@ -821,9 +832,12 @@
 			
 			<div id="presets">
 				<h3>Predefined settings (presets)</h3>
+				
 				<p>Starting with dispcalGUI v0.2.5b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
-				<h4>Why has a default gamma of 2.4 been chosen for the presets?</h4>
-				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the video card's gamma tables via calibration curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.4 for other reasons. You can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info.</p>
+				
+				<h4>Why has a default gamma of 2.2 been chosen for the presets?</h4>
+				
+				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.2-2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the video card's gamma tables via calibration curves will not be as strong as if a target response farther away from the display's native response had been chosen. Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.2 for other reasons. You can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info.</p>
 			</div>
 			
 			<div id="display_instrument">
@@ -862,9 +876,9 @@
 							<p>Set the target brightness of black in cd/m<sup>2</sup>. Setting too high a value may give strange results as it interacts with trying to achieve the target “advertised” tone curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
 						</dd>
 					
-					<dt>Tone curve / gamma</dt>
+					<dt id="trc">Tone curve / gamma</dt>
 						<dd>							
-							<p>The target response curve is normally an exponential curve (output = input<sup>gamma</sup>), and defaults to 2.4 (which is typical of a CRT type displays real response). Four pre-defined curves can be used as well: the sRGB colorspace response curve, which is an exponent curve with a straight segment at the dark end and an overall response of approximately gamma 2.2, the L* curve, which is the response of the CIE L*a*b* perceptual colorspace, the Rec. 709 video standard response curve and the SMPTE 240M video standard response curve.</p>
+							<p>The target response curve is normally an exponential curve (output = input<sup>gamma</sup>), and defaults to 2.2 (which is close to a typical CRT displays real response). Four pre-defined curves can be used as well: the sRGB colorspace response curve, which is an exponent curve with a straight segment at the dark end and an overall response of approximately gamma 2.2, the L* curve, which is the response of the CIE L*a*b* perceptual colorspace, the Rec. 709 video standard response curve and the SMPTE 240M video standard response curve.</p>
 							
 							<p>Note that a real display can't reproduce any of these ideal curves, since it will have a non-zero black point, whereas all the ideal curves assume zero light at zero input. For gamma values, you can also specify wheter it should be interpreted relative, meaning the gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve, or absolute, which allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value. To allow for the non-zero black level of a real display, by default the target curve values will be offset so that zero input gives the actual black level of the display (output offset). This ensures that the target curve better corresponds to the typical natural behavior of displays, but it may not be the most visually even progression from display minimum. This behavior can be changed using the black output offset option (see further below).</p>
 
@@ -874,7 +888,7 @@
 							<p>If you're wondering what gamma value you should use, you can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info. Setting the gamma to the reported value can then help to reduce calibration artifacts like banding, because the adjustments needed for the video card's gamma table should not be as strong as if a gamma further away from the display's native response was chosen.</p>
 						</dd>
 					
-					<dt>Ambient light level</dt>
+					<dt id="ambient">Ambient light level</dt>
 						<dd>						
 							<p>As explained for the tone curve settings, often colors are encoded in a situation with viewing conditions that are quite different to the viewing conditions of a typical display, with the expectation that this difference in viewing conditions will be allowed for in the way the display is calibrated. The ambient light level option is a way of doing this. By default calibration will not make any allowances for viewing conditions, but will calibrate to the specified response curve, but if the ambient light level is entered or measured (which you may also do during the interactive display controls portion of the calibration), an appropriate viewing conditions adjustment will be performed. For a gamma value or sRGB, the original viewing conditions will be assumed to be that of the sRGB standard viewing conditions, while for REC 709 and SMPTE 240M they will be assumed to be television studio viewing conditions. By specifying or measuring the ambient lighting for your display, a viewing conditions adjustment based on the CIECAM02 color appearance model will be made for the brightness of your display and the contrast it makes with your ambient light levels.</p>
 							
@@ -1008,6 +1022,57 @@
 				to start the actual calibration/profiling process. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
 				error). Pay attention to the output printed to the terminal, it will give you status information and prompt for keyboard input to start measurements and select calibration options (you can always cancel out of running measurements by pressing ESC or Q).</p>
 				
+				<h4 id="adjusting">Adjusting a display before calibration</h4>
+				
+				<p>If you clicked “calibrate” or “calibrate &amp; profile” and have not turned off “interactive display adjustment”, you will be presented with a text menu from Argyll's dispcal utility which contains several options to help you bring a display's characteristics closer to the chosen target values. Depending on wheter you have a CRT- or LCD-type display, I will try to give some recommendations here which options to adjust, and which to skip.</p>
+				
+				<h5>Adjusting a LCD display</h5>
+				
+				<p>For LCD displays, you will in most cases only want to adjust white point (if the screen has RGB gain or other whitepoint controls) and white level (with the white level also affecting the black level unless you have a local dimming LED model), as many LCDs lack the necessary “offset” controls to adjust black level and -point. Also note that for most LCD screens, you should leave the “contrast” control at (factory) default.</p>
+				
+				<dl>
+					<dt>White level</dt>
+						<dd>
+							Start with the white level adjustment. If you have set a target white level, dispcal will instruct you to reduce or increase the brightness of your screen (ideally using only the backlight) until the desired value is reached. If you haven't set a target, simply adjust the screen to a visually pleasing brightness that doesn't cause eye strain.
+						</dd>
+					<dt>White point</dt>
+						<dd>
+							If your screen has RGB gain, colortemperature or other whitepoint controls, the next step should be adjusting the whitepoint. Note that you may also benefit from this adjustment if you have set the target whitepoint to “native”, as it will allow you to bring it closer to the daylight or blackbody locus, which can help the human visual system to better adapt to the whitepoint. Follow dispcal's recommendations shown during the measurements to adjust RGB gains and minimize the delta E to the shown target whitepoint.
+						</dd>
+				</dl>
+				
+				<h5>Adjusting a CRT display</h5>
+				
+				<dl>
+					<dt>Black level</dt>
+						<dd>
+							On CRTs, this adjustment is done using the “brightness” control. Argyll's dispcal utility will instruct you to reduce or increase the brightness of your screen until the desired level is reached.
+						</dd>
+					<dt>White level</dt>
+						<dd>
+							Continue with the white level adjustment. On CRTs this is done using the “contrast” control. If you have set a target white level, dispcal will instruct you to reduce or increase contrast until the desired value is reached. If you haven't set a target, simply adjust the screen to a visually pleasing level that doesn't cause eye strain.
+						</dd>
+					<dt>White point</dt>
+						<dd>
+							The next step should be adjusting the whitepoint, using the display's RGB gain controls or other means of adjusting the whitepoint. Note that you may also benefit from this adjustment if you have set the target whitepoint to “native”, as it will allow you to bring it closer to the daylight or blackbody locus, which can help the human visual system to better adapt to the whitepoint. Follow dispcal's recommendations shown during the measurements to adjust RGB gains and minimize the delta E to the shown target whitepoint.
+						</dd>
+					<dt>Black point</dt>
+						<dd>
+							If your display has RGB offset controls, you can adjust the black point as well, in much the same way that you adjusted the whitepoint. Just note that many instruments are not very accurate at low luminance levels, in which case you're probably better off skipping this option altogether.
+						</dd>
+				</dl>
+				
+				<h5>Finishing adjustments (CRT/LCD) and starting calibration/charaterisation</h5>
+				
+				<p>After the adjustments, you can run “check all” from the menu to verify the achieved values. If adjusting one setting adversely affected another, you can then simply repeat the respective menu option as necessary until the target parameters are met.</p>
+				
+				<p>If you want the calibration curves to be adjusted for your ambient lighting conditions, and you have not set an ambient light level in the GUI or want to change it, you may do so by selecting “measure and set ambient for viewing condition adjustment”. You need an instrument that can measure ambient light levels using Argyll, like the i1 Display 2 or i1 Pro. The effects of this viewing condition adjustment can vary depending on other calibration parameters. Please also see the documentation for <a href="#trc">tone curve / gamma</a> and <a href="#ambient">ambient light level</a>. You'll probably want to skip this step to maximize available gamma table tone values after calibration (you can check the effect of calibration curves on the amount of available tone values with the curve viewer in the “tools” menu).</p>
+				
+				<p>Finally, select “continue on to calibration” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted dispcal to help you adjust the display and don't want/need calibration curves to be created, you can also choose “exit” and then select “profile only” from the GUI.<br />
+				If you originally selected “calibrate &amp; profile” and fulfil the requirements for <a href="#prerequisites-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, keyboard interaction is needed to start them manually.</p>
+				
+				<h4>Profile installation</h4>
+				
 				<p>When installing a profile after creating or updating it, a shortcut to load its calibration curves 
 				automatically on login will be created in your user startup directory (on Windows and Linux, Mac OS X does not need a loader).</p>
 			</div>
@@ -1072,16 +1137,16 @@
 			
 				<dl>
 						
-					<dt>Report on uncalibrated display device</dt>
+					<dt id="report-uncal">Report on uncalibrated display device</dt>
 						<dd>Does some quick measurements on the currently selected display, first resetting the video card gamma table, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card gamma table bit depth.</dd>
 						
-					<dt>Report on calibrated display device</dt>
+					<dt id="report-cal">Report on calibrated display device</dt>
 						<dd>Does some quick measurements on the currently selected display, keeping the video card gamma table, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
 						
-					<dt>Verify calibration</dt>
+					<dt id="verify-cal">Verify calibration</dt>
 						<dd>Run verify measurements on the selected display as it is currently setup (ie. video card gamma table). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
 						
-					<dt>Verify profile</dt>
+					<dt id="verify-profile">Verify profile</dt>
 						<dd><p>Do verification measurements to assess the display chain's (profile - video card and the calibration curves in its gamma table - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain.<br />
 						To do the former, you have to select a <acronym title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></acronym> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled. If a RGB testchart with gray patches (R=G=B) is measured, like the default and extended verification charts, you also have the option to evaluate the graybalance through the calibration only, by placing a check in the corresponding box on the report.<br />
 						To perform a check on the soft proofing capabilities, you have to provide a CGATS reference file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the reference file.<br />
@@ -1090,35 +1155,35 @@
 						
 						<h4>How were the nominal and recommended aim values chosen?</h4>
 						
-						<p>The nominal tolerances, with the whitepoint, average, maximum and gray balance stemming from <a href="http://www.fogra.org/mediawedge/">UGRA/Fogra Media Wedge</a> and <a href="http://www.ugra.ch/ugra-display-analysis-and-certification-tool.phtml">UDACT</a> aim values, are pretty generous, so I've included somewhat stricter 'recommended' numbers which I've chosen more or less arbitrarily to provide a bit 'extra safety margin'.<br />
+						<p>The nominal tolerances, with the whitepoint, average, maximum and gray balance stemming from <a href="http://www.fogra.org/mediawedge/">UGRA/Fogra Media Wedge</a> and <a href="http://www.ugra.ch/ugra-display-analysis-and-certification-tool.phtml">UDACT</a> aim values, are pretty generous, so I've included somewhat stricter “recommended” numbers which I've chosen more or less arbitrarily to provide a bit “extra safety margin”.<br />
 						For reports generated from reference files that contain CMYK numbers in addition to L*a*b* or XYZ values, you can also select the official Fogra Media Wedge V3 aim values for paper white, CMYK solids and CMY grey, if the chart contains the right CMYK combinations.</p>
 						
 						<h4>How are the results of the profile verification report to be interpreted?</h4>
 						
-						<p>This depends on the chart that was measured. The explanation in the first paragraph sums it up pretty well: If you have calibrated and profiled your display, and want to check how well the profile fits a set of measurements (profile accuracy), or if you want to know if your display has drifted and needs to be re-calibrated/re-profiled, you select a chart containing RGB numbers for the verification. Note that directly after profiling, accuracy can be expected to be high if the profile characterizes the display well, which will usually be the case if the display behaviour is not very non-linear, in which case creating a LUT profile instead of a 'curves + matrix' one, or increasing the number of measured patches for LUT profiles, can help.<br />
+						<p>This depends on the chart that was measured. The explanation in the first paragraph sums it up pretty well: If you have calibrated and profiled your display, and want to check how well the profile fits a set of measurements (profile accuracy), or if you want to know if your display has drifted and needs to be re-calibrated/re-profiled, you select a chart containing RGB numbers for the verification. Note that directly after profiling, accuracy can be expected to be high if the profile characterizes the display well, which will usually be the case if the display behaviour is not very non-linear, in which case creating a LUT profile instead of a “curves + matrix” one, or increasing the number of measured patches for LUT profiles, can help.<br />
 						If you want to know how well your profile can simulate another colorspace (softproofing), select a reference file containing L*a*b* or XYZ values, like one of the <a href="http://www.fogra.org/mediawedge/">Fogra Media Wedge</a> subsets (be warned though, only wide-gamut displays will handle a larger offset printing colorspace like FOGRA39 or similar well enough).<br />
-						In both cases, you should check that atleast the nominal tolerances are not exceeded. For a bit 'extra safety margin', look at the recommended values instead.<br />
-						Note that both tests are 'closed-loop' and will not tell you an 'absolute' truth in terms of 'color quality' or 'color accuracy' as they will not show if your instrument measures wrong (a profile created from wrong measurements will usually still verify great against other wrong measurements if they don't fluctuate too much) or does not cope with your display well (which is especially true for colorimeters and wide-gamut screens, as such combinations need a correction matrix in hardware or software to obtain accurate results - this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain great verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a 'known good' reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
+						In both cases, you should check that atleast the nominal tolerances are not exceeded. For a bit “extra safety margin”, look at the recommended values instead.<br />
+						Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from wrong measurements will usually still verify well against other wrong measurements if they don't fluctuate too much) or does not cope with your display well (which is especially true for colorimeters and wide-gamut screens, as such combinations need a correction matrix in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
 						
 						<h4>How are profiles evaluated against the measured values?</h4>
 						
-						<p>Different softwares use different methods (which are not always disclosed in detail) to compare and evaluate measurements. This section aims to give interested users a better insight how dispcalGUI's profile verification feature works.</p>
+						<p>Different softwares use different methods (which are not always disclosed in detail) to compare and evaluate measurements. This section aims to give interested users a better insight how dispcalGUI's profile verification feature works “under the hood”.</p>
 						
 						<h5>General</h5>
 						
-						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/icclu.html">icclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files). Then, the original RGB values from the testchart, or the looked up RGB values for a reference file are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the unchanged RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, using a user-selectable ΔE (delta E) formula for the overview, and all implemented formulas for the summary.</p>
+						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/icclu.html">icclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files). Then, the original RGB values from the testchart, or the looked up RGB values for a reference file are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, using a user-selectable ΔE (delta E) formula for the overview, and all implemented formulas for the summary.</p>
 						
 						<h5>How is the whitepoint ΔE calculated?</h5>
 		
-						<p>In a report, the correlated color temperature and assumed target whitepoint, as well as the whitepoint ΔE, do warrant some further explanations: The whitepoint ΔE is calculated as difference between the measured whitepoint's and the assumed target whitepoint's normalized XYZ values, which are first converted to L*a*b* (reference white D50). The assumed target whitepoint color temperature shown is simply the rounded correlated color temparature (100K threshold) calculated from the measured XYZ values. The XYZ values for the assumed target whitepoint are obtained by calculating the chromaticity (xy) coordinates of a CIE D illuminant of that color temperature and converting them to XYZ. You can find all the used formulas on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a>.</p>
+						<p>In a report, the correlated color temperature and assumed target whitepoint, as well as the whitepoint ΔE, do warrant some further explanations: The whitepoint ΔE is calculated as difference between the measured whitepoint's and the assumed target whitepoint's normalized XYZ values, which are first converted to L*a*b*. The assumed target whitepoint color temperature shown is simply the rounded correlated color temparature (100K threshold) calculated from the measured XYZ values. The XYZ values for the assumed target whitepoint are obtained by calculating the chromaticity (xy) coordinates of a CIE D illuminant of that color temperature and converting them to XYZ. You can find all the used formulas on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a>.</p>
 						
-						<h5>How is the gray balance 'range' evaluated?</h5>
+						<h5>How is the gray balance “range” evaluated?</h5>
 						
-						<p>The gray balance 'range' uses a combined delta a/delta b absolute deviation (e.g. if max delta a = -0.5 and max delta b = 0.7, the range is 1.2). Because results in the extreme darks can be problematic due to lack of instrument accuracy and other effects like a black point which has a different chromaticity than the whitepoint, all gray balance checks in dispcalGUI only take into account gray patches with a minimum measured luminance of 1% (i.e. if white luminance = 120 cd/m², then only patches with at least 1.2 cd/m² will be taken into account).</p>
+						<p>The gray balance “range” uses a combined delta a/delta b absolute deviation (e.g. if max delta a = -0.5 and max delta b = 0.7, the range is 1.2). Because results in the extreme darks can be problematic due to lack of instrument accuracy and other effects like a black point which has a different chromaticity than the whitepoint, all gray balance checks in dispcalGUI only take into account gray patches with a minimum measured luminance of 1% (i.e. if white luminance = 120 cd/m², then only patches with at least 1.2 cd/m² will be taken into account).</p>
 						
-						<h5>What does the 'evaluate gray balance through calibration only' checkbox on a report actually do?</h5>
+						<h5>What does the “evaluate gray balance through calibration only” checkbox on a report actually do?</h5>
 						
-						<p>It sets the nominal (target) L* value to the measured L* value and a*=b*=0, so the profile is effectively ignored and only the calibration (if any) will influence the results of the gray balance checks. Note that this option will not make a difference for a 'single curve + matrix' profile, as the single curve effectively already achieves a similar thing (the L* values can be different, but they are ignored for the gray balance checks and only influence the overall result).</p>
+						<p>It sets the nominal (target) L* value to the measured L* value and a*=b*=0, so the profile is effectively ignored and only the calibration (if any) will influence the results of the gray balance checks. Note that this option will not make a difference for a “single curve + matrix” profile, as the single curve effectively already achieves a similar thing (the L* values can be different, but they are ignored for the gray balance checks and only influence the overall result).</p>
 						</dd>
 						
 					<dt>Enable Spyder 2 colorimeter...</dt>
@@ -1127,7 +1192,7 @@ The purchaser of a Spyder 2 instrument should have received a copy of this firmw
 On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on the users machine, the firmware pattern can usually be located from there. If the vendors drivers have not been installed, or the user does not wish to install them, or no vendors drivers are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. If your Linux system is not running automount, or your automount is setup to mount CDROM's somewhere other than /media, /mnt/cdrom, /media/cdrom or /cdrom, then you will have to mount the CDROM manually, and select the path to the CDROM setup/setup.exe file.
 </dd>
 
-					<dt>Show curves</dt>
+					<dt id="curveviewer">Show curves</dt>
 						<dd>Shows the curve viewer, which graphs calibration and profile tone response curves and also shows the percentage and amount of tone values for calibration curves. Please note that if profile tone response curves are graphed and the selected profile is a table-based (LUT) profile, the displayed curves will be from the additional (and optional) matrix 'rTRC'/'gTRC'/'bTRC' tags, <strong>not</strong> the lookup table!</dd>
 						
 					<dt>Show actual calibration curves from video card gamma table</dt>
@@ -1233,20 +1298,26 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Show percentage and amount of tone values per channel (+ grayscales) for calibration curves in the curve viewer.</li>
+							<li>Show percentage and amount of tone values per channel (+ grayscales) for calibration curves in the curve viewer and profile verification reports.</li>
 							<li>Profile verification: Enabled gray balance evaluation for all RGB charts containing grayscales (R=G=B). Added option to verify graybalance through calibration only (sets the target L* of each grayscale patch to the measured L* and target a*=b*=0).</li>
+							<li>Added documentation for the interactive display adjustment part of calibration.</li>
+							<li>Added further documentation of the profile verification feature with detailed information about underlying technical aspects.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Fixed unhandled exception (local variable referenced before assignment) if trying to view calibration curves of an output with no video card gamma table access.</li>
+							<li>Fixed an unicode error after creating a profile verification report in a path containing unicode characters and a few other unrelated (potential) unicode errors.</li>
 							<li>Fixed potential unhandled exception if a JSON language file is malformed.</li>
 							<li>Fixed rare unhandled exception (local variable referenced before assignment) if logfile couldn't be renamed or removed during rollover.</li>
-							<li>Correctly determine system display profile under Windows Vista and 7. Fall back to sRGB if no display profile set.</li>
+							<li>Fail more gracefully if temp directory couldn't be created.</li>
+							<li>Correctly determine system display profile under Windows Vista and 7 if no user profile set. Fall back to sRGB if no display profile set.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li>Enhanced the documentation of the profile verification feature.</li>
+							<li>Changed default gamma from 2.4 to 2.2 in an attempt to increase the amount of available gamma table tone values after calibration for LCD screens, which often have a native response that is closer to a gamma of 2.2 than 2.4.</li>
+							<li>Changed default profile type to single curve + matrix.</li>
+							<li>Profile verification: Only evaluate grayscales (R=G=B) if their luminance is atleast 1% of the white luminance. Also evaluate combined Δa and Δb range.</li>
 							<li>Moved instrument feature details to separate JSON configuration file.</li>
-							<li>Profile verification: Only evaluate grayscales (R=G=B) if their luminance is atleast 1% of the white luminance. Also look at combined Δa and Δb range.</li>
 							<li>Made compatible with wxPython 2.8.6.0.</li>
 						</ul>
 					</dd>
@@ -1570,7 +1641,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 <span class="keyword">end tell</span></code></pre>
 								</div>
 							</li>
-							<li>fix: (Windows) several actions unexpectedly failing under Windows 7 (dispcalGUI created temporary files via system calls on several occasions, but on Windows, this does not create the file in the user's temp directory as one would expect, but in the ROOT directory e.g. C:\ - a sane method is now being used instead).</li>
+							<li>fix: (Windows) several actions unexpectedly failing under Windows 7 (dispcalGUI created temporary files via system calls on several occasions, but on Windows, this does not create the file in the user's temp directory as one would expect, but in the ROOT directory e.g. C:\—a sane method is now being used instead).</li>
 							<li>fix: bug in sorting function caused leading and trailing zeroes of numbers in testchart filenames to get lost, thus failing to load such files.</li>
 							<li>fix: (Linux) “No module named _md5” error with the standalone executable on some Linux distros (apparently an OpenSSL-related issue, because normally it wouldn't fall back to the legacy _md5 module which is not even built by default in recent Python versions). The fallback _md5 module is now included.</li>
 							<li>fix: calibration was not automatically added &amp; selected in the dropdown menu when only calibrating.</li>
@@ -1602,7 +1673,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>chg: [build/src] made dispcalGUI a distutils package, so it can be built/installed via setup.py.</li>
 							<li>chg: default locations are now also searched for resource files (<code>$XDG_DATA_HOME/dispcalGUI</code>, <code>$XDG_DATA_DIRS/dispcalGUI</code> on Linux, <code>~/Library/Application Support/dispcalGUI</code>, <code>/Library/Application Support/dispcalGUI</code> on Mac OS X, <code>%APPDATA%\dispcalGUI</code>, <code>%COMMONAPPDATA%\dispcalGUI</code> and <code>%COMMONPROGRAMFILES%\dispcalGUI</code> on Windows) in addition to the current working directory (which is always searched first if it differs from the executable directory) and the executable directory (which is always searched last).</li>
 							<li>chg: better error handling. For unhandled exceptions, a message box is shown and an entry is written to the logfile.</li>
-							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks - it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
+							<li>chg: (Linux) the calibration loader will no longer try and handle gnome-screensaver quirks—it was working too unreliably, and should really be fixed in gnome-screensaver. The current recommendation is to not use a screensaver at all if possible, and instead rely on the system's energy saving options.</li>
 							<li>chg: (Linux) there's no longer an installer for the Linux version.</li>
 							<li>chg: cancelling of certain operations like profile calculation and testchart generation is now also supported when using Python 2.5</li>
 							<li>chg: when searching for Argyll executables, also search for files with “argyll-” prefix or “-argyll” suffix (thanks to Mark Whitis for report).</li>

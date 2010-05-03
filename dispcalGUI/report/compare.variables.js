@@ -17,7 +17,11 @@ var CRITERIA_RULES_NEUTRAL = [
 		["Median absolute deviation ΔE*00", [], DELTA_E_MAD, null, null, CIE00],
 		["Standard deviation ΔE*76", [], DELTA_E_STDDEV, null, null, CIE76],
 		["Standard deviation ΔE*94", [], DELTA_E_STDDEV, null, null, CIE94],
-		["Standard deviation ΔE*00", [], DELTA_E_STDDEV, null, null, CIE00]
+		["Standard deviation ΔE*00", [], DELTA_E_STDDEV, null, null, CIE00],
+		["Calibration red tone values", ['CAL_REDLEVELS'], '', null, 95],
+		["Calibration green tone values", ['CAL_GREENLEVELS'], '', null, 95],
+		["Calibration blue tone values", ['CAL_BLUELEVELS'], '', null, 95],
+		["Calibration grayscale tone values", ['CAL_GRAYLEVELS'], '', null, 95]
 	],
 	CRITERIA_RULES_DEFAULT = CRITERIA_RULES_NEUTRAL.clone();
 
