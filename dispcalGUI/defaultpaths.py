@@ -62,8 +62,11 @@ elif sys.platform == "darwin":
 else:
 	xdg_config_home = getenvu("XDG_CONFIG_HOME",
 								  os.path.join(expanduseru("~"), ".config"))
+	xdg_config_dir_default = "/etc/xdg"
 	xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", 
-							  "/etc/xdg").split(os.pathsep)
+							  xdg_config_dir_default).split(os.pathsep)
+	if not xdg_config_dir_default in xdg_config_dirs:
+		xdg_config_dirs += [xdg_config_dir_default]
 	xdg_data_home_default = expandvarsu("$HOME/.local/share")
 	xdg_data_home = getenvu("XDG_DATA_HOME", xdg_data_home_default)
 	xdg_data_dirs_default = "/usr/local/share:/usr/share"
@@ -72,10 +75,17 @@ else:
 	for dir_ in xdg_data_dirs_default.split(os.pathsep):
 		if not dir_ in xdg_data_dirs:
 			xdg_data_dirs += [dir_]
-	del dir_
-	autostart = os.path.join(xdg_config_dirs[0], "autostart")
+	autostart = None
+	for dir_ in xdg_config_dirs:
+		if os.path.exists(dir_):
+			autostart = os.path.join(dir_, "autostart")
+			break
 	autostart_home = os.path.join(xdg_config_home, "autostart")
-	iccprofiles = [os.path.join(xdg_data_dirs[0], "color", "icc")]
+	iccprofiles = []
+	for dir_ in xdg_data_dirs:
+		if os.path.exists(dir_):
+			iccprofiles += [os.path.join(dir_, "color", "icc")]
+	del dir_
 	iccprofiles_home = [os.path.join(xdg_data_home, "color", "icc")]
 	iccprofiles_display = os.path.join(iccprofiles[0], "devices", "display")
 	iccprofiles_display_home = os.path.join(iccprofiles_home[0], "devices", 

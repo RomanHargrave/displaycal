@@ -702,15 +702,17 @@ class Worker():
 				safe_print(lang.getstr("aborted"), fn=fn)
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
+		working_dir = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_dir = os.path.dirname(args[-1])
-			working_basename = os.path.basename(args[-1])
-			if cmdname == get_argyll_utilname("dispwin"):
-				# Last arg is without extension, only for dispwin we need to 
-				# strip it
-				working_basename = os.path.splitext(working_basename)[0] 
-		else:
-			working_dir = None
+			if os.path.isdir(working_dir):
+				working_basename = os.path.basename(args[-1])
+				if cmdname == get_argyll_utilname("dispwin"):
+					# Last arg is without extension, only for dispwin we need to 
+					# strip it
+					working_basename = os.path.splitext(working_basename)[0] 
+			else:
+				working_dir = None
 		if not capture_output and low_contrast:
 			# Set low contrast colors (gray on black) so it doesn't interfere 
 			# with measurements

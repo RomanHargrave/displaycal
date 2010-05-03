@@ -1310,7 +1310,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Fixed unhandled exception (local variable referenced before assignment) if trying to view calibration curves of an output with no video card gamma table access.</li>
 							<li>Fixed rare unhandled exception (local variable referenced before assignment) if logfile couldn't be renamed or removed during rollover.</li>
 							<li>Fail more gracefully (omit traceback from error message) if temp directory couldn't be created.</li>
-							<li>Correctly determine system display profile under Windows Vista and 7 if no user profile set. Fall back to sRGB if no display profile set.</li>
+							<li>Fixed handling of XDG_CONFIG_DIRS and the system-wide autostart directory if the preferred configuration directory does not exist under Linux when installing a profile in local system scope, which prevented the system-wide autostart entry to be created.</li>
+							<li>Correctly determine system display profile under Windows Vista and 7 if no user profile is set. Fall back to sRGB if no display profile is set.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>

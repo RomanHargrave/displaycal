@@ -3226,7 +3226,7 @@ class MainFrame(BaseFrame):
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-warning"))
 					else:
-						if "-Sl" in args:
+						if "-Sl" in args and autostart:
 							# copy system-wide loader
 							system_desktopfile_path = os.path.join(
 								autostart, name + ".desktop")
