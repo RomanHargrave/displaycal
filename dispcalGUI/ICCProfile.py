@@ -28,6 +28,8 @@ from safe_print import safe_print
 
 DD_ATTACHED_TO_DESKTOP = 0x01
 
+debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
+
 if sys.platform == "darwin":
 	enc = "UTF-8"
 else:
@@ -1285,27 +1287,36 @@ class ICCProfile:
 			if self._data and len(self._data) > 131:
 				# tag table and tagged element data
 				tagCount = uInt32Number(self._data[128:132])
+				if debug: print "tagCount:", tagCount
 				tagTable = self._data[132:132 + tagCount * 12]
 				discard_len = 0
 				tags = {}
 				while tagTable:
 					tag = tagTable[:12]
 					tagSignature = tag[:4]
+					if debug: print "tagSignature:", tagSignature
 					tagDataOffset = uInt32Number(tag[4:8])
+					if debug: print "    tagDataOffset:", tagCount
 					tagDataSize = uInt32Number(tag[8:12])
+					if debug: print "    tagDataSize:", tagDataSize
 					if tagSignature in self._tags:
 						safe_print("Error (non-critical): Tag '%s' already "
 								   "encountered. Skipping..." % tagSignature)
 					else:
 						if (tagDataOffset, tagDataSize) in tags:
+							if debug: print "    tagDataOffset and tagDataSize indicate shared tag"
 							self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)]
 						else:
 							start = tagDataOffset - discard_len
+							if debug: print "    tagData start:", start
 							end = tagDataOffset - discard_len + tagDataSize
+							if debug: print "    tagData end:", end
 							tagData = self._data[start:end]
-							self._data = self._data[:128] + self._data[end:]
-							discard_len += tagDataOffset - 128 - discard_len + tagDataSize
+							##self._data = self._data[:128] + self._data[end:]
+							##discard_len += tagDataOffset - 128 - discard_len + tagDataSize
+							##if debug: print "    discard_len:", discard_len
 							typeSignature = tagData[:4]
+							if debug: print "    typeSignature:", typeSignature
 							if tagSignature in tagSignature2Tag:
 								tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
 							elif typeSignature in typeSignature2Type:
@@ -1314,6 +1325,7 @@ class ICCProfile:
 								tag = ICCProfileTag(tagData, tagSignature)
 							self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)] = tag
 					tagTable = tagTable[12:]
+				self._data = self._data[:128]
 		return self._tags
 	
 	def calculateID(self):
