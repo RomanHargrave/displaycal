@@ -782,15 +782,15 @@ class Worker():
 				sudo = which("sudo")
 		if sudo:
 			try:
-				pwdproc = sp.Popen('echo "%s"' % (self.pwd or 
-												  "").encode(enc), 
-								   shell=True, 
-								   stdin=sp.PIPE, stdout=sp.PIPE, 
-								   stderr=sp.STDOUT)
+				stdin = tempfile.SpooledTemporaryFile()
+				stdin.write((self.pwd or "").encode(enc) + os.linesep)
+				stdin.seek(0)
 				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
-									stdin=pwdproc.stdout, stdout=sp.PIPE, 
+									stdin=stdin, stdout=sp.PIPE, 
 									stderr=sp.PIPE)
 				stdout, stderr = sudoproc.communicate()
+				if not stdin.closed:
+					stdin.close()
 				if not "OK" in stdout:
 					# ask for password
 					dlg = ConfirmDialog(
@@ -812,14 +812,15 @@ class Worker():
 						if result != wx.ID_OK:
 							safe_print(lang.getstr("aborted"), fn=fn)
 							return None
-						pwdproc = sp.Popen('echo "%s"' % pwd.encode(enc), 
-										   shell=True, 
-										   stdin=sp.PIPE, stdout=sp.PIPE, 
-										   stderr=sp.STDOUT)
+						stdin = tempfile.SpooledTemporaryFile()
+						stdin.write(pwd.encode(enc) + os.linesep)
+						stdin.seek(0)
 						sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
-											stdin=pwdproc.stdout, 
+											stdin=stdin, 
 											stdout=sp.PIPE, stderr=sp.PIPE)
 						stdout, stderr = sudoproc.communicate()
+						if not stdin.closed:
+							stdin.close()
 						if "OK" in stdout:
 							self.pwd = pwd
 							break
@@ -1013,11 +1014,9 @@ class Worker():
 				else:
 					stdout = sp.PIPE
 				if sudo and isinstance(self.pwd, basestring):
-					pwdproc = sp.Popen('echo "%s"' % self.pwd.encode(enc), 
-									   shell=True, 
-									   stdin=sp.PIPE, stdout=sp.PIPE, 
-									   stderr=sp.STDOUT)
-					stdin = pwdproc.stdout
+					stdin = tempfile.SpooledTemporaryFile()
+					stdin.write(self.pwd.encode(enc) + os.linesep)
+					stdin.seek(0)
 				elif sys.stdin.isatty():
 					stdin = None
 				else:
@@ -1052,6 +1051,8 @@ class Worker():
 											   cwd=working_dir, 
 											   startupinfo=startupinfo)
 					self.retcode = self.subprocess.wait()
+					if stdin and not getattr(stdin, "closed", True):
+						stdin.close()
 				self.subprocess = None
 				tries -= 1
 				if not silent:
