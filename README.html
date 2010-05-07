@@ -405,13 +405,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.3.9.3 (Linux)<br />
-				0.3.9.3 (Mac OS X)<br />
-				0.3.9.3 (Windows)<br />
-				0.3.9.3 (Source)<br />
+				<dd id="version">0.3.9.9 (Linux)<br />
+				0.3.9.9 (Mac OS X)<br />
+				0.3.9.9 (Windows)<br />
+				0.3.9.9 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-05-03 18:45 (UTC)</dd>
+				<dd id="date">2010-05-07 22:36 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -525,18 +525,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.3.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.9.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.3.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.3-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.3-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.9.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.9-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.9-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.3.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.3.9.9.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -1017,6 +1017,8 @@
 				<h3>Calibrating / profiling</h3>
 				
 				<p>If you are unclear about the difference between calibration and profiling (also called characterisation), see “<a href="http://www.argyllcms.com/doc/calvschar.html">Calibration vs. Characterization</a>” in the Argyll CMS documentation.</p>
+				
+				<p>Please let the screen stabilize for at least half an hour after powering it up before doing any measurements or assessing its color properties. The screen can be used normally with other applications during that time.</p>
 			
 				<p>After you have set your options, click on one of the three buttons at the bottom
 				to start the actual calibration/profiling process. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
@@ -1291,8 +1293,21 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-05-03 18:45 (UTC) 0.3.9.3 -->
+			<!-- 2010-05-07 22:36 (UTC) 0.3.9.9 -->
 			<dl>
+				<dt>2010-05-07 22:36 (UTC) 0.3.9.9</dt>
+					<dd>
+						<h3>0.3.9.9</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Fixed unreliable (hanging occasionally) profile install when using system scope under Linux and Mac OS X (regression of a change in SVN r391 / 0.3.9.3).</li>
+							<li>Fixed ICC profile truncation if actual tag data is not in the same order as the tag table (regression of a change in SVN r274 / 0.3.0.7. Argyll profiles were not affected).</li>
+							<li>Fixed potential invalid profile name being generated if some unicode characters can't be conveyed in the file system encoding (Windows, Linux).</li>
+							<li>Fixed possible backslash in profile name due to wrong escaping when replacing invalid characters.</li>
+							<li>Fixed support for codepages 65000 (UTF-7) and 65001 (UTF-8) in the main application under Windows. This is actually a fix for shortcomings of Python.</li>
+						</ul>
+					</dd>
+
 				<dt>2010-05-03 18:45 (UTC) 0.3.9.3</dt>
 					<dd>
 						<h3>0.3.9.3</h3>
@@ -1322,7 +1337,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Made compatible with wxPython 2.8.6.0.</li>
 						</ul>
 					</dd>
-
+				
 				<dt>2010-03-31 15:24 (UTC) 0.3.8.0</dt>
 					<dd>
 						<h3>0.3.8.0</h3>

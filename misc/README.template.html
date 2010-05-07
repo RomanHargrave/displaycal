@@ -1300,7 +1300,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Fixed unreliable (hanging occasionally) profile install when using system scope under Linux and Mac OS X (regression of a change in 0.3.9.3).</li>
+							<li>Fixed unreliable (hanging occasionally) profile install when using system scope under Linux and Mac OS X (regression of a change in SVN r391 / 0.3.9.3).</li>
+							<li>Fixed ICC profile truncation if actual tag data is not in the same order as the tag table (regression of a change in SVN r274 / 0.3.0.7. Argyll profiles were not affected).</li>
+							<li>Fixed potential invalid profile name being generated if some unicode characters can't be conveyed in the file system encoding (Windows, Linux).</li>
+							<li>Fixed possible backslash in profile name due to wrong escaping when replacing invalid characters.</li>
+							<li>Fixed support for codepages 65000 (UTF-7) and 65001 (UTF-8) in the main application under Windows. This is actually a fix for shortcomings of Python.</li>
 						</ul>
 					</dd>
 
