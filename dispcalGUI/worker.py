@@ -330,10 +330,18 @@ def make_argyll_compatible_path(path):
 		make_compat_enc = "ASCII"
 	else:
 		make_compat_enc = fs_enc
+	skip = 0
+	if re.match(r'\\\\\?\\', path, re.I):
+		# Don't forget about UNC paths: 
+		# \\?\UNC\Server\Volume\File
+		# \\?\C:\File
+		skip = 2
 	parts = path.split(os.path.sep)
 	for i in range(len(parts)):
-		parts[i] = unicode(parts[i].encode(make_compat_enc, "asciize"), 
-						   make_compat_enc).replace("/", "_")
+		if i > skip:
+			parts[i] = unicode(parts[i].encode(make_compat_enc, "asciize"), 
+							   make_compat_enc).replace("/", "_").replace("?", 
+																		  "_")
 	return os.path.sep.join(parts)
 
 
