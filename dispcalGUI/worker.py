@@ -1013,9 +1013,9 @@ class Worker():
 					stdout = sys.stdout
 				else:
 					stdout = sp.PIPE
-				if sudo and isinstance(self.pwd, basestring):
+				if sudo:
 					stdin = tempfile.SpooledTemporaryFile()
-					stdin.write(self.pwd.encode(enc) + os.linesep)
+					stdin.write((self.pwd or "").encode(enc) + os.linesep)
 					stdin.seek(0)
 				elif sys.stdin.isatty():
 					stdin = None

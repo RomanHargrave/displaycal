@@ -1017,6 +1017,8 @@
 				<h3>Calibrating / profiling</h3>
 				
 				<p>If you are unclear about the difference between calibration and profiling (also called characterisation), see “<a href="http://www.argyllcms.com/doc/calvschar.html">Calibration vs. Characterization</a>” in the Argyll CMS documentation.</p>
+				
+				<p>Please let the screen stabilize for at least half an hour after powering it up before doing any measurements or assessing its color properties. The screen can be used normally with other applications during that time.</p>
 			
 				<p>After you have set your options, click on one of the three buttons at the bottom
 				to start the actual calibration/profiling process. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
@@ -1296,6 +1298,15 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Fixed unreliable (hanging occasionally) profile install when using system scope under Linux and Mac OS X (regression of a change in 0.3.9.3).</li>
+						</ul>
+					</dd>
+
+				<dt>2010-05-03 18:45 (UTC) 0.3.9.3</dt>
+					<dd>
+						<h3>0.3.9.3</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Show percentage and amount of tone values per channel (+ grayscales) for calibration curves in the curve viewer and profile verification reports.</li>
@@ -1322,7 +1333,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Made compatible with wxPython 2.8.6.0.</li>
 						</ul>
 					</dd>
-
+				
 				<dt>2010-03-31 15:24 (UTC) 0.3.8.0</dt>
 					<dd>
 						<h3>0.3.8.0</h3>
