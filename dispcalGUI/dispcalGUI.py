@@ -4537,7 +4537,7 @@ class MainFrame(BaseFrame):
 			if oldval == "":
 				newval = defaults.get("profile.name", "")
 			else:
-				newval = re.sub("[\\/:*?\"<>|]+", "", oldval)[:255]
+				newval = re.sub(r"[\\/:*?\"<>|]+", "", oldval)[:255]
 			self.profile_name_textctrl.ChangeValue(newval)
 			self.profile_name_textctrl.SetInsertionPoint(x - (len(oldval) - 
 															  len(newval)))
@@ -4947,7 +4947,7 @@ class MainFrame(BaseFrame):
 		profile_name = re.sub("(\W?%s)+" % lang.getstr("native").lower(), 
 							  "\\1", profile_name)
 		
-		return re.sub("[\\/:*?\"<>|]+", "_", profile_name)[:255]
+		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name)[:255]
 
 	def update_profile_name(self, event=None):
 		profile_name = self.create_profile_name()
@@ -4966,7 +4966,7 @@ class MainFrame(BaseFrame):
 			setcfg("profile.name.expanded", profile_name)
 
 	def check_profile_name(self, profile_name=None):
-		if re.match(re.compile("^[^\\/:*?\"<>|]+$"), 
+		if re.match(re.compile(r"^[^\\/:*?\"<>|]+$"), 
 					profile_name if profile_name is not None else 
 					self.create_profile_name()):
 			return True
@@ -6048,7 +6048,7 @@ class MainApp(wx.App):
 		self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
 		wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
 						  wx.LANGUAGE_ENGLISH)
-		self.locale = wx.Locale(wx_lang)
+		##self.locale = wx.Locale(wx_lang)
 		if debug:
 			safe_print("[D]", lang.getstr("language_name"), wx_lang, 
 					   self.locale.GetLocale())

@@ -37,6 +37,7 @@ from options import ascii, debug, verbose
 from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
 from util_str import safe_unicode
+import encodedstdio
 
 # Runtime configuration
 

@@ -5,6 +5,8 @@ import locale
 import os
 import sys
 
+from encodedstdio import encodestdio
+
 def safe_print(*args, **kwargs):
 	"""
 	Print safely, avoiding any UnicodeDe-/EncodingErrors.
@@ -54,6 +56,7 @@ def safe_print(*args, **kwargs):
 									   kwargs.get("encoding") is not None):
 			if kwargs.get("encoding"):
 				encoding = kwargs["encoding"]
+			##elif \
 			elif file_ not in (sys.stdout, sys.stderr) and \
 				 hasattr(file_, "encoding") and file_.encoding:
 				encoding = file_.encoding
@@ -89,6 +92,9 @@ def safe_print(*args, **kwargs):
 			# break would insert an empty line between this line and the next.
 			# To avoid this, skip the newline in that case.
 			file_.write(end)
+
+
+encodestdio()
 
 if __name__ == '__main__':
 	
