@@ -215,6 +215,9 @@ def setup():
 				versiontxt.close()
 			versionpy.close()
 	
+	if not sys.argv[1:]:
+		return
+	
 	global name, domain, version, version_lin, version_mac, version_src
 	global version_tuple, version_win
 	from dispcalGUI.meta import (name, domain, version, version_lin, 

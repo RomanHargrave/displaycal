@@ -2826,7 +2826,9 @@ class MainFrame(BaseFrame):
 								"text\0\0\0\0"
 								"(c) %s %s. Created with %s %s and Argyll CMS %s: "
 								"dispcal %s\0" % (strftime("%Y"), 
-												  getpass.getuser(), appname, 
+												  unicode(getpass.getuser(), 
+														  fs_enc, "asciize"), 
+												  appname, 
 												  version, 
 												  self.worker.argyll_version_string,
 												  " ".join(self.worker.options_dispcal))),
@@ -5378,9 +5380,9 @@ class MainFrame(BaseFrame):
 			if dlg.ShowModal() == wx.ID_OK:
 				path = dlg.GetPath()
 			dlg.Destroy()
-		if getcfg("settings.changed") and not self.settings_confirm_discard():
-			return
 		if path:
+			if getcfg("settings.changed") and not self.settings_confirm_discard():
+				return
 			if not os.path.exists(path):
 				sel = self.calibration_file_ctrl.GetSelection()
 				if len(self.recent_cals) > sel and \
