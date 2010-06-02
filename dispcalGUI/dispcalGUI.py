@@ -4080,14 +4080,16 @@ class MainFrame(BaseFrame):
 							if options_dispcal and options_colprof:
 								self.load_cal_handler(None, path=profile_path, 
 													  update_profile_name=False, 
-													  silent=True)
+													  silent=True,
+													  load_vcgt=False)
 							else:
 								setcfg("calibration.file", profile_path)
 								self.update_controls(update_profile_name=False)
-								self.load_cal(silent=True)
 			else:
 				# .cal file
 				has_cal = True
+			# Always load calibration curves
+			self.load_cal(cal=profile_path, silent=True)
 			dlg = ConfirmDialog(self, msg=success_msg, 
 								ok=lang.getstr("profile.install"), 
 								cancel=lang.getstr("profile.do_not_install"), 
@@ -4113,48 +4115,48 @@ class MainFrame(BaseFrame):
 					   self.lut_viewer.IsShownOnScreen():
 						self.show_lut.SetValue(True)
 					self.init_lut_viewer(profile=profile)
-				if ((sys.platform == "darwin" or (sys.platform != "win32" and 
-												  self.worker.argyll_version >= 
-												  [1, 1, 0])) and 
-					(os.geteuid() == 0 or which("sudo"))) or \
-					(sys.platform == "win32" and 
-					 sys.getwindowsversion() >= (6, )) or test:
-					# Linux, OSX or Vista and later
-					self.install_profile_user = wx.RadioButton(
-						dlg, -1, lang.getstr("profile.install_user"), 
-						style=wx.RB_GROUP)
-					self.install_profile_user.SetValue(
-						getcfg("profile.install_scope") == "u")
-					dlg.Bind(wx.EVT_RADIOBUTTON, 
-							 self.install_profile_scope_handler, 
-							 id=self.install_profile_user.GetId())
-					dlg.sizer3.Add(self.install_profile_user, 
-								   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-					self.install_profile_systemwide = wx.RadioButton(
-						dlg, -1, lang.getstr("profile.install_local_system"))
-					self.install_profile_systemwide.SetValue(
-						getcfg("profile.install_scope") == "l")
-					dlg.Bind(wx.EVT_RADIOBUTTON, 
-							 self.install_profile_scope_handler, 
-							 id=self.install_profile_systemwide.GetId())
-					dlg.sizer3.Add(self.install_profile_systemwide, 
-								   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-					if sys.platform == "darwin" and \
-					   os.path.isdir("/Network/Library/ColorSync/Profiles"):
-						self.install_profile_network = wx.RadioButton(
-							dlg, -1, lang.getstr("profile.install_network"))
-						self.install_profile_network.SetValue(
-							getcfg("profile.install_scope") == "n")
-						dlg.Bind(wx.EVT_RADIOBUTTON, 
-								 self.install_profile_scope_handler, 
-								 id=self.install_profile_network.GetId())
-						dlg.sizer3.Add(self.install_profile_network, 
-									   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-				dlg.sizer0.SetSizeHints(dlg)
-				dlg.sizer0.Layout()
 				if ext not in (".icc", ".icm") or \
 				   getcfg("calibration.file") != profile_path:
 					self.preview_handler(preview=True)
+			if ((sys.platform == "darwin" or (sys.platform != "win32" and 
+											  self.worker.argyll_version >= 
+											  [1, 1, 0])) and 
+				(os.geteuid() == 0 or which("sudo"))) or \
+				(sys.platform == "win32" and 
+				 sys.getwindowsversion() >= (6, )) or test:
+				# Linux, OSX or Vista and later
+				self.install_profile_user = wx.RadioButton(
+					dlg, -1, lang.getstr("profile.install_user"), 
+					style=wx.RB_GROUP)
+				self.install_profile_user.SetValue(
+					getcfg("profile.install_scope") == "u")
+				dlg.Bind(wx.EVT_RADIOBUTTON, 
+						 self.install_profile_scope_handler, 
+						 id=self.install_profile_user.GetId())
+				dlg.sizer3.Add(self.install_profile_user, 
+							   flag=wx.TOP | wx.ALIGN_LEFT, border=8)
+				self.install_profile_systemwide = wx.RadioButton(
+					dlg, -1, lang.getstr("profile.install_local_system"))
+				self.install_profile_systemwide.SetValue(
+					getcfg("profile.install_scope") == "l")
+				dlg.Bind(wx.EVT_RADIOBUTTON, 
+						 self.install_profile_scope_handler, 
+						 id=self.install_profile_systemwide.GetId())
+				dlg.sizer3.Add(self.install_profile_systemwide, 
+							   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+				if sys.platform == "darwin" and \
+				   os.path.isdir("/Network/Library/ColorSync/Profiles"):
+					self.install_profile_network = wx.RadioButton(
+						dlg, -1, lang.getstr("profile.install_network"))
+					self.install_profile_network.SetValue(
+						getcfg("profile.install_scope") == "n")
+					dlg.Bind(wx.EVT_RADIOBUTTON, 
+							 self.install_profile_scope_handler, 
+							 id=self.install_profile_network.GetId())
+					dlg.sizer3.Add(self.install_profile_network, 
+								   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
 			result = dlg.ShowModal()
 			dlg.Destroy()
@@ -5366,7 +5368,7 @@ class MainFrame(BaseFrame):
 		self.check_update_controls(silent=True)
 
 	def load_cal_handler(self, event, path=None, update_profile_name=True, 
-						 silent=False):
+						 silent=False, load_vcgt=True):
 		if not check_set_argyll_bin():
 			return
 		if path is None:
@@ -5585,7 +5587,7 @@ class MainFrame(BaseFrame):
 							update_profile_name=update_profile_name)
 						writecfg()
 
-						if "vcgt" in profile.tags:
+						if "vcgt" in profile.tags and load_vcgt:
 							# load calibration into lut
 							self.load_cal(cal=path, silent=True)
 							if options_dispcal:
@@ -5616,7 +5618,7 @@ class MainFrame(BaseFrame):
 							# (maybe because the user renamed the file)
 							idx = index_fallback_ignorecase(self.recent_cals, cal)
 							self.calibration_file_ctrl.SetSelection(idx)
-						if "vcgt" in profile.tags:
+						if "vcgt" in profile.tags and load_vcgt:
 							# load calibration into lut
 							self.load_cal(cal=path, silent=True)
 						if not silent:
@@ -5641,7 +5643,7 @@ class MainFrame(BaseFrame):
 						# (maybe because the user renamed the file)
 						idx = index_fallback_ignorecase(self.recent_cals, cal)
 						self.calibration_file_ctrl.SetSelection(idx)
-					if "vcgt" in profile.tags:
+					if "vcgt" in profile.tags and load_vcgt:
 						# load calibration into lut
 						self.load_cal(cal=path, silent=True)
 					if not silent:
