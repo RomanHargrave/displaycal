@@ -1773,9 +1773,6 @@ class spawn_windows (spawn_unix, object):
         if self.closed:
             raise ValueError ('I/O operation on closed file in read_nonblocking().')
         
-        if not self.wtty.isalive():
-            self.flag_eof = True
-            raise EOF('End Of File (EOF) in read_nonblocking().')
         
         if timeout == -1:
             timeout = self.timeout
@@ -1783,6 +1780,9 @@ class spawn_windows (spawn_unix, object):
         s = self.wtty.read_nonblocking(timeout, size)
         
         if s == '':
+            if not self.wtty.isalive():
+                self.flag_eof = True
+                raise EOF('End Of File (EOF) in read_nonblocking().')
             if timeout is None:
                 # Do not raise TIMEOUT because we might be waiting for EOF
                 # sleep to keep CPU utilization down
@@ -1928,7 +1928,7 @@ class Wtty:
         self.__consSize = [80, 16000]
         self.__parentPid = 0
         self.__oproc = 0
-        self.__opid = 0
+        self.conpid = 0
         self.__otid = 0
         self.__switch = True
         self.__childProcess = None
@@ -2016,7 +2016,7 @@ class Wtty:
                                         "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i)" % (spath, args, pid, tid))
                      
         #print commandLine
-        self.__oproc, _, self.__opid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
+        self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
                                                                   CREATE_NEW_CONSOLE, env, None, si)
             
    
@@ -2031,7 +2031,7 @@ class Wtty:
             FreeConsole()
         
         try:
-            AttachConsole(self.__opid)
+            AttachConsole(self.conpid)
         except Exception, e:
             try:
                 AttachConsole(self.__parentPid)
@@ -2114,7 +2114,7 @@ class Wtty:
             wrote = self.__consin.WriteConsoleInput(records)
             while self.__consin.PeekConsoleInput(8) != ():
                 time.sleep(0)
-            self.__consout.FillConsoleOutputCharacter(u'\5', len(s), startCo)
+            self.__consout.FillConsoleOutputCharacter(u'\0', len(s), startCo)
         except:
             self.switchBack()
             raise
