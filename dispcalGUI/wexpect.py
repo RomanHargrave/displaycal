@@ -2038,9 +2038,10 @@ class Wtty:
             except Exception, ex:
                 log_error(e)
                 log_error(ex)
-            self.__consin = None
-            self.__consout = None
-            raise e
+            return
+            #self.__consin = None
+            #self.__consout = None
+            #raise e
                 
         self.__consin = GetStdHandle(STD_INPUT_HANDLE)
         self.__consout = self.getConsoleOut()
@@ -2234,7 +2235,10 @@ class Wtty:
                 self.resetConsole()
         except Exception, e:
             self.switchBack()
-            raise e
+            if isinstance(e, ExceptionPexpect):
+                raise e
+            else:
+                return
             
         self.switchBack()    
         return s
