@@ -44,7 +44,7 @@ def safe_print(*args, **kwargs):
 		end = "\n"
 	if "file" in kwargs:
 		file_ = kwargs["file"]
-	elif kwargs.get("fn") is None:
+	elif kwargs.get("fn") is None and sys.stdout.isatty():
 		file_ = sys.stdout
 	else:
 		file_ = None
@@ -84,7 +84,7 @@ def safe_print(*args, **kwargs):
 		line = line.ljust(width, padchar)
 	if "fn" in kwargs and hasattr(kwargs["fn"],  "__call__"):
 		kwargs["fn"](line)
-	else:
+	elif file_:
 		file_.write(line)
 		if sys.platform != "win32" or len(line) != 80 or file_ not in \
 		   (sys.stdout,  sys.stderr) or end != "\n":
@@ -93,8 +93,8 @@ def safe_print(*args, **kwargs):
 			# To avoid this, skip the newline in that case.
 			file_.write(end)
 
-
-encodestdio()
+if sys.stdout.isatty():
+	encodestdio()
 
 if __name__ == '__main__':
 	
