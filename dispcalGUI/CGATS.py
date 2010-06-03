@@ -340,6 +340,14 @@ class CGATS(dict):
 			context['KEYWORDS'][len(context['KEYWORDS'])] = keyword
 		if value != None:
 			context[keyword] = value
+	
+	def add_section(self, key, value):
+		self[key] = CGATS()
+		self[key].key = key
+		self[key].parent = self
+		self[key].root = self
+		self[key].type = 'SECTION'
+		self[key].add_data(value)
 
 	def remove_keyword(self, keyword, remove_value=True):
 		""" Remove a keyword from the list of keyword values. """
@@ -676,3 +684,11 @@ class CGATS(dict):
 		return result
 	
 	pop = remove
+	
+	def write(self, filename=None):
+		if not filename:
+			filename = self.filename
+		txt = open(filename, "w")
+		txt.write(str(self))
+		txt.close()
+	
