@@ -266,6 +266,8 @@ class LogWindow(InvincibleFrame):
 
 	def Log(self, txt):
 		wx.CallAfter(self.log_txt.AppendText, txt + os.linesep)
+		wx.CallAfter(self.log_txt.ScrollLines, 
+					 len(self.log_txt.GetValue().splitlines()))
 
 	def OnClear(self, event):
 		self.log_txt.SetValue("")
