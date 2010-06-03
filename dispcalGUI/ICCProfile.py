@@ -1192,6 +1192,7 @@ class ICCProfile:
 				self.fileName = self._file.name
 				self._file.seek(0)
 				data = self._file.read(128)
+				self.close()
 			
 			if not data or len(data) < 128:
 				raise ICCProfileInvalidError("Not enough data")
