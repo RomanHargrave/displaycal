@@ -90,4 +90,4 @@ def trash(paths):
 				# else:
 					# os.remove(path)
 			deleted += [path]
-		return deleted
+	return deleted
