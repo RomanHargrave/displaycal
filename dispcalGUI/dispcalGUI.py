@@ -114,7 +114,7 @@ import util_x
 from worker import (Worker, check_argyll_bin, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, 
-					get_options_from_cprt, make_argyll_compatible_path, 
+					get_options_from_profile, make_argyll_compatible_path, 
 					set_argyll_bin)
 try:
 	from wxLUTViewer import LUTFrame
@@ -501,19 +501,20 @@ class MainFrame(BaseFrame):
 	
 	def __init__(self):
 		# Set terminal colors
-		try:
-			if sys.platform == "win32":
-				sp.call("color 07", shell=True)
-			else:
-				if sys.platform == "darwin":
-					mac_terminal_set_colors(text="white", text_bold="white")
+		if sys.stdout.isatty():
+			try:
+				if sys.platform == "win32":
+					sp.call("color 07", shell=True)
 				else:
-					print "\x1b[40;22;37m"
-				sp.call('clear', shell=True)
-		except Exception, exception:
-			# Not being able to change terminal colors is not a big
-			# issue. Simply ignore.
-			pass
+					if sys.platform == "darwin":
+						mac_terminal_set_colors(text="white", text_bold="white")
+					else:
+						print "\x1b[40;22;37m"
+					sp.call('clear', shell=True)
+			except Exception, exception:
+				# Not being able to change terminal colors is not a big
+				# issue. Simply ignore.
+				pass
 		
 		# Startup messages
 		if verbose >= 1:
@@ -904,6 +905,10 @@ class MainFrame(BaseFrame):
 		
 		"""
 		self.infoframe = LogWindow(self)
+		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
+										  ".png"))
+		if icon:
+			self.infoframe.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
 	
 	def setup_language(self):
 		"""
@@ -2788,17 +2793,7 @@ class MainFrame(BaseFrame):
 		return True
 
 	def calibrate(self, remove=False):
-		capture_output = not self.interactive_display_adjustment_cb.GetValue()
-		capture_output = False
-		if capture_output:
-			dlg = ConfirmDialog(self, pos=(-1, 100), 
-								msg=lang.getstr("instrument.place_on_screen"), 
-								ok=lang.getstr("ok"), 
-								cancel=lang.getstr("cancel"), 
-								bitmap=geticon(32, "dialog-information"))
-			result = dlg.ShowModal()
-			dlg.Destroy()
-			if result != wx.ID_OK: return False
+		capture_output = not sys.stdout.isatty()
 		cmd, args = self.worker.prepare_dispcal()
 		result = self.worker.exec_cmd(cmd, args, capture_output=capture_output)
 		self.worker.wrapup(result, remove or not result)
@@ -2819,19 +2814,12 @@ class MainFrame(BaseFrame):
 					lang.getstr("error.profile.file_not_created"), parent=self)
 				if result:
 					if self.worker.dispcal_create_fast_matrix_shaper:
-						# we need to set options to cprt
+						# we need to set cprt
 						try:
 							profile = ICCP.ICCProfile(profile_path)
-							profile.tags.cprt = ICCP.TextType(str(
-								"text\0\0\0\0"
-								"(c) %s %s. Created with %s %s and Argyll CMS %s: "
-								"dispcal %s\0" % (strftime("%Y"), 
-												  unicode(getpass.getuser(), 
-														  fs_enc, "asciize"), 
-												  appname, 
-												  version, 
-												  self.worker.argyll_version_string,
-												  " ".join(self.worker.options_dispcal))),
+							profile.tags.cprt = ICCP.TextType(
+								"text\0\0\0\0" + 
+								getcfg("copyright").encode("ASCII", "asciize"),
 								"cprt")
 							profile.write()
 						except Exception, exception:
@@ -2851,13 +2839,23 @@ class MainFrame(BaseFrame):
 					self.load_cal(cal=cal, silent=True)
 		return result
 
-	def measure(self, apply_calibration=True):
+	def measure(self, consumer, apply_calibration=True, progress_msg=""):
+		self.worker.start(consumer, self.measure_producer, 
+						  wkwargs={"apply_calibration": apply_calibration},
+						  progress_msg=progress_msg)
+	
+	def measure_producer(self, apply_calibration=True):
 		cmd, args = self.worker.prepare_dispread(apply_calibration)
 		result = self.worker.exec_cmd(cmd, args)
 		self.worker.wrapup(result, not result)
 		return result
+	
+	def measure_calibrate(self, consumer, producer, remove=True, progress_msg=""):
+		self.worker.start(consumer, producer, 
+						  wkwargs={"remove": remove},
+						  progress_msg=progress_msg)
 
-	def profile(self, apply_calibration=True, dst_path=None, 
+	def profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None):
 		safe_print(lang.getstr("create_profile"))
 		if dst_path is None:
@@ -3295,24 +3293,16 @@ class MainFrame(BaseFrame):
 
 	def verify_calibration(self):
 		safe_print("-" * 80)
-		safe_print(lang.getstr("calibration.verify"))
-		capture_output = False
-		if capture_output:
-			dlg = ConfirmDialog(self, pos=(-1, 100), 
-								msg=lang.getstr("instrument.place_on_screen"), 
-								ok=lang.getstr("ok"), 
-								cancel=lang.getstr("cancel"), 
-								bitmap=geticon(32, "dialog-information"))
-			result = dlg.ShowModal()
-			dlg.Destroy()
-			if result != wx.ID_OK: return False
+		progress_msg = lang.getstr("calibration.verify")
+		safe_print(progress_msg)
+		self.worker.start(self.result_consumer, 
+						  self.verify_calibration_worker, 
+						  progress_msg=progress_msg)
+	
+	def verify_calibration_worker(self):
 		cmd, args = self.worker.prepare_dispcal(calibrate=False, verify=True)
-		if self.worker.exec_cmd(cmd, args, capture_output=capture_output, 
-								skip_scripts=True):
-			if capture_output:
-				self.infoframe.Show()
-		self.worker.wrapup(False)
-		self.Show()
+		return self.worker.exec_cmd(cmd, args, capture_output=True, 
+									skip_scripts=True)
 
 	def verify_profile_handler(self, event):
 		if not check_set_argyll_bin():
@@ -3435,7 +3425,8 @@ class MainFrame(BaseFrame):
 
 	def verify_profile(self, ti1, profile, ti3_ref, save_path, chart, gray):
 		safe_print("-" * 80)
-		safe_print(lang.getstr("profile.verify"))
+		progress_msg = lang.getstr("profile.verify")
+		safe_print(progress_msg)
 		
 		# setup temp dir
 		temp = self.worker.create_tempdir()
@@ -3459,6 +3450,47 @@ class MainFrame(BaseFrame):
 			return
 		ti1_file.write(str(ti1))
 		ti1_file.close()
+		
+		# write profile to temp dir
+		profile.write(profile_path)
+		
+		# load calibration from profile
+		cmd, args = self.worker.prepare_dispwin(profile_path=profile_path, 
+												install=False)
+		self.worker.exec_cmd(cmd, args, skip_scripts=True)
+		
+		# start readings
+		self.worker.start(self.verify_profile_consumer, 
+						  self.verify_profile_worker, 
+						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
+								 profile, ti3_ref, save_path, chart, gray),
+						  wargs=(ti1_path, ),
+						  progress_msg=progress_msg)
+	
+	def verify_profile_worker(self, ti1_path):
+		# measure
+		self.worker.dispread_after_dispcal = False
+		cmd = get_argyll_util("dispread")
+		args = ["-v"]
+		self.worker.add_measurement_features(args)
+		args += [os.path.splitext(ti1_path)[0]]
+		return self.worker.exec_cmd(cmd, args, skip_scripts=True)
+	
+	def verify_profile_consumer(self, result, ti3_path, profile, ti3_ref, 
+								save_path, chart, gray):
+		
+		if result:
+			# get item 0 of the ti3 to strip the CAL part from the measured data
+			ti3_measured = CGATS.CGATS(ti3_path)[0]
+			safe_print(lang.getstr("success"))
+		
+		# cleanup
+		self.worker.wrapup(False)
+		
+		self.Show()
+		
+		if not result:
+			return
 		
 		# calculate amount of calibration grayscale tone values
 		cal_entrycount = 256
@@ -3485,33 +3517,6 @@ class MainFrame(BaseFrame):
 		else:
 			# should never happen
 			cal_rgblevels = [0, 0, 0]
-		
-		# write profile to temp dir
-		profile.write(profile_path)
-		
-		# load calibration from profile
-		cmd, args = self.worker.prepare_dispwin(profile_path=profile_path, 
-												install=False)
-		self.worker.exec_cmd(cmd, args, skip_scripts=True)
-		
-		# measure
-		self.worker.dispread_after_dispcal = False
-		cmd = get_argyll_util("dispread")
-		args = ["-v"]
-		self.worker.add_measurement_features(args)
-		args += [os.path.splitext(ti1_path)[0]]
-		result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
-		if result:
-			# get item 0 of the ti3 to strip the CAL part from the measured data
-			ti3_measured = CGATS.CGATS(args[-1] + ".ti3")[0]
-		
-		# cleanup
-		self.worker.wrapup(False)
-		
-		self.Show()
-		
-		if not result:
-			return
 		
 		offset = len(ti3_measured.DATA) - len(ti3_ref.DATA)
 		if not chart.lower().endswith(".ti1"):
@@ -3761,31 +3766,28 @@ class MainFrame(BaseFrame):
 		if check_set_argyll_bin():
 			safe_print("-" * 80)
 			if report_calibrated:
-				safe_print(lang.getstr("report.calibrated"))
+				progress_msg = lang.getstr("report.calibrated")
 			else:
-				safe_print(lang.getstr("report.uncalibrated"))
-			capture_output = False
-			if capture_output:
-				dlg = ConfirmDialog(self, pos=(-1, 100), 
-									msg=lang.getstr(
-										"instrument.place_on_screen"), 
-									ok=lang.getstr("ok"), 
-									cancel=lang.getstr("cancel"), 
-									bitmap=geticon(32, "dialog-information"))
-				result = dlg.ShowModal()
-				dlg.Destroy()
-				if result != wx.ID_OK: return False
-			cmd, args = self.worker.prepare_dispcal(calibrate=False)
-			if report_calibrated:
-				args += ["-r"]
-			else:
-				args += ["-R"]
-			if self.worker.exec_cmd(cmd, args, capture_output=capture_output, 
-									skip_scripts=True):
-				if capture_output:
-					self.infoframe.Show()
-			self.worker.wrapup(False)
-			self.Show()
+				progress_msg = lang.getstr("report.uncalibrated")
+			safe_print(progress_msg)
+			self.worker.start(self.result_consumer, self.report_worker, 
+							  wkwargs={"report_calibrated": report_calibrated},
+							  progress_msg=progress_msg)
+	
+	def report_worker(self, report_calibrated=True):
+		cmd, args = self.worker.prepare_dispcal(calibrate=False)
+		if report_calibrated:
+			args += ["-r"]
+		else:
+			args += ["-R"]
+		return self.worker.exec_cmd(cmd, args, capture_output=True, 
+									skip_scripts=True)
+	
+	def result_consumer(self, result):
+		if result:
+			self.infoframe.Show()
+		self.worker.wrapup(False)
+		self.Show()
 
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
@@ -3809,8 +3811,18 @@ class MainFrame(BaseFrame):
 	def just_calibrate(self):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
+		if getcfg("calibration.interactive_display_adjustment"):
+			# Interactive adjustment, do not show progress dialog
+			self.just_calibrate_finish(self.calibrate(remove=True))
+		else:
+			# No interactive adjustment, show progress dialog
+			self.measure_calibrate(self.just_calibrate_finish, self.calibrate, 
+								   remove=True,
+								   progress_msg=lang.getstr("calibration"))
+	
+	def just_calibrate_finish(self, result):
 		start_timers = True
-		if self.calibrate(remove=True):
+		if result:
 			if getcfg("calibration.update") or \
 			   self.worker.dispcal_create_fast_matrix_shaper:
 				start_timers = False
@@ -3918,30 +3930,44 @@ class MainFrame(BaseFrame):
 																	   "&"))
 		self.worker.dispcal_create_fast_matrix_shaper = False
 		self.worker.dispread_after_dispcal = True
-		start_timers = True
-		if self.calibrate():
-			if self.measure(apply_calibration=True):
-				start_timers = False
-				wx.CallAfter(self.start_profile_worker, 
-							 lang.getstr("calibration_profiling.complete"))
-			else:
-				wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
-							 msg=lang.getstr("profiling.incomplete"), 
-							 ok=lang.getstr("ok"), 
-							 bitmap=geticon(32, "dialog-error"))
+		if getcfg("calibration.interactive_display_adjustment"):
+			# Interactive adjustment, do not show progress dialog
+			self.calibrate_finish(self.calibrate())
+		else:
+			# No interactive adjustment, show progress dialog
+			self.measure_calibrate(self.calibrate_finish, self.calibrate, 
+								   progress_msg=lang.getstr("calibration"))
+	
+	def calibrate_finish(self, result):
+		if result:
+			wx.CallAfter(self.measure, self.calibrate_and_profile_finish,
+						 True, 
+						 progress_msg=lang.getstr("measuring.characterization"))
 		else:
 			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
 						 msg=lang.getstr("calibration.incomplete"), 
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
+			self.Show()
+	
+	def calibrate_and_profile_finish(self, result):
+		start_timers = True
+		if result:
+			start_timers = False
+			wx.CallAfter(self.start_profile_worker, 
+						 lang.getstr("calibration_profiling.complete"))
+		else:
+			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+						 msg=lang.getstr("profiling.incomplete"), 
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
-	def start_profile_worker(self, success_msg, apply_calibration=True):
+	def start_profile_worker(self, success_msg):
 		self.worker.start(self.profile_finish, self.profile, 
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
 									   "profiling.incomplete")}, 
-						  wkwargs={"apply_calibration": apply_calibration }, 
 						  progress_title=lang.getstr("create_profile"))
 
 	def gamap_btn_handler(self, event):
@@ -3998,11 +4024,10 @@ class MainFrame(BaseFrame):
 							self.update_profile_name_timer.Start(1000)
 							return
 						else:
-							if "cprt" in profile.tags:
-								# get dispcal options if present
-								self.worker.options_dispcal = [
-									"-" + arg for arg in 
-									get_options_from_cprt(profile.getCopyright())[0]]
+							# get dispcal options if present
+							self.worker.options_dispcal = [
+								"-" + arg for arg in 
+								get_options_from_profile(profile)[0]]
 					if os.path.exists(filename + ".cal") and \
 					   can_update_cal(filename + ".cal"):
 						apply_calibration = filename + ".cal"
@@ -4014,12 +4039,16 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.profile"))
 		self.worker.dispread_after_dispcal = False
-		start_timers = True
 		self.previous_cal = False
-		if self.measure(apply_calibration):
+		self.measure(self.just_profile_finish, apply_calibration,
+					 progress_msg=lang.getstr("measuring.characterization"))
+	
+	def just_profile_finish(self, result):
+		start_timers = True
+		if result:
 			start_timers = False
 			wx.CallAfter(self.start_profile_worker, 
-						 lang.getstr("profiling.complete"), apply_calibration)
+						 lang.getstr("profiling.complete"))
 		else:
 			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
 						 msg=lang.getstr("profiling.incomplete"), 
@@ -4064,11 +4093,9 @@ class MainFrame(BaseFrame):
 						self.start_timers(True)
 						self.previous_cal = False
 						return
-					if getcfg("calibration.file") != profile_path and \
-					   "cprt" in profile.tags:
+					if getcfg("calibration.file") != profile_path:
 						(options_dispcal, 
-						 options_colprof) = get_options_from_cprt(
-							profile.getCopyright())
+						 options_colprof) = get_options_from_profile(profile)
 						if options_dispcal or options_colprof:
 							cal = profile_save_path + ".cal"
 							sel = self.calibration_file_ctrl.GetSelection()
@@ -4711,11 +4738,10 @@ class MainFrame(BaseFrame):
 						ti3.write(profile.tags.get("CIED", "") or 
 								  profile.tags.get("targ", ""))
 						ti3.close()
-						if "cprt" in profile.tags:
-							# Get dispcal options if present
-							self.worker.options_dispcal = [
-								"-" + arg for arg in 
-								get_options_from_cprt(profile.getCopyright())[0]]
+						# Get dispcal options if present
+						self.worker.options_dispcal = [
+							"-" + arg for arg in 
+							get_options_from_profile(profile)[0]]
 						if "dmdd" in profile.tags:
 							display_name = profile.getDeviceModelDescription()
 					ti3 = CGATS.CGATS(ti3_tmp_path)
@@ -4739,8 +4765,7 @@ class MainFrame(BaseFrame):
 							 self.display_ctrl.GetStringSelection())), 
 						"failure_msg": lang.getstr(
 							"error.profile.file_not_created")}, 
-					wkwargs={"apply_calibration": True, 
-							 "dst_path": profile_save_path, 
+					wkwargs={"dst_path": profile_save_path, 
 							 "display_name": display_name}, 
 					progress_title=lang.getstr("create_profile"))
 	
@@ -5445,192 +5470,166 @@ class MainFrame(BaseFrame):
 			setcfg("last_cal_or_icc_path", path)
 			if ext.lower() in (".icc", ".icm"):
 				setcfg("last_icc_path", path)
-				if "cprt" in profile.tags:
-					(options_dispcal, 
-					 options_colprof) = get_options_from_cprt(profile.getCopyright())
-					if options_dispcal or options_colprof:
+				(options_dispcal, 
+				 options_colprof) = get_options_from_profile(profile)
+				if options_dispcal or options_colprof:
+					if debug:
+						safe_print("[D] options_dispcal:", options_dispcal)
+					if debug:
+						safe_print("[D] options_colprof:", options_colprof)
+					# Parse options
+					if options_dispcal:
+						# Restore defaults
+						self.restore_defaults_handler(
+							include=("calibration", 
+									 "measure.darken_background", 
+									 "profile.update", 
+									 "trc", 
+									 "whitepoint"), 
+							exclude=("calibration.black_point_correction_choice.show", 
+									 "measure.darken_background.show_warning", 
+									 "trc.should_use_viewcond_adjust.show_msg"))
+						self.worker.options_dispcal = ["-" + arg for arg 
+													   in options_dispcal]
+						for o in options_dispcal:
+							if o[0] == "d":
+								o = o[1:].split(",")
+								setcfg("display.number", o[0])
+								if len(o) > 1:
+									setcfg("display_lut.number", o[1])
+									setcfg("display_lut.link", 
+										   int(o[0] == o[1]))
+								else:
+									setcfg("display_lut.number", o[0])
+									setcfg("display_lut.link", 1)
+								continue
+							if o[0] == "c":
+								setcfg("comport.number", o[1:])
+								continue
+							if o[0] == "m":
+								setcfg("calibration.interactive_display_adjustment", 0)
+								continue
+							if o[0] == "o":
+								setcfg("profile.update", 1)
+								continue
+							if o[0] == "u":
+								setcfg("calibration.update", 1)
+								continue
+							if o[0] == "q":
+								setcfg("calibration.quality", o[1])
+								continue
+							if o[0] == "y":
+								setcfg("measurement_mode", o[1])
+								continue
+							if o[0] in ("t", "T"):
+								setcfg("whitepoint.colortemp.locus", o[0])
+								if o[1:]:
+									setcfg("whitepoint.colortemp", o[1:])
+								setcfg("whitepoint.x", None)
+								setcfg("whitepoint.y", None)
+								continue
+							if o[0] == "w":
+								o = o[1:].split(",")
+								setcfg("whitepoint.colortemp", None)
+								setcfg("whitepoint.x", o[0])
+								setcfg("whitepoint.y", o[1])
+								continue
+							if o[0] == "b":
+								setcfg("calibration.luminance", o[1:])
+								continue
+							if o[0] in ("g", "G"):
+								setcfg("trc.type", o[0])
+								setcfg("trc", o[1:])
+								continue
+							if o[0] == "f":
+								setcfg("calibration.black_output_offset", 
+									   o[1:])
+								continue
+							if o[0] == "a":
+								setcfg("calibration.ambient_viewcond_adjust", 1)
+								setcfg("calibration.ambient_viewcond_adjust.lux", o[1:])
+								continue
+							if o[0] == "k":
+								setcfg("calibration.black_point_correction", o[1:])
+								continue
+							if o[0] == "A":
+								setcfg("calibration.black_point_rate", 
+									   o[1:])
+								continue
+							if o[0] == "B":
+								setcfg("calibration.black_luminance", 
+									   o[1:])
+								continue
+							if o[0] in ("p", "P") and len(o[1:]) >= 5:
+								setcfg("dimensions.measureframe", o[1:])
+								setcfg("dimensions.measureframe.unzoomed", 
+									   o[1:])
+								continue
+							if o[0] == "V":
+								setcfg("measurement_mode.adaptive", 1)
+								continue
+							if o[0] == "H":
+								setcfg("measurement_mode.highres", 1)
+								continue
+							if o[0] == "p" and len(o[1:]) == 0:
+								setcfg("measurement_mode.projector", 1)
+								continue
+							if o[0] == "F":
+								setcfg("measure.darken_background", 1)
+								continue
+					if options_colprof:
+						# restore defaults
+						self.restore_defaults_handler(
+							include=("profile", "gamap_"), 
+							exclude=("profile.update", "profile.name"))
+						for o in options_colprof:
+							if o[0] == "q":
+								setcfg("profile.quality", o[1])
+								continue
+							if o[0] == "a":
+								setcfg("profile.type", o[1])
+								continue
+							if o[0] in ("s", "S"):
+								o = o.split(None, 1)
+								setcfg("gamap_profile", o[1][1:-1])
+								setcfg("gamap_perceptual", 1)
+								if o[0] == "S":
+									setcfg("gamap_saturation", 1)
+								continue
+							if o[0] == "c":
+								setcfg("gamap_src_viewcond", o[1:])
+								continue
+							if o[0] == "d":
+								setcfg("gamap_out_viewcond", o[1:])
+								continue
+					setcfg("calibration.file", path)
+					if "CTI3" in ti3_lines:
 						if debug:
-							safe_print("[D] options_dispcal:", options_dispcal)
-						if debug:
-							safe_print("[D] options_colprof:", options_colprof)
-						# Parse options
+							safe_print("[D] load_cal_handler testchart.file:", path)
+						setcfg("testchart.file", path)
+					self.update_controls(
+						update_profile_name=update_profile_name)
+					writecfg()
+
+					if "vcgt" in profile.tags and load_vcgt:
+						# load calibration into lut
+						self.load_cal(cal=path, silent=True)
 						if options_dispcal:
-							# Restore defaults
-							self.restore_defaults_handler(
-								include=("calibration", 
-										 "measure.darken_background", 
-										 "profile.update", 
-										 "trc", 
-										 "whitepoint"), 
-								exclude=("calibration.black_point_correction_choice.show", 
-										 "measure.darken_background.show_warning", 
-										 "trc.should_use_viewcond_adjust.show_msg"))
-							self.worker.options_dispcal = ["-" + arg for arg 
-														   in options_dispcal]
-							for o in options_dispcal:
-								if o[0] == "d":
-									o = o[1:].split(",")
-									setcfg("display.number", o[0])
-									if len(o) > 1:
-										setcfg("display_lut.number", o[1])
-										setcfg("display_lut.link", 
-											   int(o[0] == o[1]))
-									else:
-										setcfg("display_lut.number", o[0])
-										setcfg("display_lut.link", 1)
-									continue
-								if o[0] == "c":
-									setcfg("comport.number", o[1:])
-									continue
-								if o[0] == "m":
-									setcfg("calibration.interactive_display_adjustment", 0)
-									continue
-								if o[0] == "o":
-									setcfg("profile.update", 1)
-									continue
-								if o[0] == "u":
-									setcfg("calibration.update", 1)
-									continue
-								if o[0] == "q":
-									setcfg("calibration.quality", o[1])
-									continue
-								if o[0] == "y":
-									setcfg("measurement_mode", o[1])
-									continue
-								if o[0] in ("t", "T"):
-									setcfg("whitepoint.colortemp.locus", o[0])
-									if o[1:]:
-										setcfg("whitepoint.colortemp", o[1:])
-									setcfg("whitepoint.x", None)
-									setcfg("whitepoint.y", None)
-									continue
-								if o[0] == "w":
-									o = o[1:].split(",")
-									setcfg("whitepoint.colortemp", None)
-									setcfg("whitepoint.x", o[0])
-									setcfg("whitepoint.y", o[1])
-									continue
-								if o[0] == "b":
-									setcfg("calibration.luminance", o[1:])
-									continue
-								if o[0] in ("g", "G"):
-									setcfg("trc.type", o[0])
-									setcfg("trc", o[1:])
-									continue
-								if o[0] == "f":
-									setcfg("calibration.black_output_offset", 
-										   o[1:])
-									continue
-								if o[0] == "a":
-									setcfg("calibration.ambient_viewcond_adjust", 1)
-									setcfg("calibration.ambient_viewcond_adjust.lux", o[1:])
-									continue
-								if o[0] == "k":
-									setcfg("calibration.black_point_correction", o[1:])
-									continue
-								if o[0] == "A":
-									setcfg("calibration.black_point_rate", 
-										   o[1:])
-									continue
-								if o[0] == "B":
-									setcfg("calibration.black_luminance", 
-										   o[1:])
-									continue
-								if o[0] in ("p", "P") and len(o[1:]) >= 5:
-									setcfg("dimensions.measureframe", o[1:])
-									setcfg("dimensions.measureframe.unzoomed", 
-										   o[1:])
-									continue
-								if o[0] == "V":
-									setcfg("measurement_mode.adaptive", 1)
-									continue
-								if o[0] == "H":
-									setcfg("measurement_mode.highres", 1)
-									continue
-								if o[0] == "p" and len(o[1:]) == 0:
-									setcfg("measurement_mode.projector", 1)
-									continue
-								if o[0] == "F":
-									setcfg("measure.darken_background", 1)
-									continue
-						if options_colprof:
-							# restore defaults
-							self.restore_defaults_handler(
-								include=("profile", "gamap_"), 
-								exclude=("profile.update", "profile.name"))
-							for o in options_colprof:
-								if o[0] == "q":
-									setcfg("profile.quality", o[1])
-									continue
-								if o[0] == "a":
-									setcfg("profile.type", o[1])
-									continue
-								if o[0] in ("s", "S"):
-									o = o.split(None, 1)
-									setcfg("gamap_profile", o[1][1:-1])
-									setcfg("gamap_perceptual", 1)
-									if o[0] == "S":
-										setcfg("gamap_saturation", 1)
-									continue
-								if o[0] == "c":
-									setcfg("gamap_src_viewcond", o[1:])
-									continue
-								if o[0] == "d":
-									setcfg("gamap_out_viewcond", o[1:])
-									continue
-						setcfg("calibration.file", path)
-						if "CTI3" in ti3_lines:
-							if debug:
-								safe_print("[D] load_cal_handler testchart.file:", path)
-							setcfg("testchart.file", path)
-						self.update_controls(
-							update_profile_name=update_profile_name)
-						writecfg()
-
-						if "vcgt" in profile.tags and load_vcgt:
-							# load calibration into lut
-							self.load_cal(cal=path, silent=True)
-							if options_dispcal:
-								return
-							else:
-								msg = lang.getstr("settings_loaded.profile_and_lut")
-						elif options_dispcal:
-							msg = lang.getstr("settings_loaded.cal_and_profile")
+							return
 						else:
-							msg = lang.getstr("settings_loaded.profile")
-
-						if not silent:
-							InfoDialog(self, msg=msg + "\n" + path, ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-information"))
-						return
+							msg = lang.getstr("settings_loaded.profile_and_lut")
+					elif options_dispcal:
+						msg = lang.getstr("settings_loaded.cal_and_profile")
 					else:
-						sel = self.calibration_file_ctrl.GetSelection()
-						if len(self.recent_cals) > sel and self.recent_cals[sel] == path:
-							self.recent_cals.remove(self.recent_cals[sel])
-							self.calibration_file_ctrl.Delete(sel)
-							cal = getcfg("calibration.file") or ""
-							# The case-sensitive index could fail because of 
-							# case insensitive file systems, e.g. if the 
-							# stored filename string is 
-							# "C:\Users\Name\AppData\dispcalGUI\storage\MyFile"
-							# but the actual filename is 
-							# "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
-							# (maybe because the user renamed the file)
-							idx = index_fallback_ignorecase(self.recent_cals, cal)
-							self.calibration_file_ctrl.SetSelection(idx)
-						if "vcgt" in profile.tags and load_vcgt:
-							# load calibration into lut
-							self.load_cal(cal=path, silent=True)
-						if not silent:
-							InfoDialog(self, msg=lang.getstr("no_settings") + 
-												 "\n" + path, 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-error"))
-						return
-				elif not "CIED" in profile.tags and not "targ" in profile.tags:
+						msg = lang.getstr("settings_loaded.profile")
+
+					if not silent:
+						InfoDialog(self, msg=msg + "\n" + path, ok=lang.getstr("ok"), 
+								   bitmap=geticon(32, "dialog-information"))
+					return
+				else:
 					sel = self.calibration_file_ctrl.GetSelection()
-					if len(self.recent_cals) > sel and \
-					   self.recent_cals[sel] == path:
+					if len(self.recent_cals) > sel and self.recent_cals[sel] == path:
 						self.recent_cals.remove(self.recent_cals[sel])
 						self.calibration_file_ctrl.Delete(sel)
 						cal = getcfg("calibration.file") or ""
@@ -5865,9 +5864,21 @@ class MainFrame(BaseFrame):
 						".DS_Store" in dircontents) or \
 					   len(delete_related_files) == len(dircontents):
 						# Delete whole folder
-						trash([os.path.dirname(cal)])
+						deleted = trash([os.path.dirname(cal)])
 					else:
-						trash(delete_related_files)
+						deleted = trash(delete_related_files)
+					orphan_related_files = filter(lambda related_file:  
+												  os.path.exists(related_file), 
+												  delete_related_files)
+					if orphan_related_files:
+						InfoDialog(self, 
+								   msg=lang.getstr("error.deletion", trashcan) + 
+									   "\n\n" + 
+									   "\n".join(os.path.basename(related_file) 
+												 for related_file in 
+												 orphan_related_files), 
+								   ok=lang.getstr("ok"), 
+								   bitmap=geticon(32, "dialog-error"))
 				except TrashcanUnavailableError, exception:
 					InfoDialog(self, 
 							   msg=lang.getstr("error.trashcan_unavailable", 
@@ -6014,6 +6025,7 @@ class MainFrame(BaseFrame):
 
 	def Show(self, show=True, start_timers=True):
 		wx.Frame.Show(self, show)
+		self.Raise()
 		if hasattr(self, "tcframe"):
 			self.tcframe.Show(self.tcframe.IsShownOnScreen())
 		self.infoframe.Show(self.infoframe.IsShownOnScreen())
@@ -6030,11 +6042,12 @@ class MainFrame(BaseFrame):
 			self.HideAll()
 			if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 				self.worker.wrapup(False)
-			if sys.platform == "win32":
-				sp.call("color", shell=True)
-			elif sys.platform != "darwin":
-				print "\x1b[0m"
-				sp.call('clear', shell=True)
+			if sys.stdout.isatty():
+				if sys.platform == "win32":
+					sp.call("color", shell=True)
+				elif sys.platform != "darwin":
+					print "\x1b[0m"
+					sp.call('clear', shell=True)
 			self.Destroy()
 
 	def OnDestroy(self, event):
@@ -6066,12 +6079,9 @@ def main():
 		setup_logging()
 		
 		# Make sure we run inside a tty if we are on Mac OS X
-		# or if we are running frozen, and if stdout isn't a tty (actually 
-		# this shouldn't happen on Windows because the exe automatically 
-		# opens a commandline window)
+		# or Linux, if stdout isn't a tty
 		# Alternatively, force the tty logic with the --terminal option
-		if ((sys.platform == "darwin" or (hasattr(sys, "frozen") and 
-										  sys.frozen)) and 
+		if (sys.platform != "win32" and 
 			(not sys.stdin.isatty() or not sys.stdout.isatty() or 
 			 not sys.stderr.isatty())) or "--terminal" in sys.argv[1:]:
 			terminals_opts = {

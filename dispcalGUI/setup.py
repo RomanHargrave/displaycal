@@ -379,7 +379,6 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 	]
 	if sys.platform == "win32":
 		requires += [
-			"SendKeys (>= 0.3)",
 			"pywin32 (>= 213.0)"
 		]
 	elif sys.platform == "darwin":
@@ -500,7 +499,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		manifest_xml = getmanifestxml(os.path.join(pydir, "..", "misc", 
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
-		attrs["console"] = [{
+		attrs["windows"] = [{
 			"script": os.path.join(pydir, name + ".py"),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
 												name + ".ico"))],

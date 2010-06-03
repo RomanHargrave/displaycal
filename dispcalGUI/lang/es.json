@@ -135,7 +135,7 @@
 	"infoframe.title": "Info",
 	"initializing_gui": "Inicializando GUI...",
 	"instrument": "Instrumento/Puerto",
-	"instrument.place_on_screen": "1. Pulse OK. Despues de 1-3 segundos la ventana de test aparecerá.\n2. Coloque el instrumwento en la ventana de test.\n3. Presione ESC, Q o CTRL^C para abortar, cualquier otra tecla para iniciar la medición.",
+	"instrument.place_on_screen": "Coloque el instrumwento en la ventana de test. Pulse OK. Presione ESC, Q o CTRL^C para abortar, cualquier otra tecla para iniciar la medición.",
 	"license_info": "Licenciado bajo la GPL",
 	"locale.set": "Setting locale: %s",
 	"lut_access": "Acceso a calibración",

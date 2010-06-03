@@ -18,13 +18,9 @@ if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script,
 						  mac_terminal_set_colors)
 elif sys.platform == "win32":
-	try:
-		from SendKeys import SendKeys
-	except ImportError:
-		import win32com.client
-		SendKeys = None
 	import pywintypes
 	import win32api
+	import win32com.client
 from wxaddons import wx
 import wx.lib.delayedresult as delayedresult
 
@@ -53,11 +49,8 @@ from util_os import getenvu, quote_args, which
 from util_str import asciize, safe_unicode, wrap
 from wxwindows import ConfirmDialog, InfoDialog
 
-if sys.platform == "win32" and SendKeys is None:
+if sys.platform == "win32": #and SendKeys is None:
 	wsh_shell = win32com.client.Dispatch("WScript.Shell")
-	def SendKeys(keys, pause=0.05, with_spaces=False, with_tabs=False, with_newlines=False, 
-				turn_off_numlock=True):
-		wsh_shell.SendKeys(keys)
 
 DD_ATTACHED_TO_DESKTOP = 0x01
 DD_MULTI_DRIVER        = 0x02
@@ -231,7 +224,8 @@ def get_argyll_version(name, silent=False):
 	if (silent and check_argyll_bin()) or (not silent and 
 										   check_set_argyll_bin()):
 		cmd = get_argyll_util(name)
-		p = sp.Popen([cmd.encode(fs_enc)], stdin=None, stdout=sp.PIPE, stderr=sp.STDOUT)
+		p = sp.Popen([cmd.encode(fs_enc)], stdin=sp.PIPE, stdout=sp.PIPE, 
+					 stderr=sp.STDOUT)
 		for i, line in enumerate((p.communicate()[0] or "").splitlines()):
 			if isinstance(line, basestring):
 				line = line.strip()
@@ -248,30 +242,10 @@ def get_argyll_version(name, silent=False):
 	return argyll_version
 
 
-def get_options_from_cprt(cprt):
+def get_options_from_args(dispcal_args, colprof_args):
 	"""
-	Extract options used for dispcal and colprof from profile copyright.
+	Extract options used for dispcal and colprof from argument strings.
 	"""
-	if not isinstance(cprt, unicode):
-		if isinstance(cprt, (ICCP.TextDescriptionType, 
-							 ICCP.MultiLocalizedUnicodeType)):
-			cprt = unicode(cprt)
-		else:
-			cprt = unicode(cprt, fs_enc, "replace")
-	dispcal = cprt.split(" dispcal ")
-	colprof = None
-	if len(dispcal) > 1:
-		dispcal[1] = dispcal[1].split(" colprof ")
-		if len(dispcal[1]) > 1:
-			colprof = dispcal[1][1]
-		dispcal = dispcal[1][0]
-	else:
-		dispcal = None
-		colprof = cprt.split(" colprof ")
-		if len(colprof) > 1:
-			colprof = colprof[1]
-		else:
-			colprof = None
 	re_options_dispcal = [
 		"v",
 		"d\d+(?:,\d+)?",
@@ -306,13 +280,63 @@ def get_options_from_cprt(cprt):
 	]
 	options_dispcal = []
 	options_colprof = []
-	if dispcal:
+	if dispcal_args:
 		options_dispcal = re.findall(" -(" + "|".join(re_options_dispcal) + 
-									 ")", " " + dispcal)
-	if colprof:
+									 ")", " " + dispcal_args)
+	if colprof_args:
 		options_colprof = re.findall(" -(" + "|".join(re_options_colprof) + 
-									 ")", " " + colprof)
+									 ")", " " + colprof_args)
 	return options_dispcal, options_colprof
+
+def get_options_from_cprt(cprt):
+	"""
+	Extract options used for dispcal and colprof from profile copyright.
+	"""
+	if not isinstance(cprt, unicode):
+		if isinstance(cprt, (ICCP.TextDescriptionType, 
+							 ICCP.MultiLocalizedUnicodeType)):
+			cprt = unicode(cprt)
+		else:
+			cprt = unicode(cprt, fs_enc, "replace")
+	dispcal_args = cprt.split(" dispcal ")
+	colprof_args = None
+	if len(dispcal_args) > 1:
+		dispcal_args[1] = dispcal_args[1].split(" colprof ")
+		if len(dispcal_args[1]) > 1:
+			colprof_args = dispcal_args[1][1]
+		dispcal_args = dispcal_args[1][0]
+	else:
+		dispcal_args = None
+		colprof_args = cprt.split(" colprof ")
+		if len(colprof_args) > 1:
+			colprof_args = colprof_args[1]
+		else:
+			colprof_args = None
+	return dispcal_args, colprof_args
+
+
+def get_options_from_profile(profile):
+	""" Try and get options from profile. First, try the 'targ' tag and 
+	look for the special dispcalGUI sections 'ARGYLL_DISPCAL_ARGS' and
+	'ARGYLL_COLPROF_ARGS'. If either does not exist, fall back to the 
+	copyright tag (dispcalGUI < 0.4.0.2) """
+	dispcal_args = None
+	colprof_args = None
+	if "targ" in profile.tags:
+		ti3 = CGATS.CGATS(profile.tags.targ)
+		if len(ti3) > 1 and "ARGYLL_DISPCAL_ARGS" in ti3[1] and \
+		   ti3[1].ARGYLL_DISPCAL_ARGS:
+			dispcal_args = ti3[1].ARGYLL_DISPCAL_ARGS[0].decode("UTF-8", 
+																"replace")
+		if "ARGYLL_COLPROF_ARGS" in ti3[0] and \
+		   ti3[0].ARGYLL_COLPROF_ARGS:
+			colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-8", 
+																"replace")
+	if not dispcal_args and "cprt" in profile.tags:
+		dispcal_args = get_options_from_cprt(profile.getCopyright())[0]
+	if not colprof_args and "cprt" in profile.tags:
+		colprof_args = get_options_from_cprt(profile.getCopyright())[1]
+	return get_options_from_args(dispcal_args, colprof_args)
 
 
 def make_argyll_compatible_path(path):
@@ -372,52 +396,6 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 		safe_print(textwrap.fill(line, 80, expand_tabs = False, 
 				   replace_whitespace = False, initial_indent = "    ", 
 				   subsequent_indent = "      "), fn = fn)
-
-
-def sendkeys(delay=0, target="", keys=""):
-	""" Send key(s) to optional target after delay. """
-	if sys.platform == "darwin":
-		mac_app_activate(delay, target)
-		try:
-			if appscript is None:
-				p = sp.Popen([
-					'osascript',
-					'-e', 'tell application "System Events"',
-					'-e', 'keystroke "%s"' % keys,
-					'-e', 'end tell'
-				], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
-				p.communicate()
-			else:
-				appscript.app('System Events').keystroke(keys)
-		except Exception, exception:
-			if verbose >= 1:
-				safe_print("Error - sendkeys() failed:", exception)
-	elif sys.platform == "win32":
-		try:
-			if delay: sleep(delay)
-			## hwnd = win32gui.FindWindowEx(0, 0, 0, target)
-			## win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
-			SendKeys(keys, with_spaces=True, with_tabs=True, 
-					 with_newlines=True, turn_off_numlock=False)
-		except Exception, exception:
-			if verbose >= 1:
-				safe_print("Error - sendkeys() failed:", exception)
-	else:
-		try:
-			if delay: sleep(delay)
-			if verbose >= 2:
-				safe_print('Sending key sequence using xte: "%s"' % keys)
-			p = sp.Popen(["xte", "key %s" % keys], stdin=sp.PIPE, 
-							  stdout=sp.PIPE, stderr=sp.PIPE)
-			stdout, stderr = p.communicate()
-			if verbose >= 2:
-				safe_print(stdout)
-			if p.returncode != 0:
-				if verbose >= 2:
-					safe_print(p.returncode)
-		except Exception, exception:
-			if verbose >= 1:
-				safe_print("Error - sendkeys() failed:", exception)
 
 
 def set_argyll_bin(parent=None):
@@ -575,6 +553,10 @@ class Worker():
 					if n == 0 and "version" in line.lower():
 						argyll_version = line[line.lower().find("version")+8:]
 						self.argyll_version_string = argyll_version
+						config.defaults["copyright"] = ("Created with %s %s "
+														"and Argyll CMS %s" % 
+														(appname, version, 
+														 argyll_version))
 						if verbose >= 3:
 							safe_print("Argyll CMS version", argyll_version)
 						argyll_version = re.findall("(\d+|[^.\d]+)", 
@@ -721,7 +703,7 @@ class Worker():
 					working_basename = os.path.splitext(working_basename)[0] 
 			else:
 				working_dir = None
-		if not capture_output and low_contrast:
+		if not capture_output and low_contrast and sys.stdout.isatty():
 			# Set low contrast colors (gray on black) so it doesn't interfere 
 			# with measurements
 			try:
@@ -768,10 +750,11 @@ class Worker():
 		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
 														  "-Sn" in args):
 			asroot = True
-		interact = sys.platform == "win32" and not sys.stdout.isatty() and \
-				   args and cmdname in (get_argyll_utilname("dispcal"), 
+		interact = args and cmdname in (get_argyll_utilname("dispcal"), 
 										get_argyll_utilname("dispread"), 
 										get_argyll_utilname("spotread"))
+		needs_user_interaction = cmdname == get_argyll_utilname("dispcal") and \
+								 not "-m" in args
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
 					    sys.getwindowsversion() >= (6, ))):
@@ -945,57 +928,7 @@ class Worker():
 			except Exception, exception:
 				safe_print("Warning - error during shell script creation:", 
 						   safe_unicode(exception))
-		if cmdname == get_argyll_utilname("dispread") and \
-		   self.dispread_after_dispcal:
-			instrument_features = self.get_instrument_features()
-			if verbose >= 2:
-				safe_print("Running calibration and profiling in succession, "
-						   "checking instrument for unattended capability...")
-				if instrument_features:
-					safe_print("Instrument needs sensor calibration:", 
-							   "Yes" if instrument_features.get("sensor_cal") 
-							   else "No")
-					if instrument_features.get("sensor_cal"):
-						safe_print("Instrument can be forced to skip sensor "
-							"calibration:", "Yes" if 
-							instrument_features.get("skip_sensor_cal") and 
-							self.argyll_version >= [1, 1, 0] else "No")
-				else:
-					safe_print("Warning - instrument not recognized:", 
-							   self.get_instrument_name())
-			# -N switch not working as expected in Argyll 1.0.3
-			if instrument_features and \
-			   (not instrument_features.get("sensor_cal") or 
-			    (instrument_features.get("skip_sensor_cal") and 
-				 self.argyll_version >= [1, 1, 0])):
-				if verbose >= 2:
-					safe_print("Instrument can be used for unattended "
-							   "calibration and profiling")
-				try:
-					if verbose >= 2:
-						safe_print("Sending 'SPACE' key to automatically "
-								   "start measurements in 10 seconds...")
-					if sys.platform == "darwin":
-						start_new_thread(sendkeys, (10, "Terminal", " "))
-					elif sys.platform == "win32":
-						start_new_thread(sendkeys, (10, appname + exe_ext, 
-													" "))
-					else:
-						if which("xte"):
-							start_new_thread(sendkeys, (10, None, "space"))
-						elif verbose >= 2:
-							safe_print("Warning - 'xte' commandline tool not "
-									   "found, unattended measurements not "
-									   "possible")
-				except Exception, exception:
-					safe_print(u"Warning - unattended measurements not "
-							   u"possible (start_new_thread failed with %s)" % 
-							   safe_unicode(exception))
-			elif verbose >= 2:
-				safe_print("Instrument can not be used for unattended "
-						   "calibration and profiling")
-		elif cmdname in (get_argyll_utilname("dispcal"), 
-						 get_argyll_utilname("dispread")) and \
+		elif needs_user_interaction and \
 			 sys.platform == "darwin" and args and self.owner and not \
 			 self.owner.IsShownOnScreen():
 			start_new_thread(mac_app_activate, (3, "Terminal"))
@@ -1029,22 +962,85 @@ class Worker():
 					startupinfo = None
 			if sys.platform == "win32" and working_dir:
 				working_dir = win32api.GetShortPathName(working_dir)
+			logfn = log
 			tries = 1
 			while tries > 0:
 				if interact:
 					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
 													cwd=working_dir)
-					self.subprocess.interact()
+					if needs_user_interaction or sys.platform == "win32":
+						self.subprocess.interact()
+						if sys.platform == "win32":
+							logfn = safe_print
+							# Under Windows Vista and 7 we need atleast one 
+							# active window associated with the running
+							# subprocess, otherwise it might freeze screen
+							# updates
+							wsh_shell.AppActivate(self.subprocess.wtty.conpid)
+					if sudo:
+						# TODO: Not needed?
+						pass
+					instrument_features = self.get_instrument_features()
+					# -N switch not working as expected in Argyll < 1.1.0
+					skip_sensor_cal = instrument_features and \
+									  (not instrument_features.get("sensor_cal") or 
+									   (instrument_features.get("skip_sensor_cal") and 
+										self.argyll_version >= [1, 1, 0]))
+					if skip_sensor_cal:
+						if not "-F" in args:
+							# Allow the user to move the terminal window if
+							# using black background
+							self.subprocess.expect(":")
+							logfn(os.linesep.join(line.rstrip() for line in 
+												wrap((self.subprocess.before + 
+													  self.subprocess.after).decode(enc, 
+																					"replace"), 
+													 80).splitlines()))
+							self.subprocess.send(" ")
+					else:
+						self.subprocess.expect(":")
+						logfn(self.subprocess.before.decode(enc, "replace"))
+						dlg = ConfirmDialog(parent, 
+											msg=lang.getstr("instrument.calibrate"), 
+											ok=lang.getstr("ok"), 
+											cancel=lang.getstr("cancel"), 
+											bitmap=geticon(32, "dialog-information"))
+						dlg_result = dlg.ShowModal()
+						dlg.Destroy()
+						if dlg_result != wx.ID_OK:
+							self.quit_cmd()
+							sleep(.05)
+							self.terminate_cmd()
+							return False
+						self.subprocess.send(" ")
+						self.subprocess.expect(":")
+						logfn(os.linesep.join(line.rstrip() for line in 
+										    wrap((self.subprocess.before + 
+												  self.subprocess.after).decode(enc, 
+																				"replace"), 
+												 80).splitlines()))
+						dlg = ConfirmDialog(parent, 
+											msg=lang.getstr("instrument.place_on_screen"), 
+											ok=lang.getstr("ok"), 
+											cancel=lang.getstr("cancel"), 
+											bitmap=geticon(32, "dialog-information"))
+						dlg_result = dlg.ShowModal()
+						dlg.Destroy()
+						if dlg_result != wx.ID_OK:
+							self.quit_cmd()
+							sleep(.05)
+							self.terminate_cmd()
+							return False
+						self.subprocess.send(" ")
 					self.subprocess.expect(wexpect.EOF, timeout=None)
+					if self.subprocess.isalive():
+						self.subprocess.wait()
+					self.retcode = self.subprocess.exitstatus
 					stdout = StringIO(os.linesep.join(
 						line.rstrip() for line in wrap(self.subprocess.before, 
 													   80).splitlines()))
 					stderr = StringIO()
-					if sys.platform == "win32" and not sys.stdout.isatty():
-						wexpect.FreeConsole()
-					if self.subprocess.isalive():
-						self.subprocess.wait()
-					self.retcode = self.subprocess.exitstatus
+					self.terminate_cmd()
 				else:
 					self.subprocess = sp.Popen(cmdline, stdin=stdin, 
 											   stdout=stdout, stderr=stderr, 
@@ -1092,7 +1088,7 @@ class Worker():
 								   for line in stdout.readlines()]
 					stdout.close()
 					if len(self.output) and log_output:
-						log("".join(self.output).strip())
+						logfn("".join(self.output).strip())
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
@@ -1108,7 +1104,7 @@ class Worker():
 			else:
 				handle_error(errmsg, parent=self.owner, silent=silent)
 			self.retcode = -1
-		if not capture_output and low_contrast:
+		if not capture_output and low_contrast and sys.stdout.isatty():
 			# Reset to higher contrast colors (white on black) for readability
 			try:
 				if sys.platform == "win32":
@@ -1244,10 +1240,7 @@ class Worker():
 			if options_colprof[i][0] != "-":
 				options_colprof[i] = '"' + options_colprof[i] + '"'
 		args += ["-C"]
-		args += [u"(c) %s %s. Created with %s %s and Argyll CMS %s:" % 
-				 (strftime("%Y"), unicode(getpass.getuser(), fs_enc, 
-										  "asciize"), appname, version, 
-				  self.argyll_version_string)]
+		args += [getcfg("copyright").encode("ASCII", "asciize")]
 		if "-d3" in self.options_targen:
 			# only add display desc and dispcal options if creating RGB profile
 			if len(self.displays):
@@ -1256,12 +1249,22 @@ class Worker():
 					args.insert(-2, self.get_display_name())
 				else:
 					args.insert(-2, display_name)
-			if self.options_dispcal:
-				args[-1] += u" dispcal %s" % " ".join(self.options_dispcal)
-		args[-1] += u" colprof %s" % " ".join(options_colprof)
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
+		# Add dispcal and colprof arguments to ti3
+		try:
+			ti3 = CGATS.CGATS(inoutfile + ".ti3")
+			ti3[0].add_section("ARGYLL_COLPROF_ARGS", 
+							   " ".join(options_colprof).encode("UTF-8", 
+																"replace"))
+			if self.options_dispcal and len(ti3) > 1:
+				ti3[1].add_section("ARGYLL_DISPCAL_ARGS", 
+								   " ".join(self.options_dispcal).encode("UTF-8", 
+																		 "replace"))
+			ti3.write()
+		except Exception, exception:
+			safe_print(safe_unicode(traceback.format_exc()))
 		return cmd, args
 
 	def prepare_dispcal(self, calibrate=True, verify=False):
@@ -1507,7 +1510,7 @@ class Worker():
 					if "cprt" in profile.tags:
 						# Get dispcal options if present
 						self.options_dispcal = ["-" + arg for arg in 
-							get_options_from_cprt(profile.getCopyright())[0]]
+							get_options_from_profile(profile)[0]]
 				else:
 					ti3 = StringIO("")
 				ti3_lines = [line.strip() for line in ti3]
@@ -1660,8 +1663,7 @@ class Worker():
 		return cmd, args
 
 	def progress_timer_handler(self, event):
-		keepGoing, skip = self.progress_parent.progress_dlg.Pulse(
-			self.progress_parent.progress_dlg.GetTitle())
+		keepGoing, skip = self.progress_parent.progress_dlg.Pulse()
 		if not keepGoing:
 			if hasattr(self, "subprocess") and self.subprocess:
 				if (hasattr(self.subprocess, "poll") and 
@@ -1695,10 +1697,25 @@ class Worker():
 		self.progress_parent.progress_dlg.SetSize((400, -1))
 		self.progress_parent.progress_dlg.Center()
 		self.progress_parent.progress_timer.Start(50)
+	
+	def quit_cmd(self):
+		try:
+			self.subprocess.send("q")
+		except Exception, exception:
+			log(safe_unicode(exception))
+	
+	def terminate_cmd(self):
+		try:
+			if self.subprocess.isalive():
+				self.subprocess.terminate(force=True)
+		except Exception, exception:
+			log(safe_unicode(exception))
+		if sys.platform == "win32" and not sys.stdout.isatty():
+			wexpect.FreeConsole()
 
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
-			  wkwargs=None, progress_title="", progress_msg="", parent=None, 
-			  progress_start=100):
+			  wkwargs=None, progress_title=appname, progress_msg="", 
+			  parent=None, progress_start=100):
 		"""
 		Start a worker process.
 		
@@ -1710,11 +1727,11 @@ class Worker():
 		if wkwargs is None:
 			wkwargs = {}
 		while self.is_working():
-			sleep(250) # wait until previous worker thread finishes
+			sleep(.25) # wait until previous worker thread finishes
 		if hasattr(self.owner, "stop_timers"):
 			self.owner.stop_timers()
 		if not progress_msg:
-			progress_msg = progress_title
+			progress_msg = lang.getstr("please_wait")
 		if not parent:
 			parent = self.owner
 		self.progress_parent = parent

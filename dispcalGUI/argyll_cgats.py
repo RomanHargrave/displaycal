@@ -144,76 +144,74 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 			if cal_found:
 				cal_lines += [line]
 				if line == 'DEVICE_CLASS "DISPLAY"':
-					if "cprt" in profile.tags:
-						options_dispcal = get_options_from_cprt(
-							profile.getCopyright())[0]
-						if options_dispcal:
-							whitepoint = False
-							b = profile.tags.lumi.Y
-							for o in options_dispcal:
-								if o[0] == "y":
-									cal_lines += ['KEYWORD "DEVICE_TYPE"']
-									if o[1] == "c":
-										cal_lines += ['DEVICE_TYPE "CRT"']
-									else:
-										cal_lines += ['DEVICE_TYPE "LCD"']
-									continue
-								if o[0] in ("t", "T"):
-									continue
-								if o[0] == "w":
-									continue
-								if o[0] in ("g", "G"):
-									if o[1:] == "240":
-										trc = "SMPTE240M"
-									elif o[1:] == "709":
-										trc = "REC709"
-									elif o[1:] == "l":
-										trc = "L_STAR"
-									elif o[1:] == "s":
-										trc = "sRGB"
-									else:
-										trc = o[1:]
-										if o[0] == "G":
-											try:
-												trc = 0 - Decimal(trc)
-											except decimal.InvalidOperation, \
-												   exception:
-												continue
-									cal_lines += ['KEYWORD "TARGET_GAMMA"']
-									cal_lines += ['TARGET_GAMMA "%s"' % trc]
-									continue
-								if o[0] == "f":
-									cal_lines += ['KEYWORD '
-										'"DEGREE_OF_BLACK_OUTPUT_OFFSET"']
-									cal_lines += [
-										'DEGREE_OF_BLACK_OUTPUT_OFFSET "%s"' % 
-										o[1:]]
-									continue
-								if o[0] == "k":
-									cal_lines += ['KEYWORD '
-										'"BLACK_POINT_CORRECTION"']
-									cal_lines += [
-										'BLACK_POINT_CORRECTION "%s"' % o[1:]]
-									continue
-								if o[0] == "B":
-									cal_lines += ['KEYWORD '
-										'"TARGET_BLACK_BRIGHTNESS"']
-									cal_lines += [
-										'TARGET_BLACK_BRIGHTNESS "%s"' % o[1:]]
-									continue
-								if o[0] == "q":
-									if o[1] == "l":
-										q = "low"
-									elif o[1] == "m":
-										q = "medium"
-									else:
-										q = "high"
-									cal_lines += ['KEYWORD "QUALITY"']
-									cal_lines += ['QUALITY "%s"' % q]
-									continue
-							if not whitepoint:
-								cal_lines += ['KEYWORD "NATIVE_TARGET_WHITE"']
-								cal_lines += ['NATIVE_TARGET_WHITE ""']
+					options_dispcal = get_options_from_profile(profile)[0]
+					if options_dispcal:
+						whitepoint = False
+						b = profile.tags.lumi.Y
+						for o in options_dispcal:
+							if o[0] == "y":
+								cal_lines += ['KEYWORD "DEVICE_TYPE"']
+								if o[1] == "c":
+									cal_lines += ['DEVICE_TYPE "CRT"']
+								else:
+									cal_lines += ['DEVICE_TYPE "LCD"']
+								continue
+							if o[0] in ("t", "T"):
+								continue
+							if o[0] == "w":
+								continue
+							if o[0] in ("g", "G"):
+								if o[1:] == "240":
+									trc = "SMPTE240M"
+								elif o[1:] == "709":
+									trc = "REC709"
+								elif o[1:] == "l":
+									trc = "L_STAR"
+								elif o[1:] == "s":
+									trc = "sRGB"
+								else:
+									trc = o[1:]
+									if o[0] == "G":
+										try:
+											trc = 0 - Decimal(trc)
+										except decimal.InvalidOperation, \
+											   exception:
+											continue
+								cal_lines += ['KEYWORD "TARGET_GAMMA"']
+								cal_lines += ['TARGET_GAMMA "%s"' % trc]
+								continue
+							if o[0] == "f":
+								cal_lines += ['KEYWORD '
+									'"DEGREE_OF_BLACK_OUTPUT_OFFSET"']
+								cal_lines += [
+									'DEGREE_OF_BLACK_OUTPUT_OFFSET "%s"' % 
+									o[1:]]
+								continue
+							if o[0] == "k":
+								cal_lines += ['KEYWORD '
+									'"BLACK_POINT_CORRECTION"']
+								cal_lines += [
+									'BLACK_POINT_CORRECTION "%s"' % o[1:]]
+								continue
+							if o[0] == "B":
+								cal_lines += ['KEYWORD '
+									'"TARGET_BLACK_BRIGHTNESS"']
+								cal_lines += [
+									'TARGET_BLACK_BRIGHTNESS "%s"' % o[1:]]
+								continue
+							if o[0] == "q":
+								if o[1] == "l":
+									q = "low"
+								elif o[1] == "m":
+									q = "medium"
+								else:
+									q = "high"
+								cal_lines += ['KEYWORD "QUALITY"']
+								cal_lines += ['QUALITY "%s"' % q]
+								continue
+						if not whitepoint:
+							cal_lines += ['KEYWORD "NATIVE_TARGET_WHITE"']
+							cal_lines += ['NATIVE_TARGET_WHITE ""']
 		if cal_lines:
 			if target_filename:
 				try:

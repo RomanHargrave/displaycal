@@ -337,6 +337,8 @@ defaults = {
 	"calibration.quality": "m",
 	"calibration.update": 0,
 	"comport.number": 1,
+	"copyright": "Created with %s %s and Argyll CMS" % (appname, 
+														version),
 	"dimensions.measureframe": "0.5,0.5,1.0",
 	"dimensions.measureframe.unzoomed": "0.5,0.5,1.0",
 	"display.number": 1,
@@ -373,7 +375,7 @@ defaults = {
 		u"%cq-%pq",
 		u"%pt"
 	]),
-	"profile.name.expanded": "",
+	"profile.name.expanded": u"",
 	"profile.quality": "h",
 	"profile.save_path": storage, # directory
 	"profile.type": "S",

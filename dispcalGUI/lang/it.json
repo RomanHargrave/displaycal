@@ -135,7 +135,7 @@
 	"infoframe.title": "Informazioni",
 	"initializing_gui": "Inizializzazione interfaccia grafica...",
 	"instrument": "Strumento/Porta",
-	"instrument.place_on_screen": "1. Clicca su OK. Dopo 1-3 secondi apparirà la finestra di test.\n2. Posizionare lo strumento sulla finestra di test.\n3. Premere ESC, Q o CTRL^C per annullare, qualsiasi altro tasto avvierà la misurazione.",
+	"instrument.place_on_screen": "Posizionare lo strumento sulla finestra di test. Clicca su OK. Premere ESC, Q o CTRL^C per annullare, qualsiasi altro tasto avvierà la misurazione.",
 	"license_info": "Rilasciato sotto licenza GPL",
 	"locale.set": "Impostazioni della locale: %s",
 	"lut_access": "Accesso a calibrazione",

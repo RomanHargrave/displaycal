@@ -125,8 +125,6 @@ testForPythonModule numpy || (
 	)
 )
 
-which xte || recommendAtLeast '@hoopajoo.net/xautomation:1'
-
 removeOwningPackage "$PREFIX/bin/dispcalGUI"
 
 
