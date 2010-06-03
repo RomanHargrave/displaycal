@@ -10,7 +10,8 @@ import sys
 if sys.platform == "darwin":
     enc = "UTF-8"
 else:
-    enc = sys.stdout.encoding or locale.getpreferredencoding() or \
+    enc = locale.getlocale()[1] or sys.stdout.encoding or \
+		  locale.getpreferredencoding() or \
 		  sys.getdefaultencoding()
 fs_enc = sys.getfilesystemencoding() or enc
 
