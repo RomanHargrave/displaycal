@@ -1542,7 +1542,10 @@ class spawn_unix (object):
         while self.isalive():
             r,w,e = self.__select([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
-                data = self.__interact_read(self.child_fd)
+                try:
+                    data = self.__interact_read(self.child_fd)
+                except OSError, e:
+                    break
                 if output_filter: data = output_filter(data)
                 if self.logfile is not None:
                     self.logfile.write (data)
@@ -2113,9 +2116,13 @@ class Wtty:
             consinfo = self.__consout.GetConsoleScreenBufferInfo()
             startCo = consinfo['CursorPosition']
             wrote = self.__consin.WriteConsoleInput(records)
-            while self.__consin.PeekConsoleInput(8) != ():
-                time.sleep(0)
-            self.__consout.FillConsoleOutputCharacter(u'\0', len(s), startCo)
+            ts = time.time()
+            while self.__consin and self.__consin.PeekConsoleInput(8) != ():
+                if time.time() > ts + len(s) * .05:
+                    break
+                time.sleep(.05)
+            if self.__consout:
+                self.__consout.FillConsoleOutputCharacter(u'\0', len(s), startCo)
         except:
             self.switchBack()
             raise
@@ -2235,10 +2242,7 @@ class Wtty:
                 self.resetConsole()
         except Exception, e:
             self.switchBack()
-            if isinstance(e, ExceptionPexpect):
-                raise e
-            else:
-                return
+            raise EOF('End Of File (EOF) in Wtty.read_nonblocking().')
             
         self.switchBack()    
         return s
