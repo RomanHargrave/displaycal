@@ -3052,10 +3052,24 @@ class MainFrame(BaseFrame):
 						profile_path=None, install=True, skip_scripts=False, 
 						silent=False):
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
-		result = self.worker.exec_cmd(cmd, args, capture_output, 
-									  low_contrast=False, 
-									  skip_scripts=skip_scripts, 
-									  silent=silent)
+		if "-Sl" in args and sys.platform != "darwin":
+			# If a 'system' install is requested under Linux or Windows, 
+			# install in 'user' scope first because a system-wide install does 
+			# not replace a possible previous 'user' profile on those systems 
+			# (under Mac OS X, it does).
+			args.remove("-Sl")
+			result = self.worker.exec_cmd(cmd, args, capture_output, 
+										  low_contrast=False, 
+										  skip_scripts=skip_scripts, 
+										  silent=silent)
+			args.insert(0, "-Sl")
+		else:
+			result = True
+		if result:
+			result = self.worker.exec_cmd(cmd, args, capture_output, 
+										  low_contrast=False, 
+										  skip_scripts=skip_scripts, 
+										  silent=silent)
 		if result is not None and install:
 			result = False
 			for line in self.worker.output:
@@ -3160,11 +3174,15 @@ class MainFrame(BaseFrame):
 											os.path.join(autostart, 
 														 name + ".lnk"), 0)
 								except Exception, exception:
-									log(lang.getstr(
-										   "error.autostart_creation", 
-										   autostart) + "\n\n" + 
-										   safe_unicode(exception))
-									# try user scope
+									InfoDialog(self,
+											   msg=lang.getstr(
+												   "error.autostart_creation", 
+												   autostart) + "\n\n" + 
+												   safe_unicode(exception.args[1]), 
+											   ok=lang.getstr("ok"), 
+											   bitmap=geticon(32, 
+															  "dialog-warning"))
+									# now try user scope
 								else:
 									return result
 							else:
@@ -3193,7 +3211,7 @@ class MainFrame(BaseFrame):
 									   msg=lang.getstr(
 										   "error.autostart_creation", 
 										   autostart_home) + "\n\n" + 
-										   safe_unicode(exception), 
+										   safe_unicode(exception.args[1]), 
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-warning"))
 				elif sys.platform != "darwin":
@@ -4158,8 +4176,13 @@ class MainFrame(BaseFrame):
 											  [1, 1, 0])) and 
 				(os.geteuid() == 0 or which("sudo"))) or \
 				(sys.platform == "win32" and 
-				 sys.getwindowsversion() >= (6, )) or test:
+				 sys.getwindowsversion() >= (6, ) and 
+				 self.worker.argyll_version > 
+				 [1, 1, 1]) or test:
 				# Linux, OSX or Vista and later
+				# NOTE: System install scope is currently not implemented
+				# correctly in dispwin 1.1.0, but a patch is trivial and
+				# should be in the next version
 				self.install_profile_user = wx.RadioButton(
 					dlg, -1, lang.getstr("profile.install_user"), 
 					style=wx.RB_GROUP)
@@ -6074,9 +6097,9 @@ class MainApp(wx.App):
 		wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
 						  wx.LANGUAGE_ENGLISH)
 		##self.locale = wx.Locale(wx_lang)
-		if debug:
-			safe_print("[D]", lang.getstr("language_name"), wx_lang, 
-					   self.locale.GetLocale())
+		##if debug:
+			##safe_print("[D]", lang.getstr("language_name"), wx_lang, 
+					   ##self.locale.GetLocale())
 		self.frame = MainFrame()
 		self.SetTopWindow(self.frame)
 		self.frame.Show()

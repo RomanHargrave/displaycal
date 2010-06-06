@@ -1307,6 +1307,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li>Installing a profile system-wide under Linux now also sets it as default for the current user.</li>
+							<li>Do not offer system-wide profile installation under Windows Vista and later if using Argyll CMS &lt;= 1.1.1 (system scope in the current Argyll release acts like user scope on those systems).</li>
 							<li>Automatically scroll to bottom when messages are added to the log window.</li>
 							<li>Unattended calibration &amp; profiling: Removed the dependency on xautomation under Linux (and SendKeys under Windows).</li>
 							<li>Store calibration and profiling settings in extra sections inside the TI3 file instead of the profile copyright tag. Use “generic” copyright information (“Created with dispcalGUI <code>&lt;version&gt;</code> and Argyll CMS <code>&lt;version&gt;</code>”), overridable by adding a line <code>copyright = My copyright information</code> in dispcalGUI's configuration file.</li>

@@ -2003,6 +2003,8 @@ class Wtty:
             # 'bundle_files' 3
             spath.append(os.path.join(dirname, 'library.zip'))
             spath.append(os.path.join(dirname, 'lib', 'library.zip'))
+            spath.append(os.path.join(dirname, 'lib', 'library.zip', 
+                                      os.path.basename(os.path.splitext(sys.executable)[0])))
             pyargs.insert(0, '-S')  # skip 'import site'
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
@@ -2035,6 +2037,8 @@ class Wtty:
         
         try:
             AttachConsole(self.conpid)
+            self.__consin = GetStdHandle(STD_INPUT_HANDLE)
+            self.__consout = self.getConsoleOut()
         except Exception, e:
             try:
                 AttachConsole(self.__parentPid)
@@ -2046,8 +2050,6 @@ class Wtty:
             #self.__consout = None
             #raise e
                 
-        self.__consin = GetStdHandle(STD_INPUT_HANDLE)
-        self.__consout = self.getConsoleOut()
         
     def switchBack(self):
         """Releases from the current console and attaches 

@@ -448,8 +448,6 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		attrs["zip_safe"] = False
 	else:
 		attrs["scripts"] += [os.path.join("scripts", name)]
-		# if sys.platform == "win32":
-			# attrs["scripts"] += [os.path.join("scripts", name + ".cmd")]
 	
 	if bdist_bbfreeze:
 		attrs["setup_requires"] = ["bbfreeze"]
@@ -461,7 +459,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		reversedomain = domain.split(".")
 		reversedomain.reverse()
 		reversedomain = ".".join(reversedomain)
-		attrs["app"] = os.path.join(pydir, name + ".py"),
+		attrs["app"] = os.path.join(pydir, "main.py"),
 		attrs["options"] = {
 			"py2app": {
 				"argv_emulation": True,
@@ -472,7 +470,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 				# numpy.lib.utils imports pydoc, which imports Tkinter, but 
 				# numpy.lib.utils is not even used by dispcalGUI, so omit all 
 				# Tk stuff
-				"excludes": ["Tkconstants", "Tkinter", "tcl"],
+				"excludes": ["test", "Tkconstants", "Tkinter", "tcl"],
 				"iconfile": os.path.join(pydir, "theme", "icons", 
 										 "dispcalGUI.icns"),
 				"optimize": 2,
@@ -500,7 +498,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
 		attrs["windows"] = [{
-			"script": os.path.join(pydir, name + ".py"),
+			"script": os.path.join(pydir, "..", name + ".py"),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
 												name + ".ico"))],
 			"other_resources": [(24, 1, manifest_xml)]
@@ -786,57 +784,12 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 						"*.icns", "*.ico")]
 		manifest_in += ["recursive-include %s %s" % ("autopackage", "*")]
 		manifest_in += ["recursive-include %s %s" % ("misc", "*")]
-		manifest_in += ["exclude " + 
-						os.path.join("misc", "warn%s-pyi-*.txt" % name)]
 		if skip_instrument_conf_files:
 			manifest_in += [
 				"exclude misc/Argyll",
-				"exclude misc/*.fdi",
-				"exclude misc/*.permissions",
-				"exclude misc/*.policy",
 				"exclude misc/*.rules",
 				"exclude misc/*.usermap",
 			]
-		manifest_in += ["recursive-include %s %s" % ("pyinstaller", " ".join([
-			"*.c",
-			"*.cfg",
-			"*.cmd",
-			"*.conf",
-			"*.config",
-			"*.css",
-			"*.def",
-			"*.h",
-			"*.html",
-			"*.ico",
-			"*.manifest",
-			"*.png",
-			"*.policy",
-			"*.py",
-			"*.rc",
-			"*.rst",
-			"*.sh",
-			"*.spec",
-			"*.tex",
-			"*.txt",
-			"*.vbs",
-			"*.xml",
-		]))]
-		manifest_in += ["include " + 
-						os.path.join("pyinstaller", obj) for obj in [
-							os.path.join("doc", "LICENSE.GPL"),
-							os.path.join("doc", "source", "Makefile"),
-							os.path.join("doc", "source", "tools", "README"),
-							os.path.join("source", "Sconscript"),
-							os.path.join("source", "zlib", "README"),
-							os.path.join("support", "loader", "*.dll"),
-							os.path.join("support", "loader", "*.exe"),
-							".hgignore",
-							"Sconstruct",
-							"rthooks.dat"]]
-		manifest_in += ["exclude " + 
-						os.path.join("pyinstaller", obj) for obj in [
-							os.path.join("support", "useTK.py"),
-							os.path.join("support", "useUnicode.py")]]
 		manifest_in += ["include " + os.path.join("screenshots", "*.png")]
 		manifest_in += ["include " + os.path.join("scripts", "*")]
 		manifest_in += ["recursive-include %s %s" % ("theme", "*")]
@@ -898,35 +851,6 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 					"pyversion": sys.version[:3] 
 				}
 			))
-			# FIXME: exe gets truncated by UpdateResource
-			# if os.path.exists(exe):
-				# sys.path.insert(1, os.path.join(os.path.dirname(pydir), 
-												  # "pyinstaller"))
-				
-				# from icon import CopyIcons
-				# from winmanifest import UpdateManifestResourcesFromXMLFile
-				# from versionInfo import SetVersion
-				# from winmanifest import mktempmanifest
-				# from winversion import mktempver
-				
-				# if sys.version_info[:2] >= (2,6):
-					# manifest = mktempmanifest(os.path.join(pydir, "..", 
-						# "misc", name + ".exe.VC90.manifest"))
-				# else:
-					# manifest = mktempmanifest(os.path.join(pydir, "..", 
-						# "misc", name + ".exe.manifest"))
-				# version = mktempver(os.path.join(pydir, "..", "misc", 
-												 # "winversion.txt"))
-				
-				# CopyIcons(exe, os.path.join(pydir, "theme", "icons", name + 
-											# ".ico"))
-				# SetVersion(exe, version)
-				# UpdateManifestResourcesFromXMLFile(exe, manifest)
-				
-				# os.remove(manifest)
-				# os.rmdir(os.path.dirname(manifest))
-				# os.remove(version)
-				# os.rmdir(os.path.dirname(version))
 		
 		if not dry_run and do_full_install:
 			from postinstall import postinstall
