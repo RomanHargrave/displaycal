@@ -616,6 +616,8 @@ class MainFrame(BaseFrame):
 			"position.info.y": self.GetDisplay().ClientArea[1] + 40,
 			"position.lut_viewer.x": self.GetDisplay().ClientArea[0] + 30,
 			"position.lut_viewer.y": self.GetDisplay().ClientArea[1] + 50,
+			"position.progress.x": self.GetDisplay().ClientArea[0] + 20,
+			"position.progress.y": self.GetDisplay().ClientArea[1] + 40,
 			"position.x": self.GetDisplay().ClientArea[0] + 10,
 			"position.y": self.GetDisplay().ClientArea[1] + 30
 		})
@@ -1448,6 +1450,12 @@ class MainFrame(BaseFrame):
 			"position.y",
 			"position.info.x",
 			"position.info.y",
+			"position.lut_viewer.x",
+			"position.lut_viewer.y",
+			"position.progress.x",
+			"position.progress.y",
+			"position.tcgen.x",
+			"position.tcgen.y",
 			"recent_cals",
 			"tc_precond_profile"
 		]
@@ -2850,7 +2858,7 @@ class MainFrame(BaseFrame):
 		self.worker.wrapup(result, not result)
 		return result
 	
-	def measure_calibrate(self, consumer, producer, remove=True, progress_msg=""):
+	def measure_calibrate(self, consumer, producer, remove=False, progress_msg=""):
 		self.worker.start(consumer, producer, 
 						  wkwargs={"remove": remove},
 						  progress_msg=progress_msg)

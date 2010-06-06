@@ -398,6 +398,18 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 				   subsequent_indent = "      "), fn = fn)
 
 
+def progress_move_handler(event=None):
+	self = event.GetEventObject()
+	if self.IsShownOnScreen() and not self.IsIconized() and \
+	   not self.GetParent().IsShownOnScreen():
+		prev_x = getcfg("position.progress.x")
+		prev_y = getcfg("position.progress.y")
+		x, y = self.GetScreenPosition()
+		if x != prev_x or y != prev_y:
+			setcfg("position.progress.x", x)
+			setcfg("position.progress.y", y)
+
+
 def set_argyll_bin(parent=None):
 	if parent and not parent.IsShownOnScreen():
 		parent = None # do not center on parent if not visible
@@ -750,11 +762,20 @@ class Worker():
 		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
 														  "-Sn" in args):
 			asroot = True
+		needs_user_interaction = cmdname == get_argyll_utilname("dispcal") and \
+								 not "-m" in args and not "-r" in args and \
+								 not "-R" in args and not "-E" in args
+		# Run commands through wexpect.spawn instead of subprocess.Popen if
+		# all of these conditions apply:
+		# - command is dispcal, dispread or spotread
+		# - arguments are not empty
+		# - actual user interaction in a terminal is not needed OR
+		#   we are on Windows and running without a console
 		interact = args and cmdname in (get_argyll_utilname("dispcal"), 
 										get_argyll_utilname("dispread"), 
-										get_argyll_utilname("spotread"))
-		needs_user_interaction = cmdname == get_argyll_utilname("dispcal") and \
-								 not "-m" in args
+										get_argyll_utilname("spotread")) ##and \
+							##(not needs_user_interaction or 
+							 ##sys.platform == "win32")
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
 					    sys.getwindowsversion() >= (6, ))):
@@ -967,71 +988,88 @@ class Worker():
 			while tries > 0:
 				if interact:
 					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
-													cwd=working_dir)
-					if needs_user_interaction or sys.platform == "win32":
-						self.subprocess.interact()
-						if sys.platform == "win32":
-							logfn = safe_print
-							# Under Windows Vista and 7 we need atleast one 
-							# active window associated with the running
-							# subprocess, otherwise it might freeze screen
-							# updates
-							wsh_shell.AppActivate(self.subprocess.wtty.conpid)
-					if sudo:
-						# TODO: Not needed?
+													cwd=working_dir,
+													logfile=sys.stdout if 
+															sys.stdout.isatty()
+															and (not needs_user_interaction or 
+																 sys.platform == "win32")
+															else None)
+					if sys.platform != "win32":
+						# allow some time to setup instrument and create test window
+						sleep(5)
+					try:
+						if needs_user_interaction or sys.platform == "win32":
+							self.subprocess.interact()
+							if sys.platform == "win32":
+								##if sys.stdout.isatty():
+									##logfn = safe_print
+								# Under Windows Vista and 7 we need atleast one 
+								# active window associated with the running
+								# subprocess, otherwise it might freeze screen
+								# updates
+								wsh_shell.AppActivate(self.subprocess.wtty.conpid)
+						##elif sys.stdout.isatty():
+							##logfn = safe_print
+						if not needs_user_interaction or sys.platform == "win32":
+							if sudo:
+								# TODO: Not needed?
+								pass
+							instrument_features = self.get_instrument_features()
+							# -N switch not working as expected in Argyll < 1.1.0
+							skip_sensor_cal = instrument_features and \
+											  (not instrument_features.get("sensor_cal") or 
+											   (instrument_features.get("skip_sensor_cal") and 
+												self.argyll_version >= [1, 1, 0]))
+							if skip_sensor_cal:
+								if not "-F" in args:
+									# Allow the user to move the terminal window if
+									# using black background
+									self.subprocess.expect(":")
+									logfn(os.linesep.join(line.rstrip() for line in 
+														wrap((self.subprocess.before + 
+															  self.subprocess.after).decode(enc, 
+																							"replace"), 
+															 80).splitlines()))
+									if sys.platform != "win32":
+										sleep(.5)
+									self.subprocess.send(" ")
+							else:
+								self.subprocess.expect(":")
+								logfn(self.subprocess.before.decode(enc, "replace"))
+								dlg = ConfirmDialog(parent, 
+													msg=lang.getstr("instrument.calibrate"), 
+													ok=lang.getstr("ok"), 
+													cancel=lang.getstr("cancel"), 
+													bitmap=geticon(32, "dialog-information"))
+								dlg_result = dlg.ShowModal()
+								dlg.Destroy()
+								if dlg_result != wx.ID_OK:
+									self.quit_cmd()
+									sleep(.05)
+									self.terminate_cmd()
+									return False
+								self.subprocess.send(" ")
+								self.subprocess.expect(":")
+								logfn(os.linesep.join(line.rstrip() for line in 
+													wrap((self.subprocess.before + 
+														  self.subprocess.after).decode(enc, 
+																						"replace"), 
+														 80).splitlines()))
+								dlg = ConfirmDialog(parent, 
+													msg=lang.getstr("instrument.place_on_screen"), 
+													ok=lang.getstr("ok"), 
+													cancel=lang.getstr("cancel"), 
+													bitmap=geticon(32, "dialog-information"))
+								dlg_result = dlg.ShowModal()
+								dlg.Destroy()
+								if dlg_result != wx.ID_OK:
+									self.quit_cmd()
+									sleep(.05)
+									self.terminate_cmd()
+									return False
+								self.subprocess.send(" ")
+					except wexpect.EOF:
 						pass
-					instrument_features = self.get_instrument_features()
-					# -N switch not working as expected in Argyll < 1.1.0
-					skip_sensor_cal = instrument_features and \
-									  (not instrument_features.get("sensor_cal") or 
-									   (instrument_features.get("skip_sensor_cal") and 
-										self.argyll_version >= [1, 1, 0]))
-					if skip_sensor_cal:
-						if not "-F" in args:
-							# Allow the user to move the terminal window if
-							# using black background
-							self.subprocess.expect(":")
-							logfn(os.linesep.join(line.rstrip() for line in 
-												wrap((self.subprocess.before + 
-													  self.subprocess.after).decode(enc, 
-																					"replace"), 
-													 80).splitlines()))
-							self.subprocess.send(" ")
-					else:
-						self.subprocess.expect(":")
-						logfn(self.subprocess.before.decode(enc, "replace"))
-						dlg = ConfirmDialog(parent, 
-											msg=lang.getstr("instrument.calibrate"), 
-											ok=lang.getstr("ok"), 
-											cancel=lang.getstr("cancel"), 
-											bitmap=geticon(32, "dialog-information"))
-						dlg_result = dlg.ShowModal()
-						dlg.Destroy()
-						if dlg_result != wx.ID_OK:
-							self.quit_cmd()
-							sleep(.05)
-							self.terminate_cmd()
-							return False
-						self.subprocess.send(" ")
-						self.subprocess.expect(":")
-						logfn(os.linesep.join(line.rstrip() for line in 
-										    wrap((self.subprocess.before + 
-												  self.subprocess.after).decode(enc, 
-																				"replace"), 
-												 80).splitlines()))
-						dlg = ConfirmDialog(parent, 
-											msg=lang.getstr("instrument.place_on_screen"), 
-											ok=lang.getstr("ok"), 
-											cancel=lang.getstr("cancel"), 
-											bitmap=geticon(32, "dialog-information"))
-						dlg_result = dlg.ShowModal()
-						dlg.Destroy()
-						if dlg_result != wx.ID_OK:
-							self.quit_cmd()
-							sleep(.05)
-							self.terminate_cmd()
-							return False
-						self.subprocess.send(" ")
 					self.subprocess.expect(wexpect.EOF, timeout=None)
 					if self.subprocess.isalive():
 						self.subprocess.wait()
@@ -1081,13 +1119,17 @@ class Worker():
 								safe_print(errstr, fn=fn)
 					if tries > 0 and not interact:
 						stderr = Tea(tempfile.SpooledTemporaryFile())
-				if capture_output:
+				if capture_output or interact:
 					stdout.seek(0)
 					self.output = [re.sub("^\.{4,}\s*$", "", 
 										  line.decode(enc, "replace")) 
 								   for line in stdout.readlines()]
 					stdout.close()
 					if len(self.output) and log_output:
+						if not silent and sys.stdout.isatty() and \
+						   not needs_user_interaction and not interact and \
+						   sys.platform != "win32":
+							logfn = safe_print
 						logfn("".join(self.output).strip())
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
@@ -1665,19 +1707,34 @@ class Worker():
 	def progress_timer_handler(self, event):
 		keepGoing, skip = self.progress_parent.progress_dlg.Pulse()
 		if not keepGoing:
-			if hasattr(self, "subprocess") and self.subprocess:
-				if (hasattr(self.subprocess, "poll") and 
+			if getattr(self, "subprocess", None):
+				if not getattr(self, "thread_abort", False) and \
+				   (hasattr(self.subprocess, "poll") and 
 					self.subprocess.poll() is None) or \
 				   (hasattr(self.subprocess, "isalive") and 
-				    self.subprocess.isalive()):
+					self.subprocess.isalive()):
 					try:
-						self.subprocess.terminate()
+						if hasattr(self.subprocess, "send"):
+							try:
+								self.subprocess.send("q")
+								sleep(1)
+								if self.subprocess.isalive():
+									self.subprocess.expect([":", 
+															wexpect.EOF, 
+															wexpect.TIMEOUT],
+														   timeout=1)
+									self.subprocess.send("q")
+									sleep(1)
+								self.thread_abort = True
+							except Exception, exception:
+								if debug:
+									handle_error(traceback.format_exc())
+						if getattr(self, "subprocess", None):
+							self.subprocess.terminate()
+						self.thread_abort = True
 					except Exception, exception:
-						handle_error(u"Error - subprocess.terminate() "
-									 u"failed: " + safe_unicode(exception), 
-									 parent=self.progress_parent.progress_dlg)
-				elif verbose >= 2:
-					safe_print("Info: Subprocess already exited.")
+						if debug:
+							handle_error(traceback.format_exc())
 			else:
 				self.thread_abort = True
 
@@ -1688,14 +1745,30 @@ class Worker():
 															  progress_msg, 
 															  parent=parent, 
 															  style=style)
+		self.progress_parent.progress_dlg.Bind(wx.EVT_MOVE, 
+											   progress_move_handler, 
+											   self.progress_parent.progress_dlg)
 		for child in self.progress_parent.progress_dlg.GetChildren():
 			if isinstance(child, wx.Button):
 				child.Label = lang.getstr("cancel")
 			elif isinstance(child, wx.StaticText) and \
 				 "Elapsed time" in child.Label:
 				child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
+		self.progress_parent.progress_dlg.SetMinSize((400, -1))
 		self.progress_parent.progress_dlg.SetSize((400, -1))
-		self.progress_parent.progress_dlg.Center()
+		placed = False
+		if parent:
+			if parent.IsShownOnScreen():
+				self.progress_parent.progress_dlg.Center()
+				placed = True
+			else:
+				x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
+				y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+		else:
+			x = getcfg("position.progress.x")
+			y = getcfg("position.progress.y")
+		if not placed:
+			self.progress_parent.progress_dlg.SetSaneGeometry(x, y)
 		self.progress_parent.progress_timer.Start(50)
 	
 	def quit_cmd(self):

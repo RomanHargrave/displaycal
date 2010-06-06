@@ -37,7 +37,7 @@ def log(msg, fn=None):
 		if wx.GetApp() is not None and \
 		   hasattr(wx.GetApp(), "frame") and \
 		   hasattr(wx.GetApp().frame, "infoframe"):
-			wx.GetApp().frame.infoframe.Log(msg)
+			wx.CallAfter(wx.GetApp().frame.infoframe.Log, msg)
 
 
 def safe_print(*args, **kwargs):

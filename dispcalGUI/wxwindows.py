@@ -265,9 +265,11 @@ class LogWindow(InvincibleFrame):
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
 	def Log(self, txt):
-		wx.CallAfter(self.log_txt.AppendText, txt + os.linesep)
-		wx.CallAfter(self.log_txt.ScrollLines, 
-					 len(self.log_txt.GetValue().splitlines()))
+		self.log_txt.AppendText(txt + os.linesep)
+		self.ScrollToBottom()
+	
+	def ScrollToBottom(self):
+		self.log_txt.ScrollLines(len(self.log_txt.GetValue().splitlines()))
 
 	def OnClear(self, event):
 		self.log_txt.SetValue("")

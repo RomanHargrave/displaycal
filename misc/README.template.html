@@ -57,7 +57,15 @@
 			border-bottom: none;
 		}
 		code {
+			background: #eeeeee;
+			border: 1px solid silver;
+			border-radius: 3px;
+			display: inline-block;
+			-moz-border-radius: 3px;
+			-webkit-border-radius: 3px;
 			font: normal 11px Andale Mono, Monaco, monospace;
+			padding: 1px 3px;
+			whitespace: nowrap;
 		}
 		code.applescript {
 			color: #3d00fb;
@@ -611,7 +619,7 @@
 			<div id="prerequisites-unattended">
 				<h3>Additional prerequisites for unattended calibration and profiling</h3>
 				
-				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.5b, when using an instrument that is supported by the new unattended feature (see below), it is no longer necessary to press a key after calibration to start the measurements for profiling. Under Linux, <a href="http://hoopajoo.net/projects/xautomation.html">xautomation</a> is needed to simulate keyboard input. Mac OS X and Windows do not require external utilities (under Windows you just need to make sure to keep the terminal window active). 
+				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.5b, when using an instrument that is supported by the new unattended feature (see below), it is no longer necessary to manually start the measurements for profiling after calibration.
 				</p>
 				
 				<p>Unattended calibration and profiling currently supports the following instruments:</p>
@@ -647,7 +655,6 @@
 				
 				<p>Windows:</p>
 				<ul>
-					<li><a href="http://www.rutherfurd.net/python/sendkeys/">SendKeys</a></li>
 					<li><a href="http://sourceforge.net/projects/pywin32/">pywin32</a></li>
 				</ul>
 				
@@ -698,7 +705,7 @@
 			<div id="install-pkg">
 				<h3>Linux Autopackage (.package)</h3>
 				
-				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) and optionally numpy (enables the curve viewer) and xautomation (enables <a href="#prerequisites-unattended">unattended calibration &amp; profiling</a> for some instruments) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
+				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) and optionally numpy (enables the curve viewer) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
 			</div>
 			
 			<div id="install-exe">
@@ -798,13 +805,7 @@
 		<div id="usage">
 			<h2>Usage</h2>
 		
-			<p>Upon launching dispcalGUI, you will see two windows: A terminal and the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>. 
-			The terminal is mostly used for status information, and for the interactive part 
-			of display calibration. Through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>, you can choose your settings. Closing
-			either window will quit the application, but I strongly recommend closing the 
-			<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> window first so the cleanup routines can run. On most systems, the terminal 
-			window will close automatically afterwards (if you were not running from a manually opened
-			terminal to begin with).</p>
+			<p>Through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>, you can choose your settings. A terminal is mostly used for status information, and for the interactive part of display calibration.</p>
 			
 			<div id="settingsfile">
 				<h3>Settings file</h3>
@@ -1022,7 +1023,7 @@
 			
 				<p>After you have set your options, click on one of the three buttons at the bottom
 				to start the actual calibration/profiling process. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
-				error). Pay attention to the output printed to the terminal, it will give you status information and prompt for keyboard input to start measurements and select calibration options (you can always cancel out of running measurements by pressing ESC or Q).</p>
+				error). Pay attention to the output printed to the terminal, it will give you status information and may prompt to select calibration options (you can always cancel out of running measurements by pressing ESC or Q in the terminal).</p>
 				
 				<h4 id="adjusting">Adjusting a display before calibration</h4>
 				
@@ -1030,7 +1031,7 @@
 				
 				<h5>Adjusting a LCD display</h5>
 				
-				<p>For LCD displays, you will in most cases only want to adjust white point (if the screen has RGB gain or other whitepoint controls) and white level (with the white level also affecting the black level unless you have a local dimming LED model), as many LCDs lack the necessary “offset” controls to adjust black level and -point. Also note that for most LCD screens, you should leave the “contrast” control at (factory) default.</p>
+				<p>For LCD displays, you will in most cases only want to adjust white point (if the screen has RGB gain or other whitepoint controls) and white level (with the white level also affecting the black level unless you have a local dimming LED model), as many LCDs lack the necessary “offset” controls to adjust the black point (and even if they happen to have them, they often  change the overall color temperature, not only the black point). Also note that for most LCD screens, you should leave the “contrast” control at (factory) default.</p>
 				
 				<dl>
 					<dt>White level</dt>
@@ -1298,6 +1299,25 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Always load calibration curves before installing a profile, even if the profile has no vcgt tag (resets calibration to linear).</li>
+							<li>Also show profile installation scope if a profile has no vcgt tag (e.g. sRGB).</li>
+							<li>Immediately close a profile after reading to avoid locking it (fixes not being able to delete files from within the GUI).</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Automatically scroll to bottom when messages are added to the log window.</li>
+							<li>Unattended calibration &amp; profiling: Removed the dependency on xautomation under Linux (and SendKeys under Windows).</li>
+							<li>Store calibration and profiling settings in extra sections inside the TI3 file instead of the profile copyright tag. Use “generic” copyright information (“Created with dispcalGUI <code>&lt;version&gt;</code> and Argyll CMS <code>&lt;version&gt;</code>”), overridable by adding a line <code>copyright = My copyright information</code> in dispcalGUI's configuration file.</li>
+							<li>All measurements which do not require keyboard interaction in the terminal window now show a progress dialog with the option to cancel the measurements.</li>
+							<li>Presets: Default to high profile quality.</li>
+						</ul>
+					</dd>
+				
+				<dt>2010-05-07 22:36 (UTC) 0.3.9.9</dt>
+					<dd>
+						<h3>0.3.9.9</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Fixed unreliable (hanging occasionally) profile install when using system scope under Linux and Mac OS X (regression of a change in SVN r391 / 0.3.9.3).</li>
