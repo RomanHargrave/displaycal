@@ -2040,11 +2040,13 @@ class Wtty:
             self.__consin = GetStdHandle(STD_INPUT_HANDLE)
             self.__consout = self.getConsoleOut()
         except Exception, e:
+            #e = traceback.format_exc()
             try:
                 AttachConsole(self.__parentPid)
             except Exception, ex:
-                log_error(e)
-                log_error(ex)
+                pass
+                #log_error(e)
+                #log_error(ex)
             return
             #self.__consin = None
             #self.__consout = None
