@@ -237,6 +237,10 @@ def runtimeconfig(pyfile):
 	attribute).
 	
 	"""
+	if not "setup_logging" in globals():
+		global setup_logging
+		from log import setup_logging
+		setup_logging()
 	if debug or verbose >= 1:
 		if not "safe_print" in globals():
 			global safe_print

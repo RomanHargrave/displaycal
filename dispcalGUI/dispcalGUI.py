@@ -98,7 +98,7 @@ from argyll_names import (names as argyll_names, altnames as argyll_altnames,
 						  viewconds)
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, XYZ2xyY
 from debughelpers import getevtobjname, getevttype, handle_error
-from log import _safe_print, log, logbuffer, safe_print, setup_logging
+from log import _safe_print, log, logbuffer, safe_print
 from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
 from trash import trash, TrashcanUnavailableError
@@ -2304,7 +2304,7 @@ class MainFrame(BaseFrame):
 				# Always specify -y for colorimeters
 				args += ["-y" + measurement_mode[0]]
 			try:
-				result = wexpect.spawn(cmd, args)
+				result = wexpect.spawn(cmd, args, timeout=10)
 			except Exception, exception:
 				return exception
 			if not result or not result.isalive():
@@ -3513,7 +3513,7 @@ class MainFrame(BaseFrame):
 		# cleanup
 		self.worker.wrapup(False)
 		
-		self.Show()
+		wx.CallAfter(self.Show)
 		
 		if not result:
 			return
@@ -3718,7 +3718,7 @@ class MainFrame(BaseFrame):
 		report_html_file.close()
 		
 		# show report
-		launch_file(save_path)
+		wx.CallAfter(launch_file, save_path)
 
 	def load_cal(self, cal=None, silent=False):
 		if not cal:
@@ -6106,8 +6106,9 @@ class MainApp(wx.App):
 		return True
 
 def main():
+	log("Python " + sys.version)
+	log("wxPython " + wx.version())
 	try:
-		setup_logging()
 		
 		# Make sure we run inside a tty if we are on Mac OS X
 		# or Linux, if stdout isn't a tty
