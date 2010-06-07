@@ -542,6 +542,8 @@ class Worker():
 		"""
 		displays = list(self.displays)
 		lut_access = list(self.lut_access)
+		argyll_bin_dir = self.argyll_bin_dir
+		argyll_version_string = self.argyll_version_string
 		self.clear_argyll_info()
 		if (silent and check_argyll_bin()) or (not silent and 
 											   check_set_argyll_bin()):
@@ -549,6 +551,8 @@ class Worker():
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			cmd = get_argyll_util("dispcal")
 			self.argyll_bin_dir = os.path.dirname(cmd)
+			if (argyll_bin_dir != self.argyll_bin_dir):
+				log(self.argyll_bin_dir)
 			self.exec_cmd(cmd, [], capture_output=True, 
 						  skip_scripts=True, silent=True, log_output=False)
 			arg = None
@@ -565,12 +569,12 @@ class Worker():
 					if n == 0 and "version" in line.lower():
 						argyll_version = line[line.lower().find("version")+8:]
 						self.argyll_version_string = argyll_version
+						if (argyll_version_string != self.argyll_version_string):
+							log("Argyll CMS " + self.argyll_version_string)
 						config.defaults["copyright"] = ("Created with %s %s "
 														"and Argyll CMS %s" % 
 														(appname, version, 
 														 argyll_version))
-						if verbose >= 3:
-							safe_print("Argyll CMS version", argyll_version)
 						argyll_version = re.findall("(\d+|[^.\d]+)", 
 													argyll_version)
 						for i in range(len(argyll_version)):
@@ -989,6 +993,7 @@ class Worker():
 				if interact:
 					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
 													cwd=working_dir,
+													timeout=10,
 													logfile=sys.stdout if 
 															sys.stdout.isatty()
 															and (not needs_user_interaction or 
@@ -1000,7 +1005,8 @@ class Worker():
 					try:
 						if needs_user_interaction or sys.platform == "win32":
 							self.subprocess.interact()
-							if sys.platform == "win32":
+							if sys.platform == "win32" and \
+							   needs_user_interaction:
 								##if sys.stdout.isatty():
 									##logfn = safe_print
 								# Under Windows Vista and 7 we need atleast one 
@@ -1178,6 +1184,7 @@ class Worker():
 			self.progress_parent.progress_timer.Stop()
 			# Do not destroy, will crash on Linux
 			self.progress_parent.progress_dlg.Hide()
+			wx.CallAfter(self.progress_parent.progress_dlg.Destroy)
 		wx.CallAfter(consumer, result, *args, **kwargs)
 
 	def get_display(self):
@@ -1707,35 +1714,17 @@ class Worker():
 	def progress_timer_handler(self, event):
 		keepGoing, skip = self.progress_parent.progress_dlg.Pulse()
 		if not keepGoing:
-			if getattr(self, "subprocess", None):
-				if not getattr(self, "thread_abort", False) and \
-				   (hasattr(self.subprocess, "poll") and 
-					self.subprocess.poll() is None) or \
-				   (hasattr(self.subprocess, "isalive") and 
-					self.subprocess.isalive()):
-					try:
-						if hasattr(self.subprocess, "send"):
-							try:
-								self.subprocess.send("q")
-								sleep(1)
-								if self.subprocess.isalive():
-									self.subprocess.expect([":", 
-															wexpect.EOF, 
-															wexpect.TIMEOUT],
-														   timeout=1)
-									self.subprocess.send("q")
-									sleep(1)
-								self.thread_abort = True
-							except Exception, exception:
-								if debug:
-									handle_error(traceback.format_exc())
-						if getattr(self, "subprocess", None):
-							self.subprocess.terminate()
-						self.thread_abort = True
-					except Exception, exception:
-						if debug:
-							handle_error(traceback.format_exc())
-			else:
+			if not getattr(self, "subprocess_abort", False) and \
+			   not getattr(self, "thread_abort", False):
+				self.progress_parent.progress_dlg.Pulse(lang.getstr("aborting"))
+			if getattr(self, "subprocess", None) and \
+			   not getattr(self, "subprocess_abort", False):
+				if debug:
+					log('[D] calling safe_quit after')
+				wx.CallAfter(self.quit_terminate_cmd)
+			elif not getattr(self, "thread_abort", False):
+				if debug:
+					log('[D] thread_abort')
 				self.thread_abort = True
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
@@ -1776,6 +1765,79 @@ class Worker():
 			self.subprocess.send("q")
 		except Exception, exception:
 			log(safe_unicode(exception))
+	
+	def quit_terminate_cmd(self):
+		if debug:
+			log('[D] safe_quit')
+		if getattr(self, "subprocess", None) and \
+		   not getattr(self, "subprocess_abort", False) and \
+		   (hasattr(self.subprocess, "poll") and 
+			self.subprocess.poll() is None) or \
+		   (hasattr(self.subprocess, "isalive") and 
+			self.subprocess.isalive()):
+			if debug:
+				log('[D] subprocess_abort')
+			self.subprocess_abort = True
+			self.thread_abort = True
+			try:
+				if hasattr(self.subprocess, "send"):
+					try:
+						if debug:
+							log('[D] try send (1)')
+						self.subprocess.send("q")
+						sleep(1)
+						if getattr(self, "subprocess", None) and \
+						   self.subprocess.isalive():
+							if debug:
+								log('[D] try expect')
+							self.subprocess.expect([":", 
+													wexpect.EOF, 
+													wexpect.TIMEOUT],
+												   timeout=1)
+							if not isinstance(self.subprocess.after, 
+											  wexpect.EOF):
+								if debug:
+									log('[D] try send (2)')
+								self.subprocess.send("q")
+								sleep(1)
+							elif debug:
+								log('[D] EOF')
+					except Exception, exception:
+						if debug:
+							log(traceback.format_exc())
+				if getattr(self, "subprocess", None) and \
+				   (hasattr(self.subprocess, "poll") and 
+					self.subprocess.poll() is None) or \
+				   (hasattr(self.subprocess, "isalive") and 
+					self.subprocess.isalive()):
+					if debug:
+						log('[D] try terminate')
+					self.subprocess.terminate()
+					sleep(3)
+				if getattr(self, "subprocess", None) and \
+				   hasattr(self.subprocess, "isalive") and \
+				   self.subprocess.isalive():
+					if debug:
+						log('[D] try force terminate')
+					self.subprocess.terminate(force=True)
+			except Exception, exception:
+				if debug:
+					log(traceback.format_exc())
+			if debug:
+				log('[D] end try')
+		elif debug:
+			log('[D] subprocess: %r' % getattr(self, "subprocess", None))
+			log('[D] subprocess_abort: %r' % getattr(self, "subprocess_abort", 
+													 False))
+			if getattr(self, "subprocess", None):
+				log('[D] subprocess has poll: %r' % hasattr(self.subprocess, 
+															"poll"))
+				if hasattr(self.subprocess, "poll"):
+					log('[D] subprocess.poll(): %r' % subprocess.poll())
+				log('[D] subprocess has isalive: %r' % hasattr(self.subprocess, 
+															   "isalive"))
+				if hasattr(self.subprocess, "isalive"):
+					log('[D] subprocess.isalive(): %r' % subprocess.isalive())
 	
 	def terminate_cmd(self):
 		try:
@@ -1819,6 +1881,7 @@ class Worker():
 		self.progress_parent.progress_start_timer = wx.CallLater(
 			progress_start, self.progress_dlg_start, progress_title, 
 			progress_msg, parent) 
+		self.subprocess_abort = False
 		self.thread_abort = False
 		self.thread = delayedresult.startWorker(self.generic_consumer, 
 												producer, [consumer] + 
