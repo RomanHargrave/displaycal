@@ -829,7 +829,7 @@ class TestchartEditor(wx.Frame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("testchart.create"))
 		#self.tc_create()
-		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_title = lang.getstr("testchart.create"), parent = self, progress_start = 500)
+		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.create"), parent = self, progress_start = 500)
 
 	def tc_clear_handler(self, event):
 		self.tc_check_save_ti1()
@@ -1007,7 +1007,7 @@ class TestchartEditor(wx.Frame):
 			InfoDialog(self, msg = lang.getstr("error.testchart.read", path) + "\n\n" + safe_unicode(exception), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
 			return False
 		safe_print(lang.getstr("testchart.read"))
-		self.worker.start(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_title = lang.getstr("testchart.read"), parent = self, progress_start = 500)
+		self.worker.start(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.read"), parent = self, progress_start = 500)
 
 	def tc_load_cfg_from_ti1_worker(self):
 		if test:
