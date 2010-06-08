@@ -14,6 +14,34 @@ import ICCProfile as ICCP
 
 cals = {}
 
+def add_dispcal_options_to_cal(cal, options_dispcal):
+	# Add dispcal options to cal
+	try:
+		cgats = CGATS.CGATS(cal)
+		cgats[0].add_section("ARGYLL_DISPCAL_ARGS", 
+							 " ".join(options_dispcal).encode("UTF-8", "replace"))
+		return cgats
+	except Exception, exception:
+		safe_print(safe_unicode(traceback.format_exc()))
+
+
+def add_options_to_ti3(ti3, options_dispcal=None, options_colprof=None):
+	# Add dispcal and colprof options to ti3
+	try:
+		cgats = CGATS.CGATS(ti3)
+		if options_colprof:
+			cgats[0].add_section("ARGYLL_COLPROF_ARGS", 
+							   " ".join(options_colprof).encode("UTF-8", 
+																"replace"))
+		if options_dispcal and len(cgats) > 1:
+			cgats[1].add_section("ARGYLL_DISPCAL_ARGS", 
+							   " ".join(options_dispcal).encode("UTF-8", 
+																	 "replace"))
+		return cgats
+	except Exception, exception:
+		safe_print(safe_unicode(traceback.format_exc()))
+
+
 def cal_to_fake_profile(cal):
 	""" 
 	Create and return a 'fake' ICCProfile with just a vcgt tag.
