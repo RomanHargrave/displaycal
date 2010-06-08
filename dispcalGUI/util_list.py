@@ -25,7 +25,7 @@ def index_fallback_ignorecase(self, value, start = None, stop = None):
 	""" Return index of value in list. Prefer a case-sensitive match. """
 	if value in self:
 		return self.index(value, start or 0, stop or len(self))
-	return self.index_ignorecase(value, start or 0, stop or len(self))
+	return index_ignorecase(self, value, start or 0, stop or len(self))
 
 
 def natsort(list_in):
