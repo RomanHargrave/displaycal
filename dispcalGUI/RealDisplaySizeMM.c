@@ -76,7 +76,6 @@ typedef struct {
 	int screen;				/* Screen to select */
 	int uscreen;			/* Underlying screen */
 	int rscreen;			/* Underlying RAMDAC screen */
-	Atom icc_atom;			/* ICC profile root atom for this display */
 	unsigned char *edid;	/* 128 or 256 bytes of monitor EDID, NULL if none */
 	int edid_len;			/* 128 or 256 */
 
@@ -84,7 +83,6 @@ typedef struct {
 	/* Xrandr stuff - output is connected 1:1 to a display */
 	RRCrtc crtc;				/* Associated crtc */
 	RROutput output;			/* Associated output */
-	Atom icc_out_atom;			/* ICC profile atom for this output */
 #endif /* randr >= V 1.2 */
 #endif /* UNIX */
 } disppath;
@@ -174,18 +172,6 @@ static BOOL CALLBACK MonitorEnumProc(
 
 BOOL (WINAPI* pEnumDisplayDevices)(PVOID,DWORD,PVOID,DWORD) = NULL;
 
-#if !defined(NTDDI_LONGHORN) || NTDDI_VERSION < NTDDI_LONGHORN
-
-typedef enum {
-	WCS_PROFILE_MANAGEMENT_SCOPE_SYSTEM_WIDE,
-	WCS_PROFILE_MANAGEMENT_SCOPE_CURRENT_USER
-} WCS_PROFILE_MANAGEMENT_SCOPE;
-
-BOOL (WINAPI* pWcsAssociateColorProfileWithDevice)(WCS_PROFILE_MANAGEMENT_SCOPE,PCWSTR,PCWSTR) = NULL;
-BOOL (WINAPI* pWcsDisassociateColorProfileFromDevice)(WCS_PROFILE_MANAGEMENT_SCOPE,PCWSTR,PCWSTR) = NULL;
-
-#endif  /* NTDDI_VERSION < NTDDI_LONGHORN */
-
 /* See if we can get the wanted function calls */
 /* return nz if OK */
 static int setup_dyn_calls() {
@@ -198,13 +184,6 @@ static int setup_dyn_calls() {
 		pEnumDisplayDevices = (BOOL (WINAPI*)(PVOID,DWORD,PVOID,DWORD)) GetProcAddress(LoadLibrary("USER32"), "EnumDisplayDevicesA");
 		if (pEnumDisplayDevices == NULL)
 			dyn_inited = 0;
-
-		/* Vista calls */
-#if !defined(NTDDI_LONGHORN) || NTDDI_VERSION < NTDDI_LONGHORN
-		pWcsAssociateColorProfileWithDevice = (BOOL (WINAPI*)(WCS_PROFILE_MANAGEMENT_SCOPE,PCWSTR,PCWSTR)) GetProcAddress(LoadLibrary("mscms"), "WcsAssociateColorProfileWithDevice");
-		pWcsDisassociateColorProfileFromDevice = (BOOL (WINAPI*)(WCS_PROFILE_MANAGEMENT_SCOPE,PCWSTR,PCWSTR)) GetProcAddress(LoadLibrary("mscms"), "WcsDisassociateColorProfileFromDevice");
-		/* These are checked individually */
-#endif  /* NTDDI_VERSION < NTDDI_LONGHORN */
 	}
 
 	return dyn_inited;
@@ -686,23 +665,6 @@ disppath **get_displays() {
 						return NULL;
 					}
 					debugrr2((errout, "Display %d name = '%s'\n",ndisps,disps[ndisps]->name));
-	
-					/* Create the X11 root atom of the default screen */
-					/* that may contain the associated ICC profile */
-					/* (The _%d variant will probably break with non-Xrandr */
-					/* aware software if Xrandr is configured to have more than */
-					/* a single virtual screen.) */
-					if (jj == 0)
-						strcpy(desc1, "_ICC_PROFILE");
-					else
-						sprintf(desc1, "_ICC_PROFILE_%d",jj);
-
-					if ((disps[ndisps]->icc_atom = XInternAtom(mydisplay, desc1, False)) == None)
-						error("Unable to intern atom '%s'",desc1);
-
-					/* Create the atom of the output that may contain the associated ICC profile */
-					if ((disps[ndisps]->icc_out_atom = XInternAtom(mydisplay, "_ICC_PROFILE", False)) == None)
-						error("Unable to intern atom '%s'","_ICC_PROFILE");
 		
 					/* Grab the EDID from the output */
 					{
@@ -842,16 +804,6 @@ disppath **get_displays() {
 				disps[i]->sw = DisplayWidth(mydisplay, disps[i]->screen);
 				disps[i]->sh = DisplayHeight(mydisplay, disps[i]->screen);
 			}
-
-			/* Create the X11 root atom of the default screen */
-			/* that may contain the associated ICC profile */
-			if (disps[i]->uscreen == 0)
-				strcpy(desc1, "_ICC_PROFILE");
-			else
-				sprintf(desc1, "_ICC_PROFILE_%d",disps[i]->uscreen);
-
-			if ((disps[i]->icc_atom = XInternAtom(mydisplay, desc1, False)) == None)
-				error("Unable to intern atom '%s'",desc1);
 
 			/* See if we can locate the EDID of the monitor for this screen */
 			for (j = 0; j < 2; j++) { 
@@ -1020,8 +972,8 @@ typedef struct {
 	int width_mm, height_mm;
 } size_mm;
 
-static size_mm real_screen_size_mm(int ix) {
-	size_mm size_mm;
+static size_mm get_real_screen_size_mm(int ix) {
+	size_mm size;
 	disppath *disp = NULL;
 #ifdef NT
 	HDC hdc = NULL;
@@ -1035,27 +987,27 @@ static size_mm real_screen_size_mm(int ix) {
 	int myscreen;			/* Usual or virtual screen with Xinerama */
 #endif
 
-	size_mm.width_mm = 0;
-	size_mm.height_mm = 0;
+	size.width_mm = 0;
+	size.height_mm = 0;
 
 	disp = get_a_display(ix);
 
-	if (disp == NULL) return size_mm;
+	if (disp == NULL) return size;
 
 #ifdef NT
 	hdc = CreateDC(disp->name, NULL, NULL, NULL);
-	if (hdc == NULL) return size_mm;
-	size_mm.width_mm = GetDeviceCaps(hdc, HORZSIZE);
-	size_mm.height_mm = GetDeviceCaps(hdc, VERTSIZE);
+	if (hdc == NULL) return size;
+	size.width_mm = GetDeviceCaps(hdc, HORZSIZE);
+	size.height_mm = GetDeviceCaps(hdc, VERTSIZE);
 #endif
 #ifdef __APPLE__
 	sz = CGDisplayScreenSize(disp->ddid);
-	size_mm.width_mm = sz.width;
-	size_mm.height_mm = sz.height;
+	size.width_mm = sz.width;
+	size.height_mm = sz.height;
 #endif
 #if defined(UNIX) && !defined(__APPLE__)
 	/* Create the base display name (in case of Xinerama, XRandR) */
-	if ((bname = strdup(disp->name)) == NULL) return size_mm;
+	if ((bname = strdup(disp->name)) == NULL) return size;
 	if ((pp = strrchr(bname, ':')) != NULL) {
 		if ((pp = strchr(pp, '.')) != NULL) {
 			sprintf(pp,".%d",disp->screen);
@@ -1067,36 +1019,66 @@ static size_mm real_screen_size_mm(int ix) {
 	if(!mydisplay) {
 		debugr2((errout,"Unable to open display '%s'\n",bname));
 		free(bname);
-		return size_mm;
+		return size;
 	}
 	free(bname);
 	debugr("Opened display OK\n");
 
 	myscreen = disp->screen;
 	
-	size_mm.width_mm = DisplayWidthMM(mydisplay, myscreen);
-	size_mm.height_mm = DisplayHeightMM(mydisplay, myscreen);
+	size.width_mm = DisplayWidthMM(mydisplay, myscreen);
+	size.height_mm = DisplayHeightMM(mydisplay, myscreen);
 #endif
 
-	return size_mm;
+	return size;
+}
+
+static int get_xrandr_output_xid(int ix) {
+	int xid = 0;
+	disppath *disp = NULL;
+#if defined(UNIX) && !defined(__APPLE__)
+#if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
+	disp = get_a_display(ix);
+
+	if (disp == NULL) return 0;
+
+	xid = disp->output;
+#endif
+#endif
+
+	return xid;
 }
 
 static PyObject *
 RealDisplaySizeMM(PyObject *self, PyObject *args)
 {
 	int ix;
-	size_mm size_mm;
+	size_mm size;
 	
 	if (!PyArg_ParseTuple(args, "i", &ix)) ix = 0;
 
-	size_mm = real_screen_size_mm(ix);
+	size = get_real_screen_size_mm(ix);
 
-	return Py_BuildValue("(i,i)", size_mm.width_mm, size_mm.height_mm);
+	return Py_BuildValue("(i,i)", size.width_mm, size.height_mm);
+}
+
+static PyObject *
+GetXRandROutputXID(PyObject *self, PyObject *args)
+{
+	int ix;
+	int xid;
+	
+	if (!PyArg_ParseTuple(args, "i", &ix)) ix = 0;
+
+	xid = get_xrandr_output_xid(ix);
+
+	return Py_BuildValue("i", xid);
 }
 
 static PyMethodDef RealDisplaySizeMM_methods[] = {
 	{"RealDisplaySizeMM", RealDisplaySizeMM, METH_VARARGS, "RealDisplaySizeMM(int displayNum = 0)\nReturn the size (in mm) of a given display."},
-	{NULL, NULL, 0, NULL}
+	{"GetXRandROutputXID", GetXRandROutputXID, METH_VARARGS, "GetXRandROutputXID(int displayNum = 0)\nReturn the XRandR output X11 ID of a given display."},
+	{NULL, NULL, 0, NULL}  /* Sentinel - marks the end of this structure */
 };
 
 PyMODINIT_FUNC

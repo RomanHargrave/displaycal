@@ -26,6 +26,12 @@ from defaultpaths import iccprofiles, iccprofiles_home
 from ordereddict import OrderedDict
 from safe_print import safe_print
 
+if sys.platform not in ("darwin", "win32"):
+	try:
+		import xrandr
+	except ImportError:
+		xrandr = None
+
 DD_ATTACHED_TO_DESKTOP = 0x01
 
 debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
@@ -262,7 +268,19 @@ def _winreg_get_display_profile(monkey, current_user=False):
 		filename = os.path.join(iccprofiles[0], 
 								"sRGB Color Space Profile.icm")
 	## print repr(filename)
-	return filename
+	if filename:
+		return ICCProfile(filename)
+	return None
+
+
+def _xrandr_get_display_profile(display_no=0):
+	try:
+		property = xrandr.get_output_property(display_no, "_ICC_PROFILE")
+	except ValueError:
+		return None
+	if property:
+		return ICCProfile("".join(chr(i) for i in property))
+	return None
 
 
 def get_display_profile(display_no=0, x_hostname="", x_display=0, 
@@ -296,17 +314,16 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
 			## print monkey
 			# current user
-			filename = _winreg_get_display_profile(monkey, True)
-			if not filename:
+			profile = _winreg_get_display_profile(monkey, True)
+			if not profile:
 				# system
-				filename = _winreg_get_display_profile(monkey)
-		if filename:
-			profile = ICCProfile(filename)
+				profile = _winreg_get_display_profile(monkey)
 	else:
 		if sys.platform == "darwin":
 			options = ["Image Events", "ColorSyncScripting"]
 		else:
-			options = ["_ICC_DEVICE_PROFILE", "_ICC_PROFILE"]
+			options = [##"_ICC_DEVICE_PROFILE", 
+					   "_ICC_PROFILE"]
 		for option in options:
 			if sys.platform == "darwin":
 				args = ['osascript', '-e', 'tell app "%s"' % option, '-e', 
@@ -316,7 +333,19 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				tgt_proc = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, 
 									stderr=sp.PIPE)
 			else:
-				# Linux - read up to 8 MB of any X properties
+				# Linux
+				# Try XrandR first
+				if xrandr and option == "_ICC_PROFILE":
+					if debug:
+						safe_print("Using XrandR")
+					profile = _xrandr_get_display_profile(display_no)
+					if profile:
+						return profile
+					if debug:
+						safe_print("Couldn't get profile with XrandR")
+				# Read up to 8 MB of any X properties
+				if debug:
+					safe_print("Using xprop")
 				atom = "%s%s" % (option, "" if display_no == 0 else 
 									   "_%s" % display_no)
 				tgt_proc = sp.Popen(["xprop", "-display", "%s:%s.%s" % 
