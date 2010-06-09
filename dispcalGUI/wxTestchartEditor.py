@@ -20,7 +20,8 @@ from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
 from util_io import StringIOu as StringIO
 from util_str import safe_unicode
-from worker import Worker, check_file_isfile, check_set_argyll_bin, get_argyll_version
+from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
+					get_argyll_version, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import ConfirmDialog, InfoDialog
 
@@ -50,7 +51,7 @@ class TestchartEditor(wx.Frame):
 		
 		self.worker = Worker()
 		
-		if get_argyll_version("targen") >= [1, 1, 0]:
+		if get_argyll_version("targen", silent=True) >= [1, 1, 0]:
 			self.tc_algos_ab["Q"] = lang.getstr("tc.Q")
 
 		self.tc_algos_ba = swap_dict_keys_values(self.tc_algos_ab)
@@ -745,7 +746,7 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_filter_rad", self.tc_filter_rad.GetValue())
 
 	def tc_vrml_handler(self, event = None):
-		if get_argyll_version("targen") < [1, 1, 0]:
+		if get_argyll_version("targen", silent=True) < [1, 1, 0]:
 			if event.GetId() == self.tc_vrml_device.GetId():
 				self.tc_vrml_lab.SetValue(False)
 			else:
@@ -1348,21 +1349,23 @@ class TestchartEditor(wx.Frame):
 
 	def tc_create(self):
 		writecfg()
-		self.argyll_version = get_argyll_version("targen")
+		self.argyll_version = get_argyll_version("targen", silent=True)
 		cmd, args = self.worker.prepare_targen()
-		result = self.worker.exec_cmd(cmd, args, low_contrast = False, skip_scripts = True, silent = False, parent = self)
-		if result:
+		if not isinstance(cmd, Exception):
+			result = self.worker.exec_cmd(cmd, args, low_contrast = False, skip_scripts = True, silent = False, parent = self)
+		else:
+			result = cmd
+		if not isinstance(result, Exception) and result:
 			self.worker.create_tempdir()
 			if self.worker.tempdir:
 				path = os.path.join(self.worker.tempdir, "temp.ti1")
 				result = check_file_isfile(path, silent = False)
-				if result:
+				if not isinstance(result, Exception) and result:
 					try:
 						self.ti1 = CGATS.CGATS(path)
 						safe_print(lang.getstr("success"))
 					except Exception, exception:
-						handle_error(u"Error - testchart file could not be read: " + safe_unicode(exception), parent = self)
-						result = False
+						return Error(u"Error - testchart file could not be read: " + safe_unicode(exception))
 					self.ti1_wrl = {}
 					for ctrl in (self.tc_vrml_device, 
 								 self.tc_vrml_lab):
@@ -1377,7 +1380,7 @@ class TestchartEditor(wx.Frame):
 								self.ti1_wrl[vrml_type] = wrl.read()
 								wrl.close()
 							except Exception, exception:
-								handle_error(u"Warning - VRML file could not be read: " + safe_unicode(exception), parent = self)
+								return Error(u"Warning - VRML file could not be read: " + safe_unicode(exception))
 			else:
 				result = False
 		self.worker.wrapup(False)
@@ -1385,7 +1388,9 @@ class TestchartEditor(wx.Frame):
 
 	def tc_preview(self, result):
 		self.tc_check()
-		if result:
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		elif result:
 			if verbose >= 1: safe_print(lang.getstr("tc.preview.create"))
 			data = self.ti1.queryv1("DATA")
 

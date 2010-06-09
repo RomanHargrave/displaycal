@@ -57,22 +57,7 @@ class BaseInteractiveDialog(wx.Dialog):
 			safe_print(msg, log=False)
 		if log:
 			log_(msg)
-		oparent = parent
-		if oparent:
-			gparent = oparent.GetGrandParent()
-			if gparent is None:
-				gparent = oparent
-			if hasattr(gparent, "worker") and \
-			   hasattr(gparent.worker, "progress_parent") and \
-			   (gparent.worker.progress_parent.progress_start_timer.IsRunning() or 
-			    gparent.worker.progress_parent.progress_timer.IsRunning()):
-				gparent.worker.progress_parent.progress_start_timer.Stop()
-				if hasattr(gparent.worker.progress_parent, "progress_dlg"):
-					gparent.worker.progress_parent.progress_timer.Stop()
-					wx.CallAfter(gparent.worker.progress_parent.progress_dlg.Hide)
-				wx.CallAfter(self.__init__, oparent, id, title, msg, ok, 
-				   bitmap, pos, size)
-				return
+		if parent:
 			pos = list(pos)
 			i = 0
 			for coord in pos:
@@ -133,7 +118,7 @@ class BaseInteractiveDialog(wx.Dialog):
 			start_new_thread(mac_app_activate, (.25, wx.GetApp().GetAppName()))
 		if show:
 			self.ok.SetDefault()
-			self.ShowModalThenDestroy(oparent)
+			self.ShowModalThenDestroy(parent)
 
 	def ShowModalThenDestroy(self, parent=None):
 		if parent:
@@ -331,6 +316,70 @@ class LogWindow(InvincibleFrame):
 			setcfg("size.info.h", h)
 		if event:
 			event.Skip()
+
+
+class ProgressDialog(wx.ProgressDialog):
+	
+	""" A progress dialog. """
+	
+	def __init__(self, title=appname, msg="", maximum=1, parent=None, style=None, 
+				 handler=None, start_timer=True):
+		if style is None:
+			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
+		wx.ProgressDialog.__init__(self, title, msg, maximum, parent=parent, style=style)
+		self.Bind(wx.EVT_MOVE, self.OnMove, self)
+		if handler is None:
+			handler = self.OnTimer
+		self.timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, handler, self.timer)
+		
+		# custom localization
+		for child in self.GetChildren():
+			if isinstance(child, wx.Button):
+				child.Label = lang.getstr("cancel")
+			elif isinstance(child, wx.StaticText) and \
+				 "Elapsed time" in child.Label:
+				child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
+		
+		# set size and position	
+		self.SetMinSize((500, -1))
+		self.SetSize((500, -1))
+		placed = False
+		if parent:
+			if parent.IsShownOnScreen():
+				self.Center()
+				placed = True
+			else:
+				x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
+				y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+		else:
+			x = getcfg("position.progress.x")
+			y = getcfg("position.progress.y")
+		if not placed:
+			self.SetSaneGeometry(x, y)
+		
+		if start_timer:
+			self.start_timer()
+		
+	def OnMove(self, event):
+		if self.IsShownOnScreen() and not self.IsIconized() and \
+		   (not self.GetParent() or
+		    not self.GetParent().IsShownOnScreen()):
+			prev_x = getcfg("position.progress.x")
+			prev_y = getcfg("position.progress.y")
+			x, y = self.GetScreenPosition()
+			if x != prev_x or y != prev_y:
+				setcfg("position.progress.x", x)
+				setcfg("position.progress.y", y)
+	
+	def OnTimer(self, event):
+		self.Pulse()
+	
+	def start_timer(self, ms=50):
+		self.timer.Start(ms)
+	
+	def stop_timer(self):
+		self.timer.Stop()
 
 
 class TooltipWindow(InvincibleFrame):

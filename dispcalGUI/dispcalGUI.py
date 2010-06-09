@@ -91,7 +91,8 @@ import colormath
 import localization as lang
 import pyi_md5pickuphelper
 import wexpect
-from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
+from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
+						  cal_to_fake_profile, can_update_cal, 
 						  extract_cal_from_ti3, ti3_to_ti1, verify_ti1_rgb_xyz)
 from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
@@ -111,11 +112,11 @@ if sys.platform == "darwin":
 from util_os import expanduseru, launch_file, listdir_re, which
 from util_str import safe_str, safe_unicode, strtr, wrap
 import util_x
-from worker import (Worker, check_argyll_bin, check_cal_isfile, 
+from worker import (Worker, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, 
 					get_options_from_profile, make_argyll_compatible_path, 
-					set_argyll_bin)
+					set_argyll_bin, show_result_dialog)
 try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
@@ -220,9 +221,11 @@ class BaseFrame(wx.Frame):
 					safe_print("[D] Last focused control processed catchup "
 							   "event")
 				event.Skip()
-				event = CustomEvent(event.GetEventType(), 
-									event.GetEventObject(), 
-									self.last_focused_ctrl)
+				if hasattr(event.GetEventObject(), "GetId") and \
+				   callable(event.GetEventObject().GetId):
+					event = CustomEvent(event.GetEventType(), 
+										event.GetEventObject(), 
+										self.last_focused_ctrl)
 		if hasattr(event.GetEventObject(), "GetId") and \
 		   callable(event.GetEventObject().GetId):
 		   	if debug:
@@ -1183,13 +1186,10 @@ class MainFrame(BaseFrame):
 				  id=self.install_profile_btn.GetId())
 
 		# Update calibration checkbox
-		self.calibration_update_cb.SetValue(
-			bool(int(getcfg("calibration.update"))))
 		self.Bind(wx.EVT_CHECKBOX, self.calibration_update_ctrl_handler, 
 				  id=self.calibration_update_cb.GetId())
 
 		# Update corresponding profile checkbox
-		self.profile_update_cb.SetValue(bool(int(getcfg("profile.update"))))
 		self.Bind(wx.EVT_CHECKBOX, self.profile_update_ctrl_handler, 
 				  id=self.profile_update_cb.GetId())
 
@@ -1520,8 +1520,10 @@ class MainFrame(BaseFrame):
 			do_update_controls = self.calibration_update_cb.GetValue() or \
 								 self.profile_update_cb.GetValue()
 			self.calibration_update_cb.SetValue(False)
+			setcfg("calibration.update", 0)
 			self.calibration_update_cb.Disable()
 			self.profile_update_cb.SetValue(False)
+			setcfg("profile.update", 0)
 			self.profile_update_cb.Disable()
 			if do_update_controls:
 				self.update_controls()
@@ -1684,8 +1686,10 @@ class MainFrame(BaseFrame):
 		update_profile = self.profile_update_cb.GetValue()
 		enable_profile = not(update_profile)
 
-		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments))
-		self.ambient_measure_btn.Enable(bool(self.worker.instruments))
+		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
+										   enable_cal)
+		self.ambient_measure_btn.Enable(bool(self.worker.instruments) and
+										enable_cal)
 
 		self.calibrate_btn.Enable(bool(self.worker.displays) and 
 								  True in self.worker.lut_access and 
@@ -1694,13 +1698,13 @@ class MainFrame(BaseFrame):
 											  bool(self.worker.displays) and 
 											  True in self.worker.lut_access and 
 											  bool(self.worker.instruments))
-		self.profile_btn.Enable(enable_profile and 
+		self.profile_btn.Enable(enable_profile and not update_cal and 
 								bool(self.worker.displays) and 
 								bool(self.worker.instruments))
 		
 		self.panel.Thaw()
 
-	def update_controls(self, update_profile_name=True):
+	def update_controls(self, update_profile_name=True, silent=False):
 		""" Update all controls based on global configuration 
 		and available Argyll functionality. """
 		self.updatingctrls = True
@@ -1708,8 +1712,14 @@ class MainFrame(BaseFrame):
 		self.panel.Freeze()
 		
 		cal = getcfg("calibration.file")
-
-		if cal and check_file_isfile(cal, parent=self):
+		
+		if cal:
+			result = check_file_isfile(cal, silent=silent)
+			if isinstance(result, Exception) and not silent:
+				show_result_dialog(result, self)
+		else:
+			result = False
+		if not isinstance(result, Exception) and result:
 			filename, ext = os.path.splitext(cal)
 			if not cal in self.recent_cals:
 				self.recent_cals.append(cal)
@@ -1751,9 +1761,8 @@ class MainFrame(BaseFrame):
 			self.calibration_file_ctrl.SetStringSelection(
 				lang.getstr("settings.new"))
 			self.calibration_file_ctrl.SetToolTip(None)
-			self.calibration_update_cb.SetValue(False)
 			setcfg("calibration.file", None)
-			setcfg("calibration.update", "0")
+			setcfg("calibration.update", 0)
 			profile_path = None
 			profile_exists = False
 		self.delete_calibration_btn.Enable(bool(cal) and 
@@ -1762,16 +1771,19 @@ class MainFrame(BaseFrame):
 										cal not in self.presets)
 		enable_update = bool(cal) and os.path.exists(filename + ".cal")
 		if not enable_update:
-			self.calibration_update_cb.SetValue(False)
+			setcfg("calibration.update", 0)
 		self.calibration_update_cb.Enable(enable_update)
+		self.calibration_update_cb.SetValue(
+			bool(getcfg("calibration.update")))
 
 		update_cal = self.calibration_update_cb.GetValue()
 		enable_cal = not(update_cal)
 
 		if not update_cal or not profile_exists:
-			self.profile_update_cb.SetValue(False)
 			setcfg("profile.update", "0")
 		self.profile_update_cb.Enable(update_cal and profile_exists)
+		self.profile_update_cb.SetValue(
+			bool(getcfg("profile.update")))
 
 		update_profile = self.profile_update_cb.GetValue()
 		enable_profile = not(update_profile)
@@ -1800,7 +1812,6 @@ class MainFrame(BaseFrame):
 
 		self.testchart_btn.Enable(enable_profile)
 		self.create_testchart_btn.Enable(enable_profile)
-		self.profile_quality_ctrl.Enable(enable_profile)
 		self.profile_type_ctrl.Enable(enable_profile)
 
 		measurement_mode = getcfg("measurement_mode")
@@ -1971,7 +1982,7 @@ class MainFrame(BaseFrame):
 		elif q == 4:
 			self.profile_quality_info.SetLabel(
 				lang.getstr("calibration.quality.ultra"))
-		self.profile_quality_ctrl.Enable(not simple_gamma_model)
+		self.profile_quality_ctrl.Enable(enable_profile and not simple_gamma_model)
 
 		enable_gamap = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
@@ -2029,12 +2040,14 @@ class MainFrame(BaseFrame):
 			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 										  skip_scripts=True, silent=True,
 										  asroot=True)
-			if result:
+			if not isinstance(result, Exception) and result:
 				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-information"),
 						   log=False)
 			else:
+				if isinstance(result, Exception):
+					show_result_dialog(result, self) 
 				# prompt for setup.exe
 				defaultDir, defaultFile = expanduseru("~"), "setup.exe"
 				dlg = wx.FileDialog(self, lang.getstr("locate_spyder2_setup"), 
@@ -2056,13 +2069,15 @@ class MainFrame(BaseFrame):
 												  skip_scripts=True, 
 												  silent=True,
 												  asroot=True)
-					if result:
+					if not isinstance(result, Exception) and result:
 						InfoDialog(self, 
 								   msg=lang.getstr("enable_spyder2_success"), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-information"),
 								   log=False)
 					else:
+						if isinstance(result, Exception):
+							show_result_dialog(result, self)
 						InfoDialog(self, 
 								   msg=lang.getstr("enable_spyder2_failure"), 
 								   ok=lang.getstr("ok"), 
@@ -2290,7 +2305,7 @@ class MainFrame(BaseFrame):
 						  ckwargs={"event_id": event.GetId(),
 								   "phase": "instcal_prepare"}, 
 						  wkwargs={"phase": "init"},
-						  progress_title=lang.getstr("instrument.initializing"))
+						  progress_msg=lang.getstr("instrument.initializing"))
 	
 	def ambient_measure_process(self, result=None, event_id=None, phase=None):
 		if self.worker.thread_abort:
@@ -2339,7 +2354,7 @@ class MainFrame(BaseFrame):
 										   "phase": "measure_prepare"}, 
 								  wkwargs={"result": result, 
 										   "phase": "instcal"},
-								  progress_title=lang.getstr("instrument.calibrating"))
+								  progress_msg=lang.getstr("instrument.calibrating"))
 				return
 			else:
 				phase = "measure_prepare"
@@ -2373,7 +2388,7 @@ class MainFrame(BaseFrame):
 							  ckwargs={"event_id": event_id}, 
 							  wkwargs={"result": result, 
 									   "phase": "measure"},
-							  progress_title=lang.getstr("ambient.measure"))
+							  progress_msg=lang.getstr("ambient.measure"))
 			return
 		elif phase == "measure":
 			try:
@@ -2803,65 +2818,101 @@ class MainFrame(BaseFrame):
 	def calibrate(self, remove=False):
 		capture_output = not sys.stdout.isatty()
 		cmd, args = self.worker.prepare_dispcal()
-		result = self.worker.exec_cmd(cmd, args, capture_output=capture_output)
-		self.worker.wrapup(result, remove or not result)
-		if result:
+		if not isinstance(cmd, Exception):
+			result = self.worker.exec_cmd(cmd, args, capture_output=capture_output)
+		else:
+			result = cmd
+		self.worker.wrapup(not isinstance(result, Exception) and 
+									result, remove or isinstance(result, 
+																 Exception) or 
+									not result)
+		if not isinstance(result, Exception) and result:
 			cal = os.path.join(getcfg("profile.save_path"), 
 							   getcfg("profile.name.expanded"), 
 							   getcfg("profile.name.expanded") + ".cal")
-			setcfg("last_cal_path", cal)
-			self.previous_cal = getcfg("calibration.file")
-			if getcfg("calibration.update") or \
-			   self.worker.dispcal_create_fast_matrix_shaper:
-				profile_path = os.path.join(getcfg("profile.save_path"), 
-											getcfg("profile.name.expanded"), 
-											getcfg("profile.name.expanded") + 
-											profile_ext)
-				result = check_profile_isfile(
-					profile_path, 
-					lang.getstr("error.profile.file_not_created"), parent=self)
-				if result:
-					if self.worker.dispcal_create_fast_matrix_shaper:
-						# we need to set cprt
-						try:
-							profile = ICCP.ICCProfile(profile_path)
-							profile.tags.cprt = ICCP.TextType(
-								"text\0\0\0\0" + 
-								getcfg("copyright").encode("ASCII", "asciize"),
-								"cprt")
-							profile.write()
-						except Exception, exception:
-							handle_error(exception)
-					setcfg("calibration.file", profile_path)
-					self.update_controls(update_profile_name=False)
-					setcfg("last_cal_or_icc_path", profile_path)
-					setcfg("last_icc_path", profile_path)
-			else:
-				result = check_cal_isfile(
-					cal, lang.getstr("error.calibration.file_not_created"), 
-					parent=self)
-				if result:
+			result = check_cal_isfile(
+				cal, lang.getstr("error.calibration.file_not_created"))
+			if not isinstance(result, Exception) and result:
+				cal_cgats = add_dispcal_options_to_cal(cal, 
+													   self.worker.options_dispcal)
+				if cal_cgats:
+					cal_cgats.write()
+				setcfg("last_cal_path", cal)
+				self.previous_cal = getcfg("calibration.file")
+				if getcfg("profile.update") or \
+				   self.worker.dispcal_create_fast_matrix_shaper:
+					profile_path = os.path.join(getcfg("profile.save_path"), 
+												getcfg("profile.name.expanded"), 
+												getcfg("profile.name.expanded") + 
+												profile_ext)
+					result = check_profile_isfile(
+						profile_path, 
+						lang.getstr("error.profile.file_not_created"))
+					if not isinstance(result, Exception) and result:
+						if not getcfg("profile.update"):
+							# we need to set cprt and targ
+							try:
+								profile = ICCP.ICCProfile(profile_path)
+								profile.tags.cprt = ICCP.TextType(
+									"text\0\0\0\0" + 
+									getcfg("copyright").encode("ASCII", "asciize") + 
+									"\0",
+									"cprt")
+								ti3 = add_options_to_ti3(
+									profile.tags.get("targ", 
+													 profile.tags.get("CIED", 
+																	  "")), 
+									self.worker.options_dispcal)
+								if not ti3:
+									ti3 = CGATS.CGATS("TI3\n")
+									ti3[1] = cal_cgats
+								if ti3:
+									profile.tags.targ = ICCP.TextType(
+										"text\0\0\0\0" + str(ti3) + "\0", 
+										"targ")
+									profile.tags.CIED = ICCP.TextType(
+										"text\0\0\0\0" + str(ti3) + "\0", 
+										"CIED")
+									profile.tags.DevD = ICCP.TextType(
+										"text\0\0\0\0" + str(ti3) + "\0", 
+										"DevD")
+								profile.write()
+							except Exception, exception:
+								safe_print(exception)
+						setcfg("calibration.file", profile_path)
+						wx.CallAfter(self.update_controls, 
+									 update_profile_name=False)
+						setcfg("last_cal_or_icc_path", profile_path)
+						setcfg("last_icc_path", profile_path)
+				else:
 					setcfg("calibration.file", cal)
-					self.update_controls(update_profile_name=False)
+					wx.CallAfter(self.update_controls, 
+								 update_profile_name=False)
 					setcfg("last_cal_or_icc_path", cal)
-					self.load_cal(cal=cal, silent=True)
+					wx.CallAfter(self.load_cal, cal=cal, silent=True)
 		return result
 
-	def measure(self, consumer, apply_calibration=True, progress_msg=""):
+	def measure(self, consumer, apply_calibration=True, progress_msg="",
+				resume=False, continue_next=False):
 		self.worker.start(consumer, self.measure_producer, 
 						  wkwargs={"apply_calibration": apply_calibration},
-						  progress_msg=progress_msg)
+						  progress_msg=progress_msg, resume=resume, 
+						  continue_next=continue_next)
 	
 	def measure_producer(self, apply_calibration=True):
 		cmd, args = self.worker.prepare_dispread(apply_calibration)
-		result = self.worker.exec_cmd(cmd, args)
-		self.worker.wrapup(result, not result)
+		if not isinstance(cmd, Exception):
+			result = self.worker.exec_cmd(cmd, args)
+		self.worker.wrapup(not isinstance(result, Exception) and 
+									result, isinstance(result, Exception) or 
+									not result)
 		return result
 	
-	def measure_calibrate(self, consumer, producer, remove=False, progress_msg=""):
-		self.worker.start(consumer, producer, 
-						  wkwargs={"remove": remove},
-						  progress_msg=progress_msg)
+	def measure_calibrate(self, consumer, producer, remove=False, 
+						  progress_msg="", continue_next=False):
+		self.worker.start(consumer, producer, wkwargs={"remove": remove},
+						  progress_msg=progress_msg, 
+						  continue_next=continue_next)
 
 	def profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None):
@@ -2873,24 +2924,18 @@ class MainFrame(BaseFrame):
 									profile_ext)
 		cmd, args = self.worker.prepare_colprof(
 			os.path.basename(os.path.splitext(dst_path)[0]), display_name)
-		result = self.worker.exec_cmd(
-			cmd, args, capture_output="-as" in self.worker.options_colprof and 
-					   self.worker.argyll_version <= [1, 0, 4], 
-			low_contrast=False, skip_scripts=skip_scripts)
-		self.worker.wrapup(result, dst_path=dst_path)
-		if "-as" in self.worker.options_colprof and \
-		   self.worker.argyll_version <= [1, 0, 4]:
-			_safe_print("".join(self.worker.output if result else 
-								self.worker.errors).strip())
-		if result:
+		if not isinstance(cmd, Exception): 
+			result = self.worker.exec_cmd(cmd, args, low_contrast=False, 
+										  skip_scripts=skip_scripts)
+		else:
+			result = cmd
+		self.worker.wrapup(not isinstance(result, Exception) and 
+									result, dst_path=dst_path)
+		if not isinstance(result, Exception) and result:
 			try:
 				profile = ICCP.ICCProfile(dst_path)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				InfoDialog(self, msg=lang.getstr("profile.invalid") + "\n" + 
-									 dst_path, 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				return False
+				return Error(lang.getstr("profile.invalid") + "\n" + dst_path)
 			if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
 				setcfg("last_cal_or_icc_path", dst_path)
 				setcfg("last_icc_path", dst_path)
@@ -2901,7 +2946,13 @@ class MainFrame(BaseFrame):
 			return
 		if cal is None:
 			cal = getcfg("calibration.file")
-		if cal and check_file_isfile(cal, parent=self):
+		if cal:
+			result = check_file_isfile(cal)
+			if isinstance(result, Exception):
+				show_result_dialog(result, self)
+		else:
+			result = False
+		if not isinstance(result, Exception) and result:
 			filename, ext = os.path.splitext(cal)
 			if ext.lower() in (".icc", ".icm"):
 				try:
@@ -2994,7 +3045,8 @@ class MainFrame(BaseFrame):
 					if self.install_profile(capture_output=True, 
 											profile_path=path, 
 											install=False, 
-											skip_scripts=True, silent=True):
+											skip_scripts=True, 
+											silent=True) is True:
 						self.lut_viewer_load_lut(profile=profile)
 						if verbose >= 1: safe_print(lang.getstr("success"))
 					else:
@@ -3009,7 +3061,7 @@ class MainFrame(BaseFrame):
 				setcfg("last_cal_path", path)
 				if self.install_profile(capture_output=True, cal=path, 
 										install=False, skip_scripts=True, 
-										silent=True):
+										silent=True) is True:
 					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
 					if verbose >= 1: safe_print(lang.getstr("success"))
 				else:
@@ -3042,7 +3094,7 @@ class MainFrame(BaseFrame):
 		else:
 			if verbose >= 1: safe_print(lang.getstr("calibration.resetting"))
 		if self.install_profile(capture_output=True, cal=cal, install=False, 
-								skip_scripts=True, silent=True):
+								skip_scripts=True, silent=True) is True:
 			self.lut_viewer_load_lut(profile=profile)
 			if verbose >= 1: safe_print(lang.getstr("success"))
 		else:
@@ -3052,25 +3104,29 @@ class MainFrame(BaseFrame):
 						profile_path=None, install=True, skip_scripts=False, 
 						silent=False):
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
-		if "-Sl" in args and sys.platform != "darwin":
-			# If a 'system' install is requested under Linux or Windows, 
-			# install in 'user' scope first because a system-wide install does 
-			# not replace a possible previous 'user' profile on those systems 
-			# (under Mac OS X, it does).
-			args.remove("-Sl")
-			result = self.worker.exec_cmd(cmd, args, capture_output, 
-										  low_contrast=False, 
-										  skip_scripts=skip_scripts, 
-										  silent=silent)
-			args.insert(0, "-Sl")
+		if not isinstance(cmd, Exception): 
+			if "-Sl" in args and sys.platform != "darwin":
+				# If a 'system' install is requested under Linux or Windows, 
+				# install in 'user' scope first because a system-wide install does 
+				# not replace a possible previous 'user' profile on those systems 
+				# (under Mac OS X, it does).
+				args.remove("-Sl")
+				result = self.worker.exec_cmd(cmd, args, capture_output, 
+											  low_contrast=False, 
+											  skip_scripts=skip_scripts, 
+											  silent=silent)
+				args.insert(0, "-Sl")
+			else:
+				result = True
+			if result:
+				result = self.worker.exec_cmd(cmd, args, capture_output, 
+											  low_contrast=False, 
+											  skip_scripts=skip_scripts, 
+											  silent=silent)
 		else:
-			result = True
-		if result:
-			result = self.worker.exec_cmd(cmd, args, capture_output, 
-										  low_contrast=False, 
-										  skip_scripts=skip_scripts, 
-										  silent=silent)
-		if result is not None and install:
+			result = cmd
+		if not isinstance(result, Exception) and \
+		   result is not None and install:
 			result = False
 			for line in self.worker.output:
 				if "Installed" in line:
@@ -3111,7 +3167,7 @@ class MainFrame(BaseFrame):
 								 # args[-1].encode(enc, "asciize")) >= 0:
 						# result = True
 						# break
-		if result:
+		if not isinstance(result, Exception) and result:
 			if install:
 				if not silent:
 					if verbose >= 1: safe_print(lang.getstr("success"))
@@ -3174,14 +3230,15 @@ class MainFrame(BaseFrame):
 											os.path.join(autostart, 
 														 name + ".lnk"), 0)
 								except Exception, exception:
-									InfoDialog(self,
-											   msg=lang.getstr(
-												   "error.autostart_creation", 
-												   autostart) + "\n\n" + 
-												   safe_unicode(exception.args[1]), 
-											   ok=lang.getstr("ok"), 
-											   bitmap=geticon(32, 
-															  "dialog-warning"))
+									if not silent:
+										InfoDialog(self,
+												   msg=lang.getstr(
+													   "error.autostart_creation", 
+													   autostart) + "\n\n" + 
+													   safe_unicode(exception.args[1]), 
+												   ok=lang.getstr("ok"), 
+												   bitmap=geticon(32, 
+																  "dialog-warning"))
 									# now try user scope
 								else:
 									return result
@@ -3257,22 +3314,22 @@ class MainFrame(BaseFrame):
 							system_desktopfile_path = os.path.join(
 								autostart, name + ".desktop")
 							if not silent and \
-								(not self.worker.exec_cmd("mkdir", 
-														  ["-p", autostart], 
-														  capture_output=True, 
-														  low_contrast=False, 
-														  skip_scripts=True, 
-														  silent=True, 
-														  asroot=True) or 
-								 not self.worker.exec_cmd("mv", 
-														  ["-f", 
-														   desktopfile_path, 
-														   autostart], 
-														  capture_output=True, 
-														  low_contrast=False, 
-														  skip_scripts=True, 
-														  silent=True, 
-														  asroot=True)):
+								(self.worker.exec_cmd("mkdir", 
+													  ["-p", autostart], 
+													  capture_output=True, 
+													  low_contrast=False, 
+													  skip_scripts=True, 
+													  silent=True, 
+													  asroot=True) is not True or 
+								 self.worker.exec_cmd("mv", 
+													  ["-f", 
+													   desktopfile_path, 
+													   autostart], 
+													  capture_output=True, 
+													  low_contrast=False, 
+													  skip_scripts=True, 
+													  silent=True, 
+													  asroot=True) is not True):
 								InfoDialog(self, 
 										   msg=lang.getstr(
 											   "error.autostart_creation", 
@@ -3327,8 +3384,12 @@ class MainFrame(BaseFrame):
 	
 	def verify_calibration_worker(self):
 		cmd, args = self.worker.prepare_dispcal(calibrate=False, verify=True)
-		return self.worker.exec_cmd(cmd, args, capture_output=True, 
-									skip_scripts=True)
+		if not isinstance(cmd, Exception):
+			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
+										  skip_scripts=True)
+		else:
+			result = cmd
+		return result
 
 	def verify_profile_handler(self, event):
 		if not check_set_argyll_bin():
@@ -3483,15 +3544,19 @@ class MainFrame(BaseFrame):
 		# load calibration from profile
 		cmd, args = self.worker.prepare_dispwin(profile_path=profile_path, 
 												install=False)
-		self.worker.exec_cmd(cmd, args, skip_scripts=True)
+		if isinstance(cmd, Exception):
+			wx.CallAfter(show_result_dialog, result, self)
+			self.Show()
+		else:
+			self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		
-		# start readings
-		self.worker.start(self.verify_profile_consumer, 
-						  self.verify_profile_worker, 
-						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
-								 profile, ti3_ref, save_path, chart, gray),
-						  wargs=(ti1_path, ),
-						  progress_msg=progress_msg)
+			# start readings
+			self.worker.start(self.verify_profile_consumer, 
+							  self.verify_profile_worker, 
+							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
+									 profile, ti3_ref, save_path, chart, gray),
+							  wargs=(ti1_path, ),
+							  progress_msg=progress_msg)
 	
 	def verify_profile_worker(self, ti1_path):
 		# measure
@@ -3505,7 +3570,7 @@ class MainFrame(BaseFrame):
 	def verify_profile_consumer(self, result, ti3_path, profile, ti3_ref, 
 								save_path, chart, gray):
 		
-		if result:
+		if not isinstance(result, Exception) and result:
 			# get item 0 of the ti3 to strip the CAL part from the measured data
 			ti3_measured = CGATS.CGATS(ti3_path)[0]
 			safe_print(lang.getstr("success"))
@@ -3513,9 +3578,11 @@ class MainFrame(BaseFrame):
 		# cleanup
 		self.worker.wrapup(False)
 		
-		wx.CallAfter(self.Show)
+		self.Show()
 		
-		if not result:
+		if isinstance(result, Exception) or not result:
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
 			return
 		
 		# calculate amount of calibration grayscale tone values
@@ -3730,7 +3797,7 @@ class MainFrame(BaseFrame):
 					safe_print(cal)
 				if self.install_profile(capture_output=True, cal=cal, 
 										install=False, skip_scripts=True, 
-										silent=silent):
+										silent=silent) is True:
 					self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
 											 cal.lower().endswith(".icc") or 
 											 cal.lower().endswith(".icm") else 
@@ -3748,7 +3815,7 @@ class MainFrame(BaseFrame):
 				safe_print(lang.getstr("calibration.resetting"))
 			if self.install_profile(capture_output=True, cal=False, 
 									install=False, skip_scripts=True, 
-									silent=True): ## event is None or (
+									silent=True) is True: ## event is None or (
 										## hasattr(self, "lut_viewer") and 
 										## self.lut_viewer and 
 										## self.lut_viewer.IsShownOnScreen())):
@@ -3770,7 +3837,7 @@ class MainFrame(BaseFrame):
 					safe_print(profile.fileName)
 			if self.install_profile(capture_output=True, cal=True, 
 									install=False, skip_scripts=True, 
-									silent=True): ## event is None or (
+									silent=True) is True: ## event is None or (
 										## hasattr(self, "lut_viewer") and 
 										## self.lut_viewer and 
 										## self.lut_viewer.IsShownOnScreen())):
@@ -3802,34 +3869,53 @@ class MainFrame(BaseFrame):
 	
 	def report_worker(self, report_calibrated=True):
 		cmd, args = self.worker.prepare_dispcal(calibrate=False)
-		if report_calibrated:
-			args += ["-r"]
-		else:
-			args += ["-R"]
+		if isinstance(cmd, Exception):
+			return cmd
+		if args:
+			if report_calibrated:
+				args += ["-r"]
+			else:
+				args += ["-R"]
 		return self.worker.exec_cmd(cmd, args, capture_output=True, 
 									skip_scripts=True)
 	
 	def result_consumer(self, result):
-		if result:
-			self.infoframe.Show()
+		if isinstance(result, Exception) and result:
+			wx.CallAfter(show_result_dialog, result, self)
+		elif not sys.stdout.isatty():
+			wx.CallAfter(self.infoframe.Show)
 		self.worker.wrapup(False)
 		self.Show()
 
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
-		dlg = ConfirmDialog(self, 
-							msg=lang.getstr("calibration.create_fast_matrix_shaper_choice"),
-							ok=lang.getstr("calibration.create_fast_matrix_shaper"), 
-							alt=lang.getstr("button.calibrate"), 
-							cancel=lang.getstr("cancel"), 
-							bitmap=geticon(32, "dialog-question"))
-		result = dlg.ShowModal()
-		dlg.Destroy()
-		if result == wx.ID_CANCEL:
-			return
+		if not getcfg("profile.update") and (not getcfg("calibration.update") or 
+											 self.profile_update_cb.IsEnabled()):
+			if getcfg("calibration.update") and \
+			   self.profile_update_cb.IsEnabled():
+				msg = lang.getstr("calibration.update_profile_choice")
+				ok = lang.getstr("profile.update")
+			else:
+				msg = lang.getstr("calibration.create_fast_matrix_shaper_choice")
+				ok = lang.getstr("calibration.create_fast_matrix_shaper")
+			dlg = ConfirmDialog(self, 
+								msg=msg,
+								ok=ok, 
+								alt=lang.getstr("button.calibrate"), 
+								cancel=lang.getstr("cancel"), 
+								bitmap=geticon(32, "dialog-question"))
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result == wx.ID_CANCEL:
+				return
+		else:
+			result = None
 		self.worker.dispcal_create_fast_matrix_shaper = result == wx.ID_OK
 		self.update_profile_name_timer.Stop()
-		if check_set_argyll_bin() and self.check_overwrite(".cal"):
+		if check_set_argyll_bin() and self.check_overwrite(".cal") and \
+		   ((not getcfg("profile.update") and 
+			 not self.worker.dispcal_create_fast_matrix_shaper) or 
+			self.check_overwrite(profile_ext)):
 			self.setup_measurement(self.just_calibrate)
 		else:
 			self.update_profile_name_timer.Start(1000)
@@ -3837,7 +3923,8 @@ class MainFrame(BaseFrame):
 	def just_calibrate(self):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
-		if getcfg("calibration.interactive_display_adjustment"):
+		if getcfg("calibration.interactive_display_adjustment") and \
+		   not getcfg("calibration.update"):
 			# Interactive adjustment, do not show progress dialog
 			self.just_calibrate_finish(self.calibrate(remove=True))
 		else:
@@ -3848,19 +3935,23 @@ class MainFrame(BaseFrame):
 	
 	def just_calibrate_finish(self, result):
 		start_timers = True
-		if result:
-			if getcfg("calibration.update") or \
+		if not isinstance(result, Exception) and result:
+			if not sys.stdout.isatty():
+				wx.CallAfter(self.infoframe.Show)
+			if getcfg("profile.update") or \
 			   self.worker.dispcal_create_fast_matrix_shaper:
 				start_timers = False
 				wx.CallAfter(self.profile_finish, True, 
 							 success_msg=lang.getstr("calibration.complete"))
 			else:
-				wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+				wx.CallAfter(InfoDialog, self, 
 							 msg=lang.getstr("calibration.complete"), 
 							 ok=lang.getstr("ok"), 
 							 bitmap=geticon(32, "dialog-information"))
 		else:
-			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
+			wx.CallAfter(InfoDialog, self, 
 						 msg=lang.getstr("calibration.incomplete"), 
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
@@ -3956,21 +4047,26 @@ class MainFrame(BaseFrame):
 																	   "&"))
 		self.worker.dispcal_create_fast_matrix_shaper = False
 		self.worker.dispread_after_dispcal = True
-		if getcfg("calibration.interactive_display_adjustment"):
+		if getcfg("calibration.interactive_display_adjustment") and \
+		   not getcfg("calibration.update"):
 			# Interactive adjustment, do not show progress dialog
 			self.calibrate_finish(self.calibrate())
 		else:
 			# No interactive adjustment, show progress dialog
 			self.measure_calibrate(self.calibrate_finish, self.calibrate, 
-								   progress_msg=lang.getstr("calibration"))
+								   progress_msg=lang.getstr("calibration"), 
+								   continue_next=True)
 	
 	def calibrate_finish(self, result):
-		if result:
-			wx.CallAfter(self.measure, self.calibrate_and_profile_finish,
+		if not isinstance(result, Exception) and result:
+			self.measure(self.calibrate_and_profile_finish,
 						 True, 
-						 progress_msg=lang.getstr("measuring.characterization"))
+						 progress_msg=lang.getstr("measuring.characterization"), 
+						 resume=True, continue_next=True)
 		else:
-			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
+			wx.CallAfter(InfoDialog, self, 
 						 msg=lang.getstr("calibration.incomplete"), 
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
@@ -3978,23 +4074,27 @@ class MainFrame(BaseFrame):
 	
 	def calibrate_and_profile_finish(self, result):
 		start_timers = True
-		if result:
+		if not isinstance(result, Exception) and result:
 			start_timers = False
 			wx.CallAfter(self.start_profile_worker, 
-						 lang.getstr("calibration_profiling.complete"))
+						 lang.getstr("calibration_profiling.complete"), 
+						 resume=True)
 		else:
-			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
+			wx.CallAfter(InfoDialog, self, 
 						 msg=lang.getstr("profiling.incomplete"), 
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
-	def start_profile_worker(self, success_msg):
+	def start_profile_worker(self, success_msg, resume=False):
 		self.worker.start(self.profile_finish, self.profile, 
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
 									   "profiling.incomplete")}, 
-						  progress_title=lang.getstr("create_profile"))
+						  progress_msg=lang.getstr("create_profile"), 
+						  resume=resume)
 
 	def gamap_btn_handler(self, event):
 		if not hasattr(self, "gamapframe"):
@@ -4067,16 +4167,19 @@ class MainFrame(BaseFrame):
 		self.worker.dispread_after_dispcal = False
 		self.previous_cal = False
 		self.measure(self.just_profile_finish, apply_calibration,
-					 progress_msg=lang.getstr("measuring.characterization"))
+					 progress_msg=lang.getstr("measuring.characterization"), 
+					 continue_next=True)
 	
 	def just_profile_finish(self, result):
 		start_timers = True
-		if result:
+		if not isinstance(result, Exception) and result:
 			start_timers = False
 			wx.CallAfter(self.start_profile_worker, 
-						 lang.getstr("profiling.complete"))
+						 lang.getstr("profiling.complete"), resume=True)
 		else:
-			wx.CallAfter(InfoDialog, self, pos=(-1, 100), 
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
+			wx.CallAfter(InfoDialog, self, 
 						 msg=lang.getstr("profiling.incomplete"), 
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
@@ -4084,7 +4187,9 @@ class MainFrame(BaseFrame):
 
 	def profile_finish(self, result, profile_path=None, success_msg="", 
 					   failure_msg="", preview=True, skip_scripts=False):
-		if result:
+		if not isinstance(result, Exception) and result:
+			if not sys.stdout.isatty():
+				self.infoframe.Show()
 			if not hasattr(self, "previous_cal") or self.previous_cal is False:
 				self.previous_cal = getcfg("calibration.file")
 			if profile_path:
@@ -4233,7 +4338,9 @@ class MainFrame(BaseFrame):
 					# and if it contains curves)
 					self.load_display_profile_cal(None)
 		else:
-			InfoDialog(self, pos=(-1, 100), msg=failure_msg, 
+			if isinstance(result, Exception):
+				show_result_dialog(result, self) 
+			InfoDialog(self, msg=failure_msg, 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 		self.start_timers(True)
@@ -4304,7 +4411,7 @@ class MainFrame(BaseFrame):
 										   "LUT")])
 				result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 											  skip_scripts=True, silent=True)
-				if result:
+				if not isinstance(result, Exception) and result:
 					profile = cal_to_fake_profile(args[-1])
 					force_update = True
 				else:
@@ -4575,7 +4682,8 @@ class MainFrame(BaseFrame):
 				ok=lang.getstr("OK"), cancel=lang.getstr("cancel"), 
 				bitmap=geticon(32, "dialog-question"))
 			result = dlg.ShowModal()
-			self.profile_quality_ctrl.Enable(self.get_profile_type() not in 
+			self.profile_quality_ctrl.Enable(not getcfg("profile.update") and 
+											 self.get_profile_type() not in 
 											 ("g", "G"))
 			dlg.Destroy()
 			if result == wx.ID_OK:
@@ -4749,10 +4857,12 @@ class MainFrame(BaseFrame):
 				# create temporary working dir
 				self.worker.wrapup(False)
 				tmp_working_dir = self.worker.create_tempdir()
-				if not tmp_working_dir or not check_create_dir(tmp_working_dir, 
-															   parent=self):
-					# Check directory and in/output file(s)
+				if not tmp_working_dir:
 					return
+				# Check directory and in/output file(s)
+				result = check_create_dir(tmp_working_dir)
+				if isinstance(result, Exception):
+					show_result_dialog(result, self)
 				# Copy ti3 to temp dir
 				ti3_tmp_path = make_argyll_compatible_path(
 					os.path.join(tmp_working_dir, profile_name + ".ti3"))
@@ -4798,7 +4908,7 @@ class MainFrame(BaseFrame):
 							"error.profile.file_not_created")}, 
 					wkwargs={"dst_path": profile_save_path, 
 							 "display_name": display_name}, 
-					progress_title=lang.getstr("create_profile"))
+					progress_msg=lang.getstr("create_profile"))
 	
 	def create_profile_name(self):
 		profile_name = self.profile_name_textctrl.GetValue()
@@ -5268,7 +5378,10 @@ class MainFrame(BaseFrame):
 	def set_testchart(self, path=None):
 		if path is None:
 			path = getcfg("testchart.file")
-		if not check_file_isfile(path, parent=self):
+		
+		result = check_file_isfile(path)
+		if isinstance(result, Exception) and not silent:
+			show_result_dialog(result, self)
 			self.set_default_testchart()
 			return
 		filename, ext = os.path.splitext(path)
@@ -5518,6 +5631,7 @@ class MainFrame(BaseFrame):
 									 "trc", 
 									 "whitepoint"), 
 							exclude=("calibration.black_point_correction_choice.show", 
+									 "calibration.update", 
 									 "measure.darken_background.show_warning", 
 									 "trc.should_use_viewcond_adjust.show_msg"))
 						self.worker.options_dispcal = ["-" + arg for arg 
@@ -5536,16 +5650,17 @@ class MainFrame(BaseFrame):
 								continue
 							if o[0] == "c":
 								setcfg("comport.number", o[1:])
+								self.update_comports()
 								continue
 							if o[0] == "m":
 								setcfg("calibration.interactive_display_adjustment", 0)
 								continue
-							if o[0] == "o":
-								setcfg("profile.update", 1)
-								continue
-							if o[0] == "u":
-								setcfg("calibration.update", 1)
-								continue
+							##if o[0] == "o":
+								##setcfg("profile.update", 1)
+								##continue
+							##if o[0] == "u":
+								##setcfg("calibration.update", 1)
+								##continue
 							if o[0] == "q":
 								setcfg("calibration.quality", o[1])
 								continue
@@ -5645,12 +5760,16 @@ class MainFrame(BaseFrame):
 					if "vcgt" in profile.tags and load_vcgt:
 						# load calibration into lut
 						self.load_cal(cal=path, silent=True)
-						if options_dispcal:
+						if options_dispcal and options_colprof:
 							return
+						elif options_dispcal:
+							msg = lang.getstr("settings_loaded.cal_and_lut")
 						else:
 							msg = lang.getstr("settings_loaded.profile_and_lut")
-					elif options_dispcal:
+					elif options_dispcal and options_colprof:
 						msg = lang.getstr("settings_loaded.cal_and_profile")
+					elif options_dispcal:
+						msg = lang.getstr("settings_loaded.cal")
 					else:
 						msg = lang.getstr("settings_loaded.profile")
 
@@ -5692,6 +5811,7 @@ class MainFrame(BaseFrame):
 						 "trc", 
 						 "whitepoint"), 
 				exclude=("calibration.black_point_correction_choice.show", 
+						 "calibration.update", 
 						 "trc.should_use_viewcond_adjust.show_msg"))
 
 			self.worker.options_dispcal = []
@@ -6057,6 +6177,8 @@ class MainFrame(BaseFrame):
 	def Show(self, show=True, start_timers=True):
 		wx.Frame.Show(self, show)
 		self.Raise()
+		if not self.IsActive():
+			self.RequestUserAttention()
 		if hasattr(self, "tcframe"):
 			self.tcframe.Show(self.tcframe.IsShownOnScreen())
 		self.infoframe.Show(self.infoframe.IsShownOnScreen())

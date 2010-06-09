@@ -11,10 +11,6 @@ import traceback
 from time import sleep, strftime
 
 if sys.platform == "darwin":
-	try:
-		import appscript
-	except ImportError: # we can fall back to osascript shell command
-		appscript = None
 	from util_mac import (mac_app_activate, mac_terminal_do_script,
 						  mac_terminal_set_colors)
 elif sys.platform == "win32":
@@ -32,12 +28,14 @@ import localization as lang
 import subprocess26 as sp
 import tempfile26 as tempfile
 import wexpect
-from argyll_cgats import extract_fix_copy_cal, ti3_to_ti1, verify_cgats
+from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
+						  verify_cgats)
 from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
 from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg, 
-					geticon, get_data_path, get_verified_path, setcfg, writecfg)
+					geticon, get_data_path, get_verified_path, profile_ext,
+					setcfg, writecfg)
 from debughelpers import handle_error
 from log import log, safe_print
 from meta import name as appname, version
@@ -47,7 +45,7 @@ from thread import start_new_thread
 from util_io import Files, StringIOu as StringIO, Tea
 from util_os import getenvu, quote_args, which
 from util_str import asciize, safe_unicode, wrap
-from wxwindows import ConfirmDialog, InfoDialog
+from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog
 
 if sys.platform == "win32": #and SendKeys is None:
 	wsh_shell = win32com.client.Dispatch("WScript.Shell")
@@ -93,7 +91,7 @@ def check_argyll_bin(paths=None):
 	return True
 
 
-def check_create_dir(path, parent=None):
+def check_create_dir(path):
 	"""
 	Try to create a directory and show an error message on failure.
 	"""
@@ -101,23 +99,15 @@ def check_create_dir(path, parent=None):
 		try:
 			os.makedirs(path)
 		except Exception, exception:
-			InfoDialog(parent, pos=(-1, 100), 
-					   msg=lang.getstr("error.dir_creation", path) + "\n\n" + 
-						   safe_unicode(exception), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
-			return False
+			return Error(lang.getstr("error.dir_creation", path) + "\n\n" + 
+						 safe_unicode(exception))
 	if not os.path.isdir(path):
-		InfoDialog(parent, pos=(-1, 100), msg=lang.getstr("error.dir_notdir", 
-														  path), 
-				   ok=lang.getstr("ok"), 
-				   bitmap=geticon(32, "dialog-error"))
-		return False
+		return Error(lang.getstr("error.dir_notdir", path))
 	return True
 
 
 def check_cal_isfile(cal=None, missing_msg=None, notfile_msg=None, 
-					 parent=None, silent=False):
+					 silent=False):
 	"""
 	Check if a calibration file exists and show an error message if not.
 	"""
@@ -126,11 +116,11 @@ def check_cal_isfile(cal=None, missing_msg=None, notfile_msg=None,
 			missing_msg = lang.getstr("error.calibration.file_missing", cal)
 		if not notfile_msg:
 			notfile_msg = lang.getstr("error.calibration.file_notfile", cal)
-	return check_file_isfile(cal, missing_msg, notfile_msg, parent, silent)
+	return check_file_isfile(cal, missing_msg, notfile_msg, silent)
 
 
 def check_profile_isfile(profile_path=None, missing_msg=None, 
-						 notfile_msg=None, parent=None, silent=False):
+						 notfile_msg=None, silent=False):
 	"""
 	Check if a profile exists and show an error message if not.
 	"""
@@ -141,12 +131,11 @@ def check_profile_isfile(profile_path=None, missing_msg=None,
 		if not notfile_msg:
 			notfile_msg = lang.getstr("error.profile.file_notfile", 
 									  profile_path)
-	return check_file_isfile(profile_path, missing_msg, notfile_msg, parent, 
-							 silent)
+	return check_file_isfile(profile_path, missing_msg, notfile_msg, silent)
 
 
 def check_file_isfile(filename, missing_msg=None, notfile_msg=None, 
-					  parent=None, silent=False):
+					  silent=False):
 	"""
 	Check if a file exists and show an error message if not.
 	"""
@@ -154,17 +143,13 @@ def check_file_isfile(filename, missing_msg=None, notfile_msg=None,
 		if not silent:
 			if not missing_msg:
 				missing_msg = lang.getstr("file.missing", filename)
-			InfoDialog(parent, pos=(-1, 100), msg=missing_msg, 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
+			return Error(missing_msg)
 		return False
 	if not os.path.isfile(filename):
 		if not silent:
 			if not notfile_msg:
 				notfile_msg = lang.getstr("file.notfile", filename)
-			InfoDialog(parent, pos=(-1, 100), msg=notfile_msg, 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
+			return Error(notfile_msg)
 		return False
 	return True
 
@@ -398,18 +383,6 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 				   subsequent_indent = "      "), fn = fn)
 
 
-def progress_move_handler(event=None):
-	self = event.GetEventObject()
-	if self.IsShownOnScreen() and not self.IsIconized() and \
-	   not self.GetParent().IsShownOnScreen():
-		prev_x = getcfg("position.progress.x")
-		prev_y = getcfg("position.progress.y")
-		x, y = self.GetScreenPosition()
-		if x != prev_x or y != prev_y:
-			setcfg("position.progress.x", x)
-			setcfg("position.progress.y", y)
-
-
 def set_argyll_bin(parent=None):
 	if parent and not parent.IsShownOnScreen():
 		parent = None # do not center on parent if not visible
@@ -450,6 +423,31 @@ def set_argyll_bin(parent=None):
 	return result
 
 
+def show_result_dialog(result, parent=None, pos=None):
+	msg=result.args[0]
+	if not pos:
+		pos=(-1, -1)
+	if isinstance(result, Info):
+		bitmap = geticon(32, "dialog-information")
+	elif isinstance(result, Warning):
+		bitmap = geticon(32, "dialog-warning")
+	else:
+		bitmap = geticon(32, "dialog-error")
+	InfoDialog(parent, pos=pos, msg=msg, ok=lang.getstr("ok"), bitmap=bitmap)
+
+
+class Error(Exception):
+	pass
+
+
+class Info(UserWarning):
+	pass
+
+
+class Warn(UserWarning):
+	pass
+
+
 class Worker():
 
 	def __init__(self, owner=None):
@@ -461,11 +459,14 @@ class Worker():
 		self.clear_cmd_output()
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
+		self.finished = True
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
+		self.subprocess_abort = False
 		self.tempdir = None
+		self.thread_abort = False
 	
 	def add_measurement_features(self, args):
 		args += ["-d" + self.get_display()]
@@ -696,9 +697,6 @@ class Worker():
 		"""
 		if parent is None:
 			parent = self.owner
-		## if capture_output:
-			## fn = self.infoframe.Log
-		## else:
 		if not capture_output:
 			capture_output = not sys.stdout.isatty()
 		fn = None
@@ -766,20 +764,30 @@ class Worker():
 		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
 														  "-Sn" in args):
 			asroot = True
-		needs_user_interaction = cmdname == get_argyll_utilname("dispcal") and \
-								 not "-m" in args and not "-r" in args and \
-								 not "-R" in args and not "-E" in args
 		# Run commands through wexpect.spawn instead of subprocess.Popen if
 		# all of these conditions apply:
 		# - command is dispcal, dispread or spotread
 		# - arguments are not empty
 		# - actual user interaction in a terminal is not needed OR
 		#   we are on Windows and running without a console
-		interact = args and cmdname in (get_argyll_utilname("dispcal"), 
-										get_argyll_utilname("dispread"), 
-										get_argyll_utilname("spotread")) ##and \
-							##(not needs_user_interaction or 
-							 ##sys.platform == "win32")
+		measure_cmds = (get_argyll_utilname("dispcal"), 
+						get_argyll_utilname("dispread"), 
+						get_argyll_utilname("spotread"))
+		interact = args and cmdname in (get_argyll_utilname("colprof"),
+										) + measure_cmds
+		measure = cmdname in measure_cmds
+		if measure:
+			instrument_features = self.get_instrument_features()
+			# -N switch not working as expected in Argyll < 1.1.0
+			skip_sensor_cal = instrument_features and \
+							  (not instrument_features.get("sensor_cal") or 
+							   (instrument_features.get("skip_sensor_cal") and 
+								self.argyll_version >= [1, 1, 0]))
+		needs_user_interaction = (cmdname == get_argyll_utilname("dispcal") and 
+								  not "-E" in args and not "-R" in args and 
+								  not "-m" in args and not "-r" in args and 
+								  not "-u" in args) or (measure and 
+														not skip_sensor_cal)
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
 					    sys.getwindowsversion() >= (6, ))):
@@ -953,7 +961,7 @@ class Worker():
 			except Exception, exception:
 				safe_print("Warning - error during shell script creation:", 
 						   safe_unicode(exception))
-		elif needs_user_interaction and \
+		if needs_user_interaction and \
 			 sys.platform == "darwin" and args and self.owner and not \
 			 self.owner.IsShownOnScreen():
 			start_new_thread(mac_app_activate, (3, "Terminal"))
@@ -999,81 +1007,35 @@ class Worker():
 															and (not needs_user_interaction or 
 																 sys.platform == "win32")
 															else None)
-					if sys.platform != "win32":
+					if sys.platform not in ("win32", "darwin"):
 						# allow some time to setup instrument and create test window
 						sleep(5)
 					try:
-						if needs_user_interaction or sys.platform == "win32":
-							self.subprocess.interact()
-							if sys.platform == "win32" and \
-							   needs_user_interaction:
-								##if sys.stdout.isatty():
-									##logfn = safe_print
-								# Under Windows Vista and 7 we need atleast one 
-								# active window associated with the running
-								# subprocess, otherwise it might freeze screen
-								# updates
-								wsh_shell.AppActivate(self.subprocess.wtty.conpid)
-						##elif sys.stdout.isatty():
-							##logfn = safe_print
-						if not needs_user_interaction or sys.platform == "win32":
-							if sudo:
-								# TODO: Not needed?
-								pass
-							instrument_features = self.get_instrument_features()
-							# -N switch not working as expected in Argyll < 1.1.0
-							skip_sensor_cal = instrument_features and \
-											  (not instrument_features.get("sensor_cal") or 
-											   (instrument_features.get("skip_sensor_cal") and 
-												self.argyll_version >= [1, 1, 0]))
-							if skip_sensor_cal:
-								if not "-F" in args:
+						if self.subprocess.isalive():
+							if needs_user_interaction or sys.platform == "win32":
+								self.subprocess.interact()
+								if sys.platform == "win32" and \
+								   needs_user_interaction:
+									# Under Windows Vista and 7 we need atleast one 
+									# active window associated with the running
+									# subprocess, otherwise it might freeze screen
+									# updates
+									wsh_shell.AppActivate(self.subprocess.wtty.conpid)
+							if measure and (not needs_user_interaction or 
+											sys.platform == "win32") and \
+							   skip_sensor_cal and not "-F" in args:
 									# Allow the user to move the terminal window if
 									# using black background
 									self.subprocess.expect(":")
-									logfn(os.linesep.join(line.rstrip() for line in 
+									log(os.linesep.join(line.rstrip() for line in 
 														wrap((self.subprocess.before + 
-															  self.subprocess.after).decode(enc, 
-																							"replace"), 
+															  ":").decode(enc, 
+																		  "replace"), 
 															 80).splitlines()))
 									if sys.platform != "win32":
 										sleep(.5)
-									self.subprocess.send(" ")
-							else:
-								self.subprocess.expect(":")
-								logfn(self.subprocess.before.decode(enc, "replace"))
-								dlg = ConfirmDialog(parent, 
-													msg=lang.getstr("instrument.calibrate"), 
-													ok=lang.getstr("ok"), 
-													cancel=lang.getstr("cancel"), 
-													bitmap=geticon(32, "dialog-information"))
-								dlg_result = dlg.ShowModal()
-								dlg.Destroy()
-								if dlg_result != wx.ID_OK:
-									self.quit_cmd()
-									sleep(.05)
-									self.terminate_cmd()
-									return False
-								self.subprocess.send(" ")
-								self.subprocess.expect(":")
-								logfn(os.linesep.join(line.rstrip() for line in 
-													wrap((self.subprocess.before + 
-														  self.subprocess.after).decode(enc, 
-																						"replace"), 
-														 80).splitlines()))
-								dlg = ConfirmDialog(parent, 
-													msg=lang.getstr("instrument.place_on_screen"), 
-													ok=lang.getstr("ok"), 
-													cancel=lang.getstr("cancel"), 
-													bitmap=geticon(32, "dialog-information"))
-								dlg_result = dlg.ShowModal()
-								dlg.Destroy()
-								if dlg_result != wx.ID_OK:
-									self.quit_cmd()
-									sleep(.05)
-									self.terminate_cmd()
-									return False
-								self.subprocess.send(" ")
+									if self.subprocess.isalive():
+										self.subprocess.send(" ")
 					except wexpect.EOF:
 						pass
 					self.subprocess.expect(wexpect.EOF, timeout=None)
@@ -1093,6 +1055,10 @@ class Worker():
 					self.retcode = self.subprocess.wait()
 					if stdin and not getattr(stdin, "closed", True):
 						stdin.close()
+				##print self.is_working(), self.subprocess_abort, self.retcode
+				if self.is_working() and self.subprocess_abort and \
+				   self.retcode == 0:
+					self.retcode = -1
 				self.subprocess = None
 				tries -= 1
 				if not silent:
@@ -1118,9 +1084,10 @@ class Worker():
 							errstr = "".join(errors2).strip()
 							if (self.retcode != 0 or 
 								cmdname == get_argyll_utilname("dispwin")):
-								InfoDialog(parent, pos=(-1, 100), 
-										   msg=errstr, ok=lang.getstr("ok"), 
-										   bitmap=geticon(32, "dialog-warning"))
+								wx.CallAfter(InfoDialog, parent, 
+											 msg=errstr, ok=lang.getstr("ok"), 
+											 bitmap=geticon(32, 
+															"dialog-warning"))
 							else:
 								safe_print(errstr, fn=fn)
 					if tries > 0 and not interact:
@@ -1147,10 +1114,7 @@ class Worker():
 				safe_print('[D] working_dir:', working_dir)
 			errmsg = (" ".join(cmdline).decode(fs_enc) + "\n" + 
 					  safe_unicode(traceback.format_exc()))
-			if capture_output:
-				log(errmsg)
-			else:
-				handle_error(errmsg, parent=self.owner, silent=silent)
+			return Error(errmsg)
 			self.retcode = -1
 		if not capture_output and low_contrast and sys.stdout.isatty():
 			# Reset to higher contrast colors (white on black) for readability
@@ -1167,24 +1131,37 @@ class Worker():
 		if self.retcode != 0:
 			if verbose >= 1 and not capture_output:
 				safe_print(lang.getstr("aborted"), fn=fn)
+			if interact and len(self.output):
+				for line in self.output:
+					if line.startswith(cmdname + ": Error") and \
+					   not "display read failed with 'User Aborted'" in line and \
+					   not "test_crt returned error code 1" in line:
+						# "test_crt returned error code 1" == user aborted?
+						return Error(line.strip())
 			return False
 		return True
 
-	def generic_consumer(self, delayedResult, consumer, *args, **kwargs):
+	def generic_consumer(self, delayedResult, consumer, continue_next, *args, 
+						 **kwargs):
 		# consumer must accept result as first arg
 		result = None
 		exception = None
 		try:
 			result = delayedResult.get()
 		except Exception, exception:
-			handle_error(u"Error - delayedResult.get() failed: " + 
-						 safe_unicode(traceback.format_exc()), parent=self.owner)
-		self.progress_parent.progress_start_timer.Stop()
-		if hasattr(self.progress_parent, "progress_dlg"):
-			self.progress_parent.progress_timer.Stop()
-			# Do not destroy, will crash on Linux
-			self.progress_parent.progress_dlg.Hide()
-			wx.CallAfter(self.progress_parent.progress_dlg.Destroy)
+			result = Error(u"Error - delayedResult.get() failed: " + 
+						   safe_unicode(traceback.format_exc()))
+		if self.progress_start_timer.IsRunning():
+			self.progress_start_timer.Stop()
+		if hasattr(self, "progress_dlg") and (not continue_next or 
+											  isinstance(result, Exception) or 
+											  not result):
+			self.progress_dlg.stop_timer()
+			self.progress_dlg.MakeModal(False)
+			self.progress_dlg.EndModal(wx.ID_OK)
+		self.finished = True
+		self.subprocess_abort = False
+		self.thread_abort = False
 		wx.CallAfter(consumer, result, *args, **kwargs)
 
 	def get_display(self):
@@ -1229,9 +1206,7 @@ class Worker():
 
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
-		return hasattr(self, "progress_parent") and \
-			(self.progress_parent.progress_start_timer.IsRunning() or 
-			 self.progress_parent.progress_timer.IsRunning())
+		return not getattr(self, "finished", True)
 
 	def prepare_colprof(self, profile_name=None, display_name=None):
 		"""
@@ -1243,28 +1218,22 @@ class Worker():
 		
 		"""
 		profile_save_path = self.create_tempdir()
-		if not profile_save_path or not check_create_dir(profile_save_path, 
-														 parent=self.owner):
-			# Check directory and in/output file(s)
+		if not profile_save_path:
 			return None, None
+		# Check directory and in/output file(s)
+		result = check_create_dir(profile_save_path)
+		if isinstance(result, Exception):
+			return result, None
 		if profile_name is None:
 			profile_name = getcfg("profile.name.expanded")
 		inoutfile = make_argyll_compatible_path(os.path.join(profile_save_path, 
 															 profile_name))
 		if not os.path.exists(inoutfile + ".ti3"):
-			InfoDialog(self.owner, pos=(-1, 100), 
-					   msg=lang.getstr("error.measurement.file_missing", 
-									   inoutfile + ".ti3"), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
-			return None, None
+			return Error(lang.getstr("error.measurement.file_missing", 
+									 inoutfile + ".ti3")), None
 		if not os.path.isfile(inoutfile + ".ti3"):
-			InfoDialog(self.owner, pos=(-1, 100), 
-					   msg=lang.getstr("error.measurement.file_notfile", 
-									   inoutfile + ".ti3"), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
-			return None, None
+			return Error(lang.getstr("error.measurement.file_notfile", 
+									 inoutfile + ".ti3")), None
 		#
 		cmd = get_argyll_util("colprof")
 		args = []
@@ -1302,18 +1271,10 @@ class Worker():
 		args += [profile_name]
 		args += [inoutfile]
 		# Add dispcal and colprof arguments to ti3
-		try:
-			ti3 = CGATS.CGATS(inoutfile + ".ti3")
-			ti3[0].add_section("ARGYLL_COLPROF_ARGS", 
-							   " ".join(options_colprof).encode("UTF-8", 
-																"replace"))
-			if self.options_dispcal and len(ti3) > 1:
-				ti3[1].add_section("ARGYLL_DISPCAL_ARGS", 
-								   " ".join(self.options_dispcal).encode("UTF-8", 
-																		 "replace"))
+		ti3 = add_options_to_ti3(inoutfile + ".ti3", self.options_dispcal, 
+								 options_colprof)
+		if ti3:
 			ti3.write()
-		except Exception, exception:
-			safe_print(safe_unicode(traceback.format_exc()))
 		return cmd, args
 
 	def prepare_dispcal(self, calibrate=True, verify=False):
@@ -1332,13 +1293,16 @@ class Worker():
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
 			profile_save_path = self.create_tempdir()
-			if not profile_save_path or not check_create_dir(profile_save_path, 
-															 parent=self.owner):
+			if not profile_save_path:
 				return None, None
+			# Check directory and in/output file(s)
+			result = check_create_dir(profile_save_path)
+			if isinstance(result, Exception):
+				return result, None
 			inoutfile = make_argyll_compatible_path(
 				os.path.join(profile_save_path, 
 							 getcfg("profile.name.expanded")))
-			if getcfg("calibration.update") or \
+			if getcfg("profile.update") or \
 			   self.dispcal_create_fast_matrix_shaper:
 				args += ["-o"]
 			if getcfg("calibration.update"):
@@ -1348,46 +1312,44 @@ class Worker():
 				ext = ".cal"
 				cal = filename + ext
 				if ext.lower() == ".cal":
-					if not check_cal_isfile(cal, parent=self.owner):
+					result = check_cal_isfile(cal)
+					if isinstance(result, Exception):
+						return result, None
+					if not result:
 						return None, None
 					if not os.path.exists(calcopy):
 						try:
 							# Copy cal to profile dir
 							shutil.copyfile(cal, calcopy) 
 						except Exception, exception:
-							InfoDialog(self.owner, pos=(-1, 100), 
-									   msg=lang.getstr("error.copy_failed", 
-													   (cal, calcopy)) + 
-										   "\n\n" + safe_unicode(exception), 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-error"))
-							return None, None
-						if not check_cal_isfile(calcopy, parent=self.owner):
+							return Error(lang.getstr("error.copy_failed", 
+													 (cal, calcopy)) + 
+													 "\n\n" + 
+													 safe_unicode(exception)), None
+						result = check_cal_isfile(calcopy)
+						if isinstance(result, Exception):
+							return result, None
+						if not result:
 							return None, None
 						cal = calcopy
 				else:
 					rslt = extract_fix_copy_cal(cal, calcopy)
 					if isinstance(rslt, ICCP.ICCProfileInvalidError):
-						InfoDialog(self.owner, 
-								   msg=lang.getstr("profile.invalid") + 
-									   "\n" + cal, 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
+						return Error(lang.getstr("profile.invalid") + 
+									 "\n" + cal), None
 					elif isinstance(rslt, Exception):
-						InfoDialog(self.owner, 
-								   msg=lang.getstr("cal_extraction_failed") + 
-									   "\n" + cal + 
-									   "\n\n" + unicode(str(rslt), enc, 
-														"replace"), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
+						return Error(lang.getstr("cal_extraction_failed") + 
+									 "\n" + cal + "\n\n" + 
+									 unicode(str(rslt),  enc, "replace")), None
 					if not isinstance(rslt, list):
 						return None, None
 				if getcfg("profile.update"):
 					profile_path = os.path.splitext(
 						getcfg("calibration.file"))[0] + profile_ext
-					if not check_profile_isfile(profile_path, 
-												parent=self.owner):
+					result = check_profile_isfile(profile_path)
+					if isinstance(result, Exception):
+						return result, None
+					if not result:
 						return None, None
 					profilecopy = os.path.join(inoutfile + profile_ext)
 					if not os.path.exists(profilecopy):
@@ -1395,16 +1357,14 @@ class Worker():
 							# Copy profile to profile dir
 							shutil.copyfile(profile_path, profilecopy)
 						except Exception, exception:
-							InfoDialog(self.owner, pos=(-1, 100), 
-									   msg=lang.getstr("error.copy_failed", 
+							return Error(lang.getstr("error.copy_failed", 
 													   (profile_path, 
 													    profilecopy)) + 
-										   "\n\n" + safe_unicode(exception), 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-error"))
-							return None, None
-						if not check_profile_isfile(profilecopy, 
-													parent=self.owner):
+										   "\n\n" + safe_unicode(exception)), None
+						result = check_profile_isfile(profilecopy)
+						if isinstance(result, Exception):
+							return result, None
+						if not result:
 							return None, None
 				args += ["-u"]
 		if (calibrate and not getcfg("calibration.update")) or \
@@ -1461,27 +1421,26 @@ class Worker():
 		
 		"""
 		profile_save_path = self.create_tempdir()
-		if not profile_save_path or not check_create_dir(profile_save_path, 
-														 parent=self.owner):
-			# Check directory and in/output file(s)
+		if not profile_save_path:
 			return None, None
+		# Check directory and in/output file(s)
+		result = check_create_dir(profile_save_path)
+		if isinstance(result, Exception):
+			return result, None
 		inoutfile = make_argyll_compatible_path(
 			os.path.join(profile_save_path, getcfg("profile.name.expanded")))
 		if not os.path.exists(inoutfile + ".ti1"):
 			filename, ext = os.path.splitext(getcfg("testchart.file"))
-			if not check_file_isfile(filename + ext, parent=self.owner):
-				return None, None
+			result = check_file_isfile(filename + ext)
+			if isinstance(result, Exception):
+				return result, None
 			try:
 				if ext.lower() in (".icc", ".icm"):
 					try:
 						profile = ICCP.ICCProfile(filename + ext)
 					except (IOError, ICCP.ICCProfileInvalidError), exception:
-						InfoDialog(self.owner, pos=(-1, 100), 
-								   msg=lang.getstr("error.testchart.read", 
-												   getcfg("testchart.file")), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-						return None, None
+						return Error(lang.getstr("error.testchart.read", 
+												 getcfg("testchart.file"))), None
 					ti3 = StringIO(profile.tags.get("CIED", "") or 
 								   profile.tags.get("targ", ""))
 				elif ext.lower() == ".ti1":
@@ -1490,33 +1449,21 @@ class Worker():
 					try:
 						ti3 = open(filename + ext, "rU")
 					except Exception, exception:
-						InfoDialog(self.owner, pos=(-1, 100), 
-								   msg=lang.getstr("error.testchart.read", 
-												   getcfg("testchart.file")), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-						return None, None
+						return Error(lang.getstr("error.testchart.read", 
+												 getcfg("testchart.file"))), None
 				if ext.lower() != ".ti1":
 					ti3_lines = [line.strip() for line in ti3]
 					ti3.close()
 					if not "CTI3" in ti3_lines:
-						InfoDialog(self.owner, pos=(-1, 100), 
-								   msg=lang.getstr("error.testchart.invalid", 
-												   getcfg("testchart.file")), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-						return None, None
+						return Error(lang.getstr("error.testchart.invalid", 
+												 getcfg("testchart.file"))), None
 					ti1 = open(inoutfile + ".ti1", "w")
 					ti1.write(ti3_to_ti1(ti3_lines))
 					ti1.close()
 			except Exception, exception:
-				InfoDialog(self.owner, pos=(-1, 100), 
-						   msg=lang.getstr("error.testchart.creation_failed", 
-										   inoutfile + ".ti1") + "\n\n" + 
-							   safe_unicode(exception), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				return None, None
+				return Error(lang.getstr("error.testchart.creation_failed", 
+										 inoutfile + ".ti1") + "\n\n" + 
+							 safe_unicode(exception)), None
 		if apply_calibration:
 			if apply_calibration is True:
 				# Always a .cal file in that case
@@ -1528,26 +1475,31 @@ class Worker():
 			calcopy = os.path.join(inoutfile + ".cal")
 			filename, ext = os.path.splitext(cal)
 			if ext.lower() == ".cal":
-				if not check_cal_isfile(cal, parent=self.owner):
+				result = check_cal_isfile(cal)
+				if isinstance(result, Exception):
+					return result, None
+				if not result:
 					return None, None
 				if not os.path.exists(calcopy):
 					try:
 						# Copy cal to temp dir
 						shutil.copyfile(cal, calcopy)
 					except Exception, exception:
-						InfoDialog(self.owner, pos=(-1, 100), 
-								   msg=lang.getstr("error.copy_failed", 
-												   (cal, calcopy)) + "\n\n" + 
-									   safe_unicode(exception), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-						return None, None
-					if not check_cal_isfile(calcopy, parent=self.owner):
+						return Error(lang.getstr("error.copy_failed", 
+												 (cal, calcopy)) + "\n\n" + 
+									 safe_unicode(exception)), None
+					result = check_cal_isfile(calcopy)
+					if isinstance(result, Exception):
+						return result, None
+					if not result:
 						return None, None
 			else:
 				# .icc / .icm
 				self.options_dispcal = []
-				if not check_profile_isfile(cal, parent=self.owner):
+				result = check_profile_isfile(cal)
+				if isinstance(result, Exception):
+					return result, None
+				if not result:
 					return None, None
 				try:
 					profile = ICCP.ICCProfile(filename + ext)
@@ -1565,22 +1517,15 @@ class Worker():
 				ti3_lines = [line.strip() for line in ti3]
 				ti3.close()
 				if not "CTI3" in ti3_lines:
-					InfoDialog(self.owner, pos=(-1, 100), 
-							   msg=lang.getstr("error.cal_extraction", (cal)), 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return None, None
+					return Error(lang.getstr("error.cal_extraction", 
+											 (cal))), None
 				try:
 					tmpcal = open(calcopy, "w")
 					tmpcal.write(extract_cal_from_ti3(ti3_lines))
 					tmpcal.close()
 				except Exception, exception:
-					InfoDialog(self.owner, pos=(-1, 100), 
-							   msg=lang.getstr("error.cal_extraction", (cal)) + 
-								   "\n\n" + safe_unicode(exception), 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return None, None
+					return Error(lang.getstr("error.cal_extraction", (cal)) + 
+								 "\n\n" + safe_unicode(exception)), None
 			cal = calcopy
 		#
 		cmd = get_argyll_util("dispread")
@@ -1618,7 +1563,10 @@ class Worker():
 		if cal is True:
 			args += ["-L"]
 		elif cal:
-			if not check_cal_isfile(cal, parent=self.owner):
+			result = check_cal_isfile(cal)
+			if isinstance(result, Exception):
+				return result, None
+			if not result:
 				return None, None
 			args += [cal]
 		else:
@@ -1629,26 +1577,22 @@ class Worker():
 						getcfg("profile.name.expanded"))
 					profile_path = os.path.join(profile_save_path, 
 						getcfg("profile.name.expanded") + profile_ext)
-				if not check_profile_isfile(profile_path, parent=self.owner):
+				result = check_profile_isfile(profile_path)
+				if isinstance(result, Exception):
+					return result, None
+				if not result:
 					return None, None
 				try:
 					profile = ICCP.ICCProfile(profile_path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self.owner, msg=lang.getstr("profile.invalid") + 
-											   "\n" + profile_path, 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return None, None
+					return Error(lang.getstr("profile.invalid") + 
+											 "\n" + profile_path), None
 				if profile.profileClass != "mntr" or \
 				   profile.colorSpace != "RGB":
-					InfoDialog(self.owner, 
-							   msg=lang.getstr("profile.unsupported", 
-											   (profile.profileClass, 
-											    profile.colorSpace)) + 
-								   "\n" + profile_path, 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return None, None
+					return Error(lang.getstr("profile.unsupported", 
+											 (profile.profileClass, 
+											  profile.colorSpace)) + 
+								   "\n" + profile_path), None
 				if install:
 					if getcfg("profile.install_scope") != "u" and \
 						(((sys.platform == "darwin" or 
@@ -1672,9 +1616,12 @@ class Worker():
 		
 		"""
 		path = self.create_tempdir()
-		if not path or not check_create_dir(path, parent=self.owner):
-			# Check directory and in/output file(s)
+		if not path:
 			return None, None
+		# Check directory and in/output file(s)
+		result = check_create_dir(path)
+		if isinstance(result, Exception):
+			return result, None
 		inoutfile = os.path.join(path, "temp")
 		cmd = get_argyll_util("targen")
 		args = []
@@ -1711,12 +1658,12 @@ class Worker():
 		args += [inoutfile]
 		return cmd, args
 
-	def progress_timer_handler(self, event):
-		keepGoing, skip = self.progress_parent.progress_dlg.Pulse()
+	def progress_handler(self, event):
+		keepGoing, skip = self.progress_dlg.Pulse()
 		if not keepGoing:
 			if not getattr(self, "subprocess_abort", False) and \
 			   not getattr(self, "thread_abort", False):
-				self.progress_parent.progress_dlg.Pulse(lang.getstr("aborting"))
+				self.progress_dlg.Pulse(lang.getstr("aborting"))
 			if getattr(self, "subprocess", None) and \
 			   not getattr(self, "subprocess_abort", False):
 				if debug:
@@ -1728,37 +1675,24 @@ class Worker():
 				self.thread_abort = True
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
-						   parent=None):
-		style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT
-		self.progress_parent.progress_dlg = wx.ProgressDialog(progress_title, 
-															  progress_msg, 
-															  parent=parent, 
-															  style=style)
-		self.progress_parent.progress_dlg.Bind(wx.EVT_MOVE, 
-											   progress_move_handler, 
-											   self.progress_parent.progress_dlg)
-		for child in self.progress_parent.progress_dlg.GetChildren():
-			if isinstance(child, wx.Button):
-				child.Label = lang.getstr("cancel")
-			elif isinstance(child, wx.StaticText) and \
-				 "Elapsed time" in child.Label:
-				child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
-		self.progress_parent.progress_dlg.SetMinSize((400, -1))
-		self.progress_parent.progress_dlg.SetSize((400, -1))
-		placed = False
-		if parent:
-			if parent.IsShownOnScreen():
-				self.progress_parent.progress_dlg.Center()
-				placed = True
-			else:
-				x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
-				y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+						   parent=None, resume=False):
+		if hasattr(self, "progress_dlg"):
+			if not resume:
+				self.progress_dlg.EndModal(wx.ID_OK)
+				self.progress_dlg.Destroy()
+				del self.progress_dlg
+		if hasattr(self, "progress_dlg"):
+			self.progress_dlg.MakeModal(True)
+			self.progress_dlg.SetTitle(progress_title)
+			self.progress_dlg.Pulse(progress_msg)
+			self.progress_dlg.Resume()
+			if not self.progress_dlg.IsShownOnScreen():
+				self.progress_dlg.Show()
+			self.progress_dlg.start_timer()
 		else:
-			x = getcfg("position.progress.x")
-			y = getcfg("position.progress.y")
-		if not placed:
-			self.progress_parent.progress_dlg.SetSaneGeometry(x, y)
-		self.progress_parent.progress_timer.Start(50)
+			self.progress_dlg = ProgressDialog(progress_title, progress_msg, 
+											   parent=parent, 
+											   handler=self.progress_handler)
 	
 	def quit_cmd(self):
 		try:
@@ -1850,13 +1784,26 @@ class Worker():
 
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 
-			  parent=None, progress_start=100):
+			  parent=None, progress_start=100, resume=False, 
+			  continue_next=False):
 		"""
 		Start a worker process.
 		
 		Also show a progress dialog while the process is running.
 		
-		"""
+		consumer         consumer function.
+		producer         producer function.
+		cargs            consumer arguments.
+		ckwargs          consumer keyword arguments.
+		wargs            producer arguments.
+		wkwargs          producer keyword arguments.
+		progress_title   progress dialog title. Defaults to '%s'.
+		progress_msg     progress dialog message. Defaults to ''.
+		progress_start   show progress dialog after delay (ms).
+		resume           resume previous progress dialog (elapsed time etc).
+		continue_next    do not hide progress dialog after producer finishes.
+		
+		""" % appname
 		if ckwargs is None:
 			ckwargs = {}
 		if wkwargs is None:
@@ -1869,22 +1816,20 @@ class Worker():
 			progress_msg = lang.getstr("please_wait")
 		if not parent:
 			parent = self.owner
-		self.progress_parent = parent
-		if not hasattr(self.progress_parent, "progress_timer"):
-			self.progress_parent.progress_timer = wx.Timer(self.progress_parent)
-			self.progress_parent.Bind(wx.EVT_TIMER, 
-									  self.progress_timer_handler, 
-									  self.progress_parent.progress_timer)
 		if progress_start < 100:
 			progress_start = 100
-		# Show the progress dialog after 1ms
-		self.progress_parent.progress_start_timer = wx.CallLater(
-			progress_start, self.progress_dlg_start, progress_title, 
-			progress_msg, parent) 
+		# Show the progress dialog after a delay
+		self.progress_start_timer = wx.CallLater(progress_start, 
+												 self.progress_dlg_start, 
+												 progress_title, 
+												 progress_msg, parent,
+												 resume)
+		self.finished = False
 		self.subprocess_abort = False
 		self.thread_abort = False
 		self.thread = delayedresult.startWorker(self.generic_consumer, 
-												producer, [consumer] + 
+												producer, [consumer, 
+														   continue_next] + 
 												list(cargs), ckwargs, wargs, 
 												wkwargs)
 		return True
@@ -2304,18 +2249,10 @@ class Worker():
 										getcfg("profile.name.expanded"), 
 										getcfg("profile.name.expanded") + 
 										".ext")
-			try:
-				dir_created = check_create_dir(os.path.dirname(dst_path), 
-											   parent=self.owner)
-			except Exception, exception:
-				InfoDialog(self.owner, pos=(-1, 100), 
-						   msg=lang.getstr("error.dir_creation", 
-										   (os.path.dirname(dst_path))) + 
-							   "\n\n" + safe_unicode(exception), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				return
-			if dir_created:
+			result = check_create_dir(os.path.dirname(dst_path))
+			if isinstance(result, Exception):
+				return result
+			if result:
 				try:
 					src_listdir = os.listdir(self.tempdir)
 				except Exception, exception:
@@ -2450,3 +2387,4 @@ class Worker():
 								   u"not be removed: %s" % 
 								   tuple(safe_unicode(s) for s in 
 										 (self.tempdir, exception)))
+		return True
