@@ -13,7 +13,7 @@ import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
 from colormath import XYZ2RGB
-from config import btn_width_correction, defaults, enc, getcfg, geticon, get_data_path, get_total_patches, get_verified_path, hascfg, setcfg, writecfg
+from config import btn_width_correction, defaults, getcfg, geticon, get_data_path, get_total_patches, get_verified_path, hascfg, setcfg, writecfg
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
