@@ -18,26 +18,36 @@ import config
 
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
-def log(msg, fn=None):
-	"""
-	Log a message.
+class Log():
 	
-	Optionally use function 'fn' instead of logging.info.
+	def __call__(self, msg, fn=None):
+		"""
+		Log a message.
+		
+		Optionally use function 'fn' instead of logging.info.
+		
+		"""
+		if fn is None and logging.root.handlers:
+			fn = logging.info
+		if fn:
+			for line in universal_newlines(msg).split("\n"):
+				fn(line)
+		if "wx" in sys.modules:
+			if not "wx" in globals():
+				global wx
+				from wxaddons import wx
+			if wx.GetApp() is not None and \
+			   hasattr(wx.GetApp(), "frame") and \
+			   hasattr(wx.GetApp().frame, "infoframe"):
+				wx.CallAfter(wx.GetApp().frame.infoframe.Log, msg)
 	
-	"""
-	if fn is None and logging.root.handlers:
-		fn = logging.info
-	if fn:
-		for line in universal_newlines(msg).split("\n"):
-			fn(line)
-	if "wx" in sys.modules:
-		if not "wx" in globals():
-			global wx
-			from wxaddons import wx
-		if wx.GetApp() is not None and \
-		   hasattr(wx.GetApp(), "frame") and \
-		   hasattr(wx.GetApp().frame, "infoframe"):
-			wx.CallAfter(wx.GetApp().frame.infoframe.Log, msg)
+	def flush(self):
+		pass
+	
+	def write(self, msg):
+		self(msg.rstrip())
+
+log = Log()
 
 
 def safe_print(*args, **kwargs):
