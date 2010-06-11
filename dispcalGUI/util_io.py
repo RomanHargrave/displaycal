@@ -29,18 +29,29 @@ class Files():
 	
 	def __iter__(self):
 		return iter(self.files)
-
-	def seek(self, pos):
+	
+	def close(self):
 		for item in self.files:
-			item.seek(pos)
+			item.close()
+	
+	def flush(self):
+		for item in self.files:
+			item.flush()
+
+	def seek(self, pos, mode=0):
+		for item in self.files:
+			item.seek(pos, mode)
+
+	def truncate(self, size=None):
+		for item in self.files:
+			item.truncate(size)
 
 	def write(self, data):
 		for item in self.files:
 			item.write(data)
 
-	def close(self):
-		for item in self.files:
-			item.close()
+	def writelines(self, str_sequence):
+		self.write("".join(str_sequence))
 
 
 class StringIOu(StringIO):
@@ -53,58 +64,23 @@ class StringIOu(StringIO):
 		StringIO.__init__(self, universal_newlines(buf))
 
 
-class Tea():
+class Tee(Files):
 
 	"""
 	Write to a file and stdout.
 	"""
 
 	def __init__(self, file_obj):
-		self.file = file_obj
+		Files.__init__((sys.stdout, file_obj))
 
 	def __getattr__(self, name):
-		return getattr(self.file, name)
+		return getattr(self.files[1], name)
 
 	def close(self):
-		return self.file.close()
+		self.files[1].close()
 
-	def fileno(self):
-		return self.file.fileno()
+	def seek(self, pos, mode=0):
+		return self.files[1].seek(pos, mode)
 
-	def flush(self):
-		self.file.flush()
-
-	def issaty(self):
-		return False
-
-	def next(self):
-		return self.file.next()
-
-	def read(self):
-		return self.file.read()
-
-	def readline(self):
-		return self.file.readline()
-
-	def readlines(self):
-		return self.file.readlines()
-
-	def seek(self, offset, whence = 0):
-		return self.file.seek(offset, whence)
-
-	def tell(self):
-		return self.file.tell()
-
-	def truncate(self):
-		return self.file.truncate()
-
-	def write(self, str_val):
-		self.file.write(str_val)
-		if str_val[-1:] == "\n":
-			str_val = str_val[:-1]
-		if str_val[-1:] == "\r":
-			str_val = str_val[:-1]
-		safe_print(str_val)
-
-	def writelines(self, str_sequence):
-		self.write("".join(str_sequence))
+	def truncate(self, size=None):
+		return self.files[1].truncate(size)
