@@ -23,6 +23,7 @@ if sys.platform == "win32":
 		pass
 
 from defaultpaths import iccprofiles, iccprofiles_home
+from encoding import get_encodings
 from ordereddict import OrderedDict
 from safe_print import safe_print
 
@@ -36,13 +37,7 @@ DD_ATTACHED_TO_DESKTOP = 0x01
 
 debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
 
-if sys.platform == "darwin":
-	enc = "UTF-8"
-else:
-	enc = locale.getlocale()[1] or sys.stdout.encoding or \
-		  locale.getpreferredencoding() or \
-		  sys.getdefaultencoding()
-fs_enc = sys.getfilesystemencoding() or enc
+fs_enc = get_encodings()[1]
 
 encodings = {
 	"mac": {
@@ -506,13 +501,10 @@ class ADict(dict):
 		dict.__init__(self, *args, **kwargs)
 
 	def __getattr__(self, name):
-		try:
-			return object.__getattribute__(self, name)
-		except AttributeError:
-			if name in self:
-				return self[name]
-			else:
-				raise
+		if name in self:
+			return self[name]
+		else:
+			raise AttributeError(name)
 
 	def __setattr__(self, name, value):
 		self[name] = value

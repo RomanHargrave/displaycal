@@ -197,21 +197,21 @@ class CGATS(dict):
 		self.setmodified()
 
 	def __getattr__(self, name):
-		try:
-			if name == 'modified':
-				return object.__getattribute__(self.root, name)
-			return object.__getattribute__(self, name)
-		except AttributeError:
-			if name in self:
-				return self[name]
-			else:
-				raise
+		if name == 'modified':
+			try:
+				return getattr(self.root, name)
+			except AttributeError:
+				pass
+		if name in self:
+			return self[name]
+		else:
+			raise AttributeError(name)
 
 	def __getitem__(self, name):
 		if name == -1:
 			return self.get(len(self) - 1)
 		elif name in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
-			return object.__getattribute__(self, name)
+			return getattr(self, name)
 		elif name in self:
 			if str(name).upper() in ('INDEX', 'SAMPLE_ID', 'SAMPLEID'):
 				if type(self.get(name)) not in (int, float):
@@ -228,7 +228,7 @@ class CGATS(dict):
 		if name == -1:
 			return dict.get(self, len(self) - 1)
 		elif name in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
-			return object.__getattribute__(self, name)
+			return getattr(self, name)
 		else:
 			return dict.get(self, name)
 
