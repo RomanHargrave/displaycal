@@ -69,6 +69,7 @@ from time import sleep, strftime
 
 if sys.platform == "win32":
 	from win32com.shell import shell
+	from win32console import SetConsoleOutputCP
 	import pythoncom
 	import win32api
 	import win32con
@@ -79,7 +80,7 @@ import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
 					script_ext, confighome, datahome, defaults, enc, exe, 
 					exe_ext, exedir, fs_enc, getbitmap, geticon, get_data_path, 
-					getcfg, get_verified_path, 
+					getcfg, get_verified_path, original_codepage, 
 					initcfg, isapp, isexe, profile_ext, pydir, pyext, pyname, 
 					pypath, resfiles, runtype, setcfg, storage, writecfg)
 
@@ -3548,7 +3549,11 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(show_result_dialog, result, self)
 			self.Show()
 		else:
-			self.worker.exec_cmd(cmd, args, skip_scripts=True)
+			result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
+			if isinstance(cmd, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
+				self.Show()
+				return
 		
 			# start readings
 			self.worker.start(self.verify_profile_consumer, 
@@ -4415,7 +4420,8 @@ class MainFrame(BaseFrame):
 					profile = cal_to_fake_profile(args[-1])
 					force_update = True
 				else:
-					pass  ## getlstr("calibration.load_error")
+					if isinstance(result, Exception):
+						safe_print(result)
 				self.worker.wrapup(copy=False)
 			if profile:
 				if force_update or not self.lut_viewer.profile or \
@@ -5380,7 +5386,7 @@ class MainFrame(BaseFrame):
 			path = getcfg("testchart.file")
 		
 		result = check_file_isfile(path)
-		if isinstance(result, Exception) and not silent:
+		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 			self.set_default_testchart()
 			return
@@ -6198,6 +6204,9 @@ class MainFrame(BaseFrame):
 			if sys.stdout.isatty():
 				if sys.platform == "win32":
 					sp.call("color", shell=True)
+					if original_codepage:
+						# Restore original encoding
+						SetConsoleOutputCP(original_codepage)
 				elif sys.platform != "darwin":
 					print "\x1b[0m"
 					sp.call('clear', shell=True)
