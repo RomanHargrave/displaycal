@@ -10,13 +10,10 @@ except ImportError:
 	# Python < 2.6
 	pass
 
-if sys.platform == "darwin":
-	enc = "UTF-8"
-else:
-	enc = locale.getlocale()[1] or sys.stdout.encoding or \
-		  locale.getpreferredencoding() or \
-		  sys.getdefaultencoding()
-fs_enc = sys.getfilesystemencoding() or enc
+from encoding import get_encodings
+
+fs_enc = get_encodings()[1]
+
 
 def asciize(obj):
 	"""

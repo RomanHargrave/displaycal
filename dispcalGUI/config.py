@@ -34,6 +34,7 @@ else:
 from defaultpaths import autostart, autostart_home
 from meta import name as appname, build, lastmod, version
 from options import ascii, debug, verbose
+from safe_print import enc, fs_enc, original_codepage
 from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, listdir_re
 from util_str import safe_unicode
@@ -43,14 +44,6 @@ import encodedstdio
 
 if ascii:
 	enc = fs_enc = "ASCII"
-else:
-	if sys.platform == "darwin":
-		enc = "UTF-8"
-	else:
-		enc = locale.getlocale()[1] or sys.stdout.encoding or \
-			  locale.getpreferredencoding() or \
-			  sys.getdefaultencoding()
-	fs_enc = sys.getfilesystemencoding() or enc
 
 exe = unicode(sys.executable, fs_enc)
 exedir = os.path.dirname(exe)

@@ -5,7 +5,25 @@ import locale
 import os
 import sys
 
+from encoding import get_encodings
 from encodedstdio import encodestdio
+
+original_codepage = None
+
+if sys.stdout.isatty():
+	if sys.platform == "win32":
+		try:
+			from win32console import GetConsoleOutputCP, SetConsoleOutputCP
+		except ImportError:
+			pass
+		else:
+			original_codepage = GetConsoleOutputCP()
+			SetConsoleOutputCP(65001)
+
+	encodestdio()
+
+enc, fs_enc = get_encodings()
+
 
 def safe_print(*args, **kwargs):
 	"""
@@ -63,13 +81,7 @@ def safe_print(*args, **kwargs):
 			elif sys.platform == "darwin":
 				encoding = "UTF-8"
 			else:
-				if sys.platform == "win32" and sys.version_info >= (2, 6):
-					encoding = locale.getlocale()[1]
-				else:
-					encoding = None
-				encoding = encoding or sys.stdout.encoding or \
-						   locale.getpreferredencoding() or \
-						   sys.getdefaultencoding()
+				encoding = enc
 			arg = arg.encode(encoding, "replace")
 		strargs += [arg]
 	line = sep.join(strargs)
@@ -93,17 +105,6 @@ def safe_print(*args, **kwargs):
 			# To avoid this, skip the newline in that case.
 			file_.write(end)
 
-if sys.stdout.isatty():
-	encodestdio()
-
 if __name__ == '__main__':
-	
-	if sys.platform == "darwin":
-		enc = "UTF-8"
-	else:
-		enc = locale.getlocale()[1] or sys.stdout.encoding or \
-			  locale.getpreferredencoding() or \
-			  sys.getdefaultencoding()
-	fs_enc = sys.getfilesystemencoding() or enc
 	for arg in sys.argv[1:]:
 		safe_print(arg.decode(fs_enc))

@@ -6,6 +6,8 @@ import locale
 import os
 import sys
 
+from encoding import get_encoding
+
 _codecs = {}
 _stdio = {}
 
@@ -44,16 +46,6 @@ def encodestdio(encodings=None, errors=None):
     e.g. encodings={'stdin': 'UTF-8', 'stdout': 'UTF-8', 'stderr': 'UTF-8'}
     or errors={'stdin': 'strict', 'stdout': 'replace', 'stderr': 'replace'}
     
-    The encoding is determined in this way: If an encoding is specified for 
-    the stream in the encodings dict, it is used. If not, and we are on 
-    Windows with Python >= 2.6, locale.getlocale()[1] is used if not None.
-    If it is None or we are not on Windows, check if the stream has an 
-    'encoding' attribute. If it doesn't, fall back to UTF-8. If it does, and 
-    is not None, it is used; otherwise, check if sys.stdout has an 
-    'encoding' attribute. If it doesn't, fall back to UTF-8. If it does, and 
-    is not None, it is used; otherwise, fall back to 
-    locale.getpreferredencoding() or sys.getdefaultencoding() as last resort.
-    
     In the case of errors, stdin uses a default 'strict' error handling and 
     stdout/stderr both use 'replace'.
     """
@@ -64,16 +56,8 @@ def encodestdio(encodings=None, errors=None):
     for stream_name in set(encodings.keys() + errors.keys()):
         stream = getattr(sys, stream_name)
         encoding = encodings.get(stream_name)
-        if not encoding and stream_name in ('stdout', 'stderr') and \
-           sys.platform == 'win32' and sys.version_info >= (2, 6):
-                # Windows/Python 2.6+: If a locale is set, the actual encoding 
-                # of the stream changes, but stream.encoding isn't updated
-                encoding = locale.getlocale()[1]
         if not encoding:
-            encoding = getattr(stream, 'encoding', 'utf_8') or \
-                       getattr(sys.stdout, 'encoding', 'utf_8') or \
-                       locale.getpreferredencoding() or \
-                       sys.getdefaultencoding()
+            encoding = get_encoding(stream)
         error_handling = errors.get(stream_name, 'strict')
         if isinstance(stream, EncodedStream):
             stream.encoding = encoding
@@ -117,10 +101,7 @@ class EncodedStream(object):
         self.errors = errors
     
     def __getattr__(self, name):
-        if not name in self.__dict__:
-            return object.__getattribute__(self.stream, name)
-        else:
-            return object.__getattribute__(self, name)
+        return getattr(self.stream, name)
     
     def __iter__(self):
         return iter(self.readlines())
@@ -166,6 +147,8 @@ for _stream_name in ('stdin', 'stdout', 'stderr'):
         _stdio[_stream_name] = _stream
 
 # Register codec aliases for codepages 65000 and 65001
+codec_register_alias('65000', 'utf_7')
+codec_register_alias('65001', 'utf_8')
 codec_register_alias('cp65000', 'utf_7')
 codec_register_alias('cp65001', 'utf_8')
 codecs.register(lambda alias: _codecs.get(alias))

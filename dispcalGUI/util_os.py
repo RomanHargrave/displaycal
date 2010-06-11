@@ -7,13 +7,10 @@ import re
 import subprocess as sp
 import sys
 
-if sys.platform == "darwin":
-    enc = "UTF-8"
-else:
-    enc = locale.getlocale()[1] or sys.stdout.encoding or \
-		  locale.getpreferredencoding() or \
-		  sys.getdefaultencoding()
-fs_enc = sys.getfilesystemencoding() or enc
+from encoding import get_encodings
+
+fs_enc = get_encodings()[1]
+
 
 def quote_args(args):
 	""" Quote commandline arguments where needed. It quotes all arguments that 
