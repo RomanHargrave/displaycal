@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from encodings.aliases import aliases
 import locale
 import sys
 
@@ -27,9 +28,9 @@ def get_encoding(stream):
 			if not enc:
 				try:
 					if stream is (sys.stdin):
-						enc = str(GetConsoleCP())
+						enc = aliases.get(str(GetConsoleCP()))
 					else:
-						enc = str(GetConsoleOutputCP())
+						enc = aliases.get(str(GetConsoleOutputCP()))
 				except:
 					pass
 	enc = enc or getattr(stream, "encoding", None) or \
