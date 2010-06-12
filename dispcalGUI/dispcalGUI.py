@@ -705,8 +705,8 @@ class MainFrame(BaseFrame):
 			"6500.0"
 		]
 		
-		setcfg("use_separate_lut_access", 
-			   self.worker.has_separate_lut_access() or test)
+		defaults["use_separate_lut_access"] = int(
+			self.worker.has_separate_lut_access() or test)
 
 	def init_frame(self):
 		"""
@@ -1059,9 +1059,10 @@ class MainFrame(BaseFrame):
 		menuitem = options.FindItemById(
 			options.FindItem("detect_displays_and_ports"))
 		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
-		menuitem = options.FindItemById(
+		self.menuitem_use_separate_lut_access = options.FindItemById(
 			options.FindItem("use_separate_lut_access"))
-		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, menuitem)
+		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
+				  self.menuitem_use_separate_lut_access)
 		menuitem = options.FindItemById(options.FindItem("restore_defaults"))
 		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
 		
@@ -1093,6 +1094,10 @@ class MainFrame(BaseFrame):
 							   self.menuitem_show_actual_lut)
 		menuitem = tools.FindItemById(tools.FindItem("infoframe.toggle"))
 		self.Bind(wx.EVT_MENU, self.infoframe_toggle_handler, menuitem)
+		self.menuitem_log_autoshow = tools.FindItemById(
+			tools.FindItem("log.autoshow"))
+		self.Bind(wx.EVT_MENU, self.infoframe_autoshow_handler, 
+				  self.menuitem_log_autoshow)
 
 		languages = self.menubar.GetMenu(self.menubar.FindMenu("menu.language"))
 		llist = [(lang.ldict[lcode].get("language", ""), lcode) for lcode in 
@@ -1148,6 +1153,7 @@ class MainFrame(BaseFrame):
 			bool(self.worker.displays))
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays))
+		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
 		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
 											 self.worker.argyll_version >= [1, 1, 0] and 
@@ -1162,6 +1168,7 @@ class MainFrame(BaseFrame):
 						bool(self.worker.instruments))
 		self.menuitem_profile_verify.Enable(bool(self.worker.displays) and 
 						bool(self.worker.instruments))
+		self.menuitem_log_autoshow.Check(bool(getcfg("log.autoshow")))
 
 	def init_controls(self):
 		"""
@@ -1545,7 +1552,7 @@ class MainFrame(BaseFrame):
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
 		comport_sizer = self.comport_ctrl.GetContainingSizer()
 		use_lut_ctrl = self.worker.has_separate_lut_access() or \
-					   getcfg("use_separate_lut_access")
+					   bool(getcfg("use_separate_lut_access"))
 		menubar = self.GetMenuBar()
 		options = menubar.GetMenu(menubar.FindMenu(lang.getstr("menu.options")))
 		menuitem = options.FindItemById(
@@ -2087,12 +2094,12 @@ class MainFrame(BaseFrame):
 
 	def use_separate_lut_access_handler(self, event):
 		setcfg("use_separate_lut_access", 
-			   int(not bool(getcfg("use_separate_lut_access"))))
+			   int(self.menuitem_use_separate_lut_access.IsChecked()))
 		self.update_displays()
 
 	def lut_viewer_show_actual_lut_handler(self, event):
-		show_actual_lut = self.menuitem_show_actual_lut.IsChecked()
-		setcfg("lut_viewer.show_actual_lut", int(show_actual_lut))
+		setcfg("lut_viewer.show_actual_lut", 
+			   int(self.menuitem_show_actual_lut.IsChecked()))
 		if hasattr(self, "current_cal"):
 			profile = self.current_cal
 		else:
@@ -3887,7 +3894,7 @@ class MainFrame(BaseFrame):
 	def result_consumer(self, result):
 		if isinstance(result, Exception) and result:
 			wx.CallAfter(show_result_dialog, result, self)
-		elif not sys.stdout.isatty():
+		elif getcfg("log.autoshow"):
 			wx.CallAfter(self.infoframe.Show)
 		self.worker.wrapup(False)
 		self.Show()
@@ -3941,7 +3948,7 @@ class MainFrame(BaseFrame):
 	def just_calibrate_finish(self, result):
 		start_timers = True
 		if not isinstance(result, Exception) and result:
-			if not sys.stdout.isatty():
+			if getcfg("log.autoshow"):
 				wx.CallAfter(self.infoframe.Show)
 			if getcfg("profile.update") or \
 			   self.worker.dispcal_create_fast_matrix_shaper:
@@ -4193,7 +4200,7 @@ class MainFrame(BaseFrame):
 	def profile_finish(self, result, profile_path=None, success_msg="", 
 					   failure_msg="", preview=True, skip_scripts=False):
 		if not isinstance(result, Exception) and result:
-			if not sys.stdout.isatty():
+			if getcfg("log.autoshow"):
 				self.infoframe.Show()
 			if not hasattr(self, "previous_cal") or self.previous_cal is False:
 				self.previous_cal = getcfg("calibration.file")
@@ -5339,6 +5346,7 @@ class MainFrame(BaseFrame):
 		elif not hasattr(self.tcframe, "ti1") or \
 			 getcfg("testchart.file") != self.tcframe.ti1.filename:
 			self.tcframe.tc_load_cfg_from_ti1()
+		setcfg("tc.show", 1)
 		self.tcframe.Show()
 		self.tcframe.Raise()
 		return
@@ -6164,7 +6172,11 @@ class MainFrame(BaseFrame):
 			self.app_update_check.start()
 
 	def infoframe_toggle_handler(self, event):
-		self.infoframe.Show(not self.infoframe.IsShownOnScreen())
+		setcfg("log.show", int(not self.infoframe.IsShownOnScreen()))
+		self.infoframe.Show(getcfg("log.show"))
+	
+	def infoframe_autoshow_handler(self, event):
+		setcfg("log.autoshow", int(self.menuitem_log_autoshow.IsChecked()))
 
 	def HideAll(self):
 		self.stop_timers()
@@ -6186,8 +6198,8 @@ class MainFrame(BaseFrame):
 		if not self.IsActive():
 			self.RequestUserAttention()
 		if hasattr(self, "tcframe"):
-			self.tcframe.Show(self.tcframe.IsShownOnScreen())
-		self.infoframe.Show(self.infoframe.IsShownOnScreen())
+			self.tcframe.Show(getcfg("tc.show"))
+		self.infoframe.Show(getcfg("log.show"))
 		if start_timers:
 			self.start_timers()
 
@@ -6204,9 +6216,9 @@ class MainFrame(BaseFrame):
 			if sys.stdout.isatty():
 				if sys.platform == "win32":
 					sp.call("color", shell=True)
-					if original_codepage:
-						# Restore original encoding
-						SetConsoleOutputCP(original_codepage)
+					##if original_codepage:
+						### Restore original encoding
+						##SetConsoleOutputCP(original_codepage)
 				elif sys.platform != "darwin":
 					print "\x1b[0m"
 					sp.call('clear', shell=True)

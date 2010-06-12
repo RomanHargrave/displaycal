@@ -959,6 +959,7 @@ class TestchartEditor(wx.Frame):
 		if (not event or self.IsShownOnScreen()) and self.tc_check_save_ti1(False):
 			self.Hide()
 			if self.Parent:
+				setcfg("tc.show", 0)
 				return True
 			else:
 				self.Destroy()
@@ -1017,7 +1018,7 @@ class TestchartEditor(wx.Frame):
 			gray_patches = None
 			multi_steps = None
 		else:
-			white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or 0
+			white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None
 			single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
 			gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or 0
 			multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or 0

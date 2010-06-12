@@ -184,6 +184,7 @@
 	"instrument.measure_ambient": "If your instrument requires a special cap to measure ambient, please attach it. To measure ambient light, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation. Press OK to commence measurement.",
 	"license_info": "Licensed under the GPL",
 	"locale.set": "Setting locale: %s",
+	"log.autoshow": "Show log window automatically",
 	"lut_access": "Video card gamma table access",
 	"max": "Max",
 	"maximal": "Maximal",

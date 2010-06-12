@@ -77,6 +77,10 @@
         <object class="wxMenuItem" name="infoframe.toggle">
           <label>infoframe.toggle</label>
         </object>
+        <object class="wxMenuItem" name="log.autoshow">
+          <label>log.autoshow</label>
+          <checkable>1</checkable>
+        </object>
         <label>menu.tools</label>
       </object>
       <object class="wxMenu" name="menu.language">

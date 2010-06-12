@@ -258,6 +258,10 @@ class LogWindow(InvincibleFrame):
 
 	def OnClear(self, event):
 		self.log_txt.SetValue("")
+	
+	def OnClose(self, event):
+		setcfg("log.show", 0)
+		self.Hide()
 
 	def OnDestroy(self, event):
 		event.Skip()
@@ -327,6 +331,7 @@ class ProgressDialog(wx.ProgressDialog):
 		if style is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
 		wx.ProgressDialog.__init__(self, title, msg, maximum, parent=parent, style=style)
+		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		if handler is None:
 			handler = self.OnTimer
@@ -360,6 +365,12 @@ class ProgressDialog(wx.ProgressDialog):
 		
 		if start_timer:
 			self.start_timer()
+	
+	def OnClose(self, event):
+		if not self.timer.IsRunning():
+			self.Hide()
+		else:
+			event.Skip()
 		
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \

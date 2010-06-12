@@ -349,6 +349,9 @@ defaults = {
 	"gamap_perceptual": 0,
 	"gamap_saturation": 0,
 	"gamma": 2.2,
+	"log.autoshow": int(not(hasattr(sys.stdout, "isatty") and 
+							sys.stdout.isatty())),
+	"log.show": 0,
 	"lang": "en",
 	"lut_viewer.show_actual_lut": 0,
 	"measurement_mode": "l",
@@ -402,6 +405,7 @@ defaults = {
 	"tc_vrml_lab": 0,
 	"tc_vrml_device": 1,
 	"tc_white_patches": 4,
+	"tc.show": 0,
 	"trc": 2.2,
 	"trc.should_use_viewcond_adjust.show_msg": 1,
 	"trc.type": "g",
