@@ -11,7 +11,7 @@ from time import localtime, strftime
 
 from config import logdir
 from meta import name as appname
-from safe_print import safe_print as _safe_print
+from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO
 from util_str import safe_unicode, universal_newlines
 import config
@@ -50,14 +50,29 @@ class Log():
 log = Log()
 
 
-def safe_print(*args, **kwargs):
+class SafeLogger(SafePrinter):
+	
 	"""
-	Print and log safely, avoiding any UnicodeDe-/EncodingErrors.
+	Print and log safely, avoiding any UnicodeDe-/EncodingErrors on strings 
+	and converting all other objects to safe string representations.
+	
 	"""
-	_safe_print(*args, **kwargs)
-	if kwargs.get("log") is not False:
-		kwargs["fn"] = log
-		_safe_print(*args, **kwargs)
+	
+	def __init__(self, log=True, print_=hasattr(sys.stdout, "isatty") and 
+										sys.stdout.isatty()):
+		SafePrinter.__init__(self)
+		self.log = log
+		self.print_ = print_
+	
+	def write(self, *args, **kwargs):
+		if kwargs.get("print_", self.print_):
+			_safe_print(*args, **kwargs)
+		if kwargs.get("log", self.log):
+			kwargs.update(fn=log, encoding=None)
+			_safe_print(*args, **kwargs)
+
+safe_log = SafeLogger(print_=False)
+safe_print = SafeLogger()
 
 
 def setup_logging():
