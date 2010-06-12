@@ -8,12 +8,15 @@ import shutil
 import sys
 import textwrap
 import traceback
+from encodings.aliases import aliases
 from time import sleep, strftime
 
 if sys.platform == "darwin":
+	from thread import start_new_thread
 	from util_mac import (mac_app_activate, mac_terminal_do_script,
 						  mac_terminal_set_colors)
 elif sys.platform == "win32":
+	from ctypes import cdll
 	import pywintypes
 	import win32api
 	import win32com.client
@@ -41,13 +44,13 @@ from log import log, safe_print
 from meta import name as appname, version
 from options import debug, test, verbose
 from ordereddict import OrderedDict
-from thread import start_new_thread
-from util_io import Files, StringIOu as StringIO, Tea
-from util_os import getenvu, quote_args, which
-from util_str import asciize, safe_unicode, wrap
+from util_io import Files, StringIOu as StringIO
+from util_os import getenvu, putenvu, quote_args, which
+from util_str import asciize, safe_unicode, strtr
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog
 
 if sys.platform == "win32": #and SendKeys is None:
+	kernel32 = cdll.LoadLibrary("kernel32")
 	wsh_shell = win32com.client.Dispatch("WScript.Shell")
 
 DD_ATTACHED_TO_DESKTOP = 0x01
@@ -448,6 +451,60 @@ class Warn(UserWarning):
 	pass
 
 
+class FilteredStream():
+	
+	""" Wrap a stream and filter all lines written to it. """
+	
+	discard = re.compile("[\\*|\\.]{4,}|\\d+%?")
+	
+	triggers = ["key to retry",
+				"key to continue",
+				"Esc or Q to abort"]
+	
+	substitutions = {"Delta E": "deltaE",
+					 " peqDE ": " previous pass deltaE ",
+					 "patch ": "Patch "}
+	
+	splitter = re.compile("\r\n+|\r+|\n+|\\s{5,}")
+	
+	def __init__(self, stream, data_encoding=None, file_encoding=None,
+				 errors="replace", end="\n"):
+		self.stream = stream
+		self.data_encoding = data_encoding
+		self.file_encoding = file_encoding
+		self.errors = errors
+		self.end = end
+	
+	def __getattr__(self, name):
+		return getattr(self.stream, name)
+	
+	def write(self, data):
+		""" Write data to stream, stripping all unwanted output.
+		
+		Incoming lines are expected to be delimited by '\\r\\n' even on UNIX
+		because this is what a pseudo tty device returns.
+		
+		"""
+		lines = []
+		for line in data.split("\r\n"):
+			line = line.strip("\r")  # Strip carriage return as re-positioning
+									 # of a cursor may not be supported by
+									 # stream
+			if line and re.sub(self.discard, "", line):
+				write = True
+				for trigger in self.triggers:
+					if trigger.lower() in line.lower():
+						write = False
+						break
+				if write:
+					if self.data_encoding:
+						line = line.decode(self.data_encoding, self.errors)
+					line = strtr(line, self.substitutions)
+					if self.file_encoding:
+						line = line.encode(self.file_encoding, self.errors)
+					self.stream.write(line.rstrip() + self.end)
+
+
 class Worker():
 
 	def __init__(self, owner=None):
@@ -554,8 +611,11 @@ class Worker():
 			self.argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
 				log(self.argyll_bin_dir)
-			self.exec_cmd(cmd, [], capture_output=True, 
-						  skip_scripts=True, silent=True, log_output=False)
+			result = self.exec_cmd(cmd, [], capture_output=True, 
+								   skip_scripts=True, silent=True, 
+								   log_output=False)
+			if isinstance(result, Exception):
+				safe_print(result)
 			arg = None
 			defaults["calibration.black_point_rate.enabled"] = 0
 			n = -1
@@ -603,9 +663,9 @@ class Worker():
 									device = None
 									while True:
 										try:
-											## The ordering will work as long
-											## as Argyll continues using
-											## EnumDisplayMonitors
+											# The ordering will work as long
+											# as Argyll continues using
+											# EnumDisplayMonitors
 											device = win32api.EnumDisplayDevices(
 												monitors[len(self.displays)]["Device"], i)
 										except pywintypes.error:
@@ -645,24 +705,34 @@ class Worker():
 					if verbose >= 1 and not silent:
 						safe_print(lang.getstr("checking_lut_access", (i + 1)))
 					# Load test.cal
-					self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
-											get_data_path("test.cal")], 
-								  capture_output=True, skip_scripts=True, 
-								  silent=True)
+					result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
+													 get_data_path("test.cal")], 
+										   capture_output=True, 
+										   skip_scripts=True, 
+										   silent=True)
+					if isinstance(result, Exception):
+						safe_print(result)
 					# Check if LUT == test.cal
-					self.exec_cmd(dispwin, ["-d%s" % (i +1), "-V", 
-											get_data_path("test.cal")], 
-								  capture_output=True, skip_scripts=True, 
-								  silent=True)
+					result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-V", 
+													 get_data_path("test.cal")], 
+										   capture_output=True, 
+										   skip_scripts=True, 
+										   silent=True)
+					if isinstance(result, Exception):
+						safe_print(result)
 					retcode = -1
 					for line in self.output:
 						if line.find("IS loaded") >= 0:
 							retcode = 0
 							break
 					# Reset LUT & load profile cal (if any)
-					self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", "-L"], 
-								  capture_output=True, skip_scripts=True, 
-								  silent=True)
+					result = self.exec_cmd(dispwin, ["-d%s" % (i + 1), "-c", 
+													 "-L"], 
+										   capture_output=True, 
+										   skip_scripts=True, 
+										   silent=True)
+					if isinstance(result, Exception):
+						safe_print(result)
 					self.lut_access += [retcode == 0]
 					if verbose >= 1 and not silent:
 						if retcode == 0:
@@ -773,8 +843,9 @@ class Worker():
 		measure_cmds = (get_argyll_utilname("dispcal"), 
 						get_argyll_utilname("dispread"), 
 						get_argyll_utilname("spotread"))
-		interact = args and cmdname in (get_argyll_utilname("colprof"),
-										) + measure_cmds
+		process_cmds = (get_argyll_utilname("colprof"),
+						get_argyll_utilname("targen"))
+		interact = args and cmdname in measure_cmds + process_cmds
 		measure = cmdname in measure_cmds
 		if measure:
 			instrument_features = self.get_instrument_features()
@@ -972,7 +1043,7 @@ class Worker():
 				if silent:
 					stderr = sp.STDOUT
 				else:
-					stderr = Tea(tempfile.SpooledTemporaryFile())
+					stderr = tempfile.SpooledTemporaryFile()
 				if capture_output:
 					stdout = tempfile.SpooledTemporaryFile()
 				elif sys.stdout.isatty():
@@ -993,6 +1064,30 @@ class Worker():
 					startupinfo.wShowWindow = sp.SW_HIDE
 				else:
 					startupinfo = None
+			else:
+				kwargs = dict(timeout=10, cwd=working_dir,
+							  env=os.environ)
+				if sys.platform == "win32":
+					codepage = kernel32.GetACP()
+					kwargs["codepage"] = codepage
+					data_encoding = aliases.get(str(codepage), "ascii")
+				else:
+					data_encoding = enc
+				stderr = StringIO()
+				stdout = StringIO()
+				if log_output:
+					if sys.stdout.isatty() and (not needs_user_interaction or 
+												sys.platform == "win32"):
+						logfile = FilteredStream(safe_print, data_encoding)
+					else:
+						logfile = FilteredStream(log, data_encoding)
+					logfile = Files((logfile, stdout))
+				else:
+					logfile = stdout
+			if not needs_user_interaction:
+				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
+			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
+				del os.environ["ARGYLL_NOT_INTERACTIVE"]
 			if sys.platform == "win32" and working_dir:
 				working_dir = win32api.GetShortPathName(working_dir)
 			logfn = log
@@ -1000,19 +1095,15 @@ class Worker():
 			while tries > 0:
 				if interact:
 					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
-													cwd=working_dir,
-													timeout=10,
-													logfile=sys.stdout if 
-															sys.stdout.isatty()
-															and (not needs_user_interaction or 
-																 sys.platform == "win32")
-															else None)
-					if sys.platform not in ("win32", "darwin"):
+													**kwargs)
+					self.subprocess.logfile_read = logfile
+					if measure and sys.platform not in ("win32", "darwin"):
 						# allow some time to setup instrument and create test window
 						sleep(5)
 					try:
 						if self.subprocess.isalive():
-							if needs_user_interaction or sys.platform == "win32":
+							if needs_user_interaction or (sys.platform == "win32" and 
+														  cmdname != get_argyll_utilname("targen")):
 								self.subprocess.interact()
 								if sys.platform == "win32" and \
 								   needs_user_interaction:
@@ -1027,25 +1118,32 @@ class Worker():
 									# Allow the user to move the terminal window if
 									# using black background
 									self.subprocess.expect(":")
-									log(os.linesep.join(line.rstrip() for line in 
-														wrap((self.subprocess.before + 
-															  ":").decode(enc, 
-																		  "replace"), 
-															 80).splitlines()))
 									if sys.platform != "win32":
 										sleep(.5)
 									if self.subprocess.isalive():
 										self.subprocess.send(" ")
-					except wexpect.EOF:
+							if measure and not needs_user_interaction:
+								while True:
+									# Handle misreads, user can cancel via
+									# progress dialog
+									if not self.subprocess.isalive():
+										break
+									self.subprocess.expect("failed due to", 
+														   timeout=None)
+									self.subprocess.expect("key to retry:", 
+														   timeout=None)
+									if sys.platform != "win32":
+										sleep(.5)
+									if self.subprocess.isalive():
+										self.subprocess.send(" ")
+					except (wexpect.EOF, wexpect.TIMEOUT), exception:
 						pass
-					self.subprocess.expect(wexpect.EOF, timeout=None)
+					if self.subprocess.after not in (wexpect.EOF, 
+													 wexpect.TIMEOUT):
+						self.subprocess.expect(wexpect.EOF, timeout=None)
 					if self.subprocess.isalive():
 						self.subprocess.wait()
 					self.retcode = self.subprocess.exitstatus
-					stdout = StringIO(os.linesep.join(
-						line.rstrip() for line in wrap(self.subprocess.before, 
-													   80).splitlines()))
-					stderr = StringIO()
 					self.terminate_cmd()
 				else:
 					self.subprocess = sp.Popen(cmdline, stdin=stdin, 
@@ -1055,7 +1153,6 @@ class Worker():
 					self.retcode = self.subprocess.wait()
 					if stdin and not getattr(stdin, "closed", True):
 						stdin.close()
-				##print self.is_working(), self.subprocess_abort, self.retcode
 				if self.is_working() and self.subprocess_abort and \
 				   self.retcode == 0:
 					self.retcode = -1
@@ -1091,19 +1188,16 @@ class Worker():
 							else:
 								safe_print(errstr, fn=fn)
 					if tries > 0 and not interact:
-						stderr = Tea(tempfile.SpooledTemporaryFile())
-				if capture_output or interact:
+						stderr = tempfile.SpooledTemporaryFile()
+				if capture_output:
 					stdout.seek(0)
 					self.output = [re.sub("^\.{4,}\s*$", "", 
 										  line.decode(enc, "replace")) 
 								   for line in stdout.readlines()]
 					stdout.close()
 					if len(self.output) and log_output:
-						if not silent and sys.stdout.isatty() and \
-						   not needs_user_interaction and not interact and \
-						   sys.platform != "win32":
-							logfn = safe_print
-						logfn("".join(self.output).strip())
+						if not interact:
+							log("".join(self.output).strip())
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
@@ -1136,7 +1230,7 @@ class Worker():
 					if line.startswith(cmdname + ": Error") and \
 					   not "display read failed with 'User Aborted'" in line and \
 					   not "test_crt returned error code 1" in line:
-						# "test_crt returned error code 1" == user aborted?
+						# "test_crt returned error code 1" == user aborted
 						return Error(line.strip())
 			return False
 		return True
@@ -1159,6 +1253,9 @@ class Worker():
 			self.progress_dlg.stop_timer()
 			self.progress_dlg.MakeModal(False)
 			self.progress_dlg.EndModal(wx.ID_OK)
+			# EndModal does not hide the dialog under Linux, and destroying it
+			# causes segfault
+			self.progress_dlg.Hide()
 		self.finished = True
 		self.subprocess_abort = False
 		self.thread_abort = False
@@ -1288,7 +1385,7 @@ class Worker():
 		"""
 		cmd = get_argyll_util("dispcal")
 		args = []
-		args += ["-v"] # verbose
+		args += ["-v2"] # verbose
 		self.add_measurement_features(args)
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
@@ -1681,6 +1778,8 @@ class Worker():
 				self.progress_dlg.EndModal(wx.ID_OK)
 				self.progress_dlg.Destroy()
 				del self.progress_dlg
+		if self.finished is True:
+			return
 		if hasattr(self, "progress_dlg"):
 			self.progress_dlg.MakeModal(True)
 			self.progress_dlg.SetTitle(progress_title)
