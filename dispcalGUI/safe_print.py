@@ -5,105 +5,106 @@ import locale
 import os
 import sys
 
-from encoding import get_encodings
+from encoding import get_encoding, get_encodings
 from encodedstdio import encodestdio
 
 original_codepage = None
 
 if sys.stdout.isatty():
-	if sys.platform == "win32":
-		try:
-			from win32console import GetConsoleOutputCP, SetConsoleOutputCP
-		except ImportError:
-			pass
-		else:
-			original_codepage = GetConsoleOutputCP()
-			SetConsoleOutputCP(65001)
+	##if sys.platform == "win32":
+		##try:
+			##from win32console import GetConsoleOutputCP, SetConsoleOutputCP
+		##except ImportError:
+			##pass
+		##else:
+			##original_codepage = GetConsoleOutputCP()
+			##SetConsoleOutputCP(65001)
 
 	encodestdio()
 
 enc, fs_enc = get_encodings()
 
 
-def safe_print(*args, **kwargs):
-	"""
-	Print safely, avoiding any UnicodeDe-/EncodingErrors.
+class SafePrinter():
 	
-	safe_print(value, ..., pad=False, padchar=' ', sep=' ', end='\\n', 
+	def __init__(self, pad=False, padchar=" ", sep=" ", end="\n", 
+				 file_=sys.stdout, fn=None, encoding=None):
+		"""
+		Write safely, avoiding any UnicodeDe-/EncodingErrors on strings 
+		and converting all other objects to safe string representations.
+		
+		sprint = SafePrinter(pad=False, padchar=' ', sep=' ', end='\\n', 
+							 file=sys.stdout, fn=None)
+		sprint(value, ..., pad=False, padchar=' ', sep=' ', end='\\n', 
 			   file=sys.stdout, fn=None)
+		
+		Writes the values to a stream (default sys.stdout), honoring its 
+		encoding and replacing characters not present in the encoding with 
+		question marks silently.
+		
+		Optional keyword arguments:
+		pad:     pad the lines to n chars, or os.getenv('COLUMNS') if True.
+		padchar: character to use for padding, default a space.
+		sep:     string inserted between values, default a space.
+		end:     string appended after the last value, default a newline.
+		file:    a file-like object (stream); defaults to the sys.stdout.
+		fn:      a function to execute instead of printing.
+		"""
+		self.pad = pad
+		self.padchar = padchar
+		self.sep = sep
+		self.end = end
+		self.file = file_
+		self.fn = fn
+		self.encoding = encoding or (get_encoding(file_) if file_ else None)
 	
-	Prints the values to a stream, or to sys.stdout (default), honoring its 
-	encoding and replacing characters not present in the encoding with 
-	question marks silently.
+	def __call__(self, *args, **kwargs):
+		self.write(*args, **kwargs)
 	
-	Optional keyword arguments:
-	pad:     pad the lines to n chars, or os.getenv('COLUMNS') if True.
-	padchar: character to use for padding, default a space.
-	sep:     string inserted between values, default a space.
-	end:     string appended after the last value, default a newline.
-	file:    a file-like object (stream); defaults to the sys.stdout.
-	fn:      a function to execute instead of printing.
-	"""
-	if "pad" in kwargs:
-		pad = kwargs["pad"]
-	else:
-		pad = False
-	if "padchar" in kwargs:
-		padchar = kwargs["padchar"]
-	else:
-		padchar = " "
-	if "sep" in kwargs:
-		sep = kwargs["sep"]
-	else:
-		sep = " "
-	if "end" in kwargs:
-		end = kwargs["end"]
-	else:
-		end = "\n"
-	if "file" in kwargs:
-		file_ = kwargs["file"]
-	elif kwargs.get("fn") is None and sys.stdout.isatty():
-		file_ = sys.stdout
-	else:
-		file_ = None
-	strargs = []
-	for arg in args:
-		if type(arg) not in (str, unicode):
-			arg = str(arg)
-		elif type(arg) == unicode and (file_ is not None or 
-									   kwargs.get("encoding") is not None):
-			if kwargs.get("encoding"):
-				encoding = kwargs["encoding"]
-			##elif \
-			elif file_ not in (sys.stdout, sys.stderr) and \
-				 hasattr(file_, "encoding") and file_.encoding:
-				encoding = file_.encoding
-			elif sys.platform == "darwin":
-				encoding = "UTF-8"
+	def flush(self):
+		self.file and self.file.flush()
+	
+	def write(self, *args, **kwargs):
+		pad = kwargs.get("pad", self.pad)
+		padchar = kwargs.get("padchar", self.padchar)
+		sep = kwargs.get("sep", self.sep)
+		end = kwargs.get("end", self.end)
+		file_ = kwargs.get("file_", self.file)
+		fn = kwargs.get("fn", self.fn)
+		encoding = kwargs.get("encoding", self.encoding)
+		strargs = []
+		for arg in args:
+			if not isinstance(arg, basestring):
+				try:
+					arg = str(arg)
+				except:
+					arg = repr(arg)
+			elif isinstance(arg, unicode) and encoding:
+				arg = arg.encode(encoding, "replace")
+			strargs += [arg]
+		line = sep.join(strargs).rstrip()
+		try:
+			conwidth = int(os.getenv("COLUMNS"))
+		except (TypeError, ValueError):
+			conwidth = 80
+		if pad is not False:
+			if pad is True:
+				width = conwidth
 			else:
-				encoding = enc
-			arg = arg.encode(encoding, "replace")
-		strargs += [arg]
-	line = sep.join(strargs)
-	if pad is not False:
-		if pad is True:
-			try:
-				width = int(os.getenv("COLUMNS"))
-			except (TypeError, ValueError):
-				width = 80
+				width = int(pad)
+			line = line.ljust(width, padchar)
+		if fn:
+			fn(line)
 		else:
-			width = int(pad)
-		line = line.ljust(width, padchar)
-	if "fn" in kwargs and hasattr(kwargs["fn"],  "__call__"):
-		kwargs["fn"](line)
-	elif file_:
-		file_.write(line)
-		if sys.platform != "win32" or len(line) != 80 or file_ not in \
-		   (sys.stdout,  sys.stderr) or end != "\n":
-			# On Windows, if a line is exactly the width of the buffer, a line 
-			# break would insert an empty line between this line and the next.
-			# To avoid this, skip the newline in that case.
-			file_.write(end)
+			file_.write(line)
+			if sys.platform != "win32" or len(line) != conwidth or \
+			   not (hasattr(file_, "isatty") and file_.isatty()) or end != "\n":
+				# On Windows, if a line is exactly the width of the buffer, a line 
+				# break would insert an empty line between this line and the next.
+				# To avoid this, skip the newline in that case.
+				file_.write(end)
+
+safe_print = SafePrinter()
 
 if __name__ == '__main__':
 	for arg in sys.argv[1:]:
