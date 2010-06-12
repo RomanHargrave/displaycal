@@ -93,6 +93,7 @@ try:
             import winerror
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
+        screenbufferfillchar = u' '
 except ImportError, e:
     raise ImportError (str(e) + """
 
@@ -274,9 +275,11 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     else:
         return child_result
 
-def spawn(command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None):
+def spawn(command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None,
+          codepage=None):
     if sys.platform == 'win32':
-        return spawn_windows(command, args, timeout, maxread, searchwindowsize, logfile, cwd, env)
+        return spawn_windows(command, args, timeout, maxread, searchwindowsize, logfile, cwd, env,
+                             codepage)
     else:
         return spawn_unix(command, args, timeout, maxread, searchwindowsize, logfile, cwd, env)
         
@@ -1610,7 +1613,8 @@ class spawn_windows (spawn_unix, object):
     """This is the main class interface for Pexpect. Use this class to start
     and control child applications. """
 
-    def __init__(self, command, args=[], timeout=30, maxread=60000, searchwindowsize=None, logfile=None, cwd=None, env=None):
+    def __init__(self, command, args=[], timeout=30, maxread=60000, searchwindowsize=None, logfile=None, cwd=None, env=None,
+                 codepage=None):
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -1645,6 +1649,7 @@ class spawn_windows (spawn_unix, object):
         self.ocwd = os.getcwdu()
         self.cwd = cwd
         self.env = env
+        self.codepage = codepage
 
         # allow dummy instances for subclasses that may not use command or args.
         if command is None:
@@ -1695,7 +1700,6 @@ class spawn_windows (spawn_unix, object):
             self.args.insert (0, command)
             self.command = command    
             
-        #On windows this segment of code seems to disallow .exe files and the like.
         command_with_path = which(self.command)
         if command_with_path is None:
            raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
@@ -1707,7 +1711,7 @@ class spawn_windows (spawn_unix, object):
         #assert self.pid is None, 'The pid member should be None.'
         #assert self.command is not None, 'The command member should not be None.'
 
-        self.wtty = Wtty()        
+        self.wtty = Wtty(codepage=self.codepage)        
     
         if self.cwd is not None:
             os.chdir(self.cwd)
@@ -1912,21 +1916,9 @@ class spawn_windows (spawn_unix, object):
 # End of spawn_windows class
 ##############################################################################
 
-"""This module is the back-end for spawn_windows.  
-It spawns an instance of spawner.py with a new console, 
-passing the name of the actualy child process on the 
-command line.  It then reads from the child console from
-a pipe and attatches directly to the child console to 
-write and perform other operations.  See wexpect for 
-usage."""
-
-#TODO: 
-    # signal
-    # unit tests
-    # console screen reset by new process?
 class Wtty:
 
-    def __init__(self, timeout=30):
+    def __init__(self, timeout=30, codepage=None):
         self.__currentReadCo = PyCOORDType(0, 0)
         self.__consSize = [80, 16000]
         self.__parentPid = 0
@@ -1935,11 +1927,13 @@ class Wtty:
         self.__otid = 0
         self.__switch = True
         self.__childProcess = None
+        self.codepage = codepage
         self.console = False
         self.pid = None
         self.processList = []
         # We need a timeout for connecting to the child process
         self.timeout = timeout
+        self.totalRead = 0
             
     def spawn(self, command, args=[], env=None):
         """Spawns spawner.py with correct arguments."""
@@ -2008,6 +2002,7 @@ class Wtty:
             pyargs.insert(0, '-S')  # skip 'import site'
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
+        cp = self.codepage or GetConsoleOutputCP()
         # If we are running 'frozen', expect python.exe in the same directory
         # as the packed executable.
         # py2exe: The python executable can be included via setup script by 
@@ -2018,9 +2013,9 @@ class Wtty:
                                         ' '.join(pyargs), 
                                         "import sys; sys.path = %r + sys.path;"
                                         "args = %r; import wexpect;"
-                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i)" % (spath, args, pid, tid))
+                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i)" % (spath, args, pid, tid, cp))
                      
-        #print commandLine
+        
         self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
                                                                   CREATE_NEW_CONSOLE, env, None, si)
             
@@ -2071,7 +2066,6 @@ class Wtty:
             else:
                 # Our original console has been free'd, allocate a new one
                 AllocConsole()
-        #AttachConsole(ATTACH_PARENT_PROCESS) ### Only works once?
         
         self.__consin = None
         self.__consout = None
@@ -2126,7 +2120,7 @@ class Wtty:
                     break
                 time.sleep(.05)
             if self.__consout:
-                self.__consout.FillConsoleOutputCharacter(u'\0', len(s), startCo)
+                self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, len(s), startCo)
         except:
             self.switchBack()
             raise
@@ -2150,7 +2144,7 @@ class Wtty:
         as a string."""
         
         buff = []
-        totalRead = 0
+        self.lastRead = 0
 
         startX = startCo.X
         startY = startCo.Y
@@ -2169,6 +2163,8 @@ class Wtty:
                 endPoint = self.getPoint(endOff)
             
             s = self.__consout.ReadConsoleOutputCharacter(readlen, startCo)
+            self.lastRead = len(s)
+            self.totalRead += self.lastRead
             buff.append(s)
             
             startX, startY = endPoint[0], endPoint[1]
@@ -2183,18 +2179,17 @@ class Wtty:
         characters or screen-buffer-fill characters."""
     
         strlist = []
-        for c in s:
-            if ord(c) == 9834:
-                strlist.append('\r')
-            elif ord(c) == 9689:
-                strlist.append('\n')
-            elif ord(c) == 0:
-                if strlist[-1:] != ['\r\n']:
-                    strlist.append('\r\n')
-            else:
-                strlist.append(c)
+        for i, c in enumerate(s):
+            strlist.append(c)
+            if (self.totalRead - self.lastRead + i + 1) % 80 == 0:
+                strlist.append('\r\n')
 
-        return ''.join(strlist).encode('ascii', 'ignore')
+        s = '\r\n'.join([line.rstrip() for line in ''.join(strlist).splitlines()])
+        try:
+            return s.encode(str(self.codepage), 'replace')
+        except LookupError:
+            return s.encode(getattr(sys.stdout, 'encoding', None) or 
+                            sys.getdefaultencoding(), 'replace')
     
     def readConsoleToCursor(self):
         """Reads from the current read position to the current cursor
@@ -2242,6 +2237,7 @@ class Wtty:
                 end = time.clock()
                 timeout -= end - start
         
+            # This is never executed? and resetConsole doesn't exist?
             if self.__currentReadCo.Y > 8000:
                 self.resetConsole()
         except Exception, e:
@@ -2262,7 +2258,7 @@ class Wtty:
         writelen = self.__consSize[0] * self.__consSize[1]
         # Use NUL as fill char because it displays as whitespace
         # (if we interact() with the child)
-        self.__consout.FillConsoleOutputCharacter(u'\0', writelen, orig)
+        self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, writelen, orig)
         
     
     def setecho(self, state):
@@ -2365,27 +2361,30 @@ class Wtty:
     
 class ConsoleReader:
    
-    def __init__(self, path, pid, tid, env = None):
+    def __init__(self, path, pid, tid, env = None, cp=None):
+        if cp:
+            try:
+                SetConsoleOutputCP(cp)
+            except Exception, e:
+                log_error(e)
         try:
             try:
+                consout = self.getConsoleOut()
+                self.initConsole(consout)
+                
                 si = GetStartupInfo()
-         
                 self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
                                                                              0, None, None, si)
             except Exception, e:
                 log_error(e)
-                time.sleep(.2)
+                time.sleep(.1)
                 win32api.PostThreadMessage(int(tid), WM_USER, 0, 0)
                 sys.exit()
             
-            time.sleep(1)
+            time.sleep(.1)
             
             win32api.PostThreadMessage(int(tid), WM_USER, childPid, 0)
             
-            consout = self.getConsoleOut()
-            
-            self.initConsole(consout)
-                
             parent = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION , 0, int(pid))
             paused = False
    
@@ -2432,15 +2431,15 @@ class ConsoleReader:
                                        
         return PyConsoleScreenBufferType(consout)
         
-    def initConsole(self, consout):
-        #consin.SetConsoleMode(439)
-        #consout.SetConsoleMode(3)        
+    def initConsole(self, consout):     
+        rect = PySMALL_RECTType(0, 0, 79, 24)
+        consout.SetConsoleWindowInfo(True, rect)
         size = PyCOORDType(80, 16000)
         consout.SetConsoleScreenBufferSize(size)
-        pos = consout.GetConsoleScreenBufferInfo()['CursorPosition']
+        pos = PyCOORDType(0, 0)
         # Use NUL as fill char because it displays as whitespace
         # (if we interact() with the child)
-        consout.FillConsoleOutputCharacter(u'\0', size.X * size.Y, pos)   
+        consout.FillConsoleOutputCharacter(screenbufferfillchar, size.X * size.Y, pos)   
     
     def suspendThread(self):
         """Pauses the main thread of the child process."""
