@@ -83,6 +83,7 @@ try:
         import fcntl
     else:
         try:
+            from ctypes import windll
             import pywintypes
             from win32console import *
             from win32process import *
@@ -1929,6 +1930,7 @@ class Wtty:
         self.__childProcess = None
         self.codepage = codepage
         self.console = False
+        self.lastReadLine = ""
         self.pid = None
         self.processList = []
         # We need a timeout for connecting to the child process
@@ -2197,12 +2199,44 @@ class Wtty:
     
         consinfo = self.__consout.GetConsoleScreenBufferInfo()
         cursorPos = consinfo['CursorPosition']
+        
+        #log_error('=' * 80)
+        #log_error('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
 
-        if cursorPos.X == self.__currentReadCo.X and cursorPos.Y == self.__currentReadCo.Y:
-            return ''
+        isSameY = cursorPos.Y == self.__currentReadCo.Y
+        isSamePos = cursorPos.X == self.__currentReadCo.X and isSameY
+        
+        #log_error('isSameY: %r' % isSameY)
+        #log_error('isSamePos: %r' % isSamePos)
+        
+        if isSamePos:
+            # Assume cursor repositioning, read the current line again
+            self.totalRead -= self.__currentReadCo.X
+            self.__currentReadCo.X = 0
+            #return ''
+        
+        #log_error('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
         
         s = self.readConsole(self.__currentReadCo, cursorPos)
         s = self.parseData(s)
+        
+        #log_error('lastReadLine: %r' % self.lastReadLine)
+        #log_error('s: %r' % s)
+        
+        isSameLine = False
+        if isSameY:
+            if s == self.lastReadLine:
+                isSameLine = True
+                s = ''
+        
+        #log_error('isSameLine: %r' % isSameLine)
+        #log_error('s: %r' % s)
+        
+        if not isSameLine:
+            if s:
+                self.lastReadLine = s.splitlines()[-1]
+                if isSamePos:
+                    s = '\r' + s
 
         self.__currentReadCo.X = cursorPos.X
         self.__currentReadCo.Y = cursorPos.Y
@@ -2639,10 +2673,10 @@ def log_error(e):
     if isinstance(e, Exception):
         # Get the full traceback
         e = traceback.format_exc()
-    if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
-        # Only try to print if stdout is a tty, otherwise we might get
-        # an 'invalid handle' exception
-        print e
+    #if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        ## Only try to print if stdout is a tty, otherwise we might get
+        ## an 'invalid handle' exception
+        #print e
     # Log to the script (or packed executable if running 'frozen') directory
     # if it is writable (packed executable might be installed to a location 
     # where we don't have write access)
