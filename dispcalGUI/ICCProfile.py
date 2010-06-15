@@ -13,6 +13,8 @@ if sys.platform == "win32":
 	import _winreg
 else:
 	import subprocess as sp
+	if sys.platform == "darwin":
+		from platform import mac_ver
 
 if sys.platform == "win32":
 	try:
@@ -211,6 +213,16 @@ def Property(func):
 	return property(**func())
 
 
+def _intversion(version):
+	intversion = []
+	for digit in version:
+		try:
+			intversion += [int(digit)]
+		except ValueError:
+			pass
+	return intversion
+
+
 def _winreg_get_display_profile(monkey, current_user=False):
 	filename = None
 	try:
@@ -315,10 +327,12 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				profile = _winreg_get_display_profile(monkey)
 	else:
 		if sys.platform == "darwin":
-			options = ["Image Events", "ColorSyncScripting"]
+			if _intversion(mac_ver()[0].split(".")) >= (10, 6):
+				options = ["Image Events"]
+			else:
+				options = ["ColorSyncScripting"]
 		else:
-			options = [##"_ICC_DEVICE_PROFILE", 
-					   "_ICC_PROFILE"]
+			options = ["_ICC_PROFILE"]
 		for option in options:
 			if sys.platform == "darwin":
 				args = ['osascript', '-e', 'tell app "%s"' % option, '-e', 
@@ -708,8 +722,8 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 			if ASCIIDescription:
 				self.ASCII = ASCIIDescription
 		unicodeOffset = 12 + ASCIIDescriptionLength
-		unicodeLanguageCode = uInt32Number(
-							  tagData[unicodeOffset:unicodeOffset + 4])
+		self.unicodeLanguageCode = uInt32Number(
+									tagData[unicodeOffset:unicodeOffset + 4])
 		unicodeDescriptionLength = uInt32Number(tagData[unicodeOffset + 
 														4:unicodeOffset + 8])
 		if unicodeDescriptionLength:
@@ -731,6 +745,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 				else:
 					if unicodeDescription[:2] == "\xfe\xff":
 						# UTF-16 Big Endian
+						if debug: safe_print("UTF-16 Big endian")
 						unicodeDescription = unicodeDescription[2:]
 						if len(unicodeDescription.split(" ")) == \
 						   unicodeDescriptionLength - 1:
@@ -749,6 +764,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 														 errors="replace")
 					elif unicodeDescription[:2] == "\xff\xfe":
 						# UTF-16 Little Endian
+						if debug: safe_print("UTF-16 Little endian")
 						unicodeDescription = unicodeDescription[2:]
 						if unicodeDescription[0] == "\0":
 							safe_print("Warning (non-critical): '%s' "
@@ -765,6 +781,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 														 "utf-16-le", 
 														 errors="replace")
 					else:
+						if debug: safe_print("ASSUMED UTF-16 Big Endian")
 						unicodeDescription = unicode(unicodeDescription, 
 													 "utf-16-be", 
 													 errors="replace")
@@ -785,8 +802,9 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 		macOffsetBackup = macOffset
 		if tagData[macOffset:macOffset + 5] == "\0\0\0\0\0":
 			macOffset += 5  # fix for fubar'd desc
+		self.macScriptCode = 0
 		if len(tagData) > macOffset + 2:
-			macScriptCode = uInt16Number(tagData[macOffset:macOffset + 2])
+			self.macScriptCode = uInt16Number(tagData[macOffset:macOffset + 2])
 			macDescriptionLength = ord(tagData[macOffset + 2])
 			if macDescriptionLength:
 				if macOffsetBackup < macOffset:
@@ -797,13 +815,47 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 					macDescription = unicode(tagData[macOffset + 3:macOffset + 
 											 3 + macDescriptionLength], 
 											 "mac-" + 
-											 encodings["mac"][macScriptCode], 
+											 encodings["mac"][self.macScriptCode], 
 											 errors="replace").strip("\0\n\r ")
 					if macDescription:
 						self.Macintosh = macDescription
 				except UnicodeDecodeError:
 					safe_print("UnicodeDecodeError (non-critical): could not "
 							   "decode '%s' Macintosh part" % tagData[:4])
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			tagData = ["desc", "\0" * 4,
+					   uInt32Number_tohex(len(self.ASCII) + 1),  # count of ASCII chars + 1
+					   str(self.ASCII) + "\0",  # ASCII desc, \0 terminated
+					   uInt32Number_tohex(self.unicodeLanguageCode)]
+			if "Unicode" in self:
+				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 2),  # count of Unicode chars + 2 (1 char = 2 byte)
+								"\xfe\xff" + self.Unicode.encode("utf-16-be", "replace") + 
+								"\0\0"])  # Unicode desc, \0\0 terminated
+			else:
+				tagData.append(uInt32Number_tohex(0))  # Unicode desc length = 0
+			tagData.append(uInt16Number_tohex(self.macScriptCode))
+			if "Macintosh" in self:
+				macDescription = self.Macintosh[:66]
+				tagData.extend([uInt8Number_tohex(len(macDescription) + 1),  # count of Macintosh chars + 1
+								macDescription.encode("mac-" + 
+													  encodings["mac"][self.macScriptCode], 
+													  "replace") + "\0"])
+			else:
+				tagData.extend([uInt32Number_tohex(0),  # Mac desc length = 0
+								"\0" * 67])
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
 
 	def __str__(self):
 		return unicode(self).encode(sys.getdefaultencoding())
