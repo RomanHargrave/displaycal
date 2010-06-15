@@ -5,16 +5,13 @@ import os
 import sys
 
 from config import (btn_width_correction, defaults, getcfg, 
-					geticon, get_verified_path, setcfg)
+					geticon, get_data_path, get_verified_path, setcfg)
 from log import log as log_, safe_print
 from meta import name as appname
 from thread import start_new_thread
 from util_str import safe_unicode, wrap
 from wxaddons import wx
 import localization as lang
-
-if sys.platform == "darwin":
-	from util_mac import mac_app_activate
 
 class AboutDialog(wx.Dialog):
 
@@ -111,11 +108,8 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.Center(wx.HORIZONTAL)
 		elif pos[1] == -1:
 			self.Center(wx.VERTICAL)
-		if sys.platform == "darwin" and \
-		   (not wx.GetApp().IsActive() or 
-			(hasattr(wx.GetApp(), "frame") and not 
-			 wx.GetApp().frame.IsShownOnScreen())):
-			start_new_thread(mac_app_activate, (.25, wx.GetApp().GetAppName()))
+		if not wx.GetApp().IsActive() and wx.GetApp().GetTopWindow():
+			wx.CallAfter(wx.GetApp().GetTopWindow().RequestUserAttention)
 		if show:
 			self.ok.SetDefault()
 			self.ShowModalThenDestroy(parent)
@@ -219,8 +213,13 @@ class LogWindow(InvincibleFrame):
 		self.log_txt = wx.TextCtrl(self.panel, -1, "", style=wx.TE_MULTILINE | 
 															 wx.TE_READONLY)
 		if sys.platform == "win32":
-			font = wx.Font(8, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
-													  wx.FONTWEIGHT_NORMAL)
+			font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+													  wx.FONTWEIGHT_NORMAL,
+													  face="Consolas")
+		elif sys.platform == "darwin":
+			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+													   wx.FONTWEIGHT_NORMAL,
+													   face="Monaco")
 		else:
 			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
@@ -326,29 +325,40 @@ class ProgressDialog(wx.ProgressDialog):
 	
 	""" A progress dialog. """
 	
-	def __init__(self, title=appname, msg="", maximum=1, parent=None, style=None, 
+	def __init__(self, title=appname, msg="", maximum=100, parent=None, style=None, 
 				 handler=None, start_timer=True):
 		if style is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
-		wx.ProgressDialog.__init__(self, title, msg, maximum, parent=parent, style=style)
+		wx.ProgressDialog.__init__(self, title, "", maximum, parent=parent, style=style)
+		icon = get_data_path(os.path.join("theme", "icons", "16x16", 
+												  appname + ".png"))
+		if icon:
+			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
-		if handler is None:
-			handler = self.OnTimer
 		self.timer = wx.Timer(self)
-		self.Bind(wx.EVT_TIMER, handler, self.timer)
+		self.Bind(wx.EVT_TIMER, handler or self.OnTimer, self.timer)
 		
 		# custom localization
 		for child in self.GetChildren():
 			if isinstance(child, wx.Button):
 				child.Label = lang.getstr("cancel")
-			elif isinstance(child, wx.StaticText) and \
-				 "Elapsed time" in child.Label:
-				child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
+			elif isinstance(child, wx.StaticText):
+				if "Elapsed time" in child.Label:
+					child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
+				elif not child.Label:
+					self.msg = child
+					#child.SetBackgroundColour(wx.LIGHT_GREY)
+					child.SetWindowStyle(wx.ST_NO_AUTORESIZE)
 		
-		# set size and position	
-		self.SetMinSize((500, -1))
-		self.SetSize((500, -1))
+		self.msg.Freeze()
+		self.msg.SetLabel("\n".join(["E" * 80] * 4))
+		self.msg.Fit()
+		self.msg.Thaw()
+		self.Fit()
+		self.msg.SetLabel(msg)
+		
+		# set position	
 		placed = False
 		if parent:
 			if parent.IsShownOnScreen():
@@ -391,6 +401,175 @@ class ProgressDialog(wx.ProgressDialog):
 	
 	def stop_timer(self):
 		self.timer.Stop()
+
+
+class SimpleTerminal(InvincibleFrame):
+	
+	""" A simple terminal-like window. """
+
+	def __init__(self, parent=None, id=-1, handler=None, keyhandler=None,
+				 start_timer=True):
+		wx.Frame.__init__(self, parent, id, appname, 
+								style=wx.DEFAULT_FRAME_STYLE)
+		icon = get_data_path(os.path.join("theme", "icons", "16x16", 
+												  appname + ".png"))
+		if icon:
+			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+		
+		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
+		self.Bind(wx.EVT_MOVE, self.OnMove, self)
+		self.timer = wx.Timer(self)
+		if handler:
+			self.Bind(wx.EVT_TIMER, handler, self.timer)
+		
+		self.panel = wx.Panel(self, -1)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.panel.SetSizer(self.sizer)
+		self.console = wx.TextCtrl(self.panel, -1, "", style=wx.TE_MULTILINE | 
+															 wx.TE_READONLY |
+															 wx.VSCROLL |
+															 wx.NO_BORDER)
+		self.console.SetBackgroundColour(wx.BLACK)
+		self.console.SetForegroundColour("#808080")
+		if sys.platform == "win32":
+			font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+													  wx.FONTWEIGHT_NORMAL,
+													  face="Terminal")
+		elif sys.platform == "darwin":
+			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+													   wx.FONTWEIGHT_NORMAL,
+													   face="Monaco")
+		else:
+			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+													   wx.FONTWEIGHT_NORMAL)
+		self.console.SetFont(font)
+		self.sizer.Add(self.console, 1, flag=wx.ALL | wx.EXPAND, border=0)
+		
+		if sys.platform == "win32":
+			# Mac: TextCtrls don't receive EVT_KEY_DOWN
+			self.console.Bind(wx.EVT_KEY_DOWN, keyhandler or self.key_handler, 
+							  self.console)
+		else:
+			# Windows: EVT_CHAR_HOOK only receives "special" keys e.g. ESC, Tab
+			self.Bind(wx.EVT_CHAR_HOOK, keyhandler or self.key_handler)
+		
+		# Use an accelerator table for space, 0-9, a-z
+		keycodes = [32] + range(48, 58) + range(97, 123)
+		self.id_to_keycode = {}
+		for keycode in keycodes:
+			self.id_to_keycode[wx.NewId()] = keycode
+		##accels = []
+		##for id, keycode in self.id_to_keycode.iteritems():
+			##self.Bind(wx.EVT_MENU, keyhandler or self.key_handler, id=id)
+			##accels += [(wx.ACCEL_NORMAL, keycode, id)]
+		##self.SetAcceleratorTable(wx.AcceleratorTable(accels))
+		
+		# set size
+		text_extent = self.console.GetTextExtent(" ")
+		vscroll_w = self.console.GetSize()[0] - self.console.GetClientRect()[2]
+		##w, h = (self.console.GetCharWidth() * 80 + vscroll_w, 
+				##self.console.GetCharHeight() * 25)
+		w, h = (text_extent[0] * 80 + vscroll_w, 
+				text_extent[1] * 25)
+		self.console.SetMinSize((w, h))
+		self.console.SetSize((w, h))
+		self.sizer.SetSizeHints(self)
+		self.sizer.Layout()
+		
+		# set position	
+		placed = False
+		if parent:
+			if parent.IsShownOnScreen():
+				self.Center()
+				placed = True
+			else:
+				x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
+				y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+		else:
+			x = getcfg("position.progress.x")
+			y = getcfg("position.progress.y")
+		if not placed:
+			self.SetSaneGeometry(x, y, w, h)
+		
+		self.lastmsg = ""
+		self.keepGoing = True
+		
+		if start_timer:
+			self.start_timer()
+		
+		self.Show()
+	
+	def EndModal(self, returncode=wx.ID_OK):
+		return returncode
+	
+	def MakeModal(self, makemodal=False):
+		pass
+	
+	def OnClose(self, event):
+		if not self.timer.IsRunning():
+			self.Hide()
+		else:
+			self.keepGoing = False
+		
+	def OnMove(self, event):
+		if self.IsShownOnScreen() and not self.IsIconized() and \
+		   (not self.GetParent() or
+		    not self.GetParent().IsShownOnScreen()):
+			prev_x = getcfg("position.progress.x")
+			prev_y = getcfg("position.progress.y")
+			x, y = self.GetScreenPosition()
+			if x != prev_x or y != prev_y:
+				setcfg("position.progress.x", x)
+				setcfg("position.progress.y", y)
+	
+	def Pulse(self, msg=""):
+		self.lastmsg = msg
+		return self.keepGoing, False
+	
+	def Resume(self):
+		self.keepGoing = True
+	
+	def Update(self, value, msg=""):
+		return self.Pulse(msg)
+	
+	def UpdatePulse(self, msg=""):
+		return self.Pulse(msg)
+	
+	def add_text(self, txt):
+		pos = self.console.GetLastPosition()
+		txt = txt.rstrip("\n")
+		if txt.startswith("\r"):
+			txt = txt.lstrip("\r")
+			numlines = self.console.GetNumberOfLines()
+			start = pos - self.console.GetLineLength(numlines - 1)
+			self.console.Replace(start, pos, txt)
+		else:
+			if pos > 0:
+				txt = "\n" + txt
+			self.console.AppendText(txt)
+	
+	def flush(self):
+		pass
+	
+	def isatty(self):
+		return True
+	
+	def key_handler(self, event):
+		if event.GetEventType() == wx.EVT_CHAR_HOOK.typeId:
+			print "Received EVT_CHAR_HOOK", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
+		elif event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
+			print "Received EVT_KEY_DOWN", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
+		elif event.GetEventType() == wx.EVT_MENU.typeId:
+			print "Received EVT_MENU", self.id_to_keycode.get(event.GetId()), repr(unichr(self.id_to_keycode.get(event.GetId())))
+	
+	def start_timer(self, ms=50):
+		self.timer.Start(ms)
+	
+	def stop_timer(self):
+		self.timer.Stop()
+	
+	def write(self, txt):
+		wx.CallAfter(self.add_text, txt)
 
 
 class TooltipWindow(InvincibleFrame):
