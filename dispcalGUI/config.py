@@ -43,7 +43,7 @@ import encodedstdio
 # Runtime configuration
 
 if ascii:
-	enc = fs_enc = "ASCII"
+	enc = "ASCII"
 
 exe = unicode(sys.executable, fs_enc)
 exedir = os.path.dirname(exe)
@@ -337,8 +337,8 @@ defaults = {
 	"comport.number": 1,
 	"copyright": "Created with %s %s and Argyll CMS" % (appname, 
 														version),
-	"dimensions.measureframe": "0.5,0.5,1.0",
-	"dimensions.measureframe.unzoomed": "0.5,0.5,1.0",
+	"dimensions.measureframe": "0.5,0.5,1.5",
+	"dimensions.measureframe.unzoomed": "0.5,0.5,1.5",
 	"display.number": 1,
 	"display_lut.link": 1,
 	"display_lut.number": 1,
@@ -360,6 +360,16 @@ defaults = {
 	"measurement_mode.projector": 0,
 	"measure.darken_background": 0,
 	"measure.darken_background.show_warning": 1,
+	"position.x": 50,
+	"position.y": 50,
+	"position.info.x": 50,
+	"position.info.y": 50,
+	"position.lut_viewer.x": 50,
+	"position.lut_viewer.y": 50,
+	"position.progress.x": 50,
+	"position.progress.y": 50,
+	"position.tcgen.x": 50,
+	"position.tcgen.y": 50,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
 									 os.geteuid() == 0) # or 
 									# (sys.platform == "win32" and 
