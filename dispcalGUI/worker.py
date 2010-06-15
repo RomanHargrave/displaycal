@@ -9,14 +9,14 @@ import sys
 import textwrap
 import traceback
 from encodings.aliases import aliases
+from hashlib import md5
 from time import sleep, strftime
 
 if sys.platform == "darwin":
 	from thread import start_new_thread
-	from util_mac import (mac_app_activate, mac_terminal_do_script,
-						  mac_terminal_set_colors)
+	from util_mac import mac_terminal_do_script, mac_terminal_set_colors
 elif sys.platform == "win32":
-	from ctypes import cdll
+	from ctypes import windll
 	import pywintypes
 	import win32api
 	import win32com.client
@@ -33,7 +33,7 @@ import tempfile26 as tempfile
 import wexpect
 from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
 						  verify_cgats)
-from argyll_instruments import instruments, remove_vendor_names
+from argyll_instruments import instruments as all_instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
 from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg, 
@@ -42,15 +42,14 @@ from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg,
 from debughelpers import handle_error
 from log import log, safe_print
 from meta import name as appname, version
-from options import debug, test, verbose
+from options import ascii, debug, test, verbose
 from ordereddict import OrderedDict
 from util_io import Files, StringIOu as StringIO
 from util_os import getenvu, putenvu, quote_args, which
-from util_str import asciize, safe_unicode, strtr
-from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog
+from util_str import safe_str, safe_unicode
+from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 
 if sys.platform == "win32": #and SendKeys is None:
-	kernel32 = cdll.LoadLibrary("kernel32")
 	wsh_shell = win32com.client.Dispatch("WScript.Shell")
 
 DD_ATTACHED_TO_DESKTOP = 0x01
@@ -314,11 +313,11 @@ def get_options_from_profile(profile):
 		ti3 = CGATS.CGATS(profile.tags.targ)
 		if len(ti3) > 1 and "ARGYLL_DISPCAL_ARGS" in ti3[1] and \
 		   ti3[1].ARGYLL_DISPCAL_ARGS:
-			dispcal_args = ti3[1].ARGYLL_DISPCAL_ARGS[0].decode("UTF-8", 
+			dispcal_args = ti3[1].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", 
 																"replace")
 		if "ARGYLL_COLPROF_ARGS" in ti3[0] and \
 		   ti3[0].ARGYLL_COLPROF_ARGS:
-			colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-8", 
+			colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-7", 
 																"replace")
 	if not dispcal_args and "cprt" in profile.tags:
 		dispcal_args = get_options_from_cprt(profile.getCopyright())[0]
@@ -333,15 +332,16 @@ def make_argyll_compatible_path(path):
 	
 	This is currently only effective under Windows to make sure that any 
 	unicode 'division' slashes in the profile name are replaced with 
-	underscores, and under Linux if the encoding is not UTF-8 everything is 
-	forced to ASCII to prevent problems when installing profiles.
+	underscores.
 	
 	"""
-	if sys.platform not in ("darwin", "win32") and \
-	   fs_enc.upper() not in ("UTF8", "UTF-8"):
-		make_compat_enc = "ASCII"
-	else:
-		make_compat_enc = fs_enc
+	###Under Linux if the encoding is not UTF-8 everything is 
+	###forced to ASCII to prevent problems when installing profiles.
+	##if ascii or (sys.platform not in ("darwin", "win32") and 
+				 ##fs_enc.upper() not in ("UTF8", "UTF-8")):
+		##make_compat_enc = "ASCII"
+	##else:
+	make_compat_enc = fs_enc
 	skip = -1
 	if re.match(r'\\\\\?\\', path, re.I):
 		# Don't forget about UNC paths: 
@@ -351,7 +351,7 @@ def make_argyll_compatible_path(path):
 	parts = path.split(os.path.sep)
 	for i in range(len(parts)):
 		if i > skip:
-			parts[i] = unicode(parts[i].encode(make_compat_enc, "asciize"), 
+			parts[i] = unicode(parts[i].encode(make_compat_enc, "safe_asciize"), 
 							   make_compat_enc).replace("/", "_").replace("?", 
 																		  "_")
 	return os.path.sep.join(parts)
@@ -455,25 +455,35 @@ class FilteredStream():
 	
 	""" Wrap a stream and filter all lines written to it. """
 	
-	discard = re.compile("[\\*|\\.]{4,}|\\d+%?")
+	# Discard progress information like ... or *** or %
+	discard = re.compile("[\\*|\\.]+|\\s*\\d*%?")
 	
-	triggers = ["key to retry",
+	# If one of the triggers is contained in a line, skip the whole line
+	triggers = ["Place instrument on test window",
 				"key to continue",
-				"Esc or Q to abort"]
+				"key to retry",
+				"key to take a reading",
+				"Esc or Q to"]
 	
 	substitutions = {"Delta E": "deltaE",
 					 " peqDE ": " previous pass deltaE ",
-					 "patch ": "Patch "}
-	
-	splitter = re.compile("\r\n+|\r+|\n+|\\s{5,}")
+					 "patch ": "Patch ",
+					 re.compile("(patch \\d+ of \\d+)Point", re.I): "\\1 point"}
 	
 	def __init__(self, stream, data_encoding=None, file_encoding=None,
-				 errors="replace", end="\n"):
+				 errors="replace", end="\n", discard=None, substitutions=None,
+				 triggers=None):
 		self.stream = stream
 		self.data_encoding = data_encoding
 		self.file_encoding = file_encoding
 		self.errors = errors
 		self.end = end
+		if discard is not None:
+			self.discard = discard
+		if substitutions is not None:
+			self.substitutions = substitutions
+		if triggers is not None:
+			self.triggers = triggers
 	
 	def __getattr__(self, name):
 		return getattr(self.stream, name)
@@ -485,12 +495,18 @@ class FilteredStream():
 		because this is what a pseudo tty device returns.
 		
 		"""
+		if not data:
+			return
 		lines = []
-		for line in data.split("\r\n"):
-			line = line.strip("\r")  # Strip carriage return as re-positioning
-									 # of a cursor may not be supported by
-									 # stream
-			if line and re.sub(self.discard, "", line):
+		for line in data.rstrip().split("\r\n"):
+			if "\r" in line:
+				if not hasattr(self.stream, "isatty") or not self.stream.isatty():
+					line = line.strip("\r")  # Strip carriage return as re-positioning
+											 # of a cursor may not be supported by
+											 # stream
+					if not line:
+						continue
+			if re.sub(self.discard, "", line) or not line:
 				write = True
 				for trigger in self.triggers:
 					if trigger.lower() in line.lower():
@@ -499,10 +515,35 @@ class FilteredStream():
 				if write:
 					if self.data_encoding:
 						line = line.decode(self.data_encoding, self.errors)
-					line = strtr(line, self.substitutions)
+					for search, sub in self.substitutions.iteritems():
+						line = re.sub(search, sub, line)
 					if self.file_encoding:
 						line = line.encode(self.file_encoding, self.errors)
 					self.stream.write(line.rstrip() + self.end)
+
+
+class LineCache():
+	
+	""" When written to it, stores only the last n lines. """
+	
+	def __init__(self, n=1):
+		self.cache = []
+		self.n = n
+	
+	def flush(self):
+		pass
+	
+	def read(self):
+		return "\n".join(self.cache)
+	
+	def write(self, data):
+		if data.rstrip():
+			lines = data.rstrip().splitlines()[-self.n:]
+			while len(self.cache) > self.n - len(lines):
+				self.cache = self.cache[1:]
+			self.cache += lines
+		else:
+			self.cache = []
 
 
 class Worker():
@@ -517,6 +558,7 @@ class Worker():
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
 		self.finished = True
+		self.interactive = False
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
@@ -557,6 +599,15 @@ class Worker():
 		   instrument_features.get("highres_mode"):
 			args += ["-H"]
 	
+	def get_needs_no_sensor_cal(self):
+		instrument_features = self.get_instrument_features()
+		# -N switch not working as expected in Argyll < 1.1.0
+		return instrument_features and \
+			   (not instrument_features.get("sensor_cal") or 
+			    (self.dispread_after_dispcal and 
+			     instrument_features.get("skip_sensor_cal") and 
+				 self.argyll_version >= [1, 1, 0]))
+	
 	def clear_argyll_info(self):
 		"""
 		Clear Argyll CMS version, detected displays and instruments.
@@ -576,6 +627,8 @@ class Worker():
 		self.retcode = -1
 		self.output = []
 		self.errors = []
+		self.recent = LineCache(n=3)
+		self.lastmsg = LineCache()
 
 	def create_tempdir(self):
 		""" Create a temporary working directory and return its path. """
@@ -586,8 +639,8 @@ class Worker():
 				self.tempdir = tempfile.mkdtemp(prefix=appname + u"-")
 			except Exception, exception:
 				self.tempdir = None
-				handle_error(u"Error - couldn't create temporary directory: " + 
-							 safe_unicode(exception), parent=self.owner)
+				return Error("Error - couldn't create temporary directory: " + 
+							 safe_str(exception))
 		return self.tempdir
 
 	def enumerate_displays_and_ports(self, silent=False):
@@ -598,18 +651,17 @@ class Worker():
 		like black point rate, and checks LUT access for each display.
 		
 		"""
-		displays = list(self.displays)
-		lut_access = list(self.lut_access)
-		argyll_bin_dir = self.argyll_bin_dir
-		argyll_version_string = self.argyll_version_string
-		self.clear_argyll_info()
 		if (silent and check_argyll_bin()) or (not silent and 
 											   check_set_argyll_bin()):
+			displays = []
+			instruments = []
+			lut_access = []
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			cmd = get_argyll_util("dispcal")
-			self.argyll_bin_dir = os.path.dirname(cmd)
+			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
+				self.argyll_bin_dir = argyll_bin_dir
 				log(self.argyll_bin_dir)
 			result = self.exec_cmd(cmd, [], capture_output=True, 
 								   skip_scripts=True, silent=True, 
@@ -629,8 +681,9 @@ class Worker():
 					line = line.strip()
 					if n == 0 and "version" in line.lower():
 						argyll_version = line[line.lower().find("version")+8:]
-						self.argyll_version_string = argyll_version
+						argyll_version_string = argyll_version
 						if (argyll_version_string != self.argyll_version_string):
+							self.argyll_version_string = argyll_version_string
 							log("Argyll CMS " + self.argyll_version_string)
 						config.defaults["copyright"] = ("Created with %s %s "
 														"and Argyll CMS %s" % 
@@ -667,7 +720,7 @@ class Worker():
 											# as Argyll continues using
 											# EnumDisplayMonitors
 											device = win32api.EnumDisplayDevices(
-												monitors[len(self.displays)]["Device"], i)
+												monitors[len(displays)]["Device"], i)
 										except pywintypes.error:
 											break
 										else:
@@ -681,7 +734,7 @@ class Worker():
 								if " ".join(value.split()[-2:]) == \
 								   "(Primary Display)":
 									display += u" [PRIMARY]"
-								self.displays.append(display)
+								displays.append(display)
 						elif arg == "-c":
 							value = value.split(None, 1)
 							if len(value) > 1:
@@ -689,19 +742,22 @@ class Worker():
 							else:
 								value = value[0]
 							value = remove_vendor_names(value)
-							self.instruments.append(value)
+							instruments.append(value)
 			if test:
-				inames = instruments.keys()
+				inames = all_instruments.keys()
 				inames.sort()
 				for iname in inames:
-					if not iname in self.instruments:
-						self.instruments.append(iname)
+					if not iname in instruments:
+						instruments.append(iname)
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
+			if instruments != self.instruments:
+				self.instruments = instruments
 			if displays != self.displays:
+				self.displays = displays
 				# Check lut access
 				i = 0
 				dispwin = get_argyll_util("dispwin")
-				for disp in self.displays:
+				for disp in displays:
 					if verbose >= 1 and not silent:
 						safe_print(lang.getstr("checking_lut_access", (i + 1)))
 					# Load test.cal
@@ -733,15 +789,16 @@ class Worker():
 										   silent=True)
 					if isinstance(result, Exception):
 						safe_print(result)
-					self.lut_access += [retcode == 0]
+					lut_access += [retcode == 0]
 					if verbose >= 1 and not silent:
 						if retcode == 0:
 							safe_print(lang.getstr("success"))
 						else:
 							safe_print(lang.getstr("failure"))
 					i += 1
-			else:
 				self.lut_access = lut_access
+		elif silent or not check_argyll_bin():
+			self.clear_argyll_info()
 
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
@@ -787,19 +844,6 @@ class Worker():
 					working_basename = os.path.splitext(working_basename)[0] 
 			else:
 				working_dir = None
-		if not capture_output and low_contrast and sys.stdout.isatty():
-			# Set low contrast colors (gray on black) so it doesn't interfere 
-			# with measurements
-			try:
-				if sys.platform == "win32":
-					sp.call("color 08", shell=True)
-				elif sys.platform == "darwin":
-					mac_terminal_set_colors()
-				else:
-					print "\x1b[2;37m"
-			except Exception, exception:
-				safe_print("Info - could not set terminal colors:", 
-						   safe_unicode(exception))
 		if verbose >= 1:
 			if not silent or verbose >= 3:
 				safe_print("", fn=fn)
@@ -826,7 +870,8 @@ class Worker():
 						  os.path.dirname(item) == working_dir):
 				# Strip the path from all items in the working dir
 				if sys.platform == "win32" and \
-				   re.search("[^\x00-\x7f]", item) and os.path.exists(item):
+				   re.search("[^\x00-\x7f]", 
+							 os.path.basename(item)) and os.path.exists(item):
 					# Avoid problems with encoding
 					item = win32api.GetShortPathName(item) 
 				cmdline[i] = os.path.basename(item)
@@ -848,12 +893,8 @@ class Worker():
 		interact = args and cmdname in measure_cmds + process_cmds
 		measure = cmdname in measure_cmds
 		if measure:
-			instrument_features = self.get_instrument_features()
-			# -N switch not working as expected in Argyll < 1.1.0
-			skip_sensor_cal = instrument_features and \
-							  (not instrument_features.get("sensor_cal") or 
-							   (instrument_features.get("skip_sensor_cal") and 
-								self.argyll_version >= [1, 1, 0]))
+			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") or \
+							  "-N" in args
 		needs_user_interaction = (cmdname == get_argyll_utilname("dispcal") and 
 								  not "-E" in args and not "-R" in args and 
 								  not "-m" in args and not "-r" in args and 
@@ -870,7 +911,7 @@ class Worker():
 		if sudo:
 			try:
 				stdin = tempfile.SpooledTemporaryFile()
-				stdin.write((self.pwd or "").encode(enc) + os.linesep)
+				stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
 				stdin.seek(0)
 				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
 									stdin=stdin, stdout=sp.PIPE, 
@@ -900,7 +941,7 @@ class Worker():
 							safe_print(lang.getstr("aborted"), fn=fn)
 							return None
 						stdin = tempfile.SpooledTemporaryFile()
-						stdin.write(pwd.encode(enc) + os.linesep)
+						stdin.write(pwd.encode(enc, "replace") + os.linesep)
 						stdin.seek(0)
 						sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
 											stdin=stdin, 
@@ -949,15 +990,15 @@ class Worker():
 					context.write("@echo off\n")
 					context.write(('PATH %s;%%PATH%%\n' % 
 								   os.path.dirname(cmd)).encode(enc, 
-																"asciize"))
-					cmdfiles.write('pushd "%~dp0"\n'.encode(enc, "asciize"))
+																"safe_asciize"))
+					cmdfiles.write('pushd "%~dp0"\n'.encode(enc, "safe_asciize"))
 					if cmdname in (get_argyll_utilname("dispcal"), 
 								   get_argyll_utilname("dispread")):
 						cmdfiles.write("color 07\n")
 				else:
 					context.write(('PATH=%s:$PATH\n' % 
 								   os.path.dirname(cmd)).encode(enc, 
-																"asciize"))
+																"safe_asciize"))
 					if sys.platform == "darwin" and config.mac_create_app:
 						cmdfiles.write('pushd "`dirname '
 										'\\"$0\\"`/../../.."\n')
@@ -970,7 +1011,7 @@ class Worker():
 					os.chmod(cmdfilename, 0755)
 					os.chmod(allfilename, 0755)
 				cmdfiles.write(u" ".join(quote_args(cmdline)).replace(cmd, 
-					cmdname).encode(enc, "asciize") + "\n")
+					cmdname).encode(enc, "safe_asciize") + "\n")
 				if sys.platform == "win32":
 					cmdfiles.write("set exitcode=%errorlevel%\n")
 					if cmdname in (get_argyll_utilname("dispcal"), 
@@ -1032,13 +1073,13 @@ class Worker():
 			except Exception, exception:
 				safe_print("Warning - error during shell script creation:", 
 						   safe_unicode(exception))
-		if needs_user_interaction and \
-			 sys.platform == "darwin" and args and self.owner and not \
-			 self.owner.IsShownOnScreen():
-			start_new_thread(mac_app_activate, (3, "Terminal"))
 		cmdline = [arg.encode(fs_enc) for arg in cmdline]
 		working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 		try:
+			if not needs_user_interaction:
+				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
+			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
+				del os.environ["ARGYLL_NOT_INTERACTIVE"]
 			if not interact:
 				if silent:
 					stderr = sp.STDOUT
@@ -1052,7 +1093,7 @@ class Worker():
 					stdout = sp.PIPE
 				if sudo:
 					stdin = tempfile.SpooledTemporaryFile()
-					stdin.write((self.pwd or "").encode(enc) + os.linesep)
+					stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
 					stdin.seek(0)
 				elif sys.stdin.isatty():
 					stdin = None
@@ -1068,26 +1109,32 @@ class Worker():
 				kwargs = dict(timeout=10, cwd=working_dir,
 							  env=os.environ)
 				if sys.platform == "win32":
-					codepage = kernel32.GetACP()
+					codepage = windll.kernel32.GetACP()
 					kwargs["codepage"] = codepage
 					data_encoding = aliases.get(str(codepage), "ascii")
 				else:
 					data_encoding = enc
 				stderr = StringIO()
 				stdout = StringIO()
+				self.recent = FilteredStream(LineCache(n=3), data_encoding, 
+											 discard=re.compile("^(?:Adjusted )?[Tt]arget (?:white|black|gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|(?:Black|Red|Green|Blue|White)\\s+=.+|patch \\d+ of \\d+.*|point \\d+.*|Added \\d+/\\d+|[\\*|\\.]+|\\s*\\d*%?", 
+																re.I))
+				self.lastmsg = FilteredStream(LineCache(), data_encoding, 
+											  discard=re.compile("[\\*|\\.]+"))
 				if log_output:
-					if sys.stdout.isatty() and (not needs_user_interaction or 
-												sys.platform == "win32"):
+					if sys.stdout.isatty():
 						logfile = FilteredStream(safe_print, data_encoding)
 					else:
 						logfile = FilteredStream(log, data_encoding)
-					logfile = Files((logfile, stdout))
+					logfile = Files((logfile, stdout, self.recent,
+									 self.lastmsg))
 				else:
-					logfile = stdout
-			if not needs_user_interaction:
-				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
-			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
-				del os.environ["ARGYLL_NOT_INTERACTIVE"]
+					logfile = Files((stdout, self.recent,
+									 self.lastmsg))
+				if self.interactive:
+					logfile = Files((FilteredStream(self.terminal,
+													discard="",
+													triggers={}), logfile))
 			if sys.platform == "win32" and working_dir:
 				working_dir = win32api.GetShortPathName(working_dir)
 			logfn = log
@@ -1100,21 +1147,10 @@ class Worker():
 					if measure and sys.platform not in ("win32", "darwin"):
 						# allow some time to setup instrument and create test window
 						sleep(5)
-					try:
-						if self.subprocess.isalive():
-							if needs_user_interaction or (sys.platform == "win32" and 
-														  cmdname != get_argyll_utilname("targen")):
-								self.subprocess.interact()
-								if sys.platform == "win32" and \
-								   needs_user_interaction:
-									# Under Windows Vista and 7 we need atleast one 
-									# active window associated with the running
-									# subprocess, otherwise it might freeze screen
-									# updates
-									wsh_shell.AppActivate(self.subprocess.wtty.conpid)
-							if measure and (not needs_user_interaction or 
-											sys.platform == "win32") and \
-							   skip_sensor_cal and not "-F" in args:
+					if measure:
+						try:
+							if self.subprocess.isalive():
+								if skip_sensor_cal and not "-F" in args:
 									# Allow the user to move the terminal window if
 									# using black background
 									self.subprocess.expect(":")
@@ -1122,12 +1158,9 @@ class Worker():
 										sleep(.5)
 									if self.subprocess.isalive():
 										self.subprocess.send(" ")
-							if measure and not needs_user_interaction:
-								while True:
+								while self.subprocess.isalive():
 									# Handle misreads, user can cancel via
 									# progress dialog
-									if not self.subprocess.isalive():
-										break
 									self.subprocess.expect("failed due to", 
 														   timeout=None)
 									self.subprocess.expect("key to retry:", 
@@ -1136,15 +1169,14 @@ class Worker():
 										sleep(.5)
 									if self.subprocess.isalive():
 										self.subprocess.send(" ")
-					except (wexpect.EOF, wexpect.TIMEOUT), exception:
-						pass
+						except (wexpect.EOF, wexpect.TIMEOUT), exception:
+							pass
 					if self.subprocess.after not in (wexpect.EOF, 
 													 wexpect.TIMEOUT):
 						self.subprocess.expect(wexpect.EOF, timeout=None)
 					if self.subprocess.isalive():
 						self.subprocess.wait()
 					self.retcode = self.subprocess.exitstatus
-					self.terminate_cmd()
 				else:
 					self.subprocess = sp.Popen(cmdline, stdin=stdin, 
 											   stdout=stdout, stderr=stderr, 
@@ -1179,17 +1211,10 @@ class Worker():
 						if len(errors2):
 							self.errors = errors2
 							errstr = "".join(errors2).strip()
-							if (self.retcode != 0 or 
-								cmdname == get_argyll_utilname("dispwin")):
-								wx.CallAfter(InfoDialog, parent, 
-											 msg=errstr, ok=lang.getstr("ok"), 
-											 bitmap=geticon(32, 
-															"dialog-warning"))
-							else:
-								safe_print(errstr, fn=fn)
+							safe_print(errstr, fn=fn)
 					if tries > 0 and not interact:
 						stderr = tempfile.SpooledTemporaryFile()
-				if capture_output:
+				if capture_output or interact:
 					stdout.seek(0)
 					self.output = [re.sub("^\.{4,}\s*$", "", 
 										  line.decode(enc, "replace")) 
@@ -1197,7 +1222,8 @@ class Worker():
 					stdout.close()
 					if len(self.output) and log_output:
 						if not interact:
-							log("".join(self.output).strip())
+							logfn = log if silent else safe_print
+							logfn("".join(self.output).strip())
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
@@ -1210,28 +1236,16 @@ class Worker():
 					  safe_unicode(traceback.format_exc()))
 			return Error(errmsg)
 			self.retcode = -1
-		if not capture_output and low_contrast and sys.stdout.isatty():
-			# Reset to higher contrast colors (white on black) for readability
-			try:
-				if sys.platform == "win32":
-					sp.call("color 07", shell=True)
-				elif sys.platform == "darwin":
-					mac_terminal_set_colors(text="white", text_bold="white")
-				else:
-					print "\x1b[22;37m"
-			except Exception, exception:
-				safe_print("Info - could not restore terminal colors:", 
-						   safe_unicode(exception))
 		if self.retcode != 0:
 			if verbose >= 1 and not capture_output:
 				safe_print(lang.getstr("aborted"), fn=fn)
 			if interact and len(self.output):
-				for line in self.output:
+				for i, line in enumerate(self.output):
 					if line.startswith(cmdname + ": Error") and \
 					   not "display read failed with 'User Aborted'" in line and \
 					   not "test_crt returned error code 1" in line:
 						# "test_crt returned error code 1" == user aborted
-						return Error(line.strip())
+						return Error("".join(self.output[i:]))
 			return False
 		return True
 
@@ -1247,15 +1261,15 @@ class Worker():
 						   safe_unicode(traceback.format_exc()))
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
-		if hasattr(self, "progress_dlg") and (not continue_next or 
+		if hasattr(self, "progress_wnd") and (not continue_next or 
 											  isinstance(result, Exception) or 
 											  not result):
-			self.progress_dlg.stop_timer()
-			self.progress_dlg.MakeModal(False)
-			self.progress_dlg.EndModal(wx.ID_OK)
+			self.progress_wnd.stop_timer()
+			self.progress_wnd.MakeModal(False)
+			self.progress_wnd.EndModal(wx.ID_OK)
 			# EndModal does not hide the dialog under Linux, and destroying it
 			# causes segfault
-			self.progress_dlg.Hide()
+			self.progress_wnd.Hide()
 		self.finished = True
 		self.subprocess_abort = False
 		self.thread_abort = False
@@ -1286,7 +1300,7 @@ class Worker():
 	
 	def get_instrument_features(self):
 		""" Return features of currently configured instrument """
-		return instruments.get(self.get_instrument_name(), {})
+		return all_instruments.get(self.get_instrument_name(), {})
 	
 	def get_instrument_name(self):
 		""" Return name of currently configured instrument """
@@ -1315,16 +1329,16 @@ class Worker():
 		
 		"""
 		profile_save_path = self.create_tempdir()
-		if not profile_save_path:
-			return None, None
+		if not profile_save_path or isinstance(profile_save_path, Exception):
+			return profile_save_path, None
 		# Check directory and in/output file(s)
 		result = check_create_dir(profile_save_path)
 		if isinstance(result, Exception):
 			return result, None
 		if profile_name is None:
 			profile_name = getcfg("profile.name.expanded")
-		inoutfile = make_argyll_compatible_path(os.path.join(profile_save_path, 
-															 profile_name))
+		inoutfile = os.path.join(profile_save_path, 
+								 make_argyll_compatible_path(profile_name))
 		if not os.path.exists(inoutfile + ".ti3"):
 			return Error(lang.getstr("error.measurement.file_missing", 
 									 inoutfile + ".ti3")), None
@@ -1356,19 +1370,20 @@ class Worker():
 				options_colprof[i] = '"' + options_colprof[i] + '"'
 		args += ["-C"]
 		args += [getcfg("copyright").encode("ASCII", "asciize")]
+		options_dispcal = None
 		if "-d3" in self.options_targen:
 			# only add display desc and dispcal options if creating RGB profile
+			options_dispcal = self.options_dispcal
 			if len(self.displays):
 				args.insert(-2, "-M")
 				if display_name is None:
-					args.insert(-2, self.get_display_name())
-				else:
-					args.insert(-2, display_name)
+					display_name = self.get_display_name()
+				args.insert(-2, display_name)
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
 		# Add dispcal and colprof arguments to ti3
-		ti3 = add_options_to_ti3(inoutfile + ".ti3", self.options_dispcal, 
+		ti3 = add_options_to_ti3(inoutfile + ".ti3", options_dispcal, 
 								 options_colprof)
 		if ti3:
 			ti3.write()
@@ -1390,15 +1405,14 @@ class Worker():
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
 			profile_save_path = self.create_tempdir()
-			if not profile_save_path:
-				return None, None
+			if not profile_save_path or isinstance(profile_save_path, Exception):
+				return profile_save_path, None
 			# Check directory and in/output file(s)
 			result = check_create_dir(profile_save_path)
 			if isinstance(result, Exception):
 				return result, None
-			inoutfile = make_argyll_compatible_path(
-				os.path.join(profile_save_path, 
-							 getcfg("profile.name.expanded")))
+			inoutfile = os.path.join(profile_save_path, 
+									 make_argyll_compatible_path(getcfg("profile.name.expanded")))
 			if getcfg("profile.update") or \
 			   self.dispcal_create_fast_matrix_shaper:
 				args += ["-o"]
@@ -1518,14 +1532,14 @@ class Worker():
 		
 		"""
 		profile_save_path = self.create_tempdir()
-		if not profile_save_path:
-			return None, None
+		if not profile_save_path or isinstance(profile_save_path, Exception):
+			return profile_save_path, None
 		# Check directory and in/output file(s)
 		result = check_create_dir(profile_save_path)
 		if isinstance(result, Exception):
 			return result, None
-		inoutfile = make_argyll_compatible_path(
-			os.path.join(profile_save_path, getcfg("profile.name.expanded")))
+		inoutfile = os.path.join(profile_save_path, 
+								 make_argyll_compatible_path(getcfg("profile.name.expanded")))
 		if not os.path.exists(inoutfile + ".ti1"):
 			filename, ext = os.path.splitext(getcfg("testchart.file"))
 			result = check_file_isfile(filename + ext)
@@ -1702,6 +1716,27 @@ class Worker():
 							# releases
 							args += ["-S" + getcfg("profile.install_scope")]
 					args += ["-I"]
+					if (sys.platform in ("win32", "darwin") or 
+						fs_enc.upper() not in ("UTF8", "UTF-8")) and \
+					   re.search("[^\x00-\x7f]", 
+								 os.path.basename(profile_path)):
+						# Copy to temp dir and give unique ASCII-only name to
+						# avoid profile install issues
+						tmp_dir = self.create_tempdir()
+						if not tmp_dir or isinstance(tmp_dir, Exception):
+							return tmp_dir, None
+						# Check directory and in/output file(s)
+						result = check_create_dir(tmp_dir)
+						if isinstance(result, Exception):
+							return result, None
+						# profile name: 'display<n>-<hexmd5sum>.icc'
+						profile_tmp_path = os.path.join(tmp_dir, "display" + 
+														self.get_display() + 
+														"-" + 
+														md5(profile.data).hexdigest() + 
+														profile_ext)
+						shutil.copyfile(profile_path, profile_tmp_path)
+						profile_path = profile_tmp_path
 				args += [profile_path]
 		return cmd, args
 
@@ -1713,8 +1748,8 @@ class Worker():
 		
 		"""
 		path = self.create_tempdir()
-		if not path:
-			return None, None
+		if not path or isinstance(path, Exception):
+			return path, None
 		# Check directory and in/output file(s)
 		result = check_create_dir(path)
 		if isinstance(result, Exception):
@@ -1756,11 +1791,52 @@ class Worker():
 		return cmd, args
 
 	def progress_handler(self, event):
-		keepGoing, skip = self.progress_dlg.Pulse()
+		percentage = None
+		msg = self.recent.read()
+		lastmsg = self.lastmsg.read().strip()
+		if re.match("\\s*\\d+%", lastmsg):
+			# colprof
+			try:
+				percentage = int(self.lastmsg.read().strip("%"))
+			except ValueError:
+				pass
+		elif re.match("Patch \\d+ of \\d+|Point \\d+", lastmsg, re.I):
+			# dispcal/dispread
+			components = lastmsg.split()
+			try:
+				start = float(components[1])
+				end = float(components[3])
+			except ValueError:
+				pass
+			else:
+				percentage = start / end * 100
+		elif re.match("Added \\d+/\\d+", lastmsg, re.I):
+			# targen
+			components = lastmsg.replace("Added ", "").split("/")
+			try:
+				start = float(components[0])
+				end = float(components[1])
+			except ValueError:
+				pass
+			else:
+				percentage = start / end * 100
+		if getattr(self.progress_wnd, "original_msg", None) and \
+		   msg != self.progress_wnd.original_msg:
+			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
+			self.progress_wnd.original_msg = None
+		if percentage:
+			keepGoing, skip = self.progress_wnd.Update(percentage, 
+													   msg + "\n" + 
+													   lastmsg)
+		else:
+			if getattr(self.progress_wnd, "lastmsg", "") == msg or not msg:
+				keepGoing, skip = self.progress_wnd.Pulse()
+			else:
+				keepGoing, skip = self.progress_wnd.Pulse(msg)
 		if not keepGoing:
 			if not getattr(self, "subprocess_abort", False) and \
 			   not getattr(self, "thread_abort", False):
-				self.progress_dlg.Pulse(lang.getstr("aborting"))
+				self.progress_wnd.Pulse(lang.getstr("aborting"))
 			if getattr(self, "subprocess", None) and \
 			   not getattr(self, "subprocess_abort", False):
 				if debug:
@@ -1770,34 +1846,44 @@ class Worker():
 				if debug:
 					log('[D] thread_abort')
 				self.thread_abort = True
+		if self.interactive and self.progress_wnd.IsShownOnScreen() and \
+		   not wx.GetApp().IsActive():
+			# This is mainly needed on the Mac were dispcal's test window
+			# steals focus
+			self.progress_wnd.Raise()
+			if not wx.GetApp().IsActive():
+				self.progress_wnd.RequestUserAttention()
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
 						   parent=None, resume=False):
-		if hasattr(self, "progress_dlg"):
-			if not resume:
-				self.progress_dlg.EndModal(wx.ID_OK)
-				self.progress_dlg.Destroy()
-				del self.progress_dlg
+		if getattr(self, "progress_dlg", None) and not resume:
+			self.progress_dlg.EndModal(wx.ID_OK)
+			self.progress_dlg.Destroy()
+			self.progress_dlg = None
+		if getattr(self, "progress_wnd", None) and \
+		   self.progress_wnd is getattr(self, "terminal", None):
+			self.terminal.stop_timer()
+			self.terminal.Hide()
 		if self.finished is True:
 			return
-		if hasattr(self, "progress_dlg"):
-			self.progress_dlg.MakeModal(True)
-			self.progress_dlg.SetTitle(progress_title)
-			self.progress_dlg.Pulse(progress_msg)
-			self.progress_dlg.Resume()
-			if not self.progress_dlg.IsShownOnScreen():
-				self.progress_dlg.Show()
-			self.progress_dlg.start_timer()
+		if getattr(self, "progress_dlg", None):
+			self.progress_wnd = self.progress_dlg
+			self.progress_wnd.MakeModal(True)
+			self.progress_wnd.SetTitle(progress_title)
+			self.progress_wnd.Update(0, progress_msg)
+			self.progress_wnd.Resume()
+			if not self.progress_wnd.IsShownOnScreen():
+				self.progress_wnd.Show()
+			self.progress_wnd.start_timer()
 		else:
+			# Set maximum to 101 to prevent the 'cancel' changing to 'close'
+			# when 100 is reached
 			self.progress_dlg = ProgressDialog(progress_title, progress_msg, 
+											   maximum=101, 
 											   parent=parent, 
 											   handler=self.progress_handler)
-	
-	def quit_cmd(self):
-		try:
-			self.subprocess.send("q")
-		except Exception, exception:
-			log(safe_unicode(exception))
+			self.progress_wnd = self.progress_dlg
+		self.progress_wnd.original_msg = progress_msg
 	
 	def quit_terminate_cmd(self):
 		if debug:
@@ -1816,8 +1902,8 @@ class Worker():
 				if hasattr(self.subprocess, "send"):
 					try:
 						if debug:
-							log('[D] try send (1)')
-						self.subprocess.send("q")
+							log('[D] try send ESC (1)')
+						self.subprocess.send("\x1b")
 						sleep(1)
 						if getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
@@ -1830,8 +1916,8 @@ class Worker():
 							if not isinstance(self.subprocess.after, 
 											  wexpect.EOF):
 								if debug:
-									log('[D] try send (2)')
-								self.subprocess.send("q")
+									log('[D] try send ESC (2)')
+								self.subprocess.send("\x1b")
 								sleep(1)
 							elif debug:
 								log('[D] EOF')
@@ -1871,15 +1957,6 @@ class Worker():
 															   "isalive"))
 				if hasattr(self.subprocess, "isalive"):
 					log('[D] subprocess.isalive(): %r' % subprocess.isalive())
-	
-	def terminate_cmd(self):
-		try:
-			if self.subprocess.isalive():
-				self.subprocess.terminate(force=True)
-		except Exception, exception:
-			log(safe_unicode(exception))
-		if sys.platform == "win32" and not sys.stdout.isatty():
-			wexpect.FreeConsole()
 
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 
@@ -1917,12 +1994,31 @@ class Worker():
 			parent = self.owner
 		if progress_start < 100:
 			progress_start = 100
-		# Show the progress dialog after a delay
-		self.progress_start_timer = wx.CallLater(progress_start, 
-												 self.progress_dlg_start, 
-												 progress_title, 
-												 progress_msg, parent,
-												 resume)
+		self.resume = resume
+		if self.interactive or test:
+			self.progress_start_timer = wx.Timer()
+			if getattr(self, "progress_wnd", None) and \
+			   self.progress_wnd is getattr(self, "progress_dlg", None):
+				self.progress_dlg.EndModal(wx.ID_OK)
+				self.progress_dlg.Destroy()
+				self.progress_dlg = None
+			if getattr(self, "terminal", None):
+				self.progress_wnd = self.terminal
+				self.progress_wnd.console.SetValue("")
+				self.progress_wnd.start_timer()
+				self.progress_wnd.Show()
+			else:
+				self.terminal = SimpleTerminal(parent,
+											   handler=self.progress_handler,
+											   keyhandler=self.terminal_key_handler)
+				self.progress_wnd = self.terminal
+		else:
+			# Show the progress dialog after a delay
+			self.progress_start_timer = wx.CallLater(progress_start, 
+													 self.progress_dlg_start, 
+													 progress_title, 
+													 progress_msg, parent,
+													 resume)
 		self.finished = False
 		self.subprocess_abort = False
 		self.thread_abort = False
@@ -1932,6 +2028,27 @@ class Worker():
 												list(cargs), ckwargs, wargs, 
 												wkwargs)
 		return True
+	
+	def swap_progress_wnds(self):
+		parent = self.terminal.GetParent()
+		title = self.terminal.GetTitle()
+		self.progress_dlg_start(title, "", parent, self.resume)
+	
+	def terminal_key_handler(self, event):
+		keycode = None
+		if event.GetEventType() in (wx.EVT_CHAR_HOOK.typeId,
+									wx.EVT_KEY_DOWN.typeId):
+			keycode = event.GetKeyCode()
+		elif event.GetEventType() == wx.EVT_MENU.typeId:
+			keycode = self.terminal.id_to_keycode.get(event.GetId())
+		if keycode is not None and keycode < 256:
+			if keycode == ord("7"):
+				# calibration
+				wx.CallAfter(self.swap_progress_wnds)
+			try:
+				self.subprocess.send(chr(keycode))
+			except:
+				pass
 	
 	def ti1_lookup_to_ti3(self, ti1, profile, pcs=None):
 		"""
@@ -2014,8 +2131,8 @@ class Worker():
 		# lookup device->cie values through profile using icclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
-		if not cwd:
-			raise OSError()
+		if isinstance(cwd, Exception):
+			raise cwd
 		profile.write(os.path.join(cwd, "temp.icc"))
 		p = sp.Popen([icclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
@@ -2064,8 +2181,8 @@ class Worker():
 			gray = []
 			icclu = get_argyll_util("icclu").encode(fs_enc)
 			cwd = self.create_tempdir()
-			if not cwd:
-				raise OSError()
+			if isinstance(cwd, Exception):
+				raise cwd
 			profile.write(os.path.join(cwd, "temp.icc"))
 			p = sp.Popen([icclu, '-fb', '-ir', '-pl', '-s100', "temp.icc"], 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
@@ -2240,8 +2357,8 @@ class Worker():
 		# lookup cie->device values through profile.icc using xicclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
-		if not cwd:
-			raise OSError()
+		if isinstance(cwd, Exception):
+			raise cwd
 		profile.write(os.path.join(cwd, "temp.icc"))
 		p = sp.Popen([icclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 

@@ -76,7 +76,8 @@ class TestchartEditor(wx.Frame):
 			p1.SetSizer(p1.sizer)
 
 			p2 = wx.Panel(splitter)
-			p2.SetDropTarget(self.droptarget)
+			# Setting a droptarget seems to cause crash when destroying
+			##p2.SetDropTarget(self.droptarget)
 			p2.sizer = wx.BoxSizer(wx.VERTICAL)
 			p2.SetSizer(p2.sizer)
 
@@ -830,6 +831,7 @@ class TestchartEditor(wx.Frame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("testchart.create"))
 		#self.tc_create()
+		self.worker.interactive = False
 		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.create"), parent = self, progress_start = 500)
 
 	def tc_clear_handler(self, event):
@@ -1009,6 +1011,7 @@ class TestchartEditor(wx.Frame):
 			InfoDialog(self, msg = lang.getstr("error.testchart.read", path) + "\n\n" + safe_unicode(exception), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
 			return False
 		safe_print(lang.getstr("testchart.read"))
+		self.worker.interactive = False
 		self.worker.start(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.read"), parent = self, progress_start = 500)
 
 	def tc_load_cfg_from_ti1_worker(self):
@@ -1357,8 +1360,10 @@ class TestchartEditor(wx.Frame):
 		else:
 			result = cmd
 		if not isinstance(result, Exception) and result:
-			self.worker.create_tempdir()
-			if self.worker.tempdir:
+			tmp = self.worker.create_tempdir()
+			if isinstance(tmp, Exception):
+				result = tmp
+			if not isinstance(result, Exception):
 				path = os.path.join(self.worker.tempdir, "temp.ti1")
 				result = check_file_isfile(path, silent = False)
 				if not isinstance(result, Exception) and result:
@@ -1382,8 +1387,6 @@ class TestchartEditor(wx.Frame):
 								wrl.close()
 							except Exception, exception:
 								return Error(u"Warning - VRML file could not be read: " + safe_unicode(exception))
-			else:
-				result = False
 		self.worker.wrapup(False)
 		return result
 

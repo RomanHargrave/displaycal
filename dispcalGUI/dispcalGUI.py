@@ -56,6 +56,8 @@ import httplib
 import logging
 import math
 import os
+if sys.platform == "darwin":
+	from platform import mac_ver
 import re
 import shutil
 import socket
@@ -63,11 +65,13 @@ import subprocess as sp
 import tempfile26 as tempfile
 import threading
 import traceback
+from encodings.aliases import aliases
 from time import sleep, strftime
 
 # 3rd party modules
 
 if sys.platform == "win32":
+	from ctypes import windll
 	from win32com.shell import shell
 	from win32console import SetConsoleOutputCP
 	import pythoncom
@@ -105,19 +109,18 @@ from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
 from trash import trash, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
-from util_io import StringIOu as StringIO
+from util_io import Files, StringIOu as StringIO
 from util_list import index_fallback_ignorecase, natsort
 if sys.platform == "darwin":
-	from util_mac import (mac_app_activate, mac_terminal_do_script,
-						  mac_terminal_set_colors)
+	from util_mac import mac_terminal_do_script
 from util_os import expanduseru, launch_file, listdir_re, which
 from util_str import safe_str, safe_unicode, strtr, wrap
 import util_x
-from worker import (Worker, check_cal_isfile, 
+from worker import (FilteredStream, LineCache, Worker, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, 
 					get_options_from_profile, make_argyll_compatible_path, 
-					set_argyll_bin, show_result_dialog)
+					printcmdline, set_argyll_bin, show_result_dialog)
 try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
@@ -126,17 +129,18 @@ if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
-from wxfixes import GTKMenuItemGetFixedLabel
+from wxfixes import GTKMenuItemGetFixedLabel, _intversion
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
 					   LogWindow, TooltipWindow)
 
 # wxPython
 from wx import xrc
+from wx.lib import delayedresult
 from wx.lib.art import flagart
 import wx.lib.hyperlink
 
 def _excepthook(etype, value, tb):
-	handle_error("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
+	safe_print("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
 
 sys.excepthook = _excepthook
 
@@ -503,23 +507,7 @@ class MainFrame(BaseFrame):
 
 	""" Display calibrator main application window. """
 	
-	def __init__(self):
-		# Set terminal colors
-		if sys.stdout.isatty():
-			try:
-				if sys.platform == "win32":
-					sp.call("color 07", shell=True)
-				else:
-					if sys.platform == "darwin":
-						mac_terminal_set_colors(text="white", text_bold="white")
-					else:
-						print "\x1b[40;22;37m"
-					sp.call('clear', shell=True)
-			except Exception, exception:
-				# Not being able to change terminal colors is not a big
-				# issue. Simply ignore.
-				pass
-		
+	def __init__(self):		
 		# Startup messages
 		if verbose >= 1:
 			safe_print(lang.getstr("startup"))
@@ -2308,6 +2296,9 @@ class MainFrame(BaseFrame):
 	def ambient_measure_handler(self, event):
 		if not check_set_argyll_bin():
 			return
+		safe_print("-" * 80)
+		safe_print(lang.getstr("ambient.measure"))
+		self.worker.interactive = False
 		self.worker.start(self.ambient_measure_process, 
 						  self.ambient_measure_process, 
 						  ckwargs={"event_id": event.GetId(),
@@ -2326,8 +2317,21 @@ class MainFrame(BaseFrame):
 			if measurement_mode and not instrument_features.get("spectral"):
 				# Always specify -y for colorimeters
 				args += ["-y" + measurement_mode[0]]
+			safe_print("")
+			safe_print(lang.getstr("commandline"))
+			printcmdline(cmd, args)
+			safe_print("")
+			kwargs = dict(timeout=10)
+			if sys.platform == "win32":
+				codepage = windll.kernel32.GetACP()
+				kwargs["codepage"] = codepage
+				data_encoding = aliases.get(str(codepage), "ascii")
+			else:
+				data_encoding = enc
+			self.worker.clear_cmd_output()
 			try:
-				result = wexpect.spawn(cmd, args, timeout=10)
+				result = wexpect.spawn(cmd, args, **kwargs)
+				result.logfile_read = FilteredStream(safe_print)
 			except Exception, exception:
 				return exception
 			if not result or not result.isalive():
@@ -2355,6 +2359,7 @@ class MainFrame(BaseFrame):
 				dlg_result = dlg.ShowModal()
 				dlg.Destroy()
 				if dlg_result != wx.ID_OK:
+					safe_print(lang.getstr("aborted"))
 					return False
 				self.worker.start(self.ambient_measure_process, 
 								  self.ambient_measure_process, 
@@ -2390,6 +2395,7 @@ class MainFrame(BaseFrame):
 			dlg_result = dlg.ShowModal()
 			dlg.Destroy()
 			if dlg_result != wx.ID_OK:
+				safe_print(lang.getstr("aborted"))
 				return False
 			self.worker.start(self.ambient_measure_process, 
 							  self.ambient_measure_process, 
@@ -2408,7 +2414,7 @@ class MainFrame(BaseFrame):
 				return
 			data = result.before if isinstance(result.before, basestring) else ""
 			data = re.sub("[^\t\n\r\x20-\x7f]", "", data).strip()
-			safe_print(os.linesep.join([line.strip() for line in data.splitlines()]))
+			#safe_print(os.linesep.join([line.strip() for line in data.splitlines()]))
 			try:
 				result.expect(pat)
 				result.send("q")
@@ -2937,6 +2943,7 @@ class MainFrame(BaseFrame):
 										  skip_scripts=skip_scripts)
 		else:
 			result = cmd
+		safe_print("-" * 80)
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
 		if not isinstance(result, Exception) and result:
@@ -2947,6 +2954,18 @@ class MainFrame(BaseFrame):
 			if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
 				setcfg("last_cal_or_icc_path", dst_path)
 				setcfg("last_icc_path", dst_path)
+			# Fixup desc tags - ASCII needs to be 7-bit
+			# also add Unicode and Mac ScriptCode strings
+			desc = profile.getDescription()
+			profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
+			profile.tags.desc["Macintosh"] = desc
+			profile.tags.desc["Unicode"] = desc
+			if "dmdd" in profile.tags:
+				ddesc = profile.getDeviceModelDescription()
+				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
+				profile.tags.dmdd["Macintosh"] = ddesc
+				profile.tags.dmdd["Unicode"] = ddesc
+			profile.write()
 		return result
 
 	def install_cal_handler(self, event=None, cal=None):
@@ -3113,11 +3132,15 @@ class MainFrame(BaseFrame):
 						silent=False):
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
 		if not isinstance(cmd, Exception): 
-			if "-Sl" in args and sys.platform != "darwin":
+			if "-Sl" in args and (sys.platform != "darwin" or 
+								  _intversion(mac_ver()[0].split(".")) >= (10, 6)):
 				# If a 'system' install is requested under Linux or Windows, 
-				# install in 'user' scope first because a system-wide install does 
-				# not replace a possible previous 'user' profile on those systems 
-				# (under Mac OS X, it does).
+				# install in 'user' scope first because a system-wide install 
+				# doesn't also set it as current user profile on those systems 
+				# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
+				# It has the small drawback under Linux that it will copy the 
+				# profile to both the user and system-wide locations, though,
+				# which is not a problem under Windows as they are the same.
 				args.remove("-Sl")
 				result = self.worker.exec_cmd(cmd, args, capture_output, 
 											  low_contrast=False, 
@@ -3138,24 +3161,29 @@ class MainFrame(BaseFrame):
 			result = False
 			for line in self.worker.output:
 				if "Installed" in line:
-					if sys.platform == "darwin" and "-Sl" in args:
+					if sys.platform == "darwin" and "-Sl" in args and \
+					   _intversion(mac_ver()[0].split(".")) < (10, 6):
 						# The profile has been installed, but we need a little 
-						# help from applescript to actually make it the default 
+						# help from AppleScript to actually make it the default 
 						# for the current user
-						cmd, args = 'osascript', ['-e', 
-							'set iccProfile to POSIX file "%s"' % 
-							os.path.join(os.path.join(os.path.sep, "Library", 
-													  "ColorSync", "Profiles"), 
-										 os.path.basename(args[-1])), '-e', 
-										 'tell app "ColorSyncScripting" to set '
-										 'display profile of display %s to '
-										 'iccProfile' % 
-										 self.worker.get_display().split(",")[0]]
-						result = self.worker.exec_cmd(cmd, args, 
-													  capture_output=True, 
-													  low_contrast=False, 
-													  skip_scripts=True, 
-													  silent=True)
+						profile_name = os.path.basename(args[-1])
+						for option in ["ColorSyncScripting"]:
+							cmd, args = 'osascript', ['-e', 
+								'set iccProfile to POSIX file "%s"' % 
+								os.path.join(os.path.sep, "Library", 
+											 "ColorSync", "Profiles", 
+											 profile_name), '-e', 
+											 'tell app "%s" to set '
+											 'display profile of display %s to '
+											 'iccProfile' % (option,
+															 self.worker.get_display().split(",")[0])]
+							result = self.worker.exec_cmd(cmd, args, 
+														  capture_output=True, 
+														  low_contrast=False, 
+														  skip_scripts=True, 
+														  silent=False)
+							if result and not isinstance(result, Exception):
+								break
 					else:
 						result = True
 					break
@@ -3172,9 +3200,10 @@ class MainFrame(BaseFrame):
 				# result = False
 				# for line in self.worker.output:
 					# if line.find("'%s' IS loaded" % 
-								 # args[-1].encode(enc, "asciize")) >= 0:
+								 # args[-1].encode(enc, "safe_asciize")) >= 0:
 						# result = True
 						# break
+		self.worker.wrapup(False)
 		if not isinstance(result, Exception) and result:
 			if install:
 				if not silent:
@@ -3386,6 +3415,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("calibration.verify")
 		safe_print(progress_msg)
+		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
 		self.worker.start(self.result_consumer, 
 						  self.verify_calibration_worker, 
 						  progress_msg=progress_msg)
@@ -3525,7 +3555,8 @@ class MainFrame(BaseFrame):
 		
 		# setup temp dir
 		temp = self.worker.create_tempdir()
-		if not temp:
+		if isinstance(temp, Exception):
+			show_result_dialog(temp, self)
 			return
 		
 		# filenames
@@ -3563,6 +3594,8 @@ class MainFrame(BaseFrame):
 				return
 		
 			# start readings
+			self.worker.dispread_after_dispcal = False
+			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
 			self.worker.start(self.verify_profile_consumer, 
 							  self.verify_profile_worker, 
 							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
@@ -3572,7 +3605,6 @@ class MainFrame(BaseFrame):
 	
 	def verify_profile_worker(self, ti1_path):
 		# measure
-		self.worker.dispread_after_dispcal = False
 		cmd = get_argyll_util("dispread")
 		args = ["-v"]
 		self.worker.add_measurement_features(args)
@@ -3875,6 +3907,7 @@ class MainFrame(BaseFrame):
 			else:
 				progress_msg = lang.getstr("report.uncalibrated")
 			safe_print(progress_msg)
+			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
 			self.worker.start(self.result_consumer, self.report_worker, 
 							  wkwargs={"report_calibrated": report_calibrated},
 							  progress_msg=progress_msg)
@@ -3938,8 +3971,11 @@ class MainFrame(BaseFrame):
 		if getcfg("calibration.interactive_display_adjustment") and \
 		   not getcfg("calibration.update"):
 			# Interactive adjustment, do not show progress dialog
-			self.just_calibrate_finish(self.calibrate(remove=True))
+			##self.just_calibrate_finish(self.calibrate(remove=True))
+			self.worker.interactive = True
 		else:
+			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+		if True:
 			# No interactive adjustment, show progress dialog
 			self.measure_calibrate(self.just_calibrate_finish, self.calibrate, 
 								   remove=True,
@@ -4062,14 +4098,18 @@ class MainFrame(BaseFrame):
 		if getcfg("calibration.interactive_display_adjustment") and \
 		   not getcfg("calibration.update"):
 			# Interactive adjustment, do not show progress dialog
-			self.calibrate_finish(self.calibrate())
+			##self.calibrate_finish(self.calibrate())
+			self.worker.interactive = True
 		else:
+			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+		if True:
 			# No interactive adjustment, show progress dialog
 			self.measure_calibrate(self.calibrate_finish, self.calibrate, 
 								   progress_msg=lang.getstr("calibration"), 
 								   continue_next=True)
 	
 	def calibrate_finish(self, result):
+		self.worker.interactive = not self.worker.get_needs_no_sensor_cal()
 		if not isinstance(result, Exception) and result:
 			self.measure(self.calibrate_and_profile_finish,
 						 True, 
@@ -4101,6 +4141,7 @@ class MainFrame(BaseFrame):
 		self.Show(start_timers=start_timers)
 
 	def start_profile_worker(self, success_msg, resume=False):
+		self.worker.interactive = False
 		self.worker.start(self.profile_finish, self.profile, 
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
@@ -4177,6 +4218,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.profile"))
 		self.worker.dispread_after_dispcal = False
+		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
 		self.previous_cal = False
 		self.measure(self.just_profile_finish, apply_calibration,
 					 progress_msg=lang.getstr("measuring.characterization"), 
@@ -4414,7 +4456,8 @@ class MainFrame(BaseFrame):
 			   self.worker.argyll_version >= [1, 1, 0] and \
 			   not "Beta" in self.worker.argyll_version_string:
 				tmp = self.worker.create_tempdir()
-				if not tmp:
+				if isinstance(tmp, Exception):
+					show_result_dialog(tmp, self)
 					return
 				cmd, args = (get_argyll_util("dispwin"), 
 							 ["-d" + self.worker.get_display(), "-s", 
@@ -4676,8 +4719,8 @@ class MainFrame(BaseFrame):
 					   "g": 11,
 					   "l": 238,
 					   "lh": 124,
-					   "S": 48,
-					   "s": 48,
+					   "S": 36,
+					   "s": 36,
 					   "X": 238,
 					   "Xh": 124,
 					   "x": 238,
@@ -4846,7 +4889,9 @@ class MainFrame(BaseFrame):
 								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			result = dlg.ShowModal()
-			profile_save_path = make_argyll_compatible_path(dlg.GetPath())
+			profile_save_path = os.path.split(dlg.GetPath())
+			profile_save_path = os.path.join(profile_save_path[0], 
+											 make_argyll_compatible_path(profile_save_path[1]))
 			dlg.Destroy()
 			if result == wx.ID_OK:
 				filename, ext = os.path.splitext(profile_save_path)
@@ -4870,15 +4915,17 @@ class MainFrame(BaseFrame):
 				# create temporary working dir
 				self.worker.wrapup(False)
 				tmp_working_dir = self.worker.create_tempdir()
-				if not tmp_working_dir:
+				if isinstance(tmp_working_dir, Exception):
+					show_result_dialog(tmp_working_dir, self)
 					return
 				# Check directory and in/output file(s)
 				result = check_create_dir(tmp_working_dir)
 				if isinstance(result, Exception):
 					show_result_dialog(result, self)
 				# Copy ti3 to temp dir
-				ti3_tmp_path = make_argyll_compatible_path(
-					os.path.join(tmp_working_dir, profile_name + ".ti3"))
+				ti3_tmp_path = os.path.join(tmp_working_dir, 
+											make_argyll_compatible_path(profile_name + 
+																		".ti3"))
 				self.worker.options_dispcal = []
 				self.worker.options_targen = []
 				display_name = None
@@ -4910,6 +4957,7 @@ class MainFrame(BaseFrame):
 				self.previous_cal = False
 				safe_print("-" * 80)
 				# Run colprof
+				self.worker.interactive = False
 				self.worker.start(
 					self.profile_finish, self.profile, ckwargs={
 						"profile_path": profile_save_path, 
@@ -5521,7 +5569,20 @@ class MainFrame(BaseFrame):
 		argyll_version = list(self.worker.argyll_version)
 		displays = list(self.worker.displays)
 		comports = list(self.worker.instruments)
-		self.worker.enumerate_displays_and_ports(silent)
+		if silent:
+			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
+													self.worker.enumerate_displays_and_ports, 
+													cargs=(argyll_bin_dir, argyll_version, 
+														   displays, comports), 
+													wargs=(silent, ))
+		else:
+			self.worker.enumerate_displays_and_ports(silent)
+			return self.check_update_controls_consumer(True, argyll_bin_dir,
+													   argyll_version, displays, 
+													   comports)
+	
+	def check_update_controls_consumer(self, result, argyll_bin_dir,
+									   argyll_version, displays, comports):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
 			self.update_black_point_rate_ctrl()
@@ -6195,7 +6256,7 @@ class MainFrame(BaseFrame):
 	def Show(self, show=True, start_timers=True):
 		wx.Frame.Show(self, show)
 		self.Raise()
-		if not self.IsActive():
+		if not wx.GetApp().IsActive():
 			self.RequestUserAttention()
 		if hasattr(self, "tcframe"):
 			self.tcframe.Show(getcfg("tc.show"))
@@ -6210,18 +6271,14 @@ class MainFrame(BaseFrame):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not hasattr(self, "tcframe") or self.tcframe.tc_close_handler():
 			writecfg()
+			if getattr(self, "thread", None) and self.thread.is_alive():
+				self.Disable()
+				if debug:
+					safe_print("Waiting for child thread to exit...")
+				self.thread.join()
 			self.HideAll()
 			if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 				self.worker.wrapup(False)
-			if sys.stdout.isatty():
-				if sys.platform == "win32":
-					sp.call("color", shell=True)
-					##if original_codepage:
-						### Restore original encoding
-						##SetConsoleOutputCP(original_codepage)
-				elif sys.platform != "darwin":
-					print "\x1b[0m"
-					sp.call('clear', shell=True)
 			self.Destroy()
 
 	def OnDestroy(self, event):
@@ -6253,12 +6310,8 @@ def main():
 	log("wxPython " + wx.version())
 	try:
 		
-		# Make sure we run inside a tty if we are on Mac OS X
-		# or Linux, if stdout isn't a tty
-		# Alternatively, force the tty logic with the --terminal option
-		if (sys.platform != "win32" and 
-			(not sys.stdin.isatty() or not sys.stdout.isatty() or 
-			 not sys.stderr.isatty())) or "--terminal" in sys.argv[1:]:
+		# Force to run inside tty with the --terminal option
+		if "--terminal" in sys.argv[1:]:
 			terminals_opts = {
 				"Terminal": "-x",
 				"gnome-terminal": "-x",
