@@ -498,7 +498,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
 		attrs["windows"] = [{
-			"script": os.path.join(pydir, "..", name + ".py"),
+			"script": os.path.join(pydir, "..", name + ".pyw"),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
 												name + ".ico"))],
 			"other_resources": [(24, 1, manifest_xml)]
