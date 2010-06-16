@@ -1117,10 +1117,11 @@ class Worker():
 				stderr = StringIO()
 				stdout = StringIO()
 				self.recent = FilteredStream(LineCache(n=3), data_encoding, 
-											 discard=re.compile("^(?:Adjusted )?[Tt]arget (?:white|black|gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|(?:Black|Red|Green|Blue|White)\\s+=.+|patch \\d+ of \\d+.*|point \\d+.*|Added \\d+/\\d+|[\\*|\\.]+|\\s*\\d*%?", 
+											 discard=re.compile("^(?:Adjusted )?[Tt]arget (?:white|black|gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:Black|Red|Green|Blue|White)\\s+=.+|^patch \\d+ of \\d+.*|^point \\d+.*|^Added \\d+/\\d+|[\\*|\\.]+|\\s*\\d*%?", 
 																re.I))
 				self.lastmsg = FilteredStream(LineCache(), data_encoding, 
-											  discard=re.compile("[\\*|\\.]+"))
+											  discard=re.compile("[\\*|\\.]+|^point \\d+.*", 
+																 re.I))
 				if log_output:
 					if sys.stdout.isatty():
 						logfile = FilteredStream(safe_print, data_encoding)
@@ -1144,9 +1145,9 @@ class Worker():
 					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
 													**kwargs)
 					self.subprocess.logfile_read = logfile
-					if measure and sys.platform not in ("win32", "darwin"):
-						# allow some time to setup instrument and create test window
-						sleep(5)
+					##if measure and sys.platform not in ("win32", "darwin"):
+						### allow some time to setup instrument and create test window
+						##sleep(5)
 					if measure:
 						try:
 							if self.subprocess.isalive():
@@ -1236,6 +1237,8 @@ class Worker():
 					  safe_unicode(traceback.format_exc()))
 			return Error(errmsg)
 			self.retcode = -1
+		if debug:
+			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
 			if verbose >= 1 and not capture_output:
 				safe_print(lang.getstr("aborted"), fn=fn)
@@ -1791,6 +1794,10 @@ class Worker():
 		return cmd, args
 
 	def progress_handler(self, event):
+		if getattr(self, "subprocess_abort", False) or \
+		   getattr(self, "thread_abort", False):
+			self.progress_wnd.Pulse(lang.getstr("aborting"))
+			return
 		percentage = None
 		msg = self.recent.read()
 		lastmsg = self.lastmsg.read().strip()
@@ -1800,7 +1807,7 @@ class Worker():
 				percentage = int(self.lastmsg.read().strip("%"))
 			except ValueError:
 				pass
-		elif re.match("Patch \\d+ of \\d+|Point \\d+", lastmsg, re.I):
+		elif re.match("Patch \\d+ of \\d+", lastmsg, re.I):
 			# dispcal/dispread
 			components = lastmsg.split()
 			try:
@@ -1834,14 +1841,15 @@ class Worker():
 			else:
 				keepGoing, skip = self.progress_wnd.Pulse(msg)
 		if not keepGoing:
-			if not getattr(self, "subprocess_abort", False) and \
-			   not getattr(self, "thread_abort", False):
-				self.progress_wnd.Pulse(lang.getstr("aborting"))
 			if getattr(self, "subprocess", None) and \
 			   not getattr(self, "subprocess_abort", False):
 				if debug:
-					log('[D] calling safe_quit after')
-				wx.CallAfter(self.quit_terminate_cmd)
+					log('[D] calling quit_terminate_cmd')
+				self.subprocess_abort = True
+				self.thread_abort = True
+				delayedresult.startWorker(lambda result: None, 
+										  self.quit_terminate_cmd)
+				##wx.CallAfter(self.quit_terminate_cmd)
 			elif not getattr(self, "thread_abort", False):
 				if debug:
 					log('[D] thread_abort')
@@ -1888,16 +1896,17 @@ class Worker():
 	def quit_terminate_cmd(self):
 		if debug:
 			log('[D] safe_quit')
+		##if getattr(self, "subprocess", None) and \
+		   ##not getattr(self, "subprocess_abort", False) and \
 		if getattr(self, "subprocess", None) and \
-		   not getattr(self, "subprocess_abort", False) and \
 		   (hasattr(self.subprocess, "poll") and 
 			self.subprocess.poll() is None) or \
 		   (hasattr(self.subprocess, "isalive") and 
 			self.subprocess.isalive()):
 			if debug:
 				log('[D] subprocess_abort')
-			self.subprocess_abort = True
-			self.thread_abort = True
+			##self.subprocess_abort = True
+			##self.thread_abort = True
 			try:
 				if hasattr(self.subprocess, "send"):
 					try:
@@ -1952,11 +1961,11 @@ class Worker():
 				log('[D] subprocess has poll: %r' % hasattr(self.subprocess, 
 															"poll"))
 				if hasattr(self.subprocess, "poll"):
-					log('[D] subprocess.poll(): %r' % subprocess.poll())
+					log('[D] subprocess.poll(): %r' % self.subprocess.poll())
 				log('[D] subprocess has isalive: %r' % hasattr(self.subprocess, 
 															   "isalive"))
 				if hasattr(self.subprocess, "isalive"):
-					log('[D] subprocess.isalive(): %r' % subprocess.isalive())
+					log('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
 
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 
@@ -2045,6 +2054,9 @@ class Worker():
 			if keycode == ord("7"):
 				# calibration
 				wx.CallAfter(self.swap_progress_wnds)
+			elif keycode in (ord("\x1b"), ord("8"), ord("Q"), ord("q")):
+				# exit
+				self.subprocess_abort = True
 			try:
 				self.subprocess.send(chr(keycode))
 			except:
