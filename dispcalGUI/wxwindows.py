@@ -221,7 +221,7 @@ class LogWindow(InvincibleFrame):
 													   wx.FONTWEIGHT_NORMAL,
 													   face="Monaco")
 		else:
-			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+			font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
 		self.log_txt.SetFont(font)
 		self.sizer.Add(self.log_txt, 1, flag=wx.ALL | wx.EXPAND, border=4)
@@ -351,11 +351,19 @@ class ProgressDialog(wx.ProgressDialog):
 					#child.SetBackgroundColour(wx.LIGHT_GREY)
 					child.SetWindowStyle(wx.ST_NO_AUTORESIZE)
 		
-		self.msg.Freeze()
-		self.msg.SetLabel("\n".join(["E" * 80] * 4))
-		self.msg.Fit()
-		self.msg.Thaw()
+		##if sys.platform not in ("darwin", "win32"):
+		text_extent = self.msg.GetTextExtent("E")
+		w, h = (text_extent[0] * 80, 
+				text_extent[1] * 4)
+		self.msg.SetMinSize((w, h))
+		self.msg.SetSize((w, h))
+		##else:
+		##self.msg.Freeze()
+		##self.msg.SetLabel("\n".join(["E" * 80] * 4))
+		##self.msg.Fit()
+		##self.msg.Thaw()
 		self.Fit()
+		self.SetMinSize(self.GetSize())
 		self.msg.SetLabel(msg)
 		
 		# set position	
@@ -378,7 +386,7 @@ class ProgressDialog(wx.ProgressDialog):
 	
 	def OnClose(self, event):
 		if not self.timer.IsRunning():
-			self.Hide()
+			self.Destroy()
 		else:
 			event.Skip()
 		
@@ -394,7 +402,22 @@ class ProgressDialog(wx.ProgressDialog):
 				setcfg("position.progress.y", y)
 	
 	def OnTimer(self, event):
-		self.Pulse()
+		if getattr(self, "keepGoing", True):
+			if not hasattr(self, "i"):
+				self.i = 0
+			if self.i < 100:
+				self.i += 1
+				if self.i == 100:
+					self.stop_timer()
+				self.keepGoing, self.skip = self.Update(self.i)
+				if self.i == 100:
+					self.Destroy()
+		if not self.keepGoing:
+			self.Pulse("Aborting...")
+			if not hasattr(self, "delayed_stop"):
+				self.delayed_stop = wx.CallLater(3000, self.stop_timer)
+				wx.CallLater(3000, self.Pulse, 
+							 "Aborted. You may now close this window.")
 	
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
@@ -440,7 +463,7 @@ class SimpleTerminal(InvincibleFrame):
 													   wx.FONTWEIGHT_NORMAL,
 													   face="Monaco")
 		else:
-			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+			font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
 		self.console.SetFont(font)
 		self.sizer.Add(self.console, 1, flag=wx.ALL | wx.EXPAND, border=0)
@@ -470,8 +493,8 @@ class SimpleTerminal(InvincibleFrame):
 		##w, h = (self.console.GetCharWidth() * 80 + vscroll_w, 
 				##self.console.GetCharHeight() * 25)
 		w, h = (text_extent[0] * 80 + vscroll_w, 
-				text_extent[1] * 25)
-		self.console.SetMinSize((w, h))
+				text_extent[1] * 24)
+		##self.console.SetMinSize((w, h))
 		self.console.SetSize((w, h))
 		self.sizer.SetSizeHints(self)
 		self.sizer.Layout()
@@ -498,6 +521,7 @@ class SimpleTerminal(InvincibleFrame):
 			self.start_timer()
 		
 		self.Show()
+		self.console.SetFocus()
 	
 	def EndModal(self, returncode=wx.ID_OK):
 		return returncode
@@ -507,7 +531,7 @@ class SimpleTerminal(InvincibleFrame):
 	
 	def OnClose(self, event):
 		if not self.timer.IsRunning():
-			self.Hide()
+			self.Destroy()
 		else:
 			self.keepGoing = False
 		
@@ -612,3 +636,12 @@ class TooltipWindow(InvincibleFrame):
 			self.Center(wx.VERTICAL)
 		self.Show()
 		self.Raise()
+
+def test():
+	app = wx.App(0)
+	p = ProgressDialog(msg="".join(("Test " * 5)))
+	t = SimpleTerminal(start_timer=False)
+	app.MainLoop()
+
+if __name__ == "__main__":
+	test()
