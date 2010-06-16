@@ -1269,9 +1269,7 @@ class Worker():
 											  not result):
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
-			self.progress_wnd.EndModal(wx.ID_OK)
-			# EndModal does not hide the dialog under Linux, and destroying it
-			# causes segfault
+			# under Linux, destroying it here causes segfault
 			self.progress_wnd.Hide()
 		self.finished = True
 		self.subprocess_abort = False
@@ -1865,7 +1863,6 @@ class Worker():
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
 						   parent=None, resume=False):
 		if getattr(self, "progress_dlg", None) and not resume:
-			self.progress_dlg.EndModal(wx.ID_OK)
 			self.progress_dlg.Destroy()
 			self.progress_dlg = None
 		if getattr(self, "progress_wnd", None) and \
@@ -2008,7 +2005,6 @@ class Worker():
 			self.progress_start_timer = wx.Timer()
 			if getattr(self, "progress_wnd", None) and \
 			   self.progress_wnd is getattr(self, "progress_dlg", None):
-				self.progress_dlg.EndModal(wx.ID_OK)
 				self.progress_dlg.Destroy()
 				self.progress_dlg = None
 			if getattr(self, "terminal", None):

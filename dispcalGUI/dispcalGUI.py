@@ -6271,7 +6271,7 @@ class MainFrame(BaseFrame):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not hasattr(self, "tcframe") or self.tcframe.tc_close_handler():
 			writecfg()
-			if getattr(self, "thread", None) and self.thread.is_alive():
+			if getattr(self, "thread", None) and self.thread.isAlive():
 				self.Disable()
 				if debug:
 					safe_print("Waiting for child thread to exit...")
