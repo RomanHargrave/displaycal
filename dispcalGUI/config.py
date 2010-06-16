@@ -53,6 +53,18 @@ isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
 if isexe and os.getenv("_MEIPASS2"):
 	os.environ["_MEIPASS2"] = os.getenv("_MEIPASS2").replace("/", os.path.sep)
 
+pyfile = exe if isexe else os.path.join(os.path.dirname(__file__), 
+										appname + ".py")
+pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
+pydir = os.path.dirname(pypath)
+pyname, pyext = os.path.splitext(os.path.basename(pypath))
+isapp = sys.platform == "darwin" and \
+		exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
+		os.path.isfile(os.path.join(exedir, pyname))
+if isapp:
+	if pydir.split(os.path.sep)[-1] == "site-packages.zip":
+		pydir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
+
 data_dirs = []
 
 if sys.platform == "win32":
@@ -223,9 +235,8 @@ def get_data_path(relpath, rex=None):
 
 def runtimeconfig(pyfile):
 	"""
-	Configure and return remaining runtime options.
+	Configure remaining runtime options and return runtype.
 	
-	Return a tuple (pypath, pydir, pyname, pyext, isapp, runtype, build). 
 	You need to pass in a path to the calling script (e.g. use the __file__ 
 	attribute).
 	
@@ -238,17 +249,8 @@ def runtimeconfig(pyfile):
 		if not "safe_print" in globals():
 			global safe_print
 			from log import safe_print
-	pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
-	pydir = os.path.dirname(pypath)
-	pyname, pyext = os.path.splitext(os.path.basename(pypath))
-	isapp = sys.platform == "darwin" and \
-			exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
-			os.path.isfile(os.path.join(exedir, pyname))
 	if debug:
 		safe_print("[D] cwd:", os.getcwdu())
-	if isapp:
-		if pydir.split(os.path.sep)[-1] == "site-packages.zip":
-			pydir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
 	elif data_dirs[0] != os.getcwdu():
 		data_dirs.insert(0, os.getcwdu())
 	if debug:
@@ -296,9 +298,7 @@ def runtimeconfig(pyfile):
 															defaultchart))
 	defaults["profile_verification_chart"] = get_data_path(os.path.join("ti1", 
 															"verify.ti1"))
-	if verbose >= 1:
-		safe_print(appname + runtype, version, build)
-	return pypath, pydir, pyname, pyext, isapp, runtype, build
+	return runtype
 
 # User settings
 
@@ -679,5 +679,4 @@ def writecfg():
 					 safe_unicode(exception))
 
 _init_testcharts()
-pypath, pydir, pyname, pyext, isapp, runtype, build = runtimeconfig(
-	exe if isexe else os.path.join(os.path.dirname(__file__), appname + ".py"))
+runtype = runtimeconfig(pyfile)

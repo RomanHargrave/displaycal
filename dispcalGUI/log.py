@@ -9,7 +9,7 @@ import re
 import sys
 from time import localtime, strftime
 
-from config import logdir
+from config import isapp, logdir
 from meta import name as appname
 from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO
@@ -59,7 +59,7 @@ class SafeLogger(SafePrinter):
 	"""
 	
 	def __init__(self, log=True, print_=hasattr(sys.stdout, "isatty") and 
-										sys.stdout.isatty()):
+										sys.stdout.isatty() and not isapp):
 		SafePrinter.__init__(self)
 		self.log = log
 		self.print_ = print_
@@ -158,7 +158,6 @@ def setup_logging():
 		except Exception, exception:
 			safe_print(u"Warning - logging to file '%s' not possible: %s" % 
 					   tuple(safe_unicode(s) for s in (logfile, exception)))
-	log("=" * 80)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")
 	streamhandler.setFormatter(streamformatter)

@@ -6306,6 +6306,9 @@ class MainApp(wx.App):
 		return True
 
 def main():
+	log("=" * 80)
+	if verbose >= 1:
+		safe_print(appname + runtype, version, build)
 	log("Python " + sys.version)
 	log("wxPython " + wx.version())
 	try:
