@@ -366,6 +366,8 @@ class ProgressDialog(wx.ProgressDialog):
 		self.SetMinSize(self.GetSize())
 		self.msg.SetLabel(msg)
 		
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
+		
 		# set position	
 		placed = False
 		if parent:
@@ -389,6 +391,10 @@ class ProgressDialog(wx.ProgressDialog):
 			self.Destroy()
 		else:
 			event.Skip()
+	
+	def OnDestroy(self, event):
+		self.stop_timer()
+		del self.timer
 		
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \
@@ -517,6 +523,8 @@ class SimpleTerminal(InvincibleFrame):
 		self.lastmsg = ""
 		self.keepGoing = True
 		
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
+		
 		if start_timer:
 			self.start_timer()
 		
@@ -534,6 +542,10 @@ class SimpleTerminal(InvincibleFrame):
 			self.Destroy()
 		else:
 			self.keepGoing = False
+	
+	def OnDestroy(self, event):
+		self.stop_timer()
+		del self.timer
 		
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \
