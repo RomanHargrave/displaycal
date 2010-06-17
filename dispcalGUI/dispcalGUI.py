@@ -4473,7 +4473,8 @@ class MainFrame(BaseFrame):
 					if isinstance(result, Exception):
 						safe_print(result)
 				self.worker.wrapup(copy=False)
-			if profile:
+			if profile and (not profile.fileName or 
+							os.path.isfile(profile.fileName)):
 				if force_update or not self.lut_viewer.profile or \
 				   not self.lut_viewer.profile.fileName or \
 				   not profile.fileName or \
@@ -5569,7 +5570,7 @@ class MainFrame(BaseFrame):
 		argyll_version = list(self.worker.argyll_version)
 		displays = list(self.worker.displays)
 		comports = list(self.worker.instruments)
-		if silent:
+		if False: ##silent:
 			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
 													self.worker.enumerate_displays_and_ports, 
 													cargs=(argyll_bin_dir, argyll_version, 
