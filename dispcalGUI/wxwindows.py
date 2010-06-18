@@ -326,7 +326,7 @@ class ProgressDialog(wx.ProgressDialog):
 	""" A progress dialog. """
 	
 	def __init__(self, title=appname, msg="", maximum=100, parent=None, style=None, 
-				 handler=None, start_timer=True):
+				 handler=None, start_timer=True, pos=None):
 		if style is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
 		wx.ProgressDialog.__init__(self, title, "", maximum, parent=parent, style=style)
@@ -368,18 +368,21 @@ class ProgressDialog(wx.ProgressDialog):
 		
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
-		# set position	
+		# set position
 		placed = False
-		if parent:
-			if parent.IsShownOnScreen():
-				self.Center()
-				placed = True
-			else:
-				x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
-				y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+		if pos:
+			x, y = pos
 		else:
-			x = getcfg("position.progress.x")
-			y = getcfg("position.progress.y")
+			if parent:
+				if parent.IsShownOnScreen():
+					self.Center()
+					placed = True
+				else:
+					x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
+					y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+			else:
+				x = getcfg("position.progress.x")
+				y = getcfg("position.progress.y")
 		if not placed:
 			self.SetSaneGeometry(x, y)
 		
