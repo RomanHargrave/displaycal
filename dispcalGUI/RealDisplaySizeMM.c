@@ -76,8 +76,6 @@ typedef struct {
 	int screen;				/* Screen to select */
 	int uscreen;			/* Underlying screen */
 	int rscreen;			/* Underlying RAMDAC screen */
-	unsigned char *edid;	/* 128 or 256 bytes of monitor EDID, NULL if none */
-	int edid_len;			/* 128 or 256 */
 
 #if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
 	/* Xrandr stuff - output is connected 1:1 to a display */
@@ -666,53 +664,6 @@ disppath **get_displays() {
 					}
 					debugrr2((errout, "Display %d name = '%s'\n",ndisps,disps[ndisps]->name));
 		
-					/* Grab the EDID from the output */
-					{
-						Atom edid_atom, ret_type;
-						int ret_format;
-						long ret_len = 0, ret_togo;
-						unsigned char *atomv = NULL;
-						int ii;
-						char *keys[] = {		/* Possible keys that may be used */
-							"EDID_DATA",
-							"EDID",
-							""
-						};
-
-						/* Try each key in turn */
-						for (ii = 0; keys[ii][0] != '\000'; ii++) {
-							/* Get the atom for the EDID data */
-							if ((edid_atom = XInternAtom(mydisplay, keys[ii], True)) == None) {
-								debugrr2((errout, "Unable to intern atom '%s'\n",keys[ii]));
-								/* Try the next key */
-							} else {
-
-								/* Get the EDID_DATA */
-								if (XRRGetOutputProperty(mydisplay, scrnres->outputs[j], edid_atom,
-								            0, 0x7ffffff, False, False, XA_INTEGER, 
-   		                            &ret_type, &ret_format, &ret_len, &ret_togo, &atomv) == Success
-							            && (ret_len == 128 || ret_len == 256)) {
-									if ((disps[ndisps]->edid = malloc(sizeof(unsigned char) * ret_len)) == NULL) {
-										debugrr("get_displays failed on malloc\n");
-										XRRFreeCrtcInfo(crtci);
-										XRRFreeScreenResources(scrnres);
-										XCloseDisplay(mydisplay);
-										free_disppaths(disps);
-										return NULL;
-									}
-									memcpy(disps[ndisps]->edid, atomv, ret_len);
-									disps[ndisps]->edid_len = ret_len;
-									XFree(atomv);
-									debugrr2((errout, "Got EDID for display\n"));
-									break;
-								}
-								/* Try the next key */
-							}
-						}
-						if (keys[ii][0] == '\000')
-							debugrr2((errout, "Failed to get EDID for display\n"));
-					}
-		
 					jj++;			/* Next enabled index */
 					ndisps++;		/* Now it's number of displays */
 					XRRFreeCrtcInfo(crtci);
@@ -805,48 +756,6 @@ disppath **get_displays() {
 				disps[i]->sh = DisplayHeight(mydisplay, disps[i]->screen);
 			}
 
-			/* See if we can locate the EDID of the monitor for this screen */
-			for (j = 0; j < 2; j++) { 
-				char edid_name[50];
-				Atom edid_atom, ret_type;
-				int ret_format = 8;
-				long ret_len, ret_togo;
-				unsigned char *atomv = NULL;
-
-				if (disps[i]->uscreen == 0) {
-					if (j == 0)
-						strcpy(edid_name,"XFree86_DDC_EDID1_RAWDATA");
-					else
-						strcpy(edid_name,"XFree86_DDC_EDID2_RAWDATA");
-				} else {
-					if (j == 0)
-						sprintf(edid_name,"XFree86_DDC_EDID1_RAWDATA_%d",disps[i]->uscreen);
-					else
-						sprintf(edid_name,"XFree86_DDC_EDID2_RAWDATA_%d",disps[i]->uscreen);
-				}
-
-				if ((edid_atom = XInternAtom(mydisplay, edid_name, True)) == None)
-					continue;
-				if (XGetWindowProperty(mydisplay, RootWindow(mydisplay, disps[i]->uscreen), edid_atom,
-				            0, 0x7ffffff, False, XA_INTEGER, 
-				            &ret_type, &ret_format, &ret_len, &ret_togo, &atomv) == Success
-				            && (ret_len == 128 || ret_len == 256)) {
-					if ((disps[i]->edid = malloc(sizeof(unsigned char) * ret_len)) == NULL) {
-						debugrr("get_displays failed on malloc\n");
-						free_disppaths(disps);
-						XCloseDisplay(mydisplay);
-						return NULL;
-					}
-					memcpy(disps[i]->edid, atomv, ret_len);
-					disps[i]->edid_len = ret_len;
-					XFree(atomv);
-					debugrr2((errout, "Got EDID for display\n"));
-					break;
-				} else {
-					debugrr2((errout, "Failed to get EDID for display\n"));
-				}
-			}
-
 			if (XF86VidModeQueryExtension(mydisplay, &evb, &erb) != 0) {
 				/* Some propietary multi-screen drivers (ie. TwinView & MergeFB) */
 				/* don't implement the XVidMode extension properly. */
@@ -903,10 +812,6 @@ void free_disppaths(disppath **disps) {
 				free(disps[i]->name);
 			if (disps[i]->description != NULL)
 				free(disps[i]->description);
-#if defined(UNIX) && !defined(__APPLE__)
-			if (disps[i]->edid != NULL)
-				free(disps[i]->edid);
-#endif
 			free(disps[i]);
 		}
 		free(disps);
@@ -949,18 +854,6 @@ disppath *get_a_display(int ix) {
 		free_disppaths(paths);
 		return NULL;
 	}
-#if defined(UNIX) && !defined(__APPLE__)
-	if (paths[i]->edid != NULL) {
-		if ((rv->edid = malloc(sizeof(unsigned char) * paths[i]->edid_len)) == NULL) {
-			debugrr("get_displays failed on malloc\n");
-			free(rv);
-			free_disppaths(paths);
-			return NULL;
-		}
-		rv->edid_len = paths[i]->edid_len;
-		memcpy(rv->edid, paths[i]->edid, rv->edid_len );
-	}
-#endif
 	free_disppaths(paths);
 	return rv;
 }
@@ -1028,6 +921,8 @@ static size_mm get_real_screen_size_mm(int ix) {
 	
 	size.width_mm = DisplayWidthMM(mydisplay, myscreen);
 	size.height_mm = DisplayHeightMM(mydisplay, myscreen);
+	
+	XCloseDisplay(mydisplay);
 #endif
 
 	return size;
