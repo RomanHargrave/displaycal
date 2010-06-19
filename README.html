@@ -30,6 +30,8 @@
 			color: #0099CC;
 			border: none;
 		}
+		html#dispcalGUI a.imagelink:link,
+		html#dispcalGUI a.imagelink:visited,
 		html#dispcalGUI a.imagelink:hover {
 			border: none;
 		}
@@ -332,7 +334,7 @@
 			margin-right: .5em;
 		}
 		html#dispcalGUI #screenshots span {
-			margin-right: 0;
+			margin-right: 1px;
 		}
 		#screenshots p {
 			margin-bottom: 1em;
@@ -412,21 +414,24 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;<br />
+				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.4.1.6 (Linux)<br />
-				0.4.1.6 (Mac OS X)<br />
-				0.4.1.6 (Windows)<br />
-				0.4.1.6 (Source)<br />
+				<dd id="version">0.4.6.2 (Linux)<br />
+				0.4.6.2 (Mac OS X)<br />
+				0.4.6.2 (Windows)<br />
+				0.4.6.2 (Source)<br />
+				<a href="http://dispcalGUI.hoech.net/archive">Archive</a><br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-06-06 13:21 (UTC)</dd>
+				<dd id="date">2010-06-19 18:00 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
 				<dd><a href="LICENSE.txt"><acronym title="GNU General Public License">GPL</acronym> Version 3</a></dd>
 		</dl>
 		
-		<p class="info">Bug reports, questions, comments, suggestions? Feel free to use the <a href="http://sourceforge.net/tracker/?group_id=257092&amp;atid=1127028">issue tracker</a>, <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932493">support</a> and <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net</p>
+		<p class="info" id="contact">Bug reports, questions, comments, suggestions? Feel free to use the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-news">dispcalGUI-users mailing list</a>, <a href="http://sourceforge.net/tracker/?group_id=257092&amp;atid=1127028">issue tracker</a>, <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932493">support</a> and <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net<br />
+		If you just want to be notified of new releases, you may sign up to the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-news">dispcalGUI-news mailing list</a> (but if you already joined dispcalGUI-users, there's no need to join this list as new release notifications are sent to both).</p>
 		
 		<h2>Table of contents</h2>
 		
@@ -487,22 +492,38 @@
 			profile your display using a measurement device. Of course, you can do a lot 
 			more with Argyll CMS, but this is not the scope of this document—refer to the 
 			<a href="http://argyllcms.com/doc/ArgyllDoc.html">Argyll CMS documentation</a> for in-depth information and usage scenarios.<br />
-			dispcalGUI opens two windows when run, a terminal and the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>. The terminal is used for status messages and keyboard input during calibration. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> is used to set options and access functionality.</p>
+			dispcalGUI opens a main <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> window when run, and a terminal-like window will be shown at the beginning of interactive display adjustment, which is currently needed for direct keyboard interaction with the Argyll CMS tools. It will be replaced with a graphical interface in the future. The main window is used to set options and access functionality.</p>
 			
 			<div id="screenshots">
 				<h3>Screenshots</h3>		
 				
 				<p>
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="Screenshot of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
-					<small>Linux/GNOME</small><br /></span>
-					<span><a href="screenshots/dispcalGUI-screenshot-KDE4.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-KDE4-thumb.png" alt="Screenshot of dispcalGUI running under Linux with KDE4" title="Screenshot of dispcalGUI running under Linux with KDE4" class="opaque" /></a><br />
-					<small>Linux/KDE4</small><br /></span>
-					<span><a href="screenshots/dispcalGUI-screenshot-mac.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-mac-thumb.png" alt="Screenshot of dispcalGUI running under Mac OS X" title="Screenshot of dispcalGUI running under Mac OS X" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<small>GNOME</small><br /></span>
+					
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<small>GNOME: Edit Testchart</small><br /></span>
+					
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-adjust.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-adjust-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<small>GNOME: Adjust</small><br /></span>
+					
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-measure.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-measure-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<small>GNOME: Measure</small><br /></span>
+					
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-view-curves.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-view-curves-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<small>GNOME: View Curves</small><br /></span>
+					
+					<span><a href="screenshots/dispcalGUI-screenshot-KDE4.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-KDE4-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with KDE4" title="Screenshot of dispcalGUI running under Linux with KDE4" class="opaque" /></a><br />
+					<small>KDE4</small><br /></span>
+					
+					<span><a href="screenshots/dispcalGUI-screenshot-Mac.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-Mac-thumb.png" alt="Thumbnail of dispcalGUI running under Mac OS X" title="Screenshot of dispcalGUI running under Mac OS X" class="opaque" /></a><br />
 					<small>Mac OS X</small><br /></span>
-					<span><a href="screenshots/dispcalGUI-screenshot-Vista.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-Vista-thumb.png" alt="Screenshot of dispcalGUI running under Windows Vista" title="Screenshot of dispcalGUI running under Windows XP" class="opaque" /></a><br />
-					<small>Windows Vista</small><br /></span>
-					<span><a href="screenshots/dispcalGUI-screenshot-XP.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-XP-thumb.png" alt="Screenshot of dispcalGUI running under Windows XP" title="Screenshot of dispcalGUI running under Windows XP" class="opaque" /></a><br />
-					<small>Windows XP</small><br /></span>
+					
+					<span><a href="screenshots/dispcalGUI-screenshot-Win7.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-Win7-thumb.png" alt="Thumbnail of dispcalGUI running under Windows 7" title="Screenshot of dispcalGUI running under Windows 7" class="opaque" /></a><br />
+					<small>Windows 7</small><br /></span>
+					
+					<span><a href="http://dispcalGUI.hoech.net/samples/verify_2010-06-19_18-34.html" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-report-thumb.png" alt="Thumbnail of a profile verification report" title="Sample Profile Verification Report" class="opaque" /></a><br />
+					<small>Sample Profile Verification Report</small><br /></span>
 				</p>
 			</div>
 		</div>
@@ -533,18 +554,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.1.6.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.2.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.1.6.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.1.6-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.1.6-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.2.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.2-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.2-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.1.6.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.2.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -619,7 +640,7 @@
 			<div id="prerequisites-unattended">
 				<h3>Additional prerequisites for unattended calibration and profiling</h3>
 				
-				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.5b, when using an instrument that is supported by the new unattended feature (see below), it is no longer necessary to manually start the measurements for profiling after calibration.
+				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.5b, when using an instrument that is supported by the unattended feature (see below), it is no longer necessary to manually start the measurements for profiling after calibration.
 				</p>
 				
 				<p>Unattended calibration and profiling currently supports the following instruments:</p>
@@ -689,10 +710,10 @@
 				<ol>
 					<li>Open a shell.</li>
 					<li><code>cd</code> into the source directory (dispcalGUI-&lt;version&gt;).</li>
-					<li>Run <code>python setup.py build_ext -i</code> (on Linux, you can also untar RealDisplaySizeMM.py<code>&lt;PYTHON_VERSION&gt;</code>.<code>&lt;PLATFORM&gt;</code>.so.tar inside the dispcalGUI directory instead)</li>
+					<li>Run <code>python setup.py build_ext -i</code> (on Linux, you can also untar <code>RealDisplaySizeMM.py&lt;PYTHON_VERSION&gt;.&lt;PLATFORM&gt;.so.tar</code> inside the dispcalGUI subdirectory instead)</li>
 				</ol>
 				
-				<p>You can then run <code>python dispcalGUI/dispcalGUI.py</code> in the same directory.</p>
+				<p>You can then run <code>python dispcalGUI.pyw</code> (or launch it by double-clicking).</p>
 			</div>
 			
 		</div>
@@ -805,7 +826,7 @@
 		<div id="usage">
 			<h2>Usage</h2>
 		
-			<p>Through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>, you can choose your settings. A terminal is mostly used for status information, and for the interactive part of display calibration.</p>
+			<p>Through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>, you can choose your settings. When running calibration measurements, a terminal-like window will be shown during the interactive part of display adjustment, which is currently needed for direct keyboard interaction with the Argyll CMS tools. It will be replaced with a graphical interface in the future.</p>
 			
 			<div id="settingsfile">
 				<h3>Settings file</h3>
@@ -1022,8 +1043,8 @@
 				<p>Please let the screen stabilize for at least half an hour after powering it up before doing any measurements or assessing its color properties. The screen can be used normally with other applications during that time.</p>
 			
 				<p>After you have set your options, click on one of the three buttons at the bottom
-				to start the actual calibration/profiling process. The <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
-				error). Pay attention to the output printed to the terminal, it will give you status information and may prompt to select calibration options (you can always cancel out of running measurements by pressing ESC or Q in the terminal).</p>
+				to start the actual calibration/profiling process. The main <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
+				error). You can always cancel out of running measurements by pressing ESC or Q in the terminal window if it is shown, or using the “Cancel” button in the progress dialog. Viewing the informational log window (from the “Tools” menu) after measurements will give you access to the raw output of the Argyll CMS commandline tools and other verbose information.</p>
 				
 				<h4 id="adjusting">Adjusting a display before calibration</h4>
 				
@@ -1201,8 +1222,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 					<dt>Show actual calibration curves from video card gamma table</dt>
 						<dd>When this menu entry is checked, the curve viewer will show the actual calibration curves from the video card gamma table instead of showing the curves of the currently active profile.</dd>
 						
-					<dt>Show/hide information window</dt>
+					<dt>Show/hide log window</dt>
 						<dd>Shows/hides the informational log window.</dd>
+						
+					<dt>Show log window automatically</dt>
+						<dd>Shows the log window automatically after actions like measurements or creating a profile.</dd>
 				</dl>
 			</div>
 			
@@ -1220,9 +1244,10 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li><a href="#issue-redgreenswapped">General: Wacky image colors (red and green swapped)</a></li>
 				<li><a href="#issue-win-photoshop-monprofdefect">Photoshop: “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</a></li>
 				<li><a href="#issue-win64-driversigenforcement">MS Windows Vista and 7, 64-bit: Driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
-				<li><a href="#issue-win-calload">MS Windows Vista and 7: The installed display profile calibration cannot be loaded</a></li>
+				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and 7: The display profile isn't used if it was installed for the current user</a></li>
 				<li><a href="#issue-win-uac">MS Windows Vista: The calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
 				<li><a href="#issue-win-spyder2">MS Windows: Enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
+				<li><a href="#issue-win-install-systemwide">MS Windows: Installing a display profile system-wide might fail when not running as administrator</a></li>
 				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
 				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
 				<li><a href="#issue-linux-kdeqt">Linux (KDE): The application does not look native</a></li>
@@ -1239,8 +1264,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<span class="a"><span>Solution:</span> Beginning with Argyll CMS &gt;= 1.1.0, you may use one of the following workarounds. One method is to self sign the drivers and put your system in test mode. The procedure for doing this is a little complicated though, and beyond the scope of this documentation. You might want to refer to “<a href="http://nil-techno.blogspot.com/2008/08/installing-unsigned-drivers-on-vista-64.html">installing unsigned drivers on Vista 64</a>”. If you take this path then make sure you sign the libusb0.sys and libusb0_x86.sys files in the Argyll_VX.X.X/libusbw directory <strong>before</strong> you install the device, otherwise you will have to remove &amp; delete the driver using device manager, and also manually delete the libusb0 and libusb0_x86 .sys and .dll files from Windows\system32, Windows\System32\drivers and Windows\SysWOW64 and start again.<br />
 			If you don't want/can't sign the driver files or enable test mode, another workaround is to allow loading unsigned drivers by pressing F8 when the system boots, and selecting the boot option to “Disable Driver Signature Enforcement”. Note that you have to do this <strong>every time</strong> you boot and want to use the USB instruments (you may still get a warning about an unsigned driver not being loaded after plugging the instrument in, booting or installing the driver, but take these messages with a grain of salt, and check in device manager and also whether the instruments are actually accessible).</span></p>
 			
-			<p id="issue-win-calload"><span class="q"><span>MS Windows Vista and 7:</span> The installed display profile calibration cannot be loaded<br /></span>
-			<span class="a"><span>Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management”. Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
+			<p id="issue-win-user-profile-not-used"><span class="q"><span>MS Windows Vista and 7:</span> The display profile isn't used if it was installed for the current user<br /></span>
+			<span class="a"><span>Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management” (you may have to select “Classic View” under Vista and anything other than “Category View” under Windows 7 to see it). Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
 			
 			<p id="issue-win-uac"><span class="q"><span>MS Windows Vista:</span> The calibration gets unloaded when a “User Access Control” prompt is shown.<br /></span>
 			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Calibration Loader (Display &lt;number&gt;)” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
@@ -1248,11 +1273,14 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<p id="issue-win-spyder2"><span class="q"><span>MS Windows:</span> Enabling the Spyder 2 colorimeter might fail when not running as administrator<br /></span>
 			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
 			
+			<p id="issue-win-install-systemwide"><span class="q"><span>MS Windows:</span> Installing a display profile system-wide might fail when not running as administrator<br /></span>
+			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
+			
 			<p id="issue-mac-pscursor"><span class="q"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
 			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
 				
 			<p id="issue-linux-lutaccess"><span class="q"><span>Linux/Windows:</span> No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
-			<span class="a"><span>Solution:</span> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein. Under Windows, please see <a href="#issue-win-calload">calibration cannot be loaded</a> if you are under Windows 7 and make sure you have a recent driver for your video card installed.</span></p>
+			<span class="a"><span>Solution:</span> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein. Under Windows, please see <a href="#issue-win-user-profile-not-used">calibration cannot be loaded</a> if you are under Windows 7 and make sure you have a recent driver for your video card installed.</span></p>
 			
 			<p id="issue-linux-kdeqt"><span class="q"><span>Linux (KDE):</span> The application does not look native<br /></span>
 			<span class="a"><span>Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4).</span></p>
@@ -1265,9 +1293,12 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<h2>To-Do / planned features (in no particular order)</h2>
 		
 			<ul>
+				<li>Interface to <a href="http://www.oyranos.org/">Oyranos</a> / <a href="http://www.oyranos.org/wiki/index.php?title=Kolor-manager">KDE Kolor Manager</a></li>
+				<li>Better interface to <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a></li>
+				<li>Measure and report on screen homogenity / evenness of illumination</li>
 				<li>Get rid of the terminal and implement a proper GUI for the interactive part of calibration</li>
 				<li><del>Complete the documentation in the README</del></li>
-				<li>German language README</li>
+				<li>German language README (postponed)</li>
 				<li><del>Profile verification (feed XYZ or L*a*b* to display profile, display 
 					corresponding RGB values, measure, output Delta E)</del> (implemented in v0.3.6+)</li>
 				<li><del>“Before” / “After” switch when calibration / profiling complete</del> (implemented in v0.2+)</li>
@@ -1294,27 +1325,43 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-06-06 13:21 (UTC) 0.4.1.6 -->
+			<!-- 2010-06-19 18:00 (UTC) 0.4.6.2 -->
 			<dl>
-				<dt>2010-06-06 13:21 (UTC) 0.4.1.6</dt>
+				<dt>2010-06-19 18:00 (UTC) 0.4.6.2</dt>
 					<dd>
-						<h3>0.4.1.6</h3>
+						<h3>0.4.6.2</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Always load calibration curves before installing a profile, even if the profile has no vcgt tag (resets calibration to linear).</li>
-							<li>Also show profile installation scope if a profile has no vcgt tag (e.g. sRGB).</li>
 							<li>Immediately close a profile after reading to avoid locking it (fixes not being able to delete files from within the GUI).</li>
+							<li>Fixed quirks in “update calibration” and “update profile” operation.</li>
+							<li>Do not hide the system-wide installation option in the profile install dialog if a profile has no embedded calibration curves (vcgt tag).</li>
+							<li>If the calibration curves of the current display profile couldn't be loaded for some reason (broken video card gamma table access, or no profile set), the curve viewer was not yet shown, and then a profile under “Settings” was selected, and then deleted, and then the curve viewer called up, an unhandled exception was raised.</li>
+							<li>Linux (only if the detected filesystem encoding is not UTF-8), Mac OS X and Windows: When installing a profile with “special” characters in the filename (everything not representable as 7-bit ASCII), it is now given an unique name containing the display number and MD5 hash, which fixes a few problems with filename encoding under Linux and Mac OS (under Linux the profile couldn't be successfully installed, under Mac OS X system-wide installation broke). This also fixes an issue under Windows where a profile whose name starts with the same first few characters (but has not the same name) as an already existing file in the system profile directory could accidentally overwrite that file, because I had not considered that filenames returned by win32api.GetShortPathName are only unique for the directory where a given file resides—and upon installation, that is the profile storage directory, not the system profile directory.</li>
+						</ul>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Linux: Rudimentary use of <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a>. If it is installed and XRandR is working, profiles are imported to GCM upon installation. Any old calibration loaders created by dispcalGUI will be deleted. You then still have to manually assign the profile to a display in the GCM preferences by selecting it and then choosing the profile from the dropdown menu (in the future, this process will be automatic). Loading of calibration curves and setting up the necessary X atoms and XRandR output properties is then handled by GCM.</li>
+							<li>Menu option to automatically show the log window after certain operations (measurements, profile creation), enabled by default if not running from a shell.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li>Installing a profile system-wide under Linux now also sets it as default for the current user.</li>
-							<li>Do not offer system-wide profile installation under Windows Vista and later if using Argyll CMS &lt;= 1.1.1 (system scope in the current Argyll release acts like user scope on those systems).</li>
+							<li><strong>The terminal window is now only shown when required (e.g. keyboard interaction during interactive display adjustment).</strong> Also, the terminal is no longer an external, usually full-fledged system application, but a minimal emulator that just passes keyboard input to the Argyll CMS tools.</li>
+							<li><strong>All measurements which do not require keyboard interaction with Argyll CMS tools now show a progress dialog with the option to cancel the measurements.</strong></li>
+							<li>Always load calibration curves before installing a profile, even if the profile has no vcgt tag (resets calibration to linear).</li>
 							<li>Automatically scroll to bottom when messages are added to the log window.</li>
-							<li>Unattended calibration &amp; profiling: Removed the dependency on xautomation under Linux (and SendKeys under Windows).</li>
 							<li>Store calibration and profiling settings in extra sections inside the TI3 file instead of the profile copyright tag. Use “generic” copyright information (“Created with dispcalGUI <code>&lt;version&gt;</code> and Argyll CMS <code>&lt;version&gt;</code>”), overridable by adding a line <code>copyright = My copyright information</code> in dispcalGUI's configuration file.</li>
-							<li>All measurements which do not require keyboard interaction in the terminal window now show a progress dialog with the option to cancel the measurements.</li>
-							<li>Presets: Default to high profile quality.</li>
+							<li>Made sure that only 7-bit ASCII gets written to a profile's copyright, ASCII description, and ASCII device model description. ICC v2 Unicode and Mac ScriptCode descriptions are now also written by default.</li>
+							<li>Presets default to high profile quality.</li>
+							<li>Remember visible state of log window and testchart editor.</li>
+							<li>Updated french translation (thanks).</li>
+							<li>Linux: Unattended calibration &amp; profiling no longer depends on xautomation.</li>
+							<li>Linux: <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[7]</a></sup></acronym> is now used (if available) when generating descriptive identifiers for displays.</li>
+							<li>Linux: When determining a display's associated profile, check XrandR _ICC_PROFILE output properties first if available.</li>
+							<li>Linux: Do not offer to install a profile system-wide if using <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a> to install profiles (GCM has its own way to set profiles as system default).</li>
+							<li>Linux (only when <a href="http://projects.gnome.org/gnome-color-manager/" title="GNOME Color Manager">GCM</a> is not installed or XRandR is not working), Mac OS X, Windows: Installing a profile system-wide now also sets it as default for the current user.</li>
+							<li>Windows Vista and later: Do not offer system-wide profile installation if using Argyll CMS &lt;= 1.1.1 (system scope in the current Argyll release acts like user scope on those systems. This will be fixed in an upcoming Argyll release).</li>
 						</ul>
+						<p>+ Numerous other small fixes and changes. There is now also a mailing list for discussion and support as well as announcements (see at the <a href="#contact">top</a> of this document).</p>
 					</dd>
 				
 				<dt>2010-05-07 22:36 (UTC) 0.3.9.9</dt>
@@ -1816,6 +1863,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 					<dd>Subversion, a version-control system — <a href="http://subversion.tigris.org">subversion.tigris.org</a></dd>
 				<dt id="definition_UAC">[9] UAC</dt>
 					<dd>User Account Control — <a href="http://en.wikipedia.org/wiki/User_Account_Control">en.wikipedia.org/wiki/User_Account_Control</a></dd>
+				<dt id="definition_EDID">[10] EDID</dt>
+					<dd>Extended Display Identification Data — <a href="http://en.wikipedia.org/wiki/EDID">en.wikipedia.org/wiki/EDID</a></dd>
 			</dl>
 		</div>
 		
