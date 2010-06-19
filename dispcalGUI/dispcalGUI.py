@@ -66,7 +66,7 @@ import tempfile26 as tempfile
 import threading
 import traceback
 from encodings.aliases import aliases
-from time import sleep, strftime
+from time import gmtime, sleep, strftime, time
 
 # 3rd party modules
 
@@ -104,6 +104,9 @@ from argyll_names import (names as argyll_names, altnames as argyll_altnames,
 						  viewconds)
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, XYZ2xyY
 from debughelpers import getevtobjname, getevttype, handle_error
+if sys.platform not in ("darwin", "win32"):
+	from defaultpaths import (iccprofiles_home, iccprofiles_display_home, 
+							  xdg_config_home, xdg_config_dirs)
 from log import _safe_print, log, logbuffer, safe_print
 from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
@@ -131,13 +134,18 @@ from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
 from wxfixes import GTKMenuItemGetFixedLabel, _intversion
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
-					   LogWindow, TooltipWindow)
+					   LogWindow, ProgressDialog, TooltipWindow)
 
 # wxPython
 from wx import xrc
 from wx.lib import delayedresult
 from wx.lib.art import flagart
 import wx.lib.hyperlink
+if sys.platform not in ("darwin", "win32"):
+	try:
+		from edid import get_edid
+	except ImportError:
+		get_edid = False
 
 def _excepthook(etype, value, tb):
 	safe_print("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
@@ -507,7 +515,7 @@ class MainFrame(BaseFrame):
 
 	""" Display calibrator main application window. """
 	
-	def __init__(self):		
+	def __init__(self):
 		# Startup messages
 		if verbose >= 1:
 			safe_print(lang.getstr("startup"))
@@ -531,6 +539,7 @@ class MainFrame(BaseFrame):
 			elif ext.lower() == ".ti1":
 				self.dist_testcharts += [path]
 				self.dist_testchart_names += [os.path.basename(path)]
+			wx.GetApp().progress_dlg.Pulse()
 		if missing:
 			handle_error(lang.getstr("resources.notfound.warning") + "\n" +
 						 "\n".join(missing), False)
@@ -538,14 +547,21 @@ class MainFrame(BaseFrame):
 				if filename.lower().endswith(".xrc"):
 					handle_error(lang.getstr("resources.notfound.error") + 
 						 "\n" + filename, False)
+				wx.GetApp().progress_dlg.Pulse()
+		wx.GetApp().progress_dlg.Pulse()
 		
 		# Create main worker instance
+		wx.GetApp().progress_dlg.Pulse()
 		self.worker = Worker(self)
+		wx.GetApp().progress_dlg.Pulse()
 		self.worker.enumerate_displays_and_ports()
+		wx.GetApp().progress_dlg.Pulse()
 		
 		# Initialize GUI
 		if verbose >= 1:
 			safe_print(lang.getstr("initializing_gui"))
+		wx.GetApp().progress_dlg.Pulse(lang.getstr("initializing_gui"))
+		wx.GetApp().progress_dlg.stop_timer()
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "main.xrc")))
 		pre = wx.PreFrame()
@@ -590,6 +606,7 @@ class MainFrame(BaseFrame):
 			safe_print(lang.getstr("ready"))
 		
 		self.log()
+		wx.GetApp().progress_dlg.Hide()
 	
 	def log(self):
 		""" Put log buffer contents into the log window. """
@@ -2035,7 +2052,8 @@ class MainFrame(BaseFrame):
 			cmd, args = get_argyll_util("spyd2en"), ["-v"]
 			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 										  skip_scripts=True, silent=True,
-										  asroot=True)
+										  asroot=True,
+										  title=lang.getstr("enable_spyder2"))
 			if not isinstance(result, Exception) and result:
 				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
 						   ok=lang.getstr("ok"), 
@@ -2064,7 +2082,8 @@ class MainFrame(BaseFrame):
 												  capture_output=True, 
 												  skip_scripts=True, 
 												  silent=True,
-												  asroot=True)
+												  asroot=True,
+												  title=lang.getstr("enable_spyder2"))
 					if not isinstance(result, Exception) and result:
 						InfoDialog(self, 
 								   msg=lang.getstr("enable_spyder2_success"), 
@@ -2965,7 +2984,10 @@ class MainFrame(BaseFrame):
 				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
 				profile.tags.dmdd["Macintosh"] = ddesc
 				profile.tags.dmdd["Unicode"] = ddesc
-			profile.write()
+			try:
+				profile.write()
+			except Exception, exception:
+				return exception
 		return result
 
 	def install_cal_handler(self, event=None, cal=None):
@@ -3010,7 +3032,8 @@ class MainFrame(BaseFrame):
 						"dialog.install_profile", 
 						(os.path.basename(profile_path), 
 						 self.display_ctrl.GetStringSelection())), 
-					skip_scripts=True)
+					skip_scripts=True,
+					allow_show_log=False)
 
 	def install_profile_handler(self, event):
 		defaultDir, defaultFile = get_verified_path("last_icc_path")
@@ -3130,83 +3153,273 @@ class MainFrame(BaseFrame):
 	def install_profile(self, capture_output=False, cal=None, 
 						profile_path=None, install=True, skip_scripts=False, 
 						silent=False):
-		cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
-		if not isinstance(cmd, Exception): 
-			if "-Sl" in args and (sys.platform != "darwin" or 
-								  _intversion(mac_ver()[0].split(".")) >= (10, 6)):
-				# If a 'system' install is requested under Linux or Windows, 
-				# install in 'user' scope first because a system-wide install 
-				# doesn't also set it as current user profile on those systems 
-				# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
-				# It has the small drawback under Linux that it will copy the 
-				# profile to both the user and system-wide locations, though,
-				# which is not a problem under Windows as they are the same.
-				args.remove("-Sl")
-				result = self.worker.exec_cmd(cmd, args, capture_output, 
-											  low_contrast=False, 
-											  skip_scripts=skip_scripts, 
-											  silent=silent)
-				args.insert(0, "-Sl")
-			else:
-				result = True
-			if result:
-				result = self.worker.exec_cmd(cmd, args, capture_output, 
-											  low_contrast=False, 
-											  skip_scripts=skip_scripts, 
-											  silent=silent)
-		else:
-			result = cmd
-		if not isinstance(result, Exception) and \
-		   result is not None and install:
-			result = False
-			for line in self.worker.output:
-				if "Installed" in line:
-					if sys.platform == "darwin" and "-Sl" in args and \
-					   _intversion(mac_ver()[0].split(".")) < (10, 6):
-						# The profile has been installed, but we need a little 
-						# help from AppleScript to actually make it the default 
-						# for the current user
-						profile_name = os.path.basename(args[-1])
-						for option in ["ColorSyncScripting"]:
-							cmd, args = 'osascript', ['-e', 
-								'set iccProfile to POSIX file "%s"' % 
-								os.path.join(os.path.sep, "Library", 
-											 "ColorSync", "Profiles", 
-											 profile_name), '-e', 
-											 'tell app "%s" to set '
-											 'display profile of display %s to '
-											 'iccProfile' % (option,
-															 self.worker.get_display().split(",")[0])]
-							result = self.worker.exec_cmd(cmd, args, 
-														  capture_output=True, 
-														  low_contrast=False, 
-														  skip_scripts=True, 
-														  silent=False)
-							if result and not isinstance(result, Exception):
-								break
+		gcm = False
+		result = None
+		if install and sys.platform not in ("darwin", "win32") and \
+		   which("gcm-import") and get_edid:
+			# Use GNOME Color Manager
+			gcm_device_profiles_conf = os.path.join(xdg_config_home, 
+													"gnome-color-manager", 
+													"device-profiles.conf")
+			if not os.path.exists(gcm_device_profiles_conf):
+				gcm_device_profiles_conf = os.path.join(xdg_config_home, 
+														"color", 
+														"device-profiles.conf")
+			cfg = ConfigParser.RawConfigParser()
+			cfg.optionxform = str
+			if os.path.exists(gcm_device_profiles_conf):
+				try:
+					fp = codecs.open(gcm_device_profiles_conf, "r", "UTF-8")
+				except Exception, exception:
+					handle_error(exception)
+				else:
+					try:
+						cfg.readfp(fp)
+					except Exception, exception:
+						handle_error(exception)
+					fp.close()
+			try:
+				edid = get_edid(max(0, min(len(self.worker.displays), 
+										   getcfg("display.number") - 1)))
+			except (TypeError, ValueError):
+				edid = None
+			if edid:
+				incomplete = False
+				section_parts = ["xrandr"]
+				for name in ["manufacturer_id", "monitor_name", "ascii", 
+							 "serial_ascii"]:
+					if name in edid:
+						section_parts.append(edid[name].lower())
+					elif name != "ascii":
+						# Only allow the ASCII string to be missing,
+						# require the others
+						incomplete = True
+						break
+				if not incomplete:
+					install_section = "_".join(section_parts)
+					for section in cfg.sections():
+						# Find MD5 hash of EDID
+						if cfg.has_option(section, "edid-hash") and \
+						   cfg.get(section, "edid-hash") == edid["hash"]:
+							install_section = section
+							break
+					if not cfg.has_section(install_section):
+						# If we can't find a section with the MD5 hash,
+						# look for a section with the info we have from EDID
+						for section in cfg.sections():
+							# We only have the manufacturer ID, but GCM adds 
+							# a string like "_corporation" or "_company", so
+							# take that into account when looking for a
+							# matching section
+							if section.startswith("_".join(section_parts[:2])) and \
+							   section.endswith("_".join(section_parts[2:])):
+								   install_section = section
+								   break
+					utc = gmtime()
+					ts = strftime("%Y-%m-%dT%H:%M:%S", utc) + \
+						 str(round(time() - int(time()), 6))[1:] + "Z"
+					if not cfg.has_section(install_section):
+						# If we are creating a new entry
+						cfg.add_section(install_section)
+						cfg.set(install_section, "edid-hash", edid["hash"])
+						cfg.set(install_section, "created", ts)
+						if "serial_ascii" in edid:
+							cfg.set(install_section, "serial", 
+									edid["serial_ascii"])
+						if "monitor_name" in edid:
+							cfg.set(install_section, "model", 
+									edid["monitor_name"])
+						if "manufacturer_id" in edid:
+							cfg.set(install_section, "manufacturer", 
+									edid["manufacturer_id"])
+						if "manufacturer_id" in edid and \
+						   "monitor_name" in edid and \
+						   "max_h_size_cm" in edid and \
+						   "max_v_size_cm" in edid:
+							cfg.set(install_section, "title", 
+									" - ".join(edid["manufacturer_id"],
+											   edid["monitor_name"],
+											   str(int(math.sqrt(math.pow(edid["max_h_size_cm"], 2) * 
+																 math.pow(edid["max_v_size_cm"], 2)) / 2.54)) + '"'))
+						cfg.set(install_section, "type", "display")
+						cfg.set(install_section, "colorspace", "rgb")
+					cfg.set(install_section, "modified", ts)
+					profilename = os.path.basename(profile_path)
+					##profile_install_path = os.path.join(iccprofiles_display_home[0],
+														##profilename)
+					##if not os.path.exists(profile_install_path):
+						##shutil.copyfile(profile_path, profile_install_path)
+					profile_install_path = profile_path
+					# Fixup model and manufacturer with info from GCM
+					# device-profiles.conf (which equals the info we got from 
+					# EDID if no matching entry was available)
+					try:
+						profile = ICCP.ICCProfile(profile_install_path)
+					except ICCProfileInvalidError, exception:
+						handle_error(exception)
 					else:
+						profile.tags.dmdd = ICCP.TextDescriptionType(
+							"desc\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", "dmdd")
+						ddesc = cfg.get(install_section, "model")
+						profile.tags.dmdd["ASCII"] = ddesc.encode("ASCII", 
+																  "asciize")
+						profile.tags.dmnd["Macintosh"] = ddesc
+						profile.tags.dmnd["Unicode"] = ddesc
+						profile.tags.dmnd = ICCP.TextDescriptionType(
+							"desc\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", "dmnd")
+						mdesc = cfg.get(install_section, "manufacturer")
+						profile.tags.dmnd["ASCII"] = mdesc.encode("ASCII", 
+																  "asciize")
+						profile.tags.dmnd["Macintosh"] = mdesc
+						profile.tags.dmnd["Unicode"] = mdesc
+						try:
+							profile.write()
+						except Exception, exception:
+							handle_error(exception)
+					if True:
+						cmd, args = which("gcm-import"), [profile_install_path]
+						##if cfg.has_option(install_section, "profile"):
+							##profilepath = cfg.get(install_section, "profile")
+							### This is a comma-separated list of profiles, but
+							### a comma is probably not a good choice for a 
+							### separator, because filenames can contain them.
+							### Maybe it is just a single profile with possible 
+							### comma in filename, so check if it exists.
+							##if not os.path.isfile(profilepath):
+								### Check for os.pathsep first, only if not found
+								### in string, split by comma
+								##if os.pathsep in profilepath:
+									##profiles = profilepath.split(os.pathsep)
+								##else:
+									##profiles = profilepath.split(",")
+								##for profilepath in profiles:
+									##if os.path.exists(profilepath):
+										### FIXME: First one should be session 
+										### default, but we use the first 
+										### existing one
+										##break
+						for dirname in iccprofiles_home:
+							profilepath = os.path.join(dirname, profilename)
+							if os.path.isfile(profilepath):
+								# Run gcm-prefs instead of gcm-import
+								cmd, args = which("gcm-prefs"), []
+								break
 						result = True
-					break
-			## Verify if LUT is actually loaded?
-			# if "-c" in args:
-				# args.remove("-c")
-			# if "-I" in args:
-				# args.remove("-I")
-			# args.insert(-1, "-V")
-			# result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-			# 								low_contrast=False, 
-			# 								skip_scripts=True, silent=True)
-			# if result:
-				# result = False
-				# for line in self.worker.output:
-					# if line.find("'%s' IS loaded" % 
-								 # args[-1].encode(enc, "safe_asciize")) >= 0:
-						# result = True
-						# break
-		self.worker.wrapup(False)
+						gcm = True
+					else:
+						cfg.set(install_section, "profile", 
+								profile_install_path.encode("UTF-8"))
+						try:
+							io = StringIO()
+							cfg.write(io)
+							io.seek(0)
+							lines = io.read().strip("\n").split("\n")
+							for i, line in enumerate(lines):
+								lines[i] = "=".join(part.strip() for part in line.split("=", 1))
+							cfgfile = codecs.open(gcm_device_profiles_conf, "w", "UTF-8")
+							cfgfile.write("\n".join(lines))
+							cfgfile.close()
+						except IOError, exception:
+							handle_error(exception)
+						else:
+							if getcfg("profile.install_scope") == "l":
+								cmd, args = (which("gcm-install-system-wide"), 
+											 ["--id", install_section, 
+											  profile_install_path])
+								if not isinstance(cmd, Exception):
+									result = self.worker.exec_cmd(cmd, args, capture_output, 
+																  low_contrast=False, 
+																  skip_scripts=skip_scripts, 
+																  silent=silent)
+									if not isinstance(result, Exception) and result:
+										result = self.worker.exec_cmd(which("gcm-apply"), [], 
+																	  capture_output, 
+																	  low_contrast=False, 
+																	  skip_scripts=skip_scripts, 
+																	  silent=silent)
+							else:
+								result = True
+							gcm = True
+		
+		if not gcm:  ## or (not isinstance(result, Exception) and result):
+			cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
+			if not isinstance(cmd, Exception):
+				if "-Sl" in args and (sys.platform != "darwin" or 
+									  _intversion(mac_ver()[0].split(".")) >= (10, 6)):
+					# If a 'system' install is requested under Linux or Windows, 
+					# install in 'user' scope first because a system-wide install 
+					# doesn't also set it as current user profile on those systems 
+					# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
+					# It has the small drawback under Linux that it will copy the 
+					# profile to both the user and system-wide locations, though,
+					# which is not a problem under Windows as they are the same.
+					args.remove("-Sl")
+					result = self.worker.exec_cmd(cmd, args, capture_output, 
+												  low_contrast=False, 
+												  skip_scripts=skip_scripts, 
+												  silent=silent)
+					args.insert(0, "-Sl")
+				else:
+					result = True
+				if not isinstance(result, Exception) and result:
+					result = self.worker.exec_cmd(cmd, args, capture_output, 
+												  low_contrast=False, 
+												  skip_scripts=skip_scripts, 
+												  silent=silent,
+												  title=lang.getstr("profile.install"))
+			else:
+				result = cmd
+			if not isinstance(result, Exception) and \
+			   result is not None and install:
+				result = False
+				for line in self.worker.output:
+					if "Installed" in line:
+						if sys.platform == "darwin" and "-Sl" in args and \
+						   _intversion(mac_ver()[0].split(".")) < (10, 6):
+							# The profile has been installed, but we need a little 
+							# help from AppleScript to actually make it the default 
+							# for the current user
+							profile_name = os.path.basename(args[-1])
+							for option in ["ColorSyncScripting"]:
+								cmd, args = 'osascript', ['-e', 
+									'set iccProfile to POSIX file "%s"' % 
+									os.path.join(os.path.sep, "Library", 
+												 "ColorSync", "Profiles", 
+												 profile_name), '-e', 
+												 'tell app "%s" to set '
+												 'display profile of display %s to '
+												 'iccProfile' % (option,
+																 self.worker.get_display().split(",")[0])]
+								result = self.worker.exec_cmd(cmd, args, 
+															  capture_output=True, 
+															  low_contrast=False, 
+															  skip_scripts=True, 
+															  silent=False)
+								if result and not isinstance(result, Exception):
+									break
+						else:
+							result = True
+						break
+				## Verify if LUT is actually loaded?
+				# if "-c" in args:
+					# args.remove("-c")
+				# if "-I" in args:
+					# args.remove("-I")
+				# args.insert(-1, "-V")
+				# result = self.worker.exec_cmd(cmd, args, capture_output=True, 
+				# 								low_contrast=False, 
+				# 								skip_scripts=True, silent=True)
+				# if result:
+					# result = False
+					# for line in self.worker.output:
+						# if line.find("'%s' IS loaded" % 
+									 # args[-1].encode(enc, "safe_asciize")) >= 0:
+							# result = True
+							# break
+			self.worker.wrapup(False)
 		if not isinstance(result, Exception) and result:
 			if install:
-				if not silent:
+				if not silent and not gcm:
 					if verbose >= 1: safe_print(lang.getstr("success"))
 					InfoDialog(self, 
 							   msg=lang.getstr("profile.install.success"), 
@@ -3313,6 +3526,80 @@ class MainFrame(BaseFrame):
 					name = "%s-Calibration-Loader-Display-%s" % (appname, n)
 					desktopfile_path = os.path.join(autostart_home, 
 													name + ".desktop")
+					system_desktopfile_path = os.path.join(
+						autostart, name + ".desktop")
+					if gcm:
+						# Remove dispcalGUI user loader
+						if os.path.exists(desktopfile_path):
+							try:
+								os.remove(desktopfile_path)
+							except Exception, exception:
+								InfoDialog(self, 
+										   msg=lang.getstr(
+											   "error.autostart_remove_old", 
+											   desktopfile_path), 
+										   ok=lang.getstr("ok"), 
+										   bitmap=geticon(32, "dialog-warning"))
+						# Remove Argyll CMS user color.jcnf
+						colorjcnf_home = os.path.join(xdg_config_home, 
+													  "color.jcnf")
+						if os.path.exists(colorjcnf_home):
+							try:
+								os.remove(colorjcnf_home)
+							except Exception, exception:
+								InfoDialog(self, 
+										   msg=lang.getstr(
+											   "error.colorconfig_remove_old", 
+											   colorjcnf_home), 
+										   ok=lang.getstr("ok"), 
+										   bitmap=geticon(32, "dialog-warning"))
+						# Remove dispcalGUI system loader
+						if os.path.exists(system_desktopfile_path) and \
+						   not silent and \
+							   self.worker.exec_cmd("rm", 
+													["-f", 
+													 system_desktopfile_path], 
+													capture_output=True, 
+													low_contrast=False, 
+													skip_scripts=True, 
+													silent=False, 
+													asroot=True, 
+													title=lang.getstr("autostart_remove_old")) is not True:
+								InfoDialog(self, 
+										   msg=lang.getstr(
+											   "error.autostart_remove_old", 
+											   system_desktopfile_path), 
+										   ok=lang.getstr("ok"), 
+										   bitmap=geticon(32, "dialog-warning"))
+						# Remove Argyll CMS system color.jcnf
+						for path in xdg_config_dirs:
+							colorjcnf_system = os.path.join(path, "color.jcnf")
+							if os.path.exists(colorjcnf_system) and \
+							   not silent and \
+								   self.worker.exec_cmd("rm", 
+														["-f", 
+														 colorjcnf_system], 
+														capture_output=True, 
+														low_contrast=False, 
+														skip_scripts=True, 
+														silent=False, 
+														asroot=True, 
+														title=lang.getstr("colorconfig_remove_old")) is not True:
+									InfoDialog(self, 
+											   msg=lang.getstr(
+												   "error.colorconfig_remove_old", 
+												   colorjcnf_system), 
+											   ok=lang.getstr("ok"), 
+											   bitmap=geticon(32, "dialog-warning"))
+						# Run gcm-import or gcm-prefs
+						delayedresult.startWorker(lambda result: result, 
+												  self.worker.exec_cmd, 
+												  wargs=(cmd, args), 
+												  wkwargs=dict(capture_output=True, 
+															   low_contrast=False, 
+															   skip_scripts=True, 
+															   silent=False))
+						return result
 					exec_ = '"%s" %s' % (cmd, loader_args)
 					try:
 						# Always create user loader, even if we later try to 
@@ -3348,8 +3635,6 @@ class MainFrame(BaseFrame):
 					else:
 						if "-Sl" in args and autostart:
 							# copy system-wide loader
-							system_desktopfile_path = os.path.join(
-								autostart, name + ".desktop")
 							if not silent and \
 								(self.worker.exec_cmd("mkdir", 
 													  ["-p", autostart], 
@@ -3358,7 +3643,7 @@ class MainFrame(BaseFrame):
 													  skip_scripts=True, 
 													  silent=True, 
 													  asroot=True) is not True or 
-								 self.worker.exec_cmd("mv", 
+								 self.worker.exec_cmd("cp", 
 													  ["-f", 
 													   desktopfile_path, 
 													   autostart], 
@@ -4240,9 +4525,10 @@ class MainFrame(BaseFrame):
 		self.Show(start_timers=start_timers)
 
 	def profile_finish(self, result, profile_path=None, success_msg="", 
-					   failure_msg="", preview=True, skip_scripts=False):
+					   failure_msg="", preview=True, skip_scripts=False,
+					   allow_show_log=True):
 		if not isinstance(result, Exception) and result:
-			if getcfg("log.autoshow"):
+			if getcfg("log.autoshow") and allow_show_log:
 				self.infoframe.Show()
 			if not hasattr(self, "previous_cal") or self.previous_cal is False:
 				self.previous_cal = getcfg("calibration.file")
@@ -4332,7 +4618,9 @@ class MainFrame(BaseFrame):
 					self.preview_handler(preview=True)
 			if ((sys.platform == "darwin" or (sys.platform != "win32" and 
 											  self.worker.argyll_version >= 
-											  [1, 1, 0])) and 
+											  [1, 1, 0] and 
+											  (not which("gcm-import") or 
+											   not get_edid))) and 
 				(os.geteuid() == 0 or which("sudo"))) or \
 				(sys.platform == "win32" and 
 				 sys.getwindowsversion() >= (6, ) and 
@@ -4342,6 +4630,8 @@ class MainFrame(BaseFrame):
 				# NOTE: System install scope is currently not implemented
 				# correctly in dispwin 1.1.0, but a patch is trivial and
 				# should be in the next version
+				# 2010-06-18: Do not offer system install in dispcalGUI when
+				# installing via GCM
 				self.install_profile_user = wx.RadioButton(
 					dlg, -1, lang.getstr("profile.install_user"), 
 					style=wx.RB_GROUP)
@@ -5610,7 +5900,9 @@ class MainFrame(BaseFrame):
 	def plugplay_timer_handler(self, event):
 		if debug:
 			safe_print("[D] plugplay_timer_handler")
-		self.check_update_controls(silent=True)
+		if not self.worker.is_working() and (not hasattr(self, "tcframe") or 
+											 not self.tcframe.worker.is_working()):
+			self.check_update_controls(silent=True)
 
 	def load_cal_handler(self, event, path=None, update_profile_name=True, 
 						 silent=False, load_vcgt=True):
@@ -6286,6 +6578,7 @@ class MainFrame(BaseFrame):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			self.lut_viewer.Hide()
 			self.lut_viewer.Destroy()
+		wx.GetApp().progress_dlg.Destroy()
 		event.Skip()
 
 class MainApp(wx.App):
@@ -6295,16 +6588,25 @@ class MainApp(wx.App):
 		else:
 			self.SetAppName(appname)
 		self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
-		wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
-						  wx.LANGUAGE_ENGLISH)
+		##wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
+						  ##wx.LANGUAGE_ENGLISH)
 		##self.locale = wx.Locale(wx_lang)
 		##if debug:
 			##safe_print("[D]", lang.getstr("language_name"), wx_lang, 
 					   ##self.locale.GetLocale())
+		self.progress_dlg = ProgressDialog(msg=lang.getstr("startup"), 
+										   handler=self.startup_progress_handler,
+										   style=wx.PD_SMOOTH,
+										   pos=(getcfg("position.x") + 50, 
+												getcfg("position.y") + 50))
+		self.progress_dlg.MakeModal(False)
 		self.frame = MainFrame()
 		self.SetTopWindow(self.frame)
 		self.frame.Show()
 		return True
+	
+	def startup_progress_handler(self, event):
+		self.progress_dlg.Pulse()
 
 def main():
 	log("=" * 80)

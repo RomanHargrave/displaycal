@@ -13,13 +13,17 @@ from hashlib import md5
 from time import sleep, strftime
 
 if sys.platform == "darwin":
-	from thread import start_new_thread
 	from util_mac import mac_terminal_do_script, mac_terminal_set_colors
 elif sys.platform == "win32":
 	from ctypes import windll
 	import pywintypes
 	import win32api
 	import win32com.client
+else:
+	try:
+		from edid import get_edid
+	except ImportError:
+		get_edid = None
 from wxaddons import wx
 import wx.lib.delayedresult as delayedresult
 
@@ -615,6 +619,7 @@ class Worker():
 		self.argyll_bin_dir = None
 		self.argyll_version = [0, 0, 0]
 		self.argyll_version_string = ""
+		self._displays = []
 		self.displays = []
 		self.instruments = []
 		self.lut_access = []
@@ -658,6 +663,9 @@ class Worker():
 			lut_access = []
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
+			if wx.GetApp().progress_dlg.IsShownOnScreen():
+				wx.GetApp().progress_dlg.Pulse(
+					lang.getstr("enumerating_displays_and_comports"))
 			cmd = get_argyll_util("dispcal")
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
@@ -671,10 +679,6 @@ class Worker():
 			arg = None
 			defaults["calibration.black_point_rate.enabled"] = 0
 			n = -1
-			if sys.platform == "win32":
-				monitors = []
-				for monitor in win32api.EnumDisplayMonitors(None, None):
-					monitors.append(win32api.GetMonitorInfo(monitor[0]))
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
@@ -711,25 +715,6 @@ class Worker():
 											   "width (\d+), height (\d+)", 
 											   value)
 							if len(match):
-								if sys.platform == "win32":
-									i = 0
-									device = None
-									while True:
-										try:
-											# The ordering will work as long
-											# as Argyll continues using
-											# EnumDisplayMonitors
-											device = win32api.EnumDisplayDevices(
-												monitors[len(displays)]["Device"], i)
-										except pywintypes.error:
-											break
-										else:
-											if device.StateFlags & \
-											   DD_ATTACHED_TO_DESKTOP:
-												break
-										i += 1
-									if device:
-										match[0] = (device.DeviceString.decode(fs_enc, "replace"),) + match[0][1:]
 								display = "%s @ %s, %s, %sx%s" % match[0]
 								if " ".join(value.split()[-2:]) == \
 								   "(Primary Display)":
@@ -750,9 +735,59 @@ class Worker():
 					if not iname in instruments:
 						instruments.append(iname)
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
+			if wx.GetApp().progress_dlg.IsShownOnScreen():
+				wx.GetApp().progress_dlg.Pulse(
+					lang.getstr("success"))
 			if instruments != self.instruments:
 				self.instruments = instruments
-			if displays != self.displays:
+			if displays != self._displays:
+				self._displays = list(displays)
+				if sys.platform == "win32":
+					monitors = []
+					for monitor in win32api.EnumDisplayMonitors(None, None):
+						monitors.append(win32api.GetMonitorInfo(monitor[0]))
+				for i, display in enumerate(displays):
+					# Make sure we have nice descriptions
+					desc = []
+					if sys.platform == "win32":
+						# Get monitor description using win32api
+						n = 0
+						device = None
+						while True:
+							try:
+								# The ordering will work as long
+								# as Argyll continues using
+								# EnumDisplayMonitors
+								device = win32api.EnumDisplayDevices(
+									monitors[i]["Device"], n)
+							except pywintypes.error:
+								break
+							else:
+								if device.StateFlags & \
+								   DD_ATTACHED_TO_DESKTOP:
+									break
+							n += 1
+						if device:
+							desc.append(device.DeviceString.decode(fs_enc, "replace"))
+					elif sys.platform != "darwin" and get_edid:
+						# Get monitor descriptions from EDID
+						try:
+							edid = get_edid(i)
+						except (TypeError, ValueError):
+							edid = None
+						if edid:
+							manufacturer = edid.get("manufacturer_id")
+							monitor = edid.get("monitor_name")
+							if monitor:
+								desc.append(monitor)
+							if manufacturer and (not monitor or 
+												 not monitor.startswith(manufacturer)):
+								desc.insert(0, manufacturer)
+					if desc and desc[-1] not in display:
+						# Only replace the description if it not already
+						# contains the monitor model
+						displays[i] = " @".join([" ".join(desc), 
+												 display.split("@")[1]])
 				self.displays = displays
 				# Check lut access
 				i = 0
@@ -760,6 +795,9 @@ class Worker():
 				for disp in displays:
 					if verbose >= 1 and not silent:
 						safe_print(lang.getstr("checking_lut_access", (i + 1)))
+					if wx.GetApp().progress_dlg.IsShownOnScreen():
+						wx.GetApp().progress_dlg.Pulse(
+							lang.getstr("checking_lut_access", (i + 1)))
 					# Load test.cal
 					result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
 													 get_data_path("test.cal")], 
@@ -795,6 +833,10 @@ class Worker():
 							safe_print(lang.getstr("success"))
 						else:
 							safe_print(lang.getstr("failure"))
+					if wx.GetApp().progress_dlg.IsShownOnScreen():
+						wx.GetApp().progress_dlg.Pulse(
+							lang.getstr("success" if retcode == 0 else
+										"failure"))
 					i += 1
 				self.lut_access = lut_access
 		elif silent or not check_argyll_bin():
@@ -802,7 +844,8 @@ class Worker():
 
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
-				 silent=False, parent=None, asroot=False, log_output=True):
+				 silent=False, parent=None, asroot=False, log_output=True,
+				 title=appname):
 		"""
 		Execute a command.
 		
@@ -821,6 +864,7 @@ class Worker():
 		parent sets the parent window for any message dialogs.
 		asroot (if True) on Linux runs the command using sudo.
 		log_output (if True) logs any output if capture_output is also set.
+		title = Title for sudo dialog
 		"""
 		if parent is None:
 			parent = self.owner
@@ -922,7 +966,8 @@ class Worker():
 				if not "OK" in stdout:
 					# ask for password
 					dlg = ConfirmDialog(
-						parent, msg=lang.getstr("dialog.enter_password"), 
+						parent, title=title, 
+						msg=lang.getstr("dialog.enter_password"), 
 						ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-question"))
 					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, "", 
