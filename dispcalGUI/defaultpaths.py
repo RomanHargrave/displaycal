@@ -60,8 +60,7 @@ elif sys.platform == "darwin":
 	iccprofiles_home = [os.path.join(expanduseru("~"), "Library", "ColorSync", 
 									 "Profiles")]
 else:
-	xdg_config_home = getenvu("XDG_CONFIG_HOME",
-								  os.path.join(expanduseru("~"), ".config"))
+	xdg_config_home = getenvu("XDG_CONFIG_HOME", expandvarsu("$HOME/.config"))
 	xdg_config_dir_default = "/etc/xdg"
 	xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", 
 							  xdg_config_dir_default).split(os.pathsep)
@@ -85,7 +84,9 @@ else:
 	for dir_ in xdg_data_dirs:
 		if os.path.exists(dir_):
 			iccprofiles += [os.path.join(dir_, "color", "icc")]
-	iccprofiles_home = [os.path.join(xdg_data_home, "color", "icc")]
+	iccprofiles.append("/var/lib/color")
+	iccprofiles_home = [os.path.join(xdg_data_home, "color", "icc"), 
+						expandvarsu("$HOME/.color/icc")]
 if sys.platform in ("darwin", "win32"):
 	iccprofiles_display = iccprofiles
 	iccprofiles_display = iccprofiles_home
