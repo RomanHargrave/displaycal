@@ -1998,9 +1998,13 @@ class Wtty:
             # py2exe: Needs appropriate 'zipfile' option in setup script and 
             # 'bundle_files' 3
             spath.append(os.path.join(dirname, 'library.zip'))
-            spath.append(os.path.join(dirname, 'lib', 'library.zip'))
-            spath.append(os.path.join(dirname, 'lib', 'library.zip', 
+            spath.append(os.path.join(dirname, 'library.zip', 
                                       os.path.basename(os.path.splitext(sys.executable)[0])))
+            if os.path.isdir(os.path.join(dirname, 'lib')):
+                dirname = os.path.join(dirname, 'lib')
+                spath.append(os.path.join(dirname, 'library.zip'))
+                spath.append(os.path.join(dirname, 'library.zip', 
+                                          os.path.basename(os.path.splitext(sys.executable)[0])))
             pyargs.insert(0, '-S')  # skip 'import site'
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()

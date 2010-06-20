@@ -270,7 +270,7 @@ def setup():
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					[os.path.join(pydir, "theme", "icons", name + 
 					 "-uninstall.ico")]), 
-					(data, [sys.executable])]
+					(os.path.join(data, "lib"), [sys.executable])]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					[os.path.join(pydir, "theme", "icons", 
@@ -828,6 +828,10 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 				sys.argv.insert(i + 1, "-i")
 
 		setup(**attrs)
+		
+		if do_py2exe:
+			shutil.copy(os.path.join(dist_dir, "python26.dll"),
+						os.path.join(dist_dir, "lib", "python26.dll"))
 
 		if ((bdist_bbfreeze and sys.platform == "win32") or do_py2exe) and \
 		   sys.version_info[:2] >= (2,6):
