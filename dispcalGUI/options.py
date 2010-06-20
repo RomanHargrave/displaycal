@@ -26,6 +26,8 @@ tc_use_alternate_preview = "-ap" in sys.argv[1:] or "--alternate-preview" in \
 # test some features even if they are not available
 test = "-t" in sys.argv[1:] or "--test" in sys.argv[1:]
 
+test_require_sensor_cal = "-s" in sys.argv[1:] or "--test_require_sensor_cal" in sys.argv[1:]
+
 # verbosity level (default: 1)
 if "-v4" in sys.argv[1:] or "--verbose=4" in sys.argv[1:]:
 	verbose = 4

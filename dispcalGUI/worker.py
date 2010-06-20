@@ -10,7 +10,7 @@ import textwrap
 import traceback
 from encodings.aliases import aliases
 from hashlib import md5
-from time import sleep, strftime
+from time import sleep, strftime, time
 
 if sys.platform == "darwin":
 	from util_mac import mac_terminal_do_script, mac_terminal_set_colors
@@ -46,7 +46,7 @@ from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg,
 from debughelpers import handle_error
 from log import log, safe_print
 from meta import name as appname, version
-from options import ascii, debug, test, verbose
+from options import ascii, debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from util_io import Files, StringIOu as StringIO
 from util_os import getenvu, putenvu, quote_args, which
@@ -65,6 +65,23 @@ DD_REMOVABLE           = 0x20
 DD_DISCONNECT          = 0x2000000  # WINVER >= 5
 DD_REMOTE              = 0x4000000  # WINVER >= 5
 DD_MODESPRUNED         = 0x8000000  # WINVER >= 5
+
+keycodes = {wx.WXK_NUMPAD0: ord("0"),
+			wx.WXK_NUMPAD1: ord("1"),
+			wx.WXK_NUMPAD2: ord("2"),
+			wx.WXK_NUMPAD3: ord("3"),
+			wx.WXK_NUMPAD4: ord("4"),
+			wx.WXK_NUMPAD5: ord("5"),
+			wx.WXK_NUMPAD6: ord("6"),
+			wx.WXK_NUMPAD7: ord("7"),
+			wx.WXK_NUMPAD8: ord("8"),
+			wx.WXK_NUMPAD9: ord("9"),
+			wx.WXK_NUMPAD_ADD: ord("+"),
+			wx.WXK_NUMPAD_ENTER: ord("\n"),
+			wx.WXK_NUMPAD_EQUAL: ord("="),
+			wx.WXK_NUMPAD_DIVIDE: ord("/"),
+			wx.WXK_NUMPAD_MULTIPLY: ord("*"),
+			wx.WXK_NUMPAD_SUBTRACT: ord("-")}
 
 
 def check_argyll_bin(paths=None):
@@ -467,7 +484,7 @@ class FilteredStream():
 				"key to continue",
 				"key to retry",
 				"key to take a reading",
-				"Esc or Q to"]
+				"Esc or Q"]
 	
 	substitutions = {"Delta E": "deltaE",
 					 " peqDE ": " previous pass deltaE ",
@@ -605,6 +622,9 @@ class Worker():
 	
 	def get_needs_no_sensor_cal(self):
 		instrument_features = self.get_instrument_features()
+		# TTBD/FIXME: Skipping of sensor calibration can't be done in
+		# emissive mode
+		return not instrument_features.get("sensor_cal")
 		# -N switch not working as expected in Argyll < 1.1.0
 		return instrument_features and \
 			   (not instrument_features.get("sensor_cal") or 
@@ -873,7 +893,7 @@ class Worker():
 		fn = None
 		self.clear_cmd_output()
 		if None in [cmd, args]:
-			if verbose >= 1 and not capture_output:
+			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("aborted"), fn=fn)
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
@@ -935,15 +955,18 @@ class Worker():
 		process_cmds = (get_argyll_utilname("colprof"),
 						get_argyll_utilname("targen"))
 		interact = args and cmdname in measure_cmds + process_cmds
-		measure = cmdname in measure_cmds
-		if measure:
-			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") or \
-							  "-N" in args
-		needs_user_interaction = (cmdname == get_argyll_utilname("dispcal") and 
-								  not "-E" in args and not "-R" in args and 
-								  not "-m" in args and not "-r" in args and 
-								  not "-u" in args) or (measure and 
-														not skip_sensor_cal)
+		self.measure = cmdname in measure_cmds
+		if self.measure:
+			# TTBD/FIXME: Skipping of sensor calibration can't be done in
+			# emissive mode
+			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") ##or \
+							  ##"-N" in args
+		self.dispcal = cmdname == get_argyll_utilname("dispcal")
+		self.needs_user_interaction = (self.dispcal and 
+									   not "-E" in args and not "-R" in args and 
+									   not "-m" in args and not "-r" in args and 
+									   not "-u" in args) or (self.measure and 
+															 not skip_sensor_cal)
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
 					    sys.getwindowsversion() >= (6, ))):
@@ -1121,7 +1144,7 @@ class Worker():
 		cmdline = [arg.encode(fs_enc) for arg in cmdline]
 		working_dir = None if working_dir is None else working_dir.encode(fs_enc)
 		try:
-			if not needs_user_interaction:
+			if not self.needs_user_interaction:
 				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
 			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
 				del os.environ["ARGYLL_NOT_INTERACTIVE"]
@@ -1163,15 +1186,19 @@ class Worker():
 				stdout = StringIO()
 				self.recent = FilteredStream(LineCache(n=3), data_encoding, 
 											 discard=re.compile("^(?:Adjusted )?[Tt]arget (?:white|black|gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:Black|Red|Green|Blue|White)\\s+=.+|^patch \\d+ of \\d+.*|^point \\d+.*|^Added \\d+/\\d+|[\\*|\\.]+|\\s*\\d*%?", 
-																re.I))
+																re.I),
+											 triggers=[])
 				self.lastmsg = FilteredStream(LineCache(), data_encoding, 
 											  discard=re.compile("[\\*|\\.]+|^point \\d+.*", 
-																 re.I))
+																 re.I),
+											  triggers=[])
 				if log_output:
 					if sys.stdout.isatty():
-						logfile = FilteredStream(safe_print, data_encoding)
+						logfile = FilteredStream(safe_print, data_encoding,
+												 triggers=[])
 					else:
-						logfile = FilteredStream(log, data_encoding)
+						logfile = FilteredStream(log, data_encoding,
+												 triggers=[])
 					logfile = Files((logfile, stdout, self.recent,
 									 self.lastmsg))
 				else:
@@ -1180,7 +1207,7 @@ class Worker():
 				if self.interactive:
 					logfile = Files((FilteredStream(self.terminal,
 													discard="",
-													triggers={}), logfile))
+													triggers=[]), logfile))
 			if sys.platform == "win32" and working_dir:
 				working_dir = win32api.GetShortPathName(working_dir)
 			logfn = log
@@ -1190,20 +1217,23 @@ class Worker():
 					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
 													**kwargs)
 					self.subprocess.logfile_read = logfile
-					##if measure and sys.platform not in ("win32", "darwin"):
-						### allow some time to setup instrument and create test window
-						##sleep(5)
-					if measure:
+					if self.subprocess.isalive():
 						try:
-							if self.subprocess.isalive():
-								if skip_sensor_cal and not "-F" in args:
-									# Allow the user to move the terminal window if
-									# using black background
+							if self.measure:
+								if self.dispcal:
 									self.subprocess.expect(":")
-									if sys.platform != "win32":
-										sleep(.5)
-									if self.subprocess.isalive():
-										self.subprocess.send(" ")
+									msg = self.recent.read()
+									lastmsg = self.lastmsg.read().strip()
+									if "key to continue" in lastmsg and \
+									   "Place instrument on test window" in \
+									   "".join(msg.splitlines()[-2:-1]) and \
+									   not "-F" in args:
+										# Allow the user to move the terminal window if
+										# using black background, otherwise send
+										if sys.platform != "win32":
+											sleep(.5)
+										if self.subprocess.isalive():
+											self.subprocess.send(" ")
 								while self.subprocess.isalive():
 									# Handle misreads, user can cancel via
 									# progress dialog
@@ -1215,6 +1245,9 @@ class Worker():
 										sleep(.5)
 									if self.subprocess.isalive():
 										self.subprocess.send(" ")
+							else:
+								self.subprocess.expect(wexpect.EOF, 
+													   timeout=None)
 						except (wexpect.EOF, wexpect.TIMEOUT), exception:
 							pass
 					if self.subprocess.after not in (wexpect.EOF, 
@@ -1280,17 +1313,17 @@ class Worker():
 				safe_print('[D] working_dir:', working_dir)
 			errmsg = (" ".join(cmdline).decode(fs_enc) + "\n" + 
 					  safe_unicode(traceback.format_exc()))
-			return Error(errmsg)
 			self.retcode = -1
-		if debug:
+			return Error(errmsg)
+		if debug and not silent:
 			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
-			if verbose >= 1 and not capture_output:
+			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("aborted"), fn=fn)
 			if interact and len(self.output):
 				for i, line in enumerate(self.output):
 					if line.startswith(cmdname + ": Error") and \
-					   not "display read failed with 'User Aborted'" in line and \
+					   not "failed with 'User Aborted'" in line and \
 					   not "test_crt returned error code 1" in line:
 						# "test_crt returned error code 1" == user aborted
 						return Error("".join(self.output[i:]))
@@ -1346,7 +1379,11 @@ class Worker():
 	
 	def get_instrument_features(self):
 		""" Return features of currently configured instrument """
-		return all_instruments.get(self.get_instrument_name(), {})
+		features = all_instruments.get(self.get_instrument_name(), {})
+		if test_require_sensor_cal:
+			features["sensor_cal"] = True
+			features["skip_sensor_cal"] = False
+		return features
 	
 	def get_instrument_name(self):
 		""" Return name of currently configured instrument """
@@ -1844,6 +1881,18 @@ class Worker():
 		percentage = None
 		msg = self.recent.read()
 		lastmsg = self.lastmsg.read().strip()
+		if "key to continue" in lastmsg and \
+		   "Place instrument on test window" in \
+		   "".join(msg.splitlines()[-2:-1]) and \
+		   not self.dispcal:
+			# We no longer need keyboard interaction, switch over to
+			# progress dialog
+			if self.progress_wnd is getattr(self, "terminal", None):
+				wx.CallAfter(self.swap_progress_wnds)
+			if sys.platform != "win32":
+				sleep(.5)
+			self.subprocess.send(" ")
+			return
 		if re.match("\\s*\\d+%", lastmsg):
 			# colprof
 			try:
@@ -1897,12 +1946,12 @@ class Worker():
 				if debug:
 					log('[D] thread_abort')
 				self.thread_abort = True
-		if self.interactive and self.progress_wnd.IsShownOnScreen() and \
-		   not wx.GetApp().IsActive():
-			# This is mainly needed on the Mac were dispcal's test window
-			# steals focus
+		if self.progress_wnd.IsShownOnScreen() and \
+		   not wx.GetApp().IsActive() or not self.progress_wnd.IsActive():
 			self.progress_wnd.Raise()
-			if not wx.GetApp().IsActive():
+			if self.interactive and not wx.GetApp().IsActive():
+				# This is mainly needed on the Mac were dispcal's test window
+				# steals focus
 				self.progress_wnd.RequestUserAttention()
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
@@ -1931,7 +1980,8 @@ class Worker():
 			self.progress_dlg = ProgressDialog(progress_title, progress_msg, 
 											   maximum=101, 
 											   parent=parent, 
-											   handler=self.progress_handler)
+											   handler=self.progress_handler,
+											   keyhandler=self.terminal_key_handler)
 			self.progress_wnd = self.progress_dlg
 		self.progress_wnd.original_msg = progress_msg
 	
@@ -1950,28 +2000,24 @@ class Worker():
 			##self.subprocess_abort = True
 			##self.thread_abort = True
 			try:
-				if hasattr(self.subprocess, "send"):
+				if self.measure and hasattr(self.subprocess, "send"):
 					try:
 						if debug:
 							log('[D] try send ESC (1)')
 						self.subprocess.send("\x1b")
-						sleep(1)
+						ts = time()
+						while getattr(self, "subprocess", None) and \
+						   self.subprocess.isalive():
+							if time() > ts + 9 or \
+							   "Esc or Q" in self.lastmsg.read():
+								break
+							sleep(1)
 						if getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
 							if debug:
-								log('[D] try expect')
-							self.subprocess.expect([":", 
-													wexpect.EOF, 
-													wexpect.TIMEOUT],
-												   timeout=1)
-							if not isinstance(self.subprocess.after, 
-											  wexpect.EOF):
-								if debug:
-									log('[D] try send ESC (2)')
-								self.subprocess.send("\x1b")
-								sleep(1)
-							elif debug:
-								log('[D] EOF')
+								log('[D] try send ESC (2)')
+							self.subprocess.send("\x1b")
+							sleep(.5)
 					except Exception, exception:
 						if debug:
 							log(traceback.format_exc())
@@ -1983,13 +2029,19 @@ class Worker():
 					if debug:
 						log('[D] try terminate')
 					self.subprocess.terminate()
-					sleep(3)
-				if getattr(self, "subprocess", None) and \
-				   hasattr(self.subprocess, "isalive") and \
-				   self.subprocess.isalive():
-					if debug:
-						log('[D] try force terminate')
-					self.subprocess.terminate(force=True)
+					ts = time()
+					while getattr(self, "subprocess", None) and \
+					   hasattr(self.subprocess, "isalive") and \
+					   self.subprocess.isalive():
+						if time() > ts + 3:
+							break
+						sleep(.25)
+					if getattr(self, "subprocess", None) and \
+					   hasattr(self.subprocess, "isalive") and \
+					   self.subprocess.isalive():
+						if debug:
+							log('[D] try force terminate')
+						self.subprocess.terminate(force=True)
 			except Exception, exception:
 				if debug:
 					log(traceback.format_exc())
@@ -2039,8 +2091,6 @@ class Worker():
 			sleep(.25) # wait until previous worker thread finishes
 		if hasattr(self.owner, "stop_timers"):
 			self.owner.stop_timers()
-		if not progress_msg:
-			progress_msg = lang.getstr("please_wait")
 		if not parent:
 			parent = self.owner
 		if progress_start < 100:
@@ -2052,17 +2102,24 @@ class Worker():
 			   self.progress_wnd is getattr(self, "progress_dlg", None):
 				self.progress_dlg.Destroy()
 				self.progress_dlg = None
+			if progress_msg and progress_title == appname:
+				progress_title = progress_msg
 			if getattr(self, "terminal", None):
 				self.progress_wnd = self.terminal
-				self.progress_wnd.console.SetValue("")
+				if not resume:
+					self.progress_wnd.console.SetValue("")
+				self.progress_wnd.stop_timer()
 				self.progress_wnd.start_timer()
+				self.progress_wnd.SetTitle(progress_title)
 				self.progress_wnd.Show()
 			else:
-				self.terminal = SimpleTerminal(parent,
+				self.terminal = SimpleTerminal(parent, title=progress_title,
 											   handler=self.progress_handler,
 											   keyhandler=self.terminal_key_handler)
 				self.progress_wnd = self.terminal
 		else:
+			if not progress_msg:
+				progress_msg = lang.getstr("please_wait")
 			# Show the progress dialog after a delay
 			self.progress_start_timer = wx.CallLater(progress_start, 
 													 self.progress_dlg_start, 
@@ -2090,14 +2147,21 @@ class Worker():
 									wx.EVT_KEY_DOWN.typeId):
 			keycode = event.GetKeyCode()
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
-			keycode = self.terminal.id_to_keycode.get(event.GetId())
-		if keycode is not None and keycode < 256:
-			if keycode == ord("7"):
+			keycode = self.progress_wnd.id_to_keycode.get(event.GetId())
+		if keycode is not None and getattr(self, "subprocess", None) and \
+			hasattr(self.subprocess, "send"):
+			keycode = keycodes.get(keycode, keycode)
+			if keycode == ord("7") and \
+			   self.progress_wnd is getattr(self, "terminal", None):
 				# calibration
 				wx.CallAfter(self.swap_progress_wnds)
 			elif keycode in (ord("\x1b"), ord("8"), ord("Q"), ord("q")):
 				# exit
+				self.thread_abort = True
 				self.subprocess_abort = True
+				delayedresult.startWorker(lambda result: None, 
+										  self.quit_terminate_cmd)
+				return
 			try:
 				self.subprocess.send(chr(keycode))
 			except:
