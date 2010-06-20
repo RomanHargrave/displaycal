@@ -646,11 +646,11 @@
 				<p>Unattended calibration and profiling currently supports the following instruments:</p>
 				
 				<ul>
-					<li>X-Rite ColorMunki *</li>
+					<!--li>X-Rite ColorMunki *</li-->
 					<li>X-Rite DTP94</li>
 					<li>X-Rite/GretagMacbeth i1 Display 2</li>
-					<li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro *</li>
-					<li>X-Rite/GretagMacbeth Spectrolino/Spectroscan(T) *</li>
+					<!--li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro *</li-->
+					<!--li>X-Rite/GretagMacbeth Spectrolino/Spectroscan(T) *</li-->
 					<li>Datacolor/ColorVision Spyder 2</li>
 					<li>Datacolor/ColorVision Spyder 3 *</li>
 				</ul>
@@ -1332,11 +1332,13 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Instrument sensor calibration sometimes accidentally occured when the instrument was still attached to the screen, leading to erroneous subsequent readings.</li>
 							<li>Immediately close a profile after reading to avoid locking it (fixes not being able to delete files from within the GUI).</li>
 							<li>Fixed quirks in “update calibration” and “update profile” operation.</li>
 							<li>Do not hide the system-wide installation option in the profile install dialog if a profile has no embedded calibration curves (vcgt tag).</li>
 							<li>If the calibration curves of the current display profile couldn't be loaded for some reason (broken video card gamma table access, or no profile set), the curve viewer was not yet shown, and then a profile under “Settings” was selected, and then deleted, and then the curve viewer called up, an unhandled exception was raised.</li>
 							<li>Linux (only if the detected filesystem encoding is not UTF-8), Mac OS X and Windows: When installing a profile with “special” characters in the filename (everything not representable as 7-bit ASCII), it is now given an unique name containing the display number and MD5 hash, which fixes a few problems with filename encoding under Linux and Mac OS (under Linux the profile couldn't be successfully installed, under Mac OS X system-wide installation broke). This also fixes an issue under Windows where a profile whose name starts with the same first few characters (but has not the same name) as an already existing file in the system profile directory could accidentally overwrite that file, because I had not considered that filenames returned by win32api.GetShortPathName are only unique for the directory where a given file resides—and upon installation, that is the profile storage directory, not the system profile directory.</li>
+							<li>Windows: Fixed ambient measurement reproducably hanging on some systems.</li>
 						</ul>
 						<h4>Added in this release:</h4>
 						<ul>

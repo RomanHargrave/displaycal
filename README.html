@@ -416,14 +416,14 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.4.6.4 (Linux)<br />
-				0.4.6.4 (Mac OS X)<br />
-				0.4.6.4 (Windows)<br />
-				0.4.6.4 (Source)<br />
+				<dd id="version">0.4.6.8 (Linux)<br />
+				0.4.6.8 (Mac OS X)<br />
+				0.4.6.8 (Windows)<br />
+				0.4.6.8 (Source)<br />
 				<a href="http://dispcalGUI.hoech.net/archive">Archive</a><br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-06-19 22:12 (UTC)</dd>
+				<dd id="date">2010-06-20 16:16 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -554,18 +554,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.4.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.4.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.4-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.4-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.4.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -646,11 +646,11 @@
 				<p>Unattended calibration and profiling currently supports the following instruments:</p>
 				
 				<ul>
-					<li>X-Rite ColorMunki *</li>
+					<!--li>X-Rite ColorMunki *</li-->
 					<li>X-Rite DTP94</li>
 					<li>X-Rite/GretagMacbeth i1 Display 2</li>
-					<li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro *</li>
-					<li>X-Rite/GretagMacbeth Spectrolino/Spectroscan(T) *</li>
+					<!--li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro *</li-->
+					<!--li>X-Rite/GretagMacbeth Spectrolino/Spectroscan(T) *</li-->
 					<li>Datacolor/ColorVision Spyder 2</li>
 					<li>Datacolor/ColorVision Spyder 3 *</li>
 				</ul>
@@ -1325,18 +1325,20 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-06-19 22:12 (UTC) 0.4.6.4 -->
+			<!-- 2010-06-20 16:16 (UTC) 0.4.6.8 -->
 			<dl>
-				<dt>2010-06-19 22:12 (UTC) 0.4.6.4</dt>
+				<dt>2010-06-20 16:16 (UTC) 0.4.6.8</dt>
 					<dd>
-						<h3>0.4.6.4</h3>
+						<h3>0.4.6.8</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Instrument sensor calibration sometimes accidentally occured when the instrument was still attached to the screen, leading to erroneous subsequent readings.</li>
 							<li>Immediately close a profile after reading to avoid locking it (fixes not being able to delete files from within the GUI).</li>
 							<li>Fixed quirks in “update calibration” and “update profile” operation.</li>
 							<li>Do not hide the system-wide installation option in the profile install dialog if a profile has no embedded calibration curves (vcgt tag).</li>
 							<li>If the calibration curves of the current display profile couldn't be loaded for some reason (broken video card gamma table access, or no profile set), the curve viewer was not yet shown, and then a profile under “Settings” was selected, and then deleted, and then the curve viewer called up, an unhandled exception was raised.</li>
 							<li>Linux (only if the detected filesystem encoding is not UTF-8), Mac OS X and Windows: When installing a profile with “special” characters in the filename (everything not representable as 7-bit ASCII), it is now given an unique name containing the display number and MD5 hash, which fixes a few problems with filename encoding under Linux and Mac OS (under Linux the profile couldn't be successfully installed, under Mac OS X system-wide installation broke). This also fixes an issue under Windows where a profile whose name starts with the same first few characters (but has not the same name) as an already existing file in the system profile directory could accidentally overwrite that file, because I had not considered that filenames returned by win32api.GetShortPathName are only unique for the directory where a given file resides—and upon installation, that is the profile storage directory, not the system profile directory.</li>
+							<li>Windows: Fixed ambient measurement reproducably hanging on some systems.</li>
 						</ul>
 						<h4>Added in this release:</h4>
 						<ul>
