@@ -326,7 +326,7 @@ class ProgressDialog(wx.ProgressDialog):
 	""" A progress dialog. """
 	
 	def __init__(self, title=appname, msg="", maximum=100, parent=None, style=None, 
-				 handler=None, start_timer=True, pos=None):
+				 handler=None, keyhandler=None, start_timer=True, pos=None):
 		if style is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
 		wx.ProgressDialog.__init__(self, title, "", maximum, parent=parent, style=style)
@@ -335,9 +335,21 @@ class ProgressDialog(wx.ProgressDialog):
 		if icon:
 			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
-		self.Bind(wx.EVT_MOVE, self.OnMove, self)
+		if not pos:
+			self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, handler or self.OnTimer, self.timer)
+		
+		# Use an accelerator table for space, 0-9, a-z
+		keycodes = [32] + range(48, 58) + range(97, 123)
+		self.id_to_keycode = {}
+		for keycode in keycodes:
+			self.id_to_keycode[wx.NewId()] = keycode
+		accels = []
+		for id, keycode in self.id_to_keycode.iteritems():
+			self.Bind(wx.EVT_MENU, keyhandler or self.key_handler, id=id)
+			accels += [(wx.ACCEL_NORMAL, keycode, id)]
+		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		
 		# custom localization
 		for child in self.GetChildren():
@@ -428,6 +440,9 @@ class ProgressDialog(wx.ProgressDialog):
 				wx.CallLater(3000, self.Pulse, 
 							 "Aborted. You may now close this window.")
 	
+	def key_handler(self, event):
+		pass
+	
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
 	
@@ -439,9 +454,9 @@ class SimpleTerminal(InvincibleFrame):
 	
 	""" A simple terminal-like window. """
 
-	def __init__(self, parent=None, id=-1, handler=None, keyhandler=None,
-				 start_timer=True):
-		wx.Frame.__init__(self, parent, id, appname, 
+	def __init__(self, parent=None, id=-1, title=appname, handler=None, 
+				 keyhandler=None, start_timer=True):
+		wx.Frame.__init__(self, parent, id, title, 
 								style=wx.DEFAULT_FRAME_STYLE)
 		icon = get_data_path(os.path.join("theme", "icons", "16x16", 
 												  appname + ".png"))
@@ -594,12 +609,7 @@ class SimpleTerminal(InvincibleFrame):
 		return True
 	
 	def key_handler(self, event):
-		if event.GetEventType() == wx.EVT_CHAR_HOOK.typeId:
-			print "Received EVT_CHAR_HOOK", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
-		elif event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
-			print "Received EVT_KEY_DOWN", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
-		elif event.GetEventType() == wx.EVT_MENU.typeId:
-			print "Received EVT_MENU", self.id_to_keycode.get(event.GetId()), repr(unichr(self.id_to_keycode.get(event.GetId())))
+		pass
 	
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
@@ -653,9 +663,17 @@ class TooltipWindow(InvincibleFrame):
 		self.Raise()
 
 def test():
+	def key_handler(event):
+		if event.GetEventType() == wx.EVT_CHAR_HOOK.typeId:
+			print "Received EVT_CHAR_HOOK", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
+		elif event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
+			print "Received EVT_KEY_DOWN", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
+		elif event.GetEventType() == wx.EVT_MENU.typeId:
+			print "Received EVT_MENU", event.GetEventObject().id_to_keycode.get(event.GetId()), repr(unichr(event.GetEventObject().id_to_keycode.get(event.GetId())))
+	
 	app = wx.App(0)
-	p = ProgressDialog(msg="".join(("Test " * 5)))
-	t = SimpleTerminal(start_timer=False)
+	p = ProgressDialog(msg="".join(("Test " * 5)), keyhandler=key_handler)
+	t = SimpleTerminal(start_timer=False, keyhandler=key_handler)
 	app.MainLoop()
 
 if __name__ == "__main__":
