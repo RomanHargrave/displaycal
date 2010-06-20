@@ -1220,7 +1220,7 @@ class Worker():
 					if self.subprocess.isalive():
 						try:
 							if self.measure:
-								if self.dispcal:
+								if self.dispcal and skip_sensor_cal:
 									self.subprocess.expect(":")
 									msg = self.recent.read()
 									lastmsg = self.lastmsg.read().strip()
@@ -1243,7 +1243,7 @@ class Worker():
 														   timeout=None)
 									if sys.platform != "win32":
 										sleep(.5)
-									if self.subprocess.isalive():
+									if self.subprocess.isalive() and skip_sensor_cal:
 										self.subprocess.send(" ")
 							else:
 								self.subprocess.expect(wexpect.EOF, 
@@ -1884,7 +1884,7 @@ class Worker():
 		if "key to continue" in lastmsg and \
 		   "Place instrument on test window" in \
 		   "".join(msg.splitlines()[-2:-1]) and \
-		   not self.dispcal:
+		   not self.dispcal and not self.get_instrument_features().get("sensor_cal"):
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
 			if self.progress_wnd is getattr(self, "terminal", None):
