@@ -1318,7 +1318,7 @@ class Worker():
 		if debug and not silent:
 			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
-			if verbose >= 1 and not silent:
+			if interact and verbose >= 1 and not silent:
 				safe_print(lang.getstr("aborted"), fn=fn)
 			if interact and len(self.output):
 				for i, line in enumerate(self.output):
