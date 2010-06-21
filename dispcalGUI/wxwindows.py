@@ -13,6 +13,23 @@ from util_str import safe_unicode, wrap
 from wxaddons import wx
 import localization as lang
 
+numpad_keycodes = [wx.WXK_NUMPAD0,
+				   wx.WXK_NUMPAD1,
+				   wx.WXK_NUMPAD2,
+				   wx.WXK_NUMPAD3,
+				   wx.WXK_NUMPAD4,
+				   wx.WXK_NUMPAD5,
+				   wx.WXK_NUMPAD6,
+				   wx.WXK_NUMPAD7,
+				   wx.WXK_NUMPAD8,
+				   wx.WXK_NUMPAD9,
+				   wx.WXK_NUMPAD_ADD,
+				   wx.WXK_NUMPAD_ENTER,
+				   wx.WXK_NUMPAD_EQUAL,
+				   wx.WXK_NUMPAD_DIVIDE,
+				   wx.WXK_NUMPAD_MULTIPLY,
+				   wx.WXK_NUMPAD_SUBTRACT]
+
 class AboutDialog(wx.Dialog):
 
 	def __init__(self, *args, **kwargs):
@@ -340,8 +357,8 @@ class ProgressDialog(wx.ProgressDialog):
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, handler or self.OnTimer, self.timer)
 		
-		# Use an accelerator table for space, 0-9, a-z
-		keycodes = [32] + range(48, 58) + range(97, 123)
+		# Use an accelerator table for 0-9, a-z, numpad
+		keycodes = range(48, 58) + range(97, 123) + numpad_keycodes
 		self.id_to_keycode = {}
 		for keycode in keycodes:
 			self.id_to_keycode[wx.NewId()] = keycode
@@ -500,8 +517,8 @@ class SimpleTerminal(InvincibleFrame):
 			# Windows: EVT_CHAR_HOOK only receives "special" keys e.g. ESC, Tab
 			self.Bind(wx.EVT_CHAR_HOOK, keyhandler or self.key_handler)
 		
-		# Use an accelerator table for space, 0-9, a-z
-		keycodes = [32] + range(48, 58) + range(97, 123)
+		# Use an accelerator table for space, 0-9, a-z, numpad
+		keycodes = [32] + range(48, 58) + range(97, 123) + numpad_keycodes
 		self.id_to_keycode = {}
 		for keycode in keycodes:
 			self.id_to_keycode[wx.NewId()] = keycode
@@ -663,17 +680,21 @@ class TooltipWindow(InvincibleFrame):
 		self.Raise()
 
 def test():
-	def key_handler(event):
+	def key_handler(self, event):
 		if event.GetEventType() == wx.EVT_CHAR_HOOK.typeId:
 			print "Received EVT_CHAR_HOOK", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
 		elif event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
 			print "Received EVT_KEY_DOWN", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
-			print "Received EVT_MENU", event.GetEventObject().id_to_keycode.get(event.GetId()), repr(unichr(event.GetEventObject().id_to_keycode.get(event.GetId())))
+			print "Received EVT_MENU", self.id_to_keycode.get(event.GetId()), repr(unichr(self.id_to_keycode.get(event.GetId())))
+		event.Skip()
+			
+	ProgressDialog.key_handler = key_handler
+	SimpleTerminal.key_handler = key_handler
 	
 	app = wx.App(0)
-	p = ProgressDialog(msg="".join(("Test " * 5)), keyhandler=key_handler)
-	t = SimpleTerminal(start_timer=False, keyhandler=key_handler)
+	p = ProgressDialog(msg="".join(("Test " * 5)))
+	t = SimpleTerminal(start_timer=False)
 	app.MainLoop()
 
 if __name__ == "__main__":
