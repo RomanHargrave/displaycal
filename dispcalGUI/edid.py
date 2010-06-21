@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from hashlib import md5
+import os
 import struct
 try:
 	import xrandr
@@ -9,6 +10,7 @@ except ImportError:
 	xrandr = None
 
 atoz = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+pnpidcache = {}
 
 def COMBINE_HI_8LO(hi, lo):
 	return hi << 8 | lo
@@ -48,11 +50,46 @@ def parse_manufacturer_id(block):
 	return "".join(manufacturer_id).strip()
 
 
+def get_manufacturer_name(manufacturer_id):
+	""" Try and get a nice descriptive string for our manufacturer id.
+	This uses pnp.ids which will be looked for in several places.
+	If it can't find the file, it simply returns the manufacturer id.
+	
+	Examples:
+	SAM -> Samsung Electric Company
+	NEC -> NEC Corporation
+	
+	"""
+	if not pnpidcache:
+		paths = ["/usr/share/hwdata/pnp.ids",  # hwdata, e.g. Red Hat
+				 "/usr/share/misc/pnp.ids",  # pnputils, e.g. Debian
+				 "/usr/share/libgnome-desktop/pnp.ids"]  # fallback gnome-desktop
+		for path in paths:
+			if os.path.isfile(path):
+				try:
+					pnp_ids = open(path, "r")
+				except IOError:
+					pass
+				else:
+					try:
+						for line in pnp_ids:
+							try:
+								id, name = line.strip().split(None, 1)
+							except ValueError:
+								continue
+							pnpidcache[id] = name
+					except OSError:
+						pass
+					pnp_ids.close()
+	return pnpidcache.get(manufacturer_id, manufacturer_id)
+
+
 def parse_edid(edid):
 	""" Parse raw EDID data (binary string) and return dict. """
 	hash = md5(edid).hexdigest()
 	header = edid[0:8]
 	manufacturer_id = parse_manufacturer_id(edid[8:10])
+	manufacturer = get_manufacturer_name(manufacturer_id)
 	
 	product_id = struct.unpack("<H", edid[10:12])[0]
 	serial_32 = struct.unpack("<I", edid[12:16])[0]
