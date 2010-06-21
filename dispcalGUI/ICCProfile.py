@@ -715,6 +715,9 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 
 	def __init__(self, tagData, tagSignature):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
+		if not tagData:
+			self.update({"ASCII": ""})
+			return
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
 			ASCIIDescription = tagData[12:12 + 
@@ -833,19 +836,19 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 			tagData = ["desc", "\0" * 4,
 					   uInt32Number_tohex(len(self.ASCII) + 1),  # count of ASCII chars + 1
 					   str(self.ASCII) + "\0",  # ASCII desc, \0 terminated
-					   uInt32Number_tohex(self.unicodeLanguageCode)]
+					   uInt32Number_tohex(self.get("unicodeLanguageCode", 0))]
 			if "Unicode" in self:
 				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 2),  # count of Unicode chars + 2 (1 char = 2 byte)
 								"\xfe\xff" + self.Unicode.encode("utf-16-be", "replace") + 
 								"\0\0"])  # Unicode desc, \0\0 terminated
 			else:
 				tagData.append(uInt32Number_tohex(0))  # Unicode desc length = 0
-			tagData.append(uInt16Number_tohex(self.macScriptCode))
+			tagData.append(uInt16Number_tohex(self.get("macScriptCode", 0)))
 			if "Macintosh" in self:
 				macDescription = self.Macintosh[:66]
 				tagData.extend([uInt8Number_tohex(len(macDescription) + 1),  # count of Macintosh chars + 1
 								macDescription.encode("mac-" + 
-													  encodings["mac"][self.macScriptCode], 
+													  encodings["mac"][self.get("macScriptCode", 0)], 
 													  "replace") + "\0"])
 			else:
 				tagData.extend([uInt32Number_tohex(0),  # Mac desc length = 0
@@ -990,6 +993,12 @@ class VideoCardGammaTableType(VideoCardGammaType):
 
 	def __init__(self, tagData, tagSignature):
 		VideoCardGammaType.__init__(self, tagData, tagSignature)
+		if not tagData:
+			self.update({"channels": 0,
+						 "entryCount": 0,
+						 "entrySize": 0,
+						 "data": []})
+			return
 		data = tagData[12:]
 		channels   = uInt16Number(data[0:2])
 		entryCount = uInt16Number(data[2:4])
@@ -1236,7 +1245,7 @@ class ICCProfile:
 		self._file = None
 		self._tags = AODict()
 		self.fileName = None
-		self.size = self._size = 0
+		self.size = 0
 		
 		if profile:
 		
@@ -1277,7 +1286,7 @@ class ICCProfile:
 											 data[36:40] + "'")
 			
 			header = data[:128]
-			self.size = self._size = uInt32Number(header[0:4])
+			self.size = uInt32Number(header[0:4])
 			self.preferredCMM = header[4:8].strip("\0\n\r ")
 			self.version = float(str(ord(header[8:12][0])) + "." + 
 								   str(ord(header[8:12][1])))
@@ -1487,11 +1496,11 @@ class ICCProfile:
 		nothing if the profile was passed in as a binary string).
 		
 		"""
-		if (not self._data or len(self._data) < self._size) and self._file:
+		if (not self._data or len(self._data) < self.size) and self._file:
 			if self._file.closed:
 				self._file = open(self._file.name, "rb")
 				self._file.seek(len(self._data))
-			self._data += self._file.read(self._size - len(self._data))
+			self._data += self._file.read(self.size - len(self._data))
 			self._file.close()
 	
 	def read(self, profile):
