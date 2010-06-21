@@ -74,9 +74,13 @@ def cal_to_fake_profile(cal):
 	entries = cal.queryv(required_fields)
 	profile = ICCP.ICCProfile()
 	profile.fileName = cal.filename
-	profile._tags = ICCP.ADict()
-	profile._tags.desc = os.path.basename(cal.filename)
-	profile._tags.vcgt = ICCP.ADict({
+	profile._data = "\0" * 128
+	profile._tags.desc = ICCP.TextDescriptionType("", "desc")
+	profile._tags.desc.ASCII = safe_unicode(
+				os.path.basename(cal.filename)).encode("ascii", "asciize")
+	profile._tags.desc.Unicode = safe_unicode(os.path.basename(cal.filename))
+	profile._tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
+	profile._tags.vcgt.update({
 		"channels": 3,
 		"entryCount": len(entries),
 		"entrySize": 2,
@@ -86,6 +90,7 @@ def cal_to_fake_profile(cal):
 		for i in range(3):
 			profile._tags.vcgt.data[i].append(int(round(entries[n][i + 1] * 
 														65535.0)))
+	profile.size = len(profile.data)
 	return profile
 
 

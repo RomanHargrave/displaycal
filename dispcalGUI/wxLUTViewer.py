@@ -260,14 +260,16 @@ class LUTFrame(wx.Frame):
 	def LoadProfile(self, profile):
 		if not profile:
 			profile = ICCP.ICCProfile()
-			profile._tags = ICCP.ADict()
-			profile._tags.desc = ""
-			profile._tags.vcgt = ICCP.ADict({
+			profile._data = "\0" * 128
+			profile._tags.desc = ICCP.TextDescriptionType("", "desc")
+			profile._tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
+			profile._tags.vcgt.update({
 				"channels": 3,
 				"entryCount": 256,
 				"entrySize": 1,
 				"data": [range(0, 256), range(0, 256), range(0, 256)]
 			})
+			profile.size = len(profile.data)
 		self.profile = profile
 		curves = []
 		curves.append(lang.getstr('vcgt'))
