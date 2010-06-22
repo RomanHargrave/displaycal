@@ -270,6 +270,7 @@ class LUTFrame(wx.Frame):
 				"data": [range(0, 256), range(0, 256), range(0, 256)]
 			})
 			profile.size = len(profile.data)
+			profile.is_loaded = True
 		self.profile = profile
 		curves = []
 		curves.append(lang.getstr('vcgt'))

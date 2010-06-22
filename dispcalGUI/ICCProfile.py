@@ -327,7 +327,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				profile = _winreg_get_display_profile(monkey)
 	else:
 		if sys.platform == "darwin":
-			if _intversion(mac_ver()[0].split(".")) >= (10, 6):
+			if _intversion(mac_ver()[0].split(".")) >= (10, 5):
 				options = ["Image Events"]
 			else:
 				options = ["ColorSyncScripting"]
@@ -1245,6 +1245,7 @@ class ICCProfile:
 		self._file = None
 		self._tags = AODict()
 		self.fileName = None
+		self.is_loaded = False
 		self.size = 0
 		
 		if profile:
@@ -1270,6 +1271,7 @@ class ICCProfile:
 					profile = open(profile, "rb")
 				else: # binary string
 					data = profile
+					self.is_loaded = True
 			if not data: # file object
 				self._file = profile
 				self.fileName = self._file.name
@@ -1496,12 +1498,13 @@ class ICCProfile:
 		nothing if the profile was passed in as a binary string).
 		
 		"""
-		if (not self._data or len(self._data) < self.size) and self._file:
+		if not self.is_loaded and self._file:
 			if self._file.closed:
 				self._file = open(self._file.name, "rb")
 				self._file.seek(len(self._data))
 			self._data += self._file.read(self.size - len(self._data))
 			self._file.close()
+			self.is_loaded = True
 	
 	def read(self, profile):
 		"""

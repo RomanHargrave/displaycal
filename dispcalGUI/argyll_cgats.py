@@ -91,6 +91,7 @@ def cal_to_fake_profile(cal):
 			profile._tags.vcgt.data[i].append(int(round(entries[n][i + 1] * 
 														65535.0)))
 	profile.size = len(profile.data)
+	profile.is_loaded = True
 	return profile
 
 
