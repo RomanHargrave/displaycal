@@ -320,6 +320,7 @@ valid_values = {
 }
 
 defaults = {
+	"allow_skip_sensor_cal": 1,
 	"argyll.dir": expanduseru("~"), # directory
 	"calibration.ambient_viewcond_adjust": 0,
 	"calibration.ambient_viewcond_adjust.lux": 500.0,
@@ -353,6 +354,7 @@ defaults = {
 							sys.stdout.isatty())),
 	"log.show": 0,
 	"lang": "en",
+	"lut_viewer.show": 0,
 	"lut_viewer.show_actual_lut": 0,
 	"measurement_mode": "l",
 	"measurement_mode.adaptive": 0,

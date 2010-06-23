@@ -623,13 +623,12 @@ class Worker():
 	def get_needs_no_sensor_cal(self):
 		instrument_features = self.get_instrument_features()
 		# TTBD/FIXME: Skipping of sensor calibration can't be done in
-		# emissive mode
-		return not instrument_features.get("sensor_cal")
-		# -N switch not working as expected in Argyll < 1.1.0
+		# emissive mode (see Argyll source spectro/ss.c, around line 40)
 		return instrument_features and \
 			   (not instrument_features.get("sensor_cal") or 
-			    (self.dispread_after_dispcal and 
-			     instrument_features.get("skip_sensor_cal") and 
+			    (getcfg("allow_skip_sensor_cal") and 
+			     self.dispread_after_dispcal and 
+			     (instrument_features.get("skip_sensor_cal") or test) and 
 				 self.argyll_version >= [1, 1, 0]))
 	
 	def clear_argyll_info(self):
@@ -865,7 +864,7 @@ class Worker():
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
-				 title=appname):
+				 title=appname, working_dir=None):
 		"""
 		Execute a command.
 		
@@ -885,6 +884,10 @@ class Worker():
 		asroot (if True) on Linux runs the command using sudo.
 		log_output (if True) logs any output if capture_output is also set.
 		title = Title for sudo dialog
+		working_dir = Working directory. If None, will be determined from
+		absulte path of last argument and last argument will be set to only 
+		the basename. If False, no working dir will be used and file arguments
+		not changed.
 		"""
 		if parent is None:
 			parent = self.owner
@@ -897,16 +900,16 @@ class Worker():
 				safe_print(lang.getstr("aborted"), fn=fn)
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
-		working_dir = None
 		if args and args[-1].find(os.path.sep) > -1:
-			working_dir = os.path.dirname(args[-1])
-			if os.path.isdir(working_dir):
-				working_basename = os.path.basename(args[-1])
-				if cmdname == get_argyll_utilname("dispwin"):
-					# Last arg is without extension, only for dispwin we need to 
-					# strip it
-					working_basename = os.path.splitext(working_basename)[0] 
-			else:
+			working_basename = os.path.basename(args[-1])
+			if cmdname in (get_argyll_utilname("dispwin"),
+						   "oyranos-monitor"):
+				# Last arg is without extension, only for dispwin we need to 
+				# strip it
+				working_basename = os.path.splitext(working_basename)[0]
+			if working_dir is None:
+				working_dir = os.path.dirname(args[-1])
+			if working_dir is not False and not os.path.isdir(working_dir):
 				working_dir = None
 		if verbose >= 1:
 			if not silent or verbose >= 3:
@@ -958,9 +961,9 @@ class Worker():
 		self.measure = cmdname in measure_cmds
 		if self.measure:
 			# TTBD/FIXME: Skipping of sensor calibration can't be done in
-			# emissive mode
-			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") ##or \
-							  ##"-N" in args
+			# emissive mode (see Argyll source spectro/ss.c, around line 40)
+			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") or \
+							  "-N" in args
 		self.dispcal = cmdname == get_argyll_utilname("dispcal")
 		self.needs_user_interaction = (self.dispcal and 
 									   not "-E" in args and not "-R" in args and 
@@ -1142,7 +1145,7 @@ class Worker():
 				safe_print("Warning - error during shell script creation:", 
 						   safe_unicode(exception))
 		cmdline = [arg.encode(fs_enc) for arg in cmdline]
-		working_dir = None if working_dir is None else working_dir.encode(fs_enc)
+		working_dir = None if not working_dir else working_dir.encode(fs_enc)
 		try:
 			if not self.needs_user_interaction:
 				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
@@ -1220,20 +1223,21 @@ class Worker():
 					if self.subprocess.isalive():
 						try:
 							if self.measure:
-								if self.dispcal and skip_sensor_cal:
-									self.subprocess.expect(":")
-									msg = self.recent.read()
-									lastmsg = self.lastmsg.read().strip()
-									if "key to continue" in lastmsg and \
-									   "Place instrument on test window" in \
-									   "".join(msg.splitlines()[-2:-1]) and \
-									   not "-F" in args:
-										# Allow the user to move the terminal window if
-										# using black background, otherwise send
-										if sys.platform != "win32":
-											sleep(.5)
-										if self.subprocess.isalive():
-											self.subprocess.send(" ")
+								self.subprocess.expect("Esc or Q")
+								msg = self.recent.read()
+								lastmsg = self.lastmsg.read().strip()
+								if "key to continue" in lastmsg and \
+								   "Place instrument on test window" in \
+								   "".join(msg.splitlines()[-2:-1]) and \
+								   (not "-F" in args or 
+								    (not self.dispcal and
+								     self.dispread_after_dispcal)):
+									# Allow the user to move the terminal window if
+									# using black background, otherwise send
+									if sys.platform != "win32":
+										sleep(.5)
+									if self.subprocess.isalive():
+										self.subprocess.send(" ")
 								while self.subprocess.isalive():
 									# Handle misreads, user can cancel via
 									# progress dialog
@@ -1243,7 +1247,7 @@ class Worker():
 														   timeout=None)
 									if sys.platform != "win32":
 										sleep(.5)
-									if self.subprocess.isalive() and skip_sensor_cal:
+									if self.subprocess.isalive():
 										self.subprocess.send(" ")
 							else:
 								self.subprocess.expect(wexpect.EOF, 
@@ -1726,9 +1730,10 @@ class Worker():
 		args = []
 		args += ["-v"] # verbose
 		self.add_measurement_features(args)
-		# -N switch not working as expected in Argyll 1.0.3
-		if self.dispread_after_dispcal and \
-		   self.get_instrument_features().get("skip_sensor_cal") and \
+		# TTBD/FIXME: Skipping of sensor calibration can't be done in
+		# emissive mode (see Argyll source spectro/ss.c, around line 40)
+		if getcfg("allow_skip_sensor_cal") and self.dispread_after_dispcal and \
+		   (self.get_instrument_features().get("skip_sensor_cal") or test) and \
 		   self.argyll_version >= [1, 1, 0]:
 			args += ["-N"]
 		if apply_calibration:
@@ -1881,18 +1886,6 @@ class Worker():
 		percentage = None
 		msg = self.recent.read()
 		lastmsg = self.lastmsg.read().strip()
-		if "key to continue" in lastmsg and \
-		   "Place instrument on test window" in \
-		   "".join(msg.splitlines()[-2:-1]) and \
-		   not self.dispcal and not self.get_instrument_features().get("sensor_cal"):
-			# We no longer need keyboard interaction, switch over to
-			# progress dialog
-			if self.progress_wnd is getattr(self, "terminal", None):
-				wx.CallAfter(self.swap_progress_wnds)
-			if sys.platform != "win32":
-				sleep(.5)
-			self.subprocess.send(" ")
-			return
 		if re.match("\\s*\\d+%", lastmsg):
 			# colprof
 			try:
@@ -1919,6 +1912,10 @@ class Worker():
 				pass
 			else:
 				percentage = start / end * 100
+		if percentage and self.progress_wnd is getattr(self, "terminal", None):
+			# We no longer need keyboard interaction, switch over to
+			# progress dialog
+			wx.CallAfter(self.swap_progress_wnds)
 		if getattr(self.progress_wnd, "original_msg", None) and \
 		   msg != self.progress_wnd.original_msg:
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
@@ -2151,11 +2148,13 @@ class Worker():
 		if keycode is not None and getattr(self, "subprocess", None) and \
 			hasattr(self.subprocess, "send"):
 			keycode = keycodes.get(keycode, keycode)
-			if keycode == ord("7") and \
-			   self.progress_wnd is getattr(self, "terminal", None):
-				# calibration
-				wx.CallAfter(self.swap_progress_wnds)
-			elif keycode in (ord("\x1b"), ord("8"), ord("Q"), ord("q")):
+			##if keycode == ord("7") and \
+			   ##self.progress_wnd is getattr(self, "terminal", None) and \
+			   ##"7) Continue on to calibration" in self.recent.read():
+				### calibration
+				##wx.CallAfter(self.swap_progress_wnds)
+			##el
+			if keycode in (ord("\x1b"), ord("8"), ord("Q"), ord("q")):
 				# exit
 				self.thread_abort = True
 				self.subprocess_abort = True
