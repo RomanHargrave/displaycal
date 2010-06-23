@@ -56,6 +56,7 @@ import httplib
 import logging
 import math
 import os
+import platform
 if sys.platform == "darwin":
 	from platform import mac_ver
 import re
@@ -910,16 +911,25 @@ class MainFrame(BaseFrame):
 		"""
 		self.gamapframe = GamapFrame(self)
 
-	def init_infoframe(self):
+	def init_infoframe(self, show=None):
 		"""
 		Create & initialize the info (log) window and its controls.
 		
 		"""
 		self.infoframe = LogWindow(self)
+		self.infoframe.Bind(wx.EVT_CLOSE, self.infoframe_close_handler, 
+							self.infoframe)
 		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
 										  ".png"))
 		if icon:
 			self.infoframe.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+		if show:
+			self.Show()
+	
+	def infoframe_close_handler(self, event):
+		setcfg("log.show", 0)
+		self.infoframe.Hide()
+		self.menuitem_show_log.Check(False)
 	
 	def setup_language(self):
 		"""
@@ -1068,6 +1078,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("use_separate_lut_access"))
 		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
 				  self.menuitem_use_separate_lut_access)
+		self.menuitem_allow_skip_sensor_cal = options.FindItemById(
+			options.FindItem("allow_skip_sensor_cal"))
+		self.Bind(wx.EVT_MENU, self.allow_skip_sensor_cal_handler, 
+				  self.menuitem_allow_skip_sensor_cal)
 		menuitem = options.FindItemById(options.FindItem("restore_defaults"))
 		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
 		
@@ -1097,8 +1111,9 @@ class MainFrame(BaseFrame):
 			tools.FindItem("calibration.show_actual_lut"))
 		self.Bind(wx.EVT_MENU, self.lut_viewer_show_actual_lut_handler, 
 							   self.menuitem_show_actual_lut)
-		menuitem = tools.FindItemById(tools.FindItem("infoframe.toggle"))
-		self.Bind(wx.EVT_MENU, self.infoframe_toggle_handler, menuitem)
+		self.menuitem_show_log = tools.FindItemById(tools.FindItem("infoframe.toggle"))
+		self.Bind(wx.EVT_MENU, self.infoframe_toggle_handler, 
+				  self.menuitem_show_log)
 		self.menuitem_log_autoshow = tools.FindItemById(
 			tools.FindItem("log.autoshow"))
 		self.Bind(wx.EVT_MENU, self.infoframe_autoshow_handler, 
@@ -1159,7 +1174,9 @@ class MainFrame(BaseFrame):
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays))
 		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
+		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
+		self.menuitem_show_lut.Check(bool(getcfg("lut_viewer.show")))
 		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
 											 self.worker.argyll_version >= [1, 1, 0] and 
 											 not "Beta" in self.worker.argyll_version_string)
@@ -1173,6 +1190,8 @@ class MainFrame(BaseFrame):
 						bool(self.worker.instruments))
 		self.menuitem_profile_verify.Enable(bool(self.worker.displays) and 
 						bool(self.worker.instruments))
+		self.menuitem_show_log.Check(bool(getcfg("log.show")))
+		self.menuitem_log_autoshow.Enable(not bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Check(bool(getcfg("log.autoshow")))
 
 	def init_controls(self):
@@ -1408,7 +1427,7 @@ class MainFrame(BaseFrame):
 					self.aboutdialog.Destroy()
 					del self.aboutdialog
 				self.infoframe.Destroy()
-				self.init_infoframe()
+				self.init_infoframe(show=getcfg("log.show"))
 				self.log()
 				if sys.platform in ("darwin", "win32") or isexe:
 					self.measureframe.Destroy()
@@ -1416,6 +1435,8 @@ class MainFrame(BaseFrame):
 				if hasattr(self, "lut_viewer"):
 					self.lut_viewer.Destroy()
 					del self.lut_viewer
+					if getcfg("lut_viewer.show"):
+						self.init_lut_viewer(show=True)
 				if hasattr(self, "profile_name_tooltip_window"):
 					self.profile_name_tooltip_window.Destroy()
 					del self.profile_name_tooltip_window
@@ -2104,6 +2125,10 @@ class MainFrame(BaseFrame):
 			   int(self.menuitem_use_separate_lut_access.IsChecked()))
 		self.update_displays()
 
+	def allow_skip_sensor_cal_handler(self, event):
+		setcfg("allow_skip_sensor_cal", 
+			   int(self.menuitem_allow_skip_sensor_cal.IsChecked()))
+
 	def lut_viewer_show_actual_lut_handler(self, event):
 		setcfg("lut_viewer.show_actual_lut", 
 			   int(self.menuitem_show_actual_lut.IsChecked()))
@@ -2191,6 +2216,9 @@ class MainFrame(BaseFrame):
 			
 	def settings_confirm_discard(self):
 		sel = self.calibration_file_ctrl.GetSelection()
+		cal = getcfg("calibration.file") or ""
+		if not cal in self.recent_cals:
+			self.recent_cals.append(cal)
 		# The case-sensitive index could fail because of 
 		# case insensitive file systems, e.g. if the 
 		# stored filename string is 
@@ -2199,7 +2227,7 @@ class MainFrame(BaseFrame):
 		# "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
 		# (maybe because the user renamed the file)
 		idx = index_fallback_ignorecase(self.recent_cals, 
-										getcfg("calibration.file") or "")
+										cal)
 		self.calibration_file_ctrl.SetSelection(idx)
 		dlg = ConfirmDialog(self, msg=lang.getstr("warning.discard_changes"), 
 								  ok=lang.getstr("ok"), 
@@ -2397,7 +2425,7 @@ class MainFrame(BaseFrame):
 			except Exception, exception:
 				return exception
 			phase = "measure_init"
-		pat = "Hit ESC or Q to exit, any other key to take a reading:"
+		pat = "key to take a reading:"
 		if phase == "measure_init":
 			try:
 				result.expect(pat)
@@ -3154,10 +3182,12 @@ class MainFrame(BaseFrame):
 						profile_path=None, install=True, skip_scripts=False, 
 						silent=False):
 		gcm = False
+		oyranos = False
 		result = None
+		install_section = None
 		if install and sys.platform not in ("darwin", "win32") and \
 		   which("gcm-import") and get_edid:
-			# Use GNOME Color Manager
+			# Install using GNOME Color Manager
 			gcm_device_profiles_conf = os.path.join(xdg_config_home, 
 													"gnome-color-manager", 
 													"device-profiles.conf")
@@ -3186,40 +3216,57 @@ class MainFrame(BaseFrame):
 			if edid:
 				incomplete = False
 				section_parts = ["xrandr"]
-				for name in ["manufacturer_id", "monitor_name", "ascii", 
+				for name in ["manufacturer", "monitor_name", "ascii", 
 							 "serial_ascii"]:
 					if name in edid:
-						section_parts.append(edid[name].lower())
-					elif name != "ascii":
-						# Only allow the ASCII string to be missing,
-						# require the others
+						section_parts.append(edid[name].lower().replace(" ", 
+																		"_"))
+					elif name == "monitor_name":
+						# Do not allow the model string to be missing
 						incomplete = True
 						break
 				if not incomplete:
 					install_section = "_".join(section_parts)
+					hash_found = False
+					safe_print("Looking for device ID with hash", edid["hash"])
 					for section in cfg.sections():
 						# Find MD5 hash of EDID
 						if cfg.has_option(section, "edid-hash") and \
 						   cfg.get(section, "edid-hash") == edid["hash"]:
+							safe_print("Found device ID:", section)
+							hash_found = True
 							install_section = section
 							break
-					if not cfg.has_section(install_section):
-						# If we can't find a section with the MD5 hash,
-						# look for a section with the info we have from EDID
-						for section in cfg.sections():
-							# We only have the manufacturer ID, but GCM adds 
-							# a string like "_corporation" or "_company", so
-							# take that into account when looking for a
-							# matching section
-							if section.startswith("_".join(section_parts[:2])) and \
-							   section.endswith("_".join(section_parts[2:])):
-								   install_section = section
-								   break
+					if not hash_found:
+						safe_print("Device ID not found for hash", edid["hash"])
+						if cfg.has_section(install_section):
+							safe_print("Using existing device ID:", 
+									   install_section)
+						else:
+							# If we can't find a section with the MD5 hash or 
+							# section string, look for a section with the info we 
+							# have from EDID
+							partial_match_found = False
+							safe_print("Looking for device ID starting with %r "
+									   "and ending with %r" % ("_".join(section_parts[:2]),
+															   "_".join(section_parts[2:])))
+							for section in cfg.sections():
+								if section.startswith("_".join(section_parts[:2])) and \
+								   section.endswith("_".join(section_parts[2:])):
+									safe_print("Found device ID:", section)
+									install_section = section
+									partial_match_found = True
+									break
+							if not partial_match_found:
+								safe_print("No match found. Using generated "
+										   "device ID:", install_section)
 					utc = gmtime()
 					ts = strftime("%Y-%m-%dT%H:%M:%S", utc) + \
 						 str(round(time() - int(time()), 6))[1:] + "Z"
 					if not cfg.has_section(install_section):
 						# If we are creating a new entry
+						safe_print("New entry needed for device ID:", 
+								   install_section)
 						cfg.add_section(install_section)
 						cfg.set(install_section, "edid-hash", edid["hash"])
 						cfg.set(install_section, "created", ts)
@@ -3229,18 +3276,18 @@ class MainFrame(BaseFrame):
 						if "monitor_name" in edid:
 							cfg.set(install_section, "model", 
 									edid["monitor_name"])
-						if "manufacturer_id" in edid:
+						if "manufacturer" in edid:
 							cfg.set(install_section, "manufacturer", 
-									edid["manufacturer_id"])
-						if "manufacturer_id" in edid and \
+									edid["manufacturer"])
+						if "manufacturer" in edid and \
 						   "monitor_name" in edid and \
 						   "max_h_size_cm" in edid and \
 						   "max_v_size_cm" in edid:
 							cfg.set(install_section, "title", 
-									" - ".join(edid["manufacturer_id"],
-											   edid["monitor_name"],
-											   str(int(math.sqrt(math.pow(edid["max_h_size_cm"], 2) * 
-																 math.pow(edid["max_v_size_cm"], 2)) / 2.54)) + '"'))
+									" - ".join([edid["manufacturer"],
+											    edid["monitor_name"],
+											    str(int(math.sqrt(math.pow(edid["max_h_size_cm"], 2) * 
+																  math.pow(edid["max_v_size_cm"], 2)) / 2.54)) + '"']))
 						cfg.set(install_section, "type", "display")
 						cfg.set(install_section, "colorspace", "rgb")
 					cfg.set(install_section, "modified", ts)
@@ -3253,21 +3300,23 @@ class MainFrame(BaseFrame):
 					# Fixup model and manufacturer with info from GCM
 					# device-profiles.conf (which equals the info we got from 
 					# EDID if no matching entry was available)
+					safe_print("Adding device model and manufacturer to ICC "
+							   "profile", profile_install_path)
 					try:
 						profile = ICCP.ICCProfile(profile_install_path)
 					except ICCProfileInvalidError, exception:
 						handle_error(exception)
 					else:
-						profile.tags.dmdd = ICCP.TextDescriptionType(
-							"desc\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", "dmdd")
+						profile.tags.dmdd = ICCP.TextDescriptionType("", "dmdd")
 						ddesc = cfg.get(install_section, "model")
+						safe_print("Device model:", ddesc)
 						profile.tags.dmdd["ASCII"] = ddesc.encode("ASCII", 
 																  "asciize")
-						profile.tags.dmnd["Macintosh"] = ddesc
-						profile.tags.dmnd["Unicode"] = ddesc
-						profile.tags.dmnd = ICCP.TextDescriptionType(
-							"desc\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", "dmnd")
+						profile.tags.dmdd["Macintosh"] = ddesc
+						profile.tags.dmdd["Unicode"] = ddesc
+						profile.tags.dmnd = ICCP.TextDescriptionType("", "dmnd")
 						mdesc = cfg.get(install_section, "manufacturer")
+						safe_print("Device manufacturer:", mdesc)
 						profile.tags.dmnd["ASCII"] = mdesc.encode("ASCII", 
 																  "asciize")
 						profile.tags.dmnd["Macintosh"] = mdesc
@@ -3277,7 +3326,7 @@ class MainFrame(BaseFrame):
 						except Exception, exception:
 							handle_error(exception)
 					if True:
-						cmd, args = which("gcm-import"), [profile_install_path]
+						gcm_cmd, gcm_args = which("gcm-import"), [profile_install_path]
 						##if cfg.has_option(install_section, "profile"):
 							##profilepath = cfg.get(install_section, "profile")
 							### This is a comma-separated list of profiles, but
@@ -3299,14 +3348,27 @@ class MainFrame(BaseFrame):
 										### existing one
 										##break
 						for dirname in iccprofiles_home:
-							profilepath = os.path.join(dirname, profilename)
-							if os.path.isfile(profilepath):
-								# Run gcm-prefs instead of gcm-import
-								cmd, args = which("gcm-prefs"), []
+							profile_install_path = os.path.join(dirname, profilename)
+							if os.path.isfile(profile_install_path):
+								if True:
+									# Remove old profile
+									try:
+										trash([profile_install_path])
+									except Exception, exception:
+										handle_error(exception)
+								else:  # NEVER
+									# Update profile
+									try:
+										shutil.copyfile(profile_path, 
+														profile_install_path)
+									except Exception, exception:
+										handle_error(exception)
+									# Run gcm-prefs instead of gcm-import
+									gcm_cmd, gcm_args = which("gcm-prefs"), []
 								break
 						result = True
 						gcm = True
-					else:
+					else:  # NEVER
 						cfg.set(install_section, "profile", 
 								profile_install_path.encode("UTF-8"))
 						try:
@@ -3340,12 +3402,81 @@ class MainFrame(BaseFrame):
 							else:
 								result = True
 							gcm = True
+		if install and which("oyranos-monitor"):
+			# Install using Oyranos
+			oyranos = True
+			display = self.display_ctrl.GetStringSelection()
+			x, y = [pos.strip() for pos in display.split(" @")[1].split(",")[0:2]]
+			if False:  ## getcfg("profile.install_scope") == "l":
+				# FIXME: oyranos-monitor can't be run via sudo
+				# If system-wide install, copy profile to 
+				# /var/lib/color/icc/devices/display
+				var_icc = "/var/lib/color/icc/devices/display"
+				if install_section:
+					# Use same ID string as for GCM
+					profile_install_path = os.path.join(var_icc, 
+														install_section + ".icc")
+				else:
+					profile_install_path = os.path.join(var_icc,
+														os.path.basename(profile_path))
+				result = self.worker.exec_cmd("mkdir", 
+											  ["-p", 
+											   os.path.dirname(profile_install_path)], 
+											  capture_output=True, 
+											  low_contrast=False, 
+											  skip_scripts=True, 
+											  silent=True, 
+											  asroot=True)
+				if not isinstance(result, Exception) and result:
+					result = self.worker.exec_cmd("cp", 
+												  ["-f", profile_path, 
+												   profile_install_path], 
+												  capture_output=True, 
+												  low_contrast=False, 
+												  skip_scripts=True, 
+												  silent=True, 
+												  asroot=True)
+			else:
+				dirname = None
+				for dirname in iccprofiles_home:
+					if os.path.isdir(dirname):
+						# Use the first one that exists
+						break
+				if not dirname:
+					# Create the first one in the list
+					dirname = iccprofiles_home[0]
+					try:
+						os.makedirs(dirname)
+					except Exception, exception:
+						handle_error(exception)
+						result = False
+				if result is not False:
+					profile_install_path = os.path.join(dirname,
+														os.path.basename(profile_path))
+					try:
+						shutil.copyfile(profile_path, 
+										profile_install_path)
+					except Exception, exception:
+						handle_error(exception)
+						result = False
+			if not isinstance(result, Exception) and result is not False:
+				cmd = which("oyranos-monitor")
+				args = ["-x", x, "-y", y, profile_install_path]
+				result = self.worker.exec_cmd(cmd, args, 
+											  capture_output, 
+											  low_contrast=False, 
+											  skip_scripts=skip_scripts, 
+											  silent=silent,
+											  # FIXME: oyranos-monitor can't be run via sudo
+											  ## asroot=getcfg("profile.install_scope") == "l",
+											  working_dir=False)
 		
-		if not gcm:  ## or (not isinstance(result, Exception) and result):
+		if not gcm and not oyranos:  ## or (not isinstance(result, Exception) and result):
+			# Fallback: Install using dispwin
 			cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
 			if not isinstance(cmd, Exception):
 				if "-Sl" in args and (sys.platform != "darwin" or 
-									  _intversion(mac_ver()[0].split(".")) >= (10, 6)):
+									  _intversion(mac_ver()[0].split(".")) >= (10, 5)):
 					# If a 'system' install is requested under Linux or Windows, 
 					# install in 'user' scope first because a system-wide install 
 					# doesn't also set it as current user profile on those systems 
@@ -3375,7 +3506,7 @@ class MainFrame(BaseFrame):
 				for line in self.worker.output:
 					if "Installed" in line:
 						if sys.platform == "darwin" and "-Sl" in args and \
-						   _intversion(mac_ver()[0].split(".")) < (10, 6):
+						   _intversion(mac_ver()[0].split(".")) < (10, 5):
 							# The profile has been installed, but we need a little 
 							# help from AppleScript to actually make it the default 
 							# for the current user
@@ -3419,7 +3550,7 @@ class MainFrame(BaseFrame):
 			self.worker.wrapup(False)
 		if not isinstance(result, Exception) and result:
 			if install:
-				if not silent and not gcm:
+				if not silent and not gcm and not oyranos:
 					if verbose >= 1: safe_print(lang.getstr("success"))
 					InfoDialog(self, 
 							   msg=lang.getstr("profile.install.success"), 
@@ -3528,7 +3659,7 @@ class MainFrame(BaseFrame):
 													name + ".desktop")
 					system_desktopfile_path = os.path.join(
 						autostart, name + ".desktop")
-					if gcm:
+					if gcm or oyranos:
 						# Remove dispcalGUI user loader
 						if os.path.exists(desktopfile_path):
 							try:
@@ -3540,25 +3671,28 @@ class MainFrame(BaseFrame):
 											   desktopfile_path), 
 										   ok=lang.getstr("ok"), 
 										   bitmap=geticon(32, "dialog-warning"))
-						# Remove Argyll CMS user color.jcnf
-						colorjcnf_home = os.path.join(xdg_config_home, 
-													  "color.jcnf")
-						if os.path.exists(colorjcnf_home):
-							try:
-								os.remove(colorjcnf_home)
-							except Exception, exception:
-								InfoDialog(self, 
-										   msg=lang.getstr(
-											   "error.colorconfig_remove_old", 
-											   colorjcnf_home), 
-										   ok=lang.getstr("ok"), 
-										   bitmap=geticon(32, "dialog-warning"))
+						if False:  # NEVER
+							# Remove Argyll CMS user color.jcnf
+							colorjcnf_home = os.path.join(xdg_config_home, 
+														  "color.jcnf")
+							if os.path.exists(colorjcnf_home):
+								try:
+									os.remove(colorjcnf_home)
+								except Exception, exception:
+									InfoDialog(self, 
+											   msg=lang.getstr(
+												   "error.colorconfig_remove_old", 
+												   colorjcnf_home), 
+											   ok=lang.getstr("ok"), 
+											   bitmap=geticon(32, "dialog-warning"))
 						# Remove dispcalGUI system loader
 						if os.path.exists(system_desktopfile_path) and \
 						   not silent and \
-							   self.worker.exec_cmd("rm", 
+							   self.worker.exec_cmd("mv", 
 													["-f", 
-													 system_desktopfile_path], 
+													 system_desktopfile_path,
+													 system_desktopfile_path + 
+													 ".backup"], 
 													capture_output=True, 
 													low_contrast=False, 
 													skip_scripts=True, 
@@ -3571,36 +3705,47 @@ class MainFrame(BaseFrame):
 											   system_desktopfile_path), 
 										   ok=lang.getstr("ok"), 
 										   bitmap=geticon(32, "dialog-warning"))
-						# Remove Argyll CMS system color.jcnf
-						for path in xdg_config_dirs:
-							colorjcnf_system = os.path.join(path, "color.jcnf")
-							if os.path.exists(colorjcnf_system) and \
-							   not silent and \
-								   self.worker.exec_cmd("rm", 
-														["-f", 
-														 colorjcnf_system], 
-														capture_output=True, 
-														low_contrast=False, 
-														skip_scripts=True, 
-														silent=False, 
-														asroot=True, 
-														title=lang.getstr("colorconfig_remove_old")) is not True:
-									InfoDialog(self, 
-											   msg=lang.getstr(
-												   "error.colorconfig_remove_old", 
-												   colorjcnf_system), 
-											   ok=lang.getstr("ok"), 
-											   bitmap=geticon(32, "dialog-warning"))
+						if False:  # NEVER
+							# Remove Argyll CMS system color.jcnf
+							for path in xdg_config_dirs:
+								colorjcnf_system = os.path.join(path, "color.jcnf")
+								if os.path.exists(colorjcnf_system) and \
+								   not silent and \
+									   self.worker.exec_cmd("mv", 
+															["-f", 
+															 colorjcnf_system,
+															 colorjcnf_system + 
+															 ".backup"], 
+															capture_output=True, 
+															low_contrast=False, 
+															skip_scripts=True, 
+															silent=False, 
+															asroot=True, 
+															title=lang.getstr("colorconfig_remove_old")) is not True:
+										InfoDialog(self, 
+												   msg=lang.getstr(
+													   "error.colorconfig_remove_old", 
+													   colorjcnf_system), 
+												   ok=lang.getstr("ok"), 
+												   bitmap=geticon(32, "dialog-warning"))
+					if gcm:
 						# Run gcm-import or gcm-prefs
-						delayedresult.startWorker(lambda result: result, 
-												  self.worker.exec_cmd, 
-												  wargs=(cmd, args), 
-												  wkwargs=dict(capture_output=True, 
-															   low_contrast=False, 
-															   skip_scripts=True, 
-															   silent=False))
+						# Start in separate thread so we don't block dispcalGUI
+						wx.CallAfter(delayedresult.startWorker,
+									 lambda result: result, 
+									 self.worker.exec_cmd, 
+									 wargs=(gcm_cmd, gcm_args), 
+									 wkwargs=dict(capture_output=True, 
+												  low_contrast=False, 
+												  skip_scripts=True, 
+												  silent=False))
+					if oyranos:
+						exec_ = '"%s"' % cmd
+					elif gcm:
+						# Early exit, do not create loader
 						return result
-					exec_ = '"%s" %s' % (cmd, loader_args)
+					else:
+						exec_ = '"%s" %s' % (cmd, loader_args)
 					try:
 						# Always create user loader, even if we later try to 
 						# move it to the system-wide location so that atleast 
@@ -3633,7 +3778,7 @@ class MainFrame(BaseFrame):
 									   ok=lang.getstr("ok"), 
 									   bitmap=geticon(32, "dialog-warning"))
 					else:
-						if "-Sl" in args and autostart:
+						if getcfg("profile.install_scope") == "l" and autostart:
 							# copy system-wide loader
 							if not silent and \
 								(self.worker.exec_cmd("mkdir", 
@@ -3689,6 +3834,11 @@ class MainFrame(BaseFrame):
 					InfoDialog(self, msg=lang.getstr("calibration.load_error"), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"), log=False)
+		if debug:
+			safe_print("[D] install_profile.silent:", silent)
+			safe_print("[D] install_profile.install:", install)
+			safe_print("[D] install_profile.result:", result)
+			safe_print("[D] install_profile.cal:", cal)
 		self.worker.pwd = None  # don't keep password in memory
 		return result
 
@@ -4213,7 +4363,7 @@ class MainFrame(BaseFrame):
 		if isinstance(result, Exception) and result:
 			wx.CallAfter(show_result_dialog, result, self)
 		elif getcfg("log.autoshow"):
-			wx.CallAfter(self.infoframe.Show)
+			wx.CallAfter(self.infoframe_toggle_handler, show=True)
 		self.worker.wrapup(False)
 		self.Show()
 
@@ -4270,7 +4420,7 @@ class MainFrame(BaseFrame):
 		start_timers = True
 		if not isinstance(result, Exception) and result:
 			if getcfg("log.autoshow"):
-				wx.CallAfter(self.infoframe.Show)
+				wx.CallAfter(self.infoframe_toggle_handler, show=True)
 			if getcfg("profile.update") or \
 			   self.worker.dispcal_create_fast_matrix_shaper:
 				start_timers = False
@@ -4394,7 +4544,7 @@ class MainFrame(BaseFrame):
 								   continue_next=True)
 	
 	def calibrate_finish(self, result):
-		self.worker.interactive = not self.worker.get_needs_no_sensor_cal()
+		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
 		if not isinstance(result, Exception) and result:
 			self.measure(self.calibrate_and_profile_finish,
 						 True, 
@@ -4529,7 +4679,7 @@ class MainFrame(BaseFrame):
 					   allow_show_log=True):
 		if not isinstance(result, Exception) and result:
 			if getcfg("log.autoshow") and allow_show_log:
-				self.infoframe.Show()
+				self.infoframe_toggle_handler(show=True)
 			if not hasattr(self, "previous_cal") or self.previous_cal is False:
 				self.previous_cal = getcfg("calibration.file")
 			if profile_path:
@@ -4589,9 +4739,12 @@ class MainFrame(BaseFrame):
 			# Always load calibration curves
 			self.load_cal(cal=profile_path, silent=True)
 			dlg = ConfirmDialog(self, msg=success_msg, 
+								title=lang.getstr("profile.install"),
 								ok=lang.getstr("profile.install"), 
 								cancel=lang.getstr("profile.do_not_install"), 
-								bitmap=geticon(32, "dialog-information"))
+								bitmap=geticon(32, "dialog-information"),
+								style=wx.CAPTION | wx.CLOSE_BOX | 
+									  wx.FRAME_FLOAT_ON_PARENT)
 			if preview and has_cal:
 				# Show calibration preview checkbox
 				self.preview = wx.CheckBox(dlg, -1, 
@@ -4610,9 +4763,10 @@ class MainFrame(BaseFrame):
 					dlg.sizer3.Add(self.show_lut, flag=wx.TOP | wx.ALIGN_LEFT, 
 								   border=4)
 					if hasattr(self, "lut_viewer") and self.lut_viewer and \
-					   self.lut_viewer.IsShownOnScreen():
+					   getcfg("lut_viewer.show"):
 						self.show_lut.SetValue(True)
-					self.init_lut_viewer(profile=profile)
+					self.init_lut_viewer(profile=profile, 
+										 show=self.show_lut.GetValue())
 				if ext not in (".icc", ".icm") or \
 				   getcfg("calibration.file") != profile_path:
 					self.preview_handler(preview=True)
@@ -4620,7 +4774,8 @@ class MainFrame(BaseFrame):
 											  self.worker.argyll_version >= 
 											  [1, 1, 0] and 
 											  (not which("gcm-import") or 
-											   not get_edid))) and 
+											   not get_edid) and
+											  not which("oyranos-monitor"))) and 
 				(os.geteuid() == 0 or which("sudo"))) or \
 				(sys.platform == "win32" and 
 				 sys.getwindowsversion() >= (6, ) and 
@@ -4631,7 +4786,8 @@ class MainFrame(BaseFrame):
 				# correctly in dispwin 1.1.0, but a patch is trivial and
 				# should be in the next version
 				# 2010-06-18: Do not offer system install in dispcalGUI when
-				# installing via GCM
+				# installing via GCM or oyranos FIXME: oyranos-monitor can't 
+				# be run via sudo
 				self.install_profile_user = wx.RadioButton(
 					dlg, -1, lang.getstr("profile.install_user"), 
 					style=wx.RB_GROUP)
@@ -4665,32 +4821,62 @@ class MainFrame(BaseFrame):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
-			result = dlg.ShowModal()
-			dlg.Destroy()
-			if result == wx.ID_OK:
-				safe_print("-" * 80)
-				safe_print(lang.getstr("profile.install"))
-				self.install_profile(capture_output=True, 
-									 profile_path=profile_path, 
-									 skip_scripts=skip_scripts)
-			elif preview:
-				if getcfg("calibration.file"):
-					# Load LUT curves from last used .cal file
-					self.load_cal(silent=True)
-				else:
-					# Load LUT curves from current display profile (if any, 
-					# and if it contains curves)
-					self.load_display_profile_cal(None)
+			##result = dlg.ShowModal()
+			##dlg.Destroy()
+			self.Disable()
+			dlg.profile_path = profile_path
+			dlg.skip_scripts = skip_scripts
+			dlg.preview = preview
+			dlg.OnCloseIntercept = self.profile_finish_close_handler
+			self.modaldlg = dlg
+			if sys.platform == "darwin":
+				# FRAME_FLOAT_ON_PARENT does not work on Mac,
+				# make sure we stay under our dialog
+				self.Bind(wx.EVT_ACTIVATE, self.lower_handler)
+			wx.CallAfter(dlg.Show)
 		else:
 			if isinstance(result, Exception):
 				show_result_dialog(result, self) 
 			InfoDialog(self, msg=failure_msg, 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
+			self.start_timers(True)
+			self.previous_cal = False
+	
+	def profile_finish_close_handler(self, event):
+		if event.GetEventObject() == self.modaldlg:
+			result = wx.ID_CANCEL
+		else:
+			result = event.GetId()
+		if result == wx.ID_OK:
+			safe_print("-" * 80)
+			safe_print(lang.getstr("profile.install"))
+			self.install_profile(capture_output=True, 
+								 profile_path=self.modaldlg.profile_path, 
+								 skip_scripts=self.modaldlg.skip_scripts)
+		elif self.modaldlg.preview:
+			if getcfg("calibration.file"):
+				# Load LUT curves from last used .cal file
+				self.load_cal(silent=True)
+			else:
+				# Load LUT curves from current display profile (if any, 
+				# and if it contains curves)
+				self.load_display_profile_cal(None)
+		self.Enable()
+		if sys.platform == "darwin":
+			# FRAME_FLOAT_ON_PARENT does not work on Mac,
+			# unbind automatic lowering
+			self.Unbind(wx.EVT_ACTIVATE, handler=self.lower_handler)
+			self.Raise()
+		self.modaldlg.Destroy()
+		self.modaldlg = None
 		self.start_timers(True)
 		self.previous_cal = False
+	
+	def lower_handler(self, event):
+		self.Lower()
 		
-	def init_lut_viewer(self, event=None, profile=None):
+	def init_lut_viewer(self, event=None, profile=None, show=None):
 		if LUTFrame:
 			if not hasattr(self, "lut_viewer") or not self.lut_viewer:
 				self.lut_viewer = LUTFrame(
@@ -4734,7 +4920,9 @@ class MainFrame(BaseFrame):
 						profile = cal_to_fake_profile(path)
 				else:
 					profile = self.get_display_profile() or False
-			self.show_lut_handler(profile=profile)
+			if show is None:
+				show = not self.lut_viewer.IsShownOnScreen()
+			self.show_lut_handler(profile=profile, show=show)
 	
 	def lut_viewer_load_lut(self, event=None, profile=None, force_draw=False):
 		if LUTFrame:
@@ -4752,8 +4940,10 @@ class MainFrame(BaseFrame):
 				cmd, args = (get_argyll_util("dispwin"), 
 							 ["-d" + self.worker.get_display(), "-s", 
 							  os.path.join(tmp, 
-										   self.display_ctrl.GetStringSelection() or 
-										   "LUT")])
+										   re.sub(r"[\\/:*?\"<>|]+",
+												  "",
+												  self.display_ctrl.GetStringSelection() or 
+												  "LUT"))])
 				result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 											  skip_scripts=True, silent=True)
 				if not isinstance(result, Exception) and result:
@@ -4763,28 +4953,33 @@ class MainFrame(BaseFrame):
 					if isinstance(result, Exception):
 						safe_print(result)
 				self.worker.wrapup(copy=False)
-			if profile and (not profile.fileName or 
+			if profile and (profile.is_loaded or not profile.fileName or 
 							os.path.isfile(profile.fileName)):
 				if force_update or not self.lut_viewer.profile or \
 				   not self.lut_viewer.profile.fileName or \
 				   not profile.fileName or \
-				   self.lut_viewer.profile.fileName != profile.fileName:
+				   self.lut_viewer.profile.fileName != profile.fileName or \
+				   not self.lut_viewer.profile.isSame(profile):
 					self.lut_viewer.LoadProfile(profile)
 					self.lut_viewer.DrawLUT()
 			else:
 				self.lut_viewer.LoadProfile(None)
 				self.lut_viewer.DrawLUT()
 	
-	def show_lut_handler(self, event=None, profile=None):
-		show = bool((hasattr(self, "show_lut") and self.show_lut and 
-					 self.show_lut.GetValue()) or 
-					((not hasattr(self, "show_lut") or 
-					  not self.show_lut)))
+	def show_lut_handler(self, event=None, profile=None, show=None):
+		if show is None:
+			show = bool((hasattr(self, "show_lut") and self.show_lut and 
+						 self.show_lut.GetValue()) or 
+						(not hasattr(self, "show_lut") or 
+						 not self.show_lut))
+		setcfg("lut_viewer.show", int(show))
 		if not profile and hasattr(self, "current_cal"):
 			profile = self.current_cal
 		self.lut_viewer_load_lut(event, profile, force_draw=show)
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
+			self.menuitem_show_lut.Check(show)
 			self.lut_viewer.Show(show)
+			self.lut_viewer.Raise()
 
 	def lut_viewer_move_handler(self, event=None):
 		if self.lut_viewer.IsShownOnScreen() and not \
@@ -4805,7 +5000,9 @@ class MainFrame(BaseFrame):
 			event.Skip()
 	
 	def lut_viewer_close_handler(self, event=None):
+		setcfg("lut_viewer.show", 0)
 		self.lut_viewer.Hide()
+		self.menuitem_show_lut.Check(False)
 		if hasattr(self, "show_lut") and self.show_lut:
 			self.show_lut.SetValue(self.lut_viewer.IsShownOnScreen())
 	
@@ -4822,8 +5019,10 @@ class MainFrame(BaseFrame):
 	def start_timers(self, wrapup=False):
 		if wrapup:
 			self.worker.wrapup(False)
-		self.plugplay_timer.Start(10000)
-		self.update_profile_name_timer.Start(1000)
+		if not self.plugplay_timer.IsRunning():
+			self.plugplay_timer.Start(10000)
+		if not self.update_profile_name_timer.IsRunning():
+			self.update_profile_name_timer.Start(1000)
 	
 	def stop_timers(self):
 		self.plugplay_timer.Stop()
@@ -5934,6 +6133,8 @@ class MainFrame(BaseFrame):
 					setcfg("recent_cals", os.pathsep.join(recent_cals))
 					self.calibration_file_ctrl.Delete(sel)
 					cal = getcfg("calibration.file") or ""
+					if not cal in self.recent_cals:
+						self.recent_cals.append(cal)
 					# The case-sensitive index could fail because of 
 					# case insensitive file systems, e.g. if the 
 					# stored filename string is 
@@ -6151,6 +6352,8 @@ class MainFrame(BaseFrame):
 						self.recent_cals.remove(self.recent_cals[sel])
 						self.calibration_file_ctrl.Delete(sel)
 						cal = getcfg("calibration.file") or ""
+						if not cal in self.recent_cals:
+							self.recent_cals.append(cal)
 						# The case-sensitive index could fail because of 
 						# case insensitive file systems, e.g. if the 
 						# stored filename string is 
@@ -6293,6 +6496,8 @@ class MainFrame(BaseFrame):
 					self.recent_cals.remove(self.recent_cals[sel])
 					self.calibration_file_ctrl.Delete(sel)
 					cal = getcfg("calibration.file") or ""
+					if not cal in self.recent_cals:
+						self.recent_cals.append(cal)
 					# The case-sensitive index could fail because of 
 					# case insensitive file systems, e.g. if the 
 					# stored filename string is 
@@ -6525,9 +6730,13 @@ class MainFrame(BaseFrame):
 													 args=(self, ))
 			self.app_update_check.start()
 
-	def infoframe_toggle_handler(self, event):
-		setcfg("log.show", int(not self.infoframe.IsShownOnScreen()))
-		self.infoframe.Show(getcfg("log.show"))
+	def infoframe_toggle_handler(self, event=None, show=None):
+		if show is None:
+			show = not self.infoframe.IsShownOnScreen()
+		setcfg("log.show", int(show))
+		self.infoframe.Show(show)
+		self.menuitem_show_log.Check(show)
+		self.menuitem_log_autoshow.Enable(not show)
 	
 	def infoframe_autoshow_handler(self, event):
 		setcfg("log.autoshow", int(self.menuitem_log_autoshow.IsChecked()))
@@ -6547,15 +6756,17 @@ class MainFrame(BaseFrame):
 		self.Hide()
 
 	def Show(self, show=True, start_timers=True):
+		if hasattr(self, "tcframe"):
+			self.tcframe.Show(getcfg("tc.show"))
+		self.infoframe.Show(getcfg("log.show"))
+		if LUTFrame and getcfg("lut_viewer.show"):
+			self.init_lut_viewer(show=True)
+		if start_timers:
+			self.start_timers()
 		wx.Frame.Show(self, show)
 		self.Raise()
 		if not wx.GetApp().IsActive():
 			self.RequestUserAttention()
-		if hasattr(self, "tcframe"):
-			self.tcframe.Show(getcfg("tc.show"))
-		self.infoframe.Show(getcfg("log.show"))
-		if start_timers:
-			self.start_timers()
 
 	def OnShow(self, event):
 		self.SetFocus()
@@ -6612,10 +6823,32 @@ def main():
 	log("=" * 80)
 	if verbose >= 1:
 		safe_print(appname + runtype, version, build)
+	if sys.platform == "darwin":
+		log("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
+	else:
+		if sys.platform == "win32":
+			ver2name = {(5, 0): "2000",
+						(5, 0, 2195): "2000 RTM",
+						(5, 1): "XP",
+						(5, 1, 2600): "XP RTM",
+						(5, 2): "Server 2003/Home Server 2003",
+						(5, 2, 3790): "Server 2003/Home Server 2003, RTM",
+						(6, 0): "Vista/Server 2008",
+						(6, 0, 6000): "Vista RTM",
+						(6, 0, 6001): "Vista SP1/Server 2008, RTM",
+						(6, 0, 6002): "Vista SP2/Server 2008 SP2, RTM",
+						(6, 1): "7/Server 2008 R2",
+						(6, 1, 7600): "7/Server 2008 R2, RTM"}
+			dist = ver2name.get(sys.getwindowsversion()[:3], 
+								ver2name.get(sys.getwindowsversion()[:2], 
+											 "N/A"))
+		else:
+			dist = "%s %s %s" % getattr(platform, "linux_distribution", 
+										platform.dist)()
+		log("%s %s (%s)" % (platform.system(), platform.version(), dist))
 	log("Python " + sys.version)
 	log("wxPython " + wx.version())
 	try:
-		
 		# Force to run inside tty with the --terminal option
 		if "--terminal" in sys.argv[1:]:
 			terminals_opts = {
