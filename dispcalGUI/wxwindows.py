@@ -66,7 +66,8 @@ class BaseInteractiveDialog(wx.Dialog):
 	
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 show=True, log=True, print_=False):
+				 show=True, log=True, print_=False, 
+				 style=wx.DEFAULT_DIALOG_STYLE):
 		if print_:
 			safe_print(msg, log=False)
 		if log:
@@ -79,7 +80,7 @@ class BaseInteractiveDialog(wx.Dialog):
 					pos[i] += parent.GetScreenPosition()[i]
 				i += 1
 			pos = tuple(pos)
-		wx.Dialog.__init__(self, parent, id, title, pos, size)
+		wx.Dialog.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
 		
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
@@ -155,10 +156,10 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
-				 size=(400, -1), alt=None):
+				 size=(400, -1), alt=None, style=wx.DEFAULT_DIALOG_STYLE):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
-									   log=False)
+									   log=False, style=style)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
@@ -182,6 +183,9 @@ class ConfirmDialog(BaseInteractiveDialog):
 		self.Fit()
 
 	def OnClose(self, event):
+		if hasattr(self, "OnCloseIntercept"):
+			self.OnCloseIntercept(event)
+			return
 		if event.GetEventObject() == self:
 			id = wx.ID_CANCEL
 		else:
