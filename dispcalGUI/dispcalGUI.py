@@ -2345,17 +2345,25 @@ class MainFrame(BaseFrame):
 			return
 		safe_print("-" * 80)
 		safe_print(lang.getstr("ambient.measure"))
+		self.stop_timers()
 		self.worker.interactive = False
 		self.worker.start(self.ambient_measure_process, 
 						  self.ambient_measure_process, 
 						  ckwargs={"event_id": event.GetId(),
 								   "phase": "instcal_prepare"}, 
-						  wkwargs={"phase": "init"},
+						  wkwargs={"result": True,
+								   "phase": "init"},
 						  progress_msg=lang.getstr("instrument.initializing"))
 	
 	def ambient_measure_process(self, result=None, event_id=None, phase=None):
-		if self.worker.thread_abort:
-			return
+		if not result or isinstance(result, Exception):
+			if getattr(self.worker, "subprocess", None):
+				self.worker.quit_terminate_cmd()
+				self.worker.subprocess = None
+			self.start_timers()
+			safe_print(lang.getstr("aborted"))
+			if result is False:
+				return
 		if phase == "init":
 			cmd = get_argyll_util("spotread")
 			args = ["-v", "-c%s" % getcfg("comport.number"), "-a", "-x"]
@@ -2370,35 +2378,31 @@ class MainFrame(BaseFrame):
 			safe_print("")
 			kwargs = dict(timeout=10)
 			if sys.platform == "win32":
-				codepage = windll.kernel32.GetACP()
-				kwargs["codepage"] = codepage
-				data_encoding = aliases.get(str(codepage), "ascii")
-			else:
-				data_encoding = enc
+				kwargs["codepage"] = windll.kernel32.GetACP()
 			self.worker.clear_cmd_output()
 			try:
-				result = wexpect.spawn(cmd, args, **kwargs)
-				result.logfile_read = FilteredStream(safe_print)
+				self.worker.measure = True
+				result = self.worker.subprocess = wexpect.spawn(cmd, args, 
+																**kwargs)
+				result.logfile_read = Files([FilteredStream(safe_print, 
+															triggers=[]),
+											 self.worker.lastmsg])
 			except Exception, exception:
 				return exception
 			if not result or not result.isalive():
 				return
-			if self.worker.get_instrument_features().get("sensor_cal"):
-				return result
-			else:
-				phase = "measure_init"
-		if phase is not None and (not result or isinstance(result, 
-														   Exception) or 
-								  not result.isalive()):
-			if isinstance(result, Exception):
+			phase = "measure_init"
+		if not result or isinstance(result, Exception) or \
+		   hasattr(result, "isalive") and not result.isalive():
+			if debug and isinstance(result, Exception):
 				log(safe_unicode(result))
 			InfoDialog(self,
-					   msg=lang.getstr("error"), 
+					   msg=lang.getstr("aborted"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"), log=False)
 			return
 		if phase == "instcal_prepare":
-			if self.worker.get_instrument_features().get("sensor_cal"):
+			if self.worker.get_instrument_features().get("sensor_cal") or test:
 				dlg = ConfirmDialog(self, msg=lang.getstr("instrument.calibrate"), 
 									ok=lang.getstr("ok"), 
 									cancel=lang.getstr("cancel"), 
@@ -2406,6 +2410,9 @@ class MainFrame(BaseFrame):
 				dlg_result = dlg.ShowModal()
 				dlg.Destroy()
 				if dlg_result != wx.ID_OK:
+					self.worker.quit_terminate_cmd()
+					self.worker.subprocess = None
+					self.start_timers()
 					safe_print(lang.getstr("aborted"))
 					return False
 				self.worker.start(self.ambient_measure_process, 
@@ -2422,17 +2429,20 @@ class MainFrame(BaseFrame):
 			# the only optional phase
 			try:
 				result.send(" ")
+				if not self.worker.get_instrument_features().get("sensor_cal"):
+					# Just for testing purposes
+					sleep(5)
 			except Exception, exception:
 				return exception
 			phase = "measure_init"
-		pat = "key to take a reading:"
+		pat = ["key to take a reading:", "Esc or Q", "ESC or Q"]
 		if phase == "measure_init":
 			try:
 				result.expect(pat)
 			except Exception, exception:
+				if isinstance(exception, wexpect.EOF) and result.isalive():
+					result.wait()
 				return exception
-			if self.worker.thread_abort:
-				return
 			return result
 		elif phase == "measure_prepare":
 			dlg = ConfirmDialog(self, msg=lang.getstr("instrument.measure_ambient"), 
@@ -2442,6 +2452,9 @@ class MainFrame(BaseFrame):
 			dlg_result = dlg.ShowModal()
 			dlg.Destroy()
 			if dlg_result != wx.ID_OK:
+				self.worker.quit_terminate_cmd()
+				self.worker.subprocess = None
+				self.start_timers()
 				safe_print(lang.getstr("aborted"))
 				return False
 			self.worker.start(self.ambient_measure_process, 
@@ -2456,33 +2469,22 @@ class MainFrame(BaseFrame):
 				result.send(" ")
 				result.expect("Place instrument")
 			except Exception, exception:
+				if isinstance(exception, wexpect.EOF) and result.isalive():
+					result.wait()
 				return exception
-			if self.worker.thread_abort:
-				return
 			data = result.before if isinstance(result.before, basestring) else ""
 			data = re.sub("[^\t\n\r\x20-\x7f]", "", data).strip()
-			#safe_print(os.linesep.join([line.strip() for line in data.splitlines()]))
-			try:
-				result.expect(pat)
-				result.send("q")
-				result.expect(":")
-				result.send("q")
-			except Exception, exception:
-				return exception
-			sleep(.05)
-			try:
-				if result.isalive():
-					result.terminate(force=True)
-			except Exception, exception:
-				log(safe_unicode(exception))
+			self.worker.quit_terminate_cmd()
+			self.worker.subprocess = None
+			safe_print(lang.getstr("aborted"))
 			return data
 		# finish
 		# result = data
 		if getcfg("whitepoint.colortemp.locus") == "T":
-			K = re.search("Planckian temperature += (\d+(?:\.\d+))K", 
+			K = re.search("Planckian temperature += (\d+(?:\.\d+)?)K", 
 						  result, re.I)
 		else:
-			K = re.search("Daylight temperature += (\d+(?:\.\d+))K", 
+			K = re.search("Daylight temperature += (\d+(?:\.\d+)?)K", 
 						  result, re.I)
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
 		set_whitepoint = event_id == self.whitepoint_measure_btn.GetId()
@@ -3365,7 +3367,6 @@ class MainFrame(BaseFrame):
 										handle_error(exception)
 									# Run gcm-prefs instead of gcm-import
 									gcm_cmd, gcm_args = which("gcm-prefs"), []
-								break
 						result = True
 						gcm = True
 					else:  # NEVER
@@ -3375,11 +3376,9 @@ class MainFrame(BaseFrame):
 							io = StringIO()
 							cfg.write(io)
 							io.seek(0)
-							lines = io.read().strip("\n").split("\n")
-							for i, line in enumerate(lines):
-								lines[i] = "=".join(part.strip() for part in line.split("=", 1))
 							cfgfile = codecs.open(gcm_device_profiles_conf, "w", "UTF-8")
-							cfgfile.write("\n".join(lines))
+							cfgfile.write("".join(["=".join(line.split(" = ", 1)) 
+												   for line in io]))
 							cfgfile.close()
 						except IOError, exception:
 							handle_error(exception)
@@ -3438,13 +3437,13 @@ class MainFrame(BaseFrame):
 												  asroot=True)
 			else:
 				dirname = None
-				for dirname in iccprofiles_home:
+				for dirname in iccprofiles_display_home:
 					if os.path.isdir(dirname):
 						# Use the first one that exists
 						break
 				if not dirname:
 					# Create the first one in the list
-					dirname = iccprofiles_home[0]
+					dirname = iccprofiles_display_home[0]
 					try:
 						os.makedirs(dirname)
 					except Exception, exception:
@@ -3660,10 +3659,22 @@ class MainFrame(BaseFrame):
 					system_desktopfile_path = os.path.join(
 						autostart, name + ".desktop")
 					if gcm or oyranos:
-						# Remove dispcalGUI user loader
+						# Disable dispcalGUI user loader
 						if os.path.exists(desktopfile_path):
 							try:
-								os.remove(desktopfile_path)
+								cfg = ConfigParser.SafeConfigParser()
+								cfg.optionxform = str
+								cfg.read([desktopfile_path])
+								hidden = cfg.set("Desktop Entry", "Hidden", 
+												 "true")
+								io = StringIO()
+								cfg.write(io)
+								io.seek(0)
+								desktop = "".join(["=".join(line.split(" = ", 1)) 
+												   for line in io])
+								desktopfile = open(desktopfile_path, "w")
+								desktopfile.write(desktop)
+								desktopfile.close()
 							except Exception, exception:
 								InfoDialog(self, 
 										   msg=lang.getstr(
@@ -3671,63 +3682,81 @@ class MainFrame(BaseFrame):
 											   desktopfile_path), 
 										   ok=lang.getstr("ok"), 
 										   bitmap=geticon(32, "dialog-warning"))
-						if False:  # NEVER
-							# Remove Argyll CMS user color.jcnf
-							colorjcnf_home = os.path.join(xdg_config_home, 
-														  "color.jcnf")
-							if os.path.exists(colorjcnf_home):
-								try:
-									os.remove(colorjcnf_home)
-								except Exception, exception:
+						# Disable Argyll CMS user color.jcnf
+						colorjcnf_home = os.path.join(xdg_config_home, 
+													  "color.jcnf")
+						if os.path.exists(colorjcnf_home):
+							try:
+								shutil.move(colorjcnf_home,
+											colorjcnf_home + ".backup")
+							except Exception, exception:
+								InfoDialog(self, 
+										   msg=lang.getstr(
+											   "error.colorconfig_remove_old", 
+											   colorjcnf_home), 
+										   ok=lang.getstr("ok"), 
+										   bitmap=geticon(32, "dialog-warning"))
+						# Disable dispcalGUI system loader
+						if os.path.exists(system_desktopfile_path):
+							try:
+								cfg = ConfigParser.SafeConfigParser()
+								cfg.optionxform = str
+								cfg.read([system_desktopfile_path])
+								hidden = cfg.set("Desktop Entry", "Hidden", 
+												 "true")
+								io = StringIO()
+								cfg.write(io)
+								io.seek(0)
+								desktop = "".join(["=".join(line.split(" = ", 1)) 
+												   for line in io])
+								tmp_desktopfile_path = os.path.join(self.worker.create_tempdir(),
+																	os.path.basename(system_desktopfile_path))
+								desktopfile = open(tmp_desktopfile_path, "w")
+								desktopfile.write(desktop)
+								desktopfile.close()
+							except Exception, exception:
+								result = False
+							if (not result or \
+							    self.worker.exec_cmd("mv", 
+													 ["-f", 
+													  tmp_desktopfile_path,
+													  system_desktopfile_path], 
+													 capture_output=True, 
+													 low_contrast=False, 
+													 skip_scripts=True, 
+													 silent=True, 
+													 asroot=True, 
+													 title=lang.getstr("autostart_remove_old")) is not True) and \
+							   not silent:
 									InfoDialog(self, 
 											   msg=lang.getstr(
-												   "error.colorconfig_remove_old", 
-												   colorjcnf_home), 
+												   "error.autostart_remove_old", 
+												   system_desktopfile_path), 
 											   ok=lang.getstr("ok"), 
 											   bitmap=geticon(32, "dialog-warning"))
-						# Remove dispcalGUI system loader
-						if os.path.exists(system_desktopfile_path) and \
-						   not silent and \
+							self.worker.wrapup(False)
+						# Disable Argyll CMS system color.jcnf
+						for path in xdg_config_dirs:
+							colorjcnf_system = os.path.join(path, "color.jcnf")
+							if os.path.exists(colorjcnf_system) and \
 							   self.worker.exec_cmd("mv", 
 													["-f", 
-													 system_desktopfile_path,
-													 system_desktopfile_path + 
+													 colorjcnf_system,
+													 colorjcnf_system + 
 													 ".backup"], 
 													capture_output=True, 
 													low_contrast=False, 
 													skip_scripts=True, 
 													silent=False, 
 													asroot=True, 
-													title=lang.getstr("autostart_remove_old")) is not True:
-								InfoDialog(self, 
-										   msg=lang.getstr(
-											   "error.autostart_remove_old", 
-											   system_desktopfile_path), 
-										   ok=lang.getstr("ok"), 
-										   bitmap=geticon(32, "dialog-warning"))
-						if False:  # NEVER
-							# Remove Argyll CMS system color.jcnf
-							for path in xdg_config_dirs:
-								colorjcnf_system = os.path.join(path, "color.jcnf")
-								if os.path.exists(colorjcnf_system) and \
-								   not silent and \
-									   self.worker.exec_cmd("mv", 
-															["-f", 
-															 colorjcnf_system,
-															 colorjcnf_system + 
-															 ".backup"], 
-															capture_output=True, 
-															low_contrast=False, 
-															skip_scripts=True, 
-															silent=False, 
-															asroot=True, 
-															title=lang.getstr("colorconfig_remove_old")) is not True:
-										InfoDialog(self, 
-												   msg=lang.getstr(
-													   "error.colorconfig_remove_old", 
-													   colorjcnf_system), 
-												   ok=lang.getstr("ok"), 
-												   bitmap=geticon(32, "dialog-warning"))
+													title=lang.getstr("colorconfig_remove_old")) is not True and \
+							   not silent:
+									InfoDialog(self, 
+											   msg=lang.getstr(
+												   "error.colorconfig_remove_old", 
+												   colorjcnf_system), 
+											   ok=lang.getstr("ok"), 
+											   bitmap=geticon(32, "dialog-warning"))
 					if gcm:
 						# Run gcm-import or gcm-prefs
 						# Start in separate thread so we don't block dispcalGUI
@@ -3741,11 +3770,21 @@ class MainFrame(BaseFrame):
 												  silent=False))
 					if oyranos:
 						exec_ = '"%s"' % cmd
+						name = "oyranos-monitor"
+						desc = "oyranos-monitor"
+						desktopfile_path = os.path.join(autostart_home, 
+														name + ".desktop")
+						system_desktopfile_path = os.path.join(autostart, 
+															   name + ".desktop")
 					elif gcm:
 						# Early exit, do not create loader
 						return result
 					else:
+						# Fallback: dispwin
 						exec_ = '"%s" %s' % (cmd, loader_args)
+						name = (u'%s Calibration Loader (Display %s)' % 
+								(appname, n))
+						desc = lang.getstr("calibrationloader.description", n)
 					try:
 						# Always create user loader, even if we later try to 
 						# move it to the system-wide location so that atleast 
@@ -3758,15 +3797,9 @@ class MainFrame(BaseFrame):
 						desktopfile.write('Version=1.0\n')
 						desktopfile.write('Encoding=UTF-8\n')
 						desktopfile.write('Type=Application\n')
-						desktopfile.write((u'Name=%s Calibration Loader '
-										   '(Display %s)\n' % 
-										   (appname, n)).encode("UTF-8"))
-						desktopfile.write((u'Comment=%s\n' % 
-										   lang.getstr(
-											   "calibrationloader.description", 
-											   n)).encode("UTF-8"))
-						desktopfile.write((u'Exec=%s\n' % 
-										   exec_).encode("UTF-8"))
+						desktopfile.write('Name=%s\n' % name.encode("UTF-8"))
+						desktopfile.write('Comment=%s\n' % desc.encode("UTF-8"))
+						desktopfile.write('Exec=%s\n' % exec_.encode("UTF-8"))
 						desktopfile.close()
 					except Exception, exception:
 						if not silent:
@@ -3780,23 +3813,23 @@ class MainFrame(BaseFrame):
 					else:
 						if getcfg("profile.install_scope") == "l" and autostart:
 							# copy system-wide loader
-							if not silent and \
-								(self.worker.exec_cmd("mkdir", 
-													  ["-p", autostart], 
-													  capture_output=True, 
-													  low_contrast=False, 
-													  skip_scripts=True, 
-													  silent=True, 
-													  asroot=True) is not True or 
-								 self.worker.exec_cmd("cp", 
-													  ["-f", 
-													   desktopfile_path, 
-													   autostart], 
-													  capture_output=True, 
-													  low_contrast=False, 
-													  skip_scripts=True, 
-													  silent=True, 
-													  asroot=True) is not True):
+							if (self.worker.exec_cmd("mkdir", 
+													 ["-p", autostart], 
+													 capture_output=True, 
+													 low_contrast=False, 
+													 skip_scripts=True, 
+													 silent=True, 
+													 asroot=True) is not True or 
+								self.worker.exec_cmd("cp", 
+													 ["-f", 
+													  desktopfile_path, 
+													  system_desktopfile_path], 
+													 capture_output=True, 
+													 low_contrast=False, 
+													 skip_scripts=True, 
+													 silent=True, 
+													 asroot=True) is not True) and \
+							   not silent:
 								InfoDialog(self, 
 										   msg=lang.getstr(
 											   "error.autostart_creation", 
@@ -4979,7 +5012,8 @@ class MainFrame(BaseFrame):
 		if hasattr(self, "lut_viewer") and self.lut_viewer:
 			self.menuitem_show_lut.Check(show)
 			self.lut_viewer.Show(show)
-			self.lut_viewer.Raise()
+			if show:
+				self.lut_viewer.Raise()
 
 	def lut_viewer_move_handler(self, event=None):
 		if self.lut_viewer.IsShownOnScreen() and not \
@@ -6969,8 +7003,8 @@ def main():
 									cfg.write(cfgio)
 									desktopfile = open(desktopfile_path, "w")
 									cfgio.seek(0)
-									desktopfile.write(cfgio.read().replace("=", 
-													  "="))
+									desktopfile.write("".join(["=".join(line.split(" = ", 1)) 
+															   for line in cfgio]))
 									desktopfile.close()
 							except Exception, exception:
 								safe_print("Warning - could not process old "

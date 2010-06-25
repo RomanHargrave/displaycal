@@ -574,19 +574,26 @@ class Worker():
 		Create and return a new worker instance.
 		"""
 		self.owner = owner # owner should be a wxFrame or similar
-		self.clear_argyll_info()
-		self.clear_cmd_output()
+		if sys.platform == "win32":
+			self.data_encoding = aliases.get(str(windll.kernel32.GetACP()), 
+											 "ascii")
+		else:
+			self.data_encoding = enc
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
 		self.finished = True
 		self.interactive = False
+		self.lastmsg_discard = re.compile("[\\*|\\.]+|^point \\d+.*", re.I)
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
+		self.recent_discard = re.compile("^(?:Adjusted )?[Tt]arget (?:white|black|gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:Black|Red|Green|Blue|White)\\s+=.+|^patch \\d+ of \\d+.*|^point \\d+.*|^Added \\d+/\\d+|[\\*|\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
 		self.tempdir = None
 		self.thread_abort = False
+		self.clear_argyll_info()
+		self.clear_cmd_output()
 	
 	def add_measurement_features(self, args):
 		args += ["-d" + self.get_display()]
@@ -651,8 +658,12 @@ class Worker():
 		self.retcode = -1
 		self.output = []
 		self.errors = []
-		self.recent = LineCache(n=3)
-		self.lastmsg = LineCache()
+		self.recent = FilteredStream(LineCache(n=3), self.data_encoding, 
+									 discard=self.recent_discard,
+									 triggers=[])
+		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
+									  discard=self.lastmsg_discard,
+									  triggers=[])
 
 	def create_tempdir(self):
 		""" Create a temporary working directory and return its path. """
@@ -864,7 +875,7 @@ class Worker():
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
-				 title=appname, working_dir=None):
+				 title=appname, shell=False, working_dir=None):
 		"""
 		Execute a command.
 		
@@ -931,17 +942,18 @@ class Worker():
 							 args, fn=fn, cwd=working_dir)
 				safe_print("", fn=fn)
 		cmdline = [cmd] + args
-		for i in range(len(cmdline)):
-			item = cmdline[i]
-			if i > 0 and (item.find(os.path.sep) > -1 and 
-						  os.path.dirname(item) == working_dir):
-				# Strip the path from all items in the working dir
-				if sys.platform == "win32" and \
-				   re.search("[^\x00-\x7f]", 
-							 os.path.basename(item)) and os.path.exists(item):
-					# Avoid problems with encoding
-					item = win32api.GetShortPathName(item) 
-				cmdline[i] = os.path.basename(item)
+		if working_dir:
+			for i in range(len(cmdline)):
+				item = cmdline[i]
+				if i > 0 and (item.find(os.path.sep) > -1 and 
+							  os.path.dirname(item) == working_dir):
+					# Strip the path from all items in the working dir
+					if sys.platform == "win32" and \
+					   re.search("[^\x00-\x7f]", 
+								 os.path.basename(item)) and os.path.exists(item):
+						# Avoid problems with encoding
+						item = win32api.GetShortPathName(item) 
+					cmdline[i] = os.path.basename(item)
 		sudo = None
 		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
 														  "-Sn" in args):
@@ -1180,27 +1192,15 @@ class Worker():
 				kwargs = dict(timeout=10, cwd=working_dir,
 							  env=os.environ)
 				if sys.platform == "win32":
-					codepage = windll.kernel32.GetACP()
-					kwargs["codepage"] = codepage
-					data_encoding = aliases.get(str(codepage), "ascii")
-				else:
-					data_encoding = enc
+					kwargs["codepage"] = windll.kernel32.GetACP()
 				stderr = StringIO()
 				stdout = StringIO()
-				self.recent = FilteredStream(LineCache(n=3), data_encoding, 
-											 discard=re.compile("^(?:Adjusted )?[Tt]arget (?:white|black|gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:Black|Red|Green|Blue|White)\\s+=.+|^patch \\d+ of \\d+.*|^point \\d+.*|^Added \\d+/\\d+|[\\*|\\.]+|\\s*\\d*%?", 
-																re.I),
-											 triggers=[])
-				self.lastmsg = FilteredStream(LineCache(), data_encoding, 
-											  discard=re.compile("[\\*|\\.]+|^point \\d+.*", 
-																 re.I),
-											  triggers=[])
 				if log_output:
 					if sys.stdout.isatty():
-						logfile = FilteredStream(safe_print, data_encoding,
+						logfile = FilteredStream(safe_print, self.data_encoding,
 												 triggers=[])
 					else:
-						logfile = FilteredStream(log, data_encoding,
+						logfile = FilteredStream(log, self.data_encoding,
 												 triggers=[])
 					logfile = Files((logfile, stdout, self.recent,
 									 self.lastmsg))
@@ -1223,12 +1223,12 @@ class Worker():
 					if self.subprocess.isalive():
 						try:
 							if self.measure:
-								self.subprocess.expect("Esc or Q")
+								self.subprocess.expect(["Esc or Q", "ESC or Q"])
 								msg = self.recent.read()
 								lastmsg = self.lastmsg.read().strip()
-								if "key to continue" in lastmsg and \
-								   "Place instrument on test window" in \
-								   "".join(msg.splitlines()[-2:-1]) and \
+								if "key to continue" in lastmsg.lower() and \
+								   "place instrument on test window" in \
+								   "".join(msg.splitlines()[-2:-1]).lower() and \
 								   (not "-F" in args or 
 								    (not self.dispcal and
 								     self.dispread_after_dispcal)):
@@ -1261,9 +1261,10 @@ class Worker():
 						self.subprocess.wait()
 					self.retcode = self.subprocess.exitstatus
 				else:
-					self.subprocess = sp.Popen(cmdline, stdin=stdin, 
+					self.subprocess = sp.Popen(" ".join(cmdline) if shell else
+											   cmdline, stdin=stdin, 
 											   stdout=stdout, stderr=stderr, 
-											   cwd=working_dir, 
+											   shell=shell, cwd=working_dir, 
 											   startupinfo=startupinfo)
 					self.retcode = self.subprocess.wait()
 					if stdin and not getattr(stdin, "closed", True):
@@ -1904,7 +1905,7 @@ class Worker():
 				percentage = start / end * 100
 		elif re.match("Added \\d+/\\d+", lastmsg, re.I):
 			# targen
-			components = lastmsg.replace("Added ", "").split("/")
+			components = lastmsg.lower().replace("added ", "").split("/")
 			try:
 				start = float(components[0])
 				end = float(components[1])
@@ -1943,6 +1944,8 @@ class Worker():
 				if debug:
 					log('[D] thread_abort')
 				self.thread_abort = True
+		if self.finished is True:
+			return
 		if self.progress_wnd.IsShownOnScreen() and \
 		   not wx.GetApp().IsActive() or not self.progress_wnd.IsActive():
 			self.progress_wnd.Raise()
@@ -2006,7 +2009,7 @@ class Worker():
 						while getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
 							if time() > ts + 9 or \
-							   "Esc or Q" in self.lastmsg.read():
+							   "esc or q" in self.lastmsg.read().lower():
 								break
 							sleep(1)
 						if getattr(self, "subprocess", None) and \
