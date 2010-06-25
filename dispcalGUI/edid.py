@@ -31,7 +31,7 @@ if xrandr:
 			for key in ("XFree86_DDC_EDID1_RAWDATA", 
 						"XFree86_DDC_EDID2_RAWDATA"):
 				if display_no > 0:
-					key += "_" + display_no
+					key += "_%s" % display_no
 				edid_data = xrandr.get_atom(key, xrandr.XA_INTEGER)
 				if edid_data:
 					break
