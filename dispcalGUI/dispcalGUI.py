@@ -78,6 +78,8 @@ if sys.platform == "win32":
 	import pythoncom
 	import win32api
 	import win32con
+elif sys.platform == "darwin":
+	import appscript
 import jspacker
 
 # Config
@@ -615,9 +617,8 @@ class MainFrame(BaseFrame):
 		# expects the window to be fully created and accessible via 
 		# wx.GetApp().frame.infoframe
 		logbuffer.seek(0)
-		self.infoframe.log_txt.SetValue("".join(line.decode("UTF-8", 
-															"replace") 
-												for line in logbuffer))
+		self.infoframe.Log("".join(line.decode("UTF-8", "replace") 
+								   for line in logbuffer).strip())
 
 	def init_defaults(self):
 		""" Initialize GUI-specific defaults. """
@@ -3475,14 +3476,15 @@ class MainFrame(BaseFrame):
 			cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
 			if not isinstance(cmd, Exception):
 				if "-Sl" in args and (sys.platform != "darwin" or 
-									  _intversion(mac_ver()[0].split(".")) >= (10, 5)):
+									  _intversion(mac_ver()[0].split(".")) >= [10, 6]):
 					# If a 'system' install is requested under Linux or Windows, 
 					# install in 'user' scope first because a system-wide install 
 					# doesn't also set it as current user profile on those systems 
 					# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
-					# It has the small drawback under Linux that it will copy the 
-					# profile to both the user and system-wide locations, though,
-					# which is not a problem under Windows as they are the same.
+					# It has the small drawback under Linux and OS X 10.6 that 
+					# it will copy the profile to both the user and system-wide 
+					# locations, though, which is not a problem under Windows as 
+					# they are the same.
 					args.remove("-Sl")
 					result = self.worker.exec_cmd(cmd, args, capture_output, 
 												  low_contrast=False, 
@@ -3505,28 +3507,22 @@ class MainFrame(BaseFrame):
 				for line in self.worker.output:
 					if "Installed" in line:
 						if sys.platform == "darwin" and "-Sl" in args and \
-						   _intversion(mac_ver()[0].split(".")) < (10, 5):
+						   _intversion(mac_ver()[0].split(".")) < [10, 6]:
 							# The profile has been installed, but we need a little 
 							# help from AppleScript to actually make it the default 
-							# for the current user
-							profile_name = os.path.basename(args[-1])
-							for option in ["ColorSyncScripting"]:
-								cmd, args = 'osascript', ['-e', 
-									'set iccProfile to POSIX file "%s"' % 
-									os.path.join(os.path.sep, "Library", 
-												 "ColorSync", "Profiles", 
-												 profile_name), '-e', 
-												 'tell app "%s" to set '
-												 'display profile of display %s to '
-												 'iccProfile' % (option,
-																 self.worker.get_display().split(",")[0])]
-								result = self.worker.exec_cmd(cmd, args, 
-															  capture_output=True, 
-															  low_contrast=False, 
-															  skip_scripts=True, 
-															  silent=False)
-								if result and not isinstance(result, Exception):
-									break
+							# for the current user. Only works under Mac OS < 10.6
+							n = getcfg("display.number")
+							path = os.path.join(os.path.sep, "Library", 
+												"ColorSync", "Profiles", 
+												os.path.basename(args[-1]))
+							try:
+								fobj = appscript.mactypes.File(path)
+								appscript.app("ColorSyncScripting").displays[n].display_profile.set(fobj)  # one-based index
+							except Exception, exception:
+								log(exception)
+							else:
+								result = True
+								break
 						else:
 							result = True
 						break

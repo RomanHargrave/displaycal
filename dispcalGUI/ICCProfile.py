@@ -15,6 +15,7 @@ else:
 	import subprocess as sp
 	if sys.platform == "darwin":
 		from platform import mac_ver
+		import appscript
 
 if sys.platform == "win32":
 	try:
@@ -297,6 +298,8 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 	if sys.platform == "win32":
 		if not "win32api" in sys.modules: ## or not "win32gui" in sys.modules:
 			raise ImportError("pywin32 not available")
+		# The ordering will work as long as Argyll continues using
+		# EnumDisplayMonitors
 		monitor = win32api.EnumDisplayMonitors(None, None)
 		moninfo = win32api.GetMonitorInfo(monitor[display_no][0])
 		display_name = moninfo["Device"]
@@ -327,7 +330,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				profile = _winreg_get_display_profile(monkey)
 	else:
 		if sys.platform == "darwin":
-			if _intversion(mac_ver()[0].split(".")) >= (10, 5):
+			if _intversion(mac_ver()[0].split(".")) >= [10, 6]:
 				options = ["Image Events"]
 			else:
 				options = ["ColorSyncScripting"]
@@ -335,12 +338,10 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			options = ["_ICC_PROFILE"]
 		for option in options:
 			if sys.platform == "darwin":
-				args = ['osascript', '-e', 'tell app "%s"' % option, '-e', 
-						'set prof to location of (display profile of display %i)' % 
-						(display_no + 1), '-e', 'try', '-e', 'POSIX path of prof', 
-						'-e', 'end try', '-e', 'end tell']
-				tgt_proc = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, 
-									stderr=sp.PIPE)
+				# appscript: one-based index
+				fobj = appscript.app(option).displays[display_no + 1].display_profile.location.get()
+				if fobj:
+					profile = ICCProfile(fobj.path)
 			else:
 				# Linux
 				# Try XrandR first
@@ -364,18 +365,18 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 									 "-len", "8388608", "-root", "-notype", 
 									 atom], stdin=sp.PIPE, stdout=sp.PIPE, 
 									stderr=sp.PIPE)
-			stdout, stderr = [data.strip("\n") for data in tgt_proc.communicate()]
-			if stdout:
-				if sys.platform == "darwin":
-					filename = unicode(stdout, "UTF-8")
-					profile = ICCProfile(filename)
-				else:
-					raw = [item.strip() for item in stdout.split("=")]
-					if raw[0] == atom and len(raw) == 2:
-						bin = "".join([chr(int(part)) for part in raw[1].split(", ")])
-						profile = ICCProfile(bin)
-			elif stderr and tgt_proc.wait() != 0:
-				raise IOError(stderr)
+				stdout, stderr = [data.strip("\n") for data in tgt_proc.communicate()]
+				if stdout:
+					if sys.platform == "darwin":
+						filename = unicode(stdout, "UTF-8")
+						profile = ICCProfile(filename)
+					else:
+						raw = [item.strip() for item in stdout.split("=")]
+						if raw[0] == atom and len(raw) == 2:
+							bin = "".join([chr(int(part)) for part in raw[1].split(", ")])
+							profile = ICCProfile(bin)
+				elif stderr and tgt_proc.wait() != 0:
+					raise IOError(stderr)
 			if profile:
 				break
 	return profile
