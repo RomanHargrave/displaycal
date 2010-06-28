@@ -4,10 +4,23 @@
 from hashlib import md5
 import os
 import struct
-try:
-	import xrandr
-except ImportError:
-	xrandr = None
+import sys
+xrandr = None
+if sys.platform == "win32":
+	if sys.getwindowsversion() >= (6, ):
+		# Use WMI for Vista/Win7
+		import wmi
+		wmi_connection = wmi.WMI(namespace="WMI")
+	else:
+		# Use registry as fallback for Win2k/XP/2003
+		import _winreg
+		wmi_connection = None
+	import win32api
+elif sys.platform != "darwin":
+	try:
+		import xrandr
+	except ImportError:
+		pass
 
 atoz = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 pnpidcache = {}
@@ -16,10 +29,58 @@ def COMBINE_HI_8LO(hi, lo):
 	return hi << 8 | lo
 
 
-if xrandr:
-	def get_edid(display_no):
-		""" Get and parse EDID. Return dict. """
-		edid_data = None
+def get_edid(display_no):
+	""" Get and parse EDID. Return dict. """
+	edid_data = None
+	if sys.platform == "win32":
+		# The ordering will work as long as Argyll continues using
+		# EnumDisplayMonitors
+		monitors = win32api.EnumDisplayMonitors(None, None)
+		moninfo = win32api.GetMonitorInfo(monitors[display_no][0])
+		device = win32api.EnumDisplayDevices(moninfo["Device"])
+		id = device.DeviceID.split("\\")[1]
+		if wmi_connection:
+			# Use WMI for Vista/Win7
+			# http://msdn.microsoft.com/en-us/library/Aa392707
+			msmonitors = wmi_connection.WmiMonitorDescriptorMethods()
+			for msmonitor in msmonitors:
+				if msmonitor.InstanceName.split("\\")[1] == id:
+					try:
+						edid_data = msmonitor.WmiGetMonitorRawEEdidV1Block(0)
+					except:
+						# No EDID entry
+						pass
+					else:
+						edid_data = "".join(chr(i) for i in edid_data[0])
+					break
+		else:
+			# Use registry as fallback for Win2k/XP/2003
+			# http://msdn.microsoft.com/en-us/library/ff546173%28VS.85%29.aspx
+			# "The Enum tree is reserved for use by operating system components, 
+			#  and its layout is subject to change. (...) Drivers and Windows 
+			#  applications must not access the Enum tree directly."
+			# But do we care? Probably not, as older Windows' API isn't likely
+			# gonna change.
+			driver = "\\".join(device.DeviceID.split("\\")[-2:])
+			subkey = "\\".join(["SYSTEM", "CurrentControlSet", "Enum", 
+								"DISPLAY", id])
+			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey)
+			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+			for i in range(numsubkeys):
+				hkname = _winreg.EnumKey(key, i)
+				hk = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
+									 "\\".join([subkey, hkname]))
+				if _winreg.QueryValueEx(hk, "Driver")[0] == driver:
+					# Found our display device
+					devparms = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
+									 "\\".join([subkey, hkname, 
+												"Device Parameters"]))
+					try:
+						edid_data = _winreg.QueryValueEx(devparms, "EDID")[0]
+					except WindowsError:
+						# No EDID entry
+						pass
+	elif xrandr:
 		# Check XrandR output properties
 		for key in ("EDID", "EDID_DATA"):
 			edid_data = xrandr.get_output_property(display_no, key, 
@@ -36,8 +97,10 @@ if xrandr:
 				if edid_data:
 					break
 		if edid_data:
-			return parse_edid("".join(chr(i) for i in edid_data))
-		return {}
+			edid_data = "".join(chr(i) for i in edid_data)
+	if edid_data:
+		return parse_edid(edid_data)
+	return {}
 
 
 def parse_manufacturer_id(block):
@@ -59,11 +122,15 @@ def get_manufacturer_name(manufacturer_id):
 	SAM -> Samsung Electric Company
 	NEC -> NEC Corporation
 	
+	pnp.ids can be created from Excel data available from Microsoft:
+	http://www.microsoft.com/whdc/system/pnppwr/pnp/pnpid.mspx
+	
 	"""
 	if not pnpidcache:
 		paths = ["/usr/share/hwdata/pnp.ids",  # hwdata, e.g. Red Hat
 				 "/usr/share/misc/pnp.ids",  # pnputils, e.g. Debian
-				 "/usr/share/libgnome-desktop/pnp.ids"]  # fallback gnome-desktop
+				 "/usr/share/libgnome-desktop/pnp.ids",  # fallback gnome-desktop
+				 os.path.join(os.getcwdu(), "pnp.ids")]  # fallback
 		for path in paths:
 			if os.path.isfile(path):
 				try:
