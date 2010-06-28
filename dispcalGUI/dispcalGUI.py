@@ -2481,6 +2481,7 @@ class MainFrame(BaseFrame):
 			return data
 		# finish
 		# result = data
+		self.start_timers()
 		if getcfg("whitepoint.colortemp.locus") == "T":
 			K = re.search("Planckian temperature += (\d+(?:\.\d+)?)K", 
 						  result, re.I)
