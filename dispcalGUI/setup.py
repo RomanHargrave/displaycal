@@ -421,7 +421,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		"platforms": [
 			"Python >= 2.5 < 3.0", 
 			"Linux/Unix with X11", 
-			"Mac OS X", 
+			"Mac OS X >= 10.4", 
 			"Windows 2000 and newer"
 		],
 		"requires": requires,
