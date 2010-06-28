@@ -1800,7 +1800,8 @@ class Worker():
 							self.argyll_version >= [1, 1, 0])) and 
 						  (os.geteuid() == 0 or which("sudo"))) or 
 						 (sys.platform == "win32" and 
-						  sys.getwindowsversion() >= (6, )) or test):
+						  sys.getwindowsversion() >= (6, ) and 
+						  self.argyll_version > [1, 1, 1]) or test):
 							# -S option is broken on Linux with current Argyll 
 							# releases
 							args += ["-S" + getcfg("profile.install_scope")]
@@ -2112,6 +2113,9 @@ class Worker():
 				self.progress_wnd.start_timer()
 				self.progress_wnd.SetTitle(progress_title)
 				self.progress_wnd.Show()
+				if resume:
+					self.progress_wnd.console.ScrollLines(
+						self.progress_wnd.console.GetNumberOfLines())
 			else:
 				self.terminal = SimpleTerminal(parent, title=progress_title,
 											   handler=self.progress_handler,
