@@ -1355,10 +1355,10 @@ class ICCProfile:
 				tagTable.append(uInt32Number_tohex(tagsDataOffset[tagsData.index(tagData)]))
 			else:
 				tagTable.append(uInt32Number_tohex(tagDataOffset))
-			tagsDataOffset.append(tagDataOffset)
 			tagTable.append(uInt32Number_tohex(tagDataSize))
 			if not tagData in tagsData:
 				tagsData.append(tagData)
+				tagsDataOffset.append(tagDataOffset)
 				tagDataOffset += tagDataSize + padding
 		header = uInt32Number_tohex(128 + 4 + tagTableSize + 
 									len("".join(tagsData))) + self._data[4:84] + self.ID + self._data[100:128]
@@ -1380,6 +1380,8 @@ class ICCProfile:
 				tags = {}
 				while tagTable:
 					tag = tagTable[:12]
+					if len(tag) < 12:
+						raise ICCProfileInvalidError("Tag table is truncated")
 					tagSignature = tag[:4]
 					if debug: print "tagSignature:", tagSignature
 					tagDataOffset = uInt32Number(tag[4:8])
@@ -1399,17 +1401,32 @@ class ICCProfile:
 							end = tagDataOffset - discard_len + tagDataSize
 							if debug: print "    tagData end:", end
 							tagData = self._data[start:end]
+							if len(tagData) < tagDataSize:
+								raise ICCProfileInvalidError("Tag data for tag %r (offet %i, size %i) is truncated" % (tagSignature,
+																													   tagDataOffset,
+																													   tagDataSize))
 							##self._data = self._data[:128] + self._data[end:]
 							##discard_len += tagDataOffset - 128 - discard_len + tagDataSize
 							##if debug: print "    discard_len:", discard_len
 							typeSignature = tagData[:4]
+							if len(typeSignature) < 4:
+								raise ICCProfileInvalidError("Tag type signature for tag %r (offet %i, size %i) is truncated" % (tagSignature,
+																																 tagDataOffset,
+																																 tagDataSize))
 							if debug: print "    typeSignature:", typeSignature
-							if tagSignature in tagSignature2Tag:
-								tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
-							elif typeSignature in typeSignature2Type:
-								tag = typeSignature2Type[typeSignature](tagData, tagSignature)
-							else:
-								tag = ICCProfileTag(tagData, tagSignature)
+							try:
+								if tagSignature in tagSignature2Tag:
+									tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
+								elif typeSignature in typeSignature2Type:
+									tag = typeSignature2Type[typeSignature](tagData, tagSignature)
+								else:
+									tag = ICCProfileTag(tagData, tagSignature)
+							except Exception, exception:
+								raise ICCProfileInvalidError("Couldn't parse tag %r (type %r, offet %i, size %i): %s" % (tagSignature,
+																														 typeSignature,
+																														 tagDataOffset,
+																														 tagDataSize,
+																														 exception))
 							self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)] = tag
 					tagTable = tagTable[12:]
 				self._data = self._data[:128]
@@ -1431,7 +1448,7 @@ class ICCProfile:
 		"""
 		data = self.data[:44] + "\0\0\0\0" + self.data[48:64] + "\0\0\0\0" + \
 			   self.data[68:84] + "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + \
-			   self.data[100:self.size]
+			   self.data[100:]
 		self.ID = md5(data).digest()
 		return self.ID
 	
