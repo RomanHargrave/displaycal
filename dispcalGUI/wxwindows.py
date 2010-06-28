@@ -271,10 +271,9 @@ class LogWindow(InvincibleFrame):
 
 	def Log(self, txt):
 		self.log_txt.AppendText(txt + os.linesep)
-		self.ScrollToBottom()
 	
 	def ScrollToBottom(self):
-		self.log_txt.ScrollLines(len(self.log_txt.GetValue().splitlines()))
+		self.log_txt.ScrollLines(self.log_txt.GetNumberOfLines())
 
 	def OnClear(self, event):
 		self.log_txt.SetValue("")
