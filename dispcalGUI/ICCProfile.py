@@ -1236,11 +1236,14 @@ class ICCProfile:
 	Returns a new ICCProfile object. 
 	
 	Optionally initialized with a string containing binary profile data or 
-	a filename, or a file-like object.
+	a filename, or a file-like object. Also if the 'load' keyword argument
+	is False (default True), only the header will be read initially and
+	loading of the tags will be deferred to when they are accessed the
+	first time.
 	
 	"""
 
-	def __init__(self, profile=None):
+	def __init__(self, profile=None, load=True):
 		self.ID = "\0" * 16
 		self._data = None
 		self._file = None
@@ -1296,10 +1299,7 @@ class ICCProfile:
 			self.profileClass = header[12:16].strip()
 			self.colorSpace = header[16:20].strip()
 			self.connectionColorSpace = header[20:24].strip()
-			try:
-				self.dateTime = dateTimeNumber(header[24:36])
-			except Exception:
-				self.dateTime = 0
+			self.dateTime = dateTimeNumber(header[24:36])
 			self.platform = header[40:44].strip("\0\n\r ")
 			flags = uInt16Number(header[44:48][:2])
 			self.embedded = flags | 1 == flags
@@ -1322,6 +1322,9 @@ class ICCProfile:
 				self.ID = header[84:100]
 			
 			self._data = data[:self.size]
+			
+			if load:
+				self.tags
 	
 	def __del__(self):
 		self.close()
