@@ -2,7 +2,7 @@
 <html id="dispcalGUI" xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>dispcalGUI—Open Source Display Calibration and Profiling powered by Argyll CMS</title>
+		<title>dispcalGUI—Open Source Display Calibration and Characterization powered by Argyll CMS</title>
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<style type="text/css">
 		html#dispcalGUI a {
@@ -303,7 +303,7 @@
 		}
 		dl.info {
 			overflow: auto;
-			width: 34em;
+			width: 35em;
 		}
 		dl.info dt, dl.info dd {
 			display: block;
@@ -314,7 +314,7 @@
 			font-family: Verdana, sans-serif;
 			font-weight: bold;
 			float: left;
-			width: 5em;
+			width: 6em;
 		}
 		dl.info dd {
 			float: right;
@@ -407,23 +407,27 @@
 	
 		<div id="content">
 	
-		<h1><a href="http://dispcalGUI.hoech.net">dispcalGUI</a> <span>Display Calibration powered by Argyll <acronym>CMS<sup><a href="#definition_CMS">[2]</a></sup></acronym> and Python</span></h1>
+		<h1><a href="http://dispcalGUI.hoech.net">dispcalGUI</a><span>—Open Source Display Calibration and Characterization powered by Argyll CMS</span></h1>
 		
 		<dl class="info">
+			<dt>Platforms:<br />
+				&#160;<br />
+				&#160;</dt>
+				<dd>Linux/Unix with X11<br />
+				Mac OS X &gt;= 10.4<br />
+				Windows 2000 and newer</dd>
 			<dt>Versions:<br />
 				&#160;<br />
 				&#160;<br />
 				&#160;<br />
-				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.4.6.8 (Linux)<br />
-				0.4.6.8 (Mac OS X)<br />
-				0.4.6.8 (Windows)<br />
-				0.4.6.8 (Source)<br />
-				<a href="http://dispcalGUI.hoech.net/archive">Archive</a><br />
+				<dd id="version">0.4.8.9 (Linux)<br />
+				0.4.8.9 (Mac OS X)<br />
+				0.4.8.9 (Windows)<br />
+				0.4.8.9 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-06-20 16:16 (UTC)</dd>
+				<dd id="date">2010-06-28 20:55 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -463,7 +467,7 @@
 					<li><a href="#settings_profiling">Profiling settings</a></li>
 					<li><a href="#calibrating">Calibrating / profiling</a>
 						<ul>
-							<li><a href="#adjusting">Adjusting a display before calibration</a>
+							<li><a href="#adjusting">Adjusting a display before calibration</a></li>
 						</ul>
 					</li>
 				</ul>
@@ -487,7 +491,7 @@
 			<h2>About</h2>		
 			
 			<p>dispcalGUI is a graphical frontend for several utilities from the open source 
-			color management system <a href="http://argyllcms.com">Argyll CMS</a> by Graeme Gill, specifically 
+			color management system <a href="http://argyllcms.com">Argyll CMS</a> by Graeme W. Gill, specifically 
 			dispcal, dispread, colprof and dispwin, which when used together allow you to calibrate and 
 			profile your display using a measurement device. Of course, you can do a lot 
 			more with Argyll CMS, but this is not the scope of this document—refer to the 
@@ -501,11 +505,14 @@
 					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
 					<small>GNOME</small><br /></span>
 					
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-gamutmap.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-gamutmap-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<small>GNOME: Gamut Mapping Options</small><br /></span>
+					
 					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
 					<small>GNOME: Edit Testchart</small><br /></span>
 					
 					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-adjust.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-adjust-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
-					<small>GNOME: Adjust</small><br /></span>
+					<small>GNOME: Display Adjustment</small><br /></span>
 					
 					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-measure.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-GNOME-measure-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" title="Screenshot of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
 					<small>GNOME: Measure</small><br /></span>
@@ -521,9 +528,6 @@
 					
 					<span><a href="screenshots/dispcalGUI-screenshot-Win7.png" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-Win7-thumb.png" alt="Thumbnail of dispcalGUI running under Windows 7" title="Screenshot of dispcalGUI running under Windows 7" class="opaque" /></a><br />
 					<small>Windows 7</small><br /></span>
-					
-					<span><a href="http://dispcalGUI.hoech.net/samples/verify_2010-06-19_18-34.html" class="imagelink"><img src="screenshots/dispcalGUI-screenshot-report-thumb.png" alt="Thumbnail of a profile verification report" title="Sample Profile Verification Report" class="opaque" /></a><br />
-					<small>Sample Profile Verification Report</small><br /></span>
 				</p>
 			</div>
 		</div>
@@ -546,7 +550,7 @@
 		<div id="widegamut">
 			<h2>A note about colorimeters, wide-gamut displays and dispcalGUI</h2>
 			
-			<p>Colorimeters need a correction matrix in hardware or software to obtain correct measurements from wide-gamut displays. The latter is currently not supported by dispcalGUI, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. contains a correction matrix in hardware), you will need a spectrometer to accurately measure such a screen.</p>
+			<p>Colorimeters need a correction matrix in hardware or software to obtain correct measurements from wide-gamut displays. The latter is currently not supported by dispcalGUI, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction matrix in hardware), you will need a spectrometer to accurately measure such a screen. If you buy a screen bundled with a colorimeter, the instrument usually has been matched to the screen in some way. But it may be the case that you have to use the supplied software to get correct results, if the correction matrix isn't implemented in the instrument's hardware.</p>
 		</div>
 		
 		<div id="download">
@@ -554,18 +558,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.8.9.package">Autopackage (Python 2.5 and 2.6, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.8.9.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.8.9-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.8.9-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.6.8.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.4.8.9.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -677,6 +681,7 @@
 				<p>Windows:</p>
 				<ul>
 					<li><a href="http://sourceforge.net/projects/pywin32/">pywin32</a></li>
+					<li><a href="http://pypi.python.org/pypi/WMI/">WMI</a></li>
 				</ul>
 				
 				<p>Optional for all platforms:</p>
@@ -1150,6 +1155,9 @@
 						
 					<dt>Use separate video card gamma table acccess</dt>
 						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video card gamma table hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally dispcalGUI will automatically detect if separate video card gamma table access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
+						
+					<dt>Allow skipping of spectrometer self-calibration</dt>
+						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip the sensor calibration for characterization measurements if they are run directly after display calibration measurements (unattended calibration &amp; profiling). <em>NOTE</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
 
 					<dt>Restore defaults</dt>
 						<dd>Restores all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
@@ -1217,12 +1225,12 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 </dd>
 
 					<dt id="curveviewer">Show curves</dt>
-						<dd>Shows the curve viewer, which graphs calibration and profile tone response curves and also shows the percentage and amount of tone values for calibration curves. Please note that if profile tone response curves are graphed and the selected profile is a table-based (LUT) profile, the displayed curves will be from the additional (and optional) matrix 'rTRC'/'gTRC'/'bTRC' tags, <strong>not</strong> the lookup table!</dd>
+						<dd>Shows/hides the curve viewer, which graphs calibration and profile tone response curves and also shows the percentage and amount of tone values for calibration curves. Please note that if profile tone response curves are graphed and the selected profile is a table-based (LUT) profile, the displayed curves will be from the additional (and optional) matrix 'rTRC'/'gTRC'/'bTRC' tags, <strong>not</strong> some representation of the lookup table!</dd>
 						
 					<dt>Show actual calibration curves from video card gamma table</dt>
 						<dd>When this menu entry is checked, the curve viewer will show the actual calibration curves from the video card gamma table instead of showing the curves of the currently active profile.</dd>
 						
-					<dt>Show/hide log window</dt>
+					<dt>Show log window</dt>
 						<dd>Shows/hides the informational log window.</dd>
 						
 					<dt>Show log window automatically</dt>
@@ -1283,7 +1291,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<span class="a"><span>Solution:</span> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein. Under Windows, please see <a href="#issue-win-user-profile-not-used">calibration cannot be loaded</a> if you are under Windows 7 and make sure you have a recent driver for your video card installed.</span></p>
 			
 			<p id="issue-linux-kdeqt"><span class="q"><span>Linux (KDE):</span> The application does not look native<br /></span>
-			<span class="a"><span>Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4).</span></p>
+			<span class="a"><span>Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4). Another alternative is <a href="http://kde-apps.org/content/show.php/gtk-kde4?content=74689">gtk-kde4</a>.</span></p>
 			
 			<p id="issue-english"><span class="q"><span>General:</span> Some text is still in english, even though another language is selected in the menu.<br /></span>
 			<span class="a"><span>Solution:</span> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</span></p>
@@ -1293,10 +1301,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<h2>To-Do / planned features (in no particular order)</h2>
 		
 			<ul>
-				<li>Interface to <a href="http://www.oyranos.org/">Oyranos</a> / <a href="http://www.oyranos.org/wiki/index.php?title=Kolor-manager">KDE Kolor Manager</a></li>
 				<li>Better interface to <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a></li>
 				<li>Measure and report on screen homogenity / evenness of illumination</li>
 				<li>Get rid of the terminal and implement a proper GUI for the interactive part of calibration</li>
+				<li>Better user interface for profile verification: If a test set contains multiple value formats (CMYK, RGB, XYZ, L*a*b*), allow selection which one(s) should be used in a “setup” window</li>
+				<li>Add gamut coverage percentages to the profile verification report if the test set contains reference values (not *.ti1): Calculate profiles from test set and verification measurements on-the-fly and create gamut volumes from test set profile, evaluated profile, and verification measurements profile using Argyll's <code>iccgamut</code> tool. Compare gamut volumes using Argyll's <code>viewgam</code> tool with <code>-i</code> option and include the results in the report (coverage calculation for test set reference and profile to be evaluated could be done before the actual measurements and also shown in the yet-to-be-implemented profile verification “setup” window).</li>
 				<li><del>Complete the documentation in the README</del></li>
 				<li>German language README (postponed)</li>
 				<li><del>Profile verification (feed XYZ or L*a*b* to display profile, display 
@@ -1325,43 +1334,47 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-06-20 16:16 (UTC) 0.4.6.8 -->
+			<!-- 2010-06-28 20:55 (UTC) 0.4.8.9 -->
 			<dl>
-				<dt>2010-06-20 16:16 (UTC) 0.4.6.8</dt>
+				<dt>2010-06-28 20:55 (UTC) 0.4.8.9</dt>
 					<dd>
-						<h3>0.4.6.8</h3>
+						<h3>0.4.8.9</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Instrument sensor calibration sometimes accidentally occured when the instrument was still attached to the screen, leading to erroneous subsequent readings.</li>
+							<li>Spectrometer sensor calibration sometimes accidentally occured when the instrument was still attached to the screen, leading to erroneous subsequent readings.</li>
 							<li>Immediately close a profile after reading to avoid locking it (fixes not being able to delete files from within the GUI).</li>
 							<li>Fixed quirks in “update calibration” and “update profile” operation.</li>
-							<li>Do not hide the system-wide installation option in the profile install dialog if a profile has no embedded calibration curves (vcgt tag).</li>
+							<li>The system-wide installation option in the profile install dialog is no longer hidden just because a profile has no embedded calibration curves (vcgt tag).</li>
 							<li>If the calibration curves of the current display profile couldn't be loaded for some reason (broken video card gamma table access, or no profile set), the curve viewer was not yet shown, and then a profile under “Settings” was selected, and then deleted, and then the curve viewer called up, an unhandled exception was raised.</li>
-							<li>Linux (only if the detected filesystem encoding is not UTF-8), Mac OS X and Windows: When installing a profile with “special” characters in the filename (everything not representable as 7-bit ASCII), it is now given an unique name containing the display number and MD5 hash, which fixes a few problems with filename encoding under Linux and Mac OS (under Linux the profile couldn't be successfully installed, under Mac OS X system-wide installation broke). This also fixes an issue under Windows where a profile whose name starts with the same first few characters (but has not the same name) as an already existing file in the system profile directory could accidentally overwrite that file, because I had not considered that filenames returned by win32api.GetShortPathName are only unique for the directory where a given file resides—and upon installation, that is the profile storage directory, not the system profile directory.</li>
-							<li>Windows: Fixed ambient measurement reproducably hanging on some systems.</li>
+							<li>Fixed ambient measurement via the “Measure” buttons timing out with the ColorMunki and various error handling issues regardless of instrument which could lead to an un-cancelable, forever looping progress bar.</li>
+							<li>Fixed ambient color temperature measurement via the “Measure” button not updating the kelvin field if selected.</li>
+							<li>Linux (only if the detected filesystem encoding is not UTF-8), Mac OS X and Windows: When installing a profile with “special” characters in the filename (everything not representable as 7-bit ASCII), it is now given an unique name containing the display number and MD5 hash, which fixes a few problems with filename encoding under Linux and Mac OS (under Linux the profile couldn't be successfully installed, under Mac OS X system-wide installation partly broke). This also fixes an issue under Windows where a profile whose name starts with the same first few characters (but has not the same name) as an already existing file in the system profile directory could accidentally overwrite that file, because I had not considered that filenames returned by win32api.GetShortPathName are only unique for the directory where a given file resides—and upon installation, that is the profile storage directory, not the system profile directory.</li>
+							<li>Linux, Mac OS X: When installing a profile, interaction with the curves window works now while the installation dialog is shown.</li>
+							<li>Windows (standalone executable): Fixed ambient measurement via the “Measure” buttons reproducably hanging (regardless of instrument) if the MS Visual C++ 2008 Redistributable Package (x86) was not installed.</li>
 						</ul>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Linux: Rudimentary use of <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a>. If it is installed and XRandR is working, profiles are imported to GCM upon installation. Any old calibration loaders created by dispcalGUI will be deleted. You then still have to manually assign the profile to a display in the GCM preferences by selecting it and then choosing the profile from the dropdown menu (in the future, this process will be automatic). Loading of calibration curves and setting up the necessary X atoms and XRandR output properties is then handled by GCM.</li>
-							<li>Menu option to automatically show the log window after certain operations (measurements, profile creation), enabled by default if not running from a shell.</li>
+							<li>Linux: <a href="http://oyranos.org/">Oyranos</a> support. If it is available, profiles are imported to the Oyranos database using <code>oyranos-monitor</code> upon installation, and an appropriate autostart entry is created to load calibration curves and setup the X _ICC_PROFILE atoms on login.</li>
+							<li>Linux: Rudimentary support for <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a>. If it is available and XRandR is working, profiles are imported to GCM upon installation. Any calibration loaders created previously by dispcalGUI will be removed (except the possible <code>oyranos-monitor</code> entry). You then still have to manually assign the profile to a display in the GCM preferences by selecting it and then choosing the profile from the dropdown menu (in the future, this process will be made obsolete by using GCM library functions). Loading of calibration curves and setting up the X _ICC_PROFILE atom and XRandR output properties is then handled by GCM.</li>
+							<li>Menu option to automatically show the log window after certain operations (measurements, profile creation).</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li><strong>The terminal window is now only shown when required (e.g. keyboard interaction during interactive display adjustment).</strong> Also, the terminal is no longer an external, usually full-fledged system application, but a minimal emulator that just passes keyboard input to the Argyll CMS tools.</li>
-							<li><strong>All measurements which do not require keyboard interaction with Argyll CMS tools now show a progress dialog with the option to cancel the measurements.</strong></li>
+							<li><em>The terminal window is now only shown when required (e.g. keyboard interaction during interactive display adjustment).</em> Also, the terminal used is no longer an external application, but a minimal emulator that just passes keyboard input to the Argyll CMS tools.</li>
+							<li><em>All measurements which do not require keyboard interaction with Argyll CMS tools now show a progress dialog with the option to cancel the measurements.</em> All output that was previously visible through the terminal is still available via the log window (“Tools” menu) and -file.</li>
 							<li>Always load calibration curves before installing a profile, even if the profile has no vcgt tag (resets calibration to linear).</li>
 							<li>Automatically scroll to bottom when messages are added to the log window.</li>
 							<li>Store calibration and profiling settings in extra sections inside the TI3 file instead of the profile copyright tag. Use “generic” copyright information (“Created with dispcalGUI <code>&lt;version&gt;</code> and Argyll CMS <code>&lt;version&gt;</code>”), overridable by adding a line <code>copyright = My copyright information</code> in dispcalGUI's configuration file.</li>
 							<li>Made sure that only 7-bit ASCII gets written to a profile's copyright, ASCII description, and ASCII device model description. ICC v2 Unicode and Mac ScriptCode descriptions are now also written by default.</li>
 							<li>Presets default to high profile quality.</li>
-							<li>Remember visible state of log window and testchart editor.</li>
+							<li>Remember visible state of curves, log window and testchart editor.</li>
 							<li>Updated french translation (thanks).</li>
 							<li>Linux: Unattended calibration &amp; profiling no longer depends on xautomation.</li>
 							<li>Linux: <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[7]</a></sup></acronym> is now used (if available) when generating descriptive identifiers for displays.</li>
 							<li>Linux: When determining a display's associated profile, check XrandR _ICC_PROFILE output properties first if available.</li>
-							<li>Linux: Do not offer to install a profile system-wide if using <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a> to install profiles (GCM has its own way to set profiles as system default).</li>
+							<li>Linux: The option to install a profile system-wide is not offered if using <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a> to install profiles (GCM has its own way to set profiles as system default).</li>
 							<li>Linux (only when <a href="http://projects.gnome.org/gnome-color-manager/" title="GNOME Color Manager">GCM</a> is not installed or XRandR is not working), Mac OS X, Windows: Installing a profile system-wide now also sets it as default for the current user.</li>
-							<li>Windows Vista and later: Do not offer system-wide profile installation if using Argyll CMS &lt;= 1.1.1 (system scope in the current Argyll release acts like user scope on those systems. This will be fixed in an upcoming Argyll release).</li>
+							<li>Windows Vista and later: The option to install a profile system-wide is no longer offered if using Argyll CMS &lt;= 1.1.1 (system scope in Argyll releases up to 1.1.1 acts like user scope on those systems).</li>
 						</ul>
 						<p>+ Numerous other small fixes and changes. There is now also a mailing list for discussion and support as well as announcements (see at the <a href="#contact">top</a> of this document).</p>
 					</dd>
