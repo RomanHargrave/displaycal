@@ -1492,7 +1492,7 @@ class ICCProfile:
 		"""
 		return unicode(self.tags.vued)
 	
-	def isSame(self, profile):
+	def isSame(self, profile, force_calculation=False):
 		"""
 		Compare the ID of profiles.
 		
@@ -1504,9 +1504,9 @@ class ICCProfile:
 		"""
 		if not isinstance(profile, self.__class__):
 			profile = self.__class__(profile)
-		if not self.ID:
+		if force_calculation or self.ID == "\0" * 16:
 			self.calculateID()
-		if not profile.ID:
+		if force_calculation or profile.ID == "\0" * 16:
 			profile.calculateID()
 		return self.ID == profile.ID
 	
