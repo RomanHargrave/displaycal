@@ -1566,6 +1566,8 @@ class MainFrame(BaseFrame):
 
 	def update_displays(self):
 		""" Update the display selector controls. """
+		if debug:
+			safe_print("[D] update_displays")
 		self.panel.Freeze()
 		self.displays = []
 		for item in self.worker.displays:
@@ -4521,12 +4523,14 @@ class MainFrame(BaseFrame):
 			self.call_pending_function()
 	
 	def get_set_display(self):
+		if debug:
+			safe_print("[D] get_set_display")
 		self.display_ctrl.SetSelection(
 			min(max(0, len(self.worker.displays) - 1), 
 				max(0, getcfg("display.number") - 1)))
 		self.display_ctrl_handler(
 			CustomEvent(wx.EVT_COMBOBOX.evtType[0], 
-						self.display_ctrl))
+						self.display_ctrl), load_lut=False)
 
 	def set_pending_function(self, pending_function, *pending_function_args, 
 							 **pending_function_kwargs):
@@ -4907,6 +4911,10 @@ class MainFrame(BaseFrame):
 		self.Lower()
 		
 	def init_lut_viewer(self, event=None, profile=None, show=None):
+		if debug:
+			safe_print("[D] init_lut_viewer", 
+					   profile.getDescription() if profile else None, 
+					   "show:", show)
 		if LUTFrame:
 			if not hasattr(self, "lut_viewer") or not self.lut_viewer:
 				self.lut_viewer = LUTFrame(
@@ -4952,14 +4960,21 @@ class MainFrame(BaseFrame):
 					profile = self.get_display_profile() or False
 			if show is None:
 				show = not self.lut_viewer.IsShownOnScreen()
+			if debug:
+				safe_print("[D] init_lut_viewer (2)", 
+						   profile.getDescription() if profile else None, 
+						   "show:", show)
 			self.show_lut_handler(profile=profile, show=show)
 	
 	def lut_viewer_load_lut(self, event=None, profile=None, force_draw=False):
+		if debug:
+			safe_print("[D] lut_viewer_load_lut", 
+					   profile.getDescription() if profile else None, 
+					   "force_draw:", force_draw)
 		if LUTFrame:
 			self.current_cal = profile
 		if hasattr(self, "lut_viewer") and self.lut_viewer and \
 		   (self.lut_viewer.IsShownOnScreen() or force_draw):
-			force_update = False
 			if getcfg("lut_viewer.show_actual_lut") and \
 			   self.worker.argyll_version >= [1, 1, 0] and \
 			   not "Beta" in self.worker.argyll_version_string:
@@ -4978,16 +4993,13 @@ class MainFrame(BaseFrame):
 											  skip_scripts=True, silent=True)
 				if not isinstance(result, Exception) and result:
 					profile = cal_to_fake_profile(args[-1])
-					force_update = True
 				else:
 					if isinstance(result, Exception):
 						safe_print(result)
 				self.worker.wrapup(copy=False)
 			if profile and (profile.is_loaded or not profile.fileName or 
 							os.path.isfile(profile.fileName)):
-				if force_update or not self.lut_viewer.profile or \
-				   not self.lut_viewer.profile.fileName or \
-				   not profile.fileName or \
+				if not self.lut_viewer.profile or \
 				   self.lut_viewer.profile.fileName != profile.fileName or \
 				   not self.lut_viewer.profile.isSame(profile):
 					self.lut_viewer.LoadProfile(profile)
@@ -4997,6 +5009,10 @@ class MainFrame(BaseFrame):
 				self.lut_viewer.DrawLUT()
 	
 	def show_lut_handler(self, event=None, profile=None, show=None):
+		if debug:
+			safe_print("[D] show_lut_handler", 
+					   profile.getDescription() if profile else None, 
+					   "show:", show)
 		if show is None:
 			show = bool((hasattr(self, "show_lut") and self.show_lut and 
 						 self.show_lut.GetValue()) or 
@@ -5070,7 +5086,7 @@ class MainFrame(BaseFrame):
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
 
-	def display_ctrl_handler(self, event):
+	def display_ctrl_handler(self, event, load_lut=True):
 		if debug:
 			safe_print("[D] display_ctrl_handler called for ID %s %s event "
 					   "type %s %s" % (event.GetId(), 
@@ -5089,8 +5105,15 @@ class MainFrame(BaseFrame):
 				except ValueError:
 					i = min(0, self.display_ctrl.GetSelection())
 				setcfg("display_lut.number", i + 1)
-			profile = self.get_display_profile(display_no)
-		self.lut_viewer_load_lut(profile=profile)
+			if load_lut:
+				profile = self.get_display_profile(display_no)
+		if load_lut:
+			if debug:
+				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut", 
+						   profile.getDescription() if profile else None)
+			self.lut_viewer_load_lut(profile=profile)
+			if debug:
+				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
