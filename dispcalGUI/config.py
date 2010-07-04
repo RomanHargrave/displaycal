@@ -276,11 +276,16 @@ def runtimeconfig(pyfile):
 			data_dirs.append(getenvu("_MEIPASS2", pydir))
 		runtype = exe_ext
 	else:
-		## pydir_parent = os.path.abspath(os.path.join(pydir, ".."))
-		## if debug:
-		## 	safe_print("[D] pydir parent:", pydir_parent)
-		## if pydir_parent not in data_dirs:
-			## data_dirs.append(pydir_parent)
+		pydir_parent = os.path.abspath(os.path.join(pydir, ".."))
+		if debug:
+			safe_print("[D] dirname(sys.argv[0]):", os.path.dirname(sys.argv[0]))
+			safe_print("[D] pydir parent:", pydir_parent)
+		if os.path.dirname(sys.argv[0]) == pydir_parent and \
+		   pydir_parent not in data_dirs:
+			# Add the parent directory of the package directory to our list
+			# of data directories if it is the directory containing the 
+			# currently run script (e.g. when running from source)
+			data_dirs.append(pydir_parent)
 		runtype = pyext
 	for dir_ in sys.path:
 		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
