@@ -45,12 +45,12 @@ Source: py2exe.%(Platform)s-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\README
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: {group}\dispcalGUI; Filename: cmd.exe; Parameters: "/C ""{app}\dispcalGUI.exe"""; IconFilename: {app}\dispcalGUI.exe
+Name: {group}\dispcalGUI; Filename: {app}\dispcalGUI.exe; IconFilename: {app}\dispcalGUI.exe
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\dispcalGUI-uninstall.ico; Tasks: ; Languages: 
-Name: {commondesktop}\dispcalGUI; Filename: cmd.exe; Tasks: desktopicon; Parameters: "/C ""{app}\dispcalGUI.exe"""; IconFilename: {app}\dispcalGUI.exe
-Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\dispcalGUI; Filename: cmd.exe; Tasks: quicklaunchicon; Parameters: "/C ""{app}\dispcalGUI.exe"""; IconFilename: {app}\dispcalGUI.exe
+Name: {commondesktop}\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: desktopicon; IconFilename: {app}\dispcalGUI.exe
+Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: quicklaunchicon; IconFilename: {app}\dispcalGUI.exe
 Name: {group}\LICENSE; Filename: {app}\LICENSE.txt
 Name: {group}\README; Filename: {app}\README.html; Tasks: ; Languages: 
 
 [Run]
-Filename: cmd.exe; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent; Parameters: "/C ""{app}\dispcalGUI.exe"""
+Filename: {app}\dispcalGUI.exe; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent;
