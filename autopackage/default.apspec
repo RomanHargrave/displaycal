@@ -156,7 +156,13 @@ copyFiles lib/python/site-packages/dispcalGUI "`getPythonLibDir`"
 installData share/dispcalGUI share/doc
 installExe bin/dispcalGUI
 installIcon share/icons/hicolor
+# installMenuItem changes the .desktop file to include so-called 'Actions' 
+# which makes the menu entry vanish in recent GNOME versions after logout! So 
+# we only use it to make our app appear under 'desktop applications' in 
+# autopackage's 'manage 3rd party software' utility
 installMenuItem "Graphics" share/applications/dispcalGUI.desktop
+# Install our proper one
+xdg-desktop-menu install --novendor share/applications/dispcalGUI.desktop
 
 if [ `whoami` = "root" ]; then
 	# if [ -e "/usr/share/PolicyKit/policy" ] && [ -e "/usr/share/hal/fdi/policy/10osvendor" ]; then
@@ -190,4 +196,5 @@ fi
 # "Install" to create files. All autopackage API functions 
 # that installs files are logged.
 uninstallFromLog
+xdg-desktop-menu uninstall dispcalGUI.desktop
 
