@@ -51,6 +51,17 @@ Powered by the open source colormanagement system Argyll CMS.
 # handled by install
 
 %install
+# Make files executable
+chmod +x "scripts/%{name}"
+chmod +x "misc/Argyll"
+# Convert line endings in LICENSE.txt
+python -c "f = open('LICENSE.txt', 'rb')
+d = f.read().replace('\r\n', '\n').replace('\r', '\n')
+f.close()
+f = open('LICENSE.txt', 'wb')
+f.write(d)
+f.close()"
+# Install
 python setup.py install --use-distutils \
 	--prefix=$RPM_BUILD_ROOT%_prefix \
 	--exec-prefix=$RPM_BUILD_ROOT%_exec_prefix \
