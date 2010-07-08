@@ -6,11 +6,11 @@ from ctypes import POINTER, Structure, c_int, c_long, c_ubyte, c_ulong, cdll, po
 try:
 	libx11 = cdll.LoadLibrary(util.find_library("X11"))
 except OSError:
-	raise ImportError("Couldn't load X11")
+	raise ImportError("Couldn't load libX11")
 try:
 	libxrandr = cdll.LoadLibrary(util.find_library("Xrandr"))
 except OSError:
-	raise ImportError("Couldn't load Xrandr")
+	raise ImportError("Couldn't load libXrandr")
 
 import os
 import sys
@@ -29,22 +29,28 @@ class Display(Structure):
 
 Display._fields_ = [('_opaque_struct', c_int)]
 
-libx11.XInternAtom.restype = Atom
-libx11.XOpenDisplay.restype = POINTER(Display)
-libx11.XRootWindow.restype = c_ulong
-libx11.XGetWindowProperty.restype = c_int
-libx11.XGetWindowProperty.argtypes = [POINTER(Display), c_ulong, Atom, c_long, 
-									  c_long, c_int, c_ulong, 
-									  POINTER(c_ulong), POINTER(c_int), 
-									  POINTER(c_ulong), POINTER(c_ulong), 
-									  POINTER(POINTER(c_ubyte))]
+try:
+	libx11.XInternAtom.restype = Atom
+	libx11.XOpenDisplay.restype = POINTER(Display)
+	libx11.XRootWindow.restype = c_ulong
+	libx11.XGetWindowProperty.restype = c_int
+	libx11.XGetWindowProperty.argtypes = [POINTER(Display), c_ulong, Atom, c_long, 
+										  c_long, c_int, c_ulong, 
+										  POINTER(c_ulong), POINTER(c_int), 
+										  POINTER(c_ulong), POINTER(c_ulong), 
+										  POINTER(POINTER(c_ubyte))]
+except AttributeError, exception:
+	raise ImportError("libX11: %s" % exception)
 
-libxrandr.XRRGetOutputProperty.restype = c_int
-libxrandr.XRRGetOutputProperty.argtypes = [POINTER(Display), c_ulong, Atom, c_long, 
-										   c_long, c_int, c_int, c_ulong, 
-										   POINTER(c_ulong), POINTER(c_int), 
-										   POINTER(c_ulong), POINTER(c_ulong), 
-										   POINTER(POINTER(c_ubyte))]
+try:
+	libxrandr.XRRGetOutputProperty.restype = c_int
+	libxrandr.XRRGetOutputProperty.argtypes = [POINTER(Display), c_ulong, Atom, c_long, 
+											   c_long, c_int, c_int, c_ulong, 
+											   POINTER(c_ulong), POINTER(c_int), 
+											   POINTER(c_ulong), POINTER(c_ulong), 
+											   POINTER(POINTER(c_ubyte))]
+except AttributeError, exception:
+	raise ImportError("libXrandr: %s" % exception)
 
 
 def get_atom(atom_name=None, atom_type=XA_CARDINAL):
