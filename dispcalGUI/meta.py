@@ -2,35 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-	Meta information.
-
-	When specifying version information, play nice with distutils.
-
-	The following are valid version numbers (shown in the order that
-	would be obtained by sorting according to the supplied cmp function):
-
-		0.4       0.4.0  (these two are equivalent)
-		0.4.1
-		0.5a1
-		0.5b3
-		0.5
-		0.9.6
-		1.0
-		1.0.4a3
-		1.0.4b1
-		1.0.4
-
-	The following are examples of invalid version numbers:
-
-		1
-		2.7.2.2
-		1.3.a4
-		1.3pl1
-		1.3c4
-
-	(from distutils.version's StrictVersion)
+	Meta information
 
 """
+
+import sys
 
 try:
 	from __version__ import (BUILD_DATE as build, LASTMOD as lastmod, VERSION, 
@@ -40,12 +16,19 @@ except ImportError:
 	VERSION = VERSION_BASE = (0, 0, 0, 0)
 	VERSION_STRING = ".".join(str(n) for n in VERSION)
 
-author = u"Florian Höch"
+if sys.version_info[:2] < (3, ):
+	author = "Florian Höch".decode("utf8")
+else:
+	author = "Florian Höch"
 author_ascii = "Florian Hoech"
-description = (u"A graphical user interface for the Argyll CMS display "
+author_email = "dispcalGUI@hoech.net"
+description = ("A graphical user interface for the Argyll CMS display "
 				"calibration utilities")
 domain = "dispcalGUI.hoech.net"
 name = "dispcalGUI"
+
+py_maxversion = (2, 7)
+py_minversion = (2, 5)
 
 version = VERSION_STRING
 version_lin = VERSION_STRING # Linux
@@ -54,3 +37,5 @@ version_win = VERSION_STRING # Windows
 version_src = VERSION_STRING
 
 version_tuple = VERSION # only ints allowed and must be exactly 4 values
+
+wx_minversion = (2, 8, 6)

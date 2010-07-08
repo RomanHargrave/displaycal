@@ -34,8 +34,9 @@ import subprocess as sp
 import sys
 from types import StringType
 
-from meta import (author, author_ascii, description, domain, name, version, 
-				  version_tuple)
+from meta import (author, author_ascii, description, domain, name, 
+				  py_maxversion, py_minversion, version, version_tuple, 
+				  wx_minversion)
 from util_os import relpath
 
 pypath = os.path.abspath(__file__)
@@ -164,8 +165,6 @@ def setup():
 					install_data = arg[1]
 				elif arg[0] == "--record":
 					recordfile_name = arg[1]
-
-	from wxfixes import _intversion, minVersion as wxMinVersion, wx
 
 	if not recordfile_name and (do_full_install or do_uninstall):
 		recordfile_name = "INSTALLED_FILES"
@@ -375,7 +374,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 	ext_modules = [RealDisplaySizeMM]
 
 	requires = [
-		"wxPython (>= %s)" % ".".join(wxMinVersion[:3])
+		"wxPython (>= %s)" % ".".join(str(n) for n in wx_minversion)
 	]
 	if sys.platform == "win32":
 		requires += [
@@ -419,7 +418,8 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			name: name
 		},
 		"platforms": [
-			"Python >= 2.5 < 3.0", 
+			"Python >= %s <= %s" % (".".join(str(n) for n in py_minversion),
+									".".join(str(n) for n in py_maxversion)), 
 			"Linux/Unix with X11", 
 			"Mac OS X >= 10.4", 
 			"Windows 2000 and newer"
@@ -442,8 +442,6 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		attrs["include_package_data"] = sys.platform in ("darwin", "win32")
 		install_requires = [req.replace("(", "").replace(")", "") for req in 
 							requires]
-		if _intversion(wx.__version__.split(".")) >= _intversion(wxMinVersion):
-			install_requires.remove("wxPython >= " + ".".join(wxMinVersion[:3]))
 		attrs["install_requires"] = install_requires
 		attrs["zip_safe"] = False
 	else:
@@ -493,6 +491,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		attrs["setup_requires"] = ["py2app"]
 
 	if do_py2exe:
+		import wx
 		from winmanifest_util import getmanifestxml
 		manifest_xml = getmanifestxml(os.path.join(pydir, "..", "misc", 
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 

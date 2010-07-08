@@ -28,6 +28,17 @@ def index_fallback_ignorecase(self, value, start = None, stop = None):
 	return index_ignorecase(self, value, start or 0, stop or len(self))
 
 
+def intlist(alist):
+	""" Convert all list items to ints (0 on error) """
+	result = []
+	for item in alist:
+		try:
+			result.append(int(item))
+		except ValueError:
+			result.append(0)
+	return result
+
+
 def natsort(list_in):
 	""" Sort a list which (also) contains integers naturally. """
 	list_out = []

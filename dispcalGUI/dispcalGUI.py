@@ -37,13 +37,6 @@ def _early_excepthook(etype, value, tb):
 
 sys.excepthook = _early_excepthook
 
-# Python version check
-
-pyver = sys.version_info[:2]
-if pyver < (2, 5) or pyver >= (3, ):
-	raise RuntimeError("Need Python version >= 2.5 < 3.0, got %s" % 
-					   sys.version.split()[0])
-
 # Standard modules
 
 import ConfigParser
@@ -116,7 +109,7 @@ from options import debug, test, verbose
 from trash import trash, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_io import Files, StringIOu as StringIO
-from util_list import index_fallback_ignorecase, natsort
+from util_list import index_fallback_ignorecase, intlist, natsort
 if sys.platform == "darwin":
 	from util_mac import mac_terminal_do_script
 from util_os import expanduseru, launch_file, listdir_re, which
@@ -135,7 +128,7 @@ if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
-from wxfixes import GTKMenuItemGetFixedLabel, _intversion
+from wxfixes import GTKMenuItemGetFixedLabel
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
 					   LogWindow, ProgressDialog, TooltipWindow)
 
@@ -3479,7 +3472,7 @@ class MainFrame(BaseFrame):
 			cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
 			if not isinstance(cmd, Exception):
 				if "-Sl" in args and (sys.platform != "darwin" or 
-									  _intversion(mac_ver()[0].split(".")) >= [10, 6]):
+									  intlist(mac_ver()[0].split(".")) >= [10, 6]):
 					# If a 'system' install is requested under Linux or Windows, 
 					# install in 'user' scope first because a system-wide install 
 					# doesn't also set it as current user profile on those systems 
@@ -3510,7 +3503,7 @@ class MainFrame(BaseFrame):
 				for line in self.worker.output:
 					if "Installed" in line:
 						if sys.platform == "darwin" and "-Sl" in args and \
-						   _intversion(mac_ver()[0].split(".")) < [10, 6]:
+						   intlist(mac_ver()[0].split(".")) < [10, 6]:
 							# The profile has been installed, but we need a little 
 							# help from AppleScript to actually make it the default 
 							# for the current user. Only works under Mac OS < 10.6

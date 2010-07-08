@@ -29,6 +29,7 @@ from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
 from ordereddict import OrderedDict
 from safe_print import safe_print
+from util_list import intlist
 
 if sys.platform not in ("darwin", "win32"):
 	try:
@@ -214,16 +215,6 @@ def Property(func):
 	return property(**func())
 
 
-def _intversion(version):
-	intversion = []
-	for digit in version:
-		try:
-			intversion += [int(digit)]
-		except ValueError:
-			pass
-	return intversion
-
-
 def _winreg_get_display_profile(monkey, current_user=False):
 	filename = None
 	try:
@@ -330,7 +321,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				profile = _winreg_get_display_profile(monkey)
 	else:
 		if sys.platform == "darwin":
-			if _intversion(mac_ver()[0].split(".")) >= [10, 6]:
+			if intlist(mac_ver()[0].split(".")) >= [10, 6]:
 				options = ["Image Events"]
 			else:
 				options = ["ColorSyncScripting"]

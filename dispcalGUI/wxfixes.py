@@ -3,27 +3,19 @@
 
 import sys
 
-def _intversion(version):
-	intversion = []
-	for digit in version:
-		try:
-			intversion += [int(digit)]
-		except ValueError:
-			pass
-	return intversion
+from meta import wx_minversion
 
 import wxversion
-minVersion = "2.8.6.0".split(".")
 if not getattr(sys, "frozen", False):
-	wxversion.ensureMinimal(".".join(minVersion[:2]))
+	wxversion.ensureMinimal("%i.%i" % wx_minversion[:2])
 import wx
-if _intversion(wx.__version__.split(".")) < _intversion(minVersion):
+if wx.VERSION < wx_minversion:
 	app = wx.PySimpleApp()
 	result = wx.MessageBox("This application requires a version of wxPython "
 						   "greater than or equal to %s, but your most recent "
 						   "version is %s.\n\n"
 						   "Would you like to download a new version of wxPython?\n"
-						   % (".".join(minVersion), wx.__version__),
+						   % (".".join(str(n) for n in wx_minversion), wx.__version__),
 						   "wxPython Upgrade Needed", style=wx.YES_NO)
 	if result == wx.YES:
 		import webbrowser
