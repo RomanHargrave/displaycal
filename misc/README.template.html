@@ -434,7 +434,7 @@
 				<dd><a href="LICENSE.txt"><acronym title="GNU General Public License">GPL</acronym> Version 3</a></dd>
 		</dl>
 		
-		<p class="info" id="contact">Bug reports, questions, comments, suggestions? Feel free to use the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-news">dispcalGUI-users mailing list</a>, <a href="http://sourceforge.net/tracker/?group_id=257092&amp;atid=1127028">issue tracker</a>, <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932493">support</a> and <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net<br />
+		<p class="info" id="contact">Bug reports, questions, comments, suggestions? Feel free to use the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalGUI-users mailing list</a>, <a href="http://sourceforge.net/tracker/?group_id=257092&amp;atid=1127028">issue tracker</a>, <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932493">support</a> and <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net<br />
 		If you just want to be notified of new releases, you may sign up to the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-news">dispcalGUI-news mailing list</a> (but if you already joined dispcalGUI-users, there's no need to join this list as new release notifications are sent to both).</p>
 		
 		<h2>Table of contents</h2>
@@ -555,6 +555,10 @@
 		
 		<div id="download">
 			<h2>Download</h2>
+			
+			<h3>Linux DEB/RPM packages</h3>
+			<p>Ubuntu 10.04 <!--a href="http://dispcalGUI.hoech.net/dispcalgui_${VERSION_LIN}-1_i386.deb">x86</a> |--> <a href="http://dispcalGUI.hoech.net/dispcalgui_${VERSION_LIN}-1_amd64.deb">x86_64</a></p>
+			<p>Native packages for several other distributions are available via my <a href="http://download.opensuse.org/repositories/home:/fhoech/">openSUSE Build Service repository</a>.</p>
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
@@ -1339,6 +1343,17 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Linux (Autopackage install): Fixed menu entry sometimes disappearing after logout under GNOME.</li>
+							<li>Linux: Fixed dispcalGUI not working if libX11 or libXrandr do not expose certain functions (e.g. under Mandriva 2009).</li>
+							<li>Windows (installer): Unused console window is no longer shown when launching dispcalGUI via the installed shortcuts.</li>
+						</ul>
+					</dd>
+						
+				<dt>2010-06-29 19:23 (UTC) 0.4.9.2</dt>
+					<dd>
+						<h3>0.4.9.2</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Spectrometer sensor calibration sometimes accidentally occured when the instrument was still attached to the screen, leading to erroneous subsequent readings.</li>
