@@ -334,7 +334,7 @@ def setup():
 			for fname in glob.glob(os.path.join(pydir, "theme", "icons", 
 												dname, "*.png")):
 				icon = os.path.join(pydir, "theme", "icons", dname, fname)
-				if fname != appname + ".png" or (sys.platform in 
+				if fname != name + ".png" or (sys.platform in 
 												 ("darwin", "win32") and 
 												 dname in ("16x16", 
 														   "32x32")):
