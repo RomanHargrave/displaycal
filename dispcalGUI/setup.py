@@ -212,9 +212,7 @@ def setup():
 		package_data[name] += ["theme/icons/*.ico"]
 	data_files = [
 		(os.path.join(doc, "screenshots"), 
-			[os.path.join(pydir, "..", "screenshots", os.path.basename(fname)) 
-			for fname in 
-			glob.glob(os.path.join(pydir, "..", "screenshots", "*.png"))]),
+			glob.glob(os.path.join(pydir, "..", "screenshots", "*.png"))),
 		(os.path.join(doc, "theme"), 
 			[os.path.join(pydir, "..", "theme", "header-readme.png")]), 
 		(os.path.join(doc, "theme", "icons"), 
@@ -227,37 +225,21 @@ def setup():
 		data_files += [
 			(data, [os.path.join(pydir, "argyll_instruments.json")]), 
 			(os.path.join(data, "lang"), 
-				[os.path.join(pydir, "lang", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "lang", "*.json"))]), 
+				glob.glob(os.path.join(pydir, "lang", "*.json"))), 
 			(os.path.join(data, "presets"), 
-				[os.path.join(pydir, "presets", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "presets", "*.icc"))]),
+				glob.glob(os.path.join(pydir, "presets", "*.icc"))),
 			(os.path.join(data, "report"), 
-				[os.path.join(pydir, "report", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "report", "*.css"))]),
+				glob.glob(os.path.join(pydir, "report", "*.css"))),
 			(os.path.join(data, "report"), 
-				[os.path.join(pydir, "report", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "report", "*.html"))]),
+				glob.glob(os.path.join(pydir, "report", "*.html"))),
 			(os.path.join(data, "report"), 
-				[os.path.join(pydir, "report", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "report", "*.js"))]),
+				glob.glob(os.path.join(pydir, "report", "*.js"))),
 			(os.path.join(data, "theme"), 
-				[os.path.join(pydir, "theme", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "theme", "*.png"))]), 
+				glob.glob(os.path.join(pydir, "theme", "*.png"))), 
 			(os.path.join(data, "ti1"), 
-				[os.path.join(pydir, "ti1", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "ti1", "*.ti1"))]), 
+				glob.glob(os.path.join(pydir, "ti1", "*.ti1"))), 
 			(os.path.join(data, "xrc"), 
-				[os.path.join(pydir, "xrc", os.path.basename(fname)) 
-				 for fname in 
-				 glob.glob(os.path.join(pydir, "xrc", "*.xrc"))]),
+				glob.glob(os.path.join(pydir, "xrc", "*.xrc"))),
 			(data, [os.path.join(pydir, "test.cal")])
 		]
 		if sys.platform == "win32":
@@ -268,10 +250,8 @@ def setup():
 					(os.path.join(data, "lib"), [sys.executable])]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
-					[os.path.join(pydir, "theme", "icons", 
-					 os.path.basename(fname)) for fname in 
-					 glob.glob(os.path.join(pydir, "theme", 
-											"icons", "*.icns|*.ico"))])]
+					glob.glob(os.path.join(pydir, "theme", 
+										   "icons", "*.icns|*.ico")))]
 		elif sys.platform != "darwin":
 			# Linux
 			data_files += [(os.path.join(os.path.dirname(data), 
@@ -331,16 +311,14 @@ def setup():
 			# under Linux
 			icons = []
 			desktopicons = []
-			for fname in glob.glob(os.path.join(pydir, "theme", "icons", 
-												dname, "*.png")):
-				icon = os.path.join(pydir, "theme", "icons", dname, fname)
-				if fname != name + ".png" or (sys.platform in 
-												 ("darwin", "win32") and 
-												 dname in ("16x16", 
-														   "32x32")):
-					icons.append(icon)
+			for iconpath in glob.glob(os.path.join(pydir, "theme", "icons", 
+												   dname, "*.png")):
+				if os.path.basename(iconpath) != name + ".png" or (
+					sys.platform in ("darwin", "win32") and 
+					dname in ("16x16", "32x32")):
+					icons.append(iconpath)
 				elif sys.platform not in ("darwin", "win32"):
-					desktopicons.append(icon)
+					desktopicons.append(iconpath)
 			if icons:
 				data_files += [(os.path.join(data, "theme", "icons", dname), 
 							   icons)]
