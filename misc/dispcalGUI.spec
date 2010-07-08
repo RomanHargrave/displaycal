@@ -87,16 +87,14 @@ f.close()
 for path in list(paths):
 	if path.endswith('.py') and 0%{?fedora_version} > 0:
 		paths.append(path + 'o')
-	dirname = os.path.dirname(path)
-	if not os.path.isdir(dirname):
-		directory = '%dir ' + dirname
-		if not directory in paths:
-			paths.append(directory)
-if not os.path.isdir('/etc/udev'):
-	paths.append('%dir /etc/udev')
-if not os.path.isdir('/etc/hotplug'):
-	paths.append('%dir /etc/hotplug')
-paths.append('%dir %_datadir/dispcalGUI/theme/icons')
+	while True:
+		path = os.path.dirname(path)
+		if os.path.isdir(path):
+			break
+		else:
+			directory = '%dir ' + path
+			if not directory in paths:
+				paths.append(directory)
 f = open('INSTALLED_FILES', 'w')
 f.write('\n'.join(paths))
 f.close()"
@@ -112,12 +110,12 @@ rm -rf $RPM_BUILD_ROOT
 %doc theme
 
 %post
-xdg-icon-resource forceupdate
-xdg-desktop-menu forceupdate
+which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate
+which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate
 
 %postun
-xdg-desktop-menu forceupdate
-xdg-icon-resource forceupdate
+which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate
+which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate
 
 %changelog
 * ${DATE} ${MAINTAINER} <${MAINTAINER_EMAIL}>

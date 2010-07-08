@@ -254,8 +254,7 @@ def setup():
 										   "icons", "*.icns|*.ico")))]
 		elif sys.platform != "darwin":
 			# Linux
-			data_files += [(os.path.join(os.path.dirname(data), 
-										 "applications"), 
+			data_files += [(os.path.join("share", "applications"), 
 							[os.path.join(pydir, "..", "misc", name + 
 												".desktop")])]
 			if not skip_instrument_conf_files:
@@ -323,7 +322,7 @@ def setup():
 				data_files += [(os.path.join(data, "theme", "icons", dname), 
 							   icons)]
 			if desktopicons:
-				data_files += [(os.path.join(os.path.dirname(data), "icons", 
+				data_files += [(os.path.join("share", "icons", 
 											 "hicolor", dname, "apps"), 
 							   desktopicons)]
 
