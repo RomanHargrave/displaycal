@@ -1,0 +1,5 @@
+${DEBPACKAGE} (${VERSION}) stable; urgency=low
+
+  * Version ${VERSION}
+
+ -- ${MAINTAINER} <${MAINTAINER_EMAIL}>  ${DEBDATETIME}

@@ -1,0 +1,106 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+export DH_COMPAT=4
+
+CFLAGS = -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
+
+# The DESTDIR Has To Be Exactly  /usr/src/packages/BUILD/debian/<nameOfPackage>
+export name=${PACKAGE}
+export version=${VERSION}
+export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}
+export install_prefix=/usr
+export install_exec_prefix=/usr
+export install_datadir=/usr/share
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+
+	# Add here commands to compile the package.
+	
+	# --- end custom part for compiling
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+
+	# Add here commands to clean up after the build process.
+	make clean || true
+	# --- end custom part for cleaning up
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Add here commands to install the package
+	python setup.py install --use-distutils \
+		--prefix=${DEB_BUILD_ROOT}${install_prefix} \
+		--exec-prefix=${DEB_BUILD_ROOT}${install_exec_prefix} \
+		--install-data=${DEB_BUILD_ROOT}${install_datadir} \
+		--skip-instrument-configuration-files
+	# udev/hotplug
+	mkdir -p "${DEB_BUILD_ROOT}/etc/udev/rules.d"
+	# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
+	cp -f "misc/92-Argyll.rules" "${DEB_BUILD_ROOT}/etc/udev/rules.d/92-Argyll.rules"
+	# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+	cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/etc/udev/rules.d/45-Argyll.rules"
+	# USB using hotplug and Serial using udev (older versions of Linux)
+	mkdir -p "${DEB_BUILD_ROOT}/etc/hotplug/usb"
+	cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll"
+	cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll.usermap"
+	# --- end custom part for installing
+
+# Build architecture-independent files here.
+binary-indep: build install
+	# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+#	dh_installdebconf
+	dh_installdocs
+#	dh_installexamples
+	dh_installmenu
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_installinit
+#	dh_installcron
+#	dh_installman
+	dh_installinfo
+#	dh_undocumented
+	dh_installchangelogs
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_perl
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

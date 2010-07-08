@@ -5,8 +5,9 @@ from ConfigParser import RawConfigParser
 from distutils.util import get_platform
 from subprocess import call, Popen
 from time import gmtime, strftime, timezone
-from xml.dom import minidom
+import codecs
 import glob
+import math
 import os
 import shutil
 import subprocess as sp
@@ -114,7 +115,11 @@ def setup():
 
 	if os.path.isdir(os.path.join(pydir, ".svn")) and (which("svn") or
 													   which("svn.exe")) and (
-		not sys.argv[1:] or len(non_build_args) < len(sys.argv[1:])):
+	   not sys.argv[1:] or len(non_build_args) < len(sys.argv[1:])):
+		# Restore setup.cfg.backup if it exists
+		if os.path.isfile(os.path.join(pydir, "setup.cfg.backup")):
+			shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), 
+						 os.path.join(pydir, "setup.cfg"))
 		print "Trying to get SVN version information..."
 		svnversion = None
 		try:
@@ -140,6 +145,7 @@ def setup():
 				print "...failed:", exception
 				break
 			else:
+				from xml.dom import minidom
 				xml = p.communicate()[0]
 				xml = minidom.parseString(xml)
 				entries = xml.getElementsByTagName("entry")
@@ -220,9 +226,11 @@ def setup():
 	
 	global name, domain, version, version_lin, version_mac, version_src
 	global version_tuple, version_win
-	from dispcalGUI.meta import (name, domain, version, version_lin, 
-								 version_mac, version_src, version_tuple, 
-								 version_win)
+	from dispcalGUI.meta import (name, author, author_email, description, 
+								 domain, py_maxversion, py_minversion,
+								 version, version_lin, version_mac, 
+								 version_src, version_tuple, version_win,
+								 wx_minversion)
 
 	if setup_cfg:
 		if not os.path.exists(os.path.join(pydir, "setup.cfg.backup")):
@@ -301,6 +309,45 @@ def setup():
 		sys.argv.remove("readme")
 		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
 			return
+
+	if ("sdist" in sys.argv[1:] and 
+		not "--help" in sys.argv[1:]) or "buildservice" in sys.argv[1:]:
+		# Create control files
+		for tmpl_name in ("debian.changelog", "debian.control", "debian.rules", 
+						  "dispcalGUI.dsc", "dispcalGUI.spec"):
+			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
+			tmpl = codecs.open(tmpl_path, "r", "UTF-8")
+			tmpl_data = tmpl.read()
+			tmpl.close()
+			for key, val in [
+				("DATE", 
+					strftime("%a %b %d %Y",  # e.g. Tue Jul 06 2010
+							 gmtime(lastmod_time or 
+									os.stat(tmpl_path).st_mtime))),
+				("DEBPACKAGE", name.lower()),
+				("DEBDATETIME", strftime("%a, %d %b %Y %H:%M:%S ",  # e.g. Wed, 07 Jul 2010 15:25:00 +0100
+										 gmtime(lastmod_time or 
+												os.stat(tmpl_path).st_mtime)) +
+										 ("+" if timezone < 0 else "-") +
+										 strftime("%H%M", gmtime(abs(timezone)))),
+				("DESC", description),
+				("MAINTAINER", author),
+				("MAINTAINER_EMAIL", author_email),
+				("PACKAGE", name),
+				("PY_MAXVERSION", ".".join(str(n) for n in py_maxversion)),
+				("PY_MINVERSION", ".".join(str(n) for n in py_minversion)),
+				("VERSION", version_src),
+				("WX_MINVERSION", ".".join(str(n) for n in wx_minversion)),
+			]:
+				tmpl_data = tmpl_data.replace("${%s}" % key, val)
+			out = codecs.open(os.path.join(pydir, "dist", tmpl_name), "w", 
+							  "UTF-8")
+			out.write(tmpl_data)
+			out.close()
+		if "buildservice" in sys.argv[1:]:
+			sys.argv.remove("buildservice")
+			if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+				return
 
 	if bdist_appdmg:
 		i = sys.argv.index("bdist_appdmg")
