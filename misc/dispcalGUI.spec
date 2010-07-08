@@ -13,22 +13,22 @@ URL: http://dispcalgui.hoech.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 %if 0%{?mandriva_version} > 0
 %ifarch x86_64
-BuildRequires: udev, xdg-utils, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, libpython-devel, lib64xorg-x11-devel
+BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, libpython-devel, lib64xorg-x11-devel
 %else
-BuildRequires: udev, xdg-utils, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, libpython-devel, libxorg-x11-devel
+BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, libpython-devel, libxorg-x11-devel
 %endif
 Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?debian_version} > 0
-BuildRequires: udev, xdg-utils, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-all-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
+BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-all-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
 Requires: python >= %{py_minversion}, python <= %{py_maxversion}, python-wxgtk2.8 >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?suse_version} > 0
-BuildRequires: udev, update-desktop-files, xdg-utils, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, xorg-x11-devel
+BuildRequires: udev, update-desktop-files, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, xorg-x11-devel
 Requires: python >= %{py_minversion}, python <= %{py_maxversion}, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?fedora_version} > 0
-BuildRequires: udev, xdg-utils, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
+BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
 Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
 %endif
 %endif
@@ -110,12 +110,12 @@ rm -rf $RPM_BUILD_ROOT
 %doc theme
 
 %post
-which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate
-which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate
+which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate || true
+which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate || true
 
 %postun
-which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate
-which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate
+which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate || true
+which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate || true
 
 %changelog
 * ${DATE} ${MAINTAINER} <${MAINTAINER_EMAIL}>
