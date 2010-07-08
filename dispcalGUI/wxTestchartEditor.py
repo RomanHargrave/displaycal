@@ -13,7 +13,9 @@ import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
 from colormath import XYZ2RGB
-from config import btn_width_correction, defaults, getcfg, geticon, get_data_path, get_total_patches, get_verified_path, hascfg, setcfg, writecfg
+from config import (btn_width_correction, defaults, getcfg, geticon, 
+					get_bitmap_as_icon, get_data_path, get_total_patches, 
+					get_verified_path, hascfg, setcfg, writecfg)
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
@@ -33,10 +35,7 @@ def swap_dict_keys_values(mydict):
 class TestchartEditor(wx.Frame):
 	def __init__(self, parent = None, id = -1):
 		wx.Frame.__init__(self, parent, id, lang.getstr("testchart.edit"))
-		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
-										  ".png"))
-		if icon:
-			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+		self.SetIcon(get_bitmap_as_icon(16, appname))
 		self.Bind(wx.EVT_CLOSE, self.tc_close_handler)
 
 		self.tc_algos_ab = {

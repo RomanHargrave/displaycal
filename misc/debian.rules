@@ -63,12 +63,12 @@ install: build
 	mkdir -p "${DEB_BUILD_ROOT}/etc/udev/rules.d"
 	# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
 	cp -f "misc/92-Argyll.rules" "${DEB_BUILD_ROOT}/etc/udev/rules.d/92-Argyll.rules"
-	# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-	cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/etc/udev/rules.d/45-Argyll.rules"
-	# USB using hotplug and Serial using udev (older versions of Linux)
-	mkdir -p "${DEB_BUILD_ROOT}/etc/hotplug/usb"
-	cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll"
-	cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll.usermap"
+	## USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+	#cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/etc/udev/rules.d/45-Argyll.rules"
+	## USB using hotplug and Serial using udev (older versions of Linux)
+	#mkdir -p "${DEB_BUILD_ROOT}/etc/hotplug/usb"
+	#cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll"
+	#cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll.usermap"
 	# --- end custom part for installing
 
 # Build architecture-independent files here.

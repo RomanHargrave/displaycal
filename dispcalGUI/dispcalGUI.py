@@ -79,10 +79,11 @@ import jspacker
 import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
 					script_ext, confighome, datahome, defaults, enc, exe, 
-					exe_ext, exedir, fs_enc, getbitmap, geticon, get_data_path, 
-					getcfg, get_verified_path, original_codepage, 
-					initcfg, isapp, isexe, profile_ext, pydir, pyext, pyname, 
-					pypath, resfiles, runtype, setcfg, storage, writecfg)
+					exe_ext, exedir, fs_enc, getbitmap, geticon, 
+					get_bitmap_as_icon, get_data_path, getcfg, 
+					get_verified_path, original_codepage, initcfg, isapp, 
+					isexe, profile_ext, pydir, pyext, pyname, pypath, 
+					resfiles, runtype, setcfg, storage, writecfg)
 
 # Custom modules
 
@@ -360,10 +361,7 @@ class GamapFrame(BaseFrame):
 		self.PostCreate(pre)
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
-		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
-										  ".png"))
-		if icon:
-			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+		self.SetIcon(get_bitmap_as_icon(16, appname))
 		
 		self.SetTitle(lang.getstr("gamapframe.title"))
 
@@ -717,10 +715,7 @@ class MainFrame(BaseFrame):
 		"""
 		self.SetTitle("%s %s %s" % (appname, version, build))
 		self.SetMaxSize((-1, -1))
-		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
-										  ".png"))
-		if icon:
-			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+		self.SetIcon(get_bitmap_as_icon(16, appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
@@ -913,10 +908,7 @@ class MainFrame(BaseFrame):
 		self.infoframe = LogWindow(self)
 		self.infoframe.Bind(wx.EVT_CLOSE, self.infoframe_close_handler, 
 							self.infoframe)
-		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
-										  ".png"))
-		if icon:
-			self.infoframe.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+		self.infoframe.SetIcon(get_bitmap_as_icon(16, appname))
 		if show:
 			self.Show()
 	
@@ -4923,10 +4915,7 @@ class MainFrame(BaseFrame):
 					getcfg("position.lut_viewer.y"), 
 					getcfg("size.lut_viewer.w"), 
 					getcfg("size.lut_viewer.h"))
-				icon = get_data_path(os.path.join("theme", "icons", "16x16", 
-												  appname + ".png"))
-				if icon:
-					self.lut_viewer.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+				self.lut_viewer.SetIcon(get_bitmap_as_icon(16, appname))
 				self.lut_viewer.Bind(wx.EVT_MOVE, self.lut_viewer_move_handler)
 				self.lut_viewer.Bind(wx.EVT_SIZE, self.lut_viewer_size_handler)
 				self.lut_viewer.Bind(wx.EVT_CLOSE, 

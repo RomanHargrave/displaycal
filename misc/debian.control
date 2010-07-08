@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 4.1.16), gcc, python (>= ${PY_MINVERSION}), python 
 
 Package: ${DEBPACKAGE}
 Architecture: any
-Depends: ${shlibs:Depends}, python2.5, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0)
+Depends: ${shlibs:Depends}, python (>= ${PY_MINVERSION}), python (<= ${PY_MAXVERSION}), python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0)
 Description: ${DESC}
  Calibrates and characterizes display devices using a hardware sensor. Supports
  multiple displays and a variety of available settings like customizable

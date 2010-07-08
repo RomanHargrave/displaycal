@@ -76,15 +76,15 @@ mkdir -p "${RPM_BUILD_ROOT}/etc/udev/rules.d"
 # USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
 cp -f "misc/92-Argyll.rules" "${RPM_BUILD_ROOT}/etc/udev/rules.d/92-Argyll.rules"
 echo "/etc/udev/rules.d/92-Argyll.rules">>INSTALLED_FILES
-# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-cp -f  "misc/45-Argyll.rules" "${RPM_BUILD_ROOT}/etc/udev/rules.d/45-Argyll.rules"
-echo "/etc/udev/rules.d/45-Argyll.rules">>INSTALLED_FILES
-# USB using hotplug and Serial using udev (older versions of Linux)
-mkdir -p "${RPM_BUILD_ROOT}/etc/hotplug/usb"
-cp -f "misc/Argyll" "${RPM_BUILD_ROOT}/etc/hotplug/usb/Argyll"
-echo "/etc/hotplug/usb/Argyll">>INSTALLED_FILES
-cp -f "misc/Argyll.usermap" "${RPM_BUILD_ROOT}/etc/hotplug/usb/Argyll.usermap"
-echo "/etc/hotplug/usb/Argyll.usermap">>INSTALLED_FILES
+## USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+#cp -f  "misc/45-Argyll.rules" "${RPM_BUILD_ROOT}/etc/udev/rules.d/45-Argyll.rules"
+#echo "/etc/udev/rules.d/45-Argyll.rules">>INSTALLED_FILES
+## USB using hotplug and Serial using udev (older versions of Linux)
+#mkdir -p "${RPM_BUILD_ROOT}/etc/hotplug/usb"
+#cp -f "misc/Argyll" "${RPM_BUILD_ROOT}/etc/hotplug/usb/Argyll"
+#echo "/etc/hotplug/usb/Argyll">>INSTALLED_FILES
+#cp -f "misc/Argyll.usermap" "${RPM_BUILD_ROOT}/etc/hotplug/usb/Argyll.usermap"
+#echo "/etc/hotplug/usb/Argyll.usermap">>INSTALLED_FILES
 %if 0%{?suse_version} > 0
 # Update categories to prevent buildservice from complaining
 %suse_update_desktop_file %{name} 2DGraphics

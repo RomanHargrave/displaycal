@@ -7,7 +7,8 @@ import sys
 import config
 import localization as lang
 from config import (btn_width_correction, defaults, getcfg, geticon, 
-					get_data_path, scale_adjustment_factor, setcfg, writecfg)
+					get_bitmap_as_icon, get_data_path, scale_adjustment_factor, 
+					setcfg, writecfg)
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
@@ -137,10 +138,7 @@ class MeasureFrame(InvincibleFrame):
 								 style=wx.DEFAULT_FRAME_STYLE & 
 									   ~(wx.RESIZE_BORDER | wx.RESIZE_BOX | 
 									     wx.MAXIMIZE_BOX))
-		icon = get_data_path(os.path.join("theme", "icons", "16x16", appname + 
-										  ".png"))
-		if icon:
-			self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_PNG))
+		self.SetIcon(get_bitmap_as_icon(16, appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
 		self.Bind(wx.EVT_MOVE, self.move_handler, self)
 		self.Bind(wx.EVT_SIZE, self.size_handler, self)

@@ -126,7 +126,6 @@ resfiles = [
 	"theme/icons/16x16/edit-delete.png",
 	"theme/icons/16x16/install.png",
 	"theme/icons/16x16/media-floppy.png",
-	"theme/icons/16x16/%s.png" % appname,
 	"theme/icons/16x16/rgbsquares.png",
 	"theme/icons/16x16/stock_lock.png",
 	"theme/icons/16x16/stock_lock-open.png",
@@ -175,7 +174,11 @@ def getbitmap(name):
 			dc.SelectObject(wx.NullBitmap)
 			bitmaps[name].SetMaskColour("black")
 		else:
-			path = get_data_path(os.path.sep.join(parts) + ".png")
+			path = None
+			if parts[-1] == appname:
+				path = get_data_path(os.path.join(parts[-2], "apps", parts[-1]) + ".png")
+			if not path:
+				path = get_data_path(os.path.sep.join(parts) + ".png")
 			if path:
 				bitmaps[name] = wx.Bitmap(path)
 			else:
@@ -191,6 +194,17 @@ def getbitmap(name):
 				bitmaps[name] = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, 
 														 size=(w, h))
 	return bitmaps[name]
+
+
+def get_bitmap_as_icon(size, name):
+	""" Like geticon, but return a wx.Icon instance """
+	if not "wx" in globals():
+		global wx
+		from wxaddons import wx
+	icon = wx.EmptyIcon()
+	bmp = geticon(size, name)
+	icon.CopyFromBitmap(bmp)
+	return icon
 
 
 def geticon(size, name):
@@ -262,9 +276,8 @@ def runtimeconfig(pyfile):
 						  for dir_ in xdg_data_dirs])
 		data_dirs.extend([os.path.join(dir_, "doc", appname) 
 						  for dir_ in xdg_data_dirs])
-		for size in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
-			data_dirs.extend([os.path.join(dir_, "icons", "hicolor", size, "apps") 
-							  for dir_ in xdg_data_dirs])
+		data_dirs.extend([os.path.join(dir_, "icons", "hicolor") 
+						  for dir_ in xdg_data_dirs])
 	if isapp:
 		appdir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
 		if debug:
