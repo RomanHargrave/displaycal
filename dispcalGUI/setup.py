@@ -325,7 +325,7 @@ def setup():
 			if desktopicons:
 				data_files += [(os.path.join(os.path.dirname(data), "icons", 
 											 "hicolor", dname, "apps"), 
-							   icons)]
+							   desktopicons)]
 
 	if sys.platform == "win32":
 		RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
