@@ -251,17 +251,20 @@ def runtimeconfig(pyfile):
 			from log import safe_print
 	if debug:
 		safe_print("[D] cwd:", os.getcwdu())
-	elif data_dirs[0] != os.getcwdu():
+	if data_dirs[0] != os.getcwdu():
 		data_dirs.insert(0, os.getcwdu())
 	if debug:
 		safe_print("[D] pydir:", pydir)
 	if pydir not in data_dirs:
 		data_dirs.append(pydir)
 	if sys.platform not in ("darwin", "win32"):
-		data_dirs.append(os.path.join(os.path.sep, "usr", "share", "doc", 
-									  appname))
-		data_dirs.append(os.path.join(os.path.sep, "usr", "share", "doc", 
-									  appname + "-" + version))
+		data_dirs.extend([os.path.join(dir_, "doc", appname + "-" + version) 
+						  for dir_ in xdg_data_dirs])
+		data_dirs.extend([os.path.join(dir_, "doc", appname) 
+						  for dir_ in xdg_data_dirs])
+		for size in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
+			data_dirs.extend([os.path.join(dir_, "icons", "hicolor", size, "apps") 
+							  for dir_ in xdg_data_dirs])
 	if isapp:
 		appdir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
 		if debug:
@@ -278,9 +281,10 @@ def runtimeconfig(pyfile):
 	else:
 		pydir_parent = os.path.abspath(os.path.join(pydir, ".."))
 		if debug:
-			safe_print("[D] dirname(sys.argv[0]):", os.path.dirname(sys.argv[0]))
+			safe_print("[D] dirname(os.path.abspath(sys.argv[0])):", 
+					   os.path.dirname(os.path.abspath(sys.argv[0])))
 			safe_print("[D] pydir parent:", pydir_parent)
-		if os.path.dirname(sys.argv[0]) == pydir_parent and \
+		if os.path.dirname(os.path.abspath(sys.argv[0])) == pydir_parent and \
 		   pydir_parent not in data_dirs:
 			# Add the parent directory of the package directory to our list
 			# of data directories if it is the directory containing the 

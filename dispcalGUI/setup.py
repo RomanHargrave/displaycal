@@ -182,7 +182,7 @@ def setup():
 		if "bdist_rpm" in sys.argv[1:] or is_rpm_build:
 			doc = os.path.join("doc", "packages", name)
 		else:
-			doc = os.path.join("doc", name)
+			doc = os.path.join("doc", name + "-" + version)
 		if not install_data:
 			data = os.path.join("share", data)
 			doc = os.path.join("share", doc)
@@ -201,11 +201,7 @@ def setup():
 			"report/*.js",
 			"theme/*.png",
 			"theme/icons/16x16/*.png",
-			"theme/icons/22x22/*.png",
-			"theme/icons/24x24/*.png",
 			"theme/icons/32x32/*.png",
-			"theme/icons/48x48/*.png",
-			"theme/icons/256x256/*.png",
 			"ti1/*.ti1",
 			"xrc/*.xrc",
 			"test.cal"
@@ -276,62 +272,82 @@ def setup():
 					 os.path.basename(fname)) for fname in 
 					 glob.glob(os.path.join(pydir, "theme", 
 											"icons", "*.icns|*.ico"))])]
-		elif sys.platform != "darwin" and not skip_instrument_conf_files:
+		elif sys.platform != "darwin":
 			# Linux
-			data_files += [(data, [os.path.join(pydir, "..", "misc", name + 
+			data_files += [(os.path.join(os.path.dirname(data), 
+										 "applications"), 
+							[os.path.join(pydir, "..", "misc", name + 
 												".desktop")])]
-			# device configuration / permission stuff
-			devconf_files = []
-			## if os.path.isdir("/usr/share/PolicyKit/policy") and \
-			   ## os.path.isdir("/usr/share/hal/fdi/policy/10osvendor"):
-				## # USB and Serial access using PolicyKit V0.6 + HAL
-				## # (recent versions of Linux)
-				## devconf_files += [
-					## ("/usr/share/PolicyKit/policy", [os.path.join(
-						## pydir, "..", "misc", "color-device-file.policy")]),
-					## ("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(
-						## pydir, "..", "misc", "19-color.fdi")])
-				## ]
-			if os.path.isdir("/etc/udev/rules.d"):
-				if glob.glob("/dev/bus/usb/*/*"):
-					# USB and serial instruments using udev, where udev 
-					# already creates /dev/bus/usb/00X/00X devices
-					devconf_files += [
-						("/etc/udev/rules.d", [os.path.join(
-							pydir, "..", "misc", "92-Argyll.rules")])
-					]
-				else:
-					# USB using udev, where there are NOT /dev/bus/usb/00X/00X 
-					# devices
-					devconf_files += [
-						("/etc/udev/rules.d", [os.path.join(
-							pydir, "..", "misc", "45-Argyll.rules")])
-					]
-			else:
-				if os.path.isdir("/etc/hotplug"):
-					# USB using hotplug and Serial using udev
-					# (older versions of Linux)
-					devconf_files += [
-						("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", 
-														   fname) for fname in 
-											  ["Argyll", "Argyll.usermap"]])
-					]
-				## if os.path.isdir("/etc/udev/permissions.d"):
-					## # Serial instruments using udev (older versions of Linux)
+			if not skip_instrument_conf_files:
+				# device configuration / permission stuff
+				devconf_files = []
+				## if os.path.isdir("/usr/share/PolicyKit/policy") and \
+				   ## os.path.isdir("/usr/share/hal/fdi/policy/10osvendor"):
+					## # USB and Serial access using PolicyKit V0.6 + HAL
+					## # (recent versions of Linux)
 					## devconf_files += [
-						## ("/etc/udev/permissions.d", [os.path.join(
-							## pydir, "..", "misc", "10-Argyll.permissions")])
+						## ("/usr/share/PolicyKit/policy", [os.path.join(
+							## pydir, "..", "misc", "color-device-file.policy")]),
+						## ("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(
+							## pydir, "..", "misc", "19-color.fdi")])
 					## ]
-			for entry in devconf_files:
-				for fname in entry[1]:
-					if os.path.isfile(fname):
-						data_files += [(entry[0], [fname])]
+				if os.path.isdir("/etc/udev/rules.d"):
+					if glob.glob("/dev/bus/usb/*/*"):
+						# USB and serial instruments using udev, where udev 
+						# already creates /dev/bus/usb/00X/00X devices
+						devconf_files += [
+							("/etc/udev/rules.d", [os.path.join(
+								pydir, "..", "misc", "92-Argyll.rules")])
+						]
+					else:
+						# USB using udev, where there are NOT /dev/bus/usb/00X/00X 
+						# devices
+						devconf_files += [
+							("/etc/udev/rules.d", [os.path.join(
+								pydir, "..", "misc", "45-Argyll.rules")])
+						]
+				else:
+					if os.path.isdir("/etc/hotplug"):
+						# USB using hotplug and Serial using udev
+						# (older versions of Linux)
+						devconf_files += [
+							("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", 
+															   fname) for fname in 
+												  ["Argyll", "Argyll.usermap"]])
+						]
+					## if os.path.isdir("/etc/udev/permissions.d"):
+						## # Serial instruments using udev (older versions of Linux)
+						## devconf_files += [
+							## ("/etc/udev/permissions.d", [os.path.join(
+								## pydir, "..", "misc", "10-Argyll.permissions")])
+						## ]
+				for entry in devconf_files:
+					for fname in entry[1]:
+						if os.path.isfile(fname):
+							data_files += [(entry[0], [fname])]
 		for dname in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
-			data_files += [(os.path.join(data, "theme", "icons", dname), 
-				[os.path.join(pydir, "theme", "icons", dname, 
-					os.path.basename(fname)) for fname in 
-					glob.glob(os.path.join(pydir, "theme", "icons", dname, 
-										   "*.png"))])]
+			# Only the 16x16 and 32x32 icons are used exclusively by the app, 
+			# the other sizes of the app icon are used for the desktop entry 
+			# under Linux
+			icons = []
+			desktopicons = []
+			for fname in glob.glob(os.path.join(pydir, "theme", "icons", 
+												dname, "*.png")):
+				icon = os.path.join(pydir, "theme", "icons", dname, fname)
+				if fname != appname + ".png" or (sys.platform in 
+												 ("darwin", "win32") and 
+												 dname in ("16x16", 
+														   "32x32")):
+					icons.append(icon)
+				elif sys.platform not in ("darwin", "win32"):
+					desktopicons.append(icon)
+			if icons:
+				data_files += [(os.path.join(data, "theme", "icons", dname), 
+							   icons)]
+			if desktopicons:
+				data_files += [(os.path.join(os.path.dirname(data), "icons", 
+											 "hicolor", dname, "apps"), 
+							   icons)]
 
 	if sys.platform == "win32":
 		RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 

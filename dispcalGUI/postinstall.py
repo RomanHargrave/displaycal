@@ -231,16 +231,17 @@ def postinstall(prefix=None):
 		# Linux/Unix
 		if prefix is None:
 			prefix = sys.prefix
-		print "installing icon resources..."
-		for size in [16, 22, 24, 32, 48, 256]:
-			call(["xdg-icon-resource", "install", "--noupdate", "--novendor", 
-				  "--size", str(size), prefix + 
-				  ("/share/%s/theme/icons/%sx%s/%s.png" % (name, size, size, 
-				   name))])
+		#print "installing icon resources..."
+		#for size in [16, 22, 24, 32, 48, 256]:
+			#call(["xdg-icon-resource", "install", "--noupdate", "--novendor", 
+				  #"--size", str(size), prefix + 
+				  #("/share/%s/theme/icons/%sx%s/%s.png" % (name, size, size, 
+				   #name))])
 		call(["xdg-icon-resource", "forceupdate"])
-		print "installing desktop menu entry..."
-		call(["xdg-desktop-menu", "install", "--novendor", (prefix + 
-			  "/share/%s/%s.desktop" % (name, name))])
+		#print "installing desktop menu entry..."
+		#call(["xdg-desktop-menu", "install", "--novendor", (prefix + 
+			  #"/share/%s/%s.desktop" % (name, name))])
+		call(["xdg-desktop-menu", "forceupdate"])
 
 
 def postuninstall(prefix=None):
@@ -254,13 +255,14 @@ def postuninstall(prefix=None):
 		# Linux/Unix
 		if prefix is None:
 			prefix = sys.prefix
-		print "uninstalling desktop menu entry..."
-		call(["xdg-desktop-menu", "uninstall", prefix + 
-			  ("/share/applications/%s.desktop" % name)])
-		print "uninstalling icon resources..."
-		for size in [16, 22, 24, 32, 48, 256]:
-			call(["xdg-icon-resource", "uninstall", "--noupdate", "--size", 
-				  str(size), name])
+		#print "uninstalling desktop menu entry..."
+		#call(["xdg-desktop-menu", "uninstall", prefix + 
+			  #("/share/applications/%s.desktop" % name)])
+		call(["xdg-desktop-menu", "forceupdate"])
+		#print "uninstalling icon resources..."
+		#for size in [16, 22, 24, 32, 48, 256]:
+			#call(["xdg-icon-resource", "uninstall", "--noupdate", "--size", 
+				  #str(size), name])
 		call(["xdg-icon-resource", "forceupdate"])
 
 
