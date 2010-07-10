@@ -62,7 +62,7 @@ f = open('LICENSE.txt', 'wb')
 f.write(d)
 f.close()"
 # Install
-python setup.py install --use-distutils \
+python`python -c "import sys;print sys.version[:3]"` setup.py install --use-distutils \
 	--prefix=$RPM_BUILD_ROOT%_prefix \
 	--exec-prefix=$RPM_BUILD_ROOT%_exec_prefix \
 	--install-data=$RPM_BUILD_ROOT%_datadir \
@@ -121,12 +121,12 @@ rm -rf $RPM_BUILD_ROOT
 %doc theme
 
 %post
-which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate || true
-which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate || true
+which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true
+which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true
 
 %postun
-which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate || true
-which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate || true
+which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true
+which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true
 
 %changelog
 * ${DATE} ${MAINTAINER} <${MAINTAINER_EMAIL}>

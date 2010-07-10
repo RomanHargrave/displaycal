@@ -10,7 +10,7 @@ ls -l -G -h --color=always $HOME/.local/share/applications/dispcalGUI.desktop 2>
 
 ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/dispcalGUI 2>/dev/null && echo
 
-ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/doc/dispcalGUI 2>/dev/null && echo
+ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/doc/dispcalGUI* 2>/dev/null && echo
 
 ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/doc/packages/dispcalGUI* 2>/dev/null && echo
 
@@ -28,7 +28,7 @@ ls -l -G -h --color=always /usr/local/share/applications/dispcalGUI.desktop 2>/d
 
 ls -l -G -h --color=always --group-directories-first -R /usr/local/share/dispcalGUI 2>/dev/null && echo
 
-ls -l -G -h --color=always --group-directories-first -R /usr/local/share/doc/dispcalGUI 2>/dev/null && echo
+ls -l -G -h --color=always --group-directories-first -R /usr/local/share/doc/dispcalGUI* 2>/dev/null && echo
 
 ls -l -G -h --color=always --group-directories-first -R /usr/local/share/doc/packages/dispcalGUI* 2>/dev/null && echo
 
@@ -46,7 +46,7 @@ ls -l -G -h --color=always /usr/share/applications/dispcalGUI.desktop 2>/dev/nul
 
 ls -l -G -h --color=always --group-directories-first -R /usr/share/dispcalGUI 2>/dev/null && echo
 
-ls -l -G -h --color=always --group-directories-first -R /usr/share/doc/dispcalGUI 2>/dev/null && echo
+ls -l -G -h --color=always --group-directories-first -R /usr/share/doc/dispcalGUI* 2>/dev/null && echo
 
 ls -l -G -h --color=always --group-directories-first -R /usr/share/doc/packages/dispcalGUI* 2>/dev/null && echo
 

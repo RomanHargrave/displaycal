@@ -46,23 +46,29 @@ tar -xf dispcalGUI.tar
 rm dispcalGUI.tar
 popd > /dev/null
 
-mkdir -p "$build_root/share/doc/dispcalGUI"
+mkdir -p "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION"
 pushd "$source_dir" > /dev/null
-tar --exclude="Thumbs.db" --exclude=".svn" -pcf "$build_root/share/doc/dispcalGUI/screenshots.tar" screenshots
-tar --exclude="Thumbs.db" --exclude=".svn" -pcf "$build_root/share/doc/dispcalGUI/theme.tar" theme
+tar --exclude="Thumbs.db" --exclude=".svn" -pcf "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION/screenshots.tar" screenshots
+tar --exclude="Thumbs.db" --exclude=".svn" -pcf "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION/theme.tar" theme
 popd > /dev/null
-pushd "$build_root/share/doc/dispcalGUI" > /dev/null
+pushd "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION" > /dev/null
 tar -xf screenshots.tar
 rm screenshots.tar
 tar -xf theme.tar
 rm theme.tar
 popd > /dev/null
-cp "$source_dir/LICENSE.txt" "$build_root/share/doc/dispcalGUI"
-cp "$source_dir/README.html" "$build_root/share/doc/dispcalGUI"
+cp "$source_dir/LICENSE.txt" "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION"
+cp "$source_dir/README.html" "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION"
 
+# Move application icons
 for size in "16x16" "22x22" "24x24" "32x32" "48x48" "256x256" ; do
 	mkdir -p "$build_root/share/icons/hicolor/$size/apps"
-	cp "$source_dir/dispcalGUI/theme/icons/$size/dispcalGUI.png" "$build_root/share/icons/hicolor/$size/apps"
+	mv "$build_root/share/dispcalGUI/theme/icons/$size/dispcalGUI.png" "$build_root/share/icons/hicolor/$size/apps"
+done
+
+# Remove empty directories
+for size in "22x22" "24x24" "48x48" "256x256" ; do
+	rm -rf "$build_root/share/dispcalGUI/theme/icons/$size"
 done
 
 mkdir -p "$build_root/share/applications"
@@ -113,7 +119,7 @@ function requireLibs() {
 	return 0
 }
 
-require '@python.org/python' 2.5 2.6
+require '@python.org/python' 2.5 2.6 2.7
 
 requireAtLeast '@wxpython.org/python-wxgtk:2.8'
 
@@ -162,7 +168,7 @@ installIcon share/icons/hicolor
 # autopackage's 'manage 3rd party software' utility
 installMenuItem "Graphics" share/applications/dispcalGUI.desktop
 # Install our proper one
-xdg-desktop-menu install --novendor share/applications/dispcalGUI.desktop
+which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu install --novendor share/applications/dispcalGUI.desktop || true
 
 if [ `whoami` = "root" ]; then
 	# if [ -e "/usr/share/PolicyKit/policy" ] && [ -e "/usr/share/hal/fdi/policy/10osvendor" ]; then
@@ -196,5 +202,5 @@ fi
 # "Install" to create files. All autopackage API functions 
 # that installs files are logged.
 uninstallFromLog
-xdg-desktop-menu uninstall dispcalGUI.desktop
+which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu uninstall dispcalGUI.desktop || true
 

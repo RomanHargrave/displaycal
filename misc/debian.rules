@@ -55,7 +55,7 @@ install: build
 	# Convert line endings in LICENSE.txt
 	python -c "f = open('LICENSE.txt', 'rb');d = f.read().replace('\r\n', '\n').replace('\r', '\n');f.close();f = open('LICENSE.txt', 'wb');f.write(d);f.close()"
 	# Install
-	python setup.py install --use-distutils \
+	python${python_version} setup.py install --use-distutils \
 		--prefix=${DEB_BUILD_ROOT}${install_prefix} \
 		--exec-prefix=${DEB_BUILD_ROOT}${install_exec_prefix} \
 		--install-data=${DEB_BUILD_ROOT}${install_datadir} \
