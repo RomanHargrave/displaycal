@@ -8,6 +8,10 @@ for /F usebackq %%a in (`python -c "from dispcalGUI import meta;print meta.versi
 	set version=%%a
 )
 
+for /F usebackq %%a in (`python -c "from dispcalGUI.meta import version_tuple;print '.'.join(str(n) for n in version_tuple[:2] + (str(version_tuple[2]) + str(version_tuple[3]), ))"`) do (
+	set msi_version=%%a
+)
+
 REM Source tarball
 if not exist dist\dispcalGUI-%version%.tar.gz (
 	python setup.py sdist --format=gztar --use-setuptools 2>&1 | tee dispcalGUI-%version%.sdist.log
@@ -32,15 +36,15 @@ if not exist dist\dispcalGUI-%version%-win32.zip (
 
 if "%~1"=="bdist_msi" (
 	REM Python 2.5 MSI
-	if not exist dist\dispcalGUI-%version%.win32-py2.5.exe (
-		REM C:\Python25\python.exe setup.py bdist_msi --use-distutils 2>&1 | tee dispcalGUI-%version%.wininst-py2.5.log
-		REM C:\Python25\python.exe setup.py finalize_msi --use-distutils 2>&1 | tee -a dispcalGUI-%version%.wininst-py2.5.log
+	if not exist dist\dispcalGUI-%msi_version%.win32-py2.5.msi (
+		REM C:\Python25\python.exe setup.py bdist_msi --use-distutils 2>&1 | tee dispcalGUI-%msi_version%.msi-py2.5.log
+		REM C:\Python25\python.exe setup.py finalize_msi 2>&1 | tee -a dispcalGUI-%msi_version%.msi-py2.5.log
 	)
 
 	REM Python 2.6 MSI
-	if not exist dist\dispcalGUI-%version%.win32-py2.6.exe (
-		C:\Python26\python.exe setup.py bdist_msi --use-distutils 2>&1 | tee dispcalGUI-%version%.wininst-py2.6.log
-		C:\Python25\python.exe setup.py finalize_msi --use-distutils 2>&1 | tee -a dispcalGUI-%version%.wininst-py2.6.log
+	if not exist dist\dispcalGUI-%msi_version%.win32-py2.6.msi (
+		C:\Python26\python.exe setup.py bdist_msi --use-distutils 2>&1 | tee dispcalGUI-%msi_version%.msi-py2.6.log
+		C:\Python26\python.exe setup.py finalize_msi 2>&1 | tee -a dispcalGUI-%msi_version%.msi-py2.6.log
 	)
 )
 
