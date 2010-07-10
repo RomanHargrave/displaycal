@@ -1257,6 +1257,11 @@ class Worker():
 					if self.subprocess.after not in (wexpect.EOF, 
 													 wexpect.TIMEOUT):
 						self.subprocess.expect(wexpect.EOF, timeout=None)
+					# We need to call isalive() to set the exitstatus.
+					# We can't use wait() because it might block in the
+					# case of a timeout
+					while self.subprocess.isalive():
+						sleep(.1)
 					self.retcode = self.subprocess.exitstatus
 				else:
 					self.subprocess = sp.Popen(" ".join(cmdline) if shell else
