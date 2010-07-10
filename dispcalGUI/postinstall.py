@@ -126,13 +126,34 @@ def postinstall(prefix=None):
 								 startmenu_programs):
 						if path:
 							grppath = os.path.join(path, name)
+							if path == startmenu_programs:
+								group = relpath(grppath, startmenu)
+							else:
+								group = relpath(grppath, 
+												startmenu_common)
 							if not os.path.exists(grppath):
 								try:
 									os.makedirs(grppath)
 								except Exception, exception:
 									# maybe insufficient privileges?
-									traceback.print_exc()
-									continue
+									pass
+							if os.path.exists(grppath):
+								print ("Created start menu group '%s' in "
+									   "%s") % (name, 
+											  (unicode(path, "MBCS", 
+													   "replace") if 
+											   type(path) != unicode else 
+											   path).encode("MBCS", 
+															   "replace"))
+							else:
+								print ("Failed to create start menu group '%s' in "
+									   "%s") % (name, 
+											  (unicode(path, "MBCS", 
+													   "replace") if 
+											   type(path) != unicode else 
+											   path).encode("MBCS", 
+															   "replace"))
+								continue
 							directory_created(grppath)
 							for filename in (name + ".py", "LICENSE.txt", 
 											 "README.html", "Uninstall"):
@@ -143,7 +164,13 @@ def postinstall(prefix=None):
 										os.remove(lnkpath)
 									except Exception, exception:
 										# maybe insufficient privileges?
-										traceback.print_exc()
+										print ("Failed to create start menu entry '%s' in "
+											   "%s") % (splitext(filename)[0], 
+													  (unicode(grppath, "MBCS", 
+															   "replace") if 
+													   type(grppath) != unicode else 
+													   grppath).encode("MBCS", 
+																	   "replace"))
 										continue
 								if not os.path.exists(lnkpath):
 									if filename != "Uninstall":
@@ -168,8 +195,14 @@ def postinstall(prefix=None):
 														"icons", name + 
 														"-uninstall.ico"))
 											else:
+												# When running from a 
+												# bdist_wininst or bdist_msi 
+												# installer, sys.executable 
+												# points to the installer 
+												# executable, not python.exe
 												create_shortcut(
-													sys.executable, 
+													os.path.join(sys.prefix,
+																 "python.exe"), 
 													splitext(filename)[0], 
 													lnkpath, 
 													'"%s" uninstall '
@@ -187,8 +220,14 @@ def postinstall(prefix=None):
 														"icons", name + 
 														"-uninstall.ico"))
 										elif filename.endswith(".py"):
+											# When running from a 
+											# bdist_wininst or bdist_msi 
+											# installer, sys.executable 
+											# points to the installer 
+											# executable, not python.exe
 											create_shortcut(
-												sys.executable, 
+												os.path.join(sys.prefix,
+															 "pythonw.exe"), 
 												splitext(filename)[0], 
 												lnkpath, '"%s"' % tgtpath, 
 												modpath, icon)
@@ -199,13 +238,14 @@ def postinstall(prefix=None):
 												lnkpath, "", modpath)
 									except Exception, exception:
 										# maybe insufficient privileges?
-										traceback.print_exc()
+										print ("Failed to create start menu entry '%s' in "
+											   "%s") % (splitext(filename)[0], 
+													  (unicode(grppath, "MBCS", 
+															   "replace") if 
+													   type(grppath) != unicode else 
+													   grppath).encode("MBCS", 
+																	   "replace"))
 										continue
-									if path == startmenu_programs:
-										group = relpath(grppath, startmenu)
-									else:
-										group = relpath(grppath, 
-														startmenu_common)
 									print ("Installed start menu entry '%s' to "
 										  "%s") % (splitext(filename)[0], 
 												  (unicode(group, "MBCS", 
