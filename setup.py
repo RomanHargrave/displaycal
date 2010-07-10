@@ -437,7 +437,7 @@ def setup():
 									  msilib.Binary(os.path.join(pydir, "dispcalGUI", 
 														"theme", "icons", 
 														"dispcalGUI.ico")))])  # Data
-		msilib.add_data(db, "Icon", [("dispcalGUI-uninstall.ico",  # Name
+		msilib.add_data(db, "Icon", [("uninstall.ico",  # Name
 									  msilib.Binary(os.path.join(pydir, "dispcalGUI", 
 														"theme", "icons", 
 														"dispcalGUI-uninstall.ico")))])  # Data
@@ -446,6 +446,13 @@ def setup():
 											None,  # FileName
 											"MenuDir",  # DirProperty
 											2)])  # InstallMode
+		msilib.add_data(db, "Registry", [("DisplayIcon",  # Registry
+										  -1,  # Root
+										  r"Software\Microsoft\Windows\CurrentVersion\Uninstall\%s" % 
+										  productcode,  # Key
+										  "DisplayIcon",  # Name
+										  r"[icons]dispcalGUI.ico",  # Value
+										  "dispcalGUI")])  # Component
 		msilib.add_data(db, "Shortcut", [("dispcalGUI",  # Shortcut
 										  "MenuDir",  # Directory
 										  "DISPCA~1|dispcalGUI",  # Name
@@ -490,7 +497,7 @@ def setup():
 										  r"/x" + productcode,  # Arguments
 										  None,  # Description
 										  None,  # Hotkey
-										  "dispcalGUI-uninstall.ico",  # Icon
+										  "uninstall.ico",  # Icon
 										  None,  # IconIndex
 										  None,  # ShowCmd
 										  "SystemFolder")])  # WkDir
