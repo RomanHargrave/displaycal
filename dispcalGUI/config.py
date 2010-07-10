@@ -274,6 +274,8 @@ def runtimeconfig(pyfile):
 	if sys.platform not in ("darwin", "win32"):
 		data_dirs.extend([os.path.join(dir_, "doc", appname + "-" + version) 
 						  for dir_ in xdg_data_dirs])
+		data_dirs.extend([os.path.join(dir_, "doc", "packages", appname) 
+						  for dir_ in xdg_data_dirs])
 		data_dirs.extend([os.path.join(dir_, "doc", appname) 
 						  for dir_ in xdg_data_dirs])
 		data_dirs.extend([os.path.join(dir_, "icons", "hicolor") 
