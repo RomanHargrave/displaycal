@@ -1189,7 +1189,7 @@ class Worker():
 				else:
 					startupinfo = None
 			else:
-				kwargs = dict(timeout=10, cwd=working_dir,
+				kwargs = dict(timeout=30, cwd=working_dir,
 							  env=os.environ)
 				if sys.platform == "win32":
 					kwargs["codepage"] = windll.kernel32.GetACP()
@@ -1257,8 +1257,6 @@ class Worker():
 					if self.subprocess.after not in (wexpect.EOF, 
 													 wexpect.TIMEOUT):
 						self.subprocess.expect(wexpect.EOF, timeout=None)
-					if self.subprocess.isalive():
-						self.subprocess.wait()
 					self.retcode = self.subprocess.exitstatus
 				else:
 					self.subprocess = sp.Popen(" ".join(cmdline) if shell else

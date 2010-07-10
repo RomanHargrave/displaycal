@@ -2364,7 +2364,7 @@ class MainFrame(BaseFrame):
 			safe_print(lang.getstr("commandline"))
 			printcmdline(cmd, args)
 			safe_print("")
-			kwargs = dict(timeout=10)
+			kwargs = dict(timeout=30)
 			if sys.platform == "win32":
 				kwargs["codepage"] = windll.kernel32.GetACP()
 			self.worker.clear_cmd_output()
