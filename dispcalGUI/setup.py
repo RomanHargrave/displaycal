@@ -43,6 +43,11 @@ pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 basedir = os.path.dirname(pydir)
 
+msiversion = ".".join((str(version_tuple[0]), 
+					   str(version_tuple[1]), 
+					   str(version_tuple[2]) + 
+					   str(version_tuple[3])))
+
 def setup():
 
 	print "***", os.path.abspath(sys.argv[0]), " ".join(sys.argv[1:])
@@ -421,12 +426,12 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		"requires": requires,
 		"scripts": [],
 		"url": "http://%s.hoech.net/" % name,
-		"version": version
+		"version": msiversion if "bdist_msi" in sys.argv[1:] else version
 	}
 
 	if setuptools:
 		attrs["entry_points"] = {
-			"console_scripts": [
+			"gui_scripts": [
 				"%s = %s.%s:main" % (name, name, name),
 			]
 		}
@@ -436,6 +441,10 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		attrs["include_package_data"] = sys.platform in ("darwin", "win32")
 		install_requires = [req.replace("(", "").replace(")", "") for req in 
 							requires]
+		# wxPython windows installer doesn't add egg-info entry, so
+		# a dependency check from pkg_resources would always fail
+		install_requires.remove("wxPython >= " + ".".join(str(n) for n in 
+														  wx_minversion))
 		attrs["install_requires"] = install_requires
 		attrs["zip_safe"] = False
 	else:
@@ -444,7 +453,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 	if bdist_bbfreeze:
 		attrs["setup_requires"] = ["bbfreeze"]
 
-	if bdist_win or setuptools:
+	if (bdist_win or setuptools) and not "bdist_msi" in sys.argv[1:]:
 		attrs["scripts"] += [os.path.join("util", name + "_postinstall.py")]
 		
 	if do_py2app:
@@ -701,7 +710,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 					if os.path.isfile(path):
 						os.remove(path)
 					elif os.path.isdir(path):
-						shutil.rmtree(path, False)
+						os.rmdir(path)
 				except Exception, exception:
 					print "could'nt remove", path
 					print "   ", exception

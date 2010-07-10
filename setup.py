@@ -13,6 +13,8 @@ import shutil
 import subprocess as sp
 import sys
 import time
+if sys.platform == "win32":
+	import msilib
 
 from dispcalGUI.util_os import which
 from dispcalGUI.util_str import strtr
@@ -232,10 +234,18 @@ def setup():
 								 version_src, version_tuple, version_win,
 								 wx_minversion)
 
-	if setup_cfg:
+	msiversion = ".".join((str(version_tuple[0]), 
+						   str(version_tuple[1]), 
+						   str(version_tuple[2]) + 
+						   str(version_tuple[3])))
+
+	if setup_cfg or "bdist_msi" in sys.argv[1:]:
 		if not os.path.exists(os.path.join(pydir, "setup.cfg.backup")):
 			shutil.copy2(os.path.join(pydir, "setup.cfg"), 
 						 os.path.join(pydir, "setup.cfg.backup"))
+	if "bdist_msi" in sys.argv[1:]:
+		os.remove(os.path.join(pydir, "setup.cfg"))
+	if setup_cfg:
 		shutil.copy2(os.path.join(pydir, "misc", "setup.%s.cfg" % setup_cfg), 
 					 os.path.join(pydir, "setup.cfg"))
 
@@ -406,6 +416,87 @@ def setup():
 		inno_file.close()
 		sys.argv.remove("inno")
 		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+			return
+	
+	if "finalize_msi" in sys.argv[1:] and not dry_run:
+		db = msilib.OpenDatabase(r"dist\dispcalGUI-%s.win32-py%s.msi" %
+								 (msiversion, sys.version[:3]), 
+								 msilib.MSIDBOPEN_TRANSACT)
+		view = db.OpenView("SELECT Value FROM Property WHERE Property = 'ProductCode'")
+		view.Execute(None)
+		record = view.Fetch()
+		productcode = record.GetString(1)
+		view.Close()
+		msilib.add_data(db, "Directory", [("ProgramMenuFolder",  # Directory
+										   "TARGETDIR",  # Parent
+										   ".")])  # DefaultDir
+		msilib.add_data(db, "Directory", [("MenuDir",  # Directory
+										   "ProgramMenuFolder",  # Parent
+										   "DISPCA~1|dispcalGUI")])  # DefaultDir
+		msilib.add_data(db, "Icon", [("dispcalGUI.ico",  # Name
+									  msilib.Binary(os.path.join(pydir, "dispcalGUI", 
+														"theme", "icons", 
+														"dispcalGUI.ico")))])  # Data
+		msilib.add_data(db, "Icon", [("dispcalGUI-uninstall.ico",  # Name
+									  msilib.Binary(os.path.join(pydir, "dispcalGUI", 
+														"theme", "icons", 
+														"dispcalGUI-uninstall.ico")))])  # Data
+		msilib.add_data(db, "RemoveFile", [("MenuDir",  # FileKey
+											"dispcalGUI",  # Component
+											None,  # FileName
+											"MenuDir",  # DirProperty
+											2)])  # InstallMode
+		msilib.add_data(db, "Shortcut", [("dispcalGUI",  # Shortcut
+										  "MenuDir",  # Directory
+										  "DISPCA~1|dispcalGUI",  # Name
+										  "dispcalGUI",  # Component
+										  r"[TARGETDIR]pythonw.exe",  # Target
+										  r'"[TARGETDIR]Scripts\dispcalGUI"',  # Arguments
+										  None,  # Description
+										  None,  # Hotkey
+										  "dispcalGUI.ico",  # Icon
+										  None,  # IconIndex
+										  None,  # ShowCmd
+										  "dispcalGUI")])  # WkDir
+		msilib.add_data(db, "Shortcut", [("LICENSE",  # Shortcut
+										  "MenuDir",  # Directory
+										  "LICENSE|LICENSE",  # Name
+										  "dispcalGUI",  # Component
+										  r"[dispcalGUI]LICENSE.txt",  # Target
+										  None,  # Arguments
+										  None,  # Description
+										  None,  # Hotkey
+										  None,  # Icon
+										  None,  # IconIndex
+										  None,  # ShowCmd
+										  "dispcalGUI")])  # WkDir
+		msilib.add_data(db, "Shortcut", [("README",  # Shortcut
+										  "MenuDir",  # Directory
+										  "README|README",  # Name
+										  "dispcalGUI",  # Component
+										  r"[dispcalGUI]README.html",  # Target
+										  None,  # Arguments
+										  None,  # Description
+										  None,  # Hotkey
+										  None,  # Icon
+										  None,  # IconIndex
+										  None,  # ShowCmd
+										  "dispcalGUI")])  # WkDir
+		msilib.add_data(db, "Shortcut", [("Uninstall",  # Shortcut
+										  "MenuDir",  # Directory
+										  "UNINST|Uninstall",  # Name
+										  "dispcalGUI",  # Component
+										  r"[SystemFolder]msiexec",  # Target
+										  r"/x" + productcode,  # Arguments
+										  None,  # Description
+										  None,  # Hotkey
+										  "dispcalGUI-uninstall.ico",  # Icon
+										  None,  # IconIndex
+										  None,  # ShowCmd
+										  "SystemFolder")])  # WkDir
+		db.Commit()
+		sys.argv.remove("finalize_msi")
+		if len(sys.argv) == 1:
 			return
 
 	from dispcalGUI.setup import setup
