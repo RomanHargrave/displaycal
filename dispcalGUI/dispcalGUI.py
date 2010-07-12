@@ -138,11 +138,12 @@ from wx import xrc
 from wx.lib import delayedresult
 from wx.lib.art import flagart
 import wx.lib.hyperlink
-if sys.platform not in ("darwin", "win32"):
+if sys.platform != "darwin":
 	try:
-		from edid import get_edid
+		from edid import WMIConnectionAttributeError, get_edid
 	except ImportError:
 		get_edid = None
+if sys.platform not in ("darwin", "win32"):
 	try:
 		import xrandr
 	except ImportError:
@@ -2971,7 +2972,8 @@ class MainFrame(BaseFrame):
 						  continue_next=continue_next)
 
 	def profile(self, dst_path=None, 
-				skip_scripts=False, display_name=None):
+				skip_scripts=False, display_name=None, 
+				display_manufacturer=None):
 		safe_print(lang.getstr("create_profile"))
 		if dst_path is None:
 			dst_path = os.path.join(getcfg("profile.save_path"), 
@@ -2979,7 +2981,8 @@ class MainFrame(BaseFrame):
 									getcfg("profile.name.expanded") + 
 									profile_ext)
 		cmd, args = self.worker.prepare_colprof(
-			os.path.basename(os.path.splitext(dst_path)[0]), display_name)
+			os.path.basename(os.path.splitext(dst_path)[0]), display_name,
+			display_manufacturer)
 		if not isinstance(cmd, Exception): 
 			result = self.worker.exec_cmd(cmd, args, low_contrast=False, 
 										  skip_scripts=skip_scripts)
@@ -4583,10 +4586,19 @@ class MainFrame(BaseFrame):
 
 	def start_profile_worker(self, success_msg, resume=False):
 		self.worker.interactive = False
+		edid = {}
+		if sys.platform != "darwin" and get_edid:
+			try:
+				edid = get_edid(max(0, min(len(self.displays), 
+										   getcfg("display.number") - 1)))
+			except (TypeError, ValueError, WMIConnectionAttributeError):
+				pass
 		self.worker.start(self.profile_finish, self.profile, 
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
 									   "profiling.incomplete")}, 
+						  wkwargs={"display_name": edid.get("monitor_name"),
+								   "display_manufacturer": edid.get("manufacturer")},
 						  progress_msg=lang.getstr("create_profile"), 
 						  resume=resume)
 
@@ -5442,6 +5454,7 @@ class MainFrame(BaseFrame):
 				self.worker.options_dispcal = []
 				self.worker.options_targen = []
 				display_name = None
+				display_manufacturer = None
 				try:
 					if source_ext.lower() == ".ti3":
 						shutil.copyfile(path, ti3_tmp_path)
@@ -5458,6 +5471,8 @@ class MainFrame(BaseFrame):
 							get_options_from_profile(profile)[0]]
 						if "dmdd" in profile.tags:
 							display_name = profile.getDeviceModelDescription()
+						if "dmnd" in profile.tags:
+							display_manufacturer = profile.getDeviceManufacturerDescription()
 					ti3 = CGATS.CGATS(ti3_tmp_path)
 					if ti3.queryv1("COLOR_REP") and \
 					   ti3.queryv1("COLOR_REP")[:3] == "RGB":
@@ -5481,7 +5496,8 @@ class MainFrame(BaseFrame):
 						"failure_msg": lang.getstr(
 							"error.profile.file_not_created")}, 
 					wkwargs={"dst_path": profile_save_path, 
-							 "display_name": display_name}, 
+							 "display_name": display_name,
+							 "display_manufacturer": display_manufacturer}, 
 					progress_msg=lang.getstr("create_profile"))
 	
 	def create_profile_name(self):

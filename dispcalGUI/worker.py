@@ -1410,7 +1410,8 @@ class Worker():
 		""" Check if the Worker instance is busy. Return True or False. """
 		return not getattr(self, "finished", True)
 
-	def prepare_colprof(self, profile_name=None, display_name=None):
+	def prepare_colprof(self, profile_name=None, display_name=None,
+						display_manufacturer=None):
 		"""
 		Prepare a colprof commandline.
 		
@@ -1466,22 +1467,11 @@ class Worker():
 			# only add display desc and dispcal options if creating RGB profile
 			options_dispcal = self.options_dispcal
 			if len(self.displays):
-				edid = None
-				if sys.platform != "darwin" and get_edid:
-					try:
-						edid = get_edid(max(0, min(len(self.displays), 
-												   getcfg("display.number") - 1)))
-					except (TypeError, ValueError):
-						pass
-					else:
-						# Manufacturer - 'dmnd' tag
-						args.append("-A")
-						args.append(edid["manufacturer"])
+				if display_manufacturer:
+					args.append("-A")
+					args.append(display_manufacturer)
 				if display_name is None:
-					if edid:
-						display_name = edid["monitor_name"]
-					else:
-						display_name = self.get_display_name()
+					display_name = self.get_display_name()
 				args.append("-M")
 				args.append(display_name)
 		args += ["-D"]
