@@ -42,7 +42,10 @@ def get_edid(display_no):
 		if wmi_connection:
 			# Use WMI for Vista/Win7
 			# http://msdn.microsoft.com/en-us/library/Aa392707
-			msmonitors = wmi_connection.WmiMonitorDescriptorMethods()
+			try:
+				msmonitors = wmi_connection.WmiMonitorDescriptorMethods()
+			except AttributeError, exception:
+				raise WMIConnectionAttributeError(exception)
 			for msmonitor in msmonitors:
 				if msmonitor.InstanceName.split("\\")[1] == id:
 					try:
@@ -130,7 +133,11 @@ def get_manufacturer_name(manufacturer_id):
 		paths = ["/usr/share/hwdata/pnp.ids",  # hwdata, e.g. Red Hat
 				 "/usr/share/misc/pnp.ids",  # pnputils, e.g. Debian
 				 "/usr/share/libgnome-desktop/pnp.ids",  # fallback gnome-desktop
-				 os.path.join(os.getcwdu(), "pnp.ids")]  # fallback
+				 os.path.join(os.path.dirname(sys.executable 
+											  if getattr(sys, 'frozen', 
+														 False) else 
+											  os.path.abspath(__file__)), 
+							  "pnp.ids")]  # fallback
 		for path in paths:
 			if os.path.isfile(path):
 				try:
@@ -191,3 +198,7 @@ def parse_edid(edid):
 	result = locals()
 	
 	return result
+
+
+class WMIConnectionAttributeError(AttributeError):
+	pass

@@ -199,6 +199,7 @@ def setup():
 	package_data = {
 		name: [
 			"argyll_instruments.json",
+			"pnp.ids",
 			"lang/*.json",
 			"presets/*.icc",
 			"report/*.css",
@@ -229,6 +230,7 @@ def setup():
 		# Linux/Unix or py2app/py2exe
 		data_files += [
 			(data, [os.path.join(pydir, "argyll_instruments.json")]), 
+			(data, [os.path.join(pydir, "pnp.ids")]), 
 			(os.path.join(data, "lang"), 
 				glob.glob(os.path.join(pydir, "lang", "*.json"))), 
 			(os.path.join(data, "presets"), 
