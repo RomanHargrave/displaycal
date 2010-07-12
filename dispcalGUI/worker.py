@@ -806,13 +806,13 @@ class Worker():
 						except (TypeError, ValueError):
 							edid = None
 						if edid:
-							manufacturer = edid.get("manufacturer_id")
+							manufacturer = edid.get("manufacturer", "").split()
 							monitor = edid.get("monitor_name")
 							if monitor:
 								desc.append(monitor)
 							if manufacturer and (not monitor or 
-												 not monitor.startswith(manufacturer)):
-								desc.insert(0, manufacturer)
+												 not monitor.lower().startswith(manufacturer[0].lower())):
+								desc.insert(0, manufacturer[0])
 					if desc and desc[-1] not in display:
 						# Only replace the description if it not already
 						# contains the monitor model
