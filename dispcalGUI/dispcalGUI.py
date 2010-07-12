@@ -918,9 +918,7 @@ class MainFrame(BaseFrame):
 			self.Show()
 	
 	def infoframe_close_handler(self, event):
-		setcfg("log.show", 0)
-		self.infoframe.Hide()
-		self.menuitem_show_log.Check(False)
+		self.infoframe_toggle_handler(event)
 	
 	def setup_language(self):
 		"""
