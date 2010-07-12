@@ -142,7 +142,11 @@ if sys.platform not in ("darwin", "win32"):
 	try:
 		from edid import get_edid
 	except ImportError:
-		get_edid = False
+		get_edid = None
+	try:
+		import xrandr
+	except ImportError:
+		xrandr = None
 
 def _excepthook(etype, value, tb):
 	safe_print("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
@@ -2994,15 +2998,24 @@ class MainFrame(BaseFrame):
 				setcfg("last_icc_path", dst_path)
 			# Fixup desc tags - ASCII needs to be 7-bit
 			# also add Unicode and Mac ScriptCode strings
-			desc = profile.getDescription()
-			profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
-			profile.tags.desc["Macintosh"] = desc
-			profile.tags.desc["Unicode"] = desc
-			if "dmdd" in profile.tags:
+			if "desc" in profile.tags and isinstance(profile.tags.desc, 
+													 ICCP.TextDescriptionType):
+				desc = profile.getDescription()
+				profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
+				profile.tags.desc["Macintosh"] = desc
+				profile.tags.desc["Unicode"] = desc
+			if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
+													 ICCP.TextDescriptionType):
 				ddesc = profile.getDeviceModelDescription()
 				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
 				profile.tags.dmdd["Macintosh"] = ddesc
 				profile.tags.dmdd["Unicode"] = ddesc
+			if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
+													 ICCP.TextDescriptionType):
+				mdesc = profile.getDeviceManufacturerDescription()
+				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
+				profile.tags.dmnd["Macintosh"] = mdesc
+				profile.tags.dmnd["Unicode"] = mdesc
 			try:
 				profile.write()
 			except Exception, exception:
@@ -3177,28 +3190,28 @@ class MainFrame(BaseFrame):
 		result = None
 		install_section = None
 		if install and sys.platform not in ("darwin", "win32") and \
-		   which("gcm-import") and get_edid:
+		   which("gcm-import") and get_edid and xrandr:
 			# Install using GNOME Color Manager
-			gcm_device_profiles_conf = os.path.join(xdg_config_home, 
-													"gnome-color-manager", 
-													"device-profiles.conf")
-			if not os.path.exists(gcm_device_profiles_conf):
-				gcm_device_profiles_conf = os.path.join(xdg_config_home, 
-														"color", 
-														"device-profiles.conf")
-			cfg = ConfigParser.RawConfigParser()
-			cfg.optionxform = str
-			if os.path.exists(gcm_device_profiles_conf):
-				try:
-					fp = codecs.open(gcm_device_profiles_conf, "r", "UTF-8")
-				except Exception, exception:
-					handle_error(exception)
-				else:
-					try:
-						cfg.readfp(fp)
-					except Exception, exception:
-						handle_error(exception)
-					fp.close()
+			##gcm_device_profiles_conf = os.path.join(xdg_config_home, 
+													##"gnome-color-manager", 
+													##"device-profiles.conf")
+			##if not os.path.exists(gcm_device_profiles_conf):
+				##gcm_device_profiles_conf = os.path.join(xdg_config_home, 
+														##"color", 
+														##"device-profiles.conf")
+			##cfg = ConfigParser.RawConfigParser()
+			##cfg.optionxform = str
+			##if os.path.exists(gcm_device_profiles_conf):
+				##try:
+					##fp = codecs.open(gcm_device_profiles_conf, "r", "UTF-8")
+				##except Exception, exception:
+					##handle_error(exception)
+				##else:
+					##try:
+						##cfg.readfp(fp)
+					##except Exception, exception:
+						##handle_error(exception)
+					##fp.close()
 			try:
 				edid = get_edid(max(0, min(len(self.worker.displays), 
 										   getcfg("display.number") - 1)))
@@ -3206,116 +3219,88 @@ class MainFrame(BaseFrame):
 				edid = None
 			if edid:
 				incomplete = False
-				section_parts = ["xrandr"]
-				for name in ["manufacturer", "monitor_name", "ascii", 
-							 "serial_ascii"]:
-					if name in edid:
-						section_parts.append(edid[name].lower().replace(" ", 
-																		"_"))
-					elif name == "monitor_name":
-						# Do not allow the model string to be missing
-						incomplete = True
-						break
+				##section_parts = ["xrandr"]
+				##for name in ["manufacturer", "monitor_name", "ascii", 
+							 ##"serial_ascii"]:
+					##if name in edid:
+						##section_parts.append(edid[name].lower().replace(" ", 
+																		##"_"))
+					##elif name == "monitor_name":
+						### Do not allow the model string to be missing
+						##incomplete = True
+						##break
 				if not incomplete:
-					install_section = "_".join(section_parts)
-					hash_found = False
-					safe_print("Looking for device ID with hash", edid["hash"])
-					for section in cfg.sections():
-						# Find MD5 hash of EDID
-						if cfg.has_option(section, "edid-hash") and \
-						   cfg.get(section, "edid-hash") == edid["hash"]:
-							safe_print("Found device ID:", section)
-							hash_found = True
-							install_section = section
-							break
-					if not hash_found:
-						safe_print("Device ID not found for hash", edid["hash"])
-						if cfg.has_section(install_section):
-							safe_print("Using existing device ID:", 
-									   install_section)
-						else:
-							# If we can't find a section with the MD5 hash or 
-							# section string, look for a section with the info we 
-							# have from EDID
-							partial_match_found = False
-							safe_print("Looking for device ID starting with %r "
-									   "and ending with %r" % ("_".join(section_parts[:2]),
-															   "_".join(section_parts[2:])))
-							for section in cfg.sections():
-								if section.startswith("_".join(section_parts[:2])) and \
-								   section.endswith("_".join(section_parts[2:])):
-									safe_print("Found device ID:", section)
-									install_section = section
-									partial_match_found = True
-									break
-							if not partial_match_found:
-								safe_print("No match found. Using generated "
-										   "device ID:", install_section)
-					utc = gmtime()
-					ts = strftime("%Y-%m-%dT%H:%M:%S", utc) + \
-						 str(round(time() - int(time()), 6))[1:] + "Z"
-					if not cfg.has_section(install_section):
-						# If we are creating a new entry
-						safe_print("New entry needed for device ID:", 
-								   install_section)
-						cfg.add_section(install_section)
-						cfg.set(install_section, "edid-hash", edid["hash"])
-						cfg.set(install_section, "created", ts)
-						if "serial_ascii" in edid:
-							cfg.set(install_section, "serial", 
-									edid["serial_ascii"])
-						if "monitor_name" in edid:
-							cfg.set(install_section, "model", 
-									edid["monitor_name"])
-						if "manufacturer" in edid:
-							cfg.set(install_section, "manufacturer", 
-									edid["manufacturer"])
-						if "manufacturer" in edid and \
-						   "monitor_name" in edid and \
-						   "max_h_size_cm" in edid and \
-						   "max_v_size_cm" in edid:
-							cfg.set(install_section, "title", 
-									" - ".join([edid["manufacturer"],
-											    edid["monitor_name"],
-											    str(int(math.sqrt(math.pow(edid["max_h_size_cm"], 2) * 
-																  math.pow(edid["max_v_size_cm"], 2)) / 2.54)) + '"']))
-						cfg.set(install_section, "type", "display")
-						cfg.set(install_section, "colorspace", "rgb")
-					cfg.set(install_section, "modified", ts)
+					##install_section = "_".join(section_parts)
+					##hash_found = False
+					##safe_print("Looking for device ID with hash", edid["hash"])
+					##for section in cfg.sections():
+						### Find MD5 hash of EDID
+						##if cfg.has_option(section, "edid-hash") and \
+						   ##cfg.get(section, "edid-hash") == edid["hash"]:
+							##safe_print("Found device ID:", section)
+							##hash_found = True
+							##install_section = section
+							##break
+					##if not hash_found:
+						##safe_print("Device ID not found for hash", edid["hash"])
+						##if cfg.has_section(install_section):
+							##safe_print("Using existing device ID:", 
+									   ##install_section)
+						##else:
+							### If we can't find a section with the MD5 hash or 
+							### section string, look for a section with the info we 
+							### have from EDID
+							##partial_match_found = False
+							##safe_print("Looking for device ID starting with %r "
+									   ##"and ending with %r" % ("_".join(section_parts[:2]),
+															   ##"_".join(section_parts[2:])))
+							##for section in cfg.sections():
+								##if section.startswith("_".join(section_parts[:2])) and \
+								   ##section.endswith("_".join(section_parts[2:])):
+									##safe_print("Found device ID:", section)
+									##install_section = section
+									##partial_match_found = True
+									##break
+							##if not partial_match_found:
+								##safe_print("No match found. Using generated "
+										   ##"device ID:", install_section)
+					##utc = gmtime()
+					##ts = strftime("%Y-%m-%dT%H:%M:%S", utc) + \
+						 ##str(round(time() - int(time()), 6))[1:] + "Z"
+					##if not cfg.has_section(install_section):
+						### If we are creating a new entry
+						##safe_print("New entry needed for device ID:", 
+								   ##install_section)
+						##cfg.add_section(install_section)
+						##cfg.set(install_section, "edid-hash", edid["hash"])
+						##cfg.set(install_section, "created", ts)
+						##if "serial_ascii" in edid:
+							##cfg.set(install_section, "serial", 
+									##edid["serial_ascii"])
+						##if "monitor_name" in edid:
+							##cfg.set(install_section, "model", 
+									##edid["monitor_name"])
+						##if "manufacturer" in edid:
+							##cfg.set(install_section, "manufacturer", 
+									##edid["manufacturer"])
+						##if "manufacturer" in edid and \
+						   ##"monitor_name" in edid and \
+						   ##"max_h_size_cm" in edid and \
+						   ##"max_v_size_cm" in edid:
+							##cfg.set(install_section, "title", 
+									##" - ".join([edid["manufacturer"],
+											    ##edid["monitor_name"],
+											    ##str(int(math.sqrt(math.pow(edid["max_h_size_cm"], 2) * 
+																  ##math.pow(edid["max_v_size_cm"], 2)) / 2.54)) + '"']))
+						##cfg.set(install_section, "type", "display")
+						##cfg.set(install_section, "colorspace", "rgb")
+					##cfg.set(install_section, "modified", ts)
 					profilename = os.path.basename(profile_path)
 					##profile_install_path = os.path.join(iccprofiles_display_home[0],
 														##profilename)
 					##if not os.path.exists(profile_install_path):
 						##shutil.copyfile(profile_path, profile_install_path)
 					profile_install_path = profile_path
-					# Fixup model and manufacturer with info from GCM
-					# device-profiles.conf (which equals the info we got from 
-					# EDID if no matching entry was available)
-					safe_print("Adding device model and manufacturer to ICC "
-							   "profile", profile_install_path)
-					try:
-						profile = ICCP.ICCProfile(profile_install_path)
-					except ICCProfileInvalidError, exception:
-						handle_error(exception)
-					else:
-						profile.tags.dmdd = ICCP.TextDescriptionType("", "dmdd")
-						ddesc = cfg.get(install_section, "model")
-						safe_print("Device model:", ddesc)
-						profile.tags.dmdd["ASCII"] = ddesc.encode("ASCII", 
-																  "asciize")
-						profile.tags.dmdd["Macintosh"] = ddesc
-						profile.tags.dmdd["Unicode"] = ddesc
-						profile.tags.dmnd = ICCP.TextDescriptionType("", "dmnd")
-						mdesc = cfg.get(install_section, "manufacturer")
-						safe_print("Device manufacturer:", mdesc)
-						profile.tags.dmnd["ASCII"] = mdesc.encode("ASCII", 
-																  "asciize")
-						profile.tags.dmnd["Macintosh"] = mdesc
-						profile.tags.dmnd["Unicode"] = mdesc
-						try:
-							profile.write()
-						except Exception, exception:
-							handle_error(exception)
 					if True:
 						gcm_cmd, gcm_args = which("gcm-import"), [profile_install_path]
 						##if cfg.has_option(install_section, "profile"):
@@ -3430,6 +3415,8 @@ class MainFrame(BaseFrame):
 					if os.path.isdir(dirname):
 						# Use the first one that exists
 						break
+					else:
+						dirname = None
 				if not dirname:
 					# Create the first one in the list
 					dirname = iccprofiles_display_home[0]
@@ -3533,7 +3520,7 @@ class MainFrame(BaseFrame):
 			self.worker.wrapup(False)
 		if not isinstance(result, Exception) and result:
 			if install:
-				if not silent and not gcm and not oyranos:
+				if not silent and not gcm:
 					if verbose >= 1: safe_print(lang.getstr("success"))
 					InfoDialog(self, 
 							   msg=lang.getstr("profile.install.success"), 
@@ -4793,7 +4780,7 @@ class MainFrame(BaseFrame):
 											  self.worker.argyll_version >= 
 											  [1, 1, 0] and 
 											  (not which("gcm-import") or 
-											   not get_edid) and
+											   not get_edid or not xrandr) and
 											  not which("oyranos-monitor"))) and 
 				(os.geteuid() == 0 or which("sudo"))) or \
 				(sys.platform == "win32" and 

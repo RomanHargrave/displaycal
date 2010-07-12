@@ -19,7 +19,7 @@ elif sys.platform == "win32":
 	import pywintypes
 	import win32api
 	import win32com.client
-else:
+if sys.platform != "darwin":
 	try:
 		from edid import get_edid
 	except ImportError:
@@ -1466,10 +1466,24 @@ class Worker():
 			# only add display desc and dispcal options if creating RGB profile
 			options_dispcal = self.options_dispcal
 			if len(self.displays):
-				args.insert(-2, "-M")
+				edid = None
+				if sys.platform != "darwin" and get_edid:
+					try:
+						edid = get_edid(max(0, min(len(self.displays), 
+												   getcfg("display.number") - 1)))
+					except (TypeError, ValueError):
+						pass
+					else:
+						# Manufacturer - 'dmnd' tag
+						args.append("-A")
+						args.append(edid["manufacturer"])
 				if display_name is None:
-					display_name = self.get_display_name()
-				args.insert(-2, display_name)
+					if edid:
+						display_name = edid["monitor_name"]
+					else:
+						display_name = self.get_display_name()
+				args.append("-M")
+				args.append(display_name)
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
