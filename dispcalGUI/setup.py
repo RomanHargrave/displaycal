@@ -393,16 +393,16 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		"author_email": "%s@hoech.net" % name,
 		"classifiers": [
 			"Development Status :: 4 - Beta",
-			"Environment :: Console",
+			"Environment :: MacOS X",
+			"Environment :: Win32 (MS Windows)",
+			"Environment :: X11 Applications",
 			"Intended Audience :: End Users/Desktop",
-			"Intended Audience :: Advanced End Users",
 			"License :: OSI Approved :: GNU General Public License (GPL)",
-			"Operating System :: OS Independent "
-			"(Written in an interpreted language)",
-			"Programming Language :: Python",
-			"Topic :: Graphics",
-			"User Interface :: Project is a user interface (UI) system",
-			"User Interface :: wxWidgets",
+			"Operating System :: OS Independent",
+			"Programming Language :: Python :: 2.5",
+			"Programming Language :: Python :: 2.6",
+			"Programming Language :: Python :: 2.7",
+			"Topic :: Multimedia :: Graphics",
 		],
 		"data_files": data_files,
 		"description": description,
@@ -758,7 +758,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 					   "edit"]
 		manifest_in += ["include LICENSE.txt", "include MANIFEST", 
 						"include MANIFEST.in", "include README.html", 
-						"include use-distutils"]
+						"include %s.pyw" % name, "include use-distutils"]
 		manifest_in += ["include " + os.path.basename(sys.argv[0])]
 		manifest_in += ["include " + 
 						os.path.splitext(os.path.basename(sys.argv[0]))[0] + 

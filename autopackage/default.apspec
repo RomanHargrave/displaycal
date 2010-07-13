@@ -30,6 +30,9 @@ A graphical user interface for the Argyll CMS display calibration utilities.
 # /usr/bin/python dispcalGUI/setup.py build_ext -i --use-distutils
 # popd > /dev/null
 
+pushd "$source_dir" > /dev/null
+python setup.py install_egg_info --install-dir="$build_root/lib/python/site-packages" --use-distutils
+
 mkdir -p "$build_root/bin"
 cp "$source_dir/scripts/dispcalGUI" "$build_root/bin"
 
@@ -38,7 +41,6 @@ cp "$source_dir/dispcalGUI/"*.py "$build_root/lib/python/site-packages/dispcalGU
 cp "$source_dir/dispcalGUI/"*.so.tar "$build_root/lib/python/site-packages/dispcalGUI"
 
 mkdir -p "$build_root/share"
-pushd "$source_dir" > /dev/null
 tar --exclude=".svn" --exclude="*~" --exclude="*.c" --exclude="*.icns" --exclude="*.ico" --exclude="*.py*" --exclude="*.so" --exclude="*.tar" -pcf "$build_root/share/dispcalGUI.tar" dispcalGUI
 popd > /dev/null
 pushd "$build_root/share" > /dev/null

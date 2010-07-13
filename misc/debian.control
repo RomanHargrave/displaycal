@@ -1,5 +1,5 @@
 Source: ${DEBPACKAGE}
-Section: unknown
+Section: graphics
 Priority: optional
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 Build-Depends: debhelper (>= 4.1.16), gcc, python (>= ${PY_MINVERSION}), python (<= ${PY_MAXVERSION}), python-all-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev

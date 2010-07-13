@@ -62,7 +62,10 @@ f = open('LICENSE.txt', 'wb')
 f.write(d)
 f.close()"
 # Install
-python`python -c "import sys;print sys.version[:3]"` setup.py install --use-distutils \
+%if 0%{?fedora_version} > 0
+export PYO=-O1
+%endif
+python`python -c "import sys;print sys.version[:3]"` setup.py install $PYO --use-distutils \
 	--prefix=$RPM_BUILD_ROOT%_prefix \
 	--exec-prefix=$RPM_BUILD_ROOT%_exec_prefix \
 	--install-data=$RPM_BUILD_ROOT%_datadir \
@@ -96,8 +99,6 @@ paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in
 		 filter(lambda path: not '/doc/' in path, f.readlines())]
 f.close()
 for path in list(paths):
-	if path.endswith('.py') and 0%{?fedora_version} > 0:
-		paths.append(path + 'o')
 	while True:
 		path = os.path.dirname(path)
 		if os.path.isdir(path):
