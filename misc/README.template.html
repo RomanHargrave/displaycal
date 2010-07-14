@@ -557,7 +557,7 @@
 			<h2>Download</h2>
 			
 			<h3>Linux DEB/RPM packages</h3>
-			<p>Native packages for several distributions are available via my <a href="https://build.opensuse.org/package/show?package=dispcalGUI&amp;project=home%3Afhoech">openSUSE Build Service repository</a>.</p>
+			<p>Native packages for several distributions are available via my <a href="https://build.opensuse.org/package/show?package=dispcalGUI&amp;project=home%3Afhoech">openSUSE Build Service repository</a>:</p>
 			<p>
 				Debian 5 (Lenny)
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Debian_5.0/i386/">x86</a> | 
@@ -566,7 +566,7 @@
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_12/i686/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_12/x86_64/">x86_64</a><br />
 				Fedora 13
-				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/i686/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/i386/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/x86_64/">x86_64</a><br />
 				Mandriva 2009.1
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Mandriva_2009.1/i586/">x86</a> | 
@@ -1380,9 +1380,13 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>The timeout of 10 seconds for the startup of Argyll tools and instrument initialization was too short for some instruments and is now increased to 30 seconds. If the timeout is exceeded, dispcalGUI should also abort automatically and no longer hang.</li>
+							<li>The timeout of 10 seconds for the startup of Argyll tools and instrument initialization was too short for some instruments and is now increased to 30 seconds. If the timeout is ever exceeded, dispcalGUI should now also abort automatically and no longer hang.</li>
 							<li>Linux (Autopackage install): Fixed menu entry sometimes disappearing permanently after logging out under GNOME.</li>
 							<li>Linux: Fixed dispcalGUI not working if libX11 or libXrandr do not expose certain functions (e.g. under Mandriva 2009).</li>
+							<li>Linux: Fixed not being able to install a profile using GNOME Color Manager when the profile was not writable.</li>
+							<li>Linux: Fixed not being able to install a profile using Oyranos when the profile was not located in ~/.color/icc/devices/display.</li>
+							<li>Linux/Mac OS X: Saving a log file from the log window now works correctly.</li>
+							<li>Mac OS X 10.6: The current display profile should now be determined correctly (e.g. for the curve viewer) when loading its calibration curves or selecting the “&lt;Current&gt;” settings.</li>
 							<li>Windows (installer): An unused console window is no longer shown when launching dispcalGUI via the installed shortcuts.</li>
 						</ul>
 					</dd>

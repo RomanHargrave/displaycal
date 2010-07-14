@@ -421,13 +421,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.5.2.2 (Linux)<br />
-				0.5.2.2 (Mac OS X)<br />
-				0.5.2.2 (Windows)<br />
-				0.5.2.2 (Source)<br />
+				<dd id="version">0.5.3.3 (Linux)<br />
+				0.5.3.3 (Mac OS X)<br />
+				0.5.3.3 (Windows)<br />
+				0.5.3.3 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-07-10 20:57 (UTC)</dd>
+				<dd id="date">2010-07-14 10:03 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -557,7 +557,7 @@
 			<h2>Download</h2>
 			
 			<h3>Linux DEB/RPM packages</h3>
-			<p>Native packages for several distributions are available via my <a href="https://build.opensuse.org/package/show?package=dispcalGUI&amp;project=home%3Afhoech">openSUSE Build Service repository</a>.</p>
+			<p>Native packages for several distributions are available via my <a href="https://build.opensuse.org/package/show?package=dispcalGUI&amp;project=home%3Afhoech">openSUSE Build Service repository</a>:</p>
 			<p>
 				Debian 5 (Lenny)
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Debian_5.0/i386/">x86</a> | 
@@ -566,7 +566,7 @@
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_12/i686/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_12/x86_64/">x86_64</a><br />
 				Fedora 13
-				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/i686/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/i386/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/x86_64/">x86_64</a><br />
 				Mandriva 2009.1
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Mandriva_2009.1/i586/">x86</a> | 
@@ -593,18 +593,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.2.2.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.3.3.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.2.2.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.2.2-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.2.2-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.3.3.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.3.3-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.3.3-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.2.2.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.3.3.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -1373,16 +1373,20 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-07-10 20:57 (UTC) 0.5.2.2 -->
+			<!-- 2010-07-14 10:03 (UTC) 0.5.3.3 -->
 			<dl>
-				<dt>2010-07-10 20:57 (UTC) 0.5.2.2</dt>
+				<dt>2010-07-14 10:03 (UTC) 0.5.3.3</dt>
 					<dd>
-						<h3>0.5.2.2</h3>
+						<h3>0.5.3.3</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>The timeout of 10 seconds for the startup of Argyll tools and instrument initialization was too short for some instruments and is now increased to 30 seconds. If the timeout is exceeded, dispcalGUI should also abort automatically and no longer hang.</li>
+							<li>The timeout of 10 seconds for the startup of Argyll tools and instrument initialization was too short for some instruments and is now increased to 30 seconds. If the timeout is ever exceeded, dispcalGUI should now also abort automatically and no longer hang.</li>
 							<li>Linux (Autopackage install): Fixed menu entry sometimes disappearing permanently after logging out under GNOME.</li>
 							<li>Linux: Fixed dispcalGUI not working if libX11 or libXrandr do not expose certain functions (e.g. under Mandriva 2009).</li>
+							<li>Linux: Fixed not being able to install a profile using GNOME Color Manager when the profile was not writable.</li>
+							<li>Linux: Fixed not being able to install a profile using Oyranos when the profile was not located in ~/.color/icc/devices/display.</li>
+							<li>Linux/Mac OS X: Saving a log file from the log window now works correctly.</li>
+							<li>Mac OS X 10.6: The current display profile should now be determined correctly (e.g. for the curve viewer) when loading its calibration curves or selecting the “&lt;Current&gt;” settings.</li>
 							<li>Windows (installer): An unused console window is no longer shown when launching dispcalGUI via the installed shortcuts.</li>
 						</ul>
 					</dd>
