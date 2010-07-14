@@ -3637,16 +3637,17 @@ class MainFrame(BaseFrame):
 								cfg = ConfigParser.SafeConfigParser()
 								cfg.optionxform = str
 								cfg.read([desktopfile_path])
-								hidden = cfg.set("Desktop Entry", "Hidden", 
-												 "true")
-								io = StringIO()
-								cfg.write(io)
-								io.seek(0)
-								desktop = "".join(["=".join(line.split(" = ", 1)) 
-												   for line in io])
-								desktopfile = open(desktopfile_path, "w")
-								desktopfile.write(desktop)
-								desktopfile.close()
+								if not cfg.has_option("Desktop Entry", "Hidden") or \
+								   cfg.get("Desktop Entry", "Hidden").lower() != "true":
+									cfg.set("Desktop Entry", "Hidden", "true")
+									io = StringIO()
+									cfg.write(io)
+									io.seek(0)
+									desktop = "".join(["=".join(line.split(" = ", 1)) 
+													   for line in io])
+									desktopfile = open(desktopfile_path, "w")
+									desktopfile.write(desktop)
+									desktopfile.close()
 							except Exception, exception:
 								InfoDialog(self, 
 										   msg=lang.getstr(
@@ -3670,25 +3671,30 @@ class MainFrame(BaseFrame):
 										   bitmap=geticon(32, "dialog-warning"))
 						# Disable dispcalGUI system loader
 						if os.path.exists(system_desktopfile_path):
+							move = True
 							try:
 								cfg = ConfigParser.SafeConfigParser()
 								cfg.optionxform = str
 								cfg.read([system_desktopfile_path])
-								hidden = cfg.set("Desktop Entry", "Hidden", 
-												 "true")
-								io = StringIO()
-								cfg.write(io)
-								io.seek(0)
-								desktop = "".join(["=".join(line.split(" = ", 1)) 
-												   for line in io])
-								tmp_desktopfile_path = os.path.join(self.worker.create_tempdir(),
-																	os.path.basename(system_desktopfile_path))
-								desktopfile = open(tmp_desktopfile_path, "w")
-								desktopfile.write(desktop)
-								desktopfile.close()
+								if cfg.has_option("Desktop Entry", "Hidden") and \
+								   cfg.get("Desktop Entry", "Hidden").lower() == "true":
+									move = False
+								else:
+									cfg.set("Desktop Entry", "Hidden", "true")
+									io = StringIO()
+									cfg.write(io)
+									io.seek(0)
+									desktop = "".join(["=".join(line.split(" = ", 1)) 
+													   for line in io])
+									tmp_desktopfile_path = os.path.join(self.worker.create_tempdir(),
+																		os.path.basename(system_desktopfile_path))
+									desktopfile = open(tmp_desktopfile_path, "w")
+									desktopfile.write(desktop)
+									desktopfile.close()
 							except Exception, exception:
 								result = False
-							if (not result or \
+							if move and \
+							   (not result or 
 							    self.worker.exec_cmd("mv", 
 													 ["-f", 
 													  tmp_desktopfile_path,
@@ -3698,8 +3704,8 @@ class MainFrame(BaseFrame):
 													 skip_scripts=True, 
 													 silent=True, 
 													 asroot=True, 
-													 title=lang.getstr("autostart_remove_old")) is not True) and \
-							   not silent:
+													 title=lang.getstr("autostart_remove_old")) 
+								is not True) and not silent:
 									InfoDialog(self, 
 											   msg=lang.getstr(
 												   "error.autostart_remove_old", 
