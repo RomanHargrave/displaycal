@@ -75,19 +75,18 @@ if [ -e "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}" ]; then
 	rm -rf "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}"
 fi
 # udev/hotplug
-mkdir -p "${RPM_BUILD_ROOT}/etc/udev/rules.d"
+mkdir -p "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb"
 # USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-cp -f "misc/92-Argyll.rules" "${RPM_BUILD_ROOT}/etc/udev/rules.d/92-Argyll.rules"
-echo "/etc/udev/rules.d/92-Argyll.rules">>INSTALLED_FILES
-## USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-#cp -f  "misc/45-Argyll.rules" "${RPM_BUILD_ROOT}/etc/udev/rules.d/45-Argyll.rules"
-#echo "/etc/udev/rules.d/45-Argyll.rules">>INSTALLED_FILES
-## USB using hotplug and Serial using udev (older versions of Linux)
-#mkdir -p "${RPM_BUILD_ROOT}/etc/hotplug/usb"
-#cp -f "misc/Argyll" "${RPM_BUILD_ROOT}/etc/hotplug/usb/Argyll"
-#echo "/etc/hotplug/usb/Argyll">>INSTALLED_FILES
-#cp -f "misc/Argyll.usermap" "${RPM_BUILD_ROOT}/etc/hotplug/usb/Argyll.usermap"
-#echo "/etc/hotplug/usb/Argyll.usermap">>INSTALLED_FILES
+cp -f "misc/92-Argyll.rules" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/92-Argyll.rules"
+echo "/usr/share/dispcalGUI/usb/92-Argyll.rules">>INSTALLED_FILES
+# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+cp -f  "misc/45-Argyll.rules" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/45-Argyll.rules"
+echo "/usr/share/dispcalGUI/usb/45-Argyll.rules">>INSTALLED_FILES
+# USB using hotplug and Serial using udev (older versions of Linux)
+cp -f "misc/Argyll" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll"
+echo "/usr/share/dispcalGUI/usb/Argyll">>INSTALLED_FILES
+cp -f "misc/Argyll.usermap" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll.usermap"
+echo "/usr/share/dispcalGUI/usb/Argyll.usermap">>INSTALLED_FILES
 %if 0%{?suse_version} > 0
 # Update categories to prevent buildservice from complaining
 %suse_update_desktop_file %{name} 2DGraphics
@@ -122,6 +121,29 @@ rm -rf $RPM_BUILD_ROOT
 %doc theme
 
 %post
+if [ -e "/etc/udev/rules.d" ]; then
+	ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
+		# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
+		if [ ! -e "/etc/udev/rules.d/55-Argyll.rules" ]; then
+			cp "/usr/share/dispcalGUI/usb/92-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
+		fi
+	) || (
+		# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+		if [ ! -e "/etc/udev/rules.d/45-Argyll.rules" ]; then
+			cp "/usr/share/dispcalGUI/usb/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
+		fi
+	)
+else
+	if [ -e "/etc/hotplug"]; then
+		# USB using hotplug and Serial using udev (older versions of Linux)
+		if [ ! -e "/etc/hotplug/usb/Argyll" ]; then
+			cp "/usr/share/dispcalGUI/usb/Argyll" "/etc/hotplug/usb/Argyll"
+		fi
+		if [ ! -e "/etc/hotplug/usb/Argyll.usermap" ]; then
+			cp "/usr/share/dispcalGUI/usb/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
+		fi
+	fi
+fi
 which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true
 which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true
 

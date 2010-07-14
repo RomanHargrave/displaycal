@@ -52,6 +52,9 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package
+	# Make files executable
+	chmod +x "scripts/${name}"
+	chmod +x "misc/Argyll"
 	# Convert line endings in LICENSE.txt
 	python -c "f = open('LICENSE.txt', 'rb');d = f.read().replace('\r\n', '\n').replace('\r', '\n');f.close();f = open('LICENSE.txt', 'wb');f.write(d);f.close()"
 	# Install
@@ -68,15 +71,14 @@ install: build
 			"${DEB_BUILD_ROOT}${install_prefix}/lib/python${python_version}/dist-packages" || true; \
 	fi
 	# udev/hotplug
-	mkdir -p "${DEB_BUILD_ROOT}/etc/udev/rules.d"
+	mkdir -p "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb"
 	# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-	cp -f "misc/92-Argyll.rules" "${DEB_BUILD_ROOT}/etc/udev/rules.d/92-Argyll.rules"
-	## USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-	#cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/etc/udev/rules.d/45-Argyll.rules"
-	## USB using hotplug and Serial using udev (older versions of Linux)
-	#mkdir -p "${DEB_BUILD_ROOT}/etc/hotplug/usb"
-	#cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll"
-	#cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/etc/hotplug/usb/Argyll.usermap"
+	cp -f "misc/92-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/92-Argyll.rules"
+	# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+	cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/45-Argyll.rules"
+	# USB using hotplug and Serial using udev (older versions of Linux)
+	cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll"
+	cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll.usermap"
 	# --- end custom part for installing
 
 # Build architecture-independent files here.

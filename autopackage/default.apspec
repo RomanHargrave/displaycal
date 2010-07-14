@@ -181,16 +181,24 @@ if [ `whoami` = "root" ]; then
 	if [ -e "/etc/udev/rules.d" ]; then
 		ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
 			# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-			copyFile "etc/udev/rules.d/92-Argyll.rules" "/etc/udev/rules.d/92-Argyll.rules"
+			if [ ! -e "/etc/udev/rules.d/55-Argyll.rules" ]; then
+				copyFile "etc/udev/rules.d/92-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
+			fi
 		) || (
 			# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-			copyFile "etc/udev/rules.d/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
+			if [ ! -e "/etc/udev/rules.d/45-Argyll.rules" ]; then
+				copyFile "etc/udev/rules.d/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
+			fi
 		)
 	else
 		if [ -e "/etc/hotplug"]; then
 			# USB using hotplug and Serial using udev (older versions of Linux)
-			copyFile "etc/hotplug/usb/Argyll" "/etc/hotplug/usb/Argyll"
-			copyFile "etc/hotplug/usb/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
+			if [ ! -e "/etc/hotplug/usb/Argyll" ]; then
+				copyFile "etc/hotplug/usb/Argyll" "/etc/hotplug/usb/Argyll"
+			fi
+			if [ ! -e "/etc/hotplug/usb/Argyll.usermap" ]; then
+				copyFile "etc/hotplug/usb/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
+			fi
 		fi
 		# if [ -e "/etc/udev/permissions.d" ]; then
 			# # Serial instruments using udev (older versions of Linux)
