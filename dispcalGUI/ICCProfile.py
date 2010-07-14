@@ -5,6 +5,7 @@ from hashlib import md5
 import locale
 import math
 import os
+import re
 import struct
 import sys
 from time import localtime, mktime, strftime
@@ -28,8 +29,12 @@ if sys.platform == "win32":
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
 from ordereddict import OrderedDict
-from safe_print import safe_print
+try:
+	from log import safe_print
+except ImportError:
+	from safe_print import safe_print
 from util_list import intlist
+from util_str import hexunescape
 
 if sys.platform not in ("darwin", "win32"):
 	try:
@@ -332,7 +337,25 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				# appscript: one-based index
 				fobj = appscript.app(option).displays[display_no + 1].display_profile.location.get()
 				if fobj:
-					profile = ICCProfile(fobj.path)
+					path = fobj.path
+					if type(fobj.path) not in (str, unicode):
+						# Mac OS X 10.6: We need to turn this:
+						# app(u'/System/Library/CoreServices/Image Events.app').aliases[u'Macintosh HD:Library:ColorSync:Profiles:Displays:ProfileName.icc'].path
+						# into a POSIX path
+						#
+						# Turn into unicode representation
+						path = unicode(repr(path))
+						# Get the HFS path from the aliases[...] part
+						path = re.sub("^.+\\[u?'", "", path).replace("'].path", "")
+						# Replace unicode escapes ('\u') with literal unicode chars
+						path = re.sub("\\\\u([0-9a-f]{4})", hexunescape, path)
+						# Replace hex escapes ('\x') with literal chars
+						path = re.sub("\\\\x([0-9a-f]{2})", hexunescape, path)
+						# Split path and strip off the leading 'Macintosh HD'
+						path = path.split(":")[1:]
+						# Assemble POSIX path
+						path = os.path.join(os.path.sep, *path)
+					profile = ICCProfile(path)
 			else:
 				# Linux
 				# Try XrandR first
@@ -707,8 +730,8 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 
 	def __init__(self, tagData, tagSignature):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
+		self.ASCII = ""
 		if not tagData:
-			self.update({"ASCII": ""})
 			return
 		ASCIIDescriptionLength = uInt32Number(tagData[8:12])
 		if ASCIIDescriptionLength:
@@ -827,7 +850,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 		def fget(self):
 			tagData = ["desc", "\0" * 4,
 					   uInt32Number_tohex(len(self.ASCII) + 1),  # count of ASCII chars + 1
-					   str(self.ASCII) + "\0",  # ASCII desc, \0 terminated
+					   self.ASCII + "\0",  # ASCII desc, \0 terminated
 					   uInt32Number_tohex(self.get("unicodeLanguageCode", 0))]
 			if "Unicode" in self:
 				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 2),  # count of Unicode chars + 2 (1 char = 2 byte)

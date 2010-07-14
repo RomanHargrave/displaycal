@@ -176,6 +176,11 @@ def center(text, width = None):
 	return "\n".join(text)
 
 
+def hexunescape(match):
+	""" To be used with re.sub """
+	return unichr(int(match.group(1), 16))
+
+
 def universal_newlines(txt):
 	"""
 	Return txt with all new line formats converted to POSIX newlines.
