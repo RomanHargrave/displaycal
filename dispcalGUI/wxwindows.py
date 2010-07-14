@@ -325,7 +325,7 @@ class LogWindow(InvincibleFrame):
 			setcfg("last_filedialog_path", path)
 			try:
 				file_ = open(path, "w")
-				file_.writelines(self.log_txt.GetValue())
+				file_.write(self.log_txt.GetValue())
 				file_.close()
 			except Exception, exception:
 				InfoDialog(self, msg=safe_unicode(exception), 
