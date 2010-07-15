@@ -13,7 +13,9 @@ from hashlib import md5
 from time import sleep, strftime, time
 
 if sys.platform == "darwin":
-	from util_mac import mac_terminal_do_script, mac_terminal_set_colors
+	from thread import start_new_thread
+	from util_mac import (mac_app_activate, mac_terminal_do_script, 
+						  mac_terminal_set_colors)
 elif sys.platform == "win32":
 	from ctypes import windll
 	import pywintypes
@@ -41,7 +43,7 @@ from argyll_instruments import instruments as all_instruments, remove_vendor_nam
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
 from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg, 
-					geticon, get_data_path, get_verified_path, profile_ext,
+					geticon, get_data_path, get_verified_path, isapp, profile_ext,
 					setcfg, writecfg)
 from debughelpers import handle_error
 from log import log, safe_print
@@ -1238,6 +1240,13 @@ class Worker():
 										sleep(.5)
 									if self.subprocess.isalive():
 										self.subprocess.send(" ")
+								if self.needs_user_interaction and \
+								   sys.platform == "darwin":
+									# On the Mac dispcal's test window
+									# hides the cursor and steals focus
+									start_new_thread(mac_app_activate, 
+													 (1, appname if isapp 
+													 	 else "Python"))
 								while self.subprocess.isalive():
 									# Handle misreads, user can cancel via
 									# progress dialog
@@ -1954,13 +1963,10 @@ class Worker():
 				self.thread_abort = True
 		if self.finished is True:
 			return
-		if self.progress_wnd.IsShownOnScreen() and \
+		if not self.activated and self.progress_wnd.IsShownOnScreen() and \
 		   not wx.GetApp().IsActive() or not self.progress_wnd.IsActive():
+		   	self.activated = True
 			self.progress_wnd.Raise()
-			if self.interactive and not wx.GetApp().IsActive():
-				# This is mainly needed on the Mac were dispcal's test window
-				# steals focus
-				self.progress_wnd.RequestUserAttention()
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
 						   parent=None, resume=False):
@@ -2137,6 +2143,7 @@ class Worker():
 													 progress_title, 
 													 progress_msg, parent,
 													 resume)
+		self.activated = False
 		self.finished = False
 		self.subprocess_abort = False
 		self.thread_abort = False
