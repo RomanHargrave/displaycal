@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# Byte-compile *.py files
+python -c "import glob
+import os
+from distutils.sysconfig import get_python_lib
+from distutils.util import byte_compile
+byte_compile(glob.glob(os.path.join(get_python_lib(), 'dispcalGUI', '*.py')), 
+			 force=1)"
+
+# Install udev rules or hotplug scripts
 if [ -e "/etc/udev/rules.d" ]; then
 	ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
 		# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices

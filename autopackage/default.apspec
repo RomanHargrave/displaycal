@@ -158,8 +158,16 @@ uname -m | grep "64" && (
 rm *.tar
 cd ../../../..
 
-python -c "import compileall; compileall.compile_dir('lib/python/site-packages/dispcalGUI')"
 copyFiles lib/python/site-packages/* "`getPythonLibDir`"
+
+# Byte-compile *.py files
+python -c "import glob
+import os
+from distutils.sysconfig import get_python_lib
+from distutils.util import byte_compile
+py = glob.glob(os.path.join(get_python_lib(), 'dispcalGUI', '*.py'))
+byte_compile(py, optimize=0, force=1)
+byte_compile(py, optimize=1, force=1)"
 
 installData share/dispcalGUI share/doc
 installExe bin/dispcalGUI
@@ -211,6 +219,16 @@ fi
 # Leaving this at the default is safe unless you use custom commands in
 # "Install" to create files. All autopackage API functions 
 # that installs files are logged.
-uninstallFromLog
+
+# Remove *.py[co]
+python -c "import glob
+import os
+from distutils.sysconfig import get_python_lib
+for pyco in glob.glob(os.path.join(get_python_lib(), 'dispcalGUI', '*.py[co]')):
+	os.remove(pyco)"
+
+# Remove menu entry
 which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu uninstall dispcalGUI.desktop || true
+
+uninstallFromLog
 

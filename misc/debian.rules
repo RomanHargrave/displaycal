@@ -22,7 +22,8 @@ export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}
 export install_prefix=/usr
 export install_exec_prefix=/usr
 export install_datadir=/usr/share
-export python_version=`python -c "import sys;print sys.version[:3]" `
+export python_version=`python -c "import sys;print sys.version[:3]"`
+export install_lib=`python -c "from distutils.sysconfig import get_python_lib;print get_python_lib()"`
 
 build: build-stamp
 build-stamp:
@@ -58,18 +59,12 @@ install: build
 	# Convert line endings in LICENSE.txt
 	python -c "f = open('LICENSE.txt', 'rb');d = f.read().replace('\r\n', '\n').replace('\r', '\n');f.close();f = open('LICENSE.txt', 'wb');f.write(d);f.close()"
 	# Install
-	python${python_version} setup.py install --use-distutils \
+	python${python_version} setup.py install --no-compile --use-distutils \
 		--prefix=${DEB_BUILD_ROOT}${install_prefix} \
 		--exec-prefix=${DEB_BUILD_ROOT}${install_exec_prefix} \
 		--install-data=${DEB_BUILD_ROOT}${install_datadir} \
+		--install-lib=${DEB_BUILD_ROOT}${install_lib} \
 		--skip-instrument-configuration-files
-	# Workaround for Ubuntu's Python 2.6 which looks for modules in dist-packages,
-	# but distutils installs modules into site-packages (which is not on sys.path) 
-	# when a custom prefix is used
-	if [ -d "${install_prefix}/lib/python${python_version}/dist-packages" ]; then \
-		mv "${DEB_BUILD_ROOT}${install_prefix}/lib/python${python_version}/site-packages" \
-			"${DEB_BUILD_ROOT}${install_prefix}/lib/python${python_version}/dist-packages" || true; \
-	fi
 	# udev/hotplug
 	mkdir -p "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb"
 	# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
