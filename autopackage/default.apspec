@@ -159,7 +159,7 @@ rm *.tar
 cd ../../../..
 
 python -c "import compileall; compileall.compile_dir('lib/python/site-packages/dispcalGUI')"
-copyFiles lib/python/site-packages/dispcalGUI "`getPythonLibDir`"
+copyFiles lib/python/site-packages/* "`getPythonLibDir`"
 
 installData share/dispcalGUI share/doc
 installExe bin/dispcalGUI
