@@ -4,7 +4,7 @@
 python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
-for pyco in glob.glob(os.path.join(get_python_lib(), 'dispcalGUI', '*.py[co]')):
+for pyco in glob.glob(os.path.join(get_python_lib(True), 'dispcalGUI', '*.py[co]')):
 	os.remove(pyco)"
 
 exit 0

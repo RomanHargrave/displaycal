@@ -5,7 +5,7 @@ python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile
-byte_compile(glob.glob(os.path.join(get_python_lib(), 'dispcalGUI', '*.py')), 
+byte_compile(glob.glob(os.path.join(get_python_lib(True), 'dispcalGUI', '*.py')), 
 			 force=1)"
 
 # Install udev rules or hotplug scripts

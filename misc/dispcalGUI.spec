@@ -66,17 +66,19 @@ f.close()"
 OPTIMIZE=1
 %endif
 python_version=`python -c "import sys;print sys.version[:3]"`
+install_lib=`python -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)"`
 python${python_version} setup.py install --no-compile --use-distutils \
 	--prefix=$RPM_BUILD_ROOT%_prefix \
 	--exec-prefix=$RPM_BUILD_ROOT%_exec_prefix \
 	--install-data=$RPM_BUILD_ROOT%_datadir \
+    --install-lib=$RPM_BUILD_ROOT${install_lib} \
 	--skip-instrument-configuration-files --record=INSTALLED_FILES
 # Byte-compile *.py files and remove traces of RPM_BUILD_ROOT
 python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile, change_root
-py = glob.glob(os.path.join(change_root('$RPM_BUILD_ROOT', get_python_lib()), 
+py = glob.glob(os.path.join(change_root('$RPM_BUILD_ROOT', get_python_lib(True)), 
 			   '%{name}', '*.py'))
 byte_compile(py, optimize=0, force=1, prefix='$RPM_BUILD_ROOT')
 if 0${OPTIMIZE} > 0:
