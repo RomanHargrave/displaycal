@@ -199,7 +199,6 @@
 	"enable_spyder2": "Attivazione colorimetro Spyder 2...",
 	"enable_spyder2_failure": "Impossibile attivare Spyder 2 .",
 	"enable_spyder2_success": "Spyder 2 attivato con successo.",
-	"locate_spyder2_setup": "Individuare il file setup.exe sul disco di installazione di Spyder 2",
 	"startup": "Avvio...",
 	"success": "...ok.",
 	"tc.ofp": "Campionamento con punto più remoto ottimizzato",

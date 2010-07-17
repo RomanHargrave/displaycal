@@ -68,6 +68,7 @@
         <object class="separator"/>
         <object class="wxMenuItem" name="enable_spyder2">
           <label>enable_spyder2</label>
+          <checkable>1</checkable>
         </object>
         <object class="separator"/>
         <object class="wxMenuItem" name="calibration.show_lut">

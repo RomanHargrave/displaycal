@@ -270,7 +270,6 @@
 	"enable_spyder2": "Activer le colorimètre Spyder 2...",
 	"enable_spyder2_failure": "Spyder 2 n'a pas pu être activé.",
 	"enable_spyder2_success": "Spyder 2 a été activé avec succès.",
-	"locate_spyder2_setup": "Veuillez indiquer l'emplacement du fichier setup.exe sur le disque d'installation de Spyder 2",
 	"license": "Licence",
 	"linear": "linéaire",
 	"readme": "Lisez-moi",

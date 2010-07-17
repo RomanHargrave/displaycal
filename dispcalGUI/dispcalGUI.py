@@ -45,6 +45,7 @@ import codecs
 import decimal
 Decimal = decimal.Decimal
 import getpass
+import glob
 import httplib
 import logging
 import math
@@ -113,7 +114,7 @@ from util_io import Files, StringIOu as StringIO
 from util_list import index_fallback_ignorecase, intlist, natsort
 if sys.platform == "darwin":
 	from util_mac import mac_terminal_do_script
-from util_os import expanduseru, launch_file, listdir_re, which
+from util_os import expanduseru, getenvu, launch_file, listdir_re, which
 from util_str import safe_str, safe_unicode, strtr, wrap
 import util_x
 from worker import (FilteredStream, LineCache, Worker, check_cal_isfile, 
@@ -1091,8 +1092,10 @@ class MainFrame(BaseFrame):
 			tools.FindItem("profile.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_profile_handler, 
 				  self.menuitem_profile_verify)
-		menuitem = tools.FindItemById(tools.FindItem("enable_spyder2"))
-		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, menuitem)
+		self.menuitem_enable_spyder2 = tools.FindItemById(
+			tools.FindItem("enable_spyder2"))
+		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, 
+				  self.menuitem_enable_spyder2)
 		self.menuitem_show_lut = tools.FindItemById(
 			tools.FindItem("calibration.show_lut"))
 		self.Bind(wx.EVT_MENU, self.init_lut_viewer, self.menuitem_show_lut)
@@ -1164,6 +1167,13 @@ class MainFrame(BaseFrame):
 			bool(self.worker.displays))
 		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
+		spyd2en = get_argyll_util("spyd2en")
+		self.menuitem_enable_spyder2.Enable(spyd2en and not 
+											os.path.isfile(os.path.join(os.path.dirname(spyd2en), 
+																		"spyd2PLD.bin")))
+		self.menuitem_enable_spyder2.Check(spyd2en and  
+										   os.path.isfile(os.path.join(os.path.dirname(spyd2en), 
+																	   "spyd2PLD.bin")))
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
 		self.menuitem_show_lut.Check(bool(getcfg("lut_viewer.show")))
 		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
@@ -2060,8 +2070,25 @@ class MainFrame(BaseFrame):
 		self.update_controls()
 
 	def enable_spyder2_handler(self, event):
+		self.menuitem_enable_spyder2.Check(False)
 		if check_set_argyll_bin():
 			cmd, args = get_argyll_util("spyd2en"), ["-v"]
+			if sys.platform in ("darwin", "win32"):
+				# Look for Spyder.lib/CVSpyder.dll ourself because spyd2en will 
+				# only try some fixed paths
+				if sys.platform == "darwin":
+					wildcard = os.path.join(os.path.sep, "Applications", 
+											"Spyder2*", "Spyder2*.app", 
+											"Contents", "MacOSClassic", 
+											"Spyder.lib")
+				else:
+					wildcard = os.path.join(getenvu("PROGRAMFILES", ""), 
+											"ColorVision", "Spyder2*", 
+											"CVSpyder.dll")
+				safe_print(u"Looking for install at '%s'" % wildcard)
+				for path in glob.glob(wildcard):
+					args += [path]
+					break
 			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 										  skip_scripts=True, silent=True,
 										  asroot=True,
@@ -2071,14 +2098,27 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-information"),
 						   log=False)
+				self.update_menus()
 			else:
 				if isinstance(result, Exception):
 					show_result_dialog(result, self) 
-				# prompt for setup.exe
-				defaultDir, defaultFile = expanduseru("~"), "setup.exe"
-				dlg = wx.FileDialog(self, lang.getstr("locate_spyder2_setup"), 
+				# prompt for installer executable / Spyder.lib / CVSpyder.dll
+				msgs = {"darwin": "locate_spyder2_setup_mac",
+						"win32": "locate_spyder2_setup_win"}
+				dlg = ConfirmDialog(self, 
+									msg=lang.getstr(msgs.get(sys.platform, 
+															 "locate_spyder2_setup")), 
+									ok=lang.getstr("continue"), 
+									cancel=lang.getstr("cancel"), 
+									bitmap=geticon(32, "dialog-information"))
+				result = dlg.ShowModal()
+				if result != wx.ID_OK:
+					return
+				defaultDir, defaultFile = expanduseru("~"), ""
+				dlg = wx.FileDialog(self, lang.getstr("file.select"),
 									defaultDir=defaultDir, 
-									defaultFile=defaultFile, wildcard="*", 
+									defaultFile=defaultFile, 
+									wildcard=lang.getstr("filetype.any") + "|*", 
 									style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 				dlg.Center(wx.BOTH)
 				result = dlg.ShowModal()
@@ -2090,7 +2130,8 @@ class MainFrame(BaseFrame):
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"))
 						return
-					result = self.worker.exec_cmd(cmd, args + [path], 
+					cmd, args = get_argyll_util("spyd2en"), ["-v", path]
+					result = self.worker.exec_cmd(cmd, args, 
 												  capture_output=True, 
 												  skip_scripts=True, 
 												  silent=True,
@@ -2102,6 +2143,7 @@ class MainFrame(BaseFrame):
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-information"),
 								   log=False)
+						self.update_menus()
 					else:
 						if isinstance(result, Exception):
 							show_result_dialog(result, self)
