@@ -3206,6 +3206,8 @@ class MainFrame(BaseFrame):
 		else:
 			if cal is True: # display profile
 				profile = self.get_display_profile()
+				if not profile:
+					cal = False
 			elif cal.lower().endswith(".icc") or \
 				 cal.lower().endswith(".icm"):
 				profile = ICCP.ICCProfile(cal)
