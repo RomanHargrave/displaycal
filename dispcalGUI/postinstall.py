@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from StringIO import StringIO
 from subprocess import call
 from os.path import splitext
 import os
@@ -12,6 +13,9 @@ from meta import name
 from util_os import relpath, which
 
 recordfile_name = "INSTALLED_FILES"
+
+if not sys.stdout.isatty():
+	sys.stdout = StringIO()
 
 if sys.platform == "win32":
 	try:
@@ -122,6 +126,9 @@ def postinstall(prefix=None):
 					traceback.print_exc()
 					return
 				else:
+					filenames = [name + ".py", "LICENSE.txt", "README.html", 
+								 "Uninstall"]
+					installed_shortcuts = []
 					for path in (startmenu_programs_common, 
 								 startmenu_programs):
 						if path:
@@ -155,8 +162,7 @@ def postinstall(prefix=None):
 															   "replace"))
 								continue
 							directory_created(grppath)
-							for filename in (name + ".py", "LICENSE.txt", 
-											 "README.html", "Uninstall"):
+							for filename in filenames:
 								lnkpath = os.path.join(
 									grppath, splitext(filename)[0] + ".lnk")
 								if os.path.exists(lnkpath):
@@ -254,7 +260,9 @@ def postinstall(prefix=None):
 												   group).encode("MBCS", 
 																 "replace"))
 								file_created(lnkpath)
-							break
+								installed_shortcuts.append(filename)
+							if installed_shortcuts == filenames:
+								break
 			else:
 				print "warning - '%s' not found" % icon.encode("MBCS", 
 															   "replace")
