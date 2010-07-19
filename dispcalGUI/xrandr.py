@@ -53,8 +53,15 @@ except AttributeError, exception:
 	raise ImportError("libXrandr: %s" % exception)
 
 
-def get_atom(atom_name=None, atom_type=XA_CARDINAL):
-	x_hostname, x_display_no, x_screen_no = get_display()
+def get_atom(atom_name=None, atom_type=XA_CARDINAL, x_hostname="", 
+			 x_display_no=0, x_screen_no=0):
+	display = get_display()
+	if not x_hostname:
+		x_hostname = display[0]
+	if not x_display_no:
+		x_display_no = display[1]
+	if not x_screen_no:
+		x_screen_no = display[2]
 	display = "%s:%i.%i" % (x_hostname, x_display_no, x_screen_no)
 	x_display = libx11.XOpenDisplay(display)
 	if not x_display:
@@ -95,13 +102,21 @@ def get_atom(atom_name=None, atom_type=XA_CARDINAL):
 
 
 def get_output_property(display_no=0, property_name=None, 
-							   property_type=XA_CARDINAL):
+						property_type=XA_CARDINAL, x_hostname="", 
+						x_display_no=0, x_screen_no=0):
 	xrandr_output_xid = RDSMM.GetXRandROutputXID(display_no)
 	if not xrandr_output_xid:
 		raise ValueError("Invalid display number %r specified or XrandR "
 						 "unsupported" % display_no)
 	
-	display = os.getenv("DISPLAY")
+	display = get_display()
+	if not x_hostname:
+		x_hostname = display[0]
+	if not x_display_no:
+		x_display_no = display[1]
+	if not x_screen_no:
+		x_screen_no = display[2]
+	display = "%s:%i.%i" % (x_hostname, x_display_no, x_screen_no)
 	x_display = libx11.XOpenDisplay(display)
 	if not x_display:
 		libx11.XCloseDisplay(x_display)
