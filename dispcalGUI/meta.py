@@ -24,6 +24,16 @@ author_ascii = "Florian Hoech"
 author_email = "dispcalGUI@hoech.net"
 description = ("A graphical user interface for the Argyll CMS display "
 				"calibration utilities")
+longdesc = "\n".join(["Calibrates and characterizes display devices using a hardware sensor,",
+					  "driven by the open source color management system Argyll CMS.",
+					  "Supports multi-display setups and a variety of available settings like ",
+					  "customizable whitepoint, luminance, black level, tone response curve ",
+					  "as well as the creation of matrix and look-up-table ICC profiles with ",
+					  "optional gamut mapping. Calibrations and profiles can be verified ",
+					  "through measurements, and profiles can be installed to make them ",
+					  "available to color management aware applications.",
+					  "Profile installation can utilize Argyll CMS, Oyranos and/or GNOME "
+					  "Color Manager if available, for flexible integration."])
 domain = "dispcalGUI.hoech.net"
 name = "dispcalGUI"
 
