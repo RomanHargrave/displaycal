@@ -16,14 +16,15 @@ import time
 if sys.platform == "win32":
 	import msilib
 
-from dispcalGUI.util_os import which
-from dispcalGUI.util_str import strtr
+sys.path.insert(0, "dispcalGUI")
+
+from util_os import which
+from util_str import strtr
 
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
 def create_appdmg():
-	global name, version
 	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", 
 													  "%s-%s.dmg" % 
 													  (name, version)), 
@@ -83,11 +84,13 @@ def setup():
 	bdist_pyi = "bdist_pyi" in sys.argv[1:]
 	setup_cfg = None
 	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
+	help = False
 	inno = "inno" in sys.argv[1:]
 	onefile = "-F" in sys.argv[1:] or "--onefile" in sys.argv[1:]
 	purge = "purge" in sys.argv[1:]
 	purge_dist = "purge_dist" in sys.argv[1:]
 	suffix = "onefile" if onefile else "onedir"
+	use_setuptools = "--use-setuptools" in sys.argv[1:]
 	
 	for i in range(len(sys.argv[1:])):
 		n = len(sys.argv) - i - 1
@@ -99,13 +102,15 @@ def setup():
 			elif arg[0] == "--cfg":
 				setup_cfg = arg[1]
 				sys.argv = sys.argv[:n] + sys.argv[n + 1:]
+		elif arg[0] == "-h" or arg[0].startswith("--help"):
+			help = True
 	
 	lastmod_time = 0
 	
 	non_build_args = filter(lambda arg: arg in sys.argv[1:], 
 							["bdist_appdmg", "clean", "purge", "purge_dist", 
 							 "uninstall", "-h", "--help", "--help-commands", 
-							 "--name", "--fullname", "--author", 
+							 "--all", "--name", "--fullname", "--author", 
 							 "--author-email", "--maintainer", 
 							 "--maintainer-email", "--contact", 
 							 "--contact-email", "--url", "--license", 
@@ -113,15 +118,14 @@ def setup():
 							 "--long-description", "--platforms", 
 							 "--classifiers", "--keywords", "--provides", 
 							 "--requires", "--obsoletes", "--quiet", "-q", 
-							 "--verbose", "-v"])
+							 "register", "--list-classifiers", "upload",
+							 "--use-distutils", "--use-setuptools",
+							 "--verbose", "-v", "finalize_msi"])
 
 	if os.path.isdir(os.path.join(pydir, ".svn")) and (which("svn") or
 													   which("svn.exe")) and (
-	   not sys.argv[1:] or len(non_build_args) < len(sys.argv[1:])):
-		# Restore setup.cfg.backup if it exists
-		if os.path.isfile(os.path.join(pydir, "setup.cfg.backup")):
-			shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), 
-						 os.path.join(pydir, "setup.cfg"))
+	   not sys.argv[1:] or (len(non_build_args) < len(sys.argv[1:]) and 
+							not help)):
 		print "Trying to get SVN version information..."
 		svnversion = None
 		try:
@@ -222,32 +226,41 @@ def setup():
 				versiontxt.write(".".join(svnversion))
 				versiontxt.close()
 			versionpy.close()
+
+	if not help and not dry_run:
+		# Restore setup.cfg.backup if it exists
+		if os.path.isfile(os.path.join(pydir, "setup.cfg.backup")) and \
+		   not os.path.isfile(os.path.join(pydir, "setup.cfg")):
+			shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), 
+						 os.path.join(pydir, "setup.cfg"))
 	
 	if not sys.argv[1:]:
 		return
 	
-	global name, domain, version, version_lin, version_mac, version_src
-	global version_tuple, version_win
-	from dispcalGUI.meta import (name, author, author_email, description, 
-								 domain, py_maxversion, py_minversion,
-								 version, version_lin, version_mac, 
-								 version_src, version_tuple, version_win,
-								 wx_minversion)
+	global name, version
+	from meta import (name, author, author_email, description, longdesc,
+					  domain, py_maxversion, py_minversion,
+					  version, version_lin, version_mac, 
+					  version_src, version_tuple, version_win,
+					  wx_minversion)
 
 	msiversion = ".".join((str(version_tuple[0]), 
 						   str(version_tuple[1]), 
 						   str(version_tuple[2]) + 
 						   str(version_tuple[3])))
 
-	if setup_cfg or "bdist_msi" in sys.argv[1:]:
-		if not os.path.exists(os.path.join(pydir, "setup.cfg.backup")):
-			shutil.copy2(os.path.join(pydir, "setup.cfg"), 
-						 os.path.join(pydir, "setup.cfg.backup"))
-	if "bdist_msi" in sys.argv[1:]:
-		os.remove(os.path.join(pydir, "setup.cfg"))
-	if setup_cfg:
-		shutil.copy2(os.path.join(pydir, "misc", "setup.%s.cfg" % setup_cfg), 
-					 os.path.join(pydir, "setup.cfg"))
+	if not dry_run and not help:
+		if setup_cfg or ("bdist_msi" in sys.argv[1:] and use_setuptools):
+			if not os.path.exists(os.path.join(pydir, "setup.cfg.backup")):
+				shutil.copy2(os.path.join(pydir, "setup.cfg"), 
+							 os.path.join(pydir, "setup.cfg.backup"))
+		if "bdist_msi" in sys.argv[1:] and use_setuptools:
+			# setuptools parses options globally even if they're not under the
+			# section of the currently run command
+			os.remove(os.path.join(pydir, "setup.cfg"))
+		if setup_cfg:
+			shutil.copy2(os.path.join(pydir, "misc", "setup.%s.cfg" % setup_cfg), 
+						 os.path.join(pydir, "setup.cfg"))
 
 	if purge or purge_dist:
 
@@ -277,7 +290,7 @@ def setup():
 					print exception
 				else:
 					print "removed", path
-		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
 	if "readme" in sys.argv[1:]:
@@ -312,23 +325,28 @@ def setup():
 		readme = open(os.path.join(pydir, "README.html"), "rb")
 		readme_html = readme.read()
 		readme.close()
-		if readme_html != readme_template_html:
+		if readme_html != readme_template_html and not dry_run:
 			readme = open(os.path.join(pydir, "README.html"), "wb")
 			readme.write(readme_template_html)
 			readme.close()
 		sys.argv.remove("readme")
-		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	if ("sdist" in sys.argv[1:] and 
-		not "--help" in sys.argv[1:]) or "buildservice" in sys.argv[1:]:
+	if ("sdist" in sys.argv[1:] and not help) or "buildservice" in sys.argv[1:]:
 		# Create control files
+		post = open(os.path.join(pydir, "util", "rpm_postinstall.sh"), "r").read()
+		postun = open(os.path.join(pydir, "util", "rpm_postuninstall.sh"), "r").read()
 		for tmpl_name in ("debian.changelog", "debian.control", "debian.rules", 
 						  "dispcalGUI.dsc", "dispcalGUI.spec"):
 			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 			tmpl = codecs.open(tmpl_path, "r", "UTF-8")
 			tmpl_data = tmpl.read()
 			tmpl.close()
+			if tmpl_name.startswith("debian"):
+				longdesc_backup = longdesc
+				longdesc = "\n".join([" " + (line if line.strip() else ".") 
+									  for line in longdesc.splitlines()])
 			for key, val in [
 				("DATE", 
 					strftime("%a %b %d %Y",  # e.g. Tue Jul 06 2010
@@ -340,29 +358,35 @@ def setup():
 												os.stat(tmpl_path).st_mtime)) +
 										 ("+" if timezone < 0 else "-") +
 										 strftime("%H%M", gmtime(abs(timezone)))),
-				("DESC", description),
+				("SUMMARY", description),
+				("DESC", longdesc),
 				("MAINTAINER", author),
 				("MAINTAINER_EMAIL", author_email),
 				("PACKAGE", name),
+				("POST", post),
+				("POSTUN", postun),
 				("PY_MAXVERSION", ".".join(str(n) for n in py_maxversion)),
 				("PY_MINVERSION", ".".join(str(n) for n in py_minversion)),
 				("VERSION", version_src),
 				("WX_MINVERSION", ".".join(str(n) for n in wx_minversion)),
 			]:
 				tmpl_data = tmpl_data.replace("${%s}" % key, val)
-			out = codecs.open(os.path.join(pydir, "dist", tmpl_name), "w", 
-							  "UTF-8")
-			out.write(tmpl_data)
-			out.close()
+			if tmpl_name.startswith("debian"):
+				longdesc = longdesc_backup
+			if not dry_run:
+				out = codecs.open(os.path.join(pydir, "dist", tmpl_name), "w", 
+								  "UTF-8")
+				out.write(tmpl_data)
+				out.close()
 		if "buildservice" in sys.argv[1:]:
 			sys.argv.remove("buildservice")
-			if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+			if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 				return
 
 	if bdist_appdmg:
 		i = sys.argv.index("bdist_appdmg")
 		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
-		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+		if len(sys.argv) == 1:
 			create_appdmg()
 			return
 
@@ -409,16 +433,17 @@ def setup():
 									bdist_cmd, "%s.%s-py%s" % 
 									(bdist_cmd, get_platform(), 
 									 sys.version[:3])))
-		if not os.path.exists("dist"):
-			os.makedirs("dist")
-		inno_file = open(inno_path, "w")
-		inno_file.write(inno_script.encode("MBCS", "replace"))
-		inno_file.close()
+		if not dry_run:
+			if not os.path.exists("dist"):
+				os.makedirs("dist")
+			inno_file = open(inno_path, "w")
+			inno_file.write(inno_script.encode("MBCS", "replace"))
+			inno_file.close()
 		sys.argv.remove("inno")
-		if len(sys.argv) == 1 or len(sys.argv) == 2 and dry_run:
+		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 	
-	if "finalize_msi" in sys.argv[1:] and not dry_run:
+	if "finalize_msi" in sys.argv[1:]:
 		db = msilib.OpenDatabase(r"dist\dispcalGUI-%s.win32-py%s.msi" %
 								 (msiversion, sys.version[:3]), 
 								 msilib.MSIDBOPEN_TRANSACT)
@@ -501,24 +526,30 @@ def setup():
 										  None,  # IconIndex
 										  None,  # ShowCmd
 										  "SystemFolder")])  # WkDir
-		db.Commit()
+		if not dry_run:
+			db.Commit()
 		sys.argv.remove("finalize_msi")
-		if len(sys.argv) == 1:
+		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	from dispcalGUI.setup import setup
+	from setup import setup
 	setup()
 	
-	if bdist_appdmg:
+	if bdist_appdmg and not dry_run and not help:
 		create_appdmg()
 
-	if bdist_deb:
+	if bdist_deb and not help:
 		# Read setup.cfg
 		cfg = RawConfigParser()
 		cfg.read(os.path.join(pydir, "setup.cfg"))
 		# Get dependencies
 		dependencies = [val.strip().split(None, 1) for val in 
 						cfg.get("bdist_rpm", "Requires").split(",")]
+		# Get group
+		if cfg.has_option("bdist_rpm", "group"):
+			group = cfg.get("bdist_rpm", "group")
+		else:
+			group = None
 		# Get maintainer
 		if cfg.has_option("bdist_rpm", "maintainer"):
 			maintainer = cfg.get("bdist_rpm", "maintainer")
@@ -538,45 +569,56 @@ def setup():
 		release = 1 # TODO: parse setup.cfg
 		rpm_filename = os.path.join(pydir, "dist", "%s-%s-%s.%s.rpm" % 
 									(name, version, release, arch))
-		# remove target directory (and contents) if it already exists
-		target_dir = os.path.join(pydir, "dist", "%s-%s" % (name, version))
-		if os.path.exists(target_dir):
-			shutil.rmtree(target_dir)
-		if os.path.exists(target_dir + ".orig"):
-			shutil.rmtree(target_dir + ".orig")
-		# use alien to create deb dir from rpm package
-		retcode = call(["alien", "-c", "-g", "-k", 
-						os.path.basename(rpm_filename)], 
-						cwd=os.path.join(pydir, "dist"))
-		if retcode != 0:
-			sys.exit(retcode)
-		# control filename
-		control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, 
-																  version), 
-										"debian", "control")
-		# read control file from deb dir
-		control = open(control_filename, "r")
-		lines = [line.rstrip("\n") for line in control.readlines()]
-		control.close()
-		# update control with info from setup.cfg
-		for i in range(len(lines)):
-			if lines[i].startswith("Depends:"):
-				# add dependencies
-				lines[i] += ", " + ", ".join(dependencies)
-			elif lines[i].startswith("Maintainer:") and (maintainer or 
-														 packager):
-				# set maintainer
-				lines[i] = "Maintainer: " + (maintainer or packager)
-		# write updated control file
-		control = open(control_filename, "w")
-		control.write("\n".join(lines))
-		control.close()
-		# create deb package
-		retcode = call(["./debian/rules", "binary"], cwd=target_dir)
-		if retcode != 0:
-			sys.exit(retcode)
+		if not dry_run:
+			# remove target directory (and contents) if it already exists
+			target_dir = os.path.join(pydir, "dist", "%s-%s" % (name, version))
+			if os.path.exists(target_dir):
+				shutil.rmtree(target_dir)
+			if os.path.exists(target_dir + ".orig"):
+				shutil.rmtree(target_dir + ".orig")
+			# use alien to create deb dir from rpm package
+			retcode = call(["alien", "-c", "-g", "-k", 
+							os.path.basename(rpm_filename)], 
+							cwd=os.path.join(pydir, "dist"))
+			if retcode != 0:
+				sys.exit(retcode)
+			# control filename
+			control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, 
+																	  version), 
+											"debian", "control")
+			# read control file from deb dir
+			control = open(control_filename, "r")
+			lines = [line.rstrip("\n") for line in control.readlines()]
+			control.close()
+			# update control with info from setup.cfg
+			for i in range(len(lines)):
+				if lines[i].startswith("Depends:"):
+					# add dependencies
+					lines[i] += ", " + ", ".join(dependencies)
+				elif lines[i].startswith("Maintainer:") and (maintainer or 
+															 packager):
+					# set maintainer
+					lines[i] = "Maintainer: " + (maintainer or packager)
+				elif lines[i].startswith("Section:") and group:
+					# set section
+					lines[i] = "Section: " + group
+				elif lines[i].startswith("Description:"):
+					lines.pop()
+					lines.pop()
+					break
+			# write updated control file
+			control = open(control_filename, "w")
+			control.write("\n".join(lines))
+			control.close()
+			# create deb package
+			retcode = call(["./debian/rules", "binary"], cwd=target_dir)
+			if retcode != 0:
+				sys.exit(retcode)
+	
+	if dry_run or help:
+		return
 
-	if setup_cfg:
+	if setup_cfg or ("bdist_msi" in sys.argv[1:] and use_setuptools):
 		shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), 
 					 os.path.join(pydir, "setup.cfg"))
 

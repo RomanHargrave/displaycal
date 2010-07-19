@@ -1,4 +1,5 @@
 #!/bin/sh
 
-which xdg-desktop-menu 2>&1 >/dev/null && xdg-desktop-menu forceupdate || true
-which xdg-icon-resource 2>&1 >/dev/null && xdg-icon-resource forceupdate || true
+# Update icon cache and menu
+which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true
+which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true

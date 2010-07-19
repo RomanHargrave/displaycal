@@ -29,8 +29,13 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 
+	# Make files executable
+	chmod +x "scripts/${name}"
+	chmod +x "misc/Argyll"
+	# Convert line endings in LICENSE.txt
+	python -c "f = open('LICENSE.txt', 'rb');d = f.read().replace('\r\n', '\n').replace('\r', '\n');f.close();f = open('LICENSE.txt', 'wb');f.write(d);f.close()"
 	# Add here commands to compile the package.
-	
+	python${python_version} setup.py build --use-distutils
 	# --- end custom part for compiling
 
 	touch build-stamp
@@ -53,12 +58,6 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package
-	# Make files executable
-	chmod +x "scripts/${name}"
-	chmod +x "misc/Argyll"
-	# Convert line endings in LICENSE.txt
-	python -c "f = open('LICENSE.txt', 'rb');d = f.read().replace('\r\n', '\n').replace('\r', '\n');f.close();f = open('LICENSE.txt', 'wb');f.write(d);f.close()"
-	# Install
 	python${python_version} setup.py install --no-compile --use-distutils \
 		--prefix=${DEB_BUILD_ROOT}${install_prefix} \
 		--exec-prefix=${DEB_BUILD_ROOT}${install_exec_prefix} \

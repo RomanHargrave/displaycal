@@ -2,7 +2,7 @@
 %define py_minversion ${PY_MINVERSION}
 %define py_maxversion ${PY_MAXVERSION}
 %define wx_minversion ${WX_MINVERSION}
-Summary: ${DESC}
+Summary: ${SUMMARY}
 Name: ${PACKAGE}
 Version: ${VERSION}
 Release: 1
@@ -11,7 +11,7 @@ Source: http://%{name}.hoech.net/%{name}-%version.tar.gz
 URL: http://dispcalgui.hoech.net/
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 %if 0%{?mandriva_version} > 0
-Group: Applications/Graphics
+Group: Graphics
 %ifarch x86_64
 BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, libpython-devel, lib64xorg-x11-devel
 %else
@@ -20,15 +20,12 @@ BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}
 Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?suse_version} > 0
-%if 0%{?suse_version} > 113
 Group: Productivity/Graphics/Other
-%else
-Group: Applications/Graphics
-%endif
 BuildRequires: udev, update-desktop-files, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, xorg-x11-devel
 Requires: python >= %{py_minversion}, python <= %{py_maxversion}, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?fedora_version} > 0
+Group: Applications/Multimedia
 BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
 Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
 %endif
@@ -36,21 +33,11 @@ Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPython >= %{
 %endif
 
 %description
-Calibrates and characterizes display devices using a hardware sensor. Supports
-multiple displays and a variety of available settings like customizable
-whitepoint, luminance, black level, and tone response curve as well as the
-creation of matrix and look-up-table ICC profiles with optional gamut mapping.
-Calibrations and profiles can be verified through measurements, and profiles 
-can be installed to setup the X server for colormanagement-aware applications.
-Powered by the open source colormanagement system Argyll CMS.
+${DESC}
 
 %prep
 %setup
-
-%build
-# handled by install
-
-%install
+export python_version=`python -c "import sys;print sys.version[:3]"`
 # Make files executable
 chmod +x "scripts/%{name}"
 chmod +x "misc/Argyll"
@@ -61,11 +48,14 @@ f.close()
 f = open('LICENSE.txt', 'wb')
 f.write(d)
 f.close()"
-# Install
+
+%build
+python${python_version} setup.py build --use-distutils
+
+%install
 %if 0%{?fedora_version} > 0
 OPTIMIZE=1
 %endif
-python_version=`python -c "import sys;print sys.version[:3]"`
 install_lib=`python -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)"`
 python${python_version} setup.py install --no-compile --use-distutils \
 	--prefix=$RPM_BUILD_ROOT%_prefix \
@@ -138,35 +128,10 @@ rm -rf $RPM_BUILD_ROOT
 %doc theme
 
 %post
-if [ -e "/etc/udev/rules.d" ]; then
-	ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
-		# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-		if [ ! -e "/etc/udev/rules.d/55-Argyll.rules" ]; then
-			cp "/usr/share/dispcalGUI/usb/92-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
-		fi
-	) || (
-		# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-		if [ ! -e "/etc/udev/rules.d/45-Argyll.rules" ]; then
-			cp "/usr/share/dispcalGUI/usb/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
-		fi
-	)
-else
-	if [ -e "/etc/hotplug"]; then
-		# USB using hotplug and Serial using udev (older versions of Linux)
-		if [ ! -e "/etc/hotplug/usb/Argyll" ]; then
-			cp "/usr/share/dispcalGUI/usb/Argyll" "/etc/hotplug/usb/Argyll"
-		fi
-		if [ ! -e "/etc/hotplug/usb/Argyll.usermap" ]; then
-			cp "/usr/share/dispcalGUI/usb/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
-		fi
-	fi
-fi
-which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true
-which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true
+${POST}
 
 %postun
-which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true
-which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true
+${POSTUN}
 
 %changelog
 * ${DATE} ${MAINTAINER} <${MAINTAINER_EMAIL}>

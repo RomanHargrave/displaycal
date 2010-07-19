@@ -1,17 +1,11 @@
 Source: ${DEBPACKAGE}
 Section: graphics
-Priority: optional
+Priority: extra
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 Build-Depends: debhelper (>= 4.1.16), gcc, python (>= ${PY_MINVERSION}), python (<= ${PY_MAXVERSION}), python-all-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
 
 Package: ${DEBPACKAGE}
 Architecture: any
 Depends: ${shlibs:Depends}, python (>= ${PY_MINVERSION}), python (<= ${PY_MAXVERSION}), python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0)
-Description: ${DESC}
- Calibrates and characterizes display devices using a hardware sensor. Supports
- multiple displays and a variety of available settings like customizable
- whitepoint, luminance, black level, and tone response curve as well as the
- creation of matrix and look-up-table ICC profiles with optional gamut mapping.
- Calibrations and profiles can be verified through measurements, and profiles 
- can be installed to setup the X server for colormanagement-aware applications.
- Powered by the open source colormanagement system Argyll CMS.
+Description: ${SUMMARY}
+${DESC}

@@ -34,7 +34,7 @@ import subprocess as sp
 import sys
 from types import StringType
 
-from meta import (author, author_ascii, description, domain, name, 
+from meta import (author, author_ascii, description, longdesc, domain, name, 
 				  py_maxversion, py_minversion, version, version_tuple, 
 				  wx_minversion)
 from util_os import relpath
@@ -62,28 +62,26 @@ def setup():
 	do_py2exe = "py2exe" in sys.argv[1:]
 	do_uninstall = "uninstall" in sys.argv[1:]
 	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
+	help = False
 	install_data = None # data files install path (only if given)
-	is_rpm_build = os.path.abspath(sys.argv[0]).endswith(
+	is_rpm_build = "bdist_rpm" in sys.argv[1:] or os.path.abspath(sys.argv[0]).endswith(
 		os.path.join(os.path.sep, "rpm", "BUILD", name + "-" + version, 
 		os.path.basename(os.path.abspath(sys.argv[0]))))
 	recordfile_name = None # record installed files to this file
 	setuptools = None
 	skip_instrument_conf_files = "--skip-instrument-configuration-files" in \
 		sys.argv[1:]
-	use_distutils = not bdist_bbfreeze and not do_py2app and \
-		("--use-distutils" in sys.argv[1:] or os.path.exists("use-distutils"))
-	use_setuptools = bdist_bbfreeze or do_py2app or "--use-setuptools" in \
-		sys.argv[1:] or not use_distutils
+	use_distutils = not bdist_bbfreeze and not do_py2app
+	use_setuptools = not use_distutils or "--use-setuptools" in \
+		sys.argv[1:] or (os.path.exists("use-setuptools") and 
+						 not "--use-distutils" in sys.argv[1:])
 
 	sys.path.insert(1, os.path.join(os.path.dirname(pydir), "util"))
 
-	if not use_setuptools and use_distutils:
-		if "--use-distutils" in sys.argv[1:] and not \
-		   os.path.exists("use-distutils"):
-			open("use-distutils", "w").close()
-	else:
-		if os.path.exists("use-distutils"):
-			os.remove("use-distutils")
+	if use_setuptools:
+		if "--use-setuptools" in sys.argv[1:] and not \
+		   os.path.exists("use-setuptools"):
+			open("use-setuptools", "w").close()
 		try:
 			from ez_setup import use_setuptools as ez_use_setuptools
 			ez_use_setuptools()
@@ -95,6 +93,9 @@ def setup():
 			print "using setuptools"
 		except ImportError:
 			pass
+	else:
+		if os.path.exists("use-setuptools"):
+			os.remove("use-setuptools")
 
 	if not setuptools:
 		from distutils.core import setup, Extension
@@ -170,6 +171,8 @@ def setup():
 					install_data = arg[1]
 				elif arg[0] == "--record":
 					recordfile_name = arg[1]
+			elif arg[0] == "-h" or arg[0].startswith("--help"):
+				help = True
 
 	if not recordfile_name and (do_full_install or do_uninstall):
 		recordfile_name = "INSTALLED_FILES"
@@ -184,14 +187,14 @@ def setup():
 	else:
 		# Linux/Unix
 		data = name
-		if "bdist_rpm" in sys.argv[1:] or is_rpm_build:
+		if is_rpm_build:
 			doc = os.path.join("doc", "packages", name)
 		else:
 			doc = os.path.join("doc", name + "-" + version)
 		if not install_data:
 			data = os.path.join("share", data)
 			doc = os.path.join("share", doc)
-			if "bdist_rpm" in sys.argv[1:] or is_rpm_build:
+			if is_rpm_build:
 				doc = os.path.join(os.path.sep, "usr", doc)
 
 	# on Mac OS X and Windows, we want data files in the package dir
@@ -225,7 +228,7 @@ def setup():
 			[os.path.join(pydir, "..", "theme", "icons", "favicon.ico")]), 
 		(doc, [os.path.join(pydir, "..", "LICENSE.txt")]),
 		(doc, [os.path.join(pydir, "..", "README.html")])
-	] if not "bdist_rpm" in sys.argv[1:] and not is_rpm_build else []
+	] if not is_rpm_build else []
 	if sys.platform not in ("darwin", "win32") or do_py2app or do_py2exe:
 		# Linux/Unix or py2app/py2exe
 		data_files += [
@@ -267,51 +270,65 @@ def setup():
 												".desktop")])]
 			if not skip_instrument_conf_files:
 				# device configuration / permission stuff
-				devconf_files = []
-				## if os.path.isdir("/usr/share/PolicyKit/policy") and \
-				   ## os.path.isdir("/usr/share/hal/fdi/policy/10osvendor"):
-					## # USB and Serial access using PolicyKit V0.6 + HAL
-					## # (recent versions of Linux)
-					## devconf_files += [
-						## ("/usr/share/PolicyKit/policy", [os.path.join(
-							## pydir, "..", "misc", "color-device-file.policy")]),
-						## ("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(
-							## pydir, "..", "misc", "19-color.fdi")])
-					## ]
-				if os.path.isdir("/etc/udev/rules.d"):
-					if glob.glob("/dev/bus/usb/*/*"):
-						# USB and serial instruments using udev, where udev 
-						# already creates /dev/bus/usb/00X/00X devices
-						devconf_files += [
-							("/etc/udev/rules.d", [os.path.join(
-								pydir, "..", "misc", "92-Argyll.rules")])
-						]
-					else:
-						# USB using udev, where there are NOT /dev/bus/usb/00X/00X 
-						# devices
-						devconf_files += [
-							("/etc/udev/rules.d", [os.path.join(
-								pydir, "..", "misc", "45-Argyll.rules")])
-						]
+				if is_rpm_build:
+					# RPM postinstall script will install these to the correct
+					# locations. This allows us compatibility with Argyll
+					# packages which may also contain same udev rules / hotplug
+					# scripts, thus avoiding file conflicts
+					data_files += [(os.path.join(data, "usb"), [os.path.join(
+									pydir, "..", "misc", "45-Argyll.rules")])]
+					data_files += [(os.path.join(data, "usb"), [os.path.join(
+									pydir, "..", "misc", "92-Argyll.rules")])]
+					data_files += [(os.path.join(data, "usb"), [os.path.join(
+									pydir, "..", "misc", "Argyll")])]
+					data_files += [(os.path.join(data, "usb"), [os.path.join(
+									pydir, "..", "misc", "Argyll.usermap")])]
 				else:
-					if os.path.isdir("/etc/hotplug"):
-						# USB using hotplug and Serial using udev
-						# (older versions of Linux)
-						devconf_files += [
-							("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", 
-															   fname) for fname in 
-												  ["Argyll", "Argyll.usermap"]])
-						]
-					## if os.path.isdir("/etc/udev/permissions.d"):
-						## # Serial instruments using udev (older versions of Linux)
+					devconf_files = []
+					## if os.path.isdir("/usr/share/PolicyKit/policy") and \
+					   ## os.path.isdir("/usr/share/hal/fdi/policy/10osvendor"):
+						## # USB and Serial access using PolicyKit V0.6 + HAL
+						## # (recent versions of Linux)
 						## devconf_files += [
-							## ("/etc/udev/permissions.d", [os.path.join(
-								## pydir, "..", "misc", "10-Argyll.permissions")])
+							## ("/usr/share/PolicyKit/policy", [os.path.join(
+								## pydir, "..", "misc", "color-device-file.policy")]),
+							## ("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(
+								## pydir, "..", "misc", "19-color.fdi")])
 						## ]
-				for entry in devconf_files:
-					for fname in entry[1]:
-						if os.path.isfile(fname):
-							data_files += [(entry[0], [fname])]
+					if os.path.isdir("/etc/udev/rules.d"):
+						if glob.glob("/dev/bus/usb/*/*"):
+							# USB and serial instruments using udev, where udev 
+							# already creates /dev/bus/usb/00X/00X devices
+							devconf_files += [
+								("/etc/udev/rules.d", [os.path.join(
+									pydir, "..", "misc", "92-Argyll.rules")])
+							]
+						else:
+							# USB using udev, where there are NOT /dev/bus/usb/00X/00X 
+							# devices
+							devconf_files += [
+								("/etc/udev/rules.d", [os.path.join(
+									pydir, "..", "misc", "45-Argyll.rules")])
+							]
+					else:
+						if os.path.isdir("/etc/hotplug"):
+							# USB using hotplug and Serial using udev
+							# (older versions of Linux)
+							devconf_files += [
+								("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", 
+																   fname) for fname in 
+													  ["Argyll", "Argyll.usermap"]])
+							]
+						## if os.path.isdir("/etc/udev/permissions.d"):
+							## # Serial instruments using udev (older versions of Linux)
+							## devconf_files += [
+								## ("/etc/udev/permissions.d", [os.path.join(
+									## pydir, "..", "misc", "10-Argyll.permissions")])
+							## ]
+					for entry in devconf_files:
+						for fname in entry[1]:
+							if os.path.isfile(fname):
+								data_files += [(entry[0], [fname])]
 		for dname in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
 			# Only the 16x16 and 32x32 icons are used exclusively by the app, 
 			# the other sizes of the app icon are used for the desktop entry 
@@ -340,8 +357,11 @@ def setup():
 			libraries = ["user32", "gdi32"], 
 			define_macros=[("NT", None)])
 	elif sys.platform == "darwin":
-		if "build" in sys.argv[1:] or "build_ext" in sys.argv[1:] or \
-		   "install" in sys.argv[1:] or "install_lib" in sys.argv[1:]:
+		if not help and ("build" in sys.argv[1:] or 
+						 "build_ext" in sys.argv[1:] or 
+						 (("install" in sys.argv[1:] or 
+						   "install_lib" in sys.argv[1:]) and 
+						  not "--skip-build" in sys.argv[1:])):
 			p = sp.Popen([sys.executable, '-c', '''import os
 from distutils.core import setup, Extension
 
@@ -374,9 +394,13 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			define_macros=[("UNIX", None)])
 	ext_modules = [RealDisplaySizeMM]
 
-	requires = [
-		"wxPython (>= %s)" % ".".join(str(n) for n in wx_minversion)
-	]
+	requires = []
+	if not setuptools or sys.platform != "win32":
+		# wxPython windows installer doesn't add egg-info entry, so
+		# a dependency check from pkg_resources would always fail
+		requires += [
+			"wxPython (>= %s)" % ".".join(str(n) for n in wx_minversion)
+		]
 	if sys.platform == "win32":
 		requires += [
 			"pywin32 (>= 213.0)"
@@ -411,7 +435,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 						{"name": name, "version": version},
 		"ext_modules": ext_modules,
 		"license": "GPL v3",
-		"long_description": description,
+		"long_description": longdesc,
 		"name": name,
 		"packages": [name],
 		"package_data": package_data,
@@ -426,6 +450,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			"Windows 2000 and newer"
 		],
 		"requires": requires,
+		"provides": name,
 		"scripts": [],
 		"url": "http://%s.hoech.net/" % name,
 		"version": msiversion if "bdist_msi" in sys.argv[1:] else version
@@ -443,10 +468,6 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		attrs["include_package_data"] = sys.platform in ("darwin", "win32")
 		install_requires = [req.replace("(", "").replace(")", "") for req in 
 							requires]
-		# wxPython windows installer doesn't add egg-info entry, so
-		# a dependency check from pkg_resources would always fail
-		install_requires.remove("wxPython >= " + ".".join(str(n) for n in 
-														  wx_minversion))
 		attrs["install_requires"] = install_requires
 		attrs["zip_safe"] = False
 	else:
@@ -455,7 +476,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 	if bdist_bbfreeze:
 		attrs["setup_requires"] = ["bbfreeze"]
 
-	if (bdist_win or setuptools) and not "bdist_msi" in sys.argv[1:]:
+	if "bdist_wininst" in sys.argv[1:]:
 		attrs["scripts"] += [os.path.join("util", name + "_postinstall.py")]
 		
 	if do_py2app:
@@ -544,7 +565,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			attrs["setup_requires"] = ["py2exe"]
 		attrs["zipfile"] = os.path.join("lib", "library.zip")
 
-	if do_uninstall or do_install or bdist_win or bdist_dumb:
+	if (do_uninstall or do_install or bdist_win or bdist_dumb) and not help:
 		distutils.core._setup_stop_after = "commandline"
 		dist = setup(**attrs)
 		distutils.core._setup_stop_after = None
@@ -602,7 +623,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 					attrs["data_files"][i] = (change_root(data_basedir, f[0]), 
 											  f[1])
 
-	if do_uninstall:
+	if do_uninstall and not help:
 
 		# Quick and dirty uninstall
 
@@ -805,11 +826,12 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		manifest_in += ["global-exclude *~"]
 		manifest_in += ["global-exclude *.backup"]
 		manifest_in += ["global-exclude *.bak"]
-		manifest = open("MANIFEST.in", "w")
-		manifest.write("\n".join(manifest_in))
-		manifest.close()
-		if os.path.exists("MANIFEST"):
-			os.remove("MANIFEST")
+		if not dry_run:
+			manifest = open("MANIFEST.in", "w")
+			manifest.write("\n".join(manifest_in))
+			manifest.close()
+			if os.path.exists("MANIFEST"):
+				os.remove("MANIFEST")
 
 		if bdist_bbfreeze:
 			i = sys.argv.index("bdist_bbfreeze")
@@ -833,6 +855,9 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 
 		setup(**attrs)
 		
+		if dry_run or help:
+			return
+		
 		if do_py2exe:
 			shutil.copy(os.path.join(dist_dir, "python26.dll"),
 						os.path.join(dist_dir, "lib", "python26.dll"))
@@ -849,18 +874,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 				vc90crt_copy_files(os.path.join(dist_dir, 
 												name + "-" + version))
 		
-		if "bdist_wininst" in sys.argv[1:]:
-			# Using sys.version in this way is consistent with setuptools
-			exe = os.path.join("dist", name + (
-				"-%(version)s.%(platform)s-py%(pyversion)s.exe" % 
-				{
-					"version": version, 
-					"platform": get_platform(),
-					"pyversion": sys.version[:3] 
-				}
-			))
-		
-		if not dry_run and do_full_install:
+		if do_full_install:
 			from postinstall import postinstall
 			if sys.platform == "win32":
 				path = os.path.join(cmd.install_lib, name)
