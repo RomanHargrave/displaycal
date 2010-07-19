@@ -37,6 +37,7 @@ from util_list import intlist
 from util_str import hexunescape
 
 if sys.platform not in ("darwin", "win32"):
+	from util_x import get_display
 	try:
 		import xrandr
 	except ImportError:
@@ -277,13 +278,30 @@ def _winreg_get_display_profile(monkey, current_user=False):
 	return None
 
 
-def _xrandr_get_display_profile(display_no=0):
+def _xrandr_get_display_profile(display_no=0, x_hostname="", x_display=0, 
+								x_screen=0):
 	try:
-		property = xrandr.get_output_property(display_no, "_ICC_PROFILE")
+		property = xrandr.get_output_property(display_no, "_ICC_PROFILE", 
+											  xrandr.XA_CARDINAL, x_hostname, 
+											  x_display, x_screen)
 	except ValueError:
 		return None
 	if property:
 		return ICCProfile("".join(chr(i) for i in property))
+	return None
+
+
+def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0, 
+							 x_screen=0):
+	try:
+		atom = xrandr.get_atom("_ICC_PROFILE" + ("" if display_no == 0 else 
+													 "_%s" % display_no), 
+							   xrandr.XA_CARDINAL, x_hostname, x_display, 
+							   x_screen)
+	except ValueError:
+		return None
+	if atom:
+		return ICCProfile("".join(chr(i) for i in atom))
 	return None
 
 
@@ -332,6 +350,13 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				options = ["ColorSyncScripting"]
 		else:
 			options = ["_ICC_PROFILE"]
+			display = get_display()
+			if not x_hostname:
+				x_hostname = display[0]
+			if not x_display:
+				x_display = display[1]
+			if not x_screen:
+				x_screen = display[2]
 		for option in options:
 			if sys.platform == "darwin":
 				# appscript: one-based index
@@ -362,11 +387,21 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				if xrandr and option == "_ICC_PROFILE":
 					if debug:
 						safe_print("Using XrandR")
-					profile = _xrandr_get_display_profile(display_no)
+					profile = _xrandr_get_display_profile(display_no, 
+														  x_hostname, 
+														  x_display, x_screen)
 					if profile:
 						return profile
 					if debug:
-						safe_print("Couldn't get profile with XrandR")
+						safe_print("Couldn't get _ICC_PROFILE XrandR output property")
+						safe_print("Using X11")
+					profile = _x11_get_display_profile(display_no, 
+													   x_hostname, 
+													   x_display, x_screen)
+					if profile:
+						return profile
+					if debug:
+						safe_print("Couldn't get _ICC_PROFILE X atom")
 				# Read up to 8 MB of any X properties
 				if debug:
 					safe_print("Using xprop")
