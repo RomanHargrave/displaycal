@@ -2190,7 +2190,7 @@ class Worker():
 	def ti1_lookup_to_ti3(self, ti1, profile, pcs=None):
 		"""
 		Read TI1 (filename or CGATS instance), lookup device->pcs values 
-		absolute colorimetrically through profile using Argyll's icclu 
+		absolute colorimetrically through profile using Argyll's xicclu 
 		utility and return TI3 (CGATS instance)
 		
 		"""
@@ -2265,13 +2265,13 @@ class Worker():
 		for rgb in device_data.values():
 			idata.append(' '.join(str(n) for n in rgb.values()))
 
-		# lookup device->cie values through profile using icclu
-		icclu = get_argyll_util("icclu").encode(fs_enc)
+		# lookup device->cie values through profile using xicclu
+		xicclu = get_argyll_util("xicclu").encode(fs_enc)
 		cwd = self.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
 		profile.write(os.path.join(cwd, "temp.icc"))
-		p = sp.Popen([icclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
+		p = sp.Popen([xicclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
 					 cwd=cwd.encode(fs_enc))
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
@@ -2293,7 +2293,7 @@ class Worker():
 				# if grayscale and not white
 				cie = [float(n) for n in line[5:-1]]
 				if pcs == 'x':
-					# Need to scale XYZ coming from icclu, Lab is already scaled
+					# Need to scale XYZ coming from xicclu, Lab is already scaled
 					cie = colormath.XYZ2Lab(*[n * 100.0 for n in cie])
 				cie = (cie[0], 0, 0)  # set a=b=0
 				igray.append("%s %s %s" % cie)
@@ -2314,14 +2314,14 @@ class Worker():
 											' '.join(line[5:])])
 		
 		if igray and False:  # NEVER?
-			# lookup cie->device values for grays through profile using icclu
+			# lookup cie->device values for grays through profile using xicclu
 			gray = []
-			icclu = get_argyll_util("icclu").encode(fs_enc)
+			xicclu = get_argyll_util("xicclu").encode(fs_enc)
 			cwd = self.create_tempdir()
 			if isinstance(cwd, Exception):
 				raise cwd
 			profile.write(os.path.join(cwd, "temp.icc"))
-			p = sp.Popen([icclu, '-fb', '-ir', '-pl', '-s100', "temp.icc"], 
+			p = sp.Popen([xicclu, '-fb', '-ir', '-pl', '-s100', "temp.icc"], 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
 						 cwd=cwd.encode(fs_enc))
 			ogray = p.communicate('\n'.join(igray))[0].splitlines()
@@ -2401,7 +2401,7 @@ class Worker():
 			i += 1
 			cie = [float(n) for n in line[5:-1]]
 			if pcs == 'x':
-				# Need to scale XYZ coming from icclu, Lab is already scaled
+				# Need to scale XYZ coming from xicclu, Lab is already scaled
 				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) 
 					   for n in cie]
 			cie = [str(n) for n in cie]
@@ -2418,7 +2418,7 @@ class Worker():
 	def ti3_lookup_to_ti1(self, ti3, profile):
 		"""
 		Read TI3 (filename or CGATS instance), lookup cie->device values 
-		absolute colorimetrically through profile using Argyll's icclu 
+		absolute colorimetrically through profile using Argyll's xicclu 
 		utility and return TI1 and compatible TI3 (CGATS instances)
 		
 		"""
@@ -2492,12 +2492,12 @@ class Worker():
 			idata.append(' '.join(str(n) for n in cie))
 
 		# lookup cie->device values through profile.icc using xicclu
-		icclu = get_argyll_util("icclu").encode(fs_enc)
+		xicclu = get_argyll_util("xicclu").encode(fs_enc)
 		cwd = self.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
 		profile.write(os.path.join(cwd, "temp.icc"))
-		p = sp.Popen([icclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
+		p = sp.Popen([xicclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
 					 cwd=cwd.encode(fs_enc))
 		odata = p.communicate('\n'.join(idata))[0].splitlines()

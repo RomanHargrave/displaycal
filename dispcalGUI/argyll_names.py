@@ -6,7 +6,7 @@ names = [
 	"dispread",
 	"colprof",
 	"dispwin",
-	"icclu",
+	"xicclu",
 	"spotread",
 	"spyd2en",
 	"targen",
