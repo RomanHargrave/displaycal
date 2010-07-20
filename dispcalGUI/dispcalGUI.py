@@ -1168,10 +1168,10 @@ class MainFrame(BaseFrame):
 		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
 		spyd2en = get_argyll_util("spyd2en")
-		self.menuitem_enable_spyder2.Enable(spyd2en and not 
+		self.menuitem_enable_spyder2.Enable(bool(spyd2en) and not 
 											os.path.isfile(os.path.join(os.path.dirname(spyd2en), 
 																		"spyd2PLD.bin")))
-		self.menuitem_enable_spyder2.Check(spyd2en and  
+		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
 										   os.path.isfile(os.path.join(os.path.dirname(spyd2en), 
 																	   "spyd2PLD.bin")))
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
