@@ -14,7 +14,7 @@ for /F usebackq %%a in (`python -c "from dispcalGUI.meta import version_tuple;pr
 
 REM Source tarball
 if not exist dist\dispcalGUI-%version%.tar.gz (
-	python setup.py sdist --format=gztar --use-setuptools 2>&1 | tee dispcalGUI-%version%.sdist.log
+	python setup.py sdist --format=gztar --use-distutils 2>&1 | tee dispcalGUI-%version%.sdist.log
 )
 
 REM Standalone executable
