@@ -594,6 +594,7 @@ class Worker():
 		self.subprocess_abort = False
 		self.tempdir = None
 		self.thread_abort = False
+		self.triggers = ["key to retry:"]
 		self.clear_argyll_info()
 		self.clear_cmd_output()
 	
@@ -662,10 +663,10 @@ class Worker():
 		self.errors = []
 		self.recent = FilteredStream(LineCache(n=3), self.data_encoding, 
 									 discard=self.recent_discard,
-									 triggers=[])
+									 triggers=self.triggers)
 		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
 									  discard=self.lastmsg_discard,
-									  triggers=[])
+									  triggers=self.triggers)
 
 	def create_tempdir(self):
 		""" Create a temporary working directory and return its path. """
@@ -1212,7 +1213,8 @@ class Worker():
 				if self.interactive:
 					logfile = Files((FilteredStream(self.terminal,
 													discard="",
-													triggers=[]), logfile))
+													triggers=self.triggers), 
+									logfile))
 			if sys.platform == "win32" and working_dir:
 				working_dir = win32api.GetShortPathName(working_dir)
 			logfn = log
@@ -1248,15 +1250,14 @@ class Worker():
 													 (1, appname if isapp 
 													 	 else "Python"))
 								while self.subprocess.isalive():
-									# Handle misreads, user can cancel via
-									# progress dialog
-									self.subprocess.expect("failed due to", 
-														   timeout=None)
+									# Automatically retry on error, user can 
+									# cancel via progress dialog
 									self.subprocess.expect("key to retry:", 
 														   timeout=None)
 									if sys.platform != "win32":
 										sleep(.5)
 									if self.subprocess.isalive():
+										logfile.write("Retrying...")
 										self.subprocess.send(" ")
 							else:
 								self.subprocess.expect(wexpect.EOF, 
