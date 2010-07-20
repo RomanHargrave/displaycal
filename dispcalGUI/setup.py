@@ -874,7 +874,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 				vc90crt_copy_files(os.path.join(dist_dir, 
 												name + "-" + version))
 		
-		if do_full_install:
+		if do_full_install and not is_rpm_build:
 			from postinstall import postinstall
 			if sys.platform == "win32":
 				path = os.path.join(cmd.install_lib, name)
