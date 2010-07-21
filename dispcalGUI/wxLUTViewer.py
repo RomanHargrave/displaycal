@@ -136,46 +136,43 @@ class LUTCanvas(plot.PlotCanvas):
 		self.b_unique = len(set(round(y) for x, y in b_points))
 
 		legend = []
-		points = []
 		if r:
 			legend += ['R']
-			points += [r_points]
 		if g:
 			legend += ['G']
-			points += [g_points]
 		if b:
 			legend += ['B']
-			points += [b_points]
-		same = True
-		if points:
-			for i in range(1, len(points)):
-				if points[i] != points[0]:
-					same = False
-					break
-		suffix = ((', ' + lang.getstr('linear').capitalize()) if points and 
-					points[0] == (linear if detect_increments else 
-								  linear_points) else '')
-		if len(legend) > 1 and same:
-			if legend == ['R', 'G']:
-				colour = 'yellow'
-			elif legend == ['R', 'B']:
-				colour = 'magenta'
-			elif legend == ['G', 'B']:
-				colour = 'cyan'
-			else:
-				colour = 'white'
-			# Bottom left to top right
-			lines += [Plot(points[0], legend='='.join(legend) + suffix, 
+		colour = None
+		if r and g and b and r_points == g_points == b_points:
+			colour = 'white'
+			points = r_points
+		elif r and g and r_points == g_points:
+			colour = 'yellow'
+			points = r_points
+		elif r and b and r_points == b_points:
+			colour = 'magenta'
+			points = b_points
+		elif g and b and g_points == b_points:
+			colour = 'cyan'
+			points = b_points
+		if colour:
+			suffix = ((', ' + lang.getstr('linear').capitalize()) if 
+						points == (linear if detect_increments else 
+									linear_points) else '')
+			lines += [Plot(points, legend='='.join(legend) + suffix, 
 						   colour=colour)]
-		else:
-			if r:
+		if colour != 'white':
+			if r and colour not in ('yellow', 'magenta'):
+				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
+							r_points == (linear if detect_increments else 
+										  linear_points) else '')
 				lines += [Plot(r_points, legend='R' + suffix, colour='red')]
-			if g:
+			if g and colour not in ('yellow', 'cyan'):
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							g_points == (linear if detect_increments else 
 										  linear_points) else '')
 				lines += [Plot(g_points, legend='G' + suffix, colour='green')]
-			if b:
+			if b and colour not in ('cyan', 'magenta'):
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							b_points == (linear if detect_increments else 
 										  linear_points) else '')
