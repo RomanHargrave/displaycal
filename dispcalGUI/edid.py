@@ -85,10 +85,14 @@ def get_edid(display_no):
 						pass
 	elif xrandr:
 		# Check XrandR output properties
+		edid_data = None
 		for key in ("EDID", "EDID_DATA"):
-			edid_data = xrandr.get_output_property(display_no, key, 
-												   xrandr.XA_INTEGER)
-			if edid_data:
+			try:
+				edid_data = xrandr.get_output_property(display_no, key, 
+													   xrandr.XA_INTEGER)
+			except ValueError:
+				pass
+			else:
 				break
 		if not edid_data:
 			# Check X11 atoms
@@ -96,8 +100,11 @@ def get_edid(display_no):
 						"XFree86_DDC_EDID2_RAWDATA"):
 				if display_no > 0:
 					key += "_%s" % display_no
-				edid_data = xrandr.get_atom(key, xrandr.XA_INTEGER)
-				if edid_data:
+				try:
+					edid_data = xrandr.get_atom(key)
+				except ValueError:
+					pass
+				else:
 					break
 		if edid_data:
 			edid_data = "".join(chr(i) for i in edid_data)
