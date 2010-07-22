@@ -70,7 +70,7 @@
 	"calibration.update": "Kalibrierung aktualisieren",
 	"calibration.update_profile_choice": "Möchten Sie auch die Kalibrierungskurven im bestehenden Profil aktualisieren oder nur kalibrieren?",
 	"calibration.verify": "Kalibrierung überprüfen",
-	"calibrationloader.description": "Lädt die Kalibrierungskurven des ICC-Profils für Anzeigegerät %s",
+	"calibrationloader.description": "Setzt ICC-Profile und lädt Kalibrierungskurven für alle konfigurierten Anzeigegeräte",
 	"cancel": "Abbrechen",
 	"checking_lut_access": "Überprüfe Grafikkarten-Gammatabellen-Zugriff auf Anzeigegerät %s...",
 	"check_update": "Auf Programmaktualisierung überprüfen...",

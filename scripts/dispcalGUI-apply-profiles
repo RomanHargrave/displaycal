@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+""" 
+Set ICC profiles and load calibration curves for all configured display devices
+
+"""
+
+import os
+import subprocess as sp
+
+from dispcalGUI.defaultpaths import xdg_config_dirs
+from dispcalGUI.util_os import which
+
+# gcm-apply sets the _ICC_PROFILE root window atom for the first screen 
+# and per-output xrandr _ICC_PROFILE properties (if xrandr is working) 
+# for all configured screens (device-profiles.conf)
+gcm_apply = which("gcm-apply")
+if gcm_apply:
+	# A gcm-apply autostart entry normally exists if GCM is installed, so there's
+	# no need to call it
+	gcm_apply_autostart_exists = False
+	for xdg_config_dir in xdg_config_dirs:
+		gcm_apply_autostart_exists = os.path.isfile(os.path.join(xdg_config_dir, 
+																 "autostart", 
+																 "gcm-apply.desktop"))
+	if not gcm_apply_autostart_exists:
+		sp.call([gcm_apply])
+
+# oyranos-monitor sets _ICC_PROFILE(_n) root window atoms for all 
+# configured screens (oyranos db backend), but not xrandr output properties
+oyranos_monitor = which("oyranos-monitor")
+if oyranos_monitor:
+	sp.call([oyranos_monitor])
+
+# dispwin sets the _ICC_PROFILE(_n) root window atom and per-output xrandr 
+# _ICC_PROFILE property (if xrandr is working) for the requested screen
+# only, so has to be called multiple times to setup multiple screens.
+#
+# dispwin will look at color.jcnf to determine which profiles to load, 
+# but if it doesn't exist (or jcnf support has been removed, like in the 
+# Argyll CMS versions shipped by recent Fedora releases), or there is no 
+# profile configured for the requested screen, it will look at the 
+# per-output xrandr _ICC_PROFILE property (if xrandr is working) or 
+# _ICC_PROFILE(_n) root window atom.
+#
+# So, in any case we call it last so it can use the _ICC_PROFILE previously 
+# set by gcm-apply or oyranos-monitor
+dispwin = which("dispwin")
+if dispwin:
+	process = sp.Popen([dispwin, "-?"], stdout=sp.PIPE, stderr=sp.STDOUT)
+	stdout, stderr = process.communicate()
+	arg = None
+	display_no = 1
+	for line in stdout.splitlines():
+		line = line.strip().split(None, 1)
+		if line and line[0].startswith("-"):
+			# Argument
+			arg = line[0]
+		elif len(line) > 1 and line[1].startswith("=") and arg == "-d":
+			# Display
+			sp.call([dispwin, "-d%i" % display_no, "-c", "-L"])
+			display_no += 1

@@ -79,8 +79,8 @@ import jspacker
 # Config
 import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
-					script_ext, confighome, datahome, defaults, enc, exe, 
-					exe_ext, exedir, fs_enc, getbitmap, geticon, 
+					script_ext, confighome, datahome, data_dirs, defaults, enc, 
+					exe, exe_ext, exedir, fs_enc, getbitmap, geticon, 
 					get_bitmap_as_icon, get_data_path, getcfg, 
 					get_verified_path, original_codepage, initcfg, isapp, 
 					isexe, profile_ext, pydir, pyext, pyname, pypath, 
@@ -3235,7 +3235,7 @@ class MainFrame(BaseFrame):
 		result = None
 		install_section = None
 		if install and sys.platform not in ("darwin", "win32") and \
-		   which("gcm-import") and get_edid and xrandr:
+		   which("gcm-import"):
 			# Install using GNOME Color Manager
 			##gcm_device_profiles_conf = os.path.join(xdg_config_home, 
 													##"gnome-color-manager", 
@@ -3257,12 +3257,12 @@ class MainFrame(BaseFrame):
 					##except Exception, exception:
 						##handle_error(exception)
 					##fp.close()
-			try:
-				edid = get_edid(max(0, min(len(self.worker.displays), 
-										   getcfg("display.number") - 1)))
-			except (TypeError, ValueError):
-				edid = None
-			if edid:
+			##try:
+				##edid = get_edid(max(0, min(len(self.worker.displays), 
+										   ##getcfg("display.number") - 1)))
+			##except (TypeError, ValueError):
+				##edid = None
+			if True:
 				incomplete = False
 				##section_parts = ["xrandr"]
 				##for name in ["manufacturer", "monitor_name", "ascii", 
@@ -3669,116 +3669,91 @@ class MainFrame(BaseFrame):
 									   bitmap=geticon(32, "dialog-warning"))
 				elif sys.platform != "darwin":
 					# http://standards.freedesktop.org/autostart-spec/autostart-spec-latest.html
+					# Old names
 					name = "%s-Calibration-Loader-Display-%s" % (appname, n)
 					desktopfile_path = os.path.join(autostart_home, 
 													name + ".desktop")
+					oy_desktopfile_path = os.path.join(autostart_home, 
+													   name + ".desktop")
 					system_desktopfile_path = os.path.join(
 						autostart, name + ".desktop")
-					if gcm or oyranos:
-						# Disable dispcalGUI user loader
-						if os.path.exists(desktopfile_path):
-							try:
-								cfg = ConfigParser.SafeConfigParser()
-								cfg.optionxform = str
-								cfg.read([desktopfile_path])
-								if not cfg.has_option("Desktop Entry", "Hidden") or \
-								   cfg.get("Desktop Entry", "Hidden").lower() != "true":
-									cfg.set("Desktop Entry", "Hidden", "true")
-									io = StringIO()
-									cfg.write(io)
-									io.seek(0)
-									desktop = "".join(["=".join(line.split(" = ", 1)) 
-													   for line in io])
-									desktopfile = open(desktopfile_path, "w")
-									desktopfile.write(desktop)
-									desktopfile.close()
-							except Exception, exception:
-								InfoDialog(self, 
-										   msg=lang.getstr(
-											   "error.autostart_remove_old", 
-											   desktopfile_path), 
-										   ok=lang.getstr("ok"), 
-										   bitmap=geticon(32, "dialog-warning"))
-						# Disable Argyll CMS user color.jcnf
-						colorjcnf_home = os.path.join(xdg_config_home, 
-													  "color.jcnf")
-						if os.path.exists(colorjcnf_home):
-							try:
-								shutil.move(colorjcnf_home,
-											colorjcnf_home + ".backup")
-							except Exception, exception:
-								InfoDialog(self, 
-										   msg=lang.getstr(
-											   "error.colorconfig_remove_old", 
-											   colorjcnf_home), 
-										   ok=lang.getstr("ok"), 
-										   bitmap=geticon(32, "dialog-warning"))
-						# Disable dispcalGUI system loader
-						if os.path.exists(system_desktopfile_path):
-							move = True
-							try:
-								cfg = ConfigParser.SafeConfigParser()
-								cfg.optionxform = str
-								cfg.read([system_desktopfile_path])
-								if cfg.has_option("Desktop Entry", "Hidden") and \
-								   cfg.get("Desktop Entry", "Hidden").lower() == "true":
-									move = False
-								else:
-									cfg.set("Desktop Entry", "Hidden", "true")
-									io = StringIO()
-									cfg.write(io)
-									io.seek(0)
-									desktop = "".join(["=".join(line.split(" = ", 1)) 
-													   for line in io])
-									tmp_desktopfile_path = os.path.join(self.worker.create_tempdir(),
-																		os.path.basename(system_desktopfile_path))
-									desktopfile = open(tmp_desktopfile_path, "w")
-									desktopfile.write(desktop)
-									desktopfile.close()
-							except Exception, exception:
-								result = False
-							if move and \
-							   (not result or 
-							    self.worker.exec_cmd("mv", 
-													 ["-f", 
-													  tmp_desktopfile_path,
-													  system_desktopfile_path], 
-													 capture_output=True, 
-													 low_contrast=False, 
-													 skip_scripts=True, 
-													 silent=True, 
-													 asroot=True, 
-													 title=lang.getstr("autostart_remove_old")) 
-								is not True) and not silent:
-									InfoDialog(self, 
-											   msg=lang.getstr(
-												   "error.autostart_remove_old", 
-												   system_desktopfile_path), 
-											   ok=lang.getstr("ok"), 
-											   bitmap=geticon(32, "dialog-warning"))
-							self.worker.wrapup(False)
-						# Disable Argyll CMS system color.jcnf
-						for path in xdg_config_dirs:
-							colorjcnf_system = os.path.join(path, "color.jcnf")
-							if os.path.exists(colorjcnf_system) and \
-							   self.worker.exec_cmd("mv", 
-													["-f", 
-													 colorjcnf_system,
-													 colorjcnf_system + 
-													 ".backup"], 
-													capture_output=True, 
-													low_contrast=False, 
-													skip_scripts=True, 
-													silent=False, 
-													asroot=True, 
-													title=lang.getstr("colorconfig_remove_old")) is not True and \
-							   not silent:
-									InfoDialog(self, 
-											   msg=lang.getstr(
-												   "error.colorconfig_remove_old", 
-												   colorjcnf_system), 
-											   ok=lang.getstr("ok"), 
-											   bitmap=geticon(32, "dialog-warning"))
+					# Remove old (pre-0.5.5.9) dispcalGUI user loader
+					if os.path.exists(desktopfile_path):
+						try:
+							os.remove(desktopfile_path)
+						except Exception, exception:
+							InfoDialog(self, 
+									   msg=lang.getstr(
+										   "error.autostart_remove_old", 
+										   desktopfile_path), 
+									   ok=lang.getstr("ok"), 
+									   bitmap=geticon(32, "dialog-warning"))
+					# Remove old (pre-0.5.5.9) oyranos user loader
+					if os.path.exists(oy_desktopfile_path):
+						try:
+							os.remove(oy_desktopfile_path)
+						except Exception, exception:
+							InfoDialog(self, 
+									   msg=lang.getstr(
+										   "error.autostart_remove_old", 
+										   oy_desktopfile_path), 
+									   ok=lang.getstr("ok"), 
+									   bitmap=geticon(32, "dialog-warning"))
+					# Remove old (pre-0.5.5.9) dispcalGUI system loader
+					if os.path.exists(system_desktopfile_path) and \
+					   (self.worker.exec_cmd("rm", 
+											 ["-f", 
+											  system_desktopfile_path], 
+											 capture_output=True, 
+											 low_contrast=False, 
+											 skip_scripts=True, 
+											 silent=False, 
+											 asroot=True, 
+											 title=lang.getstr("autostart_remove_old")) 
+						is not True) and not silent:
+						InfoDialog(self, 
+								   msg=lang.getstr(
+									   "error.autostart_remove_old", 
+									   system_desktopfile_path), 
+								   ok=lang.getstr("ok"), 
+								   bitmap=geticon(32, "dialog-warning"))
+					##if gcm or oyranos:
+						### Disable Argyll CMS user color.jcnf
+						##colorjcnf_home = os.path.join(xdg_config_home, 
+													  ##"color.jcnf")
+						##if os.path.exists(colorjcnf_home):
+							##try:
+								##shutil.move(colorjcnf_home,
+											##colorjcnf_home + ".backup")
+							##except Exception, exception:
+								##InfoDialog(self, 
+										   ##msg=lang.getstr(
+											   ##"error.colorconfig_remove_old", 
+											   ##colorjcnf_home), 
+										   ##ok=lang.getstr("ok"), 
+										   ##bitmap=geticon(32, "dialog-warning"))
+						### Disable Argyll CMS system color.jcnf
+						##for path in xdg_config_dirs:
+							##colorjcnf_system = os.path.join(path, "color.jcnf")
+							##if os.path.exists(colorjcnf_system) and \
+							   ##self.worker.exec_cmd("mv", 
+													##["-f", 
+													 ##colorjcnf_system,
+													 ##colorjcnf_system + 
+													 ##".backup"], 
+													##capture_output=True, 
+													##low_contrast=False, 
+													##skip_scripts=True, 
+													##silent=False, 
+													##asroot=True, 
+													##title=lang.getstr("colorconfig_remove_old")) is not True and \
+							   ##not silent:
+									##InfoDialog(self, 
+											   ##msg=lang.getstr(
+												   ##"error.colorconfig_remove_old", 
+												   ##colorjcnf_system), 
+											   ##ok=lang.getstr("ok"), 
+											   ##bitmap=geticon(32, "dialog-warning"))
 					if gcm:
 						# Run gcm-import or gcm-prefs
 						# Start in separate thread so we don't block dispcalGUI
@@ -3790,23 +3765,20 @@ class MainFrame(BaseFrame):
 												  low_contrast=False, 
 												  skip_scripts=True, 
 												  silent=False))
-					if oyranos:
-						exec_ = '"%s"' % cmd
-						name = "oyranos-monitor"
-						desc = "oyranos-monitor"
-						desktopfile_path = os.path.join(autostart_home, 
-														name + ".desktop")
-						system_desktopfile_path = os.path.join(autostart, 
-															   name + ".desktop")
-					elif gcm:
-						# Early exit, do not create loader
-						return result
-					else:
-						# Fallback: dispwin
-						exec_ = '"%s" %s' % (cmd, loader_args)
-						name = (u'%s Calibration Loader (Display %s)' % 
-								(appname, n))
-						desc = lang.getstr("calibrationloader.description", n)
+					# Unified loader
+					exec_ = which('%s-apply-profiles' % appname, 
+								  paths=getenvu("PATH", 
+												os.defpath).split(os.pathsep) + 
+										data_dirs)
+					name = u'%s Profile Loader' % appname
+					desc = lang.getstr("calibrationloader.description")
+					# Prepend 'z' so our loader hopefully comes after
+					# possible nvidia-settings entry (which resets gamma table)
+					name = "z-%s-apply-profiles" % appname
+					desktopfile_path = os.path.join(autostart_home, 
+													name + ".desktop")
+					system_desktopfile_path = os.path.join(
+						autostart, name + ".desktop")
 					try:
 						# Always create user loader, even if we later try to 
 						# move it to the system-wide location so that atleast 
@@ -4839,8 +4811,7 @@ class MainFrame(BaseFrame):
 			if ((sys.platform == "darwin" or (sys.platform != "win32" and 
 											  self.worker.argyll_version >= 
 											  [1, 1, 0] and 
-											  (not which("gcm-import") or 
-											   not get_edid or not xrandr) and
+											  not which("gcm-import") and
 											  not which("oyranos-monitor"))) and 
 				(os.geteuid() == 0 or which("sudo"))) or \
 				(sys.platform == "win32" and 

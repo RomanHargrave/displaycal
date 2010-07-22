@@ -70,7 +70,7 @@
 	"calibration.update": "Update calibration",
 	"calibration.update_profile_choice": "Do you want to also update the calibration curves in the existing profile or just calibrate?",
 	"calibration.verify": "Verify calibration",
-	"calibrationloader.description": "Loads the calibration curves from the ICC-profile for display %s",
+	"calibrationloader.description": "Sets ICC profiles and loads calibration curves for all configured display devices",
 	"cancel": "Cancel",
 	"checking_lut_access": "Checking video card gamma table access for display %s...",
 	"check_update": "Check for application update...",

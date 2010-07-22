@@ -473,6 +473,9 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 	else:
 		attrs["scripts"] += [os.path.join("scripts", name)]
 	
+	if sys.platform not in ("darwin", "win32"):
+		attrs["scripts"] += [os.path.join("scripts", name + "-apply-profiles")]
+	
 	if bdist_bbfreeze:
 		attrs["setup_requires"] = ["bbfreeze"]
 

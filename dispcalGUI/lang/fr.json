@@ -65,7 +65,6 @@
 	"calibration.show_actual_lut": "Afficher les courbes de calibrage actuelles de la table du gamma de la carte vidéo",
 	"calibration.update": "Mettre à jour le calibrage",
 	"calibration.verify": "Vérifier le calibrage",
-	"calibrationloader.description": "Charge les courbes de calibrage à partir du profil ICC pour l'écran %s",
 	"cancel": "Annuler",
 	"checking_lut_access": "Contrôle de l'accès à la table de correspondance pour l'écran %s...",
 	"check_update": "Vérifier la mise à jour de l'application...",
