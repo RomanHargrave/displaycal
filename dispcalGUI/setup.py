@@ -34,6 +34,7 @@ import subprocess as sp
 import sys
 from types import StringType
 
+from defaultpaths import autostart, autostart_home
 from meta import (author, author_ascii, description, longdesc, domain, name, 
 				  py_maxversion, py_minversion, version, version_tuple, 
 				  wx_minversion)
@@ -61,12 +62,14 @@ def setup():
 	do_py2app = "py2app" in sys.argv[1:]
 	do_py2exe = "py2exe" in sys.argv[1:]
 	do_uninstall = "uninstall" in sys.argv[1:]
+	doc_layout = "deb" if os.path.exists("/etc/debian_version") else ""
 	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
 	help = False
 	install_data = None # data files install path (only if given)
 	is_rpm_build = "bdist_rpm" in sys.argv[1:] or os.path.abspath(sys.argv[0]).endswith(
 		os.path.join(os.path.sep, "rpm", "BUILD", name + "-" + version, 
 		os.path.basename(os.path.abspath(sys.argv[0]))))
+	prefix = ""
 	recordfile_name = None # record installed files to this file
 	setuptools = None
 	skip_instrument_conf_files = "--skip-instrument-configuration-files" in \
@@ -149,9 +152,9 @@ def setup():
 		i = sys.argv.index("--use-setuptools")
 		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
 
-	for i in range(len(sys.argv[1:])):
+	argv = list(sys.argv[1:])
+	for i, arg in enumerate(reversed(argv)):
 		n = len(sys.argv) - i - 1
-		arg = sys.argv[n]
 		if arg in ("install", "install_lib", "install_headers", 
 				   "install_scripts", "install_data"):
 			if arg == "install":
@@ -167,8 +170,13 @@ def setup():
 			elif len(arg) == 2:
 				if arg[0] == "--dist-dir":
 					dist_dir = arg[1]
+				elif arg[0] == "--doc-layout":
+					doc_layout = arg[1]
+					sys.argv = sys.argv[:n] + sys.argv[n + 1:]
 				elif arg[0] == "--install-data":
 					install_data = arg[1]
+				elif arg[0] == "--prefix":
+					prefix = arg[1]
 				elif arg[0] == "--record":
 					recordfile_name = arg[1]
 			elif arg[0] == "-h" or arg[0].startswith("--help"):
@@ -187,7 +195,9 @@ def setup():
 	else:
 		# Linux/Unix
 		data = name
-		if is_rpm_build:
+		if doc_layout.startswith("deb"):
+			doc = os.path.join("doc", name.lower())
+		elif "suse" in doc_layout:
 			doc = os.path.join("doc", "packages", name)
 		else:
 			doc = os.path.join("doc", name + "-" + version)
@@ -226,9 +236,17 @@ def setup():
 			[os.path.join(pydir, "..", "theme", "header-readme.png")]), 
 		(os.path.join(doc, "theme", "icons"), 
 			[os.path.join(pydir, "..", "theme", "icons", "favicon.ico")]), 
-		(doc, [os.path.join(pydir, "..", "LICENSE.txt")]),
 		(doc, [os.path.join(pydir, "..", "README.html")])
-	] if not is_rpm_build else []
+	] if not is_rpm_build or doc_layout.startswith("deb") else []
+	if data_files:
+		if doc_layout.startswith("deb"):
+			data_files.append((doc, [os.path.join(pydir, "..", "dist", 
+												  "copyright")]))
+			data_files.append((os.path.join(os.path.dirname(data), "doc-base"), 
+							   [os.path.join(pydir, "..", "misc", 
+											 "dispcalgui-readme")]))
+		else:
+			data_files.append((doc, [os.path.join(pydir, "..", "LICENSE.txt")]))
 	if sys.platform not in ("darwin", "win32") or do_py2app or do_py2exe:
 		# Linux/Unix or py2app/py2exe
 		data_files += [
@@ -254,10 +272,14 @@ def setup():
 		]
 		if sys.platform == "win32":
 			if do_py2exe:
-				data_files += [(os.path.join(data, "theme", "icons"), 
-					[os.path.join(pydir, "theme", "icons", name + 
-					 "-uninstall.ico")]), 
-					(os.path.join(data, "lib"), [sys.executable])]
+				data_files += [
+					(os.path.join(data, "theme", "icons"), 
+					 [os.path.join(pydir, "theme", "icons", name + 
+					  "-uninstall.ico")]), 
+					(os.path.join(data, "lib"), 
+					 [sys.executable, sys.executable.replace(".exe", "w.exe")]),
+					(os.path.join(data, "scripts"), 
+					 os.path.join("scripts", name + "-apply-profiles"))]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					glob.glob(os.path.join(pydir, "theme", 
@@ -268,6 +290,12 @@ def setup():
 										 "applications"), 
 							[os.path.join(pydir, "..", "misc", name + 
 												".desktop")])]
+			data_files += [(autostart if os.geteuid() == 0 or prefix.startswith("/")
+							else autostart_home, 
+							[os.path.join(pydir, "..", "misc", 
+										  "z-%s-apply-profiles.desktop" % name)])]
+			data_files += [(os.path.join(os.path.dirname(data), "man", "man1"), 
+							glob.glob(os.path.join(pydir, "..", "man", "*.1")))]
 			if not skip_instrument_conf_files:
 				# device configuration / permission stuff
 				if is_rpm_build:
@@ -811,6 +839,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 						(os.path.join(name, "theme", "icons"), 
 						"*.icns", "*.ico")]
 		manifest_in += ["recursive-include %s %s" % ("autopackage", "*")]
+		manifest_in += ["include " + os.path.join("man", "*.1")]
 		manifest_in += ["recursive-include %s %s" % ("misc", "*")]
 		if skip_instrument_conf_files:
 			manifest_in += [

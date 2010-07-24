@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from ConfigParser import RawConfigParser
-from distutils.util import get_platform
+from distutils.sysconfig import get_python_lib
+from distutils.util import change_root, get_platform
 from subprocess import call, Popen
 from time import gmtime, strftime, timezone
 import codecs
@@ -92,9 +93,9 @@ def setup():
 	suffix = "onefile" if onefile else "onedir"
 	use_setuptools = "--use-setuptools" in sys.argv[1:]
 	
-	for i in range(len(sys.argv[1:])):
+	argv = list(sys.argv[1:])
+	for i, arg in enumerate(reversed(argv)):
 		n = len(sys.argv) - i - 1
-		arg = sys.argv[n]
 		arg = arg.split("=")
 		if len(arg) == 2:
 			if arg[0] == "--force-arch":
@@ -333,12 +334,14 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	if ("sdist" in sys.argv[1:] and not help) or "buildservice" in sys.argv[1:]:
+	if (("sdist" in sys.argv[1:] or 
+		 "bdist_deb" in sys.argv[1:]) and 
+		not help) or "buildservice" in sys.argv[1:]:
 		# Create control files
 		post = open(os.path.join(pydir, "util", "rpm_postinstall.sh"), "r").read()
 		postun = open(os.path.join(pydir, "util", "rpm_postuninstall.sh"), "r").read()
-		for tmpl_name in ("debian.changelog", "debian.control", "debian.rules", 
-						  "dispcalGUI.dsc", "dispcalGUI.spec"):
+		for tmpl_name in ("debian.changelog", "debian.control", "debian.copyright", 
+						  "debian.rules", "dispcalGUI.dsc", "dispcalGUI.spec"):
 			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 			tmpl = codecs.open(tmpl_path, "r", "UTF-8")
 			tmpl_data = tmpl.read()
@@ -368,14 +371,18 @@ def setup():
 				("PY_MAXVERSION", ".".join(str(n) for n in py_maxversion)),
 				("PY_MINVERSION", ".".join(str(n) for n in py_minversion)),
 				("VERSION", version_src),
+				("URL", "http://%s.hoech.net/" % name),
 				("WX_MINVERSION", ".".join(str(n) for n in wx_minversion)),
+				("YEAR", strftime("%Y", gmtime())),
 			]:
 				tmpl_data = tmpl_data.replace("${%s}" % key, val)
 			if tmpl_name.startswith("debian"):
 				longdesc = longdesc_backup
 			if not dry_run:
-				out = codecs.open(os.path.join(pydir, "dist", tmpl_name), "w", 
-								  "UTF-8")
+				if tmpl_name == "debian.copyright":
+					tmpl_name = "copyright"
+				out_filename = os.path.join(pydir, "dist", tmpl_name)
+				out = codecs.open(out_filename, "w", "UTF-8")
 				out.write(tmpl_data)
 				out.close()
 		if "buildservice" in sys.argv[1:]:
@@ -582,34 +589,51 @@ def setup():
 							cwd=os.path.join(pydir, "dist"))
 			if retcode != 0:
 				sys.exit(retcode)
-			# control filename
+			# update changelog
+			shutil.copy2(os.path.join(pydir, "dist", "debian.changelog"), 
+						 os.path.join(pydir, "dist", "%s-%s" % (name, version), 
+									  "debian", "changelog"))
+			# update rules
+			shutil.copy2(os.path.join(pydir, "misc", "alien.rules"), 
+						 os.path.join(pydir, "dist", "%s-%s" % (name, version), 
+									  "debian", "rules"))
+			# update control
 			control_filename = os.path.join(pydir, "dist", "%s-%s" % (name, 
 																	  version), 
 											"debian", "control")
-			# read control file from deb dir
-			control = open(control_filename, "r")
-			lines = [line.rstrip("\n") for line in control.readlines()]
-			control.close()
-			# update control with info from setup.cfg
-			for i in range(len(lines)):
-				if lines[i].startswith("Depends:"):
-					# add dependencies
-					lines[i] += ", " + ", ".join(dependencies)
-				elif lines[i].startswith("Maintainer:") and (maintainer or 
-															 packager):
-					# set maintainer
-					lines[i] = "Maintainer: " + (maintainer or packager)
-				elif lines[i].startswith("Section:") and group:
-					# set section
-					lines[i] = "Section: " + group
-				elif lines[i].startswith("Description:"):
-					lines.pop()
-					lines.pop()
-					break
-			# write updated control file
-			control = open(control_filename, "w")
-			control.write("\n".join(lines))
-			control.close()
+			shutil.copy2(os.path.join(pydir, "dist", "debian.control"), 
+						 control_filename)
+			### read control file from deb dir
+			##control = open(control_filename, "r")
+			##lines = [line.rstrip("\n") for line in control.readlines()]
+			##control.close()
+			### update control with info from setup.cfg
+			##for i in range(len(lines)):
+				##if lines[i].startswith("Depends:"):
+					### add dependencies
+					##lines[i] += ", python"
+					##lines[i] += ", python" + sys.version[:3]
+					##lines[i] += ", " + ", ".join(dependencies)
+				##elif lines[i].startswith("Maintainer:") and (maintainer or 
+															 ##packager):
+					### set maintainer
+					##lines[i] = "Maintainer: " + (maintainer or packager)
+				##elif lines[i].startswith("Section:") and group:
+					### set section
+					##lines[i] = "Section: " + group
+				##elif lines[i].startswith("Description:"):
+					##lines.pop()
+					##lines.pop()
+					##break
+			### write updated control file
+			##control = open(control_filename, "w")
+			##control.write("\n".join(lines))
+			##control.close()
+			### run strip on shared libraries
+			##sos = os.path.join(change_root(target_dir, get_python_lib(True)),
+							   ##name, "*.so")
+			##for so in glob.glob(sos):
+				##retcode = call(["strip", "--strip-unneeded", so])
 			# create deb package
 			retcode = call(["./debian/rules", "binary"], cwd=target_dir)
 			if retcode != 0:

@@ -1,0 +1,11 @@
+Document: dispcalgui-readme
+Title: dispcalGUI ReadMe
+Author: Florian Höch
+Abstract: This manual describes dispcalGUI, a graphical front-end to display 
+ calibration and characterization functionality provided by the Argyll color 
+ management system, and how it can be used.
+Section: Graphics
+
+Format: HTML
+Index: /usr/share/doc/dispcalgui/README.html
+Files: /usr/share/doc/dispcalgui/README.html
