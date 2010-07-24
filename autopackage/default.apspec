@@ -25,73 +25,34 @@ A graphical user interface for the Argyll CMS display calibration utilities.
 # need to pass arguments to configure, just add them to prepareBuild:
 # prepareBuild --enable-foo --disable-bar
 
-# pushd "$source_dir" > /dev/null
-# export CC=apgcc
-# /usr/bin/python dispcalGUI/setup.py build_ext -i --use-distutils
-# popd > /dev/null
+export CC=apgcc
 
-pushd "$source_dir" > /dev/null
-python setup.py install_egg_info --install-dir="$build_root/lib/python/site-packages" --use-distutils
+python setup.py clean --all --use-distutils
 
-mkdir -p "$build_root/bin"
-cp "$source_dir/scripts/dispcalGUI" "$build_root/bin"
+python setup.py build_py build_scripts --use-distutils
 
-mkdir -p "$build_root/lib/python/site-packages/dispcalGUI"
-cp "$source_dir/dispcalGUI/"*.py "$build_root/lib/python/site-packages/dispcalGUI"
-cp "$source_dir/dispcalGUI/"*.so.tar "$build_root/lib/python/site-packages/dispcalGUI"
+python setup.py install --no-compile --use-distutils \
+	--root="$build_root" \
+	--prefix=/usr \
+	--doc-layout=generic \
+	--exec-prefix=/usr \
+	--install-data=/share \
+	--install-lib=/lib/python/site-packages \
+	--install-scripts=/bin \
+	--skip-build \
+	--skip-instrument-configuration-files
 
-mkdir -p "$build_root/share"
-tar --exclude=".svn" --exclude="*~" --exclude="*.c" --exclude="*.icns" --exclude="*.ico" --exclude="*.py*" --exclude="*.so" --exclude="*.tar" -pcf "$build_root/share/dispcalGUI.tar" dispcalGUI
-popd > /dev/null
-pushd "$build_root/share" > /dev/null
-tar -xf dispcalGUI.tar
-rm dispcalGUI.tar
-popd > /dev/null
+cp $source_dir/dispcalGUI/RealDisplaySizeMM.py*.so.tar "$build_root/lib/python/site-packages/dispcalGUI"
 
-mkdir -p "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION"
-pushd "$source_dir" > /dev/null
-tar --exclude="Thumbs.db" --exclude=".svn" -pcf "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION/screenshots.tar" screenshots
-tar --exclude="Thumbs.db" --exclude=".svn" -pcf "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION/theme.tar" theme
-popd > /dev/null
-pushd "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION" > /dev/null
-tar -xf screenshots.tar
-rm screenshots.tar
-tar -xf theme.tar
-rm theme.tar
-popd > /dev/null
-cp "$source_dir/LICENSE.txt" "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION"
-cp "$source_dir/README.html" "$build_root/share/doc/dispcalGUI-$SOFTWAREVERSION"
-
-# Move application icons
-for size in "16x16" "22x22" "24x24" "32x32" "48x48" "256x256" ; do
-	mkdir -p "$build_root/share/icons/hicolor/$size/apps"
-	mv "$build_root/share/dispcalGUI/theme/icons/$size/dispcalGUI.png" "$build_root/share/icons/hicolor/$size/apps"
-done
-
-# Remove empty directories
-for size in "22x22" "24x24" "48x48" "256x256" ; do
-	rm -rf "$build_root/share/dispcalGUI/theme/icons/$size"
-done
-
-mkdir -p "$build_root/share/applications"
-cp "$source_dir/misc/dispcalGUI.desktop" "$build_root/share/applications"
-
-# mkdir -p "$build_root/share/PolicyKit/policy"
-# cp "$source_dir/misc/color-device-file.policy" "$build_root/share/PolicyKit/policy"
-
-# mkdir -p "$build_root/share/hal/fdi/policy/10osvendor"
-# cp "$source_dir/misc/19-color.fdi" "$build_root/share/hal/fdi/policy/10osvendor"
-
-mkdir -p "$build_root/etc/udev/rules.d"
-cp "$source_dir/misc/92-Argyll.rules" "$build_root/etc/udev/rules.d"
-cp "$source_dir/misc/45-Argyll.rules" "$build_root/etc/udev/rules.d"
-
-mkdir -p "$build_root/etc/hotplug/usb"
-cp "$source_dir/misc/Argyll" "$build_root/etc/hotplug/usb"
-cp "$source_dir/misc/Argyll.usermap" "$build_root/etc/hotplug/usb"
-
-# mkdir -p "$build_root/etc/udev/permissions.d"
-# cp "$source_dir/misc/10-Argyll.permissions" "$build_root/etc/udev/permissions.d"
+# udev/hotplug
+mkdir -p "$build_root/share/dispcalGUI/usb"
+# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
+cp -f "misc/92-Argyll.rules" "$build_root/share/dispcalGUI/usb/92-Argyll.rules"
+# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+cp -f  "misc/45-Argyll.rules" "$build_root/share/dispcalGUI/usb/45-Argyll.rules"
+# USB using hotplug and Serial using udev (older versions of Linux)
+cp -f "misc/Argyll" "$build_root/share/dispcalGUI/usb/Argyll"
+cp -f "misc/Argyll.usermap" "$build_root/share/dispcalGUI/usb/Argyll.usermap"
 
 
 [BuildUnprepare]
@@ -144,24 +105,52 @@ echo '*' | import
 
 
 [Install]
+outputStatus "Determining python version..."
 python_version=`python -c "import sys;print sys.version[:3]"`
 
+outputStatus "Determining python binary..."
 python=`which python$python_version 2>/dev/null || which python`
-safeSed bin/dispcalGUI "s|/usr/bin/env python|$python|"
 
+outputStatus "Adjusting script shebang lines..."
+for script in `ls bin` ; do
+	safeSed bin/$script "s|/usr/bin/python|$python|"
+done
+
+# Unpack binary extension module
+outputStatus "Unpacking binary extension module..."
 cd lib/python/site-packages/dispcalGUI
 uname -m | grep "64" && (
+	outputStatus "Unpacking 64-bit shared library..."
 	tar -xf RealDisplaySizeMM.py$python_version.x86_64.so.tar
 ) || (
+	outputStatus "Unpacking 32-bit shared library..."
 	tar -xf RealDisplaySizeMM.py$python_version.x86.so.tar
 )
 rm *.tar
+which strip > /dev/null 2>&1 && (
+	outputStatus "Stripping unneeded symbols..."
+	strip --strip-unneeded *.so
+) || true
 cd ../../../..
 
+# Copy autostart entries
+if [ `whoami` = "root" ]; then
+	outputStatus "Installing autostart entry to /etc/xdg/autostart..."
+	mkdir -p /etc/xdg/autostart
+	copyFiles etc/xdg/autostart/* /etc/xdg/autostart
+else
+	outputStatus "Installing autostart entry to ${XDG_CONFIG_HOME:-~/.config}/autostart..."
+	mkdir -p "${XDG_CONFIG_HOME:-~/.config}/autostart"
+	copyFiles etc/xdg/autostart/* "${XDG_CONFIG_HOME:-~/.config}/autostart"
+fi
+
+# Copy pure python modules
 platlib=`python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True)"`
+outputStatus "Installing modules to $platlib..."
 copyFiles lib/python/site-packages/* "$platlib"
 
 # Byte-compile *.py files
+outputStatus "Byte-compiling pure python modules..."
 python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
@@ -171,8 +160,9 @@ byte_compile(py, optimize=0, force=1)
 byte_compile(py, optimize=1, force=1)"
 
 installData share/dispcalGUI share/doc
-installExe bin/dispcalGUI
+installExe bin/*
 installIcon share/icons/hicolor
+installMan 1 share/man/man1/*
 # installMenuItem changes the .desktop file to include so-called 'Actions' 
 # which makes the menu entry vanish in recent GNOME versions after logout! So 
 # we only use it to make our app appear under 'desktop applications' in 
@@ -182,37 +172,30 @@ installMenuItem "Graphics" share/applications/dispcalGUI.desktop
 which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu install --novendor share/applications/dispcalGUI.desktop || true
 
 if [ `whoami` = "root" ]; then
-	# if [ -e "/usr/share/PolicyKit/policy" ] && [ -e "/usr/share/hal/fdi/policy/10osvendor" ]; then
-		# # USB and Serial access using PolicyKit V0.6 + HAL (recent versions of Linux)
-		# copyFile "share/PolicyKit/policy/color-device-file.policy" "/usr/share/PolicyKit/policy/color-device-file.policy"
-		# copyFile "share/hal/fdi/policy/10osvendor/19-color.fdi" "/usr/share/hal/fdi/policy/10osvendor/19-color.fdi"
-	# fi
 	if [ -e "/etc/udev/rules.d" ]; then
+		outputStatus "Installing udev rules..."
 		ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
 			# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
 			if [ ! -e "/etc/udev/rules.d/55-Argyll.rules" ]; then
-				copyFile "etc/udev/rules.d/92-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
+				linkFile "$PREFIX/share/dispcalGUI/usb/92-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
 			fi
 		) || (
 			# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
 			if [ ! -e "/etc/udev/rules.d/45-Argyll.rules" ]; then
-				copyFile "etc/udev/rules.d/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
+				linkFile "$PREFIX/share/dispcalGUI/usb/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
 			fi
 		)
 	else
 		if [ -e "/etc/hotplug"]; then
 			# USB using hotplug and Serial using udev (older versions of Linux)
+			outputStatus "Installing hotplug scripts..."
 			if [ ! -e "/etc/hotplug/usb/Argyll" ]; then
-				copyFile "etc/hotplug/usb/Argyll" "/etc/hotplug/usb/Argyll"
+				linkFile "$PREFIX/share/dispcalGUI/usb/Argyll" "/etc/hotplug/usb/Argyll"
 			fi
 			if [ ! -e "/etc/hotplug/usb/Argyll.usermap" ]; then
-				copyFile "etc/hotplug/usb/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
+				linkFile "$PREFIX/share/dispcalGUI/usb/Argyll.usermap" "/etc/hotplug/usb/Argyll.usermap"
 			fi
 		fi
-		# if [ -e "/etc/udev/permissions.d" ]; then
-			# # Serial instruments using udev (older versions of Linux)
-			# copyFile "etc/udev/permissions.d/10-Argyll.permissions" "/etc/udev/permissions.d/10-Argyll.permissions"
-		# fi
 	fi
 fi
 
@@ -220,6 +203,8 @@ fi
 # Leaving this at the default is safe unless you use custom commands in
 # "Install" to create files. All autopackage API functions 
 # that installs files are logged.
+
+uninstallFromLog
 
 # Remove *.py[co]
 python -c "import glob
@@ -230,6 +215,4 @@ for pyco in glob.glob(os.path.join(get_python_lib(True), 'dispcalGUI', '*.py[co]
 
 # Remove menu entry
 which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu uninstall dispcalGUI.desktop || true
-
-uninstallFromLog
 

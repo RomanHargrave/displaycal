@@ -22,7 +22,8 @@ Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPythonGTK >=
 %if 0%{?suse_version} > 0
 Group: Productivity/Graphics/Other
 BuildRequires: udev, update-desktop-files, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, xorg-x11-devel
-Requires: python >= %{py_minversion}, python <= %{py_maxversion}, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires: python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+%py_requires
 %else
 %if 0%{?fedora_version} > 0
 Group: Applications/Multimedia
@@ -39,8 +40,8 @@ ${DESC}
 %setup
 export python_version=`python -c "import sys;print sys.version[:3]"`
 # Make files executable
-chmod +x "scripts/%{name}"
-chmod +x "misc/Argyll"
+chmod +x scripts/*
+chmod +x misc/Argyll
 # Convert line endings in LICENSE.txt
 python -c "f = open('LICENSE.txt', 'rb')
 d = f.read().replace('\r\n', '\n').replace('\r', '\n')
@@ -53,16 +54,16 @@ f.close()"
 python${python_version} setup.py build --use-distutils
 
 %install
-%if 0%{?fedora_version} > 0
-OPTIMIZE=1
-%endif
 install_lib=`python -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)"`
 python${python_version} setup.py install --no-compile --use-distutils \
-	--prefix=$RPM_BUILD_ROOT%_prefix \
-	--exec-prefix=$RPM_BUILD_ROOT%_exec_prefix \
-	--install-data=$RPM_BUILD_ROOT%_datadir \
-    --install-lib=$RPM_BUILD_ROOT${install_lib} \
+	--root=$RPM_BUILD_ROOT \
+	--prefix=%_prefix \
+	--exec-prefix=%_exec_prefix \
+	--install-data=%_datadir \
+    --install-lib=${install_lib} \
 	--skip-instrument-configuration-files --record=INSTALLED_FILES
+# Strip extensions
+strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/*.so
 # Byte-compile *.py files and remove traces of RPM_BUILD_ROOT
 python -c "import glob
 import os
@@ -71,7 +72,7 @@ from distutils.util import byte_compile, change_root
 py = glob.glob(os.path.join(change_root('$RPM_BUILD_ROOT', get_python_lib(True)), 
 			   '%{name}', '*.py'))
 byte_compile(py, optimize=0, force=1, prefix='$RPM_BUILD_ROOT')
-if 0${OPTIMIZE} > 0:
+if 0%{?fedora_version} > 0:
 	byte_compile(py, optimize=1, force=1, prefix='$RPM_BUILD_ROOT')"
 # Remove doc directory
 if [ -e "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}" ]; then
@@ -91,19 +92,22 @@ echo "/usr/share/dispcalGUI/usb/Argyll">>INSTALLED_FILES
 cp -f "misc/Argyll.usermap" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll.usermap"
 echo "/usr/share/dispcalGUI/usb/Argyll.usermap">>INSTALLED_FILES
 %if 0%{?suse_version} > 0
-# Update categories to prevent buildservice from complaining
+# Update desktop files to prevent buildservice from complaining
 %suse_update_desktop_file %{name} 2DGraphics
+%suse_update_desktop_file "%{buildroot}/etc/xdg/autostart/z-%{name}-apply-profiles.desktop"
 %endif
 # Remove unused files from list of installed files and add directories
 python -c "import os
 f = open('INSTALLED_FILES')
 paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in 
-		 filter(lambda path: not '/doc/' in path, f.readlines())]
+		 filter(lambda path: not '/doc/' in path and not '/etc/' in path and
+				not '/man/' in path, 
+				f.readlines())]
 f.close()
 for path in list(paths):
 	if path.endswith('.py'):
 		paths.append(path + 'c')
-		if 0${OPTIMIZE} > 0:
+		if 0%{?fedora_version} > 0:
 			paths.append(path + 'o')
 	while True:
 		path = os.path.dirname(path)
@@ -122,10 +126,12 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
 %defattr(-,root,root)
+%config /etc/xdg/autostart/z-%{name}-apply-profiles.desktop
 %doc LICENSE.txt
 %doc README.html
 %doc screenshots
 %doc theme
+/usr/share/man/man1/*
 
 %post
 ${POST}
