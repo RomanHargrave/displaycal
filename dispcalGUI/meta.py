@@ -32,7 +32,7 @@ longdesc = "\n".join(["Calibrates and characterizes display devices using a hard
 					  "optional gamut mapping. Calibrations and profiles can be verified ",
 					  "through measurements, and profiles can be installed to make them ",
 					  "available to color management aware applications.",
-					  "Profile installation can utilize Argyll CMS, Oyranos and/or GNOME "
+					  "Profile installation can utilize Argyll CMS, Oyranos and/or GNOME ",
 					  "Color Manager if available, for flexible integration."])
 domain = "dispcalGUI.hoech.net"
 name = "dispcalGUI"
