@@ -278,6 +278,8 @@ def runtimeconfig(pyfile):
 						  for dir_ in xdg_data_dirs])
 		data_dirs.extend([os.path.join(dir_, "doc", appname) 
 						  for dir_ in xdg_data_dirs])
+		data_dirs.extend([os.path.join(dir_, "doc", appname.lower())  # Debian
+						  for dir_ in xdg_data_dirs])
 		data_dirs.extend([os.path.join(dir_, "icons", "hicolor") 
 						  for dir_ in xdg_data_dirs])
 	if isapp:
