@@ -79,6 +79,8 @@ else:
 		if os.path.exists(dir_):
 			autostart = os.path.join(dir_, "autostart")
 			break
+	if not autostart:
+		autostart = os.path.join(xdg_config_dir_default, "autostart")
 	autostart_home = os.path.join(xdg_config_home, "autostart")
 	iccprofiles = []
 	for dir_ in xdg_data_dirs:
