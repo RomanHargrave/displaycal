@@ -3640,7 +3640,7 @@ class MainFrame(BaseFrame):
 						cmd = sys.executable
 					else:
 						# Skip 'import site'
-						loader_args += "-S"
+						loader_args += ["-S"]
 						cmd = os.path.join(pydir, "lib", "pythonw.exe")
 					loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
 																		 "dispcalGUI-apply-profiles"))]
