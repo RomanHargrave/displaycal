@@ -3634,13 +3634,16 @@ class MainFrame(BaseFrame):
 												   (loader_v02b, exception)))
 					# Unified loader
 					name = appname + " Profile Loader"
+					loader_args = []
 					if os.path.basename(sys.executable) in ("python.exe", 
 															"pythonw.exe"):
 						cmd = sys.executable
+						# Skip 'import site'
+						loader_args += "-S"
 					else:
 						cmd = os.path.join(pydir, "lib", "pythonw.exe")
-					loader_args = u'"%s"' % get_data_path(os.path.join("scripts", 
-																	   "dispcalGUI-apply-profiles"))
+					loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
+																		 "dispcalGUI-apply-profiles"))]
 					try:
 						scut = pythoncom.CoCreateInstance(
 							shell.CLSID_ShellLink, 
@@ -3656,7 +3659,7 @@ class MainFrame(BaseFrame):
 								get_data_path(os.path.join("theme", "icons", 
 														   appname + ".ico")), 
 								0)
-						scut.SetArguments(loader_args)
+						scut.SetArguments(" ".join(loader_args))
 						scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
 						if "-Sl" in args or sys.getwindowsversion() < (6, ):
 							# Vista and later if using system scope, Win 2k/XP

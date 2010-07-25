@@ -6,23 +6,25 @@ Set ICC profiles and load calibration curves for all configured display devices
 
 """
 
-import os
-import subprocess as sp
 import sys
 
 if sys.platform == "win32":
-	# Setup sys.path
-	# e.g. C:\Program Files\dispcalGUI\lib\library.zip if running frozen
-	libpath = os.path.join(os.path.dirname(sys.executable), "library.zip")
-	if os.path.exists(libpath):
-		sys.path.insert(0, libpath)
-	# or if running from source
-	srcpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-	if os.path.exists(os.path.join(srcpath, "dispcalGUI", "__init__.py")):
-		sys.path.insert(0, srcpath)
-	# Otherwise, assume to be installed in Lib\site-packages, which is
-	# already on sys.path - nothing to be done
+	# Setup sys.path for running frozen
+	# i.e. add C:\Program Files\dispcalGUI\lib\library.zip
+	libpath = "\\".join(sys.executable.replace("/", "\\").split("\\")[:-1]) + "\\library.zip"
+	sys.path.insert(0, libpath)
 
+import os
+import subprocess as sp
+
+if sys.platform == "win32":
+	if os.path.isfile(libpath):
+		sys.frozen = True
+	else:
+		# Setup sys.path if running from source
+		srcpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+		if os.path.exists(os.path.join(srcpath, "dispcalGUI", "__init__.py")):
+			sys.path.insert(0, srcpath)
 	# Do not show a glimpse of the subprocess' console window
 	startupinfo = sp.STARTUPINFO()
 	startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
