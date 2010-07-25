@@ -421,13 +421,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.5.4.0 (Linux)<br />
-				0.5.4.0 (Mac OS X)<br />
-				0.5.4.0 (Windows)<br />
-				0.5.4.0 (Source)<br />
+				<dd id="version">0.5.7.4 (Linux)<br />
+				0.5.7.4 (Mac OS X)<br />
+				0.5.7.4 (Windows)<br />
+				0.5.7.4 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-07-16 01:28 (UTC)</dd>
+				<dd id="date">2010-07-25 07:16 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -596,18 +596,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.4.0.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.7.4.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.4.0.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.4.0-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.4.0-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.7.4.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.7.4-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.7.4-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.4.0.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.7.4.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -807,7 +807,7 @@
 					<dt>buildservice</dt>
 						<dd>Creates control files for openSUSE Build Service (also happens implicitly when invoking <code>sdist</code>).</dd>
 					<dt>finalize_msi (Windows only)</dt>
-						<dd>Adds icons and start menu shortcuts to the MSI installer previously created with <code>bdist_msi</code> (successful MSI creation needs a patched Python, see <a href="http://bugs.python.org/file15898/msilib_make_short.diff">patch</a> and <a href="http://bugs.python.org/issue1128">additional</a> <a href="http://bugs.python.org/issue7639">information</a>).</dd>
+						<dd>Adds icons and start menu shortcuts to the MSI installer previously created with <code>bdist_msi</code>. Successful MSI creation needs a <a href="http://bugs.python.org/file15898/msilib_make_short.diff">patched msilib</a> (<a href="http://bugs.python.org/issue1128">additional</a> <a href="http://bugs.python.org/issue7639">information</a>).</dd>
 					<dt>inno (Windows only)</dt>
 						<dd>Creates an Inno Setup install script for an executable created with the <code>py2exe</code> or <code>bdist_standalone</code> commands.</dd>
 					<dt>purge</dt>
@@ -826,10 +826,12 @@
 						<dd>Use an alternate setup.cfg, e.g. tailored for a given Linux distribution. The original setup.cfg is backed up and restored afterwards. The alternate file must exist as misc/setup.&lt;name&gt;.cfg</dd>
 					<dt>-n, --dry-run</dt>
 						<dd>Don't actually do anything. Useful in combination with the uninstall command to see which files would be removed.</dd>
+					<dt>--skip-instrument-configuration-files</dt>
+						<dd>Skip installation of udev rules and hotplug scripts.</dd>
 					<dt>--use-distutils</dt>
-						<dd>Force setup to use distutils instead of setuptools. This is useful in combination with the bdist* commands, because it will avoid an artificial dependency on setuptools. This is actually a switch, use it once and the choice is remembered until you specify the <code>--use-setuptools</code> switch (see next paragraph).</dd>
+						<dd>Force setup to use distutils (default) instead of setuptools. This is useful in combination with the bdist* commands, because it will avoid an artificial dependency on setuptools. This is actually a switch, use it once and the choice is remembered until you specify the <code>--use-setuptools</code> switch (see next paragraph).</dd>
 					<dt>--use-setuptools</dt>
-						<dd>Force setup to try and use setuptools instead of distutils (default). This is actually a switch, use it once and the choice is remembered until you specify the <code>--use-distutils</code> switch (see above).</dd>
+						<dd>Force setup to try and use setuptools instead of distutils. This is actually a switch, use it once and the choice is remembered until you specify the <code>--use-distutils</code> switch (see above).</dd>
 				</dl>
 			</div>
 		</div>
@@ -1376,14 +1378,16 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-07-16 01:28 (UTC) 0.5.4.0 -->
+			<!-- 2010-07-25 07:16 (UTC) 0.5.7.4 -->
 			<dl>
-				<dt>2010-07-16 01:28 (UTC) 0.5.4.0</dt>
+				<dt>2010-07-25 07:16 (UTC) 0.5.7.4</dt>
 					<dd>
-						<h3>0.5.4.0</h3>
+						<h3>0.5.7.4</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>The timeout of 10 seconds for the startup of Argyll tools and instrument initialization was too short for some instruments and is now increased to 30 seconds. If the timeout is ever exceeded, dispcalGUI should now also abort automatically and no longer hang.</li>
+							<li>When previewing the calibration upon profile installation, use a linear calibration if no display profile is present when toggling the preview on and off (fixes the curve viewer not updating).</li>
+							<li>Fixed closing the log window not re-enabling the “show log automatically” menuitem.</li>
 							<li>Linux (Autopackage install): Fixed menu entry sometimes disappearing permanently after logging out under GNOME.</li>
 							<li>Linux: Fixed dispcalGUI not working if libX11 or libXrandr do not expose certain functions (e.g. under Mandriva 2009).</li>
 							<li>Linux: Fixed not being able to install a profile using GNOME Color Manager when the profile was not writable.</li>
@@ -1393,6 +1397,16 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Mac OS X 10.6: The current display profile should now be determined correctly (e.g. for the curve viewer) when loading its calibration curves or selecting the “&lt;Current&gt;” settings.</li>
 							<li>Windows (installer): An unused console window is no longer shown when launching dispcalGUI via the installed shortcuts.</li>
 						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Do not pass through the “hit any key to retry” message from Argyll CMS tools to the progress dialog in case of misreads/port communication problems (retries happen automatically, so there is no need and also no possibility for keyboard interaction).</li>
+							<li>Enabling the Spyder 2 is now less cumbersome if the original installation CD is not available (especially on Mac OS X, where the firmware couldn't be found if a recent version of the Spyder 2 software was installed) and should work with the downloadable Spyder 2 software installers (but they need to be run to install the software first because the firmware can't be extracted from the installer binaries directly). Messages are now hopefully more informative to give a better idea of what to do. If the firmware can't be extracted from the Spyder 2 software installer, you are asked to install the software and try again. If that can't be done because of platform incompatibility (Linux), the last choice is to locate the Spyder.lib/CVSpyder.dll file manually (it must be copied from a Mac OS X or Windows system in that case).</li>
+							<li>Linux: Allow installation of profiles using GNOME Color Manager even if XRandR is not working/available.</li>
+							<li>Linux: Installation now checks for existing udev rules/hotplug scripts for instruments and only installs its own rules if none exist yet.</li>
+							<li>Linux/Windows: The profile loader will now show a warning dialog if a profile couldn't be loaded.</li>
+							<li>Linux/Windows: Device model and manufacturer are added to profiles if <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[7]</a></sup></acronym> info is available.</li>
+						</ul>
+						<p>+ Numerous other small fixes and changes.</p>
 					</dd>
 						
 				<dt>2010-06-29 19:23 (UTC) 0.4.9.2</dt>
