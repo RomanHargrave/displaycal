@@ -335,6 +335,7 @@ def setup():
 			return
 
 	if (("sdist" in sys.argv[1:] or 
+		 "install" in sys.argv[1:] or 
 		 "bdist_deb" in sys.argv[1:]) and 
 		not help) or "buildservice" in sys.argv[1:]:
 		# Create control files
@@ -381,7 +382,10 @@ def setup():
 			if not dry_run:
 				if tmpl_name == "debian.copyright":
 					tmpl_name = "copyright"
-				out_filename = os.path.join(pydir, "dist", tmpl_name)
+				out_dir = os.path.join(pydir, "dist")
+				if not os.path.isdir(out_dir):
+					os.makedirs(out_dir)
+				out_filename = os.path.join(out_dir, tmpl_name)
 				out = codecs.open(out_filename, "w", "UTF-8")
 				out.write(tmpl_data)
 				out.close()
