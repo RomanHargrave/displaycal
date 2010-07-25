@@ -282,7 +282,7 @@ def setup():
 					(os.path.join(data, "lib"), 
 					 [sys.executable, sys.executable.replace(".exe", "w.exe")]),
 					(os.path.join(data, "scripts"), 
-					 os.path.join("scripts", name + "-apply-profiles"))]
+					 [os.path.join("scripts", name + "-apply-profiles")])]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					glob.glob(os.path.join(pydir, "theme", 
@@ -903,8 +903,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		   sys.version_info[:2] >= (2,6):
 			from vc90crt import name as vc90crt_name, vc90crt_copy_files
 			if do_py2exe:
-				vc90crt_copy_files(os.path.join(dist_dir, 
-												vc90crt_name))
+				vc90crt_copy_files(dist_dir)
 				vc90crt_copy_files(os.path.join(dist_dir, 
 												"lib"))
 			else:
