@@ -3638,9 +3638,9 @@ class MainFrame(BaseFrame):
 					if os.path.basename(sys.executable) in ("python.exe", 
 															"pythonw.exe"):
 						cmd = sys.executable
+					else:
 						# Skip 'import site'
 						loader_args += "-S"
-					else:
 						cmd = os.path.join(pydir, "lib", "pythonw.exe")
 					loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
 																		 "dispcalGUI-apply-profiles"))]
