@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import getpass
+import math
 import os
 import re
 import shutil
@@ -562,8 +563,18 @@ class LineCache():
 	def flush(self):
 		pass
 	
-	def read(self):
-		return "\n".join(self.cache)
+	def read(self, triggers=None):
+		lines = []
+		for line in self.cache:
+			read = True
+			if triggers:
+				for trigger in triggers:
+					if trigger.lower() in line.lower():
+						read = False
+						break
+			if read:
+				lines.append(line)
+		return "\n".join(lines)
 	
 	def write(self, data):
 		if data.rstrip():
@@ -600,7 +611,7 @@ class Worker():
 		self.subprocess_abort = False
 		self.tempdir = None
 		self.thread_abort = False
-		self.triggers = ["key to retry:"]
+		self.triggers = []
 		self.clear_argyll_info()
 		self.clear_cmd_output()
 	
@@ -1262,7 +1273,9 @@ class Worker():
 														   timeout=None)
 									if sys.platform != "win32":
 										sleep(.5)
-									if self.subprocess.isalive():
+									if self.subprocess.isalive() and \
+									   not "Sample read stopped at user request!" \
+									   in self.recent.read():
 										logfile.write("Retrying...")
 										self.subprocess.send(" ")
 							else:
@@ -1909,8 +1922,8 @@ class Worker():
 			self.progress_wnd.Pulse(lang.getstr("aborting"))
 			return
 		percentage = None
-		msg = self.recent.read()
-		lastmsg = self.lastmsg.read().strip()
+		msg = self.recent.read(FilteredStream.triggers)
+		lastmsg = self.lastmsg.read(FilteredStream.triggers).strip()
 		if re.match("\\s*\\d+%", lastmsg):
 			# colprof
 			try:
@@ -1946,7 +1959,7 @@ class Worker():
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
 			self.progress_wnd.original_msg = None
 		if percentage:
-			keepGoing, skip = self.progress_wnd.Update(percentage, 
+			keepGoing, skip = self.progress_wnd.Update(math.ceil(percentage), 
 													   msg + "\n" + 
 													   lastmsg)
 		else:
@@ -1971,7 +1984,7 @@ class Worker():
 		if self.finished is True:
 			return
 		if not self.activated and self.progress_wnd.IsShownOnScreen() and \
-		   not wx.GetApp().IsActive() or not self.progress_wnd.IsActive():
+		   (not wx.GetApp().IsActive() or not self.progress_wnd.IsActive()):
 		   	self.activated = True
 			self.progress_wnd.Raise()
 
