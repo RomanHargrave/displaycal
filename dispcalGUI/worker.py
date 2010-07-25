@@ -234,8 +234,14 @@ def get_argyll_version(name, silent=False):
 	if (silent and check_argyll_bin()) or (not silent and 
 										   check_set_argyll_bin()):
 		cmd = get_argyll_util(name)
+		if sys.platform == "win32":
+			startupinfo = sp.STARTUPINFO()
+			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+			startupinfo.wShowWindow = sp.SW_HIDE
+		else:
+			startupinfo = None
 		p = sp.Popen([cmd.encode(fs_enc)], stdin=sp.PIPE, stdout=sp.PIPE, 
-					 stderr=sp.STDOUT)
+					 stderr=sp.STDOUT, startupinfo=startupinfo)
 		for i, line in enumerate((p.communicate()[0] or "").splitlines()):
 			if isinstance(line, basestring):
 				line = line.strip()
@@ -2272,9 +2278,15 @@ class Worker():
 		if isinstance(cwd, Exception):
 			raise cwd
 		profile.write(os.path.join(cwd, "temp.icc"))
+		if sys.platform == "win32":
+			startupinfo = sp.STARTUPINFO()
+			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+			startupinfo.wShowWindow = sp.SW_HIDE
+		else:
+			startupinfo = None
 		p = sp.Popen([xicclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
-					 cwd=cwd.encode(fs_enc))
+					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		if p.wait() != 0:
 			# error
@@ -2322,9 +2334,15 @@ class Worker():
 			if isinstance(cwd, Exception):
 				raise cwd
 			profile.write(os.path.join(cwd, "temp.icc"))
+			if sys.platform == "win32":
+				startupinfo = sp.STARTUPINFO()
+				startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+				startupinfo.wShowWindow = sp.SW_HIDE
+			else:
+				startupinfo = None
 			p = sp.Popen([xicclu, '-fb', '-ir', '-pl', '-s100', "temp.icc"], 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
-						 cwd=cwd.encode(fs_enc))
+						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 			ogray = p.communicate('\n'.join(igray))[0].splitlines()
 			if p.wait() != 0:
 				# error
@@ -2498,9 +2516,15 @@ class Worker():
 		if isinstance(cwd, Exception):
 			raise cwd
 		profile.write(os.path.join(cwd, "temp.icc"))
+		if sys.platform == "win32":
+			startupinfo = sp.STARTUPINFO()
+			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+			startupinfo.wShowWindow = sp.SW_HIDE
+		else:
+			startupinfo = None
 		p = sp.Popen([xicclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
-					 cwd=cwd.encode(fs_enc))
+					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		if p.wait() != 0:
 			# error
