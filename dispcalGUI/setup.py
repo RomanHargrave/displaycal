@@ -229,6 +229,7 @@ def setup():
 	}
 	if sys.platform == "win32" and not do_py2exe:
 		package_data[name] += ["theme/icons/*.ico"]
+	# Doc files
 	data_files = [
 		(os.path.join(doc, "screenshots"), 
 			glob.glob(os.path.join(pydir, "..", "screenshots", "*.png"))),
@@ -262,6 +263,8 @@ def setup():
 				glob.glob(os.path.join(pydir, "report", "*.html"))),
 			(os.path.join(data, "report"), 
 				glob.glob(os.path.join(pydir, "report", "*.js"))),
+			(os.path.join(doc if do_py2app else data, "tests"), 
+				glob.glob(os.path.join(pydir, "..", "tests", "*.icc"))),
 			(os.path.join(data, "theme"), 
 				glob.glob(os.path.join(pydir, "theme", "*.png"))), 
 			(os.path.join(data, "ti1"), 
@@ -719,6 +722,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 					"lang",
 					"presets",
 					"screenshots",
+					"tests",
 					"theme",
 					"ti1",
 					"LICENSE.txt",
@@ -849,6 +853,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			]
 		manifest_in += ["include " + os.path.join("screenshots", "*.png")]
 		manifest_in += ["include " + os.path.join("scripts", "*")]
+		manifest_in += ["include " + os.path.join("tests", "*")]
 		manifest_in += ["recursive-include %s %s" % ("theme", "*")]
 		manifest_in += ["recursive-include %s %s" % ("util", 
 													 "*.cmd *.py *.sh")]
