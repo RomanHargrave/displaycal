@@ -3634,7 +3634,8 @@ class MainFrame(BaseFrame):
 												   (loader_v02b, exception)))
 					# Unified loader
 					name = appname + " Profile Loader"
-					if sys.executable in ("python.exe", "pythonw.exe"):
+					if os.path.basename(sys.executable) in ("python.exe", 
+															"pythonw.exe"):
 						cmd = sys.executable
 					else:
 						cmd = os.path.join(pydir, "lib", "pythonw.exe")
@@ -3647,6 +3648,7 @@ class MainFrame(BaseFrame):
 							pythoncom.CLSCTX_INPROC_SERVER, 
 							shell.IID_IShellLink)
 						scut.SetPath(cmd)
+						scut.SetWorkingDirectory(pydir)
 						if isexe:
 							scut.SetIconLocation(exe, 0)
 						else:
