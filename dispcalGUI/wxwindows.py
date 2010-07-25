@@ -83,6 +83,7 @@ class BaseInteractiveDialog(wx.Dialog):
 			pos = tuple(pos)
 		wx.Dialog.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
+		self.SetIcon(get_bitmap_as_icon(16, appname))
 		
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 
@@ -645,6 +646,7 @@ class TooltipWindow(InvincibleFrame):
 				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW):
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
+		self.SetIcon(get_bitmap_as_icon(16, appname))
 
 		margin = 12
 		
