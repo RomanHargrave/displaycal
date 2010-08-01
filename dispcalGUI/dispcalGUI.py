@@ -57,7 +57,7 @@ import re
 import shutil
 import socket
 import subprocess as sp
-import tempfile26 as tempfile
+import tempfile
 import threading
 import traceback
 from encodings.aliases import aliases

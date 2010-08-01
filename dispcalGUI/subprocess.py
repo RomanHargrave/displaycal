@@ -1,5 +1,7 @@
-# this module exists only to make sure that other module's imports of subprocess
-# end up with the same we use in worker.py
+# WRAPPER FOR PYTHON 2.5
+# This module exists only to make sure that other module's imports of subprocess
+# end up with a version that supports the terminate() method (introduced in
+# Python 2.6)
 
 import sys
 

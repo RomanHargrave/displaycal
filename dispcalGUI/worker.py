@@ -35,8 +35,8 @@ import ICCProfile as ICCP
 import colormath
 import config
 import localization as lang
-import subprocess26 as sp
-import tempfile26 as tempfile
+import subprocess as sp
+import tempfile
 import wexpect
 from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
 						  verify_cgats)
@@ -557,8 +557,11 @@ class LineCache():
 	""" When written to it, stores only the last n lines. """
 	
 	def __init__(self, n=1):
-		self.cache = []
+		self.clear()
 		self.n = n
+	
+	def clear(self):
+		self.cache = []
 	
 	def flush(self):
 		pass
@@ -1179,7 +1182,9 @@ class Worker():
 		cmdline = [arg.encode(fs_enc) for arg in cmdline]
 		working_dir = None if not working_dir else working_dir.encode(fs_enc)
 		try:
-			if not self.needs_user_interaction:
+			if False:  # NEVER
+				safe_print('Disabling Argyll interactive mode')
+				# Argyll tools will no longer respond to keys sent via wexpect
 				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
 			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
 				del os.environ["ARGYLL_NOT_INTERACTIVE"]
@@ -1227,7 +1232,7 @@ class Worker():
 				else:
 					logfile = Files((stdout, self.recent,
 									 self.lastmsg))
-				if self.interactive:
+				if self.interactive or test:
 					logfile = Files((FilteredStream(self.terminal,
 													discard="",
 													triggers=self.triggers), 
@@ -1258,6 +1263,8 @@ class Worker():
 									if sys.platform != "win32":
 										sleep(.5)
 									if self.subprocess.isalive():
+										if debug or test:
+											safe_print('Sending SPACE key')
 										self.subprocess.send(" ")
 								if self.needs_user_interaction and \
 								   sys.platform == "darwin":
@@ -1959,6 +1966,9 @@ class Worker():
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
 			self.progress_wnd.original_msg = None
 		if percentage:
+			if "Setting up the instrument" in msg:
+				self.recent.clear()
+				msg = ""
 			keepGoing, skip = self.progress_wnd.Update(math.ceil(percentage), 
 													   msg + "\n" + 
 													   lastmsg)
@@ -2029,15 +2039,15 @@ class Worker():
 			self.subprocess.poll() is None) or \
 		   (hasattr(self.subprocess, "isalive") and 
 			self.subprocess.isalive()):
-			if debug:
-				log('[D] subprocess_abort')
+			if debug or test:
+				log('User requested abort')
 			##self.subprocess_abort = True
 			##self.thread_abort = True
 			try:
 				if self.measure and hasattr(self.subprocess, "send"):
 					try:
-						if debug:
-							log('[D] try send ESC (1)')
+						if debug or test:
+							log('Sending ESC (1)')
 						self.subprocess.send("\x1b")
 						ts = time()
 						while getattr(self, "subprocess", None) and \
@@ -2048,8 +2058,8 @@ class Worker():
 							sleep(1)
 						if getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
-							if debug:
-								log('[D] try send ESC (2)')
+							if debug or test:
+								log('Sending ESC (2)')
 							self.subprocess.send("\x1b")
 							sleep(.5)
 					except Exception, exception:
@@ -2060,8 +2070,8 @@ class Worker():
 					self.subprocess.poll() is None) or \
 				   (hasattr(self.subprocess, "isalive") and 
 					self.subprocess.isalive()):
-					if debug:
-						log('[D] try terminate')
+					if debug or test:
+						log('Trying to terminate subprocess...')
 					self.subprocess.terminate()
 					ts = time()
 					while getattr(self, "subprocess", None) and \
@@ -2073,8 +2083,8 @@ class Worker():
 					if getattr(self, "subprocess", None) and \
 					   hasattr(self.subprocess, "isalive") and \
 					   self.subprocess.isalive():
-						if debug:
-							log('[D] try force terminate')
+						if debug or test:
+							log('Trying to terminate subprocess forcefully...')
 						self.subprocess.terminate(force=True)
 			except Exception, exception:
 				if debug:
