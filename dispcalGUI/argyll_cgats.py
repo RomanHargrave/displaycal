@@ -159,6 +159,9 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 	'updateable') and optionally copy it to target_filename.
 	
 	"""
+	if not "get_options_from_profile" in globals():
+		global get_options_from_profile
+		from worker import get_options_from_profile
 	try:
 		profile = ICCP.ICCProfile(source_filename)
 	except (IOError, ICCP.ICCProfileInvalidError), exception:
