@@ -59,6 +59,8 @@ from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 if sys.platform == "win32": #and SendKeys is None:
 	wsh_shell = win32com.client.Dispatch("WScript.Shell")
 
+USE_WPOPEN = 0
+
 DD_ATTACHED_TO_DESKTOP = 0x01
 DD_MULTI_DRIVER        = 0x02
 DD_PRIMARY_DEVICE      = 0x04
@@ -259,7 +261,7 @@ def get_argyll_version(name, silent=False):
 	return argyll_version
 
 
-def get_options_from_args(dispcal_args, colprof_args):
+def get_options_from_args(dispcal_args=None, colprof_args=None):
 	"""
 	Extract options used for dispcal and colprof from argument strings.
 	"""
@@ -330,6 +332,13 @@ def get_options_from_cprt(cprt):
 		else:
 			colprof_args = None
 	return dispcal_args, colprof_args
+
+
+def get_options_from_cal(cal):
+	if not isinstance(cal, CGATS.CGATS):
+		cal = CGATS.CGATS(cal)
+	dispcal_args = cal[0].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", "replace")
+	return get_options_from_args(dispcal_args)
 
 
 def get_options_from_profile(profile):
@@ -486,7 +495,7 @@ class FilteredStream():
 	""" Wrap a stream and filter all lines written to it. """
 	
 	# Discard progress information like ... or *** or %
-	discard = re.compile("[\\*|\\.]+|\\s*\\d*%?")
+	discard = ""
 	
 	# If one of the triggers is contained in a line, skip the whole line
 	triggers = ["Place instrument on test window",
@@ -495,21 +504,22 @@ class FilteredStream():
 				"key to take a reading",
 				"Esc or Q"]
 	
-	substitutions = {"Delta E": "deltaE",
-					 " peqDE ": " previous pass deltaE ",
+	substitutions = {" peqDE ": " previous pass DE ",
 					 "patch ": "Patch ",
-					 re.compile("(patch \\d+ of \\d+)Point", re.I): "\\1 point"}
+					 re.compile("Point (\\d+ Delta E)", re.I): " point \\1"}
 	
 	def __init__(self, stream, data_encoding=None, file_encoding=None,
-				 errors="replace", end="\n", discard=None, substitutions=None,
+				 errors="replace", discard=None, linesep_in="\r\n", 
+				 linesep_out="\n", substitutions=None,
 				 triggers=None):
 		self.stream = stream
 		self.data_encoding = data_encoding
 		self.file_encoding = file_encoding
 		self.errors = errors
-		self.end = end
 		if discard is not None:
 			self.discard = discard
+		self.linesep_in = linesep_in
+		self.linesep_out = linesep_out
 		if substitutions is not None:
 			self.substitutions = substitutions
 		if triggers is not None:
@@ -521,53 +531,97 @@ class FilteredStream():
 	def write(self, data):
 		""" Write data to stream, stripping all unwanted output.
 		
-		Incoming lines are expected to be delimited by '\\r\\n' even on UNIX
-		because this is what a pseudo tty device returns.
+		Incoming lines are expected to be delimited by linesep_in.
 		
 		"""
 		if not data:
 			return
 		lines = []
-		for line in data.rstrip().split("\r\n"):
-			if "\r" in line:
-				if not hasattr(self.stream, "isatty") or not self.stream.isatty():
-					line = line.strip("\r")  # Strip carriage return as re-positioning
-											 # of a cursor may not be supported by
-											 # stream
-					if not line:
-						continue
-			if re.sub(self.discard, "", line) or not line:
-				write = True
-				for trigger in self.triggers:
-					if trigger.lower() in line.lower():
-						write = False
-						break
-				if write:
-					if self.data_encoding:
-						line = line.decode(self.data_encoding, self.errors)
-					for search, sub in self.substitutions.iteritems():
-						line = re.sub(search, sub, line)
-					if self.file_encoding:
-						line = line.encode(self.file_encoding, self.errors)
-					self.stream.write(line.rstrip() + self.end)
+		for line in data.split(self.linesep_in):
+			if line and not re.sub(self.discard, "", line):
+				line = ""
+			write = True
+			for trigger in self.triggers:
+				if trigger.lower() in line.lower():
+					write = False
+					break
+			if write:
+				if self.data_encoding:
+					line = line.decode(self.data_encoding, self.errors)
+				for search, sub in self.substitutions.iteritems():
+					line = re.sub(search, sub, line)
+				if self.file_encoding:
+					line = line.encode(self.file_encoding, self.errors)
+				lines.append(line)
+		if lines:
+			self.stream.write(self.linesep_out.join(lines))
+
+
+class LineBufferedStream():
+	
+	""" Buffer lines and only write them to stream if line separator is 
+		detected """
+		
+	def __init__(self, stream, data_encoding=None, file_encoding=None,
+				 errors="replace", linesep_in="\r\n", linesep_out="\n"):
+		self.buf = ""
+		self.data_encoding = data_encoding
+		self.file_encoding = file_encoding
+		self.errors = errors
+		self.linesep_in = linesep_in
+		self.linesep_out = linesep_out
+		self.stream = stream
+	
+	def __del__(self):
+		self.commit()
+	
+	def __getattr__(self, name):
+		return getattr(self.stream, name)
+	
+	def close(self):
+		self.commit()
+		self.stream.close()
+	
+	def commit(self):
+		if self.buf:
+			if self.data_encoding:
+				self.buf = self.buf.decode(self.data_encoding, self.errors)
+			if self.file_encoding:
+				self.buf = self.buf.encode(self.file_encoding, self.errors)
+			self.stream.write(self.buf)
+			self.buf = ""
+	
+	def write(self, data):
+		data = data.replace(self.linesep_in, "\n")
+		for char in data:
+			if char == "\r":
+				while self.buf and not self.buf.endswith(self.linesep_out):
+					self.buf = self.buf[:-1]
+			else:
+				if char == "\n":
+					self.buf += self.linesep_out
+					self.commit()
+				else:
+					self.buf += char
 
 
 class LineCache():
 	
-	""" When written to it, stores only the last n lines. """
+	""" When written to it, stores only the last n + 1 lines and
+		returns only the last n non-empty lines when read. """
 	
-	def __init__(self, n=1):
+	def __init__(self, maxlines=1):
 		self.clear()
-		self.n = n
+		self.maxlines = maxlines
 	
 	def clear(self):
-		self.cache = []
+		self.cache = [""]
 	
 	def flush(self):
 		pass
 	
 	def read(self, triggers=None):
-		lines = []
+		lines = [""]
 		for line in self.cache:
 			read = True
 			if triggers:
@@ -575,18 +629,82 @@ class LineCache():
 					if trigger.lower() in line.lower():
 						read = False
 						break
-			if read:
+			if read and line:
 				lines.append(line)
-		return "\n".join(lines)
+		return "\n".join(filter(lambda line: line, lines)[-self.maxlines:])
 	
 	def write(self, data):
-		if data.rstrip():
-			lines = data.rstrip().splitlines()[-self.n:]
-			while len(self.cache) > self.n - len(lines):
-				self.cache = self.cache[1:]
-			self.cache += lines
-		else:
-			self.cache = []
+		for char in data:
+			if char == "\r":
+				self.cache[-1] = ""
+			elif char == "\n":
+				self.cache.append("")
+			else:
+				self.cache[-1] += char
+		self.cache = (filter(lambda line: line, self.cache[:-1]) + 
+					  self.cache[-1:])[-self.maxlines - 1:]
+
+
+class WPopen(sp.Popen):
+	
+	def __init__(self, *args, **kwargs):
+		sp.Popen.__init__(self, *args, **kwargs)
+		self._seekpos = 0
+		self._stdout = kwargs["stdout"]
+		self.after = None
+		self.before = None
+		self.exitstatus = None
+		self.logfile_read = None
+		self.match = None
+		self.maxlen = 80
+		self.timeout = 30
+	
+	def isalive(self):
+		self.exitstatus = self.poll()
+		return self.exitstatus is None
+	
+	def expect(self, patterns, timeout=-1):
+		if not isinstance(patterns, list):
+			patterns = [patterns]
+		if timeout == -1:
+			timeout = self.timeout
+		if timeout is not None:
+			end = time() + timeout
+		while timeout is None or time() < end:
+			self._stdout.seek(self._seekpos)
+			buf = self._stdout.read()
+			self._seekpos += len(buf)
+			if not buf and not self.isalive():
+				self.match = wexpect.EOF("End Of File (EOF) in expect() - dead child process")
+				if wexpect.EOF in patterns:
+					return self.match
+				raise self.match
+			if buf and self.logfile_read:
+				self.logfile_read.write(buf)
+			for pattern in patterns:
+				if isinstance(pattern, basestring) and pattern in buf:
+					offset = buf.find(pattern)
+					self.after = buf[offset:]
+					self.before = buf[:offset]
+					self.match = buf[offset:offset + len(pattern)]
+					return self.match
+			sleep(.01)
+		if timeout is not None:
+			self.match = wexpect.TIMEOUT("Timeout exceeded in expect()")
+			if wexpect.TIMEOUT in patterns:
+				return self.match
+			raise self.match
+	
+	def send(self, s):
+		self.stdin.write(s)
+		self._stdout.seek(self._seekpos)
+		buf = self._stdout.read()
+		self._seekpos += len(buf)
+		if buf and self.logfile_read:
+			self.logfile_read.write(buf)
+	
+	def terminate(self, force=False):
+		sp.Popen.terminate(self)
 
 
 class Worker():
@@ -605,12 +723,12 @@ class Worker():
 		self.dispread_after_dispcal = False
 		self.finished = True
 		self.interactive = False
-		self.lastmsg_discard = re.compile("[\\*|\\.]+|^point \\d+.*", re.I)
+		self.lastmsg_discard = re.compile("[\\*\\.]+")
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
-		self.recent_discard = re.compile("^(?:Adjusted )?[Tt]arget (?:white|black|gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:Black|Red|Green|Blue|White)\\s+=.+|^patch \\d+ of \\d+.*|^point \\d+.*|^Added \\d+/\\d+|[\\*|\\.]+|\\s*\\d*%?", re.I)
+		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
 		self.tempdir = None
 		self.thread_abort = False
@@ -681,7 +799,7 @@ class Worker():
 		self.retcode = -1
 		self.output = []
 		self.errors = []
-		self.recent = FilteredStream(LineCache(n=3), self.data_encoding, 
+		self.recent = FilteredStream(LineCache(maxlines=3), self.data_encoding, 
 									 discard=self.recent_discard,
 									 triggers=self.triggers)
 		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
@@ -693,6 +811,13 @@ class Worker():
 		if not self.tempdir or not os.path.isdir(self.tempdir):
 			# we create the tempdir once each calibrating/profiling run 
 			# (deleted by 'wrapup' after each run)
+			if verbose >= 2:
+				if not self.tempdir:
+					msg = "there is none"
+				else:
+					msg = "the previous (%s) no longer exists" % self.tempdir
+				safe_print(appname + ": Creating a new temporary directory "
+						   "because", msg)
 			try:
 				self.tempdir = tempfile.mkdtemp(prefix=appname + u"-")
 			except Exception, exception:
@@ -997,10 +1122,10 @@ class Worker():
 		if self.measure:
 			# TTBD/FIXME: Skipping of sensor calibration can't be done in
 			# emissive mode (see Argyll source spectro/ss.c, around line 40)
-			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") or \
-							  "-N" in args
+			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") ##or \
+							  ##"-N" in args
 		self.dispcal = cmdname == get_argyll_utilname("dispcal")
-		self.needs_user_interaction = (self.dispcal and 
+		self.needs_user_interaction = args and (self.dispcal and 
 									   not "-E" in args and not "-R" in args and 
 									   not "-m" in args and not "-r" in args and 
 									   not "-u" in args) or (self.measure and 
@@ -1182,12 +1307,23 @@ class Worker():
 		cmdline = [arg.encode(fs_enc) for arg in cmdline]
 		working_dir = None if not working_dir else working_dir.encode(fs_enc)
 		try:
-			if False:  # NEVER
-				safe_print('Disabling Argyll interactive mode')
-				# Argyll tools will no longer respond to keys sent via wexpect
+			if not self.measure and self.argyll_version >= [1, 2]:
+				# Argyll tools will no longer respond to keys
+				if debug:
+					safe_print("[D] Setting ARGYLL_NOT_INTERACTIVE 1")
 				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
 			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
 				del os.environ["ARGYLL_NOT_INTERACTIVE"]
+			if debug:
+				safe_print("[D] argyll_version", self.argyll_version)
+				safe_print("[D] ARGYLL_NOT_INTERACTIVE", 
+						   os.environ.get("ARGYLL_NOT_INTERACTIVE"))
+			if sys.platform == "win32":
+				startupinfo = sp.STARTUPINFO()
+				startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+				startupinfo.wShowWindow = sp.SW_HIDE
+			else:
+				startupinfo = None
 			if not interact:
 				if silent:
 					stderr = sp.STDOUT
@@ -1207,12 +1343,6 @@ class Worker():
 					stdin = None
 				else:
 					stdin = sp.PIPE
-				if sys.platform == "win32":
-					startupinfo = sp.STARTUPINFO()
-					startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-					startupinfo.wShowWindow = sp.SW_HIDE
-				else:
-					startupinfo = None
 			else:
 				kwargs = dict(timeout=30, cwd=working_dir,
 							  env=os.environ)
@@ -1222,11 +1352,17 @@ class Worker():
 				stdout = StringIO()
 				if log_output:
 					if sys.stdout.isatty():
-						logfile = FilteredStream(safe_print, self.data_encoding,
-												 triggers=[])
+						logfile = LineBufferedStream(
+								  FilteredStream(safe_print, self.data_encoding,
+												 discard="", 
+												 linesep_in="\n", 
+												 triggers=[]))
 					else:
-						logfile = FilteredStream(log, self.data_encoding,
-												 triggers=[])
+						logfile = LineBufferedStream(
+								  FilteredStream(log, self.data_encoding,
+												 discard="",
+												 linesep_in="\n", 
+												 triggers=[]))
 					logfile = Files((logfile, stdout, self.recent,
 									 self.lastmsg))
 				else:
@@ -1243,8 +1379,19 @@ class Worker():
 			tries = 1
 			while tries > 0:
 				if interact:
-					self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
-													**kwargs)
+					if self.argyll_version >= [1, 2] and USE_WPOPEN and \
+					   os.environ.get("ARGYLL_NOT_INTERACTIVE"):
+						self.subprocess = WPopen(" ".join(cmdline) if shell else
+												 cmdline, stdin=sp.PIPE, 
+												 stdout=tempfile.SpooledTemporaryFile(), 
+												 stderr=sp.STDOUT, 
+												 shell=shell, cwd=working_dir, 
+												 startupinfo=startupinfo)
+					else:
+						self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
+														**kwargs)
+						if debug or test:
+							self.subprocess.interact()
 					self.subprocess.logfile_read = logfile
 					if self.subprocess.isalive():
 						try:
@@ -1282,8 +1429,9 @@ class Worker():
 										sleep(.5)
 									if self.subprocess.isalive() and \
 									   not "Sample read stopped at user request!" \
-									   in self.recent.read():
-										logfile.write("Retrying...")
+									   in self.recent.read() and \
+									   not self.subprocess_abort:
+										logfile.write("\r\n%s: Retrying..." % appname)
 										self.subprocess.send(" ")
 							else:
 								self.subprocess.expect(wexpect.EOF, 
@@ -1506,10 +1654,11 @@ class Worker():
 				if display_manufacturer:
 					args.append("-A")
 					args.append(display_manufacturer)
-				if display_name is None:
+				if not display_name:
 					display_name = self.get_display_name()
-				args.append("-M")
-				args.append(display_name)
+				if display_name:
+					args.append("-M")
+					args.append(display_name)
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
@@ -1532,6 +1681,8 @@ class Worker():
 		cmd = get_argyll_util("dispcal")
 		args = []
 		args += ["-v2"] # verbose
+		if getcfg("argyll.debug"):
+			args += ["-D6"]
 		self.add_measurement_features(args)
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
@@ -1773,6 +1924,8 @@ class Worker():
 		cmd = get_argyll_util("dispread")
 		args = []
 		args += ["-v"] # verbose
+		if getcfg("argyll.debug"):
+			args += ["-D6"]
 		self.add_measurement_features(args)
 		# TTBD/FIXME: Skipping of sensor calibration can't be done in
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
@@ -1801,6 +1954,8 @@ class Worker():
 		cmd = get_argyll_util("dispwin")
 		args = []
 		args += ["-v"]
+		if getcfg("argyll.debug"):
+			args += ["-E6"]
 		args += ["-d" + self.get_display()]
 		args += ["-c"]
 		if cal is True:
@@ -1957,7 +2112,7 @@ class Worker():
 				pass
 			else:
 				percentage = start / end * 100
-		if percentage and self.progress_wnd is getattr(self, "terminal", None):
+		if not test and percentage and self.progress_wnd is getattr(self, "terminal", None):
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
@@ -1966,7 +2121,7 @@ class Worker():
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
 			self.progress_wnd.original_msg = None
 		if percentage:
-			if "Setting up the instrument" in msg:
+			if "Setting up the instrument" in msg or "Commencing device calibration" in msg:
 				self.recent.clear()
 				msg = ""
 			keepGoing, skip = self.progress_wnd.Update(math.ceil(percentage), 
@@ -2672,10 +2827,11 @@ class Worker():
 							dst += ext
 							if os.path.exists(dst):
 								if os.path.isdir(dst):
-									if debug:
-										safe_print("[D] wrapup.copy: "
-												   "shutil.rmtree('%s', "
-												   "True)" % dst)
+									if verbose >= 2:
+										safe_print(appname + 
+												   ": Removing existing "
+												   "destination directory tree", 
+												   dst)
 									try:
 										shutil.rmtree(dst, True)
 									except Exception, exception:
@@ -2685,9 +2841,10 @@ class Worker():
 														 for s in (dst, 
 																   exception)))
 								else:
-									if debug:
-										safe_print("[D] wrapup.copy: "
-												   "os.remove('%s')" % dst)
+									if verbose >= 2:
+										safe_print(appname + 
+												   ": Removing existing "
+												   "destination file", dst)
 									try:
 										os.remove(dst)
 									except Exception, exception:
@@ -2697,10 +2854,9 @@ class Worker():
 														 for s in (dst, 
 																   exception)))
 							if remove:
-								if debug:
-									safe_print("[D] wrapup.copy: "
-											   "shutil.move('%s', "
-											   "'%s')" % (src, dst))
+								if verbose >= 2:
+									safe_print(appname + ": Moving temporary "
+											   "object %s to %s" % (src, dst))
 								try:
 									shutil.move(src, dst)
 								except Exception, exception:
@@ -2711,10 +2867,11 @@ class Worker():
 													 (src, dst, exception)))
 							else:
 								if os.path.isdir(src):
-									if debug:
-										safe_print("[D] wrapup.copy: "
-												   "shutil.copytree('%s', "
-												   "'%s')" % (src, dst))
+									if verbose >= 2:
+										safe_print(appname + 
+												   ": Copying temporary "
+												   "directory tree %s to %s" % 
+												   (src, dst))
 									try:
 										shutil.copytree(src, dst)
 									except Exception, exception:
@@ -2725,10 +2882,10 @@ class Worker():
 														 for s in 
 														 (src, dst, exception)))
 								else:
-									if debug:
-										safe_print("[D] wrapup.copy: "
-												   "shutil.copyfile('%s', "
-												   "'%s')" % (src, dst))
+									if verbose >= 2:
+										safe_print(appname + 
+												   ": Copying temporary "
+												   "file %s to %s" % (src, dst))
 									try:
 										shutil.copyfile(src, dst)
 									except Exception, exception:
@@ -2752,9 +2909,9 @@ class Worker():
 						src = os.path.join(self.tempdir, basename)
 						isdir = os.path.isdir(src)
 						if isdir:
-							if debug:
-								safe_print("[D] wrapup.remove: "
-										   "shutil.rmtree('%s', True)" % src)
+							if verbose >= 2:
+								safe_print(appname + ": Removing temporary "
+										   "directory tree", src)
 							try:
 								shutil.rmtree(src, True)
 							except Exception, exception:
@@ -2763,8 +2920,9 @@ class Worker():
 										   tuple(safe_unicode(s) for s in 
 												 (src, exception)))
 						else:
-							if debug:
-								safe_print("[D] wrapup.remove: os.remove('%s')" % 
+							if verbose >= 2:
+								safe_print(appname + 
+										   ": Removing temporary file", 
 										   src)
 							try:
 								os.remove(src)
@@ -2781,6 +2939,10 @@ class Worker():
 														   exception)))
 			else:
 				if not src_listdir:
+					if verbose >= 2:
+						safe_print(appname + 
+								   ": Removing empty temporary directory", 
+								   self.tempdir)
 					try:
 						shutil.rmtree(self.tempdir, True)
 					except Exception, exception:

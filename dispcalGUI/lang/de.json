@@ -111,6 +111,7 @@
 	"measurement_mode": "Modus",
 	"measurement_mode.adaptive": "Adaptiv",
 	"measurement_mode.highres": "HiRes",
+	"enable_argyll_debug": "Argyll CMS Diagnose-Ausgabe aktivieren",
 	"enumerating_displays_and_comports": "Anzeigegeräte- und Messgeräte-Erkennung...",
 	"error": "Fehler",
 	"error.autostart_creation": "Der Autostart-Eintrag für %s, um die Kalibrierungskurven bei der Anmeldung zu laden, konnte nicht angelegt werden.",

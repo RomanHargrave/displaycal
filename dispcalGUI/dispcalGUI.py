@@ -119,7 +119,7 @@ from util_str import safe_str, safe_unicode, strtr, wrap
 import util_x
 from worker import (FilteredStream, LineCache, Worker, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
-					check_set_argyll_bin, get_argyll_util, 
+					check_set_argyll_bin, get_argyll_util, get_options_from_cal,
 					get_options_from_profile, make_argyll_compatible_path, 
 					printcmdline, set_argyll_bin, show_result_dialog)
 try:
@@ -1072,6 +1072,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("allow_skip_sensor_cal"))
 		self.Bind(wx.EVT_MENU, self.allow_skip_sensor_cal_handler, 
 				  self.menuitem_allow_skip_sensor_cal)
+		self.menuitem_enable_argyll_debug = options.FindItemById(
+			options.FindItem("enable_argyll_debug"))
+		self.Bind(wx.EVT_MENU, self.enable_argyll_debug_handler, 
+				  self.menuitem_enable_argyll_debug)
 		menuitem = options.FindItemById(options.FindItem("restore_defaults"))
 		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
 		
@@ -1166,6 +1170,7 @@ class MainFrame(BaseFrame):
 			bool(self.worker.displays))
 		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
+		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		spyd2en = get_argyll_util("spyd2en")
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en) and not 
 											os.path.isfile(os.path.join(os.path.dirname(spyd2en), 
@@ -1472,6 +1477,8 @@ class MainFrame(BaseFrame):
 			"last_icc_path",
 			"last_ti1_path",
 			"last_ti3_path",
+			"log.show",
+			"lut_viewer.show",
 			"measurement_mode",
 			"measurement_mode.adaptive",
 			"measurement_mode.highres",
@@ -1520,6 +1527,7 @@ class MainFrame(BaseFrame):
 			writecfg()
 			self.update_displays()
 			self.update_controls()
+			self.update_menus()
 			if hasattr(self, "tcframe"):
 				self.tcframe.tc_update_controls()
 
@@ -2161,6 +2169,10 @@ class MainFrame(BaseFrame):
 		setcfg("allow_skip_sensor_cal", 
 			   int(self.menuitem_allow_skip_sensor_cal.IsChecked()))
 
+	def enable_argyll_debug_handler(self, event):
+		setcfg("argyll.debug", 
+			   int(self.menuitem_enable_argyll_debug.IsChecked()))
+
 	def lut_viewer_show_actual_lut_handler(self, event):
 		setcfg("lut_viewer.show_actual_lut", 
 			   int(self.menuitem_show_actual_lut.IsChecked()))
@@ -2412,8 +2424,10 @@ class MainFrame(BaseFrame):
 			if sys.platform == "win32":
 				kwargs["codepage"] = windll.kernel32.GetACP()
 			self.worker.clear_cmd_output()
+			self.worker.measure = True
+			if "ARGYLL_NOT_INTERACTIVE" in os.environ:
+				del os.environ["ARGYLL_NOT_INTERACTIVE"]
 			try:
-				self.worker.measure = True
 				result = self.worker.subprocess = wexpect.spawn(cmd, args, 
 																**kwargs)
 				result.logfile_read = Files([FilteredStream(safe_print, 
@@ -2933,6 +2947,9 @@ class MainFrame(BaseFrame):
 													   self.worker.options_dispcal)
 				if cal_cgats:
 					cal_cgats.write()
+					if not remove:
+						# Remove the temp .cal file
+						self.worker.wrapup(False, True, ext_filter=[script_ext])
 				setcfg("last_cal_path", cal)
 				self.previous_cal = getcfg("calibration.file")
 				if getcfg("profile.update") or \
@@ -3634,6 +3651,8 @@ class MainFrame(BaseFrame):
 												   (loader_v02b, exception)))
 					# Unified loader
 					name = appname + " Profile Loader"
+					autostart_home_lnkname = os.path.join(autostart_home, 
+														  name + ".lnk")
 					loader_args = []
 					if os.path.basename(sys.executable) in ("python.exe", 
 															"pythonw.exe"):
@@ -3681,6 +3700,9 @@ class MainFrame(BaseFrame):
 																  "dialog-warning"))
 									# now try user scope
 								else:
+									# remove existing user loader
+									if os.path.isfile(autostart_home_lnkname):
+										os.remove(autostart_home_lnkname)
 									# do not create user loader
 									return result
 							else:
@@ -3694,8 +3716,7 @@ class MainFrame(BaseFrame):
 						if autostart_home:
 							scut.QueryInterface(
 								pythoncom.IID_IPersistFile).Save(
-									os.path.join(autostart_home, 
-												 name + ".lnk"), 0)
+									os.path.join(autostart_home_lnkname), 0)
 						else:
 							if not silent:
 								InfoDialog(self, 
@@ -4094,7 +4115,8 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(show_result_dialog, result, self)
 			self.Show()
 		else:
-			result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
+			result = self.worker.exec_cmd(cmd, args, capture_output=True,
+										  skip_scripts=True)
 			if isinstance(cmd, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
 				self.Show()
@@ -4621,7 +4643,7 @@ class MainFrame(BaseFrame):
 		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
 		if not isinstance(result, Exception) and result:
 			self.measure(self.calibrate_and_profile_finish,
-						 True, 
+						 apply_calibration=True, 
 						 progress_msg=lang.getstr("measuring.characterization"), 
 						 resume=True, continue_next=True)
 		else:
@@ -5472,7 +5494,7 @@ class MainFrame(BaseFrame):
 								os.path.basename(source_filename) + 
 								profile_ext, 
 								wildcard=lang.getstr("filetype.icc") + 
-										 "|*.icc;*.icm", 
+										 "|*" + profile_ext, 
 								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			result = dlg.ShowModal()
@@ -5589,13 +5611,19 @@ class MainFrame(BaseFrame):
 			elif "l" in measurement_mode:
 				legacy_profile_name += "lcd"
 			if "p" in measurement_mode:
-				if len(measurement_mode) > 1:
+				if legacy_profile_name:
 					legacy_profile_name += "-"
 				legacy_profile_name += lang.getstr("projector").lower()
 			if "V" in measurement_mode:
-				if len(measurement_mode) > 1:
+				if legacy_profile_name:
 					legacy_profile_name += "-"
 				legacy_profile_name += lang.getstr("measurement_mode.adaptive").lower()
+			if "H" in measurement_mode:
+				if legacy_profile_name:
+					legacy_profile_name += "-"
+				legacy_profile_name += lang.getstr("measurement_mode.highres").lower()
+		else:
+			legacy_profile_name += lang.getstr("default").lower()
 		if legacy_profile_name:
 			legacy_profile_name += "-"
 		if not whitepoint or whitepoint.find(",") < 0:
@@ -5651,23 +5679,27 @@ class MainFrame(BaseFrame):
 			profile_name = profile_name.replace("%in", instrument)
 		else:
 			profile_name = re.sub("[-_\s]+%in|%in[-_\s]*", "", profile_name)
+		mode = ""
 		if measurement_mode:
-			mode = ""
 			if "c" in measurement_mode:
 				mode += "CRT"
 			elif "l" in measurement_mode:
 				mode += "LCD"
 			if "p" in measurement_mode:
-				if len(measurement_mode) > 1:
+				if mode:
 					mode += "-"
 				mode += lang.getstr("projector")
 			if "V" in measurement_mode:
-				if len(measurement_mode) > 1:
+				if mode:
 					mode += "-"
 				mode += lang.getstr("measurement_mode.adaptive")
-			profile_name = profile_name.replace("%im", mode)
+			if "H" in measurement_mode:
+				if mode:
+					mode += "-"
+				mode += lang.getstr("measurement_mode.highres")
 		else:
-			profile_name = re.sub("[-_\s]+%im|%im[-_\s]*", "", profile_name)
+			mode += lang.getstr("default")
+		profile_name = profile_name.replace("%im", mode)
 		if isinstance(whitepoint, str):
 			if whitepoint.find(",") < 0:
 				if self.get_whitepoint_locus() == "t":
@@ -5809,6 +5841,20 @@ class MainFrame(BaseFrame):
 		return "spect" if spect else "color"
 
 	def get_measurement_mode(self):
+		""" Return the measurement mode as string.
+		
+		Examples
+		
+		Argyll options -V -H (adaptive highres mode)
+		Returned string 'VH'
+		
+		Argyll option -yl
+		Returned string 'l'
+		
+		Argyll options -p -H (projector highres mode)
+		Returned string 'pH'
+		
+		"""
 		return self.measurement_modes_ab[self.get_instrument_type()].get(
 			self.measurement_mode_ctrl.GetSelection())
 
@@ -6286,194 +6332,205 @@ class MainFrame(BaseFrame):
 				setcfg("last_icc_path", path)
 				(options_dispcal, 
 				 options_colprof) = get_options_from_profile(profile)
-				if options_dispcal or options_colprof:
+			else:
+				(options_dispcal, 
+				 options_colprof) = get_options_from_cal(path)
+			if options_dispcal or options_colprof:
+				if debug:
+					safe_print("[D] options_dispcal:", options_dispcal)
+				if debug:
+					safe_print("[D] options_colprof:", options_colprof)
+				# Parse options
+				if options_dispcal:
+					# Restore defaults
+					self.restore_defaults_handler(
+						include=("calibration", 
+								 "measure.darken_background", 
+								 "profile.update", 
+								 "trc", 
+								 "whitepoint"), 
+						exclude=("calibration.black_point_correction_choice.show", 
+								 "calibration.update", 
+								 "measure.darken_background.show_warning", 
+								 "trc.should_use_viewcond_adjust.show_msg"))
+					self.worker.options_dispcal = ["-" + arg for arg 
+												   in options_dispcal]
+					for o in options_dispcal:
+						if o[0] == "d":
+							o = o[1:].split(",")
+							setcfg("display.number", o[0])
+							if len(o) > 1:
+								setcfg("display_lut.number", o[1])
+								setcfg("display_lut.link", 
+									   int(o[0] == o[1]))
+							else:
+								setcfg("display_lut.number", o[0])
+								setcfg("display_lut.link", 1)
+							continue
+						if o[0] == "c":
+							setcfg("comport.number", o[1:])
+							self.update_comports()
+							continue
+						if o[0] == "m":
+							setcfg("calibration.interactive_display_adjustment", 0)
+							continue
+						##if o[0] == "o":
+							##setcfg("profile.update", 1)
+							##continue
+						##if o[0] == "u":
+							##setcfg("calibration.update", 1)
+							##continue
+						if o[0] == "q":
+							setcfg("calibration.quality", o[1])
+							continue
+						if o[0] == "y":
+							setcfg("measurement_mode", o[1])
+							continue
+						if o[0] in ("t", "T"):
+							setcfg("whitepoint.colortemp.locus", o[0])
+							if o[1:]:
+								setcfg("whitepoint.colortemp", o[1:])
+							setcfg("whitepoint.x", None)
+							setcfg("whitepoint.y", None)
+							continue
+						if o[0] == "w":
+							o = o[1:].split(",")
+							setcfg("whitepoint.colortemp", None)
+							setcfg("whitepoint.x", o[0])
+							setcfg("whitepoint.y", o[1])
+							continue
+						if o[0] == "b":
+							setcfg("calibration.luminance", o[1:])
+							continue
+						if o[0] in ("g", "G"):
+							setcfg("trc.type", o[0])
+							setcfg("trc", o[1:])
+							continue
+						if o[0] == "f":
+							setcfg("calibration.black_output_offset", 
+								   o[1:])
+							continue
+						if o[0] == "a":
+							setcfg("calibration.ambient_viewcond_adjust", 1)
+							setcfg("calibration.ambient_viewcond_adjust.lux", o[1:])
+							continue
+						if o[0] == "k":
+							setcfg("calibration.black_point_correction", o[1:])
+							continue
+						if o[0] == "A":
+							setcfg("calibration.black_point_rate", 
+								   o[1:])
+							continue
+						if o[0] == "B":
+							setcfg("calibration.black_luminance", 
+								   o[1:])
+							continue
+						if o[0] in ("p", "P") and len(o[1:]) >= 5:
+							setcfg("dimensions.measureframe", o[1:])
+							setcfg("dimensions.measureframe.unzoomed", 
+								   o[1:])
+							continue
+						if o[0] == "V":
+							setcfg("measurement_mode.adaptive", 1)
+							continue
+						if o[0] == "H":
+							setcfg("measurement_mode.highres", 1)
+							continue
+						if o[0] == "p" and len(o[1:]) == 0:
+							setcfg("measurement_mode.projector", 1)
+							continue
+						if o[0] == "F":
+							setcfg("measure.darken_background", 1)
+							continue
+				if options_colprof:
+					# restore defaults
+					self.restore_defaults_handler(
+						include=("profile", "gamap_"), 
+						exclude=("profile.update", "profile.name"))
+					for o in options_colprof:
+						if o[0] == "q":
+							setcfg("profile.quality", o[1])
+							continue
+						if o[0] == "a":
+							setcfg("profile.type", o[1])
+							continue
+						if o[0] in ("s", "S"):
+							o = o.split(None, 1)
+							setcfg("gamap_profile", o[1][1:-1])
+							setcfg("gamap_perceptual", 1)
+							if o[0] == "S":
+								setcfg("gamap_saturation", 1)
+							continue
+						if o[0] == "c":
+							setcfg("gamap_src_viewcond", o[1:])
+							continue
+						if o[0] == "d":
+							setcfg("gamap_out_viewcond", o[1:])
+							continue
+				setcfg("calibration.file", path)
+				if "CTI3" in ti3_lines:
 					if debug:
-						safe_print("[D] options_dispcal:", options_dispcal)
-					if debug:
-						safe_print("[D] options_colprof:", options_colprof)
-					# Parse options
-					if options_dispcal:
-						# Restore defaults
-						self.restore_defaults_handler(
-							include=("calibration", 
-									 "measure.darken_background", 
-									 "profile.update", 
-									 "trc", 
-									 "whitepoint"), 
-							exclude=("calibration.black_point_correction_choice.show", 
-									 "calibration.update", 
-									 "measure.darken_background.show_warning", 
-									 "trc.should_use_viewcond_adjust.show_msg"))
-						self.worker.options_dispcal = ["-" + arg for arg 
-													   in options_dispcal]
-						for o in options_dispcal:
-							if o[0] == "d":
-								o = o[1:].split(",")
-								setcfg("display.number", o[0])
-								if len(o) > 1:
-									setcfg("display_lut.number", o[1])
-									setcfg("display_lut.link", 
-										   int(o[0] == o[1]))
-								else:
-									setcfg("display_lut.number", o[0])
-									setcfg("display_lut.link", 1)
-								continue
-							if o[0] == "c":
-								setcfg("comport.number", o[1:])
-								self.update_comports()
-								continue
-							if o[0] == "m":
-								setcfg("calibration.interactive_display_adjustment", 0)
-								continue
-							##if o[0] == "o":
-								##setcfg("profile.update", 1)
-								##continue
-							##if o[0] == "u":
-								##setcfg("calibration.update", 1)
-								##continue
-							if o[0] == "q":
-								setcfg("calibration.quality", o[1])
-								continue
-							if o[0] == "y":
-								setcfg("measurement_mode", o[1])
-								continue
-							if o[0] in ("t", "T"):
-								setcfg("whitepoint.colortemp.locus", o[0])
-								if o[1:]:
-									setcfg("whitepoint.colortemp", o[1:])
-								setcfg("whitepoint.x", None)
-								setcfg("whitepoint.y", None)
-								continue
-							if o[0] == "w":
-								o = o[1:].split(",")
-								setcfg("whitepoint.colortemp", None)
-								setcfg("whitepoint.x", o[0])
-								setcfg("whitepoint.y", o[1])
-								continue
-							if o[0] == "b":
-								setcfg("calibration.luminance", o[1:])
-								continue
-							if o[0] in ("g", "G"):
-								setcfg("trc.type", o[0])
-								setcfg("trc", o[1:])
-								continue
-							if o[0] == "f":
-								setcfg("calibration.black_output_offset", 
-									   o[1:])
-								continue
-							if o[0] == "a":
-								setcfg("calibration.ambient_viewcond_adjust", 1)
-								setcfg("calibration.ambient_viewcond_adjust.lux", o[1:])
-								continue
-							if o[0] == "k":
-								setcfg("calibration.black_point_correction", o[1:])
-								continue
-							if o[0] == "A":
-								setcfg("calibration.black_point_rate", 
-									   o[1:])
-								continue
-							if o[0] == "B":
-								setcfg("calibration.black_luminance", 
-									   o[1:])
-								continue
-							if o[0] in ("p", "P") and len(o[1:]) >= 5:
-								setcfg("dimensions.measureframe", o[1:])
-								setcfg("dimensions.measureframe.unzoomed", 
-									   o[1:])
-								continue
-							if o[0] == "V":
-								setcfg("measurement_mode.adaptive", 1)
-								continue
-							if o[0] == "H":
-								setcfg("measurement_mode.highres", 1)
-								continue
-							if o[0] == "p" and len(o[1:]) == 0:
-								setcfg("measurement_mode.projector", 1)
-								continue
-							if o[0] == "F":
-								setcfg("measure.darken_background", 1)
-								continue
-					if options_colprof:
-						# restore defaults
-						self.restore_defaults_handler(
-							include=("profile", "gamap_"), 
-							exclude=("profile.update", "profile.name"))
-						for o in options_colprof:
-							if o[0] == "q":
-								setcfg("profile.quality", o[1])
-								continue
-							if o[0] == "a":
-								setcfg("profile.type", o[1])
-								continue
-							if o[0] in ("s", "S"):
-								o = o.split(None, 1)
-								setcfg("gamap_profile", o[1][1:-1])
-								setcfg("gamap_perceptual", 1)
-								if o[0] == "S":
-									setcfg("gamap_saturation", 1)
-								continue
-							if o[0] == "c":
-								setcfg("gamap_src_viewcond", o[1:])
-								continue
-							if o[0] == "d":
-								setcfg("gamap_out_viewcond", o[1:])
-								continue
-					setcfg("calibration.file", path)
-					if "CTI3" in ti3_lines:
-						if debug:
-							safe_print("[D] load_cal_handler testchart.file:", path)
-						setcfg("testchart.file", path)
-					self.update_controls(
-						update_profile_name=update_profile_name)
-					writecfg()
+						safe_print("[D] load_cal_handler testchart.file:", path)
+					setcfg("testchart.file", path)
+				self.update_controls(
+					update_profile_name=update_profile_name)
+				writecfg()
 
-					if "vcgt" in profile.tags and load_vcgt:
-						# load calibration into lut
-						self.load_cal(cal=path, silent=True)
-						if options_dispcal and options_colprof:
-							return
-						elif options_dispcal:
-							msg = lang.getstr("settings_loaded.cal_and_lut")
-						else:
-							msg = lang.getstr("settings_loaded.profile_and_lut")
-					elif options_dispcal and options_colprof:
-						msg = lang.getstr("settings_loaded.cal_and_profile")
+				if ext.lower() in (".icc", ".icm") and \
+				   "vcgt" in profile.tags and load_vcgt:
+					# load calibration into lut
+					self.load_cal(cal=path, silent=True)
+					if options_dispcal and options_colprof:
+						return
 					elif options_dispcal:
+						msg = lang.getstr("settings_loaded.cal_and_lut")
+					else:
+						msg = lang.getstr("settings_loaded.profile_and_lut")
+				elif options_dispcal and options_colprof:
+					msg = lang.getstr("settings_loaded.cal_and_profile")
+				elif options_dispcal:
+					if ext.lower() in (".icc", ".icm"):
 						msg = lang.getstr("settings_loaded.cal")
 					else:
-						msg = lang.getstr("settings_loaded.profile")
-
-					if not silent:
-						InfoDialog(self, msg=msg + "\n" + path, ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"))
-					return
-				else:
-					sel = self.calibration_file_ctrl.GetSelection()
-					if len(self.recent_cals) > sel and self.recent_cals[sel] == path:
-						self.recent_cals.remove(self.recent_cals[sel])
-						self.calibration_file_ctrl.Delete(sel)
-						cal = getcfg("calibration.file") or ""
-						if not cal in self.recent_cals:
-							self.recent_cals.append(cal)
-						# The case-sensitive index could fail because of 
-						# case insensitive file systems, e.g. if the 
-						# stored filename string is 
-						# "C:\Users\Name\AppData\dispcalGUI\storage\MyFile"
-						# but the actual filename is 
-						# "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
-						# (maybe because the user renamed the file)
-						idx = index_fallback_ignorecase(self.recent_cals, cal)
-						self.calibration_file_ctrl.SetSelection(idx)
-					if "vcgt" in profile.tags and load_vcgt:
 						# load calibration into lut
 						self.load_cal(cal=path, silent=True)
-					if not silent:
-						InfoDialog(self, msg=lang.getstr("no_settings") + 
-											 "\n" + path, 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-					return
+						msg = lang.getstr("settings_loaded.cal_and_lut")
+				else:
+					msg = lang.getstr("settings_loaded.profile")
 
+				if not silent:
+					InfoDialog(self, msg=msg + "\n" + path, ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-information"))
+				return
+			elif ext.lower() in (".icc", ".icm"):
+				sel = self.calibration_file_ctrl.GetSelection()
+				if len(self.recent_cals) > sel and self.recent_cals[sel] == path:
+					self.recent_cals.remove(self.recent_cals[sel])
+					self.calibration_file_ctrl.Delete(sel)
+					cal = getcfg("calibration.file") or ""
+					if not cal in self.recent_cals:
+						self.recent_cals.append(cal)
+					# The case-sensitive index could fail because of 
+					# case insensitive file systems, e.g. if the 
+					# stored filename string is 
+					# "C:\Users\Name\AppData\dispcalGUI\storage\MyFile"
+					# but the actual filename is 
+					# "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
+					# (maybe because the user renamed the file)
+					idx = index_fallback_ignorecase(self.recent_cals, cal)
+					self.calibration_file_ctrl.SetSelection(idx)
+				if "vcgt" in profile.tags and load_vcgt:
+					# load calibration into lut
+					self.load_cal(cal=path, silent=True)
+				if not silent:
+					InfoDialog(self, msg=lang.getstr("no_settings") + 
+										 "\n" + path, 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
+				return
+
+			# Old .cal file without ARGYLL_DISPCAL_ARGS section
+			
 			setcfg("last_cal_path", path)
 
 			# Restore defaults

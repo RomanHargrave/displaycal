@@ -45,6 +45,10 @@
           <label>allow_skip_sensor_cal</label>
           <checkable>1</checkable>
         </object>
+        <object class="wxMenuItem" name="enable_argyll_debug">
+          <label>enable_argyll_debug</label>
+          <checkable>1</checkable>
+        </object>
         <object class="separator"/>
         <object class="wxMenuItem" name="restore_defaults">
           <label>restore_defaults</label>

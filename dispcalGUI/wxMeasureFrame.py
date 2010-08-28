@@ -513,7 +513,7 @@ class MeasureFrame(InvincibleFrame):
 											 (measureframe_pos[1] + titlebar))
 		if debug: safe_print("[D]  scale:", scale)
 		if debug: safe_print("[D]  measureframe_pos:", measureframe_pos)
-		measureframe_dimensions = ",".join(str(n) for n in 
+		measureframe_dimensions = ",".join(str(max(0, n)) for n in 
 										   measureframe_pos + [scale])
 		if debug:
 			safe_print("[D]  measureframe_dimensions:", measureframe_dimensions)

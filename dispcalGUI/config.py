@@ -346,7 +346,8 @@ valid_values = {
 }
 
 defaults = {
-	"allow_skip_sensor_cal": 1,
+	"allow_skip_sensor_cal": 0,
+	"argyll.debug": 0,
 	"argyll.dir": expanduseru("~"), # directory
 	"calibration.ambient_viewcond_adjust": 0,
 	"calibration.ambient_viewcond_adjust.lux": 500.0,
@@ -498,6 +499,11 @@ def getcfg(name, fallback=True):
 					value = deftype(value)
 				except ValueError:
 					value = defval
+			elif name.startswith("dimensions.measureframe"):
+				try:
+					value = ",".join([str(max(0, float(n))) for n in value.split(",")])
+				except ValueError:
+					value = defaults[name]
 			elif name == "profile.quality" and getcfg("profile.type") in ("g", 
 																		  "G"):
 				# default to high quality for gamma + matrix
