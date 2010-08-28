@@ -97,8 +97,9 @@ class SafePrinter():
 			fn(line)
 		else:
 			file_.write(line)
-			if sys.platform != "win32" or len(line) != conwidth or \
-			   not (hasattr(file_, "isatty") and file_.isatty()) or end != "\n":
+			if end and (sys.platform != "win32" or len(line) != conwidth or 
+						not (hasattr(file_, "isatty") and file_.isatty()) or 
+						end != "\n"):
 				# On Windows, if a line is exactly the width of the buffer, a line 
 				# break would insert an empty line between this line and the next.
 				# To avoid this, skip the newline in that case.
