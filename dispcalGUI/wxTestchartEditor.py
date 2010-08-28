@@ -49,8 +49,9 @@ class TestchartEditor(wx.Frame):
 		}
 		
 		self.worker = Worker()
+		self.worker.argyll_version = get_argyll_version("targen", silent=True)
 		
-		if get_argyll_version("targen", silent=True) >= [1, 1, 0]:
+		if self.worker.argyll_version >= [1, 1, 0]:
 			self.tc_algos_ab["Q"] = lang.getstr("tc.Q")
 
 		self.tc_algos_ba = swap_dict_keys_values(self.tc_algos_ab)
@@ -1352,7 +1353,7 @@ class TestchartEditor(wx.Frame):
 
 	def tc_create(self):
 		writecfg()
-		self.argyll_version = get_argyll_version("targen", silent=True)
+		self.worker.argyll_version = get_argyll_version("targen", silent=True)
 		cmd, args = self.worker.prepare_targen()
 		if not isinstance(cmd, Exception):
 			result = self.worker.exec_cmd(cmd, args, low_contrast = False, skip_scripts = True, silent = False, parent = self)
@@ -1376,7 +1377,7 @@ class TestchartEditor(wx.Frame):
 								 self.tc_vrml_lab):
 						if ctrl.GetValue():
 							vrml_type = "l" if ctrl.Name == "tc_vrml_lab" else "d"
-							if self.argyll_version >= [1, 1, 0]:
+							if self.worker.argyll_version >= [1, 1, 0]:
 								wrlname = "temp%s.wrl" % vrml_type
 							else:
 								wrlname = "temp.wrl"
