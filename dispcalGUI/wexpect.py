@@ -82,6 +82,7 @@ try:
         import resource
         import fcntl
     else:
+        from StringIO import StringIO
         try:
             from ctypes import windll
             import pywintypes
@@ -94,7 +95,7 @@ try:
             import winerror
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
-        screenbufferfillchar = u' '
+        screenbufferfillchar = u'\4'
 except ImportError, e:
     raise ImportError (str(e) + """
 
@@ -1775,8 +1776,7 @@ class spawn_windows (spawn_unix, object):
         available right away then one character will be returned immediately.
         It will not wait for 30 seconds for another 99 characters to come in.
 
-        This is a wrapper around wtty.read(). It uses select.select() to
-        implement the timeout. """
+        This is a wrapper around Wtty.read(). """
 
         if self.closed:
             raise ValueError ('I/O operation on closed file in read_nonblocking().')
@@ -1920,6 +1920,8 @@ class spawn_windows (spawn_unix, object):
 class Wtty:
 
     def __init__(self, timeout=30, codepage=None):
+        self.__buffer = StringIO()
+        self.__bufferY = 0
         self.__currentReadCo = PyCOORDType(0, 0)
         self.__consSize = [80, 16000]
         self.__parentPid = 0
@@ -1930,7 +1932,8 @@ class Wtty:
         self.__childProcess = None
         self.codepage = codepage
         self.console = False
-        self.lastReadLine = ""
+        self.lastRead = 0
+        self.lastReadData = ""
         self.pid = None
         self.processList = []
         # We need a timeout for connecting to the child process
@@ -2117,6 +2120,8 @@ class Wtty:
             if s[-1] == '\n':
                 s = s[:-1]
             records = [self.createKeyEvent(c) for c in unicode(s)]
+            if not self.__consout:
+                return ""
             consinfo = self.__consout.GetConsoleScreenBufferInfo()
             startCo = consinfo['CursorPosition']
             wrote = self.__consin.WriteConsoleInput(records)
@@ -2169,8 +2174,9 @@ class Wtty:
                 endPoint = self.getPoint(endOff)
             
             s = self.__consout.ReadConsoleOutputCharacter(readlen, startCo)
-            self.lastRead = len(s)
-            self.totalRead += self.lastRead
+            ln = len(s)
+            self.lastRead += ln
+            self.totalRead += ln
             buff.append(s)
             
             startX, startY = endPoint[0], endPoint[1]
@@ -2186,11 +2192,13 @@ class Wtty:
     
         strlist = []
         for i, c in enumerate(s):
-            strlist.append(c)
-            if (self.totalRead - self.lastRead + i + 1) % 80 == 0:
-                strlist.append('\r\n')
+            if c == screenbufferfillchar:
+                if (self.totalRead - self.lastRead + i + 1) % 80 == 0:
+                    strlist.append('\r\n')
+            else:
+                strlist.append(c)
 
-        s = '\r\n'.join([line.rstrip() for line in ''.join(strlist).splitlines()])
+        s = ''.join(strlist)
         try:
             return s.encode(str(self.codepage), 'replace')
         except LookupError:
@@ -2207,40 +2215,70 @@ class Wtty:
         #log_error('=' * 80)
         #log_error('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
 
+        isSameX = cursorPos.X == self.__currentReadCo.X
         isSameY = cursorPos.Y == self.__currentReadCo.Y
-        isSamePos = cursorPos.X == self.__currentReadCo.X and isSameY
+        isSamePos = isSameX and isSameY
         
         #log_error('isSameY: %r' % isSameY)
         #log_error('isSamePos: %r' % isSamePos)
         
-        if isSamePos:
-            # Assume cursor repositioning, read the current line again
-            self.totalRead -= self.__currentReadCo.X
+        if isSameY or not self.lastReadData.endswith('\r\n'):
+            # Read the current slice again
+            self.totalRead -= self.lastRead
             self.__currentReadCo.X = 0
-            #return ''
+            self.__currentReadCo.Y = self.__bufferY
         
         #log_error('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
         
-        s = self.readConsole(self.__currentReadCo, cursorPos)
-        s = self.parseData(s)
+        raw = self.readConsole(self.__currentReadCo, cursorPos)
+        rawlist = []
+        while raw:
+            rawlist.append(raw[:self.__consSize[0]])
+            raw = raw[self.__consSize[0]:]
+        raw = ''.join(rawlist)
+        s = self.parseData(raw)
+        for i, line in enumerate(reversed(rawlist)):
+            if line.endswith(screenbufferfillchar):
+                # Record the Y offset where the most recent line break was detected
+                self.__bufferY += len(rawlist) - i
+                break
         
-        #log_error('lastReadLine: %r' % self.lastReadLine)
+        #log_error('lastReadData: %r' % self.lastReadData)
         #log_error('s: %r' % s)
         
-        isSameLine = False
-        if isSameY:
-            if s == self.lastReadLine:
-                isSameLine = True
-                s = ''
+        #isSameData = False
+        if isSamePos and self.lastReadData == s:
+            #isSameData = True
+            s = ''
         
-        #log_error('isSameLine: %r' % isSameLine)
+        #log_error('isSameData: %r' % isSameData)
         #log_error('s: %r' % s)
         
-        if not isSameLine:
-            if s:
-                self.lastReadLine = s.splitlines()[-1]
-                if isSamePos:
-                    s = '\r' + s
+        if s:
+            lastReadData = self.lastReadData
+            pos = self.getOffset(self.__currentReadCo.X, self.__currentReadCo.Y)
+            self.lastReadData = s
+            if isSameY or not lastReadData.endswith('\r\n'):
+                # Detect changed lines
+                self.__buffer.seek(pos)
+                buf = self.__buffer.read()
+                #log_error('buf: %r' % buf)
+                #log_error('raw: %r' % raw)
+                if raw.startswith(buf):
+                    # Line has grown
+                    rawslice = raw[len(buf):]
+                    # Update last read bytes so line breaks can be detected in parseData
+                    lastRead = self.lastRead
+                    self.lastRead = len(rawslice)
+                    s = self.parseData(rawslice)
+                    self.lastRead = lastRead
+                else:
+                    # Cursor has been repositioned
+                    s = '\r' + s        
+                #log_error('s:   %r' % s)
+            self.__buffer.seek(pos)
+            self.__buffer.truncate()
+            self.__buffer.write(raw)
 
         self.__currentReadCo.X = cursorPos.X
         self.__currentReadCo.Y = cursorPos.Y
