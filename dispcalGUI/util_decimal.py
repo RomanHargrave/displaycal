@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import decimal
-Decimal = decimal.Decimal
+import math
 
 
 def float2dec(f, digits=10):
@@ -12,7 +12,7 @@ def float2dec(f, digits=10):
 			f = math.ceil(f)
 		elif parts[1][:digits] == "0" * digits:
 			f = math.floor(f)
-	return Decimal(str(f))
+	return decimal.Decimal(str(f))
 
 
 def stripzeros(n):
@@ -27,7 +27,7 @@ def stripzeros(n):
 	if n.find(".") < 0:
 		n += "."
 	try:
-		n = Decimal(n.rstrip("0"))
+		n = decimal.Decimal(n.rstrip("0"))
 	except decimal.InvalidOperation, exception:
 		pass
 	return n
