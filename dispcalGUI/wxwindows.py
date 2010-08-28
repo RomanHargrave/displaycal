@@ -607,15 +607,12 @@ class SimpleTerminal(InvincibleFrame):
 	
 	def add_text(self, txt):
 		pos = self.console.GetLastPosition()
-		txt = txt.rstrip("\n")
 		if txt.startswith("\r"):
 			txt = txt.lstrip("\r")
 			numlines = self.console.GetNumberOfLines()
 			start = pos - self.console.GetLineLength(numlines - 1)
 			self.console.Replace(start, pos, txt)
 		else:
-			if pos > 0:
-				txt = "\n" + txt
 			self.console.AppendText(txt)
 	
 	def flush(self):
