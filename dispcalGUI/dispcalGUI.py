@@ -5504,7 +5504,7 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result == wx.ID_OK:
 				filename, ext = os.path.splitext(profile_save_path)
-				if ext.lower() != profile_ext:
+				if ext.lower() not in (".icc", ".icm"):
 					profile_save_path += profile_ext
 					if os.path.exists(profile_save_path):
 						dlg = ConfirmDialog(
