@@ -337,6 +337,9 @@ def get_options_from_cprt(cprt):
 def get_options_from_cal(cal):
 	if not isinstance(cal, CGATS.CGATS):
 		cal = CGATS.CGATS(cal)
+	if not cal or not "ARGYLL_DISPCAL_ARGS" in cal[0] or \
+	   not cal[0].ARGYLL_DISPCAL_ARGS :
+		return [], []
 	dispcal_args = cal[0].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", "replace")
 	return get_options_from_args(dispcal_args)
 
