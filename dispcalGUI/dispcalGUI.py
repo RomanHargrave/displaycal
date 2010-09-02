@@ -916,7 +916,7 @@ class MainFrame(BaseFrame):
 							self.infoframe)
 		self.infoframe.SetIcon(get_bitmap_as_icon(16, appname))
 		if show:
-			self.Show()
+			self.infoframe.Show()
 	
 	def infoframe_close_handler(self, event):
 		self.infoframe_toggle_handler(event)
@@ -1443,6 +1443,7 @@ class MainFrame(BaseFrame):
 				if hasattr(self, "profile_name_tooltip_window"):
 					self.profile_name_tooltip_window.Destroy()
 					del self.profile_name_tooltip_window
+				self.Raise()
 				break
 	
 	def update_layout(self):
@@ -2949,7 +2950,8 @@ class MainFrame(BaseFrame):
 					cal_cgats.write()
 					if not remove:
 						# Remove the temp .cal file
-						self.worker.wrapup(False, True, ext_filter=[script_ext])
+						self.worker.wrapup(False, True, ext_filter=[script_ext,
+																	".app"])
 				setcfg("last_cal_path", cal)
 				self.previous_cal = getcfg("calibration.file")
 				if getcfg("profile.update") or \
@@ -4870,8 +4872,8 @@ class MainFrame(BaseFrame):
 					if hasattr(self, "lut_viewer") and self.lut_viewer and \
 					   getcfg("lut_viewer.show"):
 						self.show_lut.SetValue(True)
-					self.init_lut_viewer(profile=profile, 
-										 show=self.show_lut.GetValue())
+					#self.init_lut_viewer(profile=profile, 
+										 #show=self.show_lut.GetValue())
 				if ext not in (".icc", ".icm") or \
 				   getcfg("calibration.file") != profile_path:
 					self.preview_handler(preview=True)
@@ -5061,7 +5063,15 @@ class MainFrame(BaseFrame):
 				else:
 					if isinstance(result, Exception):
 						safe_print(result)
-				self.worker.wrapup(copy=False)
+				# Important: lut_viewer_load_lut is called after measurements,
+				# so make sure to only delete the temporary cal file we created
+				# (which hasn't an extension, so we can use ext_filter to 
+				# exclude files which should not be deleted)
+				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
+														   ".cmd", ".command", 
+														   ".icc", ".icm", 
+														   ".sh", ".ti1", 
+														   ".ti3"])
 			if profile and (profile.is_loaded or not profile.fileName or 
 							os.path.isfile(profile.fileName)):
 				if not self.lut_viewer.profile or \
@@ -6489,7 +6499,7 @@ class MainFrame(BaseFrame):
 				elif options_dispcal and options_colprof:
 					msg = lang.getstr("settings_loaded.cal_and_profile")
 				elif options_dispcal:
-					if ext.lower() in (".icc", ".icm"):
+					if ext.lower() in (".icc", ".icm") or not load_vcgt:
 						msg = lang.getstr("settings_loaded.cal")
 					else:
 						# load calibration into lut
@@ -6679,9 +6689,10 @@ class MainFrame(BaseFrame):
 					setcfg("testchart.file", path)
 				self.update_controls(update_profile_name=update_profile_name)
 				writecfg()
-
-				# load calibration into lut
-				self.load_cal(silent=True)
+				
+				if load_vcgt:
+					# load calibration into lut
+					self.load_cal(silent=True)
 				if not silent:
 					InfoDialog(self, msg=lang.getstr("settings_loaded", 
 													 ", ".join(settings)) + 
