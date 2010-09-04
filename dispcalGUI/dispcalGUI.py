@@ -97,7 +97,7 @@ import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 						  cal_to_fake_profile, can_update_cal, 
 						  extract_cal_from_ti3, ti3_to_ti1, verify_ti1_rgb_xyz)
-from argyll_instruments import instruments, remove_vendor_names
+from argyll_instruments import remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
 from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, XYZ2xyY
@@ -199,15 +199,28 @@ def app_update_check(parent=None):
 					 bitmap=geticon(32, "dialog-error"))
 		return
 	if newversion_tuple > VERSION_BASE:
-		safe_print(lang.getstr("check_update.new_version", 
-							   ".".join(str(n) for n in newversion_tuple)))
-		launch_file("http://" + domain)
+		wx.CallAfter(app_update_confirm, newversion_tuple)
 	else:
 		wx.CallAfter(InfoDialog, parent, 
 					 msg=lang.getstr("check_update.uptodate",
 									 appname),
 					 ok=lang.getstr("ok"), 
 					 bitmap=geticon(32, "dialog-information"), print_=True)
+
+
+def app_update_confirm(newversion_tuple):
+	dlg = ConfirmDialog(None,
+						msg=lang.getstr("check_update.new_version", 
+						   ".".join(str(n) for n in newversion_tuple)), 
+						ok=lang.getstr("ok"), 
+						cancel=lang.getstr("cancel"), 
+						bitmap=getbitmap(
+							"theme/icons/32x32/dialog-information"), 
+						log=True,
+						print_=True)
+	if dlg.ShowModal() == wx.ID_OK:
+		launch_file("http://" + domain)
+	dlg.Destroy()
 
 
 class BaseFrame(wx.Frame):
@@ -533,9 +546,7 @@ class MainFrame(BaseFrame):
 			path, ext = (get_data_path(os.path.sep.join(filename.split("/"))), 
 				os.path.splitext(filename)[1])
 			if (not path or not os.path.isfile(path)):
-				if ext.lower() != ".json":
-					# Ignore missing language files, these are handled separate
-					missing += [filename]
+				missing += [filename]
 			elif ext.lower() == ".ti1":
 				self.dist_testcharts += [path]
 				self.dist_testchart_names += [os.path.basename(path)]
@@ -1121,8 +1132,10 @@ class MainFrame(BaseFrame):
 		llist.sort()
 		for lstr, lcode in llist:
 			menuitem = languages.Append(-1, "&" + lstr, kind=wx.ITEM_RADIO)
-			menuitem.SetBitmap(
-				flagart.catalog[lcode.upper().replace("EN", "US")].getBitmap())
+			if (lcode.upper().replace("EN", "US") in flagart.catalog):
+				menuitem.SetBitmap(
+					flagart.catalog[lcode.upper().replace("EN", 
+														  "US")].getBitmap())
 			if lang.getcode() == lcode:
 				menuitem.Check()
 				font = menuitem.Font
@@ -5054,8 +5067,9 @@ class MainFrame(BaseFrame):
 							  os.path.join(tmp, 
 										   re.sub(r"[\\/:*?\"<>|]+",
 												  "",
-												  self.display_ctrl.GetStringSelection() or 
-												  "LUT"))])
+												  make_argyll_compatible_path(
+													self.display_ctrl.GetStringSelection() or 
+													"LUT")))])
 				result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 											  skip_scripts=True, silent=True)
 				if not isinstance(result, Exception) and result:
