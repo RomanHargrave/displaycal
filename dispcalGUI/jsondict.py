@@ -47,7 +47,13 @@ class JSONDict(dict):
 		if not self._isloaded:
 			self._isloaded = True
 			if not os.path.isabs(self.path):
-				self.path = get_data_path(self.path)
+				path = get_data_path(self.path)
+				if path:
+					self.path = path
+				else:
+					handle_error(u"Warning - JSON file '%s' not found" % 
+								 safe_unicode(self.path))
+					return
 			try:
 				jsonfile = codecs.open(self.path, "rU", self.encoding)
 				try:
