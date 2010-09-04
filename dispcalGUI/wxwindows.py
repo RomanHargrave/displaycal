@@ -158,10 +158,11 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
-				 size=(400, -1), alt=None, style=wx.DEFAULT_DIALOG_STYLE):
+				 size=(400, -1), alt=None, log=False, print_=False, 
+				 style=wx.DEFAULT_DIALOG_STYLE):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
-									   log=False, style=style)
+									   log=log, print_=print_, style=style)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
