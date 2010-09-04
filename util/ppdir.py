@@ -1,16 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import sys
+
 brackets = {
 	dict: "{}",
 	list: "[]",
 	tuple: "()"
 }
 
-def ppdir(obj, types=None, level=1):
+def ppdir(obj, types=None, level=1, stream=sys.stdout, repr=repr):
 	""" Pretty-print object attributes """
 	if isinstance(obj, (dict, list, tuple)):
-		print brackets[obj.__class__][0]
+		if isinstance(obj, dict):
+			class_ = dict
+		elif isinstance(obj, list):
+			class_ = list
+		elif isinstance(obj, tuple):
+			class_ = tuple
+		stream.write(brackets[class_][0] + '\n')
 		bag = obj
 	else:
 		bag = dir(obj)
@@ -29,24 +38,24 @@ def ppdir(obj, types=None, level=1):
 					break
 			if not match:
 				continue
-		print ("    " * level) + (
-			((repr(stuff) if level else unicode(stuff)) + ":")
-			if item != stuff else ""
-		),
+		stream.write(("    " * level) + (
+			((repr(stuff) if level else unicode(stuff)) + ": ")
+			if item is not stuff else ""
+		))
 		if isinstance(item, (str, unicode, int, float)):
-			if isinstance(item, (str, unicode)) and "\n" in item:
-				print '"""' + item + '"""' + ("," if level else "")
-			else:
-				print repr(item) + ("," if level else "")
+			#if isinstance(item, (str, unicode)) and "\n" in item:
+				#stream.write('"""' + item + '"""' + ("," if level else "") + '\n')
+			#else:
+			stream.write(repr(item) + ("," if level else "") + '\n')
 		elif isinstance(item, (dict, list, tuple)):
 			if len(("    " * level) + repr(item)) < 80:
-				print repr(item) + ("," if level else "")
+				stream.write(repr(item) + ("," if level else "") + '\n')
 			else:
-				#print brackets[item.__class__][0]
-				ppdir(item, types, level=level+1)
-				#print ("    " * level) + brackets[item.__class__][1] + ("," if level else "")
+				#stream.write(brackets[item.__class__][0] + '\n')
+				ppdir(item, types, level=level+1, stream=stream)
+				#stream.write(("    " * level) + brackets[item.__class__][1] + ("," if level else "") + '\n')
 		else:
-			print repr(item) + ("," if level else "")
+			stream.write(repr(item) + ("," if level else "") + '\n')
 	if isinstance(obj, (dict, list, tuple)):
-		print ("    " * (level - 1)) + brackets[obj.__class__][1] + ("," if level - 1 else "")
+		stream.write(("    " * (level - 1)) + brackets[class_][1] + ("," if level - 1 else "") + '\n')
 		bag = obj
