@@ -41,7 +41,7 @@ button {
 	border-radius: 3px;
 	-moz-border-radius: 3px;
 	-webkit-border-radius: 3px;
-	color: #666666;
+	color: #000;
 	font: normal 1em Verdana, Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	padding: 2px 6px;
 }
@@ -60,7 +60,7 @@ button:hover,
 button.hover {
 	background: #333333;
 	border-color: #333333;
-	color: #b9b9b9;
+	color: #fff;
 }
 button.disabled:hover, 
 button.disabled.hover,
@@ -74,9 +74,11 @@ h2 {
 	color: #333333;
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	font-size: 20px;
+	font-weight: normal;
 	margin-bottom: 9px;
 }
 h3 {
+	cursor: pointer;
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 }
 p {
@@ -84,38 +86,34 @@ p {
 }
 fieldset, div.fieldset {
 	border-style: solid;
-	border-top-width: 25px;
 	border-width: 4px;
-	border-radius: 6px;
-	-moz-border-radius: 6px;
-	-webkit-border-radius: 6px;
-	margin: 10px 0 0 0;
+	border-top: none;
+	border-bottom-left-radius: 6px;
+	-moz-border-radius-bottomleft: 6px;
+	-webkit-border-bottom-left-radius: 6px;
+	border-bottom-right-radius: 6px;
+	-moz-border-radius-bottomright: 6px;
+	-webkit-border-bottom-right-radius: 6px;
 	padding: 10px;
 }
 div.fieldset {
-	border-top-width: 4px;
-	padding-top: 31px;
 	position: relative;
 }
-legend, h2.legend {
-	border-top-style: solid;
-	border-top-width: 4px;
+h2.legend {
+	border-top-left-radius: 6px;
+	-moz-border-radius-topleft: 6px;
+	-webkit-border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+	-moz-border-radius-topright: 6px;
+	-webkit-border-top-right-radius: 6px;
 	display: block;
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	font-size: 10px;
 	font-weight: bold;
 	line-height: 12px;
-	margin: 0;
-	padding: 3px 0 7px;
+	margin: 10px 0 0;
+	padding: 8px 14px 7px;
 	text-transform: uppercase;
-}
-h2.legend {
-	left: 0;
-	margin-top: 0;
-	padding: 0px 10px 7px;
-	position: absolute;
-	right: 0;
-	top: 0;
 }
 form,
 div.process {
@@ -134,13 +132,9 @@ h1 {
 	-webkit-border-radius: 5px;
 	font: lighter 12px Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	margin: 0;
-	padding: 12px;
+	padding: 12px 15px;
 	position: relative;
-	text-indent: .5em;
 	z-index: 1;
-}
-label.disabled {
-	color: gray;
 }
 p.error {
 	color: red;
@@ -162,18 +156,24 @@ select:focus {
 	background: white;
 	border-color: #333333;
 }
-#report {
-	display: none;
+#report,
+#reporttitle {
+	/* display: none; oddly cuts off part of the summary in IE6 */
+	visibility: hidden;
 }
 .options {
-	display: inline-block;
 	margin: 6px 0 10px;
 	width: 430px;
 }
 .functions {
-	display: inline-block;
 	margin: 6px 0 10px;
 	text-align: right;
+}
+.functions button {
+	width: 17em;
+}
+* > .functions {
+	float: right;
 	width: 430px;
 }
 input[type=checkbox] {

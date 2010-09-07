@@ -1,12 +1,11 @@
 h1 span {
-	display: block;
-	float: left;
-	height: .75em;
-	margin: .25em .5em .35em 0;
-	width: .75em;
+	display: inline-block;
+	height: 9px;
+	font-size: 1px;
+	margin: 3px 6px 0 0;
+	width: 9px;
 }
 h1 span.r {
-	margin-left: .5em;
 	background: #f00000;
 }
 h1 span.g {
@@ -38,6 +37,10 @@ table.info td, table.info th, td.first-column, th.first-column {
 }
 table.info th {
 	padding-right: 1em;
+}
+td.bar {
+	padding: 0;
+	text-align: left;
 }
 td.patch {
 	border-left: none;
