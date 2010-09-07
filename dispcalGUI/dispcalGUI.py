@@ -100,7 +100,8 @@ from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 from argyll_instruments import remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
-from colormath import CIEDCCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, XYZ2xyY
+from colormath import (CIEDCCT2xyY, planckianCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, 
+					   XYZ2xyY)
 from debughelpers import getevtobjname, getevttype, handle_error
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import (iccprofiles_home, iccprofiles_display_home, 
@@ -2724,8 +2725,11 @@ class MainFrame(BaseFrame):
 													  getevttype(event)))
 		v = self.get_whitepoint_locus()
 		if v != getcfg("whitepoint.colortemp.locus"):
+			setcfg("whitepoint.colortemp.locus", v)
+			self.whitepoint_ctrl_handler(
+				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
+				self.whitepoint_colortemp_rb), False)
 			self.cal_changed()
-		setcfg("whitepoint.colortemp.locus", v)
 		self.update_profile_name()
 
 	def whitepoint_ctrl_handler(self, event, cal_changed=True):
@@ -2814,9 +2818,16 @@ class MainFrame(BaseFrame):
 				wx.Bell()
 				self.whitepoint_colortemp_textctrl.SetValue(
 					str(getcfg("whitepoint.colortemp")))
-			xyY = CIEDCCT2xyY(
-				float(self.whitepoint_colortemp_textctrl.GetValue().replace(
-					",", ".")))
+			if getcfg("whitepoint.colortemp.locus") == "T":
+				# Planckian locus
+				xyY = planckianCT2xyY(
+					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
+						",", ".")))
+			else:
+				# Daylight locus
+				xyY = CIEDCCT2xyY(
+					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
+						",", ".")))
 			if xyY:
 				self.whitepoint_x_textctrl.ChangeValue(
 					str(stripzeros(round(xyY[0], 6))))
@@ -4173,6 +4184,17 @@ class MainFrame(BaseFrame):
 				wx.CallAfter(show_result_dialog, result, self)
 			return
 		
+		# Determine if we should use planckian locus for assumed target wp
+		# Detection will only work for profiles created by dispcalGUI
+		planckian = False
+		if (profile.tags.get("CIED", "") or 
+			profile.tags.get("targ", ""))[0:4] == "CTI3":
+			options_dispcal = get_options_from_profile(profile)[0]
+			for option in options_dispcal:
+				if option.startswith("T"):
+					planckian = True
+					break
+		
 		# calculate amount of calibration grayscale tone values
 		cal_entrycount = 256
 		if "vcgt" in profile.tags:
@@ -4229,11 +4251,12 @@ class MainFrame(BaseFrame):
 			# undo chromatic adaption of profile whitepoint
 			X, Y, Z = wtpt_profile
 			M = colormath.Matrix3x3(profile.tags.chad).inverted()
-			X = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
-			Y = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
-			Z = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
-			# normalize so that Y = 100
-			wtpt_profile = tuple((n / Y) * 100 for n in (X, Y, Z))
+			XR = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
+			YR = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
+			ZR = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
+			wtpt_profile = XR, YR, ZR
+		# normalize so that Y = 100
+		wtpt_profile_norm = tuple((n / wtpt_profile[1]) * 100 for n in wtpt_profile)
 		
 		wtpt_measured = tuple(float(n) for n in ti3_joined.LUMINANCE_XYZ_CDM2.split())
 		# normalize so that Y = 100
@@ -4294,6 +4317,8 @@ class MainFrame(BaseFrame):
 		report_html_template.close()
 		
 		# create report
+		report_html = report_html.replace("${PLANCKIAN}", 
+										  'checked="checked"' if planckian else "")
 		report_html = report_html.replace("${DISPLAY}", 
 										  self.display_ctrl.GetStringSelection())
 		report_html = report_html.replace("${INSTRUMENT}", 
@@ -4306,6 +4331,8 @@ class MainFrame(BaseFrame):
 										  profile.getDescription())
 		report_html = report_html.replace("${PROFILE_WHITEPOINT}", 
 										  "%f %f %f" % wtpt_profile)
+		report_html = report_html.replace("${PROFILE_WHITEPOINT_NORMALIZED}", 
+										  "%f %f %f" % wtpt_profile_norm)
 		report_html = report_html.replace("${TESTCHART}", 
 										  os.path.basename(chart))
 		report_html = report_html.replace("${ADAPTION}", 

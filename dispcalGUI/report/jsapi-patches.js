@@ -160,6 +160,47 @@ jsapi.math.color.XYZ2rgb = function (X, Y, Z, whitepoint) {
 	B = Math.max(0, Math.round(var_B * 255));
 	return [R, G, B];
 };
+jsapi.math.color.planckianCT2XYZ = function(T) {
+	var xyY = jsapi.math.color.planckianCT2xyY(T);
+	return jsapi.math.color.xyY2XYZ(xyY[0], xyY[1], xyY[2]);
+};
+jsapi.math.color.planckianCT2xyY = function (T) {
+	/* Convert from planckian temperature to xyY.
+	
+	T = temperature in Kelvin.
+	
+	Formula from http://en.wikipedia.org/wiki/Planckian_locus
+	
+	*/
+	var x, y;
+	if      (1667 <= T && T <= 4000)
+		x = (  -0.2661239 * (Math.pow(10, 9) / Math.pow(T, 3))
+			 -  0.2343580 * (Math.pow(10, 6) / Math.pow(T, 2))
+			 +  0.8776956 * (Math.pow(10, 3) / T)
+			 +  0.179910);
+	else if (4000 <= T && T <= 25000)
+		x = (  -3.0258469 * (Math.pow(10, 9) / Math.pow(T, 3))
+			 +  2.1070379 * (Math.pow(10, 6) / Math.pow(T, 2))
+			 +  0.2226347 * (Math.pow(10, 3) / T)
+			 +  0.24039);
+	else return null;
+	if      (1667 <= T && T <= 2222)
+		y = (  -1.1063814  * Math.pow(x, 3)
+			 -  1.34811020 * Math.pow(x, 2)
+			 +  2.18555832 * x
+			 -  0.20219683);
+	else if (2222 <= T && T <= 4000)
+		y = (  -0.9549476  * Math.pow(x, 3)
+			 -  1.37418593 * Math.pow(x, 2)
+			 +  2.09137015 * x
+			 -  0.16748867);
+	else if (4000 <= T && T <= 25000)
+		y = (   3.0817580  * Math.pow(x, 3)
+			 -  5.87338670 * Math.pow(x, 2)
+			 +  3.75112997 * x
+			 -  0.37001483);
+	return [x, y, 1.0]
+};
 jsapi.math.color.matrix_rgb = function (xr, yr, xg, yg, xb, yb, Xw, Yw, Zw) {
 	// Create and return an RGB matrix
 	var XYZr = jsapi.math.color.xyY2XYZ(xr, yr, 1.0),

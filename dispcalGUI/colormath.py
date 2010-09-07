@@ -318,6 +318,53 @@ def matrix_rgb(xr, yr, xg, yg, xb, yb, Xw, Yw, Zw):
 	)
 
 
+def planckianCT2XYZ(T):
+	""" Convert from planckian temperature to XYZ.
+	
+	T = temperature in Kelvin.
+	
+	"""
+	return xyY2XYZ(*planckianCT2xyY(T))
+
+
+def planckianCT2xyY(T):
+	""" Convert from planckian temperature to xyY.
+	
+	T = temperature in Kelvin.
+	
+	Formula from http://en.wikipedia.org/wiki/Planckian_locus
+	
+	"""
+	if   1667 <= T and T <= 4000:
+		x = (  -0.2661239 * (math.pow(10, 9) / math.pow(T, 3))
+			 -  0.2343580 * (math.pow(10, 6) / math.pow(T, 2))
+			 +  0.8776956 * (math.pow(10, 3) / T)
+			 +  0.179910)
+	elif 4000 <= T and T <= 25000:
+		x = (  -3.0258469 * (math.pow(10, 9) / math.pow(T, 3))
+			 +  2.1070379 * (math.pow(10, 6) / math.pow(T, 2))
+			 +  0.2226347 * (math.pow(10, 3) / T)
+			 +  0.24039)
+	else:
+		return None
+	if   1667 <= T and T <= 2222:
+		y = (  -1.1063814  * math.pow(x, 3)
+			 -  1.34811020 * math.pow(x, 2)
+			 +  2.18555832 * x
+			 -  0.20219683)
+	elif 2222 <= T and T <= 4000:
+		y = (  -0.9549476  * math.pow(x, 3)
+			 -  1.37418593 * math.pow(x, 2)
+			 +  2.09137015 * x
+			 -  0.16748867)
+	elif 4000 <= T and T <= 25000:
+		y = (   3.0817580  * math.pow(x, 3)
+			 -  5.87338670 * math.pow(x, 2)
+			 +  3.75112997 * x
+			 -  0.37001483)
+	return x, y, 1.0
+
+
 def xyY2CCT(x, y, Y):
 	""" Convert from xyY to correlated color temperature. """
 	return XYZ2CCT(*xyY2XYZ(x, y, Y))

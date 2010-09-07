@@ -7,8 +7,17 @@ var data_ref, data_in,
 	fields_match = [];
 		
 window.onload = function() {
-	if (document.all) document.getElementById("FF_gray_balance_cal_only").onmouseup = function () {
-		setTimeout(document.getElementById("FF_gray_balance_cal_only").blur, 50);  // needed to trigger onchange for IE
+	if (document.all) {
+		labels = document.getElementsByTagName('label');
+		for (var i = 0; i < labels.length; i ++) {
+			labels[i].onmouseup = function () {
+				setTimeout(compare, 50);  // needed to trigger onchange for IE
+			};
+			document.getElementById(jsapi.dom.attribute(labels[i], 'for')).onchange = null;
+			document.getElementById(jsapi.dom.attribute(labels[i], 'for')).onmouseup = function () {
+				setTimeout(compare, 50);  // needed to trigger onchange for IE
+			};
+		};
 	};
 	analyze()
 };

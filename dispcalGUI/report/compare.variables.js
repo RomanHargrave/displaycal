@@ -1,8 +1,11 @@
 var CRITERIA_RULES_NEUTRAL = [
 		// description, [[R, G, B],...], DELTA_[E|L|C|H]_[MAX|MED|MAD|AVG|STDDEV], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
-		["Whitepoint ΔE*76", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE76],
-		["Whitepoint ΔE*94", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE94],
-		["Whitepoint ΔE*00", ['WHITEPOINT'], DELTA_E_MAX, null, null, CIE00],
+		["Measured vs. assumed target whitepoint ΔE*76", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE76],
+		["Measured vs. assumed target whitepoint ΔE*94", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE94],
+		["Measured vs. assumed target whitepoint ΔE*00", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE00],
+		["Measured vs. profile whitepoint ΔE*76", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, CIE76],
+		["Measured vs. profile whitepoint ΔE*94", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, CIE94],
+		["Measured vs. profile whitepoint ΔE*00", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, CIE00],
 		["Average ΔE*76", [], DELTA_E_AVG, null, null, CIE76],
 		["Average ΔE*94", [], DELTA_E_AVG, null, null, CIE94],
 		["Average ΔE*00", [], DELTA_E_AVG, null, null, CIE00],
@@ -27,10 +30,10 @@ var CRITERIA_RULES_NEUTRAL = [
 
 CRITERIA_RULES_DEFAULT[0][3] = 2; // Whitepoint ΔE*76 nominal
 CRITERIA_RULES_DEFAULT[0][4] = 1; // Whitepoint ΔE*76 recommended
-CRITERIA_RULES_DEFAULT[3][3] = 3; // Average ΔE*76 nominal
-CRITERIA_RULES_DEFAULT[3][4] = 1.5; // Average ΔE*76 recommended
-CRITERIA_RULES_DEFAULT[6][3] = 6; // Maximum ΔE*76 nominal
-CRITERIA_RULES_DEFAULT[6][4] = 4; // Maximum ΔE*76 recommended
+CRITERIA_RULES_DEFAULT[6][3] = 3; // Average ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[6][4] = 1.5; // Average ΔE*76 recommended
+CRITERIA_RULES_DEFAULT[9][3] = 6; // Maximum ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[9][4] = 4; // Maximum ΔE*76 recommended
 
 var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
 	CRITERIA_RULES_CMYK = CRITERIA_RULES_DEFAULT.clone(),
@@ -102,7 +105,7 @@ var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
 	comparison_criteria = { // values MUST pass these criteria
 		RGB: CRITERIA_DEFAULT.clone(),
 		CMYK: CRITERIA_CMYK,
-		FOGRA_MW3: CRITERIA_FOGRA_MEDIAWEDGE_3,
+		FOGRA_MW3: CRITERIA_FOGRA_MEDIAWEDGE_3
 	};
 
 for (var i=27; i<=47; i++) {
