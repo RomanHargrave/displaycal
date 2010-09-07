@@ -96,9 +96,6 @@ fieldset, div.fieldset {
 	-webkit-border-bottom-right-radius: 6px;
 	padding: 10px;
 }
-div.fieldset {
-	position: relative;
-}
 h2.legend {
 	border-top-left-radius: 6px;
 	-moz-border-radius-topleft: 6px;
@@ -133,7 +130,6 @@ h1 {
 	font: lighter 12px Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	margin: 0;
 	padding: 12px 15px;
-	position: relative;
 	z-index: 1;
 }
 p.error {
@@ -181,4 +177,10 @@ input[type=checkbox] {
 }
 label[for=FF_gray_balance_cal_only] {
 	display: none;
+}
+table {
+	width: 872px;
+}
+td, th {
+	font-size: 11px;
 }

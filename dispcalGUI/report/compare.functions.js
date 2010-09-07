@@ -247,7 +247,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'		</tr>',
 		'		<tr>',
 		'			<th>Profile whitepoint XYZ (normalized):</th>',
-		'			<td>' + profile_wp_round.join(' ') + ' (' + profile_wp_norm_round.join(' ') + '), CCT = ' + profile_colortemp + '° K</td>',
+		'			<td>' + profile_wp_round.join(' ') + (profile_wp_norm_round.join(' ') != profile_wp_round.join(' ') ? ' (' + profile_wp_norm_round.join(' ') + ')' : '') + ', CCT = ' + profile_colortemp + '° K</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Measured luminance:</th>',
