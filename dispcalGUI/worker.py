@@ -281,7 +281,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"f\d+(?:\.\d+)?",
 		"a\d+(?:\.\d+)?",
 		"k\d+(?:\.\d+)?",
-		"A\d+",
+		"A\d+(?:\.\d+)?",
 		"B\d+(?:\.\d+)?",
 		"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
 		"p",
@@ -1404,18 +1404,21 @@ class Worker():
 								lastmsg = self.lastmsg.read().strip()
 								if "key to continue" in lastmsg.lower() and \
 								   "place instrument on test window" in \
-								   "".join(msg.splitlines()[-2:-1]).lower() and \
-								   (not "-F" in args or 
-								    (not self.dispcal and
-								     self.dispread_after_dispcal)):
-									# Allow the user to move the terminal window if
-									# using black background, otherwise send
-									if sys.platform != "win32":
-										sleep(.5)
-									if self.subprocess.isalive():
-										if debug or test:
-											safe_print('Sending SPACE key')
-										self.subprocess.send(" ")
+								   "".join(msg.splitlines()[-2:-1]).lower():
+									self.recent.clear()
+									if not "-F" in args or \
+									  (not self.dispcal and
+									   self.dispread_after_dispcal):
+										# Allow the user to move the terminal 
+										# window if using black background, 
+										# otherwise send space key to start
+										# measurements right away
+										if sys.platform != "win32":
+											sleep(.5)
+										if self.subprocess.isalive():
+											if debug or test:
+												safe_print('Sending SPACE key')
+											self.subprocess.send(" ")
 								if self.needs_user_interaction and \
 								   sys.platform == "darwin":
 									# On the Mac dispcal's test window
