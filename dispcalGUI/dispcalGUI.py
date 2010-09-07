@@ -1897,8 +1897,6 @@ class MainFrame(BaseFrame):
 
 		self.whitepoint_colortemp_textctrl.SetValue(
 			str(getcfg("whitepoint.colortemp")))
-		self.whitepoint_x_textctrl.ChangeValue(str(getcfg("whitepoint.x")))
-		self.whitepoint_y_textctrl.ChangeValue(str(getcfg("whitepoint.y")))
 		self.whitepoint_colortemp_locus_ctrl.SetSelection(
 			self.whitepoint_colortemp_loci_ba.get(
 				getcfg("whitepoint.colortemp.locus"), 
@@ -1911,6 +1909,8 @@ class MainFrame(BaseFrame):
 				self.whitepoint_colortemp_rb), False)
 			self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
 		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
+			self.whitepoint_x_textctrl.ChangeValue(str(getcfg("whitepoint.x")))
+			self.whitepoint_y_textctrl.ChangeValue(str(getcfg("whitepoint.y")))
 			self.whitepoint_xy_rb.SetValue(True)
 			self.whitepoint_ctrl_handler(
 				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
@@ -1918,6 +1918,9 @@ class MainFrame(BaseFrame):
 			self.whitepoint_colortemp_locus_ctrl.Disable()
 		else:
 			self.whitepoint_native_rb.SetValue(True)
+			self.whitepoint_ctrl_handler(
+				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
+				self.whitepoint_native_rb), False)
 		self.whitepoint_colortemp_textctrl.Enable(
 			enable_cal and bool(getcfg("whitepoint.colortemp", False)))
 		self.whitepoint_x_textctrl.Enable(enable_cal and 
@@ -2818,24 +2821,6 @@ class MainFrame(BaseFrame):
 				wx.Bell()
 				self.whitepoint_colortemp_textctrl.SetValue(
 					str(getcfg("whitepoint.colortemp")))
-			if getcfg("whitepoint.colortemp.locus") == "T":
-				# Planckian locus
-				xyY = planckianCT2xyY(
-					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
-						",", ".")))
-			else:
-				# Daylight locus
-				xyY = CIEDCCT2xyY(
-					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
-						",", ".")))
-			if xyY:
-				self.whitepoint_x_textctrl.ChangeValue(
-					str(stripzeros(round(xyY[0], 6))))
-				self.whitepoint_y_textctrl.ChangeValue(
-					str(stripzeros(round(xyY[1], 6))))
-			else:
-				self.whitepoint_x_textctrl.ChangeValue("")
-				self.whitepoint_y_textctrl.ChangeValue("")
 			if cal_changed:
 				v = float(self.whitepoint_colortemp_textctrl.GetValue())
 				if getcfg("whitepoint.colortemp") == v and not \
@@ -2859,6 +2844,25 @@ class MainFrame(BaseFrame):
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
+		if not self.whitepoint_xy_rb.GetValue():
+			if getcfg("whitepoint.colortemp.locus") == "T":
+				# Planckian locus
+				xyY = planckianCT2xyY(
+					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
+						",", ".")))
+			else:
+				# Daylight locus
+				xyY = CIEDCCT2xyY(
+					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
+						",", ".")))
+			if xyY:
+				self.whitepoint_x_textctrl.ChangeValue(
+					str(stripzeros(round(xyY[0], 6))))
+				self.whitepoint_y_textctrl.ChangeValue(
+					str(stripzeros(round(xyY[1], 6))))
+			else:
+				self.whitepoint_x_textctrl.ChangeValue("")
+				self.whitepoint_y_textctrl.ChangeValue("")
 		if cal_changed and not self.updatingctrls:
 			self.cal_changed()
 			self.update_profile_name()
@@ -4197,7 +4201,8 @@ class MainFrame(BaseFrame):
 		
 		# calculate amount of calibration grayscale tone values
 		cal_entrycount = 256
-		if "vcgt" in profile.tags:
+		if "vcgt" in profile.tags and isinstance(profile.tags.vcgt,
+												 ICCP.VideoCardGammaType):
 			rgb = [[], [], []]
 			vcgt = profile.tags.vcgt
 			if "data" in vcgt:
@@ -4246,17 +4251,22 @@ class MainFrame(BaseFrame):
 			for color in labels_xyz:
 				ti3_joined.DATA[i][color] = ti3_measured.DATA[i + offset][color]
 		
-		wtpt_profile = tuple(n * 100 for n in profile.tags.wtpt.values())
+		wtpt_profile_norm = tuple(n * 100 for n in profile.tags.wtpt.values())
 		if "chad" in profile.tags:
 			# undo chromatic adaption of profile whitepoint
-			X, Y, Z = wtpt_profile
+			X, Y, Z = wtpt_profile_norm
 			M = colormath.Matrix3x3(profile.tags.chad).inverted()
 			XR = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
 			YR = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
 			ZR = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
-			wtpt_profile = XR, YR, ZR
-		# normalize so that Y = 100
-		wtpt_profile_norm = tuple((n / wtpt_profile[1]) * 100 for n in wtpt_profile)
+			wtpt_profile_norm = tuple((n / YR) * 100.0 for n in (XR, YR, ZR))
+		if "lumi" in profile.tags and isinstance(profile.tags.lumi,
+												 ICCP.XYZType):
+			# get scaled whitepoint
+			scale = profile.tags.lumi.Y / 100.0
+			wtpt_profile = tuple(n * scale for n in wtpt_profile_norm)
+		else:
+			wtpt_profile = wtpt_profile_norm
 		
 		wtpt_measured = tuple(float(n) for n in ti3_joined.LUMINANCE_XYZ_CDM2.split())
 		# normalize so that Y = 100
