@@ -287,7 +287,8 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"p",
 		"F\d+(?:\.\d+)?",
 		"H",
-		"V"  # Argyll >= 1.1.0_RC3 i1pro adaptive mode
+		"V",  # Argyll >= 1.1.0_RC3 i1pro adaptive mode
+		"I[bw]{,2}"  # Argyll >= 1.3.0 drift compensation
 	]
 	re_options_colprof = [
 		"q[lmh]",
@@ -770,6 +771,14 @@ class Worker():
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode"):
 			args += ["-H"]
+		if (getcfg("drift_compensation.blacklevel") or 
+			getcfg("drift_compensation.whitelevel")) and \
+		   self.argyll_version >= [1, 3, 0]:
+			args += ["-I"]
+			if getcfg("drift_compensation.blacklevel"):
+				args[-1] += "b"
+			if getcfg("drift_compensation.whitelevel"):
+				args[-1] += "w"
 	
 	def get_needs_no_sensor_cal(self):
 		instrument_features = self.get_instrument_features()

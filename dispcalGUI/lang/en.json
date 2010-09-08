@@ -106,6 +106,8 @@
 	"display_lut.link": "Link/unlink display and video card gamma table access",
 	"display_detected": "A change in the display device configuration has been detected.",
 	"display.primary": "(Primary)",
+	"drift_compensation.blacklevel": "Instrument drift compensation",
+	"drift_compensation.whitelevel": "Display drift compensation",
 	"elapsed_time": "Elapsed time",
 	"bug_report": "Report a bug...",
 	"measurement_mode": "Mode",

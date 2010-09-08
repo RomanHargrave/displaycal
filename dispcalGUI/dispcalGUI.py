@@ -1287,6 +1287,8 @@ class MainFrame(BaseFrame):
 				  id=self.luminance_cdm2_rb.GetId())
 		self.luminance_textctrl.Bind(wx.EVT_KILL_FOCUS, 
 									 self.luminance_ctrl_handler)
+		self.Bind(wx.EVT_CHECKBOX, self.whitelevel_drift_compensation_handler, 
+				  id=self.whitelevel_drift_compensation.GetId())
 
 		# Black luminance
 		self.Bind(wx.EVT_RADIOBUTTON, self.black_luminance_ctrl_handler, 
@@ -1295,6 +1297,8 @@ class MainFrame(BaseFrame):
 				  id=self.black_luminance_cdm2_rb.GetId())
 		self.black_luminance_textctrl.Bind(wx.EVT_KILL_FOCUS, 
 										   self.black_luminance_ctrl_handler)
+		self.Bind(wx.EVT_CHECKBOX, self.blacklevel_drift_compensation_handler, 
+				  id=self.blacklevel_drift_compensation.GetId())
 
 		# Tonal response curve (TRC)
 		self.Bind(wx.EVT_RADIOBUTTON, self.trc_ctrl_handler, 
@@ -1865,6 +1869,7 @@ class MainFrame(BaseFrame):
 		self.black_point_correction_ctrl.Enable(enable_cal)
 		self.black_point_correction_intctrl.Enable(enable_cal)
 		self.update_black_point_rate_ctrl()
+		self.update_drift_compensation_ctrls()
 		self.interactive_display_adjustment_cb.Enable(enable_cal)
 
 		self.testchart_btn.Enable(enable_profile)
@@ -1937,6 +1942,9 @@ class MainFrame(BaseFrame):
 		self.luminance_textctrl.Enable(enable_cal and 
 									   bool(getcfg("calibration.luminance", 
 												   False)))
+		
+		self.whitelevel_drift_compensation.SetValue(
+			bool(getcfg("drift_compensation.whitelevel")))
 
 		if getcfg("calibration.black_luminance", False):
 			self.black_luminance_cdm2_rb.SetValue(True)
@@ -1946,6 +1954,9 @@ class MainFrame(BaseFrame):
 			str(getcfg("calibration.black_luminance")))
 		self.black_luminance_textctrl.Enable(
 			enable_cal and bool(getcfg("calibration.black_luminance", False)))
+		
+		self.blacklevel_drift_compensation.SetValue(
+			bool(getcfg("drift_compensation.blacklevel")))
 
 		trc = getcfg("trc")
 		if trc in ("l", "709", "240", "s"):
@@ -2082,6 +2093,25 @@ class MainFrame(BaseFrame):
 			defaults["calibration.black_point_rate.enabled"])
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
+	
+	def update_drift_compensation_ctrls(self):
+		self.calpanel.Freeze()
+		self.blacklevel_drift_compensation.GetContainingSizer().Show(
+			self.blacklevel_drift_compensation,
+			self.worker.argyll_version >= [1, 3, 0])
+		self.whitelevel_drift_compensation.GetContainingSizer().Show(
+			self.whitelevel_drift_compensation,
+			self.worker.argyll_version >= [1, 3, 0])
+		self.calpanel.Layout()
+		self.calpanel.Thaw()
+	
+	def blacklevel_drift_compensation_handler(self, event):
+		setcfg("drift_compensation.blacklevel", 
+			   int(self.blacklevel_drift_compensation.GetValue()))
+	
+	def whitelevel_drift_compensation_handler(self, event):
+		setcfg("drift_compensation.whitelevel", 
+			   int(self.whitelevel_drift_compensation.GetValue()))
 
 	def calibration_update_ctrl_handler(self, event):
 		if debug:
@@ -6284,6 +6314,7 @@ class MainFrame(BaseFrame):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
 			self.update_black_point_rate_ctrl()
+			self.update_drift_compensation_ctrls()
 			self.update_profile_type_ctrl()
 			self.profile_type_ctrl.SetSelection(
 				self.profile_types_ba.get(getcfg("profile.type"), 
@@ -6502,6 +6533,12 @@ class MainFrame(BaseFrame):
 							continue
 						if o[0] == "F":
 							setcfg("measure.darken_background", 1)
+							continue
+						if o[0] == "I":
+							if "b" in o[1:]:
+								setcfg("drift_compensation.blacklevel", 1)
+							if "w" in o[1:]:
+								setcfg("drift_compensation.whitelevel", 1)
 							continue
 				if options_colprof:
 					# restore defaults

@@ -106,6 +106,8 @@
 	"display_lut.link": "Anzeigegerät und Grafikkarten-Gammatabellen-Zugriff getrennt oder gemeinsam ändern",
 	"display_detected": "Eine Änderung in der Anzeigegerätekonfiguration wurde erkannt.",
 	"display.primary": "(Primär)",
+	"drift_compensation.blacklevel": "Messgeräte-Drift-Kompensierung",
+	"drift_compensation.whitelevel": "Anzeigegeräte-Drift-Kompensierung",
 	"elapsed_time": "Verstrichene Zeit",
 	"bug_report": "Fehler melden...",
 	"measurement_mode": "Modus",

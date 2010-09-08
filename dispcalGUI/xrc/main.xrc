@@ -473,6 +473,16 @@
                         <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                         <border>4</border>
                       </object>
+                      <object class="sizeritem">
+                        <object class="wxCheckBox" name="whitelevel_drift_compensation">
+                          <label>drift_compensation.whitelevel</label>
+                          <XRCED>
+                            <events>EVT_CHECKBOX</events>
+                          </XRCED>
+                        </object>
+                        <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                        <border>4</border>
+                      </object>
                       <orient>wxHORIZONTAL</orient>
                     </object>
                     <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
@@ -526,6 +536,16 @@
                           <label>cd/m²</label>
                         </object>
                         <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                        <border>4</border>
+                      </object>
+                      <object class="sizeritem">
+                        <object class="wxCheckBox" name="blacklevel_drift_compensation">
+                          <label>drift_compensation.blacklevel</label>
+                          <XRCED>
+                            <events>EVT_CHECKBOX</events>
+                          </XRCED>
+                        </object>
+                        <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                         <border>4</border>
                       </object>
                       <orient>wxHORIZONTAL</orient>

@@ -349,6 +349,8 @@ defaults = {
 	"allow_skip_sensor_cal": 0,
 	"argyll.debug": 0,
 	"argyll.dir": expanduseru("~"), # directory
+	"drift_compensation.blacklevel": 0,
+	"drift_compensation.whitelevel": 0,
 	"calibration.ambient_viewcond_adjust": 0,
 	"calibration.ambient_viewcond_adjust.lux": 500.0,
 	"calibration.black_luminance": 0.5,
