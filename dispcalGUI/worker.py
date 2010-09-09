@@ -288,6 +288,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"F\d+(?:\.\d+)?",
 		"H",
 		"V",  # Argyll >= 1.1.0_RC3 i1pro adaptive mode
+		'X\s+["\'][^"\']+?["\']',  # Argyll >= 1.3.0 colorimeter correction matrix
 		"I[bw]{,2}"  # Argyll >= 1.3.0 drift compensation
 	]
 	re_options_colprof = [
@@ -479,7 +480,8 @@ def show_result_dialog(result, parent=None, pos=None):
 		bitmap = geticon(32, "dialog-warning")
 	else:
 		bitmap = geticon(32, "dialog-error")
-	InfoDialog(parent, pos=pos, msg=msg, ok=lang.getstr("ok"), bitmap=bitmap)
+	InfoDialog(parent, pos=pos, msg=msg, ok=lang.getstr("ok"), bitmap=bitmap, 
+			   log=not isinstance(result, UnloggedError))
 
 
 class Error(Exception):
@@ -487,6 +489,10 @@ class Error(Exception):
 
 
 class Info(UserWarning):
+	pass
+
+
+class UnloggedError(Error):
 	pass
 
 
@@ -771,6 +777,44 @@ class Worker():
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode"):
 			args += ["-H"]
+		if self.argyll_version >= [1, 3, 0] and \
+		   not instrument_features.get("spectral"):
+			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+			if ccmx[0] == "AUTO":
+				# TODO: implement auto selection based on available ccmx files 
+				# and display/instrument combo
+				ccmx = None
+			elif len(ccmx) > 1 and ccmx[1]:
+				ccmx = ccmx[1]
+			else:
+				ccmx = None
+			if ccmx:
+				tempdir = self.create_tempdir()
+				if not tempdir or isinstance(tempdir, Exception):
+					return tempdir
+				result = check_file_isfile(ccmx)
+				if isinstance(result, Exception):
+					return result
+				if not result:
+					return None
+				ccmxcopy = os.path.join(os.path.join(tempdir, 
+													 os.path.basename(ccmx)))
+				if not os.path.isfile(ccmxcopy):
+					try:
+						# Copy ccmx to profile dir
+						shutil.copyfile(ccmx, ccmxcopy) 
+					except Exception, exception:
+						return Error(lang.getstr("error.copy_failed", 
+												 (ccmx, ccmxcopy)) + 
+												 "\n\n" + 
+												 safe_unicode(exception))
+					result = check_file_isfile(ccmxcopy)
+					if isinstance(result, Exception):
+						return result
+					if not result:
+						return None
+				args += ["-X"]
+				args += [ccmxcopy]
 		if (getcfg("drift_compensation.blacklevel") or 
 			getcfg("drift_compensation.whitelevel")) and \
 		   self.argyll_version >= [1, 3, 0]:
@@ -779,6 +823,7 @@ class Worker():
 				args[-1] += "b"
 			if getcfg("drift_compensation.whitelevel"):
 				args[-1] += "w"
+		return True
 	
 	def get_needs_no_sensor_cal(self):
 		instrument_features = self.get_instrument_features()
@@ -959,7 +1004,7 @@ class Worker():
 							n += 1
 						if device:
 							desc.append(device.DeviceString.decode(fs_enc, "replace"))
-					elif sys.platform != "darwin" and get_edid:
+					if sys.platform != "darwin" and get_edid:
 						# Get monitor descriptions from EDID
 						try:
 							edid = get_edid(i)
@@ -968,11 +1013,11 @@ class Worker():
 						if edid:
 							manufacturer = edid.get("manufacturer", "").split()
 							monitor = edid.get("monitor_name")
-							if monitor:
-								desc.append(monitor)
-							if manufacturer and (not monitor or 
-												 not monitor.lower().startswith(manufacturer[0].lower())):
-								desc.insert(0, manufacturer[0])
+							if monitor and not monitor in "".join(desc):
+								desc = [monitor]
+							##if manufacturer and (not monitor or 
+												 ##not monitor.lower().startswith(manufacturer[0].lower())):
+								##desc.insert(0, manufacturer[0])
 					if desc and desc[-1] not in display:
 						# Only replace the description if it not already
 						# contains the monitor model
@@ -1533,7 +1578,7 @@ class Worker():
 					   not "failed with 'User Aborted'" in line and \
 					   not "test_crt returned error code 1" in line:
 						# "test_crt returned error code 1" == user aborted
-						return Error("".join(self.output[i:]))
+						return UnloggedError("".join(self.output[i:]))
 			return False
 		return True
 
@@ -1698,7 +1743,11 @@ class Worker():
 		args += ["-v2"] # verbose
 		if getcfg("argyll.debug"):
 			args += ["-D6"]
-		self.add_measurement_features(args)
+		result = self.add_measurement_features(args)
+		if isinstance(result, Exception):
+			return result, None
+		if not result:
+			return None, None
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
 			profile_save_path = self.create_tempdir()
@@ -1941,7 +1990,11 @@ class Worker():
 		args += ["-v"] # verbose
 		if getcfg("argyll.debug"):
 			args += ["-D6"]
-		self.add_measurement_features(args)
+		result = self.add_measurement_features(args)
+		if isinstance(result, Exception):
+			return result, None
+		if not result:
+			return None, None
 		# TTBD/FIXME: Skipping of sensor calibration can't be done in
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
 		if getcfg("allow_skip_sensor_cal") and self.dispread_after_dispcal and \
@@ -2813,7 +2866,7 @@ class Worker():
 			return # nothing to do
 		if copy:
 			if not ext_filter:
-				ext_filter = [".app", ".cal", ".cmd", ".command", ".icc", 
+				ext_filter = [".app", ".cal", ".ccmx", ".cmd", ".command", ".icc", 
 							  ".icm", ".sh", ".ti1", ".ti3"]
 			if dst_path is None:
 				dst_path = os.path.join(getcfg("profile.save_path"), 

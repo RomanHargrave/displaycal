@@ -331,6 +331,18 @@ def runtimeconfig(pyfile):
 cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
+valid_ranges = {
+	"gamma": [0.000001, 10],
+	"trc": [0.000001, 10],
+	"calibration.ambient_viewcond_adjust.lux": [0, sys.maxint],
+	"calibration.black_luminance": [0.000001, 100000],
+	"calibration.black_output_offset": [0, 1],
+	"calibration.black_point_correction": [0, 1],
+	"calibration.black_point_rate": [0.05, 20],
+	"calibration.luminance": [0.000001, 100000],
+	"whitepoint.colortemp": [1000, 15000],
+}
+
 valid_values = {
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	"measurement_mode": [None, "c", "l"],
@@ -364,6 +376,7 @@ defaults = {
 	"calibration.luminance": 120.0,
 	"calibration.quality": "m",
 	"calibration.update": 0,
+	"colorimeter_correction_matrix_file": ":",
 	"comport.number": 1,
 	"copyright": "Created with %s %s and Argyll CMS" % (appname, 
 														version),
@@ -501,11 +514,22 @@ def getcfg(name, fallback=True):
 					value = deftype(value)
 				except ValueError:
 					value = defval
+				else:
+					valid_range = valid_ranges.get(name)
+					if valid_range:
+						value = min(max(valid_range[0], value), valid_range[1])
 			elif name.startswith("dimensions.measureframe"):
 				try:
-					value = ",".join([str(max(0, float(n))) for n in value.split(",")])
+					value = [max(0, float(n)) for n in value.split(",")]
+					if len(value) != 3:
+						raise ValueError()
 				except ValueError:
 					value = defaults[name]
+				else:
+					value[0] = min(value[0], 1)
+					value[1] = min(value[1], 1)
+					value[2] = min(value[2], 50)
+					value = ",".join([str(n) for n in value])
 			elif name == "profile.quality" and getcfg("profile.type") in ("g", 
 																		  "G"):
 				# default to high quality for gamma + matrix

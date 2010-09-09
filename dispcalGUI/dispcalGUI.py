@@ -134,6 +134,8 @@ from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
 from wxfixes import GTKMenuItemGetFixedLabel
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
 					   LogWindow, ProgressDialog, TooltipWindow)
+import floatspin
+import xh_floatspin
 
 # wxPython
 from wx import xrc
@@ -351,8 +353,10 @@ class BaseFrame(wx.Frame):
 		if not parent:
 			parent = self
 		for child in parent.GetAllChildren():
-			if (isinstance(child, wx.StaticText) or 
-				isinstance(child, wx.Control)):
+			if debug:
+				safe_print(child.__class__, child.Name)
+			if isinstance(child, (wx.StaticText, wx.Control, 
+								  floatspin.FloatSpin)):
 				child.SetMaxFontSize(11)
 				if sys.platform == "darwin" or debug:
 					# Work around ComboBox issues on Mac OS X
@@ -576,6 +580,7 @@ class MainFrame(BaseFrame):
 		wx.GetApp().progress_dlg.stop_timer()
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "main.xrc")))
+		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, None, "mainframe")
 		self.PostCreate(pre)
@@ -1255,6 +1260,22 @@ class MainFrame(BaseFrame):
 				  id=self.comport_ctrl.GetId())
 		self.Bind(wx.EVT_COMBOBOX, self.measurement_mode_ctrl_handler, 
 				  id=self.measurement_mode_ctrl.GetId())
+		
+		# Colorimeter correction matrix
+		##items = ["<%s>" % lang.getstr("auto")]
+		items = [lang.getstr("calibration.file.none")]
+		index = 0
+		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+		if len(ccmx) > 1 and ccmx[1]:
+			items.append(os.path.basename(ccmx[1]))
+			if ccmx[0] != "AUTO":
+				index = len(items) - 1
+		self.colorimeter_correction_matrix_ctrl.SetItems(items)
+		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
+		self.Bind(wx.EVT_COMBOBOX, self.colorimeter_correction_matrix_handler, 
+				  id=self.colorimeter_correction_matrix_ctrl.GetId())
+		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_handler, 
+				  id=self.colorimeter_correction_matrix_btn.GetId())
 
 		# Calibration settings
 		# ====================
@@ -1346,8 +1367,8 @@ class MainFrame(BaseFrame):
 		# Black point correction rate
 		self.Bind(wx.EVT_SLIDER, self.black_point_rate_ctrl_handler, 
 				  id=self.black_point_rate_ctrl.GetId())
-		self.Bind(wx.EVT_TEXT, self.black_point_rate_ctrl_handler, 
-				  id=self.black_point_rate_intctrl.GetId())
+		self.Bind(floatspin.EVT_FLOATSPIN, self.black_point_rate_ctrl_handler, 
+				  id=self.black_point_rate_floatctrl.GetId())
 
 		# Calibration quality
 		self.Bind(wx.EVT_SLIDER, self.calibration_quality_ctrl_handler, 
@@ -1731,6 +1752,25 @@ class MainFrame(BaseFrame):
 			bool(self.worker.instruments) and 
 			len(measurement_modes[instrument_type]) > 1)
 		self.measurement_mode_ctrl.Thaw()
+	
+	def update_colorimeter_correction_matrix_ctrl(self):
+		# Show or hide the colorimeter correction matrix control
+		self.panel.Freeze()
+		instrument_features = self.worker.get_instrument_features()
+		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
+			self.colorimeter_correction_matrix_ctrl,
+			self.worker.argyll_version >= [1, 3, 0] and 
+			not instrument_features.get("spectral"))
+		self.colorimeter_correction_matrix_label.GetContainingSizer().Show(
+			self.colorimeter_correction_matrix_label,
+			self.worker.argyll_version >= [1, 3, 0] and 
+			not instrument_features.get("spectral"))
+		self.colorimeter_correction_matrix_btn.GetContainingSizer().Show(
+			self.colorimeter_correction_matrix_btn,
+			self.worker.argyll_version >= [1, 3, 0] and 
+			not instrument_features.get("spectral"))
+		self.panel.Layout()
+		self.panel.Thaw()
 
 	def update_main_controls(self):
 		""" Enable/disable the calibrate and profile buttons 
@@ -2006,8 +2046,8 @@ class MainFrame(BaseFrame):
 
 		self.black_point_rate_ctrl.SetValue(
 			int(Decimal(str(getcfg("calibration.black_point_rate"))) * 100))
-		self.black_point_rate_intctrl.SetValue(
-			int(Decimal(str(getcfg("calibration.black_point_rate"))) * 100))
+		self.black_point_rate_floatctrl.SetValue(
+			getcfg("calibration.black_point_rate"))
 
 		q = self.quality_ba.get(getcfg("calibration.quality"), 
 								self.quality_ba.get(
@@ -2084,10 +2124,10 @@ class MainFrame(BaseFrame):
 			enable and 
 			getcfg("calibration.black_point_correction") < 1 and 
 			defaults["calibration.black_point_rate.enabled"])
-		self.black_point_rate_intctrl.GetContainingSizer().Show(
-			self.black_point_rate_intctrl,
+		self.black_point_rate_floatctrl.GetContainingSizer().Show(
+			self.black_point_rate_floatctrl,
 			defaults["calibration.black_point_rate.enabled"])
-		self.black_point_rate_intctrl.Enable(
+		self.black_point_rate_floatctrl.Enable(
 			enable  and 
 			getcfg("calibration.black_point_correction") < 1 and 
 			defaults["calibration.black_point_rate.enabled"])
@@ -2389,7 +2429,7 @@ class MainFrame(BaseFrame):
 		self.black_point_rate_ctrl.Enable(
 			getcfg("calibration.black_point_correction") < 1 and 
 			defaults["calibration.black_point_rate.enabled"])
-		self.black_point_rate_intctrl.Enable(
+		self.black_point_rate_floatctrl.Enable(
 			getcfg("calibration.black_point_correction") < 1 and 
 			defaults["calibration.black_point_rate.enabled"])
 		self.update_profile_name()
@@ -2401,12 +2441,12 @@ class MainFrame(BaseFrame):
 											 getevtobjname(event, self), 
 											 event.GetEventType(), 
 											 getevttype(event)))
-		if event.GetId() == self.black_point_rate_intctrl.GetId():
+		if event.GetId() == self.black_point_rate_floatctrl.GetId():
 			self.black_point_rate_ctrl.SetValue(
-				self.black_point_rate_intctrl.GetValue())
+				int(round(self.black_point_rate_floatctrl.GetValue() * 100)))
 		else:
-			self.black_point_rate_intctrl.SetValue(
-				self.black_point_rate_ctrl.GetValue())
+			self.black_point_rate_floatctrl.SetValue(
+				self.black_point_rate_ctrl.GetValue() / 100.0)
 		v = self.get_black_point_rate()
 		if v != str(getcfg("calibration.black_point_rate")):
 			self.cal_changed()
@@ -2644,7 +2684,7 @@ class MainFrame(BaseFrame):
 			if value:
 				try:
 					v = float(value.replace(",", "."))
-					if v < 0.000001 or v > 100000:
+					if v < 0.000001 or v > sys.maxint:
 						raise ValueError()
 					self.ambient_viewcond_adjust_textctrl.ChangeValue(str(v))
 				except ValueError:
@@ -5148,7 +5188,7 @@ class MainFrame(BaseFrame):
 				# so make sure to only delete the temporary cal file we created
 				# (which hasn't an extension, so we can use ext_filter to 
 				# exclude files which should not be deleted)
-				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
+				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", ".ccmx", 
 														   ".cmd", ".command", 
 														   ".icc", ".icm", 
 														   ".sh", ".ti1", 
@@ -5230,6 +5270,39 @@ class MainFrame(BaseFrame):
 	def stop_timers(self):
 		self.plugplay_timer.Stop()
 		self.update_profile_name_timer.Stop()
+	
+	def colorimeter_correction_matrix_handler(self, event):
+		if event.GetId() == self.colorimeter_correction_matrix_ctrl.GetId():
+			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+			if self.colorimeter_correction_matrix_ctrl.GetSelection() == 0:
+				if len(ccmx) > 1 and ccmx[1]:
+					ccmx = ["AUTO", ccmx[1]]
+				else:
+					ccmx = ["AUTO", ""]
+			elif len(ccmx) > 1:
+				ccmx = ["", ccmx[1]]
+			if len(ccmx) > 1 and ccmx[1]:
+				setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
+		else:
+			path = None
+			defaultDir, defaultFile = get_verified_path("last_filedialog_path")
+			dlg = wx.FileDialog(self, 
+								lang.getstr("colorimeter_correction_matrix_file.choose"), 
+								defaultDir=defaultDir, 
+								wildcard=lang.getstr("filetype.ccmx") + 
+										 "|*.ccmx", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			if dlg.ShowModal() == wx.ID_OK:
+				path = dlg.GetPath()
+			dlg.Destroy()
+			if path:
+				items = [##"<%s>" % lang.getstr("auto"), 
+						 lang.getstr("calibration.file.none"),
+						 os.path.basename(path)]
+				self.colorimeter_correction_matrix_ctrl.SetItems(items)
+				self.colorimeter_correction_matrix_ctrl.SetSelection(len(items) - 1)
+				setcfg("colorimeter_correction_matrix_file", ":" + path)
 
 	def comport_ctrl_handler(self, event=None):
 		if debug and event:
@@ -5241,6 +5314,7 @@ class MainFrame(BaseFrame):
 		if self.comport_ctrl.GetSelection() > -1:
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
+		self.update_colorimeter_correction_matrix_ctrl()
 
 	def display_ctrl_handler(self, event, load_lut=True):
 		if debug:
@@ -6002,7 +6076,7 @@ class MainFrame(BaseFrame):
 
 	def get_black_point_rate(self):
 		if defaults["calibration.black_point_rate.enabled"]:
-			return str(Decimal(self.black_point_rate_ctrl.GetValue()) / 100)
+			return str(self.black_point_rate_floatctrl.GetValue())
 		else:
 			return None
 
@@ -6313,6 +6387,8 @@ class MainFrame(BaseFrame):
 									   argyll_version, displays, comports):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
+			if comports == self.worker.instruments:
+				self.update_colorimeter_correction_matrix_ctrl()
 			self.update_black_point_rate_ctrl()
 			self.update_drift_compensation_ctrls()
 			self.update_profile_type_ctrl()
@@ -6533,6 +6609,17 @@ class MainFrame(BaseFrame):
 							continue
 						if o[0] == "F":
 							setcfg("measure.darken_background", 1)
+							continue
+						if o[0] == "X":
+							o = o.split(None, 1)
+							ccmx = o[1][1:-1]
+							if not os.path.abspath(ccmx):
+								ccmx = os.path.join(os.path.dirname(path), ccmx)
+							if getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] == "AUTO":
+								ccmx = "AUTO:" + ccmx
+							else:
+								ccmx = ":" + ccmx
+							setcfg("colorimeter_correction_matrix_file", ccmx)
 							continue
 						if o[0] == "I":
 							if "b" in o[1:]:

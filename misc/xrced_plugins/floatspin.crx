@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<resource>
+  <component class="Component" name="FloatSpin">
+    <groups>
+      <item>control</item>
+    </groups>
+    <attributes>
+      <item>pos</item>
+      <item>size</item>
+      <item>value</item>
+      <item>min_val</item>
+      <item>max_val</item>
+      <item>increment</item>
+      <item>digits</item>
+    </attributes>
+    <has-name>1</has-name>
+    <styles>
+      <item>FS_LEFT</item>
+      <item>FS_RIGHT</item>
+      <item>FS_CENTRE</item>
+      <item>FS_READONLY</item>
+    </styles>
+    <events>
+      <item>EVT_FLOATSPIN</item>
+    </events>
+    <module>xh_floatspin</module>
+    <handler>FloatSpinCtrlXmlHandler</handler>
+    <menu>gizmo</menu>
+    <label>FloatSpin</label>
+    <help>Floating Point SpinCtrl</help>
+    <index>10</index>
+  </component>
+</resource>
