@@ -96,6 +96,7 @@ try:
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
         screenbufferfillchar = u'\4'
+        maxconsoleY = 8000
 except ImportError, e:
     raise ImportError (str(e) + """
 
@@ -2208,6 +2209,10 @@ class Wtty:
     def readConsoleToCursor(self):
         """Reads from the current read position to the current cursor
         position and inserts the string into self.__buffer."""
+        
+        if not self.__consout:
+            log_error('readConsoleToCursor: self.switchTo()')
+            self.switchTo()
     
         consinfo = self.__consout.GetConsoleScreenBufferInfo()
         cursorPos = consinfo['CursorPosition']
@@ -2295,17 +2300,20 @@ class Wtty:
         try:  
             while True:
                 #Wait for child process to be paused
-                if self.__currentReadCo.Y > 8000:
+                if self.__currentReadCo.Y > maxconsoleY:
                     time.sleep(.2)
             
                 start = time.clock()
                 s = self.readConsoleToCursor()
                 
+                if self.__currentReadCo.Y > maxconsoleY:
+                    self.refreshConsole()
+                
                 if len(s) != 0:
                     self.switchBack()
                     return s
                 
-                if timeout <= 0:
+                if not self.isalive() or timeout <= 0:
                     self.switchBack()
                     return ''
                 
@@ -2313,10 +2321,8 @@ class Wtty:
                 end = time.clock()
                 timeout -= end - start
         
-            # This is never executed? and resetConsole doesn't exist?
-            if self.__currentReadCo.Y > 8000:
-                self.resetConsole()
         except Exception, e:
+            log_error(e)
             self.switchBack()
             raise EOF('End Of File (EOF) in Wtty.read_nonblocking().')
             
@@ -2335,6 +2341,12 @@ class Wtty:
         # Use NUL as fill char because it displays as whitespace
         # (if we interact() with the child)
         self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, writelen, orig)
+        
+        self.__bufferY = 0
+        self.__buffer.truncate(0)
+        #consinfo = self.__consout.GetConsoleScreenBufferInfo()
+        #cursorPos = consinfo['CursorPosition']
+        #log_error('refreshConsole: cursorPos %s' % cursorPos)
         
     
     def setecho(self, state):
@@ -2480,11 +2492,15 @@ class ConsoleReader:
                             log_error(e)
                     sys.exit()
                 
-                if cursorPos.Y > 8000:
+                if cursorPos.Y > maxconsoleY and not paused:
+                    #log_error('ConsoleReader.__init__: cursorPos %s' % cursorPos)
+                    #log_error('suspendThread')
                     self.suspendThread()
                     paused = True
                     
-                if cursorPos.Y <= 8000 and paused:
+                if cursorPos.Y <= maxconsoleY and paused:
+                    #log_error('ConsoleReader.__init__: cursorPos %s' % cursorPos)
+                    #log_error('resumeThread')
                     self.resumeThread()
                     paused = False
                                     
