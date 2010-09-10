@@ -2,6 +2,25 @@
 /* ##### jsapi Distribution ##### */
 /* ############################## */
 
+/*
+	2006 Florian Hoech
+	
+	Function.prototype.apply.js
+	
+	adds apply method for functions in browsers without native implementation
+*/
+
+if (!Function.prototype.apply) {
+	Function.prototype.apply = function(o, args) {
+		o = o ? Object(o) : window;
+		o.__apply__ = this;
+		for (var i = 0, sargs = []; i < args.length; i ++) sargs[i] = "args[" + i + "]";
+		var result = eval("o.__apply__(" + sargs.join(",") + ");");
+		o.__apply__ = null;
+		return result
+	}
+};
+
 /* ##### Array.prototype.pop.js ##### */
 
 /*
@@ -216,7 +235,7 @@ if (!Array.prototype.indexOf)
 
     for (; from < len; from++)
     {
-      if (from in this &&
+      if (/* from in this && */ /* Not compatible with IE/Mac */
           this[from] === elt)
         return from
     };
@@ -257,10 +276,10 @@ jsapi.jsapi = function() {
 	if (!jsapi.initialized) {
 		for (var propertyName in jsapi.dom) if (typeof jsapi.dom[propertyName] == "function" && !jsapi.dom[propertyName]._args) jsapi.dom[propertyName]._args = [jsapi.dom.isNode];
 		for (var propertyName in jsapi.regexp) if (typeof jsapi.regexp[propertyName] == "function") jsapi.regexp[propertyName]._args = [function(argument) {
-			return argument instanceof RegExp;
+			return argument.constructor == RegExp;
 		}];
 		for (var propertyName in jsapi.string) if (typeof jsapi.string[propertyName] == "function") jsapi.string[propertyName]._args = [function(argument) {
-			return typeof argument == "string" || argument instanceof String;
+			return typeof argument == "string" || argument.constructor == String;
 		}];
 		for (var propertyName in jsapi) jsapi.extend(jsapi[propertyName], jsapi[propertyName]);
 		var arrayMethodNames = [
@@ -342,7 +361,7 @@ jsapi.jsapi = function() {
 				}
 				else if (/<[^<]*>/.test(object)) object = jsapi.dom.parseString(object);
 			default:
-				if (object instanceof Array) Array.prototype.push.apply(this, object);
+				if (object.constructor == Array) Array.prototype.push.apply(this, object);
 				else if (typeof object == "object" && typeof object.length == "number" && object.constructor != String && object.constructor != Function) 
 					Array.prototype.push.apply(this, Array.prototype.slice.apply(object));
 				else this[this.length ++] = object;
@@ -673,11 +692,11 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 	};
 	jsapi.dom.attr =
 	jsapi.dom.attribute = function (object, attribute, value) {
-		return arguments.length == 2 && (typeof attribute != "object" || attribute instanceof Array) ? jsapi._get(object, jsapi._attribute, attribute) : jsapi._set(object, jsapi._attribute, attribute, value);
+		return arguments.length == 2 && (typeof attribute != "object" || attribute.constructor == Array) ? jsapi._get(object, jsapi._attribute, attribute) : jsapi._set(object, jsapi._attribute, attribute, value);
 	};
 	jsapi.util.prop = 
 	jsapi.util.property = function (object, property, value) {
-		return arguments.length == 2 && (typeof property != "object" || property instanceof Array) ? jsapi._get(object, jsapi._property, property) : jsapi._set(object, jsapi._property, property, value);
+		return arguments.length == 2 && (typeof property != "object" || property.constructor == Array) ? jsapi._get(object, jsapi._property, property) : jsapi._set(object, jsapi._property, property, value);
 	};
 	jsapi._get = function (object, callback, property) {
 		if (typeof property != "object") return callback(object, property);
@@ -690,7 +709,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 	jsapi._set = function (object, callback, property, value) {
 		if (typeof property != "object") callback(object, property, value);
 		else {
-			if (property instanceof Array) for (var i = 0; i < property.length; i ++) callback(object, property[i], value);
+			if (property.constructor == Array) for (var i = 0; i < property.length; i ++) callback(object, property[i], value);
 			else for (var propertyName in property) callback(object, propertyName, property[propertyName] != null ? property[propertyName] : value);
 		};
 		return object;
