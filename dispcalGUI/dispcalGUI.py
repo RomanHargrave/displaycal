@@ -1262,16 +1262,6 @@ class MainFrame(BaseFrame):
 				  id=self.measurement_mode_ctrl.GetId())
 		
 		# Colorimeter correction matrix
-		##items = ["<%s>" % lang.getstr("auto")]
-		items = [lang.getstr("calibration.file.none")]
-		index = 0
-		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-		if len(ccmx) > 1 and ccmx[1]:
-			items.append(os.path.basename(ccmx[1]))
-			if ccmx[0] != "AUTO":
-				index = len(items) - 1
-		self.colorimeter_correction_matrix_ctrl.SetItems(items)
-		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
 		self.Bind(wx.EVT_COMBOBOX, self.colorimeter_correction_matrix_handler, 
 				  id=self.colorimeter_correction_matrix_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_handler, 
@@ -1888,6 +1878,17 @@ class MainFrame(BaseFrame):
 
 		update_profile = self.profile_update_cb.GetValue()
 		enable_profile = not(update_profile)
+		
+		##items = ["<%s>" % lang.getstr("auto")]
+		items = [lang.getstr("calibration.file.none")]
+		index = 0
+		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+		if len(ccmx) > 1 and ccmx[1]:
+			items.append(os.path.basename(ccmx[1]))
+			if ccmx[0] != "AUTO":
+				index = len(items) - 1
+		self.colorimeter_correction_matrix_ctrl.SetItems(items)
+		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
 
 		self.whitepoint_native_rb.Enable(enable_cal)
 		self.whitepoint_colortemp_rb.Enable(enable_cal)
@@ -3116,6 +3117,8 @@ class MainFrame(BaseFrame):
 		cmd, args = self.worker.prepare_dispread(apply_calibration)
 		if not isinstance(cmd, Exception):
 			result = self.worker.exec_cmd(cmd, args)
+		else:
+			result = cmd
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, isinstance(result, Exception) or 
 									not result)
@@ -4217,7 +4220,7 @@ class MainFrame(BaseFrame):
 		else:
 			result = self.worker.exec_cmd(cmd, args, capture_output=True,
 										  skip_scripts=True)
-			if isinstance(cmd, Exception):
+			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
 				self.Show()
 				return
