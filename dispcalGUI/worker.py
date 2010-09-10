@@ -340,7 +340,7 @@ def get_options_from_cal(cal):
 	if not isinstance(cal, CGATS.CGATS):
 		cal = CGATS.CGATS(cal)
 	if not cal or not "ARGYLL_DISPCAL_ARGS" in cal[0] or \
-	   not cal[0].ARGYLL_DISPCAL_ARGS :
+	   not cal[0].ARGYLL_DISPCAL_ARGS:
 		return [], []
 	dispcal_args = cal[0].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", "replace")
 	return get_options_from_args(dispcal_args)
@@ -351,6 +351,8 @@ def get_options_from_profile(profile):
 	look for the special dispcalGUI sections 'ARGYLL_DISPCAL_ARGS' and
 	'ARGYLL_COLPROF_ARGS'. If either does not exist, fall back to the 
 	copyright tag (dispcalGUI < 0.4.0.2) """
+	if not isinstance(profile, ICCP.ICCProfile):
+		profile = ICCP.ICCProfile(profile)
 	dispcal_args = None
 	colprof_args = None
 	if "targ" in profile.tags:
@@ -789,16 +791,17 @@ class Worker():
 			else:
 				ccmx = None
 			if ccmx:
-				tempdir = self.create_tempdir()
-				if not tempdir or isinstance(tempdir, Exception):
-					return tempdir
 				result = check_file_isfile(ccmx)
 				if isinstance(result, Exception):
 					return result
 				if not result:
 					return None
-				ccmxcopy = os.path.join(os.path.join(tempdir, 
-													 os.path.basename(ccmx)))
+				tempdir = self.create_tempdir()
+				if not tempdir or isinstance(tempdir, Exception):
+					return tempdir
+				ccmxcopy = os.path.join(tempdir, 
+										getcfg("profile.name.expanded") + 
+										".ccmx")
 				if not os.path.isfile(ccmxcopy):
 					try:
 						# Copy ccmx to profile dir
@@ -814,7 +817,7 @@ class Worker():
 					if not result:
 						return None
 				args += ["-X"]
-				args += [ccmxcopy]
+				args += [ccmx]
 		if (getcfg("drift_compensation.blacklevel") or 
 			getcfg("drift_compensation.whitelevel")) and \
 		   self.argyll_version >= [1, 3, 0]:
@@ -1700,10 +1703,6 @@ class Worker():
 				args += ["-c" + getcfg("gamap_src_viewcond")]
 				args += ["-d" + getcfg("gamap_out_viewcond")]
 		self.options_colprof = list(args)
-		options_colprof = list(args)
-		for i in range(len(options_colprof)):
-			if options_colprof[i][0] != "-":
-				options_colprof[i] = '"' + options_colprof[i] + '"'
 		args += ["-C"]
 		args += [getcfg("copyright").encode("ASCII", "asciize")]
 		options_dispcal = None
@@ -1724,12 +1723,12 @@ class Worker():
 		args += [inoutfile]
 		# Add dispcal and colprof arguments to ti3
 		ti3 = add_options_to_ti3(inoutfile + ".ti3", options_dispcal, 
-								 options_colprof)
+								 self.options_colprof)
 		if ti3:
 			ti3.write()
 		return cmd, args
 
-	def prepare_dispcal(self, calibrate=True, verify=False):
+	def prepare_dispcal(self, calibrate=True, verify=False, dry_run=False):
 		"""
 		Prepare a dispcal commandline.
 		
@@ -1762,7 +1761,7 @@ class Worker():
 			if getcfg("profile.update") or \
 			   self.dispcal_create_fast_matrix_shaper:
 				args += ["-o"]
-			if getcfg("calibration.update"):
+			if getcfg("calibration.update") and not dry_run:
 				cal = getcfg("calibration.file")
 				calcopy = os.path.join(inoutfile + ".cal")
 				filename, ext = os.path.splitext(cal)
@@ -1937,6 +1936,8 @@ class Worker():
 					return result, None
 				if not result:
 					return None, None
+				# Get dispcal options if present
+				options_dispcal = get_options_from_cal(cal)[0]
 				if not os.path.exists(calcopy):
 					try:
 						# Copy cal to temp dir
@@ -1952,7 +1953,6 @@ class Worker():
 						return None, None
 			else:
 				# .icc / .icm
-				self.options_dispcal = []
 				result = check_profile_isfile(cal)
 				if isinstance(result, Exception):
 					return result, None
@@ -1965,10 +1965,8 @@ class Worker():
 				if profile:
 					ti3 = StringIO(profile.tags.get("CIED", "") or 
 								   profile.tags.get("targ", ""))
-					if "cprt" in profile.tags:
-						# Get dispcal options if present
-						self.options_dispcal = ["-" + arg for arg in 
-							get_options_from_profile(profile)[0]]
+					# Get dispcal options if present
+					options_dispcal = get_options_from_profile(profile)[0]
 				else:
 					ti3 = StringIO("")
 				ti3_lines = [line.strip() for line in ti3]
@@ -1984,7 +1982,13 @@ class Worker():
 					return Error(lang.getstr("error.cal_extraction", (cal)) + 
 								 "\n\n" + safe_unicode(exception)), None
 			cal = calcopy
+			if options_dispcal:
+				self.options_dispcal = ["-" + arg for arg in 
+					options_dispcal]
 		#
+		# Make sure any measurement options are present
+		if not self.options_dispcal:
+			self.prepare_dispcal(dry_run=True)
 		cmd = get_argyll_util("dispread")
 		args = []
 		args += ["-v"] # verbose

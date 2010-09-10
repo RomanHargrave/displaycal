@@ -14,8 +14,21 @@ import ICCProfile as ICCP
 
 cals = {}
 
+def quote_nonoption_args(args):
+	""" Puts quotes around all arguments which are not options 
+	(ie. which do not start with a hyphen '-')
+	
+	"""
+	args = list(args)
+	for i, arg in enumerate(args):
+		if arg[0] != "-":
+			args[i] = '"' + arg + '"'
+	return args
+
+
 def add_dispcal_options_to_cal(cal, options_dispcal):
 	# Add dispcal options to cal
+	options_dispcal = quote_nonoption_args(options_dispcal)
 	try:
 		cgats = CGATS.CGATS(cal)
 		cgats[0].add_section("ARGYLL_DISPCAL_ARGS", 
@@ -31,10 +44,12 @@ def add_options_to_ti3(ti3, options_dispcal=None, options_colprof=None):
 	try:
 		cgats = CGATS.CGATS(ti3)
 		if options_colprof:
+			options_colprof = quote_nonoption_args(options_colprof)
 			cgats[0].add_section("ARGYLL_COLPROF_ARGS", 
 							   " ".join(options_colprof).encode("UTF-7", 
 																"replace"))
 		if options_dispcal and len(cgats) > 1:
+			options_dispcal = quote_nonoption_args(options_dispcal)
 			cgats[1].add_section("ARGYLL_DISPCAL_ARGS", 
 							   " ".join(options_dispcal).encode("UTF-7", 
 																"replace"))
