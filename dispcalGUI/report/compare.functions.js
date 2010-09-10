@@ -807,7 +807,7 @@ function analyze(which) {
 		}
 	};
 	for (var i=0; i<_criteria.length; i++) {
-		e['FF_criteria'].options[i] = new Option(_criteria[i].name, _criteria[i].id) //, data_ref.id == _criteria[i].id, data_ref.id == _criteria[i].id)
+		e['FF_criteria'].options[i] = new Option(_criteria[i].name, _criteria[i].id); //, data_ref.id == _criteria[i].id, data_ref.id == _criteria[i].id);
 		if (data_ref.id == _criteria[i].id) e['FF_criteria'].selectedIndex = i;
 	};
 	
