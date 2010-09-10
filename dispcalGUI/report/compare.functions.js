@@ -18,16 +18,6 @@ p.clone = function() {
 	};
 	return o
 };
-p.toString=function(){
-	var str = "{";
-	for (var i in this) {
-		if (this[i] != this.constructor.prototype[i]) {
-			if (str.length > 1) str += ",";
-			str += i + ":" + (typeof this[i] == "string" ? "\"" + this[i] + "\"" : this[i])
-		}
-	};
-	return str += "}"
-};
 
 // Number methods
 p=Number.prototype;
@@ -817,7 +807,8 @@ function analyze(which) {
 		}
 	};
 	for (var i=0; i<_criteria.length; i++) {
-		e['FF_criteria'].options[i] = new Option(_criteria[i].name, _criteria[i].id, data_ref.id == _criteria[i].id, data_ref.id == _criteria[i].id)
+		e['FF_criteria'].options[i] = new Option(_criteria[i].name, _criteria[i].id) //, data_ref.id == _criteria[i].id, data_ref.id == _criteria[i].id)
+		if (data_ref.id == _criteria[i].id) e['FF_criteria'].selectedIndex = i;
 	};
 	
 	var criteria = comparison_criteria[e['FF_criteria'].value],

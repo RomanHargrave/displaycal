@@ -8,13 +8,11 @@
 		@import "compare.css";
 		@import "compare-dark.css";
 	</style>
-	<!--[if gte IE 6]><!-->
 	<style type="text/css" media="print">
 		@import "print.css";
 	</style>
-	<!--<![endif]-->
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Profile Verification Report | ${PROFILE} | ${DATETIME}</title>
+	<title>Profile Verification Report — ${PROFILE} — ${DATETIME}</title>
 	<script type="text/javascript" src="jsapi-packages.js"></script>
 	<script type="text/javascript" src="jsapi-patches.js"></script>
 	<script type="text/javascript" src="compare.functions.js"></script>
@@ -49,7 +47,7 @@
 		</div>
 	</form>
 	<form action="#" id="F_out" onsubmit="return false">
-		<h2 id="reporttitle" class="legend">${PROFILE} | ${DATETIME}</h2>
+		<h2 id="reporttitle" class="legend">${PROFILE} — ${DATETIME}</h2>
 		<div id="report" class="fieldset process">
 			<p class="functions">
 				<button onclick="plaintext('ref')">View raw reference data</button>&#160;

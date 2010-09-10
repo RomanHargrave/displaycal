@@ -2,6 +2,7 @@
 	display: none;
 }
 body {
+	background: white;
 	font: normal .75em Helvetica, Arial, "Liberation Sans", FreeSans, sans-serif;
 	padding: 1em;
 }
