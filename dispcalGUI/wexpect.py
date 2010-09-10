@@ -2211,8 +2211,7 @@ class Wtty:
         position and inserts the string into self.__buffer."""
         
         if not self.__consout:
-            log_error('readConsoleToCursor: self.switchTo()')
-            self.switchTo()
+            return ""
     
         consinfo = self.__consout.GetConsoleScreenBufferInfo()
         cursorPos = consinfo['CursorPosition']
