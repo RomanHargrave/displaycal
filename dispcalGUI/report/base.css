@@ -81,6 +81,10 @@ div.patch.sample_id {
 td.ok, td.ko {
 	line-height: 1em;
 }
-.statonly {
+.statonly,
+tr.statonly td  {
 	color: gray;
+}
+tr.verbose {
+	display: none;
 }

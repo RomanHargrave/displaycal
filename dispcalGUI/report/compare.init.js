@@ -10,12 +10,20 @@ window.onload = function() {
 	if ((jsapi.useragent.msie && !jsapi.useragent.mac) || (jsapi.useragent.opera && jsapi.useragent.opera < 7.52)) {
 		labels = document.getElementsByTagName('label');
 		for (var i = 0; i < labels.length; i ++) {
-			labels[i].onmouseup = function () {
-				setTimeout(compare, 50);  // needed to trigger onchange for IE Win / Opera < 7.52
+			var form_element = document.getElementById(jsapi.dom.attribute(labels[i], 'for'));
+			form_element._onchange = form_element.onchange;
+			form_element.onchange = null;
+			if (jsapi.useragent.opera) labels[i].onclick = function () {
+				var form_element = document.getElementById(jsapi.dom.attribute(this, 'for'));
+				setTimeout(function () {
+					form_element._onchange();
+				}, 50);
 			};
-			document.getElementById(jsapi.dom.attribute(labels[i], 'for')).onchange = null;
-			document.getElementById(jsapi.dom.attribute(labels[i], 'for')).onmouseup = function () {
-				setTimeout(compare, 50);  // needed to trigger onchange for IE Win / Opera < 7.52
+			else form_element.onclick = function () {
+				var form_element = this;
+				setTimeout(function () {
+					form_element._onchange();
+				}, 50);
 			};
 		};
 	};

@@ -57,7 +57,8 @@ function dataset(src) {
 	this.id = "RGB";
 	var e = document.forms['F_data'].elements;
 	this.testchart = e['FF_testchart'].value;
-	this.id = window.CRITERIA_GRAYSCALE ? 'VERIFY' : splitext(basename(this.testchart))[0].toUpperCase();
+	//this.id = window.CRITERIA_GRAYSCALE ? 'RGB_GRAY' : splitext(basename(this.testchart))[0].toUpperCase();
+	this.id = splitext(basename(this.testchart))[0].toUpperCase();
 	if (src) {
 		this.src = src;
 		src=cr2lf(src);
@@ -177,11 +178,13 @@ p.generate_report = function(set_delta_calc_method) {
 		wp_assumed,
 		wp_assumed_round = [],
 		n = 0,
-		o = fields_match.length - 1, // offset for CIE values
-		devlen = fields_match.length > 4 ? 2 : o, // length for device values, if RGB + CMYK, just use RGB (TODO: it depends on the order of the comparison_criteria keys if RGB is first, but this is assumed - need to make sure it is really the case!)
+		o = fields_match.length - 1, // offset for CIE values in fields_extract_indexes
+		devstart = criteria.fields_match.length > 3 ? 3 : 0, // start offset for device values in fields_match (CMYK if length > 3, else RGB)
+		devend = criteria.fields_match.length > 3 ? 6 : 2, // end offset for device values in fields_match (CMYK if length > 3, else RGB)
 		missing_data,
 		delta_calc_method = f['F_out'].elements['FF_delta_calc_method'].value,
 		patch_number_html,
+		verbosestats = f['F_out'].elements['FF_verbosestats'].checked,
 		warn_deviation = criteria.warn_deviation,
 		no_Lab = (this.data_format.indexof("LAB_L", true) < 0
 				|| this.data_format.indexof("LAB_A", true) < 0
@@ -280,8 +283,8 @@ p.generate_report = function(set_delta_calc_method) {
 	]);
 	var seen = [];
 	for (var j=0; j<rules.length; j++) {
-		this.report_html.push('		<tr>');
-		this.report_html.push('			<td class="first-column' + (!rules[j][3] ? ' statonly' : '' ) + '">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '&#160;') + '</td><td' + (!rules[j][3] ? ' class="statonly"' : '' ) + '>' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '&#160;') + '</td><td class="patch sample_id">');
+		this.report_html.push('		<tr' + (!rules[j][3] || (rules[j][5] && rules[j][5].substr(3) != delta_calc_method.substr(3)) ? ' class="statonly' + (verbosestats ? '' : ' verbose') + '"' : '' ) + '>');
+		this.report_html.push('			<td class="first-column">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '&#160;') + '</td><td class="statonly">' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '&#160;') + '</td><td class="patch sample_id">');
 		result[j] = {
 			E: [],
 			L: [],
@@ -315,18 +318,35 @@ p.generate_report = function(set_delta_calc_method) {
 		};
 		var silent = false;
 		for (var i=0, n=0; i<this.data.length; i++) {
+				this.data[i].actual_DE = null;
+				this.data[i].tolerance_DE = null;
+				this.data[i].actual_DL = null;
+				this.data[i].tolerance_DL = null;
+				this.data[i].actual_Da = null;
+				this.data[i].tolerance_Da = null;
+				this.data[i].actual_Db = null;
+				this.data[i].tolerance_Db = null;
+				this.data[i].actual_DC = null;
+				this.data[i].tolerance_DC = null;
+				this.data[i].actual_DH = null;
+				this.data[i].tolerance_DH = null;
 				n++;
 				target = data_ref.data[i];
 				actual = this.data[i];
 				matched = false;
 				if (rules[j][1].length) {
 					for (var k=0; k<rules[j][1].length; k++) {
-						if (fields_match.join(',').indexOf('RGB') == 0) 
-							var current_rgb = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[0] + 3),
-								current_cmyk = actual.slice(fields_extract_indexes_i[3], fields_extract_indexes_i[7]);
-						else 
-							var current_rgb = actual.slice(fields_extract_indexes_i[4], fields_extract_indexes_i[7]),
-								current_cmyk = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[4]);
+						var current_cmyk = [];
+						if (fields_match.join(',').indexOf('RGB') == 0) {
+							var current_rgb = [actual[fields_extract_indexes_i[0]], actual[fields_extract_indexes_i[1]], actual[fields_extract_indexes_i[2]]];
+							if (fields_match.join(',').indexOf('CMYK') > -1) 
+								current_cmyk = [actual[fields_extract_indexes_i[3]], actual[fields_extract_indexes_i[4]], actual[fields_extract_indexes_i[5]], actual[fields_extract_indexes_i[6]]];
+						}
+						else {
+							var current_rgb = [actual[fields_extract_indexes_i[4]], actual[fields_extract_indexes_i[5]], actual[fields_extract_indexes_i[6]]];
+							if (fields_match.join(',').indexOf('CMYK') > -1) 
+								current_cmyk = [actual[fields_extract_indexes_i[0]], actual[fields_extract_indexes_i[1]], actual[fields_extract_indexes_i[2]], actual[fields_extract_indexes_i[3]]];
+						}
 						for (var l=0; l<current_rgb.length; l++) current_rgb[l] = current_rgb[l].accuracy(2);
 						for (var l=0; l<current_cmyk.length; l++) current_cmyk[l] = current_cmyk[l].accuracy(2);
 						if ((rules[j][1][k].length == 3 && current_rgb.join(',') == rules[j][1][k].join(',')) || (rules[j][1][k].length == 4 && current_cmyk.join(',') == rules[j][1][k].join(','))) {
@@ -361,9 +381,9 @@ p.generate_report = function(set_delta_calc_method) {
 					}
 					if (gray_balance_cal_only) {
 						if (fields_match.join(',').indexOf('RGB') == 0) 
-							var current_rgb = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[0] + 3);
+							var current_rgb = [actual[fields_extract_indexes_i[0]], actual[fields_extract_indexes_i[1]], actual[fields_extract_indexes_i[2]]];
 						else 
-							var current_rgb = actual.slice(fields_extract_indexes_i[4], fields_extract_indexes_i[7]);
+							var current_rgb = [actual[fields_extract_indexes_i[4]], actual[fields_extract_indexes_i[5]], actual[fields_extract_indexes_i[6]]];
 						for (var l=0; l<current_rgb.length; l++) current_rgb[l] = current_rgb[l].accuracy(2);
 						if (current_rgb[0] == current_rgb[1] && current_rgb[1] == current_rgb[2]) {
 							target_Lab[0] = actual_Lab[0]; // set L to measured value
@@ -385,17 +405,21 @@ p.generate_report = function(set_delta_calc_method) {
 		if (rules[j][1].length == 1) {
 			switch (rules[j][1][0]) {
 				case 'CAL_REDLEVELS':
-					result[j].sum = (window.CAL_RGBLEVELS[0] / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + window.CAL_RGBLEVELS[0] + '/' + CAL_ENTRYCOUNT + ')';
+					result[j].sum = (window.CAL_RGBLEVELS[0] / CAL_ENTRYCOUNT * 100).accuracy(1);
+					result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[0] + '/' + CAL_ENTRYCOUNT + ')';
 					break;
 				case 'CAL_GREENLEVELS':
-					result[j].sum = (window.CAL_RGBLEVELS[1] / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + window.CAL_RGBLEVELS[1] + '/' + CAL_ENTRYCOUNT + ')';
+					result[j].sum = (window.CAL_RGBLEVELS[1] / CAL_ENTRYCOUNT * 100).accuracy(1);
+					result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[1] + '/' + CAL_ENTRYCOUNT + ')';
 					break;
 				case 'CAL_BLUELEVELS':
-					result[j].sum = (window.CAL_RGBLEVELS[2] / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + window.CAL_RGBLEVELS[2] + '/' + CAL_ENTRYCOUNT + ')';
+					result[j].sum = (window.CAL_RGBLEVELS[2] / CAL_ENTRYCOUNT * 100).accuracy(1);
+					result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[2] + '/' + CAL_ENTRYCOUNT + ')';
 					break;
 				case 'CAL_GRAYLEVELS':
 					var cal_graylevels = Math.min(CAL_RGBLEVELS[0], CAL_RGBLEVELS[1], CAL_RGBLEVELS[2]);
-					result[j].sum = (cal_graylevels / CAL_ENTRYCOUNT * 100).accuracy(1) + '%<br />(' + cal_graylevels + '/' + CAL_ENTRYCOUNT + ')';
+					result[j].sum = (cal_graylevels / CAL_ENTRYCOUNT * 100).accuracy(1);
+					result[j].htmlsum = result[j].sum + '%<br />(' + cal_graylevels + '/' + CAL_ENTRYCOUNT + ')';
 					break;
 				case 'WHITEPOINT_MvsA': // Measured vs. assumed
 					target_Lab = jsapi.math.color.XYZ2Lab(wp_assumed[0], wp_assumed[1], wp_assumed[2]);
@@ -592,7 +616,7 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html.push('			<td class="patch">' + actual_rgb_html.join('') + '</td>');
 		var bar_html = [];
 		if (result[j].sum != null && (!rules[j][1].length || (rules[j][1][0] + '').indexOf('LEVELS') < 0)) {
-			if (!rules[j][3]) rgb = [204, 204, 204];
+			if (!rules[j][3] || (rules[j][5] && rules[j][5].substr(3) != delta_calc_method.substr(3))) rgb = [204, 204, 204];
 			else {
 				var rgb = [0, 255, 0],
 					step = 255 / (rules[j][3] + rules[j][3] / 2);
@@ -611,7 +635,7 @@ p.generate_report = function(set_delta_calc_method) {
 				bar_html.push(Math.abs(result[j].sum).accuracy(2) > 0 ? '<span style="display: block; width: ' + Math.round(10 * Math.abs(result[j].sum).accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em 0 .125em 0; overflow: hidden;">&#160;</span>' : '&#160;');
 			};
 		};
-		this.report_html.push('			<td><span class="' + (result[j].sum != null && rules[j][3] ? (Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'statonly') + '">' + (result[j].sum != null ? result[j].sum.accuracy(2) : '') + '</span></td><td class="bar">' + (bar_html.join('') || '&#160;') + '</td><td class="' + (result[j].sum != null && (!rules[j][3] || Math.abs(result[j].sum) <= rules[j][3]) ? ((Math.abs(result[j].sum).accuracy(2) < rules[j][3] ? 'ok">OK <span class="checkmark">✔</span>' : (result[j].sum != null && rules[j][3] ? 'warn">OK \u26a0' : 'na">')) + '<span class="' + (rules[j][4] && Math.abs(result[j].sum) <= rules[j][4] ? 'checkmark' : 'hidden') + (rules[j][4] ? '">✔' : '">&#160;')) : 'ko">' + (result[j].sum != null ? 'NOT OK' : '') + ' <span class="checkmark">\u2716') + '</span></td>');
+		this.report_html.push('			<td><span class="' + (result[j].sum != null && rules[j][3] && (!rules[j][5] || rules[j][5].substr(3) == delta_calc_method.substr(3)) ? ((rules[j][2] ? Math.abs(result[j].sum).accuracy(2) < rules[j][3] : Math.abs(result[j].sum).accuracy(2) > rules[j][3]) ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'statonly') + '">' + (result[j].sum != null ? result[j].htmlsum || result[j].sum.accuracy(2) : '') + '</span></td><td class="bar">' + (bar_html.join('') || '&#160;') + '</td><td class="' + (result[j].sum != null && (!rules[j][3] || (rules[j][2] ? Math.abs(result[j].sum) <= rules[j][3] : Math.abs(result[j].sum) >= rules[j][3])) ? (((rules[j][2] ? Math.abs(result[j].sum).accuracy(2) < rules[j][3] : Math.abs(result[j].sum).accuracy(2) > rules[j][3]) ? 'ok">OK <span class="checkmark">✔</span>' : (result[j].sum != null && rules[j][3] ? 'warn">OK \u26a0' : 'statonly">')) + '<span class="' + (rules[j][4] && (rules[j][2] ? Math.abs(result[j].sum) <= rules[j][4] : Math.abs(result[j].sum) >= rules[j][4]) ? 'checkmark' : 'hidden') + (rules[j][4] ? '">✔' : '">&#160;')) : 'ko">' + (result[j].sum != null ? 'NOT OK' : '') + ' <span class="checkmark">\u2716') + '</span></td>');
 		this.report_html.push('		</tr>');
 		if (rules[j][1] && rules[j][1].length > 1) seen.push(rules[j][1].join(','));
 	};
@@ -619,11 +643,13 @@ p.generate_report = function(set_delta_calc_method) {
 	
 	var pass, overachieve;
 	for (var j=0; j<result.length; j++) {
-		if (!rules[j][3]) continue;
-		if (missing_data || isNaN(result[j].sum) || Math.abs(result[j].sum) > rules[j][3]) pass = false;
-		if (!rules[j][4]) continue;
-		if (missing_data || isNaN(result[j].sum) || Math.abs(result[j].sum) > rules[j][4]) overachieve = false;
-		if (rules[j][5] == delta_calc_method) for (var k=0; k<result[j].matches.length; k++) {
+		if (!rules[j][5] || rules[j][5].substr(3) == delta_calc_method.substr(3)) {
+			if (!rules[j][3]) continue;
+			if (missing_data || isNaN(result[j].sum) || (rules[j][2] ? Math.abs(result[j].sum) > rules[j][3] : Math.abs(result[j].sum) < rules[j][3])) pass = false;
+			if (!rules[j][4]) continue;
+			if (missing_data || isNaN(result[j].sum) || (rules[j][2] ? Math.abs(result[j].sum) > rules[j][4] : Math.abs(result[j].sum) < rules[j][4])) overachieve = false;
+		}
+		if (rules[j][5] && rules[j][5].substr(3) == delta_calc_method.substr(3)) for (var k=0; k<result[j].matches.length; k++) {
 			if (rules[j][2].indexOf('_E_') > -1) {
 				this.data[result[j].matches[k][1]].actual_DE = Math.abs(rules[j][2].indexOf('_MAX') < 0 ? result[j].sum : result[j].E[k]);
 				this.data[result[j].matches[k][1]].tolerance_DE = rules[j][3];
@@ -631,6 +657,14 @@ p.generate_report = function(set_delta_calc_method) {
 			else if (rules[j][2].indexOf('_L_') > -1) {
 				this.data[result[j].matches[k][1]].actual_DL = Math.abs(rules[j][2].indexOf('_MAX') < 0 ? result[j].sum : result[j].L[k]);
 				this.data[result[j].matches[k][1]].tolerance_DL = rules[j][3];
+			}
+			else if (rules[j][2].indexOf('_A_') > -1) {
+				this.data[result[j].matches[k][1]].actual_Da = Math.abs(rules[j][2].indexOf('_MAX') < 0 ? result[j].sum : result[j].a[k]);
+				this.data[result[j].matches[k][1]].tolerance_Da = rules[j][3];
+			}
+			else if (rules[j][2].indexOf('_B_') > -1) {
+				this.data[result[j].matches[k][1]].actual_Db = Math.abs(rules[j][2].indexOf('_MAX') < 0 ? result[j].sum : result[j].b[k]);
+				this.data[result[j].matches[k][1]].tolerance_Db = rules[j][3];
 			}
 			else if (rules[j][2].indexOf('_C_') > -1) {
 				this.data[result[j].matches[k][1]].actual_DC = Math.abs(rules[j][2].indexOf('_MAX') < 0 ? result[j].sum : result[j].C[k]);
@@ -651,10 +685,10 @@ p.generate_report = function(set_delta_calc_method) {
 	this.report_html.push('	<h3 onclick="document.getElementById(\'overview\').style.display = document.getElementById(\'overview\').style.display != \'none\' ? \'none\' : \'block\'">Overview</h3>');
 	this.report_html.push('	<table cellspacing="0" id="overview">');
 	this.report_html.push('		<tr>');
-	this.report_html.push('			<th>#</th><th colspan="' + fields_match.slice(0, devlen + 1).length + '">Device Values</th><th colspan="3">Nominal Values</th><th colspan="2">&#160;</th><th colspan="3">Measured Values</th><th colspan="6">ΔE*' + delta_calc_method.substr(3) + '</th><th>&#160;</th>');
+	this.report_html.push('			<th>#</th><th colspan="' + fields_match.slice(devstart, devend + 1).length + '">Device Values</th><th colspan="3">Nominal Values</th><th colspan="2">&#160;</th><th colspan="3">Measured Values</th><th colspan="6">ΔE*' + delta_calc_method.substr(3) + '</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
 	this.report_html.push('		<tr>');
-	this.report_html.push('			<th>&#160;</th><th>' + fields_match.slice(0, devlen + 1).join('</th><th>').replace(/\w+_/g, '') + '</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>&#160;</th><th>&#160;</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>ΔL*</th><th>Δa*</th><th>Δb*</th><th>ΔC*</th><th>ΔH*</th><th>ΔE*</th><th>&#160;</th>');
+	this.report_html.push('			<th>&#160;</th><th>' + fields_match.slice(devstart, devend + 1).join('</th><th>').replace(/\w+_/g, '') + '</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>&#160;</th><th>&#160;</th><th>' + 'L*,a*,b*'.split(',').join('</th><th>') + '</th><th>ΔL*</th><th>Δa*</th><th>Δb*</th><th>ΔC*</th><th>ΔH*</th><th>ΔE*</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
 	for (var i=0, n=0; i<this.data.length; i++) {
 		n++;
@@ -674,9 +708,9 @@ p.generate_report = function(set_delta_calc_method) {
 		}
 		if (gray_balance_cal_only) {
 			if (fields_match.join(',').indexOf('RGB') == 0) 
-				var current_rgb = actual.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[0] + 3);
+				var current_rgb = [actual[fields_extract_indexes_i[0]], actual[fields_extract_indexes_i[1]], actual[fields_extract_indexes_i[2]]];
 			else 
-				var current_rgb = actual.slice(fields_extract_indexes_i[4], fields_extract_indexes_i[7]);
+				var current_rgb = [actual[fields_extract_indexes_i[4]], actual[fields_extract_indexes_i[5]], actual[fields_extract_indexes_i[6]]];
 			for (var l=0; l<current_rgb.length; l++) current_rgb[l] = current_rgb[l].accuracy(2);
 			if (current_rgb[0] == current_rgb[1] && current_rgb[1] == current_rgb[2]) {
 				target_Lab[0] = actual_Lab[0]; // set L to measured value
@@ -703,8 +737,19 @@ p.generate_report = function(set_delta_calc_method) {
 		}
 		else rgb = [255, 0, 0];
 		bar_html.push(actual.actual_DE.accuracy(2) > 0 ? '<span style="display: block; width: ' + Math.round(10 * actual.actual_DE.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em 0 .125em 0; overflow: hidden;">&#160;</span>' : '&#160;');
-		var device = target.slice(fields_extract_indexes_i[0], fields_extract_indexes_i[devlen] + 1);
-		for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
+		if (criteria.fields_match.join(',').indexOf('CMYK') > -1) {
+			if (fields_match.join(',').indexOf('RGB') == 0) 
+				var device = [target[fields_extract_indexes_i[3]], target[fields_extract_indexes_i[4]], target[fields_extract_indexes_i[5]], target[fields_extract_indexes_i[6]]];
+			else
+				var device = [target[fields_extract_indexes_i[0]], target[fields_extract_indexes_i[1]], target[fields_extract_indexes_i[2]], target[fields_extract_indexes_i[3]]];
+		}
+		else {
+			if (fields_match.join(',').indexOf('RGB') == 0) 
+				var device = [target[fields_extract_indexes_i[0]], target[fields_extract_indexes_i[1]], target[fields_extract_indexes_i[2]]];
+			else
+				var device = [target[fields_extract_indexes_i[4]], target[fields_extract_indexes_i[5]], target[fields_extract_indexes_i[6]]];
+			for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
+		}
 		if (typeof actual_Lab[2] != 'number') alert(actual);
 		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_Lab[0].accuracy(2) + '</td><td>' + target_Lab[1].accuracy(2) + '</td><td>' + target_Lab[2].accuracy(2) + '</td><td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_Lab[0].accuracy(2) + '</td><td>' + actual_Lab[1].accuracy(2) + '</td><td>' + actual_Lab[2].accuracy(2) + '</td><td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td><td class="' + (actual.actual_Da != null ? (actual.actual_Da.accuracy(2) < actual.tolerance_Da ? 'ok' : (actual.actual_Da.accuracy(2) == actual.tolerance_Da ? 'warn' : 'ko')) : 'info') + '">' + delta.a.accuracy(2) + '</td><td class="' + (actual.actual_Db != null ? (actual.actual_Db.accuracy(2) < actual.tolerance_Db ? 'ok' : (actual.actual_Db.accuracy(2) == actual.tolerance_Db ? 'warn' : 'ko')) : 'info') + '">' + delta.b.accuracy(2) + '</td><td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td class="bar">' + bar_html.join('') + '</td>');
 		this.report_html.push('		</tr>');
@@ -915,7 +960,7 @@ function form_element_set_disabled(form_element, disabled) {
 	else if (!disabled && jsapi.dom.attributeHasWord(form_element, "class", "disabled")) jsapi.dom.attributeRemoveWord(form_element, "class", "disabled");
 	var labels = document.getElementsByTagName("label");
 	for (var i=0; i<labels.length; i++) if (jsapi.dom.attribute(labels[i], "for") == form_element.id) {
-		if (jsapi.dom.attribute(labels[i], "for") == "FF_gray_balance_cal_only") labels[i].style.display = document.forms['F_out'].elements['FF_criteria'].value != 'VERIFY' ? "none" : "inline";
+		if (jsapi.dom.attribute(labels[i], "for") == "FF_gray_balance_cal_only") labels[i].style.display = document.forms['F_out'].elements['FF_criteria'].value != 'RGB_GRAY' ? "none" : "inline";
 		labels[i].className = disabled;
 		labels[i].disabled = disabled;
 	}
@@ -932,6 +977,14 @@ function form_elements_set_disabled(form, disabled) {
 			}
 		}
 	}
+};
+
+function togglestats() {
+	var verbosestats = document.forms['F_out'].elements['FF_verbosestats'].checked,
+		summary = document.getElementById("summary"),
+		trs = summary.getElementsByTagName("tr");
+	for (var i = 0; i < trs.length; i ++)
+		if (jsapi.dom.attributeHasWord(trs[i], "class", "statonly")) (jsapi.dom.attributeHasWord(trs[i], "class", "verbose") ? jsapi.dom.attributeRemoveWord : jsapi.dom.attributeAddWord)(trs[i], "class", "verbose");
 };
 
 function set_status(str, append) {
