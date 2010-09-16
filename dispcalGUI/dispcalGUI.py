@@ -122,7 +122,8 @@ from worker import (FilteredStream, LineCache, Worker, check_cal_isfile,
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, get_options_from_cal,
 					get_options_from_profile, make_argyll_compatible_path, 
-					printcmdline, set_argyll_bin, show_result_dialog)
+					parse_argument_string, printcmdline, set_argyll_bin, 
+					show_result_dialog)
 try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
@@ -286,6 +287,17 @@ class BaseFrame(wx.Frame):
 		
 		"""
 		
+		# Title
+		if not hasattr(self, "_Title"):
+			# Backup un-translated label
+			title = self._Title = self.Title
+		else:
+			# Restore un-translated label
+			title = self._Title
+		translated = lang.getstr(title)
+		if translated != title:
+			self.Title = translated
+		
 		# Menus
 		menubar = self.menubar if hasattr(self, "menubar") else self.GetMenuBar()
 		if menubar:
@@ -373,6 +385,55 @@ class BaseFrame(wx.Frame):
 					setattr(self, child.Name, child)
 
 
+class ExtraArgsFrame(BaseFrame):
+
+	""" Extra commandline arguments window. """
+	
+	def __init__(self, parent):
+		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+															  "extra.xrc")))
+		pre = wx.PreFrame()
+		self.res.LoadOnFrame(pre, parent, "extra_args")
+		self.PostCreate(pre)
+		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
+		
+		self.SetIcon(get_bitmap_as_icon(16, appname))
+		
+		self.set_child_ctrls_as_attrs(self)
+
+		# Bind event handlers
+		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
+				   id=self.extra_args_dispcal_ctrl.GetId())
+		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
+				   id=self.extra_args_dispread_ctrl.GetId())
+		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
+				   id=self.extra_args_spotread_ctrl.GetId())
+		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
+				   id=self.extra_args_colprof_ctrl.GetId())
+		
+		self.setup_language()
+		self.update_controls()
+		self.update_layout()
+
+	def OnClose(self, event):
+		self.Hide()
+	
+	def extra_args_handler(self, event):
+		mapping = {self.extra_args_dispcal_ctrl.GetId(): "extra_args.dispcal",
+				   self.extra_args_dispread_ctrl.GetId(): "extra_args.dispread",
+				   self.extra_args_spotread_ctrl.GetId(): "extra_args.spotread",
+				   self.extra_args_colprof_ctrl.GetId(): "extra_args.colprof"}
+		pref = mapping.get(event.GetId())
+		if pref:
+			setcfg(pref, self.FindWindowById(event.GetId()).Value)
+	
+	def update_controls(self):
+		self.extra_args_dispcal_ctrl.ChangeValue(getcfg("extra_args.dispcal"))
+		self.extra_args_dispread_ctrl.ChangeValue(getcfg("extra_args.dispread"))
+		self.extra_args_spotread_ctrl.ChangeValue(getcfg("extra_args.spotread"))
+		self.extra_args_colprof_ctrl.ChangeValue(getcfg("extra_args.colprof"))
+
+
 class GamapFrame(BaseFrame):
 
 	""" Gamut mapping options window. """
@@ -386,8 +447,6 @@ class GamapFrame(BaseFrame):
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
 		self.SetIcon(get_bitmap_as_icon(16, appname))
-		
-		self.SetTitle(lang.getstr("gamapframe.title"))
 
 		self.panel = self.FindWindowByName("panel")
 		
@@ -1089,6 +1148,8 @@ class MainFrame(BaseFrame):
 			options.FindItem("allow_skip_sensor_cal"))
 		self.Bind(wx.EVT_MENU, self.allow_skip_sensor_cal_handler, 
 				  self.menuitem_allow_skip_sensor_cal)
+		menuitem = options.FindItemById(options.FindItem("extra_args"))
+		self.Bind(wx.EVT_MENU, self.extra_args_handler, menuitem)
 		self.menuitem_enable_argyll_debug = options.FindItemById(
 			options.FindItem("enable_argyll_debug"))
 		self.Bind(wx.EVT_MENU, self.enable_argyll_debug_handler, 
@@ -1498,6 +1559,10 @@ class MainFrame(BaseFrame):
 			"display.number",
 			"display_lut.link",
 			"display_lut.number",
+			"extra_args.colprof",
+			"extra_args.dispcal",
+			"extra_args.dispread",
+			"extra_args.spotread",
 			"gamap_profile",
 			"gamma",
 			"lang",
@@ -2066,6 +2131,9 @@ class MainFrame(BaseFrame):
 		elif q == 4:
 			self.calibration_quality_info.SetLabel(
 				lang.getstr("calibration.quality.high"))
+		elif q == 5:
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.quality.ultra"))
 
 		self.interactive_display_adjustment_cb.SetValue(enable_cal and 
 			bool(int(getcfg("calibration.interactive_display_adjustment"))))
@@ -2249,6 +2317,15 @@ class MainFrame(BaseFrame):
 								   bitmap=geticon(32, "dialog-error"),
 								   log=False)
 
+	def extra_args_handler(self, event):
+		if not hasattr(self, "extra_args"):
+			self.extra_args = ExtraArgsFrame(self)
+			self.extra_args.Center()
+		if self.extra_args.IsShownOnScreen():
+			self.extra_args.Raise()
+		else:
+			self.extra_args.Show()
+
 	def use_separate_lut_access_handler(self, event):
 		setcfg("use_separate_lut_access", 
 			   int(self.menuitem_use_separate_lut_access.IsChecked()))
@@ -2308,7 +2385,7 @@ class MainFrame(BaseFrame):
 		elif q == "h":
 			self.profile_quality_info.SetLabel(lang.getstr(
 				"calibration.quality.high"))
-		if q == "u":
+		elif q == "u":
 			self.profile_quality_info.SetLabel(lang.getstr(
 				"calibration.quality.ultra"))
 		self.profile_settings_changed()
@@ -2392,6 +2469,9 @@ class MainFrame(BaseFrame):
 		elif q == "h":
 			self.calibration_quality_info.SetLabel(
 				lang.getstr("calibration.quality.high"))
+		elif q == "u":
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.quality.ultra"))
 		if q != getcfg("calibration.quality"):
 			self.profile_settings_changed()
 		setcfg("calibration.quality", q)
@@ -2500,6 +2580,8 @@ class MainFrame(BaseFrame):
 		if phase == "init":
 			cmd = get_argyll_util("spotread")
 			args = ["-v", "-c%s" % getcfg("comport.number"), "-a", "-x"]
+			if getcfg("extra_args.spotread").strip():
+				args += parse_argument_string(getcfg("extra_args.spotread"))
 			measurement_mode = getcfg("measurement_mode")
 			instrument_features = self.worker.get_instrument_features()
 			if measurement_mode and not instrument_features.get("spectral"):
@@ -2517,6 +2599,7 @@ class MainFrame(BaseFrame):
 			if "ARGYLL_NOT_INTERACTIVE" in os.environ:
 				del os.environ["ARGYLL_NOT_INTERACTIVE"]
 			try:
+				args = [arg.encode(fs_enc) for arg in args]
 				result = self.worker.subprocess = wexpect.spawn(cmd, args, 
 																**kwargs)
 				result.logfile_read = Files([FilteredStream(safe_print, 
@@ -2913,19 +2996,17 @@ class MainFrame(BaseFrame):
 			   not getcfg("whitepoint.x") and not getcfg("whitepoint.y"):
 				cal_changed = False
 			setcfg("whitepoint.colortemp", None)
+			self.whitepoint_colortemp_textctrl.SetValue(
+					str(getcfg("whitepoint.colortemp")))
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
 		if not self.whitepoint_xy_rb.GetValue():
 			if getcfg("whitepoint.colortemp.locus") == "T":
 				# Planckian locus
-				xyY = planckianCT2xyY(
-					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
-						",", ".")))
+				xyY = planckianCT2xyY(getcfg("whitepoint.colortemp"))
 			else:
 				# Daylight locus
-				xyY = CIEDCCT2xyY(
-					float(self.whitepoint_colortemp_textctrl.GetValue().replace(
-						",", ".")))
+				xyY = CIEDCCT2xyY(getcfg("whitepoint.colortemp"))
 			if xyY:
 				self.whitepoint_x_textctrl.ChangeValue(
 					str(stripzeros(round(xyY[0], 6))))
@@ -4399,13 +4480,29 @@ class MainFrame(BaseFrame):
 		report_html = report_html_template.read()
 		report_html_template.close()
 		
+		instrument = self.comport_ctrl.GetStringSelection()
+		measurement_mode = self.get_measurement_mode()
+		mode = []
+		if measurement_mode:
+			if "c" in measurement_mode:
+				mode += ["CRT"]
+			elif "l" in measurement_mode:
+				mode += ["LCD"]
+			if "p" in measurement_mode:
+				mode += [lang.getstr("projector")]
+			if "V" in measurement_mode:
+				mode += [lang.getstr("measurement_mode.adaptive")]
+			if "H" in measurement_mode:
+				mode += [lang.getstr("measurement_mode.highres")]
+		if mode:
+			instrument += " (%s)" % "/".join(mode)
+		
 		# create report
 		report_html = report_html.replace("${PLANCKIAN}", 
 										  'checked="checked"' if planckian else "")
 		report_html = report_html.replace("${DISPLAY}", 
 										  self.display_ctrl.GetStringSelection())
-		report_html = report_html.replace("${INSTRUMENT}", 
-										  self.comport_ctrl.GetStringSelection())
+		report_html = report_html.replace("${INSTRUMENT}", instrument)
 		report_html = report_html.replace("${WHITEPOINT}", 
 										  "%f %f %f" % wtpt_measured)
 		report_html = report_html.replace("${WHITEPOINT_NORMALIZED}", 
@@ -6516,8 +6613,9 @@ class MainFrame(BaseFrame):
 					# Restore defaults
 					self.restore_defaults_handler(
 						include=("calibration", 
+								 "colorimeter_correction_matrix_file", 
+								 "drift_compensation", 
 								 "measure.darken_background", 
-								 "profile.update", 
 								 "trc", 
 								 "whitepoint"), 
 						exclude=("calibration.black_point_correction_choice.show", 
@@ -7098,6 +7196,8 @@ class MainFrame(BaseFrame):
 			self.gamapframe.Hide()
 		if hasattr(self, "aboutdialog"):
 			self.aboutdialog.Hide()
+		if hasattr(self, "extra_args"):
+			self.extra_args.Hide()
 		self.infoframe.Hide()
 		if hasattr(self, "tcframe"):
 			self.tcframe.Hide()

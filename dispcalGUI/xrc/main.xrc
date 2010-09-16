@@ -336,7 +336,7 @@
                     <object class="sizeritem">
                       <object class="wxBitmapButton" name="colorimeter_correction_matrix_btn">
                         <bitmap>../theme/icons/16x16/document-open.png</bitmap>
-                        <tooltip>colorimeter_correction_matrix_file.load</tooltip>
+                        <tooltip>colorimeter_correction_matrix_file.choose</tooltip>
                         <style>wxNO_BORDER</style>
                         <XRCED>
                           <events>EVT_BUTTON</events>

@@ -261,6 +261,11 @@ def get_argyll_version(name, silent=False):
 	return argyll_version
 
 
+def parse_argument_string(args):
+	""" Parses an argument string and returns a list of arguments. """
+	return [arg.strip('"\'') for arg in re.findall('(?:^|\s+)(-[^\s]+|["\'][^"\']+?["\']|\S+)', args)]
+
+
 def get_options_from_args(dispcal_args=None, colprof_args=None):
 	"""
 	Extract options used for dispcal and colprof from argument strings.
@@ -1702,9 +1707,11 @@ class Worker():
 				args += [getcfg("gamap_profile")]
 				args += ["-c" + getcfg("gamap_src_viewcond")]
 				args += ["-d" + getcfg("gamap_out_viewcond")]
-		self.options_colprof = list(args)
 		args += ["-C"]
 		args += [getcfg("copyright").encode("ASCII", "asciize")]
+		if getcfg("extra_args.colprof").strip():
+			args += parse_argument_string(getcfg("extra_args.colprof"))
+		self.options_colprof = list(args)
 		options_dispcal = None
 		if "-d3" in self.options_targen:
 			# only add display desc and dispcal options if creating RGB profile
@@ -1823,8 +1830,9 @@ class Worker():
 						if not result:
 							return None, None
 				args += ["-u"]
-		if (calibrate and not getcfg("calibration.update")) or \
-		   (not calibrate and verify):
+		##if (calibrate and not getcfg("calibration.update")) or \
+		   ##(not calibrate and verify):
+		if calibrate or verify:
 			if calibrate and not \
 			   getcfg("calibration.interactive_display_adjustment"):
 				# Skip interactive display adjustment
@@ -1861,6 +1869,8 @@ class Worker():
 					args += ["-e%s" % verify]  # Verify final computed curves
 				else:
 					args += ["-E"]  # Verify current curves
+		if getcfg("extra_args.dispcal").strip():
+			args += parse_argument_string(getcfg("extra_args.dispcal"))
 		self.options_dispcal = list(args)
 		if calibrate:
 			args += [inoutfile]
@@ -2008,6 +2018,8 @@ class Worker():
 		if apply_calibration:
 			args += ["-k"]
 			args += [cal]
+		if getcfg("extra_args.dispread").strip():
+			args += parse_argument_string(getcfg("extra_args.dispread"))
 		self.options_dispread = list(args)
 		return cmd, self.options_dispread + [inoutfile]
 

@@ -112,6 +112,7 @@
 	"drift_compensation.blacklevel": "Drift compensation during measurements",
 	"drift_compensation.whitelevel": "Drift compensation during measurements",
 	"elapsed_time": "Elapsed time",
+	"extra_args": "Set additional commandline arguments...",
 	"bug_report": "Report a bug...",
 	"measurement_mode": "Mode",
 	"measurement_mode.adaptive": "Adaptive",
