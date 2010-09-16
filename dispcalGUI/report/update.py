@@ -7,7 +7,7 @@ import os
 import re
 import shutil
 import sys
-sys.path.insert(0, "..")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from config import get_data_path, initcfg
 from safe_print import safe_print
