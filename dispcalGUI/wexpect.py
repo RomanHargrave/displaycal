@@ -2480,6 +2480,7 @@ class ConsoleReader:
                 cursorPos = consinfo['CursorPosition']
                 
                 if GetExitCodeProcess(parent) != STILL_ACTIVE or GetExitCodeProcess(self.__childProcess) != STILL_ACTIVE:
+                    time.sleep(.1)
                     try:
                         TerminateProcess(self.__childProcess, 0)
                     except pywintypes.error, e:
@@ -2506,6 +2507,7 @@ class ConsoleReader:
                 time.sleep(.1)
         except Exception, e:
             log_error(e)
+            time.sleep(.1)
     
     def handler(self, sig):       
         log_error(sig)
