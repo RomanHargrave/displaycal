@@ -93,6 +93,7 @@ import ICCProfile as ICCP
 import colormath
 import localization as lang
 import pyi_md5pickuphelper
+import report
 import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 						  cal_to_fake_profile, can_update_cal, 
@@ -1174,6 +1175,10 @@ class MainFrame(BaseFrame):
 			tools.FindItem("profile.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_profile_handler, 
 				  self.menuitem_profile_verify)
+		menuitem = tools.FindItemById(
+			tools.FindItem("profile.verification_report.update"))
+		self.Bind(wx.EVT_MENU, self.update_profile_verification_report, 
+				  menuitem)
 		self.menuitem_enable_spyder2 = tools.FindItemById(
 			tools.FindItem("enable_spyder2"))
 		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, 
@@ -4118,6 +4123,28 @@ class MainFrame(BaseFrame):
 			safe_print("[D] install_profile.cal:", cal)
 		self.worker.pwd = None  # don't keep password in memory
 		return result
+	
+	def update_profile_verification_report(self, event=None):
+		defaultDir, defaultFile = get_verified_path("last_filedialog_path")
+		dlg = wx.FileDialog(self, lang.getstr("profile.verification_report.update"), 
+							defaultDir=defaultDir, defaultFile=defaultFile, 
+							wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
+							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		if result == wx.ID_OK:
+			path = dlg.GetPath()
+			setcfg("last_filedialog_path", path)
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		try:
+			report.update(path)
+		except (IOError, OSError), exception:
+			show_result_dialog(exception)
+		else:
+			# show report
+			wx.CallAfter(launch_file, path)
 
 	def verify_calibration_handler(self, event):
 		if check_set_argyll_bin():
@@ -4176,7 +4203,7 @@ class MainFrame(BaseFrame):
 			else:
 				path = None
 		if not profile:
-			defaultDir, defaultFile = get_verified_path(path)
+			defaultDir, defaultFile = get_verified_path(None, path)
 			dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_profile"), 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
 								wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm", 
@@ -4185,6 +4212,8 @@ class MainFrame(BaseFrame):
 			result = dlg.ShowModal()
 			if result == wx.ID_OK:
 				path = dlg.GetPath()
+				setcfg("last_icc_path", path)
+				setcfg("last_cal_or_icc_path", path)
 			dlg.Destroy()
 			if result != wx.ID_OK:
 				return
@@ -4234,12 +4263,14 @@ class MainFrame(BaseFrame):
 									   os.path.join(getcfg("profile.save_path"), 
 									   defaultFile))[0]
 		dlg = wx.FileDialog(self, lang.getstr("save_as"), 
-							defaultDir, defaultFile, wildcard="*.html", 
+							defaultDir, defaultFile, 
+							wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
 							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
 		if result == wx.ID_OK:
 			save_path = os.path.splitext(dlg.GetPath())[0] + ".html"
+			setcfg("last_filedialog_path", save_path)
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
@@ -4461,24 +4492,7 @@ class MainFrame(BaseFrame):
 						for j, color in enumerate(labels_Lab):
 							data.DATA[i][color] = Lab[j]
 		
-		# read report template
-		report_html_template_path = get_data_path(os.path.join("report", 
-															   "report.html"))
-		if not report_html_template_path:
-			InfoDialog(self, msg=lang.getstr("file.missing", 
-											 report_html_template_path), 
-					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
-			return
-		try:
-			report_html_template = codecs.open(report_html_template_path, "r", 
-										   "UTF-8")
-		except (IOError, OSError), exception:
-			InfoDialog(self, msg=lang.getstr("error.file.open", 
-											 report_html_template_path), 
-					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
-			return
-		report_html = report_html_template.read()
-		report_html_template.close()
+		# gather data for report
 		
 		instrument = self.comport_ctrl.GetStringSelection()
 		measurement_mode = self.get_measurement_mode()
@@ -4497,90 +4511,53 @@ class MainFrame(BaseFrame):
 		if mode:
 			instrument += " (%s)" % "/".join(mode)
 		
-		# create report
-		report_html = report_html.replace("${PLANCKIAN}", 
-										  'checked="checked"' if planckian else "")
-		report_html = report_html.replace("${DISPLAY}", 
-										  self.display_ctrl.GetStringSelection())
-		report_html = report_html.replace("${INSTRUMENT}", instrument)
-		report_html = report_html.replace("${WHITEPOINT}", 
-										  "%f %f %f" % wtpt_measured)
-		report_html = report_html.replace("${WHITEPOINT_NORMALIZED}", 
-										  "%f %f %f" % wtpt_measured_norm)
-		report_html = report_html.replace("${PROFILE}", 
-										  profile.getDescription())
-		report_html = report_html.replace("${PROFILE_WHITEPOINT}", 
-										  "%f %f %f" % wtpt_profile)
-		report_html = report_html.replace("${PROFILE_WHITEPOINT_NORMALIZED}", 
-										  "%f %f %f" % wtpt_profile_norm)
-		report_html = report_html.replace("${TESTCHART}", 
-										  os.path.basename(chart))
-		report_html = report_html.replace("${ADAPTION}", 
-										  str(adaption_matrix))
-		report_html = report_html.replace("${DATETIME}", 
-										  strftime("%Y-%m-%d %H:%M:%S"))
-		report_html = report_html.replace("${REF}", 
-										  str(ti3_ref).decode(enc, 
-															  "replace").replace('"', 
-																				 "&quot;"))
-		report_html = report_html.replace("${MEASURED}", 
-										  str(ti3_joined).decode(enc, 
-																 "replace").replace('"', 
-																					"&quot;"))
-		report_html = report_html.replace("${CAL_ENTRYCOUNT}", 
-										  str(cal_entrycount))
-		report_html = report_html.replace("${CAL_RGBLEVELS}", 
-										  repr(cal_rgblevels))
-		report_html = report_html.replace("${GRAYSCALE}", 
-										  repr(gray) if gray else 'null')
-		for include in ("base.css", "compare.css", "compare-dark-light.css", 
-						"compare-dark.css", "compare-light.css", 
-						"compare-light-dark.css", "print.css", 
-						"jsapi-packages.js", "jsapi-patches.js", 
-						"compare.constants.js", "compare.variables.js", 
-						"compare.functions.js", "compare.init.js"):
-			path = get_data_path(os.path.join("report", include))
-			if not path:
-				InfoDialog(self, msg=lang.getstr("file.missing", 
-												 include), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				return
-			try:
-				f = codecs.open(path, "r", "UTF-8")
-			except (IOError, OSError), exception:
-				InfoDialog(self, msg=lang.getstr("error.file.open", 
-												 path), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				return
-			if include.endswith(".js"):
-				packer = jspacker.JavaScriptPacker()
-				report_html = report_html.replace('src="%s">' % include, 
-												  ">/*<![CDATA[*/\n" + 
-												  packer.pack(f.read(), 
-															  62, 
-															  True).strip() + 
-												  "\n/*]]>*/")
+		ccmx = "None"
+		if self.worker.argyll_version >= [1, 3, 0] and \
+		   not self.worker.get_instrument_features().get("spectral"):
+			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+			if ccmx[0] == "AUTO":
+				# TODO: implement auto selection based on available ccmx files 
+				# and display/instrument combo
+				ccmx = "None"
+			elif len(ccmx) > 1 and ccmx[1]:
+				ccmx = os.path.basename(ccmx[1])
 			else:
-				report_html = report_html.replace('@import "%s";' % include, 
-												  f.read().strip())
-			f.close()
+				ccmx = "None"
 		
-		# write report
+		placeholders2data = {"${PLANCKIAN}": 'checked="checked"' if planckian 
+											 else "",
+							 "${DISPLAY}": self.display_ctrl.GetStringSelection(),
+							 "${INSTRUMENT}": instrument,
+							 "${CORRECTION_MATRIX}": ccmx,
+							 "${WHITEPOINT}": "%f %f %f" % wtpt_measured,
+							 "${WHITEPOINT_NORMALIZED}": "%f %f %f" % 
+														 wtpt_measured_norm,
+							 "${PROFILE}": profile.getDescription(),
+							 "${PROFILE_WHITEPOINT}": "%f %f %f" % wtpt_profile,
+							 "${PROFILE_WHITEPOINT_NORMALIZED}": "%f %f %f" % 
+																 wtpt_profile_norm,
+							 "${TESTCHART}": os.path.basename(chart),
+							 "${ADAPTION}": str(adaption_matrix),
+							 "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
+							 "${REF}":  str(ti3_ref).decode(enc, 
+															"replace").replace('"', 
+																			   "&quot;"),
+							 "${MEASURED}": str(ti3_joined).decode(enc, 
+																   "replace").replace('"', 
+																					  "&quot;"),
+							 "${CAL_ENTRYCOUNT}": str(cal_entrycount),
+							 "${CAL_RGBLEVELS}": repr(cal_rgblevels),
+							 "${GRAYSCALE}": repr(gray) if gray else 'null',
+							 "${REPORT_VERSION}": version}
+		
+		# create report
 		try:
-			report_html_file = codecs.open(save_path, "w", "UTF-8")
+			report.create(save_path, placeholders2data)
 		except (IOError, OSError), exception:
-			InfoDialog(self, msg=lang.getstr("error.file.create", 
-											 save_path), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
-			return
-		report_html_file.write(report_html)
-		report_html_file.close()
-		
-		# show report
-		wx.CallAfter(launch_file, save_path)
+			show_result_dialog(exception)
+		else:
+			# show report
+			wx.CallAfter(launch_file, save_path)
 
 	def load_cal(self, cal=None, silent=False):
 		if not cal:
@@ -5385,7 +5362,8 @@ class MainFrame(BaseFrame):
 				setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 		else:
 			path = None
-			defaultDir, defaultFile = get_verified_path("last_filedialog_path")
+			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+			defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction_matrix_file.choose"), 
 								defaultDir=defaultDir, 
@@ -5782,6 +5760,7 @@ class MainFrame(BaseFrame):
 						dlg.Destroy()
 						if result != wx.ID_OK:
 							return
+				setcfg("last_cal_or_icc_path", profile_save_path)
 				setcfg("last_icc_path", profile_save_path)
 				# get filename and extension of target file
 				profile_name = os.path.basename(

@@ -12,7 +12,7 @@
 		@import "print.css";
 	</style>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>Profile Verification Report — ${PROFILE} — ${DATETIME}</title>
+	<title>Profile Verification Report ${REPORT_VERSION} — ${PROFILE} — ${DATETIME}</title>
 	<script type="text/javascript" src="jsapi-packages.js"></script>
 	<script type="text/javascript" src="jsapi-patches.js"></script>
 	<script type="text/javascript" src="compare.functions.js"></script>
@@ -28,12 +28,13 @@
 	<script type="text/javascript" src="compare.init.js"></script>
 </head>
 <body>
-	<h1><span class="r"></span><span class="g"></span><span class="b"></span>Profile Verification Report</h1>
+	<h1><span class="r"></span><span class="g"></span><span class="b"></span>Profile Verification Report ${REPORT_VERSION}</h1>
 	<div><noscript><p class="error">Please enable JavaScript</p></noscript></div>
 	<form action="#" id="F_data">
 		<div>
 			<input type="hidden" name="FF_display" value="${DISPLAY}" />
 			<input type="hidden" name="FF_instrument" value="${INSTRUMENT}" />
+			<input type="hidden" name="FF_correction_matrix" value="${CORRECTION_MATRIX}" />
 			<input type="hidden" name="FF_profile" value="${PROFILE}" />
 			<input type="hidden" name="FF_profile_whitepoint" value="${PROFILE_WHITEPOINT}" />
 			<input type="hidden" name="FF_profile_whitepoint_normalized" value="${PROFILE_WHITEPOINT_NORMALIZED}" />
@@ -44,6 +45,7 @@
 			<input type="hidden" name="FF_datetime" value="${DATETIME}" />
 			<input type="hidden" name="FF_data_in" value="${MEASURED}" />
 			<input type="hidden" name="FF_data_ref" value="${REF}" />
+			<input type="hidden" name="FF_report_version" value="${REPORT_VERSION}" />
 		</div>
 	</form>
 	<form action="#" id="F_out" onsubmit="return false">
@@ -59,7 +61,7 @@
 				</select>
 			</p>
 			<p class="options">
-				<label for="FF_gray_balance_cal_only" class="disabled">Evaluate gray balance through calibration only: <input type="checkbox" name="FF_gray_balance_cal_only" id="FF_gray_balance_cal_only" checked="checked" disabled="disabled" onchange="compare(false)" /><br /></label>
+				<label for="FF_gray_balance_cal_only" class="disabled">Evaluate gray balance through calibration only: <input type="checkbox" name="FF_gray_balance_cal_only" id="FF_gray_balance_cal_only" disabled="disabled" onchange="compare(false)" /><br /></label>
 				<label for="FF_planckian" class="disabled">Use blackbody locus as assumed target whitepoint: <input type="checkbox" name="FF_planckian" id="FF_planckian" ${PLANCKIAN} disabled="disabled" onchange="compare(false)" /><br /></label>
 				<label for="FF_verbosestats" class="disabled">Show additional statistics: <input type="checkbox" name="FF_verbosestats" id="FF_verbosestats" disabled="disabled" onchange="togglestats()" /></label>
 			</p>

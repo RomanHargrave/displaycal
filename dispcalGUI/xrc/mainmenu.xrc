@@ -72,6 +72,9 @@
         <object class="wxMenuItem" name="profile.verify">
           <label>profile.verify</label>
         </object>
+        <object class="wxMenuItem" name="profile.verification_report.update">
+          <label>profile.verification_report.update</label>
+        </object>
         <object class="separator"/>
         <object class="wxMenuItem" name="enable_spyder2">
           <label>enable_spyder2</label>
