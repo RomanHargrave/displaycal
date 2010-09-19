@@ -5366,7 +5366,7 @@ class MainFrame(BaseFrame):
 			defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction_matrix_file.choose"), 
-								defaultDir=defaultDir, 
+								defaultDir=defaultDir, defaultFile=defaultFile,
 								wildcard=lang.getstr("filetype.ccmx") + 
 										 "|*.ccmx", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
