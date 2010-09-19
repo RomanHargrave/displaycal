@@ -66,7 +66,7 @@ def create(report_path, placeholders2data):
 	try:
 		report_html_file = codecs.open(report_path, "w", "UTF-8")
 	except (IOError, OSError), exception:
-		raise exception.__class__(lang.getstr("error.file.create", save_path))
+		raise exception.__class__(lang.getstr("error.file.create", report_path))
 	report_html_file.write(report_html)
 	report_html_file.close()
 
@@ -108,11 +108,17 @@ def update(report_path):
 			("${CAL_RGBLEVELS}", "CAL_RGBLEVELS\s*=\s*(.+?);", 0),
 			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?);", 0))
 	
-	placeholders2data = {"${REPORT_VERSION}": version}
+	placeholders2data = {"${REPORT_VERSION}": version,
+						 "${CORRECTION_MATRIX}": "Unknown",
+						 "${ADAPTION}": "None",
+						 "${CAL_ENTRYCOUNT}": "null",
+						 "${CAL_RGBLEVELS}": "null",
+						 "${GRAYSCALE}": "null"}
 	
 	for placeholder, pattern, flags in data:
 		result = re.search(pattern, orig_report_html, flags)
-		placeholders2data[placeholder] = result.groups()[0] if result else ""
+		if result or not placeholders2data.get(placeholder):
+			placeholders2data[placeholder] = result.groups()[0] if result else ""
 	
 	# backup original report
 	shutil.copy2(report_path, "%s.%s" % (report_path, 

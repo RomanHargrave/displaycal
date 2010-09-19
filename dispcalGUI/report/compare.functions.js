@@ -169,6 +169,7 @@ p.generate_report = function(set_delta_calc_method) {
 		profile_wp_round = [],
 		profile_wp_norm = e['FF_profile_whitepoint_normalized'].value.split(/\s+/),
 		profile_wp_norm_round = [],
+		profile_colortemp,
 		wp = e['FF_whitepoint'].value.split(/\s+/),
 		wp_round = [],
 		wp_norm = e['FF_whitepoint_normalized'].value.split(/\s+/),
@@ -194,34 +195,38 @@ p.generate_report = function(set_delta_calc_method) {
 				|| this.data_format.indexof("XYZ_Z", true) < 0),
 		gray_balance_cal_only = f['F_out'].elements['FF_gray_balance_cal_only'].checked;
 	
-	for (var i=0; i<profile_wp.length; i++) {
-		profile_wp[i] = parseFloat(profile_wp[i]);
-		profile_wp_round[i] = profile_wp[i].accuracy(2)
-	};
-	for (var i=0; i<profile_wp.length; i++) {
-		profile_wp_norm[i] = parseFloat(profile_wp[i] / profile_wp[1] * 100);
-		profile_wp_norm_round[i] = profile_wp_norm[i].accuracy(2)
-	};
+	if (profile_wp.length == 3) {
+		for (var i=0; i<profile_wp.length; i++) {
+			profile_wp[i] = parseFloat(profile_wp[i]);
+			profile_wp_round[i] = profile_wp[i].accuracy(2)
+		};
+		for (var i=0; i<profile_wp.length; i++) {
+			profile_wp_norm[i] = profile_wp[i] / profile_wp[1] * 100;
+			profile_wp_norm_round[i] = profile_wp_norm[i].accuracy(2)
+		};
+		profile_colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]));
+	}
 	
-	profile_colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]));
-	
-	for (var i=0; i<wp.length; i++) {
-		wp[i] = parseFloat(wp[i]);
-		wp_round[i] = wp[i].accuracy(2)
-	};
-	for (var i=0; i<wp_norm.length; i++) {
-		wp_norm[i] = parseFloat(wp_norm[i]);
-		wp_norm_round[i] = wp_norm[i].accuracy(2)
-	};
-	
-	colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(wp_norm[0], wp_norm[1], wp_norm[2]));
-	colortemp_assumed = Math.round(colortemp / 100) * 100;
-	if (planckian)
-		wp_assumed = jsapi.math.color.planckianCT2XYZ(colortemp_assumed);
-	else
-		wp_assumed = jsapi.math.color.CIEDCorColorTemp2XYZ(colortemp_assumed);
-	for (var i=0; i<wp_assumed.length; i++) wp_assumed[i] = wp_assumed[i] * 100;
-	for (var i=0; i<wp_assumed.length; i++) wp_assumed_round[i] = wp_assumed[i].accuracy(2);
+	if (wp.length == 3) {
+		for (var i=0; i<wp.length; i++) {
+			wp[i] = parseFloat(wp[i]);
+			wp_round[i] = wp[i].accuracy(2)
+		};
+		for (var i=0; i<wp.length; i++) {
+			wp_norm[i] = wp[i] / wp[1] * 100;
+			wp_norm_round[i] = wp_norm[i].accuracy(2)
+		};
+		colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(wp_norm[0], wp_norm[1], wp_norm[2]));
+		colortemp_assumed = Math.round(colortemp / 100) * 100;
+		if (planckian)
+			wp_assumed = jsapi.math.color.planckianCT2XYZ(colortemp_assumed);
+		else
+			wp_assumed = jsapi.math.color.CIEDCorColorTemp2XYZ(colortemp_assumed);
+		for (var i=0; i<wp_assumed.length; i++) {
+			wp_assumed[i] = wp_assumed[i] * 100;
+			wp_assumed[i].accuracy(2);
+		}
+	}
 	
 	this.report_html = [
 		'	<h3 onclick="document.getElementById(\'info\').style.display = document.getElementById(\'info\').style.display != \'none\' ? \'none\' : \'block\'">Basic Information</h3>',
@@ -238,11 +243,15 @@ p.generate_report = function(set_delta_calc_method) {
 		'		<tr>',
 		'			<th>Profile:</th>',
 		'			<td>' + e['FF_profile'].value + '</td>',
-		'		</tr>',
+		'		</tr>'
+	];
+	if (profile_wp.length == 3) this.report_html = this.report_html.concat([
 		'		<tr>',
 		'			<th>Profile whitepoint XYZ (normalized):</th>',
 		'			<td>' + profile_wp_round.join(' ') + (profile_wp_norm_round.join(' ') != profile_wp_round.join(' ') ? ' (' + profile_wp_norm_round.join(' ') + ')' : '') + ', CCT = ' + profile_colortemp + '° K</td>',
-		'		</tr>',
+		'		</tr>'
+	]);
+	if (wp.length == 3) this.report_html = this.report_html.concat([
 		'		<tr>',
 		'			<th>Measured luminance:</th>',
 		'			<td>' + wp[1].accuracy(1) + ' cd/m²</td>',
@@ -253,7 +262,9 @@ p.generate_report = function(set_delta_calc_method) {
 		'		</tr>',
 		'		<tr>',
 		'			<th>Assumed target whitepoint (XYZ):</th>',
-		'			<td>' + colortemp_assumed + '° K ' + (planckian ? 'blackbody' : 'daylight') + ' (' + wp_assumed_round.join(' ') + ')</td>',
+		'			<td>' + colortemp_assumed + '° K ' + (planckian ? 'blackbody' : 'daylight') + ' (' + wp_assumed_round.join(' ') + ')</td>'
+	]);
+	this.report_html = this.report_html.concat([
 		'		</tr>',
 		'		<tr>',
 		'			<th>Testchart:</th>',
@@ -272,7 +283,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'			<td>' + e['FF_datetime'].value + '</td>',
 		'		</tr>',
 		'	</table>'
-	];
+	]);
 	var result_start = this.report_html.length;
 	this.report_html = this.report_html.concat([
 		'	<div class="summary">',
@@ -284,8 +295,6 @@ p.generate_report = function(set_delta_calc_method) {
 	]);
 	var seen = [];
 	for (var j=0; j<rules.length; j++) {
-		this.report_html.push('		<tr' + (!rules[j][3] || (rules[j][5] && rules[j][5].substr(3) != delta_calc_method.substr(3)) ? ' class="statonly' + (verbosestats ? '' : ' verbose') + '"' : '' ) + '>');
-		this.report_html.push('			<td class="first-column">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '&#160;') + '</td><td class="statonly">' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '&#160;') + '</td><td class="patch sample_id">');
 		result[j] = {
 			E: [],
 			L: [],
@@ -296,6 +305,95 @@ p.generate_report = function(set_delta_calc_method) {
 			matches: [],
 			sum: null
 		};
+		if (rules[j][1].length == 1) {
+			switch (rules[j][1][0]) {
+				case 'CAL_REDLEVELS':
+					if (window.CAL_RGBLEVELS) {
+						result[j].sum = (window.CAL_RGBLEVELS[0] / CAL_ENTRYCOUNT * 100).accuracy(1);
+						result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[0] + '/' + CAL_ENTRYCOUNT + ')';
+					}
+					else {
+						rules[j][3] = null;
+						rules[j][4] = null;
+						continue;
+					}
+					break;
+				case 'CAL_GREENLEVELS':
+					if (window.CAL_RGBLEVELS) {
+						result[j].sum = (window.CAL_RGBLEVELS[1] / CAL_ENTRYCOUNT * 100).accuracy(1);
+						result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[1] + '/' + CAL_ENTRYCOUNT + ')';
+					}
+					else {
+						rules[j][3] = null;
+						rules[j][4] = null;
+						continue;
+					}
+					break;
+				case 'CAL_BLUELEVELS':
+					if (window.CAL_RGBLEVELS) {
+						result[j].sum = (window.CAL_RGBLEVELS[2] / CAL_ENTRYCOUNT * 100).accuracy(1);
+						result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[2] + '/' + CAL_ENTRYCOUNT + ')';
+					}
+					else {
+						rules[j][3] = null;
+						rules[j][4] = null;
+						continue;
+					}
+					break;
+				case 'CAL_GRAYLEVELS':
+					if (window.CAL_RGBLEVELS) {
+						var cal_graylevels = Math.min(CAL_RGBLEVELS[0], CAL_RGBLEVELS[1], CAL_RGBLEVELS[2]);
+						result[j].sum = (cal_graylevels / CAL_ENTRYCOUNT * 100).accuracy(1);
+						result[j].htmlsum = result[j].sum + '%<br />(' + cal_graylevels + '/' + CAL_ENTRYCOUNT + ')';
+					}
+					else {
+						rules[j][3] = null;
+						rules[j][4] = null;
+						continue;
+					}
+					break;
+				case 'WHITEPOINT_MvsA': // Measured vs. assumed
+					if (wp.length == 3) {
+						target_Lab = jsapi.math.color.XYZ2Lab(wp_assumed[0], wp_assumed[1], wp_assumed[2]);
+						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
+						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
+						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
+						result[j].E.push(delta.E);
+						result[j].L.push(delta.L);
+						result[j].C.push(delta.C);
+						result[j].H.push(delta.H);
+						result[j].a.push(delta.a);
+						result[j].b.push(delta.b);
+					}
+					else {
+						rules[j][3] = null;
+						rules[j][4] = null;
+						continue;
+					}
+					break;
+				case 'WHITEPOINT_MvsP': // Profile vs. measured
+					if (wp.length == 3 && profile_wp.length == 3) {
+						target_Lab = jsapi.math.color.XYZ2Lab(profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]);
+						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
+						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
+						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
+						result[j].E.push(delta.E);
+						result[j].L.push(delta.L);
+						result[j].C.push(delta.C);
+						result[j].H.push(delta.H);
+						result[j].a.push(delta.a);
+						result[j].b.push(delta.b);
+					}
+					else {
+						rules[j][3] = null;
+						rules[j][4] = null;
+						continue;
+					}
+					break;
+			}
+		};
+		this.report_html.push('		<tr' + (!rules[j][3] || (rules[j][5] && rules[j][5].substr(3) != delta_calc_method.substr(3)) ? ' class="statonly' + (verbosestats ? '' : ' verbose') + '"' : '' ) + '>');
+		this.report_html.push('			<td class="first-column">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '&#160;') + '</td><td class="statonly">' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '&#160;') + '</td><td class="patch sample_id">');
 		patch_number_html = [];
 		actual_rgb_html = [];
 		target_rgb_html = [];
@@ -372,52 +470,7 @@ p.generate_report = function(set_delta_calc_method) {
 		};
 		this.report_html = this.report_html.concat(patch_number_html);
 		var number_of_sets = n;
-		if (rules[j][1].length == 1) {
-			switch (rules[j][1][0]) {
-				case 'CAL_REDLEVELS':
-					result[j].sum = (window.CAL_RGBLEVELS[0] / CAL_ENTRYCOUNT * 100).accuracy(1);
-					result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[0] + '/' + CAL_ENTRYCOUNT + ')';
-					break;
-				case 'CAL_GREENLEVELS':
-					result[j].sum = (window.CAL_RGBLEVELS[1] / CAL_ENTRYCOUNT * 100).accuracy(1);
-					result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[1] + '/' + CAL_ENTRYCOUNT + ')';
-					break;
-				case 'CAL_BLUELEVELS':
-					result[j].sum = (window.CAL_RGBLEVELS[2] / CAL_ENTRYCOUNT * 100).accuracy(1);
-					result[j].htmlsum = result[j].sum + '%<br />(' + window.CAL_RGBLEVELS[2] + '/' + CAL_ENTRYCOUNT + ')';
-					break;
-				case 'CAL_GRAYLEVELS':
-					var cal_graylevels = Math.min(CAL_RGBLEVELS[0], CAL_RGBLEVELS[1], CAL_RGBLEVELS[2]);
-					result[j].sum = (cal_graylevels / CAL_ENTRYCOUNT * 100).accuracy(1);
-					result[j].htmlsum = result[j].sum + '%<br />(' + cal_graylevels + '/' + CAL_ENTRYCOUNT + ')';
-					break;
-				case 'WHITEPOINT_MvsA': // Measured vs. assumed
-					target_Lab = jsapi.math.color.XYZ2Lab(wp_assumed[0], wp_assumed[1], wp_assumed[2]);
-					actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
-					// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
-					delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
-					result[j].E.push(delta.E);
-					result[j].L.push(delta.L);
-					result[j].C.push(delta.C);
-					result[j].H.push(delta.H);
-					result[j].a.push(delta.a);
-					result[j].b.push(delta.b);
-					break;
-				case 'WHITEPOINT_MvsP': // Profile vs. measured
-					target_Lab = jsapi.math.color.XYZ2Lab(profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]);
-					actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
-					// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
-					delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
-					result[j].E.push(delta.E);
-					result[j].L.push(delta.L);
-					result[j].C.push(delta.C);
-					result[j].H.push(delta.H);
-					result[j].a.push(delta.a);
-					result[j].b.push(delta.b);
-					break;
-			}
-		};
-		if (!rules[j][1].length || rules[j][1][0] == 'WHITEPOINT_MvsA' || rules[j][1][0] == 'WHITEPOINT_MvsP' || result[j].matches.length >= rules[j][1].length) switch (rules[j][2]) {
+		if (!rules[j][1].length || ((rules[j][1][0] == 'WHITEPOINT_MvsA' || (rules[j][1][0] == 'WHITEPOINT_MvsP' && profile_wp.length == 3)) && wp.length == 3) || result[j].matches.length >= rules[j][1].length) switch (rules[j][2]) {
 			case DELTA_A_MAX:
 				result[j].sum = jsapi.math.absmax(result[j].a);
 				break;
@@ -694,7 +747,6 @@ p.generate_report = function(set_delta_calc_method) {
 			var device = current_rgb;
 			for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
 		}
-		if (typeof actual_Lab[2] != 'number') alert(actual);
 		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_Lab[0].accuracy(2) + '</td><td>' + target_Lab[1].accuracy(2) + '</td><td>' + target_Lab[2].accuracy(2) + '</td><td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_Lab[0].accuracy(2) + '</td><td>' + actual_Lab[1].accuracy(2) + '</td><td>' + actual_Lab[2].accuracy(2) + '</td><td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td><td class="' + (actual.actual_Da != null ? (actual.actual_Da.accuracy(2) < actual.tolerance_Da ? 'ok' : (actual.actual_Da.accuracy(2) == actual.tolerance_Da ? 'warn' : 'ko')) : 'info') + '">' + delta.a.accuracy(2) + '</td><td class="' + (actual.actual_Db != null ? (actual.actual_Db.accuracy(2) < actual.tolerance_Db ? 'ok' : (actual.actual_Db.accuracy(2) == actual.tolerance_Db ? 'warn' : 'ko')) : 'info') + '">' + delta.b.accuracy(2) + '</td><td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td class="bar">' + bar_html.join('') + '</td>');
 		this.report_html.push('		</tr>');
 	};
