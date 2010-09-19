@@ -356,6 +356,19 @@
 			color: #66CC66;
 			border-color: #66CC66;
 		}
+		a#issueslink:link,
+		a#issueslink:visited,
+		html#dispcalGUI a#issueslink:link,
+		html#dispcalGUI a#issueslink:visited {
+			color: #cc0000;
+		}
+		a#issueslink:hover,
+		a#issueslink:visited:hover,
+		html#dispcalGUI a#issueslink:hover,
+		html#dispcalGUI a#issueslink:visited:hover {
+			color: #cc0000;
+			border-color: #66CC66;
+		}
 		#definitions dl {
 			overflow: auto;
 		}
@@ -421,13 +434,13 @@
 				&#160;<br />
 				&#160;<br />
 				&#160;</dt>
-				<dd id="version">0.5.8.1 (Linux)<br />
-				0.5.8.1 (Mac OS X)<br />
-				0.5.8.1 (Windows)<br />
-				0.5.8.1 (Source)<br />
+				<dd id="version">0.6.2.2 (Linux)<br />
+				0.6.2.2 (Mac OS X)<br />
+				0.6.2.2 (Windows)<br />
+				0.6.2.2 (Source)<br />
 				<a href="#history">Changelog</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-08-01 03:19 (UTC)</dd>
+				<dd id="date">2010-09-19 17:53 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -436,6 +449,8 @@
 		
 		<p class="info" id="contact">Bug reports, questions, comments, suggestions? Feel free to use the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalGUI-users mailing list</a>, <a href="http://sourceforge.net/tracker/?group_id=257092&amp;atid=1127028">issue tracker</a>, <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932493">support</a> and <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net<br />
 		If you just want to be notified of new releases, you may sign up to the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-news">dispcalGUI-news mailing list</a> (but if you already joined dispcalGUI-users, there's no need to join this list as new release notifications are sent to both).</p>
+		
+		<p class="info">If you would like to support the development of dispcalGUI, you can <a href="http://sourceforge.net/project/project_donations.php?group_id=257092">make a donation using PayPal</a>. If you decide to donate, please also consider donating to <a href="http://argyllcms.com">Argyll CMS</a> (if you haven't already), as dispcalGUI wouldn't be possible without it (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its donation link). Thanks to all <a href="#thanks">donors</a>!</p>
 		
 		<h2>Table of contents</h2>
 		
@@ -452,6 +467,7 @@
 			<li><a href="#prerequisites">Prerequisites</a>
 				<ul>
 					<li><a href="#argyll">Argyll CMS</a></li>
+					<li><a href="#instruments">Supported instruments</a></li>
 					<li><a href="#prerequisites-unattended">Additional prerequisites for unattended calibration and profiling</a></li>
 					<li><a href="#prerequisites-source">Additional prerequisites for using the non-standalone release and source code</a></li>
 				</ul>
@@ -480,7 +496,7 @@
 					<li><a href="#menu-lang">Language menu</a></li>
 				</ul>
 			</li>
-			<li><a href="#issues">Known issues / solutions</a></li>
+			<li><a href="#issues" id="issueslink">Known issues / solutions</a></li>
 			<li><a href="#todo">To-Do / planned features</a></li>
 			<li><a href="#thanks">Thanks and acknowledgements</a></li>
 			<li><a href="#history">Version history / changelog</a></li>
@@ -550,14 +566,14 @@
 		<div id="widegamut">
 			<h2>A note about colorimeters, wide-gamut displays and dispcalGUI</h2>
 			
-			<p>Colorimeters need a correction matrix in hardware or software to obtain correct measurements from wide-gamut displays. The latter is currently not supported by dispcalGUI, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction matrix in hardware), you will need a spectrometer to accurately measure such a screen. If you buy a screen bundled with a colorimeter, the instrument usually has been matched to the screen in some way. But it may be the case that you have to use the supplied software to get correct results, if the correction matrix isn't implemented in the instrument's hardware.</p>
+			<p>Colorimeters need a correction matrix in hardware or software to obtain correct measurements from wide-gamut displays (please also see <a href="http://argyllcms.com/doc/WideGamutColmters.html">“Wide Gamut Displays and Colorimeters”</a> on the Argyll CMS website for more information). The latter is supported when using Argyll CMS &gt;= 1.3.0, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction matrix in hardware), you can apply a correction matrix that has been calculated from spectrometer measurements to help better measure such a screen (but you need a spectrometer in the first place to do the necessary measurements to create such a matrix, or you may <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed 'ccmx' (colorimeter correction matrix) files on the Argyll CMS website">look for a suitable correction matrix on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most colorimeters). If you buy a screen bundled with a colorimeter, the instrument usually has been matched to the screen in some way, so you may not need a software correction matrix in that case.</p>
 		</div>
 		
 		<div id="download">
 			<h2>Download</h2>
 			
 			<h3>Linux DEB/RPM packages</h3>
-			<p>Native packages for several distributions are available via my <a href="https://build.opensuse.org/package/show?package=dispcalGUI&amp;project=home%3Afhoech">openSUSE Build Service repository</a>:</p>
+			<p>Native packages for several distributions are available via <a href="https://build.opensuse.org/package/show?package=dispcalGUI&amp;project=home%3Afhoech">my openSUSE Build Service repository</a>:</p>
 			<p>
 				Debian 5 (Lenny)
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Debian_5.0/i386/">x86</a> | 
@@ -596,18 +612,18 @@
 			
 			<h3>Linux Autopackage</h3>
 			<p>Universal install that should work on a multitude of distributions.</p>
-			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.8.1.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
+			<p><a href="http://dispcalGUI.hoech.net/dispcalGUI-0.6.2.2.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
 			
 			<h3>Stand-alone executable</h3>
 			<p>This is what you should get if you don't have Python installed or cannot satisfy all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>
-				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.8.1.dmg">DMG</a><br />
-				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.8.1-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.8.1-win32.zip">ZIP</a>
+				Mac OS X <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.6.2.2.dmg">DMG</a><br />
+				Windows <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.6.2.2-Setup.exe">Installer</a> | <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.6.2.2-win32.zip">ZIP</a>
 			</p>
 			
 			<h3>Source code</h3>
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
-			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.5.8.1.tar.gz">Tarball</a></p>
+			<p>All platforms <a href="http://dispcalGUI.hoech.net/dispcalGUI-0.6.2.2.tar.gz">Tarball</a></p>
 			<p>
 				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
@@ -674,29 +690,47 @@
 				<p>If you do not know Argyll CMS yet, be sure to look at the 
 				<a href="http://argyllcms.com/doc/ArgyllDoc.html">documentation</a>, specifically 
 				the <a href="http://argyllcms.com/doc/instruments.html">list of supported 
-				instruments</a> and <a href="http://argyllcms.com/doc/Installing.html">installation 
-				instructions</a> (also, please pay attention to the installation instructions for your measurement device).</p>
+				instruments</a> (also see below) and <a href="http://argyllcms.com/doc/Installing.html">installation 
+				instructions</a> (please pay attention to the installation instructions for your measurement device).</p>
+			</div>
+			
+			<div id="instruments">
+				<h3>Supported instruments</h3>
+				
+				<p>All instruments supported by Argyll CMS. For display readings, these currently are:</p>
+				
+				<ul>
+					<li>X-Rite ColorMunki **</li>
+					<li>X-Rite DTP92</li>
+					<li>X-Rite DTP94</li>
+					<li>X-Rite/GretagMacbeth Huey</li>
+					<li>X-Rite/GretagMacbeth i1 Display 1</li>
+					<li>X-Rite/GretagMacbeth i1 Display 2/LT</li>
+					<li>X-Rite/GretagMacbeth i1 Monitor *</li>
+					<li>X-Rite/GretagMacbeth i1 Pro</li>
+					<li>X-Rite/GretagMacbeth Spectrolino</li>
+					<li>Datacolor/ColorVision Spyder 2</li>
+					<li>Datacolor/ColorVision Spyder 3 **</li>
+				</ul>
+				
+				<p>* Argyll CMS &gt;= 1.0.3<br />
+				** Argyll CMS &gt;= 1.1.0</p>
 			</div>
 			
 			<div id="prerequisites-unattended">
 				<h3>Additional prerequisites for unattended calibration and profiling</h3>
 				
-				<p>Normally, the Argyll command line utilities require keyboard input before any measurements. Starting from dispcalGUI v0.2.5b, when using an instrument that is supported by the unattended feature (see below), it is no longer necessary to manually start the measurements for profiling after calibration.
-				</p>
+				<p>When using a spectrometer that is supported by the unattended feature (see below), having to take the instrument off the screen to do a sensor self-calibration again after display calibration before starting the measurements for profiling may be avoided if the menu item “Allow skipping of spectrometer self-calibration” in the “Options” menu is checked (colorimeter measurements are always unattended because they generally do not require a sensor calibration away from the screen, with the exception of the i1 Display 1).</p>
 				
-				<p>Unattended calibration and profiling currently supports the following instruments:</p>
+				<p>Unattended calibration and profiling currently supports the following spectrometers in addition to most colorimeters:</p>
 				
 				<ul>
-					<!--li>X-Rite ColorMunki *</li-->
-					<li>X-Rite DTP94</li>
-					<li>X-Rite/GretagMacbeth i1 Display 2</li>
-					<!--li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro *</li-->
-					<!--li>X-Rite/GretagMacbeth Spectrolino/Spectroscan(T) *</li-->
-					<li>Datacolor/ColorVision Spyder 2</li>
-					<li>Datacolor/ColorVision Spyder 3 *</li>
+					<li>X-Rite ColorMunki</li>
+					<li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro</li>
+					<li>X-Rite/GretagMacbeth Spectrolino</li>
 				</ul>
 				
-				<p>* Argyll CMS &gt;= 1.1.0</p>
+				<p><em>NOTE</em> you may still be forced to do a sensor calibration if the instrument requires it. Also, please look at the possible <a href="#issue-samplereadfail">caveats</a>.</p>
 			</div>
 			
 			<div id="prerequisites-source">
@@ -766,6 +800,12 @@
 			<p>It is recommended to first remove all previous versions.</p>
 			
 			<div id="install-pkg">
+				<h3>Linux DEB/RPM packages</h3>
+				
+				<p>A lot of distributions allow easy installation of DEB and RPM packages via the graphical desktop, i.e. by double-clicking the package file's icon. Please consult your distribution's documentation if you are unsure how to install packages.</p>
+			</div>
+			
+			<div id="install-pkg">
 				<h3>Linux Autopackage (.package)</h3>
 				
 				<p>Before installing the autopackage, first install wxPython (on some systems called python-wxGTK) and optionally numpy (enables the curve viewer) using your system's package management software. To install the autopackage, follow “<a href="http://www.autopackage.org/howtoinstall.html">How to install Linux autopackages in 4 easy steps</a>” (off-site link).</p>
@@ -776,7 +816,7 @@
 				
 				<h4>Mac OS X</h4>
 				
-				<p>Mount the disk image and drag the application icon to your “Applications” folder, then simply run it from there.</p>
+				<p>Mount the disk image and option-drag its icon to your “Applications” folder. Afterwards open the “dispcalGUI” folder in your “Applications” folder and drag dispcalGUI's icon to the dock if you want easy access.</p>
 				
 				<h4>Windows (Installer)</h4>
 				
@@ -919,6 +959,12 @@
 				item “Detect displays and instruments” in the “Options” menu,
 				but normally you shouldn't need this (if you can't seem to get your instrument to appear in the dropdown, please make
 				sure that Argyll recognizes your instrument before filing a bug report).</p>
+				
+				<h4>Choosing a colorimeter correction matrix for a particular (wide-gamut) display</h3>
+		
+				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#widegamut">“A note about colorimeters, wide-gamut displays and dispcalGUI”</a>. A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can be found on the Argyll CMS website.</p>
+				
+				<p>Please note this option is only available if using Argyll CMS &gt;= 1.3.0 and a colorimeter.</p>
 			</div>
 			
 			<div id="settings_calibration">
@@ -944,6 +990,11 @@
 					<dt>Black level</dt>
 						<dd>
 							<p>Set the target brightness of black in cd/m<sup>2</sup>. Setting too high a value may give strange results as it interacts with trying to achieve the target “advertised” tone curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
+						</dd>
+					
+					<dt>Drift compensation during measurements (only available if using Argyll CMS &gt;= 1.3.0)</dt>
+						<dd>							
+							<p>These options invoke instrument black level, and display white level compensation (respectively). Instrument black level drift compensation attempts to combat instrument black calibration drift by using a display black test patch as a reference. If an instrument is not acclimatised sufficiently to the measurement conditions, changes in temperature can affect the black readings. Display white level drift compensation attempts to combat changes in display brightness as it warms up by measuring a white patch every so often, and using it to normalise all the other readings.</p>
 						</dd>
 					
 					<dt id="trc">Tone curve / gamma</dt>
@@ -975,9 +1026,9 @@
 							<p>Normally dispcal will attempt to make all colors down the neutral axis (R=G=B) have the same hue as the chosen white point. Near the black point, red, green or blue can only be added, not subtracted from zero, so the process of making the near black colors have the desired hue, will lighten them to some extent. For a device with a good contrast ratio or a black point that has nearly the same hue as the white, this is not a problem. If the device contrast ratio is not so good, and the black hue is noticeably different to that of the chosen white point (which is often the case for LCD type displays), this could have a noticeably detrimental effect on an already limited contrast ratio. Here the amount of black point hue correction can be controlled. By default a factor of 100% will be used, which is usually good for CRT and also by default a factor of 0% is used for LCD type displays, but you can override these with a custom value between 0% (no correction) to 100% (full correction). If less than full correction is chosen, then the resulting calibration curves will have the target white point down most of the curve, but will then cross over to the native or compromise black point.</p>
 						</dd>
 					
-					<dt>Black point correction rate</dt>
+					<dt>Black point correction rate (only available if using Argyll CMS &gt;= 1.0.4)</dt>
 						<dd>							
-							<p>If the black point is not being set completely to the same hue as the white point (ie. because the factor is less than 100%), then the resulting calibration curves will have the target white point down most of the curve, but will then blend over to the native or compromise black point that is blacker, but not of the right hue. The rate of this blend can be controlled. The default value 400, which results in a target that switches from the white point target to the black, moderately close to the black point. While this typically gives a good visual result with the target neutral hue being maintained to the point where the crossover to the black hue is not visible, it may be asking too much of some displays (typically LCD type displays), and there may be some visual effects due to inconsistent color with viewing angle. For this situation a smaller value may give a better visual result (e.g. try values of 300 or 200. A value of 100 will set a pure linear blend from white point to black point). If there is too much coloration near black, try a larger value, e.g. 600 or 800.</p>
+							<p>If the black point is not being set completely to the same hue as the white point (ie. because the factor is less than 100%), then the resulting calibration curves will have the target white point down most of the curve, but will then blend over to the native or compromise black point that is blacker, but not of the right hue. The rate of this blend can be controlled. The default value 4.0, which results in a target that switches from the white point target to the black, moderately close to the black point. While this typically gives a good visual result with the target neutral hue being maintained to the point where the crossover to the black hue is not visible, it may be asking too much of some displays (typically LCD type displays), and there may be some visual effects due to inconsistent color with viewing angle. For this situation a smaller value may give a better visual result (e.g. try values of 3.0 or 2.0. A value of 1.0 will set a pure linear blend from white point to black point). If there is too much coloration near black, try a larger value, e.g. 6.0 or 8.0.</p>
 						</dd>
 					
 					<dt>Calibration quality</dt>
@@ -1141,7 +1192,7 @@
 				<p>If you want the calibration curves to be adjusted for your ambient lighting conditions, and you have not set an ambient light level in the GUI or want to change it, you may do so by selecting “measure and set ambient for viewing condition adjustment”. You need an instrument that can measure ambient light levels using Argyll, like the i1 Display 2 or i1 Pro. The effects of this viewing condition adjustment can vary depending on other calibration parameters. Please also see the documentation for <a href="#trc">tone curve / gamma</a> and <a href="#ambient">ambient light level</a>. You'll probably want to skip this step to maximize available gamma table tone values after calibration (you can check the effect of calibration curves on the amount of available tone values with the curve viewer in the “tools” menu).</p>
 				
 				<p>Finally, select “continue on to calibration” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted dispcal to help you adjust the display and don't want/need calibration curves to be created, you can also choose “exit” and then select “profile only” from the GUI.<br />
-				If you originally selected “calibrate &amp; profile” and fulfil the requirements for <a href="#prerequisites-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, keyboard interaction is needed to start them manually.</p>
+				If you originally selected “calibrate &amp; profile” and fulfil the requirements for <a href="#prerequisites-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, you may be forced to take the instrument off the screen to do a sensor self-calibration before starting the profiling measurements.</p>
 				
 				<h4>Profile installation</h4>
 				
@@ -1201,6 +1252,12 @@
 						
 					<dt>Allow skipping of spectrometer self-calibration</dt>
 						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip the sensor calibration for characterization measurements if they are run directly after display calibration measurements (unattended calibration &amp; profiling). <em>NOTE</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
+					
+					<dt>Set additional commandline arguments...</dt>
+						<dd>Allows you to set additional options for dispcal, dispread, spotread and colprof in the same way you would specify them on the commandline.</dd>
+					
+					<dt>Enable Argyll CMS diagnostic output</dt>
+						<dd>When checked, outputs diagnostic information for measurements. Useful for debugging. Warning: Very verbose.</dd>
 
 					<dt>Restore defaults</dt>
 						<dd>Restores all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
@@ -1230,7 +1287,7 @@
 						
 						<h4>How were the nominal and recommended aim values chosen?</h4>
 						
-						<p>The nominal tolerances, with the whitepoint, average, maximum and gray balance stemming from <a href="http://www.fogra.org/mediawedge/">UGRA/Fogra Media Wedge</a> and <a href="http://www.ugra.ch/ugra-display-analysis-and-certification-tool.phtml">UDACT</a> aim values, are pretty generous, so I've included somewhat stricter “recommended” numbers which I've chosen more or less arbitrarily to provide a bit “extra safety margin”.<br />
+						<p>The nominal tolerances, with the whitepoint, average, maximum and gray balance Delta E CIE 1976 aim values stemming from <a href="http://www.fogra.org/mediawedge/">UGRA/Fogra Media Wedge</a> and <a href="http://www.ugra.ch/ugra-display-analysis-and-certification-tool.phtml">UDACT</a>, are pretty generous, so I've included somewhat stricter “recommended” numbers which I've chosen more or less arbitrarily to provide a bit “extra safety margin”.<br />
 						For reports generated from reference files that contain CMYK numbers in addition to L*a*b* or XYZ values, you can also select the official Fogra Media Wedge V3 aim values for paper white, CMYK solids and CMY grey, if the chart contains the right CMYK combinations.</p>
 						
 						<h4>How are the results of the profile verification report to be interpreted?</h4>
@@ -1238,7 +1295,7 @@
 						<p>This depends on the chart that was measured. The explanation in the first paragraph sums it up pretty well: If you have calibrated and profiled your display, and want to check how well the profile fits a set of measurements (profile accuracy), or if you want to know if your display has drifted and needs to be re-calibrated/re-profiled, you select a chart containing RGB numbers for the verification. Note that directly after profiling, accuracy can be expected to be high if the profile characterizes the display well, which will usually be the case if the display behaviour is not very non-linear, in which case creating a LUT profile instead of a “curves + matrix” one, or increasing the number of measured patches for LUT profiles, can help.<br />
 						If you want to know how well your profile can simulate another colorspace (softproofing), select a reference file containing L*a*b* or XYZ values, like one of the <a href="http://www.fogra.org/mediawedge/">Fogra Media Wedge</a> subsets (be warned though, only wide-gamut displays will handle a larger offset printing colorspace like FOGRA39 or similar well enough).<br />
 						In both cases, you should check that atleast the nominal tolerances are not exceeded. For a bit “extra safety margin”, look at the recommended values instead.<br />
-						Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from wrong measurements will usually still verify well against other wrong measurements if they don't fluctuate too much) or does not cope with your display well (which is especially true for colorimeters and wide-gamut screens, as such combinations need a correction matrix in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
+						Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from wrong measurements will usually still verify well against other wrong measurements if they don't fluctuate too much) or does not cope with your display well (which is especially true for <a href="#widegamut">colorimeters and wide-gamut screens</a>, as such combinations need a <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed 'ccmx' (colorimeter correction matrix) files on the Argyll CMS website">correction matrix</a> in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
 						
 						<h4>How are profiles evaluated against the measured values?</h4>
 						
@@ -1246,11 +1303,11 @@
 						
 						<h5>General</h5>
 						
-						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/icclu.html">icclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files). Then, the original RGB values from the testchart, or the looked up RGB values for a reference file are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, using a user-selectable ΔE (delta E) formula for the overview, and all implemented formulas for the summary.</p>
+						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/icclu.html">icclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files). Then, the original RGB values from the testchart, or the looked up RGB values for a reference file are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, with user-selectable critera and ΔE (delta E) formula.</p>
 						
-						<h5>How is the whitepoint ΔE calculated?</h5>
+						<h5>How is the assumed vs. measured whitepoint ΔE calculated?</h5>
 		
-						<p>In a report, the correlated color temperature and assumed target whitepoint, as well as the whitepoint ΔE, do warrant some further explanations: The whitepoint ΔE is calculated as difference between the measured whitepoint's and the assumed target whitepoint's normalized XYZ values, which are first converted to L*a*b*. The assumed target whitepoint color temperature shown is simply the rounded correlated color temparature (100K threshold) calculated from the measured XYZ values. The XYZ values for the assumed target whitepoint are obtained by calculating the chromaticity (xy) coordinates of a CIE D illuminant of that color temperature and converting them to XYZ. You can find all the used formulas on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a>.</p>
+						<p>In a report, the correlated color temperature and assumed target whitepoint, as well as the whitepoint ΔE, do warrant some further explanations: The whitepoint ΔE is calculated as difference between the measured whitepoint's and the assumed target whitepoint's normalized XYZ values, which are first converted to L*a*b*. The assumed target whitepoint color temperature shown is simply the rounded correlated color temparature (100K threshold) calculated from the measured XYZ values. The XYZ values for the assumed target whitepoint are obtained by calculating the chromaticity (xy) coordinates of a CIE D (daylight) or blackbody illuminant of that color temperature and converting them to XYZ. You can find all the used formulas on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> and on <a href="http://en.wikipedia.org/wiki/Planckian_locus#Approximation">Wikipedia</a>.</p>
 						
 						<h5>How is the gray balance “range” evaluated?</h5>
 						
@@ -1260,6 +1317,9 @@
 						
 						<p>It sets the nominal (target) L* value to the measured L* value and a*=b*=0, so the profile is effectively ignored and only the calibration (if any) will influence the results of the gray balance checks. Note that this option will not make a difference for a “single curve + matrix” profile, as the single curve effectively already achieves a similar thing (the L* values can be different, but they are ignored for the gray balance checks and only influence the overall result).</p>
 						</dd>
+
+					<dt>Update profile verification report...</dt>
+						<dd>This allows to update an existing report HTML file with the newest template and functionality from this version of dispcalGUI (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
 						
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1270,7 +1330,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 					<dt id="curveviewer">Show curves</dt>
 						<dd>Shows/hides the curve viewer, which graphs calibration and profile tone response curves and also shows the percentage and amount of tone values for calibration curves. Please note that if profile tone response curves are graphed and the selected profile is a table-based (LUT) profile, the displayed curves will be from the additional (and optional) matrix 'rTRC'/'gTRC'/'bTRC' tags, <strong>not</strong> some representation of the lookup table!</dd>
 						
-					<dt>Show actual calibration curves from video card gamma table</dt>
+					<dt>Show actual calibration curves from video card gamma table (only available if using Argyll CMS &gt;= 1.1.0)</dt>
 						<dd>When this menu entry is checked, the curve viewer will show the actual calibration curves from the video card gamma table instead of showing the curves of the currently active profile.</dd>
 						
 					<dt>Show log window</dt>
@@ -1293,6 +1353,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			
 			<ul>
 				<li><a href="#issue-redgreenswapped">General: Wacky image colors (red and green swapped)</a></li>
+				<li><a href="#issue-samplereadfail">Measurements are failing if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</a></li>
 				<li><a href="#issue-win-photoshop-monprofdefect">Photoshop: “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</a></li>
 				<li><a href="#issue-win64-driversigenforcement">MS Windows Vista and 7, 64-bit: Driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
 				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and 7: The display profile isn't used if it was installed for the current user</a></li>
@@ -1307,6 +1368,9 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			
 			<p id="issue-redgreenswapped"><span class="q"><span>General:</span> Wacky image colors (red and green swapped)<br /></span>
 			<span class="a"><span>Solution:</span> This happens when you created a “XYZ LUT + R ↔ G swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Options” menu and select the profile you had the issue with.</span></p>
+			
+			<p id="issue-samplereadfail"><span class="q"><span>General:</span> Measurements are failing (“sample read failed”) if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode<br /></span>
+			<span class="a"><span>Solution:</span> Disable either or all of the above options. The problem seems to mainly occur with the ColorMunki.</span></p>
 			
 			<p id="issue-win-photoshop-monprofdefect"><span class="q"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”<br /></span>
 			<span class="a"><span>Solution:</span> If you see a similar message when launching Photoshop, with the options “use profile regardless” and “ignore profile”, I'd try to “use profile regardless” as I've seen this message appearing even with perfectly good profiles. The exact cause of this issue is still unbeknownst to me, and there is quite a lot, sometimes contradicting information to be found about this or similar issues on the web. <a href="http://kb2.adobe.com/cps/328/328054.html">Adobe has some information</a>, but it seems rather outdated. If you can shed light on this issue, I'd be interested to hear about it.</span></p>
@@ -1363,12 +1427,15 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		<div id="thanks">
 			<h2>Thanks and acknowledgements</h2>
 		
-			<p>I would like to thank the following people:<br />
-			Graeme Gill, for creating Argyll CMS.<br />
-			Loïc Guégant (french translation).<br />
-			Roberto Quintero (spanish translation).<br />
-			Tommaso Schiavinotto (italian translation).<br />
-			And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
+			<p>I would like to thank the following people:</p>
+			
+			<p>Graeme Gill, for creating Argyll CMS<br />
+			Translators: Loïc Guégant (french translation),
+			Roberto Quintero (spanish translation),
+			Tommaso Schiavinotto (italian translation)<br />
+			Recent donors: Eugene Yurov</p>
+			
+			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 			
 			<p><span class="h">Acknowledgements</span><br />
 			Part of the comprehensive Argyll CMS documentation has been used in this document, and was only slightly altered to better fit dispcalGUI's behavior and notations.</p>
@@ -1376,8 +1443,52 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-08-01 03:19 (UTC) 0.5.8.1 -->
+			<!-- 2010-09-19 17:53 (UTC) 0.6.2.2 -->
 			<dl>
+				<dt>2010-09-19 17:53 (UTC) 0.6.2.2</dt>
+					<dd>
+						<h3>0.6.2.2</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Trying to verify or view curves of a (non-Argyll) profile with a 'formula' type vcgt tag no longer fails with a 'NameError'.</li>
+							<li>When the measurement window was moved to the leftmost and/or topmost coordinates of the screen, the calculated relative position could become negative and prevent starting measurements.</li>
+							<li>Trying to profile a display which provides an empty model description via EDID no longer fails.</li>
+							<li>Profile name placeholder %im (instrument measurement mode) now inserts the correct string.</li>
+							<li>Profiling did not finish if “Show actual calibration curves from video card gamma table” was checked and the curves window shown.</li>
+							<li>Fixed black point correction rate not being restored correctly when loading settings.</li>
+							<li>Fixed conversion of the color temperature to xy chromaticity coordinates (the input fields in the GUI) which was erroneously being calculated with the formula for daylight even if a blackbody locus was chosen.</li>
+							<li>Fixed assumed whitepoint in profile verification reports erroneously being calculated  with the formula for daylight even if a blackbody locus was originally chosen when creating the profile.</li>
+							<li>Fixed profile verification reports not working in Internet Explorer 5.x-6.0 and Opera 7.x.</li>
+							<li>Fixed profile verification reports showing “missing data” for some fields if using the Fogra Media Wedge V3 criteria and the reference file contained both XYZ and Lab data.</li>
+							<li>Mac OS X: A double extension (.icc.icm) is no longer added when creating a profile from an existing one (menu “Options”, “Create profile from measurement data...”).</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>When loading settings from calibration (.cal) files, the actual parameters chosen when calibrating are now set instead of stored measured values (e.g. whitepoint, black- and white level. Will only work for .cal files created in this version and up).</li>
+							<li>“Allow skipping of spectrometer self-calibration” (in the “Options” menu) for characterization readings after calibration is now disabled by default to help sensor stability (especially for the ColorMunki).</li>
+							<li>Black point correction rate now uses a floating-point control with the range 0.05...20.0 (consistent with the Argyll CMS dispcal commandline tool) instead of the previous integer control with the range 5...2000.</li>
+							<li>The default evaluation criteria for RGB testcharts in profile verification reports is now RGB only.</li>
+							<li>The default Delta E formula used for results in profile verification reports is now Delta E 2000 (except for standardised criteria like the Fogra Media Wedge V3).</li>
+							<li>Additional statistics in profile verification reports are now hidden by default.</li>
+							<li>Selecting “CMYK” or “RGB” in profile verification reports now actually makes a difference (shows the corresponding device values in the overview).</li>
+							<li>“Evaluate gray balance through calibration only” in profile verification reports is now disabled by default.</li>
+							<li>Windows: Installing a profile system-wide removes an existing user autostart entry for the profile loader to avoid having two entries.</li>
+							<li>Windows: EDID info will be used if available instead of generic device strings ('PnP-Monitor' et al).</li>
+						</ul>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Ability to enable Argyll CMS diagnostic (debugging) output for measurements via menu “Options”.</li>
+							<li>Option to choose blackbody whitepoint reference instead of daylight in profile verification reports.</li>
+							<li>Original profile whitepoint is now shown in profile verification reports.</li>
+							<li>Instrument black level and display white level drift compensation options when using Argyll CMS &gt;= 1.3.0</li>
+							<li>Ability to choose a correction matrix for colorimeters when using Argyll CMS &gt;= 1.3.0</li>
+							<li>Allow setting of additional commandline arguments for dispcal, dispread, spotread and colprof via a new menu item in the “Options” menu.</li>
+							<li>IDEAlliance Control Strip 2009 aim values for profile verification with CMYK test charts.</li>
+							<li>Profile verification report shows instrument measurement mode and correction matrix (if any).</li>
+							<li>Menu option to update existing profile verification reports with the current templates.</li>
+						</ul>
+					</dd>
+				
 				<dt>2010-08-01 03:19 (UTC) 0.5.8.1</dt>
 					<dd>
 						<h3>0.5.8.1</h3>
@@ -1403,7 +1514,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>Mac OS X: The terminal should no longer lose its focus when the measurement area is shown. This should also make the mouse cursor reappear which is otherwise hidden by dispcal/dispread.</li>
 							<li>Mac OS X 10.6: The current display profile should now be determined correctly (e.g. for the curve viewer) when loading its calibration curves or selecting the “&lt;Current&gt;” settings.</li>
 							<li>Windows (installer): An unused console window is no longer shown when launching dispcalGUI via the installed shortcuts.</li>
-							<li>Windows (installer): Fixed executable not working under Windows 2000.</li>
+							<li>Windows: Fixed executable not working under Windows 2000.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
