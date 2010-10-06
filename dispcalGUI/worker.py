@@ -271,38 +271,24 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 	Extract options used for dispcal and colprof from argument strings.
 	"""
 	re_options_dispcal = [
-		"v",
+		"[moupHV]",
 		"d\d+(?:,\d+)?",
-		"c\d+",
-		"m",
-		"o",
-		"u",
+		"[cv]\d+",
 		"q[vlmh]",
 		"y[cl]",
 		"[tT](?:\d+(?:\.\d+)?)?",
 		"w\d+(?:\.\d+)?,\d+(?:\.\d+)?",
-		"b\d+(?:\.\d+)?",
+		"[bfakABF]\d+(?:\.\d+)?",
 		"(?:g(?:240|709|l|s)|[gG]\d+(?:\.\d+)?)",
-		"f\d+(?:\.\d+)?",
-		"a\d+(?:\.\d+)?",
-		"k\d+(?:\.\d+)?",
-		"A\d+(?:\.\d+)?",
-		"B\d+(?:\.\d+)?",
 		"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
-		"p",
-		"F\d+(?:\.\d+)?",
-		"H",
-		"V",  # Argyll >= 1.1.0_RC3 i1pro adaptive mode
 		'X\s+["\'][^"\']+?["\']',  # Argyll >= 1.3.0 colorimeter correction matrix
 		"I[bw]{,2}"  # Argyll >= 1.3.0 drift compensation
 	]
 	re_options_colprof = [
 		"q[lmh]",
 		"a[lxXgsGS]",
-		's\s+["\'][^"\']+?["\']',
-		'S\s+["\'][^"\']+?["\']',
-		"c(?:%s)" % "|".join(viewconds),
-		"d(?:%s)" % "|".join(viewconds)
+		'[sSMA]\s+["\'][^"\']+?["\']',
+		"[cd](?:%s)" % "|".join(viewconds)
 	]
 	options_dispcal = []
 	options_colprof = []
@@ -374,6 +360,22 @@ def get_options_from_profile(profile):
 		dispcal_args = get_options_from_cprt(profile.getCopyright())[0]
 	if not colprof_args and "cprt" in profile.tags:
 		colprof_args = get_options_from_cprt(profile.getCopyright())[1]
+	return get_options_from_args(dispcal_args, colprof_args)
+
+
+def get_options_from_ti3(ti3):
+	if not isinstance(ti3, CGATS.CGATS):
+		ti3 = CGATS.CGATS(ti3)
+	dispcal_args = None
+	colprof_args = None
+	if len(ti3) > 1 and "ARGYLL_DISPCAL_ARGS" in ti3[1] and \
+	   ti3[1].ARGYLL_DISPCAL_ARGS:
+		dispcal_args = ti3[1].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", 
+															"replace")
+	if "ARGYLL_COLPROF_ARGS" in ti3[0] and \
+	   ti3[0].ARGYLL_COLPROF_ARGS:
+		colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-7", 
+															"replace")
 	return get_options_from_args(dispcal_args, colprof_args)
 
 
@@ -852,6 +854,7 @@ class Worker():
 		self.argyll_version = [0, 0, 0]
 		self.argyll_version_string = ""
 		self._displays = []
+		self.display_names = []
 		self.displays = []
 		self.instruments = []
 		self.lut_access = []
@@ -891,7 +894,7 @@ class Worker():
 							 safe_str(exception))
 		return self.tempdir
 
-	def enumerate_displays_and_ports(self, silent=False):
+	def enumerate_displays_and_ports(self, silent=False, check_lut_access=True):
 		"""
 		Run Argyll dispcal to enumerate the available displays and ports.
 		
@@ -906,15 +909,16 @@ class Worker():
 			lut_access = []
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
-			if wx.GetApp().progress_dlg.IsShownOnScreen():
+			if hasattr(wx.GetApp(), "progress_dlg") and \
+			   wx.GetApp().progress_dlg.IsShownOnScreen():
 				wx.GetApp().progress_dlg.Pulse(
 					lang.getstr("enumerating_displays_and_comports"))
-			cmd = get_argyll_util("dispcal")
+			cmd = get_argyll_util("dispcal") or get_argyll_util("dispwin")
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
 				self.argyll_bin_dir = argyll_bin_dir
 				log(self.argyll_bin_dir)
-			result = self.exec_cmd(cmd, [], capture_output=True, 
+			result = self.exec_cmd(cmd, ["-?"], capture_output=True, 
 								   skip_scripts=True, silent=True, 
 								   log_output=False)
 			if isinstance(result, Exception):
@@ -978,13 +982,15 @@ class Worker():
 					if not iname in instruments:
 						instruments.append(iname)
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
-			if wx.GetApp().progress_dlg.IsShownOnScreen():
+			if hasattr(wx.GetApp(), "progress_dlg") and \
+			   wx.GetApp().progress_dlg.IsShownOnScreen():
 				wx.GetApp().progress_dlg.Pulse(
 					lang.getstr("success"))
 			if instruments != self.instruments:
 				self.instruments = instruments
 			if displays != self._displays:
 				self._displays = list(displays)
+				self.display_names = []
 				if sys.platform == "win32":
 					monitors = []
 					for monitor in win32api.EnumDisplayMonitors(None, None):
@@ -1031,57 +1037,58 @@ class Worker():
 						# contains the monitor model
 						displays[i] = " @".join([" ".join(desc), 
 												 display.split("@")[1]])
+					self.display_names.append(displays[i].split("@")[0].strip())
 				self.displays = displays
-				# Check lut access
-				i = 0
-				dispwin = get_argyll_util("dispwin")
-				for disp in displays:
-					if verbose >= 1 and not silent:
-						safe_print(lang.getstr("checking_lut_access", (i + 1)))
-					if wx.GetApp().progress_dlg.IsShownOnScreen():
-						wx.GetApp().progress_dlg.Pulse(
-							lang.getstr("checking_lut_access", (i + 1)))
-					# Load test.cal
-					result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
-													 get_data_path("test.cal")], 
-										   capture_output=True, 
-										   skip_scripts=True, 
-										   silent=True)
-					if isinstance(result, Exception):
-						safe_print(result)
-					# Check if LUT == test.cal
-					result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-V", 
-													 get_data_path("test.cal")], 
-										   capture_output=True, 
-										   skip_scripts=True, 
-										   silent=True)
-					if isinstance(result, Exception):
-						safe_print(result)
-					retcode = -1
-					for line in self.output:
-						if line.find("IS loaded") >= 0:
-							retcode = 0
-							break
-					# Reset LUT & load profile cal (if any)
-					result = self.exec_cmd(dispwin, ["-d%s" % (i + 1), "-c", 
-													 "-L"], 
-										   capture_output=True, 
-										   skip_scripts=True, 
-										   silent=True)
-					if isinstance(result, Exception):
-						safe_print(result)
-					lut_access += [retcode == 0]
-					if verbose >= 1 and not silent:
-						if retcode == 0:
-							safe_print(lang.getstr("success"))
-						else:
-							safe_print(lang.getstr("failure"))
-					if wx.GetApp().progress_dlg.IsShownOnScreen():
-						wx.GetApp().progress_dlg.Pulse(
-							lang.getstr("success" if retcode == 0 else
-										"failure"))
-					i += 1
-				self.lut_access = lut_access
+				if check_lut_access:
+					dispwin = get_argyll_util("dispwin")
+					for i, disp in enumerate(displays):
+						if verbose >= 1 and not silent:
+							safe_print(lang.getstr("checking_lut_access", (i + 1)))
+						if hasattr(wx.GetApp(), "progress_dlg") and \
+						   wx.GetApp().progress_dlg.IsShownOnScreen():
+							wx.GetApp().progress_dlg.Pulse(
+								lang.getstr("checking_lut_access", (i + 1)))
+						# Load test.cal
+						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
+														 get_data_path("test.cal")], 
+											   capture_output=True, 
+											   skip_scripts=True, 
+											   silent=True)
+						if isinstance(result, Exception):
+							safe_print(result)
+						# Check if LUT == test.cal
+						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-V", 
+														 get_data_path("test.cal")], 
+											   capture_output=True, 
+											   skip_scripts=True, 
+											   silent=True)
+						if isinstance(result, Exception):
+							safe_print(result)
+						retcode = -1
+						for line in self.output:
+							if line.find("IS loaded") >= 0:
+								retcode = 0
+								break
+						# Reset LUT & load profile cal (if any)
+						result = self.exec_cmd(dispwin, ["-d%s" % (i + 1), "-c", 
+														 "-L"], 
+											   capture_output=True, 
+											   skip_scripts=True, 
+											   silent=True)
+						if isinstance(result, Exception):
+							safe_print(result)
+						lut_access += [retcode == 0]
+						if verbose >= 1 and not silent:
+							if retcode == 0:
+								safe_print(lang.getstr("success"))
+							else:
+								safe_print(lang.getstr("failure"))
+						if hasattr(wx.GetApp(), "progress_dlg") and \
+						   wx.GetApp().progress_dlg.IsShownOnScreen():
+							wx.GetApp().progress_dlg.Pulse(
+								lang.getstr("success" if retcode == 0 else
+											"failure"))
+					self.lut_access = lut_access
 		elif silent or not check_argyll_bin():
 			self.clear_argyll_info()
 
@@ -1535,7 +1542,6 @@ class Worker():
 					if not capture_output or stderr is not stdout:
 						stderr.close()
 					if len(errors):
-						errors2 = []
 						for line in errors:
 							if "Instrument Access Failed" in line and \
 							   "-N" in cmdline[:-1]:
@@ -1546,10 +1552,9 @@ class Worker():
 							   line.find("User Aborted") < 0 and \
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
-								errors2 += [line.decode(enc, "replace")]
-						if len(errors2):
-							self.errors = errors2
-							errstr = "".join(errors2).strip()
+								self.errors += [line.decode(enc, "replace")]
+						if len(self.errors):
+							errstr = "".join(self.errors).strip()
 							safe_print(errstr, fn=fn)
 					if tries > 0 and not interact:
 						stderr = tempfile.SpooledTemporaryFile()
@@ -1634,7 +1639,7 @@ class Worker():
 		""" Return name of currently configured display """
 		n = getcfg("display.number") - 1
 		if n >= 0 and n < len(self.displays):
-			return self.displays[n].split(" @")[0]
+			return self.displays[n].split("@")[0].strip()
 		return ""
 	
 	def get_instrument_features(self):
@@ -1711,7 +1716,6 @@ class Worker():
 		args += [getcfg("copyright").encode("ASCII", "asciize")]
 		if getcfg("extra_args.colprof").strip():
 			args += parse_argument_string(getcfg("extra_args.colprof"))
-		self.options_colprof = list(args)
 		options_dispcal = None
 		if "-d3" in self.options_targen:
 			# only add display desc and dispcal options if creating RGB profile
@@ -1725,6 +1729,7 @@ class Worker():
 				if display_name:
 					args.append("-M")
 					args.append(display_name)
+		self.options_colprof = list(args)
 		args += ["-D"]
 		args += [profile_name]
 		args += [inoutfile]
@@ -1999,6 +2004,15 @@ class Worker():
 		# Make sure any measurement options are present
 		if not self.options_dispcal:
 			self.prepare_dispcal(dry_run=True)
+		# strip options we may override (basically all the stuff which will be 
+		# added by add_measurement_features)
+		self.options_dispcal = filter(lambda arg: not arg[:2] in ("-F", "-H", 
+																  "-I", "-P", 
+																  "-V", "-X", 
+																  "-d", "-c", 
+																  "-p", "-y"), 
+									  self.options_dispcal)
+		self.add_measurement_features(self.options_dispcal)
 		cmd = get_argyll_util("dispread")
 		args = []
 		args += ["-v"] # verbose
