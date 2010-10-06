@@ -440,7 +440,7 @@
                               </object>
                               <object class="sizeritem">
                                 <object class="wxStaticText">
-                                  <label>° K</label>
+                                  <label>K</label>
                                 </object>
                                 <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                 <border>4</border>
