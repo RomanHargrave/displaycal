@@ -342,7 +342,8 @@ def setup():
 		post = open(os.path.join(pydir, "util", "rpm_postinstall.sh"), "r").read()
 		postun = open(os.path.join(pydir, "util", "rpm_postuninstall.sh"), "r").read()
 		for tmpl_name in ("debian.changelog", "debian.control", "debian.copyright", 
-						  "debian.rules", "dispcalGUI.dsc", "dispcalGUI.spec"):
+						  "debian.rules", "dispcalGUI.dsc", "dispcalGUI.spec", 
+						  "dispcalGUI.autopackage.spec"):
 			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 			tmpl = codecs.open(tmpl_path, "r", "UTF-8")
 			tmpl_data = tmpl.read()
