@@ -65,6 +65,8 @@ python${python_version} setup.py install --no-compile --use-distutils \
 # Strip extensions
 strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/*.so
 # Byte-compile *.py files and remove traces of RPM_BUILD_ROOT
+%if 0%{?mandriva_version} < 201010
+# Mandriva 2010.1 got rid of byte-compilation
 python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
@@ -74,6 +76,7 @@ py = glob.glob(os.path.join(change_root('$RPM_BUILD_ROOT', get_python_lib(True))
 byte_compile(py, optimize=0, force=1, prefix='$RPM_BUILD_ROOT')
 if 0%{?fedora_version} > 0:
 	byte_compile(py, optimize=1, force=1, prefix='$RPM_BUILD_ROOT')"
+%endif
 # Remove doc directory
 if [ -e "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}" ]; then
 	rm -rf "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}"
@@ -105,7 +108,8 @@ paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in
 				f.readlines())]
 f.close()
 for path in list(paths):
-	if path.endswith('.py'):
+	if path.endswith('.py') and %{?mandriva_version}.0 < 201010:
+		# Mandriva 2010.1 got rid of byte-compilation
 		paths.append(path + 'c')
 		if 0%{?fedora_version} > 0:
 			paths.append(path + 'o')
