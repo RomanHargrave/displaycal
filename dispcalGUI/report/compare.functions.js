@@ -224,7 +224,7 @@ p.generate_report = function(set_delta_calc_method) {
 			wp_assumed = jsapi.math.color.CIEDCorColorTemp2XYZ(colortemp_assumed);
 		for (var i=0; i<wp_assumed.length; i++) {
 			wp_assumed[i] = wp_assumed[i] * 100;
-			wp_assumed[i].accuracy(2);
+			wp_assumed_round[i] = wp_assumed[i].accuracy(2);
 		}
 	}
 	
@@ -248,7 +248,7 @@ p.generate_report = function(set_delta_calc_method) {
 	if (profile_wp.length == 3) this.report_html = this.report_html.concat([
 		'		<tr>',
 		'			<th>Profile whitepoint XYZ (normalized):</th>',
-		'			<td>' + profile_wp_round.join(' ') + (profile_wp_norm_round.join(' ') != profile_wp_round.join(' ') ? ' (' + profile_wp_norm_round.join(' ') + ')' : '') + ', CCT = ' + profile_colortemp + '° K</td>',
+		'			<td>' + profile_wp_round.join(' ') + (profile_wp_norm_round.join(' ') != profile_wp_round.join(' ') ? ' (' + profile_wp_norm_round.join(' ') + ')' : '') + ', CCT = ' + profile_colortemp + 'K</td>',
 		'		</tr>'
 	]);
 	if (wp.length == 3) this.report_html = this.report_html.concat([
@@ -258,11 +258,11 @@ p.generate_report = function(set_delta_calc_method) {
 		'		</tr>',
 		'		<tr>',
 		'			<th>Measured whitepoint XYZ (normalized):</th>',
-		'			<td>' + wp_round.join(' ') + ' (' + wp_norm_round.join(' ') + '), CCT = ' + colortemp + '° K</td>',
+		'			<td>' + wp_round.join(' ') + ' (' + wp_norm_round.join(' ') + '), CCT = ' + colortemp + 'K</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Assumed target whitepoint (XYZ):</th>',
-		'			<td>' + colortemp_assumed + '° K ' + (planckian ? 'blackbody' : 'daylight') + ' (' + wp_assumed_round.join(' ') + ')</td>'
+		'			<td>' + colortemp_assumed + 'K ' + (planckian ? 'blackbody' : 'daylight') + ' (' + wp_assumed_round.join(' ') + ')</td>'
 	]);
 	this.report_html = this.report_html.concat([
 		'		</tr>',
