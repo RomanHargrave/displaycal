@@ -122,9 +122,9 @@ import util_x
 from worker import (FilteredStream, LineCache, Worker, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, get_options_from_cal,
-					get_options_from_profile, make_argyll_compatible_path, 
-					parse_argument_string, printcmdline, set_argyll_bin, 
-					show_result_dialog)
+					get_options_from_profile, get_options_from_ti3,
+					make_argyll_compatible_path, parse_argument_string, 
+					printcmdline, set_argyll_bin, show_result_dialog)
 try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
@@ -1119,6 +1119,10 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 
 		options = self.menubar.GetMenu(self.menubar.FindMenu("menu.options"))
+		menuitem = options.FindItemById(
+			options.FindItem("measure.testchart"))
+		self.Bind(wx.EVT_MENU, self.measure_handler, 
+				  menuitem)
 		self.menuitem_create_profile = options.FindItemById(
 			options.FindItem("create_profile"))
 		self.Bind(wx.EVT_MENU, self.create_profile_handler, 
@@ -1564,10 +1568,10 @@ class MainFrame(BaseFrame):
 			"display.number",
 			"display_lut.link",
 			"display_lut.number",
-			"extra_args.colprof",
-			"extra_args.dispcal",
-			"extra_args.dispread",
-			"extra_args.spotread",
+			##"extra_args.colprof",
+			##"extra_args.dispcal",
+			##"extra_args.dispread",
+			##"extra_args.spotread",
 			"gamap_profile",
 			"gamma",
 			"lang",
@@ -3840,6 +3844,7 @@ class MainFrame(BaseFrame):
 												   (loader_v02b, exception)))
 					# Unified loader
 					name = appname + " Profile Loader"
+					autostart_lnkname = os.path.join(autostart, name + ".lnk")
 					autostart_home_lnkname = os.path.join(autostart_home, 
 														  name + ".lnk")
 					loader_args = []
@@ -3875,8 +3880,7 @@ class MainFrame(BaseFrame):
 								try:
 									scut.QueryInterface(
 										pythoncom.IID_IPersistFile).Save(
-											os.path.join(autostart, 
-														 name + ".lnk"), 0)
+											autostart_lnkname, 0)
 								except Exception, exception:
 									if not silent:
 										InfoDialog(self,
@@ -3903,9 +3907,11 @@ class MainFrame(BaseFrame):
 											   bitmap=geticon(32, 
 															  "dialog-warning"))
 						if autostart_home:
-							scut.QueryInterface(
-								pythoncom.IID_IPersistFile).Save(
-									os.path.join(autostart_home_lnkname), 0)
+							if not os.path.isfile(autostart_lnkname):
+								# Only create user loader if no system loader
+								scut.QueryInterface(
+									pythoncom.IID_IPersistFile).Save(
+										os.path.join(autostart_home_lnkname), 0)
 						else:
 							if not silent:
 								InfoDialog(self, 
@@ -4900,6 +4906,14 @@ class MainFrame(BaseFrame):
 											 self.gamapframe.GetSize()[1] - 
 											 100))
 			self.gamapframe.Show(not self.gamapframe.IsShownOnScreen())
+	
+	def measure_handler(self, event):
+		if sys.platform == "darwin" or debug: self.focus_handler(event)
+		self.update_profile_name_timer.Stop()
+		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
+			self.setup_measurement(self.just_measure, False)
+		else:
+			self.update_profile_name_timer.Start(1000)
 
 	def profile_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
@@ -4952,6 +4966,22 @@ class MainFrame(BaseFrame):
 			self.setup_measurement(self.just_profile, apply_calibration)
 		else:
 			self.update_profile_name_timer.Start(1000)
+
+	def just_measure(self, apply_calibration):
+		safe_print("-" * 80)
+		safe_print(lang.getstr("measure"))
+		self.worker.dispread_after_dispcal = False
+		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+		self.previous_cal = False
+		self.measure(self.just_measure_finish, apply_calibration,
+					 progress_msg=lang.getstr("measuring.characterization"), 
+					 continue_next=True)
+	
+	def just_measure_finish(self, result):
+		if isinstance(result, Exception) or not result:
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
+		self.Show(start_timers=True)
 
 	def just_profile(self, apply_calibration):
 		safe_print("-" * 80)
@@ -5802,6 +5832,14 @@ class MainFrame(BaseFrame):
 						if "dmnd" in profile.tags:
 							display_manufacturer = profile.getDeviceManufacturerDescription()
 					ti3 = CGATS.CGATS(ti3_tmp_path)
+					if source_ext.lower() == ".ti3":
+						options_colprof = get_options_from_ti3(ti3)[1]
+						for option in options_colprof:
+							if option[0] == "M":
+								display_name = option.split(None, 1)[-1][1:-1]
+							elif option[0] == "A":
+								display_manufacturer = option.split(None, 
+																	1)[-1][1:-1]
 					if ti3.queryv1("COLOR_REP") and \
 					   ti3.queryv1("COLOR_REP")[:3] == "RGB":
 						self.worker.options_targen = ["-d3"]
@@ -6564,6 +6602,12 @@ class MainFrame(BaseFrame):
 					return
 				cal = StringIO(profile.tags.get("CIED", "") or 
 							   profile.tags.get("targ", ""))
+				##dmdd = profile.getDeviceModelDescription()
+				##safe_print("Device Model description:", dmdd)
+				##if dmdd and self.worker.display_names.count(dmdd) == 1:
+					##setcfg("display.number", 
+						   ##self.worker.display_names.index(dmdd) + 1)
+					##self.get_set_display()
 			else:
 				try:
 					cal = open(path, "rU")
@@ -6604,17 +6648,18 @@ class MainFrame(BaseFrame):
 					self.worker.options_dispcal = ["-" + arg for arg 
 												   in options_dispcal]
 					for o in options_dispcal:
-						if o[0] == "d":
-							o = o[1:].split(",")
-							setcfg("display.number", o[0])
-							if len(o) > 1:
-								setcfg("display_lut.number", o[1])
-								setcfg("display_lut.link", 
-									   int(o[0] == o[1]))
-							else:
-								setcfg("display_lut.number", o[0])
-								setcfg("display_lut.link", 1)
-							continue
+						##if o[0] == "d":
+							##o = o[1:].split(",")
+							##setcfg("display.number", o[0])
+							##self.get_set_display()
+							##if len(o) > 1:
+								##setcfg("display_lut.number", o[1])
+								##setcfg("display_lut.link", 
+									   ##int(o[0] == o[1]))
+							##else:
+								##setcfg("display_lut.number", o[0])
+								##setcfg("display_lut.link", 1)
+							##continue
 						if o[0] == "c":
 							setcfg("comport.number", o[1:])
 							self.update_comports()
@@ -6692,7 +6737,7 @@ class MainFrame(BaseFrame):
 							continue
 						if o[0] == "X":
 							o = o.split(None, 1)
-							ccmx = o[1][1:-1]
+							ccmx = o[-1][1:-1]
 							if not os.path.abspath(ccmx):
 								ccmx = os.path.join(os.path.dirname(path), ccmx)
 							if getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] == "AUTO":
@@ -6721,7 +6766,7 @@ class MainFrame(BaseFrame):
 							continue
 						if o[0] in ("s", "S"):
 							o = o.split(None, 1)
-							setcfg("gamap_profile", o[1][1:-1])
+							setcfg("gamap_profile", o[-1][1:-1])
 							setcfg("gamap_perceptual", 1)
 							if o[0] == "S":
 								setcfg("gamap_saturation", 1)

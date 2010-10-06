@@ -206,6 +206,7 @@
 	"max": "Max",
 	"maximal": "Maximal",
 	"measure": "Measure",
+	"measure.testchart": "Measure testchart",
 	"measure.darken_background": "Black background",
 	"measureframe.center": "Center",
 	"measure.darken_background.warning": "Attention: If „black background“ is chosen, it will cover the whole screen and you will not be able to see the command line window! If you have a multi-screen setup, move the command line window to another screen before starting the measurement, or use the keyboard (to abort the measurement, press ESC or Q. If the measurement is already running, wait briefly, then press ESC or Q again).",

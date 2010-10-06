@@ -18,6 +18,9 @@
         <label>menu.file</label>
       </object>
       <object class="wxMenu" name="menu.options">
+        <object class="wxMenuItem" name="measure.testchart">
+          <label>measure.testchart</label>
+        </object>
         <object class="wxMenuItem" name="create_profile">
           <label>create_profile</label>
         </object>
