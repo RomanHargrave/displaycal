@@ -22,7 +22,7 @@ elif sys.platform != "darwin":
 	except ImportError:
 		pass
 
-atoz = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+atoz = dict([(i, char) for i, char in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ")])
 pnpidcache = {}
 
 def COMBINE_HI_8LO(hi, lo):
@@ -108,7 +108,7 @@ def get_edid(display_no):
 					break
 		if edid_data:
 			edid_data = "".join(chr(i) for i in edid_data)
-	if edid_data:
+	if edid_data and len(edid_data) >= 128:
 		return parse_edid(edid_data)
 	return {}
 
@@ -117,9 +117,9 @@ def parse_manufacturer_id(block):
 	""" Parse the manufacturer id and return decoded string. """
 	h = COMBINE_HI_8LO(ord(block[0]), ord(block[1]))
 	manufacturer_id = []
-	manufacturer_id.append(atoz[((h>>10) & 0x1f) - 1])
-	manufacturer_id.append(atoz[((h>>5) & 0x1f) - 1])
-	manufacturer_id.append(atoz[(h & 0x1f) - 1])
+	manufacturer_id.append(atoz.get(((h>>10) & 0x1f) - 1, ""))
+	manufacturer_id.append(atoz.get(((h>>5) & 0x1f) - 1, ""))
+	manufacturer_id.append(atoz.get((h & 0x1f) - 1, ""))
 	return "".join(manufacturer_id).strip()
 
 
