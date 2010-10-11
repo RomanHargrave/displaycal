@@ -49,6 +49,15 @@ var DELTA_A_MAX = 'DELTA_A_MAX',
 									 // e.g. if delta1 = -0.2 and delta2 = 0.3, the range is 0.5
 	DELTA_H_STDDEV = 'DELTA_H_STDDEV', // Standard deviation
 	
+	GAMMA_MAX = 'GAMMA_MAX',
+	GAMMA_MIN = 'GAMMA_MIN',
+	GAMMA_AVG = 'GAMMA_AVG',
+	GAMMA_MED = 'GAMMA_MED', // Median
+	GAMMA_MAD = 'GAMMA_MAD', // Median absolute deviation
+	GAMMA_RANGE = 'GAMMA_RANGE', // The 'range' between two delta values is calculated as follows: abs(delta1 - delta2)
+								 // e.g. if delta1 = -0.2 and delta2 = 0.3, the range is 0.5
+	GAMMA_STDDEV = 'GAMMA_STDDEV', // Standard deviation
+	
 	CIE76 = 'CIE76',
 	CIE94 = 'CIE94',
 	CIE00 = 'CIE00',

@@ -55,7 +55,24 @@ CRITERIA_RULES_DEFAULT[10][4] = 3; // Maximum ΔE*94 recommended
 CRITERIA_RULES_DEFAULT[11][3] = 4; // Maximum ΔE*00 nominal
 CRITERIA_RULES_DEFAULT[11][4] = 3; // Maximum ΔE*00 recommended
 
-var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
+var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
+		[
+			["Gamma maximum", [], GAMMA_MAX],
+			["Gamma minimum", [], GAMMA_MIN],
+			["Gamma range", [], GAMMA_RANGE],
+			["Gamma average", [], GAMMA_AVG],
+			["Gamma median", [], GAMMA_MED],
+			["Gamma median absolute deviation", [], GAMMA_MAD],
+			["Gamma standard deviation", [], GAMMA_STDDEV]
+		]
+	),
+	CRITERIA_RULES_VERIFY = CRITERIA_RULES_RGB.concat(
+		[
+			["RGB gray balance (>= 1% luminance) average ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
+			["RGB gray balance (>= 1% luminance) combined Δa*76 and Δb*76 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE76],
+			["RGB gray balance (>= 1% luminance) maximum ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE76]
+		]
+	),
 	CRITERIA_RULES_CMYK = CRITERIA_RULES_DEFAULT.clone(),
 	CRITERIA_DEFAULT = {
 		fields_compare: ['LAB_L', 'LAB_A', 'LAB_B'],
@@ -96,7 +113,7 @@ var CRITERIA_RULES_VERIFY = CRITERIA_RULES_DEFAULT.clone(),
 		delta_calc_method: CIE00, // delta calculation method for overview
 		warn_deviation: 3,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
-		rules: CRITERIA_RULES_CMYK.clone().concat([
+		rules: CRITERIA_RULES_CMYK.concat([
 			// description, [[C, M, Y, K],...], DELTA_[E|L|C|H]_[MAX|AVG], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
 			["Paper white ΔL*00", [[0, 0, 0, 0]], DELTA_L_MAX, 2, 1, CIE00],
 			["Paper white Δa*00", [[0, 0, 0, 0]], DELTA_A_MAX, 1, .5, CIE00],
@@ -203,18 +220,12 @@ comparison_criteria.RGB.id = 'RGB';
 comparison_criteria.RGB.fields_match = ['RGB_R', 'RGB_G', 'RGB_B'];
 comparison_criteria.RGB.name = "RGB";
 comparison_criteria.RGB.strip_name = "RGB";
+comparison_criteria.RGB.rules = CRITERIA_RULES_RGB;
 
 if (window.CRITERIA_GRAYSCALE) {
 	comparison_criteria.RGB_GRAY = comparison_criteria.RGB.clone();
 	comparison_criteria.RGB_GRAY.delta_calc_method = CIE76;
 	comparison_criteria.RGB_GRAY.id = 'RGB_GRAY';
 	comparison_criteria.RGB_GRAY.name = "RGB + gray balance";
-	comparison_criteria.RGB_GRAY.rules = CRITERIA_RULES_VERIFY.concat(
-		[
-			["RGB gray balance (>= 1% luminance) average ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
-			["RGB gray balance (>= 1% luminance) combined Δa*76 and Δb*76 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE76],
-			["RGB gray balance (>= 1% luminance) maximum ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE76]
-		]
-	);
-	//comparison_criteria.RGB_GRAY.rules[24][3] = 95; // Calibration grayscale tone values
+	comparison_criteria.RGB_GRAY.rules = CRITERIA_RULES_VERIFY;
 };
