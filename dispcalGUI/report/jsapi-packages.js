@@ -793,7 +793,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 
 	jsapi.math = {
 		absmax: function(v) {
-			var a = jsapi.array.flat(arguments), r = 0;
+			var a = jsapi.array.flat(arguments), r = a[0];
 			for (var i = 0; i < a.length; i ++) if (Math.abs(r) < Math.abs(a[i])) r = a[i];
 			return r
 		},
@@ -813,12 +813,12 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			return num
 		},
 		max: function(v) {
-			var a = jsapi.array.flat(arguments), r = 0;
+			var a = jsapi.array.flat(arguments), r = a[0];
 			for (var i = 0; i < a.length; i ++) r = Math.max(r, a[i]);
 			return r
 		},
 		min: function(v) {
-			var a = jsapi.array.flat(arguments), r = 0;
+			var a = jsapi.array.flat(arguments), r = a[0];
 			for (var i = 0; i < a.length; i ++) r = Math.min(r, a[i]);
 			return r
 		},
