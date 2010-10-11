@@ -62,15 +62,17 @@ elif sys.platform == "darwin":
 else:
 	xdg_config_home = getenvu("XDG_CONFIG_HOME", expandvarsu("$HOME/.config"))
 	xdg_config_dir_default = "/etc/xdg"
-	xdg_config_dirs = getenvu("XDG_CONFIG_DIRS", 
-							  xdg_config_dir_default).split(os.pathsep)
+	xdg_config_dirs = [os.path.normpath(pth) for pth in 
+					   getenvu("XDG_CONFIG_DIRS", 
+							   xdg_config_dir_default).split(os.pathsep)]
 	if not xdg_config_dir_default in xdg_config_dirs:
 		xdg_config_dirs += [xdg_config_dir_default]
 	xdg_data_home_default = expandvarsu("$HOME/.local/share")
 	xdg_data_home = getenvu("XDG_DATA_HOME", xdg_data_home_default)
 	xdg_data_dirs_default = "/usr/local/share:/usr/share:/var/lib"
-	xdg_data_dirs = getenvu("XDG_DATA_DIRS", 
-							xdg_data_dirs_default).split(os.pathsep)
+	xdg_data_dirs = [os.path.normpath(pth) for pth in 
+					 getenvu("XDG_DATA_DIRS", 
+							 xdg_data_dirs_default).split(os.pathsep)]
 	for dir_ in xdg_data_dirs_default.split(os.pathsep):
 		if not dir_ in xdg_data_dirs:
 			xdg_data_dirs += [dir_]
