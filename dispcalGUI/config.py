@@ -273,15 +273,15 @@ def runtimeconfig(pyfile):
 		data_dirs.append(pydir)
 	if sys.platform not in ("darwin", "win32"):
 		data_dirs.extend([os.path.join(dir_, "doc", appname + "-" + version) 
-						  for dir_ in xdg_data_dirs])
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 		data_dirs.extend([os.path.join(dir_, "doc", "packages", appname) 
-						  for dir_ in xdg_data_dirs])
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 		data_dirs.extend([os.path.join(dir_, "doc", appname) 
-						  for dir_ in xdg_data_dirs])
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 		data_dirs.extend([os.path.join(dir_, "doc", appname.lower())  # Debian
-						  for dir_ in xdg_data_dirs])
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 		data_dirs.extend([os.path.join(dir_, "icons", "hicolor") 
-						  for dir_ in xdg_data_dirs])
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 	if isapp:
 		appdir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
 		if debug:
