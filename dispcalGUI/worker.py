@@ -846,6 +846,31 @@ class Worker():
 			     (instrument_features.get("skip_sensor_cal") or test) and 
 				 self.argyll_version >= [1, 1, 0]))
 	
+	def check_display_conf_oy_compat(self, display_no):
+		""" Check the screen configuration for oyranos-monitor compatibility 
+		
+		oyranos-monitor works off screen coordinates, so it will not handle 
+		overlapping screens (like separate X screens, which will usually 
+		have the same x, y coordinates)!
+		So, oyranos-monitor can only be used if:
+		- The wx.Display count is > 1 which means NOT separate X screens
+		  OR if we use the 1st screen
+		- The screens don't overlap
+		
+		"""
+		oyranos = False
+		if wx.Display.GetCount() > 1 or display_no == 1:
+			oyranos = True
+			for display_rect_1 in self.display_rects:
+				for display_rect_2 in self.display_rects:
+					if display_rect_1 is not display_rect_2:
+						if display_rect_1.Intersects(display_rect_2):
+							oyranos = False
+							break
+				if not oyranos:
+					break
+		return oyranos
+	
 	def clear_argyll_info(self):
 		"""
 		Clear Argyll CMS version, detected displays and instruments.
@@ -855,6 +880,7 @@ class Worker():
 		self.argyll_version_string = ""
 		self._displays = []
 		self.display_names = []
+		self.display_rects = []
 		self.displays = []
 		self.instruments = []
 		self.lut_access = []
@@ -926,6 +952,7 @@ class Worker():
 			arg = None
 			defaults["calibration.black_point_rate.enabled"] = 0
 			n = -1
+			self.display_rects = []
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
@@ -967,6 +994,8 @@ class Worker():
 								   "(Primary Display)":
 									display += u" [PRIMARY]"
 								displays.append(display)
+								self.display_rects.append(
+									wx.Rect(*[int(item) for item in match[0][1:]]))
 						elif arg == "-c":
 							value = value.split(None, 1)
 							if len(value) > 1:
@@ -1495,6 +1524,7 @@ class Worker():
 									start_new_thread(mac_app_activate, 
 													 (1, appname if isapp 
 													 	 else "Python"))
+								retrycount = 0
 								while self.subprocess.isalive():
 									# Automatically retry on error, user can 
 									# cancel via progress dialog
@@ -1506,7 +1536,9 @@ class Worker():
 									   not "Sample read stopped at user request!" \
 									   in self.recent.read() and \
 									   not self.subprocess_abort:
-										logfile.write("\r\n%s: Retrying..." % appname)
+										retrycount += 1
+										logfile.write("\r\n%s: Retrying (%s)..." % 
+													  (appname, retrycount))
 										self.subprocess.send(" ")
 							else:
 								self.subprocess.expect(wexpect.EOF, 
