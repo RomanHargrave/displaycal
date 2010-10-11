@@ -3632,7 +3632,8 @@ class MainFrame(BaseFrame):
 					else:
 						result = True
 					gcm = True
-		if install and which("oyranos-monitor"):
+		if install and which("oyranos-monitor") and \
+		   self.worker.check_display_conf_oy_compat(getcfg("display.number")):
 			# Install using Oyranos
 			oyranos = True
 			display = self.display_ctrl.GetStringSelection()
@@ -4975,13 +4976,25 @@ class MainFrame(BaseFrame):
 		self.previous_cal = False
 		self.measure(self.just_measure_finish, apply_calibration,
 					 progress_msg=lang.getstr("measuring.characterization"), 
-					 continue_next=True)
+					 continue_next=False)
 	
 	def just_measure_finish(self, result):
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
+		else:
+			wx.CallAfter(self.just_measure_show_result, 
+						 os.path.join(getcfg("profile.save_path"), 
+									  getcfg("profile.name.expanded"), 
+									  getcfg("profile.name.expanded") + 
+									  ".ti3"))
 		self.Show(start_timers=True)
+	
+	def just_measure_show_result(self, path):
+		InfoDialog(self, msg=lang.getstr("measurements.complete"), 
+				   ok=lang.getstr("ok"), 
+				   bitmap=geticon(32, "dialog-information"))
+		launch_file(path)
 
 	def just_profile(self, apply_calibration):
 		safe_print("-" * 80)
