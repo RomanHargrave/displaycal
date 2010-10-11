@@ -74,6 +74,7 @@ def setup():
 	setuptools = None
 	skip_instrument_conf_files = "--skip-instrument-configuration-files" in \
 		sys.argv[1:]
+	skip_postinstall = "--skip-postinstall" in sys.argv[1:]
 	use_distutils = not bdist_bbfreeze and not do_py2app
 	use_setuptools = not use_distutils or "--use-setuptools" in \
 		sys.argv[1:] or (os.path.exists("use-setuptools") and 
@@ -142,6 +143,10 @@ def setup():
 
 	if skip_instrument_conf_files:
 		i = sys.argv.index("--skip-instrument-configuration-files")
+		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
+	
+	if skip_postinstall:
+		i = sys.argv.index("--skip-postinstall")
 		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
 
 	if "--use-distutils" in sys.argv[1:]:
@@ -910,7 +915,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 				vc90crt_copy_files(os.path.join(dist_dir, 
 												name + "-" + version))
 		
-		if do_full_install and not is_rpm_build:
+		if do_full_install and not is_rpm_build and not skip_postinstall:
 			from postinstall import postinstall
 			if sys.platform == "win32":
 				path = os.path.join(cmd.install_lib, name)
