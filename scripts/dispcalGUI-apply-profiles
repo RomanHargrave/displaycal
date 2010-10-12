@@ -15,60 +15,33 @@ if sys.platform == "win32":
 	sys.path.insert(0, libpath)
 
 import os
-import subprocess as sp
 
 if sys.platform == "win32":
 	if os.path.isfile(libpath):
 		sys.frozen = True
-	else:
-		# Setup sys.path if running from source
-		srcpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-		if os.path.exists(os.path.join(srcpath, "dispcalGUI", "__init__.py")):
-			sys.path.insert(0, srcpath)
-	# Do not show a glimpse of the subprocess' console window
-	startupinfo = sp.STARTUPINFO()
-	startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-	startupinfo.wShowWindow = sp.SW_HIDE
-else:
-	startupinfo = None
+
+if not getattr(sys, "frozen", False):
+	# Setup sys.path if running from source
+	srcpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+	if os.path.exists(os.path.join(srcpath, "dispcalGUI", "__init__.py")):
+		sys.path.insert(0, srcpath)
 
 from dispcalGUI import config, localization as lang
 from dispcalGUI.config import geticon
+from dispcalGUI.log import safe_print
 from dispcalGUI.util_os import which
-from dispcalGUI.worker import get_argyll_util
+from dispcalGUI.worker import Worker, get_argyll_util
 from dispcalGUI.wxwindows import InfoDialog, wx
 
 
-DISPWIN_NOT_FOUND = 1
-CAL_LOAD_ERROR = 2
-PROFILE_LOAD_ERROR = 4
+worker = Worker()
 
 
 def apply_profiles():
-	retcode = None
-	if sys.platform == "win32":
-		errcode = CAL_LOAD_ERROR
-	else:
-		errcode = PROFILE_LOAD_ERROR
-
-	if sys.platform != "win32":
-		# gcm-apply sets the _ICC_PROFILE root window atom for the first screen, 
-		# per-output xrandr _ICC_PROFILE properties (if xrandr is working) and 
-		# loads the vcgt for all configured screens (device-profiles.conf)
-		gcm_apply = which("gcm-apply")
-		if gcm_apply:
-			retcode = sp.call([gcm_apply])
-			if retcode != 0:
-				retcode = errcode
-
-		if retcode != 0:
-			# oyranos-monitor sets _ICC_PROFILE(_n) root window atoms and loads the 
-			# vcgt for all configured screens (oyranos db backend)
-			oyranos_monitor = which("oyranos-monitor")
-			if oyranos_monitor:
-				retcode = sp.call([oyranos_monitor])
-				if retcode != 0:
-					retcode = errcode
+	errors = []
+	
+	safe_print("=" * 80)
+	safe_print(lang.getstr("calibration.loading_from_display_profile"))
 
 	# dispwin sets the _ICC_PROFILE(_n) root window atom, per-output xrandr 
 	# _ICC_PROFILE property (if xrandr is working) and loads the vcgt for the 
@@ -82,63 +55,79 @@ def apply_profiles():
 	# root window atom.
 	dispwin = get_argyll_util("dispwin")
 	if dispwin:
-		process = sp.Popen([dispwin, "-?"], stdin=sp.PIPE, stdout=sp.PIPE, 
-						   stderr=sp.STDOUT, startupinfo=startupinfo)
-		stdout, stderr = process.communicate()
-		arg = None
-		display_no = 1
-		for line in stdout.splitlines():
-			line = line.strip().split(None, 1)
-			if line and line[0].startswith("-"):
-				arg = line[0]
-			elif len(line) > 1 and line[1].startswith("=") and arg == "-d":
-				if retcode != 0:
-					# Load profile if not yet done
-					if retcode is None:
-						retcode = 0
-					if sp.call([dispwin, "-v", "-d%i" % display_no, "-c", 
-								"-L"], stdin=sp.PIPE, stdout=sp.PIPE, 
-							   stderr=sp.STDOUT, startupinfo=startupinfo) != 0:
-						retcode |= errcode
-				# Verify the calibration was actually loaded
-				process = sp.Popen([dispwin, "-v", "-d%i" % display_no, 
-									"-L", "-V"], stdin=sp.PIPE, stdout=sp.PIPE, 
-								   stderr=sp.STDOUT, startupinfo=startupinfo)
-				stdout, stderr = process.communicate()
-				if "NOT loaded" in stdout:
-					retcode |= errcode
-				display_no += 1
+		worker.enumerate_displays_and_ports(silent=True, check_lut_access=False)
 	else:
-		if retcode is None:
-			retcode = 0
-		if sys.platform == "win32":
-			retcode |= errcode
-		retcode |= DISPWIN_NOT_FOUND
+		errors.append(lang.getstr("argyll.util.not_found", "dispwin"))
 
-	return retcode
+	if sys.platform != "win32":
+		# gcm-apply sets the _ICC_PROFILE root window atom for the first screen, 
+		# per-output xrandr _ICC_PROFILE properties (if xrandr is working) and 
+		# loads the vcgt for all configured screens (device-profiles.conf)
+		gcm_apply = which("gcm-apply")
+		if gcm_apply:
+			worker.exec_cmd(gcm_apply, capture_output=True, skip_scripts=True,
+							silent=False)
+
+		# oyranos-monitor sets _ICC_PROFILE(_n) root window atoms (oyranos 
+		# db backend) and loads the vcgt for all configured screens when 
+		# xcalib is installed
+		oyranos_monitor = which("oyranos-monitor")
+
+	for i, display in enumerate([display.replace("[PRIMARY]", 
+												 lang.getstr("display.primary")) 
+								 for display in worker.displays]):
+		# Load profile and set vcgt
+		if (sys.platform != "win32" and oyranos_monitor and 
+			worker.check_display_conf_oy_compat(i + 1)):
+			worker.exec_cmd(oyranos_monitor, 
+							["-x", str(worker.display_rects[i][0]), 
+							 "-y", str(worker.display_rects[i][1])], 
+							capture_output=True, skip_scripts=True, 
+							silent=False)
+		worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
+								  "-L"], 
+						capture_output=True, skip_scripts=True, 
+						silent=False)
+		errortxt = "\n".join(worker.errors).strip()
+		if errortxt and (not "using linear" in errortxt or 
+						 len(errortxt.split("\n")) > 1):
+			if "Failed to get the displays current ICC profile" in errortxt:
+				# Maybe just not configured
+				continue
+			elif sys.platform == "win32" or \
+			   "Failed to set VideoLUT" in errortxt or \
+			   "We don't have access to the VideoLUT" in errortxt:
+				errstr = lang.getstr("calibration.load_error")
+			else:
+				errstr = lang.getstr("profile.load_error")
+			errors.append(": ".join([display, errstr]))
+			continue
+		# Verify the calibration was actually loaded
+		worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-L", 
+								  "-V"], 
+						capture_output=True, skip_scripts=True, 
+						silent=False)
+		errortxt = "\n".join(worker.errors).strip()
+		if "NOT loaded" in errortxt or \
+		   "We don't have access to the VideoLUT" in errortxt:
+			errors.append(": ".join([display, 
+									lang.getstr("calibration.load_error")]))
+
+	return errors
 
 
 def apply_profiles_and_warn_on_error():
-	retcode = apply_profiles()
-	if retcode != 0:
-		if not wx.GetApp():
-			app = wx.App(0)
-		if retcode & PROFILE_LOAD_ERROR:
-			msg1 = "profile.load_error"
-		elif retcode & CAL_LOAD_ERROR:
-			msg1 = "calibration.load_error"
-		if retcode & DISPWIN_NOT_FOUND:
-			msg2 = lang.getstr("argyll.util.not_found", "dispwin")
-		else:
-			msg2 = ""
-		InfoDialog(None, msg=" ".join([lang.getstr(msg1), msg2]), 
-				   ok=lang.getstr("cancel"), 
+	errors = apply_profiles()
+	if errors:
+		InfoDialog(None, msg="\n".join(errors), 
+				   ok=lang.getstr("ok"), 
 				   bitmap=geticon(32, "dialog-error"))
 
 
 def main():
 	config.initcfg()
 	lang.init()
+	app = wx.App(0)
 	apply_profiles_and_warn_on_error()
 
 
