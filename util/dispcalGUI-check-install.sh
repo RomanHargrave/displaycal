@@ -22,7 +22,7 @@ ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/pysha
 
 ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/pyshared-data/dispcalgui 2>/dev/null && echo
 
-ls -l -G -h --color=always --group-directories-first $HOME/.local/share/dispcalGUI 2>/dev/null && echo
+ls -l -G -h --color=always --group-directories-first $HOME/.local/share/dispcalGUI/* 2>/dev/null && echo
 
 ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/doc/dispcalgui 2>/dev/null && echo
 

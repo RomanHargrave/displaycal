@@ -5,7 +5,7 @@ ShortName: dispcalgui
 SoftwareVersion: `python -c "from dispcalGUI import meta;print meta.version"`
 DisplayName: dispcalGUI - Display Calibration
 RootName: @dispcalgui.hoech.net/dispcalgui:$SOFTWAREVERSION
-RootInstallOnly: Yes
+RootInstallOnly: No
 URL: http://dispcalGUI.hoech.net
 Summary: A graphical user interface for the Argyll CMS display calibration utilities
 Maintainer: Florian Höch <dispcalGUI@hoech.net>
@@ -40,7 +40,8 @@ python setup.py install --no-compile --use-distutils \
 	--install-lib=/lib/python/site-packages \
 	--install-scripts=/bin \
 	--skip-build \
-	--skip-instrument-configuration-files
+	--skip-instrument-configuration-files \
+	--skip-postinstall
 
 cp $source_dir/dispcalGUI/RealDisplaySizeMM.py*.so.tar "$build_root/lib/python/site-packages/dispcalGUI"
 
@@ -111,9 +112,23 @@ python_version=`python -c "import sys;print sys.version[:3]"`
 outputStatus "Determining python binary..."
 python=`which python$python_version 2>/dev/null || which python`
 
-outputStatus "Adjusting script shebang lines..."
+outputStatus "Determining python library prefix..."
+if [ `whoami` = "root" ]; then
+	python_lib_prefix=None
+else
+	python_lib_prefix=\"$PREFIX\"
+fi
+
+outputStatus "Getting python library..."
+platlib=`python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True, prefix=$python_lib_prefix)"`
+
 for script in `ls bin` ; do
+	outputStatus "Adjusting script shebang line for $script..."
 	safeSed bin/$script "s|/usr/bin/python|$python|"
+	if [ `whoami` != "root" ]; then
+		outputStatus "Adjusting module search path for $script..."
+		safeSed bin/$script "s|import sys|import sys\nsys.path.insert(0, '$platlib')|"
+	fi
 done
 
 # Unpack binary extension module
@@ -135,17 +150,18 @@ cd ../../../..
 
 # Copy autostart entries
 if [ `whoami` = "root" ]; then
-	outputStatus "Installing autostart entry to /etc/xdg/autostart..."
+	outputStatus "Installing profile loader autostart entry to /etc/xdg/autostart..."
 	mkdir -p /etc/xdg/autostart
 	copyFiles etc/xdg/autostart/* /etc/xdg/autostart
 else
-	outputStatus "Installing autostart entry to ${XDG_CONFIG_HOME:-~/.config}/autostart..."
-	mkdir -p "${XDG_CONFIG_HOME:-~/.config}/autostart"
-	copyFiles etc/xdg/autostart/* "${XDG_CONFIG_HOME:-~/.config}/autostart"
+	outputStatus "Adjusting profile loader autostart entry..."
+	safeSed etc/xdg/autostart/z-dispcalGUI-apply-profiles.desktop "s|Exec=dispcalGUI-apply-profiles|Exec=$PREFIX/bin/dispcalGUI-apply-profiles|"
+	outputStatus "Installing profile loader autostart entry to ${XDG_CONFIG_HOME:-$HOME/.config}/autostart..."
+	mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
+	copyFiles etc/xdg/autostart/* "${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
 fi
 
 # Copy pure python modules
-platlib=`python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True)"`
 outputStatus "Installing modules to $platlib..."
 copyFiles lib/python/site-packages/* "$platlib"
 
@@ -155,7 +171,7 @@ python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile
-py = glob.glob(os.path.join(get_python_lib(True), 'dispcalGUI', '*.py'))
+py = glob.glob(os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI', '*.py'))
 byte_compile(py, optimize=0, force=1)
 byte_compile(py, optimize=1, force=1)"
 
@@ -163,6 +179,10 @@ installData share/dispcalGUI share/doc
 installExe bin/*
 installIcon share/icons/hicolor
 installMan 1 share/man/man1/*
+if [ `whoami` != "root" ]; then
+	outputStatus "Adjusting desktop menu entry..."
+	safeSed share/applications/dispcalGUI.desktop "s|Exec=dispcalGUI|Exec=$PREFIX/bin/dispcalGUI|"
+fi
 # installMenuItem changes the .desktop file to include so-called 'Actions' 
 # which makes the menu entry vanish in recent GNOME versions after logout! So 
 # we only use it to make our app appear under 'desktop applications' in 
@@ -206,11 +226,18 @@ fi
 
 uninstallFromLog
 
+# Determine python library prefix
+if [ `whoami` = "root" ]; then
+	python_lib_prefix=None
+else
+	python_lib_prefix=\"$PREFIX\"
+fi
+
 # Remove *.py[co]
 python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
-for pyco in glob.glob(os.path.join(get_python_lib(True), 'dispcalGUI', '*.py[co]')):
+for pyco in glob.glob(os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI', '*.py[co]')):
 	os.remove(pyco)"
 
 # Remove menu entry
