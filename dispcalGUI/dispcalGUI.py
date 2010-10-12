@@ -4031,9 +4031,10 @@ class MainFrame(BaseFrame):
 													name + ".desktop")
 					system_desktopfile_path = os.path.join(
 						autostart, name + ".desktop")
-					if not os.path.exists(system_desktopfile_path):
+					if not os.path.exists(system_desktopfile_path) and \
+					   not os.path.exists(desktopfile_path):
 						try:
-							# Always create user loader, even if we later try to 
+							# Create user loader, even if we later try to 
 							# move it to the system-wide location so that atleast 
 							# the user loader is present if the move to the system 
 							# dir fails
