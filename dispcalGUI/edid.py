@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from hashlib import md5
+import codecs
 import os
 import struct
 import sys
@@ -22,7 +23,6 @@ elif sys.platform != "darwin":
 	except ImportError:
 		pass
 
-atoz = dict([(i, char) for i, char in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ")])
 pnpidcache = {}
 
 def COMBINE_HI_8LO(hi, lo):
@@ -114,12 +114,15 @@ def get_edid(display_no):
 
 
 def parse_manufacturer_id(block):
-	""" Parse the manufacturer id and return decoded string. """
+	""" Parse the manufacturer id and return decoded string. 
+	
+	The range is always ASCII charcode 64 to 95.
+	
+	"""
 	h = COMBINE_HI_8LO(ord(block[0]), ord(block[1]))
 	manufacturer_id = []
-	manufacturer_id.append(atoz.get(((h>>10) & 0x1f) - 1, ""))
-	manufacturer_id.append(atoz.get(((h>>5) & 0x1f) - 1, ""))
-	manufacturer_id.append(atoz.get((h & 0x1f) - 1, ""))
+	for shift in (10, 5, 0):
+		manufacturer_id.append(chr(((h >> shift) & 0x1f) + ord('A') - 1))
 	return "".join(manufacturer_id).strip()
 
 
@@ -148,14 +151,16 @@ def get_manufacturer_name(manufacturer_id):
 		for path in paths:
 			if os.path.isfile(path):
 				try:
-					pnp_ids = open(path, "r")
+					pnp_ids = codecs.open(path, "r", "UTF-8", "replace")
 				except IOError:
 					pass
 				else:
 					try:
 						for line in pnp_ids:
 							try:
-								id, name = line.strip().split(None, 1)
+								# Strip leading/trailing whitespace
+								# (non-breaking spaces too)
+								id, name = line.strip(u" \n\r\t\u00a0").split(None, 1)
 							except ValueError:
 								continue
 							pnpidcache[id] = name
@@ -184,25 +189,36 @@ def parse_edid(edid):
 	gamma = ord(edid[23]) / 100.0 + 1
 	features = ord(edid[24])
 	
+	result = locals()
+	
+	text_types = {"\xff": "serial_ascii",
+				  "\xfe": "ascii",
+				  "\xfc": "monitor_name"}
+	
 	# descriptor blocks
 	for block in (edid[54:72], edid[72:90], edid[90:108], edid[108:126]):
-		#if "\0" in (block[0], block[1]):
-		block_type = block[3]
-		if block_type == "\xff":
-			# Monitor serial
-			serial_ascii = block[5:18].strip()
-		elif block_type == "\xfe":
-			# ASCII
-			ascii = block[5:18].strip()
-		elif block_type == "\xfc":
-			# Monitor name
-			monitor_name = block[5:18].strip()
-		#else:
-			#pixel_clock_lsb = ord(block[0])
-			#pixel_clock_msb = ord(block[1])
-	del block, block_type
-	
-	result = locals()
+		if block[:3] != "\0\0\0":
+			# ignore pixel clock data
+			continue
+		text_type = text_types.get(block[3])
+		if text_type:
+			# Make sure it's ASCII (charcode 0...127)
+			desc = block[5:18].strip().decode("ASCII", 
+											  "replace").encode("ASCII", 
+																"replace")
+			# Filter out bogus strings
+			if desc.count("?") <= 4 < len(desc):
+				result[text_type] = desc.replace("?", "-")
+		elif block[3] == "\xfb":
+			# White point index structure
+			if block[5] == "\x01" and block[9] != "\xff":
+				block_type = "gamma"
+				i = 9
+			if block[10] == "\x02" and block[14] != "\xff":
+				block_type = "gamma"
+				i = 14
+			if block_type == "gamma":
+				result[block_type] = ord(block[i]) / 100.0 + 1
 	
 	return result
 
