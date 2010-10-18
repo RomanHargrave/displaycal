@@ -102,7 +102,7 @@
 	"dialog.set_profile_save_path": "Create profile directory “%s” here:",
 	"dialog.set_testchart": "Choose testchart file",
 	"dialog.do_not_show_again": "Do not show this message again",
-	"dialog.current_cal_warning": "The profile will contain the current video card gamma table calibration curves. Do you want to continue?",
+	"dialog.current_cal_warning": "The current calibration curves will be used. Do you want to continue?",
 	"dialog.ti3_no_cal_info": "The measurement data does not contain calibration curves. Do you really want to continue?",
 	"display": "Display device",
 	"display_short": "Display device (abbreviated)",
