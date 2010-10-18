@@ -22,11 +22,7 @@ elif sys.platform == "win32":
 	import pywintypes
 	import win32api
 	import win32com.client
-if sys.platform != "darwin":
-	try:
-		from edid import get_edid
-	except ImportError:
-		get_edid = None
+from edid import WMIConnectionAttributeError, get_edid
 from wxaddons import wx
 import wx.lib.delayedresult as delayedresult
 
@@ -879,6 +875,7 @@ class Worker():
 		self.argyll_version = [0, 0, 0]
 		self.argyll_version_string = ""
 		self._displays = []
+		self.display_edid = []
 		self.display_names = []
 		self.display_rects = []
 		self.displays = []
@@ -1019,6 +1016,7 @@ class Worker():
 				self.instruments = instruments
 			if displays != self._displays:
 				self._displays = list(displays)
+				self.display_edid = []
 				self.display_names = []
 				if sys.platform == "win32":
 					monitors = []
@@ -1047,20 +1045,20 @@ class Worker():
 							n += 1
 						if device:
 							desc.append(device.DeviceString.decode(fs_enc, "replace"))
-					if sys.platform != "darwin" and get_edid:
-						# Get monitor descriptions from EDID
-						try:
-							edid = get_edid(i)
-						except (TypeError, ValueError):
-							edid = None
-						if edid:
-							manufacturer = edid.get("manufacturer", "").split()
-							monitor = edid.get("monitor_name")
-							if monitor and not monitor in "".join(desc):
-								desc = [monitor]
-							##if manufacturer and (not monitor or 
-												 ##not monitor.lower().startswith(manufacturer[0].lower())):
-								##desc.insert(0, manufacturer[0])
+					# Get monitor descriptions from EDID
+					try:
+						edid = get_edid(i)
+					except (TypeError, ValueError, WMIConnectionAttributeError):
+						edid = {}
+					self.display_edid.append(edid)
+					if edid:
+						manufacturer = edid.get("manufacturer", "").split()
+						monitor = edid.get("monitor_name")
+						if monitor and not monitor in "".join(desc):
+							desc = [monitor]
+						##if manufacturer and (not monitor or 
+											 ##not monitor.lower().startswith(manufacturer[0].lower())):
+							##desc.insert(0, manufacturer[0])
 					if desc and desc[-1] not in display:
 						# Only replace the description if it not already
 						# contains the monitor model
@@ -1670,9 +1668,45 @@ class Worker():
 	def get_display_name(self):
 		""" Return name of currently configured display """
 		n = getcfg("display.number") - 1
-		if n >= 0 and n < len(self.displays):
-			return self.displays[n].split("@")[0].strip()
+		if n >= 0 and n < len(self.display_names):
+			return self.display_names[n]
 		return ""
+	
+	def update_display_name_manufacturer(self, ti3, display_name=None,
+										 display_manufacturer=None, 
+										 write=True):
+		options_colprof = []
+		if not display_name and not display_manufacturer:
+			# Note: Do not mix'n'match display name and manufacturer from 
+			# different sources
+			for option in get_options_from_ti3(ti3)[1]:
+				if option[0] == "M":
+					display_name = option.split(None, 1)[-1][1:-1]
+				elif option[0] == "A":
+					display_manufacturer = option.split(None, 1)[-1][1:-1]
+		if not display_name and not display_manufacturer:
+			# Note: Do not mix'n'match display name and manufacturer from 
+			# different sources
+			edid = self.display_edid[max(0, min(len(self.displays), 
+												getcfg("display.number") - 1))]
+			display_name = edid.get("monitor_name")
+			display_manufacturer = edid.get("manufacturer")
+		if not display_name and not display_manufacturer:
+			# Note: Do not mix'n'match display name and manufacturer from 
+			# different sources
+			display_name = self.get_display_name()
+		if display_name:
+			options_colprof.append("-M")
+			options_colprof.append(display_name)
+		if display_manufacturer:
+			options_colprof.append("-A")
+			options_colprof.append(display_manufacturer)
+		if write:
+			# Add dispcal and colprof arguments to ti3
+			ti3 = add_options_to_ti3(ti3, self.options_dispcal, options_colprof)
+			if ti3:
+				ti3.write()
+		return options_colprof
 	
 	def get_instrument_features(self):
 		""" Return features of currently configured instrument """
@@ -1753,14 +1787,11 @@ class Worker():
 			# only add display desc and dispcal options if creating RGB profile
 			options_dispcal = self.options_dispcal
 			if len(self.displays):
-				if display_manufacturer:
-					args.append("-A")
-					args.append(display_manufacturer)
-				if not display_name:
-					display_name = self.get_display_name()
-				if display_name:
-					args.append("-M")
-					args.append(display_name)
+				args.extend(
+					self.update_display_name_manufacturer(inoutfile + ".ti3", 
+														  display_name,
+														  display_manufacturer, 
+														  write=False))
 		self.options_colprof = list(args)
 		args += ["-D"]
 		args += [profile_name]
@@ -2030,8 +2061,7 @@ class Worker():
 								 "\n\n" + safe_unicode(exception)), None
 			cal = calcopy
 			if options_dispcal:
-				self.options_dispcal = ["-" + arg for arg in 
-					options_dispcal]
+				self.options_dispcal = ["-" + arg for arg in options_dispcal]
 		#
 		# Make sure any measurement options are present
 		if not self.options_dispcal:
