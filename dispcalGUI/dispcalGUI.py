@@ -144,16 +144,6 @@ from wx import xrc
 from wx.lib import delayedresult
 from wx.lib.art import flagart
 import wx.lib.hyperlink
-if sys.platform != "darwin":
-	try:
-		from edid import WMIConnectionAttributeError, get_edid
-	except ImportError:
-		get_edid = None
-if sys.platform not in ("darwin", "win32"):
-	try:
-		import xrandr
-	except ImportError:
-		xrandr = None
 
 def _excepthook(etype, value, tb):
 	safe_print("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
@@ -1119,10 +1109,10 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 
 		options = self.menubar.GetMenu(self.menubar.FindMenu("menu.options"))
-		menuitem = options.FindItemById(
+		self.menuitem_measure_testchart = options.FindItemById(
 			options.FindItem("measure.testchart"))
 		self.Bind(wx.EVT_MENU, self.measure_handler, 
-				  menuitem)
+				  self.menuitem_measure_testchart)
 		self.menuitem_create_profile = options.FindItemById(
 			options.FindItem("create_profile"))
 		self.Bind(wx.EVT_MENU, self.create_profile_handler, 
@@ -1251,6 +1241,8 @@ class MainFrame(BaseFrame):
 		Enable/disable menu items based on available Argyll functionality.
 		
 		"""
+		self.menuitem_measure_testchart.Enable(bool(self.worker.displays) and 
+											   bool(self.worker.instruments))
 		self.menuitem_create_profile.Enable(bool(self.worker.displays))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays))
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
@@ -1275,13 +1267,13 @@ class MainFrame(BaseFrame):
 		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")))
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays))
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
-						bool(self.worker.instruments))
+											   bool(self.worker.instruments))
 		self.menuitem_report_uncalibrated.Enable(bool(self.worker.displays) and 
-						bool(self.worker.instruments))
+												 bool(self.worker.instruments))
 		self.menuitem_calibration_verify.Enable(bool(self.worker.displays) and 
-						bool(self.worker.instruments))
+												bool(self.worker.instruments))
 		self.menuitem_profile_verify.Enable(bool(self.worker.displays) and 
-						bool(self.worker.instruments))
+											bool(self.worker.instruments))
 		self.menuitem_show_log.Check(bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Enable(not bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Check(bool(getcfg("log.autoshow")))
@@ -3207,6 +3199,8 @@ class MainFrame(BaseFrame):
 		cmd, args = self.worker.prepare_dispread(apply_calibration)
 		if not isinstance(cmd, Exception):
 			result = self.worker.exec_cmd(cmd, args)
+			if not isinstance(result, Exception) and result:
+				self.worker.update_display_name_manufacturer(args[-1] + ".ti3")
 		else:
 			result = cmd
 		self.worker.wrapup(not isinstance(result, Exception) and 
@@ -3466,11 +3460,9 @@ class MainFrame(BaseFrame):
 					except Exception, exception:
 						handle_error(exception)
 					fp.close()
-			try:
-				edid = get_edid(max(0, min(len(self.worker.displays), 
-										   getcfg("display.number") - 1)))
-			except (TypeError, ValueError):
-				edid = {}
+			edid = self.worker.display_edid[max(0, 
+												min(len(self.worker.displays), 
+													getcfg("display.number") - 1))]
 			incomplete = False
 			section_parts = ["xrandr"]
 			for name in ["manufacturer", "monitor_name", "ascii", 
@@ -4880,19 +4872,10 @@ class MainFrame(BaseFrame):
 
 	def start_profile_worker(self, success_msg, resume=False):
 		self.worker.interactive = False
-		edid = {}
-		if sys.platform != "darwin" and get_edid:
-			try:
-				edid = get_edid(max(0, min(len(self.displays), 
-										   getcfg("display.number") - 1)))
-			except (TypeError, ValueError, WMIConnectionAttributeError):
-				pass
 		self.worker.start(self.profile_finish, self.profile, 
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
 									   "profiling.incomplete")}, 
-						  wkwargs={"display_name": edid.get("monitor_name"),
-								   "display_manufacturer": edid.get("manufacturer")},
 						  progress_msg=lang.getstr("create_profile"), 
 						  resume=resume)
 
@@ -4909,11 +4892,58 @@ class MainFrame(BaseFrame):
 											 100))
 			self.gamapframe.Show(not self.gamapframe.IsShownOnScreen())
 	
+	def current_cal_choice(self):
+		""" Either keep or clear the current calibration """
+		dlg = ConfirmDialog(self, 
+							msg=lang.getstr("dialog.current_cal_warning"), 
+							ok=lang.getstr("continue"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-warning"))
+		dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
+								   lang.getstr("calibration.reset"))
+		dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
+					   border=12)
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		result = dlg.ShowModal()
+		reset_cal = dlg.reset_cal_ctrl.GetValue()
+		dlg.Destroy()
+		if result == wx.ID_CANCEL:
+			self.update_profile_name_timer.Start(1000)
+			return wx.ID_CANCEL
+		if reset_cal:
+			self.reset_cal()
+		else:
+			cal = getcfg("calibration.file")
+			if cal:
+				filename, ext = os.path.splitext(cal)
+				if ext.lower() in (".icc", ".icm"):
+					self.worker.options_dispcal = []
+					try:
+						profile = ICCP.ICCProfile(cal)
+					except (IOError, ICCP.ICCProfileInvalidError), exception:
+						InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+										 "\n" + path, 
+								   ok=lang.getstr("ok"), 
+								   bitmap=geticon(32, "dialog-error"))
+						self.update_profile_name_timer.Start(1000)
+						return wx.ID_CANCEL
+					else:
+						# get dispcal options if present
+						self.worker.options_dispcal = [
+							"-" + arg for arg in 
+							get_options_from_profile(profile)[0]]
+				if os.path.exists(filename + ".cal") and \
+				   can_update_cal(filename + ".cal"):
+					return filename + ".cal"
+	
 	def measure_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
-			self.setup_measurement(self.just_measure, False)
+			apply_calibration = self.current_cal_choice()
+			if apply_calibration != wx.ID_CANCEL:
+				self.setup_measurement(self.just_measure, apply_calibration)
 		else:
 			self.update_profile_name_timer.Start(1000)
 
@@ -4922,50 +4952,9 @@ class MainFrame(BaseFrame):
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3") and \
 		   self.check_overwrite(profile_ext):
-			apply_calibration = False
-			dlg = ConfirmDialog(self, 
-								msg=lang.getstr("dialog.current_cal_warning"), 
-								ok=lang.getstr("continue"), 
-								cancel=lang.getstr("cancel"), 
-								bitmap=geticon(32, "dialog-warning"))
-			dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
-									   lang.getstr("calibration.reset"))
-			dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
-						   border=12)
-			dlg.sizer0.SetSizeHints(dlg)
-			dlg.sizer0.Layout()
-			result = dlg.ShowModal()
-			reset_cal = dlg.reset_cal_ctrl.GetValue()
-			dlg.Destroy()
-			if result == wx.ID_CANCEL:
-				self.update_profile_name_timer.Start(1000)
-				return
-			if reset_cal:
-				self.reset_cal()
-			else:
-				cal = getcfg("calibration.file")
-				if cal:
-					filename, ext = os.path.splitext(cal)
-					if ext.lower() in (".icc", ".icm"):
-						self.worker.options_dispcal = []
-						try:
-							profile = ICCP.ICCProfile(cal)
-						except (IOError, ICCP.ICCProfileInvalidError), exception:
-							InfoDialog(self, msg=lang.getstr("profile.invalid") + 
-											 "\n" + path, 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-error"))
-							self.update_profile_name_timer.Start(1000)
-							return
-						else:
-							# get dispcal options if present
-							self.worker.options_dispcal = [
-								"-" + arg for arg in 
-								get_options_from_profile(profile)[0]]
-					if os.path.exists(filename + ".cal") and \
-					   can_update_cal(filename + ".cal"):
-						apply_calibration = filename + ".cal"
-			self.setup_measurement(self.just_profile, apply_calibration)
+			apply_calibration = self.current_cal_choice()
+			if apply_calibration != wx.ID_CANCEL:
+				self.setup_measurement(self.just_profile, apply_calibration)
 		else:
 			self.update_profile_name_timer.Start(1000)
 
@@ -4980,6 +4969,7 @@ class MainFrame(BaseFrame):
 					 continue_next=False)
 	
 	def just_measure_finish(self, result):
+		self.worker.wrapup(copy=False, remove=True)
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
@@ -5846,14 +5836,6 @@ class MainFrame(BaseFrame):
 						if "dmnd" in profile.tags:
 							display_manufacturer = profile.getDeviceManufacturerDescription()
 					ti3 = CGATS.CGATS(ti3_tmp_path)
-					if source_ext.lower() == ".ti3":
-						options_colprof = get_options_from_ti3(ti3)[1]
-						for option in options_colprof:
-							if option[0] == "M":
-								display_name = option.split(None, 1)[-1][1:-1]
-							elif option[0] == "A":
-								display_manufacturer = option.split(None, 
-																	1)[-1][1:-1]
 					if ti3.queryv1("COLOR_REP") and \
 					   ti3.queryv1("COLOR_REP")[:3] == "RGB":
 						self.worker.options_targen = ["-d3"]
