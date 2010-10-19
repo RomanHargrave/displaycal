@@ -25,7 +25,10 @@ def rpad(value, width):
 	strval = str(value)
 	i = strval.find(".")
 	if i > -1:
-		strval = str(round(value, width - i - 1)).ljust(width, '0')
+		if i < width - 1:
+			strval = str(round(value, width - i - 1)).ljust(width, '0')
+		else:
+			strval = str(int(round(value)))
 	return strval
 
 
@@ -39,7 +42,10 @@ def rcut(value, width):
 	strval = str(value)
 	i = strval.find(".")
 	if i > -1:
-		strval = str(round(value, width - i - 1))
+		if i < width - 1:
+			strval = str(round(value, width - i - 1))
+		else:
+			strval = str(int(round(value)))
 	return strval
 
 
@@ -440,7 +446,7 @@ class CGATS(dict):
 													  '%s (expected float, '
 													  'got %s)' % 
 													  (item, type(value)))
-							if isinstance(value, float):
+							else:
 								lencheck = len(str(abs(value)))
 								if lencheck > self.vmaxlen:
 									self.vmaxlen = lencheck
