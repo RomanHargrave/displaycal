@@ -1,38 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# stdlib
 import getpass
 import math
 import os
 import re
 import shutil
+import subprocess as sp
 import sys
+import tempfile
 import textwrap
 import traceback
 from encodings.aliases import aliases
 from hashlib import md5
 from time import sleep, strftime, time
-
 if sys.platform == "darwin":
 	from thread import start_new_thread
-	from util_mac import (mac_app_activate, mac_terminal_do_script, 
-						  mac_terminal_set_colors)
 elif sys.platform == "win32":
 	from ctypes import windll
+
+# 3rd party
+if sys.platform == "win32":
 	import pywintypes
 	import win32api
 	import win32com.client
-from edid import WMIConnectionAttributeError, get_edid
-from wxaddons import wx
-import wx.lib.delayedresult as delayedresult
 
+# custom
 import CGATS
 import ICCProfile as ICCP
 import colormath
 import config
 import localization as lang
-import subprocess as sp
-import tempfile
 import wexpect
 from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
 						  verify_cgats)
@@ -43,14 +42,20 @@ from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg,
 					geticon, get_data_path, get_verified_path, isapp, profile_ext,
 					setcfg, writecfg)
 from debughelpers import handle_error
+from edid import WMIConnectionAttributeError, get_edid
 from log import log, safe_print
 from meta import name as appname, version
 from options import ascii, debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from util_io import Files, StringIOu as StringIO
+if sys.platform == "darwin":
+	from util_mac import (mac_app_activate, mac_terminal_do_script, 
+						  mac_terminal_set_colors)
 from util_os import getenvu, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
+from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
+import wx.lib.delayedresult as delayedresult
 
 if sys.platform == "win32": #and SendKeys is None:
 	wsh_shell = win32com.client.Dispatch("WScript.Shell")
@@ -1216,15 +1221,15 @@ class Worker():
 						get_argyll_utilname("spotread"))
 		process_cmds = (get_argyll_utilname("colprof"),
 						get_argyll_utilname("targen"))
-		interact = args and cmdname in measure_cmds + process_cmds
-		self.measure = cmdname in measure_cmds
+		interact = args and not "-?" in args and cmdname in measure_cmds + process_cmds
+		self.measure = not "-?" in args and cmdname in measure_cmds
 		if self.measure:
 			# TTBD/FIXME: Skipping of sensor calibration can't be done in
 			# emissive mode (see Argyll source spectro/ss.c, around line 40)
 			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") ##or \
 							  ##"-N" in args
 		self.dispcal = cmdname == get_argyll_utilname("dispcal")
-		self.needs_user_interaction = args and (self.dispcal and 
+		self.needs_user_interaction = args and (self.dispcal and not "-?" in args and 
 									   not "-E" in args and not "-R" in args and 
 									   not "-m" in args and not "-r" in args and 
 									   not "-u" in args) or (self.measure and 
@@ -1467,7 +1472,8 @@ class Worker():
 				else:
 					logfile = Files((stdout, self.recent,
 									 self.lastmsg))
-				if self.interactive or test:
+				if ((self.interactive or (test and not "-?" in args)) and 
+					getattr(self, "terminal", None)):
 					logfile = Files((FilteredStream(self.terminal,
 													discard="",
 													triggers=self.triggers), 
@@ -1489,7 +1495,7 @@ class Worker():
 					else:
 						self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
 														**kwargs)
-						if debug or test:
+						if debug or (test and not "-?" in args):
 							self.subprocess.interact()
 					self.subprocess.logfile_read = logfile
 					if self.subprocess.isalive():
