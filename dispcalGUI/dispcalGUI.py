@@ -4938,7 +4938,6 @@ class MainFrame(BaseFrame):
 					return filename + ".cal"
 	
 	def measure_handler(self, event):
-		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
 			apply_calibration = self.current_cal_choice()
