@@ -1028,6 +1028,7 @@ class Worker():
 					for monitor in win32api.EnumDisplayMonitors(None, None):
 						monitors.append(win32api.GetMonitorInfo(monitor[0]))
 				for i, display in enumerate(displays):
+					display_name = displays[i].split("@")[0].strip()
 					# Make sure we have nice descriptions
 					desc = []
 					if sys.platform == "win32":
@@ -1052,7 +1053,10 @@ class Worker():
 							desc.append(device.DeviceString.decode(fs_enc, "replace"))
 					# Get monitor descriptions from EDID
 					try:
-						edid = get_edid(i)
+						# Important: display_name must be given for get_edid
+						# under Mac OS X, but it doesn't hurt to always
+						# include it
+						edid = get_edid(i, display_name)
 					except (TypeError, ValueError, WMIConnectionAttributeError):
 						edid = {}
 					self.display_edid.append(edid)

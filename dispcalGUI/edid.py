@@ -7,7 +7,6 @@ import math
 import os
 import struct
 import sys
-xrandr = None
 if sys.platform == "win32":
 	if sys.getwindowsversion() >= (6, ):
 		# Use WMI for Vista/Win7
@@ -22,7 +21,11 @@ elif sys.platform != "darwin":
 	try:
 		import xrandr
 	except ImportError:
-		pass
+		xrandr = None
+else:
+	import binascii
+	import re
+	import subprocess as sp
 
 HEADER = (0, 8)
 MANUFACTURER_ID = (8, 10)
@@ -65,9 +68,14 @@ def combine_hi_8lo(hi, lo):
 	return hi << 8 | lo
 
 
-def get_edid(display_no):
-	""" Get and parse EDID. Return dict. """
-	edid_data = None
+def get_edid(display_no, display_name=None):
+	""" Get and parse EDID. Return dict. 
+	
+	On Mac OS X, you need to specify a display name.
+	On all other platforms, you need to specify a display number (zero-based).
+	
+	"""
+	edid = None
 	if sys.platform == "win32":
 		# The ordering will work as long as Argyll continues using
 		# EnumDisplayMonitors
@@ -85,12 +93,12 @@ def get_edid(display_no):
 			for msmonitor in msmonitors:
 				if msmonitor.InstanceName.split("\\")[1] == id:
 					try:
-						edid_data = msmonitor.WmiGetMonitorRawEEdidV1Block(0)
+						edid = msmonitor.WmiGetMonitorRawEEdidV1Block(0)
 					except:
 						# No EDID entry
 						pass
 					else:
-						edid_data = "".join(chr(i) for i in edid_data[0])
+						edid = "".join(chr(i) for i in edid[0])
 					break
 		else:
 			# Use registry as fallback for Win2k/XP/2003
@@ -115,37 +123,52 @@ def get_edid(display_no):
 									 "\\".join([subkey, hkname, 
 												"Device Parameters"]))
 					try:
-						edid_data = _winreg.QueryValueEx(devparms, "EDID")[0]
+						edid = _winreg.QueryValueEx(devparms, "EDID")[0]
 					except WindowsError:
 						# No EDID entry
 						pass
+	elif sys.platform == "darwin":
+		# Get EDID via ioreg
+		p = sp.Popen(["ioreg", "-c", "IODisplay", "-S", "-w0"], stdout=sp.PIPE)
+		stdout, stderr = p.communicate()
+		if stdout:
+			for edid in [binascii.unhexlify(edid_hex) for edid_hex in 
+						 re.findall('"IODisplayEDID"\s*=\s*<([0-9A-Fa-f]*)>', 
+									stdout)]:
+				if edid and len(edid) >= 128:
+					parsed_edid = parse_edid(edid)
+					if parsed_edid.get("monitor_name") == display_name:
+						# On Mac OS X, you need to specify a display name 
+						# because the order is unknown
+						return parsed_edid
+		return {}
 	elif xrandr:
 		# Check XrandR output properties
-		edid_data = None
+		edid = None
 		for key in ("EDID", "EDID_DATA"):
 			try:
-				edid_data = xrandr.get_output_property(display_no, key, 
+				edid = xrandr.get_output_property(display_no, key, 
 													   xrandr.XA_INTEGER)
 			except ValueError:
 				pass
 			else:
 				break
-		if not edid_data:
+		if not edid:
 			# Check X11 atoms
 			for key in ("XFree86_DDC_EDID1_RAWDATA", 
 						"XFree86_DDC_EDID2_RAWDATA"):
 				if display_no > 0:
 					key += "_%s" % display_no
 				try:
-					edid_data = xrandr.get_atom(key)
+					edid = xrandr.get_atom(key)
 				except ValueError:
 					pass
 				else:
 					break
-		if edid_data:
-			edid_data = "".join(chr(i) for i in edid_data)
-	if edid_data and len(edid_data) >= 128:
-		return parse_edid(edid_data)
+		if edid:
+			edid = "".join(chr(i) for i in edid)
+	if edid and len(edid) >= 128:
+		return parse_edid(edid)
 	return {}
 
 
