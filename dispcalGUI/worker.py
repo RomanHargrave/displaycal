@@ -2287,7 +2287,9 @@ class Worker():
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
 			self.progress_wnd.original_msg = None
 		if percentage:
-			if "Setting up the instrument" in msg or "Commencing device calibration" in msg:
+			if "Setting up the instrument" in msg or \
+			   "Commencing device calibration" in msg or \
+			   "Calibration complete" in msg:
 				self.recent.clear()
 				msg = ""
 			keepGoing, skip = self.progress_wnd.Update(math.ceil(percentage), 
