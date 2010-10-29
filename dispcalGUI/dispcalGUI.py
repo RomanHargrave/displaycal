@@ -4588,8 +4588,7 @@ class MainFrame(BaseFrame):
 			if self.install_profile(capture_output=True, cal=False, 
 									install=False, skip_scripts=True, 
 									silent=True) is True: ## event is None or (
-										## hasattr(self, "lut_viewer") and 
-										## self.lut_viewer and 
+										## getattr(self, "lut_viewer", None) and 
 										## self.lut_viewer.IsShownOnScreen())):
 				self.lut_viewer_load_lut(profile=None)
 				if verbose >= 1: ## and event is None:
@@ -4610,8 +4609,7 @@ class MainFrame(BaseFrame):
 			if self.install_profile(capture_output=True, cal=True, 
 									install=False, skip_scripts=True, 
 									silent=True) is True: ## event is None or (
-										## hasattr(self, "lut_viewer") and 
-										## self.lut_viewer and 
+										## getattr(self, "lut_viewer", None) and 
 										## self.lut_viewer.IsShownOnScreen())):
 				self.lut_viewer_load_lut(profile=profile)
 				if verbose >= 1: ## and event is None:
@@ -5099,11 +5097,10 @@ class MainFrame(BaseFrame):
 							 id=self.show_lut.GetId())
 					dlg.sizer3.Add(self.show_lut, flag=wx.TOP | wx.ALIGN_LEFT, 
 								   border=4)
-					if hasattr(self, "lut_viewer") and self.lut_viewer and \
-					   getcfg("lut_viewer.show"):
-						self.show_lut.SetValue(True)
-					#self.init_lut_viewer(profile=profile, 
-										 #show=self.show_lut.GetValue())
+					self.show_lut.SetValue(bool(getcfg("lut_viewer.show")))
+					if not getattr(self, "lut_viewer", None):
+						self.init_lut_viewer(profile=profile, 
+											 show=getcfg("lut_viewer.show"))
 				if ext not in (".icc", ".icm") or \
 				   getcfg("calibration.file") != profile_path:
 					self.preview_handler(preview=True)
@@ -5216,7 +5213,7 @@ class MainFrame(BaseFrame):
 					   profile.getDescription() if profile else None, 
 					   "show:", show)
 		if LUTFrame:
-			if not hasattr(self, "lut_viewer") or not self.lut_viewer:
+			if not getattr(self, "lut_viewer", None):
 				self.lut_viewer = LUTFrame(
 					None, -1, lang.getstr("calibration.lut_viewer.title"), 
 					(getcfg("position.lut_viewer.x"), 
@@ -5270,7 +5267,7 @@ class MainFrame(BaseFrame):
 					   "force_draw:", force_draw)
 		if LUTFrame:
 			self.current_cal = profile
-		if hasattr(self, "lut_viewer") and self.lut_viewer and \
+		if getattr(self, "lut_viewer", None) and \
 		   (self.lut_viewer.IsShownOnScreen() or force_draw):
 			if getcfg("lut_viewer.show_actual_lut") and \
 			   self.worker.argyll_version >= [1, 1, 0] and \
@@ -5327,8 +5324,9 @@ class MainFrame(BaseFrame):
 		setcfg("lut_viewer.show", int(show))
 		if not profile and hasattr(self, "current_cal"):
 			profile = self.current_cal
-		self.lut_viewer_load_lut(event, profile, force_draw=show)
-		if hasattr(self, "lut_viewer") and self.lut_viewer:
+		if show:
+			self.lut_viewer_load_lut(event, profile, force_draw=True)
+		if getattr(self, "lut_viewer", None):
 			self.menuitem_show_lut.Check(show)
 			self.lut_viewer.Show(show)
 			if show:
@@ -7220,7 +7218,7 @@ class MainFrame(BaseFrame):
 		self.infoframe.Hide()
 		if hasattr(self, "tcframe"):
 			self.tcframe.Hide()
-		if hasattr(self, "lut_viewer") and self.lut_viewer and \
+		if getattr(self, "lut_viewer", None) and \
 		   self.lut_viewer.IsShownOnScreen():
 			self.lut_viewer.Hide()
 		self.Hide()
@@ -7256,7 +7254,7 @@ class MainFrame(BaseFrame):
 			self.Destroy()
 
 	def OnDestroy(self, event):
-		if hasattr(self, "lut_viewer") and self.lut_viewer:
+		if getattr(self, "lut_viewer", None):
 			self.lut_viewer.Hide()
 			self.lut_viewer.Destroy()
 		wx.GetApp().progress_dlg.Destroy()
