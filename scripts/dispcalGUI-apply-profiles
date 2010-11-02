@@ -107,7 +107,9 @@ def apply_profiles():
 								  "-V"], 
 						capture_output=True, skip_scripts=True, 
 						silent=False)
-		errortxt = "\n".join(worker.errors).strip()
+		# The 'NOT loaded' message goes to stdout!
+		# Other errors go to stderr
+		errortxt = "\n".join(worker.errors + worker.output).strip()
 		if "NOT loaded" in errortxt or \
 		   "We don't have access to the VideoLUT" in errortxt:
 			errors.append(": ".join([display, 
