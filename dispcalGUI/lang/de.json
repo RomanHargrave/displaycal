@@ -254,6 +254,7 @@
 	"profile.install.error": "Das Profil konnte nicht installiert/aktiviert werden.",
 	"profile.invalid": "Ungültiges Profil.",
 	"profile.load_error": "Anzeigegeräteprofil konnte nicht geladen werden.",
+	"profile.load_on_login": "Profil und Kalibrierung beim Anmelden laden",
 	"profile.name": "Profilname",
 	"profile.name.create": "Profilname erzeugen",
 	"profile.name.placeholders": "Sie können folgende Platzhalter im Profilnamen verwenden:\n\n%a	Abgekürzter Wochentagsname\n%A	Voller Wochentagsname\n%b	Abgekürzter Monatsname\n%B	Voller Monatsname\n%d	Tag des Monats\n%H	Stunde (24-Stunden-Format)\n%I	Stunde (12-Stunden-Format)\n%j	Tag des Jahres\n%m	Monat\n%M	Minute\n%p	AM/PM\n%S	Sekunde\n%U	Woche (Sonntag als erster Wochentag)\n%w	Wochentag (Sonntag ist 0)\n%W	Woche (Montag als erster Wochentag)\n%y	Jahr ohne Jahrhundert\n%Y	Jahr inklusive Jahrhundert",

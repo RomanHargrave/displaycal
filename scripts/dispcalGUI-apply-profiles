@@ -27,6 +27,12 @@ if not getattr(sys, "frozen", False):
 		sys.path.insert(0, srcpath)
 
 from dispcalGUI import config, localization as lang
+
+config.initcfg()
+if not config.getcfg("profile.load_on_login"):
+	# Early exit incase profile loading has been disabled
+	sys.exit()
+
 from dispcalGUI.config import geticon
 from dispcalGUI.log import safe_print
 from dispcalGUI.util_os import which
@@ -127,7 +133,6 @@ def apply_profiles_and_warn_on_error():
 
 
 def main():
-	config.initcfg()
 	lang.init()
 	app = wx.App(0)
 	apply_profiles_and_warn_on_error()

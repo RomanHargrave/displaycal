@@ -3429,6 +3429,10 @@ class MainFrame(BaseFrame):
 			if verbose >= 1: safe_print(lang.getstr("success"))
 		else:
 			if verbose >= 1: safe_print(lang.getstr("failure"))
+	
+	def profile_load_on_login_handler(self, event):
+		setcfg("profile.load_on_login", 
+			   int(self.profile_load_on_login.GetValue()))
 
 	def install_profile(self, capture_output=False, cal=None, 
 						profile_path=None, install=True, skip_scripts=False, 
@@ -5104,6 +5108,16 @@ class MainFrame(BaseFrame):
 				if ext not in (".icc", ".icm") or \
 				   getcfg("calibration.file") != profile_path:
 					self.preview_handler(preview=True)
+			if sys.platform not in ("darwin", "win32") or test:
+				self.profile_load_on_login = wx.CheckBox(dlg, -1, 
+					lang.getstr("profile.load_on_login"))
+				self.profile_load_on_login.SetValue(
+					bool(getcfg("profile.load_on_login")))
+				dlg.Bind(wx.EVT_CHECKBOX, self.profile_load_on_login_handler, 
+						 id=self.profile_load_on_login.GetId())
+				dlg.sizer3.Add(self.profile_load_on_login, 
+							   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+				dlg.sizer3.Add((1, 4))
 			if ((sys.platform == "darwin" or (sys.platform != "win32" and 
 											  self.worker.argyll_version >= 
 											  [1, 1, 0])) and 
