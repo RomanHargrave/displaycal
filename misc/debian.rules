@@ -66,7 +66,8 @@ install: build
 		--exec-prefix=}${install_exec_prefix} \
 		--install-data=${install_datadir} \
 		--install-lib=${install_lib} \
-		--skip-instrument-configuration-files
+		--skip-instrument-configuration-files \
+		--skip-postinstall
 	# udev/hotplug
 	mkdir -p "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb"
 	# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices

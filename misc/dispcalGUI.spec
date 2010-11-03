@@ -61,7 +61,9 @@ python${python_version} setup.py install --no-compile --use-distutils \
 	--exec-prefix=%_exec_prefix \
 	--install-data=%_datadir \
     --install-lib=${install_lib} \
-	--skip-instrument-configuration-files --record=INSTALLED_FILES
+	--skip-instrument-configuration-files \
+	--skip-postinstall \
+	--record=INSTALLED_FILES
 # Strip extensions
 strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/*.so
 # Byte-compile *.py files and remove traces of RPM_BUILD_ROOT
