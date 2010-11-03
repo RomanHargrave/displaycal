@@ -133,13 +133,19 @@ done
 
 # Unpack binary extension module
 outputStatus "Unpacking binary extension module..."
+if [ "$python_version" = "2.5" ]; then
+	pycompat=2.5
+else
+	# Extensions built for 2.6 should also work with 2.7
+	pycompat=2.6
+fi
 cd lib/python/site-packages/dispcalGUI
 uname -m | grep "64" && (
 	outputStatus "Unpacking 64-bit shared library..."
-	tar -xf RealDisplaySizeMM.py$python_version.x86_64.so.tar
+	tar -xf RealDisplaySizeMM.py$pycompat.x86_64.so.tar
 ) || (
 	outputStatus "Unpacking 32-bit shared library..."
-	tar -xf RealDisplaySizeMM.py$python_version.x86.so.tar
+	tar -xf RealDisplaySizeMM.py$pycompat.x86.so.tar
 )
 rm *.tar
 which strip > /dev/null 2>&1 && (
