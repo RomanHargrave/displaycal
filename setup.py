@@ -29,7 +29,7 @@ def create_appdmg():
 	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", 
 													  "%s-%s.dmg" % 
 													  (name, version)), 
-					"-volname", name, "-fs", "HFS+", "-srcfolder", 
+					"-volname", name, "-srcfolder", 
 					os.path.join(pydir, "dist", "py2app.%s-py%s" % 
 					(get_platform(), sys.version[:3]), name + "-" + version)])
 	if retcode != 0:
