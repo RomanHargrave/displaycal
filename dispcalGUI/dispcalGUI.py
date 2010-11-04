@@ -119,7 +119,7 @@ if sys.platform == "darwin":
 from util_os import expanduseru, getenvu, launch_file, listdir_re, which
 from util_str import safe_str, safe_unicode, strtr, wrap
 import util_x
-from worker import (FilteredStream, LineCache, Worker, check_cal_isfile, 
+from worker import (Error, FilteredStream, LineCache, Worker, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, get_options_from_cal,
 					get_options_from_profile, get_options_from_ti3,
