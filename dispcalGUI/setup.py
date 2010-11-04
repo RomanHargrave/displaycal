@@ -654,8 +654,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			if data_basedir.startswith(cmd.install_data + os.path.sep):
 				data_basedir = relpath(data_basedir, cmd.install_data)
 			print "*** changing basedir for data_files:", data_basedir
-			for i in range(len(attrs["data_files"])):
-				f = attrs["data_files"][i]
+			for i, f in enumerate(attrs["data_files"]):
 				if type(f) is StringType:
 					attrs["data_files"][i] = change_root(data_basedir, f)
 				else:

@@ -2414,10 +2414,10 @@ class MainFrame(BaseFrame):
 		if not keep_changed_state: setcfg("settings.changed", 0)
 		items = self.calibration_file_ctrl.GetItems()
 		changed = False
-		for j in range(len(items)):
-			#if j != sel and items[j][0] == "*":
-			if items[j][0] == "*":
-				items[j] = items[j][2:]
+		for j, item in enumerate(items):
+			#if j != sel and item[0] == "*":
+			if item[0] == "*":
+				items[j] = item[2:]
 				changed = True
 		if changed:
 			self.calibration_file_ctrl.Freeze()

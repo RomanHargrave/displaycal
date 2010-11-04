@@ -487,8 +487,8 @@ class TestchartEditor(wx.Frame):
 						while len(clip[-1]) - 1 < col:
 							clip[-1] += [""]
 						clip[-1][col] = self.grid.GetCellValue(row, col)
-					for i in range(len(clip)):
-						clip[i] = "\t".join(clip[i][start_col:])
+					for i, row in enumerate(clip):
+						clip[i] = "\t".join(row[start_col:])
 					clipdata = wx.TextDataObject()
 					clipdata.SetText("\n".join(clip))
 					wx.TheClipboard.Open()
@@ -504,8 +504,8 @@ class TestchartEditor(wx.Frame):
 						txt = StringIO(do.GetText())
 						lines = txt.readlines()
 						txt.close()
-						for i in range(len(lines)):
-							lines[i] = re.sub(" +", "\t", lines[i]).split("\t")
+						for i, line in enumerate(lines):
+							lines[i] = re.sub(" +", "\t", line).split("\t")
 						# translate from selected cells into a grid with None values for not selected cells
 						grid = []
 						cells = self.grid.GetSelection()
@@ -522,14 +522,14 @@ class TestchartEditor(wx.Frame):
 							while len(grid[-1]) - 1 < col:
 								grid[-1] += [None]
 							grid[-1][col] = cell
-						for i in range(len(grid)):
-							grid[i] = grid[i][start_col:]
+						for i, row in enumerate(grid):
+							grid[i] = row[start_col:]
 						# 'paste' values from clipboard
-						for i in range(len(grid)):
-							for j in range(len(grid[i])):
-								if grid[i][j] != None and len(lines) > i and len(lines[i]) > j and self.grid.GetColLabelValue(j):
-									self.grid.SetCellValue(grid[i][j][0], grid[i][j][1], lines[i][j])
-									self.tc_grid_cell_change_handler(CustomGridCellEvent(wx.grid.EVT_GRID_CELL_CHANGE.evtType[0], self.grid, grid[i][j][0], grid[i][j][1]))
+						for i, row in enumerate(grid):
+							for j, cell in enumerate(row):
+								if cell != None and len(lines) > i and len(lines[i]) > j and self.grid.GetColLabelValue(j):
+									self.grid.SetCellValue(cell[0], cell[1], lines[i][j])
+									self.tc_grid_cell_change_handler(CustomGridCellEvent(wx.grid.EVT_GRID_CELL_CHANGE.evtType[0], self.grid, cell[0], cell[1]))
 					return
 			if key == 83: # S
 				if (hasattr(self, "ti1")):
@@ -1339,11 +1339,9 @@ class TestchartEditor(wx.Frame):
 	def tc_get_increments(self, channel, vmaxlen = 4):
 		channel.sort()
 		increments = {"0": 0}
-		for i in range(len(channel)):
-			rev = range(i, len(channel))
-			rev.reverse()
-			for j in rev:
-				inc = round(float(str(channel[j] - channel[i])), vmaxlen)
+		for i, v in enumerate(channel):
+			for j in reversed(xrange(i, len(channel))):
+				inc = round(float(str(channel[j] - v)), vmaxlen)
 				if inc > 0:
 					inc = str(inc)
 					if not inc in increments:

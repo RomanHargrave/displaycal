@@ -253,11 +253,11 @@ def get_argyll_version(name, silent=False):
 					argyll_version_string = line[line.lower().find("version")+8:]
 					argyll_version = re.findall("(\d+|[^.\d]+)", 
 												argyll_version_string)
-					for i in range(len(argyll_version)):
+					for i, v in enumerate(argyll_version):
 						try:
-							argyll_version[i] = int(argyll_version[i])
+							argyll_version[i] = int(v)
 						except ValueError:
-							argyll_version[i] = argyll_version[i]
+							pass
 					break
 	return argyll_version
 
@@ -403,9 +403,9 @@ def make_argyll_compatible_path(path):
 		# \\?\C:\File
 		skip = 2
 	parts = path.split(os.path.sep)
-	for i in range(len(parts)):
+	for i, part in enumerate(parts):
 		if i > skip:
-			parts[i] = unicode(parts[i].encode(make_compat_enc, "safe_asciize"), 
+			parts[i] = unicode(part.encode(make_compat_enc, "safe_asciize"), 
 							   make_compat_enc).replace("/", "_").replace("?", 
 																		  "_")
 	return os.path.sep.join(parts)
@@ -971,11 +971,11 @@ class Worker():
 														 argyll_version))
 						argyll_version = re.findall("(\d+|[^.\d]+)", 
 													argyll_version)
-						for i in range(len(argyll_version)):
+						for i, v in enumerate(argyll_version):
 							try:
-								argyll_version[i] = int(argyll_version[i])
+								argyll_version[i] = int(v)
 							except ValueError:
-								argyll_version[i] = argyll_version[i]
+								pass
 						self.argyll_version = argyll_version
 						continue
 					line = line.split(None, 1)
@@ -1199,8 +1199,7 @@ class Worker():
 				safe_print("", fn=fn)
 		cmdline = [cmd] + args
 		if working_dir:
-			for i in range(len(cmdline)):
-				item = cmdline[i]
+			for i, item in enumerate(cmdline):
 				if i > 0 and (item.find(os.path.sep) > -1 and 
 							  os.path.dirname(item) == working_dir):
 					# Strip the path from all items in the working dir
