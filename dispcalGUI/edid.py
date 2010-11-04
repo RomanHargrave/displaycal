@@ -5,6 +5,7 @@ from hashlib import md5
 import codecs
 import math
 import os
+import string
 import struct
 import sys
 if sys.platform == "win32":
@@ -26,6 +27,8 @@ else:
 	import binascii
 	import re
 	import subprocess as sp
+
+from util_str import ascii_printable
 
 HEADER = (0, 8)
 MANUFACTURER_ID = (8, 10)
@@ -219,7 +222,8 @@ def get_manufacturer_name(manufacturer_id):
 							try:
 								# Strip leading/trailing whitespace
 								# (non-breaking spaces too)
-								id, name = line.strip(u" \n\r\t\u00a0").split(None, 1)
+								id, name = line.strip(string.whitespace + 
+													  u"\u00a0").split(None, 1)
 							except ValueError:
 								continue
 							pnpidcache[id] = name
@@ -300,12 +304,18 @@ def parse_edid(edid):
 			continue
 		text_type = text_types.get(block[BLOCK_TYPE])
 		if text_type:
-			# Make sure it's ASCII (charcode 0...127)
-			desc = block[BLOCK_CONTENTS[0]:BLOCK_CONTENTS[1]].strip().decode(
-				"ASCII", "replace").encode("ASCII", "replace")
+			# Strip all leading/trailing whitespace and NULL chars, then
+			# replace all non-printable chars with NULL
+			desc = ascii_printable(
+				block[BLOCK_CONTENTS[0]:BLOCK_CONTENTS[1]].strip(
+					"\0" + string.whitespace), subst="\0")
 			# Filter out bogus strings
-			if desc.count("?") <= 4 < len(desc):
-				result[text_type] = desc.replace("?", "-")
+			if desc.count("\0") <= 4 < len(desc):
+				# Replace any NULL chars with dashes to make a printable string
+				# also replace whitespace with space
+				result[text_type] = desc.translate(
+					string.maketrans("\0" + string.whitespace, 
+									 "-" + (" " * len(string.whitespace))))
 		elif block[BLOCK_TYPE] == BLOCK_TYPE_COLOR_POINT:
 			for i in (5, 10):
 				# 2nd white point index in range 1...255

@@ -3,6 +3,7 @@
 
 import codecs
 import locale
+import string
 import sys
 try:
 	from functools import reduce
@@ -13,6 +14,10 @@ except ImportError:
 from encoding import get_encodings
 
 fs_enc = get_encodings()[1]
+
+# Control chars are defined as charcodes in the decimal range 0-31 (inclusive) 
+# except whitespace characters, plus charcode 127 (DEL)
+control_chars = "".join([chr(i) for i in range(0, 9) + range(14, 32) + [127]])
 
 # Safe character substitution - can be used for filenames
 # i.e. no \/:*?"<>| will be added through substitution
@@ -155,6 +160,10 @@ def escape(obj):
 codecs.register_error("escape", escape)
 
 
+def ascii_printable(text, subst=""):
+	return "".join([char if char in string.printable else subst for char in text])
+
+
 def center(text, width = None):
 	"""
 	Center (mono-spaced) text.
@@ -187,6 +196,22 @@ def universal_newlines(txt):
 	
 	"""
 	return txt.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def replace_control_chars(txt, replacement=" ", collapse=False):
+	""" Replace all control characters.
+	
+	Default replacement character is ' ' (space).
+	If the 'collapse' keyword argument evaluates to True, consecutive
+	replacement characters are collapsed to a single one.
+	
+	"""
+	txt = strtr(txt, dict(zip(control_chars, [replacement] * len(control_chars))))
+	if collapse:
+		while replacement * 2 in txt:
+			txt = txt.replace(replacement * 2, replacement)
+	return txt ##.translate(string.maketrans(control_chars, 
+										  ##replacement * len(control_chars)))
 
 
 def safe_basestring(obj):
