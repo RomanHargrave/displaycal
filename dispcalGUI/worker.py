@@ -2124,7 +2124,10 @@ class Worker():
 		args = []
 		args += ["-v"]
 		if getcfg("argyll.debug"):
-			args += ["-E6"]
+			if self.argyll_version >= [1, 3, 1]:
+				args += ["-D6"]
+			else:
+				args += ["-E6"]
 		args += ["-d" + self.get_display()]
 		args += ["-c"]
 		if cal is True:
