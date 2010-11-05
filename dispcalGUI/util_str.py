@@ -15,6 +15,9 @@ from encoding import get_encodings
 
 fs_enc = get_encodings()[1]
 
+ascii_printable = "".join([getattr(string, name) for name in "digits", 
+						   "ascii_letters", "punctuation", "whitespace"])
+
 # Control chars are defined as charcodes in the decimal range 0-31 (inclusive) 
 # except whitespace characters, plus charcode 127 (DEL)
 control_chars = "".join([chr(i) for i in range(0, 9) + range(14, 32) + [127]])
@@ -160,8 +163,8 @@ def escape(obj):
 codecs.register_error("escape", escape)
 
 
-def ascii_printable(text, subst=""):
-	return "".join([char if char in string.printable else subst for char in text])
+def make_ascii_printable(text, subst=""):
+	return "".join([char if char in ascii_printable else subst for char in text])
 
 
 def center(text, width = None):

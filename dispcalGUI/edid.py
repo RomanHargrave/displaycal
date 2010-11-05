@@ -28,7 +28,7 @@ else:
 	import re
 	import subprocess as sp
 
-from util_str import ascii_printable
+from util_str import make_ascii_printable
 
 HEADER = (0, 8)
 MANUFACTURER_ID = (8, 10)
@@ -306,7 +306,7 @@ def parse_edid(edid):
 		if text_type:
 			# Strip all leading/trailing whitespace and NULL chars, then
 			# replace all non-printable chars with NULL
-			desc = ascii_printable(
+			desc = make_ascii_printable(
 				block[BLOCK_CONTENTS[0]:BLOCK_CONTENTS[1]].strip(
 					"\0" + string.whitespace), subst="\0")
 			# Filter out bogus strings
