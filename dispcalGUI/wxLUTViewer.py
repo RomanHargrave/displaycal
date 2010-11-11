@@ -212,7 +212,7 @@ class LUTFrame(wx.Frame):
 		self.box_panel.SetBackgroundColour(BGCOLOUR)
 		self.sizer.Add(self.box_panel, flag=wx.EXPAND)
 		
-		self.box_sizer = wx.GridSizer(-1, 3)
+		self.box_sizer = wx.GridSizer(0, 3)
 		self.box_panel.SetSizer(self.box_sizer)
 		
 		self.box_sizer.Add((0, 0))

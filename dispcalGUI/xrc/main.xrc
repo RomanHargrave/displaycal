@@ -289,7 +289,7 @@
                             <rows>2</rows>
                             <vgap>8</vgap>
                             <hgap>8</hgap>
-                            <growablecols>1</growablecols>
+                            <growablecols>0</growablecols>
                           </object>
                           <option>1</option>
                           <flag>wxALL</flag>

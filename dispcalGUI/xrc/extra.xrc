@@ -35,10 +35,6 @@
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
-                <cols>2</cols>
-                <rows>3</rows>
-                <vgap>8</vgap>
-                <growablecols>1</growablecols>
                 <object class="sizeritem">
                   <object class="wxStaticText">
                     <label>spotread</label>
@@ -65,6 +61,9 @@
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
+                <cols>2</cols>
+                <vgap>8</vgap>
+                <growablecols>1</growablecols>
               </object>
               <flag>wxALL|wxEXPAND</flag>
               <border>12</border>

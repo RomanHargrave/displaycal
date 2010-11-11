@@ -95,7 +95,7 @@ class TestchartEditor(wx.Frame):
 
 		border = 4
 
-		sizer = wx.FlexGridSizer(-1, 4)
+		sizer = wx.FlexGridSizer(0, 4)
 		self.sizer.Add(sizer, flag = (wx.ALL & ~wx.BOTTOM), border = 12)
 
 		# white patches
@@ -157,7 +157,7 @@ class TestchartEditor(wx.Frame):
 		self.Bind(wx.EVT_TEXT, self.tc_adaption_handler, id = self.tc_adaption_intctrl.GetId())
 		sizer.Add(self.tc_adaption_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
-		hsizer = wx.GridSizer(-1, 2)
+		hsizer = wx.GridSizer(0, 2)
 		sizer.Add(hsizer, 1, flag = wx.EXPAND)
 		hsizer.Add(wx.StaticText(panel, -1, "%"), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.angle")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT, border = border)
@@ -274,7 +274,7 @@ class TestchartEditor(wx.Frame):
 			preview.sizer = wx.BoxSizer(wx.VERTICAL)
 			preview.SetSizer(preview.sizer)
 
-			self.patchsizer = wx.GridSizer(-1, -1)
+			self.patchsizer = wx.GridSizer(0, 0)
 			preview.sizer.Add(self.patchsizer)
 			preview.SetMinSize((-1, 100))
 			panel.Bind(wx.EVT_ENTER_WINDOW, self.tc_set_default_status, id = panel.GetId())
