@@ -1445,7 +1445,7 @@ class ICCProfile:
 					tagSignature = tag[:4]
 					if debug: print "tagSignature:", tagSignature
 					tagDataOffset = uInt32Number(tag[4:8])
-					if debug: print "    tagDataOffset:", tagCount
+					if debug: print "    tagDataOffset:", tagDataOffset
 					tagDataSize = uInt32Number(tag[8:12])
 					if debug: print "    tagDataSize:", tagDataSize
 					if tagSignature in self._tags:
