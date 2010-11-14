@@ -6,9 +6,13 @@ import math
 import os
 import sys
 
+from config import get_bitmap_as_icon, getcfg, geticon, setcfg
+from meta import name as appname
 from util_decimal import float2dec
-from wxaddons import wx
+from wxaddons import FileDrop, wx
 from wxenhancedplot import _Numeric
+from wxwindows import InfoDialog
+import config
 import wxenhancedplot as plot
 import localization as lang
 import ICCProfile as ICCP
@@ -42,11 +46,11 @@ class LUTCanvas(plot.PlotCanvas):
 	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, 
 				r=True, g=True, b=True):
 		if not title:
-			title = "LUT"
+			title = ""
 		if not xLabel:
-			xLabel = "In"
+			xLabel = lang.getstr("in")
 		if not yLabel:
-			yLabel="Out"
+			yLabel = lang.getstr("out")
 		
 		detect_increments = False
 		Plot = plot.PolySpline
@@ -190,17 +194,17 @@ class LUTFrame(wx.Frame):
 	def __init__(self, *args, **kwargs):
 	
 		if len(args) < 3 and not "title" in kwargs:
-			kwargs["title"] = "LUT Viewer"
-		if len(args) < 5 and not "size" in kwargs:
-			kwargs["size"] = (512, 580)
+			kwargs["title"] = lang.getstr("calibration.lut_viewer.title")
 		
 		wx.Frame.__init__(self, *args, **kwargs)
+		
+		self.SetIcon(get_bitmap_as_icon(16, appname))
 		
 		self.CreateStatusBar(1)
 		
 		self.profile = None
-		self.xLabel = None
-		self.yLabel = None
+		self.xLabel = lang.getstr("in")
+		self.yLabel = lang.getstr("out")
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
@@ -253,6 +257,45 @@ class LUTFrame(wx.Frame):
 
 		self.client.SetPointLabelFunc(self.DrawPointLabel)
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
+		
+		self.droptarget = FileDrop()
+		self.droptarget.drophandlers = {
+			".cal": self.drop_handler,
+			".icc": self.drop_handler,
+			".icm": self.drop_handler
+		}
+		self.droptarget.unsupported_handler = self.drop_unsupported_handler
+		self.client.SetDropTarget(self.droptarget)
+		
+		self.SetSaneGeometry(
+			getcfg("position.lut_viewer.x"), 
+			getcfg("position.lut_viewer.y"), 
+			getcfg("size.lut_viewer.w"), 
+			getcfg("size.lut_viewer.h"))
+		
+		self.Bind(wx.EVT_MOVE, self.OnMove)
+		self.Bind(wx.EVT_SIZE, self.OnSize)
+
+	def drop_handler(self, path):
+		"""
+		Drag'n'drop handler for .cal/.icc/.icm files.
+		
+		"""
+		self.LoadProfile(path)
+		self.DrawLUT()
+
+	def drop_unsupported_handler(self):
+		"""
+		Drag'n'drop handler for unsupported files. 
+		
+		Shows an error message.
+		
+		"""
+		files = self.droptarget._filenames
+		InfoDialog(self, msg=lang.getstr("error.file_type_unsupported") +
+							 "\n\n" + "\n".join(files), 
+				   ok=lang.getstr("ok"), 
+				   bitmap=geticon(32, "dialog-error"))
 
 	def LoadProfile(self, profile):
 		if not profile:
@@ -268,6 +311,8 @@ class LUTFrame(wx.Frame):
 			})
 			profile.size = len(profile.data)
 			profile.is_loaded = True
+		elif not isinstance(profile, ICCP.ICCProfile):
+			profile = ICCP.ICCProfile(profile)
 		self.profile = profile
 		curves = []
 		curves.append(lang.getstr('vcgt'))
@@ -435,6 +480,25 @@ class LUTFrame(wx.Frame):
 		if isinstance(event, wx.MouseEvent):
 			event.Skip() # Go to next handler
 
+	def OnMove(self, event=None):
+		if self.IsShownOnScreen() and not \
+		   self.IsMaximized() and not self.IsIconized():
+			x, y = self.GetScreenPosition()
+			setcfg("position.lut_viewer.x", x)
+			setcfg("position.lut_viewer.y", y)
+		if event:
+			event.Skip()
+	
+	def OnSize(self, event=None):
+		if self.IsShownOnScreen() and not \
+		   self.IsMaximized() and not self.IsIconized():
+			w, h = self.GetSize()
+			setcfg("size.lut_viewer.w", w)
+			setcfg("size.lut_viewer.h", h)
+		if event:
+			event.Skip()
+
+
 class LUTViewer(wx.App):
 
 	def OnInit(self):
@@ -443,13 +507,14 @@ class LUTViewer(wx.App):
 		return True
 
 
-def main():
-
+def main(profile=None):
+	config.initcfg()
+	lang.init()
+	lang.update_defaults()
 	app = LUTViewer(0)
-	profile = ICCP.get_display_profile()
-	app.frame.LoadProfile(profile)
+	app.frame.LoadProfile(profile or ICCP.get_display_profile())
 	app.frame.DrawLUT()
 	app.MainLoop()
 
 if __name__ == '__main__':
-    main()
+    main(*sys.argv[1:2])

@@ -5228,22 +5228,7 @@ class MainFrame(BaseFrame):
 					   "show:", show)
 		if LUTFrame:
 			if not getattr(self, "lut_viewer", None):
-				self.lut_viewer = LUTFrame(
-					None, -1, lang.getstr("calibration.lut_viewer.title"), 
-					(getcfg("position.lut_viewer.x"), 
-					 getcfg("position.lut_viewer.y")), 
-					(getcfg("size.lut_viewer.w"), 
-					 getcfg("size.lut_viewer.h")))
-				self.lut_viewer.xLabel = lang.getstr("in")
-				self.lut_viewer.yLabel = lang.getstr("out")
-				self.lut_viewer.SetSaneGeometry(
-					getcfg("position.lut_viewer.x"), 
-					getcfg("position.lut_viewer.y"), 
-					getcfg("size.lut_viewer.w"), 
-					getcfg("size.lut_viewer.h"))
-				self.lut_viewer.SetIcon(get_bitmap_as_icon(16, appname))
-				self.lut_viewer.Bind(wx.EVT_MOVE, self.lut_viewer_move_handler)
-				self.lut_viewer.Bind(wx.EVT_SIZE, self.lut_viewer_size_handler)
+				self.lut_viewer = LUTFrame(None, -1)
 				self.lut_viewer.Bind(wx.EVT_CLOSE, 
 									 self.lut_viewer_close_handler, 
 									 self.lut_viewer)
@@ -5345,24 +5330,6 @@ class MainFrame(BaseFrame):
 			self.lut_viewer.Show(show)
 			if show:
 				self.lut_viewer.Raise()
-
-	def lut_viewer_move_handler(self, event=None):
-		if self.lut_viewer.IsShownOnScreen() and not \
-		   self.lut_viewer.IsMaximized() and not self.lut_viewer.IsIconized():
-			x, y = self.lut_viewer.GetScreenPosition()
-			setcfg("position.lut_viewer.x", x)
-			setcfg("position.lut_viewer.y", y)
-		if event:
-			event.Skip()
-	
-	def lut_viewer_size_handler(self, event=None):
-		if self.lut_viewer.IsShownOnScreen() and not \
-		   self.lut_viewer.IsMaximized() and not self.lut_viewer.IsIconized():
-			w, h = self.lut_viewer.GetSize()
-			setcfg("size.lut_viewer.w", w)
-			setcfg("size.lut_viewer.h", h)
-		if event:
-			event.Skip()
 	
 	def lut_viewer_close_handler(self, event=None):
 		setcfg("lut_viewer.show", 0)
