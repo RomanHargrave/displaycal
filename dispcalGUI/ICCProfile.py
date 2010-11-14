@@ -779,15 +779,15 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 									tagData[unicodeOffset:unicodeOffset + 4])
 		unicodeDescriptionLength = uInt32Number(tagData[unicodeOffset + 
 														4:unicodeOffset + 8])
-		if unicodeOffset + 8 + unicodeDescriptionLength * 2 > len(tagData):
-			# Damn you MS. The Unicode character count should be the number of 
-			# double-byte characters (including trailing unicode NUL), not the
-			# number of bytes as in the profiles created by Vista and later
-			safe_print("Warning (non-critical): '%s' Unicode part end points "
-					   "past the tag data, assuming number of bytes instead "
-					   "of number of characters for length" % tagData[:4])
-			unicodeDescriptionLength /= 2
 		if unicodeDescriptionLength:
+			if unicodeOffset + 8 + unicodeDescriptionLength * 2 > len(tagData):
+				# Damn you MS. The Unicode character count should be the number of 
+				# double-byte characters (including trailing unicode NUL), not the
+				# number of bytes as in the profiles created by Vista and later
+				safe_print("Warning (non-critical): '%s' Unicode part end points "
+						   "past the tag data, assuming number of bytes instead "
+						   "of number of characters for length" % tagData[:4])
+				unicodeDescriptionLength /= 2
 			if tagData[unicodeOffset + 8 + 
 					   unicodeDescriptionLength:unicodeOffset + 8 + 
 					   unicodeDescriptionLength + 2] == "\0\0":
