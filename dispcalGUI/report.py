@@ -99,6 +99,8 @@ def update(report_path):
 			 '"FF_profile_whitepoint"\s*value="(.+?)"\s\/>', 0),
 			("${PROFILE_WHITEPOINT_NORMALIZED}", 
 			 '"FF_profile_whitepoint_normalized"\s*value="(.+?)"\s\/>', 0),
+			("${SIMULATION_PROFILE}",
+			 'SIMULATION_PROFILE\s*=\s*"(.+?)";', 0),
 			("${TESTCHART}", '"FF_testchart"\s*value="(.+?)"\s\/>', 0),
 			("${ADAPTION}", '"FF_adaption"\s*value="(.+?)"\s\/>', 0),
 			("${DATETIME}", '"FF_datetime"\s*value="(.+?)"\s\/>', 0),

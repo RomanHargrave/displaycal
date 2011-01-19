@@ -2546,10 +2546,55 @@ class Worker():
 			except:
 				pass
 	
-	def ti1_lookup_to_ti3(self, ti1, profile, pcs=None):
+	def chart_lookup(self, cgats, profile, as_ti3=False, 
+					 check_missing_fields=False, absolute=False):
+		if profile.colorSpace == "RGB":
+			labels = ('RGB_R', 'RGB_G', 'RGB_B')
+		else:
+			labels = ('CMYK_C', 'CMYK_M', 'CMYK_Y', 'CMYK_K')
+		ti1 = None
+		ti3_ref = None
+		gray = None
+		scale = 1.0
+		try:
+			if not isinstance(cgats, CGATS.CGATS):
+				cgats = CGATS.CGATS(cgats, True)
+			else:
+				# Always make a copy and do not alter a passed in CGATS instance!
+				cgats = CGATS.CGATS(str(cgats))
+			if 0 in cgats:
+				# only look at the first section
+				cgats[0].filename = cgats.filename
+				cgats = cgats[0]
+			primaries = cgats.queryi(labels)
+			if primaries and not as_ti3:
+				for i in primaries:
+					for label in labels:
+						if primaries[i][label] > 100:
+							scale = 2.55
+							break
+				if scale > 1.0:
+					for i in primaries:
+						for label in labels:
+							primaries[i][label] = primaries[i][label] / scale
+				cgats.type = 'CTI1'
+				cgats.COLOR_REP = profile.colorSpace
+				ti1, ti3_ref, gray = self.ti1_lookup_to_ti3(cgats, profile, 
+															"l", absolute)
+			else:
+				if not primaries and check_missing_fields:
+					raise ValueError(lang.getstr("error.testchart.missing_fields", 
+												 (cgats.filename, ", ".join(labels))))
+				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile)
+		except Exception, exception:
+			InfoDialog(self.owner, msg=safe_unicode(exception), 
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+		return ti1, ti3_ref, gray
+	
+	def ti1_lookup_to_ti3(self, ti1, profile, pcs=None, absolute=False):
 		"""
 		Read TI1 (filename or CGATS instance), lookup device->pcs values 
-		absolute colorimetrically through profile using Argyll's xicclu 
+		colorimetrically through profile using Argyll's xicclu 
 		utility and return TI3 (CGATS instance)
 		
 		"""
@@ -2560,12 +2605,6 @@ class Worker():
 		if not isinstance(ti1, CGATS.CGATS):
 			raise TypeError('Wrong type for ti1, needs to be CGATS.CGATS '
 							'instance')
-		required = ("RGB_R", "RGB_G", "RGB_B")
-		ti1_filename = ti1.filename
-		ti1 = verify_cgats(ti1, required, True)
-		if not ti1:
-			raise ValueError(lang.getstr("error.testchart.missing_fields", 
-										 (ti1_filename, ", ".join(required))))
 		
 		# profile
 		if isinstance(profile, basestring):
@@ -2582,10 +2621,21 @@ class Worker():
 			elif color_rep == 'XYZ':
 				pcs = 'x'
 			else:
-				raise ValueError('Unknown color representation ' + color_rep)
+				raise ValueError('Unknown CIE color representation ' + color_rep)
 		
 		# get profile color space
 		colorspace = profile.colorSpace
+		
+		# required fields for ti1
+		if colorspace == "CMYK":
+			required = ("CMYK_C", "CMYK_M", "CMYK_Y", "CMYK_K")
+		else:
+			required = ("RGB_R", "RGB_G", "RGB_B")
+		ti1_filename = ti1.filename
+		ti1 = verify_cgats(ti1, required, True)
+		if not ti1:
+			raise ValueError(lang.getstr("error.testchart.missing_fields", 
+										 (ti1_filename, ", ".join(required))))
 		
 		# read device values from ti1
 		data = ti1.queryv1("DATA")
@@ -2596,33 +2646,37 @@ class Worker():
 		if not device_data:
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti1_filename, ", ".join(required))))
-		# make sure the first four patches are white so the whitepoint can be
-		# averaged
-		white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
-		white = dict(white_rgb)
-		for label in data.parent.DATA_FORMAT.values():
-			if not label in white:
-				if label.upper() == 'LAB_L':
-					value = 100
-				elif label.upper() in ('LAB_A', 'LAB_B'):
-					value = 0
-				elif label.upper() == 'XYZ_X':
-					value = 95.1065
-				elif label.upper() == 'XYZ_Y':
-					value = 100
-				elif label.upper() == 'XYZ_Z':
-					value = 108.844
-				else:
-					value = '0'
-				white.update({label: value})
-		white_added_count = 0
-		while len(data.queryi(white_rgb)) < 4:  # add white patches
-			data.insert(0, white)
-			white_added_count += 1
-		safe_print("Added %i white patch(es)" % white_added_count)
+		
+		if colorspace == "RGB":
+			# make sure the first four patches are white so the whitepoint can be
+			# averaged
+			white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
+			white = dict(white_rgb)
+			for label in data.parent.DATA_FORMAT.values():
+				if not label in white:
+					if label.upper() == 'LAB_L':
+						value = 100
+					elif label.upper() in ('LAB_A', 'LAB_B'):
+						value = 0
+					elif label.upper() == 'XYZ_X':
+						value = 95.1065
+					elif label.upper() == 'XYZ_Y':
+						value = 100
+					elif label.upper() == 'XYZ_Z':
+						value = 108.844
+					else:
+						value = '0'
+					white.update({label: value})
+			white_added_count = 0
+			while len(data.queryi(white_rgb)) < 4:  # add white patches
+				data.insert(0, white)
+				white_added_count += 1
+			safe_print("Added %i white patch(es)" % white_added_count)
+		
 		idata = []
-		for rgb in device_data.values():
-			idata.append(' '.join(str(n) for n in rgb.values()))
+		for primaries in device_data.values():
+			idata.append(' '.join(str(n) for n in primaries.values()))
+		##safe_print('\n'.join(idata))
 
 		# lookup device->cie values through profile using xicclu
 		xicclu = get_argyll_util("xicclu").encode(fs_enc)
@@ -2636,48 +2690,51 @@ class Worker():
 			startupinfo.wShowWindow = sp.SW_HIDE
 		else:
 			startupinfo = None
-		p = sp.Popen([xicclu, '-ff', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
+		p = sp.Popen([xicclu, '-ff', '-i' + ('a' if absolute else 'r'), '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
 					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
 		if p.wait() != 0:
 			# error
 			raise IOError(''.join(odata))
+		##safe_print('\n'.join(odata))
 		
-		# treat r=g=b specially: set expected a=b=0
 		gray = []
 		igray = []
 		igray_idx = []
-		for i, line in enumerate(odata):
-			line = line.strip().split('->')
-			line = ''.join(line).split()
-			if line[-1] == '(clip)':
-				line.pop()
-			r, g, b = [float(n) for n in line[:3]]
-			if r == g == b < 100:
-				# if grayscale and not white
-				cie = [float(n) for n in line[5:-1]]
-				if pcs == 'x':
-					# Need to scale XYZ coming from xicclu, Lab is already scaled
-					cie = colormath.XYZ2Lab(*[n * 100.0 for n in cie])
-				cie = (cie[0], 0, 0)  # set a=b=0
-				igray.append("%s %s %s" % cie)
-				igray_idx.append(i)
-				if pcs == 'x':
-					cie = colormath.Lab2XYZ(*cie)
-					luminance = cie[1]
-				else:
-					luminance = colormath.Lab2XYZ(*cie)[1]
-				if luminance * 100.0 >= 1:
-					# only add if luminance is greater or equal 1% because 
-					# dark tones fluctuate too much
-					gray.append((r, g, b))
-				if False:  # NEVER?
-					# set cie in odata to a=b=0
-					line[5:-1] = [str(n) for n in cie]
-					odata[i] = ' -> '.join([' '.join(line[:4]), line[4], 
-											' '.join(line[5:])])
-		
+		if colorspace == "RGB":
+			# treat r=g=b specially: set expected a=b=0
+			for i, line in enumerate(odata):
+				line = line.strip().split('->')
+				line = ''.join(line).split()
+				if line[-1] == '(clip)':
+					line.pop()
+				r, g, b = [float(n) for n in line[:3]]
+				if r == g == b < 100:
+					# if grayscale and not white
+					cie = [float(n) for n in line[5:-1]]
+					if pcs == 'x':
+						# Need to scale XYZ coming from xicclu
+						# Lab is already scaled
+						cie = colormath.XYZ2Lab(*[n * 100.0 for n in cie])
+					cie = (cie[0], 0, 0)  # set a=b=0
+					igray.append("%s %s %s" % cie)
+					igray_idx.append(i)
+					if pcs == 'x':
+						cie = colormath.Lab2XYZ(*cie)
+						luminance = cie[1]
+					else:
+						luminance = colormath.Lab2XYZ(*cie)[1]
+					if luminance * 100.0 >= 1:
+						# only add if luminance is greater or equal 1% because 
+						# dark tones fluctuate too much
+						gray.append((r, g, b))
+					if False:  # NEVER?
+						# set cie in odata to a=b=0
+						line[5:-1] = [str(n) for n in cie]
+						odata[i] = ' -> '.join([' '.join(line[:4]), line[4], 
+												' '.join(line[5:])])
+			
 		if igray and False:  # NEVER?
 			# lookup cie->device values for grays through profile using xicclu
 			gray = []
@@ -2730,13 +2787,14 @@ class Worker():
 										'OUTPUT') + '"\n')
 		include_sample_name = False
 		i = 0
+		offset = 0 if colorspace == "RGB" else 1
 		for line in odata:
 			line = line.strip().split('->')
 			line = ''.join(line).split()
 			if line[-1] == '(clip)':
 				line.pop()
 			if i == 0:
-				icolor = line[3].strip('[]')
+				icolor = line[3 + offset].strip('[]')
 				if icolor == 'RGB':
 					olabel = 'RGB_R RGB_G RGB_B'
 				elif icolor == 'CMYK':
@@ -2749,7 +2807,7 @@ class Worker():
 				elif ocolor == 'XYZ':
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
-					raise ValueError('Unknown color representation ' + ocolor)
+					raise ValueError('Unknown CIE color representation ' + ocolor)
 				ofile.write('KEYWORD "COLOR_REP"\n')
 				ofile.write('COLOR_REP "' + icolor + '_' + ocolor + '"\n')
 				
@@ -2770,7 +2828,7 @@ class Worker():
 				ofile.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
 				ofile.write('BEGIN_DATA\n')
 			i += 1
-			cie = [float(n) for n in line[5:-1]]
+			cie = [float(n) for n in line[5 + offset:-1]]
 			if pcs == 'x':
 				# Need to scale XYZ coming from xicclu, Lab is already scaled
 				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) 
@@ -2778,9 +2836,9 @@ class Worker():
 			cie = [str(n) for n in cie]
 			if include_sample_name:
 				ofile.write(str(i) + ' ' + data[i - 1][1].strip('"') + ' ' + 
-							' '.join(line[:3]) + ' ' + ' '.join(cie) + '\n')
+							' '.join(line[:3 + offset]) + ' ' + ' '.join(cie) + '\n')
 			else:
-				ofile.write(str(i) + ' ' + ' '.join(line[:3]) + ' ' + 
+				ofile.write(str(i) + ' ' + ' '.join(line[:3 + offset]) + ' ' + 
 							' '.join(cie) + '\n')
 		ofile.write('END_DATA\n')
 		ofile.seek(0)
@@ -2789,18 +2847,24 @@ class Worker():
 	def ti3_lookup_to_ti1(self, ti3, profile):
 		"""
 		Read TI3 (filename or CGATS instance), lookup cie->device values 
-		absolute colorimetrically through profile using Argyll's xicclu 
+		colorimetrically through profile using Argyll's xicclu 
 		utility and return TI1 and compatible TI3 (CGATS instances)
 		
 		"""
 		
 		# ti3
+		copy = True
 		if isinstance(ti3, basestring):
+			copy = False
 			ti3 = CGATS.CGATS(ti3)
 		if not isinstance(ti3, CGATS.CGATS):
 			raise TypeError('Wrong type for ti3, needs to be CGATS.CGATS '
 							'instance')
 		ti3_filename = ti3.filename
+		if copy:
+			# Make a copy and do not alter a passed in CGATS instance!
+			ti3 = CGATS.CGATS(str(ti3))
+		
 		ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
 		if ti3v:
 			color_rep = 'LAB'
@@ -2830,7 +2894,7 @@ class Worker():
 			pcs = 'x'
 			required = ("XYZ_X", "XYZ_Y", "XYZ_Z")
 		else:
-			raise ValueError('Unknown color representation ' + color_rep)
+			raise ValueError('Unknown CIE color representation ' + color_rep)
 
 		# get profile color space
 		colorspace = profile.colorSpace
@@ -2845,22 +2909,27 @@ class Worker():
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti3_filename, ", ".join(required))))
 		idata = []
-		# make sure the first four patches are white so the whitepoint can be
-		# averaged
-		wp = [n * 100.0 for n in profile.tags.wtpt.values()]
-		if color_rep == 'LAB':
-			wp = colormath.XYZ2Lab(*wp)
-			wp = OrderedDict((('L', wp[0]), ('a', wp[1]), ('b', wp[2])))
+		if colorspace == "RGB":
+			# make sure the first four patches are white so the whitepoint can be
+			# averaged
+			wp = [n * 100.0 for n in profile.tags.wtpt.values()]
+			if color_rep == 'LAB':
+				wp = colormath.XYZ2Lab(*wp)
+				wp = OrderedDict((('L', wp[0]), ('a', wp[1]), ('b', wp[2])))
+			else:
+				wp = OrderedDict((('X', wp[0]), ('Y', wp[1]), ('Z', wp[2])))
+			wp = [wp] * 4
+			safe_print("Added 4 white patches")
 		else:
-			wp = OrderedDict((('X', wp[0]), ('Y', wp[1]), ('Z', wp[2])))
-		wp = [wp] * 4
-		safe_print("Added 4 white patches")
-		for cie in wp + cie_data.values():  # first four patches = white
+			wp = []
+		
+		for cie in wp + cie_data.values():
 			cie = cie.values()
 			if color_rep == 'XYZ':
 				# assume scale 0...100 in ti3, we need to convert to 0...1
 				cie = [n / 100.0 for n in cie]
 			idata.append(' '.join(str(n) for n in cie))
+		##safe_print('\n'.join(idata))
 
 		# lookup cie->device values through profile.icc using xicclu
 		xicclu = get_argyll_util("xicclu").encode(fs_enc)
@@ -2881,6 +2950,7 @@ class Worker():
 		if p.wait() != 0:
 			# error
 			raise IOError(''.join(odata))
+		##safe_print('\n'.join(odata))
 		self.wrapup(False)
 		
 		# write output ti1/ti3
@@ -2902,17 +2972,21 @@ class Worker():
 				elif icolor == 'XYZ':
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
-					raise ValueError('Unknown color representation ' + icolor)
+					raise ValueError('Unknown CIE color representation ' + icolor)
 				ocolor = line[-1].strip('[]')
 				if ocolor == 'RGB':
 					olabel = 'RGB_R RGB_G RGB_B'
+				elif ocolor == 'CMYK':
+					olabel = 'CMYK_C CMYK_M CMYK_Y CMYK_K'
 				else:
 					raise ValueError('Unknown color representation ' + ocolor)
 				olabels = olabel.split()
 				# add device fields to DATA_FORMAT if not yet present
 				if not olabels[0] in ti3v.DATA_FORMAT.values() and \
 				   not olabels[1] in ti3v.DATA_FORMAT.values() and \
-				   not olabels[2] in ti3v.DATA_FORMAT.values():
+				   not olabels[2] in ti3v.DATA_FORMAT.values() and \
+				   (ocolor == 'RGB' or (ocolor == 'CMYK' and 
+				    not olabels[3] in ti3v.DATA_FORMAT.values())):
 					ti3v.DATA_FORMAT.add_data(olabels)
 				# add required fields to DATA_FORMAT if not yet present
 				if not required[0] in ti3v.DATA_FORMAT.values() and \
@@ -2938,7 +3012,10 @@ class Worker():
 				ti1out.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
 				ti1out.write('BEGIN_DATA\n')
 			if i < len(wp):
-				device = '100.00 100.00 100.00'.split()
+				if ocolor == 'RGB':
+					device = '100.00 100.00 100.00'.split()
+				else:
+					device = '0 0 0 0'.split()
 			else:
 				device = line[5:-1]
 			cie = (wp + cie_data.values())[i].values()

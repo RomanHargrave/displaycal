@@ -267,6 +267,10 @@ p.generate_report = function(set_delta_calc_method) {
 	this.report_html = this.report_html.concat([
 		'		</tr>',
 		'		<tr>',
+		'			<th>Simulation profile:</th>',
+		'			<td>' + (SIMULATION_PROFILE || 'None') + '</td>',
+		'		</tr>',
+		'		<tr>',
 		'			<th>Testchart:</th>',
 		'			<td>' + this.testchart + '</td>',
 		'		</tr>',

@@ -4176,20 +4176,56 @@ class MainFrame(BaseFrame):
 		if not check_set_argyll_bin():
 			return
 			
+		sim_ti3 = None
+		sim_gray = None
+			
 		# select measurement data (ti1 or ti3)
-		defaultDir, defaultFile = get_verified_path("profile_verification_chart")
-		dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_chart"), 
-							defaultDir=defaultDir, defaultFile=defaultFile, 
-							wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
-									 "|*.cgats;*.ti1;*.ti3;*.txt", 
-							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-		dlg.Center(wx.BOTH)
-		result = dlg.ShowModal()
-		if result == wx.ID_OK:
-			chart = dlg.GetPath()
-		dlg.Destroy()
-		if result != wx.ID_OK:
-			return
+		sim_profile = None
+		while True:
+			defaultDir, defaultFile = get_verified_path("profile_verification_chart")
+			dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_chart"), 
+								defaultDir=defaultDir, defaultFile=defaultFile, 
+								wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
+										 "|*.cgats;*.icc;*.icm;*.ti1;*.ti3;*.txt", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			if result == wx.ID_OK:
+				chart = dlg.GetPath()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
+			if chart.lower().endswith(".icc") or chart.lower().endswith(".icm"):
+				try:
+					sim_profile = ICCP.ICCProfile(chart)
+				except ICCP.ICCProfileInvalidError, exception:
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+									 "\n" + path, 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
+					return
+				if (sim_profile.profileClass not in ("mntr", "prtr") or 
+					sim_profile.colorSpace not in ("CMYK", "RGB")):
+					InfoDialog(self, msg=lang.getstr("profile.unsupported", 
+													 (sim_profile.profileClass, 
+													  sim_profile.colorSpace)), 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
+					return
+			else:
+				if sim_profile:
+					sim_ti1, sim_ti3, sim_gray = self.worker.chart_lookup(chart, 
+															  sim_profile,
+															  check_missing_fields=True, 
+															  absolute=sim_profile.colorSpace == "CMYK")
+					# NOTE: we ignore the ti1 and gray patches here
+					# only the ti3 is valuable at this point
+					if not sim_ti3:
+						return
+					##safe_print(sim_ti1)
+					##safe_print(sim_ti3)
+					##safe_print(sim_gray)
+				break
 		setcfg("profile_verification_chart", chart)
 		
 		# select profile
@@ -4229,37 +4265,25 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
+			if profile.profileClass != "mntr" or profile.colorSpace != "RGB":
+				InfoDialog(self, msg=lang.getstr("profile.unsupported", 
+												 profile.profileClass, 
+												 profile.colorSpace) + 
+								 "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
 		
 		# lookup test patches
-		ti3_ref = None
-		rgb_labels = ('RGB_R', 'RGB_G', 'RGB_B')
-		scale = 1.0
-		try:
-			cgats = CGATS.CGATS(chart, True)
-			rgb = cgats.queryi(rgb_labels)
-			if rgb:
-				for i in rgb:
-					for label in rgb_labels:
-						if rgb[i][label] > 100:
-							scale = 2.55
-							break
-				if scale > 1.0:
-					for i in rgb:
-						for label in rgb_labels:
-							rgb[i][label] = rgb[i][label] / scale
-				cgats[0].type = 'CTI1'
-				cgats[0].COLOR_REP = 'RGB'
-				ti1, ti3_ref, gray = self.worker.ti1_lookup_to_ti3(cgats, profile, "l")
-			else:
-				ti1, ti3_ref = self.worker.ti3_lookup_to_ti1(cgats, profile)
-				gray = None
-			##print ti3_ref
-		except Exception, exception:
-			InfoDialog(self, msg=safe_unicode(exception), 
-					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
-			return
+		ti1, ti3_ref, gray = self.worker.chart_lookup(sim_ti3 or chart, 
+													  profile, bool(sim_ti3))
 		if not ti3_ref:
 			return
+		if not gray and sim_gray:
+			gray = sim_gray
+		##safe_print(ti1)
+		##safe_print(ti3_ref)
+		##safe_print(gray)
 		
 		# let the user choose a location for the result
 		defaultFile = "verify_" + strftime("%Y-%m-%d_%H-%M.html")
@@ -4292,10 +4316,11 @@ class MainFrame(BaseFrame):
 					return
 		
 		# setup for measurement
-		self.setup_measurement(self.verify_profile, ti1, profile, ti3_ref, 
-							   save_path, chart, gray)
+		self.setup_measurement(self.verify_profile, ti1, profile, sim_profile, 
+							   ti3_ref, sim_ti3, save_path, chart, gray)
 
-	def verify_profile(self, ti1, profile, ti3_ref, save_path, chart, gray):
+	def verify_profile(self, ti1, profile, sim_profile, ti3_ref, sim_ti3, 
+					   save_path, chart, gray):
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("profile.verify")
 		safe_print(progress_msg)
@@ -4347,7 +4372,8 @@ class MainFrame(BaseFrame):
 			self.worker.start(self.verify_profile_consumer, 
 							  self.verify_profile_worker, 
 							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
-									 profile, ti3_ref, save_path, chart, gray),
+									 profile, sim_profile, ti3_ref, sim_ti3, 
+									 save_path, chart, gray),
 							  wargs=(ti1_path, ),
 							  progress_msg=progress_msg)
 	
@@ -4359,8 +4385,8 @@ class MainFrame(BaseFrame):
 		args += [os.path.splitext(ti1_path)[0]]
 		return self.worker.exec_cmd(cmd, args, skip_scripts=True)
 	
-	def verify_profile_consumer(self, result, ti3_path, profile, ti3_ref, 
-								save_path, chart, gray):
+	def verify_profile_consumer(self, result, ti3_path, profile, sim_profile,
+								ti3_ref, sim_ti3, save_path, chart, gray):
 		
 		if not isinstance(result, Exception) and result:
 			# get item 0 of the ti3 to strip the CAL part from the measured data
@@ -4416,11 +4442,14 @@ class MainFrame(BaseFrame):
 			cal_rgblevels = [0, 0, 0]
 		
 		offset = len(ti3_measured.DATA) - len(ti3_ref.DATA)
-		if not chart.lower().endswith(".ti1"):
+		if not chart.lower().endswith(".ti1") or sim_ti3:
 			# make the device values match
 			for i in ti3_ref.DATA:
 				for color in ("RGB_R", "RGB_G", "RGB_B"):
-					ti3_ref.DATA[i][color] = ti3_measured.DATA[i + offset][color]
+					if sim_ti3 and sim_ti3.DATA[i].get(color) is not None:
+						ti3_ref.DATA[i][color] = sim_ti3.DATA[i][color]
+					else:
+						ti3_ref.DATA[i][color] = ti3_measured.DATA[i + offset][color]
 		
 		adaption_matrix = "Bradford"
 		
@@ -4540,6 +4569,7 @@ class MainFrame(BaseFrame):
 							 "${PROFILE_WHITEPOINT}": "%f %f %f" % wtpt_profile,
 							 "${PROFILE_WHITEPOINT_NORMALIZED}": "%f %f %f" % 
 																 wtpt_profile_norm,
+							 "${SIMULATION_PROFILE}": sim_profile.getDescription() if sim_profile else '',
 							 "${TESTCHART}": os.path.basename(chart),
 							 "${ADAPTION}": str(adaption_matrix),
 							 "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
