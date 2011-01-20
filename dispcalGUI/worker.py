@@ -42,7 +42,7 @@ from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg,
 					geticon, get_data_path, get_verified_path, isapp, profile_ext,
 					setcfg, writecfg)
 from debughelpers import handle_error
-from edid import WMIConnectionAttributeError, get_edid
+from edid import WMIError, get_edid
 from log import log, safe_print
 from meta import name as appname, version
 from options import ascii, debug, test, test_require_sensor_cal, verbose
@@ -1057,7 +1057,7 @@ class Worker():
 						# under Mac OS X, but it doesn't hurt to always
 						# include it
 						edid = get_edid(i, display_name)
-					except (TypeError, ValueError, WMIConnectionAttributeError):
+					except (TypeError, ValueError, WMIError):
 						edid = {}
 					self.display_edid.append(edid)
 					if edid:

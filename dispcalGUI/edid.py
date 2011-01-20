@@ -91,8 +91,8 @@ def get_edid(display_no, display_name=None):
 			# http://msdn.microsoft.com/en-us/library/Aa392707
 			try:
 				msmonitors = wmi_connection.WmiMonitorDescriptorMethods()
-			except AttributeError, exception:
-				raise WMIConnectionAttributeError(exception)
+			except Exception, exception:
+				raise WMIError(exception)
 			for msmonitor in msmonitors:
 				if msmonitor.InstanceName.split("\\")[1] == id:
 					try:
@@ -360,5 +360,5 @@ def parse_edid(edid):
 	return result
 
 
-class WMIConnectionAttributeError(AttributeError):
+class WMIError(Exception):
 	pass
