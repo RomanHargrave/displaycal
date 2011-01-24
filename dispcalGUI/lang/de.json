@@ -277,6 +277,7 @@
 	"profile.update": "Profil aktualisieren",
 	"profile.verify": "Profil überprüfen",
 	"profile.verification_report.update": "Profilüberprüfungsreport aktualisieren...", 
+	"profile_verification_choose_chart_or_reference": "Bitte wählen Sie eine Testform, Referenzdatei, oder ein Simulationsprofil:",
 	"profile_verification_choose_chart": "Bitte wählen Sie die zu messende Testform:",
 	"profile_verification_choose_profile": "Bitte wählen Sie das zu überprüfende Profil:",
 	"profiling.complete": "Profilierung abgeschlossen!",

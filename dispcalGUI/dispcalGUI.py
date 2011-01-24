@@ -4181,9 +4181,10 @@ class MainFrame(BaseFrame):
 			
 		# select measurement data (ti1 or ti3)
 		sim_profile = None
+		msg_id = "profile_verification_choose_chart_or_reference"
 		while True:
 			defaultDir, defaultFile = get_verified_path("profile_verification_chart")
-			dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_chart"), 
+			dlg = wx.FileDialog(self, lang.getstr(msg_id), 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
 								wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
 										 "|*.cgats;*.cie;*.icc;*.icm;*.ti1;*.ti3;*.txt", 
@@ -4212,6 +4213,7 @@ class MainFrame(BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
+				msg_id = "profile_verification_choose_chart"
 			else:
 				if sim_profile:
 					sim_ti1, sim_ti3, sim_gray = self.worker.chart_lookup(chart, 

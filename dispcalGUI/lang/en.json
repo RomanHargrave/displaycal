@@ -276,6 +276,7 @@
 	"profile.update": "Update profile",
 	"profile.verify": "Verify profile",
 	"profile.verification_report.update": "Update profile verification report...", 
+	"profile_verification_choose_chart_or_reference": "Please choose a testchart, reference, or simulation profile:",
 	"profile_verification_choose_chart": "Please choose the testchart to measure:",
 	"profile_verification_choose_profile": "Please choose the profile to validate:",
 	"profiling.complete": "Profiling complete!",
