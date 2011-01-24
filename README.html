@@ -433,11 +433,11 @@
 				&#160;<br />
 				&#160;</dt>
 				<dd id="version">
-				0.6.6.7<br />
+				0.6.7.7<br />
 				<a href="#history">What's new in this version / changelog</a><br />
 				<a href="http://dispcalGUI.hoech.net/archive/">Archive</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2010-11-05 03:12 (UTC)</dd>
+				<dd id="date">2011-01-24 03:56 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -447,7 +447,7 @@
 		<p class="info" id="contact">Bug reports, questions, comments, suggestions? Feel free to use the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalGUI-users mailing list</a>, <a href="http://sourceforge.net/tracker/?group_id=257092&amp;atid=1127028">issue tracker</a>, <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932493">support</a> and <a href="http://sourceforge.net/projects/dispcalgui/forums/forum/932494">discussion</a> forums, or drop me a mail: dispcalGUI ‹at› hoech . net<br />
 		If you just want to be notified of new releases, you may sign up to the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-news">dispcalGUI-news mailing list</a> (but if you already joined dispcalGUI-users, there's no need to join this list as new release notifications are sent to both).</p>
 		
-		<p class="info">If you would like to support the development of dispcalGUI, you can <a href="http://sourceforge.net/project/project_donations.php?group_id=257092">make a donation using PayPal</a>. If you decide to donate, please also consider donating to <a href="http://argyllcms.com">Argyll CMS</a> (if you haven't already), as dispcalGUI wouldn't be possible without it (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its donation link). Thanks to all <a href="#thanks">donors</a>!</p>
+		<p class="info">If you would like to support the development of dispcalGUI, you can <a href="http://sourceforge.net/project/project_donations.php?group_id=257092">make a donation using PayPal</a> (for other means of donating, please contact me under dispcalGUI ‹at› hoech . net). If you decide to donate, please also consider donating to <a href="http://argyllcms.com">Argyll CMS</a> (if you haven't already), as dispcalGUI wouldn't be possible without it (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its donation link). Thanks to all <a href="#thanks">donors</a>!</p>
 		
 		<h2>Table of contents</h2>
 		
@@ -581,6 +581,9 @@
 				Fedora 13
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/i386/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_13/x86_64/">x86_64</a><br />
+				Fedora 14
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_14/i386/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_14/x86_64/">x86_64</a><br />
 				Mandriva 2009.1
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Mandriva_2009.1/i586/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Mandriva_2009.1/x86_64/">x86_64</a><br />
@@ -617,6 +620,9 @@
 				Ubuntu 10.04 (Lucid)
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_10.04/i386/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_10.04/amd64/">x86_64</a><br />
+				Ubuntu 10.10 (Maverick)
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_10.10/i386/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_10.10/amd64/">x86_64</a><br />
 			</p>
 			
 			<h3>Linux Autopackage</h3>
@@ -1005,7 +1011,8 @@
 					
 					<dt>Drift compensation during measurements (only available if using Argyll CMS &gt;= 1.3.0)</dt>
 						<dd>							
-							<p>These options invoke instrument black level, and display white level compensation (respectively). Instrument black level drift compensation attempts to combat instrument black calibration drift by using a display black test patch as a reference. If an instrument is not acclimatised sufficiently to the measurement conditions, changes in temperature can affect the black readings. Display white level drift compensation attempts to combat changes in display brightness as it warms up by measuring a white patch every so often, and using it to normalise all the other readings.</p>
+							<p>These options invoke instrument black level, and display white level drift compensation (respectively). Instrument black level drift compensation attempts to combat instrument black calibration drift by using a display black test patch as a reference. If an instrument is not acclimatised sufficiently to the measurement conditions, changes in temperature can affect the black readings. Display white level drift compensation attempts to combat changes in display brightness as it warms up by measuring a white patch every so often, and using it to normalise all the other readings.</p>
+							<p>Please note that black level drift compensation will probably not do much for colorimeters. It is mainly intended for Spectrometers.</p>
 						</dd>
 					
 					<dt id="trc">Tone curve / gamma</dt>
@@ -1293,23 +1300,23 @@
 						<dd>Run verify measurements on the selected display as it is currently setup (ie. video card gamma table). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
 						
 					<dt id="verify-profile">Verify profile</dt>
-						<dd><p>Do verification measurements to assess the display chain's (profile - video card and the calibration curves in its gamma table - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain.<br />
-						To do the former, you have to select a <acronym title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></acronym> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled. If a RGB testchart with gray patches (R=G=B) is measured, like the default and extended verification charts, you also have the option to evaluate the graybalance through the calibration only, by placing a check in the corresponding box on the report.<br />
-						To perform a check on the soft proofing capabilities, you have to provide a CGATS reference file containing XYZ or L*a*b* data which will be fed through the profile to lookup corresponding device (RGB) values, which will then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the reference file.<br />
+						<dd><p>Do verification measurements to assess the display chain's (display profile - video card and the calibration curves in its gamma table - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain.<br />
+						To do the former, you have to select a <acronym title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></acronym> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the display profile (measured vs expected values). The default verification chart contains 24 patches and can be used, for example, to check if a display needs to be re-profiled. If a RGB testchart with gray patches (R=G=B) is measured, like the default and extended verification charts, you also have the option to evaluate the graybalance through the calibration only, by placing a check in the corresponding box on the report.<br />
+						To perform a check on the soft proofing capabilities, you have to provide a CGATS reference file containing XYZ or L*a*b* data, or a combination of simulation profile and testchart file (in the latter case, first choose the simulation profile, and afterwards the testchart itself), which will be fed through the display profile to lookup corresponding device (RGB) values, and then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the reference.<br />
 						<br />
-						The profile that is used for verification is the one currently selected under “settings”, or the current display profile if any. Otherwise, a file dialog will appear to allow choosing a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the reference and measurement data, which consists of device RGB numbers, original measured XYZ values, and D50-adapted L*a*b* values computed from the XYZ numbers, and which can be examined as plain text directly from the report at the click of a button.</p>
+						The display profile that is used for verification is the one currently selected under “settings”, or the current display profile if any. Otherwise, a file dialog will appear to allow choosing a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the reference and measurement data, which consists of device RGB numbers, original measured XYZ values, and D50-adapted L*a*b* values computed from the XYZ numbers, and which can be examined as plain text directly from the report at the click of a button.</p>
 						
 						<h4>How were the nominal and recommended aim values chosen?</h4>
 						
 						<p>The nominal tolerances, with the whitepoint, average, maximum and gray balance Delta E CIE 1976 aim values stemming from <a href="http://www.fogra.org/mediawedge/">UGRA/Fogra Media Wedge</a> and <a href="http://www.ugra.ch/ugra-display-analysis-and-certification-tool.phtml">UDACT</a>, are pretty generous, so I've included somewhat stricter “recommended” numbers which I've chosen more or less arbitrarily to provide a bit “extra safety margin”.<br />
-						For reports generated from reference files that contain CMYK numbers in addition to L*a*b* or XYZ values, you can also select the official Fogra Media Wedge V3 aim values for paper white, CMYK solids and CMY grey, if the chart contains the right CMYK combinations.</p>
+						For reports generated from reference files that contain CMYK numbers in addition to L*a*b* or XYZ values, you can also select the official Fogra Media Wedge V3 or IDEAlliance Control Strip aim values for paper white, CMYK solids and CMY grey, if the chart contains the right CMYK combinations.</p>
 						
 						<h4>How are the results of the profile verification report to be interpreted?</h4>
 						
 						<p>This depends on the chart that was measured. The explanation in the first paragraph sums it up pretty well: If you have calibrated and profiled your display, and want to check how well the profile fits a set of measurements (profile accuracy), or if you want to know if your display has drifted and needs to be re-calibrated/re-profiled, you select a chart containing RGB numbers for the verification. Note that directly after profiling, accuracy can be expected to be high if the profile characterizes the display well, which will usually be the case if the display behaviour is not very non-linear, in which case creating a LUT profile instead of a “curves + matrix” one, or increasing the number of measured patches for LUT profiles, can help.<br />
-						If you want to know how well your profile can simulate another colorspace (softproofing), select a reference file containing L*a*b* or XYZ values, like one of the <a href="http://www.fogra.org/mediawedge/">Fogra Media Wedge</a> subsets (be warned though, only wide-gamut displays will handle a larger offset printing colorspace like FOGRA39 or similar well enough).<br />
+						If you want to know how well your profile can simulate another colorspace (softproofing), select a reference file containing L*a*b* or XYZ values, like one of the <a href="http://www.fogra.org/mediawedge/">Fogra Media Wedge</a> subsets, or a combination of a simulation profile and testchart (in the latter case, first choose the simulation profile, and afterwards the testchart itself). Be warned though, only wide-gamut displays will handle a larger offset printing colorspace like FOGRA39 or similar well enough.<br />
 						In both cases, you should check that atleast the nominal tolerances are not exceeded. For a bit “extra safety margin”, look at the recommended values instead.<br />
-						Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from wrong measurements will usually still verify well against other wrong measurements if they don't fluctuate too much) or does not cope with your display well (which is especially true for <a href="#widegamut">colorimeters and wide-gamut screens</a>, as such combinations need a <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed 'ccmx' (colorimeter correction matrix) files on the Argyll CMS website">correction matrix</a> in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
+						Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from repeatable wrong measurements will usually still verify well against other wrong measurements from the same instrument if they don't fluctuate too much) or does not cope with your display well (which is especially true for <a href="#widegamut">colorimeters and wide-gamut screens</a>, as such combinations need a <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed 'ccmx' (colorimeter correction matrix) files on the Argyll CMS website">correction matrix</a> in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays which use white LEDs), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
 						
 						<h4>How are profiles evaluated against the measured values?</h4>
 						
@@ -1317,7 +1324,7 @@
 						
 						<h5>General</h5>
 						
-						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/icclu.html">icclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files). Then, the original RGB values from the testchart, or the looked up RGB values for a reference file are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, with user-selectable critera and ΔE (delta E) formula.</p>
+						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/xicclu.html">xicclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile that is tested to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files or a combination of simulation profile and testchart). If a combination of simulation profile and testchart is used as reference, the reference L*a*b* values are calculated by feeding the device numbers from the testchart through the simulation profile absolute colorimetrically if the simulation profile is a printer profile and relative colorimetrically if it is a display profile (like most RGB working spaces). Then, the original RGB values from the testchart, or the looked up RGB values for a reference are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, with user-selectable critera and ΔE (delta E) formula.</p>
 						
 						<h5>How is the assumed vs. measured whitepoint ΔE calculated?</h5>
 		
@@ -1325,7 +1332,7 @@
 						
 						<h5>How is the gray balance “range” evaluated?</h5>
 						
-						<p>The gray balance “range” uses a combined delta a/delta b absolute deviation (e.g. if max delta a = -0.5 and max delta b = 0.7, the range is 1.2). Because results in the extreme darks can be problematic due to lack of instrument accuracy and other effects like a black point which has a different chromaticity than the whitepoint, all gray balance checks in dispcalGUI only take into account gray patches with a minimum measured luminance of 1% (i.e. if white luminance = 120 cd/m², then only patches with at least 1.2 cd/m² will be taken into account).</p>
+						<p>The gray balance “range” uses a combined delta a/delta b absolute deviation (e.g. if max delta a = -0.5 and max delta b = 0.7, the range is 1.2). Because results in the extreme darks can be problematic due to lack of instrument accuracy and other effects like a black point which has a different chromaticity than the whitepoint, all gray balance checks in dispcalGUI only take into account gray patches with a minimum measured luminance of 1% (i.e. if the white luminance = 120 cd/m², then only patches with at least 1.2 cd/m² will be taken into account).</p>
 						
 						<h5>What does the “evaluate gray balance through calibration only” checkbox on a report actually do?</h5>
 						
@@ -1333,7 +1340,7 @@
 						</dd>
 
 					<dt>Update profile verification report...</dt>
-						<dd>This allows to update an existing report HTML file with the newest template and functionality from this version of dispcalGUI (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
+						<dd>This allows to update an existing report HTML file with the template and functionality from a newer version of dispcalGUI (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
 						
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1447,7 +1454,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			Translators: Loïc Guégant (french translation),
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)<br />
-			Recent donors: Eugene Yurov, Konstantin Pyanzin</p>
+			Recent donors: Richard Egger, Michael Dougherty, Christian Spyr, Eugene Yurov, Konstantin Pyanzin</p>
 			
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 			
@@ -1457,8 +1464,24 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2010-11-05 03:12 (UTC) 0.6.6.7 -->
+			<!-- 2011-01-24 03:56 (UTC) 0.6.7.7 -->
 			<dl>
+				<dt>2011-01-24 03:56 (UTC) 0.6.7.7</dt>
+					<dd>
+						<h3>0.6.7.7</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Fixed measurements hanging at the start if using the black background option.</li>
+							<li>wxPython 2.9 compatibility.</li>
+							<li>Windows Vista/7: Potential WMI errors when trying to read a display's EDID are now suppressed (the EDID can not be read on systems where WMI has errors, which may prevent more accurate display descriptions, but will not impede functionality otherwise).</li>
+						</ul>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Profiles can now be dragged and dropped onto the curve viewer.</li>
+							<li>When using the profile verification feature, it is now possible to first select a simulation profile before choosing a testchart.</li>
+						</ul>
+					</dd>
+				
 				<dt>2010-11-05 03:12 (UTC) 0.6.6.7</dt>
 					<dd>
 						<h3>0.6.6.7</h3>
