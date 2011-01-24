@@ -4186,7 +4186,7 @@ class MainFrame(BaseFrame):
 			dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_chart"), 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
 								wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
-										 "|*.cgats;*.icc;*.icm;*.ti1;*.ti3;*.txt", 
+										 "|*.cgats;*.cie;*.icc;*.icm;*.ti1;*.ti3;*.txt", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			result = dlg.ShowModal()
@@ -4217,7 +4217,7 @@ class MainFrame(BaseFrame):
 					sim_ti1, sim_ti3, sim_gray = self.worker.chart_lookup(chart, 
 															  sim_profile,
 															  check_missing_fields=True, 
-															  absolute=sim_profile.colorSpace == "CMYK")
+															  absolute=sim_profile.profileClass == "prtr")
 					# NOTE: we ignore the ti1 and gray patches here
 					# only the ti3 is valuable at this point
 					if not sim_ti3:

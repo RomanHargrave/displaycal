@@ -322,7 +322,7 @@ def runtimeconfig(pyfile):
 										  testchart_defaults["s"])[None]
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart))
-	defaults["profile_verification_chart"] = get_data_path(os.path.join("ti1", 
+	defaults["profile_verification_chart"] = get_data_path(os.path.join("ref", 
 															"verify.ti1"))
 	return runtype
 
@@ -646,6 +646,10 @@ def get_verified_path(cfg_item_name, path=None):
 		if os.path.exists(defaultPath):
 			defaultDir, defaultFile = (os.path.dirname(defaultPath), 
 									   os.path.basename(defaultPath))
+		elif (defaults.get(cfg_item_name) and 
+			  os.path.exists(defaults[cfg_item_name])):
+			defaultDir, defaultFile = (os.path.dirname(defaults[cfg_item_name]), 
+									   os.path.basename(defaults[cfg_item_name]))
 		elif os.path.exists(os.path.dirname(defaultPath)):
 			defaultDir = os.path.dirname(defaultPath)
 	return defaultDir, defaultFile
