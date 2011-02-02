@@ -10,18 +10,19 @@ if sys.platform == "win32":
 		from win32com.shell.shellcon import (CSIDL_APPDATA, 
 											 CSIDL_COMMON_APPDATA, 
 											 CSIDL_COMMON_STARTUP, 
+											 CSIDL_PROFILE,
 											 CSIDL_PROGRAM_FILES_COMMON, 
 											 CSIDL_STARTUP, CSIDL_SYSTEM)
 	except ImportError:
 		(CSIDL_APPDATA, CSIDL_COMMON_APPDATA, CSIDL_COMMON_STARTUP, 
-		 CSIDL_PROGRAM_FILES_COMMON, CSIDL_STARTUP, CSIDL_SYSTEM) = (26, 35, 
-																	 24, 43, 
-																	 7, 37)
+		 CSIDL_PROFILE, CSIDL_PROGRAM_FILES_COMMON, CSIDL_STARTUP, 
+		 CSIDL_SYSTEM) = (26, 35, 24, 40, 43, 7, 37)
 		def SHGetSpecialFolderPath(hwndOwner, nFolder):
 			return {
 				CSIDL_APPDATA: getenvu("APPDATA"),
-				CSIDL_COMMON_APPDATA: None,
+				CSIDL_COMMON_APPDATA: getenvu("ALLUSERSPROFILE"),
 				CSIDL_COMMON_STARTUP: None,
+				CSIDL_PROFILE: getenvu("USERPROFILE"),
 				CSIDL_PROGRAM_FILES_COMMON: getenvu("CommonProgramFiles"),
 				CSIDL_STARTUP: None,
 				CSIDL_SYSTEM: getenvu("SystemRoot")
@@ -29,6 +30,7 @@ if sys.platform == "win32":
 
 from util_os import expanduseru, expandvarsu, getenvu
 
+home = expanduseru("~")
 if sys.platform == "win32":
 	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA)
 	commonappdata = SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA)
@@ -47,17 +49,18 @@ if sys.platform == "win32":
 								"spool", "drivers", "color")]
 	iccprofiles_home = iccprofiles
 elif sys.platform == "darwin":
+	appdata = os.path.join(home, "Library")
+	commonappdata = os.path.join(os.path.sep, "Library")
 	prefs = os.path.join(os.path.sep, "Library", "Preferences")
-	prefs_home = os.path.join(expanduseru("~"), "Library", "Preferences")
+	prefs_home = os.path.join(home, "Library", "Preferences")
 	appsupport = os.path.join(os.path.sep, "Library", "Application Support")
-	appsupport_home = os.path.join(expanduseru("~"), "Library", 
-								   "Application Support")
+	appsupport_home = os.path.join(home, "Library", "Application Support")
 	autostart = autostart_home = None
 	iccprofiles = [os.path.join(os.path.sep, "Library", "ColorSync", 
 								"Profiles"),
 				   os.path.join(os.path.sep, "System", "Library", "ColorSync", 
 								"Profiles")]
-	iccprofiles_home = [os.path.join(expanduseru("~"), "Library", "ColorSync", 
+	iccprofiles_home = [os.path.join(home, "Library", "ColorSync", 
 									 "Profiles")]
 else:
 	xdg_config_home = getenvu("XDG_CONFIG_HOME", expandvarsu("$HOME/.config"))
@@ -68,7 +71,7 @@ else:
 	if not xdg_config_dir_default in xdg_config_dirs:
 		xdg_config_dirs += [xdg_config_dir_default]
 	xdg_data_home_default = expandvarsu("$HOME/.local/share")
-	xdg_data_home = getenvu("XDG_DATA_HOME", xdg_data_home_default)
+	appdata = xdg_data_home = getenvu("XDG_DATA_HOME", xdg_data_home_default)
 	xdg_data_dirs_default = "/usr/local/share:/usr/share:/var/lib"
 	xdg_data_dirs = [os.path.normpath(pth) for pth in 
 					 getenvu("XDG_DATA_DIRS", 
@@ -76,6 +79,7 @@ else:
 	for dir_ in xdg_data_dirs_default.split(os.pathsep):
 		if not dir_ in xdg_data_dirs:
 			xdg_data_dirs += [dir_]
+	commonappdata = xdg_data_dirs[0]
 	autostart = None
 	for dir_ in xdg_config_dirs:
 		if os.path.exists(dir_):

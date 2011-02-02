@@ -31,6 +31,7 @@ import CGATS
 import ICCProfile as ICCP
 import colormath
 import config
+import defaultpaths
 import localization as lang
 import wexpect
 from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
@@ -2432,6 +2433,22 @@ class Worker():
 															   "isalive"))
 				if hasattr(self.subprocess, "isalive"):
 					log('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
+
+	def spyder2_firmware_exists(self):
+		if self.argyll_version < [1, 2, 0]:
+			spyd2en = get_argyll_util("spyd2en")
+			if not spyd2en:
+				return False
+			pldpaths = [os.path.join(os.path.dirname(spyd2en), "spyd2PLD.bin")]
+		else:
+			pldpaths = [os.path.join(dir_, "color", "spyd2PLD.bin") 
+						for dir_ in (defaultpaths.appdata, 
+									 defaultpaths.home, 
+									 defaultpaths.commonappdata)]
+		for pldpath in pldpaths:
+			if os.path.isfile(pldpath):
+				return True
+		return False
 
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 

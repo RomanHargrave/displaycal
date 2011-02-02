@@ -1253,12 +1253,11 @@ class MainFrame(BaseFrame):
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		spyd2en = get_argyll_util("spyd2en")
+		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en) and not 
-											os.path.isfile(os.path.join(os.path.dirname(spyd2en), 
-																		"spyd2PLD.bin")))
+											spyder2_firmware_exists)
 		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
-										   os.path.isfile(os.path.join(os.path.dirname(spyd2en), 
-																	   "spyd2PLD.bin")))
+										   spyder2_firmware_exists)
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
 		self.menuitem_show_lut.Check(bool(getcfg("lut_viewer.show")))
 		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
@@ -2256,7 +2255,7 @@ class MainFrame(BaseFrame):
 					break
 			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 										  skip_scripts=True, silent=True,
-										  asroot=True,
+										  asroot=self.worker.argyll_version < [1, 2, 0],
 										  title=lang.getstr("enable_spyder2"))
 			if not isinstance(result, Exception) and result:
 				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
@@ -2300,7 +2299,7 @@ class MainFrame(BaseFrame):
 												  capture_output=True, 
 												  skip_scripts=True, 
 												  silent=True,
-												  asroot=True,
+												  asroot=self.worker.argyll_version < [1, 2, 0],
 												  title=lang.getstr("enable_spyder2"))
 					if not isinstance(result, Exception) and result:
 						InfoDialog(self, 
