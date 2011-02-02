@@ -71,6 +71,7 @@ def setup():
 		os.path.basename(os.path.abspath(sys.argv[0]))))
 	prefix = ""
 	recordfile_name = None # record installed files to this file
+	sdist = "sdist" in sys.argv[1:]
 	setuptools = None
 	skip_instrument_conf_files = "--skip-instrument-configuration-files" in \
 		sys.argv[1:]
@@ -235,6 +236,11 @@ def setup():
 		] if sys.platform in ("darwin", "win32") and not do_py2app and not 
 		do_py2exe else []
 	}
+	if sdist and sys.platform in ("darwin", "win32"):
+		package_data[name] += ["theme/icons/22x22/*.png",
+							   "theme/icons/24x24/*.png",
+							   "theme/icons/48x48/*.png",
+							   "theme/icons/256x256/*.png"]
 	if sys.platform == "win32" and not do_py2exe:
 		package_data[name] += ["theme/icons/*.ico"]
 	# Doc files
