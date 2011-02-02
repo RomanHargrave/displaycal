@@ -70,7 +70,13 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
 		[
 			["RGB gray balance (>= 1% luminance) average ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
 			["RGB gray balance (>= 1% luminance) combined Δa*76 and Δb*76 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE76],
-			["RGB gray balance (>= 1% luminance) maximum ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE76]
+			["RGB gray balance (>= 1% luminance) maximum ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE76],
+			["RGB gray balance (>= 1% luminance) average ΔC*94", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE94],
+			["RGB gray balance (>= 1% luminance) combined Δa*94 and Δb*94 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE94],
+			["RGB gray balance (>= 1% luminance) maximum ΔC*94", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE94],
+			["RGB gray balance (>= 1% luminance) average ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE00],
+			["RGB gray balance (>= 1% luminance) combined Δa*00 and Δb*00 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE00],
+			["RGB gray balance (>= 1% luminance) maximum ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE00]
 		]
 	),
 	CRITERIA_RULES_CMYK = CRITERIA_RULES_DEFAULT.clone(),
@@ -224,7 +230,7 @@ comparison_criteria.RGB.rules = CRITERIA_RULES_RGB;
 
 if (window.CRITERIA_GRAYSCALE) {
 	comparison_criteria.RGB_GRAY = comparison_criteria.RGB.clone();
-	comparison_criteria.RGB_GRAY.delta_calc_method = CIE76;
+	comparison_criteria.RGB_GRAY.delta_calc_method = CIE00;
 	comparison_criteria.RGB_GRAY.id = 'RGB_GRAY';
 	comparison_criteria.RGB_GRAY.name = "RGB + gray balance";
 	comparison_criteria.RGB_GRAY.rules = CRITERIA_RULES_VERIFY;
