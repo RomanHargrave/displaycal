@@ -106,9 +106,9 @@ def update(report_path):
 			("${DATETIME}", '"FF_datetime"\s*value="(.+?)"\s\/>', 0),
 			("${REF}", '"FF_data_ref"\s*value="(.+?)"\s\/>', re.DOTALL),
 			("${MEASURED}", '"FF_data_in"\s*value="(.+?)"\s\/>', re.DOTALL),
-			("${CAL_ENTRYCOUNT}", "CAL_ENTRYCOUNT\s*=\s*(.+?);", 0),
-			("${CAL_RGBLEVELS}", "CAL_RGBLEVELS\s*=\s*(.+?);", 0),
-			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?);", 0))
+			("${CAL_ENTRYCOUNT}", "CAL_ENTRYCOUNT\s*=\s*(.+?)[;,]$", re.M),
+			("${CAL_RGBLEVELS}", "CAL_RGBLEVELS\s*=\s*(.+?)[;,]$", re.M),
+			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?)[;,]$", re.M))
 	
 	placeholders2data = {"${REPORT_VERSION}": version,
 						 "${CORRECTION_MATRIX}": "Unknown",
