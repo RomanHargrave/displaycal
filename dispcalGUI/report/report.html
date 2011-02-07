@@ -67,12 +67,12 @@
 				<label for="FF_verbosestats" class="disabled">Show additional statistics: <input type="checkbox" name="FF_verbosestats" id="FF_verbosestats" disabled="disabled" onchange="togglestats()" /></label>
 			</p>
 			<p class="options">
-				Delta E formula for results:
-				<select name="FF_delta_calc_method" id="FF_delta_calc_method" onchange="compare(false)">
+				<label for="FF_delta_calc_method" class="disabled">Delta E formula for results:
+				<select name="FF_delta_calc_method" id="FF_delta_calc_method" disabled="disabled" onchange="compare(false)">
 					<option value="CIE76">CIE 1976</option>
 					<option value="CIE94">CIE 1994</option>
 					<option value="CIE00">CIE 2000</option>
-				</select>
+				</select></label>
 			</p>
 			<div id="result"></div>
 		</div>

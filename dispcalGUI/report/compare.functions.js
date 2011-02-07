@@ -151,6 +151,7 @@ p.generate_report = function(set_delta_calc_method) {
 		e = f['F_data'].elements,
 		criteria = comparison_criteria[f['F_out'].elements['FF_criteria'].value];
 	if (set_delta_calc_method !== false) f['F_out'].elements['FF_delta_calc_method'].selectedIndex = ['CIE76', 'CIE94', 'CIE00'].indexOf(criteria.delta_calc_method);
+	f['F_out'].elements['FF_delta_calc_method'].disabled = criteria.lock_delta_calc_method;
 	var rules = criteria.rules,
 		result = [],
 		delta,
@@ -1033,6 +1034,7 @@ function layout() {
 
 function form_element_set_disabled(form_element, disabled) {
 	if (!form_element || form_element.readOnly || form_element.type == "hidden" || form_element.type == "file" || jsapi.dom.attributeHasWord(form_element, "class", "fakefile") || jsapi.dom.attributeHasWord(form_element, "class", "save") || jsapi.dom.attributeHasWord(form_element, "class", "delete")) return;
+	if (form_element.name == "FF_delta_calc_method") disabled = form_element.disabled;
 	disabled = disabled ? "disabled" : "";
 	form_element.disabled = disabled;
 	if (disabled && !jsapi.dom.attributeHasWord(form_element, "class", "disabled")) jsapi.dom.attributeAddWord(form_element, "class", "disabled");

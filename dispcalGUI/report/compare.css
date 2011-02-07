@@ -53,8 +53,8 @@ button:active:focus {
 }
 button.disabled {
 	background: #dddddd;
-	border-color: #cccccc;
-	color: #cccccc;
+	border-color: #999;
+	color: #999;
 }
 button:hover, 
 button.hover {
@@ -67,8 +67,8 @@ button.disabled.hover,
 button.disabled:focus,
 button.disabled.focus {
 	background: #dddddd;
-	border-color: #cccccc;
-	color: #cccccc;
+	border-color: #999;
+	color: #999;
 }
 h2 {
 	color: #333333;
@@ -137,7 +137,9 @@ p.error {
 	font-weight: bold;
 	margin: 20px 14px 10px 14px;
 }
-select {
+select,
+select:disabled:hover,
+select:disabled:focus {
 	background: #f9f9f9;
 	border: 1px solid #999999;
 	border-radius: 3px;
@@ -156,6 +158,9 @@ select:focus {
 #reporttitle {
 	/* display: none; oddly cuts off part of the summary in IE6 */
 	visibility: hidden;
+}
+.disabled {
+	color: #999;
 }
 .options {
 	margin: 6px 0 10px;

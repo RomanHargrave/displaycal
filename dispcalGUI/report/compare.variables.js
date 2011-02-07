@@ -88,6 +88,7 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
 		passrecommendedtext: "Recommended tolerance passed",
 		failrecommendedtext: null,
 		delta_calc_method: CIE00, // delta calculation method for overview
+		lock_delta_calc_method: false,
 		warn_deviation: 5,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
 		rules: CRITERIA_RULES_DEFAULT
@@ -103,6 +104,7 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
 		passrecommendedtext: "Recommended tolerance passed",
 		failrecommendedtext: null,
 		delta_calc_method: CIE00, // delta calculation method for overview
+		lock_delta_calc_method: false,
 		warn_deviation: 5,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
 		rules: CRITERIA_RULES_CMYK
@@ -117,6 +119,7 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
 		passrecommendedtext: "Recommended tolerance passed",
 		failrecommendedtext: null,
 		delta_calc_method: CIE00, // delta calculation method for overview
+		lock_delta_calc_method: true,
 		warn_deviation: 3,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
 		rules: CRITERIA_RULES_CMYK.concat([
@@ -171,6 +174,7 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
 		passrecommendedtext: "Recommended tolerance passed",
 		failrecommendedtext: null,
 		delta_calc_method: CIE76, // delta calculation method for overview
+		lock_delta_calc_method: true,
 		warn_deviation: 5,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
 		rules: CRITERIA_RULES_CMYK.concat([
