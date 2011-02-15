@@ -16,13 +16,6 @@ from time import gmtime, strftime, timezone
 if sys.platform == "win32":
 	import _winreg
 
-if sys.platform == "win32":
-	from win32com.shell.shell import SHGetSpecialFolderPath
-	from win32com.shell.shellcon import (CSIDL_APPDATA, CSIDL_COMMON_APPDATA, 
-										 CSIDL_COMMON_STARTUP, 
-										 CSIDL_PROGRAM_FILES_COMMON, 
-										 CSIDL_STARTUP, CSIDL_SYSTEM)
-
 from argyll_names import viewconds
 if sys.platform == "win32":
 	from defaultpaths import appdata, commonappdata, commonprogramfiles

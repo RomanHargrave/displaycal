@@ -24,7 +24,6 @@ elif sys.platform == "win32":
 if sys.platform == "win32":
 	import pywintypes
 	import win32api
-	import win32com.client
 
 # custom
 import CGATS
@@ -57,9 +56,6 @@ from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 import wx.lib.delayedresult as delayedresult
-
-if sys.platform == "win32": #and SendKeys is None:
-	wsh_shell = win32com.client.Dispatch("WScript.Shell")
 
 USE_WPOPEN = 0
 
