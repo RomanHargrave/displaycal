@@ -66,63 +66,95 @@ rgbspaces = {
 }
 
 
+def cat_matrix(cat="Bradford"):
+	if isinstance(cat, basestring):
+		cat = cat_matrices[cat]
+	if not isinstance(cat, Matrix3x3):
+		cat = Matrix3x3(cat)
+	return cat
+
+
 def cbrt(x):
 	return math.pow(x, 1.0 / 3.0) if x >= 0 else -math.pow(-x, 1.0 / 3.0)
 
 
-def adapt(XS, YS, ZS, whitepoint_source=None, whitepoint_destination=None, matrix=None):
+def XYZ2LMS(X, Y, Z, cat="Bradford"):
+	cat = cat_matrix(cat)
+	p, y, b = cat * [X, Y, Z]
+	return p, y, b
+
+
+def LMS_wp_adaption_matrix(whitepoint_source=None, 
+						   whitepoint_destination=None, 
+						   cat="Bradford"):
 	# chromatic adaption
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
-	# matrix = adaption matrix or predefined choice ('bradford', 'vonkries' or 'xyzscaling'),
-	# defaults to 'bradford'
-	if matrix:
-		MA = matrix
-	else:
-		matrix = 'bradford';
-	if isinstance(matrix, basestring):
-		if matrix.lower() == 'xyzscaling':
-			MA = [[1, 0, 0],
-				  [0, 1, 0],
-				  [0, 0, 1]]
-		elif matrix.lower() == 'vonkries':
-			MA = [[ 0.40024,  0.70760, -0.08081],
-				  [-0.22630,  1.16532,  0.04570],
-				  [ 0.00000,  0.00000,  0.91822]]
-		else:
-			MA = [[ 0.89510,  0.26640, -0.16140],
-				  [-0.75020,  1.71350,  0.03670],
-				  [ 0.03890, -0.06850,  1.02960]]
-	if not isinstance(MA, Matrix3x3):
-		MA = Matrix3x3(MA)
+	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
+	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
+	cat = cat_matrix(cat)
 	if isinstance(whitepoint_source, (list, tuple)):
 		XYZWS = whitepoint_source
 	elif whitepoint_source:
 		XYZWS = CIEDCCT2XYZ(whitepoint_source)
 	else:
 		XYZWS = 0.96422, 1.0, 0.82521  # Observer= 2°, Illuminant= D50
-	XWS = XYZWS[0]
-	YWS = XYZWS[1]
-	ZWS = XYZWS[2]
-	ps = XWS * MA[0][0] + YWS * MA[0][1] + ZWS * MA[0][2]
-	ys = XWS * MA[1][0] + YWS * MA[1][1] + ZWS * MA[1][2]
-	bs = XWS * MA[2][0] + YWS * MA[2][1] + ZWS * MA[2][2]
 	if isinstance(whitepoint_destination, (list, tuple)):
 		XYZWD = whitepoint_destination
 	elif whitepoint_destination:
 		XYZWD = CIEDCCT2XYZ(whitepoint_destination)
 	else:
 		XYZWD = 0.96422, 1.0, 0.82521  # Observer= 2°, Illuminant= D50
-	XWD = XYZWD[0]
-	YWD = XYZWD[1]
-	ZWD = XYZWD[2]
-	pd = XWD * MA[0][0] + YWD * MA[0][1] + ZWD * MA[0][2]
-	yd = XWD * MA[1][0] + YWD * MA[1][1] + ZWD * MA[1][2]
-	bd = XWD * MA[2][0] + YWD * MA[2][1] + ZWD * MA[2][2]
-	M = MA.inverted() * [[pd/ps, 0, 0], [0, yd/ys, 0], [0, 0, bd/bs]] * MA
-	XD = XS * M[0][0] + YS * M[0][1] + ZS * M[0][2]
-	YD = XS * M[1][0] + YS * M[1][1] + ZS * M[1][2]
-	ZD = XS * M[2][0] + YS * M[2][1] + ZS * M[2][2]
-	return XD, YD, ZD
+	if XYZWS[1] <= 1.0 and XYZWD[1] > 1.0:
+		# make sure the scaling is identical
+		XYZWS = [v * 100 for v in XYZWS]
+	if XYZWD[1] <= 1.0 and XYZWS[1] > 1.0:
+		# make sure the scaling is identical
+		XYZWD = [v * 100 for v in XYZWD]
+	Ls, Ms, Ss = XYZ2LMS(XYZWS[0], XYZWS[1], XYZWS[2], cat)
+	Ld, Md, Sd = XYZ2LMS(XYZWD[0], XYZWD[1], XYZWD[2], cat)
+	return Matrix3x3([[Ld/Ls, 0, 0], [0, Md/Ms, 0], [0, 0, Sd/Ss]])
+
+
+def wp_adaption_matrix(whitepoint_source=None, whitepoint_destination=None, 
+					   cat="Bradford"):
+	# chromatic adaption
+	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
+	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
+	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
+	cat = cat_matrix(cat)
+	return cat.inverted() * LMS_wp_adaption_matrix(whitepoint_source, 
+												   whitepoint_destination, 
+												   cat) * cat
+
+
+def adapt(X, Y, Z, whitepoint_source=None, whitepoint_destination=None, 
+		  cat="Bradford"):
+	# chromatic adaption
+	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
+	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
+	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
+	return wp_adaption_matrix(whitepoint_source, whitepoint_destination, 
+							  cat) * (X, Y, Z)
+
+
+def is_similar_matrix(matrix1, matrix2, digits=3):
+	""" Compare two matrices and check if they are the same
+	up to n digits after the decimal point """
+	return matrix1.rounded(digits) == matrix2.rounded(digits)
+
+
+def guess_cat(chad, whitepoint_source=None, whitepoint_destination=None):
+	""" Try and guess the chromatic adaption transform used in a chromatic 
+	adaption matrix as found in an ICC profile's 'chad' tag """
+	if chad == [[1, 0, 0], [0, 1, 0], [0, 0, 1]]:
+		return "None"
+	for cat in cat_matrices:
+		if is_similar_matrix((chad * cat_matrices[cat].inverted() * 
+							  LMS_wp_adaption_matrix(whitepoint_destination, 
+													 whitepoint_source, 
+													 cat)).inverted(), 
+							 cat_matrices[cat], 2):
+			return cat
 
 
 def CIEDCCT2xyY(T):
@@ -513,12 +545,12 @@ def XYZ2Lab(X, Y, Z, Xr=None, Yr=None, Zr=None):
 				Xr = 94.939
 				Yr = 122.558
 			elif Xr == "E":
-				Xr = 100
-				Yr = 100
+				Xr = 100.0
+				Yr = 100.0
 			else:
 				Xr = 96.422
 				Zr = 82.521
-			Yr = 100
+			Yr = 100.0
 		else:
 			xyY = CIEDCCT2xyY(Xr, true)
 			XYZ = xyY2XYZ(xyY[0], xyY[1], xyY[2])
@@ -625,7 +657,11 @@ class Matrix3x3(list):
 	
 	""" Simple 3x3 matrix """
 	
-	def __init__(self, matrix):
+	def __init__(self, matrix=None):
+		if matrix:
+			self.update(matrix)
+	
+	def update(self, matrix):
 		if len(matrix) != 3:
 			raise ValueError('Invalid number of rows for 3x3 matrix: %i' % len(matrix))
 		while len(self):
@@ -638,7 +674,8 @@ class Matrix3x3(list):
 				self[-1].append(column)
 	
 	def __add__(self, matrix):
-		return self.__class__([[self[0][0] + matrix[0][0],
+		instance = self.__class__()
+		instance.update([[self[0][0] + matrix[0][0],
 								self[0][1] + matrix[0][1],
 								self[0][2] + matrix[0][2]],
 							   [self[1][0] + matrix[1][0],
@@ -647,19 +684,25 @@ class Matrix3x3(list):
 							   [self[2][0] + matrix[2][0],
 								self[2][1] + matrix[2][1],
 								self[2][2] + matrix[2][2]]])
+		return instance
 	
 	def __iadd__(self, matrix):
 		# inplace
-		self.__init__(self.__add__(matrix))
+		self.update(self.__add__(matrix))
 		return self
 	
 	def __imul__(self, matrix):
 		# inplace
-		self.__init__(self.__mul__(matrix))
+		self.update(self.__mul__(matrix))
 		return self
 	
 	def __mul__(self, matrix):
-		return self.__class__([[self[0][0]*matrix[0][0] + self[0][1]*matrix[1][0] + self[0][2]*matrix[2][0],
+		if not isinstance(matrix[0], (list, tuple)):
+			return [matrix[0] * self[0][0] + matrix[1] * self[0][1] + matrix[2] * self[0][2],
+					matrix[0] * self[1][0] + matrix[1] * self[1][1] + matrix[2] * self[1][2],
+					matrix[0] * self[2][0] + matrix[1] * self[2][1] + matrix[2] * self[2][2]]
+		instance = self.__class__()
+		instance.update([[self[0][0]*matrix[0][0] + self[0][1]*matrix[1][0] + self[0][2]*matrix[2][0],
 								self[0][0]*matrix[0][1] + self[0][1]*matrix[1][1] + self[0][2]*matrix[2][1],
 								self[0][0]*matrix[0][2] + self[0][1]*matrix[1][2] + self[0][2]*matrix[2][2]],
 							   [self[1][0]*matrix[0][0] + self[1][1]*matrix[1][0] + self[1][2]*matrix[2][0],
@@ -668,12 +711,14 @@ class Matrix3x3(list):
 							   [self[2][0]*matrix[0][0] + self[2][1]*matrix[1][0] + self[2][2]*matrix[2][0],
 								self[2][0]*matrix[0][1] + self[2][1]*matrix[1][1] + self[2][2]*matrix[2][1],
 								self[2][0]*matrix[0][2] + self[2][1]*matrix[1][2] + self[2][2]*matrix[2][2]]])
+		return instance
 	
 	def adjoint(self):
 		return self.cofactors().transposed()
 	
 	def cofactors(self):
-		return self.__class__([[(self[1][1]*self[2][2] - self[1][2]*self[2][1]),
+		instance = self.__class__()
+		instance.update([[(self[1][1]*self[2][2] - self[1][2]*self[2][1]),
 								-1 * (self[1][0]*self[2][2] - self[1][2]*self[2][0]),
 								(self[1][0]*self[2][1] - self[1][1]*self[2][0])],
 							   [-1 * (self[0][1]*self[2][2] - self[0][2]*self[2][1]),
@@ -682,6 +727,7 @@ class Matrix3x3(list):
 							   [(self[0][1]*self[1][2] - self[0][2]*self[1][1]),
 								-1 * (self[0][0]*self[1][2] - self[1][0]*self[0][2]),
 								(self[0][0]*self[1][1] - self[0][1]*self[1][0])]])
+		return instance
 	
 	def determinant(self):
 		return ((self[0][0]*self[1][1]*self[2][2] + 
@@ -693,12 +739,13 @@ class Matrix3x3(list):
 	
 	def invert(self):
 		# inplace
-		self.__init__(self.inverted())
+		self.update(self.inverted())
 	
 	def inverted(self):
 		determinant = self.determinant()
 		matrix = self.adjoint()
-		return self.__class__([[matrix[0][0] / determinant,
+		instance = self.__class__()
+		instance.update([[matrix[0][0] / determinant,
 								matrix[0][1] / determinant,
 								matrix[0][2] / determinant],
 							   [matrix[1][0] / determinant,
@@ -707,14 +754,74 @@ class Matrix3x3(list):
 							   [matrix[2][0] / determinant,
 								matrix[2][1] / determinant,
 								matrix[2][2] / determinant]])
+		return instance
+	
+	def rounded(self, digits=3):
+		matrix = self.__class__()
+		for row in self:
+			matrix.append([]);
+			for column in row:
+				matrix[-1].append(round(column, digits))
+		return matrix
 								
 	def transpose(self):
-		self.__init__(self.transposed())
+		self.update(self.transposed())
 	
 	def transposed(self):
-		return self.__class__([[self[0][0], self[1][0], self[2][0]],
+		instance = self.__class__()
+		instance.update([[self[0][0], self[1][0], self[2][0]],
 							   [self[0][1], self[1][1], self[2][1]],
 							   [self[0][2], self[1][2], self[2][2]]])
+		return instance
+
+
+# Chromatic adaption transform matrices
+# Bradford, von Kries from http://brucelindbloom.com/Eqn_ChromAdapt.html
+# CAT02 from http://en.wikipedia.org/wiki/CIECAM02#CAT02
+# HPE, CAT97s from http://en.wikipedia.org/wiki/LMS_color_space#CAT97s
+# CMCCAT97 from 'Performance Of Five Chromatic Adaptation Transforms Using 
+# Large Number Of Color Patches', http://hrcak.srce.hr/file/95370
+# CMCCAT2000, Sharp from 'Computational colour science using MATLAB'
+# ISBN 0470845627, http://books.google.com/books?isbn=0470845627
+# Cross-verification of the matrix numbers has been done using various sources,
+# most notably 'Chromatic Adaptation Performance of Different RGB Sensors'
+# http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.14.918&rep=rep1&type=pdf
+cat_matrices = {"Bradford": Matrix3x3([[ 0.89510,  0.26640, -0.16140],
+									   [-0.75020,  1.71350,  0.03670],
+									   [ 0.03890, -0.06850,  1.02960]]),
+				"CAT02": Matrix3x3([[ 0.7328,  0.4296, -0.1624],
+									[-0.7036,  1.6975,  0.0061],
+									[ 0.0030,  0.0136,  0.9834]]),
+				"CAT97s": Matrix3x3([[ 0.8562,  0.3372, -0.1934],
+									 [-0.8360,  1.8327,  0.0033],
+									 [ 0.0357, -0.0469,  1.0112]]),
+				"CMCCAT97": Matrix3x3([[ 0.8951, -0.7502,  0.0389],
+									   [ 0.2664,  1.7135,  0.0685],
+									   [-0.1614,  0.0367,  1.0296]]),
+				"CMCCAT2000": Matrix3x3([[ 0.7982,  0.3389, -0.1371],
+										 [-0.5918,  1.5512,  0.0406],
+										 [ 0.0008,  0.0239,  0.9753]]),
+				# Hunt-Pointer-Estevez, equal-energy illuminant 
+				"HPE normalized to illuminant E": Matrix3x3([[ 0.38971, 0.68898, -0.07868],
+								  [-0.22981, 1.18340,  0.04641],
+								  [ 0.00000, 0.00000,  1.00000]]),
+				# Süsstrunk et al.15 optimized spectrally sharpened matrix
+				"Sharp": Matrix3x3([[ 1.2694, -0.0988, -0.1706],
+									[-0.8364,  1.8006,  0.0357],
+									[ 0.0297, -0.0315,  1.0018]]),
+				# 'Von Kries' as found on Bruce Lindbloom's site: 
+				# Hunt-Pointer-Estevez normalized to D65
+				# (maybe I should call it that instead of 'Von Kries'
+				# to avoid ambiguity?)
+				"HPE normalized to illuminant D65": Matrix3x3([[ 0.40024,  0.70760, -0.08081],
+										[-0.22630,  1.16532,  0.04570],
+										[ 0.00000,  0.00000,  0.91822]]),
+				"RLAB": Matrix3x3([[1.9569, -1.1882, 0.2313], 
+								   [0.3612, 0.6388, 0.0], 
+								   [0.0, 0.0, 1.0]]).inverted(),
+				"XYZ scaling": Matrix3x3([[1, 0, 0],
+										  [0, 1, 0],
+										  [0, 0, 1]])}
 
 
 def test():

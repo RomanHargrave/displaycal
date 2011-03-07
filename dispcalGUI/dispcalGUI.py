@@ -4452,7 +4452,7 @@ class MainFrame(BaseFrame):
 					else:
 						ti3_ref.DATA[i][color] = ti3_measured.DATA[i + offset][color]
 		
-		adaption_matrix = "Bradford"
+		cat = "Bradford"
 		
 		# create a 'joined' ti3 from ref ti3, with XYZ values from measured ti3
 		# this makes sure CMYK data in the original ref will be present in
@@ -4473,15 +4473,13 @@ class MainFrame(BaseFrame):
 		wtpt_profile_norm = tuple(n * 100 for n in profile.tags.wtpt.values())
 		if "chad" in profile.tags:
 			# undo chromatic adaption of profile whitepoint
-			X, Y, Z = wtpt_profile_norm
-			M = colormath.Matrix3x3(profile.tags.chad).inverted()
-			XR = X * M[0][0] + Y * M[0][1] + Z * M[0][2]
-			YR = X * M[1][0] + Y * M[1][1] + Z * M[1][2]
-			ZR = X * M[2][0] + Y * M[2][1] + Z * M[2][2]
-			wtpt_profile_norm = tuple((n / YR) * 100.0 for n in (XR, YR, ZR))
+			WX, WY, WZ = profile.tags.chad.inverted() * wtpt_profile_norm
+			wtpt_profile_norm = tuple((n / WY) * 100.0 for n in (WX, WY, WZ))
+			# guess chromatic adaption transform (Bradford, CAT02...)
+			cat = profile.guess_cat() or cat
 		if "lumi" in profile.tags and isinstance(profile.tags.lumi,
 												 ICCP.XYZType):
-			# get scaled whitepoint
+			# calculate unscaled whitepoint
 			scale = profile.tags.lumi.Y / 100.0
 			wtpt_profile = tuple(n * scale for n in wtpt_profile_norm)
 		else:
@@ -4518,9 +4516,9 @@ class MainFrame(BaseFrame):
 						if data is ti3_joined:
 							# we need to adapt the measured values to D50
 							#print X, Y, Z, '->',
-							X, Y, Z = [n * 100 for n in 
-									   colormath.adapt(X, Y, Z, wtpt_measured_norm, 
-													   matrix=adaption_matrix)]
+							X, Y, Z = colormath.adapt(X, Y, Z, 
+													  wtpt_measured_norm, 
+													  cat=cat)
 							#print X, Y, Z
 						Lab = XYZ2Lab(X, Y, Z)
 						for j, color in enumerate(labels_Lab):
@@ -4572,7 +4570,7 @@ class MainFrame(BaseFrame):
 																 wtpt_profile_norm,
 							 "${SIMULATION_PROFILE}": sim_profile.getDescription() if sim_profile else '',
 							 "${TESTCHART}": os.path.basename(chart),
-							 "${ADAPTION}": str(adaption_matrix),
+							 "${ADAPTION}": str(cat),
 							 "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
 							 "${REF}":  str(ti3_ref).decode(enc, 
 															"replace").replace('"', 

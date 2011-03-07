@@ -26,6 +26,7 @@ if sys.platform == "win32":
 	except ImportError:
 		pass
 
+import colormath
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
 from ordereddict import OrderedDict
@@ -603,8 +604,10 @@ class ICCProfileTag(object):
 		"""
 		t.__repr__() <==> repr(t)
 		"""
-		if isinstance(self, ADict):
-			return ADict.__repr__(self)
+		if isinstance(self, OrderedDict):
+			return OrderedDict.__repr__(self)
+		elif isinstance(self, dict):
+			return dict.__repr__(self)
 		elif isinstance(self, UserString):
 			return UserString.__repr__(self)
 		elif isinstance(self, list):
@@ -1249,16 +1252,23 @@ class XYZType(ICCProfileTag, XYZNumber):
 		XYZNumber.__init__(self, tagData[8:20])
 
 
-class chromaticAdaptionTag(s15Fixed16ArrayType):
+class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
 	
-	def __init__(self, tagData, tagSignature):
+	def __init__(self, tagData=None, tagSignature=None):
+		if not tagData:
+			tagData = ""
+		if not tagSignature:
+			tagSignature = "chad"
 		ICCProfileTag.__init__(self, tagData, tagSignature)
-		data = self.tagData[8:]
-		while data:
-			if len(self) == 0 or len(self[-1]) == 3:
-				self.append([])
-			self[-1].append(s15Fixed16Number(data[0:4]))
-			data = data[4:]
+		data = tagData[8:]
+		if data:
+			matrix = []
+			while data:
+				if len(matrix) == 0 or len(matrix[-1]) == 3:
+					matrix.append([])
+				matrix[-1].append(s15Fixed16Number(data[0:4]))
+				data = data[4:]
+			self.update(matrix)
 
 
 tagSignature2Tag = {
@@ -1548,6 +1558,13 @@ class ICCProfile:
 		Return viewing conditions description.
 		"""
 		return unicode(self.tags.get("vued", ""))
+	
+	def guess_cat(self):
+		illuminant = self.illuminant.values()
+		if "chad" in self.tags:
+			return colormath.guess_cat(self.tags.chad, 
+									   self.tags.chad.inverted() * illuminant, 
+									   illuminant)
 	
 	def isSame(self, profile, force_calculation=False):
 		"""
