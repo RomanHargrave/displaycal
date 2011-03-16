@@ -1289,14 +1289,13 @@ class Worker():
 							break
 						else:
 							errstr = unicode(stderr, enc, "replace")
-							##if not silent:
-								##safe_print(errstr)
-							##else:
-								##log(errstr)
+							if not silent:
+								safe_print(errstr)
+							else:
+								log(errstr)
 							dlg.message.SetLabel(
 								lang.getstr("auth.failed") + "\n" + 
-								##errstr +
-								lang.getstr("dialog.enter_password"))
+								errstr)
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
 					dlg.Destroy()
