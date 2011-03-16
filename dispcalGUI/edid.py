@@ -28,6 +28,8 @@ else:
 	import re
 	import subprocess as sp
 
+import config
+from log import log, safe_print
 from util_str import make_ascii_printable
 
 HEADER = (0, 8)
@@ -114,17 +116,37 @@ def get_edid(display_no, display_name=None):
 			driver = "\\".join(device.DeviceID.split("\\")[-2:])
 			subkey = "\\".join(["SYSTEM", "CurrentControlSet", "Enum", 
 								"DISPLAY", id])
-			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey)
+			try:
+				key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey)
+			except WindowsError:
+				# Registry error
+				safe_print("Windows registry error: Key", 
+						   "\\".join(["HKEY_LOCAL_MACHINE", subkey]), 
+						   "does not exist.")
+				return {}
 			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 			for i in range(numsubkeys):
 				hkname = _winreg.EnumKey(key, i)
 				hk = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
 									 "\\".join([subkey, hkname]))
-				if _winreg.QueryValueEx(hk, "Driver")[0] == driver:
+				try:
+					test = _winreg.QueryValueEx(hk, "Driver")[0]
+				except WindowsError:
+					# No Driver entry
+					continue
+				if test == driver:
 					# Found our display device
-					devparms = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
-									 "\\".join([subkey, hkname, 
-												"Device Parameters"]))
+					try:
+						devparms = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
+										 "\\".join([subkey, hkname, 
+													"Device Parameters"]))
+					except WindowsError:
+						# No Device Parameters (registry error?)
+						safe_print("Windows registry error: Key", 
+								   "\\".join(["HKEY_LOCAL_MACHINE", subkey, 
+											  hkname, "Device Parameters"]), 
+								   "does not exist.")
+						continue
 					try:
 						edid = _winreg.QueryValueEx(devparms, "EDID")[0]
 					except WindowsError:
