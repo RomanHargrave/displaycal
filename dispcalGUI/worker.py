@@ -2437,9 +2437,9 @@ class Worker():
 			pldpaths = [os.path.join(os.path.dirname(spyd2en), "spyd2PLD.bin")]
 		else:
 			pldpaths = [os.path.join(dir_, "color", "spyd2PLD.bin") 
-						for dir_ in (defaultpaths.appdata, 
-									 defaultpaths.home, 
-									 defaultpaths.commonappdata)]
+						for dir_ in [defaultpaths.appdata, 
+									 defaultpaths.home] + 
+									defaultpaths.commonappdata]
 		for pldpath in pldpaths:
 			if os.path.isfile(pldpath):
 				return True

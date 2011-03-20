@@ -67,8 +67,10 @@ if sys.platform == "win32":
 	confighome = os.path.join(appdata, appname)
 	datahome = os.path.join(appdata, appname)
 	logdir = os.path.join(datahome, "logs")
-	data_dirs += [datahome, os.path.join(commonappdata, appname), 
-				  os.path.join(commonprogramfiles, appname)]
+	data_dirs += [datahome]
+	data_dirs += [os.path.join(dir_, appname) for dir_ in commonappdata]
+	del dir_
+	data_dirs += [os.path.join(commonprogramfiles, appname)]
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:

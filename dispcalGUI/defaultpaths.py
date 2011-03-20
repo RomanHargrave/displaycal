@@ -33,7 +33,7 @@ from util_os import expanduseru, expandvarsu, getenvu
 home = expanduseru("~")
 if sys.platform == "win32":
 	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA)
-	commonappdata = SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA)
+	commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA)]
 	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON)
 	try:
 		autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP)
@@ -50,7 +50,7 @@ if sys.platform == "win32":
 	iccprofiles_home = iccprofiles
 elif sys.platform == "darwin":
 	appdata = os.path.join(home, "Library")
-	commonappdata = os.path.join(os.path.sep, "Library")
+	commonappdata = [os.path.join(os.path.sep, "Library")]
 	prefs = os.path.join(os.path.sep, "Library", "Preferences")
 	prefs_home = os.path.join(home, "Library", "Preferences")
 	appsupport = os.path.join(os.path.sep, "Library", "Application Support")
@@ -79,7 +79,7 @@ else:
 	for dir_ in xdg_data_dirs_default.split(os.pathsep):
 		if not dir_ in xdg_data_dirs:
 			xdg_data_dirs += [dir_]
-	commonappdata = xdg_data_dirs[0]
+	commonappdata = xdg_data_dirs
 	autostart = None
 	for dir_ in xdg_config_dirs:
 		if os.path.exists(dir_):
