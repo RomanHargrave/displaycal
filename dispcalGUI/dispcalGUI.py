@@ -649,7 +649,7 @@ class MainFrame(BaseFrame):
 		# further than necessary
 		self.headerbitmap = self.panel.FindWindowByName("headerbitmap")
 		self.headerbitmap.SetBitmap(getbitmap("theme/header"))
-		self.calpanel.SetScrollRate(0, 20)
+		self.calpanel.SetScrollRate(2, 2)
 		self.update_comports()
 		self.update_controls()
 		self.SetSaneGeometry(int(getcfg("position.x")), 
@@ -792,6 +792,7 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
+		self.Bind(wx.EVT_SIZE, self.OnResize, self)
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 		self.droptarget = FileDrop()
 		self.droptarget.drophandlers = {
@@ -894,9 +895,15 @@ class MainFrame(BaseFrame):
 					   self.GetSizer().GetMinSize()[1])
 			safe_print("[D] Main window sizer height after adjust:", 
 					   self.GetSizer().GetSize()[1])
-		self.SetMinSize((self.GetMinSize()[0], newheight))
-		self.SetMaxSize((size[0], newheight))
-		self.SetSize((size[0], newheight))
+		self.SetMinSize((min(self.GetDisplay().ClientArea[2], 
+							 self.GetMinSize()[0]), newheight))
+		# We add a margin on the right side for the vertical scrollbar
+		size = (min(self.GetDisplay().ClientArea[2], 
+					max(self.GetMinSize()[0], 
+						self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
+				newheight)
+		self.SetMaxSize(size)
+		self.SetSize(size)
 		self.Thaw()
 		wx.CallLater(100, self.calpanel.SetMaxSize, (-1, -1))
 
@@ -914,13 +921,20 @@ class MainFrame(BaseFrame):
 		# arcane, but needed to circumvent the issue where the size set by 
 		# frame_fit is immediately scrapped under certain circumstances
 		# (related to the selected window manager under Linux, for example).
-		wx.CallLater(100, self.SetMinSize, (self.GetMinSize()[0], 
+		wx.CallLater(100, self.SetMinSize, (min(self.GetDisplay().ClientArea[2],
+												self.GetMinSize()[0]), 
 											self.GetSize()[1] - 
 											self.calpanel.GetSize()[1] + 64))
 		wx.CallLater(150, self.SetMaxSize, (-1, -1))
 		self.Unbind(wx.EVT_IDLE)
 		if event:
 			event.Skip()
+	
+	def OnResize(self, event):
+		# Hide the header bitmap on small screens
+		self.header.GetContainingSizer().Show(
+			self.header, self.Size[1] > 480)
+		event.Skip()
 
 	def cal_drop_handler(self, path):
 		"""
@@ -1304,10 +1318,6 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_CHECKBOX, self.calibration_update_ctrl_handler, 
 				  id=self.calibration_update_cb.GetId())
 
-		# Update corresponding profile checkbox
-		self.Bind(wx.EVT_CHECKBOX, self.profile_update_ctrl_handler, 
-				  id=self.profile_update_cb.GetId())
-
 		# Display
 		self.Bind(wx.EVT_COMBOBOX, self.display_ctrl_handler, 
 				  id=self.display_ctrl.GetId())
@@ -1652,14 +1662,11 @@ class MainFrame(BaseFrame):
 			self.calibration_file_ctrl.SetToolTip(None)
 			self.delete_calibration_btn.Disable()
 			self.install_profile_btn.Disable()
-			do_update_controls = self.calibration_update_cb.GetValue() or \
-								 self.profile_update_cb.GetValue()
+			do_update_controls = self.calibration_update_cb.GetValue()
 			self.calibration_update_cb.SetValue(False)
 			setcfg("calibration.update", 0)
 			self.calibration_update_cb.Disable()
-			self.profile_update_cb.SetValue(False)
 			setcfg("profile.update", 0)
-			self.profile_update_cb.Disable()
 			if do_update_controls:
 				self.update_controls()
 			self.settings_discard_changes(keep_changed_state=True)
@@ -1668,7 +1675,7 @@ class MainFrame(BaseFrame):
 		""" Update the display selector controls. """
 		if debug:
 			safe_print("[D] update_displays")
-		self.panel.Freeze()
+		self.calpanel.Freeze()
 		self.displays = []
 		for item in self.worker.displays:
 			self.displays += [item.replace("[PRIMARY]", 
@@ -1712,8 +1719,22 @@ class MainFrame(BaseFrame):
 		display_lut_sizer.Show(self.display_lut_label, use_lut_ctrl)
 		display_lut_sizer.Show(self.display_lut_ctrl, use_lut_ctrl)
 		display_sizer.Show(self.display_lut_link_ctrl, use_lut_ctrl)
-		self.panel.Layout()
-		self.panel.Thaw()
+		self.calpanel.Layout()
+		self.calpanel.Thaw()
+		self.update_scrollbars()
+	
+	def update_scrollbars(self):
+		self.Freeze()
+		# Only way I could find to trigger a scrollbars update
+		# was to change the frame size
+		self.SetSize((min(self.GetDisplay().ClientArea[2], 
+						  self.calpanel.GetSizer().GetMinSize()[0]), 
+					  self.GetSize()[1] - 1))
+		# We add a margin on the right side for the vertical scrollbar
+		self.SetSize((min(self.GetDisplay().ClientArea[2], 
+						  self.calpanel.GetSizer().GetMinSize()[0] + 34), 
+					  self.GetSize()[1] + 1))
+		self.Thaw()
 
 	def update_comports(self):
 		""" Update the comport selector control. """
@@ -1810,7 +1831,7 @@ class MainFrame(BaseFrame):
 	
 	def update_colorimeter_correction_matrix_ctrl(self):
 		# Show or hide the colorimeter correction matrix control
-		self.panel.Freeze()
+		self.calpanel.Freeze()
 		instrument_features = self.worker.get_instrument_features()
 		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_ctrl,
@@ -1824,8 +1845,21 @@ class MainFrame(BaseFrame):
 			self.colorimeter_correction_matrix_btn,
 			self.worker.argyll_version >= [1, 3, 0] and 
 			not instrument_features.get("spectral"))
-		self.panel.Layout()
-		self.panel.Thaw()
+		self.calpanel.Layout()
+		self.calpanel.Thaw()
+		self.update_scrollbars()
+	
+	def is_profile(self, filename=None):
+		filename = filename or getcfg("calibration.file")
+		is_profile = False
+		if filename and os.path.exists(filename):
+			try:
+				profile = ICCP.ICCProfile(filename)
+			except ICCP.ICCProfileInvalidError:
+				pass
+			else:
+				is_profile = True
+		return is_profile
 
 	def update_main_controls(self):
 		""" Enable/disable the calibrate and profile buttons 
@@ -1838,8 +1872,8 @@ class MainFrame(BaseFrame):
 		self.measurement_mode_ctrl.Enable(
 			enable_cal and bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
-
-		update_profile = self.profile_update_cb.GetValue()
+		
+		update_profile = self.calibration_update_cb.GetValue() and self.is_profile()
 		enable_profile = not(update_profile)
 
 		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
@@ -1937,11 +1971,8 @@ class MainFrame(BaseFrame):
 
 		if not update_cal or not profile_exists:
 			setcfg("profile.update", "0")
-		self.profile_update_cb.Enable(update_cal and profile_exists)
-		self.profile_update_cb.SetValue(
-			bool(getcfg("profile.update")))
 
-		update_profile = self.profile_update_cb.GetValue()
+		update_profile = self.calibration_update_cb.GetValue() and self.is_profile()
 		enable_profile = not(update_profile)
 		
 		##items = ["<%s>" % lang.getstr("auto")]
@@ -1957,7 +1988,6 @@ class MainFrame(BaseFrame):
 
 		self.whitepoint_native_rb.Enable(enable_cal)
 		self.whitepoint_colortemp_rb.Enable(enable_cal)
-		self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
 		self.whitepoint_xy_rb.Enable(enable_cal)
 		self.luminance_max_rb.Enable(enable_cal)
 		self.luminance_cdm2_rb.Enable(enable_cal)
@@ -2032,6 +2062,7 @@ class MainFrame(BaseFrame):
 			self.whitepoint_ctrl_handler(
 				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
 				self.whitepoint_native_rb), False)
+			self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
 		self.whitepoint_colortemp_textctrl.Enable(
 			enable_cal and bool(getcfg("whitepoint.colortemp", False)))
 		self.whitepoint_x_textctrl.Enable(enable_cal and 
@@ -2231,6 +2262,8 @@ class MainFrame(BaseFrame):
 												getevttype(event)))
 		setcfg("calibration.update", 
 			   int(self.calibration_update_cb.GetValue()))
+		setcfg("profile.update", 
+			   int(self.calibration_update_cb.GetValue() and self.is_profile()))
 		self.update_controls()
 
 	def enable_spyder2_handler(self, event):
@@ -2347,16 +2380,6 @@ class MainFrame(BaseFrame):
 		else:
 			profile = None
 		self.lut_viewer_load_lut(profile=profile)
-	
-	def profile_update_ctrl_handler(self, event):
-		if debug:
-			safe_print("[D] profile_update_ctrl_handler called for ID %s %s "
-					   "event type %s %s" % (event.GetId(), 
-											 getevtobjname(event, self), 
-											 event.GetEventType(), 
-											 getevttype(event)))
-		setcfg("profile.update", int(self.profile_update_cb.GetValue()))
-		self.update_controls()
 
 	def profile_quality_warning_handler(self, event):
 		q = self.get_profile_quality()
