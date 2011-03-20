@@ -1268,8 +1268,7 @@ class MainFrame(BaseFrame):
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
-		self.menuitem_enable_spyder2.Enable(bool(spyd2en) and not 
-											spyder2_firmware_exists)
+		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
 		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
 										   spyder2_firmware_exists)
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
@@ -2267,7 +2266,7 @@ class MainFrame(BaseFrame):
 		self.update_controls()
 
 	def enable_spyder2_handler(self, event):
-		self.menuitem_enable_spyder2.Check(False)
+		self.update_menus()
 		if check_set_argyll_bin():
 			cmd, args = get_argyll_util("spyd2en"), ["-v"]
 			if sys.platform in ("darwin", "win32"):
