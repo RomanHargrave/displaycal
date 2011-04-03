@@ -7,6 +7,9 @@ import re
 import subprocess as sp
 import sys
 
+if sys.platform == "win32":
+	import ctypes
+
 from encoding import get_encodings
 
 fs_enc = get_encodings()[1]
@@ -37,6 +40,13 @@ def getenvu(key, default = None):
 	""" Unicode version of os.getenv """
 	var = os.getenv(key, default)
 	return var if isinstance(var, unicode) else unicode(var, fs_enc)
+
+
+def is_superuser():
+	if sys.platform == "win32":
+		return ctypes.windll.shell32.IsUserAnAdmin()
+	else:
+		return os.geteuid() == 0
 
 
 def launch_file(filepath):

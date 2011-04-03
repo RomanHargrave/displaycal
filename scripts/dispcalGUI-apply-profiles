@@ -90,36 +90,37 @@ def apply_profiles():
 							 "-y", str(worker.display_rects[i][1])], 
 							capture_output=True, skip_scripts=True, 
 							silent=False)
-		worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
-								  "-L"], 
-						capture_output=True, skip_scripts=True, 
-						silent=False)
-		errortxt = "\n".join(worker.errors).strip()
-		if errortxt and (not "using linear" in errortxt or 
-						 len(errortxt.split("\n")) > 1):
-			if "Failed to get the displays current ICC profile" in errortxt:
-				# Maybe just not configured
+		if dispwin:
+			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
+									  "-L"], 
+							capture_output=True, skip_scripts=True, 
+							silent=False)
+			errortxt = "\n".join(worker.errors).strip()
+			if errortxt and (not "using linear" in errortxt or 
+							 len(errortxt.split("\n")) > 1):
+				if "Failed to get the displays current ICC profile" in errortxt:
+					# Maybe just not configured
+					continue
+				elif sys.platform == "win32" or \
+				   "Failed to set VideoLUT" in errortxt or \
+				   "We don't have access to the VideoLUT" in errortxt:
+					errstr = lang.getstr("calibration.load_error")
+				else:
+					errstr = lang.getstr("profile.load_error")
+				errors.append(": ".join([display, errstr]))
 				continue
-			elif sys.platform == "win32" or \
-			   "Failed to set VideoLUT" in errortxt or \
+			# Verify the calibration was actually loaded
+			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-L", 
+									  "-V"], 
+							capture_output=True, skip_scripts=True, 
+							silent=False)
+			# The 'NOT loaded' message goes to stdout!
+			# Other errors go to stderr
+			errortxt = "\n".join(worker.errors + worker.output).strip()
+			if "NOT loaded" in errortxt or \
 			   "We don't have access to the VideoLUT" in errortxt:
-				errstr = lang.getstr("calibration.load_error")
-			else:
-				errstr = lang.getstr("profile.load_error")
-			errors.append(": ".join([display, errstr]))
-			continue
-		# Verify the calibration was actually loaded
-		worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-L", 
-								  "-V"], 
-						capture_output=True, skip_scripts=True, 
-						silent=False)
-		# The 'NOT loaded' message goes to stdout!
-		# Other errors go to stderr
-		errortxt = "\n".join(worker.errors + worker.output).strip()
-		if "NOT loaded" in errortxt or \
-		   "We don't have access to the VideoLUT" in errortxt:
-			errors.append(": ".join([display, 
-									lang.getstr("calibration.load_error")]))
+				errors.append(": ".join([display, 
+										lang.getstr("calibration.load_error")]))
 
 	return errors
 

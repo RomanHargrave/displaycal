@@ -116,7 +116,8 @@ from util_io import Files, StringIOu as StringIO
 from util_list import index_fallback_ignorecase, intlist, natsort
 if sys.platform == "darwin":
 	from util_mac import mac_terminal_do_script
-from util_os import expanduseru, getenvu, launch_file, listdir_re, which
+from util_os import (expanduseru, getenvu, is_superuser, launch_file, 
+					 listdir_re, which)
 from util_str import safe_str, safe_unicode, strtr, wrap
 import util_x
 from worker import (Error, FilteredStream, LineCache, Worker, check_cal_isfile, 
@@ -3801,6 +3802,14 @@ class MainFrame(BaseFrame):
 				self.worker.wrapup(False)
 		if not isinstance(result, Exception) and result:
 			if install:
+				if getcfg("profile.install_scope") == "l":
+					# We need a system-wide config file to store the path to 
+					# the Argyll binaries
+					result = config.makecfgdir("system")
+					if result:
+						result = config.writecfg("system")
+					if not result:
+						return result
 				if not silent and not gcm:
 					if verbose >= 1: safe_print(lang.getstr("success"))
 					InfoDialog(self, 
@@ -5176,7 +5185,7 @@ class MainFrame(BaseFrame):
 				(sys.platform == "win32" and 
 				 sys.getwindowsversion() >= (6, ) and 
 				 self.worker.argyll_version > 
-				 [1, 1, 1]) or test:
+				 [1, 1, 1] and is_superuser()) or test:
 				# Linux, OSX or Vista and later
 				# NOTE: System install scope is currently not implemented
 				# correctly in dispwin 1.1.0, but a patch is trivial and

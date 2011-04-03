@@ -20,10 +20,11 @@ from argyll_names import viewconds
 if sys.platform == "win32":
 	from defaultpaths import appdata, commonappdata, commonprogramfiles
 elif sys.platform == "darwin":
-	from defaultpaths import appsupport, appsupport_home, prefs_home
+	from defaultpaths import appsupport, appsupport_home, prefs, prefs_home
 else:
-	from defaultpaths import (xdg_config_home, xdg_data_home, 
-							 xdg_data_home_default, xdg_data_dirs)
+	from defaultpaths import (xdg_config_dir_default, xdg_config_home, 
+							  xdg_data_home, xdg_data_home_default, 
+							  xdg_data_dirs)
 from defaultpaths import autostart, autostart_home
 from meta import name as appname, build, lastmod, version
 from options import ascii, debug, verbose
@@ -64,6 +65,7 @@ if sys.platform == "win32":
 	btn_width_correction = 20
 	script_ext = ".cmd"
 	scale_adjustment_factor = 1.0
+	config_sys = os.path.join(commonappdata[0], appname)
 	confighome = os.path.join(appdata, appname)
 	datahome = os.path.join(appdata, appname)
 	logdir = os.path.join(datahome, "logs")
@@ -79,6 +81,7 @@ else:
 		script_ext = ".command"
 		mac_create_app = True
 		scale_adjustment_factor = 1.0
+		config_sys = os.path.join(prefs, appname)
 		confighome = os.path.join(prefs_home, appname)
 		datahome = os.path.join(appsupport_home, appname)
 		logdir = os.path.join(expanduseru("~"), "Library", 
@@ -87,6 +90,7 @@ else:
 	else:
 		script_ext = ".sh"
 		scale_adjustment_factor = 1.0
+		config_sys = os.path.join(xdg_config_dir_default, appname)
 		confighome = os.path.join(xdg_config_home, appname)
 		datahome = os.path.join(xdg_data_home, appname)
 		datahome_default = os.path.join(xdg_data_home_default, appname)
@@ -650,6 +654,40 @@ def get_verified_path(cfg_item_name, path=None):
 	return defaultDir, defaultFile
 
 
+def makecfgdir(which="user"):
+	if which == "user":
+		if not os.path.exists(confighome):
+			try:
+				os.makedirs(confighome)
+			except Exception, exception:
+				if not "handle_error" in globals():
+					from debughelpers import handle_error
+				handle_error(u"Warning - could not create configuration directory "
+							 "'%s': %s" % (confighome, safe_unicode(exception)))
+				return False
+	elif not os.path.exists(config_sys):
+		try:
+			if sys.platform == "win32":
+				os.makedirs(config_sys)
+			else:
+				result = self.worker.exec_cmd("mkdir", 
+											  ["-p", config_sys], 
+											  capture_output=True, 
+											  low_contrast=False, 
+											  skip_scripts=True, 
+											  silent=True, 
+											  asroot=True)
+				if isinstance(result, Exception):
+					raise result
+		except Exception, exception:
+			if not "handle_error" in globals():
+				from debughelpers import handle_error
+			handle_error(u"Warning - could not create configuration directory "
+						 "'%s': %s" % (config_sys, safe_unicode(exception)))
+			return False
+	return True
+
+
 def initcfg():
 	"""
 	Initialize the configuration.
@@ -665,14 +703,7 @@ def initcfg():
 							  appname + " Preferences")
 	else:
 		oldcfg = os.path.join(expanduseru("~"), "." + appname)
-	if not os.path.exists(confighome):
-		try:
-			os.makedirs(confighome)
-		except Exception, exception:
-			if not "handle_error" in globals():
-				from debughelpers import handle_error
-			handle_error("Warning - could not create configuration directory "
-						 "'%s'" % confighome)
+	makecfgdir()
 	if os.path.exists(confighome) and \
 	   not os.path.exists(os.path.join(confighome, appname + ".ini")):
 		try:
@@ -707,6 +738,7 @@ def initcfg():
 						   safe_unicode(exception))
 	# Read cfg
 	try:
+		cfg.read([os.path.join(config_sys, appname + ".ini")])
 		cfg.read([os.path.join(confighome, appname + ".ini")])
 		# This won't raise an exception if the file does not exist, only if it
 		# can't be parsed
@@ -725,22 +757,60 @@ def setcfg(name, value):
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 
-def writecfg():
-	try:
-		cfgfile = open(os.path.join(confighome, appname + ".ini"), "wb")
-		io = StringIO()
-		cfg.write(io)
-		io.seek(0)
-		lines = io.read().strip("\n").split("\n")
-		lines.sort()
-		cfgfile.write("\n".join(lines))
-		cfgfile.close()
-	except Exception, exception:
-		if not "handle_error" in globals():
-			global handle_error
-			from debughelpers import handle_error
-		handle_error(u"Warning - could not write configuration file: %s" % 
-					 safe_unicode(exception))
+def writecfg(which="user"):
+	if which == "user":
+		# user config - stores everything and overrides system-wide config
+		cfgfilename = os.path.join(confighome, appname + ".ini")
+		try:
+			io = StringIO()
+			cfg.write(io)
+			io.seek(0)
+			lines = io.read().strip("\n").split("\n")
+			lines.sort()
+			cfgfile = open(cfgfilename, "wb")
+			cfgfile.write("\n".join(lines))
+			cfgfile.close()
+		except Exception, exception:
+			if not "handle_error" in globals():
+				global handle_error
+				from debughelpers import handle_error
+			handle_error(u"Warning - could not write user configuration file "
+						 "'%s': %s" % (cfgfilename, safe_unicode(exception)))
+			return False
+	else:
+		# system-wide config - only stores essentials ie. Argyll directory
+		cfgfilename1 = os.path.join(confighome, appname + ".local.ini")
+		cfgfilename2 = os.path.join(config_sys, appname + ".ini")
+		if sys.platform == "win32":
+			cfgfilename = cfgfilename2
+		else:
+			cfgfilename = cfgfilename1
+		try:
+			cfgfile = open(cfgfilename, "wb")
+			cfgfile.write("\n".join(["[Default]",
+									 "%s = %s" % ("argyll.dir", 
+												  getcfg("argyll.dir"))]))
+			cfgfile.close()
+			if sys.platform != "win32":
+				# on Linux and OS X, we write the file to the users's config dir
+				# then 'su mv' it to the system-wide config dir
+				result = self.worker.exec_cmd("mv", 
+											  ["-f", cfgfilename1, cfgfilename2], 
+											  capture_output=True, 
+											  low_contrast=False, 
+											  skip_scripts=True, 
+											  silent=True, 
+											  asroot=True)
+				if isinstance(result, Exception):
+					raise result
+		except Exception, exception:
+			if not "handle_error" in globals():
+				global handle_error
+				from debughelpers import handle_error
+			handle_error(u"Warning - could not write system-wide configuration file "
+						 "'%s': %s" % (cfgfilename2, safe_unicode(exception)))
+			return False
+	return True
 
 _init_testcharts()
 runtype = runtimeconfig(pyfile)
