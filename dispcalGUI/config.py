@@ -757,7 +757,14 @@ def setcfg(name, value):
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 
-def writecfg(which="user"):
+def writecfg(which="user", worker=None):
+	"""
+	Write configuration file.
+	
+	which: 'user' or 'system'
+	worker: worker instance if which == 'system'
+	
+	"""
 	if which == "user":
 		# user config - stores everything and overrides system-wide config
 		cfgfilename = os.path.join(confighome, appname + ".ini")
@@ -794,13 +801,13 @@ def writecfg(which="user"):
 			if sys.platform != "win32":
 				# on Linux and OS X, we write the file to the users's config dir
 				# then 'su mv' it to the system-wide config dir
-				result = self.worker.exec_cmd("mv", 
-											  ["-f", cfgfilename1, cfgfilename2], 
-											  capture_output=True, 
-											  low_contrast=False, 
-											  skip_scripts=True, 
-											  silent=True, 
-											  asroot=True)
+				result = worker.exec_cmd("mv", 
+										 ["-f", cfgfilename1, cfgfilename2], 
+										 capture_output=True, 
+										 low_contrast=False, 
+										 skip_scripts=True, 
+										 silent=True, 
+										 asroot=True)
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:

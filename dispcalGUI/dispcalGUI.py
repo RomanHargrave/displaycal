@@ -3807,7 +3807,7 @@ class MainFrame(BaseFrame):
 					# the Argyll binaries
 					result = config.makecfgdir("system")
 					if result:
-						result = config.writecfg("system")
+						result = config.writecfg("system", self.worker)
 					if not result:
 						return result
 				if not silent and not gcm:
