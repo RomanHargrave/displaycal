@@ -644,7 +644,7 @@ def get_verified_path(cfg_item_name, path=None):
 	return defaultDir, defaultFile
 
 
-def makecfgdir(which="user"):
+def makecfgdir(which="user", worker=None):
 	if which == "user":
 		if not os.path.exists(confighome):
 			try:
@@ -659,13 +659,13 @@ def makecfgdir(which="user"):
 			if sys.platform == "win32":
 				os.makedirs(config_sys)
 			else:
-				result = self.worker.exec_cmd("mkdir", 
-											  ["-p", config_sys], 
-											  capture_output=True, 
-											  low_contrast=False, 
-											  skip_scripts=True, 
-											  silent=True, 
-											  asroot=True)
+				result = worker.exec_cmd("mkdir", 
+										 ["-p", config_sys], 
+										 capture_output=True, 
+										 low_contrast=False, 
+										 skip_scripts=True, 
+										 silent=True, 
+										 asroot=True)
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:

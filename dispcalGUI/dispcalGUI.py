@@ -3805,7 +3805,7 @@ class MainFrame(BaseFrame):
 				if getcfg("profile.install_scope") == "l":
 					# We need a system-wide config file to store the path to 
 					# the Argyll binaries
-					result = config.makecfgdir("system")
+					result = config.makecfgdir("system", self.worker)
 					if result:
 						result = config.writecfg("system", self.worker)
 					if not result:
