@@ -33,9 +33,7 @@ class Log():
 			for line in universal_newlines(msg).split("\n"):
 				fn(line)
 		if "wx" in sys.modules:
-			if not "wx" in globals():
-				global wx
-				from wxaddons import wx
+			from wxaddons import wx
 			if wx.GetApp() is not None and \
 			   hasattr(wx.GetApp(), "frame") and \
 			   hasattr(wx.GetApp().frame, "infoframe"):

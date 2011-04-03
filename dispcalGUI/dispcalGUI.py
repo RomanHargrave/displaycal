@@ -567,7 +567,7 @@ class GamapFrame(BaseFrame):
 			self.viewconds_out_ab.values())
 	
 	def update_controls(self):
-		""" Update controls with values from the global configuration """
+		""" Update controls with values from the configuration """
 		self.gamap_profile.SetPath(getcfg("gamap_profile"))
 		self.gamap_perceptual_cb.SetValue(getcfg("gamap_perceptual"))
 		self.gamap_saturation_cb.SetValue(getcfg("gamap_saturation"))
@@ -1895,7 +1895,7 @@ class MainFrame(BaseFrame):
 		self.panel.Thaw()
 
 	def update_controls(self, update_profile_name=True, silent=False):
-		""" Update all controls based on global configuration 
+		""" Update all controls based on configuration 
 		and available Argyll functionality. """
 		self.updatingctrls = True
 		

@@ -26,9 +26,7 @@ def getevtobjname(event, window=None):
 def getevttype(event):
 	""" Get and return the event object's type. """
 	if not wxEventTypes:
-		if not "wx" in globals():
-			global wx
-			from wxaddons import wx
+		from wxaddons import wx
 		try:
 			for name in dir(wx):
 				if name.find("EVT_") == 0:
@@ -48,9 +46,7 @@ def handle_error(error, parent=None, silent=False):
 	safe_print(error)
 	if not silent:
 		try:
-			if not "wx" in globals():
-				global wx
-				from wxaddons import wx
+			from wxaddons import wx
 			if wx.GetApp() is None and parent is None:
 				app = wx.App(redirect=False)
 			if parent:

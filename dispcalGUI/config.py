@@ -150,9 +150,7 @@ def getbitmap(name):
 	if not given).
 	
 	"""
-	if not "wx" in globals():
-		global wx
-		from wxaddons import wx
+	from wxaddons import wx
 	if not name in bitmaps:
 		parts = name.split("/")
 		if parts[-1] == "empty":
@@ -197,9 +195,7 @@ def getbitmap(name):
 
 def get_bitmap_as_icon(size, name):
 	""" Like geticon, but return a wx.Icon instance """
-	if not "wx" in globals():
-		global wx
-		from wxaddons import wx
+	from wxaddons import wx
 	icon = wx.EmptyIcon()
 	bmp = geticon(size, name)
 	icon.CopyFromBitmap(bmp)
@@ -231,9 +227,7 @@ def get_data_path(relpath, rex=None):
 				try:
 					filelist = listdir_re(curpath, rex)
 				except Exception, exception:
-					if not "safe_print" in globals():
-						global safe_print
-						from log import safe_print
+					from log import safe_print
 					safe_print(u"Error - directory '%s' listing failed: %s" % 
 							   tuple(safe_unicode(s) for s in (curpath, exception)))
 				else:
@@ -254,14 +248,10 @@ def runtimeconfig(pyfile):
 	attribute).
 	
 	"""
-	if not "setup_logging" in globals():
-		global setup_logging
-		from log import setup_logging
-		setup_logging()
+	from log import setup_logging
+	setup_logging()
 	if debug or verbose >= 1:
-		if not "safe_print" in globals():
-			global safe_print
-			from log import safe_print
+		from log import safe_print
 	if debug:
 		safe_print("[D] cwd:", os.getcwdu())
 	if data_dirs[0] != os.getcwdu():
@@ -660,8 +650,7 @@ def makecfgdir(which="user"):
 			try:
 				os.makedirs(confighome)
 			except Exception, exception:
-				if not "handle_error" in globals():
-					from debughelpers import handle_error
+				from debughelpers import handle_error
 				handle_error(u"Warning - could not create configuration directory "
 							 "'%s': %s" % (confighome, safe_unicode(exception)))
 				return False
@@ -680,8 +669,7 @@ def makecfgdir(which="user"):
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:
-			if not "handle_error" in globals():
-				from debughelpers import handle_error
+			from debughelpers import handle_error
 			handle_error(u"Warning - could not create configuration directory "
 						 "'%s': %s" % (config_sys, safe_unicode(exception)))
 			return False
@@ -696,7 +684,6 @@ def initcfg():
 	settings directory if nonexistent.
 	
 	"""
-	global handle_error, safe_print
 	# read pre-v0.2.2b configuration if present
 	if sys.platform == "darwin":
 		oldcfg = os.path.join(expanduseru("~"), "Library", "Preferences", 
@@ -732,8 +719,7 @@ def initcfg():
 			# warning in that case
 			if sys.platform != "win32" or not hasattr(exception, "errno") or \
 			   exception.errno != 2:
-				if not "safe_print" in globals():
-					from log import safe_print
+				from log import safe_print
 				safe_print("Warning - could not process old configuration:", 
 						   safe_unicode(exception))
 	# Read cfg
@@ -743,8 +729,7 @@ def initcfg():
 		# This won't raise an exception if the file does not exist, only if it
 		# can't be parsed
 	except Exception, exception:
-		if not "safe_print" in globals():
-			from log import safe_print
+		from log import safe_print
 		safe_print("Warning - could not parse configuration file '%s'" % 
 				   appname + ".ini")
 
@@ -778,9 +763,7 @@ def writecfg(which="user", worker=None):
 			cfgfile.write("\n".join(lines))
 			cfgfile.close()
 		except Exception, exception:
-			if not "handle_error" in globals():
-				global handle_error
-				from debughelpers import handle_error
+			from debughelpers import handle_error
 			handle_error(u"Warning - could not write user configuration file "
 						 "'%s': %s" % (cfgfilename, safe_unicode(exception)))
 			return False
@@ -811,9 +794,7 @@ def writecfg(which="user", worker=None):
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:
-			if not "handle_error" in globals():
-				global handle_error
-				from debughelpers import handle_error
+			from debughelpers import handle_error
 			handle_error(u"Warning - could not write system-wide configuration file "
 						 "'%s': %s" % (cfgfilename2, safe_unicode(exception)))
 			return False
