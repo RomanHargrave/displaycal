@@ -17,6 +17,7 @@ if sys.platform == "win32":
 		# Use registry as fallback for Win2k/XP/2003
 		import _winreg
 		wmi_connection = None
+	import pywintypes
 	import win32api
 elif sys.platform != "darwin":
 	try:
@@ -86,7 +87,10 @@ def get_edid(display_no, display_name=None):
 		# EnumDisplayMonitors
 		monitors = win32api.EnumDisplayMonitors(None, None)
 		moninfo = win32api.GetMonitorInfo(monitors[display_no][0])
-		device = win32api.EnumDisplayDevices(moninfo["Device"])
+		try:
+			device = win32api.EnumDisplayDevices(moninfo["Device"])
+		except pywintypes.error:
+			return {}
 		id = device.DeviceID.split("\\")[1]
 		if wmi_connection:
 			# Use WMI for Vista/Win7
