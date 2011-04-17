@@ -323,26 +323,20 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 		## filename = win32api.GetICMProfile(dc)
 		## win32gui.ReleaseDC(None, dc)
 		# via registry
-		i = 0
-		device = None
-		while True:
-			try:
-				device = win32api.EnumDisplayDevices(display_name, i)
-			except pywintypes.error, exception:
-				break
-			else:
-				if device.StateFlags & DD_ATTACHED_TO_DESKTOP:
-					break
-			i += 1
-		filename = None
-		if device:
-			monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
-			## print monkey
-			# current user
-			profile = _winreg_get_display_profile(monkey, True)
-			if not profile:
-				# system
-				profile = _winreg_get_display_profile(monkey)
+		try:
+			device = win32api.EnumDisplayDevices(display_name, 
+						0 if sys.getwindowsversion() >= (6, ) else display_no)
+		except pywintypes.error, exception:
+			pass
+		else:
+			if device.StateFlags & DD_ATTACHED_TO_DESKTOP:
+				monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
+				## print monkey
+				# current user
+				profile = _winreg_get_display_profile(monkey, True)
+				if not profile:
+					# system
+					profile = _winreg_get_display_profile(monkey)
 	else:
 		if sys.platform == "darwin":
 			if intlist(mac_ver()[0].split(".")) >= [10, 6]:

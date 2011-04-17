@@ -74,7 +74,7 @@ def combine_hi_8lo(hi, lo):
 	return hi << 8 | lo
 
 
-def get_edid(display_no, display_name=None):
+def get_edid(display_no=0, display_name=None):
 	""" Get and parse EDID. Return dict. 
 	
 	On Mac OS X, you need to specify a display name.
@@ -88,7 +88,8 @@ def get_edid(display_no, display_name=None):
 		monitors = win32api.EnumDisplayMonitors(None, None)
 		moninfo = win32api.GetMonitorInfo(monitors[display_no][0])
 		try:
-			device = win32api.EnumDisplayDevices(moninfo["Device"])
+			device = win32api.EnumDisplayDevices(moninfo["Device"], 
+						0 if sys.getwindowsversion() >= (6, ) else display_no)
 		except pywintypes.error:
 			return {}
 		id = device.DeviceID.split("\\")[1]

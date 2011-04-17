@@ -1030,24 +1030,18 @@ class Worker():
 					desc = []
 					if sys.platform == "win32":
 						# Get monitor description using win32api
-						n = 0
-						device = None
-						while True:
-							try:
-								# The ordering will work as long
-								# as Argyll continues using
-								# EnumDisplayMonitors
-								device = win32api.EnumDisplayDevices(
-									monitors[i]["Device"], n)
-							except pywintypes.error:
-								break
-							else:
-								if device.StateFlags & \
-								   DD_ATTACHED_TO_DESKTOP:
-									break
-							n += 1
-						if device:
-							desc.append(device.DeviceString.decode(fs_enc, "replace"))
+						try:
+							# The ordering will work as long
+							# as Argyll continues using
+							# EnumDisplayMonitors
+							device = win32api.EnumDisplayDevices(
+								monitors[i]["Device"], 
+								0 if sys.getwindowsversion() >= (6, ) else i)
+						except pywintypes.error:
+							pass
+						else:
+							if device.StateFlags & DD_ATTACHED_TO_DESKTOP:
+								desc.append(device.DeviceString.decode(fs_enc, "replace"))
 					# Get monitor descriptions from EDID
 					try:
 						# Important: display_name must be given for get_edid
