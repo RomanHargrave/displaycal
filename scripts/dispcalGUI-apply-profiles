@@ -91,8 +91,9 @@ def apply_profiles():
 							capture_output=True, skip_scripts=True, 
 							silent=False)
 		if dispwin:
+			profile_arg = worker.get_dispwin_display_profile_argument(i)
 			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
-									  "-L"], 
+									  profile_arg], 
 							capture_output=True, skip_scripts=True, 
 							silent=False)
 			errortxt = "\n".join(worker.errors).strip()
@@ -110,7 +111,7 @@ def apply_profiles():
 				errors.append(": ".join([display, errstr]))
 				continue
 			# Verify the calibration was actually loaded
-			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-L", 
+			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), profile_arg, 
 									  "-V"], 
 							capture_output=True, skip_scripts=True, 
 							silent=False)

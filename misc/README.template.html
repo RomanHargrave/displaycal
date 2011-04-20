@@ -112,9 +112,6 @@
 			padding: 3px 5px;
 			-moz-border-radius: 0 0 5px 5px;
 		}
-		.a span {
-			font-weight: bold;
-		}
 		h1 {
 			background: url(theme/icons/48x48/dispcalGUI.png) no-repeat;
 			height: 48px;
@@ -246,6 +243,10 @@
 		}
 		div.p, p, dl {
 			margin-left: 20px;
+		}
+		#content div.p ul {
+			margin-bottom: 0;
+			margin-left: 15px;
 		}
 		dt {
 			color: #666666;
@@ -575,6 +576,9 @@
 				Debian 5 (Lenny)
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Debian_5.0/i386/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Debian_5.0/amd64/">x86_64</a><br />
+				Debian 6 (Squeezy)
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/Debian_6.0/i386/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/Debian_6.0/amd64/">x86_64</a><br />
 				Fedora 12
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_12/i686/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/Fedora_12/x86_64/">x86_64</a><br />
@@ -602,9 +606,15 @@
 				openSUSE 11.3
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/openSUSE_11.3/i586/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/openSUSE_11.3/x86_64/">x86_64</a><br />
+				openSUSE 11.4
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/openSUSE_11.4/i586/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/openSUSE_11.4/x86_64/">x86_64</a><br />
 				openSUSE Factory
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/openSUSE_Factory/i586/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/openSUSE_Factory/x86_64/">x86_64</a><br />
+				RedHat RHEL 6
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/RedHat_RHEL-6/i386/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/RedHat_RHEL-6/x86_64/">x86_64</a><br />
 				SUSE Linux Enterprise 11
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/SLE_11/i586/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/SLE_11/x86_64/">x86_64</a><br />
@@ -947,14 +957,11 @@
 				calibration or profiling settings, with one exception: When a <code>.cal</code> file with the same base name as the settings file
 				exists in the same directory, adjusting the quality and profiling controls will not cause unloading of the settings file. This allows you to use an existing calibration with new profiling settings for “Just Profiling”, or to update an existing calibration with different quality and/or profiling settings. If you change settings in other situations, the file will get unloaded (but current settings will be retained—unloading just happens to remind you that the settings no longer match those in the file), and current display profile's calibration curves will be restored (if present, otherwise they will reset to linear).</p>
 
-				<p>When a calibration file is loaded or present, the “Update calibration”
+				<p>When a calibration file is selected, the “Update calibration”
 				checkbox will become available, which takes less time than a calibration from scratch.
-				If an <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile with the same base name as the settings file
-				exists in the same directory, the “Update profile” checkbox
-				will also be available. If you place a check in that box,
-				all options and the “Calibrate &amp; profile” and “Just profile” buttons at the 
-				bottom will get grayed out, but don't worry, the “Calibrate”
-				button takes care of the profile in that case.</p>
+				If a <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile is selected, and a calibration file with the same base name
+				exists in the same directory, the profile will be updated with the new calibration. Ticking the “Update calibration” checkbox will gray out
+				all options as well as the “Calibrate &amp; profile” and “Just profile” buttons, only the quality level will be changeable.</p>
 			</div>
 			
 			<div id="presets">
@@ -1324,7 +1331,7 @@
 						
 						<h5>General</h5>
 						
-						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/xicclu.html">xicclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile that is tested to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files or a combination of simulation profile and testchart). If a combination of simulation profile and testchart is used as reference, the reference L*a*b* values are calculated by feeding the device numbers from the testchart through the simulation profile absolute colorimetrically if the simulation profile is a printer profile and relative colorimetrically if it is a display profile (like most RGB working spaces). Then, the original RGB values from the testchart, or the looked up RGB values for a reference are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, with user-selectable critera and ΔE (delta E) formula.</p>
+						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/xicclu.html">xicclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile that is tested to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files or a combination of simulation profile and testchart). If a combination of simulation profile and testchart is used as reference, the reference L*a*b* values are calculated by feeding the device numbers from the testchart through the simulation profile absolute colorimetrically if the simulation profile is a printer profile and relative colorimetrically if it is a display profile (like most RGB working spaces). Then, the original RGB values from the testchart, or the looked up RGB values for a reference are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) or with the adaption matrix from the profile in the case of profiles with 'chad' chromatic adaption tag, and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, with user-selectable critera and ΔE (delta E) formula.</p>
 						
 						<h5>How is the assumed vs. measured whitepoint ΔE calculated?</h5>
 		
@@ -1376,11 +1383,12 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li><a href="#issue-redgreenswapped">General: Wacky image colors (red and green swapped)</a></li>
 				<li><a href="#issue-samplereadfail">Measurements are failing if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</a></li>
 				<li><a href="#issue-win-photoshop-monprofdefect">Photoshop: “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</a></li>
-				<li><a href="#issue-win64-driversigenforcement">MS Windows Vista and 7, 64-bit: Driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
-				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and 7: The display profile isn't used if it was installed for the current user</a></li>
 				<li><a href="#issue-win-uac">MS Windows Vista: The calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
+				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and 7: The display profile isn't used if it was installed for the current user</a></li>
 				<li><a href="#issue-win-spyder2">MS Windows: Enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
 				<li><a href="#issue-win-install-systemwide">MS Windows: Installing a display profile system-wide might fail when not running as administrator</a></li>
+				<li><a href="#issue-win64-driversigenforcement">MS Windows Vista and 7, 64-bit: Driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
+				<li><a href="#issue-winxp-multidisplay">MS Windows XP, multiple displays: One profile is used by all displays connected to a graphics card</a></li>
 				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
 				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
 				<li><a href="#issue-linux-kdeqt">Linux (KDE): The application does not look native</a></li>
@@ -1388,40 +1396,49 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			</ul>
 			
 			<p id="issue-redgreenswapped"><span class="q"><span>General:</span> Wacky image colors (red and green swapped)<br /></span>
-			<span class="a"><span>Solution:</span> This happens when you created a “XYZ LUT + R ↔ G swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Options” menu and select the profile you had the issue with.</span></p>
+			<span class="a"><strong>Solution:</strong> This happens when you created a “XYZ LUT + R ↔ G swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Options” menu and select the profile you had the issue with.</span></p>
 			
 			<p id="issue-samplereadfail"><span class="q"><span>General:</span> Measurements are failing (“sample read failed”) if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode<br /></span>
-			<span class="a"><span>Solution:</span> Disable either or all of the above options. The problem seems to mainly occur with the ColorMunki.</span></p>
+			<span class="a"><strong>Solution:</strong> Disable either or all of the above options. The problem seems to mainly occur with the ColorMunki.</span></p>
 			
 			<p id="issue-win-photoshop-monprofdefect"><span class="q"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”<br /></span>
-			<span class="a"><span>Solution:</span> If you see a similar message when launching Photoshop, with the options “use profile regardless” and “ignore profile”, I'd try to “use profile regardless” as I've seen this message appearing even with perfectly good profiles. The exact cause of this issue is still unbeknownst to me, and there is quite a lot, sometimes contradicting information to be found about this or similar issues on the web. <a href="http://kb2.adobe.com/cps/328/328054.html">Adobe has some information</a>, but it seems rather outdated. If you can shed light on this issue, I'd be interested to hear about it.</span></p>
-			
-			<p id="issue-win64-driversigenforcement"><span class="q"><span>MS Windows Vista and 7, 64-bit:</span> Driver signature enforcement prevents the installation of unsigned Argyll USB drivers<br /></span>
-			<span class="a"><span>Solution:</span> Please upgrade to Argyll CMS 1.2.0 or later. For prior versions, signing the Argyll drivers or disabling driver signature enforcement altogether on each boot was needed to successfully use the drivers. <strong>Such workarounds are no longer needed with Argyll CMS 1.2.0</strong> which includes drivers that will work out-of-the-box (if you already have drivers for your measurement device installed, see “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a> if you use a prior version of the Argyll drivers, or “Adding Argyll drivers to existing drivers” if you are using vendor drivers).</span></p>
-			
-			<p id="issue-win-user-profile-not-used"><span class="q"><span>MS Windows Vista and 7:</span> The display profile isn't used if it was installed for the current user<br /></span>
-			<span class="a"><span>Solution:</span> Open the Windows start menu, select “Control Panel”, then “Color Management” (you may have to select “Classic View” under Vista and anything other than “Category View” under Windows 7 to see it). Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
+			<span class="a"><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With Argyll XYZ LUT profiles created in versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “use profile regardless” and “ignore profile”, you may choose “use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll 1.3.3 and newer. Alternatively, you can create a Lab LUT profile.</span></p>
 			
 			<p id="issue-win-uac"><span class="q"><span>MS Windows Vista:</span> The calibration gets unloaded when a “User Access Control” prompt is shown.<br /></span>
-			<span class="a"><span>Solution:</span> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
+			<span class="a"><strong>Solution:</strong> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</span></p>
+			
+			<p id="issue-win-user-profile-not-used"><span class="q"><span>MS Windows Vista and 7:</span> The display profile isn't used if it was installed for the current user<br /></span>
+			<span class="a"><strong>Solution:</strong> Open the Windows start menu, select “Control Panel”, then “Color Management” (you may have to select “Classic View” under Vista and anything other than “Category View” under Windows 7 to see it). Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</span></p>
 			
 			<p id="issue-win-spyder2"><span class="q"><span>MS Windows:</span> Enabling the Spyder 2 colorimeter might fail when not running as administrator<br /></span>
-			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
+			<span class="a"><strong>Solution:</strong> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
 			
 			<p id="issue-win-install-systemwide"><span class="q"><span>MS Windows:</span> Installing a display profile system-wide might fail when not running as administrator<br /></span>
-			<span class="a"><span>Solution:</span> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
+			<span class="a"><strong>Solution:</strong> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</span></p>
+			
+			<p id="issue-win64-driversigenforcement"><span class="q"><span>MS Windows Vista and 7, 64-bit:</span> Driver signature enforcement prevents the installation of unsigned Argyll USB drivers<br /></span>
+			<span class="a"><strong>Solution:</strong> Please upgrade to Argyll CMS 1.2.0 or later. For prior versions, signing the Argyll drivers or disabling driver signature enforcement altogether on each boot was needed to successfully use the drivers. <strong>Such workarounds are no longer needed with Argyll CMS 1.2.0</strong> which includes drivers that will work out-of-the-box (if you already have drivers for your measurement device installed, see “Updating Argyll drivers” in <a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a> if you use a prior version of the Argyll drivers, or “Adding Argyll drivers to existing drivers” if you are using vendor drivers).</span></p>
+			
+			<div class="p" id="issue-winxp-multidisplay"><span class="q"><span>MS Windows XP, multiple displays:</span> One profile is used by all displays connected to a graphics card<br /></span>
+			<div class="a"><strong>Solution:</strong> The underlying issue is that Windows XP assigns color profiles per (logical) graphics card, not per output. Most XP graphics drivers present only one logical card to the OS even if the card itself has multiple outputs. There are several possible solutions to this problem:<br />
+			<ul>
+				<li>Use different graphics cards and connect only one display to each (this is probably the preferable solution in terms of ease of use and is least prone to configuration error)</li>
+				<li>Install and use the <a href="http://www.microsoft.com/downloads/en/details.aspx?FamilyID=1e33dca0-7721-43ca-9174-7f8d429fbb9e">Windows XP color control applet</a></li>
+				<li>Some graphics cards, like the Matrox Parhelia APV (no longer produced), will expose two logical cards to the OS when using a specific vendor driver (some older ATI drivers also had this feature, but it seems to have been removed from newer ones)</li>
+			</ul>
+			</div></div>
 			
 			<p id="issue-mac-pscursor"><span class="q"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).<br /></span>
-			<span class="a"><span>Solution:</span> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
+			<span class="a"><strong>Solution:</strong> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile (for hints as to which profile to select, see  “Advanced gamut mapping options” under “<a href="#settings_profiling">Profiling settings</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</span></p>				
 				
 			<p id="issue-linux-lutaccess"><span class="q"><span>Linux/Windows:</span> No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)<br /></span>
-			<span class="a"><span>Solution:</span> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein. Under Windows, please see <a href="#issue-win-user-profile-not-used">calibration cannot be loaded</a> if you are under Windows 7 and make sure you have a recent driver for your video card installed.</span></p>
+			<span class="a"><strong>Solution:</strong> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Fixing access to Video LUTs” therein. Under Windows, please see <a href="#issue-win-user-profile-not-used">calibration cannot be loaded</a> if you are under Windows 7 and make sure you have a recent driver for your video card installed.</span></p>
 			
 			<p id="issue-linux-kdeqt"><span class="q"><span>Linux (KDE):</span> The application does not look native<br /></span>
-			<span class="a"><span>Solution:</span> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4). Another alternative is <a href="http://kde-apps.org/content/show.php/gtk-kde4?content=74689">gtk-kde4</a>.</span></p>
+			<span class="a"><strong>Solution:</strong> You need the <a href="http://gtk-qt.ecs.soton.ac.uk/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt” (there will likely be separate packages for KDE3 and KDE4). Another alternative is <a href="http://kde-apps.org/content/show.php/gtk-kde4?content=74689">gtk-kde4</a>.</span></p>
 			
 			<p id="issue-english"><span class="q"><span>General:</span> Some text is still in english, even though another language is selected in the menu.<br /></span>
-			<span class="a"><span>Solution:</span> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</span></p>
+			<span class="a"><strong>Solution:</strong> All output from the Argyll utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is not changeable by me.</span></p>
 		</div>
 		
 		<div id="todo">
@@ -1454,7 +1471,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			Translators: Loïc Guégant (french translation),
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)<br />
-			Recent donors: Richard Egger, Michael Dougherty, Christian Spyr, Eugene Yurov, Konstantin Pyanzin</p>
+			Recent donors: Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Eugeniy Yurov, Konstantin Pyanzin</p>
 			
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 			
@@ -1471,8 +1488,38 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h3>${VERSION}</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Updating profile verification reports created in versions prior to revision 672 should not strip calibration and gray balance information anymore (regression of a change in r672).</li>
+							<li>If the Spyder 2 was enabled using Argyll CMS 1.2 or newer, this should now be reflected correctly in the “Tools” menu by a checkmark next to the “Enable Spyder 2” menu item.</li>
+							<li>Linux (Autopackage, DEB and RPM installs) and source: Fixed missing application icons in sizes other than 16x16 and 32x32 if the source archive was created with setup.py under Mac OS X or Windows (regression of a change in r501).</li>
+							<li>Linux/Windows: The location of the Argyll binaries was not stored in the system-wide configuration, which could prevent the profile loader from finding the Argyll binaries if they were not on the PATH environment variable and a profile was installed system-wide.</li>
+							<li>Windows: Fixed program termination if EnumDisplayDevices fails for some reason.</li>
+							<li>Windows: Fixed program termination if a display device has no driver entry in the registry (the very generic Windows error message is misleading in that case: It pretends a file was not found).</li>
+							<li>Windows XP: Correctly enumerate display device names and EDID.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>When doing verification measurements of a (non-Argyll) profile containing a chromatic adaptation 'chad' tag, dispcalGUI now tries to use the same chromatic adaptation transform to calculate adapted values from the measurements instead of using a hardcoded Bradford transform.</li>
+							<li>The default delta E formula for “RGB + gray balance” evaluation is now DE 2000.</li>
+							<li>The delta E formula is now locked for the Fogra MediaWedge and IDEAlliance Control Strip evaluation criteria.</li>
+							<li>The “Update calibration” and “Update profile” checkboxes were combined into one. This removes the ambiguity about what “Update profile” functionality actually was: Only updating the calibration inside the profile. Both updating stand-alone calibration '.cal' files and calibrations embedded in profiles are now handled with the single “Update calibration” checkbox. The slightly different workflow of only updating the calibration, and then creating an actual new profile on top of it in one go, is still possible by explicitly loading a calibration '.cal' file under “Settings”.</li>
+							<li>Made the GUI a bit nicer towards low screen resolutions by moving more controls into the scrollable area and also removing the graphical banner and allowing horizontal scrollbars if things get really cramped.</li>
+							<li>Windows Vista/7 and later: To be able to install a profile system-wide, you now need to run dispcalGUI explicitly as administrator (right-click the dispcalGUI icon, then select “Run as administrator”) to show the appropriate controls in the profile installation dialog.</li>
+						</ul>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Documentation: Updated the information for <a href="#issue-win-photoshop-monprofdefect">Photoshop's “The monitor profile […] appears to be defective”</a> message under <a href="#issues">Known issues and solutions</a>.</li>
+							<li>Documentation: Added <a href="#issue-winxp-multidisplay">Windows XP multiple displays and profiles</a> under <a href="#issues">Known issues and solutions</a>.</li>
+						</ul>
+					</dd>
+				
+				<dt>2011-01-24 03:56 (UTC) 0.6.7.7</dt>
+					<dd>
+						<h3>0.6.7.7</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
 							<li>Fixed measurements hanging at the start if using the black background option.</li>
 							<li>wxPython 2.9 compatibility.</li>
+							<li>Windows: Potential COM error caused by obsolete code.</li>
 							<li>Windows Vista/7: Potential WMI errors when trying to read a display's EDID are now suppressed (the EDID can not be read on systems where WMI has errors, which may prevent more accurate display descriptions, but will not impede functionality otherwise).</li>
 						</ul>
 						<h4>Added in this release:</h4>

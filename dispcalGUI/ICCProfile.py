@@ -43,8 +43,8 @@ if sys.platform not in ("darwin", "win32"):
 		import xrandr
 	except ImportError:
 		xrandr = None
-
-DD_ATTACHED_TO_DESKTOP = 0x01
+elif sys.platform == "win32":
+	import util_win
 
 debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
 
@@ -315,28 +315,22 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			raise ImportError("pywin32 not available")
 		# The ordering will work as long as Argyll continues using
 		# EnumDisplayMonitors
-		monitor = win32api.EnumDisplayMonitors(None, None)
-		moninfo = win32api.GetMonitorInfo(monitor[display_no][0])
-		display_name = moninfo["Device"]
+		monitors = util_win.get_real_display_devices_info()
+		moninfo = monitors[display_no]
 		# via GetICMProfile - not dynamic, will not reflect runtime changes
-		## dc = win32gui.CreateDC("DISPLAY", display_name, None)
+		## dc = win32gui.CreateDC("DISPLAY", moninfo["Device"], None)
 		## filename = win32api.GetICMProfile(dc)
 		## win32gui.ReleaseDC(None, dc)
-		# via registry
-		try:
-			device = win32api.EnumDisplayDevices(display_name, 
-						0 if sys.getwindowsversion() >= (6, ) else display_no)
-		except pywintypes.error, exception:
-			pass
-		else:
-			if device.StateFlags & DD_ATTACHED_TO_DESKTOP:
-				monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
-				## print monkey
-				# current user
-				profile = _winreg_get_display_profile(monkey, True)
-				if not profile:
-					# system
-					profile = _winreg_get_display_profile(monkey)
+		# via win32api & registry
+		device = util_win.get_active_display_device(moninfo["Device"])
+		if device:
+			monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
+			## print monkey
+			# current user
+			profile = _winreg_get_display_profile(monkey, True)
+			if not profile:
+				# system
+				profile = _winreg_get_display_profile(monkey)
 	else:
 		if sys.platform == "darwin":
 			if intlist(mac_ver()[0].split(".")) >= [10, 6]:

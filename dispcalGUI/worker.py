@@ -51,6 +51,8 @@ from util_io import Files, StringIOu as StringIO
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
 						  mac_terminal_set_colors)
+elif sys.platform == "win32":
+	import util_win
 from util_os import getenvu, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
@@ -58,16 +60,6 @@ from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 import wx.lib.delayedresult as delayedresult
 
 USE_WPOPEN = 0
-
-DD_ATTACHED_TO_DESKTOP = 0x01
-DD_MULTI_DRIVER        = 0x02
-DD_PRIMARY_DEVICE      = 0x04
-DD_MIRRORING_DRIVER    = 0x08
-DD_VGA_COMPATIBLE      = 0x10
-DD_REMOVABLE           = 0x20
-DD_DISCONNECT          = 0x2000000  # WINVER >= 5
-DD_REMOTE              = 0x4000000  # WINVER >= 5
-DD_MODESPRUNED         = 0x8000000  # WINVER >= 5
 
 keycodes = {wx.WXK_NUMPAD0: ord("0"),
 			wx.WXK_NUMPAD1: ord("1"),
@@ -1021,27 +1013,21 @@ class Worker():
 				self.display_edid = []
 				self.display_names = []
 				if sys.platform == "win32":
-					monitors = []
-					for monitor in win32api.EnumDisplayMonitors(None, None):
-						monitors.append(win32api.GetMonitorInfo(monitor[0]))
+					# The ordering will work as long
+					# as Argyll continues using
+					# EnumDisplayMonitors
+					monitors = util_win.get_real_display_devices_info()
 				for i, display in enumerate(displays):
 					display_name = displays[i].split("@")[0].strip()
 					# Make sure we have nice descriptions
 					desc = []
-					if sys.platform == "win32":
+					if sys.platform == "win32" and i < len(monitors):
 						# Get monitor description using win32api
-						try:
-							# The ordering will work as long
-							# as Argyll continues using
-							# EnumDisplayMonitors
-							device = win32api.EnumDisplayDevices(
-								monitors[i]["Device"], 
-								0 if sys.getwindowsversion() >= (6, ) else i)
-						except pywintypes.error:
-							pass
-						else:
-							if device.StateFlags & DD_ATTACHED_TO_DESKTOP:
-								desc.append(device.DeviceString.decode(fs_enc, "replace"))
+						device = util_win.get_active_display_device(
+									monitors[i]["Device"])
+						if device:
+							desc.append(device.DeviceString.decode(fs_enc, 
+																   "replace"))
 					# Get monitor descriptions from EDID
 					try:
 						# Important: display_name must be given for get_edid
@@ -1098,7 +1084,7 @@ class Worker():
 								break
 						# Reset LUT & load profile cal (if any)
 						result = self.exec_cmd(dispwin, ["-d%s" % (i + 1), "-c", 
-														 "-L"], 
+														 self.get_dispwin_display_profile_argument(i)], 
 											   capture_output=True, 
 											   skip_scripts=True, 
 											   silent=True)
@@ -1670,6 +1656,18 @@ class Worker():
 			return self.display_names[n]
 		return ""
 	
+	def get_dispwin_display_profile_argument(self, display_no=0):
+		arg = "-L"
+		if sys.platform == "win32":
+			try:
+				profile = ICCP.get_display_profile(display_no)
+			except Exception, exception:
+				safe_print("Error - couldn't get profile for display %s" % 
+						   getcfg("display.number"))
+			else:
+				arg = profile.fileName
+		return arg
+	
 	def update_display_name_manufacturer(self, ti3, display_name=None,
 										 display_manufacturer=None, 
 										 write=True):
@@ -2120,7 +2118,9 @@ class Worker():
 		args += ["-d" + self.get_display()]
 		args += ["-c"]
 		if cal is True:
-			args += ["-L"]
+			args += [self.get_dispwin_display_profile_argument(
+						max(0, min(len(self.displays), 
+								   getcfg("display.number")) - 1))]
 		elif cal:
 			result = check_cal_isfile(cal)
 			if isinstance(result, Exception):

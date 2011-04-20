@@ -32,6 +32,8 @@ else:
 import config
 from log import log, safe_print
 from util_str import make_ascii_printable
+if sys.platform == "win32":
+	import util_win
 
 HEADER = (0, 8)
 MANUFACTURER_ID = (8, 10)
@@ -85,12 +87,10 @@ def get_edid(display_no=0, display_name=None):
 	if sys.platform == "win32":
 		# The ordering will work as long as Argyll continues using
 		# EnumDisplayMonitors
-		monitors = win32api.EnumDisplayMonitors(None, None)
-		moninfo = win32api.GetMonitorInfo(monitors[display_no][0])
-		try:
-			device = win32api.EnumDisplayDevices(moninfo["Device"], 
-						0 if sys.getwindowsversion() >= (6, ) else display_no)
-		except pywintypes.error:
+		monitors = util_win.get_real_display_devices_info()
+		moninfo = monitors[display_no]
+		device = util_win.get_active_display_device(moninfo["Device"])
+		if not device:
 			return {}
 		id = device.DeviceID.split("\\")[1]
 		if wmi_connection:
