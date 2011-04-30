@@ -640,6 +640,7 @@ def setup():
 			##for so in glob.glob(sos):
 				##retcode = call(["strip", "--strip-unneeded", so])
 			# create deb package
+			retcode = call(["chmod", "+x", "./debian/rules"], cwd=target_dir)
 			retcode = call(["./debian/rules", "binary"], cwd=target_dir)
 			if retcode != 0:
 				sys.exit(retcode)
