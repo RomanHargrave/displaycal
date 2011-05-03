@@ -86,6 +86,8 @@ try:
         try:
             from ctypes import windll
             import pywintypes
+            from win32com.shell.shellcon import CSIDL_APPDATA
+            from win32com.shell.shell import SHGetSpecialFolderPath
             from win32console import *
             from win32process import *
             from win32con import *
@@ -280,6 +282,7 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
 
 def spawn(command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None,
           codepage=None):
+    log('=' * 80)
     if sys.platform == 'win32':
         return spawn_windows(command, args, timeout, maxread, searchwindowsize, logfile, cwd, env,
                              codepage)
@@ -2050,8 +2053,8 @@ class Wtty:
                 AttachConsole(self.__parentPid)
             except Exception, ex:
                 pass
-                #log_error(e)
-                #log_error(ex)
+                #log(e)
+                #log(ex)
             return
             #self.__consin = None
             #self.__consout = None
@@ -2216,15 +2219,15 @@ class Wtty:
         consinfo = self.__consout.GetConsoleScreenBufferInfo()
         cursorPos = consinfo['CursorPosition']
         
-        #log_error('=' * 80)
-        #log_error('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
+        #log('=' * 80)
+        #log('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
 
         isSameX = cursorPos.X == self.__currentReadCo.X
         isSameY = cursorPos.Y == self.__currentReadCo.Y
         isSamePos = isSameX and isSameY
         
-        #log_error('isSameY: %r' % isSameY)
-        #log_error('isSamePos: %r' % isSamePos)
+        #log('isSameY: %r' % isSameY)
+        #log('isSamePos: %r' % isSamePos)
         
         if isSameY or not self.lastReadData.endswith('\r\n'):
             # Read the current slice again
@@ -2232,7 +2235,7 @@ class Wtty:
             self.__currentReadCo.X = 0
             self.__currentReadCo.Y = self.__bufferY
         
-        #log_error('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
+        #log('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
         
         raw = self.readConsole(self.__currentReadCo, cursorPos)
         rawlist = []
@@ -2247,16 +2250,16 @@ class Wtty:
                 self.__bufferY += len(rawlist) - i
                 break
         
-        #log_error('lastReadData: %r' % self.lastReadData)
-        #log_error('s: %r' % s)
+        #log('lastReadData: %r' % self.lastReadData)
+        #log('s: %r' % s)
         
         #isSameData = False
         if isSamePos and self.lastReadData == s:
             #isSameData = True
             s = ''
         
-        #log_error('isSameData: %r' % isSameData)
-        #log_error('s: %r' % s)
+        #log('isSameData: %r' % isSameData)
+        #log('s: %r' % s)
         
         if s:
             lastReadData = self.lastReadData
@@ -2266,8 +2269,8 @@ class Wtty:
                 # Detect changed lines
                 self.__buffer.seek(pos)
                 buf = self.__buffer.read()
-                #log_error('buf: %r' % buf)
-                #log_error('raw: %r' % raw)
+                #log('buf: %r' % buf)
+                #log('raw: %r' % raw)
                 if raw.startswith(buf):
                     # Line has grown
                     rawslice = raw[len(buf):]
@@ -2279,7 +2282,7 @@ class Wtty:
                 else:
                     # Cursor has been repositioned
                     s = '\r' + s        
-                #log_error('s:   %r' % s)
+                #log('s:   %r' % s)
             self.__buffer.seek(pos)
             self.__buffer.truncate()
             self.__buffer.write(raw)
@@ -2321,7 +2324,8 @@ class Wtty:
                 timeout -= end - start
         
         except Exception, e:
-            log_error(e)
+            log(e)
+            log('End Of File (EOF) in Wtty.read_nonblocking().')
             self.switchBack()
             raise EOF('End Of File (EOF) in Wtty.read_nonblocking().')
             
@@ -2345,7 +2349,7 @@ class Wtty:
         self.__buffer.truncate(0)
         #consinfo = self.__consout.GetConsoleScreenBufferInfo()
         #cursorPos = consinfo['CursorPosition']
-        #log_error('refreshConsole: cursorPos %s' % cursorPos)
+        #log('refreshConsole: cursorPos %s' % cursorPos)
         
     
     def setecho(self, state):
@@ -2453,7 +2457,7 @@ class ConsoleReader:
             try:
                 SetConsoleOutputCP(cp)
             except Exception, e:
-                log_error(e)
+                log(e, 'consolereader')
         try:
             try:
                 consout = self.getConsoleOut()
@@ -2463,7 +2467,7 @@ class ConsoleReader:
                 self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
                                                                              0, None, None, si)
             except Exception, e:
-                log_error(e)
+                log(e, 'consolereader')
                 time.sleep(.1)
                 win32api.PostThreadMessage(int(tid), WM_USER, 0, 0)
                 sys.exit()
@@ -2489,28 +2493,30 @@ class ConsoleReader:
                         # Don't log. Child process will exit regardless when 
                         # calling sys.exit
                         if e.args[0] != winerror.ERROR_ACCESS_DENIED:
-                            log_error(e)
+                            log(e, 'consolereader')
                     sys.exit()
                 
                 if cursorPos.Y > maxconsoleY and not paused:
-                    #log_error('ConsoleReader.__init__: cursorPos %s' % cursorPos)
-                    #log_error('suspendThread')
+                    #log('ConsoleReader.__init__: cursorPos %s' 
+                               #% cursorPos, 'consolereader')
+                    #log('suspendThread', 'consolereader')
                     self.suspendThread()
                     paused = True
                     
                 if cursorPos.Y <= maxconsoleY and paused:
-                    #log_error('ConsoleReader.__init__: cursorPos %s' % cursorPos)
-                    #log_error('resumeThread')
+                    #log('ConsoleReader.__init__: cursorPos %s' 
+                               #% cursorPos, 'consolereader')
+                    #log('resumeThread', 'consolereader')
                     self.resumeThread()
                     paused = False
                                     
                 time.sleep(.1)
         except Exception, e:
-            log_error(e)
+            log(e, 'consolereader')
             time.sleep(.1)
     
     def handler(self, sig):       
-        log_error(sig)
+        log(sig, 'consolereader')
         return False
 
     def getConsoleOut(self):
@@ -2728,7 +2734,7 @@ class searcher_re (object):
         self.end = self.match.end()
         return best_index
 
-def log_error(e):
+def log(e, suffix=''):
     if isinstance(e, Exception):
         # Get the full traceback
         e = traceback.format_exc()
@@ -2736,17 +2742,33 @@ def log_error(e):
         ## Only try to print if stdout is a tty, otherwise we might get
         ## an 'invalid handle' exception
         #print e
-    # Log to the script (or packed executable if running 'frozen') directory
-    # if it is writable (packed executable might be installed to a location 
-    # where we don't have write access)
-    dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__))
+    dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)).split(os.sep)
+    if dirname[-1] == 'lib':
+        dirname.pop()
+    if sys.platform == "win32":
+        dirname = os.path.join(SHGetSpecialFolderPath(0, CSIDL_APPDATA), 
+                                                     dirname[-1], "logs")
+    elif sys.platform == "darwin":
+        dirname = os.path.join(os.expanduser("~"), "Library", "Logs", 
+                              dirname[-1])
+    else:
+        dirname = os.path.join(os.getenv("XDG_DATA_HOME", 
+                                         os.expandvars("$HOME/.local/share")), 
+                                         dirname[-1], "logs")
     if os.access(dirname, os.W_OK):
-        fout = open(os.path.join(dirname, 'pexpect_error.txt'), 'a')
-        fout.write(str(e) + '\n')
-        fout.close()   
+        try:
+            fout = open(os.path.join(dirname, 'wexpect%s.log' % suffix), 'a')
+        except:
+            pass
+        else:
+            ts = time.time()
+            fout.write('%s,%s %s\n' % (time.strftime("%Y-%m-%d %H:%M:%S",
+                                                      time.localtime(ts)), 
+                                       ('%3f' % (ts - int(ts)))[2:5], e))
+            fout.close()   
 
 def excepthook(etype, value, tb):
-	log_error(''.join(traceback.format_exception(etype, value, tb)))
+	log(''.join(traceback.format_exception(etype, value, tb)))
 
 #sys.excepthook = excepthook
         
