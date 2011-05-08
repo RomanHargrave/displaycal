@@ -1665,7 +1665,8 @@ class Worker():
 				safe_print("Error - couldn't get profile for display %s" % 
 						   getcfg("display.number"))
 			else:
-				arg = profile.fileName
+				if profile and profile.fileName:
+					arg = profile.fileName
 		return arg
 	
 	def update_display_name_manufacturer(self, ti3, display_name=None,
