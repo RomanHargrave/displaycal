@@ -26,7 +26,7 @@ class LUTCanvas(plot.PlotCanvas):
 
 	def __init__(self, *args, **kwargs):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
-		self.canvas.Bind(wx.EVT_LEAVE_WINDOW, None)
+		self.canvas.Unbind(wx.EVT_LEAVE_WINDOW)
 		self.SetBackgroundColour(BGCOLOUR)
 		self.SetEnableAntiAliasing(True)
 		self.SetEnableHiRes(True)
