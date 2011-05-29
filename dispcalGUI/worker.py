@@ -1280,6 +1280,10 @@ class Worker():
 							dlg.sizer0.Layout()
 					dlg.Destroy()
 				cmdline.insert(0, sudo)
+				if (cmdname == get_argyll_utilname("dispwin")
+					and getcfg("sudo.preserve_environment")):
+					# Preserve environment so $DISPLAY is set
+					cmdline.insert(1, "-E")
 				if not interact:
 					cmdline.insert(1, "-S")
 			except Exception, exception:

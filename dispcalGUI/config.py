@@ -436,6 +436,7 @@ defaults = {
 	"size.info.h": 384,
 	"size.lut_viewer.w": 512,
 	"size.lut_viewer.h": 580,
+	"sudo.preserve_environment": 1,
 	"tc_adaption": 0.1,
 	"tc_algo": "",
 	"tc_angle": 0.3333,
