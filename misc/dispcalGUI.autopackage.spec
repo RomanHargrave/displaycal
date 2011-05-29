@@ -11,19 +11,19 @@ Source: http://%{name}.hoech.net/%{name}-%version.tar.gz
 URL: http://dispcalgui.hoech.net/
 BuildArchitectures: noarch
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: autopackage-devel, python >= %{py_minversion}, python <= %{py_maxversion}
+BuildRequires: autopackage-devel, python >= %{py_minversion}, python < 3.0
 %if 0%{?mandriva_version} > 0
 Group: Graphics
-Requires: autopackage, python >= %{py_minversion}, python <= %{py_maxversion}, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires: autopackage, python >= %{py_minversion}, python < 3.0, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?suse_version} > 0
 Group: Productivity/Graphics/Other
-Requires: autopackage, python >= %{py_minversion}, python <= %{py_maxversion}, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires: autopackage, python >= %{py_minversion}, python < 3.0, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0
 Group: Applications/Multimedia
-Requires: autopackage, python >= %{py_minversion}, python <= %{py_maxversion}, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
+Requires: autopackage, python >= %{py_minversion}, python < 3.0, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
 %endif
 %endif
 %endif

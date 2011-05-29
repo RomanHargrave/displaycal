@@ -13,22 +13,22 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-root
 %if 0%{?mandriva_version} > 0
 Group: Graphics
 %ifarch x86_64
-BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, libpython-devel, lib64xorg-x11-devel
+BuildRequires: udev, gcc, python >= %{py_minversion}, python < 3.0, libpython-devel, lib64xorg-x11-devel
 %else
-BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, libpython-devel, libxorg-x11-devel
+BuildRequires: udev, gcc, python >= %{py_minversion}, python < 3.0, libpython-devel, libxorg-x11-devel
 %endif
-Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires: python >= %{py_minversion}, python < 3.0, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?suse_version} > 0
 Group: Productivity/Graphics/Other
-BuildRequires: udev, update-desktop-files, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, xorg-x11-devel
+BuildRequires: udev, update-desktop-files, gcc, python >= %{py_minversion}, python < 3.0, python-devel, xorg-x11-devel
 Requires: python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0
 Group: Applications/Multimedia
-BuildRequires: udev, gcc, python >= %{py_minversion}, python <= %{py_maxversion}, python-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
-Requires: python >= %{py_minversion}, python <= %{py_maxversion}, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
+BuildRequires: udev, gcc, python >= %{py_minversion}, python < 3.0, python-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
+Requires: python >= %{py_minversion}, python < 3.0, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
 %endif
 %endif
 %endif
