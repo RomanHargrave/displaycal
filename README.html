@@ -434,11 +434,11 @@
 				&#160;<br />
 				&#160;</dt>
 				<dd id="version">
-				0.7.0.0<br />
+				0.7.0.7<br />
 				<a href="#history">What's new in this version / changelog</a><br />
 				<a href="http://dispcalGUI.hoech.net/archive/">Archive</a></dd>
 			<dt>Updated:</dt>
-				<dd id="date">2011-04-20 21:08 (UTC)</dd>
+				<dd id="date">2011-05-29 18:51 (UTC)</dd>
 			<dt>Author:</dt>
 				<dd>Florian Höch</dd>
 			<dt>License:</dt>
@@ -633,6 +633,9 @@
 				Ubuntu 10.10 (Maverick)
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_10.10/i386/">x86</a> | 
 				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_10.10/amd64/">x86_64</a><br />
+				Ubuntu 11.04 (Natty)
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_11.04/i386/">x86</a> | 
+				<a href="http://download.opensuse.org/repositories/home:/fhoech/xUbuntu_11.04/amd64/">x86_64</a><br />
 			</p>
 			
 			<h3>Linux Autopackage</h3>
@@ -811,7 +814,7 @@
 				<ol>
 					<li>Open a shell.</li>
 					<li><code>cd</code> into the source directory (dispcalGUI-&lt;version&gt;).</li>
-					<li>Run <code>python setup.py build_ext -i</code> (on Linux, you can also untar <code>RealDisplaySizeMM.py&lt;PYTHON_VERSION&gt;.&lt;PLATFORM&gt;.so.tar</code> inside the dispcalGUI subdirectory instead)</li>
+					<li>Run <code>python setup.py build_ext -i</code> (on Linux, you can also extract a pre-built extension module by running <code>tar -xf RealDisplaySizeMM.py&lt;PYTHON_VERSION&gt;.&lt;PLATFORM&gt;.so.tar</code> inside the dispcalGUI subdirectory instead. The py2.6 version should also work when using Python 2.7)</li>
 				</ol>
 				
 				<p>You can then run <code>python dispcalGUI.pyw</code> (or launch it by double-clicking).</p>
@@ -865,7 +868,7 @@
 						<dd>Creates a DMG of a previously created (by the py2app or bdist_standalone commands) application bundle.</dd>
 					<dt>bdist_deb (Linux/Debian-based)</dt>
 						<dd>Create an installable Debian (.deb) package, much like the standard distutils command bdist_rpm for RPM packages. Prerequisites:
-						You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example).</dd>
+						You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example). Under Ubuntu, running utils/dist_ubuntu.sh will automatically use the correct setup.cfg. If you are using Ubuntu 11.04 or any other debian-based distribution which has Python 2.7 as default, you need to edit /usr/lib/python2.7/distutils/command/bdist_rpm.py, and change the line <code>install_cmd = ('%s install <span style="color: #c00">-O1</span> --root=$RPM_BUILD_ROOT '</code> to <code>install_cmd = ('%s install --root=$RPM_BUILD_ROOT '</code> by removing the <code><span style="color: #c00">-O1</span></code> flag. Also, you need to change /usr/lib/rpm/brp-compress to do nothing (e.g. change the file contents to <code>exit 0</code>, but don't forget to create a backup copy first) otherwise you will get errors when building.</dd>
 					<dt>bdist_standalone</dt>
 						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, py2app is not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files.</dd>
 					<dt>buildservice</dt>
@@ -1481,8 +1484,21 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		
 		<div id="history">
 			<h2>Version history / changelog</h2>
-			<!-- 2011-04-20 21:08 (UTC) 0.7.0.0 -->
+			<!-- 2011-05-29 18:51 (UTC) 0.7.0.7 -->
 			<dl>
+				<dt>2011-05-29 18:51 (UTC) 0.7.0.7</dt>
+					<dd>
+						<h3>0.7.0.7</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>wxPython 2.8.12 compatibility.</li>
+							<li>Linux: Preserve environment when installing a profile system-wide so $DISPLAY is available for dispwin.</li>
+							<li>Linux (Source): Changed highest supported Python version to “lower than 3.0” because openSUSE Build Service would choke on “lower than or equal to 2.7” when building for Ubuntu 11.04.</li>
+							<li>Linux (Source): Fixed setup.py bdist_deb as far as possible (see notes under <a href="#install-src">installing from source</a>, additional setup commands, bdist_deb)</li>
+							<li>Windows: Fixed error when the display profile cannot be determined (e.g. when running remotely).</li>
+						</ul>
+					</dd>
+				
 				<dt>2011-04-20 21:08 (UTC) 0.7.0.0</dt>
 					<dd>
 						<h3>0.7.0.0</h3>
@@ -1492,7 +1508,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 							<li>If the Spyder 2 was enabled using Argyll CMS 1.2 or newer, this should now be reflected correctly in the “Tools” menu by a checkmark next to the “Enable Spyder 2” menu item.</li>
 							<li>Linux (Autopackage, DEB and RPM installs) and source: Fixed missing application icons in sizes other than 16x16 and 32x32 if the source archive was created with setup.py under Mac OS X or Windows (regression of a change in r501).</li>
 							<li>Linux/Windows: The location of the Argyll binaries was not stored in the system-wide configuration, which could prevent the profile loader from finding the Argyll binaries if they were not on the PATH environment variable and a profile was installed system-wide.</li>
-							<li>Windows: Fixed program termination if EnumDisplayDevices fails for some reason.</li>
+							<li>Windows: Fixed program termination if EnumDisplayDevices fails (e.g. when running remotely).</li>
 							<li>Windows: Fixed program termination if a display device has no driver entry in the registry (the very generic Windows error message is misleading in that case: It pretends a file was not found).</li>
 							<li>Windows XP: Correctly enumerate display device names and EDID.</li>
 						</ul>
