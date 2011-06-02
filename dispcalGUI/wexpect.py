@@ -2753,7 +2753,7 @@ def log(e, suffix=''):
                               dirname[-1])
     else:
         dirname = os.path.join(os.getenv("XDG_DATA_HOME", 
-                                         os.expandvars("$HOME/.local/share")), 
+                                         os.path.expandvars("$HOME/.local/share")), 
                                          dirname[-1], "logs")
     if os.access(dirname, os.W_OK):
         try:
