@@ -47,18 +47,25 @@ class AboutDialog(wx.Dialog):
 	def set_properties(self):
 		icon = wx.EmptyIcon()
 		self.SetIcon(icon)
+	
+	def OnClose(self, event):
+		self.Hide()
 
 	def Layout(self):
 		self.sizer.SetSizeHints(self)
 		self.sizer.Layout()
 
 	def add_items(self, items):
+		self.closebtn = wx.Button(self, -1, lang.getstr("ok"))
+		self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.closebtn.GetId())
+		items += [self.closebtn, (1, 16)]
 		pointsize = 10
 		for item in items:
-			font = item.GetFont()
-			if item.GetLabel() and font.GetPointSize() > pointsize:
-				font.SetPointSize(pointsize)
-				item.SetFont(font)
+			if isinstance(item, wx.Window):
+				font = item.GetFont()
+				if item.GetLabel() and font.GetPointSize() > pointsize:
+					font.SetPointSize(pointsize)
+					item.SetFont(font)
 			self.sizer.Add(item, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 0)
 
 
