@@ -35,7 +35,7 @@ def swap_dict_keys_values(mydict):
 class TestchartEditor(wx.Frame):
 	def __init__(self, parent = None, id = -1):
 		wx.Frame.__init__(self, parent, id, lang.getstr("testchart.edit"))
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.tc_close_handler)
 
 		self.tc_algos_ab = {

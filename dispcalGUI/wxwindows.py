@@ -4,6 +4,7 @@
 import os
 import sys
 
+import config
 from config import (btn_width_correction, defaults, getcfg, geticon, 
 					get_bitmap_as_icon, get_data_path, get_verified_path, 
 					setcfg)
@@ -83,7 +84,7 @@ class BaseInteractiveDialog(wx.Dialog):
 			pos = tuple(pos)
 		wx.Dialog.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 
@@ -353,7 +354,7 @@ class ProgressDialog(wx.ProgressDialog):
 		if style is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
 		wx.ProgressDialog.__init__(self, title, "", maximum, parent=parent, style=style)
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
 			self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -478,7 +479,7 @@ class SimpleTerminal(InvincibleFrame):
 				 keyhandler=None, start_timer=True):
 		wx.Frame.__init__(self, parent, id, title, 
 								style=wx.DEFAULT_FRAME_STYLE)
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -644,7 +645,7 @@ class TooltipWindow(InvincibleFrame):
 				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW):
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
 		margin = 12
 		

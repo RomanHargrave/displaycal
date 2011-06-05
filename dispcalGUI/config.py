@@ -202,6 +202,15 @@ def get_bitmap_as_icon(size, name):
 	return icon
 
 
+def get_icon_bundle(sizes, name):
+	""" Return a wx.IconBundle with given icon sizes """
+	from wxaddons import wx
+	iconbundle = wx.IconBundle()
+	for size in sizes:
+		iconbundle.AddIcon(get_bitmap_as_icon(size, name))
+	return iconbundle
+
+
 def geticon(size, name):
 	""" Convenience function for getbitmap('theme/icons/<size>/<name>'). """
 	return getbitmap("theme/icons/%(size)sx%(size)s/%(name)s" % 

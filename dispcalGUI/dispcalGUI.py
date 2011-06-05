@@ -389,7 +389,7 @@ class ExtraArgsFrame(BaseFrame):
 		self.PostCreate(pre)
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.set_child_ctrls_as_attrs(self)
 
@@ -438,7 +438,7 @@ class GamapFrame(BaseFrame):
 		self.PostCreate(pre)
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
 		self.panel = self.FindWindowByName("panel")
 		
@@ -789,7 +789,7 @@ class MainFrame(BaseFrame):
 		"""
 		self.SetTitle("%s %s %s" % (appname, version, build))
 		self.SetMaxSize((-1, -1))
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
@@ -996,7 +996,8 @@ class MainFrame(BaseFrame):
 		self.infoframe = LogWindow(self)
 		self.infoframe.Bind(wx.EVT_CLOSE, self.infoframe_close_handler, 
 							self.infoframe)
-		self.infoframe.SetIcon(get_bitmap_as_icon(16, appname))
+		self.infoframe.SetIcons(config.get_icon_bundle([256, 48, 32, 16], 
+													   appname))
 		if show:
 			self.infoframe.Show()
 	

@@ -198,7 +198,7 @@ class LUTFrame(wx.Frame):
 		
 		wx.Frame.__init__(self, *args, **kwargs)
 		
-		self.SetIcon(get_bitmap_as_icon(16, appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.CreateStatusBar(1)
 		
