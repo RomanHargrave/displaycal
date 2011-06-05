@@ -551,7 +551,7 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 				"excludes": ["test", "Tkconstants", "Tkinter", "tcl"],
 				"iconfile": os.path.join(pydir, "theme", "icons", 
 										 "dispcalGUI.icns"),
-				"optimize": 2,
+				"optimize": 0,
 				"plist": {
 					"CFBundleDevelopmentRegion": "English",
 					"CFBundleExecutable": name,
