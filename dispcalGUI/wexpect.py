@@ -2749,8 +2749,8 @@ def log(e, suffix=''):
         dirname = os.path.join(SHGetSpecialFolderPath(0, CSIDL_APPDATA), 
                                                      dirname[-1], "logs")
     elif sys.platform == "darwin":
-        dirname = os.path.join(os.expanduser("~"), "Library", "Logs", 
-                              dirname[-1])
+        dirname = os.path.join(os.path.expanduser("~"), "Library", "Logs", 
+                               dirname[-1])
     else:
         dirname = os.path.join(os.getenv("XDG_DATA_HOME", 
                                          os.path.expandvars("$HOME/.local/share")), 
