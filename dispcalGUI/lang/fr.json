@@ -263,7 +263,7 @@
 	"profile.type.gamma_matrix": "Gamma + matrice",
 	"profile.type.lut.lab": "Table L*a*b*",
 	"profile.type.lut.xyz": "Table XYZ",
-	"profile.type.lut_rg_swapped_matrix.xyz": "Table XYZ + matrice d'inversion R <-> V",
+	"profile.type.lut_rg_swapped_matrix.xyz": "Table XYZ + matrice d'inversion",
 	"profile.type.lut_matrix.xyz": "Table XYZ + matrice",
 	"profile.type.shaper_matrix": "Courbes + matrice",
 	"profile.type.single_gamma_matrix": "Gamma unique + matrice",

@@ -267,7 +267,7 @@
 	"profile.type.gamma_matrix": "Gamma + Matrix",
 	"profile.type.lut.lab": "L*a*b* LUT",
 	"profile.type.lut.xyz": "XYZ LUT",
-	"profile.type.lut_rg_swapped_matrix.xyz": "XYZ LUT + R ↔ G vertauschte Matrix",
+	"profile.type.lut_rg_swapped_matrix.xyz": "XYZ LUT + vertauschte Matrix",
 	"profile.type.lut_matrix.xyz": "XYZ LUT + Matrix",
 	"profile.type.shaper_matrix": "Kurven + Matrix",
 	"profile.type.single_gamma_matrix": "Einzelnes Gamma + Matrix",
