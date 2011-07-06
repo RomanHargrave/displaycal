@@ -1281,6 +1281,7 @@ class Worker():
 					dlg.Destroy()
 				cmdline.insert(0, sudo)
 				if (cmdname == get_argyll_utilname("dispwin")
+					and sys.platform != "darwin"
 					and getcfg("sudo.preserve_environment")):
 					# Preserve environment so $DISPLAY is set
 					cmdline.insert(1, "-E")
