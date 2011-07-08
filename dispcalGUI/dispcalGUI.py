@@ -4812,9 +4812,7 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(self.measureframe_subprocess)
 	
 	def measureframe_subprocess(self):
-		args = (u'"%s" "%s"' % (exe, 
-								os.path.join(pydir, 
-											 "wxMeasureFrame.py"))).encode(fs_enc)
+		args = u'"%s" "%s"' % (exe, os.path.join(pydir, "wxMeasureFrame.py"))
 		if wx.Display.GetCount() == 1:
 			try:
 				x_hostname, x_display, x_screen = util_x.get_display()
@@ -4827,9 +4825,10 @@ class MainFrame(BaseFrame):
 			args = "DISPLAY=%s:%s.%s %s" % (x_hostname, x_display,
 											getcfg("display.number") - 1,
 											args)
+		safe_print(args)
 		returncode = -1
 		try:
-			p = sp.Popen(args, 
+			p = sp.Popen(args.encode(fs_enc), 
 						 shell=True, 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
 		except Exception, exception:
@@ -4842,7 +4841,9 @@ class MainFrame(BaseFrame):
 		if returncode != 255:
 			self.Show(start_timers=True)
 			if stderr and stderr.strip():
-				safe_print(stderr.strip())
+				InfoDialog(self, msg=safe_unicode(stderr.strip()), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"), print_=True)
 		else:
 			self.call_pending_function()
 	
