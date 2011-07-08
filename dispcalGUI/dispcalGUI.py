@@ -6660,8 +6660,15 @@ class MainFrame(BaseFrame):
 				(options_dispcal, 
 				 options_colprof) = get_options_from_profile(profile)
 			else:
-				(options_dispcal, 
-				 options_colprof) = get_options_from_cal(path)
+				try:
+					(options_dispcal, 
+					 options_colprof) = get_options_from_cal(path)
+				except CGATS.CGATSError, exception:
+					InfoDialog(self, msg=lang.getstr("calibration.file.invalid") + 
+										 "\n" + path, 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
+					return
 			if options_dispcal or options_colprof:
 				if debug:
 					safe_print("[D] options_dispcal:", options_dispcal)

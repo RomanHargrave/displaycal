@@ -6,6 +6,7 @@ import math
 import os
 import sys
 
+from argyll_cgats import cal_to_fake_profile
 from config import get_bitmap_as_icon, getcfg, geticon, setcfg
 from meta import name as appname
 from util_decimal import float2dec
@@ -15,6 +16,7 @@ from wxwindows import InfoDialog
 import config
 import wxenhancedplot as plot
 import localization as lang
+import CGATS
 import ICCProfile as ICCP
 
 BGCOLOUR = "#333333"
@@ -281,7 +283,25 @@ class LUTFrame(wx.Frame):
 		Drag'n'drop handler for .cal/.icc/.icm files.
 		
 		"""
-		self.LoadProfile(path)
+		filename, ext = os.path.splitext(path)
+		if ext == ".cal":
+			profile = cal_to_fake_profile(path)
+			if not profile:
+				InfoDialog(self, msg=lang.getstr("calibration.file.invalid") + 
+									 "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+		else:
+			try:
+				profile = ICCP.ICCProfile(path)
+			except ICCP.ICCProfileInvalidError, exception:
+				InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+									 "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+		self.LoadProfile(profile)
 		self.DrawLUT()
 
 	def drop_unsupported_handler(self):
