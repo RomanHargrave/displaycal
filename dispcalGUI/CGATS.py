@@ -49,27 +49,32 @@ def rcut(value, width):
 	return strval
 
 
-class CGATSInvalidError(IOError):
+class CGATSError(Exception):
 	def __str__(self):
 		return self.args[0]
 
 
-class CGATSInvalidOperationError(Exception):
+class CGATSInvalidError(CGATSError, IOError):
 	def __str__(self):
 		return self.args[0]
 
 
-class CGATSKeyError(KeyError):
+class CGATSInvalidOperationError(CGATSError):
 	def __str__(self):
 		return self.args[0]
 
 
-class CGATSTypeError(TypeError):
+class CGATSKeyError(CGATSError, KeyError):
 	def __str__(self):
 		return self.args[0]
 
 
-class CGATSValueError(ValueError):
+class CGATSTypeError(CGATSError, TypeError):
+	def __str__(self):
+		return self.args[0]
+
+
+class CGATSValueError(CGATSError, ValueError):
 	def __str__(self):
 		return self.args[0]
 
