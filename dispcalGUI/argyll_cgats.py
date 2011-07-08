@@ -4,6 +4,7 @@
 import decimal
 Decimal = decimal.Decimal
 import os
+import traceback
 
 from options import debug
 from safe_print import safe_print
@@ -75,9 +76,9 @@ def cal_to_fake_profile(cal):
 			safe_print(u"Warning - couldn't process CGATS file '%s': %s" % 
 					   tuple(safe_unicode(s) for s in (cal, exception)))
 			return None
+	required_fields = ("RGB_I", "RGB_R", "RGB_G", "RGB_B")
 	data_format = cal.queryv1("DATA_FORMAT")
 	if data_format:
-		required_fields = ("RGB_I", "RGB_R", "RGB_G", "RGB_B")
 		for field in required_fields:
 			if not field in data_format.values():
 				if debug: safe_print("[D] Missing required field:", field)
@@ -87,6 +88,9 @@ def cal_to_fake_profile(cal):
 				if debug: safe_print("[D] Unknown field:", field)
 				return None
 	entries = cal.queryv(required_fields)
+	if len(entries) < 1:
+		if debug: safe_print("[D] No entries found in", cal.filename)
+		return None
 	profile = ICCP.ICCProfile()
 	profile.fileName = cal.filename
 	profile._data = "\0" * 128
