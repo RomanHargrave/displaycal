@@ -7,7 +7,7 @@ import logging.handlers
 import os
 import re
 import sys
-from time import localtime, strftime
+from time import localtime, strftime, time
 
 from config import isapp, logdir
 from meta import name as appname
@@ -93,7 +93,16 @@ def setup_logging():
 					   tuple(safe_unicode(s) for s in (logfile, exception)))
 		else:
 			# rollover needed?
-			mtime = localtime(logstat.st_mtime)
+			try:
+				mtime = localtime(logstat.st_mtime)
+			except ValueError, exception:
+				# This can happen on Windows because localtime() is buggy on
+				# that platform. See:
+				# http://stackoverflow.com/questions/4434629/zipfile-module-in-python-runtime-problems
+				# http://bugs.python.org/issue1760357
+				# To overcome this problem, we ignore the real modification
+				# date and force a rollover
+				mtime = localtime(time() - 60 * 60 * 24)
 			if localtime()[:3] > mtime[:3]:
 				# do rollover
 				logbackup = logfile + strftime(".%Y-%m-%d", mtime)
