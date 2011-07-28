@@ -53,6 +53,7 @@ import os
 import platform
 if sys.platform == "darwin":
 	from platform import mac_ver
+	import posix
 import re
 import shutil
 import socket
@@ -619,7 +620,7 @@ class MainFrame(BaseFrame):
 		
 		# Create main worker instance
 		wx.GetApp().progress_dlg.Pulse()
-		self.worker = Worker(self)
+		self.worker = Worker(None)
 		wx.GetApp().progress_dlg.Pulse()
 		self.worker.enumerate_displays_and_ports()
 		wx.GetApp().progress_dlg.Pulse()
@@ -635,6 +636,7 @@ class MainFrame(BaseFrame):
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, None, "mainframe")
 		self.PostCreate(pre)
+		self.worker.owner = self
 		self.init_frame()
 		self.init_defaults()
 		self.init_infoframe()
@@ -7451,6 +7453,18 @@ def main():
 							   (me, unicode(stdout.read(), enc, "replace")))
 				handle_error(msg)
 		else:
+			if sys.platform == "darwin" and ("--admin" not in sys.argv[1:] 
+											 and 80 not in posix.getgroups()):
+				# GID 80 is the admin group on Mac OS X
+				# Argyll dispwin/dispcal need admin (not root) privileges
+				if isapp:
+					cmd = os.path.join(exedir, pyname)
+				else:
+					cmd = u"'%s' '%s'" % (exe, pypath)
+				sp.Popen(['osascript', '-e', 
+						  'do shell script "%s --admin" with administrator privileges' 
+						 % cmd.encode(fs_enc)])
+				sys.exit(0)
 			# Create main data dir if it does not exist
 			if not os.path.exists(datahome):
 				try:

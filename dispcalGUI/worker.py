@@ -16,6 +16,7 @@ from encodings.aliases import aliases
 from hashlib import md5
 from time import sleep, strftime, time
 if sys.platform == "darwin":
+	from platform import mac_ver
 	from thread import start_new_thread
 elif sys.platform == "win32":
 	from ctypes import windll
@@ -1188,7 +1189,9 @@ class Worker():
 					cmdline[i] = os.path.basename(item)
 		sudo = None
 		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
-														  "-Sn" in args):
+														  "-Sn" in args or
+														  (sys.platform == "darwin" and 
+														   mac_ver()[0] >= '10.7')):
 			asroot = True
 		# Run commands through wexpect.spawn instead of subprocess.Popen if
 		# all of these conditions apply:

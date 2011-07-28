@@ -331,7 +331,11 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			if not profile:
 				# system
 				profile = _winreg_get_display_profile(monkey)
-	else:
+	elif "--admin" not in sys.argv[1:] or mac_ver()[0] >= "10.6":
+		# We set --admin on Mac OS X when using osascript to run as admin
+		# under a standard account. In this case any attempt to access the
+		# display profile with AppleScript will time out with 
+		# ColorSyncScripting, so we skip it
 		if sys.platform == "darwin":
 			if intlist(mac_ver()[0].split(".")) >= [10, 6]:
 				options = ["Image Events"]
