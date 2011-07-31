@@ -1182,11 +1182,16 @@ class Worker():
 							  os.path.dirname(item) == working_dir):
 					# Strip the path from all items in the working dir
 					if sys.platform == "win32" and \
-					   re.search("[^\x00-\x7f]", 
+					   re.search("[^\x20-\x7e]", 
 								 os.path.basename(item)) and os.path.exists(item):
 						# Avoid problems with encoding
 						item = win32api.GetShortPathName(item) 
 					cmdline[i] = os.path.basename(item)
+			if (sys.platform == "win32" and 
+				re.search("[^\x20-\x7e]", working_dir) and 
+				os.path.exists(working_dir)):
+				# Avoid problems with encoding
+				working_dir = win32api.GetShortPathName(working_dir)
 		sudo = None
 		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
 														  "-Sn" in args or
@@ -1465,8 +1470,6 @@ class Worker():
 													discard="",
 													triggers=self.triggers), 
 									logfile))
-			if sys.platform == "win32" and working_dir:
-				working_dir = win32api.GetShortPathName(working_dir)
 			logfn = log
 			tries = 1
 			while tries > 0:
@@ -2176,7 +2179,7 @@ class Worker():
 					args += ["-I"]
 					if (sys.platform in ("win32", "darwin") or 
 						fs_enc.upper() not in ("UTF8", "UTF-8")) and \
-					   re.search("[^\x00-\x7f]", 
+					   re.search("[^\x20-\x7e]", 
 								 os.path.basename(profile_path)):
 						# Copy to temp dir and give unique ASCII-only name to
 						# avoid profile install issues
