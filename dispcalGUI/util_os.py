@@ -6,6 +6,7 @@ import os
 import re
 import subprocess as sp
 import sys
+from os.path import join
 
 if sys.platform == "win32":
 	import ctypes
@@ -28,17 +29,126 @@ def quote_args(args):
 
 def expanduseru(path):
 	""" Unicode version of os.path.expanduser """
+	if sys.platform == "win32":
+		# The code in this if-statement is copied from Python 2.7's expanduser
+		# in ntpath.py, but uses getenvu() instead of os.environ[]
+		if path[:1] != '~':
+			return path
+		i, n = 1, len(path)
+		while i < n and path[i] not in '/\\':
+			i = i + 1
+
+		if 'HOME' in os.environ:
+			userhome = getenvu('HOME')
+		elif 'USERPROFILE' in os.environ:
+			userhome = getenvu('USERPROFILE')
+		elif not 'HOMEPATH' in os.environ:
+			return path
+		else:
+			try:
+				drive = getenvu('HOMEDRIVE')
+			except KeyError:
+				drive = ''
+			userhome = join(drive, getenvu('HOMEPATH'))
+
+		if i != 1: #~user
+			userhome = join(dirname(userhome), path[1:i])
+
+		return userhome + path[i:]
 	return unicode(os.path.expanduser(path), fs_enc)
 
 
 def expandvarsu(path):
 	""" Unicode version of os.path.expandvars """
+	if sys.platform == "win32":
+		# The code in this if-statement is copied from Python 2.7's expandvars
+		# in ntpath.py, but uses getenvu() instead of os.environ[]
+		if '$' not in path and '%' not in path:
+			return path
+		import string
+		varchars = string.ascii_letters + string.digits + '_-'
+		res = ''
+		index = 0
+		pathlen = len(path)
+		while index < pathlen:
+			c = path[index]
+			if c == '\'':   # no expansion within single quotes
+				path = path[index + 1:]
+				pathlen = len(path)
+				try:
+					index = path.index('\'')
+					res = res + '\'' + path[:index + 1]
+				except ValueError:
+					res = res + path
+					index = pathlen - 1
+			elif c == '%':  # variable or '%'
+				if path[index + 1:index + 2] == '%':
+					res = res + c
+					index = index + 1
+				else:
+					path = path[index+1:]
+					pathlen = len(path)
+					try:
+						index = path.index('%')
+					except ValueError:
+						res = res + '%' + path
+						index = pathlen - 1
+					else:
+						var = path[:index]
+						if var in os.environ:
+							res = res + getenvu(var)
+						else:
+							res = res + '%' + var + '%'
+			elif c == '$':  # variable or '$$'
+				if path[index + 1:index + 2] == '$':
+					res = res + c
+					index = index + 1
+				elif path[index + 1:index + 2] == '{':
+					path = path[index+2:]
+					pathlen = len(path)
+					try:
+						index = path.index('}')
+						var = path[:index]
+						if var in os.environ:
+							res = res + getenvu(var)
+						else:
+							res = res + '${' + var + '}'
+					except ValueError:
+						res = res + '${' + path
+						index = pathlen - 1
+				else:
+					var = ''
+					index = index + 1
+					c = path[index:index + 1]
+					while c != '' and c in varchars:
+						var = var + c
+						index = index + 1
+						c = path[index:index + 1]
+					if var in os.environ:
+						res = res + getenvu(var)
+					else:
+						res = res + '$' + var
+					if c != '':
+						index = index - 1
+			else:
+				res = res + c
+			index = index + 1
+		return res
 	return unicode(os.path.expandvars(path), fs_enc)
 
 
-def getenvu(key, default = None):
+def getenvu(name, default = None):
 	""" Unicode version of os.getenv """
-	var = os.getenv(key, default)
+	if sys.platform == "win32":
+		name = unicode(name)
+		# http://stackoverflow.com/questions/2608200/problems-with-umlauts-in-python-appdata-environvent-variable
+		length = ctypes.windll.kernel32.GetEnvironmentVariableW(name, None, 0)
+		if length == 0:
+			return default
+		buffer = ctypes.create_unicode_buffer(u'\0' * length)
+		ctypes.windll.kernel32.GetEnvironmentVariableW(name, buffer, length)
+		return buffer.value
+	var = os.getenv(name, default)
 	return var if isinstance(var, unicode) else unicode(var, fs_enc)
 
 
@@ -83,9 +193,12 @@ def listdir_re(path, rex = None):
 	return files
 
 
-def putenvu(key, value):
+def putenvu(name, value):
 	""" Unicode version of os.putenv (also correctly updates os.environ) """
-	os.environ[key] = value.encode(fs_enc)
+	if sys.platform == "win32" and isinstance(value, unicode):
+		ctypes.windll.kernel32.SetEnvironmentVariableW(unicode(name), value)
+	else:
+		os.environ[name] = value.encode(fs_enc)
 
 
 def relpath(path, start):
