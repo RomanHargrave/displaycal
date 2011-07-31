@@ -227,6 +227,9 @@ def _winreg_get_display_profile(monkey, current_user=False):
 	try:
 		if current_user and sys.getwindowsversion() >= (6, ):
 			# Vista / Windows 7 ONLY
+			# User has to place a check in 'use my settings for this device'
+			# in the color management control panel at least once to cause
+			# this key to be created, otherwise it won't exist
 			subkey = "\\".join(["Software", "Microsoft", "Windows NT", 
 								"CurrentVersion", "ICM", "ProfileAssociations", 
 								"Display"] + monkey)
@@ -267,6 +270,12 @@ def _winreg_get_display_profile(monkey, current_user=False):
 			elif name == "UsePerUserProfiles" and not value:
 				filename = None
 				break
+	except WindowsError, exception:
+		if exception.args[0] == 2:
+			# Key does not exist
+			pass
+		else:
+			raise
 	except Exception, exception:
 		raise
 	if not filename and not current_user:
