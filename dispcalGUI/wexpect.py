@@ -2020,7 +2020,7 @@ class Wtty:
             pyargs.insert(0, '-S')  # skip 'import site'
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
-        cp = self.codepage or GetConsoleOutputCP()
+        cp = self.codepage or windll.kernel32.GetACP()
         # If we are running 'frozen', expect python.exe in the same directory
         # as the packed executable.
         # py2exe: The python executable can be included via setup script by 
