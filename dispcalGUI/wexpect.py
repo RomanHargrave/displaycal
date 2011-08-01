@@ -1997,6 +1997,11 @@ class Wtty:
         dirname = os.path.dirname(sys.executable 
                                   if getattr(sys, 'frozen', False) else 
                                   os.path.abspath(__file__))
+        if getattr(sys, 'frozen', False):
+            logdir = os.path.splitext(sys.executable)[0]
+        else:
+            logdir = dirname
+        logdir = os.path.basename(logdir)
         spath = [dirname]
         pyargs = ['-c']
         if getattr(sys, 'frozen', False):
@@ -2026,7 +2031,7 @@ class Wtty:
                                         ' '.join(pyargs), 
                                         "import sys; sys.path = %r + sys.path;"
                                         "args = %r; import wexpect;"
-                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i)" % (spath, args, pid, tid, cp))
+                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (spath, args, pid, tid, cp, logdir))
                      
         
         self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
@@ -2452,12 +2457,13 @@ class Wtty:
     
 class ConsoleReader:
    
-    def __init__(self, path, pid, tid, env = None, cp=None):
+    def __init__(self, path, pid, tid, env = None, cp=None, logdir=None):
+        self.logdir = logdir
         if cp:
             try:
                 SetConsoleOutputCP(cp)
             except Exception, e:
-                log(e, 'consolereader')
+                log(e, 'consolereader', logdir)
         try:
             try:
                 consout = self.getConsoleOut()
@@ -2467,7 +2473,7 @@ class ConsoleReader:
                 self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
                                                                              0, None, None, si)
             except Exception, e:
-                log(e, 'consolereader')
+                log(e, 'consolereader', logdir)
                 time.sleep(.1)
                 win32api.PostThreadMessage(int(tid), WM_USER, 0, 0)
                 sys.exit()
@@ -2493,30 +2499,30 @@ class ConsoleReader:
                         # Don't log. Child process will exit regardless when 
                         # calling sys.exit
                         if e.args[0] != winerror.ERROR_ACCESS_DENIED:
-                            log(e, 'consolereader')
+                            log(e, 'consolereader', logdir)
                     sys.exit()
                 
                 if cursorPos.Y > maxconsoleY and not paused:
                     #log('ConsoleReader.__init__: cursorPos %s' 
-                               #% cursorPos, 'consolereader')
-                    #log('suspendThread', 'consolereader')
+                               #% cursorPos, 'consolereader', logdir)
+                    #log('suspendThread', 'consolereader', logdir)
                     self.suspendThread()
                     paused = True
                     
                 if cursorPos.Y <= maxconsoleY and paused:
                     #log('ConsoleReader.__init__: cursorPos %s' 
-                               #% cursorPos, 'consolereader')
-                    #log('resumeThread', 'consolereader')
+                               #% cursorPos, 'consolereader', logdir)
+                    #log('resumeThread', 'consolereader', logdir)
                     self.resumeThread()
                     paused = False
                                     
                 time.sleep(.1)
         except Exception, e:
-            log(e, 'consolereader')
+            log(e, 'consolereader', logdir)
             time.sleep(.1)
     
     def handler(self, sig):       
-        log(sig, 'consolereader')
+        log(sig, 'consolereader', logdir)
         return False
 
     def getConsoleOut(self):
@@ -2734,7 +2740,7 @@ class searcher_re (object):
         self.end = self.match.end()
         return best_index
 
-def log(e, suffix=''):
+def log(e, suffix='', logdir=None):
     if isinstance(e, Exception):
         # Get the full traceback
         e = traceback.format_exc()
@@ -2742,22 +2748,32 @@ def log(e, suffix=''):
         ## Only try to print if stdout is a tty, otherwise we might get
         ## an 'invalid handle' exception
         #print e
-    dirname = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)).split(os.sep)
-    if dirname[-1] == 'lib':
-        dirname.pop()
+    if not logdir:
+        if getattr(sys, 'frozen', False):
+            logdir = os.path.splitext(os.path.basename(sys.executable))[0]
+        else:
+            logdir = os.path.split(os.path.dirname(os.path.abspath(__file__)))
+            if logdir[-1] == 'lib':
+                logdir.pop()
+            logdir = logdir[-1]
     if sys.platform == "win32":
-        dirname = os.path.join(SHGetSpecialFolderPath(0, CSIDL_APPDATA), 
-                                                     dirname[-1], "logs")
+        logdir = os.path.join(SHGetSpecialFolderPath(0, CSIDL_APPDATA), 
+                              logdir, "logs")
     elif sys.platform == "darwin":
-        dirname = os.path.join(os.path.expanduser("~"), "Library", "Logs", 
-                               dirname[-1])
+        logdir = os.path.join(os.path.expanduser("~"), "Library", "Logs", 
+                              logdir)
     else:
-        dirname = os.path.join(os.getenv("XDG_DATA_HOME", 
-                                         os.path.expandvars("$HOME/.local/share")), 
-                                         dirname[-1], "logs")
-    if os.access(dirname, os.W_OK):
+        logdir = os.path.join(os.getenv("XDG_DATA_HOME", 
+                                        os.path.expandvars("$HOME/.local/share")), 
+                                        logdir, "logs")
+    if not os.path.exists(logdir):
         try:
-            fout = open(os.path.join(dirname, 'wexpect%s.log' % suffix), 'a')
+            os.makedirs(logdir)
+        except (OSError, WindowsError):
+            pass
+    if os.path.isdir(logdir) and os.access(logdir, os.W_OK):
+        try:
+            fout = open(os.path.join(logdir, 'wexpect%s.log' % suffix), 'a')
         except:
             pass
         else:
