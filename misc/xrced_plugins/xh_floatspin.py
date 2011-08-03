@@ -3,9 +3,9 @@
 import wx
 import wx.xrc as xrc
 try:
-	import floatspin
-except ImportError:
 	import wx.lib.agw.floatspin as floatspin
+except ImportError:
+	import floatspin
 
 class FloatSpinCtrlXmlHandler(xrc.XmlResourceHandler):
 	

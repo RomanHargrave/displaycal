@@ -197,6 +197,9 @@ def get_bitmap_as_icon(size, name):
 	""" Like geticon, but return a wx.Icon instance """
 	from wxaddons import wx
 	icon = wx.EmptyIcon()
+	if sys.platform == "darwin" and wx.VERSION >= (2, 9) and size > 128:
+		# FIXME: wxMac 2.9 doesn't support icon sizes above 128
+		size = 128
 	bmp = geticon(size, name)
 	icon.CopyFromBitmap(bmp)
 	return icon

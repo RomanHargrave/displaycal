@@ -157,7 +157,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.SetFocus()
 
 	def OnClose(self, event):
-		self.Close(True)
+		self.Destroy()
 
 
 class ConfirmDialog(BaseInteractiveDialog):
@@ -380,6 +380,7 @@ class ProgressDialog(wx.ProgressDialog):
 		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		
 		# custom localization
+		self.msg = None
 		for child in self.GetChildren():
 			if isinstance(child, wx.Button):
 				child.Label = lang.getstr("cancel")
@@ -391,20 +392,24 @@ class ProgressDialog(wx.ProgressDialog):
 					#child.SetBackgroundColour(wx.LIGHT_GREY)
 					child.SetWindowStyle(wx.ST_NO_AUTORESIZE)
 		
-		##if sys.platform not in ("darwin", "win32"):
-		text_extent = self.msg.GetTextExtent("E")
-		w, h = (text_extent[0] * 80, 
-				text_extent[1] * 4)
-		self.msg.SetMinSize((w, h))
-		self.msg.SetSize((w, h))
-		##else:
-		##self.msg.Freeze()
-		##self.msg.SetLabel("\n".join(["E" * 80] * 4))
-		##self.msg.Fit()
-		##self.msg.Thaw()
+		if self.msg:
+			##if sys.platform not in ("darwin", "win32"):
+			text_extent = self.msg.GetTextExtent("E")
+			w, h = (text_extent[0] * 80, 
+					text_extent[1] * 4)
+			self.msg.SetMinSize((w, h))
+			self.msg.SetSize((w, h))
+			##else:
+			##self.msg.Freeze()
+			##self.msg.SetLabel("\n".join(["E" * 80] * 4))
+			##self.msg.Fit()
+			##self.msg.Thaw()
 		self.Fit()
 		self.SetMinSize(self.GetSize())
-		self.msg.SetLabel(msg)
+		if self.msg:
+			self.msg.SetLabel(msg)
+		else:
+			self.Pulse(msg)
 		
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		

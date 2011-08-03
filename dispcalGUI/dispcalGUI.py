@@ -138,7 +138,10 @@ from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
 from wxfixes import GTKMenuItemGetFixedLabel
 from wxwindows import (AboutDialog, ConfirmDialog, InfoDialog, InvincibleFrame, 
 					   LogWindow, ProgressDialog, TooltipWindow)
-import floatspin
+try:
+	import wx.lib.agw.floatspin as floatspin
+except ImportError:
+	import floatspin
 import xh_floatspin
 
 # wxPython
@@ -676,7 +679,11 @@ class MainFrame(BaseFrame):
 			safe_print(lang.getstr("ready"))
 		
 		self.log()
-		wx.GetApp().progress_dlg.Hide()
+		if sys.platform == "win32" and wx.VERSION >= (2, 9):
+			wx.GetApp().progress_dlg.Destroy()
+			wx.GetApp().progress_dlg = None
+		else:
+			wx.GetApp().progress_dlg.Hide()
 	
 	def log(self):
 		""" Put log buffer contents into the log window. """
@@ -796,7 +803,6 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 		self.Bind(wx.EVT_SIZE, self.OnResize, self)
-		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 		self.droptarget = FileDrop()
 		self.droptarget.drophandlers = {
 			".cal": self.cal_drop_handler,
@@ -888,6 +894,7 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_IDLE, self.frame_enableresize_handler)
 		size = self.GetSize()
 		self.Freeze()
+		self.SetMinSize((self.GetMinSize()[0], 0))
 		self.SetMaxSize((size[0], fullheight))
 		self.calpanel.SetMaxSize((-1, virtualheight))
 		self.calpanel.SetMinSize((-1, 64))
@@ -1743,9 +1750,10 @@ class MainFrame(BaseFrame):
 		""" Update the comport selector control. """
 		self.comport_ctrl.Freeze()
 		self.comport_ctrl.SetItems(self.worker.instruments)
-		self.comport_ctrl.SetSelection(
-			min(max(0, len(self.worker.instruments) - 1), 
-				max(0, int(getcfg("comport.number")) - 1)))
+		if self.worker.instruments:
+			self.comport_ctrl.SetSelection(
+				min(max(0, len(self.worker.instruments) - 1), 
+					max(0, int(getcfg("comport.number")) - 1)))
 		self.comport_ctrl.Enable(len(self.worker.instruments) > 1)
 		self.comport_ctrl.Thaw()
 		self.comport_ctrl_handler()
@@ -4815,6 +4823,10 @@ class MainFrame(BaseFrame):
 	
 	def measureframe_subprocess(self):
 		args = u'"%s" "%s"' % (exe, os.path.join(pydir, "wxMeasureFrame.py"))
+		# TODO: Support TwinView. Compare Screen size returned by wx with 
+		# screen sizes returned by Argyll. If wx screen size = combined Argyll 
+		# screen sizes, do not use $DISPLAY and calculate positioning offsets 
+		# instead.
 		if wx.Display.GetCount() == 1:
 			try:
 				x_hostname, x_display, x_screen = util_x.get_display()
@@ -4852,9 +4864,10 @@ class MainFrame(BaseFrame):
 	def get_set_display(self):
 		if debug:
 			safe_print("[D] get_set_display")
-		self.display_ctrl.SetSelection(
-			min(max(0, len(self.worker.displays) - 1), 
-				max(0, getcfg("display.number") - 1)))
+		if self.worker.displays:
+			self.display_ctrl.SetSelection(
+				min(max(0, len(self.worker.displays) - 1), 
+					max(0, getcfg("display.number") - 1)))
 		self.display_ctrl_handler(
 			CustomEvent(wx.EVT_COMBOBOX.evtType[0], 
 						self.display_ctrl), load_lut=False)
@@ -7303,14 +7316,7 @@ class MainFrame(BaseFrame):
 			self.HideAll()
 			if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 				self.worker.wrapup(False)
-			self.Destroy()
-
-	def OnDestroy(self, event):
-		if getattr(self, "lut_viewer", None):
-			self.lut_viewer.Hide()
-			self.lut_viewer.Destroy()
-		wx.GetApp().progress_dlg.Destroy()
-		event.Skip()
+			wx.GetApp().ExitMainLoop()
 
 class MainApp(wx.App):
 	def OnInit(self):
@@ -7318,7 +7324,6 @@ class MainApp(wx.App):
 			self.SetAppName("Python")
 		else:
 			self.SetAppName(appname)
-		self.SetAssertMode(wx.PYAPP_ASSERT_SUPPRESS)
 		##wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
 						  ##wx.LANGUAGE_ENGLISH)
 		##self.locale = wx.Locale(wx_lang)
@@ -7327,7 +7332,7 @@ class MainApp(wx.App):
 					   ##self.locale.GetLocale())
 		self.progress_dlg = ProgressDialog(msg=lang.getstr("startup"), 
 										   handler=self.startup_progress_handler,
-										   style=wx.PD_SMOOTH,
+										   style=wx.PD_SMOOTH & ~wx.PD_CAN_ABORT,
 										   pos=(getcfg("position.x") + 50, 
 												getcfg("position.y") + 50))
 		self.progress_dlg.MakeModal(False)

@@ -927,7 +927,7 @@ class Worker():
 			lut_access = []
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
-			if hasattr(wx.GetApp(), "progress_dlg") and \
+			if getattr(wx.GetApp(), "progress_dlg", None) and \
 			   wx.GetApp().progress_dlg.IsShownOnScreen():
 				wx.GetApp().progress_dlg.Pulse(
 					lang.getstr("enumerating_displays_and_comports"))
@@ -1003,7 +1003,7 @@ class Worker():
 					if not iname in instruments:
 						instruments.append(iname)
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
-			if hasattr(wx.GetApp(), "progress_dlg") and \
+			if getattr(wx.GetApp(), "progress_dlg", None) and \
 			   wx.GetApp().progress_dlg.IsShownOnScreen():
 				wx.GetApp().progress_dlg.Pulse(
 					lang.getstr("success"))
@@ -1058,7 +1058,7 @@ class Worker():
 					for i, disp in enumerate(displays):
 						if verbose >= 1 and not silent:
 							safe_print(lang.getstr("checking_lut_access", (i + 1)))
-						if hasattr(wx.GetApp(), "progress_dlg") and \
+						if getattr(wx.GetApp(), "progress_dlg", None) and \
 						   wx.GetApp().progress_dlg.IsShownOnScreen():
 							wx.GetApp().progress_dlg.Pulse(
 								lang.getstr("checking_lut_access", (i + 1)))
@@ -1097,7 +1097,7 @@ class Worker():
 								safe_print(lang.getstr("success"))
 							else:
 								safe_print(lang.getstr("failure"))
-						if hasattr(wx.GetApp(), "progress_dlg") and \
+						if getattr(wx.GetApp(), "progress_dlg", None) and \
 						   wx.GetApp().progress_dlg.IsShownOnScreen():
 							wx.GetApp().progress_dlg.Pulse(
 								lang.getstr("success" if retcode == 0 else
@@ -1250,7 +1250,10 @@ class Worker():
 						bitmap=geticon(32, "dialog-question"))
 					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, "", 
 												   size=(320, -1), 
-												   style=wx.TE_PASSWORD)
+												   style=wx.TE_PASSWORD | 
+														 wx.TE_PROCESS_ENTER)
+					dlg.pwd_txt_ctrl.Bind(wx.EVT_TEXT_ENTER, 
+										  lambda event: dlg.EndModal(wx.ID_OK))
 					dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, 
 								   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 					dlg.ok.SetDefault()
@@ -1638,7 +1641,10 @@ class Worker():
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
 			# under Linux, destroying it here causes segfault
-			self.progress_wnd.Hide()
+			if sys.platform == "win32" and wx.VERSION >= (2, 9):
+				self.progress_wnd.Destroy()
+			else:
+				self.progress_wnd.Hide()
 		self.finished = True
 		self.subprocess_abort = False
 		self.thread_abort = False
