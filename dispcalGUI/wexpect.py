@@ -283,6 +283,17 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
 def spawn(command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None,
           codepage=None):
     log('=' * 80)
+    log('Buffer size: %s' % maxread)
+    if searchwindowsize:
+        log('Search window size: %s' % searchwindowsize)
+    log('Timeout: %ss' % timeout)
+    if env:
+        log('Environment:')
+        for name in env:
+            log('\t%s=%s' % (name, env[name]))
+    if cwd:
+        log('Working directory: %s' % cwd)
+    log('Spawning %s' % join_args([command] + args))
     if sys.platform == 'win32':
         return spawn_windows(command, args, timeout, maxread, searchwindowsize, logfile, cwd, env,
                              codepage)
@@ -2459,11 +2470,19 @@ class ConsoleReader:
    
     def __init__(self, path, pid, tid, env = None, cp=None, logdir=None):
         self.logdir = logdir
+        log('=' * 80, 'consolereader', logdir)
+        log("OEM code page: %s" % windll.kernel32.GetOEMCP(), 'consolereader', logdir)
+        log("ANSI code page: %s" % windll.kernel32.GetACP(), 'consolereader', logdir)
+        log("Console output code page: %s" % windll.kernel32.GetConsoleOutputCP(), 'consolereader', logdir)
         if cp:
+            log("Setting console output code page to %s" % cp, 'consolereader', logdir)
             try:
                 SetConsoleOutputCP(cp)
             except Exception, e:
                 log(e, 'consolereader', logdir)
+            else:
+                log("Console output code page: %s" % windll.kernel32.GetConsoleOutputCP(), 'consolereader', logdir)
+        log('Spawning %s' % path, 'consolereader', logdir)
         try:
             try:
                 consout = self.getConsoleOut()
@@ -2772,8 +2791,31 @@ def log(e, suffix='', logdir=None):
         except (OSError, WindowsError):
             pass
     if os.path.isdir(logdir) and os.access(logdir, os.W_OK):
+        logfile = os.path.join(logdir, 'wexpect%s.log' % suffix)
+        if os.path.isfile(logfile):
+            try:
+                logstat = os.stat(logfile)
+            except Exception, exception:
+                pass
+            else:
+                try:
+                    mtime = time.localtime(logstat.st_mtime)
+                except ValueError, exception:
+                    # This can happen on Windows because localtime() is buggy on
+                    # that platform. See:
+                    # http://stackoverflow.com/questions/4434629/zipfile-module-in-python-runtime-problems
+                    # http://bugs.python.org/issue1760357
+                    # To overcome this problem, we ignore the real modification
+                    # date and force a rollover
+                    mtime = time.localtime(time() - 60 * 60 * 24)
+                if time.localtime()[:3] > mtime[:3]:
+                    # do rollover
+                    try:
+                        os.remove(logfile)
+                    except Exception, exception:
+                        pass
         try:
-            fout = open(os.path.join(logdir, 'wexpect%s.log' % suffix), 'a')
+            fout = open(logfile, 'a')
         except:
             pass
         else:
