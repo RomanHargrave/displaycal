@@ -1232,16 +1232,10 @@ class Worker():
 				sudo = which("sudo")
 		if sudo:
 			try:
-				stdin = tempfile.SpooledTemporaryFile()
-				stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
-				stdin.seek(0)
-				sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
-									stdin=stdin, stdout=sp.PIPE, 
+				sudoproc = sp.Popen([sudo, "-l", "-n", cmd], stdout=sp.PIPE, 
 									stderr=sp.PIPE)
 				stdout, stderr = sudoproc.communicate()
-				if not stdin.closed:
-					stdin.close()
-				if not "OK" in stdout:
+				if stderr.strip():
 					# ask for password
 					dlg = ConfirmDialog(
 						parent, title=title, 
@@ -1269,13 +1263,14 @@ class Worker():
 						stdin = tempfile.SpooledTemporaryFile()
 						stdin.write(pwd.encode(enc, "replace") + os.linesep)
 						stdin.seek(0)
-						sudoproc = sp.Popen([sudo, "-S", "echo", "OK"], 
+						sudoproc = sp.Popen([sudo, "-l", "-S", cmd], 
 											stdin=stdin, 
 											stdout=sp.PIPE, stderr=sp.PIPE)
 						stdout, stderr = sudoproc.communicate()
 						if not stdin.closed:
 							stdin.close()
-						if "OK" in stdout:
+						if stdout.strip():
+							# password was accepted and cmd printed to stdout
 							self.pwd = pwd
 							break
 						else:
