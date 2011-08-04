@@ -4823,22 +4823,37 @@ class MainFrame(BaseFrame):
 	
 	def measureframe_subprocess(self):
 		args = u'"%s" "%s"' % (exe, os.path.join(pydir, "wxMeasureFrame.py"))
-		# TODO: Support TwinView. Compare Screen size returned by wx with 
-		# screen sizes returned by Argyll. If wx screen size = combined Argyll 
-		# screen sizes, do not use $DISPLAY and calculate positioning offsets 
-		# instead.
-		if wx.Display.GetCount() == 1:
-			try:
-				x_hostname, x_display, x_screen = util_x.get_display()
-			except ValueError, exception:
-				InfoDialog(self, msg=safe_unicode(exception), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				self.Show(start_timers=True)
-				return
-			args = "DISPLAY=%s:%s.%s %s" % (x_hostname, x_display,
-											getcfg("display.number") - 1,
-											args)
+		if wx.Display.GetCount() == 1 and len(self.worker.display_rects) > 1:
+			# Separate X screens, TwinView or similar
+			display = wx.Display(0)
+			geometry = display.Geometry
+			union = wx.Rect()
+			xy = []
+			for rect in self.worker.display_rects:
+				if rect[:2] in xy or rect[2:] == geometry[2:]:
+					# Overlapping x y coordinates or screen filling whole
+					# reported geometry, so assume separate X screens
+					union = None
+					break
+				xy.append(rect[:2])
+				union = union.Union(rect)
+			if union == geometry:
+				# Assume TwinView or similar where Argyll enumerates 1+n 
+				# displays but wx only 'sees' one that is the union of them
+				pass
+			else:
+				# Assume separate X screens
+				try:
+					x_hostname, x_display, x_screen = util_x.get_display()
+				except ValueError, exception:
+					InfoDialog(self, msg=safe_unicode(exception), 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
+					self.Show(start_timers=True)
+					return
+				args = "DISPLAY=%s:%s.%s %s" % (x_hostname, x_display,
+												getcfg("display.number") - 1,
+												args)
 		safe_print(args)
 		returncode = -1
 		try:

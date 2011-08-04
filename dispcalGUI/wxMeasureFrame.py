@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import sys
 
 import config
@@ -123,6 +124,16 @@ def get_display_number(display_no):
 	return display_no
 
 
+def get_display_rects():
+	""" Return the Argyll enumerated display coordinates and sizes """
+	display_rects = []
+	for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+		match = re.search("@ (-?\d+), (-?\d+), (\d+)x(\d+)", display)
+		if match:
+			display_rects.append(wx.Rect(*[int(item) for item in match.groups()]))
+	return display_rects
+
+
 class MeasureFrame(InvincibleFrame):
 
 	"""
@@ -223,6 +234,7 @@ class MeasureFrame(InvincibleFrame):
 		self.SetMinSize((min_size, min_size))
 		self.SetMaxSize((20000, 20000))
 		self.display_no = wx.Display.GetFromWindow(self)
+		self.display_rects = get_display_rects()
 
 	def measure_darken_background_ctrl_handler(self, event):
 		if self.measure_darken_background_cb.GetValue() and \
@@ -316,8 +328,8 @@ class MeasureFrame(InvincibleFrame):
 			safe_print("[D]  scale_adjustment_factor:", scale_adjustment_factor)
 		scale /= scale_adjustment_factor
 		if debug: safe_print("[D]  scale / scale_adjustment_factor:", scale)
-		display = self.GetDisplay()
-		display_client_rect = display.GetRealClientArea()
+		display = self.get_display(getcfg("display.number") - 1)
+		display_client_rect = display[2]
 		if debug: safe_print("[D]  display_client_rect:", display_client_rect)
 		display_client_size = display_client_rect[2:]
 		if debug: safe_print("[D]  display_client_size:", display_client_size)
@@ -338,16 +350,20 @@ class MeasureFrame(InvincibleFrame):
 			scale = 50
 		if debug: safe_print("[D]  measureframe_size:", size)
 		self.SetSize(size)
-		display_rect = display.Geometry
+		display_rect = display[1]
 		if debug: safe_print("[D]  display_rect:", display_rect)
 		display_size = display_rect[2:]
 		if debug: safe_print("[D]  display_size:", display_size)
+		if sys.platform in ("darwin", "win32"):
+			titlebar = 0  # size already includes window decorations
+		else:
+			titlebar = 25  # assume titlebar height of 25px
 		measureframe_pos = [display_rect[0] + round((display_size[0] - 
 													 size[0]) * 
 													 x), 
 							display_rect[1] + round((display_size[1] - 
 													 size[1]) * 
-													 y)]
+													 y) - titlebar]
 		if measureframe_pos[0] < display_client_rect[0]:
 			measureframe_pos[0] = display_client_rect[0]
 		if measureframe_pos[1] < display_client_rect[1]:
@@ -360,8 +376,7 @@ class MeasureFrame(InvincibleFrame):
 		if debug: safe_print("[D] measureframe_zoomin_handler")
 		# We can't use self.get_dimensions() here because if we are near 
 		# fullscreen, next magnification step will be larger than normal
-		display = self.GetDisplay()
-		display_size = display.Geometry[2:]
+		display_size = self.get_display()[1][2:]
 		default_measureframe_size = get_default_size()
 		size = floatlist(self.GetSize())
 		x, y = None, None
@@ -374,8 +389,7 @@ class MeasureFrame(InvincibleFrame):
 		if debug: safe_print("[D] measureframe_zoomout_handler")
 		# We can't use self.get_dimensions() here because if we are 
 		# fullscreen, scale will be 50, thus changes won't be visible quickly
-		display = self.GetDisplay()
-		display_size = display.Geometry[2:]
+		display_size = self.get_display()[1][2:]
 		default_measureframe_size = get_default_size()
 		size = floatlist(self.GetSize())
 		x, y = None, None
@@ -392,8 +406,7 @@ class MeasureFrame(InvincibleFrame):
 
 	def zoommax_handler(self, event):
 		if debug: safe_print("[D] measureframe_zoommax_handler")
-		display = self.GetDisplay()
-		display_client_rect = display.GetRealClientArea()
+		display_client_rect = self.get_display()[2]
 		if debug: safe_print("[D]  display_client_rect:", display_client_rect)
 		display_client_size = display_client_rect[2:]
 		if debug: safe_print("[D]  display_client_size:", display_client_size)
@@ -420,26 +433,75 @@ class MeasureFrame(InvincibleFrame):
 			writecfg()
 			self.Destroy()
 
+	def get_display(self, display_no=None):
+		"""
+		Get the display number, geometry and client area, taking into 
+		account separate X screens, TwinView and similar
+		
+		"""
+		if wx.Display.GetCount() == 1 and len(self.display_rects) > 1:
+			# Separate X screens, TwinView or similar
+			display = wx.Display(0)
+			geometry = display.Geometry
+			union = wx.Rect()
+			xy = []
+			for rect in self.display_rects:
+				if rect[:2] in xy or rect[2:] == geometry[2:]:
+					# Overlapping x y coordinates or screen filling whole
+					# reported geometry, so assume separate X screens
+					union = None
+					break
+				xy.append(rect[:2])
+				union = union.Union(rect)
+			if union == geometry:
+				# Assume TwinView or similar where Argyll enumerates 1+n 
+				# displays but wx only 'sees' one that is the union of them
+				framerect = self.Rect
+				if display_no is not None:
+					geometry = self.display_rects[display_no]
+				else:
+					display_no = 0
+					for i, coord in enumerate(framerect[:2]):
+						if coord < 0:
+							framerect[i] = 0
+						elif coord > geometry[i + 2]:
+							framerect[i] = geometry[i]
+					for i, display_rect in enumerate(self.display_rects):
+						if display_rect.Contains(framerect[:2]):
+							display_no = i
+							geometry = display_rect
+							break
+			elif display_no is None:
+				# Assume separate X screens
+				display_no = 0
+			client_rect = wx.Rect(*tuple(geometry)).Intersect(display.GetRealClientArea())
+		else:
+			display_no = wx.Display.GetFromWindow(self)
+			display = self.GetDisplay()
+			geometry = display.Geometry
+			client_rect = display.GetRealClientArea()
+		return display_no, geometry, client_rect
+
 	def move_handler(self, event):
 		if not self.IsShownOnScreen():
 			return
-		display_no = wx.Display.GetFromWindow(self)
+		display_no, geometry, client_area = self.get_display()
 		if display_no != self.display_no:
 			self.display_no = display_no
-			geometry = "%i, %i, %ix%i" % tuple(self.GetDisplay().Geometry)
+			# Translate from wx display index to Argyll display index
+			geometry = "%i, %i, %ix%i" % tuple(geometry)
 			for i, display in enumerate(getcfg("displays").split(os.pathsep)):
 				if display.find("@ " + geometry) > -1:
 					if debug:
 						safe_print("[D] Found display %s at index %i" % 
 								   (geometry, i))
+					# Save Argyll display index to configuration
 					setcfg("display.number", i + 1)
 					break
 
 	def size_handler(self, event):
 		if debug: safe_print("[D] measureframe_size_handler")
-		display = self.GetDisplay()
-		display_client_rect = display.GetRealClientArea()
-		display_client_size = display_client_rect[2:]
+		display_client_size = self.get_display()[2][2:]
 		size = self.GetSize()
 		if debug:
 			safe_print("[D]  display_client_size:", display_client_size)
@@ -464,10 +526,10 @@ class MeasureFrame(InvincibleFrame):
 		
 		"""
 		if debug: safe_print("[D] measureframe.get_dimensions")
-		display = self.GetDisplay()
-		display_rect = display.Geometry
+		display = self.get_display()
+		display_rect = display[1]
 		display_size = display_rect[2:]
-		display_client_rect = display.GetRealClientArea()
+		display_client_rect = display[2]
 		display_client_size = display_client_rect[2:]
 		if debug: safe_print("[D]  display_size:", display_size)
 		if debug: safe_print("[D]  display_client_size:", display_client_size)
