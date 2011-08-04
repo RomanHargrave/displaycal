@@ -157,7 +157,11 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.SetFocus()
 
 	def OnClose(self, event):
-		self.Destroy()
+		if event.GetEventObject() == self:
+			id = wx.ID_OK
+		else:
+			id = event.GetId()
+		self.EndModal(id)
 
 
 class ConfirmDialog(BaseInteractiveDialog):

@@ -5311,7 +5311,7 @@ class MainFrame(BaseFrame):
 		self.previous_cal = False
 	
 	def lower_handler(self, event):
-		self.Lower()
+		self.modaldlg.Raise()
 		
 	def init_lut_viewer(self, event=None, profile=None, show=None):
 		if debug:
@@ -6207,7 +6207,8 @@ class MainFrame(BaseFrame):
 			self.measurement_mode_ctrl.GetSelection())
 
 	def get_profile_type(self):
-		return self.profile_types_ab[self.profile_type_ctrl.GetSelection()]
+		return self.profile_types_ab.get(self.profile_type_ctrl.GetSelection(),
+										 getcfg("profile.type"))
 
 	def get_whitepoint(self):
 		if self.whitepoint_native_rb.GetValue():
