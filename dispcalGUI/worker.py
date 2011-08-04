@@ -740,6 +740,7 @@ class Worker():
 		self.options_targen = []
 		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
+		self.sudo_availoptions = None
 		self.tempdir = None
 		self.thread_abort = False
 		self.triggers = []
@@ -1232,10 +1233,43 @@ class Worker():
 				sudo = which("sudo")
 		if sudo:
 			try:
-				sudoproc = sp.Popen([sudo, "-l", "-n", cmd], stdout=sp.PIPE, 
+				# Determine available sudo options
+				if not self.sudo_availoptions:
+					man = which("man")
+					if man:
+						manproc = sp.Popen([man, "sudo"], stdout=sp.PIPE, 
+											stderr=sp.PIPE)
+						# Strip formatting
+						stdout = re.sub(".\x08", "", manproc.communicate()[0])
+						self.sudo_availoptions = {"E": bool(re.search("-E", stdout)),
+												  "l [command]": bool(re.search("-l(?:\[l\])?\s+\[command\]", stdout)),
+												  "n": bool(re.search("-n", stdout))}
+					else:
+						self.sudo_availoptions = {"E": False, 
+												  "l [command]": False, 
+												  "n": False}
+					if debug:
+						safe_print("[D] Available sudo options:", 
+								   ", ".join(filter(lambda option: self.sudo_availoptions[option], 
+													self.sudo_availoptions.keys())))
+				# Set sudo args based on available options
+				if self.sudo_availoptions["l [command]"]:
+					sudo_args = ["-l", "-n" if self.sudo_availoptions["n"] else "-S", cmd]
+				else:
+					sudo_args = ["-l", "-S"]
+				# Set stdin based on -n option availability
+				if "-S" in sudo_args:
+					stdin = tempfile.SpooledTemporaryFile()
+					stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
+					stdin.seek(0)
+				else:
+					stdin = None
+				sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, stdout=sp.PIPE, 
 									stderr=sp.PIPE)
 				stdout, stderr = sudoproc.communicate()
-				if stderr.strip():
+				if stdin and not stdin.closed:
+					stdin.close()
+				if not stdout.strip():
 					# ask for password
 					dlg = ConfirmDialog(
 						parent, title=title, 
@@ -1254,6 +1288,9 @@ class Worker():
 					dlg.pwd_txt_ctrl.SetFocus()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
+					sudo_args = ["-l", "-S"]
+					if self.sudo_availoptions["l [command]"]:
+						sudo_args.append(cmd)
 					while True:
 						result = dlg.ShowModal()
 						pwd = dlg.pwd_txt_ctrl.GetValue()
@@ -1263,14 +1300,13 @@ class Worker():
 						stdin = tempfile.SpooledTemporaryFile()
 						stdin.write(pwd.encode(enc, "replace") + os.linesep)
 						stdin.seek(0)
-						sudoproc = sp.Popen([sudo, "-l", "-S", cmd], 
-											stdin=stdin, 
+						sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, 
 											stdout=sp.PIPE, stderr=sp.PIPE)
 						stdout, stderr = sudoproc.communicate()
 						if not stdin.closed:
 							stdin.close()
 						if stdout.strip():
-							# password was accepted and cmd printed to stdout
+							# password was accepted
 							self.pwd = pwd
 							break
 						else:
@@ -1288,6 +1324,7 @@ class Worker():
 				cmdline.insert(0, sudo)
 				if (cmdname == get_argyll_utilname("dispwin")
 					and sys.platform != "darwin"
+					and self.sudo_availoptions["E"]
 					and getcfg("sudo.preserve_environment")):
 					# Preserve environment so $DISPLAY is set
 					cmdline.insert(1, "-E")
