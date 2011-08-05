@@ -4166,7 +4166,6 @@ class MainFrame(BaseFrame):
 			safe_print("[D] install_profile.install:", install)
 			safe_print("[D] install_profile.result:", result)
 			safe_print("[D] install_profile.cal:", cal)
-		self.worker.pwd = None  # don't keep password in memory
 		return result
 	
 	def update_profile_verification_report(self, event=None):

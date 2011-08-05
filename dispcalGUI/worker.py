@@ -741,6 +741,7 @@ class Worker():
 		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
 		self.sudo_availoptions = None
+		self.auth_timestamp = 0
 		self.tempdir = None
 		self.thread_abort = False
 		self.triggers = []
@@ -882,7 +883,9 @@ class Worker():
 		"""
 		Clear any output from the last run command.
 		"""
-		self.pwd = None
+		if time() - 5 * 60 > self.auth_timestamp:
+			# Store password for 5 minutes
+			self.pwd = None
 		self.retcode = -1
 		self.output = []
 		self.errors = []
@@ -1232,7 +1235,7 @@ class Worker():
 			else:
 				sudo = which("sudo")
 		if sudo:
-			try:
+			if not self.pwd:
 				# Determine available sudo options
 				if not self.sudo_availoptions:
 					man = which("man")
@@ -1307,6 +1310,7 @@ class Worker():
 							stdin.close()
 						if stdout.strip():
 							# password was accepted
+							self.auth_timestamp = time()
 							self.pwd = pwd
 							break
 						else:
@@ -1321,18 +1325,15 @@ class Worker():
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
 					dlg.Destroy()
-				cmdline.insert(0, sudo)
-				if (cmdname == get_argyll_utilname("dispwin")
-					and sys.platform != "darwin"
-					and self.sudo_availoptions["E"]
-					and getcfg("sudo.preserve_environment")):
-					# Preserve environment so $DISPLAY is set
-					cmdline.insert(1, "-E")
-				if not interact:
-					cmdline.insert(1, "-S")
-			except Exception, exception:
-				safe_print("Warning - execution as root not possible:", 
-						   safe_unicode(exception))
+			cmdline.insert(0, sudo)
+			if (cmdname == get_argyll_utilname("dispwin")
+				and sys.platform != "darwin"
+				and self.sudo_availoptions["E"]
+				and getcfg("sudo.preserve_environment")):
+				# Preserve environment so $DISPLAY is set
+				cmdline.insert(1, "-E")
+			if not interact:
+				cmdline.insert(1, "-S")
 		if working_dir and not skip_scripts:
 			try:
 				cmdfilename = os.path.join(working_dir, working_basename + 
