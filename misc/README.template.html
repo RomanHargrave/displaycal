@@ -83,6 +83,13 @@
 		code.applescript .string {
 			color: black;
 		}
+		del {
+			color: #999;
+		}
+		ins {
+			border-bottom: 1px solid #eee; 
+			text-decoration: none;
+		}
 		#issues ul {
 			margin-bottom: 1.5em;
 		}
@@ -656,7 +663,7 @@
 			<p>This is what you need to compile from source. You need to have a working Python installation and all <a href="#prerequisites-source">prerequisites</a>.</p>
 			<p>All platforms <a href="http://dispcalGUI.hoech.net/download.php?version=latest&amp;suffix=.tar.gz">Tarball</a></p>
 			<p>
-				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalGUI</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
+				Alternatively, if you don't mind trying out development code, <a href="http://dispcalgui.svn.sourceforge.net/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn co https://dispcalgui.svn.sourceforge.net/svnroot/dispcalgui dispcalgui</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 			</p>
 		</div>
 		
@@ -771,7 +778,7 @@
 				
 				<p>All platforms:</p>
 				<ul>
-					<li><a href="http://python.org/">Python</a> &gt;= v2.5 &lt; v3.0 (2.6 is the recommended version. Mac OS X users: If you want to compile dispcalGUI from source, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
+					<li><a href="http://python.org/">Python</a> &gt;= v2.5 &lt;= v2.7.x (2.7.x is the recommended version. Mac OS X users: If you want to compile dispcalGUI from source, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
 					<li><a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> toolkit</li>
 				</ul>
 				
@@ -802,8 +809,8 @@
 				
 				<p>Mac OS X:</p>
 				<ul>
-					<li><a href="http://developer.apple.com/TOOLS/xcode/">XCode</a></li>
-					<li><a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable (install setuptools first: <code>sudo python util/ez_setup.py -Z setuptools</code>)</li>
+					<li><a href="http://developer.apple.com/xcode/">XCode</a></li>
+					<li><a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable (on Mac OS X before 10.5, install setuptools first: <code>sudo python util/ez_setup.py setuptools</code>)</li>
 				</ul>
 				
 				<p>Windows:</p>
@@ -816,8 +823,8 @@
 			
 				<ol>
 					<li>Open a shell.</li>
-					<li><code>cd</code> into the source directory (dispcalGUI-&lt;version&gt;).</li>
-					<li>Run <code>python setup.py build_ext -i</code> (on Linux, you can also extract a pre-built extension module by running <code>tar -xf RealDisplaySizeMM.py&lt;PYTHON_VERSION&gt;.&lt;PLATFORM&gt;.so.tar</code> inside the dispcalGUI subdirectory instead. The py2.6 version should also work when using Python 2.7)</li>
+					<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-${VERSION}</code> or <code>dispcalgui</code>).</li>
+					<li>Run <code>python setup.py build_ext -i</code> (on Linux, you can also extract a pre-built extension module by running <code>tar -xf RealDisplaySizeMM.py&lt;PYTHON_VERSION&gt;.&lt;PLATFORM&gt;.so.tar</code> inside the <code>dispcalGUI</code> subdirectory instead. The py2.6 version should also work when using Python 2.7.x)</li>
 				</ol>
 				
 				<p>You can then run <code>python dispcalGUI.pyw</code> (or launch it by double-clicking).</p>
@@ -873,7 +880,7 @@
 						<dd>Create an installable Debian (.deb) package, much like the standard distutils command bdist_rpm for RPM packages. Prerequisites:
 						You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example). Under Ubuntu, running utils/dist_ubuntu.sh will automatically use the correct setup.cfg. If you are using Ubuntu 11.04 or any other debian-based distribution which has Python 2.7 as default, you need to edit /usr/lib/python2.7/distutils/command/bdist_rpm.py, and change the line <code>install_cmd = ('%s install <span style="color: #c00">-O1</span> --root=$RPM_BUILD_ROOT '</code> to <code>install_cmd = ('%s install --root=$RPM_BUILD_ROOT '</code> by removing the <code><span style="color: #c00">-O1</span></code> flag. Also, you need to change /usr/lib/rpm/brp-compress to do nothing (e.g. change the file contents to <code>exit 0</code>, but don't forget to create a backup copy first) otherwise you will get errors when building.</dd>
 					<dt>bdist_standalone</dt>
-						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, py2app is not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing py2app from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files.</dd>
+						<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, older versions of py2app (before 0.4) are not able to access files inside python “egg” files (which are basically zip-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing those older py2app versions from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files. This is no longer an issue with py2app 0.4 and later.</dd>
 					<dt>buildservice</dt>
 						<dd>Creates control files for openSUSE Build Service (also happens implicitly when invoking <code>sdist</code>).</dd>
 					<dt>finalize_msi (Windows only)</dt>
@@ -1122,7 +1129,7 @@
 							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[2]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS</acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
 							
 							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> type profiles, or certain variations of them).
-							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS &gt;= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped R ↔ G matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
+							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created. L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> L*a*b* encoding range. Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS &gt;= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll versions. As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped matrix (which I'd recommend), so it will be obvious if an application uses it instead.</p>
 							
 							<p id="difference_lutcurves_lutprofile">Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based profiles (which contain three-dimensional LUTs) might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> (calibration) curves (one-dimensional LUTs), but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based and matrix-based profiles may include calibration curves which can be loaded into a video card's gamma table hardware.</p>
 						</dd>
@@ -1386,7 +1393,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<h2>Known issues and solutions</h2>
 			
 			<ul>
-				<li><a href="#issue-redgreenswapped">General: Wacky image colors (red and green swapped)</a></li>
+				<li><a href="#issue-redgreenswapped">General: Wacky image colors (swapped colors)</a></li>
 				<li><a href="#issue-samplereadfail">Measurements are failing if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</a></li>
 				<li><a href="#issue-win-photoshop-monprofdefect">Photoshop: “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</a></li>
 				<li><a href="#issue-win-uac">MS Windows Vista: The calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
@@ -1401,8 +1408,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li><a href="#issue-english">General: Some text is still in english, even though another language is selected</a></li>
 			</ul>
 			
-			<p id="issue-redgreenswapped"><span class="q"><span>General:</span> Wacky image colors (red and green swapped)<br /></span>
-			<span class="a"><strong>Solution:</strong> This happens when you created a “XYZ LUT + R ↔ G swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Options” menu and select the profile you had the issue with.</span></p>
+			<p id="issue-redgreenswapped"><span class="q"><span>General:</span> Wacky image colors (swapped colors)<br /></span>
+			<span class="a"><strong>Solution:</strong> This happens when you created a “XYZ LUT + swapped matrix” profile (which is the default for the “Prepress” and “Photo” presets) and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Options” menu and select the profile you had the issue with.</span></p>
 			
 			<p id="issue-samplereadfail"><span class="q"><span>General:</span> Measurements are failing (“sample read failed”) if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode<br /></span>
 			<span class="a"><strong>Solution:</strong> Disable either or all of the above options. The problem seems to mainly occur with the ColorMunki.</span></p>
@@ -1477,7 +1484,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			Translators: Loïc Guégant (french translation),
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)<br />
-			Recent donors: Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Eugeniy Yurov, Konstantin Pyanzin</p>
+			Recent donors: Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Eugeniy Yurov, Konstantin Pyanzin</p>
 			
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 			
@@ -1492,6 +1499,26 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Linux: Fixed multi-display support when not using separate X screens.</li>
+							<li>Mac OS X: Fixed not being able to run under a standard user account, and Mac OS X 10.7 compatibility.</li>
+							<li>Mac OS X 10.4.x: Fixed functionality requiring elevated privileges, e.g. installing profiles system wide or enabling the Spyder 2 using Argyll 1.1.x (regression of a change introduced in r706 / 0.7.0.7)</li>
+							<li>Windows: Fixed several problems with special characters in paths which are not representable through the file system encoding.</li>
+							<li>Windows: Worked around OS localtime() bug. If the system's clock was set to a date far into the future, dispcalGUI failed to launch on subsequent runs because of the logfile's timestamp which could not be processed by localtime().</li>
+							<li>Windows Vista/7: Querying the user display profile resulted in a “not found” error if the checkbox “Use my settings for this device” was never ticked in Windows' color management control panel, failing the fallback of querying the system display profile in case of no user display profile.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>All presets now use curves + matrix as profile type (for better overall application compatibility).</li>
+							<li>Better feedback when trying to open broken/invalid files (display an error dialog instead of just logging the error).</li>
+							<li>Icons in the task switcher on Windows Vista/7 (and presumably Linux) should now be crisp and not pixelated.</li>
+						</ul>
+					</dd>
+				
+				<dt>2011-06-02 21:45 (UTC) 0.7.0.7</dt>
+					<dd>
+						<h3>0.7.0.7</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>wxPython 2.8.12 compatibility.</li>
