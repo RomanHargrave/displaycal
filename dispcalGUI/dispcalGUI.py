@@ -4821,8 +4821,10 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(self.measureframe_subprocess)
 	
 	def measureframe_subprocess(self):
-		args = u'"%s" -c "%s"' % (exe, "from dispcalGUI import wxMeasureFrame;"
-									   "wxMeasureFrame.main()")
+		args = u'"%s" -c "%s"' % (exe, "import sys;"
+									   "from dispcalGUI import wxMeasureFrame;"
+									   "wxMeasureFrame.main();"
+									   "sys.exit(wxMeasureFrame.MeasureFrame.exitcode)")
 		if wx.Display.GetCount() == 1 and len(self.worker.display_rects) > 1:
 			# Separate X screens, TwinView or similar
 			display = wx.Display(0)
