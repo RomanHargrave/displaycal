@@ -528,25 +528,25 @@ def XYZ2Lab(X, Y, Z, Xr=None, Yr=None, Zr=None):
 		if isinstance(Xr, basestring):
 			if Xr == "A":
 				Xr = 109.828
-				Yr = 35.547
+				Zr = 35.547
 			elif Xr == "B":
 				Xr = 99.072
-				Yr = 85.223
+				Zr = 85.223
 			elif Xr == "C":
 				Xr = 98.041
-				Yr = 118.103
+				Zr = 118.103
 			elif Xr == "D55":
 				Xr = 95.642
 				Zr = 92.085
 			elif Xr == "D65":
 				Xr = 95.0467
-				Yr = 108.8969
+				Zr = 108.8969
 			elif Xr == "D75":
 				Xr = 94.939
-				Yr = 122.558
+				Zr = 122.558
 			elif Xr == "E":
 				Xr = 100.0
-				Yr = 100.0
+				Zr = 100.0
 			else:
 				Xr = 96.422
 				Zr = 82.521

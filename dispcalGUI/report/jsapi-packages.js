@@ -1163,15 +1163,15 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 				switch (Xr.toUpperCase()) {
 					case "A":	// light bulb, 2856K
 						Xr = 109.828;
-						Yr = 35.547;
+						Zr = 35.547;
 						break;
 					case "B":	// direct sunlight, 4875K
 						Xr = 99.072;
-						Yr = 85.223;
+						Zr = 85.223;
 						break;
 					case "C":	// covered sky daylight, 6774K
 						Xr = 98.041;
-						Yr = 118.103;
+						Zr = 118.103;
 						break;
 					case "D55":
 						Xr = 95.642;
@@ -1179,15 +1179,15 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 						break;
 					case "D65":
 						Xr = 95.0467;
-						Yr = 108.8969;
+						Zr = 108.8969;
 						break;
 					case "D75":
 						Xr = 94.939;
-						Yr = 122.558;
+						Zr = 122.558;
 						break;
 					case "E":
 						Xr = 100;
-						Yr = 100;
+						Zr = 100;
 						break;
 					default:	// D50, 5000K
 						Xr = 96.422;
