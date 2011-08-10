@@ -66,6 +66,7 @@ from time import gmtime, sleep, strftime, time
 
 # 3rd party modules
 
+import demjson
 if sys.platform == "win32":
 	from ctypes import windll
 	from win32com.shell import shell
@@ -91,6 +92,7 @@ from config import (autostart, autostart_home, btn_width_correction, build,
 
 import CGATS
 import ICCProfile as ICCP
+import ccmx
 import colormath
 import localization as lang
 import pyi_md5pickuphelper
@@ -1198,6 +1200,10 @@ class MainFrame(BaseFrame):
 			tools.FindItem("profile.verification_report.update"))
 		self.Bind(wx.EVT_MENU, self.update_profile_verification_report, 
 				  menuitem)
+		self.menuitem_import_devicecorrections = tools.FindItemById(
+			tools.FindItem("devicecorrections.import"))
+		self.Bind(wx.EVT_MENU, self.import_devicecorrections_handler, 
+				  self.menuitem_import_devicecorrections)
 		self.menuitem_enable_spyder2 = tools.FindItemById(
 			tools.FindItem("enable_spyder2"))
 		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, 
@@ -1860,6 +1866,34 @@ class MainFrame(BaseFrame):
 		self.calpanel.Thaw()
 		self.update_scrollbars()
 	
+	def update_colorimeter_correction_matrix_ctrl_items(self, force=False):
+		"""
+		Show the currently selected correction matrix and list all files
+		in ccmx directory below
+		
+		force	If True, reads the ccmx directory again, otherwise uses a
+				previously cached result if available
+		
+		"""
+		##items = ["<%s>" % lang.getstr("auto")]
+		items = [lang.getstr("calibration.file.none")]
+		index = 0
+		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+		if force or not getattr(self, "ccmx_cached_paths", None):
+			self.ccmx_cached_paths = glob.glob(os.path.join(datahome, "ccmx", 
+															"*.ccmx"))
+		for i, path in enumerate(self.ccmx_cached_paths):
+			if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
+				index = i + 1
+			items.append(os.path.basename(path))
+		if len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths:
+			self.ccmx_cached_paths.insert(0, ccmx[1])
+			items.insert(1, os.path.basename(ccmx[1]))
+			if ccmx[0] != "AUTO":
+				index = 1
+		self.colorimeter_correction_matrix_ctrl.SetItems(items)
+		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
+	
 	def is_profile(self, filename=None):
 		filename = filename or getcfg("calibration.file")
 		is_profile = False
@@ -1986,16 +2020,7 @@ class MainFrame(BaseFrame):
 		update_profile = self.calibration_update_cb.GetValue() and self.is_profile()
 		enable_profile = not(update_profile)
 		
-		##items = ["<%s>" % lang.getstr("auto")]
-		items = [lang.getstr("calibration.file.none")]
-		index = 0
-		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-		if len(ccmx) > 1 and ccmx[1]:
-			items.append(os.path.basename(ccmx[1]))
-			if ccmx[0] != "AUTO":
-				index = len(items) - 1
-		self.colorimeter_correction_matrix_ctrl.SetItems(items)
-		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
+		self.update_colorimeter_correction_matrix_ctrl_items()
 
 		self.whitepoint_native_rb.Enable(enable_cal)
 		self.whitepoint_colortemp_rb.Enable(enable_cal)
@@ -5461,10 +5486,11 @@ class MainFrame(BaseFrame):
 					ccmx = ["AUTO", ccmx[1]]
 				else:
 					ccmx = ["AUTO", ""]
-			elif len(ccmx) > 1:
-				ccmx = ["", ccmx[1]]
-			if len(ccmx) > 1 and ccmx[1]:
-				setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
+			else:
+				path = self.ccmx_cached_paths[
+					self.colorimeter_correction_matrix_ctrl.GetSelection() - 1]
+				ccmx = ["", path]
+			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 		else:
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
@@ -5480,12 +5506,8 @@ class MainFrame(BaseFrame):
 				path = dlg.GetPath()
 			dlg.Destroy()
 			if path:
-				items = [##"<%s>" % lang.getstr("auto"), 
-						 lang.getstr("calibration.file.none"),
-						 os.path.basename(path)]
-				self.colorimeter_correction_matrix_ctrl.SetItems(items)
-				self.colorimeter_correction_matrix_ctrl.SetSelection(len(items) - 1)
 				setcfg("colorimeter_correction_matrix_file", ":" + path)
+				self.update_colorimeter_correction_matrix_ctrl_items()
 
 	def comport_ctrl_handler(self, event=None):
 		if debug and event:
@@ -5498,6 +5520,71 @@ class MainFrame(BaseFrame):
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
 		self.update_colorimeter_correction_matrix_ctrl()
+	
+	def import_devicecorrections_handler(self, event):
+		"""
+		Convert correction matrices from other profiling softwares to Argyll's
+		CCMX format
+		
+		"""
+		defaultDir = None
+		path = None
+		if sys.platform == "win32":
+			defaultDir = os.path.join(getenvu("PROGRAMFILES", ""), "Quato", 
+									  "iColorDisplay")
+		elif sys.platform == "darwin":
+			paths = glob.glob(os.path.join(os.path.sep, "Applications", 
+										   "iColorDisplay*.app"))
+			paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+											"iColorDisplay*", 
+											"iColorDisplay*.app"))
+			if paths:
+				defaultDir = paths[-1]
+		if defaultDir and os.path.isdir(defaultDir):
+			if not wx.GetKeyState(wx.WXK_SHIFT):
+				path = os.path.join(defaultDir, "DeviceCorrections.txt")
+		else:
+			defaultDir = None
+		if not path or not os.path.isfile(path):
+			dlg = wx.FileDialog(self, 
+								lang.getstr("devicecorrections.choose"),
+								defaultDir=defaultDir,
+								defaultFile="DeviceCorrections.txt",
+								wildcard=lang.getstr("filetype.txt") + 
+										 "|DeviceCorrections.txt", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			if dlg.ShowModal() == wx.ID_OK:
+				path = dlg.GetPath()
+			dlg.Destroy()
+		if path and os.path.isfile(path):
+			if path.lower().endswith(".dmg"):
+				# TODO: We have a disk image, try mounting it
+				pass
+			if path.lower().endswith(".exe"):
+				# TODO: We have an installer, try opening it as lzma archive
+				pass
+			ccmx_dir = os.path.join(datahome, "ccmx")
+			if not os.path.exists(ccmx_dir):
+				try:
+					check_create_dir(ccmx_dir)
+				except Error, exception:
+					InfoDialog(self, msg=exception.args[0], 
+							   ok=lang.getstr("cancel"), 
+							   bitmap=geticon(32, "dialog-error"))
+			try:
+				ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
+			except (WindowsError, OSError, UnicodeDecodeError,
+					demjson.JSONDecodeError), exception:
+				InfoDialog(self, msg=exception.args[0], 
+						   ok=lang.getstr("cancel"), 
+						   bitmap=geticon(32, "dialog-error"))
+			else:
+				self.update_colorimeter_correction_matrix_ctrl_items(True)
+				InfoDialog(self,
+						   msg=lang.getstr("devicecorrections.import.success"), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-information"))
 
 	def display_ctrl_handler(self, event, load_lut=True):
 		if debug:

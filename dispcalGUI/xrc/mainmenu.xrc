@@ -1,133 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resource>
-    <object class="wxMenuBar" name="menu">
-      <object class="wxMenu" name="menu.file">
-        <object class="wxMenuItem" name="calibration.load">
-          <label>calibration.load</label>
-          <accel>CTRL+O</accel>
-        </object>
-        <object class="wxMenuItem" name="testchart.set">
-          <label>testchart.set</label>
-        </object>
-        <object class="wxMenuItem" name="testchart.edit">
-          <label>testchart.edit</label>
-        </object>
-        <object class="wxMenuItem" name="profile.set_save_path">
-          <label>profile.set_save_path</label>
-        </object>
-        <label>menu.file</label>
+  <object class="wxMenuBar" name="menu">
+    <object class="wxMenu" name="menu.file">
+      <object class="wxMenuItem" name="calibration.load">
+        <label>calibration.load</label>
+        <accel>CTRL+O</accel>
       </object>
-      <object class="wxMenu" name="menu.options">
-        <object class="wxMenuItem" name="measure.testchart">
-          <label>measure.testchart</label>
-        </object>
-        <object class="wxMenuItem" name="create_profile">
-          <label>create_profile</label>
-        </object>
-        <object class="wxMenuItem" name="install_display_profile">
-          <label>install_display_profile</label>
-        </object>
-        <object class="wxMenuItem" name="calibration.load_from_cal_or_profile">
-          <label>calibration.load_from_cal_or_profile</label>
-        </object>
-        <object class="wxMenuItem" name="calibration.load_from_display_profile">
-          <label>calibration.load_from_display_profile</label>
-        </object>
-        <object class="wxMenuItem" name="calibration.reset">
-          <label>calibration.reset</label>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="detect_displays_and_ports">
-          <label>detect_displays_and_ports</label>
-        </object>
-        <object class="wxMenuItem" name="use_separate_lut_access">
-          <label>use_separate_lut_access</label>
-          <checkable>1</checkable>
-        </object>
-        <object class="wxMenuItem" name="allow_skip_sensor_cal">
-          <label>allow_skip_sensor_cal</label>
-          <checkable>1</checkable>
-        </object>
-        <object class="wxMenuItem" name="extra_args">
-          <label>extra_args</label>
-        </object>
-        <object class="wxMenuItem" name="enable_argyll_debug">
-          <label>enable_argyll_debug</label>
-          <checkable>1</checkable>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="restore_defaults">
-          <label>restore_defaults</label>
-        </object>
-        <label>menu.options</label>
+      <object class="wxMenuItem" name="testchart.set">
+        <label>testchart.set</label>
       </object>
-      <object class="wxMenu" name="menu.tools">
-        <object class="wxMenuItem" name="report.uncalibrated">
-          <label>report.uncalibrated</label>
-        </object>
-        <object class="wxMenuItem" name="report.calibrated">
-          <label>report.calibrated</label>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="calibration.verify">
-          <label>calibration.verify</label>
-        </object>
-        <object class="wxMenuItem" name="profile.verify">
-          <label>profile.verify</label>
-        </object>
-        <object class="wxMenuItem" name="profile.verification_report.update">
-          <label>profile.verification_report.update</label>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="enable_spyder2">
-          <label>enable_spyder2</label>
-          <checkable>1</checkable>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="calibration.show_lut">
-          <label>calibration.show_lut</label>
-          <checkable>1</checkable>
-        </object>
-        <object class="wxMenuItem" name="calibration.show_actual_lut">
-          <label>calibration.show_actual_lut</label>
-          <checkable>1</checkable>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="infoframe.toggle">
-          <label>infoframe.toggle</label>
-          <checkable>1</checkable>
-        </object>
-        <object class="wxMenuItem" name="log.autoshow">
-          <label>log.autoshow</label>
-          <checkable>1</checkable>
-        </object>
-        <label>menu.tools</label>
+      <object class="wxMenuItem" name="testchart.edit">
+        <label>testchart.edit</label>
       </object>
-      <object class="wxMenu" name="menu.language">
-        <label>menu.language</label>
+      <object class="wxMenuItem" name="profile.set_save_path">
+        <label>profile.set_save_path</label>
       </object>
-      <object class="wxMenu" name="menu.help">
-        <object class="wxMenuItem" name="menu.about">
-          <label>menu.about</label>
-        </object>
-        <object class="wxMenuItem" name="readme">
-          <label>readme</label>
-        </object>
-        <object class="wxMenuItem" name="license">
-          <label>license</label>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="help_support">
-          <label>help_support</label>
-        </object>
-        <object class="wxMenuItem" name="bug_report">
-          <label>bug_report</label>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="check_update">
-          <label>check_update</label>
-        </object>
-        <label>menu.help</label>
-      </object>
+      <label>menu.file</label>
     </object>
+    <object class="wxMenu" name="menu.options">
+      <object class="wxMenuItem" name="measure.testchart">
+        <label>measure.testchart</label>
+      </object>
+      <object class="wxMenuItem" name="create_profile">
+        <label>create_profile</label>
+      </object>
+      <object class="wxMenuItem" name="install_display_profile">
+        <label>install_display_profile</label>
+      </object>
+      <object class="wxMenuItem" name="calibration.load_from_cal_or_profile">
+        <label>calibration.load_from_cal_or_profile</label>
+      </object>
+      <object class="wxMenuItem" name="calibration.load_from_display_profile">
+        <label>calibration.load_from_display_profile</label>
+      </object>
+      <object class="wxMenuItem" name="calibration.reset">
+        <label>calibration.reset</label>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="detect_displays_and_ports">
+        <label>detect_displays_and_ports</label>
+      </object>
+      <object class="wxMenuItem" name="use_separate_lut_access">
+        <label>use_separate_lut_access</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="wxMenuItem" name="allow_skip_sensor_cal">
+        <label>allow_skip_sensor_cal</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="wxMenuItem" name="extra_args">
+        <label>extra_args</label>
+      </object>
+      <object class="wxMenuItem" name="enable_argyll_debug">
+        <label>enable_argyll_debug</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="restore_defaults">
+        <label>restore_defaults</label>
+      </object>
+      <label>menu.options</label>
+    </object>
+    <object class="wxMenu" name="menu.tools">
+      <object class="wxMenuItem" name="report.uncalibrated">
+        <label>report.uncalibrated</label>
+      </object>
+      <object class="wxMenuItem" name="report.calibrated">
+        <label>report.calibrated</label>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="calibration.verify">
+        <label>calibration.verify</label>
+      </object>
+      <object class="wxMenuItem" name="profile.verify">
+        <label>profile.verify</label>
+      </object>
+      <object class="wxMenuItem" name="profile.verification_report.update">
+        <label>profile.verification_report.update</label>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="devicecorrections.import">
+        <label>devicecorrections.import</label>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="enable_spyder2">
+        <label>enable_spyder2</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="calibration.show_lut">
+        <label>calibration.show_lut</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="wxMenuItem" name="calibration.show_actual_lut">
+        <label>calibration.show_actual_lut</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="infoframe.toggle">
+        <label>infoframe.toggle</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="wxMenuItem" name="log.autoshow">
+        <label>log.autoshow</label>
+        <checkable>1</checkable>
+      </object>
+      <label>menu.tools</label>
+    </object>
+    <object class="wxMenu" name="menu.language">
+      <label>menu.language</label>
+    </object>
+    <object class="wxMenu" name="menu.help">
+      <object class="wxMenuItem" name="menu.about">
+        <label>menu.about</label>
+      </object>
+      <object class="wxMenuItem" name="readme">
+        <label>readme</label>
+      </object>
+      <object class="wxMenuItem" name="license">
+        <label>license</label>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="help_support">
+        <label>help_support</label>
+      </object>
+      <object class="wxMenuItem" name="bug_report">
+        <label>bug_report</label>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenuItem" name="check_update">
+        <label>check_update</label>
+      </object>
+      <label>menu.help</label>
+    </object>
+  </object>
 </resource>
