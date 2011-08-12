@@ -59,7 +59,7 @@ if isapp:
 	if pydir.split(os.path.sep)[-1] == "site-packages.zip":
 		pydir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
 
-data_dirs = []
+data_dirs = [pydir]
 
 if sys.platform == "win32":
 	btn_width_correction = 20
@@ -265,36 +265,19 @@ def runtimeconfig(pyfile):
 	if debug or verbose >= 1:
 		from log import safe_print
 	if debug:
-		safe_print("[D] cwd:", os.getcwdu())
-	if data_dirs[0] != os.getcwdu():
-		data_dirs.insert(0, os.getcwdu())
-	if debug:
 		safe_print("[D] pydir:", pydir)
-	if pydir not in data_dirs:
-		data_dirs.append(pydir)
-	if sys.platform not in ("darwin", "win32"):
-		data_dirs.extend([os.path.join(dir_, "doc", appname + "-" + version) 
-						  for dir_ in xdg_data_dirs + [xdg_data_home]])
-		data_dirs.extend([os.path.join(dir_, "doc", "packages", appname) 
-						  for dir_ in xdg_data_dirs + [xdg_data_home]])
-		data_dirs.extend([os.path.join(dir_, "doc", appname) 
-						  for dir_ in xdg_data_dirs + [xdg_data_home]])
-		data_dirs.extend([os.path.join(dir_, "doc", appname.lower())  # Debian
-						  for dir_ in xdg_data_dirs + [xdg_data_home]])
-		data_dirs.extend([os.path.join(dir_, "icons", "hicolor") 
-						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 	if isapp:
 		appdir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
 		if debug:
 			safe_print("[D] appdir:", appdir)
 		if appdir not in data_dirs and os.path.isdir(appdir):
-			data_dirs.append(appdir)
+			data_dirs.insert(1, appdir)
 		runtype = ".app"
 	elif isexe:
 		if debug:
 			safe_print("[D] _MEIPASS2 or pydir:", getenvu("_MEIPASS2", pydir))
 		if getenvu("_MEIPASS2", pydir) not in data_dirs:
-			data_dirs.append(getenvu("_MEIPASS2", pydir))
+			data_dirs.insert(1, getenvu("_MEIPASS2", pydir))
 		runtype = exe_ext
 	else:
 		pydir_parent = os.path.abspath(os.path.join(pydir, ".."))
@@ -307,7 +290,7 @@ def runtimeconfig(pyfile):
 			# Add the parent directory of the package directory to our list
 			# of data directories if it is the directory containing the 
 			# currently run script (e.g. when running from source)
-			data_dirs.append(pydir_parent)
+			data_dirs.insert(1, pydir_parent)
 		runtype = pyext
 	for dir_ in sys.path:
 		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
@@ -315,6 +298,17 @@ def runtimeconfig(pyfile):
 			data_dirs.append(dir_)
 			if debug:
 				safe_print("[D] from sys.path:", dir_)
+	if sys.platform not in ("darwin", "win32"):
+		data_dirs.extend([os.path.join(dir_, "doc", appname + "-" + version) 
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
+		data_dirs.extend([os.path.join(dir_, "doc", "packages", appname) 
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
+		data_dirs.extend([os.path.join(dir_, "doc", appname) 
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
+		data_dirs.extend([os.path.join(dir_, "doc", appname.lower())  # Debian
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
+		data_dirs.extend([os.path.join(dir_, "icons", "hicolor") 
+						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 	if debug:
 		safe_print("[D] Data files search paths:\n[D]", "\n[D] ".join(data_dirs))
 	defaultmmode = defaults["measurement_mode"]
