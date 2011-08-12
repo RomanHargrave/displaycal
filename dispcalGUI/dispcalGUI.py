@@ -150,6 +150,7 @@ import xh_floatspin
 from wx import xrc
 from wx.lib import delayedresult
 from wx.lib.art import flagart
+import wx.html
 import wx.lib.hyperlink
 
 def _excepthook(etype, value, tb):
@@ -162,8 +163,8 @@ def swap_dict_keys_values(mydict):
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
 
 
-def app_update_check(parent=None):
-	safe_print(lang.getstr("check_update"))
+def app_update_check(parent=None, silent=False):
+	safe_print(lang.getstr("update_check"))
 	conn = httplib.HTTPConnection(domain)
 	try:
 		conn.request("GET", "/VERSION")
@@ -171,7 +172,7 @@ def app_update_check(parent=None):
 	except (socket.error, httplib.HTTPException), exception:
 		safe_print(lang.getstr("failure"), log=False)
 		wx.CallAfter(InfoDialog, parent, 
-					 msg=" ".join([lang.getstr("check_update.fail"),
+					 msg=" ".join([lang.getstr("update_check.fail"),
 								   lang.getstr("connection.fail", 
 											   " ".join([str(arg) for 
 														 arg in exception.args]))]),
@@ -181,7 +182,7 @@ def app_update_check(parent=None):
 	if resp.status != httplib.OK:
 		safe_print(lang.getstr("failure"), log=False)
 		wx.CallAfter(InfoDialog, parent, 
-					 msg=" ".join([lang.getstr("check_update.fail"),
+					 msg=" ".join([lang.getstr("update_check.fail"),
 								   lang.getstr("connection.fail.http", 
 											   " ".join([str(resp.status),
 														 resp.reason,
@@ -195,34 +196,89 @@ def app_update_check(parent=None):
 	except ValueError:
 		safe_print(lang.getstr("failure"), log=False)
 		wx.CallAfter(InfoDialog, parent, 
-					 msg=lang.getstr("check_update.fail.version",
+					 msg=lang.getstr("update_check.fail.version",
 									 domain),
 					 ok=lang.getstr("ok"), 
 					 bitmap=geticon(32, "dialog-error"))
 		return
 	if newversion_tuple > VERSION_BASE:
-		wx.CallAfter(app_update_confirm, newversion_tuple)
+		# Get changelog
+		chglog = None
+		try:
+			conn.request("GET", "/README.html")
+			resp = conn.getresponse()
+		except (socket.error, httplib.HTTPException), exception:
+			pass
+		else:
+			if resp.status == httplib.OK:
+				chglog = resp.read()
+				chglog = re.search("<h2>Version history / changelog</h2>"
+								   ".+?<dl>.+?</dd>", chglog, re.S)
+				if chglog:
+					chglog = chglog.group().decode("utf-8", "replace")
+					chglog = re.sub("<\/?d[l|d]>", "", chglog)
+					chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
+					chglog = re.sub("<h3>.+?</h3>", "", chglog)
+					chglog = re.sub("<h\d>(.+?)</h\d>", 
+									"<p><strong>\\1</strong></p>", chglog)
+		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog)
+	elif not silent:
+		wx.CallAfter(app_uptodate, parent)
 	else:
-		wx.CallAfter(InfoDialog, parent, 
-					 msg=lang.getstr("check_update.uptodate",
+		log(lang.getstr("update_check.uptodate", appname))
+
+
+def app_uptodate(parent=None):
+	dlg = InfoDialog(parent, 
+					 msg=lang.getstr("update_check.uptodate",
 									 appname),
 					 ok=lang.getstr("ok"), 
-					 bitmap=geticon(32, "dialog-information"), print_=True)
+					 bitmap=geticon(32, "dialog-information"), show=False,
+					 print_=True)
+	update_check = wx.CheckBox(dlg, -1, 
+							   lang.getstr("update_check.onstartup"))
+	update_check.SetValue(getcfg("update_check"))
+	dlg.Bind(wx.EVT_CHECKBOX, lambda event: setcfg("update_check", 
+												   int(event.IsChecked())), 
+			 id=update_check.GetId())
+	dlg.sizer3.Add(update_check, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+	dlg.sizer0.SetSizeHints(dlg)
+	dlg.sizer0.Layout()
+	dlg.ShowModalThenDestroy()
+	if parent and getattr(parent, "menuitem_app_auto_update_check"):
+		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 
-def app_update_confirm(newversion_tuple):
-	dlg = ConfirmDialog(None,
-						msg=lang.getstr("check_update.new_version", 
+def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
+	dlg = ConfirmDialog(parent,
+						msg=lang.getstr("update_check.new_version", 
 						   ".".join(str(n) for n in newversion_tuple)), 
-						ok=lang.getstr("ok"), 
+						ok=lang.getstr("go_to_website"), 
 						cancel=lang.getstr("cancel"), 
 						bitmap=getbitmap(
 							"theme/icons/32x32/dialog-information"), 
 						log=True,
 						print_=True)
+	if chglog:
+		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500, 300))
+		htmlwnd.SetStandardFonts()
+		htmlwnd.SetPage(chglog)
+		dlg.sizer3.Add(htmlwnd, 1, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=12)
+	update_check = wx.CheckBox(dlg, -1, 
+							   lang.getstr("update_check.onstartup"))
+	update_check.SetValue(getcfg("update_check"))
+	dlg.Bind(wx.EVT_CHECKBOX, lambda event: setcfg("update_check", 
+												   int(event.IsChecked())), 
+			 id=update_check.GetId())
+	dlg.sizer3.Add(update_check, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+	dlg.sizer0.SetSizeHints(dlg)
+	dlg.sizer0.Layout()
+	dlg.Center()
 	if dlg.ShowModal() == wx.ID_OK:
 		launch_file("http://" + domain)
 	dlg.Destroy()
+	if parent and getattr(parent, "menuitem_app_auto_update_check"):
+		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 
 class BaseFrame(wx.Frame):
@@ -686,6 +742,10 @@ class MainFrame(BaseFrame):
 			wx.GetApp().progress_dlg = None
 		else:
 			wx.GetApp().progress_dlg.Hide()
+		
+		# Check for updates if configured
+		if getcfg("update_check"):
+			self.app_update_check_handler(None, silent=True)
 	
 	def log(self):
 		""" Put log buffer contents into the log window. """
@@ -1258,7 +1318,11 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_MENU, self.help_support_handler, menuitem)
 		menuitem = help.FindItemById(help.FindItem("bug_report"))
 		self.Bind(wx.EVT_MENU, self.bug_report_handler, menuitem)
-		menuitem = help.FindItemById(help.FindItem("check_update"))
+		self.menuitem_app_auto_update_check = help.FindItemById(
+			help.FindItem("update_check.onstartup"))
+		self.Bind(wx.EVT_MENU, self.app_auto_update_check_handler,
+				  self.menuitem_app_auto_update_check)
+		menuitem = help.FindItemById(help.FindItem("update_check"))
 		self.Bind(wx.EVT_MENU, self.app_update_check_handler, menuitem)
 		
 		if sys.platform == "darwin":
@@ -1306,6 +1370,7 @@ class MainFrame(BaseFrame):
 		self.menuitem_show_log.Check(bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Enable(not bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Check(bool(getcfg("log.autoshow")))
+		self.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 	def init_controls(self):
 		"""
@@ -7363,12 +7428,16 @@ class MainFrame(BaseFrame):
 	def bug_report_handler(self, event):
 		launch_file("http://sourceforge.net/tracker/?group_id=257092&atid=1127028")
 	
-	def app_update_check_handler(self, event):
+	def app_update_check_handler(self, event, silent=False):
 		if not hasattr(self, "app_update_check") or \
 		   not self.app_update_check.isAlive():
 			self.app_update_check = threading.Thread(target=app_update_check, 
-													 args=(self, ))
+													 args=(self, silent))
 			self.app_update_check.start()
+	
+	def app_auto_update_check_handler(self, event):
+		setcfg("update_check", 
+			   int(self.menuitem_app_auto_update_check.IsChecked()))
 
 	def infoframe_toggle_handler(self, event=None, show=None):
 		if show is None:

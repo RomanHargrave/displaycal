@@ -128,8 +128,12 @@
         <label>bug_report</label>
       </object>
       <object class="separator"/>
-      <object class="wxMenuItem" name="check_update">
-        <label>check_update</label>
+      <object class="wxMenuItem" name="update_check.onstartup">
+        <label>update_check.onstartup</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="wxMenuItem" name="update_check">
+        <label>update_check</label>
       </object>
       <label>menu.help</label>
     </object>

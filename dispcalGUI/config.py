@@ -465,6 +465,7 @@ defaults = {
 	"trc": 2.2,
 	"trc.should_use_viewcond_adjust.show_msg": 1,
 	"trc.type": "g",
+	"update_check": 1,
 	"use_separate_lut_access": 0,
 	"whitepoint.colortemp": 5000.0,
 	"whitepoint.colortemp.locus": "t",
