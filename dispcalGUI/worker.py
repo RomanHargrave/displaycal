@@ -993,6 +993,13 @@ class Worker():
 								self.display_rects.append(
 									wx.Rect(*[int(item) for item in match[0][1:]]))
 						elif arg == "-c":
+							if (value.startswith("/dev/tty") and 
+								getcfg("skip_legacy_serial_ports")):
+								# Skip all legacy serial ports (this means we 
+								# deliberately don't support DTP92 and
+								# Spectrolino, although they may work when
+								# used with a serial to USB adaptor)
+								continue
 							value = value.split(None, 1)
 							if len(value) > 1:
 								value = value[1].strip("()")
