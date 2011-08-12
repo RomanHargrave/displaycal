@@ -5544,14 +5544,19 @@ class MainFrame(BaseFrame):
 			if not wx.GetKeyState(wx.WXK_SHIFT):
 				path = os.path.join(defaultDir, "DeviceCorrections.txt")
 		else:
-			defaultDir = None
+			defaultDir = ""
 		if not path or not os.path.isfile(path):
+			if sys.platform == "darwin":
+				# If the wildcard is a filename, wxMac won't let us select
+				wildcard = "*.txt"
+			else:
+				wildcard = "DeviceCorrections.txt"
 			dlg = wx.FileDialog(self, 
 								lang.getstr("devicecorrections.choose"),
 								defaultDir=defaultDir,
 								defaultFile="DeviceCorrections.txt",
 								wildcard=lang.getstr("filetype.txt") + 
-										 "|DeviceCorrections.txt", 
+										 "|" + wildcard, 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
