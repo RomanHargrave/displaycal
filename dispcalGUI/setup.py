@@ -32,6 +32,7 @@ import os
 import shutil
 import subprocess as sp
 import sys
+from time import strftime
 from types import StringType
 
 from defaultpaths import autostart, autostart_home
@@ -48,6 +49,12 @@ msiversion = ".".join((str(version_tuple[0]),
 					   str(version_tuple[1]), 
 					   str(version_tuple[2]) + 
 					   str(version_tuple[3])))
+
+
+class Target:
+	def __init__(self, **kwargs):
+		self.__dict__.update(kwargs)
+
 
 def setup():
 
@@ -564,7 +571,8 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 					"CFBundleShortVersionString": version,
 					"CFBundleSignature": "????",
 					"CFBundleVersion": ".".join(map(str, version_tuple)),
-					"NSHumanReadableCopyright": u"© " + author
+					"NSHumanReadableCopyright": u"© %s %s" % (strftime("%Y"),
+															  author)
 				}
 			}
 		}
@@ -576,12 +584,14 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 		manifest_xml = getmanifestxml(os.path.join(pydir, "..", "misc", 
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
-		attrs["windows"] = [{
+		attrs["windows"] = [Target(**{
 			"script": os.path.join(pydir, "..", name + ".pyw"),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
 												name + ".ico"))],
-			"other_resources": [(24, 1, manifest_xml)]
-		}]
+			"other_resources": [(24, 1, manifest_xml)],
+			"copyright": u"© %s %s" % (strftime("%Y"), author),
+			"description": name
+		})]
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
