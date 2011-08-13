@@ -428,8 +428,10 @@ def setup():
 												  suffix if bdist_pyi else 
 												  bdist_cmd)))
 		inno_template = open(inno_template_path, "r")
-		inno_script = inno_template.read().decode("MBCS", "replace") % {
+		inno_script = inno_template.read().decode("UTF-8", "replace") % {
+			"AppCopyright": u"© %s %s" % (strftime("%Y"), author),
 			"AppVerName": version,
+			"AppPublisher": author,
 			"AppPublisherURL": "http://" + domain,
 			"AppSupportURL": "http://" + domain,
 			"AppUpdatesURL": "http://" + domain,
@@ -449,7 +451,7 @@ def setup():
 			if not os.path.exists("dist"):
 				os.makedirs("dist")
 			inno_file = open(inno_path, "w")
-			inno_file.write(inno_script.encode("MBCS", "replace"))
+			inno_file.write(inno_script.encode("UTF-8", "replace"))
 			inno_file.close()
 		sys.argv.remove("inno")
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
