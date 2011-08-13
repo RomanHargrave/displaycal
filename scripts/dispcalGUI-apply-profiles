@@ -111,8 +111,8 @@ def apply_profiles():
 				errors.append(": ".join([display, errstr]))
 				continue
 			# Verify the calibration was actually loaded
-			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), profile_arg, 
-									  "-V"], 
+			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-V",
+									  profile_arg], 
 							capture_output=True, skip_scripts=True, 
 							silent=False)
 			# The 'NOT loaded' message goes to stdout!
