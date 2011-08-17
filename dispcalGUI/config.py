@@ -437,6 +437,7 @@ defaults = {
 	"profile.update": 0,
 	"recent_cals": "",
 	"recent_cals_max": 15,
+	"report.pack_js": 1,
 	"settings.changed": 0,
 	"size.info.w": 512,
 	"size.info.h": 384,

@@ -225,7 +225,7 @@ def app_update_check(parent=None, silent=False):
 	elif not silent:
 		wx.CallAfter(app_uptodate, parent)
 	else:
-		log(lang.getstr("update_check.uptodate", appname))
+		safe_print(lang.getstr("update_check.uptodate", appname))
 
 
 def app_uptodate(parent=None):
@@ -4273,7 +4273,7 @@ class MainFrame(BaseFrame):
 		if result != wx.ID_OK:
 			return
 		try:
-			report.update(path)
+			report.update(path, pack=getcfg("report.pack_js"))
 		except (IOError, OSError), exception:
 			show_result_dialog(exception)
 		else:

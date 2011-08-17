@@ -15,7 +15,7 @@ import jspacker
 import localization as lang
 
 
-def create(report_path, placeholders2data):
+def create(report_path, placeholders2data, pack=True):
 	""" Create a report with all placeholders substituted by data. """
 	# read report template
 	report_html_template_path = get_data_path(os.path.join("report", 
@@ -50,12 +50,13 @@ def create(report_path, placeholders2data):
 		except (IOError, OSError), exception:
 			raise exception.__class__(lang.getstr("error.file.open", path))
 		if include.endswith(".js"):
-			packer = jspacker.JavaScriptPacker()
+			js = f.read()
+			if pack:
+				packer = jspacker.JavaScriptPacker()
+				js = packer.pack(js, 62, True).strip()
 			report_html = report_html.replace('src="%s">' % include, 
 											  ">/*<![CDATA[*/\n" + 
-											  packer.pack(f.read(), 
-														  62, 
-														  True).strip() + 
+											  js + 
 											  "\n/*]]>*/")
 		else:
 			report_html = report_html.replace('@import "%s";' % include, 
@@ -71,7 +72,7 @@ def create(report_path, placeholders2data):
 	report_html_file.close()
 
 
-def update(report_path):
+def update(report_path, pack=True):
 	""" Update existing report with current template files. 
 	
 	Also creates a backup copy of the old report.
@@ -126,7 +127,7 @@ def update(report_path):
 	shutil.copy2(report_path, "%s.%s" % (report_path, 
 										 strftime("%Y-%m-%d_%H-%M-%S")))
 	
-	create(report_path, placeholders2data)
+	create(report_path, placeholders2data, pack)
 
 
 if __name__ == "__main__":
