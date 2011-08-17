@@ -452,7 +452,7 @@ class CGATS(dict):
 													  'got %s)' % 
 													  (item, type(value)))
 							else:
-								lencheck = len(str(abs(value)))
+								lencheck = len(str(abs(value)).split("e")[0])
 								if lencheck > self.vmaxlen:
 									self.vmaxlen = lencheck
 						elif self.root.normalize_fields and \
