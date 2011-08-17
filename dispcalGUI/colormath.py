@@ -20,11 +20,11 @@ standard_illuminants = {
 	"ICC": {"D50": {"X": 0.9642, "Z": 0.8249},
 			"D65": {"X": 0.9505, "Z": 1.0890}},
 	"Wyszecki & Stiles": {"A": {"X": 1.09828, "Z": 0.35547},
-						   "B": {"X": 0.99072, "Z": 0.85223},
-						   "C": {"X": 0.98041, "Z": 1.18103},
-						   "D55": {"X": 0.95642, "Z": 0.92085},
-						   "D65": {"X": 0.95017, "Z": 1.08813},
-						   "D75": {"X": 0.94939, "Z": 1.22558}}
+						  "B": {"X": 0.99072, "Z": 0.85223},
+						  "C": {"X": 0.98041, "Z": 1.18103},
+						  "D55": {"X": 0.95642, "Z": 0.92085},
+						  "D65": {"X": 0.95017, "Z": 1.08813},
+						  "D75": {"X": 0.94939, "Z": 1.22558}}
 }
 
 
@@ -389,7 +389,7 @@ get_rgb_space.cache = {}
 
 
 def get_standard_illuminant(illuminant_name="D50",
-							priority=(None, "ICC", "ASTM E308-01"),
+							priority=("ICC", "ASTM E308-01", "Wyszecki & Stiles", None),
 							scale=1.0):
 	""" Return a standard illuminant as XYZ coordinates. """
 	cachehash = illuminant_name, tuple(priority), scale

@@ -301,7 +301,7 @@ jsapi.math.color.standard_illuminants = {
 	// 1st level is the standard name => illuminant definitions
 	// 2nd level is the illuminant name => CIE XYZ coordinates
 	// (Y should always assumed to be 1.0 and is not explicitly defined)
-	null: {"E": {"X": 1.00000, "Z": 1.00000}},
+	"None": {"E": {"X": 1.00000, "Z": 1.00000}},
 	"ASTM E308-01": {"A": {"X": 1.09850, "Z": 0.35585},
 					 "C": {"X": 0.98074, "Z": 1.18232},
 					 "D50": {"X": 0.96422, "Z": 0.82521},
@@ -314,14 +314,14 @@ jsapi.math.color.standard_illuminants = {
 	"ICC": {"D50": {"X": 0.9642, "Z": 0.8249},
 			"D65": {"X": 0.9505, "Z": 1.0890}},
 	"Wyszecki & Stiles": {"A": {"X": 1.09828, "Z": 0.35547},
-						   "B": {"X": 0.99072, "Z": 0.85223},
-						   "C": {"X": 0.98041, "Z": 1.18103},
-						   "D55": {"X": 0.95642, "Z": 0.92085},
-						   "D65": {"X": 0.95017, "Z": 1.08813},
-						   "D75": {"X": 0.94939, "Z": 1.22558}}
+						  "B": {"X": 0.99072, "Z": 0.85223},
+						  "C": {"X": 0.98041, "Z": 1.18103},
+						  "D55": {"X": 0.95642, "Z": 0.92085},
+						  "D65": {"X": 0.95017, "Z": 1.08813},
+						  "D75": {"X": 0.94939, "Z": 1.22558}}
 };
 jsapi.math.color.get_standard_illuminant = function (illuminant_name, priority, scale) {
-	if (!priority) priority = [null, "ICC", "ASTM E308-01"];
+	if (!priority) priority = ["ICC", "ASTM E308-01", "Wyszecki & Stiles", "None"];
 	if (!scale) scale = 1.0;
 	var cachehash = [illuminant_name, priority, scale].join(","),
 		cache = jsapi.math.color.get_standard_illuminant.cache[cachehash];
