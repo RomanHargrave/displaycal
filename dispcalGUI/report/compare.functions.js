@@ -164,7 +164,6 @@ p.generate_report = function(set_delta_calc_method) {
 		actual_Lab,
 		actual_rgb,
 		actual_rgb_html,
-		D50 = [96.422, 100, 82.521],
 		planckian = f['F_out'].elements['FF_planckian'].checked,
 		profile_wp = e['FF_profile_whitepoint'].value.split(/\s+/),
 		profile_wp_round = [],
@@ -409,7 +408,7 @@ p.generate_report = function(set_delta_calc_method) {
 				patch_number_html.push('<div class="patch sample_id">&#160;</div>');
 				haspatchid = true;
 				if (rules[j][1][k].length == 4) // Assume CMYK
-					target_rgb = jsapi.math.color.cmyk2rgb(rules[j][1][k][0] / 100, rules[j][1][k][1] / 100, rules[j][1][k][2] / 100, rules[j][1][k][3] / 100);
+					target_rgb = jsapi.math.color.CMYK2RGB(rules[j][1][k][0] / 100, rules[j][1][k][1] / 100, rules[j][1][k][2] / 100, rules[j][1][k][3] / 100, 255);
 				else 
 					target_rgb = [rules[j][1][k][0] * 2.55, rules[j][1][k][1] * 2.55, rules[j][1][k][2] * 2.55];
 				target_rgb_html.push('<div class="patch" style="background-color: rgb(' + Math.round(target_rgb[0]) + ', ' + Math.round(target_rgb[1]) + ', ' + Math.round(target_rgb[2]) + ');">&#160;</div>');
@@ -453,8 +452,8 @@ p.generate_report = function(set_delta_calc_method) {
 									patch_number_html[k] = ('<div class="patch sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 									haspatchid = true;
 								}
-								target_rgb = jsapi.math.color.Lab2rgb(target_Lab[0], target_Lab[1], target_Lab[2], null, D50);
-								actual_rgb = jsapi.math.color.Lab2rgb(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, D50);
+								target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, "D50", 255, true);
+								actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, "D50", 255, true);
 								target_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 								actual_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
 							};
@@ -661,8 +660,8 @@ p.generate_report = function(set_delta_calc_method) {
 				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true);
 				target_Lab = colors.target_Lab;
 				actual_Lab = colors.actual_Lab;
-				target_rgb = jsapi.math.color.Lab2rgb(target_Lab[0], target_Lab[1], target_Lab[2], null, D50);
-				actual_rgb = jsapi.math.color.Lab2rgb(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, D50);
+				target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, "D50", 255, true);
+				actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, "D50", 255, true);
 				target_rgb_html.push('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 				actual_rgb_html.push('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
 			};
@@ -760,8 +759,8 @@ p.generate_report = function(set_delta_calc_method) {
 		actual_Lab = colors.actual_Lab;
 		current_rgb = colors.current_rgb;
 		current_cmyk = colors.current_cmyk;
-		target_rgb = jsapi.math.color.Lab2rgb(target_Lab[0], target_Lab[1], target_Lab[2], null, D50);
-		actual_rgb = jsapi.math.color.Lab2rgb(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, D50);
+		target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, "D50", 255, true);
+		actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, "D50", 255, true);
 		delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
 		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
 		var bar_html = [],
@@ -967,8 +966,8 @@ function get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, sk
 		if (!skip_gamma && !current_cmyk.length && current_rgb[0] > 0 && current_rgb[0] < 100 && target_Lab[0] > 0 && actual_Lab[0] > 0) {
 			var target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2]),
 				actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
-			target.gamma = Math.log(target_XYZ[1] / 100) / Math.log(current_rgb[0] / 100);
-			actual.gamma = Math.log(actual_XYZ[1] / 100) / Math.log(current_rgb[0] / 100);
+			target.gamma = Math.log(target_XYZ[1]) / Math.log(current_rgb[0] / 100);
+			actual.gamma = Math.log(actual_XYZ[1]) / Math.log(current_rgb[0] / 100);
 		}
 	}
 	return {target_Lab: target_Lab,

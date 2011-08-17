@@ -3,70 +3,106 @@
 
 import math
 
-try:
-	import Numeric as numpy
-except ImportError:
-	try:
-		import numarray as numpy
-	except ImportError:
-		try:
-			import numpy
-		except ImportError:
-			numpy = None
-
-CIEilluminants = {
-	# en.wikipedia.org/wiki/Standard_illuminant
-	#
-	# name  white point                          CCT      Remark
-	#       CIE 1931 (2°)      CIE 1964 (10°)
-	#       x         y        x        y
-	"A":    [0.44757, 0.40745, 0.45117, 0.40594, 2856], # Incandescent / Tungsten
-	"B":    [0.34842, 0.35161, 0.3498,  0.3527,  4874], # {obsolete} Direct sunlight at noon
-	"C":    [0.31006, 0.31616, 0.31039, 0.31905, 6774], # {obsolete} Average / North sky Daylight
-	"D50":  [0.34567, 0.35850, 0.34773, 0.35952, 5003], # Horizon Light. ICC profile PCS
-	"D55":  [0.33242, 0.34743, 0.33411, 0.34877, 5503], # Mid-morning / Mid-afternoon Daylight
-	"D65":  [0.31271, 0.32902, 0.31382, 0.33100, 6504], # Noon Daylight: Television, sRGB color space
-	"D75":  [0.29902, 0.31485, 0.29968, 0.31740, 7504], # North sky Daylight
-	"E":    [1.0 / 3, 1.0 / 3, 1.0 / 3, 1.0 / 3, 5454], # Equal energy
-	"F1":   [0.31310, 0.33727, 0.31811, 0.33559, 6430], # Daylight Fluorescent
-	"F2":   [0.37208, 0.37529, 0.37925, 0.36733, 4230], # Cool White Fluorescent
-	"F3":   [0.40910, 0.39430, 0.41761, 0.38324, 3450], # White Fluorescent
-	"F4":   [0.44018, 0.40329, 0.44920, 0.39074, 2940], # Warm White Fluorescent
-	"F5":   [0.31379, 0.34531, 0.31975, 0.34246, 6350], # Daylight Fluorescent
-	"F6":   [0.37790, 0.38835, 0.38660, 0.37847, 4150], # Lite White Fluorescent
-	"F7":   [0.31292, 0.32933, 0.31569, 0.32960, 6500], # D65 simulator, Daylight simulator
-	"F8":   [0.34588, 0.35875, 0.34902, 0.35939, 5000], # D50 simulator, Sylvania F40 Design 50
-	"F9":   [0.37417, 0.37281, 0.37829, 0.37045, 4150], # Cool White Deluxe Fluorescent
-	"F10":  [0.34609, 0.35986, 0.35090, 0.35444, 5000], # Philips TL85, Ultralume 50
-	"F11":  [0.38052, 0.37713, 0.38541, 0.37123, 4000], # Philips TL84, Ultralume 40
-	"F12":  [0.43695, 0.40441, 0.44256, 0.39717, 3000]  # Philips TL83, Ultralume 30
+standard_illuminants = {
+	# 1st level is the standard name => illuminant definitions
+	# 2nd level is the illuminant name => CIE XYZ coordinates
+	# (Y should always assumed to be 1.0 and is not explicitly defined)
+	None: {"E": {"X": 1.00000, "Z": 1.00000}},
+	"ASTM E308-01": {"A": {"X": 1.09850, "Z": 0.35585},
+					 "C": {"X": 0.98074, "Z": 1.18232},
+					 "D50": {"X": 0.96422, "Z": 0.82521},
+					 "D55": {"X": 0.95682, "Z": 0.92149},
+					 "D65": {"X": 0.95047, "Z": 1.08883},
+					 "D75": {"X": 0.94972, "Z": 1.22638},
+					 "F2": {"X": 0.99186, "Z": 0.67393},
+					 "F7": {"X": 0.95041, "Z": 1.08747},
+					 "F11": {"X": 1.00962, "Z": 0.64350}},
+	"ICC": {"D50": {"X": 0.9642, "Z": 0.8249},
+			"D65": {"X": 0.9505, "Z": 1.0890}},
+	"Wyszecki & Stiles": {"A": {"X": 1.09828, "Z": 0.35547},
+						   "B": {"X": 0.99072, "Z": 0.85223},
+						   "C": {"X": 0.98041, "Z": 1.18103},
+						   "D55": {"X": 0.95642, "Z": 0.92085},
+						   "D65": {"X": 0.95017, "Z": 1.08813},
+						   "D75": {"X": 0.94939, "Z": 1.22558}}
 }
 
-rgbspaces = {
-	# brucelindbloom.com/WorkingSpaceInfo.html
+
+def specialpow(a, b):
+	"""
+	Wrapper for power, sRGB and L* functions
+	
+	Positive b integers = power, -2.2 = sRGB, -3.0 = L*
+	
+	"""
+	if b >= 0.0:
+		# Power curve
+		if a < 0.0:
+			return -math.pow(-a, b)
+		else:
+			return math.pow(a, b)
+	if a < 0.0:
+		signScale = -1.0
+		a = -a
+	else:
+		signScale = 1.0
+	K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
+	if b >= -0.4:
+		# XYZ -> RGB, L* TRC
+		E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
+		if a <= E:
+			v = 0.01 * a * K
+		else:
+			v = 1.16 * math.pow(a, 1.0 / 3.0) - 0.16
+	else:
+		if b >= -1.0:
+			# XYZ -> RGB, sRGB TRC
+			if a <= 0.0031308:
+				v = a * 12.92
+			else:
+				v = 1.055 * math.pow(a, 1.0 / 2.4) - 0.055
+		else:
+			if b >= -2.6:
+				# RGB -> XYZ, sRGB TRC
+				if a <= 0.04045:
+					v = a / 12.92
+				else:
+					v = math.pow((a + 0.055) / 1.055, 2.4)
+			else:
+				# RGB -> XYZ, L* TRC
+				if a <= 0.08:
+					v = 100.0 * a / K
+				else:
+					v = (((1000000.0 * a + 480000.0) * a + 76800.0) * a + 4096.0) / 1560896.0
+	return v * signScale
+
+
+rgb_spaces = {
+	# http://brucelindbloom.com/WorkingSpaceInfo.html
 	#
 	# name              gamma  white  primaries
-	#                          point  Rx      Ry      RY        Gx      Gy      GY        Bx      By      BY
-	"Adobe RGB (1998)": [2.2,  "D65", 0.6400, 0.3300, 0.297361, 0.2100, 0.7100, 0.627355, 0.1500, 0.0600, 0.075285],
-	"Apple RGB ":       [1.8,  "D65", 0.6250, 0.3400, 0.244634, 0.2800, 0.5950, 0.672034, 0.1550, 0.0700, 0.083332],
-	"Best RGB":         [2.2,  "D50", 0.7347, 0.2653, 0.228457, 0.2150, 0.7750, 0.737352, 0.1300, 0.0350, 0.034191],
-	"Beta RGB":         [2.2,  "D50", 0.6888, 0.3112, 0.303273, 0.1986, 0.7551, 0.663786, 0.1265, 0.0352, 0.032941],
-	"Bruce RGB":        [2.2,  "D65", 0.6400, 0.3300, 0.240995, 0.2800, 0.6500, 0.683554, 0.1500, 0.0600, 0.075452],
-	"CIE RGB":          [2.2,  "E",   0.7350, 0.2650, 0.176204, 0.2740, 0.7170, 0.812985, 0.1670, 0.0090, 0.010811],
-	"ColorMatch RGB":   [1.8,  "D50", 0.6300, 0.3400, 0.274884, 0.2950, 0.6050, 0.658132, 0.1500, 0.0750, 0.066985],
-	"Don RGB 4":        [2.2,  "D50", 0.6960, 0.3000, 0.278350, 0.2150, 0.7650, 0.687970, 0.1300, 0.0350, 0.033680],
-	"ECI RGB":          [1.8,  "D50", 0.6700, 0.3300, 0.320250, 0.2100, 0.7100, 0.602071, 0.1400, 0.0800, 0.077679],
-	"Ekta Space PS5":   [2.2,  "D50", 0.6950, 0.3050, 0.260629, 0.2600, 0.7000, 0.734946, 0.1100, 0.0050, 0.004425],
-	"NTSC RGB":         [2.2,  "C",   0.6700, 0.3300, 0.298839, 0.2100, 0.7100, 0.586811, 0.1400, 0.0800, 0.114350],
-	"PAL/SECAM RGB":    [2.2,  "D65", 0.6400, 0.3300, 0.222021, 0.2900, 0.6000, 0.706645, 0.1500, 0.0600, 0.071334],
-	"ProPhoto RGB":     [1.8,  "D50", 0.7347, 0.2653, 0.288040, 0.1596, 0.8404, 0.711874, 0.0366, 0.0001, 0.000086],
-	"SMPTE-C RGB":      [2.2,  "D65", 0.6300, 0.3400, 0.212395, 0.3100, 0.5950, 0.701049, 0.1550, 0.0700, 0.086556],
-	"sRGB":             [2.2,  "D65", 0.6400, 0.3300, 0.212656, 0.3000, 0.6000, 0.715158, 0.1500, 0.0600, 0.072186],
-	"Wide Gamut RGB":   [2.2,  "D50", 0.7350, 0.2650, 0.258187, 0.1150, 0.8260, 0.724938, 0.1570, 0.0180, 0.016875]
+	#                          point   Rx      Ry      RY          Gx      Gy      GY          Bx      By      BY
+	"Adobe RGB (1998)": (2.2,  "D65", (0.6400, 0.3300, 0.297361), (0.2100, 0.7100, 0.627355), (0.1500, 0.0600, 0.075285)),
+	"Apple RGB ":       (1.8,  "D65", (0.6250, 0.3400, 0.244634), (0.2800, 0.5950, 0.672034), (0.1550, 0.0700, 0.083332)),
+	"Best RGB":         (2.2,  "D50", (0.7347, 0.2653, 0.228457), (0.2150, 0.7750, 0.737352), (0.1300, 0.0350, 0.034191)),
+	"Beta RGB":         (2.2,  "D50", (0.6888, 0.3112, 0.303273), (0.1986, 0.7551, 0.663786), (0.1265, 0.0352, 0.032941)),
+	"Bruce RGB":        (2.2,  "D65", (0.6400, 0.3300, 0.240995), (0.2800, 0.6500, 0.683554), (0.1500, 0.0600, 0.075452)),
+	"CIE RGB":          (2.2,  "E",   (0.7350, 0.2650, 0.176204), (0.2740, 0.7170, 0.812985), (0.1670, 0.0090, 0.010811)),
+	"ColorMatch RGB":   (1.8,  "D50", (0.6300, 0.3400, 0.274884), (0.2950, 0.6050, 0.658132), (0.1500, 0.0750, 0.066985)),
+	"Don RGB 4":        (2.2,  "D50", (0.6960, 0.3000, 0.278350), (0.2150, 0.7650, 0.687970), (0.1300, 0.0350, 0.033680)),
+	"ECI RGB":          (1.8,  "D50", (0.6700, 0.3300, 0.320250), (0.2100, 0.7100, 0.602071), (0.1400, 0.0800, 0.077679)),
+	"ECI RGB v2":       (-3.0, "D50", (0.6700, 0.3300, 0.320250), (0.2100, 0.7100, 0.602071), (0.1400, 0.0800, 0.077679)),
+	"Ekta Space PS5":   (2.2,  "D50", (0.6950, 0.3050, 0.260629), (0.2600, 0.7000, 0.734946), (0.1100, 0.0050, 0.004425)),
+	"NTSC RGB":         (2.2,  "C",   (0.6700, 0.3300, 0.298839), (0.2100, 0.7100, 0.586811), (0.1400, 0.0800, 0.114350)),
+	"PAL/SECAM RGB":    (2.2,  "D65", (0.6400, 0.3300, 0.222021), (0.2900, 0.6000, 0.706645), (0.1500, 0.0600, 0.071334)),
+	"ProPhoto RGB":     (1.8,  "D50", (0.7347, 0.2653, 0.288040), (0.1596, 0.8404, 0.711874), (0.0366, 0.0001, 0.000086)),
+	"SMPTE-C RGB":      (2.2,  "D65", (0.6300, 0.3400, 0.212395), (0.3100, 0.5950, 0.701049), (0.1550, 0.0700, 0.086556)),
+	"sRGB":             (-2.2, "D65", (0.6400, 0.3300, 0.212656), (0.3000, 0.6000, 0.715158), (0.1500, 0.0600, 0.072186)),
+	"Wide Gamut RGB":   (2.2,  "D50", (0.7350, 0.2650, 0.258187), (0.1150, 0.8260, 0.724938), (0.1570, 0.0180, 0.016875))
 }
 
 
-def cat_matrix(cat="Bradford"):
+def get_cat_matrix(cat="Bradford"):
 	if isinstance(cat, basestring):
 		cat = cat_matrices[cat]
 	if not isinstance(cat, Matrix3x3):
@@ -79,7 +115,8 @@ def cbrt(x):
 
 
 def XYZ2LMS(X, Y, Z, cat="Bradford"):
-	cat = cat_matrix(cat)
+	""" Convert from XYZ to cone response domain """
+	cat = get_cat_matrix(cat)
 	p, y, b = cat * [X, Y, Z]
 	return p, y, b
 
@@ -87,23 +124,14 @@ def XYZ2LMS(X, Y, Z, cat="Bradford"):
 def LMS_wp_adaption_matrix(whitepoint_source=None, 
 						   whitepoint_destination=None, 
 						   cat="Bradford"):
+	""" Prepare a matrix to match the whitepoints in cone response domain """
 	# chromatic adaption
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
 	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
 	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
-	cat = cat_matrix(cat)
-	if isinstance(whitepoint_source, (list, tuple)):
-		XYZWS = whitepoint_source
-	elif whitepoint_source:
-		XYZWS = CIEDCCT2XYZ(whitepoint_source)
-	else:
-		XYZWS = 0.96422, 1.0, 0.82521  # Observer= 2°, Illuminant= D50
-	if isinstance(whitepoint_destination, (list, tuple)):
-		XYZWD = whitepoint_destination
-	elif whitepoint_destination:
-		XYZWD = CIEDCCT2XYZ(whitepoint_destination)
-	else:
-		XYZWD = 0.96422, 1.0, 0.82521  # Observer= 2°, Illuminant= D50
+	cat = get_cat_matrix(cat)
+	XYZWS = get_whitepoint(whitepoint_source)
+	XYZWD = get_whitepoint(whitepoint_destination)
 	if XYZWS[1] <= 1.0 and XYZWD[1] > 1.0:
 		# make sure the scaling is identical
 		XYZWS = [v * 100 for v in XYZWS]
@@ -117,11 +145,16 @@ def LMS_wp_adaption_matrix(whitepoint_source=None,
 
 def wp_adaption_matrix(whitepoint_source=None, whitepoint_destination=None, 
 					   cat="Bradford"):
+	"""
+	Prepare a matrix to match the whitepoints in cone response doamin and 
+	transform back to XYZ
+	
+	"""
 	# chromatic adaption
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
 	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
 	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
-	cat = cat_matrix(cat)
+	cat = get_cat_matrix(cat)
 	return cat.inverted() * LMS_wp_adaption_matrix(whitepoint_source, 
 												   whitepoint_destination, 
 												   cat) * cat
@@ -129,6 +162,10 @@ def wp_adaption_matrix(whitepoint_source=None, whitepoint_destination=None,
 
 def adapt(X, Y, Z, whitepoint_source=None, whitepoint_destination=None, 
 		  cat="Bradford"):
+	"""
+	Transform XYZ under source illuminant to XYZ under destination illuminant
+	
+	"""
 	# chromatic adaption
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
 	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
@@ -157,20 +194,18 @@ def guess_cat(chad, whitepoint_source=None, whitepoint_destination=None):
 			return cat
 
 
-def CIEDCCT2xyY(T):
+def CIEDCCT2xyY(T, scale=1.0):
 	"""
 	Convert from CIE correlated daylight temperature to xyY.
 	
 	T = temperature in Kelvin.
 	
-	Derived from formula found on brucelindbloom.com
+	Based on formula from http://brucelindbloom.com/Eqn_T_to_xy.html
 	
 	"""
-	if type(T) == str:
-		T = T.upper()
-		if T in CIEilluminants:
-			return CIEilluminants[T][0:2] + [1.0]
-		raise ValueError('Unrecognized color temperature "%s"' % T)
+	if isinstance(T, basestring):
+		# Assume standard illuminant, e.g. "D50"
+		return XYZ2xyY(*get_standard_illuminant(T, scale=scale))
 	if 4000 <= T and T <= 7000:
 		xD = (((-4.607 * math.pow(10, 9)) / math.pow(T, 3))
 			+ ((2.9678 * math.pow(10, 6)) / math.pow(T, 2))
@@ -184,17 +219,17 @@ def CIEDCCT2xyY(T):
 	else:
 		return None
 	yD = -3 * math.pow(xD, 2) + 2.87 * xD - 0.275
-	return xD, yD, 1.0
+	return xD, yD, scale
 
 
-def CIEDCCT2XYZ(T):
+def CIEDCCT2XYZ(T, scale=1.0):
 	"""
 	Convert from CIE correlated daylight temperature to XYZ.
 	
 	T = temperature in Kelvin.
 	
 	"""
-	return xyY2XYZ(*CIEDCCT2xyY(T))
+	return xyY2XYZ(*CIEDCCT2xyY(T, scale))
 
 
 def get_DBL_MIN():
@@ -223,24 +258,26 @@ def get_DBL_MIN():
 DBL_MIN = get_DBL_MIN()
 
 
-def Lab2XYZ(L, a, b, whitepoint=None):
+def Lab2XYZ(L, a, b, whitepoint=None, scale=1.0):
 	"""
-	based on formula
-	http://brucelindbloom.com/Eqn_Lab_to_XYZ.html
+	Convert from Lab to XYZ.
 	
-	whitepoint can be a color temperature in Kelvin or an array containing 
-	reference XYZ values. It defaults to D50
+	The input L value needs to be in the nominal range [0.0, 100.0] and 
+	other input values scaled accordingly.
+	The output XYZ values are in the nominal range [0.0, scale].
 	
-	Implementation Notes:
-	The output XYZ values are in the nominal range [0.0, 1.0].
+	whitepoint can be string (e.g. "D50"), a tuple of XYZ coordinates or 
+	color temperature as float or int. Defaults to D50 if not set.
+	
+	Based on formula from http://brucelindbloom.com/Eqn_Lab_to_XYZ.html
 	
 	"""
 	fy = (L + 16) / 116.0
 	fx = a / 500.0 + fy
 	fz = fy - b / 200.0
 	
-	E = 0.008856
-	K = 903.3
+	E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
+	K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
 	
 	if math.pow(fx, 3.0) > E:
 		xr = math.pow(fx, 3.0)
@@ -257,13 +294,7 @@ def Lab2XYZ(L, a, b, whitepoint=None):
 	else:
 		zr = (116.0 * fz - 16) / K
 	
-	if whitepoint:
-		if isinstance(whitepoint, (float, int)):
-			Xr, Yr, Zr = CIEDCCT2XYZ(whitepoint)
-		else:
-			Xr, Yr, Zr = whitepoint
-	else:
-		Xr, Yr, Zr = 0.96422, 1.0, 0.82521  # Observer = 2°, Illuminant = D50
+	Xr, Yr, Zr = get_whitepoint(whitepoint, scale)
 	
 	X = xr * Xr
 	Y = yr * Yr
@@ -272,13 +303,23 @@ def Lab2XYZ(L, a, b, whitepoint=None):
 	return X, Y, Z
 
 
-def RGB2XYZ(R, G, B, gamma=None, matrix=None):
+def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 	"""
 	Convert from RGB to XYZ.
 	
-	Use optional gamma and matrix (both default to sRGB).
+	Use optional RGB colorspace definition, which can be a named colorspace 
+	(e.g. "CIE RGB") or must be a tuple in the following format:
 	
-	Formula from brucelindbloom.com
+	(gamma, whitepoint, red, green, blue)
+	
+	whitepoint can be a string (e.g. "D50"), a tuple of XYZ coordinates,
+	or a color temperatur in degrees K (float or int). Gamma should be a float.
+	The RGB primaries red, green, blue should be lists or tuples of xyY 
+	coordinates (only x and y will be used, so Y can be zero or None).
+	
+	If no colorspace is given, it defaults to sRGB.
+	
+	Based on formula from http://brucelindbloom.com/Eqn_RGB_to_XYZ.html
 	
 	Implementation Notes:
 	1. The transformation matrix [M] is calculated from the RGB reference 
@@ -289,7 +330,7 @@ def RGB2XYZ(R, G, B, gamma=None, matrix=None):
 	3. Your input RGB values may need to be scaled before using the above. 
 	   For example, if your values are in the range [0, 255], you must first 
 	   divide each by 255.0.
-	4. The output XYZ values are in the nominal range [0.0, 1.0].
+	4. The output XYZ values are in the nominal range [0.0, scale].
 	5. The XYZ values will be relative to the same reference white as the 
 	   RGB system. If you want XYZ relative to a different reference white, 
 	   you must apply a chromatic adaptation transform 
@@ -301,65 +342,112 @@ def RGB2XYZ(R, G, B, gamma=None, matrix=None):
 	   with gamma = 2.2.
 	   
 	"""
-	if gamma is None: # default to sRGB trc
-		if R > 0.04045:
-			R = math.pow((R + 0.055) / 1.055, 2.4)
-		else:
-			R = R / 12.92
-		if G > 0.04045:
-			G = math.pow((G + 0.055) / 1.055, 2.4)
-		else:
-			G = G / 12.92
-		if B > 0.04045:
-			B = math.pow((B + 0.055) / 1.055, 2.4)
-		else:
-			B = B / 12.92
-	else:
-		R = math.pow(R, gamma)
-		G = math.pow(G, gamma)
-		B = math.pow(B, gamma)
-	if matrix is None: # default to sRGB matrix
-		matrix = (
-			(0.412424, 0.212656,  0.0193324),
-			(0.357579, 0.715158,  0.119193),
-			(0.180464, 0.0721856, 0.950444)
-		)
-	X = R * matrix[0][0] + G * matrix[1][0] + B * matrix[2][0]
-	Y = R * matrix[0][1] + G * matrix[1][1] + B * matrix[2][1]
-	Z = R * matrix[0][2] + G * matrix[1][2] + B * matrix[2][2]
-	return X, Y, Z
+	gamma, whitepoint, rxyY, gxyY, bxyY, matrix = get_rgb_space(rgb_space)
+	RGB = [R, G, B]
+	for i, v in enumerate(RGB):
+		RGB[i] = specialpow(v, gamma)
+	XYZ = matrix * RGB
+	return tuple(v * scale for v in XYZ)
 
 
-def matrix_rgb(xr, yr, xg, yg, xb, yb, Xw, Yw, Zw):
+def rgb_matrix(rx, ry, gx, gy, bx, by, whitepoint=None, scale=1.0):
 	""" Create and return an RGB matrix. """
-	Xr, Yr, Zr = xyY2XYZ(xr, yr, 1.0)
-	Xg, Yg, Zg = xyY2XYZ(xg, yg, 1.0)
-	Xb, Yb, Zb = xyY2XYZ(xb, yb, 1.0)
-	mtx = numpy.matrix((
-		(Xr, Yr, Zr),
-		(Xg, Yg, Zg),
-		(Xb, Yb, Zb)
-	)).I
-	Sr = Xw * mtx[0].item(0) + Yw * mtx[1].item(0) + Zw * mtx[2].item(0)
-	Sg = Xw * mtx[0].item(1) + Yw * mtx[1].item(1) + Zw * mtx[2].item(1)
-	Sb = Xw * mtx[0].item(2) + Yw * mtx[1].item(2) + Zw * mtx[2].item(2)
-	return (
-		(Sr * Xr, Sr * Yr, Sr * Zr),
-		(Sg * Xg, Sg * Yg, Sg * Zg),
-		(Sb * Xb, Sb * Yb, Sb * Zb)
-	)
+	whitepoint = get_whitepoint(whitepoint, scale)
+	Xr, Yr, Zr = xyY2XYZ(rx, ry, scale)
+	Xg, Yg, Zg = xyY2XYZ(gx, gy, scale)
+	Xb, Yb, Zb = xyY2XYZ(bx, by, scale)
+	Sr, Sg, Sb = Matrix3x3(((Xr, Xg, Xb),
+							(Yr, Yg, Yb),
+							(Zr, Zg, Zb))).inverted() * whitepoint
+	return Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
+					  (Sr * Yr, Sg * Yg, Sb * Yb),
+					  (Sr * Zr, Sg * Zg, Sb * Zb)))
 
 
-def planckianCT2XYZ(T):
+def get_rgb_space(rgb_space=None, scale=1.0):
+	""" Return gamma, whitepoint, primaries and RGB -> XYZ matrix """
+	if not rgb_space:
+		rgb_space = "sRGB"
+	if isinstance(rgb_space, basestring):
+		rgb_space = rgb_spaces[rgb_space]
+	cachehash = rgb_space, scale
+	cache = get_rgb_space.cache.get(cachehash, None)
+	if cache:
+		return cache
+	gamma = rgb_space[0] or rgb_spaces["sRGB"][0]
+	whitepoint = get_whitepoint(rgb_space[1] or rgb_spaces["sRGB"][1], scale)
+	rx, ry, rY = rgb_space[2] or rgb_spaces["sRGB"][2]
+	gx, gy, gY = rgb_space[3] or rgb_spaces["sRGB"][3]
+	bx, by, bY = rgb_space[4] or rgb_spaces["sRGB"][4]
+	matrix = rgb_matrix(rx, ry, gx, gy, bx, by, whitepoint, scale)
+	rgb_space = gamma, whitepoint, (rx, ry, rY), (gx, gy, gY), (bx, by, bY), matrix
+	get_rgb_space.cache[cachehash] = rgb_space
+	return rgb_space
+
+
+get_rgb_space.cache = {}
+
+
+def get_standard_illuminant(illuminant_name="D50",
+							priority=(None, "ICC", "ASTM E308-01"),
+							scale=1.0):
+	""" Return a standard illuminant as XYZ coordinates. """
+	cachehash = illuminant_name, priority, scale
+	cache = get_standard_illuminant.cache.get(cachehash, None)
+	if cache:
+		return cache
+	illuminant = None
+	for standard_name in priority:
+		if not standard_name in standard_illuminants:
+			raise ValueError('Unrecognized standard "%s"' % standard_name)
+		illuminant = standard_illuminants.get(standard_name).get(illuminant_name.upper(), 
+																 None)
+		if illuminant:
+			illuminant = illuminant["X"] * scale, 1.0 * scale, illuminant["Z"] * scale
+			get_standard_illuminant.cache[cachehash] = illuminant
+			return illuminant
+	raise ValueError('Unrecognized illuminant "%s"' % illuminant_name)
+
+
+get_standard_illuminant.cache = {}
+
+
+def get_whitepoint(whitepoint=None, scale=1.0):
+	""" Return a whitepoint as XYZ coordinates """
+	if isinstance(whitepoint, (list, tuple)):
+		return whitepoint
+	if not whitepoint:
+		whitepoint = "D50"
+	cachehash = whitepoint, scale
+	cache = get_whitepoint.cache.get(cachehash, None)
+	if cache:
+		return cache
+	if isinstance(whitepoint, basestring):
+		whitepoint = get_standard_illuminant(whitepoint)
+	elif isinstance(whitepoint, (float, int)):
+		whitepoint = CIEDCCT2XYZ(whitepoint)
+	if scale > 1.0 and whitepoint[1] == 100:
+		scale = 1.0
+	if whitepoint[1] * scale > 100:
+		ValueError("Y value out of range after scaling: %s" % (whitepoint[1] * scale))
+	whitepoint = tuple(v * scale for v in whitepoint)
+	get_whitepoint.cache[cachehash] = whitepoint
+	return whitepoint
+
+
+get_whitepoint.cache = {}
+
+
+def planckianCT2XYZ(T, scale=1.0):
 	""" Convert from planckian temperature to XYZ.
 	
 	T = temperature in Kelvin.
 	
 	"""
-	return xyY2XYZ(*planckianCT2xyY(T))
+	return xyY2XYZ(*planckianCT2xyY(T, scale))
 
 
-def planckianCT2xyY(T):
+def planckianCT2xyY(T, scale=1.0):
 	""" Convert from planckian temperature to xyY.
 	
 	T = temperature in Kelvin.
@@ -394,24 +482,24 @@ def planckianCT2xyY(T):
 			 -  5.87338670 * math.pow(x, 2)
 			 +  3.75112997 * x
 			 -  0.37001483)
-	return x, y, 1.0
+	return x, y, scale
 
 
-def xyY2CCT(x, y, Y):
+def xyY2CCT(x, y, Y=1.0):
 	""" Convert from xyY to correlated color temperature. """
 	return XYZ2CCT(*xyY2XYZ(x, y, Y))
 
 
-def xyY2XYZ(x, y, Y):
+def xyY2XYZ(x, y, Y=1.0):
 	"""
 	Convert from xyY to XYZ.
 	
-	Formula from brucelindbloom.com
+	Based on formula from http://brucelindbloom.com/Eqn_xyY_to_XYZ.html
 	
 	Implementation Notes:
 	1. Watch out for the case where y = 0. In that case, X = Y = Z = 0 is 
 	   returned.
-	2. The output XYZ values are in the nominal range [0.0, 1.0].
+	2. The output XYZ values are in the nominal range [0.0, Y[xyY]].
 	
 	"""
 	if y == 0:
@@ -435,7 +523,8 @@ def XYZ2CCT(X, Y, Z):
 	"""
 	Convert from XYZ to correlated color temperature.
 	
-	Derived from ANSI C implementation by Bruce Lindbloom brucelindbloom.com
+	Derived from ANSI C implementation by Bruce Lindbloom
+	http://brucelindbloom.com/Eqn_XYZ_to_T.html
 	
 	Return: correlated color temperature if successful, else None.
 	
@@ -515,51 +604,24 @@ def XYZ2CCT(X, Y, Z):
 	return p
 
 
-def XYZ2Lab(X, Y, Z, Xr=None, Yr=None, Zr=None):
+def XYZ2Lab(X, Y, Z, whitepoint=None):
 	"""
-	based on formula from www.brucelindbloom.com
-	Xr, Yr, Zr = reference whitepoint -or- Xr = reference color temperature in 
-	Kelvin
+	Convert from XYZ to Lab.
+	
+	The input Y value needs to be in the nominal range [0.0, 100.0] and 
+	other input values scaled accordingly.
+	The output L value is in the nominal range [0.0, 100.0].
+	
+	whitepoint can be string (e.g. "D50"), a tuple of XYZ coordinates or 
+	color temperature as float or int. Defaults to D50 if not set.
+	
+	Based on formula from http://brucelindbloom.com/Eqn_XYZ_to_Lab.html
 	
 	"""
-	if Yr is None or Zr is None:
-		if Xr is None:
-			Xr = "D50"
-		if isinstance(Xr, basestring):
-			if Xr == "A":
-				Xr = 109.828
-				Zr = 35.547
-			elif Xr == "B":
-				Xr = 99.072
-				Zr = 85.223
-			elif Xr == "C":
-				Xr = 98.041
-				Zr = 118.103
-			elif Xr == "D55":
-				Xr = 95.642
-				Zr = 92.085
-			elif Xr == "D65":
-				Xr = 95.0467
-				Zr = 108.8969
-			elif Xr == "D75":
-				Xr = 94.939
-				Zr = 122.558
-			elif Xr == "E":
-				Xr = 100.0
-				Zr = 100.0
-			else:
-				Xr = 96.422
-				Zr = 82.521
-			Yr = 100.0
-		else:
-			xyY = CIEDCCT2xyY(Xr, true)
-			XYZ = xyY2XYZ(xyY[0], xyY[1], xyY[2])
-			Xr = XYZ[0]
-			Yr = XYZ[1]
-			Zr = XYZ[2]
+	Xr, Yr, Zr = get_whitepoint(whitepoint, 100)
 
-	E = 0.008856
-	K = 903.3
+	E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
+	K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
 	xr = X / Xr
 	yr = Y / Yr
 	zr = Z / Zr
@@ -573,11 +635,23 @@ def XYZ2Lab(X, Y, Z, Xr=None, Yr=None, Zr=None):
 	return L, a, b
 
 
-def XYZ2RGB(X, Y, Z, gamma=None, matrix=None):
+def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True):
 	"""
 	Convert from XYZ to RGB.
 	
-	Formula from brucelindbloom.com
+	Use optional RGB colorspace definition, which can be a named colorspace 
+	(e.g. "CIE RGB") or must be a tuple in the following format:
+	
+	(gamma, whitepoint, red, green, blue)
+	
+	whitepoint can be a string (e.g. "D50"), a tuple of XYZ coordinates,
+	or a color temperatur in degrees K (float or int). Gamma should be a float.
+	The RGB primaries red, green, blue should be lists or tuples of xyY 
+	coordinates (only x and y will be used, so Y can be zero or None).
+	
+	If no colorspace is given, it defaults to sRGB.
+	
+	Based on formula from http://brucelindbloom.com/Eqn_XYZ_to_RGB.html
 	
 	Implementation Notes:
 	1. The transformation matrix [M] is calculated from the RGB reference 
@@ -586,9 +660,7 @@ def XYZ2RGB(X, Y, Z, gamma=None, matrix=None):
 	2. gamma is the gamma value of the RGB color system used. Many common ones 
 	   may be found here:
 	   http://brucelindbloom.com/WorkingSpaceInfo.html#Specifications
-	3. The output RGB values are in the nominal range [0.0, 1.0]. You may wish 
-	   to scale them to some other range. For example, if you want RGB in the 
-	   range [0, 255], you must multiply each component by 255.0.
+	3. The output RGB values are in the nominal range [0.0, scale].
 	4. If the input XYZ color is not relative to the same reference white as 
 	   the RGB system, you must first apply a chromatic adaptation transform 
 	   [http://brucelindbloom.com/Eqn_ChromAdapt.html] to the XYZ color to 
@@ -599,55 +671,33 @@ def XYZ2RGB(X, Y, Z, gamma=None, matrix=None):
 	   gamma = 2.2.
 	
 	"""
-	if matrix is None: # default to sRGB matrix
-		matrix = (
-			( 3.24071,  -0.969258,   0.0556352),
-			(-1.53726,   1.87599,   -0.203996),
-			(-0.498571,  0.0415557,  1.05707)
-		)
-	R = X * matrix[0][0] + Y * matrix[1][0] + Z * matrix[2][0]
-	G = X * matrix[0][1] + Y * matrix[1][1] + Z * matrix[2][1]
-	B = X * matrix[0][2] + Y * matrix[1][2] + Z * matrix[2][2]
-	if gamma is None: # default to sRGB trc
-		if (R > 0.0031308):
-			R = 1.055 * math.pow(R, 1.0 / 2.4) - 0.055
-		else:
-			R = 12.92 * R
-		if (G > 0.0031308):
-			G = 1.055 * math.pow(G, 1.0 / 2.4) - 0.055
-		else:
-			G = 12.92 * G
-		if (B > 0.0031308):
-			B = 1.055 * math.pow(B, 1.0 / 2.4) - 0.055
-		else:
-			B = 12.92 * B
-	else:
-		R = math.pow(R, 1.0 / gamma)
-		G = math.pow(G, 1.0 / gamma)
-		B = math.pow(B, 1.0 / gamma)
-	R = max(0.0, R)
-	G = max(0.0, G)
-	B = max(0.0, B)
-	R = min(1.0, R)
-	G = min(1.0, G)
-	B = min(1.0, B)
-	return R, G, B
+	gamma, whitepoint, rxyY, gxyY, bxyY, matrix = get_rgb_space(rgb_space)
+	RGB = matrix.inverted() * [X, Y, Z]
+	for i, v in enumerate(RGB):
+		RGB[i] = specialpow(v, 1.0 / gamma)
+		if clamp:
+			RGB[i] = min(1.0, max(0.0, RGB[i]))
+		RGB[i] *= scale
+		if round_ is not False:
+			RGB[i] = round(RGB[i], round_)
+	return RGB
 
 
-def XYZ2xyY(X, Y, Z):
+def XYZ2xyY(X, Y, Z, whitepoint=None):
 	"""
 	Convert from XYZ to xyY.
 	
-	Formula from brucelindbloom.com
+	Based on formula from http://brucelindbloom.com/Eqn_XYZ_to_xyY.html
 	
 	Implementation Notes:
 	1. Watch out for black, where X = Y = Z = 0. In that case, x and y are set 
-	   to the chromaticity coordinates of D50.
-	2. The output Y value is in the nominal range [0.0, 1.0].
+	   to the chromaticity coordinates of the reference whitepoint.
+	2. The output Y value is in the nominal range [0.0, Y[XYZ]].
 	
 	"""
 	if X == Y == Z == 0:
-		return CIEDCCT2xyY(5000)[0:2] + (0, )
+		x, y, Y = XYZ2xyY(*get_whitepoint(whitepoint))
+		return x, y, 0.0
 	x = X / (X + Y + Z)
 	y = Y / (X + Y + Z)
 	return x, y, Y
@@ -669,7 +719,7 @@ class Matrix3x3(list):
 		for row in matrix:
 			if len(row) != 3:
 				raise ValueError('Invalid number of columns for 3x3 matrix: %i' % len(row))
-			self.append([]);
+			self.append([])
 			for column in row:
 				self[-1].append(column)
 	
@@ -759,7 +809,7 @@ class Matrix3x3(list):
 	def rounded(self, digits=3):
 		matrix = self.__class__()
 		for row in self:
-			matrix.append([]);
+			matrix.append([])
 			for column in row:
 				matrix[-1].append(round(column, digits))
 		return matrix
@@ -776,9 +826,9 @@ class Matrix3x3(list):
 
 
 # Chromatic adaption transform matrices
-# Bradford, von Kries from http://brucelindbloom.com/Eqn_ChromAdapt.html
+# Bradford, von Kries (= HPE normalized to D65) from http://brucelindbloom.com/Eqn_ChromAdapt.html
 # CAT02 from http://en.wikipedia.org/wiki/CIECAM02#CAT02
-# HPE, CAT97s from http://en.wikipedia.org/wiki/LMS_color_space#CAT97s
+# HPE normalized to illuminant E, CAT97s from http://en.wikipedia.org/wiki/LMS_color_space#CAT97s
 # CMCCAT97 from 'Performance Of Five Chromatic Adaptation Transforms Using 
 # Large Number Of Color Patches', http://hrcak.srce.hr/file/95370
 # CMCCAT2000, Sharp from 'Computational colour science using MATLAB'
@@ -816,9 +866,6 @@ cat_matrices = {"Bradford": Matrix3x3([[ 0.89510,  0.26640, -0.16140],
 				"HPE normalized to illuminant D65": Matrix3x3([[ 0.40024,  0.70760, -0.08081],
 										[-0.22630,  1.16532,  0.04570],
 										[ 0.00000,  0.00000,  0.91822]]),
-				"RLAB": Matrix3x3([[1.9569, -1.1882, 0.2313], 
-								   [0.3612, 0.6388, 0.0], 
-								   [0.0, 0.0, 1.0]]).inverted(),
 				"XYZ scaling": Matrix3x3([[1, 0, 0],
 										  [0, 1, 0],
 										  [0, 0, 1]])}
@@ -830,29 +877,28 @@ def test():
 			wp = "native"
 		elif i == 1:
 			wp = "D50"
-			XYZ = CIEDCCT2XYZ(wp)
+			XYZ = get_standard_illuminant(wp)
 		elif i == 2:
 			wp = "D65"
-			XYZ = CIEDCCT2XYZ(wp)
+			XYZ = get_standard_illuminant(wp)
 		elif i == 3:
-			XYZ = (0.95106486, 1.0, 1.08844025)
+			XYZ = get_standard_illuminant("D65", ("ASTM E308-01", ))
 			wp = " ".join([str(v) for v in XYZ])
 		print ("RGB and corresponding XYZ (nominal range 0.0 - 1.0) with "
 			   "whitepoint %s" % wp)
-		for name in rgbspaces:
-			spc = rgbspaces[name]
+		for name in rgb_spaces:
+			spc = rgb_spaces[name]
 			if i == 0:
 				XYZ = CIEDCCT2XYZ(spc[1])
-			mtx = matrix_rgb(spc[2], spc[3], spc[5], spc[6], spc[8], spc[9], 
-							 *XYZ)
+			spc = spc[0], XYZ, spc[2], spc[3], spc[4]
 			print "%s 1.0, 1.0, 1.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(1.0, 1.0, 1.0, spc[0], mtx)]
+				[str(round(v, 4)) for v in RGB2XYZ(1.0, 1.0, 1.0, spc)]
 			print "%s 1.0, 0.0, 0.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(1.0, 0.0, 0.0, spc[0], mtx)]
+				[str(round(v, 4)) for v in RGB2XYZ(1.0, 0.0, 0.0, spc)]
 			print "%s 0.0, 1.0, 0.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(0.0, 1.0, 0.0, spc[0], mtx)]
+				[str(round(v, 4)) for v in RGB2XYZ(0.0, 1.0, 0.0, spc)]
 			print "%s 0.0, 0.0, 1.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(0.0, 0.0, 1.0, spc[0], mtx)]
+				[str(round(v, 4)) for v in RGB2XYZ(0.0, 0.0, 1.0, spc)]
 		print ""
 
 if __name__ == '__main__':

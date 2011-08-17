@@ -64,20 +64,12 @@ jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_des
 		}
 	};
 	if (MA.constructor != jsapi.math.Matrix3x3) MA = new jsapi.math.Matrix3x3(MA);
-	var XYZWS = (whitepoint_source 
-					? (whitepoint_source.constructor == Array 
-						? whitepoint_source 
-						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint_source)) 
-					: [0.96422, 1, 0.82521]), // Observer= 2°, Illuminant= D50
+	var XYZWS = jsapi.math.color.get_whitepoint(whitepoint_source),
 		XWS = XYZWS[0], YWS = XYZWS[1], ZWS = XYZWS[2],
 		ps = XWS * MA[0][0] + YWS * MA[0][1] + ZWS * MA[0][2],
 		ys = XWS * MA[1][0] + YWS * MA[1][1] + ZWS * MA[1][2],
 		bs = XWS * MA[2][0] + YWS * MA[2][1] + ZWS * MA[2][2],
-		XYZWD = (whitepoint_destination 
-					? (whitepoint_destination.constructor == Array 
-						? whitepoint_destination 
-						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint_destination)) 
-					: [0.96422, 1, 0.82521]), // Observer= 2°, Illuminant= D50
+		XYZWD = jsapi.math.color.get_whitepoint(whitepoint_destination),
 		XWD = XYZWD[0], YWD = XYZWD[1], ZWD = XYZWD[2],
 		pd = XWD * MA[0][0] + YWD * MA[0][1] + ZWD * MA[0][2],
 		yd = XWD * MA[1][0] + YWD * MA[1][1] + ZWD * MA[1][2],
@@ -88,77 +80,184 @@ jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_des
 		ZD = XS * M[2][0] + YS * M[2][1] + ZS * M[2][2];
 	return [XD, YD, ZD];
 };
-jsapi.math.color.Lab2rgb = function (L, a, b, Lab_whitepoint, rgb_whitepoint) {
+jsapi.math.color.Lab2RGB = function (L, a, b, Lab_whitepoint, rgb_whitepoint, scale, round_) {
 	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, Lab_whitepoint);
-	return jsapi.math.color.XYZ2rgb(XYZ[0], XYZ[1], XYZ[2], rgb_whitepoint)
+	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], rgb_whitepoint, scale, round_)
 };
-jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint) {
+jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
 	// based on http://www.easyrgb.com/math.php?MATH=M8
 	// whitepoint can be a color temperature in Kelvin or an array containing XYZ values
-	var var_Y = ( L + 16 ) / 116;
-	var var_X = a / 500 + var_Y;
-	var var_Z = var_Y - b / 200;
+	if (!scale) scale = 1.0;
 	
-	if ( Math.pow(var_Y, 3) > 0.008856 ) var_Y = Math.pow(var_Y, 3);
-	else                      var_Y = ( var_Y - 16 / 116 ) / 7.787;
-	if ( Math.pow(var_X, 3) > 0.008856 ) var_X = Math.pow(var_X, 3);
-	else                      var_X = ( var_X - 16 / 116 ) / 7.787;
-	if ( Math.pow(var_Z, 3) > 0.008856 ) var_Z = Math.pow(var_Z, 3);
-	else                      var_Z = ( var_Z - 16 / 116 ) / 7.787;
+	var Y = ( L + 16 ) / 116,
+		X = a / 500 + Y,
+		Z = Y - b / 200;
 	
-	var ref_XYZ = (whitepoint 
-					? (whitepoint.constructor == Array 
-						? whitepoint 
-						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint, true)) 
-					: [96.422, 100, 82.521]), // Observer= 2°, Illuminant= D50
-	X = ref_XYZ[0] * var_X,
-	Y = ref_XYZ[1] * var_Y,
-	Z = ref_XYZ[2] * var_Z;
+	// Bruce Lindbloom's fix for the discontinuity of the CIE L* function
+	// (http://brucelindbloom.com/LContinuity.html)
+	var E = 216 / 24389,  // Intent of CIE standard, actual CIE standard = 0.008856
+		K = 24389 / 27;  // Intent of CIE standard, actual CIE standard = 903.3
+	// K / 116 is used instead of 7.787
+	
+	if ( Math.pow(Y, 3) > E ) Y = Math.pow(Y, 3);
+	else                      Y = ( Y - 16 / 116 ) / (K / 116);
+	if ( Math.pow(X, 3) > E ) X = Math.pow(X, 3);
+	else                      X = ( X - 16 / 116 ) / (K / 116);
+	if ( Math.pow(Z, 3) > E ) Z = Math.pow(Z, 3);
+	else                      Z = ( Z - 16 / 116 ) / (K / 116);
+	
+	var ref_XYZ = jsapi.math.color.get_whitepoint(whitepoint, scale);
+	X *= ref_XYZ[0];
+	Y *= ref_XYZ[1];
+	Z *= ref_XYZ[2];
 	
 	return [X, Y, Z]
 };
-jsapi.math.color.XYZ2rgb = function (X, Y, Z, whitepoint) {
-	var var_X = X / 100;
-	var var_Y = Y / 100;
-	var var_Z = Z / 100;
+jsapi.math.color.XYZ2RGB = function (X, Y, Z, whitepoint, scale, round_) {
+	if (!scale) scale = 1.0;
 	
-	var xr = 0.6400, yr = 0.3300, // sRGB red primary
-		xg = 0.3000, yg = 0.6000, // sRGB green primary
-		xb = 0.1500, yb = 0.0600, // sRGB blue primary
-		XYZw = (whitepoint 
-					? (whitepoint.constructor == Array 
-						? whitepoint 
-						: jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint, true)) 
-					: [95.047, 100, 108.883]), // Observer= 2°, Illuminant= D65
-		Xw = XYZw[0] / 100, 
-		Yw = XYZw[1] / 100, 
-		Zw = XYZw[2] / 100,
-		matrix = jsapi.math.color.matrix_rgb(xr, yr, xg, yg, xb, yb, Xw, Yw, Zw).invert();
-	
-	var var_R = var_X * matrix[0][0] + var_Y * matrix[1][0] + var_Z * matrix[2][0];
-	var var_G = var_X * matrix[0][1] + var_Y * matrix[1][1] + var_Z * matrix[2][1];
-	var var_B = var_X * matrix[0][2] + var_Y * matrix[1][2] + var_Z * matrix[2][2];
+	var matrix = jsapi.math.color.matrix_rgb(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, whitepoint || "D65", 1.0, true), // sRGB
+		R = X * matrix[0][0] + Y * matrix[1][0] + Z * matrix[2][0],
+		G = X * matrix[0][1] + Y * matrix[1][1] + Z * matrix[2][1],
+		B = X * matrix[0][2] + Y * matrix[1][2] + Z * matrix[2][2];
 		
-	if (var_R > 0.0031308) {
-		var_R = 1.055 * Math.pow(var_R, 0.4166666666666667) - 0.055;
+	if (R > 0.0031308) {
+		R = 1.055 * Math.pow(R, 1 / 2.4) - 0.055;
 	} else {
-		var_R = 12.92 * var_R;
+		R *= 12.92;
 	}
-	if (var_G > 0.0031308) {
-		var_G = 1.055 * Math.pow(var_G, 0.4166666666666667) - 0.055;
+	if (G > 0.0031308) {
+		G = 1.055 * Math.pow(G, 1 / 2.4) - 0.055;
 	} else {
-		var_G = 12.92 * var_G;
+		G *= 12.92;
 	}
-	if (var_B > 0.0031308) {
-		var_B = 1.055 * Math.pow(var_B, 0.4166666666666667) - 0.055;
+	if (B > 0.0031308) {
+		B = 1.055 * Math.pow(B, 1 / 2.4) - 0.055;
 	} else {
-		var_B = 12.92 * var_B;
+		B *= 12.92;
 	}
-	var R, G, B;
-	R = Math.max(0, Math.round(var_R * 255));
-	G = Math.max(0, Math.round(var_G * 255));
-	B = Math.max(0, Math.round(var_B * 255));
+	R = Math.min(1.0, Math.max(0, R)) * scale;
+	G = Math.min(1.0, Math.max(0, G)) * scale;
+	B = Math.min(1.0, Math.max(0, B)) * scale;
+	if (round_) {
+		R = Math.round(R);
+		G = Math.round(G);
+		B = Math.round(B);
+	}
 	return [R, G, B];
+};
+jsapi.math.color.CIEDCorColorTemp2XYZ = function(T, scale) {
+	var xyY = jsapi.math.color.CIEDCorColorTemp2xyY(T, scale);
+	return jsapi.math.color.xyY2XYZ(xyY[0], xyY[1], xyY[2]);
+};
+jsapi.math.color.CIEDCorColorTemp2xyY = function(T, scale) {
+	// Based on formula from http://brucelindbloom.com/Eqn_T_to_xy.html
+	if (!scale) scale = 1.0;
+	if (typeof T == "string") {
+		// Assume standard illuminant, e.g. "D50"
+		var illuminant = jsapi.math.color.get_standard_illuminant(T, null, scale);
+		return XYZ2xyY(illuminant[0], illuminant[1], illuminant[2]);
+	}
+	var xD = 4000 <= T && T <= 7000
+		? ((-4.607 * Math.pow(10, 9)) / Math.pow(T, 3))
+			+ ((2.9678 * Math.pow(10, 6)) / Math.pow(T, 2))
+			+ ((0.09911 * Math.pow(10, 3)) / T)
+			+ 0.244063
+		: (7000 < T && T <= 25000 
+			? ((-2.0064 * Math.pow(10, 9)) / Math.pow(T, 3))
+						+ ((1.9018 * Math.pow(10, 6)) / Math.pow(T, 2))
+						+ ((0.24748 * Math.pow(10, 3)) / T)
+						+ 0.237040
+			: null),
+		yD = xD != null ? -3 * Math.pow(xD, 2) + 2.87 * xD - 0.275 : null;
+	return xD == null ? null : [xD, yD, scale];
+};
+jsapi.math.color.CMYK2RGB = function(C, M, Y, K, scale, round_) {
+	// http://www.easyrgb.com/math.php?MATH=M14
+	if (!scale) scale = 1.0;
+	C = ( C * ( 1 - K ) + K );
+	M = ( M * ( 1 - K ) + K );
+	Y = ( Y * ( 1 - K ) + K );
+	// http://www.easyrgb.com/math.php?MATH=M12
+	var R, G, B;
+	R = ( 1 - C ) * scale;
+	G = ( 1 - M ) * scale;
+	B = ( 1 - Y ) * scale;
+	if (round_) {
+		R = Math.round(R);
+		G = Math.round(G);
+		B = Math.round(B);
+	}
+	return [R, G, B];
+};
+jsapi.math.color.XYZ2Lab = function(X, Y, Z, whitepoint) {
+	/*
+	Convert from XYZ to Lab.
+	
+	The input Y value needs to be in the nominal range [0.0, 100.0] and 
+	other input values scaled accordingly.
+	The output L value is in the nominal range [0.0, 100.0].
+	
+	whitepoint can be string (e.g. "D50"), list/tuple of XYZ coordinates or 
+	color temperature as float or int. Defaults to D50 if not set.
+	
+	Based on formula from http://brucelindbloom.com/Eqn_XYZ_to_Lab.html
+	
+	*/
+	whitepoint = jsapi.math.color.get_whitepoint(whitepoint, 100);
+
+	var E = 216 / 24389,  // Intent of CIE standard, actual CIE standard = 0.008856
+		K = 24389 / 27,  // Intent of CIE standard, actual CIE standard = 903.3
+		xr = X / whitepoint[0],
+		yr = Y / whitepoint[1],
+		zr = Z / whitepoint[2],
+		fx = xr > E ? jsapi.math.cbrt(xr) : (K * xr + 16) / 116,
+		fy = yr > E ? jsapi.math.cbrt(yr) : (K * yr + 16) / 116,
+		fz = zr > E ? jsapi.math.cbrt(zr) : (K * zr + 16) / 116,
+		L = 116 * fy - 16,
+		a = 500 * (fx - fy),
+		b = 200 * (fy - fz);
+
+	return [L, a, b];
+};
+jsapi.math.color.xyY2XYZ = function(x, y, Y) {
+	/*
+	Convert from xyY to XYZ.
+	
+	Based on formula from http://brucelindbloom.com/Eqn_xyY_to_XYZ.html
+	
+	Implementation Notes:
+	1. Watch out for the case where y = 0. In that case, X = Y = Z = 0 is 
+	   returned.
+	2. The output XYZ values are in the nominal range [0.0, Y[xyY]].
+	
+	*/
+	if (y == 0) return [0, 0, 0];
+	if (Y == null) Y = 1.0;
+	var X = (x * Y) / y,
+		Z = (1 - x - y) * Y / y;
+	return [X, Y, Z];
+};
+jsapi.math.color.XYZ2xyY = function (X, Y, Z, whitepoint) {
+	/*
+	Convert from XYZ to xyY.
+	
+	Based on formula from http://brucelindbloom.com/Eqn_XYZ_to_xyY.html
+	
+	Implementation Notes:
+	1. Watch out for black, where X = Y = Z = 0. In that case, x and y are set 
+	   to the chromaticity coordinates of the reference whitepoint.
+	2. The output Y value is in the nominal range [0.0, Y[XYZ]].
+	
+	*/
+	if (X == Y && Y == Z && Z == 0) {
+		whitepoint = jsapi.math.color.get_whitepoint(whitepoint);
+		var xyY = XYZ2xyY(whitepoint[0], whitepoint[1], whitepoint[2]);
+		return [xyY[0], xyY[1], 0.0];
+	}
+	var x = X / (X + Y + Z),
+		y = Y / (X + Y + Z);
+	return [x, y, Y];
 };
 jsapi.math.color.planckianCT2XYZ = function(T) {
 	var xyY = jsapi.math.color.planckianCT2xyY(T);
@@ -201,24 +300,94 @@ jsapi.math.color.planckianCT2xyY = function (T) {
 			 -  0.37001483);
 	return [x, y, 1.0]
 };
-jsapi.math.color.matrix_rgb = function (xr, yr, xg, yg, xb, yb, Xw, Yw, Zw) {
+jsapi.math.color.matrix_rgb = function (xr, yr, xg, yg, xb, yb, whitepoint, scale, invert) {
 	// Create and return an RGB matrix
-	var XYZr = jsapi.math.color.xyY2XYZ(xr, yr, 1.0),
-		XYZg = jsapi.math.color.xyY2XYZ(xg, yg, 1.0),
-		XYZb = jsapi.math.color.xyY2XYZ(xb, yb, 1.0),
+	if (!scale) scale = 1.0;
+	cachehash = [xr, yr, xg, yg, xb, yb, whitepoint, scale, invert].join(",");
+	if (jsapi.math.color.matrix_rgb.cache[cachehash])
+		return jsapi.math.color.matrix_rgb.cache[cachehash];
+	whitepoint = jsapi.math.color.get_whitepoint(whitepoint, scale);
+	var XYZr = jsapi.math.color.xyY2XYZ(xr, yr, scale),
+		XYZg = jsapi.math.color.xyY2XYZ(xg, yg, scale),
+		XYZb = jsapi.math.color.xyY2XYZ(xb, yb, scale),
 		Xr = XYZr[0], Yr = XYZr[1], Zr = XYZr[2],
 		Xg = XYZg[0], Yg = XYZg[1], Zg = XYZg[2],
 		Xb = XYZb[0], Yb = XYZb[1], Zb = XYZb[2],
 		mtx = new jsapi.math.Matrix3x3([[Xr, Yr, Zr],
 										 [Xg, Yg, Zg],
 										 [Xb, Yb, Zb]]).invert(),
-		Sr = Xw * mtx[0][0] + Yw * mtx[1][0] + Zw * mtx[2][0],
-		Sg = Xw * mtx[0][1] + Yw * mtx[1][1] + Zw * mtx[2][1],
-		Sb = Xw * mtx[0][2] + Yw * mtx[1][2] + Zw * mtx[2][2];
-	return new jsapi.math.Matrix3x3([[Sr * Xr, Sr * Yr, Sr * Zr],
-									  [Sg * Xg, Sg * Yg, Sg * Zg],
-									  [Sb * Xb, Sb * Yb, Sb * Zb]]);
+		Sr = whitepoint[0] * mtx[0][0] + whitepoint[1] * mtx[1][0] + whitepoint[2] * mtx[2][0],
+		Sg = whitepoint[0] * mtx[0][1] + whitepoint[1] * mtx[1][1] + whitepoint[2] * mtx[2][1],
+		Sb = whitepoint[0] * mtx[0][2] + whitepoint[1] * mtx[1][2] + whitepoint[2] * mtx[2][2];
+	mtx = new jsapi.math.Matrix3x3([[Sr * Xr, Sr * Yr, Sr * Zr],
+									[Sg * Xg, Sg * Yg, Sg * Zg],
+									[Sb * Xb, Sb * Yb, Sb * Zb]]);
+	if (invert) mtx = mtx.invert();
+	return jsapi.math.color.matrix_rgb.cache[cachehash] = mtx;
 };
+jsapi.math.color.matrix_rgb.cache = {};
+jsapi.math.color.standard_illuminants = {
+	// 1st level is the standard name => illuminant definitions
+	// 2nd level is the illuminant name => CIE XYZ coordinates
+	// (Y should always assumed to be 1.0 and is not explicitly defined)
+	null: {"E": {"X": 1.00000, "Z": 1.00000}},
+	"ASTM E308-01": {"A": {"X": 1.09850, "Z": 0.35585},
+					 "C": {"X": 0.98074, "Z": 1.18232},
+					 "D50": {"X": 0.96422, "Z": 0.82521},
+					 "D55": {"X": 0.95682, "Z": 0.92149},
+					 "D65": {"X": 0.95047, "Z": 1.08883},
+					 "D75": {"X": 0.94972, "Z": 1.22638},
+					 "F2": {"X": 0.99186, "Z": 0.67393},
+					 "F7": {"X": 0.95041, "Z": 1.08747},
+					 "F11": {"X": 1.00962, "Z": 0.64350}},
+	"ICC": {"D50": {"X": 0.9642, "Z": 0.8249},
+			"D65": {"X": 0.9505, "Z": 1.0890}},
+	"Wyszecki & Stiles": {"A": {"X": 1.09828, "Z": 0.35547},
+						   "B": {"X": 0.99072, "Z": 0.85223},
+						   "C": {"X": 0.98041, "Z": 1.18103},
+						   "D55": {"X": 0.95642, "Z": 0.92085},
+						   "D65": {"X": 0.95017, "Z": 1.08813},
+						   "D75": {"X": 0.94939, "Z": 1.22558}}
+};
+jsapi.math.color.get_standard_illuminant = function (illuminant_name, priority, scale) {
+	if (!priority) priority = [null, "ICC", "ASTM E308-01"];
+	if (!scale) scale = 1.0;
+	cachehash = [illuminant_name, priority, scale].join(",");
+	if (jsapi.math.color.get_standard_illuminant.cache[cachehash])
+		return jsapi.math.color.get_standard_illuminant.cache[cachehash];
+	var illuminant = null;
+	for (var i = 0; i < priority.length; i ++) {
+		if (!jsapi.math.color.standard_illuminants[priority[i]])
+			throw 'Unrecognized standard "' + priority[i] + '"';
+		illuminant = jsapi.math.color.standard_illuminants[priority[i]][illuminant_name.toUpperCase()];
+		if (illuminant)
+			return jsapi.math.color.get_standard_illuminant.cache[cachehash] = [illuminant["X"] * scale, 1.0 * scale, illuminant["Z"] * scale];
+	}
+	throw 'Unrecognized illuminant "' + illuminant_name + '"';
+};
+jsapi.math.color.get_standard_illuminant.cache = {};
+jsapi.math.color.get_whitepoint = function (whitepoint, scale) {
+	// Return a whitepoint as XYZ coordinates
+	if (whitepoint && whitepoint.constructor == Array)
+		return whitepoint;
+	if (!scale) scale = 1.0;
+	if (!whitepoint)
+		whitepoint = "D50";
+	cachehash = [whitepoint, scale].join(",");
+	if (jsapi.math.color.get_whitepoint.cache[cachehash])
+		return jsapi.math.color.get_whitepoint.cache[cachehash];
+	if (typeof whitepoint == "string")
+		whitepoint = jsapi.math.color.get_standard_illuminant(whitepoint);
+	else if (typeof whitepoint == "number")
+		whitepoint = jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint);
+	if (scale > 1.0 && whitepoint[1] == 100)
+		scale = 1.0;
+	if (whitepoint[1] * scale > 100)
+		throw "Y value out of range after scaling: " + (whitepoint[1] * scale);
+	return jsapi.math.color.get_whitepoint.cache[cachehash] =
+		   [whitepoint[0] * scale, whitepoint[1] * scale, whitepoint[2] * scale];
+};
+jsapi.math.color.get_whitepoint.cache = {};
 jsapi.math.Matrix3x3 = function (matrix) {
 	for (var i=0; i<matrix.length; i++) {
 		this[i] = [];
