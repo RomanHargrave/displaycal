@@ -8,11 +8,11 @@ import sys
 
 import CGATS
 import ICCProfile as ICCP
+import colormath
 import config
 import localization as lang
-from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ
+from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ, XYZ2RGB as argyll_XYZ2RGB
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
-from colormath import XYZ2RGB
 from config import (btn_width_correction, defaults, getcfg, geticon, 
 					get_bitmap_as_icon, get_data_path, get_total_patches, 
 					get_verified_path, hascfg, setcfg, writecfg)
@@ -360,22 +360,29 @@ class TestchartEditor(wx.Frame):
 		row, col = event.GetRow(), event.GetCol()
 		if col == -1: # row label clicked
 			self.grid.InsertRows(row + 1, 1)
-			data = {
+			data = self.ti1.queryv1("DATA")
+			wp = self.ti1.queryv1("APPROX_WHITE_POINT")
+			if wp:
+				wp = [float(v) for v in wp.split()]
+				wp = [CGATS.rpad((v / wp[1]) * 100.0, data.vmaxlen) for v in wp]
+			else:
+				wp = colormath.get_standard_illuminant("D65", scale=100)
+			newdata = {
 				"SAMPLE_ID": row + 2,
 				"RGB_R": 100.0,
 				"RGB_B": 100.0,
 				"RGB_G": 100.0,
-				"XYZ_X": 95.0543,
+				"XYZ_X": wp[0],
 				"XYZ_Y": 100,
-				"XYZ_Z": 108.9303
+				"XYZ_Z": wp[2]
 			}
-			self.ti1.queryv1("DATA").add_data(data, row + 1)
+			data.add_data(newdata, row + 1)
 			self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
 			self.tc_set_default_status()
 			for label in ("RGB_R", "RGB_G", "RGB_B"):
 				for col in range(self.grid.GetNumberCols()):
 					if self.grid.GetColLabelValue(col) == label:
-						self.grid.SetCellValue(row + 1, col, str(round(data[label], 4)))
+						self.grid.SetCellValue(row + 1, col, str(round(float(newdata[label]), 4)))
 			self.tc_grid_setcolorlabel(row + 1)
 			self.tc_vrml_device.SetValue(False)
 			self.tc_vrml_lab.SetValue(False)
@@ -383,7 +390,7 @@ class TestchartEditor(wx.Frame):
 			self.tc_save_check()
 			if hasattr(self, "preview"):
 				self.preview.Freeze()
-				self.tc_add_patch(row + 1, self.ti1.queryv1("DATA")[row + 1])
+				self.tc_add_patch(row + 1, data[row + 1])
 				self.preview.Layout()
 				self.preview.FitInside()
 				self.preview.Thaw()
@@ -561,7 +568,8 @@ class TestchartEditor(wx.Frame):
 			event.Skip()
 
 	def tc_grid_cell_change_handler(self, event):
-		sample = self.ti1.queryv1("DATA")[event.GetRow()]
+		data = self.ti1.queryv1("DATA")
+		sample = data[event.GetRow()]
 		label = self.grid.GetColLabelValue(event.GetCol())
 		value = self.grid.GetCellValue(event.GetRow(), event.GetCol()).replace(",", ".")
 		try:
@@ -578,18 +586,33 @@ class TestchartEditor(wx.Frame):
 				elif value < 0:
 					value = 0.0
 				sample[label] = value
-				RGB = argyll_RGB2XYZ(*[component / 100.0 for component in (sample["RGB_R"], sample["RGB_G"], sample["RGB_B"])])
-				sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"] = [component * 100.0 for component in RGB]
+				# If the same RGB combo is already in the ti1, use its XYZ
+				# TODO: Implement proper lookup when using precond profile
+				ref = data.queryi({"RGB_R": sample["RGB_R"],
+								   "RGB_G": sample["RGB_G"],
+								   "RGB_B": sample["RGB_B"]})
+				if ref:
+					for i in ref:
+						if ref[i] != sample:
+							ref = ref[i]
+							break
+				if "XYZ_X" in ref:
+					XYZ = [component / 100.0 for component in (ref["XYZ_X"], ref["XYZ_Y"], ref["XYZ_Z"])]
+				else:
+					# Fall back to default D65-ish values
+					XYZ = argyll_RGB2XYZ(*[component / 100.0 for component in (sample["RGB_R"], sample["RGB_G"], sample["RGB_B"])])
+				sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"] = [component * 100.0 for component in XYZ]
 				for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
 					for col in range(self.grid.GetNumberCols()):
 						if self.grid.GetColLabelValue(col) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
 			elif label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
+				# FIXME: Should this be removed? There are no XYZ fields in the editor 
 				if value < 0:
 					value = 0.0
 				sample[label] = value
-				XYZ = XYZ2RGB(*[component / 100.0 for component in (sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"])])
-				sample["RGB_R"], sample["RGB_G"], sample["RGB_B"] = [component * 100.0 for component in XYZ]
+				RGB = argyll_XYZ2RGB(*[component / 100.0 for component in (sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"])])
+				sample["RGB_R"], sample["RGB_G"], sample["RGB_B"] = [component * 100.0 for component in RGB]
 				for label in ("RGB_R", "RGB_G", "RGB_B"):
 					for col in range(self.grid.GetNumberCols()):
 						if self.grid.GetColLabelValue(col) == label:

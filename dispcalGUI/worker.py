@@ -2715,6 +2715,12 @@ class Worker():
 			# averaged
 			white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
 			white = dict(white_rgb)
+			wp = ti1.queryv1("APPROX_WHITE_POINT")
+			if wp:
+				wp = [float(v) for v in wp.split()]
+				wp = [CGATS.rpad((v / wp[1]) * 100.0, data.vmaxlen) for v in wp]
+			else:
+				wp = colormath.get_standard_illuminant("D65", scale=100)
 			for label in data.parent.DATA_FORMAT.values():
 				if not label in white:
 					if label.upper() == 'LAB_L':
@@ -2722,11 +2728,11 @@ class Worker():
 					elif label.upper() in ('LAB_A', 'LAB_B'):
 						value = 0
 					elif label.upper() == 'XYZ_X':
-						value = 95.1065
+						value = wp[0]
 					elif label.upper() == 'XYZ_Y':
 						value = 100
 					elif label.upper() == 'XYZ_Z':
-						value = 108.844
+						value = wp[2]
 					else:
 						value = '0'
 					white.update({label: value})
