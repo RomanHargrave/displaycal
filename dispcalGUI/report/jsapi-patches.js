@@ -41,48 +41,43 @@ jsapi.math.variance = function () {
 jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_destination, MA) {
 	// chromatic adaption
 	// based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
-	// MA = adaption matrix or predefined choice ('bradford', 'vonkries' or 'xyzscaling'),
-	// defaults to 'bradford'
-	if (!MA) MA = 'bradford';
+	// MA = adaption matrix or predefined choice ('CAT02', 'Bradford', 'HPE D65', 'XYZ scaling'),
+	// defaults to 'Bradford'
+	if (!MA) MA = 'Bradford';
 	if (typeof MA == 'string') {
-		switch (MA.toLowerCase()) {
-			case 'xyzscaling':
+		switch (MA) {
+			case 'XYZ scaling':
 				MA = [[1, 0, 0],
 					  [0, 1, 0],
 					  [0, 0, 1]];
 				break;
-			case 'vonkries':
-				MA = [[0.4002400,  0.7076000, -0.0808100],
-					  [-0.2263000,  1.1653200,  0.0457000],
-					  [0.0000000,  0.0000000,  0.9182200]];
+			case 'HPE D65':
+				MA = [[ 0.40024,  0.70760, -0.08081],
+					  [-0.22630,  1.16532,  0.04570],
+					  [ 0.00000,  0.00000,  0.91822]];
 				break;
-			case 'bradford':
+			case 'CAT02':
+				MA = [[ 0.7328,  0.4296, -0.1624],
+					  [-0.7036,  1.6975,  0.0061],
+					  [ 0.0030,  0.0136,  0.9834]];
+				break;
+			case 'Bradford':
 			default:
-				MA = [[0.8951000,  0.2664000, -0.1614000],
-					  [-0.7502000,  1.7135000,  0.0367000],
-					  [0.0389000, -0.0685000,  1.0296000]];
+				MA = [[ 0.8951,  0.2664, -0.1614],
+					  [-0.7502,  1.7135,  0.0367],
+					  [ 0.0389, -0.0685,  1.0296]];
 		}
 	};
 	if (MA.constructor != jsapi.math.Matrix3x3) MA = new jsapi.math.Matrix3x3(MA);
 	var XYZWS = jsapi.math.color.get_whitepoint(whitepoint_source),
-		XWS = XYZWS[0], YWS = XYZWS[1], ZWS = XYZWS[2],
-		ps = XWS * MA[0][0] + YWS * MA[0][1] + ZWS * MA[0][2],
-		ys = XWS * MA[1][0] + YWS * MA[1][1] + ZWS * MA[1][2],
-		bs = XWS * MA[2][0] + YWS * MA[2][1] + ZWS * MA[2][2],
+		pybs = MA.multiply(XYZWS),
 		XYZWD = jsapi.math.color.get_whitepoint(whitepoint_destination),
-		XWD = XYZWD[0], YWD = XYZWD[1], ZWD = XYZWD[2],
-		pd = XWD * MA[0][0] + YWD * MA[0][1] + ZWD * MA[0][2],
-		yd = XWD * MA[1][0] + YWD * MA[1][1] + ZWD * MA[1][2],
-		bd = XWD * MA[2][0] + YWD * MA[2][1] + ZWD * MA[2][2],
-		M = MA.invert().multiply([[pd/ps, 0, 0], [0, yd/ys, 0], [0, 0, bd/bs]]).multiply(MA),
-		XD = XS * M[0][0] + YS * M[0][1] + ZS * M[0][2],
-		YD = XS * M[1][0] + YS * M[1][1] + ZS * M[1][2],
-		ZD = XS * M[2][0] + YS * M[2][1] + ZS * M[2][2];
-	return [XD, YD, ZD];
+		pybd = MA.multiply(XYZWD);
+	return MA.invert().multiply([[pybd[0]/pybs[0], 0, 0], [0, pybd[1]/pybs[1], 0], [0, 0, pybd[2]/pybs[2]]]).multiply(MA).multiply([XS, YS, ZS]);
 };
-jsapi.math.color.Lab2RGB = function (L, a, b, Lab_whitepoint, rgb_whitepoint, scale, round_) {
-	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, Lab_whitepoint);
-	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], rgb_whitepoint, scale, round_)
+jsapi.math.color.Lab2RGB = function (L, a, b, whitepoint, scale, round_) {
+	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, whitepoint || "D50");
+	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], whitepoint || "D50", scale, round_)
 };
 jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
 	// based on http://www.easyrgb.com/math.php?MATH=M8
@@ -116,35 +111,18 @@ jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
 jsapi.math.color.XYZ2RGB = function (X, Y, Z, whitepoint, scale, round_) {
 	if (!scale) scale = 1.0;
 	
-	var matrix = jsapi.math.color.matrix_rgb(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, whitepoint || "D65", 1.0, true), // sRGB
-		R = X * matrix[0][0] + Y * matrix[1][0] + Z * matrix[2][0],
-		G = X * matrix[0][1] + Y * matrix[1][1] + Z * matrix[2][1],
-		B = X * matrix[0][2] + Y * matrix[1][2] + Z * matrix[2][2];
-		
-	if (R > 0.0031308) {
-		R = 1.055 * Math.pow(R, 1 / 2.4) - 0.055;
-	} else {
-		R *= 12.92;
+	var RGB = jsapi.math.color.xyz_to_rgb_matrix(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, whitepoint || "D65", 1.0).multiply([X, Y, Z]); // sRGB
+	
+	for (var i = 0; i < 3; i ++) {
+		if (RGB[i] > 0.0031308) {
+			RGB[i] = 1.055 * Math.pow(RGB[i], 1 / 2.4) - 0.055;
+		} else {
+			RGB[i] *= 12.92;
+		}
+		RGB[i] = Math.min(1.0, Math.max(0, RGB[i])) * scale;
+		if (round_) RGB[i] = Math.round(RGB[i]);
 	}
-	if (G > 0.0031308) {
-		G = 1.055 * Math.pow(G, 1 / 2.4) - 0.055;
-	} else {
-		G *= 12.92;
-	}
-	if (B > 0.0031308) {
-		B = 1.055 * Math.pow(B, 1 / 2.4) - 0.055;
-	} else {
-		B *= 12.92;
-	}
-	R = Math.min(1.0, Math.max(0, R)) * scale;
-	G = Math.min(1.0, Math.max(0, G)) * scale;
-	B = Math.min(1.0, Math.max(0, B)) * scale;
-	if (round_) {
-		R = Math.round(R);
-		G = Math.round(G);
-		B = Math.round(B);
-	}
-	return [R, G, B];
+	return RGB;
 };
 jsapi.math.color.CIEDCorColorTemp2XYZ = function(T, scale) {
 	var xyY = jsapi.math.color.CIEDCorColorTemp2xyY(T, scale);
@@ -300,32 +278,25 @@ jsapi.math.color.planckianCT2xyY = function (T) {
 			 -  0.37001483);
 	return [x, y, 1.0]
 };
-jsapi.math.color.matrix_rgb = function (xr, yr, xg, yg, xb, yb, whitepoint, scale, invert) {
-	// Create and return an RGB matrix
+jsapi.math.color.xyz_to_rgb_matrix = function (xr, yr, xg, yg, xb, yb, whitepoint, scale) {
+	// Create and return an XYZ to RGB matrix
 	if (!scale) scale = 1.0;
-	cachehash = [xr, yr, xg, yg, xb, yb, whitepoint, scale, invert].join(",");
-	if (jsapi.math.color.matrix_rgb.cache[cachehash])
-		return jsapi.math.color.matrix_rgb.cache[cachehash];
+	var cachehash = [xr, yr, xg, yg, xb, yb, whitepoint, scale].join(","),
+		cache = jsapi.math.color.xyz_to_rgb_matrix.cache[cachehash];
+	if (cache) return cache;
 	whitepoint = jsapi.math.color.get_whitepoint(whitepoint, scale);
 	var XYZr = jsapi.math.color.xyY2XYZ(xr, yr, scale),
 		XYZg = jsapi.math.color.xyY2XYZ(xg, yg, scale),
 		XYZb = jsapi.math.color.xyY2XYZ(xb, yb, scale),
-		Xr = XYZr[0], Yr = XYZr[1], Zr = XYZr[2],
-		Xg = XYZg[0], Yg = XYZg[1], Zg = XYZg[2],
-		Xb = XYZb[0], Yb = XYZb[1], Zb = XYZb[2],
-		mtx = new jsapi.math.Matrix3x3([[Xr, Yr, Zr],
-										 [Xg, Yg, Zg],
-										 [Xb, Yb, Zb]]).invert(),
-		Sr = whitepoint[0] * mtx[0][0] + whitepoint[1] * mtx[1][0] + whitepoint[2] * mtx[2][0],
-		Sg = whitepoint[0] * mtx[0][1] + whitepoint[1] * mtx[1][1] + whitepoint[2] * mtx[2][1],
-		Sb = whitepoint[0] * mtx[0][2] + whitepoint[1] * mtx[1][2] + whitepoint[2] * mtx[2][2];
-	mtx = new jsapi.math.Matrix3x3([[Sr * Xr, Sr * Yr, Sr * Zr],
-									[Sg * Xg, Sg * Yg, Sg * Zg],
-									[Sb * Xb, Sb * Yb, Sb * Zb]]);
-	if (invert) mtx = mtx.invert();
-	return jsapi.math.color.matrix_rgb.cache[cachehash] = mtx;
+		SrSgSb = new jsapi.math.Matrix3x3([[XYZr[0], XYZg[0], XYZb[0]],
+										   [XYZr[1], XYZg[1], XYZb[1]],
+										   [XYZr[2], XYZg[2], XYZb[2]]]).invert().multiply(whitepoint);
+	return jsapi.math.color.xyz_to_rgb_matrix.cache[cachehash] = 
+		   new jsapi.math.Matrix3x3([[SrSgSb[0] * XYZr[0], SrSgSb[1] * XYZg[0], SrSgSb[2] * XYZb[0]],
+									 [SrSgSb[0] * XYZr[1], SrSgSb[1] * XYZg[1], SrSgSb[2] * XYZb[1]],
+									 [SrSgSb[0] * XYZr[2], SrSgSb[1] * XYZg[2], SrSgSb[2] * XYZb[2]]]).invert();
 };
-jsapi.math.color.matrix_rgb.cache = {};
+jsapi.math.color.xyz_to_rgb_matrix.cache = {};
 jsapi.math.color.standard_illuminants = {
 	// 1st level is the standard name => illuminant definitions
 	// 2nd level is the illuminant name => CIE XYZ coordinates
@@ -352,9 +323,9 @@ jsapi.math.color.standard_illuminants = {
 jsapi.math.color.get_standard_illuminant = function (illuminant_name, priority, scale) {
 	if (!priority) priority = [null, "ICC", "ASTM E308-01"];
 	if (!scale) scale = 1.0;
-	cachehash = [illuminant_name, priority, scale].join(",");
-	if (jsapi.math.color.get_standard_illuminant.cache[cachehash])
-		return jsapi.math.color.get_standard_illuminant.cache[cachehash];
+	var cachehash = [illuminant_name, priority, scale].join(","),
+		cache = jsapi.math.color.get_standard_illuminant.cache[cachehash];
+	if (cache) return cache;
 	var illuminant = null;
 	for (var i = 0; i < priority.length; i ++) {
 		if (!jsapi.math.color.standard_illuminants[priority[i]])
@@ -373,9 +344,9 @@ jsapi.math.color.get_whitepoint = function (whitepoint, scale) {
 	if (!scale) scale = 1.0;
 	if (!whitepoint)
 		whitepoint = "D50";
-	cachehash = [whitepoint, scale].join(",");
-	if (jsapi.math.color.get_whitepoint.cache[cachehash])
-		return jsapi.math.color.get_whitepoint.cache[cachehash];
+	var cachehash = [whitepoint, scale].join(","),
+		cache = jsapi.math.color.get_whitepoint.cache[cachehash];
+	if (cache) return cache;
 	if (typeof whitepoint == "string")
 		whitepoint = jsapi.math.color.get_standard_illuminant(whitepoint);
 	else if (typeof whitepoint == "number")
@@ -389,7 +360,11 @@ jsapi.math.color.get_whitepoint = function (whitepoint, scale) {
 };
 jsapi.math.color.get_whitepoint.cache = {};
 jsapi.math.Matrix3x3 = function (matrix) {
+	if (matrix.length != 3)
+		throw 'Invalid number of rows for 3x3 matrix: ' + matrix.length;
 	for (var i=0; i<matrix.length; i++) {
+		if (matrix[i].length != 3)
+			throw 'Invalid number of columns for 3x3 matrix: ' + matrix[i].length;
 		this[i] = [];
 		for (var j=0; j<matrix[i].length; j++) {
 			this[i][j] = matrix[i][j];
@@ -447,6 +422,11 @@ jsapi.math.Matrix3x3.prototype = {
 										   matrix[2][2] / determinant]]);
 	},
 	multiply: function (matrix) {
+		if (typeof matrix[0] == "number") {
+			return [matrix[0] * this[0][0] + matrix[1] * this[0][1] + matrix[2] * this[0][2],
+					matrix[0] * this[1][0] + matrix[1] * this[1][1] + matrix[2] * this[1][2],
+					matrix[0] * this[2][0] + matrix[1] * this[2][1] + matrix[2] * this[2][2]];
+		}
 		return new jsapi.math.Matrix3x3([[this[0][0]*matrix[0][0] + this[0][1]*matrix[1][0] + this[0][2]*matrix[2][0],
 										   this[0][0]*matrix[0][1] + this[0][1]*matrix[1][1] + this[0][2]*matrix[2][1],
 										   this[0][0]*matrix[0][2] + this[0][1]*matrix[1][2] + this[0][2]*matrix[2][2]],

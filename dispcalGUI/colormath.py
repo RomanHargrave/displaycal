@@ -350,8 +350,8 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 	return tuple(v * scale for v in XYZ)
 
 
-def rgb_matrix(rx, ry, gx, gy, bx, by, whitepoint=None, scale=1.0):
-	""" Create and return an RGB matrix. """
+def rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, whitepoint=None, scale=1.0):
+	""" Create and return an RGB to XYZ matrix. """
 	whitepoint = get_whitepoint(whitepoint, scale)
 	Xr, Yr, Zr = xyY2XYZ(rx, ry, scale)
 	Xg, Yg, Zg = xyY2XYZ(gx, gy, scale)
@@ -370,7 +370,7 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 		rgb_space = "sRGB"
 	if isinstance(rgb_space, basestring):
 		rgb_space = rgb_spaces[rgb_space]
-	cachehash = rgb_space, scale
+	cachehash = tuple(rgb_space), scale
 	cache = get_rgb_space.cache.get(cachehash, None)
 	if cache:
 		return cache
@@ -379,7 +379,7 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 	rx, ry, rY = rgb_space[2] or rgb_spaces["sRGB"][2]
 	gx, gy, gY = rgb_space[3] or rgb_spaces["sRGB"][3]
 	bx, by, bY = rgb_space[4] or rgb_spaces["sRGB"][4]
-	matrix = rgb_matrix(rx, ry, gx, gy, bx, by, whitepoint, scale)
+	matrix = rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, whitepoint, scale)
 	rgb_space = gamma, whitepoint, (rx, ry, rY), (gx, gy, gY), (bx, by, bY), matrix
 	get_rgb_space.cache[cachehash] = rgb_space
 	return rgb_space
@@ -392,7 +392,7 @@ def get_standard_illuminant(illuminant_name="D50",
 							priority=(None, "ICC", "ASTM E308-01"),
 							scale=1.0):
 	""" Return a standard illuminant as XYZ coordinates. """
-	cachehash = illuminant_name, priority, scale
+	cachehash = illuminant_name, tuple(priority), scale
 	cache = get_standard_illuminant.cache.get(cachehash, None)
 	if cache:
 		return cache

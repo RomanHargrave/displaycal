@@ -452,8 +452,8 @@ p.generate_report = function(set_delta_calc_method) {
 									patch_number_html[k] = ('<div class="patch sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 									haspatchid = true;
 								}
-								target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, "D50", 255, true);
-								actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, "D50", 255, true);
+								target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
+								actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], "D50", 255, true);
 								target_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 								actual_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
 							};
@@ -660,8 +660,8 @@ p.generate_report = function(set_delta_calc_method) {
 				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true);
 				target_Lab = colors.target_Lab;
 				actual_Lab = colors.actual_Lab;
-				target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, "D50", 255, true);
-				actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, "D50", 255, true);
+				target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
+				actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], "D50", 255, true);
 				target_rgb_html.push('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 				actual_rgb_html.push('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
 			};
@@ -759,8 +759,8 @@ p.generate_report = function(set_delta_calc_method) {
 		actual_Lab = colors.actual_Lab;
 		current_rgb = colors.current_rgb;
 		current_cmyk = colors.current_cmyk;
-		target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, "D50", 255, true);
-		actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, "D50", 255, true);
+		target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
+		actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], "D50", 255, true);
 		delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
 		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
 		var bar_html = [],
