@@ -32,7 +32,7 @@ def specialpow(a, b):
 	"""
 	Wrapper for power, sRGB and L* functions
 	
-	Positive b integers = power, -2.2 = sRGB, -3.0 = L*
+	Positive b = power, -2.2 = sRGB, -3.0 = L*
 	
 	"""
 	if b >= 0.0:
@@ -73,7 +73,7 @@ def specialpow(a, b):
 				if a <= 0.08:
 					v = 100.0 * a / K
 				else:
-					v = (((1000000.0 * a + 480000.0) * a + 76800.0) * a + 4096.0) / 1560896.0
+					v = math.pow((a + 0.16) / 1.16, 3.0)
 	return v * signScale
 
 
