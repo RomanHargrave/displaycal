@@ -43,6 +43,14 @@ python setup.py install --no-compile --use-distutils \
 	--skip-instrument-configuration-files \
 	--skip-postinstall
 
+# Use precompiled extension modules
+cp "$source_dir/dispcalGUI/lib32/python25/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib32/python25"
+cp "$source_dir/dispcalGUI/lib32/python26/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib32/python26"
+cp "$source_dir/dispcalGUI/lib32/python27/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib32/python27"
+cp "$source_dir/dispcalGUI/lib64/python25/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib64/python25"
+cp "$source_dir/dispcalGUI/lib64/python26/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib64/python26"
+cp "$source_dir/dispcalGUI/lib64/python27/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib64/python27"
+
 # udev/hotplug
 mkdir -p "$build_root/share/dispcalGUI/usb"
 # USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
