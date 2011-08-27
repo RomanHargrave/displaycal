@@ -72,6 +72,7 @@ strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/*.so
 python -c "import glob
 import os
 import platform
+import sys
 from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile, change_root
 bits = platform.architecture()[0][:2]

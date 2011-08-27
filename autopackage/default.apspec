@@ -241,8 +241,14 @@ fi
 # Remove *.py[co]
 python -c "import glob
 import os
+import platform
+import sys
 from distutils.sysconfig import get_python_lib
-for pyco in glob.glob(os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI', '*.py[co]')):
+bits = platform.architecture()[0][:2]
+mod = os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI')
+for pyco in (glob.glob(os.path.join(mod, '*.py[co]')) +
+			 glob.glob(os.path.join(mod, 'lib' + bits, '*.py[co]')) +
+			 glob.glob(os.path.join(mod, 'lib' + bits, 'python%s%s' % sys.version_info[:2], '*.py[co]'))):
 	os.remove(pyco)"
 
 # Remove menu entry
