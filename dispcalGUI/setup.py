@@ -29,6 +29,7 @@ from distutils.util import change_root, get_platform
 import distutils.core
 import glob
 import os
+import platform
 import shutil
 import subprocess as sp
 import sys
@@ -41,6 +42,7 @@ from meta import (author, author_ascii, description, longdesc, domain, name,
 				  wx_minversion)
 from util_os import relpath
 
+bits = platform.architecture()[0][:2]
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 basedir = os.path.dirname(pydir)
@@ -410,10 +412,9 @@ def setup():
 							   desktopicons)]
 
 	if sys.platform == "win32":
-		RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
-			sources = [os.path.join(name, "RealDisplaySizeMM.c")], 
-			libraries = ["user32", "gdi32"], 
-			define_macros=[("NT", None)])
+			define_macros = [("NT", None)]
+			libraries = ["user32", "gdi32"]
+			extra_link_args = None
 	elif sys.platform == "darwin":
 		if not help and ("build" in sys.argv[1:] or 
 						 "build_ext" in sys.argv[1:] or 
@@ -423,12 +424,17 @@ def setup():
 			p = sp.Popen([sys.executable, '-c', '''import os
 from distutils.core import setup, Extension
 
-setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM", 
-	  sources = [os.path.join("%(name)s", "RealDisplaySizeMM.c")],
-	  extra_link_args = ["-framework Carbon", "-framework CoreFoundation", 
-					     "-framework Python", "-framework IOKit"], 
-	  define_macros=[("__APPLE__", None), ("UNIX", None)])])''' % {"name": name}, 
-						  ] + sys.argv[1:], stdout = sp.PIPE, stderr = sp.STDOUT)
+setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version1)s.RealDisplaySizeMM", 
+							   sources=[os.path.join("%(name)s", "RealDisplaySizeMM.c")], 
+							   define_macros=[("__APPLE__", None), ("UNIX", None)])],
+							   extra_link_args=["-framework Carbon",
+												"-framework CoreFoundation", 
+												"-framework Python",
+												"-framework IOKit"])''' % {"name": name,
+																		   "bits": bits,
+																		   "version0": sys.version_info[0],
+																		   "version2": sys.version_info[1]}] + 
+						  sys.argv[1:], stdout = sp.PIPE, stderr = sp.STDOUT)
 			lines = []
 			while True:
 				o = p.stdout.readline()
@@ -440,16 +446,20 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			if len(lines):
 				os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.3'
 				sp.call(lines[-1], shell = True)  # fix the library
-		RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
-			sources = [os.path.join(name, "RealDisplaySizeMM.c")],
+			define_macros = [("__APPLE__", None), ("UNIX", None)]
+			libraries = None
 			extra_link_args = ["-framework Carbon", "-framework CoreFoundation", 
-							   "-framework Python", "-framework IOKit"], 
-			define_macros=[("__APPLE__", None), ("UNIX", None)])
+							   "-framework Python", "-framework IOKit"]
 	else:
-		RealDisplaySizeMM = Extension(name + "." + "RealDisplaySizeMM", 
-			sources = [os.path.join(name, "RealDisplaySizeMM.c")], 
-			libraries = ["Xinerama", "Xrandr", "Xxf86vm"], 
-			define_macros=[("UNIX", None)])
+		define_macros = [("UNIX", None)]
+		libraries = ["Xinerama", "Xrandr", "Xxf86vm"]
+		extra_link_args = None
+	RealDisplaySizeMM = Extension("%s.lib%s.python%s%s.RealDisplaySizeMM" % 
+								  ((name, bits) + sys.version_info[:2]), 
+								  sources=[os.path.join(name, "RealDisplaySizeMM.c")], 
+								  define_macros=define_macros, 
+								  libraries=libraries,
+								  extra_link_args=extra_link_args)
 	ext_modules = [RealDisplaySizeMM]
 
 	requires = []
@@ -507,6 +517,8 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			"Mac OS X >= 10.4", 
 			"Windows 2000 and newer"
 		],
+		"py_modules": ["%s.lib%s.python%s%s" % ((name, bits, ) + sys.version_info[:2]),
+					   "%s.lib%s.python%s%s.RealDisplaySizeMM" % ((name, bits, ) + sys.version_info[:2])],
 		"requires": requires,
 		"provides": name,
 		"scripts": [],
@@ -864,7 +876,8 @@ setup(ext_modules = [Extension("%(name)s.RealDisplaySizeMM",
 			pkgdir = os.path.sep.join(attrs.get("package_dir", 
 												{}).get(pkg, pkg).split("/"))
 			manifest_in += ["include " + os.path.join(pkgdir, "*.py")]
-			manifest_in += ["include " + os.path.join(pkgdir, "*.so.tar")]
+			manifest_in += ["include " + os.path.join(pkgdir, "lib*", "python*", "*.py")]
+			manifest_in += ["include " + os.path.join(pkgdir, "lib*", "python*", "*.so")]
 			for obj in attrs.get("package_data", {}).get(pkg, []):
 				manifest_in += ["include " + os.path.sep.join([pkgdir] + 
 															  obj.split("/"))]
