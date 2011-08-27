@@ -62,6 +62,9 @@ if isapp:
 data_dirs = [pydir]
 
 if sys.platform == "win32":
+	if pydir.lower().startswith(exedir.lower()):
+		# Installed, add executable directory to data directories
+		data_dirs += [exedir]
 	btn_width_correction = 20
 	script_ext = ".cmd"
 	scale_adjustment_factor = 1.0

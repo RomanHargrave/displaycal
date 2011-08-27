@@ -42,7 +42,6 @@ from meta import (author, author_ascii, description, longdesc, domain, name,
 				  wx_minversion)
 from util_os import relpath
 
-bits = platform.architecture()[0][:2]
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 basedir = os.path.dirname(pydir)
@@ -59,6 +58,7 @@ class Target:
 
 
 def setup():
+	bits = platform.architecture()[0][:2]
 
 	print "***", os.path.abspath(sys.argv[0]), " ".join(sys.argv[1:])
 
@@ -480,6 +480,16 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 	else:
 		pass
 
+	packages = [name]
+	if sdist:
+		for bits in ("32", "64"):
+			for pycompat in ("25", "26", "27"):
+				packages += ["%s.lib%s" % (name, bits, ),
+							 "%s.lib%s.python%s" % (name, bits, pycompat)]
+	else:
+		packages += ["%s.lib%s" % (name, bits, ),
+					 "%s.lib%s.python%s%s" % ((name, bits, ) + sys.version_info[:2])]
+
 	attrs = {
 		"author": author_ascii,
 		"author_email": "%s@hoech.net" % name,
@@ -505,9 +515,7 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 		"license": "GPL v3",
 		"long_description": longdesc,
 		"name": name,
-		"packages": [name,
-					 "%s.lib%s" % (name, bits, ),
-					 "%s.lib%s.python%s%s" % ((name, bits, ) + sys.version_info[:2])],
+		"packages": packages,
 		"package_data": package_data,
 		"package_dir": {
 			name: name
@@ -543,7 +551,7 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 	else:
 		attrs["scripts"] += [os.path.join("scripts", name)]
 	
-	if sys.platform not in ("darwin", "win32"):
+	if sys.platform != "darwin" and (sys.platform != "win32" or not do_py2exe):
 		attrs["scripts"] += [os.path.join("scripts", name + "-apply-profiles")]
 	
 	if bdist_bbfreeze:
@@ -873,6 +881,7 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 			manifest_in += ["include " + os.path.sep.join(src.split("/")) 
 							for src in extmod.sources]
 		for pkg in attrs.get("packages", []):
+			pkg = os.path.join(*pkg.split("."))
 			pkgdir = os.path.sep.join(attrs.get("package_dir", 
 												{}).get(pkg, pkg).split("/"))
 			manifest_in += ["include " + os.path.join(pkgdir, "*.py")]
