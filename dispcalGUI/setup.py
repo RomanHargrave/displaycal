@@ -520,7 +520,7 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 			"Windows 2000 and newer"
 		],
 		"requires": requires,
-		"provides": name,
+		"provides": [name],
 		"scripts": [],
 		"url": "http://%s.hoech.net/" % name,
 		"version": msiversion if "bdist_msi" in sys.argv[1:] else version
