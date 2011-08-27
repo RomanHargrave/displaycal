@@ -44,12 +44,18 @@ python setup.py install --no-compile --use-distutils \
 	--skip-postinstall
 
 # Use precompiled extension modules
-cp "$source_dir/dispcalGUI/lib32/python25/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib32/python25"
-cp "$source_dir/dispcalGUI/lib32/python26/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib32/python26"
-cp "$source_dir/dispcalGUI/lib32/python27/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib32/python27"
-cp "$source_dir/dispcalGUI/lib64/python25/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib64/python25"
-cp "$source_dir/dispcalGUI/lib64/python26/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib64/python26"
-cp "$source_dir/dispcalGUI/lib64/python27/RealDisplaySizeMM.so" "$build_root/lib/python/site-packages/dispcalGUI/lib64/python27"
+for bits in "32" "64" ; do
+	mkdir -p "$build_root/lib/python/site-packages/dispcalGUI/lib$bits"
+	echo "copying dispcalGUI/lib$bits/*.py -> $build_root/lib/python/site-packages/dispcalGUI/lib$bits"
+	cp -f dispcalGUI/lib$bits/*.py "$build_root/lib/python/site-packages/dispcalGUI/lib$bits"
+	for pycompat in "25" "26" "27" ; do
+		mkdir -p "$build_root/lib/python/site-packages/dispcalGUI/lib$bits/python$pycompat"
+		echo "copying dispcalGUI/lib$bits/python$pycompat/*.py -> $build_root/lib/python/site-packages/dispcalGUI/lib$bits/python$pycompat"
+		cp -f dispcalGUI/lib$bits/python$pycompat/*.py "$build_root/lib/python/site-packages/dispcalGUI/lib$bits/python$pycompat"
+		echo "copying dispcalGUI/lib$bits/python$pycompat/*.so -> $build_root/lib/python/site-packages/dispcalGUI/lib$bits/python$pycompat"
+		cp -f dispcalGUI/lib$bits/python$pycompat/*.so "$build_root/lib/python/site-packages/dispcalGUI/lib$bits/python$pycompat"
+	done
+done
 
 # udev/hotplug
 mkdir -p "$build_root/share/dispcalGUI/usb"
@@ -137,6 +143,13 @@ for script in `ls bin` ; do
 	fi
 done
 
+# Copy binary extension module
+bits=`python -c "import platform;print platform.architecture()[0][:2]"`
+mkdir -p "$platlib/dispcalGUI/lib$bits"
+copyFiles lib/python/site-packages/dispcalGUI/lib$bits/*.py "$platlib/dispcalGUI/lib$bits"
+pycompat=`python -c "import sys;print '%s%s' % sys.version_info[:2]"`
+copyFiles "lib/python/site-packages/dispcalGUI/lib$bits/python$pycompat" "$platlib/dispcalGUI/lib$bits"
+
 # Copy autostart entries
 if [ `whoami` = "root" ]; then
 	outputStatus "Installing profile loader autostart entry to /etc/xdg/autostart..."
@@ -152,7 +165,7 @@ fi
 
 # Copy pure python modules
 outputStatus "Installing modules to $platlib..."
-copyFiles lib/python/site-packages/* "$platlib"
+copyFiles lib/python/site-packages/dispcalGUI/*.py "$platlib/dispcalGUI"
 
 # Byte-compile *.py files
 outputStatus "Byte-compiling pure python modules..."
@@ -160,9 +173,12 @@ python -c "import glob
 import os
 from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile
-py = glob.glob(os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI', '*.py'))
-byte_compile(py, optimize=0, force=1)
-byte_compile(py, optimize=1, force=1)"
+mod = os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI')
+for py in (glob.glob(os.path.join(mod, '*.py')),
+		   glob.glob(os.path.join(mod, 'lib$bits', '*.py')), 
+		   glob.glob(os.path.join(mod, 'lib$bits', 'python$pycompat', '*.py'))):
+	byte_compile(py, optimize=0, force=1)
+	byte_compile(py, optimize=1, force=1)"
 
 installData share/dispcalGUI share/doc
 installExe bin/*

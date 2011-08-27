@@ -505,7 +505,9 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 		"license": "GPL v3",
 		"long_description": longdesc,
 		"name": name,
-		"packages": [name],
+		"packages": [name,
+					 "%s.lib%s" % (name, bits, ),
+					 "%s.lib%s.python%s%s" % ((name, bits, ) + sys.version_info[:2])],
 		"package_data": package_data,
 		"package_dir": {
 			name: name
@@ -517,8 +519,6 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 			"Mac OS X >= 10.4", 
 			"Windows 2000 and newer"
 		],
-		"py_modules": ["%s.lib%s.python%s%s" % ((name, bits, ) + sys.version_info[:2]),
-					   "%s.lib%s.python%s%s.RealDisplaySizeMM" % ((name, bits, ) + sys.version_info[:2])],
 		"requires": requires,
 		"provides": name,
 		"scripts": [],
@@ -876,8 +876,7 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 			pkgdir = os.path.sep.join(attrs.get("package_dir", 
 												{}).get(pkg, pkg).split("/"))
 			manifest_in += ["include " + os.path.join(pkgdir, "*.py")]
-			manifest_in += ["include " + os.path.join(pkgdir, "lib*", "python*", "*.py")]
-			manifest_in += ["include " + os.path.join(pkgdir, "lib*", "python*", "*.so")]
+			manifest_in += ["include " + os.path.join(pkgdir, "*.so")]
 			for obj in attrs.get("package_data", {}).get(pkg, []):
 				manifest_in += ["include " + os.path.sep.join([pkgdir] + 
 															  obj.split("/"))]

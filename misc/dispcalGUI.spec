@@ -71,13 +71,17 @@ strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/*.so
 # Mandriva 2010.1 got rid of byte-compilation
 python -c "import glob
 import os
+import platform
 from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile, change_root
-py = glob.glob(os.path.join(change_root('$RPM_BUILD_ROOT', get_python_lib(True)), 
-			   '%{name}', '*.py'))
-byte_compile(py, optimize=0, force=1, prefix='$RPM_BUILD_ROOT')
-if 0%{?fedora_version} > 0 or 0%{?rhel_version} > 0 or 0%{?centos_version} > 0:
-	byte_compile(py, optimize=1, force=1, prefix='$RPM_BUILD_ROOT')"
+bits = platform.architecture()[0][:2]
+mod = os.path.join(change_root('$RPM_BUILD_ROOT', get_python_lib(True)), '%{name}')
+for py in (glob.glob(os.path.join(mod, '*.py')),
+		   glob.glob(os.path.join(mod, 'lib' + bits, '*.py')), 
+		   glob.glob(os.path.join(mod, 'lib' + bits, 'python%s%s' % sys.version_info[:2], '*.py'))):
+	byte_compile(py, optimize=0, force=1, prefix='$RPM_BUILD_ROOT')
+	if 0%{?fedora_version} > 0 or 0%{?rhel_version} > 0 or 0%{?centos_version} > 0:
+		byte_compile(py, optimize=1, force=1, prefix='$RPM_BUILD_ROOT')"
 %endif
 # Remove doc directory
 if [ -e "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}" ]; then
