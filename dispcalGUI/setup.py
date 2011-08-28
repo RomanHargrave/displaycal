@@ -411,11 +411,16 @@ def setup():
 											 "hicolor", dname, "apps"), 
 							   desktopicons)]
 
+	sources = [os.path.join(name, "RealDisplaySizeMM.c")]
 	if sys.platform == "win32":
-			define_macros = [("NT", None)]
-			libraries = ["user32", "gdi32"]
-			extra_link_args = None
+		macros = [("NT", None)]
+		libraries = ["user32", "gdi32"]
+		link_args = None
 	elif sys.platform == "darwin":
+		macros = [("__APPLE__", None), ("UNIX", None)]
+		libraries = None
+		link_args = ["-framework Carbon", "-framework CoreFoundation", 
+						   "-framework Python", "-framework IOKit"]
 		if not help and ("build" in sys.argv[1:] or 
 						 "build_ext" in sys.argv[1:] or 
 						 (("install" in sys.argv[1:] or 
@@ -424,17 +429,10 @@ def setup():
 			p = sp.Popen([sys.executable, '-c', '''import os
 from distutils.core import setup, Extension
 
-setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version1)s.RealDisplaySizeMM", 
-							   sources=[os.path.join("%(name)s", "RealDisplaySizeMM.c")], 
-							   define_macros=[("__APPLE__", None), ("UNIX", None)])],
-							   extra_link_args=["-framework Carbon",
-												"-framework CoreFoundation", 
-												"-framework Python",
-												"-framework IOKit"])''' % {"name": name,
-																		   "bits": bits,
-																		   "version0": sys.version_info[0],
-																		   "version2": sys.version_info[1]}] + 
-						  sys.argv[1:], stdout = sp.PIPE, stderr = sp.STDOUT)
+setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r, 
+							   define_macros=%r, extra_link_args=%r)''' % 
+						  (name, sources, macros, link_args)] + sys.argv[1:], 
+						 stdout = sp.PIPE, stderr = sp.STDOUT)
 			lines = []
 			while True:
 				o = p.stdout.readline()
@@ -446,20 +444,20 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 			if len(lines):
 				os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.3'
 				sp.call(lines[-1], shell = True)  # fix the library
-			define_macros = [("__APPLE__", None), ("UNIX", None)]
-			libraries = None
-			extra_link_args = ["-framework Carbon", "-framework CoreFoundation", 
-							   "-framework Python", "-framework IOKit"]
 	else:
-		define_macros = [("UNIX", None)]
+		macros = [("UNIX", None)]
 		libraries = ["Xinerama", "Xrandr", "Xxf86vm"]
-		extra_link_args = None
-	RealDisplaySizeMM = Extension("%s.lib%s.python%s%s.RealDisplaySizeMM" % 
-								  ((name, bits) + sys.version_info[:2]), 
-								  sources=[os.path.join(name, "RealDisplaySizeMM.c")], 
-								  define_macros=define_macros, 
+		link_args = None
+	if sys.platform == "darwin":
+		extname = "%s.lib.RealDisplaySizeMM" % name
+	else:
+		extname = "%s.lib%s.python%s%s.RealDisplaySizeMM" % ((name, bits) + 
+															 sys.version_info[:2])
+	RealDisplaySizeMM = Extension(extname, 
+								  sources=sources, 
+								  define_macros=macros, 
 								  libraries=libraries,
-								  extra_link_args=extra_link_args)
+								  extra_link_args=link_args)
 	ext_modules = [RealDisplaySizeMM]
 
 	requires = []
@@ -482,13 +480,20 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 
 	packages = [name]
 	if sdist:
-		for bits in ("32", "64"):
+		# For source desributions we want all libraries
+		packages += ["%s.lib" % name]
+		for tmpbits in ("32", "64"):
 			for pycompat in ("25", "26", "27"):
-				packages += ["%s.lib%s" % (name, bits, ),
-							 "%s.lib%s.python%s" % (name, bits, pycompat)]
+				packages += ["%s.lib%s" % (name, tmpbits),
+							 "%s.lib%s.python%s" % (name, tmpbits, pycompat)]
+	elif sys.platform == "darwin":
+		# On Mac OS X we only want the universal binary
+		packages += ["%s.lib" % name]
 	else:
-		packages += ["%s.lib%s" % (name, bits, ),
-					 "%s.lib%s.python%s%s" % ((name, bits, ) + sys.version_info[:2])]
+		# On Linux/Windows we want separate libraries
+		packages += ["%s.lib%s" % (name, bits),
+					 "%s.lib%s.python%s%s" % ((name, bits) + sys.version_info[:2])]
+		
 
 	attrs = {
 		"author": author_ascii,
@@ -564,7 +569,13 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 		reversedomain = domain.split(".")
 		reversedomain.reverse()
 		reversedomain = ".".join(reversedomain)
-		attrs["app"] = os.path.join(pydir, "main.py"),
+		attrs["app"] = [os.path.join(pydir, "main.py")]
+		excludes = ["test", "Tkconstants", "Tkinter", "tcl"]
+		for excludebits in ("32", "64"):
+			excludes += ["dispcalGUI.lib%s" % excludebits]
+			for pycompat in ("25", "26", "27"):
+				excludes += ["lib%s.python%s" % (excludebits, pycompat),
+							 "lib%s.python%s.RealDisplaySizeMM" % (excludebits, pycompat)]
 		attrs["options"] = {
 			"py2app": {
 				"argv_emulation": True,
@@ -575,7 +586,7 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 				# numpy.lib.utils imports pydoc, which imports Tkinter, but 
 				# numpy.lib.utils is not even used by dispcalGUI, so omit all 
 				# Tk stuff
-				"excludes": ["test", "Tkconstants", "Tkinter", "tcl"],
+				"excludes": excludes,
 				"iconfile": os.path.join(pydir, "theme", "icons", 
 										 "dispcalGUI.icns"),
 				"optimize": 0,
@@ -615,6 +626,17 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
+		excludes = ["Tkconstants", "Tkinter", "tcl", "dispcalGUI.lib",
+					"lib.RealDisplaySizeMM"]
+		if bits == "32":
+			excludebits = "64"
+		else:
+			excludebits = "32"
+		excludes += ["dispcalGUI.lib%s" % excludebits,
+					 "lib%s.RealDisplaySizeMM" % excludebits]
+		for pycompat in ("25", "26", "27"):
+			excludes += ["lib%s.python%s" % (excludebits, pycompat),
+						 "lib%s.python%s.RealDisplaySizeMM" % (excludebits, pycompat)]
 		attrs["options"] = {
 			"py2exe": {
 				"dist_dir": dist_dir,
@@ -630,7 +652,7 @@ setup(ext_modules = [Extension("%(name)s.lib%(bits)s.python%(version0)s%(version
 				# numpy.lib.utils imports pydoc, which imports Tkinter, but 
 				# numpy.lib.utils is not even used by dispcalGUI, so omit all 
 				# Tk stuff
-				"excludes": ["Tkconstants", "Tkinter", "tcl"], 
+				"excludes": excludes, 
 				"bundle_files": 3 if wx.VERSION >= (2, 8, 10, 1) else 1,
 				"compressed": 1,
 				"optimize": 0  # 0 = don’t optimize (generate .pyc)
