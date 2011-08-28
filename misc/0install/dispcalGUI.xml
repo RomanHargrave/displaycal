@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface uri="http://dispcalgui.hoech.net/0install/dispcalGUI.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+  <name>${PACKAGE}</name>
+  <summary>${SUMMARY}</summary>
+  <description>
+${DESC}</description>
+  <homepage>http://dispcalgui.hoech.net</homepage>
+  <category>Graphics</category>
+  <icon href="http://dispcalgui.hoech.net/theme/icons/256x256/dispcalGUI.png" type="image/png"/>
+  <group license="OSI Approved :: GNU General Public License v3">
+    <requires interface="http://dispcalgui.hoech.net/0install/python.xml">
+      <version before="3.0" not-before="${PY_MINVERSION}"/>
+    </requires>
+    <requires interface="http://dispcalgui.hoech.net/0install/wxpython.xml">
+      <version not-before="${WX_MINVERSION}"/>
+    </requires>
+    <requires interface="http://dispcalgui.hoech.net/0install/numpy.xml"/>
+    <implementation id="sha1new=0000000000000000000000000000000000000000" released="0000-00-00" version="0.0.0.0">
+    </implementation>
+  </group>
+</interface>

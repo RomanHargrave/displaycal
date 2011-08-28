@@ -336,14 +336,16 @@ def setup():
 
 	if (("sdist" in sys.argv[1:] or 
 		 "install" in sys.argv[1:] or 
-		 "bdist_deb" in sys.argv[1:]) and 
-		not help) or "buildservice" in sys.argv[1:]:
+		 "bdist_deb" in sys.argv[1:] or 
+		 "buildservice" in sys.argv[1:]) and 
+		not help):
 		# Create control files
 		post = open(os.path.join(pydir, "util", "rpm_postinstall.sh"), "r").read()
 		postun = open(os.path.join(pydir, "util", "rpm_postuninstall.sh"), "r").read()
 		for tmpl_name in ("debian.changelog", "debian.control", "debian.copyright", 
 						  "debian.rules", "dispcalGUI.dsc", "dispcalGUI.spec", 
-						  "dispcalGUI.autopackage.spec"):
+						  os.path.join("obs-autopackage-deploy", "dispcalGUI.spec"), 
+						  os.path.join("0install", "dispcalGUI.xml")):
 			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 			tmpl = codecs.open(tmpl_path, "r", "UTF-8")
 			tmpl_data = tmpl.read()
@@ -383,10 +385,10 @@ def setup():
 			if not dry_run:
 				if tmpl_name == "debian.copyright":
 					tmpl_name = "copyright"
-				out_dir = os.path.join(pydir, "dist")
+				out_filename = os.path.join(pydir, "dist", tmpl_name)
+				out_dir = os.path.dirname(out_filename)
 				if not os.path.isdir(out_dir):
 					os.makedirs(out_dir)
-				out_filename = os.path.join(out_dir, tmpl_name)
 				out = codecs.open(out_filename, "w", "UTF-8")
 				out.write(tmpl_data)
 				out.close()
