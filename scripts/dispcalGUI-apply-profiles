@@ -20,14 +20,19 @@ if sys.platform == "win32":
 	if os.path.isfile(libpath):
 		sys.frozen = True
 
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 if not getattr(sys, "frozen", False):
 	# Setup sys.path if running from source
-	srcpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	if os.path.exists(os.path.join(srcpath, "dispcalGUI", "__init__.py")):
-		sys.path.insert(0, srcpath)
+	if os.path.exists(os.path.join(parent_dir, "dispcalGUI", "__init__.py")):
+		sys.path.insert(0, parent_dir)
 
 from dispcalGUI import config, localization as lang
 
+if getattr(sys, "frozen", False):
+	# Add script parent directory to data directories if running frozen
+	config.data_dirs.insert(0, parent_dir)
+	
 config.initcfg()
 if not config.getcfg("profile.load_on_login"):
 	# Early exit incase profile loading has been disabled

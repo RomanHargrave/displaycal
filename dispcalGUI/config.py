@@ -42,7 +42,7 @@ if ascii:
 exe = unicode(sys.executable, fs_enc)
 exedir = os.path.dirname(exe)
 
-isexe = sys.platform != "darwin" and hasattr(sys, "frozen") and sys.frozen
+isexe = sys.platform != "darwin" and getattr(sys, "frozen", False)
 
 if isexe and os.getenv("_MEIPASS2"):
 	os.environ["_MEIPASS2"] = os.getenv("_MEIPASS2").replace("/", os.path.sep)
@@ -62,8 +62,13 @@ if isapp:
 data_dirs = [pydir]
 
 if sys.platform == "win32":
-	if pydir.lower().startswith(exedir.lower()):
-		# Installed, add executable directory to data directories
+	if pydir.lower().startswith(exedir.lower()) and pydir != exedir:
+		# We are installed in a subfolder of the executable directory (e.g. 
+		# C:\Python26\Lib\site-packages\dispcalGUI) - we nee to add 
+		# the executable directory to the data directories so files in
+		# subfolders of the executable directory which are not in 
+		# Lib\site-packages\dispcalGUI can be found
+		# (e.g. Scripts\dispcalGUI-apply-profiles)
 		data_dirs += [exedir]
 	btn_width_correction = 20
 	script_ext = ".cmd"
@@ -278,12 +283,12 @@ def runtimeconfig(pyfile):
 		runtype = ".app"
 	elif isexe:
 		if debug:
-			safe_print("[D] _MEIPASS2 or pydir:", getenvu("_MEIPASS2", pydir))
-		if getenvu("_MEIPASS2", pydir) not in data_dirs:
-			data_dirs.insert(1, getenvu("_MEIPASS2", pydir))
+			safe_print("[D] _MEIPASS2 or pydir:", getenvu("_MEIPASS2", exedir))
+		if getenvu("_MEIPASS2", exedir) not in data_dirs:
+			data_dirs.insert(1, getenvu("_MEIPASS2", exedir))
 		runtype = exe_ext
 	else:
-		pydir_parent = os.path.abspath(os.path.join(pydir, ".."))
+		pydir_parent = os.path.dirname(pydir)
 		if debug:
 			safe_print("[D] dirname(os.path.abspath(sys.argv[0])):", 
 					   os.path.dirname(os.path.abspath(sys.argv[0])))
