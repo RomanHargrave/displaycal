@@ -14,37 +14,29 @@ if sys.platform == "win32":
 											 CSIDL_PROGRAM_FILES_COMMON, 
 											 CSIDL_STARTUP, CSIDL_SYSTEM)
 	except ImportError:
+		import ctypes
 		(CSIDL_APPDATA, CSIDL_COMMON_APPDATA, CSIDL_COMMON_STARTUP, 
 		 CSIDL_PROFILE, CSIDL_PROGRAM_FILES_COMMON, CSIDL_STARTUP, 
 		 CSIDL_SYSTEM) = (26, 35, 24, 40, 43, 7, 37)
-		def SHGetSpecialFolderPath(hwndOwner, nFolder):
-			return {
-				CSIDL_APPDATA: getenvu("APPDATA"),
-				CSIDL_COMMON_APPDATA: getenvu("ALLUSERSPROFILE"),
-				CSIDL_COMMON_STARTUP: None,
-				CSIDL_PROFILE: getenvu("USERPROFILE"),
-				CSIDL_PROGRAM_FILES_COMMON: getenvu("CommonProgramFiles"),
-				CSIDL_STARTUP: None,
-				CSIDL_SYSTEM: getenvu("SystemRoot")
-			}.get(nFolder)
+		MAX_PATH = 260
+		def SHGetSpecialFolderPath(hwndOwner, nFolder, create=0):
+			""" ctypes wrapper around shell32.SHGetSpecialFolderPathW """
+			buffer = ctypes.create_unicode_buffer(u'\0' * MAX_PATH)
+			ctypes.windll.shell32.SHGetSpecialFolderPathW(0, buffer, nFolder, 
+														  create)
+			return buffer.value
 
 from util_os import expanduseru, expandvarsu, getenvu
 
 home = expanduseru("~")
 if sys.platform == "win32":
-	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA)
-	commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA)]
-	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON)
-	try:
-		autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP)
-		# Can fail under Vista and later if directory doesn't exist
-	except Exception, exception:
-		autostart = None
-	try:
-		autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP)
-		# Can fail under Vista and later if directory doesn't exist
-	except Exception, exception:
-		autostart_home = None
+	# Always specify create=1 for SHGetSpecialFolderPath so we don't get an
+	# exception if the folder does not yet exist
+	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
+	commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA, 1)]
+	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON, 1)
+	autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP, 1)
+	autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP, 1)
 	iccprofiles = [os.path.join(SHGetSpecialFolderPath(0, CSIDL_SYSTEM), 
 								"spool", "drivers", "color")]
 	iccprofiles_home = iccprofiles

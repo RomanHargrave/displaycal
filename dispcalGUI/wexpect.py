@@ -2776,7 +2776,7 @@ def log(e, suffix='', logdir=None):
                 logdir.pop()
             logdir = logdir[-1]
     if sys.platform == "win32":
-        logdir = os.path.join(SHGetSpecialFolderPath(0, CSIDL_APPDATA), 
+        logdir = os.path.join(SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1), 
                               logdir, "logs")
     elif sys.platform == "darwin":
         logdir = os.path.join(os.path.expanduser("~"), "Library", "Logs", 

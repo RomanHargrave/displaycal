@@ -96,7 +96,7 @@ if sys.platform == "win32":
 		else:
 			def get_special_folder_path(csidl_string):
 				return shell.SHGetSpecialFolderPath(0, getattr(shellcon, 
-															   csidl_string))
+															   csidl_string), 1)
 
 def postinstall(prefix=None):
 	if sys.platform == "darwin":
