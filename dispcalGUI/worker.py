@@ -993,7 +993,8 @@ class Worker():
 								self.display_rects.append(
 									wx.Rect(*[int(item) for item in match[0][1:]]))
 						elif arg == "-c":
-							if (value.startswith("/dev/tty") and 
+							if ((value.startswith("/dev/tty") or
+								 value.startswith("COM")) and 
 								getcfg("skip_legacy_serial_ports")):
 								# Skip all legacy serial ports (this means we 
 								# deliberately don't support DTP92 and
