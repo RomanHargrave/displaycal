@@ -3972,9 +3972,12 @@ class MainFrame(BaseFrame):
 												   (loader_v02b, exception)))
 					# Unified loader
 					name = appname + " Profile Loader"
-					autostart_lnkname = os.path.join(autostart, name + ".lnk")
-					autostart_home_lnkname = os.path.join(autostart_home, 
-														  name + ".lnk")
+					if autostart:
+						autostart_lnkname = os.path.join(autostart,
+														 name + ".lnk")
+					if autostart_home:
+						autostart_home_lnkname = os.path.join(autostart_home, 
+															  name + ".lnk")
 					loader_args = []
 					if os.path.basename(sys.executable) in ("python.exe", 
 															"pythonw.exe"):
@@ -4002,8 +4005,7 @@ class MainFrame(BaseFrame):
 								0)
 						scut.SetArguments(" ".join(loader_args))
 						scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
-						if "-Sl" in args or sys.getwindowsversion() < (6, ):
-							# Vista and later if using system scope, Win 2k/XP
+						if is_superuser():
 							if autostart:
 								try:
 									scut.QueryInterface(
@@ -4020,12 +4022,6 @@ class MainFrame(BaseFrame):
 												   bitmap=geticon(32, 
 																  "dialog-warning"))
 									# now try user scope
-								else:
-									# remove existing user loader
-									if os.path.isfile(autostart_home_lnkname):
-										os.remove(autostart_home_lnkname)
-									# do not create user loader
-									return result
 							else:
 								if not silent:
 									InfoDialog(self, 
@@ -4035,7 +4031,12 @@ class MainFrame(BaseFrame):
 											   bitmap=geticon(32, 
 															  "dialog-warning"))
 						if autostart_home:
-							if not os.path.isfile(autostart_lnkname):
+							if (autostart and 
+								os.path.isfile(autostart_lnkname)):
+								# remove existing user loader
+								if os.path.isfile(autostart_home_lnkname):
+									os.remove(autostart_home_lnkname)
+							else:
 								# Only create user loader if no system loader
 								scut.QueryInterface(
 									pythoncom.IID_IPersistFile).Save(
