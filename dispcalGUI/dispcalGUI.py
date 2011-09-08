@@ -1945,8 +1945,11 @@ class MainFrame(BaseFrame):
 		index = 0
 		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 		if force or not getattr(self, "ccmx_cached_paths", None):
-			self.ccmx_cached_paths = glob.glob(os.path.join(datahome, "ccmx", 
-															"*.ccmx"))
+			self.ccmx_cached_paths = glob.glob(os.path.join(config.appdata, 
+															"color", "*.ccmx"))
+			if "i1 DisplayPro, ColorMunki Display" in self.worker.get_instrument_name():
+				self.ccmx_cached_paths += glob.glob(os.path.join(config.appdata, 
+																 "color", "*.ccss"))
 		for i, path in enumerate(self.ccmx_cached_paths):
 			if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
 				index = i + 1
@@ -5478,7 +5481,8 @@ class MainFrame(BaseFrame):
 				# so make sure to only delete the temporary cal file we created
 				# (which hasn't an extension, so we can use ext_filter to 
 				# exclude files which should not be deleted)
-				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", ".ccmx", 
+				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
+														   ".ccmx", ".ccss",
 														   ".cmd", ".command", 
 														   ".icc", ".icm", 
 														   ".sh", ".ti1", 
@@ -5565,7 +5569,7 @@ class MainFrame(BaseFrame):
 								lang.getstr("colorimeter_correction_matrix_file.choose"), 
 								defaultDir=defaultDir, defaultFile=defaultFile,
 								wildcard=lang.getstr("filetype.ccmx") + 
-										 "|*.ccmx", 
+										 "|*.ccmx;*.ccss", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
@@ -5586,6 +5590,7 @@ class MainFrame(BaseFrame):
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
 		self.update_colorimeter_correction_matrix_ctrl()
+		self.update_colorimeter_correction_matrix_ctrl_items(True)
 	
 	def import_devicecorrections_handler(self, event):
 		"""
@@ -5635,7 +5640,7 @@ class MainFrame(BaseFrame):
 			if path.lower().endswith(".exe"):
 				# TODO: We have an installer, try opening it as lzma archive
 				pass
-			ccmx_dir = os.path.join(datahome, "ccmx")
+			ccmx_dir = os.path.join(config.appdata, "color")
 			if not os.path.exists(ccmx_dir):
 				try:
 					check_create_dir(ccmx_dir)

@@ -159,7 +159,7 @@
 	"filetype.any": "Tout type de fichier",
 	"filetype.cal": "Fichiers de calibrages (*.cal)",
 	"filetype.cal_icc": "Fichiers de calibrages et de profils (*.cal;*.icc;*.icm)",
-	"filetype.ccmx": "Matrices de correction (*.ccmx)",
+	"filetype.ccmx": "Matrices de correction (*.ccmx;*.ccss)",
 	"filetype.html": "Fichiers HTML (*.html;*.htm)",
 	"filetype.icc": "Fichiers de profils (*.icc;*.icm)",
 	"filetype.icc_mpp": "Fichiers de profils (*.icc;*.icm;*.mpp)",

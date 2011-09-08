@@ -82,6 +82,14 @@
 				// (dispread -D9 output: "Setting no-sensor_calibrate failed 
 				// failed with 'Unsupported function'")
 	},
+	"i1 DisplayPro, ColorMunki Display": {
+		"spectral": false,
+		"adaptive_mode": false,
+		"highres_mode": false,
+		"projector_mode": false,
+		"sensor_cal": false,
+		"skip_sensor_cal": false
+	},
 	"i1 Monitor": {  // like i1Pro
 		"spectral": true,
 		"adaptive_mode": true,

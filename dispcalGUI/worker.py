@@ -38,7 +38,7 @@ from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1,
 						  verify_cgats)
 from argyll_instruments import instruments as all_instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
-						  viewconds)
+						  optional as argyll_optional, viewconds)
 from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg, 
 					geticon, get_data_path, get_verified_path, isapp, profile_ext,
 					setcfg, writecfg)
@@ -86,6 +86,8 @@ def check_argyll_bin(paths=None):
 	for name in argyll_names:
 		exe = get_argyll_util(name, paths)
 		if not exe:
+			if name in argyll_optional:
+				continue
 			return False
 		cur_dir = os.path.dirname(exe)
 		if prev_dir:
@@ -212,7 +214,7 @@ def get_argyll_util(name, paths=None):
 
 
 def get_argyll_utilname(name, paths=None):
-	""" Find a single Argyll utility. Return the basename. """
+	""" Find a single Argyll utility. Return the basename without extension. """
 	exe = get_argyll_util(name, paths)
 	if exe:
 		exe = os.path.basename(os.path.splitext(exe)[0])
@@ -801,7 +803,7 @@ class Worker():
 					return tempdir
 				ccmxcopy = os.path.join(tempdir, 
 										getcfg("profile.name.expanded") + 
-										".ccmx")
+										os.path.splitext(ccmx)[1])
 				if not os.path.isfile(ccmxcopy):
 					try:
 						# Copy ccmx to profile dir
@@ -3119,8 +3121,8 @@ class Worker():
 			return # nothing to do
 		if copy:
 			if not ext_filter:
-				ext_filter = [".app", ".cal", ".ccmx", ".cmd", ".command", ".icc", 
-							  ".icm", ".sh", ".ti1", ".ti3"]
+				ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
+							  ".command", ".icc", ".icm", ".sh", ".ti1", ".ti3"]
 			if dst_path is None:
 				dst_path = os.path.join(getcfg("profile.save_path"), 
 										getcfg("profile.name.expanded"), 
