@@ -274,7 +274,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"[bfakABF]\d+(?:\.\d+)?",
 		"(?:g(?:240|709|l|s)|[gG]\d+(?:\.\d+)?)",
 		"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
-		'X\s+["\'][^"\']+?["\']',  # Argyll >= 1.3.0 colorimeter correction matrix
+		'X(?:\s*\d+|\s+["\'][^"\']+?["\'])',  # Argyll >= 1.3.0 colorimeter correction matrix / Argyll >= 1.3.4 calibration spectral sample
 		"I[bw]{,2}"  # Argyll >= 1.3.0 drift compensation
 	]
 	re_options_colprof = [
@@ -370,6 +370,13 @@ def get_options_from_ti3(ti3):
 		colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-7", 
 															"replace")
 	return get_options_from_args(dispcal_args, colprof_args)
+
+
+def get_arg(argmatch, args):
+	""" Return first found entry beginning with the argmatch string or None """
+	for arg in args:
+		if arg.startswith(argmatch):
+			return arg
 
 
 def make_argyll_compatible_path(path):
@@ -751,18 +758,20 @@ class Worker():
 		self.clear_cmd_output()
 	
 	def add_measurement_features(self, args):
-		args += ["-d" + self.get_display()]
-		args += ["-c%s" % getcfg("comport.number")]
+		if not get_arg("-d", args):
+			args += ["-d" + self.get_display()]
+		if not get_arg("-c", args):
+			args += ["-c%s" % getcfg("comport.number")]
 		measurement_mode = getcfg("measurement_mode")
 		instrument_features = self.get_instrument_features()
 		if measurement_mode:
-			if not instrument_features.get("spectral"):
+			if not instrument_features.get("spectral") and not get_arg("-y", args):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
 				args += ["-y" + measurement_mode[0]]
 		if getcfg("measurement_mode.projector") and \
 		   instrument_features.get("projector_mode") and \
-		   self.argyll_version >= [1, 1, 0]:
+		   self.argyll_version >= [1, 1, 0] and not get_arg("-p", args):
 			# Projector mode, Argyll >= 1.1.0 Beta
 			args += ["-p"]
 		if getcfg("measurement_mode.adaptive") and \
@@ -771,18 +780,20 @@ class Worker():
 			self.argyll_version[0:3] == [1, 1, 0] and 
 			not "Beta" in self.argyll_version_string and 
 			not "RC1" in self.argyll_version_string and 
-			not "RC2" in self.argyll_version_string)):
+			not "RC2" in self.argyll_version_string)) and not get_arg("-V", args):
 			# Adaptive mode, Argyll >= 1.1.0 RC3
 			args += ["-V"]
-		args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
-				 getcfg("dimensions.measureframe")]
-		if getcfg("measure.darken_background"):
+		if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
+			(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
+			args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
+					 getcfg("dimensions.measureframe")]
+		if getcfg("measure.darken_background") and not get_arg("-F", args):
 			args += ["-F"]
 		if getcfg("measurement_mode.highres") and \
-		   instrument_features.get("highres_mode"):
+		   instrument_features.get("highres_mode") and not get_arg("-H", args):
 			args += ["-H"]
 		if self.argyll_version >= [1, 3, 0] and \
-		   not instrument_features.get("spectral"):
+		   not instrument_features.get("spectral") and not get_arg("-X", args):
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if ccmx[0] == "AUTO":
 				# TODO: implement auto selection based on available ccmx files 
@@ -796,10 +807,8 @@ class Worker():
 				result = check_file_isfile(ccmx)
 				if isinstance(result, Exception):
 					return result
-				if not result:
-					return None
 				tempdir = self.create_tempdir()
-				if not tempdir or isinstance(tempdir, Exception):
+				if isinstance(tempdir, Exception):
 					return tempdir
 				ccmxcopy = os.path.join(tempdir, 
 										getcfg("profile.name.expanded") + 
@@ -816,13 +825,11 @@ class Worker():
 					result = check_file_isfile(ccmxcopy)
 					if isinstance(result, Exception):
 						return result
-					if not result:
-						return None
 				args += ["-X"]
 				args += [ccmx]
 		if (getcfg("drift_compensation.blacklevel") or 
 			getcfg("drift_compensation.whitelevel")) and \
-		   self.argyll_version >= [1, 3, 0]:
+		   self.argyll_version >= [1, 3, 0] and not get_arg("-I", args):
 			args += ["-I"]
 			if getcfg("drift_compensation.blacklevel"):
 				args[-1] += "b"
@@ -1877,8 +1884,6 @@ class Worker():
 		result = self.add_measurement_features(args)
 		if isinstance(result, Exception):
 			return result, None
-		if not result:
-			return None, None
 		if calibrate:
 			args += ["-q" + getcfg("calibration.quality")]
 			profile_save_path = self.create_tempdir()
@@ -2123,15 +2128,23 @@ class Worker():
 		# Make sure any measurement options are present
 		if not self.options_dispcal:
 			self.prepare_dispcal(dry_run=True)
-		# strip options we may override (basically all the stuff which will be 
+		# Strip options we may override (basically all the stuff which can be 
 		# added by add_measurement_features)
-		self.options_dispcal = filter(lambda arg: not arg[:2] in ("-F", "-H", 
-																  "-I", "-P", 
-																  "-V", "-X", 
-																  "-d", "-c", 
-																  "-p", "-y"), 
+		dispcal_override_args = ("-F", "-H", "-I", "-P", "-V", "-X", "-d", "-c", 
+								 "-p", "-y")
+		self.options_dispcal = filter(lambda arg: not arg[:2] in dispcal_override_args, 
 									  self.options_dispcal)
-		self.add_measurement_features(self.options_dispcal)
+		# Only add the dispcal extra args which may override measurement features
+		dispcal_extra_args = parse_argument_string(getcfg("extra_args.dispcal"))
+		for i, arg in enumerate(dispcal_extra_args):
+			if not arg.startswith("-") and i > 0:
+				# Assume option to previous arg
+				arg = dispcal_extra_args[i - 1]
+			if arg[:2] in dispcal_override_args:
+				self.options_dispcal += [dispcal_extra_args[i]]
+		result = self.add_measurement_features(self.options_dispcal)
+		if isinstance(result, Exception):
+			return result, None
 		cmd = get_argyll_util("dispread")
 		args = []
 		args += ["-v"] # verbose
@@ -2140,8 +2153,6 @@ class Worker():
 		result = self.add_measurement_features(args)
 		if isinstance(result, Exception):
 			return result, None
-		if not result:
-			return None, None
 		# TTBD/FIXME: Skipping of sensor calibration can't be done in
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
 		if getcfg("allow_skip_sensor_cal") and self.dispread_after_dispcal and \

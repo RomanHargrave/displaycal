@@ -4517,7 +4517,11 @@ class MainFrame(BaseFrame):
 		# measure
 		cmd = get_argyll_util("dispread")
 		args = ["-v"]
-		self.worker.add_measurement_features(args)
+		result = self.worker.add_measurement_features(args)
+		if isinstance(result, Exception):
+			return result
+		if getcfg("extra_args.dispread").strip():
+			args += parse_argument_string(getcfg("extra_args.dispread"))
 		args += [os.path.splitext(ti1_path)[0]]
 		return self.worker.exec_cmd(cmd, args, skip_scripts=True)
 	
