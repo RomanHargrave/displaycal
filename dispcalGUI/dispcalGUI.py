@@ -2473,6 +2473,18 @@ class MainFrame(BaseFrame):
 			   int(self.menuitem_allow_skip_sensor_cal.IsChecked()))
 
 	def enable_argyll_debug_handler(self, event):
+		if not getcfg("argyll.debug"):
+			dlg = ConfirmDialog(self, msg=lang.getstr("argyll.debug.warning1"),  
+								ok=lang.getstr("ok"), 
+								cancel=lang.getstr("cancel"), 
+								bitmap=geticon(32, "dialog-warning"), log=False)
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				self.menuitem_enable_argyll_debug.Check(False)
+				return
+			InfoDialog(self, msg=lang.getstr("argyll.debug.warning2"), 
+					   bitmap=geticon(32, "dialog-warning"), log=False)
 		setcfg("argyll.debug", 
 			   int(self.menuitem_enable_argyll_debug.IsChecked()))
 
