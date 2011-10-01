@@ -17,8 +17,9 @@ if sys.platform == "win32":
 	import _winreg
 
 from argyll_names import viewconds
+from defaultpaths import appdata, commonappdata
 if sys.platform == "win32":
-	from defaultpaths import appdata, commonappdata, commonprogramfiles
+	from defaultpaths import commonprogramfiles
 elif sys.platform == "darwin":
 	from defaultpaths import appsupport, appsupport_home, prefs, prefs_home
 else:
