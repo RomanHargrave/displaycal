@@ -3891,7 +3891,7 @@ class MainFrame(BaseFrame):
 								fobj = appscript.mactypes.File(path)
 								appscript.app("ColorSyncScripting").displays[n].display_profile.set(fobj)  # one-based index
 							except Exception, exception:
-								log(exception)
+								safe_print(exception)
 							else:
 								result = True
 								break
@@ -7549,7 +7549,7 @@ def main():
 	if verbose >= 1:
 		safe_print(appname + runtype, version, build)
 	if sys.platform == "darwin":
-		log("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
+		safe_print("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
 	else:
 		if sys.platform == "win32":
 			ver2name = {(5, 0): "2000",
@@ -7570,9 +7570,9 @@ def main():
 		else:
 			dist = "%s %s %s" % getattr(platform, "linux_distribution", 
 										platform.dist)()
-		log("%s %s (%s)" % (platform.system(), platform.version(), dist))
-	log("Python " + sys.version)
-	log("wxPython " + wx.version())
+		safe_print("%s %s (%s)" % (platform.system(), platform.version(), dist))
+	safe_print("Python " + sys.version)
+	safe_print("wxPython " + wx.version())
 	try:
 		# Force to run inside tty with the --terminal option
 		if "--terminal" in sys.argv[1:]:

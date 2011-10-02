@@ -948,7 +948,7 @@ class Worker():
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
 				self.argyll_bin_dir = argyll_bin_dir
-				log(self.argyll_bin_dir)
+				safe_print(self.argyll_bin_dir)
 			result = self.exec_cmd(cmd, ["-?"], capture_output=True, 
 								   skip_scripts=True, silent=True, 
 								   log_output=False)
@@ -967,7 +967,7 @@ class Worker():
 						argyll_version_string = argyll_version
 						if (argyll_version_string != self.argyll_version_string):
 							self.argyll_version_string = argyll_version_string
-							log("Argyll CMS " + self.argyll_version_string)
+							safe_print("Argyll CMS " + self.argyll_version_string)
 						config.defaults["copyright"] = ("Created with %s %s "
 														"and Argyll CMS %s" % 
 														(appname, version, 
@@ -2371,7 +2371,7 @@ class Worker():
 			if getattr(self, "subprocess", None) and \
 			   not getattr(self, "subprocess_abort", False):
 				if debug:
-					log('[D] calling quit_terminate_cmd')
+					safe_print('[D] calling quit_terminate_cmd')
 				self.subprocess_abort = True
 				self.thread_abort = True
 				delayedresult.startWorker(lambda result: None, 
@@ -2379,7 +2379,7 @@ class Worker():
 				##wx.CallAfter(self.quit_terminate_cmd)
 			elif not getattr(self, "thread_abort", False):
 				if debug:
-					log('[D] thread_abort')
+					safe_print('[D] thread_abort')
 				self.thread_abort = True
 		if self.finished is True:
 			return
@@ -2421,7 +2421,7 @@ class Worker():
 	
 	def quit_terminate_cmd(self):
 		if debug:
-			log('[D] safe_quit')
+			safe_print('[D] safe_quit')
 		##if getattr(self, "subprocess", None) and \
 		   ##not getattr(self, "subprocess_abort", False) and \
 		if getattr(self, "subprocess", None) and \
@@ -2430,14 +2430,14 @@ class Worker():
 		   (hasattr(self.subprocess, "isalive") and 
 			self.subprocess.isalive()):
 			if debug or test:
-				log('User requested abort')
+				safe_print('User requested abort')
 			##self.subprocess_abort = True
 			##self.thread_abort = True
 			try:
 				if self.measure and hasattr(self.subprocess, "send"):
 					try:
 						if debug or test:
-							log('Sending ESC (1)')
+							safe_print('Sending ESC (1)')
 						self.subprocess.send("\x1b")
 						ts = time()
 						while getattr(self, "subprocess", None) and \
@@ -2449,19 +2449,19 @@ class Worker():
 						if getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
 							if debug or test:
-								log('Sending ESC (2)')
+								safe_print('Sending ESC (2)')
 							self.subprocess.send("\x1b")
 							sleep(.5)
 					except Exception, exception:
 						if debug:
-							log(traceback.format_exc())
+							safe_print(traceback.format_exc())
 				if getattr(self, "subprocess", None) and \
 				   (hasattr(self.subprocess, "poll") and 
 					self.subprocess.poll() is None) or \
 				   (hasattr(self.subprocess, "isalive") and 
 					self.subprocess.isalive()):
 					if debug or test:
-						log('Trying to terminate subprocess...')
+						safe_print('Trying to terminate subprocess...')
 					self.subprocess.terminate()
 					ts = time()
 					while getattr(self, "subprocess", None) and \
@@ -2474,26 +2474,26 @@ class Worker():
 					   hasattr(self.subprocess, "isalive") and \
 					   self.subprocess.isalive():
 						if debug or test:
-							log('Trying to terminate subprocess forcefully...')
+							safe_print('Trying to terminate subprocess forcefully...')
 						self.subprocess.terminate(force=True)
 			except Exception, exception:
 				if debug:
-					log(traceback.format_exc())
+					safe_print(traceback.format_exc())
 			if debug:
-				log('[D] end try')
+				safe_print('[D] end try')
 		elif debug:
-			log('[D] subprocess: %r' % getattr(self, "subprocess", None))
-			log('[D] subprocess_abort: %r' % getattr(self, "subprocess_abort", 
+			safe_print('[D] subprocess: %r' % getattr(self, "subprocess", None))
+			safe_print('[D] subprocess_abort: %r' % getattr(self, "subprocess_abort", 
 													 False))
 			if getattr(self, "subprocess", None):
-				log('[D] subprocess has poll: %r' % hasattr(self.subprocess, 
+				safe_print('[D] subprocess has poll: %r' % hasattr(self.subprocess, 
 															"poll"))
 				if hasattr(self.subprocess, "poll"):
-					log('[D] subprocess.poll(): %r' % self.subprocess.poll())
-				log('[D] subprocess has isalive: %r' % hasattr(self.subprocess, 
+					safe_print('[D] subprocess.poll(): %r' % self.subprocess.poll())
+				safe_print('[D] subprocess has isalive: %r' % hasattr(self.subprocess, 
 															   "isalive"))
 				if hasattr(self.subprocess, "isalive"):
-					log('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
+					safe_print('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
 
 	def spyder2_firmware_exists(self):
 		if self.argyll_version < [1, 2, 0]:
