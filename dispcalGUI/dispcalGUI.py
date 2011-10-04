@@ -7377,8 +7377,8 @@ class MainFrame(BaseFrame):
 		items += [wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
 																   build))]
 		items += [wx.lib.hyperlink.HyperLinkCtrl(
-			self.aboutdialog, -1, label="%s.hoech.net" % appname, 
-			URL="http://%s.hoech.net" % appname)]
+			self.aboutdialog, -1, label=domain, 
+			URL="http://%s" % domain)]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		items += [wx.StaticText(
 			self.aboutdialog, -1, u"Argyll CMS © Graeme Gill")]
@@ -7445,10 +7445,10 @@ class MainFrame(BaseFrame):
 			launch_file(license)
 	
 	def help_support_handler(self, event):
-		launch_file("http://sourceforge.net/projects/dispcalgui/support")
+		launch_file("http://%s/#help" % domain)
 	
 	def bug_report_handler(self, event):
-		launch_file("http://sourceforge.net/tracker/?group_id=257092&atid=1127028")
+		launch_file("http://%s/#reportbug" % domain)
 	
 	def app_update_check_handler(self, event, silent=False):
 		if not hasattr(self, "app_update_check") or \

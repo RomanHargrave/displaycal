@@ -257,7 +257,15 @@ def setup():
 		(os.path.join(doc, "screenshots"), 
 			glob.glob(os.path.join(pydir, "..", "screenshots", "*.png"))),
 		(os.path.join(doc, "theme"), 
-			[os.path.join(pydir, "..", "theme", "header-readme.png")]), 
+			glob.glob(os.path.join(pydir, "..", "theme", "*.png"))), 
+		(os.path.join(doc, "theme"), 
+			glob.glob(os.path.join(pydir, "..", "theme", "*.css"))), 
+		(os.path.join(doc, "theme"), 
+			glob.glob(os.path.join(pydir, "..", "theme", "*.js"))), 
+		(os.path.join(doc, "theme", "slimbox2"), 
+			glob.glob(os.path.join(pydir, "..", "theme", "slimbox2", "*.css"))), 
+		(os.path.join(doc, "theme", "slimbox2"), 
+			glob.glob(os.path.join(pydir, "..", "theme", "slimbox2", "*.js"))), 
 		(os.path.join(doc, "theme", "icons"), 
 			[os.path.join(pydir, "..", "theme", "icons", "favicon.ico")]), 
 		(doc, [os.path.join(pydir, "..", "README.html")])
@@ -513,9 +521,9 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		],
 		"data_files": data_files,
 		"description": description,
-		"download_url": "http://%(name)s.hoech.net/"
+		"download_url": "http://%(domain)s/"
 						"%(name)s-%(version)s.tar.gz" % 
-						{"name": name, "version": version},
+						{"domain": domain, "name": name, "version": version},
 		"ext_modules": ext_modules,
 		"license": "GPL v3",
 		"long_description": longdesc,
@@ -535,7 +543,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		"requires": requires,
 		"provides": [name],
 		"scripts": [],
-		"url": "http://%s.hoech.net/" % name,
+		"url": "http://%s/" % domain,
 		"version": msiversion if "bdist_msi" in sys.argv[1:] else version
 	}
 

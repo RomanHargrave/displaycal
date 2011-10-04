@@ -1,0 +1,143 @@
+/* SLIMBOX */
+
+#lbOverlay {
+	position: fixed;
+	z-index: 9999;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background-color: #fff;
+	cursor: pointer;
+}
+
+#lbCenter,
+#lbBottomContainer {
+	position: fixed;
+	z-index: 10000;
+}
+
+#lbBottomContainer {
+	overflow: hidden;
+}
+
+.lbLoading {
+    background: #fff;
+
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    border-radius: 8px;
+    
+	-moz-box-shadow: 0 1px 5px rgba(0, 0, 0, .25);
+	-webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, .25);
+	box-shadow: 0 1px 5px rgba(0, 0, 0, .25);
+
+    height: 22px !important;
+    padding: 1em;
+    text-align: center;
+}
+.lbLoading:before {
+    color: rgba(0, 0, 0, .5);
+    content: 'Loading image, please wait...';
+    text-align: center;
+	text-shadow: 0 1px 1px rgba(0, 0, 0, .125);
+}
+
+#lbCenter {
+}
+
+#lbImage {
+    cursor: pointer;
+	position: absolute;
+	left: 0;
+	top: 0;
+	background-repeat: no-repeat;
+	-moz-box-shadow: 0 1px 5px rgba(0, 0, 0, .5);
+	-webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, .5);
+	box-shadow: 0 1px 5px rgba(0, 0, 0, .5);
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+}
+
+#lbImage,
+#lbSlide {
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+	border-radius: 6px;
+}
+
+#lbPrevLink,
+#lbNextLink {
+	color: #069;
+	display: block;
+	position: absolute;
+	top: 7px;
+	text-shadow: none;
+	text-transform: uppercase;
+}
+
+#lbPrevLink:before,
+#lbNextLink:after {
+    font-size: 22px;
+}
+
+#lbPrevLink:before {
+    content: '← ';
+}
+
+#lbNextLink:after {
+    content: ' →';
+}
+
+#lbPrevLink:hover,
+#lbNextLink:hover {
+	color: #6c0;
+	text-decoration: none;
+	text-shadow: 0 1px 3px rgba(102, 204, 0, .75);
+}
+
+#lbPrevLink {
+	right: 198px;
+}
+
+#lbNextLink {
+	right: 75px;
+}
+
+#lbBottom {
+	font-family: Arial, sans-serif;
+	font-size: 12px;
+	color: #000;
+	line-height: 18px;
+	text-align: left;
+	padding-top: 10px;
+	position: relative;
+	text-shadow: 0 1px 1px rgba(0, 0, 0, .125);
+}
+
+#lbCloseLink {
+	display: block;
+	float: right;
+	text-transform: uppercase;
+}
+
+#lbCloseLink:hover {
+	color: #f60;
+	text-shadow: 0 1px 3px rgba(255, 102, 0, .5);
+}
+
+#lbCaption,
+#lbNumber {
+}
+
+#lbNumber {
+    position: absolute;
+    right: 155px;
+    text-align: center;
+    top: 10px;
+}
+
+#lbCaption {
+	font-weight: normal;
+}

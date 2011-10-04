@@ -26,6 +26,14 @@ Files: dispcalGUI/theme/icons/*/dispcalGUI.png
 Copyright: 2008-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
 License: GPL-3+
 
+Files: theme/jquery.min.js
+Copyright: 2010-${YEAR}, the jQuery Project
+License: MIT-style
+
+Files: theme/slimbox2/*
+Copyright: 2007-2010, Christophe Beyls
+License: MIT-style
+
 Files: dispcalGUI/RealDisplaySizeMM.c
 Copyright: 1995-${YEAR}, Graeme W. Gill <Graeme@argyllcms.com>
            2008-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
