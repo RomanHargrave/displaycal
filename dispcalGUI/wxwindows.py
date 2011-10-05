@@ -115,7 +115,7 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.sizer1.Add(self.bitmap, flag=wx.RIGHT, border=margin)
 
 		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT)
-		self.message = wx.StaticText(self, -1, wrap(msg))
+		self.message = wx.StaticText(self, -1, wrap(msg.replace("&", "&&")))
 		self.sizer3.Add(self.message)
 
 		btnwidth = 80

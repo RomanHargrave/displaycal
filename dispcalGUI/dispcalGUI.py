@@ -61,6 +61,7 @@ import subprocess as sp
 import tempfile
 import threading
 import traceback
+import urllib
 from encodings.aliases import aliases
 from time import gmtime, sleep, strftime, time
 
@@ -165,62 +166,38 @@ def swap_dict_keys_values(mydict):
 
 def app_update_check(parent=None, silent=False):
 	safe_print(lang.getstr("update_check"))
-	conn = httplib.HTTPConnection(domain)
-	try:
-		conn.request("GET", "/VERSION")
-		resp = conn.getresponse()
-	except (socket.error, httplib.HTTPException), exception:
-		safe_print(lang.getstr("failure"), log=False)
-		wx.CallAfter(InfoDialog, parent, 
-					 msg=" ".join([lang.getstr("update_check.fail"),
-								   lang.getstr("connection.fail", 
-											   " ".join([str(arg) for 
-														 arg in exception.args]))]),
-					 ok=lang.getstr("ok"), 
-					 bitmap=geticon(32, "dialog-error"))
+	data = http_request(parent, domain, "GET", "/VERSION",
+						failure_msg=lang.getstr("update_check.fail"),
+						silent=silent)
+	if data is False:
 		return
-	if resp.status != httplib.OK:
-		safe_print(lang.getstr("failure"), log=False)
-		wx.CallAfter(InfoDialog, parent, 
-					 msg=" ".join([lang.getstr("update_check.fail"),
-								   lang.getstr("connection.fail.http", 
-											   " ".join([str(resp.status),
-														 resp.reason,
-														 domain + "/VERSION"]))]),
-					 ok=lang.getstr("ok"), 
-					 bitmap=geticon(32, "dialog-error"))
-		return
-	data = resp.read()
 	try:
 		newversion_tuple = tuple(int(n) for n in data.split("."))
 	except ValueError:
-		safe_print(lang.getstr("failure"), log=False)
-		wx.CallAfter(InfoDialog, parent, 
-					 msg=lang.getstr("update_check.fail.version",
-									 domain),
-					 ok=lang.getstr("ok"), 
-					 bitmap=geticon(32, "dialog-error"))
-		return
+		safe_print(lang.getstr("update_check.fail.version", domain))
+		if not silent:
+			wx.CallAfter(InfoDialog, parent, 
+						 msg=lang.getstr("update_check.fail.version",
+										 domain),
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"), log=False)
+			return
 	if newversion_tuple > VERSION_BASE:
 		# Get changelog
-		chglog = None
-		try:
-			conn.request("GET", "/README.html")
-			resp = conn.getresponse()
-		except (socket.error, httplib.HTTPException), exception:
-			pass
-		else:
-			if resp.status == httplib.OK:
-				chglog = resp.read()
-				chglog = re.search("<h2>Version history / changelog</h2>"
-								   ".+?<dl>.+?</dd>", chglog, re.S)
-				if chglog:
-					chglog = chglog.group().decode("utf-8", "replace")
-					chglog = re.sub("<\/?d[l|d]>", "", chglog)
-					chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
-					chglog = re.sub("<h3>.+?</h3>", "", chglog)
-					chglog = re.sub("<h\d>(.+?)</h\d>", 
-									"<p><strong>\\1</strong></p>", chglog)
+		readme = http_request(parent, domain, "GET", "/README.html",
+							  silent=silent)
+		if readme:
+			chglog = re.search('<div id="(?:changelog|history)">'
+							   '.+?<h2>.+?</h2>'
+							   '.+?<dl>.+?</dd>', readme, re.S)
+			if chglog:
+				chglog = chglog.group().decode("utf-8", "replace")
+				chglog = re.sub('<div id="(?:changelog|history)">', "", chglog)
+				chglog = re.sub("<\/?d[l|d]>", "", chglog)
+				chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
+				chglog = re.sub("<h3>.+?</h3>", "", chglog)
+				chglog = re.sub("<h\d>(.+?)</h\d>", 
+								"<p><strong>\\1</strong></p>", chglog)
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog)
 	elif not silent:
 		wx.CallAfter(app_uptodate, parent)
@@ -255,8 +232,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 						   ".".join(str(n) for n in newversion_tuple)), 
 						ok=lang.getstr("go_to_website"), 
 						cancel=lang.getstr("cancel"), 
-						bitmap=getbitmap(
-							"theme/icons/32x32/dialog-information"), 
+						bitmap=geticon(32, "dialog-information"), 
 						log=True,
 						print_=True)
 	if chglog:
@@ -279,6 +255,113 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 	dlg.Destroy()
 	if parent and getattr(parent, "menuitem_app_auto_update_check"):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
+
+
+def colorimeter_correction_web_check(parent=None, params=None):
+	""" Check online for ccmx or ccss """
+	path = "/colorimetercorrection/index.php"
+	data = http_request(parent, domain, "POST", path, params)
+	if data is not False:
+		if data.strip().startswith("CC"):
+			cgats = CGATS.CGATS(data)
+			description = cgats.queryv1("DESCRIPTOR")
+			name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
+			target = os.path.join(config.commonappdata if is_superuser() else 
+								  config.appdata, "color", 
+								  "%s.%s" % (name, cgats[0].type.lower().strip()))
+			wx.CallAfter(colorimeter_correction_check_overwrite, parent, 
+						 cgats, target, lang.getstr("colorimeter_correction_web_check.success"))
+		else:
+			wx.CallAfter(InfoDialog, parent, 
+						 msg=lang.getstr("colorimeter_correction_web_check.failure"),
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-information"))
+
+
+def colorimeter_correction_check_overwrite(parent=None, cgats=None, path=None,
+										   msg=""):
+	if os.path.isfile(path):
+		dlg = ConfirmDialog(parent,
+							msg=" ".join([msg,
+										  lang.getstr("dialog.confirm_overwrite", path)]), 
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-information"))
+		result = dlg.ShowModal()
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return False
+	else:
+		InfoDialog(parent, 
+				   msg=msg,
+				   ok=lang.getstr("ok"), 
+				   bitmap=geticon(32, "dialog-information"))
+	cgats.write(path)
+	setcfg("colorimeter_correction_matrix_file", ":" + path)
+	parent.update_colorimeter_correction_matrix_ctrl_items(True)
+	return True
+	
+
+
+def upload_colorimeter_correction(parent=None, params=None):
+	""" Upload colorimeter correction to online database """
+	path = "/colorimetercorrection/index.php"
+	failure_msg = lang.getstr("upload_colorimeter_correction.failure")
+	data = http_request(parent, domain, "POST", path, params, 
+						failure_msg=failure_msg)
+	if data is not False:
+		if data.strip() == "PUT OK":
+			wx.CallAfter(InfoDialog, parent, 
+						 msg=lang.getstr("upload_colorimeter_correction.success"),
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-information"))
+		else:
+			wx.CallAfter(InfoDialog, parent, 
+						 msg=failure_msg,
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"))
+
+
+def http_request(parent=None, domain=None, request_type="GET", path="", 
+				 params=None, headers=None, failure_msg="", silent=False):
+	""" HTTP request wrapper """
+	if params is None:
+		params = {}
+	if headers is None:
+		if request_type == "GET":
+			headers = {}
+		else:
+			headers = {"Content-type": "application/x-www-form-urlencoded",
+					   "Accept": "text/plain"}
+	conn = httplib.HTTPConnection(domain)
+	try:
+		conn.request(request_type, path, params, headers)
+		resp = conn.getresponse()
+	except (socket.error, httplib.HTTPException), exception:
+		msg = " ".join([failure_msg, lang.getstr("connection.fail", 
+												 " ".join([str(arg) for 
+														   arg in exception.args]))])
+		safe_print(msg)
+		if not silent:
+			wx.CallAfter(InfoDialog, parent, 
+						 msg=msg,
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"), log=False)
+		return False
+	if resp.status != httplib.OK:
+		msg = " ".join([failure_msg,
+						lang.getstr("connection.fail.http", 
+									" ".join([str(resp.status),
+											  resp.reason,
+											  domain + path]))])
+		safe_print(msg)
+		if not silent:
+			wx.CallAfter(InfoDialog, parent, 
+						 msg=msg,
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"), log=False)
+		return False
+	return resp.read()
 
 
 class BaseFrame(wx.Frame):
@@ -1264,6 +1347,10 @@ class MainFrame(BaseFrame):
 			tools.FindItem("devicecorrections.import"))
 		self.Bind(wx.EVT_MENU, self.import_devicecorrections_handler, 
 				  self.menuitem_import_devicecorrections)
+		self.menuitem_create_colorimeter_correction = tools.FindItemById(
+			tools.FindItem("colorimeter_correction.create"))
+		self.Bind(wx.EVT_MENU, self.create_colorimeter_correction_handler, 
+				  self.menuitem_create_colorimeter_correction)
 		self.menuitem_enable_spyder2 = tools.FindItemById(
 			tools.FindItem("enable_spyder2"))
 		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, 
@@ -1418,6 +1505,8 @@ class MainFrame(BaseFrame):
 				  id=self.colorimeter_correction_matrix_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_handler, 
 				  id=self.colorimeter_correction_matrix_btn.GetId())
+		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_web_handler, 
+				  id=self.colorimeter_correction_matrix_web_btn.GetId())
 
 		# Calibration settings
 		# ====================
@@ -1915,18 +2004,20 @@ class MainFrame(BaseFrame):
 		# Show or hide the colorimeter correction matrix control
 		self.calpanel.Freeze()
 		instrument_features = self.worker.get_instrument_features()
+		ccmx_testchart = get_data_path(os.path.join("ti1", 
+													"d3-e4-s0-g0-m3-f0.ti1"))
+		is_ccmx_testchart = getcfg("testchart.file") == ccmx_testchart
+		show_control = (self.worker.argyll_version >= [1, 3, 0] and 
+						not instrument_features.get("spectral") and
+						not is_ccmx_testchart)
 		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
-			self.colorimeter_correction_matrix_ctrl,
-			self.worker.argyll_version >= [1, 3, 0] and 
-			not instrument_features.get("spectral"))
+			self.colorimeter_correction_matrix_ctrl, show_control)
 		self.colorimeter_correction_matrix_label.GetContainingSizer().Show(
-			self.colorimeter_correction_matrix_label,
-			self.worker.argyll_version >= [1, 3, 0] and 
-			not instrument_features.get("spectral"))
+			self.colorimeter_correction_matrix_label, show_control)
 		self.colorimeter_correction_matrix_btn.GetContainingSizer().Show(
-			self.colorimeter_correction_matrix_btn,
-			self.worker.argyll_version >= [1, 3, 0] and 
-			not instrument_features.get("spectral"))
+			self.colorimeter_correction_matrix_btn, show_control)
+		self.colorimeter_correction_matrix_web_btn.GetContainingSizer().Show(
+			self.colorimeter_correction_matrix_web_btn, show_control)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
@@ -1947,7 +2038,7 @@ class MainFrame(BaseFrame):
 		if force or not getattr(self, "ccmx_cached_paths", None):
 			self.ccmx_cached_paths = glob.glob(os.path.join(config.appdata, 
 															"color", "*.ccmx"))
-			if "i1 DisplayPro, ColorMunki Display" in self.worker.get_instrument_name():
+			if self.worker.instrument_supports_ccss():
 				self.ccmx_cached_paths += glob.glob(os.path.join(config.appdata, 
 																 "color", "*.ccss"))
 		for i, path in enumerate(self.ccmx_cached_paths):
@@ -2392,7 +2483,8 @@ class MainFrame(BaseFrame):
 					break
 			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
 										  skip_scripts=True, silent=True,
-										  asroot=self.worker.argyll_version < [1, 2, 0],
+										  asroot=self.worker.argyll_version < [1, 2, 0] or 
+												 (sys.platform == "darwin" and mac_ver()[0] >= '10.6'),
 										  title=lang.getstr("enable_spyder2"))
 			if not isinstance(result, Exception) and result:
 				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
@@ -2436,7 +2528,8 @@ class MainFrame(BaseFrame):
 												  capture_output=True, 
 												  skip_scripts=True, 
 												  silent=True,
-												  asroot=self.worker.argyll_version < [1, 2, 0],
+												  asroot=self.worker.argyll_version < [1, 2, 0] or 
+														 (sys.platform == "darwin" and mac_ver()[0] >= '10.6'),
 												  title=lang.getstr("enable_spyder2"))
 					if not isinstance(result, Exception) and result:
 						InfoDialog(self, 
@@ -5580,10 +5673,13 @@ class MainFrame(BaseFrame):
 		else:
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+			ccmx_default = os.path.join(config.commonappdata if is_superuser() else 
+										config.appdata, "color")
 			defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction_matrix_file.choose"), 
-								defaultDir=defaultDir, defaultFile=defaultFile,
+								defaultDir=defaultDir if defaultFile else ccmx_default, 
+								defaultFile=defaultFile,
 								wildcard=lang.getstr("filetype.ccmx") + 
 										 "|*.ccmx;*.ccss", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -5594,6 +5690,192 @@ class MainFrame(BaseFrame):
 			if path:
 				setcfg("colorimeter_correction_matrix_file", ":" + path)
 				self.update_colorimeter_correction_matrix_ctrl_items()
+	
+	def colorimeter_correction_matrix_web_handler(self, event):
+		""" Check the web for cccmx or ccss files """
+		if self.worker.instrument_supports_ccss():
+			filetype = 'ccss'
+		else:
+			filetype = 'ccmx'
+		params = urllib.urlencode({'get': True,
+								   'type': filetype,
+								   'display': self.worker.get_display_edid().get("monitor_name", 
+																				 self.worker.get_display_name()),
+								   'instrument': self.worker.get_instrument_name() or "NONE"})
+		self.colorimeter_correction_web_check = threading.Thread(target=colorimeter_correction_web_check, 
+																 args=(self, params))
+		self.colorimeter_correction_web_check.start()
+	
+	def create_colorimeter_correction_handler(self, event):
+		"""
+		Create a CCSS or CCMX file from one or more .ti3 files
+		
+		Atleast one of the ti3 files must be a measured with a spectrometer.
+		
+		"""
+		paths = []
+		spectro_ti3 = None
+		colorimeter_ti3 = None
+		spectral = False
+		defaultDir, defaultFile = get_verified_path("last_ti3_path")
+		for n in (0, 1):
+			path = None
+			if n < 1:
+				msg = lang.getstr("measurement_file.choose")
+			else:
+				if spectro_ti3:
+					msg = lang.getstr("measurement_file.choose.colorimeter")
+				else:
+					msg = lang.getstr("measurement_file.choose.spectro")
+			dlg = wx.FileDialog(self, 
+								msg,
+								defaultDir=defaultDir,
+								defaultFile=defaultFile,
+								wildcard=lang.getstr("filetype.ti3") + "|*.ti3", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			if dlg.ShowModal() == wx.ID_OK:
+				path = dlg.GetPath()
+			dlg.Destroy()
+			if path:
+				try:
+					cgats = CGATS.CGATS(path)
+					if not cgats.queryv1("DATA"):
+						raise CGATS.CGATSError()
+				except CGATS.CGATSError, exception:
+					InfoDialog(self,
+							   msg=lang.getstr("error.measurement.file_invalid", path), 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
+					return
+				else:
+					paths.append(path)
+					# Check if measurement contains spectral values
+					# Check if instrument type is spectral
+					if cgats.queryv1("SPECTRAL_BANDS"):
+						if spectro_ti3:
+							# We already have a spectro ti3
+							spectro_ti3 = None
+							break
+						spectro_ti3 = path
+						spectral = True
+						# Ask if user wants to create CCSS
+						dlg = ConfirmDialog(self, 
+											msg=lang.getstr("create_ccss_or_ccmx"), 
+											ok=lang.getstr("CCSS"), 
+											cancel=lang.getstr("cancel"), 
+											alt=lang.getstr("CCMX"),
+											bitmap=geticon(32, "dialog-information"))
+						result = dlg.ShowModal()
+						dlg.Destroy()
+						if result == wx.ID_OK:
+							break
+						elif result == wx.ID_CANCEL:
+							return
+					elif cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "YES":
+						if spectro_ti3:
+							# We already have a spectro ti3
+							spectro_ti3 = None
+							break
+						spectro_ti3 = path
+					elif cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "NO":
+						if colorimeter_ti3:
+							# We already have a colorimeter ti3
+							colorimeter_ti3 = None
+							break
+						colorimeter_ti3 = path
+			else:
+				# User canceled dialog
+				return
+		setcfg("last_ti3_path", paths[-1])
+		# Check if atleast one file has been measured with a spectro
+		if not spectro_ti3:
+			InfoDialog(self,
+					   msg=lang.getstr("error.measurement.one_spectro"), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"))
+			return
+		if len(paths) == 2:
+			if not colorimeter_ti3:
+				# If 2 files, check if atleast one file has NOT been measured 
+				# with a spectro (CCMX creation)
+				InfoDialog(self,
+						   msg=lang.getstr("error.measurement.one_colorimeter"), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+		elif not spectral:
+			# If 1 file, check if it contains spectral values (CCSS creation)
+			InfoDialog(self,
+					   msg=lang.getstr("error.measurement.missing_spectral"), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"))
+			return
+		# Prepare our files
+		cwd = self.worker.create_tempdir()
+		args = []
+		ti3_tmp_names = []
+		if spectro_ti3:
+			shutil.copyfile(spectro_ti3, os.path.join(cwd, 'spectro.ti3'))
+			ti3_tmp_names.append('spectro.ti3')
+		if colorimeter_ti3:
+			# Create CCMX
+			shutil.copyfile(colorimeter_ti3, os.path.join(cwd, 'colorimeter.ti3'))
+			ti3_tmp_names.append('colorimeter.ti3')
+			name = "correction"
+			ext = ".ccmx"
+		else:
+			# Create CCSS
+			args.append("-S")
+			name = "calibration"
+			ext = ".ccss"
+		args.append("-f")
+		args.append(",".join(ti3_tmp_names))
+		args.append(name + ext)
+		result = self.worker.create_ccxx(args, cwd)
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		elif result:
+			source = os.path.join(self.worker.tempdir, name + ext)
+			cgats = CGATS.CGATS(source)
+			description = cgats.queryv1("DESCRIPTOR")
+			name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
+			target = os.path.join(config.commonappdata if is_superuser() else 
+								  config.appdata, "color", name + ext)
+			if (colorimeter_correction_check_overwrite(self, cgats, target, 
+													   lang.getstr("colorimeter_correction.create.success")) and
+				(not hasattr(self, "upload_colorimeter_correction") or \
+				 not self.upload_colorimeter_correction.isAlive())):
+				# Ask if user wants to upload
+				dlg = ConfirmDialog(self, 
+									msg=lang.getstr("upload_colorimeter_correction.choice"), 
+									ok=lang.getstr("ok"), 
+									cancel=lang.getstr("cancel"), 
+									bitmap=geticon(32, "dialog-information"))
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result == wx.ID_OK:
+					params = urllib.urlencode({'put': True,
+											   'type': ext[1:],
+											   'description': description,
+											   'display': cgats.queryv1("DISPLAY"),
+											   'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
+																									   self.worker.get_display_name()),
+											   'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
+											   'edid': self.worker.get_display_edid().get("edid", ""),
+											   'instrument': remove_vendor_names(cgats.queryv1("INSTRUMENT")),
+											   'reference': remove_vendor_names(cgats.queryv1("REFERENCE")),
+											   'cgats': cgats})
+					# Upload correction
+					self.upload_colorimeter_correction = threading.Thread(target=upload_colorimeter_correction, 
+													     args=(self, params))
+					self.upload_colorimeter_correction.start()
+		elif result is not None:
+			InfoDialog(self,
+					   msg=lang.getstr("colorimeter_correction.create.failure"), 
+					   ok=lang.getstr("cancel"), 
+					   bitmap=geticon(32, "dialog-error"))
+		self.worker.wrapup(False)
 
 	def comport_ctrl_handler(self, event=None):
 		if debug and event:
@@ -5611,11 +5893,24 @@ class MainFrame(BaseFrame):
 	def import_devicecorrections_handler(self, event):
 		"""
 		Convert correction matrices from other profiling softwares to Argyll's
-		CCMX format
+		CCMX or CCSS format
+		
+		Currently supported: iColor Display (native import to CCMX),
+							 i1 Profiler (import to CCSS via Argyll CMS 1.3.4)
+		
+		Hold SHIFT to skip automatic import
 		
 		"""
-		defaultDir = None
+		result = None
+		i1d3ccss = get_argyll_util("i1d3ccss")
+		if i1d3ccss and not wx.GetKeyState(wx.WXK_SHIFT):
+			# Automatically import X-Rite .edr files
+			result = self.worker.import_edr()
+		# Import iColorDisplay device corrections or let the user choose
+		defaultDir = ""
+		defaultFile = ""
 		path = None
+		# Look for iColorDisplay
 		if sys.platform == "win32":
 			defaultDir = os.path.join(getenvu("PROGRAMFILES", ""), "Quato", 
 									  "iColorDisplay")
@@ -5628,55 +5923,102 @@ class MainFrame(BaseFrame):
 			if paths:
 				defaultDir = paths[-1]
 		if defaultDir and os.path.isdir(defaultDir):
+			# iColorDisplay found
+			defaultFile = "DeviceCorrections.txt"
+		elif i1d3ccss:
+			# Look for *.edr files
+			if sys.platform == "win32":
+				defaultDir = os.path.join(getenvu("PROGRAMFILES", ""), 
+										  "X-Rite", "Devices", "i1d3", 
+										  "Calibrations")
+			elif sys.platform == "darwin":
+				paths = glob.glob(os.path.join(os.path.sep, "Library", 
+											   "Application Support", "X-Rite", 
+											   "Devices", "i1d3xrdevice", 
+											   "Contents", "Resources", 
+											   "Calibrations"))
+				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+												"i1Profiler"))
+				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+												"ColorMunki Display"))
+				if paths:
+					defaultDir = paths[-1]
+			defaultFile = ""
+		if defaultDir and os.path.isdir(defaultDir):
 			if not wx.GetKeyState(wx.WXK_SHIFT):
-				path = os.path.join(defaultDir, "DeviceCorrections.txt")
-		else:
-			defaultDir = ""
+				path = os.path.join(defaultDir, defaultFile)
 		if not path or not os.path.isfile(path):
-			if sys.platform == "darwin":
-				# If the wildcard is a filename, wxMac won't let us select
-				wildcard = "*.txt"
-			else:
-				wildcard = "DeviceCorrections.txt"
 			dlg = wx.FileDialog(self, 
 								lang.getstr("devicecorrections.choose"),
 								defaultDir=defaultDir,
-								defaultFile="DeviceCorrections.txt",
-								wildcard=lang.getstr("filetype.txt") + 
-										 "|" + wildcard, 
+								defaultFile=defaultFile,
+								wildcard=lang.getstr("filetype.any") + 
+										 "|*.edr;*.exe;*.txt", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
 				path = dlg.GetPath()
 			dlg.Destroy()
 		if path and os.path.isfile(path):
-			if path.lower().endswith(".dmg"):
-				# TODO: We have a disk image, try mounting it
-				pass
-			if path.lower().endswith(".exe"):
-				# TODO: We have an installer, try opening it as lzma archive
-				pass
-			ccmx_dir = os.path.join(config.appdata, "color")
-			if not os.path.exists(ccmx_dir):
-				try:
-					check_create_dir(ccmx_dir)
-				except Error, exception:
-					InfoDialog(self, msg=exception.args[0], 
-							   ok=lang.getstr("cancel"), 
-							   bitmap=geticon(32, "dialog-error"))
-			try:
-				ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
-			except (WindowsError, OSError, UnicodeDecodeError,
-					demjson.JSONDecodeError), exception:
-				InfoDialog(self, msg=exception.args[0], 
-						   ok=lang.getstr("cancel"), 
-						   bitmap=geticon(32, "dialog-error"))
+			type = None
+			if path.lower().endswith(".txt"):
+				type = ".txt"
 			else:
-				self.update_colorimeter_correction_matrix_ctrl_items(True)
-				InfoDialog(self,
-						   msg=lang.getstr("devicecorrections.import.success"), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-information"))
+				icolordisplay = "icolordisplay" in os.path.basename(path).lower()
+				if path.lower().endswith(".dmg"):
+					if icolordisplay:
+						# TODO: We have a iColorDisplay disk image,
+						# try mounting it
+						pass
+					else:
+						# Assume X-Rite disk image
+						type = "xrite"
+				elif path.lower().endswith(".edr"):
+					type = "xrite"
+				elif path.lower().endswith(".exe"):
+					if icolordisplay:
+						# TODO: We have a iColorDisplay installer,
+						# try opening it as lzma archive
+						pass
+					else:
+						# Assume X-Rite installer
+						type = "xrite"
+			if type == ".txt":
+				# Assume iColorDisplay DeviceCorrections.txt
+				ccmx_dir = os.path.join(config.commonappdata if is_superuser() else 
+										config.appdata, "color")
+				if not os.path.exists(ccmx_dir):
+					try:
+						check_create_dir(ccmx_dir)
+					except Error, exception:
+						InfoDialog(self, msg=exception.args[0], 
+								   ok=lang.getstr("cancel"), 
+								   bitmap=geticon(32, "dialog-error"))
+				safe_print(lang.getstr("devicecorrections.import"))
+				safe_print(path)
+				try:
+					ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
+				except (WindowsError, OSError, UnicodeDecodeError,
+						demjson.JSONDecodeError), exception:
+					result = exception
+				else:
+					result = True
+			elif type == "xrite":
+				# Import .edr
+				result = self.worker.import_edr([path])
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		elif result:
+			self.update_colorimeter_correction_matrix_ctrl_items(True)
+			InfoDialog(self,
+					   msg=lang.getstr("devicecorrections.import.success"), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-information"))
+		elif result is not None:
+			InfoDialog(self,
+					   msg=lang.getstr("devicecorrections.import.failure"), 
+					   ok=lang.getstr("cancel"), 
+					   bitmap=geticon(32, "dialog-error"))
 
 	def display_ctrl_handler(self, event, load_lut=True):
 		if debug:
@@ -5867,7 +6209,10 @@ class MainFrame(BaseFrame):
 									  self.get_profile_quality(), 
 									  recommended[self.get_profile_type()])
 		patches = int(self.testchart_patches_amount.GetLabel())
-		if recommended > patches:
+		ccmx_testchart = get_data_path(os.path.join("ti1", "d3-e4-s0-g0-m3-f0.ti1"))
+		is_ccmx_testchart = getcfg("testchart.file") == ccmx_testchart
+		self.update_colorimeter_correction_matrix_ctrl()
+		if recommended > patches and not is_ccmx_testchart:
 			self.profile_quality_ctrl.Disable()
 			dlg = ConfirmDialog(
 				self, msg=lang.getstr("profile.testchart_recommendation"), 

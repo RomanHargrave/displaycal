@@ -54,7 +54,7 @@ if sys.platform == "darwin":
 						  mac_terminal_set_colors)
 elif sys.platform == "win32":
 	import util_win
-from util_os import getenvu, putenvu, quote_args, which
+from util_os import getenvu, is_superuser, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
@@ -792,7 +792,10 @@ class Worker():
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args):
 			args += ["-H"]
-		if self.argyll_version >= [1, 3, 0] and \
+		ccmx_testchart = get_data_path(os.path.join("ti1",
+													"d3-e4-s0-g0-m3-f0.ti1"))
+		is_ccmx_testchart = getcfg("testchart.file") == ccmx_testchart
+		if self.argyll_version >= [1, 3, 0] and not is_ccmx_testchart and \
 		   not instrument_features.get("spectral") and not get_arg("-X", args):
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if ccmx[0] == "AUTO":
@@ -882,6 +885,7 @@ class Worker():
 		self.argyll_version_string = ""
 		self._displays = []
 		self.display_edid = []
+		self.display_manufacturers = []
 		self.display_names = []
 		self.display_rects = []
 		self.displays = []
@@ -1033,6 +1037,7 @@ class Worker():
 			if displays != self._displays:
 				self._displays = list(displays)
 				self.display_edid = []
+				self.display_manufacturers = []
 				self.display_names = []
 				if sys.platform == "win32":
 					# The ordering will work as long
@@ -1064,14 +1069,17 @@ class Worker():
 						monitor = edid.get("monitor_name")
 						if monitor and not monitor in "".join(desc):
 							desc = [monitor]
-						##if manufacturer and (not monitor or 
-											 ##not monitor.lower().startswith(manufacturer[0].lower())):
-							##desc.insert(0, manufacturer[0])
+						if (manufacturer and 
+							"".join(desc).lower().startswith(manufacturer[0].lower())):
+							manufacturer = []
+					else:
+						manufacturer = []
 					if desc and desc[-1] not in display:
 						# Only replace the description if it not already
 						# contains the monitor model
 						displays[i] = " @".join([" ".join(desc), 
 												 display.split("@")[1]])
+					self.display_manufacturers.append(" ".join(manufacturer))
 					self.display_names.append(displays[i].split("@")[0].strip())
 				self.displays = displays
 				if check_lut_access:
@@ -1716,11 +1724,20 @@ class Worker():
 			display += "," + str(display_lut_no + 1)
 		return display
 	
-	def get_display_name(self):
+	def get_display_edid(self):
+		""" Return name of currently configured display """
+		n = getcfg("display.number") - 1
+		if n >= 0 and n < len(self.display_edid):
+			return self.display_edid[n]
+		return {}
+	
+	def get_display_name(self, prepend_manufacturer=False):
 		""" Return name of currently configured display """
 		n = getcfg("display.number") - 1
 		if n >= 0 and n < len(self.display_names):
-			return self.display_names[n]
+			return (self.display_manufacturers[n] + " " if 
+					prepend_manufacturer and self.display_manufacturers[n] else 
+					"") + self.display_names[n]
 		return ""
 	
 	def get_dispwin_display_profile_argument(self, display_no=0):
@@ -1792,6 +1809,45 @@ class Worker():
 		return (len(self.displays) > 1 and False in 
 				self.lut_access and True in 
 				self.lut_access)
+	
+	def import_edr(self, args=None):
+		""" Import X-Rite .edr files """
+		if not args:
+			args = []
+		cmd = get_argyll_util("i1d3ccss")
+		needroot = sys.platform != "win32"
+		if is_superuser() or needroot:
+			# If we are root or need root privs anyway, install to local
+			# system scope
+			args.insert(0, "-Sl")
+		return self.exec_cmd(cmd, ["-v"] + args, capture_output=True, 
+							 skip_scripts=True, silent=False,
+							 asroot=needroot)
+	
+	def instrument_supports_ccss(self):
+		return "i1 DisplayPro, ColorMunki Display" in self.get_instrument_name()
+	
+	def create_ccxx(self, args=None, working_dir=None):
+		""" Create CCMX or CCSS """
+		if not args:
+			args = []
+		cmd = get_argyll_util("ccxxmake")
+		# Display manufacturer & name
+		name = self.get_display_name(True)
+		if name:
+			args.insert(0, "-I")
+			args.insert(1, name)
+		else:
+			# Display technology
+			args.insert(0, "-T")
+			displaytech = ["LCD" if getcfg("measurement_mode") == "l" else "CRT"]
+			if (self.get_instrument_features().get("projector_mode") and 
+				getcfg("measurement_mode.projector")):
+				displaytech.append("Projector")
+			args.insert(1, " ".join(displaytech))
+		return self.exec_cmd(cmd, ["-v"] + args, capture_output=True, 
+							 skip_scripts=True, silent=False,
+							 working_dir=working_dir)
 
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
@@ -2162,6 +2218,8 @@ class Worker():
 		if apply_calibration:
 			args += ["-k"]
 			args += [cal]
+		if self.get_instrument_features().get("spectral"):
+			args += ["-s"]
 		if getcfg("extra_args.dispread").strip():
 			args += parse_argument_string(getcfg("extra_args.dispread"))
 		self.options_dispread = list(args)

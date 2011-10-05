@@ -82,6 +82,9 @@
       <object class="wxMenuItem" name="devicecorrections.import">
         <label>devicecorrections.import</label>
       </object>
+      <object class="wxMenuItem" name="colorimeter_correction.create">
+        <label>colorimeter_correction.create</label>
+      </object>
       <object class="separator"/>
       <object class="wxMenuItem" name="enable_spyder2">
         <label>enable_spyder2</label>

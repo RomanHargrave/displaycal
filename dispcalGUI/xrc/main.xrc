@@ -101,7 +101,6 @@
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
                     </object>
-                    
                     <orient>wxHORIZONTAL</orient>
                   </object>
                   <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
@@ -338,7 +337,19 @@
                               </XRCED>
                             </object>
                             <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>66</border>
+                            <border>8</border>
+                          </object>
+                          <object class="sizeritem">
+                            <object class="wxBitmapButton" name="colorimeter_correction_matrix_web_btn">
+                              <bitmap>../theme/icons/16x16/web.png</bitmap>
+                              <tooltip>colorimeter_correction_matrix_web</tooltip>
+                              <style>wxNO_BORDER</style>
+                              <XRCED>
+                                <events>EVT_BUTTON</events>
+                              </XRCED>
+                            </object>
+                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>42</border>
                           </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>

@@ -735,7 +735,6 @@ sup {
 	-moz-border-radius: 0 0 8px 8px;
 	-webkit-border-radius: 0 0 8px 8px;
 	border-radius: 0 0 8px 8px;
-	text-shadow: 1px 1px 1px rgba(0, 153, 0, .25);
 }
 #issues dt.collapsed + dd {
 	color: #000;
@@ -743,8 +742,6 @@ sup {
 	-moz-border-radius: 0;
 	-webkit-border-radius: 0;
 	border-radius: 0;
-
-	text-shadow: 1px 1px 1px rgba(0, 0, 0, .125);
 }
 
 

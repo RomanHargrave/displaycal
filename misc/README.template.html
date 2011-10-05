@@ -774,7 +774,7 @@
 
 				<h4>Choosing a colorimeter correction matrix for a particular (wide-gamut) display</h4>
 
-				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#widegamut">“A note about colorimeters, wide-gamut displays and dispcalGUI”</a>. A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can be found on the Argyll CMS website.</p>
+				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#widegamut">“A note about colorimeters, wide-gamut displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online database for a match of your display/instrument combination (click the small globe next to the correction matrix dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
 
 				<p>Please note this option is only available if using Argyll CMS &gt;= 1.3.0 and a colorimeter.</p>
 			</div>
@@ -1165,7 +1165,13 @@
 
 
 					<dt id="import-correction-matrices">Import correction matrices from other display profiling softwares...</dt>
-						<dd>Converts matrices from other softwares to Argyll's CCMX format and adds them to the corresponding dropdown menu. Currently only iColor Display is supported. If it is installed or the Mac OS X installer disk image mounted, the correct file will be imported automatically (if you want to select the file which to import yourself, hold the SHIFT key while choosing the menu item), otherwise a file dialog will be shown.</dd>
+						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler and ColorMunki Display are supported. If they are installed or the CD / disk image mounted, the correct file(s) should be imported automatically (if you want to select the file which to import yourself, hold the SHIFT key while choosing the menu item), otherwise a file dialog will be shown.</dd>
+
+
+					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
+						<dd>Allows you to create correction matrices for ordinary colorimeters as well as Calibration Spectral Sample files for i1 Display Pro and ColorMunki Display.
+							Before you choose this menu option though, you must measure the special Colorimeter Correction testchart with a spectrometer and (in case you want to create an ordinary correction matrix) with the colorimeter. To do this, select the aforementioned chart in the testchart file dropdown, then select “Measure testchart” from the “Options” menu. After you have measured the chart(s), you can select the resulting measurement files for processing into a correction matrix or Calibration Spectral Sample file.
+						</dd>
 
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1358,7 +1364,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		</div>
 
 		<div id="changelog">
-			<h2>Changelog</h2>
+			<h2>Version history / changelog</h2>
 			<!-- ${DATE} ${TIME} (UTC) ${VERSION} -->
 			<dl>
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
@@ -1380,9 +1386,10 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Support for Argyll CMS 1.3.4 features: i1 Display Pro and Colormunki Display, Colorimeter Calibration Spectral Sample (.ccss) files.</li>
-							<li>Ability to import correction matrices from other display profiling softwares (in “Tools” menu). Currently only iColor Display is supported.</li>
+							<li>Ability to import correction matrices from other display profiling softwares. Currently iColor Display, i1 Profiler and ColorMunki Display are supported.</li>
+							<li>Ability to create correction matrices and Calibration Spectral Sample files.</li>
 							<li>Option to automatically check for program updates on startup.</li>
-							<li>Added <a href="#issue-linux-libmtp">information how to fix instrument not working correctly/constantly disconnecting under Linux due to a conflict with libmtp</a> (thanks to Pascal Obry who notified me of the issue in May 2011).</li>
+							<li>Added <a href="#issue-linux-libmtp">information how to fix instrument not working correctly/constantly disconnecting under Linux due to a conflict with libmtp</a> (thanks to Pascal Obry who notified me of the issue back in May 2011).</li>
 						</ul>
 					</dd>
 
