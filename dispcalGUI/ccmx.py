@@ -19,7 +19,7 @@ KEYWORD "DISPLAY"
 DISPLAY "%(Display)s"
 KEYWORD "REFERENCE"
 REFERENCE "%(ReferenceDevice)s"
-ORIGINATOR "Argyll ccmx"
+ORIGINATOR "%(Originator)s"
 CREATED "%(DateTime)s"
 KEYWORD "COLOR_REP"
 COLOR_REP "XYZ"
@@ -37,7 +37,7 @@ END_DATA
 
 
 def convert_devicecorrections_to_ccmx(path, target_dir):
-	""" Convert DeviceCorrections.txt to individual Argyll CCMX files """
+	""" Convert iColorDisplay DeviceCorrections.txt to individual Argyll CCMX files """
 	with codecs.open(path, 'r', 'utf8') as devcorrections_file:
 		lines = devcorrections_file.read().strip().splitlines()
 	# Convert to JSON
@@ -76,7 +76,8 @@ def convert_devicecorrections_to_ccmx(path, target_dir):
 	devcorrections = demjson.decode(devcorrections_data)
 	# Convert to ccmx
 	for name, devcorrection in devcorrections.iteritems():
-		values = {'DateTime': time.strftime('%a %b %d %H:%M:%S %Y')}
+		values = {'DateTime': time.strftime('%a %b %d %H:%M:%S %Y'),
+				  'Originator': "Quato iColorDisplay"}
 		for key in ('Name', 'Device', 'Display', 'ReferenceDevice', 'MatrixXYZ'):
 			value = devcorrection[key]
 			if key == 'MatrixXYZ':

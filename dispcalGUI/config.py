@@ -31,7 +31,7 @@ from meta import name as appname, build, lastmod, version
 from options import ascii, debug, verbose
 from safe_print import enc, fs_enc, original_codepage
 from util_io import StringIOu as StringIO
-from util_os import expanduseru, expandvarsu, getenvu, listdir_re
+from util_os import expanduseru, expandvarsu, getenvu, is_superuser, listdir_re
 from util_str import safe_unicode
 import encodedstdio
 
@@ -215,6 +215,15 @@ def get_bitmap_as_icon(size, name):
 	return icon
 
 
+def get_display_name():
+	""" Return name of currently configured display """
+	n = getcfg("display.number") - 1
+	displays = getcfg("displays").split(os.pathsep)
+	if n >= 0 and n < len(displays):
+		return displays[n].split("@")[0].strip()
+	return ""
+
+
 def get_icon_bundle(sizes, name):
 	""" Return a wx.IconBundle with given icon sizes """
 	from wxaddons import wx
@@ -222,6 +231,15 @@ def get_icon_bundle(sizes, name):
 	for size in sizes:
 		iconbundle.AddIcon(get_bitmap_as_icon(size, name))
 	return iconbundle
+
+
+def get_instrument_name():
+	""" Return name of currently configured instrument """
+	n = getcfg("comport.number") - 1
+	instrument_names = getcfg("instruments").split(os.pathsep)
+	if n >= 0 and n < len(instrument_names):
+		return instrument_names[n]
+	return ""
 
 
 def geticon(size, name):
@@ -381,7 +399,10 @@ defaults = {
 	"calibration.luminance": 120.0,
 	"calibration.quality": "m",
 	"calibration.update": 0,
+	"colorimeter_correction.testchart": "d3-e4-s0-g0-m3-f0.ti1",
 	"colorimeter_correction_matrix_file": ":",
+	"color.dir": os.path.join(commonappdata[0] if is_superuser() else 
+							  appdata, "color"),
 	"comport.number": 1,
 	"copyright": "Created with %s %s and Argyll CMS" % (appname, 
 														version),
@@ -401,6 +422,7 @@ defaults = {
 	"gamap_perceptual": 0,
 	"gamap_saturation": 0,
 	"gamma": 2.2,
+	"instruments": "",
 	"log.autoshow": int(not(hasattr(sys.stdout, "isatty") and 
 							sys.stdout.isatty())),
 	"log.show": 0,
@@ -411,6 +433,8 @@ defaults = {
 	"measurement_mode.adaptive": 0,
 	"measurement_mode.highres": 0,
 	"measurement_mode.projector": 0,
+	"measurement.name.expanded": u"",
+	"measurement.save_path": expanduseru("~"),
 	"measure.darken_background": 0,
 	"measure.darken_background.show_warning": 1,
 	"position.x": 50,
@@ -511,6 +535,12 @@ def getcfg(name, fallback=True):
 	return its default value.
 	
 	"""
+	if (name in ("profile.save_path", "profile.name.expanded") and
+		is_ccxx_testchart()):
+		name = {"profile.save_path": "measurement.save_path",
+				"profile.name.expanded": "measurement.name.expanded"}[name]
+		setcfg("measurement.name.expanded", "%s & %s" % (get_instrument_name(),
+													     get_display_name()))
 	hasdef = name in defaults
 	if hasdef:
 		defval = defaults[name]
@@ -597,6 +627,12 @@ def hascfg(name, fallback=True):
 	return False
 
 
+def get_ccxx_testchart():
+	""" Get the path to the default chart for CCMX/CCSS creation """
+	return get_data_path(os.path.join("ti1",
+									  getcfg("colorimeter_correction.testchart")))
+
+
 def get_total_patches(white_patches=None, single_channel_patches=None, 
 					  gray_patches=None, multi_steps=None, 
 					  fullspread_patches=None):
@@ -662,6 +698,11 @@ def get_verified_path(cfg_item_name, path=None):
 		elif os.path.exists(os.path.dirname(defaultPath)):
 			defaultDir = os.path.dirname(defaultPath)
 	return defaultDir, defaultFile
+
+
+def is_ccxx_testchart():
+	""" Check wether the current testchart is the default chart for CCMX/CCSS creation """
+	return getcfg("testchart.file") == get_ccxx_testchart()
 
 
 def makecfgdir(which="user", worker=None):

@@ -40,7 +40,8 @@ from argyll_instruments import instruments as all_instruments, remove_vendor_nam
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  optional as argyll_optional, viewconds)
 from config import (script_ext, defaults, enc, exe_ext, fs_enc, getcfg, 
-					geticon, get_data_path, get_verified_path, isapp, profile_ext,
+					geticon, get_ccxx_testchart, get_data_path, 
+					get_verified_path, isapp, is_ccxx_testchart, profile_ext,
 					setcfg, writecfg)
 from debughelpers import handle_error
 from edid import WMIError, get_edid
@@ -792,10 +793,7 @@ class Worker():
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args):
 			args += ["-H"]
-		ccmx_testchart = get_data_path(os.path.join("ti1",
-													"d3-e4-s0-g0-m3-f0.ti1"))
-		is_ccmx_testchart = getcfg("testchart.file") == ccmx_testchart
-		if self.argyll_version >= [1, 3, 0] and not is_ccmx_testchart and \
+		if self.argyll_version >= [1, 3, 0] and not is_ccxx_testchart() and \
 		   not instrument_features.get("spectral") and not get_arg("-X", args):
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if ccmx[0] == "AUTO":
@@ -1034,6 +1032,7 @@ class Worker():
 					lang.getstr("success"))
 			if instruments != self.instruments:
 				self.instruments = instruments
+				setcfg("instruments", os.pathsep.join(instruments))
 			if displays != self._displays:
 				self._displays = list(displays)
 				self.display_edid = []
@@ -1082,6 +1081,7 @@ class Worker():
 					self.display_manufacturers.append(" ".join(manufacturer))
 					self.display_names.append(displays[i].split("@")[0].strip())
 				self.displays = displays
+				setcfg("displays", os.pathsep.join(displays))
 				if check_lut_access:
 					dispwin = get_argyll_util("dispwin")
 					for i, disp in enumerate(displays):

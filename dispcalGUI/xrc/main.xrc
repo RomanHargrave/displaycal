@@ -340,9 +340,9 @@
                             <border>8</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxBitmapButton" name="colorimeter_correction_matrix_web_btn">
+                            <object class="wxBitmapButton" name="colorimeter_correction_web_btn">
                               <bitmap>../theme/icons/16x16/web.png</bitmap>
-                              <tooltip>colorimeter_correction_matrix_web</tooltip>
+                              <tooltip>colorimeter_correction.web_check</tooltip>
                               <style>wxNO_BORDER</style>
                               <XRCED>
                                 <events>EVT_BUTTON</events>

@@ -63,6 +63,7 @@ import threading
 import traceback
 import urllib
 from encodings.aliases import aliases
+from hashlib import md5
 from time import gmtime, sleep, strftime, time
 
 # 3rd party modules
@@ -84,10 +85,11 @@ import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
 					script_ext, confighome, datahome, data_dirs, defaults, enc, 
 					exe, exe_ext, exedir, fs_enc, getbitmap, geticon, 
-					get_bitmap_as_icon, get_data_path, getcfg, 
-					get_verified_path, original_codepage, initcfg, isapp, 
-					isexe, profile_ext, pydir, pyext, pyname, pypath, 
-					resfiles, runtype, setcfg, storage, writecfg)
+					get_bitmap_as_icon, get_ccxx_testchart, get_data_path, 
+					getcfg, get_verified_path, is_ccxx_testchart, 
+					original_codepage, initcfg, isapp, isexe, profile_ext, 
+					pydir, pyext, pyname, pypath, resfiles, runtype, setcfg, 
+					storage, writecfg)
 
 # Custom modules
 
@@ -266,14 +268,18 @@ def colorimeter_correction_web_check(parent=None, params=None):
 			cgats = CGATS.CGATS(data)
 			description = cgats.queryv1("DESCRIPTOR")
 			name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
-			target = os.path.join(config.commonappdata if is_superuser() else 
-								  config.appdata, "color", 
+			result = check_create_dir(getcfg("color.dir"))
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, parent)
+				return
+			target = os.path.join(getcfg("color.dir"), 
 								  "%s.%s" % (name, cgats[0].type.lower().strip()))
 			wx.CallAfter(colorimeter_correction_check_overwrite, parent, 
-						 cgats, target, lang.getstr("colorimeter_correction_web_check.success"))
+						 cgats, target, 
+						 lang.getstr("colorimeter_correction.web_check.success"))
 		else:
 			wx.CallAfter(InfoDialog, parent, 
-						 msg=lang.getstr("colorimeter_correction_web_check.failure"),
+						 msg=lang.getstr("colorimeter_correction.web_check.failure"),
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-information"))
 
@@ -306,18 +312,32 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None, path=None,
 def upload_colorimeter_correction(parent=None, params=None):
 	""" Upload colorimeter correction to online database """
 	path = "/colorimetercorrection/index.php"
-	failure_msg = lang.getstr("upload_colorimeter_correction.failure")
-	data = http_request(parent, domain, "POST", path, params, 
-						failure_msg=failure_msg)
+	failure_msg = lang.getstr("colorimeter_correction.upload.failure")
+	# Check for duplicate
+	data = http_request(parent, domain, "POST", path, 
+						{"get": True, "hash": md5("%r" % params).hexdigest()},
+						silent=True)
+	if data and data.strip().startswith("CC"):
+		wx.CallAfter(InfoDialog, parent, 
+					 msg=lang.getstr("colorimeter_correction.upload.exists"),
+					 ok=lang.getstr("ok"), 
+					 bitmap=geticon(32, "dialog-information"))
+		return
+	else:
+		# Upload
+		params['hash'] = md5("%r" % params).hexdigest()
+		params['put'] = True
+		data = http_request(parent, domain, "POST", path, params, 
+							failure_msg=failure_msg)
 	if data is not False:
 		if data.strip() == "PUT OK":
 			wx.CallAfter(InfoDialog, parent, 
-						 msg=lang.getstr("upload_colorimeter_correction.success"),
+						 msg=lang.getstr("colorimeter_correction.upload.success"),
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-information"))
 		else:
 			wx.CallAfter(InfoDialog, parent, 
-						 msg=failure_msg,
+						 msg="%s\n\n%s" % (failure_msg, data),
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
 
@@ -327,6 +347,8 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 	""" HTTP request wrapper """
 	if params is None:
 		params = {}
+	else:
+		params = urllib.urlencode(params)
 	if headers is None:
 		if request_type == "GET":
 			headers = {}
@@ -1343,14 +1365,18 @@ class MainFrame(BaseFrame):
 			tools.FindItem("profile.verification_report.update"))
 		self.Bind(wx.EVT_MENU, self.update_profile_verification_report, 
 				  menuitem)
-		self.menuitem_import_devicecorrections = tools.FindItemById(
-			tools.FindItem("devicecorrections.import"))
-		self.Bind(wx.EVT_MENU, self.import_devicecorrections_handler, 
-				  self.menuitem_import_devicecorrections)
+		self.menuitem_import_colorimeter_correction = tools.FindItemById(
+			tools.FindItem("colorimeter_correction.import"))
+		self.Bind(wx.EVT_MENU, self.import_colorimeter_correction_handler, 
+				  self.menuitem_import_colorimeter_correction)
 		self.menuitem_create_colorimeter_correction = tools.FindItemById(
 			tools.FindItem("colorimeter_correction.create"))
 		self.Bind(wx.EVT_MENU, self.create_colorimeter_correction_handler, 
 				  self.menuitem_create_colorimeter_correction)
+		self.menuitem_upload_colorimeter_correction = tools.FindItemById(
+			tools.FindItem("colorimeter_correction.upload"))
+		self.Bind(wx.EVT_MENU, self.upload_colorimeter_correction_handler, 
+				  self.menuitem_upload_colorimeter_correction)
 		self.menuitem_enable_spyder2 = tools.FindItemById(
 			tools.FindItem("enable_spyder2"))
 		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, 
@@ -1505,8 +1531,8 @@ class MainFrame(BaseFrame):
 				  id=self.colorimeter_correction_matrix_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_handler, 
 				  id=self.colorimeter_correction_matrix_btn.GetId())
-		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_web_handler, 
-				  id=self.colorimeter_correction_matrix_web_btn.GetId())
+		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_web_handler, 
+				  id=self.colorimeter_correction_web_btn.GetId())
 
 		# Calibration settings
 		# ====================
@@ -1850,7 +1876,6 @@ class MainFrame(BaseFrame):
 		for item in self.worker.displays:
 			self.displays += [item.replace("[PRIMARY]", 
 										   lang.getstr("display.primary"))]
-		setcfg("displays", os.pathsep.join(self.worker.displays))
 		self.display_ctrl.SetItems(self.displays)
 		self.get_set_display()
 		self.display_ctrl.Enable(len(self.worker.displays) > 1)
@@ -2004,20 +2029,17 @@ class MainFrame(BaseFrame):
 		# Show or hide the colorimeter correction matrix control
 		self.calpanel.Freeze()
 		instrument_features = self.worker.get_instrument_features()
-		ccmx_testchart = get_data_path(os.path.join("ti1", 
-													"d3-e4-s0-g0-m3-f0.ti1"))
-		is_ccmx_testchart = getcfg("testchart.file") == ccmx_testchart
 		show_control = (self.worker.argyll_version >= [1, 3, 0] and 
 						not instrument_features.get("spectral") and
-						not is_ccmx_testchart)
+						not is_ccxx_testchart())
 		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_ctrl, show_control)
 		self.colorimeter_correction_matrix_label.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_label, show_control)
 		self.colorimeter_correction_matrix_btn.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_btn, show_control)
-		self.colorimeter_correction_matrix_web_btn.GetContainingSizer().Show(
-			self.colorimeter_correction_matrix_web_btn, show_control)
+		self.colorimeter_correction_web_btn.GetContainingSizer().Show(
+			self.colorimeter_correction_web_btn, show_control)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
@@ -5236,9 +5258,27 @@ class MainFrame(BaseFrame):
 					return filename + ".cal"
 	
 	def measure_handler(self, event):
+		if is_ccxx_testchart():
+			# Allow different location to store measurements
+			path = None
+			defaultPath = os.path.sep.join(get_verified_path("measurement.save_path"))
+			dlg = wx.DirDialog(self, lang.getstr("measurement.set_save_path"), 
+							   defaultPath=defaultPath)
+			dlg.Center(wx.BOTH)
+			if dlg.ShowModal() == wx.ID_OK:
+				path = dlg.GetPath()
+			dlg.Destroy()
+			if path:
+				setcfg("measurement.save_path", path)
+			else:
+				return
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
-			apply_calibration = self.current_cal_choice()
+			if is_ccxx_testchart():
+				self.reset_cal()
+				apply_calibration = False
+			else:
+				apply_calibration = self.current_cal_choice()
 			if apply_calibration != wx.ID_CANCEL:
 				self.setup_measurement(self.just_measure, apply_calibration)
 		else:
@@ -5279,10 +5319,13 @@ class MainFrame(BaseFrame):
 		self.Show(start_timers=True)
 	
 	def just_measure_show_result(self, path):
-		InfoDialog(self, msg=lang.getstr("measurements.complete"), 
-				   ok=lang.getstr("ok"), 
-				   bitmap=geticon(32, "dialog-information"))
-		launch_file(path)
+		dlg = ConfirmDialog(self, msg=lang.getstr("measurements.complete"), 
+						    ok=lang.getstr("ok"), 
+						    cancel=lang.getstr("cancel"), 
+						    bitmap=geticon(32, "dialog-question"))
+		if dlg.ShowModal() == wx.ID_OK:
+			launch_file(os.path.dirname(path))
+		dlg.Destroy()
 
 	def just_profile(self, apply_calibration):
 		safe_print("-" * 80)
@@ -5673,8 +5716,7 @@ class MainFrame(BaseFrame):
 		else:
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-			ccmx_default = os.path.join(config.commonappdata if is_superuser() else 
-										config.appdata, "color")
+			ccmx_default = getcfg("color.dir")
 			defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction_matrix_file.choose"), 
@@ -5691,17 +5733,17 @@ class MainFrame(BaseFrame):
 				setcfg("colorimeter_correction_matrix_file", ":" + path)
 				self.update_colorimeter_correction_matrix_ctrl_items()
 	
-	def colorimeter_correction_matrix_web_handler(self, event):
+	def colorimeter_correction_web_handler(self, event):
 		""" Check the web for cccmx or ccss files """
 		if self.worker.instrument_supports_ccss():
 			filetype = 'ccss'
 		else:
 			filetype = 'ccmx'
-		params = urllib.urlencode({'get': True,
-								   'type': filetype,
-								   'display': self.worker.get_display_edid().get("monitor_name", 
-																				 self.worker.get_display_name()),
-								   'instrument': self.worker.get_instrument_name() or "NONE"})
+		params = {'get': True,
+				  'type': filetype,
+				  'display': self.worker.get_display_edid().get("monitor_name", 
+																 self.worker.get_display_name()),
+				  'instrument': self.worker.get_instrument_name() or "NONE"}
 		self.colorimeter_correction_web_check = threading.Thread(target=colorimeter_correction_web_check, 
 																 args=(self, params))
 		self.colorimeter_correction_web_check.start()
@@ -5713,6 +5755,19 @@ class MainFrame(BaseFrame):
 		Atleast one of the ti3 files must be a measured with a spectrometer.
 		
 		"""
+		dlg = ConfirmDialog(self,
+							msg=lang.getstr("colorimeter_correction.create.info"), 
+							ok=lang.getstr("continue"), 
+							cancel=lang.getstr("cancel"), 
+							alt=lang.getstr("testchart.set"), 
+							bitmap=geticon(32, "dialog-information"))
+		result = dlg.ShowModal()
+		dlg.Destroy()
+		if result == wx.ID_CANCEL:
+			return
+		elif result != wx.ID_OK:
+			self.set_testchart(get_ccxx_testchart())
+			return
 		paths = []
 		spectro_ti3 = None
 		colorimeter_ti3 = None
@@ -5840,42 +5895,80 @@ class MainFrame(BaseFrame):
 			cgats = CGATS.CGATS(source)
 			description = cgats.queryv1("DESCRIPTOR")
 			name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
-			target = os.path.join(config.commonappdata if is_superuser() else 
-								  config.appdata, "color", name + ext)
+			target = os.path.join(getcfg("color.dir"), name + ext)
+			result = check_create_dir(getcfg("color.dir"))
+			if isinstance(result, Exception):
+				show_result_dialog(result, self)
+				return
 			if (colorimeter_correction_check_overwrite(self, cgats, target, 
 													   lang.getstr("colorimeter_correction.create.success")) and
-				(not hasattr(self, "upload_colorimeter_correction") or \
-				 not self.upload_colorimeter_correction.isAlive())):
-				# Ask if user wants to upload
-				dlg = ConfirmDialog(self, 
-									msg=lang.getstr("upload_colorimeter_correction.choice"), 
-									ok=lang.getstr("ok"), 
-									cancel=lang.getstr("cancel"), 
-									bitmap=geticon(32, "dialog-information"))
-				result = dlg.ShowModal()
-				dlg.Destroy()
-				if result == wx.ID_OK:
-					params = urllib.urlencode({'put': True,
-											   'type': ext[1:],
-											   'description': description,
-											   'display': cgats.queryv1("DISPLAY"),
-											   'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
-																									   self.worker.get_display_name()),
-											   'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
-											   'edid': self.worker.get_display_edid().get("edid", ""),
-											   'instrument': remove_vendor_names(cgats.queryv1("INSTRUMENT")),
-											   'reference': remove_vendor_names(cgats.queryv1("REFERENCE")),
-											   'cgats': cgats})
-					# Upload correction
-					self.upload_colorimeter_correction = threading.Thread(target=upload_colorimeter_correction, 
-													     args=(self, params))
-					self.upload_colorimeter_correction.start()
+				(not hasattr(self, "upload_colorimeter_correction_thread") or
+				 not self.upload_colorimeter_correction_thread.isAlive())):
+				self.upload_colorimeter_correction(description, cgats)
 		elif result is not None:
 			InfoDialog(self,
 					   msg=lang.getstr("colorimeter_correction.create.failure"), 
 					   ok=lang.getstr("cancel"), 
 					   bitmap=geticon(32, "dialog-error"))
 		self.worker.wrapup(False)
+	
+	def upload_colorimeter_correction(self, description, cgats):
+		""" Upload a colorimeter correction to the online database """
+		if (hasattr(self, "upload_colorimeter_correction_thread") and
+			self.upload_colorimeter_correction_thread.isAlive()):
+			# Last upload thread not finished yet
+			return False
+		# Ask if user wants to upload
+		dlg = ConfirmDialog(self, 
+							msg=lang.getstr("colorimeter_correction.upload.confirm"), 
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-information"))
+		result = dlg.ShowModal()
+		dlg.Destroy()
+		if result == wx.ID_OK:
+			params = {'type': cgats[0].type.lower().strip(),
+					  'description': description,
+					  'display': cgats.queryv1("DISPLAY"),
+					  'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
+																			   self.worker.get_display_name()),
+					  'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
+					  'edid': self.worker.get_display_edid().get("edid", ""),
+					  'instrument': remove_vendor_names(cgats.queryv1("INSTRUMENT")),
+					  'reference': remove_vendor_names(cgats.queryv1("REFERENCE")),
+					  'cgats': cgats}
+			# Upload correction
+			self.upload_colorimeter_correction_thread = threading.Thread(target=upload_colorimeter_correction, 
+																		 args=(self, params))
+			self.upload_colorimeter_correction_thread.start()
+	
+	def upload_colorimeter_correction_handler(self, event):
+		""" Let user choose a ccss/ccmx file to upload """
+		path = None
+		defaultDir, defaultFile = get_verified_path("last_filedialog_path",
+													getcfg("colorimeter_correction_matrix_file").split(":", 1).pop())
+		dlg = wx.FileDialog(self, 
+							lang.getstr("colorimeter_correction_matrix_file.choose"),
+							defaultDir=defaultDir,
+							defaultFile=defaultFile,
+							wildcard=lang.getstr("filetype.ccmx") + 
+									 "|*.ccmx;*.ccss", 
+							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+		dlg.Center(wx.BOTH)
+		if dlg.ShowModal() == wx.ID_OK:
+			path = dlg.GetPath()
+		dlg.Destroy()
+		if path:
+			setcfg("last_filedialog_path", path)
+			cgats = CGATS.CGATS(path)
+			if not "Argyll" in (cgats.queryv1("ORIGINATOR") or ""):
+				InfoDialog(self,
+						   msg=lang.getstr("colorimeter_correction.upload.deny"), 
+						   ok=lang.getstr("cancel"), 
+						   bitmap=geticon(32, "dialog-error"))
+			else:
+				self.upload_colorimeter_correction(cgats.queryv1("DESCRIPTOR"), 
+												   cgats)
 
 	def comport_ctrl_handler(self, event=None):
 		if debug and event:
@@ -5890,7 +5983,7 @@ class MainFrame(BaseFrame):
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(True)
 	
-	def import_devicecorrections_handler(self, event):
+	def import_colorimeter_correction_handler(self, event):
 		"""
 		Convert correction matrices from other profiling softwares to Argyll's
 		CCMX or CCSS format
@@ -5949,7 +6042,7 @@ class MainFrame(BaseFrame):
 				path = os.path.join(defaultDir, defaultFile)
 		if not path or not os.path.isfile(path):
 			dlg = wx.FileDialog(self, 
-								lang.getstr("devicecorrections.choose"),
+								lang.getstr("colorimeter_correction.import.choose"),
 								defaultDir=defaultDir,
 								defaultFile=defaultFile,
 								wildcard=lang.getstr("filetype.any") + 
@@ -5985,16 +6078,13 @@ class MainFrame(BaseFrame):
 						type = "xrite"
 			if type == ".txt":
 				# Assume iColorDisplay DeviceCorrections.txt
-				ccmx_dir = os.path.join(config.commonappdata if is_superuser() else 
-										config.appdata, "color")
+				ccmx_dir = getcfg("color.dir")
 				if not os.path.exists(ccmx_dir):
-					try:
-						check_create_dir(ccmx_dir)
-					except Error, exception:
-						InfoDialog(self, msg=exception.args[0], 
-								   ok=lang.getstr("cancel"), 
-								   bitmap=geticon(32, "dialog-error"))
-				safe_print(lang.getstr("devicecorrections.import"))
+					result = check_create_dir(ccmx_dir)
+					if isinstance(result, Exception):
+						show_result_dialog(result, self)
+						return
+				safe_print(lang.getstr("colorimeter_correction.import"))
 				safe_print(path)
 				try:
 					ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
@@ -6011,12 +6101,12 @@ class MainFrame(BaseFrame):
 		elif result:
 			self.update_colorimeter_correction_matrix_ctrl_items(True)
 			InfoDialog(self,
-					   msg=lang.getstr("devicecorrections.import.success"), 
+					   msg=lang.getstr("colorimeter_correction.import.success"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
 		elif result is not None:
 			InfoDialog(self,
-					   msg=lang.getstr("devicecorrections.import.failure"), 
+					   msg=lang.getstr("colorimeter_correction.import.failure"), 
 					   ok=lang.getstr("cancel"), 
 					   bitmap=geticon(32, "dialog-error"))
 
@@ -6209,10 +6299,7 @@ class MainFrame(BaseFrame):
 									  self.get_profile_quality(), 
 									  recommended[self.get_profile_type()])
 		patches = int(self.testchart_patches_amount.GetLabel())
-		ccmx_testchart = get_data_path(os.path.join("ti1", "d3-e4-s0-g0-m3-f0.ti1"))
-		is_ccmx_testchart = getcfg("testchart.file") == ccmx_testchart
-		self.update_colorimeter_correction_matrix_ctrl()
-		if recommended > patches and not is_ccmx_testchart:
+		if recommended > patches and not is_ccxx_testchart():
 			self.profile_quality_ctrl.Disable()
 			dlg = ConfirmDialog(
 				self, msg=lang.getstr("profile.testchart_recommendation"), 
@@ -7015,6 +7102,7 @@ class MainFrame(BaseFrame):
 			   (not hasattr(self.tcframe, "ti1") or 
 				getcfg("testchart.file") != self.tcframe.ti1.filename):
 				self.tcframe.tc_load_cfg_from_ti1()
+		self.update_colorimeter_correction_matrix_ctrl()
 
 	def get_testchart_names(self, path=None):
 		testchart_names = []
