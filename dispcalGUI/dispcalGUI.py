@@ -64,7 +64,7 @@ import traceback
 import urllib
 from encodings.aliases import aliases
 from hashlib import md5
-from time import gmtime, sleep, strftime, time
+from time import gmtime, sleep, strftime, strptime, time
 
 # 3rd party modules
 
@@ -266,7 +266,7 @@ def colorimeter_correction_web_check(parent=None, params=None):
 	if data is not False:
 		if data.strip().startswith("CC"):
 			cgats = CGATS.CGATS(data)
-			wx.CallAfter(colorimeter_correction_check_overwrite, parent, cgats)
+			wx.CallAfter(colorimeter_correction_web_check_choose, parent, cgats)
 		else:
 			wx.CallAfter(InfoDialog, parent, 
 						 msg=lang.getstr("colorimeter_correction.web_check.failure"),
@@ -274,7 +274,7 @@ def colorimeter_correction_web_check(parent=None, params=None):
 						 bitmap=geticon(32, "dialog-information"))
 
 
-def colorimeter_correction_check_overwrite(parent=None, cgats=None):
+def colorimeter_correction_web_check_choose(parent=None, cgats=None):
 	""" Let user choose a colorimeter correction and confirm overwrite """
 	dlg = ConfirmDialog(parent,
 						msg=lang.getstr("colorimeter_correction.web_check.choose"), 
@@ -323,13 +323,16 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	dlg.Destroy()
 	if result != wx.ID_OK:
 		return False
-	cgats = cgats[index]
-	description = cgats.queryv1("DESCRIPTOR")
-	name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
+	colorimeter_correction_check_overwrite(parent, cgats[index])
+
+
+def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	result = check_create_dir(getcfg("color.dir"))
 	if isinstance(result, Exception):
-		wx.CallAfter(show_result_dialog, result, parent)
+		show_result_dialog(result, parent)
 		return
+	description = cgats.queryv1("DESCRIPTOR") or "Unnamed"
+	name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
 	path = os.path.join(getcfg("color.dir"), 
 						"%s.%s" % (name, cgats.type.lower().strip()))
 	if os.path.isfile(path):
@@ -5899,10 +5902,9 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			cgats = colorimeter_ti3
-			description = "%s & %s" % (cgats.queryv1("TARGET_INSTRUMENT") or 
-													 self.worker.get_instrument_name(),
-													 self.worker.get_display_name(True))
+			description = "%s & %s" % (colorimeter_ti3.queryv1("TARGET_INSTRUMENT") or 
+									   self.worker.get_instrument_name(),
+									   self.worker.get_display_name(True))
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
@@ -5911,7 +5913,6 @@ class MainFrame(BaseFrame):
 					   bitmap=geticon(32, "dialog-error"))
 			return
 		else:
-			cgats = spectro_ti3
 			description = self.worker.get_display_name(True)
 		args = []
 		# Allow use to alter description, display and instrument
@@ -5968,16 +5969,13 @@ class MainFrame(BaseFrame):
 			show_result_dialog(result, self)
 		elif result:
 			source = os.path.join(self.worker.tempdir, name + ext)
-			cgats = CGATS.CGATS(source)
+			cgats = CGATS.CGATS(source)[0]
 			description = cgats.queryv1("DESCRIPTOR")
-			name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
-			target = os.path.join(getcfg("color.dir"), name + ext)
 			result = check_create_dir(getcfg("color.dir"))
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
-			if (colorimeter_correction_check_overwrite(self, cgats, target, 
-													   lang.getstr("colorimeter_correction.create.success")) and
+			if (colorimeter_correction_check_overwrite(self, cgats) and
 				(not hasattr(self, "upload_colorimeter_correction_thread") or
 				 not self.upload_colorimeter_correction_thread.isAlive())):
 				self.upload_colorimeter_correction(description, cgats)
@@ -6003,7 +6001,38 @@ class MainFrame(BaseFrame):
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result == wx.ID_OK:
-			params = {'type': cgats[0].type.lower().strip(),
+			# Ex. "Sat Oct 01 22:33:44 2011"
+			created = cgats.queryv1("CREATED")
+			if created:
+				try:
+					created = strptime(created)
+				except ValueError:
+					created = re.search("\w+ (\w{3}) (\d{2}) (\d{2}(?::[0-5][0-9]){2}) (\d{4})",
+										created)
+					if created:
+						created = "%s-%s-%s %s" % (created.groups()[3],
+												   {"Jan": "01",
+													"Feb": "02",
+													"Mar": "03",
+													"Apr": "04",
+													"May": "05",
+													"Jun": "06",
+													"Jul": "07",
+													"Aug": "08",
+													"Sep": "09",
+													"Oct": "10",
+													"Nov": "11",
+													"Dec": "12"}.get(created.groups()[0]),
+													created.groups()[1],
+													created.groups()[2])
+						try:
+							created = strptime(created, "%Y-%m-%d %H:%M:%S")
+						except ValueError:
+							created = None
+				if created:
+					created = strftime("%Y-%m-%d %H:%M:%S", created)
+			params = {'type': cgats.type.lower().strip(),
+					  'created': created,
 					  'description': description,
 					  'display': cgats.queryv1("DISPLAY"),
 					  #'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
@@ -6035,7 +6064,7 @@ class MainFrame(BaseFrame):
 		dlg.Destroy()
 		if path:
 			setcfg("last_filedialog_path", path)
-			cgats = CGATS.CGATS(path)
+			cgats = CGATS.CGATS(path)[0]
 			if not "Argyll" in (cgats.queryv1("ORIGINATOR") or ""):
 				InfoDialog(self,
 						   msg=lang.getstr("colorimeter_correction.upload.deny"), 
