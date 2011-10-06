@@ -1832,19 +1832,20 @@ class Worker():
 		if not args:
 			args = []
 		cmd = get_argyll_util("ccxxmake")
-		# Display manufacturer & name
-		name = self.get_display_name(True)
-		if name:
-			args.insert(0, "-I")
-			args.insert(1, name)
-		else:
-			# Display technology
-			args.insert(0, "-T")
-			displaytech = ["LCD" if getcfg("measurement_mode") == "l" else "CRT"]
-			if (self.get_instrument_features().get("projector_mode") and 
-				getcfg("measurement_mode.projector")):
-				displaytech.append("Projector")
-			args.insert(1, " ".join(displaytech))
+		if not "-I" in args:
+			# Display manufacturer & name
+			name = self.get_display_name(True)
+			if name:
+				args.insert(0, "-I")
+				args.insert(1, name)
+			elif not "-T" in args:
+				# Display technology
+				args.insert(0, "-T")
+				displaytech = ["LCD" if getcfg("measurement_mode") == "l" else "CRT"]
+				if (self.get_instrument_features().get("projector_mode") and 
+					getcfg("measurement_mode.projector")):
+					displaytech.append("Projector")
+				args.insert(1, " ".join(displaytech))
 		return self.exec_cmd(cmd, ["-v"] + args, capture_output=True, 
 							 skip_scripts=True, silent=False,
 							 working_dir=working_dir)

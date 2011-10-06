@@ -266,17 +266,7 @@ def colorimeter_correction_web_check(parent=None, params=None):
 	if data is not False:
 		if data.strip().startswith("CC"):
 			cgats = CGATS.CGATS(data)
-			description = cgats.queryv1("DESCRIPTOR")
-			name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
-			result = check_create_dir(getcfg("color.dir"))
-			if isinstance(result, Exception):
-				wx.CallAfter(show_result_dialog, result, parent)
-				return
-			target = os.path.join(getcfg("color.dir"), 
-								  "%s.%s" % (name, cgats[0].type.lower().strip()))
-			wx.CallAfter(colorimeter_correction_check_overwrite, parent, 
-						 cgats, target, 
-						 lang.getstr("colorimeter_correction.web_check.success"))
+			wx.CallAfter(colorimeter_correction_check_overwrite, parent, cgats)
 		else:
 			wx.CallAfter(InfoDialog, parent, 
 						 msg=lang.getstr("colorimeter_correction.web_check.failure"),
@@ -284,12 +274,67 @@ def colorimeter_correction_web_check(parent=None, params=None):
 						 bitmap=geticon(32, "dialog-information"))
 
 
-def colorimeter_correction_check_overwrite(parent=None, cgats=None, path=None,
-										   msg=""):
+def colorimeter_correction_check_overwrite(parent=None, cgats=None):
+	""" Let user choose a colorimeter correction and confirm overwrite """
+	dlg = ConfirmDialog(parent,
+						msg=lang.getstr("colorimeter_correction.web_check.choose"), 
+						ok=lang.getstr("ok"), 
+						cancel=lang.getstr("cancel"), 
+						bitmap=geticon(32, "dialog-information"), nowrap=True)
+	dlg.list_ctrl = wx.ListCtrl(dlg, -1, size=(640, 100), style=wx.LC_REPORT | 
+																wx.LC_SINGLE_SEL)
+	dlg.list_ctrl.InsertColumn(0, lang.getstr("type"))
+	dlg.list_ctrl.InsertColumn(1, lang.getstr("description"))
+	dlg.list_ctrl.InsertColumn(2, lang.getstr("instrument"))
+	dlg.list_ctrl.InsertColumn(3, lang.getstr("display"))
+	dlg.list_ctrl.InsertColumn(4, lang.getstr("reference_instrument"))
+	dlg.list_ctrl.SetColumnWidth(0, 50)
+	dlg.list_ctrl.SetColumnWidth(1, 320)
+	dlg.list_ctrl.SetColumnWidth(2, 75)
+	dlg.list_ctrl.SetColumnWidth(3, 175)
+	dlg.list_ctrl.SetColumnWidth(4, 75)
+	for i in cgats:
+		index = dlg.list_ctrl.InsertStringItem(i, "")
+		dlg.list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
+		dlg.list_ctrl.SetStringItem(index, 1, remove_vendor_names(cgats[i].queryv1("DESCRIPTOR")))
+		dlg.list_ctrl.SetStringItem(index, 2, remove_vendor_names(cgats[i].queryv1("INSTRUMENT")))
+		dlg.list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
+		dlg.list_ctrl.SetStringItem(index, 4, remove_vendor_names(cgats[i].queryv1("REFERENCE")))
+	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
+			 dlg.list_ctrl)
+	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
+			 dlg.list_ctrl)
+	dlg.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda event: dlg.EndModal(wx.ID_OK),
+			 dlg.list_ctrl)
+	dlg.sizer3.Add(dlg.list_ctrl, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+	if len(cgats) > 1:
+		# We got several matches
+		dlg.ok.Disable()
+	else:
+		item = dlg.list_ctrl.GetItem(0)
+		dlg.list_ctrl.SetItemState(item.GetId(), wx.LIST_STATE_SELECTED, 
+								   wx.LIST_STATE_SELECTED)
+	dlg.sizer0.SetSizeHints(dlg)
+	dlg.sizer0.Layout()
+	dlg.Center()
+	result = dlg.ShowModal()
+	index = dlg.list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
+										  wx.LIST_STATE_SELECTED)
+	dlg.Destroy()
+	if result != wx.ID_OK:
+		return False
+	cgats = cgats[index]
+	description = cgats.queryv1("DESCRIPTOR")
+	name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
+	result = check_create_dir(getcfg("color.dir"))
+	if isinstance(result, Exception):
+		wx.CallAfter(show_result_dialog, result, parent)
+		return
+	path = os.path.join(getcfg("color.dir"), 
+						"%s.%s" % (name, cgats.type.lower().strip()))
 	if os.path.isfile(path):
 		dlg = ConfirmDialog(parent,
-							msg=" ".join([msg,
-										  lang.getstr("dialog.confirm_overwrite", path)]), 
+							msg=lang.getstr("dialog.confirm_overwrite", path), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
@@ -297,11 +342,6 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None, path=None,
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return False
-	else:
-		InfoDialog(parent, 
-				   msg=msg,
-				   ok=lang.getstr("ok"), 
-				   bitmap=geticon(32, "dialog-information"))
 	cgats.write(path)
 	setcfg("colorimeter_correction_matrix_file", ":" + path)
 	parent.update_colorimeter_correction_matrix_ctrl_items(True)
@@ -5736,7 +5776,7 @@ class MainFrame(BaseFrame):
 	def colorimeter_correction_web_handler(self, event):
 		""" Check the web for cccmx or ccss files """
 		if self.worker.instrument_supports_ccss():
-			filetype = 'ccss'
+			filetype = 'ccss,ccmx'
 		else:
 			filetype = 'ccmx'
 		params = {'get': True,
@@ -5768,7 +5808,7 @@ class MainFrame(BaseFrame):
 		elif result != wx.ID_OK:
 			self.set_testchart(get_ccxx_testchart())
 			return
-		paths = []
+		cgats_list = []
 		spectro_ti3 = None
 		colorimeter_ti3 = None
 		spectral = False
@@ -5804,7 +5844,7 @@ class MainFrame(BaseFrame):
 							   bitmap=geticon(32, "dialog-error"))
 					return
 				else:
-					paths.append(path)
+					cgats_list.append(cgats)
 					# Check if measurement contains spectral values
 					# Check if instrument type is spectral
 					if cgats.queryv1("SPECTRAL_BANDS"):
@@ -5812,7 +5852,7 @@ class MainFrame(BaseFrame):
 							# We already have a spectro ti3
 							spectro_ti3 = None
 							break
-						spectro_ti3 = path
+						spectro_ti3 = cgats
 						spectral = True
 						# Ask if user wants to create CCSS
 						dlg = ConfirmDialog(self, 
@@ -5832,17 +5872,17 @@ class MainFrame(BaseFrame):
 							# We already have a spectro ti3
 							spectro_ti3 = None
 							break
-						spectro_ti3 = path
+						spectro_ti3 = cgats
 					elif cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "NO":
 						if colorimeter_ti3:
 							# We already have a colorimeter ti3
 							colorimeter_ti3 = None
 							break
-						colorimeter_ti3 = path
+						colorimeter_ti3 = cgats
 			else:
 				# User canceled dialog
 				return
-		setcfg("last_ti3_path", paths[-1])
+		setcfg("last_ti3_path", cgats_list[-1].filename)
 		# Check if atleast one file has been measured with a spectro
 		if not spectro_ti3:
 			InfoDialog(self,
@@ -5850,7 +5890,7 @@ class MainFrame(BaseFrame):
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			return
-		if len(paths) == 2:
+		if len(cgats_list) == 2:
 			if not colorimeter_ti3:
 				# If 2 files, check if atleast one file has NOT been measured 
 				# with a spectro (CCMX creation)
@@ -5859,6 +5899,10 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
+			cgats = colorimeter_ti3
+			description = "%s & %s" % (cgats.queryv1("TARGET_INSTRUMENT") or 
+													 self.worker.get_instrument_name(),
+													 self.worker.get_display_name(True))
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
@@ -5866,16 +5910,48 @@ class MainFrame(BaseFrame):
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			return
+		else:
+			cgats = spectro_ti3
+			description = self.worker.get_display_name(True)
+		args = []
+		# Allow use to alter description, display and instrument
+		dlg = ConfirmDialog(
+			self, 
+			msg=lang.getstr("colorimeter_correction.create.details"), 
+			ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
+			bitmap=geticon(32, "dialog-question"))
+		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
+											   description, 
+											   size=(400, -1))
+		dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
+											  self.worker.get_display_name(True), 
+											  size=(400, -1))
+		dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		dlg.description_txt_ctrl.SetFocus()
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		dlg.Center()
+		result = dlg.ShowModal()
+		args += ["-E", dlg.description_txt_ctrl.GetValue()]
+		args += ["-I", dlg.display_txt_ctrl.GetValue()]
+		if result != wx.ID_OK:
+			return
 		# Prepare our files
 		cwd = self.worker.create_tempdir()
-		args = []
 		ti3_tmp_names = []
 		if spectro_ti3:
-			shutil.copyfile(spectro_ti3, os.path.join(cwd, 'spectro.ti3'))
+			shutil.copyfile(spectro_ti3.filename, os.path.join(cwd, 'spectro.ti3'))
 			ti3_tmp_names.append('spectro.ti3')
 		if colorimeter_ti3:
 			# Create CCMX
-			shutil.copyfile(colorimeter_ti3, os.path.join(cwd, 'colorimeter.ti3'))
+			shutil.copyfile(colorimeter_ti3.filename, os.path.join(cwd, 'colorimeter.ti3'))
 			ti3_tmp_names.append('colorimeter.ti3')
 			name = "correction"
 			ext = ".ccmx"
@@ -5930,10 +6006,10 @@ class MainFrame(BaseFrame):
 			params = {'type': cgats[0].type.lower().strip(),
 					  'description': description,
 					  'display': cgats.queryv1("DISPLAY"),
-					  'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
-																			   self.worker.get_display_name()),
-					  'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
-					  'edid': self.worker.get_display_edid().get("edid", ""),
+					  #'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
+																			   #self.worker.get_display_name()),
+					  #'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
+					  #'edid': self.worker.get_display_edid().get("edid", ""),
 					  'instrument': remove_vendor_names(cgats.queryv1("INSTRUMENT")),
 					  'reference': remove_vendor_names(cgats.queryv1("REFERENCE")),
 					  'cgats': cgats}
@@ -5945,8 +6021,7 @@ class MainFrame(BaseFrame):
 	def upload_colorimeter_correction_handler(self, event):
 		""" Let user choose a ccss/ccmx file to upload """
 		path = None
-		defaultDir, defaultFile = get_verified_path("last_filedialog_path",
-													getcfg("colorimeter_correction_matrix_file").split(":", 1).pop())
+		defaultDir, defaultFile = get_verified_path("last_filedialog_path")
 		dlg = wx.FileDialog(self, 
 							lang.getstr("colorimeter_correction_matrix_file.choose"),
 							defaultDir=defaultDir,

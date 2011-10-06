@@ -76,7 +76,7 @@ class BaseInteractiveDialog(wx.Dialog):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 show=True, log=True, print_=False, 
-				 style=wx.DEFAULT_DIALOG_STYLE):
+				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False):
 		if print_:
 			safe_print(msg, log=False)
 		if log:
@@ -115,7 +115,8 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.sizer1.Add(self.bitmap, flag=wx.RIGHT, border=margin)
 
 		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT)
-		self.message = wx.StaticText(self, -1, wrap(msg.replace("&", "&&")))
+		msg = msg.replace("&", "&&")
+		self.message = wx.StaticText(self, -1, msg if nowrap else wrap(msg))
 		self.sizer3.Add(self.message)
 
 		btnwidth = 80
@@ -171,10 +172,11 @@ class ConfirmDialog(BaseInteractiveDialog):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
 				 size=(400, -1), alt=None, log=False, print_=False, 
-				 style=wx.DEFAULT_DIALOG_STYLE):
+				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
-									   log=log, print_=print_, style=style)
+									   log=log, print_=print_, style=style,
+									   nowrap=nowrap)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
