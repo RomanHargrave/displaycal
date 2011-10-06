@@ -390,7 +390,7 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 				 silent=False):
 	""" HTTP request wrapper """
 	if params is None:
-		params = {}
+		params = ""
 	else:
 		for key in params:
 			params[key] = safe_str(params[key], charset)
