@@ -331,7 +331,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	if isinstance(result, Exception):
 		show_result_dialog(result, parent)
 		return
-	description = cgats.queryv1("DESCRIPTOR") or "Unnamed"
+	description = safe_unicode(cgats.queryv1("DESCRIPTOR") or "Unnamed", "UTF-7")
 	name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
 	path = os.path.join(getcfg("color.dir"), 
 						"%s.%s" % (name, cgats.type.lower().strip()))
@@ -386,11 +386,14 @@ def upload_colorimeter_correction(parent=None, params=None):
 
 
 def http_request(parent=None, domain=None, request_type="GET", path="", 
-				 params=None, headers=None, failure_msg="", silent=False):
+				 params=None, headers=None, charset="UTF-8", failure_msg="",
+				 silent=False):
 	""" HTTP request wrapper """
 	if params is None:
 		params = {}
 	else:
+		for key in params:
+			params[key] = safe_str(params[key], charset)
 		params = urllib.urlencode(params)
 	if headers is None:
 		if request_type == "GET":
@@ -5902,7 +5905,10 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			description = "%s & %s" % (colorimeter_ti3.queryv1("TARGET_INSTRUMENT") or 
+			instrument = colorimeter_ti3.queryv1("TARGET_INSTRUMENT")
+			if instrument:
+				instrument = safe_unicode(instrument, "UTF-7")
+			description = "%s & %s" % (instrument or 
 									   self.worker.get_instrument_name(),
 									   self.worker.get_display_name(True))
 		elif not spectral:
@@ -5940,8 +5946,8 @@ class MainFrame(BaseFrame):
 		dlg.sizer0.Layout()
 		dlg.Center()
 		result = dlg.ShowModal()
-		args += ["-E", dlg.description_txt_ctrl.GetValue()]
-		args += ["-I", dlg.display_txt_ctrl.GetValue()]
+		args += ["-E", safe_str(dlg.description_txt_ctrl.GetValue(), "UTF-7")]
+		args += ["-I", safe_str(dlg.display_txt_ctrl.GetValue(), "UTF-7")]
 		if result != wx.ID_OK:
 			return
 		# Prepare our files
@@ -5970,7 +5976,7 @@ class MainFrame(BaseFrame):
 		elif result:
 			source = os.path.join(self.worker.tempdir, name + ext)
 			cgats = CGATS.CGATS(source)[0]
-			description = cgats.queryv1("DESCRIPTOR")
+			description = safe_unicode(cgats.queryv1("DESCRIPTOR"), "UTF-7")
 			result = check_create_dir(getcfg("color.dir"))
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
@@ -6034,13 +6040,13 @@ class MainFrame(BaseFrame):
 			params = {'type': cgats.type.lower().strip(),
 					  'created': created,
 					  'description': description,
-					  'display': cgats.queryv1("DISPLAY"),
+					  'display': safe_unicode(cgats.queryv1("DISPLAY"), "UTF-7"),
 					  #'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
 																			   #self.worker.get_display_name()),
 					  #'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
 					  #'edid': self.worker.get_display_edid().get("edid", ""),
-					  'instrument': remove_vendor_names(cgats.queryv1("INSTRUMENT")),
-					  'reference': remove_vendor_names(cgats.queryv1("REFERENCE")),
+					  'instrument': remove_vendor_names(safe_unicode(cgats.queryv1("INSTRUMENT"), "UTF-7")),
+					  'reference': remove_vendor_names(safe_unicode(cgats.queryv1("REFERENCE"), "UTF-7")),
 					  'cgats': cgats}
 			# Upload correction
 			self.upload_colorimeter_correction_thread = threading.Thread(target=upload_colorimeter_correction, 
@@ -6071,7 +6077,7 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("cancel"), 
 						   bitmap=geticon(32, "dialog-error"))
 			else:
-				self.upload_colorimeter_correction(cgats.queryv1("DESCRIPTOR"), 
+				self.upload_colorimeter_correction(safe_unicode(cgats.queryv1("DESCRIPTOR"), "UTF-7"), 
 												   cgats)
 
 	def comport_ctrl_handler(self, event=None):
