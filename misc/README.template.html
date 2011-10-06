@@ -125,7 +125,7 @@
 			<p>Calibrate and characterize your display devices using one of the <a href="#instruments">many supported hardware sensors</a>, with support for multi-display setups and a variety of available settings like customizable whitepoint, luminance, black level, tone response curve as well as the option to create matrix and look-up-table ICC profiles, with optional gamut mapping. Other features include:</p>
 
 			<ul>
-				<li>Support of colorimeter correction for wide-gamut screens via correction matrices or specral sample files (only for specific colorimeters).</li>
+				<li>Support of colorimeter correction for wide-gamut screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (only for specific colorimeters i.e. i1 Display Pro and ColorMunki Display).</li>
 				<li>Profile verification: Check the quality of profiles via measurements. Also supports custom CGATS files (e.g. FOGRA, GRACoL/IDEAlliance, SWOP) and using of reference profiles to obtain test values.</li>
 				<li>Test chart editor: Create charts with any amount of color patches, easy copy &amp; paste from CGATS, CSV files (only tab-delimited) and spreadsheet applications.</li>
 			</ul>
@@ -185,6 +185,8 @@
 
 		<div id="download">
 			<h2>Get dispcalGUI</h2>
+			
+			<p><em>Please note: <a href="http://argyllcms.com">Argyll CMS</a> is a separate download.</em></p>
 
 			<ul>
 				<li>
@@ -289,7 +291,7 @@
 							</li>
 						</ul>
 
-						<p>Note that there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
+						<p>Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
 
 						<p>In all other cases, you can try this universal install that should work on a multitude of distributions:</p>
 						<p><a href="http://dispcalGUI.hoech.net/download.php?version=latest&amp;suffix=.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
@@ -456,7 +458,7 @@
 
 				<p>Note that the <em>i1 Display Pro</em> and <em>i1 Pro</em> are very different instruments despite their naming similarities.</p>
 
-				<p>Also note that there are currently (2011-09-02) four instruments (or rather, packages) under the ColorMunki brand, two of which are spectrometers, and two are colorimeters:</p>
+				<p>Also there are currently (2011-09-02) four instruments (or rather, packages) under the ColorMunki brand, two of which are spectrometers, and two are colorimeters:</p>
 				<ul>
 					<li>The <em>ColorMunki Design</em> and <em>ColorMunki Photo</em> spectrometers differ only in the functionality of the bundled vendor software. There are no differences between the instruments when used with Argyll CMS and dispcalGUI.</li>
 					<li>The <em>ColorMunki Display</em> colorimeter is a less expensive version of the i1 Display Pro colorimeter. It comes bundled with a simpler vendor software and has longer measurement times compared to the i1 Display Pro. Apart from that, the instrument appears to be virtually identical.</li>
@@ -477,7 +479,7 @@
 					<li>X-Rite/GretagMacbeth Spectrolino</li>
 				</ul>
 
-				<p><em>NOTE</em> you may still be forced to do a sensor calibration if the instrument requires it. Also, please look at the possible <a href="#issue-samplereadfail">caveats</a>.</p>
+				<p>Be aware you may still be forced to do a sensor calibration if the instrument requires it. Also, please look at the possible <a href="#issue-samplereadfail">caveats</a>.</p>
 			</div>
 
 			<div id="requirements-source">
@@ -713,11 +715,11 @@
 		<div id="widegamut">
 			<h2>A note about colorimeters, wide-gamut displays and dispcalGUI</h2>
 
-			<p>Colorimeters need a correction matrix in hardware or software to obtain correct measurements from wide-gamut displays (please also see <a href="http://argyllcms.com/doc/WideGamutColmters.html">“Wide Gamut Displays and Colorimeters”</a> on the Argyll CMS website for more information). The latter is supported when using Argyll CMS &gt;= 1.3.0, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction matrix in hardware), you can apply a correction matrix that has been calculated from spectrometer measurements to help better measure such a screen.<br />
-			You need a spectrometer in the first place to do the necessary measurements to create such a matrix, or you may <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed 'ccmx' (colorimeter correction matrix) files on the Argyll CMS website">look for a suitable correction matrix on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most colorimeters.<br />
+			<p>Colorimeters need a correction in hardware or software to obtain correct measurements from wide-gamut displays (please also see <a href="http://argyllcms.com/doc/WideGamutColmters.html">“Wide Gamut Displays and Colorimeters”</a> on the Argyll CMS website for more information). The latter is supported when using Argyll CMS &gt;= 1.3.0, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction in hardware), you can apply a correction that has been calculated from spectrometer measurements to help better measure such a screen.<br />
+			You need a spectrometer in the first place to do the necessary measurements to create such a correction, or you may query dispcalGUI's online database, and there's also a <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed colorimeter correction files on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most colorimeters.<br />
 			Starting with dispcalGUI 0.6.8, you can also <a href="#import-correction-matrices">import generic corrections</a> from some profiling softwares by choosing the corresponding item in the “Tools” menu.</p>
 
-			<p>If you buy a screen bundled with a colorimeter, the instrument may have been matched to the screen in some way already, so you may not need a software correction matrix in that case.</p>
+			<p>If you buy a screen bundled with a colorimeter, the instrument may have been matched to the screen in some way already, so you may not need a software correction in that case.</p>
 
 			<h3>Special note about the X-Rite i1 Display Pro and ColorMunki Display colorimeters</h3>
 
@@ -772,9 +774,9 @@
 				but normally you shouldn't need this (if you can't seem to get your instrument to appear in the dropdown, please make
 				sure that Argyll CMS recognizes your instrument before filing a bug report).</p>
 
-				<h4>Choosing a colorimeter correction matrix for a particular (wide-gamut) display</h4>
+				<h4>Choosing a colorimeter correction for a particular (wide-gamut) display</h4>
 
-				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#widegamut">“A note about colorimeters, wide-gamut displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online database for a match of your display/instrument combination (click the small globe next to the correction matrix dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
+				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#widegamut">“A note about colorimeters, wide-gamut displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online database for a match of your display/instrument combination (click the small globe next to the correction dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
 
 				<p>Please note this option is only available if using Argyll CMS &gt;= 1.3.0 and a colorimeter.</p>
 			</div>
@@ -1137,7 +1139,7 @@
 
 						<p>In both cases, you should check that atleast the nominal tolerances are not exceeded. For a bit “extra safety margin”, look at the recommended values instead.</p>
 
-						<p>Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from repeatable wrong measurements will usually still verify well against other wrong measurements from the same instrument if they don't fluctuate too much) or does not cope with your display well (which is especially true for <a href="#widegamut">colorimeters and wide-gamut screens</a>, as such combinations need a <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed 'ccmx' (colorimeter correction matrix) files on the Argyll CMS website">correction matrix</a> in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction matrix for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays which use white LEDs), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
+						<p>Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from repeatable wrong measurements will usually still verify well against other wrong measurements from the same instrument if they don't fluctuate too much) or does not cope with your display well (which is especially true for <a href="#widegamut">colorimeters and wide-gamut screens</a>, as such combinations need a <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed colorimeter correction files on the Argyll CMS website">correction</a> in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays which use white LEDs), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
 
 						<h4>How are profiles evaluated against the measured values?</h4>
 
@@ -1165,7 +1167,7 @@
 
 
 					<dt id="import-correction-matrices">Import correction matrices from other display profiling softwares...</dt>
-						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler and ColorMunki Display are supported. If they are installed or the CD / disk image mounted, the correct file(s) should be imported automatically (if you want to select the file which to import yourself, hold the SHIFT key while choosing the menu item), otherwise a file dialog will be shown.</dd>
+						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler and ColorMunki Display are supported. If they are installed or the CD / disk image is mounted, the correct file(s) should be imported automatically (if you want to select the file which to import yourself, hold the SHIFT key while choosing the menu item), otherwise a file dialog will be shown.</dd>
 
 
 					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
@@ -1386,8 +1388,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Support for Argyll CMS 1.3.4 features: i1 Display Pro and Colormunki Display, Colorimeter Calibration Spectral Sample (.ccss) files.</li>
-							<li>Ability to import correction matrices from other display profiling softwares. Currently iColor Display, i1 Profiler and ColorMunki Display are supported.</li>
-							<li>Ability to create correction matrices and Calibration Spectral Sample files.</li>
+							<li>Ability to import colorimeter corrections from other display profiling softwares. Currently iColor Display, i1 Profiler and ColorMunki Display are supported.</li>
+							<li>Ability to create correction matrices and Calibration Spectral Sample files, with the option to share them via an online database.</li>
 							<li>Option to automatically check for program updates on startup.</li>
 							<li>Added <a href="#issue-linux-libmtp">information how to fix instrument not working correctly/constantly disconnecting under Linux due to a conflict with libmtp</a> (thanks to Pascal Obry who notified me of the issue back in May 2011).</li>
 						</ul>
@@ -2152,6 +2154,10 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 		</div>
 
 		</div>
+		
+		<hr />
+		
+		<p id="copyright">dispcalGUI © 2008-2011 Florian Höch</p>
 
 		<div id="footer-container">
 			<div id="footer"><a href="#toc" id="totop">↑ Top</a></div>

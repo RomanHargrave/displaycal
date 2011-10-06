@@ -92,5 +92,5 @@ jQuery(function ($) {
 	});
 	
 	/* Indent after br */
-	$('#content br').after('<span style="display: inline-block; width: .5em;"></span>')
+	$('#content br').after('<span class="indent"></span>')
 });

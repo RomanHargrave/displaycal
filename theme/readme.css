@@ -226,6 +226,9 @@ dt {
 em {
 	font-style: italic;
 }
+hr {
+	display: none;
+}
 ins {
 	border-bottom: 1px solid #eee; 
 	text-decoration: none;
@@ -261,6 +264,13 @@ sup {
 	font-style: oblique;
 	line-height: 18px;
 }
+.indent {
+	display: inline-block;
+	width: .5em;
+}
+#screenshots .indent {
+	display: none;
+}
 #intro {
 	position: relative;
 }
@@ -268,6 +278,11 @@ sup {
 	margin: 0;
 	text-align: right;
 	vertical-align: bottom;
+}
+#copyright {
+	color: #999;
+	font-size: 11px;
+	margin-top: 5em;
 }
 
 
