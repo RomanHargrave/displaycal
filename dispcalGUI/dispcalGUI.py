@@ -1009,6 +1009,9 @@ class MainFrame(BaseFrame):
 		Controls are initialized in a separate step (see init_controls).
 		
 		"""
+		# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+		# segfault under Arch Linux when setting the window title
+		safe_print("")
 		self.SetTitle("%s %s %s" % (appname, version, build))
 		self.SetMaxSize((-1, -1))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))

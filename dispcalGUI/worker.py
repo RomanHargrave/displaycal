@@ -2410,6 +2410,9 @@ class Worker():
 			wx.CallAfter(self.swap_progress_wnds)
 		if getattr(self.progress_wnd, "original_msg", None) and \
 		   msg != self.progress_wnd.original_msg:
+			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+			# segfault under Arch Linux when setting the window title
+			safe_print("")
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
 			self.progress_wnd.original_msg = None
 		if percentage:
@@ -2461,6 +2464,9 @@ class Worker():
 		if getattr(self, "progress_dlg", None):
 			self.progress_wnd = self.progress_dlg
 			self.progress_wnd.MakeModal(True)
+			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+			# segfault under Arch Linux when setting the window title
+			safe_print("")
 			self.progress_wnd.SetTitle(progress_title)
 			self.progress_wnd.Update(0, progress_msg)
 			self.progress_wnd.Resume()
@@ -2619,6 +2625,9 @@ class Worker():
 					self.progress_wnd.console.SetValue("")
 				self.progress_wnd.stop_timer()
 				self.progress_wnd.start_timer()
+				# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+				# segfault under Arch Linux when setting the window title
+				safe_print("")
 				self.progress_wnd.SetTitle(progress_title)
 				self.progress_wnd.Show()
 				if resume:

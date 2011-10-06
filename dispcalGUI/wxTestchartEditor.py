@@ -878,6 +878,9 @@ class TestchartEditor(wx.Frame):
 		self.ti1_wrl = None
 		self.tc_update_controls()
 		self.tc_check()
+		# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+		# segfault under Arch Linux when setting the window title
+		safe_print("")
 		self.SetTitle(lang.getstr("testchart.edit"))
 
 	def tc_save_handler(self, event = None):
@@ -910,6 +913,9 @@ class TestchartEditor(wx.Frame):
 				self.ti1.filename = path
 				self.ti1.root.setmodified(False)
 				if not self.IsBeingDeleted():
+					# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+					# segfault under Arch Linux when setting the window title
+					safe_print("")
 					self.SetTitle(lang.getstr("testchart.edit").rstrip(".") + ": " + os.path.basename(path))
 			except Exception, exception:
 				handle_error(u"Error - testchart could not be saved: " + safe_unicode(exception), parent = self)
@@ -1026,6 +1032,9 @@ class TestchartEditor(wx.Frame):
 					return
 				ti1.root.setmodified(False)
 				self.ti1 = ti1
+				# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+				# segfault under Arch Linux when setting the window title
+				safe_print("")
 				self.SetTitle(lang.getstr("testchart.edit").rstrip(".") + ": " + os.path.basename(ti1.filename))
 			else:
 				InfoDialog(self, msg = lang.getstr("error.testchart.invalid", path), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
