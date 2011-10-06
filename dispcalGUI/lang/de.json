@@ -104,7 +104,7 @@
 	"colorimeter_correction.upload.deny": "Diese Korrekturdatei darf nicht hochgeladen werden.",
 	"colorimeter_correction.upload.success": "Die Korrekturdatei wurde in die Online-Datenbank eingetragen.",
 	"colorimeter_correction.upload.failure": "Die Korrekturdatei konnte nicht in die Online-Datenbank eingetragen werden.",
-	"colorimeter_correction.web_check": "Online nach Colorimeter-Korrektur suchen",
+	"colorimeter_correction.web_check": "Online nach Colorimeter-Korrektur suchen...",
 	"colorimeter_correction.web_check.choose": "Für das gewählte Anzeige- und Messgerät wurden folgende Colorimeter-Korrekturen gefunden:",
 	"colorimeter_correction.web_check.failure": "Für das gewählte Anzeige- und Messgerät wurden keine Colorimeter-Korrekturen gefunden.",
 	"commandline": "Befehlszeile:",

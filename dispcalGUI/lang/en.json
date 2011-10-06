@@ -104,7 +104,7 @@
 	"colorimeter_correction.upload.deny": "This colorimeter correction may not be uploaded.",
 	"colorimeter_correction.upload.success": "The correction was successfully uploaded to the online database.",
 	"colorimeter_correction.upload.failure": "The correction couldn't be entered into the online database.",
-	"colorimeter_correction.web_check": "Check online for colorimeter correction",
+	"colorimeter_correction.web_check": "Check online for colorimeter correction...",
 	"colorimeter_correction.web_check.choose": "The folowing colorimeter corrections for the selected display and instrument have been found:",
 	"colorimeter_correction.web_check.failure": "No colorimeter corrections for the selected display and instrument have been found.",
 	"commandline": "Command line:",

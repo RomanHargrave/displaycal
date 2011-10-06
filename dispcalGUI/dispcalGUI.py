@@ -259,23 +259,19 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 
-def colorimeter_correction_web_check(parent=None, params=None):
-	""" Check online for ccmx or ccss """
-	path = "/colorimetercorrection/index.php"
-	data = http_request(parent, domain, "POST", path, params)
+def colorimeter_correction_web_check_choose(data, parent=None):
+	""" Let user choose a colorimeter correction and confirm overwrite """
 	if data is not False:
 		if data.strip().startswith("CC"):
 			cgats = CGATS.CGATS(data)
-			wx.CallAfter(colorimeter_correction_web_check_choose, parent, cgats)
 		else:
-			wx.CallAfter(InfoDialog, parent, 
+			InfoDialog(parent, 
 						 msg=lang.getstr("colorimeter_correction.web_check.failure"),
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-information"))
-
-
-def colorimeter_correction_web_check_choose(parent=None, cgats=None):
-	""" Let user choose a colorimeter correction and confirm overwrite """
+			return
+	else:
+		return
 	dlg = ConfirmDialog(parent,
 						msg=lang.getstr("colorimeter_correction.web_check.choose"), 
 						ok=lang.getstr("ok"), 
@@ -296,10 +292,10 @@ def colorimeter_correction_web_check_choose(parent=None, cgats=None):
 	for i in cgats:
 		index = dlg.list_ctrl.InsertStringItem(i, "")
 		dlg.list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
-		dlg.list_ctrl.SetStringItem(index, 1, remove_vendor_names(cgats[i].queryv1("DESCRIPTOR")))
-		dlg.list_ctrl.SetStringItem(index, 2, remove_vendor_names(cgats[i].queryv1("INSTRUMENT")))
+		dlg.list_ctrl.SetStringItem(index, 1, remove_vendor_names(cgats[i].queryv1("DESCRIPTOR") or ""))
+		dlg.list_ctrl.SetStringItem(index, 2, remove_vendor_names(cgats[i].queryv1("INSTRUMENT") or ""))
 		dlg.list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
-		dlg.list_ctrl.SetStringItem(index, 4, remove_vendor_names(cgats[i].queryv1("REFERENCE")))
+		dlg.list_ctrl.SetStringItem(index, 4, remove_vendor_names(cgats[i].queryv1("REFERENCE") or ""))
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg.list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
@@ -331,8 +327,10 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	if isinstance(result, Exception):
 		show_result_dialog(result, parent)
 		return
-	description = safe_unicode(cgats.queryv1("DESCRIPTOR") or "Unnamed", "UTF-7")
-	name = re.sub(r"[\\/:*?\"<>|]+", "_", description)[:255]
+	description = safe_unicode(cgats.queryv1("DESCRIPTOR") or 
+							   lang.getstr("unnamed"), "UTF-7")
+	name = re.sub(r"[\\/:*?\"<>|]+", "_", 
+				  make_argyll_compatible_path(description))[:255]
 	path = os.path.join(getcfg("color.dir"), 
 						"%s.%s" % (name, cgats.type.lower().strip()))
 	if os.path.isfile(path):
@@ -354,11 +352,12 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 
 def upload_colorimeter_correction(parent=None, params=None):
 	""" Upload colorimeter correction to online database """
-	path = "/colorimetercorrection/index.php"
+	path = "/colorimetercorrections/index.php"
 	failure_msg = lang.getstr("colorimeter_correction.upload.failure")
 	# Check for duplicate
 	data = http_request(parent, domain, "POST", path, 
-						{"get": True, "hash": md5("%r" % params).hexdigest()},
+						{"get": True, "hash": md5(safe_str(params['cgats'],
+														   "UTF-8").strip()).hexdigest()},
 						silent=True)
 	if data and data.strip().startswith("CC"):
 		wx.CallAfter(InfoDialog, parent, 
@@ -368,7 +367,8 @@ def upload_colorimeter_correction(parent=None, params=None):
 		return
 	else:
 		# Upload
-		params['hash'] = md5("%r" % params).hexdigest()
+		params['hash'] = md5(safe_str(params['cgats'],
+									  "UTF-8").strip()).hexdigest()
 		params['put'] = True
 		data = http_request(parent, domain, "POST", path, params, 
 							failure_msg=failure_msg)
@@ -408,7 +408,7 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 	except (socket.error, httplib.HTTPException), exception:
 		msg = " ".join([failure_msg, lang.getstr("connection.fail", 
 												 " ".join([str(arg) for 
-														   arg in exception.args]))])
+														   arg in exception.args]))]).strip()
 		safe_print(msg)
 		if not silent:
 			wx.CallAfter(InfoDialog, parent, 
@@ -421,7 +421,7 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 						lang.getstr("connection.fail.http", 
 									" ".join([str(resp.status),
 											  resp.reason,
-											  domain + path]))])
+											  domain + path]))]).strip()
 		safe_print(msg)
 		if not silent:
 			wx.CallAfter(InfoDialog, parent, 
@@ -5788,11 +5788,16 @@ class MainFrame(BaseFrame):
 		params = {'get': True,
 				  'type': filetype,
 				  'display': self.worker.get_display_edid().get("monitor_name", 
-																 self.worker.get_display_name()),
+																 self.worker.get_display_name()) or "NONE",
 				  'instrument': self.worker.get_instrument_name() or "NONE"}
-		self.colorimeter_correction_web_check = threading.Thread(target=colorimeter_correction_web_check, 
-																 args=(self, params))
-		self.colorimeter_correction_web_check.start()
+		self.worker.interactive = False
+		self.worker.start(colorimeter_correction_web_check_choose, 
+						  http_request, 
+						  ckwargs={"parent": self}, 
+						  wargs=(self, domain, "POST",
+								 "/colorimetercorrections/index.php", params),
+						  progress_msg=lang.getstr("colorimeter_correction.web_check"),
+						  stop_timers=False)
 	
 	def create_colorimeter_correction_handler(self, event):
 		"""
@@ -5976,14 +5981,12 @@ class MainFrame(BaseFrame):
 		elif result:
 			source = os.path.join(self.worker.tempdir, name + ext)
 			cgats = CGATS.CGATS(source)[0]
-			description = safe_unicode(cgats.queryv1("DESCRIPTOR"), "UTF-7")
+			description = safe_unicode(cgats.queryv1("DESCRIPTOR") or "", "UTF-7")
 			result = check_create_dir(getcfg("color.dir"))
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
-			if (colorimeter_correction_check_overwrite(self, cgats) and
-				(not hasattr(self, "upload_colorimeter_correction_thread") or
-				 not self.upload_colorimeter_correction_thread.isAlive())):
+			if (colorimeter_correction_check_overwrite(self, cgats)):
 				self.upload_colorimeter_correction(description, cgats)
 		elif result is not None:
 			InfoDialog(self,
@@ -5994,10 +5997,6 @@ class MainFrame(BaseFrame):
 	
 	def upload_colorimeter_correction(self, description, cgats):
 		""" Upload a colorimeter correction to the online database """
-		if (hasattr(self, "upload_colorimeter_correction_thread") and
-			self.upload_colorimeter_correction_thread.isAlive()):
-			# Last upload thread not finished yet
-			return False
 		# Ask if user wants to upload
 		dlg = ConfirmDialog(self, 
 							msg=lang.getstr("colorimeter_correction.upload.confirm"), 
@@ -6040,18 +6039,21 @@ class MainFrame(BaseFrame):
 			params = {'type': cgats.type.lower().strip(),
 					  'created': created,
 					  'description': description,
-					  'display': safe_unicode(cgats.queryv1("DISPLAY"), "UTF-7"),
+					  'display': safe_unicode(cgats.queryv1("DISPLAY") or "", "UTF-7"),
 					  #'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
 																			   #self.worker.get_display_name()),
 					  #'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
 					  #'edid': self.worker.get_display_edid().get("edid", ""),
-					  'instrument': remove_vendor_names(safe_unicode(cgats.queryv1("INSTRUMENT"), "UTF-7")),
-					  'reference': remove_vendor_names(safe_unicode(cgats.queryv1("REFERENCE"), "UTF-7")),
+					  'instrument': remove_vendor_names(safe_unicode(cgats.queryv1("INSTRUMENT") or "", "UTF-7")),
+					  'reference': remove_vendor_names(safe_unicode(cgats.queryv1("REFERENCE") or "", "UTF-7")),
 					  'cgats': cgats}
 			# Upload correction
-			self.upload_colorimeter_correction_thread = threading.Thread(target=upload_colorimeter_correction, 
-																		 args=(self, params))
-			self.upload_colorimeter_correction_thread.start()
+			self.worker.interactive = False
+			self.worker.start(lambda result: result, 
+							  upload_colorimeter_correction, 
+							  wargs=(self, params),
+							  progress_msg=lang.getstr("colorimeter_correction.upload"),
+							  stop_timers=False)
 	
 	def upload_colorimeter_correction_handler(self, event):
 		""" Let user choose a ccss/ccmx file to upload """
@@ -6077,7 +6079,8 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("cancel"), 
 						   bitmap=geticon(32, "dialog-error"))
 			else:
-				self.upload_colorimeter_correction(safe_unicode(cgats.queryv1("DESCRIPTOR"), "UTF-7"), 
+				self.upload_colorimeter_correction(safe_unicode(cgats.queryv1("DESCRIPTOR") or "", 
+																"UTF-7"), 
 												   cgats)
 
 	def comport_ctrl_handler(self, event=None):

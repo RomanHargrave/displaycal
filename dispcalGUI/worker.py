@@ -2573,7 +2573,7 @@ class Worker():
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 
 			  parent=None, progress_start=100, resume=False, 
-			  continue_next=False):
+			  continue_next=False, stop_timers=True):
 		"""
 		Start a worker process.
 		
@@ -2598,7 +2598,7 @@ class Worker():
 			wkwargs = {}
 		while self.is_working():
 			sleep(.25) # wait until previous worker thread finishes
-		if hasattr(self.owner, "stop_timers"):
+		if hasattr(self.owner, "stop_timers") and stop_timers:
 			self.owner.stop_timers()
 		if not parent:
 			parent = self.owner
