@@ -94,3 +94,8 @@ jQuery(function ($) {
 	/* Indent after br */
 	$('#content br').after('<span class="indent"></span>')
 });
+
+jQuery(window).load(function () {
+	/* Fix scroll position */
+	if (location.hash) location.hash = location.hash;
+});
