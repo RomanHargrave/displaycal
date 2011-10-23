@@ -26,5 +26,13 @@
 	<string>%(CFBundleVersion)s</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>%(NSHumanReadableCopyright)s</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>de</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>it</string>
+	</array>
 </dict>
 </plist>
