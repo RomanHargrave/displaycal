@@ -2,12 +2,11 @@ Source: ${DEBPACKAGE}
 Section: graphics
 Priority: extra
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
-Build-Depends: debhelper (>= 5.0.38), doc-base, gcc, python (>= ${PY_MINVERSION}), python (<< 3.0), python-all-dev, python-central (>= 0.5.6), libxinerama-dev, libxrandr-dev, libxxf86vm-dev
+Build-Depends: debhelper (>= 5.0.38), doc-base, gcc, python-dev, python-central (>= 0.5.6), libxinerama-dev, libxrandr-dev, libxxf86vm-dev
 XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 
 Package: ${DEBPACKAGE}
 Architecture: any
 Depends: ${shlibs:Depends}, ${python:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0)
-XB-Python-Version: ${python:Versions}
 Description: ${SUMMARY}
 ${DESC}

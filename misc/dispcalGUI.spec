@@ -13,22 +13,22 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-root
 %if 0%{?mandriva_version} > 0
 Group: Graphics
 %ifarch x86_64
-BuildRequires: udev, gcc, python >= %{py_minversion}, python < 3.0, libpython-devel, lib64xorg-x11-devel
+BuildRequires: udev, gcc, libpython-devel, lib64xorg-x11-devel
 %else
-BuildRequires: udev, gcc, python >= %{py_minversion}, python < 3.0, libpython-devel, libxorg-x11-devel
+BuildRequires: udev, gcc, libpython-devel, libxorg-x11-devel
 %endif
-Requires: python >= %{py_minversion}, python < 3.0, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires: wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?suse_version} > 0
 Group: Productivity/Graphics/Other
-BuildRequires: udev, update-desktop-files, gcc, python >= %{py_minversion}, python < 3.0, python-devel, xorg-x11-devel
+BuildRequires: udev, update-desktop-files, gcc, python-devel, xorg-x11-devel
 Requires: python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0
 Group: Applications/Multimedia
-BuildRequires: udev, gcc, python >= %{py_minversion}, python < 3.0, python-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
-Requires: python >= %{py_minversion}, python < 3.0, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
+BuildRequires: udev, gcc, python2-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
+Requires: wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
 %endif
 %endif
 %endif
@@ -38,7 +38,6 @@ ${DESC}
 
 %prep
 %setup
-export python_version=`python -c "import sys;print sys.version[:3]"`
 # Make files executable
 chmod +x scripts/*
 chmod +x misc/Argyll
@@ -51,11 +50,15 @@ f.write(d)
 f.close()"
 
 %build
-python${python_version} setup.py build --use-distutils
+python_version=`python -c "import sys;print sys.version[:3]"`
+python=`which python${python_version} 2>/dev/null || which python`
+${python} setup.py build --use-distutils
 
 %install
+python_version=`python -c "import sys;print sys.version[:3]"`
+python=`which python${python_version} 2>/dev/null || which python`
 install_lib=`python -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)"`
-python${python_version} setup.py install --no-compile --use-distutils \
+${python} setup.py install --no-compile --use-distutils \
 	--root=$RPM_BUILD_ROOT \
 	--prefix=%_prefix \
 	--exec-prefix=%_exec_prefix \
@@ -65,7 +68,9 @@ python${python_version} setup.py install --no-compile --use-distutils \
 	--skip-postinstall \
 	--record=INSTALLED_FILES
 # Strip extensions
-strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/*.so
+bits=`python -c "import platform;print platform.architecture()[0][:2]"`
+python_shortversion=`python -c "import sys;print ''.join(map(str, sys.version_info[:2]))"`
+strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/lib${bits}/python${python_shortversion}/*.so
 # Byte-compile *.py files and remove traces of RPM_BUILD_ROOT
 %if 0%{?mandriva_version} < 201010
 # Mandriva 2010.1 got rid of byte-compilation

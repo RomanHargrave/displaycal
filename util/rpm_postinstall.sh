@@ -25,18 +25,6 @@ else
 	fi
 fi
 
-# Remove obsolete profile loaders
-python -c "import glob
-import os
-from dispcalGUI.defaultpaths import autostart
-for desktopbasename in ['dispcalGUI-Calibration-Loader-Display-*']:
-	wildcard = os.path.join(autostart, desktopbasename + '.desktop')
-	for filename in glob.glob(wildcard):
-		try:
-			os.remove(filename)
-		except OSError, exception:
-			print exception"
-
 # Update icon cache and menu
 which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true
 which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true

@@ -27,18 +27,6 @@ else
 	fi
 fi
 
-# Remove obsolete profile loaders
-python -c "import glob
-import os
-from dispcalGUI.defaultpaths import autostart
-for desktopbasename in ['dispcalGUI-Calibration-Loader-Display-*']:
-	wildcard = os.path.join(autostart, desktopbasename + '.desktop')
-	for filename in glob.glob(wildcard):
-		try:
-			os.remove(filename)
-		except OSError, exception:
-			print exception"
-
 #DEBHELPER#
 
 exit 0
