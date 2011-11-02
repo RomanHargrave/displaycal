@@ -572,7 +572,7 @@ class ADict(dict):
 		if name in self:
 			return self[name]
 		else:
-			raise AttributeError(name)
+			return self.__getattribute__(name)
 
 	def __setattr__(self, name, value):
 		self[name] = value
@@ -699,6 +699,144 @@ class DateTimeType(ICCProfileTag, list):
 		self += dateTimeNumber(tagData[8:20])
 
 
+class DictType(ICCProfileTag, AODict):
+
+	def __init__(self, tagData, tagSignature):
+		""" ICC dictType Tag
+		
+		Implements all features of 'Dictionary Type and Metadata TAG Definition'
+		(ICC spec revision 2010-02-25), including shared data (the latter will
+		only be effective for mutable types, ie. MultiLocalizedUnicodeType)
+		
+		"""
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		AODict.__init__(self)
+		if not tagData:
+			return
+		numrecords = uInt32Number(tagData[8:12])
+		recordlen = uInt32Number(tagData[12:16])
+		if recordlen not in (16, 24, 32):
+			safe_print("Error (non-critical): '%s' invalid record length "
+					   "(expected 16, 24 or 32, got %s)" % (tagData[:4],
+															recordlen))
+			return
+		elements = {}
+		for n in range(0, numrecords):
+			record = tagData[16 + n * recordlen:16 + (n + 1) * recordlen]
+			if len(record) < recordlen:
+				safe_print("Error (non-critical): '%s' record %s too short "
+						   "(expected %s bytes, got %s bytes)" % (tagData[:4],
+																  n,
+																  recordlen,
+																  len(record)))
+				break
+			for key, offsetpos in (("name", 0), ("value", 8),
+								   ("display_name", 16), ("display_value", 24)):
+				if (offsetpos in (0, 8) or recordlen == offsetpos + 8 or
+					recordlen == offsetpos + 16):
+					# Required:
+					# Bytes 0..3, 4..7: Name offset and size
+					# Bytes 8..11, 12..15: Value offset and size
+					# Optional:
+					# Bytes 16..23, 24..23: Display name offset and size
+					# Bytes 24..27, 28..31: Display value offset and size
+					offset = uInt32Number(record[offsetpos:offsetpos + 4])
+					size = uInt32Number(record[offsetpos + 4:offsetpos + 8])
+					if offset > 0:
+						if (offset, size) in elements:
+							# Use existing element if same offset and size
+							# This will really only make a difference for
+							# mutable types ie. MultiLocalizedUnicodeType
+							data = elements[(offset, size)]
+						else:
+							data = tagData[offset:offset + size]
+							try:
+								if key.startswith("display_"):
+									data = MultiLocalizedUnicodeType(data,
+																	 "mluc")
+								else:
+									data = data.decode("UTF-16-BE",
+													   "replace").rstrip("\0")
+							except Exception, exception:
+								safe_print("Error (non-critical): could not "
+										   "decode '%s', offset %s, length %s" %
+										   (tagData[:4], offset, size))
+							# Remember element by offset and size
+							elements[(offset, size)] = data
+						if key == "name":
+							name = data
+							self[name] = ADict()
+						else:
+							self[name][key] = data
+					##else:
+						##safe_print(name, key)
+
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+
+		def fget(self):
+			numrecords = len(self)
+			recordlen = 16
+			keys = ("name", "value")
+			for value in self.itervalues():
+				if "display_value" in value:
+					recordlen = 32
+					break
+				elif "display_name" in value:
+					recordlen = 24
+			if recordlen > 16:
+				keys += ("display_name", )
+			if recordlen > 24:
+				keys += ("display_value", )
+			tagData = ["dict", "\0" * 4, uInt32Number_tohex(numrecords),
+					   uInt32Number_tohex(recordlen)]
+			storage_offset = 16 + numrecords * recordlen
+			storage = []
+			elements = []
+			offsets = []
+			for item in self.iteritems():
+				for key in keys:
+					if key == "name":
+						element = item[0]
+					else:
+						element = item[1].get(key)
+					if element is None:
+						offset = 0
+						size = 0
+					else:
+						if element in elements:
+							# Use existing offset and size if same element
+							offset, size = offsets[elements.index(element)]
+						else:
+							offset = storage_offset + len("".join(storage))
+							if isinstance(element, MultiLocalizedUnicodeType):
+								data = element.tagData
+							else:
+								data = element.encode("UTF-16-BE")
+							size = len(data)
+							if isinstance(element, MultiLocalizedUnicodeType):
+								# Remember element, offset and size
+								elements.append(element)
+								offsets.append((offset, size))
+							# Pad all data with binary zeros so it lies on 
+							# 4-byte boundaries
+							padding = int(math.ceil(size / 4.0)) * 4 - size
+							data += "\0" * padding
+							storage.append(data)
+					tagData.append(uInt32Number_tohex(offset))
+					tagData.append(uInt32Number_tohex(size))
+			tagData.extend(storage)
+			return "".join(tagData)
+
+		def fset(self, tagData):
+			pass
+
+		return locals()
+
+
 class MeasurementType(ICCProfileTag, ADict):
 
 	def __init__(self, tagData, tagSignature):
@@ -717,6 +855,8 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 	def __init__(self, tagData, tagSignature):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		AODict.__init__(self)
+		if not tagData:
+			return
 		recordsCount = uInt32Number(tagData[8:12])
 		recordSize = uInt32Number(tagData[12:16]) # 12
 		records = tagData[16:16 + recordSize * recordsCount]
@@ -726,11 +866,9 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 			recordCountryCode = record[2:4]
 			recordLength = uInt32Number(record[4:8])
 			recordOffset = uInt32Number(record[8:12])
-			if recordLanguageCode not in self:
-				self[recordLanguageCode] = AODict()
-			self[recordLanguageCode][recordCountryCode] = unicode(
-				tagData[recordOffset:recordOffset + recordLength], 
-				"utf-16-be", "replace")
+			self.add_localized_string(recordLanguageCode, recordCountryCode,
+				unicode(tagData[recordOffset:recordOffset + recordLength], 
+						"utf-16-be", "replace"))
 			records = records[recordSize:]
 
 	def __str__(self):
@@ -747,7 +885,56 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 			for countryCode in ("UK", "US"):
 				if countryCode in self["en"]:
 					return self["en"][countryCode]
-		return self.values()[0].values()[0]
+		elif len(self):
+			return self.values()[0].values()[0]
+		else:
+			return u""
+
+	def add_localized_string(self, languagecode, countrycode, localized_string):
+		""" Convenience function for adding localized strings """
+		if languagecode not in self:
+			self[languagecode] = AODict()
+		self[languagecode][countrycode] = localized_string
+		
+
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+
+		def fget(self):
+			tagData = ["mluc", "\0" * 4]
+			recordsCount = 0
+			for languageCode in self:
+				for countryCode in self[languageCode]:
+					recordsCount += 1
+			tagData.append(uInt32Number_tohex(recordsCount))
+			recordSize = 12
+			tagData.append(uInt32Number_tohex(recordSize))
+			storage_offset = 16 + recordSize * recordsCount
+			storage = []
+			offsets = []
+			for languageCode in self:
+				for countryCode in self[languageCode]:
+					tagData.append(languageCode + countryCode)
+					data = self[languageCode][countryCode].encode("UTF-16-BE")
+					if data in storage:
+						offset, recordLength = offsets[storage.index(data)]
+					else:
+						recordLength = len(data)
+						offset = len("".join(storage))
+						offsets.append((offset, recordLength))
+						storage.append(data)
+					tagData.append(uInt32Number_tohex(recordLength))
+					tagData.append(uInt32Number_tohex(storage_offset + offset))
+			tagData.append("".join(storage))
+			return "".join(tagData)
+
+		def fset(self, tagData):
+			pass
+
+		return locals()
 
 
 class s15Fixed16ArrayType(ICCProfileTag, list):
@@ -1282,6 +1469,7 @@ typeSignature2Type = {
 	"chrm": ChromacityType,
 	"curv": CurveType,
 	"desc": TextDescriptionType,  # ICC v2
+	"dict": DictType,  # ICC v2 + v4
 	"dtim": DateTimeType,
 	"meas": MeasurementType,
 	"mluc": MultiLocalizedUnicodeType,  # ICC v4
@@ -1495,7 +1683,7 @@ class ICCProfile:
 								else:
 									tag = ICCProfileTag(tagData, tagSignature)
 							except Exception, exception:
-								raise ICCProfileInvalidError("Couldn't parse tag %r (type %r, offet %i, size %i): %s" % (tagSignature,
+								raise ICCProfileInvalidError("Couldn't parse tag %r (type %r, offet %i, size %i): %r" % (tagSignature,
 																														 typeSignature,
 																														 tagDataOffset,
 																														 tagDataSize,
