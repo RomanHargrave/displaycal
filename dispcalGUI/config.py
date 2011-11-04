@@ -467,7 +467,7 @@ defaults = {
 	"profile.name.expanded": u"",
 	"profile.quality": "h",
 	"profile.save_path": storage, # directory
-	"profile.type": "S",
+	"profile.type": "s",
 	"profile.update": 0,
 	"recent_cals": "",
 	"recent_cals_max": 15,
