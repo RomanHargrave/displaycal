@@ -318,7 +318,7 @@ def ti3_to_ti1(ti3_data):
 	return "\n".join(ti1_lines)
 
 
-def verify_cgats(cgats, required, ignore_unknown=False):
+def verify_cgats(cgats, required, ignore_unknown=True):
 	"""
 	Verify and return a CGATS instance or None on failure.
 	
@@ -336,24 +336,20 @@ def verify_cgats(cgats, required, ignore_unknown=False):
 			if cgats_1.queryv1("DATA_FORMAT"):
 				for field in required:
 					if not field in cgats_1.queryv1("DATA_FORMAT").values():
-						if debug: safe_print("[D] Missing required field:", field)
-						return None
+						raise CGATS.CGATSKeyError("Missing required field: %s" % field)
 				if not ignore_unknown:
 					for field in cgats_1.queryv1("DATA_FORMAT").values():
 						if not field in required:
-							if debug: safe_print("[D] Unknown field:", field)
-							return None
+							raise CGATS.CGATSError("Unknown field: %s" % field)
 			else:
-				if debug: safe_print("[D] Missing DATA_FORMAT")
-				return None
+				raise CGATS.CGATSInvalidError("Missing DATA_FORMAT")
 		else:
-			if debug: safe_print("[D] Missing DATA")
-			return None
+			raise CGATS.CGATSInvalidError("Missing NUMBER_OF_SETS")
 		cgats_1.filename = cgats.filename
 		return cgats_1
 	else:
-		if debug: safe_print("[D] Invalid Argyll CGATS format")
-		return None
+		raise CGATS.CGATSKeyError("Missing required fields: %s" % 
+								  ", ".join(required))
 
 def verify_ti1_rgb_xyz(cgats):
 	"""

@@ -2777,8 +2777,12 @@ class Worker():
 		else:
 			required = ("RGB_R", "RGB_G", "RGB_B")
 		ti1_filename = ti1.filename
-		ti1 = verify_cgats(ti1, required, True)
-		if not ti1:
+		try:
+			ti1 = verify_cgats(ti1, required, True)
+		except CGATS.CGATSInvalidError:
+			raise ValueError(lang.getstr("error.testchart.invalid", 
+										 ti1_filename))
+		except CGATS.CGATSKeyError:
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti1_filename, ", ".join(required))))
 		
@@ -3016,19 +3020,25 @@ class Worker():
 			# Make a copy and do not alter a passed in CGATS instance!
 			ti3 = CGATS.CGATS(str(ti3))
 		
-		ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
-		if ti3v:
-			color_rep = 'LAB'
-		else:
-			ti3v = verify_cgats(ti3, ("XYZ_X", "XYZ_Y", "XYZ_Z"), True)
-			if ti3v:
-				color_rep = 'XYZ'
-			else:
+		try:
+			ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
+		except CGATS.CGATSInvalidError, exception:
+			raise ValueError(lang.getstr("error.testchart.invalid", 
+										 ti3_filename) + "\n" +
+										 lang.getstr(exception.args[0]))
+		except CGATS.CGATSKeyError:
+			try:
+				ti3v = verify_cgats(ti3, ("XYZ_X", "XYZ_Y", "XYZ_Z"), True)
+			except CGATS.CGATSKeyError:
 				raise ValueError(lang.getstr("error.testchart.missing_fields", 
-										 (ti3_filename, 
-										  "XYZ_X, XYZ_Y, XYZ_Z " +
-										  lang.getstr("or") + 
-										  " LAB_L, LAB_A, LAB_B")))
+											 (ti3_filename, 
+											  "XYZ_X, XYZ_Y, XYZ_Z " +
+											  lang.getstr("or") + 
+											  " LAB_L, LAB_A, LAB_B")))
+			else:
+				color_rep = 'XYZ'
+		else:
+			color_rep = 'LAB'
 		
 		# profile
 		if isinstance(profile, basestring):

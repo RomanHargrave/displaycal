@@ -7171,10 +7171,19 @@ class MainFrame(BaseFrame):
 				profile = ICCP.ICCProfile(path)
 				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.get("CIED", "") or 
 											 profile.tags.get("targ", "")))
-			ti1_1 = verify_ti1_rgb_xyz(ti1)
-			if not ti1_1:
+			try:
+				ti1_1 = verify_ti1_rgb_xyz(ti1)
+			except CGATS.CGATSError, exception:
+				msg = {CGATS.CGATSInvalidError: lang.getstr("error.testchart.invalid", path) + 
+															"\n" + 
+															lang.getstr(exception.args[0]),
+					   CGATS.CGATSKeyError: lang.getstr("error.testchart.missing_fields", 
+														(path, 
+														 "RGB_R, RGB_G, RGB_B, "
+														 " XYZ_X, XYZ_Y, XYZ_Z"))}.get(exception.__class__,
+																					   "error")
 				InfoDialog(self, 
-						   msg=lang.getstr("error.testchart.invalid", path), 
+						   msg=msg, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				self.set_default_testchart()
