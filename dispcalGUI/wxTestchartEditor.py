@@ -1029,14 +1029,14 @@ class TestchartEditor(wx.Frame):
 			try:
 				ti1_1 = verify_ti1_rgb_xyz(ti1)
 			except CGATS.CGATSError, exception:
-				msg = {CGATS.CGATSInvalidError: lang.getstr("error.testchart.invalid", path) + 
-															"\n" + 
-															lang.getstr(exception.args[0]),
-					   CGATS.CGATSKeyError: lang.getstr("error.testchart.missing_fields", 
+				msg = {CGATS.CGATSKeyError: lang.getstr("error.testchart.missing_fields", 
 														(path, 
 														 "RGB_R, RGB_G, RGB_B, "
 														 " XYZ_X, XYZ_Y, XYZ_Z"))}.get(exception.__class__,
-																					   "error")
+																					   lang.getstr("error.testchart.invalid",
+																								   path) + 
+																					   "\n" + 
+																					   lang.getstr(exception.args[0]))
 				InfoDialog(self,
 						   msg=msg,
 						   ok=lang.getstr("ok"),
