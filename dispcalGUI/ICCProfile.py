@@ -700,15 +700,22 @@ class DateTimeType(ICCProfileTag, list):
 
 
 class DictType(ICCProfileTag, AODict):
+	""" ICC dictType Tag
+	
+	Implements all features of 'Dictionary Type and Metadata TAG Definition'
+	(ICC spec revision 2010-02-25), including shared data (the latter will
+	only be effective for mutable types, ie. MultiLocalizedUnicodeType)
+	
+	Examples:
+	
+	tag[key]   Returns the (non-localized) value
+	tag.getname(key, locale='en_US') Returns the localized name if present
+	tag.getvalue(key, locale='en_US') Returns the localized value if present
+	tag[key] = value   Sets the (non-localized) value
+	
+	"""
 
-	def __init__(self, tagData, tagSignature):
-		""" ICC dictType Tag
-		
-		Implements all features of 'Dictionary Type and Metadata TAG Definition'
-		(ICC spec revision 2010-02-25), including shared data (the latter will
-		only be effective for mutable types, ie. MultiLocalizedUnicodeType)
-		
-		"""
+	def __init__(self, tagData=None, tagSignature="dict"):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		AODict.__init__(self)
 		if not tagData:
@@ -765,11 +772,17 @@ class DictType(ICCProfileTag, AODict):
 							elements[(offset, size)] = data
 						if key == "name":
 							name = data
-							self[name] = ADict()
+							self[name] = ""
 						else:
-							self[name][key] = data
+							self.get(name)[key] = data
 					##else:
 						##safe_print(name, key)
+
+	def __getitem__(self, name):
+		return self.get(name).value
+
+	def __setitem__(self, name, value):
+		AODict.__setitem__(self, name, ADict(value=value))
 
 	@Property
 	def tagData():
@@ -815,7 +828,7 @@ class DictType(ICCProfileTag, AODict):
 							if isinstance(element, MultiLocalizedUnicodeType):
 								data = element.tagData
 							else:
-								data = element.encode("UTF-16-BE")
+								data = unicode(element).encode("UTF-16-BE")
 							size = len(data)
 							if isinstance(element, MultiLocalizedUnicodeType):
 								# Remember element, offset and size
@@ -836,6 +849,72 @@ class DictType(ICCProfileTag, AODict):
 
 		return locals()
 
+	def getname(self, name, default=None, locale="en_US"):
+		""" Convenience function to get (localized) names
+		
+		"""
+		item = self.get(name, default)
+		if item is default:
+			return default
+		if locale and "display_name" in item:
+			return item.display_name.get_localized_string(*locale.split("_"))
+		else:
+			return name
+
+	def getvalue(self, name, default=None, locale="en_US"):
+		""" Convenience function to get (localized) values
+		
+		"""
+		item = self.get(name, default)
+		if item is default:
+			return default
+		if locale and "display_value" in item:
+			return item.display_value.get_localized_string(*locale.split("_"))
+		else:
+			return item.value
+
+	def setitem(self, name, value, display_name=None, display_value=None):
+		""" Convenience function to set items
+		
+		display_name and display_value (if given) should be dict types with
+		country -> language -> string mappings, e.g.:
+		
+		{"en": {"US": u"localized string"},
+		 "de": {"DE": u"localized string", "CH": u"localized string"}}
+		
+		"""
+		self[name] = value
+		item = self.get(name)
+		if display_name:
+			item.display_name = MultiLocalizedUnicodeType()
+			item.display_name.update(display_name)
+		if display_value:
+			item.display_value = MultiLocalizedUnicodeType()
+			item.display_value.update(display_value)
+
+	def to_json(self, encoding="UTF-8", errors="replace", locale="en_US"):
+		""" Return a JSON representation
+		
+		Display names/values are used if present.
+		
+		"""
+		json = []
+		for name in self:
+			value = self.getvalue(name, None, locale)
+			name = self.getname(name, None, locale)
+			#try:
+				#value = str(int(value))
+			#except ValueError:
+				#try:
+					#value = str(float(value))
+				#except ValueError:
+			value = '"%s"' % repr(unicode(value))[2:-1]
+			json.append('"%s": %s' % tuple([re.sub(r"\\x([0-9a-f]{2})",
+												   "\\u00\\1", item)
+											for item in [repr(unicode(name))[2:-1],
+														 value]]))
+		return "{%s}" % ",\n".join(json)
+
 
 class MeasurementType(ICCProfileTag, ADict):
 
@@ -852,7 +931,7 @@ class MeasurementType(ICCProfileTag, ADict):
 
 class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 
-	def __init__(self, tagData, tagSignature):
+	def __init__(self, tagData=None, tagSignature="mluc"):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		AODict.__init__(self)
 		if not tagData:
@@ -895,7 +974,18 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 		if languagecode not in self:
 			self[languagecode] = AODict()
 		self[languagecode][countrycode] = localized_string
+
+	def get_localized_string(self, languagecode="en", countrycode="US"):
+		""" Convenience function for retrieving localized strings
 		
+		Falls back to first locale available if the requested one isn't
+		
+		"""
+		try:
+			return self[languagecode][countrycode]
+		except KeyError:
+			return unicode(self)
+
 
 	@Property
 	def tagData():
