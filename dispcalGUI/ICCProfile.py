@@ -1945,6 +1945,38 @@ class ICCProfile:
 		"""
 		self.__init__(profile)
 	
+	def set_edid_metadata(self, edid, prefix = "EDID_"):
+		"""
+		Sets metadata from EDID
+		
+		Key names follow the examples provided by the OpenICC 'Taxi' project
+		http://icc.opensuse.org
+		
+		"""
+		if not "meta" in self.tags:
+			self.tags.meta = DictType()
+		self.tags.meta.update({"prefix": prefix,
+							   prefix + "manufacturer": edid.get("manufacturer", ""),
+							   prefix + "mnft": edid.get("manufacturer_id", ""),
+							   prefix + "model": edid.get("monitor_name", ""),
+							   prefix + "serial": edid.get("serial_ascii", ""),
+							   prefix + "date": "%0.4i-T%i" %
+											(edid.get("year_of_manufacture", 0),
+											 edid.get("week_of_manufacture", 0)),
+							   prefix + "mnft_id": struct.unpack("<H",
+															 edid.get("edid",
+																	  "\0\0")[8:10])[0],
+							   prefix + "model_id": edid.get("product_id", 0),
+							   prefix + "redx": edid.get("red_x", 0),
+							   prefix + "redy": edid.get("red_y", 0),
+							   prefix + "greenx": edid.get("green_x", 0),
+							   prefix + "greeny": edid.get("green_y", 0),
+							   prefix + "bluex": edid.get("blue_x", 0),
+							   prefix + "bluey": edid.get("blue_y", 0),
+							   prefix + "whitex": edid.get("white_x", 0),
+							   prefix + "whitey": edid.get("white_y", 0),
+							   prefix + "gamma": edid.get("gamma", "")})
+	
 	def write(self, stream_or_filename=None):
 		"""
 		Write profile to stream.
