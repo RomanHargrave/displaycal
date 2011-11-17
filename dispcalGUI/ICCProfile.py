@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from hashlib import md5
+import datetime
 import locale
 import math
 import os
@@ -1647,7 +1648,10 @@ class ICCProfile:
 			self.profileClass = header[12:16].strip()
 			self.colorSpace = header[16:20].strip()
 			self.connectionColorSpace = header[20:24].strip()
-			self.dateTime = dateTimeNumber(header[24:36])
+			try:
+				self.dateTime = datetime.datetime(*dateTimeNumber(header[24:36]))
+			except ValueError:
+				raise ICCProfileInvalidError("Profile date invalid")
 			self.platform = header[40:44].strip("\0\n\r ")
 			flags = uInt16Number(header[44:48][:2])
 			self.embedded = flags | 1 == flags
