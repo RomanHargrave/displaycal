@@ -35,6 +35,7 @@ try:
 	from log import safe_print
 except ImportError:
 	from safe_print import safe_print
+from util_decimal import float2dec
 from util_list import intlist
 from util_str import hexunescape
 
@@ -1235,6 +1236,57 @@ class VideoCardGammaType(ICCProfileTag, ADict):
 
 	def __init__(self, tagData, tagSignature):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
+	
+	def is_linear(self, r=True, g=True, b=True):
+		r_points = []
+		g_points = []
+		b_points = []
+		linear_points = []
+		vcgt = self
+		if "data" in vcgt: # table
+			irange = range(0, vcgt['entryCount'])
+			for i in irange:
+				j = i * (255.0 / (vcgt['entryCount'] - 1))
+				linear_points += [[j, j]]
+				if r:
+					n = float(vcgt['data'][0][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
+					r_points += [[j, n]]
+				if g:
+					n = float(vcgt['data'][1][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
+					g_points += [[j, n]]
+				if b:
+					n = float(vcgt['data'][2][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
+					b_points += [[j, n]]
+		else: # formula
+			irange = range(0, 256)
+			step = 100.0 / 255.0
+			for i in irange:
+				# float2dec(v) fixes miniscule deviations in the calculated gamma
+				linear_points += [[i, (i)]]
+				if r:
+					vmin = float2dec(vcgt["redMin"] * 255)
+					v = float2dec(math.pow(step * i / 100.0, vcgt["redGamma"]))
+					vmax = float2dec(vcgt["redMax"] * 255)
+					r_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
+				if g:
+					vmin = float2dec(vcgt["greenMin"] * 255)
+					v = float2dec(math.pow(step * i / 100.0, vcgt["greenGamma"]))
+					vmax = float2dec(vcgt["greenMax"] * 255)
+					g_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
+				if b:
+					vmin = float2dec(vcgt["blueMin"] * 255)
+					v = float2dec(math.pow(step * i / 100.0, vcgt["blueGamma"]))
+					vmax = float2dec(vcgt["blueMax"] * 255)
+					b_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
+		if ((r and g and b and r_points == g_points == b_points) or
+			(r and g and r_points == g_points) or not (g or b)):
+			points = r_points
+		elif ((r and b and r_points == b_points) or
+			  (g and b and g_points == b_points) or not (r or g)):
+			points = b_points
+		elif g:
+			points = g_points
+		return points == linear_points
 
 	def printNormalizedValues(self, amount=None, digits=12):
 		"""
