@@ -145,13 +145,14 @@ class BaseInteractiveDialog(wx.Dialog):
 
 	def ShowModalThenDestroy(self, parent=None):
 		if parent:
-			if hasattr(parent, "modaldlg") and parent.modaldlg != None:
+			if getattr(parent, "modaldlg", None):
 				wx.CallLater(250, self.ShowModalThenDestroy, parent)
 				return
 			parent.modaldlg = self
 		self.ShowModal()
 		if parent:
 			parent.modaldlg = None
+			del parent.modaldlg
 		self.Destroy()
 
 	def OnShow(self, event):

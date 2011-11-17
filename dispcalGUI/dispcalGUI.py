@@ -42,6 +42,7 @@ sys.excepthook = _early_excepthook
 import ConfigParser
 ConfigParser.DEFAULTSECT = "Default"
 import codecs
+import datetime
 import decimal
 Decimal = decimal.Decimal
 import getpass
@@ -118,6 +119,7 @@ from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
 from trash import trash, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
+from util_http import encode_multipart_formdata
 from util_io import Files, StringIOu as StringIO
 from util_list import index_fallback_ignorecase, intlist, natsort
 if sys.platform == "darwin":
@@ -224,7 +226,7 @@ def app_uptodate(parent=None):
 	dlg.sizer0.SetSizeHints(dlg)
 	dlg.sizer0.Layout()
 	dlg.ShowModalThenDestroy()
-	if parent and getattr(parent, "menuitem_app_auto_update_check"):
+	if parent and getattr(parent, "menuitem_app_auto_update_check", None):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 
@@ -255,7 +257,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 	if dlg.ShowModal() == wx.ID_OK:
 		launch_file("http://" + domain)
 	dlg.Destroy()
-	if parent and getattr(parent, "menuitem_app_auto_update_check"):
+	if parent and getattr(parent, "menuitem_app_auto_update_check", None):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 
@@ -386,11 +388,14 @@ def upload_colorimeter_correction(parent=None, params=None):
 
 
 def http_request(parent=None, domain=None, request_type="GET", path="", 
-				 params=None, headers=None, charset="UTF-8", failure_msg="",
+				 params=None, files=None, headers=None, charset="UTF-8", failure_msg="",
 				 silent=False):
 	""" HTTP request wrapper """
 	if params is None:
-		params = ""
+		params = {}
+	if files:
+		content_type, params = encode_multipart_formdata(params.iteritems(),
+														 files)
 	else:
 		for key in params:
 			params[key] = safe_str(params[key], charset)
@@ -399,8 +404,12 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 		if request_type == "GET":
 			headers = {}
 		else:
-			headers = {"Content-type": "application/x-www-form-urlencoded",
-					   "Accept": "text/plain"}
+			if files:
+				headers = {"Content-Type": content_type,
+						   "Content-Length": str(len(params))}
+			else:
+				headers = {"Content-Type": "application/x-www-form-urlencoded",
+						   "Accept": "text/plain"}
 	conn = httplib.HTTPConnection(domain)
 	try:
 		conn.request(request_type, path, params, headers)
@@ -1362,6 +1371,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("install_display_profile"))
 		self.Bind(wx.EVT_MENU, self.install_profile_handler, 
 				  self.menuitem_install_display_profile)
+		self.menuitem_profile_share = options.FindItemById(
+			options.FindItem("profile.share"))
+		self.Bind(wx.EVT_MENU, self.profile_share_handler, 
+				  self.menuitem_profile_share)
 		self.menuitem_load_lut_from_cal_or_profile = options.FindItemById(
 			options.FindItem("calibration.load_from_cal_or_profile"))
 		self.Bind(wx.EVT_MENU, self.load_profile_cal_handler, 
@@ -3518,7 +3531,7 @@ class MainFrame(BaseFrame):
 
 	def profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None, 
-				display_manufacturer=None):
+				display_manufacturer=None, meta=None):
 		safe_print(lang.getstr("create_profile"))
 		if dst_path is None:
 			dst_path = os.path.join(getcfg("profile.save_path"), 
@@ -3533,6 +3546,24 @@ class MainFrame(BaseFrame):
 										  skip_scripts=skip_scripts)
 		else:
 			result = cmd
+		# Get profile max and avg err to be later added to metadata
+		# Argyll outputs the following:
+		# Profile check complete, peak err = x.xxxxxx, avg err = x.xxxxxx, RMS = x.xxxxxx
+		peak = None
+		avg = None
+		rms = None
+		for line in self.worker.output:
+			if line.startswith("Profile check complete"):
+				peak = re.search("peak err = (\d(?:\.\d+))", line)
+				avg = re.search("avg err = (\d(?:\.\d+))", line)
+				rms = re.search("RMS = (\d(?:\.\d+))", line)
+				if peak:
+					peak = peak.groups()[0]
+				if avg:
+					avg = avg.groups()[0]
+				if rms:
+					rms = rms.groups()[0]
+				break
 		safe_print("-" * 80)
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
@@ -3564,11 +3595,208 @@ class MainFrame(BaseFrame):
 				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
 				profile.tags.dmnd["Macintosh"] = mdesc
 				profile.tags.dmnd["Unicode"] = mdesc
+			if meta and meta is not True:
+				# Add existing meta information
+				profile.tags.meta = meta
+			elif meta is True and self.worker.get_display_edid():
+				# Add new meta information based on EDID
+				profile.set_edid_metadata(self.worker.get_display_edid())
+				# Add instrument
+				profile.tags.meta["measurement_device"] = self.worker.get_instrument_name()
+			# Make sure meta tag exists
+			if not "meta" in profile.tags:
+				profile.tags.meta = ICCP.DictType()
+			# Add error info
+			if avg:
+				profile.tags.meta["Argyll.profcheck.avg.dE76"] = avg
+			if peak:
+				profile.tags.meta["Argyll.profcheck.max.dE76"] = peak
+			if rms:
+				profile.tags.meta["Argyll.profcheck.rms.dE76"] = rms
+			# Calculate profile ID
+			profile.calculateID()
 			try:
 				profile.write()
 			except Exception, exception:
 				return exception
 		return result
+	
+	def profile_share_get_meta_error(self, profile):
+		""" Check for required metadata in profile """
+		if ("meta" in profile.tags and
+			isinstance(profile.tags.meta, ICCP.DictType)):
+			try:
+				avg_dE76 = float(profile.tags.meta.getvalue("Argyll.profcheck.avg.dE76"))
+			except (TypeError, ValueError):
+				return lang.getstr("profile.share.meta_missing")
+			else:
+				if avg_dE76 and avg_dE76 > 1:
+					return lang.getstr("profile.share.avg_dE_too_high", (avg_dE76, 1))
+				else:
+					# Check for EDID metadata
+					metadata = profile.tags.meta
+					prefix = metadata.getvalue("prefix", "EDID_", None)
+					if (not prefix + "model" in metadata or
+						not prefix + "manufacturer" in metadata):
+						return lang.getstr("profile.share.meta_missing")
+		else:
+			return lang.getstr("profile.share.meta_missing")
+	
+	def profile_share_handler(self, event):
+		""" Share ICC profile via http://icc.opensuse.org """
+		# Select profile
+		profile = self.select_profile()
+		if not profile:
+			return
+
+		# First get the profile data
+		data = profile.data
+		
+		# Second check meta and profcheck data
+		error = self.profile_share_get_meta_error(profile)
+		if error:
+			InfoDialog(getattr(self, "modaldlg", self), msg=error, ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"))
+			return
+		
+		# Third get the metadata (this order makes sure that changes to 
+		# metadata below are not reflected in the profile)
+		metadata = profile.tags.meta
+		prefix = metadata.getvalue("prefix", "EDID_", None)
+		# Model will be shown in overview on http://icc.opensuse.org
+		metadata["model"] = metadata.getvalue(prefix + "model",
+											  profile.getDeviceModelDescription(),
+											  None)
+		metadata["vcgt"] = int("vcgt" in profile.tags)
+		date = metadata.getvalue(prefix + "date", "", None).split("-T")
+		if len(date) == 2:
+			year = int(date[0])
+			week = int(date[1])
+			date = datetime.date(int(year), 1, 1) + datetime.timedelta(weeks=week)
+			metadata.get("model").value += " '" + strftime("%y", date.timetuple())
+		description = metadata["model"]
+		if "vcgt" in profile.tags:
+			if profile.tags.vcgt.is_linear():
+				vcgt = "linear VCGT"
+			else:
+				vcgt = "VCGT"
+		else:
+			vcgt = "no VCGT"
+		if vcgt:
+			description += ", " + vcgt
+			if vcgt == "VCGT":
+				whitepoint = "%sK" % round(XYZ2CCT(*profile.tags.wtpt.values()))
+				description += metadata["model"] + ", " + whitepoint
+		instrument = metadata.getvalue("measurement_device")
+		if instrument:
+			description += ", " + instrument
+		description += ", " + strftime("%Y-%m-%d", profile.dateTime.timetuple())
+		dlg = ConfirmDialog(
+			getattr(self, "modaldlg", self), 
+			msg=lang.getstr("profile.share.enter_info"), 
+			ok=lang.getstr("upload"), cancel=lang.getstr("cancel"), 
+			bitmap=geticon(32, "dialog-information"))
+		# Description field
+		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
+											   description, 
+											   size=(400, -1))
+		dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		# Panel surface field
+		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("panel.surface")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.panel_ctrl = wx.ComboBox(dlg, -1, 
+									 choices=["-", "Glossy", "Matt"], 
+									 style=wx.CB_READONLY)
+		dlg.panel_ctrl.SetSelection(0)
+		dlg.sizer3.Add(dlg.panel_ctrl, 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		# License field
+		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("license")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.license_ctrl = wx.ComboBox(dlg, -1, 
+									 choices=["http://www.color.org/registry/icc_license_2011.txt",
+											  "http://www.gzip.org/zlib/zlib_license.html"], 
+									 style=wx.CB_READONLY)
+		dlg.license_ctrl.SetSelection(0)
+		sizer4 = wx.BoxSizer(wx.HORIZONTAL)
+		dlg.sizer3.Add(sizer4, 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		sizer4.Add(dlg.license_ctrl, 1, 
+					   flag=wx.RIGHT | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, border=8)
+		# License link button
+		dlg.license_link_ctrl = wx.BitmapButton(dlg, -1,
+												geticon(16, "dialog-information"), 
+												style=wx.NO_BORDER)
+		dlg.license_link_ctrl.SetToolTipString(lang.getstr("license"))
+		dlg.Bind(wx.EVT_BUTTON,
+				 lambda event: launch_file(dlg.license_ctrl.GetValue()),
+				 dlg.license_link_ctrl)
+		sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+		# Link to ICC Profile Taxi service
+		dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
+													  label="icc.opensuse.org", 
+													  URL="http://icc.opensuse.org"),
+					   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.TOP,
+					   border=12)
+		dlg.description_txt_ctrl.SetFocus()
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		dlg.Center()
+		result = dlg.ShowModal()
+		if result != wx.ID_OK:
+			return
+		# Update meta model string with info from profile
+		panel = dlg.panel_ctrl.GetValue()
+		if panel != "-":
+			metadata.get("model").value += " (%s)" % panel.lower()
+		if vcgt:
+			metadata.get("model").value += ", " + vcgt
+			if vcgt == "VCGT":
+				metadata.get("model").value += ", " + whitepoint
+		metadata.get("model").value += ", " + strftime("%Y-%m-%d",
+													   profile.dateTime.timetuple())
+		params = {"description": dlg.description_txt_ctrl.GetValue(),
+				  "licence": dlg.license_ctrl.GetValue()}
+		files = [("metadata", "metadata.json",
+				  '{"org":{"freedesktop":{"openicc":{"device":{"monitor":[%s]}}}}}' %
+				  metadata.to_json()),
+				 ("profile", "profile.icc", data)]
+		safe_print('{"org":{"freedesktop":{"openicc":{"device":{"monitor":[%s]}}}}}' %
+				  metadata.to_json())
+		self.worker.interactive = False
+		self.worker.start(self.profile_share_consumer, 
+						  http_request, 
+						  ckwargs={}, 
+						  wkwargs={"domain": "dispcalgui.hoech.net",
+								   "request_type": "POST",
+								   "path": "/print_r_post.php", "params": params,
+								   "files": files},
+						  progress_msg=lang.getstr("profile.share"),
+						  stop_timers=False)
+
+	def profile_share_consumer(self, result, parent=None):
+		""" This function receives the response from the profile upload """
+		safe_print(repr(result))
+		if result is not False:
+			parent = parent or getattr(self, "modaldlg", self)
+			dlg = InfoDialog(parent, 
+							 msg=lang.getstr("profile.share.success"),
+							 ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, "dialog-information"),
+							 show=False)
+			# Link to ICC Profile Taxi service
+			dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
+														  label="icc.opensuse.org", 
+														  URL="http://icc.opensuse.org"),
+						   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.TOP,
+						   border=12)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			dlg.ok.SetDefault()
+			dlg.ShowModalThenDestroy(parent)
 
 	def install_cal_handler(self, event=None, cal=None):
 		if not check_set_argyll_bin():
@@ -4481,6 +4709,60 @@ class MainFrame(BaseFrame):
 		else:
 			result = cmd
 		return result
+	
+	def select_profile(self, parent=None):
+		"""
+		Selects the currently set profile or display profile. Falls back
+		to user choice via FileDialog if both not set.
+		
+		"""
+		if not parent:
+			parent = self
+		profile = None
+		path = getcfg("calibration.file")
+		if path:
+			try:
+				profile = ICCP.ICCProfile(path)
+			except ICCP.ICCProfileInvalidError, exception:
+				pass
+		if not profile:
+			profile = self.get_display_profile()
+			if profile:
+				path = profile.fileName
+			else:
+				path = None
+		if not profile:
+			defaultDir, defaultFile = get_verified_path(None, path)
+			dlg = wx.FileDialog(parent, lang.getstr("profile_verification_choose_profile"), 
+								defaultDir=defaultDir, defaultFile=defaultFile, 
+								wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			if result == wx.ID_OK:
+				path = dlg.GetPath()
+				setcfg("last_icc_path", path)
+				setcfg("last_cal_or_icc_path", path)
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
+			try:
+				profile = ICCP.ICCProfile(path)
+			except ICCP.ICCProfileInvalidError, exception:
+				InfoDialog(parent, msg=lang.getstr("profile.invalid") + 
+								 "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+			if profile.profileClass != "mntr" or profile.colorSpace != "RGB":
+				InfoDialog(parent, msg=lang.getstr("profile.unsupported", 
+												 profile.profileClass, 
+												 profile.colorSpace) + 
+								 "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+		return profile
 
 	def verify_profile_handler(self, event):
 		if not check_set_argyll_bin():
@@ -4541,50 +4823,9 @@ class MainFrame(BaseFrame):
 		setcfg("profile_verification_chart", chart)
 		
 		# select profile
-		profile = None
-		path = getcfg("calibration.file")
-		if path:
-			try:
-				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError, exception:
-				pass
+		profile = self.select_profile()
 		if not profile:
-			profile = self.get_display_profile()
-			if profile:
-				path = profile.fileName
-			else:
-				path = None
-		if not profile:
-			defaultDir, defaultFile = get_verified_path(None, path)
-			dlg = wx.FileDialog(self, lang.getstr("profile_verification_choose_profile"), 
-								defaultDir=defaultDir, defaultFile=defaultFile, 
-								wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm", 
-								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-			dlg.Center(wx.BOTH)
-			result = dlg.ShowModal()
-			if result == wx.ID_OK:
-				path = dlg.GetPath()
-				setcfg("last_icc_path", path)
-				setcfg("last_cal_or_icc_path", path)
-			dlg.Destroy()
-			if result != wx.ID_OK:
-				return
-			try:
-				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError, exception:
-				InfoDialog(self, msg=lang.getstr("profile.invalid") + 
-								 "\n" + path, 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				return
-			if profile.profileClass != "mntr" or profile.colorSpace != "RGB":
-				InfoDialog(self, msg=lang.getstr("profile.unsupported", 
-												 profile.profileClass, 
-												 profile.colorSpace) + 
-								 "\n" + path, 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"))
-				return
+			return
 		
 		# lookup test patches
 		ti1, ti3_ref, gray = self.worker.chart_lookup(sim_ti3 or chart, 
@@ -5245,6 +5486,7 @@ class MainFrame(BaseFrame):
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
 									   "profiling.incomplete")}, 
+						  wkwargs={"meta": True},
 						  progress_msg=lang.getstr("create_profile"), 
 						  resume=resume)
 
@@ -5418,6 +5660,7 @@ class MainFrame(BaseFrame):
 										getcfg("profile.name.expanded"))
 				profile_path = profile_save_path + profile_ext
 			self.cal = profile_path
+			profile = None
 			filename, ext = os.path.splitext(profile_path)
 			if ext.lower() in (".icc", ".icm"):
 				has_cal = False
@@ -5465,13 +5708,23 @@ class MainFrame(BaseFrame):
 				has_cal = True
 			# Always load calibration curves
 			self.load_cal(cal=profile_path, silent=True)
+			# Check profile metadata
+			share_profile = None
+			if not self.profile_share_get_meta_error(profile):
+				share_profile = lang.getstr("profile.share")
 			dlg = ConfirmDialog(self, msg=success_msg, 
 								title=lang.getstr("profile.install"),
 								ok=lang.getstr("profile.install"), 
 								cancel=lang.getstr("profile.do_not_install"), 
 								bitmap=geticon(32, "dialog-information"),
+								alt=share_profile,
 								style=wx.CAPTION | wx.CLOSE_BOX | 
 									  wx.FRAME_FLOAT_ON_PARENT)
+			if share_profile:
+				# Show share profile button
+				dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
+				dlg.Bind(wx.EVT_BUTTON, self.profile_share_handler,
+						 id=dlg.alt.GetId())
 			if preview and has_cal:
 				# Show calibration preview checkbox
 				self.preview = wx.CheckBox(dlg, -1, 
@@ -5602,7 +5855,10 @@ class MainFrame(BaseFrame):
 			self.Unbind(wx.EVT_ACTIVATE, handler=self.lower_handler)
 			self.Raise()
 		self.modaldlg.Destroy()
+		# The C part of modaldlg will not be gone instantly, so we must
+		# dereference it before we can delete the python attribute
 		self.modaldlg = None
+		del self.modaldlg
 		self.start_timers(True)
 		self.previous_cal = False
 	
@@ -6522,6 +6778,7 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
+			meta = None
 			# Get filename and extension of source file
 			source_filename, source_ext = os.path.splitext(path)
 			if source_ext.lower() != ".ti3":
@@ -6543,6 +6800,8 @@ class MainFrame(BaseFrame):
 					return
 				ti3 = StringIO(profile.tags.get("CIED", "") or 
 							   profile.tags.get("targ", ""))
+				# Preserve meta information
+				meta = profile.tags.get("meta")
 			else:
 				try:
 					ti3 = open(path, "rU")
@@ -6657,7 +6916,8 @@ class MainFrame(BaseFrame):
 							"error.profile.file_not_created")}, 
 					wkwargs={"dst_path": profile_save_path, 
 							 "display_name": display_name,
-							 "display_manufacturer": display_manufacturer}, 
+							 "display_manufacturer": display_manufacturer,
+							 "meta": meta}, 
 					progress_msg=lang.getstr("create_profile"))
 	
 	def create_profile_name(self):

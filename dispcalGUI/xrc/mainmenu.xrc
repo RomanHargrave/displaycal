@@ -27,6 +27,9 @@
       <object class="wxMenuItem" name="install_display_profile">
         <label>install_display_profile</label>
       </object>
+      <object class="wxMenuItem" name="profile.share">
+        <label>profile.share</label>
+      </object>
       <object class="wxMenuItem" name="calibration.load_from_cal_or_profile">
         <label>calibration.load_from_cal_or_profile</label>
       </object>
