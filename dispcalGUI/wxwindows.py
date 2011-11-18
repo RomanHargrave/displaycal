@@ -11,9 +11,10 @@ from config import (btn_width_correction, defaults, getcfg, geticon,
 from log import log as log_, safe_print
 from meta import name as appname
 from thread import start_new_thread
-from util_str import safe_unicode, wrap
+from util_str import safe_unicode
 from wxaddons import wx
 import localization as lang
+import util_str
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
 				   wx.WXK_NUMPAD1,
@@ -76,7 +77,7 @@ class BaseInteractiveDialog(wx.Dialog):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 show=True, log=True, print_=False, 
-				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False):
+				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70):
 		if print_:
 			safe_print(msg, log=False)
 		if log:
@@ -104,7 +105,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		else:
 			self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer3 = wx.BoxSizer(wx.VERTICAL)
+		self.sizer3 = wx.FlexGridSizer(0, 1)
 		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | 
 		   wx.RIGHT | wx.LEFT, border = margin)
 		self.sizer0.Add(self.sizer2, flag = wx.ALIGN_RIGHT | wx.ALL, 
@@ -116,7 +117,8 @@ class BaseInteractiveDialog(wx.Dialog):
 
 		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT)
 		msg = msg.replace("&", "&&")
-		self.message = wx.StaticText(self, -1, msg if nowrap else wrap(msg))
+		self.message = wx.StaticText(self, -1, msg if nowrap else
+											   util_str.wrap(msg, wrap))
 		self.sizer3.Add(self.message)
 
 		btnwidth = 80
@@ -173,11 +175,11 @@ class ConfirmDialog(BaseInteractiveDialog):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
 				 size=(400, -1), alt=None, log=False, print_=False, 
-				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False):
+				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
 									   log=log, print_=print_, style=style,
-									   nowrap=nowrap)
+									   nowrap=nowrap, wrap=wrap)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
@@ -661,7 +663,7 @@ class TooltipWindow(InvincibleFrame):
 	
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW):
+				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW, wrap=70):
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
@@ -683,7 +685,7 @@ class TooltipWindow(InvincibleFrame):
 			   size = (32, 32))
 			self.sizer1.Add(self.bitmap, flag=wx.RIGHT, border=margin)
 
-		self.message = wx.StaticText(self.panel, -1, wrap(msg))
+		self.message = wx.StaticText(self.panel, -1, util_str.wrap(msg, wrap))
 		self.sizer1.Add(self.message)
 
 		self.sizer0.SetSizeHints(self)
