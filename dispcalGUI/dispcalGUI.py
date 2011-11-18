@@ -3648,33 +3648,39 @@ class MainFrame(BaseFrame):
 		profile = self.select_profile()
 		if not profile:
 			return
-
-		# First get the profile data
-		data = profile.data
 		
-		# Second check meta and profcheck data
+		# Check meta and profcheck data
 		error = self.profile_share_get_meta_error(profile)
 		if error:
-			InfoDialog(getattr(self, "modaldlg", self), msg=error, ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
+			InfoDialog(getattr(self, "modaldlg", self), msg=error,
+					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
 			return
 		
-		# Third get the metadata (this order makes sure that changes to 
-		# metadata below are not reflected in the profile)
+		# Get options from profile
+		options_dispcal, options_colprof = get_options_from_profile(profile)
+		gamma = None
+		for option in options_dispcal:
+			if option.startswith("g") or option.startswith("G"):
+				option = option[1:]
+				gamma = {"240": "SMPTE 240M",
+						 "709": "Rec. 709",
+						 "l": "L*",
+						 "s": "sRGB"}.get(option, "Gamma %s" % option)
+
 		metadata = profile.tags.meta
 		prefix = metadata.getvalue("prefix", "EDID_", None)
 		# Model will be shown in overview on http://icc.opensuse.org
-		metadata["model"] = metadata.getvalue(prefix + "model",
-											  profile.getDeviceModelDescription(),
-											  None)
+		model = metadata.getvalue(prefix + "model",
+								  profile.getDeviceModelDescription(),
+								  None)
 		metadata["vcgt"] = int("vcgt" in profile.tags)
 		date = metadata.getvalue(prefix + "date", "", None).split("-T")
 		if len(date) == 2:
 			year = int(date[0])
 			week = int(date[1])
 			date = datetime.date(int(year), 1, 1) + datetime.timedelta(weeks=week)
-			metadata.get("model").value += " '" + strftime("%y", date.timetuple())
-		description = metadata["model"]
+			model += " '" + strftime("%y", date.timetuple())
+		description = model
 		if "vcgt" in profile.tags:
 			if profile.tags.vcgt.is_linear():
 				vcgt = "linear VCGT"
@@ -3684,9 +3690,11 @@ class MainFrame(BaseFrame):
 			vcgt = "no VCGT"
 		if vcgt:
 			description += ", " + vcgt
-			if vcgt == "VCGT":
-				whitepoint = "%sK" % round(XYZ2CCT(*profile.tags.wtpt.values()))
-				description += metadata["model"] + ", " + whitepoint
+		whitepoint = "%iK" % round(XYZ2CCT(*profile.tags.wtpt.values()))
+		description += ", " + whitepoint
+		description += u", %i cd/m²" % profile.tags.lumi.Y 
+		if gamma:
+			description += ", " + gamma
 		instrument = metadata.getvalue("measurement_device")
 		if instrument:
 			description += ", " + instrument
@@ -3695,23 +3703,142 @@ class MainFrame(BaseFrame):
 			getattr(self, "modaldlg", self), 
 			msg=lang.getstr("profile.share.enter_info"), 
 			ok=lang.getstr("upload"), cancel=lang.getstr("cancel"), 
-			bitmap=geticon(32, "dialog-information"))
+			bitmap=geticon(32, "dialog-information"), wrap=100)
 		# Description field
 		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 		dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
-											   description, 
-											   size=(400, -1))
+											   description)
 		dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-		# Panel surface field
-		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("panel.surface")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+		# Display properties
+		boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+												  lang.getstr("display.properties")),
+									 wx.VERTICAL)
+		dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+		box_gridsizer = wx.FlexGridSizer(0, 1)
+		boxsizer.Add(box_gridsizer, 1, flag=wx.ALL, border=4)
+		# Display panel surface type, connection
+		gridsizer = wx.FlexGridSizer(0, 4, 4, 8)
+		box_gridsizer.Add(gridsizer, 1, wx.ALIGN_LEFT)
+		# Panel surface type
+		gridsizer.Add(wx.StaticText(dlg, -1, lang.getstr("panel.surface")), 1, 
+					   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 		dlg.panel_ctrl = wx.ComboBox(dlg, -1, 
 									 choices=["-", "Glossy", "Matt"], 
 									 style=wx.CB_READONLY)
-		dlg.panel_ctrl.SetSelection(0)
-		dlg.sizer3.Add(dlg.panel_ctrl, 1, 
+		try:
+			index = dlg.panel_ctrl.GetItems().index(metadata.getvalue("display_device.panel.surface"))
+		except ValueError:
+			index = 0
+		dlg.panel_ctrl.SetSelection(index)
+		gridsizer.Add(dlg.panel_ctrl, 1, flag=wx.RIGHT | wx.ALIGN_LEFT |
+					  wx.ALIGN_CENTER_VERTICAL, border=8)
+		# Connection type
+		gridsizer.Add(wx.StaticText(dlg, -1,
+									lang.getstr("display.connection.type")), 1,
+					  flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+		dlg.connection_ctrl = wx.ComboBox(dlg, -1, 
+										  choices=["DVI", "DisplayPort", "HDMI",
+												   "VGA"], 
+										  style=wx.CB_READONLY)
+		try:
+			index = dlg.connection_ctrl.GetItems().index(metadata.getvalue("display_device.connection.type"))
+		except ValueError:
+			index = 0
+		dlg.connection_ctrl.SetSelection(index)
+		gridsizer.Add(dlg.connection_ctrl, 1, flag=wx.RIGHT | wx.ALIGN_LEFT |
+					  wx.ALIGN_CENTER_VERTICAL, border=8)
+		# Separator
+		box_gridsizer.Add(wx.StaticLine(dlg, -1), 1, 
+						  flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=12)
+		# Display settings
+		box_gridsizer.Add(wx.StaticText(dlg, -1,
+										lang.getstr("display.settings")), 1, 
+						  flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		display_settings_tabs = wx.Notebook(dlg, -1)
+		# Column layout
+		display_settings = ((# 1st tab
+							 lang.getstr("basic"), # Tab title
+							 2, # Number of columns
+							 (# 1st (left) column
+							  (("preset", 100),
+							   ("brightness", 50),
+							   ("contrast", 50),
+							   ("trc.gamma", 50),
+							   ("blacklevel", 50),
+							   ("hue", 50)),
+							  # 2nd (right) column
+							  (("", 0),
+							   ("whitepoint.colortemp", 75),
+							   ("whitepoint", 50),
+							   ("saturation", 50)))),
+							(# 2nd tab
+							 lang.getstr("settings.additional"), # Tab title
+							 3, # Number of columns
+							 (# 1st (left) column
+							  (("hue", 50), ),
+							  # 2nd (middle) column
+							  (("offset", 50), ),
+							  # 3rd (right) column
+							  (("saturation", 50), ))))
+		display_settings_ctrls = []
+		for tab_num, settings in enumerate(display_settings):
+			panel = wx.Panel(display_settings_tabs, -1)
+			panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
+			gridsizer = wx.FlexGridSizer(0, settings[1] * 2, 4, 12)
+			panel.GetSizer().Add(gridsizer, 1, wx.ALL | wx.EXPAND, border=8)
+			display_settings_tabs.AddPage(panel, settings[0])
+			ctrls = []
+			for column in settings[2]:
+				for name, width in column:
+					if name in ("whitepoint", ):
+						components = ("red", "green", "blue")
+					elif tab_num == 1 and name in ("hue", "offset",
+												   "saturation"):
+						components = ("red", "green", "blue", "cyan", "magenta",
+									  "yellow")
+					else:
+						components = ("", )
+					nameprefix = name
+					for component in components:
+						if component:
+							name = nameprefix + " " + component
+						if name:
+							ctrl = wx.TextCtrl(panel, -1,
+											   metadata.getvalue("display_device.settings.%s" %
+																 name.replace(" ", "."), ""),
+											   size=(width, -1),
+											   name=name)
+						else:
+							ctrl = (0, 0)
+						ctrls.append(ctrl)
+						display_settings_ctrls.append(ctrl)
+			# Add the controls to the sizer
+			rows = int(math.ceil(len(ctrls) / float(settings[1])))
+			for row_num in range(rows):
+				for column_num in range(settings[1]):
+					ctrl_index = row_num + column_num * rows
+					if ctrl_index < len(ctrls):
+						if isinstance(ctrls[ctrl_index], wx.Window):
+							label = ctrls[ctrl_index].Name
+							if (" " in label):
+								label = label.split(" ")
+								for i, part in enumerate(label):
+									label[i] = lang.getstr(part)
+								label = " ".join(label)
+							else:
+								label = lang.getstr(label)
+							text = wx.StaticText(panel, -1, label)
+						else:
+							text = (0, 0)
+						gridsizer.Add(text,
+									  1, flag=wx.ALIGN_CENTER_VERTICAL |
+											  wx.ALIGN_LEFT)
+						gridsizer.Add(ctrls[ctrl_index], 1, 
+									   flag=wx.ALIGN_CENTER_VERTICAL |
+											wx.ALIGN_LEFT | wx.RIGHT, border=4)
+		box_gridsizer.Add(display_settings_tabs, 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
 		# License field
 		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("license")), 1, 
@@ -3725,7 +3852,8 @@ class MainFrame(BaseFrame):
 		dlg.sizer3.Add(sizer4, 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
 		sizer4.Add(dlg.license_ctrl, 1, 
-					   flag=wx.RIGHT | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, border=8)
+					   flag=wx.RIGHT | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
+							border=8)
 		# License link button
 		dlg.license_link_ctrl = wx.BitmapButton(dlg, -1,
 												geticon(16, "dialog-information"), 
@@ -3734,7 +3862,8 @@ class MainFrame(BaseFrame):
 		dlg.Bind(wx.EVT_BUTTON,
 				 lambda event: launch_file(dlg.license_ctrl.GetValue()),
 				 dlg.license_link_ctrl)
-		sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+		sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT |
+				   wx.ALIGN_CENTER_VERTICAL)
 		# Link to ICC Profile Taxi service
 		dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
 													  label="icc.opensuse.org", 
@@ -3750,36 +3879,52 @@ class MainFrame(BaseFrame):
 			return
 		# Update meta model string with info from profile
 		panel = dlg.panel_ctrl.GetValue()
+		metadata["display_device.panel.surface"] = panel
+		metadata["display_device.connection.type"] = dlg.connection_ctrl.GetValue()
+		for ctrl in display_settings_ctrls:
+			if isinstance(ctrl, wx.TextCtrl):
+				metadata["display_device.settings.%s" %
+						 ctrl.Name.replace(" ", ".")] = ctrl.GetValue()
+		# Calculate profile ID
+		profile.calculateID()
+		# Save profile
+		profile.write()
+		# Get profile data
+		data = profile.data
+		# Add metadata which should not be reflected in profile
 		if panel != "-":
-			metadata.get("model").value += " (%s)" % panel.lower()
+			model += " (%s)" % panel.lower()
 		if vcgt:
-			metadata.get("model").value += ", " + vcgt
-			if vcgt == "VCGT":
-				metadata.get("model").value += ", " + whitepoint
-		metadata.get("model").value += ", " + strftime("%Y-%m-%d",
-													   profile.dateTime.timetuple())
+			model += ", " + vcgt
+		model += ", " + whitepoint
+		if gamma:
+			model += ", " + gamma
+		if instrument:
+			model += ", " + instrument
+		model += ", " + strftime("%Y-%m-%d", profile.dateTime.timetuple())
+		metadata["model"] = model
+		# Upload
 		params = {"description": dlg.description_txt_ctrl.GetValue(),
 				  "licence": dlg.license_ctrl.GetValue()}
 		files = [("metadata", "metadata.json",
 				  '{"org":{"freedesktop":{"openicc":{"device":{"monitor":[%s]}}}}}' %
 				  metadata.to_json()),
 				 ("profile", "profile.icc", data)]
-		safe_print('{"org":{"freedesktop":{"openicc":{"device":{"monitor":[%s]}}}}}' %
-				  metadata.to_json())
 		self.worker.interactive = False
 		self.worker.start(self.profile_share_consumer, 
 						  http_request, 
 						  ckwargs={}, 
 						  wkwargs={"domain": "dispcalgui.hoech.net",
 								   "request_type": "POST",
-								   "path": "/print_r_post.php", "params": params,
+								   "path": "/print_r_post.php",
+								   "params": params,
 								   "files": files},
 						  progress_msg=lang.getstr("profile.share"),
 						  stop_timers=False)
 
 	def profile_share_consumer(self, result, parent=None):
 		""" This function receives the response from the profile upload """
-		safe_print(repr(result))
+		safe_print(safe_unicode(result, "UTF-8"))
 		if result is not False:
 			parent = parent or getattr(self, "modaldlg", self)
 			dlg = InfoDialog(parent, 
@@ -3791,7 +3936,8 @@ class MainFrame(BaseFrame):
 			dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
 														  label="icc.opensuse.org", 
 														  URL="http://icc.opensuse.org"),
-						   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.TOP,
+						   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL |
+								wx.TOP,
 						   border=12)
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
