@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from hashlib import md5
+import binascii
 import datetime
 import locale
 import math
@@ -454,7 +455,12 @@ def dateTimeNumber(binaryString):
 														  binaryString[6:8], 
 														  binaryString[8:10], 
 														  binaryString[10:12])]
-	return Y, m, d, H, M, S
+	return datetime.datetime(*(Y, m, d, H, M, S))
+
+
+def dateTimeNumber_tohex(dt):
+	data = [uInt16Number_tohex(n) for n in dt.timetuple()[:6]]
+	return "".join(data)
 
 
 def s15Fixed16Number(binaryString):
@@ -680,8 +686,10 @@ class ChromacityType(ICCProfileTag, ADict):
 
 class CurveType(ICCProfileTag, list):
 
-	def __init__(self, tagData, tagSignature):
+	def __init__(self, tagData=None, tagSignature=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
+		if not tagData:
+			return
 		curveEntriesCount = uInt32Number(tagData[8:12])
 		curveEntries = tagData[12:]
 		if curveEntriesCount == 1:
@@ -692,6 +700,27 @@ class CurveType(ICCProfileTag, list):
 			while curveEntries:
 				self.append(uInt16Number(curveEntries[:2]))
 				curveEntries = curveEntries[2:]
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			curveEntriesCount = len(self)
+			tagData = ["curv", "\0" * 4, uInt32Number_tohex(curveEntriesCount)]
+			if curveEntriesCount == 1:
+				tagData.append(u8Fixed8Number_tohex(self[0]))
+			else:
+				for curveEntry in self:
+					tagData.append(uInt16Number_tohex(curveEntry))
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
 
 
 class DateTimeType(ICCProfileTag, list):
@@ -717,7 +746,7 @@ class DictType(ICCProfileTag, AODict):
 	
 	"""
 
-	def __init__(self, tagData=None, tagSignature="dict"):
+	def __init__(self, tagData=None, tagSignature=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		AODict.__init__(self)
 		if not tagData:
@@ -933,7 +962,7 @@ class MeasurementType(ICCProfileTag, ADict):
 
 class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 
-	def __init__(self, tagData=None, tagSignature="mluc"):
+	def __init__(self, tagData=None, tagSignature=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		AODict.__init__(self)
 		if not tagData:
@@ -1031,12 +1060,30 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 
 class s15Fixed16ArrayType(ICCProfileTag, list):
 
-	def __init__(self, tagData, tagSignature):
+	def __init__(self, tagData=None, tagSignature=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
-		data = self.tagData[8:]
-		while data:
-			self.append(s15Fixed16Number(data[0:4]))
-			data = data[4:]
+		if tagData:
+			data = tagData[8:]
+			while data:
+				self.append(s15Fixed16Number(data[0:4]))
+				data = data[4:]
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			tagData = ["sf32", "\0" * 4]
+			for value in self:
+				tagData.append(s15Fixed16Number_tohex(value))
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
 
 
 def SignatureType(tagData, tagSignature):
@@ -1048,7 +1095,7 @@ def SignatureType(tagData, tagSignature):
 
 class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 
-	def __init__(self, tagData, tagSignature):
+	def __init__(self, tagData=None, tagSignature=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		self.ASCII = ""
 		if not tagData:
@@ -1178,7 +1225,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 		def fget(self):
 			tagData = ["desc", "\0" * 4,
 					   uInt32Number_tohex(len(self.ASCII) + 1),  # count of ASCII chars + 1
-					   self.ASCII + "\0",  # ASCII desc, \0 terminated
+					   self.ASCII.encode("ASCII", "replace") + "\0",  # ASCII desc, \0 terminated
 					   uInt32Number_tohex(self.get("unicodeLanguageCode", 0))]
 			if "Unicode" in self:
 				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 2),  # count of Unicode chars + 2 (1 char = 2 byte)
@@ -1576,32 +1623,67 @@ class XYZNumber(AODict):
 		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in 
 								  (binaryString[:4], binaryString[4:8], 
 								   binaryString[8:12])]
+	
+	def tohex(self):
+		data = [s15Fixed16Number_tohex(n) for n in self.values()]
+		return "".join(data)
 
 
 class XYZType(ICCProfileTag, XYZNumber):
 
-	def __init__(self, tagData, tagSignature):
+	def __init__(self, tagData="\0" * 20, tagSignature=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		XYZNumber.__init__(self, tagData[8:20])
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			tagData = ["XYZ ", "\0" * 4]
+			tagData += [self.tohex()]
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
 
 
 class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
 	
 	def __init__(self, tagData=None, tagSignature=None):
-		if not tagData:
-			tagData = ""
-		if not tagSignature:
-			tagSignature = "chad"
 		ICCProfileTag.__init__(self, tagData, tagSignature)
-		data = tagData[8:]
-		if data:
-			matrix = []
-			while data:
-				if len(matrix) == 0 or len(matrix[-1]) == 3:
-					matrix.append([])
-				matrix[-1].append(s15Fixed16Number(data[0:4]))
-				data = data[4:]
-			self.update(matrix)
+		if tagData:
+			data = tagData[8:]
+			if data:
+				matrix = []
+				while data:
+					if len(matrix) == 0 or len(matrix[-1]) == 3:
+						matrix.append([])
+					matrix[-1].append(s15Fixed16Number(data[0:4]))
+					data = data[4:]
+				self.update(matrix)
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			tagData = ["sf32", "\0" * 4]
+			for row in self:
+				for column in row:
+					tagData.append(s15Fixed16Number_tohex(column))
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
 
 
 tagSignature2Tag = {
@@ -1646,7 +1728,7 @@ class ICCProfile:
 
 	def __init__(self, profile=None, load=True):
 		self.ID = "\0" * 16
-		self._data = None
+		self._data = ""
 		self._file = None
 		self._tags = AODict()
 		self.fileName = None
@@ -1695,28 +1777,30 @@ class ICCProfile:
 			header = data[:128]
 			self.size = uInt32Number(header[0:4])
 			self.preferredCMM = header[4:8].strip("\0\n\r ")
+			minorrev_bugfixrev = binascii.hexlify(header[8:12][1])
 			self.version = float(str(ord(header[8:12][0])) + "." + 
-								   str(ord(header[8:12][1])))
+								 str(int("0x0" + minorrev_bugfixrev[0], 16)) + 
+								 str(int("0x0" + minorrev_bugfixrev[1], 16)))
 			self.profileClass = header[12:16].strip()
 			self.colorSpace = header[16:20].strip()
 			self.connectionColorSpace = header[20:24].strip()
 			try:
-				self.dateTime = datetime.datetime(*dateTimeNumber(header[24:36]))
+				self.dateTime = dateTimeNumber(header[24:36])
 			except ValueError:
-				raise ICCProfileInvalidError("Profile date invalid")
+				raise ICCProfileInvalidError("Profile creation date/time invalid")
 			self.platform = header[40:44].strip("\0\n\r ")
-			flags = uInt16Number(header[44:48][:2])
-			self.embedded = flags | 1 == flags
-			self.independent = flags | 2 != flags
-			deviceAttributes = uInt32Number(header[56:64][:4])
+			flags = uInt32Number(header[44:48])
+			self.embedded = flags & 1 != 0
+			self.independent = flags & 2 == 0
+			deviceAttributes = uInt64Number(header[56:64])
 			self.device = {
 				"manufacturer": header[48:52].strip("\0\n\r "),
 				"model": header[52:56].strip("\0\n\r "),
 				"attributes": {
-					"reflective":   deviceAttributes | 1 != deviceAttributes,
-					"glossy":       deviceAttributes | 2 != deviceAttributes,
-					"positive":     deviceAttributes | 4 != deviceAttributes,
-					"color":        deviceAttributes | 8 != deviceAttributes
+					"reflective":   deviceAttributes & 1 == 0,
+					"glossy":       deviceAttributes & 2 == 0,
+					"positive":     deviceAttributes & 4 == 0,
+					"color":        deviceAttributes & 8 == 0
 				}
 			}
 			self.intent = uInt32Number(header[64:68])
@@ -1729,6 +1813,30 @@ class ICCProfile:
 			
 			if load:
 				self.tags
+		else:
+			# Default to RGB display device profile
+			self.preferredCMM = ""
+			self.version = 2.4
+			self.profileClass = "mntr"
+			self.colorSpace = "RGB"
+			self.connectionColorSpace = "XYZ"
+			self.dateTime = datetime.datetime.now()
+			self.platform = ""
+			self.embedded = False
+			self.independent = True
+			self.device = {
+				"manufacturer": "",
+				"model": "",
+				"attributes": {
+					"reflective":   True,
+					"glossy":       True,
+					"positive":     True,
+					"color":        True
+				}
+			}
+			self.intent = 0
+			self.illuminant = XYZNumber("\0\0\xf6\xd6\0\x01\0\0\0\0\xd3-")  # D50
+			self.creator = ""
 	
 	def __del__(self):
 		self.close()
@@ -1744,8 +1852,6 @@ class ICCProfile:
 		"""
 		# Assemble tag table and tag data
 		tagCount = len(self.tags)
-		if not self._data or len(self._data) < 128:
-			return None
 		tagTable = []
 		tagTableSize = tagCount * 12
 		tagsData = []
@@ -1767,11 +1873,48 @@ class ICCProfile:
 				tagsData.append(tagData)
 				tagsDataOffset.append(tagDataOffset)
 				tagDataOffset += tagDataSize + padding
-		header = uInt32Number_tohex(128 + 4 + tagTableSize + 
-									len("".join(tagsData))) + self._data[4:84] + self.ID + self._data[100:128]
+		header = self.header(tagTableSize, len("".join(tagsData)))
 		data = "".join([header, uInt32Number_tohex(tagCount), 
 						"".join(tagTable), "".join(tagsData)])
 		return data
+	
+	def header(self, tagTableSize, tagDataSize):
+		"Profile Header"
+		# Profile size: 128 bytes header + 4 bytes tag count + tag table + data
+		header = [uInt32Number_tohex(128 + 4 + tagTableSize + tagDataSize),
+				  self.preferredCMM[:4].ljust(4, " ") if self.preferredCMM else "\0" * 4,
+				  # Next three lines are ICC version
+				  chr(int(str(self.version).split(".")[0])),
+				  binascii.unhexlify(("%.2f" % self.version).split(".")[1]),
+				  "\0" * 2,
+				  self.profileClass[:4].ljust(4, " "),
+				  self.colorSpace[:4].ljust(4, " "),
+				  self.connectionColorSpace[:4].ljust(4, " "),
+				  dateTimeNumber_tohex(self.dateTime),
+				  "acsp",
+				  self.platform[:4].ljust(4, " ") if self.platform else "\0" * 4,]
+		flags = 0
+		if self.embedded:
+			flags += 1
+		if not self.independent:
+			flags += 2
+		header += [uInt32Number_tohex(flags),
+				   self.device["manufacturer"][:4].ljust(4, " ") if self.device["manufacturer"] else "\0" * 4,
+				   self.device["model"][:4].ljust(4, " ") if self.device["model"] else "\0" * 4]
+		deviceAttributes = 0
+		for name, bit in {"reflective": 1,
+						  "glossy": 2,
+						  "positive": 4,
+						  "color": 8}.iteritems():
+			if not self.device["attributes"][name]:
+				deviceAttributes += bit
+		header += [uInt64Number_tohex(deviceAttributes),
+				   uInt32Number_tohex(self.intent),
+				   self.illuminant.tohex(),
+				   self.creator[:4].ljust(4, " ") if self.creator else "\0" * 4,
+				   self.ID[:16].ljust(16, "\0"),
+				   self._data[100:128] if len(self._data[100:128]) == 28 else "\0" * 28]
+		return "".join(header)
 	
 	@property
 	def tags(self):
@@ -1865,6 +2008,83 @@ class ICCProfile:
 		"""
 		if self._file and not self._file.closed:
 			self._file.close()
+	
+	@staticmethod
+	def from_edid(edid, iccv4=False, cat="Bradford"):
+		""" Create an ICC Profile from EDID data and return it
+		
+		You may override the gamma from EDID by setting it to a list of curve
+		values.
+		
+		"""
+		profile = ICCProfile()
+		monitor_name = edid.get("monitor_name",
+								md5(edid.get("edid")).hexdigest())
+		if iccv4:
+			profile.version = 4.2
+			profile.tags.desc = MultiLocalizedUnicodeType()
+			profile.tags.desc.add_localized_string("en", "US", monitor_name)
+			profile.tags.cprt = MultiLocalizedUnicodeType()
+			profile.tags.cprt.add_localized_string("en", "US",
+												   "Created from EDID")
+			profile.tags.dmnd = MultiLocalizedUnicodeType()
+			profile.tags.dmnd.add_localized_string("en", "US",
+												   edid.get("manufacturer", ""))
+			profile.tags.dmdd = MultiLocalizedUnicodeType()
+			profile.tags.dmdd.add_localized_string("en", "US", monitor_name)
+		else:
+			profile.tags.desc = TextDescriptionType()
+			profile.tags.desc.ASCII = monitor_name
+			profile.tags.dmnd = TextDescriptionType()
+			profile.tags.dmnd.ASCII = edid.get("manufacturer",
+											   "").encode("ASCII", "replace")
+			profile.tags.dmdd = TextDescriptionType()
+			profile.tags.dmdd.ASCII = monitor_name
+			profile.tags.cprt = TextType("text\0\0\0\0Created from EDID",
+										 "cprt")
+		white = colormath.xyY2XYZ(edid.get("white_x", 0.0),
+								  edid.get("white_y", 0.0), 1.0)
+		profile.tags.wtpt = XYZType()
+		D50 = colormath.get_whitepoint("D50")
+		if iccv4:
+			# Set wtpt to D50 and store actual white -> D50 transform in chad
+			(profile.tags.wtpt.X, profile.tags.wtpt.Y,
+			 profile.tags.wtpt.Z) = D50
+			profile.tags.chad = chromaticAdaptionTag()
+			matrix = colormath.wp_adaption_matrix(white, D50, cat)
+			profile.tags.chad.update(matrix)
+		else:
+			# Store actual white in wtpt
+			(profile.tags.wtpt.X, profile.tags.wtpt.Y,
+			 profile.tags.wtpt.Z) = white
+		# Get chromaticities of primaries
+		xy = {}
+		for color in ("red", "green", "blue"):
+			xy[color[0] + "x"] = edid.get(color + "_x", 0.0)
+			xy[color[0] + "y"] = edid.get(color + "_y", 0.0)
+		# Calculate RGB to XYZ matrix from chromaticities and white
+		mtx = colormath.rgb_to_xyz_matrix(xy["rx"], xy["ry"],
+										  xy["gx"], xy["gy"],
+										  xy["bx"], xy["by"], white)
+		rgb = {"r": (1.0, 0.0, 0.0),
+			   "g": (0.0, 1.0, 0.0),
+			   "b": (0.0, 0.0, 1.0)}
+		for color in "rgb":
+			# Calculate XYZ for primaries
+			X, Y, Z = mtx * rgb[color]
+			# Write XYZ and TRC tags (don't forget to adapt to D50)
+			tagname = color + "XYZ"
+			profile.tags[tagname] = XYZType()
+			(profile.tags[tagname].X, profile.tags[tagname].Y,
+			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, white, D50, cat)
+			tagname = color + "TRC"
+			profile.tags[tagname] = CurveType()
+			gamma = edid.get("gamma", 2.2)
+			if not isinstance(gamma, (list, tuple)):
+				gamma = [gamma]
+			profile.tags[tagname].extend(gamma)
+		profile.set_edid_metadata(edid)
+		return profile
 	
 	def getCopyright(self):
 		"""
@@ -1967,14 +2187,14 @@ class ICCProfile:
 															 edid.get("edid",
 																	  "\0\0")[8:10])[0],
 							   prefix + "model_id": edid.get("product_id", 0),
-							   prefix + "redx": edid.get("red_x", 0),
-							   prefix + "redy": edid.get("red_y", 0),
-							   prefix + "greenx": edid.get("green_x", 0),
-							   prefix + "greeny": edid.get("green_y", 0),
-							   prefix + "bluex": edid.get("blue_x", 0),
-							   prefix + "bluey": edid.get("blue_y", 0),
-							   prefix + "whitex": edid.get("white_x", 0),
-							   prefix + "whitey": edid.get("white_y", 0),
+							   prefix + "redx": edid.get("red_x", 0.0),
+							   prefix + "redy": edid.get("red_y", 0.0),
+							   prefix + "greenx": edid.get("green_x", 0.0),
+							   prefix + "greeny": edid.get("green_y", 0.0),
+							   prefix + "bluex": edid.get("blue_x", 0.0),
+							   prefix + "bluey": edid.get("blue_y", 0.0),
+							   prefix + "whitex": edid.get("white_x", 0.0),
+							   prefix + "whitey": edid.get("white_y", 0.0),
 							   prefix + "gamma": edid.get("gamma", "")})
 	
 	def write(self, stream_or_filename=None):
