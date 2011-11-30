@@ -121,6 +121,7 @@
 	"contrast": "Kontrast",
 	"create_ccss_or_ccmx": "Möchten Sie eine Korrekturmatrix für herkömmliche Colorimeter erstellen (CCMX) oder eine Spektralkalibration für das i1 Display Pro und ColorMunki Display (CCSS)?",
 	"create_profile": "Profil aus Messwertdatei erstellen...",
+	"create_profile_from_edid": "Profil aus EDID erstellen...",
 	"default": "Standard",
 	"delete": "Löschen",
 	"description": "Beschreibung",

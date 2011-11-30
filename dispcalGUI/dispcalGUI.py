@@ -1367,6 +1367,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("create_profile"))
 		self.Bind(wx.EVT_MENU, self.create_profile_handler, 
 				  self.menuitem_create_profile)
+		self.menuitem_create_profile_from_edid = options.FindItemById(
+			options.FindItem("create_profile_from_edid"))
+		self.Bind(wx.EVT_MENU, self.create_profile_from_edid, 
+				  self.menuitem_create_profile_from_edid)
 		self.menuitem_install_display_profile = options.FindItemById(
 			options.FindItem("install_display_profile"))
 		self.Bind(wx.EVT_MENU, self.install_profile_handler, 
@@ -1514,6 +1518,15 @@ class MainFrame(BaseFrame):
 		self.menuitem_measure_testchart.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments))
 		self.menuitem_create_profile.Enable(bool(self.worker.displays))
+		edid = self.worker.get_display_edid()
+		self.menuitem_create_profile_from_edid.Enable(bool(self.worker.displays
+														   and edid.get("monitor_name")
+														   and edid.get("red_x")
+														   and edid.get("red_y")
+														   and edid.get("green_x")
+														   and edid.get("green_y")
+														   and edid.get("blue_x")
+														   and edid.get("blue_y")))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays))
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays))
@@ -6669,6 +6682,7 @@ class MainFrame(BaseFrame):
 			self.lut_viewer_load_lut(profile=profile)
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
+		self.update_menus()
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -7078,6 +7092,37 @@ class MainFrame(BaseFrame):
 							 "display_manufacturer": display_manufacturer,
 							 "meta": meta}, 
 					progress_msg=lang.getstr("create_profile"))
+	
+	def create_profile_from_edid(self, event):
+		edid = self.worker.get_display_edid()
+		defaultFile = edid.get("monitor_name") + profile_ext
+		defaultDir = get_verified_path(None, 
+									   os.path.join(getcfg("profile.save_path"), 
+													defaultFile))[0]
+		# let the user choose a location for the profile
+		dlg = wx.FileDialog(self, lang.getstr("save_as"), defaultDir, 
+							defaultFile, wildcard=lang.getstr("filetype.icc") + 
+												  "|*" + profile_ext, 
+							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		profile_save_path = os.path.split(dlg.GetPath())
+		profile_save_path = os.path.join(profile_save_path[0], 
+										 make_argyll_compatible_path(profile_save_path[1]))
+		dlg.Destroy()
+		if result == wx.ID_OK:
+			profile = ICCP.ICCProfile.from_edid(edid)
+			try:
+				profile.write(profile_save_path)
+			except Exception, exception:
+				InfoDialog(self, msg=safe_unicode(exception), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+			else:
+				self.profile_finish(True, profile_save_path, 
+									success_msg=lang.getstr("dialog.install_profile", 
+															(os.path.basename(profile_save_path), 
+															 self.display_ctrl.GetStringSelection())))
 	
 	def create_profile_name(self):
 		profile_name = self.profile_name_textctrl.GetValue()

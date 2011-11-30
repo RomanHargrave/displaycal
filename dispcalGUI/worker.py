@@ -1725,7 +1725,7 @@ class Worker():
 		return display
 	
 	def get_display_edid(self):
-		""" Return name of currently configured display """
+		""" Return EDID of currently configured display """
 		n = getcfg("display.number") - 1
 		if n >= 0 and n < len(self.display_edid):
 			return self.display_edid[n]

@@ -24,6 +24,9 @@
       <object class="wxMenuItem" name="create_profile">
         <label>create_profile</label>
       </object>
+      <object class="wxMenuItem" name="create_profile_from_edid">
+        <label>create_profile_from_edid</label>
+      </object>
       <object class="wxMenuItem" name="install_display_profile">
         <label>install_display_profile</label>
       </object>
