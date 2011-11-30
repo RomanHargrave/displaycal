@@ -425,7 +425,7 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"), log=False)
 		return False
-	if resp.status != httplib.OK:
+	if resp.status not in (httplib.OK, httplib.FOUND):
 		msg = " ".join([failure_msg,
 						lang.getstr("connection.fail.http", 
 									" ".join([str(resp.status),
@@ -3606,13 +3606,19 @@ class MainFrame(BaseFrame):
 			# Make sure meta tag exists
 			if not "meta" in profile.tags:
 				profile.tags.meta = ICCP.DictType()
+			# Update meta prefix
+			if (avg, peak, rms) != (None, ) * 3: 
+				prefixes = profile.tags.meta.getvalue("prefix", "", None).split(",")
+				if not "ARGYLL_" in prefixes:
+					prefixes.append("ARGYLL_")
+				profile.tags.meta["prefix"] = ",".join(prefixes)
 			# Add error info
-			if avg:
-				profile.tags.meta["Argyll.profcheck.avg.dE76"] = avg
-			if peak:
-				profile.tags.meta["Argyll.profcheck.max.dE76"] = peak
-			if rms:
-				profile.tags.meta["Argyll.profcheck.rms.dE76"] = rms
+			if avg is not None:
+				profile.tags.meta["ARGYLL_profcheck_avg_dE76"] = avg
+			if peak is not None:
+				profile.tags.meta["ARGYLL_profcheck_max_dE76"] = peak
+			if rms is not None:
+				profile.tags.meta["ARGYLL_profcheck_rms_dE76"] = rms
 			# Calculate profile ID
 			profile.calculateID()
 			try:
@@ -3626,18 +3632,19 @@ class MainFrame(BaseFrame):
 		if ("meta" in profile.tags and
 			isinstance(profile.tags.meta, ICCP.DictType)):
 			try:
-				avg_dE76 = float(profile.tags.meta.getvalue("Argyll.profcheck.avg.dE76"))
+				avg_dE76 = float(profile.tags.meta.getvalue("ARGYLL_profcheck_avg_dE76"))
 			except (TypeError, ValueError):
 				return lang.getstr("profile.share.meta_missing")
 			else:
-				if avg_dE76 and avg_dE76 > 1:
-					return lang.getstr("profile.share.avg_dE_too_high", (avg_dE76, 1))
+				threshold = 1.0
+				if avg_dE76 and avg_dE76 > threshold:
+					return lang.getstr("profile.share.avg_dE_too_high",
+									   (avg_dE76, threshold))
 				else:
 					# Check for EDID metadata
 					metadata = profile.tags.meta
-					prefix = metadata.getvalue("prefix", "EDID_", None)
-					if (not prefix + "model" in metadata or
-						not prefix + "manufacturer" in metadata):
+					if (not "EDID_model" in metadata or
+						not "EDID_manufacturer" in metadata):
 						return lang.getstr("profile.share.meta_missing")
 		else:
 			return lang.getstr("profile.share.meta_missing")
@@ -3668,19 +3675,19 @@ class MainFrame(BaseFrame):
 						 "s": "sRGB"}.get(option, "Gamma %s" % option)
 
 		metadata = profile.tags.meta
-		prefix = metadata.getvalue("prefix", "EDID_", None)
 		# Model will be shown in overview on http://icc.opensuse.org
-		model = metadata.getvalue(prefix + "model",
+		model = metadata.getvalue("EDID_model",
 								  profile.getDeviceModelDescription(),
 								  None)
+		metadata["model"] = model
 		metadata["vcgt"] = int("vcgt" in profile.tags)
-		date = metadata.getvalue(prefix + "date", "", None).split("-T")
+		description = model
+		date = metadata.getvalue("EDID_date", "", None).split("-T")
 		if len(date) == 2:
 			year = int(date[0])
 			week = int(date[1])
 			date = datetime.date(int(year), 1, 1) + datetime.timedelta(weeks=week)
-			model += " '" + strftime("%y", date.timetuple())
-		description = model
+			description += " '" + strftime("%y", date.timetuple())
 		if "vcgt" in profile.tags:
 			if profile.tags.vcgt.is_linear():
 				vcgt = "linear VCGT"
@@ -3727,9 +3734,11 @@ class MainFrame(BaseFrame):
 		dlg.panel_ctrl = wx.ComboBox(dlg, -1, 
 									 choices=["-", "Glossy", "Matt"], 
 									 style=wx.CB_READONLY)
+		panel_surface = metadata.getvalue("display_panel_surface", "-")
 		try:
-			index = dlg.panel_ctrl.GetItems().index(metadata.getvalue("display_device.panel.surface"))
+			index = dlg.panel_ctrl.GetItems().index(panel_surface)
 		except ValueError:
+			dlg.panel_ctrl.Insert(panel_surface, 0)
 			index = 0
 		dlg.panel_ctrl.SetSelection(index)
 		gridsizer.Add(dlg.panel_ctrl, 1, flag=wx.RIGHT | wx.ALIGN_LEFT |
@@ -3742,24 +3751,20 @@ class MainFrame(BaseFrame):
 										  choices=["DVI", "DisplayPort", "HDMI",
 												   "VGA"], 
 										  style=wx.CB_READONLY)
+		connection_type = metadata.getvalue("display_connection_type",
+											"DVI")
 		try:
-			index = dlg.connection_ctrl.GetItems().index(metadata.getvalue("display_device.connection.type"))
+			index = dlg.connection_ctrl.GetItems().index(connection_type)
 		except ValueError:
+			dlg.panel_ctrl.Insert(connection_type, 0)
 			index = 0
 		dlg.connection_ctrl.SetSelection(index)
 		gridsizer.Add(dlg.connection_ctrl, 1, flag=wx.RIGHT | wx.ALIGN_LEFT |
 					  wx.ALIGN_CENTER_VERTICAL, border=8)
-		# Separator
-		box_gridsizer.Add(wx.StaticLine(dlg, -1), 1, 
-						  flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=12)
-		# Display settings
-		box_gridsizer.Add(wx.StaticText(dlg, -1,
-										lang.getstr("display.settings")), 1, 
-						  flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 		display_settings_tabs = wx.Notebook(dlg, -1)
 		# Column layout
 		display_settings = ((# 1st tab
-							 lang.getstr("basic"), # Tab title
+							 lang.getstr("settings.basic"), # Tab title
 							 2, # Number of columns
 							 (# 1st (left) column
 							  (("preset", 100),
@@ -3806,8 +3811,8 @@ class MainFrame(BaseFrame):
 							name = nameprefix + " " + component
 						if name:
 							ctrl = wx.TextCtrl(panel, -1,
-											   metadata.getvalue("display_device.settings.%s" %
-																 name.replace(" ", "."), ""),
+											   metadata.getvalue("OSD_settings_%s" %
+																 re.sub("[ .]", "_", name), ""),
 											   size=(width, -1),
 											   name=name)
 						else:
@@ -3839,32 +3844,32 @@ class MainFrame(BaseFrame):
 									   flag=wx.ALIGN_CENTER_VERTICAL |
 											wx.ALIGN_LEFT | wx.RIGHT, border=4)
 		box_gridsizer.Add(display_settings_tabs, 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=8)
 		# License field
-		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("license")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-		dlg.license_ctrl = wx.ComboBox(dlg, -1, 
-									 choices=["http://www.color.org/registry/icc_license_2011.txt",
-											  "http://www.gzip.org/zlib/zlib_license.html"], 
-									 style=wx.CB_READONLY)
-		dlg.license_ctrl.SetSelection(0)
-		sizer4 = wx.BoxSizer(wx.HORIZONTAL)
-		dlg.sizer3.Add(sizer4, 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-		sizer4.Add(dlg.license_ctrl, 1, 
-					   flag=wx.RIGHT | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
-							border=8)
+		##dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("license")), 1, 
+					   ##flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		##dlg.license_ctrl = wx.ComboBox(dlg, -1, 
+									 ##choices=["http://www.color.org/registry/icc_license_2011.txt",
+											  ##"http://www.gzip.org/zlib/zlib_license.html"], 
+									 ##style=wx.CB_READONLY)
+		##dlg.license_ctrl.SetSelection(0)
+		##sizer4 = wx.BoxSizer(wx.HORIZONTAL)
+		##dlg.sizer3.Add(sizer4, 1, 
+					   ##flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		##sizer4.Add(dlg.license_ctrl, 1, 
+					   ##flag=wx.RIGHT | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL,
+							##border=8)
 		# License link button
-		dlg.license_link_ctrl = wx.BitmapButton(dlg, -1,
-												geticon(16, "dialog-information"), 
-												style=wx.NO_BORDER)
-		dlg.license_link_ctrl.SetToolTipString(lang.getstr("license"))
-		dlg.Bind(wx.EVT_BUTTON,
-				 lambda event: launch_file(dlg.license_ctrl.GetValue()),
-				 dlg.license_link_ctrl)
-		sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT |
-				   wx.ALIGN_CENTER_VERTICAL)
-		# Link to ICC Profile Taxi service
+		##dlg.license_link_ctrl = wx.BitmapButton(dlg, -1,
+												##geticon(16, "dialog-information"), 
+												##style=wx.NO_BORDER)
+		##dlg.license_link_ctrl.SetToolTipString(lang.getstr("license"))
+		##dlg.Bind(wx.EVT_BUTTON,
+				 ##lambda event: launch_file(dlg.license_ctrl.GetValue()),
+				 ##dlg.license_link_ctrl)
+		##sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT |
+				   ##wx.ALIGN_CENTER_VERTICAL)
+		## Link to ICC Profile Taxi service
 		dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
 													  label="icc.opensuse.org", 
 													  URL="http://icc.opensuse.org"),
@@ -3877,14 +3882,19 @@ class MainFrame(BaseFrame):
 		result = dlg.ShowModal()
 		if result != wx.ID_OK:
 			return
-		# Update meta model string with info from profile
+		# Update meta prefix
+		prefixes = metadata.getvalue("prefix", "", None).split(",")
+		if not "OSD_" in prefixes:
+			prefixes.append("OSD_")
+		metadata["prefix"] = ",".join(prefixes)
+		# Update meta
 		panel = dlg.panel_ctrl.GetValue()
-		metadata["display_device.panel.surface"] = panel
-		metadata["display_device.connection.type"] = dlg.connection_ctrl.GetValue()
+		metadata["display_panel_surface"] = panel
+		metadata["display_connection_type"] = dlg.connection_ctrl.GetValue()
 		for ctrl in display_settings_ctrls:
 			if isinstance(ctrl, wx.TextCtrl):
-				metadata["display_device.settings.%s" %
-						 ctrl.Name.replace(" ", ".")] = ctrl.GetValue()
+				metadata["OSD_settings_%s" %
+						 re.sub("[ .]", "_", ctrl.Name)] = ctrl.GetValue()
 		# Calculate profile ID
 		profile.calculateID()
 		# Save profile
@@ -3892,20 +3902,21 @@ class MainFrame(BaseFrame):
 		# Get profile data
 		data = profile.data
 		# Add metadata which should not be reflected in profile
-		if panel != "-":
-			model += " (%s)" % panel.lower()
-		if vcgt:
-			model += ", " + vcgt
-		model += ", " + whitepoint
-		if gamma:
-			model += ", " + gamma
-		if instrument:
-			model += ", " + instrument
-		model += ", " + strftime("%Y-%m-%d", profile.dateTime.timetuple())
-		metadata["model"] = model
+		##if panel != "-":
+			##model += " (%s)" % panel.lower()
+		##if vcgt:
+			##model += ", " + vcgt
+		##model += ", " + whitepoint
+		##if gamma:
+			##model += ", " + gamma
+		##if instrument:
+			##model += ", " + instrument
+		##model += ", " + strftime("%Y-%m-%d", profile.dateTime.timetuple())
+		##metadata["model"] = model
 		# Upload
 		params = {"description": dlg.description_txt_ctrl.GetValue(),
-				  "licence": dlg.license_ctrl.GetValue()}
+				  ##"licence": dlg.license_ctrl.GetValue()}
+				  "licence": "http://www.color.org/registry/icc_license_2011.txt"}
 		files = [("metadata", "metadata.json",
 				  '{"org":{"freedesktop":{"openicc":{"device":{"monitor":[%s]}}}}}' %
 				  metadata.to_json()),
@@ -3914,9 +3925,11 @@ class MainFrame(BaseFrame):
 		self.worker.start(self.profile_share_consumer, 
 						  http_request, 
 						  ckwargs={}, 
-						  wkwargs={"domain": "dispcalgui.hoech.net",
+						  wkwargs={"domain": "dispcalgui.hoech.net" if test
+											 else "icc.opensuse.org",
 								   "request_type": "POST",
-								   "path": "/print_r_post.php",
+								   "path": "/print_r_post.php" if test
+										   else "/upload",
 								   "params": params,
 								   "files": files},
 						  progress_msg=lang.getstr("profile.share"),
@@ -3924,8 +3937,8 @@ class MainFrame(BaseFrame):
 
 	def profile_share_consumer(self, result, parent=None):
 		""" This function receives the response from the profile upload """
-		safe_print(safe_unicode(result, "UTF-8"))
 		if result is not False:
+			safe_print(safe_unicode(result, "UTF-8"))
 			parent = parent or getattr(self, "modaldlg", self)
 			dlg = InfoDialog(parent, 
 							 msg=lang.getstr("profile.share.success"),

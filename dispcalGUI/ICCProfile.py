@@ -2169,13 +2169,16 @@ class ICCProfile:
 		"""
 		Sets metadata from EDID
 		
-		Key names follow the examples provided by the OpenICC 'Taxi' project
-		http://icc.opensuse.org
+		Key names follow the examples provided by OpenICC Configuration 0.1 DRAFT 1
+		http://www.oyranos.org/wiki/index.php?title=OpenICC_Configuration_0.1
 		
 		"""
 		if not "meta" in self.tags:
 			self.tags.meta = DictType()
-		self.tags.meta.update({"prefix": prefix,
+		prefixes = self.tags.meta.getvalue("prefix", "", None).split(",")
+		if not prefix in prefixes:
+			prefixes.append(prefix)
+		self.tags.meta.update({"prefix": ",".join(prefixes),
 							   prefix + "manufacturer": edid.get("manufacturer", ""),
 							   prefix + "mnft": edid.get("manufacturer_id", ""),
 							   prefix + "model": edid.get("monitor_name", ""),
