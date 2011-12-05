@@ -4140,9 +4140,10 @@ class MainFrame(BaseFrame):
 						profile_path=None, install=True, skip_scripts=False, 
 						silent=False):
 		gcm = False
+		colormgr = None
 		oyranos = False
 		result = None
-		install_section = None
+		device_id = None
 		if install and sys.platform not in ("darwin", "win32") and \
 		   which("gcm-import"):
 			# Install using GNOME Color Manager
@@ -4174,15 +4175,14 @@ class MainFrame(BaseFrame):
 			for name in ["manufacturer", "monitor_name", "ascii", 
 						 "serial_ascii"]:
 				if name in edid:
-					section_parts.append(edid[name].lower().replace(" ", 
-																	"_"))
-				elif name != "ascii":
-					# Do not allow the anything other than the ASCII 
-					# string to be missing
+					section_parts.append(edid[name].replace(" ", "_"))
+				elif name not in ("ascii", "serial_ascii"):
+					# Do not allow anything other than the ASCII 
+					# strings to be missing
 					incomplete = True
 					break
 			if not incomplete:
-				install_section = "_".join(section_parts)
+				device_id = "_".join(section_parts)
 				hash_found = False
 				if "hash" in edid:
 					safe_print("Looking for device ID with hash", edid["hash"])
@@ -4192,14 +4192,14 @@ class MainFrame(BaseFrame):
 						   cfg.get(section, "edid-hash") == edid["hash"]:
 							safe_print("Found device ID:", section)
 							hash_found = True
-							install_section = section
+							device_id = section
 							break
 					if not hash_found:
 						safe_print("Device ID not found for hash", edid["hash"])
 				if not hash_found:
-					if cfg.has_section(install_section):
+					if cfg.has_section(device_id):
 						safe_print("Using existing device ID:", 
-								   install_section)
+								   device_id)
 					else:
 						# If we can't find a section with the MD5 hash or 
 						# section string, look for a section with the info we 
@@ -4212,71 +4212,73 @@ class MainFrame(BaseFrame):
 							if section.startswith("_".join(section_parts[:2])) and \
 							   section.endswith("_".join(section_parts[2:])):
 								safe_print("Found device ID:", section)
-								install_section = section
+								device_id = section
 								partial_match_found = True
 								break
 						if not partial_match_found:
 							safe_print("No match found. Using generated "
-									   "device ID:", install_section)
-				##utc = gmtime()
-				##ts = strftime("%Y-%m-%dT%H:%M:%S", utc) + \
-					 ##str(round(time() - int(time()), 6))[1:] + "Z"
-				##if not cfg.has_section(install_section):
-					### If we are creating a new entry
-					##safe_print("New entry needed for device ID:", 
-							   ##install_section)
-					##cfg.add_section(install_section)
-					##cfg.set(install_section, "edid-hash", edid["hash"])
-					##cfg.set(install_section, "created", ts)
-					##if "serial_ascii" in edid:
-						##cfg.set(install_section, "serial", 
-								##edid["serial_ascii"])
-					##if "monitor_name" in edid:
-						##cfg.set(install_section, "model", 
-								##edid["monitor_name"])
-					##if "manufacturer" in edid:
-						##cfg.set(install_section, "manufacturer", 
-								##edid["manufacturer"])
-					##if "manufacturer" in edid and \
-					   ##"monitor_name" in edid and \
-					   ##"max_h_size_cm" in edid and \
-					   ##"max_v_size_cm" in edid:
-						##cfg.set(install_section, "title", 
-								##" - ".join([edid["manufacturer"],
-											##edid["monitor_name"],
-											##str(int(math.sqrt(math.pow(edid["max_h_size_cm"], 2) * 
-															  ##math.pow(edid["max_v_size_cm"], 2)) / 2.54)) + '"']))
-					##cfg.set(install_section, "type", "display")
-					##cfg.set(install_section, "colorspace", "rgb")
-				##cfg.set(install_section, "modified", ts)
+									   "device ID:", device_id)
+				# Check for colormgr
+				colormgr = which("colormgr")
+				if colormgr:
+					# Install using colormgr
+					cd_device_path = "/org/freedesktop/ColorManager/devices/%s" % device_id
+					cd_profile_id = "%s_%s" % (device_id,
+											   md5(str(time())).hexdigest())
+					cd_profile_path = "/org/freedesktop/ColorManager/profiles/%s" % cd_profile_id
+					# Check for patch 1e9272c / colord 0.1.15
+					# It should return the default profile instead of 'Not enough
+					# arguments, expected device path e.g. '/org/devices/bar''
+					result = self.worker.exec_cmd(colormgr,
+												  ["device-get-default-profile",
+												   cd_device_path], 
+												  capture_output=True, 
+												  skip_scripts=True, 
+												  silent=True)
+					if (isinstance(result, Exception) or
+						"Not enough arguments, expected device path e.g. '/org/devices/bar'"
+						in self.worker.output):
+						colormgr = None
+					else:
+						# Create profile object
+						result = self.worker.exec_cmd(colormgr,
+													  ["create-profile",
+													   cd_profile_id], 
+													  capture_output=True, 
+													  skip_scripts=True, 
+													  silent=True)
+						# Set profile filename
+						if result and not isinstance(result, Exception):
+							result = self.worker.exec_cmd(colormgr,
+													  ["profile-set-filename",
+													   cd_profile_path,
+													   profile_path], 
+													  capture_output=True, 
+													  skip_scripts=True, 
+													  silent=True)
+						# Add the profile to our device
+						if result and not isinstance(result, Exception):
+							result = self.worker.exec_cmd(colormgr,
+													  ["device-add-profile",
+													   cd_device_path,
+													   cd_profile_path], 
+													  capture_output=True, 
+													  skip_scripts=True, 
+													  silent=True)
+						# Make the profile default for our device
+						if result and not isinstance(result, Exception):
+							result = self.worker.exec_cmd(colormgr,
+													  ["device-make-profile-default",
+													   cd_device_path,
+													   cd_profile_path], 
+													  capture_output=True, 
+													  skip_scripts=True, 
+													  silent=True)
 			profilename = os.path.basename(profile_path)
-			##profile_install_path = os.path.join(iccprofiles_home[-1],
-												##profilename)
-			##if not os.path.exists(profile_install_path):
-				##shutil.copyfile(profile_path, profile_install_path)
 			profile_install_path = profile_path
-			if True:
+			if not colormgr:
+				# Use gcm-import
 				gcm_cmd, gcm_args = which("gcm-import"), [profile_install_path]
-				##if not incomplete and cfg.has_option(install_section, "profile"):
-					##profilepath = cfg.get(install_section, "profile")
-					### This is a comma-separated list of profiles, but
-					### a comma is probably not a good choice for a 
-					### separator, because filenames can contain them.
-					### Maybe it is just a single profile with possible 
-					### comma in filename, so check if it exists.
-					##if not os.path.isfile(profilepath):
-						### Check for os.pathsep first, only if not found
-						### in string, split by comma
-						##if os.pathsep in profilepath:
-							##profiles = profilepath.split(os.pathsep)
-						##else:
-							##profiles = profilepath.split(",")
-						##for profilepath in profiles:
-							##if os.path.exists(profilepath):
-								### FIXME: First one should be session 
-								### default, but we use the first 
-								### existing one
-								##break
 				for dirname in iccprofiles_home:
 					profile_install_path = os.path.join(dirname, profilename)
 					if os.path.isfile(profile_install_path) and \
@@ -4298,38 +4300,6 @@ class MainFrame(BaseFrame):
 							gcm_cmd, gcm_args = which("gcm-prefs"), []
 				result = True
 				gcm = True
-			elif not incomplete:  # NEVER
-				cfg.set(install_section, "profile", 
-						profile_install_path.encode("UTF-8"))
-				try:
-					io = StringIO()
-					cfg.write(io)
-					io.seek(0)
-					cfgfile = codecs.open(gcm_device_profiles_conf, "w", "UTF-8")
-					cfgfile.write("".join(["=".join(line.split(" = ", 1)) 
-										   for line in io]))
-					cfgfile.close()
-				except IOError, exception:
-					handle_error(exception)
-				else:
-					if getcfg("profile.install_scope") == "l":
-						cmd, args = (which("gcm-install-system-wide"), 
-									 ["--id", install_section, 
-									  profile_install_path])
-						if not isinstance(cmd, Exception):
-							result = self.worker.exec_cmd(cmd, args, capture_output, 
-														  low_contrast=False, 
-														  skip_scripts=skip_scripts, 
-														  silent=silent)
-							if not isinstance(result, Exception) and result:
-								result = self.worker.exec_cmd(which("gcm-apply"), [], 
-															  capture_output, 
-															  low_contrast=False, 
-															  skip_scripts=skip_scripts, 
-															  silent=silent)
-					else:
-						result = True
-					gcm = True
 		if install and which("oyranos-monitor") and \
 		   self.worker.check_display_conf_oy_compat(getcfg("display.number")):
 			# Install using Oyranos
@@ -4340,10 +4310,10 @@ class MainFrame(BaseFrame):
 				# If system-wide install, copy profile to 
 				# /var/lib/color/icc/devices/display
 				var_icc = "/var/lib/color/icc/devices/display"
-				if install_section:
+				if device_id:
 					# Use same ID string as for GCM
 					profile_install_path = os.path.join(var_icc, 
-														install_section + ".icc")
+														device_id + ".icc")
 				else:
 					profile_install_path = os.path.join(var_icc,
 														os.path.basename(profile_path))
@@ -4686,43 +4656,6 @@ class MainFrame(BaseFrame):
 									   system_desktopfile_path), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-warning"))
-					##if gcm or oyranos:
-						### Disable Argyll CMS user color.jcnf
-						##colorjcnf_home = os.path.join(xdg_config_home, 
-													  ##"color.jcnf")
-						##if os.path.exists(colorjcnf_home):
-							##try:
-								##shutil.move(colorjcnf_home,
-											##colorjcnf_home + ".backup")
-							##except Exception, exception:
-								##InfoDialog(self, 
-										   ##msg=lang.getstr(
-											   ##"error.colorconfig_remove_old", 
-											   ##colorjcnf_home), 
-										   ##ok=lang.getstr("ok"), 
-										   ##bitmap=geticon(32, "dialog-warning"))
-						### Disable Argyll CMS system color.jcnf
-						##for path in xdg_config_dirs:
-							##colorjcnf_system = os.path.join(path, "color.jcnf")
-							##if os.path.exists(colorjcnf_system) and \
-							   ##self.worker.exec_cmd("mv", 
-													##["-f", 
-													 ##colorjcnf_system,
-													 ##colorjcnf_system + 
-													 ##".backup"], 
-													##capture_output=True, 
-													##low_contrast=False, 
-													##skip_scripts=True, 
-													##silent=False, 
-													##asroot=True, 
-													##title=lang.getstr("colorconfig_remove_old")) is not True and \
-							   ##not silent:
-									##InfoDialog(self, 
-											   ##msg=lang.getstr(
-												   ##"error.colorconfig_remove_old", 
-												   ##colorjcnf_system), 
-											   ##ok=lang.getstr("ok"), 
-											   ##bitmap=geticon(32, "dialog-warning"))
 					if gcm:
 						# Run gcm-import or gcm-prefs
 						gcm_args = " ".join('"%s"' % gcm_arg for gcm_arg in gcm_args)
