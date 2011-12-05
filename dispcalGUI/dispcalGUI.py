@@ -4197,7 +4197,7 @@ class MainFrame(BaseFrame):
 					if not hash_found:
 						safe_print("Device ID not found for hash", edid["hash"])
 				if not hash_found:
-					if cfg.has_section(device_id):
+					if cfg.has_section(device_id.lower()):
 						safe_print("Using existing device ID:", 
 								   device_id)
 					else:
@@ -4234,7 +4234,8 @@ class MainFrame(BaseFrame):
 												   cd_device_path], 
 												  capture_output=True, 
 												  skip_scripts=True, 
-												  silent=True)
+												  silent=True,
+												  log_output=False)
 					if (isinstance(result, Exception) or
 						"Not enough arguments, expected device path e.g. '/org/devices/bar'"
 						in self.worker.output):
@@ -4243,10 +4244,10 @@ class MainFrame(BaseFrame):
 						# Create profile object
 						result = self.worker.exec_cmd(colormgr,
 													  ["create-profile",
-													   cd_profile_id], 
+													   cd_profile_id,
+													   "normal"], 
 													  capture_output=True, 
-													  skip_scripts=True, 
-													  silent=True)
+													  skip_scripts=True)
 						# Set profile filename
 						if result and not isinstance(result, Exception):
 							result = self.worker.exec_cmd(colormgr,
@@ -4254,8 +4255,8 @@ class MainFrame(BaseFrame):
 													   cd_profile_path,
 													   profile_path], 
 													  capture_output=True, 
-													  skip_scripts=True, 
-													  silent=True)
+													  skip_scripts=True,
+													  working_dir=False)
 						# Add the profile to our device
 						if result and not isinstance(result, Exception):
 							result = self.worker.exec_cmd(colormgr,
@@ -4263,8 +4264,7 @@ class MainFrame(BaseFrame):
 													   cd_device_path,
 													   cd_profile_path], 
 													  capture_output=True, 
-													  skip_scripts=True, 
-													  silent=True)
+													  skip_scripts=True)
 						# Make the profile default for our device
 						if result and not isinstance(result, Exception):
 							result = self.worker.exec_cmd(colormgr,
@@ -4272,8 +4272,7 @@ class MainFrame(BaseFrame):
 													   cd_device_path,
 													   cd_profile_path], 
 													  capture_output=True, 
-													  skip_scripts=True, 
-													  silent=True)
+													  skip_scripts=True)
 			profilename = os.path.basename(profile_path)
 			profile_install_path = profile_path
 			if not colormgr:
