@@ -2175,7 +2175,7 @@ class ICCProfile:
 		"""
 		if not "meta" in self.tags:
 			self.tags.meta = DictType()
-		prefixes = self.tags.meta.getvalue("prefix", "", None).split(",")
+		prefixes = (self.tags.meta.getvalue("prefix", "", None) or prefix).split(",")
 		if not prefix in prefixes:
 			prefixes.append(prefix)
 		self.tags.meta.update({"prefix": ",".join(prefixes),

@@ -3621,7 +3621,7 @@ class MainFrame(BaseFrame):
 				profile.tags.meta = ICCP.DictType()
 			# Update meta prefix
 			if (avg, peak, rms) != (None, ) * 3: 
-				prefixes = profile.tags.meta.getvalue("prefix", "", None).split(",")
+				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ARGYLL_").split(",")
 				if not "ARGYLL_" in prefixes:
 					prefixes.append("ARGYLL_")
 				profile.tags.meta["prefix"] = ",".join(prefixes)
@@ -3896,7 +3896,7 @@ class MainFrame(BaseFrame):
 		if result != wx.ID_OK:
 			return
 		# Update meta prefix
-		prefixes = metadata.getvalue("prefix", "", None).split(",")
+		prefixes = (metadata.getvalue("prefix", "", None) or "OSD_").split(",")
 		if not "OSD_" in prefixes:
 			prefixes.append("OSD_")
 		metadata["prefix"] = ",".join(prefixes)
