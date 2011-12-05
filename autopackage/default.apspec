@@ -168,6 +168,8 @@ outputStatus "Installing modules to $platlib..."
 copyFiles lib/python/site-packages/dispcalGUI/*.py "$platlib/dispcalGUI"
 
 # Byte-compile *.py files
+# set PYTHONDONTWRITEBYTECODE for Mandriva 2011
+export PYTHONDONTWRITEBYTECODE=
 outputStatus "Byte-compiling pure python modules..."
 python -c "import glob
 import os
