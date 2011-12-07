@@ -424,7 +424,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				if colord:
 					try:
 						profile = _colord_get_display_profile(display_no)
-					except CDError, exception:
+					except colord.CDError, exception:
 						safe_print(exception)
 					if profile:
 						return profile
