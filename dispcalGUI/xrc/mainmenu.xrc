@@ -54,6 +54,10 @@
         <label>allow_skip_sensor_cal</label>
         <checkable>1</checkable>
       </object>
+      <object class="wxMenuItem" name="show_advanced_calibration_options">
+        <label>show_advanced_calibration_options</label>
+        <checkable>1</checkable>
+      </object>
       <object class="wxMenuItem" name="extra_args">
         <label>extra_args</label>
       </object>

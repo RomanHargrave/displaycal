@@ -866,9 +866,10 @@ class MainFrame(BaseFrame):
 		self.init_menus()
 		self.update_menus()
 		self.init_controls()
+		self.show_advanced_calibration_options_handler()
 		self.setup_language()
-		BaseFrame.update_layout(self)
 		self.update_displays()
+		BaseFrame.update_layout(self)
 		# Add the header bitmap after layout so it won't stretch the window 
 		# further than necessary
 		self.headerbitmap = self.panel.FindWindowByName("headerbitmap")
@@ -878,6 +879,7 @@ class MainFrame(BaseFrame):
 		self.update_controls()
 		self.SetSaneGeometry(int(getcfg("position.x")), 
 							 int(getcfg("position.y")))
+		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		if verbose >= 1:
 			safe_print(lang.getstr("success"))
 		
@@ -1025,7 +1027,6 @@ class MainFrame(BaseFrame):
 		self.SetMaxSize((-1, -1))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
-		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 		self.Bind(wx.EVT_SIZE, self.OnResize, self)
 		self.droptarget = FileDrop()
@@ -1401,6 +1402,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("allow_skip_sensor_cal"))
 		self.Bind(wx.EVT_MENU, self.allow_skip_sensor_cal_handler, 
 				  self.menuitem_allow_skip_sensor_cal)
+		self.menuitem_show_advanced_calibration_options = options.FindItemById(
+			options.FindItem("show_advanced_calibration_options"))
+		self.Bind(wx.EVT_MENU, self.show_advanced_calibration_options_handler, 
+				  self.menuitem_show_advanced_calibration_options)
 		menuitem = options.FindItemById(options.FindItem("extra_args"))
 		self.Bind(wx.EVT_MENU, self.extra_args_handler, menuitem)
 		self.menuitem_enable_argyll_debug = options.FindItemById(
@@ -2506,19 +2511,21 @@ class MainFrame(BaseFrame):
 	def update_black_point_rate_ctrl(self):
 		self.calpanel.Freeze()
 		enable = not(self.calibration_update_cb.GetValue())
+		show = (bool(getcfg("show_advanced_calibration_options")) and
+				defaults["calibration.black_point_rate.enabled"])
 		self.black_point_rate_label.GetContainingSizer().Show(
 			self.black_point_rate_label,
-			defaults["calibration.black_point_rate.enabled"])
+			show)
 		self.black_point_rate_ctrl.GetContainingSizer().Show(
 			self.black_point_rate_ctrl,
-			defaults["calibration.black_point_rate.enabled"])
+			show)
 		self.black_point_rate_ctrl.Enable(
 			enable and 
 			getcfg("calibration.black_point_correction") < 1 and 
 			defaults["calibration.black_point_rate.enabled"])
 		self.black_point_rate_floatctrl.GetContainingSizer().Show(
 			self.black_point_rate_floatctrl,
-			defaults["calibration.black_point_rate.enabled"])
+			show)
 		self.black_point_rate_floatctrl.Enable(
 			enable  and 
 			getcfg("calibration.black_point_correction") < 1 and 
@@ -3037,7 +3044,7 @@ class MainFrame(BaseFrame):
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
 		set_whitepoint = event_id == self.whitepoint_measure_btn.GetId()
 		set_ambient = event_id == self.ambient_measure_btn.GetId()
-		if set_whitepoint and not set_ambient:
+		if set_whitepoint and not set_ambient and bool(getcfg("show_advanced_calibration_options")):
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
 								ok=lang.getstr("yes"), 
 								cancel=lang.getstr("no"), 
@@ -3399,10 +3406,11 @@ class MainFrame(BaseFrame):
 			self.update_profile_name()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
-		if trc in ("240", "709", "s") and not \
-		   (bool(int(getcfg("calibration.ambient_viewcond_adjust"))) and 
-			getcfg("calibration.ambient_viewcond_adjust.lux")) and \
-			getcfg("trc.should_use_viewcond_adjust.show_msg"):
+		if (trc in ("240", "709", "s") and not
+		    (bool(int(getcfg("calibration.ambient_viewcond_adjust"))) and 
+			 getcfg("calibration.ambient_viewcond_adjust.lux")) and
+			getcfg("trc.should_use_viewcond_adjust.show_msg") and
+			getcfg("show_advanced_calibration_options")):
 			dlg = InfoDialog(self, 
 							 msg=lang.getstr("trc.should_use_viewcond_adjust"), 
 							 ok=lang.getstr("ok"), 
@@ -5486,6 +5494,44 @@ class MainFrame(BaseFrame):
 		self.menuitem_show_lut.Check(False)
 		if hasattr(self, "show_lut") and self.show_lut:
 			self.show_lut.SetValue(self.lut_viewer.IsShownOnScreen())
+
+	def show_advanced_calibration_options_handler(self, event=None):
+		""" Show or hide advanced calibration settings """
+		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
+		if event:
+			show_advanced_calibration_options = not show_advanced_calibration_options
+			setcfg("show_advanced_calibration_options", 
+				   int(show_advanced_calibration_options))
+		self.calpanel.Freeze()
+		self.menuitem_show_advanced_calibration_options.Check(show_advanced_calibration_options)
+		for ctrl in (#self.black_luminance_label,
+					 #self.black_luminance_min_rb,
+					 #self.black_luminance_cdm2_rb,
+					 #self.black_luminance_textctrl,
+					 #self.black_luminance_textctrl_label,
+					 #self.blacklevel_drift_compensation,
+					 self.trc_type_ctrl,
+					 self.ambient_viewcond_adjust_cb,
+					 self.ambient_viewcond_adjust_textctrl,
+					 self.ambient_viewcond_adjust_textctrl_label,
+					 self.ambient_viewcond_adjust_info,
+					 self.ambient_measure_btn,
+					 self.black_output_offset_label,
+					 self.black_output_offset_ctrl,
+					 self.black_output_offset_intctrl,
+					 self.black_output_offset_intctrl_label,
+					 self.black_point_correction_label,
+					 self.black_point_correction_ctrl,
+					 self.black_point_correction_intctrl,
+					 self.black_point_correction_intctrl_label,
+					 self.black_point_rate_label,
+					 self.black_point_rate_ctrl,
+					 self.black_point_rate_floatctrl):
+			ctrl.GetContainingSizer().Show(ctrl,
+										   show_advanced_calibration_options)
+		self.calpanel.Layout()
+		self.calpanel.Thaw()
+		self.update_scrollbars()
 	
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():

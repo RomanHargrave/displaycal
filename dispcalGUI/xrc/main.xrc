@@ -640,7 +640,7 @@
                             <border>0</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxStaticText">
+                            <object class="wxStaticText" name="black_luminance_textctrl_label">
                               <label>cd/m²</label>
                             </object>
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -786,7 +786,7 @@
                             <border>0</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxStaticText">
+                            <object class="wxStaticText" name="ambient_viewcond_adjust_textctrl_label">
                               <label>Lux</label>
                             </object>
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -849,7 +849,7 @@
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxStaticText">
+                            <object class="wxStaticText" name="black_output_offset_intctrl_label">
                               <label>%</label>
                             </object>
                             <flag>wxALIGN_CENTRE_VERTICAL</flag>
@@ -892,7 +892,7 @@
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxStaticText">
+                            <object class="wxStaticText" name="black_point_correction_intctrl_label">
                               <label>%</label>
                             </object>
                             <flag>wxALIGN_CENTRE_VERTICAL</flag>

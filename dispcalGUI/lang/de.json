@@ -369,6 +369,7 @@
 	"readme": "LiesMich",
 	"resources.notfound.warning": "Warnung: Einige benötigte Dateien wurden nicht gefunden:",
 	"resources.notfound.error": "Kritischer Fehler: Eine benötigte Datei wurde nicht gefunden:",
+	"show_advanced_calibration_options": "Erweiterte Kalibrierungsoptionen zeigen",
 	"startup": "Starte...",
 	"success": "...ok.",
 	"tc.ofp": "Optimierte Fernste-Punkte-Abtastung",

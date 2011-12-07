@@ -369,6 +369,7 @@
 	"reference_instrument": "Reference",
 	"resources.notfound.warning": "Warning: Some required files have not been found:",
 	"resources.notfound.error": "Fatal error: A required file has not been found:",
+	"show_advanced_calibration_options": "Show advanced calibration options",
 	"startup": "Starting up...",
 	"success": "...ok.",
 	"tc.ofp": "Optimized farthest point sampling",
