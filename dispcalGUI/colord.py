@@ -15,6 +15,10 @@ CD_DEVICE_RELATION_HARD = 2
 
 colord = cdll.LoadLibrary(util.find_library('colord'))
 
+try:
+	colord.cd_profile_get_filename.restype = gchar_p
+except AttributeError, exception:
+	raise ImportError("libcolord: %s" % exception)
 
 def cd_client_connect():
 	""" Connect to colord """
@@ -68,7 +72,9 @@ def cd_get_default_profile(device_key):
 	# Connect to profile
 	if not colord.cd_profile_connect_sync(profile, None, error):
 		raise CDError(error.message.value)
-	return gchar_p(colord.cd_profile_get_filename(profile)).value.decode('UTF-8')
+	filename = colord.cd_profile_get_filename(profile)
+	if filename and isinstance(getattr(filename, "value", ""), str):
+		return filename.value.decode('UTF-8')
 
 
 def cd_install_profile(device_key, profile_filename, profile_installname=None,
@@ -135,3 +141,9 @@ def cd_install_profile(device_key, profile_filename, profile_installname=None,
 
 class CDError(Exception):
 	pass
+
+
+if __name__ == "__main__":
+	import sys
+	for arg in sys.argv[1:]:
+		print cd_get_default_profile(arg)
