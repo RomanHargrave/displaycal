@@ -239,9 +239,12 @@ def _colord_get_display_profile(display_no=0):
 		incomplete = False
 		section_parts = ["xrandr"]
 		for name in ["manufacturer", "monitor_name", "ascii", 
-					 "serial_ascii"]:
+					 "serial_ascii", "serial_32"]:
 			if name in edid:
-				section_parts.append(edid[name].replace(" ", "_"))
+				if name == "serial_32" and "serial_ascii" in edid:
+					# Only add serial if no ascii serial
+					break
+				section_parts.append(str(edid[name]).replace(" ", "_"))
 			elif name not in ("ascii", "serial_ascii"):
 				# Do not allow anything other than the ASCII 
 				# strings to be missing
