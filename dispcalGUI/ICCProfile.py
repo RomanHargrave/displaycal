@@ -41,7 +41,12 @@ from util_list import intlist
 from util_str import hexunescape
 
 if sys.platform not in ("darwin", "win32"):
+	from edid import get_edid
 	from util_x import get_display
+	try:
+		import colord
+	except ImportError:
+		colord = None
 	try:
 		import xrandr
 	except ImportError:
@@ -225,6 +230,31 @@ def Property(func):
 	return property(**func())
 
 
+def _colord_get_display_profile(display_no=0):
+	try:
+		edid = get_edid(display_no)
+	except (TypeError, ValueError):
+		return None
+	if edid:
+		incomplete = False
+		section_parts = ["xrandr"]
+		for name in ["manufacturer", "monitor_name", "ascii", 
+					 "serial_ascii"]:
+			if name in edid:
+				section_parts.append(edid[name].replace(" ", "_"))
+			elif name not in ("ascii", "serial_ascii"):
+				# Do not allow anything other than the ASCII 
+				# strings to be missing
+				incomplete = True
+				break
+		if not incomplete:
+			device_key = "_".join(section_parts)
+			profile_path = colord.cd_get_default_profile(device_key)
+			if profile_path:
+				return ICCProfile(profile_path)
+	return None
+
+
 def _winreg_get_display_profile(monkey, current_user=False):
 	filename = None
 	try:
@@ -390,7 +420,15 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 						profile = ICCProfile(path)
 			else:
 				# Linux
-				# Try XrandR first
+				# Try colord
+				if colord:
+					try:
+						profile = _colord_get_display_profile(display_no)
+					except CDError, exception:
+						safe_print(exception)
+					if profile:
+						return profile
+				# Try XrandR
 				if xrandr and option == "_ICC_PROFILE":
 					if debug:
 						safe_print("Using XrandR")
@@ -402,6 +440,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 					if debug:
 						safe_print("Couldn't get _ICC_PROFILE XrandR output property")
 						safe_print("Using X11")
+					# Try X11
 					profile = _x11_get_display_profile(display_no, 
 													   x_hostname, 
 													   x_display, x_screen)

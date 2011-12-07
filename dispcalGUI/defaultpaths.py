@@ -86,6 +86,7 @@ else:
 			iccprofiles += [os.path.join(dir_, "color", "icc")]
 	iccprofiles.append("/var/lib/color")
 	iccprofiles_home = [os.path.join(xdg_data_home, "color", "icc"), 
+						os.path.join(xdg_data_home, "icc"), 
 						expandvarsu("$HOME/.color/icc")]
 if sys.platform in ("darwin", "win32"):
 	iccprofiles_display = iccprofiles

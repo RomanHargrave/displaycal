@@ -4072,11 +4072,10 @@ class MainFrame(BaseFrame):
 					return
 				if "vcgt" in profile.tags:
 					setcfg("last_icc_path", path)
-					if self.install_profile(capture_output=True, 
-											profile_path=path, 
-											install=False, 
-											skip_scripts=True, 
-											silent=True) is True:
+					if self.install_cal(capture_output=True, 
+										profile_path=path, 
+										skip_scripts=True, 
+										silent=True) is True:
 						self.lut_viewer_load_lut(profile=profile)
 						if verbose >= 1: safe_print(lang.getstr("success"))
 					else:
@@ -4089,9 +4088,8 @@ class MainFrame(BaseFrame):
 							   bitmap=geticon(32, "dialog-error"))
 			else:
 				setcfg("last_cal_path", path)
-				if self.install_profile(capture_output=True, cal=path, 
-										install=False, skip_scripts=True, 
-										silent=True) is True:
+				if self.install_cal(capture_output=True, cal=path, 
+									skip_scripts=True, silent=True) is True:
 					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
 					if verbose >= 1: safe_print(lang.getstr("success"))
 				else:
@@ -4125,8 +4123,8 @@ class MainFrame(BaseFrame):
 					safe_print(profile.fileName)
 		else:
 			if verbose >= 1: safe_print(lang.getstr("calibration.resetting"))
-		if self.install_profile(capture_output=True, cal=cal, install=False, 
-								skip_scripts=True, silent=True) is True:
+		if self.install_cal(capture_output=True, cal=cal, 
+							skip_scripts=True, silent=True) is True:
 			self.lut_viewer_load_lut(profile=profile)
 			if verbose >= 1: safe_print(lang.getstr("success"))
 		else:
@@ -4136,638 +4134,42 @@ class MainFrame(BaseFrame):
 		setcfg("profile.load_on_login", 
 			   int(self.profile_load_on_login.GetValue()))
 
-	def install_profile(self, capture_output=False, cal=None, 
-						profile_path=None, install=True, skip_scripts=False, 
-						silent=False):
-		gcm = False
-		colormgr = None
-		oyranos = False
-		result = None
-		device_id = None
-		if install and sys.platform not in ("darwin", "win32") and \
-		   which("gcm-import"):
-			# Install using GNOME Color Manager
-			gcm_device_profiles_conf = os.path.join(xdg_config_home, 
-													"color", 
-													"device-profiles.conf")
-			if not os.path.exists(gcm_device_profiles_conf):
-				gcm_device_profiles_conf = os.path.join(xdg_config_home, 
-														"gnome-color-manager", 
-														"device-profiles.conf")
-			cfg = ConfigParser.RawConfigParser()
-			cfg.optionxform = str
-			if os.path.exists(gcm_device_profiles_conf):
-				try:
-					fp = codecs.open(gcm_device_profiles_conf, "r", "UTF-8")
-				except Exception, exception:
-					handle_error(exception)
-				else:
-					try:
-						cfg.readfp(fp)
-					except Exception, exception:
-						handle_error(exception)
-					fp.close()
-			edid = self.worker.display_edid[max(0, 
-												min(len(self.worker.displays), 
-													getcfg("display.number") - 1))]
-			incomplete = False
-			section_parts = ["xrandr"]
-			for name in ["manufacturer", "monitor_name", "ascii", 
-						 "serial_ascii"]:
-				if name in edid:
-					section_parts.append(edid[name].replace(" ", "_"))
-				elif name not in ("ascii", "serial_ascii"):
-					# Do not allow anything other than the ASCII 
-					# strings to be missing
-					incomplete = True
-					break
-			if not incomplete:
-				device_id = "_".join(section_parts)
-				hash_found = False
-				if "hash" in edid:
-					safe_print("Looking for device ID with hash", edid["hash"])
-					for section in cfg.sections():
-						# Find MD5 hash of EDID
-						if cfg.has_option(section, "edid-hash") and \
-						   cfg.get(section, "edid-hash") == edid["hash"]:
-							safe_print("Found device ID:", section)
-							hash_found = True
-							device_id = section
-							break
-					if not hash_found:
-						safe_print("Device ID not found for hash", edid["hash"])
-				if not hash_found:
-					if cfg.has_section(device_id.lower()):
-						safe_print("Using existing device ID:", 
-								   device_id)
-					else:
-						# If we can't find a section with the MD5 hash or 
-						# section string, look for a section with the info we 
-						# have from EDID
-						partial_match_found = False
-						safe_print("Looking for device ID starting with %r "
-								   "and ending with %r" % ("_".join(section_parts[:2]),
-														   "_".join(section_parts[2:])))
-						for section in cfg.sections():
-							if section.startswith("_".join(section_parts[:2])) and \
-							   section.endswith("_".join(section_parts[2:])):
-								safe_print("Found device ID:", section)
-								device_id = section
-								partial_match_found = True
-								break
-						if not partial_match_found:
-							safe_print("No match found. Using generated "
-									   "device ID:", device_id)
-				# Check for colormgr
-				colormgr = which("colormgr")
-				if colormgr:
-					# Install using colormgr
-					cd_device_path = "/org/freedesktop/ColorManager/devices/%s" % device_id
-					cd_profile_id = "%s_%s" % (device_id,
-											   md5(str(time())).hexdigest())
-					cd_profile_path = "/org/freedesktop/ColorManager/profiles/%s" % cd_profile_id
-					# Check for patch 1e9272c / colord 0.1.15
-					# It should return the default profile instead of 'Not enough
-					# arguments, expected device path e.g. '/org/devices/bar''
-					result = self.worker.exec_cmd(colormgr,
-												  ["device-get-default-profile",
-												   cd_device_path], 
-												  capture_output=True, 
-												  skip_scripts=True, 
-												  silent=True,
-												  log_output=False)
-					if (isinstance(result, Exception) or
-						"Not enough arguments, expected device path e.g. '/org/devices/bar'"
-						in self.worker.output):
-						colormgr = None
-					else:
-						# Create profile object
-						result = self.worker.exec_cmd(colormgr,
-													  ["create-profile",
-													   cd_profile_id,
-													   "normal"], 
-													  capture_output=True, 
-													  skip_scripts=True)
-						# Set profile filename
-						if result and not isinstance(result, Exception):
-							result = self.worker.exec_cmd(colormgr,
-													  ["profile-set-filename",
-													   cd_profile_path,
-													   profile_path], 
-													  capture_output=True, 
-													  skip_scripts=True,
-													  working_dir=False)
-						# Add the profile to our device
-						if result and not isinstance(result, Exception):
-							result = self.worker.exec_cmd(colormgr,
-													  ["device-add-profile",
-													   cd_device_path,
-													   cd_profile_path], 
-													  capture_output=True, 
-													  skip_scripts=True)
-						# Make the profile default for our device
-						if result and not isinstance(result, Exception):
-							result = self.worker.exec_cmd(colormgr,
-													  ["device-make-profile-default",
-													   cd_device_path,
-													   cd_profile_path], 
-													  capture_output=True, 
-													  skip_scripts=True)
-			profilename = os.path.basename(profile_path)
-			profile_install_path = profile_path
-			if not colormgr:
-				# Use gcm-import
-				gcm_cmd, gcm_args = which("gcm-import"), [profile_install_path]
-				for dirname in iccprofiles_home:
-					profile_install_path = os.path.join(dirname, profilename)
-					if os.path.isfile(profile_install_path) and \
-					   profile_install_path != profile_path:
-						if True:
-							# Remove old profile
-							try:
-								trash([profile_install_path])
-							except Exception, exception:
-								handle_error(exception)
-						else:  # NEVER
-							# Update profile
-							try:
-								shutil.copyfile(profile_path, 
-												profile_install_path)
-							except Exception, exception:
-								handle_error(exception)
-							# Run gcm-prefs instead of gcm-import
-							gcm_cmd, gcm_args = which("gcm-prefs"), []
-				result = True
-				gcm = True
-		if install and which("oyranos-monitor") and \
-		   self.worker.check_display_conf_oy_compat(getcfg("display.number")):
-			# Install using Oyranos
-			oyranos = True
-			display = self.display_ctrl.GetStringSelection()
-			x, y = [pos.strip() for pos in display.split(" @")[1].split(",")[0:2]]
-			if getcfg("profile.install_scope") == "l":
-				# If system-wide install, copy profile to 
-				# /var/lib/color/icc/devices/display
-				var_icc = "/var/lib/color/icc/devices/display"
-				if device_id:
-					# Use same ID string as for GCM
-					profile_install_path = os.path.join(var_icc, 
-														device_id + ".icc")
-				else:
-					profile_install_path = os.path.join(var_icc,
-														os.path.basename(profile_path))
-				result = self.worker.exec_cmd("mkdir", 
-											  ["-p", 
-											   os.path.dirname(profile_install_path)], 
-											  capture_output=True, 
-											  low_contrast=False, 
-											  skip_scripts=True, 
-											  silent=True, 
-											  asroot=True)
-				if not isinstance(result, Exception) and result:
-					result = self.worker.exec_cmd("cp", 
-												  ["-f", profile_path, 
-												   profile_install_path], 
-												  capture_output=True, 
-												  low_contrast=False, 
-												  skip_scripts=True, 
-												  silent=True, 
-												  asroot=True)
-			else:
-				dirname = None
-				for dirname in iccprofiles_display_home:
-					if os.path.isdir(dirname):
-						# Use the first one that exists
-						break
-					else:
-						dirname = None
-				if not dirname:
-					# Create the first one in the list
-					dirname = iccprofiles_display_home[0]
-					try:
-						os.makedirs(dirname)
-					except Exception, exception:
-						handle_error(exception)
-						result = False
-				if result is not False:
-					profile_install_path = os.path.join(dirname,
-														os.path.basename(profile_path))
-					try:
-						shutil.copyfile(profile_path, 
-										profile_install_path)
-					except Exception, exception:
-						handle_error(exception)
-						result = False
-			if not isinstance(result, Exception) and result is not False:
-				cmd = which("oyranos-monitor")
-				args = ["-x", x, "-y", y, profile_install_path]
-				result = self.worker.exec_cmd(cmd, args, 
-											  capture_output, 
-											  low_contrast=False, 
-											  skip_scripts=skip_scripts, 
-											  silent=silent,
-											  working_dir=False)
-				##if getcfg("profile.install_scope") == "l":
-					##result = self.worker.exec_cmd(cmd, args, 
-												  ##capture_output, 
-												  ##low_contrast=False, 
-												  ##skip_scripts=skip_scripts, 
-												  ##silent=silent,
-												  ##asroot=True,
-												  ##working_dir=False)
-		
-		if True:
-			# Install using dispwin
-			cmd, args = self.worker.prepare_dispwin(cal, profile_path, install)
-			if not isinstance(cmd, Exception):
-				if "-Sl" in args and (sys.platform != "darwin" or 
-									  intlist(mac_ver()[0].split(".")) >= [10, 6]):
-					# If a 'system' install is requested under Linux or Windows, 
-					# install in 'user' scope first because a system-wide install 
-					# doesn't also set it as current user profile on those systems 
-					# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
-					# It has the small drawback under Linux and OS X 10.6 that 
-					# it will copy the profile to both the user and system-wide 
-					# locations, though, which is not a problem under Windows as 
-					# they are the same.
-					args.remove("-Sl")
-					result = self.worker.exec_cmd(cmd, args, capture_output, 
-												  low_contrast=False, 
-												  skip_scripts=skip_scripts, 
-												  silent=silent)
-					args.insert(0, "-Sl")
-				else:
-					result = True
-				if not isinstance(result, Exception) and result:
-					result = self.worker.exec_cmd(cmd, args, capture_output, 
-												  low_contrast=False, 
-												  skip_scripts=skip_scripts, 
-												  silent=silent,
-												  title=lang.getstr("profile.install"))
-			else:
-				result = cmd
-			if not isinstance(result, Exception) and \
-			   result is not None and install:
-				result = False
-				for line in self.worker.output:
-					if "Installed" in line:
-						if sys.platform == "darwin" and "-Sl" in args and \
-						   intlist(mac_ver()[0].split(".")) < [10, 6]:
-							# The profile has been installed, but we need a little 
-							# help from AppleScript to actually make it the default 
-							# for the current user. Only works under Mac OS < 10.6
-							n = getcfg("display.number")
-							path = os.path.join(os.path.sep, "Library", 
-												"ColorSync", "Profiles", 
-												os.path.basename(args[-1]))
-							try:
-								fobj = appscript.mactypes.File(path)
-								appscript.app("ColorSyncScripting").displays[n].display_profile.set(fobj)  # one-based index
-							except Exception, exception:
-								safe_print(exception)
-							else:
-								result = True
-								break
-						else:
-							result = True
-						break
-				## Verify if LUT is actually loaded?
-				# if "-c" in args:
-					# args.remove("-c")
-				# if "-I" in args:
-					# args.remove("-I")
-				# args.insert(-1, "-V")
-				# result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-				# 								low_contrast=False, 
-				# 								skip_scripts=True, silent=True)
-				# if result:
-					# result = False
-					# for line in self.worker.output:
-						# if line.find("'%s' IS loaded" % 
-									 # args[-1].encode(enc, "safe_asciize")) >= 0:
-							# result = True
-							# break
-			if install:
-				self.worker.wrapup(False)
+	def install_cal(self, capture_output=False, cal=None, profile_path=None,
+					skip_scripts=False, silent=False):
+		# Install using dispwin
+		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
+		if not isinstance(cmd, Exception):
+			result = self.worker.exec_cmd(cmd, args, capture_output, 
+										  low_contrast=False, 
+										  skip_scripts=skip_scripts, 
+										  silent=silent,
+										  title=lang.getstr("profile.install"))
+		else:
+			result = cmd
 		if not isinstance(result, Exception) and result:
-			if install:
-				if getcfg("profile.install_scope") == "l":
-					# We need a system-wide config file to store the path to 
-					# the Argyll binaries
-					result = config.makecfgdir("system", self.worker)
-					if result:
-						result = config.writecfg("system", self.worker)
-					if not result:
-						return result
-				if not silent and not gcm:
-					if verbose >= 1: safe_print(lang.getstr("success"))
+			if not silent:
+				if cal is False:
 					InfoDialog(self, 
-							   msg=lang.getstr("profile.install.success"), 
+							   msg=lang.getstr("calibration.reset_success"), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-information"),
 							   log=False)
-				# try to create autostart script to load LUT curves on login
-				n = self.worker.get_display()
-				if sys.platform == "win32":
-					# Remove outdated (pre-0.5.5.9) profile loaders
-					name = "%s Calibration Loader (Display %s)" % (appname, n)
-					if autostart_home:
-						loader_v01b = os.path.join(autostart_home, 
-												   ("dispwin-d%s-c-L" % n) + 
-												   ".lnk")
-						if os.path.exists(loader_v01b):
-							try:
-								# delete v0.1b loader
-								os.remove(loader_v01b)
-							except Exception, exception:
-								safe_print(u"Warning - could not remove old "
-										   u"v0.1b calibration loader '%s': %s" 
-										   % tuple(safe_unicode(s) for s in 
-												   (loader_v01b, exception)))
-						loader_v02b = os.path.join(autostart_home, 
-												   name + ".lnk")
-						if os.path.exists(loader_v02b):
-							try:
-								# delete v02.b/v0.2.1b loader
-								os.remove(loader_v02b)
-							except Exception, exception:
-								safe_print(u"Warning - could not remove old "
-										   u"v0.2b calibration loader '%s': %s" 
-										   % tuple(safe_unicode(s) for s in 
-												   (loader_v02b, exception)))
-						loader_v0558 = os.path.join(autostart_home, 
-													name + ".lnk")
-						if os.path.exists(loader_v0558):
-							try:
-								# delete v0.5.5.8 user loader
-								os.remove(loader_v0558)
-							except Exception, exception:
-								safe_print(u"Warning - could not remove old "
-										   u"v0.2b calibration loader '%s': %s" 
-										   % tuple(safe_unicode(s) for s in 
-												   (loader_v02b, exception)))
-					if autostart:
-						loader_v0558 = os.path.join(autostart, 
-													name + ".lnk")
-						if os.path.exists(loader_v0558):
-							try:
-								# delete v0.5.5.8 system loader
-								os.remove(loader_v0558)
-							except Exception, exception:
-								safe_print(u"Warning - could not remove old "
-										   u"v0.2b calibration loader '%s': %s" 
-										   % tuple(safe_unicode(s) for s in 
-												   (loader_v02b, exception)))
-					# Unified loader
-					name = appname + " Profile Loader"
-					if autostart:
-						autostart_lnkname = os.path.join(autostart,
-														 name + ".lnk")
-					if autostart_home:
-						autostart_home_lnkname = os.path.join(autostart_home, 
-															  name + ".lnk")
-					loader_args = []
-					if os.path.basename(sys.executable) in ("python.exe", 
-															"pythonw.exe"):
-						cmd = sys.executable
-					else:
-						# Skip 'import site'
-						loader_args += ["-S"]
-						cmd = os.path.join(pydir, "lib", "pythonw.exe")
-					loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
-																		 "dispcalGUI-apply-profiles"))]
-					try:
-						scut = pythoncom.CoCreateInstance(
-							shell.CLSID_ShellLink, 
-							None,
-							pythoncom.CLSCTX_INPROC_SERVER, 
-							shell.IID_IShellLink)
-						scut.SetPath(cmd)
-						scut.SetWorkingDirectory(pydir)
-						if isexe:
-							scut.SetIconLocation(exe, 0)
-						else:
-							scut.SetIconLocation(
-								get_data_path(os.path.join("theme", "icons", 
-														   appname + ".ico")), 
-								0)
-						scut.SetArguments(" ".join(loader_args))
-						scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
-						if is_superuser():
-							if autostart:
-								try:
-									scut.QueryInterface(
-										pythoncom.IID_IPersistFile).Save(
-											autostart_lnkname, 0)
-								except Exception, exception:
-									if not silent:
-										InfoDialog(self,
-												   msg=lang.getstr(
-													   "error.autostart_creation", 
-													   autostart) + "\n\n" + 
-													   safe_unicode(exception.args[1]), 
-												   ok=lang.getstr("ok"), 
-												   bitmap=geticon(32, 
-																  "dialog-warning"))
-									# now try user scope
-							else:
-								if not silent:
-									InfoDialog(self, 
-											   msg=lang.getstr(
-												   "error.autostart_system"), 
-											   ok=lang.getstr("ok"), 
-											   bitmap=geticon(32, 
-															  "dialog-warning"))
-						if autostart_home:
-							if (autostart and 
-								os.path.isfile(autostart_lnkname)):
-								# remove existing user loader
-								if os.path.isfile(autostart_home_lnkname):
-									os.remove(autostart_home_lnkname)
-							else:
-								# Only create user loader if no system loader
-								scut.QueryInterface(
-									pythoncom.IID_IPersistFile).Save(
-										os.path.join(autostart_home_lnkname), 0)
-						else:
-							if not silent:
-								InfoDialog(self, 
-										   msg=lang.getstr(
-											   "error.autostart_user"), 
-										   ok=lang.getstr("ok"), 
-										   bitmap=geticon(32, "dialog-warning"))
-					except Exception, exception:
-						if not silent:
-							InfoDialog(self, 
-									   msg=lang.getstr(
-										   "error.autostart_creation", 
-										   autostart_home) + "\n\n" + 
-										   safe_unicode(exception.args[1]), 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-warning"))
-				elif sys.platform != "darwin":
-					# http://standards.freedesktop.org/autostart-spec/autostart-spec-latest.html
-					# Remove outdated (pre-0.5.5.9) profile loaders
-					name = "%s-Calibration-Loader-Display-%s" % (appname, n)
-					desktopfile_path = os.path.join(autostart_home, 
-													name + ".desktop")
-					oy_desktopfile_path = os.path.join(autostart_home, 
-													   "oyranos-monitor.desktop")
-					system_desktopfile_path = os.path.join(
-						autostart, name + ".desktop")
-					# Remove old (pre-0.5.5.9) dispwin user loader
-					if os.path.exists(desktopfile_path):
-						try:
-							os.remove(desktopfile_path)
-						except Exception, exception:
-							InfoDialog(self, 
-									   msg=lang.getstr(
-										   "error.autostart_remove_old", 
-										   desktopfile_path), 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-warning"))
-					# Remove old (pre-0.5.5.9) oyranos user loader
-					if os.path.exists(oy_desktopfile_path):
-						try:
-							os.remove(oy_desktopfile_path)
-						except Exception, exception:
-							InfoDialog(self, 
-									   msg=lang.getstr(
-										   "error.autostart_remove_old", 
-										   oy_desktopfile_path), 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-warning"))
-					# Remove old (pre-0.5.5.9) dispwin system loader
-					if os.path.exists(system_desktopfile_path) and \
-					   (self.worker.exec_cmd("rm", 
-											 ["-f", 
-											  system_desktopfile_path], 
-											 capture_output=True, 
-											 low_contrast=False, 
-											 skip_scripts=True, 
-											 silent=False, 
-											 asroot=True, 
-											 title=lang.getstr("autostart_remove_old")) 
-						is not True) and not silent:
-						InfoDialog(self, 
-								   msg=lang.getstr(
-									   "error.autostart_remove_old", 
-									   system_desktopfile_path), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-warning"))
-					if gcm:
-						# Run gcm-import or gcm-prefs
-						gcm_args = " ".join('"%s"' % gcm_arg for gcm_arg in gcm_args)
-						safe_print('%s %s &' % (gcm_cmd, gcm_args))
-						sp.call(('%s %s &' % (gcm_cmd, 
-											  gcm_args)).encode(fs_enc), 
-								shell=True)
-					# Unified loader
-					# Prepend 'z' so our loader hopefully loads after
-					# possible nvidia-settings entry (which resets gamma table)
-					name = "z-%s-apply-profiles" % appname
-					desktopfile_path = os.path.join(autostart_home, 
-													name + ".desktop")
-					system_desktopfile_path = os.path.join(
-						autostart, name + ".desktop")
-					if not os.path.exists(system_desktopfile_path) and \
-					   not os.path.exists(desktopfile_path):
-						try:
-							# Create user loader, even if we later try to 
-							# move it to the system-wide location so that atleast 
-							# the user loader is present if the move to the system 
-							# dir fails
-							if not os.path.exists(autostart_home):
-								os.makedirs(autostart_home)
-							desktopfile = open(desktopfile_path, "w")
-							desktopfile.write('[Desktop Entry]\n')
-							desktopfile.write('Version=1.0\n')
-							desktopfile.write('Encoding=UTF-8\n')
-							desktopfile.write('Type=Application\n')
-							desktopfile.write('Name=%s\n' % (appname + 
-															 ' Profile Loader').encode("UTF-8"))
-							desktopfile.write('Comment=%s\n' % 
-											  lang.getstr("calibrationloader.description", 
-														  lcode="en").encode("UTF-8"))
-							if lang.getcode() != "en":
-								desktopfile.write(('Comment[%s]=%s\n' % 
-												   (lang.getcode(),
-													lang.getstr("calibrationloader.description"))).encode("UTF-8"))
-							desktopfile.write('Icon=%s\n' % appname.encode("UTF-8"))
-							desktopfile.write('Exec=%s-apply-profiles\n' % appname.encode("UTF-8"))
-							desktopfile.write('Terminal=false\n')
-							desktopfile.close()
-						except Exception, exception:
-							if not silent:
-								InfoDialog(self, 
-										   msg=lang.getstr(
-											   "error.autostart_creation", 
-											   desktopfile_path) + "\n\n" + 
-											   safe_unicode(exception), 
-										   ok=lang.getstr("ok"), 
-										   bitmap=geticon(32, "dialog-warning"))
-						else:
-							if getcfg("profile.install_scope") == "l" and autostart:
-								# move system-wide loader
-								if (self.worker.exec_cmd("mkdir", 
-														 ["-p", autostart], 
-														 capture_output=True, 
-														 low_contrast=False, 
-														 skip_scripts=True, 
-														 silent=True, 
-														 asroot=True) is not True or 
-									self.worker.exec_cmd("mv", 
-														 ["-f", 
-														  desktopfile_path, 
-														  system_desktopfile_path], 
-														 capture_output=True, 
-														 low_contrast=False, 
-														 skip_scripts=True, 
-														 silent=True, 
-														 asroot=True) is not True) and \
-								   not silent:
-									InfoDialog(self, 
-											   msg=lang.getstr(
-												   "error.autostart_creation", 
-												   system_desktopfile_path), 
-											   ok=lang.getstr("ok"), 
-											   bitmap=geticon(32, "dialog-warning"))
-			else:
-				if not silent:
-					if cal is False:
-						InfoDialog(self, 
-								   msg=lang.getstr("calibration.reset_success"), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"),
-								   log=False)
-					else:
-						InfoDialog(self, 
-								   msg=lang.getstr("calibration.load_success"), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"),
-								   log=False)
-		elif not silent:
-			if install:
-				if result is not None:
-					if verbose >= 1: safe_print(lang.getstr("failure"))
-					InfoDialog(self, msg=lang.getstr("profile.install.error"), 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"), log=False)
-			else:
-				if cal is False:
-					InfoDialog(self, 
-							   msg=lang.getstr("calibration.reset_error"), 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"), log=False)
 				else:
-					InfoDialog(self, msg=lang.getstr("calibration.load_error"), 
+					InfoDialog(self, 
+							   msg=lang.getstr("calibration.load_success"), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"), log=False)
-		if debug:
-			safe_print("[D] install_profile.silent:", silent)
-			safe_print("[D] install_profile.install:", install)
-			safe_print("[D] install_profile.result:", result)
-			safe_print("[D] install_profile.cal:", cal)
+							   bitmap=geticon(32, "dialog-information"),
+							   log=False)
+		elif not silent:
+			if cal is False:
+				InfoDialog(self, 
+						   msg=lang.getstr("calibration.reset_error"), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"), log=False)
+			else:
+				InfoDialog(self, msg=lang.getstr("calibration.load_error"), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"), log=False)
 		return result
 	
 	def update_profile_verification_report(self, event=None):
@@ -5260,9 +4662,8 @@ class MainFrame(BaseFrame):
 				if verbose >= 1: ## and silent:
 					safe_print(lang.getstr("calibration.loading"))
 					safe_print(cal)
-				if self.install_profile(capture_output=True, cal=cal, 
-										install=False, skip_scripts=True, 
-										silent=silent) is True:
+				if self.install_cal(capture_output=True, cal=cal, 
+									skip_scripts=True, silent=silent) is True:
 					self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
 											 cal.lower().endswith(".icc") or 
 											 cal.lower().endswith(".icm") else 
@@ -5278,9 +4679,8 @@ class MainFrame(BaseFrame):
 		if check_set_argyll_bin():
 			if verbose >= 1: ## and event is None:
 				safe_print(lang.getstr("calibration.resetting"))
-			if self.install_profile(capture_output=True, cal=False, 
-									install=False, skip_scripts=True, 
-									silent=True) is True: ## event is None or (
+			if self.install_cal(capture_output=True, cal=False, 
+								skip_scripts=True, silent=True) is True: ## event is None or (
 										## getattr(self, "lut_viewer", None) and 
 										## self.lut_viewer.IsShownOnScreen())):
 				self.lut_viewer_load_lut(profile=None)
@@ -5299,9 +4699,8 @@ class MainFrame(BaseFrame):
 					lang.getstr("calibration.loading_from_display_profile"))
 				if profile and profile.fileName:
 					safe_print(profile.fileName)
-			if self.install_profile(capture_output=True, cal=True, 
-									install=False, skip_scripts=True, 
-									silent=True) is True: ## event is None or (
+			if self.install_cal(capture_output=True, cal=True, 
+								skip_scripts=True, silent=True) is True: ## event is None or (
 										## getattr(self, "lut_viewer", None) and 
 										## self.lut_viewer.IsShownOnScreen())):
 				self.lut_viewer_load_lut(profile=profile)
@@ -5941,9 +5340,10 @@ class MainFrame(BaseFrame):
 		if result == wx.ID_OK:
 			safe_print("-" * 80)
 			safe_print(lang.getstr("profile.install"))
-			self.install_profile(capture_output=True, 
-								 profile_path=self.modaldlg.profile_path, 
-								 skip_scripts=self.modaldlg.skip_scripts)
+			result = self.worker.install_profile(profile_path=self.modaldlg.profile_path, 
+												 skip_scripts=self.modaldlg.skip_scripts)
+			if isinstance(result, Exception):
+				show_result_dialog(result, parent=self.modaldlg)
 		elif self.modaldlg.preview:
 			if getcfg("calibration.file"):
 				# Load LUT curves from last used .cal file
