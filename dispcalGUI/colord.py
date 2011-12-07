@@ -8,6 +8,7 @@ import shutil
 from time import sleep, time
 
 from gtypes import GError, gchar_p
+from defaultpaths import xdg_data_home
 
 
 CD_DEVICE_RELATION_HARD = 2
@@ -92,8 +93,7 @@ def cd_install_profile(device_key, profile_filename, profile_installname=None,
 
 	# Copy profile
 	if not profile_installname:
-		profile_installname = os.path.join(os.path.expanduser('~'),
-										   '.local', 'share', 'icc',
+		profile_installname = os.path.join(xdg_data_home, 'icc',
 										   os.path.basename(profile_filename))
 	shutil.copyfile(profile_filename, profile_installname)
 	
