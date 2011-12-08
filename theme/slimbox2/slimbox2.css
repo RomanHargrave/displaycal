@@ -22,6 +22,8 @@
 }
 
 .lbLoading {
+}
+.lbLoading:before {
     background: #fff;
 
     -moz-border-radius: 8px;
@@ -32,13 +34,10 @@
 	-webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, .25);
 	box-shadow: 0 1px 5px rgba(0, 0, 0, .25);
 
-    height: 22px !important;
-    padding: 1em;
-    text-align: center;
-}
-.lbLoading:before {
     color: rgba(0, 0, 0, .5);
     content: 'Loading image, please wait...';
+    height: 22px !important;
+    padding: 1em;
     text-align: center;
 	text-shadow: 0 1px 1px rgba(0, 0, 0, .125);
 }
@@ -98,11 +97,11 @@
 }
 
 #lbPrevLink {
-	right: 198px;
+	right: 185px;
 }
 
 #lbNextLink {
-	right: 75px;
+	right: 65px;
 }
 
 #lbBottom {
@@ -133,9 +132,10 @@
 
 #lbNumber {
     position: absolute;
-    right: 155px;
+    right: 130px;
     text-align: center;
     top: 10px;
+    width: 50px;
 }
 
 #lbCaption {

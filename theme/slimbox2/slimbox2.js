@@ -36,16 +36,8 @@
 
 (function($) {
 
-	// Global variables, accessible to Slimbox only
-	var win = $(window), options, images, activeImage = -1, activeURL, prevImage, nextImage, compatibleOverlay, middle, centerWidth, centerHeight,
-		maxWidth, maxHeight, slideWidth, slideHeight, slideInterval,
-		ie6 = !window.XMLHttpRequest, hiddenElements = [], documentElement = document.documentElement,
-
-	// Preload images
-	preload = {}, preloadPrev = new Image(), preloadNext = new Image(),
-
 	// DOM elements
-	overlay, center, image, slide, sizer, prevLink, nextLink, playLink, pauseLink, bottomContainer, bottom, caption, number;
+	var overlay, center, image, slide, sizer, prevLink, nextLink, playPauseLink, closeBtn, bottomContainer, bottom, caption, number;
 	
 
 	/*
@@ -62,18 +54,18 @@
 			]).css("display", "none")
 		);
 
-		image = $('<div id="lbImage" />').click(next).appendTo(center).append(
+		image = $('<div id="lbImage" />').appendTo(center).append(
 			sizer = $('<div style="position: absolute;" />').append([
 				slide    = $('<img id="lbSlide" alt="" />')[0]
 			])[0]
 		)[0];
 
 		bottom = $('<div id="lbBottom" />').appendTo(bottomContainer).append([
-			$('<a id="lbCloseLink" href="#">Close</a>').add(overlay).click(close)[0],
+			closeBtn = $('<a id="lbCloseLink" href="#">Close</a>')[0],
 			caption = $('<div id="lbCaption" />')[0],
 			number = $('<div id="lbNumber" />')[0],
-			prevLink = $('<a id="lbPrevLink" href="#">Prev</a>').click(previous)[0],
-			nextLink = $('<a id="lbNextLink" href="#">Next</a>').click(next)[0],
+			prevLink = $('<a id="lbPrevLink" href="#">Prev</a>')[0],
+			nextLink = $('<a id="lbNextLink" href="#">Next</a>')[0],
 			playPauseLink  = $('<div id="lbPlayPauseLink" class="lbPlay"  />').hide()[0],
 			$('<div style="clear: both;" />')[0]
 		])[0];
@@ -86,7 +78,170 @@
 
 	// Open Slimbox with the specified parameters
 	$.slimbox = function(_images, startImage, _options) {
+
+		// Global variables, accessible to Slimbox only
+		var win = $(window), options, images, activeImage = -1, activeURL, prevImage, nextImage, compatibleOverlay, middle, centerWidth, centerHeight,
+			maxWidth, maxHeight, slideWidth, slideHeight, slideInterval,
+			ie6 = !window.XMLHttpRequest, hiddenElements = [], documentElement = document.documentElement,
+
+		// Preload images
+		preload = {}, preloadPrev = new Image(), preloadNext = new Image();
+
+
+		/*
+			Internal functions
+		*/
+
+		function position() {
+			var l = win.scrollLeft(), w = win.width();
+			$([center, bottomContainer]).css("left", l + (w / 2));
+			if (compatibleOverlay) $(overlay).css({left: l, top: win.scrollTop(), width: w, height: win.height()});
+		};
+
+		function setup(open) {
+			if (open) {
+				$("object").add(ie6 ? "select" : "embed").each(function(index, el) {
+					hiddenElements[index] = [el, el.style.visibility];
+					el.style.visibility = "hidden";
+				});
+			} else {
+				$.each(hiddenElements, function(index, el) {
+					el[0].style.visibility = el[1];
+				});
+				hiddenElements = [];
+			}
+			var fn = open ? "bind" : "unbind";
+			win[fn]("scroll resize", position);
+			$(document)[fn]("keydown", keyDown);
+		};
+
+		function keyDown(event) {
+			var code = event.keyCode, fn = $.inArray;
+			// Prevent default keyboard action (like navigating inside the page)
+			return (fn(code, options.closeKeys) >= 0) ? close()
+				: (fn(code, options.nextKeys) >= 0) ? next()
+				: (fn(code, options.previousKeys) >= 0) ? previous()
+				: false;
+		};
+
+		function previous() {
+			return changeImage(prevImage);
+		};
+
+		function next() {
+			if (nextImage < 0) return close();
+			return changeImage(nextImage);
+		};
+
+		function changeImage(imageIndex) {
+			if (imageIndex >= 0) {
+				activeImage = imageIndex;
+				activeURL = images[activeImage][0];
+				prevImage = (activeImage || (options.loop ? images.length : 0)) - 1;
+				nextImage = ((activeImage + 1) % images.length) || (options.loop ? 0 : -1);
+
+				stop();
+				center.className = "lbBeforeLoading";
+				setTimeout(function () {
+					// Only show the loading message if the image takes longer than one fourth of a second to load
+					if (center.className == "lbBeforeLoading") center.className = "lbLoading";
+				}, 250);
+
+				preload = new Image();
+				preload.onload = animateBox;
+				preload.src = activeURL;
+			}
+
+			return false;
+		};
+
+		function animateBox() {
+			center.className = "";
+			
+			slideWidth    = options.slideWidth || "100%";
+			slideHeight   = options.slideHeight || "100%";
+
+			var borderWidth = 10, captionHeight = 42;
+			if (typeof maxWidth  == "string" && maxWidth.match(/%$/))
+				maxWidth  = win.width()  * 0.01 * parseFloat(maxWidth) - borderWidth * 2;
+			if (typeof maxHeight == "string" && maxHeight.match(/%$/))
+				maxHeight = win.height() * 0.01 * parseFloat(maxHeight) - borderWidth * 2 - captionHeight;
+			if (typeof slideWidth  == "string" && slideWidth.match(/%$/))
+				slideWidth  = preload.width  * 0.01 * parseFloat(slideWidth);
+			if (typeof slideHeight == "string" && slideHeight.match(/%$/))
+				slideHeight = preload.height * 0.01 * parseFloat(slideHeight);
+			if (slideWidth > maxWidth || slideHeight > maxHeight) {
+				var factor = Math.min(maxWidth / slideWidth, maxHeight / slideHeight);
+				slideWidth  *= factor;
+				slideHeight *= factor;
+			}
+
+			$(slide).attr({src: activeURL});
+			$(image).css({visibility: "hidden", display: ""});
+			$([image, sizer, slide]).width(slideWidth);
+			$([image, sizer, slide]).height(slideHeight);
+
+			$(caption).html(images[activeImage][1] || "");
+			$(number).html((images.length > 1 ? options.counterText : "").replace(/{x}/, activeImage + 1).replace(/{y}/, images.length));
+
+			if (prevImage >= 0) preloadPrev.src = images[prevImage][0];
+			if (nextImage >= 0) preloadNext.src = images[nextImage][0];
+
+			centerWidth = image.offsetWidth;
+			centerHeight = image.offsetHeight;
+			var top = Math.max(0, middle - ((centerHeight + captionHeight) / 2));
+			if (center.offsetHeight != centerHeight) {
+				$(center).animate({height: centerHeight, top: top}, options.resizeDuration, options.resizeEasing);
+			}
+			if (center.offsetWidth != centerWidth) {
+				$(center).animate({width: centerWidth, marginLeft: -centerWidth/2}, options.resizeDuration, options.resizeEasing);
+			}
+			$(center).queue(function() {
+				$(bottomContainer).css({width: centerWidth, top: top + centerHeight, marginLeft: -centerWidth/2, visibility: "hidden", display: ""});
+				$(image).css({display: "none", visibility: "", opacity: ""}).fadeIn(options.imageFadeDuration, animateCaption);
+			});
+		};
+
+		function animateCaption() {
+			if (prevImage >= 0) $(prevLink).show();
+			if (nextImage >= 0) $(nextLink).show();
+			$(bottom).css("marginTop", -bottom.offsetHeight).animate({marginTop: 0}, options.captionAnimationDuration);
+			bottomContainer.style.visibility = "";
+		};
+
+		function stop() {
+			preload.onload = null;
+			preload.src = preloadPrev.src = preloadNext.src = activeURL;
+			$([center, image, bottom]).stop(true);
+			$([prevLink, nextLink, image, bottomContainer]).hide();
+		};
+
+		function close() {
+			if (activeImage >= 0) {
+				stop();
+				activeImage = prevImage = nextImage = -1;
+				$(center).hide();
+				$(overlay).stop().fadeOut(options.overlayFadeDuration, setup);
+			}
+			
+			var $playPauseLink = $(playPauseLink);
+			if ($playPauseLink.data('ppHandler') != -1) {
+				clearInterval($playPauseLink.data('ppHandler'));
+				$playPauseLink.data('ppHandler', -1);
+				$playPauseLink.removeClass('lbPause').addClass('lbPlay');
+			}
+
+			return false;
+		};
+
+		$(overlay).unbind('click').click(close);
+		$(image).unbind('click').click(next);
+		$(closeBtn).unbind('click').click(close);
+		$(prevLink).unbind('click').click(previous);
+		$(nextLink).unbind('click').click(next);
+
 		options = $.extend({
+			filterDuplicates: false,	// Filter duplicates
 			loop: false,				// Allows to navigate between first and last images
 			overlayOpacity: 0.9,			// 1 is opaque, 0 is completely transparent (change the color in the CSS file)
 			overlayFadeDuration: 400,		// Duration of the overlay fade-in and fade-out animations (in milliseconds)
@@ -171,6 +326,7 @@
 
 		var links = this;
 		options = $.extend({
+			filterDuplicates: false,
 			slideInterval: 0			// Interval between flipping slides (in seconds), 0 means no automation.
 		}, _options);
 		
@@ -182,7 +338,7 @@
 				if (!uris[this.href]) uris[this.href] = 0;
 				uris[this.href] ++;
 				return uris[this.href] == 1;
-			}, filteredLinks = links.filter(duplicatesFilter);
+			}, filteredLinks = options.filterDuplicates ? links.filter(duplicatesFilter) : links;
 			
 			// Build the list of images that will be displayed
 			var link = this, startIndex = 0, i = 0, length;
@@ -200,165 +356,22 @@
 		});
 	};
 
-
-	/*
-		Internal functions
-	*/
-
-	function position() {
-		var l = win.scrollLeft(), w = win.width();
-		$([center, bottomContainer]).css("left", l + (w / 2));
-		if (compatibleOverlay) $(overlay).css({left: l, top: win.scrollTop(), width: w, height: win.height()});
-	}
-
-	function setup(open) {
-		if (open) {
-			$("object").add(ie6 ? "select" : "embed").each(function(index, el) {
-				hiddenElements[index] = [el, el.style.visibility];
-				el.style.visibility = "hidden";
-			});
-		} else {
-			$.each(hiddenElements, function(index, el) {
-				el[0].style.visibility = el[1];
-			});
-			hiddenElements = [];
-		}
-		var fn = open ? "bind" : "unbind";
-		win[fn]("scroll resize", position);
-		$(document)[fn]("keydown", keyDown);
-	}
-
-	function keyDown(event) {
-		var code = event.keyCode, fn = $.inArray;
-		// Prevent default keyboard action (like navigating inside the page)
-		return (fn(code, options.closeKeys) >= 0) ? close()
-			: (fn(code, options.nextKeys) >= 0) ? next()
-			: (fn(code, options.previousKeys) >= 0) ? previous()
-			: false;
-	}
-
-	function previous() {
-		return changeImage(prevImage);
-	}
-
-	function next() {
-		if (nextImage < 0) return close();
-		return changeImage(nextImage);
-	}
-
-	function changeImage(imageIndex) {
-		if (imageIndex >= 0) {
-			activeImage = imageIndex;
-			activeURL = images[activeImage][0];
-			prevImage = (activeImage || (options.loop ? images.length : 0)) - 1;
-			nextImage = ((activeImage + 1) % images.length) || (options.loop ? 0 : -1);
-
-			stop();
-			center.className = "lbBeforeLoading";
-			setTimeout(function () {
-				// Only show the loading message if the image takes longer than one fourth of a second to load
-				if (center.className == "lbBeforeLoading") center.className = "lbLoading";
-			}, 250);
-
-			preload = new Image();
-			preload.onload = animateBox;
-			preload.src = activeURL;
-		}
-
-		return false;
-	}
-
-	function animateBox() {
-		center.className = "";
-        
-		slideWidth    = options.slideWidth || "100%";
-		slideHeight   = options.slideHeight || "100%";
-
-        var borderWidth = 10, captionHeight = 42;
-		if (typeof maxWidth  == "string" && maxWidth.match(/%$/))
-			maxWidth  = win.width()  * 0.01 * parseFloat(maxWidth) - borderWidth * 2;
-		if (typeof maxHeight == "string" && maxHeight.match(/%$/))
-			maxHeight = win.height() * 0.01 * parseFloat(maxHeight) - borderWidth * 2 - captionHeight;
-		if (typeof slideWidth  == "string" && slideWidth.match(/%$/))
-			slideWidth  = preload.width  * 0.01 * parseFloat(slideWidth);
-		if (typeof slideHeight == "string" && slideHeight.match(/%$/))
-			slideHeight = preload.height * 0.01 * parseFloat(slideHeight);
-        if (slideWidth > maxWidth || slideHeight > maxHeight) {
-			var factor = Math.min(maxWidth / slideWidth, maxHeight / slideHeight);
-            slideWidth  *= factor;
-            slideHeight *= factor;
-		}
-
-		$(slide).attr({src: activeURL});
-		$(image).css({visibility: "hidden", display: ""});
-		$([image, sizer, slide]).width(slideWidth);
-		$([image, sizer, slide]).height(slideHeight);
-
-		$(caption).html(images[activeImage][1] || "");
-		$(number).html((((images.length > 1) && options.counterText) || "").replace(/{x}/, activeImage + 1).replace(/{y}/, images.length));
-
-		if (prevImage >= 0) preloadPrev.src = images[prevImage][0];
-		if (nextImage >= 0) preloadNext.src = images[nextImage][0];
-
-		centerWidth = image.offsetWidth;
-		centerHeight = image.offsetHeight;
-		var top = Math.max(0, middle - ((centerHeight + captionHeight) / 2));
-		if (center.offsetHeight != centerHeight) {
-			$(center).animate({height: centerHeight, top: top}, options.resizeDuration, options.resizeEasing);
-		}
-		if (center.offsetWidth != centerWidth) {
-			$(center).animate({width: centerWidth, marginLeft: -centerWidth/2}, options.resizeDuration, options.resizeEasing);
-		}
-		$(center).queue(function() {
-			$(bottomContainer).css({width: centerWidth, top: top + centerHeight, marginLeft: -centerWidth/2, visibility: "hidden", display: ""});
-			$(image).css({display: "none", visibility: "", opacity: ""}).fadeIn(options.imageFadeDuration, animateCaption);
-		});
-	}
-
-	function animateCaption() {
-		if (prevImage >= 0) $(prevLink).show();
-		if (nextImage >= 0) $(nextLink).show();
-		$(bottom).css("marginTop", -bottom.offsetHeight).animate({marginTop: 0}, options.captionAnimationDuration);
-		bottomContainer.style.visibility = "";
-	}
-
-	function stop() {
-		preload.onload = null;
-		preload.src = preloadPrev.src = preloadNext.src = activeURL;
-		$([center, image, bottom]).stop(true);
-		$([prevLink, nextLink, image, bottomContainer]).hide();
-	}
-
-	function close() {
-		if (activeImage >= 0) {
-			stop();
-			activeImage = prevImage = nextImage = -1;
-			$(center).hide();
-			$(overlay).stop().fadeOut(options.overlayFadeDuration, setup);
-		}
-		
-		var $playPauseLink = $(playPauseLink);
-		if ($playPauseLink.data('ppHandler') != -1) {
-			clearInterval($playPauseLink.data('ppHandler'));
-			$playPauseLink.data('ppHandler', -1);
-			$playPauseLink.removeClass('lbPause').addClass('lbPlay');
-		}
-
-		return false;
-	}
-
 })(jQuery);
 
-function slimbox_init($) {
-  $("a[rel^='lightbox'], a[href$='.gif'], a[href$='.jpg'], a[href$='.jpeg'], a[href$='.png']").each(function () {
+function slimbox_init($, container) {
+  $(container || 'body').find("a[rel^='lightbox'], a[href$='.gif'], a[href$='.jpg'], a[href$='.jpeg'], a[href$='.png']").filter(function () {
+	return $(this).attr('slimbox') != 'slimbox';
+  }).each(function () {
+	  $(this).attr('slimbox', 'slimbox');
 	  if (!this.title) {
 		  var img = $(this).find('img');
 		  if (img.length) {
 			  this.title = img.attr('title') || img.attr('alt') || img.attr('src').split('/').pop();
 			  img.attr('title', null);
 		  }
+		  else this.title = $(this).text();
 	  }
-  }).slimbox({/* Put custom options here */}, null, function(el) {
+  }).slimbox({filterDuplicates: true}, null, function(el) {
     return this == el || (this.rel.length > 8 && this.rel == el.rel);
   });
 };

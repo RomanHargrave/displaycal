@@ -30,6 +30,14 @@ Files: theme/jquery.min.js
 Copyright: 2010-${YEAR}, the jQuery Project
 License: MIT-style
 
+Files: theme/jquery.localscroll-min.js
+Copyright: 2007-${YEAR}, Ariel Flesler
+License: MIT-style
+
+Files: theme/jquery.scrollTo-min.js
+Copyright: 2007-${YEAR}, Ariel Flesler
+License: MIT-style
+
 Files: theme/slimbox2/*
 Copyright: 2007-2010, Christophe Beyls
 License: MIT-style

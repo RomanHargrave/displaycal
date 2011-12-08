@@ -96,6 +96,7 @@ jQuery(function ($) {
 });
 
 jQuery(window).load(function () {
-	/* Fix scroll position */
-	if (location.hash) location.hash = location.hash;
+	/* Anchor scroll effect */
+	$.localScroll({hash: true, filter: ':not(a[href="#info"], #toc li:has(ul) > a)'});
+	$.localScroll.hash();
 });
