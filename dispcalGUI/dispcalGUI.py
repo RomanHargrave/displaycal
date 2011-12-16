@@ -357,7 +357,7 @@ def upload_colorimeter_correction(parent=None, params=None):
 	path = "/colorimetercorrections/index.php"
 	failure_msg = lang.getstr("colorimeter_correction.upload.failure")
 	# Check for duplicate
-	data = http_request(parent, domain, "POST", path, 
+	data = http_request(parent, domain, "GET", path, 
 						{"get": True, "hash": md5(safe_str(params['cgats'],
 														   "UTF-8").strip()).hexdigest()},
 						silent=True)
@@ -403,6 +403,8 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 	if headers is None:
 		if request_type == "GET":
 			headers = {}
+			path += '?' + params
+			params = None
 		else:
 			if files:
 				headers = {"Content-Type": content_type,
@@ -5603,7 +5605,7 @@ class MainFrame(BaseFrame):
 		self.worker.start(colorimeter_correction_web_check_choose, 
 						  http_request, 
 						  ckwargs={"parent": self}, 
-						  wargs=(self, domain, "POST",
+						  wargs=(self, domain, "GET",
 								 "/colorimetercorrections/index.php", params),
 						  progress_msg=lang.getstr("colorimeter_correction.web_check"),
 						  stop_timers=False)
