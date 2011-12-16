@@ -2228,7 +2228,7 @@ class ICCProfile:
 							   prefix + "date": "%0.4i-T%i" %
 											(edid.get("year_of_manufacture", 0),
 											 edid.get("week_of_manufacture", 0)),
-							   prefix + "mnft_id": struct.unpack("<H",
+							   prefix + "mnft_id": struct.unpack(">H",
 															 edid.get("edid",
 																	  "\0\0")[8:10])[0],
 							   prefix + "model_id": edid.get("product_id", 0),
