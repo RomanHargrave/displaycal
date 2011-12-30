@@ -454,7 +454,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 				sp.call(lines[-1], shell = True)  # fix the library
 	else:
 		macros = [("UNIX", None)]
-		libraries = ["Xinerama", "Xrandr", "Xxf86vm"]
+		libraries = ["X11", "Xinerama", "Xrandr", "Xxf86vm"]
 		link_args = None
 	if sys.platform == "darwin":
 		extname = "%s.lib.RealDisplaySizeMM" % name
