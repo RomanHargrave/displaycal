@@ -3624,6 +3624,10 @@ class MainFrame(BaseFrame):
 			elif meta is True and self.worker.get_display_edid():
 				# Add new meta information based on EDID
 				profile.set_edid_metadata(self.worker.get_display_edid())
+				# Set OPENICC_automatic_generated to "0"
+				profile.tags.meta["OPENICC_automatic_generated"] = "0"
+				# Set GCM DATA_source to "calib"
+				profile.tags.meta["DATA_source"] = "calib"
 				# Add instrument
 				profile.tags.meta["measurement_device"] = self.worker.get_instrument_name()
 			# Make sure meta tag exists
@@ -3667,7 +3671,9 @@ class MainFrame(BaseFrame):
 					# Check for EDID metadata
 					metadata = profile.tags.meta
 					if (not "EDID_model" in metadata or
-						not "EDID_manufacturer" in metadata):
+					    not metadata["EDID_model"].strip() or
+						not "EDID_mnft_id" in metadata or
+					    not metadata["EDID_mnft_id"].strip()):
 						return lang.getstr("profile.share.meta_missing")
 		else:
 			return lang.getstr("profile.share.meta_missing")
@@ -3915,9 +3921,9 @@ class MainFrame(BaseFrame):
 		metadata["display_panel_surface"] = panel
 		metadata["display_connection_type"] = dlg.connection_ctrl.GetValue()
 		for ctrl in display_settings_ctrls:
-			if isinstance(ctrl, wx.TextCtrl):
+			if isinstance(ctrl, wx.TextCtrl) and ctrl.GetValue().strip():
 				metadata["OSD_settings_%s" %
-						 re.sub("[ .]", "_", ctrl.Name)] = ctrl.GetValue()
+						 re.sub("[ .]", "_", ctrl.Name)] = ctrl.GetValue().strip()
 		# Calculate profile ID
 		profile.calculateID()
 		# Save profile

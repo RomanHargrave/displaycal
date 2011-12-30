@@ -31,6 +31,7 @@ if sys.platform == "win32":
 import colormath
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
+from meta import version
 from ordereddict import OrderedDict
 try:
 	from log import safe_print
@@ -2126,6 +2127,8 @@ class ICCProfile:
 				gamma = [gamma]
 			profile.tags[tagname].extend(gamma)
 		profile.set_edid_metadata(edid)
+		profile.tags.meta["OPENICC_automatic_generated"] = "1"
+		profile.tags.meta["DATA_source"] = "edid"
 		return profile
 	
 	def getCopyright(self):
@@ -2207,40 +2210,51 @@ class ICCProfile:
 		"""
 		self.__init__(profile)
 	
-	def set_edid_metadata(self, edid, prefix = "EDID_"):
+	def set_edid_metadata(self, edid):
 		"""
 		Sets metadata from EDID
 		
 		Key names follow the examples provided by OpenICC Configuration 0.1 DRAFT 1
 		http://www.oyranos.org/wiki/index.php?title=OpenICC_Configuration_0.1
+		and the GNOME Color Manager metadata specification
+		http://gitorious.org/colord/master/blobs/master/doc/metadata-spec.txt
 		
 		"""
 		if not "meta" in self.tags:
 			self.tags.meta = DictType()
-		prefixes = (self.tags.meta.getvalue("prefix", "", None) or prefix).split(",")
-		if not prefix in prefixes:
-			prefixes.append(prefix)
+		spec_prefixes = "EDID_,CMF_,DATA_"
+		prefixes = (self.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
+		for prefix in spec_prefixes.split(","):
+			if not prefix in prefixes:
+				prefixes.append(prefix)
+		# OpenICC keys
 		self.tags.meta.update({"prefix": ",".join(prefixes),
-							   prefix + "manufacturer": edid.get("manufacturer", ""),
-							   prefix + "mnft": edid.get("manufacturer_id", ""),
-							   prefix + "model": edid.get("monitor_name", ""),
-							   prefix + "serial": edid.get("serial_ascii", ""),
-							   prefix + "date": "%0.4i-T%i" %
-											(edid.get("year_of_manufacture", 0),
-											 edid.get("week_of_manufacture", 0)),
-							   prefix + "mnft_id": struct.unpack(">H",
-															 edid.get("edid",
-																	  "\0\0")[8:10])[0],
-							   prefix + "model_id": edid.get("product_id", 0),
-							   prefix + "redx": edid.get("red_x", 0.0),
-							   prefix + "redy": edid.get("red_y", 0.0),
-							   prefix + "greenx": edid.get("green_x", 0.0),
-							   prefix + "greeny": edid.get("green_y", 0.0),
-							   prefix + "bluex": edid.get("blue_x", 0.0),
-							   prefix + "bluey": edid.get("blue_y", 0.0),
-							   prefix + "whitex": edid.get("white_x", 0.0),
-							   prefix + "whitey": edid.get("white_y", 0.0),
-							   prefix + "gamma": edid.get("gamma", "")})
+							   "EDID_manufacturer": edid["manufacturer"],
+							   "EDID_mnft": edid["manufacturer_id"],
+							   "EDID_model": edid.get("monitor_name",
+														  str(edid["product_id"])),
+							   "EDID_serial": edid.get("serial_ascii",
+														   str(edid["serial_32"])),
+							   "EDID_date": "%0.4i-T%i" %
+											(edid["year_of_manufacture"],
+											 edid["week_of_manufacture"]),
+							   "EDID_mnft_id": struct.unpack(">H",
+															 edid["edid"][8:10])[0],
+							   "EDID_model_id": edid["product_id"],
+							   "EDID_redx": edid["red_x"],
+							   "EDID_redy": edid["red_y"],
+							   "EDID_greenx": edid["green_x"],
+							   "EDID_greeny": edid["green_y"],
+							   "EDID_bluex": edid["blue_x"],
+							   "EDID_bluey": edid["blue_y"],
+							   "EDID_whitex": edid["white_x"],
+							   "EDID_whitey": edid["white_y"],
+							   "EDID_gamma": edid["gamma"],
+							   # GCM keys
+							   "EDID_md5": edid["hash"],
+							   "CMF_product": "dispcalGUI",
+							   "CMF_binary": "dispcalGUI",
+							   "CMF_version": version})
 	
 	def write(self, stream_or_filename=None):
 		"""
