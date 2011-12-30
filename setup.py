@@ -305,6 +305,7 @@ def setup():
 				strftime("%Y-%m-%d", 
 						 gmtime(lastmod_time or 
 								os.stat(readme_template_path).st_mtime))),
+			("SUMMARY", description),
 			("TIME", 
 				strftime("%H:%M", 
 						 gmtime(lastmod_time or 
