@@ -312,7 +312,7 @@
 	"profile.set_save_path": "Choose save path...",
 	"profile.settings": "Profiling settings",
 	"profile.share": "Upload profile...",
-	"profile.share.avg_dE_too_high": "The profile yields a too high delta E (actual = %.2f, threshold = %.2f).",
+	"profile.share.avg_dE_too_high": "The profile yields a too high delta E (actual = %s, threshold = %s).",
 	"profile.share.meta_missing": "The profile does not contain the necessary meta information.",
 	"profile.share.enter_info": "You may share your profile with other users via the OpenSUSE “ICC Profile Taxi” service.\n\nPlease provide a meaningful description and enter display device properties below. Read display device settings from your display device's OSD and only enter settings applicable to your display device which have changed from defaults.\nExample: For most display devices, these are the name of the chosen preset, brightness, contrast, color temperature and/or whitepoint RGB gains, as well as gamma. On laptops and notebooks, usually only the brightness. If you have changed additional settings while calibrating your display device, enter them too if possible.",
 	"profile.share.success": "Profile uploaded successfully.",

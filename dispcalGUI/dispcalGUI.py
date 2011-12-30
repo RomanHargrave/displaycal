@@ -3666,7 +3666,7 @@ class MainFrame(BaseFrame):
 				threshold = 1.0
 				if avg_dE76 and avg_dE76 > threshold:
 					return lang.getstr("profile.share.avg_dE_too_high",
-									   (avg_dE76, threshold))
+									   ("%.2f" % avg_dE76, "%.2f" % threshold))
 				else:
 					# Check for EDID metadata
 					metadata = profile.tags.meta
