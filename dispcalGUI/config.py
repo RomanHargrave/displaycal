@@ -321,7 +321,9 @@ def runtimeconfig(pyfile):
 			data_dirs.insert(1, pydir_parent)
 		runtype = pyext
 	for dir_ in sys.path:
-		dir_ = os.path.abspath(os.path.join(unicode(dir_, fs_enc), appname))
+		if not isinstance(dir_, unicode):
+			dir_ = unicode(dir_, fs_enc)
+		dir_ = os.path.abspath(os.path.join(dir_, appname))
 		if dir_ not in data_dirs and os.path.isdir(dir_):
 			data_dirs.append(dir_)
 			if debug:
