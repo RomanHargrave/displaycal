@@ -238,13 +238,13 @@ class CGATS(dict):
 			return self.get(name)
 		raise CGATSKeyError(name)
 	
-	def get(self, name):
+	def get(self, name, default=None):
 		if name == -1:
-			return dict.get(self, len(self) - 1)
+			return dict.get(self, len(self) - 1, default)
 		elif name in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
-			return getattr(self, name)
+			return getattr(self, name, default)
 		else:
-			return dict.get(self, name)
+			return dict.get(self, name, default)
 
 	def __setattr__(self, name, value):
 		if name == 'modified':
