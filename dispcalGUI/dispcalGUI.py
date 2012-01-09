@@ -1527,7 +1527,8 @@ class MainFrame(BaseFrame):
 		self.menuitem_create_profile.Enable(bool(self.worker.displays))
 		edid = self.worker.get_display_edid()
 		self.menuitem_create_profile_from_edid.Enable(bool(self.worker.displays
-														   and edid.get("monitor_name")
+														   and edid.get("monitor_name",
+																		edid["product_id"])
 														   and edid.get("red_x")
 														   and edid.get("red_y")
 														   and edid.get("green_x")
@@ -3670,10 +3671,14 @@ class MainFrame(BaseFrame):
 				else:
 					# Check for EDID metadata
 					metadata = profile.tags.meta
-					if (not "EDID_model" in metadata or
-					    not metadata["EDID_model"].strip() or
+					if (not "EDID_model_id" in metadata or
+						(not "EDID_model" in metadata and
+						 metadata["EDID_model_id"] == "0") or
 						not "EDID_mnft_id" in metadata or
-					    not metadata["EDID_mnft_id"].strip()):
+						not "EDID_mnft" in metadata or
+						not "EDID_manufacturer" in metadata or
+						metadata["EDID_manufacturer"] == metadata["EDID_mnft"] or
+						not "OPENICC_automatic_generated" in metadata):
 						return lang.getstr("profile.share.meta_missing")
 		else:
 			return lang.getstr("profile.share.meta_missing")
@@ -3706,7 +3711,8 @@ class MainFrame(BaseFrame):
 		metadata = profile.tags.meta
 		# Model will be shown in overview on http://icc.opensuse.org
 		model = metadata.getvalue("EDID_model",
-								  profile.getDeviceModelDescription(),
+								  profile.getDeviceModelDescription() or
+								  metadata["EDID_model_id"],
 								  None)
 		metadata["model"] = model
 		metadata["vcgt"] = int("vcgt" in profile.tags)
@@ -6487,7 +6493,7 @@ class MainFrame(BaseFrame):
 	
 	def create_profile_from_edid(self, event):
 		edid = self.worker.get_display_edid()
-		defaultFile = edid.get("monitor_name") + profile_ext
+		defaultFile = edid.get("monitor_name", str(edid["product_id"])) + profile_ext
 		defaultDir = get_verified_path(None, 
 									   os.path.join(getcfg("profile.save_path"), 
 													defaultFile))[0]

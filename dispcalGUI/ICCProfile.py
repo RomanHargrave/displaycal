@@ -2061,8 +2061,8 @@ class ICCProfile:
 		
 		"""
 		profile = ICCProfile()
-		monitor_name = edid.get("monitor_name",
-								md5(edid.get("edid")).hexdigest())
+		monitor_name = edid.get("monitor_name", str(edid["product_id"] or
+													edid["hash"]))
 		if iccv4:
 			profile.version = 4.2
 			profile.tags.desc = MultiLocalizedUnicodeType()
@@ -2227,14 +2227,14 @@ class ICCProfile:
 		for prefix in spec_prefixes.split(","):
 			if not prefix in prefixes:
 				prefixes.append(prefix)
-		# OpenICC keys
+		# OpenICC keys (some shared with GCM)
+		if edid.get("monitor_name"):
+			self.tags.meta["EDID_model"] = edid["monitor_name"]
+		if edid.get("serial_ascii"):
+			self.tags.meta["EDID_serial"] = edid["serial_ascii"]
 		self.tags.meta.update({"prefix": ",".join(prefixes),
 							   "EDID_manufacturer": edid["manufacturer"],
 							   "EDID_mnft": edid["manufacturer_id"],
-							   "EDID_model": edid.get("monitor_name",
-														  str(edid["product_id"])),
-							   "EDID_serial": edid.get("serial_ascii",
-														   str(edid["serial_32"])),
 							   "EDID_date": "%0.4i-T%i" %
 											(edid["year_of_manufacture"],
 											 edid["week_of_manufacture"]),

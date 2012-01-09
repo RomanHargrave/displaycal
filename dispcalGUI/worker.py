@@ -1078,7 +1078,8 @@ class Worker():
 					self.display_edid.append(edid)
 					if edid:
 						manufacturer = edid.get("manufacturer", "").split()
-						monitor = edid.get("monitor_name")
+						monitor = edid.get("monitor_name",
+										   str(edid["product_id"] or ""))
 						if monitor and not monitor in "".join(desc):
 							desc = [monitor]
 						if (manufacturer and 
@@ -1811,7 +1812,8 @@ class Worker():
 			# different sources
 			edid = self.display_edid[max(0, min(len(self.displays), 
 												getcfg("display.number") - 1))]
-			display_name = edid.get("monitor_name")
+			display_name = edid.get("monitor_name",
+									str(edid["product_id"] or ""))
 			display_manufacturer = edid.get("manufacturer")
 		if not display_name and not display_manufacturer:
 			# Note: Do not mix'n'match display name and manufacturer from 
