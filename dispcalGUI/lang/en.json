@@ -16,6 +16,8 @@
 	"argyll.debug.warning2": "Please remember to disable debugging output for normal operation of the software.",
 	"argyll.dir": "Argyll CMS executable directory:",
 	"argyll.dir.invalid": "Argyll CMS executables not found!\nPlease select the directory which contains the executable files (maybe prefixed or suffixed “argyll-” / “-argyll”): %s",
+	"argyll.error.detail": "Detailed Argyll CMS error message:",
+	"argyll.instrument.driver.missing": "The Argyll CMS driver for your measurement device seems not to be installed or installed incorrectly. Please check if your measurement device is shown in Windows' device manager under „Argyll LibUSB-1.0A devices“ and (re-)install the driver if necessary. Please read the documentation for installation instructions.",
 	"argyll.util.not_found": "Argyll CMS “%s” executable not found!",
 	"black": "Black",
 	"blacklevel": "Black level",

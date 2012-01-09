@@ -1690,6 +1690,14 @@ class Worker():
 					   not "failed with 'User Aborted'" in line and \
 					   not "test_crt returned error code 1" in line:
 						# "test_crt returned error code 1" == user aborted
+						if (sys.platform == "win32" and
+							("config 1 failed (Operation not supported or "
+							 "unimplemented on this platform) (Permissions ?)")
+							in line):
+							self.output.insert(i, lang.getstr("argyll.instrument.driver.missing") +
+															  "\n\n" +
+															  lang.getstr("argyll.error.detail") +
+															  " ")
 						return UnloggedError("".join(self.output[i:]))
 			return False
 		return True
