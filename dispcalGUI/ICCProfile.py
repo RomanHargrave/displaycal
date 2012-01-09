@@ -1271,7 +1271,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 					   self.ASCII.encode("ASCII", "replace") + "\0",  # ASCII desc, \0 terminated
 					   uInt32Number_tohex(self.get("unicodeLanguageCode", 0))]
 			if "Unicode" in self:
-				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 2),  # count of Unicode chars + 2 (1 char = 2 byte)
+				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 1),  # count of Unicode chars + 1 (1 char = 2 byte)
 								"\xfe\xff" + self.Unicode.encode("utf-16-be", "replace") + 
 								"\0\0"])  # Unicode desc, \0\0 terminated
 			else:
@@ -2083,7 +2083,7 @@ class ICCProfile:
 											   "").encode("ASCII", "replace")
 			profile.tags.dmdd = TextDescriptionType()
 			profile.tags.dmdd.ASCII = monitor_name
-			profile.tags.cprt = TextType("text\0\0\0\0Created from EDID",
+			profile.tags.cprt = TextType("text\0\0\0\0Created from EDID\0",
 										 "cprt")
 		white = colormath.xyY2XYZ(edid.get("white_x", 0.0),
 								  edid.get("white_y", 0.0), 1.0)
