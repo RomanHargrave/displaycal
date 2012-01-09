@@ -5800,6 +5800,10 @@ class MainFrame(BaseFrame):
 		elif result:
 			source = os.path.join(self.worker.tempdir, name + ext)
 			cgats = CGATS.CGATS(source)[0]
+			if not cgats.get("REFERENCE") and spectro_ti3:
+				cgats.add_keyword("REFERENCE",
+								  spectro_ti3[0].get("TARGET_INSTRUMENT", "?"))
+				cgats.write(source)
 			description = safe_unicode(cgats.queryv1("DESCRIPTOR") or "", "UTF-7")
 			result = check_create_dir(getcfg("color.dir"))
 			if isinstance(result, Exception):
