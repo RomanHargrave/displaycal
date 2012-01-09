@@ -57,7 +57,7 @@ def specialpow(a, b):
 	else:
 		if b >= -1.0:
 			# XYZ -> RGB, sRGB TRC
-			if a <= 0.0031308:
+			if a <= 0.04045 / 12.92:
 				v = a * 12.92
 			else:
 				v = 1.055 * math.pow(a, 1.0 / 2.4) - 0.055
