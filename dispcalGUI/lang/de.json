@@ -229,6 +229,7 @@
 	"gamap.viewconds.pcd": "Photo CD - Außenaufnahme",
 	"gamap.viewconds.ob": "Außenaufnahme in hellem Licht",
 	"gamap.viewconds.cx": "Dias auf Leuchtkasten",
+	"glossy": "Glossy",
 	"go_to_website": "Gehe zur Website",
 	"grayscale": "Graustufen",
 	"help_support": "Hilfe und Unterstützung...",
@@ -249,6 +250,7 @@
 	"locale.set": "Setze Lokalisierung: %s",
 	"log.autoshow": "Protokollfenster automatisch zeigen",
 	"lut_access": "Grafikkarten-Gammatabellen-Zugriff",
+	"matte": "Matt",
 	"max": "Max",
 	"maximal": "Maximal",
 	"measure": "Messen",
@@ -349,6 +351,7 @@
 	"report.uncalibrated": "Unkalibriertes Anzeigegerät messen (Kurzreport)",
 	"restore_defaults": "Standardeinstellungen wiederherstellen",
 	"saturation": "Sättigung",
+	"save": "Sichern",
 	"save_as": "Sichern unter...",
 	"settings.additional": "Weitere Einstellungen",
 	"settings.basic": "Grundlegende Einstellungen",
@@ -471,5 +474,6 @@
 	"whitepoint.xy": "Farbort",
 	"window.title": "dispcalGUI",
 	"working_dir": "Arbeitsverzeichnis:",
-	"yes": "Ja"
+	"yes": "Ja",
+	"internal": "Intern"
 }

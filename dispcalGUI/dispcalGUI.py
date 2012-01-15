@@ -105,7 +105,7 @@ import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 						  cal_to_fake_profile, can_update_cal, 
 						  extract_cal_from_ti3, ti3_to_ti1, verify_ti1_rgb_xyz)
-from argyll_instruments import remove_vendor_names
+from argyll_instruments import instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
 from colormath import (CIEDCCT2xyY, planckianCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, 
@@ -3630,23 +3630,29 @@ class MainFrame(BaseFrame):
 				# Set GCM DATA_source to "calib"
 				profile.tags.meta["DATA_source"] = "calib"
 				# Add instrument
-				profile.tags.meta["measurement_device"] = self.worker.get_instrument_name()
-			# Make sure meta tag exists
-			if not "meta" in profile.tags:
-				profile.tags.meta = ICCP.DictType()
-			# Update meta prefix
-			if (avg, peak, rms) != (None, ) * 3: 
-				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ARGYLL_").split(",")
-				if not "ARGYLL_" in prefixes:
-					prefixes.append("ARGYLL_")
+				profile.tags.meta["MEASUREMENT_device"] = self.worker.get_instrument_name().lower()
+				spec_prefixes = "DATA_,MEASUREMENT_,OPENICC_"
+				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
+				for prefix in spec_prefixes.split(","):
+					if not prefix in prefixes:
+						prefixes.append(prefix)
 				profile.tags.meta["prefix"] = ",".join(prefixes)
-			# Add error info
-			if avg is not None:
-				profile.tags.meta["ARGYLL_profcheck_avg_dE76"] = avg
-			if peak is not None:
-				profile.tags.meta["ARGYLL_profcheck_max_dE76"] = peak
-			if rms is not None:
-				profile.tags.meta["ARGYLL_profcheck_rms_dE76"] = rms
+			if (avg, peak, rms) != (None, ) * 3:
+				# Make sure meta tag exists
+				if not "meta" in profile.tags:
+					profile.tags.meta = ICCP.DictType()
+				# Update meta prefix
+				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ACCURACY_").split(",")
+				if not "ACCURACY_" in prefixes:
+					prefixes.append("ACCURACY_")
+				profile.tags.meta["prefix"] = ",".join(prefixes)
+				# Add error info
+				if avg is not None:
+					profile.tags.meta["ACCURACY_dE76_avg"] = avg
+				if peak is not None:
+					profile.tags.meta["ACCURACY_dE76_max"] = peak
+				if rms is not None:
+					profile.tags.meta["ACCURACY_dE76_rms"] = rms
 			# Calculate profile ID
 			profile.calculateID()
 			try:
@@ -3660,7 +3666,7 @@ class MainFrame(BaseFrame):
 		if ("meta" in profile.tags and
 			isinstance(profile.tags.meta, ICCP.DictType)):
 			try:
-				avg_dE76 = float(profile.tags.meta.getvalue("ARGYLL_profcheck_avg_dE76"))
+				avg_dE76 = float(profile.tags.meta.getvalue("ACCURACY_dE76_avg"))
 			except (TypeError, ValueError):
 				return lang.getstr("profile.share.meta_missing")
 			else:
@@ -3737,15 +3743,20 @@ class MainFrame(BaseFrame):
 		description += u", %i cd/m²" % profile.tags.lumi.Y 
 		if gamma:
 			description += ", " + gamma
-		instrument = metadata.getvalue("measurement_device")
+		instrument = metadata.getvalue("MEASUREMENT_device")
 		if instrument:
+			for instrument_name in instruments:
+				if instrument_name.lower() == instrument:
+					instrument = instrument_name
+					break
 			description += ", " + instrument
 		description += ", " + strftime("%Y-%m-%d", profile.dateTime.timetuple())
 		dlg = ConfirmDialog(
 			getattr(self, "modaldlg", self), 
 			msg=lang.getstr("profile.share.enter_info"), 
 			ok=lang.getstr("upload"), cancel=lang.getstr("cancel"), 
-			bitmap=geticon(32, "dialog-information"), wrap=100)
+			bitmap=geticon(32, "dialog-information"), alt=lang.getstr("save"),
+			wrap=100)
 		# Description field
 		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
@@ -3766,14 +3777,16 @@ class MainFrame(BaseFrame):
 		# Panel surface type
 		gridsizer.Add(wx.StaticText(dlg, -1, lang.getstr("panel.surface")), 1, 
 					   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+		paneltypes = ["glossy", "matte"]
 		dlg.panel_ctrl = wx.ComboBox(dlg, -1, 
-									 choices=["-", "Glossy", "Matt"], 
+									 choices=[""] + [lang.getstr(panel)
+												     for panel in
+												     paneltypes], 
 									 style=wx.CB_READONLY)
-		panel_surface = metadata.getvalue("display_panel_surface", "-")
+		panel_surface = metadata.getvalue("SCREEN_surface", "")
 		try:
-			index = dlg.panel_ctrl.GetItems().index(panel_surface)
+			index = dlg.panel_ctrl.GetItems().index(lang.getstr(panel_surface))
 		except ValueError:
-			dlg.panel_ctrl.Insert(panel_surface, 0)
 			index = 0
 		dlg.panel_ctrl.SetSelection(index)
 		gridsizer.Add(dlg.panel_ctrl, 1, flag=wx.RIGHT | wx.ALIGN_LEFT |
@@ -3782,16 +3795,17 @@ class MainFrame(BaseFrame):
 		gridsizer.Add(wx.StaticText(dlg, -1,
 									lang.getstr("display.connection.type")), 1,
 					  flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+		connections = ["dvi", "displayport", "hdmi", "internal", "vga"]
 		dlg.connection_ctrl = wx.ComboBox(dlg, -1, 
-										  choices=["DVI", "DisplayPort", "HDMI",
-												   "VGA"], 
+										  choices=[lang.getstr(contype)
+												   for contype in
+												   connections], 
 										  style=wx.CB_READONLY)
-		connection_type = metadata.getvalue("display_connection_type",
-											"DVI")
+		connection_type = metadata.getvalue("CONNECTION_type",
+											"dvi")
 		try:
-			index = dlg.connection_ctrl.GetItems().index(connection_type)
+			index = dlg.connection_ctrl.GetItems().index(lang.getstr(connection_type))
 		except ValueError:
-			dlg.panel_ctrl.Insert(connection_type, 0)
 			index = 0
 		dlg.connection_ctrl.SetSelection(index)
 		gridsizer.Add(dlg.connection_ctrl, 1, flag=wx.RIGHT | wx.ALIGN_LEFT |
@@ -3799,6 +3813,7 @@ class MainFrame(BaseFrame):
 		display_settings_tabs = wx.Notebook(dlg, -1)
 		# Column layout
 		display_settings = ((# 1st tab
+							 lang.getstr("osd") + ": " +
 							 lang.getstr("settings.basic"), # Tab title
 							 2, # Number of columns
 							 (# 1st (left) column
@@ -3814,6 +3829,7 @@ class MainFrame(BaseFrame):
 							   ("whitepoint", 50),
 							   ("saturation", 50)))),
 							(# 2nd tab
+							 lang.getstr("osd") + ": " +
 							 lang.getstr("settings.additional"), # Tab title
 							 3, # Number of columns
 							 (# 1st (left) column
@@ -3915,25 +3931,34 @@ class MainFrame(BaseFrame):
 		dlg.sizer0.Layout()
 		dlg.Center()
 		result = dlg.ShowModal()
-		if result != wx.ID_OK:
+		if result == wx.ID_CANCEL:
 			return
-		# Update meta prefix
-		prefixes = (metadata.getvalue("prefix", "", None) or "OSD_").split(",")
-		if not "OSD_" in prefixes:
-			prefixes.append("OSD_")
-		metadata["prefix"] = ",".join(prefixes)
+		# Get meta prefix
+		prefixes = (metadata.getvalue("prefix", "", None) or "CONNECTION_").split(",")
+		if not "CONNECTION_" in prefixes:
+			prefixes.append("CONNECTION_")
 		# Update meta
-		panel = dlg.panel_ctrl.GetValue()
-		metadata["display_panel_surface"] = panel
-		metadata["display_connection_type"] = dlg.connection_ctrl.GetValue()
+		panel = dlg.panel_ctrl.GetSelection()
+		if panel > 0:
+			metadata["SCREEN_surface"] = paneltypes[panel - 1]
+			if not "SCREEN_" in prefixes:
+				prefixes.append("SCREEN_")
+		# Update meta
+		metadata["CONNECTION_type"] = connections[dlg.connection_ctrl.GetSelection()]
 		for ctrl in display_settings_ctrls:
 			if isinstance(ctrl, wx.TextCtrl) and ctrl.GetValue().strip():
 				metadata["OSD_settings_%s" %
 						 re.sub("[ .]", "_", ctrl.Name)] = ctrl.GetValue().strip()
+			if not "OSD_" in prefixes:
+				prefixes.append("OSD_")
+		# Set meta prefix
+		metadata["prefix"] = ",".join(prefixes)
 		# Calculate profile ID
 		profile.calculateID()
 		# Save profile
 		profile.write()
+		if result != wx.ID_OK:
+			return
 		# Get profile data
 		data = profile.data
 		# Add metadata which should not be reflected in profile

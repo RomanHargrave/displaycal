@@ -228,6 +228,7 @@
 	"gamap.viewconds.pcd": "Photo CD - original scene outdoors",
 	"gamap.viewconds.ob": "Original scene - Bright Outdoors",
 	"gamap.viewconds.cx": "Cut Sheet Transparencies on a viewing box",
+	"glossy": "Glossy",
 	"go_to_website": "Go to Website",
 	"grayscale": "grayscale",
 	"help_support": "Help and support...",
@@ -248,6 +249,7 @@
 	"locale.set": "Setting locale: %s",
 	"log.autoshow": "Show log window automatically",
 	"lut_access": "Video card gamma table access",
+	"matte": "Matte",
 	"max": "Max",
 	"maximal": "Maximal",
 	"measure": "Measure",
@@ -283,6 +285,7 @@
 	"no_settings": "The file does not contain settings.",
 	"offset": "Offset",
 	"ok": "OK",
+	"osd": "OSD",
 	"other": "Other",
 	"out": "Out",
 	"overwrite": "Overwrite",
@@ -348,6 +351,7 @@
 	"report.uncalibrated": "Report on uncalibrated display device",
 	"restore_defaults": "Restore defaults",
 	"saturation": "Saturation",
+	"save": "Save",
 	"save_as": "Save as...",
 	"settings.additional": "Additional settings",
 	"settings.basic": "Basic settings",
@@ -471,5 +475,10 @@
 	"whitepoint.xy": "Chromaticity coordinates",
 	"window.title": "dispcalGUI",
 	"working_dir": "Working directory:",
-	"yes": "Yes"
+	"yes": "Yes",
+	"dvi": "DVI",
+	"displayport": "DisplayPort",
+	"hdmi": "HDMI",
+	"internal": "Internal",
+	"vga": "VGA"
 }
