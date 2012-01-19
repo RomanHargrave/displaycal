@@ -3605,19 +3605,16 @@ class MainFrame(BaseFrame):
 													 ICCP.TextDescriptionType):
 				desc = profile.getDescription()
 				profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
-				profile.tags.desc["Macintosh"] = desc
 				profile.tags.desc["Unicode"] = desc
 			if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
 													 ICCP.TextDescriptionType):
 				ddesc = profile.getDeviceModelDescription()
 				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
-				profile.tags.dmdd["Macintosh"] = ddesc
 				profile.tags.dmdd["Unicode"] = ddesc
 			if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
 													 ICCP.TextDescriptionType):
 				mdesc = profile.getDeviceManufacturerDescription()
 				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
-				profile.tags.dmnd["Macintosh"] = mdesc
 				profile.tags.dmnd["Unicode"] = mdesc
 			if meta and meta is not True:
 				# Add existing meta information
