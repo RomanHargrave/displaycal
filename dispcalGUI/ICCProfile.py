@@ -1271,7 +1271,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 					   self.ASCII.encode("ASCII", "replace") + "\0",  # ASCII desc, \0 terminated
 					   uInt32Number_tohex(self.get("unicodeLanguageCode", 0))]
 			if "Unicode" in self:
-				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 1),  # count of Unicode chars + 1 (1 char = 2 byte)
+				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 2),  # count of Unicode chars + 2 (UTF-16-BE BOM + trailing UTF-16 NUL, 1 char = 2 byte)
 								"\xfe\xff" + self.Unicode.encode("utf-16-be", "replace") + 
 								"\0\0"])  # Unicode desc, \0\0 terminated
 			else:
@@ -1282,9 +1282,9 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 				tagData.extend([uInt8Number_tohex(len(macDescription) + 1),  # count of Macintosh chars + 1
 								macDescription.encode("mac-" + 
 													  encodings["mac"][self.get("macScriptCode", 0)], 
-													  "replace") + "\0"])
+													  "replace") + ("\0" * (67 - len(macDescription)))])
 			else:
-				tagData.extend([uInt32Number_tohex(0),  # Mac desc length = 0
+				tagData.extend(["\0",  # Mac desc length = 0
 								"\0" * 67])
 			return "".join(tagData)
 		
