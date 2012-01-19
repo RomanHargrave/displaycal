@@ -3720,8 +3720,6 @@ class MainFrame(BaseFrame):
 								  profile.getDeviceModelDescription() or
 								  metadata["EDID_model_id"],
 								  None)
-		metadata["model"] = model
-		metadata["vcgt"] = int("vcgt" in profile.tags)
 		description = model
 		date = metadata.getvalue("EDID_date", "", None).split("-T")
 		if len(date) == 2:
@@ -3962,17 +3960,8 @@ class MainFrame(BaseFrame):
 		# Get profile data
 		data = profile.data
 		# Add metadata which should not be reflected in profile
-		##if panel != "-":
-			##model += " (%s)" % panel.lower()
-		##if vcgt:
-			##model += ", " + vcgt
-		##model += ", " + whitepoint
-		##if gamma:
-			##model += ", " + gamma
-		##if instrument:
-			##model += ", " + instrument
-		##model += ", " + strftime("%Y-%m-%d", profile.dateTime.timetuple())
-		##metadata["model"] = model
+		metadata["model"] = model
+		metadata["vcgt"] = int("vcgt" in profile.tags)
 		# Upload
 		params = {"description": dlg.description_txt_ctrl.GetValue(),
 				  ##"licence": dlg.license_ctrl.GetValue()}
