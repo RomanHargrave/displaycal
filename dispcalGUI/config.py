@@ -16,7 +16,7 @@ from time import gmtime, strftime, timezone
 if sys.platform == "win32":
 	import _winreg
 
-from argyll_names import viewconds
+from argyll_names import viewconds, intents
 from defaultpaths import appdata, commonappdata
 if sys.platform == "win32":
 	from defaultpaths import commonprogramfiles
@@ -349,6 +349,7 @@ def runtimeconfig(pyfile):
 															defaultchart))
 	defaults["profile_verification_chart"] = get_data_path(os.path.join("ref", 
 															"verify.ti1"))
+	defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm"))
 	return runtype
 
 # User settings
@@ -365,12 +366,15 @@ valid_ranges = {
 	"calibration.black_point_correction": [0, 1],
 	"calibration.black_point_rate": [0.05, 20],
 	"calibration.luminance": [0.000001, 100000],
+	"gamap_default_intent": [0, 3],
 	"whitepoint.colortemp": [1000, 15000],
 }
 
 valid_values = {
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	"measurement_mode": [None, "c", "l"],
+	"gamap_perceptual_intent": intents,
+	"gamap_saturation_intent": intents,
 	"gamap_src_viewcond": viewconds,
 	"gamap_out_viewcond": ["mt", "mb", "md", "jm", "jd"],
 	"profile.install_scope": ["l", "u"],
@@ -418,11 +422,12 @@ defaults = {
 	"extra_args.dispcal": "",
 	"extra_args.dispread": "",
 	"extra_args.spotread": "",
-	"gamap_src_viewcond": "pp",
-	"gamap_out_viewcond": "mt",
 	"gamap_profile": "",
 	"gamap_perceptual": 0,
+	"gamap_perceptual_intent": "la",
 	"gamap_saturation": 0,
+	"gamap_saturation_intent": "s",
+	"gamap_default_intent": 0,
 	"gamma": 2.2,
 	"instruments": "",
 	"log.autoshow": int(not(hasattr(sys.stdout, "isatty") and 
@@ -786,6 +791,10 @@ def initcfg():
 				from log import safe_print
 				safe_print("Warning - could not process old configuration:", 
 						   safe_unicode(exception))
+		# Set a few defaults which have None as possible value and thus cannot
+		# be set in the 'defaults' collection
+		setcfg("gamap_src_viewcond", "mt")
+		setcfg("gamap_out_viewcond", "mt")
 	# Read cfg
 	try:
 		cfg.read([os.path.join(config_sys, appname + ".ini")])

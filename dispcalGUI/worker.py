@@ -41,7 +41,7 @@ from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1,
 						  verify_cgats)
 from argyll_instruments import instruments as all_instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
-						  optional as argyll_optional, viewconds)
+						  optional as argyll_optional, viewconds, intents)
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exe_ext, fs_enc, getcfg, geticon, get_ccxx_testchart,
 					get_data_path, get_verified_path, isapp, isexe,
@@ -295,7 +295,8 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"q[lmh]",
 		"a[lxXgsGS]",
 		'[sSMA]\s+["\'][^"\']+?["\']',
-		"[cd](?:%s)" % "|".join(viewconds)
+		"[cd](?:%s)" % "|".join(viewconds),
+		"[tT](?:%s)" % "|".join(intents)
 	]
 	options_dispcal = []
 	options_colprof = []
@@ -2362,8 +2363,13 @@ class Worker():
 			if gamap:
 				args += ["-" + gamap]
 				args += [getcfg("gamap_profile")]
-				args += ["-c" + getcfg("gamap_src_viewcond")]
-				args += ["-d" + getcfg("gamap_out_viewcond")]
+				args += ["-t" + getcfg("gamap_perceptual_intent")]
+				if gamap == "S":
+					args += ["-T" + getcfg("gamap_saturation_intent")]
+				if getcfg("gamap_src_viewcond"):
+					args += ["-c" + getcfg("gamap_src_viewcond")]
+				if getcfg("gamap_out_viewcond"):
+					args += ["-d" + getcfg("gamap_out_viewcond")]
 		args += ["-C"]
 		args += [getcfg("copyright").encode("ASCII", "asciize")]
 		if getcfg("extra_args.colprof").strip():

@@ -33,8 +33,7 @@
               <border>12</border>
             </object>
             <object class="sizeritem">
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
+              <object class="wxFlexGridSizer">
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="gamap_perceptual_cb">
                     <label>gamap.perceptual</label>
@@ -42,13 +41,15 @@
                       <events>EVT_CHECKBOX</events>
                     </XRCED>
                   </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
                 </object>
-              </object>
-              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
-              <border>12</border>
-            </object>
-            <object class="sizeritem">
-              <object class="wxBoxSizer">
+                <object class="sizeritem">
+                  <object class="wxComboBox" name="gamap_perceptual_intent_ctrl">
+                    <style>wxCB_READONLY</style>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="gamap_saturation_cb">
                     <label>gamap.saturation</label>
@@ -56,10 +57,21 @@
                       <events>EVT_CHECKBOX</events>
                     </XRCED>
                   </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
                 </object>
-                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxComboBox" name="gamap_saturation_intent_ctrl">
+                    <style>wxCB_READONLY</style>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <cols>2</cols>
+                <rows>1</rows>
+                <vgap>8</vgap>
+                <growablecols>1</growablecols>
               </object>
-              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
               <border>12</border>
             </object>
             <object class="sizeritem">
@@ -96,6 +108,29 @@
                 <growablecols>1</growablecols>
               </object>
               <flag>wxALL|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
+              <object class="wxFlexGridSizer">
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>gamap.default_intent</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxComboBox" name="gamap_default_intent_ctrl">
+                    <style>wxCB_READONLY</style>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <cols>2</cols>
+                <rows>3</rows>
+                <vgap>8</vgap>
+                <growablecols>1</growablecols>
+              </object>
+              <flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
               <border>12</border>
             </object>
           </object>

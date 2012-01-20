@@ -57,3 +57,6 @@ viewconds = [
 	"ob",
 	"cx"
 ]
+
+# Intents supported by colprof
+intents = ["a", "aa", "aw", "la", "ms", "p", "pa", "r", "s"]  # pa = Argyll >= 1.3.3

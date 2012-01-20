@@ -117,6 +117,7 @@ if sys.platform not in ("darwin", "win32"):
 from log import _safe_print, log, logbuffer, safe_print
 from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
+from ordereddict import OrderedDict
 from trash import trash, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_http import encode_multipart_formdata
@@ -671,16 +672,25 @@ class GamapFrame(BaseFrame):
 		# Bind event handlers
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_perceptual_cb_handler, 
 				   id=self.gamap_perceptual_cb.GetId())
+		self.Bind(wx.EVT_COMBOBOX, self.gamap_perceptual_intent_handler, 
+				   id=self.gamap_perceptual_intent_ctrl.GetId())
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_saturation_cb_handler, 
 				   id=self.gamap_saturation_cb.GetId())
+		self.Bind(wx.EVT_COMBOBOX, self.gamap_saturation_intent_handler, 
+				   id=self.gamap_saturation_intent_ctrl.GetId())
 		self.Bind(wx.EVT_COMBOBOX, self.gamap_src_viewcond_handler, 
 				   id=self.gamap_src_viewcond_ctrl.GetId())
 		self.Bind(wx.EVT_COMBOBOX, self.gamap_out_viewcond_handler, 
 				   id=self.gamap_out_viewcond_ctrl.GetId())
+		self.Bind(wx.EVT_COMBOBOX, self.gamap_default_intent_handler, 
+				   id=self.gamap_default_intent_ctrl.GetId())
 
-		self.viewconds_ab = {}
+		self.viewconds_ab = OrderedDict()
 		self.viewconds_ba = {}
-		self.viewconds_out_ab = {}
+		self.viewconds_out_ab = OrderedDict()
+		
+		self.intents_ab = OrderedDict()
+		self.intents_ba = OrderedDict()
 		
 		self.setup_language()
 		self.update_controls()
@@ -703,19 +713,24 @@ class GamapFrame(BaseFrame):
 				self.gamap_profile.SetPath("")
 				v = None
 			else:
-				# pre-select suitable viewing condition
-				if profile.profileClass == "prtr":
-					self.gamap_src_viewcond_ctrl.SetStringSelection(
-						lang.getstr("gamap.viewconds.pp"))
-				else:
-					self.gamap_src_viewcond_ctrl.SetStringSelection(
-						lang.getstr("gamap.viewconds.mt"))
+				if event:
+					# pre-select suitable viewing condition
+					if profile.profileClass == "prtr":
+						self.gamap_src_viewcond_ctrl.SetStringSelection(
+							lang.getstr("gamap.viewconds.pp"))
+					else:
+						self.gamap_src_viewcond_ctrl.SetStringSelection(
+							lang.getstr("gamap.viewconds.mt"))
+					self.gamap_src_viewcond_handler()
 		self.gamap_perceptual_cb.Enable(p)
+		self.gamap_perceptual_intent_ctrl.Enable(self.gamap_perceptual_cb.GetValue())
 		self.gamap_saturation_cb.Enable(p)
+		self.gamap_saturation_intent_ctrl.Enable(self.gamap_saturation_cb.GetValue())
 		c = self.gamap_perceptual_cb.GetValue() or \
 			self.gamap_saturation_cb.GetValue()
 		self.gamap_src_viewcond_ctrl.Enable(p and c)
 		self.gamap_out_viewcond_ctrl.Enable(p and c)
+		self.gamap_default_intent_ctrl.Enable(p and c)
 		if v != getcfg("gamap_profile") and self.Parent and \
 		   hasattr(self.Parent, "profile_settings_changed"):
 			self.Parent.profile_settings_changed()
@@ -732,6 +747,13 @@ class GamapFrame(BaseFrame):
 		setcfg("gamap_perceptual", int(v))
 		self.gamap_profile_handler()
 
+	def gamap_perceptual_intent_handler(self, event=None):
+		v = self.intents_ba[self.gamap_perceptual_intent_ctrl.GetStringSelection()]
+		if v != getcfg("gamap_perceptual_intent") and self.Parent and \
+		   hasattr(self.Parent, "profile_settings_changed"):
+			self.Parent.profile_settings_changed()
+		setcfg("gamap_perceptual_intent", v)
+
 	def gamap_saturation_cb_handler(self, event=None):
 		v = self.gamap_saturation_cb.GetValue()
 		if v:
@@ -742,6 +764,13 @@ class GamapFrame(BaseFrame):
 			self.Parent.profile_settings_changed()
 		setcfg("gamap_saturation", int(v))
 		self.gamap_profile_handler()
+
+	def gamap_saturation_intent_handler(self, event=None):
+		v = self.intents_ba[self.gamap_saturation_intent_ctrl.GetStringSelection()]
+		if v != getcfg("gamap_saturation_intent") and self.Parent and \
+		   hasattr(self.Parent, "profile_settings_changed"):
+			self.Parent.profile_settings_changed()
+		setcfg("gamap_saturation_intent", v)
 
 	def gamap_src_viewcond_handler(self, event=None):
 		v = self.viewconds_ba[self.gamap_src_viewcond_ctrl.GetStringSelection()]
@@ -756,6 +785,13 @@ class GamapFrame(BaseFrame):
 		   hasattr(self.Parent, "profile_settings_changed"):
 			self.Parent.profile_settings_changed()
 		setcfg("gamap_out_viewcond", v)
+	
+	def gamap_default_intent_handler(self, event=None):
+		v = self.gamap_default_intent_ctrl.GetSelection()
+		if v != getcfg("gamap_default_intent") and self.Parent and \
+		   hasattr(self.Parent, "profile_settings_changed"):
+			self.Parent.profile_settings_changed()
+		setcfg("gamap_default_intent", v)
 	
 	def setup_language(self):
 		"""
@@ -778,6 +814,22 @@ class GamapFrame(BaseFrame):
 		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.gamap_profile_handler, 
 				   id=self.gamap_profile.GetId())
 		
+		intents = ["a", "aa", "aw", "la", "ms", "p", "r", "s"]
+		if (self.Parent and hasattr(self.Parent, "worker") and
+			self.Parent.worker.argyll_version >= [1, 3, 3]):
+			intents.append("pa")
+		for v in sorted(intents):
+			lstr = lang.getstr("gamap.intents.%s" % v)
+			self.intents_ab[v] = lstr
+			self.intents_ba[lstr] = v
+		
+		self.gamap_perceptual_intent_ctrl.SetItems(
+			self.intents_ab.values())
+		self.gamap_saturation_intent_ctrl.SetItems(
+			self.intents_ab.values())
+		
+		self.viewconds_ab[None] = lang.getstr("default")
+		self.viewconds_ba[lang.getstr("default")] = None
 		for v in viewconds:
 			lstr = lang.getstr("gamap.viewconds.%s" % v)
 			self.viewconds_ab[v] = lstr
@@ -788,19 +840,29 @@ class GamapFrame(BaseFrame):
 		self.gamap_src_viewcond_ctrl.SetItems(
 			self.viewconds_ab.values())
 		self.gamap_out_viewcond_ctrl.SetItems(
-			self.viewconds_out_ab.values())
+			[lang.getstr("default")] + self.viewconds_out_ab.values())
+		
+		self.gamap_default_intent_ctrl.SetItems([lang.getstr("gamap.intents." + v)
+												 for v in ["p", "r", "s", "a"]])
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
 		self.gamap_profile.SetPath(getcfg("gamap_profile"))
 		self.gamap_perceptual_cb.SetValue(getcfg("gamap_perceptual"))
+		self.gamap_perceptual_intent_ctrl.SetStringSelection(
+			self.intents_ab.get(getcfg("gamap_perceptual_intent"), 
+			self.intents_ab.get(defaults["gamap_perceptual_intent"])))
 		self.gamap_saturation_cb.SetValue(getcfg("gamap_saturation"))
+		self.gamap_saturation_intent_ctrl.SetStringSelection(
+			self.intents_ab.get(getcfg("gamap_saturation_intent"), 
+			self.intents_ab.get(defaults["gamap_saturation_intent"])))
 		self.gamap_src_viewcond_ctrl.SetStringSelection(
-			self.viewconds_ab.get(getcfg("gamap_src_viewcond"), 
-			self.viewconds_ab.get(defaults["gamap_src_viewcond"])))
+			self.viewconds_ab.get(getcfg("gamap_src_viewcond", False), 
+			self.viewconds_ab.get(defaults.get("gamap_src_viewcond"))))
 		self.gamap_out_viewcond_ctrl.SetStringSelection(
 			self.viewconds_ab.get(getcfg("gamap_out_viewcond"), 
-			self.viewconds_ab.get(defaults["gamap_out_viewcond"])))
+			self.viewconds_ab.get(defaults.get("gamap_out_viewcond"))))
+		self.gamap_default_intent_ctrl.SetSelection(getcfg("gamap_default_intent"))
 		self.gamap_profile_handler()
 
 
@@ -1852,7 +1914,6 @@ class MainFrame(BaseFrame):
 			##"extra_args.dispcal",
 			##"extra_args.dispread",
 			##"extra_args.spotread",
-			"gamap_profile",
 			"gamma",
 			"lang",
 			"last_cal_path",
@@ -1886,6 +1947,8 @@ class MainFrame(BaseFrame):
 			"calibration.black_luminance": None,
 			"calibration.file": None,
 			"calibration.luminance": None,
+			"gamap_src_viewcond": "mt",
+			"gamap_out_viewcond": "mt",
 			"trc": defaults["gamma"],
 			"whitepoint.colortemp": None,
 			"whitepoint.x": None,
@@ -3600,7 +3663,7 @@ class MainFrame(BaseFrame):
 				setcfg("last_cal_or_icc_path", dst_path)
 				setcfg("last_icc_path", dst_path)
 			# Fixup desc tags - ASCII needs to be 7-bit
-			# also add Unicode and Mac ScriptCode strings
+			# also add Unicode strings
 			if "desc" in profile.tags and isinstance(profile.tags.desc, 
 													 ICCP.TextDescriptionType):
 				desc = profile.getDescription()
@@ -3650,6 +3713,9 @@ class MainFrame(BaseFrame):
 					profile.tags.meta["ACCURACY_dE76_max"] = peak
 				if rms is not None:
 					profile.tags.meta["ACCURACY_dE76_rms"] = rms
+			# Set default rendering intent
+			if getcfg("gamap_perceptual") or getcfg("gamap_saturation"):
+				profile.intent = getcfg("gamap_default_intent")
 			# Calculate profile ID
 			profile.calculateID()
 			try:
@@ -7441,7 +7507,8 @@ class MainFrame(BaseFrame):
 					# restore defaults
 					self.restore_defaults_handler(
 						include=("profile", "gamap_"), 
-						exclude=("profile.update", "profile.name"))
+						exclude=("profile.update", "profile.name",
+								 "gamap_default_intent"))
 					for o in options_colprof:
 						if o[0] == "q":
 							setcfg("profile.quality", o[1])
@@ -7461,6 +7528,12 @@ class MainFrame(BaseFrame):
 							continue
 						if o[0] == "d":
 							setcfg("gamap_out_viewcond", o[1:])
+							continue
+						if o[0] == "t":
+							setcfg("gamap_perceptual_intent", o[1:])
+							continue
+						if o[0] == "T":
+							setcfg("gamap_saturation_intent", o[1:])
 							continue
 				setcfg("calibration.file", path)
 				if "CTI3" in ti3_lines:
