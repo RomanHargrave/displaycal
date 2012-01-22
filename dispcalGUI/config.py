@@ -347,6 +347,7 @@ def runtimeconfig(pyfile):
 										  testchart_defaults["s"])[None]
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart))
+	defaults["testchart.file.backup"] = defaults["testchart.file"]
 	defaults["profile_verification_chart"] = get_data_path(os.path.join("ref", 
 															"verify.ti1"))
 	defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm"))
@@ -405,7 +406,7 @@ defaults = {
 	"calibration.luminance": 120.0,
 	"calibration.quality": "m",
 	"calibration.update": 0,
-	"colorimeter_correction.testchart": "d3-e4-s0-g0-m3-f0.ti1",
+	"colorimeter_correction.testchart": "ccxxmake-s3.ti1",
 	"colorimeter_correction_matrix_file": ":",
 	"color.dir": os.path.join(commonappdata[0] if is_superuser() else 
 							  appdata, "color"),
@@ -638,7 +639,7 @@ def hascfg(name, fallback=True):
 def get_ccxx_testchart():
 	""" Get the path to the default chart for CCMX/CCSS creation """
 	return get_data_path(os.path.join("ti1",
-									  getcfg("colorimeter_correction.testchart")))
+									  defaults["colorimeter_correction.testchart"]))
 
 
 def get_total_patches(white_patches=None, single_channel_patches=None, 

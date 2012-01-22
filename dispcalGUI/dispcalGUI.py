@@ -2279,14 +2279,14 @@ class MainFrame(BaseFrame):
 		self.panel.Freeze()
 		
 		update_cal = self.calibration_update_cb.GetValue()
-		enable_cal = not(update_cal)
+		enable_cal = not update_cal
 
 		self.measurement_mode_ctrl.Enable(
 			enable_cal and bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
 		update_profile = self.calibration_update_cb.GetValue() and self.is_profile()
-		enable_profile = not(update_profile)
+		enable_profile = not update_profile and not is_ccxx_testchart()
 
 		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
 										   enable_cal)
@@ -5191,8 +5191,13 @@ class MainFrame(BaseFrame):
 				if os.path.exists(filename + ".cal") and \
 				   can_update_cal(filename + ".cal"):
 					return filename + ".cal"
+
+	def restore_testchart(self):
+		if getcfg("testchart.file.backup", False):
+			self.set_testchart(getcfg("testchart.file.backup"))
+			setcfg("testchart.file.backup", None)
 	
-	def measure_handler(self, event):
+	def measure_handler(self, event=None):
 		if is_ccxx_testchart():
 			# Allow different location to store measurements
 			path = None
@@ -5206,6 +5211,7 @@ class MainFrame(BaseFrame):
 			if path:
 				setcfg("measurement.save_path", path)
 			else:
+				self.restore_testchart()
 				return
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
@@ -5217,6 +5223,7 @@ class MainFrame(BaseFrame):
 			if apply_calibration != wx.ID_CANCEL:
 				self.setup_measurement(self.just_measure, apply_calibration)
 		else:
+			self.restore_testchart()
 			self.update_profile_name_timer.Start(1000)
 
 	def profile_btn_handler(self, event):
@@ -5252,6 +5259,7 @@ class MainFrame(BaseFrame):
 									  getcfg("profile.name.expanded") + 
 									  ".ti3"))
 		self.Show(start_timers=True)
+		self.restore_testchart()
 	
 	def just_measure_show_result(self, path):
 		dlg = ConfirmDialog(self, msg=lang.getstr("measurements.complete"), 
@@ -5750,16 +5758,19 @@ class MainFrame(BaseFrame):
 		"""
 		dlg = ConfirmDialog(self,
 							msg=lang.getstr("colorimeter_correction.create.info"), 
-							ok=lang.getstr("continue"), 
+							ok=lang.getstr("colorimeter_correction.create"), 
 							cancel=lang.getstr("cancel"), 
-							alt=lang.getstr("testchart.set"), 
+							alt=lang.getstr("measure.testchart"), 
 							bitmap=geticon(32, "dialog-information"))
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			return
 		elif result != wx.ID_OK:
+			if not is_ccxx_testchart():
+				setcfg("testchart.file.backup", getcfg("testchart.file"))
 			self.set_testchart(get_ccxx_testchart())
+			self.measure_handler()
 			return
 		cgats_list = []
 		spectro_ti3 = None
@@ -7233,6 +7244,7 @@ class MainFrame(BaseFrame):
 				getcfg("testchart.file") != self.tcframe.ti1.filename):
 				self.tcframe.tc_load_cfg_from_ti1()
 		self.update_colorimeter_correction_matrix_ctrl()
+		self.update_main_controls()
 
 	def get_testchart_names(self, path=None):
 		testchart_names = []
