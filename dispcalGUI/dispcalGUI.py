@@ -65,7 +65,7 @@ import traceback
 import urllib
 from encodings.aliases import aliases
 from hashlib import md5
-from time import gmtime, sleep, strftime, strptime, time
+from time import gmtime, sleep, strftime, strptime, time, struct_time
 
 # 3rd party modules
 
@@ -127,7 +127,7 @@ if sys.platform == "darwin":
 	from util_mac import mac_terminal_do_script
 from util_os import (expanduseru, getenvu, is_superuser, launch_file, 
 					 listdir_re, which)
-from util_str import safe_str, safe_unicode, strtr, wrap
+from util_str import safe_str, safe_unicode, strtr, universal_newlines, wrap
 import util_x
 from worker import (Error, FilteredStream, LineCache, Worker, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
@@ -287,11 +287,13 @@ def colorimeter_correction_web_check_choose(data, parent=None):
 	dlg.list_ctrl.InsertColumn(2, lang.getstr("instrument"))
 	dlg.list_ctrl.InsertColumn(3, lang.getstr("display"))
 	dlg.list_ctrl.InsertColumn(4, lang.getstr("reference_instrument"))
+	dlg.list_ctrl.InsertColumn(5, lang.getstr("created"))
 	dlg.list_ctrl.SetColumnWidth(0, 50)
 	dlg.list_ctrl.SetColumnWidth(1, 320)
 	dlg.list_ctrl.SetColumnWidth(2, 75)
 	dlg.list_ctrl.SetColumnWidth(3, 175)
 	dlg.list_ctrl.SetColumnWidth(4, 75)
+	dlg.list_ctrl.SetColumnWidth(5, 75)
 	for i in cgats:
 		index = dlg.list_ctrl.InsertStringItem(i, "")
 		dlg.list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
@@ -299,6 +301,36 @@ def colorimeter_correction_web_check_choose(data, parent=None):
 		dlg.list_ctrl.SetStringItem(index, 2, remove_vendor_names(cgats[i].queryv1("INSTRUMENT") or ""))
 		dlg.list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
 		dlg.list_ctrl.SetStringItem(index, 4, remove_vendor_names(cgats[i].queryv1("REFERENCE") or ""))
+		created = cgats[i].queryv1("CREATED")
+		if created:
+			try:
+				created = strptime(created)
+			except ValueError:
+				datetmp = re.search("\w+ (\w{3}) (\d{2}) (\d{2}(?::[0-5][0-9]){2}) (\d{4})",
+									created)
+				if datetmp:
+					datetmp = "%s-%s-%s %s" % (datetmp.groups()[3],
+											   {"Jan": "01",
+												"Feb": "02",
+												"Mar": "03",
+												"Apr": "04",
+												"May": "05",
+												"Jun": "06",
+												"Jul": "07",
+												"Aug": "08",
+												"Sep": "09",
+												"Oct": "10",
+												"Nov": "11",
+												"Dec": "12"}.get(datetmp.groups()[0]),
+												datetmp.groups()[1],
+												datetmp.groups()[2])
+					try:
+						created = strptime(datetmp, "%Y-%m-%d %H:%M:%S")
+					except ValueError:
+						pass
+			if isinstance(created, struct_time):
+				created = strftime("%Y-%m-%d %H:%M:%S", created)
+		dlg.list_ctrl.SetStringItem(index, 5, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg.list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
@@ -322,6 +354,9 @@ def colorimeter_correction_web_check_choose(data, parent=None):
 	dlg.Destroy()
 	if result != wx.ID_OK:
 		return False
+	# Important: Do not use parsed CGATS, order of keywords may be 
+	# different than raw data so MD5 will be different
+	cgats = re.sub("\n(CCMX|CCSS)( *\n)", "\n<>\n\\1\\2", data).split("\n<>\n")
 	colorimeter_correction_check_overwrite(parent, cgats[index])
 
 
@@ -330,12 +365,15 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	if isinstance(result, Exception):
 		show_result_dialog(result, parent)
 		return
-	description = safe_unicode(cgats.queryv1("DESCRIPTOR") or 
-							   lang.getstr("unnamed"), "UTF-7")
+	descriptor = re.search('\nDESCRIPTOR\s+"(.+?)"\n', cgats)
+	if descriptor:
+		descriptor = descriptor.groups()[0]
+	description = safe_unicode(descriptor or 
+							   lang.getstr("unnamed"), "UTF-8")
 	name = re.sub(r"[\\/:*?\"<>|]+", "_", 
 				  make_argyll_compatible_path(description))[:255]
 	path = os.path.join(getcfg("color.dir"), 
-						"%s.%s" % (name, cgats.type.lower().strip()))
+						"%s.%s" % (name, cgats[:7].strip().lower()))
 	if os.path.isfile(path):
 		dlg = ConfirmDialog(parent,
 							msg=lang.getstr("dialog.confirm_overwrite", path), 
@@ -346,7 +384,9 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return False
-	cgats.write(path)
+	cgatsfile = open(path, 'wb')
+	cgatsfile.write(cgats)
+	cgatsfile.close()
 	setcfg("colorimeter_correction_matrix_file", ":" + path)
 	parent.update_colorimeter_correction_matrix_ctrl_items(True)
 	return True
@@ -358,9 +398,11 @@ def upload_colorimeter_correction(parent=None, params=None):
 	path = "/colorimetercorrections/index.php"
 	failure_msg = lang.getstr("colorimeter_correction.upload.failure")
 	# Check for duplicate
-	data = http_request(parent, domain, "GET", path, 
-						{"get": True, "hash": md5(safe_str(params['cgats'],
-														   "UTF-8").strip()).hexdigest()},
+	data = http_request(parent, domain, "GET", path,
+						# Remove CREATED date for calculating hash
+						{"get": True, "hash": md5(re.sub('\nCREATED\s+".+?"\n', "\n\n",
+														 safe_str(params['cgats'],
+																  "UTF-8")).strip()).hexdigest()},
 						silent=True)
 	if data and data.strip().startswith("CC"):
 		wx.CallAfter(InfoDialog, parent, 
@@ -370,8 +412,6 @@ def upload_colorimeter_correction(parent=None, params=None):
 		return
 	else:
 		# Upload
-		params['hash'] = md5(safe_str(params['cgats'],
-									  "UTF-8").strip()).hexdigest()
 		params['put'] = True
 		data = http_request(parent, domain, "POST", path, params, 
 							failure_msg=failure_msg)
@@ -5814,7 +5854,7 @@ class MainFrame(BaseFrame):
 				return
 			instrument = colorimeter_ti3.queryv1("TARGET_INSTRUMENT")
 			if instrument:
-				instrument = safe_unicode(instrument, "UTF-7")
+				instrument = safe_unicode(instrument, "UTF-8")
 			description = "%s & %s" % (instrument or 
 									   self.worker.get_instrument_name(),
 									   self.worker.get_display_name(True))
@@ -5848,13 +5888,70 @@ class MainFrame(BaseFrame):
 											  size=(400, -1))
 		dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		if spectro_ti3 and not colorimeter_ti3:
+			dlg.sizer4 = wx.FlexGridSizer(2, 3, 0, 8)
+			dlg.sizer4.AddGrowableCol(0, 1)
+			dlg.sizer4.AddGrowableCol(1, 1)
+			dlg.sizer4.AddGrowableCol(2, 1)
+			dlg.sizer3.Add(dlg.sizer4, 1, flag=wx.EXPAND)
+			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("backlight")), 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("panel.type")), 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			# Display technology
+			dlg.display_tech_ctrl = wx.ComboBox(dlg, -1,
+												choices=["LCD", "CRT",
+														 "Plasma", "Projector"], 
+												style=wx.CB_READONLY)
+			dlg.display_tech_ctrl.SetSelection(0)
+			dlg.sizer4.Add(dlg.display_tech_ctrl,
+						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+			def display_tech_handler(event):
+				tech = dlg.display_tech_ctrl.GetStringSelection()
+				illumination = dlg.illumination_ctrl.GetStringSelection()
+				separate_illumination = ("LCD", "DLP", "LCoS")
+				dlg.illumination_ctrl.Enable(tech in separate_illumination)
+				if tech in ("DLP", "LCoS") and illumination == "CCFL":
+					dlg.illumination_ctrl.SetStringSelection("UHP")
+				dlg.panel_type_ctrl.Enable(tech == "LCD")
+			dlg.Bind(wx.EVT_COMBOBOX, display_tech_handler, 
+					 id=dlg.display_tech_ctrl.GetId())
+			# Display illumination/backlight
+			dlg.illumination_ctrl = wx.ComboBox(dlg, -1,
+												choices=["CCFL",
+														 "White LED",
+														 "RGB LED"], 
+												style=wx.CB_READONLY)
+			dlg.illumination_ctrl.SetSelection(0)
+			dlg.sizer4.Add(dlg.illumination_ctrl,
+						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+			# Panel type
+			dlg.panel_type_ctrl = wx.ComboBox(dlg, -1,
+											  choices=["IPS",
+													   "Wide Gamut IPS",
+													   "PVA",
+													   "Wide Gamut PVA",
+													   "TN"], 
+											  style=wx.CB_READONLY)
+			dlg.panel_type_ctrl.SetSelection(2)
+			dlg.sizer4.Add(dlg.panel_type_ctrl,
+						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 		dlg.description_txt_ctrl.SetFocus()
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		dlg.Center()
 		result = dlg.ShowModal()
-		args += ["-E", safe_str(dlg.description_txt_ctrl.GetValue(), "UTF-7")]
-		args += ["-I", safe_str(dlg.display_txt_ctrl.GetValue(), "UTF-7")]
+		args += ["-E", safe_str(dlg.description_txt_ctrl.GetValue(), "UTF-8")]
+		args += ["-I", safe_str(dlg.display_txt_ctrl.GetValue(), "UTF-8")]
+		if spectro_ti3 and not colorimeter_ti3:
+			tech = []
+			for ctrl in (dlg.display_tech_ctrl, dlg.illumination_ctrl,
+						 dlg.panel_type_ctrl):
+				if ctrl.IsEnabled() and ctrl.GetStringSelection():
+					tech.append(ctrl.GetStringSelection())
+			args += ["-T", safe_str(" ".join(tech), "UTF-8")]
 		if result != wx.ID_OK:
 			return
 		# Prepare our files
@@ -5882,18 +5979,24 @@ class MainFrame(BaseFrame):
 			show_result_dialog(result, self)
 		elif result:
 			source = os.path.join(self.worker.tempdir, name + ext)
-			cgats = CGATS.CGATS(source)[0]
-			if not cgats.get("REFERENCE") and spectro_ti3:
-				cgats.add_keyword("REFERENCE",
-								  spectro_ti3[0].get("TARGET_INSTRUMENT", "?"))
-				cgats.write(source)
-			description = safe_unicode(cgats.queryv1("DESCRIPTOR") or "", "UTF-7")
+			# Important: Do not use parsed CGATS, order of keywords may be 
+			# different than raw data so MD5 will be different
+			cgatsfile = open(source, "rb")
+			cgats = universal_newlines(cgatsfile.read())
+			cgatsfile.close()
+			if not re.search('\nREFERENCE\s+".+?"\n', cgats):
+				re.sub('\nKEYWORD\s+"DISPLAY"\n',
+					   '\nKEYWORD "REFERENCE"\nREFERENCE "%s"\\0' %
+					   spectro_ti3[0].get("TARGET_INSTRUMENT", "?"), cgats)
+			cgatsfile = open(source, "wb")
+			cgatsfile.write(cgats)
+			cgatsfile.close()
 			result = check_create_dir(getcfg("color.dir"))
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
 			if (colorimeter_correction_check_overwrite(self, cgats)):
-				self.upload_colorimeter_correction(description, cgats)
+				self.upload_colorimeter_correction(cgats)
 		elif result is not None:
 			InfoDialog(self,
 					   msg=lang.getstr("colorimeter_correction.create.failure"), 
@@ -5901,7 +6004,7 @@ class MainFrame(BaseFrame):
 					   bitmap=geticon(32, "dialog-error"))
 		self.worker.wrapup(False)
 	
-	def upload_colorimeter_correction(self, description, cgats):
+	def upload_colorimeter_correction(self, cgats):
 		""" Upload a colorimeter correction to the online database """
 		# Ask if user wants to upload
 		dlg = ConfirmDialog(self, 
@@ -5912,47 +6015,7 @@ class MainFrame(BaseFrame):
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result == wx.ID_OK:
-			# Ex. "Sat Oct 01 22:33:44 2011"
-			created = cgats.queryv1("CREATED")
-			if created:
-				try:
-					created = strptime(created)
-				except ValueError:
-					created = re.search("\w+ (\w{3}) (\d{2}) (\d{2}(?::[0-5][0-9]){2}) (\d{4})",
-										created)
-					if created:
-						created = "%s-%s-%s %s" % (created.groups()[3],
-												   {"Jan": "01",
-													"Feb": "02",
-													"Mar": "03",
-													"Apr": "04",
-													"May": "05",
-													"Jun": "06",
-													"Jul": "07",
-													"Aug": "08",
-													"Sep": "09",
-													"Oct": "10",
-													"Nov": "11",
-													"Dec": "12"}.get(created.groups()[0]),
-													created.groups()[1],
-													created.groups()[2])
-						try:
-							created = strptime(created, "%Y-%m-%d %H:%M:%S")
-						except ValueError:
-							created = None
-				if created:
-					created = strftime("%Y-%m-%d %H:%M:%S", created)
-			params = {'type': cgats.type.lower().strip(),
-					  'created': created,
-					  'description': description,
-					  'display': safe_unicode(cgats.queryv1("DISPLAY") or "", "UTF-7"),
-					  #'display_name_edid': self.worker.get_display_edid().get("monitor_name", 
-																			   #self.worker.get_display_name()),
-					  #'display_manufacturer_id_edid': self.worker.get_display_edid().get("manufacturer_id", ""),
-					  #'edid': self.worker.get_display_edid().get("edid", ""),
-					  'instrument': remove_vendor_names(safe_unicode(cgats.queryv1("INSTRUMENT") or "", "UTF-7")),
-					  'reference': remove_vendor_names(safe_unicode(cgats.queryv1("REFERENCE") or "", "UTF-7")),
-					  'cgats': cgats}
+			params = {"cgats": cgats}
 			# Upload correction
 			self.worker.interactive = False
 			self.worker.start(lambda result: result, 
@@ -5978,16 +6041,19 @@ class MainFrame(BaseFrame):
 		dlg.Destroy()
 		if path:
 			setcfg("last_filedialog_path", path)
-			cgats = CGATS.CGATS(path)[0]
-			if not "Argyll" in (cgats.queryv1("ORIGINATOR") or ""):
+			# Important: Do not use parsed CGATS, order of keywords may be 
+			# different than raw data so MD5 will be different
+			cgatsfile = open(path, "rb")
+			cgats = cgatsfile.read()
+			cgatsfile.close()
+			originator = re.search('\nORIGINATOR\s+"Argyll', cgats)
+			if not originator:
 				InfoDialog(self,
 						   msg=lang.getstr("colorimeter_correction.upload.deny"), 
 						   ok=lang.getstr("cancel"), 
 						   bitmap=geticon(32, "dialog-error"))
 			else:
-				self.upload_colorimeter_correction(safe_unicode(cgats.queryv1("DESCRIPTOR") or "", 
-																"UTF-7"), 
-												   cgats)
+				self.upload_colorimeter_correction(cgats)
 
 	def comport_ctrl_handler(self, event=None):
 		if debug and event:
