@@ -171,11 +171,12 @@ def swap_dict_keys_values(mydict):
 
 def app_update_check(parent=None, silent=False):
 	safe_print(lang.getstr("update_check"))
-	data = http_request(parent, domain, "GET", "/VERSION",
+	resp = http_request(parent, domain, "GET", "/VERSION",
 						failure_msg=lang.getstr("update_check.fail"),
 						silent=silent)
-	if data is False:
+	if resp is False:
 		return
+	data = resp.read()
 	try:
 		newversion_tuple = tuple(int(n) for n in data.split("."))
 	except ValueError:
@@ -189,9 +190,10 @@ def app_update_check(parent=None, silent=False):
 			return
 	if newversion_tuple > VERSION_BASE:
 		# Get changelog
-		readme = http_request(parent, domain, "GET", "/README.html",
-							  silent=silent)
-		if readme:
+		resp = http_request(parent, domain, "GET", "/README.html",
+							silent=silent)
+		if resp:
+			readme = resp.read()
 			chglog = re.search('<div id="(?:changelog|history)">'
 							   '.+?<h2>.+?</h2>'
 							   '.+?<dl>.+?</dd>', readme, re.S)
@@ -262,9 +264,10 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 
-def colorimeter_correction_web_check_choose(data, parent=None):
+def colorimeter_correction_web_check_choose(resp, parent=None):
 	""" Let user choose a colorimeter correction and confirm overwrite """
-	if data is not False:
+	if resp is not False:
+		data = resp.read()
 		if data.strip().startswith("CC"):
 			cgats = CGATS.CGATS(data)
 		else:
@@ -398,13 +401,13 @@ def upload_colorimeter_correction(parent=None, params=None):
 	path = "/colorimetercorrections/index.php"
 	failure_msg = lang.getstr("colorimeter_correction.upload.failure")
 	# Check for duplicate
-	data = http_request(parent, domain, "GET", path,
+	resp = http_request(parent, domain, "GET", path,
 						# Remove CREATED date for calculating hash
 						{"get": True, "hash": md5(re.sub('\nCREATED\s+".+?"\n', "\n\n",
 														 safe_str(params['cgats'],
 																  "UTF-8")).strip()).hexdigest()},
 						silent=True)
-	if data and data.strip().startswith("CC"):
+	if resp and resp.read().strip().startswith("CC"):
 		wx.CallAfter(InfoDialog, parent, 
 					 msg=lang.getstr("colorimeter_correction.upload.exists"),
 					 ok=lang.getstr("ok"), 
@@ -413,17 +416,17 @@ def upload_colorimeter_correction(parent=None, params=None):
 	else:
 		# Upload
 		params['put'] = True
-		data = http_request(parent, domain, "POST", path, params, 
+		resp = http_request(parent, domain, "POST", path, params, 
 							failure_msg=failure_msg)
-	if data is not False:
-		if data.strip() == "PUT OK":
+	if resp is not False:
+		if resp.status == 201:
 			wx.CallAfter(InfoDialog, parent, 
 						 msg=lang.getstr("colorimeter_correction.upload.success"),
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-information"))
 		else:
 			wx.CallAfter(InfoDialog, parent, 
-						 msg="%s\n\n%s" % (failure_msg, data),
+						 msg="\n\n".join([failure_msg, resp.read().strip()]),
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
 
@@ -468,12 +471,12 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"), log=False)
 		return False
-	if resp.status not in (httplib.OK, httplib.FOUND):
+	if resp.status >= 400:
 		msg = " ".join([failure_msg,
 						lang.getstr("connection.fail.http", 
 									" ".join([str(resp.status),
 											  resp.reason,
-											  domain + path]))]).strip()
+											  resp.read()]))]).strip()
 		safe_print(msg)
 		if not silent:
 			wx.CallAfter(InfoDialog, parent, 
@@ -481,7 +484,7 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"), log=False)
 		return False
-	return resp.read()
+	return resp
 
 
 class BaseFrame(wx.Frame):
@@ -4090,7 +4093,7 @@ class MainFrame(BaseFrame):
 	def profile_share_consumer(self, result, parent=None):
 		""" This function receives the response from the profile upload """
 		if result is not False:
-			safe_print(safe_unicode(result, "UTF-8"))
+			safe_print(safe_unicode(result.read().strip(), "UTF-8"))
 			parent = parent or getattr(self, "modaldlg", self)
 			dlg = InfoDialog(parent, 
 							 msg=lang.getstr("profile.share.success"),
