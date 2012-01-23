@@ -5902,56 +5902,55 @@ class MainFrame(BaseFrame):
 											  size=(400, -1))
 		dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-		if spectro_ti3 and not colorimeter_ti3:
-			dlg.sizer4 = wx.FlexGridSizer(2, 3, 0, 8)
-			dlg.sizer4.AddGrowableCol(0, 1)
-			dlg.sizer4.AddGrowableCol(1, 1)
-			dlg.sizer4.AddGrowableCol(2, 1)
-			dlg.sizer3.Add(dlg.sizer4, 1, flag=wx.EXPAND)
-			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("backlight")), 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("panel.type")), 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			# Display technology
-			dlg.display_tech_ctrl = wx.ComboBox(dlg, -1,
-												choices=["LCD", "CRT",
-														 "Plasma", "Projector"], 
-												style=wx.CB_READONLY)
-			dlg.display_tech_ctrl.SetSelection(0)
-			dlg.sizer4.Add(dlg.display_tech_ctrl,
-						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			def display_tech_handler(event):
-				tech = dlg.display_tech_ctrl.GetStringSelection()
-				illumination = dlg.illumination_ctrl.GetStringSelection()
-				separate_illumination = ("LCD", "DLP", "LCoS")
-				dlg.illumination_ctrl.Enable(tech in separate_illumination)
-				if tech in ("DLP", "LCoS") and illumination == "CCFL":
-					dlg.illumination_ctrl.SetStringSelection("UHP")
-				dlg.panel_type_ctrl.Enable(tech == "LCD")
-			dlg.Bind(wx.EVT_COMBOBOX, display_tech_handler, 
-					 id=dlg.display_tech_ctrl.GetId())
-			# Display illumination/backlight
-			dlg.illumination_ctrl = wx.ComboBox(dlg, -1,
-												choices=["CCFL",
-														 "White LED",
-														 "RGB LED"], 
-												style=wx.CB_READONLY)
-			dlg.illumination_ctrl.SetSelection(0)
-			dlg.sizer4.Add(dlg.illumination_ctrl,
-						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			# Panel type
-			dlg.panel_type_ctrl = wx.ComboBox(dlg, -1,
-											  choices=["IPS",
-													   "Wide Gamut IPS",
-													   "PVA",
-													   "Wide Gamut PVA",
-													   "TN"], 
-											  style=wx.CB_READONLY)
-			dlg.panel_type_ctrl.SetSelection(2)
-			dlg.sizer4.Add(dlg.panel_type_ctrl,
-						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+		dlg.sizer4 = wx.FlexGridSizer(2, 3, 0, 8)
+		dlg.sizer4.AddGrowableCol(0, 1)
+		dlg.sizer4.AddGrowableCol(1, 1)
+		dlg.sizer4.AddGrowableCol(2, 1)
+		dlg.sizer3.Add(dlg.sizer4, 1, flag=wx.EXPAND)
+		dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("backlight")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("panel.type")), 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		# Display technology
+		dlg.display_tech_ctrl = wx.ComboBox(dlg, -1,
+											choices=["LCD", "CRT",
+													 "Plasma", "Projector"], 
+											style=wx.CB_READONLY)
+		dlg.display_tech_ctrl.SetSelection(0)
+		dlg.sizer4.Add(dlg.display_tech_ctrl,
+					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+		def display_tech_handler(event):
+			tech = dlg.display_tech_ctrl.GetStringSelection()
+			illumination = dlg.illumination_ctrl.GetStringSelection()
+			separate_illumination = ("LCD", "DLP", "LCoS")
+			dlg.illumination_ctrl.Enable(tech in separate_illumination)
+			if tech in ("DLP", "LCoS") and illumination == "CCFL":
+				dlg.illumination_ctrl.SetStringSelection("UHP")
+			dlg.panel_type_ctrl.Enable(tech == "LCD")
+		dlg.Bind(wx.EVT_COMBOBOX, display_tech_handler, 
+				 id=dlg.display_tech_ctrl.GetId())
+		# Display illumination/backlight
+		dlg.illumination_ctrl = wx.ComboBox(dlg, -1,
+											choices=["CCFL",
+													 "White LED",
+													 "RGB LED"], 
+											style=wx.CB_READONLY)
+		dlg.illumination_ctrl.SetSelection(0)
+		dlg.sizer4.Add(dlg.illumination_ctrl,
+					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+		# Panel type
+		dlg.panel_type_ctrl = wx.ComboBox(dlg, -1,
+										  choices=["IPS",
+												   "Wide Gamut IPS",
+												   "PVA",
+												   "Wide Gamut PVA",
+												   "TN"], 
+										  style=wx.CB_READONLY)
+		dlg.panel_type_ctrl.SetSelection(2)
+		dlg.sizer4.Add(dlg.panel_type_ctrl,
+					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 		dlg.description_txt_ctrl.SetFocus()
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
@@ -5959,12 +5958,12 @@ class MainFrame(BaseFrame):
 		result = dlg.ShowModal()
 		args += ["-E", safe_str(dlg.description_txt_ctrl.GetValue(), "UTF-8")]
 		args += ["-I", safe_str(dlg.display_txt_ctrl.GetValue(), "UTF-8")]
+		tech = []
+		for ctrl in (dlg.display_tech_ctrl, dlg.illumination_ctrl,
+					 dlg.panel_type_ctrl):
+			if ctrl.IsEnabled() and ctrl.GetStringSelection():
+				tech.append(ctrl.GetStringSelection())
 		if spectro_ti3 and not colorimeter_ti3:
-			tech = []
-			for ctrl in (dlg.display_tech_ctrl, dlg.illumination_ctrl,
-						 dlg.panel_type_ctrl):
-				if ctrl.IsEnabled() and ctrl.GetStringSelection():
-					tech.append(ctrl.GetStringSelection())
 			args += ["-T", safe_str(" ".join(tech), "UTF-8")]
 		if result != wx.ID_OK:
 			return
@@ -5999,12 +5998,15 @@ class MainFrame(BaseFrame):
 			cgats = universal_newlines(cgatsfile.read())
 			cgatsfile.close()
 			if not re.search('\nREFERENCE\s+".+?"\n', cgats):
-				re.sub('\nKEYWORD\s+"DISPLAY"\n',
-					   '\nKEYWORD "REFERENCE"\nREFERENCE "%s"\\0' %
-					   spectro_ti3[0].get("TARGET_INSTRUMENT", "?"), cgats)
-			cgatsfile = open(source, "wb")
-			cgatsfile.write(cgats)
-			cgatsfile.close()
+				# By default, CCSS files don't contain reference instrument
+				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
+							   '\nKEYWORD "REFERENCE"\nREFERENCE "%s"\\1' %
+							   spectro_ti3[0].get("TARGET_INSTRUMENT", "?"), cgats)
+			if not re.search('\nTECHNOLOGY\s+".+?"\n', cgats):
+				# By default, CCMX files don't contain technology string
+				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
+							   '\nKEYWORD "TECHNOLOGY"\nTECHNOLOGY "%s"\\1' %
+							   safe_str(" ".join(tech), "UTF-8"), cgats)
 			result = check_create_dir(getcfg("color.dir"))
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
