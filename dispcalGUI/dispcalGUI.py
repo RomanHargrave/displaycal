@@ -1633,7 +1633,7 @@ class MainFrame(BaseFrame):
 		edid = self.worker.get_display_edid()
 		self.menuitem_create_profile_from_edid.Enable(bool(self.worker.displays
 														   and edid.get("monitor_name",
-																		edid["product_id"])
+																		edid.get("product_id"))
 														   and edid.get("red_x")
 														   and edid.get("red_y")
 														   and edid.get("green_x")
