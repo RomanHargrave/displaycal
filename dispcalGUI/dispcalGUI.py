@@ -3725,9 +3725,13 @@ class MainFrame(BaseFrame):
 			if meta and meta is not True:
 				# Add existing meta information
 				profile.tags.meta = meta
-			elif meta is True and self.worker.get_display_edid():
-				# Add new meta information based on EDID
-				profile.set_edid_metadata(self.worker.get_display_edid())
+			elif meta is True:
+				if self.worker.get_display_edid():
+					# Add new meta information based on EDID
+					profile.set_edid_metadata(self.worker.get_display_edid())
+				elif not "meta" in profile.tags:
+					# Make sure meta tag exists
+					profile.tags.meta = ICCP.DictType()
 				# Set OPENICC_automatic_generated to "0"
 				profile.tags.meta["OPENICC_automatic_generated"] = "0"
 				# Set GCM DATA_source to "calib"
