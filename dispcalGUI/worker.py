@@ -1814,7 +1814,7 @@ class Worker():
 			edid = self.display_edid[max(0, min(len(self.displays), 
 												getcfg("display.number") - 1))]
 			display_name = edid.get("monitor_name",
-									str(edid["product_id"] or ""))
+									str(edid.get("product_id") or ""))
 			display_manufacturer = edid.get("manufacturer")
 		if not display_name and not display_manufacturer:
 			# Note: Do not mix'n'match display name and manufacturer from 
