@@ -23,7 +23,7 @@ else:
 author_ascii = "Florian Hoech"
 author_email = "dispcalGUI@hoech.net"
 description = ("A graphical user interface for the Argyll CMS display "
-				"calibration utilities")
+			   "calibration and profiling tools")
 longdesc = "\n".join(["Calibrates and characterizes display devices using a hardware sensor,",
 					  "driven by the open source color management system Argyll CMS.",
 					  "Supports multi-display setups and a variety of available settings like ",

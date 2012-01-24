@@ -62,6 +62,9 @@ jQuery(function ($) {
 	/* Requirements toggle */
 	$maketoggle('#requirements-source h3', 'div');
 	
+	/* Driver install sub toggle */
+	$maketoggle('#install-windows-driver h4, #install-windows-driver h5', 'ol, p');
+	
 	/* Install toggle */
 	$maketoggle('#install h3', 'div');
 	
@@ -74,6 +77,12 @@ jQuery(function ($) {
 	/* Issues toggle on link click */
 	$('a[href^="#issue-"]').click(function() {
 		if (!$($(this).attr('href')).hasClass('expanded')) $($(this).attr('href')).click();
+		return true;
+	});
+	
+	/* Install toggle on link click */
+	$('a[href^="#install-"]').click(function() {
+		if (!$($(this).attr('href')).find('h3').hasClass('expanded')) $($(this).attr('href')).find('h3').click();
 		return true;
 	});
 	

@@ -562,8 +562,8 @@ sup {
 #download div ul,
 #quickstart > ol > li,
 #quickstart > ol > li h3,
-#quickstart > ol > li h4,
-#quickstart > ol > li h5,
+#install-windows-driver h4,
+#install-windows-driver h5,
 #requirements-source > div,
 #install > div,
 #issues dt.collapsed,
@@ -584,8 +584,8 @@ sup {
 .ie_lte_8 #download div ul,
 .ie_lte_8 #quickstart > ol > li,
 .ie_lte_8 #quickstart > ol > li h3,
-.ie_lte_8 #quickstart > ol > li h4,
-.ie_lte_8 #quickstart > ol > li h5,
+.ie_lte_8 #install-windows-driver h4,
+.ie_lte_8 #install-windows-driver h5,
 .ie_lte_8 #requirements-source > div,
 .ie_lte_8 #install > div,
 .ie_lte_8 #issues dt.collapsed,
@@ -605,8 +605,8 @@ sup {
 	margin: 0;
 }
 #quickstart > ol > li h3,
-#quickstart > ol > li h4,
-#quickstart > ol > li h5 {
+#install-windows-driver h4,
+#install-windows-driver h5 {
 	margin: 0;
 }
 #requirements-source > div h3,
@@ -659,15 +659,15 @@ sup {
 }
 #download > ul,
 #download div ul,
-#quickstart ul {
+#install-windows-driver ul {
 	list-style: none;
 	margin-left: 0;
 }
 .button,
 #download div ul,
 #quickstart > ol > li h3,
-#quickstart > ol > li h4,
-#quickstart > ol > li h5 {
+#install-windows-driver h4,
+#install-windows-driver h5 {
 	border: 1px solid #9bc;
 
 	-moz-border-radius: 6px;
