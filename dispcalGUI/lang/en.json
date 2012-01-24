@@ -142,6 +142,7 @@
 	"dialog.current_cal_warning": "The current calibration curves will be used. Do you want to continue?",
 	"dialog.ti3_no_cal_info": "The measurement data does not contain calibration curves. Do you really want to continue?",
 	"display": "Display device",
+	"display.manufacturer": "Display device manufacturer",
 	"display_short": "Display device (abbreviated)",
 	"display_lut.link": "Link/unlink display and video card gamma table access",
 	"display_detected": "A change in the display device configuration has been detected.",

@@ -114,6 +114,7 @@ from debughelpers import getevtobjname, getevttype, handle_error
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import (iccprofiles_home, iccprofiles_display_home, 
 							  xdg_config_home, xdg_config_dirs)
+from edid import pnpidcache, get_manufacturer_name
 from log import _safe_print, log, logbuffer, safe_print
 from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
@@ -283,27 +284,30 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						ok=lang.getstr("ok"), 
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), nowrap=True)
-	dlg.list_ctrl = wx.ListCtrl(dlg, -1, size=(640, 100), style=wx.LC_REPORT | 
+	dlg.list_ctrl = wx.ListCtrl(dlg, -1, size=(640, 150), style=wx.LC_REPORT | 
 																wx.LC_SINGLE_SEL)
 	dlg.list_ctrl.InsertColumn(0, lang.getstr("type"))
 	dlg.list_ctrl.InsertColumn(1, lang.getstr("description"))
-	dlg.list_ctrl.InsertColumn(2, lang.getstr("instrument"))
+	dlg.list_ctrl.InsertColumn(2, lang.getstr("display.manufacturer"))
 	dlg.list_ctrl.InsertColumn(3, lang.getstr("display"))
-	dlg.list_ctrl.InsertColumn(4, lang.getstr("reference_instrument"))
-	dlg.list_ctrl.InsertColumn(5, lang.getstr("created"))
+	dlg.list_ctrl.InsertColumn(4, lang.getstr("instrument"))
+	dlg.list_ctrl.InsertColumn(5, lang.getstr("reference_instrument"))
+	dlg.list_ctrl.InsertColumn(6, lang.getstr("created"))
 	dlg.list_ctrl.SetColumnWidth(0, 50)
-	dlg.list_ctrl.SetColumnWidth(1, 320)
-	dlg.list_ctrl.SetColumnWidth(2, 75)
-	dlg.list_ctrl.SetColumnWidth(3, 175)
+	dlg.list_ctrl.SetColumnWidth(1, 250)
+	dlg.list_ctrl.SetColumnWidth(2, 150)
+	dlg.list_ctrl.SetColumnWidth(3, 100)
 	dlg.list_ctrl.SetColumnWidth(4, 75)
 	dlg.list_ctrl.SetColumnWidth(5, 75)
+	dlg.list_ctrl.SetColumnWidth(6, 150)
 	for i in cgats:
 		index = dlg.list_ctrl.InsertStringItem(i, "")
 		dlg.list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
 		dlg.list_ctrl.SetStringItem(index, 1, remove_vendor_names(cgats[i].queryv1("DESCRIPTOR") or ""))
-		dlg.list_ctrl.SetStringItem(index, 2, remove_vendor_names(cgats[i].queryv1("INSTRUMENT") or ""))
+		dlg.list_ctrl.SetStringItem(index, 2, cgats[i].queryv1("MANUFACTURER") or "")
 		dlg.list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
-		dlg.list_ctrl.SetStringItem(index, 4, remove_vendor_names(cgats[i].queryv1("REFERENCE") or ""))
+		dlg.list_ctrl.SetStringItem(index, 4, remove_vendor_names(cgats[i].queryv1("INSTRUMENT") or ""))
+		dlg.list_ctrl.SetStringItem(index, 5, remove_vendor_names(cgats[i].queryv1("REFERENCE") or ""))
 		created = cgats[i].queryv1("CREATED")
 		if created:
 			try:
@@ -333,7 +337,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						pass
 			if isinstance(created, struct_time):
 				created = strftime("%Y-%m-%d %H:%M:%S", created)
-		dlg.list_ctrl.SetStringItem(index, 5, created or "")
+		dlg.list_ctrl.SetStringItem(index, 6, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg.list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
@@ -445,17 +449,17 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 			params[key] = safe_str(params[key], charset)
 		params = urllib.urlencode(params)
 	if headers is None:
+		headers = {"User-Agent": "%s/%s" % (appname, version)}
 		if request_type == "GET":
-			headers = {}
 			path += '?' + params
 			params = None
 		else:
 			if files:
-				headers = {"Content-Type": content_type,
-						   "Content-Length": str(len(params))}
+				headers.update({"Content-Type": content_type,
+								"Content-Length": str(len(params))})
 			else:
-				headers = {"Content-Type": "application/x-www-form-urlencoded",
-						   "Accept": "text/plain"}
+				headers.update({"Content-Type": "application/x-www-form-urlencoded",
+								"Accept": "text/plain"})
 	conn = httplib.HTTPConnection(domain)
 	try:
 		conn.request(request_type, path, params, headers)
@@ -5744,9 +5748,8 @@ class MainFrame(BaseFrame):
 			filetype = 'ccmx'
 		params = {'get': True,
 				  'type': filetype,
-				  'display': self.worker.get_display_edid().get("monitor_name", 
-																 self.worker.get_display_name()) or "NONE",
-				  'instrument': self.worker.get_instrument_name() or "NONE"}
+				  'display': self.worker.get_display_name(False, True) or "Unknown",
+				  'instrument': self.worker.get_instrument_name() or "Unknown"}
 		self.worker.interactive = False
 		self.worker.start(colorimeter_correction_web_check_choose, 
 						  http_request, 
@@ -5885,6 +5888,14 @@ class MainFrame(BaseFrame):
 			return
 		else:
 			description = self.worker.get_display_name(True)
+		options_dispcal, options_colprof = get_options_from_ti3(spectro_ti3)
+		display = None
+		manufacturer = None
+		for option in options_colprof:
+			if option.startswith("M"):
+				display = option[1:].strip(' "')
+			elif option.startswith("A"):
+				manufacturer = option[1:].strip(' "')
 		args = []
 		# Allow use to alter description, display and instrument
 		dlg = ConfirmDialog(
@@ -5899,13 +5910,23 @@ class MainFrame(BaseFrame):
 											   size=(400, -1))
 		dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-		dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
-											  self.worker.get_display_name(True), 
-											  size=(400, -1))
-		dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		if not display:
+			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display")), 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
+											   self.worker.get_display_name(True,
+																			True), 
+											   size=(400, -1))
+			dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+		if not manufacturer:
+			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display.manufacturer")), 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
+													self.worker.get_display_edid().get("manufacturer", ""), 
+													size=(400, -1))
+			dlg.sizer3.Add(dlg.manufacturer_txt_ctrl, 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
 		dlg.sizer4 = wx.FlexGridSizer(2, 3, 0, 8)
 		dlg.sizer4.AddGrowableCol(0, 1)
 		dlg.sizer4.AddGrowableCol(1, 1)
@@ -5952,7 +5973,7 @@ class MainFrame(BaseFrame):
 												   "Wide Gamut PVA",
 												   "TN"], 
 										  style=wx.CB_READONLY)
-		dlg.panel_type_ctrl.SetSelection(2)
+		dlg.panel_type_ctrl.SetSelection(1)
 		dlg.sizer4.Add(dlg.panel_type_ctrl,
 					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 		dlg.description_txt_ctrl.SetFocus()
@@ -5960,8 +5981,10 @@ class MainFrame(BaseFrame):
 		dlg.sizer0.Layout()
 		dlg.Center()
 		result = dlg.ShowModal()
-		args += ["-E", safe_str(dlg.description_txt_ctrl.GetValue(), "UTF-8")]
-		args += ["-I", safe_str(dlg.display_txt_ctrl.GetValue(), "UTF-8")]
+		args += ["-E", safe_str(dlg.description_txt_ctrl.GetValue().strip(), "UTF-8")]
+		if not display:
+			display = dlg.display_txt_ctrl.GetValue()
+		args += ["-I", safe_str(display.strip(), "UTF-8")]
 		tech = []
 		for ctrl in (dlg.display_tech_ctrl, dlg.illumination_ctrl,
 					 dlg.panel_type_ctrl):
@@ -6001,16 +6024,38 @@ class MainFrame(BaseFrame):
 			cgatsfile = open(source, "rb")
 			cgats = universal_newlines(cgatsfile.read())
 			cgatsfile.close()
-			if not re.search('\nREFERENCE\s+".+?"\n', cgats):
+			if (spectro_ti3[0].get("TARGET_INSTRUMENT") and
+				not re.search('\nREFERENCE\s+".+?"\n', cgats)):
 				# By default, CCSS files don't contain reference instrument
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "REFERENCE"\nREFERENCE "%s"\\1' %
-							   spectro_ti3[0].get("TARGET_INSTRUMENT", "?"), cgats)
+							   spectro_ti3[0].get("TARGET_INSTRUMENT"), cgats)
 			if not re.search('\nTECHNOLOGY\s+".+?"\n', cgats):
 				# By default, CCMX files don't contain technology string
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "TECHNOLOGY"\nTECHNOLOGY "%s"\\1' %
 							   safe_str(" ".join(tech), "UTF-8"), cgats)
+			manufacturer_id = None
+			if not manufacturer:
+				manufacturer = dlg.manufacturer_txt_ctrl.GetValue()
+			if manufacturer:
+				if not pnpidcache:
+					# Populate pnpidcache
+					get_manufacturer_name("???")
+				manufacturers = dict([name, id] for id, name in
+									 pnpidcache.iteritems())
+				manufacturer_id = manufacturers.get(manufacturer)
+			if manufacturer_id and not re.search('\nMANUFACTURER_ID\s+".+?"\n',
+												 cgats):
+				# By default, CCMX/CCSS files don't contain manufacturer ID
+				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
+							   '\nKEYWORD "MANUFACTURER_ID"\nMANUFACTURER_ID "%s"\\1' %
+							   safe_str(manufacturer_id, "UTF-8"), cgats)
+			if manufacturer and not re.search('\nMANUFACTURER\s+".+?"\n', cgats):
+				# By default, CCMX/CCSS files don't contain manufacturer
+				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
+							   '\nKEYWORD "MANUFACTURER"\nMANUFACTURER "%s"\\1' %
+							   safe_str(manufacturer, "UTF-8"), cgats)
 			result = check_create_dir(getcfg("color.dir"))
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)

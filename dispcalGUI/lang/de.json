@@ -142,6 +142,7 @@
 	"dialog.current_cal_warning": "Die gerade geladenen Kalibrierungskurven werden verwendet. Wollen Sie fortfahren?",
 	"dialog.ti3_no_cal_info": "Die Messwerte enthalten keine Kalibrierungskurven. Wollen Sie wirklich fortfahren?",
 	"display": "Anzeigegerät",
+	"display.manufacturer": "Anzeigegerätehersteller",
 	"display_short": "Anzeigegerät (Kurzname)",
 	"display_lut.link": "Anzeigegerät und Grafikkarten-Gammatabellen-Zugriff getrennt oder gemeinsam ändern",
 	"display_detected": "Eine Änderung in der Anzeigegerätekonfiguration wurde erkannt.",

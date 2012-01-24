@@ -425,6 +425,49 @@ def make_argyll_compatible_path(path):
 	return os.path.sep.join(parts)
 
 
+def normalize_manufacturer_name(vendor):
+	""" Strip certain redundant info from vendor name """
+	subs = {"Acer .+": "Acer",
+			"Apple .+": "Apple",
+			"Compaq .+": "Compaq",
+			"Daewoo .+": "Daewoo",
+			"Eizo .+": "EIZO",
+			"Envision .+": "Envision",
+			"Fujitsu( Siemens|) .+": "Fujitsu\\1",
+			"Gateway .+": "Gateway",
+			"Goldstar .+": "LG",  # GoldStar no longer exists
+			"HannStar .+": "HannStar",
+			"Hitachi .+": "Hitachi",
+			"Lenovo .+": "Lenovo",
+			"Liyama .+": "Iiyama",  # Typo in pnp.ids
+			"Mitsubishi .+": "Mitsubishi",
+			"Panasonic .+": "Panasonic",
+			"Philips .+": "Philips",
+			"Proview .+": "Proview",
+			"Samsung .+": "Samsung",
+			"Tatung .+": "Tatung",
+			"Zalman .+": "Zalman"}
+	for sub in subs.iteritems():
+		vendor = re.sub(sub[0], sub[1], vendor)
+	strings = ["AG", "KG", "[Ii][Nn][Cc]", "Asia", "Germany", "Spain",
+			   "(?:North\s+)?America","\w?mbH", "[Cc]o(?:mpany)?", "CO(?:MPANY)?",
+			   "[Ll]\.?[Tt]\.?[Dd]\.?(?:[Aa]\.?)?", "[Ll]imited", "LIMITED",
+			   "CORP(?:ORATION)?", "[Cc]orp(?:oration)?", "[Ii]nt'l", "L\.P",
+			   "[Pp]\.?[Tt]\.?[EeYy]", "[Ss]\.?[Pp]?\.?[Aa]", "K\.?K\.?", "AB",
+			   "[Ss]\.?[Rr]\.?[Ll]", "[Pp]\.?[Ll]\.?[Cc]", "P/?L", "[Nn]\.[Vv]",
+			   "A[/.]?S", "[Bb]\.?[Vv]", "[Ss]\.?[Aa]\.?[Ss]",
+			   "[Dd]\.?[Bb]\.?[Aa]", "LLC", "S\.?A", "Sdn", "Bhd", "I[Nn][Dd]",
+			   "[Ii]nternational", "INTERNATIONAL",
+			   "GmbH\s*&\s*Co(?:\.|mpany)?\s*KG", "M[Ff][Gg]"]
+	previous = None
+	while previous != vendor:
+		previous = vendor
+		vendor = re.sub("\s*\([^)]+\)\s*$", "", vendor)
+		vendor = re.sub("([,.\s])\s*(?:%s)(?:[,.]+|\s*$)" % "|".join(strings),
+					    "\\1", vendor).strip(",").strip()
+	return vendor
+
+
 def printcmdline(cmd, args=None, fn=None, cwd=None):
 	"""
 	Pretty-print a command line.
@@ -1775,13 +1818,27 @@ class Worker():
 			return self.display_edid[n]
 		return {}
 	
-	def get_display_name(self, prepend_manufacturer=False):
+	def get_display_name(self, prepend_manufacturer=False, prefer_edid=False):
 		""" Return name of currently configured display """
 		n = getcfg("display.number") - 1
 		if n >= 0 and n < len(self.display_names):
-			return (self.display_manufacturers[n] + " " if 
-					prepend_manufacturer and self.display_manufacturers[n] else 
-					"") + self.display_names[n]
+			display = []
+			manufacturer = None
+			display_name = None
+			if prefer_edid:
+				edid = self.get_display_edid()
+				manufacturer = edid.get("manufacturer")
+				display_name = edid.get("monitor_name",
+										str(edid.get("product_id") or ""))
+			if prepend_manufacturer:
+				if not manufacturer:
+					manufacturer = self.display_manufacturers[n]
+				if manufacturer:
+					display.append(normalize_manufacturer_name(manufacturer))
+			if not display_name:
+				display_name = self.display_names[n]
+			display.append(display_name)
+			return " ".join(display)
 		return ""
 	
 	def get_dispwin_display_profile_argument(self, display_no=0):
