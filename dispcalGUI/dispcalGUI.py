@@ -5040,6 +5040,7 @@ class MainFrame(BaseFrame):
 			self.get_set_display()
 		if returncode != 255:
 			self.Show(start_timers=True)
+			self.restore_testchart()
 			if stderr and stderr.strip():
 				InfoDialog(self, msg=safe_unicode(stderr.strip()), 
 						   ok=lang.getstr("ok"), 
@@ -5772,6 +5773,8 @@ class MainFrame(BaseFrame):
 							cancel=lang.getstr("cancel"), 
 							alt=lang.getstr("measure.testchart"), 
 							bitmap=geticon(32, "dialog-information"))
+		dlg.alt.Enable(bool(self.worker.displays) and 
+					   bool(self.worker.instruments))
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:

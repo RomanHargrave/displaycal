@@ -429,6 +429,8 @@ class MeasureFrame(InvincibleFrame):
 		self.Hide()
 		if self.Parent:
 			self.Parent.Show()
+			if getattr(self.Parent, "restore_testchart"):
+				self.Parent.restore_testchart()
 		else:
 			writecfg()
 			self.Destroy()
