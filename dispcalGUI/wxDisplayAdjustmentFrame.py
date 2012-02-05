@@ -667,7 +667,7 @@ class DisplayAdjustmentPanel(wx.Panel):
 		self.sizer.Add(wx.StaticBitmap(self,
 									   bitmap=getbitmap("theme/marker_%s" %
 														direction),
-									   size=(200, 10)), flag=wx.ALIGN_CENTER)
+									   size=(200, 10)))
 	
 	def add_txt(self, label):
 		bitmap = wx.StaticBitmap(self, wx.ID_ANY,
@@ -852,9 +852,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 
 	def Pulse(self, msg=""):
 		self.lastmsg = msg
-		if msg in (lang.getstr("instrument.initializing"),
-				   lang.getstr("instrument.calibrating"),
-				   lang.getstr("please_wait")) or msg == " " * 4:
+		if (msg in (lang.getstr("instrument.initializing"),
+					lang.getstr("instrument.calibrating"),
+					lang.getstr("please_wait")) or msg == " " * 4 or
+			"error" in msg.lower() or "failed" in msg.lower()):
 			txt = self.lb.GetCurrentPage().txt.get("rgb",
 												   self.lb.GetCurrentPage().txt.get("luminance"))
 			if txt.GetLabel() != msg:
