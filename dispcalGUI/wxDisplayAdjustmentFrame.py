@@ -147,9 +147,15 @@ import colormath
 import config
 import localization as lang
 
-BGCOLOUR = "#333333"
-BORDERCOLOUR = "#222222"
-FGCOLOUR = "#999999"
+BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
+BORDERCOLOUR = wx.Colour(0x22, 0x22, 0x22)
+FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
+
+
+def get_panel(parent, size=wx.DefaultSize):
+	panel = wx.Panel(parent, wx.ID_ANY, size=size)
+	panel.SetBackgroundColour(BGCOLOUR)
+	return panel
 
 
 class FlatShadedButton(GradientButton):
@@ -160,6 +166,9 @@ class FlatShadedButton(GradientButton):
 				 name="gradientbutton"):
 		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
 								style, validator, name)
+		if sys.platform != "win32":
+			self.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+									 wx.FONTWEIGHT_NORMAL))
 		self._setcolours()
 	
 	def _setcolours(self, colour=None):
@@ -168,8 +177,8 @@ class FlatShadedButton(GradientButton):
 		self.SetBottomStartColour(colour or wx.Colour(0x22, 0x22, 0x22))
 		self.SetBottomEndColour(colour or wx.Colour(0x22, 0x22, 0x22))
 		self.SetForegroundColour(FGCOLOUR)
-		self.SetPressedBottomColour(colour or "#222222")
-		self.SetPressedTopColour(colour or "#222222")
+		self.SetPressedBottomColour(colour or wx.Colour(0x22, 0x22, 0x22))
+		self.SetPressedTopColour(colour or wx.Colour(0x22, 0x22, 0x22))
 	
 	def Enable(self, enable=True):
 		if enable:
@@ -219,6 +228,9 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 		 ====================== ======= ================================
 		 
 		"""
+		
+		if self.GetParent().GetParent().is_busy:
+			return -1, IMG_NONE
 		
 		style = self.GetParent().GetAGWWindowStyleFlag()
 		
@@ -315,6 +327,8 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 		count = 0
 		
 		for i in xrange(len(self._pagesInfoVec)):
+			if self.GetParent().GetParent().is_busy and i != self.GetParent().GetSelection():
+				continue
 
 			count = count + 1            
 		
@@ -427,7 +441,7 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 				if bUseYcoord:
 				
 					imgXcoord = 0
-					imgYcoord = (style & INB_SHOW_ONLY_IMAGES and [pos] or [pos + imgTopPadding])[0] + (8 * i)
+					imgYcoord = (style & INB_SHOW_ONLY_IMAGES and [pos] or [pos + imgTopPadding])[0] + (8 * (count - 1))
 				
 				else:
 				
@@ -594,9 +608,14 @@ class DisplayAdjustmentPanel(wx.Panel):
 	
 	def __init__(self, parent=None, id=wx.ID_ANY, title="", ctrltype="luminance"):
 		wx.Panel.__init__(self, parent, id)
+		self.SetBackgroundColour(BGCOLOUR)
 		self.SetForegroundColour(FGCOLOUR)
 		self.SetSizer(wx.BoxSizer(wx.VERTICAL))
-		self.GetSizer().Add(wx.StaticText(self, wx.ID_ANY, title))
+		self.title_txt = wx.StaticText(self, wx.ID_ANY, title)
+		self.title_txt.SetFont(wx.Font(10, wx.FONTFAMILY_DEFAULT,
+							   wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+		self.title_txt.SetForegroundColour(FGCOLOUR)
+		self.GetSizer().Add(self.title_txt)
 		self.sizer = wx.FlexGridSizer(0, 2, 0, 0)
 		self.GetSizer().Add(self.sizer, flag=wx.TOP, border=8)
 		self.gauges = {}
@@ -609,7 +628,10 @@ class DisplayAdjustmentPanel(wx.Panel):
 				lstr = "calibration.interactive_display_adjustment.white_point"
 			txt = wx.StaticText(self, wx.ID_ANY, lang.getstr(lstr) + " " +
 												 lang.getstr("calibration.interactive_display_adjustment.generic_hint.plural"))
-			txt.Wrap(240)
+			txt.SetForegroundColour(FGCOLOUR)
+			txt.SetMaxFontSize(10)
+			txt.Wrap(224)
+			self.desc = txt
 			self.GetSizer().Insert(1, txt, flag=wx.TOP, border=8)
 			self.add_marker()
 			self.add_gauge("R", ctrltype + "_red")
@@ -634,7 +656,10 @@ class DisplayAdjustmentPanel(wx.Panel):
 				lstr = "calibration.interactive_display_adjustment.white_level.lcd"
 			txt = wx.StaticText(self, wx.ID_ANY, lang.getstr(lstr) + " " +
 												 lang.getstr("calibration.interactive_display_adjustment.generic_hint.singular"))
-			txt.Wrap(240)
+			txt.SetForegroundColour(FGCOLOUR)
+			txt.SetMaxFontSize(10)
+			txt.Wrap(224)
+			self.desc = txt
 			self.GetSizer().Insert(1, txt, flag=wx.TOP, border=8)
 		self.add_marker()
 		bitmapnames = {"rgb_offset": "black_level",
@@ -658,6 +683,7 @@ class DisplayAdjustmentPanel(wx.Panel):
 																				  bitmapname))
 		else:
 			self.gauges[label].label = wx.StaticText(self, wx.ID_ANY, label)
+			self.gauges[label].label.SetForegroundColour(FGCOLOUR)
 		self.sizer.Add(self.gauges[label].label, flag=wx.ALIGN_CENTER_VERTICAL |
 													  wx.RIGHT, border=8)
 		self.sizer.Add(self.gauges[label], flag=wx.ALIGN_CENTER_VERTICAL)
@@ -678,6 +704,8 @@ class DisplayAdjustmentPanel(wx.Panel):
 		self.sizer.Add(txtsizer, flag=wx.TOP | wx.ALIGN_CENTER_VERTICAL, border=8)
 		txtsizer.Add(wx.StaticText(self, wx.ID_ANY, ""))
 		self.txt[label] = wx.StaticText(self, wx.ID_ANY, "")
+		self.txt[label].SetForegroundColour(FGCOLOUR)
+		self.txt[label].SetMaxFontSize(10)
 		self.txt[label].bitmap = bitmap
 		txtsizer.Add(self.txt[label])
 
@@ -686,12 +714,15 @@ class DisplayAdjustmentFrame(wx.Frame):
 
 	def __init__(self, parent=None, handler=None,
 				 keyhandler=None, start_timer=True):
+		self.is_busy = None
 		self.is_measuring = None
 		wx.Frame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("calibration.interactive_display_adjustment"))
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.SetBackgroundColour(BGCOLOUR)
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer = wx.FlexGridSizer(0, 3)
+		self.sizer.AddGrowableCol(1)
+		self.sizer.AddGrowableRow(2)
 		self.SetSizer(self.sizer)
 		
 		# FlatImageNotebook
@@ -700,7 +731,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 														  INB_SHOW_ONLY_IMAGES)
 		self._assign_image_list()
 		self.lb.SetBackgroundColour(BGCOLOUR)
-		self.sizer.Add(self.lb, 1, flag=wx.EXPAND | wx.ALL, border=12)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.sizer.Add(self.lb, 1, flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
 		
 		is_crt = getcfg("measurement_mode") == "c"
 		
@@ -718,7 +754,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		# Page - white point
 		self.page_white_point = DisplayAdjustmentPanel(self, wx.ID_ANY,
 													   lang.getstr("whitepoint") +
-													   " && " +
+													   " / " +
 													   lang.getstr("calibration.luminance"),
 													   "rgb_gain")
 		self.lb.AddPage(self.page_white_point, lang.getstr("whitepoint"), True, 1)
@@ -735,7 +771,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 			# Page - black point
 			self.page_black_point = DisplayAdjustmentPanel(self, wx.ID_ANY,
 														   lang.getstr("black_point")
-														   + " && " +
+														   + " / " +
 														   lang.getstr("calibration.black_luminance"),
 														   "rgb_offset")
 			self.lb.AddPage(self.page_black_point, lang.getstr("black_point"),
@@ -745,29 +781,50 @@ class DisplayAdjustmentFrame(wx.Frame):
 		# Select first page
 		self.lb.SetSelection(0)
 		
-		# Set colours
+		# Set colours on tab list
 		self.lb.Children[0].SetBackgroundColour(BGCOLOUR)
 		self.lb.Children[0].SetForegroundColour(FGCOLOUR)
-		self.lb.Children[1].SetBackgroundColour(BGCOLOUR)
 		
 		# Add buttons
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.GetSizer().Add(self.btnsizer, flag=wx.ALIGN_RIGHT | wx.BOTTOM |
-									  wx.RIGHT, border=12)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.sizer.Add(self.btnsizer, flag=wx.ALIGN_RIGHT | wx.EXPAND)
 		self.calibration_btn = self.create_gradient_button(getbitmap("theme/icons/10x10/skip"),
 														   " " + lang.getstr("calibration.start"),
 														   name="calibration_btn")
 		self.calibration_btn.Bind(wx.EVT_BUTTON, self.continue_to_calibration)
 		self.calibration_btn.Disable()
+		self.btnsizer.Insert(0, get_panel(self, (12, 12)), flag=wx.EXPAND)
 		self.create_start_interactive_adjustment_button()
+		self.btnsizer.Insert(0, get_panel(self, (0, 12)), 1, flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
+		self.add_panel((12, 12), flag=wx.EXPAND)
 		
 		# Set size
-		self.lb.SetMinSize((320, (72 + 8) * self.lb.GetPageCount() + 2 - 8))
+		min_h = (72 + 8) * self.lb.GetPageCount() + 2 - 8
+		self.lb.SetMinSize((320, min_h))
 		self.lb.GetCurrentPage().Fit()
 		self.lb.SetMinSize((self.lb.GetMinSize()[0],
-							max(self.lb.GetCurrentPage().GetSize()[1],
-								self.lb.GetMinSize()[1])))
+							max(self.lb.GetMinSize()[1], min_h)))
 		self.Fit()
+		for page_num in xrange(0, self.lb.GetPageCount()):
+			w = self.GetSize()[0] - 84 - 12 * 3
+			self.lb.GetPage(page_num).SetSize((w, -1))
+			self.lb.GetPage(page_num).desc.SetLabel(self.lb.GetPage(page_num).desc.GetLabel().replace("\n", " "))
+			self.lb.GetPage(page_num).desc.Wrap(w)
+			self.lb.GetPage(page_num).Fit()
+		self.lb.SetMinSize((self.lb.GetMinSize()[0],
+							max(self.lb.GetCurrentPage().GetSize()[1], min_h)))
+		self.Fit()
+		# The 'start adjustment' button will change width slightly because of
+		# the different label when active, so use an additional 12 pixels as
+		# safe margin
+		self.SetSize((self.GetSize()[0] + 12, self.GetSize()[1]))
 		self.SetMinSize(self.GetSize())
 		
 		# Set position
@@ -890,8 +947,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.abort()
 		if self.has_worker_subprocess():
 			if self.worker.safe_send(key):
+				self.is_busy = True
 				self.adjustment_btn.Disable()
 				self.calibration_btn.Disable()
+	
+	def add_panel(self, size=wx.DefaultSize, flag=0):
+		self.sizer.Add(get_panel(self, size), flag=flag)
 	
 	def continue_to_calibration(self, event=None):
 		self.abort_and_send("7")
@@ -920,7 +981,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 	
 	def create_gradient_button(self, bitmap, label, name):
 		btn = FlatShadedButton(self, bitmap=bitmap, label=label, name=name)
-		self.btnsizer.Insert(0, btn, flag=wx.LEFT, border=12)
+		i = max(len(self.btnsizer.GetChildren()) - 2, 0)
+		self.btnsizer.Insert(i, btn)
 		self.btnsizer.Layout()
 		return btn
 	
@@ -954,7 +1016,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 					self.worker.safe_send(chr(keycode))
 
 	def parse_txt(self, txt):
-		colors = {True: "#33cc00",
+		colors = {True: wx.Colour(0x33, 0xcc, 0x0),
 				  False: FGCOLOUR}
 		target_br = re.search("(Target|Initial)(?:\s+Br)?\s+(\d+(?:\.\d+)?)", txt)
 		if target_br:
@@ -1021,18 +1083,23 @@ class DisplayAdjustmentFrame(wx.Frame):
 				self.cold_run = False
 				self.Pulse(" " * 4)
 			if self.is_measuring is not False:
+				self.lb.Children[0].Refresh()
 				if self.is_measuring is True:
 					self.create_start_interactive_adjustment_button(enable=True)
 				else:
 					self.adjustment_btn.Enable()
+				self.is_busy = False
 				self.is_measuring = False
 			self.calibration_btn.Enable()
 		elif "initial measurements" in txt:
+			self.is_busy = True
+			self.lb.Children[0].Refresh()
 			self.Pulse(lang.getstr("please_wait"))
 		#self.SetTitle("is_measuring %s timer.IsRunning %s keepGoing %s" %
 					  #(str(self.is_measuring), self.timer.IsRunning(), self.keepGoing))
 	
 	def reset(self):
+		self.is_busy = None
 		self.is_measuring = None
 		for pagenum in xrange(0, self.lb.GetPageCount()):
 			page = self.lb.GetPage(pagenum)
@@ -1065,6 +1132,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 
 
 if __name__ == "__main__":
+	from time import sleep
 	class Subprocess():
 		def send(self, chars):
 			test(chars)
@@ -1111,6 +1179,7 @@ Press 1 .. 7
 				frame.Close()
 			return
 		else:
+			sleep(.1)
 			txt = r"""
 Doing some initial measurements
 Red   = XYZ  82.22  41.78   2.23
