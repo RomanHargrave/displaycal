@@ -884,19 +884,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 	def abort(self):
 		if self.has_worker_subprocess():
 			if self.is_measuring:
-				try:
-					self.worker.subprocess.send(" ")
-				except:
-					pass
+				self.worker.safe_send(" ")
 	
 	def abort_and_send(self, key):
 		self.abort()
 		if self.has_worker_subprocess():
-			try:
-				self.worker.subprocess.send(key)
-			except:
-				pass
-			else:
+			if self.worker.safe_send(key):
 				self.adjustment_btn.Disable()
 				self.calibration_btn.Disable()
 	
@@ -936,8 +929,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 	
 	def has_worker_subprocess(self):
 		return bool(getattr(self, "worker", None) and
-					getattr(self.worker, "subprocess", None) and
-					hasattr(self.worker.subprocess, "send"))
+					getattr(self.worker, "subprocess", None))
 	
 	def isatty(self):
 		return True
@@ -959,10 +951,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				if self.keyhandler:
 					self.keyhandler(event)
 				elif self.has_worker_subprocess():
-					try:
-						self.worker.subprocess.send(chr(keycode))
-					except:
-						pass
+					self.worker.safe_send(chr(keycode))
 
 	def parse_txt(self, txt):
 		colors = {True: "#33cc00",
@@ -1082,6 +1071,9 @@ if __name__ == "__main__":
 	class Worker(object):
 		def __init__(self):
 			self.subprocess = Subprocess()
+		def safe_send(self, chars):
+			test(chars)
+			return True
 	config.initcfg()
 	lang.init()
 	app = wx.App(0)

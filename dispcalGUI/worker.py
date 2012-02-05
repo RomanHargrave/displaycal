@@ -976,11 +976,7 @@ class Worker():
 			self.abort_subprocess()
 			return False
 		self.progress_wnd.Pulse(lang.getstr("please_wait"))
-		try:
-			self.subprocess.send(" ")
-		except:
-			pass
-		else:
+		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 	
 	def abort_subprocess(self):
@@ -1002,10 +998,7 @@ class Worker():
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
-		try:
-			self.subprocess.send(" ")
-		except:
-			pass
+		self.safe_send(" ")
 	
 	def clear_argyll_info(self):
 		"""
@@ -3162,6 +3155,17 @@ class Worker():
 															   "isalive"))
 				if hasattr(self.subprocess, "isalive"):
 					safe_print('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
+	
+	def safe_send(self, bytes, retry=3):
+		for i in xrange(0, retry):
+			sleep(.25)
+			try:
+				self.subprocess.send(bytes)
+			except:
+				if i == retry - 2:
+					return False
+			else:
+				return True
 
 	def spyder2_firmware_exists(self):
 		if self.argyll_version < [1, 2, 0]:
