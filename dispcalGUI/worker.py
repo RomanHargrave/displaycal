@@ -592,7 +592,7 @@ class FilteredStream():
 				"key to continue",
 				"key to retry",
 				"key to take a reading",
-				"Esc or Q"] + INST_CAL_MSGS
+				" or Q to "] + INST_CAL_MSGS
 	
 	substitutions = {" peqDE ": " previous pass DE ",
 					 "patch ": "Patch ",
@@ -1686,7 +1686,7 @@ class Worker():
 					if self.subprocess.isalive():
 						try:
 							if self.measure:
-								self.subprocess.expect(["Esc or Q", "ESC or Q"])
+								self.subprocess.expect([" or Q to "])
 								msg = self.recent.read()
 								lastmsg = self.lastmsg.read().strip()
 								if "key to continue" in lastmsg.lower() and \
@@ -3111,7 +3111,7 @@ class Worker():
 						while getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
 							if time() > ts + 9 or \
-							   "esc or q" in self.lastmsg.read().lower():
+							   " or Q to " in self.lastmsg.read():
 								break
 							sleep(1)
 						if getattr(self, "subprocess", None) and \
