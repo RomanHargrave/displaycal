@@ -7004,7 +7004,7 @@ class MainFrame(BaseFrame):
 		Returned string 'pH'
 		
 		"""
-		return self.measurement_modes_ab[self.get_instrument_type()].get(
+		return self.measurement_modes_ab.get(self.get_instrument_type(), {}).get(
 			self.measurement_mode_ctrl.GetSelection())
 
 	def get_profile_type(self):
