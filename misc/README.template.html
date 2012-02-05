@@ -118,12 +118,12 @@
 		<div id="about">
 			<h2>About dispcalGUI</h2>		
 
-			<p>dispcalGUI is a graphical user interface for the display calibration and profiling tools of <a href="http://argyllcms.com">Argyll CMS</a>, an open source color management system.</p>
+			<p>dispcalGUI is a graphical user interface for the display calibration and profiling tools of <a href="http://argyllcms.com">Argyll CMS</a>, an open source color management system by Graeme Gill.</p>
 
 			<p>Calibrate and characterize your display devices using one of the <a href="#instruments">many supported hardware sensors</a>, with support for multi-display setups and a variety of available settings like customizable whitepoint, luminance, black level, tone response curve as well as the option to create matrix and look-up-table ICC profiles, with optional gamut mapping. Other features include:</p>
 
 			<ul>
-				<li>Support of colorimeter correction for wide-gamut screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (only for specific colorimeters i.e. i1 Display Pro and ColorMunki Display).</li>
+				<li>Support of colorimeter correction for wide-gamut screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (the latter only for specific colorimeters i.e. i1 Display Pro and ColorMunki Display).</li>
 				<li>Profile verification: Check the quality of profiles via measurements. Also supports custom CGATS files (e.g. FOGRA, GRACoL/IDEAlliance, SWOP) and using of reference profiles to obtain test values.</li>
 				<li>Test chart editor: Create charts with any amount of color patches, easy copy &amp; paste from CGATS, CSV files (only tab-delimited) and spreadsheet applications.</li>
 			</ul>
@@ -741,7 +741,7 @@
 			<h2>A note about colorimeters, wide-gamut displays and dispcalGUI</h2>
 
 			<p>Colorimeters need a correction in hardware or software to obtain correct measurements from wide-gamut displays (please also see <a href="http://argyllcms.com/doc/WideGamutColmters.html">“Wide Gamut Displays and Colorimeters”</a> on the Argyll CMS website for more information). The latter is supported when using Argyll CMS &gt;= 1.3.0, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction in hardware), you can apply a correction that has been calculated from spectrometer measurements to help better measure such a screen.<br />
-			You need a spectrometer in the first place to do the necessary measurements to create such a correction, or you may query dispcalGUI's online database, and there's also a <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed colorimeter correction files on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most colorimeters.<br />
+			You need a spectrometer in the first place to do the necessary measurements to create such a correction, or you may query dispcalGUI's <a href="http://dispcalgui.hoech.net/colorimetercorrections">Colorimeter Corrections Database</a>, and there's also a <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed colorimeter correction files on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most colorimeters.<br />
 			Starting with dispcalGUI 0.6.8, you can also <a href="#import-correction-matrices">import generic corrections</a> from some profiling softwares by choosing the corresponding item in the “Tools” menu.</p>
 
 			<p>If you buy a screen bundled with a colorimeter, the instrument may have been matched to the screen in some way already, so you may not need a software correction in that case.</p>
@@ -755,7 +755,7 @@
 		<div id="usage">
 			<h2>Usage</h2>
 
-			<p>Through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>, you can choose your settings. When running calibration measurements, a terminal-like window will be shown during the interactive part of display adjustment, which is currently needed for direct keyboard interaction with the Argyll CMS tools. It will be replaced with a graphical interface in the future.</p>
+			<p>Through the main <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> window, you can choose your settings. When running calibration measurements, a smaller interface will guide you through the interactive part of display adjustment.</p>
 
 			<div id="settingsfile">
 				<h3>Settings file</h3>
@@ -1003,7 +1003,7 @@
 
 				<p>After you have set your options, click on one of the three buttons at the bottom
 				to start the actual calibration/profiling process. The main <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
-				error). You can always cancel out of running measurements by pressing ESC or Q in the terminal window if it is shown, or using the “Cancel” button in the progress dialog. Viewing the informational log window (from the “Tools” menu) after measurements will give you access to the raw output of the Argyll CMS commandline tools and other verbose information.</p>
+				error). You can always cancel out of running measurements using the “Cancel” button in the progress dialog, or by pressing ESC or Q. Viewing the informational log window (from the “Tools” menu) after measurements will give you access to the raw output of the Argyll CMS commandline tools and other verbose information.</p>
 
 				<h4 id="adjusting">Adjusting a display before calibration</h4>
 
@@ -1240,7 +1240,8 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li><a href="#issue-redgreenswapped">General: Wacky image colors (swapped colors)</a></li>
 				<li><a href="#issue-samplereadfail">Measurements are failing if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</a></li>
 				<li><a href="#issue-win-photoshop-monprofdefect">Photoshop: “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</a></li>
-				<li><a href="#issue-win-uac">MS Windows Vista: The calibration gets unloaded when a “User Access Control” prompt is shown</a></li>
+				<li><a href="#issue-win-uac-cal-reset">MS Windows Vista: The calibration gets unloaded when a User Access Control prompt is shown</a></li>
+				<li><a href="#issue-win-intel-cal-reset">MS Windows with Intel graphics: The Calibration gets unloaded after login/resume/User Access Control prompt</a></li>
 				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and 7: The display profile isn't used if it was installed for the current user</a></li>
 				<li><a href="#issue-win-spyder2">MS Windows: Enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
 				<li><a href="#issue-win-install-systemwide">MS Windows: Installing a display profile system-wide might fail when not running as administrator</a></li>
@@ -1264,8 +1265,14 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt id="issue-win-photoshop-monprofdefect"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</dt>
 				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “use profile regardless” and “ignore profile”, you may choose “use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a Lab LUT profile.</dd>
 
-				<dt id="issue-win-uac"><span>MS Windows Vista:</span> The calibration gets unloaded when a “User Access Control” prompt is shown.</dt>
-				<dd><strong>Solution:</strong> This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
+				<dt id="issue-win-uac-cal-reset"><span>MS Windows Vista:</span> The calibration gets unloaded when a User Access Control prompt is shown</dt>
+				<dd><strong>Solution:</strong> (Intel and Intel/AMD hybrid graphics users please see <a href="#issue-win-intel-cal-reset">“The Calibration gets unloaded after login/resume/User Access Control prompt”</a> first) This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
+				
+				<dt id="issue-win-intel-cal-reset"><span>MS Windows with Intel graphics (also Intel/AMD hybrid):</span> The Calibration gets unloaded after login/resume/User Access Control prompt</dt>
+				<dd><strong>Solution:</strong> The Intel graphics drivers contain several utilities that interfere with correct calibration loading. A workaround is to rename, move or disable (e.g. using a tool like <a href="http://technet.microsoft.com/en-us/sysinternals/bb963902">AutoRuns</a>) the following files:
+				<pre><code>C:\Windows\system32\igfxtray.exe
+C:\Windows\system32\igfxpph.dll
+C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 				<dt id="issue-win-user-profile-not-used"><span>MS Windows Vista and 7:</span> The display profile isn't used if it was installed for the current user</dt>
 				<dd><strong>Solution:</strong> Open the Windows start menu, select “Control Panel”, then “Color Management” (you may have to select “Classic View” under Vista and anything other than “Category View” under Windows 7 to see it). Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</dd>
@@ -1291,7 +1298,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 					</ul>
 				</dd>
 
-				<dt id="issue-mac-pscursor"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush).</dt>
+				<dt id="issue-mac-pscursor"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush)</dt>
 				<dd><strong>Solution:</strong> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
 
 				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</dt>
@@ -1305,7 +1312,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				This seems to be a <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=626010">bug in libmtp-runtime</a>.
 				You can work around it by renaming <code>/lib/udev/mtp-probe</code> or updating to libmtp 1.0.6 where the issue should be fixed.</dd>
 
-				<dt id="issue-english"><span>General:</span> Some text is still in english, even though another language is selected in the menu.</dt>
+				<dt id="issue-english"><span>General:</span> Some text is still in english, even though another language is selected in the menu</dt>
 				<dd><strong>Solution:</strong> All output from the Argyll CMS utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is currently not changeable.</dd>
 			</dl>
 		</div>
@@ -1365,7 +1372,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 			<ul>
 				<li><del>Better interface to <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a></del> (implemented in v0.8.1.0+)</li>
 				<li>Measure and report on screen homogenity / evenness of illumination</li>
-				<li>Get rid of the terminal and implement a proper GUI for the interactive part of calibration</li>
+				<li><del>Get rid of the terminal and implement a proper GUI for the interactive part of calibration</del> (implemented in v0.8.5.6+)</li>
 				<li>Better user interface for profile verification: If a test set contains multiple value formats (CMYK, RGB, XYZ, L*a*b*), allow selection which one(s) should be used in a “setup” window</li>
 				<li>Add gamut coverage percentages to the profile verification report if the test set contains reference values (not *.ti1): Calculate profiles from test set and verification measurements on-the-fly and create gamut volumes from test set profile, evaluated profile, and verification measurements profile using Argyll's <code>iccgamut</code> tool. Compare gamut volumes using Argyll's <code>viewgam</code> tool with <code>-i</code> option and include the results in the report (coverage calculation for test set reference and profile to be evaluated could be done before the actual measurements and also shown in the yet-to-be-implemented profile verification “setup” window).</li>
 				<li><del>Complete the documentation in the README</del></li>
@@ -1407,6 +1414,20 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Restore previously selected testchart if canceling colorimeter correction measurements.</li>
+							<li>Disable the “Measure” button in the “Create colorimeter correction” dialog if no display or instrument detected/selected.</li>
+						</ul>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>GUI for interactive display adjustment.</li>
+						</ul>
+					</dd>
+
+				<dt>2012-01-24 18:40 (UTC) 0.8.5.2</dt>
+					<dd>
+						<h3>0.8.5.2</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Added missing numbers to “delta E too high” message when trying to upload a profile with low self-fit accuracy.</li>

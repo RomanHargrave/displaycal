@@ -2142,12 +2142,8 @@ class MainFrame(BaseFrame):
 		measurement_mode = getcfg("measurement_mode")
 		if self.get_instrument_type() == "spect":
 			measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
-		measurement_modes = dict({instrument_type: ["CRT", "LCD"] if 
-												   instrument_type == "color" 
-												   else [lang.getstr("default")]})
-		measurement_modes_ab = dict({instrument_type: ["c", "l"] if 
-													  instrument_type == "color" 
-													  else [None]})
+		measurement_modes = dict({instrument_type: ["CRT", "LCD"]})
+		measurement_modes_ab = dict({instrument_type: ["c", "l"]})
 		instrument_features = self.worker.get_instrument_features()
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
@@ -3070,7 +3066,11 @@ class MainFrame(BaseFrame):
 			return
 		if phase == "instcal_prepare":
 			if self.worker.get_instrument_features().get("sensor_cal") or test:
-				dlg = ConfirmDialog(self, msg=lang.getstr("instrument.calibrate"), 
+				if self.worker.get_instrument_name() == "ColorMunki":
+					lstr ="instrument.calibrate.colormunki"
+				else:
+					lstr = "instrument.calibrate"
+				dlg = ConfirmDialog(self, msg=lang.getstr(lstr), 
 									ok=lang.getstr("ok"), 
 									cancel=lang.getstr("cancel"), 
 									bitmap=geticon(32, "dialog-information"))
@@ -4352,7 +4352,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("calibration.verify")
 		safe_print(progress_msg)
-		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+		self.worker.interactive = False
 		self.worker.start(self.result_consumer, 
 						  self.verify_calibration_worker, 
 						  progress_msg=progress_msg)
@@ -4577,7 +4577,7 @@ class MainFrame(BaseFrame):
 		
 			# start readings
 			self.worker.dispread_after_dispcal = False
-			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+			self.worker.interactive = False
 			self.worker.start(self.verify_profile_consumer, 
 							  self.verify_profile_worker, 
 							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
@@ -4875,7 +4875,7 @@ class MainFrame(BaseFrame):
 			else:
 				progress_msg = lang.getstr("report.uncalibrated")
 			safe_print(progress_msg)
-			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+			self.worker.interactive = False
 			self.worker.start(self.result_consumer, self.report_worker, 
 							  wkwargs={"report_calibrated": report_calibrated},
 							  progress_msg=progress_msg)
@@ -4942,7 +4942,7 @@ class MainFrame(BaseFrame):
 			##self.just_calibrate_finish(self.calibrate(remove=True))
 			self.worker.interactive = True
 		else:
-			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+			self.worker.interactive = False
 		if True:
 			# No interactive adjustment, show progress dialog
 			self.measure_calibrate(self.just_calibrate_finish, self.calibrate, 
@@ -5097,7 +5097,7 @@ class MainFrame(BaseFrame):
 			##self.calibrate_finish(self.calibrate())
 			self.worker.interactive = True
 		else:
-			self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+			self.worker.interactive = False
 		if True:
 			# No interactive adjustment, show progress dialog
 			self.measure_calibrate(self.calibrate_finish, self.calibrate, 
@@ -5105,7 +5105,7 @@ class MainFrame(BaseFrame):
 								   continue_next=True)
 	
 	def calibrate_finish(self, result):
-		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+		self.worker.interactive = False
 		if not isinstance(result, Exception) and result:
 			self.measure(self.calibrate_and_profile_finish,
 						 apply_calibration=True, 
@@ -5253,7 +5253,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("measure"))
 		self.worker.dispread_after_dispcal = False
-		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+		self.worker.interactive = False
 		self.previous_cal = False
 		self.measure(self.just_measure_finish, apply_calibration,
 					 progress_msg=lang.getstr("measuring.characterization"), 
@@ -5286,7 +5286,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.profile"))
 		self.worker.dispread_after_dispcal = False
-		self.worker.interactive = self.worker.get_instrument_features().get("sensor_cal")
+		self.worker.interactive = False
 		self.previous_cal = False
 		self.measure(self.just_profile_finish, apply_calibration,
 					 progress_msg=lang.getstr("measuring.characterization"), 

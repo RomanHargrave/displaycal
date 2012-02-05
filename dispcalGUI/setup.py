@@ -237,8 +237,10 @@ def setup():
 			"report/*.html",
 			"report/*.js",
 			"theme/*.png",
+			"theme/icons/10x10/*.png",
 			"theme/icons/16x16/*.png",
 			"theme/icons/32x32/*.png",
+			"theme/icons/72x72/*.png",
 			"ti1/*.ti1",
 			"xrc/*.xrc",
 			"test.cal"
@@ -398,16 +400,16 @@ def setup():
 							if os.path.isfile(fname):
 								data_files += [(entry[0], [fname])]
 		for dname in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
-			# Only the 16x16 and 32x32 icons are used exclusively by the app, 
-			# the other sizes of the app icon are used for the desktop entry 
-			# under Linux
+			# Only the 10x10, 16x16, 32x32 and 72x72 icons are used exclusively
+			# by the app, the other sizes of the app icon are used for the 
+			# desktop entry under Linux
 			icons = []
 			desktopicons = []
 			for iconpath in glob.glob(os.path.join(pydir, "theme", "icons", 
 												   dname, "*.png")):
 				if os.path.basename(iconpath) != name + ".png" or (
 					sys.platform in ("darwin", "win32") and 
-					dname in ("16x16", "32x32")):
+					dname in ("10x10", "16x16", "32x32", "72x72")):
 					icons.append(iconpath)
 				elif sys.platform not in ("darwin", "win32"):
 					desktopicons.append(iconpath)
@@ -486,7 +488,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 	else:
 		pass
 
-	packages = [name]
+	packages = [name, "%s.lib.agw" % name]
 	if sdist:
 		# For source desributions we want all libraries
 		packages += ["%s.lib" % name]

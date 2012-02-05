@@ -72,8 +72,21 @@ from util_os import getenvu, is_superuser, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
+from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 import wx.lib.delayedresult as delayedresult
 
+INST_CAL_MSGS = ["Do a reflective white calibration",
+				 "Do a transmissive white calibration",
+				 "Do a transmissive dark calibration",
+				 "Place the instrument on its reflective white reference",
+				 "Click the instrument on its reflective white reference",
+				 "Place the instrument in the dark",
+				 "Place cap on the instrument",  # i1 Pro
+				 "place on the white calibration reference",  # i1 Pro
+				 "Set instrument sensor to calibration position",  # ColorMunki
+				 "Place the instrument on its transmissive white source",
+				 "Use the appropriate tramissive blocking",
+				 "Change filter on instrument to"]
 USE_WPOPEN = 0
 
 keycodes = {wx.WXK_NUMPAD0: ord("0"),
@@ -579,7 +592,7 @@ class FilteredStream():
 				"key to continue",
 				"key to retry",
 				"key to take a reading",
-				"Esc or Q"]
+				"Esc or Q"] + INST_CAL_MSGS
 	
 	substitutions = {" peqDE ": " previous pass DE ",
 					 "patch ": "Patch ",
@@ -930,6 +943,69 @@ class Worker():
 				if not oyranos:
 					break
 		return oyranos
+	
+	def check_instrument_calibration(self):
+		msgs = self.recent.read()
+		if not getattr(self, "instrument_calibration_started", False):
+			for calmsg in INST_CAL_MSGS:
+				if calmsg in msgs:
+					wx.CallAfter(self.do_instrument_calibration, )
+					break
+		elif (not getattr(self, "instrument_calibration_complete", False) and
+			"Calibration complete" in msgs and
+			"key to continue" in self.lastmsg.read()):
+			self.instrument_calibration_complete = True
+			wx.CallAfter(self.instrument_calibration_finish)
+	
+	def do_instrument_calibration(self):
+		self.instrument_calibration_started = True
+		self.progress_wnd.Pulse(" " * 4)
+		self.progress_wnd.MakeModal(False)
+		if self.get_instrument_name() == "ColorMunki":
+			lstr ="instrument.calibrate.colormunki"
+		else:
+			lstr = "instrument.calibrate"
+		dlg = ConfirmDialog(self.progress_wnd, msg=lang.getstr(lstr), 
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-information"))
+		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
+		self.progress_wnd.MakeModal(True)
+		if dlg_result != wx.ID_OK:
+			self.abort_subprocess()
+			return False
+		self.progress_wnd.Pulse(lang.getstr("please_wait"))
+		try:
+			self.subprocess.send(" ")
+		except:
+			pass
+		else:
+			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
+	
+	def abort_subprocess(self):
+		self.subprocess_abort = True
+		self.thread_abort = True
+		delayedresult.startWorker(lambda result: None, 
+								  self.quit_terminate_cmd)
+	
+	def instrument_calibration_finish(self):
+		self.progress_wnd.Pulse(" " * 4)
+		self.progress_wnd.MakeModal(False)
+		dlg = ConfirmDialog(self.progress_wnd, msg=lang.getstr("instrument.place_on_screen"), 
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-information"))
+		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
+		self.progress_wnd.MakeModal(True)
+		if dlg_result != wx.ID_OK:
+			self.abort_subprocess()
+			return False
+		try:
+			self.subprocess.send(" ")
+		except:
+			pass
 	
 	def clear_argyll_info(self):
 		"""
@@ -2903,6 +2979,7 @@ class Worker():
 		   getattr(self, "thread_abort", False):
 			self.progress_wnd.Pulse(lang.getstr("aborting"))
 			return
+		self.check_instrument_calibration()
 		percentage = None
 		msg = self.recent.read(FilteredStream.triggers)
 		lastmsg = self.lastmsg.read(FilteredStream.triggers).strip()
@@ -2956,17 +3033,15 @@ class Worker():
 			if getattr(self.progress_wnd, "lastmsg", "") == msg or not msg:
 				keepGoing, skip = self.progress_wnd.Pulse()
 			else:
+				if "Setting up the instrument" in lastmsg:
+					msg = lang.getstr("instrument.initializing")
 				keepGoing, skip = self.progress_wnd.Pulse(msg)
 		if not keepGoing:
 			if getattr(self, "subprocess", None) and \
 			   not getattr(self, "subprocess_abort", False):
 				if debug:
 					safe_print('[D] calling quit_terminate_cmd')
-				self.subprocess_abort = True
-				self.thread_abort = True
-				delayedresult.startWorker(lambda result: None, 
-										  self.quit_terminate_cmd)
-				##wx.CallAfter(self.quit_terminate_cmd)
+				self.abort_subprocess()
 			elif not getattr(self, "thread_abort", False):
 				if debug:
 					safe_print('[D] thread_abort')
@@ -3139,6 +3214,8 @@ class Worker():
 		if progress_start < 100:
 			progress_start = 100
 		self.resume = resume
+		self.instrument_calibration_started = False
+		self.instrument_calibration_complete = False
 		if self.interactive or test:
 			self.progress_start_timer = wx.Timer()
 			if getattr(self, "progress_wnd", None) and \
@@ -3150,21 +3227,32 @@ class Worker():
 			if getattr(self, "terminal", None):
 				self.progress_wnd = self.terminal
 				if not resume:
-					self.progress_wnd.console.SetValue("")
+					if isinstance(self.progress_wnd, SimpleTerminal):
+						self.progress_wnd.console.SetValue("")
+					elif isinstance(self.progress_wnd, DisplayAdjustmentFrame):
+						self.progress_wnd.reset()
 				self.progress_wnd.stop_timer()
+				self.progress_wnd.Resume()
 				self.progress_wnd.start_timer()
 				# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 				# segfault under Arch Linux when setting the window title
 				safe_print("")
-				self.progress_wnd.SetTitle(progress_title)
+				if isinstance(self.progress_wnd, SimpleTerminal):
+					self.progress_wnd.SetTitle(progress_title)
 				self.progress_wnd.Show()
-				if resume:
+				if resume and isinstance(self.progress_wnd, SimpleTerminal):
 					self.progress_wnd.console.ScrollLines(
 						self.progress_wnd.console.GetNumberOfLines())
 			else:
-				self.terminal = SimpleTerminal(parent, title=progress_title,
-											   handler=self.progress_handler,
-											   keyhandler=self.terminal_key_handler)
+				if test:
+					self.terminal = SimpleTerminal(parent, title=progress_title,
+												   handler=self.progress_handler,
+												   keyhandler=self.terminal_key_handler)
+				else:
+					self.terminal = DisplayAdjustmentFrame(parent,
+														   handler=self.progress_handler,
+														   keyhandler=self.terminal_key_handler)
+				self.terminal.worker = self
 				self.progress_wnd = self.terminal
 		else:
 			if not progress_msg:
@@ -3188,7 +3276,10 @@ class Worker():
 	
 	def swap_progress_wnds(self):
 		parent = self.terminal.GetParent()
-		title = self.terminal.GetTitle()
+		if isinstance(self.terminal, DisplayAdjustmentFrame):
+			title = lang.getstr("calibration")
+		else:
+			title = self.terminal.GetTitle()
 		self.progress_dlg_start(title, "", parent, self.resume)
 	
 	def terminal_key_handler(self, event):
@@ -3209,10 +3300,7 @@ class Worker():
 			##el
 			if keycode in (ord("\x1b"), ord("8"), ord("Q"), ord("q")):
 				# exit
-				self.thread_abort = True
-				self.subprocess_abort = True
-				delayedresult.startWorker(lambda result: None, 
-										  self.quit_terminate_cmd)
+				self.abort_subprocess()
 				return
 			try:
 				self.subprocess.send(chr(keycode))
