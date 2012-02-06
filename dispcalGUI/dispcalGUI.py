@@ -975,7 +975,6 @@ class MainFrame(BaseFrame):
 		if sys.platform in ("darwin", "win32") or isexe:
 			self.init_measureframe()
 		self.init_menus()
-		self.update_menus()
 		self.init_controls()
 		self.show_advanced_calibration_options_handler()
 		self.setup_language()
@@ -2793,6 +2792,13 @@ class MainFrame(BaseFrame):
 					   bitmap=geticon(32, "dialog-warning"), log=False)
 		setcfg("argyll.debug", 
 			   int(self.menuitem_enable_argyll_debug.IsChecked()))
+	
+	def enable_menus(self, enable=True):
+		for menu, label in self.menubar.GetMenus():
+			for item in menu.GetMenuItems():
+				item.Enable(enable)
+		if enable:
+			self.update_menus()
 
 	def lut_viewer_show_actual_lut_handler(self, event):
 		setcfg("lut_viewer.show_actual_lut", 
@@ -8132,6 +8138,7 @@ class MainFrame(BaseFrame):
 		   self.lut_viewer.IsShownOnScreen():
 			self.lut_viewer.Hide()
 		self.Hide()
+		self.enable_menus(False)
 
 	def Show(self, show=True, start_timers=True):
 		if hasattr(self, "tcframe"):
@@ -8141,6 +8148,7 @@ class MainFrame(BaseFrame):
 			self.init_lut_viewer(show=True)
 		if start_timers:
 			self.start_timers()
+		self.enable_menus()
 		wx.Frame.Show(self, show)
 		self.Raise()
 		if not wx.GetApp().IsActive():
