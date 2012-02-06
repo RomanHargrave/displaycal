@@ -1349,10 +1349,9 @@ class Worker():
 				# Avoid problems with encoding
 				working_dir = win32api.GetShortPathName(working_dir)
 		sudo = None
-		if cmdname == get_argyll_utilname("dispwin") and ("-Sl" in args or 
-														  "-Sn" in args or
-														  (sys.platform == "darwin" and 
-														   mac_ver()[0] >= '10.7')):
+		if (cmdname == get_argyll_utilname("dispwin") and "-I" in args and
+			("-Sl" in args or "-Sn" in args or
+			 (sys.platform == "darwin" and mac_ver()[0] >= '10.7'))):
 			asroot = True
 		# Run commands through wexpect.spawn instead of subprocess.Popen if
 		# all of these conditions apply:
