@@ -902,8 +902,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 	def OnPageChanging(self, event):
 		oldsel = event.GetOldSelection()
 		newsel = event.GetSelection()
-		# Reset stored target brightness
-		self.lb.GetPage(oldsel).target_br = None
+		target_br = getattr(self.lb.GetCurrentPage(), "target_br", None)
+		if target_br and target_br[0] == "Initial":
+			# Reset stored initial brightness
+			self.lb.GetPage(oldsel).target_br = None
 		self.abort()
 		event.Skip()
 
@@ -1018,14 +1020,18 @@ class DisplayAdjustmentFrame(wx.Frame):
 	def parse_txt(self, txt):
 		colors = {True: wx.Colour(0x33, 0xcc, 0x0),
 				  False: FGCOLOUR}
-		target_br = re.search("(Target|Initial)(?:\s+Br)?\s+(\d+(?:\.\d+)?)", txt)
-		if target_br:
-			self.lb.GetCurrentPage().target_br = (target_br.groups()[0],
-												  float(target_br.groups()[1]))
+		target_br = re.search("(Target|Initial)(?:\s+(?:Br|(?:black|white)\s+brightness\s+=))?\s+(\d+(?:\.\d+)?)", txt)
+		if target_br and not getattr(self.lb.GetCurrentPage(), "target_br", None):
+			self.lb.GetCurrentPage().target_br = [target_br.groups()[0],
+												  float(target_br.groups()[1])]
 		current_br = re.search("Current(?:\s+Br)?\s+(\d+(?:\.\d+)?)", txt)
 		if current_br and getattr(self.lb.GetCurrentPage(), "target_br", None) is not None:
+			if self.lb.GetCurrentPage().target_br[0] == "Initial":
+				diff_target_br = float(current_br.groups()[0])
+			else:
+				diff_target_br = self.lb.GetCurrentPage().target_br[1]
 			l_diff = (float(current_br.groups()[0]) -
-					  self.lb.GetCurrentPage().target_br[1])
+					  diff_target_br)
 			l = int(round(50 + l_diff * 2))
 			if self.lb.GetCurrentPage().gauges.get("L"):
 				self.lb.GetCurrentPage().gauges["L"].SetValue(min(max(l, 1), 100))
@@ -1033,8 +1039,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 			if self.lb.GetCurrentPage().txt.get("luminance"):
 				self.lb.GetCurrentPage().txt["luminance"].bitmap.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["luminance"].bitmap,
 																						   abs(l_diff) <= 1.5)
-				self.lb.GetCurrentPage().txt["luminance"].SetLabel("%s %s cd/m2, %s %s cd/m2" %
-																   (lang.getstr("target"),
+				self.lb.GetCurrentPage().txt["luminance"].SetLabel("%s %.1f cd/m2, %s %.1f cd/m2" %
+																   (lang.getstr(self.lb.GetCurrentPage().target_br[0].lower()),
 																	self.lb.GetCurrentPage().target_br[1],
 																	lang.getstr("actual"),
 																	float(current_br.groups()[0])))
@@ -1070,10 +1076,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 				self.lb.GetCurrentPage().gauges["B"].Refresh()
 			if self.lb.GetCurrentPage().txt.get("rgb"):
 				self.lb.GetCurrentPage().txt["rgb"].bitmap.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["rgb"].bitmap,
-																					 abs(dE) <= 1.5)
-				self.lb.GetCurrentPage().txt["rgb"].SetLabel("x %s y %s%s, %s dE" %
+																					 abs(dE) <= 1)
+				self.lb.GetCurrentPage().txt["rgb"].SetLabel("x %.4f y %.4f%s, %.1f dE" %
 															 (x, y, vdt, dE))
-				self.lb.GetCurrentPage().txt["rgb"].SetForegroundColour(colors[abs(dE) <= 1.5])
+				self.lb.GetCurrentPage().txt["rgb"].SetForegroundColour(colors[abs(dE) <= 1])
 		if current_br or xy_dE_rgb:
 			if not self.is_measuring:
 				self.create_start_interactive_adjustment_button("pause", True, "stop")
@@ -1103,6 +1109,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.is_measuring = None
 		for pagenum in xrange(0, self.lb.GetPageCount()):
 			page = self.lb.GetPage(pagenum)
+			page.target_br = None
 			for label in ("R", "G", "B", "L"):
 				if page.gauges.get(label):
 					page.gauges[label].SetValue(0)

@@ -266,6 +266,7 @@
 	"infoframe.default_text": "",
 	"infoframe.toggle": "Protokollfenster zeigen",
 	"infoframe.title": "Protokoll",
+	"initial": "Start",
 	"initializing_gui": "Initialisiere GUI...",
 	"instrument": "Messgerät",
 	"instrument.initializing": "Messgeräteinitialisierung...",

@@ -265,6 +265,7 @@
 	"infoframe.default_text": "",
 	"infoframe.toggle": "Show log window",
 	"infoframe.title": "Log",
+	"initial": "Initial",
 	"initializing_gui": "Initializing GUI...",
 	"instrument": "Instrument",
 	"instrument.initializing": "Connecting to the instrument...",
