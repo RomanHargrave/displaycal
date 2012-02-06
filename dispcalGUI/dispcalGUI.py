@@ -6303,7 +6303,8 @@ class MainFrame(BaseFrame):
 			self.lut_viewer_load_lut(profile=profile)
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
-		self.update_menus()
+		if self.IsShownOnScreen():
+			self.update_menus()
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -7414,7 +7415,8 @@ class MainFrame(BaseFrame):
 			if verbose >= 1: safe_print(lang.getstr("comport_detected"))
 		if displays != self.worker.displays or \
 		   comports != self.worker.instruments:
-			self.update_menus()
+			if self.IsShownOnScreen():
+				self.update_menus()
 			self.update_main_controls()
 			return True
 		return False
