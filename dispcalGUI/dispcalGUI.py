@@ -4225,7 +4225,8 @@ class MainFrame(BaseFrame):
 					if self.install_cal(capture_output=True, 
 										profile_path=path, 
 										skip_scripts=True, 
-										silent=True) is True:
+										silent=True,
+										title=lang.getstr("calibration.load_from_profile")) is True:
 						self.lut_viewer_load_lut(profile=profile)
 						if verbose >= 1: safe_print(lang.getstr("success"))
 					else:
@@ -4239,7 +4240,8 @@ class MainFrame(BaseFrame):
 			else:
 				setcfg("last_cal_path", path)
 				if self.install_cal(capture_output=True, cal=path, 
-									skip_scripts=True, silent=True) is True:
+									skip_scripts=True, silent=True,
+									title=lang.getstr("calibration.load_from_cal")) is True:
 					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
 					if verbose >= 1: safe_print(lang.getstr("success"))
 				else:
@@ -4274,7 +4276,8 @@ class MainFrame(BaseFrame):
 		else:
 			if verbose >= 1: safe_print(lang.getstr("calibration.resetting"))
 		if self.install_cal(capture_output=True, cal=cal, 
-							skip_scripts=True, silent=True) is True:
+							skip_scripts=True, silent=True,
+							title=lang.getstr("calibration.load_from_cal_or_profile")) is True:
 			self.lut_viewer_load_lut(profile=profile)
 			if verbose >= 1: safe_print(lang.getstr("success"))
 		else:
@@ -4285,7 +4288,7 @@ class MainFrame(BaseFrame):
 			   int(self.profile_load_on_login.GetValue()))
 
 	def install_cal(self, capture_output=False, cal=None, profile_path=None,
-					skip_scripts=False, silent=False):
+					skip_scripts=False, silent=False, title=appname):
 		# Install using dispwin
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
 		if not isinstance(cmd, Exception):
@@ -4293,7 +4296,7 @@ class MainFrame(BaseFrame):
 										  low_contrast=False, 
 										  skip_scripts=skip_scripts, 
 										  silent=silent,
-										  title=lang.getstr("profile.install"))
+										  title=title)
 		else:
 			result = cmd
 		if not isinstance(result, Exception) and result:
@@ -4813,7 +4816,8 @@ class MainFrame(BaseFrame):
 					safe_print(lang.getstr("calibration.loading"))
 					safe_print(cal)
 				if self.install_cal(capture_output=True, cal=cal, 
-									skip_scripts=True, silent=silent) is True:
+									skip_scripts=True, silent=silent,
+									title=lang.getstr("calibration.load_from_cal_or_profile")) is True:
 					self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
 											 cal.lower().endswith(".icc") or 
 											 cal.lower().endswith(".icm") else 
@@ -4830,7 +4834,8 @@ class MainFrame(BaseFrame):
 			if verbose >= 1: ## and event is None:
 				safe_print(lang.getstr("calibration.resetting"))
 			if self.install_cal(capture_output=True, cal=False, 
-								skip_scripts=True, silent=True) is True: ## event is None or (
+								skip_scripts=True, silent=True,
+								title=lang.getstr("calibration.reset")) is True: ## event is None or (
 										## getattr(self, "lut_viewer", None) and 
 										## self.lut_viewer.IsShownOnScreen())):
 				self.lut_viewer_load_lut(profile=None)
@@ -4850,7 +4855,8 @@ class MainFrame(BaseFrame):
 				if profile and profile.fileName:
 					safe_print(profile.fileName)
 			if self.install_cal(capture_output=True, cal=True, 
-								skip_scripts=True, silent=True) is True: ## event is None or (
+								skip_scripts=True, silent=True,
+								title=lang.getstr("calibration.load_from_display_profile")) is True: ## event is None or (
 										## getattr(self, "lut_viewer", None) and 
 										## self.lut_viewer.IsShownOnScreen())):
 				self.lut_viewer_load_lut(profile=profile)
