@@ -2139,8 +2139,8 @@ class MainFrame(BaseFrame):
 		""" Update the measurement mode control. """
 		instrument_type = self.get_instrument_type()
 		measurement_mode = getcfg("measurement_mode")
-		if self.get_instrument_type() == "spect":
-			measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
+		#if self.get_instrument_type() == "spect":
+			#measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
 		measurement_modes = dict({instrument_type: ["CRT", "LCD"]})
 		measurement_modes_ab = dict({instrument_type: ["c", "l"]})
 		instrument_features = self.worker.get_instrument_features()
@@ -2418,8 +2418,8 @@ class MainFrame(BaseFrame):
 		self.profile_type_ctrl.Enable(enable_profile)
 
 		measurement_mode = getcfg("measurement_mode")
-		if self.get_instrument_type() == "spect":
-			measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
+		#if self.get_instrument_type() == "spect":
+			#measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
 		instrument_features = self.worker.get_instrument_features()
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0] and \
