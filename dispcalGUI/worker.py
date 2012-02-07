@@ -107,6 +107,10 @@ keycodes = {wx.WXK_NUMPAD0: ord("0"),
 			wx.WXK_NUMPAD_SUBTRACT: ord("-")}
 
 
+def Property(func):
+	return property(**func())
+
+
 def check_argyll_bin(paths=None):
 	""" Check if the Argyll binaries can be found. """
 	prev_dir = None
@@ -797,7 +801,7 @@ class WPopen(sp.Popen):
 		sp.Popen.terminate(self)
 
 
-class Worker():
+class Worker(object):
 
 	def __init__(self, owner=None):
 		"""
@@ -827,6 +831,7 @@ class Worker():
 		self.triggers = []
 		self.clear_argyll_info()
 		self.clear_cmd_output()
+		self._pwdstr = ""
 	
 	def add_measurement_features(self, args):
 		if not get_arg("-d", args):
@@ -907,6 +912,18 @@ class Worker():
 			if getcfg("drift_compensation.whitelevel"):
 				args[-1] += "w"
 		return True
+	
+	@Property
+	def pwd():
+		def fget(self):
+			return self._pwdstr[10:].ljust(int(math.ceil(len(self._pwdstr[5:]) / 4.0) * 4),
+										  "=").decode("base64").decode("UTF-8")
+		
+		def fset(self, pwd):
+			self._pwdstr = "/tmp/%s%s" % (md5(getpass.getuser()).hexdigest().encode("base64")[:5],
+										  pwd.encode("UTF-8").encode("base64").rstrip("=\n"))
+		
+		return locals()
 	
 	def get_needs_no_sensor_cal(self):
 		instrument_features = self.get_instrument_features()
@@ -1020,9 +1037,6 @@ class Worker():
 		"""
 		Clear any output from the last run command.
 		"""
-		if time() - 5 * 60 > self.auth_timestamp:
-			# Store password for 5 minutes
-			self.pwd = None
 		self.retcode = -1
 		self.output = []
 		self.errors = []
@@ -1349,9 +1363,12 @@ class Worker():
 				# Avoid problems with encoding
 				working_dir = win32api.GetShortPathName(working_dir)
 		sudo = None
-		if (cmdname == get_argyll_utilname("dispwin") and "-I" in args and
+		if (cmdname == get_argyll_utilname("dispwin") and
 			("-Sl" in args or "-Sn" in args or
 			 (sys.platform == "darwin" and mac_ver()[0] >= '10.7'))):
+			# Mac OS X 10.7 Lion needs root privileges even if just loading
+			# calibration if the current display profile is not a user
+			# profile
 			asroot = True
 		# Run commands through wexpect.spawn instead of subprocess.Popen if
 		# all of these conditions apply:
