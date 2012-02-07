@@ -3640,7 +3640,6 @@ class MainFrame(BaseFrame):
 					wx.CallAfter(self.update_controls, 
 								 update_profile_name=False)
 					setcfg("last_cal_or_icc_path", cal)
-					wx.CallAfter(self.load_cal, cal=cal, silent=True)
 		return result
 
 	def measure(self, consumer, apply_calibration=True, progress_msg="",
@@ -4972,6 +4971,7 @@ class MainFrame(BaseFrame):
 				wx.CallAfter(self.profile_finish, True, 
 							 success_msg=lang.getstr("calibration.complete"))
 			else:
+				wx.CallAfter(self.load_cal, silent=True)
 				wx.CallAfter(InfoDialog, self, 
 							 msg=lang.getstr("calibration.complete"), 
 							 ok=lang.getstr("ok"), 
