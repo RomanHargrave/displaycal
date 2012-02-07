@@ -1304,8 +1304,13 @@ class Worker(object):
 		the basename. If False, no working dir will be used and file arguments
 		not changed.
 		"""
+		progress_dlg = getattr(self, "progress_wnd",
+							   getattr(wx.GetApp(), "progress_dlg", None))
 		if parent is None:
-			parent = self.owner
+			if progress_dlg and progress_dlg.IsShownOnScreen():
+				parent = progress_dlg
+			else:
+				parent = self.owner
 		if not capture_output:
 			capture_output = not sys.stdout.isatty()
 		fn = None
@@ -1463,7 +1468,11 @@ class Worker(object):
 					if self.sudo_availoptions["l [command]"]:
 						sudo_args.append(cmd)
 					while True:
+						if parent and parent is progress_dlg:
+							progress_dlg.MakeModal(False)
 						result = dlg.ShowModal()
+						if parent and parent is progress_dlg:
+							progress_dlg.MakeModal(True)
 						pwd = dlg.pwd_txt_ctrl.GetValue()
 						if result != wx.ID_OK:
 							safe_print(lang.getstr("aborted"), fn=fn)
