@@ -338,6 +338,7 @@
 	"profile.install_network": "Profil im Netzwerk installieren",
 	"profile.install_user": "Profil nur für aktuellen Benutzer installieren",
 	"profile.install.success": "Das Profil wurde installiert und aktiviert.",
+	"profile.install.osx_manual_select": "Das Profil wurde installiert. Bitte aktivieren Sie es in der Systemeinstellung „Monitore“.",
 	"profile.install.error": "Das Profil konnte nicht installiert/aktiviert werden.",
 	"profile.invalid": "Ungültiges Profil.",
 	"profile.load_error": "Anzeigegeräteprofil konnte nicht geladen werden.",

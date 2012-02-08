@@ -2062,7 +2062,14 @@ class Worker(object):
 					self._install_profile_gcm(profile_path)
 			if not isinstance(result, Exception) and result and not gcm_import:
 				if verbose >= 1: safe_print(lang.getstr("success"))
-				result = Info(lang.getstr("profile.install.success"))
+				if (sys.platform == "darwin" and
+					intlist(mac_ver()[0].split(".")) >= [10, 7]):
+					# dispwin seems to not work correctly since the last
+					# update to lion
+					msg = lang.getstr("profile.install.osx_manual_select")
+				else:
+					msg = lang.getstr("profile.install.success")
+				result = Info(msg)
 		else:
 			if result is not None:
 				if verbose >= 1: safe_print(lang.getstr("failure"))
@@ -2072,40 +2079,69 @@ class Worker(object):
 	def _install_profile_argyll(self, profile_path, capture_output=False,
 								skip_scripts=False, silent=False):
 		""" Install profile using dispwin """
-		cmd, args = self.prepare_dispwin(None, profile_path, True)
-		if not isinstance(cmd, Exception):
-			if "-Sl" in args and (sys.platform != "darwin" or 
-								  intlist(mac_ver()[0].split(".")) >= [10, 6]):
-				# If a 'system' install is requested under Linux or Windows, 
-				# install in 'user' scope first because a system-wide install 
-				# doesn't also set it as current user profile on those systems 
-				# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
-				# It has the small drawback under Linux and OS X 10.6 that 
-				# it will copy the profile to both the user and system-wide 
-				# locations, though, which is not a problem under Windows as 
-				# they are the same.
-				args.remove("-Sl")
-				result = self.exec_cmd(cmd, args, capture_output, 
-											  low_contrast=False, 
-											  skip_scripts=skip_scripts, 
-											  silent=silent)
-				args.insert(0, "-Sl")
+		if (sys.platform == "darwin" and
+			intlist(mac_ver()[0].split(".")) >= [10, 7]):
+			# dispwin seems to not work correctly since the last
+			# update to lion
+			profiles = os.path.join("Library", "ColorSync", "Profiles")
+			profile_install_path = os.path.join(profiles,
+												os.path.basename(profile_path))
+			network = os.path.join(os.path.sep, "Network", profiles)
+			if getcfg("profile.install_scope") == "l":
+				profile_install_path = os.path.join(os.path.sep,
+													profile_install_path)
+			elif (getcfg("profile.install_scope") == "n" and
+				  os.path.isdir(network)):
+				profile_install_path = os.path.join(network,
+													profile_install_path)
 			else:
-				result = True
+				profile_install_path = os.path.join(os.path.expanduser("~"),
+													profile_install_path)
+			cmd, args = "cp", ["-f", profile_path, profile_install_path]
+			result = self.exec_cmd(cmd, args, capture_output, 
+								   low_contrast=False, 
+								   skip_scripts=skip_scripts, 
+								   silent=silent,
+								   asroot=getcfg("profile.install_scope") in ("l", "n"),
+								   title=lang.getstr("profile.install"))
 			if not isinstance(result, Exception) and result:
-				result = self.exec_cmd(cmd, args, capture_output, 
-									   low_contrast=False, 
-									   skip_scripts=skip_scripts, 
-									   silent=silent,
-									   title=lang.getstr("profile.install"))
+				self.output = ["Installed"]
 		else:
-			result = cmd
+			cmd, args = self.prepare_dispwin(None, profile_path, True)
+			if not isinstance(cmd, Exception):
+				if "-Sl" in args and (sys.platform != "darwin" or 
+									  intlist(mac_ver()[0].split(".")) >= [10, 6]):
+					# If a 'system' install is requested under Linux or Windows, 
+					# install in 'user' scope first because a system-wide install 
+					# doesn't also set it as current user profile on those systems 
+					# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
+					# It has the small drawback under Linux and OS X 10.6 that 
+					# it will copy the profile to both the user and system-wide 
+					# locations, though, which is not a problem under Windows as 
+					# they are the same.
+					args.remove("-Sl")
+					result = self.exec_cmd(cmd, args, capture_output, 
+												  low_contrast=False, 
+												  skip_scripts=skip_scripts, 
+												  silent=silent,
+												  title=lang.getstr("profile.install"))
+					args.insert(0, "-Sl")
+				else:
+					result = True
+				if not isinstance(result, Exception) and result:
+					result = self.exec_cmd(cmd, args, capture_output, 
+										   low_contrast=False, 
+										   skip_scripts=skip_scripts, 
+										   silent=silent,
+										   title=lang.getstr("profile.install"))
+			else:
+				result = cmd
 		if not isinstance(result, Exception) and result is not None:
 			result = False
 			for line in self.output:
 				if "Installed" in line:
-					if sys.platform == "darwin" and "-Sl" in args and \
-					   intlist(mac_ver()[0].split(".")) < [10, 6]:
+					if (sys.platform == "darwin" and "-Sl" in args and
+					    intlist(mac_ver()[0].split(".")) < [10, 6]):
 						# The profile has been installed, but we need a little 
 						# help from AppleScript to actually make it the default 
 						# for the current user. Only works under Mac OS < 10.6
@@ -2127,6 +2163,30 @@ class Worker(object):
 							else:
 								result = True
 						break
+					elif (sys.platform == "darwin" and
+						  intlist(mac_ver()[0].split(".")) >= [10, 7]):
+						# dispwin seems to not work correctly since the last
+						# update to lion
+						applescript = ['tell application "System Preferences"',
+										   'activate',
+										   'set current pane to pane id "com.apple.preference.displays"',
+										   'reveal (first anchor of current pane whose name is "displaysColorTab")',
+										   # This needs access for assistive devices enabled
+										   #'tell application "System Events"',
+											   #'tell process "System Preferences"',
+												   #'select row 2 of table 1 of scroll area 1 of group 1 of tab group 1 of window "<Display name from EDID here>"',
+											   #'end tell',
+										   #'end tell',
+									   'end tell']
+						try:
+							retcode, output, errors = osascript(applescript)
+						except Exception, exception:
+							safe_print(exception)
+						else:
+							if errors.strip():
+								safe_print("osascript error: %s" % errors)
+							else:
+								result = True
 					else:
 						result = True
 					break
