@@ -481,12 +481,6 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		requires += [
 			"pywin32 (>= 213.0)"
 		]
-	elif sys.platform == "darwin":
-		requires += [
-			"appscript (>= 0.19)"
-		]
-	else:
-		pass
 
 	packages = [name, "%s.lib.agw" % name]
 	if sdist:
