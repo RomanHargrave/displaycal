@@ -3733,9 +3733,15 @@ class MainFrame(BaseFrame):
 				# Add existing meta information
 				profile.tags.meta = meta
 			elif meta is True:
-				if self.worker.get_display_edid():
+				edid = self.worker.get_display_edid()
+				if edid:
 					# Add new meta information based on EDID
-					profile.set_edid_metadata(self.worker.get_display_edid())
+					profile.set_edid_metadata(edid)
+					# Add Apple-specific 'mmod' tag (TODO: need full spec)
+					mmod = ("mmod" + ("\x00" * 6) + edid["edid"][8:10] +
+							("\x00" * 2) + edid["edid"][11] + edid["edid"][10] +
+							("\x00" * 4) + ("\x00" * 20))
+					profile.tags.mmod = ICCP.ICCProfileTag(mmod, "mmod")
 				elif not "meta" in profile.tags:
 					# Make sure meta tag exists
 					profile.tags.meta = ICCP.DictType()
