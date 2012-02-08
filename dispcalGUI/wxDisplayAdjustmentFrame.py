@@ -618,6 +618,7 @@ class DisplayAdjustmentPanel(wx.Panel):
 		self.txt[label] = wx.StaticText(self, wx.ID_ANY, "-")
 		self.txt[label].SetForegroundColour(BGCOLOUR)
 		self.txt[label].SetMaxFontSize(10)
+		self.txt[label].SetMinSize((-1, 16))
 		self.txt[label].checkmark = checkmark
 		txtsizer.Add(self.txt[label])
 	
@@ -1028,7 +1029,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				self.lb.GetCurrentPage().gauges["L"].SetValue(min(max(l, 1), 100))
 				self.lb.GetCurrentPage().gauges["L"].Refresh()
 			if self.lb.GetCurrentPage().txt.get("luminance"):
-				if round(l_diff, 2):
+				if True: #round(l_diff, 2):
 					label = u"%s %.2f cd/m\u00b2, %s %.2f cd/m\u00b2 (%s%.2f%%)" % (lang.getstr(lstr),
 																					target_br[1],
 																					lang.getstr("actual"),
@@ -1047,7 +1048,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 												 "initial_br", None)
 			if target_bl:
 				percent = 100.0 / target_bl[1]
-			if target_bl and round(target_bl[1], 2) != round(current_bl, 2):
+			if target_bl: #and round(target_bl[1], 2) != round(current_bl, 2):
 				l_diff = current_bl - target_bl[1]
 				label = u"%s %.2f cd/m\u00b2, %s %.2f cd/m\u00b2 (%s%.2f%%)" % (lang.getstr("target"),
 																				target_bl[1],
