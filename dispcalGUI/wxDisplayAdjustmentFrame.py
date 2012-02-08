@@ -615,8 +615,8 @@ class DisplayAdjustmentPanel(wx.Panel):
 			self.sizer.Add(checkmark, flag=wx.RIGHT | wx.TOP | wx.ALIGN_CENTER_VERTICAL, border=8)
 		checkmark.GetContainingSizer().Hide(checkmark)
 		self.sizer.Add(txtsizer, flag=wx.TOP | wx.ALIGN_CENTER_VERTICAL, border=8)
-		self.txt[label] = wx.StaticText(self, wx.ID_ANY, " ", size=(-1, 16))
-		self.txt[label].SetForegroundColour(FGCOLOUR)
+		self.txt[label] = wx.StaticText(self, wx.ID_ANY, "-")
+		self.txt[label].SetForegroundColour(BGCOLOUR)
 		self.txt[label].SetMaxFontSize(10)
 		self.txt[label].checkmark = checkmark
 		txtsizer.Add(self.txt[label])
@@ -749,12 +749,13 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.Bind(labelbook.EVT_IMAGENOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
+		self.Show()
+		
 		# Final initialization steps
 		self._setup()
 		
 		if start_timer:
 			self.start_timer()
-		self.Show()
 	
 	def EndModal(self, returncode=wx.ID_OK):
 		return returncode
