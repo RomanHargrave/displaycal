@@ -97,8 +97,8 @@ fi
 # udev/hotplug
 mkdir -p "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb"
 # USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-cp -f "misc/92-Argyll.rules" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/92-Argyll.rules"
-echo "/usr/share/dispcalGUI/usb/92-Argyll.rules">>INSTALLED_FILES
+cp -f "misc/55-Argyll.rules" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/55-Argyll.rules"
+echo "/usr/share/dispcalGUI/usb/55-Argyll.rules">>INSTALLED_FILES
 # USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
 cp -f  "misc/45-Argyll.rules" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/45-Argyll.rules"
 echo "/usr/share/dispcalGUI/usb/45-Argyll.rules">>INSTALLED_FILES

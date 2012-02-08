@@ -348,7 +348,7 @@ def setup():
 					data_files += [(os.path.join(data, "usb"), [os.path.join(
 									pydir, "..", "misc", "45-Argyll.rules")])]
 					data_files += [(os.path.join(data, "usb"), [os.path.join(
-									pydir, "..", "misc", "92-Argyll.rules")])]
+									pydir, "..", "misc", "55-Argyll.rules")])]
 					data_files += [(os.path.join(data, "usb"), [os.path.join(
 									pydir, "..", "misc", "Argyll")])]
 					data_files += [(os.path.join(data, "usb"), [os.path.join(
@@ -371,7 +371,7 @@ def setup():
 							# already creates /dev/bus/usb/00X/00X devices
 							devconf_files += [
 								("/etc/udev/rules.d", [os.path.join(
-									pydir, "..", "misc", "92-Argyll.rules")])
+									pydir, "..", "misc", "55-Argyll.rules")])
 							]
 						else:
 							# USB using udev, where there are NOT /dev/bus/usb/00X/00X 
@@ -399,7 +399,8 @@ def setup():
 						for fname in entry[1]:
 							if os.path.isfile(fname):
 								data_files += [(entry[0], [fname])]
-		for dname in ("16x16", "22x22", "24x24", "32x32", "48x48", "256x256"):
+		for dname in ("10x10", "16x16", "22x22", "24x24", "32x32", "48x48",
+					  "72x72", "256x256"):
 			# Only the 10x10, 16x16, 32x32 and 72x72 icons are used exclusively
 			# by the app, the other sizes of the app icon are used for the 
 			# desktop entry under Linux
@@ -482,17 +483,16 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 			"pywin32 (>= 213.0)"
 		]
 
-	packages = [name, "%s.lib.agw" % name]
+	packages = [name, "%s.lib" % name, "%s.lib.agw" % name]
 	if sdist:
 		# For source desributions we want all libraries
-		packages += ["%s.lib" % name]
 		for tmpbits in ("32", "64"):
 			for pycompat in ("25", "26", "27"):
 				packages += ["%s.lib%s" % (name, tmpbits),
 							 "%s.lib%s.python%s" % (name, tmpbits, pycompat)]
 	elif sys.platform == "darwin":
-		# On Mac OS X we only want the universal binary
-		packages += ["%s.lib" % name]
+		# On Mac OS X we only want the universal binary in lib
+		pass
 	else:
 		# On Linux/Windows we want separate libraries
 		packages += ["%s.lib%s" % (name, bits),
