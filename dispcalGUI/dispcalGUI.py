@@ -7208,11 +7208,15 @@ class MainFrame(BaseFrame):
 			if debug:
 				safe_print("[D] set_default_testchart testchart.file:", path)
 			setcfg("testchart.file", path)
-		if force or lang.getstr(os.path.basename(path)) in [""] + \
-		   self.default_testchart_names or not os.path.isfile(path):
-			ti1 = self.testchart_defaults[self.get_profile_type()].get(
-				self.get_profile_quality(), 
-				self.testchart_defaults[self.get_profile_type()][None])
+		if force or (lang.getstr(os.path.basename(path)) in [""] +
+					 self.default_testchart_names) or not os.path.isfile(path):
+			if (not force and lang.getstr(os.path.basename(path)) in [""] +
+				self.default_testchart_names):
+				ti1 = os.path.basename(path)
+			else:
+				ti1 = self.testchart_defaults[self.get_profile_type()].get(
+					self.get_profile_quality(), 
+					self.testchart_defaults[self.get_profile_type()][None])
 			path = get_data_path(os.path.join("ti1", ti1))
 			if not path or not os.path.isfile(path):
 				if alert:
