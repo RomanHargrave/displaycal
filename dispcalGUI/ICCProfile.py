@@ -18,7 +18,6 @@ else:
 	import subprocess as sp
 	if sys.platform == "darwin":
 		from platform import mac_ver
-		import appscript
 
 if sys.platform == "win32":
 	try:
@@ -54,6 +53,8 @@ if sys.platform not in ("darwin", "win32"):
 		xrandr = None
 elif sys.platform == "win32":
 	import util_win
+elif sys.platform == "darwin":
+	from util_mac import osascript
 
 debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
 
@@ -398,30 +399,14 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				x_screen = display[2]
 		for option in options:
 			if sys.platform == "darwin":
-				# appscript: one-based index
-				display_profile = appscript.app(option).displays[display_no + 1].display_profile.get()
-				if isinstance(display_profile, appscript.reference.Reference):
-					fobj = display_profile.location.get()
-					if fobj:
-						path = fobj.path
-						if type(fobj.path) not in (str, unicode):
-							# Mac OS X 10.6: We need to turn this:
-							# app(u'/System/Library/CoreServices/Image Events.app').aliases[u'Macintosh HD:Library:ColorSync:Profiles:Displays:ProfileName.icc'].path
-							# into a POSIX path
-							#
-							# Turn into unicode representation
-							path = unicode(repr(path))
-							# Get the HFS path from the aliases[...] part
-							path = re.sub("^.+\\[u?'", "", path).replace("'].path", "")
-							# Replace unicode escapes ('\u') with literal unicode chars
-							path = re.sub("\\\\u([0-9a-f]{4})", hexunescape, path)
-							# Replace hex escapes ('\x') with literal chars
-							path = re.sub("\\\\x([0-9a-f]{2})", hexunescape, path)
-							# Split path and strip off the leading 'Macintosh HD'
-							path = path.split(":")[1:]
-							# Assemble POSIX path
-							path = os.path.join(os.path.sep, *path)
-						profile = ICCProfile(path)
+				# applescript: one-based index
+				applescript = ['tell app "%s"' % option,
+								   'set displayProfile to location of display profile of display %i' % (display_no + 1),
+								   'return POSIX path of displayProfile',
+							   'end tell']
+				retcode, output, errors = osascript(applescript)
+				if not errors.strip() and output.strip():
+					profile = ICCProfile(output.strip("\n").decode(fs_enc))
 			else:
 				# Linux
 				# Try colord

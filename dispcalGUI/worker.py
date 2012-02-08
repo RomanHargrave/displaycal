@@ -60,7 +60,7 @@ from util_io import Files, StringIOu as StringIO
 from util_list import intlist
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
-						  mac_terminal_set_colors)
+						  mac_terminal_set_colors, osascript)
 elif sys.platform == "win32":
 	import util_win
 else:
@@ -2113,14 +2113,20 @@ class Worker(object):
 						path = os.path.join(os.path.sep, "Library", 
 											"ColorSync", "Profiles", 
 											os.path.basename(args[-1]))
+						applescript = ['tell app "ColorSyncScripting"',
+										   'set displayProfile to POSIX file "%s" as alias' % path,
+										   'set display profile of display %i to displayProfile' % n,
+									   'end tell']
 						try:
-							fobj = appscript.mactypes.File(path)
-							appscript.app("ColorSyncScripting").displays[n].display_profile.set(fobj)  # one-based index
+							retcode, output, errors = osascript(applescript)
 						except Exception, exception:
 							safe_print(exception)
 						else:
-							result = True
-							break
+							if errors.strip():
+								safe_print("osascript error: %s" % errors)
+							else:
+								result = True
+						break
 					else:
 						result = True
 					break

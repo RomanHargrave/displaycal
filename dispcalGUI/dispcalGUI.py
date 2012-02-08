@@ -77,8 +77,6 @@ if sys.platform == "win32":
 	import pythoncom
 	import win32api
 	import win32con
-elif sys.platform == "darwin":
-	import appscript
 import jspacker
 
 # Config
@@ -8269,7 +8267,7 @@ def main():
 				retcode = sp.call(cmd.encode(fs_enc), shell=True, cwd=cwd)
 			elif sys.platform == "darwin":
 				if debug: safe_print("[D]", cmd)
-				retcode = mac_terminal_do_script(cmd)
+				retcode, output, errors = mac_terminal_do_script(cmd)
 			else:
 				stdout = tempfile.SpooledTemporaryFile()
 				retcode = None
