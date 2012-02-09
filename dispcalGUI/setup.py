@@ -227,6 +227,7 @@ def setup():
 	package_data = {
 		name: [
 			"argyll_instruments.json",
+			"camera_shutter.wav",
 			"pnp.ids",
 			"lang/*.json",
 			"presets/*.icc",
@@ -284,7 +285,8 @@ def setup():
 	if sys.platform not in ("darwin", "win32") or do_py2app or do_py2exe:
 		# Linux/Unix or py2app/py2exe
 		data_files += [
-			(data, [os.path.join(pydir, "argyll_instruments.json")]), 
+			(data, [os.path.join(pydir, "argyll_instruments.json")]),
+			(data, [os.path.join(pydir, "camera_shutter.wav")]), 
 			(data, [os.path.join(pydir, "pnp.ids")]), 
 			(os.path.join(data, "lang"), 
 				glob.glob(os.path.join(pydir, "lang", "*.json"))), 
@@ -805,6 +807,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 					"LICENSE.txt",
 					"README.html",
 					"argyll_instruments.json",
+					"camera_shutter.wav",
 					name + ".desktop",
 					"pnp.ids",
 					"test.cal"
