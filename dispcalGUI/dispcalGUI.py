@@ -3270,11 +3270,11 @@ class MainFrame(BaseFrame):
 																		   "."))
 				if v < 0.000001 or v > 100000:
 					raise ValueError()
-				self.black_luminance_textctrl.ChangeValue(str(v))
+				self.black_luminance_textctrl.ChangeValue("%.6f" % v)
 			except ValueError:
 				wx.Bell()
 				self.black_luminance_textctrl.ChangeValue(
-					str(getcfg("calibration.black_luminance")))
+					"%.6f" % getcfg("calibration.black_luminance"))
 			if event.GetId() == self.black_luminance_cdm2_rb.GetId():
 				self.black_luminance_textctrl.SetFocus()
 				self.black_luminance_textctrl.SelectAll()
