@@ -1320,6 +1320,15 @@ class Worker(object):
 				safe_print(lang.getstr("aborted"), fn=fn)
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
+		if cmdname == get_argyll_utilname("dispwin"):
+			if "-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
+												  not "-I" in args and
+												  mac_ver()[0] >= '10.7'):
+				# Mac OS X 10.7 Lion needs root privileges if loading/clearing 
+				# calibration
+				# In all other cases, root is only required if installing a
+				# profile to a system location
+				asroot = True
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
 			if cmdname in (get_argyll_utilname("dispwin"),
@@ -1368,13 +1377,6 @@ class Worker(object):
 				# Avoid problems with encoding
 				working_dir = win32api.GetShortPathName(working_dir)
 		sudo = None
-		if (cmdname == get_argyll_utilname("dispwin") and
-			("-Sl" in args or "-Sn" in args or
-			 (sys.platform == "darwin" and mac_ver()[0] >= '10.7'))):
-			# Mac OS X 10.7 Lion needs root privileges even if just loading
-			# calibration if the current display profile is not a user
-			# profile
-			asroot = True
 		# Run commands through wexpect.spawn instead of subprocess.Popen if
 		# all of these conditions apply:
 		# - command is dispcal, dispread or spotread
@@ -2079,10 +2081,9 @@ class Worker(object):
 	def _install_profile_argyll(self, profile_path, capture_output=False,
 								skip_scripts=False, silent=False):
 		""" Install profile using dispwin """
-		if (sys.platform == "darwin" and
-			intlist(mac_ver()[0].split(".")) >= [10, 7]):
-			# dispwin seems to not work correctly since the last
-			# update to lion
+		if (sys.platform == "darwin" and False):  # NEVER
+			# Alternate way of 'installing' the profile under OS X by just
+			# copying it
 			profiles = os.path.join("Library", "ColorSync", "Profiles")
 			profile_install_path = os.path.join(profiles,
 												os.path.basename(profile_path))
@@ -2163,10 +2164,9 @@ class Worker(object):
 							else:
 								result = True
 						break
-					elif (sys.platform == "darwin" and
-						  intlist(mac_ver()[0].split(".")) >= [10, 7]):
-						# dispwin seems to not work correctly since the last
-						# update to lion
+					elif (sys.platform == "darwin" and False):  # NEVER
+						# After 'installing' a profile under Mac OS X by just
+						# copying it, show system preferences
 						applescript = ['tell application "System Preferences"',
 										   'activate',
 										   'set current pane to pane id "com.apple.preference.displays"',
@@ -2935,7 +2935,10 @@ class Worker(object):
 			else:
 				args += ["-E6"]
 		args += ["-d" + self.get_display()]
-		args += ["-c"]
+		if sys.platform != "darwin" or cal is False:
+			# Mac OS X 10.7 Lion needs root privileges when clearing 
+			# calibration
+			args += ["-c"]
 		if cal is True:
 			args += [self.get_dispwin_display_profile_argument(
 						max(0, min(len(self.displays), 
