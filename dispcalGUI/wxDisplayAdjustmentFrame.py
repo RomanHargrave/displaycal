@@ -804,7 +804,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		# Sound when measuring
 		# Needs to be stereo!
 		try:
-			self.measurement_sound = wx.Sound(get_data_path("camera_shutter.wav"))
+			self.measurement_sound = wx.Sound(get_data_path("beep.wav"))
 		except NotImplementedError:
 			pass
 		#else:

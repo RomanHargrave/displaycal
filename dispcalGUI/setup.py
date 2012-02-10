@@ -227,6 +227,7 @@ def setup():
 	package_data = {
 		name: [
 			"argyll_instruments.json",
+			"beep.wav",
 			"camera_shutter.wav",
 			"pnp.ids",
 			"lang/*.json",
@@ -286,6 +287,7 @@ def setup():
 		# Linux/Unix or py2app/py2exe
 		data_files += [
 			(data, [os.path.join(pydir, "argyll_instruments.json")]),
+			(data, [os.path.join(pydir, "beep.wav")]), 
 			(data, [os.path.join(pydir, "camera_shutter.wav")]), 
 			(data, [os.path.join(pydir, "pnp.ids")]), 
 			(os.path.join(data, "lang"), 
@@ -807,6 +809,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 					"LICENSE.txt",
 					"README.html",
 					"argyll_instruments.json",
+					"beep.wav",
 					"camera_shutter.wav",
 					name + ".desktop",
 					"pnp.ids",

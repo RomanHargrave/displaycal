@@ -139,6 +139,7 @@ resfiles = [
 	"theme/icons/16x16/stock_lock-open.png",
 	"theme/icons/16x16/web.png",
 	# "theme/icons/16x16/stock_refresh.png",
+	"beep.wav",
 	"camera_shutter.wav",
 	"test.cal",
 	"xrc/gamap.xrc",
