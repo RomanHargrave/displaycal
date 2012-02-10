@@ -34,9 +34,16 @@ FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 
 def get_panel(parent, size=wx.DefaultSize):
 	panel = wx.Panel(parent, wx.ID_ANY, size=size)
-	panel.SetBackgroundColour(BGCOLOUR)
+	if "--debug" in sys.argv[1:]:
+		from random import randint
+		panel.SetBackgroundColour(wx.Colour(randint(0, 255), randint(0, 255), randint(0, 255)))
+		get_panel.i += 1
+		wx.StaticText(panel, wx.ID_ANY, str(get_panel.i) + " " + str(size))
+	else:
+		panel.SetBackgroundColour(BGCOLOUR)
 	return panel
 
+get_panel.i = 0
 
 def get_xy_vdt_dE(groups):
 	x = float(groups[0])
@@ -751,7 +758,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 														   lang.getstr("measurement.play_sound"))
 			self.measurement_play_sound_ctrl.SetForegroundColour(FGCOLOUR)
 			self.measurement_play_sound_ctrl.SetValue(bool(getcfg("measurement.play_sound")))
-			optionspanel.GetSizer().Add(get_panel(self, (84, 12)), 1, flag=wx.EXPAND)
+			optionspanel.GetSizer().Add(get_panel(optionspanel, (84, 12)), 1, flag=wx.EXPAND)
 			optionspanel.GetSizer().Add(self.measurement_play_sound_ctrl)
 		
 		# Add buttons
@@ -768,18 +775,20 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.calibration_btn.Disable()
 		self.btnsizer.Insert(0, get_panel(self, (12, 12)), flag=wx.EXPAND)
 		self.create_start_interactive_adjustment_button()
-		panel = get_panel(self, (0, 12))
-		panel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
-		self.btnsizer.Insert(0, panel, flag=wx.EXPAND)
-		self.indicator_ctrl = wx.StaticBitmap(panel, wx.ID_ANY,
+		self.indicator_panel = get_panel(self, (0, 12))
+		self.indicator_panel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
+		self.btnsizer.Insert(0, self.indicator_panel, flag=wx.EXPAND)
+		self.indicator_ctrl = wx.StaticBitmap(self.indicator_panel, wx.ID_ANY,
 											  getbitmap("theme/icons/10x10/record"),
 											  size=(10, 10))
 		self.indicator_ctrl.SetForegroundColour(FGCOLOUR)
-		panel.GetSizer().Add(self.indicator_ctrl, 
-							 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-							 border=12)
+		self.indicator_panel.GetSizer().Add(self.indicator_ctrl, 
+											flag=wx.ALIGN_CENTER_VERTICAL)
+		self.indicator_panel.GetSizer().Add(get_panel(self.indicator_panel,
+													  (12, 12)),
+											flag=wx.EXPAND)
 		self.indicator_ctrl.GetContainingSizer().Hide(self.indicator_ctrl)
-		self.btnsizer.Insert(0, get_panel(self, (12, 12)), 1, flag=wx.EXPAND)
+		self.btnsizer.Insert(0, get_panel(self, (0, 12)), 1, flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
