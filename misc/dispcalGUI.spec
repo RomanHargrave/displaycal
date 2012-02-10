@@ -83,6 +83,7 @@ from distutils.util import byte_compile, change_root
 bits = platform.architecture()[0][:2]
 mod = os.path.join(change_root('$RPM_BUILD_ROOT', get_python_lib(True)), '%{name}')
 for py in (glob.glob(os.path.join(mod, '*.py')),
+		   glob.glob(os.path.join(mod, 'lib', '*.py')),
 		   glob.glob(os.path.join(mod, 'lib', 'agw', '*.py')), 
 		   glob.glob(os.path.join(mod, 'lib' + bits, '*.py')), 
 		   glob.glob(os.path.join(mod, 'lib' + bits, 'python%s%s' % sys.version_info[:2], '*.py'))):
