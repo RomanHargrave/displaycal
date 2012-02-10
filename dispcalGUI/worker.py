@@ -2064,10 +2064,9 @@ class Worker(object):
 					self._install_profile_gcm(profile_path)
 			if not isinstance(result, Exception) and result and not gcm_import:
 				if verbose >= 1: safe_print(lang.getstr("success"))
-				if (sys.platform == "darwin" and
-					intlist(mac_ver()[0].split(".")) >= [10, 7]):
-					# dispwin seems to not work correctly since the last
-					# update to lion
+				if sys.platform == "darwin" and False:  # NEVER
+					# If installing the profile by just copying it to the
+					# right location, tell user to select it manually
 					msg = lang.getstr("profile.install.osx_manual_select")
 				else:
 					msg = lang.getstr("profile.install.success")
