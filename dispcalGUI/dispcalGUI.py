@@ -2491,7 +2491,7 @@ class MainFrame(BaseFrame):
 		else:
 			self.black_luminance_min_rb.SetValue(True)
 		self.black_luminance_textctrl.ChangeValue(
-			str(getcfg("calibration.black_luminance")))
+			"%.6f" % getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Enable(
 			enable_cal and bool(getcfg("calibration.black_luminance", False)))
 		
