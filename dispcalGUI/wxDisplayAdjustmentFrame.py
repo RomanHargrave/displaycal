@@ -57,6 +57,12 @@ def get_xy_vdt_dE(groups):
 	return x, y, vdt, dE
 
 
+def set_label_and_size(txtctrl, label):
+	txtctrl.SetMinSize((txtctrl.GetSize()[0], -1))
+	txtctrl.SetLabel(label)
+	txtctrl.SetMinSize(txtctrl.GetSize())
+
+
 class FlatShadedButton(GradientButton):
 
 	def __init__(self, parent, id=wx.ID_ANY, bitmap=None, label="",
@@ -79,15 +85,44 @@ class FlatShadedButton(GradientButton):
 		self.SetPressedBottomColour(colour or wx.Colour(0x22, 0x22, 0x22))
 		self.SetPressedTopColour(colour or wx.Colour(0x22, 0x22, 0x22))
 	
+	def Disable(self):
+		self.Enable(False)
+	
+	def DoGetBestSize(self):
+		"""
+		Overridden base class virtual. Determines the best size of the
+		button based on the label and bezel size.
+		"""
+
+		if not getattr(self, "_lastBestSize", None):
+			label = self.GetLabel() or u"\u200b"
+			
+			dc = wx.ClientDC(self)
+			dc.SetFont(self.GetFont())
+			retWidth, retHeight = dc.GetTextExtent(label)
+			
+			bmpWidth = bmpHeight = 0
+			constant = 15
+			if self._bitmap:
+				if label != u"\u200b":
+					constant = 10
+				else:
+					constant = 0
+				# Pin the bitmap height to 10
+				bmpWidth, bmpHeight = self._bitmap.GetWidth()+constant, 10
+				retWidth += bmpWidth
+				retHeight = max(bmpHeight, retHeight)
+				constant = 15
+
+			self._lastBestSize = wx.Size(retWidth+constant, retHeight+constant)
+		return self._lastBestSize
+	
 	def Enable(self, enable=True):
 		if enable:
 			self._setcolours()
 		else:
 			self._setcolours(wx.Colour(0x66, 0x66, 0x66))
 		GradientButton.Enable(self, enable)
-	
-	def Disable(self):
-		self.Enable(False)
 
 
 class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
@@ -542,7 +577,7 @@ class DisplayAdjustmentPanel(wx.Panel):
 				bitmap = wx.StaticBitmap(self, wx.ID_ANY,
 										 getbitmap("theme/icons/16x16/%s" % name))
 				bitmap.SetToolTipString(lang.getstr(lstr))
-				self.add_txt(name, bitmap, 2)
+				self.add_txt(name, bitmap, 4)
 			return
 		if ctrltype.startswith("rgb"):
 			if ctrltype == "rgb_offset":
@@ -632,23 +667,26 @@ class DisplayAdjustmentPanel(wx.Panel):
 		if spacer:
 			self.sizer.Add(spacer, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
 			txtsizer.Add(checkmark, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
-			label = "..."
 		else:
 			self.sizer.Add(checkmark, flag=wx.RIGHT | wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border=8)
-			label = "\n".join([lang.getstr("initial") +
-							   u" x 0.0000 y 0.0000 VDT 0000K 0.0 \u0394E*00",
-							   u"\u2022\u00a0 " + lang.getstr("current") +
-							   u" x 0.0000 y 0.0000 VDT 0000K 0.0 \u0394E*00"])
+		initial = lang.getstr("initial")
+		current = lang.getstr("current")
+		target = lang.getstr("target")
+		strings = {len(initial): initial,
+				   len(current): current,
+				   len(target): target}
+		longest = strings[max(strings.keys())]
+		label = longest + u" x 0.0000 y 0.0000 VDT 0000K 0.0 \u0394E*00"
 		checkmark.GetContainingSizer().Hide(checkmark)
 		self.sizer.Add(txtsizer, flag=wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border=border)
 		self.txt[name] = wx.StaticText(self, wx.ID_ANY, label)
 		self.txt[name].SetForegroundColour(BGCOLOUR)
 		self.txt[name].SetMaxFontSize(10)
-		self.txt[name].Fit()
-		self.txt[name].SetMinSize((self.txt[name].GetSize()[0],
-								   self.txt[name].GetSize()[1]))
 		self.txt[name].checkmark = checkmark
 		txtsizer.Add(self.txt[name])
+		self.txt[name].Fit()
+		self.txt[name].SetMinSize((self.txt[name].GetSize()[0],
+								   self.txt[name].GetSize()[1] * 2))
 	
 	def update_desc(self):
 		if self.ctrltype in ("luminance", "black_level"):
@@ -689,7 +727,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.sizer.Add(self.lb, 1, flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		
-		self.pageid_2_argyll_key_num = {}
+		self.pagenum_2_argyll_key_num = {}
 
 		# Page - black luminance
 		self.page_black_luminance = DisplayAdjustmentPanel(self, wx.ID_ANY,
@@ -697,7 +735,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 														   "black_level")
 		self.lb.AddPage(self.page_black_luminance,
 						lang.getstr("calibration.black_luminance"), True, 0)
-		self.pageid_2_argyll_key_num[len(self.pageid_2_argyll_key_num)] = "1"
+		self.pagenum_2_argyll_key_num[len(self.pagenum_2_argyll_key_num)] = "1"
 		
 		# Page - white point
 		self.page_white_point = DisplayAdjustmentPanel(self, wx.ID_ANY,
@@ -706,14 +744,14 @@ class DisplayAdjustmentFrame(wx.Frame):
 													   lang.getstr("calibration.luminance"),
 													   "rgb_gain")
 		self.lb.AddPage(self.page_white_point, lang.getstr("whitepoint"), True, 1)
-		self.pageid_2_argyll_key_num[len(self.pageid_2_argyll_key_num)] = "2"
+		self.pagenum_2_argyll_key_num[len(self.pagenum_2_argyll_key_num)] = "2"
 		
 		# Page - luminance
 		self.page_luminance = DisplayAdjustmentPanel(self, wx.ID_ANY,
 													 lang.getstr("calibration.luminance"))
 		self.lb.AddPage(self.page_luminance,
 						lang.getstr("calibration.luminance"), True, 2)
-		self.pageid_2_argyll_key_num[len(self.pageid_2_argyll_key_num)] = "3"
+		self.pagenum_2_argyll_key_num[len(self.pagenum_2_argyll_key_num)] = "3"
 
 		# Page - black point
 		self.page_black_point = DisplayAdjustmentPanel(self, wx.ID_ANY,
@@ -723,7 +761,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 													   "rgb_offset")
 		self.lb.AddPage(self.page_black_point, lang.getstr("black_point"),
 						True, 3)
-		self.pageid_2_argyll_key_num[len(self.pageid_2_argyll_key_num)] = "4"
+		self.pagenum_2_argyll_key_num[len(self.pagenum_2_argyll_key_num)] = "4"
 		
 		# Page - check all
 		self.page_check_all = DisplayAdjustmentPanel(self, wx.ID_ANY,
@@ -731,7 +769,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 													 "check_all")
 		self.lb.AddPage(self.page_check_all,
 						lang.getstr("calibration.check_all"), True, 4)
-		self.pageid_2_argyll_key_num[len(self.pageid_2_argyll_key_num)] = "5"
+		self.pagenum_2_argyll_key_num[len(self.pagenum_2_argyll_key_num)] = "5"
 		
 		# Set colours on tab list
 		self.lb.Children[0].SetBackgroundColour(BGCOLOUR)
@@ -744,22 +782,34 @@ class DisplayAdjustmentFrame(wx.Frame):
 			self.measurement_sound = wx.Sound(get_data_path("camera_shutter.wav"))
 		except NotImplementedError:
 			pass
-		else:
-			# Add option to toggle playing measurement sound on/off
-			self.add_panel((12, 12), flag=wx.EXPAND)
-			self.add_panel((12, 12), flag=wx.EXPAND)
-			self.add_panel((12, 12), flag=wx.EXPAND)
-			self.add_panel((12, 12), flag=wx.EXPAND)
-			optionspanel = self.add_panel((12, 12), flag=wx.EXPAND)
-			optionspanel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
-			self.add_panel((12, 12), flag=wx.EXPAND)
-			self.measurement_play_sound_ctrl = wx.CheckBox(optionspanel,
-														   wx.ID_ANY,
-														   lang.getstr("measurement.play_sound"))
-			self.measurement_play_sound_ctrl.SetForegroundColour(FGCOLOUR)
-			self.measurement_play_sound_ctrl.SetValue(bool(getcfg("measurement.play_sound")))
-			optionspanel.GetSizer().Add(get_panel(optionspanel, (84, 12)), 1, flag=wx.EXPAND)
-			optionspanel.GetSizer().Add(self.measurement_play_sound_ctrl)
+		#else:
+			## Add option to toggle playing measurement sound on/off
+			#self.add_panel((12, 12), flag=wx.EXPAND)
+			#self.add_panel((12, 12), flag=wx.EXPAND)
+			#self.add_panel((12, 12), flag=wx.EXPAND)
+			#self.add_panel((12, 12), flag=wx.EXPAND)
+			#optionspanel = self.add_panel((12, 12), flag=wx.EXPAND)
+			#optionspanel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
+			#optionspanel.SetForegroundColour(FGCOLOUR)
+			#self.add_panel((12, 12), flag=wx.EXPAND)
+			#self.measurement_play_sound_ctrl = wx.CheckBox(optionspanel,
+														   #wx.ID_ANY,
+														   #"")
+			#self.measurement_play_sound_ctrl.SetValue(bool(getcfg("measurement.play_sound")))
+			## wxMac won't set color on checkbox label
+			#self.measurement_play_sound_txt = wx.StaticText(optionspanel,
+															#wx.ID_ANY,
+															#lang.getstr("measurement.play_sound"))
+			#self.measurement_play_sound_txt.SetForegroundColour(FGCOLOUR)
+			#self.measurement_play_sound_txt.SetMaxFontSize(10)
+			#self.measurement_play_sound_txt.Bind(wx.EVT_LEFT_UP,
+												 #self.measurement_play_sound_handler)
+			#optionspanel.GetSizer().Add(get_panel(optionspanel, (96, 12)), 1, flag=wx.EXPAND)
+			#optionspanel.GetSizer().Add(self.measurement_play_sound_ctrl,
+										#flag=wx.ALIGN_CENTER_VERTICAL)
+			#optionspanel.GetSizer().Add(self.measurement_play_sound_txt,
+										#flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL,
+										#border=4)
 		
 		# Add buttons
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -774,21 +824,31 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.calibration_btn.Bind(wx.EVT_BUTTON, self.continue_to_calibration)
 		self.calibration_btn.Disable()
 		self.btnsizer.Insert(0, get_panel(self, (12, 12)), flag=wx.EXPAND)
+		if getcfg("measurement.play_sound"):
+			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
+		else:
+			bitmap = getbitmap("theme/icons/16x16/sound_off")
+		self.sound_on_off_btn = self.create_gradient_button(bitmap, "",
+														    name="sound_on_off_btn")
+		self.sound_on_off_btn.SetToolTipString(lang.getstr("measurement.play_sound"))
+		self.sound_on_off_btn.Bind(wx.EVT_BUTTON,
+								   self.measurement_play_sound_handler)
+		self.btnsizer.Insert(0, get_panel(self, (6, 12)), flag=wx.EXPAND)
 		self.create_start_interactive_adjustment_button()
-		self.indicator_panel = get_panel(self, (0, 12))
+		self.indicator_panel = get_panel(self, (22, 12))
 		self.indicator_panel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
+		self.indicator_panel.SetForegroundColour(FGCOLOUR)
 		self.btnsizer.Insert(0, self.indicator_panel, flag=wx.EXPAND)
 		self.indicator_ctrl = wx.StaticBitmap(self.indicator_panel, wx.ID_ANY,
-											  getbitmap("theme/icons/10x10/record"),
+											  getbitmap("10x10/empty"),
 											  size=(10, 10))
 		self.indicator_ctrl.SetForegroundColour(FGCOLOUR)
 		self.indicator_panel.GetSizer().Add(self.indicator_ctrl, 
 											flag=wx.ALIGN_CENTER_VERTICAL)
 		self.indicator_panel.GetSizer().Add(get_panel(self.indicator_panel,
-													  (12, 12)),
+													  (10, 12)),
 											flag=wx.EXPAND)
-		self.indicator_ctrl.GetContainingSizer().Hide(self.indicator_ctrl)
-		self.btnsizer.Insert(0, get_panel(self, (0, 12)), 1, flag=wx.EXPAND)
+		self.btnsizer.Insert(0, get_panel(self, (2, 12)), 1, flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
@@ -815,10 +875,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.Bind(labelbook.EVT_IMAGENOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
-		self.Show()
-		
 		# Final initialization steps
-		self._setup()
+		self._setup(True)
+		
+		self.Show()
 		
 		if start_timer:
 			self.start_timer()
@@ -830,9 +890,9 @@ class DisplayAdjustmentFrame(wx.Frame):
 		pass
 	
 	def OnClose(self, event):
-		if getattr(self, "measurement_play_sound_ctrl", None):
-			setcfg("measurement.play_sound",
-				   int(self.measurement_play_sound_ctrl.GetValue()))
+		#if getattr(self, "measurement_play_sound_ctrl", None):
+			#setcfg("measurement.play_sound",
+				   #int(self.measurement_play_sound_ctrl.GetValue()))
 		config.writecfg()
 		if not self.timer.IsRunning():
 			self.Destroy()
@@ -894,7 +954,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 			imagelist.Add(bmp)
 		self.lb.AssignImageList(imagelist)
 	
-	def _setup(self):
+	def _setup(self, init=False):
 		self.cold_run = True
 		self.is_busy = None
 		self.is_measuring = None
@@ -914,25 +974,34 @@ class DisplayAdjustmentFrame(wx.Frame):
 		
 		# Set size
 		min_h = (72 + 8) * (self.lb.GetPageCount() - len(self.lb.disabled_pages)) + 2 - 8
-		self.lb.SetMinSize((350, min_h))
+		if init:
+			self.lb.SetMinSize((350, min_h))
 		self.lb.SetMinSize((self.lb.GetMinSize()[0],
 							max(self.lb.GetMinSize()[1], min_h)))
 		self.lb.GetCurrentPage().Fit()
+		self.lb.GetCurrentPage().Layout()
 		self.lb.Fit()
+		self.lb.Layout()
 		self.SetMinSize((0, 0))
 		self.Fit()
+		self.Layout()
 		# The button sizer will be as wide as the labelbook or wider,
 		# so use it as reference
 		w = self.btnsizer.GetSize()[0] - 84 - 12
-		for page_num in xrange(0, self.lb.GetPageCount()):
-			self.lb.GetPage(page_num).SetSize((w + 12, -1))
-			self.lb.GetPage(page_num).desc.SetLabel(self.lb.GetPage(page_num).desc.GetLabel().replace("\n", " "))
-			self.lb.GetPage(page_num).desc.Wrap(w)
-			self.lb.GetPage(page_num).Fit()
+		for pagenum in xrange(0, self.lb.GetPageCount()):
+			page = self.lb.GetPage(pagenum)
+			page.SetSize((w, -1))
+			page.desc.SetLabel(page.desc.GetLabel().replace("\n", " "))
+			page.desc.Wrap(w)
+			page.Fit()
+			page.Layout()
+			for txt in page.txt.itervalues():
+				txt.SetLabel(" ")
 		self.lb.SetMinSize((self.lb.GetMinSize()[0],
 							max(self.lb.GetCurrentPage().GetSize()[1], min_h)))
 		self.Fit()
-		self.SetSize((self.GetSize()[0] + 12, self.GetSize()[1]))
+		self.Layout()
+		self.SetSize((self.GetSize()[0], self.GetSize()[1]))
 		self.SetMinSize(self.GetSize())
 		
 		# Set position
@@ -975,15 +1044,13 @@ class DisplayAdjustmentFrame(wx.Frame):
 												   enable=False,
 												   startstop="start"):
 		if getattr(self, "adjustment_btn", None):
-			#enable = self.adjustment_btn.IsEnabled()
-			wx.CallAfter(self.adjustment_btn.Destroy)
-			self.adjustment_btn = None
-			wx.CallAfter(self.create_start_interactive_adjustment_button, icon,
-						 enable, startstop)
+			self.adjustment_btn._bitmap = getbitmap("theme/icons/10x10/%s" %
+													icon)
+			self.adjustment_btn.SetLabel(" " +
+										 lang.getstr("calibration.interactive_display_adjustment.%s" %
+													 startstop))
+			self.adjustment_btn.Enable(enable)
 			return
-		#if self.is_measuring:
-			#icon="pause"
-			#startstop="stop"
 		self.adjustment_btn = self.create_gradient_button(getbitmap("theme/icons/10x10/%s" %
 																	icon),
 														  " " +
@@ -995,7 +1062,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 	
 	def create_gradient_button(self, bitmap, label, name):
 		btn = FlatShadedButton(self, bitmap=bitmap, label=label, name=name)
-		i = max(len(self.btnsizer.GetChildren()) - 2, 0)
+		i = max(len(self.btnsizer.GetChildren()) - 4, 0)
 		self.btnsizer.Insert(i, btn)
 		self.btnsizer.Layout()
 		return btn
@@ -1015,20 +1082,33 @@ class DisplayAdjustmentFrame(wx.Frame):
 			keycode = self.id_to_keycode.get(event.GetId())
 		if keycode:
 			if keycode == ord(" "):
-				self.abort()
+				if self.is_measuring:
+					self.abort()
+				else:
+					self.start_interactive_adjustment()
 			elif keycode in [ord(str(c)) for c in range(1, 6)]:
 				key_num = chr(keycode)
-				page_id = dict(zip(self.pageid_2_argyll_key_num.values(),
-								   self.pageid_2_argyll_key_num.keys())).get(key_num)
-				if getcfg("measurement_mode") != "c" or page_id not in self.lb.disabled_pages:
-					if page_id is not None and not self.is_measuring:
-						self.lb.SetSelection(page_id)
+				pagenum = dict(zip(self.pagenum_2_argyll_key_num.values(),
+								   self.pagenum_2_argyll_key_num.keys())).get(key_num)
+				if getcfg("measurement_mode") != "c" or pagenum not in self.lb.disabled_pages:
+					if pagenum is not None and not self.is_measuring:
+						self.lb.SetSelection(pagenum)
 						self.start_interactive_adjustment()
 			elif keycode in (ord("\x1b"), ord("7"), ord("8"), ord("Q"), ord("q")):
 				if self.keyhandler:
 					self.keyhandler(event)
 				elif self.has_worker_subprocess():
 					self.worker.safe_send(chr(keycode))
+	
+	def measurement_play_sound_handler(self, event):
+		#self.measurement_play_sound_ctrl.SetValue(not self.measurement_play_sound_ctrl.GetValue())
+		setcfg("measurement.play_sound",
+			   int(not(bool(getcfg("measurement.play_sound")))))
+		if getcfg("measurement.play_sound"):
+			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
+		else:
+			bitmap = getbitmap("theme/icons/16x16/sound_off")
+		self.sound_on_off_btn._bitmap = bitmap
 
 	def parse_txt(self, txt):
 		colors = {True: wx.Colour(0x33, 0xcc, 0x0),
@@ -1043,7 +1123,9 @@ class DisplayAdjustmentFrame(wx.Frame):
 			label = self.lb.GetCurrentPage().txt.values()[0].GetLabel()
 			self.Pulse(" " * 4)
 			setcfg("measurement_mode", dtype.groups()[0][0].lower())
+			self.Freeze()
 			self._setup()
+			self.Thaw()
 			self.Pulse(label)
 		
 		if "/ Current" in txt:
@@ -1125,9 +1207,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				self.lb.GetCurrentPage().txt["luminance"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["luminance"].checkmark,
 																							  lstr == "target" and abs(l_diff) * percent <= 1)
 				self.lb.GetCurrentPage().txt["luminance"].SetForegroundColour(colors[lstr == "target" and abs(l_diff) * percent <= 1])
-				self.lb.GetCurrentPage().txt["luminance"].SetLabel(label)
-				self.lb.GetCurrentPage().txt["luminance"].SetMinSize((-1, -1))
-				self.lb.GetCurrentPage().txt["luminance"].SetMinSize(self.lb.GetCurrentPage().txt["luminance"].GetSize())
+				set_label_and_size(self.lb.GetCurrentPage().txt["luminance"], label)
 		if current_bl and self.lb.GetCurrentPage().txt.get("black_level"):
 			target_bl = getattr(self.lb.GetCurrentPage(), "target_bl",
 								None) or getattr(self.lb.GetCurrentPage(),
@@ -1157,9 +1237,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 			self.lb.GetCurrentPage().txt["black_level"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["black_level"].checkmark,
 																							l_diff is not None and abs(l_diff) * percent <= 1)
 			self.lb.GetCurrentPage().txt["black_level"].SetForegroundColour(colors[l_diff is not None and abs(l_diff) * percent <= 1])
-			self.lb.GetCurrentPage().txt["black_level"].SetLabel(label)
-			self.lb.GetCurrentPage().txt["black_level"].SetMinSize((-1, -1))
-			self.lb.GetCurrentPage().txt["black_level"].SetMinSize(self.lb.GetCurrentPage().txt["black_level"].GetSize())
+			set_label_and_size(self.lb.GetCurrentPage().txt["black_level"], label)
 		# groups()[0] = x
 		# groups()[1] = y
 		# groups()[2] = VDT (optional)
@@ -1195,7 +1273,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 					x, y, vdt, dE = get_xy_vdt_dE(initial_br[2:])
 					label = (lang.getstr(initial_br[0].lower()) + u" x %.4f y %.4f %s %.1f \u0394E*00\n" %
 							 (x, y, vdt, dE)).replace("  ", " ") + label
-				self.lb.GetCurrentPage().txt["rgb"].SetLabel(label)
+				set_label_and_size(self.lb.GetCurrentPage().txt["rgb"], label)
 		if white_xy_dE:
 			x, y, vdt, dE = get_xy_vdt_dE(white_xy_dE.groups())
 			if self.lb.GetCurrentPage().txt.get("white_point"):
@@ -1208,9 +1286,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 					x, y, vdt, dE = get_xy_vdt_dE(white_xy_target.groups())
 					label = (lang.getstr("target") + u" x %.4f y %.4f\n" %
 							 (x, y)).replace("  ", " ") + label
-				self.lb.GetCurrentPage().txt["white_point"].SetLabel(label)
-				self.lb.GetCurrentPage().txt["white_point"].SetMinSize((-1, -1))
-				self.lb.GetCurrentPage().txt["white_point"].SetMinSize(self.lb.GetCurrentPage().txt["white_point"].GetSize())
+				set_label_and_size(self.lb.GetCurrentPage().txt["white_point"], label)
 		if black_xy_dE:
 			x, y, vdt, dE = get_xy_vdt_dE(black_xy_dE.groups())
 			if self.lb.GetCurrentPage().txt.get("white_point"):
@@ -1223,20 +1299,18 @@ class DisplayAdjustmentFrame(wx.Frame):
 					x, y, vdt, dE = get_xy_vdt_dE(black_xy_target.groups())
 					label = (lang.getstr("target") + u" x %.4f y %.4f\n" %
 							 (x, y)).replace("  ", " ") + label
-				self.lb.GetCurrentPage().txt["black_point"].SetLabel(label)
-				self.lb.GetCurrentPage().txt["black_point"].SetMinSize((-1, -1))
-				self.lb.GetCurrentPage().txt["black_point"].SetMinSize(self.lb.GetCurrentPage().txt["black_point"].GetSize())
+				set_label_and_size(self.lb.GetCurrentPage().txt["black_point"], label)
 		if ((current_br or current_bl or xy_dE_rgb) and
 			self.lb.GetCurrentPage().ctrltype != "check_all"):
 			if (getattr(self, "measurement_sound", None) and
-				self.measurement_play_sound_ctrl.GetValue() and
+				#self.measurement_play_sound_ctrl.GetValue() and
+				getcfg("measurement.play_sound") and
 				self.measurement_sound.IsOk()):
 				self.measurement_sound.Play(wx.SOUND_ASYNC)
 			self.indicator_ctrl.SetBitmap(indicator)
-			self.indicator_ctrl.GetContainingSizer().Show(self.indicator_ctrl)
 			self.btnsizer.Layout()
 		else:
-			self.indicator_ctrl.GetContainingSizer().Hide(self.indicator_ctrl)
+			self.indicator_ctrl.SetBitmap(getbitmap("10x10/empty"))
 		if current_br or current_bl or xy_dE_rgb or white_xy_dE or black_xy_dE:
 			self.lb.GetCurrentPage().Layout()
 			self.Thaw()
@@ -1277,7 +1351,6 @@ class DisplayAdjustmentFrame(wx.Frame):
 					page.gauges[name].Refresh()
 			for txt in page.txt.itervalues():
 				txt.checkmark.GetContainingSizer().Hide(txt.checkmark)
-				txt.SetLabel(" ")
 				txt.SetForegroundColour(FGCOLOUR)
 		self.create_start_interactive_adjustment_button()
 		self.calibration_btn.Disable()
@@ -1287,7 +1360,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		if self.is_measuring:
 			self.abort()
 		else:
-			self.abort_and_send(self.pageid_2_argyll_key_num[self.lb.GetSelection()])
+			self.abort_and_send(self.pagenum_2_argyll_key_num[self.lb.GetSelection()])
 	
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
