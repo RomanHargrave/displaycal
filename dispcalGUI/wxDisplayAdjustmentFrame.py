@@ -15,7 +15,7 @@ from wxaddons import wx
 from wx.lib import delayedresult
 from lib.agw import labelbook
 from lib.agw.fmresources import *
-from lib.agw.gradientbutton import GradientButton
+from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.pygauge import PyGauge
 from lib.agw.artmanager import ArtManager
 
@@ -116,6 +116,30 @@ class FlatShadedButton(GradientButton):
 
 			self._lastBestSize = wx.Size(retWidth+constant, retHeight+constant)
 		return self._lastBestSize
+
+	def OnGainFocus(self, event):
+		"""
+		Handles the ``wx.EVT_SET_FOCUS`` event for L{GradientButton}.
+
+		:param `event`: a `wx.FocusEvent` event to be processed.
+		"""
+		
+		self._hasFocus = True
+		self._mouseAction = HOVER
+		self.Refresh()
+		self.Update()
+
+	def OnLoseFocus(self, event):
+		"""
+		Handles the ``wx.EVT_LEAVE_WINDOW`` event for L{GradientButton}.
+
+		:param `event`: a `wx.MouseEvent` event to be processed.
+		"""
+
+		self._hasFocus = False
+		self._mouseAction = None
+		self.Refresh()
+		event.Skip()
 	
 	def Enable(self, enable=True):
 		if enable:
@@ -706,7 +730,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 	def __init__(self, parent=None, handler=None,
 				 keyhandler=None, start_timer=True):
 		wx.Frame.__init__(self, parent, wx.ID_ANY,
-						  lang.getstr("calibration.interactive_display_adjustment"))
+						  lang.getstr("calibration.interactive_display_adjustment"),
+						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.SetBackgroundColour(BGCOLOUR)
 		self.sizer = wx.FlexGridSizer(0, 3)
@@ -818,27 +843,11 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.sizer.Add(self.btnsizer, flag=wx.ALIGN_RIGHT | wx.EXPAND)
-		self.calibration_btn = self.create_gradient_button(getbitmap("theme/icons/10x10/skip"),
-														   " " + lang.getstr("calibration.start"),
-														   name="calibration_btn")
-		self.calibration_btn.Bind(wx.EVT_BUTTON, self.continue_to_calibration)
-		self.calibration_btn.Disable()
-		self.btnsizer.Insert(0, get_panel(self, (12, 12)), flag=wx.EXPAND)
-		if getcfg("measurement.play_sound"):
-			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
-		else:
-			bitmap = getbitmap("theme/icons/16x16/sound_off")
-		self.sound_on_off_btn = self.create_gradient_button(bitmap, "",
-														    name="sound_on_off_btn")
-		self.sound_on_off_btn.SetToolTipString(lang.getstr("measurement.play_sound"))
-		self.sound_on_off_btn.Bind(wx.EVT_BUTTON,
-								   self.measurement_play_sound_handler)
-		self.btnsizer.Insert(0, get_panel(self, (6, 12)), flag=wx.EXPAND)
-		self.create_start_interactive_adjustment_button()
+		self.btnsizer.Add(get_panel(self, (2, 12)), 1, flag=wx.EXPAND)
 		self.indicator_panel = get_panel(self, (22, 12))
 		self.indicator_panel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
 		self.indicator_panel.SetForegroundColour(FGCOLOUR)
-		self.btnsizer.Insert(0, self.indicator_panel, flag=wx.EXPAND)
+		self.btnsizer.Add(self.indicator_panel, flag=wx.EXPAND)
 		self.indicator_ctrl = wx.StaticBitmap(self.indicator_panel, wx.ID_ANY,
 											  getbitmap("10x10/empty"),
 											  size=(10, 10))
@@ -848,23 +857,45 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.indicator_panel.GetSizer().Add(get_panel(self.indicator_panel,
 													  (10, 12)),
 											flag=wx.EXPAND)
-		self.btnsizer.Insert(0, get_panel(self, (2, 12)), 1, flag=wx.EXPAND)
+		self.create_start_interactive_adjustment_button()
+		self.adjustment_btn.SetDefault()
+		self.btnsizer.Add(get_panel(self, (6, 12)), flag=wx.EXPAND)
+		if getcfg("measurement.play_sound"):
+			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
+		else:
+			bitmap = getbitmap("theme/icons/16x16/sound_off")
+		self.sound_on_off_btn = self.create_gradient_button(bitmap, "",
+														    name="sound_on_off_btn")
+		self.sound_on_off_btn.SetToolTipString(lang.getstr("measurement.play_sound"))
+		self.sound_on_off_btn.Bind(wx.EVT_BUTTON,
+								   self.measurement_play_sound_handler)
+		self.btnsizer.Add(get_panel(self, (12, 12)), flag=wx.EXPAND)
+		self.calibration_btn = self.create_gradient_button(getbitmap("theme/icons/10x10/skip"),
+														   " " + lang.getstr("calibration.start"),
+														   name="calibration_btn")
+		self.calibration_btn.Bind(wx.EVT_BUTTON, self.continue_to_calibration)
+		self.calibration_btn.Disable()
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		
-		# Use an accelerator table for space, 0-9, a-z, numpad
-		keycodes = [32] + range(48, 58) + range(97, 123) + numpad_keycodes
-		self.id_to_keycode = {}
-		for keycode in keycodes:
-			self.id_to_keycode[wx.NewId()] = keycode
-		accels = []
 		self.keyhandler = keyhandler
-		for id, keycode in self.id_to_keycode.iteritems():
-			self.Bind(wx.EVT_MENU, self.key_handler, id=id)
-			accels += [(wx.ACCEL_NORMAL, keycode, id)]
-		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
+		if sys.platform in ("darwin", "win32"):
+			# Use an accelerator table for space, 0-9, A-Z, numpad
+			keycodes = [ord(" ")] + range(ord("0"),
+										  ord("9")) + range(ord("A"),
+															ord("Z")) + numpad_keycodes
+			self.id_to_keycode = {}
+			for keycode in keycodes:
+				self.id_to_keycode[wx.NewId()] = keycode
+			accels = []
+			for id, keycode in self.id_to_keycode.iteritems():
+				self.Bind(wx.EVT_MENU, self.key_handler, id=id)
+				accels += [(wx.ACCEL_NORMAL, keycode, id)]
+			self.SetAcceleratorTable(wx.AcceleratorTable(accels))
+		else:
+			self.Bind(wx.EVT_CHAR_HOOK, self.key_handler)
 		
 		# Event handlers
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
@@ -1062,8 +1093,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 	
 	def create_gradient_button(self, bitmap, label, name):
 		btn = FlatShadedButton(self, bitmap=bitmap, label=label, name=name)
-		i = max(len(self.btnsizer.GetChildren()) - 4, 0)
-		self.btnsizer.Insert(i, btn)
+		self.btnsizer.Add(btn)
 		self.btnsizer.Layout()
 		return btn
 	
@@ -1078,14 +1108,28 @@ class DisplayAdjustmentFrame(wx.Frame):
 		return True
 	
 	def key_handler(self, event):
-		if event.GetEventType() == wx.EVT_MENU.typeId:
+		#print {wx.EVT_CHAR.typeId: 'EVT_CHAR',
+			   #wx.EVT_CHAR_HOOK.typeId: 'EVT_CHAR_HOOK',
+			   #wx.EVT_KEY_DOWN.typeId: 'EVT_KEY_DOWN',
+			   #wx.EVT_MENU.typeId: 'EVT_MENU'}.get(event.GetEventType(),
+												   #event.GetEventType())
+		keycode = None
+		if event.GetEventType() in (wx.EVT_CHAR.typeId,
+									wx.EVT_CHAR_HOOK.typeId,
+									wx.EVT_KEY_DOWN.typeId):
+			keycode = event.GetKeyCode()
+		elif event.GetEventType() == wx.EVT_MENU.typeId:
 			keycode = self.id_to_keycode.get(event.GetId())
-		if keycode:
+		if keycode is not None:
+			#print chr(keycode)
 			if keycode == ord(" "):
-				if self.is_measuring:
-					self.abort()
-				else:
-					self.start_interactive_adjustment()
+				if (event.GetEventType() != wx.EVT_MENU.typeId or
+					not isinstance(self.FindFocus(), FlatShadedButton) or
+					self.FindFocus() == self.adjustment_btn):
+					if self.is_measuring:
+						self.abort()
+					else:
+						self.start_interactive_adjustment()
 			elif keycode in [ord(str(c)) for c in range(1, 6)]:
 				key_num = chr(keycode)
 				pagenum = dict(zip(self.pagenum_2_argyll_key_num.values(),
@@ -1099,6 +1143,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 					self.keyhandler(event)
 				elif self.has_worker_subprocess():
 					self.worker.safe_send(chr(keycode))
+				else:
+					event.Skip()
+			else:
+				event.Skip()
+		else:
+			event.Skip()
 	
 	def measurement_play_sound_handler(self, event):
 		#self.measurement_play_sound_ctrl.SetValue(not self.measurement_play_sound_ctrl.GetValue())
@@ -1327,6 +1377,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				self.is_busy = False
 				self.is_measuring = False
 			self.calibration_btn.Enable()
+			self.lb.SetFocus()  # Make frame receive EVT_CHAR_HOOK events under Linux
 		elif "initial measurements" in txt or "check measurements" in txt:
 			self.is_busy = True
 			self.lb.Children[0].Refresh()
@@ -1334,6 +1385,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 			if not self.is_measuring:
 				self.create_start_interactive_adjustment_button("pause", True, "stop")
 			self.is_measuring = True
+			self.lb.SetFocus()  # Make frame receive EVT_CHAR_HOOK events under Linux
 		#self.SetTitle("is_measuring %s timer.IsRunning %s keepGoing %s" %
 					  #(str(self.is_measuring), self.timer.IsRunning(), self.keepGoing))
 	
