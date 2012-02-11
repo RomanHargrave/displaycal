@@ -13,6 +13,10 @@ if [ -e "/etc/udev/rules.d" ]; then
 			ln -s "/usr/share/dispcalGUI/usb/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
 		fi
 	)
+	# Reload udev rules
+	if [ -e "/sbin/udevadm"]; then
+		/sbin/udevadm control --reload-rules
+	fi
 else
 	if [ -e "/etc/hotplug"]; then
 		# USB using hotplug and Serial using udev (older versions of Linux)
