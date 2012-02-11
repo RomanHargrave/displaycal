@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>0.8.7.2</h2>
-					<p>2012-02-07 23:26 UTC</p>
+					<h2>0.8.9.3</h2>
+					<p>2012-02-11 03:56 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -371,7 +371,7 @@
 				</li>
 				<li>
 					<p>Connect your measurement device to your computer.</p>
-					<p class="info"><em>Windows only:</em> If your measurement device is <strong>not</strong> a ColorMunki Display or i1 Display Pro, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Driver installation under Windows”.</a></a></p>
+					<p class="info"><em>Windows only:</em> If your measurement device is <strong>not</strong> a ColorMunki Display or i1 Display Pro, you need to install an Argyll-specific driver.See  <a href="#install-windows-driver">“Driver installation under Windows”.</a></p>
 					<p>The instrument should show up in the dropdown menu within about 10 seconds.</p>
 					<p class="info"><em>Linux only:</em> If you cannot access your instrument, first try unplugging and reconnecting it, or a reboot. If that doesn't help, read “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>”.</p>
 				</li>
@@ -509,7 +509,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-0.8.7.2</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-0.8.9.3</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -750,7 +750,7 @@
 		<div id="usage">
 			<h2>Usage</h2>
 
-			<p>Through the main <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> window, you can choose your settings. When running calibration measurements, a smaller interface will guide you through the interactive part of display adjustment.</p>
+			<p>Through the main window, you can choose your settings. When running calibration measurements, another window will guide you through the interactive part of display adjustment.</p>
 
 			<div id="settingsfile">
 				<h3>Settings file</h3>
@@ -823,7 +823,7 @@
 
 					<dt>Black level</dt>
 						<dd>
-							<p>Set the target brightness of black in cd/m<sup>2</sup>. Setting too high a value may give strange results as it interacts with trying to achieve the target “advertised” tone curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
+							<p>Can be used to set the target brightness of black in cd/m<sup>2</sup> and is useful for e.g. matching two different screens with different native blacks to one another, by measuring the black levels on both (i.e. in the “Tools” menu, choose “Report on uncalibrated display”) and then entering the highest measured value. Normally you may want to use native black level though, to maximize contrast ratio. Setting too high a value may also give strange results as it interacts with trying to achieve the target “advertised” tone curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
 						</dd>
 
 					<dt>Drift compensation during measurements (only available if using Argyll CMS &gt;= 1.3.0)</dt>
@@ -838,7 +838,7 @@
 
 							<p>Note that a real display can't reproduce any of these ideal curves, since it will have a non-zero black point, whereas all the ideal curves assume zero light at zero input.</p>
 
-							<p>For gamma values, you can also specify wheter it should be interpreted relative, meaning the gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve, or absolute, which allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value.</p>
+							<p>For gamma values, you can also specify wheter it should be interpreted relative, meaning the gamma value provided is used to set an actual response curve in light of the non-zero black of the actual display that has the same relative output at 50% input as the ideal gamma power curve, or absolute, which allows the actual power to be specified instead, meaning that after the actual displays non-zero black is accounted for, the response at 50% input will probably not match that of the ideal power curve with that gamma value (to see this setting, you have to go into the “Options” menu, and enable “Show advanced calibration options”).</p>
 
 							<p>To allow for the non-zero black level of a real display, by default the target curve values will be offset so that zero input gives the actual black level of the display (output offset). This ensures that the target curve better corresponds to the typical natural behavior of displays, but it may not be the most visually even progression from display minimum. This behavior can be changed using the black output offset option (see further below).</p>
 
@@ -851,7 +851,9 @@
 						</dd>
 
 					<dt id="ambient">Ambient light level</dt>
-						<dd>						
+						<dd>
+							<p>(To see this setting, go into the “Options” menu, and enable “Show advanced calibration options”)</p>
+
 							<p>As explained for the tone curve settings, often colors are encoded in a situation with viewing conditions that are quite different to the viewing conditions of a typical display, with the expectation that this difference in viewing conditions will be allowed for in the way the display is calibrated. The ambient light level option is a way of doing this. By default calibration will not make any allowances for viewing conditions, but will calibrate to the specified response curve, but if the ambient light level is entered or measured (which you may also do during the interactive display controls portion of the calibration), an appropriate viewing conditions adjustment will be performed. For a gamma value or sRGB, the original viewing conditions will be assumed to be that of the sRGB standard viewing conditions, while for REC 709 and SMPTE 240M they will be assumed to be television studio viewing conditions.<br />
 							By specifying or measuring the ambient lighting for your display, a viewing conditions adjustment based on the CIECAM02 color appearance model will be made for the brightness of your display and the contrast it makes with your ambient light levels.</p>
 
@@ -859,7 +861,9 @@
 						</dd>
 
 					<dt>Black output offset</dt>
-						<dd>							
+						<dd>
+							<p>(To see this setting, go into the “Options” menu, and enable “Show advanced calibration options”)</p>
+
 							<p>Real displays do not have a zero black response, while all the target response curves do, so this has to be allowed for in some way.</p>
 
 							<p>The default way of handling this (equivalent to 100% black output offset) is to allow for this at the output of the ideal response curve, by offsetting and scaling the output values. This defined a curve that will match the responses that many other systems provide and may be a better match to the natural response of the display, but will give a less visually even response from black.</p>
@@ -870,7 +874,9 @@
 						</dd>
 
 					<dt>Black point correction</dt>
-						<dd>						
+						<dd>
+							<p>(To see this setting, go into the “Options” menu, and enable “Show advanced calibration options”)</p>
+
 							<p>Normally dispcal will attempt to make all colors down the neutral axis (R=G=B) have the same hue as the chosen white point. Near the black point, red, green or blue can only be added, not subtracted from zero, so the process of making the near black colors have the desired hue, will lighten them to some extent. For a device with a good contrast ratio or a black point that has nearly the same hue as the white, this is not a problem. If the device contrast ratio is not so good, and the black hue is noticeably different to that of the chosen white point (which is often the case for LCD type displays), this could have a noticeably detrimental effect on an already limited contrast ratio. Here the amount of black point hue correction can be controlled.<br />
 							By default a factor of 100% will be used, which is usually good for CRT and also by default a factor of 0% is used for LCD type displays, but you can override these with a custom value between 0% (no correction) to 100% (full correction).</p>
 
@@ -878,7 +884,9 @@
 						</dd>
 
 					<dt>Black point correction rate (only available if using Argyll CMS &gt;= 1.0.4)</dt>
-						<dd>							
+						<dd>
+							<p>(To see this setting, go into the “Options” menu, and enable “Show advanced calibration options”)</p>
+
 							<p>If the black point is not being set completely to the same hue as the white point (ie. because the factor is less than 100%), then the resulting calibration curves will have the target white point down most of the curve, but will then blend over to the native or compromise black point that is blacker, but not of the right hue. The rate of this blend can be controlled. The default value is 4.0, which results in a target that switches from the white point target to the black, moderately close to the black point. While this typically gives a good visual result with the target neutral hue being maintained to the point where the crossover to the black hue is not visible, it may be asking too much of some displays (typically LCD type displays), and there may be some visual effects due to inconsistent color with viewing angle. For this situation a smaller value may give a better visual result (e.g. try values of 3.0 or 2.0. A value of 1.0 will set a pure linear blend from white point to black point). If there is too much coloration near black, try a larger value, e.g. 6.0 or 8.0.</p>
 						</dd>
 
@@ -888,7 +896,7 @@
 						</dd>
 
 					<dt>Interactive display adjustment</dt>
-						<dd>Turning this off skips straight to calibration measurements instead of giving you the opportunity to alter the display's contrast, brightness and white point controls first. You will normally want to keep this checked, to be able to use the controls to get closer to the chosen target characteristics.</dd>
+						<dd>Turning this off skips straight to calibration measurements instead of giving you the opportunity to alter the display's controls first. You will normally want to keep this checked, to be able to use the controls to get closer to the chosen target characteristics.</dd>
 				</dl>
 			</div>		
 
@@ -920,7 +928,7 @@
 
 							<p>For the body centered grid distributions, the angle parameter sets the overall angle that the grid distribution has.</p>
 
-							<p>The “limit samples to sphere” option is used to define an L*a*b* sphere to filter the test points through. Only test points within the sphere (defined by it's center and radius) will be in the generated testchart. This can be good for targeting supplemental test points at a troublesome area of a device. The accuracy of the L*a*b* target will be best when a reasonably accurate preconditioning profile for the device is chosen. Note that the actual number of points generated can be hard to predict, and will depend on the type of generation used. If the OFPS, device and perceptual space random and device space filling quasi-random methods are used, then the target number of points will be achieved. All other means of generating points will generate a smaller number of test points than expected. For this reason, the device space filling quasi-random method is probably the easiest to use.</p>
+							<p>The “Limit samples to sphere” option is used to define an L*a*b* sphere to filter the test points through. Only test points within the sphere (defined by it's center and radius) will be in the generated testchart. This can be good for targeting supplemental test points at a troublesome area of a device. The accuracy of the L*a*b* target will be best when a reasonably accurate preconditioning profile for the device is chosen. Note that the actual number of points generated can be hard to predict, and will depend on the type of generation used. If the OFPS, device and perceptual space random and device space filling quasi-random methods are used, then the target number of points will be achieved. All other means of generating points will generate a smaller number of test points than expected. For this reason, the device space filling quasi-random method is probably the easiest to use.</p>
 
 							<p>Controls for the spreadsheet-like patch editor are as follows:</p>
 							<ul>
@@ -997,25 +1005,25 @@
 				<p>Please let the screen stabilize for at least half an hour after powering it up before doing any measurements or assessing its color properties. The screen can be used normally with other applications during that time.</p>
 
 				<p>After you have set your options, click on one of the three buttons at the bottom
-				to start the actual calibration/profiling process. The main <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> will hide during measurements, and should pop up again after they are completed (or after an 
+				to start the actual calibration/profiling process. The main window will hide during measurements, and should pop up again after they are completed (or after an 
 				error). You can always cancel out of running measurements using the “Cancel” button in the progress dialog, or by pressing ESC or Q. Viewing the informational log window (from the “Tools” menu) after measurements will give you access to the raw output of the Argyll CMS commandline tools and other verbose information.</p>
 
 				<h4 id="adjusting">Adjusting a display before calibration</h4>
 
-				<p>If you clicked “calibrate” or “calibrate &amp; profile” and have not turned off “interactive display adjustment”, you will be presented with a text menu from Argyll's dispcal utility which contains several options to help you bring a display's characteristics closer to the chosen target values. Depending on wheter you have a CRT- or LCD-type display, I will try to give some recommendations here which options to adjust, and which to skip.</p>
+				<p>If you clicked “Calibrate” or “Calibrate &amp; profile” and have not turned off “Interactive display adjustment”, you will be presented with the interactive display adjustment window which contains several options to help you bring a display's characteristics closer to the chosen target values. Depending on wheter you have a CRT- or LCD-type display, I will try to give some recommendations here which options to adjust, and which to skip.</p>
 
 				<h5>Adjusting a LCD display</h5>
 
-				<p>For LCD displays, you will in most cases only want to adjust white point (if the screen has RGB gain or other whitepoint controls) and white level (with the white level also affecting the black level unless you have a local dimming LED model), as many LCDs lack the necessary “offset” controls to adjust the black point (and even if they happen to have them, they often  change the overall color temperature, not only the black point). Also note that for most LCD screens, you should leave the “contrast” control at (factory) default.</p>
+				<p>For LCD displays, you will in most cases only want to adjust white point (if the screen has RGB gain or other whitepoint controls) and white level (with the white level also affecting the black level unless you have a local dimming LED model), as many LCDs lack the necessary “offset” controls to adjust the black point (and even if they happen to have them, they often change the overall color temperature, not only the black point). Also note that for most LCD screens, you should leave the “contrast” control at (factory) default.</p>
 
 				<dl>
-					<dt>White level</dt>
-						<dd>
-							Start with the white level adjustment. If you have set a target white level, dispcal will instruct you to reduce or increase the brightness of your screen (ideally using only the backlight) until the desired value is reached. If you haven't set a target, simply adjust the screen to a visually pleasing brightness that doesn't cause eye strain.
-						</dd>
 					<dt>White point</dt>
 						<dd>
-							If your screen has RGB gain, colortemperature or other whitepoint controls, the next step should be adjusting the whitepoint. Note that you may also benefit from this adjustment if you have set the target whitepoint to “native”, as it will allow you to bring it closer to the daylight or blackbody locus, which can help the human visual system to better adapt to the whitepoint. Follow dispcal's recommendations shown during the measurements to adjust RGB gains and minimize the delta E to the shown target whitepoint.
+							If your screen has RGB gain, colortemperature or other whitepoint controls, the first step should be adjusting the whitepoint. Note that you may also benefit from this adjustment if you have set the target whitepoint to “native”, as it will allow you to bring it closer to the daylight or blackbody locus, which can help the human visual system to better adapt to the whitepoint. Look at the bars shown during the measurements to adjust RGB gains and minimize the delta E to the target whitepoint.
+						</dd>
+					<dt>White level</dt>
+						<dd>
+							Continue with the white level adjustment. If you have set a target white level, you may reduce or increase the brightness of your screen (ideally using only the backlight) until the desired value is reached (i.e. the bar ends at the marked center position). If you haven't set a target, simply adjust the screen to a visually pleasing brightness that doesn't cause eye strain.
 						</dd>
 				</dl>
 
@@ -1024,35 +1032,33 @@
 				<dl>
 					<dt>Black level</dt>
 						<dd>
-							On CRTs, this adjustment is done using the “brightness” control. Argyll's dispcal utility will instruct you to reduce or increase the brightness of your screen until the desired level is reached.
-						</dd>
-					<dt>White level</dt>
-						<dd>
-							Continue with the white level adjustment. On CRTs this is done using the “contrast” control. If you have set a target white level, dispcal will instruct you to reduce or increase contrast until the desired value is reached. If you haven't set a target, simply adjust the screen to a visually pleasing level that doesn't cause eye strain.
+							On CRTs, this adjustment is done using the “brightness” control. You may reduce or increase the brightness of your screen until the desired black level is reached (i.e. the bar ends at the marked center position).
 						</dd>
 					<dt>White point</dt>
 						<dd>
-							The next step should be adjusting the whitepoint, using the display's RGB gain controls or other means of adjusting the whitepoint. Note that you may also benefit from this adjustment if you have set the target whitepoint to “native”, as it will allow you to bring it closer to the daylight or blackbody locus, which can help the human visual system to better adapt to the whitepoint. Follow dispcal's recommendations shown during the measurements to adjust RGB gains and minimize the delta E to the shown target whitepoint.
+							The next step should be adjusting the whitepoint, using the display's RGB gain controls or other means of adjusting the whitepoint. Note that you may also benefit from this adjustment if you have set the target whitepoint to “native”, as it will allow you to bring it closer to the daylight or blackbody locus, which can help the human visual system to better adapt to the whitepoint. Look at the bars shown during the measurements to adjust RGB gains and minimize the delta E to the target whitepoint.
+						</dd>
+					<dt>White level</dt>
+						<dd>
+							Continue with the white level adjustment. On CRTs this is done using the “contrast” control. If you have set a target white level, you may reduce or increase contrast until the desired value is reached (i.e. the bar ends at the marked center position). If you haven't set a target, simply adjust the screen to a visually pleasing level that doesn't cause eye strain.
 						</dd>
 					<dt>Black point</dt>
 						<dd>
-							If your display has RGB offset controls, you can adjust the black point as well, in much the same way that you adjusted the whitepoint. Just note that many instruments are not very accurate at low luminance levels, in which case you're probably better off skipping this option altogether.
+							If your display has RGB offset controls, you can adjust the black point as well, in much the same way that you adjusted the whitepoint.
 						</dd>
 				</dl>
 
 				<h5>Finishing adjustments (CRT/LCD) and starting calibration/charaterisation</h5>
 
-				<p>After the adjustments, you can run “check all” from the menu to verify the achieved values. If adjusting one setting adversely affected another, you can then simply repeat the respective menu option as necessary until the target parameters are met.</p>
+				<p>After the adjustments, you can run a check on all the settings by choosing the last option from the left-hand menu to verify the achieved values. If adjusting one setting adversely affected another, you can then simply repeat the respective option as necessary until the target parameters are met.</p>
 
-				<p>If you want the calibration curves to be adjusted for your ambient lighting conditions, and you have not set an ambient light level in the GUI or want to change it, you may do so by selecting “measure and set ambient for viewing condition adjustment”. You need an instrument that can measure ambient light levels using Argyll, like the i1 Display 2 or i1 Pro. The effects of this viewing condition adjustment can vary depending on other calibration parameters. Please also see the documentation for <a href="#trc">tone curve / gamma</a> and <a href="#ambient">ambient light level</a>. You'll probably want to skip this step to maximize available gamma table tone values after calibration (you can check the effect of calibration curves on the amount of available tone values with the curve viewer in the “tools” menu).</p>
-
-				<p>Finally, select “continue on to calibration” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted dispcal to help you adjust the display and don't want/need calibration curves to be created, you can also choose “exit” and then select “profile only” from the GUI.<br />
-				If you originally selected “calibrate &amp; profile” and fulfil the requirements for <a href="#requirements-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, you may be forced to take the instrument off the screen to do a sensor self-calibration before starting the profiling measurements.</p>
+				<p>Finally, select “Continue on to calibration” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted help to adjust the display and don't want/need calibration curves to be created, you can also choose to exit by closing the interactive display adjustment window and then select “Profile only” from the main window.<br />
+				If you originally selected “Calibrate &amp; profile” and fulfil the requirements for <a href="#requirements-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, you may be forced to take the instrument off the screen to do a sensor self-calibration before starting the profiling measurements.</p>
 
 				<h4>Profile installation</h4>
 
 				<p>When installing a profile after creating or updating it, a shortcut to load its calibration curves 
-				automatically on login will be created in your user startup directory (on Windows and Linux, Mac OS X does not need a loader).</p>
+				automatically on login will be created in your user startup directory (on Windows and Linux, Mac OS X does not need a loader). You may also disable this loader from doing anything by removing the check in the “Load calibration curves on Login” checkbox in the profile installation dialog.</p>
 			</div>
 		</div>
 
@@ -1100,7 +1106,7 @@
 						<dd>Share a profile via the <a href="http://icc.opensuse.org">openSUSE ICC Profile Taxi</a> service. This will only work for profiles created from actual measurements by dispcalGUI 0.8.0.8 and newer, and not for profiles created from EDID.</dd>
 
 					<dt>Load calibration curves from calibration file or profile...</dt>
-						<dd>Unlike “load settings....” from the “file” menu, loads just calibration curves for the currently selected display into the video card without changing settings.</dd>
+						<dd>Unlike “Load settings....” from the “File” menu, loads just calibration curves for the currently selected display into the video card without changing settings.</dd>
 
 					<dt>Load calibration curves from current display device profile</dt>
 						<dd>Tries to determine the profile associated to the currently selected display and loads its calibration curves from the 'vcgt' tag.</dd>
@@ -1116,6 +1122,9 @@
 
 					<dt>Allow skipping of spectrometer self-calibration</dt>
 						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip the sensor calibration for characterization measurements if they are run directly after display calibration measurements (unattended calibration &amp; profiling). <em>NOTE</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
+
+					<dt>Show advanced calibration options</dt>
+						<dd>Enabling this menu option will show some additional controls for advanced users in the main window.</dd>
 
 					<dt>Set additional commandline arguments...</dt>
 						<dd>Allows you to set additional options for dispcal, dispread, spotread and colprof in the same way you would specify them on the commandline.</dd>
@@ -1149,7 +1158,7 @@
 
 						<p>To perform a check on the soft proofing capabilities, you have to provide a CGATS reference file containing XYZ or L*a*b* data, or a combination of simulation profile and testchart file (in the latter case, first choose the simulation profile, and afterwards the testchart itself), which will be fed through the display profile to lookup corresponding device (RGB) values, and then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the reference.</p>
 
-						<p>The display profile that is used for verification is the one currently selected under “settings”, or the current display profile if any. Otherwise, a file dialog will appear to allow choosing a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the reference and measurement data, which consists of device RGB numbers, original measured XYZ values, and D50-adapted L*a*b* values computed from the XYZ numbers, and which can be examined as plain text directly from the report at the click of a button.</p>
+						<p>The display profile that is used for verification is the one currently selected under “Settings”, or the current display profile if any. Otherwise, a file dialog will appear to allow choosing a profile. The report files generated after the verification measurements are plain HTML with some embedded JavaScript, and are fully self-contained. They also contain the reference and measurement data, which consists of device RGB numbers, original measured XYZ values, and D50-adapted L*a*b* values computed from the XYZ numbers, and which can be examined as plain text directly from the report at the click of a button.</p>
 
 						<h4>How were the nominal and recommended aim values chosen?</h4>
 
@@ -1159,7 +1168,7 @@
 
 						<h4>How are the results of the profile verification report to be interpreted?</h4>
 
-						<p>This depends on the chart that was measured. The explanation in the first paragraph sums it up pretty well: If you have calibrated and profiled your display, and want to check how well the profile fits a set of measurements (profile accuracy), or if you want to know if your display has drifted and needs to be re-calibrated/re-profiled, you select a chart containing RGB numbers for the verification. Note that directly after profiling, accuracy can be expected to be high if the profile characterizes the display well, which will usually be the case if the display behaviour is not very non-linear, in which case creating a LUT profile instead of a “curves + matrix” one, or increasing the number of measured patches for LUT profiles, can help.</p>
+						<p>This depends on the chart that was measured. The explanation in the first paragraph sums it up pretty well: If you have calibrated and profiled your display, and want to check how well the profile fits a set of measurements (profile accuracy), or if you want to know if your display has drifted and needs to be re-calibrated/re-profiled, you select a chart containing RGB numbers for the verification. Note that directly after profiling, accuracy can be expected to be high if the profile characterizes the display well, which will usually be the case if the display behaviour is not very non-linear, in which case creating a LUT profile instead of a “Curves + matrix” one, or increasing the number of measured patches for LUT profiles, can help.</p>
 
 						<p>If you want to know how well your profile can simulate another colorspace (softproofing), select a reference file containing L*a*b* or XYZ values, like one of the <a href="http://www.fogra.org/mediawedge/">Fogra Media Wedge</a> subsets, or a combination of a simulation profile and testchart (in the latter case, first choose the simulation profile, and afterwards the testchart itself). Be warned though, only wide-gamut displays will handle a larger offset printing colorspace like FOGRA39 or similar well enough.</p>
 
@@ -1183,9 +1192,9 @@
 
 						<p>The gray balance “range” uses a combined delta a/delta b absolute deviation (e.g. if max delta a = -0.5 and max delta b = 0.7, the range is 1.2). Because results in the extreme darks can be problematic due to lack of instrument accuracy and other effects like a black point which has a different chromaticity than the whitepoint, all gray balance checks in dispcalGUI only take into account gray patches with a minimum measured luminance of 1% (i.e. if the white luminance = 120 cd/m², then only patches with at least 1.2 cd/m² will be taken into account).</p>
 
-						<h5>What does the “evaluate gray balance through calibration only” checkbox on a report actually do?</h5>
+						<h5>What does the “Evaluate gray balance through calibration only” checkbox on a report actually do?</h5>
 
-						<p>It sets the nominal (target) L* value to the measured L* value and a*=b*=0, so the profile is effectively ignored and only the calibration (if any) will influence the results of the gray balance checks. Note that this option will not make a difference for a “single curve + matrix” profile, as the single curve effectively already achieves a similar thing (the L* values can be different, but they are ignored for the gray balance checks and only influence the overall result).</p>
+						<p>It sets the nominal (target) L* value to the measured L* value and a*=b*=0, so the profile is effectively ignored and only the calibration (if any) will influence the results of the gray balance checks. Note that this option will not make a difference for a “Single curve + matrix” profile, as the single curve effectively already achieves a similar thing (the L* values can be different, but they are ignored for the gray balance checks and only influence the overall result).</p>
 						</dd>
 
 					<dt>Update profile verification report...</dt>
@@ -1199,6 +1208,10 @@
 					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
 						<dd>Allows you to create correction matrices for ordinary colorimeters as well as Calibration Spectral Sample files for i1 Display Pro and ColorMunki Display.
 							Before you choose this menu option though, you must measure the special Colorimeter Correction testchart with a spectrometer and (in case you want to create an ordinary correction matrix) with the colorimeter. To do this, select the aforementioned chart in the testchart file dropdown, then select “Measure testchart” from the “Options” menu. After you have measured the chart(s), you can select the resulting measurement files for processing into a correction matrix or Calibration Spectral Sample file.
+						</dd>
+
+					<dt id="upload-colorimeter-correction">Upload colorimeter correction...</dt>
+						<dd>Upload a colorimeter correction to the <a href="http://dispcalgui.hoech.net/colorimetercorrections/">online colorimeter corrections database</a> to share it with other users or download it later on another machine.
 						</dd>
 
 					<dt>Enable Spyder 2 colorimeter...</dt>
@@ -1244,7 +1257,7 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<li><a href="#issue-win7-autoloadcalibration">MS Windows 7: Calibration does not load automatically on login when not using the dispcalGUI Profile Loader</a></li>
 				<li><a href="#issue-winxp-multidisplay">MS Windows XP, multiple displays: One profile is used by all displays connected to a graphics card</a></li>
 				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
-				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</a></li>
+				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</a></li>
 				<li><a href="#issue-linux-kdeqt">Linux (KDE): The application does not look native</a></li>
 				<li><a href="#issue-linux-libmtp">Linux: Instrument not working correctly/constantly disconnecting (conflict with libmtp)</a></li>
 				<li><a href="#issue-english">General: Some text is still in english, even though another language is selected</a></li>
@@ -1254,11 +1267,11 @@ On Microsoft Windows or Mac OS X, if the vendors drivers have been installed on 
 				<dt id="issue-redgreenswapped"><span>General:</span> Wacky image colors (swapped colors)</dt>
 				<dd><strong>Solution:</strong> This happens when you created a “XYZ LUT + swapped matrix” profile and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In dispcalGUI, choose a profile type as suggested previously, adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “Options” menu and select the profile you had the issue with.</dd>
 
-				<dt id="issue-samplereadfail"><span>General:</span> Measurements are failing (“sample read failed”) if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</dt>
+				<dt id="issue-samplereadfail"><span>General:</span> Measurements are failing (“Sample read failed”) if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</dt>
 				<dd><strong>Solution:</strong> Disable either or all of the above options. The problem seems to mainly occur with the ColorMunki.</dd>
 
 				<dt id="issue-win-photoshop-monprofdefect"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</dt>
-				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “use profile regardless” and “ignore profile”, you may choose “use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a Lab LUT profile.</dd>
+				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “Use profile regardless” and “Ignore profile”, you may choose “Use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a Lab LUT profile.</dd>
 
 				<dt id="issue-win-uac-cal-reset"><span>MS Windows Vista:</span> The calibration gets unloaded when a User Access Control prompt is shown</dt>
 				<dd><strong>Solution:</strong> (Intel and Intel/AMD hybrid graphics users please see <a href="#issue-win-intel-cal-reset">“The Calibration gets unloaded after login/resume/User Access Control prompt”</a> first) This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
@@ -1296,7 +1309,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="issue-mac-pscursor"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush)</dt>
 				<dd><strong>Solution:</strong> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
 
-				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“calibrate only” and “calibrate &amp; profile” buttons grayed, “profile only” button available)</dt>
+				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</dt>
 				<dd><strong>Solution:</strong> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Note on X11 multi-monitor setups” / “Fixing access to Video LUTs” therein. Under Windows, please also see the solution posted under “<a href="#issue-win-user-profile-not-used">The display profile isn't used if it was installed for the current user</a>” if you are using Windows 7 and make sure you have a recent driver for your video card installed.</dd>
 
 				<dt id="issue-linux-kdeqt"><span>Linux (KDE):</span> The application does not look native</dt>
@@ -1393,7 +1406,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Eugeniy Yurov, Konstantin Pyanzin</p>
+			<p>Recent donors: Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Eugeniy Yurov, Konstantin Pyanzin</p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1404,19 +1417,29 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2012-02-07 23:26 (UTC) 0.8.7.2 -->
+			<!-- 2012-02-11 03:56 (UTC) 0.8.9.3 -->
 			<dl>
-				<dt>2012-02-07 23:26 (UTC) 0.8.7.2</dt>
+				<dt>2012-02-11 03:56 (UTC) 0.8.9.3</dt>
 					<dd>
-						<h3>0.8.7.2</h3>
+						<h3>0.8.9.3</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Selecting a smaller default testchart than the recommended one did not work (was reset to the recommended default when starting measurements or re-starting dispcalGUI).</li>
 							<li>Restore previously selected testchart if canceling colorimeter correction measurements.</li>
 							<li>Disable the “Measure” button in the “Create colorimeter correction” dialog if no display or instrument detected/selected.</li>
+							<li>Disable menus while the main window isn't shown (only affects operating systems where the menu is not part of the main window e.g. Mac OS X).</li>
+							<li>Linux: Fixed i1 Display Pro / ColorMunki Display missing from Argyll udev rules (this was actually already fixed in 0.8.5.2, but not mentioned in the changelog).</li>
+							<li>Mac OS X Lion: Removed sporadic password dialog being shown after calibration measurements when running “Calibrate &amp; profile”.</li>
+							<li>Mac OS X Lion: Fixed an issue with profile installation for the current user which only installed the profile for the root user, thus not making it available in system preferences and making e.g. the login screen the only visible place where it was effectively being used.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Allow the selection of LCD or CRT measurement modes for spectrometers too (determines the available controls during interactive display adjustment).</li>
 						</ul>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>GUI for interactive display adjustment.</li>
+							<li>Add 'mmod' tag (monitor make and model, an Apple-specific private tag) to created profiles (ensures the profiles still show up in Mac OS X system preferences if “Show profiles for this display only” is ticked).</li>
 						</ul>
 					</dd>
 
