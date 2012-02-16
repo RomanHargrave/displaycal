@@ -5244,6 +5244,7 @@ class MainFrame(BaseFrame):
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
 			if is_ccxx_testchart():
+				# Reset calibration before measuring CCXX testchart
 				self.reset_cal()
 				apply_calibration = False
 			else:
@@ -5287,6 +5288,9 @@ class MainFrame(BaseFrame):
 									  getcfg("profile.name.expanded") + 
 									  ".ti3"))
 		self.Show(start_timers=True)
+		if is_ccxx_testchart():
+			# Restore calibration after measuring CCXX testcahrt
+			self.load_cal() or self.load_display_profile_cal()
 		self.restore_testchart()
 	
 	def just_measure_show_result(self, path):
