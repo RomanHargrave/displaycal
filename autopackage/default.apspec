@@ -131,7 +131,6 @@ else
 	python_lib_prefix=\"$PREFIX\"
 fi
 
-outputStatus "Getting python library..."
 platlib=`python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(True, prefix=$python_lib_prefix)"`
 
 for script in `ls bin` ; do
@@ -142,13 +141,6 @@ for script in `ls bin` ; do
 		safeSed bin/$script "s|import sys|import sys\nsys.path.insert(0, '$platlib')|"
 	fi
 done
-
-# Copy binary extension module
-bits=`python -c "import platform;print platform.architecture()[0][:2]"`
-mkdir -p "$platlib/dispcalGUI/lib$bits"
-copyFiles lib/python/site-packages/dispcalGUI/lib$bits/*.py "$platlib/dispcalGUI/lib$bits"
-pycompat=`python -c "import sys;print '%s%s' % sys.version_info[:2]"`
-copyFiles "lib/python/site-packages/dispcalGUI/lib$bits/python$pycompat" "$platlib/dispcalGUI/lib$bits"
 
 # Copy autostart entries
 if [ `whoami` = "root" ]; then
@@ -163,9 +155,9 @@ else
 	copyFiles etc/xdg/autostart/* "${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
 fi
 
-# Copy pure python modules
-outputStatus "Installing modules to $platlib..."
-copyFiles lib/python/site-packages/dispcalGUI/*.py "$platlib/dispcalGUI"
+# Copy package files
+outputStatus "Installing dispcalGUI to $platlib..."
+copyFiles lib/python/site-packages/dispcalGUI "$platlib"
 
 # Byte-compile *.py files
 # set PYTHONDONTWRITEBYTECODE for Mandriva 2011
@@ -177,6 +169,8 @@ from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile
 mod = os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI')
 for py in (glob.glob(os.path.join(mod, '*.py')),
+		   glob.glob(os.path.join(mod, 'lib', '*.py')),
+		   glob.glob(os.path.join(mod, 'lib', 'agw', '*.py')),
 		   glob.glob(os.path.join(mod, 'lib$bits', '*.py')), 
 		   glob.glob(os.path.join(mod, 'lib$bits', 'python$pycompat', '*.py'))):
 	byte_compile(py, optimize=0, force=1)
@@ -212,6 +206,10 @@ if [ `whoami` = "root" ]; then
 				linkFile "$PREFIX/share/dispcalGUI/usb/45-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules"
 			fi
 		)
+		# Reload udev rules
+		if [ -e "/sbin/udevadm"]; then
+			/sbin/udevadm control --reload-rules
+		fi
 	else
 		if [ -e "/etc/hotplug"]; then
 			# USB using hotplug and Serial using udev (older versions of Linux)
@@ -249,6 +247,8 @@ from distutils.sysconfig import get_python_lib
 bits = platform.architecture()[0][:2]
 mod = os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI')
 for pyco in (glob.glob(os.path.join(mod, '*.py[co]')) +
+			 glob.glob(os.path.join(mod, 'lib', '*.py[co]')) +
+			 glob.glob(os.path.join(mod, 'lib', 'agw', '*.py[co]')) +
 			 glob.glob(os.path.join(mod, 'lib' + bits, '*.py[co]')) +
 			 glob.glob(os.path.join(mod, 'lib' + bits, 'python%s%s' % sys.version_info[:2], '*.py[co]'))):
 	os.remove(pyco)"
