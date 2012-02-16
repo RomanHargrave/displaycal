@@ -6,6 +6,8 @@
 	"ambient.measure": "Umgebungslicht messen",
 	"ambient.set": "Möchten sie auch die Umgebungshelligkeit auf den gemessenen Wert setzen?",
 	"autostart_remove_old": "Entferne alten Autostart-Eintrag",
+	"black_point_compensation": "Tiefenkompensierung",
+	"black_point_compensation.info": "Tiefenkompensierung verhindert effektiv den Verlust von Tiefenzeichnung, wirkt sich aber negativ auf die Genauigkeit der Farbkonvertierung aus.",
 	"translations": "Übersetzungen",
 	"aborted": "...abgebrochen.",
 	"aborting": "Breche ab, bitte warten (dies kann einige Sekunden dauern)...",

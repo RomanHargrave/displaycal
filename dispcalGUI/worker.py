@@ -2608,6 +2608,11 @@ class Worker(object):
 		ti3 = add_options_to_ti3(inoutfile + ".ti3", options_dispcal, 
 								 self.options_colprof)
 		if ti3:
+			if getcfg("profile.black_point_compensation"):
+				# Backup TI3
+				ti3.write(inoutfile + ".ti3.backup")
+				# Apply black point compensation
+				ti3.apply_bpc()
 			ti3.write()
 		return cmd, args
 

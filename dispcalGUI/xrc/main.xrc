@@ -1087,6 +1087,15 @@
                             <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>2</border>
                           </object>
+                          <object class="spacer"/>
+                          <object class="sizeritem">
+                            <object class="wxCheckBox" name="black_point_compensation_cb">
+                              <label>black_point_compensation</label>
+                              <tooltip>black_point_compensation.info</tooltip>
+                            </object>
+                            <flag>wxTOP|wxBOTTOM</flag>
+                            <border>5</border>
+                          </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="testchart_label">
                               <label>testchart.file</label>

@@ -174,6 +174,54 @@ def adapt(X, Y, Z, whitepoint_source=None, whitepoint_destination=None,
 							  cat) * (X, Y, Z)
 
 
+def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50"):
+	"""
+	Apply black point compensation
+	
+	"""
+	wp_out = get_whitepoint(wp_out)
+	XYZ = [X, Y, Z]
+	for i, v in enumerate(XYZ):
+		XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
+	return XYZ
+
+
+def compute_bpc(bp_in, bp_out):
+	"""
+	Black point compensation. Implemented as a linear scaling in XYZ. 
+
+	Black points should come relative to the white point. Fills and
+	returns a matrix/offset element.
+
+	[matrix]*bp_in + offset = bp_out
+	[matrix]*D50  + offset = D50
+
+	"""
+	# This is a linear scaling in the form ax+b, where
+	# a = (bp_out - D50) / (bp_in - D50)
+	# b = - D50* (bp_out - bp_in) / (bp_in - D50)
+	
+	D50 = get_standard_illuminant("D50")
+
+	tx = bp_in[0] - D50[0]
+	ty = bp_in[1] - D50[1]
+	tz = bp_in[2] - D50[2]
+
+	ax = (bp_out[0] - D50[0]) / tx
+	ay = (bp_out[1] - D50[1]) / ty
+	az = (bp_out[2] - D50[2]) / tz
+
+	bx = - D50[0] * (bp_out[0] - bp_in[0]) / tx
+	by = - D50[1] * (bp_out[1] - bp_in[1]) / ty
+	bz = - D50[2] * (bp_out[2] - bp_in[2]) / tz
+
+	matrix = Matrix3x3([[ax, 0,  0],
+						[0, ay,  0]
+						[0,  0, az]])
+	offset = [bx, by, bz]
+	return matrix, offset
+
+
 def is_similar_matrix(matrix1, matrix2, digits=3):
 	""" Compare two matrices and check if they are the same
 	up to n digits after the decimal point """

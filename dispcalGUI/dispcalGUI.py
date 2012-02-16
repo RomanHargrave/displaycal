@@ -1850,6 +1850,11 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_BUTTON, self.gamap_btn_handler, 
 				  id=self.gamap_btn.GetId())
 
+		# Black point compensation
+		self.Bind(wx.EVT_CHECKBOX, 
+				  self.black_point_compensation_ctrl_handler, 
+				  id=self.black_point_compensation_cb.GetId())
+
 		# Profile name
 		self.Bind(wx.EVT_TEXT, self.profile_name_ctrl_handler, 
 				  id=self.profile_name_textctrl.GetId())
@@ -2572,6 +2577,9 @@ class MainFrame(BaseFrame):
 		self.interactive_display_adjustment_cb.SetValue(enable_cal and 
 			bool(int(getcfg("calibration.interactive_display_adjustment"))))
 
+		self.black_point_compensation_cb.SetValue(enable_cal and 
+			bool(int(getcfg("profile.black_point_compensation"))))
+
 		self.testchart_ctrl.Enable(enable_profile)
 		if self.set_default_testchart() is None:
 			self.set_testchart()
@@ -2938,6 +2946,12 @@ class MainFrame(BaseFrame):
 		if v != getcfg("calibration.interactive_display_adjustment"):
 			self.profile_settings_changed()
 		setcfg("calibration.interactive_display_adjustment", v)
+
+	def black_point_compensation_ctrl_handler(self, event):
+		v = int(self.black_point_compensation_cb.GetValue())
+		if v != getcfg("profile.black_point_compensation"):
+			self.profile_settings_changed()
+		setcfg("profile.black_point_compensation", v)
 
 	def black_point_correction_ctrl_handler(self, event):
 		if debug:
@@ -3701,6 +3715,16 @@ class MainFrame(BaseFrame):
 				if rms:
 					rms = rms.groups()[0]
 				break
+		if (os.path.isfile(args[-1] + ".ti3.backup") and
+			os.path.isfile(args[-1] + ".ti3")):
+			# Restore backed up TI3
+			os.remove(args[-1] + ".ti3")
+			os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
+			ti3_file = open(args[-1] + ".ti3", "rb")
+			ti3 = ti3_file.read()
+			ti3_file.close()
+		else:
+			ti3 = None
 		safe_print("-" * 80)
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
@@ -3712,6 +3736,11 @@ class MainFrame(BaseFrame):
 			if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
 				setcfg("last_cal_or_icc_path", dst_path)
 				setcfg("last_icc_path", dst_path)
+			if ti3:
+				# Embed original TI3
+				profile.tags.targ = profile.tags.DevD = profile.tags.CIED = ICCP.TextType(
+												"text\0\0\0\0" + ti3 + "\0", 
+												"targ")
 			# Fixup desc tags - ASCII needs to be 7-bit
 			# also add Unicode strings
 			if "desc" in profile.tags and isinstance(profile.tags.desc, 

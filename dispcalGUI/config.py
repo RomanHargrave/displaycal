@@ -370,6 +370,7 @@ valid_ranges = {
 	"calibration.black_point_rate": [0.05, 20],
 	"calibration.luminance": [0.000001, 100000],
 	"gamap_default_intent": [0, 3],
+	"profile.black_point_compensation": [0, 1],
 	"whitepoint.colortemp": [1000, 15000],
 }
 
@@ -458,6 +459,7 @@ defaults = {
 	"position.progress.y": 50,
 	"position.tcgen.x": 50,
 	"position.tcgen.y": 50,
+	"profile.black_point_compensation": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
 									 os.geteuid() == 0) # or 
 									# (sys.platform == "win32" and 

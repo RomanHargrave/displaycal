@@ -704,44 +704,38 @@ class CGATS(dict):
 			for label in ("RGB_R", "RGB_G", "RGB_B"):
 				data[i][label] *= factor
 	
-	def scale_black(self):
-		""" Scales XYZ so that black (RGB 0) = zero.
+	def apply_bpc(self):
+		"""
+		Apply black point compensation.
 		
+		Scales XYZ so that black (RGB 0) = zero.
 		Needs a CGATS structure with RGB and XYZ data.
 		
 		"""
 		data = self.queryi(("RGB_R", "RGB_G", "RGB_B", "XYZ_X", "XYZ_Y", "XYZ_Z"))
-		# blacks
+
+		# Get blacks
 		blacks = data.queryi({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
 		black = [0, 0, 0]
 		for i in blacks:
 			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
 				black[j] += blacks[i][label]
-				# set to zero
-				blacks[i][label] = 0
-		# average
+		# Average blacks
 		black = [n / len(blacks) for n in black]
-		### whites
-		##whites = data.queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
-		##white = [0, 0, 0]
-		##for i in whites:
-			##for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
-				##white[j] += whites[i][label]
-		### average
-		##white = [n / len(whites) for n in white]
-		### normalize to Y = 100
-		##black = [n / white[1] * 100 for n in black]
-		##white = [n / white[1] * 100 for n in white]
-		# get L
-		black_L = colormath.XYZ2Lab(*black)[0]
-		# scale
+
+		# Get whites
+		whites = data.queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+		white = [0, 0, 0]
+		for i in whites:
+			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
+				white[j] += whites[i][label]
+		# Average whites
+		white = [n / len(whites) for n in white]
+
+		# Apply black point compensation
 		for i in data:
-			if data[i] in blacks.values():
-				continue
-			Lab = list(colormath.XYZ2Lab(*data[i].queryv1(("XYZ_X", "XYZ_Y", "XYZ_Z")).values()))
-			Lab[0] = Lab[0] - black_L + black_L / 100.0 * Lab[0]
-			##is_rgb_gray = len(set(data[i].queryv1(("RGB_R", "RGB_G", "RGB_B")).values())) == 1
-			XYZ = [n * 100 for n in colormath.Lab2XYZ(*Lab)]
+			XYZ = data[i].queryv1(("XYZ_X", "XYZ_Y", "XYZ_Z"))
+			XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black, (0, 0, 0), white)
 			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
 				data[i][label] = XYZ[j]
 	

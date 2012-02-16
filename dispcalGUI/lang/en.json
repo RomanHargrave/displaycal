@@ -6,6 +6,8 @@
 	"ambient.measure": "Measure ambient",
 	"ambient.set": "Do you also want to set the ambient light level to the measured value?",
 	"autostart_remove_old": "Removing old autostart entry",
+	"black_point_compensation": "Black point compensation",
+	"black_point_compensation.info": "Black point compensation effectively prevents black crush, but reduces the accuracy of color conversion.",
 	"translations": "Translations",
 	"aborted": "...aborted.",
 	"aborting": "Aborting, please wait (this may take a few seconds)...",
