@@ -2,8 +2,10 @@
 
 # Remove udev rules or hotplug scripts symlinks
 for file in "/etc/udev/rules.d/55-Argyll.rules" "/etc/udev/rules.d/45-Argyll.rules" "/etc/hotplug/usb/Argyll" "/etc/hotplug/usb/Argyll.usermap" ; do
-	if [[ ! -e $file && -L $file ]]; then
-		rm -f $file
+	if [ ! -e $file ]; then
+		if [ -L $file ]; then
+			rm -f $file
+		fi
 	fi
 done
 
