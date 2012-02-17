@@ -729,6 +729,37 @@ class CurveType(ICCProfileTag, list):
 				self.append(uInt16Number(curveEntries[:2]))
 				curveEntries = curveEntries[2:]
 	
+	def set_trc(self, power=2.2, size=None):
+		"""
+		Set the response to a certain function.
+		
+		Positive power, or -1.9 = Rec. 709, -2.2 = sRGB, -3.0 = L*
+		
+		"""
+		if size is None:
+			size = len(self)
+		self[:] = []
+		for i in xrange(0, size):
+			self.append(int(round(colormath.specialpow(float(i) / (size - 1), power) * 65535.0)))
+	
+	def get_gamma(self, average=True):
+		""" Return the gamma average or values, for curve entries > 0 and < 1 """
+		if len(self) == 1:
+			gammas = [self[0]]
+		else:
+			gammas = []
+			vmin = self[0] / 65535.0
+			vmax = self[-1] / 65535.0
+			for i, entry in enumerate(self):
+				x = i / (len(self) - 1.0)
+				y = (vmin + entry * (vmax - vmin)) / 65535.0
+				if x > 0 and x < 1 and y > 0:
+					gammas.append(math.log(y) / math.log(x))
+		if average:
+			return sum(gammas) / len(gammas)
+		else:
+			return gammas
+	
 	@Property
 	def tagData():
 		doc = """

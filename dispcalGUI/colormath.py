@@ -30,9 +30,9 @@ standard_illuminants = {
 
 def specialpow(a, b):
 	"""
-	Wrapper for power, sRGB and L* functions
+	Wrapper for power, Rec. 709, sRGB and L* functions
 	
-	Positive b = power, -2.2 = sRGB, -3.0 = L*
+	Positive b = power, -1.9 = Rec. 709, -2.2 = sRGB, -3.0 = L*
 	
 	"""
 	if b >= 0.0:
@@ -54,26 +54,36 @@ def specialpow(a, b):
 			v = 0.01 * a * K
 		else:
 			v = 1.16 * math.pow(a, 1.0 / 3.0) - 0.16
-	else:
-		if b >= -1.0:
-			# XYZ -> RGB, sRGB TRC
-			if a <= 0.04045 / 12.92:
-				v = a * 12.92
-			else:
-				v = 1.055 * math.pow(a, 1.0 / 2.4) - 0.055
+	elif b >= -0.5:
+		# XYZ -> RGB, sRGB TRC
+		if a <= 0.04045 / 12.92:
+			v = a * 12.92
 		else:
-			if b >= -2.6:
-				# RGB -> XYZ, sRGB TRC
-				if a <= 0.04045:
-					v = a / 12.92
-				else:
-					v = math.pow((a + 0.055) / 1.055, 2.4)
-			else:
-				# RGB -> XYZ, L* TRC
-				if a <= 0.08:
-					v = 100.0 * a / K
-				else:
-					v = math.pow((a + 0.16) / 1.16, 3.0)
+			v = 1.055 * math.pow(a, 1.0 / 2.4) - 0.055
+	elif b >= -1.0:
+		# XYZ -> RGB, Rec. 709 TRC
+		if a < 0.018:
+			v = a * 4.5
+		else:
+			v = 1.099 * math.pow(a, 0.45) - 0.099
+	elif b >= -1.9:
+		# RGB -> XYZ, Rec. 709 TRC
+		if a < 0.018 * 4.5:
+			v = a / 4.5
+		else:
+			v = math.pow((a + .099) / 1.099, 1.0 / 0.45)
+	elif b >= -2.6:
+		# RGB -> XYZ, sRGB TRC
+		if a <= 0.04045:
+			v = a / 12.92
+		else:
+			v = math.pow((a + 0.055) / 1.055, 2.4)
+	else:
+		# RGB -> XYZ, L* TRC
+		if a <= 0.08:
+			v = 100.0 * a / K
+		else:
+			v = math.pow((a + 0.16) / 1.16, 3.0)
 	return v * signScale
 
 
