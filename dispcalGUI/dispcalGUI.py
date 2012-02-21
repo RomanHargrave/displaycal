@@ -5463,7 +5463,7 @@ class MainFrame(BaseFrame):
 				if ext not in (".icc", ".icm") or \
 				   getcfg("calibration.file") != profile_path:
 					self.preview_handler(preview=True)
-			if sys.platform not in ("darwin", "win32") or test:
+			if sys.platform != "darwin" or test:
 				self.profile_load_on_login = wx.CheckBox(dlg, -1, 
 					lang.getstr("profile.load_on_login"))
 				self.profile_load_on_login.SetValue(

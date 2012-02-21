@@ -2062,9 +2062,11 @@ class Worker(object):
 				if not result:
 					return Error(lang.getstr("error.autostart_system"))
 			if sys.platform == "win32":
-				result = self._install_profile_loader_win32(silent)
+				if getcfg("profile.load_on_login"):
+					result = self._install_profile_loader_win32(silent)
 			elif sys.platform != "darwin":
-				result = self._install_profile_loader_xdg(silent)
+				if getcfg("profile.load_on_login"):
+					result = self._install_profile_loader_xdg(silent)
 				if gcm_import:
 					self._install_profile_gcm(profile_path)
 			if not isinstance(result, Exception) and result and not gcm_import:
