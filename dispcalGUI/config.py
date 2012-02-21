@@ -577,6 +577,8 @@ def getcfg(name, fallback=True):
 					valid_range = valid_ranges.get(name)
 					if valid_range:
 						value = min(max(valid_range[0], value), valid_range[1])
+					elif name in valid_values and value not in valid_values[name]:
+						value = defval
 			elif name.startswith("dimensions.measureframe"):
 				try:
 					value = [max(0, float(n)) for n in value.split(",")]
