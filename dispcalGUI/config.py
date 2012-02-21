@@ -142,6 +142,7 @@ resfiles = [
 	"beep.wav",
 	"camera_shutter.wav",
 	"test.cal",
+	"xrc/extra.xrc",
 	"xrc/gamap.xrc",
 	"xrc/main.xrc",
 	"xrc/mainmenu.xrc"
