@@ -439,6 +439,7 @@ defaults = {
 							sys.stdout.isatty())),
 	"log.show": 0,
 	"lang": "en",
+	# The last_[...]_path defaults are set in localization.py
 	"lut_viewer.show": 0,
 	"lut_viewer.show_actual_lut": 0,
 	"measurement_mode": "l",
