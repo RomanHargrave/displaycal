@@ -837,7 +837,8 @@ def writecfg(which="user", worker=None):
 			cfg.write(io)
 			io.seek(0)
 			lines = io.read().strip("\n").split("\n")
-			lines.sort()
+			# Sorting works as long as config has only one section
+			lines = [lines[0]] + sorted(lines[1:])
 			cfgfile = open(cfgfilename, "wb")
 			cfgfile.write("\n".join(lines))
 			cfgfile.close()
