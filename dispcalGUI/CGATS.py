@@ -436,7 +436,7 @@ class CGATS(dict):
 							# allow alphanumeric INDEX / SAMPLE_ID
 							if isinstance(value, basestring):
 								match = re.match(
-									'(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
+									'(?:\d+|((?:\d*\.\d+|\d+)(?:e[+-]?\d+)?))$', value)
 								if match:
 									if match.groups()[0]:
 										value = float(value)
@@ -545,7 +545,7 @@ class CGATS(dict):
 						else:
 							if isinstance(value, basestring):
 								match = re.match(
-									'(?:\d+|\d*(\.\d+))(e[+-]\d+)?$', value)
+									'(?:\d+|((?:\d*\.\d+|\d+)(?:e[+-]?\d+)?))$', value)
 								if match:
 									if match.groups()[0]:
 										value = float(value)
