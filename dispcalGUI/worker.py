@@ -1206,7 +1206,9 @@ class Worker(object):
 					if edid:
 						manufacturer = edid.get("manufacturer", "").split()
 						monitor = edid.get("monitor_name",
-										   str(edid["product_id"] or ""))
+										   edid.get("ascii",
+													str(edid["product_id"] or
+														"")))
 						if monitor and not monitor in "".join(desc):
 							desc = [monitor]
 						if (manufacturer and 
@@ -1883,7 +1885,7 @@ class Worker(object):
 					# Only add serial if no ascii serial
 					break
 				section_parts.append(str(edid[name]).replace(" ", "_"))
-			elif name not in ("ascii", "serial_ascii"):
+			elif name not in ("monitor_name", "ascii", "serial_ascii"):
 				# Do not allow anything other than the ASCII 
 				# strings to be missing
 				incomplete = True
@@ -1925,7 +1927,9 @@ class Worker(object):
 				edid = self.get_display_edid()
 				manufacturer = edid.get("manufacturer")
 				display_name = edid.get("monitor_name",
-										str(edid.get("product_id") or ""))
+										edid.get("ascii",
+												 str(edid.get("product_id") or
+													 "")))
 			if prepend_manufacturer:
 				if not manufacturer:
 					manufacturer = self.display_manufacturers[n]
@@ -1967,7 +1971,8 @@ class Worker(object):
 			edid = self.display_edid[max(0, min(len(self.displays), 
 												getcfg("display.number") - 1))]
 			display_name = edid.get("monitor_name",
-									str(edid.get("product_id") or ""))
+									edid.get("ascii",
+											 str(edid.get("product_id") or "")))
 			display_manufacturer = edid.get("manufacturer")
 		if not display_name and not display_manufacturer:
 			# Note: Do not mix'n'match display name and manufacturer from 

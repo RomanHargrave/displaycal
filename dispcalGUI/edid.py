@@ -167,7 +167,8 @@ def get_edid(display_no=0, display_name=None):
 									stdout)]:
 				if edid and len(edid) >= 128:
 					parsed_edid = parse_edid(edid)
-					if parsed_edid.get("monitor_name") == display_name:
+					if parsed_edid.get("monitor_name",
+									   parsed_edid.get("ascii")) == display_name:
 						# On Mac OS X, you need to specify a display name 
 						# because the order is unknown
 						return parsed_edid

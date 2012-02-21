@@ -1634,7 +1634,8 @@ class MainFrame(BaseFrame):
 		edid = self.worker.get_display_edid()
 		self.menuitem_create_profile_from_edid.Enable(bool(self.worker.displays
 														   and edid.get("monitor_name",
-																		edid.get("product_id"))
+																		edid.get("ascii",
+																				 edid["product_id"]))
 														   and edid.get("red_x")
 														   and edid.get("red_y")
 														   and edid.get("green_x")
@@ -6754,7 +6755,9 @@ class MainFrame(BaseFrame):
 	
 	def create_profile_from_edid(self, event):
 		edid = self.worker.get_display_edid()
-		defaultFile = edid.get("monitor_name", str(edid["product_id"])) + profile_ext
+		defaultFile = edid.get("monitor_name",
+							   edid.get("ascii",
+										str(edid["product_id"]))) + profile_ext
 		defaultDir = get_verified_path(None, 
 									   os.path.join(getcfg("profile.save_path"), 
 													defaultFile))[0]

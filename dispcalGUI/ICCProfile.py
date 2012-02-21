@@ -247,7 +247,7 @@ def _colord_get_display_profile(display_no=0):
 					# Only add serial if no ascii serial
 					break
 				section_parts.append(str(edid[name]).replace(" ", "_"))
-			elif name not in ("ascii", "serial_ascii"):
+			elif name not in ("monitor_name", "ascii", "serial_ascii"):
 				# Do not allow anything other than the ASCII 
 				# strings to be missing
 				incomplete = True
@@ -2077,8 +2077,9 @@ class ICCProfile:
 		
 		"""
 		profile = ICCProfile()
-		monitor_name = edid.get("monitor_name", str(edid["product_id"] or
-													edid["hash"]))
+		monitor_name = edid.get("monitor_name",
+								edid.get("ascii", str(edid["product_id"] or
+													  edid["hash"])))
 		if iccv4:
 			profile.version = 4.2
 			profile.tags.desc = MultiLocalizedUnicodeType()
@@ -2268,8 +2269,9 @@ class ICCProfile:
 							   ("EDID_white_x", edid["white_x"]),
 							   ("EDID_white_y", edid["white_y"]),
 							   ("EDID_gamma", edid["gamma"])))
-		if edid.get("monitor_name"):
-			self.tags.meta["EDID_model"] = edid["monitor_name"]
+		monitor_name = edid.get("monitor_name", edid.get("ascii"))
+		if monitor_name:
+			self.tags.meta["EDID_model"] = monitor_name
 		if edid.get("serial_ascii"):
 			self.tags.meta["EDID_serial"] = edid["serial_ascii"]
 		# GCM keys
