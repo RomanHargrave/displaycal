@@ -4,7 +4,6 @@
 import subprocess as sp
 from time import sleep
 
-from log import safe_print
 from meta import name as appname
 from options import verbose
 
