@@ -99,6 +99,10 @@
         <label>colorimeter_correction.upload</label>
       </object>
       <object class="separator"/>
+      <object class="wxMenuItem" name="3dlut.create">
+        <label>3dlut.create</label>
+      </object>
+      <object class="separator"/>
       <object class="wxMenuItem" name="enable_spyder2">
         <label>enable_spyder2</label>
         <checkable>1</checkable>

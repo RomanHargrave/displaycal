@@ -44,6 +44,7 @@ def init(set_wx_locale=False):
 
 def update_defaults():
 	defaults.update({
+		"last_3dlut_path": os.path.join(os.path.expanduser("~"), getstr("unnamed")),
 		"last_cal_path": os.path.join(storage, getstr("unnamed")),
 		"last_cal_or_icc_path": os.path.join(storage, getstr("unnamed")),
 		"last_filedialog_path": os.path.join(os.path.expanduser("~"), getstr("unnamed")),

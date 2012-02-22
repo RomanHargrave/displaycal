@@ -38,7 +38,7 @@ import defaultpaths
 import localization as lang
 import wexpect
 from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
-						  verify_cgats)
+						  vcgt_to_cal, verify_cgats)
 from argyll_instruments import instruments as all_instruments, remove_vendor_names
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  optional as argyll_optional, viewconds, intents)
@@ -1046,6 +1046,230 @@ class Worker(object):
 		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
+
+	def create_3dlut(self, profile_in, profile_out, apply_cal=True, intent="r",
+					 bpc=True, format="3dl", size=17, input_bits=10,
+					 output_bits=12, maxval=1.0):
+		""" Create a 3D LUT from two profiles. """
+		# .cube: http://doc.iridas.com/index.php/LUT_Formats
+		# .3dl: http://www.kodak.com/US/plugins/acrobat/en/motion/products/look/UserGuide.pdf
+		#       http://download.autodesk.com/us/systemdocs/pdf/lustre_color_management_user_guide.pdf
+		
+		for profile in (profile_in, profile_out):
+			if (profile.profileClass != "mntr" or 
+				profile.colorSpace != "RGB"):
+				raise NotImplementedError(lang.getstr("profile.unsupported", 
+													  (profile.profileClass, 
+													   profile.colorSpace)))
+		
+		# Create input RGB values
+		RGB_triplets = []
+		seen = {}
+		step = 1.0 / (size - 1)
+		RGB_triplet = [0.0, 0.0, 0.0]
+		# Set the fastest and slowest changing columns, from right to left
+		if format == "3dl":
+			columns = (0, 1, 2)
+		else:
+			columns = (2, 1, 0)
+		for i in xrange(0, size):
+			# Red
+			RGB_triplet[columns[0]] = step * i
+			for j in xrange(0, size):
+				# Green
+				RGB_triplet[columns[1]] = step * j
+				for k in xrange(0, size):
+					# Blue
+					RGB_triplet[columns[2]] = step * k
+					RGB_triplets.append(list(RGB_triplet))
+
+		# Convert RGB triplets to list of strings
+		for i, RGB_triplet in enumerate(RGB_triplets):
+			RGB_triplets[i] = " ".join(str(n) for n in RGB_triplet)
+		if debug:
+			safe_print(len(RGB_triplets), "RGB triplets")
+			safe_print("\n".join(RGB_triplets))
+		
+		# Setup xicclu
+		xicclu = get_argyll_util("xicclu").encode(fs_enc)
+		cwd = self.create_tempdir()
+		if isinstance(cwd, Exception):
+			raise cwd
+		if sys.platform == "win32":
+			startupinfo = sp.STARTUPINFO()
+			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+			startupinfo.wShowWindow = sp.SW_HIDE
+		else:
+			startupinfo = None
+
+		pcs = "x"
+
+		# Prepare 'input' profile
+		profile_in.write(os.path.join(cwd, "profile_in.icc"))
+
+		# Lookup RGB -> XYZ values through 'input' profile using xicclu
+		stderr = tempfile.SpooledTemporaryFile()
+		p = sp.Popen([xicclu, "-ff", "-i" + intent, "-p" + pcs, "profile_in.icc"], 
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+		self.subprocess = p
+		if p.poll() not in (0, None):
+			stderr.seek(0)
+			raise Error(stderr.read().strip())
+		odata = p.communicate("\n".join(RGB_triplets))[0].splitlines()
+		if p.wait() != 0:
+			raise IOError(''.join(odata))
+		stderr.close()
+
+		# Convert xicclu output to XYZ triplets
+		XYZ_triplets = []
+		for line in odata:
+			line = "".join(line.strip().split("->")).split()
+			XYZ_triplets.append(" ".join([n for n in line[5:8]]))
+		if debug:
+			safe_print(len(XYZ_triplets), "XYZ triplets")
+			safe_print("\n".join(XYZ_triplets))
+
+		# Prepare 'output' profile
+		profile_out.write(os.path.join(cwd, "profile_out.icc"))
+		
+		# Apply calibration?
+		if apply_cal:
+			if not profile_out.tags.get("vcgt", None):
+				raise Error(lang.getstr("profile.no_vcgt"))
+			try:
+				cgats = vcgt_to_cal(profile_out)
+			except (CGATS.CGATSInvalidError, 
+					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+				raise Error(lang.getstr("cal_extraction_failed"))
+			cgats.write(os.path.join(cwd, "profile_out.cal"))
+			applycal = get_argyll_util("applycal")
+			if not applycal:
+				raise NotImplementedError(lang.getstr("argyll.util.not_found",
+													  "applycal"))
+			safe_print(lang.getstr("3dlut.output.profile.apply_cal"))
+			result = self.exec_cmd(applycal, ["-v",
+											  "profile_out.cal",
+											  "profile_out.icc",
+											  "profile_out.icc"],
+								   capture_output=True, skip_scripts=True,
+								   working_dir=cwd)
+			if isinstance(result, Exception):
+				raise result
+			elif not result:
+				raise Error("\n\n".join(lang.getstr("3dlut.output.profile.apply_cal.error"),
+										"\n".join(self.errors)))
+			profile_out = ICCP.ICCProfile(os.path.join(cwd,
+													   "profile_out.icc"))
+
+		if bpc:
+			# Black point compensation
+			
+			# Get 'input' profile black point
+			bp_in = [float(n) for n in XYZ_triplets[0].split()]
+			if debug:
+				safe_print("bp_in", bp_in)
+
+			# Lookup 'output' profile black point
+			stderr = tempfile.SpooledTemporaryFile()
+			p = sp.Popen([xicclu, "-ff", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
+						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+			self.subprocess = p
+			if p.poll() not in (0, None):
+				stderr.seek(0)
+				raise Error(stderr.read().strip())
+			odata = p.communicate("0 0 0\n1 1 1")[0].splitlines()
+			if p.wait() != 0:
+				# error
+				raise IOError(''.join(odata))
+			stderr.close()
+
+			bp_out = [float(n) for n in "".join(odata[0].strip().split("->")).split()[5:8]]
+			if debug:
+				safe_print("bp_out", bp_out)
+
+			# Get 'output' profile white point
+			wp_out = [float(n) for n in "".join(odata[1].strip().split("->")).split()[5:8]]
+			if debug:
+				safe_print("wp_out", wp_out)
+			
+			# Apply black point compensation
+			for i, XYZ_triplet in enumerate(XYZ_triplets):
+				X, Y, Z = [float(n) for n in XYZ_triplet.split()]
+				XYZ_triplets[i] = " ".join(str(n) for n in
+										   colormath.apply_bpc(X, Y, Z, bp_in,
+															   bp_out, wp_out))
+		if debug:
+			safe_print(len(XYZ_triplets), "XYZ triplets")
+			safe_print("\n".join(XYZ_triplets))
+
+		# Lookup XYZ -> RGB values through 'output' profile using xicclu
+		stderr = tempfile.SpooledTemporaryFile()
+		p = sp.Popen([xicclu, "-fb", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+		self.subprocess = p
+		if p.poll() not in (0, None):
+			stderr.seek(0)
+			raise Error(stderr.read().strip())
+		odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
+		if p.wait() != 0:
+			# error
+			raise IOError(''.join(odata))
+		stderr.close()
+
+		# Remove temporary files
+		self.wrapup(False)
+		
+		# Convert xicclu output to RGB triplets
+		RGB_triplets = []
+		for line in odata:
+			line = "".join(line.strip().split("->")).split()
+			RGB_triplets.append(" ".join([n for n in line[5:8]]))
+		if debug:
+			safe_print(len(RGB_triplets), "RGB triplets")
+			safe_print("\n".join(RGB_triplets))
+
+		lut = [["# Created with %s %s" % (appname, version)]]
+		if format == "3dl":
+			if maxval is None:
+				maxval = 1023
+			if output_bits is None:
+				output_bits = math.log(maxval + 1) / math.log(2)
+			if input_bits is None:
+				input_bits = output_bits
+			maxval = math.pow(2, output_bits) - 1
+			pad = len(str(maxval))
+			lut.append(["# INPUT RANGE: %i" % input_bits])
+			lut.append(["# OUTPUT RANGE: %i" % output_bits])
+			lut.append([])
+			for i in xrange(0, size):
+				lut[-1] += ["%i" % int(round(i * step * (math.pow(2, input_bits) - 1)))]
+			for RGB_triplet in RGB_triplets:
+				lut.append([])
+				RGB_triplet = RGB_triplet.split()
+				for component in (0, 1, 2):
+					lut[-1] += [("%i" % int(round(float(RGB_triplet[component]) * maxval))).rjust(pad, " ")]
+		elif format == "cube":
+			if maxval is None:
+				maxval = 1.0
+			lut.append(["LUT_3D_SIZE %i" % size])
+			lut.append(["DOMAIN_MIN 0.0 0.0 0.0"])
+			fp_offset = str(maxval).find(".")
+			domain_max = "DOMAIN_MAX %s %s %s" % (("%%.%if" % len(str(maxval)[fp_offset + 1:]), ) * 3)
+			lut.append([domain_max % ((maxval ,) * 3)])
+			lut.append([])
+			for RGB_triplet in RGB_triplets:
+				lut.append([])
+				RGB_triplet = RGB_triplet.split()
+				for component in (0, 1, 2):
+					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
+		lut.append([])
+		for i, line in enumerate(lut):
+			lut[i] = " ".join(line)
+		return "\n".join(lut)
 
 	def create_tempdir(self):
 		""" Create a temporary working directory and return its path. """

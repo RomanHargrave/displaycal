@@ -5,6 +5,7 @@ import decimal
 Decimal = decimal.Decimal
 import os
 import traceback
+from time import strftime
 
 from options import debug
 from safe_print import safe_print
@@ -316,6 +317,35 @@ def ti3_to_ti1(ti3_data):
 	if isinstance(ti3, file):
 		ti3.close()
 	return "\n".join(ti1_lines)
+
+
+def vcgt_to_cal(profile):
+	""" Return a CAL (CGATS instance) from vcgt """
+	cgats = CGATS.CGATS(file_identifier="CAL    ")
+	context = cgats.add_data({"DESCRIPTOR": "Argyll Device Calibration State"})
+	context.add_data({"ORIGINATOR": "vcgt"})
+	context.add_data({"CREATED": strftime("%a %b %d %H:%M:%S %Y",
+										  profile.dateTime.timetuple())})
+	context.add_keyword("DEVICE_CLASS", "DISPLAY")
+	context.add_keyword("COLOR_REP", "RGB")
+	context.add_keyword("RGB_I")
+	key = "DATA_FORMAT"
+	context[key] = CGATS.CGATS()
+	context[key].key = key
+	context[key].parent = context
+	context[key].root = cgats
+	context[key].type = key
+	context[key].add_data(("RGB_I", "RGB_R", "RGB_G", "RGB_B"))
+	key = "DATA"
+	context[key] = CGATS.CGATS()
+	context[key].key = key
+	context[key].parent = context
+	context[key].root = cgats
+	context[key].type = key
+	values = profile.tags.vcgt.getNormalizedValues()
+	for i, triplet in enumerate(values):
+		context[key].add_data(("%.7f" % (i / float(len(values) - 1)), ) + triplet)
+	return cgats
 
 
 def verify_cgats(cgats, required, ignore_unknown=True):

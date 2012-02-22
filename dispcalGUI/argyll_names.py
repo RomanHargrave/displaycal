@@ -3,6 +3,7 @@
 
 # Argyll CMS tools used by dispcalGUI
 names = [
+	"applycal",
 	"ccxxmake",
 	"dispcal",
 	"dispread",
@@ -17,7 +18,7 @@ names = [
 ]
 
 # Argyll CMS tools optionally used by dispcalGUI
-optional = ["ccxxmake", "i1d3ccss"]
+optional = ["applycal", "ccxxmake", "i1d3ccss"]
 
 prefixes_suffixes = ["argyll"]
 

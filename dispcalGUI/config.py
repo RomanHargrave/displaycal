@@ -142,6 +142,8 @@ resfiles = [
 	"beep.wav",
 	"camera_shutter.wav",
 	"test.cal",
+	"ref/Rec709.icm",
+	"xrc/3dlut.xrc",
 	"xrc/extra.xrc",
 	"xrc/gamap.xrc",
 	"xrc/main.xrc",
@@ -344,6 +346,8 @@ def runtimeconfig(pyfile):
 						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 	if debug:
 		safe_print("[D] Data files search paths:\n[D]", "\n[D] ".join(data_dirs))
+	defaults["3dlut.input.profile"] = get_data_path(os.path.join("ref",
+																 "Rec709.icm")) or ""
 	defaultmmode = defaults["measurement_mode"]
 	defaultptype = defaults["profile.type"]
 	defaultchart = testchart_defaults.get(defaultptype, 
@@ -362,6 +366,7 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 valid_ranges = {
+	"3dlut.black_point_compensation": [0, 1],
 	"gamma": [0.000001, 10],
 	"trc": [0.000001, 10],
 	"calibration.ambient_viewcond_adjust.lux": [0, sys.maxint],
@@ -376,6 +381,11 @@ valid_ranges = {
 }
 
 valid_values = {
+	"3dlut.bitdepth.input": [0, 1, 2, 3, 4],
+	"3dlut.bitdepth.output": [0, 1, 2, 3, 4],
+	"3dlut.format": [0, 1],
+	"3dlut.rendering_intent": [0, 1, 2, 3],
+	"3dlut.size": [0, 1, 2],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	"measurement_mode": [None, "c", "l"],
 	"gamap_perceptual_intent": intents,
@@ -392,6 +402,15 @@ valid_values = {
 }
 
 defaults = {
+	"3dlut.black_point_compensation": 0,
+	"3dlut.bitdepth.input": 2,
+	"3dlut.bitdepth.output": 2,
+	"3dlut.format": 0,
+	"3dlut.input.profile": "",
+	"3dlut.output.profile": "",
+	"3dlut.output.profile.apply_cal": 1,
+	"3dlut.rendering_intent": 1,
+	"3dlut.size": 0,
 	"allow_skip_sensor_cal": 0,
 	"argyll.debug": 0,
 	"argyll.dir": expanduseru("~"), # directory
@@ -603,6 +622,7 @@ def getcfg(name, fallback=True):
 					print "%s does not exist: %s" % (name, value),
 				if value.split(os.path.sep)[-3:-2] == [appname] and (
 				   value.split(os.path.sep)[-2:-1] == ["presets"] or 
+				   value.split(os.path.sep)[-2:-1] == ["ref"] or 
 				   value.split(os.path.sep)[-2:-1] == ["ti1"]):
 					value = os.path.join(*value.split(os.path.sep)[-2:])
 					value = get_data_path(value)
