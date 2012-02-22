@@ -75,7 +75,7 @@ def getstr(id_str, strvars=None, lcode=None):
 		lcode = "en"
 	if lcode in ldict and id_str in ldict[lcode]:
 		lstr = ldict[lcode][id_str]
-		if strvars:
+		if strvars is not None:
 			if type(strvars) not in (list, tuple):
 				strvars = (strvars, )
 			if lstr.count("%s") == len(strvars):

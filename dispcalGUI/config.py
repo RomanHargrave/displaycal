@@ -143,6 +143,8 @@ resfiles = [
 	"camera_shutter.wav",
 	"test.cal",
 	"ref/Rec709.icm",
+	"ref/sRGB.icm",
+	"ref/verify.ti1",
 	"xrc/3dlut.xrc",
 	"xrc/extra.xrc",
 	"xrc/gamap.xrc",
@@ -261,7 +263,8 @@ def get_data_path(relpath, rex=None):
 	return a list of files in the intersection of searched directories.
 	
 	"""
-	if not relpath:
+	if (not relpath or relpath.endswith(os.path.sep) or
+		relpath.endswith(os.path.altsep)):
 		return None
 	intersection = []
 	paths = []
@@ -353,11 +356,11 @@ def runtimeconfig(pyfile):
 	defaultchart = testchart_defaults.get(defaultptype, 
 										  testchart_defaults["s"])[None]
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
-															defaultchart))
+															defaultchart)) or ""
 	defaults["testchart.file.backup"] = defaults["testchart.file"]
 	defaults["profile_verification_chart"] = get_data_path(os.path.join("ref", 
-															"verify.ti1"))
-	defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm"))
+															"verify.ti1")) or ""
+	defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm")) or ""
 	return runtype
 
 # User settings
