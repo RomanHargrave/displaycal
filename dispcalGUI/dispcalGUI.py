@@ -985,7 +985,8 @@ class LUT3DFrame(BaseFrame):
 			defaultDir, defaultFile = get_verified_path("last_3dlut_path")
 			format = {0: "3dl",
 					  1: "cube"}.get(getcfg("3dlut.format"), "3dl")
-			defaultFile = os.path.splitext(defaultFile)[0] + "." + format
+			defaultFile = os.path.splitext(defaultFile or
+										   defaults.get("last_3dlut_path"))[0] + "." + format
 			dlg = wx.FileDialog(self, 
 								lang.getstr("3dlut.create"),
 								defaultDir=defaultDir,
@@ -1091,6 +1092,9 @@ class LUT3DFrame(BaseFrame):
 				else:
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					setcfg("3dlut.%s.profile" % which, profile.fileName)
+					self.lut3d_create_btn.Enable(bool(getcfg("3dlut.input.profile")) and
+												 bool(getcfg("3dlut.output.profile")))
+					self.update_layout()
 					return profile
 			getattr(self, "%s_profile_ctrl" %
 						  which).SetPath(getcfg("3dlut.%s.profile" % which))
