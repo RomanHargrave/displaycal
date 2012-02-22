@@ -264,7 +264,8 @@ def get_data_path(relpath, rex=None):
 	
 	"""
 	if (not relpath or relpath.endswith(os.path.sep) or
-		relpath.endswith(os.path.altsep)):
+		(isinstance(os.path.altsep, basestring) and
+		 relpath.endswith(os.path.altsep))):
 		return None
 	intersection = []
 	paths = []
