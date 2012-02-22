@@ -357,6 +357,7 @@
 	"profile.invalid": "Invalid profile.",
 	"profile.load_error": "Display profile couldn't be loaded.",
 	"profile.load_on_login": "Load calibration on login",
+	"profile.load_on_login.handled_by_os": "Let the operating system handle calibration loading",
 	"profile.name": "Profile name",
 	"profile.name.create": "Generate profile name",
 	"profile.name.placeholders": "You may use the following placeholders in the profile name:\n\n%a	Abbreviated weekday name\n%A	Full weekday name\n%b	Abbreviated month name\n%B	Full month name\n%d	Day of the month\n%H	Hour (24-hour clock)\n%I	Hour (12-hour clock)\n%j	Day of the year\n%m	Month\n%M	Minute\n%p	AM/PM\n%S	Second\n%U	Week (Sunday as first day of the week)\n%w	Weekday (sunday is 0)\n%W	Week (Monday as first day of the week)\n%y	Year without century\n%Y	Year with century",

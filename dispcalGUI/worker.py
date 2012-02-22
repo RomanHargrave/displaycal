@@ -2338,11 +2338,23 @@ class Worker(object):
 			if not isinstance(result, Exception) and result:
 				self.output = ["Installed"]
 		else:
+			if (sys.platform == "win32" and
+				sys.getwindowsversion() >= (6, ) and
+				not util_win.per_user_profiles_isenabled()):
+					# Enable per-user profiles under Vista / Windows 7
+					try:
+						util_win.enable_per_user_profiles(True,
+														  getcfg("display.number") - 1)
+					except Exception, exception:
+						safe_print("util_win.enable_per_user_profiles(True, %s): %s" %
+								   (getcfg("display.number") - 1,
+									safe_unicode(exception)))
 			cmd, args = self.prepare_dispwin(None, profile_path, True)
 			if not isinstance(cmd, Exception):
 				if "-Sl" in args and (sys.platform != "darwin" or 
 									  intlist(mac_ver()[0].split(".")) >= [10, 6]):
-					# If a 'system' install is requested under Linux or Windows, 
+					# If a 'system' install is requested under Linux,
+					# Mac OS X >= 10.6 or Windows, 
 					# install in 'user' scope first because a system-wide install 
 					# doesn't also set it as current user profile on those systems 
 					# (on Mac OS X < 10.6, we can use ColorSyncScripting to set it).
@@ -2518,6 +2530,10 @@ class Worker(object):
 	
 	def _install_profile_loader_win32(self, silent=False):
 		""" Install profile loader """
+		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, 1) and
+			util_win.calibration_management_isenabled()):
+			self._uninstall_profile_loader_win32()
+			return True
 		# Must return either True on success or an Exception object on error
 		result = True
 		# Remove outdated (pre-0.5.5.9) profile loaders
@@ -2636,6 +2652,27 @@ class Worker(object):
 										     autostart_home) + "\n\n" + 
 							     safe_unicode(exception.args[0]))
 		return result
+	
+	def _uninstall_profile_loader_win32(self):
+		""" Uninstall profile loader """
+		name = appname + " Profile Loader"
+		if autostart:
+			autostart_lnkname = os.path.join(autostart,
+											 name + ".lnk")
+		if autostart_home:
+			autostart_home_lnkname = os.path.join(autostart_home, 
+												  name + ".lnk")
+		if os.path.exists(autostart_home_lnkname):
+			try:
+				os.remove(autostart_home_lnkname)
+			except Exception, exception:
+				safe_print(autostart_home_lnkname, exception)
+		if os.path.exists(autostart_lnkname) and is_superuser():
+			try:
+				os.remove(autostart_lnkname)
+			except Exception, exception:
+				safe_print(autostart_lnkname, exception)
+		return True
 	
 	def _install_profile_loader_xdg(self, silent=False):
 		""" Install profile loader """

@@ -27,6 +27,14 @@ if not getattr(sys, "frozen", False):
 	if os.path.exists(os.path.join(parent_dir, "dispcalGUI", "__init__.py")):
 		sys.path.insert(0, parent_dir)
 
+if sys.platform == "win32":
+	from dispcalGUI.util_win import calibration_management_isenabled
+	if (not "--force" in sys.argv[1:] and sys.getwindowsversion() >= (6, 1) and
+		calibration_management_isenabled()):
+		# Early exit incase calibration loading is handled by Windows 7 and
+		# isn't forced
+		sys.exit()
+
 from dispcalGUI import config, localization as lang
 
 if getattr(sys, "frozen", False):
@@ -34,8 +42,8 @@ if getattr(sys, "frozen", False):
 	config.data_dirs.insert(0, parent_dir)
 	
 config.initcfg()
-if not config.getcfg("profile.load_on_login"):
-	# Early exit incase profile loading has been disabled
+if (not "--force" in sys.argv[1:] and not config.getcfg("profile.load_on_login")):
+	# Early exit incase profile loading has been disabled and isn't forced
 	sys.exit()
 
 from dispcalGUI.config import geticon

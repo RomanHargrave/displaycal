@@ -20,7 +20,7 @@ LicenseFile=..\LICENSE.txt
 OutputDir=.
 OutputBaseFilename=dispcalGUI-%(AppVersion)s-Setup
 SetupIconFile=..\dispcalGUI\theme\icons\dispcalGUI.ico
-Compression=lzma
+Compression=lzma/Max
 SolidCompression=true
 VersionInfoVersion=%(VersionInfoVersion)s
 VersionInfoDescription=dispcalGUI Setup
@@ -32,17 +32,20 @@ UninstallDisplayName=dispcalGUI
 UninstallDisplayIcon={app}\dispcalGUI.exe
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
+MinVersion=,5.0.2195
 
 [Languages]
-Name: english; MessagesFile: compiler:Default.isl
-Name: french; MessagesFile: compiler:Languages\French.isl
-Name: german; MessagesFile: compiler:Languages\German.isl
-Name: italian; MessagesFile: compiler:Languages\Italian.isl
-Name: spanish; MessagesFile: compiler:Languages\Spanish.isl
+Name: english; MessagesFile: ..\misc\InnoSetup\v5\Default.isl; 
+Name: french; MessagesFile: ..\misc\InnoSetup\v5\Languages\French.isl; 
+Name: german; MessagesFile: ..\misc\InnoSetup\v5\Languages\German.isl; 
+Name: italian; MessagesFile: ..\misc\InnoSetup\v5\Languages\Italian.isl; 
+Name: spanish; MessagesFile: ..\misc\InnoSetup\v5\Languages\Spanish.isl; 
 
 [Tasks]
 Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 Name: quicklaunchicon; Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
+Name: calibrationloadinghandledbydispcalgui; Description: {cm:CalibrationLoadingHandledByDispcalGUI}; Flags: exclusive; GroupDescription: {cm:CalibrationLoading}; 
+Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledByOS}; Flags: exclusive; GroupDescription: {cm:CalibrationLoading}; MinVersion: 0,6.1.7600; 
 
 [Files]
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\*; DestDir: {app}; Flags: recursesubdirs replacesameversion; Excludes: \dispcalGUI.exe,\README.html; 
@@ -52,17 +55,20 @@ Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly;
 
 [Icons]
 Name: {group}\dispcalGUI; Filename: {app}\dispcalGUI.exe; IconFilename: {app}\dispcalGUI.exe
+Name: "{group}\dispcalGUI Profile Loader"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-apply-profiles"" --force"; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\dispcalGUI-uninstall.ico; Tasks: ; Languages: 
 Name: {commondesktop}\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: desktopicon; IconFilename: {app}\dispcalGUI.exe
 Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: quicklaunchicon; IconFilename: {app}\dispcalGUI.exe
 Name: {group}\LICENSE; Filename: {app}\LICENSE.txt
 Name: {group}\README; Filename: {app}\README.html; Tasks: ; Languages: 
-Name: "{commonstartup}\dispcalGUI Profile Loader"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-apply-profiles"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
+Name: "{commonstartup}\dispcalGUI Profile Loader"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-apply-profiles"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; Tasks: calibrationloadinghandledbydispcalgui; 
 
 [Run]
 Filename: {app}\dispcalGUI.exe; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent;
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden; 
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden; 
+Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from dispcalGUI import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDispcalGUI}; Tasks: calibrationloadinghandledbydispcalgui; 
+MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from dispcalGUI import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
 
 [Dirs]
-Name: {commonappdata}\dispcalGUI; Permissions: users-modify; 
+Name: {commonappdata}\dispcalGUI; Permissions: users-modify;

@@ -99,6 +99,8 @@ import colormath
 import localization as lang
 import pyi_md5pickuphelper
 import report
+if sys.platform == "win32":
+	import util_win
 import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 						  cal_to_fake_profile, can_update_cal, 
@@ -4596,9 +4598,27 @@ class MainFrame(BaseFrame):
 		else:
 			if verbose >= 1: safe_print(lang.getstr("failure"))
 	
-	def profile_load_on_login_handler(self, event):
+	def profile_load_on_login_handler(self, event=None):
 		setcfg("profile.load_on_login", 
 			   int(self.profile_load_on_login.GetValue()))
+		if sys.platform == "win32" and sys.getwindowsversion() >= (6, 1):
+			self.profile_load_on_login.Enable(is_superuser() or
+											  not util_win.calibration_management_isenabled())
+			self.profile_load_by_os.Enable(is_superuser() and
+										   self.profile_load_on_login.GetValue())
+			if (not self.profile_load_on_login.GetValue() and 
+				self.profile_load_by_os.GetValue() and is_superuser()):
+				self.profile_load_by_os.SetValue(False)
+				self.profile_load_by_os_handler()
+	
+	def profile_load_by_os_handler(self, event=None):
+		if is_superuser():
+			# Enable calibration management under Windows 7
+			try:
+				util_win.enable_calibration_management(self.profile_load_by_os.GetValue())
+			except Exception, exception:
+				safe_print("util_win.enable_calibration_management(True): %s" %
+						   safe_unicode(exception))
 
 	def install_cal(self, capture_output=False, cal=None, profile_path=None,
 					skip_scripts=False, silent=False, title=appname):
@@ -5741,12 +5761,26 @@ class MainFrame(BaseFrame):
 				self.profile_load_on_login = wx.CheckBox(dlg, -1, 
 					lang.getstr("profile.load_on_login"))
 				self.profile_load_on_login.SetValue(
-					bool(getcfg("profile.load_on_login")))
+					bool(getcfg("profile.load_on_login") or
+						 (sys.platform == "win32" and
+						  sys.getwindowsversion() >= (6, 1) and
+						  util_win.calibration_management_isenabled())))
 				dlg.Bind(wx.EVT_CHECKBOX, self.profile_load_on_login_handler, 
 						 id=self.profile_load_on_login.GetId())
 				dlg.sizer3.Add(self.profile_load_on_login, 
 							   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 				dlg.sizer3.Add((1, 4))
+				if sys.platform == "win32" and sys.getwindowsversion() >= (6, 1):
+					self.profile_load_by_os = wx.CheckBox(dlg, -1, 
+						lang.getstr("profile.load_on_login.handled_by_os"))
+					self.profile_load_by_os.SetValue(
+						bool(util_win.calibration_management_isenabled()))
+					dlg.Bind(wx.EVT_CHECKBOX, self.profile_load_by_os_handler, 
+							 id=self.profile_load_by_os.GetId())
+					dlg.sizer3.Add(self.profile_load_by_os, 
+								   flag=wx.LEFT | wx.ALIGN_LEFT, border=16)
+					dlg.sizer3.Add((1, 4))
+					self.profile_load_on_login_handler()
 			if ((sys.platform == "darwin" or (sys.platform != "win32" and 
 											  self.worker.argyll_version >= 
 											  [1, 1, 0])) and 

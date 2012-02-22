@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import ctypes
+import _winreg
+import struct
 import sys
 
 import pywintypes
 import win32api
+import winerror
 
 # http://msdn.microsoft.com/en-us/library/dd183569%28v=vs.85%29.aspx
 DISPLAY_DEVICE_ACTIVE = 0x1  # DISPLAY_DEVICE_ACTIVE specifies whether a monitor is presented as being "on" by the respective GDI view.
@@ -22,20 +26,89 @@ DISPLAY_DEVICE_DISCONNECT = 0x2000000
 DISPLAY_DEVICE_MULTI_DRIVER = 0x2
 DISPLAY_DEVICE_REMOTE = 0x4000000
 
+# Icm.h
+CLASS_MONITOR = struct.unpack("!L", "mntr")[0]
+CLASS_PRINTER = struct.unpack("!L", "prtr")[0]
+CLASS_SCANNER = struct.unpack("!L", "scnr")[0]
 
-def get_real_display_devices_info():
-	""" Return info for real (non-virtual) devices """
-	# See Argyll source spectro/dispwin.c MonitorEnumProc, get_displays
-	monitors = []
-	for monitor in win32api.EnumDisplayMonitors(None, None):
-		try:
-			moninfo = win32api.GetMonitorInfo(monitor[0])
-		except pywintypes.error:
-			pass
+
+def _get_icm_display_device_key(device):
+	monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
+	subkey = "\\".join(["Software", "Microsoft", "Windows NT", 
+						"CurrentVersion", "ICM", "ProfileAssociations", 
+						"Display"] + monkey)
+	return _winreg.CreateKey(_winreg.HKEY_CURRENT_USER, subkey)
+
+
+def calibration_management_isenabled():
+	""" Check if calibration is enabled under Windows 7 """
+	if sys.getwindowsversion() < (6, 1):
+		# Windows XP and Vista don't have calibration management
+		return False
+	if False:
+		# Using registry - NEVER
+		# Also, does not work!
+		key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+							  r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration")
+		return bool(_winreg.QueryValueEx(key, "CalibrationManagementEnabled")[0])
+	else:
+		# Using ctypes
+		pbool = ctypes.pointer(ctypes.c_bool())
+		if not ctypes.windll.mscms.WcsGetCalibrationManagementState(pbool):
+			return
+		return bool(pbool.contents)
+
+
+def disable_calibration_management():
+	""" Disable calibration loading under Windows 7 """
+	enable_calibration_management(False)
+
+
+def disable_per_user_profiles(display_no=0):
+	""" Disable per user profiles under Vista/Windows 7 """
+	enable_per_user_profiles(False, display_no)
+
+
+def enable_calibration_management(enable=True):
+	""" Enable calibration loading under Windows 7 """
+	if sys.getwindowsversion() < (6, 1):
+		raise NotImplementedError("Calibration Management is only available "
+								  "in Windows 7 or later")
+	if False:
+		# Using registry - NEVER
+		# Also, does not work!
+		key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+							  r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration",
+							  _winreg.KEY_SET_VALUE)
+		_winreg.SetValueEx(key, "CalibrationManagementEnabled", 0,
+						   _winreg.REG_DWORD, int(enable))
+	else:
+		# Using ctypes (must be called with elevated permissions)
+		if not ctypes.windll.mscms.WcsSetCalibrationManagementState(enable):
+			raise get_windows_error(ctypes.windll.kernel32.GetLastError())
+		return True
+
+
+def enable_per_user_profiles(enable=True, display_no=0):
+	""" Enable per user profiles under Vista/Windows 7 """
+	if sys.getwindowsversion() < (6, ):
+		# Windows XP doesn't have per-user profiles
+		raise NotImplementedError("Per-user profiles are only available "
+								  "in Windows Vista, 7 or later")
+	device = get_display_device(display_no)
+	if device:
+		if False:
+			# Using registry - NEVER
+			key = _get_icm_display_device_key(device)
+			_winreg.SetValueEx(key, "UsePerUserProfiles", 0,
+							   _winreg.REG_DWORD, int(enable))
 		else:
-			if moninfo and not moninfo["Device"].startswith("\\\\.\\DISPLAYV"):
-				monitors.append(moninfo)
-	return monitors
+			# Using ctypes
+			if not ctypes.windll.mscms.WcsSetUsePerUserProfiles(unicode(device.DeviceID),
+																CLASS_MONITOR,
+																enable):
+				raise get_windows_error(ctypes.windll.kernel32.GetLastError())
+		return True
 
 
 def get_active_display_device(devicename):
@@ -62,3 +135,66 @@ def get_active_display_device(devicename):
 			and (len(devices) == 1 or device.StateFlags & 
 									  DISPLAY_DEVICE_MULTI_DRIVER)):
 			return device
+
+
+def get_display_device(display_no=0):
+	# The ordering will work as long as Argyll continues using
+	# EnumDisplayMonitors
+	monitors = get_real_display_devices_info()
+	moninfo = monitors[display_no]
+	# via win32api & registry
+	return get_active_display_device(moninfo["Device"])
+
+
+def get_real_display_devices_info():
+	""" Return info for real (non-virtual) devices """
+	# See Argyll source spectro/dispwin.c MonitorEnumProc, get_displays
+	monitors = []
+	for monitor in win32api.EnumDisplayMonitors(None, None):
+		try:
+			moninfo = win32api.GetMonitorInfo(monitor[0])
+		except pywintypes.error:
+			pass
+		else:
+			if moninfo and not moninfo["Device"].startswith("\\\\.\\DISPLAYV"):
+				monitors.append(moninfo)
+	return monitors
+
+
+def get_windows_error(errorcode):
+	for name in dir(winerror):
+		if name.startswith("ERROR_") and getattr(winerror, name) == errorcode:
+			return WindowsError(errorcode, name)
+	return WindowsError(errorcode, "")
+
+
+def per_user_profiles_isenabled(display_no=0):
+	""" Check if per user profiles is enabled under Vista/Windows 7 """
+	if sys.getwindowsversion() < (6, ):
+		# Windows XP doesn't have per-user profiles
+		return False
+	device = get_display_device(display_no)
+	if device:
+		if False:
+			# Using registry - NEVER
+			key = _get_icm_display_device_key(device)
+			return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
+		else:
+			# Using ctypes
+			pbool = ctypes.pointer(ctypes.c_bool())
+			if not ctypes.windll.mscms.WcsGetUsePerUserProfiles(unicode(device.DeviceID),
+																CLASS_MONITOR,
+																pbool):
+				return
+			return bool(pbool.contents)
+
+
+if __name__ == "__main__":
+	if "calibration" in sys.argv[1:]:
+		if "enable" in sys.argv[1:] or "disable" in sys.argv[1:]:
+			enable_calibration_management(sys.argv[1:][-1] != "disable")
+		print calibration_management_isenabled()
+	elif "per_user_profiles" in sys.argv[1:]:
+		if "enable" in sys.argv[1:] or "disable" in sys.argv[1:]:
+			enable_per_user_profiles(sys.argv[1:][-1] != "disable")
+		print per_user_profiles_isenabled()
