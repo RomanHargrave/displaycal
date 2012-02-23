@@ -33,7 +33,7 @@ from options import ascii, debug, verbose
 from safe_print import enc, fs_enc, original_codepage
 from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, is_superuser, listdir_re
-from util_str import safe_unicode
+from util_str import create_replace_function, safe_unicode
 import encodedstdio
 
 # Runtime configuration
@@ -648,16 +648,18 @@ def getcfg(name, fallback=True):
 					print "- falling back to", value
 			elif name == "copyright":
 				# Make sure dispcalGUI and Argyll version are up-to-date
-				pattern = re.compile("(%s(?:\s*v(?:ersion)?)?)\s*\d+(?:\.\d+)*" %
+				pattern = re.compile("(%s(?:\s*v(?:ersion|\.)?)?\s*)\d+(?:\.\d+)*" %
 									 appname, re.I)
-				value = re.sub(pattern, "\\1 %s" % version, value)
-				if defval.split()[-1] != "CMS":
-					argyll_version = " " + defval.split()[-1]
-				else:
-					argyll_version = ""
-				pattern = re.compile("(Argyll(?:\s*CMS)?(?:\s*v(?:ersion)?)?)\s*\d+(?:\.\d+)*",
+				repl = create_replace_function("\\1%s", version)
+				value = re.sub(pattern, repl, value)
+				pattern = re.compile("(Argyll(?:\s*CMS)?)((?:\s*v(?:ersion|\.)?)?\s*)\d+(?:\.\d+)*",
 									 re.I)
-				value = re.sub(pattern, "\\1%s" % argyll_version, value)
+				if defval.split()[-1] != "CMS":
+					repl = create_replace_function("\\1\\2%s",
+												   defval.split()[-1])
+				else:
+					repl = "\\1"
+				value = re.sub(pattern, repl, value)
 			return value
 	if hasdef and fallback:
 		value = defval
