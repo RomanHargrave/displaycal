@@ -1091,6 +1091,10 @@ class LUT3DFrame(BaseFrame):
 									   parent=self)
 				else:
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
+					if which == "output":
+						self.apply_cal_cb.SetValue("vcgt" in profile.tags and
+												   bool(getcfg("3dlut.output.profile.apply_cal")))
+						self.apply_cal_cb.Enable("vcgt" in profile.tags)
 					setcfg("3dlut.%s.profile" % which, profile.fileName)
 					self.lut3d_create_btn.Enable(bool(getcfg("3dlut.input.profile")) and
 												 bool(getcfg("3dlut.output.profile")))
@@ -1139,8 +1143,8 @@ class LUT3DFrame(BaseFrame):
 		self.input_profile_ctrl.SetPath(getcfg("3dlut.input.profile"))
 		self.input_profile_ctrl_handler(None)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
+		self.apply_cal_cb.Disable()
 		self.output_profile_ctrl_handler(None)
-		self.apply_cal_cb.SetValue(bool(getcfg("3dlut.output.profile.apply_cal")))
 		self.rendering_intent_ctrl.SetSelection(getcfg("3dlut.rendering_intent"))
 		self.black_point_compensation_cb.SetValue(bool(getcfg("3dlut.black_point_compensation")))
 		self.lut3d_format_ctrl.SetSelection(getcfg("3dlut.format"))
