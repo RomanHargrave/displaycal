@@ -11,6 +11,7 @@ from decimal import Decimal
 import locale
 import math
 import os
+import re
 import sys
 from time import gmtime, strftime, timezone
 if sys.platform == "win32":
@@ -645,6 +646,18 @@ def getcfg(name, fallback=True):
 					value = None
 				if debug:
 					print "- falling back to", value
+			elif name == "copyright":
+				# Make sure dispcalGUI and Argyll version are up-to-date
+				pattern = re.compile("(%s(?:\s*v(?:ersion)?)?)\s*\d+(?:\.\d+)*" %
+									 appname, re.I)
+				value = re.sub(pattern, "\\1 %s" % version, value)
+				if defval.split()[-1] != "CMS":
+					argyll_version = " " + defval.split()[-1]
+				else:
+					argyll_version = ""
+				pattern = re.compile("(Argyll(?:\s*CMS)?(?:\s*v(?:ersion)?)?)\s*\d+(?:\.\d+)*",
+									 re.I)
+				value = re.sub(pattern, "\\1%s" % argyll_version, value)
 			return value
 	if hasdef and fallback:
 		value = defval

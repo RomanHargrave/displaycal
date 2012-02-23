@@ -2251,6 +2251,7 @@ class MainFrame(BaseFrame):
 			"calibration.black_point_rate.enabled",
 			"color.dir",
 			"comport.number",
+			"copyright",
 			"display.number",
 			"display_lut.link",
 			"display_lut.number",
