@@ -26,6 +26,9 @@ def apply_profiles():
 	from dispcalGUI.log import safe_print
 	from dispcalGUI.util_os import which
 	from dispcalGUI.worker import Worker, get_argyll_util
+	from dispcalGUI.wxwindows import wx
+	if not wx.GetApp():
+		app = wx.App(0)
 
 	worker = Worker()
 
@@ -122,7 +125,8 @@ def apply_profiles_and_warn_on_error():
 		not "--silent" in sys.argv[1:]):
 		from dispcalGUI import localization as lang
 		from dispcalGUI.wxwindows import InfoDialog, wx
-		app = wx.App(0)
+		if not wx.GetApp():
+			app = wx.App(0)
 		dlg = InfoDialog(None, msg="\n".join(errors), 
 						 ok=lang.getstr("ok"), 
 						 bitmap=config.geticon(32, "dialog-error"),
