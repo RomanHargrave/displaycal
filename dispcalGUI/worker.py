@@ -963,19 +963,23 @@ class Worker(object):
 	
 	def check_instrument_calibration(self):
 		msgs = self.recent.read()
-		if not getattr(self, "instrument_calibration_started", False):
-			for calmsg in INST_CAL_MSGS:
-				if calmsg in msgs:
-					wx.CallAfter(self.do_instrument_calibration, )
-					break
-		elif (not getattr(self, "instrument_calibration_complete", False) and
+		if (not getattr(self, "instrument_calibration_complete", False) and
 			"Calibration complete" in msgs and
 			"key to continue" in self.lastmsg.read()):
 			self.instrument_calibration_complete = True
 			wx.CallAfter(self.instrument_calibration_finish)
+		elif (not getattr(self, "instrument_calibration_complete", False) and
+			  (not getattr(self, "instrument_calibration_started", False) or
+			   "Calibration failed" in msgs)):
+			if "Calibration failed" in msgs:
+				self.recent.clear()
+			for calmsg in INST_CAL_MSGS:
+				if calmsg in msgs or "Calibration failed" in msgs:
+					self.instrument_calibration_started = True
+					wx.CallAfter(self.do_instrument_calibration)
+					break
 	
 	def do_instrument_calibration(self):
-		self.instrument_calibration_started = True
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
 		if self.get_instrument_name() == "ColorMunki":
@@ -1971,10 +1975,14 @@ class Worker(object):
 														   timeout=None)
 									if sys.platform != "win32":
 										sleep(.5)
-									if self.subprocess.isalive() and \
-									   not "Sample read stopped at user request!" \
-									   in self.recent.read() and \
-									   not self.subprocess_abort:
+									if (self.subprocess.isalive() and
+									    not "Sample read stopped at user request!"
+									    in self.recent.read() and
+									    ("Sample read failed due to misread"
+									     in self.recent.read() or 
+									     "Sample read failed due to communication problem"
+									     in self.recent.read()) and
+									    not self.subprocess_abort):
 										retrycount += 1
 										logfile.write("\r\n%s: Retrying (%s)..." % 
 													  (appname, retrycount))
