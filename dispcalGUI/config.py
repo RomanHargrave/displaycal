@@ -508,6 +508,8 @@ defaults = {
 	"profile.save_path": storage, # directory
 	"profile.type": "s",
 	"profile.update": 0,
+	"profile_loader.error.show_msg": 1,
+	"profile_loader.verify_calibration": 0,
 	"recent_cals": "",
 	"recent_cals_max": 15,
 	"report.pack_js": 1,
