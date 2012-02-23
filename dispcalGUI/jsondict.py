@@ -159,10 +159,10 @@ class JSONDict(dict):
 					handle_error(
 						u"Warning - JSON file '%s': %s" % 
 						tuple(safe_unicode(s) for s in 
-							  (path, exception.args[0].capitalize() if 
-										  isinstance(exception, 
-													 demjson.JSONDecodeError)
-										  else exception)))
+							  (path, safe_unicode(exception).capitalize() if 
+									 isinstance(exception, 
+												demjson.JSONDecodeError)
+									 else exception)))
 			except Exception, exception:
 				handle_error(u"Warning - JSON file '%s': %s" % 
 							 tuple(safe_unicode(s) for s in (path, 

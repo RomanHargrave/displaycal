@@ -21,7 +21,7 @@ from log import safe_print
 from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
 from util_io import StringIOu as StringIO
-from util_str import safe_unicode
+from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_version, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
@@ -1036,7 +1036,7 @@ class TestchartEditor(wx.Frame):
 																					   lang.getstr("error.testchart.invalid",
 																								   path) + 
 																					   "\n" + 
-																					   lang.getstr(exception.args[0]))
+																					   lang.getstr(safe_str(exception)))
 				InfoDialog(self,
 						   msg=msg,
 						   ok=lang.getstr("ok"),

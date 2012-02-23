@@ -225,7 +225,9 @@ def safe_basestring(obj):
 	string(obj), or repr(obj), whichever succeeds first.
 	
 	"""
-	if not isinstance(obj, basestring):
+	if isinstance(obj, EnvironmentError) and obj.filename:
+		obj = u"[Error %i] %s: %s" % (obj.errno, obj.strerror, obj.filename)
+	elif not isinstance(obj, basestring):
 		try:
 			obj = unicode(obj)
 		except UnicodeDecodeError:

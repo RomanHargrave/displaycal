@@ -1767,9 +1767,7 @@ typeSignature2Type = {
 
 
 class ICCProfileInvalidError(IOError):
-
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 class ICCProfile:

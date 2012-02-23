@@ -7654,7 +7654,7 @@ class MainFrame(BaseFrame):
 																					   lang.getstr("error.testchart.invalid",
 																								   path) + 
 																					   "\n" + 
-																					   lang.getstr(exception.args[0]))
+																					   lang.getstr(safe_str(exception)))
 				InfoDialog(self, 
 						   msg=msg, 
 						   ok=lang.getstr("ok"), 

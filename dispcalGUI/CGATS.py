@@ -50,33 +50,27 @@ def rcut(value, width):
 
 
 class CGATSError(Exception):
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 class CGATSInvalidError(CGATSError, IOError):
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 class CGATSInvalidOperationError(CGATSError):
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 class CGATSKeyError(CGATSError, KeyError):
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 class CGATSTypeError(CGATSError, TypeError):
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 class CGATSValueError(CGATSError, ValueError):
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 class CGATS(dict):
@@ -133,7 +127,7 @@ class CGATS(dict):
 				elif isinstance(cgats, file):
 					self.filename = cgats.name
 				elif not isinstance(cgats, StringIO):
-					raise CGATSInvalidError('Unsupported type:', type(cgats))
+					raise CGATSInvalidError('Unsupported type: %s' % type(cgats))
 				if self.filename not in ('', None):
 					self.mtime = os.stat(self.filename).st_mtime
 				cgats.seek(0)

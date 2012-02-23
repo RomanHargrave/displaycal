@@ -142,4 +142,4 @@ if __name__ == "__main__":
 			try:
 				update(arg)
 			except (IOError, OSError), exception:
-				safe_print(exception.args[0])
+				safe_print(exception)

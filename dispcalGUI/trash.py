@@ -24,9 +24,7 @@ else:
 from util_os import getenvu, expanduseru
 
 class TrashcanUnavailableError(Exception):
-
-	def __str__(self):
-		return self.args[0]
+	pass
 
 
 def trash(paths):

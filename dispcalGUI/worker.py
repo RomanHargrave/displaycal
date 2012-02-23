@@ -555,7 +555,7 @@ def set_argyll_bin(parent=None):
 
 
 def show_result_dialog(result, parent=None, pos=None):
-	msg=result.args[0]
+	msg = safe_unicode(result)
 	if not pos:
 		pos=(-1, -1)
 	if isinstance(result, Info):
@@ -2454,7 +2454,7 @@ class Worker(object):
 			colord.cd_install_profile(device_key, profile_path)
 		except Exception, exception:
 			safe_print(exception)
-			return Error(exception.args[0])
+			return exception
 		return True
 	
 	def _install_profile_gcm(self, profile_path):
@@ -2640,7 +2640,7 @@ class Worker(object):
 						if not silent:
 							result = Warning(lang.getstr("error.autostart_creation", 
 													     autostart) + "\n\n" + 
-										     safe_unicode(exception.args[0]))
+										     safe_unicode(exception))
 						# Now try user scope
 				else:
 					if not silent:
@@ -2663,7 +2663,7 @@ class Worker(object):
 			if not silent:
 				result = Warning(lang.getstr("error.autostart_creation", 
 										     autostart_home) + "\n\n" + 
-							     safe_unicode(exception.args[0]))
+							     safe_unicode(exception))
 		return result
 	
 	def _uninstall_profile_loader_win32(self):
@@ -4024,7 +4024,7 @@ class Worker(object):
 		except CGATS.CGATSInvalidError, exception:
 			raise ValueError(lang.getstr("error.testchart.invalid", 
 										 ti3_filename) + "\n" +
-										 lang.getstr(exception.args[0]))
+										 lang.getstr(safe_str(exception)))
 		except CGATS.CGATSKeyError:
 			try:
 				ti3v = verify_cgats(ti3, ("XYZ_X", "XYZ_Y", "XYZ_Z"), True)
