@@ -511,7 +511,6 @@ defaults = {
 	"profile_loader.error.show_msg": 1,
 	"profile_loader.verify_calibration": 0,
 	"recent_cals": "",
-	"recent_cals_max": 15,
 	"report.pack_js": 1,
 	"settings.changed": 0,
 	"show_advanced_calibration_options": 0,

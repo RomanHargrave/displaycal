@@ -368,7 +368,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 
 
 def colorimeter_correction_check_overwrite(parent=None, cgats=None):
-	result = check_create_dir(getcfg("color.dir"))
+	result = check_create_dir(defaults["color.dir"])
 	if isinstance(result, Exception):
 		show_result_dialog(result, parent)
 		return
@@ -379,7 +379,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 							   lang.getstr("unnamed"), "UTF-8")
 	name = re.sub(r"[\\/:*?\"<>|]+", "_", 
 				  make_argyll_compatible_path(description))[:255]
-	path = os.path.join(getcfg("color.dir"), 
+	path = os.path.join(defaults["color.dir"], 
 						"%s.%s" % (name, cgats[:7].strip().lower()))
 	if os.path.isfile(path):
 		dlg = ConfirmDialog(parent,
@@ -2233,19 +2233,25 @@ class MainFrame(BaseFrame):
 			"3dlut.format",
 			"3dlut.input.profile",
 			"3dlut.output.profile",
+			"3dlut.output.profile.apply_cal",
 			"3dlut.rendering_intent",
 			"3dlut.size",
+			"allow_skip_sensor_cal",
 			"argyll.dir",
 			"calibration.black_point_rate.enabled",
+			"color.dir",
 			"comport.number",
 			"display.number",
 			"display_lut.link",
 			"display_lut.number",
+			"displays",
+			"enumerate_ports.auto",
 			##"extra_args.colprof",
 			##"extra_args.dispcal",
 			##"extra_args.dispread",
 			##"extra_args.spotread",
 			"gamma",
+			"instruments",
 			"lang",
 			"last_3dlut_path",
 			"last_cal_path",
@@ -2254,14 +2260,22 @@ class MainFrame(BaseFrame):
 			"last_icc_path",
 			"last_ti1_path",
 			"last_ti3_path",
+			"log.autoshow",
 			"log.show",
 			"lut_viewer.show",
+			"lut_viewer.show_actual_lut",
 			"measurement_mode",
 			"measurement_mode.adaptive",
 			"measurement_mode.highres",
 			"measurement_mode.projector",
+			"measurement.play_sound",
+			"measurement.save_path",
+			"profile.install_scope",
+			"profile.load_on_login",
 			"profile.name",
 			"profile.save_path",
+			"profile_loader.error.show_msg",
+			"profile_loader.verify_calibration",
 			"position.x",
 			"position.y",
 			"position.info.x",
@@ -2273,7 +2287,11 @@ class MainFrame(BaseFrame):
 			"position.tcgen.x",
 			"position.tcgen.y",
 			"recent_cals",
-			"tc_precond_profile"
+			"report.pack_js",
+			"skip_legacy_serial_ports",
+			"sudo.preserve_environment",
+			"tc_precond_profile",
+			"update_check"
 		]
 		override = {
 			"calibration.black_luminance": None,
@@ -6100,11 +6118,10 @@ class MainFrame(BaseFrame):
 		else:
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-			ccmx_default = getcfg("color.dir")
 			defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction_matrix_file.choose"), 
-								defaultDir=defaultDir if defaultFile else ccmx_default, 
+								defaultDir=defaultDir if defaultFile else defaults["color.dir"], 
 								defaultFile=defaultFile,
 								wildcard=lang.getstr("filetype.ccmx") + 
 										 "|*.ccmx;*.ccss", 
@@ -6435,7 +6452,7 @@ class MainFrame(BaseFrame):
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "MANUFACTURER"\nMANUFACTURER "%s"\\1' %
 							   safe_str(manufacturer, "UTF-8"), cgats)
-			result = check_create_dir(getcfg("color.dir"))
+			result = check_create_dir(defaults["color.dir"])
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
@@ -6607,7 +6624,7 @@ class MainFrame(BaseFrame):
 						type = "xrite"
 			if type == ".txt":
 				# Assume iColorDisplay DeviceCorrections.txt
-				ccmx_dir = getcfg("color.dir")
+				ccmx_dir = defaults["color.dir"]
 				if not os.path.exists(ccmx_dir):
 					result = check_create_dir(ccmx_dir)
 					if isinstance(result, Exception):
