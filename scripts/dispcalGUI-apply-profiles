@@ -58,6 +58,8 @@ def apply_profiles():
 		# gcm-apply sets the _ICC_PROFILE root window atom for the first screen, 
 		# per-output xrandr _ICC_PROFILE properties (if xrandr is working) and 
 		# loads the vcgt for all configured screens (device-profiles.conf)
+		# NOTE: gcm-apply is no longer part of GNOME Color Manager since the 
+		# introduction of colord as it's no longer needed
 		gcm_apply = which("gcm-apply")
 		if gcm_apply:
 			worker.exec_cmd(gcm_apply, capture_output=True, skip_scripts=True,
@@ -67,19 +69,22 @@ def apply_profiles():
 		# db backend) and loads the vcgt for all configured screens when 
 		# xcalib is installed
 		oyranos_monitor = which("oyranos-monitor")
+		xcalib = which("xcalib")
 
 	for i, display in enumerate([display.replace("[PRIMARY]", 
 												 lang.getstr("display.primary")) 
 								 for display in worker.displays]):
 		# Load profile and set vcgt
-		if (sys.platform != "win32" and oyranos_monitor and 
-			worker.check_display_conf_oy_compat(i + 1)):
-			worker.exec_cmd(oyranos_monitor, 
-							["-x", str(worker.display_rects[i][0]), 
-							 "-y", str(worker.display_rects[i][1])], 
-							capture_output=True, skip_scripts=True, 
-							silent=False)
-		if dispwin:
+		if sys.platform != "win32" and oyranos_monitor:
+			display_conf_oy_compat = worker.check_display_conf_oy_compat(i + 1)
+			if display_conf_oy_compat:
+				worker.exec_cmd(oyranos_monitor, 
+								["-x", str(worker.display_rects[i][0]), 
+								 "-y", str(worker.display_rects[i][1])], 
+								capture_output=True, skip_scripts=True, 
+								silent=False)
+		if dispwin and (sys.platform == "win32" or not oyranos_monitor or
+						not display_conf_oy_compat or not xcalib):
 			profile_arg = worker.get_dispwin_display_profile_argument(i)
 			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
 									  profile_arg], 
