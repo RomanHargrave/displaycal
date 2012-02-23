@@ -1058,30 +1058,37 @@ class LUT3DFrame(BaseFrame):
 		setcfg("3dlut.size", int(self.lut3d_size_ctrl.GetSelection()))
 	
 	def output_profile_ctrl_handler(self, event):
-		self.set_profile("output")
+		self.set_profile("output", silent=not event)
 	
 	def output_profile_current_ctrl_handler(self, event):
 		if self.Parent.is_profile():
 			self.output_profile_ctrl.SetPath(getcfg("calibration.file"))
-			self.set_profile("output")
+			self.set_profile("output", silent=not event)
 	
 	def rendering_intent_ctrl_handler(self, event):
 		setcfg("3dlut.rendering_intent",
 			   int(self.rendering_intent_ctrl.GetSelection()))
 	
-	def set_profile(self, which):
+	def set_profile(self, which, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
 		if which == "output":
 			self.output_profile_current_btn.Enable(self.Parent.is_profile() and
 												   getcfg("calibration.file") != path)
 		if path:
+			if not os.path.isfile(path):
+				if not silent:
+					show_result_dialog(Error(lang.getstr("file.missing", path)),
+									   parent=self)
+				return
 			try:
 				profile = ICCP.ICCProfile(path)
 			except ICCP.ICCProfileInvalidError:
-				show_result_dialog(Error(lang.getstr("profile.invalid")),
-								   parent=self)
+				if not silent:
+					show_result_dialog(Error(lang.getstr("profile.invalid")),
+									   parent=self)
 			except IOError, exception:
-				show_result_dialog(exception, parent=self)
+				if not silent:
+					show_result_dialog(exception, parent=self)
 			else:
 				if (profile.profileClass != "mntr" or 
 					profile.colorSpace != "RGB"):
@@ -1097,7 +1104,9 @@ class LUT3DFrame(BaseFrame):
 						self.apply_cal_cb.Enable("vcgt" in profile.tags)
 					setcfg("3dlut.%s.profile" % which, profile.fileName)
 					self.lut3d_create_btn.Enable(bool(getcfg("3dlut.input.profile")) and
-												 bool(getcfg("3dlut.output.profile")))
+												 os.path.isfile(getcfg("3dlut.input.profile")) and
+												 bool(getcfg("3dlut.output.profile")) and
+												 os.path.isfile(getcfg("3dlut.output.profile")))
 					self.update_layout()
 					return profile
 			getattr(self, "%s_profile_ctrl" %
@@ -1140,6 +1149,7 @@ class LUT3DFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
+		self.lut3d_create_btn.Disable()
 		self.input_profile_ctrl.SetPath(getcfg("3dlut.input.profile"))
 		self.input_profile_ctrl_handler(None)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
