@@ -40,6 +40,13 @@ def _get_icm_display_device_key(device):
 	return _winreg.CreateKey(_winreg.HKEY_CURRENT_USER, subkey)
 
 
+def _get_mscms_dll_handle():
+	try:
+		return ctypes.windll.mscms
+	except WindowsError:
+		return None
+
+
 def calibration_management_isenabled():
 	""" Check if calibration is enabled under Windows 7 """
 	if sys.getwindowsversion() < (6, 1):
@@ -53,8 +60,9 @@ def calibration_management_isenabled():
 		return bool(_winreg.QueryValueEx(key, "CalibrationManagementEnabled")[0])
 	else:
 		# Using ctypes
+		mscms = _get_mscms_dll_handle()
 		pbool = ctypes.pointer(ctypes.c_bool())
-		if not ctypes.windll.mscms.WcsGetCalibrationManagementState(pbool):
+		if not mscms or not mscms.WcsGetCalibrationManagementState(pbool):
 			return
 		return bool(pbool.contents)
 
@@ -84,7 +92,10 @@ def enable_calibration_management(enable=True):
 						   _winreg.REG_DWORD, int(enable))
 	else:
 		# Using ctypes (must be called with elevated permissions)
-		if not ctypes.windll.mscms.WcsSetCalibrationManagementState(enable):
+		mscms = _get_mscms_dll_handle()
+		if not mscms:
+			return False
+		if not mscms.WcsSetCalibrationManagementState(enable):
 			raise get_windows_error(ctypes.windll.kernel32.GetLastError())
 		return True
 
@@ -104,7 +115,10 @@ def enable_per_user_profiles(enable=True, display_no=0):
 							   _winreg.REG_DWORD, int(enable))
 		else:
 			# Using ctypes
-			if not ctypes.windll.mscms.WcsSetUsePerUserProfiles(unicode(device.DeviceID),
+			mscms = _get_mscms_dll_handle()
+			if not mscms:
+				return False
+			if not mscms.WcsSetUsePerUserProfiles(unicode(device.DeviceID),
 																CLASS_MONITOR,
 																enable):
 				raise get_windows_error(ctypes.windll.kernel32.GetLastError())
@@ -181,8 +195,9 @@ def per_user_profiles_isenabled(display_no=0):
 			return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
 		else:
 			# Using ctypes
+			mscms = _get_mscms_dll_handle()
 			pbool = ctypes.pointer(ctypes.c_bool())
-			if not ctypes.windll.mscms.WcsGetUsePerUserProfiles(unicode(device.DeviceID),
+			if not mscms or not mscms.WcsGetUsePerUserProfiles(unicode(device.DeviceID),
 																CLASS_MONITOR,
 																pbool):
 				return
