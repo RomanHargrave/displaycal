@@ -188,6 +188,7 @@
 	"measurement.play_sound": "Akustische Rückmeldung bei fortlaufender Messung",
 	"enable_argyll_debug": "Argyll CMS Debugging-Ausgabe aktivieren",
 	"enumerating_displays_and_comports": "Anzeigegeräte- und Messgeräte-Erkennung...",
+	"enumerate_ports.auto": "Automatische Messgeräte-Erkennung",
 	"error": "Fehler",
 	"error.autostart_creation": "Der Autostart-Eintrag für %s, um die Kalibrierungskurven bei der Anmeldung zu laden, konnte nicht angelegt werden.",
 	"error.autostart_remove_old": "Der alte Autostart-Eintrag, welcher Kalibrierungskurven bei der Anmeldung lädt, konnte nicht entfernt werden: %s",

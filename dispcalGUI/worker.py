@@ -1291,9 +1291,10 @@ class Worker(object):
 							 safe_str(exception))
 		return self.tempdir
 
-	def enumerate_displays_and_ports(self, silent=False, check_lut_access=True):
+	def enumerate_displays_and_ports(self, silent=False, check_lut_access=True,
+									 enumerate_ports=True):
 		"""
-		Run Argyll dispcal to enumerate the available displays and ports.
+		Enumerate the available displays and ports.
 		
 		Also sets Argyll version number, availability of certain options
 		like black point rate, and checks LUT access for each display.
@@ -1302,7 +1303,6 @@ class Worker(object):
 		if (silent and check_argyll_bin()) or (not silent and 
 											   check_set_argyll_bin()):
 			displays = []
-			instruments = []
 			lut_access = []
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
@@ -1310,7 +1310,12 @@ class Worker(object):
 			   wx.GetApp().progress_dlg.IsShownOnScreen():
 				wx.GetApp().progress_dlg.Pulse(
 					lang.getstr("enumerating_displays_and_comports"))
-			cmd = get_argyll_util("dispcal") or get_argyll_util("dispwin")
+			if enumerate_ports:
+				cmd = get_argyll_util("dispcal")
+				instruments = []
+			else:
+				cmd = get_argyll_util("dispwin")
+				instruments = getcfg("instruments").split(os.pathsep)
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
 				self.argyll_bin_dir = argyll_bin_dir
@@ -1498,7 +1503,7 @@ class Worker(object):
 							wx.GetApp().progress_dlg.Pulse(
 								lang.getstr("success" if retcode == 0 else
 											"failure"))
-					self.lut_access = lut_access
+				self.lut_access = lut_access
 		elif silent or not check_argyll_bin():
 			self.clear_argyll_info()
 

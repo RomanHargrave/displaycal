@@ -1195,7 +1195,7 @@ class MainFrame(BaseFrame):
 		wx.GetApp().progress_dlg.Pulse()
 		self.worker = Worker(None)
 		wx.GetApp().progress_dlg.Pulse()
-		self.worker.enumerate_displays_and_ports()
+		self.worker.enumerate_displays_and_ports(enumerate_ports=getcfg("enumerate_ports.auto"))
 		wx.GetApp().progress_dlg.Pulse()
 		
 		# Initialize GUI
@@ -1752,6 +1752,10 @@ class MainFrame(BaseFrame):
 		menuitem = options.FindItemById(
 			options.FindItem("detect_displays_and_ports"))
 		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
+		self.menuitem_auto_enumerate_ports = options.FindItemById(
+			options.FindItem("enumerate_ports.auto"))
+		self.Bind(wx.EVT_MENU, self.auto_enumerate_ports_handler, 
+				  self.menuitem_auto_enumerate_ports) 
 		self.menuitem_use_separate_lut_access = options.FindItemById(
 			options.FindItem("use_separate_lut_access"))
 		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
@@ -1901,6 +1905,9 @@ class MainFrame(BaseFrame):
 			bool(self.worker.displays))
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays))
+		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
+		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
+												  [0, 0, 0])
 		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
@@ -1969,6 +1976,9 @@ class MainFrame(BaseFrame):
 				  id=self.comport_ctrl.GetId())
 		self.Bind(wx.EVT_COMBOBOX, self.measurement_mode_ctrl_handler, 
 				  id=self.measurement_mode_ctrl.GetId())
+		self.detect_displays_and_ports_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.Bind(wx.EVT_BUTTON, self.check_update_controls, 
+				  id=self.detect_displays_and_ports_btn.GetId())
 		
 		# Colorimeter correction matrix
 		self.Bind(wx.EVT_COMBOBOX, self.colorimeter_correction_matrix_handler, 
@@ -7736,14 +7746,25 @@ class MainFrame(BaseFrame):
 		argyll_version = list(self.worker.argyll_version)
 		displays = list(self.worker.displays)
 		comports = list(self.worker.instruments)
+		if event:
+			# Explicitly called from menu
+			enumerate_ports = True
+		else:
+			# Use configured value
+			enumerate_ports = getcfg("enumerate_ports.auto")
+		if not enumerate_ports:
+			return False
 		if False: ##silent:
 			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
 													self.worker.enumerate_displays_and_ports, 
 													cargs=(argyll_bin_dir, argyll_version, 
 														   displays, comports), 
-													wargs=(silent, ))
+													wargs=(silent, ),
+													wkwargs={"enumerate_ports":
+															 enumerate_ports})
 		else:
-			self.worker.enumerate_displays_and_ports(silent)
+			self.worker.enumerate_displays_and_ports(silent,
+													 enumerate_ports=enumerate_ports)
 			return self.check_update_controls_consumer(True, argyll_bin_dir,
 													   argyll_version, displays, 
 													   comports)
@@ -8469,6 +8490,10 @@ class MainFrame(BaseFrame):
 	def app_auto_update_check_handler(self, event):
 		setcfg("update_check", 
 			   int(self.menuitem_app_auto_update_check.IsChecked()))
+
+	def auto_enumerate_ports_handler(self, event):
+		setcfg("enumerate_ports.auto", 
+			   int(self.menuitem_auto_enumerate_ports.IsChecked()))
 
 	def infoframe_toggle_handler(self, event=None, show=None):
 		if show is None:

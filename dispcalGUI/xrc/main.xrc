@@ -140,7 +140,7 @@
                               </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
-                            <flag>wxTOP|wxBOTTOM|wxRIGHT|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -193,8 +193,17 @@
                                   <tooltip>display_lut.link</tooltip>
                                   <style>wxNO_BORDER</style>
                                 </object>
-                                <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                 <border>3</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxBitmapButton" name="detect_displays_and_ports_btn">
+                                  <bitmap>../theme/icons/16x16/stock_refresh.png</bitmap>
+                                  <tooltip>detect_displays_and_ports</tooltip>
+                                  <style>wxNO_BORDER</style>
+                                </object>
+                                <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>12</border>
                               </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
@@ -204,24 +213,19 @@
                           <orient>wxVERTICAL</orient>
                         </object>
                         <option>1</option>
-                        <flag>wxBOTTOM|wxEXPAND</flag>
+                        <flag>wxBOTTOM|wxRIGHT|wxEXPAND</flag>
                         <border>2</border>
                       </object>
+                      
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
-                                <object class="wxStaticLine">
-                                  <size>8,-1</size>
-                                </object>
-                                <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                              </object>
-                              <object class="sizeritem">
                                 <object class="wxStaticText" name="instrument_box_label">
                                   <label>instrument</label>
                                 </object>
-                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                 <border>2</border>
                               </object>
                               <object class="sizeritem">
@@ -232,7 +236,7 @@
                               </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
-                            <flag>wxTOP|wxBOTTOM|wxLEFT|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -286,13 +290,13 @@
                                   <growablecols>0</growablecols>
                                 </object>
                                 <option>1</option>
-                                <flag>wxALL</flag>
+                                <flag>wxTOP|wxBOTTOM|wxRIGHT</flag>
                                 <border>4</border>
                               </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
                             <option>1</option>
-                            <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+                            <flag>wxRIGHT|wxEXPAND</flag>
                             <border>14</border>
                           </object>
                           <orient>wxVERTICAL</orient>

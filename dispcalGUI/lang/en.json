@@ -188,6 +188,7 @@
 	"measurement.play_sound": "Acoustic feedback on continuous measurements",
 	"enable_argyll_debug": "Enable Argyll CMS debugging output",
 	"enumerating_displays_and_comports": "Enumerating display devices and communication ports...",
+	"enumerate_ports.auto": "Automatically detect instruments",
 	"error": "Error",
 	"error.autostart_creation": "Creation of the autostart entry for %s to load the calibration curves on login has failed.",
 	"error.autostart_remove_old": "The old autostart entry which loads calibration curves on login could not be removed: %s",
