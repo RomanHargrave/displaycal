@@ -67,7 +67,7 @@
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <cols>2</cols>
-                <rows>1</rows>
+                <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
               </object>
@@ -103,7 +103,7 @@
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <cols>2</cols>
-                <rows>3</rows>
+                <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
               </object>
@@ -126,7 +126,7 @@
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <cols>2</cols>
-                <rows>3</rows>
+                <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
               </object>
