@@ -952,11 +952,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 		event.Skip()
 
 	def Pulse(self, msg=""):
-		self.lastmsg = msg
-		if (msg in (lang.getstr("instrument.initializing"),
-					lang.getstr("instrument.calibrating"),
-					lang.getstr("please_wait")) or msg == " " * 4 or
-			"error" in msg.lower() or "failed" in msg.lower()):
+		if ((msg in (lang.getstr("instrument.initializing"),
+					 lang.getstr("instrument.calibrating"),
+					 lang.getstr("please_wait")) or msg == " " * 4 or
+			 "error" in msg.lower() or "failed" in msg.lower()) and
+			msg != self.lastmsg):
+			self.lastmsg = msg
 			self.Freeze()
 			for txt in self.lb.GetCurrentPage().txt.itervalues():
 				txt.checkmark.GetContainingSizer().Hide(txt.checkmark)
