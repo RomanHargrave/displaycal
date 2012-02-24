@@ -31,6 +31,7 @@ BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
 BORDERCOLOUR = wx.Colour(0x22, 0x22, 0x22)
 FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 
+CRT = True
 
 def get_panel(parent, size=wx.DefaultSize):
 	panel = wx.Panel(parent, wx.ID_ANY, size=size)
@@ -686,7 +687,7 @@ class DisplayAdjustmentPanel(wx.Panel):
 	
 	def add_txt(self, name, spacer=None, border=8):
 		checkmark = wx.StaticBitmap(self, wx.ID_ANY,
-								 getbitmap("theme/icons/16x16/checkmark"))
+								    getbitmap("theme/icons/16x16/checkmark"))
 		txtsizer = wx.BoxSizer(wx.HORIZONTAL)
 		if spacer:
 			self.sizer.Add(spacer, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
@@ -707,6 +708,7 @@ class DisplayAdjustmentPanel(wx.Panel):
 		self.txt[name].SetForegroundColour(BGCOLOUR)
 		self.txt[name].SetMaxFontSize(10)
 		self.txt[name].checkmark = checkmark
+		self.txt[name].spacer = spacer
 		txtsizer.Add(self.txt[name])
 		self.txt[name].Fit()
 		self.txt[name].SetMinSize((self.txt[name].GetSize()[0],
@@ -743,7 +745,6 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.lb = DisplayAdjustmentFlatImageBook(self,
 												 agwStyle=INB_LEFT |
 														  INB_SHOW_ONLY_IMAGES)
-		self._assign_image_list()
 		self.lb.SetBackgroundColour(BGCOLOUR)
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		self.add_panel((12, 12), flag=wx.EXPAND)
@@ -980,8 +981,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 
 	def _assign_image_list(self):
 		imagelist = wx.ImageList(72, 72)
+		modes = {CRT: {"black_luminance": "luminance",
+					   "luminance": "contrast"}}
 		for img in ("black_luminance", "white_point", "luminance",
 					"black_point", "check_all"):
+			img = modes.get(getcfg("measurement_mode") == "c",
+							{}).get(img, img)
 			bmp = getbitmap("theme/icons/72x72/%s" % img)
 			imagelist.Add(bmp)
 		self.lb.AssignImageList(imagelist)
@@ -993,6 +998,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.keepGoing = True
 		self.lastmsg = ""
 		self.target_br = None
+		self._assign_image_list()
 		if getcfg("measurement_mode") == "c":
 			self.lb.disabled_pages = tuple()
 			self.lb.SetSelection(0)
@@ -1025,6 +1031,22 @@ class DisplayAdjustmentFrame(wx.Frame):
 			page.SetSize((w, -1))
 			page.desc.SetLabel(page.desc.GetLabel().replace("\n", " "))
 			page.desc.Wrap(w)
+			bitmaps = {"black_level": {CRT: "luminance",
+									   not CRT: "black_level"},
+					   "luminance": {CRT: "contrast",
+								  	 not CRT: "luminance"}}
+			if page.ctrltype == "check_all":
+				for name in bitmaps:
+					bitmap = bitmaps.get(name).get(getcfg("measurement_mode") == "c")
+					page.txt[name].spacer.SetBitmap(getbitmap("theme/icons/16x16/" +
+															  bitmap))
+			else:
+				ctrltype = {"rgb_offset": "black_level",
+							"rgb_gain": "luminance"}.get(page.ctrltype,
+														 page.ctrltype)
+				bitmap = bitmaps.get(ctrltype).get(getcfg("measurement_mode") == "c")
+				page.gauges["L"].label.SetBitmap(getbitmap("theme/icons/16x16/" +
+														   bitmap))
 			page.Fit()
 			page.Layout()
 			for txt in page.txt.itervalues():
