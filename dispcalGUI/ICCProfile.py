@@ -733,11 +733,19 @@ class CurveType(ICCProfileTag, list):
 		"""
 		Set the response to a certain function.
 		
-		Positive power, or -1.9 = Rec. 709, -2.2 = sRGB, -3.0 = L*
+		Positive power, or -2.4 = sRGB, -3.0 = L*, -240 = SMPTE 240M,
+		-601 = Rec. 601, -709 = Rec. 709 (Rec. 601 and 709 transfer functions are
+		identical)
 		
 		"""
-		if size is None:
-			size = len(self)
+		if not size:
+			size = len(self) or 1024
+		if size == 1:
+			if power >= 0.0:
+				self[0] = power
+				return
+			else:
+				size = 1024
 		self[:] = []
 		for i in xrange(0, size):
 			self.append(int(round(colormath.specialpow(float(i) / (size - 1), power) * 65535.0)))

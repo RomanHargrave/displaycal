@@ -3,6 +3,20 @@
 
 import math
 
+
+def get_transfer_function_phi(alpha, gamma):
+	return (math.pow(1 + alpha, gamma) * math.pow(gamma - 1, gamma - 1)) / (math.pow(alpha, gamma - 1) * math.pow(gamma, gamma))
+
+
+LSTAR_E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
+LSTAR_K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
+REC709_K0 = 0.081  ##0.099 / (1.0 / 0.45 - 1)
+REC709_P = 4.5  ##get_transfer_function_phi(0.099, 1.0 / 0.45)
+SMPTE240M_K0 = 0.0913  ##0.1115 / (1.0 / 0.45 - 1)
+SMPTE240M_P = 4.0  ##get_transfer_function_phi(0.1115, 1.0 / 0.45)
+SRGB_K0 = 0.04045  ##0.055 / (2.4 - 1)
+SRGB_P = 12.92  ##get_transfer_function_phi(0.055, 2.4)
+
 standard_illuminants = {
 	# 1st level is the standard name => illuminant definitions
 	# 2nd level is the illuminant name => CIE XYZ coordinates
@@ -30,9 +44,11 @@ standard_illuminants = {
 
 def specialpow(a, b):
 	"""
-	Wrapper for power, Rec. 709, sRGB and L* functions
+	Wrapper for power, Rec. 601/709, SMPTE 240M, sRGB and L* functions
 	
-	Positive b = power, -1.9 = Rec. 709, -2.2 = sRGB, -3.0 = L*
+	Positive b = power, -2.4 = sRGB, -3.0 = L*, -240 = SMPTE 240M,
+	-601 = Rec. 601, -709 = Rec. 709 (Rec. 601 and 709 transfer functions are
+	identical)
 	
 	"""
 	if b >= 0.0:
@@ -46,44 +62,56 @@ def specialpow(a, b):
 		a = -a
 	else:
 		signScale = 1.0
-	K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
-	if b >= -0.4:
-		# XYZ -> RGB, L* TRC
-		E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
-		if a <= E:
-			v = 0.01 * a * K
-		else:
-			v = 1.16 * math.pow(a, 1.0 / 3.0) - 0.16
-	elif b >= -0.5:
-		# XYZ -> RGB, sRGB TRC
-		if a <= 0.04045 / 12.92:
-			v = a * 12.92
-		else:
-			v = 1.055 * math.pow(a, 1.0 / 2.4) - 0.055
-	elif b >= -1.0:
-		# XYZ -> RGB, Rec. 709 TRC
-		if a < 0.018:
-			v = a * 4.5
+	if b in (1.0 / -601, 1.0 / -709):
+		# XYZ -> RGB, Rec. 601/709 TRC
+		if a < REC709_K0 / REC709_P:
+			v = a * REC709_P
 		else:
 			v = 1.099 * math.pow(a, 0.45) - 0.099
-	elif b >= -1.9:
-		# RGB -> XYZ, Rec. 709 TRC
-		if a < 0.018 * 4.5:
-			v = a / 4.5
+	elif b == 1.0 / -240:
+		# XYZ -> RGB, SMPTE 240M TRC
+		if a < SMPTE240M_K0 / SMPTE240M_P:
+			v = a * SMPTE240M_P
 		else:
-			v = math.pow((a + .099) / 1.099, 1.0 / 0.45)
-	elif b >= -2.6:
+			v = 1.1115 * math.pow(a, 0.45) - 0.1115
+	elif b == 1.0 / -3.0:
+		# XYZ -> RGB, L* TRC
+		if a <= LSTAR_E:
+			v = 0.01 * a * LSTAR_K
+		else:
+			v = 1.16 * math.pow(a, 1.0 / 3.0) - 0.16
+	elif b == 1.0 / -2.4:
+		# XYZ -> RGB, sRGB TRC
+		if a <= SRGB_K0 / SRGB_P:
+			v = a * SRGB_P
+		else:
+			v = 1.055 * math.pow(a, 1.0 / 2.4) - 0.055
+	elif b == -2.4:
 		# RGB -> XYZ, sRGB TRC
-		if a <= 0.04045:
-			v = a / 12.92
+		if a <= SRGB_K0:
+			v = a / SRGB_P
 		else:
 			v = math.pow((a + 0.055) / 1.055, 2.4)
-	else:
+	elif b == -3.0:
 		# RGB -> XYZ, L* TRC
-		if a <= 0.08:
-			v = 100.0 * a / K
+		if a <= 0.08:  # E * K * 0.01
+			v = 100.0 * a / LSTAR_K
 		else:
 			v = math.pow((a + 0.16) / 1.16, 3.0)
+	elif b == -240:
+		# RGB -> XYZ, SMPTE 240M TRC
+		if a < SMPTE240M_K0:
+			v = a / SMPTE240M_P
+		else:
+			v = math.pow((0.1115 + a) / 1.1115, 1.0 / 0.45)
+	elif b in (-601, -709):
+		# RGB -> XYZ, Rec. 601/709 TRC
+		if a < REC709_K0:
+			v = a / REC709_P
+		else:
+			v = math.pow((a + .099) / 1.099, 1.0 / 0.45)
+	else:
+		raise ValueError("Invalid gamma %s" % b)
 	return v * signScale
 
 
@@ -106,8 +134,10 @@ rgb_spaces = {
 	"NTSC RGB":         (2.2,  "C",   (0.6700, 0.3300, 0.298839), (0.2100, 0.7100, 0.586811), (0.1400, 0.0800, 0.114350)),
 	"PAL/SECAM RGB":    (2.2,  "D65", (0.6400, 0.3300, 0.222021), (0.2900, 0.6000, 0.706645), (0.1500, 0.0600, 0.071334)),
 	"ProPhoto RGB":     (1.8,  "D50", (0.7347, 0.2653, 0.288040), (0.1596, 0.8404, 0.711874), (0.0366, 0.0001, 0.000086)),
+	"Rec. 709 RGB":     (-709, "D65", (0.6400, 0.3300, 0.212656), (0.3000, 0.6000, 0.715158), (0.1500, 0.0600, 0.072186)),
 	"SMPTE-C RGB":      (2.2,  "D65", (0.6300, 0.3400, 0.212395), (0.3100, 0.5950, 0.701049), (0.1550, 0.0700, 0.086556)),
-	"sRGB":             (-2.2, "D65", (0.6400, 0.3300, 0.212656), (0.3000, 0.6000, 0.715158), (0.1500, 0.0600, 0.072186)),
+	"SMPTE 240M RGB":   (-240, "D65", (0.6300, 0.3400, 0.212395), (0.3100, 0.5950, 0.701049), (0.1550, 0.0700, 0.086556)),
+	"sRGB":             (-2.4, "D65", (0.6400, 0.3300, 0.212656), (0.3000, 0.6000, 0.715158), (0.1500, 0.0600, 0.072186)),
 	"Wide Gamut RGB":   (2.2,  "D50", (0.7350, 0.2650, 0.258187), (0.1150, 0.8260, 0.724938), (0.1570, 0.0180, 0.016875))
 }
 
@@ -334,23 +364,20 @@ def Lab2XYZ(L, a, b, whitepoint=None, scale=1.0):
 	fx = a / 500.0 + fy
 	fz = fy - b / 200.0
 	
-	E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
-	K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
-	
-	if math.pow(fx, 3.0) > E:
+	if math.pow(fx, 3.0) > LSTAR_E:
 		xr = math.pow(fx, 3.0)
 	else:
-		xr = (116.0 * fx - 16) / K
+		xr = (116.0 * fx - 16) / LSTAR_K
 	
-	if L > K * E:
+	if L > LSTAR_K * LSTAR_E:
 		yr = math.pow((L + 16) / 116.0, 3.0)
 	else:
-		yr = L / K
+		yr = L / LSTAR_K
 	
-	if math.pow(fz, 3.0) > E:
+	if math.pow(fz, 3.0) > LSTAR_E:
 		zr = math.pow(fz, 3.0)
 	else:
-		zr = (116.0 * fz - 16) / K
+		zr = (116.0 * fz - 16) / LSTAR_K
 	
 	Xr, Yr, Zr = get_whitepoint(whitepoint, scale)
 	
@@ -678,14 +705,12 @@ def XYZ2Lab(X, Y, Z, whitepoint=None):
 	"""
 	Xr, Yr, Zr = get_whitepoint(whitepoint, 100)
 
-	E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
-	K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
 	xr = X / Xr
 	yr = Y / Yr
 	zr = Z / Zr
-	fx = cbrt(xr) if xr > E else (K * xr + 16) / 116.0
-	fy = cbrt(yr) if yr > E else (K * yr + 16) / 116.0
-	fz = cbrt(zr) if zr > E else (K * zr + 16) / 116.0
+	fx = cbrt(xr) if xr > LSTAR_E else (LSTAR_K * xr + 16) / 116.0
+	fy = cbrt(yr) if yr > LSTAR_E else (LSTAR_K * yr + 16) / 116.0
+	fz = cbrt(zr) if zr > LSTAR_E else (LSTAR_K * zr + 16) / 116.0
 	L = 116 * fy - 16
 	a = 500 * (fx - fy)
 	b = 200 * (fy - fz)
