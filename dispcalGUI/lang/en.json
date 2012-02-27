@@ -270,6 +270,8 @@
 	"gamap.viewconds.pcd": "Photo CD - original scene outdoors",
 	"gamap.viewconds.ob": "Original scene - Bright Outdoors",
 	"gamap.viewconds.cx": "Cut Sheet Transparencies on a viewing box",
+	"gamut.coverage": "Gamut coverage",
+	"gamut.view.create": "Generating gamut views...",
 	"glossy": "Glossy",
 	"go_to_website": "Go to Website",
 	"grayscale": "grayscale",

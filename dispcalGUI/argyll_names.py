@@ -9,12 +9,14 @@ names = [
 	"dispread",
 	"colprof",
 	"dispwin",
+	"iccgamut",
 	"xicclu",
 	"spotread",
 	"spyd2en",
 	"targen",
 	"txt2ti3",
-	"i1d3ccss"
+	"i1d3ccss",
+	"viewgam"
 ]
 
 # Argyll CMS tools optionally used by dispcalGUI

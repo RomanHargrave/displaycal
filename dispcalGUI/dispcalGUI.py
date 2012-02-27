@@ -4056,6 +4056,31 @@ class MainFrame(BaseFrame):
 				chrm = ICCP.ChromaticityType(blob.read())
 		else:
 			chrm = None
+		coverage_percent = {}
+		if getcfg("profile.create_gamut_views"):
+			safe_print("-" * 80)
+			safe_print(lang.getstr("gamut.view.create"))
+			self.worker.recent.clear()
+			self.worker.recent.write(lang.getstr("gamut.view.create"))
+			sleep(1)  # Allow time for progress window to update
+			if not isinstance(result, Exception) and result:
+				# Create profile gamut and vrml
+				result = self.worker.exec_cmd(get_argyll_util("iccgamut"),
+											  ["-w", "-ir", args[-1] + profile_ext],
+											  skip_scripts=True)
+			for key, src in (("srgb", "sRGB"), ("adobergb", "ClayRGB1998")):
+				if not isinstance(result, Exception) and result:
+					# Create gamut view and intersection
+					result = self.worker.exec_cmd(get_argyll_util("viewgam"),
+												  ["-cw", "-t.75", "-s",
+												   get_data_path("ref\%s.gam" % src),
+												   "-cn", "-t.25", "-s",
+												   args[-1] + ".gam", "-i",
+												   args[-1] + (" vs %s.wrl" % src)],
+												  capture_output=True,
+												  skip_scripts=True)
+					if len(self.worker.output) > 1:
+						coverage_percent[key] = self.worker.output[1].split()[-1]
 		safe_print("-" * 80)
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
@@ -4137,6 +4162,14 @@ class MainFrame(BaseFrame):
 					profile.tags.meta["ACCURACY_dE76_max"] = peak
 				if rms is not None:
 					profile.tags.meta["ACCURACY_dE76_rms"] = rms
+			if coverage_percent:
+				# Update meta prefix
+				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "GAMUT_").split(",")
+				if not "GAMUT_" in prefixes:
+					prefixes.append("GAMUT_")
+				profile.tags.meta["prefix"] = ",".join(prefixes)
+				for key, percent in coverage_percent.iteritems():
+					profile.tags.meta["GAMUT_coverage_%s" % key] = percent
 			# Set default rendering intent
 			if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
 				(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
@@ -5729,6 +5762,7 @@ class MainFrame(BaseFrame):
 			self.cal = profile_path
 			profile = None
 			filename, ext = os.path.splitext(profile_path)
+			extra = []
 			if ext.lower() in (".icc", ".icm"):
 				has_cal = False
 				try:
@@ -5770,16 +5804,24 @@ class MainFrame(BaseFrame):
 							else:
 								setcfg("calibration.file", profile_path)
 								self.update_controls(update_profile_name=False)
+					if "meta" in profile.tags:
+						for key, name in (("srgb", "sRGB"),
+										  ("adobergb", "AdobeRGB")):
+							coverage_percent = profile.tags.meta.getvalue("GAMUT_coverage_" + key)
+							if coverage_percent:
+								extra.append("%s %s: %s" % (lang.getstr("gamut.coverage"),
+															name, coverage_percent))
 			else:
 				# .cal file
 				has_cal = True
+			extra = "\n".join(extra)
 			# Always load calibration curves
 			self.load_cal(cal=profile_path, silent=True)
 			# Check profile metadata
 			share_profile = None
 			if not self.profile_share_get_meta_error(profile):
 				share_profile = lang.getstr("profile.share")
-			dlg = ConfirmDialog(self, msg=success_msg, 
+			dlg = ConfirmDialog(self, msg="\n\n".join([success_msg, extra]), 
 								title=lang.getstr("profile.install"),
 								ok=lang.getstr("profile.install"), 
 								cancel=lang.getstr("profile.do_not_install"), 
@@ -6023,9 +6065,10 @@ class MainFrame(BaseFrame):
 				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
 														   ".ccmx", ".ccss",
 														   ".cmd", ".command", 
-														   ".icc", ".icm", 
-														   ".sh", ".ti1", 
-														   ".ti3"])
+														   ".gam", ".icc",
+														   ".icm", ".sh",
+														   ".ti1", ".ti3",
+														   ".wrl"])
 			if profile and (profile.is_loaded or not profile.fileName or 
 							os.path.isfile(profile.fileName)):
 				if not self.lut_viewer.profile or \

@@ -143,7 +143,9 @@ resfiles = [
 	"beep.wav",
 	"camera_shutter.wav",
 	"test.cal",
+	"ref/ClayRGB1998.gam",
 	"ref/Rec709.icm",
+	"ref/sRGB.gam",
 	"ref/sRGB.icm",
 	"ref/verify.ti1",
 	"xrc/3dlut.xrc",
@@ -487,6 +489,7 @@ defaults = {
 	"position.tcgen.x": 50,
 	"position.tcgen.y": 50,
 	"profile.black_point_compensation": 1,
+	"profile.create_gamut_views": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
 									 os.geteuid() == 0) # or 
 									# (sys.platform == "win32" and 

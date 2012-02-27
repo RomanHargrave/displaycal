@@ -4235,7 +4235,8 @@ class Worker(object):
 		if copy:
 			if not ext_filter:
 				ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
-							  ".command", ".icc", ".icm", ".sh", ".ti1", ".ti3"]
+							  ".command", ".gam", ".icc", ".icm", ".sh",
+							  ".ti1", ".ti3", ".wrl"]
 			if dst_path is None:
 				dst_path = os.path.join(getcfg("profile.save_path"), 
 										getcfg("profile.name.expanded"), 
@@ -4257,10 +4258,17 @@ class Worker(object):
 						if ext_filter is None or ext.lower() in ext_filter:
 							src = os.path.join(self.tempdir, basename)
 							dst = os.path.splitext(dst_path)[0]
-							if ext.lower() in (".app", script_ext):
-								# Preserve *.<utility>.[app|cmd|sh]
-								dst += os.path.splitext(name)[1]
-							dst += ext
+							if basename.startswith(os.path.basename(dst)):
+								# Use source basename if it starts with dst
+								# basename (sans ext)
+								dst = os.path.join(os.path.dirname(dst),
+												   basename)
+							else:
+								# Use dst basename (sans ext) + source ext
+								if ext.lower() in (".app", script_ext):
+									# Preserve *.<utility>.[app|cmd|sh]
+									dst += os.path.splitext(name)[1]
+								dst += ext
 							if os.path.exists(dst):
 								if os.path.isdir(dst):
 									if verbose >= 2:

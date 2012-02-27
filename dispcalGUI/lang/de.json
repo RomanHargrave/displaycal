@@ -271,6 +271,8 @@
 	"gamap.viewconds.pcd": "Photo CD - Außenaufnahme",
 	"gamap.viewconds.ob": "Außenaufnahme in hellem Licht",
 	"gamap.viewconds.cx": "Dias auf Leuchtkasten",
+	"gamut.coverage": "Farbraumabdeckung",
+	"gamut.view.create": "Generiere Gamut-Ansichten...",
 	"glossy": "Glossy",
 	"go_to_website": "Gehe zur Website",
 	"grayscale": "Graustufen",
