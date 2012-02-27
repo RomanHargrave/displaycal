@@ -239,6 +239,17 @@ class CGATS(dict):
 			return getattr(self, name, default)
 		else:
 			return dict.get(self, name, default)
+	
+	def get_colorants(self):
+		color_rep = (self.queryv1("COLOR_REP") or "").split("_")
+		if len(color_rep) == 2:
+			query = {}
+			colorants = []
+			for i in xrange(len(color_rep[0])):
+				for j, channelname in enumerate(color_rep[0]):
+					query["_".join([color_rep[0], channelname])] = {i: 100}.get(j, 0)
+				colorants.append(self.queryi1(query))
+			return colorants
 
 	def __setattr__(self, name, value):
 		if name == 'modified':

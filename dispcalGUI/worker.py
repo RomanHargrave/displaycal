@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # stdlib
+from __future__ import with_statement
 import getpass
 import math
 import os
@@ -2895,6 +2896,24 @@ class Worker(object):
 		ti3 = add_options_to_ti3(inoutfile + ".ti3", options_dispcal, 
 								 self.options_colprof)
 		if ti3:
+			# Prepare ChromaticityType tag
+			colorants = ti3.get_colorants()
+			if colorants and not None in colorants:
+				color_rep = ti3.queryv1("COLOR_REP").split("_")
+				chrm = ICCP.ChromaticityType()
+				chrm.type = 0
+				for colorant in colorants:
+					if color_rep[1] == "LAB":
+						XYZ = colormath.Lab2XYZ(colorant["LAB_L"],
+												colorant["LAB_A"],
+												colorant["LAB_B"])
+					else:
+						XYZ = (colorant["XYZ_X"], colorant["XYZ_Y"],
+							   colorant["XYZ_Z"])
+					chrm.channels.append(colormath.XYZ2xyY(*XYZ)[:-1])
+				with open(inoutfile + ".chrm", "wb") as blob:
+					blob.write(chrm.tagData)
+			# Black point compensation
 			if getcfg("profile.black_point_compensation"):
 				# Backup TI3
 				ti3.write(inoutfile + ".ti3.backup")

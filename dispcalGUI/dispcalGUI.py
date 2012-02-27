@@ -22,6 +22,7 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, see <http://www.gnu.org/licenses/>
 """
 
+from __future__ import with_statement
 import sys
 
 def _early_excepthook(etype, value, tb):
@@ -4006,7 +4007,7 @@ class MainFrame(BaseFrame):
 
 	def profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None, 
-				display_manufacturer=None, meta=None):
+				display_manufacturer=None, tags=None):
 		safe_print(lang.getstr("create_profile"))
 		if dst_path is None:
 			dst_path = os.path.join(getcfg("profile.save_path"), 
@@ -4049,6 +4050,12 @@ class MainFrame(BaseFrame):
 			ti3_file.close()
 		else:
 			ti3 = None
+		if os.path.isfile(args[-1] + ".chrm"):
+			# Get ChromaticityType tag
+			with open(args[-1] + ".chrm", "rb") as blob:
+				chrm = ICCP.ChromaticityType(blob.read())
+		else:
+			chrm = None
 		safe_print("-" * 80)
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
@@ -4065,6 +4072,9 @@ class MainFrame(BaseFrame):
 				profile.tags.targ = profile.tags.DevD = profile.tags.CIED = ICCP.TextType(
 												"text\0\0\0\0" + ti3 + "\0", 
 												"targ")
+			if chrm:
+				# Add ChromaticityType tag
+				profile.tags.chrm = chrm
 			# Fixup desc tags - ASCII needs to be 7-bit
 			# also add Unicode strings
 			if "desc" in profile.tags and isinstance(profile.tags.desc, 
@@ -4082,10 +4092,11 @@ class MainFrame(BaseFrame):
 				mdesc = profile.getDeviceManufacturerDescription()
 				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
 				profile.tags.dmnd["Unicode"] = mdesc
-			if meta and meta is not True:
-				# Add existing meta information
-				profile.tags.meta = meta
-			elif meta is True:
+			if tags and tags is not True:
+				# Add custom tags
+				for tagname, tag in tags.iteritems():
+					profile.tags[tagname] = tag
+			elif tags is True:
 				edid = self.worker.get_display_edid()
 				if edid:
 					# Add new meta information based on EDID
@@ -4127,7 +4138,8 @@ class MainFrame(BaseFrame):
 				if rms is not None:
 					profile.tags.meta["ACCURACY_dE76_rms"] = rms
 			# Set default rendering intent
-			if getcfg("gamap_perceptual") or getcfg("gamap_saturation"):
+			if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
+				(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
 				profile.intent = getcfg("gamap_default_intent")
 			# Calculate profile ID
 			profile.calculateID()
@@ -5529,7 +5541,7 @@ class MainFrame(BaseFrame):
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
 									   "profiling.incomplete")}, 
-						  wkwargs={"meta": True},
+						  wkwargs={"tags": True},
 						  progress_msg=lang.getstr("create_profile"), 
 						  resume=resume)
 
@@ -6965,7 +6977,7 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			meta = None
+			tags = {}
 			# Get filename and extension of source file
 			source_filename, source_ext = os.path.splitext(path)
 			if source_ext.lower() != ".ti3":
@@ -6987,8 +6999,10 @@ class MainFrame(BaseFrame):
 					return
 				ti3 = StringIO(profile.tags.get("CIED", "") or 
 							   profile.tags.get("targ", ""))
-				# Preserve meta information
-				meta = profile.tags.get("meta")
+				# Preserve custom tags
+				for tagname in ("meta", "mmod"):
+					if tagname in profile.tags:
+						tags[tagname] = profile.tags[tagname]
 			else:
 				try:
 					ti3 = open(path, "rU")
@@ -7104,7 +7118,7 @@ class MainFrame(BaseFrame):
 					wkwargs={"dst_path": profile_save_path, 
 							 "display_name": display_name,
 							 "display_manufacturer": display_manufacturer,
-							 "meta": meta}, 
+							 "tags": tags}, 
 					progress_msg=lang.getstr("create_profile"))
 	
 	def create_profile_from_edid(self, event):
