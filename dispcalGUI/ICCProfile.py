@@ -2540,10 +2540,12 @@ class ICCProfile:
 					safe_print("Colorants (mediawhite-relative)")
 					maxlen = max(map(len, tag.keys()))
 					for colorant_name, colorant in tag.iteritems():
-						XYZ = colorant.values()
+						values = colorant.values()
 						if "".join(colorant.keys()) == "Lab":
-							XYZ = colormath.Lab2XYZ(*XYZ)
-						xyY = colormath.XYZ2xyY(*XYZ)
+							values = colormath.Lab2XYZ(*values)
+						else:
+							values = [v / 100.0 for v in values]
+						xyY = colormath.XYZ2xyY(*values)
 						safe_print("  %s %s:" % (colorant_name.ljust(maxlen),
 								   self.connectionColorSpace),
 								   " ".join("%6.2f" % v for v in
