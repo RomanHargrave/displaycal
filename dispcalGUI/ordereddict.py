@@ -268,16 +268,15 @@ class OrderedDict(dict):
 	def update(self, *args, **kwargs):
 		if len(args) > 1:
 			raise TypeError("update expected at most 1 arguments, got %i" % len(args))
-		for iterable in args + (kwargs, ):
-			if iterable:
-				if hasattr(iterable, "iteritems"):
-					self.update(iterable.iteritems())
-				elif hasattr(iterable, "keys"):
-					for key in iterable.keys():
-						self[key] = iterable[key]
-				else:
-					for key, val in iterable:
-						self[key] = val
+		for iterable in args + tuple(kwargs.items()):
+			if hasattr(iterable, "iteritems"):
+				self.update(iterable.iteritems())
+			elif hasattr(iterable, "keys"):
+				for key in iterable.keys():
+					self[key] = iterable[key]
+			else:
+				for key, val in iterable:
+					self[key] = val
 	
 	def values(self):
 		return map(self.get, self._keys)

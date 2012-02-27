@@ -908,6 +908,15 @@ class Matrix3x3(list):
 		return instance
 
 
+class NumberTuple(tuple):
+	
+	def __repr__(self):
+		return "(%s)" % ", ".join(str(value) for value in self)
+	
+	def round(self, digits=4):
+		return self.__class__(round(value, digits) for value in self)
+
+
 # Chromatic adaption transform matrices
 # Bradford, von Kries (= HPE normalized to D65) from http://brucelindbloom.com/Eqn_ChromAdapt.html
 # CAT02 from http://en.wikipedia.org/wiki/CIECAM02#CAT02

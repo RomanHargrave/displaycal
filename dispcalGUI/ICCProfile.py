@@ -10,6 +10,7 @@ import os
 import re
 import struct
 import sys
+from itertools import izip, imap
 from time import localtime, mktime, strftime
 from UserString import UserString
 if sys.platform == "win32":
@@ -28,6 +29,7 @@ if sys.platform == "win32":
 		pass
 
 import colormath
+from colormath import NumberTuple
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
 from meta import version
@@ -38,7 +40,7 @@ except ImportError:
 	from safe_print import safe_print
 from util_decimal import float2dec
 from util_list import intlist
-from util_str import hexunescape
+from util_str import hexunescape, safe_unicode
 
 if sys.platform not in ("darwin", "win32"):
 	from edid import get_edid
@@ -183,7 +185,8 @@ encodings = {
 
 colorants = {
 	0: {
-		"description": "unknown"
+		"description": "unknown",
+		"channels": ()
 		},
 	1: {
 		"description": "ITU-R BT.709",
@@ -666,12 +669,105 @@ class Text(ICCProfileTag, UserString, str):
 		return unicode(self.data, fs_enc, errors="replace")
 
 
-class Colorant(ADict):
+class Colorant(object):
 
-	def __init__(self, binaryString):
-		self.type = uInt32Number(binaryString)
-		self.channels = colorants[self.type].channels
-		self.description = colorants[self.type].description
+	def __init__(self, binaryString="\0" * 4):
+		self._type = uInt32Number(binaryString)
+		self._channels = []
+	
+	def __getitem__(self, key):
+		return self.__getattribute__(key)
+	
+	def __iter__(self):
+		return iter(self.keys())
+	
+	def __repr__(self):
+		items = []
+		for key, value in (("type", self.type),
+						   ("description", self.description)):
+			items.append("%s: %s" % (repr(key), repr(value)))
+		channels = []
+		for xy in self.channels:
+			channels.append("[%s]" % ", ".join([str(v) for v in xy]))
+		items.append("'channels': [%s]" % ", ".join(channels))
+		return "{%s}" % ", ".join(items)
+	
+	def __setitem__(self, key, value):
+		object.__setattr__(self, key, value)
+	
+	@Property
+	def channels():
+		def fget(self):
+			if not self._channels and self._type and self._type in colorants:
+				return [list(xy) for xy in colorants[self._type]["channels"]]
+			return self._channels
+		
+		def fset(self, channels):
+			self._channels = channels
+		
+		return locals()
+	
+	@Property
+	def description():
+		def fget(self):
+			return colorants.get(self._type, colorants[0])["description"]
+		
+		def fset(self, value):
+			pass
+		
+		return locals()
+	
+	def get(self, key, default=None):
+		return getattr(self, key, default)
+	
+	def items(self):
+		return zip(self.keys(), self.values())
+	
+	def iteritems(self):
+		return izip(self.keys(), self.itervalues())
+	
+	iterkeys = __iter__
+	
+	def itervalues(self):
+		return imap(self.get, self.keys())
+	
+	def keys(self):
+		return ["type", "description", "channels"]
+	
+	def round(self, digits=4):
+		colorant = self.__class__()
+		colorant.type = self.type
+		for xy in self.channels:
+			colorant._channels.append([round(value, digits) for value in xy])
+		return colorant
+	
+	@Property
+	def type():
+		def fget(self):
+			return self._type
+		
+		def fset(self, value):
+			if value and value != self._type and value in colorants:
+				self._channels = []
+			self._type = value
+		
+		return locals()
+	
+	def update(self, *args, **kwargs):
+		if len(args) > 1:
+			raise TypeError("update expected at most 1 arguments, got %i" % len(args))
+		for iterable in args + tuple(kwargs.items()):
+			if hasattr(iterable, "iteritems"):
+				self.update(iterable.iteritems())
+			elif hasattr(iterable, "keys"):
+				for key in iterable.keys():
+					self[key] = iterable[key]
+			else:
+				for key, val in iterable:
+					self[key] = val
+	
+	def values(self):
+		return map(self.get, self.keys())
 
 
 class Geometry(ADict):
@@ -695,21 +791,72 @@ class Observer(ADict):
 		self.description = observers[self.type]
 
 
-class ChromacityType(ICCProfileTag, ADict):
+class ChromaticityType(ICCProfileTag, Colorant):
 
-	def __init__(self, tagData, tagSignature):
+	def __init__(self, tagData=None, tagSignature=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
+		if not tagData:
+			Colorant.__init__(self, uInt32Number_tohex(1))
+			return
 		deviceChannelsCount = uInt16Number(tagData[8:10])
-		colorant = uInt16Number(tagData[10:12])
-		if colorant in colorants:
-			colorant = colorants[colorant]
+		Colorant.__init__(self,
+						  uInt32Number_tohex(uInt16Number(tagData[10:12])))
 		channels = tagData[12:]
-		self.colorant = colorant
-		self.channels = []
-		while channels:
-			self.channels.append((u16Fixed16Number(channels[:4]), 
-								  u16Fixed16Number(channels[4:8])))
+		for count in xrange(deviceChannelsCount):
+			self._channels.append([u16Fixed16Number(channels[:4]), 
+								   u16Fixed16Number(channels[4:8])])
 			channels = channels[8:]
+	
+	__repr__ = Colorant.__repr__
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			tagData = ["chrm", "\0" * 4, uInt16Number_tohex(len(self.channels))]
+			tagData.append(uInt16Number_tohex(self.type))
+			for channel in self.channels:
+				for xy in channel:
+					tagData.append(u16Fixed16Number_tohex(xy))
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
+
+
+class ColorantTableType(ICCProfileTag, AODict):
+
+	def __init__(self, tagData=None, tagSignature=None, pcs=None):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		AODict.__init__(self)
+		if not tagData:
+			return
+		colorantCount = uInt32Number(tagData[8:12])
+		data = tagData[12:]
+		for count in xrange(colorantCount):
+			pcsvalues = [uInt16Number(data[32:34]),
+						 uInt16Number(data[34:36]),
+						 uInt16Number(data[36:38])]
+			for i, pcsvalue in enumerate(pcsvalues):
+				if pcs == "Lab":
+					keys = ["L", "a", "b"]
+					if i == 0:
+						# L* range 0..100
+						pcsvalues[i] = pcsvalue / 65536.0 * 100
+					else:
+						# a, b range -128..127
+						pcsvalues[i] = -128 + (pcsvalue / 65536.0 * 255)
+				elif pcs == "XYZ":
+					# X, Y, Z range 0..100
+					keys = ["X", "Y", "Z"]
+					pcsvalues[i] = pcsvalue / 32768.0 * 100
+			self[data[:32].rstrip("\0")] = AODict(zip(keys, pcsvalues))
+			data = data[38:]
 
 
 class CurveType(ICCProfileTag, list):
@@ -721,13 +868,16 @@ class CurveType(ICCProfileTag, list):
 		curveEntriesCount = uInt32Number(tagData[8:12])
 		curveEntries = tagData[12:]
 		if curveEntriesCount == 1:
-			# gamma
+			# Gamma
 			self.append(u8Fixed8Number(curveEntries[:2]))
-		else:
-			# curve
-			while curveEntries:
+		elif curveEntriesCount:
+			# Curve
+			for count in xrange(curveEntriesCount):
 				self.append(uInt16Number(curveEntries[:2]))
 				curveEntries = curveEntries[2:]
+		else:
+			# Identity
+			self.append(1.0)
 	
 	def set_trc(self, power=2.2, size=None):
 		"""
@@ -750,21 +900,32 @@ class CurveType(ICCProfileTag, list):
 		for i in xrange(0, size):
 			self.append(int(round(colormath.specialpow(float(i) / (size - 1), power) * 65535.0)))
 	
-	def get_gamma(self, average=True):
+	def get_gamma(self, average=True, least_squares=False):
 		""" Return the gamma average or values, for curve entries > 0 and < 1 """
 		if len(self) == 1:
 			gammas = [self[0]]
 		else:
-			gammas = []
+			if least_squares:
+				logxy = []
+				logx2 = []
+			else:
+				gammas = []
 			vmin = self[0] / 65535.0
 			vmax = self[-1] / 65535.0
 			for i, entry in enumerate(self):
 				x = i / (len(self) - 1.0)
 				y = (vmin + entry * (vmax - vmin)) / 65535.0
 				if x > 0 and x < 1 and y > 0:
-					gammas.append(math.log(y) / math.log(x))
-		if average:
-			return sum(gammas) / len(gammas)
+					if least_squares:
+						logxy.append(math.log(x) * math.log(y))
+						logx2.append(math.pow(math.log(x), 2))
+					else:
+						gammas.append(math.log(y) / math.log(x))
+		if average or least_squares:
+			if least_squares:
+				return sum(logxy) / sum(logx2)
+			else:
+				return sum(gammas) / len(gammas)
 		else:
 			return gammas
 	
@@ -775,11 +936,17 @@ class CurveType(ICCProfileTag, list):
 		"""
 	
 		def fget(self):
-			curveEntriesCount = len(self)
+			if len(self) == 1 and self[0] == 1.0:
+				# Identity
+				curveEntriesCount = 0
+			else:
+				curveEntriesCount = len(self)
 			tagData = ["curv", "\0" * 4, uInt32Number_tohex(curveEntriesCount)]
 			if curveEntriesCount == 1:
+				# Gamma
 				tagData.append(u8Fixed8Number_tohex(self[0]))
-			else:
+			elif curveEntriesCount:
+				# Curve
 				for curveEntry in self:
 					tagData.append(uInt16Number_tohex(curveEntry))
 			return "".join(tagData)
@@ -1037,7 +1204,7 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 		recordsCount = uInt32Number(tagData[8:12])
 		recordSize = uInt32Number(tagData[12:16]) # 12
 		records = tagData[16:16 + recordSize * recordsCount]
-		while records:
+		for count in xrange(recordsCount):
 			record = records[:recordSize]
 			recordLanguageCode = record[:2]
 			recordCountryCode = record[2:4]
@@ -1292,7 +1459,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 		def fget(self):
 			tagData = ["desc", "\0" * 4,
 					   uInt32Number_tohex(len(self.ASCII) + 1),  # count of ASCII chars + 1
-					   self.ASCII.encode("ASCII", "replace") + "\0",  # ASCII desc, \0 terminated
+					   safe_unicode(self.ASCII).encode("ASCII", "replace") + "\0",  # ASCII desc, \0 terminated
 					   uInt32Number_tohex(self.get("unicodeLanguageCode", 0))]
 			if "Unicode" in self:
 				tagData.extend([uInt32Number_tohex(len(self.Unicode) + 2),  # count of Unicode chars + 2 (UTF-16-BE BOM + trailing UTF-16 NUL, 1 char = 2 byte)
@@ -1321,10 +1488,11 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 		return unicode(self).encode(sys.getdefaultencoding())
 
 	def __unicode__(self):
-		if sys.platform == "darwin":
-			localizedTypes = ("Unicode", "Macintosh", "ASCII")
+		if not "Unicode" in self and len(safe_unicode(self.ASCII)) < 67:
+			# Do not use Macintosh description if ASCII length >= 67
+			localizedTypes = ("Macintosh", "ASCII")
 		else:
-			localizedTypes = ("Unicode", "ASCII", "Macintosh")
+			localizedTypes = ("Unicode", "ASCII")
 		for localizedType in localizedTypes:
 			if localizedType in self:
 				value = self[localizedType]
@@ -1332,7 +1500,7 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 					# Even ASCII description may contain non-ASCII chars, so 
 					# assume system encoding and convert to unicode, replacing 
 					# unknown chars
-					value = unicode(value, fs_enc, errors="replace")
+					value = safe_unicode(value)
 				return value
 
 
@@ -1685,22 +1853,80 @@ class XYZNumber(AODict):
 	8..11  CIE Z   s15Fixed16Number
 	"""
 
-	def __init__(self, binaryString):
+	def __init__(self, binaryString="\0" * 12):
 		AODict.__init__(self)
 		self.X, self.Y, self.Z = [s15Fixed16Number(chunk) for chunk in 
 								  (binaryString[:4], binaryString[4:8], 
 								   binaryString[8:12])]
 	
+	def __repr__(self):
+		XYZ = []
+		for key, value in self.iteritems():
+			XYZ.append("(%s, %s)" % (repr(key), str(value)))
+		return "%s.%s([%s])" % (self.__class__.__module__,
+								self.__class__.__name__,
+								", ".join(XYZ))
+	
+	def adapt(self, whitepoint_source=None, whitepoint_destination=None, cat="Bradford"):
+		XYZ = self.__class__()
+		XYZ.X, XYZ.Y, XYZ.Z = colormath.adapt(self.X, self.Y, self.Z,
+											  whitepoint_source,
+											  whitepoint_destination, cat)
+		return XYZ
+	
+	def round(self, digits=4):
+		XYZ = self.__class__()
+		for key in self:
+			XYZ[key] = round(self[key], digits)
+		return XYZ
+	
 	def tohex(self):
 		data = [s15Fixed16Number_tohex(n) for n in self.values()]
 		return "".join(data)
+	
+	@property
+	def hex(self):
+		return self.tohex()
+	
+	@property
+	def xyY(self):
+		return NumberTuple(colormath.XYZ2xyY(self.X, self.Y, self.Z))
 
 
 class XYZType(ICCProfileTag, XYZNumber):
 
-	def __init__(self, tagData="\0" * 20, tagSignature=None):
+	def __init__(self, tagData="\0" * 20, tagSignature=None, profile=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		XYZNumber.__init__(self, tagData[8:20])
+		self.profile = profile
+	
+	__repr__ = XYZNumber.__repr__
+
+	def __setattr__(self, name, value):
+		if name in ("_keys", "profile", "tagData", "tagSignature"):
+			object.__setattr__(self, name, value)
+		else:
+			self[name] = value
+	
+	@property
+	def ir(self):
+		""" Get illuminant-relative values """
+		D50 = self.profile.illuminant.values()
+		if "chad" in self.profile.tags:
+			if self is self.profile.tags.wtpt:
+				XYZ = self.__class__()
+				XYZ.X, XYZ.Y, XYZ.Z = self.values()
+			else:
+				# Go from XYZ mediawhite-relative under D50 to XYZ under D50
+				XYZ = self.adapt(D50, self.profile.tags.wtpt.values(), cat="XYZ scaling")
+			# Go from XYZ under D50 to XYZ illuminant-relative
+			XYZ.X, XYZ.Y, XYZ.Z = self.profile.tags.chad.inverted() * XYZ.values()
+			return XYZ
+		else:
+			if self is self.profile.tags.wtpt:
+				return self
+			else:
+				return self.adapt(D50, self.profile.tags.wtpt.values())
 	
 	@Property
 	def tagData():
@@ -1758,7 +1984,8 @@ tagSignature2Tag = {
 }
 
 typeSignature2Type = {
-	"chrm": ChromacityType,
+	"chrm": ChromaticityType,
+	"clrt": ColorantTableType,
 	"curv": CurveType,
 	"desc": TextDescriptionType,  # ICC v2
 	"dict": DictType,  # ICC v2 + v4
@@ -2033,7 +2260,12 @@ class ICCProfile:
 								if tagSignature in tagSignature2Tag:
 									tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
 								elif typeSignature in typeSignature2Type:
-									tag = typeSignature2Type[typeSignature](tagData, tagSignature)
+									args = tagData, tagSignature
+									if typeSignature == "clrt":
+										args += (self.connectionColorSpace, )
+									elif typeSignature == "XYZ ":
+										args += (self, )
+									tag = typeSignature2Type[typeSignature](*args)
 								else:
 									tag = ICCProfileTag(tagData, tagSignature)
 							except Exception, exception:
@@ -2047,7 +2279,7 @@ class ICCProfile:
 				self._data = self._data[:128]
 		return self._tags
 	
-	def calculateID(self):
+	def calculateID(self, setID=True):
 		"""
 		Calculates, sets, and returns the profile's ID (checksum).
 		
@@ -2064,8 +2296,10 @@ class ICCProfile:
 		data = self.data[:44] + "\0\0\0\0" + self.data[48:64] + "\0\0\0\0" + \
 			   self.data[68:84] + "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + \
 			   self.data[100:]
-		self.ID = md5(data).digest()
-		return self.ID
+		ID = md5(data).digest()
+		if setID:
+			self.ID = ID
+		return ID
 	
 	def close(self):
 		"""
@@ -2231,6 +2465,151 @@ class ICCProfile:
 			self._data += self._file.read(self.size - len(self._data))
 			self._file.close()
 			self.is_loaded = True
+	
+	def print_info(self):
+		safe_print("=" * 80)
+		safe_print("ICC profile information")
+		safe_print("-" * 80)
+		safe_print("File name:", os.path.basename(self.fileName or ""))
+		#safe_print("Internal name:", self.getDescription())
+		#safe_print("Copyright:", self.tags.cprt)
+		safe_print("Created:", strftime("%Y-%m-%d %H:%M:%S",
+										self.dateTime.timetuple()))
+		safe_print("ICC version: %s" % self.version)
+		safe_print("Profile class:", self.profileClass)
+		safe_print("Color space:", self.colorSpace)
+		safe_print("Connection color space:", self.connectionColorSpace)
+		safe_print("Platform:", self.platform)
+		safe_print("Is embedded:", {True: "Yes"}.get(self.embedded, "No"))
+		safe_print("Can be used independently:",
+				   {True: "Yes"}.get(self.independent, "No"))
+		safe_print("Device")
+		safe_print("  Manufacturer ID:", self.device["manufacturer"])
+		safe_print("  Model ID:", self.device["model"])
+		safe_print("  Attributes:")
+		safe_print("    ", {True: "Reflective"}.get(self.device["attributes"]["reflective"], "Transparency"))
+		safe_print("    ", {True: "Glossy"}.get(self.device["attributes"]["glossy"], "Matte"))
+		safe_print("    ", {True: "Positive"}.get(self.device["attributes"]["positive"], "Negative"))
+		safe_print("    ", {True: "Color"}.get(self.device["attributes"]["color"], "Black & white"))
+		safe_print("Default rendering intent:", {0: "Perceptual",
+												 1: "Media-relative colorimetric",
+												 2: "Saturation",
+												 3: "ICC-absolute colorimetric"}.get(self.intent, "Unknown"))
+		safe_print("Creator:", self.creator)
+		if self.ID == "\0" * 16 or self.ID == self.calculateID(False):
+			check = " (OK)"
+		else:
+			check = " (calculated: %s" % self.calculateID(False)
+		safe_print("ID: %s%s" % (binascii.hexlify(self.ID), check))
+		for name, tag in self.tags.iteritems():
+			#if type(tag) in (chromaticAdaptionTag, ChromaticityType,
+							 #ColorantTableType, CurveType, DictType,
+							 #MultiLocalizedUnicodeType, TextDescriptionType,
+							 #Text, XYZType):
+			if True:
+				if isinstance(tag, (MultiLocalizedUnicodeType,
+									TextDescriptionType)):
+					if name == "cprt":
+						name = "Copyright"
+					elif name == "desc":
+						name = "Description"
+					elif name == "dmnd":
+						name = "Device manufacturer name"
+					elif name == "dmdd":
+						name = "Device model name"
+					elif name == "vued":
+						name = "Viewing conditions description"
+				if isinstance(tag, chromaticAdaptionTag):
+					safe_print("Chromatic adaptation matrix:")
+					for row in tag:
+						safe_print("  [%s]" % " ".join("%6.4f" % v for v in
+													   row))
+					safe_print("Chromatic adaptation transform (best guess):",
+							   self.guess_cat() or "Unknown")
+				elif isinstance(tag, ChromaticityType):
+					safe_print("Chromaticity (illuminant-relative)")
+					for i, colorant in enumerate(tag):
+						if self.colorSpace.endswith("CLR"):
+							colorant_name = ""
+						else:
+							colorant_name = "(%s) " % self.colorSpace[i:i + 1]
+						safe_print("  Channel %i %sxy:" % (i, colorant_name),
+								   " ".join("%6.4f" % v for v in
+											tag.channels[i]))
+				elif isinstance(tag, ColorantTableType):
+					safe_print("Colorants (mediawhite-relative)")
+					maxlen = max(map(len, tag.keys()))
+					for colorant_name, colorant in tag.iteritems():
+						XYZ = colorant.values()
+						if "".join(colorant.keys()) == "Lab":
+							XYZ = colormath.Lab2XYZ(*XYZ)
+						xyY = colormath.XYZ2xyY(*XYZ)
+						safe_print("  %s %s:" % (colorant_name.ljust(maxlen),
+								   self.connectionColorSpace),
+								   " ".join("%6.2f" % v for v in
+											colorant.values()),
+								   "(xyY: %s)" % " ".join("%6.4f" % v for v in
+														  xyY))
+				elif isinstance(tag, CurveType):
+					if len(tag) == 1:
+						safe_print("%s: Gamma" % name, "%3.2f" % tag[0])
+					elif len(tag):
+						safe_print("%s: Average gamma" % name,
+								   "%3.2f" % tag.get_gamma(),
+								   "(least squares %3.2f), %i values" %
+								   (tag.get_gamma(True, True), len(tag)))
+				elif isinstance(tag, DictType):
+					if tag.tagSignature == "meta":
+						safe_print("Metadata")
+					else:
+						safe_print("Generic name-value data")
+					for key in tag:
+						safe_print("  %s:" % tag.getname(key), tag.getvalue(key))
+				elif isinstance(tag, MultiLocalizedUnicodeType):
+					safe_print("%s (Unicode with %i entries):" %
+							   (name, len(tag)), unicode(tag))
+				elif isinstance(tag, Text):
+					if name == "cprt":
+						safe_print("Copyright:", tag)
+					elif tag.find("\n") > -1 or tag.find("\r") > -1:
+						safe_print(name, "[%i bytes]" % len(tag))
+					else:
+						safe_print(name,
+								  tag[:60 - len(name)] +
+								  ("...[%i more bytes]" % (len(tag) - (60 - len(name)))
+								   if len(tag) > 60 - len(name) else ""))
+				elif isinstance(tag, TextDescriptionType):
+					if tag.get("Unicode") or tag.get("Macintosh"):
+						info = "Unicode"
+					else:
+						info = "ASCII"
+					safe_print("%s (%s):" % (name, info), unicode(tag))
+				elif isinstance(tag, XYZType):
+					if name == "bkpt":
+						safe_print("Blackpoint XYZ (illuminant-relative):",
+								   " ".join("%6.2f" % (v * 100) for v in
+											self.tags.bkpt.ir.values()))
+					elif name == "lumi":
+						safe_print("Luminance:", u"%.2f cd/m²" % self.tags.lumi.Y)
+					elif name == "wtpt":
+						safe_print("Whitepoint XYZ (illuminant-relative):",
+								   " ".join("%6.2f" % (v * 100) for v in
+											self.tags.wtpt.ir.values()),
+								   "(%iK)" % (colormath.XYZ2CCT(*self.tags.wtpt.ir.values()) or 0))
+					else:
+						safe_print("%s (illuminant-relative):" % name,
+								   " ".join("%6.2f" % (v * 100) for v in
+											tag.ir.values()),
+								   "(xyY: %s)" % " ".join("%6.4f" % v for v in
+														  tag.ir.xyY))
+						safe_print("%s (mediawhite-relative):" % name,
+								   " ".join("%6.2f" % (v * 100) for v in
+											tag.values()),
+								   "(xyY: %s)" % " ".join("%6.4f" % v for v in
+														  tag.xyY))
+				else:
+					safe_print(name, "[%i bytes]" % len(tag.tagData))
+		safe_print("=" * 80)
 	
 	def read(self, profile):
 		"""
