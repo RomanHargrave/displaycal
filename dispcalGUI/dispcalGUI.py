@@ -1388,7 +1388,7 @@ class MainFrame(BaseFrame):
 		# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 		# segfault under Arch Linux when setting the window title
 		safe_print("")
-		self.SetTitle("%s %s %s" % (appname, version, build))
+		self.SetTitle("%s %s" % (appname, version))
 		self.SetMaxSize((-1, -1))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
@@ -7209,18 +7209,27 @@ class MainFrame(BaseFrame):
 		profile_name = profile_name.replace("%legacy", legacy_profile_name)
 		
 		# default v0.2.2b profile name
-		display = self.display_ctrl.GetStringSelection()
+		display = self.worker.get_display_name(True, True)
 		if display:
-			display_short = display = display.split(" @")[0]
+			display_short = self.worker.get_display_name(False, True)
 			if len(display_short) > 10:
 				maxweight = 0
 				for part in re.findall('[^\s_]+(?:\s*\d+)?', re.sub("\([^)]+\)", "", 
 																	display)):
 					digits = re.search("\d+", part)
-					chars = re.sub("\d+", "", part)
-					weight = len(chars) + (len(digits.group()) * 5 if digits else 0)
-					if chars and weight > maxweight:
+					if digits:
 						# Weigh parts with digits higher than those without
+						chars = re.sub("\d+", "", part)
+						weight = len(chars) + len(digits.group()) * 5
+					else:
+						# Weigh parts with uppercase letters higher than those without
+						chars = ""
+						for char in part:
+							if char.lower() != char:
+								chars += char
+						weight = len(chars)
+					if chars and weight >= maxweight:
+						# Weigh parts further to the right higher
 						display_short = part
 						maxweight = weight
 			profile_name = profile_name.replace("%dns", display_short)
@@ -7265,14 +7274,14 @@ class MainFrame(BaseFrame):
 			else:
 				whitepoint = "x ".join(whitepoint.split(",")) + "y"
 		profile_name = profile_name.replace("%wp", 
-											lang.getstr("native").lower() if 
+											"\0" if 
 											whitepoint is None else whitepoint)
 		profile_name = profile_name.replace("%cb", 
-											lang.getstr("max").lower() if 
+											"\0" if 
 											luminance is None else 
 											luminance + u"cdm²")
 		profile_name = profile_name.replace("%cB", 
-											lang.getstr("min").lower() if 
+											"\0" if 
 											black_luminance is None else 
 											black_luminance + u"cdm²")
 		if trc not in ("l", "709", "s", "240"):
@@ -7294,7 +7303,7 @@ class MainFrame(BaseFrame):
 													k < 100 else "") + 
 												   (lang.getstr("neutral") if 
 													k > 0 else 
-													lang.getstr("native")
+													"\0"
 												   ).lower())
 		if black_point_rate and float(black_point_correction) < 1:
 			profile_name = profile_name.replace("%cA", black_point_rate)
@@ -7356,6 +7365,8 @@ class MainFrame(BaseFrame):
 		
 		profile_name = re.sub("(\W?%s)+" % lang.getstr("native").lower(), 
 							  "\\1", profile_name)
+		
+		profile_name = re.sub("\0\s?", "", profile_name)
 		
 		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name)[:255]
 

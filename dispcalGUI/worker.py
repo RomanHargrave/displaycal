@@ -2167,13 +2167,19 @@ class Worker(object):
 										edid.get("ascii",
 												 str(edid.get("product_id") or
 													 "")))
-			if prepend_manufacturer:
-				if not manufacturer:
-					manufacturer = self.display_manufacturers[n]
-				if manufacturer:
-					display.append(normalize_manufacturer_name(manufacturer))
+			if not manufacturer:
+				manufacturer = self.display_manufacturers[n]
 			if not display_name:
 				display_name = self.display_names[n]
+			if manufacturer:
+				if prepend_manufacturer:
+					if manufacturer.lower() not in display_name.lower():
+						display.append(normalize_manufacturer_name(manufacturer))
+				else:
+					start = display_name.lower().find(manufacturer.lower())
+					if start > -1:
+						display_name = (display_name[:start] +
+										display_name[start + len(manufacturer):]).replace("  ", " ")
 			display.append(display_name)
 			return " ".join(display)
 		return ""
