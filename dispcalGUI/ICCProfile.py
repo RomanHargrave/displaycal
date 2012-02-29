@@ -2105,9 +2105,10 @@ class ICCProfile:
 			if type(profile) in (str, unicode):
 				if profile.find("\0") < 0:
 					# filename
-					if not os.path.isfile(profile) and \
-					   not os.path.sep in profile and \
-					   not os.path.altsep in profile:
+					if (not os.path.isfile(profile) and
+						not os.path.sep in profile and
+						(not isinstance(os.path.altsep, basestring) or
+						 not os.path.altsep in profile)):
 						for path in iccprofiles_home + filter(lambda x: 
 							x not in iccprofiles_home, iccprofiles):
 							if os.path.isdir(path):
