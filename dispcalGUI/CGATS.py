@@ -145,6 +145,17 @@ class CGATS(dict):
 					line = line[:comment_offset].strip()
 				##print line
 				values = [value.strip('"') for value in line.split()]
+				if line[:6] == 'BEGIN_':
+					key = line[6:]
+					if key in context:
+						# Start new CGATS
+						new = len(self)
+						self[new] = CGATS()
+						self[new].key = ''
+						self[new].parent = self
+						self[new].root = self.root
+						self[new].type = ''
+						context = self[new]
 				if line == 'BEGIN_DATA_FORMAT':
 					context['DATA_FORMAT'] = CGATS()
 					context['DATA_FORMAT'].key = 'DATA_FORMAT'
