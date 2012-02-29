@@ -268,6 +268,36 @@ def is_similar_matrix(matrix1, matrix2, digits=3):
 	return matrix1.rounded(digits) == matrix2.rounded(digits)
 
 
+def get_gamma(values, scale=1.0, average=True, least_squares=False):
+	""" Return the gamma average or values, for entries > 0 and < 1 """
+	if len(values) == 1:
+		gammas = [values[0]]
+	else:
+		if least_squares:
+			logxy = []
+			logx2 = []
+		else:
+			gammas = []
+		vmin = values[0] / scale
+		vmax = values[-1] / scale
+		for i, entry in enumerate(values):
+			x = i / (len(values) - 1.0)
+			y = (vmin + entry * (vmax - vmin)) / scale
+			if x > 0 and x < 1 and y > 0:
+				if least_squares:
+					logxy.append(math.log(x) * math.log(y))
+					logx2.append(math.pow(math.log(x), 2))
+				else:
+					gammas.append(math.log(y) / math.log(x))
+	if average or least_squares:
+		if least_squares:
+			return sum(logxy) / sum(logx2)
+		else:
+			return sum(gammas) / len(gammas)
+	else:
+		return gammas
+
+
 def guess_cat(chad, whitepoint_source=None, whitepoint_destination=None):
 	""" Try and guess the chromatic adaption transform used in a chromatic 
 	adaption matrix as found in an ICC profile's 'chad' tag """
@@ -344,6 +374,12 @@ def get_DBL_MIN():
 
 
 DBL_MIN = get_DBL_MIN()
+
+
+def Lab2RGB(L, a, b, rgb_space=None, scale=1.0, round_=False, clamp=True):
+	""" Convert from Lab to RGB """
+	X, Y, Z = Lab2XYZ(L, a, b)
+	return XYZ2RGB(X, Y, Z, rgb_space, scale, round_, clamp)
 
 
 def Lab2XYZ(L, a, b, whitepoint=None, scale=1.0):

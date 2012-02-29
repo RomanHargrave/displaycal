@@ -143,6 +143,7 @@ except ImportError:
 	LUTFrame = None
 if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
+from wxProfileInfo import ProfileInfoFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
 from wxfixes import GTKMenuItemGetFixedLabel
@@ -1722,6 +1723,8 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_MENU, self.create_testchart_btn_handler, menuitem)
 		menuitem = file_.FindItemById(file_.FindItem("profile.set_save_path"))
 		self.Bind(wx.EVT_MENU, self.profile_save_path_btn_handler, menuitem)
+		self.menuitem_profile_info = file_.FindItemById(file_.FindItem("profile.info"))
+		self.Bind(wx.EVT_MENU, self.profile_info_handler, self.menuitem_profile_info)
 		if sys.platform != "darwin":
 			file_.AppendSeparator()
 		self.menuitem_prefs = file_.Append(
@@ -1973,6 +1976,9 @@ class MainFrame(BaseFrame):
 		self.install_profile_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.install_cal_handler, 
 				  id=self.install_profile_btn.GetId())
+		self.profile_info_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.Bind(wx.EVT_BUTTON, self.profile_info_handler, 
+				  id=self.profile_info_btn.GetId())
 
 		# Update calibration checkbox
 		self.Bind(wx.EVT_CHECKBOX, self.calibration_update_ctrl_handler, 
@@ -2579,16 +2585,19 @@ class MainFrame(BaseFrame):
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
 	
-	def is_profile(self, filename=None):
+	def is_profile(self, filename=None, include_display_profile=False):
 		filename = filename or getcfg("calibration.file")
 		is_profile = False
-		if filename and os.path.exists(filename):
-			try:
-				profile = ICCP.ICCProfile(filename)
-			except ICCP.ICCProfileInvalidError:
-				pass
-			else:
-				is_profile = True
+		if filename:
+			if os.path.exists(filename):
+				try:
+					profile = ICCP.ICCProfile(filename)
+				except ICCP.ICCProfileInvalidError:
+					pass
+				else:
+					is_profile = True
+		elif include_display_profile:
+			is_profile = bool(self.get_display_profile())
 		return is_profile
 
 	def update_main_controls(self):
@@ -2689,6 +2698,9 @@ class MainFrame(BaseFrame):
 										   cal not in self.presets)
 		self.install_profile_btn.Enable(profile_exists and 
 										cal not in self.presets)
+		is_profile = self.is_profile(include_display_profile=True)
+		self.profile_info_btn.Enable(is_profile)
+		self.menuitem_profile_info.Enable(is_profile)
 		enable_update = bool(cal) and os.path.exists(filename + ".cal")
 		if not enable_update:
 			setcfg("calibration.update", 0)
@@ -2702,7 +2714,7 @@ class MainFrame(BaseFrame):
 		if not update_cal or not profile_exists:
 			setcfg("profile.update", "0")
 
-		update_profile = self.calibration_update_cb.GetValue() and self.is_profile()
+		update_profile = self.calibration_update_cb.GetValue() and profile_exists
 		enable_profile = not(update_profile)
 		
 		self.update_colorimeter_correction_matrix_ctrl_items()
@@ -4066,7 +4078,7 @@ class MainFrame(BaseFrame):
 			if not isinstance(result, Exception) and result:
 				# Create profile gamut and vrml
 				result = self.worker.exec_cmd(get_argyll_util("iccgamut"),
-											  ["-w", "-ir", args[-1] + profile_ext],
+											  ["-w", "-ia", args[-1] + profile_ext],
 											  skip_scripts=True)
 			for key, src in (("srgb", "sRGB"), ("adobergb", "ClayRGB1998")):
 				if not isinstance(result, Exception) and result:
@@ -4799,7 +4811,7 @@ class MainFrame(BaseFrame):
 			result = cmd
 		return result
 	
-	def select_profile(self, parent=None):
+	def select_profile(self, parent=None, check_profile_class=True):
 		"""
 		Selects the currently set profile or display profile. Falls back
 		to user choice via FileDialog if both not set.
@@ -4843,7 +4855,8 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			if profile.profileClass != "mntr" or profile.colorSpace != "RGB":
+			if check_profile_class and (profile.profileClass != "mntr" or
+										profile.colorSpace != "RGB"):
 				InfoDialog(parent, msg=lang.getstr("profile.unsupported", 
 												 profile.profileClass, 
 												 profile.colorSpace) + 
@@ -5990,6 +6003,26 @@ class MainFrame(BaseFrame):
 		del self.modaldlg
 		self.start_timers(True)
 		self.previous_cal = False
+	
+	def profile_info_handler(self, event):
+		profile = self.select_profile(check_profile_class=False)
+		if getattr(self, "profile_info_frame", None):
+			if profile:
+				self.profile_info_frame.LoadProfile(profile)
+			self.profile_info_frame.Raise()
+		else:
+			frame = self.profile_info_frame = ProfileInfoFrame(self, -1)
+			frame.Fit()
+			frame.SetSize((frame.GetSize()[0] -
+						   frame.client.GetSize()[0] +
+						   frame.client.GetSize()[1],
+						   getcfg("size.profile_info.h") - 1))
+			frame.SetMinSize(frame.GetSize())
+			if profile:
+				frame.LoadProfile(profile)
+			frame.Show(True)
+			frame.SetSize((frame.GetSize()[0],
+						   frame.GetSize()[1] + 1))  # To make scrollbars show
 	
 	def lower_handler(self, event):
 		self.modaldlg.Raise()

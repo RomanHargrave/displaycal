@@ -15,6 +15,9 @@
       <object class="wxMenuItem" name="profile.set_save_path">
         <label>profile.set_save_path</label>
       </object>
+      <object class="wxMenuItem" name="profile.info">
+        <label>profile.info</label>
+      </object>
       <label>menu.file</label>
     </object>
     <object class="wxMenu" name="menu.options">

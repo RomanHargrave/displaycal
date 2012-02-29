@@ -82,6 +82,18 @@
                           <events>EVT_BUTTON</events>
                         </XRCED>
                       </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxBitmapButton" name="profile_info_btn">
+                        <bitmap>../theme/icons/16x16/info.png</bitmap>
+                        <tooltip>profile.info</tooltip>
+                        <style>wxNO_BORDER</style>
+                        <XRCED>
+                          <events>EVT_BUTTON</events>
+                        </XRCED>
+                      </object>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
                   </object>
@@ -216,7 +228,6 @@
                         <flag>wxBOTTOM|wxRIGHT|wxEXPAND</flag>
                         <border>2</border>
                       </object>
-                      
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
                           <object class="sizeritem">
