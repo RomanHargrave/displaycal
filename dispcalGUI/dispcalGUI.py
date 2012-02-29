@@ -4101,22 +4101,25 @@ class MainFrame(BaseFrame):
 				# Add ChromaticityType tag
 				profile.tags.chrm = chrm
 			# Fixup desc tags - ASCII needs to be 7-bit
-			# also add Unicode strings
+			# also add Unicode strings if different from ASCII
 			if "desc" in profile.tags and isinstance(profile.tags.desc, 
 													 ICCP.TextDescriptionType):
 				desc = profile.getDescription()
 				profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
-				profile.tags.desc["Unicode"] = desc
+				if desc != profile.tags.desc["ASCII"]:
+					profile.tags.desc["Unicode"] = desc
 			if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
 													 ICCP.TextDescriptionType):
 				ddesc = profile.getDeviceModelDescription()
 				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
-				profile.tags.dmdd["Unicode"] = ddesc
+				if ddesc != profile.tags.dmdd["ASCII"]:
+					profile.tags.dmdd["Unicode"] = ddesc
 			if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
 													 ICCP.TextDescriptionType):
 				mdesc = profile.getDeviceManufacturerDescription()
 				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
-				profile.tags.dmnd["Unicode"] = mdesc
+				if mdesc != profile.tags.dmnd["ASCII"]:
+					profile.tags.dmnd["Unicode"] = mdesc
 			if tags and tags is not True:
 				# Add custom tags
 				for tagname, tag in tags.iteritems():
@@ -4124,13 +4127,15 @@ class MainFrame(BaseFrame):
 			elif tags is True:
 				edid = self.worker.get_display_edid()
 				if edid:
-					# Add new meta information based on EDID
-					profile.set_edid_metadata(edid)
+					profile.device["manufacturer"] = "\0\0" + edid["edid"][9] + edid["edid"][8]
+					profile.device["model"] = "\0\0" + edid["edid"][11] + edid["edid"][10]
 					# Add Apple-specific 'mmod' tag (TODO: need full spec)
 					mmod = ("mmod" + ("\x00" * 6) + edid["edid"][8:10] +
 							("\x00" * 2) + edid["edid"][11] + edid["edid"][10] +
 							("\x00" * 4) + ("\x00" * 20))
 					profile.tags.mmod = ICCP.ICCProfileTag(mmod, "mmod")
+					# Add new meta information based on EDID
+					profile.set_edid_metadata(edid)
 				elif not "meta" in profile.tags:
 					# Make sure meta tag exists
 					profile.tags.meta = ICCP.DictType()
