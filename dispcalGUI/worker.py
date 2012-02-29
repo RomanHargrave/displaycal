@@ -1121,7 +1121,11 @@ class Worker(object):
 		if p.poll() not in (0, None):
 			stderr.seek(0)
 			raise Error(stderr.read().strip())
-		odata = p.communicate("\n".join(RGB_triplets))[0].splitlines()
+		try:
+			odata = p.communicate("\n".join(RGB_triplets))[0].splitlines()
+		except IOError:
+			stderr.seek(0)
+			raise Error(stderr.read().strip())
 		if p.wait() != 0:
 			raise IOError(''.join(odata))
 		stderr.close()
@@ -1185,7 +1189,11 @@ class Worker(object):
 			if p.poll() not in (0, None):
 				stderr.seek(0)
 				raise Error(stderr.read().strip())
-			odata = p.communicate("0 0 0\n1 1 1")[0].splitlines()
+			try:
+				odata = p.communicate("0 0 0\n1 1 1")[0].splitlines()
+			except IOError:
+				stderr.seek(0)
+				raise Error(stderr.read().strip())
 			if p.wait() != 0:
 				# error
 				raise IOError(''.join(odata))
@@ -1219,7 +1227,11 @@ class Worker(object):
 		if p.poll() not in (0, None):
 			stderr.seek(0)
 			raise Error(stderr.read().strip())
-		odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
+		try:
+			odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
+		except IOError:
+			stderr.seek(0)
+			raise Error(stderr.read().strip())
 		if p.wait() != 0:
 			# error
 			raise IOError(''.join(odata))
