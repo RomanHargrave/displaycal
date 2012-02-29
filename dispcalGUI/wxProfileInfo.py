@@ -26,6 +26,15 @@ FGCOLOUR = "#999999"
 GRIDCOLOUR = "#444444"
 HILITECOLOUR = "white"
 
+if sys.platform == "darwin":
+	FONTSIZE_LARGE = 14
+	FONTSIZE_MEDIUM = 11
+	FONTSIZE_SMALL = 10
+else:
+	FONTSIZE_LARGE = 12
+	FONTSIZE_MEDIUM = 9
+	FONTSIZE_SMALL = 8
+
 class GamutCanvas(plot.PlotCanvas):
 
 	def __init__(self, *args, **kwargs):
@@ -36,9 +45,9 @@ class GamutCanvas(plot.PlotCanvas):
 		self.SetEnableHiRes(True)
 		self.SetEnableGrid(True)
 		self.SetEnablePointLabel(False)
-		self.SetFontSizeAxis(8)
-		self.SetFontSizeLegend(8)
-		self.SetFontSizeTitle(9)
+		self.SetFontSizeAxis(FONTSIZE_SMALL)
+		self.SetFontSizeLegend(FONTSIZE_SMALL)
+		self.SetFontSizeTitle(FONTSIZE_MEDIUM)
 		self.SetForegroundColour(FGCOLOUR)
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
@@ -204,23 +213,26 @@ class GamutCanvas(plot.PlotCanvas):
 		self.ratio = [max(max_abs_x, max_abs_y) /
 					  max(max_abs_x + poly._attributes["width"],
 					      max_abs_y + poly._attributes["width"])] * 2
-		self._DrawCanvas(plot.PlotGraphics(polys, title, "a", "b"))
+		self._DrawCanvas(plot.PlotGraphics(polys, title, "a*", "b*"))
 	
 	def _DrawCanvas(self, graphics):
 		""" Draw proportionally correct, center and zoom """
 		self.Freeze()
 		ratio = (float(self.GetSize()[0]) / float(self.GetSize()[1]),
 				 float(self.GetSize()[1]) / float(self.GetSize()[0]))
-		if ratio[0] > 1:
-			ratio = ratio[0]
-			self.SetXSpec(3 * ratio)
-			axis_x=tuple([v * ratio for v in self.axis])
-			axis_y=self.axis
+		axis_x, axis_y = self.axis, self.axis
+		if ratio[0] > ratio[1]:
+			self.SetXSpec(3 * ratio[0])
 		else:
-			ratio = ratio[1]
-			self.SetYSpec(3 * ratio)
-			axis_x=self.axis
-			axis_y=tuple([v * ratio for v in self.axis])
+			self.SetXSpec(3)
+		if ratio[0] > 1:
+			axis_x=tuple([v * ratio[0] for v in self.axis])
+		if ratio[1] > ratio[0]:
+			self.SetYSpec(3 * ratio[1])
+		else:
+			self.SetYSpec(3)
+		if ratio[1] > 1:
+			axis_y=tuple([v * ratio[1] for v in self.axis])
 		self.Draw(graphics, axis_x, axis_y)
 		self.Zoom((self.center_x, self.center_y), self.ratio)
 		self.Thaw()
@@ -255,7 +267,7 @@ class ProfileInfoFrame(wx.Frame):
 		
 		self.title_txt = wx.StaticText(self.title_panel, -1, "")
 		self.title_txt.SetForegroundColour(FGCOLOUR)
-		font = wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
+		font = wx.Font(FONTSIZE_LARGE, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
 		self.title_txt.SetFont(font)
 		self.title_sizer.Add((0, 0))
@@ -276,8 +288,17 @@ class ProfileInfoFrame(wx.Frame):
 		self.midpanel.SetBackgroundColour(BGCOLOUR)
 		self.hsizer.Add(self.midpanel, flag=wx.EXPAND)
 		
-		self.box_panel = wx.ScrolledWindow(self, -1, style=wx.VSCROLL)
-		self.box_panel.SetBackgroundColour(BGCOLOUR)
+		self.box_panel = wx.grid.Grid(self, -1)
+		self.box_panel.CreateGrid(0, 2)
+		self.box_panel.SetCellHighlightColour(BGCOLOUR)
+		self.box_panel.SetDefaultCellBackgroundColour(BGCOLOUR)
+		self.box_panel.SetDefaultCellTextColour(FGCOLOUR)
+		self.box_panel.SetLabelBackgroundColour(BGCOLOUR)
+		self.box_panel.SetRowLabelSize(0)
+		self.box_panel.SetColLabelSize(0)
+		self.box_panel.DisableDragGridSize()
+		self.box_panel.EnableEditing(False)
+		self.box_panel.EnableGridLines(False)
 		self.hsizer.Add(self.box_panel, 7, flag=wx.EXPAND)
 		
 		self.rightpanel = wx.Panel(self, -1, size=(12, -1))
@@ -287,21 +308,9 @@ class ProfileInfoFrame(wx.Frame):
 		self.box_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.box_panel.SetSizer(self.box_sizer)
 		
-		self.cbox_sizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.box_sizer.Add(self.cbox_sizer, 
-						   flag=wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL |
-								wx.ALL, border=5)
-		
-		font = wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
+		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
-		self.label_txt = wx.StaticText(self.box_panel, -1, "Test")
-		self.label_txt.SetFont(font)
-		self.label_txt.SetForegroundColour(FGCOLOUR)
-		self.info_txt = wx.StaticText(self.box_panel, -1, "Test")
-		self.info_txt.SetFont(font)
-		self.info_txt.SetForegroundColour(FGCOLOUR)
-		self.cbox_sizer.Add(self.label_txt, flag=wx.RIGHT, border=12)
-		self.cbox_sizer.Add(self.info_txt, 1)
+		self.box_panel.SetDefaultCellFont(font)
 
 		self.client = GamutCanvas(self)
 		self.client.SetMinSize((300, 300))
@@ -318,6 +327,7 @@ class ProfileInfoFrame(wx.Frame):
 		
 		self.rendering_intent_label = wx.StaticText(self.options_panel, -1,
 													lang.getstr("rendering_intent"))
+		self.rendering_intent_label.SetMaxFontSize(11)
 		self.rendering_intent_label.SetForegroundColour(FGCOLOUR)
 		self.options_sizer.Add(self.rendering_intent_label,
 							   flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
@@ -342,6 +352,7 @@ class ProfileInfoFrame(wx.Frame):
 		self.comparison_profile_label = wx.StaticText(self.options_panel, -1,
 													  lang.getstr("comparison_profile") +
 													  " - -")
+		self.comparison_profile_label.SetMaxFontSize(11)
 		self.comparison_profile_label.SetForegroundColour(FGCOLOUR)
 		self.options_sizer.Add(self.comparison_profile_label,
 							   flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
@@ -368,7 +379,7 @@ class ProfileInfoFrame(wx.Frame):
 					 "ISOwebcoated.icc",
 					 "LStar-RGB.icc",
 					 "LStar-RGB-v2.icc",
-					 "ProPhoto.icc",
+					 "ProPhoto.icm",
 					 "PSO_Coated_300_NPscreen_ISO12647_eci.icc",
 					 "PSO_Coated_NPscreen_ISO12647_eci.icc",
 					 "PSO_LWC_Improved_eci.icc",
@@ -415,6 +426,7 @@ class ProfileInfoFrame(wx.Frame):
 			getcfg("size.profile_info.w"), 
 			getcfg("size.profile_info.h"))
 		
+		self.Bind(wx.EVT_IDLE, self.OnIdle)
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 	
@@ -443,6 +455,10 @@ class ProfileInfoFrame(wx.Frame):
 							 "\n\n" + "\n".join(files), 
 				   ok=lang.getstr("ok"), 
 				   bitmap=geticon(32, "dialog-error"))
+	
+	def resize_grid(self):
+		self.box_panel.SetColSize(1, self.box_panel.GetSize()[0] -
+									 self.box_panel.GetColSize(0) - 30)
 
 	def LoadProfile(self, profile):
 		if not isinstance(profile, ICCP.ICCProfile):
@@ -462,6 +478,7 @@ class ProfileInfoFrame(wx.Frame):
 				return
 		self.profile = profile
 		
+		self.Freeze()
 		self.title_txt.SetLabel(profile.getDescription())
 		self.title_sizer.Layout()
 		
@@ -471,9 +488,6 @@ class ProfileInfoFrame(wx.Frame):
 		for label, value in profile.get_info():
 			label = label.replace("&", "&&").replace("\0", "")
 			value = universal_newlines(value.strip()).replace("&", "&&").replace("\0", "").split("\n")
-			#if (label in ("Device", "Manufacturer ID", "Model ID", "Attributes") or
-				#value in ("Yes", "No") or label.startswith("Description") or
-				#value.startswith("[")):
 			linecount = len(value)
 			for i, line in enumerate(value):
 				value[i] = line.strip()
@@ -493,11 +507,17 @@ class ProfileInfoFrame(wx.Frame):
 				value = "\n".join(value)
 				infos.append(value)
 		
-		self.label_txt.SetLabel("\n".join(labels))
-		self.info_txt.SetLabel("\n".join(infos))
-		self.box_panel.Layout()
-		self.box_panel.FitInside()
-		self.box_panel.SetScrollbars(0, 20, 0, 0)
+		if self.box_panel.GetNumberRows():
+			self.box_panel.DeleteRows(0, self.box_panel.GetNumberRows())
+		self.box_panel.AppendRows(len(infos))
+		for i, (label, info) in enumerate(zip(labels, infos)):
+			self.box_panel.SetCellValue(i, 0, label)
+			self.box_panel.SetCellValue(i, 1, info)
+		
+		self.box_panel.AutoSizeColumn(0)
+		self.resize_grid()
+		self.Thaw()
+		
 		self.DrawCanvas()
 
 	def DrawCanvas(self, event=None):
@@ -512,6 +532,11 @@ class ProfileInfoFrame(wx.Frame):
 										   3: "s"}.get(self.rendering_intent_select.GetSelection()))
 		except Exception, exception:
 			show_result_dialog(exception, self)
+	
+	def OnIdle(self, event):
+		if getattr(self, "sizing", False):
+			self.sizing = False
+			self.resize_grid()
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):
@@ -533,6 +558,8 @@ class ProfileInfoFrame(wx.Frame):
 			event.Skip()
 	
 	def OnSize(self, event=None):
+		self.sizing = True
+		wx.CallAfter(self.resize_grid)
 		wx.CallAfter(self.Zoom)
 		if self.IsShownOnScreen() and not \
 		   self.IsMaximized() and not self.IsIconized():
