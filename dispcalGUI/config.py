@@ -441,8 +441,8 @@ defaults = {
 	"color.dir": os.path.join(commonappdata[0] if is_superuser() else 
 							  appdata, "color"),
 	"comport.number": 1,
-	"copyright": "Created with %s %s and Argyll CMS" % (appname, 
-														version),
+	"copyright": "No copyright. Created with %s %s and Argyll CMS" % (appname, 
+																	  version),
 	"dimensions.measureframe": "0.5,0.5,1.5",
 	"dimensions.measureframe.unzoomed": "0.5,0.5,1.5",
 	"display.number": 1,
