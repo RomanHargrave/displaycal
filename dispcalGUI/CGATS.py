@@ -736,6 +736,8 @@ class CGATS(dict):
 		for i in blacks:
 			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
 				black[j] += blacks[i][label]
+			if blacks[i]["XYZ_Y"] == 0:
+				break
 		# Average blacks
 		black = [n / len(blacks) for n in black]
 
@@ -745,6 +747,8 @@ class CGATS(dict):
 		for i in whites:
 			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
 				white[j] += whites[i][label]
+			if whites[i]["XYZ_Y"] == 100:
+				break
 		# Average whites
 		white = [n / len(whites) for n in white]
 
