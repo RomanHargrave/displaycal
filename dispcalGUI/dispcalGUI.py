@@ -4091,8 +4091,12 @@ class MainFrame(BaseFrame):
 												   args[-1] + (" vs %s.wrl" % src)],
 												  capture_output=True,
 												  skip_scripts=True)
+					# viewgam output looks like this:
+					# Intersecting volume = xxx.x cubic units
+					# 'path/to/gam1' volume = xxx.x cubic units, intersect = xx.xx%
+					# 'path/to/gam2' volume = xxx.x cubic units, intersect = xx.xx%
 					if len(self.worker.output) > 1:
-						coverage_percent[key] = self.worker.output[1].split()[-1]
+						coverage_percent[key] = self.worker.output[1].split()[-1].strip("%")
 		safe_print("-" * 80)
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
