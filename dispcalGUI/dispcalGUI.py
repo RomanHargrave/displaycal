@@ -4139,6 +4139,9 @@ class MainFrame(BaseFrame):
 			if tags and tags is not True:
 				# Add custom tags
 				for tagname, tag in tags.iteritems():
+					if tagname == "mmod":
+						profile.device["manufacturer"] = "\0\0" + tag["manufacturer"][1] + tag["manufacturer"][0]
+						profile.device["model"] = "\0\0" + tag["model"][0] + tag["model"][1]
 					profile.tags[tagname] = tag
 			elif tags is True:
 				edid = self.worker.get_display_edid()
@@ -7062,7 +7065,7 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			tags = {}
+			tags = OrderedDict()
 			# Get filename and extension of source file
 			source_filename, source_ext = os.path.splitext(path)
 			if source_ext.lower() != ".ti3":
@@ -7085,7 +7088,7 @@ class MainFrame(BaseFrame):
 				ti3 = StringIO(profile.tags.get("CIED", "") or 
 							   profile.tags.get("targ", ""))
 				# Preserve custom tags
-				for tagname in ("meta", "mmod"):
+				for tagname in ("mmod", "meta"):
 					if tagname in profile.tags:
 						tags[tagname] = profile.tags[tagname]
 			else:
