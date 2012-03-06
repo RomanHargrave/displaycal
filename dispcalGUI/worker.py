@@ -1327,12 +1327,14 @@ class Worker(object):
 			   wx.GetApp().progress_dlg.IsShownOnScreen():
 				wx.GetApp().progress_dlg.Pulse(
 					lang.getstr("enumerating_displays_and_comports"))
+			instruments = []
 			if enumerate_ports:
 				cmd = get_argyll_util("dispcal")
-				instruments = []
 			else:
 				cmd = get_argyll_util("dispwin")
-				instruments = getcfg("instruments").split(os.pathsep)
+				for instrument in getcfg("instruments").split(os.pathsep):
+					if instrument.strip():
+						instruments.append(instrument)
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
 				self.argyll_bin_dir = argyll_bin_dir
