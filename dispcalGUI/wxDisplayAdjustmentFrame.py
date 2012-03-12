@@ -1211,7 +1211,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 			target_bl = re.search("Target Near Black = (\d+(?:\.\d+)?), Current = (\d+(?:\.\d+)?)".replace(" ", "\s+"), txt, re.I)
 			if target_bl:
 				self.lb.GetCurrentPage().target_bl = ["Target", float(target_bl.groups()[0])]
-		initial_br = re.search("(Initial|Target)(?: Br)? (\d+(?:\.\d+)?)\s*(?:, x (\d+(?:\.\d+)?) , y (\d+(?:\.\d+)?)(?: , (?:(VDT \d+K?) )?DE(?: 2K)? (\d+(?:\.\d+)?))?|$)".replace(" ", "\s+"), txt, re.I)
+		initial_br = re.search("(Initial|Target)(?: Br)? (\d+(?:\.\d+)?)\s*(?:, x (\d+(?:\.\d+)?)\s*, y (\d+(?:\.\d+)?)(?:\s*, (?:(VDT \d+K?) )?DE(?: 2K)? (\d+(?:\.\d+)?))?|$)".replace(" ", "\s+"), txt, re.I)
 		current_br = None
 		current_bl = None
 		if target_br and not getattr(self, "target_br", None):
@@ -1250,7 +1250,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				target_br = getattr(self, "target_br", None)
 			else:
 				target_br = None
-			if self.lb.GetCurrentPage().ctrltype == "rgb_gain":
+			if self.lb.GetCurrentPage().ctrltype == "rgb_gain" and initial_br:
 				initial_br = ["Initial"] + initial_br[1:]
 			compare_br = target_br or initial_br or ("Initial",
 													 float(current_br.groups()[0]))
@@ -1342,7 +1342,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				label = (lang.getstr("current") + u" x %.4f y %.4f %s %.1f \u0394E*00" %
 						 (x, y, vdt, dE)).replace("  ", " ")
 				initial_br = getattr(self.lb.GetCurrentPage(), "initial_br", None)
-				if len(initial_br) > 3:
+				if initial_br and len(initial_br) > 3:
 					x, y, vdt, dE = get_xy_vdt_dE(initial_br[2:])
 					label = (lang.getstr(initial_br[0].lower()) + u" x %.4f y %.4f %s %.1f \u0394E*00\n" %
 							 (x, y, vdt, dE)).replace("  ", " ") + label
