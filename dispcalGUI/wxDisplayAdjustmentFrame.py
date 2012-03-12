@@ -1255,7 +1255,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 			compare_br = target_br or initial_br or ("Initial",
 													 float(current_br.groups()[0]))
 			lstr = (compare_br[0]).lower()
-			percent = 100.0 / compare_br[1]
+			if compare_br[1]:
+				percent = 100.0 / compare_br[1]
+			else:
+				percent = 100.0
 			l_diff = float(current_br.groups()[0]) - compare_br[1]
 			l = int(round(50 + l_diff * percent))
 			if self.lb.GetCurrentPage().gauges.get("L"):
