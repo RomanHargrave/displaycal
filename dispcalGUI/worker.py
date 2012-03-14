@@ -3103,7 +3103,7 @@ class Worker(object):
 					args += ["-A%s" % black_point_rate]
 			black_luminance = getcfg("calibration.black_luminance", False)
 			if black_luminance:
-				args += ["-B%s" % black_luminance]
+				args += ["-B%f" % black_luminance]
 			if verify:
 				if calibrate and type(verify) == int:
 					args += ["-e%s" % verify]  # Verify final computed curves
