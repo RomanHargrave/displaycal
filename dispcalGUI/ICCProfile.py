@@ -59,6 +59,10 @@ elif sys.platform == "win32":
 elif sys.platform == "darwin":
 	from util_mac import osascript
 
+
+GAMUT_VOLUME_SRGB = 833675.435316  # rel. col.
+GAMUT_VOLUME_ADOBERGB = 1209986.014983  # rel. col.
+
 debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
 
 fs_enc = get_encodings()[1]
@@ -3124,6 +3128,23 @@ class ICCProfile:
 							   ("CMF_product", "dispcalGUI"),
 							   ("CMF_binary", "dispcalGUI"),
 							   ("CMF_version", version)))
+	
+	def set_gamut_metadata(self, gamut_volume=None, gamut_coverage=None):
+		""" Sets gamut volume and coverage metadata keys """
+		if gamut_volume or gamut_coverage:
+			# Update meta prefix
+			prefixes = (self.tags.meta.getvalue("prefix", "", None) or
+						"GAMUT_").split(",")
+			if not "GAMUT_" in prefixes:
+				prefixes.append("GAMUT_")
+				self.tags.meta["prefix"] = ",".join(prefixes)
+			if gamut_volume:
+				# Set gamut size
+				self.tags.meta["GAMUT_volume"] = gamut_volume
+			if gamut_coverage:
+				# Set gamut coverage
+				for key, factor in gamut_coverage.iteritems():
+					self.tags.meta["GAMUT_coverage(%s)" % key] = factor
 	
 	def write(self, stream_or_filename=None):
 		"""

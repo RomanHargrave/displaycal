@@ -4068,35 +4068,11 @@ class MainFrame(BaseFrame):
 				chrm = ICCP.ChromaticityType(blob.read())
 		else:
 			chrm = None
-		coverage_percent = {}
-		if getcfg("profile.create_gamut_views"):
-			safe_print("-" * 80)
-			safe_print(lang.getstr("gamut.view.create"))
-			self.worker.recent.clear()
-			self.worker.recent.write(lang.getstr("gamut.view.create"))
-			sleep(1)  # Allow time for progress window to update
-			if not isinstance(result, Exception) and result:
-				# Create profile gamut and vrml
-				result = self.worker.exec_cmd(get_argyll_util("iccgamut"),
-											  ["-w", "-ia", args[-1] + profile_ext],
-											  skip_scripts=True)
-			for key, src in (("srgb", "sRGB"), ("adobergb", "ClayRGB1998")):
-				if not isinstance(result, Exception) and result:
-					# Create gamut view and intersection
-					result = self.worker.exec_cmd(get_argyll_util("viewgam"),
-												  ["-cw", "-t.75", "-s",
-												   get_data_path("ref\%s.gam" % src),
-												   "-cn", "-t.25", "-s",
-												   args[-1] + ".gam", "-i",
-												   args[-1] + (" vs %s.wrl" % src)],
-												  capture_output=True,
-												  skip_scripts=True)
-					# viewgam output looks like this:
-					# Intersecting volume = xxx.x cubic units
-					# 'path/to/gam1' volume = xxx.x cubic units, intersect = xx.xx%
-					# 'path/to/gam2' volume = xxx.x cubic units, intersect = xx.xx%
-					if len(self.worker.output) > 1:
-						coverage_percent[key] = self.worker.output[1].split()[-1].strip("%")
+		if not isinstance(result, Exception) and result:
+			(gamut_volume,
+			 gamut_coverage) = self.create_gamut(args[-1] + profile_ext)
+		else:
+			gamut_volume, gamut_coverage = None, None
 		safe_print("-" * 80)
 		self.worker.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
@@ -4178,7 +4154,7 @@ class MainFrame(BaseFrame):
 				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ACCURACY_").split(",")
 				if not "ACCURACY_" in prefixes:
 					prefixes.append("ACCURACY_")
-				profile.tags.meta["prefix"] = ",".join(prefixes)
+					profile.tags.meta["prefix"] = ",".join(prefixes)
 				# Add error info
 				if avg is not None:
 					profile.tags.meta["ACCURACY_dE76_avg"] = avg
@@ -4186,14 +4162,7 @@ class MainFrame(BaseFrame):
 					profile.tags.meta["ACCURACY_dE76_max"] = peak
 				if rms is not None:
 					profile.tags.meta["ACCURACY_dE76_rms"] = rms
-			if coverage_percent:
-				# Update meta prefix
-				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "GAMUT_").split(",")
-				if not "GAMUT_" in prefixes:
-					prefixes.append("GAMUT_")
-				profile.tags.meta["prefix"] = ",".join(prefixes)
-				for key, percent in coverage_percent.iteritems():
-					profile.tags.meta["GAMUT_coverage_%s" % key] = percent
+			profile.set_gamut_metadata(gamut_volume, gamut_coverage)
 			# Set default rendering intent
 			if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
 				(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
@@ -5831,22 +5800,47 @@ class MainFrame(BaseFrame):
 								self.update_controls(update_profile_name=False)
 					if "meta" in profile.tags:
 						for key, name in (("srgb", "sRGB"),
-										  ("adobergb", "AdobeRGB")):
-							coverage_percent = profile.tags.meta.getvalue("GAMUT_coverage_" + key)
-							if coverage_percent:
-								extra.append("%s %s: %s" % (lang.getstr("gamut.coverage"),
-															name, coverage_percent))
+										  ("adobe-rgb", "Adobe RGB")):
+							try:
+								gamut_coverage = float(profile.tags.meta.getvalue("GAMUT_coverage(%s)" % key))
+							except (TypeError, ValueError):
+								gamut_coverage = None
+							if gamut_coverage:
+								if not lang.getstr("gamut.coverage") + ":" in extra:
+									extra.append(lang.getstr("gamut.coverage") + ":")
+								extra.append(" %.1f%% %s" % (gamut_coverage * 100,
+															 name))
+						try:
+							gamut_volume = float(profile.tags.meta.getvalue("GAMUT_volume"))
+						except (TypeError, ValueError):
+							gamut_volume = None
+						if gamut_volume:
+							gamut_volumes = {"srgb": ICCP.GAMUT_VOLUME_SRGB,
+											 "adobe-rgb": ICCP.GAMUT_VOLUME_ADOBERGB}
+							for key, name in (("srgb", "sRGB"),
+											  ("adobe-rgb", "Adobe RGB")):
+								if not lang.getstr("gamut.volume") + ":" in extra:
+									if extra:
+										extra.append("")
+									extra.append(lang.getstr("gamut.volume") + ":")
+								extra.append(" %.1f%% %s" %
+											 (gamut_volume *
+											  ICCP.GAMUT_VOLUME_SRGB /
+											  gamut_volumes[key] * 100,
+											  name))
 			else:
 				# .cal file
 				has_cal = True
-			extra = "\n".join(extra)
+			if extra:
+				extra = ",".join(extra).replace(":,", ":").replace(",,", "\n")
+				success_msg = "\n\n".join([success_msg, extra])
 			# Always load calibration curves
 			self.load_cal(cal=profile_path, silent=True)
 			# Check profile metadata
 			share_profile = None
 			if not self.profile_share_get_meta_error(profile):
 				share_profile = lang.getstr("profile.share")
-			dlg = ConfirmDialog(self, msg="\n\n".join([success_msg, extra]), 
+			dlg = ConfirmDialog(self, msg=success_msg, 
 								title=lang.getstr("profile.install"),
 								ok=lang.getstr("profile.install"), 
 								cancel=lang.getstr("profile.do_not_install"), 
@@ -6097,10 +6091,11 @@ class MainFrame(BaseFrame):
 				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
 														   ".ccmx", ".ccss",
 														   ".cmd", ".command", 
-														   ".gam", ".icc",
-														   ".icm", ".sh",
-														   ".ti1", ".ti3",
-														   ".wrl"])
+														   ".gam", ".gz",
+														   ".icc", ".icm",
+														   ".sh", ".ti1",
+														   ".ti3", ".wrl",
+														   ".wrz"])
 			if profile and (profile.is_loaded or not profile.fileName or 
 							os.path.isfile(profile.fileName)):
 				if not self.lut_viewer.profile or \
@@ -7196,6 +7191,19 @@ class MainFrame(BaseFrame):
 							 "tags": tags}, 
 					progress_msg=lang.getstr("create_profile"))
 	
+	def create_gamut(self, profile_path):
+		if getcfg("profile.create_gamut_views"):
+			safe_print("-" * 80)
+			safe_print(lang.getstr("gamut.view.create"))
+			self.worker.recent.clear()
+			self.worker.recent.write(lang.getstr("gamut.view.create"))
+			sleep(.5)  # Allow time for progress window to update
+			(gamut_volume,
+			 gamut_coverage) = self.worker.calculate_gamut(profile_path)
+		else:
+			gamut_volume, gamut_coverage = None, None
+		return gamut_volume, gamut_coverage
+	
 	def create_profile_from_edid(self, event):
 		edid = self.worker.get_display_edid()
 		defaultFile = edid.get("monitor_name",
@@ -7224,10 +7232,28 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 			else:
-				self.profile_finish(True, profile_save_path, 
-									success_msg=lang.getstr("dialog.install_profile", 
-															(os.path.basename(profile_save_path), 
-															 self.display_ctrl.GetStringSelection())))
+				self.worker.interactive = False
+				self.worker.start(self.create_profile_from_edid_finish,
+								  self.create_gamut, 
+								  cargs=(profile, ),
+								  wargs=(profile_save_path, ),
+								  progress_msg=lang.getstr("create_profile"), 
+								  resume=False)
+	
+	def create_profile_from_edid_finish(self, result, profile):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		elif result:
+			profile.set_gamut_metadata(result[0], result[1])
+			try:
+				profile.write()
+			except Exception, exception:
+				show_result_dialog(exception, self)
+				return
+			self.profile_finish(True, profile.fileName, 
+								success_msg=lang.getstr("dialog.install_profile", 
+														(os.path.basename(profile.fileName), 
+														 self.display_ctrl.GetStringSelection())))
 	
 	def create_profile_name(self):
 		profile_name = self.profile_name_textctrl.GetValue()

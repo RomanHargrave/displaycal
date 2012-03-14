@@ -275,6 +275,7 @@
 	"gamap.viewconds.cx": "Cut Sheet Transparencies on a viewing box",
 	"gamut": "Gamut",
 	"gamut.coverage": "Gamut coverage",
+	"gamut.volume": "Gamut volume",
 	"gamut.view.create": "Generating gamut views...",
 	"gamut_plot.tooltip": "Click and drag the mouse inside the plot to move the viewport,\nor zoom with the mouse wheel and +/- keys. Double-click resets the viewport.",
 	"glossy": "Glossy",

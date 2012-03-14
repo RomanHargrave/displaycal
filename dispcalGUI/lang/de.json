@@ -276,6 +276,7 @@
 	"gamap.viewconds.cx": "Dias auf Leuchtkasten",
 	"gamut": "Farbumfang",
 	"gamut.coverage": "Farbraumabdeckung",
+	"gamut.volume": "Farbraumvolumen",
 	"gamut.view.create": "Generiere Gamut-Ansichten...",
 	"gamut_plot.tooltip": "Klicken und ziehen Sie die Maus im Diagramm, um den Ausschnitt zu verschieben,\noder zoomen Sie mit dem Mausrad und den +/- Tasten. Doppelklick setzt die Ansicht zurück.",
 	"glossy": "Glossy",

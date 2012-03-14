@@ -4,6 +4,7 @@
 # stdlib
 from __future__ import with_statement
 import getpass
+import gzip
 import math
 import os
 import re
@@ -3729,6 +3730,82 @@ class Worker(object):
 			except:
 				pass
 	
+	def calculate_gamut(self, profile_path):
+		"""
+		Calculate gamut, volume, and coverage % against sRGB and Adobe RGB.
+		
+		Return gamut volume (int, scaled to sRGB = 1.0) and
+		coverage (dict) as tuple.
+		
+		"""
+		outname = os.path.splitext(profile_path)[0]
+		gamut_volume = None
+		gamut_coverage = {}
+		# Create profile gamut and vrml
+		result = self.exec_cmd(get_argyll_util("iccgamut"),
+							   ["-v", "-w", "-ir", outname + profile_ext],
+							   skip_scripts=True)
+		if not isinstance(result, Exception) and result:
+			# iccgamut output looks like this:
+			# Header:
+			#  <...>
+			#
+			# Total volume of gamut is xxxxxx.xxxxxx cubic colorspace units
+			for line in self.output:
+				match = re.search("(\d+(?:\.\d+)?)\s+cubic\s+colorspace\s+"
+								  "units", line)
+				if match:
+					gamut_volume = float(match.groups()[0]) / ICCP.GAMUT_VOLUME_SRGB
+					break
+		wrlfilenames = [outname + ".gam", outname + ".wrl"]
+		for key, src in (("srgb", "sRGB"), ("adobe-rgb", "ClayRGB1998")):
+			if not isinstance(result, Exception) and result:
+				# Create gamut view and intersection
+				src_path = get_data_path("ref/%s.gam" % src)
+				outfilename = outname + (" vs %s.wrl" % src)
+				wrlfilenames.append(outfilename)
+				result = self.exec_cmd(get_argyll_util("viewgam"),
+									   ["-cw", "-t.75", "-s", src_path, "-cn",
+										"-t.25", "-s", outname + ".gam", "-i",
+										outfilename],
+									   capture_output=True,
+									   skip_scripts=True)
+				if not isinstance(result, Exception) and result:
+					# viewgam output looks like this:
+					# Intersecting volume = xxx.x cubic units
+					# 'path/to/1.gam' volume = xxx.x cubic units, intersect = xx.xx%
+					# 'path/to/2.gam' volume = xxx.x cubic units, intersect = xx.xx%
+					for line in self.output:
+						match = re.search("[\\\/]%s.gam'\s+volume\s*=\s*"
+										  "\d+(?:\.\d+)?\s+cubic\s+units,?"
+										  "\s+intersect\s*=\s*"
+										  "(\d+(?:\.\d+)?)" %
+										  re.escape(src), line)
+						if match:
+							gamut_coverage[key] = float(match.groups()[0]) / 100.0
+							break
+		if not isinstance(result, Exception) and result:
+			# Compress gam and wrl files using gzip
+			for filename in wrlfilenames:
+				if filename.endswith(".wrl"):
+					outfilename = filename[:-4] + ".wrz"
+				else:
+					outfilename = filename + ".gz"
+				try:
+					with open(filename, "rb") as infile:
+						# gzip.open has no __exit__ method
+						gz = gzip.open(outfilename, "wb")
+						gz.write(infile.read())
+						gz.close()
+					# Remove uncompressed files
+					os.remove(filename)
+				except Exception, exception:
+					safe_print(safe_unicode(exception))
+		elif result:
+			# Exception
+			safe_print(safe_unicode(result))
+		return gamut_volume, gamut_coverage
+	
 	def chart_lookup(self, cgats, profile, as_ti3=False, 
 					 check_missing_fields=False, absolute=False):
 		if profile.colorSpace == "RGB":
@@ -4249,8 +4326,8 @@ class Worker(object):
 		if copy:
 			if not ext_filter:
 				ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
-							  ".command", ".gam", ".icc", ".icm", ".sh",
-							  ".ti1", ".ti3", ".wrl"]
+							  ".command", ".gam", ".gz", ".icc", ".icm",
+							  ".sh", ".ti1", ".ti3", ".wrl", ".wrz"]
 			if dst_path is None:
 				dst_path = os.path.join(getcfg("profile.save_path"), 
 										getcfg("profile.name.expanded"), 
@@ -4279,8 +4356,9 @@ class Worker(object):
 												   basename)
 							else:
 								# Use dst basename (sans ext) + source ext
-								if ext.lower() in (".app", script_ext):
+								if ext.lower() in (".app", script_ext, ".gz"):
 									# Preserve *.<utility>.[app|cmd|sh]
+									# and <ext>.gz
 									dst += os.path.splitext(name)[1]
 								dst += ext
 							if os.path.exists(dst):
