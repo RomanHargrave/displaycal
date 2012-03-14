@@ -1411,6 +1411,9 @@ class Worker(object):
 							except ValueError:
 								pass
 						self.argyll_version = argyll_version
+						if argyll_version > [1, 0, 4]:
+							# Rate of blending from neutral to black point.
+							defaults["calibration.black_point_rate.enabled"] = 1
 						continue
 					line = line.split(None, 1)
 					if len(line) and line[0][0] == "-":
