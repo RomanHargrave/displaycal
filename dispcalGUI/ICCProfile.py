@@ -3137,9 +3137,11 @@ class ICCProfile:
 			if self._file:
 				if not self._file.closed:
 					self.close()
-				stream_or_filename = self.fileName
+			stream_or_filename = self.fileName
 		if isinstance(stream_or_filename, basestring):
 			stream = open(stream_or_filename, "wb")
+			if not self.fileName:
+				self.fileName = stream_or_filename
 		else:
 			stream = stream_or_filename
 		stream.write(self.data)
