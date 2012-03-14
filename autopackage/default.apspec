@@ -101,11 +101,7 @@ requireAtLeast '@wxpython.org/python-wxgtk:2.8'
 
 requireLibs libc libdl libpthread libX11 libXau libXext libXinerama libXrandr libXrender libXxf86vm
 
-testForPythonModule numpy || (
-	testForPythonModule numarray || (
-		testForPythonModule Numeric || recommendAtLeast '@numpy.scipy.org/numpy:1.1'
-	)
-)
+testForPythonModule numpy || requireAtLeast '@numpy.scipy.org/numpy:1.1'
 
 removeOwningPackage "$PREFIX/bin/dispcalGUI"
 
