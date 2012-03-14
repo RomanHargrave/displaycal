@@ -357,6 +357,7 @@
 	"profile.current": "Current profile",
 	"profile.do_not_install": "Don't install profile",
 	"profile.info": "Profile information",
+	"profile.info.show": "Show profile information",
 	"profile.install": "Install profile",
 	"profile.install_local_system": "Install profile system-wide",
 	"profile.install_network": "Install profile network-wide",

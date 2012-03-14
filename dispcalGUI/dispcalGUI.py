@@ -1418,6 +1418,8 @@ class MainFrame(BaseFrame):
 		
 		# Calibration settings panel
 		self.calpanel = self.FindWindowByName("calpanel")
+		
+		self.profile_info = {}
 	
 	def init_timers(self):
 		"""
@@ -4795,13 +4797,7 @@ class MainFrame(BaseFrame):
 		"""
 		if not parent:
 			parent = self
-		profile = None
-		path = getcfg("calibration.file")
-		if path:
-			try:
-				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError, exception:
-				pass
+		profile = self.get_profile()
 		if not profile:
 			profile = self.get_display_profile()
 			if profile:
@@ -5862,7 +5858,19 @@ class MainFrame(BaseFrame):
 						 id=self.preview.GetId())
 				dlg.sizer3.Add(self.preview, flag=wx.TOP | wx.ALIGN_LEFT, 
 							   border=12)
-				if LUTFrame:
+				if ProfileInfoFrame:
+					self.show_profile_info = wx.CheckBox(dlg, -1,
+														 lang.getstr("profile.info.show"))
+					dlg.Bind(wx.EVT_CHECKBOX, self.profile_info_handler, 
+							 id=self.show_profile_info.GetId())
+					dlg.sizer3.Add(self.show_profile_info, flag=wx.TOP |
+																wx.ALIGN_LEFT, 
+								   border=4)
+					if profile and profile.calculateID() in self.profile_info:
+						self.show_profile_info.SetValue(
+							self.profile_info[profile.ID].IsShownOnScreen())
+				elif LUTFrame:
+					# Disabled, use profile information window instead
 					self.show_lut = wx.CheckBox(dlg, -1, 
 												lang.getstr(
 													"calibration.show_lut"))
@@ -6005,12 +6013,39 @@ class MainFrame(BaseFrame):
 		self.start_timers(True)
 		self.previous_cal = False
 	
+	def profile_info_close_handler(self, event):
+		if getattr(self, "show_profile_info", None):
+			# If the profile install dialog is shown, just hide info window
+			self.profile_info[event.GetEventObject().profile.ID].Hide()
+			self.show_profile_info.SetValue(False)
+		else:
+			# Remove the frame from the hash table
+			self.profile_info.pop(event.GetEventObject().profile.ID)
+			# Closes the window
+			event.Skip()
+	
 	def profile_info_handler(self, event):
 		profile = self.select_profile(check_profile_class=False)
-		frame = ProfileInfoFrame(None, -1)
-		if profile:
-			frame.LoadProfile(profile)
-		frame.Show(True)
+		if not profile:
+			return
+		profile.calculateID()
+		show = (not getattr(self, "show_profile_info", None) or
+				self.show_profile_info.GetValue())
+		if show:
+			if not profile.ID in self.profile_info:
+				# Create profile info window and store in hash table
+				self.profile_info[profile.ID] = ProfileInfoFrame(None, -1)
+				self.profile_info[profile.ID].Unbind(wx.EVT_CLOSE)
+				self.profile_info[profile.ID].Bind(wx.EVT_CLOSE,
+												   self.profile_info_close_handler)
+			if (not self.profile_info[profile.ID].profile or
+				self.profile_info[profile.ID].profile.ID != profile.ID):
+				# Load profile if info window has no profile or ID is different
+				self.profile_info[profile.ID].LoadProfile(profile)
+		if self.profile_info.get(profile.ID):
+			self.profile_info[profile.ID].Show(show)
+			if show:
+				self.profile_info[profile.ID].Raise()
 	
 	def lower_handler(self, event):
 		self.modaldlg.Raise()
@@ -7629,6 +7664,16 @@ class MainFrame(BaseFrame):
 			_safe_print("ICCP.get_display_profile(%s):" % display_no, 
 						exception, fn=log)
 			return None
+	
+	def get_profile(self):
+		""" Get the currently set profile """
+		path = getcfg("calibration.file")
+		if path:
+			try:
+				profile = ICCP.ICCProfile(path)
+			except ICCP.ICCProfileInvalidError, exception:
+				return
+			return profile
 
 	def get_profile_quality(self):
 		return self.quality_ab[self.profile_quality_ctrl.GetValue() + 1]
