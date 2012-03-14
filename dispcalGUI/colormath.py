@@ -226,6 +226,10 @@ def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50"):
 	return XYZ
 
 
+def avg(*args):
+	return float(sum(args)) / len(args)
+
+
 def compute_bpc(bp_in, bp_out):
 	"""
 	Black point compensation. Implemented as a linear scaling in XYZ. 
@@ -262,37 +266,174 @@ def compute_bpc(bp_in, bp_out):
 	return matrix, offset
 
 
+def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None):
+		"""
+		Compute the delta of two samples
+
+		CIE 1994 & CMC calculation code derived from formulas on
+		 www.brucelindbloom.com
+		CIE 1994 code uses some alterations seen on
+		 www.farbmetrik-gall.de/cielab/korrcielab/cie94.html
+		 (see notes in code below)
+		CIE 2000 calculation code derived from Excel spreadsheet available at
+		 www.ece.rochester.edu/~gsharma/ciede2000
+		
+		method: either "CIE94", "CMC", "CIE2K" or "CIE76"
+		 (default if method is not set)
+		
+		p1, p2, p3 arguments have different meaning for each calculation method:
+		
+			CIE 1994: If p1 is not None, calculation will be adjusted for
+					  textiles, otherwise graphics arts (default if p1 is not set)
+			CMC(l:c): p1 equals l (lightness) weighting factor and p2 equals c
+					  (chroma) weighting factor.
+					  Commonly used values are CMC(1:1) for perceptability
+					  (default if p1 and p2 are not set) and CMC(2:1) for
+					  acceptability
+			CIE 2000: p1 becomes kL (lightness) weighting factor, p2 becomes
+					  kC (chroma) weighting factor and p3 becomes kH (hue)
+					  weighting factor (all three default to 1 if not set)
+
+		"""
+		if isinstance(method, basestring):
+			method = method.lower()
+		else:
+			method = str(int(method))
+		if method in ("94", "1994", "cie94", "cie1994"):
+			textiles = p1
+			dL = L1 - L2
+			C1 = math.sqrt(math.pow(a1, 2) + math.pow(b1, 2))
+			C2 = math.sqrt(math.pow(a2, 2) + math.pow(b2, 2))
+			dC = C1 - C2
+			da = a1 - a2
+			db = b1 - b2
+			dH = math.sqrt(math.pow(da, 2) + math.pow(db, 2) - math.pow(dC, 2))
+			SL = 1.0
+			K1 = 0.048 if textiles else 0.045
+			K2 = 0.014 if textiles else 0.015
+			# brucelindbloom.com formula originally used C1 instead of C_,
+			# but the results are different from ProfileMaker/MeasureTool 
+			# implementation, so use this instead
+			# (found on www.farbmetrik-gall.de/cielab/korrcielab/cie94.html)
+			C_ = (math.sqrt((1 + (K1 * C1)) * (1 + (K1 * C2))) - 1) / K1
+			SC = 1.0 + K1 * C_
+			SH = 1.0 + K2 * C_
+			KL = 2.0 if textiles else 1.0
+			KC = 1.0
+			KH = 1.0
+			dE = math.sqrt(math.pow(dL / (KL * SL), 2) + math.pow(dC / (KC * SC), 2) + math.pow(dH / (KH * SH), 2))
+		elif method in ("cmc(2:1)", "cmc21", "cmc(1:1)", "cmc11", "cmc"):
+			if method in ("cmc(2:1)", "cmc21"):
+				p1 = 2.0
+			l = p1 if isinstance(p1, (float, int)) else 1.0
+			c = p2 if isinstance(p2, (float, int)) else 1.0
+			dL = L1 - L2
+			C1 = math.sqrt(math.pow(a1, 2) + math.pow(b1, 2))
+			C2 = math.sqrt(math.pow(a2, 2) + math.pow(b2, 2))
+			dC = C1 - C2
+			da = a1 - a2
+			db = b1 - b2
+			dH = math.sqrt(math.pow(da, 2) + math.pow(db, 2) - math.pow(dC, 2))
+			SL = 0.511 if L1 < 16 else (0.040975 * L1) / (1 + 0.01765 * L1)
+			SC = (0.0638 * C1) / (1 + 0.0131 * C1) + 0.638
+			F = math.sqrt(math.pow(C1, 4) / (math.pow(C1, 4) + 1900.0))
+			H1 = math.degrees(math.atan2(b1, a1)) + (0 if b1 >= 0 else 360.0)
+			T = 0.56 + abs(0.2 * math.cos(math.radians(H1 + 168.0))) if 164 <= H1 and H1 <= 345 else 0.36 + abs(0.4 * math.cos(math.radians(H1 + 35)))
+			SH = SC * (F * T + 1 - F)
+			dE = math.sqrt(math.pow(dL / (l * SL), 2) + math.pow(dC / (c * SC), 2) + math.pow(dH / SH, 2))
+		elif method in ("00", "2k", "2000", "cie00", "cie2k", "cie2000"):
+			pow25_7 = math.pow(25, 7)
+			k_L = p1 if isinstance(p1, (float, int)) else 1.0
+			k_C = p2 if isinstance(p2, (float, int)) else 1.0
+			k_H = p3 if isinstance(p3, (float, int)) else 1.0
+			C1 = math.sqrt(math.pow(a1, 2) + math.pow(b1, 2))
+			C2 = math.sqrt(math.pow(a2, 2) + math.pow(b2, 2))
+			C_avg = avg(C1, C2)
+			G = .5 * (1 - math.sqrt(math.pow(C_avg, 7) / (math.pow(C_avg, 7) + pow25_7)))
+			L1_ = L1
+			a1_ = (1 + G) * a1
+			b1_ = b1
+			L2_ = L2
+			a2_ = (1 + G) * a2
+			b2_ = b2
+			C1_ = math.sqrt(math.pow(a1_, 2) + math.pow(b1_, 2))
+			C2_ = math.sqrt(math.pow(a2_, 2) + math.pow(b2_, 2))
+			h1_ = 0 if a1_ == 0 and b1_ == 0 else math.degrees(math.atan2(b1_, a1_)) + (0 if b1_ >= 0 else 360.0)
+			h2_ = 0 if a2_ == 0 and b2_ == 0 else math.degrees(math.atan2(b2_, a2_)) + (0 if b2_ >= 0 else 360.0)
+			dh_cond = 1.0 if h2_ - h1_ > 180 else (2.0 if h2_ - h1_ < -180 else 0)
+			dh_ = h2_ - h1_ if dh_cond == 0 else (h2_ - h1_ - 360.0 if dh_cond == 1 else h2_ + 360.0 - h1_)
+			dL_ = L2_ - L1_
+			dL = dL_
+			dC_ = C2_ - C1_
+			dC = dC_
+			dH_ = 2 * math.sqrt(C1_ * C2_) * math.sin(math.radians(dh_ / 2.0))
+			dH = dH_
+			L__avg = avg(L1_, L2_)
+			C__avg = avg(C1_, C2_)
+			h__avg_cond = 3.0 if C1_ * C2_ == 0 else (0 if abs(h2_ - h1_) <= 180 else (1.0 if h2_ + h1_ < 360 else 2.0))
+			h__avg = h1_ + h2_ if h__avg_cond == 3 else (avg(h1_, h2_) if h__avg_cond == 0 else (avg(h1_, h2_) + 180.0 if h__avg_cond == 1 else avg(h1_, h2_) - 180.0))
+			AB = math.pow(L__avg - 50.0, 2)  # (L'_ave-50)^2
+			S_L = 1 + .015 * AB / math.sqrt(20.0 + AB)
+			S_C = 1 + .045 * C__avg
+			T = (1 - .17 * math.cos(math.radians(h__avg - 30.0)) + .24 * math.cos(math.radians(2.0 * h__avg)) + .32 * math.cos(math.radians(3.0 * h__avg + 6.0))
+				 - .2 * math.cos(math.radians(4 * h__avg - 63.0)))
+			S_H = 1 + .015 * C__avg * T
+			dTheta = 30.0 * math.exp(-1 * math.pow((h__avg - 275.0) / 25.0, 2))
+			R_C = 2.0 * math.sqrt(math.pow(C__avg, 7) / (math.pow(C__avg, 7) + pow25_7))
+			R_T = -math.sin(math.radians(2.0 * dTheta)) * R_C
+			AJ = dL_ / S_L / k_L  # dL' / k_L / S_L
+			AK = dC_ / S_C / k_C  # dC' / k_C / S_C
+			AL = dH_ / S_H / k_H  # dH' / k_H / S_H
+			dE = math.sqrt(math.pow(AJ, 2) + math.pow(AK, 2) + math.pow(AL, 2) + R_T * AK * AL)
+		else:
+			# dE 1976
+			dL = L1 - L2
+			C1 = math.sqrt(math.pow(a1, 2) + math.pow(b1, 2))
+			C2 = math.sqrt(math.pow(a2, 2) + math.pow(b2, 2))
+			dC = C1 - C2
+			dH = math.sqrt(math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2) - math.pow(dC, 2))
+			dE = math.sqrt(math.pow(dL, 2) + math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2))
+		
+		return {"E": dE,
+				"L": dL,
+				"C": dC,
+				"H": dH,
+				"a": a1 - a2,
+				"b": b1 - b2}
+
+
 def is_similar_matrix(matrix1, matrix2, digits=3):
 	""" Compare two matrices and check if they are the same
 	up to n digits after the decimal point """
 	return matrix1.rounded(digits) == matrix2.rounded(digits)
 
 
-def get_gamma(values, scale=1.0, average=True, least_squares=False):
-	""" Return the gamma average or values, for entries > 0 and < 1 """
-	if len(values) == 1:
-		gammas = [values[0]]
+def get_gamma(values, scale=1.0, vmin=0.0, vmax=1.0, average=True, least_squares=False):
+	""" Return average or least squares gamma or a list of gamma values """
+	if least_squares:
+		logxy = []
+		logx2 = []
 	else:
-		if least_squares:
-			logxy = []
-			logx2 = []
-		else:
-			gammas = []
-		vmin = values[0] / scale
-		vmax = values[-1] / scale
-		for i, entry in enumerate(values):
-			x = i / (len(values) - 1.0)
-			y = (vmin + entry * (vmax - vmin)) / scale
-			if x > 0 and x < 1 and y > 0:
-				if least_squares:
-					logxy.append(math.log(x) * math.log(y))
-					logx2.append(math.pow(math.log(x), 2))
-				else:
-					gammas.append(math.log(y) / math.log(x))
+		gammas = []
+	vmin /= scale
+	vmax /= scale
+	for x, y in values:
+		x /= scale
+		y = (y / scale - vmin) * (vmax + vmin)
+		if x > 0 and x < 1 and y > 0:
+			if least_squares:
+				logxy.append(math.log(x) * math.log(y))
+				logx2.append(math.pow(math.log(x), 2))
+			else:
+				gammas.append(math.log(y) / math.log(x))
 	if average or least_squares:
 		if least_squares:
+			if not logxy or not logx2:
+				return 0
 			return sum(logxy) / sum(logx2)
 		else:
+			if not gammas:
+				return 0
 			return sum(gammas) / len(gammas)
 	else:
 		return gammas
@@ -422,6 +563,47 @@ def Lab2XYZ(L, a, b, whitepoint=None, scale=1.0):
 	Z = zr * Zr
 	
 	return X, Y, Z
+
+
+def Lab2xyY(L, a, b, whitepoint=None, scale=1.0):
+	X, Y, Z = Lab2XYZ(L, a, b, whitepoint, scale)
+	return XYZ2xyY(X, Y, Z, whitepoint)
+
+
+def Luv2RGB(L, u, v, rgb_space=None, scale=1.0, round_=False, clamp=True):
+	""" Convert from Luv to RGB """
+	X, Y, Z = Luv2XYZ(L, u, v)
+	return XYZ2RGB(X, Y, Z, rgb_space, scale, round_, clamp)
+
+
+def u_v_2xy(u, v):
+	""" Convert from u'v' to xy """
+	
+	x = (9.0 * u) / (6 * u - 16 * v + 12)
+	y = (4 * v) / (6 * u - 16 * v + 12)
+	
+	return x, y
+
+
+def Luv2XYZ(L, u, v, whitepoint=None, scale=1.0):
+	""" Convert from Luv to XYZ """
+	
+	Xr, Yr, Zr = get_whitepoint(whitepoint)
+	
+	Y = math.pow((L + 16.0) / 116.0, 3) if L > LSTAR_K * LSTAR_E else L / LSTAR_K
+	
+	uo = (4.0 * Xr) / (Xr + 15.0 * Yr + 3.0 * Zr)
+	vo = (9.0 * Yr) / (Xr + 15.0 * Yr + 3.0 * Zr)
+	
+	a = (1.0 / 3.0) * (((52.0 * L) / (u + 13 * L * uo)) -1)
+	b = -5.0 * Y
+	c = -(1.0 / 3.0)
+	d = Y * (((39.0 * L) / (v + 13 * L * vo)) - 5)
+	
+	X = (d - b) / (a - c)
+	Z = X * a + b
+	
+	return tuple([v * scale for v in X, Y, Z])
 
 
 def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
@@ -611,6 +793,17 @@ def xyY2CCT(x, y, Y=1.0):
 	return XYZ2CCT(*xyY2XYZ(x, y, Y))
 
 
+def xyY2Lab(x, y, Y=1.0, whitepoint=None):
+	X, Y, Z = xyY2XYZ(x, y, Y)
+	return XYZ2Lab(X, Y, Z, whitepoint)
+
+
+def xyY2RGB(x, y, Y, rgb_space=None, scale=1.0, round_=False, clamp=True):
+	""" Convert from xyY to RGB """
+	X, Y, Z = xyY2XYZ(x, y, Y)
+	return XYZ2RGB(X, Y, Z, rgb_space, scale, round_, clamp)
+
+
 def xyY2XYZ(x, y, Y=1.0):
 	"""
 	Convert from xyY to XYZ.
@@ -754,6 +947,42 @@ def XYZ2Lab(X, Y, Z, whitepoint=None):
 	return L, a, b
 
 
+def XYZ2Lu_v_(X, Y, Z, whitepoint=None):
+	""" Convert from XYZ to CIE Lu'v' """
+	
+	Xn, Yn, Zn = get_whitepoint(whitepoint, 100)
+	
+	if Y / Yn <= math.pow(6.0 / 29.0, 3):
+		L = math.pow(29.0 / 3.0, 3)
+	else:
+		L = 116.0 * math.pow(Y / Yn, 1.0 / 3.0) - 16.0
+	
+	u_ = (4.0 * X) / (X + 15.0 * Y + 3.0 * Z)
+	v_ = (9.0 * Y) / (X + 15.0 * Y + 3.0 * Z)
+	
+	return L, u_, v_
+
+
+def XYZ2Luv(X, Y, Z, whitepoint=None):
+	""" Convert from XYZ to Luv """
+	Xr, Yr, Zr = get_whitepoint(whitepoint, 100)
+	
+	yr = Y / Yr
+	
+	L = 116.0 * cbrt(yr) - 16.0 if yr > LSTAR_E else LSTAR_K * yr
+	
+	u_ = (4.0 * X) / (X + 15.0 * Y + 3.0 * Z)
+	v_ = (9.0 * Y) / (X + 15.0 * Y + 3.0 * Z)
+	
+	u_r = (4.0 * Xr) / (Xr + 15.0 * Yr + 3.0 * Zr)
+	v_r = (9.0 * Yr) / (Xr + 15.0 * Yr + 3.0 * Zr)
+	
+	u = 13.0 * L * (u_ - u_r)
+	v = 13.0 * L * (v_ - v_r)
+	
+	return L, u, v
+
+
 def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True):
 	"""
 	Convert from XYZ to RGB.
@@ -820,6 +1049,27 @@ def XYZ2xyY(X, Y, Z, whitepoint=None):
 	x = X / (X + Y + Z)
 	y = Y / (X + Y + Z)
 	return x, y, Y
+
+
+def xy_CCT_delta(x, y, daylight=True, method=2000):
+	""" Return CCT and delta to locus """
+	cct = xyY2CCT(x, y)
+	d = None
+	if cct:
+		locus = None
+		if daylight:
+			# Daylight locus
+			if 4000 <= cct <= 25000:
+				locus = CIEDCCT2XYZ(cct, 100.0)
+		else:
+			# Planckian locus
+			if 1667 <= cct <= 25000:
+				locus = planckianCT2XYZ(cct, 100.0)
+		if locus:
+			L1, a1, b1 = xyY2Lab(x, y, 100.0)
+			L2, a2, b2 = XYZ2Lab(*locus)
+			d = delta(L1, a1, b1, L2, a2, b2, method)
+	return cct, d
 
 
 class Matrix3x3(list):

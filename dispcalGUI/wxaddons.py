@@ -134,6 +134,36 @@ def IsSizer(self):
 wx.Window.IsSizer = IsSizer
 
 
+def get_dc_font_size(size, dc):
+	""" Get correct font size for DC """
+	pointsize = (1.0, 1.0)
+	if isinstance(dc, wx.GCDC):
+		pointsize = tuple(1.0 / scale for scale in dc.GetLogicalScale())
+	if sys.platform in ("darwin", "win32") or not isinstance(dc, wx.GCDC):
+		return size * (sum(pointsize) / 2.0)
+	else:
+		# On Linux, we need to correct the font size by a certain factor if
+		# wx.GCDC is used, to make text the same size as if wx.GCDC weren't used
+		ppi = dc.GetPPI()
+		return size * ((96.0 / ppi[0] * pointsize[0] + 96.0 / ppi[1] * pointsize[1]) / 2.0)
+
+
+def get_platform_window_decoration_size():
+	if sys.platform in ("darwin", "win32"):
+		# Size includes windows decoration
+		if sys.platform == "win32":
+			border = 8  # Windows 7
+			titlebar = 30  # Windows 7
+		else:
+			border = 0  # Mac OS X 10.7 Lion
+			titlebar = 22  # Mac OS X 10.7 Lion
+	else:
+		# Linux. Size does not include window decoration
+		border = 0
+		titlebar = 0
+	return border, titlebar
+
+
 class CustomEvent(wx.PyEvent):
 
 	def __init__(self, typeId, object, window=None):

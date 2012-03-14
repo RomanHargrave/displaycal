@@ -1,18 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import math
 import os
 import sys
 
 import config
-from config import (btn_width_correction, defaults, getcfg, geticon, 
+from config import (btn_width_correction, defaults, getbitmap, getcfg, geticon, 
 					get_bitmap_as_icon, get_data_path, get_verified_path, 
 					setcfg)
 from log import log as log_, safe_print
 from meta import name as appname
 from thread import start_new_thread
 from util_str import safe_unicode
-from wxaddons import wx
+from wxaddons import (FileDrop as _FileDrop, get_dc_font_size,
+					  get_platform_window_decoration_size, wx)
+from lib.agw import labelbook
+from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
+									 NOWHERE, FourWaySplitter,
+									 FourWaySplitterEvent)
 import localization as lang
 import util_str
 
@@ -168,6 +174,103 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.EndModal(id)
 
 
+class BitmapBackgroundBitmapButton(wx.BitmapButton):
+	
+	""" A BitmapButton that will use its parent bitmap background.
+	
+	The parent needs to have a GetBitmap() method.
+	
+	"""
+
+	def __init__(self, *args, **kwargs):
+		wx.BitmapButton.__init__(self, *args, **kwargs)
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+	def OnPaint(self, dc):
+		dc = wx.PaintDC(self)
+		try:
+			dc = wx.GCDC(dc)
+		except Exception, exception:
+			pass
+		dc.DrawBitmap(self.Parent.GetBitmap(), 0, -self.GetPosition()[1])
+		dc.DrawBitmap(self.GetBitmapLabel(), 0, 0)
+
+
+class BitmapBackgroundPanel(wx.Panel):
+	
+	""" A panel with a background bitmap and text label """
+
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
+		self._bitmap = getbitmap("empty")
+		self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+	
+	def GetBitmap(self):
+		return self._bitmap
+
+	def SetBitmap(self, bitmap):
+		self._bitmap = bitmap
+
+	def OnEraseBackground(self, event):
+		dc = event.GetDC()
+		if not dc:
+			dc = wx.ClientDC(self)
+			rect = self.GetUpdateRegion().GetBox()
+			dc.SetClippingRect(rect)
+		dc.Clear()
+		self._drawbitmap(dc)
+	
+	def _drawbitmap(self, dc):
+		dc.DrawBitmap(self._bitmap, 0, 0)
+		pen = wx.Pen(wx.Colour(0x66, 0x66, 0x66), 1, wx.SOLID)
+		pen.SetCap(wx.CAP_BUTT)
+		dc.SetPen(pen)
+		dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
+
+
+class BitmapBackgroundPanelText(BitmapBackgroundPanel):
+	
+	""" A panel with a background bitmap and text label """
+
+	def __init__(self, *args, **kwargs):
+		BitmapBackgroundPanel.__init__(self, *args, **kwargs)
+		self._label = ""
+		self.Unbind(wx.EVT_ERASE_BACKGROUND)
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+	
+	def _set_font(self, dc):
+		try:
+			dc = wx.GCDC(dc)
+		except Exception, exception:
+			pass
+		font = self.GetFont()
+		font.SetPointSize(get_dc_font_size(font.GetPointSize(), dc))
+		dc.SetFont(font)
+		return dc
+	
+	def GetLabel(self):
+		return self._label
+	
+	def SetLabel(self, label):
+		self._label = label
+
+	def OnPaint(self, dc):
+		dc = wx.PaintDC(self)
+		self._drawbitmap(dc)
+		dc = self._set_font(dc)
+		w1, h1 = self.GetTextExtent(self.GetLabel())
+		w2, h2 = dc.GetTextExtent(self.GetLabel())
+		w = (max(w1, w2) - min(w1, w2)) / 2.0 + min(w1, w2)
+		h = (max(h1, h2) - min(h1, h2)) / 2.0 + min(h1, h2)
+		x, y = (self.GetSize()[0] / 2.0 - w / 2.0,
+				self.GetSize()[1] / 2.0 - h / 2.0)
+		dc.SetTextForeground(wx.Colour(214, 214, 214))
+		dc.DrawText(self.GetLabel(), x + 1, y + 1)
+		dc.SetTextForeground(self.GetForegroundColour())
+		dc.DrawText(self.GetLabel(), x, y)
+
+
 class ConfirmDialog(BaseInteractiveDialog):
 
 	""" Confirmation dialog with OK and Cancel buttons """
@@ -211,6 +314,27 @@ class ConfirmDialog(BaseInteractiveDialog):
 		else:
 			id = event.GetId()
 		self.EndModal(id)
+
+
+class FileDrop(_FileDrop):
+	
+	def __init__(self, *args, **kwargs):
+		self.parent = kwargs.pop("parent")
+		_FileDrop.__init__(self, *args, **kwargs)
+		self.unsupported_handler = self.drop_unsupported_handler
+
+	def drop_unsupported_handler(self):
+		"""
+		Drag'n'drop handler for unsupported files. 
+		
+		Shows an error message.
+		
+		"""
+		files = self._filenames
+		InfoDialog(self.parent, msg=lang.getstr("error.file_type_unsupported") +
+									"\n\n" + "\n".join(files), 
+				   ok=lang.getstr("ok"), 
+				   bitmap=geticon(32, "dialog-error"))
 
 
 class InfoDialog(BaseInteractiveDialog):
@@ -492,6 +616,26 @@ class ProgressDialog(wx.ProgressDialog):
 		self.timer.Stop()
 
 
+class SimpleBook(labelbook.FlatBookBase):
+
+	def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize,
+				 style=0, agwStyle=0, name="SimpleBook"):
+		
+		labelbook.FlatBookBase.__init__(self, parent, id, pos, size, style, agwStyle, name)
+		
+		self._pages = self.CreateImageContainer()
+
+		# Label book specific initialization
+		self._mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.SetSizer(self._mainSizer)
+		
+
+	def CreateImageContainer(self):
+		""" Creates the image container (LabelContainer) class for L{FlatImageBook}. """
+
+		return labelbook.ImageContainerBase(self, wx.ID_ANY, agwStyle=self.GetAGWWindowStyleFlag())
+
+
 class SimpleTerminal(InvincibleFrame):
 	
 	""" A simple terminal-like window. """
@@ -698,6 +842,324 @@ class TooltipWindow(InvincibleFrame):
 			self.Center(wx.VERTICAL)
 		self.Show()
 		self.Raise()
+
+
+class TwoWaySplitter(FourWaySplitter):
+	
+	def __init__(self, *args, **kwargs):
+		FourWaySplitter.__init__(self, *args, **kwargs)
+		self._minimum_pane_size = 0
+		self._sashbitmap = getbitmap("theme/sash")
+		self._splitsize = (800, 400)
+		self._expandedsize = (400, 400)
+		self._handcursor = wx.StockCursor(wx.CURSOR_HAND)
+		self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
+
+	def _GetSashSize(self):
+		""" Used internally. """
+
+		if self.HasFlag(wx.SP_NOSASH):
+			return 0
+
+		return self._sashbitmap.GetSize()[0]
+
+    # Recompute layout
+	def _SizeWindows(self):
+		"""
+		Recalculate the layout based on split positions and split fractions.
+
+		:see: L{SetHSplit} and L{SetVSplit} for more information about split fractions.
+		"""
+			
+		win0 = self.GetTopLeft()
+		win1 = self.GetTopRight()
+
+		width, height = self.GetSize()
+		barSize = self._GetSashSize()
+		border = self._GetBorderSize()
+		
+		if self._expanded < 0:
+			totw = width - barSize - 2*border
+			self._splitx = max((self._fhor*totw)/10000, self._minimum_pane_size)
+			self._splity = height
+			rightw = totw - self._splitx
+			if win0:
+				win0.SetDimensions(0, 0, self._splitx, self._splity)
+				win0.Show()
+			if win1:
+				win1.SetDimensions(self._splitx + barSize, 0, rightw, self._splity)
+				win1.Show()
+
+		else:
+			if self._expanded < len(self._windows):
+				for ii, win in enumerate(self._windows):
+					if ii == self._expanded:
+						win.SetDimensions(0, 0, width - barSize - 2*border, height-2*border)
+						win.Show()
+					else:
+						win.Hide()
+
+	# Draw the horizontal split
+	def DrawSplitter(self, dc):
+		"""
+		Actually draws the sashes.
+
+		:param `dc`: an instance of `wx.DC`.
+		"""
+
+		backColour = self.GetBackgroundColour()
+		dc.SetBrush(wx.Brush(backColour, wx.SOLID))
+		dc.SetPen(wx.Pen(backColour))
+		dc.Clear()
+		
+		width, height = self.GetSize()
+
+		if self._expanded > -1:
+			splitx = width - self._GetSashSize() - 2*self._GetBorderSize()
+		else:
+			splitx = self._splitx
+
+		if self._expanded < 0:
+			if splitx <= self._minimum_pane_size:
+				self._sashbitmap = getbitmap("theme/sash-right")
+			else:
+				self._sashbitmap = getbitmap("theme/sash")
+		else:
+			self._sashbitmap = getbitmap("theme/sash-left")
+		sashwidth, sashheight = self._sashbitmap.GetSize()
+		
+		dc.DrawRectangle(splitx, 0, sashwidth, height)
+		
+		dc.DrawBitmap(self._sashbitmap, splitx, height / 2 - sashheight / 2, True)
+		
+		dc.SetPen(wx.Pen(wx.Colour(178, 178, 178), 1))
+		dc.DrawLine(splitx, 0, splitx, height)
+		dc.DrawLine(splitx + self._GetSashSize() - 1, 0, splitx + self._GetSashSize() - 1, height)
+	
+	def GetExpandedSize(self):
+		return self._expandedsize
+
+	# Determine split mode
+	def GetMode(self, pt):
+		"""
+		Determines the split mode for L{FourWaySplitter}.
+
+		:param `pt`: the point at which the mouse has been clicked, an instance of
+		 `wx.Point`.
+
+		:return: One of the following 3 split modes:
+
+		 ================= ==============================
+		 Split Mode        Description
+		 ================= ==============================
+		 ``wx.HORIZONTAL`` the user has clicked on the horizontal sash
+		 ``wx.VERTICAL``   The user has clicked on the vertical sash
+		 ``wx.BOTH``       The user has clicked at the intersection between the 2 sashes
+		 ================= ==============================
+
+		"""
+
+		barSize = self._GetSashSize()        
+		flag = wx.BOTH
+
+		width, height = self.GetSize()
+		if self._expanded > -1:
+			splitx = width - self._GetSashSize() - 2*self._GetBorderSize()
+		else:
+			splitx = self._splitx
+
+		if pt.x < splitx - _TOLERANCE:
+			flag &= ~wx.VERTICAL
+
+		if pt.y < self._splity - _TOLERANCE:
+			flag &= ~wx.HORIZONTAL
+
+		if pt.x >= splitx + barSize + _TOLERANCE:
+			flag &= ~wx.VERTICAL
+			
+		if pt.y >= self._splity + barSize + _TOLERANCE:
+			flag &= ~wx.HORIZONTAL
+			
+		return flag
+	
+	def GetSplitSize(self):
+		return self._splitsize
+	
+	def OnLeftDClick(self, event):
+		if not self.IsEnabled():
+			return
+		
+		pt = event.GetPosition()
+
+		if self.GetMode(pt):
+			
+			width, height = self.GetSize()
+			barSize = self._GetSashSize()
+			border = self._GetBorderSize()
+			
+			totw = width - barSize - 2*border
+			
+			winborder, titlebar = get_platform_window_decoration_size()
+			winwidth, winheight = self.Parent.GetSize()
+			
+			self.Freeze()
+			self.SetExpanded(-1 if self._expanded > -1 else 0)
+			if self._expanded < 0:
+				if self.GetExpandedSize()[0] < self.GetSplitSize()[0]:
+					self._fhor = int(math.ceil((self.GetExpandedSize()[0] - 
+												barSize - winborder * 2) /
+											   float(self.GetSplitSize()[0] - 
+													 barSize - winborder * 2) *
+											   10000))
+				else:
+					self._fhor = int(math.ceil(self._minimum_pane_size /
+											   float(self.GetSplitSize()[0] - 
+													 barSize - winborder * 2) *
+											   10000))
+				self.Parent.SetMinSize((defaults["size.profile_info.split.w"] + winborder * 2,
+										self.Parent.GetMinSize()[1]))
+				if (not self.Parent.IsMaximized() and
+					self.Parent.GetSize()[0] < self.GetSplitSize()[0]):
+					self.Parent.SetSize((self.GetSplitSize()[0],
+										 self.Parent.GetSize()[1]))
+			else:
+				self.Parent.SetMinSize((defaults["size.profile_info.w"] + winborder * 2,
+										self.Parent.GetMinSize()[1]))
+				w = max(self.GetExpandedSize()[0],
+						self._splitx + barSize + winborder * 2)
+				if (not self.Parent.IsMaximized() and
+					self.Parent.GetSize()[0] > w):
+					self.Parent.SetSize((w,
+										 self.Parent.GetSize()[1]))
+			#wx.CallLater(25, self.Parent.redraw)
+			self.Parent.idle = False
+			self.Parent.resize_grid()
+			self.Thaw()
+
+	# Button being released
+	def OnLeftUp(self, event):
+		"""
+		Handles the ``wx.EVT_LEFT_UP`` event for L{FourWaySplitter}.
+
+		:param `event`: a `wx.MouseEvent` event to be processed.
+		"""
+		
+		if not self.IsEnabled():
+			return
+
+		if self.HasCapture():
+			self.ReleaseMouse()
+
+		flgs = self._flags
+		
+		self._flags &= ~FLAG_CHANGED
+		self._flags &= ~FLAG_PRESSED
+		
+		if flgs & FLAG_PRESSED:
+			
+			if not self.GetAGWWindowStyleFlag() & wx.SP_LIVE_UPDATE:
+				self.DrawTrackSplitter(self._splitx, self._splity)
+				self.DrawSplitter(wx.ClientDC(self))
+				self.AdjustLayout()
+				
+			if flgs & FLAG_CHANGED:
+				event = FourWaySplitterEvent(wx.wxEVT_COMMAND_SPLITTER_SASH_POS_CHANGED, self)
+				event.SetSashIdx(self._mode)
+				event.SetSashPosition(wx.Point(self._splitx, self._splity))
+				self.GetEventHandler().ProcessEvent(event)                
+			else:
+				self.OnLeftDClick(event)
+
+		self._mode = NOWHERE
+
+	def OnMotion(self, event):
+		"""
+		Handles the ``wx.EVT_MOTION`` event for L{FourWaySplitter}.
+
+		:param `event`: a `wx.MouseEvent` event to be processed.
+		"""
+
+		if self.HasFlag(wx.SP_NOSASH):
+			return
+
+		pt = event.GetPosition()
+
+		# Moving split
+		if self._flags & FLAG_PRESSED:
+			
+			width, height = self.GetSize()
+			barSize = self._GetSashSize()
+			border = self._GetBorderSize()
+			
+			totw = width - barSize - 2*border
+			
+			if pt.x > totw - _TOLERANCE:
+				self._expanded = 0
+				self._offx += 1
+			elif self._expanded > -1 and pt.x > self._minimum_pane_size:
+				self._fhor = int((pt.x - barSize - 2*border) / float(totw) * 10000)
+				self._splitx = (self._fhor*totw)/10000
+				self._offx = pt.x - self._splitx + 1
+				self._expanded = -1
+
+			oldsplitx = self._splitx
+			oldsplity = self._splity
+			
+			if self._mode == wx.BOTH:
+				self.MoveSplit(pt.x - self._offx, pt.y - self._offy)
+			  
+			elif self._mode == wx.VERTICAL:
+				self.MoveSplit(pt.x - self._offx, self._splity)
+			  
+			elif self._mode == wx.HORIZONTAL:
+				self.MoveSplit(self._splitx, pt.y - self._offy)
+
+			# Send a changing event
+			if not self.DoSendChangingEvent(wx.Point(self._splitx, self._splity)):
+				self._splitx = oldsplitx
+				self._splity = oldsplity
+				return              
+
+			if oldsplitx != self._splitx or oldsplity != self._splity:
+				if not self.GetAGWWindowStyleFlag() & wx.SP_LIVE_UPDATE:
+					self.DrawTrackSplitter(oldsplitx, oldsplity)
+					self.DrawTrackSplitter(self._splitx, self._splity)
+				else:
+					self.AdjustLayout()
+
+				self._flags |= FLAG_CHANGED
+
+			self.Refresh()
+		
+		# Change cursor based on position
+		ff = self.GetMode(pt)
+		
+		if self._expanded > -1 and self._splitx <= self._minimum_pane_size:
+			self.SetCursor(self._handcursor)
+
+		elif ff == wx.BOTH:
+			self.SetCursor(self._sashCursorSIZING)
+
+		elif ff == wx.VERTICAL:
+			self.SetCursor(self._sashCursorWE)
+
+		elif ff == wx.HORIZONTAL:
+			self.SetCursor(self._sashCursorNS)
+
+		else:
+			self.SetCursor(self._handcursor)
+
+		event.Skip()
+	
+	def SetExpandedSize(self, size):
+		self._expandedsize = size
+
+	def SetMinimumPaneSize(self, size=0):
+		self._minimum_pane_size = size
+	
+	def SetSplitSize(self, size):
+		self._splitsize = size
+
 
 def test():
 	def key_handler(self, event):

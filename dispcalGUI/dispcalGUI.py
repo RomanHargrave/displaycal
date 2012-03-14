@@ -6013,23 +6013,10 @@ class MainFrame(BaseFrame):
 	
 	def profile_info_handler(self, event):
 		profile = self.select_profile(check_profile_class=False)
-		if getattr(self, "profile_info_frame", None):
-			if profile:
-				self.profile_info_frame.LoadProfile(profile)
-			self.profile_info_frame.Raise()
-		else:
-			frame = self.profile_info_frame = ProfileInfoFrame(self, -1)
-			frame.Fit()
-			frame.SetSize((frame.GetSize()[0] -
-						   frame.client.GetSize()[0] +
-						   frame.client.GetSize()[1],
-						   getcfg("size.profile_info.h") - 1))
-			frame.SetMinSize(frame.GetSize())
-			if profile:
-				frame.LoadProfile(profile)
-			frame.Show(True)
-			frame.SetSize((frame.GetSize()[0],
-						   frame.GetSize()[1] + 1))  # To make scrollbars show
+		frame = ProfileInfoFrame(None, -1)
+		if profile:
+			frame.LoadProfile(profile)
+		frame.Show(True)
 	
 	def lower_handler(self, event):
 		self.modaldlg.Raise()
