@@ -5,7 +5,7 @@
 # Author:      Gordon Williams
 #
 # Created:     2003/11/03
-# RCS-ID:      $Id: plot.py 57921 2009-01-09 04:44:13Z RD $
+# RCS-ID:      $Id: plot.py 65712 2010-10-01 17:56:32Z RD $
 # Copyright:   (c) 2002
 # Licence:     Use as you wish.
 #-----------------------------------------------------------------------------
@@ -709,7 +709,8 @@ class PlotCanvas(wx.Panel):
                 dlg1.Destroy()
                 return False
 
-        dlg1.Destroy()
+        if dlg1:
+            dlg1.Destroy()
 
         # Save Bitmap
         res= self._Buffer.SaveFile(fileName, extensions[fType])
