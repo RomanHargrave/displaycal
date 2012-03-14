@@ -567,8 +567,9 @@ class GamutViewOptions(wx.Panel):
 							 border=10)
 		
 		# Comparison profile whitepoint legend
-		legendsizer.Add(wx.StaticBitmap(self, -1,
-										getbitmap("theme/x-2px-12x12-999")),
+		self.comparison_whitepoint_bmp = wx.StaticBitmap(self, -1,
+														 getbitmap("theme/x-2px-12x12-999"))
+		legendsizer.Add(self.comparison_whitepoint_bmp,
 						flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
 							 border=20)
 		self.comparison_whitepoint_legend = wx.StaticText(self, -1,
@@ -626,8 +627,9 @@ class GamutViewOptions(wx.Panel):
 							   border=4)
 		
 		# Colortemperature curve select
-		self.options_sizer.Add(wx.StaticBitmap(self, -1,
-											   getbitmap("theme/solid-16x1-fff")),
+		self.whitepoint_bmp = wx.StaticBitmap(self, -1,
+											  getbitmap("theme/solid-16x1-fff"))
+		self.options_sizer.Add(self.whitepoint_bmp,
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.whitepoint_label = wx.StaticText(self, -1,
 										 lang.getstr("whitepoint.colortemp.locus.curve"))
@@ -644,10 +646,12 @@ class GamutViewOptions(wx.Panel):
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.whitepoint_select.Bind(wx.EVT_CHOICE, self.generic_select_handler)
 		self.whitepoint_select.SetSelection(0)
+		self.whitepoint_bmp.Hide()
 		
 		# Comparison profile select
-		self.options_sizer.Add(wx.StaticBitmap(self, -1,
-											   getbitmap("theme/dashed-16x2-666")),
+		self.comparison_profile_bmp = wx.StaticBitmap(self, -1,
+													  getbitmap("theme/dashed-16x2-666"))
+		self.options_sizer.Add(self.comparison_profile_bmp,
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profile_label = wx.StaticText(self, -1,
 													  lang.getstr("comparison_profile"))
@@ -748,6 +752,9 @@ class GamutViewOptions(wx.Panel):
 		self.draw(center=reset)
 	
 	def comparison_profile_select_handler(self, event):
+		self.comparison_whitepoint_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
+		self.comparison_whitepoint_legend.Show(self.comparison_profile_select.GetSelection() > 0)
+		self.comparison_profile_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.DrawCanvas(0, reset=False)
 
 	def draw(self, center=False):
@@ -768,6 +775,7 @@ class GamutViewOptions(wx.Panel):
 		self.draw()
 	
 	def generic_select_handler(self, event):
+		self.whitepoint_bmp.Show(self.whitepoint_select.GetSelection() > 0)
 		parent = self.Parent.Parent.Parent.Parent
 		if parent.client.profiles:
 			self.draw(center=event.GetId() == self.colorspace_select.GetId())
