@@ -653,6 +653,46 @@ class FilteredStream():
 			self.stream.write(self.linesep_out.join(lines))
 
 
+class GzipFileProper(gzip.GzipFile):
+
+	"""
+	Proper GZIP file implementation, where the optional filename in the
+	header has directory components removed, and is converted to ISO 8859-1
+	(Latin-1). On Windows, the filename will also be forced to lowercase.
+	
+	See RFC 1952 GZIP File Format Specification	version 4.3
+	
+	"""
+
+	def _write_gzip_header(self):
+		self.fileobj.write('\037\213')             # magic header
+		self.fileobj.write('\010')                 # compression method
+		fname = os.path.basename(self.name)
+		if fname.endswith(".gz"):
+			fname = fname[:-3]
+		flags = 0
+		if fname:
+			flags = gzip.FNAME
+		self.fileobj.write(chr(flags))
+		gzip.write32u(self.fileobj, long(time()))
+		self.fileobj.write('\002')
+		self.fileobj.write('\377')
+		if fname:
+			if sys.platform == "win32":
+				# Windows is case insensitive by default (although it can be
+				# set to case sensitive), so according to the GZIP spec, we
+				# force the name to lowercase
+				fname = fname.lower()
+			self.fileobj.write(fname.encode("ISO-8859-1", "replace")
+							   .replace("?", "_") + '\000')
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, type, value, tb):
+		self.close()
+
+
 class LineBufferedStream():
 	
 	""" Buffer lines and only write them to stream if line separator is 
@@ -3742,8 +3782,13 @@ class Worker(object):
 		gamut_volume = None
 		gamut_coverage = {}
 		# Create profile gamut and vrml
+		if sys.platform == "win32":
+			# Avoid problems with encoding
+			infilename = win32api.GetShortPathName(profile_path)
+		else:
+			infilename = profile_path
 		result = self.exec_cmd(get_argyll_util("iccgamut"),
-							   ["-v", "-w", "-ir", outname + profile_ext],
+							   ["-v", "-w", "-ir", infilename],
 							   skip_scripts=True)
 		if not isinstance(result, Exception) and result:
 			# iccgamut output looks like this:
@@ -3757,16 +3802,18 @@ class Worker(object):
 				if match:
 					gamut_volume = float(match.groups()[0]) / ICCP.GAMUT_VOLUME_SRGB
 					break
-		wrlfilenames = [outname + ".gam", outname + ".wrl"]
+		inname = os.path.splitext(infilename)[0]
+		infilename = inname + ".gam"
+		tmpfilenames = [infilename, inname + ".wrl"]
 		for key, src in (("srgb", "sRGB"), ("adobe-rgb", "ClayRGB1998")):
 			if not isinstance(result, Exception) and result:
 				# Create gamut view and intersection
 				src_path = get_data_path("ref/%s.gam" % src)
 				outfilename = outname + (" vs %s.wrl" % src)
-				wrlfilenames.append(outfilename)
+				tmpfilenames.append(outfilename)
 				result = self.exec_cmd(get_argyll_util("viewgam"),
 									   ["-cw", "-t.75", "-s", src_path, "-cn",
-										"-t.25", "-s", outname + ".gam", "-i",
+										"-t.25", "-s", infilename, "-i",
 										outfilename],
 									   capture_output=True,
 									   skip_scripts=True)
@@ -3786,17 +3833,21 @@ class Worker(object):
 							break
 		if not isinstance(result, Exception) and result:
 			# Compress gam and wrl files using gzip
-			for filename in wrlfilenames:
+			for filename in tmpfilenames:
 				if filename.endswith(".wrl"):
 					outfilename = filename[:-4] + ".wrz"
 				else:
 					outfilename = filename + ".gz"
 				try:
 					with open(filename, "rb") as infile:
-						# gzip.open has no __exit__ method
-						gz = gzip.open(outfilename, "wb")
-						gz.write(infile.read())
-						gz.close()
+						data = infile.read()
+					with GzipFileProper(filename + ".gz", "wb") as gz:
+						# Always use original filename with '.gz' extension,
+						# that way the filename in the header will be correct
+						gz.write(data)
+					if outfilename != filename + ".gz":
+						# Rename the file afterwards if outfilename is different
+						os.rename(filename + ".gz", outfilename)
 					# Remove uncompressed files
 					os.remove(filename)
 				except Exception, exception:
