@@ -973,20 +973,10 @@ class ProfileInfoFrame(LUTFrame):
 		self.splitter.SetMinimumPaneSize(defaults["size.profile_info.w"] - self.splitter._GetSashSize())
 		self.splitter.SetHSplit(0)
 		
-		x, y = (getcfg("position.profile_info.x"),
-				getcfg("position.profile_info.y"))
-		if self.GetDisplay().ClientArea.ContainsXY(x + 15, y):
-			x += 15
-		else:
-			x = defaults["position.profile_info.x"]
-		if self.GetDisplay().ClientArea.ContainsXY(x, y + 15):
-			y += 15
-		else:
-			y = defaults["position.profile_info.y"]
 		border, titlebar = get_platform_window_decoration_size()
 		self.SetSaneGeometry(
-			x,
-			y,
+			getcfg("position.profile_info.x"),
+			getcfg("position.profile_info.y"),
 			getcfg("size.profile_info.w") + border * 2,
 			getcfg("size.profile_info.h") + titlebar + border)
 		self.SetMinSize((defaults["size.profile_info.w"] + border * 2,
@@ -997,7 +987,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.splitter.SetExpanded(0)
 		
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
-		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, self.OnSashPosChanging)
@@ -1148,15 +1137,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.resize_grid()
 		self.DrawCanvas()
 		self.Thaw()
-	
-	def OnClose(self, event):
-		if self.IsShownOnScreen() and not \
-		   self.IsMaximized() and not self.IsIconized():
-			x, y = self.GetScreenPosition()
-			setcfg("position.profile_info.x", x - 15)
-			setcfg("position.profile_info.y", y - 15)
-		if event:
-			event.Skip()
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):
