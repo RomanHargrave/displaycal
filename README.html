@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>0.9.5.9</h2>
-					<p>2012-03-15 00:34 UTC</p>
+					<h2>0.9.6.6</h2>
+					<p>2012-03-15 14:45 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -505,7 +505,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-0.9.5.9</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-0.9.6.6</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -1424,15 +1424,15 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2012-03-15 00:34 (UTC) 0.9.5.9 -->
+			<!-- 2012-03-15 14:45 (UTC) 0.9.6.6 -->
 			<dl>
-				<dt>2012-03-15 00:34 (UTC) 0.9.5.9</dt>
+				<dt>2012-03-15 14:45 (UTC) 0.9.6.6</dt>
 					<dd>
-						<h3>0.9.5.9</h3>
+						<h3>0.9.6.6</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><strong>Black point compensation option for profiles (default ON).</strong> This effectively prevents black crush, but at the expense of accuracy of the resulting profile.</li>
-							<li><strong>Profile information window with 2D gamut plot</strong> as well as information pane which shows most data in a profile in detail (with few exceptions).</li>
+							<li><strong>Profile information window with 2D gamut plot</strong> as well as information pane which shows profile header and tag data in detail (with few exceptions).</li>
 							<li><strong>Ability to create display correction 3D LUTs</strong> for use in movie post-processing applications that don't have ICC support. Currently supported are the <code>.3dl</code> and <code>.cube</code> formats.</li>
 							<li>Write gamut VRML files and calculate coverage and volume percentages against sRGB and Adobe RGB when creating profiles.</li>
 							<li>Add 'chrm' tag (xy chromaticities for each primary) to created profiles. Unlike the values from 'rXYZ', 'gXYZ', 'bXYZ', A2Bx or 'clrt' tags, the 'chrm' data corresponds to the actual measured chromaticities without chromatic adaptation or interpolation. The 'chrm' tag is purely informational.</li>
@@ -1447,11 +1447,11 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Correctly parse CGATS files containing KEYWORD, INDEX, SAMPLE_ID or DATA_FORMAT values in exponential notation.</li>
-							<li>Do not store calibration black level target values in exponential notation to prevent erroneous parsing.</li>
-							<li>Correctly handle failed instrument calibration (by asking to repeat) and measurement failures which are not misreads or communication failures (and should thus not automatically be retried).</li>
+							<li>Do not fail to launch due to unhandled exception when parsing CGATS files containing KEYWORD, INDEX, SAMPLE_ID or DATA_FORMAT values in exponential notation.</li>
+							<li>Do not use exponential notation for low (&lt; 0.0001) calibration black level target values.</li>
+							<li>Correctly handle failed instrument calibration (by asking to repeat) and measurement failures which are not misreads or communication failures (and should thus not be retried automatically).</li>
 							<li>Also look at ASCII descriptor blocks when determining the display device name from EDID (fixes display model not being set in profiles for certain Apple displays).</li>
-							<li>Don't loose 'mmod' tag (monitor make and model) if creating a profile from measurement data embedded in an existing profile.</li>
+							<li>Don't loose 'mmod' tag (monitor make and model) when creating a profile from measurement data embedded in an existing profile.</li>
 							<li>Automatically restore calibration after measuring the colorimeter correction testchart.</li>
 							<li>Restore Argyll CMS &lt; 1.3.0 compatibility (broken in 0.8.9.3).</li>
 							<li>Windows Vista, 7 and later: Automatically enable “Use my settings for this device” in Windows' colormanagement settings when installing a profile.</li>
