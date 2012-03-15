@@ -4070,9 +4070,15 @@ class MainFrame(BaseFrame):
 				chrm = ICCP.ChromaticityType(blob.read())
 		else:
 			chrm = None
-		if not isinstance(result, Exception) and result:
+		if (not isinstance(result, Exception) and result and
+			getcfg("profile.create_gamut_views")):
+			safe_print("-" * 80)
+			safe_print(lang.getstr("gamut.view.create"))
+			self.worker.recent.clear()
+			self.worker.recent.write(lang.getstr("gamut.view.create"))
+			sleep(.75)  # Allow time for progress window to update
 			(gamut_volume,
-			 gamut_coverage) = self.create_gamut(args[-1] + profile_ext)
+			 gamut_coverage) = self.worker.calculate_gamut(args[-1] + profile_ext)
 		else:
 			gamut_volume, gamut_coverage = None, None
 		safe_print("-" * 80)
@@ -5858,18 +5864,7 @@ class MainFrame(BaseFrame):
 						 id=self.preview.GetId())
 				dlg.sizer3.Add(self.preview, flag=wx.TOP | wx.ALIGN_LEFT, 
 							   border=12)
-				if ProfileInfoFrame:
-					self.show_profile_info = wx.CheckBox(dlg, -1,
-														 lang.getstr("profile.info.show"))
-					dlg.Bind(wx.EVT_CHECKBOX, self.profile_info_handler, 
-							 id=self.show_profile_info.GetId())
-					dlg.sizer3.Add(self.show_profile_info, flag=wx.TOP |
-																wx.ALIGN_LEFT, 
-								   border=4)
-					if profile and profile.calculateID() in self.profile_info:
-						self.show_profile_info.SetValue(
-							self.profile_info[profile.ID].IsShownOnScreen())
-				elif LUTFrame:
+				if LUTFrame and not ProfileInfoFrame:
 					# Disabled, use profile information window instead
 					self.show_lut = wx.CheckBox(dlg, -1, 
 												lang.getstr(
@@ -5885,6 +5880,18 @@ class MainFrame(BaseFrame):
 				if ext not in (".icc", ".icm") or \
 				   getcfg("calibration.file") != profile_path:
 					self.preview_handler(preview=True)
+			else:
+				dlg.sizer3.Add((0, 8))
+			self.show_profile_info = wx.CheckBox(dlg, -1,
+												 lang.getstr("profile.info.show"))
+			dlg.Bind(wx.EVT_CHECKBOX, self.profile_info_handler, 
+					 id=self.show_profile_info.GetId())
+			dlg.sizer3.Add(self.show_profile_info, flag=wx.TOP |
+														wx.ALIGN_LEFT, 
+						   border=4)
+			if profile.calculateID() in self.profile_info:
+				self.show_profile_info.SetValue(
+					self.profile_info[profile.ID].IsShownOnScreen())
 			if sys.platform != "darwin" or test:
 				self.profile_load_on_login = wx.CheckBox(dlg, -1, 
 					lang.getstr("profile.load_on_login"))
@@ -5960,6 +5967,7 @@ class MainFrame(BaseFrame):
 			##result = dlg.ShowModal()
 			##dlg.Destroy()
 			self.Disable()
+			dlg.profile = profile
 			dlg.profile_path = profile_path
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
@@ -6016,16 +6024,20 @@ class MainFrame(BaseFrame):
 	def profile_info_close_handler(self, event):
 		if getattr(self, "show_profile_info", None):
 			# If the profile install dialog is shown, just hide info window
-			self.profile_info[event.GetEventObject().profile.ID].Hide()
+			self.profile_info[event.GetEventObject().profileID].Hide()
 			self.show_profile_info.SetValue(False)
 		else:
 			# Remove the frame from the hash table
-			self.profile_info.pop(event.GetEventObject().profile.ID)
+			self.profile_info.pop(event.GetEventObject().profileID)
 			# Closes the window
 			event.Skip()
 	
 	def profile_info_handler(self, event):
-		profile = self.select_profile(check_profile_class=False)
+		if event.GetEventObject() == getattr(self, "show_profile_info", None):
+			# Use the profile that was requested to be installed
+			profile = self.modaldlg.profile
+		else:
+			profile = self.select_profile(check_profile_class=False)
 		if not profile:
 			return
 		profile.calculateID()
@@ -6041,6 +6053,7 @@ class MainFrame(BaseFrame):
 			if (not self.profile_info[profile.ID].profile or
 				self.profile_info[profile.ID].profile.ID != profile.ID):
 				# Load profile if info window has no profile or ID is different
+				self.profile_info[profile.ID].profileID = profile.ID
 				self.profile_info[profile.ID].LoadProfile(profile)
 		if self.profile_info.get(profile.ID):
 			self.profile_info[profile.ID].Show(show)
@@ -7226,19 +7239,6 @@ class MainFrame(BaseFrame):
 							 "tags": tags}, 
 					progress_msg=lang.getstr("create_profile"))
 	
-	def create_gamut(self, profile_path):
-		if getcfg("profile.create_gamut_views"):
-			safe_print("-" * 80)
-			safe_print(lang.getstr("gamut.view.create"))
-			self.worker.recent.clear()
-			self.worker.recent.write(lang.getstr("gamut.view.create"))
-			sleep(.5)  # Allow time for progress window to update
-			(gamut_volume,
-			 gamut_coverage) = self.worker.calculate_gamut(profile_path)
-		else:
-			gamut_volume, gamut_coverage = None, None
-		return gamut_volume, gamut_coverage
-	
 	def create_profile_from_edid(self, event):
 		edid = self.worker.get_display_edid()
 		defaultFile = edid.get("monitor_name",
@@ -7267,19 +7267,26 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 			else:
-				self.worker.interactive = False
-				self.worker.start(self.create_profile_from_edid_finish,
-								  self.create_gamut, 
-								  cargs=(profile, ),
-								  wargs=(profile_save_path, ),
-								  progress_msg=lang.getstr("create_profile"), 
-								  resume=False)
+				if getcfg("profile.create_gamut_views"):
+					safe_print("-" * 80)
+					safe_print(lang.getstr("gamut.view.create"))
+					self.worker.interactive = False
+					self.worker.start(self.create_profile_from_edid_finish,
+									  self.worker.calculate_gamut, 
+									  cargs=(profile, ),
+									  wargs=(profile_save_path, ),
+									  progress_msg=lang.getstr("gamut.view.create"), 
+									  resume=False)
+				else:
+					self.create_profile_from_edid_finish(True, profile)
 	
 	def create_profile_from_edid_finish(self, result, profile):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result:
-			profile.set_gamut_metadata(result[0], result[1])
+			if isinstance(result, tuple):
+				profile.set_gamut_metadata(result[0], result[1])
+				safe_print("-" * 80)
 			try:
 				profile.write()
 			except Exception, exception:
