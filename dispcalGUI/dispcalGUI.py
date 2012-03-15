@@ -2436,15 +2436,7 @@ class MainFrame(BaseFrame):
 	
 	def update_scrollbars(self):
 		self.Freeze()
-		# Only way I could find to trigger a scrollbars update
-		# was to change the frame size
-		self.SetSize((min(self.GetDisplay().ClientArea[2], 
-						  self.calpanel.GetSizer().GetMinSize()[0]), 
-					  self.GetSize()[1] - 1))
-		# We add a margin on the right side for the vertical scrollbar
-		self.SetSize((min(self.GetDisplay().ClientArea[2], 
-						  self.calpanel.GetSizer().GetMinSize()[0] + 34), 
-					  self.GetSize()[1] + 1))
+		self.calpanel.SetVirtualSize(self.calpanel.GetBestVirtualSize())
 		self.Thaw()
 
 	def update_comports(self):
