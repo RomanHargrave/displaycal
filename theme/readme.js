@@ -102,10 +102,29 @@ jQuery(function ($) {
 	
 	/* Indent after br */
 	$('#content br').after('<span class="indent"></span>')
+	
+	/* Teaser */
+	var interval = setInterval(function () {
+		jQuery('#teaser img').fadeOut(750, function () {
+			var src;
+			if (jQuery('#teaser img').attr('src').indexOf('theme/dispcalGUI-adjust-reflection.png') > -1)
+				src = 'theme/dispcalGUI-main_window-reflection.png';
+			else
+				src = 'theme/dispcalGUI-adjust-reflection.png';
+			jQuery('#teaser img').attr('src', src).fadeIn(750);
+		});
+	}, 10000);
 });
 
 jQuery(window).load(function () {
 	/* Anchor scroll effect */
 	$.localScroll({hash: true, filter: ':not(a[href="#info"], #toc li:has(ul) > a)'});
 	$.localScroll.hash();
+	
+	/* Teaser */
+	setTimeout(function () {
+		var src = ['theme/dispcalGUI-main_window-reflection.png',
+				   'theme/dispcalGUI-adjust-reflection.png'][Math.round(Math.random())];
+		jQuery('#teaser img').attr('src', src).fadeIn(750);
+	}, 500);
 });
