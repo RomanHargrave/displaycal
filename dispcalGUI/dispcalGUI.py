@@ -2635,7 +2635,8 @@ class MainFrame(BaseFrame):
 		
 		self.panel.Thaw()
 
-	def update_controls(self, update_profile_name=True, silent=False):
+	def update_controls(self, update_profile_name=True, update_ccmx_items=True,
+						silent=False):
 		""" Update all controls based on configuration 
 		and available Argyll functionality. """
 		self.updatingctrls = True
@@ -2720,7 +2721,8 @@ class MainFrame(BaseFrame):
 		update_profile = self.calibration_update_cb.GetValue() and profile_exists
 		enable_profile = not(update_profile)
 		
-		self.update_colorimeter_correction_matrix_ctrl_items()
+		if update_ccmx_items:
+			self.update_colorimeter_correction_matrix_ctrl_items()
 
 		self.whitepoint_native_rb.Enable(enable_cal)
 		self.whitepoint_colortemp_rb.Enable(enable_cal)
@@ -8104,6 +8106,7 @@ class MainFrame(BaseFrame):
 					safe_print("[D] options_dispcal:", options_dispcal)
 				if debug:
 					safe_print("[D] options_colprof:", options_colprof)
+				update_ccmx_items = True
 				# Parse options
 				if options_dispcal:
 					# Restore defaults
@@ -8133,9 +8136,10 @@ class MainFrame(BaseFrame):
 								##setcfg("display_lut.number", o[0])
 								##setcfg("display_lut.link", 1)
 							##continue
-						if o[0] == "c":
+						if o[0] == "c" and o[1:] != str(getcfg("comport.number")):
 							setcfg("comport.number", o[1:])
 							self.update_comports()
+							update_ccmx_items = False
 							continue
 						if o[0] == "m":
 							setcfg("calibration.interactive_display_adjustment", 0)
@@ -8263,7 +8267,8 @@ class MainFrame(BaseFrame):
 						safe_print("[D] load_cal_handler testchart.file:", path)
 					setcfg("testchart.file", path)
 				self.update_controls(
-					update_profile_name=update_profile_name)
+					update_profile_name=update_profile_name,
+					update_ccmx_items=update_ccmx_items)
 				writecfg()
 
 				if ext.lower() in (".icc", ".icm") and \
