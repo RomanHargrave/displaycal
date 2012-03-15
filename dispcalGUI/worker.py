@@ -3792,6 +3792,7 @@ class Worker(object):
 			infilename = profile_path
 		result = self.exec_cmd(get_argyll_util("iccgamut"),
 							   ["-v", "-w", "-ir", infilename],
+							   capture_output=True,
 							   skip_scripts=True)
 		if not isinstance(result, Exception) and result:
 			# iccgamut output looks like this:
