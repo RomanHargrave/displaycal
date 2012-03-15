@@ -3785,13 +3785,12 @@ class Worker(object):
 		gamut_volume = None
 		gamut_coverage = {}
 		# Create profile gamut and vrml
-		if sys.platform == "win32":
+		if (sys.platform == "win32" and
+			re.search("[^\x20-\x7e]", os.path.basename(profile_path))):
 			# Avoid problems with encoding
-			infilename = win32api.GetShortPathName(profile_path)
-		else:
-			infilename = profile_path
+			profile_path = win32api.GetShortPathName(profile_path)
 		result = self.exec_cmd(get_argyll_util("iccgamut"),
-							   ["-v", "-w", "-ir", infilename],
+							   ["-v", "-w", "-ir", profile_path],
 							   capture_output=True,
 							   skip_scripts=True)
 		if not isinstance(result, Exception) and result:
@@ -3806,9 +3805,10 @@ class Worker(object):
 				if match:
 					gamut_volume = float(match.groups()[0]) / ICCP.GAMUT_VOLUME_SRGB
 					break
-		inname = os.path.splitext(infilename)[0]
-		infilename = inname + ".gam"
-		tmpfilenames = [infilename, inname + ".wrl"]
+		name = os.path.splitext(profile_path)[0]
+		gamfilename = name + ".gam"
+		wrlfilename = name + ".wrl"
+		tmpfilenames = [gamfilename, wrlfilename]
 		for key, src in (("srgb", "sRGB"), ("adobe-rgb", "ClayRGB1998")):
 			if not isinstance(result, Exception) and result:
 				# Create gamut view and intersection
@@ -3817,7 +3817,7 @@ class Worker(object):
 				tmpfilenames.append(outfilename)
 				result = self.exec_cmd(get_argyll_util("viewgam"),
 									   ["-cw", "-t.75", "-s", src_path, "-cn",
-										"-t.25", "-s", infilename, "-i",
+										"-t.25", "-s", gamfilename, "-i",
 										outfilename],
 									   capture_output=True,
 									   skip_scripts=True)
@@ -3837,14 +3837,24 @@ class Worker(object):
 							break
 		if not isinstance(result, Exception) and result:
 			# Compress gam and wrl files using gzip
-			for filename in tmpfilenames:
-				if filename.endswith(".wrl"):
-					outfilename = filename[:-4] + ".wrz"
-				else:
-					outfilename = filename + ".gz"
+			for tmpfilename in tmpfilenames:
 				try:
-					with open(filename, "rb") as infile:
+					with open(tmpfilename, "rb") as infile:
 						data = infile.read()
+					if (tmpfilename == gamfilename and
+						tmpfilename != outname + ".gam"):
+						# Use the original file name
+						filename = outname + ".gam"
+					elif (tmpfilename == wrlfilename and
+						  tmpfilename != outname + ".wrl"):
+						# Use the original file name
+						filename = outname + ".wrl"
+					else:
+						filename = tmpfilename
+					if filename.endswith(".wrl"):
+						outfilename = filename[:-4] + ".wrz"
+					else:
+						outfilename = filename + ".gz"
 					with GzipFileProper(filename + ".gz", "wb") as gz:
 						# Always use original filename with '.gz' extension,
 						# that way the filename in the header will be correct
@@ -3852,8 +3862,8 @@ class Worker(object):
 					if outfilename != filename + ".gz":
 						# Rename the file afterwards if outfilename is different
 						os.rename(filename + ".gz", outfilename)
-					# Remove uncompressed files
-					os.remove(filename)
+					# Remove uncompressed file
+					os.remove(tmpfilename)
 				except Exception, exception:
 					safe_print(safe_unicode(exception))
 		elif result:
