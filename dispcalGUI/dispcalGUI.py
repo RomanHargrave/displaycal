@@ -1752,7 +1752,7 @@ class MainFrame(BaseFrame):
 				  self.menuitem_create_profile_from_edid)
 		self.menuitem_install_display_profile = options.FindItemById(
 			options.FindItem("install_display_profile"))
-		self.Bind(wx.EVT_MENU, self.install_profile_handler, 
+		self.Bind(wx.EVT_MENU, self.select_install_profile_handler, 
 				  self.menuitem_install_display_profile)
 		self.menuitem_profile_share = options.FindItemById(
 			options.FindItem("profile.share"))
@@ -1976,7 +1976,7 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_BUTTON, self.delete_calibration_handler, 
 				  id=self.delete_calibration_btn.GetId())
 		self.install_profile_btn.SetBitmapDisabled(geticon(16, "empty"))
-		self.Bind(wx.EVT_BUTTON, self.install_cal_handler, 
+		self.Bind(wx.EVT_BUTTON, self.install_profile_handler, 
 				  id=self.install_profile_btn.GetId())
 		self.profile_info_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.profile_info_handler, 
@@ -2698,7 +2698,8 @@ class MainFrame(BaseFrame):
 			profile_exists = False
 		self.delete_calibration_btn.Enable(bool(cal) and 
 										   cal not in self.presets)
-		self.install_profile_btn.Enable(profile_exists and 
+		self.install_profile_btn.Enable(profile_exists and
+										profile_path == cal and
 										cal not in self.presets)
 		is_profile = self.is_profile(include_display_profile=True)
 		self.profile_info_btn.Enable(is_profile)
@@ -4528,52 +4529,46 @@ class MainFrame(BaseFrame):
 			dlg.ok.SetDefault()
 			dlg.ShowModalThenDestroy(parent)
 
-	def install_cal_handler(self, event=None, cal=None):
+	def install_profile_handler(self, event=None, profile_path=None):
 		if not check_set_argyll_bin():
 			return
-		if cal is None:
-			cal = getcfg("calibration.file")
-		if cal:
-			result = check_file_isfile(cal)
+		if profile_path is None:
+			profile_path = getcfg("calibration.file")
+		if profile_path:
+			result = check_file_isfile(profile_path)
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 		else:
 			result = False
 		if not isinstance(result, Exception) and result:
-			filename, ext = os.path.splitext(cal)
-			if ext.lower() in (".icc", ".icm"):
-				try:
-					profile = ICCP.ICCProfile(cal)
-				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
-										 "\n" + cal, 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return
-				if profile.profileClass != "mntr" or \
-				   profile.colorSpace != "RGB":
-					InfoDialog(self, msg=lang.getstr("profile.unsupported", 
-													 (profile.profileClass, 
-													  profile.colorSpace)) +
-										 "\n" + cal, 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return
-				profile_path = cal
-			else:
-				profile_path = filename + profile_ext
-			if os.path.exists(profile_path):
-				self.previous_cal = False
-				self.profile_finish(
-					True, profile_path=profile_path, 
-					success_msg=lang.getstr(
-						"dialog.install_profile", 
-						(os.path.basename(profile_path), 
-						 self.display_ctrl.GetStringSelection())), 
-					skip_scripts=True,
-					allow_show_log=False)
+			try:
+				profile = ICCP.ICCProfile(profile_path)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+									 "\n" + profile_path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+			if profile.profileClass != "mntr" or \
+			   profile.colorSpace != "RGB":
+				InfoDialog(self, msg=lang.getstr("profile.unsupported", 
+												 (profile.profileClass, 
+												  profile.colorSpace)) +
+									 "\n" + profile_path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+			self.previous_cal = False
+			self.profile_finish(
+				True, profile_path=profile_path, 
+				success_msg=lang.getstr(
+					"dialog.install_profile", 
+					(os.path.basename(profile_path), 
+					 self.display_ctrl.GetStringSelection())), 
+				skip_scripts=True,
+				allow_show_log=False)
 
-	def install_profile_handler(self, event):
+	def select_install_profile_handler(self, event):
 		defaultDir, defaultFile = get_verified_path("last_icc_path")
 		dlg = wx.FileDialog(self, lang.getstr("install_display_profile"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
@@ -4585,14 +4580,9 @@ class MainFrame(BaseFrame):
 		path = dlg.GetPath()
 		dlg.Destroy()
 		if result == wx.ID_OK:
-			if not os.path.exists(path):
-				InfoDialog(self, msg=lang.getstr("file.missing", path), 
-						   ok=lang.getstr("ok"), bitmap=geticon(32, 
-																"dialog-error"))
-				return
 			setcfg("last_icc_path", path)
 			setcfg("last_cal_or_icc_path", path)
-			self.install_cal_handler(cal=path)
+			self.install_profile_handler(profile_path=path)
 
 	def load_profile_cal_handler(self, event):
 		if not check_set_argyll_bin():
@@ -5759,80 +5749,76 @@ class MainFrame(BaseFrame):
 			profile = None
 			filename, ext = os.path.splitext(profile_path)
 			extra = []
-			if ext.lower() in (".icc", ".icm"):
-				has_cal = False
-				try:
-					profile = ICCP.ICCProfile(profile_path)
-				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
-										 "\n" + profile_path, 
+			has_cal = False
+			try:
+				profile = ICCP.ICCProfile(profile_path)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+									 "\n" + profile_path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				self.start_timers(True)
+				self.previous_cal = False
+				return
+			else:
+				has_cal = "vcgt" in profile.tags
+				if profile.profileClass != "mntr" or \
+				   profile.colorSpace != "RGB":
+					InfoDialog(self, msg=success_msg, 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
+							   bitmap=geticon(32, "dialog-information"))
 					self.start_timers(True)
 					self.previous_cal = False
 					return
-				else:
-					has_cal = "vcgt" in profile.tags
-					if profile.profileClass != "mntr" or \
-					   profile.colorSpace != "RGB":
-						InfoDialog(self, msg=success_msg, 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"))
-						self.start_timers(True)
-						self.previous_cal = False
-						return
-					if getcfg("calibration.file") != profile_path:
-						(options_dispcal, 
-						 options_colprof) = get_options_from_profile(profile)
-						if options_dispcal or options_colprof:
-							cal = profile_save_path + ".cal"
-							sel = self.calibration_file_ctrl.GetSelection()
-							if options_dispcal and self.recent_cals[sel] == cal:
-								self.recent_cals.remove(cal)
-								self.calibration_file_ctrl.Delete(sel)
-							if getcfg("settings.changed"):
-								self.settings_discard_changes()
-							if options_dispcal and options_colprof:
-								self.load_cal_handler(None, path=profile_path, 
-													  update_profile_name=False, 
-													  silent=True,
-													  load_vcgt=False)
-							else:
-								setcfg("calibration.file", profile_path)
-								self.update_controls(update_profile_name=False)
-					if "meta" in profile.tags:
+				if getcfg("calibration.file") != profile_path:
+					(options_dispcal, 
+					 options_colprof) = get_options_from_profile(profile)
+					if options_dispcal or options_colprof:
+						cal = profile_save_path + ".cal"
+						sel = self.calibration_file_ctrl.GetSelection()
+						if options_dispcal and self.recent_cals[sel] == cal:
+							self.recent_cals.remove(cal)
+							self.calibration_file_ctrl.Delete(sel)
+						if getcfg("settings.changed"):
+							self.settings_discard_changes()
+						if options_dispcal and options_colprof:
+							self.load_cal_handler(None, path=profile_path, 
+												  update_profile_name=False, 
+												  silent=True,
+												  load_vcgt=False)
+						else:
+							setcfg("calibration.file", profile_path)
+							self.update_controls(update_profile_name=False)
+				if "meta" in profile.tags:
+					for key, name in (("srgb", "sRGB"),
+									  ("adobe-rgb", "Adobe RGB")):
+						try:
+							gamut_coverage = float(profile.tags.meta.getvalue("GAMUT_coverage(%s)" % key))
+						except (TypeError, ValueError):
+							gamut_coverage = None
+						if gamut_coverage:
+							if not lang.getstr("gamut.coverage") + ":" in extra:
+								extra.append(lang.getstr("gamut.coverage") + ":")
+							extra.append(" %.1f%% %s" % (gamut_coverage * 100,
+														 name))
+					try:
+						gamut_volume = float(profile.tags.meta.getvalue("GAMUT_volume"))
+					except (TypeError, ValueError):
+						gamut_volume = None
+					if gamut_volume:
+						gamut_volumes = {"srgb": ICCP.GAMUT_VOLUME_SRGB,
+										 "adobe-rgb": ICCP.GAMUT_VOLUME_ADOBERGB}
 						for key, name in (("srgb", "sRGB"),
 										  ("adobe-rgb", "Adobe RGB")):
-							try:
-								gamut_coverage = float(profile.tags.meta.getvalue("GAMUT_coverage(%s)" % key))
-							except (TypeError, ValueError):
-								gamut_coverage = None
-							if gamut_coverage:
-								if not lang.getstr("gamut.coverage") + ":" in extra:
-									extra.append(lang.getstr("gamut.coverage") + ":")
-								extra.append(" %.1f%% %s" % (gamut_coverage * 100,
-															 name))
-						try:
-							gamut_volume = float(profile.tags.meta.getvalue("GAMUT_volume"))
-						except (TypeError, ValueError):
-							gamut_volume = None
-						if gamut_volume:
-							gamut_volumes = {"srgb": ICCP.GAMUT_VOLUME_SRGB,
-											 "adobe-rgb": ICCP.GAMUT_VOLUME_ADOBERGB}
-							for key, name in (("srgb", "sRGB"),
-											  ("adobe-rgb", "Adobe RGB")):
-								if not lang.getstr("gamut.volume") + ":" in extra:
-									if extra:
-										extra.append("")
-									extra.append(lang.getstr("gamut.volume") + ":")
-								extra.append(" %.1f%% %s" %
-											 (gamut_volume *
-											  ICCP.GAMUT_VOLUME_SRGB /
-											  gamut_volumes[key] * 100,
-											  name))
-			else:
-				# .cal file
-				has_cal = True
+							if not lang.getstr("gamut.volume") + ":" in extra:
+								if extra:
+									extra.append("")
+								extra.append(lang.getstr("gamut.volume") + ":")
+							extra.append(" %.1f%% %s" %
+										 (gamut_volume *
+										  ICCP.GAMUT_VOLUME_SRGB /
+										  gamut_volumes[key] * 100,
+										  name))
 			if extra:
 				extra = ",".join(extra).replace(":,", ":").replace(",,", "\n")
 				success_msg = "\n\n".join([success_msg, extra])
