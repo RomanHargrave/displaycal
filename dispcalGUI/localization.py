@@ -11,6 +11,7 @@ from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
 from jsondict import JSONDict
 from log import safe_print
+from util_os import expanduseru
 from util_str import safe_unicode
 
 
@@ -44,10 +45,10 @@ def init(set_wx_locale=False):
 
 def update_defaults():
 	defaults.update({
-		"last_3dlut_path": os.path.join(os.path.expanduser("~"), getstr("unnamed")),
+		"last_3dlut_path": os.path.join(expanduseru("~"), getstr("unnamed")),
 		"last_cal_path": os.path.join(storage, getstr("unnamed")),
 		"last_cal_or_icc_path": os.path.join(storage, getstr("unnamed")),
-		"last_filedialog_path": os.path.join(os.path.expanduser("~"), getstr("unnamed")),
+		"last_filedialog_path": os.path.join(expanduseru("~"), getstr("unnamed")),
 		"last_icc_path": os.path.join(storage, getstr("unnamed")),
 		"last_ti1_path": os.path.join(storage, getstr("unnamed")),
 		"last_ti3_path": os.path.join(storage, getstr("unnamed"))
