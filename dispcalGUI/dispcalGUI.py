@@ -2458,23 +2458,16 @@ class MainFrame(BaseFrame):
 		measurement_mode = getcfg("measurement_mode")
 		#if self.get_instrument_type() == "spect":
 			#measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
-		measurement_modes = dict({instrument_type: ["CRT", "LCD"]})
+		measurement_modes = dict({instrument_type: [lang.getstr("measurement_mode.refresh"),
+													"LCD"]})
 		measurement_modes_ab = dict({instrument_type: ["c", "l"]})
 		instrument_features = self.worker.get_instrument_features()
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			# Projector mode introduced in Argyll 1.1.0 Beta
-			if instrument_type == "spect":
-				measurement_modes[instrument_type] += [lang.getstr("projector")]
-				measurement_modes_ab[instrument_type] += ["p"]
-			else:
-				measurement_modes[instrument_type] += [
-					"CRT-" + lang.getstr("projector"),
-					"LCD-" + lang.getstr("projector")
-				]
-				measurement_modes_ab[instrument_type] += ["cp"]
-				measurement_modes_ab[instrument_type] += ["lp"]
-			if getcfg("measurement_mode.projector",):
+			measurement_modes[instrument_type] += [lang.getstr("projector")]
+			measurement_modes_ab[instrument_type] += ["p"]
+			if getcfg("measurement_mode.projector"):
 				measurement_mode += "p"
 		if instrument_features.get("adaptive_mode") and (
 		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
@@ -5152,7 +5145,7 @@ class MainFrame(BaseFrame):
 		mode = []
 		if measurement_mode:
 			if "c" in measurement_mode:
-				mode += ["CRT"]
+				mode += [lang.getstr("measurement_mode.refresh")]
 			elif "l" in measurement_mode:
 				mode += ["LCD"]
 			if "p" in measurement_mode:
@@ -7385,7 +7378,7 @@ class MainFrame(BaseFrame):
 		mode = ""
 		if measurement_mode:
 			if "c" in measurement_mode:
-				mode += "CRT"
+				mode += lang.getstr("measurement_mode.refresh")
 			elif "l" in measurement_mode:
 				mode += "LCD"
 			if "p" in measurement_mode:

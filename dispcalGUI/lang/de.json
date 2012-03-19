@@ -188,6 +188,7 @@
 	"measurement_mode": "Modus",
 	"measurement_mode.adaptive": "Adaptiv",
 	"measurement_mode.highres": "HiRes",
+	"measurement_mode.refresh": "Refresh",
 	"measurement.play_sound": "Akustische Rückmeldung bei fortlaufender Messung",
 	"enable_argyll_debug": "Argyll CMS Debugging-Ausgabe aktivieren",
 	"enumerating_displays_and_comports": "Anzeigegeräte- und Messgeräte-Erkennung...",
