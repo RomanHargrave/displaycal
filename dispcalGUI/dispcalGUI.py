@@ -1911,15 +1911,16 @@ class MainFrame(BaseFrame):
 		self.menuitem_create_profile.Enable(bool(self.worker.displays))
 		edid = self.worker.get_display_edid()
 		self.menuitem_create_profile_from_edid.Enable(bool(self.worker.displays
+														   and edid
 														   and edid.get("monitor_name",
 																		edid.get("ascii",
 																				 edid["product_id"]))
-														   and edid.get("red_x")
-														   and edid.get("red_y")
-														   and edid.get("green_x")
-														   and edid.get("green_y")
-														   and edid.get("blue_x")
-														   and edid.get("blue_y")))
+														   and edid["red_x"]
+														   and edid["red_y"]
+														   and edid["green_x"]
+														   and edid["green_y"]
+														   and edid["blue_x"]
+														   and edid["blue_y"]))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays))
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays))
