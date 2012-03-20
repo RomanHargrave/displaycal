@@ -739,7 +739,7 @@ class CGATS(dict):
 			if blacks[i]["XYZ_Y"] == 0:
 				break
 		# Average blacks
-		black = [n / len(blacks) for n in black]
+		black = [n / (i + 1.0) for n in black]
 
 		# Get whites
 		whites = data.queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
@@ -750,7 +750,7 @@ class CGATS(dict):
 			if whites[i]["XYZ_Y"] == 100:
 				break
 		# Average whites
-		white = [n / len(whites) for n in white]
+		white = [n / (i + 1.0) for n in white]
 
 		# Apply black point compensation
 		for i in data:
