@@ -106,6 +106,14 @@
 		"sensor_cal": true,
 		"skip_sensor_cal": true
 	},
+	"ColorHug": {
+		"spectral": false,
+		"adaptive_mode": false,
+		"highres_mode": false,
+		"projector_mode": false,
+		"sensor_cal": null,
+		"skip_sensor_cal": null
+	},
 	"ColorMunki": {
 		"spectral": true,
 		"adaptive_mode": true,
@@ -131,6 +139,14 @@
 		"skip_sensor_cal": null
 	},
 	"Spyder3": {
+		"spectral": false,
+		"adaptive_mode": false,
+		"highres_mode": false,
+		"projector_mode": false,
+		"sensor_cal": null,
+		"skip_sensor_cal": null
+	},
+	"Spyder4": {
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,

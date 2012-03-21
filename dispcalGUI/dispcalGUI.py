@@ -2454,21 +2454,40 @@ class MainFrame(BaseFrame):
 	
 	def update_measurement_modes(self):
 		""" Update the measurement mode control. """
+		instrument_name = self.worker.get_instrument_name()
 		instrument_type = self.get_instrument_type()
 		measurement_mode = getcfg("measurement_mode")
 		#if self.get_instrument_type() == "spect":
 			#measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
 		measurement_modes = dict({instrument_type: [lang.getstr("measurement_mode.refresh"),
-													"LCD"]})
+													lang.getstr("measurement_mode.lcd")]})
 		measurement_modes_ab = dict({instrument_type: ["c", "l"]})
+		if instrument_name == "Spyder4":
+			# Argyll CMS 1.3.6
+			# See http://www.argyllcms.com/doc/instruments.html#spyd4
+			# for description of supported modes
+			measurement_modes[instrument_type].extend([lang.getstr("measurement_mode.lcd.ccfl"),
+													   lang.getstr("measurement_mode.lcd.wide_gamut.ccfl"),
+													   lang.getstr("measurement_mode.lcd.white_led"),
+													   lang.getstr("measurement_mode.lcd.wide_gamut.rgb_led"),
+													   lang.getstr("measurement_mode.lcd.ccfl.2")])
+			measurement_modes_ab[instrument_type].extend(["3", "4", "5",
+														  "6", "7", "8"])
+		elif instrument_name == "ColorHug":
+			# Argyll CMS 1.3.6, spectro/colorhug.c, colorhug_disptypesel
+			# Note: projector mode (-yp) is not the same as ColorMunki
+			# projector mode! (-p)
+			measurement_modes[instrument_type].extend([lang.getstr("projector"),
+													   lang.getstr("measurement_mode.lcd.white_led"),
+													   lang.getstr("measurement_mode.factory"),
+													   lang.getstr("measurement_mode.raw")])
+			measurement_modes_ab[instrument_type].extend(["p", "e", "F", "R"])
 		instrument_features = self.worker.get_instrument_features()
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			# Projector mode introduced in Argyll 1.1.0 Beta
 			measurement_modes[instrument_type] += [lang.getstr("projector")]
 			measurement_modes_ab[instrument_type] += ["p"]
-			if getcfg("measurement_mode.projector"):
-				measurement_mode += "p"
 		if instrument_features.get("adaptive_mode") and (
 		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
 		   self.worker.argyll_version[0:3] == [1, 1, 0] and
@@ -2516,8 +2535,9 @@ class MainFrame(BaseFrame):
 		self.measurement_mode_ctrl.SetItems(measurement_modes[instrument_type])
 		self.measurement_mode_ctrl.SetSelection(
 			min(self.measurement_modes_ba[instrument_type].get(measurement_mode, 
-															   0), 
+															   1), 
 				len(measurement_modes[instrument_type]) - 1))
+		setcfg("measurement_mode", (self.get_measurement_mode() or "l")[0])
 		self.measurement_mode_ctrl.Enable(
 			bool(self.worker.instruments) and 
 			len(measurement_modes[instrument_type]) > 1)
@@ -2740,10 +2760,6 @@ class MainFrame(BaseFrame):
 		#if self.get_instrument_type() == "spect":
 			#measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
 		instrument_features = self.worker.get_instrument_features()
-		if instrument_features.get("projector_mode") and \
-		   self.worker.argyll_version >= [1, 1, 0] and \
-		   getcfg("measurement_mode.projector"):
-			measurement_mode += "p"
 		if instrument_features.get("adaptive_mode") and (
 		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
 		   self.worker.argyll_version[0:3] == [1, 1, 0] and
@@ -2757,7 +2773,7 @@ class MainFrame(BaseFrame):
 			measurement_mode += "H"
 		self.measurement_mode_ctrl.SetSelection(
 			min(self.measurement_modes_ba[self.get_instrument_type()].get(
-					measurement_mode, 0), 
+					measurement_mode, 1), 
 				len(self.measurement_mode_ctrl.GetItems()) - 1))
 
 		self.whitepoint_colortemp_textctrl.SetValue(
@@ -3375,8 +3391,11 @@ class MainFrame(BaseFrame):
 				args += parse_argument_string(getcfg("extra_args.spotread"))
 			measurement_mode = getcfg("measurement_mode")
 			instrument_features = self.worker.get_instrument_features()
-			if measurement_mode and not instrument_features.get("spectral"):
+			if (measurement_mode and (measurement_mode != "p" or
+									  self.worker.get_instrument_name() == "ColorHug") and
+				not instrument_features.get("spectral")):
 				# Always specify -y for colorimeters
+				# Only ColorHug supports -yp parameter
 				args += ["-y" + measurement_mode[0]]
 			safe_print("")
 			safe_print(lang.getstr("commandline"))
@@ -5147,7 +5166,7 @@ class MainFrame(BaseFrame):
 			if "c" in measurement_mode:
 				mode += [lang.getstr("measurement_mode.refresh")]
 			elif "l" in measurement_mode:
-				mode += ["LCD"]
+				mode += [lang.getstr("measurement_mode.lcd")]
 			if "p" in measurement_mode:
 				mode += [lang.getstr("projector")]
 			if "V" in measurement_mode:
@@ -6855,7 +6874,7 @@ class MainFrame(BaseFrame):
 		if v and "p" in v and self.worker.argyll_version < [1, 1, 0]:
 			self.measurement_mode_ctrl.SetSelection(
 				self.measurement_modes_ba[self.get_instrument_type()].get(
-					defaults["measurement_mode"], 0))
+					defaults["measurement_mode"], 1))
 			v = None
 			InfoDialog(self, msg=lang.getstr("projector_mode_unavailable"), 
 					   ok=lang.getstr("ok"), 
@@ -6868,7 +6887,7 @@ class MainFrame(BaseFrame):
 			# adaptive emissive mode was added in RC3
 			self.measurement_mode_ctrl.SetSelection(
 				self.measurement_modes_ba[self.get_instrument_type()].get(
-					defaults["measurement_mode"], 0))
+					defaults["measurement_mode"], 1))
 			v = None
 			InfoDialog(self, msg=lang.getstr("adaptive_mode_unavailable"), 
 					   ok=lang.getstr("ok"), 
@@ -6877,12 +6896,16 @@ class MainFrame(BaseFrame):
 					  getcfg("calibration.file") not in self.presets
 		if cal_changed:
 			self.cal_changed()
+		setcfg("measurement_mode", (strtr(v, {"V": "", 
+											  "H": ""}) if v else None) or None)
 		setcfg("measurement_mode.adaptive", 1 if v and "V" in v else None)
 		setcfg("measurement_mode.highres", 1 if v and "H" in v else None)
+		if v and self.worker.get_instrument_name() == "ColorHug" and "p" in v:
+			# ColorHug projector mode is just a correction matrix
+			# Avoid setting ColorMunki projector mode
+			v = v.replace("p", "")
+		# ColorMunki projector mode is an actual special sensor dial position
 		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
-		setcfg("measurement_mode", (strtr(v, {"V": "", 
-											  "H": "", 
-											  "p": ""}) if v else None) or None)
 		if v and ((("l" in v or "p" in v) and 
 			 float(self.get_black_point_correction()) > 0) or 
 			("c" in v and 
@@ -7380,7 +7403,7 @@ class MainFrame(BaseFrame):
 			if "c" in measurement_mode:
 				mode += lang.getstr("measurement_mode.refresh")
 			elif "l" in measurement_mode:
-				mode += "LCD"
+				mode += lang.getstr("measurement_mode.lcd")
 			if "p" in measurement_mode:
 				if mode:
 					mode += "-"

@@ -19,7 +19,8 @@ from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.pygauge import PyGauge
 from lib.agw.artmanager import ArtManager
 
-from config import get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg
+from config import (get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg,
+					valid_values)
 from meta import name as appname
 from ordereddict import OrderedDict
 from wxwindows import numpad_keycodes
@@ -1190,7 +1191,13 @@ class DisplayAdjustmentFrame(wx.Frame):
 			return
 		if "Setting up the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
-		dtype = re.search("Display type is (CRT|LCD)".replace(" ", "\s+"), txt, re.I)
+		# Argyll CMS < 1.3.6: "Display type is (CRT|LCD)"
+		# Argyll CMS >= 1.3.6: "Display type is '(c|l|n|r|1|2|3|4|5|6|7)'"
+		modes = []
+		for v in valid_values["measurement_mode"]:
+			if v:
+				modes.append(v)
+		dtype = re.search("Display type is '?(CRT|LCD|%s)'?".replace(" ", "\s+") % "|".join(modes), txt, re.I)
 		if dtype and dtype.groups()[0][0].lower() != getcfg("measurement_mode"):
 			#print "INFO: Changing mode to", dtype.groups()[0]
 			label = self.lb.GetCurrentPage().txt.values()[0].GetLabel()

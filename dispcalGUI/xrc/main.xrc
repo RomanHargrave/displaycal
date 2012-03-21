@@ -275,13 +275,6 @@
                                       </object>
                                       <object class="sizeritem">
                                         <object class="wxComboBox" name="measurement_mode_ctrl">
-                                          <size>100,-1</size>
-                                          <content>
-                                            <item/>
-                                            <item/>
-                                            <item/>
-                                            <item/>
-                                          </content>
                                           <style>wxCB_READONLY</style>
                                           <XRCED>
                                             <events>EVT_COMBOBOX</events>

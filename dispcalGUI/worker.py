@@ -882,10 +882,12 @@ class Worker(object):
 			args += ["-c%s" % getcfg("comport.number")]
 		measurement_mode = getcfg("measurement_mode")
 		instrument_features = self.get_instrument_features()
-		if measurement_mode:
-			if not instrument_features.get("spectral") and not get_arg("-y", args):
+		if (measurement_mode and (measurement_mode != "p" or
+								  self.get_instrument_name() == "ColorHug") and
+			not instrument_features.get("spectral") and not get_arg("-y", args)):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
+				# Only ColorHug supports -yp parameter
 				args += ["-y" + measurement_mode[0]]
 		if getcfg("measurement_mode.projector") and \
 		   instrument_features.get("projector_mode") and \
@@ -2853,7 +2855,9 @@ class Worker(object):
 		return result
 	
 	def instrument_supports_ccss(self):
-		return "i1 DisplayPro, ColorMunki Display" in self.get_instrument_name()
+		instrument_name = self.get_instrument_name()
+		return ("i1 DisplayPro, ColorMunki Display" in instrument_name or
+				"Spyder4" in instrument_name)
 	
 	def create_ccxx(self, args=None, working_dir=None):
 		""" Create CCMX or CCSS """

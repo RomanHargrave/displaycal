@@ -394,7 +394,14 @@ valid_values = {
 	"3dlut.rendering_intent": [0, 1, 2, 3],
 	"3dlut.size": [0, 1, 2],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
-	"measurement_mode": [None, "c", "l"],
+	# Measurement modes as supported by Argyll -y parameter
+	# 'l' = 'n' (non-refresh-type display, e.g. LCD)
+	# 'c' = 'r' (refresh-type display, e.g. CRT)
+	# We only use 'l' and 'c'
+	# See http://www.argyllcms.com/doc/instruments.html
+	# for description of per-instrument supported modes
+	"measurement_mode": [None, "F", "R", "c", "e", "p", "l", "n", "r", "1", "2",
+						 "3", "4", "5", "6", "7"],
 	"gamap_perceptual_intent": intents,
 	"gamap_saturation_intent": intents,
 	"gamap_src_viewcond": viewconds,
