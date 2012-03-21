@@ -307,11 +307,6 @@ def runtimeconfig(pyfile):
 	if debug:
 		safe_print("[D] pydir:", pydir)
 	if isapp:
-		appdir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
-		if debug:
-			safe_print("[D] appdir:", appdir)
-		if appdir not in data_dirs and os.path.isdir(appdir):
-			data_dirs.insert(1, appdir)
 		runtype = ".app"
 	elif isexe:
 		if debug:

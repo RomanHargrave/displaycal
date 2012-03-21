@@ -204,9 +204,6 @@ def setup():
 
 	if sys.platform in ("darwin", "win32") or "bdist_egg" in sys.argv[1:]:
 		doc = data = "." if do_py2app or do_py2exe or bdist_bbfreeze else name
-		if do_py2app:
-			# dispcalGUI.app/Contents/Resources
-			doc = os.path.join("..", "..", "..")
 	else:
 		# Linux/Unix
 		data = name
@@ -295,13 +292,13 @@ def setup():
 				glob.glob(os.path.join(pydir, "lang", "*.json"))), 
 			(os.path.join(data, "presets"), 
 				glob.glob(os.path.join(pydir, "presets", "*.icc"))),
-			(os.path.join(doc if do_py2app else data, "ref"), 
+			(os.path.join(data, "ref"), 
 				glob.glob(os.path.join(pydir, "ref", "*.cie"))), 
-			(os.path.join(doc if do_py2app else data, "ref"), 
+			(os.path.join(data, "ref"), 
 				glob.glob(os.path.join(pydir, "ref", "*.gam"))), 
-			(os.path.join(doc if do_py2app else data, "ref"), 
+			(os.path.join(data, "ref"), 
 				glob.glob(os.path.join(pydir, "ref", "*.icm"))), 
-			(os.path.join(doc if do_py2app else data, "ref"), 
+			(os.path.join(data, "ref"), 
 				glob.glob(os.path.join(pydir, "ref", "*.ti1"))), 
 			(os.path.join(data, "report"), 
 				glob.glob(os.path.join(pydir, "report", "*.css"))),
@@ -309,7 +306,7 @@ def setup():
 				glob.glob(os.path.join(pydir, "report", "*.html"))),
 			(os.path.join(data, "report"), 
 				glob.glob(os.path.join(pydir, "report", "*.js"))),
-			(os.path.join(doc if do_py2app else data, "tests"), 
+			(os.path.join(data, "tests"), 
 				glob.glob(os.path.join(pydir, "..", "tests", "*.icc"))),
 			(os.path.join(data, "theme"), 
 				glob.glob(os.path.join(pydir, "theme", "*.png"))), 
@@ -581,6 +578,10 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		reversedomain.reverse()
 		reversedomain = ".".join(reversedomain)
 		attrs["app"] = [os.path.join(pydir, "main.py")]
+		dist_dir = os.path.join(pydir, "..", "dist", 
+								"py2app.%s-py%s" % (get_platform(), 
+													sys.version[:3]), 
+								name + "-" + version)
 		excludes = ["test", "Tkconstants", "Tkinter", "tcl"]
 		for excludebits in ("32", "64"):
 			excludes += ["dispcalGUI.lib%s" % excludebits]
@@ -590,10 +591,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["options"] = {
 			"py2app": {
 				"argv_emulation": True,
-				"dist_dir": os.path.join(pydir, "..", "dist", 
-										 "py2app.%s-py%s" % (get_platform(), 
-															 sys.version[:3]), 
-										 name + "-" + version),
+				"dist_dir": dist_dir,
 				# numpy.lib.utils imports pydoc, which imports Tkinter, but 
 				# numpy.lib.utils is not even used by dispcalGUI, so omit all 
 				# Tk stuff
@@ -983,6 +981,20 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		
 		if dry_run or help:
 			return
+		
+		if do_py2app:
+			# Create ref, tests, ReadMe and license symlinks in directory
+			# containing the app bundle
+			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+									"ref"), os.path.join(dist_dir, "ref"))
+			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+									"tests"), os.path.join(dist_dir, "tests"))
+			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+									"README.html"), os.path.join(dist_dir,
+																 "README.html"))
+			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+									"LICENSE.txt"), os.path.join(dist_dir,
+																 "LICENSE.txt"))
 		
 		if do_py2exe:
 			shutil.copy(os.path.join(dist_dir, "python26.dll"),
