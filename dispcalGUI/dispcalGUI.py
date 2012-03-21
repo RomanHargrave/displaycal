@@ -2094,6 +2094,8 @@ class MainFrame(BaseFrame):
 				  id=self.black_output_offset_intctrl.GetId())
 
 		# Black point hue correction
+		self.Bind(wx.EVT_CHECKBOX, self.black_point_correction_auto_handler, 
+				  id=self.black_point_correction_auto_cb.GetId())
 		self.Bind(wx.EVT_SLIDER, self.black_point_correction_ctrl_handler, 
 				  id=self.black_point_correction_ctrl.GetId())
 		self.Bind(wx.EVT_TEXT, self.black_point_correction_ctrl_handler, 
@@ -2748,6 +2750,7 @@ class MainFrame(BaseFrame):
 		self.black_output_offset_intctrl.Enable(enable_cal)
 		self.black_point_correction_ctrl.Enable(enable_cal)
 		self.black_point_correction_intctrl.Enable(enable_cal)
+		self.black_point_correction_auto_handler()
 		self.update_black_point_rate_ctrl()
 		self.update_drift_compensation_ctrls()
 		self.interactive_display_adjustment_cb.Enable(enable_cal)
@@ -3296,6 +3299,19 @@ class MainFrame(BaseFrame):
 		if v != getcfg("profile.black_point_compensation"):
 			self.profile_settings_changed()
 		setcfg("profile.black_point_compensation", v)
+	
+	def black_point_correction_auto_handler(self, event=None):
+		if event:
+			auto = self.black_point_correction_auto_cb.GetValue()
+			setcfg("calibration.black_point_correction.auto", int(auto))
+		else:
+			auto = getcfg("calibration.black_point_correction.auto")
+			self.black_point_correction_auto_cb.SetValue(bool(auto))
+		show = bool(getcfg("show_advanced_calibration_options")) and not auto
+		self.black_point_correction_ctrl.Show(show)
+		self.black_point_correction_intctrl.Show(show)
+		self.black_point_correction_intctrl_label.Show(show)
+		self.black_point_correction_ctrl.GetContainingSizer().Layout()
 
 	def black_point_correction_ctrl_handler(self, event):
 		if debug:
@@ -6202,14 +6218,13 @@ class MainFrame(BaseFrame):
 					 self.black_output_offset_intctrl,
 					 self.black_output_offset_intctrl_label,
 					 self.black_point_correction_label,
-					 self.black_point_correction_ctrl,
-					 self.black_point_correction_intctrl,
-					 self.black_point_correction_intctrl_label,
+					 self.black_point_correction_auto_cb,
 					 self.black_point_rate_label,
 					 self.black_point_rate_ctrl,
 					 self.black_point_rate_floatctrl):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_calibration_options)
+		self.black_point_correction_auto_handler()
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
@@ -6906,11 +6921,12 @@ class MainFrame(BaseFrame):
 			v = v.replace("p", "")
 		# ColorMunki projector mode is an actual special sensor dial position
 		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
-		if v and ((("l" in v or "p" in v) and 
-			 float(self.get_black_point_correction()) > 0) or 
-			("c" in v and 
-			 float(self.get_black_point_correction()) == 0)) and \
-		   getcfg("calibration.black_point_correction_choice.show"):
+		if (v and ((("l" in v or "p" in v) and
+					float(self.get_black_point_correction()) > 0) or
+				   ("c" in v and
+					float(self.get_black_point_correction()) == 0)) and
+			getcfg("calibration.black_point_correction_choice.show") and
+			not getcfg("calibration.black_point_correction.auto")):
 			if "c" in v:
 				ok = lang.getstr("calibration.turn_on_black_point_correction")
 			else:
@@ -8194,7 +8210,11 @@ class MainFrame(BaseFrame):
 							setcfg("calibration.ambient_viewcond_adjust.lux", o[1:])
 							continue
 						if o[0] == "k":
-							setcfg("calibration.black_point_correction", o[1:])
+							setcfg("calibration.black_point_correction.auto",
+								   int(stripzeros(o[1:]) < 0))
+							if stripzeros(o[1:]) >= 0:
+								setcfg("calibration.black_point_correction",
+									   o[1:])
 							continue
 						if o[0] == "A":
 							setcfg("calibration.black_point_rate", 
@@ -8432,11 +8452,14 @@ class MainFrame(BaseFrame):
 						settings += [
 							lang.getstr("calibration.black_output_offset")]
 					elif line[0] == "BLACK_POINT_CORRECTION":
-						setcfg("calibration.black_point_correction", 
-							   stripzeros(value))
-						self.worker.options_dispcal += [
-							"-k%s" % 
-							getcfg("calibration.black_point_correction")]
+						setcfg("calibration.black_point_correction.auto",
+							   int(stripzeros(value) < 0))
+						if stripzeros(value) >= 0:
+							setcfg("calibration.black_point_correction", 
+								   stripzeros(value))
+							self.worker.options_dispcal += [
+								"-k%s" % 
+								getcfg("calibration.black_point_correction")]
 						settings += [
 							lang.getstr("calibration.black_point_correction")]
 					elif line[0] == "TARGET_BLACK_BRIGHTNESS":

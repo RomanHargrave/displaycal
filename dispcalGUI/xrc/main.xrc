@@ -876,6 +876,14 @@
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
                           <object class="sizeritem">
+                            <object class="wxCheckBox" name="black_point_correction_auto_cb">
+                              <label>auto</label>
+                              <checked>1</checked>
+                            </object>
+                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>8</border>
+                          </object>
+                          <object class="sizeritem">
                             <object class="wxSlider" name="black_point_correction_ctrl">
                               <size>128,-1</size>
                               <min>0</min>

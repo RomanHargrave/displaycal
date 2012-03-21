@@ -3102,7 +3102,8 @@ class Worker(object):
 			if bool(int(getcfg("calibration.ambient_viewcond_adjust"))):
 				args += ["-a%s" % 
 						 getcfg("calibration.ambient_viewcond_adjust.lux")]
-			args += ["-k%s" % getcfg("calibration.black_point_correction")]
+			if not getcfg("calibration.black_point_correction.auto"):
+				args += ["-k%s" % getcfg("calibration.black_point_correction")]
 			if defaults["calibration.black_point_rate.enabled"] and \
 			   float(getcfg("calibration.black_point_correction")) < 1:
 				black_point_rate = getcfg("calibration.black_point_rate")
