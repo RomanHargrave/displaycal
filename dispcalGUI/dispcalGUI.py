@@ -2311,6 +2311,7 @@ class MainFrame(BaseFrame):
 			"position.tcgen.y",
 			"recent_cals",
 			"report.pack_js",
+			"show_advanced_calibration_options",
 			"skip_legacy_serial_ports",
 			"sudo.preserve_environment",
 			"tc_precond_profile",
