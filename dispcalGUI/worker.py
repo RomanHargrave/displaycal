@@ -1528,9 +1528,13 @@ class Worker(object):
 						   wx.GetApp().progress_dlg.IsShownOnScreen():
 							wx.GetApp().progress_dlg.Pulse(
 								lang.getstr("checking_lut_access", (i + 1)))
+						test_cal = get_data_path("test.cal")
+						if not test_cal:
+							safe_print(lang.getstr("file.missing", "test.cal"))
+							return
 						# Load test.cal
 						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
-														 get_data_path("test.cal")], 
+														 test_cal], 
 											   capture_output=True, 
 											   skip_scripts=True, 
 											   silent=True)
@@ -1538,7 +1542,7 @@ class Worker(object):
 							safe_print(result)
 						# Check if LUT == test.cal
 						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-V", 
-														 get_data_path("test.cal")], 
+														 test_cal], 
 											   capture_output=True, 
 											   skip_scripts=True, 
 											   silent=True)
@@ -3818,6 +3822,8 @@ class Worker(object):
 			if not isinstance(result, Exception) and result:
 				# Create gamut view and intersection
 				src_path = get_data_path("ref/%s.gam" % src)
+				if not src_path:
+					continue
 				outfilename = outname + (" vs %s.wrl" % src)
 				tmpfilenames.append(outfilename)
 				result = self.exec_cmd(get_argyll_util("viewgam"),
