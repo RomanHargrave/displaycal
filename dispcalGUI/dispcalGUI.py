@@ -988,7 +988,7 @@ class LUT3DFrame(BaseFrame):
 			format = {0: "3dl",
 					  1: "cube"}.get(getcfg("3dlut.format"), "3dl")
 			defaultFile = os.path.splitext(defaultFile or
-										   defaults.get("last_3dlut_path"))[0] + "." + format
+										   os.path.basename(defaults.get("last_3dlut_path")))[0] + "." + format
 			dlg = wx.FileDialog(self, 
 								lang.getstr("3dlut.create"),
 								defaultDir=defaultDir,
