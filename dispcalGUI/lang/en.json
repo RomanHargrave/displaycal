@@ -203,6 +203,7 @@
 	"enumerating_displays_and_comports": "Enumerating display devices and communication ports...",
 	"enumerate_ports.auto": "Automatically detect instruments",
 	"error": "Error",
+	"error.access_denied.write": "You do not have write access to %s",
 	"error.autostart_creation": "Creation of the autostart entry for %s to load the calibration curves on login has failed.",
 	"error.autostart_remove_old": "The old autostart entry which loads calibration curves on login could not be removed: %s",
 	"error.autostart_system": "The system-wide autostart entry to load the calibration curves on login could not be created, because the system-wide autostart directory could not be determined.",

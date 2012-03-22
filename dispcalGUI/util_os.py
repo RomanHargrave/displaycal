@@ -6,6 +6,7 @@ import os
 import re
 import subprocess as sp
 import sys
+import tempfile
 from os.path import join
 
 if sys.platform == "win32":
@@ -211,6 +212,29 @@ def relpath(path, start):
 		return os.path.sep.join(path[len(start):])
 	elif start[:len(path)] == path:
 		return os.path.sep.join([".."] * (len(start) - len(path)))
+
+
+def waccess(path, mode):
+	""" Test access to path """
+	if mode & os.R_OK:
+		try:
+			test = open(path, "rb")
+		except EnvironmentError:
+			return False
+		test.close()
+	if mode & os.W_OK:
+		if os.path.isdir(path):
+			dir = path
+		else:
+			dir = os.path.dirname(path)
+		try:
+			test = tempfile.TemporaryFile(prefix=".", dir=dir)
+		except EnvironmentError:
+			return False
+		test.close()
+	if mode & os.X_OK:
+		return os.access(path, mode)
+	return True
 
 
 def which(executable, paths = None):

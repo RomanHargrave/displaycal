@@ -15,6 +15,7 @@ from argyll_cgats import cal_to_fake_profile
 from config import fs_enc, get_bitmap_as_icon, getcfg, geticon, setcfg
 from meta import name as appname
 from util_decimal import float2dec
+from util_os import waccess
 from worker import Error, Worker, get_argyll_util, show_result_dialog
 from wxaddons import FileDrop, wx
 from wxenhancedplot import _Numeric
@@ -1056,6 +1057,10 @@ class LUTFrame(wx.Frame):
 
 			if dlg1.ShowModal() == wx.ID_OK:
 				fileName = dlg1.GetPath()
+				if not waccess(os.path.dirname(fileName), os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 os.path.dirname(fileName))), self)
+					return
 				fType = fileName[-3:].lower()
 			else:                      # exit without saving
 				dlg1.Destroy()

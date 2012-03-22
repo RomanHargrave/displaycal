@@ -128,7 +128,7 @@ from util_list import index_fallback_ignorecase, intlist, natsort
 if sys.platform == "darwin":
 	from util_mac import mac_terminal_do_script
 from util_os import (expanduseru, getenvu, is_superuser, launch_file, 
-					 listdir_re, which)
+					 listdir_re, waccess, which)
 from util_str import safe_str, safe_unicode, strtr, universal_newlines, wrap
 import util_x
 from worker import (Error, FilteredStream, LineCache, Worker, check_cal_isfile, 
@@ -1000,6 +1000,11 @@ class LUT3DFrame(BaseFrame):
 				path = dlg.GetPath()
 			dlg.Destroy()
 			if path:
+				if not waccess(os.path.dirname(path), os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 os.path.dirname(path))),
+									   self)
+					return
 				setcfg("last_3dlut_path", path)
 				try:
 					lut_file = open(path, "wb")
@@ -4944,7 +4949,13 @@ class MainFrame(BaseFrame):
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
 		if result == wx.ID_OK:
-			save_path = os.path.splitext(dlg.GetPath())[0] + ".html"
+			path = dlg.GetPath()
+			if not waccess(os.path.dirname(path), os.W_OK):
+				show_result_dialog(Error(lang.getstr("error.access_denied.write",
+													 os.path.dirname(path))),
+								   self)
+				return
+			save_path = os.path.splitext(path)[0] + ".html"
 			setcfg("last_filedialog_path", save_path)
 		dlg.Destroy()
 		if result != wx.ID_OK:
@@ -5663,6 +5674,10 @@ class MainFrame(BaseFrame):
 				path = dlg.GetPath()
 			dlg.Destroy()
 			if path:
+				if not waccess(path, os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 path)), self)
+					return
 				setcfg("measurement.save_path", path)
 			else:
 				self.restore_testchart()
@@ -7102,7 +7117,12 @@ class MainFrame(BaseFrame):
 						   defaultPath=defaultPath)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
-			setcfg("profile.save_path", dlg.GetPath())
+			path = dlg.GetPath()
+			if not waccess(path, os.W_OK):
+				show_result_dialog(Error(lang.getstr("error.access_denied.write",
+													 path)), self)
+				return
+			setcfg("profile.save_path", path)
 			self.update_profile_name()
 		dlg.Destroy()
 	
@@ -7222,6 +7242,11 @@ class MainFrame(BaseFrame):
 											 make_argyll_compatible_path(profile_save_path[1]))
 			dlg.Destroy()
 			if result == wx.ID_OK:
+				if not waccess(os.path.dirname(profile_save_path), os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 os.path.dirname(profile_save_path))),
+									   self)
+					return
 				filename, ext = os.path.splitext(profile_save_path)
 				if ext.lower() not in (".icc", ".icm"):
 					profile_save_path += profile_ext
@@ -7325,6 +7350,11 @@ class MainFrame(BaseFrame):
 										 make_argyll_compatible_path(profile_save_path[1]))
 		dlg.Destroy()
 		if result == wx.ID_OK:
+			if not waccess(os.path.dirname(profile_save_path), os.W_OK):
+				show_result_dialog(Error(lang.getstr("error.access_denied.write",
+													 os.path.dirname(profile_save_path))),
+								   self)
+				return
 			profile = ICCP.ICCProfile.from_edid(edid)
 			try:
 				profile.write(profile_save_path)

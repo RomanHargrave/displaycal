@@ -12,6 +12,7 @@ from config import (btn_width_correction, defaults, getbitmap, getcfg, geticon,
 from log import log as log_, safe_print
 from meta import name as appname
 from thread import start_new_thread
+from util_os import waccess
 from util_str import safe_unicode
 from wxaddons import (FileDrop as _FileDrop, get_dc_font_size,
 					  get_platform_window_decoration_size, wx)
@@ -450,6 +451,12 @@ class LogWindow(InvincibleFrame):
 		path = dlg.GetPath()
 		dlg.Destroy()
 		if result == wx.ID_OK:
+			if not waccess(os.path.dirname(path), os.W_OK):
+				InfoDialog(self, msg=lang.getstr("error.access_denied.write",
+												 os.path.dirname(path)),
+						   ok=lang.getstr("ok"),
+						   bitmap=geticon(32, "dialog-error"))
+				return
 			filename, ext = os.path.splitext(path)
 			if ext.lower() != ".log":
 				path += ".log"

@@ -21,6 +21,7 @@ from log import safe_print
 from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
 from util_io import StringIOu as StringIO
+from util_os import waccess
 from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_version, show_result_dialog)
@@ -896,6 +897,11 @@ class TestchartEditor(wx.Frame):
 				path = dlg.GetPath()
 			dlg.Destroy()
 		if path:
+			if not waccess(os.path.dirname(path), os.W_OK):
+				show_result_dialog(Error(lang.getstr("error.access_denied.write",
+													 os.path.dirname(path))),
+								   self)
+				return
 			filename, ext = os.path.splitext(path)
 			if ext.lower() != ".ti1":
 				path += ".ti1"
