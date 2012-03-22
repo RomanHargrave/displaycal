@@ -13,6 +13,7 @@ names = [
 	"xicclu",
 	"spotread",
 	"spyd2en",
+	"spyd4en",
 	"targen",
 	"txt2ti3",
 	"i1d3ccss",
@@ -20,7 +21,7 @@ names = [
 ]
 
 # Argyll CMS tools optionally used by dispcalGUI
-optional = ["applycal", "ccxxmake", "i1d3ccss"]
+optional = ["applycal", "ccxxmake", "i1d3ccss", "spyd4en"]
 
 prefixes_suffixes = ["argyll"]
 

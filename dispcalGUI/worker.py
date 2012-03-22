@@ -2333,6 +2333,20 @@ class Worker(object):
 		return self.exec_cmd(cmd, ["-v"] + args, capture_output=True, 
 							 skip_scripts=True, silent=False,
 							 asroot=needroot)
+	
+	def import_spyd4cal(self, args=None):
+		""" Import Spyder4 calibrations to spy4cal.bin """
+		if not args:
+			args = []
+		cmd = get_argyll_util("spyd4en")
+		needroot = sys.platform != "win32"
+		if is_superuser() or needroot:
+			# If we are root or need root privs anyway, install to local
+			# system scope
+			args.insert(0, "-Sl")
+		return self.exec_cmd(cmd, ["-v"] + args, capture_output=True, 
+							 skip_scripts=True, silent=False,
+							 asroot=needroot)
 
 	def install_profile(self, profile_path, capture_output=True,
 						skip_scripts=False, silent=False):
@@ -3651,6 +3665,18 @@ class Worker(object):
 									defaultpaths.commonappdata]
 		for pldpath in pldpaths:
 			if os.path.isfile(pldpath):
+				return True
+		return False
+
+	def spyder4_cal_exists(self):
+		if self.argyll_version < [1, 3, 6]:
+			# We couldn't use it even if it exists
+			return False
+		paths = [os.path.join(dir_, "color", "spyd4cal.bin") 
+				 for dir_ in [defaultpaths.appdata, 
+							  defaultpaths.home] + defaultpaths.commonappdata]
+		for path in paths:
+			if os.path.isfile(path):
 				return True
 		return False
 

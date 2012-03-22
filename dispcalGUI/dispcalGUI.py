@@ -2465,7 +2465,7 @@ class MainFrame(BaseFrame):
 		measurement_modes = dict({instrument_type: [lang.getstr("measurement_mode.refresh"),
 													lang.getstr("measurement_mode.lcd")]})
 		measurement_modes_ab = dict({instrument_type: ["c", "l"]})
-		if instrument_name == "Spyder4":
+		if instrument_name == "Spyder4" and self.worker.spyder4_cal_exists():
 			# Argyll CMS 1.3.6
 			# See http://www.argyllcms.com/doc/instruments.html#spyd4
 			# for description of supported modes
@@ -6682,19 +6682,35 @@ class MainFrame(BaseFrame):
 	def import_colorimeter_correction_handler(self, event):
 		"""
 		Convert correction matrices from other profiling softwares to Argyll's
-		CCMX or CCSS format
+		CCMX or CCSS format (or to spyd4cal.bin in case of the Spyder4)
 		
 		Currently supported: iColor Display (native import to CCMX),
 							 i1 Profiler (import to CCSS via Argyll CMS 1.3.4)
+							 Spyder4 (import to spyd4cal.bin via Argyll CMS 1.3.6)
 		
 		Hold SHIFT to skip automatic import
 		
 		"""
+		dlg = ConfirmDialog(self, title=lang.getstr("colorimeter_correction.import"),
+							msg=lang.getstr("colorimeter_correction.import.auto_manual"),
+							ok=lang.getstr("auto"),
+							cancel=lang.getstr("cancel"),
+							bitmap=geticon(32, "dialog-question"),
+							alt=lang.getstr("file.select"))
+		choice = dlg.ShowModal()
+		if choice == wx.ID_CANCEL:
+			return
 		result = None
+		i1d3 = False
 		i1d3ccss = get_argyll_util("i1d3ccss")
-		if i1d3ccss and not wx.GetKeyState(wx.WXK_SHIFT):
+		if i1d3ccss and choice == wx.ID_OK:
 			# Automatically import X-Rite .edr files
-			result = self.worker.import_edr()
+			result = i1d3 = self.worker.import_edr()
+		spyd4 = False
+		spyd4en = get_argyll_util("spyd4en")
+		if spyd4en and choice == wx.ID_OK:
+			# Automatically import Spyder4 calibrations
+			result = spyd4 = self.worker.import_spyd4cal()
 		# Import iColorDisplay device corrections or let the user choose
 		defaultDir = ""
 		defaultFile = ""
@@ -6733,8 +6749,29 @@ class MainFrame(BaseFrame):
 				if paths:
 					defaultDir = paths[-1]
 			defaultFile = ""
+		elif spyd4en:
+			# Look for dccmtr.dll
+			if sys.platform == "win32":
+				paths = glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+											   "Datacolor", "Spyder4*", 
+											   "dccmtr.dll"))
+			elif sys.platform == "darwin":
+				# TODO: Check if these guessed paths are correct? (probably not)
+				paths = glob.glob(os.path.join(os.path.sep, "Applications", 
+											   "Spyder4*", "Spyder4*.app", 
+											   "Contents", "MacOS", 
+											   "dccmtr.lib"))
+				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+												"Datacolor", "Data",
+												"setup.exe"))
+				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+												"Datacolor_ISO", "Data",
+												"setup.exe"))
+			if paths:
+				defaultDir = paths[-1]
+			defaultFile = ""
 		if defaultDir and os.path.isdir(defaultDir):
-			if not wx.GetKeyState(wx.WXK_SHIFT):
+			if choice == wx.ID_OK:
 				path = os.path.join(defaultDir, defaultFile)
 		if not path or not os.path.isfile(path):
 			dlg = wx.FileDialog(self, 
@@ -6748,6 +6785,7 @@ class MainFrame(BaseFrame):
 			if dlg.ShowModal() == wx.ID_OK:
 				path = dlg.GetPath()
 			dlg.Destroy()
+		icd = False
 		if path and os.path.isfile(path):
 			type = None
 			if path.lower().endswith(".txt"):
@@ -6759,19 +6797,20 @@ class MainFrame(BaseFrame):
 						# TODO: We have a iColorDisplay disk image,
 						# try mounting it
 						pass
-					else:
-						# Assume X-Rite disk image
-						type = "xrite"
-				elif path.lower().endswith(".edr"):
+				elif i1d3ccss and path.lower().endswith(".edr"):
 					type = "xrite"
 				elif path.lower().endswith(".exe"):
 					if icolordisplay:
 						# TODO: We have a iColorDisplay installer,
 						# try opening it as lzma archive
 						pass
-					else:
+					elif i1d3ccss and ("colormunki" in path.lower() or
+									   "i1profiler" in path.lower()):
 						# Assume X-Rite installer
 						type = "xrite"
+					elif spyd4en and "spyder4" in path.lower():
+						# Assume Spyder4
+						type = "spyder4"
 			if type == ".txt":
 				# Assume iColorDisplay DeviceCorrections.txt
 				ccmx_dir = defaults["color.dir"]
@@ -6788,16 +6827,29 @@ class MainFrame(BaseFrame):
 						demjson.JSONDecodeError), exception:
 					result = exception
 				else:
-					result = True
+					result = icd = True
 			elif type == "xrite":
 				# Import .edr
-				result = self.worker.import_edr([path])
+				result = i1d3 = self.worker.import_edr([path])
+			elif type == "spyder4":
+				# Import spyd4cal.bin
+				result = spyd4 = self.worker.import_spyd4cal([path])
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result:
+			if spyd4en:
+				self.update_measurement_modes()
 			self.update_colorimeter_correction_matrix_ctrl_items(True)
+			imported = []
+			if i1d3:
+				imported.append("i1 Profiler/ColorMunki Display")
+			if spyd4:
+				imported.append("Spyder4")
+			if icd:
+				imported.append("iColor Display")
 			InfoDialog(self,
-					   msg=lang.getstr("colorimeter_correction.import.success"), 
+					   msg=lang.getstr("colorimeter_correction.import.success",
+									   "\n".join(imported)), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
 		elif result is not None:
