@@ -487,7 +487,7 @@
 	"photo.icc": "Photo",
 	"prepress.icc": "Prepress",
 	"video.icc": "Video",
-	"ccxxmake-s3.ti1": "Testchart for colorimeter correction",
+	"ccxxmake-s1.ti1": "Testchart for colorimeter correction",
 	"d3-e4-s3-g3-m0-f0.ti1": "Default testchart for “gamma + matrix” profiles",
 	"d3-e4-s0-g9-m3-f0-crossover.ti1": "Default testchart for “curves + matrix” profiles",
 	"d3-e4-s0-g25-m3-f0-crossover.ti1": "Extended testchart for “curves + matrix” profiles",
