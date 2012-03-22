@@ -2994,6 +2994,9 @@ class Worker(object):
 				with open(inoutfile + ".chrm", "wb") as blob:
 					blob.write(chrm.tagData)
 			# Black point compensation
+			ti3[0].add_keyword("USE_BLACK_POINT_COMPENSATION",
+							   "YES" if getcfg("profile.black_point_compensation")
+							   else "NO")
 			if getcfg("profile.black_point_compensation"):
 				# Backup TI3
 				ti3.write(inoutfile + ".ti3.backup")

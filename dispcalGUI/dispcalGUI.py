@@ -8348,6 +8348,10 @@ class MainFrame(BaseFrame):
 					if debug:
 						safe_print("[D] load_cal_handler testchart.file:", path)
 					setcfg("testchart.file", path)
+				if 'USE_BLACK_POINT_COMPENSATION "YES"' in ti3_lines:
+					setcfg("profile.black_point_compensation", 1)
+				elif 'USE_BLACK_POINT_COMPENSATION "NO"' in ti3_lines:
+					setcfg("profile.black_point_compensation", 0)
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)
