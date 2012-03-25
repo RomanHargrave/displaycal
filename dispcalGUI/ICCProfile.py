@@ -3116,8 +3116,9 @@ class ICCProfile:
 							   ("EDID_blue_x", edid["blue_x"]),
 							   ("EDID_blue_y", edid["blue_y"]),
 							   ("EDID_white_x", edid["white_x"]),
-							   ("EDID_white_y", edid["white_y"]),
-							   ("EDID_gamma", edid["gamma"])))
+							   ("EDID_white_y", edid["white_y"])))
+		if "gamma" in edid:
+			self.tags.meta["EDID_gamma"] = edid["gamma"]
 		monitor_name = edid.get("monitor_name", edid.get("ascii"))
 		if monitor_name:
 			self.tags.meta["EDID_model"] = monitor_name
