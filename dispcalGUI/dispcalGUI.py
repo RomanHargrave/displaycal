@@ -1376,10 +1376,10 @@ class MainFrame(BaseFrame):
 		]
 		
 		self.whitepoint_presets = [
-			"5000.0",
-			"5500.0",
-			"6000.0",
-			"6500.0"
+			"5000",
+			"5500",
+			"6000",
+			"6500"
 		]
 		
 		defaults["use_separate_lut_access"] = int(
@@ -2739,6 +2739,7 @@ class MainFrame(BaseFrame):
 			self.update_colorimeter_correction_matrix_ctrl_items()
 
 		self.whitepoint_ctrl.Enable(enable_cal)
+		self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
 		self.luminance_ctrl.Enable(enable_cal)
 		self.black_luminance_ctrl.Enable(enable_cal)
 		self.trc_ctrl.Enable(enable_cal)
@@ -2778,7 +2779,7 @@ class MainFrame(BaseFrame):
 				len(self.measurement_mode_ctrl.GetItems()) - 1))
 
 		self.whitepoint_colortemp_textctrl.SetValue(
-			str(getcfg("whitepoint.colortemp")))
+			str(stripzeros(getcfg("whitepoint.colortemp"))))
 		self.whitepoint_colortemp_locus_ctrl.SetSelection(
 			self.whitepoint_colortemp_loci_ba.get(
 				getcfg("whitepoint.colortemp.locus"), 
@@ -2795,12 +2796,6 @@ class MainFrame(BaseFrame):
 		self.whitepoint_ctrl_handler(
 			CustomEvent(wx.EVT_CHOICE.evtType[0], 
 			self.whitepoint_ctrl), False)
-		#self.whitepoint_colortemp_textctrl.Show(
-			#enable_cal and bool(getcfg("whitepoint.colortemp", False)))
-		#self.whitepoint_x_textctrl.Show(enable_cal and 
-										#bool(getcfg("whitepoint.x", False)))
-		#self.whitepoint_y_textctrl.Show(enable_cal and 
-										#bool(getcfg("whitepoint.y", False)))
 
 		if getcfg("calibration.luminance", False):
 			self.luminance_ctrl.SetSelection(1)
@@ -3305,10 +3300,13 @@ class MainFrame(BaseFrame):
 			auto = getcfg("calibration.black_point_correction.auto")
 			self.black_point_correction_auto_cb.SetValue(bool(auto))
 		show = bool(getcfg("show_advanced_calibration_options")) and not auto
+		self.calpanel.Freeze()
 		self.black_point_correction_ctrl.Show(show)
 		self.black_point_correction_intctrl.Show(show)
 		self.black_point_correction_intctrl_label.Show(show)
-		self.black_point_correction_ctrl.GetContainingSizer().Layout()
+		self.calpanel.Layout()
+		self.calpanel.Refresh()
+		self.calpanel.Thaw()
 
 	def black_point_correction_ctrl_handler(self, event):
 		if debug:
@@ -3637,6 +3635,7 @@ class MainFrame(BaseFrame):
 											 getevtobjname(event, self), 
 											 event.GetEventType(), 
 											 getevttype(event)))
+		self.calpanel.Freeze()
 		if self.black_luminance_ctrl.GetSelection() == 1: # cd/m2
 			self.black_luminance_textctrl.Show()
 			self.black_luminance_textctrl_label.Show()
@@ -3657,7 +3656,9 @@ class MainFrame(BaseFrame):
 		else:
 			self.black_luminance_textctrl.Hide()
 			self.black_luminance_textctrl_label.Hide()
-		self.black_luminance_ctrl.GetContainingSizer().Layout()
+		self.calpanel.Layout()
+		self.calpanel.Refresh()
+		self.calpanel.Thaw()
 		v = self.get_black_luminance()
 		if v != str(getcfg("calibration.black_luminance", False)):
 			self.cal_changed()
@@ -3679,6 +3680,7 @@ class MainFrame(BaseFrame):
 									   getevtobjname(event, self), 
 									   event.GetEventType(), 
 									   getevttype(event)))
+		self.calpanel.Freeze()
 		if self.luminance_ctrl.GetSelection() == 1: # cd/m2
 			self.luminance_textctrl.Show()
 			self.luminance_textctrl_label.Show()
@@ -3698,7 +3700,9 @@ class MainFrame(BaseFrame):
 		else:
 			self.luminance_textctrl.Hide()
 			self.luminance_textctrl_label.Hide()
-		self.luminance_ctrl.GetContainingSizer().Layout()
+		self.calpanel.Layout()
+		self.calpanel.Refresh()
+		self.calpanel.Thaw()
 		v = self.get_luminance()
 		if v != str(getcfg("calibration.luminance", False)):
 			self.cal_changed()
@@ -3749,6 +3753,7 @@ class MainFrame(BaseFrame):
 									   getevtobjname(event, self), 
 									   event.GetEventType(), 
 									   getevttype(event)))
+		self.calpanel.Freeze()
 		if self.whitepoint_ctrl.GetSelection() == 2: # x,y chromaticity coordinates
 			self.whitepoint_colortemp_locus_ctrl.Hide()
 			self.whitepoint_colortemp_textctrl.Hide()
@@ -3812,11 +3817,11 @@ class MainFrame(BaseFrame):
 						",", "."))
 				if v < 1000 or v > 15000:
 					raise ValueError()
-				self.whitepoint_colortemp_textctrl.SetValue(str(v))
+				self.whitepoint_colortemp_textctrl.SetValue(str(stripzeros(v)))
 			except ValueError:
 				wx.Bell()
 				self.whitepoint_colortemp_textctrl.SetValue(
-					str(getcfg("whitepoint.colortemp")))
+					str(stripzeros(getcfg("whitepoint.colortemp"))))
 			if cal_changed:
 				v = float(self.whitepoint_colortemp_textctrl.GetValue())
 				if getcfg("whitepoint.colortemp") == v and not \
@@ -3843,11 +3848,13 @@ class MainFrame(BaseFrame):
 				cal_changed = False
 			setcfg("whitepoint.colortemp", None)
 			self.whitepoint_colortemp_textctrl.SetValue(
-					str(getcfg("whitepoint.colortemp")))
+					str(stripzeros(getcfg("whitepoint.colortemp"))))
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
 		self.whitepoint_measure_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
-		self.whitepoint_ctrl.GetContainingSizer().Layout()
+		self.calpanel.Layout()
+		self.calpanel.Refresh()
+		self.calpanel.Thaw()
 		if self.whitepoint_ctrl.GetSelection() != 2:
 			if getcfg("whitepoint.colortemp.locus") == "T":
 				# Planckian locus
@@ -3892,6 +3899,7 @@ class MainFrame(BaseFrame):
 			safe_print("[D] trc_ctrl_handler called for ID %s %s event type %s "
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
+		self.calpanel.Freeze()
 		if self.trc_ctrl.GetSelection() == 0:
 			self.trc_textctrl.Show()
 			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
@@ -3909,6 +3917,9 @@ class MainFrame(BaseFrame):
 		else:
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.Hide()
+		self.calpanel.Layout()
+		self.calpanel.Refresh()
+		self.calpanel.Thaw()
 		trc = self.get_trc()
 		if cal_changed:
 			if trc != str(getcfg("trc")):
@@ -6246,10 +6257,13 @@ class MainFrame(BaseFrame):
 					 self.black_point_rate_label,
 					 self.black_point_rate_ctrl,
 					 self.black_point_rate_floatctrl):
-			ctrl.GetContainingSizer().Show(ctrl,
-										   show_advanced_calibration_options)
+			if (ctrl is not self.trc_type_ctrl or
+				self.trc_ctrl.GetSelection() == 0):
+				ctrl.GetContainingSizer().Show(ctrl,
+											   show_advanced_calibration_options)
 		self.black_point_correction_auto_handler()
 		self.calpanel.Layout()
+		self.calpanel.Refresh()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
 	

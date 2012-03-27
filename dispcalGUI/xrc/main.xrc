@@ -400,6 +400,7 @@
                           </object>
                           <object class="sizeritem">
                             <object class="wxComboBox" name="whitepoint_colortemp_textctrl">
+                              <size>90,-1</size>
                               <XRCED>
                                 <events>EVT_COMBOBOX|EVT_KILL_FOCUS</events>
                               </XRCED>
@@ -422,7 +423,7 @@
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="whitepoint_x_textctrl">
-                              <size>70,-1</size>
+                              <size>75,-1</size>
                               <XRCED>
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
@@ -439,7 +440,7 @@
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="whitepoint_y_textctrl">
-                              <size>70,-1</size>
+                              <size>75,-1</size>
                               <XRCED>
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
@@ -475,7 +476,6 @@
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
-                          
                           <object class="sizeritem">
                             <object class="wxChoice" name="luminance_ctrl">
                               <content>
@@ -489,7 +489,7 @@
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="luminance_textctrl">
-                              <size>50,-1</size>
+                              <size>75,-1</size>
                               <XRCED>
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
@@ -528,7 +528,6 @@
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
-                          
                           <object class="sizeritem">
                             <object class="wxChoice" name="black_luminance_ctrl">
                               <content>
@@ -542,7 +541,7 @@
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="black_luminance_textctrl">
-                              <size>50,-1</size>
+                              <size>75,-1</size>
                               <XRCED>
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
@@ -616,8 +615,6 @@
                         <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                         <border>4</border>
                       </object>
-                      
-                      
                       <object class="sizeritem">
                         <object class="wxCheckBox" name="ambient_viewcond_adjust_cb">
                           <label>calibration.ambient_viewcond_adjust</label>
@@ -816,7 +813,7 @@
                           <orient>wxHORIZONTAL</orient>
                           <object class="sizeritem">
                             <object class="wxSlider" name="calibration_quality_ctrl">
-                              <size>50,-1</size>
+                              <size>75,-1</size>
                               <value>2</value>
                               <min>1</min>
                               <max>4</max>
@@ -902,7 +899,7 @@
                               <orient>wxHORIZONTAL</orient>
                               <object class="sizeritem">
                                 <object class="wxSlider" name="profile_quality_ctrl">
-                                  <size>50,-1</size>
+                                  <size>75,-1</size>
                                   <value>2</value>
                                   <min>1</min>
                                   <max>3</max>
