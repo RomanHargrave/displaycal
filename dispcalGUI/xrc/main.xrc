@@ -211,6 +211,24 @@
                             <border>18</border>
                           </object>
                           <orient>wxVERTICAL</orient>
+                          <object class="sizeritem">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxCheckBox" name="whitelevel_drift_compensation">
+                                  <label>drift_compensation.whitelevel</label>
+                                  <tooltip>drift_compensation.whitelevel.info</tooltip>
+                                  <XRCED>
+                                    <events>EVT_CHECKBOX</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxTOP|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>6</border>
+                              </object>
+                              <orient>wxHORIZONTAL</orient>
+                            </object>
+                            <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+                            <border>18</border>
+                          </object>
                         </object>
                         <option>1</option>
                         <flag>wxBOTTOM|wxRIGHT|wxEXPAND</flag>
@@ -243,9 +261,7 @@
                               <object class="sizeritem">
                                 <object class="wxFlexGridSizer">
                                   <object class="sizeritem">
-                                    <object class="wxChoice" name="comport_ctrl">
-                                      <size>150,-1</size>
-                                    </object>
+                                    <object class="wxChoice" name="comport_ctrl"/>
                                     <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                                   </object>
                                   <object class="sizeritem">
@@ -284,6 +300,24 @@
                             <border>14</border>
                           </object>
                           <orient>wxVERTICAL</orient>
+                          <object class="sizeritem">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxCheckBox" name="blacklevel_drift_compensation">
+                                  <label>drift_compensation.blacklevel</label>
+                                  <tooltip>drift_compensation.blacklevel.info</tooltip>
+                                  <XRCED>
+                                    <events>EVT_CHECKBOX</events>
+                                  </XRCED>
+                                </object>
+                                <flag>wxTOP|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>6</border>
+                              </object>
+                              <orient>wxHORIZONTAL</orient>
+                            </object>
+                            <flag>wxRIGHT|wxEXPAND</flag>
+                            <border>18</border>
+                          </object>
                         </object>
                         <flag>wxBOTTOM</flag>
                         <border>2</border>
@@ -339,7 +373,7 @@
                         </object>
                         <option>1</option>
                         <flag>wxTOP</flag>
-                        <border>2</border>
+                        <border>8</border>
                       </object>
                       <orient>wxHORIZONTAL</orient>
                     </object>
@@ -411,6 +445,13 @@
                           <object class="sizeritem">
                             <object class="wxStaticText" name="whitepoint_colortemp_label">
                               <label>K</label>
+                            </object>
+                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
+                          </object>
+                          <object class="sizeritem">
+                            <object class="wxStaticText" name="whitepoint_colortemp_locus_label">
+                              <label>reference</label>
                             </object>
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
@@ -504,16 +545,6 @@
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
-                          <object class="sizeritem">
-                            <object class="wxCheckBox" name="whitelevel_drift_compensation">
-                              <label>drift_compensation.whitelevel</label>
-                              <XRCED>
-                                <events>EVT_CHECKBOX</events>
-                              </XRCED>
-                            </object>
-                            <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
-                          </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>
                         <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
@@ -555,16 +586,6 @@
                             </object>
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
-                          </object>
-                          <object class="sizeritem">
-                            <object class="wxCheckBox" name="blacklevel_drift_compensation">
-                              <label>drift_compensation.blacklevel</label>
-                              <XRCED>
-                                <events>EVT_CHECKBOX</events>
-                              </XRCED>
-                            </object>
-                            <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
                           </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>
@@ -615,19 +636,21 @@
                         <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                         <border>4</border>
                       </object>
-                      <object class="sizeritem">
-                        <object class="wxCheckBox" name="ambient_viewcond_adjust_cb">
-                          <label>calibration.ambient_viewcond_adjust</label>
-                          <XRCED>
-                            <events>EVT_CHECKBOX</events>
-                          </XRCED>
-                        </object>
-                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
-                      </object>
+                      <object class="spacer"/>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
                           <orient>wxHORIZONTAL</orient>
+                          <object class="sizeritem">
+                            <object class="wxCheckBox" name="ambient_viewcond_adjust_cb">
+                              <label>calibration.ambient_viewcond_adjust</label>
+                              <tooltip>calibration.ambient_viewcond_adjust.info</tooltip>
+                              <XRCED>
+                                <events>EVT_CHECKBOX</events>
+                              </XRCED>
+                            </object>
+                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>8</border>
+                          </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="ambient_viewcond_adjust_textctrl">
                               <size>50,-1</size>
@@ -646,13 +669,10 @@
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxBitmapButton" name="ambient_viewcond_adjust_info">
+                            <object class="wxStaticBitmap" name="ambient_viewcond_adjust_info">
                               <bitmap>../theme/icons/16x16/dialog-information.png</bitmap>
                               <tooltip>calibration.ambient_viewcond_adjust.info</tooltip>
                               <style>wxNO_BORDER</style>
-                              <XRCED>
-                                <events>EVT_BUTTON</events>
-                              </XRCED>
                             </object>
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>8</border>
@@ -1027,12 +1047,9 @@
                                 <border>8</border>
                               </object>
                               <object class="sizeritem">
-                                <object class="wxBitmapButton" name="profile_name_info_btn">
+                                <object class="wxStaticBitmap" name="profile_name_info_btn">
                                   <bitmap>../theme/icons/16x16/dialog-information.png</bitmap>
                                   <style>wxNO_BORDER</style>
-                                  <XRCED>
-                                    <events>EVT_BUTTON</events>
-                                  </XRCED>
                                 </object>
                                 <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                 <border>8</border>

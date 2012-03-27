@@ -293,7 +293,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg.list_ctrl.InsertColumn(2, lang.getstr("display.manufacturer"))
 	dlg.list_ctrl.InsertColumn(3, lang.getstr("display"))
 	dlg.list_ctrl.InsertColumn(4, lang.getstr("instrument"))
-	dlg.list_ctrl.InsertColumn(5, lang.getstr("reference_instrument"))
+	dlg.list_ctrl.InsertColumn(5, lang.getstr("reference"))
 	dlg.list_ctrl.InsertColumn(6, lang.getstr("created"))
 	dlg.list_ctrl.SetColumnWidth(0, 50)
 	dlg.list_ctrl.SetColumnWidth(1, 250)
@@ -1640,7 +1640,7 @@ class MainFrame(BaseFrame):
 			settings += [lstr]
 		self.calibration_file_ctrl.SetItems(settings)
 		
-		self.whitepoint_ctrl.SetItems([lang.getstr("native"),
+		self.whitepoint_ctrl.SetItems([lang.getstr("as_measured"),
 									   lang.getstr("whitepoint.colortemp"),
 									   lang.getstr("whitepoint.xy")])
 		
@@ -1651,11 +1651,11 @@ class MainFrame(BaseFrame):
 		self.whitepoint_colortemp_locus_ctrl.SetItems(
 			self.whitepoint_colortemp_loci)
 		
-		self.luminance_ctrl.SetItems([lang.getstr("native"),
-									  lang.getstr("other")])
+		self.luminance_ctrl.SetItems([lang.getstr("as_measured"),
+									  lang.getstr("custom")])
 		
-		self.black_luminance_ctrl.SetItems([lang.getstr("native"),
-											lang.getstr("other")])
+		self.black_luminance_ctrl.SetItems([lang.getstr("as_measured"),
+											lang.getstr("custom")])
 		
 		self.trc_ctrl.SetItems([lang.getstr("trc.gamma"),
 								lang.getstr("trc.lstar"),
@@ -2085,10 +2085,7 @@ class MainFrame(BaseFrame):
 				  id=self.ambient_viewcond_adjust_cb.GetId())
 		self.ambient_viewcond_adjust_textctrl.Bind(
 			wx.EVT_KILL_FOCUS, self.ambient_viewcond_adjust_ctrl_handler)
-		self.ambient_viewcond_adjust_info.SetBitmapDisabled(
-			geticon(16, "empty"))
-		self.Bind(wx.EVT_BUTTON, self.ambient_viewcond_adjust_info_handler, 
-				  id=self.ambient_viewcond_adjust_info.GetId())
+		self.ambient_viewcond_adjust_info.SetCursor(wx.StockCursor(wx.CURSOR_QUESTION_ARROW))
 		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler,
 				  id=self.ambient_measure_btn.GetId())
 
@@ -2154,9 +2151,7 @@ class MainFrame(BaseFrame):
 		# Profile name
 		self.Bind(wx.EVT_TEXT, self.profile_name_ctrl_handler, 
 				  id=self.profile_name_textctrl.GetId())
-		self.profile_name_info_btn.SetBitmapDisabled(geticon(16, "empty"))
-		self.Bind(wx.EVT_BUTTON, self.profile_name_info_btn_handler, 
-				  id=self.profile_name_info_btn.GetId())
+		self.profile_name_info_btn.SetCursor(wx.StockCursor(wx.CURSOR_QUESTION_ARROW))
 		self.profile_save_path_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.profile_save_path_btn_handler, 
 				  id=self.profile_save_path_btn.GetId())
@@ -3755,6 +3750,7 @@ class MainFrame(BaseFrame):
 									   getevttype(event)))
 		self.calpanel.Freeze()
 		if self.whitepoint_ctrl.GetSelection() == 2: # x,y chromaticity coordinates
+			self.whitepoint_colortemp_locus_label.Hide()
 			self.whitepoint_colortemp_locus_ctrl.Hide()
 			self.whitepoint_colortemp_textctrl.Hide()
 			self.whitepoint_colortemp_label.Hide()
@@ -3804,6 +3800,7 @@ class MainFrame(BaseFrame):
 				self.whitepoint_x_textctrl.SetFocus()
 				self.whitepoint_x_textctrl.SelectAll()
 		elif self.whitepoint_ctrl.GetSelection() == 1:
+			self.whitepoint_colortemp_locus_label.Show()
 			self.whitepoint_colortemp_locus_ctrl.Show()
 			self.whitepoint_colortemp_textctrl.Show()
 			self.whitepoint_colortemp_label.Show()
@@ -3836,6 +3833,7 @@ class MainFrame(BaseFrame):
 				self.whitepoint_colortemp_textctrl.SetFocus()
 				self.whitepoint_colortemp_textctrl.SelectAll()
 		else:
+			self.whitepoint_colortemp_locus_label.Show()
 			self.whitepoint_colortemp_locus_ctrl.Show()
 			self.whitepoint_colortemp_textctrl.Hide()
 			self.whitepoint_colortemp_label.Hide()
