@@ -45,8 +45,7 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxComboBox" name="gamap_perceptual_intent_ctrl">
-                    <style>wxCB_READONLY</style>
+                  <object class="wxChoice" name="gamap_perceptual_intent_ctrl">
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -61,8 +60,7 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxComboBox" name="gamap_saturation_intent_ctrl">
-                    <style>wxCB_READONLY</style>
+                  <object class="wxChoice" name="gamap_saturation_intent_ctrl">
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -84,8 +82,7 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxComboBox" name="gamap_src_viewcond_ctrl">
-                    <style>wxCB_READONLY</style>
+                  <object class="wxChoice" name="gamap_src_viewcond_ctrl">
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -97,8 +94,7 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxComboBox" name="gamap_out_viewcond_ctrl">
-                    <style>wxCB_READONLY</style>
+                  <object class="wxChoice" name="gamap_out_viewcond_ctrl">
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -120,8 +116,7 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxComboBox" name="gamap_default_intent_ctrl">
-                    <style>wxCB_READONLY</style>
+                  <object class="wxChoice" name="gamap_default_intent_ctrl">
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>

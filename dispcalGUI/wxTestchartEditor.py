@@ -143,8 +143,8 @@ class TestchartEditor(wx.Frame):
 		algos = self.tc_algos_ab.values()
 		algos.sort()
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.algo")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT, border = border)
-		self.tc_algo = wx.ComboBox(panel, -1, choices = algos, style = wx.CB_READONLY, name = "tc_algo")
-		self.Bind(wx.EVT_COMBOBOX, self.tc_algo_handler, id = self.tc_algo.GetId())
+		self.tc_algo = wx.Choice(panel, -1, choices = algos, name = "tc_algo")
+		self.Bind(wx.EVT_CHOICE, self.tc_algo_handler, id = self.tc_algo.GetId())
 		sizer.Add(self.tc_algo, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		# adaption

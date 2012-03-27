@@ -721,17 +721,17 @@ class GamapFrame(BaseFrame):
 		# Bind event handlers
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_perceptual_cb_handler, 
 				   id=self.gamap_perceptual_cb.GetId())
-		self.Bind(wx.EVT_COMBOBOX, self.gamap_perceptual_intent_handler, 
+		self.Bind(wx.EVT_CHOICE, self.gamap_perceptual_intent_handler, 
 				   id=self.gamap_perceptual_intent_ctrl.GetId())
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_saturation_cb_handler, 
 				   id=self.gamap_saturation_cb.GetId())
-		self.Bind(wx.EVT_COMBOBOX, self.gamap_saturation_intent_handler, 
+		self.Bind(wx.EVT_CHOICE, self.gamap_saturation_intent_handler, 
 				   id=self.gamap_saturation_intent_ctrl.GetId())
-		self.Bind(wx.EVT_COMBOBOX, self.gamap_src_viewcond_handler, 
+		self.Bind(wx.EVT_CHOICE, self.gamap_src_viewcond_handler, 
 				   id=self.gamap_src_viewcond_ctrl.GetId())
-		self.Bind(wx.EVT_COMBOBOX, self.gamap_out_viewcond_handler, 
+		self.Bind(wx.EVT_CHOICE, self.gamap_out_viewcond_handler, 
 				   id=self.gamap_out_viewcond_ctrl.GetId())
-		self.Bind(wx.EVT_COMBOBOX, self.gamap_default_intent_handler, 
+		self.Bind(wx.EVT_CHOICE, self.gamap_default_intent_handler, 
 				   id=self.gamap_default_intent_ctrl.GetId())
 
 		self.viewconds_ab = OrderedDict()
@@ -937,17 +937,17 @@ class LUT3DFrame(BaseFrame):
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
 		self.apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.apply_cal_ctrl_handler)
-		self.rendering_intent_ctrl.Bind(wx.EVT_COMBOBOX,
+		self.rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
 										self.rendering_intent_ctrl_handler)
 		self.black_point_compensation_cb.Bind(wx.EVT_CHECKBOX,
 											  self.black_point_compensation_ctrl_handler)
-		self.lut3d_format_ctrl.Bind(wx.EVT_COMBOBOX,
+		self.lut3d_format_ctrl.Bind(wx.EVT_CHOICE,
 									self.lut3d_format_ctrl_handler)
-		self.lut3d_size_ctrl.Bind(wx.EVT_COMBOBOX,
+		self.lut3d_size_ctrl.Bind(wx.EVT_CHOICE,
 								  self.lut3d_size_ctrl_handler)
-		self.lut3d_bitdepth_input_ctrl.Bind(wx.EVT_COMBOBOX,
+		self.lut3d_bitdepth_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.lut3d_bitdepth_input_ctrl_handler)
-		self.lut3d_bitdepth_output_ctrl.Bind(wx.EVT_COMBOBOX,
+		self.lut3d_bitdepth_output_ctrl.Bind(wx.EVT_CHOICE,
 											 self.lut3d_bitdepth_output_ctrl_handler)
 		self.lut3d_create_btn.Bind(wx.EVT_BUTTON, self.lut3d_create_handler)
 		
@@ -1640,12 +1640,28 @@ class MainFrame(BaseFrame):
 			settings += [lstr]
 		self.calibration_file_ctrl.SetItems(settings)
 		
+		self.whitepoint_ctrl.SetItems([lang.getstr("native"),
+									   lang.getstr("whitepoint.colortemp"),
+									   lang.getstr("whitepoint.xy")])
+		
 		self.whitepoint_colortemp_loci = [
 			lang.getstr("whitepoint.colortemp.locus.daylight"),
 			lang.getstr("whitepoint.colortemp.locus.blackbody")
 		]
 		self.whitepoint_colortemp_locus_ctrl.SetItems(
 			self.whitepoint_colortemp_loci)
+		
+		self.luminance_ctrl.SetItems([lang.getstr("native"),
+									  lang.getstr("other")])
+		
+		self.black_luminance_ctrl.SetItems([lang.getstr("native"),
+											lang.getstr("other")])
+		
+		self.trc_ctrl.SetItems([lang.getstr("trc.gamma"),
+								lang.getstr("trc.lstar"),
+								lang.getstr("trc.rec709"),
+								lang.getstr("trc.smpte240m"),
+								lang.getstr("trc.srgb")])
 		
 		self.trc_types = [
 			lang.getstr("trc.type.relative"),
@@ -1974,7 +1990,7 @@ class MainFrame(BaseFrame):
 		# ======================
 		
 		# Settings file dropdown
-		self.Bind(wx.EVT_COMBOBOX, self.calibration_file_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.calibration_file_ctrl_handler, 
 				  id=self.calibration_file_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.load_cal_handler, 
 				  id=self.calibration_file_btn.GetId())
@@ -1993,24 +2009,24 @@ class MainFrame(BaseFrame):
 				  id=self.calibration_update_cb.GetId())
 
 		# Display
-		self.Bind(wx.EVT_COMBOBOX, self.display_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.display_ctrl_handler, 
 				  id=self.display_ctrl.GetId())
-		self.Bind(wx.EVT_COMBOBOX, self.display_lut_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.display_lut_ctrl_handler, 
 				  id=self.display_lut_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.display_lut_link_ctrl_handler, 
 				  id=self.display_lut_link_ctrl.GetId())
 
 		# Instrument
-		self.Bind(wx.EVT_COMBOBOX, self.comport_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.comport_ctrl_handler, 
 				  id=self.comport_ctrl.GetId())
-		self.Bind(wx.EVT_COMBOBOX, self.measurement_mode_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.measurement_mode_ctrl_handler, 
 				  id=self.measurement_mode_ctrl.GetId())
 		self.detect_displays_and_ports_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.check_update_controls, 
 				  id=self.detect_displays_and_ports_btn.GetId())
 		
 		# Colorimeter correction matrix
-		self.Bind(wx.EVT_COMBOBOX, self.colorimeter_correction_matrix_handler, 
+		self.Bind(wx.EVT_CHOICE, self.colorimeter_correction_matrix_handler, 
 				  id=self.colorimeter_correction_matrix_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_handler, 
 				  id=self.colorimeter_correction_matrix_btn.GetId())
@@ -2021,19 +2037,15 @@ class MainFrame(BaseFrame):
 		# ====================
 
 		# Whitepoint
-		self.Bind(wx.EVT_RADIOBUTTON, self.whitepoint_ctrl_handler, 
-				  id=self.whitepoint_native_rb.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.whitepoint_ctrl_handler, 
-				  id=self.whitepoint_colortemp_rb.GetId())
+		self.Bind(wx.EVT_CHOICE, self.whitepoint_ctrl_handler, 
+				  id=self.whitepoint_ctrl.GetId())
 		self.Bind(wx.EVT_COMBOBOX, self.whitepoint_ctrl_handler, 
 				  id=self.whitepoint_colortemp_textctrl.GetId())
 		self.whitepoint_colortemp_textctrl.SetItems(self.whitepoint_presets)
 		self.whitepoint_colortemp_textctrl.Bind(
 			wx.EVT_KILL_FOCUS, self.whitepoint_ctrl_handler)
-		self.Bind(wx.EVT_COMBOBOX, self.whitepoint_colortemp_locus_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.whitepoint_colortemp_locus_ctrl_handler, 
 				  id=self.whitepoint_colortemp_locus_ctrl.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.whitepoint_ctrl_handler, 
-				  id=self.whitepoint_xy_rb.GetId())
 		self.whitepoint_x_textctrl.Bind(wx.EVT_KILL_FOCUS, 
 										self.whitepoint_ctrl_handler)
 		self.whitepoint_y_textctrl.Bind(wx.EVT_KILL_FOCUS, 
@@ -2042,43 +2054,31 @@ class MainFrame(BaseFrame):
 				  id=self.whitepoint_measure_btn.GetId())
 
 		# White luminance
-		self.Bind(wx.EVT_RADIOBUTTON, self.luminance_ctrl_handler, 
-				  id=self.luminance_max_rb.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.luminance_ctrl_handler, 
-				  id=self.luminance_cdm2_rb.GetId())
+		self.Bind(wx.EVT_CHOICE, self.luminance_ctrl_handler, 
+				  id=self.luminance_ctrl.GetId())
 		self.luminance_textctrl.Bind(wx.EVT_KILL_FOCUS, 
 									 self.luminance_ctrl_handler)
 		self.Bind(wx.EVT_CHECKBOX, self.whitelevel_drift_compensation_handler, 
 				  id=self.whitelevel_drift_compensation.GetId())
 
 		# Black luminance
-		self.Bind(wx.EVT_RADIOBUTTON, self.black_luminance_ctrl_handler, 
-				  id=self.black_luminance_min_rb.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.black_luminance_ctrl_handler, 
-				  id=self.black_luminance_cdm2_rb.GetId())
+		self.Bind(wx.EVT_CHOICE, self.black_luminance_ctrl_handler, 
+				  id=self.black_luminance_ctrl.GetId())
 		self.black_luminance_textctrl.Bind(wx.EVT_KILL_FOCUS, 
 										   self.black_luminance_ctrl_handler)
 		self.Bind(wx.EVT_CHECKBOX, self.blacklevel_drift_compensation_handler, 
 				  id=self.blacklevel_drift_compensation.GetId())
 
 		# Tonal response curve (TRC)
-		self.Bind(wx.EVT_RADIOBUTTON, self.trc_ctrl_handler, 
-				  id=self.trc_g_rb.GetId())
+		self.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler, 
+				  id=self.trc_ctrl.GetId())
 		self.trc_textctrl.SetItems(self.trc_presets)
 		self.trc_textctrl.SetValue(str(defaults["gamma"]))
 		self.Bind(wx.EVT_COMBOBOX, self.trc_ctrl_handler, 
 				  id=self.trc_textctrl.GetId())
 		self.trc_textctrl.Bind(wx.EVT_KILL_FOCUS, self.trc_ctrl_handler)
-		self.Bind(wx.EVT_COMBOBOX, self.trc_type_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.trc_type_ctrl_handler, 
 				  id=self.trc_type_ctrl.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.trc_ctrl_handler, 
-				  id=self.trc_l_rb.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.trc_ctrl_handler, 
-				  id=self.trc_rec709_rb.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.trc_ctrl_handler, 
-				  id=self.trc_smpte240m_rb.GetId())
-		self.Bind(wx.EVT_RADIOBUTTON, self.trc_ctrl_handler, 
-				  id=self.trc_srgb_rb.GetId())
 
 		# Viewing condition adjustment for ambient in Lux
 		self.Bind(wx.EVT_CHECKBOX, self.ambient_viewcond_adjust_ctrl_handler, 
@@ -2125,7 +2125,7 @@ class MainFrame(BaseFrame):
 		# ==================
 
 		# Testchart file
-		self.Bind(wx.EVT_COMBOBOX, self.testchart_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.testchart_ctrl_handler, 
 				  id=self.testchart_ctrl.GetId())
 		self.testchart_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.testchart_btn_handler, 
@@ -2139,7 +2139,7 @@ class MainFrame(BaseFrame):
 				  id=self.profile_quality_ctrl.GetId())
 
 		# Profile type
-		self.Bind(wx.EVT_COMBOBOX, self.profile_type_ctrl_handler, 
+		self.Bind(wx.EVT_CHOICE, self.profile_type_ctrl_handler, 
 				  id=self.profile_type_ctrl.GetId())
 
 		# Advanced (gamut mapping)
@@ -2738,18 +2738,10 @@ class MainFrame(BaseFrame):
 		if update_ccmx_items:
 			self.update_colorimeter_correction_matrix_ctrl_items()
 
-		self.whitepoint_native_rb.Enable(enable_cal)
-		self.whitepoint_colortemp_rb.Enable(enable_cal)
-		self.whitepoint_xy_rb.Enable(enable_cal)
-		self.luminance_max_rb.Enable(enable_cal)
-		self.luminance_cdm2_rb.Enable(enable_cal)
-		self.black_luminance_min_rb.Enable(enable_cal)
-		self.black_luminance_cdm2_rb.Enable(enable_cal)
-		self.trc_g_rb.Enable(enable_cal)
-		self.trc_l_rb.Enable(enable_cal)
-		self.trc_rec709_rb.Enable(enable_cal)
-		self.trc_smpte240m_rb.Enable(enable_cal)
-		self.trc_srgb_rb.Enable(enable_cal)
+		self.whitepoint_ctrl.Enable(enable_cal)
+		self.luminance_ctrl.Enable(enable_cal)
+		self.black_luminance_ctrl.Enable(enable_cal)
+		self.trc_ctrl.Enable(enable_cal)
 		self.ambient_viewcond_adjust_cb.Enable(enable_cal)
 		self.ambient_viewcond_adjust_info.Enable(enable_cal)
 		self.black_output_offset_ctrl.Enable(enable_cal)
@@ -2793,52 +2785,48 @@ class MainFrame(BaseFrame):
 			self.whitepoint_colortemp_loci_ba.get(
 				defaults["whitepoint.colortemp.locus"])))
 		if getcfg("whitepoint.colortemp", False):
-			self.whitepoint_colortemp_rb.SetValue(True)
-			self.whitepoint_ctrl_handler(
-				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
-				self.whitepoint_colortemp_rb), False)
-			self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
+			self.whitepoint_ctrl.SetSelection(1)
 		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
 			self.whitepoint_x_textctrl.ChangeValue(str(getcfg("whitepoint.x")))
 			self.whitepoint_y_textctrl.ChangeValue(str(getcfg("whitepoint.y")))
-			self.whitepoint_xy_rb.SetValue(True)
-			self.whitepoint_ctrl_handler(
-				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
-				self.whitepoint_xy_rb), False)
-			self.whitepoint_colortemp_locus_ctrl.Disable()
+			self.whitepoint_ctrl.SetSelection(2)
 		else:
-			self.whitepoint_native_rb.SetValue(True)
-			self.whitepoint_ctrl_handler(
-				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
-				self.whitepoint_native_rb), False)
-			self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
-		self.whitepoint_colortemp_textctrl.Enable(
-			enable_cal and bool(getcfg("whitepoint.colortemp", False)))
-		self.whitepoint_x_textctrl.Enable(enable_cal and 
-										  bool(getcfg("whitepoint.x", False)))
-		self.whitepoint_y_textctrl.Enable(enable_cal and 
-										  bool(getcfg("whitepoint.y", False)))
+			self.whitepoint_ctrl.SetSelection(0)
+		self.whitepoint_ctrl_handler(
+			CustomEvent(wx.EVT_CHOICE.evtType[0], 
+			self.whitepoint_ctrl), False)
+		#self.whitepoint_colortemp_textctrl.Show(
+			#enable_cal and bool(getcfg("whitepoint.colortemp", False)))
+		#self.whitepoint_x_textctrl.Show(enable_cal and 
+										#bool(getcfg("whitepoint.x", False)))
+		#self.whitepoint_y_textctrl.Show(enable_cal and 
+										#bool(getcfg("whitepoint.y", False)))
 
 		if getcfg("calibration.luminance", False):
-			self.luminance_cdm2_rb.SetValue(True)
+			self.luminance_ctrl.SetSelection(1)
 		else:
-			self.luminance_max_rb.SetValue(True)
+			self.luminance_ctrl.SetSelection(0)
 		self.luminance_textctrl.ChangeValue(
 			str(getcfg("calibration.luminance")))
-		self.luminance_textctrl.Enable(enable_cal and 
-									   bool(getcfg("calibration.luminance", 
-												   False)))
+		self.luminance_textctrl.Show(enable_cal and 
+									 bool(getcfg("calibration.luminance", 
+												 False)))
+		self.luminance_textctrl_label.Show(enable_cal and 
+										   bool(getcfg("calibration.luminance", 
+													   False)))
 		
 		self.whitelevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.whitelevel")))
 
 		if getcfg("calibration.black_luminance", False):
-			self.black_luminance_cdm2_rb.SetValue(True)
+			self.black_luminance_ctrl.SetSelection(1)
 		else:
-			self.black_luminance_min_rb.SetValue(True)
+			self.black_luminance_ctrl.SetSelection(0)
 		self.black_luminance_textctrl.ChangeValue(
 			"%.6f" % getcfg("calibration.black_luminance"))
-		self.black_luminance_textctrl.Enable(
+		self.black_luminance_textctrl.Show(
+			enable_cal and bool(getcfg("calibration.black_luminance", False)))
+		self.black_luminance_textctrl_label.Show(
 			enable_cal and bool(getcfg("calibration.black_luminance", False)))
 		
 		self.blacklevel_drift_compensation.SetValue(
@@ -2846,24 +2834,27 @@ class MainFrame(BaseFrame):
 
 		trc = getcfg("trc")
 		if trc in ("l", "709", "240", "s"):
-			self.trc_textctrl.Disable()
+			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.SetSelection(0)
-			self.trc_type_ctrl.Disable()
+			self.trc_type_ctrl.Hide()
 		if trc == "l":
-			self.trc_l_rb.SetValue(True)
+			self.trc_ctrl.SetSelection(1)
 		elif trc == "709":
-			self.trc_rec709_rb.SetValue(True)
+			self.trc_ctrl.SetSelection(2)
 		elif trc == "240":
-			self.trc_smpte240m_rb.SetValue(True)
+			self.trc_ctrl.SetSelection(3)
 		elif trc == "s":
-			self.trc_srgb_rb.SetValue(True)
+			self.trc_ctrl.SetSelection(4)
 		elif trc:
-			self.trc_g_rb.SetValue(True)
+			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.SetValue(str(trc))
+			self.trc_textctrl.Show(enable_cal)
 			self.trc_textctrl.Enable(enable_cal)
 			self.trc_type_ctrl.SetSelection(
 				self.trc_types_ba.get(getcfg("trc.type"), 
 				self.trc_types_ba.get(defaults["trc.type"])))
+			self.trc_type_ctrl.Show(enable_cal and
+									getcfg("show_advanced_calibration_options"))
 			self.trc_type_ctrl.Enable(enable_cal)
 
 		self.ambient_viewcond_adjust_cb.SetValue(
@@ -3568,10 +3559,10 @@ class MainFrame(BaseFrame):
 				self.whitepoint_x_textctrl.SetValue(x)
 				self.whitepoint_y_textctrl.SetValue(y)
 				if not getcfg("whitepoint.colortemp", False):
-					self.whitepoint_xy_rb.SetValue(True)
+					self.whitepoint_ctrl.SetSelection(2)
 					self.whitepoint_ctrl_handler(
-						CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
-									self.whitepoint_xy_rb))
+						CustomEvent(wx.EVT_CHOICE.evtType[0], 
+									self.whitepoint_ctrl))
 		if set_ambient:
 			if lux and len(lux.groups()) == 1:
 				self.ambient_viewcond_adjust_textctrl.SetValue(lux.groups()[0])
@@ -3634,8 +3625,8 @@ class MainFrame(BaseFrame):
 				   bitmap=geticon(32, "dialog-information"), log=False)
 
 	def black_luminance_ctrl_handler(self, event):
-		if event.GetId() == self.black_luminance_textctrl.GetId() and (not 
-		   self.black_luminance_cdm2_rb.GetValue() or 
+		if event.GetId() == self.black_luminance_textctrl.GetId() and (
+		   self.black_luminance_ctrl.GetSelection() != 1 or 
 		   str(float(getcfg("calibration.black_luminance"))) == 
 		   self.black_luminance_textctrl.GetValue()):
 			event.Skip()
@@ -3646,8 +3637,9 @@ class MainFrame(BaseFrame):
 											 getevtobjname(event, self), 
 											 event.GetEventType(), 
 											 getevttype(event)))
-		if self.black_luminance_cdm2_rb.GetValue(): # cd/m2
-			self.black_luminance_textctrl.Enable()
+		if self.black_luminance_ctrl.GetSelection() == 1: # cd/m2
+			self.black_luminance_textctrl.Show()
+			self.black_luminance_textctrl_label.Show()
 			try:
 				v = float(self.black_luminance_textctrl.GetValue().replace(",", 
 																		   "."))
@@ -3658,11 +3650,14 @@ class MainFrame(BaseFrame):
 				wx.Bell()
 				self.black_luminance_textctrl.ChangeValue(
 					"%.6f" % getcfg("calibration.black_luminance"))
-			if event.GetId() == self.black_luminance_cdm2_rb.GetId():
+			if (event.GetId() == self.black_luminance_ctrl.GetId() and
+				self.black_luminance_ctrl.GetSelection() == 1):
 				self.black_luminance_textctrl.SetFocus()
 				self.black_luminance_textctrl.SelectAll()
 		else:
-			self.black_luminance_textctrl.Disable()
+			self.black_luminance_textctrl.Hide()
+			self.black_luminance_textctrl_label.Hide()
+		self.black_luminance_ctrl.GetContainingSizer().Layout()
 		v = self.get_black_luminance()
 		if v != str(getcfg("calibration.black_luminance", False)):
 			self.cal_changed()
@@ -3672,8 +3667,8 @@ class MainFrame(BaseFrame):
 			event.Skip()
 
 	def luminance_ctrl_handler(self, event):
-		if event.GetId() == self.luminance_textctrl.GetId() and (not 
-		   self.luminance_cdm2_rb.GetValue() or 
+		if event.GetId() == self.luminance_textctrl.GetId() and (
+		   self.luminance_ctrl.GetSelection() != 1 or 
 		   str(float(getcfg("calibration.luminance"))) == 
 		   self.luminance_textctrl.GetValue()):
 			event.Skip()
@@ -3684,8 +3679,9 @@ class MainFrame(BaseFrame):
 									   getevtobjname(event, self), 
 									   event.GetEventType(), 
 									   getevttype(event)))
-		if self.luminance_cdm2_rb.GetValue(): # cd/m2
-			self.luminance_textctrl.Enable()
+		if self.luminance_ctrl.GetSelection() == 1: # cd/m2
+			self.luminance_textctrl.Show()
+			self.luminance_textctrl_label.Show()
 			try:
 				v = float(self.luminance_textctrl.GetValue().replace(",", "."))
 				if v < 0.000001 or v > 100000:
@@ -3695,11 +3691,14 @@ class MainFrame(BaseFrame):
 				wx.Bell()
 				self.luminance_textctrl.ChangeValue(
 					str(getcfg("calibration.luminance")))
-			if event.GetId() == self.luminance_cdm2_rb.GetId():
+			if (event.GetId() == self.luminance_ctrl.GetId() and
+				self.luminance_ctrl.GetSelection() == 1):
 				self.luminance_textctrl.SetFocus()
 				self.luminance_textctrl.SelectAll()
 		else:
-			self.luminance_textctrl.Disable()
+			self.luminance_textctrl.Hide()
+			self.luminance_textctrl_label.Hide()
+		self.luminance_ctrl.GetContainingSizer().Layout()
 		v = self.get_luminance()
 		if v != str(getcfg("calibration.luminance", False)):
 			self.cal_changed()
@@ -3720,26 +3719,26 @@ class MainFrame(BaseFrame):
 		if v != getcfg("whitepoint.colortemp.locus"):
 			setcfg("whitepoint.colortemp.locus", v)
 			self.whitepoint_ctrl_handler(
-				CustomEvent(wx.EVT_RADIOBUTTON.evtType[0], 
-				self.whitepoint_colortemp_rb), False)
+				CustomEvent(wx.EVT_CHOICE.evtType[0], 
+				self.whitepoint_ctrl), False)
 			self.cal_changed()
 		self.update_profile_name()
 
 	def whitepoint_ctrl_handler(self, event, cal_changed=True):
-		if event.GetId() == self.whitepoint_colortemp_textctrl.GetId() and (not 
-		   self.whitepoint_colortemp_rb.GetValue() or 
+		if event.GetId() == self.whitepoint_colortemp_textctrl.GetId() and (
+		   self.whitepoint_ctrl.GetSelection() != 1 or 
 		   str(float(getcfg("whitepoint.colortemp"))) == 
 		   self.whitepoint_colortemp_textctrl.GetValue()):
 			event.Skip()
 			return
-		if event.GetId() == self.whitepoint_x_textctrl.GetId() and (not 
-		   self.whitepoint_xy_rb.GetValue() or 
+		if event.GetId() == self.whitepoint_x_textctrl.GetId() and (
+		   self.whitepoint_ctrl.GetSelection() != 2 or 
 		   str(float(getcfg("whitepoint.x"))) == 
 		   self.whitepoint_x_textctrl.GetValue()):
 			event.Skip()
 			return
-		if event.GetId() == self.whitepoint_y_textctrl.GetId() and (not 
-		   self.whitepoint_xy_rb.GetValue() or 
+		if event.GetId() == self.whitepoint_y_textctrl.GetId() and (
+		   self.whitepoint_ctrl.GetSelection() != 2 or 
 		   str(float(getcfg("whitepoint.y"))) == 
 		   self.whitepoint_y_textctrl.GetValue()):
 			event.Skip()
@@ -3750,11 +3749,14 @@ class MainFrame(BaseFrame):
 									   getevtobjname(event, self), 
 									   event.GetEventType(), 
 									   getevttype(event)))
-		if self.whitepoint_xy_rb.GetValue(): # x,y chromaticity coordinates
-			self.whitepoint_colortemp_locus_ctrl.Disable()
-			self.whitepoint_colortemp_textctrl.Disable()
-			self.whitepoint_x_textctrl.Enable()
-			self.whitepoint_y_textctrl.Enable()
+		if self.whitepoint_ctrl.GetSelection() == 2: # x,y chromaticity coordinates
+			self.whitepoint_colortemp_locus_ctrl.Hide()
+			self.whitepoint_colortemp_textctrl.Hide()
+			self.whitepoint_colortemp_label.Hide()
+			self.whitepoint_x_textctrl.Show()
+			self.whitepoint_x_label.Show()
+			self.whitepoint_y_textctrl.Show()
+			self.whitepoint_y_label.Show()
 			try:
 				v = float(self.whitepoint_x_textctrl.GetValue().replace(",", 
 																		"."))
@@ -3791,15 +3793,19 @@ class MainFrame(BaseFrame):
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", x)
 			setcfg("whitepoint.y", y)
-			if event.GetId() == self.whitepoint_xy_rb.GetId() and \
-			   not self.updatingctrls:
+			if (event.GetId() == self.whitepoint_ctrl.GetId() and
+				self.whitepoint_ctrl.GetSelection() == 2 and
+				not self.updatingctrls):
 				self.whitepoint_x_textctrl.SetFocus()
 				self.whitepoint_x_textctrl.SelectAll()
-		elif self.whitepoint_colortemp_rb.GetValue():
-			self.whitepoint_colortemp_locus_ctrl.Enable()
-			self.whitepoint_colortemp_textctrl.Enable()
-			self.whitepoint_x_textctrl.Disable()
-			self.whitepoint_y_textctrl.Disable()
+		elif self.whitepoint_ctrl.GetSelection() == 1:
+			self.whitepoint_colortemp_locus_ctrl.Show()
+			self.whitepoint_colortemp_textctrl.Show()
+			self.whitepoint_colortemp_label.Show()
+			self.whitepoint_x_textctrl.Hide()
+			self.whitepoint_x_label.Hide()
+			self.whitepoint_y_textctrl.Hide()
+			self.whitepoint_y_label.Hide()
 			try:
 				v = float(
 					self.whitepoint_colortemp_textctrl.GetValue().replace(
@@ -3819,15 +3825,19 @@ class MainFrame(BaseFrame):
 			setcfg("whitepoint.colortemp", v)
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
-			if event.GetId() == self.whitepoint_colortemp_rb.GetId() and not \
-			   self.updatingctrls:
+			if (event.GetId() == self.whitepoint_ctrl.GetId() and
+				self.whitepoint_ctrl.GetSelection() == 1 and
+				not self.updatingctrls):
 				self.whitepoint_colortemp_textctrl.SetFocus()
 				self.whitepoint_colortemp_textctrl.SelectAll()
 		else:
-			self.whitepoint_colortemp_locus_ctrl.Enable()
-			self.whitepoint_colortemp_textctrl.Disable()
-			self.whitepoint_x_textctrl.Disable()
-			self.whitepoint_y_textctrl.Disable()
+			self.whitepoint_colortemp_locus_ctrl.Show()
+			self.whitepoint_colortemp_textctrl.Hide()
+			self.whitepoint_colortemp_label.Hide()
+			self.whitepoint_x_textctrl.Hide()
+			self.whitepoint_x_label.Hide()
+			self.whitepoint_y_textctrl.Hide()
+			self.whitepoint_y_label.Hide()
 			if not getcfg("whitepoint.colortemp") and \
 			   not getcfg("whitepoint.x") and not getcfg("whitepoint.y"):
 				cal_changed = False
@@ -3836,7 +3846,9 @@ class MainFrame(BaseFrame):
 					str(getcfg("whitepoint.colortemp")))
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
-		if not self.whitepoint_xy_rb.GetValue():
+		self.whitepoint_measure_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
+		self.whitepoint_ctrl.GetContainingSizer().Layout()
+		if self.whitepoint_ctrl.GetSelection() != 2:
 			if getcfg("whitepoint.colortemp.locus") == "T":
 				# Planckian locus
 				xyY = planckianCT2xyY(getcfg("whitepoint.colortemp"))
@@ -3871,8 +3883,8 @@ class MainFrame(BaseFrame):
 		self.update_profile_name()
 
 	def trc_ctrl_handler(self, event, cal_changed=True):
-		if event.GetId() == self.trc_textctrl.GetId() and (not 
-		   self.trc_g_rb.GetValue() or stripzeros(getcfg("trc")) == 
+		if event.GetId() == self.trc_textctrl.GetId() and (
+		   self.trc_ctrl.GetSelection() != 0 or stripzeros(getcfg("trc")) == 
 		   stripzeros(self.trc_textctrl.GetValue())):
 			event.Skip()
 			return
@@ -3880,9 +3892,9 @@ class MainFrame(BaseFrame):
 			safe_print("[D] trc_ctrl_handler called for ID %s %s event type %s "
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
-		if self.trc_g_rb.GetValue():
-			self.trc_textctrl.Enable()
-			self.trc_type_ctrl.Enable()
+		if self.trc_ctrl.GetSelection() == 0:
+			self.trc_textctrl.Show()
+			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
 			try:
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
@@ -3891,12 +3903,12 @@ class MainFrame(BaseFrame):
 			except ValueError:
 				wx.Bell()
 				self.trc_textctrl.SetValue(str(getcfg("trc")))
-			if event.GetId() == self.trc_g_rb.GetId():
+			if event.GetId() == self.trc_ctrl.GetId():
 				self.trc_textctrl.SetFocus()
 				self.trc_textctrl.SelectAll()
 		else:
-			self.trc_textctrl.Disable()
-			self.trc_type_ctrl.Disable()
+			self.trc_textctrl.Hide()
+			self.trc_type_ctrl.Hide()
 		trc = self.get_trc()
 		if cal_changed:
 			if trc != str(getcfg("trc")):
@@ -4328,11 +4340,10 @@ class MainFrame(BaseFrame):
 		gridsizer.Add(wx.StaticText(dlg, -1, lang.getstr("panel.surface")), 1, 
 					   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 		paneltypes = ["glossy", "matte"]
-		dlg.panel_ctrl = wx.ComboBox(dlg, -1, 
-									 choices=[""] + [lang.getstr(panel)
-												     for panel in
-												     paneltypes], 
-									 style=wx.CB_READONLY)
+		dlg.panel_ctrl = wx.Choice(dlg, -1, 
+								   choices=[""] + [lang.getstr(panel)
+												   for panel in
+												   paneltypes])
 		panel_surface = metadata.getvalue("SCREEN_surface", "")
 		try:
 			index = dlg.panel_ctrl.GetItems().index(lang.getstr(panel_surface))
@@ -4346,11 +4357,10 @@ class MainFrame(BaseFrame):
 									lang.getstr("display.connection.type")), 1,
 					  flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 		connections = ["dvi", "displayport", "hdmi", "internal", "vga"]
-		dlg.connection_ctrl = wx.ComboBox(dlg, -1, 
-										  choices=[lang.getstr(contype)
-												   for contype in
-												   connections], 
-										  style=wx.CB_READONLY)
+		dlg.connection_ctrl = wx.Choice(dlg, -1, 
+										choices=[lang.getstr(contype)
+												 for contype in
+												 connections])
 		connection_type = metadata.getvalue("CONNECTION_type",
 											"dvi")
 		try:
@@ -4449,10 +4459,9 @@ class MainFrame(BaseFrame):
 		# License field
 		##dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("license")), 1, 
 					   ##flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-		##dlg.license_ctrl = wx.ComboBox(dlg, -1, 
+		##dlg.license_ctrl = wx.Choice(dlg, -1, 
 									 ##choices=["http://www.color.org/registry/icc_license_2011.txt",
-											  ##"http://www.gzip.org/zlib/zlib_license.html"], 
-									 ##style=wx.CB_READONLY)
+											  ##"http://www.gzip.org/zlib/zlib_license.html"])
 		##dlg.license_ctrl.SetSelection(0)
 		##sizer4 = wx.BoxSizer(wx.HORIZONTAL)
 		##dlg.sizer3.Add(sizer4, 1, 
@@ -5509,7 +5518,7 @@ class MainFrame(BaseFrame):
 				min(max(0, len(self.worker.displays) - 1), 
 					max(0, getcfg("display.number") - 1)))
 		self.display_ctrl_handler(
-			CustomEvent(wx.EVT_COMBOBOX.evtType[0], 
+			CustomEvent(wx.EVT_CHOICE.evtType[0], 
 						self.display_ctrl), load_lut=False)
 
 	def set_pending_function(self, pending_function, *pending_function_args, 
@@ -6218,8 +6227,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.Freeze()
 		self.menuitem_show_advanced_calibration_options.Check(show_advanced_calibration_options)
 		for ctrl in (#self.black_luminance_label,
-					 #self.black_luminance_min_rb,
-					 #self.black_luminance_cdm2_rb,
+					 #self.black_luminance_ctrl,
 					 #self.black_luminance_textctrl,
 					 #self.black_luminance_textctrl_label,
 					 #self.blacklevel_drift_compensation,
@@ -6500,10 +6508,9 @@ class MainFrame(BaseFrame):
 		dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("panel.type")), 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 		# Display technology
-		dlg.display_tech_ctrl = wx.ComboBox(dlg, -1,
-											choices=["LCD", "CRT",
-													 "Plasma", "Projector"], 
-											style=wx.CB_READONLY)
+		dlg.display_tech_ctrl = wx.Choice(dlg, -1,
+										  choices=["LCD", "CRT",
+												   "Plasma", "Projector"])
 		dlg.display_tech_ctrl.SetSelection(0)
 		dlg.sizer4.Add(dlg.display_tech_ctrl,
 					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
@@ -6515,25 +6522,23 @@ class MainFrame(BaseFrame):
 			if tech in ("DLP", "LCoS") and illumination == "CCFL":
 				dlg.illumination_ctrl.SetStringSelection("UHP")
 			dlg.panel_type_ctrl.Enable(tech == "LCD")
-		dlg.Bind(wx.EVT_COMBOBOX, display_tech_handler, 
+		dlg.Bind(wx.EVT_CHOICE, display_tech_handler, 
 				 id=dlg.display_tech_ctrl.GetId())
 		# Display illumination/backlight
-		dlg.illumination_ctrl = wx.ComboBox(dlg, -1,
-											choices=["CCFL",
-													 "White LED",
-													 "RGB LED"], 
-											style=wx.CB_READONLY)
+		dlg.illumination_ctrl = wx.Choice(dlg, -1,
+										  choices=["CCFL",
+												   "White LED",
+												   "RGB LED"])
 		dlg.illumination_ctrl.SetSelection(0)
 		dlg.sizer4.Add(dlg.illumination_ctrl,
 					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 		# Panel type
-		dlg.panel_type_ctrl = wx.ComboBox(dlg, -1,
-										  choices=["IPS",
-												   "Wide Gamut IPS",
-												   "PVA",
-												   "Wide Gamut PVA",
-												   "TN"], 
-										  style=wx.CB_READONLY)
+		dlg.panel_type_ctrl = wx.Choice(dlg, -1,
+										choices=["IPS",
+												 "Wide Gamut IPS",
+												 "PVA",
+												 "Wide Gamut PVA",
+												 "TN"])
 		dlg.panel_type_ctrl.SetSelection(1)
 		dlg.sizer4.Add(dlg.panel_type_ctrl,
 					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
@@ -7683,15 +7688,15 @@ class MainFrame(BaseFrame):
 										 getcfg("profile.type"))
 
 	def get_whitepoint(self):
-		if self.whitepoint_native_rb.GetValue():
+		if self.whitepoint_ctrl.GetSelection() == 0:
 			# Native
 			return None
-		elif self.whitepoint_colortemp_rb.GetValue():
+		elif self.whitepoint_ctrl.GetSelection() == 1:
 			# Color temperature in kelvin
 			return str(stripzeros(
 				self.whitepoint_colortemp_textctrl.GetValue().replace(",", 
 																	  ".")))
-		elif self.whitepoint_xy_rb.GetValue():
+		elif self.whitepoint_ctrl.GetSelection() == 2:
 			x = self.whitepoint_x_textctrl.GetValue().replace(",", ".")
 			try:
 				x = round(float(x), 6)
@@ -7711,14 +7716,14 @@ class MainFrame(BaseFrame):
 		return str(self.whitepoint_colortemp_loci_ab[n])
 
 	def get_luminance(self):
-		if self.luminance_max_rb.GetValue():
+		if self.luminance_ctrl.GetSelection() == 0:
 			return None
 		else:
 			return str(stripzeros(
 				self.luminance_textctrl.GetValue().replace(",", ".")))
 
 	def get_black_luminance(self):
-		if self.black_luminance_min_rb.GetValue():
+		if self.black_luminance_ctrl.GetSelection() == 0:
 			return None
 		else:
 			return str(stripzeros(
@@ -7737,23 +7742,23 @@ class MainFrame(BaseFrame):
 			return None
 
 	def get_trc_type(self):
-		if self.trc_type_ctrl.GetSelection() == 1 and self.trc_g_rb.GetValue():
+		if self.trc_type_ctrl.GetSelection() == 1 and self.trc_ctrl.GetSelection() == 0:
 			return "G"
 		else:
 			return "g"
 
 	def get_trc(self):
-		if self.trc_g_rb.GetValue():
+		if self.trc_ctrl.GetSelection() == 0:
 			return str(stripzeros(self.trc_textctrl.GetValue().replace(",", 
 																	   ".")))
-		elif self.trc_l_rb.GetValue():
+		elif self.trc_ctrl.GetSelection() == 1:
 			return "l"
-		elif self.trc_rec709_rb.GetValue():
+		elif self.trc_ctrl.GetSelection() == 2:
 			return "709"
-		elif self.trc_srgb_rb.GetValue():
-			return "s"
-		else:
+		elif self.trc_ctrl.GetSelection() == 3:
 			return "240"
+		else:
+			return "s"
 
 	def get_calibration_quality(self):
 		return self.quality_ab[self.calibration_quality_ctrl.GetValue()]
