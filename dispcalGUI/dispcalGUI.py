@@ -1875,7 +1875,7 @@ class MainFrame(BaseFrame):
 				  self.menuitem_log_autoshow)
 
 		languages = self.menubar.GetMenu(self.menubar.FindMenu("menu.language"))
-		llist = [(lang.ldict[lcode].get("language", ""), lcode) for lcode in 
+		llist = [(lang.ldict[lcode].get("!language", ""), lcode) for lcode in 
 				 lang.ldict]
 		llist.sort()
 		for lstr, lcode in llist:
@@ -8761,8 +8761,8 @@ class MainFrame(BaseFrame):
 								u"%s:" % lang.getstr("translations"))]
 		lauthors = {}
 		for lcode in lang.ldict:
-			lauthor = lang.ldict[lcode].get("author", "")
-			language = lang.ldict[lcode].get("language", "")
+			lauthor = lang.ldict[lcode].get("!author", "")
+			language = lang.ldict[lcode].get("!language", "")
 			if lauthor and language:
 				if not lauthors.get(lauthor):
 					lauthors[lauthor] = []
@@ -8900,11 +8900,11 @@ class MainApp(wx.App):
 			self.SetAppName("Python")
 		else:
 			self.SetAppName(appname)
-		##wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("language_name"), 
+		##wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("!language_name"), 
 						  ##wx.LANGUAGE_ENGLISH)
 		##self.locale = wx.Locale(wx_lang)
 		##if debug:
-			##safe_print("[D]", lang.getstr("language_name"), wx_lang, 
+			##safe_print("[D]", lang.getstr("!language_name"), wx_lang, 
 					   ##self.locale.GetLocale())
 		self.progress_dlg = ProgressDialog(msg=lang.getstr("startup"), 
 										   handler=self.startup_progress_handler,
