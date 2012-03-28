@@ -2207,6 +2207,7 @@ class MainFrame(BaseFrame):
 					self.lut3dframe.setup_language()
 					self.lut3dframe.update_layout()
 					self.lut3dframe.panel.Thaw()
+				self.update_measurement_modes()
 				self.update_controls()
 				self.update_displays()
 				self.set_testcharts()
