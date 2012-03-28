@@ -178,6 +178,8 @@ p.generate_report = function(set_delta_calc_method) {
 		colortemp_assumed,
 		wp_assumed,
 		wp_assumed_round = [],
+		absolute = f['F_out'].elements['FF_absolute'].style.display != 'none' && f['F_out'].elements['FF_absolute'].checked,
+		cat = e['FF_adaption'].value,
 		n = 0,
 		o = fields_match.length - 1, // offset for CIE values in fields_extract_indexes
 		devstart = criteria.fields_match.length > 3 ? 3 : 0, // start offset for device values in fields_match (CMYK if length > 3, else RGB)
@@ -438,7 +440,7 @@ p.generate_report = function(set_delta_calc_method) {
 				target = data_ref.data[i];
 				actual = this.data[i];
 				matched = false;
-				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only);
+				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, false, profile_wp_norm, wp_norm, absolute, cat);
 				target_Lab = colors.target_Lab;
 				actual_Lab = colors.actual_Lab;
 				current_rgb = colors.current_rgb;
@@ -657,7 +659,7 @@ p.generate_report = function(set_delta_calc_method) {
 			if (matched) {
 				this.report_html.push('<div class="patch sample_id">' + result[j].finalmatch[2].fill(String(number_of_sets).length) + '</div>');
 				haspatchid = true;
-				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true);
+				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true, profile_wp_norm, wp_norm, absolute, cat);
 				target_Lab = colors.target_Lab;
 				actual_Lab = colors.actual_Lab;
 				target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
@@ -754,7 +756,7 @@ p.generate_report = function(set_delta_calc_method) {
 		n++;
 		target = data_ref.data[i];
 		actual = this.data[i];
-		var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true);
+		var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true, profile_wp_norm, wp_norm, absolute, cat);
 		target_Lab = colors.target_Lab;
 		actual_Lab = colors.actual_Lab;
 		current_rgb = colors.current_rgb;
@@ -938,7 +940,7 @@ function analyze(which) {
 	};
 };
 
-function get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, skip_gamma) {
+function get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, skip_gamma, profile_wp_norm, wp_norm, absolute, cat) {
 	var target_Lab, actual_Lab, current_rgb, current_cmyk = [];
 	target_Lab = [target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]];
 	actual_Lab = [actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]];
@@ -963,6 +965,16 @@ function get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, sk
 			target_Lab[0] = actual_Lab[0]; // set L to measured value
 			target_Lab[1] = target_Lab[2] = 0; // set a=b=0
 		}
+	}
+	if (absolute) {
+		var target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2], null, 100.0);
+		target_XYZ = jsapi.math.color.adapt(target_XYZ[0], target_XYZ[1], target_XYZ[2], [96.42, 100, 82.49], profile_wp_norm, cat);
+		target_Lab = jsapi.math.color.XYZ2Lab(target_XYZ[0], target_XYZ[1], target_XYZ[2]);
+		var actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, 100.0);
+		actual_XYZ = jsapi.math.color.adapt(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2], [96.42, 100, 82.49], wp_norm, cat);
+		actual_Lab = jsapi.math.color.XYZ2Lab(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]);
+	}
+	if (current_rgb[0] == current_rgb[1] && current_rgb[1] == current_rgb[2]) {
 		if (!skip_gamma && !current_cmyk.length && current_rgb[0] > 0 && current_rgb[0] < 100 && target_Lab[0] > 0 && actual_Lab[0] > 0) {
 			var target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2]),
 				actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
@@ -1041,6 +1053,7 @@ function form_element_set_disabled(form_element, disabled) {
 	var labels = document.getElementsByTagName("label");
 	for (var i=0; i<labels.length; i++) if (jsapi.dom.attribute(labels[i], "for") == form_element.id) {
 		if (jsapi.dom.attribute(labels[i], "for") == "FF_gray_balance_cal_only") labels[i].style.display = window.CRITERIA_GRAYSCALE ? "inline" : "none";
+		else if (jsapi.dom.attribute(labels[i], "for") == "FF_absolute") labels[i].style.display = !window.SIMULATION_PROFILE && data_ref.device == "RGB" ? "inline" : "none";
 		labels[i].className = disabled;
 		labels[i].disabled = disabled;
 	}
@@ -1053,6 +1066,7 @@ function form_elements_set_disabled(form, disabled) {
 		for (var i=0; i<document.forms.length; i++) {
 			for (var j=0; j<document.forms[i].elements.length; j++) {
 				if (document.forms[i].elements[j].name == "FF_gray_balance_cal_only") form_element_set_disabled(document.forms[i].elements[j], disabled || !window.CRITERIA_GRAYSCALE);
+				else if (document.forms[i].elements[j].name == "FF_absolute")  form_element_set_disabled(document.forms[i].elements[j], disabled || window.SIMULATION_PROFILE || data_ref.device != "RGB");
 				else form_element_set_disabled(document.forms[i].elements[j], disabled);
 			}
 		}
