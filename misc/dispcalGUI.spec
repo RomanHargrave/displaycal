@@ -17,18 +17,18 @@ BuildRequires: udev, gcc, libpython-devel, lib64xorg-x11-devel
 %else
 BuildRequires: udev, gcc, libpython-devel, libxorg-x11-devel
 %endif
-Requires: wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires: argyllcms, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %else
 %if 0%{?suse_version} > 0
 Group: Productivity/Graphics/Other
 BuildRequires: udev, update-desktop-files, gcc, python-devel, xorg-x11-devel
-Requires: python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires: argyllcms, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0
 Group: Applications/Multimedia
 BuildRequires: udev, gcc, python2-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
-Requires: wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
+Requires: argyllcms, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
 %endif
 %endif
 %endif
