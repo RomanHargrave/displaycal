@@ -123,7 +123,7 @@
 			<p>Calibrate and characterize your display devices using one of the <a href="#instruments">many supported hardware sensors</a>, with support for multi-display setups and a variety of available settings like customizable whitepoint, luminance, black level, tone response curve as well as the option to create matrix and look-up-table ICC profiles, with optional gamut mapping. Other features include:</p>
 
 			<ul>
-				<li>Support of colorimeter correction for wide-gamut screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (the latter only for specific colorimeters i.e. i1 Display Pro and ColorMunki Display).</li>
+				<li>Support of colorimeter correction for wide-gamut screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (the latter only for specific colorimeters i.e. i1 Display Pro, ColorMunki Display and Spyder 4).</li>
 				<li>Profile verification: Check the quality of profiles via measurements. Also supports custom CGATS files (e.g. FOGRA, GRACoL/IDEAlliance, SWOP) and using of reference profiles to obtain test values.</li>
 				<li>Test chart editor: Create charts with any amount of color patches, easy copy &amp; paste from CGATS, CSV files (only tab-delimited) and spreadsheet applications.</li>
 			</ul>
@@ -132,7 +132,7 @@
 				<h3>Screenshots</h3>		
 
 				<p>
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under Ubuntu Linux"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under Linux with GNOME 3"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME 3" class="opaque" /></a><br />
 					<small>Main window</small><br /></span>
 
 					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-gamutmap.png" class="imagelink" rel="lightbox-set" title="Gamut mapping options"><img src="screenshots/dispcalGUI-screenshot-GNOME-gamutmap-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with GNOME" class="opaque" /></a><br />
@@ -154,7 +154,7 @@
 				</p>
 
 				<p>
-					<span><a href="screenshots/dispcalGUI-screenshot-KDE4.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under openSUSE Linux"><img src="screenshots/dispcalGUI-screenshot-KDE4-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with KDE4" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-KDE4.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under Linux with KDE4"><img src="screenshots/dispcalGUI-screenshot-KDE4-thumb.png" alt="Thumbnail of dispcalGUI running under Linux with KDE4" class="opaque" /></a><br />
 					<small>KDE4</small><br /></span>
 
 					<span><a href="screenshots/dispcalGUI-screenshot-Mac.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under Mac OS X"><img src="screenshots/dispcalGUI-screenshot-Mac-thumb.png" alt="Thumbnail of dispcalGUI running under Mac OS X" class="opaque" /></a><br />
@@ -358,15 +358,22 @@
 				<li>
 					<p>Download and unpack Argyll CMS: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</p>
 					<h3>If you want to use the HCFR colorimeter under Mac OS X...</h3>
-					<div class="optional">
+					<div class="toggle">
 						<p>Follow the instructions under “<a href="http://argyllcms.com/doc/Installing_OSX.html">installing Argyll CMS on Mac OS X</a>” in the Argyll CMS documentation.</p>
 					</div>
 				</li>
 				<li>
 					<p>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</p>
 					<h3>If your measurement device is a Spyder 2...</h3>
-					<div class="optional">
-						<p>Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Tools” menu. If you don't have the spyder software installed or its location cannot be determined, you will be prompted to select the setup executable that came with the instrument's installation media to enable it.</p>
+					<div class="toggle">
+						<p>The Spyder 2 needs the vendor firmware pattern to function.</p>
+						<p>Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Tools” menu. If the Spyder 2 software is installed or its installation media is inserted, the Spyder 2 can be enabled automatically, otherwise you will have to manually select the Spyder 2 software's setup executable.</p>
+					</div>
+					<div style="height: .25em;"></div>
+					<h3>If your measurement device is a Spyder 4...</h3>
+					<div class="toggle">
+						<p>The full range of measurement modes for the Spyder 4 are only available if they are imported from the Spyder 4 software.</p>
+						<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the Spyder 4 software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the Spyder 4 software's setup executable.</p>
 					</div>
 				</li>
 				<li>
@@ -414,6 +421,7 @@
 					<li>X-Rite i1 Display Pro, ColorMunki Display (new in Argyll CMS 1.3.4)</li>
 					<li>Datacolor/ColorVision Spyder 2</li>
 					<li>Datacolor Spyder 3 (since Argyll CMS 1.1.0)</li>
+					<li>Datacolor Spyder 4 (new in Argyll CMS 1.3.6)</li>
 				</ul>
 
 				<h4>Spectrometers</h4>
@@ -524,7 +532,7 @@
 			
 			<div id="install-windows-driver">
 				<h3>Driver installation under Windows</h3>
-				<div class="optional">
+				<div class="toggle">
 					<ul>
 						<li>
 							<h4>If you already have drivers for your measurement device installed...</h4>
@@ -685,7 +693,14 @@
 				</div>
 			</div>
 			
+			<h4>Instrument-specific setup</h4>
+			
 			<p>If your measurement device is a Spyder 2, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Tools” menu. If you don't have the spyder software installed or its location cannot be determined, you will be prompted to select the setup executable that came with the instrument's installation media to enable it.</p>
+			
+			<p>The full range of measurement modes for the Spyder 4 are only available if they are imported from the Spyder 4 software.</p>
+
+			<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the Spyder 4 software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the Spyder 4 software's setup executable.</p>
+
 		</div>
 
 		<div id="concept">
@@ -713,7 +728,7 @@
 			because loading the calibration curves from the profile is generally the 
 			responsibility of a third party utility or the OS, while applications using 
 			the profile to do color transforms usually rely on the calibration being already 
-			loaded. Ccurrently, the only OS that 
+			loaded. Currently, the only OS that 
 			applies calibration curves out-of-the-box is Mac OS X (under <a href="#issue-win7-autoloadcalibration">Windows 7 you can enable it</a>, but it's off by default)—for other OS's, dispcalGUI takes care of creating an appropriate loader.</p>
 
 			<p>Even non-color-managed applications will benefit from a loaded 
@@ -737,7 +752,7 @@
 
 			<p>If you buy a screen bundled with a colorimeter, the instrument may have been matched to the screen in some way already, so you may not need a software correction in that case.</p>
 
-			<h3>Special note about the X-Rite i1 Display Pro and ColorMunki Display colorimeters</h3>
+			<h3>Special note about the X-Rite i1 Display Pro, ColorMunki Display and Spyder 4 colorimeters</h3>
 
 			<p>These instruments greatly reduce the amount of work needed to match them to a display because they contain the spectral sensitivities of their filters in hardware, so only a spectrometer reading of the display is needed to create the correction (in contrast to matching other colorimeters to a display, which needs two readings: One with a spectrometer and one with the colorimeter).<br />
 			That means anyone with a particular screen and a spectrometer can create a special <em>Calibration Spectral Sample</em> (<code>.ccss</code>) file of that screen for use with those colorimeters, without needing to actually have access to the colorimeter itself.</p>
@@ -784,8 +799,19 @@
 				<h3>Choosing the display to calibrate and the measurement device</h3>
 
 				<p>After connecting the instrument, click the small icon with the swirling arrows <img src="theme/refresh_lr.png" alt="" /> in between the “Display device” and “Instrument” controls to detect connected displays devices and instruments.</p>
+				
+				<h4 id="settings_measurement_modes">Choosing a measurement mode</h4>
+				
+				<p>Some instruments may support different measurement modes for different types of display devices. In general, there are three base measurement modes: “LCD”, “Refresh” (e.g. CRT and Plasma are refresh-type displays) and “Projector” (the latter is only available if supported by the instrument). Some instruments like the Spyder 4 and ColorHug support additional measurement modes, where a mode is coupled with a predefined colorimeter correction (in that case, you should set the <a href="#settings_colorimeter_correction">colorimeter correction</a> dropdown to “None” / “Off”).<br />
+				Variations of these measurement modes may be available depending on the instrument: “Adaptive” measurement mode for spectrometers uses varying integration times to increase accuracy of dark readings, but may be more inconsistent overall. “HiRes” turns on high resolution spectral mode for spectrometers like the i1 Pro, which may increase the accuracy of measurements.</p>
 
-				<h4>Choosing a colorimeter correction for a particular (wide-gamut) display</h4>
+				<h4 id="settings_drift_compensation">Drift compensation during measurements (only available if using Argyll CMS &gt;= 1.3.0)</h4>
+				
+				<p>White level drift compensation tries to counter luminance changes of a warming up display device. For this purpose, a white test patch is measured periodically, which increases the overall time needed for measurements.</p>
+
+				<p>Black level drift compensation tries to counter measurement deviations caused by black calibration drift of a warming up measurement device. For this purpose, a black test patch is measured periodically, which increases the overall time needed for measurements. Many colorimeters are temperature stabilised, in which case black level drift compensation should not be needed, but spectrometers like the i1 Pro or ColorMunki Design/Photo are not temperature compensated.</p>
+
+				<h4 id="settings_colorimeter_correction">Choosing a colorimeter correction for a particular (wide-gamut) display</h4>
 
 				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#widegamut">“A note about colorimeters, wide-gamut displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online <a href="http://dispcalgui.hoech.net/colorimetercorrections/">Colorimeter Corrections Database</a> for a match of your display/instrument combination (click the small globe next to the correction dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
 
@@ -802,7 +828,7 @@
 
 							<p>If you want to find out the current uncalibrated whitepoint of your display, you can run “Report on uncalibrated display device” from the “Tools” menu to measure it.</p>
 
-							<p>If you want to adjust the whitepoint to the chromaticities of your ambient lighting, or those of a viewing booth as used in prepress and photography, and your measurement device has ambient measuring capability (e.g. like the i1 Pro or i1display2 with their respective ambient measurement heads), you can use the “Measure” button next to the whitepoint settings. If you want to measure ambient lighting, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation.</p>
+							<p>If you want to adjust the whitepoint to the chromaticities of your ambient lighting, or those of a viewing booth as used in prepress and photography, and your measurement device has ambient measuring capability (e.g. like the i1 Pro or i1 Display with their respective ambient measurement heads), you can use the “Measure” button next to the whitepoint settings. If you want to measure ambient lighting, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation.</p>
 						</dd>
 
 					<dt id="settings_calibration_white_level">White level</dt>
@@ -815,12 +841,6 @@
 					<dt id="settings_calibration_black_level">Black level</dt>
 						<dd>
 							<p>Can be used to set the target brightness of black in cd/m<sup>2</sup> and is useful for e.g. matching two different screens with different native blacks to one another, by measuring the black levels on both (i.e. in the “Tools” menu, choose “Report on uncalibrated display”) and then entering the highest measured value. Normally you may want to use native black level though, to maximize contrast ratio. Setting too high a value may also give strange results as it interacts with trying to achieve the target “advertised” tone curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
-						</dd>
-
-					<dt id="settings_drift_compensation">Drift compensation during measurements (only available if using Argyll CMS &gt;= 1.3.0)</dt>
-						<dd>							
-							<p>These options invoke instrument black level, and display white level drift compensation (respectively). Instrument black level drift compensation attempts to combat instrument black calibration drift by using a display black test patch as a reference. If an instrument is not acclimatised sufficiently to the measurement conditions, changes in temperature can affect the black readings. Display white level drift compensation attempts to combat changes in display brightness as it warms up by measuring a white patch every so often, and using it to normalise all the other readings.</p>
-							<p>Please note that black level drift compensation will probably not do much for colorimeters. It is mainly intended for Spectrometers.</p>
 						</dd>
 
 					<dt id="trc">Tone curve / gamma</dt>
@@ -962,7 +982,7 @@
 
 					<dt id="settings_profiling_bpc">Black point compensation</dt>
 						<dd>
-							<p>This effectively prevents black crush when using the profile, but at the expense of accuracy.</p>
+							<p>This effectively prevents black crush when using the profile, but at the expense of accuracy. (Note: This option has no effect if just calibrating and creating a simple curves + matrix profile directly from the calibration data without additional profiling measurements)</p>
 						</dd>
 
 					<dt>Profile name</dt>
@@ -1094,8 +1114,8 @@
 					<dt>Measure testchart</dt>
 						<dd>Measures the currently selected testchart on the selected display in its current state and creates a <code>.ti3</code> measurement data file. The file is saved under the chosen save path (see “Choose save path...” under the “File” menu) and with the same base name used for profiles.</dd>
 
-					<dt>Create profile from measurement data...</dt>
-						<dd>Allows you to create a profile from existing <code>.ti3</code> measurement data (existing profiles created with Argyll CMS or dispcalGUI can also be selected as source).</dd>
+					<dt id="create_profile_from_measurement_data">Create profile from measurement data...</dt>
+						<dd>Allows you to (re-)create a profile from existing measurement data (existing profiles created with Argyll CMS or dispcalGUI can also be selected as source) with the current profiling settings.</dd>
 
 					<dt>Create profile from extended display identification data...</dt>
 						<dd>Allows you to create a profile from your display's <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></acronym> (if available).</dd>
@@ -1186,7 +1206,7 @@
 
 						<h5>How is a testchart or reference file used?</h5>
 
-						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/xicclu.html">xicclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile that is tested to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files or a combination of simulation profile and testchart). If a combination of simulation profile and testchart is used as reference, the reference L*a*b* values are calculated by feeding the device numbers from the testchart through the simulation profile absolute colorimetrically if the simulation profile is a printer profile and relative colorimetrically if it is a display profile (like most RGB working spaces). Then, the original RGB values from the testchart, or the looked up RGB values for a reference are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values (and also those in reference files if they don't contain L*a*b* numbers) are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) or with the adaption matrix from the profile in the case of profiles with 'chad' chromatic adaption tag, and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, with user-selectable critera and ΔE (delta E) formula.</p>
+						<p>There are currently two slightly different paths depending if a testchart or reference file is used for the verification measurements, as outlined above. In both cases, Argyll's <a href="http://www.argyllcms.com/doc/xicclu.html">xicclu</a> utility is run behind the scenes and the values of the testchart or reference file are fed relative colorimetrically through the profile that is tested to obtain corresponding L*a*b* (in the case of RGB testcharts) or device RGB numbers (in the case of XYZ or L*a*b* reference files or a combination of simulation profile and testchart). If a combination of simulation profile and testchart is used as reference, the reference L*a*b* values are calculated by feeding the device numbers from the testchart through the simulation profile absolute colorimetrically if the simulation profile is a printer profile and relative colorimetrically if it is a display profile (like most RGB working spaces). Then, the original RGB values from the testchart, or the looked up RGB values for a reference are sent to the display through the calibration curves of the profile that is going to be evaluated (actually the calibration curves are loaded before the RGB numbers are sent to the display for measurement with <a href="http://www.argyllcms.com/doc/dispread.html">dispread</a>). A reference white of D50 (ICC default) and complete chromatic adaption of the viewer to the display's whitepoint is always assumed, so the measured XYZ values are adapted to D50 (with the measured whitepoint as source reference white) using the Bradford transform (see <a href="http://brucelindbloom.com/Eqn_ChromAdapt.html">Chromatic Adaption</a> on <a href="http://brucelindbloom.com/">Bruce Lindbloom's website</a> for the formula and matrix that is used by dispcalGUI) or with the adaption matrix from the profile in the case of profiles with 'chad' chromatic adaption tag, and converted to L*a*b*. The L*a*b* values are then compared by the generated dynamic report, with user-selectable critera and ΔE (delta E) formula.</p>
 
 						<h5>How is the assumed vs. measured whitepoint ΔE calculated?</h5>
 
@@ -1205,12 +1225,12 @@
 						<dd>This allows to update an existing report HTML file with the template and functionality from a newer version of dispcalGUI (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
 
 
-					<dt id="import-correction-matrices">Import correction matrices from other display profiling softwares...</dt>
-						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler and ColorMunki Display are supported. If they are installed or the CD / disk image is mounted, the correct file(s) should be imported automatically (if you want to select the file which to import yourself, hold the SHIFT key while choosing the menu item), otherwise a file dialog will be shown.</dd>
+					<dt id="import-correction-matrices">Import colorimeter corrections from other display profiling software...</dt>
+						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler, ColorMunki Display and Spyder 4 softwares are supported. If they are installed or the CD / disk image is mounted, the correct file(s) can in most cases be imported automatically. Please note: The colorimeter corrections imported from Spyder 4 software are only usable with the Spyder 4 and need to be selected in the measurement mode dropdown instead of the colorimeter corrections dropdown.</dd>
 
 
 					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
-						<dd>Allows you to create correction matrices for ordinary colorimeters as well as Calibration Spectral Sample files for i1 Display Pro and ColorMunki Display.
+						<dd>Allows you to create correction matrices for ordinary colorimeters as well as Calibration Spectral Sample files for i1 Display Pro, ColorMunki Display and Spyder 4.
 							Before you choose this menu option though, you must measure the special Colorimeter Correction testchart with a spectrometer and (in case you want to create an ordinary correction matrix) with the colorimeter. To do this, select the aforementioned chart in the testchart file dropdown, then select “Measure testchart” from the “Options” menu. After you have measured the chart(s), you can select the resulting measurement files for processing into a correction matrix or Calibration Spectral Sample file.
 						</dd>
 
@@ -1413,7 +1433,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Eugeniy Yurov, Konstantin Pyanzin</p>
+			<p>Recent donors: Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Eugeniy Yurov, Konstantin Pyanzin</p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1429,6 +1449,32 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt>${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Spyder 4 support if using Argyll CMS &gt;= 1.3.6. To make all measurement modes available, you have to use “Import correction matrices from other display profiling softwares...” from the “Tools” menu.</li>
+							<li>Experimental ColorHug support is enabled through Argyll CMS &gt;= 1.3.6 if the <code>ENABLE_COLORHUG</code> environment variable is set, but the ColorHug currently doesn't work reliably across all platforms.</li>
+							<li>Added information about <a href="#settings_measurement_modes">instrument measurement modes</a> to the ReadMe.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>GUI spring-cleaning: Re-arranged some controls and replaced radiobuttons and read-only combo-boxes with choice controls instead. Only the controls related to a selected choice are shown.</li>
+							<li>Default calibration black point correction to automatic.</li>
+							<li>Replaced previous 19-patch colorimeter correction testchart with smaller 4-patch version (just red, green, blue at 100% each and white, as is the default with Argyll CMS 1.3.6).</li>
+							<li>Linux packages: Added Argyll CMS to dependencies. Please note: If you want the latest Argyll features or run into problems, it is recommemded to download the standalone Argyll binaries from argyllcms.com as the distribution repositories often only contain older Argyll CMS releases.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Fixed unhandled exception when adding metadata to a profile from EDID that contains an invalid (out of range) gamma value.</li>
+							<li>Fixed slightly off the mark whitepoint in resulting profile when using black point compensation (typical max. error 0.2 ΔE*76). You may want to <a href="#create_profile_from_measurement_data">re-create existing profiles</a>.</li>
+							<li>Do not reset visibility of advanced calibration options when restoring defaults.</li>
+							<li>Store black point compensation setting in profiles.</li>
+							<li>Mac OS X: The application bundle now again contains all required files (no missing files when dragging just the bundle to Mac OS X “Applications” folder).</li>
+						</ul>
+					</dd>
+
+				<dt>2012-03-15 14:45 (UTC) 0.9.6.6</dt>
+					<dd>
+						<h3>0.9.6.6</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><strong>Black point compensation option for profiles (default ON).</strong> This effectively prevents black crush, but at the expense of accuracy of the resulting profile.</li>

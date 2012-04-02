@@ -54,7 +54,7 @@ jQuery(function ($) {
 	});
 	
 	/* Quickstart sub toggle */
-	$maketoggle('#quickstart h3', 'div.optional');
+	$maketoggle('#quickstart h3', 'div.toggle');
 	
 	/* Quickstart sub sub toggle */
 	$maketoggle('#quickstart h4, #quickstart h5', 'ol, p');
