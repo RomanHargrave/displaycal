@@ -50,6 +50,33 @@ def cd_device_connect(client, device_key):
 	return device
 
 
+def cd_device_key_from_edid(edid, use_unused_edid_keys=False):
+	""" Assemble device key from EDID """
+	# https://gitorious.org/colord/master/blobs/master/doc/device-and-profile-naming-spec.txt
+	incomplete = False
+	parts = ["xrandr"]
+	if use_unused_edid_keys:
+		# Not currently used by colord
+		edid_keys = ["manufacturer", "monitor_name", "ascii", "serial_ascii",
+					 "serial_32"]
+	else:
+		edid_keys = ["manufacturer", "monitor_name", "serial_ascii"]
+	for name in edid_keys:
+		value = edid.get(name)
+		if value:
+			if name == "serial_32" and "serial_ascii" in edid:
+				# Only add numeric serial if no ascii serial
+				continue
+			parts.append(str(value).replace(" ", "_"))
+		elif name == "manufacturer":
+			# Do not allow the manufacturer to be missing or empty
+			# TODO: Should fall back to xrandr name in that case
+			incomplete = True
+			break
+	if not incomplete:
+		return "_".join(parts)
+
+
 def cd_get_default_profile(device_key):
 	"""
 	Get default profile filename for device

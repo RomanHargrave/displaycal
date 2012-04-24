@@ -358,22 +358,8 @@ def _colord_get_display_profile(display_no=0):
 	except (TypeError, ValueError):
 		return None
 	if edid:
-		incomplete = False
-		section_parts = ["xrandr"]
-		for name in ["manufacturer", "monitor_name", "ascii", 
-					 "serial_ascii", "serial_32"]:
-			if name in edid:
-				if name == "serial_32" and "serial_ascii" in edid:
-					# Only add serial if no ascii serial
-					break
-				section_parts.append(str(edid[name]).replace(" ", "_"))
-			elif name not in ("monitor_name", "ascii", "serial_ascii"):
-				# Do not allow anything other than the ASCII 
-				# strings to be missing
-				incomplete = True
-				break
-		if not incomplete:
-			device_key = "_".join(section_parts)
+		device_key = colord.cd_device_key_from_edid(edid)
+		if device_key:
 			profile_path = colord.cd_get_default_profile(device_key)
 			if profile_path:
 				return ICCProfile(profile_path)

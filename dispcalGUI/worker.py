@@ -2176,24 +2176,10 @@ class Worker(object):
 	
 	def get_device_key(self):
 		""" Get org.freedesktop.ColorManager device key """
-		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
-											getcfg("display.number") - 1))]
-		incomplete = False
-		section_parts = ["xrandr"]
-		for name in ["manufacturer", "monitor_name", "ascii", 
-					 "serial_ascii", "serial_32"]:
-			if name in edid:
-				if name == "serial_32" and "serial_ascii" in edid:
-					# Only add serial if no ascii serial
-					break
-				section_parts.append(str(edid[name]).replace(" ", "_"))
-			elif name not in ("monitor_name", "ascii", "serial_ascii"):
-				# Do not allow anything other than the ASCII 
-				# strings to be missing
-				incomplete = True
-				break
-		if not incomplete:
-			return "_".join(section_parts)
+		if colord:
+			edid = self.display_edid[max(0, min(len(self.displays) - 1, 
+												getcfg("display.number") - 1))]
+			return colord.cd_device_key_from_edid(edid)
 
 	def get_display(self):
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
