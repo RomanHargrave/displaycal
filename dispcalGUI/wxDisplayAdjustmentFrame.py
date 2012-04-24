@@ -1392,12 +1392,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 				self.measurement_sound.Play(wx.SOUND_ASYNC)
 			self.indicator_ctrl.SetBitmap(indicator)
 			self.btnsizer.Layout()
-		else:
-			self.indicator_ctrl.SetBitmap(getbitmap("10x10/empty"))
 		if current_br or current_bl or xy_dE_rgb or white_xy_dE or black_xy_dE:
 			self.lb.GetCurrentPage().Layout()
 			self.Thaw()
-		elif "Press 1 .. 7" in txt or "8) Exit" in txt:
+		if "Press 1 .. 7" in txt or "8) Exit" in txt:
 			if self.cold_run:
 				self.cold_run = False
 				self.Pulse(" " * 4)
@@ -1409,6 +1407,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 					self.adjustment_btn.Enable()
 				self.is_busy = False
 				self.is_measuring = False
+				self.indicator_ctrl.SetBitmap(getbitmap("10x10/empty"))
 			self.calibration_btn.Enable()
 			self.lb.SetFocus()  # Make frame receive EVT_CHAR_HOOK events under Linux
 		elif "initial measurements" in txt or "check measurements" in txt:
