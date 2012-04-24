@@ -725,13 +725,22 @@ class CGATS(dict):
 		Apply black point compensation.
 		
 		Scales XYZ so that black (RGB 0) = zero.
-		Needs a CGATS structure with RGB and XYZ data.
+		Needs a CGATS structure with RGB and XYZ data and atleast one black and
+		white patch.
+		
+		Return True if bpc was applied, False otherwise.
 		
 		"""
 		data = self.queryi(("RGB_R", "RGB_G", "RGB_B", "XYZ_X", "XYZ_Y", "XYZ_Z"))
 
 		# Get blacks
 		blacks = data.queryi({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
+		# Get whites
+		whites = data.queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+		if not blacks or not whites:
+			# Can't apply bpc
+			return False
+
 		black = [0, 0, 0]
 		for i in blacks:
 			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
@@ -741,8 +750,6 @@ class CGATS(dict):
 		# Average blacks
 		black = [n / (i + 1.0) for n in black]
 
-		# Get whites
-		whites = data.queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
 		white = [0, 0, 0]
 		for i in whites:
 			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
@@ -758,6 +765,8 @@ class CGATS(dict):
 			XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black, (0, 0, 0), white)
 			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
 				data[i][label] = XYZ[j]
+
+		return True
 	
 	pop = remove
 	
