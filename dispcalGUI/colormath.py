@@ -1043,7 +1043,9 @@ def XYZ2xyY(X, Y, Z, whitepoint=None):
 	2. The output Y value is in the nominal range [0.0, Y[XYZ]].
 	
 	"""
-	if X == Y == Z == 0:
+	if X + Y + Z == 0:
+		# We can't check for X == Y == Z == 0 because they may actually add up
+		# to 0, thus resulting in ZeroDivisionError later
 		x, y, Y = XYZ2xyY(*get_whitepoint(whitepoint))
 		return x, y, 0.0
 	x = X / (X + Y + Z)
