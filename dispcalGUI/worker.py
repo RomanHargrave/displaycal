@@ -2924,10 +2924,10 @@ class Worker(object):
 		args += ["-q" + getcfg("profile.quality")]
 		args += ["-a" + getcfg("profile.type")]
 		if getcfg("profile.type") in ["l", "x", "X"]:
-			if getcfg("gamap_perceptual"):
-				gamap = "s"
-			elif getcfg("gamap_saturation"):
+			if getcfg("gamap_saturation"):
 				gamap = "S"
+			elif getcfg("gamap_perceptual"):
+				gamap = "s"
 			else:
 				gamap = None
 			if gamap:
