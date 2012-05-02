@@ -64,10 +64,15 @@
 			<p class="options">
 				<label for="FF_gray_balance_cal_only" class="disabled">Evaluate gray balance through calibration only: <input type="checkbox" name="FF_gray_balance_cal_only" id="FF_gray_balance_cal_only" disabled="disabled" onchange="compare(false)" /><br /></label>
 				<label for="FF_planckian" class="disabled">Use blackbody locus as assumed target whitepoint: <input type="checkbox" name="FF_planckian" id="FF_planckian" ${PLANCKIAN} disabled="disabled" onchange="compare(false)" /><br /></label>
-				<label for="FF_absolute" class="disabled">Show absolute values: <input type="checkbox" name="FF_absolute" id="FF_absolute" disabled="disabled" onchange="compare(false)" /><br /></label>
 				<label for="FF_verbosestats" class="disabled">Show additional statistics: <input type="checkbox" name="FF_verbosestats" id="FF_verbosestats" disabled="disabled" onchange="togglestats()" /></label>
 			</p>
 			<p class="options">
+				<label for="FF_mode" class="disabled">Show values as: <select name="FF_mode" id="FF_mode" disabled="disabled" onchange="compare(false)">
+					<option value="Lab">L*a*b*</option>
+					<option value="XYZ">XYZ</option>
+					<option value="xyY">xyY</option>
+				</select><br /></label>
+				<label for="FF_absolute" class="disabled">Use absolute values: <input type="checkbox" name="FF_absolute" id="FF_absolute" disabled="disabled" onchange="compare(false)" /><br /></label>
 				<label for="FF_delta_calc_method" class="disabled">Delta E formula for results:
 				<select name="FF_delta_calc_method" id="FF_delta_calc_method" disabled="disabled" onchange="compare(false)">
 					<option value="CIE76">CIE 1976</option>

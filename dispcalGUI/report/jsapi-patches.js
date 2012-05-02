@@ -134,7 +134,7 @@ jsapi.math.color.CIEDCorColorTemp2xyY = function(T, scale) {
 	if (typeof T == "string") {
 		// Assume standard illuminant, e.g. "D50"
 		var illuminant = jsapi.math.color.get_standard_illuminant(T, null, scale);
-		return XYZ2xyY(illuminant[0], illuminant[1], illuminant[2]);
+		return jsapi.math.color.XYZ2xyY(illuminant[0], illuminant[1], illuminant[2]);
 	}
 	var xD = 4000 <= T && T <= 7000
 		? ((-4.607 * Math.pow(10, 9)) / Math.pow(T, 3))
@@ -230,7 +230,7 @@ jsapi.math.color.XYZ2xyY = function (X, Y, Z, whitepoint) {
 	*/
 	if (X == Y && Y == Z && Z == 0) {
 		whitepoint = jsapi.math.color.get_whitepoint(whitepoint);
-		var xyY = XYZ2xyY(whitepoint[0], whitepoint[1], whitepoint[2]);
+		var xyY = jsapi.math.color.XYZ2xyY(whitepoint[0], whitepoint[1], whitepoint[2]);
 		return [xyY[0], xyY[1], 0.0];
 	}
 	var x = X / (X + Y + Z),
