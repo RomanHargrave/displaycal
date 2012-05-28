@@ -8076,8 +8076,6 @@ class MainFrame(BaseFrame):
 		else:
 			# Use configured value
 			enumerate_ports = getcfg("enumerate_ports.auto")
-		if not enumerate_ports:
-			return False
 		if False: ##silent:
 			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
 													self.worker.enumerate_displays_and_ports, 
