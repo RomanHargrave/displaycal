@@ -1248,7 +1248,7 @@ class MainFrame(BaseFrame):
 		self.headerbitmap.SetBitmap(getbitmap("theme/header"))
 		self.calpanel.SetScrollRate(2, 2)
 		self.update_comports()
-		self.update_controls()
+		self.update_controls(update_ccmx_items=False)
 		self.SetSaneGeometry(int(getcfg("position.x")), 
 							 int(getcfg("position.y")))
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -2589,7 +2589,9 @@ class MainFrame(BaseFrame):
 			if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
 				index = i + 1
 			items.append(os.path.basename(path))
-		if len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths:
+		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
+			and (not ccmx[1].lower().endswith(".ccss") or
+				 self.worker.instrument_supports_ccss())):
 			self.ccmx_cached_paths.insert(0, ccmx[1])
 			items.insert(1, os.path.basename(ccmx[1]))
 			if ccmx[0] != "AUTO":

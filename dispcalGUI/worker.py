@@ -923,7 +923,8 @@ class Worker(object):
 				ccmx = ccmx[1]
 			else:
 				ccmx = None
-			if ccmx:
+			if ccmx and (not ccmx.lower().endswith(".ccss") or
+						 self.instrument_supports_ccss()):
 				result = check_file_isfile(ccmx)
 				if isinstance(result, Exception):
 					return result
