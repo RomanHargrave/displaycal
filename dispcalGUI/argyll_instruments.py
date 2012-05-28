@@ -9,6 +9,7 @@ vendors = [
 	"ColorVision",
 	"Datacolor",
 	"GretagMacbeth",
+	"Hughski",
 	"X-Rite",
 	"Xrite"
 ]
