@@ -2182,6 +2182,14 @@ class XYZType(ICCProfileTag, XYZNumber):
 		else:
 			self[name] = value
 	
+	def adapt(self, whitepoint_source=None, whitepoint_destination=None,
+			  cat="Bradford"):
+		XYZ = self.__class__(profile=self.profile)
+		XYZ.X, XYZ.Y, XYZ.Z = colormath.adapt(self.X, self.Y, self.Z,
+											  whitepoint_source,
+											  whitepoint_destination, cat)
+		return XYZ
+	
 	@property
 	def ir(self):
 		""" Get illuminant-relative values """
@@ -2190,7 +2198,7 @@ class XYZType(ICCProfileTag, XYZNumber):
 			# Apple profiles have a bug where they contain a 'chad' tag, 
 			# but the media white is not under PCS illuminant
 			if self is self.profile.tags.wtpt:
-				XYZ = self.__class__()
+				XYZ = self.__class__(profile=self.profile)
 				XYZ.X, XYZ.Y, XYZ.Z = self.values()
 			else:
 				# Go from XYZ mediawhite-relative under PCS illuminant to XYZ under PCS illuminant
@@ -2204,7 +2212,7 @@ class XYZType(ICCProfileTag, XYZNumber):
 				# already be illuminant-relative
 				return self
 			elif "chad" in self.profile.tags:
-				XYZ = self.__class__()
+				XYZ = self.__class__(profile=self.profile)
 				# Go from XYZ under PCS illuminant to XYZ illuminant-relative
 				XYZ.X, XYZ.Y, XYZ.Z = self.profile.tags.chad.inverted() * self.values()
 				return XYZ
@@ -2220,7 +2228,7 @@ class XYZType(ICCProfileTag, XYZNumber):
 			# Apple profiles have a bug where they contain a 'chad' tag, 
 			# but the media white is not under PCS illuminant
 			if "chad" in self.profile.tags:
-				XYZ = self.__class__()
+				XYZ = self.__class__(profile=self.profile)
 				XYZ.X, XYZ.Y, XYZ.Z = self.profile.tags.chad * self.values()
 				return XYZ
 			pcs_illuminant = self.profile.illuminant.values()
@@ -2244,6 +2252,15 @@ class XYZType(ICCProfileTag, XYZNumber):
 			pass
 		
 		return locals()
+	
+	@property
+	def xyY(self):
+		if self is self.profile.tags.bkpt:
+			ref = self.profile.tags.bkpt
+		else:
+			ref = self.profile.tags.wtpt
+		return NumberTuple(colormath.XYZ2xyY(self.X, self.Y, self.Z,
+											 (ref.X, 1.0, ref.Z)))
 
 
 class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
