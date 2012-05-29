@@ -2339,25 +2339,25 @@ class Worker(object):
 						skip_scripts=False, silent=False):
 		result = True
 		gcm_import = False
-		device_key = self.get_device_key()
-		if sys.platform not in ("darwin", "win32") and which("gcm-import"):
-			if device_key and colord:
+		if sys.platform not in ("darwin", "win32"):
+			device_key = self.get_device_key()
+			if device_key:
 				# FIXME: This can block, so should really be run in separate
 				# thread with progress dialog in 'indeterminate' mode
 				result = self._install_profile_colord(profile_path, device_key)
 			if (not device_key or not colord or
 				isinstance(result, Exception) or not result):
-				gcm_import = True
-		if not isinstance(result, Exception) and result:
-			if (which("oyranos-monitor") and
-				self.check_display_conf_oy_compat(getcfg("display.number"))):
-				if device_key:
-					profile_name = device_key.lower() + ".icc"
-				else:
-					profile_name = None
-				result = self._install_profile_oy(profile_path, profile_name,
-												  capture_output, skip_scripts,
-												  silent)
+				gcm_import = bool(which("gcm-import"))
+		if (not isinstance(result, Exception) and result and
+			which("oyranos-monitor") and
+			self.check_display_conf_oy_compat(getcfg("display.number"))):
+			if device_key:
+				profile_name = device_key.lower() + ".icc"
+			else:
+				profile_name = None
+			result = self._install_profile_oy(profile_path, profile_name,
+											  capture_output, skip_scripts,
+											  silent)
 		if not isinstance(result, Exception) and result:
 			result = self._install_profile_argyll(profile_path, capture_output,
 												  skip_scripts, silent)
