@@ -3,12 +3,18 @@
 
 from ctypes import POINTER, Structure, c_int, c_long, c_ubyte, c_ulong, cdll, pointer, util
 
+libx11pth = util.find_library("X11")
+if not libx11pth:
+	raise ImportError("Couldn't find libX11")
 try:
-	libx11 = cdll.LoadLibrary(util.find_library("X11"))
+	libx11 = cdll.LoadLibrary(libx11pth)
 except OSError:
 	raise ImportError("Couldn't load libX11")
+libxrandrpth = util.find_library("Xrandr")
+if not libxrandrpth:
+	raise ImportError("Couldn't find libXrandr")
 try:
-	libxrandr = cdll.LoadLibrary(util.find_library("Xrandr"))
+	libxrandr = cdll.LoadLibrary(libxrandrpth)
 except OSError:
 	raise ImportError("Couldn't load libXrandr")
 
