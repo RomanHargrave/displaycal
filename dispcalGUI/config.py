@@ -418,7 +418,7 @@ defaults = {
 	"calibration.luminance": 120.0,
 	"calibration.quality": "m",
 	"calibration.update": 0,
-	"colorimeter_correction.testchart": "ccxxmake-s1.ti1",
+	"colorimeter_correction.testchart": "ccxx.ti1",
 	"colorimeter_correction_matrix_file": ":",
 	"color.dir": os.path.join(commonappdata[0] if is_superuser() else 
 							  appdata, "color"),

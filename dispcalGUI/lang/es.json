@@ -110,7 +110,7 @@
 	"calibration_profiling.complete": "Calibración y perfilado completado!",
 		"*calibrationloader.description": "Sets ICC profiles and loads calibration curves for all configured display devices",
 	"cancel": "Cancelar",
-		"*ccxxmake-s1.ti1": "Testchart for colorimeter correction",
+		"*ccxx.ti1": "Testchart for colorimeter correction",
 	"checking_lut_access": "Chequeando acceso calibración para la pantalla %s...",
 	"clear": "Limpiar",
 		"*colorconfig_remove_old": "Removing old display configuration file",

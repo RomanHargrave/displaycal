@@ -110,7 +110,7 @@
 	"calibration_profiling.complete": "Calibration and profiling complete!",
 	"calibrationloader.description": "Sets ICC profiles and loads calibration curves for all configured display devices",
 	"cancel": "Cancel",
-	"ccxxmake-s1.ti1": "Testchart for colorimeter correction",
+	"ccxx.ti1": "Testchart for colorimeter correction",
 	"checking_lut_access": "Checking video card gamma table access for display %s...",
 	"clear": "Clear",
 	"colorconfig_remove_old": "Removing old display configuration file",

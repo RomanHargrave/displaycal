@@ -110,7 +110,7 @@
 	"calibration_profiling.complete": "Calibrage et caractérisation terminés.",
 	"calibrationloader.description": "Charge les courbes de calibrage à partir du profil ICC pour l'écran %s",
 	"cancel": "Annuler",
-		"*ccxxmake-s1.ti1": "Testchart for colorimeter correction",
+		"*ccxx.ti1": "Testchart for colorimeter correction",
 	"checking_lut_access": "Contrôle de l'accès à la table de correspondance pour l'écran %s...",
 	"clear": "Effacer",
 	"colorconfig_remove_old": "Suppression de l'ancien fichier de configuration de l'écran",
