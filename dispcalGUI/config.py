@@ -52,14 +52,14 @@ if isexe and os.getenv("_MEIPASS2"):
 pyfile = exe if isexe else os.path.join(os.path.dirname(__file__), 
 										appname + ".py")
 pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
-pydir = os.path.dirname(pypath)
 pyname, pyext = os.path.splitext(os.path.basename(pypath))
 isapp = sys.platform == "darwin" and \
 		exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
 		os.path.isfile(os.path.join(exedir, pyname))
 if isapp:
-	if pydir.split(os.path.sep)[-1] == "site-packages.zip":
-		pydir = os.path.abspath(os.path.join(pydir, "..", "..", ".."))
+	pydir = os.path.normpath(os.path.join(exedir, "..", "Resources"))
+else:
+	pydir = os.path.dirname(pypath)
 
 data_dirs = [pydir]
 
