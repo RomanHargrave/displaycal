@@ -1,56 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ctypes import cdll, util
-from hashlib import md5
 import os
 import shutil
-from time import sleep, time
+from time import sleep
 
-from gtypes import GError, gchar_p
+from gi.repository import Colord
+from gi.repository import Gio
+
 from defaultpaths import xdg_data_home
 
 
-CD_DEVICE_RELATION_HARD = 2
+cancellable = Gio.Cancellable.new();
 
-colord = cdll.LoadLibrary(util.find_library('colord'))
-
-try:
-	colord.cd_profile_get_filename.restype = gchar_p
-except AttributeError, exception:
-	raise ImportError("libcolord: %s" % exception)
-
-def cd_client_connect():
+def client_connect():
 	""" Connect to colord """
-	colord.g_type_init()
-	client = colord.cd_client_new()
-	error = GError()
+	client = Colord.Client.new()
 
 	# Connect to colord
-	if not colord.cd_client_connect_sync(client, None, error):
-		raise CDError("No connection to colord: %s" % error.message.value)
+	if not client.connect_sync(cancellable):
+		raise CDError("Couldn't connect to colord")
 	return client
 
 
-def cd_device_connect(client, device_key):
+def device_connect(client, device_id):
 	""" Connect to device """
-	if isinstance(device_key, unicode):
-		device_key = device_key.encode('UTF-8')
-	device_object_path = '/org/freedesktop/ColorManager/devices/%s' % device_key.replace('-', '_').replace(' ', '_')
-	device = colord.cd_device_new_with_object_path(device_object_path)
-	error = GError()
-	
-	# Check is valid object path
-	if not colord.g_variant_is_object_path(device_object_path):
-		raise CDError("Not a valid object path: %s" % device_object_path)
+	if isinstance(device_id, unicode):
+		device_id = device_id.encode('UTF-8')
+	try:
+		device = client.find_device_sync(device_id, cancellable)
+	except Exception, exception:
+		raise CDError(exception.args[0])
 
 	# Connect to device
-	if not colord.cd_device_connect_sync(device, None, error):
-		raise CDError("Device does not exist: %s" % device_object_path)
+	if not device.connect_sync(cancellable):
+		raise CDError("Couldn't connect to device with ID %r" % device_id)
 	return device
 
 
-def cd_device_key_from_edid(edid, use_unused_edid_keys=False):
+def device_id_from_edid(edid, use_unused_edid_keys=False):
 	""" Assemble device key from EDID """
 	# https://gitorious.org/colord/master/blobs/master/doc/device-and-profile-naming-spec.txt
 	incomplete = False
@@ -67,49 +55,46 @@ def cd_device_key_from_edid(edid, use_unused_edid_keys=False):
 			if name == "serial_32" and "serial_ascii" in edid:
 				# Only add numeric serial if no ascii serial
 				continue
-			parts.append(str(value).replace(" ", "_"))
+			parts.append(str(value))
 		elif name == "manufacturer":
 			# Do not allow the manufacturer to be missing or empty
 			# TODO: Should fall back to xrandr name in that case
 			incomplete = True
 			break
 	if not incomplete:
-		return "_".join(parts)
+		return "-".join(parts)
 
 
-def cd_get_default_profile(device_key):
+def get_default_profile(device_id):
 	"""
 	Get default profile filename for device
 	
-	device_key   object path without /org/freedesktop/ColorManager/devices/
-	
 	"""
-	client = cd_client_connect()
-	error = GError()
+	client = client_connect()
 
 	# Connect to existing device
-	device = cd_device_connect(client, device_key)
+	device = device_connect(client, device_id)
 	
 	# Get default profile
-	profile = colord.cd_device_get_default_profile(device)
+	profile = device.get_default_profile()
 	if not profile:
 		# No assigned device
 		return
 
 	# Connect to profile
-	if not colord.cd_profile_connect_sync(profile, None, error):
-		raise CDError(error.message.value)
-	filename = colord.cd_profile_get_filename(profile)
-	if filename and isinstance(getattr(filename, "value", ""), str):
-		return filename.value.decode('UTF-8')
+	if not profile.connect_sync(cancellable):
+		raise CDError("Couldn't get default profile for device ID %r" % device_id)
+	filename = profile.get_filename()
+	if not isinstance(filename, unicode):
+		filename = filename.decode('UTF-8')
+	return filename
 
 
-def cd_install_profile(device_key, profile_filename, profile_installname=None,
-					   timeout=2):
+def install_profile(device_id, profile_filename, profile_installname=None,
+					timeout=2):
 	"""
 	Install profile for device
 	
-	device_key 			  object path without /org/freedesktop/ColorManager/devices/
 	profile_installname   filename of the installed profile (full path).
 						  The profile is copied to this location.
 						  If profile_installname is None, it defaults to
@@ -118,11 +103,10 @@ def cd_install_profile(device_key, profile_filename, profile_installname=None,
 						  (recommended not below 2 secs)
 	
 	"""
-	client = cd_client_connect()
-	error = GError()
+	client = client_connect()
 
 	# Connect to existing device
-	device = cd_device_connect(client, device_key)
+	device = device_connect(client, device_id)
 
 	# Copy profile
 	if not profile_installname:
@@ -135,35 +119,32 @@ def cd_install_profile(device_key, profile_filename, profile_installname=None,
 
 	# Query colord for newly added profile
 	for i in xrange(int(timeout / .05)):
-		profile = colord.cd_client_find_profile_by_filename_sync(client,
-																 profile_installname,
-																 None, error)
+		profile = client.find_profile_by_filename_sync(profile_installname,
+													   cancellable)
 		if profile:
 			break
 		# Give colord time to pick up the profile
 		sleep(.05)
 
 	if not profile:
-		if error.message.value:
-			raise CDError(error.message.value)
-		else:
-			raise CDError("Querying for profile returned empty result for %s secs: %s"
-						  % (timeout, profile_installname))
+		raise CDError("Querying for profile %r returned no result for %s secs" %
+					  (profile_installname, timeout))
 
 	# Connect to profile
-	if not colord.cd_profile_connect_sync(profile, None, error):
-		raise CDError(error.message.value)
+	if not profile.connect_sync(cancellable):
+		raise CDError("Could not connect to profile")
 
 	# Add profile to device
-	if not colord.cd_device_add_profile_sync(device, CD_DEVICE_RELATION_HARD,
-											 profile, None, error):
+	try:
+		device.add_profile_sync(Colord.DeviceRelation.HARD, profile, cancellable)
+	except Exception, exception:
 		# Profile may already have been added
 		pass
 
 	# Make profile default for device
-	if not colord.cd_device_make_profile_default(device, profile, None, error):
-		raise CDError("Could not make profile default for device: %s" %
-					  error.message.value)
+	if not device.make_profile_default_sync(profile, cancellable):
+		raise CDError("Could not make profile %r default for device ID %s" %
+					  (profile.get_filename(), device_id))
 
 
 class CDError(Exception):
@@ -173,4 +154,4 @@ class CDError(Exception):
 if __name__ == "__main__":
 	import sys
 	for arg in sys.argv[1:]:
-		print cd_get_default_profile(arg)
+		print get_default_profile(arg)

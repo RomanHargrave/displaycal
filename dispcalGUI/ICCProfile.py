@@ -358,9 +358,9 @@ def _colord_get_display_profile(display_no=0):
 	except (TypeError, ValueError):
 		return None
 	if edid:
-		device_key = colord.cd_device_key_from_edid(edid)
-		if device_key:
-			profile_path = colord.cd_get_default_profile(device_key)
+		device_id = colord.device_id_from_edid(edid)
+		if device_id:
+			profile_path = colord.get_default_profile(device_id)
 			if profile_path:
 				return ICCProfile(profile_path)
 	return None

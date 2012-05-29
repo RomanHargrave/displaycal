@@ -2175,12 +2175,12 @@ class Worker(object):
 		self.thread_abort = False
 		wx.CallAfter(consumer, result, *args, **kwargs)
 	
-	def get_device_key(self):
+	def get_device_id(self):
 		""" Get org.freedesktop.ColorManager device key """
 		if colord:
 			edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 												getcfg("display.number") - 1))]
-			return colord.cd_device_key_from_edid(edid)
+			return colord.device_id_from_edid(edid)
 
 	def get_display(self):
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
@@ -2340,19 +2340,19 @@ class Worker(object):
 		result = True
 		gcm_import = False
 		if sys.platform not in ("darwin", "win32"):
-			device_key = self.get_device_key()
-			if device_key:
+			device_id = self.get_device_id()
+			if device_id:
 				# FIXME: This can block, so should really be run in separate
 				# thread with progress dialog in 'indeterminate' mode
-				result = self._install_profile_colord(profile_path, device_key)
-			if (not device_key or not colord or
+				result = self._install_profile_colord(profile_path, device_id)
+			if (not device_id or not colord or
 				isinstance(result, Exception) or not result):
 				gcm_import = bool(which("gcm-import"))
 		if (not isinstance(result, Exception) and result and
 			which("oyranos-monitor") and
 			self.check_display_conf_oy_compat(getcfg("display.number"))):
-			if device_key:
-				profile_name = device_key.lower() + ".icc"
+			if device_id:
+				profile_name = re.sub("[- ]", "_", device_id.lower()) + ".icc"
 			else:
 				profile_name = None
 			result = self._install_profile_oy(profile_path, profile_name,
@@ -2520,10 +2520,10 @@ class Worker(object):
 		self.wrapup(False)
 		return result
 	
-	def _install_profile_colord(self, profile_path, device_key):
+	def _install_profile_colord(self, profile_path, device_id):
 		""" Install profile using colord """
 		try:
-			colord.cd_install_profile(device_key, profile_path)
+			colord.install_profile(device_id, profile_path)
 		except Exception, exception:
 			safe_print(exception)
 			return exception
