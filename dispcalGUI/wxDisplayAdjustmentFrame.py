@@ -47,16 +47,16 @@ def get_panel(parent, size=wx.DefaultSize):
 
 get_panel.i = 0
 
-def get_xy_vdt_dE(groups):
+def get_xy_vt_dE(groups):
 	x = float(groups[0])
 	y = float(groups[1])
-	vdt = ""
+	vt = ""
 	dE = 0
 	if len(groups) > 2:
-		vdt = groups[2] or ""
+		vt = groups[2] or ""
 		if groups[3]:
 			dE = float(groups[3])
-	return x, y, vdt, dE
+	return x, y, vt, dE
 
 
 def set_label_and_size(txtctrl, label):
@@ -1218,7 +1218,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 			target_bl = re.search("Target Near Black = (\d+(?:\.\d+)?), Current = (\d+(?:\.\d+)?)".replace(" ", "\s+"), txt, re.I)
 			if target_bl:
 				self.lb.GetCurrentPage().target_bl = ["Target", float(target_bl.groups()[0])]
-		initial_br = re.search("(Initial|Target)(?: Br)? (\d+(?:\.\d+)?)\s*(?:, x (\d+(?:\.\d+)?)\s*, y (\d+(?:\.\d+)?)(?:\s*, (?:(VDT \d+K?) )?DE(?: 2K)? (\d+(?:\.\d+)?))?|$)".replace(" ", "\s+"), txt, re.I)
+		initial_br = re.search("(Initial|Target)(?: Br)? (\d+(?:\.\d+)?)\s*(?:, x (\d+(?:\.\d+)?)\s*, y (\d+(?:\.\d+)?)(?:\s*, (?:(V[CD]T \d+K?) )?DE(?: 2K)? (\d+(?:\.\d+)?))?|$)".replace(" ", "\s+"), txt, re.I)
 		current_br = None
 		current_bl = None
 		if target_br and not getattr(self, "target_br", None):
@@ -1239,8 +1239,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 				current_bl = re.search("Black = XYZ (?:\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (?:\d+(?:\.\d+)?)".replace(" ", "\s+"), txt, re.I)
 				if current_bl:
 					current_bl = float(current_bl.groups()[0])
-		xy_dE_rgb = re.search("x (\d+(?:\.\d+)?)[=+-]*, y (\d+(?:\.\d+)?)[=+-]*,? (?:(VDT \d+K?) )?DE(?: 2K)? (\d+(?:\.\d+)?) R([=+-]+) G([=+-]+) B([=+-]+)".replace(" ", "\s+"), txt, re.I)
-		white_xy_dE_re = "(?:Target white = x (?:\d+(?:\.\d+)?), y (?:\d+(?:\.\d+)?), Current|Current white) = x (\d+(?:\.\d+)?), y (\d+(?:\.\d+)?), (?:(?:(VDT \d+K?) )?DE(?: 2K)?|error =) (\d+(?:\.\d+)?)".replace(" ", "\s+")
+		xy_dE_rgb = re.search("x (\d+(?:\.\d+)?)[=+-]*, y (\d+(?:\.\d+)?)[=+-]*,? (?:(V[CD]T \d+K?) )?DE(?: 2K)? (\d+(?:\.\d+)?) R([=+-]+) G([=+-]+) B([=+-]+)".replace(" ", "\s+"), txt, re.I)
+		white_xy_dE_re = "(?:Target white = x (?:\d+(?:\.\d+)?), y (?:\d+(?:\.\d+)?), Current|Current white) = x (\d+(?:\.\d+)?), y (\d+(?:\.\d+)?), (?:(?:(V[CD]T \d+K?) )?DE(?: 2K)?|error =) (\d+(?:\.\d+)?)".replace(" ", "\s+")
 		white_xy_dE = re.search(white_xy_dE_re, txt, re.I)
 		black_xy_dE = re.search(white_xy_dE_re.replace("white", "black"), txt, re.I)
 		white_xy_target = re.search("Target white = x (\d+(?:\.\d+)?), y (\d+(?:\.\d+)?)".replace(" ", "\s+"), txt, re.I)
@@ -1323,13 +1323,13 @@ class DisplayAdjustmentFrame(wx.Frame):
 			set_label_and_size(self.lb.GetCurrentPage().txt["black_level"], label)
 		# groups()[0] = x
 		# groups()[1] = y
-		# groups()[2] = VDT (optional)
+		# groups()[2] = VDT/VCT (optional)
 		# groups()[3] = dE
 		# groups()[4] = R +-
 		# groups()[5] = G +-
 		# groups()[6] = B +-
 		if xy_dE_rgb:
-			x, y, vdt, dE = get_xy_vdt_dE(xy_dE_rgb.groups())
+			x, y, vdt, dE = get_xy_vt_dE(xy_dE_rgb.groups())
 			r = int(round(50 - (xy_dE_rgb.groups()[4].count("+") -
 								xy_dE_rgb.groups()[4].count("-")) * (dE)))
 			g = int(round(50 - (xy_dE_rgb.groups()[5].count("+") -
@@ -1353,12 +1353,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 						 (x, y, vdt, dE)).replace("  ", " ")
 				initial_br = getattr(self.lb.GetCurrentPage(), "initial_br", None)
 				if initial_br and len(initial_br) > 3:
-					x, y, vdt, dE = get_xy_vdt_dE(initial_br[2:])
+					x, y, vdt, dE = get_xy_vt_dE(initial_br[2:])
 					label = (lang.getstr(initial_br[0].lower()) + u" x %.4f y %.4f %s %.1f \u0394E*00\n" %
 							 (x, y, vdt, dE)).replace("  ", " ") + label
 				set_label_and_size(self.lb.GetCurrentPage().txt["rgb"], label)
 		if white_xy_dE:
-			x, y, vdt, dE = get_xy_vdt_dE(white_xy_dE.groups())
+			x, y, vdt, dE = get_xy_vt_dE(white_xy_dE.groups())
 			if self.lb.GetCurrentPage().txt.get("white_point"):
 				self.lb.GetCurrentPage().txt["white_point"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["white_point"].checkmark,
 																								abs(dE) <= 1)
@@ -1366,12 +1366,12 @@ class DisplayAdjustmentFrame(wx.Frame):
 				label = (lang.getstr("current") + u" x %.4f y %.4f %s %.1f \u0394E*00" %
 						 (x, y, vdt, dE)).replace("  ", " ")
 				if white_xy_target:
-					x, y, vdt, dE = get_xy_vdt_dE(white_xy_target.groups())
+					x, y, vdt, dE = get_xy_vt_dE(white_xy_target.groups())
 					label = (lang.getstr("target") + u" x %.4f y %.4f\n" %
 							 (x, y)).replace("  ", " ") + label
 				set_label_and_size(self.lb.GetCurrentPage().txt["white_point"], label)
 		if black_xy_dE:
-			x, y, vdt, dE = get_xy_vdt_dE(black_xy_dE.groups())
+			x, y, vdt, dE = get_xy_vt_dE(black_xy_dE.groups())
 			if self.lb.GetCurrentPage().txt.get("white_point"):
 				self.lb.GetCurrentPage().txt["black_point"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["black_point"].checkmark,
 																								abs(dE) <= 1)
@@ -1379,7 +1379,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				label = (lang.getstr("current") + u" x %.4f y %.4f %s %.1f \u0394E*00" %
 						 (x, y, vdt, dE)).replace("  ", " ")
 				if black_xy_target:
-					x, y, vdt, dE = get_xy_vdt_dE(black_xy_target.groups())
+					x, y, vdt, dE = get_xy_vt_dE(black_xy_target.groups())
 					label = (lang.getstr("target") + u" x %.4f y %.4f\n" %
 							 (x, y)).replace("  ", " ") + label
 				set_label_and_size(self.lb.GetCurrentPage().txt["black_point"], label)
