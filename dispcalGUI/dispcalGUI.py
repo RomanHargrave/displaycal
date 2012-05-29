@@ -8125,8 +8125,9 @@ class MainFrame(BaseFrame):
 	def plugplay_timer_handler(self, event):
 		if debug:
 			safe_print("[D] plugplay_timer_handler")
-		if not self.worker.is_working() and (not hasattr(self, "tcframe") or 
-											 not self.tcframe.worker.is_working()):
+		if (getcfg("enumerate_ports.auto") and not self.worker.is_working() and
+			(not hasattr(self, "tcframe") or 
+			 not self.tcframe.worker.is_working())):
 			self.check_update_controls(silent=True)
 
 	def load_cal_handler(self, event, path=None, update_profile_name=True, 
