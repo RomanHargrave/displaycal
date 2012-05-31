@@ -423,6 +423,7 @@ defaults = {
 	"color.dir": os.path.join(commonappdata[0] if is_superuser() else 
 							  appdata, "color"),
 	"comport.number": 1,
+	# Note: worker.Worker.enumerate_displays_and_ports() overwrites copyright
 	"copyright": "No copyright. Created with %s %s and Argyll CMS" % (appname, 
 																	  version),
 	"dimensions.measureframe": "0.5,0.5,1.5",

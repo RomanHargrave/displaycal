@@ -1402,8 +1402,9 @@ class Worker(object):
 						if (argyll_version_string != self.argyll_version_string):
 							self.argyll_version_string = argyll_version_string
 							safe_print("Argyll CMS " + self.argyll_version_string)
-						config.defaults["copyright"] = ("Created with %s %s "
-														"and Argyll CMS %s" % 
+						config.defaults["copyright"] = ("No copyright. Created "
+														"with %s %s and Argyll "
+														"CMS %s" % 
 														(appname, version, 
 														 argyll_version))
 						argyll_version = re.findall("(\d+|[^.\d]+)", 
