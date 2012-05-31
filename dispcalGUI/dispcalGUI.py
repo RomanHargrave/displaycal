@@ -4668,20 +4668,17 @@ class MainFrame(BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
-				if "vcgt" in profile.tags:
-					setcfg("last_icc_path", path)
-					if self.install_cal(capture_output=True, 
-										profile_path=path, 
-										skip_scripts=True, 
-										silent=True,
-										title=lang.getstr("calibration.load_from_profile")) is True:
-						self.lut_viewer_load_lut(profile=profile)
-						if verbose >= 1: safe_print(lang.getstr("success"))
-					else:
-						if verbose >= 1: safe_print(lang.getstr("failure"))
+				setcfg("last_icc_path", path)
+				if self.install_cal(capture_output=True, 
+									profile_path=path, 
+									skip_scripts=True, 
+									silent=True,
+									title=lang.getstr("calibration.load_from_profile")) is True:
+					self.lut_viewer_load_lut(profile=profile)
+					if verbose >= 1: safe_print(lang.getstr("success"))
 				else:
 					if verbose >= 1: safe_print(lang.getstr("failure"))
-					InfoDialog(self, msg=lang.getstr("profile.no_vcgt") + 
+					InfoDialog(self, msg=lang.getstr("calibration.load_error") + 
 										 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
@@ -5121,8 +5118,8 @@ class MainFrame(BaseFrame):
 						rgb[j] += [float2dec(vmin + v * (vmax - vmin), 8)]
 			cal_rgblevels = [len(set(round(n) for n in channel)) for channel in rgb]
 		else:
-			# should never happen
-			cal_rgblevels = [0, 0, 0]
+			# Assume linear with all steps
+			cal_rgblevels = [256, 256, 256]
 		
 		offset = len(ti3_measured.DATA) - len(ti3_ref.DATA)
 		if not chart.lower().endswith(".ti1") or sim_ti3:
@@ -8406,8 +8403,7 @@ class MainFrame(BaseFrame):
 					update_ccmx_items=update_ccmx_items)
 				writecfg()
 
-				if ext.lower() in (".icc", ".icm") and \
-				   "vcgt" in profile.tags and load_vcgt:
+				if ext.lower() in (".icc", ".icm"):
 					# load calibration into lut
 					self.load_cal(cal=path, silent=True)
 					if options_dispcal and options_colprof:
@@ -8419,7 +8415,7 @@ class MainFrame(BaseFrame):
 				elif options_dispcal and options_colprof:
 					msg = lang.getstr("settings_loaded.cal_and_profile")
 				elif options_dispcal:
-					if ext.lower() in (".icc", ".icm") or not load_vcgt:
+					if not load_vcgt:
 						msg = lang.getstr("settings_loaded.cal")
 					else:
 						# load calibration into lut
@@ -8449,7 +8445,7 @@ class MainFrame(BaseFrame):
 					# (maybe because the user renamed the file)
 					idx = index_fallback_ignorecase(self.recent_cals, cal)
 					self.calibration_file_ctrl.SetSelection(idx)
-				if "vcgt" in profile.tags and load_vcgt:
+				if load_vcgt:
 					# load calibration into lut
 					self.load_cal(cal=path, silent=True)
 				if not silent:
