@@ -5651,6 +5651,7 @@ class MainFrame(BaseFrame):
 			return wx.ID_CANCEL
 		if reset_cal:
 			self.reset_cal()
+			return False
 		else:
 			cal = getcfg("calibration.file")
 			if cal:

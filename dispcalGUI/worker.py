@@ -3139,8 +3139,9 @@ class Worker(object):
 		
 		All options are read from the user configuration.
 		You can choose if you want to apply the current calibration,
-		either from the user configuration by passing in 'True', or by
-		passing in a valid path to a .cal file.
+		either the previously by dispcal created one by passing in True, by
+		passing in a valid path to a .cal file, or by passing in None
+		(current video card gamma table).
 		
 		"""
 		profile_save_path = self.create_tempdir()
@@ -3187,15 +3188,27 @@ class Worker(object):
 				return Error(lang.getstr("error.testchart.creation_failed", 
 										 inoutfile + ".ti1") + "\n\n" + 
 							 safe_unicode(exception)), None
-		if apply_calibration:
+		if apply_calibration is not False:
 			if apply_calibration is True:
 				# Always a .cal file in that case
 				cal = os.path.join(getcfg("profile.save_path"), 
 								   getcfg("profile.name.expanded"), 
 								   getcfg("profile.name.expanded")) + ".cal"
+			elif apply_calibration is None:
+				result = None
+				if self.argyll_version >= [1, 1, 0]:
+					cal = inoutfile + ".cal"
+					cmd, args = (get_argyll_util("dispwin"), 
+								 ["-d" + self.get_display(), "-s", cal])
+					result = self.exec_cmd(cmd, args, capture_output=True, 
+										   skip_scripts=True, silent=True)
+					if isinstance(result, Exception):
+						return result, None
+				if not result:
+					return Error(lang.getstr("calibration.load_error")), None
 			else:
 				cal = apply_calibration # can be .cal or .icc / .icm
-			calcopy = os.path.join(inoutfile + ".cal")
+			calcopy = inoutfile + ".cal"
 			filename, ext = os.path.splitext(cal)
 			if ext.lower() == ".cal":
 				result = check_cal_isfile(cal)
@@ -3286,7 +3299,7 @@ class Worker(object):
 		   (self.get_instrument_features().get("skip_sensor_cal") or test) and \
 		   self.argyll_version >= [1, 1, 0]:
 			args += ["-N"]
-		if apply_calibration:
+		if apply_calibration is not False:
 			args += ["-k"]
 			args += [cal]
 		if self.get_instrument_features().get("spectral"):
