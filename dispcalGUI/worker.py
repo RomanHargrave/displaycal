@@ -3268,8 +3268,16 @@ class Worker(object):
 		# Make sure any measurement options are present
 		if not self.options_dispcal:
 			self.prepare_dispcal(dry_run=True)
+		# Special case -X because it can have a separate filename argument
+		if "-X" in self.options_dispcal:
+			index = self.options_dispcal.index("-X")
+			if (len(self.options_dispcal) > index + 1 and
+				self.options_dispcal[index + 1][0] != "-"):
+				self.options_dispcal = (self.options_dispcal[:index] +
+										self.options_dispcal[index + 2:])
 		# Strip options we may override (basically all the stuff which can be 
-		# added by add_measurement_features)
+		# added by add_measurement_features. -X is repeated because it can
+		# have a number instead of explicit filename argument, e.g. -X1)
 		dispcal_override_args = ("-F", "-H", "-I", "-P", "-V", "-X", "-d", "-c", 
 								 "-p", "-y")
 		self.options_dispcal = filter(lambda arg: not arg[:2] in dispcal_override_args, 
