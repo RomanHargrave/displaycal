@@ -3136,6 +3136,8 @@ class ICCProfile:
 	def set_gamut_metadata(self, gamut_volume=None, gamut_coverage=None):
 		""" Sets gamut volume and coverage metadata keys """
 		if gamut_volume or gamut_coverage:
+			if not "meta" in self.tags:
+				self.tags.meta = DictType()
 			# Update meta prefix
 			prefixes = (self.tags.meta.getvalue("prefix", "", None) or
 						"GAMUT_").split(",")
