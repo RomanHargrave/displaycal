@@ -300,8 +300,8 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"[moupHV]",
 		"d\d+(?:,\d+)?",
 		"[cv]\d+",
-		"q[vlmh]",
-		"y[cl]",
+		"q(?:%s)" % "|".join(config.valid_values["calibration.quality"]),
+		"y(?:%s)" % "|".join(filter(None, config.valid_values["measurement_mode"])),
 		"[tT](?:\d+(?:\.\d+)?)?",
 		"w\d+(?:\.\d+)?,\d+(?:\.\d+)?",
 		"[bfakABF]\d+(?:\.\d+)?",
@@ -312,7 +312,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 	]
 	re_options_colprof = [
 		"q[lmh]",
-		"a[lxXgsGS]",
+		"a(?:%s)" % "|".join(config.valid_values["profile.type"]),
 		'[sSMA]\s+["\'][^"\']+?["\']',
 		"[cd](?:%s)" % "|".join(viewconds),
 		"[tT](?:%s)" % "|".join(intents)
