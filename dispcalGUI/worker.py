@@ -1931,6 +1931,8 @@ class Worker(object):
 				safe_print("[D] argyll_version", self.argyll_version)
 				safe_print("[D] ARGYLL_NOT_INTERACTIVE", 
 						   os.environ.get("ARGYLL_NOT_INTERACTIVE"))
+			if sys.platform not in ("darwin", "win32"):
+				putenvu("ENABLE_COLORHUG", "1")
 			if sys.platform == "win32":
 				startupinfo = sp.STARTUPINFO()
 				startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
