@@ -2255,7 +2255,7 @@ class XYZType(ICCProfileTag, XYZNumber):
 	
 	@property
 	def xyY(self):
-		if self is self.profile.tags.bkpt:
+		if self is self.profile.tags.get("bkpt"):
 			ref = self.profile.tags.bkpt
 		else:
 			ref = self.profile.tags.wtpt
