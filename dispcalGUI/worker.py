@@ -947,7 +947,7 @@ class Worker(object):
 					if isinstance(result, Exception):
 						return result
 				args += ["-X"]
-				args += [ccmx]
+				args += [os.path.basename(ccmxcopy)]
 		if (getcfg("drift_compensation.blacklevel") or 
 			getcfg("drift_compensation.whitelevel")) and \
 		   self.argyll_version >= [1, 3, 0] and not get_arg("-I", args):
