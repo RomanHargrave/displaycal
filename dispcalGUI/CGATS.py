@@ -15,6 +15,30 @@ from safe_print import safe_print
 from util_io import StringIOu as StringIO
 
 
+def get_ccxx_descriptor(cgats):
+	""" Given a CCMX or CCSS filename, return the instrument & display """
+	desc = None
+	if not isinstance(cgats, CGATS):
+		try:
+			cgats = CGATS(cgats)
+		except CGATSError, exception:
+			safe_print("%s:" % cgats, exception)
+	if isinstance(cgats, CGATS):
+		desc = cgats.queryv1("INSTRUMENT")
+		if desc:
+			desc += " & "
+		else:
+			desc = ""
+		desc += cgats.queryv1("DISPLAY") or ""
+	if not desc or desc == "Not specified":
+		if isinstance(cgats, CGATS):
+			path = cgats.filename
+		else:
+			path = cgats
+		desc = os.path.splitext(os.path.basename(path))[0]
+	return desc
+
+
 def rpad(value, width):
 	"""
 	Right-pad a value to a given width.

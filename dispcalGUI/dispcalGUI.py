@@ -2585,19 +2585,43 @@ class MainFrame(BaseFrame):
 			if self.worker.instrument_supports_ccss():
 				self.ccmx_cached_paths += glob.glob(os.path.join(config.appdata, 
 																 "color", "*.ccss"))
+		if not getattr(self, "ccmx_cached_descriptors", None):
+			self.ccmx_cached_descriptors = {}
+		types = {"ccss": lang.getstr("Spectral"),
+				 "ccmx": lang.getstr("Matrix")}
 		for i, path in enumerate(self.ccmx_cached_paths):
 			if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
 				index = i + 1
-			items.append(os.path.basename(path))
+			if self.ccmx_cached_descriptors.get(path):
+				desc = self.ccmx_cached_descriptors[path]
+			else:
+				desc = CGATS.get_ccxx_descriptor(path)
+				self.ccmx_cached_descriptors[path] = desc
+			
+			items.append("%s: %s" %
+						 (types.get(os.path.splitext(path)[1].lower()[1:]),
+						  desc))
 		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
 			self.ccmx_cached_paths.insert(0, ccmx[1])
-			items.insert(1, os.path.basename(ccmx[1]))
+			if self.ccmx_cached_descriptors.get(ccmx[1]):
+				desc = self.ccmx_cached_descriptors[ccmx[1]]
+			else:
+				desc = CGATS.get_ccxx_descriptor(ccmx[1])
+				self.ccmx_cached_descriptors[ccmx[1]] = desc
+			items.insert(1, "%s: %s" %
+							(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
+							 desc))
 			if ccmx[0] != "AUTO":
 				index = 1
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
+		if index > 0:
+			tooltip = self.ccmx_cached_paths[index - 1]
+		else:
+			tooltip = ""
+		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
 	
 	def is_profile(self, filename=None, include_display_profile=False):
 		filename = filename or getcfg("calibration.file")
@@ -6290,6 +6314,7 @@ class MainFrame(BaseFrame):
 	
 	def colorimeter_correction_matrix_handler(self, event):
 		if event.GetId() == self.colorimeter_correction_matrix_ctrl.GetId():
+			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if self.colorimeter_correction_matrix_ctrl.GetSelection() == 0:
 				if len(ccmx) > 1 and ccmx[1]:
@@ -6301,6 +6326,7 @@ class MainFrame(BaseFrame):
 					self.colorimeter_correction_matrix_ctrl.GetSelection() - 1]
 				ccmx = ["", path]
 			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
+			self.colorimeter_correction_matrix_ctrl.SetToolTipString(path or "")
 		else:
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
