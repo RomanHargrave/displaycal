@@ -928,26 +928,37 @@ class Worker(object):
 				result = check_file_isfile(ccmx)
 				if isinstance(result, Exception):
 					return result
-				tempdir = self.create_tempdir()
-				if isinstance(tempdir, Exception):
-					return tempdir
-				ccmxcopy = os.path.join(tempdir, 
-										getcfg("profile.name.expanded") + 
-										os.path.splitext(ccmx)[1])
-				if not os.path.isfile(ccmxcopy):
-					try:
-						# Copy ccmx to profile dir
-						shutil.copyfile(ccmx, ccmxcopy) 
-					except Exception, exception:
-						return Error(lang.getstr("error.copy_failed", 
-												 (ccmx, ccmxcopy)) + 
-												 "\n\n" + 
-												 safe_unicode(exception))
-					result = check_file_isfile(ccmxcopy)
-					if isinstance(result, Exception):
-						return result
-				args += ["-X"]
-				args += [os.path.basename(ccmxcopy)]
+				try:
+					cgats = CGATS.CGATS(ccmx)
+				except CGATS.CGATSError, exception:
+					safe_print("%s:" % ccmx, exception)
+					instrument = None
+				else:
+					instrument = str(cgats.queryv1("INSTRUMENT") or "")
+				if ((instrument and
+					 self.get_instrument_name().lower().replace(" ", "") in
+					 instrument.lower().replace(" ", "").replace("eye-one", "i1")) or
+					ccmx.lower().endswith(".ccss")):
+					tempdir = self.create_tempdir()
+					if isinstance(tempdir, Exception):
+						return tempdir
+					ccmxcopy = os.path.join(tempdir, 
+											getcfg("profile.name.expanded") + 
+											os.path.splitext(ccmx)[1])
+					if not os.path.isfile(ccmxcopy):
+						try:
+							# Copy ccmx to profile dir
+							shutil.copyfile(ccmx, ccmxcopy) 
+						except Exception, exception:
+							return Error(lang.getstr("error.copy_failed", 
+													 (ccmx, ccmxcopy)) + 
+													 "\n\n" + 
+													 safe_unicode(exception))
+						result = check_file_isfile(ccmxcopy)
+						if isinstance(result, Exception):
+							return result
+					args += ["-X"]
+					args += [os.path.basename(ccmxcopy)]
 		if (getcfg("drift_compensation.blacklevel") or 
 			getcfg("drift_compensation.whitelevel")) and \
 		   self.argyll_version >= [1, 3, 0] and not get_arg("-I", args):
