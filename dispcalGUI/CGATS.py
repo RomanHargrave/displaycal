@@ -15,30 +15,6 @@ from safe_print import safe_print
 from util_io import StringIOu as StringIO
 
 
-def get_ccxx_descriptor(cgats):
-	""" Given a CCMX or CCSS filename, return the instrument & display """
-	desc = None
-	if not isinstance(cgats, CGATS):
-		try:
-			cgats = CGATS(cgats)
-		except CGATSError, exception:
-			safe_print("%s:" % cgats, exception)
-	if isinstance(cgats, CGATS):
-		desc = cgats.queryv1("INSTRUMENT")
-		if desc:
-			desc += " & "
-		else:
-			desc = ""
-		desc += cgats.queryv1("DISPLAY") or ""
-	if not desc or desc == "Not specified":
-		if isinstance(cgats, CGATS):
-			path = cgats.filename
-		else:
-			path = cgats
-		desc = os.path.splitext(os.path.basename(path))[0]
-	return desc
-
-
 def rpad(value, width):
 	"""
 	Right-pad a value to a given width.
@@ -285,6 +261,20 @@ class CGATS(dict):
 					query["_".join([color_rep[0], channelname])] = {i: 100}.get(j, 0)
 				colorants.append(self.queryi1(query))
 			return colorants
+
+	def get_descriptor(self):
+		""" Return descriptor """
+		desc = self.queryv1("DESCRIPTOR")
+		if not desc or desc == "Not specified":
+			desc = self.queryv1("INSTRUMENT")
+			if desc:
+				desc += " & "
+			else:
+				desc = ""
+			desc += self.queryv1("DISPLAY") or ""
+		if not desc and self.filename:
+			desc = os.path.splitext(os.path.basename(self.filename))[0]
+		return desc
 
 	def __setattr__(self, name, value):
 		if name == 'modified':

@@ -2585,22 +2585,30 @@ class MainFrame(BaseFrame):
 			if self.worker.instrument_supports_ccss():
 				self.ccmx_cached_paths += glob.glob(os.path.join(config.appdata, 
 																 "color", "*.ccss"))
-		if not getattr(self, "ccmx_cached_descriptors", None):
-			self.ccmx_cached_descriptors = {}
+			self.ccmx_cached_descriptors = OrderedDict()
+			self.ccmx_instruments = {}
 		types = {"ccss": lang.getstr("Spectral"),
 				 "ccmx": lang.getstr("Matrix")}
 		for i, path in enumerate(self.ccmx_cached_paths):
-			if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
-				index = i + 1
 			if self.ccmx_cached_descriptors.get(path):
 				desc = self.ccmx_cached_descriptors[path]
 			else:
-				desc = CGATS.get_ccxx_descriptor(path)
+				try:
+					cgats = CGATS.CGATS(path)
+				except CGATS.CGATSError, exception:
+					safe_print("%s:" % path, exception)
+					continue
+				desc = ("%s: %s" %
+						(types.get(os.path.splitext(path)[1].lower()[1:]),
+						 cgats.get_descriptor()))
 				self.ccmx_cached_descriptors[path] = desc
-			
-			items.append("%s: %s" %
-						 (types.get(os.path.splitext(path)[1].lower()[1:]),
-						  desc))
+				self.ccmx_instruments[path] = str(cgats.queryv1("INSTRUMENT") or "")
+			if (self.worker.get_instrument_name().lower().replace(" ", "") in
+				self.ccmx_instruments[path].lower().replace(" ", "").replace("eye-one", "i1") or
+				path.lower().endswith(".ccss")):
+				if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
+					index = len(items)
+				items.append(desc)
 		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
@@ -2608,17 +2616,26 @@ class MainFrame(BaseFrame):
 			if self.ccmx_cached_descriptors.get(ccmx[1]):
 				desc = self.ccmx_cached_descriptors[ccmx[1]]
 			else:
-				desc = CGATS.get_ccxx_descriptor(ccmx[1])
-				self.ccmx_cached_descriptors[ccmx[1]] = desc
-			items.insert(1, "%s: %s" %
+				try:
+					cgats = CGATS.CGATS(ccmx[1])
+				except CGATS.CGATSError, exception:
+					safe_print("%s:" % ccmx[1], exception)
+				else:
+					desc = ("%s: %s" %
 							(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
-							 desc))
-			if ccmx[0] != "AUTO":
-				index = 1
+							 cgats.get_descriptor()))
+					self.ccmx_cached_descriptors[ccmx[1]] = desc
+					self.ccmx_instruments[ccmx[1]] = str(cgats.queryv1("INSTRUMENT") or "")
+			if (self.worker.get_instrument_name().lower().replace(" ", "") in
+				self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "").replace("eye-one", "i1") or
+				ccmx[1].lower().endswith(".ccss")):
+				items.insert(1, desc)
+				if ccmx[0] != "AUTO":
+					index = 1
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
-		if index > 0:
-			tooltip = self.ccmx_cached_paths[index - 1]
+		if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1]:
+			tooltip = ccmx[1]
 		else:
 			tooltip = ""
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
@@ -6322,8 +6339,9 @@ class MainFrame(BaseFrame):
 				else:
 					ccmx = ["AUTO", ""]
 			else:
-				path = self.ccmx_cached_paths[
-					self.colorimeter_correction_matrix_ctrl.GetSelection() - 1]
+				index = self.ccmx_cached_descriptors.values().index(
+					self.colorimeter_correction_matrix_ctrl.GetStringSelection())
+				path = self.ccmx_cached_paths[index]
 				ccmx = ["", path]
 			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 			self.colorimeter_correction_matrix_ctrl.SetToolTipString(path or "")
