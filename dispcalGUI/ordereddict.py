@@ -157,8 +157,8 @@ class OrderedDict(dict):
 		Return numerical position of key.
 		Raise KeyError if the key is not present.
 		"""
-		if start != 0 or stop is not missing:
-			if stop is not missing:
+		if start != 0 or stop is not OrderedDict.missing:
+			if stop is not OrderedDict.missing:
 				iterable = self._keys[start:stop]
 			else:
 				iterable = self._keys[start:]
@@ -194,8 +194,8 @@ class OrderedDict(dict):
 		Return key of first value.
 		Raise ValueError if the value is not present.
 		"""
-		if start != 0 or stop is not missing:
-			if stop is not missing:
+		if start != 0 or stop is not OrderedDict.missing:
+			if stop is not OrderedDict.missing:
 				iterable = self[start:stop]
 			else:
 				iterable = self[start:]
