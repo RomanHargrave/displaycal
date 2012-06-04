@@ -3355,6 +3355,7 @@ class MainFrame(BaseFrame):
 		if event:
 			auto = self.black_point_correction_auto_cb.GetValue()
 			setcfg("calibration.black_point_correction.auto", int(auto))
+			self.cal_changed()
 		else:
 			auto = getcfg("calibration.black_point_correction.auto")
 			self.black_point_correction_auto_cb.SetValue(bool(auto))
