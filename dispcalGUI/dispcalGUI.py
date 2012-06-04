@@ -7481,6 +7481,7 @@ class MainFrame(BaseFrame):
 		elif result:
 			if isinstance(result, tuple):
 				profile.set_gamut_metadata(result[0], result[1])
+				profile.calculateID()
 				safe_print("-" * 80)
 			try:
 				profile.write()
