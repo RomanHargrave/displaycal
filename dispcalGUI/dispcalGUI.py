@@ -2684,21 +2684,21 @@ class MainFrame(BaseFrame):
 		self.panel.Freeze()
 		
 		update_cal = self.calibration_update_cb.GetValue()
-		enable_cal = not update_cal
 
 		self.measurement_mode_ctrl.Enable(
-			enable_cal and bool(self.worker.instruments) and 
+			not update_cal and bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
 		update_profile = self.calibration_update_cb.GetValue() and self.is_profile()
 		enable_profile = not update_profile and not is_ccxx_testchart()
 
 		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
-										   enable_cal)
+										   not update_cal)
 		self.ambient_measure_btn.Enable(bool(self.worker.instruments) and
-										enable_cal)
+										not update_cal)
 
-		self.calibrate_btn.Enable(bool(self.worker.displays) and 
+		self.calibrate_btn.Enable(not is_ccxx_testchart() and
+								  bool(self.worker.displays) and 
 								  True in self.worker.lut_access and 
 								  bool(self.worker.instruments))
 		self.calibrate_and_profile_btn.Enable(enable_profile and 
@@ -2789,7 +2789,6 @@ class MainFrame(BaseFrame):
 			bool(getcfg("calibration.update")))
 
 		update_cal = self.calibration_update_cb.GetValue()
-		enable_cal = not(update_cal)
 
 		if not update_cal or not profile_exists:
 			setcfg("profile.update", "0")
@@ -2800,21 +2799,22 @@ class MainFrame(BaseFrame):
 		if update_ccmx_items:
 			self.update_colorimeter_correction_matrix_ctrl_items()
 
-		self.whitepoint_ctrl.Enable(enable_cal)
-		self.whitepoint_colortemp_locus_ctrl.Enable(enable_cal)
-		self.luminance_ctrl.Enable(enable_cal)
-		self.black_luminance_ctrl.Enable(enable_cal)
-		self.trc_ctrl.Enable(enable_cal)
-		self.ambient_viewcond_adjust_cb.Enable(enable_cal)
-		self.ambient_viewcond_adjust_info.Enable(enable_cal)
-		self.black_output_offset_ctrl.Enable(enable_cal)
-		self.black_output_offset_intctrl.Enable(enable_cal)
-		self.black_point_correction_ctrl.Enable(enable_cal)
-		self.black_point_correction_intctrl.Enable(enable_cal)
+		self.whitepoint_ctrl.Enable(not update_cal)
+		self.whitepoint_colortemp_locus_ctrl.Enable(not update_cal)
+		self.luminance_ctrl.Enable(not update_cal)
+		self.black_luminance_ctrl.Enable(not update_cal)
+		self.trc_ctrl.Enable(not update_cal)
+		self.ambient_viewcond_adjust_cb.Enable(not update_cal)
+		self.ambient_viewcond_adjust_info.Enable(not update_cal)
+		self.black_output_offset_ctrl.Enable(not update_cal)
+		self.black_output_offset_intctrl.Enable(not update_cal)
+		self.black_point_correction_auto_cb.Enable(not update_cal)
+		self.black_point_correction_ctrl.Enable(not update_cal)
+		self.black_point_correction_intctrl.Enable(not update_cal)
 		self.black_point_correction_auto_handler()
 		self.update_black_point_rate_ctrl()
 		self.update_drift_compensation_ctrls()
-		self.interactive_display_adjustment_cb.Enable(enable_cal)
+		self.interactive_display_adjustment_cb.Enable(not update_cal)
 
 		self.testchart_btn.Enable(enable_profile)
 		self.create_testchart_btn.Enable(enable_profile)
@@ -2865,11 +2865,9 @@ class MainFrame(BaseFrame):
 			self.luminance_ctrl.SetSelection(0)
 		self.luminance_textctrl.ChangeValue(
 			str(getcfg("calibration.luminance")))
-		self.luminance_textctrl.Show(enable_cal and 
-									 bool(getcfg("calibration.luminance", 
+		self.luminance_textctrl.Show(bool(getcfg("calibration.luminance", 
 												 False)))
-		self.luminance_textctrl_label.Show(enable_cal and 
-										   bool(getcfg("calibration.luminance", 
+		self.luminance_textctrl_label.Show(bool(getcfg("calibration.luminance", 
 													   False)))
 		
 		self.whitelevel_drift_compensation.SetValue(
@@ -2882,9 +2880,9 @@ class MainFrame(BaseFrame):
 		self.black_luminance_textctrl.ChangeValue(
 			"%.6f" % getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Show(
-			enable_cal and bool(getcfg("calibration.black_luminance", False)))
+			not update_cal and bool(getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(
-			enable_cal and bool(getcfg("calibration.black_luminance", False)))
+			not update_cal and bool(getcfg("calibration.black_luminance", False)))
 		
 		self.blacklevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.blacklevel")))
@@ -2905,21 +2903,19 @@ class MainFrame(BaseFrame):
 		elif trc:
 			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.SetValue(str(trc))
-			self.trc_textctrl.Show(enable_cal)
-			self.trc_textctrl.Enable(enable_cal)
+			self.trc_textctrl.Enable(not update_cal)
 			self.trc_type_ctrl.SetSelection(
 				self.trc_types_ba.get(getcfg("trc.type"), 
 				self.trc_types_ba.get(defaults["trc.type"])))
-			self.trc_type_ctrl.Show(enable_cal and
-									getcfg("show_advanced_calibration_options"))
-			self.trc_type_ctrl.Enable(enable_cal)
+			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
+			self.trc_type_ctrl.Enable(not update_cal)
 
 		self.ambient_viewcond_adjust_cb.SetValue(
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
 		self.ambient_viewcond_adjust_textctrl.ChangeValue(
 			str(getcfg("calibration.ambient_viewcond_adjust.lux")))
 		self.ambient_viewcond_adjust_textctrl.Enable(
-			enable_cal and 
+			not update_cal and 
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
 
 		self.profile_type_ctrl.SetSelection(
@@ -2963,10 +2959,11 @@ class MainFrame(BaseFrame):
 			self.calibration_quality_info.SetLabel(
 				lang.getstr("calibration.quality.ultra"))
 
-		self.interactive_display_adjustment_cb.SetValue(enable_cal and 
+		self.interactive_display_adjustment_cb.SetValue(not update_cal and 
 			bool(int(getcfg("calibration.interactive_display_adjustment"))))
 
-		self.black_point_compensation_cb.SetValue(enable_cal and 
+		self.black_point_compensation_cb.Enable(not update_cal)
+		self.black_point_compensation_cb.SetValue(
 			bool(int(getcfg("profile.black_point_compensation"))))
 
 		self.testchart_ctrl.Enable(enable_profile)
