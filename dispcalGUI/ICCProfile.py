@@ -2776,10 +2776,14 @@ class ICCProfile:
 		if not isinstance(profile, self.__class__):
 			profile = self.__class__(profile)
 		if force_calculation or self.ID == "\0" * 16:
-			self.calculateID()
+			id1 = self.calculateID(False)
+		else:
+			id1 = self.ID
 		if force_calculation or profile.ID == "\0" * 16:
-			profile.calculateID()
-		return self.ID == profile.ID
+			id2 = profile.calculateID(False)
+		else:
+			id2 = profile.ID
+		return id1 == id2
 	
 	def load(self):
 		"""
@@ -2854,11 +2858,11 @@ class ICCProfile:
 											   "CCT %iK)" % (colormath.XYZ2CCT(*self.illuminant.values()) or 0)])
 		info["Creator"] = hexrepr(self.creator, manufacturers)
 		info["Checksum"] = "0x%s" % binascii.hexlify(self.ID).upper()
+		calcID = self.calculateID(False)
 		if self.ID != "\0" * 16:
-			calcID = self.calculateID(False)
 			info["    Checksum OK"] = {True: "Yes"}.get(self.ID == calcID, "No")
-			if self.ID != calcID:
-				info["    Calculated checksum"] = "0x%s" % binascii.hexlify(calcID).upper()
+		if self.ID != calcID:
+			info["    Calculated checksum"] = "0x%s" % binascii.hexlify(calcID).upper()
 		for sig, tag in self.tags.iteritems():
 			name = tags.get(sig, "'%s'" % sig)
 			if isinstance(tag, chromaticAdaptionTag):

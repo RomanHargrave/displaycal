@@ -435,7 +435,7 @@ class GamutCanvas(LUTCanvas):
 				self.profiles[i] = ""
 				continue
 
-			id = profile.calculateID()
+			id = profile.calculateID(False)
 			if self.profiles.get(i) == id and intent == self.intent:
 				continue
 

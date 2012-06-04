@@ -5994,9 +5994,13 @@ class MainFrame(BaseFrame):
 			dlg.sizer3.Add(self.show_profile_info, flag=wx.TOP |
 														wx.ALIGN_LEFT, 
 						   border=4)
-			if profile.calculateID() in self.profile_info:
+			if profile.ID == "\0" * 16:
+				id = profile.calculateID(False)
+			else:
+				id = profile.ID
+			if id in self.profile_info:
 				self.show_profile_info.SetValue(
-					self.profile_info[profile.ID].IsShownOnScreen())
+					self.profile_info[id].IsShownOnScreen())
 			if sys.platform != "darwin" or test:
 				self.profile_load_on_login = wx.CheckBox(dlg, -1, 
 					lang.getstr("profile.load_on_login"))
@@ -6145,25 +6149,28 @@ class MainFrame(BaseFrame):
 			profile = self.select_profile(check_profile_class=False)
 		if not profile:
 			return
-		profile.calculateID()
+		if profile.ID == "\0" * 16:
+			id = profile.calculateID(False)
+		else:
+			id = profile.ID
 		show = (not getattr(self, "show_profile_info", None) or
 				self.show_profile_info.GetValue())
 		if show:
-			if not profile.ID in self.profile_info:
+			if not id in self.profile_info:
 				# Create profile info window and store in hash table
-				self.profile_info[profile.ID] = ProfileInfoFrame(None, -1)
-				self.profile_info[profile.ID].Unbind(wx.EVT_CLOSE)
-				self.profile_info[profile.ID].Bind(wx.EVT_CLOSE,
+				self.profile_info[id] = ProfileInfoFrame(None, -1)
+				self.profile_info[id].Unbind(wx.EVT_CLOSE)
+				self.profile_info[id].Bind(wx.EVT_CLOSE,
 												   self.profile_info_close_handler)
-			if (not self.profile_info[profile.ID].profile or
-				self.profile_info[profile.ID].profile.ID != profile.ID):
+			if (not self.profile_info[id].profile or
+				self.profile_info[id].profile.calculateID(False) != id):
 				# Load profile if info window has no profile or ID is different
-				self.profile_info[profile.ID].profileID = profile.ID
-				self.profile_info[profile.ID].LoadProfile(profile)
-		if self.profile_info.get(profile.ID):
-			self.profile_info[profile.ID].Show(show)
+				self.profile_info[id].profileID = id
+				self.profile_info[id].LoadProfile(profile)
+		if self.profile_info.get(id):
+			self.profile_info[id].Show(show)
 			if show:
-				self.profile_info[profile.ID].Raise()
+				self.profile_info[id].Raise()
 	
 	def lower_handler(self, event):
 		self.modaldlg.Raise()
