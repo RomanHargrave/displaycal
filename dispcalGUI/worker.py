@@ -915,11 +915,7 @@ class Worker(object):
 		if self.argyll_version >= [1, 3, 0] and not is_ccxx_testchart() and \
 		   not instrument_features.get("spectral") and not get_arg("-X", args):
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-			if ccmx[0] == "AUTO":
-				# TODO: implement auto selection based on available ccmx files 
-				# and display/instrument combo
-				ccmx = None
-			elif len(ccmx) > 1 and ccmx[1]:
+			if len(ccmx) > 1 and ccmx[1]:
 				ccmx = ccmx[1]
 			else:
 				ccmx = None

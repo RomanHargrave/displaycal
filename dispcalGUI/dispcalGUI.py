@@ -396,7 +396,8 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	cgatsfile = open(path, 'wb')
 	cgatsfile.write(cgats)
 	cgatsfile.close()
-	setcfg("colorimeter_correction_matrix_file", ":" + path)
+	if getcfg("colorimeter_correction_matrix_file").split(":")[0] != "AUTO":
+		setcfg("colorimeter_correction_matrix_file", ":" + path)
 	parent.update_colorimeter_correction_matrix_ctrl_items(True)
 	return True
 	
@@ -1240,7 +1241,7 @@ class MainFrame(BaseFrame):
 		self.init_controls()
 		self.show_advanced_calibration_options_handler()
 		self.setup_language()
-		self.update_displays()
+		self.update_displays(update_ccmx_items=False)
 		BaseFrame.update_layout(self)
 		# Add the header bitmap after layout so it won't stretch the window 
 		# further than necessary
@@ -2388,7 +2389,7 @@ class MainFrame(BaseFrame):
 				self.update_controls()
 			self.settings_discard_changes(keep_changed_state=True)
 
-	def update_displays(self):
+	def update_displays(self, update_ccmx_items=False):
 		""" Update the display selector controls. """
 		if debug:
 			safe_print("[D] update_displays")
@@ -2398,7 +2399,7 @@ class MainFrame(BaseFrame):
 			self.displays += [item.replace("[PRIMARY]", 
 										   lang.getstr("display.primary"))]
 		self.display_ctrl.SetItems(self.displays)
-		self.get_set_display()
+		self.get_set_display(update_ccmx_items)
 		self.display_ctrl.Enable(len(self.worker.displays) > 1)
 		display_lut_sizer = self.display_ctrl.GetContainingSizer()
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
@@ -2575,20 +2576,19 @@ class MainFrame(BaseFrame):
 				previously cached result if available
 		
 		"""
-		##items = ["<%s>" % lang.getstr("auto")]
-		items = [lang.getstr("calibration.file.none")]
+		items = [lang.getstr("colorimeter_correction.file.none"), lang.getstr("auto")]
 		index = 0
 		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 		if force or not getattr(self, "ccmx_cached_paths", None):
 			self.ccmx_cached_paths = glob.glob(os.path.join(config.appdata, 
 															"color", "*.ccmx"))
-			if self.worker.instrument_supports_ccss():
-				self.ccmx_cached_paths += glob.glob(os.path.join(config.appdata, 
-																 "color", "*.ccss"))
+			self.ccmx_cached_paths += glob.glob(os.path.join(config.appdata, 
+															 "color", "*.ccss"))
 			self.ccmx_cached_descriptors = OrderedDict()
 			self.ccmx_instruments = {}
-		types = {"ccss": lang.getstr("Spectral"),
-				 "ccmx": lang.getstr("Matrix")}
+			self.ccmx_mapping = {}
+		types = {"ccss": lang.getstr("spectral").replace(":", ""),
+				 "ccmx": lang.getstr("matrix").replace(":", "")}
 		for i, path in enumerate(self.ccmx_cached_paths):
 			if self.ccmx_cached_descriptors.get(path):
 				desc = self.ccmx_cached_descriptors[path]
@@ -2598,43 +2598,66 @@ class MainFrame(BaseFrame):
 				except CGATS.CGATSError, exception:
 					safe_print("%s:" % path, exception)
 					continue
-				desc = ("%s: %s" %
-						(types.get(os.path.splitext(path)[1].lower()[1:]),
-						 cgats.get_descriptor()))
+				desc = cgats.get_descriptor()
 				self.ccmx_cached_descriptors[path] = desc
-				self.ccmx_instruments[path] = str(cgats.queryv1("INSTRUMENT") or "")
+				self.ccmx_instruments[path] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
+				self.ccmx_mapping["%s\0%s" % (self.ccmx_instruments[path],
+											  str(cgats.queryv1("DISPLAY") or
+												  ""))] = path
 			if (self.worker.get_instrument_name().lower().replace(" ", "") in
 				self.ccmx_instruments[path].lower().replace(" ", "").replace("eye-one", "i1") or
-				path.lower().endswith(".ccss")):
+				(path.lower().endswith(".ccss") and
+				 self.worker.instrument_supports_ccss())):
 				if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
 					index = len(items)
-				items.append(desc)
+				items.append("%s: %s" %
+							 (types.get(os.path.splitext(path)[1].lower()[1:]),
+							  desc))
 		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
 			self.ccmx_cached_paths.insert(0, ccmx[1])
 			if self.ccmx_cached_descriptors.get(ccmx[1]):
 				desc = self.ccmx_cached_descriptors[ccmx[1]]
-			else:
+			elif os.path.isfile(ccmx[1]):
 				try:
 					cgats = CGATS.CGATS(ccmx[1])
 				except CGATS.CGATSError, exception:
 					safe_print("%s:" % ccmx[1], exception)
 				else:
-					desc = ("%s: %s" %
-							(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
-							 cgats.get_descriptor()))
+					desc = cgats.get_descriptor()
 					self.ccmx_cached_descriptors[ccmx[1]] = desc
-					self.ccmx_instruments[ccmx[1]] = str(cgats.queryv1("INSTRUMENT") or "")
+					self.ccmx_instruments[ccmx[1]] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
+					self.ccmx_mapping["%s\0%s" % (self.ccmx_instruments[ccmx[1]],
+												  str(cgats.queryv1("DISPLAY") or
+													  ""))] = ccmx[1]
 			if (self.worker.get_instrument_name().lower().replace(" ", "") in
 				self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "").replace("eye-one", "i1") or
 				ccmx[1].lower().endswith(".ccss")):
-				items.insert(1, desc)
+				items.insert(2, "%s: %s" %
+								(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
+								 desc))
 				if ccmx[0] != "AUTO":
-					index = 1
+					index = 2
+		if ccmx[0] == "AUTO":
+			index = 1
+			display_name = self.worker.get_display_name(False, True)
+			if self.worker.instrument_supports_ccss():
+				# Prefer CCSS
+				ccmx[1] = self.ccmx_mapping.get("\0%s" % display_name, "")
+			if not self.worker.instrument_supports_ccss() or not ccmx[1]:
+				ccmx[1] = self.ccmx_mapping.get("%s\0%s" %
+												(self.worker.get_instrument_name(),
+												 display_name), "")
+			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
+			if ccmx[1]:
+				items[1] += " (%s: %s)" % (types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
+										   self.ccmx_cached_descriptors[ccmx[1]])
+			else:
+				items[1] += " (%s)" % lang.getstr("colorimeter_correction.file.none")
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
-		if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1]:
+		if len(ccmx) > 1 and ccmx[1]:
 			tooltip = ccmx[1]
 		else:
 			tooltip = ""
@@ -5267,11 +5290,7 @@ class MainFrame(BaseFrame):
 		if self.worker.argyll_version >= [1, 3, 0] and \
 		   not self.worker.get_instrument_features().get("spectral"):
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-			if ccmx[0] == "AUTO":
-				# TODO: implement auto selection based on available ccmx files 
-				# and display/instrument combo
-				ccmx = "None"
-			elif len(ccmx) > 1 and ccmx[1]:
+			if len(ccmx) > 1 and ccmx[1]:
 				ccmx = os.path.basename(ccmx[1])
 			else:
 				ccmx = "None"
@@ -5560,7 +5579,7 @@ class MainFrame(BaseFrame):
 		else:
 			self.call_pending_function()
 	
-	def get_set_display(self):
+	def get_set_display(self, update_ccmx_items=False):
 		if debug:
 			safe_print("[D] get_set_display")
 		if self.worker.displays:
@@ -5569,7 +5588,8 @@ class MainFrame(BaseFrame):
 					max(0, getcfg("display.number") - 1)))
 		self.display_ctrl_handler(
 			CustomEvent(wx.EVT_CHOICE.evtType[0], 
-						self.display_ctrl), load_lut=False)
+						self.display_ctrl), load_lut=False,
+						update_ccmx_items=update_ccmx_items)
 
 	def set_pending_function(self, pending_function, *pending_function_args, 
 							 **pending_function_kwargs):
@@ -6334,17 +6354,21 @@ class MainFrame(BaseFrame):
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if self.colorimeter_correction_matrix_ctrl.GetSelection() == 0:
-				if len(ccmx) > 1 and ccmx[1]:
-					ccmx = ["AUTO", ccmx[1]]
-				else:
-					ccmx = ["AUTO", ""]
+				# Off
+				ccmx = ["", ""]
+			elif self.colorimeter_correction_matrix_ctrl.GetSelection() == 1:
+				# Auto
+				ccmx = ["AUTO", ""]
 			else:
 				index = self.ccmx_cached_descriptors.values().index(
-					self.colorimeter_correction_matrix_ctrl.GetStringSelection())
+					self.colorimeter_correction_matrix_ctrl.GetStringSelection().split(": ", 1)[1])
 				path = self.ccmx_cached_paths[index]
 				ccmx = ["", path]
 			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
-			self.colorimeter_correction_matrix_ctrl.SetToolTipString(path or "")
+			if ccmx[0] == "AUTO":
+				self.update_colorimeter_correction_matrix_ctrl_items()
+			else:
+				self.colorimeter_correction_matrix_ctrl.SetToolTipString(path or "")
 		else:
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
@@ -6361,7 +6385,9 @@ class MainFrame(BaseFrame):
 				path = dlg.GetPath()
 			dlg.Destroy()
 			if path:
-				setcfg("colorimeter_correction_matrix_file", ":" + path)
+				if (getcfg("colorimeter_correction_matrix_file").split(":")[0] != "AUTO" or
+					path not in self.ccmx_cached_paths):
+					setcfg("colorimeter_correction_matrix_file", ":" + path)
 				self.update_colorimeter_correction_matrix_ctrl_items()
 	
 	def colorimeter_correction_web_handler(self, event):
@@ -6754,7 +6780,7 @@ class MainFrame(BaseFrame):
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
 		self.update_colorimeter_correction_matrix_ctrl()
-		self.update_colorimeter_correction_matrix_ctrl_items(True)
+		self.update_colorimeter_correction_matrix_ctrl_items()
 	
 	def import_colorimeter_correction_handler(self, event):
 		"""
@@ -6935,7 +6961,8 @@ class MainFrame(BaseFrame):
 					   ok=lang.getstr("cancel"), 
 					   bitmap=geticon(32, "dialog-error"))
 
-	def display_ctrl_handler(self, event, load_lut=True):
+	def display_ctrl_handler(self, event, load_lut=True,
+							 update_ccmx_items=True):
 		if debug:
 			safe_print("[D] display_ctrl_handler called for ID %s %s event "
 					   "type %s %s" % (event.GetId(), 
@@ -6965,6 +6992,9 @@ class MainFrame(BaseFrame):
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
 		if self.IsShownOnScreen():
 			self.update_menus()
+		if (update_ccmx_items and
+			getcfg("colorimeter_correction_matrix_file").split(":")[0] == "AUTO"):
+			self.update_colorimeter_correction_matrix_ctrl_items()
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -8390,10 +8420,7 @@ class MainFrame(BaseFrame):
 							ccmx = o[-1][1:-1]
 							if not os.path.abspath(ccmx):
 								ccmx = os.path.join(os.path.dirname(path), ccmx)
-							if getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] == "AUTO":
-								ccmx = "AUTO:" + ccmx
-							else:
-								ccmx = ":" + ccmx
+							ccmx = ":" + ccmx
 							setcfg("colorimeter_correction_matrix_file", ccmx)
 							continue
 						if o[0] == "I":

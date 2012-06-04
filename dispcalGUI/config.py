@@ -419,7 +419,7 @@ defaults = {
 	"calibration.quality": "m",
 	"calibration.update": 0,
 	"colorimeter_correction.testchart": "ccxx.ti1",
-	"colorimeter_correction_matrix_file": ":",
+	"colorimeter_correction_matrix_file": "AUTO:",
 	"color.dir": os.path.join(commonappdata[0] if is_superuser() else 
 							  appdata, "color"),
 	"comport.number": 1,
