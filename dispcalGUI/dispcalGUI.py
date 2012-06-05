@@ -8187,7 +8187,7 @@ class MainFrame(BaseFrame):
 				self.aboutdialog.Destroy()
 				del self.aboutdialog
 		if displays != self.worker.displays:
-			self.update_displays()
+			self.update_displays(update_ccmx_items=True)
 			if verbose >= 1: safe_print(lang.getstr("display_detected"))
 		if comports != self.worker.instruments:
 			self.update_comports()
