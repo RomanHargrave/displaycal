@@ -2601,9 +2601,12 @@ class MainFrame(BaseFrame):
 				desc = cgats.get_descriptor()
 				self.ccmx_cached_descriptors[path] = desc
 				self.ccmx_instruments[path] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
-				self.ccmx_mapping["%s\0%s" % (self.ccmx_instruments[path],
-											  str(cgats.queryv1("DISPLAY") or
-												  ""))] = path
+				key = "%s\0%s" % (self.ccmx_instruments[path],
+								  str(cgats.queryv1("DISPLAY") or ""))
+				if (not self.ccmx_mapping.get(key) or
+					(len(ccmx) > 1 and path == ccmx[1])):
+					# Prefer the selected CCMX
+					self.ccmx_mapping[key] = path
 			if (self.worker.get_instrument_name().lower().replace(" ", "") in
 				self.ccmx_instruments[path].lower().replace(" ", "").replace("eye-one", "i1") or
 				(path.lower().endswith(".ccss") and
@@ -2628,9 +2631,9 @@ class MainFrame(BaseFrame):
 					desc = cgats.get_descriptor()
 					self.ccmx_cached_descriptors[ccmx[1]] = desc
 					self.ccmx_instruments[ccmx[1]] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
-					self.ccmx_mapping["%s\0%s" % (self.ccmx_instruments[ccmx[1]],
-												  str(cgats.queryv1("DISPLAY") or
-													  ""))] = ccmx[1]
+					key = "%s\0%s" % (self.ccmx_instruments[ccmx[1]],
+									  str(cgats.queryv1("DISPLAY") or ""))
+					self.ccmx_mapping[key] = ccmx[1]
 			if (self.worker.get_instrument_name().lower().replace(" ", "") in
 				self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "").replace("eye-one", "i1") or
 				ccmx[1].lower().endswith(".ccss")):
