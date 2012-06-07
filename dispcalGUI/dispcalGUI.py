@@ -8312,12 +8312,12 @@ class MainFrame(BaseFrame):
 				if debug:
 					safe_print("[D] options_colprof:", options_colprof)
 				update_ccmx_items = True
+				ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] + ":"
 				# Parse options
 				if options_dispcal:
 					# Restore defaults
 					self.restore_defaults_handler(
 						include=("calibration", 
-								 "colorimeter_correction_matrix_file", 
 								 "drift_compensation", 
 								 "measure.darken_background", 
 								 "trc", 
@@ -8344,6 +8344,8 @@ class MainFrame(BaseFrame):
 						if o[0] == "c" and o[1:] != str(getcfg("comport.number")):
 							setcfg("comport.number", o[1:])
 							self.update_comports()
+							# No need to update ccmx items in update_controls,
+							# as comport_ctrl_handler took care of it
 							update_ccmx_items = False
 							continue
 						if o[0] == "m":
@@ -8426,8 +8428,13 @@ class MainFrame(BaseFrame):
 							ccmx = o[-1][1:-1]
 							if not os.path.abspath(ccmx):
 								ccmx = os.path.join(os.path.dirname(path), ccmx)
-							ccmx = ":" + ccmx
-							setcfg("colorimeter_correction_matrix_file", ccmx)
+							if getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] == "AUTO":
+								ccmx = "AUTO:" + ccmx
+							else:
+								ccmx = ":" + ccmx
+							# Need to update ccmx items again even if
+							# comport_ctrl_handler already did
+							update_ccmx_items = True
 							continue
 						if o[0] == "I":
 							if "b" in o[1:]:
@@ -8435,6 +8442,7 @@ class MainFrame(BaseFrame):
 							if "w" in o[1:]:
 								setcfg("drift_compensation.whitelevel", 1)
 							continue
+				setcfg("colorimeter_correction_matrix_file", ccmx)
 				if options_colprof:
 					# restore defaults
 					self.restore_defaults_handler(
