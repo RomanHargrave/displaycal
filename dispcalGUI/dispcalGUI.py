@@ -2608,7 +2608,7 @@ class MainFrame(BaseFrame):
 					# Prefer the selected CCMX
 					self.ccmx_mapping[key] = path
 			if (self.worker.get_instrument_name().lower().replace(" ", "") in
-				self.ccmx_instruments[path].lower().replace(" ", "").replace("eye-one", "i1") or
+				self.ccmx_instruments.get(path, "").lower().replace(" ", "").replace("eye-one", "i1") or
 				(path.lower().endswith(".ccss") and
 				 self.worker.instrument_supports_ccss())):
 				if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
