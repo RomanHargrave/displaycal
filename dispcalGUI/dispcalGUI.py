@@ -2456,9 +2456,29 @@ class MainFrame(BaseFrame):
 		self.comport_ctrl.Enable(len(self.worker.instruments) > 1)
 		self.comport_ctrl.Thaw()
 		self.comport_ctrl_handler()
+
+	def update_measurement_mode(self):
+		""" Update the measurement mode control. """
+		measurement_mode = getcfg("measurement_mode")
+		instrument_features = self.worker.get_instrument_features()
+		if instrument_features.get("adaptive_mode") and (
+		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
+		   self.worker.argyll_version[0:3] == [1, 1, 0] and
+		   not "Beta" in self.worker.argyll_version_string and
+		   not "RC1" in self.worker.argyll_version_string and
+		   not "RC2" in self.worker.argyll_version_string)) and \
+		   getcfg("measurement_mode.adaptive"):
+			measurement_mode += "V"
+		if instrument_features.get("highres_mode") and \
+		   getcfg("measurement_mode.highres"):
+			measurement_mode += "H"
+		self.measurement_mode_ctrl.SetSelection(
+			min(self.measurement_modes_ba[self.get_instrument_type()].get(
+					measurement_mode, 1), 
+				len(self.measurement_mode_ctrl.GetItems()) - 1))
 	
 	def update_measurement_modes(self):
-		""" Update the measurement mode control. """
+		""" Populate the measurement mode control. """
 		instrument_name = self.worker.get_instrument_name()
 		instrument_type = self.get_instrument_type()
 		measurement_mode = getcfg("measurement_mode")
@@ -2827,25 +2847,7 @@ class MainFrame(BaseFrame):
 		self.create_testchart_btn.Enable(enable_profile)
 		self.profile_type_ctrl.Enable(enable_profile)
 
-		measurement_mode = getcfg("measurement_mode")
-		#if self.get_instrument_type() == "spect":
-			#measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
-		instrument_features = self.worker.get_instrument_features()
-		if instrument_features.get("adaptive_mode") and (
-		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
-		   self.worker.argyll_version[0:3] == [1, 1, 0] and
-		   not "Beta" in self.worker.argyll_version_string and
-		   not "RC1" in self.worker.argyll_version_string and
-		   not "RC2" in self.worker.argyll_version_string)) and \
-		   getcfg("measurement_mode.adaptive"):
-			measurement_mode += "V"
-		if instrument_features.get("highres_mode") and \
-		   getcfg("measurement_mode.highres"):
-			measurement_mode += "H"
-		self.measurement_mode_ctrl.SetSelection(
-			min(self.measurement_modes_ba[self.get_instrument_type()].get(
-					measurement_mode, 1), 
-				len(self.measurement_mode_ctrl.GetItems()) - 1))
+		self.update_measurement_mode()
 
 		self.whitepoint_colortemp_textctrl.SetValue(
 			str(stripzeros(getcfg("whitepoint.colortemp"))))
@@ -5576,6 +5578,7 @@ class MainFrame(BaseFrame):
 			self.get_set_display()
 		if returncode != 255:
 			self.Show(start_timers=True)
+			self.restore_measurement_mode()
 			self.restore_testchart()
 			if stderr and stderr.strip():
 				InfoDialog(self, msg=safe_unicode(stderr.strip()), 
@@ -5741,6 +5744,12 @@ class MainFrame(BaseFrame):
 				if os.path.exists(filename + ".cal") and \
 				   can_update_cal(filename + ".cal"):
 					return filename + ".cal"
+	
+	def restore_measurement_mode(self):
+		if getcfg("measurement_mode.backup", False):
+			setcfg("measurement_mode", getcfg("measurement_mode.backup"))
+			setcfg("measurement_mode.backup", None)
+			self.update_measurement_mode()
 
 	def restore_testchart(self):
 		if getcfg("testchart.file.backup", False):
@@ -5765,6 +5774,7 @@ class MainFrame(BaseFrame):
 					return
 				setcfg("measurement.save_path", path)
 			else:
+				self.restore_measurement_mode()
 				self.restore_testchart()
 				return
 		self.update_profile_name_timer.Stop()
@@ -5778,6 +5788,7 @@ class MainFrame(BaseFrame):
 			if apply_calibration != wx.ID_CANCEL:
 				self.setup_measurement(self.just_measure, apply_calibration)
 		else:
+			self.restore_measurement_mode()
 			self.restore_testchart()
 			self.update_profile_name_timer.Start(1000)
 
@@ -5817,6 +5828,7 @@ class MainFrame(BaseFrame):
 		if is_ccxx_testchart():
 			# Restore calibration after measuring CCXX testcahrt
 			self.load_cal() or self.load_display_profile_cal()
+		self.restore_measurement_mode()
 		self.restore_testchart()
 	
 	def just_measure_show_result(self, path):
@@ -6443,6 +6455,13 @@ class MainFrame(BaseFrame):
 		elif result != wx.ID_OK:
 			if not is_ccxx_testchart():
 				setcfg("testchart.file.backup", getcfg("testchart.file"))
+			if (self.worker.get_instrument_name() == "ColorHug"
+				and getcfg("measurement_mode") not in ("F", "R")):
+				# Automatically set factory measurement mode if not already
+				# factory or raw measurement mode
+				setcfg("measurement_mode.backup", getcfg("measurement_mode"))
+				setcfg("measurement_mode", "F")
+				self.update_measurement_mode()
 			self.set_testchart(get_ccxx_testchart())
 			self.measure_handler()
 			return
