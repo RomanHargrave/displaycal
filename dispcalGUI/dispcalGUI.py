@@ -6162,7 +6162,7 @@ class MainFrame(BaseFrame):
 				self.profile_info[id] = ProfileInfoFrame(None, -1)
 				self.profile_info[id].Unbind(wx.EVT_CLOSE)
 				self.profile_info[id].Bind(wx.EVT_CLOSE,
-												   self.profile_info_close_handler)
+										   self.profile_info_close_handler)
 			if (not self.profile_info[id].profile or
 				self.profile_info[id].profile.calculateID(False) != id):
 				# Load profile if info window has no profile or ID is different
@@ -8947,6 +8947,8 @@ class MainFrame(BaseFrame):
 			self.lut_viewer.Hide()
 		if hasattr(self, "lut3dframe"):
 			self.lut3dframe.Hide()
+		for profile_info in self.profile_info.itervalues():
+			profile_info.Hide()
 		self.Hide()
 		self.enable_menus(False)
 
@@ -8956,6 +8958,8 @@ class MainFrame(BaseFrame):
 		self.infoframe.Show(getcfg("log.show"))
 		if LUTFrame and getcfg("lut_viewer.show"):
 			self.init_lut_viewer(show=True)
+		for profile_info in reversed(self.profile_info.values()):
+			profile_info.Show()
 		if start_timers:
 			self.start_timers()
 		self.enable_menus()
