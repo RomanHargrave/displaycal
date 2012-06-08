@@ -912,8 +912,14 @@ class Worker(object):
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args):
 			args += ["-H"]
-		if self.argyll_version >= [1, 3, 0] and not is_ccxx_testchart() and \
-		   not instrument_features.get("spectral") and not get_arg("-X", args):
+		if (self.argyll_version >= [1, 3, 0] and
+		    not instrument_features.get("spectral") and
+		    not is_ccxx_testchart() and
+			(self.get_instrument_name() != "ColorHug" or
+			 getcfg("measurement_mode") in ("F", "R")) and not get_arg("-X", args)):
+			# Use colorimeter correction?
+			# Special case: Spectrometer (not needed) and ColorHug
+			# (only sensible in factory or raw measurement mode)
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if len(ccmx) > 1 and ccmx[1]:
 				ccmx = ccmx[1]
