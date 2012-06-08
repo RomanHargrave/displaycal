@@ -2592,7 +2592,7 @@ class MainFrame(BaseFrame):
 		for i, path in enumerate(self.ccmx_cached_paths):
 			if self.ccmx_cached_descriptors.get(path):
 				desc = self.ccmx_cached_descriptors[path]
-			else:
+			elif os.path.isfile(path):
 				try:
 					cgats = CGATS.CGATS(path)
 				except CGATS.CGATSError, exception:
@@ -2620,9 +2620,8 @@ class MainFrame(BaseFrame):
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
 			self.ccmx_cached_paths.insert(0, ccmx[1])
-			if self.ccmx_cached_descriptors.get(ccmx[1]):
-				desc = self.ccmx_cached_descriptors[ccmx[1]]
-			elif os.path.isfile(ccmx[1]):
+			desc = self.ccmx_cached_descriptors.get(ccmx[1])
+			if not desc and os.path.isfile(ccmx[1]):
 				try:
 					cgats = CGATS.CGATS(ccmx[1])
 				except CGATS.CGATSError, exception:
@@ -2634,9 +2633,10 @@ class MainFrame(BaseFrame):
 					key = "%s\0%s" % (self.ccmx_instruments[ccmx[1]],
 									  str(cgats.queryv1("DISPLAY") or ""))
 					self.ccmx_mapping[key] = ccmx[1]
-			if (self.worker.get_instrument_name().lower().replace(" ", "") in
-				self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "").replace("eye-one", "i1") or
-				ccmx[1].lower().endswith(".ccss")):
+			if (desc and
+				(self.worker.get_instrument_name().lower().replace(" ", "") in
+				 self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "").replace("eye-one", "i1") or
+				 ccmx[1].lower().endswith(".ccss"))):
 				items.insert(2, "%s: %s" %
 								(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
 								 desc))
