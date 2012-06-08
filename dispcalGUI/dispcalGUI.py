@@ -6455,13 +6455,6 @@ class MainFrame(BaseFrame):
 		elif result != wx.ID_OK:
 			if not is_ccxx_testchart():
 				setcfg("testchart.file.backup", getcfg("testchart.file"))
-			if (self.worker.get_instrument_name() == "ColorHug"
-				and getcfg("measurement_mode") not in ("F", "R")):
-				# Automatically set factory measurement mode if not already
-				# factory or raw measurement mode
-				setcfg("measurement_mode.backup", getcfg("measurement_mode"))
-				setcfg("measurement_mode", "F")
-				self.update_measurement_mode()
 			self.set_testchart(get_ccxx_testchart())
 			self.measure_handler()
 			return
@@ -8111,6 +8104,16 @@ class MainFrame(BaseFrame):
 			   (not hasattr(self.tcframe, "ti1") or 
 				getcfg("testchart.file") != self.tcframe.ti1.filename):
 				self.tcframe.tc_load_cfg_from_ti1()
+		if is_ccxx_testchart():
+			if (self.worker.get_instrument_name() == "ColorHug"
+				and getcfg("measurement_mode") not in ("F", "R")):
+				# Automatically set factory measurement mode if not already
+				# factory or raw measurement mode
+				setcfg("measurement_mode.backup", getcfg("measurement_mode"))
+				setcfg("measurement_mode", "F")
+				self.update_measurement_mode()
+		else:
+			self.restore_measurement_mode()
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_main_controls()
 
