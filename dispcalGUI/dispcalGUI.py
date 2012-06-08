@@ -6721,7 +6721,8 @@ class MainFrame(BaseFrame):
 				self.upload_colorimeter_correction(cgats)
 		elif result is not None:
 			InfoDialog(self,
-					   msg=lang.getstr("colorimeter_correction.create.failure"), 
+					   msg=lang.getstr("colorimeter_correction.create.failure") +
+						   "\n" + "\n".join(self.worker.errors), 
 					   ok=lang.getstr("cancel"), 
 					   bitmap=geticon(32, "dialog-error"))
 		self.worker.wrapup(False)
