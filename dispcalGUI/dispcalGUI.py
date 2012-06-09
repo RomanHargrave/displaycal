@@ -6549,6 +6549,47 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
+			# Use only the device combinations from CCXX testchart
+			reference_new = CGATS.CGATS("BEGIN_DATA\nEND_DATA")
+			reference_new.DATA_FORMAT = reference_ti3.queryv1("DATA_FORMAT")
+			colorimeter_new = CGATS.CGATS("BEGIN_DATA\nEND_DATA")
+			colorimeter_new.DATA_FORMAT = colorimeter_ti3.queryv1("DATA_FORMAT")
+			data_reference = reference_ti3.queryv1("DATA")
+			data_colorimeter = colorimeter_ti3.queryv1("DATA")
+			ccxx = CGATS.CGATS(get_ccxx_testchart())
+			required = ccxx.queryv(("RGB_R", "RGB_G", "RGB_B"))
+			devicecombination2name = {"RGB_R=100 RGB_G=100 RGB_B=100": "white",
+									  "RGB_R=100 RGB_G=0 RGB_B=0": "red",
+									  "RGB_R=0 RGB_G=100 RGB_B=0": "green",
+									  "RGB_R=0 RGB_G=0 RGB_B=100": "blue"}
+			for i, values in required.iteritems():
+				patch = OrderedDict([("RGB_R", values[0]),
+									 ("RGB_G", values[1]),
+									 ("RGB_B", values[2])])
+				devicecombination = " ".join(["=".join([key, "%i" % value])
+											  for key, value in
+											  patch.iteritems()])
+				name = devicecombination2name.get(devicecombination,
+												  devicecombination)
+				item = data_reference.queryi1(patch)
+				if item:
+					reference_new.DATA.add_data(item)
+				else:
+					show_result_dialog(lang.getstr("error.testchart.missing_fields", 
+									   (os.path.basename(reference_ti3.filename),
+										lang.getstr(name))))
+					return
+				item = data_colorimeter.queryi1(patch)
+				if item:
+					colorimeter_new.DATA.add_data(item)
+				else:
+					show_result_dialog(lang.getstr("error.testchart.missing_fields", 
+									   (os.path.basename(colorimeter_ti3.filename),
+									    lang.getstr(name))))
+					return
+			reference_ti3.queryi1("DATA").DATA = reference_new.DATA
+			colorimeter_ti3.queryi1("DATA").DATA = colorimeter_new.DATA
+			#
 			instrument = colorimeter_ti3.queryv1("TARGET_INSTRUMENT")
 			if instrument:
 				instrument = safe_unicode(instrument, "UTF-8")
@@ -6667,33 +6708,6 @@ class MainFrame(BaseFrame):
 			args += ["-T", safe_str(" ".join(tech), "UTF-8")]
 		if result != wx.ID_OK:
 			return
-		if reference_ti3 and colorimeter_ti3:
-			# If one of our measurement files has more patches than the other,
-			# use device (RGB) triplets of the other as a guide and try to
-			# make them the same size by selecting a subset of the larger one.
-			# This also makes the order of rows exactly the same, ordering by
-			# device value (RGB) triplets.
-			reference_patchcount = reference_ti3.queryv1("NUMBER_OF_SETS")
-			colorimeter_patchcount = colorimeter_ti3.queryv1("NUMBER_OF_SETS")
-			if reference_patchcount > colorimeter_patchcount:
-				cgats1 = reference_ti3
-				cgats2 = colorimeter_ti3
-			else:
-				cgats1 = colorimeter_ti3
-				cgats2 = reference_ti3
-			cgatsnew = CGATS.CGATS("BEGIN_DATA\nEND_DATA")
-			cgatsnew.DATA_FORMAT = cgats1.queryv1("DATA_FORMAT")
-			data = cgats1.queryv1("DATA")
-			for i, patch in cgats2.queryv1("DATA").iteritems():
-				item = data.queryi1({"RGB_R": patch["RGB_R"],
-									 "RGB_G": patch["RGB_G"],
-									 "RGB_B": patch["RGB_B"]})
-				if item:
-					cgatsnew.DATA.add_data(item)
-			if reference_patchcount > colorimeter_patchcount:
-				reference_ti3.queryi1("DATA").DATA = cgatsnew.DATA
-			else:
-				colorimeter_ti3.queryi1("DATA").DATA = cgatsnew.DATA
 		# Prepare our files
 		cwd = self.worker.create_tempdir()
 		ti3_tmp_names = []
