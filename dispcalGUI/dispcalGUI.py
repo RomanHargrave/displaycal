@@ -6459,7 +6459,7 @@ class MainFrame(BaseFrame):
 			self.measure_handler()
 			return
 		cgats_list = []
-		spectro_ti3 = None
+		reference_ti3 = None
 		colorimeter_ti3 = None
 		spectral = False
 		defaultDir, defaultFile = get_verified_path("last_ti3_path")
@@ -6468,10 +6468,10 @@ class MainFrame(BaseFrame):
 			if n < 1:
 				msg = lang.getstr("measurement_file.choose")
 			else:
-				if spectro_ti3:
+				if reference_ti3:
 					msg = lang.getstr("measurement_file.choose.colorimeter")
 				else:
-					msg = lang.getstr("measurement_file.choose.spectro")
+					msg = lang.getstr("measurement_file.choose.reference")
 			dlg = wx.FileDialog(self, 
 								msg,
 								defaultDir=defaultDir,
@@ -6498,11 +6498,11 @@ class MainFrame(BaseFrame):
 					# Check if measurement contains spectral values
 					# Check if instrument type is spectral
 					if cgats.queryv1("SPECTRAL_BANDS"):
-						if spectro_ti3:
-							# We already have a spectro ti3
-							spectro_ti3 = None
+						if reference_ti3:
+							# We already have a reference ti3
+							reference_ti3 = None
 							break
-						spectro_ti3 = cgats
+						reference_ti3 = cgats
 						spectral = True
 						# Ask if user wants to create CCSS
 						dlg = ConfirmDialog(self, 
@@ -6518,11 +6518,11 @@ class MainFrame(BaseFrame):
 						elif result == wx.ID_CANCEL:
 							return
 					elif cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "YES":
-						if spectro_ti3:
-							# We already have a spectro ti3
-							spectro_ti3 = None
+						if reference_ti3:
+							# We already have a reference ti3
+							reference_ti3 = None
 							break
-						spectro_ti3 = cgats
+						reference_ti3 = cgats
 					elif cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "NO":
 						if colorimeter_ti3:
 							# We already have a colorimeter ti3
@@ -6533,10 +6533,10 @@ class MainFrame(BaseFrame):
 				# User canceled dialog
 				return
 		setcfg("last_ti3_path", cgats_list[-1].filename)
-		# Check if atleast one file has been measured with a spectro
-		if not spectro_ti3:
+		# Check if atleast one file has been measured with a reference
+		if not reference_ti3:
 			InfoDialog(self,
-					   msg=lang.getstr("error.measurement.one_spectro"), 
+					   msg=lang.getstr("error.measurement.one_reference"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			return
@@ -6564,7 +6564,7 @@ class MainFrame(BaseFrame):
 			return
 		else:
 			description = self.worker.get_display_name(True)
-		options_dispcal, options_colprof = get_options_from_ti3(spectro_ti3)
+		options_dispcal, options_colprof = get_options_from_ti3(reference_ti3)
 		display = None
 		manufacturer = None
 		for option in options_colprof:
@@ -6663,19 +6663,46 @@ class MainFrame(BaseFrame):
 					 dlg.panel_type_ctrl):
 			if ctrl.IsEnabled() and ctrl.GetStringSelection():
 				tech.append(ctrl.GetStringSelection())
-		if spectro_ti3 and not colorimeter_ti3:
+		if reference_ti3 and not colorimeter_ti3:
 			args += ["-T", safe_str(" ".join(tech), "UTF-8")]
 		if result != wx.ID_OK:
 			return
+		if reference_ti3 and colorimeter_ti3:
+			# If one of our measurement files has more patches than the other,
+			# use device (RGB) triplets of the other as a guide and try to
+			# make them the same size by selecting a subset of the larger one.
+			# This also makes the order of rows exactly the same, ordering by
+			# device value (RGB) triplets.
+			reference_patchcount = reference_ti3.queryv1("NUMBER_OF_SETS")
+			colorimeter_patchcount = colorimeter_ti3.queryv1("NUMBER_OF_SETS")
+			if reference_patchcount > colorimeter_patchcount:
+				cgats1 = reference_ti3
+				cgats2 = colorimeter_ti3
+			else:
+				cgats1 = colorimeter_ti3
+				cgats2 = reference_ti3
+			cgatsnew = CGATS.CGATS("BEGIN_DATA\nEND_DATA")
+			cgatsnew.DATA_FORMAT = cgats1.queryv1("DATA_FORMAT")
+			data = cgats1.queryv1("DATA")
+			for i, patch in cgats2.queryv1("DATA").iteritems():
+				item = data.queryi1({"RGB_R": patch["RGB_R"],
+									 "RGB_G": patch["RGB_G"],
+									 "RGB_B": patch["RGB_B"]})
+				if item:
+					cgatsnew.DATA.add_data(item)
+			if reference_patchcount > colorimeter_patchcount:
+				reference_ti3.queryi1("DATA").DATA = cgatsnew.DATA
+			else:
+				colorimeter_ti3.queryi1("DATA").DATA = cgatsnew.DATA
 		# Prepare our files
 		cwd = self.worker.create_tempdir()
 		ti3_tmp_names = []
-		if spectro_ti3:
-			shutil.copyfile(spectro_ti3.filename, os.path.join(cwd, 'spectro.ti3'))
-			ti3_tmp_names.append('spectro.ti3')
+		if reference_ti3:
+			reference_ti3.write(os.path.join(cwd, 'reference.ti3'))
+			ti3_tmp_names.append('reference.ti3')
 		if colorimeter_ti3:
 			# Create CCMX
-			shutil.copyfile(colorimeter_ti3.filename, os.path.join(cwd, 'colorimeter.ti3'))
+			colorimeter_ti3.write(os.path.join(cwd, 'colorimeter.ti3'))
 			ti3_tmp_names.append('colorimeter.ti3')
 			name = "correction"
 			ext = ".ccmx"
@@ -6697,12 +6724,12 @@ class MainFrame(BaseFrame):
 			cgatsfile = open(source, "rb")
 			cgats = universal_newlines(cgatsfile.read())
 			cgatsfile.close()
-			if (spectro_ti3[0].get("TARGET_INSTRUMENT") and
+			if (reference_ti3[0].get("TARGET_INSTRUMENT") and
 				not re.search('\nREFERENCE\s+".+?"\n', cgats)):
 				# By default, CCSS files don't contain reference instrument
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "REFERENCE"\nREFERENCE "%s"\\1' %
-							   spectro_ti3[0].get("TARGET_INSTRUMENT"), cgats)
+							   reference_ti3[0].get("TARGET_INSTRUMENT"), cgats)
 			if not re.search('\nTECHNOLOGY\s+".+?"\n', cgats):
 				# By default, CCMX files don't contain technology string
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
