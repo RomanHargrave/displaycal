@@ -8547,7 +8547,7 @@ class MainFrame(BaseFrame):
 						if o[0] == "X":
 							o = o.split(None, 1)
 							ccmx = o[-1][1:-1]
-							if not os.path.abspath(ccmx):
+							if not os.path.isabs(ccmx):
 								ccmx = os.path.join(os.path.dirname(path), ccmx)
 							if getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] == "AUTO":
 								ccmx = "AUTO:" + ccmx
