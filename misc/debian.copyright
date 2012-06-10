@@ -18,13 +18,9 @@ Files: dispcalGUI/lang/it.json
 Copyright: 2008-${YEAR}, Tommaso Schiavinotto <mynos_main@yahoo.it>
 License: GPL-3+
 
-Files: dispcalGUI/theme/icons/*/*.png
+Files: dispcalGUI/theme/icons/16x16/dialog-information.png dispcalGUI/theme/icons/16x16/dialog-warning.png dispcalGUI/theme/icons/16x16/document-open.png dispcalGUI/theme/icons/16x16/edit-delete.png dispcalGUI/theme/icons/16x16/install.png dispcalGUI/theme/icons/16x16/media-floppy.png dispcalGUI/theme/icons/16x16/stock_brightness.png dispcalGUI/theme/icons/16x16/stock_contrast.png dispcalGUI/theme/icons/16x16/stock_filters-pop-art.png dispcalGUI/theme/icons/16x16/stock_lock.png dispcalGUI/theme/icons/16x16/stock_lock-open.png dispcalGUI/theme/icons/16x16/stock_refresh.png dispcalGUI/theme/icons/16x16/web.png dispcalGUI/theme/icons/32x32/dialog-error.png dispcalGUI/theme/icons/32x32/dialog-information.png dispcalGUI/theme/icons/32x32/dialog-question.png dispcalGUI/theme/icons/32x32/dialog-warning.png dispcalGUI/theme/icons/32x32/window-center.png dispcalGUI/theme/icons/32x32/zoom-best-fit.png dispcalGUI/theme/icons/32x32/zoom-in.png dispcalGUI/theme/icons/32x32/zoom-original.png dispcalGUI/theme/icons/32x32/zoom-out.png
 Copyright: 2008, Amazigh Aneglus <aneglus@gmail.com>
 License: GPL-2+
-
-Files: dispcalGUI/theme/icons/*/dispcalGUI.png
-Copyright: 2008-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
-License: GPL-3+
 
 Files: theme/jquery.js
 Copyright: 2010-${YEAR}, the jQuery Project
