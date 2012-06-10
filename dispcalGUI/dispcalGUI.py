@@ -5830,7 +5830,7 @@ class MainFrame(BaseFrame):
 		self.Show(start_timers=True)
 		if is_ccxx_testchart():
 			# Restore calibration after measuring CCXX testcahrt
-			self.load_cal() or self.load_display_profile_cal()
+			self.load_cal(silent=True) or self.load_display_profile_cal()
 		self.restore_measurement_mode()
 		self.restore_testchart()
 	
