@@ -26,15 +26,15 @@ Files: dispcalGUI/theme/icons/*/dispcalGUI.png
 Copyright: 2008-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
 License: GPL-3+
 
-Files: theme/jquery.min.js
+Files: theme/jquery.js
 Copyright: 2010-${YEAR}, the jQuery Project
 License: MIT-style
 
-Files: theme/jquery.localscroll-min.js
+Files: theme/jquery.localscroll.js
 Copyright: 2007-${YEAR}, Ariel Flesler
 License: MIT-style
 
-Files: theme/jquery.scrollTo-min.js
+Files: theme/jquery.scrollTo.js
 Copyright: 2007-${YEAR}, Ariel Flesler
 License: MIT-style
 
