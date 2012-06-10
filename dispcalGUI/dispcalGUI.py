@@ -5820,7 +5820,18 @@ class MainFrame(BaseFrame):
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
 		elif is_ccxx_testchart():
-			wx.CallAfter(self.create_colorimeter_correction_handler)
+			try:
+				cgats = CGATS.CGATS(os.path.join(getcfg("measurement.save_path"),
+												 getcfg("measurement.name.expanded"),
+												 getcfg("measurement.name.expanded")) + ".ti3")
+			except Exception, exception:
+				wx.CallAfter(show_result_dialog, exception, self)
+			else:
+				if cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "YES":
+					setcfg("last_reference_ti3_path", cgats.filename)
+				else:
+					setcfg("last_colorimeter_ti3_path", cgats.filename)
+				wx.CallAfter(self.create_colorimeter_correction_handler)
 		else:
 			wx.CallAfter(self.just_measure_show_result, 
 						 os.path.join(getcfg("profile.save_path"), 
