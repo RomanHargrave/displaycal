@@ -6556,20 +6556,21 @@ class MainFrame(BaseFrame):
 							break
 						reference_ti3 = cgats
 						setcfg("last_reference_ti3_path", path)
-						spectral = True
-						# Ask if user wants to create CCSS
-						dlg = ConfirmDialog(self, 
-											msg=lang.getstr("create_ccss_or_ccmx"), 
-											ok=lang.getstr("CCSS"), 
-											cancel=lang.getstr("cancel"), 
-											alt=lang.getstr("CCMX"),
-											bitmap=geticon(32, "dialog-information"))
-						result = dlg.ShowModal()
-						dlg.Destroy()
-						if result == wx.ID_OK:
-							break
-						elif result == wx.ID_CANCEL:
-							return
+						if cgats.queryv1("SPECTRAL_BANDS"):
+							spectral = True
+							# Ask if user wants to create CCSS
+							dlg = ConfirmDialog(self, 
+												msg=lang.getstr("create_ccss_or_ccmx"), 
+												ok=lang.getstr("CCSS"), 
+												cancel=lang.getstr("cancel"), 
+												alt=lang.getstr("CCMX"),
+												bitmap=geticon(32, "dialog-information"))
+							result = dlg.ShowModal()
+							dlg.Destroy()
+							if result == wx.ID_OK:
+								break
+							elif result == wx.ID_CANCEL:
+								return
 					elif cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "YES":
 						if reference_ti3:
 							# We already have a reference ti3
