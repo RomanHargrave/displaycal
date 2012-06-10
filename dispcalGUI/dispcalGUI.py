@@ -135,8 +135,9 @@ from worker import (Error, FilteredStream, LineCache, Worker, check_cal_isfile,
 					check_create_dir, check_file_isfile, check_profile_isfile, 
 					check_set_argyll_bin, get_argyll_util, get_options_from_cal,
 					get_options_from_profile, get_options_from_ti3,
-					make_argyll_compatible_path, parse_argument_string, 
-					printcmdline, set_argyll_bin, show_result_dialog)
+					make_argyll_compatible_path, normalize_manufacturer_name,
+					parse_argument_string, printcmdline, set_argyll_bin,
+					show_result_dialog)
 try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
@@ -6458,25 +6459,25 @@ class MainFrame(BaseFrame):
 			self.set_testchart(get_ccxx_testchart())
 			self.measure_handler()
 			return
+		ccxx = CGATS.CGATS(get_ccxx_testchart())
 		cgats_list = []
 		reference_ti3 = None
 		colorimeter_ti3 = None
 		spectral = False
-		defaultDir, defaultFile = get_verified_path("last_ti3_path")
 		for n in (0, 1):
 			path = None
-			if n < 1:
-				msg = lang.getstr("measurement_file.choose")
+			if reference_ti3:
+				defaultDir, defaultFile = get_verified_path("last_colorimeter_ti3_path")
+				msg = lang.getstr("measurement_file.choose.colorimeter")
 			else:
-				if reference_ti3:
-					msg = lang.getstr("measurement_file.choose.colorimeter")
-				else:
-					msg = lang.getstr("measurement_file.choose.reference")
+				defaultDir, defaultFile = get_verified_path("last_reference_ti3_path")
+				msg = lang.getstr("measurement_file.choose.reference")
 			dlg = wx.FileDialog(self, 
 								msg,
 								defaultDir=defaultDir,
 								defaultFile=defaultFile,
-								wildcard=lang.getstr("filetype.ti3") + "|*.ti3", 
+								wildcard=lang.getstr("filetype.ti3") +
+										 "|*.ti3;*.icm;*.icc", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
@@ -6484,10 +6485,47 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if path:
 				try:
-					cgats = CGATS.CGATS(path)
+					if os.path.splitext(path.lower())[1] in (".icm", ".icc"):
+						profile = ICCP.ICCProfile(path)
+						cgats = self.worker.ti1_lookup_to_ti3(ccxx, profile,
+															  pcs="x",
+															  absolute=True)[1]
+						cgats.add_keyword("DATA_SOURCE",
+										  profile.tags.get("meta",
+														   {}).get("DATA_source",
+																   {}).get("value",
+																		   "unknown").upper())
+						cgats.add_keyword("TARGET_INSTRUMENT",
+										  profile.tags.get("meta",
+														   {}).get("MEASUREMENT_device",
+																   {}).get("value",
+																		   cgats.DATA_SOURCE).upper())
+						spectral = "YES" if instruments.get(remove_vendor_names(cgats.TARGET_INSTRUMENT),
+															{}).get("spectral", False) else "NO"
+						cgats.add_keyword("INSTRUMENT_TYPE_SPECTRAL", spectral)
+						cgats.ARGYLL_COLPROF_ARGS = CGATS.CGATS()
+						cgats.ARGYLL_COLPROF_ARGS.key = "ARGYLL_COLPROF_ARGS"
+						cgats.ARGYLL_COLPROF_ARGS.parent = cgats
+						cgats.ARGYLL_COLPROF_ARGS.root = cgats
+						cgats.ARGYLL_COLPROF_ARGS.type = "SECTION"
+						display = profile.tags.get("meta",
+												   {}).get("EDID_model",
+														   {}).get("value",
+																   "").encode("UTF-7")
+						manufacturer = profile.tags.get("meta",
+												   {}).get("EDID_manufacturer",
+														   {}).get("value",
+																   "").encode("UTF-7")
+						cgats.ARGYLL_COLPROF_ARGS.add_data('-M "%s" -A "%s"' %
+														   (display,
+															manufacturer))
+						cgats = CGATS.CGATS(str(cgats))
+					else:
+						cgats = CGATS.CGATS(path)
 					if not cgats.queryv1("DATA"):
-						raise CGATS.CGATSError()
-				except CGATS.CGATSError, exception:
+						raise CGATS.CGATSError("Missing DATA")
+				except Exception, exception:
+					safe_print(exception)
 					InfoDialog(self,
 							   msg=lang.getstr("error.measurement.file_invalid", path), 
 							   ok=lang.getstr("ok"), 
@@ -6497,12 +6535,14 @@ class MainFrame(BaseFrame):
 					cgats_list.append(cgats)
 					# Check if measurement contains spectral values
 					# Check if instrument type is spectral
-					if cgats.queryv1("SPECTRAL_BANDS"):
+					if (cgats.queryv1("SPECTRAL_BANDS") or
+						cgats.queryv1("DATA_SOURCE") == "EDID"):
 						if reference_ti3:
 							# We already have a reference ti3
 							reference_ti3 = None
 							break
 						reference_ti3 = cgats
+						setcfg("last_reference_ti3_path", path)
 						spectral = True
 						# Ask if user wants to create CCSS
 						dlg = ConfirmDialog(self, 
@@ -6523,16 +6563,17 @@ class MainFrame(BaseFrame):
 							reference_ti3 = None
 							break
 						reference_ti3 = cgats
+						setcfg("last_reference_ti3_path", path)
 					elif cgats.queryv1("INSTRUMENT_TYPE_SPECTRAL") == "NO":
 						if colorimeter_ti3:
 							# We already have a colorimeter ti3
 							colorimeter_ti3 = None
 							break
 						colorimeter_ti3 = cgats
+						setcfg("last_colorimeter_ti3_path", path)
 			else:
 				# User canceled dialog
 				return
-		setcfg("last_ti3_path", cgats_list[-1].filename)
 		# Check if atleast one file has been measured with a reference
 		if not reference_ti3:
 			InfoDialog(self,
@@ -6556,7 +6597,6 @@ class MainFrame(BaseFrame):
 			colorimeter_new.DATA_FORMAT = colorimeter_ti3.queryv1("DATA_FORMAT")
 			data_reference = reference_ti3.queryv1("DATA")
 			data_colorimeter = colorimeter_ti3.queryv1("DATA")
-			ccxx = CGATS.CGATS(get_ccxx_testchart())
 			required = ccxx.queryv(("RGB_R", "RGB_G", "RGB_B"))
 			devicecombination2name = {"RGB_R=100 RGB_G=100 RGB_B=100": "white",
 									  "RGB_R=100 RGB_G=0 RGB_B=0": "red",
@@ -6589,13 +6629,6 @@ class MainFrame(BaseFrame):
 					return
 			reference_ti3.queryi1("DATA").DATA = reference_new.DATA
 			colorimeter_ti3.queryi1("DATA").DATA = colorimeter_new.DATA
-			#
-			instrument = colorimeter_ti3.queryv1("TARGET_INSTRUMENT")
-			if instrument:
-				instrument = safe_unicode(instrument, "UTF-8")
-			description = "%s & %s" % (instrument or 
-									   self.worker.get_instrument_name(),
-									   self.worker.get_display_name(True))
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
@@ -6608,11 +6641,25 @@ class MainFrame(BaseFrame):
 		options_dispcal, options_colprof = get_options_from_ti3(reference_ti3)
 		display = None
 		manufacturer = None
+		manufacturer_display = None
 		for option in options_colprof:
 			if option.startswith("M"):
 				display = option[1:].strip(' "')
 			elif option.startswith("A"):
 				manufacturer = option[1:].strip(' "')
+		if manufacturer and display:
+			manufacturer_display = " ".join([normalize_manufacturer_name(manufacturer),
+											 display])
+		elif display:
+			manufacturer_display = display
+		if len(cgats_list) == 2:
+			instrument = colorimeter_ti3.queryv1("TARGET_INSTRUMENT")
+			if instrument:
+				instrument = safe_unicode(instrument, "UTF-8")
+			description = "%s & %s" % (instrument or 
+									   self.worker.get_instrument_name(),
+									   manufacturer_display or
+									   self.worker.get_display_name(True))
 		args = []
 		# Allow use to alter description, display and instrument
 		dlg = ConfirmDialog(

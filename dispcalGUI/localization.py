@@ -48,8 +48,13 @@ def update_defaults():
 		"last_3dlut_path": os.path.join(expanduseru("~"), getstr("unnamed")),
 		"last_cal_path": os.path.join(storage, getstr("unnamed")),
 		"last_cal_or_icc_path": os.path.join(storage, getstr("unnamed")),
-		"last_filedialog_path": os.path.join(expanduseru("~"), getstr("unnamed")),
+		"last_colorimeter_ti3_path": os.path.join(expanduseru("~"),
+												  getstr("unnamed")),
+		"last_filedialog_path": os.path.join(expanduseru("~"),
+											 getstr("unnamed")),
 		"last_icc_path": os.path.join(storage, getstr("unnamed")),
+		"last_reference_ti3_path": os.path.join(expanduseru("~"),
+												getstr("unnamed")),
 		"last_ti1_path": os.path.join(storage, getstr("unnamed")),
 		"last_ti3_path": os.path.join(storage, getstr("unnamed"))
 	})
