@@ -6642,6 +6642,15 @@ class MainFrame(BaseFrame):
 					return
 			reference_ti3.queryi1("DATA").DATA = reference_new.DATA
 			colorimeter_ti3.queryi1("DATA").DATA = colorimeter_new.DATA
+			# If the reference comes from EDID, normalize luminance to Y=100
+			if reference_ti3.queryv1("DATA_SOURCE") == "EDID":
+				white = colorimeter_ti3.queryi1("DATA").queryi1({"RGB_R": 100,
+																 "RGB_G": 100,
+																 "RGB_B": 100})
+				white = " ".join([str(v) for v in (white["XYZ_X"],
+												   white["XYZ_Y"],
+												   white["XYZ_Z"])])
+				colorimeter_ti3.queryi1("DATA").LUMINANCE_XYZ_CDM2 = white
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
