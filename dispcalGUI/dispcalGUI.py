@@ -6683,6 +6683,9 @@ class MainFrame(BaseFrame):
 									   self.worker.get_instrument_name(),
 									   manufacturer_display or
 									   self.worker.get_display_name(True))
+		target_instrument = reference_ti3.queryv1("TARGET_INSTRUMENT")
+		if target_instrument:
+			description = "%s (%s)" % (description, target_instrument)
 		args = []
 		# Allow use to alter description, display and instrument
 		dlg = ConfirmDialog(
