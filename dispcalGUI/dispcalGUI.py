@@ -6436,7 +6436,7 @@ class MainFrame(BaseFrame):
 						  progress_msg=lang.getstr("colorimeter_correction.web_check"),
 						  stop_timers=False)
 	
-	def create_colorimeter_correction_handler(self, event):
+	def create_colorimeter_correction_handler(self, event=None):
 		"""
 		Create a CCSS or CCMX file from one or more .ti3 files
 		
