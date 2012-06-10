@@ -5819,6 +5819,8 @@ class MainFrame(BaseFrame):
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
+		elif is_ccxx_testchart():
+			wx.CallAfter(self.create_colorimeter_correction_handler)
 		else:
 			wx.CallAfter(self.just_measure_show_result, 
 						 os.path.join(getcfg("profile.save_path"), 
