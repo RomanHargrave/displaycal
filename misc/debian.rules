@@ -101,7 +101,7 @@ binary-arch: build install
 	dh_installinfo
 #	dh_undocumented
 	dh_installchangelogs
-	dh_pycentral
+	which dh_pycentral > /dev/null 2>&1 && dh_pycentral || dh_python2 --no-guessing-versions
 	dh_link
 	dh_strip
 	dh_compress

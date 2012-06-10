@@ -5,7 +5,7 @@ Version: ${VERSION}
 Binary: ${DEBPACKAGE}
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 Architecture: any
-Build-Depends: debhelper (>= 5.0.38), doc-base, gcc, python-dev, python-central (>= 0.5.6), libxinerama-dev, libxrandr-dev, libxxf86vm-dev
+Build-Depends: debhelper (>= 5.0.38), doc-base, gcc, python-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
 Files: 
  ffffffffffffffffffffffffffffffff 1 ${DEBPACKAGE}_${VERSION}.orig.tar.gz
  ffffffffffffffffffffffffffffffff 1 ${DEBPACKAGE}_${VERSION}-1.diff.tar.gz
