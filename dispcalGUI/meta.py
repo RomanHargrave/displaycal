@@ -22,8 +22,8 @@ else:
 	author = "Florian Höch"
 author_ascii = "Florian Hoech"
 author_email = "dispcalGUI@hoech.net"
-description = ("A graphical user interface for the Argyll CMS display "
-			   "calibration and profiling tools")
+description = ("A graphical front-end for display calibration and profiling "
+			   "using Argyll CMS")
 longdesc = "\n".join(["Calibrates and characterizes display devices using a hardware sensor,",
 					  "driven by the open source color management system Argyll CMS.",
 					  "Supports multi-display setups and a variety of available settings like ",

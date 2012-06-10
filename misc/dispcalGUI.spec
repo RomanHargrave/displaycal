@@ -1,34 +1,72 @@
+#
+# spec file for package dispcalGUI
+#
+# Copyright (c) ${YEAR} SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) ${YEAR} Florian Hoech
+#
+# All modifications and additions to the file contributed by third parties
+# remain the property of their copyright owners, unless otherwise agreed
+# upon. The license for this file, and modifications and additions to the
+# file, is the same license as for the pristine package itself (unless the
+# license for the pristine package is not an Open Source License, in which
+# case the license is the MIT License). An "Open Source License" is a
+# license that conforms to the Open Source Definition (Version 1.9)
+# published by the Open Source Initiative.
+
+# Please submit bugfixes or comments via http://bugs.opensuse.org/
+#
+
+
 %define numpy_version 1.0
 %define py_minversion ${PY_MINVERSION}
 %define py_maxversion ${PY_MAXVERSION}
 %define wx_minversion ${WX_MINVERSION}
-Summary: ${SUMMARY}
-Name: ${PACKAGE}
-Version: ${VERSION}
-Release: 1
-License: GPL
-Source: http://%{name}.hoech.net/%{name}-%version.tar.gz
-URL: http://dispcalgui.hoech.net/
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
+
+Summary:        ${SUMMARY}
+License:        GPL-3.0+
+Group:          Applications/Multimedia
+Name:           ${PACKAGE}
+Version:        ${VERSION}
+Release:        0
+Source0:        http://%{name}.hoech.net/download/%{name}-%version.tar.gz
+Source1:        copyright
+Url:            http://dispcalgui.hoech.net/
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %if 0%{?mandriva_version} > 0
-Group: Graphics
+BuildRequires:  gcc
+BuildRequires:  libpython-devel
+BuildRequires:  udev
 %ifarch x86_64
-BuildRequires: udev, gcc, libpython-devel, lib64xorg-x11-devel
+BuildRequires:  lib64xorg-x11-devel
 %else
-BuildRequires: udev, gcc, libpython-devel, libxorg-x11-devel
+BuildRequires:  libxorg-x11-devel
 %endif
-Requires: argyllcms, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires:       argyllcms
+Requires:       python-numpy >= %{numpy_version}
+Requires:       wxPythonGTK >= %{wx_minversion}
 %else
 %if 0%{?suse_version} > 0
-Group: Productivity/Graphics/Other
-BuildRequires: udev, update-desktop-files, gcc, python-devel, xorg-x11-devel
-Requires: argyllcms, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+BuildRequires:  gcc
+BuildRequires:  python-devel
+BuildRequires:  udev
+BuildRequires:  update-desktop-files
+BuildRequires:  xorg-x11-devel
+Requires:       argyllcms
+Requires:       python-numpy >= %{numpy_version}
+Requires:       python-wxGTK >= %{wx_minversion}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0
-Group: Applications/Multimedia
-BuildRequires: udev, gcc, python2-devel, libX11-devel, libXinerama-devel, libXrandr-devel, libXxf86vm-devel
-Requires: argyllcms, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
+BuildRequires:  gcc
+BuildRequires:  libX11-devel
+BuildRequires:  libXinerama-devel
+BuildRequires:  libXrandr-devel
+BuildRequires:  libXxf86vm-devel
+BuildRequires:  python2-devel
+BuildRequires:  udev
+Requires:       argyllcms
+Requires:       numpy >= %{numpy_version}
+Requires:       wxPython >= %{wx_minversion}
 %endif
 %endif
 %endif
@@ -95,19 +133,6 @@ for py in (glob.glob(os.path.join(mod, '*.py')),
 if [ -e "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}" ]; then
 	rm -rf "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}"
 fi
-# udev/hotplug
-mkdir -p "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb"
-# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-cp -f "misc/55-Argyll.rules" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/55-Argyll.rules"
-echo "/usr/share/dispcalGUI/usb/55-Argyll.rules">>INSTALLED_FILES
-# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-cp -f  "misc/45-Argyll.rules" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/45-Argyll.rules"
-echo "/usr/share/dispcalGUI/usb/45-Argyll.rules">>INSTALLED_FILES
-# USB using hotplug and Serial using udev (older versions of Linux)
-cp -f "misc/Argyll" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll"
-echo "/usr/share/dispcalGUI/usb/Argyll">>INSTALLED_FILES
-cp -f "misc/Argyll.usermap" "${RPM_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll.usermap"
-echo "/usr/share/dispcalGUI/usb/Argyll.usermap">>INSTALLED_FILES
 %if 0%{?suse_version} > 0
 # Update desktop files to prevent buildservice from complaining
 %suse_update_desktop_file %{name} 2DGraphics
@@ -139,9 +164,6 @@ f = open('INSTALLED_FILES', 'w')
 f.write('\n'.join(paths))
 f.close()"
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %files -f INSTALLED_FILES
 %defattr(-,root,root)
 %config /etc/xdg/autostart/z-%{name}-apply-profiles.desktop
@@ -158,5 +180,3 @@ ${POST}
 ${POSTUN}
 
 %changelog
-* ${DATE} ${MAINTAINER} <${MAINTAINER_EMAIL}>
-- Version ${VERSION}

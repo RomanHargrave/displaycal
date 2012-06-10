@@ -341,11 +341,16 @@ def setup():
 		 "buildservice" in sys.argv[1:]) and 
 		not help):
 		# Create control files
-		post = open(os.path.join(pydir, "util", "rpm_postinstall.sh"), "r").read()
-		postun = open(os.path.join(pydir, "util", "rpm_postuninstall.sh"), "r").read()
-		for tmpl_name in ("debian.changelog", "debian.control", "debian.copyright", 
-						  "debian.rules", "dispcalGUI.dsc", "dispcalGUI.spec", 
-						  os.path.join("obs-autopackage-deploy", "dispcalGUI.spec"), 
+		post = open(os.path.join(pydir, "util",
+								 "rpm_postinstall.sh"), "r").read().strip()
+		postun = open(os.path.join(pydir, "util",
+								   "rpm_postuninstall.sh"), "r").read().strip()
+		for tmpl_name in ("debian.changelog", "debian.control",
+						  "debian.copyright", "debian.rules",
+						  "dispcalGUI.changes", "dispcalGUI.dsc",
+						  "dispcalGUI.spec", 
+						  os.path.join("obs-autopackage-deploy",
+									   "dispcalGUI.spec"), 
 						  os.path.join("0install", "dispcalGUI.xml")):
 			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 			tmpl = codecs.open(tmpl_path, "r", "UTF-8")
@@ -360,6 +365,9 @@ def setup():
 					strftime("%a %b %d %Y",  # e.g. Tue Jul 06 2010
 							 gmtime(lastmod_time or 
 									os.stat(tmpl_path).st_mtime))),
+				("DATETIME", strftime("%a %b %d %H:%M:%S UTC %Y",  # e.g. Wed Jul 07 15:25:00 UTC 2010
+									  gmtime(lastmod_time or 
+											 os.stat(tmpl_path).st_mtime))),
 				("DEBPACKAGE", name.lower()),
 				("DEBDATETIME", strftime("%a, %d %b %Y %H:%M:%S ",  # e.g. Wed, 07 Jul 2010 15:25:00 +0100
 										 gmtime(lastmod_time or 

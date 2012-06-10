@@ -1,29 +1,61 @@
+#
+# spec file for package dispcalGUI
+#
+# Copyright (c) ${YEAR} SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) ${YEAR} Florian Hoech
+#
+# All modifications and additions to the file contributed by third parties
+# remain the property of their copyright owners, unless otherwise agreed
+# upon. The license for this file, and modifications and additions to the
+# file, is the same license as for the pristine package itself (unless the
+# license for the pristine package is not an Open Source License, in which
+# case the license is the MIT License). An "Open Source License" is a
+# license that conforms to the Open Source Definition (Version 1.9)
+# published by the Open Source Initiative.
+
+# Please submit bugfixes or comments via http://bugs.opensuse.org/
+#
+
+
 %define numpy_version 1.0
 %define py_minversion ${PY_MINVERSION}
 %define py_maxversion ${PY_MAXVERSION}
 %define wx_minversion ${WX_MINVERSION}
-Summary: ${SUMMARY}
-Name: ${PACKAGE}
-Version: ${VERSION}
-Release: 1
-License: GPL
-Source: http://%{name}.hoech.net/%{name}-%version.tar.gz
-URL: http://dispcalgui.hoech.net/
-BuildArchitectures: noarch
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildRequires: autopackage-devel, python >= %{py_minversion}, python < 3.0
+
+Summary:        ${SUMMARY}
+License:        GPL-3.0+
+Group:          Applications/Multimedia
+Name:           ${PACKAGE}
+Version:        ${VERSION}
+Release:        0
+Source:         http://%{name}.hoech.net/download/%{name}-%version.tar.gz
+Url:            http://dispcalgui.hoech.net/
+BuildArch:      noarch
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildRequires:  autopackage-devel
+BuildRequires:  python < 3.0
+BuildRequires:  python >= %{py_minversion}
 %if 0%{?mandriva_version} > 0
-Group: Graphics
-Requires: autopackage, python >= %{py_minversion}, python < 3.0, wxPythonGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires:       autopackage
+Requires:       python < 3.0
+Requires:       python >= %{py_minversion}
+Requires:       python-numpy >= %{numpy_version}
+Requires:       wxPythonGTK >= %{wx_minversion}
 %else
 %if 0%{?suse_version} > 0
-Group: Productivity/Graphics/Other
-Requires: autopackage, python >= %{py_minversion}, python < 3.0, python-wxGTK >= %{wx_minversion}, python-numpy >= %{numpy_version}
+Requires:       autopackage
+Requires:       python < 3.0
+Requires:       python >= %{py_minversion}
+Requires:       python-numpy >= %{numpy_version}
+Requires:       python-wxGTK >= %{wx_minversion}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0
-Group: Applications/Multimedia
-Requires: autopackage, python >= %{py_minversion}, python < 3.0, wxPython >= %{wx_minversion}, numpy >= %{numpy_version}
+Requires:       autopackage
+Requires:       numpy >= %{numpy_version}
+Requires:       python < 3.0
+Requires:       python >= %{py_minversion}
+Requires:       wxPython >= %{wx_minversion}
 %endif
 %endif
 %endif
@@ -63,5 +95,3 @@ rm -rf $RPM_BUILD_ROOT
 /var/lib/packages/dispcalGUI-*.package.meta
 
 %changelog
-* ${DATE} ${MAINTAINER} <${MAINTAINER_EMAIL}>
-- Version ${VERSION}

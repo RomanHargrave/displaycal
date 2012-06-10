@@ -1,0 +1,28 @@
+-------------------------------------------------------------------
+${DATETIME} - ${MAINTAINER_EMAIL}
+
+- update to ${VERSION}: see README.html#changelog-${VERSION}
+
+-------------------------------------------------------------------
+Thu Jun  9 12:47:00 UTC 2012 - dispcalGUI@hoech.net
+
+- removed all udev stuff as it should already be handled by the
+  Argyll dependency
+
+-------------------------------------------------------------------
+Thu May 10 12:28:37 UTC 2012 - coolo@suse.com
+
+- ran format_spec_file service to give the spec file a valid
+  license (it already had a copyright)
+
+-------------------------------------------------------------------
+Wed May  2 13:46:20 UTC 2012 - cfarrell@suse.com
+
+- license update: GPL-3.0+
+  Use SPDX syntax and always specify the version of the GPL that applies
+
+-------------------------------------------------------------------
+Thu Apr  5 17:19:55 UTC 2012 - dispcalGUI@hoech.net
+
+- added .changes file
+
