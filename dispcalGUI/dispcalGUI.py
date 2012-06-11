@@ -6400,7 +6400,7 @@ class MainFrame(BaseFrame):
 			else:
 				index = self.ccmx_cached_descriptors.values().index(
 					self.colorimeter_correction_matrix_ctrl.GetStringSelection().split(": ", 1)[1])
-				path = self.ccmx_cached_paths[index]
+				path = self.ccmx_cached_descriptors.keys()[index]
 				ccmx = ["", path]
 			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 			if ccmx[0] == "AUTO":
