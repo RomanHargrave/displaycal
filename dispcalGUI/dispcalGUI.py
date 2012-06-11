@@ -2601,7 +2601,9 @@ class MainFrame(BaseFrame):
 				previously cached result if available
 		
 		"""
-		items = [lang.getstr("colorimeter_correction.file.none"), lang.getstr("auto")]
+		items = [lang.getstr("colorimeter_correction.file.none"),
+				 lang.getstr("auto")]
+		self.ccmx_item_paths = []
 		index = 0
 		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 		if force or not getattr(self, "ccmx_cached_paths", None):
@@ -2641,6 +2643,7 @@ class MainFrame(BaseFrame):
 				items.append("%s: %s" %
 							 (types.get(os.path.splitext(path)[1].lower()[1:]),
 							  desc))
+				self.ccmx_item_paths.append(path)
 		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
@@ -2665,6 +2668,7 @@ class MainFrame(BaseFrame):
 				items.insert(2, "%s: %s" %
 								(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
 								 desc))
+				self.ccmx_item_paths.insert(0, path)
 				if ccmx[0] != "AUTO":
 					index = 2
 		if ccmx[0] == "AUTO":
@@ -6398,9 +6402,8 @@ class MainFrame(BaseFrame):
 				# Auto
 				ccmx = ["AUTO", ""]
 			else:
-				index = self.ccmx_cached_descriptors.values().index(
-					self.colorimeter_correction_matrix_ctrl.GetStringSelection().split(": ", 1)[1])
-				path = self.ccmx_cached_descriptors.keys()[index]
+				path = self.ccmx_item_paths[
+					self.colorimeter_correction_matrix_ctrl.GetSelection() - 2]
 				ccmx = ["", path]
 			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 			if ccmx[0] == "AUTO":
