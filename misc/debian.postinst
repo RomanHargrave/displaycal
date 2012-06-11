@@ -16,11 +16,11 @@ if [ -e "/etc/udev/rules.d" ]; then
 		fi
 	)
 	# Reload udev rules
-	if [ -e "/sbin/udevadm"]; then
+	if [ -e "/sbin/udevadm" ]; then
 		/sbin/udevadm control --reload-rules
 	fi
 else
-	if [ -e "/etc/hotplug"]; then
+	if [ -e "/etc/hotplug" ]; then
 		# USB using hotplug and Serial using udev (older versions of Linux)
 		if [ ! -e "/etc/hotplug/usb/Argyll" ]; then
 			ln -s "/usr/share/dispcalGUI/usb/Argyll" "/etc/hotplug/usb/Argyll"

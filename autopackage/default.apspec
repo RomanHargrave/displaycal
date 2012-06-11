@@ -203,11 +203,11 @@ if [ `whoami` = "root" ]; then
 			fi
 		)
 		# Reload udev rules
-		if [ -e "/sbin/udevadm"]; then
+		if [ -e "/sbin/udevadm" ]; then
 			/sbin/udevadm control --reload-rules
 		fi
 	else
-		if [ -e "/etc/hotplug"]; then
+		if [ -e "/etc/hotplug" ]; then
 			# USB using hotplug and Serial using udev (older versions of Linux)
 			outputStatus "Installing hotplug scripts..."
 			if [ ! -e "/etc/hotplug/usb/Argyll" ]; then
