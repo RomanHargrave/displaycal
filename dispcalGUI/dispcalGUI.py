@@ -2668,7 +2668,7 @@ class MainFrame(BaseFrame):
 				items.insert(2, "%s: %s" %
 								(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
 								 desc))
-				self.ccmx_item_paths.insert(0, path)
+				self.ccmx_item_paths.insert(0, ccmx[1])
 				if ccmx[0] != "AUTO":
 					index = 2
 		if ccmx[0] == "AUTO":
