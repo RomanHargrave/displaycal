@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from ctypes import Structure, c_char_p, c_int, c_uint
