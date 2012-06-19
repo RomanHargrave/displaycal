@@ -2016,7 +2016,7 @@ class Worker(object):
 					else:
 						self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
 														**kwargs)
-						if debug or (test and not "-?" in args):
+						if debug >= 9 or (test and not "-?" in args):
 							self.subprocess.interact()
 					self.subprocess.logfile_read = logfile
 					if self.subprocess.isalive():

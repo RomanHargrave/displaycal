@@ -8349,7 +8349,7 @@ class MainFrame(BaseFrame):
 		return False
 
 	def plugplay_timer_handler(self, event):
-		if debug:
+		if debug >= 9:
 			safe_print("[D] plugplay_timer_handler")
 		if (getcfg("enumerate_ports.auto") and not self.worker.is_working() and
 			(not hasattr(self, "tcframe") or 
