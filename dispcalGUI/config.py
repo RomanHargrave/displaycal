@@ -615,7 +615,11 @@ def getcfg(name, fallback=True):
 				value = "h"
 			elif name == "trc.type" and getcfg("trc") in valid_values["trc"]:
 				value = "g"
-			elif value and name.endswith("file") and not os.path.exists(value):
+			elif (value and name.endswith("file") and
+				  name != "colorimeter_correction_matrix_file" and
+				  not os.path.exists(value)):
+				  # colorimeter_correction_matrix_file is special because it's
+				  # not (only) a path
 				if debug:
 					print "%s does not exist: %s" % (name, value),
 				if value.split(os.path.sep)[-3:-2] == [appname] and (
