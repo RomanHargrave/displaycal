@@ -4,7 +4,12 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
 - update to ${VERSION}: see README.html#changelog-${VERSION}
 
 -------------------------------------------------------------------
-Thu Jun  9 12:47:00 UTC 2012 - dispcalGUI@hoech.net
+Mon Jun 18 19:13:00 UTC 2012 - dispcalGUI@hoech.net
+
+- define RPM group per-distro as before format_spec_file
+
+-------------------------------------------------------------------
+Sat Jun  9 12:47:00 UTC 2012 - dispcalGUI@hoech.net
 
 - removed all udev stuff as it should already be handled by the
   Argyll dependency

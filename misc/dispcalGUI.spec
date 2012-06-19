@@ -24,7 +24,6 @@
 
 Summary:        ${SUMMARY}
 License:        GPL-3.0+
-Group:          Applications/Multimedia
 Name:           ${PACKAGE}
 Version:        ${VERSION}
 Release:        0
@@ -33,6 +32,7 @@ Source1:        copyright
 Url:            http://dispcalgui.hoech.net/
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %if 0%{?mandriva_version} > 0
+Group:          Graphics
 BuildRequires:  gcc
 BuildRequires:  libpython-devel
 BuildRequires:  udev
@@ -46,6 +46,7 @@ Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPythonGTK >= %{wx_minversion}
 %else
 %if 0%{?suse_version} > 0
+Group:          Productivity/Graphics/Other
 BuildRequires:  gcc
 BuildRequires:  python-devel
 BuildRequires:  udev
@@ -57,6 +58,7 @@ Requires:       python-wxGTK >= %{wx_minversion}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0
+Group:          Applications/Multimedia
 BuildRequires:  gcc
 BuildRequires:  libX11-devel
 BuildRequires:  libXinerama-devel
@@ -76,9 +78,6 @@ ${DESC}
 
 %prep
 %setup
-# Make files executable
-chmod +x scripts/*
-chmod +x misc/Argyll
 # Convert line endings in LICENSE.txt
 python -c "f = open('LICENSE.txt', 'rb')
 d = f.read().replace('\r\n', '\n').replace('\r', '\n')
@@ -139,6 +138,7 @@ fi
 %suse_update_desktop_file "%{buildroot}/etc/xdg/autostart/z-%{name}-apply-profiles.desktop"
 %endif
 # Remove unused files from list of installed files and add directories
+# as well as mark files as executable where needed
 python -c "import os
 f = open('INSTALLED_FILES')
 paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in 
@@ -146,12 +146,38 @@ paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in
 				not '/man/' in path, 
 				f.readlines())]
 f.close()
+executables = ['argyll_RGB2XYZ.py',
+			   'ccmx.py',
+			   'colord.py',
+			   'colormath.py',
+			   'dispcalGUI.py',
+			   'encodedstdio.py',
+			   'jspacker.py',
+			   'main.py',
+			   'postinstall.py',
+			   'report.py',
+			   'safe_print.py',
+			   'setup.py',
+			   'util_str.py',
+			   'util_win.py',
+			   'wxDisplayAdjustmentFrame.py',
+			   'wxLUTViewer.py',
+			   'wxMeasureFrame.py',
+			   'wxProfileInfo.py',
+			   'wxTestchartEditor.py',
+			   'wxwindows.py',
+			   'xrandr.py',
+			   'Argyll',
+			   'dispcalGUI',
+			   'dispcalGUI-apply-profiles']
 for path in list(paths):
 	if path.endswith('.py') and %{?mandriva_version}.0 < 201010:
 		# Mandriva 2010.1 got rid of byte-compilation
 		paths.append(path + 'c')
 		if 0%{?fedora_version} > 0 or 0%{?rhel_version} > 0 or 0%{?centos_version} > 0:
 			paths.append(path + 'o')
+	if os.path.basename(path) in executables:
+		paths.append('%attr(755, root, root) ' + path)
 	while True:
 		path = os.path.dirname(path)
 		if os.path.isdir(path):
