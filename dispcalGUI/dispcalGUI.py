@@ -8237,7 +8237,8 @@ class MainFrame(BaseFrame):
 		else:
 			self.restore_measurement_mode()
 		self.update_colorimeter_correction_matrix_ctrl()
-		self.update_main_controls()
+		if not self.updatingctrls:
+			self.update_main_controls()
 
 	def get_testchart_names(self, path=None):
 		testchart_names = []
