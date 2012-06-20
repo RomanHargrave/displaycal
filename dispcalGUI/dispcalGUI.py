@@ -2779,6 +2779,7 @@ class MainFrame(BaseFrame):
 				profile_path = filename + profile_ext
 			profile_exists = os.path.exists(profile_path)
 		else:
+			filename = None
 			if cal in self.recent_cals:
 				# The case-sensitive index could fail because of 
 				# case insensitive file systems, e.g. if the 
