@@ -2743,14 +2743,7 @@ class MainFrame(BaseFrame):
 		
 		self.panel.Thaw()
 
-	def update_controls(self, update_profile_name=True, update_ccmx_items=True,
-						silent=False):
-		""" Update all controls based on configuration 
-		and available Argyll functionality. """
-		self.updatingctrls = True
-		
-		self.panel.Freeze()
-		
+	def update_calibration_file_ctrl(self, silent=False):
 		cal = getcfg("calibration.file")
 		
 		if cal:
@@ -2805,6 +2798,19 @@ class MainFrame(BaseFrame):
 			setcfg("calibration.update", 0)
 			profile_path = None
 			profile_exists = False
+		
+		return cal, filename, profile_path, profile_exists
+
+	def update_controls(self, update_profile_name=True, update_ccmx_items=True,
+						silent=False):
+		""" Update all controls based on configuration 
+		and available Argyll functionality. """
+		self.updatingctrls = True
+		
+		self.panel.Freeze()
+		
+		(cal, filename, profile_path,
+		 profile_exists) = self.update_calibration_file_ctrl(silent)
 		self.delete_calibration_btn.Enable(bool(cal) and 
 										   cal not in self.presets)
 		self.install_profile_btn.Enable(profile_exists and
@@ -4112,14 +4118,12 @@ class MainFrame(BaseFrame):
 							except Exception, exception:
 								safe_print(exception)
 						setcfg("calibration.file", profile_path)
-						wx.CallAfter(self.update_controls, 
-									 update_profile_name=False)
+						wx.CallAfter(self.update_calibration_file_ctrl)
 						setcfg("last_cal_or_icc_path", profile_path)
 						setcfg("last_icc_path", profile_path)
 				else:
 					setcfg("calibration.file", cal)
-					wx.CallAfter(self.update_controls, 
-								 update_profile_name=False)
+					wx.CallAfter(self.update_calibration_file_ctrl)
 					setcfg("last_cal_or_icc_path", cal)
 		return result
 
