@@ -1026,7 +1026,8 @@ class LUT3DFrame(BaseFrame):
 									 progress_msg=lang.getstr("3dlut.create"))
 	
 	def lut3d_create_producer(self, profile_in, profile_out):
-		apply_cal = getcfg("3dlut.output.profile.apply_cal")
+		apply_cal = ("vcgt" in profile_out.tags and
+					 getcfg("3dlut.output.profile.apply_cal"))
 		intent = {0: "a",
 				  1: "r",
 				  2: "p",
