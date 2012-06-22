@@ -10,6 +10,7 @@ import codecs
 import glob
 import math
 import os
+import re
 import shutil
 import subprocess as sp
 import sys
@@ -316,11 +317,12 @@ def setup():
 								os.stat(readme_template_path).st_mtime)) +
 						 ("+" if timezone < 0 else "-") +
 						 strftime("%H:%M", gmtime(abs(timezone)))),
-			("VERSION", version),
-			("VERSION_LIN", version_lin),
-			("VERSION_MAC", version_mac),
-			("VERSION_WIN", version_win),
-			("VERSION_SRC", version_src)
+			("VERSION", re.sub("(?:\.0){2}$", "", version)),
+			("VERSION_LIN", re.sub("(?:\.0){2}$", "", version_lin)),
+			("VERSION_MAC", re.sub("(?:\.0){2}$", "", version_mac)),
+			("VERSION_WIN", re.sub("(?:\.0){2}$", "", version_win)),
+			("VERSION_SRC", re.sub("(?:\.0){2}$", "", version_src)),
+			("YEAR", strftime("%Y", gmtime()))
 		]:
 			readme_template_html = readme_template_html.replace("${%s}" % key, 
 																val)
