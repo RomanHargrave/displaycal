@@ -78,7 +78,7 @@ def get_default_profile(device_id):
 	# Get default profile
 	profile = device.get_default_profile()
 	if not profile:
-		# No assigned device
+		# No assigned profile
 		return
 
 	# Connect to profile
@@ -118,13 +118,17 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 		profile_installname = profile_installname.encode('UTF-8')
 
 	# Query colord for newly added profile
-	for i in xrange(int(timeout / .05)):
-		profile = client.find_profile_by_filename_sync(profile_installname,
-													   cancellable)
-		if profile:
-			break
+	for i in xrange(int(timeout / .5)):
+		try:
+			profile = client.find_profile_by_filename_sync(profile_installname,
+														   cancellable)
+			if profile:
+				break
+		except Exception, exception:
+			# Profile not found
+			pass
 		# Give colord time to pick up the profile
-		sleep(.05)
+		sleep(.5)
 
 	if not profile:
 		raise CDError("Querying for profile %r returned no result for %s secs" %
