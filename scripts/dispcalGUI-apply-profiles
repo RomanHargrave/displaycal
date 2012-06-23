@@ -83,27 +83,32 @@ def apply_profiles():
 								 "-y", str(worker.display_rects[i][1])], 
 								capture_output=True, skip_scripts=True, 
 								silent=False)
-		if dispwin and (sys.platform == "win32" or not oyranos_monitor or
-						not display_conf_oy_compat or not xcalib):
+		if dispwin:
 			profile_arg = worker.get_dispwin_display_profile_argument(i)
-			worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
-									  profile_arg], 
-							capture_output=True, skip_scripts=True, 
-							silent=False)
-			errortxt = "\n".join(worker.errors).strip()
-			if errortxt and (not "using linear" in errortxt or 
-							 len(errortxt.split("\n")) > 1):
-				if "Failed to get the displays current ICC profile" in errortxt:
-					# Maybe just not configured
+			if (sys.platform == "win32" or not oyranos_monitor or
+				not display_conf_oy_compat or not xcalib or profile_arg == "-L"):
+				# Only need to run dispwin if under Windows, or if nothing else
+				# has already taken care of display profile and vcgt loading
+				# (e.g. oyranos-monitor with xcalib, or colord)
+				worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
+										  profile_arg], 
+								capture_output=True, skip_scripts=True, 
+								silent=False)
+				errortxt = "\n".join(worker.errors).strip()
+				if errortxt and ((not "using linear" in errortxt and
+								  not "assuming linear" in errortxt) or 
+								 len(errortxt.split("\n")) > 1):
+					if "Failed to get the displays current ICC profile" in errortxt:
+						# Maybe just not configured
+						continue
+					elif sys.platform == "win32" or \
+					   "Failed to set VideoLUT" in errortxt or \
+					   "We don't have access to the VideoLUT" in errortxt:
+						errstr = lang.getstr("calibration.load_error")
+					else:
+						errstr = lang.getstr("profile.load_error")
+					errors.append(": ".join([display, errstr]))
 					continue
-				elif sys.platform == "win32" or \
-				   "Failed to set VideoLUT" in errortxt or \
-				   "We don't have access to the VideoLUT" in errortxt:
-					errstr = lang.getstr("calibration.load_error")
-				else:
-					errstr = lang.getstr("profile.load_error")
-				errors.append(": ".join([display, errstr]))
-				continue
 			if (config.getcfg("profile_loader.verify_calibration")
 				or "--verify" in sys.argv[1:]):
 				# Verify the calibration was actually loaded
