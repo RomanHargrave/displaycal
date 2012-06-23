@@ -2353,13 +2353,16 @@ class Worker(object):
 	def install_profile(self, profile_path, capture_output=True,
 						skip_scripts=False, silent=False):
 		result = True
+		colord_install = False
 		gcm_import = False
+		oy_install = False
 		if sys.platform not in ("darwin", "win32"):
 			device_id = self.get_device_id()
 			if device_id:
 				# FIXME: This can block, so should really be run in separate
 				# thread with progress dialog in 'indeterminate' mode
 				result = self._install_profile_colord(profile_path, device_id)
+				colord_install = result
 			if (not device_id or not colord or
 				isinstance(result, Exception) or not result):
 				gcm_import = bool(which("gcm-import"))
@@ -2373,9 +2376,18 @@ class Worker(object):
 			result = self._install_profile_oy(profile_path, profile_name,
 											  capture_output, skip_scripts,
 											  silent)
+			oy_install = result
 		if not isinstance(result, Exception) and result:
 			result = self._install_profile_argyll(profile_path, capture_output,
 												  skip_scripts, silent)
+			if isinstance(result, Exception) or not result:
+				# Fedora's Argyll cannot install profiles using dispwin
+				# Check if profile installation via colord or oyranos-monitor
+				# was successful and continue
+				if not isinstance(colord_install, Exception) and colord_install:
+					result = colord_install
+				elif not isinstance(oy_install, Exception) and oy_install:
+					result = oy_install
 		if not isinstance(result, Exception) and result:
 			if getcfg("profile.install_scope") == "l":
 				# We need a system-wide config file to store the path to 
