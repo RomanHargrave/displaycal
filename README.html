@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>1.0.7.2</h2>
-					<p>2012-06-21 04:18 UTC</p>
+					<h2>1.0.7.6</h2>
+					<p>2012-06-23 00:25 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -508,7 +508,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.0.7.2</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.0.7.6</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -1439,11 +1439,11 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2012-06-21 04:18 (UTC) 1.0.7.2 -->
+			<!-- 2012-06-23 00:25 (UTC) 1.0.7.6 -->
 			<dl>
-				<dt id="changelog-1.0.7.2">2012-06-21 04:18 (UTC) 1.0.7.2</dt>
+				<dt id="changelog-1.0.7.6">2012-06-23 00:25 (UTC) 1.0.7.6</dt>
 					<dd>
-						<h3>1.0.7.2</h3>
+						<h3>1.0.7.6</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Option to auto-select a suitable colorimeter correction if available locally.</li>
@@ -1482,7 +1482,9 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>Saturation gamut mapping settings are no longer ignored.</li>
 							<li>Trying to view profile information for profiles whose black point X Y Z sum is zero will no longer result in a division by zero error.</li>
 							<li>Black point compensation is no longer attempted if not atleast one black or white patch is found in measurement data.</li>
+							<li>Linux: Do error out if profile installation with dispwin fails, but profile installation via colord or oyranos-monitor is successful (fixes profile installation when using the distribution-packaged Argyll under Fedora)</li>
 							<li>Linux: colord device key name now correctly adheres to device naming spec for xrandr devices (fixes some profile installation problems).</li>
+							<li>Linux, Windows: Correctly detect in the profile loader if linear calibration is assumed when using Argyll CMS 1.4.0 or newer.</li>
 							<li>Windows: Continuous measurements during interactive display adjustment are now stopped reliably when clicking the “Stop measurements” button or hitting the space key.</li>
 						</ul>
 					</dd>

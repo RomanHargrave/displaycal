@@ -1482,7 +1482,9 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>Saturation gamut mapping settings are no longer ignored.</li>
 							<li>Trying to view profile information for profiles whose black point X Y Z sum is zero will no longer result in a division by zero error.</li>
 							<li>Black point compensation is no longer attempted if not atleast one black or white patch is found in measurement data.</li>
+							<li>Linux: Do error out if profile installation with dispwin fails, but profile installation via colord or oyranos-monitor is successful (fixes profile installation when using the distribution-packaged Argyll under Fedora)</li>
 							<li>Linux: colord device key name now correctly adheres to device naming spec for xrandr devices (fixes some profile installation problems).</li>
+							<li>Linux, Windows: Correctly detect in the profile loader if linear calibration is assumed when using Argyll CMS 1.4.0 or newer.</li>
 							<li>Windows: Continuous measurements during interactive display adjustment are now stopped reliably when clicking the “Stop measurements” button or hitting the space key.</li>
 						</ul>
 					</dd>
