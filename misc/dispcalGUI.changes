@@ -4,6 +4,11 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
 - update to ${VERSION}: see README.html#changelog-${VERSION}
 
 -------------------------------------------------------------------
+Fri Jun 22 22:26:46 UTC 2012 - dispcalGUI@hoech.net
+
+- update to 1.0.7.6: see README.html#changelog-1.0.7.6
+
+-------------------------------------------------------------------
 Mon Jun 18 19:13:00 UTC 2012 - dispcalGUI@hoech.net
 
 - define RPM group per-distro as before format_spec_file

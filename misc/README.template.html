@@ -1444,6 +1444,15 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="changelog-${VERSION}">${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<p>This is a bug-fix release for version 1.0.7.6.</p>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Unhandled exception in gamut view calculation after profile creation if using french localization.</li>
+						</ul>
+					</dd>
+				<dt id="changelog-1.0.7.6">2012-06-23 00:25 (UTC) 1.0.7.6</dt>
+					<dd>
+						<h3>1.0.7.6</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Option to auto-select a suitable colorimeter correction if available locally.</li>
@@ -1462,7 +1471,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>ColorHug: Only enable colorimeter corrections for “Factory” and “Raw” measurement modes.</li>
 							<li>ColorHug: Automatically set “Factory” measurement mode when measuring the colorimeter correction testchart and measurement mode is not yet “Factory” or “Raw”. Restore previous measurement mode afterwards.</li>
 							<li>Linux: Enable ColorHug support by default.</li>
-							<li>Linux: colord wrapper now uses PyGOBject instead of ctypes.</li>
+							<li>Linux: colord wrapper now uses PyGObject instead of ctypes.</li>
 							<li>Updated french translation, thanks to Loïc Guégant.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
@@ -1482,7 +1491,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>Saturation gamut mapping settings are no longer ignored.</li>
 							<li>Trying to view profile information for profiles whose black point X Y Z sum is zero will no longer result in a division by zero error.</li>
 							<li>Black point compensation is no longer attempted if not atleast one black or white patch is found in measurement data.</li>
-							<li>Linux: Do error out if profile installation with dispwin fails, but profile installation via colord or oyranos-monitor is successful (fixes profile installation when using the distribution-packaged Argyll under Fedora)</li>
+							<li>Linux: Don't error out if profile installation with dispwin fails, but profile installation via colord or oyranos-monitor is successful (fixes profile installation when using the distribution-packaged Argyll under Fedora)</li>
 							<li>Linux: colord device key name now correctly adheres to device naming spec for xrandr devices (fixes some profile installation problems).</li>
 							<li>Linux, Windows: Correctly detect in the profile loader if linear calibration is assumed when using Argyll CMS 1.4.0 or newer.</li>
 							<li>Windows: Continuous measurements during interactive display adjustment are now stopped reliably when clicking the “Stop measurements” button or hitting the space key.</li>

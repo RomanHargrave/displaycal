@@ -641,7 +641,7 @@ class FilteredStream():
 					write = False
 					break
 			if write:
-				if self.data_encoding:
+				if self.data_encoding and not isinstance(line, unicode):
 					line = line.decode(self.data_encoding, self.errors)
 				for search, sub in self.substitutions.iteritems():
 					line = re.sub(search, sub, line)
@@ -728,6 +728,8 @@ class LineBufferedStream():
 	
 	def write(self, data):
 		data = data.replace(self.linesep_in, "\n")
+		if self.data_encoding and isinstance(data, unicode):
+			data = data.encode(self.data_encoding)
 		for char in data:
 			if char == "\r":
 				while self.buf and not self.buf.endswith(self.linesep_out):
