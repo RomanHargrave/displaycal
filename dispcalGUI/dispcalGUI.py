@@ -129,7 +129,8 @@ if sys.platform == "darwin":
 	from util_mac import mac_terminal_do_script
 from util_os import (expanduseru, getenvu, is_superuser, launch_file, 
 					 listdir_re, waccess, which)
-from util_str import safe_str, safe_unicode, strtr, universal_newlines, wrap
+from util_str import (ellipsis, safe_str, safe_unicode, strtr,
+					  universal_newlines, wrap)
 import util_x
 from worker import (Error, FilteredStream, LineCache, Worker, check_cal_isfile, 
 					check_create_dir, check_file_isfile, check_profile_isfile, 
@@ -2627,6 +2628,9 @@ class MainFrame(BaseFrame):
 					safe_print("%s:" % path, exception)
 					continue
 				desc = cgats.get_descriptor()
+				if desc != os.path.splitext(os.path.basename(path))[0]:
+					desc = "%s <%s>" % (desc, ellipsis(os.path.basename(path),
+													   31, "m"))
 				self.ccmx_cached_descriptors[path] = desc
 				self.ccmx_instruments[path] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
 				key = "%s\0%s" % (self.ccmx_instruments[path],
@@ -2659,6 +2663,10 @@ class MainFrame(BaseFrame):
 					safe_print("%s:" % ccmx[1], exception)
 				else:
 					desc = cgats.get_descriptor()
+					if desc != os.path.splitext(os.path.basename(ccmx[1]))[0]:
+						desc = "%s <%s>" % (desc,
+											ellipsis(os.path.basename(ccmx[1]),
+													 31, "m"))
 					self.ccmx_cached_descriptors[ccmx[1]] = desc
 					self.ccmx_instruments[ccmx[1]] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
 					key = "%s\0%s" % (self.ccmx_instruments[ccmx[1]],
@@ -5312,7 +5320,18 @@ class MainFrame(BaseFrame):
 		   not self.worker.get_instrument_features().get("spectral"):
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if len(ccmx) > 1 and ccmx[1]:
+				ccmxpath = ccmx[1]
 				ccmx = os.path.basename(ccmx[1])
+				try:
+					cgats = CGATS.CGATS(ccmxpath)
+				except CGATS.CGATSError, exception:
+					safe_print("%s:" % ccmxpath, exception)
+				else:
+					desc = cgats.get_descriptor()
+					if desc != os.path.splitext(ccmx)[0]:
+						ccmx = "%s &amp;lt;%s&amp;gt;" % (desc, ellipsis(ccmx,
+																		 31,
+																		 "m"))
 			else:
 				ccmx = "None"
 		

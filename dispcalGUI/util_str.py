@@ -197,6 +197,20 @@ def create_replace_function(template, values):
 	return replace_function
 
 
+def ellipsis(text, maxlen=64, pos="r"):
+	""" Truncate text to maxlen characters and add elipsis if it was longer.
+	
+	Elipsis position can be 'm' (middle) or 'r' (right).
+	
+	"""
+	if len(text) <= maxlen:
+		return text
+	if pos == "r":
+		return text[:maxlen - 1] + u"\u2026"
+	elif pos == "m":
+		return text[:maxlen / 2] + u"\u2026" + text[-maxlen / 2 + 1:]
+
+
 def hexunescape(match):
 	""" To be used with re.sub """
 	return unichr(int(match.group(1), 16))
