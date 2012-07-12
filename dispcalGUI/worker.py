@@ -946,8 +946,7 @@ class Worker(object):
 					if isinstance(tempdir, Exception):
 						return tempdir
 					ccmxcopy = os.path.join(tempdir, 
-											getcfg("profile.name.expanded") + 
-											os.path.splitext(ccmx)[1])
+											os.path.basename(ccmx))
 					if not os.path.isfile(ccmxcopy):
 						try:
 							# Copy ccmx to profile dir
@@ -1654,8 +1653,10 @@ class Worker(object):
 				working_basename = os.path.splitext(working_basename)[0]
 			if working_dir is None:
 				working_dir = os.path.dirname(args[-1])
-			if working_dir is not False and not os.path.isdir(working_dir):
-				working_dir = None
+		if working_dir is None:
+			working_dir = self.tempdir
+		if working_dir and not os.path.isdir(working_dir):
+			working_dir = None
 		if verbose >= 1:
 			if not silent or verbose >= 3:
 				safe_print("", fn=fn)
@@ -4490,19 +4491,7 @@ class Worker(object):
 						name, ext = os.path.splitext(basename)
 						if ext_filter is None or ext.lower() in ext_filter:
 							src = os.path.join(self.tempdir, basename)
-							dst = os.path.splitext(dst_path)[0]
-							if basename.startswith(os.path.basename(dst)):
-								# Use source basename if it starts with dst
-								# basename (sans ext)
-								dst = os.path.join(os.path.dirname(dst),
-												   basename)
-							else:
-								# Use dst basename (sans ext) + source ext
-								if ext.lower() in (".app", script_ext, ".gz"):
-									# Preserve *.<utility>.[app|cmd|sh]
-									# and <ext>.gz
-									dst += os.path.splitext(name)[1]
-								dst += ext
+							dst = os.path.join(os.path.dirname(dst_path), basename)
 							if os.path.exists(dst):
 								if os.path.isdir(dst):
 									if verbose >= 2:
