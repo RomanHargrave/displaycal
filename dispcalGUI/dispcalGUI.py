@@ -2927,6 +2927,7 @@ class MainFrame(BaseFrame):
 		elif trc:
 			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.SetValue(str(trc))
+			self.trc_textctrl.Show()
 			self.trc_textctrl.Enable(not update_cal)
 			self.trc_type_ctrl.SetSelection(
 				self.trc_types_ba.get(getcfg("trc.type"), 
