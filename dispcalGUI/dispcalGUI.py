@@ -2635,6 +2635,8 @@ class MainFrame(BaseFrame):
 					(len(ccmx) > 1 and path == ccmx[1])):
 					# Prefer the selected CCMX
 					self.ccmx_mapping[key] = path
+			else:
+				continue
 			if (self.worker.get_instrument_name().lower().replace(" ", "") in
 				self.ccmx_instruments.get(path, "").lower().replace(" ", "").replace("eye-one", "i1") or
 				(path.lower().endswith(".ccss") and
