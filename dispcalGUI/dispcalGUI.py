@@ -2628,7 +2628,14 @@ class MainFrame(BaseFrame):
 					safe_print("%s:" % path, exception)
 					continue
 				desc = cgats.get_descriptor()
-				if desc != os.path.splitext(os.path.basename(path))[0]:
+				# If the description is not the same as the 'sane'
+				# filename, add the filename after the description
+				# (max 31 chars)
+				# See also colorimeter_correction_check_overwite, the
+				# way the filename is processed must be the same
+				if (re.sub(r"[\\/:*?\"<>|]+", "_",
+						   make_argyll_compatible_path(desc)) !=
+					os.path.splitext(os.path.basename(path))[0]):
 					desc = "%s <%s>" % (desc, ellipsis(os.path.basename(path),
 													   31, "m"))
 				self.ccmx_cached_descriptors[path] = desc
@@ -2663,7 +2670,14 @@ class MainFrame(BaseFrame):
 					safe_print("%s:" % ccmx[1], exception)
 				else:
 					desc = cgats.get_descriptor()
-					if desc != os.path.splitext(os.path.basename(ccmx[1]))[0]:
+					# If the description is not the same as the 'sane'
+					# filename, add the filename after the description
+					# (max 31 chars)
+					# See also colorimeter_correction_check_overwite, the
+					# way the filename is processed must be the same
+					if (re.sub(r"[\\/:*?\"<>|]+", "_",
+							   make_argyll_compatible_path(desc)) !=
+						os.path.splitext(os.path.basename(ccmx[1]))[0]):
 						desc = "%s <%s>" % (desc,
 											ellipsis(os.path.basename(ccmx[1]),
 													 31, "m"))
@@ -5328,7 +5342,14 @@ class MainFrame(BaseFrame):
 					safe_print("%s:" % ccmxpath, exception)
 				else:
 					desc = cgats.get_descriptor()
-					if desc != os.path.splitext(ccmx)[0]:
+					# If the description is not the same as the 'sane'
+					# filename, add the filename after the description
+					# (max 31 chars)
+					# See also colorimeter_correction_check_overwite, the
+					# way the filename is processed must be the same
+					if (re.sub(r"[\\/:*?\"<>|]+", "_",
+							   make_argyll_compatible_path(desc)) !=
+						os.path.splitext(ccmx)[0]):
 						ccmx = "%s &amp;lt;%s&amp;gt;" % (desc, ellipsis(ccmx,
 																		 31,
 																		 "m"))
