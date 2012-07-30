@@ -2369,6 +2369,9 @@ class Worker(object):
 			if (not device_id or not colord or
 				isinstance(result, Exception) or not result):
 				gcm_import = bool(which("gcm-import"))
+				if (isinstance(result, Exception) or not result) and gcm_import:
+					# Fall back to gcm-import if colord profile install failed
+					result = gcm_import
 		if (not isinstance(result, Exception) and result and
 			which("oyranos-monitor") and
 			self.check_display_conf_oy_compat(getcfg("display.number"))):
