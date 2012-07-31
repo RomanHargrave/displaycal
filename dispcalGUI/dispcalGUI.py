@@ -8688,8 +8688,9 @@ class MainFrame(BaseFrame):
 				writecfg()
 
 				if ext.lower() in (".icc", ".icm"):
-					# load calibration into lut
-					self.load_cal(cal=path, silent=True)
+					if load_vcgt:
+						# load calibration into lut
+						self.load_cal(cal=path, silent=True)
 					if options_dispcal and options_colprof:
 						return
 					elif options_dispcal:
