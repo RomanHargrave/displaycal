@@ -389,7 +389,7 @@
 			<div>
 				<h3>General system requirements</h3>
 				<ul>
-					<li>A recent Linux, Mac OS X (10.4 and newer) or Windows (2000 or newer) operating system.</li>
+					<li>A recent Linux, Mac OS X (10.4 up to 10.7, 10.8 is not yet supported by Argyll CMS—if you want to help make it happen, please consider <a href="http://argyllcms.com/">donating to the Argyll CMS project</a>) or Windows (2000 or newer) operating system.</li>
 					<li>A graphics card with at least 24 bits per pixel (true color) support and the desktop set up to use this color depth.</li>
 				</ul>
 			</div>
@@ -1444,12 +1444,31 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="changelog-${VERSION}">${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Use the original file basename for colorimeter corrections copied over to the storage directory (previously, if a colorimeter correction was copied, it inherited the same basename as the rest of the measurement/profile/calibration files, thus making it a bit cumbersome to determine which colorimeter correction was originally the source, especially in profile verification reports which only showed the filename and not the description from the file contents).</li>
+							<li>Show colorimeter correction file basename in addition to the description if they are different.</li>
+							<li>Linux: Fall back to gcm-import if colord profile installation fails.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>When switching to L*/Rec. 709/SMPTE or sRGB and then loading settings with a gamma value, the gamma entry field was not shown.</li>
+							<li>Report on calibrated/uncalibrated display and calibration verification did not work if using a colorimeter correction (regression of changeset #1020).</li>
+							<li>Do not freeze if loading a settings file which had an accompanying colorimeter correction that was since deleted.</li>
+							<li>Windows 2000: Don't fail to launch.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-1.0.7.7">2012-06-28 22:05 (UTC) 1.0.7.7</dt>
+					<dd>
+						<h3>1.0.7.7</h3>
 						<p>This is a bug-fix release for version 1.0.7.6.</p>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Unhandled exception in gamut view calculation after profile creation if using french localization.</li>
 						</ul>
 					</dd>
+
 				<dt id="changelog-1.0.7.6">2012-06-23 00:25 (UTC) 1.0.7.6</dt>
 					<dd>
 						<h3>1.0.7.6</h3>
