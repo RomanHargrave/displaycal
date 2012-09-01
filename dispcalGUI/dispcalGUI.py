@@ -7089,7 +7089,7 @@ class MainFrame(BaseFrame):
 				path = dlg.GetPath()
 			dlg.Destroy()
 		icd = False
-		if path and os.path.isfile(path):
+		if path and os.path.exists(path):
 			type = None
 			if path.lower().endswith(".txt"):
 				type = ".txt"
@@ -7102,8 +7102,7 @@ class MainFrame(BaseFrame):
 						pass
 				elif i1d3ccss and path.lower().endswith(".edr"):
 					type = "xrite"
-				else:
-					# .exe / .app / .mpkg
+				elif path.lower().endswith(".exe"):
 					if icolordisplay:
 						# TODO: We have a iColorDisplay installer,
 						# try opening it as lzma archive
