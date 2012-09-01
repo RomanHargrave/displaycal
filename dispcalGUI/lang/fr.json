@@ -125,6 +125,7 @@
 	"colorimeter_correction.import.choose": "Veuillez choisir le fichier de correction de colorimètre à importer :",
 	"colorimeter_correction.import.failure": "Aucune correction de colorimètre n'a pu être importée.",
 	"colorimeter_correction.import.success": "Les corrections du colorimètre ont été importées depuis les logiciels suivants :\n\n%s",
+		"*colorimeter_correction.instrument_mismatch": "The selected colorimeter correction is not suitable for the selected instrument.",
 	"colorimeter_correction.upload": "Charger la correction du colorimètre...",
 	"colorimeter_correction.upload.confirm": "Voulez-vous charger la correction du colorimètre vers la base de données en ligne (recommandé) ? Tout fichier chargé sera considéré comme placé dans le domaine public, de sorte à pouvoir être utilisé librement.",
 	"colorimeter_correction.upload.deny": "Cette correction de colorimètre ne peut être chargée.",

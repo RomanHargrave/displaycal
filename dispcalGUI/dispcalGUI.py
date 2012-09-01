@@ -2652,6 +2652,8 @@ class MainFrame(BaseFrame):
 				self.ccmx_instruments.get(path, "").lower().replace(" ", "").replace("eye-one", "i1") or
 				(path.lower().endswith(".ccss") and
 				 self.worker.instrument_supports_ccss())):
+				# Only add the correction to the list if it matches the
+				# currently selected instrument or if it is a CCSS
 				if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
 					index = len(items)
 				items.append("%s: %s" %
@@ -2690,12 +2692,19 @@ class MainFrame(BaseFrame):
 				(self.worker.get_instrument_name().lower().replace(" ", "") in
 				 self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "").replace("eye-one", "i1") or
 				 ccmx[1].lower().endswith(".ccss"))):
+				# Only add the correction to the list if it matches the
+				# currently selected instrument or if it is a CCSS
 				items.insert(2, "%s: %s" %
 								(types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
 								 desc))
 				self.ccmx_item_paths.insert(0, ccmx[1])
 				if ccmx[0] != "AUTO":
 					index = 2
+		if len(ccmx) > 1 and ccmx[1] not in self.ccmx_item_paths:
+			# CCMX does not match the currently selected instrument,
+			# don't use
+			ccmx = [""]
+			show_result_dialog(Error(lang.getstr("colorimeter_correction.instrument_mismatch")), self)
 		if ccmx[0] == "AUTO":
 			index = 1
 			display_name = self.worker.get_display_name(False, True)
@@ -2706,12 +2715,12 @@ class MainFrame(BaseFrame):
 				ccmx[1] = self.ccmx_mapping.get("%s\0%s" %
 												(self.worker.get_instrument_name(),
 												 display_name), "")
-			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 			if ccmx[1]:
 				items[1] += " (%s: %s)" % (types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
 										   self.ccmx_cached_descriptors[ccmx[1]])
 			else:
 				items[1] += " (%s)" % lang.getstr("colorimeter_correction.file.none")
+		setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
 		if len(ccmx) > 1 and ccmx[1]:
