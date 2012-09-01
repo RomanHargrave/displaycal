@@ -7102,16 +7102,19 @@ class MainFrame(BaseFrame):
 						pass
 				elif i1d3ccss and path.lower().endswith(".edr"):
 					type = "xrite"
-				elif path.lower().endswith(".exe"):
+				else:
+					# .exe / .app / .mpkg
 					if icolordisplay:
 						# TODO: We have a iColorDisplay installer,
 						# try opening it as lzma archive
 						pass
-					elif i1d3ccss and ("colormunki" in path.lower() or
-									   "i1profiler" in path.lower()):
+					elif i1d3ccss and ("colormunki" in
+									   os.path.basename(path).lower() or
+									   "i1profiler" in
+									   os.path.basename(path).lower()):
 						# Assume X-Rite installer
 						type = "xrite"
-					elif spyd4en and "spyder4" in path.lower():
+					elif spyd4en and "spyder4" in os.path.basename(path).lower():
 						# Assume Spyder4
 						type = "spyder4"
 			if type == ".txt":
@@ -7137,6 +7140,8 @@ class MainFrame(BaseFrame):
 			elif type == "spyder4":
 				# Import spyd4cal.bin
 				result = spyd4 = self.worker.import_spyd4cal([path])
+			else:
+				result = Error(lang.getstr("error.file_type_unsupported"))
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result:
