@@ -2700,7 +2700,7 @@ class MainFrame(BaseFrame):
 				self.ccmx_item_paths.insert(0, ccmx[1])
 				if ccmx[0] != "AUTO":
 					index = 2
-		if len(ccmx) > 1 and ccmx[1] not in self.ccmx_item_paths:
+		if len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_item_paths:
 			# CCMX does not match the currently selected instrument,
 			# don't use
 			ccmx = [""]
