@@ -9,7 +9,7 @@ import textwrap
 
 import ppdir
 
-sys.path.insert(0, os.path.join(".."))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dispcalGUI import demjson
 from dispcalGUI import jsondict
