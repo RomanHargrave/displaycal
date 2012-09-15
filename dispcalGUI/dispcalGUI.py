@@ -67,6 +67,7 @@ import urllib
 from encodings.aliases import aliases
 from hashlib import md5
 from time import gmtime, sleep, strftime, strptime, time, struct_time
+from zlib import crc32
 
 # 3rd party modules
 
@@ -7437,6 +7438,10 @@ class MainFrame(BaseFrame):
 		info = [
 			"%dn	" + lang.getstr("display"),
 			"%dns	" + lang.getstr("display_short"),
+			"%dnw	" + lang.getstr("display") + " (" +
+						lang.getstr("windows_only") + ")",
+			"%dnws	" + lang.getstr("display_short") + " (" +
+						lang.getstr("windows_only") + ")",
 			"%in	" + lang.getstr("instrument"),
 			"%im	" + lang.getstr("measurement_mode"),
 			"%wp	" + lang.getstr("whitepoint"),
@@ -7758,31 +7763,34 @@ class MainFrame(BaseFrame):
 		legacy_profile_name += "-" + profile_type
 		legacy_profile_name += "-" + strftime("%Y%m%d%H%M")
 		profile_name = profile_name.replace("%legacy", legacy_profile_name)
-		
+
+		# Windows display name (EnumDisplayDevices / DeviceString)
+		display_win32 = self.worker.get_display_name(True, False)
+		if display_win32:
+			display_win32_short = self.worker.get_display_name_short(False,
+																	 False)
+			profile_name = profile_name.replace("%dnws", display_win32_short)
+			profile_name = profile_name.replace("%dnw", display_win32)
+		else:
+			profile_name = re.sub("[-_\s]+%dnws?|%dnws?[-_\s]*", "", profile_name)
+
+		# EDID
+		# Serial
+		edid = self.worker.get_display_edid()
+		serial = edid.get("serial_ascii", hex(edid.get("serial_32", 0))[2:])
+		if serial and serial != "0x1010101" and serial != "0x0":
+			profile_name = profile_name.replace("%ds", serial)
+		else:
+			profile_name = profile_name.replace("%ds", "")
+		# CRC32
+		profile_name = profile_name.replace("%crc32",
+											"%X" % (crc32(edid.get("edid", ""))
+													& 0xFFFFFFFF))
+
 		# default v0.2.2b profile name
 		display = self.worker.get_display_name(True, True)
 		if display:
-			display_short = self.worker.get_display_name(False, True)
-			if len(display_short) > 10:
-				maxweight = 0
-				for part in re.findall('[^\s_]+(?:\s*\d+)?', re.sub("\([^)]+\)", "", 
-																	display)):
-					digits = re.search("\d+", part)
-					if digits:
-						# Weigh parts with digits higher than those without
-						chars = re.sub("\d+", "", part)
-						weight = len(chars) + len(digits.group()) * 5
-					else:
-						# Weigh parts with uppercase letters higher than those without
-						chars = ""
-						for char in part:
-							if char.lower() != char:
-								chars += char
-						weight = len(chars)
-					if chars and weight >= maxweight:
-						# Weigh parts further to the right higher
-						display_short = part
-						maxweight = weight
+			display_short = self.worker.get_display_name_short(False, True)
 			profile_name = profile_name.replace("%dns", display_short)
 			profile_name = profile_name.replace("%dn", display)
 		else:

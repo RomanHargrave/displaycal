@@ -563,6 +563,7 @@
 	"whitepoint.set": "Do you also want to set the whitepoint to the measured value?",
 	"whitepoint.xy": "Chromaticity coordinates",
 	"window.title": "dispcalGUI",
+	"windows_only": "Windows only",
 	"working_dir": "Working directory:",
 	"yellow": "Yellow",
 	"yes": "Yes",

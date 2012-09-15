@@ -2253,6 +2253,30 @@ class Worker(object):
 			display.append(display_name)
 			return " ".join(display)
 		return ""
+
+	def get_display_name_short(self, prepend_manufacturer=False, prefer_edid=False):
+		display_name = self.get_display_name(prepend_manufacturer, prefer_edid)
+		if len(display_name) > 10:
+			maxweight = 0
+			for part in re.findall('[^\s_]+(?:\s*\d+)?', re.sub("\([^)]+\)", "", 
+																display_name)):
+				digits = re.search("\d+", part)
+				if digits:
+					# Weigh parts with digits higher than those without
+					chars = re.sub("\d+", "", part)
+					weight = len(chars) + len(digits.group()) * 5
+				else:
+					# Weigh parts with uppercase letters higher than those without
+					chars = ""
+					for char in part:
+						if char.lower() != char:
+							chars += char
+					weight = len(chars)
+				if chars and weight >= maxweight:
+					# Weigh parts further to the right higher
+					display_name = part
+					maxweight = weight
+		return display_name
 	
 	def get_dispwin_display_profile_argument(self, display_no=0):
 		arg = "-L"
