@@ -120,6 +120,7 @@ jQuery(window).load(function () {
 	/* Anchor scroll effect */
 	$.localScroll({hash: true, filter: ':not(a[href="#info"], #toc li:has(ul) > a)'});
 	$.localScroll.hash();
+	if (location.hash == '#donate') jQuery('a[href="#donate"]').click();
 	
 	/* Teaser */
 	setTimeout(function () {
