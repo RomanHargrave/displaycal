@@ -59,3 +59,5 @@ if "%~1"=="bdist_wininst" (
 		C:\Python26\python.exe setup.py bdist_wininst --user-access-control=auto --use-distutils 2>&1 | tee dispcalGUI-%version%.wininst-py2.6.log
 	)
 )
+
+python util\tidy_dist.py
