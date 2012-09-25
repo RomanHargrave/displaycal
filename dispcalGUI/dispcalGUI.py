@@ -775,12 +775,13 @@ class GamapFrame(BaseFrame):
 						self.gamap_src_viewcond_ctrl.SetStringSelection(
 							lang.getstr("gamap.viewconds.mt"))
 					self.gamap_src_viewcond_handler()
-		self.gamap_perceptual_cb.Enable(p)
+		self.gamap_perceptual_cb.Enable()
 		self.gamap_perceptual_intent_ctrl.Enable(self.gamap_perceptual_cb.GetValue())
-		self.gamap_saturation_cb.Enable(p)
+		self.gamap_saturation_cb.Enable()
 		self.gamap_saturation_intent_ctrl.Enable(self.gamap_saturation_cb.GetValue())
 		c = self.gamap_perceptual_cb.GetValue() or \
 			self.gamap_saturation_cb.GetValue()
+		self.gamap_profile.Enable(c)
 		self.gamap_src_viewcond_ctrl.Enable(p and c)
 		self.gamap_out_viewcond_ctrl.Enable(p and c)
 		self.gamap_default_intent_ctrl.Enable(p and c)
