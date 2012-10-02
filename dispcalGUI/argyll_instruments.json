@@ -71,12 +71,28 @@
 		"sensor_cal": true,
 		"skip_sensor_cal": null
 	},
-	"i1 Display": {
+	"i1 Display": {  // Argyll 1.3.5 and earlier
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
 		"projector_mode": false,
-		"sensor_cal": false, // FIXME: Only i1 Display 2
+		"sensor_cal": false,
+		"skip_sensor_cal": false
+	},
+	"i1 Display 1": {  // Argyll 1.3.6 and newer
+		"spectral": false,
+		"adaptive_mode": false,
+		"highres_mode": false,
+		"projector_mode": false,
+		"sensor_cal": true,
+		"skip_sensor_cal": false
+	},
+	"i1 Display 2": {  // Argyll 1.3.6 and newer
+		"spectral": false,
+		"adaptive_mode": false,
+		"highres_mode": false,
+		"projector_mode": false,
+		"sensor_cal": false,
 		"skip_sensor_cal": false // i1 Display 2 instrument access fails 
 				// when using -N option to skip automatic sensor calibration
 				// (dispread -D9 output: "Setting no-sensor_calibrate failed 
