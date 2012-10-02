@@ -7038,7 +7038,7 @@ class MainFrame(BaseFrame):
 		if defaultDir and os.path.isdir(defaultDir):
 			# iColorDisplay found
 			defaultFile = "DeviceCorrections.txt"
-		elif i1d3ccss:
+		elif i1d3ccss and not i1d3:
 			# Look for *.edr files
 			if sys.platform == "win32":
 				defaultDir = os.path.join(getenvu("PROGRAMFILES", ""), 
@@ -7056,32 +7056,26 @@ class MainFrame(BaseFrame):
 												"ColorMunki Display"))
 				if paths:
 					defaultDir = paths[-1]
-			defaultFile = ""
-		elif spyd4en:
+		elif spyd4en and not spyd4:
 			# Look for dccmtr.dll
 			if sys.platform == "win32":
 				paths = glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 											   "Datacolor", "Spyder4*", 
 											   "dccmtr.dll"))
 			elif sys.platform == "darwin":
-				# TODO: Check if these guessed paths are correct? (probably not)
-				paths = glob.glob(os.path.join(os.path.sep, "Applications", 
-											   "Spyder4*", "Spyder4*.app", 
-											   "Contents", "MacOS", 
-											   "dccmtr.lib"))
-				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-												"Datacolor", "Data",
-												"setup.exe"))
+				# Look for setup.exe on CD-ROM
+				paths = glob.glob(os.path.join(os.path.sep, "Volumes", 
+											   "Datacolor", "Data",
+											   "setup.exe"))
 				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
 												"Datacolor_ISO", "Data",
 												"setup.exe"))
 			if paths:
-				defaultDir = paths[-1]
-			defaultFile = ""
+				defaultDir, defaultFile = os.path.split(paths[-1])
 		if defaultDir and os.path.isdir(defaultDir):
 			if choice == wx.ID_OK:
 				path = os.path.join(defaultDir, defaultFile)
-		if not path or not os.path.isfile(path):
+		if (not path or not os.path.isfile(path)) and not (i1d3 or spyd4):
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction.import.choose"),
 								defaultDir=defaultDir,
