@@ -243,6 +243,7 @@
 	"error.trashcan_unavailable": "Der %s ist nicht verfügbar. Es wurden keine Dateien entfernt.",
 	"extra_args": "Zusätzliche Befehlszeilen-Parameter setzen...",
 	"failure": "...fehlgeschlagen!",
+	"file.invalid": "Datei ungültig.",
 	"file.missing": "Die Datei „%s“ existiert nicht.",
 	"file.notfile": "„%s“ ist keine Datei.",
 	"file.select": "Datei auswählen",

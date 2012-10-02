@@ -7135,7 +7135,7 @@ class MainFrame(BaseFrame):
 					ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
 				except (OSError, UnicodeDecodeError,
 						demjson.JSONDecodeError), exception:
-					result = exception
+					result = Error(lang.getstr("file.invalid"))
 				else:
 					result = icd = True
 			elif type == "xrite":

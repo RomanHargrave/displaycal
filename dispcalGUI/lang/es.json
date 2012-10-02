@@ -243,6 +243,7 @@
 	"error.trashcan_unavailable": "El %s no esta disponible. No se eliminaron archivos.",
 	"extra_args": "Establecer argumentos adicionales de línea de comandos...",
 	"failure": "...fallado!",
+		"*file.invalid": "File invalid.",
 	"file.missing": "El archivo no existe “%s” no existe.",
 	"file.notfile": "“%s” no es un archivo.",
 	"file.select": "Seleccionar archivo",

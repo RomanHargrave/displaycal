@@ -243,6 +243,7 @@
 	"error.trashcan_unavailable": "The %s is not available. No files were removed.",
 	"extra_args": "Set additional commandline arguments...",
 	"failure": "...failed!",
+	"file.invalid": "File invalid.",
 	"file.missing": "The file “%s” does not exist.",
 	"file.notfile": "“%s” is not a file.",
 	"file.select": "Select file",
