@@ -133,13 +133,13 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
-from worker import (Error, FilteredStream, LineCache, Worker, check_cal_isfile, 
-					check_create_dir, check_file_isfile, check_profile_isfile, 
-					check_set_argyll_bin, get_argyll_util, get_options_from_cal,
-					get_options_from_profile, get_options_from_ti3,
-					make_argyll_compatible_path, normalize_manufacturer_name,
-					parse_argument_string, printcmdline, set_argyll_bin,
-					show_result_dialog)
+from worker import (Error, FilteredStream, LineCache, Warn, Worker,
+					check_cal_isfile, check_create_dir, check_file_isfile,
+					check_profile_isfile, check_set_argyll_bin, get_argyll_util,
+					get_options_from_cal, get_options_from_profile,
+					get_options_from_ti3, make_argyll_compatible_path,
+					normalize_manufacturer_name, parse_argument_string,
+					printcmdline, set_argyll_bin, show_result_dialog)
 try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
@@ -2596,7 +2596,8 @@ class MainFrame(BaseFrame):
 		self.calpanel.Thaw()
 		self.update_scrollbars()
 	
-	def update_colorimeter_correction_matrix_ctrl_items(self, force=False):
+	def update_colorimeter_correction_matrix_ctrl_items(self, force=False,
+														warn_on_mismatch=False):
 		"""
 		Show the currently selected correction matrix and list all files
 		in ccmx directory below
@@ -2702,13 +2703,7 @@ class MainFrame(BaseFrame):
 				self.ccmx_item_paths.insert(0, ccmx[1])
 				if ccmx[0] != "AUTO":
 					index = 2
-		if len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_item_paths:
-			# CCMX does not match the currently selected instrument,
-			# don't use
-			ccmx = [""]
-			show_result_dialog(Error(lang.getstr("colorimeter_correction.instrument_mismatch")), self)
 		if ccmx[0] == "AUTO":
-			index = 1
 			display_name = self.worker.get_display_name(False, True)
 			if self.worker.instrument_supports_ccss():
 				# Prefer CCSS
@@ -2717,6 +2712,15 @@ class MainFrame(BaseFrame):
 				ccmx[1] = self.ccmx_mapping.get("%s\0%s" %
 												(self.worker.get_instrument_name(),
 												 display_name), "")
+		if (self.worker.instrument_can_use_ccxx() and len(ccmx) > 1 and
+			ccmx[1] and ccmx[1] not in self.ccmx_item_paths):
+			# CCMX does not match the currently selected instrument,
+			# don't use
+			ccmx = [""]
+			if warn_on_mismatch:
+				show_result_dialog(Warn(lang.getstr("colorimeter_correction.instrument_mismatch")), self)
+		elif ccmx[0] == "AUTO":
+			index = 1
 			if ccmx[1]:
 				items[1] += " (%s: %s)" % (types.get(os.path.splitext(ccmx[1])[1].lower()[1:]),
 										   self.ccmx_cached_descriptors[ccmx[1]])
@@ -5341,8 +5345,7 @@ class MainFrame(BaseFrame):
 			instrument += " (%s)" % "/".join(mode)
 		
 		ccmx = "None"
-		if self.worker.argyll_version >= [1, 3, 0] and \
-		   not self.worker.get_instrument_features().get("spectral"):
+		if self.worker.instrument_can_use_ccxx():
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if len(ccmx) > 1 and ccmx[1]:
 				ccmxpath = ccmx[1]
@@ -6489,7 +6492,7 @@ class MainFrame(BaseFrame):
 				if (getcfg("colorimeter_correction_matrix_file").split(":")[0] != "AUTO" or
 					path not in self.ccmx_cached_paths):
 					setcfg("colorimeter_correction_matrix_file", ":" + path)
-				self.update_colorimeter_correction_matrix_ctrl_items()
+				self.update_colorimeter_correction_matrix_ctrl_items(warn_on_mismatch=True)
 	
 	def colorimeter_correction_web_handler(self, event):
 		""" Check the web for cccmx or ccss files """
