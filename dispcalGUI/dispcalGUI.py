@@ -7130,7 +7130,7 @@ class MainFrame(BaseFrame):
 				safe_print(path)
 				try:
 					ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
-				except (WindowsError, OSError, UnicodeDecodeError,
+				except (OSError, UnicodeDecodeError,
 						demjson.JSONDecodeError), exception:
 					result = exception
 				else:

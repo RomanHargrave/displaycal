@@ -2788,7 +2788,7 @@ def log(e, suffix='', logdir=None):
     if not os.path.exists(logdir):
         try:
             os.makedirs(logdir)
-        except (OSError, WindowsError):
+        except OSError:
             pass
     if os.path.isdir(logdir) and os.access(logdir, os.W_OK):
         logfile = os.path.join(logdir, 'wexpect%s.log' % suffix)
