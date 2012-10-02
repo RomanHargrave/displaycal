@@ -41,9 +41,9 @@ def autopackage_extract(package):
 		data = package_file.read(datasize)
 	with open('%s.sh' % package, 'wb') as script_file:
 		script_file.write(script)
-	with open('%s.meta.gz' % package, 'wb') as meta_file:
+	with open('%s.meta.tar.gz' % package, 'wb') as meta_file:
 		meta_file.write(meta)
-	with open('%s.payload.%s' % (package, compression), 'wb') as data_file:
+	with open('%s.payload.tar.%s' % (package, compression), 'wb') as data_file:
 		data_file.write(data)
 
 
