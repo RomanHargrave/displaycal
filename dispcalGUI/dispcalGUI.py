@@ -2367,7 +2367,7 @@ class MainFrame(BaseFrame):
 		adjustment controls, which do not cause a 'calibration changed' event.
 		
 		"""
-		if not self.updatingctrls:
+		if not self.updatingctrls and self.IsShownOnScreen():
 			# update_controls which is called from cal_changed might cause a 
 			# another cal_changed call, in which case we can skip it
 			if debug:
