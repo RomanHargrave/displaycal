@@ -3853,7 +3853,7 @@ class MainFrame(BaseFrame):
 	def whitepoint_ctrl_handler(self, event, cal_changed=True):
 		if event.GetId() == self.whitepoint_colortemp_textctrl.GetId() and (
 		   self.whitepoint_ctrl.GetSelection() != 1 or 
-		   str(float(getcfg("whitepoint.colortemp"))) == 
+		   str(int(getcfg("whitepoint.colortemp"))) == 
 		   self.whitepoint_colortemp_textctrl.GetValue()):
 			event.Skip()
 			return

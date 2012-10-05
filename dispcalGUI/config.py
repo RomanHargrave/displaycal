@@ -535,7 +535,7 @@ defaults = {
 	"trc.type": "g",
 	"update_check": 1,
 	"use_separate_lut_access": 0,
-	"whitepoint.colortemp": 5000.0,
+	"whitepoint.colortemp": 5000,
 	"whitepoint.colortemp.locus": "t",
 	"whitepoint.x": 0.345741,
 	"whitepoint.y": 0.358666
