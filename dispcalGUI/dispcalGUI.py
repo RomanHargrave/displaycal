@@ -3951,7 +3951,7 @@ class MainFrame(BaseFrame):
 				if getcfg("whitepoint.colortemp") == v and not \
 				   getcfg("whitepoint.x") and not getcfg("whitepoint.y"):
 					cal_changed = False
-			setcfg("whitepoint.colortemp", v)
+			setcfg("whitepoint.colortemp", int(v))
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
 			if (event.GetId() == self.whitepoint_ctrl.GetId() and
@@ -8587,7 +8587,8 @@ class MainFrame(BaseFrame):
 						if o[0] in ("t", "T"):
 							setcfg("whitepoint.colortemp.locus", o[0])
 							if o[1:]:
-								setcfg("whitepoint.colortemp", o[1:])
+								setcfg("whitepoint.colortemp",
+									   int(float(o[1:])))
 							setcfg("whitepoint.x", None)
 							setcfg("whitepoint.y", None)
 							continue
