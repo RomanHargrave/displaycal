@@ -7013,12 +7013,16 @@ class MainFrame(BaseFrame):
 		i1d3ccss = get_argyll_util("i1d3ccss")
 		if i1d3ccss and choice == wx.ID_OK:
 			# Automatically import X-Rite .edr files
-			result = i1d3 = self.worker.import_edr()
+			result = self.worker.import_edr()
+			if not isinstance(result, Exception):
+				i1d3 = result
 		spyd4 = False
 		spyd4en = get_argyll_util("spyd4en")
 		if spyd4en and choice == wx.ID_OK:
 			# Automatically import Spyder4 calibrations
-			result = spyd4 = self.worker.import_spyd4cal()
+			result = self.worker.import_spyd4cal()
+			if not isinstance(result, Exception):
+				spyd4 = result
 		# Import iColorDisplay device corrections or let the user choose
 		defaultDir = ""
 		defaultFile = ""
