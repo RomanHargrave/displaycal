@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>1.1</h2>
-					<p>2012-09-15 15:38 UTC</p>
+					<h2>1.1.2.1</h2>
+					<p>2012-10-05 19:04 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -360,7 +360,7 @@
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
 						<p><a href="http://dispcalGUI.hoech.net/download/dispcalGUI.tar.gz">Source Tarball</a></p>
 						<p>
-							Alternatively, if you don't mind trying out development code, <a href="http://sourceforge.net/p/dispcalgui/code/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn+ssh://fhoech@svn.code.sf.net/p/dispcalgui/code/trunk dispcalgui</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
+							Alternatively, if you don't mind trying out development code, <a href="http://sourceforge.net/p/dispcalgui/code/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk dispcalgui</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
 					</div>
 				</li>
@@ -534,7 +534,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.1</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.1.2.1</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -1454,7 +1454,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
+			<p>Recent donors: Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1465,8 +1465,25 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2012-09-15 15:38 (UTC) 1.1 -->
+			<!-- 2012-10-05 19:04 (UTC) 1.1.2.1 -->
 			<dl>
+				<dt id="changelog-1.1.2.1">2012-10-05 19:04 (UTC) 1.1.2.1</dt>
+					<dd>
+						<h3>1.1.2.1</h3>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Disable source profile selector in advanced gamut mapping options if not atleast one of perceptual or saturation checkboxes is selected.</li>
+							<li>Only show a warning if an incompatible colorimeter correction is explicitly selected via the filebrowser.</li>
+							<li>Show a less cryptic error message if an invalid file is selected when importing colorimeter corrections from other display profiling software.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Whitepoint color temperature is an integer, not a float. This fixes calibration settings being detected as changed when they actually haven't.</li>
+							<li>Worked around a bug in wxPython where controls in a hidden window react to focus events. This fixes the sporadic hang after calibration measurements during a “Calibrate &amp; profile” run.</li>
+							<li>Linux, Mac OS X: Unhandled exception when trying to import colorimeter corrections from other display profiling software and selecting a file with '.txt' extension.</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-1.1">2012-09-15 15:38 (UTC) 1.1</dt>
 					<dd>
 						<h3>1.1</h3>
