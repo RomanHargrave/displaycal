@@ -3164,12 +3164,9 @@ class MainFrame(BaseFrame):
 			else:
 				if isinstance(result, Exception):
 					show_result_dialog(result, self) 
-				# prompt for installer executable / Spyder.lib / CVSpyder.dll
-				msgs = {"darwin": "locate_spyder2_setup_mac",
-						"win32": "locate_spyder2_setup_win"}
+				# prompt for installer executable
 				dlg = ConfirmDialog(self, 
-									msg=lang.getstr(msgs.get(sys.platform, 
-															 "locate_spyder2_setup")), 
+									msg=lang.getstr("locate_spyder2_setup"), 
 									ok=lang.getstr("continue"), 
 									cancel=lang.getstr("cancel"), 
 									bitmap=geticon(32, "dialog-information"))
