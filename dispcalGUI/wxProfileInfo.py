@@ -410,9 +410,10 @@ class GamutCanvas(LUTCanvas):
 		self.size = 40  # Number of segments from one primary to the next secondary color
 		
 		# Setup xicclu
-		xicclu = get_argyll_util("xicclu").encode(fs_enc)
+		xicclu = get_argyll_util("xicclu")
 		if not xicclu:
 			return
+		xicclu = xicclu.encode(fs_enc)
 		cwd = self.worker.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
