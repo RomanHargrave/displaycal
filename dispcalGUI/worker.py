@@ -982,7 +982,7 @@ class Worker(object):
 	@Property
 	def pwd():
 		def fget(self):
-			return self._pwdstr[10:].ljust(int(math.ceil(len(self._pwdstr[5:]) / 4.0) * 4),
+			return self._pwdstr[10:].ljust(int(math.ceil(len(self._pwdstr[10:]) / 4.0) * 4),
 										  "=").decode("base64").decode("UTF-8")
 		
 		def fset(self, pwd):
