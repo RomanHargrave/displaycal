@@ -392,6 +392,7 @@
 	"preset": "Preset",
 	"preview": "Preview",
 	"profile.advanced_gamap": "Advanced...",
+	"profile.choose": "Please choose a profile:",
 	"profile.created": "The profile has been successfully created.",
 	"profile.current": "Current profile",
 	"profile.do_not_install": "Don't install profile",

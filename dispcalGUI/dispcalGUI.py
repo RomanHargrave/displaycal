@@ -4951,7 +4951,7 @@ class MainFrame(BaseFrame):
 			result = cmd
 		return result
 	
-	def select_profile(self, parent=None, check_profile_class=True):
+	def select_profile(self, parent=None, check_profile_class=True, msg=None):
 		"""
 		Selects the currently set profile or display profile. Falls back
 		to user choice via FileDialog if both not set.
@@ -4959,6 +4959,8 @@ class MainFrame(BaseFrame):
 		"""
 		if not parent:
 			parent = self
+		if not msg:
+			msg = lang.getstr("profile.choose")
 		profile = self.get_profile()
 		if not profile:
 			profile = self.get_display_profile()
@@ -4968,7 +4970,7 @@ class MainFrame(BaseFrame):
 				path = None
 		if not profile:
 			defaultDir, defaultFile = get_verified_path(None, path)
-			dlg = wx.FileDialog(parent, lang.getstr("profile_verification_choose_profile"), 
+			dlg = wx.FileDialog(parent, msg, 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
 								wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -5059,7 +5061,7 @@ class MainFrame(BaseFrame):
 		setcfg("profile_verification_chart", chart)
 		
 		# select profile
-		profile = self.select_profile()
+		profile = self.select_profile(msg=lang.getstr("profile_verification_choose_profile"))
 		if not profile:
 			return
 		
