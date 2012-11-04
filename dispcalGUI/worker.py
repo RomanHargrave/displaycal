@@ -437,7 +437,6 @@ def make_argyll_compatible_path(path):
 	parts = path.split(os.path.sep)
 	for i, part in enumerate(parts):
 		if i > skip:
-			part = safe_unicode(part)
 			parts[i] = unicode(part.encode(make_compat_enc, "safe_asciize"), 
 							   make_compat_enc).replace("/", "_").replace("?", 
 																		  "_")
