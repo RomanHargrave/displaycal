@@ -2630,7 +2630,7 @@ class MainFrame(BaseFrame):
 				except CGATS.CGATSError, exception:
 					safe_print("%s:" % path, exception)
 					continue
-				desc = cgats.get_descriptor()
+				desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
 				# If the description is not the same as the 'sane'
 				# filename, add the filename after the description
 				# (max 31 chars)
@@ -2674,7 +2674,7 @@ class MainFrame(BaseFrame):
 				except CGATS.CGATSError, exception:
 					safe_print("%s:" % ccmx[1], exception)
 				else:
-					desc = cgats.get_descriptor()
+					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
 					# If the description is not the same as the 'sane'
 					# filename, add the filename after the description
 					# (max 31 chars)
@@ -5354,7 +5354,7 @@ class MainFrame(BaseFrame):
 				except CGATS.CGATSError, exception:
 					safe_print("%s:" % ccmxpath, exception)
 				else:
-					desc = cgats.get_descriptor()
+					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
 					# If the description is not the same as the 'sane'
 					# filename, add the filename after the description
 					# (max 31 chars)
