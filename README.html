@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>1.1.2.1</h2>
-					<p>2012-10-05 19:04 UTC</p>
+					<h2>1.1.2.9</h2>
+					<p>2012-11-05 20:32 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -328,6 +328,11 @@
 								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/i386/dispcalGUI.deb">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
+							<li>
+								<span>Ubuntu 12.10 (Quantal)</span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/i386/dispcalGUI.deb">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/amd64/dispcalGUI.deb">x86_64</a></span>
+							</li>
 						</ul>
 
 						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
@@ -534,7 +539,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.1.2.1</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.1.2.9</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -1454,7 +1459,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
+			<p>Recent donors: Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1465,8 +1470,23 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2012-10-05 19:04 (UTC) 1.1.2.1 -->
+			<!-- 2012-11-05 20:32 (UTC) 1.1.2.9 -->
 			<dl>
+				<dt id="changelog-1.1.2.9">2012-11-05 20:32 (UTC) 1.1.2.9</dt>
+					<dd>
+						<h3>1.1.2.9</h3>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Simplified Spyder 2 enabling instructions.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Broken Unicode support (unhandled exception) when dealing with colorimeter correction descriptions containing 8-Bit characters.</li>
+							<li>Check if xicclu is found before attempting to use it for the profile information window (gets rid of bogus “'NoneType' object has no attribute 'encode'” message).</li>
+							<li>Use a default generic message when prompting to choose a profile.</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-1.1.2.1">2012-10-05 19:04 (UTC) 1.1.2.1</dt>
 					<dd>
 						<h3>1.1.2.1</h3>
