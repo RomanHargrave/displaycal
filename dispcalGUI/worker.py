@@ -2371,11 +2371,13 @@ class Worker(object):
 	
 	def import_edr(self, args=None):
 		""" Import X-Rite .edr files """
-		self.import_colorimeter_corrections(get_argyll_util("i1d3ccss"), args)
+		return self.import_colorimeter_corrections(get_argyll_util("i1d3ccss"),
+												   args)
 	
 	def import_spyd4cal(self, args=None):
 		""" Import Spyder4 calibrations to spy4cal.bin """
-		self.import_colorimeter_corrections(get_argyll_util("spyd4en"), args)
+		return self.import_colorimeter_corrections(get_argyll_util("spyd4en"),
+												   args)
 
 	def install_profile(self, profile_path, capture_output=True,
 						skip_scripts=False, silent=False):
