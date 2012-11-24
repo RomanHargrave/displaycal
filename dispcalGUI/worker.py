@@ -2357,13 +2357,11 @@ class Worker(object):
 				self.lut_access and True in 
 				self.lut_access)
 	
-	def import_edr(self, args=None):
-		""" Import X-Rite .edr files """
+	def import_colorimeter_corrections(self, cmd, args=None):
 		if not args:
 			args = []
-		cmd = get_argyll_util("i1d3ccss")
 		needroot = sys.platform != "win32"
-		if is_superuser() or needroot:
+		if (is_superuser() or needroot) and not "-Sl" in args:
 			# If we are root or need root privs anyway, install to local
 			# system scope
 			args.insert(0, "-Sl")
@@ -2371,19 +2369,13 @@ class Worker(object):
 							 skip_scripts=True, silent=False,
 							 asroot=needroot)
 	
+	def import_edr(self, args=None):
+		""" Import X-Rite .edr files """
+		self.import_colorimeter_corrections(get_argyll_util("i1d3ccss"), args)
+	
 	def import_spyd4cal(self, args=None):
 		""" Import Spyder4 calibrations to spy4cal.bin """
-		if not args:
-			args = []
-		cmd = get_argyll_util("spyd4en")
-		needroot = sys.platform != "win32"
-		if is_superuser() or needroot:
-			# If we are root or need root privs anyway, install to local
-			# system scope
-			args.insert(0, "-Sl")
-		return self.exec_cmd(cmd, ["-v"] + args, capture_output=True, 
-							 skip_scripts=True, silent=False,
-							 asroot=needroot)
+		self.import_colorimeter_corrections(get_argyll_util("spyd4en"), args)
 
 	def install_profile(self, profile_path, capture_output=True,
 						skip_scripts=False, silent=False):
