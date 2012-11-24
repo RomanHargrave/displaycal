@@ -2612,10 +2612,20 @@ class MainFrame(BaseFrame):
 		index = 0
 		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 		if force or not getattr(self, "ccmx_cached_paths", None):
-			self.ccmx_cached_paths = glob.glob(os.path.join(config.appdata, 
-															"color", "*.ccmx"))
-			self.ccmx_cached_paths += glob.glob(os.path.join(config.appdata, 
-															 "color", "*.ccss"))
+			ccmx_paths = []
+			ccss_paths = []
+			for commonappdata in config.commonappdata:
+				ccmx_paths += glob.glob(os.path.join(commonappdata, "color",
+													 "*.ccmx"))
+				ccss_paths += glob.glob(os.path.join(commonappdata, "color",
+													 "*.ccss"))
+			ccmx_paths += glob.glob(os.path.join(config.appdata, "color",
+												 "*.ccmx"))
+			ccss_paths += glob.glob(os.path.join(config.appdata, "color",
+												 "*.ccss"))
+			ccmx_paths.sort(key=os.path.basename)
+			ccss_paths.sort(key=os.path.basename)
+			self.ccmx_cached_paths = ccmx_paths + ccss_paths
 			self.ccmx_cached_descriptors = OrderedDict()
 			self.ccmx_instruments = {}
 			self.ccmx_mapping = {}
