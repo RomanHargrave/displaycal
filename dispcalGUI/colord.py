@@ -139,16 +139,12 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 		raise CDError("Could not connect to profile")
 
 	# Add profile to device
+	# (DeviceRelation.HARD also makes it default)
 	try:
 		device.add_profile_sync(Colord.DeviceRelation.HARD, profile, cancellable)
 	except Exception, exception:
 		# Profile may already have been added
 		pass
-
-	# Make profile default for device
-	if not device.make_profile_default_sync(profile, cancellable):
-		raise CDError("Could not make profile %r default for device ID %s" %
-					  (profile.get_filename(), device_id))
 
 
 class CDError(Exception):
