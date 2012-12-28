@@ -1121,9 +1121,10 @@ class Worker(object):
 					 bpc=True, format="3dl", size=17, input_bits=10,
 					 output_bits=12, maxval=1.0):
 		""" Create a 3D LUT from two profiles. """
-		# .cube: http://doc.iridas.com/index.php/LUT_Formats
+		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
 		# .3dl: http://www.kodak.com/US/plugins/acrobat/en/motion/products/look/UserGuide.pdf
 		#       http://download.autodesk.com/us/systemdocs/pdf/lustre_color_management_user_guide.pdf
+		# .spi3d: https://github.com/imageworks/OpenColorIO/blob/master/src/core/FileFormatSpi3D.cpp
 		
 		for profile in (profile_in, profile_out):
 			if (profile.profileClass != "mntr" or 
@@ -1133,32 +1134,38 @@ class Worker(object):
 													   profile.colorSpace)))
 		
 		# Create input RGB values
-		RGB_triplets = []
+		RGB_in = []
+		RGB_indexes = []
 		seen = {}
 		step = 1.0 / (size - 1)
 		RGB_triplet = [0.0, 0.0, 0.0]
+		RGB_index = [0, 0, 0]
 		# Set the fastest and slowest changing columns, from right to left
-		if format == "3dl":
+		if format in ("3dl", "spi3d"):
 			columns = (0, 1, 2)
 		else:
 			columns = (2, 1, 0)
 		for i in xrange(0, size):
 			# Red
 			RGB_triplet[columns[0]] = step * i
+			RGB_index[columns[0]] = i
 			for j in xrange(0, size):
 				# Green
 				RGB_triplet[columns[1]] = step * j
+				RGB_index[columns[1]] = j
 				for k in xrange(0, size):
 					# Blue
 					RGB_triplet[columns[2]] = step * k
-					RGB_triplets.append(list(RGB_triplet))
+					RGB_index[columns[2]] = k
+					RGB_in.append(list(RGB_triplet))
+					RGB_indexes.append(list(RGB_index))
 
 		# Convert RGB triplets to list of strings
-		for i, RGB_triplet in enumerate(RGB_triplets):
-			RGB_triplets[i] = " ".join(str(n) for n in RGB_triplet)
+		for i, RGB_triplet in enumerate(RGB_in):
+			RGB_in[i] = " ".join(str(n) for n in RGB_triplet)
 		if debug:
-			safe_print(len(RGB_triplets), "RGB triplets")
-			safe_print("\n".join(RGB_triplets))
+			safe_print(len(RGB_in), "RGB triplets")
+			safe_print("\n".join(RGB_in))
 		
 		# Setup xicclu
 		xicclu = get_argyll_util("xicclu").encode(fs_enc)
@@ -1187,7 +1194,7 @@ class Worker(object):
 			stderr.seek(0)
 			raise Error(stderr.read().strip())
 		try:
-			odata = p.communicate("\n".join(RGB_triplets))[0].splitlines()
+			odata = p.communicate("\n".join(RGB_in))[0].splitlines()
 		except IOError:
 			stderr.seek(0)
 			raise Error(stderr.read().strip())
@@ -1306,13 +1313,13 @@ class Worker(object):
 		self.wrapup(False)
 		
 		# Convert xicclu output to RGB triplets
-		RGB_triplets = []
+		RGB_out = []
 		for line in odata:
 			line = "".join(line.strip().split("->")).split()
-			RGB_triplets.append(" ".join([n for n in line[5:8]]))
+			RGB_out.append(" ".join([n for n in line[5:8]]))
 		if debug:
-			safe_print(len(RGB_triplets), "RGB triplets")
-			safe_print("\n".join(RGB_triplets))
+			safe_print(len(RGB_out), "RGB triplets")
+			safe_print("\n".join(RGB_out))
 
 		lut = [["# Created with %s %s" % (appname, version)]]
 		if format == "3dl":
@@ -1329,7 +1336,7 @@ class Worker(object):
 			lut.append([])
 			for i in xrange(0, size):
 				lut[-1] += ["%i" % int(round(i * step * (math.pow(2, input_bits) - 1)))]
-			for RGB_triplet in RGB_triplets:
+			for RGB_triplet in RGB_out:
 				lut.append([])
 				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
@@ -1343,8 +1350,19 @@ class Worker(object):
 			domain_max = "DOMAIN_MAX %s %s %s" % (("%%.%if" % len(str(maxval)[fp_offset + 1:]), ) * 3)
 			lut.append([domain_max % ((maxval ,) * 3)])
 			lut.append([])
-			for RGB_triplet in RGB_triplets:
+			for RGB_triplet in RGB_out:
 				lut.append([])
+				RGB_triplet = RGB_triplet.split()
+				for component in (0, 1, 2):
+					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
+		elif format == "spi3d":
+			if maxval is None:
+				maxval = 1.0
+			lut = [["SPILUT 1.0"]]
+			lut.append(["3 3"])
+			lut.append(["%i %i %i" % ((size, ) * 3)])
+			for i, RGB_triplet in enumerate(RGB_out):
+				lut.append([str(index) for index in RGB_indexes[i]])
 				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
 					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]

@@ -363,7 +363,7 @@ valid_ranges = {
 valid_values = {
 	"3dlut.bitdepth.input": [0, 1, 2, 3, 4],
 	"3dlut.bitdepth.output": [0, 1, 2, 3, 4],
-	"3dlut.format": [0, 1],
+	"3dlut.format": [0, 1, 2],
 	"3dlut.rendering_intent": [0, 1, 2, 3],
 	"3dlut.size": [0, 1, 2],
 	"calibration.quality": ["v", "l", "m", "h", "u"],

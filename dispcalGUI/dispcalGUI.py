@@ -991,7 +991,8 @@ class LUT3DFrame(BaseFrame):
 			path = None
 			defaultDir, defaultFile = get_verified_path("last_3dlut_path")
 			format = {0: "3dl",
-					  1: "cube"}.get(getcfg("3dlut.format"), "3dl")
+					  1: "cube",
+					  2: "spi3d"}.get(getcfg("3dlut.format"), "3dl")
 			defaultFile = os.path.splitext(defaultFile or
 										   os.path.basename(defaults.get("last_3dlut_path")))[0] + "." + format
 			dlg = wx.FileDialog(self, 
@@ -1037,7 +1038,8 @@ class LUT3DFrame(BaseFrame):
 				  3: "s"}.get(getcfg("3dlut.rendering_intent"), "r")
 		bpc = bool(getcfg("3dlut.black_point_compensation"))
 		format = {0: "3dl",
-				  1: "cube"}.get(getcfg("3dlut.format"), "3dl")
+				  1: "cube",
+				  2: "spi3d"}.get(getcfg("3dlut.format"), "3dl")
 		size = {0: 17,
 				1: 24,
 				2: 32}.get(getcfg("3dlut.size"), 17)
