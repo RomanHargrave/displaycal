@@ -1076,8 +1076,12 @@ class LUT3DFrame(BaseFrame):
 		self.set_profile("output", silent=not event)
 	
 	def output_profile_current_ctrl_handler(self, event):
-		if self.Parent.is_profile():
-			self.output_profile_ctrl.SetPath(getcfg("calibration.file"))
+		profile = self.Parent.get_profile()
+		if not profile:
+			profile = self.Parent.get_display_profile()
+		if profile:
+			if profile.fileName and os.path.isfile(profile.fileName):
+				self.output_profile_ctrl.SetPath(profile.fileName)
 			self.set_profile("output", silent=not event)
 	
 	def rendering_intent_ctrl_handler(self, event):
@@ -1087,8 +1091,13 @@ class LUT3DFrame(BaseFrame):
 	def set_profile(self, which, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
 		if which == "output":
-			self.output_profile_current_btn.Enable(self.Parent.is_profile() and
-												   getcfg("calibration.file") != path)
+			profile = self.Parent.get_profile()
+			if not profile:
+				profile = self.Parent.get_display_profile()
+			self.output_profile_current_btn.Enable(profile and
+												   profile.fileName and
+												   os.path.isfile(profile.fileName) and
+												   profile.fileName != path)
 		if path:
 			if not os.path.isfile(path):
 				if not silent:
@@ -1122,7 +1131,6 @@ class LUT3DFrame(BaseFrame):
 												 os.path.isfile(getcfg("3dlut.input.profile")) and
 												 bool(getcfg("3dlut.output.profile")) and
 												 os.path.isfile(getcfg("3dlut.output.profile")))
-					self.update_layout()
 					return profile
 			getattr(self, "%s_profile_ctrl" %
 						  which).SetPath(getcfg("3dlut.%s.profile" % which))
@@ -3073,7 +3081,7 @@ class MainFrame(BaseFrame):
 			self.gamapframe.update_controls()
 
 		if hasattr(self, "lut3dframe"):
-			self.lut3dframe.update_controls()
+			self.lut3dframe.set_profile("output")
 
 		if update_profile_name:
 			self.profile_name_textctrl.ChangeValue(getcfg("profile.name"))
@@ -3332,6 +3340,8 @@ class MainFrame(BaseFrame):
 			self.load_cal_handler(None, path=self.recent_cals[sel])
 		else:
 			self.cal_changed(setchanged=False)
+			if hasattr(self, "lut3dframe"):
+				self.lut3dframe.set_profile("output")
 	
 	def settings_discard_changes(self, sel=None, keep_changed_state=False):
 		if sel is None:
