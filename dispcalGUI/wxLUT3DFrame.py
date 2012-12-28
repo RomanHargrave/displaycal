@@ -9,7 +9,7 @@ from config import get_data_path, get_verified_path, getcfg, hascfg, setcfg
 from log import safe_print
 from meta import name as appname
 from util_os import waccess
-from worker import show_result_dialog
+from worker import Error, show_result_dialog
 import ICCProfile as ICCP
 import config
 import localization as lang
