@@ -9,19 +9,27 @@ import config
 from config import (btn_width_correction, defaults, getbitmap, getcfg, geticon, 
 					get_bitmap_as_icon, get_data_path, get_verified_path, 
 					setcfg)
+from debughelpers import getevtobjname, getevttype
 from log import log as log_, safe_print
 from meta import name as appname
+from options import debug
 from thread import start_new_thread
 from util_os import waccess
-from util_str import safe_unicode
-from wxaddons import (FileDrop as _FileDrop, get_dc_font_size,
+from util_str import safe_unicode, wrap
+from wxaddons import (CustomEvent, FileDrop as _FileDrop, get_dc_font_size,
 					  get_platform_window_decoration_size, wx)
+from wxfixes import GTKMenuItemGetFixedLabel
 from lib.agw import labelbook
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
 									 NOWHERE, FourWaySplitter,
 									 FourWaySplitterEvent)
 import localization as lang
 import util_str
+
+try:
+	import wx.lib.agw.floatspin as floatspin
+except ImportError:
+	import floatspin
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
 				   wx.WXK_NUMPAD1,
@@ -75,6 +83,164 @@ class AboutDialog(wx.Dialog):
 					font.SetPointSize(pointsize)
 					item.SetFont(font)
 			self.sizer.Add(item, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 0)
+
+
+class BaseFrame(wx.Frame):
+
+	""" Main frame base class. """
+	
+	def __init__(self, *args, **kwargs):
+		wx.Frame.__init__(self, *args, **kwargs)
+
+	def focus_handler(self, event):
+		if debug and hasattr(self, "last_focused_ctrl"):
+				safe_print("[D] Last focused control: %s" %
+						   self.last_focused_ctrl)
+		if hasattr(self, "last_focused_ctrl") and self.last_focused_ctrl and \
+		   self.last_focused_ctrl != event.GetEventObject():
+			catchup_event = wx.FocusEvent(wx.EVT_KILL_FOCUS.evtType[0], 
+										  self.last_focused_ctrl.GetId())
+			if debug:
+				safe_print("[D] Last focused control ID %s %s processing "
+						   "catchup event type %s %s" % 
+						   (self.last_focused_ctrl.GetId(), 
+							self.last_focused_ctrl.GetName(), 
+							catchup_event.GetEventType(), 
+							getevttype(catchup_event)))
+			if self.last_focused_ctrl.ProcessEvent(catchup_event):
+				if debug:
+					safe_print("[D] Last focused control processed catchup "
+							   "event")
+				event.Skip()
+				if hasattr(event.GetEventObject(), "GetId") and \
+				   callable(event.GetEventObject().GetId):
+					event = CustomEvent(event.GetEventType(), 
+										event.GetEventObject(), 
+										self.last_focused_ctrl)
+		if hasattr(event.GetEventObject(), "GetId") and \
+		   callable(event.GetEventObject().GetId):
+		   	if debug:
+					safe_print("[D] Setting last focused control to %s " %
+							   event.GetEventObject())
+			self.last_focused_ctrl = event.GetEventObject()
+		if debug:
+			if hasattr(event, "GetWindow") and event.GetWindow():
+				safe_print("[D] Focus moving from control ID %s %s to %s %s, "
+						   "event type %s %s" % (event.GetWindow().GetId(), 
+												 event.GetWindow().GetName(), 
+												 event.GetId(), 
+												 getevtobjname(event, self), 
+												 event.GetEventType(), 
+												 getevttype(event)))
+			else:
+				safe_print("[D] Focus moving to control ID %s %s, event type "
+						   "%s %s" % (event.GetId(), 
+									  getevtobjname(event, self), 
+									  event.GetEventType(), getevttype(event)))
+		event.Skip()
+	
+	def setup_language(self):
+		"""
+		Substitute translated strings for menus, controls, labels and tooltips.
+		
+		"""
+		
+		# Title
+		if not hasattr(self, "_Title"):
+			# Backup un-translated label
+			title = self._Title = self.Title
+		else:
+			# Restore un-translated label
+			title = self._Title
+		translated = lang.getstr(title)
+		if translated != title:
+			self.Title = translated
+		
+		# Menus
+		menubar = self.menubar if hasattr(self, "menubar") else self.GetMenuBar()
+		if menubar:
+			for menu, label in menubar.GetMenus():
+				menu_pos = menubar.FindMenu(label)
+				if not hasattr(menu, "_Label"):
+					# Backup un-translated label
+					menu._Label = label
+				menubar.SetMenuLabel(menu_pos, "&" + lang.getstr(
+									 GTKMenuItemGetFixedLabel(menu._Label)))
+				if not hasattr(menu, "_Items"):
+					# Backup un-translated labels
+					menu._Items = [(item, item.Label) for item in 
+								   menu.GetMenuItems()]
+				for item, label in menu._Items:
+					if item.Label:
+						label = GTKMenuItemGetFixedLabel(label)
+						if item.Accel:
+							item.Text = lang.getstr(label) + "\t" + \
+										item.Accel.ToString()
+						else:
+							item.Text = lang.getstr(label)
+			if sys.platform == "darwin":
+				wx.GetApp().SetMacHelpMenuTitleName(lang.getstr("menu.help"))
+			self.SetMenuBar(menubar)
+		
+		# Controls and labels
+		for child in self.GetAllChildren():
+			if (isinstance(child, wx.StaticText) or 
+				isinstance(child, wx.Control)):
+				if not hasattr(child, "_Label"):
+					# Backup un-translated label
+					label = child._Label = child.Label
+				else:
+					# Restore un-translated label
+					label = child._Label
+				translated = lang.getstr(label)
+				if translated != label:
+					child.Label = translated
+				if child.ToolTip:
+					if not hasattr(child, "_ToolTipString"):
+						# Backup un-translated tooltip
+						tooltipstr = child._ToolTipString = child.ToolTip.Tip
+					else:
+						# Restore un-translated tooltip
+						tooltipstr = child._ToolTipString
+					translated = lang.getstr(tooltipstr)
+					if translated != tooltipstr:
+						child.SetToolTipString(wrap(translated, 72))
+	
+	def update_layout(self):
+		""" Update main window layout. """
+		self.GetSizer().SetSizeHints(self)
+		self.GetSizer().Layout()
+	
+	def set_child_ctrls_as_attrs(self, parent=None):
+		"""
+		Set child controls and labels as attributes of the frame.
+		
+		Will also set a maximum font size of 11 pt.
+		parent is the window over which children will be iterated and
+		defaults to self.
+		
+		"""
+		if not parent:
+			parent = self
+		for child in parent.GetAllChildren():
+			if debug:
+				safe_print(child.__class__, child.Name)
+			if isinstance(child, (wx.StaticText, wx.Control, 
+								  floatspin.FloatSpin)):
+				child.SetMaxFontSize(11)
+				if sys.platform == "darwin" or debug:
+					# Work around ComboBox issues on Mac OS X
+					# (doesn't receive EVT_KILL_FOCUS)
+					if isinstance(child, wx.ComboBox):
+						if child.IsEditable():
+							if debug:
+								safe_print("[D]", child.Name,
+										   "binds EVT_TEXT to focus_handler")
+							child.Bind(wx.EVT_TEXT, self.focus_handler)
+					else:
+						child.Bind(wx.EVT_SET_FOCUS, self.focus_handler)
+				if not hasattr(self, child.Name):
+					setattr(self, child.Name, child)
 
 
 class BaseInteractiveDialog(wx.Dialog):
