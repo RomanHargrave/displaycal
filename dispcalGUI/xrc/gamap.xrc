@@ -136,7 +136,7 @@
     </object>
     <pos>-1,100</pos>
     <title>gamapframe.title</title>
-    <style>wxDEFAULT_FRAME_STYLE|wxFRAME_NO_TASKBAR</style>
+    <style>wxCLIP_CHILDREN|wxCAPTION|wxSYSTEM_MENU|wxCLOSE_BOX|wxFRAME_NO_TASKBAR</style>
     <XRCED>
       <events>EVT_CLOSE</events>
     </XRCED>

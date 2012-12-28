@@ -79,6 +79,7 @@
     <size>400,-1</size>
     <title>extra_args</title>
     <centered>1</centered>
+    <style>wxCLIP_CHILDREN|wxCAPTION|wxSYSTEM_MENU|wxCLOSE_BOX|wxFRAME_NO_TASKBAR</style>
     <XRCED>
       <events>EVT_CLOSE</events>
     </XRCED>
