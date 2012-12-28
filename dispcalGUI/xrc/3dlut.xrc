@@ -229,7 +229,7 @@
     </object>
     <pos>-1,100</pos>
     <title>3dlut.frame.title</title>
-    <style>wxDEFAULT_FRAME_STYLE|wxFRAME_NO_TASKBAR</style>
+    <style>wxDEFAULT_FRAME_STYLE</style>
     <XRCED>
       <events>EVT_CLOSE</events>
     </XRCED>
