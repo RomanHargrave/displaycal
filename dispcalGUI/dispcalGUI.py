@@ -4541,12 +4541,8 @@ class MainFrame(BaseFrame):
 		if not msg:
 			msg = lang.getstr("profile.choose")
 		profile = get_current_profile(include_display_profile=True)
-		if profile:
-			path = profile.fileName
-		else:
-			path = None
 		if not profile:
-			defaultDir, defaultFile = get_verified_path(None, path)
+			defaultDir, defaultFile = get_verified_path("last_icc_path")
 			dlg = wx.FileDialog(parent, msg, 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
 								wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm", 
