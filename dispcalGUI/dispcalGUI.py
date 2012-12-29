@@ -1794,6 +1794,7 @@ class MainFrame(BaseFrame):
 				if getattr(self, "lut3dframe", None):
 					self.lut3dframe.panel.Freeze()
 					self.lut3dframe.setup_language()
+					self.lut3dframe.update_controls()
 					self.lut3dframe.update_layout()
 					self.lut3dframe.panel.Thaw()
 				self.update_measurement_modes()
