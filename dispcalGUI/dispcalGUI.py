@@ -86,10 +86,11 @@ import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
 					script_ext, confighome, datahome, data_dirs, defaults, enc, 
 					exe, exe_ext, exedir, fs_enc, getbitmap, geticon, 
-					get_bitmap_as_icon, get_ccxx_testchart, get_data_path, 
-					getcfg, get_verified_path, is_ccxx_testchart, 
-					original_codepage, initcfg, isapp, isexe, profile_ext, 
-					pydir, pyext, pyname, pypath, resfiles, runtype, setcfg, 
+					get_bitmap_as_icon, get_ccxx_testchart, get_current_profile,
+					get_display_profile, get_data_path, getcfg,
+					get_verified_path, is_ccxx_testchart, is_profile,
+					original_codepage, initcfg, isapp, isexe, profile_ext,
+					pydir, pyext, pyname, pypath, resfiles, runtype, setcfg,
 					storage, writecfg)
 
 # Custom modules
@@ -2326,21 +2327,6 @@ class MainFrame(BaseFrame):
 		else:
 			tooltip = ""
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
-	
-	def is_profile(self, filename=None, include_display_profile=False):
-		filename = filename or getcfg("calibration.file")
-		is_profile = False
-		if filename:
-			if os.path.exists(filename):
-				try:
-					profile = ICCP.ICCProfile(filename)
-				except ICCP.ICCProfileInvalidError:
-					pass
-				else:
-					is_profile = True
-		elif include_display_profile:
-			is_profile = bool(self.get_display_profile())
-		return is_profile
 
 	def update_main_controls(self):
 		""" Enable/disable the calibrate and profile buttons 
@@ -2353,7 +2339,7 @@ class MainFrame(BaseFrame):
 			not update_cal and bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
-		update_profile = self.calibration_update_cb.GetValue() and self.is_profile()
+		update_profile = self.calibration_update_cb.GetValue() and is_profile()
 		enable_profile = not update_profile and not is_ccxx_testchart()
 
 		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
@@ -2449,9 +2435,9 @@ class MainFrame(BaseFrame):
 		self.install_profile_btn.Enable(profile_exists and
 										profile_path == cal and
 										cal not in self.presets)
-		is_profile = self.is_profile(include_display_profile=True)
-		self.profile_info_btn.Enable(is_profile)
-		self.menuitem_profile_info.Enable(is_profile)
+		is_profile_ = is_profile(include_display_profile=True)
+		self.profile_info_btn.Enable(is_profile_)
+		self.menuitem_profile_info.Enable(is_profile_)
 		enable_update = bool(cal) and os.path.exists(filename + ".cal")
 		if not enable_update:
 			setcfg("calibration.update", 0)
@@ -2719,7 +2705,7 @@ class MainFrame(BaseFrame):
 		setcfg("calibration.update", 
 			   int(self.calibration_update_cb.GetValue()))
 		setcfg("profile.update", 
-			   int(self.calibration_update_cb.GetValue() and self.is_profile()))
+			   int(self.calibration_update_cb.GetValue() and is_profile()))
 		self.update_controls()
 
 	def enable_spyder2_handler(self, event):
@@ -4417,7 +4403,7 @@ class MainFrame(BaseFrame):
 			profile = None
 		else:
 			if cal is True: # display profile
-				profile = self.get_display_profile()
+				profile = get_display_profile()
 				if not profile:
 					cal = False
 			elif cal.lower().endswith(".icc") or \
@@ -4554,13 +4540,11 @@ class MainFrame(BaseFrame):
 			parent = self
 		if not msg:
 			msg = lang.getstr("profile.choose")
-		profile = self.get_profile()
-		if not profile:
-			profile = self.get_display_profile()
-			if profile:
-				path = profile.fileName
-			else:
-				path = None
+		profile = get_current_profile(include_display_profile=True)
+		if profile:
+			path = profile.fileName
+		else:
+			path = None
 		if not profile:
 			defaultDir, defaultFile = get_verified_path(None, path)
 			dlg = wx.FileDialog(parent, msg, 
@@ -5038,7 +5022,7 @@ class MainFrame(BaseFrame):
 		return False
 
 	def load_display_profile_cal(self, event=None):
-		profile = self.get_display_profile()
+		profile = get_display_profile()
 		if check_set_argyll_bin():
 			if verbose >= 1: ## and event is None:
 				safe_print(
@@ -5894,7 +5878,7 @@ class MainFrame(BaseFrame):
 					else:
 						profile = cal_to_fake_profile(path)
 				else:
-					profile = self.get_display_profile() or False
+					profile = get_display_profile() or False
 			if show is None:
 				show = not self.lut_viewer.IsShownOnScreen()
 			if debug:
@@ -6781,7 +6765,7 @@ class MainFrame(BaseFrame):
 					i = min(0, self.display_ctrl.GetSelection())
 				setcfg("display_lut.number", i + 1)
 			if load_lut:
-				profile = self.get_display_profile(display_no)
+				profile = get_display_profile(display_no)
 		if load_lut:
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut", 
@@ -7657,26 +7641,6 @@ class MainFrame(BaseFrame):
 
 	def get_calibration_quality(self):
 		return self.quality_ab[self.calibration_quality_ctrl.GetValue()]
-	
-	def get_display_profile(self, display_no=None):
-		if display_no is None:
-			display_no = max(self.display_ctrl.GetSelection(), 0)
-		try:
-			return ICCP.get_display_profile(display_no)
-		except Exception, exception:
-			_safe_print("ICCP.get_display_profile(%s):" % display_no, 
-						exception, fn=log)
-			return None
-	
-	def get_profile(self):
-		""" Get the currently set profile """
-		path = getcfg("calibration.file")
-		if path:
-			try:
-				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError, exception:
-				return
-			return profile
 
 	def get_profile_quality(self):
 		return self.quality_ab[self.profile_quality_ctrl.GetValue() + 1]

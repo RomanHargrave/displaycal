@@ -691,6 +691,32 @@ def get_ccxx_testchart():
 									  defaults["colorimeter_correction.testchart"]))
 
 
+def get_current_profile(include_display_profile=False):
+	""" Get the currently selected profile (if any) """
+	path = getcfg("calibration.file")
+	if path:
+		import ICCProfile as ICCP
+		try:
+			profile = ICCP.ICCProfile(path)
+		except ICCP.ICCProfileInvalidError, exception:
+			return
+		return profile
+	elif include_display_profile:
+		return get_display_profile()
+
+
+def get_display_profile(display_no=None):
+	if display_no is None:
+		display_no = max(getcfg("display.number") - 1, 0)
+	import ICCProfile as ICCP
+	try:
+		return ICCP.get_display_profile(display_no)
+	except Exception, exception:
+		from log import _safe_print, log
+		_safe_print("ICCP.get_display_profile(%s):" % display_no, 
+					exception, fn=log)
+
+
 def get_total_patches(white_patches=None, single_channel_patches=None, 
 					  gray_patches=None, multi_steps=None, 
 					  fullspread_patches=None):
@@ -758,9 +784,26 @@ def get_verified_path(cfg_item_name, path=None):
 	return defaultDir, defaultFile
 
 
-def is_ccxx_testchart():
-	""" Check wether the current testchart is the default chart for CCMX/CCSS creation """
-	return getcfg("testchart.file") == get_ccxx_testchart()
+def is_ccxx_testchart(testchart=None):
+	""" Check wether the testchart is the default chart for CCMX/CCSS creation """
+	testchart = testchart or getcfg("testchart.file")
+	return testchart == get_ccxx_testchart()
+
+
+def is_profile(filename=None, include_display_profile=False):
+	filename = filename or getcfg("calibration.file")
+	if filename:
+		if os.path.exists(filename):
+			import ICCProfile as ICCP
+			try:
+				profile = ICCP.ICCProfile(filename)
+			except ICCP.ICCProfileInvalidError:
+				pass
+			else:
+				return True
+	elif include_display_profile:
+		return bool(get_display_profile())
+	return False
 
 
 def makecfgdir(which="user", worker=None):
