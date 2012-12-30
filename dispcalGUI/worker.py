@@ -2403,6 +2403,9 @@ class Worker(object):
 		colord_install = False
 		gcm_import = False
 		oy_install = False
+		argyll_install = self._install_profile_argyll(profile_path,
+													  capture_output,
+													  skip_scripts, silent)
 		if sys.platform not in ("darwin", "win32"):
 			device_id = self.get_device_id()
 			if device_id:
@@ -2428,9 +2431,7 @@ class Worker(object):
 											  silent)
 			oy_install = result
 		if not isinstance(result, Exception) and result:
-			result = self._install_profile_argyll(profile_path, capture_output,
-												  skip_scripts, silent)
-			if isinstance(result, Exception) or not result:
+			if isinstance(argyll_install, Exception) or not argyll_install:
 				# Fedora's Argyll cannot install profiles using dispwin
 				# Check if profile installation via colord or oyranos-monitor
 				# was successful and continue
