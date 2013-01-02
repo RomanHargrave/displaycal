@@ -2201,11 +2201,19 @@ class MainFrame(BaseFrame):
 			for commonappdata in config.commonappdata:
 				ccmx_paths += glob.glob(os.path.join(commonappdata, "color",
 													 "*.ccmx"))
+				ccmx_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+													 "*.ccmx"))
 				ccss_paths += glob.glob(os.path.join(commonappdata, "color",
+													 "*.ccss"))
+				ccss_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
 													 "*.ccss"))
 			ccmx_paths += glob.glob(os.path.join(config.appdata, "color",
 												 "*.ccmx"))
+			ccmx_paths += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
+												 "*.ccmx"))
 			ccss_paths += glob.glob(os.path.join(config.appdata, "color",
+												 "*.ccss"))
+			ccss_paths += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
 												 "*.ccss"))
 			ccmx_paths.sort(key=os.path.basename)
 			ccss_paths.sort(key=os.path.basename)

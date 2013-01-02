@@ -897,15 +897,21 @@ class Worker(object):
 		   self.argyll_version >= [1, 1, 0] and not get_arg("-p", args):
 			# Projector mode, Argyll >= 1.1.0 Beta
 			args += ["-p"]
-		if getcfg("measurement_mode.adaptive") and \
-		   instrument_features.get("adaptive_mode") and \
-		   (self.argyll_version[0:3] > [1, 1, 0] or (
-			self.argyll_version[0:3] == [1, 1, 0] and 
-			not "Beta" in self.argyll_version_string and 
-			not "RC1" in self.argyll_version_string and 
-			not "RC2" in self.argyll_version_string)) and not get_arg("-V", args):
-			# Adaptive mode, Argyll >= 1.1.0 RC3
-			args += ["-V"]
+		if instrument_features.get("adaptive_mode"):
+			if getcfg("measurement_mode.adaptive"):
+				if ((self.argyll_version[0:3] > [1, 1, 0] or
+					 (self.argyll_version[0:3] == [1, 1, 0] and
+					  not "Beta" in self.argyll_version_string and
+					  not "RC1" in self.argyll_version_string and
+					  not "RC2" in self.argyll_version_string)) and
+					 self.argyll_version[0:3] < [1, 5, 0] and
+					 not get_arg("-V", args)):
+					# Adaptive measurement mode, Argyll >= 1.1.0 RC3
+					args += ["-V"]
+			else:
+				if self.argyll_version[0:3] >= [1, 5, 0]:
+					# Disable adaptive measurement mode
+					args += ["-ZA"]
 		if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 			(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
 			args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
