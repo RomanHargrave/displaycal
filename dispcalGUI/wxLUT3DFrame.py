@@ -5,7 +5,8 @@ import os
 import sys
 
 from ICCProfile import get_display_profile
-from config import get_data_path, get_verified_path, getcfg, hascfg, setcfg
+from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
+					setcfg)
 from log import safe_print
 from meta import name as appname
 from util_os import waccess
@@ -14,7 +15,8 @@ import ICCProfile as ICCP
 import config
 import localization as lang
 import worker
-from wxwindows import BaseFrame, wx
+from wxaddons import FileDrop
+from wxwindows import BaseFrame, InfoDialog, wx
 
 from wx import xrc
 
@@ -100,6 +102,30 @@ class LUT3DFrame(BaseFrame):
 		setcfg("3dlut.black_point_compensation",
 			   int(self.black_point_compensation_cb.GetValue()))
 		config.writecfg()
+
+	def input_drop_unsupported_handler(self):
+		self.drop_unsupported("input")
+		
+	def output_drop_unsupported_handler(self):
+		self.drop_unsupported("output")
+	
+	def drop_unsupported(self, which):
+		if not self.worker.is_working():
+			files = getattr(self, "%s_droptarget" % which)._filenames
+			InfoDialog(self, msg=lang.getstr("error.file_type_unsupported") +
+							 "\n\n" + "\n".join(files),
+					   ok=lang.getstr("ok"),
+					   bitmap=geticon(32, "dialog-error"))
+
+	def input_drop_handler(self, path):
+		if not self.worker.is_working():
+			self.input_profile_ctrl.SetPath(path)
+			self.set_profile("input")
+
+	def output_drop_handler(self, path):
+		if not self.worker.is_working():
+			self.output_profile_ctrl.SetPath(path)
+			self.set_profile("output")
 	
 	def input_profile_ctrl_handler(self, event):
 		self.set_profile("input")
@@ -306,6 +332,14 @@ class LUT3DFrame(BaseFrame):
 						  % which).Bind(wx.EVT_FILEPICKER_CHANGED,
 										getattr(self, "%s_profile_ctrl_handler" % 
 													 which))
+			# Drop targets
+			setattr(self, "%s_droptarget" % which, FileDrop())
+			getattr(self, "%s_droptarget" % which).drophandlers = {".icc": getattr(self, "%s_drop_handler" % which),
+																   ".icm": getattr(self, "%s_drop_handler" % which)}
+			getattr(self, "%s_droptarget" % which).unsupported_handler = getattr(self, "%s_drop_unsupported_handler" % which)
+			getattr(self, "%s_profile_ctrl"
+						  % which).SetDropTarget(getattr(self, "%s_droptarget"
+														 % which))
 		
 		rendering_intents = []
 		for ri in ("a", "r", "p", "s"):
