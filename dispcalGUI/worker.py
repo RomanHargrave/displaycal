@@ -538,7 +538,8 @@ def set_argyll_bin(parent=None):
 			else:
 				not_found = []
 				for name in argyll_names:
-					if not get_argyll_util(name, [path]):
+					if (not get_argyll_util(name, [path]) and
+						not name in argyll_optional):
 						not_found.append((" " + 
 										  lang.getstr("or") + 
 										  " ").join(filter(lambda altname: not "argyll" in altname, 
