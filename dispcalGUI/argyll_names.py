@@ -20,7 +20,7 @@ names = [
 ]
 
 # Argyll CMS tools optionally used by dispcalGUI
-optional = ["applycal", "ccxxmake", "i1d3ccss", "spyd4en"]
+optional = ["applycal", "ccxxmake", "i1d3ccss", "spyd2en", "spyd4en"]
 
 prefixes_suffixes = ["argyll"]
 
@@ -28,7 +28,10 @@ prefixes_suffixes = ["argyll"]
 # prefix/suffix like on some Linux distros)
 altnames = {"txt2ti3": ["logo2cgats"], 
 			"icclu": ["xicclu"],
-			"ccxxmake": ["ccmxmake"]}
+			"ccxxmake": ["ccmxmake"],
+			"i1d3ccss": ["oeminst"],
+			"spyd2en": ["oeminst"],
+			"spyd4en": ["oeminst"]}
 
 def add_prefixes_suffixes(name, altname):
 	for prefix_suffix in prefixes_suffixes:
