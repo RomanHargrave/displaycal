@@ -87,14 +87,6 @@
 		"sensor_cal": true,
 		"skip_sensor_cal": false
 	},
-	"i1D1": {  // Argyll 1.5.x, i1 Display 1
-		"spectral": false,
-		"adaptive_mode": false,
-		"highres_mode": false,
-		"projector_mode": false,
-		"sensor_cal": true,
-		"skip_sensor_cal": false
-	},
 	"i1 Display 2": {  // Argyll 1.3.6 and newer
 		"spectral": false,
 		"adaptive_mode": false,
@@ -106,23 +98,7 @@
 				// (dispread -D9 output: "Setting no-sensor_calibrate failed 
 				// failed with 'Unsupported function'")
 	},
-	"i1D2": {  // Argyll 1.5.x, i1 Display 2
-		"spectral": false,
-		"adaptive_mode": false,
-		"highres_mode": false,
-		"projector_mode": false,
-		"sensor_cal": false,
-		"skip_sensor_cal": false
-	},
 	"i1 DisplayPro, ColorMunki Display": {
-		"spectral": false,
-		"adaptive_mode": false,
-		"highres_mode": false,
-		"projector_mode": false,
-		"sensor_cal": false,
-		"skip_sensor_cal": false
-	},
-	"i1D3": {  // Argyll 1.5.x, i1 DisplayPro, ColorMunki Display
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -178,7 +154,7 @@
 		"sensor_cal": null,
 		"skip_sensor_cal": null
 	},
-	"Smile": {  // Argyll 1.5.x
+	"ColorMunki Smile": {  // Argyll 1.5.x and newer
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,

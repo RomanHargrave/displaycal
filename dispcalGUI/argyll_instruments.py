@@ -17,10 +17,9 @@ vendors = [
 	"Xrite"
 ]
 
-def get_canonical_instrument_name(instrument_name, inverse=False):
-	replacements = {"i1 Display 1": "i1D1",
-					"i1 Display 2": "i1D2",
-					"i1 DisplayPro, ColorMunki Display": "i1D3"}
+def get_canonical_instrument_name(instrument_name, replacements=None,
+								  inverse=False):
+	replacements = replacements or {}
 	if inverse:
 		replacements = dict(izip(replacements.itervalues(),
 								 replacements.iterkeys()))

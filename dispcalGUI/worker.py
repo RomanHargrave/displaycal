@@ -2951,7 +2951,7 @@ class Worker(object):
 	
 	def instrument_supports_ccss(self):
 		instrument_name = self.get_instrument_name()
-		return ("i1D3" in instrument_name or
+		return ("i1 DisplayPro, ColorMunki Display" in instrument_name or
 				"Spyder4" in instrument_name)
 	
 	def create_ccxx(self, args=None, working_dir=None):
