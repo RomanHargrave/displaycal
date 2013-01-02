@@ -108,7 +108,7 @@ import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 						  cal_to_fake_profile, can_update_cal, 
 						  extract_cal_from_ti3, ti3_to_ti1, verify_ti1_rgb_xyz)
-from argyll_instruments import instruments, remove_vendor_names
+from argyll_instruments import (get_canonical_instrument_name, instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
 from colormath import (CIEDCCT2xyY, planckianCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, 
@@ -310,11 +310,11 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	for i in cgats:
 		index = dlg.list_ctrl.InsertStringItem(i, "")
 		dlg.list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
-		dlg.list_ctrl.SetStringItem(index, 1, remove_vendor_names(cgats[i].queryv1("DESCRIPTOR") or ""))
+		dlg.list_ctrl.SetStringItem(index, 1, get_canonical_instrument_name(cgats[i].queryv1("DESCRIPTOR") or ""))
 		dlg.list_ctrl.SetStringItem(index, 2, cgats[i].queryv1("MANUFACTURER") or "")
 		dlg.list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
-		dlg.list_ctrl.SetStringItem(index, 4, remove_vendor_names(cgats[i].queryv1("INSTRUMENT") or ""))
-		dlg.list_ctrl.SetStringItem(index, 5, remove_vendor_names(cgats[i].queryv1("REFERENCE") or ""))
+		dlg.list_ctrl.SetStringItem(index, 4, get_canonical_instrument_name(cgats[i].queryv1("INSTRUMENT") or ""))
+		dlg.list_ctrl.SetStringItem(index, 5, get_canonical_instrument_name(cgats[i].queryv1("REFERENCE") or ""))
 		created = cgats[i].queryv1("CREATED")
 		if created:
 			try:
@@ -2236,7 +2236,10 @@ class MainFrame(BaseFrame):
 					desc = "%s <%s>" % (desc, ellipsis(os.path.basename(path),
 													   31, "m"))
 				self.ccmx_cached_descriptors[path] = desc
-				self.ccmx_instruments[path] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
+				self.ccmx_instruments[path] = get_canonical_instrument_name(
+					str(cgats.queryv1("INSTRUMENT") or
+									  "").replace("eye-one display",
+												  "i1 Display"))
 				key = "%s\0%s" % (self.ccmx_instruments[path],
 								  str(cgats.queryv1("DISPLAY") or ""))
 				if (not self.ccmx_mapping.get(key) or
@@ -2246,7 +2249,7 @@ class MainFrame(BaseFrame):
 			else:
 				continue
 			if (self.worker.get_instrument_name().lower().replace(" ", "") in
-				self.ccmx_instruments.get(path, "").lower().replace(" ", "").replace("eye-one", "i1") or
+				self.ccmx_instruments.get(path, "").lower().replace(" ", "") or
 				(path.lower().endswith(".ccss") and
 				 self.worker.instrument_supports_ccss())):
 				# Only add the correction to the list if it matches the
@@ -2281,13 +2284,16 @@ class MainFrame(BaseFrame):
 											ellipsis(os.path.basename(ccmx[1]),
 													 31, "m"))
 					self.ccmx_cached_descriptors[ccmx[1]] = desc
-					self.ccmx_instruments[ccmx[1]] = remove_vendor_names(str(cgats.queryv1("INSTRUMENT") or ""))
+					self.ccmx_instruments[ccmx[1]] = get_canonical_instrument_name(
+						str(cgats.queryv1("INSTRUMENT") or
+										  "").replace("eye-one display",
+													  "i1 Display"))
 					key = "%s\0%s" % (self.ccmx_instruments[ccmx[1]],
 									  str(cgats.queryv1("DISPLAY") or ""))
 					self.ccmx_mapping[key] = ccmx[1]
 			if (desc and
 				(self.worker.get_instrument_name().lower().replace(" ", "") in
-				 self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "").replace("eye-one", "i1") or
+				 self.ccmx_instruments.get(ccmx[1], "").lower().replace(" ", "") or
 				 ccmx[1].lower().endswith(".ccss"))):
 				# Only add the correction to the list if it matches the
 				# currently selected instrument or if it is a CCSS
@@ -6152,7 +6158,7 @@ class MainFrame(BaseFrame):
 														   {}).get("MEASUREMENT_device",
 																   {}).get("value",
 																		   cgats.DATA_SOURCE).upper())
-						spectral = "YES" if instruments.get(remove_vendor_names(cgats.TARGET_INSTRUMENT),
+						spectral = "YES" if instruments.get(get_canonical_instrument_name(cgats.TARGET_INSTRUMENT),
 															{}).get("spectral", False) else "NO"
 						cgats.add_keyword("INSTRUMENT_TYPE_SPECTRAL", spectral)
 						cgats.ARGYLL_COLPROF_ARGS = CGATS.CGATS()
@@ -7372,7 +7378,6 @@ class MainFrame(BaseFrame):
 			profile_name = re.sub("[-_\s]+%dns?|%dns?[-_\s]*", "", profile_name)
 		instrument = self.comport_ctrl.GetStringSelection()
 		if instrument:
-			instrument = remove_vendor_names(instrument)
 			instrument = instrument.replace("Colorimetre", "")
 			instrument = instrument.replace(" ", "")
 			profile_name = profile_name.replace("%in", instrument)

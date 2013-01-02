@@ -40,7 +40,8 @@ import localization as lang
 import wexpect
 from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
 						  vcgt_to_cal, verify_cgats)
-from argyll_instruments import instruments as all_instruments, remove_vendor_names
+from argyll_instruments import (get_canonical_instrument_name,
+								instruments as all_instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  optional as argyll_optional, viewconds, intents)
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
@@ -934,10 +935,10 @@ class Worker(object):
 					safe_print("%s:" % ccmx, exception)
 					instrument = None
 				else:
-					instrument = str(cgats.queryv1("INSTRUMENT") or "")
+					instrument = get_canonical_instrument_name(str(cgats.queryv1("INSTRUMENT") or "").replace("eye-one display", "i1 Display"))
 				if ((instrument and
 					 self.get_instrument_name().lower().replace(" ", "") in
-					 instrument.lower().replace(" ", "").replace("eye-one", "i1")) or
+					 instrument.lower().replace(" ", "")) or
 					ccmx.lower().endswith(".ccss")):
 					tempdir = self.create_tempdir()
 					if isinstance(tempdir, Exception):
@@ -1416,6 +1417,9 @@ class Worker(object):
 			else:
 				cmd = get_argyll_util("dispwin")
 				for instrument in getcfg("instruments").split(os.pathsep):
+					# Names are canonical from 1.1.4.7 onwards, but we may have
+					# verbose names from an old configuration
+					instrument = get_canonical_instrument_name(instrument)
 					if instrument.strip():
 						instruments.append(instrument)
 			argyll_bin_dir = os.path.dirname(cmd)
@@ -1492,12 +1496,13 @@ class Worker(object):
 								value = value[1].strip("()")
 							else:
 								value = value[0]
-							value = remove_vendor_names(value)
+							value = get_canonical_instrument_name(value)
 							instruments.append(value)
 			if test:
 				inames = all_instruments.keys()
 				inames.sort()
 				for iname in inames:
+					iname = get_canonical_instrument_name(iname)
 					if not iname in instruments:
 						instruments.append(iname)
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
@@ -2939,7 +2944,7 @@ class Worker(object):
 	
 	def instrument_supports_ccss(self):
 		instrument_name = self.get_instrument_name()
-		return ("i1 DisplayPro, ColorMunki Display" in instrument_name or
+		return ("i1D3" in instrument_name or
 				"Spyder4" in instrument_name)
 	
 	def create_ccxx(self, args=None, working_dir=None):
