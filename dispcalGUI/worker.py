@@ -3764,6 +3764,10 @@ class Worker(object):
 						for dir_ in [defaultpaths.appdata, 
 									 defaultpaths.home] + 
 									defaultpaths.commonappdata]
+			pldpaths += [os.path.join(dir_, "ArgyllCMS", "spyd2PLD.bin") 
+						 for dir_ in [defaultpaths.appdata, 
+									  defaultpaths.home] + 
+									 defaultpaths.commonappdata]
 		for pldpath in pldpaths:
 			if os.path.isfile(pldpath):
 				return True
@@ -3776,6 +3780,9 @@ class Worker(object):
 		paths = [os.path.join(dir_, "color", "spyd4cal.bin") 
 				 for dir_ in [defaultpaths.appdata, 
 							  defaultpaths.home] + defaultpaths.commonappdata]
+		paths += [os.path.join(dir_, "ArgyllCMS", "spyd4cal.bin") 
+				  for dir_ in [defaultpaths.appdata, 
+							   defaultpaths.home] + defaultpaths.commonappdata]
 		for path in paths:
 			if os.path.isfile(path):
 				return True
