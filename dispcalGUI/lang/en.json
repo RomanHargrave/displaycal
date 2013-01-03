@@ -13,6 +13,7 @@
 	"3dlut.output.profile.apply_cal": "Apply calibration (vcgt)",
 	"3dlut.output.profile.apply_cal.error": "Calibration could not be applied.",
 	"3dlut.size": "3D LUT size",
+	"3dlut.use_abstract_profile": "Abstract (“Look”) profile",
 	"[rgb]TRC": "Tone response curves",
 	"aborted": "...aborted.",
 	"aborting": "Aborting, please wait (this may take a few seconds)...",

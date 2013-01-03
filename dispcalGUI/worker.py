@@ -1125,9 +1125,9 @@ class Worker(object):
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
 
-	def create_3dlut(self, profile_in, profile_out=None, apply_cal=True,
-					 intent="r", bpc=True, format="3dl", size=17, input_bits=10,
-					 output_bits=12, maxval=1.0):
+	def create_3dlut(self, profile_in, profile_abst=None, profile_out=None,
+					 apply_cal=True, intent="r", bpc=True, format="3dl",
+					 size=17, input_bits=10, output_bits=12, maxval=1.0):
 		""" Create a 3D LUT from two profiles. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
 		# .3dl: http://www.kodak.com/US/plugins/acrobat/en/motion/products/look/UserGuide.pdf
@@ -1303,6 +1303,39 @@ class Worker(object):
 			if debug:
 				safe_print(len(XYZ_triplets), "XYZ triplets")
 				safe_print("\n".join(XYZ_triplets))
+
+			# Use abstract profile?
+			if profile_abst is not None:
+				# Prepare abstract profile
+				profile_abst.write(os.path.join(cwd, "profile_abst.icc"))
+
+				# Lookup XYZ -> XYZ values through abstract profile using icclu
+				stderr = tempfile.SpooledTemporaryFile()
+				args = ["-ff", "-p" + pcs, "profile_abst.icc"]
+				p = sp.Popen([icclu] + args, 
+							 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+							 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+				self.subprocess = p
+				if p.poll() not in (0, None):
+					stderr.seek(0)
+					raise Error(stderr.read().strip())
+				try:
+					odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
+				except IOError:
+					stderr.seek(0)
+					raise Error(stderr.read().strip())
+				if p.wait() != 0:
+					raise IOError(''.join(odata))
+				stderr.close()
+
+				# Convert icclu output to XYZ triplets
+				XYZ_triplets = []
+				for line in odata:
+					line = "".join(line.strip().split("->")).split()
+					XYZ_triplets.append(" ".join([n for n in line[5:8]]))
+				if debug:
+					safe_print(len(XYZ_triplets), "XYZ triplets")
+					safe_print("\n".join(XYZ_triplets))
 
 			# Lookup XYZ -> RGB values through 'output' profile using icclu
 			stderr = tempfile.SpooledTemporaryFile()

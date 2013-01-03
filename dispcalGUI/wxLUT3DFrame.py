@@ -41,6 +41,8 @@ class LUT3DFrame(BaseFrame):
 		self.worker = worker.Worker(self)
 
 		# Bind event handlers
+		self.abstract_profile_cb.Bind(wx.EVT_CHECKBOX,
+									  self.use_abstract_profile_ctrl_handler)
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
 		self.apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.apply_cal_ctrl_handler)
@@ -93,6 +95,14 @@ class LUT3DFrame(BaseFrame):
 		if event:
 			event.Skip()
 	
+	def use_abstract_profile_ctrl_handler(self, event):
+		setcfg("3dlut.use_abstract_profile",
+			   int(self.abstract_profile_cb.GetValue()))
+		config.writecfg()
+		enable = bool(getcfg("3dlut.use_abstract_profile"))
+		self.abstract_profile_ctrl.Enable(enable)
+		self.abstract_profile_desc.Enable(enable)
+	
 	def apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
 			   int(self.apply_cal_cb.GetValue()))
@@ -102,6 +112,9 @@ class LUT3DFrame(BaseFrame):
 		setcfg("3dlut.black_point_compensation",
 			   int(self.black_point_compensation_cb.GetValue()))
 		config.writecfg()
+
+	def abstract_drop_unsupported_handler(self):
+		self.drop_unsupported("abstract")
 
 	def input_drop_unsupported_handler(self):
 		self.drop_unsupported("input")
@@ -117,6 +130,11 @@ class LUT3DFrame(BaseFrame):
 					   ok=lang.getstr("ok"),
 					   bitmap=geticon(32, "dialog-error"))
 
+	def abstract_drop_handler(self, path):
+		if not self.worker.is_working():
+			self.abstract_profile_ctrl.SetPath(path)
+			self.set_profile("abstract")
+
 	def input_drop_handler(self, path):
 		if not self.worker.is_working():
 			self.input_profile_ctrl.SetPath(path)
@@ -126,6 +144,9 @@ class LUT3DFrame(BaseFrame):
 		if not self.worker.is_working():
 			self.output_profile_ctrl.SetPath(path)
 			self.set_profile("output")
+	
+	def abstract_profile_ctrl_handler(self, event):
+		self.set_profile("abstract")
 	
 	def input_profile_ctrl_handler(self, event):
 		self.set_profile("input")
@@ -178,16 +199,20 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_create_handler(self, event):
 		profile_in = self.set_profile("input")
+		if getcfg("3dlut.use_abstract_profile"):
+			profile_abst = self.set_profile("abstract")
+		else:
+			profile_abst = None
 		profile_out = self.set_profile("output")
 		if (not None in (profile_in, profile_out) or
 			(profile_in and profile_in.profileClass == "link")):
 			self.worker.interactive = False
 			self.worker.start(self.lut3d_create_consumer,
 							  self.lut3d_create_producer,
-							  wargs=(profile_in, profile_out),
+							  wargs=(profile_in, profile_abst, profile_out),
 							  progress_msg=lang.getstr("3dlut.create"))
 	
-	def lut3d_create_producer(self, profile_in, profile_out):
+	def lut3d_create_producer(self, profile_in, profile_abst, profile_out):
 		apply_cal = (profile_out and "vcgt" in profile_out.tags and
 					 getcfg("3dlut.output.profile.apply_cal"))
 		intent = {0: "a",
@@ -212,8 +237,8 @@ class LUT3DFrame(BaseFrame):
 					   3: 14,
 					   4: 16}.get(getcfg("3dlut.bitdepth.output"), 12)
 		try:
-			lut = self.worker.create_3dlut(profile_in, profile_out,
-										   apply_cal=apply_cal,
+			lut = self.worker.create_3dlut(profile_in, profile_abst,
+										   profile_out, apply_cal=apply_cal,
 										   intent=intent, bpc=bpc, 
 										   format=format, size=size,
 										   input_bits=input_bits,
@@ -283,8 +308,12 @@ class LUT3DFrame(BaseFrame):
 				if not silent:
 					show_result_dialog(exception, parent=self)
 			else:
-				if (profile.profileClass not in ("mntr", "link") or 
-					profile.colorSpace != "RGB"):
+				if ((which in ("input", "output") and
+					 (profile.profileClass not in ("mntr", "link") or 
+					  profile.colorSpace != "RGB")) or
+					(which == "abstract" and
+					 (profile.profileClass != "abst" or profile.colorSpace
+					  not in ("Lab", "XYZ")))):
 					show_result_dialog(NotImplementedError(lang.getstr("profile.unsupported", 
 																	   (profile.profileClass, 
 																		profile.colorSpace))),
@@ -297,6 +326,10 @@ class LUT3DFrame(BaseFrame):
 							self.set_profile("input", silent)
 							return
 						else:
+							self.abstract_profile_cb.SetValue(False)
+							self.abstract_profile_cb.Disable()
+							self.abstract_profile_ctrl.Disable()
+							self.abstract_profile_desc.Disable()
 							self.output_profile_ctrl.Disable()
 							self.output_profile_current_btn.Disable()
 							self.output_profile_desc.Disable()
@@ -306,12 +339,17 @@ class LUT3DFrame(BaseFrame):
 							self.black_point_compensation_cb.Disable()
 					else:
 						if which == "input":
+							enable = bool(getcfg("3dlut.use_abstract_profile"))
+							self.abstract_profile_cb.SetValue(enable)
+							self.abstract_profile_cb.Enable()
+							self.abstract_profile_ctrl.Enable(enable)
+							self.abstract_profile_desc.Enable(enable)
 							self.output_profile_ctrl.Enable()
 							self.output_profile_current_btn.Enable()
 							self.output_profile_desc.Enable()
 							self.rendering_intent_ctrl.Enable()
 							self.black_point_compensation_cb.Enable()
-						else:
+						elif which == "output":
 							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
 							self.apply_cal_cb.Enable("vcgt" in profile.tags)
@@ -335,7 +373,7 @@ class LUT3DFrame(BaseFrame):
 		BaseFrame.setup_language(self)
 		
 		# Create the file picker ctrls dynamically to get translated strings
-		for which in ("input", "output"):
+		for which in ("input", "abstract", "output"):
 			if sys.platform in ("darwin", "win32"):
 				origpickerctrl = self.FindWindowByName("%s_profile_ctrl" % which)
 				hsizer = origpickerctrl.GetContainingSizer()
@@ -377,6 +415,12 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_create_btn.Disable()
 		self.input_profile_ctrl.SetPath(getcfg("3dlut.input.profile"))
 		self.input_profile_ctrl_handler(None)
+		enable = bool(getcfg("3dlut.use_abstract_profile"))
+		self.abstract_profile_cb.SetValue(enable)
+		self.abstract_profile_ctrl.SetPath(getcfg("3dlut.abstract.profile"))
+		self.abstract_profile_ctrl_handler(None)
+		##self.abstract_profile_ctrl.Enable(enable)
+		##self.abstract_profile_desc.Enable(enable)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.apply_cal_cb.Disable()
 		self.output_profile_ctrl_handler(None)

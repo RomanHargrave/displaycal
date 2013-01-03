@@ -13,6 +13,7 @@
 	"3dlut.output.profile.apply_cal": "Kalibrierung (vcgt) anwenden",
 	"3dlut.output.profile.apply_cal.error": "Kalibrierung konnte nicht angewendet werden.",
 	"3dlut.size": "3D LUT Größe",
+	"3dlut.use_abstract_profile": "Abstraktes (“Look”) Profil",
 	"[rgb]TRC": "Farbtonwiedergabekurven",
 	"aborted": "...abgebrochen.",
 	"aborting": "Breche ab, bitte warten (dies kann einige Sekunden dauern)...",
