@@ -958,18 +958,21 @@ class ColorantTableType(ICCProfileTag, AODict):
 						 uInt16Number(data[34:36]),
 						 uInt16Number(data[36:38])]
 			for i, pcsvalue in enumerate(pcsvalues):
-				if pcs == "Lab":
+				if pcs in ("Lab", "RGB", "CMYK"):
 					keys = ["L", "a", "b"]
 					if i == 0:
 						# L* range 0..100
-						pcsvalues[i] = pcsvalue / 65536.0 * 100
+						pcsvalues[i] = pcsvalue / 65535.0 * 100
 					else:
 						# a, b range -128..127
-						pcsvalues[i] = -128 + (pcsvalue / 65536.0 * 255)
+						pcsvalues[i] = -128 + (pcsvalue / 65535.0 * 255)
 				elif pcs == "XYZ":
-					# X, Y, Z range 0..100
+					# X, Y, Z range 0..200
 					keys = ["X", "Y", "Z"]
-					pcsvalues[i] = pcsvalue / 32768.0 * 100
+					pcsvalues[i] = pcsvalue / 65535.0 * 200
+				else:
+					raise NotImplementedError("Profile connection space '%s'"
+											  "not supported." % pcs)
 			self[data[:32].rstrip("\0")] = AODict(zip(keys, pcsvalues))
 			data = data[38:]
 
