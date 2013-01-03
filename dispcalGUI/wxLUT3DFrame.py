@@ -179,7 +179,8 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_create_handler(self, event):
 		profile_in = self.set_profile("input")
 		profile_out = self.set_profile("output")
-		if not None in (profile_in, profile_out):
+		if (not None in (profile_in, profile_out) or
+			(profile_in and profile_in.profileClass == "link")):
 			self.worker.interactive = False
 			self.worker.start(self.lut3d_create_consumer,
 							  self.lut3d_create_producer,
@@ -187,7 +188,7 @@ class LUT3DFrame(BaseFrame):
 							  progress_msg=lang.getstr("3dlut.create"))
 	
 	def lut3d_create_producer(self, profile_in, profile_out):
-		apply_cal = ("vcgt" in profile_out.tags and
+		apply_cal = (profile_out and "vcgt" in profile_out.tags and
 					 getcfg("3dlut.output.profile.apply_cal"))
 		intent = {0: "a",
 				  1: "r",
@@ -262,7 +263,8 @@ class LUT3DFrame(BaseFrame):
 					pass
 				else:
 					profile_path = profile.fileName
-			self.output_profile_current_btn.Enable(profile_path and
+			self.output_profile_current_btn.Enable(self.output_profile_ctrl.Enabled and
+												   profile_path and
 												   os.path.isfile(profile_path) and
 												   profile_path != path)
 		if path:
@@ -281,24 +283,48 @@ class LUT3DFrame(BaseFrame):
 				if not silent:
 					show_result_dialog(exception, parent=self)
 			else:
-				if (profile.profileClass != "mntr" or 
+				if (profile.profileClass not in ("mntr", "link") or 
 					profile.colorSpace != "RGB"):
 					show_result_dialog(NotImplementedError(lang.getstr("profile.unsupported", 
 																	   (profile.profileClass, 
 																		profile.colorSpace))),
 									   parent=self)
 				else:
+					if profile.profileClass == "link":
+						if which == "output":
+							self.input_profile_ctrl.SetPath(path)
+							self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
+							self.set_profile("input", silent)
+							return
+						else:
+							self.output_profile_ctrl.Disable()
+							self.output_profile_current_btn.Disable()
+							self.output_profile_desc.Disable()
+							self.apply_cal_cb.SetValue(False)
+							self.apply_cal_cb.Disable()
+							self.rendering_intent_ctrl.Disable()
+							self.black_point_compensation_cb.Disable()
+					else:
+						if which == "input":
+							self.output_profile_ctrl.Enable()
+							self.output_profile_current_btn.Enable()
+							self.output_profile_desc.Enable()
+							self.rendering_intent_ctrl.Enable()
+							self.black_point_compensation_cb.Enable()
+						else:
+							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
+													   bool(getcfg("3dlut.output.profile.apply_cal")))
+							self.apply_cal_cb.Enable("vcgt" in profile.tags)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
-					if which == "output":
-						self.apply_cal_cb.SetValue("vcgt" in profile.tags and
-												   bool(getcfg("3dlut.output.profile.apply_cal")))
-						self.apply_cal_cb.Enable("vcgt" in profile.tags)
+					if which == "output" and not self.output_profile_ctrl.Enabled:
+						return
 					setcfg("3dlut.%s.profile" % which, profile.fileName)
 					config.writecfg()
 					self.lut3d_create_btn.Enable(bool(getcfg("3dlut.input.profile")) and
 												 os.path.isfile(getcfg("3dlut.input.profile")) and
-												 bool(getcfg("3dlut.output.profile")) and
-												 os.path.isfile(getcfg("3dlut.output.profile")))
+												 ((bool(getcfg("3dlut.output.profile")) and
+												   os.path.isfile(getcfg("3dlut.output.profile"))) or
+												  profile.profileClass == "link"))
 					return profile
 			getattr(self, "%s_profile_ctrl" %
 						  which).SetPath(getcfg("3dlut.%s.profile" % which))

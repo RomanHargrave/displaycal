@@ -9,6 +9,7 @@ names = [
 	"colprof",
 	"dispwin",
 	"iccgamut",
+	"icclu",
 	"xicclu",
 	"spotread",
 	"spyd2en",

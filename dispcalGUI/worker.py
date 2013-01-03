@@ -1125,8 +1125,8 @@ class Worker(object):
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
 
-	def create_3dlut(self, profile_in, profile_out, apply_cal=True, intent="r",
-					 bpc=True, format="3dl", size=17, input_bits=10,
+	def create_3dlut(self, profile_in, profile_out=None, apply_cal=True,
+					 intent="r", bpc=True, format="3dl", size=17, input_bits=10,
 					 output_bits=12, maxval=1.0):
 		""" Create a 3D LUT from two profiles. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -1135,11 +1135,13 @@ class Worker(object):
 		# .spi3d: https://github.com/imageworks/OpenColorIO/blob/master/src/core/FileFormatSpi3D.cpp
 		
 		for profile in (profile_in, profile_out):
-			if (profile.profileClass != "mntr" or 
+			if (profile.profileClass not in ("mntr", "link") or 
 				profile.colorSpace != "RGB"):
 				raise NotImplementedError(lang.getstr("profile.unsupported", 
 													  (profile.profileClass, 
 													   profile.colorSpace)))
+			if profile_in.profileClass == "link":
+				break
 		
 		# Create input RGB values
 		RGB_in = []
@@ -1175,8 +1177,8 @@ class Worker(object):
 			safe_print(len(RGB_in), "RGB triplets")
 			safe_print("\n".join(RGB_in))
 		
-		# Setup xicclu
-		xicclu = get_argyll_util("xicclu").encode(fs_enc)
+		# Setup icclu
+		icclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
@@ -1192,9 +1194,12 @@ class Worker(object):
 		# Prepare 'input' profile
 		profile_in.write(os.path.join(cwd, "profile_in.icc"))
 
-		# Lookup RGB -> XYZ values through 'input' profile using xicclu
+		# Lookup RGB -> XYZ values through 'input' profile using icclu
 		stderr = tempfile.SpooledTemporaryFile()
-		p = sp.Popen([xicclu, "-ff", "-i" + intent, "-p" + pcs, "profile_in.icc"], 
+		args = ["-ff", "-p" + pcs, "profile_in.icc"]
+		if profile_in.profileClass != "link":
+			args.insert(1, "-i" + intent)
+		p = sp.Popen([icclu] + args, 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		self.subprocess = p
@@ -1210,59 +1215,98 @@ class Worker(object):
 			raise IOError(''.join(odata))
 		stderr.close()
 
-		# Convert xicclu output to XYZ triplets
-		XYZ_triplets = []
-		for line in odata:
-			line = "".join(line.strip().split("->")).split()
-			XYZ_triplets.append(" ".join([n for n in line[5:8]]))
-		if debug:
-			safe_print(len(XYZ_triplets), "XYZ triplets")
-			safe_print("\n".join(XYZ_triplets))
-
-		# Prepare 'output' profile
-		profile_out.write(os.path.join(cwd, "profile_out.icc"))
-		
-		# Apply calibration?
-		if apply_cal:
-			if not profile_out.tags.get("vcgt", None):
-				raise Error(lang.getstr("profile.no_vcgt"))
-			try:
-				cgats = vcgt_to_cal(profile_out)
-			except (CGATS.CGATSInvalidError, 
-					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-				raise Error(lang.getstr("cal_extraction_failed"))
-			cgats.write(os.path.join(cwd, "profile_out.cal"))
-			applycal = get_argyll_util("applycal")
-			if not applycal:
-				raise NotImplementedError(lang.getstr("argyll.util.not_found",
-													  "applycal"))
-			safe_print(lang.getstr("3dlut.output.profile.apply_cal"))
-			result = self.exec_cmd(applycal, ["-v",
-											  "profile_out.cal",
-											  "profile_out.icc",
-											  "profile_out.icc"],
-								   capture_output=True, skip_scripts=True,
-								   working_dir=cwd)
-			if isinstance(result, Exception):
-				raise result
-			elif not result:
-				raise Error("\n\n".join(lang.getstr("3dlut.output.profile.apply_cal.error"),
-										"\n".join(self.errors)))
-			profile_out = ICCP.ICCProfile(os.path.join(cwd,
-													   "profile_out.icc"))
-
-		if bpc:
-			# Black point compensation
-			
-			# Get 'input' profile black point
-			bp_in = [float(n) for n in XYZ_triplets[0].split()]
+		if profile_in.profileClass != "link":
+			# Convert icclu output to XYZ triplets
+			XYZ_triplets = []
+			for line in odata:
+				line = "".join(line.strip().split("->")).split()
+				XYZ_triplets.append(" ".join([n for n in line[5:8]]))
 			if debug:
-				safe_print("bp_in", bp_in)
+				safe_print(len(XYZ_triplets), "XYZ triplets")
+				safe_print("\n".join(XYZ_triplets))
 
-			# Lookup 'output' profile black point
+			# Prepare 'output' profile
+			profile_out.write(os.path.join(cwd, "profile_out.icc"))
+			
+			# Apply calibration?
+			if apply_cal:
+				if not profile_out.tags.get("vcgt", None):
+					raise Error(lang.getstr("profile.no_vcgt"))
+				try:
+					cgats = vcgt_to_cal(profile_out)
+				except (CGATS.CGATSInvalidError, 
+						CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+						CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+					raise Error(lang.getstr("cal_extraction_failed"))
+				cgats.write(os.path.join(cwd, "profile_out.cal"))
+				applycal = get_argyll_util("applycal")
+				if not applycal:
+					raise NotImplementedError(lang.getstr("argyll.util.not_found",
+														  "applycal"))
+				safe_print(lang.getstr("3dlut.output.profile.apply_cal"))
+				result = self.exec_cmd(applycal, ["-v",
+												  "profile_out.cal",
+												  "profile_out.icc",
+												  "profile_out.icc"],
+									   capture_output=True, skip_scripts=True,
+									   working_dir=cwd)
+				if isinstance(result, Exception):
+					raise result
+				elif not result:
+					raise Error("\n\n".join(lang.getstr("3dlut.output.profile.apply_cal.error"),
+											"\n".join(self.errors)))
+				profile_out = ICCP.ICCProfile(os.path.join(cwd,
+														   "profile_out.icc"))
+
+			if bpc:
+				# Black point compensation
+				
+				# Get 'input' profile black point
+				bp_in = [float(n) for n in XYZ_triplets[0].split()]
+				if debug:
+					safe_print("bp_in", bp_in)
+
+				# Lookup 'output' profile black point
+				stderr = tempfile.SpooledTemporaryFile()
+				p = sp.Popen([icclu, "-ff", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
+							 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+							 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+				self.subprocess = p
+				if p.poll() not in (0, None):
+					stderr.seek(0)
+					raise Error(stderr.read().strip())
+				try:
+					odata = p.communicate("0 0 0\n1 1 1")[0].splitlines()
+				except IOError:
+					stderr.seek(0)
+					raise Error(stderr.read().strip())
+				if p.wait() != 0:
+					# error
+					raise IOError(''.join(odata))
+				stderr.close()
+
+				bp_out = [float(n) for n in "".join(odata[0].strip().split("->")).split()[5:8]]
+				if debug:
+					safe_print("bp_out", bp_out)
+
+				# Get 'output' profile white point
+				wp_out = [float(n) for n in "".join(odata[1].strip().split("->")).split()[5:8]]
+				if debug:
+					safe_print("wp_out", wp_out)
+				
+				# Apply black point compensation
+				for i, XYZ_triplet in enumerate(XYZ_triplets):
+					X, Y, Z = [float(n) for n in XYZ_triplet.split()]
+					XYZ_triplets[i] = " ".join(str(n) for n in
+											   colormath.apply_bpc(X, Y, Z, bp_in,
+																   bp_out, wp_out))
+			if debug:
+				safe_print(len(XYZ_triplets), "XYZ triplets")
+				safe_print("\n".join(XYZ_triplets))
+
+			# Lookup XYZ -> RGB values through 'output' profile using icclu
 			stderr = tempfile.SpooledTemporaryFile()
-			p = sp.Popen([xicclu, "-ff", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
+			p = sp.Popen([icclu, "-fb", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 			self.subprocess = p
@@ -1270,7 +1314,7 @@ class Worker(object):
 				stderr.seek(0)
 				raise Error(stderr.read().strip())
 			try:
-				odata = p.communicate("0 0 0\n1 1 1")[0].splitlines()
+				odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
 			except IOError:
 				stderr.seek(0)
 				raise Error(stderr.read().strip())
@@ -1279,48 +1323,10 @@ class Worker(object):
 				raise IOError(''.join(odata))
 			stderr.close()
 
-			bp_out = [float(n) for n in "".join(odata[0].strip().split("->")).split()[5:8]]
-			if debug:
-				safe_print("bp_out", bp_out)
-
-			# Get 'output' profile white point
-			wp_out = [float(n) for n in "".join(odata[1].strip().split("->")).split()[5:8]]
-			if debug:
-				safe_print("wp_out", wp_out)
-			
-			# Apply black point compensation
-			for i, XYZ_triplet in enumerate(XYZ_triplets):
-				X, Y, Z = [float(n) for n in XYZ_triplet.split()]
-				XYZ_triplets[i] = " ".join(str(n) for n in
-										   colormath.apply_bpc(X, Y, Z, bp_in,
-															   bp_out, wp_out))
-		if debug:
-			safe_print(len(XYZ_triplets), "XYZ triplets")
-			safe_print("\n".join(XYZ_triplets))
-
-		# Lookup XYZ -> RGB values through 'output' profile using xicclu
-		stderr = tempfile.SpooledTemporaryFile()
-		p = sp.Popen([xicclu, "-fb", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
-					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-		self.subprocess = p
-		if p.poll() not in (0, None):
-			stderr.seek(0)
-			raise Error(stderr.read().strip())
-		try:
-			odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
-		except IOError:
-			stderr.seek(0)
-			raise Error(stderr.read().strip())
-		if p.wait() != 0:
-			# error
-			raise IOError(''.join(odata))
-		stderr.close()
-
 		# Remove temporary files
 		self.wrapup(False)
 		
-		# Convert xicclu output to RGB triplets
+		# Convert icclu output to RGB triplets
 		RGB_out = []
 		for line in odata:
 			line = "".join(line.strip().split("->")).split()
