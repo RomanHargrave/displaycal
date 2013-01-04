@@ -15,7 +15,6 @@ from wxaddons import wx
 from wx.lib import delayedresult
 from lib.agw import labelbook
 from lib.agw.fmresources import *
-from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.pygauge import PyGauge
 from lib.agw.artmanager import ArtManager
 
@@ -23,7 +22,7 @@ from config import (get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg,
 					valid_values)
 from meta import name as appname
 from ordereddict import OrderedDict
-from wxwindows import numpad_keycodes
+from wxwindows import FlatShadedButton, numpad_keycodes
 import colormath
 import config
 import localization as lang
@@ -63,92 +62,6 @@ def set_label_and_size(txtctrl, label):
 	txtctrl.SetMinSize((txtctrl.GetSize()[0], -1))
 	txtctrl.SetLabel(label)
 	txtctrl.SetMinSize(txtctrl.GetSize())
-
-
-class FlatShadedButton(GradientButton):
-
-	def __init__(self, parent, id=wx.ID_ANY, bitmap=None, label="",
-				 pos=wx.DefaultPosition, size=wx.DefaultSize,
-				 style=wx.NO_BORDER, validator=wx.DefaultValidator,
-				 name="gradientbutton"):
-		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
-								style, validator, name)
-		if sys.platform != "win32":
-			self.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-									 wx.FONTWEIGHT_NORMAL))
-		self._setcolours()
-	
-	def _setcolours(self, colour=None):
-		self.SetTopStartColour(colour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetTopEndColour(colour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetBottomStartColour(colour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetBottomEndColour(colour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetForegroundColour(FGCOLOUR)
-		self.SetPressedBottomColour(colour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetPressedTopColour(colour or wx.Colour(0x22, 0x22, 0x22))
-	
-	def Disable(self):
-		self.Enable(False)
-	
-	def DoGetBestSize(self):
-		"""
-		Overridden base class virtual. Determines the best size of the
-		button based on the label and bezel size.
-		"""
-
-		if not getattr(self, "_lastBestSize", None):
-			label = self.GetLabel() or u"\u200b"
-			
-			dc = wx.ClientDC(self)
-			dc.SetFont(self.GetFont())
-			retWidth, retHeight = dc.GetTextExtent(label)
-			
-			bmpWidth = bmpHeight = 0
-			constant = 15
-			if self._bitmap:
-				if label != u"\u200b":
-					constant = 10
-				else:
-					constant = 0
-				# Pin the bitmap height to 10
-				bmpWidth, bmpHeight = self._bitmap.GetWidth()+constant, 10
-				retWidth += bmpWidth
-				retHeight = max(bmpHeight, retHeight)
-				constant = 15
-
-			self._lastBestSize = wx.Size(retWidth+constant, retHeight+constant)
-		return self._lastBestSize
-
-	def OnGainFocus(self, event):
-		"""
-		Handles the ``wx.EVT_SET_FOCUS`` event for L{GradientButton}.
-
-		:param `event`: a `wx.FocusEvent` event to be processed.
-		"""
-		
-		self._hasFocus = True
-		self._mouseAction = HOVER
-		self.Refresh()
-		self.Update()
-
-	def OnLoseFocus(self, event):
-		"""
-		Handles the ``wx.EVT_LEAVE_WINDOW`` event for L{GradientButton}.
-
-		:param `event`: a `wx.MouseEvent` event to be processed.
-		"""
-
-		self._hasFocus = False
-		self._mouseAction = None
-		self.Refresh()
-		event.Skip()
-	
-	def Enable(self, enable=True):
-		if enable:
-			self._setcolours()
-		else:
-			self._setcolours(wx.Colour(0x66, 0x66, 0x66))
-		GradientButton.Enable(self, enable)
 
 
 class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
@@ -1116,7 +1029,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.adjustment_btn.Enable(enable)
 	
 	def create_gradient_button(self, bitmap, label, name):
-		btn = FlatShadedButton(self, bitmap=bitmap, label=label, name=name)
+		btn = FlatShadedButton(self, bitmap=bitmap, label=label, name=name,
+							   fgcolour=FGCOLOUR)
 		self.btnsizer.Add(btn)
 		self.btnsizer.Layout()
 		return btn
