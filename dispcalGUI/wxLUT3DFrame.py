@@ -309,7 +309,7 @@ class LUT3DFrame(BaseFrame):
 					show_result_dialog(exception, parent=self)
 			else:
 				if ((which in ("input", "output") and
-					 (profile.profileClass not in ("mntr", "link") or 
+					 (profile.profileClass not in ("mntr", "link", "scnr") or 
 					  profile.colorSpace != "RGB")) or
 					(which == "abstract" and
 					 (profile.profileClass != "abst" or profile.colorSpace

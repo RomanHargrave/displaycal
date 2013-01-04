@@ -1135,7 +1135,7 @@ class Worker(object):
 		# .spi3d: https://github.com/imageworks/OpenColorIO/blob/master/src/core/FileFormatSpi3D.cpp
 		
 		for profile in (profile_in, profile_out):
-			if (profile.profileClass not in ("mntr", "link") or 
+			if (profile.profileClass not in ("mntr", "link", "scnr") or 
 				profile.colorSpace != "RGB"):
 				raise NotImplementedError(lang.getstr("profile.unsupported", 
 													  (profile.profileClass, 
