@@ -1428,6 +1428,10 @@ class MainFrame(BaseFrame):
 			tools.FindItem("profile.verification_report.update"))
 		self.Bind(wx.EVT_MENU, self.update_profile_verification_report, 
 				  menuitem)
+		self.menuitem_measure_uniformity = tools.FindItemById(
+			tools.FindItem("report.uniformity"))
+		self.Bind(wx.EVT_MENU, self.measure_uniformity_handler, 
+				  self.menuitem_measure_uniformity)
 		self.menuitem_import_colorimeter_correction = tools.FindItemById(
 			tools.FindItem("colorimeter_correction.import"))
 		self.Bind(wx.EVT_MENU, self.import_colorimeter_correction_handler, 
@@ -1562,6 +1566,8 @@ class MainFrame(BaseFrame):
 												bool(self.worker.instruments))
 		self.menuitem_profile_verify.Enable(bool(self.worker.displays) and 
 											bool(self.worker.instruments))
+		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
+												bool(self.worker.instruments))
 		self.menuitem_show_log.Check(bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Enable(not bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Check(bool(getcfg("log.autoshow")))
@@ -3785,6 +3791,26 @@ class MainFrame(BaseFrame):
 		self.worker.start(consumer, producer, wkwargs={"remove": remove},
 						  progress_msg=progress_msg, 
 						  continue_next=continue_next)
+	
+	def measure_uniformity_handler(self, event):
+		self.HideAll()
+		self.worker.interactive = True
+		self.worker.start(self.measure_uniformity_consumer,
+						  self.measure_uniformity_producer, resume=False, 
+						  continue_next=False, interactive_frame="uniformity")
+	
+	def measure_uniformity_producer(self):
+		cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-V", "-T"]
+		if cmd:
+			self.worker.add_measurement_features(args, display=False)
+			result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
+		else:
+			wx.CallAfter(show_result_dialog,
+						 Error(lang.getstr("argyll.util.not_found",
+										   "spotread")), self)
+	
+	def measure_uniformity_consumer(self, result):
+		self.Show()
 
 	def profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None, 

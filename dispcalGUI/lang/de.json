@@ -452,6 +452,7 @@
 	"rendering_intent": "Rendering-Intent",
 	"report.calibrated": "Kalibriertes Anzeigegerät messen (Kurzreport)",
 	"report.uncalibrated": "Unkalibriertes Anzeigegerät messen (Kurzreport)",
+	"report.uniformity": "Anzeigegeräteausleuchtung messen...",
 	"resources.notfound.error": "Kritischer Fehler: Eine benötigte Datei wurde nicht gefunden:",
 	"resources.notfound.warning": "Warnung: Einige benötigte Dateien wurden nicht gefunden:",
 	"restore_defaults": "Standardeinstellungen wiederherstellen",

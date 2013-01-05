@@ -75,6 +75,7 @@ from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
+from wxDisplayUniformityFrame import DisplayUniformityFrame
 import wx.lib.delayedresult as delayedresult
 
 INST_CAL_MSGS = ["Do a reflective white calibration",
@@ -878,8 +879,8 @@ class Worker(object):
 		self.clear_cmd_output()
 		self._pwdstr = ""
 	
-	def add_measurement_features(self, args):
-		if not get_arg("-d", args):
+	def add_measurement_features(self, args, display=True):
+		if display and not get_arg("-d", args):
 			args += ["-d" + self.get_display()]
 		if not get_arg("-c", args):
 			args += ["-c%s" % getcfg("comport.number")]
@@ -912,12 +913,13 @@ class Worker(object):
 				if self.argyll_version[0:3] >= [1, 5, 0]:
 					# Disable adaptive measurement mode
 					args += ["-ZA"]
-		if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
-			(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
-			args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
-					 getcfg("dimensions.measureframe")]
-		if getcfg("measure.darken_background") and not get_arg("-F", args):
-			args += ["-F"]
+		if display:
+			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
+				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
+				args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
+						 getcfg("dimensions.measureframe")]
+			if getcfg("measure.darken_background") and not get_arg("-F", args):
+				args += ["-F"]
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args):
 			args += ["-H"]
@@ -966,9 +968,9 @@ class Worker(object):
 							return result
 					args += ["-X"]
 					args += [os.path.basename(ccmxcopy)]
-		if (getcfg("drift_compensation.blacklevel") or 
-			getcfg("drift_compensation.whitelevel")) and \
-		   self.argyll_version >= [1, 3, 0] and not get_arg("-I", args):
+		if (display and (getcfg("drift_compensation.blacklevel") or 
+						 getcfg("drift_compensation.whitelevel")) and
+			self.argyll_version >= [1, 3, 0] and not get_arg("-I", args)):
 			args += ["-I"]
 			if getcfg("drift_compensation.blacklevel"):
 				args[-1] += "b"
@@ -1712,6 +1714,7 @@ class Worker(object):
 				safe_print(lang.getstr("aborted"), fn=fn)
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
+		self.cmdname = cmdname
 		if cmdname == get_argyll_utilname("dispwin"):
 			if "-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
 												  not "-I" in args and
@@ -3830,7 +3833,7 @@ class Worker(object):
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 
 			  parent=None, progress_start=100, resume=False, 
-			  continue_next=False, stop_timers=True):
+			  continue_next=False, stop_timers=True, interactive_frame=""):
 		"""
 		Start a worker process.
 		
@@ -3877,7 +3880,8 @@ class Worker(object):
 				if not resume:
 					if isinstance(self.progress_wnd, SimpleTerminal):
 						self.progress_wnd.console.SetValue("")
-					elif isinstance(self.progress_wnd, DisplayAdjustmentFrame):
+					elif (isinstance(self.progress_wnd, DisplayAdjustmentFrame) or
+						  isinstance(self.progress_wnd, DisplayUniformityFrame)):
 						self.progress_wnd.reset()
 				self.progress_wnd.stop_timer()
 				self.progress_wnd.Resume()
@@ -3896,6 +3900,10 @@ class Worker(object):
 					self.terminal = SimpleTerminal(parent, title=progress_title,
 												   handler=self.progress_handler,
 												   keyhandler=self.terminal_key_handler)
+				elif interactive_frame == "uniformity":
+					self.terminal = DisplayUniformityFrame(parent,
+														   handler=self.progress_handler,
+														   keyhandler=self.terminal_key_handler)
 				else:
 					self.terminal = DisplayAdjustmentFrame(parent,
 														   handler=self.progress_handler,

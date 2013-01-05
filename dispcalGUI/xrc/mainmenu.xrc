@@ -95,6 +95,9 @@
       <object class="wxMenuItem" name="profile.verification_report.update">
         <label>profile.verification_report.update</label>
       </object>
+      <object class="wxMenuItem" name="report.uniformity">
+        <label>report.uniformity</label>
+      </object>
       <object class="separator"/>
       <object class="wxMenuItem" name="colorimeter_correction.import">
         <label>colorimeter_correction.import</label>
