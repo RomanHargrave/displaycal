@@ -3800,7 +3800,7 @@ class MainFrame(BaseFrame):
 						  continue_next=False, interactive_frame="uniformity")
 	
 	def measure_uniformity_producer(self):
-		cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-V", "-T"]
+		cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-T"]
 		if cmd:
 			self.worker.add_measurement_features(args, display=False)
 			result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
