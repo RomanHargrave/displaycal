@@ -239,7 +239,7 @@ class DisplayUniformityFrame(wx.Frame):
 				self.panels[self.index].SetBackgroundColour(self.colors[len(self.results[self.index])])
 				self.panels[self.index].Refresh()
 				self.panels[self.index].Update()
-				self.buttons[self.index].measure(None)
+				wx.CallAfter(self.buttons[self.index].measure, None)
 			else:
 				self.buttons[self.index].SetBitmap(getbitmap("theme/icons/16x16/checkmark"))
 				self.panels[self.index].SetBackgroundColour(WHITE)
