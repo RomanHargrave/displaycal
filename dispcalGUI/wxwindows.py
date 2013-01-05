@@ -590,6 +590,10 @@ class FlatShadedButton(GradientButton):
 			self._setcolours(wx.Colour(0x66, 0x66, 0x66))
 		GradientButton.Enable(self, enable)
 
+	def SetBitmap(self, bitmap):
+		self._bitmap = bitmap
+		self.Refresh()
+
 
 class InfoDialog(BaseInteractiveDialog):
 
