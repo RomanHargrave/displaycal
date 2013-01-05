@@ -250,33 +250,46 @@ class DisplayUniformityFrame(wx.Frame):
 					reference = self.results[int(math.floor(self.rows * self.cols / 2.0))]
 					Yr = 0
 					Lr, ar, br = 0, 0, 0
+					CDTr = 0
+					delta_Er = 0
 					for item in reference:
 						Yr += item["XYZ"][1]
 						Lr += item["Lab"][0]
 						ar += item["Lab"][1]
 						br += item["Lab"][2]
+						CDTr += item["CDT"]
+						delta_Er += item["delta_E"]
 					Yr /= 4.0
 					Lr /= 4.0
 					ar /= 4.0
 					br /= 4.0
+					CDTr /= 4.0
+					delta_Er /= 4.0
 					for index in self.results:
 						result = self.results[index]
 						if result is reference:
 							continue
 						Y = 0
 						L, a, b = 0, 0, 0
+						CDT = 0
+						delta_E = 0
 						for item in result:
 							Y += item["XYZ"][1]
 							L += item["Lab"][0]
 							a += item["Lab"][1]
 							b += item["Lab"][2]
+							CDT += item["CDT"]
+							delta_E += item["delta_E"]
 						Y /= 4.0
 						L /= 4.0
 						a /= 4.0
 						b /= 4.0
+						CDT /= 4.0
+						delta_E /= 4.0
 						Y_diff_percent = Yr - Y
 						delta_C = colormath.delta(Lr, ar, br, L, a, b, "2k")["C"]
-						self.labels[index].SetLabel("Delta C 2000: %.2f, Y: %.2f" % (delta_C, Y_diff_percent))
+						self.labels[index].SetLabel(u"\u0394C*00: %.2f, \u0394Y: %.2f\nCDT: %i (\u0394E: %.2f)" %
+													(delta_C, Y_diff_percent, round(CDT), delta_E))
 						self.labels[index].GetContainingSizer().Layout()
 	
 	def reset(self):
