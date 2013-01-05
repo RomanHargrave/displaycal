@@ -45,6 +45,7 @@ class FlatShadedNumberedButton(FlatShadedButton):
 		if event:
 			self.Parent.Parent.results[self.index] = []
 		self.Parent.Parent.index = self.index
+		self.Parent.Parent.labels[self.index].SetLabel("")
 		self.Parent.Parent.disable_buttons()
 		self.Parent.Parent.worker.safe_send(" ")
 
