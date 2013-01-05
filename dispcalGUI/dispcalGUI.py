@@ -3814,6 +3814,8 @@ class MainFrame(BaseFrame):
 		for i, line in enumerate(self.worker.output):
 			if line.startswith("spotread: Error"):
 				show_result_dialog(Error(line.strip()), self)
+			elif line.startswith("spotread: Warning"):
+				show_result_dialog(Warn(line.strip()), self)
 
 	def profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None, 
