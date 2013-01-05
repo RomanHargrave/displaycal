@@ -58,6 +58,9 @@ class DisplayUniformityFrame(wx.Frame):
 						  lang.getstr("report.uniformity"),
 						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
+		clientarea = self.GetDisplay().ClientArea
+		self.SetPosition((clientarea[0], clientarea[1]))
+		self.SetSize((clientarea[2], clientarea[3]))
 		self.SetBackgroundColour(BGCOLOUR)
 		self.sizer = wx.GridSizer(rows, cols)
 		self.SetSizer(self.sizer)
