@@ -3811,6 +3811,9 @@ class MainFrame(BaseFrame):
 	
 	def measure_uniformity_consumer(self, result):
 		self.Show()
+		for i, line in enumerate(self.worker.output):
+			if line.startswith("spotread: Error"):
+				show_result_dialog(Error(line.strip()), self)
 
 	def profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None, 
