@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>1.1.2.9</h2>
-					<p>2012-11-05 20:32 UTC</p>
+					<h2>1.1.7.0</h2>
+					<p>2013-01-05 13:32 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -539,7 +539,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.1.2.9</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.1.7.0</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -1250,6 +1250,9 @@
 					<dt>Update profile verification report...</dt>
 						<dd>This allows to update an existing report HTML file with the template and functionality from a newer version of dispcalGUI (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
 
+					<dt>Measure display device uniformity...</dt>
+						<dd>Measure the display at several points to evaluate evenness of illumination and chroma errors.</dd>
+
 
 					<dt id="import-correction-matrices">Import colorimeter corrections from other display profiling software...</dt>
 						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler, ColorMunki Display and Spyder 4 softwares are supported. If they are installed or the CD / disk image is mounted, the correct file(s) can in most cases be imported automatically. Please note: The colorimeter corrections imported from Spyder 4 software are only usable with the Spyder 4 and need to be selected in the measurement mode dropdown instead of the colorimeter corrections dropdown.</dd>
@@ -1265,7 +1268,7 @@
 						</dd>
 
 					<dt id="create-3dlut">Create 3D LUT...</dt>
-						<dd>Create display correction 3D LUTs for use in movie post-processing applications that don't have ICC support. Currently supported are the <code>.3dl</code> and <code>.cube</code> formats.</dd>
+						<dd>Create display correction 3D LUTs for use in movie post-processing applications that don't have ICC support. Currently supported are the <code>.3dl</code>, <code>.cube</code> and <code>.spi3d</code> formats.</dd>
 
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1432,7 +1435,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 			<ul>
 				<li><del>Better interface to <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a></del> (implemented in v0.8.1.0+)</li>
-				<li>Measure and report on screen homogenity / evenness of illumination</li>
+				<li><del>Measure and report on screen homogenity / evenness of illumination</del></li>
 				<li><del>Get rid of the terminal and implement a proper GUI for the interactive part of calibration</del> (implemented in v0.8.5.6+)</li>
 				<li>Better user interface for profile verification: If a test set contains multiple value formats (CMYK, RGB, XYZ, L*a*b*), allow selection which one(s) should be used in a “setup” window</li>
 				<li>Add gamut coverage percentages to the profile verification report if the test set contains reference values (not *.ti1): Calculate profiles from test set and verification measurements on-the-fly and create gamut volumes from test set profile, evaluated profile, and verification measurements profile using Argyll's <code>iccgamut</code> tool. Compare gamut volumes using Argyll's <code>viewgam</code> tool with <code>-i</code> option and include the results in the report (coverage calculation for test set reference and profile to be evaluated could be done before the actual measurements and also shown in the yet-to-be-implemented profile verification “setup” window).</li>
@@ -1459,7 +1462,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
+			<p>Recent donors: Nejib Boubaker, Mason Livingston, Daniel Lenardon, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1470,8 +1473,30 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2012-11-05 20:32 (UTC) 1.1.2.9 -->
+			<!-- 2013-01-05 13:32 (UTC) 1.1.7.0 -->
 			<dl>
+				<dt id="changelog-1.1.7.0">2013-01-05 13:32 (UTC) 1.1.7.0</dt>
+					<dd>
+						<h3>1.1.7.0</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Preliminary Argyll CMS 1.5.0 compatibility.</li>
+							<li>Added facility to measure and report display device uniformity. <strong>Known issue:</strong> Sometimes measurements hang. Press space to try and continue.</li>
+							<li>3D LUTs can optionally incorporate abstract (“Look”) profiles.</li>
+							<li>3D LUTs can be created from Device Link (class “link”) and input (class “scnr”) profiles.</li>
+							<li>3D LUTs can also be created in SPI3D format.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Updated french translation, thanks to Loïc Guégant.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Fedora: Calibration curves were reset to linear when installing a profile and using the Fedora packaged Argyll CMS.</li>
+							<li>Linux, Mac OS X, Windows (Administrator): Colorimeter corrections imported from i1 Profiler and ColorMunki Display software were not listed in the dropdown menu.</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-1.1.2.9">2012-11-05 20:32 (UTC) 1.1.2.9</dt>
 					<dd>
 						<h3>1.1.2.9</h3>
@@ -2518,7 +2543,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 		
 		<hr />
 		
-		<p id="copyright">dispcalGUI © 2008-2012 Florian Höch</p>
+		<p id="copyright">dispcalGUI © 2008-2013 Florian Höch</p>
 
 		<div id="footer-container">
 			<div id="footer"><a href="#toc" id="totop">↑ Top</a></div>
