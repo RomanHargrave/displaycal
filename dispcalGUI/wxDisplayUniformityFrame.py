@@ -151,14 +151,6 @@ class DisplayUniformityFrame(wx.Frame):
 		pass
 
 	def Pulse(self, msg=""):
-		if ((msg in (lang.getstr("instrument.initializing"),
-					 lang.getstr("instrument.calibrating"),
-					 lang.getstr("please_wait")) or msg == " " * 4 or
-			 "error" in msg.lower() or "failed" in msg.lower()) and
-			msg != self.lastmsg):
-			self.lastmsg = msg
-			self.Freeze()
-			self.Thaw()
 		return self.keepGoing, False
 	
 	def Resume(self):
@@ -301,9 +293,7 @@ class DisplayUniformityFrame(wx.Frame):
 	
 	def _setup(self):
 		self.index = 0
-		self.is_busy = None
 		self.is_measuring = None
-		self.lastmsg = ""
 		self.keepGoing = True
 		self.results = {}
 	
