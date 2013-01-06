@@ -14,7 +14,7 @@ import time
 
 from wxaddons import wx
 
-from config import getbitmap, get_icon_bundle
+from config import getbitmap, getcfg, get_icon_bundle, get_display_number
 from meta import name as appname
 from wxaddons import CustomEvent
 from wxwindows import FlatShadedButton, numpad_keycodes
@@ -50,9 +50,6 @@ class DisplayUniformityFrame(wx.Frame):
 						  lang.getstr("report.uniformity"),
 						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
-		clientarea = self.GetDisplay().ClientArea
-		self.SetPosition((clientarea[0], clientarea[1]))
-		self.SetSize((clientarea[2], clientarea[3]))
 		self.SetBackgroundColour(BGCOLOUR)
 		self.sizer = wx.GridSizer(rows, cols)
 		self.SetSizer(self.sizer)
@@ -117,7 +114,6 @@ class DisplayUniformityFrame(wx.Frame):
 		self._setup()
 		
 		self.Show()
-		self.Maximize()
 		
 		if start_timer:
 			self.start_timer()
@@ -148,7 +144,18 @@ class DisplayUniformityFrame(wx.Frame):
 		self.keepGoing = True
 	
 	def Show(self, show=True):
-		self.disable_buttons()
+		if show:
+			display_no = getcfg("display.number") - 1
+			if display_no < 0 or display_no > wx.Display.GetCount() - 1:
+				display_no = 0
+			else:
+				display_no = get_display_number(display_no)
+			x, y, w, h = wx.Display(display_no).ClientArea
+			# Place frame on correct display
+			self.SetPosition((x, y))
+			self.SetSize((w, h))
+			self.disable_buttons()
+			wx.CallAfter(self.Maximize)
 		wx.Frame.Show(self, show)
 	
 	def Update(self, value, msg=""):
