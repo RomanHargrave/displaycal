@@ -8,8 +8,9 @@ import sys
 import config
 import localization as lang
 from config import (btn_width_correction, defaults, getcfg, geticon, 
-					get_bitmap_as_icon, get_data_path, scale_adjustment_factor, 
-					setcfg, writecfg)
+					get_bitmap_as_icon, get_data_path, get_display_number, 
+					get_display_rects, scale_adjustment_factor, setcfg,
+					writecfg)
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
@@ -104,34 +105,6 @@ def get_default_size():
 		safe_print("[D]  H px_per_mm:", px_per_mm[0])
 		safe_print("[D]  V px_per_mm:", px_per_mm[1])
 	return round(100.0 * max(px_per_mm))
-
-
-def get_display_number(display_no):
-	""" Translate from Argyll display index to wx display index """
-	try:
-		display = getcfg("displays").split(os.pathsep)[display_no]
-	except IndexError:
-		pass
-	else:
-		for i in xrange(wx.Display.GetCount()):
-			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
-			if display.find("@ " + geometry) > -1:
-				if debug:
-					safe_print("[D] Found display %s at index %i" % 
-							   (geometry, i))
-				display_no = i
-				break
-	return display_no
-
-
-def get_display_rects():
-	""" Return the Argyll enumerated display coordinates and sizes """
-	display_rects = []
-	for i, display in enumerate(getcfg("displays").split(os.pathsep)):
-		match = re.search("@ (-?\d+), (-?\d+), (\d+)x(\d+)", display)
-		if match:
-			display_rects.append(wx.Rect(*[int(item) for item in match.groups()]))
-	return display_rects
 
 
 class MeasureFrame(InvincibleFrame):

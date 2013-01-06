@@ -212,6 +212,37 @@ def get_display_name():
 	return ""
 
 
+def get_display_number(display_no):
+	""" Translate from Argyll display index to wx display index """
+	from wxaddons import wx
+	try:
+		display = getcfg("displays").split(os.pathsep)[display_no]
+	except IndexError:
+		pass
+	else:
+		for i in xrange(wx.Display.GetCount()):
+			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
+			if display.find("@ " + geometry) > -1:
+				if debug:
+					from log import safe_print
+					safe_print("[D] Found display %s at index %i" % 
+							   (geometry, i))
+				display_no = i
+				break
+	return display_no
+
+
+def get_display_rects():
+	""" Return the Argyll enumerated display coordinates and sizes """
+	from wxaddons import wx
+	display_rects = []
+	for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+		match = re.search("@ (-?\d+), (-?\d+), (\d+)x(\d+)", display)
+		if match:
+			display_rects.append(wx.Rect(*[int(item) for item in match.groups()]))
+	return display_rects
+
+
 def get_icon_bundle(sizes, name):
 	""" Return a wx.IconBundle with given icon sizes """
 	from wxaddons import wx
