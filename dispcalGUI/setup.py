@@ -325,6 +325,8 @@ def setup():
 					(os.path.join(data, "lib"), 
 					 [sys.executable, sys.executable.replace(".exe", "w.exe")]),
 					(os.path.join(data, "scripts"), 
+					 [os.path.join("scripts", name + "-3DLUT-maker")]),
+					(os.path.join(data, "scripts"), 
 					 [os.path.join("scripts", name + "-apply-profiles")]),
 					(os.path.join(data, "scripts"), 
 					 [os.path.join("scripts", name + "-profile-info")]),
@@ -567,6 +569,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["zip_safe"] = False
 	else:
 		attrs["scripts"] += [os.path.join("scripts", name)]
+		attrs["scripts"] += [os.path.join("scripts", name + "-3DLUT-maker")]
 		attrs["scripts"] += [os.path.join("scripts", name + "-profile-info")]
 		attrs["scripts"] += [os.path.join("scripts", name + "-testchart-editor")]
 	
