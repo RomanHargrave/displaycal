@@ -16,6 +16,7 @@ from wxaddons import wx
 
 from config import getbitmap, get_icon_bundle
 from meta import name as appname
+from wxaddons import CustomEvent
 from wxwindows import FlatShadedButton, numpad_keycodes
 import colormath
 import config
@@ -39,17 +40,6 @@ class FlatShadedNumberedButton(FlatShadedButton):
 		FlatShadedButton.__init__(self, parent, id, bitmap, label, pos, size,
 								  style, validator, name, bgcolour, fgcolour)
 		self.index = index
-		self.Bind(wx.EVT_BUTTON, self.measure)
-	
-	def measure(self, event):
-		if event:
-			self.Parent.Parent.results[self.index] = []
-		self.Parent.Parent.index = self.index
-		cursor = wx.StockCursor(wx.CURSOR_BLANK)
-		self.Parent.Parent.SetCursor(cursor)
-		self.Parent.Parent.labels[self.index].SetLabel("")
-		self.Parent.Parent.disable_buttons()
-		self.Parent.Parent.worker.safe_send(" ")
 
 
 class DisplayUniformityFrame(wx.Frame):
@@ -87,6 +77,7 @@ class DisplayUniformityFrame(wx.Frame):
 											  bitmap=getbitmap("theme/icons/10x10/record"),
 											  bgcolour=LIGHTGRAY,
 											  fgcolour=BLACK, index=index)
+			button.Bind(wx.EVT_BUTTON, self.measure)
 			self.buttons.append(button)
 			label = wx.StaticText(panel)
 			self.labels[index] = label
@@ -167,8 +158,11 @@ class DisplayUniformityFrame(wx.Frame):
 		return self.Pulse(msg)
 	
 	def disable_buttons(self):
+		self.enable_buttons(False)
+	
+	def enable_buttons(self, enable=True):
 		for button in self.buttons:
-			button.Disable()
+			button.Enable(enable)
 	
 	def flush(self):
 		pass
@@ -190,20 +184,32 @@ class DisplayUniformityFrame(wx.Frame):
 			keycode = self.id_to_keycode.get(event.GetId())
 		if keycode is not None:
 			if self.has_worker_subprocess():
-				self.worker.safe_send(chr(keycode))
+				if keycode == 27 or chr(keycode) == "Q":
+					# ESC or Q
+					self.worker.safe_send(chr(keycode))
+				elif self.index > -1 and not self.is_measuring:
+					# Any other key
+					self.measure(CustomEvent(wx.EVT_BUTTON.typeId,
+											 self.buttons[self.index]))
 		else:
 			event.Skip()
+	
+	def measure(self, event=None):
+		if event:
+			self.index = event.GetEventObject().index
+			self.is_measuring = True
+			self.results[self.index] = []
+			cursor = wx.StockCursor(wx.CURSOR_BLANK)
+			self.SetCursor(cursor)
+			self.labels[self.index].SetLabel("")
+			self.disable_buttons()
+		self.worker.safe_send(" ")
 
 	def parse_txt(self, txt):
 		if not txt:
 			return
 		if "Setting up the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
-		if "key to take a reading" in txt:
-			cursor = wx.StockCursor(wx.CURSOR_ARROW)
-			self.SetCursor(cursor)
-			for button in self.buttons:
-				button.Enable()
 		if "Result is XYZ:" in txt:
 			# Result is XYZ: d.dddddd d.dddddd d.dddddd, D50 Lab: d.dddddd d.dddddd d.dddddd
 			#							CCT = ddddK (Delta E d.dddddd)
@@ -223,19 +229,27 @@ class DisplayUniformityFrame(wx.Frame):
 			delta_E = float(CDT_delta_E.groups()[1])
 			self.results[self.index][-1]["CDT"] = CDT
 			self.results[self.index][-1]["delta_E"] = delta_E
+		if "key to take a reading" in txt:
+			if not self.is_measuring:
+				self.enable_buttons()
+				return
 			if len(self.results[self.index]) < 4:
 				# Take readings at 4 different brightness levels per swatch
 				self.panels[self.index].SetBackgroundColour(self.colors[len(self.results[self.index])])
 				self.panels[self.index].Refresh()
 				self.panels[self.index].Update()
-				wx.CallAfter(self.buttons[self.index].measure, None)
+				wx.CallAfter(self.measure)
 			else:
+				self.is_measuring = False
+				cursor = wx.StockCursor(wx.CURSOR_ARROW)
+				self.SetCursor(cursor)
+				self.enable_buttons()
 				self.buttons[self.index].SetBitmap(getbitmap("theme/icons/16x16/checkmark"))
 				self.panels[self.index].SetBackgroundColour(WHITE)
 				self.panels[self.index].Refresh()
 				self.panels[self.index].Update()
 				if len(self.results) == self.rows * self.cols:
-					# All swatches have been measured
+					# All swatches have been measured, show results
 					reference = self.results[int(math.floor(self.rows * self.cols / 2.0))]
 					Yr = 0
 					Lr, ar, br = 0, 0, 0
@@ -292,8 +306,8 @@ class DisplayUniformityFrame(wx.Frame):
 			self.labels[index].GetContainingSizer().Layout()
 	
 	def _setup(self):
-		self.index = 0
-		self.is_measuring = None
+		self.index = -1
+		self.is_measuring = False
 		self.keepGoing = True
 		self.results = {}
 	
