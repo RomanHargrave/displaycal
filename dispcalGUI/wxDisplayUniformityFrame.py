@@ -45,6 +45,8 @@ class FlatShadedNumberedButton(FlatShadedButton):
 		if event:
 			self.Parent.Parent.results[self.index] = []
 		self.Parent.Parent.index = self.index
+		cursor = wx.StockCursor(wx.CURSOR_BLANK)
+		self.Parent.Parent.SetCursor(cursor)
 		self.Parent.Parent.labels[self.index].SetLabel("")
 		self.Parent.Parent.disable_buttons()
 		self.Parent.Parent.worker.safe_send(" ")
@@ -217,6 +219,8 @@ class DisplayUniformityFrame(wx.Frame):
 		if "Setting up the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
 		if "key to take a reading" in txt:
+			cursor = wx.StockCursor(wx.CURSOR_ARROW)
+			self.SetCursor(cursor)
 			for button in self.buttons:
 				button.Enable()
 		if "Result is XYZ:" in txt:
