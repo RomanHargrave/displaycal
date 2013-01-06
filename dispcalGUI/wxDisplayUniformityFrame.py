@@ -174,17 +174,6 @@ class DisplayUniformityFrame(wx.Frame):
 	def UpdatePulse(self, msg=""):
 		return self.Pulse(msg)
 	
-	def abort(self):
-		if self.has_worker_subprocess():
-			if self.is_measuring:
-				self.worker.safe_send(" ")
-	
-	def abort_and_send(self, key):
-		self.abort()
-		if self.has_worker_subprocess():
-			if self.worker.safe_send(key):
-				self.is_busy = True
-	
 	def disable_buttons(self):
 		for button in self.buttons:
 			button.Disable()
