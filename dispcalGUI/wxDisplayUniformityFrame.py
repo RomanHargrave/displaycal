@@ -171,6 +171,22 @@ class DisplayUniformityFrame(wx.Frame):
 		return bool(getattr(self, "worker", None) and
 					getattr(self.worker, "subprocess", None))
 	
+	def hide_cursor(self):
+		if sys.platform == "darwin":
+			cursor_id = wx.CURSOR_WAIT
+		else:
+			# Does not work correctly under Mac OS X
+			# (cursor shows as black square)
+			cursor_id = wx.CURSOR_BLANK
+		cursor = wx.StockCursor(cursor_id)
+		self.SetCursor(cursor)
+		for panel in self.panels:
+			panel.SetCursor(cursor)
+		for label in self.labels.values():
+			label.SetCursor(cursor)
+		for button in self.buttons:
+			button.SetCursor(cursor)
+	
 	def isatty(self):
 		return True
 	
@@ -199,9 +215,8 @@ class DisplayUniformityFrame(wx.Frame):
 			self.index = event.GetEventObject().index
 			self.is_measuring = True
 			self.results[self.index] = []
-			cursor = wx.StockCursor(wx.CURSOR_BLANK)
-			self.SetCursor(cursor)
 			self.labels[self.index].SetLabel("")
+			self.hide_cursor()
 			self.disable_buttons()
 		self.worker.safe_send(" ")
 
@@ -241,8 +256,7 @@ class DisplayUniformityFrame(wx.Frame):
 				wx.CallAfter(self.measure)
 			else:
 				self.is_measuring = False
-				cursor = wx.StockCursor(wx.CURSOR_ARROW)
-				self.SetCursor(cursor)
+				self.show_cursor()
 				self.enable_buttons()
 				self.buttons[self.index].SetBitmap(getbitmap("theme/icons/16x16/checkmark"))
 				self.panels[self.index].SetBackgroundColour(WHITE)
@@ -310,6 +324,16 @@ class DisplayUniformityFrame(wx.Frame):
 		self.is_measuring = False
 		self.keepGoing = True
 		self.results = {}
+	
+	def show_cursor(self):
+		cursor = wx.StockCursor(wx.CURSOR_ARROW)
+		self.SetCursor(cursor)
+		for panel in self.panels:
+			panel.SetCursor(cursor)
+		for label in self.labels.values():
+			label.SetCursor(cursor)
+		for button in self.buttons:
+			button.SetCursor(cursor)
 	
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
