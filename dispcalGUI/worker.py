@@ -3875,7 +3875,12 @@ class Worker(object):
 				self.progress_dlg = None
 			if progress_msg and progress_title == appname:
 				progress_title = progress_msg
-			if getattr(self, "terminal", None):
+			if interactive_frame == "uniformity":
+				windowclass = DisplayUniformityFrame
+			else:
+				windowclass = DisplayAdjustmentFrame
+			if getattr(self, "terminal", None) and isinstance(self.terminal,
+															  windowclass):
 				self.progress_wnd = self.terminal
 				if not resume:
 					if isinstance(self.progress_wnd, SimpleTerminal):
