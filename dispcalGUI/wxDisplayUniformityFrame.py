@@ -220,6 +220,7 @@ class DisplayUniformityFrame(wx.Frame):
 			self.labels[self.index].SetLabel("")
 			self.hide_cursor()
 			self.disable_buttons()
+			self.buttons[self.index].Hide()
 		self.worker.safe_send(" ")
 
 	def parse_txt(self, txt):
@@ -260,6 +261,7 @@ class DisplayUniformityFrame(wx.Frame):
 				self.is_measuring = False
 				self.show_cursor()
 				self.enable_buttons()
+				self.buttons[self.index].Show()
 				self.buttons[self.index].SetBitmap(getbitmap("theme/icons/16x16/checkmark"))
 				self.panels[self.index].SetBackgroundColour(WHITE)
 				self.panels[self.index].Refresh()
