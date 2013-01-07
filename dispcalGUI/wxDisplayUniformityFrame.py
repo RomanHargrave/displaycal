@@ -179,12 +179,7 @@ class DisplayUniformityFrame(wx.Frame):
 					getattr(self.worker, "subprocess", None))
 	
 	def hide_cursor(self):
-		if sys.platform == "darwin":
-			cursor_id = wx.CURSOR_WAIT
-		else:
-			# Does not work correctly under Mac OS X
-			# (cursor shows as black square)
-			cursor_id = wx.CURSOR_BLANK
+		cursor_id = wx.CURSOR_BLANK
 		cursor = wx.StockCursor(cursor_id)
 		self.SetCursor(cursor)
 		for panel in self.panels:
