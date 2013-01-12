@@ -161,6 +161,8 @@ executables = ['argyll_RGB2XYZ.py',
 			   'util_str.py',
 			   'util_win.py',
 			   'wxDisplayAdjustmentFrame.py',
+			   'wxDisplayUniformityFrame.py',
+			   'wxLUT3DFrame.py',
 			   'wxLUTViewer.py',
 			   'wxMeasureFrame.py',
 			   'wxProfileInfo.py',
@@ -169,7 +171,10 @@ executables = ['argyll_RGB2XYZ.py',
 			   'xrandr.py',
 			   'Argyll',
 			   'dispcalGUI',
-			   'dispcalGUI-apply-profiles']
+			   'dispcalGUI-3DLUT-maker',
+			   'dispcalGUI-apply-profiles',
+			   'dispcalGUI-profile-info',
+			   'dispcalGUI-testchart-editor']
 for path in list(paths):
 	if path.endswith('.py') and %{?mandriva_version}.0 < 201010:
 		# Mandriva 2010.1 got rid of byte-compilation
