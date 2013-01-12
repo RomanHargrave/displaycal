@@ -5126,9 +5126,8 @@ class MainFrame(BaseFrame):
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not getcfg("profile.update") and (not getcfg("calibration.update") or 
-											 self.profile_update_cb.IsEnabled()):
-			if getcfg("calibration.update") and \
-			   self.profile_update_cb.IsEnabled():
+											 is_profile()):
+			if getcfg("calibration.update") and is_profile():
 				msg = lang.getstr("calibration.update_profile_choice")
 				ok = lang.getstr("profile.update")
 			else:
