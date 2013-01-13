@@ -446,6 +446,7 @@ defaults = {
 	"calibration.black_point_rate": 4.0,
 	"calibration.black_point_rate.enabled": 0,
 	"calibration.file": None,
+	"calibration.file.previous": None,
 	"calibration.interactive_display_adjustment": 1,
 	"calibration.luminance": 120.0,
 	"calibration.quality": "m",

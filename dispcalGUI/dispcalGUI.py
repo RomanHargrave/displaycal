@@ -105,8 +105,7 @@ import report
 if sys.platform == "win32":
 	import util_win
 import wexpect
-from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
-						  cal_to_fake_profile, can_update_cal, 
+from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
 						  extract_cal_from_ti3, ti3_to_ti1, verify_ti1_rgb_xyz)
 from argyll_instruments import (get_canonical_instrument_name, instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
@@ -3687,110 +3686,6 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result != wx.ID_OK: return False
 		return True
-
-	def calibrate(self, remove=False):
-		capture_output = not sys.stdout.isatty()
-		cmd, args = self.worker.prepare_dispcal()
-		if not isinstance(cmd, Exception):
-			result = self.worker.exec_cmd(cmd, args, capture_output=capture_output)
-		else:
-			result = cmd
-		self.worker.wrapup(not isinstance(result, Exception) and 
-									result, remove or isinstance(result, 
-																 Exception) or 
-									not result)
-		if not isinstance(result, Exception) and result:
-			cal = os.path.join(getcfg("profile.save_path"), 
-							   getcfg("profile.name.expanded"), 
-							   getcfg("profile.name.expanded") + ".cal")
-			result = check_cal_isfile(
-				cal, lang.getstr("error.calibration.file_not_created"))
-			if not isinstance(result, Exception) and result:
-				cal_cgats = add_dispcal_options_to_cal(cal, 
-													   self.worker.options_dispcal)
-				if cal_cgats:
-					cal_cgats.write()
-					if not remove:
-						# Remove the temp .cal file
-						self.worker.wrapup(False, True, ext_filter=[script_ext,
-																	".app"])
-				setcfg("last_cal_path", cal)
-				self.previous_cal = getcfg("calibration.file")
-				if getcfg("profile.update") or \
-				   self.worker.dispcal_create_fast_matrix_shaper:
-					profile_path = os.path.join(getcfg("profile.save_path"), 
-												getcfg("profile.name.expanded"), 
-												getcfg("profile.name.expanded") + 
-												profile_ext)
-					result = check_profile_isfile(
-						profile_path, 
-						lang.getstr("error.profile.file_not_created"))
-					if not isinstance(result, Exception) and result:
-						if not getcfg("profile.update"):
-							# we need to set cprt and targ
-							try:
-								profile = ICCP.ICCProfile(profile_path)
-								profile.tags.cprt = ICCP.TextType(
-									"text\0\0\0\0" + 
-									getcfg("copyright").encode("ASCII", "asciize") + 
-									"\0",
-									"cprt")
-								ti3 = add_options_to_ti3(
-									profile.tags.get("targ", 
-													 profile.tags.get("CIED", 
-																	  "")), 
-									self.worker.options_dispcal)
-								if not ti3:
-									ti3 = CGATS.CGATS("TI3\n")
-									ti3[1] = cal_cgats
-								if ti3:
-									profile.tags.targ = ICCP.TextType(
-										"text\0\0\0\0" + str(ti3) + "\0", 
-										"targ")
-									profile.tags.CIED = ICCP.TextType(
-										"text\0\0\0\0" + str(ti3) + "\0", 
-										"CIED")
-									profile.tags.DevD = ICCP.TextType(
-										"text\0\0\0\0" + str(ti3) + "\0", 
-										"DevD")
-								profile.write()
-							except Exception, exception:
-								safe_print(exception)
-						setcfg("calibration.file", profile_path)
-						wx.CallAfter(self.update_calibration_file_ctrl)
-						setcfg("last_cal_or_icc_path", profile_path)
-						setcfg("last_icc_path", profile_path)
-				else:
-					setcfg("calibration.file", cal)
-					wx.CallAfter(self.update_calibration_file_ctrl)
-					setcfg("last_cal_or_icc_path", cal)
-		return result
-
-	def measure(self, consumer, apply_calibration=True, progress_msg="",
-				resume=False, continue_next=False):
-		self.worker.start(consumer, self.measure_producer, 
-						  wkwargs={"apply_calibration": apply_calibration},
-						  progress_msg=progress_msg, resume=resume, 
-						  continue_next=continue_next)
-	
-	def measure_producer(self, apply_calibration=True):
-		cmd, args = self.worker.prepare_dispread(apply_calibration)
-		if not isinstance(cmd, Exception):
-			result = self.worker.exec_cmd(cmd, args)
-			if not isinstance(result, Exception) and result:
-				self.worker.update_display_name_manufacturer(args[-1] + ".ti3")
-		else:
-			result = cmd
-		self.worker.wrapup(not isinstance(result, Exception) and 
-									result, isinstance(result, Exception) or 
-									not result)
-		return result
-	
-	def measure_calibrate(self, consumer, producer, remove=False, 
-						  progress_msg="", continue_next=False):
-		self.worker.start(consumer, producer, wkwargs={"remove": remove},
-						  progress_msg=progress_msg, 
-						  continue_next=continue_next)
 	
 	def measure_uniformity_handler(self, event):
 		self.HideAll()
@@ -3816,170 +3711,6 @@ class MainFrame(BaseFrame):
 				show_result_dialog(Error(line.strip()), self)
 			elif line.startswith("spotread: Warning"):
 				show_result_dialog(Warn(line.strip()), self)
-
-	def profile(self, dst_path=None, 
-				skip_scripts=False, display_name=None, 
-				display_manufacturer=None, tags=None):
-		safe_print(lang.getstr("create_profile"))
-		if dst_path is None:
-			dst_path = os.path.join(getcfg("profile.save_path"), 
-									getcfg("profile.name.expanded"), 
-									getcfg("profile.name.expanded") + 
-									profile_ext)
-		cmd, args = self.worker.prepare_colprof(
-			os.path.basename(os.path.splitext(dst_path)[0]), display_name,
-			display_manufacturer)
-		if not isinstance(cmd, Exception): 
-			result = self.worker.exec_cmd(cmd, args, low_contrast=False, 
-										  skip_scripts=skip_scripts)
-		else:
-			result = cmd
-		# Get profile max and avg err to be later added to metadata
-		# Argyll outputs the following:
-		# Profile check complete, peak err = x.xxxxxx, avg err = x.xxxxxx, RMS = x.xxxxxx
-		peak = None
-		avg = None
-		rms = None
-		for line in self.worker.output:
-			if line.startswith("Profile check complete"):
-				peak = re.search("peak err = (\d(?:\.\d+))", line)
-				avg = re.search("avg err = (\d(?:\.\d+))", line)
-				rms = re.search("RMS = (\d(?:\.\d+))", line)
-				if peak:
-					peak = peak.groups()[0]
-				if avg:
-					avg = avg.groups()[0]
-				if rms:
-					rms = rms.groups()[0]
-				break
-		if (os.path.isfile(args[-1] + ".ti3.backup") and
-			os.path.isfile(args[-1] + ".ti3")):
-			# Restore backed up TI3
-			os.remove(args[-1] + ".ti3")
-			os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
-			ti3_file = open(args[-1] + ".ti3", "rb")
-			ti3 = ti3_file.read()
-			ti3_file.close()
-		else:
-			ti3 = None
-		if os.path.isfile(args[-1] + ".chrm"):
-			# Get ChromaticityType tag
-			with open(args[-1] + ".chrm", "rb") as blob:
-				chrm = ICCP.ChromaticityType(blob.read())
-		else:
-			chrm = None
-		if (not isinstance(result, Exception) and result and
-			getcfg("profile.create_gamut_views")):
-			safe_print("-" * 80)
-			safe_print(lang.getstr("gamut.view.create"))
-			self.worker.recent.clear()
-			self.worker.recent.write(lang.getstr("gamut.view.create"))
-			sleep(.75)  # Allow time for progress window to update
-			(gamut_volume,
-			 gamut_coverage) = self.worker.calculate_gamut(args[-1] + profile_ext)
-		else:
-			gamut_volume, gamut_coverage = None, None
-		safe_print("-" * 80)
-		self.worker.wrapup(not isinstance(result, Exception) and 
-									result, dst_path=dst_path)
-		if not isinstance(result, Exception) and result:
-			try:
-				profile = ICCP.ICCProfile(dst_path)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				return Error(lang.getstr("profile.invalid") + "\n" + dst_path)
-			if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
-				setcfg("last_cal_or_icc_path", dst_path)
-				setcfg("last_icc_path", dst_path)
-			if ti3:
-				# Embed original TI3
-				profile.tags.targ = profile.tags.DevD = profile.tags.CIED = ICCP.TextType(
-												"text\0\0\0\0" + ti3 + "\0", 
-												"targ")
-			if chrm:
-				# Add ChromaticityType tag
-				profile.tags.chrm = chrm
-			# Fixup desc tags - ASCII needs to be 7-bit
-			# also add Unicode strings if different from ASCII
-			if "desc" in profile.tags and isinstance(profile.tags.desc, 
-													 ICCP.TextDescriptionType):
-				desc = profile.getDescription()
-				profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
-				if desc != profile.tags.desc["ASCII"]:
-					profile.tags.desc["Unicode"] = desc
-			if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
-													 ICCP.TextDescriptionType):
-				ddesc = profile.getDeviceModelDescription()
-				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
-				if ddesc != profile.tags.dmdd["ASCII"]:
-					profile.tags.dmdd["Unicode"] = ddesc
-			if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
-													 ICCP.TextDescriptionType):
-				mdesc = profile.getDeviceManufacturerDescription()
-				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
-				if mdesc != profile.tags.dmnd["ASCII"]:
-					profile.tags.dmnd["Unicode"] = mdesc
-			if tags and tags is not True:
-				# Add custom tags
-				for tagname, tag in tags.iteritems():
-					if tagname == "mmod":
-						profile.device["manufacturer"] = "\0\0" + tag["manufacturer"][1] + tag["manufacturer"][0]
-						profile.device["model"] = "\0\0" + tag["model"][0] + tag["model"][1]
-					profile.tags[tagname] = tag
-			elif tags is True:
-				edid = self.worker.get_display_edid()
-				if edid:
-					profile.device["manufacturer"] = "\0\0" + edid["edid"][9] + edid["edid"][8]
-					profile.device["model"] = "\0\0" + edid["edid"][11] + edid["edid"][10]
-					# Add Apple-specific 'mmod' tag (TODO: need full spec)
-					mmod = ("mmod" + ("\x00" * 6) + edid["edid"][8:10] +
-							("\x00" * 2) + edid["edid"][11] + edid["edid"][10] +
-							("\x00" * 4) + ("\x00" * 20))
-					profile.tags.mmod = ICCP.ICCProfileTag(mmod, "mmod")
-					# Add new meta information based on EDID
-					profile.set_edid_metadata(edid)
-				elif not "meta" in profile.tags:
-					# Make sure meta tag exists
-					profile.tags.meta = ICCP.DictType()
-				# Set OPENICC_automatic_generated to "0"
-				profile.tags.meta["OPENICC_automatic_generated"] = "0"
-				# Set GCM DATA_source to "calib"
-				profile.tags.meta["DATA_source"] = "calib"
-				# Add instrument
-				profile.tags.meta["MEASUREMENT_device"] = self.worker.get_instrument_name().lower()
-				spec_prefixes = "DATA_,MEASUREMENT_,OPENICC_"
-				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
-				for prefix in spec_prefixes.split(","):
-					if not prefix in prefixes:
-						prefixes.append(prefix)
-				profile.tags.meta["prefix"] = ",".join(prefixes)
-			if (avg, peak, rms) != (None, ) * 3:
-				# Make sure meta tag exists
-				if not "meta" in profile.tags:
-					profile.tags.meta = ICCP.DictType()
-				# Update meta prefix
-				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ACCURACY_").split(",")
-				if not "ACCURACY_" in prefixes:
-					prefixes.append("ACCURACY_")
-					profile.tags.meta["prefix"] = ",".join(prefixes)
-				# Add error info
-				if avg is not None:
-					profile.tags.meta["ACCURACY_dE76_avg"] = avg
-				if peak is not None:
-					profile.tags.meta["ACCURACY_dE76_max"] = peak
-				if rms is not None:
-					profile.tags.meta["ACCURACY_dE76_rms"] = rms
-			profile.set_gamut_metadata(gamut_volume, gamut_coverage)
-			# Set default rendering intent
-			if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
-				(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
-				profile.intent = getcfg("gamap_default_intent")
-			# Calculate profile ID
-			profile.calculateID()
-			try:
-				profile.write()
-			except Exception, exception:
-				return exception
-		return result
 	
 	def profile_share_get_meta_error(self, profile):
 		""" Check for required metadata in profile """
@@ -4352,7 +4083,7 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			self.previous_cal = False
+			setcfg("calibration.file.previous", None)
 			self.profile_finish(
 				True, profile_path=profile_path, 
 				success_msg=lang.getstr(
@@ -4440,7 +4171,7 @@ class MainFrame(BaseFrame):
 		if preview or self.preview.GetValue():
 			cal = self.cal
 		else:
-			cal = self.previous_cal
+			cal = getcfg("calibration.file.previous")
 			if self.cal == cal:
 				cal = False
 			elif not cal:
@@ -4564,17 +4295,8 @@ class MainFrame(BaseFrame):
 		safe_print(progress_msg)
 		self.worker.interactive = False
 		self.worker.start(self.result_consumer, 
-						  self.verify_calibration_worker, 
+						  self.worker.verify_calibration, 
 						  progress_msg=progress_msg)
-	
-	def verify_calibration_worker(self):
-		cmd, args = self.worker.prepare_dispcal(calibrate=False, verify=True)
-		if not isinstance(cmd, Exception):
-			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-										  skip_scripts=True)
-		else:
-			result = cmd
-		return result
 	
 	def select_profile(self, parent=None, check_profile_class=True, msg=None):
 		"""
@@ -4786,24 +4508,12 @@ class MainFrame(BaseFrame):
 			self.worker.dispread_after_dispcal = False
 			self.worker.interactive = False
 			self.worker.start(self.verify_profile_consumer, 
-							  self.verify_profile_worker, 
+							  self.worker.verify_profile, 
 							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
 									 profile, sim_profile, ti3_ref, sim_ti3, 
 									 save_path, chart, gray),
 							  wargs=(ti1_path, ),
 							  progress_msg=progress_msg)
-	
-	def verify_profile_worker(self, ti1_path):
-		# measure
-		cmd = get_argyll_util("dispread")
-		args = ["-v"]
-		result = self.worker.add_measurement_features(args)
-		if isinstance(result, Exception):
-			return result
-		if getcfg("extra_args.dispread").strip():
-			args += parse_argument_string(getcfg("extra_args.dispread"))
-		args += [os.path.splitext(ti1_path)[0]]
-		return self.worker.exec_cmd(cmd, args, skip_scripts=True)
 	
 	def verify_profile_consumer(self, result, ti3_path, profile, sim_profile,
 								ti3_ref, sim_ti3, save_path, chart, gray):
@@ -5099,21 +4809,9 @@ class MainFrame(BaseFrame):
 				progress_msg = lang.getstr("report.uncalibrated")
 			safe_print(progress_msg)
 			self.worker.interactive = False
-			self.worker.start(self.result_consumer, self.report_worker, 
+			self.worker.start(self.result_consumer, self.worker.report, 
 							  wkwargs={"report_calibrated": report_calibrated},
 							  progress_msg=progress_msg)
-	
-	def report_worker(self, report_calibrated=True):
-		cmd, args = self.worker.prepare_dispcal(calibrate=False)
-		if isinstance(cmd, Exception):
-			return cmd
-		if args:
-			if report_calibrated:
-				args += ["-r"]
-			else:
-				args += ["-R"]
-		return self.worker.exec_cmd(cmd, args, capture_output=True, 
-									skip_scripts=True)
 	
 	def result_consumer(self, result):
 		if isinstance(result, Exception) and result:
@@ -5161,19 +4859,17 @@ class MainFrame(BaseFrame):
 		if getcfg("calibration.interactive_display_adjustment") and \
 		   not getcfg("calibration.update"):
 			# Interactive adjustment, do not show progress dialog
-			##self.just_calibrate_finish(self.calibrate(remove=True))
 			self.worker.interactive = True
 		else:
-			self.worker.interactive = False
-		if True:
 			# No interactive adjustment, show progress dialog
-			self.measure_calibrate(self.just_calibrate_finish, self.calibrate, 
-								   remove=True,
-								   progress_msg=lang.getstr("calibration"))
+			self.worker.interactive = False
+		self.worker.measure_calibrate(self.just_calibrate_finish, remove=True,
+									  progress_msg=lang.getstr("calibration"))
 	
 	def just_calibrate_finish(self, result):
 		start_timers = True
 		if not isinstance(result, Exception) and result:
+			wx.CallAfter(self.update_calibration_file_ctrl)
 			if getcfg("log.autoshow"):
 				wx.CallAfter(self.infoframe_toggle_handler, show=True)
 			if getcfg("profile.update") or \
@@ -5319,23 +5015,22 @@ class MainFrame(BaseFrame):
 		if getcfg("calibration.interactive_display_adjustment") and \
 		   not getcfg("calibration.update"):
 			# Interactive adjustment, do not show progress dialog
-			##self.calibrate_finish(self.calibrate())
 			self.worker.interactive = True
 		else:
-			self.worker.interactive = False
-		if True:
 			# No interactive adjustment, show progress dialog
-			self.measure_calibrate(self.calibrate_finish, self.calibrate, 
-								   progress_msg=lang.getstr("calibration"), 
-								   continue_next=True)
+			self.worker.interactive = False
+		self.worker.measure_calibrate(self.calibrate_finish,
+									  progress_msg=lang.getstr("calibration"), 
+									  continue_next=True)
 	
 	def calibrate_finish(self, result):
 		self.worker.interactive = False
 		if not isinstance(result, Exception) and result:
-			self.measure(self.calibrate_and_profile_finish,
-						 apply_calibration=True, 
-						 progress_msg=lang.getstr("measuring.characterization"), 
-						 resume=True, continue_next=True)
+			wx.CallAfter(self.update_calibration_file_ctrl)
+			self.worker.measure(self.calibrate_and_profile_finish,
+								apply_calibration=True, 
+								progress_msg=lang.getstr("measuring.characterization"), 
+								resume=True, continue_next=True)
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
@@ -5363,7 +5058,7 @@ class MainFrame(BaseFrame):
 
 	def start_profile_worker(self, success_msg, resume=False):
 		self.worker.interactive = False
-		self.worker.start(self.profile_finish, self.profile, 
+		self.worker.start(self.profile_finish, self.worker.create_profile, 
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
 									   "profiling.incomplete")}, 
@@ -5493,10 +5188,10 @@ class MainFrame(BaseFrame):
 		safe_print(lang.getstr("measure"))
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = False
-		self.previous_cal = False
-		self.measure(self.just_measure_finish, apply_calibration,
-					 progress_msg=lang.getstr("measuring.characterization"), 
-					 continue_next=False)
+		setcfg("calibration.file.previous", None)
+		self.worker.measure(self.just_measure_finish, apply_calibration,
+							progress_msg=lang.getstr("measuring.characterization"), 
+							continue_next=False)
 	
 	def just_measure_finish(self, result):
 		self.worker.wrapup(copy=False, remove=True)
@@ -5543,10 +5238,10 @@ class MainFrame(BaseFrame):
 		safe_print(lang.getstr("button.profile"))
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = False
-		self.previous_cal = False
-		self.measure(self.just_profile_finish, apply_calibration,
-					 progress_msg=lang.getstr("measuring.characterization"), 
-					 continue_next=True)
+		setcfg("calibration.file.previous", None)
+		self.worker.measure(self.just_profile_finish, apply_calibration,
+							progress_msg=lang.getstr("measuring.characterization"), 
+							continue_next=True)
 	
 	def just_profile_finish(self, result):
 		start_timers = True
@@ -5569,8 +5264,8 @@ class MainFrame(BaseFrame):
 		if not isinstance(result, Exception) and result:
 			if getcfg("log.autoshow") and allow_show_log:
 				self.infoframe_toggle_handler(show=True)
-			if not hasattr(self, "previous_cal") or self.previous_cal is False:
-				self.previous_cal = getcfg("calibration.file")
+			if not getcfg("calibration.file.previous"):
+				setcfg("calibration.file.previous", getcfg("calibration.file"))
 			if profile_path:
 				profile_save_path = os.path.splitext(profile_path)[0]
 			else:
@@ -5592,7 +5287,7 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				self.start_timers(True)
-				self.previous_cal = False
+				setcfg("calibration.file.previous", None)
 				return
 			else:
 				has_cal = "vcgt" in profile.tags
@@ -5602,7 +5297,7 @@ class MainFrame(BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-information"))
 					self.start_timers(True)
-					self.previous_cal = False
+					setcfg("calibration.file.previous", None)
 					return
 				if getcfg("calibration.file") != profile_path:
 					(options_dispcal, 
@@ -5809,7 +5504,7 @@ class MainFrame(BaseFrame):
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			self.start_timers(True)
-			self.previous_cal = False
+			setcfg("calibration.file.previous", None)
 	
 	def profile_finish_close_handler(self, event):
 		if event.GetEventObject() == self.modaldlg:
@@ -5843,7 +5538,7 @@ class MainFrame(BaseFrame):
 		self.modaldlg = None
 		del self.modaldlg
 		self.start_timers(True)
-		self.previous_cal = False
+		setcfg("calibration.file.previous", None)
 	
 	def profile_info_close_handler(self, event):
 		if getattr(self, "show_profile_info", None):
@@ -7232,12 +6927,12 @@ class MainFrame(BaseFrame):
 								 u"created: " + safe_unicode(exception), parent=self)
 					self.worker.wrapup(False)
 					return
-				self.previous_cal = False
+				setcfg("calibration.file.previous", None)
 				safe_print("-" * 80)
 				# Run colprof
 				self.worker.interactive = False
 				self.worker.start(
-					self.profile_finish, self.profile, ckwargs={
+					self.profile_finish, self.worker.create_profile, ckwargs={
 						"profile_path": profile_save_path, 
 						"success_msg": lang.getstr(
 							"dialog.install_profile", 

@@ -38,8 +38,9 @@ import config
 import defaultpaths
 import localization as lang
 import wexpect
-from argyll_cgats import (add_options_to_ti3, extract_fix_copy_cal, ti3_to_ti1, 
-						  vcgt_to_cal, verify_cgats)
+from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
+						  extract_fix_copy_cal, ti3_to_ti1, vcgt_to_cal,
+						  verify_cgats)
 from argyll_instruments import (get_canonical_instrument_name,
 								instruments as all_instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
@@ -1786,8 +1787,8 @@ class Worker(object):
 		process_cmds = (get_argyll_utilname("colprof"),
 						get_argyll_utilname("targen"))
 		interact = args and not "-?" in args and cmdname in measure_cmds + process_cmds
-		self.measure = not "-?" in args and cmdname in measure_cmds
-		if self.measure:
+		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
+		if self.measure_cmd:
 			# TTBD/FIXME: Skipping of sensor calibration can't be done in
 			# emissive mode (see Argyll source spectro/ss.c, around line 40)
 			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") ##or \
@@ -1796,7 +1797,7 @@ class Worker(object):
 		self.needs_user_interaction = args and (self.dispcal and not "-?" in args and 
 									   not "-E" in args and not "-R" in args and 
 									   not "-m" in args and not "-r" in args and 
-									   not "-u" in args) or (self.measure and 
+									   not "-u" in args) or (self.measure_cmd and 
 															 not skip_sensor_cal)
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
@@ -2015,7 +2016,7 @@ class Worker(object):
 		cmdline = [arg.encode(fs_enc) for arg in cmdline]
 		working_dir = None if not working_dir else working_dir.encode(fs_enc)
 		try:
-			if not self.measure and self.argyll_version >= [1, 2]:
+			if not self.measure_cmd and self.argyll_version >= [1, 2]:
 				# Argyll tools will no longer respond to keys
 				if debug:
 					safe_print("[D] Setting ARGYLL_NOT_INTERACTIVE 1")
@@ -2104,7 +2105,7 @@ class Worker(object):
 					self.subprocess.logfile_read = logfile
 					if self.subprocess.isalive():
 						try:
-							if self.measure:
+							if self.measure_cmd:
 								self.subprocess.expect([" or Q to "])
 								msg = self.recent.read()
 								lastmsg = self.lastmsg.read().strip()
@@ -2246,7 +2247,7 @@ class Worker(object):
 			return False
 		return True
 
-	def generic_consumer(self, delayedResult, consumer, continue_next, *args, 
+	def _generic_consumer(self, delayedResult, consumer, continue_next, *args, 
 						 **kwargs):
 		# consumer must accept result as first arg
 		result = None
@@ -3019,9 +3020,198 @@ class Worker(object):
 							 skip_scripts=True, silent=False,
 							 working_dir=working_dir)
 
+	def create_profile(self, dst_path=None, 
+				skip_scripts=False, display_name=None, 
+				display_manufacturer=None, tags=None):
+		safe_print(lang.getstr("create_profile"))
+		if dst_path is None:
+			dst_path = os.path.join(getcfg("profile.save_path"), 
+									getcfg("profile.name.expanded"), 
+									getcfg("profile.name.expanded") + 
+									profile_ext)
+		cmd, args = self.prepare_colprof(
+			os.path.basename(os.path.splitext(dst_path)[0]), display_name,
+			display_manufacturer)
+		if not isinstance(cmd, Exception): 
+			result = self.exec_cmd(cmd, args, low_contrast=False, 
+								   skip_scripts=skip_scripts)
+		else:
+			result = cmd
+		# Get profile max and avg err to be later added to metadata
+		# Argyll outputs the following:
+		# Profile check complete, peak err = x.xxxxxx, avg err = x.xxxxxx, RMS = x.xxxxxx
+		peak = None
+		avg = None
+		rms = None
+		for line in self.output:
+			if line.startswith("Profile check complete"):
+				peak = re.search("peak err = (\d(?:\.\d+))", line)
+				avg = re.search("avg err = (\d(?:\.\d+))", line)
+				rms = re.search("RMS = (\d(?:\.\d+))", line)
+				if peak:
+					peak = peak.groups()[0]
+				if avg:
+					avg = avg.groups()[0]
+				if rms:
+					rms = rms.groups()[0]
+				break
+		if (os.path.isfile(args[-1] + ".ti3.backup") and
+			os.path.isfile(args[-1] + ".ti3")):
+			# Restore backed up TI3
+			os.remove(args[-1] + ".ti3")
+			os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
+			ti3_file = open(args[-1] + ".ti3", "rb")
+			ti3 = ti3_file.read()
+			ti3_file.close()
+		else:
+			ti3 = None
+		if os.path.isfile(args[-1] + ".chrm"):
+			# Get ChromaticityType tag
+			with open(args[-1] + ".chrm", "rb") as blob:
+				chrm = ICCP.ChromaticityType(blob.read())
+		else:
+			chrm = None
+		if (not isinstance(result, Exception) and result and
+			getcfg("profile.create_gamut_views")):
+			safe_print("-" * 80)
+			safe_print(lang.getstr("gamut.view.create"))
+			self.recent.clear()
+			self.recent.write(lang.getstr("gamut.view.create"))
+			sleep(.75)  # Allow time for progress window to update
+			(gamut_volume,
+			 gamut_coverage) = self.calculate_gamut(args[-1] + profile_ext)
+		else:
+			gamut_volume, gamut_coverage = None, None
+		safe_print("-" * 80)
+		self.wrapup(not isinstance(result, Exception) and 
+									result, dst_path=dst_path)
+		if not isinstance(result, Exception) and result:
+			try:
+				profile = ICCP.ICCProfile(dst_path)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				return Error(lang.getstr("profile.invalid") + "\n" + dst_path)
+			if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
+				setcfg("last_cal_or_icc_path", dst_path)
+				setcfg("last_icc_path", dst_path)
+			if ti3:
+				# Embed original TI3
+				profile.tags.targ = profile.tags.DevD = profile.tags.CIED = ICCP.TextType(
+												"text\0\0\0\0" + ti3 + "\0", 
+												"targ")
+			if chrm:
+				# Add ChromaticityType tag
+				profile.tags.chrm = chrm
+			# Fixup desc tags - ASCII needs to be 7-bit
+			# also add Unicode strings if different from ASCII
+			if "desc" in profile.tags and isinstance(profile.tags.desc, 
+													 ICCP.TextDescriptionType):
+				desc = profile.getDescription()
+				profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
+				if desc != profile.tags.desc["ASCII"]:
+					profile.tags.desc["Unicode"] = desc
+			if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
+													 ICCP.TextDescriptionType):
+				ddesc = profile.getDeviceModelDescription()
+				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
+				if ddesc != profile.tags.dmdd["ASCII"]:
+					profile.tags.dmdd["Unicode"] = ddesc
+			if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
+													 ICCP.TextDescriptionType):
+				mdesc = profile.getDeviceManufacturerDescription()
+				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
+				if mdesc != profile.tags.dmnd["ASCII"]:
+					profile.tags.dmnd["Unicode"] = mdesc
+			if tags and tags is not True:
+				# Add custom tags
+				for tagname, tag in tags.iteritems():
+					if tagname == "mmod":
+						profile.device["manufacturer"] = "\0\0" + tag["manufacturer"][1] + tag["manufacturer"][0]
+						profile.device["model"] = "\0\0" + tag["model"][0] + tag["model"][1]
+					profile.tags[tagname] = tag
+			elif tags is True:
+				edid = self.get_display_edid()
+				if edid:
+					profile.device["manufacturer"] = "\0\0" + edid["edid"][9] + edid["edid"][8]
+					profile.device["model"] = "\0\0" + edid["edid"][11] + edid["edid"][10]
+					# Add Apple-specific 'mmod' tag (TODO: need full spec)
+					mmod = ("mmod" + ("\x00" * 6) + edid["edid"][8:10] +
+							("\x00" * 2) + edid["edid"][11] + edid["edid"][10] +
+							("\x00" * 4) + ("\x00" * 20))
+					profile.tags.mmod = ICCP.ICCProfileTag(mmod, "mmod")
+					# Add new meta information based on EDID
+					profile.set_edid_metadata(edid)
+				elif not "meta" in profile.tags:
+					# Make sure meta tag exists
+					profile.tags.meta = ICCP.DictType()
+				# Set OPENICC_automatic_generated to "0"
+				profile.tags.meta["OPENICC_automatic_generated"] = "0"
+				# Set GCM DATA_source to "calib"
+				profile.tags.meta["DATA_source"] = "calib"
+				# Add instrument
+				profile.tags.meta["MEASUREMENT_device"] = self.get_instrument_name().lower()
+				spec_prefixes = "DATA_,MEASUREMENT_,OPENICC_"
+				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
+				for prefix in spec_prefixes.split(","):
+					if not prefix in prefixes:
+						prefixes.append(prefix)
+				profile.tags.meta["prefix"] = ",".join(prefixes)
+			if (avg, peak, rms) != (None, ) * 3:
+				# Make sure meta tag exists
+				if not "meta" in profile.tags:
+					profile.tags.meta = ICCP.DictType()
+				# Update meta prefix
+				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ACCURACY_").split(",")
+				if not "ACCURACY_" in prefixes:
+					prefixes.append("ACCURACY_")
+					profile.tags.meta["prefix"] = ",".join(prefixes)
+				# Add error info
+				if avg is not None:
+					profile.tags.meta["ACCURACY_dE76_avg"] = avg
+				if peak is not None:
+					profile.tags.meta["ACCURACY_dE76_max"] = peak
+				if rms is not None:
+					profile.tags.meta["ACCURACY_dE76_rms"] = rms
+			profile.set_gamut_metadata(gamut_volume, gamut_coverage)
+			# Set default rendering intent
+			if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
+				(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
+				profile.intent = getcfg("gamap_default_intent")
+			# Calculate profile ID
+			profile.calculateID()
+			try:
+				profile.write()
+			except Exception, exception:
+				return exception
+		return result
+
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
 		return not getattr(self, "finished", True)
+
+	def measure(self, consumer, apply_calibration=True, progress_msg="",
+				resume=False, continue_next=False):
+		self.start(consumer, self._measure_producer, 
+				   wkwargs={"apply_calibration": apply_calibration},
+				   progress_msg=progress_msg, resume=resume, 
+				   continue_next=continue_next)
+	
+	def measure_calibrate(self, consumer, remove=False, 
+						  progress_msg="", continue_next=False):
+		self.start(consumer, self.calibrate, wkwargs={"remove": remove},
+				   progress_msg=progress_msg, 
+				   continue_next=continue_next)
+	
+	def _measure_producer(self, apply_calibration=True):
+		cmd, args = self.prepare_dispread(apply_calibration)
+		if not isinstance(cmd, Exception):
+			result = self.exec_cmd(cmd, args)
+			if not isinstance(result, Exception) and result:
+				self.update_display_name_manufacturer(args[-1] + ".ti3")
+		else:
+			result = cmd
+		self.wrapup(not isinstance(result, Exception) and result,
+					isinstance(result, Exception) or not result)
+		return result
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
 						display_manufacturer=None):
@@ -3723,7 +3913,7 @@ class Worker(object):
 			##self.subprocess_abort = True
 			##self.thread_abort = True
 			try:
-				if self.measure and hasattr(self.subprocess, "send"):
+				if self.measure_cmd and hasattr(self.subprocess, "send"):
 					try:
 						if debug or test:
 							safe_print('Sending ESC (1)')
@@ -3783,6 +3973,17 @@ class Worker(object):
 															   "isalive"))
 				if hasattr(self.subprocess, "isalive"):
 					safe_print('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
+	
+	def report(self, report_calibrated=True):
+		cmd, args = self.prepare_dispcal(calibrate=False)
+		if isinstance(cmd, Exception):
+			return cmd
+		if args:
+			if report_calibrated:
+				args += ["-r"]
+			else:
+				args += ["-R"]
+		return self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
 	
 	def safe_send(self, bytes, retry=3):
 		for i in xrange(0, retry):
@@ -3928,7 +4129,7 @@ class Worker(object):
 		self.finished = False
 		self.subprocess_abort = False
 		self.thread_abort = False
-		self.thread = delayedresult.startWorker(self.generic_consumer, 
+		self.thread = delayedresult.startWorker(self._generic_consumer, 
 												producer, [consumer, 
 														   continue_next] + 
 												list(cargs), ckwargs, wargs, 
@@ -4067,6 +4268,82 @@ class Worker(object):
 			# Exception
 			safe_print(safe_unicode(result))
 		return gamut_volume, gamut_coverage
+
+	def calibrate(self, remove=False):
+		capture_output = not sys.stdout.isatty()
+		cmd, args = self.prepare_dispcal()
+		if not isinstance(cmd, Exception):
+			result = self.exec_cmd(cmd, args, capture_output=capture_output)
+		else:
+			result = cmd
+		self.wrapup(not isinstance(result, Exception) and 
+									result, remove or isinstance(result, 
+																 Exception) or 
+									not result)
+		if not isinstance(result, Exception) and result:
+			cal = os.path.join(getcfg("profile.save_path"), 
+							   getcfg("profile.name.expanded"), 
+							   getcfg("profile.name.expanded") + ".cal")
+			result = check_cal_isfile(
+				cal, lang.getstr("error.calibration.file_not_created"))
+			if not isinstance(result, Exception) and result:
+				cal_cgats = add_dispcal_options_to_cal(cal, 
+													   self.options_dispcal)
+				if cal_cgats:
+					cal_cgats.write()
+					if not remove:
+						# Remove the temp .cal file
+						self.wrapup(False, True, ext_filter=[script_ext,
+																	".app"])
+				setcfg("last_cal_path", cal)
+				setcfg("calibration.file.previous", getcfg("calibration.file"))
+				if getcfg("profile.update") or \
+				   self.dispcal_create_fast_matrix_shaper:
+					profile_path = os.path.join(getcfg("profile.save_path"), 
+												getcfg("profile.name.expanded"), 
+												getcfg("profile.name.expanded") + 
+												profile_ext)
+					result = check_profile_isfile(
+						profile_path, 
+						lang.getstr("error.profile.file_not_created"))
+					if not isinstance(result, Exception) and result:
+						if not getcfg("profile.update"):
+							# we need to set cprt and targ
+							try:
+								profile = ICCP.ICCProfile(profile_path)
+								profile.tags.cprt = ICCP.TextType(
+									"text\0\0\0\0" + 
+									getcfg("copyright").encode("ASCII", "asciize") + 
+									"\0",
+									"cprt")
+								ti3 = add_options_to_ti3(
+									profile.tags.get("targ", 
+													 profile.tags.get("CIED", 
+																	  "")), 
+									self.options_dispcal)
+								if not ti3:
+									ti3 = CGATS.CGATS("TI3\n")
+									ti3[1] = cal_cgats
+								if ti3:
+									profile.tags.targ = ICCP.TextType(
+										"text\0\0\0\0" + str(ti3) + "\0", 
+										"targ")
+									profile.tags.CIED = ICCP.TextType(
+										"text\0\0\0\0" + str(ti3) + "\0", 
+										"CIED")
+									profile.tags.DevD = ICCP.TextType(
+										"text\0\0\0\0" + str(ti3) + "\0", 
+										"DevD")
+								profile.write()
+							except Exception, exception:
+								safe_print(exception)
+						setcfg("calibration.file", profile_path)
+						setcfg("last_cal_or_icc_path", profile_path)
+						setcfg("last_icc_path", profile_path)
+				else:
+					setcfg("calibration.file", cal)
+					setcfg("last_cal_or_icc_path", cal)
+		return result
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, 
 					 check_missing_fields=False, absolute=False):
@@ -4576,6 +4853,26 @@ class Worker(object):
 		ti1out.seek(0)
 		return CGATS.CGATS(ti1out), ti3v
 
+	def verify_calibration(self):
+		cmd, args = self.prepare_dispcal(calibrate=False, verify=True)
+		if not isinstance(cmd, Exception):
+			result = self.exec_cmd(cmd, args, capture_output=True, 
+										  skip_scripts=True)
+		else:
+			result = cmd
+		return result
+
+	def verify_profile(self, ti1_path):
+		# measure
+		cmd = get_argyll_util("dispread")
+		args = ["-v"]
+		result = self.add_measurement_features(args)
+		if isinstance(result, Exception):
+			return result
+		if getcfg("extra_args.dispread").strip():
+			args += parse_argument_string(getcfg("extra_args.dispread"))
+		args += [os.path.splitext(ti1_path)[0]]
+		return self.exec_cmd(cmd, args, skip_scripts=True)
 
 	def wrapup(self, copy=True, remove=True, dst_path=None, ext_filter=None):
 		"""
