@@ -319,9 +319,11 @@ class DisplayUniformityFrame(wx.Frame):
 			panel.SetBackgroundColour(WHITE)
 		for button in self.buttons:
 			button.SetBitmap(getbitmap("theme/icons/10x10/record"))
+			button.Show()
 		for index in self.labels:
 			self.labels[index].SetLabel("")
 			self.labels[index].GetContainingSizer().Layout()
+		self.show_cursor()
 	
 	def _setup(self):
 		self.index = -1
