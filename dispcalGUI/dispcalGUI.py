@@ -4536,6 +4536,8 @@ class MainFrame(BaseFrame):
 		
 		self.Show()
 		
+		self.load_cal(silent=True) or self.load_display_profile_cal()
+		
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
