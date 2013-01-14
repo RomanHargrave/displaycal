@@ -3142,7 +3142,7 @@ class MainFrame(BaseFrame):
 			if sys.platform == "win32":
 				kwargs["codepage"] = windll.kernel32.GetACP()
 			self.worker.clear_cmd_output()
-			self.worker.measure = True
+			self.worker.measure_cmd = True
 			if "ARGYLL_NOT_INTERACTIVE" in os.environ:
 				del os.environ["ARGYLL_NOT_INTERACTIVE"]
 			try:
@@ -4516,7 +4516,7 @@ class MainFrame(BaseFrame):
 			self.worker.dispread_after_dispcal = False
 			self.worker.interactive = False
 			self.worker.start(self.verify_profile_consumer, 
-							  self.worker.verify_profile, 
+							  self.worker.measure_ti1, 
 							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
 									 profile, sim_profile, ti3_ref, sim_ti3, 
 									 save_path, chart, gray),
@@ -4874,7 +4874,7 @@ class MainFrame(BaseFrame):
 		else:
 			# No interactive adjustment, show progress dialog
 			self.worker.interactive = False
-		self.worker.measure_calibrate(self.just_calibrate_finish, remove=True,
+		self.worker.start_calibration(self.just_calibrate_finish, remove=True,
 									  progress_msg=lang.getstr("calibration"))
 	
 	def just_calibrate_finish(self, result):
@@ -5030,7 +5030,7 @@ class MainFrame(BaseFrame):
 		else:
 			# No interactive adjustment, show progress dialog
 			self.worker.interactive = False
-		self.worker.measure_calibrate(self.calibrate_finish,
+		self.worker.start_calibration(self.calibrate_finish,
 									  progress_msg=lang.getstr("calibration"), 
 									  continue_next=True)
 	
@@ -5038,10 +5038,10 @@ class MainFrame(BaseFrame):
 		self.worker.interactive = False
 		if not isinstance(result, Exception) and result:
 			wx.CallAfter(self.update_calibration_file_ctrl)
-			self.worker.measure(self.calibrate_and_profile_finish,
-								apply_calibration=True, 
-								progress_msg=lang.getstr("measuring.characterization"), 
-								resume=True, continue_next=True)
+			self.worker.start_measurement(self.calibrate_and_profile_finish,
+										  apply_calibration=True, 
+										  progress_msg=lang.getstr("measuring.characterization"), 
+										  resume=True, continue_next=True)
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
@@ -5200,9 +5200,9 @@ class MainFrame(BaseFrame):
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = False
 		setcfg("calibration.file.previous", None)
-		self.worker.measure(self.just_measure_finish, apply_calibration,
-							progress_msg=lang.getstr("measuring.characterization"), 
-							continue_next=False)
+		self.worker.start_measurement(self.just_measure_finish, apply_calibration,
+									  progress_msg=lang.getstr("measuring.characterization"), 
+									  continue_next=False)
 	
 	def just_measure_finish(self, result):
 		self.worker.wrapup(copy=False, remove=True)
@@ -5250,9 +5250,9 @@ class MainFrame(BaseFrame):
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = False
 		setcfg("calibration.file.previous", None)
-		self.worker.measure(self.just_profile_finish, apply_calibration,
-							progress_msg=lang.getstr("measuring.characterization"), 
-							continue_next=True)
+		self.worker.start_measurement(self.just_profile_finish, apply_calibration,
+									  progress_msg=lang.getstr("measuring.characterization"), 
+									  continue_next=True)
 	
 	def just_profile_finish(self, result):
 		start_timers = True

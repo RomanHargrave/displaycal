@@ -3188,20 +3188,21 @@ class Worker(object):
 		""" Check if the Worker instance is busy. Return True or False. """
 		return not getattr(self, "finished", True)
 
-	def measure(self, consumer, apply_calibration=True, progress_msg="",
-				resume=False, continue_next=False):
-		self.start(consumer, self._measure_producer, 
+	def start_measurement(self, consumer, apply_calibration=True,
+						  progress_msg="", resume=False, continue_next=False):
+		self.start(consumer, self.measure, 
 				   wkwargs={"apply_calibration": apply_calibration},
 				   progress_msg=progress_msg, resume=resume, 
 				   continue_next=continue_next)
 	
-	def measure_calibrate(self, consumer, remove=False, 
-						  progress_msg="", continue_next=False):
+	def start_calibration(self, consumer, remove=False, progress_msg="",
+						  continue_next=False):
 		self.start(consumer, self.calibrate, wkwargs={"remove": remove},
 				   progress_msg=progress_msg, 
 				   continue_next=continue_next)
 	
-	def _measure_producer(self, apply_calibration=True):
+	def measure(self, apply_calibration=True):
+		""" Measure the configured testchart """
 		cmd, args = self.prepare_dispread(apply_calibration)
 		if not isinstance(cmd, Exception):
 			result = self.exec_cmd(cmd, args)
@@ -4862,8 +4863,7 @@ class Worker(object):
 			result = cmd
 		return result
 
-	def verify_profile(self, ti1_path):
-		# measure
+	def measure_ti1(self, ti1_path):
 		cmd = get_argyll_util("dispread")
 		args = ["-v"]
 		result = self.add_measurement_features(args)
