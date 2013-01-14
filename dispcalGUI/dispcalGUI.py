@@ -8542,21 +8542,14 @@ def main():
 		safe_print("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
 	else:
 		if sys.platform == "win32":
+			# http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832%28v=vs.85%29.aspx
 			ver2name = {(5, 0): "2000",
-						(5, 0, 2195): "2000 RTM",
 						(5, 1): "XP",
-						(5, 1, 2600): "XP RTM",
-						(5, 2): "Server 2003/Home Server 2003",
-						(5, 2, 3790): "Server 2003/Home Server 2003, RTM",
+						(5, 2): "XP 64-Bit/Server 2003/Server 2003 R2",
 						(6, 0): "Vista/Server 2008",
-						(6, 0, 6000): "Vista RTM",
-						(6, 0, 6001): "Vista SP1/Server 2008, RTM",
-						(6, 0, 6002): "Vista SP2/Server 2008 SP2, RTM",
 						(6, 1): "7/Server 2008 R2",
-						(6, 1, 7600): "7/Server 2008 R2, RTM"}
-			dist = ver2name.get(sys.getwindowsversion()[:3], 
-								ver2name.get(sys.getwindowsversion()[:2], 
-											 "N/A"))
+						(6, 2): "8/Server 2012"}
+			dist = ver2name.get(sys.getwindowsversion()[:2], "N/A")
 		else:
 			dist = "%s %s %s" % getattr(platform, "linux_distribution", 
 										platform.dist)()
