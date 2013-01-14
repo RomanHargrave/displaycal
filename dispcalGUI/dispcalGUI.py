@@ -4833,7 +4833,8 @@ class MainFrame(BaseFrame):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not getcfg("profile.update") and (not getcfg("calibration.update") or 
 											 is_profile()):
-			if getcfg("calibration.update") and is_profile():
+			update_profile = getcfg("calibration.update") and is_profile()
+			if update_profile:
 				msg = lang.getstr("calibration.update_profile_choice")
 				ok = lang.getstr("profile.update")
 			else:
@@ -4849,6 +4850,8 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result == wx.ID_CANCEL:
 				return
+			if update_profile and result == wx.ID_OK:
+				setcfg("profile.update", 1)
 		else:
 			result = None
 		self.worker.dispcal_create_fast_matrix_shaper = result == wx.ID_OK
