@@ -1045,14 +1045,11 @@ class Worker(object):
 			"key to continue" in self.lastmsg.read()):
 			self.instrument_calibration_complete = True
 			wx.CallAfter(self.instrument_calibration_finish)
-		elif (not getattr(self, "instrument_calibration_complete", False) and
-			  (not getattr(self, "instrument_calibration_started", False) or
-			   "Calibration failed" in msgs)):
-			if "Calibration failed" in msgs:
-				self.recent.clear()
+		elif (not getattr(self, "instrument_calibration_complete", False) or
+			  "Calibration failed" in msgs):
 			for calmsg in INST_CAL_MSGS:
 				if calmsg in msgs or "Calibration failed" in msgs:
-					self.instrument_calibration_started = True
+					self.recent.clear()
 					wx.CallAfter(self.do_instrument_calibration)
 					break
 	
@@ -4067,7 +4064,6 @@ class Worker(object):
 		if progress_start < 100:
 			progress_start = 100
 		self.resume = resume
-		self.instrument_calibration_started = False
 		self.instrument_calibration_complete = False
 		if self.interactive or test:
 			self.progress_start_timer = wx.Timer()
