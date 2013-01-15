@@ -3198,6 +3198,7 @@ class MainFrame(BaseFrame):
 			# the only optional phase
 			try:
 				result.send(" ")
+				result.expect("Calibration complete")
 				if not self.worker.get_instrument_features().get("sensor_cal"):
 					# Just for testing purposes
 					sleep(5)
