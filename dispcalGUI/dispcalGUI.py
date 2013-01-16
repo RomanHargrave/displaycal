@@ -8250,7 +8250,8 @@ class MainFrame(BaseFrame):
 				fn, ext = os.path.splitext(entry)
 				if ext.lower() in (".app", script_ext):
 					fn, ext = os.path.splitext(fn)
-				if fn == os.path.splitext(os.path.basename(cal))[0]:
+				if (fn.startswith(os.path.splitext(os.path.basename(cal))[0]) or
+					ext.lower() in (".ccss", ".ccmx")):
 					self.related_files[entry] = True
 			self.dlg = dlg = ConfirmDialog(
 				self, msg=lang.getstr("dialog.confirm_delete"), 
