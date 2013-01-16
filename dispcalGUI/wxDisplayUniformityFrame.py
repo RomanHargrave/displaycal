@@ -16,6 +16,7 @@ from wxaddons import wx
 
 from config import getbitmap, getcfg, get_icon_bundle, get_display_number
 from meta import name as appname
+from util_str import center
 from wxaddons import CustomEvent
 from wxwindows import FlatShadedButton, numpad_keycodes
 import colormath
@@ -62,6 +63,8 @@ class DisplayUniformityFrame(wx.Frame):
 		self.labels = {}
 		self.panels = []
 		self.buttons = []
+		font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+					   wx.FONTWEIGHT_NORMAL)
 		for index in xrange(rows * cols):
 			panel = wx.Panel(self, style=wx.BORDER_SIMPLE)
 			##panel.SetBackgroundColour(wx.Colour(0x33, 0x33, 255.0 / (rows * cols) * (index + 1)))
@@ -77,6 +80,7 @@ class DisplayUniformityFrame(wx.Frame):
 			button.Bind(wx.EVT_BUTTON, self.measure)
 			self.buttons.append(button)
 			label = wx.StaticText(panel)
+			label.SetFont(font)
 			self.labels[index] = label
 			sizer.Add(label, 1, wx.ALIGN_CENTER)
 			sizer.Add(button, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTER | wx.BOTTOM |
@@ -241,12 +245,22 @@ class DisplayUniformityFrame(wx.Frame):
 			Lab = colormath.XYZ2Lab(*XYZ_Y100)
 			self.results[self.index].append({"XYZ": XYZ,
 											 "Lab": Lab})
-		if "Closest Daylight" in txt:
-			CDT_delta_E = re.search("Closest Daylight\s+temperature\s+=\s+(\d+)K\s+\(Delta\s+E\s+(\d+\.\d+)\)", txt)
-			CDT = int(CDT_delta_E.groups()[0])
-			delta_E = float(CDT_delta_E.groups()[1])
-			self.results[self.index][-1]["CDT"] = CDT
-			self.results[self.index][-1]["delta_E"] = delta_E
+		if "CCT =" in txt:
+			CCT_delta_E = re.search("CCT\s+=\s+(\d+)K\s+\(Delta\s+E\s+(\d+\.\d+)\)",
+									txt)
+			CCT = int(CCT_delta_E.groups()[0])
+			CCT_delta_E = float(CCT_delta_E.groups()[1])
+			self.results[self.index][-1]["CCT"] = CCT
+			self.results[self.index][-1]["CCT_delta_E"] = CCT_delta_E
+		locus = {"t": "Closest Daylight",
+				 "T": "Closest Planckian"}.get(getcfg("whitepoint.colortemp.locus"))
+		if locus in txt:
+			CT_delta_E = re.search("%s\s+temperature\s+=\s+(\d+)K\s+\(Delta\s+E\s+(\d+\.\d+)\)"
+								   % locus, txt)
+			CT = int(CT_delta_E.groups()[0])
+			CT_delta_E = float(CT_delta_E.groups()[1])
+			self.results[self.index][-1]["CT"] = CT
+			self.results[self.index][-1]["CT_delta_E"] = CT_delta_E
 		if "key to take a reading" in txt:
 			if not self.is_measuring:
 				self.enable_buttons()
@@ -266,51 +280,86 @@ class DisplayUniformityFrame(wx.Frame):
 				self.panels[self.index].SetBackgroundColour(WHITE)
 				self.panels[self.index].Refresh()
 				self.panels[self.index].Update()
+				locus = {"t": "CDT",
+						 "T": "CPT"}.get(getcfg("whitepoint.colortemp.locus"))
 				if len(self.results) == self.rows * self.cols:
 					# All swatches have been measured, show results
 					reference = self.results[int(math.floor(self.rows * self.cols / 2.0))]
-					Yr = 0
-					Lr, ar, br = 0, 0, 0
-					CDTr = 0
-					delta_Er = 0
+					Yr = []
+					Lr, ar, br = [], [], []
+					CTr = []
+					CCTr = []
 					for item in reference:
-						Yr += item["XYZ"][1]
-						Lr += item["Lab"][0]
-						ar += item["Lab"][1]
-						br += item["Lab"][2]
-						CDTr += item["CDT"]
-						delta_Er += item["delta_E"]
-					Yr /= 4.0
-					Lr /= 4.0
-					ar /= 4.0
-					br /= 4.0
-					CDTr /= 4.0
-					delta_Er /= 4.0
+						# 4 readings
+						Yr += [item["XYZ"][1]]
+						Lr += [item["Lab"][0]]
+						ar += [item["Lab"][1]]
+						br += [item["Lab"][2]]
+						CTr += [item["CT"]]
+						CCTr += [item["CCT"]]
 					for index in self.results:
 						result = self.results[index]
-						if result is reference:
-							continue
-						Y = 0
-						L, a, b = 0, 0, 0
-						CDT = 0
-						delta_E = 0
-						for item in result:
-							Y += item["XYZ"][1]
-							L += item["Lab"][0]
-							a += item["Lab"][1]
-							b += item["Lab"][2]
-							CDT += item["CDT"]
-							delta_E += item["delta_E"]
-						Y /= 4.0
-						L /= 4.0
-						a /= 4.0
-						b /= 4.0
-						CDT /= 4.0
-						delta_E /= 4.0
-						Y_diff_percent = Yr - Y
-						delta_C = colormath.delta(Lr, ar, br, L, a, b, "2k")["C"]
-						self.labels[index].SetLabel(u"\u0394C*00: %.2f, \u0394Y: %.2f\nCDT: %i (\u0394E: %.2f)" %
-													(delta_C, Y_diff_percent, round(CDT), delta_E))
+						Y = []
+						Y_diff = []
+						Y_diff_percent = []
+						L, a, b = [], [], []
+						delta_C = []
+						CT = []
+						CCT = []
+						CCT_diff = []
+						CCT_diff_percent = []
+						CT_delta_E = []
+						label = []
+						for i, item in enumerate(result):
+							# 4 readings
+							Y += [item["XYZ"][1]]
+							Y_diff += [-(Yr[i] - Y[i])]
+							Y_diff_percent += [100.0 / Yr[0] * Y_diff[i]]
+							L += [item["Lab"][0]]
+							a += [item["Lab"][1]]
+							b += [item["Lab"][2]]
+							delta_C += [colormath.delta(Lr[i], ar[i], br[i],
+														L[i], a[i], b[i], "2k")["C"]]
+							CT += [item["CT"]]
+							CCT += [item["CCT"]]
+							CCT_diff += [-(CCTr[i] - CCT[i])]
+							CCT_diff_percent += [100.0 / CCTr[i] * CCT_diff[i]]
+							CT_delta_E += [item["CT_delta_E"]]
+							if getcfg("measure.uniformity.show_detail"):
+								if result is reference:
+									label.append(u"%i%% RGB: Y=%.2f, CCT %iK, %s %iK (%.2f \u0394E*00)" %
+												 (100 - i * 25, Y[i],
+												  round(CCT[i]), locus,
+												  round(CT[i]), CT_delta_E[i]))
+								else:
+									label.append(u"%i%% RGB: Y=%.2f, %.2f \u0394Y (%s%.2f%%), %.2f \u0394C*00,\n      CCT %iK (%s%.2f%%), %s %iK (%.2f \u0394E*00)" %
+												 (100 - i * 25, Y[i], Y_diff[i],
+												  "+" if Y_diff_percent[i] > 0 else "",
+												  Y_diff_percent[i], delta_C[i],
+												  round(CCT[i]),
+												  "+" if CCT_diff_percent[i] > 0 else "",
+												  CCT_diff_percent[i], locus,
+												  round(CT[i]), CT_delta_E[i]))
+						if not getcfg("measure.uniformity.show_detail"):
+							Y_diff = sum(Y_diff) / 4.0
+							Y_diff_percent = sum(Y_diff_percent) / 4.0
+							delta_C = sum(delta_C) / 4.0
+							CT = sum(CT) / 4.0
+							CCT = sum(CCT) / 4.0
+							CCT_diff_percent = sum(CCT_diff_percent) / 4.0
+							CT_delta_E = sum(CT_delta_E) / 4.0
+							if result is reference:
+								label = [u"CCT %iK\n%s %iK (%.2f \u0394E*00)" %
+										 (round(CCT), locus, round(CT), CT_delta_E)]
+							else:
+								label = [u"%.2f \u0394Y (%s%.2f%%)\n%.2f \u0394C*00\nCCT %iK (%s%.2f%%)\n%s %iK (%.2f \u0394E*00)" %
+										 (Y_diff,
+										  "+" if Y_diff_percent > 0 else "",
+										  Y_diff_percent, delta_C, round(CCT),
+										  "+" if CCT_diff_percent > 0 else "",
+										  CCT_diff_percent, locus, round(CT),
+										  CT_delta_E)]
+						self.labels[index].SetLabel("\n" + center("\n".join(label)))
 						self.labels[index].GetContainingSizer().Layout()
 	
 	def reset(self):

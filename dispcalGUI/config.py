@@ -387,6 +387,7 @@ valid_ranges = {
 	"calibration.black_point_rate": [0.05, 20],
 	"calibration.luminance": [0.000001, 100000],
 	"gamap_default_intent": [0, 3],
+	"measure.uniformity.show_detail": [0, 1],
 	"profile.black_point_compensation": [0, 1],
 	"whitepoint.colortemp": [1000, 15000],
 }
@@ -495,6 +496,7 @@ defaults = {
 	"measurement.save_path": expanduseru("~"),
 	"measure.darken_background": 0,
 	"measure.darken_background.show_warning": 1,
+	"measure.uniformity.show_detail": 0,
 	"position.x": 50,
 	"position.y": 50,
 	"position.info.x": 50,
