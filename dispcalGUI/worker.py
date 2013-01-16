@@ -2228,6 +2228,8 @@ class Worker(object):
 				safe_print(lang.getstr("aborted"), fn=fn)
 			if interact and len(self.output):
 				for i, line in enumerate(self.output):
+					if "Calibrate failed with 'User hit Abort Key' (No device error)" in line:
+						break
 					if line.startswith(cmdname + ": Error") and \
 					   not "failed with 'User Aborted'" in line and \
 					   not "test_crt returned error code 1" in line:
