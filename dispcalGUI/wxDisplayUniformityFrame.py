@@ -63,7 +63,7 @@ class DisplayUniformityFrame(wx.Frame):
 		self.labels = {}
 		self.panels = []
 		self.buttons = []
-		font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+		font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
 		for index in xrange(rows * cols):
 			panel = wx.Panel(self, style=wx.BORDER_SIMPLE)
