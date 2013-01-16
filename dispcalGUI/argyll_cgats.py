@@ -133,7 +133,7 @@ def can_update_cal(path):
 			safe_print(u"Warning - couldn't process CGATS file '%s': %s" % 
 					   tuple(safe_unicode(s) for s in (path, exception)))
 		else:
-			if cal.queryv1("DEVICE_TYPE") in ("CRT", "LCD") and not None in \
+			if cal.queryv1("DEVICE_CLASS") == "DISPLAY" and not None in \
 			   (cal.queryv1("TARGET_WHITE_XYZ"), 
 				cal.queryv1("TARGET_GAMMA"), 
 				cal.queryv1("BLACK_POINT_CORRECTION"), 

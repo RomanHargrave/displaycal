@@ -2458,7 +2458,8 @@ class MainFrame(BaseFrame):
 		is_profile_ = is_profile(include_display_profile=True)
 		self.profile_info_btn.Enable(is_profile_)
 		self.menuitem_profile_info.Enable(is_profile_)
-		enable_update = bool(cal) and os.path.exists(filename + ".cal")
+		enable_update = (bool(cal) and os.path.exists(filename + ".cal") and
+						 can_update_cal(filename + ".cal"))
 		if not enable_update:
 			setcfg("calibration.update", 0)
 		self.calibration_update_cb.Enable(enable_update)
