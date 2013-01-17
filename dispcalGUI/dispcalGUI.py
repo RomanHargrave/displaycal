@@ -173,10 +173,13 @@ sys.excepthook = _excepthook
 
 
 def swap_dict_keys_values(mydict):
+	""" Swap dictionary keys and values """
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
 
 
 def app_update_check(parent=None, silent=False):
+	""" Check for application update. Show an error dialog if a failure
+	occurs. """
 	safe_print(lang.getstr("update_check"))
 	resp = http_request(parent, domain, "GET", "/VERSION",
 						failure_msg=lang.getstr("update_check.fail"),
@@ -220,6 +223,7 @@ def app_update_check(parent=None, silent=False):
 
 
 def app_uptodate(parent=None):
+	""" Show a dialog confirming application is up-to-date """
 	dlg = InfoDialog(parent, 
 					 msg=lang.getstr("update_check.uptodate",
 									 appname),
@@ -241,6 +245,7 @@ def app_uptodate(parent=None):
 
 
 def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
+	""" Show a dialog confirming application update, with cancel option """
 	dlg = ConfirmDialog(parent,
 						msg=lang.getstr("update_check.new_version", 
 						   ".".join(str(n) for n in newversion_tuple)), 
@@ -374,6 +379,8 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 
 
 def colorimeter_correction_check_overwrite(parent=None, cgats=None):
+	""" Check if a colorimeter correction file will be overwritten and 
+	present a dialog to confirm or cancel the operation. Write the file. """
 	result = check_create_dir(defaults["color.dir"])
 	if isinstance(result, Exception):
 		show_result_dialog(result, parent)
@@ -1270,6 +1277,8 @@ class MainFrame(BaseFrame):
 			wrap(self.profile_name_info(), 72))
 	
 	def update_profile_type_ctrl(self):
+		""" Populate the profile type control with available choices
+		depending on Argyll version. """
 		self.profile_types = [
 			lang.getstr("profile.type.lut.lab"),
 			lang.getstr("profile.type.shaper_matrix"),
@@ -1620,9 +1629,9 @@ class MainFrame(BaseFrame):
 				  id=self.detect_displays_and_ports_btn.GetId())
 		
 		# Colorimeter correction matrix
-		self.Bind(wx.EVT_CHOICE, self.colorimeter_correction_matrix_handler, 
+		self.Bind(wx.EVT_CHOICE, self.colorimeter_correction_matrix_ctrl_handler, 
 				  id=self.colorimeter_correction_matrix_ctrl.GetId())
-		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_handler, 
+		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_ctrl_handler, 
 				  id=self.colorimeter_correction_matrix_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_web_handler, 
 				  id=self.colorimeter_correction_web_btn.GetId())
@@ -2158,7 +2167,7 @@ class MainFrame(BaseFrame):
 		self.measurement_mode_ctrl.Thaw()
 	
 	def update_colorimeter_correction_matrix_ctrl(self):
-		# Show or hide the colorimeter correction matrix control
+		""" Show or hide the colorimeter correction matrix controls """
 		self.calpanel.Freeze()
 		instrument_features = self.worker.get_instrument_features()
 		# Special case: Spectrometer (not needed) and ColorHug
@@ -2184,7 +2193,7 @@ class MainFrame(BaseFrame):
 														warn_on_mismatch=False):
 		"""
 		Show the currently selected correction matrix and list all files
-		in ccmx directory below
+		in ccmx directories below
 		
 		force	If True, reads the ccmx directory again, otherwise uses a
 				previously cached result if available
@@ -2377,6 +2386,8 @@ class MainFrame(BaseFrame):
 		self.panel.Thaw()
 
 	def update_calibration_file_ctrl(self, silent=False):
+		""" Update items shown in the calibration file control and set
+		a tooltip with the path of the currently selected file """
 		cal = getcfg("calibration.file")
 		
 		if cal:
@@ -2866,6 +2877,7 @@ class MainFrame(BaseFrame):
 		self.lut_viewer_load_lut(profile=profile)
 
 	def lut3d_create_handler(self, event):
+		""" Assign and initialize the 3DLUT creation window """
 		if not getattr(self, "lut3dframe", None):
 			self.init_lut3dframe()
 		if self.lut3dframe.IsShownOnScreen():
@@ -2925,6 +2937,8 @@ class MainFrame(BaseFrame):
 				self.lut3dframe.set_profile("output")
 	
 	def settings_discard_changes(self, sel=None, keep_changed_state=False):
+		""" Update the calibration file control and remove the leading
+		asterisk (*) from items """
 		if sel is None:
 			sel = self.calibration_file_ctrl.GetSelection()
 		if not keep_changed_state: setcfg("settings.changed", 0)
@@ -2942,6 +2956,8 @@ class MainFrame(BaseFrame):
 			self.calibration_file_ctrl.Thaw()
 			
 	def settings_confirm_discard(self):
+		""" Show a dialog for user to confirm or cancel discarding changed
+		settings """
 		sel = self.calibration_file_ctrl.GetSelection()
 		cal = getcfg("calibration.file") or ""
 		if not cal in self.recent_cals:
@@ -3094,6 +3110,7 @@ class MainFrame(BaseFrame):
 		self.update_profile_name()
 	
 	def ambient_measure_handler(self, event):
+		""" Start measuring ambient illumination """
 		if not check_set_argyll_bin():
 			return
 		safe_print("-" * 80)
@@ -3109,6 +3126,7 @@ class MainFrame(BaseFrame):
 						  progress_msg=lang.getstr("instrument.initializing"))
 	
 	def ambient_measure_process(self, result=None, event_id=None, phase=None):
+		""" Process spotread output for ambient readings """
 		if not result or isinstance(result, Exception):
 			if getattr(self.worker, "subprocess", None):
 				self.worker.quit_terminate_cmd()
@@ -3693,6 +3711,7 @@ class MainFrame(BaseFrame):
 		return True
 	
 	def measure_uniformity_handler(self, event):
+		""" Start measuring display device uniformity """
 		self.HideAll()
 		self.worker.interactive = True
 		self.worker.start(self.measure_uniformity_consumer,
@@ -3718,7 +3737,11 @@ class MainFrame(BaseFrame):
 				show_result_dialog(Warn(line.strip()), self)
 	
 	def profile_share_get_meta_error(self, profile):
-		""" Check for required metadata in profile """
+		""" Check for required metadata in profile to allow sharing.
+		
+		The treshold for average delta E 1976 is 1.0
+		
+		"""
 		if ("meta" in profile.tags and
 			isinstance(profile.tags.meta, ICCP.DictType)):
 			try:
@@ -4060,6 +4083,8 @@ class MainFrame(BaseFrame):
 			dlg.ShowModalThenDestroy(parent)
 
 	def install_profile_handler(self, event=None, profile_path=None):
+		""" Install a profile. Show an error dialog if the profile is
+		invalid or unsupported (only 'mntr' RGB profiles are allowed) """
 		if not check_set_argyll_bin():
 			return
 		if profile_path is None:
@@ -4099,6 +4124,7 @@ class MainFrame(BaseFrame):
 				allow_show_log=False)
 
 	def select_install_profile_handler(self, event):
+		""" Show a dialog for user to select a profile for installation """
 		defaultDir, defaultFile = get_verified_path("last_icc_path")
 		dlg = wx.FileDialog(self, lang.getstr("install_display_profile"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
@@ -4115,6 +4141,8 @@ class MainFrame(BaseFrame):
 			self.install_profile_handler(profile_path=path)
 
 	def load_profile_cal_handler(self, event):
+		""" Show a dialog for user to select a profile to load calibration
+		(vcgt) from. """
 		if not check_set_argyll_bin():
 			return
 		defaultDir, defaultFile = get_verified_path("last_cal_or_icc_path")
@@ -4173,6 +4201,11 @@ class MainFrame(BaseFrame):
 					if verbose >= 1: safe_print(lang.getstr("failure"))
 
 	def preview_handler(self, event=None, preview=False):
+		""" Preview profile calibration (vcgt).
+		
+		Toggle between profile curves and previous calibration curves.
+		
+		"""
 		if preview or self.preview.GetValue():
 			cal = self.cal
 		else:
@@ -4232,6 +4265,8 @@ class MainFrame(BaseFrame):
 
 	def install_cal(self, capture_output=False, cal=None, profile_path=None,
 					skip_scripts=False, silent=False, title=appname):
+		""" 'Install' (load) a calibration from a calibration file or
+		profile """
 		# Install using dispwin
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
 		if not isinstance(cmd, Exception):
@@ -4269,6 +4304,8 @@ class MainFrame(BaseFrame):
 		return result
 	
 	def update_profile_verification_report(self, event=None):
+		""" Show file dialog to select a HTML profile verification report
+		for updating. Update the selected report and show it afterwards. """
 		defaultDir, defaultFile = get_verified_path("last_filedialog_path")
 		dlg = wx.FileDialog(self, lang.getstr("profile.verification_report.update"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
@@ -4305,8 +4342,8 @@ class MainFrame(BaseFrame):
 	
 	def select_profile(self, parent=None, check_profile_class=True, msg=None):
 		"""
-		Selects the currently set profile or display profile. Falls back
-		to user choice via FileDialog if both not set.
+		Selects the currently configured profile or display profile. Falls
+		back to user choice via FileDialog if both not set.
 		
 		"""
 		if not parent:
@@ -4736,6 +4773,8 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(launch_file, save_path)
 
 	def load_cal(self, cal=None, silent=False):
+		""" Load a calibration from a .cal file or ICC profile. Defaults
+		to currently configured file if cal parameter is not given. """
 		if not cal:
 			cal = getcfg("calibration.file")
 		if cal:
@@ -4758,6 +4797,7 @@ class MainFrame(BaseFrame):
 		return False
 
 	def reset_cal(self, event=None):
+		""" Reset video card gamma table to linear """
 		if check_set_argyll_bin():
 			if verbose >= 1:
 				safe_print(lang.getstr("calibration.resetting"))
@@ -4773,6 +4813,7 @@ class MainFrame(BaseFrame):
 		return False
 
 	def load_display_profile_cal(self, event=None):
+		""" Load calibration (vcgt) from current display profile """
 		profile = get_display_profile()
 		if check_set_argyll_bin():
 			if verbose >= 1:
@@ -4792,9 +4833,11 @@ class MainFrame(BaseFrame):
 		return False
 
 	def report_calibrated_handler(self, event):
+		""" Report on calibrated display and exit """
 		self.setup_measurement(self.report)
 
 	def report_uncalibrated_handler(self, event):
+		""" Report on uncalibrated display and exit """
 		self.setup_measurement(self.report, False)
 
 	def report(self, report_calibrated=True):
@@ -4811,6 +4854,9 @@ class MainFrame(BaseFrame):
 							  progress_msg=progress_msg)
 	
 	def result_consumer(self, result):
+		""" Generic result consumer. Shows the info window on success
+		if enabled in the configuration or an info/warn/error dialog if
+		result was an exception. """
 		if isinstance(result, Exception) and result:
 			wx.CallAfter(show_result_dialog, result, self)
 		elif getcfg("log.autoshow"):
@@ -4854,6 +4900,7 @@ class MainFrame(BaseFrame):
 			self.update_profile_name_timer.Start(1000)
 
 	def just_calibrate(self):
+		""" Just calibrate, optionally creating a fast matrix shaper profile """
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
 		if getcfg("calibration.interactive_display_adjustment") and \
@@ -4969,6 +5016,8 @@ class MainFrame(BaseFrame):
 			self.call_pending_function()
 	
 	def get_set_display(self, update_ccmx_items=False):
+		""" Get the currently configured display number, and set the
+		display device selection """
 		if debug:
 			safe_print("[D] get_set_display")
 		if self.worker.displays:
@@ -4998,6 +5047,7 @@ class MainFrame(BaseFrame):
 					 **self.pending_function_kwargs)
 
 	def calibrate_and_profile_btn_handler(self, event):
+		""" Setup calibration and characterization measurements """
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".cal") and \
@@ -5007,6 +5057,7 @@ class MainFrame(BaseFrame):
 			self.update_profile_name_timer.Start(1000)
 
 	def calibrate_and_profile(self):
+		""" Start calibration measurements """
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate_and_profile").replace("&&", 
 																	   "&"))
@@ -5024,6 +5075,7 @@ class MainFrame(BaseFrame):
 									  continue_next=True)
 	
 	def calibrate_finish(self, result):
+		""" Start characterization measurements """
 		self.worker.interactive = False
 		if not isinstance(result, Exception) and result:
 			wx.CallAfter(self.update_calibration_file_ctrl)
@@ -5041,6 +5093,7 @@ class MainFrame(BaseFrame):
 			self.Show()
 	
 	def calibrate_and_profile_finish(self, result):
+		""" Build profile from characterization measurements """
 		start_timers = True
 		if not isinstance(result, Exception) and result:
 			start_timers = False
@@ -5080,7 +5133,7 @@ class MainFrame(BaseFrame):
 			self.gamapframe.Show(not self.gamapframe.IsShownOnScreen())
 	
 	def current_cal_choice(self):
-		""" Either keep or clear the current calibration """
+		""" Prompt user to either keep or clear the current calibration """
 		dlg = ConfirmDialog(self, 
 							msg=lang.getstr("dialog.current_cal_warning"), 
 							ok=lang.getstr("continue"), 
@@ -5173,6 +5226,7 @@ class MainFrame(BaseFrame):
 			self.update_profile_name_timer.Start(1000)
 
 	def profile_btn_handler(self, event):
+		""" Setup characterization measurements """
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3") and \
@@ -5234,6 +5288,7 @@ class MainFrame(BaseFrame):
 		dlg.Destroy()
 
 	def just_profile(self, apply_calibration):
+		""" Start characterization measurements """
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.profile"))
 		self.worker.dispread_after_dispcal = False
@@ -5244,6 +5299,7 @@ class MainFrame(BaseFrame):
 									  continue_next=True)
 	
 	def just_profile_finish(self, result):
+		""" Build profile from characterization measurements """
 		start_timers = True
 		if not isinstance(result, Exception) and result:
 			start_timers = False
@@ -5493,7 +5549,7 @@ class MainFrame(BaseFrame):
 			if sys.platform == "darwin":
 				# FRAME_FLOAT_ON_PARENT does not work on Mac,
 				# make sure we stay under our dialog
-				self.Bind(wx.EVT_ACTIVATE, self.lower_handler)
+				self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
 			wx.CallAfter(dlg.Show)
 		else:
 			if isinstance(result, Exception):
@@ -5528,7 +5584,7 @@ class MainFrame(BaseFrame):
 		if sys.platform == "darwin":
 			# FRAME_FLOAT_ON_PARENT does not work on Mac,
 			# unbind automatic lowering
-			self.Unbind(wx.EVT_ACTIVATE, handler=self.lower_handler)
+			self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
 			self.Raise()
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
@@ -5580,7 +5636,8 @@ class MainFrame(BaseFrame):
 			if show:
 				self.profile_info[id].Raise()
 	
-	def lower_handler(self, event):
+	def modaldlg_raise_handler(self, event):
+		""" Prevent modal dialog from being lowered (keep on top) """
 		self.modaldlg.Raise()
 		
 	def init_lut_viewer(self, event=None, profile=None, show=None):
@@ -5764,7 +5821,7 @@ class MainFrame(BaseFrame):
 		self.plugplay_timer.Stop()
 		self.update_profile_name_timer.Stop()
 	
-	def colorimeter_correction_matrix_handler(self, event):
+	def colorimeter_correction_matrix_ctrl_handler(self, event):
 		if event.GetId() == self.colorimeter_correction_matrix_ctrl.GetId():
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
@@ -6234,8 +6291,8 @@ class MainFrame(BaseFrame):
 		self.worker.wrapup(False)
 	
 	def upload_colorimeter_correction(self, cgats):
-		""" Upload a colorimeter correction to the online database """
-		# Ask if user wants to upload
+		""" Ask the user if he wants to upload a colorimeter correction
+		to the online database. Upload the file. """
 		dlg = ConfirmDialog(self, 
 							msg=lang.getstr("colorimeter_correction.upload.confirm"), 
 							ok=lang.getstr("ok"), 
@@ -6305,8 +6362,6 @@ class MainFrame(BaseFrame):
 		Currently supported: iColor Display (native import to CCMX),
 							 i1 Profiler (import to CCSS via Argyll CMS 1.3.4)
 							 Spyder4 (import to spyd4cal.bin via Argyll CMS 1.3.6)
-		
-		Hold SHIFT to skip automatic import
 		
 		"""
 		dlg = ConfirmDialog(self, title=lang.getstr("colorimeter_correction.import"),
@@ -6663,6 +6718,9 @@ class MainFrame(BaseFrame):
 		self.check_testchart_patches_amount
 	
 	def check_testchart_patches_amount(self):
+		""" Check if the selected testchart has at least the recommended
+		amount of patches. Give user the choice to use the recommended amount
+		if patch count is lower. """
 		recommended = {"G": 9,
 					   "g": 11,
 					   "l": 238,
@@ -6774,6 +6832,7 @@ class MainFrame(BaseFrame):
 			   "\n".join(info)
 
 	def create_profile_handler(self, event, path=None):
+		""" Create profile from existing measurements """
 		if not check_set_argyll_bin():
 			return
 		if path is None:
@@ -7637,6 +7696,7 @@ class MainFrame(BaseFrame):
 		return self.testchart_names
 
 	def set_argyll_bin_handler(self, event):
+		""" Set Argyll CMS binary executables directory """
 		if set_argyll_bin():
 			self.check_update_controls() or self.update_menus()
 			if len(self.worker.displays):
@@ -7720,6 +7780,7 @@ class MainFrame(BaseFrame):
 
 	def load_cal_handler(self, event, path=None, update_profile_name=True, 
 						 silent=False, load_vcgt=True):
+		""" Load settings and calibration """
 		if not check_set_argyll_bin():
 			return
 		if path is None:

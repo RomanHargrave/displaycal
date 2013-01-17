@@ -393,6 +393,8 @@ def get_options_from_profile(profile):
 
 
 def get_options_from_ti3(ti3):
+	""" Try and get options from TI3 file by looking for the special
+	dispcalGUI sections 'ARGYLL_DISPCAL_ARGS' and 'ARGYLL_COLPROF_ARGS'. """
 	if not isinstance(ti3, CGATS.CGATS):
 		ti3 = CGATS.CGATS(ti3)
 	dispcal_args = None
@@ -510,6 +512,7 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 
 
 def set_argyll_bin(parent=None):
+	""" Set the directory containing the Argyll CMS binary executables """
 	if parent and not parent.IsShownOnScreen():
 		parent = None # do not center on parent if not visible
 	defaultPath = os.path.sep.join(get_verified_path("argyll.dir"))
@@ -551,6 +554,9 @@ def set_argyll_bin(parent=None):
 
 
 def show_result_dialog(result, parent=None, pos=None):
+	""" Show dialog depending on type of result. Result should be an
+	exception type. An appropriate visual representation will be chosen
+	whether result is of exception type 'Info', 'Warning' or other error. """
 	msg = safe_unicode(result)
 	if not pos:
 		pos=(-1, -1)
@@ -872,6 +878,7 @@ class Worker(object):
 		self._pwdstr = ""
 	
 	def add_measurement_features(self, args, display=True):
+		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args += ["-d" + self.get_display()]
 		if not get_arg("-c", args):
@@ -994,6 +1001,7 @@ class Worker(object):
 		return locals()
 	
 	def get_needs_no_sensor_cal(self):
+		""" Check if current instrument needs no sensor calibration """
 		instrument_features = self.get_instrument_features()
 		# TTBD/FIXME: Skipping of sensor calibration can't be done in
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
@@ -1030,6 +1038,8 @@ class Worker(object):
 		return oyranos
 	
 	def check_instrument_calibration(self):
+		""" Check if current instrument needs sensor calibration by looking
+		at Argyll CMS command output """
 		msgs = self.recent.read()
 		if (not getattr(self, "instrument_calibration_complete", False) and
 			"Calibration complete" in msgs and
@@ -1045,6 +1055,8 @@ class Worker(object):
 					break
 	
 	def do_instrument_calibration(self):
+		""" Ask user to initiate sensor calibration and execute.
+		Give an option to cancel. """
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
 		if self.get_instrument_name() == "ColorMunki":
@@ -1066,12 +1078,15 @@ class Worker(object):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 	
 	def abort_subprocess(self):
+		""" Abort the current subprocess """
 		self.subprocess_abort = True
 		self.thread_abort = True
 		delayedresult.startWorker(lambda result: None, 
 								  self.quit_terminate_cmd)
 	
 	def instrument_calibration_finish(self):
+		""" Show a dialog confirming sensor calibration has been finished
+		and give an option to cancel """
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
 		dlg = ConfirmDialog(self.progress_wnd, msg=lang.getstr("instrument.place_on_screen"), 
@@ -1119,7 +1134,8 @@ class Worker(object):
 	def create_3dlut(self, profile_in, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", bpc=True, format="3dl",
 					 size=17, input_bits=10, output_bits=12, maxval=1.0):
-		""" Create a 3D LUT from two profiles. """
+		""" Create a 3D LUT from two profiles, optionally incorporating
+		an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
 		# .3dl: http://www.kodak.com/US/plugins/acrobat/en/motion/products/look/UserGuide.pdf
 		#       http://download.autodesk.com/us/systemdocs/pdf/lustre_color_management_user_guide.pdf
@@ -2271,6 +2287,11 @@ class Worker(object):
 			return colord.device_id_from_edid(edid)
 
 	def get_display(self):
+		""" Get the currently configured display number.
+		
+		Returned is the Argyll CMS dispcal/dispread -d argument
+		
+		"""
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 
@@ -2325,6 +2346,12 @@ class Worker(object):
 		return ""
 
 	def get_display_name_short(self, prepend_manufacturer=False, prefer_edid=False):
+		""" Return shortened name of configured display (if possible)
+		
+		If name can't be shortened (e.g. because it's already 10 characters
+		or less), return full string
+		
+		"""
 		display_name = self.get_display_name(prepend_manufacturer, prefer_edid)
 		if len(display_name) > 10:
 			maxweight = 0
@@ -2349,6 +2376,12 @@ class Worker(object):
 		return display_name
 	
 	def get_dispwin_display_profile_argument(self, display_no=0):
+		""" Return argument corresponding to the display profile for use
+		with dispwin.
+		
+		Will either return '-L' (use current profile) or a filename
+		
+		"""
 		arg = "-L"
 		try:
 			profile = ICCP.get_display_profile(display_no)
@@ -2363,6 +2396,8 @@ class Worker(object):
 	def update_display_name_manufacturer(self, ti3, display_name=None,
 										 display_manufacturer=None, 
 										 write=True):
+		""" Update display name and manufacturer in colprof arguments
+		embedded in 'ARGYLL_COLPROF_ARGS' section in a TI3 file. """
 		options_colprof = []
 		if not display_name and not display_manufacturer:
 			# Note: Do not mix'n'match display name and manufacturer from 
@@ -2420,6 +2455,8 @@ class Worker(object):
 				self.lut_access)
 	
 	def import_colorimeter_corrections(self, cmd, args=None):
+		""" Import colorimeter corrections. cmd can be 'i1d3ccss', 'spyd4en'
+		or 'oeminst' """
 		if not args:
 			args = []
 		needroot = sys.platform != "win32"
@@ -2443,6 +2480,8 @@ class Worker(object):
 
 	def install_profile(self, profile_path, capture_output=True,
 						skip_scripts=False, silent=False):
+		""" Install a profile by copying it to an appropriate location and
+		registering it with the system """
 		result = True
 		colord_install = False
 		gcm_import = False
@@ -2982,6 +3021,7 @@ class Worker(object):
 		return result
 	
 	def instrument_supports_ccss(self):
+		""" Return whether instrument supports CCSS files or not """
 		instrument_name = self.get_instrument_name()
 		return ("i1 DisplayPro, ColorMunki Display" in instrument_name or
 				"Spyder4" in instrument_name)
@@ -3010,6 +3050,8 @@ class Worker(object):
 							 working_dir=working_dir)
 
 	def create_gamut_views(self, profile_path):
+		""" Generate gamut views (VRML files) and show progress in current
+		progress dialog """
 		if getcfg("profile.create_gamut_views"):
 			safe_print("-" * 80)
 			safe_print(lang.getstr("gamut.view.create"))
@@ -3023,6 +3065,7 @@ class Worker(object):
 	def create_profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None, 
 				display_manufacturer=None, tags=None):
+		""" Create an ICC profile and process the generated file """
 		safe_print(lang.getstr("create_profile"))
 		if dst_path is None:
 			dst_path = os.path.join(getcfg("profile.save_path"), 
@@ -3085,6 +3128,7 @@ class Worker(object):
 	def update_profile(self, profile, ti3=None, chrm=None, tags=None,
 					   avg=None, peak=None, rms=None, gamut_volume=None,
 					   gamut_coverage=None):
+		""" Update profile tags and metadata """
 		if isinstance(profile, basestring):
 			profile_path = profile
 			try:
@@ -3193,6 +3237,8 @@ class Worker(object):
 
 	def start_measurement(self, consumer, apply_calibration=True,
 						  progress_msg="", resume=False, continue_next=False):
+		""" Start a measurement and use a progress dialog for progress
+		information """
 		self.start(consumer, self.measure, 
 				   wkwargs={"apply_calibration": apply_calibration},
 				   progress_msg=progress_msg, resume=resume, 
@@ -3200,6 +3246,8 @@ class Worker(object):
 	
 	def start_calibration(self, consumer, remove=False, progress_msg="",
 						  continue_next=False):
+		""" Start a calibration and use a progress dialog for progress
+		information """
 		self.start(consumer, self.calibrate, wkwargs={"remove": remove},
 				   progress_msg=progress_msg, 
 				   continue_next=continue_next)
@@ -3788,6 +3836,7 @@ class Worker(object):
 		return cmd, args
 
 	def progress_handler(self, event):
+		""" Handle progress dialog updates and react to Argyll CMS command output """
 		if getattr(self, "subprocess_abort", False) or \
 		   getattr(self, "thread_abort", False):
 			self.progress_wnd.Pulse(lang.getstr("aborting"))
@@ -3868,6 +3917,7 @@ class Worker(object):
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
 						   parent=None, resume=False):
+		""" Start a progress dialog, replacing existing one if present """
 		if getattr(self, "progress_dlg", None) and not resume:
 			self.progress_dlg.Destroy()
 			self.progress_dlg = None
@@ -3901,6 +3951,13 @@ class Worker(object):
 		self.progress_wnd.original_msg = progress_msg
 	
 	def quit_terminate_cmd(self):
+		""" Forcefully abort the current subprocess.
+		
+		Try to gracefully exit first by sending common Argyll CMS abort
+		keystrokes (ESC), forcefully terminate the subprocess if not
+		reacting
+		
+		"""
 		if debug:
 			safe_print('[D] safe_quit')
 		if getattr(self, "subprocess", None) and \
@@ -3973,6 +4030,7 @@ class Worker(object):
 					safe_print('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
 	
 	def report(self, report_calibrated=True):
+		""" Report on calibrated or uncalibrated display device response """
 		cmd, args = self.prepare_dispcal(calibrate=False)
 		if isinstance(cmd, Exception):
 			return cmd
@@ -3984,6 +4042,7 @@ class Worker(object):
 		return self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
 	
 	def safe_send(self, bytes, retry=3):
+		""" Safely send a keystroke to the current subprocess """
 		for i in xrange(0, retry):
 			sleep(.25)
 			try:
@@ -3995,6 +4054,8 @@ class Worker(object):
 				return True
 
 	def spyder2_firmware_exists(self):
+		""" Check if the Spyder 2 firmware file exists in any of the known
+		locations. """
 		if self.argyll_version < [1, 2, 0]:
 			spyd2en = get_argyll_util("spyd2en")
 			if not spyd2en:
@@ -4015,6 +4076,8 @@ class Worker(object):
 		return False
 
 	def spyder4_cal_exists(self):
+		""" Check if the Spyder 4 calibration file exists in any of the known
+		locations. """
 		if self.argyll_version < [1, 3, 6]:
 			# We couldn't use it even if it exists
 			return False
@@ -4038,17 +4101,20 @@ class Worker(object):
 		
 		Also show a progress dialog while the process is running.
 		
-		consumer         consumer function.
-		producer         producer function.
-		cargs            consumer arguments.
-		ckwargs          consumer keyword arguments.
-		wargs            producer arguments.
-		wkwargs          producer keyword arguments.
-		progress_title   progress dialog title. Defaults to '%s'.
-		progress_msg     progress dialog message. Defaults to ''.
-		progress_start   show progress dialog after delay (ms).
-		resume           resume previous progress dialog (elapsed time etc).
-		continue_next    do not hide progress dialog after producer finishes.
+		consumer            consumer function.
+		producer            producer function.
+		cargs               consumer arguments.
+		ckwargs             consumer keyword arguments.
+		wargs               producer arguments.
+		wkwargs             producer keyword arguments.
+		progress_title      progress dialog title. Defaults to '%s'.
+		progress_msg        progress dialog message. Defaults to ''.
+		progress_start      show progress dialog after delay (ms).
+		resume              resume previous progress dialog (elapsed time etc).
+		continue_next       do not hide progress dialog after producer finishes.
+		stop_timers         stop the timers on the owner window if True
+		interactive_frame   "" or "uniformity" (selects the type of
+		                    interactive window)
 		
 		""" % appname
 		if ckwargs is None:
@@ -4134,6 +4200,7 @@ class Worker(object):
 		return True
 	
 	def swap_progress_wnds(self):
+		""" Swap the current interactive window with a progress dialog """
 		parent = self.terminal.GetParent()
 		if isinstance(self.terminal, DisplayAdjustmentFrame):
 			title = lang.getstr("calibration")
@@ -4142,6 +4209,7 @@ class Worker(object):
 		self.progress_dlg_start(title, "", parent, self.resume)
 	
 	def terminal_key_handler(self, event):
+		""" Key handler for the interactive window or progress dialog. """
 		keycode = None
 		if event.GetEventType() in (wx.EVT_CHAR_HOOK.typeId,
 									wx.EVT_KEY_DOWN.typeId):
@@ -4261,6 +4329,7 @@ class Worker(object):
 		return gamut_volume, gamut_coverage
 
 	def calibrate(self, remove=False):
+		""" Calibrate the screen and process the generated file(s). """
 		capture_output = not sys.stdout.isatty()
 		cmd, args = self.prepare_dispcal()
 		if not isinstance(cmd, Exception):
@@ -4311,6 +4380,9 @@ class Worker(object):
 								getcfg("copyright").encode("ASCII", "asciize") + 
 								"\0",
 								"cprt")
+							# Fast matrix shaper profiles currently don't
+							# contain TI3 data, but look for it anyways
+							# to be future-proof
 							ti3 = add_options_to_ti3(
 								profile.tags.get("targ", 
 												 profile.tags.get("CIED", 
@@ -4361,6 +4433,7 @@ class Worker(object):
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, 
 					 check_missing_fields=False, absolute=False):
+		""" Lookup CIE or device values through profile """
 		if profile.colorSpace == "RGB":
 			labels = ('RGB_R', 'RGB_G', 'RGB_B')
 		else:
@@ -4864,6 +4937,7 @@ class Worker(object):
 		return CGATS.CGATS(ti1out), ti3v
 
 	def verify_calibration(self):
+		""" Verify the current calibration """
 		cmd, args = self.prepare_dispcal(calibrate=False, verify=True)
 		if not isinstance(cmd, Exception):
 			result = self.exec_cmd(cmd, args, capture_output=True, 
@@ -4873,6 +4947,7 @@ class Worker(object):
 		return result
 
 	def measure_ti1(self, ti1_path):
+		""" Measure a TI1 testchart file """
 		cmd = get_argyll_util("dispread")
 		args = ["-v"]
 		result = self.add_measurement_features(args)
