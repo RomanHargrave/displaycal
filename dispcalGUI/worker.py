@@ -3019,6 +3019,17 @@ class Worker(object):
 							 skip_scripts=True, silent=False,
 							 working_dir=working_dir)
 
+	def create_gamut_views(self, profile_path):
+		if getcfg("profile.create_gamut_views"):
+			safe_print("-" * 80)
+			safe_print(lang.getstr("gamut.view.create"))
+			self.recent.clear()
+			self.recent.write(lang.getstr("gamut.view.create"))
+			sleep(.75)  # Allow time for progress window to update
+			return self.calculate_gamut(profile_path)
+		else:
+			return None, None
+
 	def create_profile(self, dst_path=None, 
 				skip_scripts=False, display_name=None, 
 				display_manufacturer=None, tags=None):
@@ -3070,118 +3081,121 @@ class Worker(object):
 				chrm = ICCP.ChromaticityType(blob.read())
 		else:
 			chrm = None
-		if (not isinstance(result, Exception) and result and
-			getcfg("profile.create_gamut_views")):
-			safe_print("-" * 80)
-			safe_print(lang.getstr("gamut.view.create"))
-			self.recent.clear()
-			self.recent.write(lang.getstr("gamut.view.create"))
-			sleep(.75)  # Allow time for progress window to update
+		if not isinstance(result, Exception) and result:
 			(gamut_volume,
-			 gamut_coverage) = self.calculate_gamut(args[-1] + profile_ext)
-		else:
-			gamut_volume, gamut_coverage = None, None
+			 gamut_coverage) = self.create_gamut_views(args[-1] + profile_ext)
 		safe_print("-" * 80)
 		self.wrapup(not isinstance(result, Exception) and 
 									result, dst_path=dst_path)
 		if not isinstance(result, Exception) and result:
-			try:
-				profile = ICCP.ICCProfile(dst_path)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				return Error(lang.getstr("profile.invalid") + "\n" + dst_path)
-			if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
-				setcfg("last_cal_or_icc_path", dst_path)
-				setcfg("last_icc_path", dst_path)
-			if ti3:
-				# Embed original TI3
-				profile.tags.targ = profile.tags.DevD = profile.tags.CIED = ICCP.TextType(
-												"text\0\0\0\0" + ti3 + "\0", 
-												"targ")
-			if chrm:
-				# Add ChromaticityType tag
-				profile.tags.chrm = chrm
-			# Fixup desc tags - ASCII needs to be 7-bit
-			# also add Unicode strings if different from ASCII
-			if "desc" in profile.tags and isinstance(profile.tags.desc, 
-													 ICCP.TextDescriptionType):
-				desc = profile.getDescription()
-				profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
-				if desc != profile.tags.desc["ASCII"]:
-					profile.tags.desc["Unicode"] = desc
-			if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
-													 ICCP.TextDescriptionType):
-				ddesc = profile.getDeviceModelDescription()
-				profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
-				if ddesc != profile.tags.dmdd["ASCII"]:
-					profile.tags.dmdd["Unicode"] = ddesc
-			if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
-													 ICCP.TextDescriptionType):
-				mdesc = profile.getDeviceManufacturerDescription()
-				profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
-				if mdesc != profile.tags.dmnd["ASCII"]:
-					profile.tags.dmnd["Unicode"] = mdesc
-			if tags and tags is not True:
-				# Add custom tags
-				for tagname, tag in tags.iteritems():
-					if tagname == "mmod":
-						profile.device["manufacturer"] = "\0\0" + tag["manufacturer"][1] + tag["manufacturer"][0]
-						profile.device["model"] = "\0\0" + tag["model"][0] + tag["model"][1]
-					profile.tags[tagname] = tag
-			elif tags is True:
-				edid = self.get_display_edid()
-				if edid:
-					profile.device["manufacturer"] = "\0\0" + edid["edid"][9] + edid["edid"][8]
-					profile.device["model"] = "\0\0" + edid["edid"][11] + edid["edid"][10]
-					# Add Apple-specific 'mmod' tag (TODO: need full spec)
-					mmod = ("mmod" + ("\x00" * 6) + edid["edid"][8:10] +
-							("\x00" * 2) + edid["edid"][11] + edid["edid"][10] +
-							("\x00" * 4) + ("\x00" * 20))
-					profile.tags.mmod = ICCP.ICCProfileTag(mmod, "mmod")
-					# Add new meta information based on EDID
-					profile.set_edid_metadata(edid)
-				elif not "meta" in profile.tags:
-					# Make sure meta tag exists
-					profile.tags.meta = ICCP.DictType()
-				# Set OPENICC_automatic_generated to "0"
-				profile.tags.meta["OPENICC_automatic_generated"] = "0"
-				# Set GCM DATA_source to "calib"
-				profile.tags.meta["DATA_source"] = "calib"
-				# Add instrument
-				profile.tags.meta["MEASUREMENT_device"] = self.get_instrument_name().lower()
-				spec_prefixes = "DATA_,MEASUREMENT_,OPENICC_"
-				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
-				for prefix in spec_prefixes.split(","):
-					if not prefix in prefixes:
-						prefixes.append(prefix)
-				profile.tags.meta["prefix"] = ",".join(prefixes)
-			if (avg, peak, rms) != (None, ) * 3:
-				# Make sure meta tag exists
-				if not "meta" in profile.tags:
-					profile.tags.meta = ICCP.DictType()
-				# Update meta prefix
-				prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ACCURACY_").split(",")
-				if not "ACCURACY_" in prefixes:
-					prefixes.append("ACCURACY_")
-					profile.tags.meta["prefix"] = ",".join(prefixes)
-				# Add error info
-				if avg is not None:
-					profile.tags.meta["ACCURACY_dE76_avg"] = avg
-				if peak is not None:
-					profile.tags.meta["ACCURACY_dE76_max"] = peak
-				if rms is not None:
-					profile.tags.meta["ACCURACY_dE76_rms"] = rms
-			profile.set_gamut_metadata(gamut_volume, gamut_coverage)
-			# Set default rendering intent
-			if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
-				(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
-				profile.intent = getcfg("gamap_default_intent")
-			# Calculate profile ID
-			profile.calculateID()
-			try:
-				profile.write()
-			except Exception, exception:
-				return exception
+			result = self.update_profile(dst_path, ti3, chrm, tags, avg, peak,
+										 rms, gamut_volume, gamut_coverage)
 		return result
+	
+	def update_profile(self, profile, ti3=None, chrm=None, tags=None,
+					   avg=None, peak=None, rms=None, gamut_volume=None,
+					   gamut_coverage=None):
+		if isinstance(profile, basestring):
+			profile_path = profile
+			try:
+				profile = ICCP.ICCProfile(profile_path)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				return Error(lang.getstr("profile.invalid") + "\n" + profile_path)
+		else:
+			profile_path = profile.fileName
+		if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
+			setcfg("last_cal_or_icc_path", profile_path)
+			setcfg("last_icc_path", profile_path)
+		if ti3:
+			# Embed original TI3
+			profile.tags.targ = profile.tags.DevD = profile.tags.CIED = ICCP.TextType(
+											"text\0\0\0\0" + ti3 + "\0", 
+											"targ")
+		if chrm:
+			# Add ChromaticityType tag
+			profile.tags.chrm = chrm
+		# Fixup desc tags - ASCII needs to be 7-bit
+		# also add Unicode strings if different from ASCII
+		if "desc" in profile.tags and isinstance(profile.tags.desc, 
+												 ICCP.TextDescriptionType):
+			desc = profile.getDescription()
+			profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
+			if desc != profile.tags.desc["ASCII"]:
+				profile.tags.desc["Unicode"] = desc
+		if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
+												 ICCP.TextDescriptionType):
+			ddesc = profile.getDeviceModelDescription()
+			profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
+			if ddesc != profile.tags.dmdd["ASCII"]:
+				profile.tags.dmdd["Unicode"] = ddesc
+		if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
+												 ICCP.TextDescriptionType):
+			mdesc = profile.getDeviceManufacturerDescription()
+			profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
+			if mdesc != profile.tags.dmnd["ASCII"]:
+				profile.tags.dmnd["Unicode"] = mdesc
+		if tags and tags is not True:
+			# Add custom tags
+			for tagname, tag in tags.iteritems():
+				if tagname == "mmod":
+					profile.device["manufacturer"] = "\0\0" + tag["manufacturer"][1] + tag["manufacturer"][0]
+					profile.device["model"] = "\0\0" + tag["model"][0] + tag["model"][1]
+				profile.tags[tagname] = tag
+		elif tags is True:
+			edid = self.get_display_edid()
+			if edid:
+				profile.device["manufacturer"] = "\0\0" + edid["edid"][9] + edid["edid"][8]
+				profile.device["model"] = "\0\0" + edid["edid"][11] + edid["edid"][10]
+				# Add Apple-specific 'mmod' tag (TODO: need full spec)
+				mmod = ("mmod" + ("\x00" * 6) + edid["edid"][8:10] +
+						("\x00" * 2) + edid["edid"][11] + edid["edid"][10] +
+						("\x00" * 4) + ("\x00" * 20))
+				profile.tags.mmod = ICCP.ICCProfileTag(mmod, "mmod")
+				# Add new meta information based on EDID
+				profile.set_edid_metadata(edid)
+			elif not "meta" in profile.tags:
+				# Make sure meta tag exists
+				profile.tags.meta = ICCP.DictType()
+			# Set OPENICC_automatic_generated to "0"
+			profile.tags.meta["OPENICC_automatic_generated"] = "0"
+			# Set GCM DATA_source to "calib"
+			profile.tags.meta["DATA_source"] = "calib"
+			# Add instrument
+			profile.tags.meta["MEASUREMENT_device"] = self.get_instrument_name().lower()
+			spec_prefixes = "DATA_,MEASUREMENT_,OPENICC_"
+			prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
+			for prefix in spec_prefixes.split(","):
+				if not prefix in prefixes:
+					prefixes.append(prefix)
+			profile.tags.meta["prefix"] = ",".join(prefixes)
+		if (avg, peak, rms) != (None, ) * 3:
+			# Make sure meta tag exists
+			if not "meta" in profile.tags:
+				profile.tags.meta = ICCP.DictType()
+			# Update meta prefix
+			prefixes = (profile.tags.meta.getvalue("prefix", "", None) or "ACCURACY_").split(",")
+			if not "ACCURACY_" in prefixes:
+				prefixes.append("ACCURACY_")
+				profile.tags.meta["prefix"] = ",".join(prefixes)
+			# Add error info
+			if avg is not None:
+				profile.tags.meta["ACCURACY_dE76_avg"] = avg
+			if peak is not None:
+				profile.tags.meta["ACCURACY_dE76_max"] = peak
+			if rms is not None:
+				profile.tags.meta["ACCURACY_dE76_rms"] = rms
+		profile.set_gamut_metadata(gamut_volume, gamut_coverage)
+		# Set default rendering intent
+		if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
+			(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
+			profile.intent = getcfg("gamap_default_intent")
+		# Calculate profile ID
+		profile.calculateID()
+		try:
+			profile.write()
+		except Exception, exception:
+			return exception
+		return True
 
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
@@ -4306,39 +4320,62 @@ class Worker(object):
 						profile_path, 
 						lang.getstr("error.profile.file_not_created"))
 					if not isinstance(result, Exception) and result:
+						try:
+							profile = ICCP.ICCProfile(profile_path)
+						except (IOError, ICCP.ICCProfileInvalidError), exception:
+							return Error(lang.getstr("profile.invalid") + "\n"
+										 + dst_path)
 						if not getcfg("profile.update"):
-							# we need to set cprt and targ
+							# Created fast matrix shaper profile
+							# we need to set cprt, targ and a few other things
+							profile.tags.cprt = ICCP.TextType(
+								"text\0\0\0\0" + 
+								getcfg("copyright").encode("ASCII", "asciize") + 
+								"\0",
+								"cprt")
+							ti3 = add_options_to_ti3(
+								profile.tags.get("targ", 
+												 profile.tags.get("CIED", 
+																  "")), 
+								self.options_dispcal)
+							if not ti3:
+								ti3 = CGATS.CGATS("TI3\n")
+								ti3[1] = cal_cgats
+							edid = self.get_display_edid()
+							display_name = edid.get("monitor_name",
+													edid.get("ascii",
+															 str(edid.get("product_id") or "")))
+							display_manufacturer = edid.get("manufacturer")
+							profile.tags.dmdd = ICCP.TextDescriptionType()
+							profile.tags.dmdd.ASCII = display_name
+							profile.tags.dmnd = ICCP.TextDescriptionType()
+							profile.tags.dmnd.ASCII = display_manufacturer
+							(gamut_volume,
+							 gamut_coverage) = self.create_gamut_views(profile_path)
+							self.update_profile(profile, ti3=str(ti3),
+												chrm=None, tags=True, avg=None,
+												peak=None, rms=None,
+												gamut_volume=gamut_volume,
+												gamut_coverage=gamut_coverage)
+						else:
+							# Update desc tag - ASCII needs to be 7-bit
+							# also add Unicode string if different from ASCII
+							if "desc" in profile.tags and isinstance(profile.tags.desc, 
+																	 ICCP.TextDescriptionType):
+								desc = getcfg("profile.name.expanded")
+								profile.tags.desc["ASCII"] = desc.encode("ascii",
+																		 "asciize")
+								if desc != profile.tags.desc["ASCII"]:
+									profile.tags.desc["Unicode"] = desc
+							# Calculate profile ID
+							profile.calculateID()
 							try:
-								profile = ICCP.ICCProfile(profile_path)
-								profile.tags.cprt = ICCP.TextType(
-									"text\0\0\0\0" + 
-									getcfg("copyright").encode("ASCII", "asciize") + 
-									"\0",
-									"cprt")
-								ti3 = add_options_to_ti3(
-									profile.tags.get("targ", 
-													 profile.tags.get("CIED", 
-																	  "")), 
-									self.options_dispcal)
-								if not ti3:
-									ti3 = CGATS.CGATS("TI3\n")
-									ti3[1] = cal_cgats
-								if ti3:
-									profile.tags.targ = ICCP.TextType(
-										"text\0\0\0\0" + str(ti3) + "\0", 
-										"targ")
-									profile.tags.CIED = ICCP.TextType(
-										"text\0\0\0\0" + str(ti3) + "\0", 
-										"CIED")
-									profile.tags.DevD = ICCP.TextType(
-										"text\0\0\0\0" + str(ti3) + "\0", 
-										"DevD")
 								profile.write()
 							except Exception, exception:
-								safe_print(exception)
+								return exception
+							setcfg("last_cal_or_icc_path", profile_path)
+							setcfg("last_icc_path", profile_path)
 						setcfg("calibration.file", profile_path)
-						setcfg("last_cal_or_icc_path", profile_path)
-						setcfg("last_icc_path", profile_path)
 				else:
 					setcfg("calibration.file", cal)
 					setcfg("last_cal_or_icc_path", cal)
