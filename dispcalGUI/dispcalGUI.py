@@ -3187,7 +3187,7 @@ class MainFrame(BaseFrame):
 					   bitmap=geticon(32, "dialog-error"), log=False)
 			return
 		if phase == "instcal_prepare":
-			if self.worker.get_instrument_features().get("sensor_cal") or test:
+			if self.worker.get_instrument_features().get("sensor_cal"):
 				if self.worker.get_instrument_name() == "ColorMunki":
 					lstr ="instrument.calibrate.colormunki"
 				else:

@@ -1065,16 +1065,10 @@ class TestchartEditor(wx.Frame):
 		self.worker.start(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.read"), parent = self, progress_start = 500)
 
 	def tc_load_cfg_from_ti1_worker(self):
-		if test:
-			white_patches = None
-			single_channel_patches = None
-			gray_patches = None
-			multi_steps = None
-		else:
-			white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None
-			single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
-			gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or 0
-			multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or 0
+		white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None
+		single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
+		gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or 0
+		multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or 0
 		fullspread_patches = self.ti1.queryv1("NUMBER_OF_SETS")
 
 		if None in (white_patches, single_channel_patches, gray_patches, multi_steps):

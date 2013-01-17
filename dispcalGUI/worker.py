@@ -2070,8 +2070,7 @@ class Worker(object):
 				else:
 					logfile = Files((stdout, self.recent,
 									 self.lastmsg))
-				if ((self.interactive or (test and not "-?" in args)) and 
-					getattr(self, "terminal", None)):
+				if (self.interactive and getattr(self, "terminal", None)):
 					logfile = Files((FilteredStream(self.terminal,
 													discard="",
 													triggers=self.triggers), 
@@ -3238,7 +3237,8 @@ class Worker(object):
 		information """
 		self.start(consumer, self.calibrate, wkwargs={"remove": remove},
 				   progress_msg=progress_msg, 
-				   continue_next=continue_next)
+				   continue_next=continue_next,
+				   interactive_frame="adjust")
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
@@ -3663,7 +3663,7 @@ class Worker(object):
 		# TTBD/FIXME: Skipping of sensor calibration can't be done in
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
 		if getcfg("allow_skip_sensor_cal") and self.dispread_after_dispcal and \
-		   (self.get_instrument_features().get("skip_sensor_cal") or test) and \
+		   self.get_instrument_features().get("skip_sensor_cal") and \
 		   self.argyll_version >= [1, 1, 0]:
 			args += ["-N"]
 		if apply_calibration is not False:
@@ -3744,7 +3744,7 @@ class Worker(object):
 						  (os.geteuid() == 0 or which("sudo"))) or 
 						 (sys.platform == "win32" and 
 						  sys.getwindowsversion() >= (6, ) and 
-						  self.argyll_version > [1, 1, 1]) or test):
+						  self.argyll_version > [1, 1, 1])):
 							# -S option is broken on Linux with current Argyll 
 							# releases
 							args += ["-S" + getcfg("profile.install_scope")]
@@ -3859,7 +3859,7 @@ class Worker(object):
 				pass
 			else:
 				percentage = start / end * 100
-		if not test and percentage and self.progress_wnd is getattr(self, "terminal", None):
+		if percentage and self.progress_wnd is getattr(self, "terminal", None):
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
@@ -4119,7 +4119,7 @@ class Worker(object):
 			progress_start = 100
 		self.resume = resume
 		self.instrument_calibration_complete = False
-		if self.interactive or test:
+		if self.interactive:
 			self.progress_start_timer = wx.Timer()
 			if getattr(self, "progress_wnd", None) and \
 			   self.progress_wnd is getattr(self, "progress_dlg", None):
@@ -4127,10 +4127,12 @@ class Worker(object):
 				self.progress_dlg = None
 			if progress_msg and progress_title == appname:
 				progress_title = progress_msg
-			if interactive_frame == "uniformity":
+			if interactive_frame == "adjust":
+				windowclass = DisplayAdjustmentFrame
+			elif interactive_frame == "uniformity":
 				windowclass = DisplayUniformityFrame
 			else:
-				windowclass = DisplayAdjustmentFrame
+				windowclass = SimpleTerminal
 			if getattr(self, "terminal", None) and isinstance(self.terminal,
 															  windowclass):
 				self.progress_wnd = self.terminal
@@ -4153,18 +4155,18 @@ class Worker(object):
 					self.progress_wnd.console.ScrollLines(
 						self.progress_wnd.console.GetNumberOfLines())
 			else:
-				if test:
-					self.terminal = SimpleTerminal(parent, title=progress_title,
-												   handler=self.progress_handler,
-												   keyhandler=self.terminal_key_handler)
+				if interactive_frame == "adjust":
+					self.terminal = DisplayAdjustmentFrame(parent,
+														   handler=self.progress_handler,
+														   keyhandler=self.terminal_key_handler)
 				elif interactive_frame == "uniformity":
 					self.terminal = DisplayUniformityFrame(parent,
 														   handler=self.progress_handler,
 														   keyhandler=self.terminal_key_handler)
 				else:
-					self.terminal = DisplayAdjustmentFrame(parent,
-														   handler=self.progress_handler,
-														   keyhandler=self.terminal_key_handler)
+					self.terminal = SimpleTerminal(parent, title=progress_title,
+												   handler=self.progress_handler,
+												   keyhandler=self.terminal_key_handler)
 				self.terminal.worker = self
 				self.progress_wnd = self.terminal
 		else:
