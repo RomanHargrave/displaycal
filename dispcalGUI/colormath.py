@@ -10,12 +10,12 @@ def get_transfer_function_phi(alpha, gamma):
 
 LSTAR_E = 216.0 / 24389.0  # Intent of CIE standard, actual CIE standard = 0.008856
 LSTAR_K = 24389.0 / 27.0  # Intent of CIE standard, actual CIE standard = 903.3
-REC709_K0 = 0.081  ##0.099 / (1.0 / 0.45 - 1)
-REC709_P = 4.5  ##get_transfer_function_phi(0.099, 1.0 / 0.45)
-SMPTE240M_K0 = 0.0913  ##0.1115 / (1.0 / 0.45 - 1)
-SMPTE240M_P = 4.0  ##get_transfer_function_phi(0.1115, 1.0 / 0.45)
-SRGB_K0 = 0.04045  ##0.055 / (2.4 - 1)
-SRGB_P = 12.92  ##get_transfer_function_phi(0.055, 2.4)
+REC709_K0 = 0.081  # 0.099 / (1.0 / 0.45 - 1)
+REC709_P = 4.5  # get_transfer_function_phi(0.099, 1.0 / 0.45)
+SMPTE240M_K0 = 0.0913  # 0.1115 / (1.0 / 0.45 - 1)
+SMPTE240M_P = 4.0  # get_transfer_function_phi(0.1115, 1.0 / 0.45)
+SRGB_K0 = 0.04045  # 0.055 / (2.4 - 1)
+SRGB_P = 12.92  # get_transfer_function_phi(0.055, 2.4)
 
 standard_illuminants = {
 	# 1st level is the standard name => illuminant definitions

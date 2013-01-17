@@ -786,21 +786,14 @@ class ProgressDialog(wx.ProgressDialog):
 					child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
 				elif not child.Label:
 					self.msg = child
-					#child.SetBackgroundColour(wx.LIGHT_GREY)
 					child.SetWindowStyle(wx.ST_NO_AUTORESIZE)
 		
 		if self.msg:
-			##if sys.platform not in ("darwin", "win32"):
 			text_extent = self.msg.GetTextExtent("E")
 			w, h = (text_extent[0] * 80, 
 					text_extent[1] * 4)
 			self.msg.SetMinSize((w, h))
 			self.msg.SetSize((w, h))
-			##else:
-			##self.msg.Freeze()
-			##self.msg.SetLabel("\n".join(["E" * 80] * 4))
-			##self.msg.Fit()
-			##self.msg.Thaw()
 		self.Fit()
 		self.SetMinSize(self.GetSize())
 		if self.msg:
@@ -952,20 +945,12 @@ class SimpleTerminal(InvincibleFrame):
 		self.id_to_keycode = {}
 		for keycode in keycodes:
 			self.id_to_keycode[wx.NewId()] = keycode
-		##accels = []
-		##for id, keycode in self.id_to_keycode.iteritems():
-			##self.Bind(wx.EVT_MENU, keyhandler or self.key_handler, id=id)
-			##accels += [(wx.ACCEL_NORMAL, keycode, id)]
-		##self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		
 		# set size
 		text_extent = self.console.GetTextExtent(" ")
 		vscroll_w = self.console.GetSize()[0] - self.console.GetClientRect()[2]
-		##w, h = (self.console.GetCharWidth() * 80 + vscroll_w, 
-				##self.console.GetCharHeight() * 25)
 		w, h = (text_extent[0] * 80 + vscroll_w, 
 				text_extent[1] * 24)
-		##self.console.SetMinSize((w, h))
 		self.console.SetSize((w, h))
 		self.sizer.SetSizeHints(self)
 		self.sizer.Layout()

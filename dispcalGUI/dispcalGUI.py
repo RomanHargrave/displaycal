@@ -1323,7 +1323,7 @@ class MainFrame(BaseFrame):
 		""" Initialize the menus and menuitem event handlers. """
 		res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 														 "mainmenu.xrc")))
-		self.menubar = res.LoadMenuBar("menu")  ##self.GetMenuBar()
+		self.menubar = res.LoadMenuBar("menu")
 		
 		file_ = self.menubar.GetMenu(self.menubar.FindMenu("menu.file"))
 		menuitem = file_.FindItemById(file_.FindItem("calibration.load"))
@@ -1765,7 +1765,6 @@ class MainFrame(BaseFrame):
 		Set a new language globally and on-the-fly.
 		
 		"""
-		##menubar = self.GetMenuBar()
 		for lcode in lang.ldict:
 			if lang.ldict[lcode].menuitem_id == event.GetId():
 				# Get the previously marked menu item
@@ -1865,10 +1864,6 @@ class MainFrame(BaseFrame):
 			"display_lut.number",
 			"displays",
 			"enumerate_ports.auto",
-			##"extra_args.colprof",
-			##"extra_args.dispcal",
-			##"extra_args.dispread",
-			##"extra_args.spotread",
 			"gamma",
 			"instruments",
 			"lang",
@@ -3976,7 +3971,7 @@ class MainFrame(BaseFrame):
 				 ##dlg.license_link_ctrl)
 		##sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT |
 				   ##wx.ALIGN_CENTER_VERTICAL)
-		## Link to ICC Profile Taxi service
+		# Link to ICC Profile Taxi service
 		dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
 													  label="icc.opensuse.org", 
 													  URL="http://icc.opensuse.org"),
@@ -4405,9 +4400,6 @@ class MainFrame(BaseFrame):
 					# only the ti3 is valuable at this point
 					if not sim_ti3:
 						return
-					##safe_print(sim_ti1)
-					##safe_print(sim_ti3)
-					##safe_print(sim_gray)
 				break
 		setcfg("profile_verification_chart", chart)
 		
@@ -4423,9 +4415,6 @@ class MainFrame(BaseFrame):
 			return
 		if not gray and sim_gray:
 			gray = sim_gray
-		##safe_print(ti1)
-		##safe_print(ti3_ref)
-		##safe_print(gray)
 		
 		# let the user choose a location for the result
 		defaultFile = "verify_" + strftime("%Y-%m-%d_%H-%M.html")
@@ -4751,7 +4740,7 @@ class MainFrame(BaseFrame):
 			cal = getcfg("calibration.file")
 		if cal:
 			if check_set_argyll_bin():
-				if verbose >= 1: ## and silent:
+				if verbose >= 1:
 					safe_print(lang.getstr("calibration.loading"))
 					safe_print(cal)
 				if self.install_cal(capture_output=True, cal=cal, 
@@ -4764,45 +4753,41 @@ class MainFrame(BaseFrame):
 					if verbose >= 1 and silent:
 						safe_print(lang.getstr("success"))
 					return True
-				if verbose >= 1: ## and silent:
+				if verbose >= 1:
 					safe_print(lang.getstr("failure"))
 		return False
 
 	def reset_cal(self, event=None):
 		if check_set_argyll_bin():
-			if verbose >= 1: ## and event is None:
+			if verbose >= 1:
 				safe_print(lang.getstr("calibration.resetting"))
 			if self.install_cal(capture_output=True, cal=False, 
 								skip_scripts=True, silent=True,
-								title=lang.getstr("calibration.reset")) is True: ## event is None or (
-										## getattr(self, "lut_viewer", None) and 
-										## self.lut_viewer.IsShownOnScreen())):
+								title=lang.getstr("calibration.reset")) is True:
 				self.lut_viewer_load_lut(profile=None)
-				if verbose >= 1: ## and event is None:
+				if verbose >= 1:
 					safe_print(lang.getstr("success"))
 				return True
-			if verbose >= 1: ## and event is None:
+			if verbose >= 1:
 				safe_print(lang.getstr("failure"))
 		return False
 
 	def load_display_profile_cal(self, event=None):
 		profile = get_display_profile()
 		if check_set_argyll_bin():
-			if verbose >= 1: ## and event is None:
+			if verbose >= 1:
 				safe_print(
 					lang.getstr("calibration.loading_from_display_profile"))
 				if profile and profile.fileName:
 					safe_print(profile.fileName)
 			if self.install_cal(capture_output=True, cal=True, 
 								skip_scripts=True, silent=True,
-								title=lang.getstr("calibration.load_from_display_profile")) is True: ## event is None or (
-										## getattr(self, "lut_viewer", None) and 
-										## self.lut_viewer.IsShownOnScreen())):
+								title=lang.getstr("calibration.load_from_display_profile")) is True:
 				self.lut_viewer_load_lut(profile=profile)
-				if verbose >= 1: ## and event is None:
+				if verbose >= 1:
 					safe_print(lang.getstr("success"))
 				return True
-			if verbose >= 1: ## and event is None:
+			if verbose >= 1:
 				safe_print(lang.getstr("failure"))
 		return False
 
@@ -5498,8 +5483,6 @@ class MainFrame(BaseFrame):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
-			##result = dlg.ShowModal()
-			##dlg.Destroy()
 			self.Disable()
 			dlg.profile = profile
 			dlg.profile_path = profile_path
@@ -7683,7 +7666,7 @@ class MainFrame(BaseFrame):
 		else:
 			# Use configured value
 			enumerate_ports = getcfg("enumerate_ports.auto")
-		if False: ##silent:
+		if False:
 			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
 													self.worker.enumerate_displays_and_ports, 
 													cargs=(argyll_bin_dir, argyll_version, 
@@ -7802,12 +7785,6 @@ class MainFrame(BaseFrame):
 					return
 				cal = StringIO(profile.tags.get("CIED", "") or 
 							   profile.tags.get("targ", ""))
-				##dmdd = profile.getDeviceModelDescription()
-				##safe_print("Device Model description:", dmdd)
-				##if dmdd and self.worker.display_names.count(dmdd) == 1:
-					##setcfg("display.number", 
-						   ##self.worker.display_names.index(dmdd) + 1)
-					##self.get_set_display()
 			else:
 				try:
 					cal = open(path, "rU")

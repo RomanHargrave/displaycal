@@ -67,7 +67,6 @@ class DisplayUniformityFrame(wx.Frame):
 					   wx.FONTWEIGHT_NORMAL)
 		for index in xrange(rows * cols):
 			panel = wx.Panel(self, style=wx.BORDER_SIMPLE)
-			##panel.SetBackgroundColour(wx.Colour(0x33, 0x33, 255.0 / (rows * cols) * (index + 1)))
 			panel.SetBackgroundColour(WHITE)
 			sizer = wx.BoxSizer(wx.VERTICAL)
 			panel.SetSizer(sizer)

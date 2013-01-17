@@ -142,7 +142,6 @@ class CGATS(dict):
 				comment_offset = line.find('#')
 				if comment_offset >= 0: # strip comment
 					line = line[:comment_offset].strip()
-				##print line
 				values = [value.strip('"') for value in line.split()]
 				if line[:6] == 'BEGIN_':
 					key = line[6:]
@@ -315,9 +314,6 @@ class CGATS(dict):
 												# identifiers are always 
 												# a minimum of 7 characters
 				result += ['']
-			# elif self.type == 'FILE':
-				# result += [self.key]
-				# result += ['']
 			for key in self:
 				value = self[key]
 				if key == 'DATA':
@@ -519,10 +515,6 @@ class CGATS(dict):
 				self[key].key = key
 				self[key].parent = self
 				self[key].root = self.root
-				# self[key][data] = CGATS()
-				# self[key][data].key = data
-				# self[key][data].parent = self[key]
-				# self[key][data].type = 'FILE'
 				self[key].type = data
 				context = self[key]
 			elif not len(self):
@@ -633,8 +625,6 @@ class CGATS(dict):
 				query = (query, )
 		
 		items = [self] + [self[key] for key in self]
-		# for key in self:
-			# item = self[key]
 		for item in items:
 			if type(item) in (CGATS, dict, list, tuple):
 			

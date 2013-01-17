@@ -236,8 +236,7 @@ def replace_control_chars(txt, replacement=" ", collapse=False):
 	if collapse:
 		while replacement * 2 in txt:
 			txt = txt.replace(replacement * 2, replacement)
-	return txt ##.translate(string.maketrans(control_chars, 
-										  ##replacement * len(control_chars)))
+	return txt
 
 
 def safe_basestring(obj):

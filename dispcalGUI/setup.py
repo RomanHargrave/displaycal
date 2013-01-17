@@ -365,16 +365,6 @@ def setup():
 									pydir, "..", "misc", "Argyll.usermap")])]
 				else:
 					devconf_files = []
-					## if os.path.isdir("/usr/share/PolicyKit/policy") and \
-					   ## os.path.isdir("/usr/share/hal/fdi/policy/10osvendor"):
-						## # USB and Serial access using PolicyKit V0.6 + HAL
-						## # (recent versions of Linux)
-						## devconf_files += [
-							## ("/usr/share/PolicyKit/policy", [os.path.join(
-								## pydir, "..", "misc", "color-device-file.policy")]),
-							## ("/usr/share/hal/fdi/policy/10osvendor", [os.path.join(
-								## pydir, "..", "misc", "19-color.fdi")])
-						## ]
 					if os.path.isdir("/etc/udev/rules.d"):
 						if glob.glob("/dev/bus/usb/*/*"):
 							# USB and serial instruments using udev, where udev 
@@ -399,12 +389,6 @@ def setup():
 																   fname) for fname in 
 													  ["Argyll", "Argyll.usermap"]])
 							]
-						## if os.path.isdir("/etc/udev/permissions.d"):
-							## # Serial instruments using udev (older versions of Linux)
-							## devconf_files += [
-								## ("/etc/udev/permissions.d", [os.path.join(
-									## pydir, "..", "misc", "10-Argyll.permissions")])
-							## ]
 					for entry in devconf_files:
 						for fname in entry[1]:
 							if os.path.isfile(fname):

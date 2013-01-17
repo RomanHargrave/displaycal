@@ -419,8 +419,6 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_cb.SetValue(enable)
 		self.abstract_profile_ctrl.SetPath(getcfg("3dlut.abstract.profile"))
 		self.abstract_profile_ctrl_handler(None)
-		##self.abstract_profile_ctrl.Enable(enable)
-		##self.abstract_profile_desc.Enable(enable)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.apply_cal_cb.Disable()
 		self.output_profile_ctrl_handler(None)

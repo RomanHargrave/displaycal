@@ -11,15 +11,6 @@ from encodedstdio import encodestdio
 original_codepage = None
 
 if sys.stdout.isatty():
-	##if sys.platform == "win32":
-		##try:
-			##from win32console import GetConsoleOutputCP, SetConsoleOutputCP
-		##except ImportError:
-			##pass
-		##else:
-			##original_codepage = GetConsoleOutputCP()
-			##SetConsoleOutputCP(65001)
-
 	encodestdio()
 
 enc, fs_enc = get_encodings()

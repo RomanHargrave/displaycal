@@ -424,12 +424,6 @@ def make_argyll_compatible_path(path):
 	underscores.
 	
 	"""
-	###Under Linux if the encoding is not UTF-8 everything is 
-	###forced to ASCII to prevent problems when installing profiles.
-	##if ascii or (sys.platform not in ("darwin", "win32") and 
-				 ##fs_enc.upper() not in ("UTF8", "UTF-8")):
-		##make_compat_enc = "ASCII"
-	##else:
 	make_compat_enc = fs_enc
 	skip = -1
 	if re.match(r'\\\\\?\\', path, re.I):
@@ -507,9 +501,6 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 				item = os.path.basename(item)
 			ispath = True
 		item = quote_args([item])[0]
-		##if not item.startswith("-") and len(lines) and i < len(args) - 1:
-			##lines[-1] += "\n      " + item
-		##else:
 		lines.append(item)
 		i += 1
 	for line in lines:
@@ -1788,8 +1779,7 @@ class Worker(object):
 		if self.measure_cmd:
 			# TTBD/FIXME: Skipping of sensor calibration can't be done in
 			# emissive mode (see Argyll source spectro/ss.c, around line 40)
-			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal") ##or \
-							  ##"-N" in args
+			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal")
 		self.dispcal = cmdname == get_argyll_utilname("dispcal")
 		self.needs_user_interaction = args and (self.dispcal and not "-?" in args and 
 									   not "-E" in args and not "-R" in args and 
@@ -3421,8 +3411,6 @@ class Worker(object):
 						if not result:
 							return None, None
 				args += ["-u"]
-		##if (calibrate and not getcfg("calibration.update")) or \
-		   ##(not calibrate and verify):
 		if calibrate or verify:
 			if calibrate and not \
 			   getcfg("calibration.interactive_display_adjustment"):
@@ -3915,8 +3903,6 @@ class Worker(object):
 	def quit_terminate_cmd(self):
 		if debug:
 			safe_print('[D] safe_quit')
-		##if getattr(self, "subprocess", None) and \
-		   ##not getattr(self, "subprocess_abort", False) and \
 		if getattr(self, "subprocess", None) and \
 		   (hasattr(self.subprocess, "poll") and 
 			self.subprocess.poll() is None) or \
@@ -3924,8 +3910,6 @@ class Worker(object):
 			self.subprocess.isalive()):
 			if debug or test:
 				safe_print('User requested abort')
-			##self.subprocess_abort = True
-			##self.thread_abort = True
 			try:
 				if self.measure_cmd and hasattr(self.subprocess, "send"):
 					try:
@@ -4167,12 +4151,6 @@ class Worker(object):
 		if keycode is not None and getattr(self, "subprocess", None) and \
 			hasattr(self.subprocess, "send"):
 			keycode = keycodes.get(keycode, keycode)
-			##if keycode == ord("7") and \
-			   ##self.progress_wnd is getattr(self, "terminal", None) and \
-			   ##"7) Continue on to calibration" in self.recent.read():
-				### calibration
-				##wx.CallAfter(self.swap_progress_wnds)
-			##el
 			if keycode in (ord("\x1b"), ord("8"), ord("Q"), ord("q")):
 				# exit
 				self.abort_subprocess()
@@ -4521,7 +4499,6 @@ class Worker(object):
 		idata = []
 		for primaries in device_data.values():
 			idata.append(' '.join(str(n) for n in primaries.values()))
-		##safe_print('\n'.join(idata))
 
 		# lookup device->cie values through profile using xicclu
 		xicclu = get_argyll_util("xicclu").encode(fs_enc)
@@ -4542,7 +4519,6 @@ class Worker(object):
 		if p.wait() != 0:
 			# error
 			raise IOError(''.join(odata))
-		##safe_print('\n'.join(odata))
 		
 		gray = []
 		igray = []
@@ -4780,7 +4756,6 @@ class Worker(object):
 				# assume scale 0...100 in ti3, we need to convert to 0...1
 				cie = [n / 100.0 for n in cie]
 			idata.append(' '.join(str(n) for n in cie))
-		##safe_print('\n'.join(idata))
 
 		# lookup cie->device values through profile.icc using xicclu
 		xicclu = get_argyll_util("xicclu").encode(fs_enc)
@@ -4801,7 +4776,6 @@ class Worker(object):
 		if p.wait() != 0:
 			# error
 			raise IOError(''.join(odata))
-		##safe_print('\n'.join(odata))
 		self.wrapup(False)
 		
 		# write output ti1/ti3

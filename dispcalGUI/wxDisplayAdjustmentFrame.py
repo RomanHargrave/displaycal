@@ -256,45 +256,6 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 				buttonRect = wx.Rect(1, pos, modRectWidth, modRectHeight)
 			else:
 				buttonRect = wx.Rect(pos , 1, modRectWidth, modRectHeight)
-
-			# Check if we need to draw a rectangle around the button
-			#if self._nIndex == i:
-			
-				# Set the colours
-				#penColour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_ACTIVECAPTION)
-				#brushColour = ArtManager.Get().LightColour(wx.SystemSettings_GetColour(wx.SYS_COLOUR_ACTIVECAPTION), 75)
-
-				#dc.SetPen(wx.Pen(penColour))
-				#dc.SetBrush(wx.Brush(brushColour))
-
-				## Fix the surrounding of the rect if border is set
-				#if style & INB_BORDER:
-				
-					#if style & INB_TOP or style & INB_BOTTOM:
-						#buttonRect = wx.Rect(buttonRect.x + 1, buttonRect.y, buttonRect.width - 1, buttonRect.height)
-					#else:
-						#buttonRect = wx.Rect(buttonRect.x, buttonRect.y + 1, buttonRect.width, buttonRect.height - 1)
-				
-				#dc.DrawRectangleRect(buttonRect)
-			
-			#if self._nHoeveredImgIdx == i:
-			
-				## Set the colours
-				#penColour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_ACTIVECAPTION)
-				#brushColour = ArtManager.Get().LightColour(wx.SystemSettings_GetColour(wx.SYS_COLOUR_ACTIVECAPTION), 90)
-
-				#dc.SetPen(wx.Pen(penColour))
-				#dc.SetBrush(wx.Brush(brushColour))
-
-				## Fix the surrounding of the rect if border is set
-				#if style & INB_BORDER:
-				
-					#if style & INB_TOP or style & INB_BOTTOM:
-						#buttonRect = wx.Rect(buttonRect.x + 1, buttonRect.y, buttonRect.width - 1, buttonRect.height)
-					#else:
-						#buttonRect = wx.Rect(buttonRect.x, buttonRect.y + 1, buttonRect.width, buttonRect.height - 1)
-				
-				#dc.DrawRectangleRect(buttonRect)
 			
 			if bUseYcoord:
 				rect = wx.Rect(0, pos, rectWidth, rectWidth)
@@ -722,34 +683,6 @@ class DisplayAdjustmentFrame(wx.Frame):
 			self.measurement_sound = wx.Sound(get_data_path("beep.wav") or "")
 		except NotImplementedError:
 			pass
-		#else:
-			## Add option to toggle playing measurement sound on/off
-			#self.add_panel((12, 12), flag=wx.EXPAND)
-			#self.add_panel((12, 12), flag=wx.EXPAND)
-			#self.add_panel((12, 12), flag=wx.EXPAND)
-			#self.add_panel((12, 12), flag=wx.EXPAND)
-			#optionspanel = self.add_panel((12, 12), flag=wx.EXPAND)
-			#optionspanel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
-			#optionspanel.SetForegroundColour(FGCOLOUR)
-			#self.add_panel((12, 12), flag=wx.EXPAND)
-			#self.measurement_play_sound_ctrl = wx.CheckBox(optionspanel,
-														   #wx.ID_ANY,
-														   #"")
-			#self.measurement_play_sound_ctrl.SetValue(bool(getcfg("measurement.play_sound")))
-			## wxMac won't set color on checkbox label
-			#self.measurement_play_sound_txt = wx.StaticText(optionspanel,
-															#wx.ID_ANY,
-															#lang.getstr("measurement.play_sound"))
-			#self.measurement_play_sound_txt.SetForegroundColour(FGCOLOUR)
-			#self.measurement_play_sound_txt.SetMaxFontSize(10)
-			#self.measurement_play_sound_txt.Bind(wx.EVT_LEFT_UP,
-												 #self.measurement_play_sound_handler)
-			#optionspanel.GetSizer().Add(get_panel(optionspanel, (96, 12)), 1, flag=wx.EXPAND)
-			#optionspanel.GetSizer().Add(self.measurement_play_sound_ctrl,
-										#flag=wx.ALIGN_CENTER_VERTICAL)
-			#optionspanel.GetSizer().Add(self.measurement_play_sound_txt,
-										#flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL,
-										#border=4)
 		
 		# Add buttons
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)

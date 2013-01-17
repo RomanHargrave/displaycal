@@ -377,16 +377,13 @@ def _winreg_get_display_profile(monkey, current_user=False):
 								"CurrentVersion", "ICM", "ProfileAssociations", 
 								"Display"] + monkey)
 			key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, subkey)
-			## print "HKEY_CURRENT_USER", subkey
 		else:
 			subkey = "\\".join(["SYSTEM", "CurrentControlSet", "Control", 
 								"Class"] + monkey)
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey)
-			## print "HKEY_LOCAL_MACHINE", subkey
 		numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		for i in range(numvalues):
 			name, value, type_ = _winreg.EnumValue(key, i)
-			## print i, name, repr(value), type_
 			if name == "ICMProfile":
 				if type_ == _winreg.REG_BINARY:
 					# Win2k/XP
@@ -425,7 +422,6 @@ def _winreg_get_display_profile(monkey, current_user=False):
 		# fall back to sRGB
 		filename = os.path.join(iccprofiles[0], 
 								"sRGB Color Space Profile.icm")
-	## print repr(filename)
 	if filename:
 		return ICCProfile(filename)
 	return None
@@ -477,7 +473,6 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 		device = util_win.get_active_display_device(moninfo["Device"])
 		if device:
 			monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
-			## print monkey
 			# current user
 			profile = _winreg_get_display_profile(monkey, True)
 			if not profile:
@@ -1091,7 +1086,6 @@ class CurveType(ICCProfileTag, list):
 				count = 0
 				start = slice[0] * len(self)
 				end = slice[1] * len(self)
-				#print self.tagSignature, name
 				for i, n in enumerate(self):
 					##n = colormath.XYZ2Lab(0, n / 65535.0 * 100, 0)[0]
 					if i >= start and i <= end:
@@ -1106,7 +1100,6 @@ class CurveType(ICCProfileTag, list):
 								count += 1
 				if count:
 					match[(name, exp)] /= count
-		#print self.tagSignature, match
 		if not best:
 			self._transfer_function[(best, slice)] = match
 			return match
@@ -1286,8 +1279,6 @@ class DictType(ICCProfileTag, AODict):
 							self[name] = ""
 						else:
 							self.get(name)[key] = data
-					##else:
-						##safe_print(name, key)
 
 	def __getitem__(self, name):
 		return self.get(name).value
@@ -2569,9 +2560,6 @@ class ICCProfile:
 								raise ICCProfileInvalidError("Tag data for tag %r (offet %i, size %i) is truncated" % (tagSignature,
 																													   tagDataOffset,
 																													   tagDataSize))
-							##self._data = self._data[:128] + self._data[end:]
-							##discard_len += tagDataOffset - 128 - discard_len + tagDataSize
-							##if debug: print "    discard_len:", discard_len
 							typeSignature = tagData[:4]
 							if len(typeSignature) < 4:
 								raise ICCProfileInvalidError("Tag type signature for tag %r (offet %i, size %i) is truncated" % (tagSignature,
