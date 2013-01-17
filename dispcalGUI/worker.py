@@ -1784,8 +1784,8 @@ class Worker(object):
 			# TTBD/FIXME: Skipping of sensor calibration can't be done in
 			# emissive mode (see Argyll source spectro/ss.c, around line 40)
 			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal")
-		self.dispcal = cmdname == get_argyll_utilname("dispcal")
-		self.needs_user_interaction = args and (self.dispcal and not "-?" in args and 
+		dispcal = cmdname == get_argyll_utilname("dispcal")
+		needs_user_interaction = args and (dispcal and not "-?" in args and 
 									   not "-E" in args and not "-R" in args and 
 									   not "-m" in args and not "-r" in args and 
 									   not "-u" in args) or (self.measure_cmd and 
@@ -2116,7 +2116,7 @@ class Worker(object):
 										if debug or test:
 											safe_print('Sending SPACE key')
 										self.subprocess.send(" ")
-								if self.needs_user_interaction and \
+								if needs_user_interaction and \
 								   sys.platform == "darwin":
 									# On the Mac dispcal's test window
 									# hides the cursor and steals focus
