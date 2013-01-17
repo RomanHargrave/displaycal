@@ -1000,18 +1000,6 @@ class Worker(object):
 		
 		return locals()
 	
-	def get_needs_no_sensor_cal(self):
-		""" Check if current instrument needs no sensor calibration """
-		instrument_features = self.get_instrument_features()
-		# TTBD/FIXME: Skipping of sensor calibration can't be done in
-		# emissive mode (see Argyll source spectro/ss.c, around line 40)
-		return instrument_features and \
-			   (not instrument_features.get("sensor_cal") or 
-			    (getcfg("allow_skip_sensor_cal") and 
-			     self.dispread_after_dispcal and 
-			     (instrument_features.get("skip_sensor_cal") or test) and 
-				 self.argyll_version >= [1, 1, 0]))
-	
 	def check_display_conf_oy_compat(self, display_no):
 		""" Check the screen configuration for oyranos-monitor compatibility 
 		
