@@ -518,9 +518,10 @@ def get_DBL_MIN():
 DBL_MIN = get_DBL_MIN()
 
 
-def Lab2RGB(L, a, b, rgb_space=None, scale=1.0, round_=False, clamp=True):
+def Lab2RGB(L, a, b, rgb_space=None, scale=1.0, round_=False, clamp=True,
+			whitepoint=None):
 	""" Convert from Lab to RGB """
-	X, Y, Z = Lab2XYZ(L, a, b)
+	X, Y, Z = Lab2XYZ(L, a, b, whitepoint)
 	return XYZ2RGB(X, Y, Z, rgb_space, scale, round_, clamp)
 
 
@@ -571,9 +572,10 @@ def Lab2xyY(L, a, b, whitepoint=None, scale=1.0):
 	return XYZ2xyY(X, Y, Z, whitepoint)
 
 
-def Luv2RGB(L, u, v, rgb_space=None, scale=1.0, round_=False, clamp=True):
+def Luv2RGB(L, u, v, rgb_space=None, scale=1.0, round_=False, clamp=True,
+			whitepoint=None):
 	""" Convert from Luv to RGB """
-	X, Y, Z = Luv2XYZ(L, u, v)
+	X, Y, Z = Luv2XYZ(L, u, v, whitepoint)
 	return XYZ2RGB(X, Y, Z, rgb_space, scale, round_, clamp)
 
 
