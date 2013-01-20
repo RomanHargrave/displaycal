@@ -4771,7 +4771,7 @@ class MainFrame(BaseFrame):
 		
 		# create report
 		try:
-			report.create(save_path, placeholders2data)
+			report.create(save_path, placeholders2data, getcfg("report.pack_js"))
 		except (IOError, OSError), exception:
 			show_result_dialog(exception)
 		else:
