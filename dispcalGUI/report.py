@@ -15,11 +15,12 @@ import jspacker
 import localization as lang
 
 
-def create(report_path, placeholders2data, pack=True):
+def create(report_path, placeholders2data, pack=True, templatename="report"):
 	""" Create a report with all placeholders substituted by data. """
 	# read report template
 	report_html_template_path = get_data_path(os.path.join("report", 
-														   "report.html"))
+														   "%s.html" %
+														   templatename))
 	if not report_html_template_path:
 		raise IOError(lang.getstr("file.missing", 
 								  report_html_template_path))
@@ -41,7 +42,8 @@ def create(report_path, placeholders2data, pack=True):
 					"compare-light-dark.css", "print.css", 
 					"jsapi-packages.js", "jsapi-patches.js", 
 					"compare.constants.js", "compare.variables.js", 
-					"compare.functions.js", "compare.init.js"):
+					"compare.functions.js", "compare.init.js",
+					"uniformity.functions.js"):
 		path = get_data_path(os.path.join("report", include))
 		if not path:
 			raise IOError(lang.getstr("file.missing", include))

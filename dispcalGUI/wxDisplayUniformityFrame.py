@@ -7,21 +7,29 @@ Interactive display calibration UI
 
 """
 
+from __future__ import with_statement
+from time import strftime
+import codecs
 import math
+import os
 import re
 import sys
 import time
 
 from wxaddons import wx
 
-from config import getbitmap, getcfg, get_icon_bundle, get_display_number
-from meta import name as appname
+from config import (getbitmap, getcfg, get_icon_bundle, get_data_path,
+					get_display_number, get_verified_path, setcfg)
+from meta import name as appname, version as appversion
+from util_os import launch_file, waccess
 from util_str import center
 from wxaddons import CustomEvent
 from wxwindows import FlatShadedButton, numpad_keycodes
 import colormath
 import config
+import jspacker
 import localization as lang
+import report
 
 BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
 BLACK = wx.Colour(0, 0, 0)
@@ -58,16 +66,13 @@ class DisplayUniformityFrame(wx.Frame):
 		self.rows = rows
 		self.cols = cols
 		self.colors = (WHITE, wx.Colour(192, 192, 192),
-							  wx.Colour(128, 128, 128), wx.Colour(64, 64, 64),
-					   BLACK)
+							  wx.Colour(128, 128, 128), wx.Colour(64, 64, 64))
 		self.labels = {}
 		self.panels = []
 		self.buttons = []
-		font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL)
 		for index in xrange(rows * cols):
 			panel = wx.Panel(self, style=wx.BORDER_SIMPLE)
-			panel.SetBackgroundColour(WHITE)
+			panel.SetBackgroundColour(BGCOLOUR)
 			sizer = wx.BoxSizer(wx.VERTICAL)
 			panel.SetSizer(sizer)
 			self.panels.append(panel)
@@ -79,7 +84,7 @@ class DisplayUniformityFrame(wx.Frame):
 			button.Bind(wx.EVT_BUTTON, self.measure)
 			self.buttons.append(button)
 			label = wx.StaticText(panel)
-			label.SetFont(font)
+			label.SetForegroundColour(WHITE)
 			self.labels[index] = label
 			sizer.Add(label, 1, wx.ALIGN_CENTER)
 			sizer.Add(button, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTER | wx.BOTTOM |
@@ -224,7 +229,11 @@ class DisplayUniformityFrame(wx.Frame):
 			self.hide_cursor()
 			self.disable_buttons()
 			self.buttons[self.index].Hide()
-		self.worker.safe_send(" ")
+		self.panels[self.index].SetBackgroundColour(self.colors[len(self.results[self.index])])
+		self.panels[self.index].Refresh()
+		self.panels[self.index].Update()
+		# Use a delay to allow for TFT lag
+		wx.CallLater(125, self.worker.safe_send, " ")
 
 	def parse_txt(self, txt):
 		if not txt:
@@ -237,134 +246,70 @@ class DisplayUniformityFrame(wx.Frame):
 			# Closest Planckian temperature = ddddK (Delta E d.dddddd)
 			# Closest Daylight temperature  = ddddK (Delta E d.dddddd)
 			XYZ = re.search("XYZ:\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)", txt)
-			XYZ = [float(value) for value in XYZ.groups()]
-			XYZ_Y100 = [100.0 / XYZ[1] * value for value in XYZ]
-			#Lab = re.search("Lab:\s+(\d+\.\d+)\s+(\-?\d+\.\d+)\s+(\-?\d+\.\d+)", txt)
-			#Lab = [float(value) for value in Lab.groups()]
-			Lab = colormath.XYZ2Lab(*XYZ_Y100)
-			self.results[self.index].append({"XYZ": XYZ,
-											 "Lab": Lab})
-		if "CCT =" in txt:
-			CCT_delta_E = re.search("CCT\s+=\s+(\d+)K\s+\(Delta\s+E\s+(\d+\.\d+)\)",
-									txt)
-			CCT = int(CCT_delta_E.groups()[0])
-			CCT_delta_E = float(CCT_delta_E.groups()[1])
-			self.results[self.index][-1]["CCT"] = CCT
-			self.results[self.index][-1]["CCT_delta_E"] = CCT_delta_E
-		locus = {"t": "Closest Daylight",
-				 "T": "Closest Planckian"}.get(getcfg("whitepoint.colortemp.locus"))
+			self.results[self.index].append({"XYZ": [float(value) for value in
+													 XYZ.groups()]})
+		locus = {"t": "Daylight",
+				 "T": "Planckian"}.get(getcfg("whitepoint.colortemp.locus"))
 		if locus in txt:
-			CT_delta_E = re.search("%s\s+temperature\s+=\s+(\d+)K\s+\(Delta\s+E\s+(\d+\.\d+)\)"
-								   % locus, txt)
-			CT = int(CT_delta_E.groups()[0])
-			CT_delta_E = float(CT_delta_E.groups()[1])
-			self.results[self.index][-1]["CT"] = CT
-			self.results[self.index][-1]["CT_delta_E"] = CT_delta_E
+			CT = re.search("Closest\s+%s\s+temperature\s+=\s+(\d+)K" % locus,
+						   txt, re.I)
+			self.results[self.index][-1]["CT"] = int(CT.groups()[0])
 		if "key to take a reading" in txt:
 			if not self.is_measuring:
 				self.enable_buttons()
 				return
-			if len(self.results[self.index]) < 4:
-				# Take readings at 4 different brightness levels per swatch
-				self.panels[self.index].SetBackgroundColour(self.colors[len(self.results[self.index])])
-				self.panels[self.index].Refresh()
-				self.panels[self.index].Update()
-				wx.CallAfter(self.measure)
+			if len(self.results[self.index]) < len(self.colors):
+				# Take readings at 5 different brightness levels per swatch
+				self.measure()
 			else:
 				self.is_measuring = False
 				self.show_cursor()
 				self.enable_buttons()
 				self.buttons[self.index].Show()
 				self.buttons[self.index].SetBitmap(getbitmap("theme/icons/16x16/checkmark"))
-				self.panels[self.index].SetBackgroundColour(WHITE)
+				self.panels[self.index].SetBackgroundColour(BGCOLOUR)
 				self.panels[self.index].Refresh()
 				self.panels[self.index].Update()
-				locus = {"t": "CDT",
-						 "T": "CPT"}.get(getcfg("whitepoint.colortemp.locus"))
 				if len(self.results) == self.rows * self.cols:
 					# All swatches have been measured, show results
-					reference = self.results[int(math.floor(self.rows * self.cols / 2.0))]
-					Yr = []
-					Lr, ar, br = [], [], []
-					CTr = []
-					CCTr = []
-					for item in reference:
-						# 4 readings
-						Yr += [item["XYZ"][1]]
-						Lr += [item["Lab"][0]]
-						ar += [item["Lab"][1]]
-						br += [item["Lab"][2]]
-						CTr += [item["CT"]]
-						CCTr += [item["CCT"]]
-					for index in self.results:
-						result = self.results[index]
-						Y = []
-						Y_diff = []
-						Y_diff_percent = []
-						L, a, b = [], [], []
-						delta_C = []
-						CT = []
-						CCT = []
-						CCT_diff = []
-						CCT_diff_percent = []
-						CT_delta_E = []
-						label = []
-						for i, item in enumerate(result):
-							# 4 readings
-							Y += [item["XYZ"][1]]
-							Y_diff += [-(Yr[i] - Y[i])]
-							Y_diff_percent += [100.0 / Yr[0] * Y_diff[i]]
-							L += [item["Lab"][0]]
-							a += [item["Lab"][1]]
-							b += [item["Lab"][2]]
-							delta_C += [colormath.delta(Lr[i], ar[i], br[i],
-														L[i], a[i], b[i], "2k")["C"]]
-							CT += [item["CT"]]
-							CCT += [item["CCT"]]
-							CCT_diff += [-(CCTr[i] - CCT[i])]
-							CCT_diff_percent += [100.0 / CCTr[i] * CCT_diff[i]]
-							CT_delta_E += [item["CT_delta_E"]]
-							if getcfg("measure.uniformity.show_detail"):
-								if result is reference:
-									label.append(u"%i%% RGB: Y=%.2f, CCT %iK, %s %iK (%.2f \u0394E*00)" %
-												 (100 - i * 25, Y[i],
-												  round(CCT[i]), locus,
-												  round(CT[i]), CT_delta_E[i]))
-								else:
-									label.append(u"%i%% RGB: Y=%.2f, %.2f \u0394Y (%s%.2f%%), %.2f \u0394C*00,\n      CCT %iK (%s%.2f%%), %s %iK (%.2f \u0394E*00)" %
-												 (100 - i * 25, Y[i], Y_diff[i],
-												  "+" if Y_diff_percent[i] > 0 else "",
-												  Y_diff_percent[i], delta_C[i],
-												  round(CCT[i]),
-												  "+" if CCT_diff_percent[i] > 0 else "",
-												  CCT_diff_percent[i], locus,
-												  round(CT[i]), CT_delta_E[i]))
-						if not getcfg("measure.uniformity.show_detail"):
-							Y_diff = sum(Y_diff) / 4.0
-							Y_diff_percent = sum(Y_diff_percent) / 4.0
-							delta_C = sum(delta_C) / 4.0
-							CT = sum(CT) / 4.0
-							CCT = sum(CCT) / 4.0
-							CCT_diff_percent = sum(CCT_diff_percent) / 4.0
-							CT_delta_E = sum(CT_delta_E) / 4.0
-							if result is reference:
-								label = [u"CCT %iK\n%s %iK (%.2f \u0394E*00)" %
-										 (round(CCT), locus, round(CT), CT_delta_E)]
-							else:
-								label = [u"%.2f \u0394Y (%s%.2f%%)\n%.2f \u0394C*00\nCCT %iK (%s%.2f%%)\n%s %iK (%.2f \u0394E*00)" %
-										 (Y_diff,
-										  "+" if Y_diff_percent > 0 else "",
-										  Y_diff_percent, delta_C, round(CCT),
-										  "+" if CCT_diff_percent > 0 else "",
-										  CCT_diff_percent, locus, round(CT),
-										  CT_delta_E)]
-						self.labels[index].SetLabel("\n" + center("\n".join(label)))
-						self.labels[index].GetContainingSizer().Layout()
+					# Let the user choose a location for the results html
+					defaultFile = "uniformity_" + strftime("%Y-%m-%d_%H-%M.html")
+					defaultDir = get_verified_path(None, 
+												   os.path.join(getcfg("profile.save_path"), 
+												   defaultFile))[0]
+					dlg = wx.FileDialog(self, lang.getstr("save_as"), 
+										defaultDir, defaultFile, 
+										wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
+										style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+					dlg.Center(wx.BOTH)
+					result = dlg.ShowModal()
+					if result == wx.ID_OK:
+						path = dlg.GetPath()
+						if not waccess(os.path.dirname(path), os.W_OK):
+							from worker import show_result_dialog
+							show_result_dialog(Error(lang.getstr("error.access_denied.write",
+																 os.path.dirname(path))),
+											   self)
+							return
+						save_path = os.path.splitext(path)[0] + ".html"
+						setcfg("last_filedialog_path", save_path)
+					dlg.Destroy()
+					if result != wx.ID_OK:
+						return
+					report.create(save_path,
+								  {"${REPORT_VERSION}": appversion,
+								   "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
+								   "${ROWS}": str(self.rows),
+								   "${COLS}": str(self.cols),
+								   "${RESULTS}": str(self.results),
+								   "${LOCUS}": locus},
+								  getcfg("report.pack_js"), "uniformity")
+					launch_file(save_path)
 	
 	def reset(self):
 		self._setup()
 		for panel in self.panels:
-			panel.SetBackgroundColour(WHITE)
+			panel.SetBackgroundColour(BGCOLOUR)
 		for button in self.buttons:
 			button.SetBitmap(getbitmap("theme/icons/10x10/record"))
 			button.Show()
@@ -474,6 +419,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
 'r' to set reference, 's' to save spectrum,
 'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.640770 -1.226804 -5.876967
+                           CCT = 6123K (Delta E 4.946609)
+ Closest Planckian temperature = 5943K (Delta E 4.353019)
+ Closest Daylight temperature  = 6082K (Delta E 0.985734)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:"""], ["""
  Result is XYZ: 116.565941 124.165894 121.365684, D50 Lab: 108.678651 -4.762572 -12.508939
                            CCT = 5972K (Delta E 6.890329)
@@ -509,6 +465,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:""", """
  Result is XYZ: 6.144071 6.471379 6.584408, D50 Lab: 30.571861 -1.030833 -5.816641
+                           CCT = 6083K (Delta E 4.418192)
+ Closest Planckian temperature = 5923K (Delta E 3.883022)
+ Closest Daylight temperature  = 6062K (Delta E 0.510176)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.571861 -1.030833 -5.816641
                            CCT = 6083K (Delta E 4.418192)
  Closest Planckian temperature = 5923K (Delta E 3.883022)
  Closest Daylight temperature  = 6062K (Delta E 0.510176)
@@ -562,6 +529,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
 'r' to set reference, 's' to save spectrum,
 'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.567493 -0.904424 -5.891430
+                           CCT = 6079K (Delta E 4.041262)
+ Closest Planckian temperature = 5932K (Delta E 3.549922)
+ Closest Daylight temperature  = 6072K (Delta E 0.177697)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:"""], ["""
  Result is XYZ: 120.030166 127.667344 125.560879, D50 Lab: 109.839774 -4.542272 -13.098348
                            CCT = 5991K (Delta E 6.554213)
@@ -597,6 +575,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:""", """
  Result is XYZ: 6.326874 6.649709 6.776715, D50 Lab: 30.995780 -0.896754 -5.916062
+                           CCT = 6071K (Delta E 4.005433)
+ Closest Planckian temperature = 5926K (Delta E 3.517820)
+ Closest Daylight temperature  = 6065K (Delta E 0.144142)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.995780 -0.896754 -5.916062
                            CCT = 6071K (Delta E 4.005433)
  Closest Planckian temperature = 5926K (Delta E 3.517820)
  Closest Daylight temperature  = 6065K (Delta E 0.144142)
@@ -650,6 +639,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
 'r' to set reference, 's' to save spectrum,
 'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.266484 -0.517860 -5.923364
+                           CCT = 6007K (Delta E 2.947859)
+ Closest Planckian temperature = 5902K (Delta E 2.582843)
+ Closest Daylight temperature  = 6042K (Delta E 0.798814)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:"""], ["""
  Result is XYZ: 116.801943 124.624261 123.359911, D50 Lab: 108.831883 -5.063829 -13.483891
                            CCT = 6057K (Delta E 7.069302)
@@ -685,6 +685,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:""", """
  Result is XYZ: 6.255018 6.563924 6.746680, D50 Lab: 30.792814 -0.788285 -6.137368
+                           CCT = 6105K (Delta E 3.641727)
+ Closest Planckian temperature = 5970K (Delta E 3.198805)
+ Closest Daylight temperature  = 6113K (Delta E 0.167052)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.792814 -0.788285 -6.137368
                            CCT = 6105K (Delta E 3.641727)
  Closest Planckian temperature = 5970K (Delta E 3.198805)
  Closest Daylight temperature  = 6113K (Delta E 0.167052)
@@ -738,6 +749,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
 'r' to set reference, 's' to save spectrum,
 'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.993614 -1.240610 -6.124217
+                           CCT = 6197K (Delta E 4.937751)
+ Closest Planckian temperature = 6011K (Delta E 4.350182)
+ Closest Daylight temperature  = 6153K (Delta E 0.996499)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:"""], ["""
  Result is XYZ: 114.661874 122.077962 119.963424, D50 Lab: 107.975846 -4.649371 -12.841206
                            CCT = 5996K (Delta E 6.745175)
@@ -782,6 +804,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
 'r' to set reference, 's' to save spectrum,
 'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.067324 -1.256015 -5.997186
+                           CCT = 6170K (Delta E 5.014894)
+ Closest Planckian temperature = 5984K (Delta E 4.416741)
+ Closest Daylight temperature  = 6124K (Delta E 1.057856)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:"""], ["""
  Result is XYZ: 116.839314 123.894968 122.159446, D50 Lab: 108.587904 -3.955352 -13.160232
                            CCT = 5975K (Delta E 5.963774)
@@ -817,6 +850,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:""", """
  Result is XYZ: 6.001154 6.326623 6.508185, D50 Lab: 30.221991 -1.083417 -6.086282
+                           CCT = 6157K (Delta E 4.496558)
+ Closest Planckian temperature = 5990K (Delta E 3.957006)
+ Closest Daylight temperature  = 6131K (Delta E 0.597640)
+
+Place instrument on spot to be measured,
+and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
+[a-z] to read and make FWA compensated reading from keyed reference
+'r' to set reference, 's' to save spectrum,
+'h' to toggle high res., 'k' to do a calibration
+Hit ESC or Q to exit, any other key to take a reading:""", """
+ Result is XYZ: 0.104401 0.110705 0.109155, D50 Lab: 0.221991 -1.083417 -6.086282
                            CCT = 6157K (Delta E 4.496558)
  Closest Planckian temperature = 5990K (Delta E 3.957006)
  Closest Daylight temperature  = 6131K (Delta E 0.597640)
