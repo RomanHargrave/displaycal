@@ -86,7 +86,7 @@ function generate_report() {
 			line = jsapi.math.avg(Y_diff).accuracy(2) + ' ΔY (' + (jsapi.math.avg(Y_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(Y_diff_percent).accuracy(2) + '%), ' + jsapi.math.avg(delta_C).accuracy(2) + ' ΔC*00<br>\n<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K (' + (jsapi.math.avg(CCT_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(CCT_diff_percent).accuracy(2) + '%), <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K (' + (jsapi.math.avg(CT_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(CT_diff_percent).accuracy(2) + '%)';
 		}
 		cellcontent.push(line);
-		cells.push('<td id="cell-' + i + '" style="background-color: rgb(' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + '); ' + (i == reference_index ? 'border: 1px dashed #666; ' : '') + 'height: ' + (100 / cols) + '%; width: ' + (100 / rows) + '%;">' + cellcontent.join('<br>\n') + '</td>');
+		cells.push('<td id="cell-' + i + '" style="background-color: rgb(' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + '); ' + (i == reference_index ? 'border: 1px dashed #666; ' : '') + 'height: ' + (100 / rows) + '%; width: ' + (100 / cols) + '%;">' + cellcontent.join('<br>\n') + '</td>');
 		if ((i + 1) % self.cols == 0 && i + 1 < self.rows * self.cols) {
 			cells[cells.length - 1] += '</tr>\n<tr>';
 		}
