@@ -180,7 +180,7 @@ p.generate_report = function(set_delta_calc_method) {
 		wp_assumed,
 		wp_assumed_round = [],
 		mode = f['F_out'].elements['FF_mode'].value,
-		absolute = f['F_out'].elements['FF_absolute'].style.display != 'none' && f['F_out'].elements['FF_absolute'].checked,
+		absolute = f['F_out'].elements['FF_absolute'].checked,
 		cat = e['FF_adaption'].value,
 		n = 0,
 		o = fields_match.length - 1, // offset for CIE values in fields_extract_indexes
@@ -1064,7 +1064,6 @@ function compare(set_delta_calc_method) {
 	catch (e) {
 		alert("Error parsing variable:\n" + e + "\nUsing default values.")
 	};
-	if (fe['FF_mode'].value != 'Lab') fe['FF_absolute'].checked = true;
 	var report = data_in.generate_report(set_delta_calc_method);
 	document.getElementById('result').innerHTML = report;
 	layout();
@@ -1097,7 +1096,6 @@ function form_element_set_disabled(form_element, disabled) {
 	var labels = document.getElementsByTagName("label");
 	for (var i=0; i<labels.length; i++) if (jsapi.dom.attribute(labels[i], "for") == form_element.id) {
 		if (jsapi.dom.attribute(labels[i], "for") == "FF_gray_balance_cal_only") labels[i].style.display = window.CRITERIA_GRAYSCALE ? "inline" : "none";
-		else if (jsapi.dom.attribute(labels[i], "for") == "FF_absolute") labels[i].style.display = !window.SIMULATION_PROFILE && data_ref.device == "RGB" ? "inline" : "none";
 		labels[i].className = disabled;
 		labels[i].disabled = disabled;
 	}
@@ -1110,7 +1108,6 @@ function form_elements_set_disabled(form, disabled) {
 		for (var i=0; i<document.forms.length; i++) {
 			for (var j=0; j<document.forms[i].elements.length; j++) {
 				if (document.forms[i].elements[j].name == "FF_gray_balance_cal_only") form_element_set_disabled(document.forms[i].elements[j], disabled || !window.CRITERIA_GRAYSCALE);
-				else if (document.forms[i].elements[j].name == "FF_absolute")  form_element_set_disabled(document.forms[i].elements[j], disabled || window.SIMULATION_PROFILE || data_ref.device != "RGB" || (document.forms[i].elements['FF_mode'] && document.forms[i].elements['FF_mode'].value != 'Lab'));
 				else form_element_set_disabled(document.forms[i].elements[j], disabled);
 			}
 		}
