@@ -248,12 +248,12 @@ class DisplayUniformityFrame(wx.Frame):
 			XYZ = re.search("XYZ:\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)", txt)
 			self.results[self.index].append({"XYZ": [float(value) for value in
 													 XYZ.groups()]})
-		locus = {"t": "Daylight",
-				 "T": "Planckian"}.get(getcfg("whitepoint.colortemp.locus"))
-		if locus in txt:
-			CT = re.search("Closest\s+%s\s+temperature\s+=\s+(\d+)K" % locus,
-						   txt, re.I)
-			self.results[self.index][-1]["CT"] = int(CT.groups()[0])
+		loci = {"t": "Daylight", "T": "Planckian"}
+		for locus in loci.values():
+			if locus in txt:
+				CT = re.search("Closest\s+%s\s+temperature\s+=\s+(\d+)K" % locus,
+							   txt, re.I)
+				self.results[self.index][-1]["C%sT" % locus[0]] = int(CT.groups()[0])
 		if "key to take a reading" in txt:
 			if not self.is_measuring:
 				self.enable_buttons()
@@ -296,6 +296,7 @@ class DisplayUniformityFrame(wx.Frame):
 					dlg.Destroy()
 					if result != wx.ID_OK:
 						return
+					locus = loci.get(getcfg("whitepoint.colortemp.locus"))
 					report.create(save_path,
 								  {"${REPORT_VERSION}": appversion,
 								   "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),

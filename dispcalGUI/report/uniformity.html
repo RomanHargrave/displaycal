@@ -5,11 +5,13 @@
 	<title>Uniformity Check ${REPORT_VERSION} — ${DATETIME}</title>
 	<style type="text/css">
 		abbr { border-bottom: 1px dotted #666; cursor: help; }
-		.delta { border-bottom: 1px solid #666; cursor: pointer; }
+		.locus_toggle { cursor: pointer; }
+		.locus_toggle:hover { text-decoration: underline; }
 		html, body, table { height: 100%; }
-		body { font: normal 11px/15px sans-serif; margin: 0; padding: 0; }
+		body, td { font: normal 11px/15px sans-serif; margin: 0; padding: 0; }
 		table { border: 1px solid #666; border-collapse: separate; border-spacing: 0; width: 100%; }
 		td { border: 1px solid #666; text-align: center; vertical-align: middle; white-space: nowrap; }
+		p.error { color: red; font-weight: bold; margin: 22px; }
 	</style>
 	<script type="text/javascript" src="jsapi-packages.js"></script>
 	<script type="text/javascript" src="jsapi-patches.js"></script>
@@ -20,4 +22,5 @@
 </head>
 <body>
 </body>
+	<div><noscript><p class="error">Please enable JavaScript</p></noscript></div>
 </html>

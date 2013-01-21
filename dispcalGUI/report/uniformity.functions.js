@@ -17,18 +17,25 @@ p.lead=function(ln) {
 };
 
 // Main
-window.onload = function () {
+function generate_report() {
 	var cells = [],
 		reference_index = parseInt(Math.floor(rows * cols / 2.0)),
 		reference = results[reference_index],
-		factor = 100 / reference[0]['XYZ'][1];  // item[0] is the 100% RGB reading
+		Ymax = 0;
+	// Find brightest point
+	for (var i = 0; i < rows * cols; i ++) {
+		for (var j = 0; j < results[i].length; j ++) {
+			if (results[i][j]['XYZ'][1] > Ymax) Ymax = results[i][j]['XYZ'][1];
+		}
+	}
+	var scale = 100 / Ymax;
 	for (var i = 0; i < rows * cols; i ++) {
 		for (var j = 0; j < results[i].length; j ++) {
 			var XYZ = results[i][j]['XYZ'],
-				XYZ_Y100 = [factor * XYZ[0], factor * XYZ[1], factor * XYZ[2]];
-			results[i][j]['XYZ_Y100'] = XYZ_Y100;
+				XYZ_scaled = [scale * XYZ[0], scale * XYZ[1], scale * XYZ[2]];
+			results[i][j]['XYZ_scaled'] = XYZ_scaled;
 			results[i][j]['Lab'] = jsapi.math.color.XYZ2Lab(XYZ[0], XYZ[1], XYZ[2]);
-			results[i][j]['Lab_L100'] = jsapi.math.color.XYZ2Lab(XYZ_Y100[0], XYZ_Y100[1], XYZ_Y100[2]);
+			results[i][j]['Lab_scaled'] = jsapi.math.color.XYZ2Lab(XYZ_scaled[0], XYZ_scaled[1], XYZ_scaled[2]);
 			results[i][j]['CCT'] = jsapi.math.color.XYZ2CorColorTemp(XYZ[0], XYZ[1], XYZ[2]);
 		}
 	}
@@ -46,25 +53,23 @@ window.onload = function () {
 			CT_diff_percent = [];
 		for (var j = 0; j < results[i].length; j ++) {
 			var line = '<strong>' + (100 - j * 25) + '% RGB:</strong> Y = ' + results[i][j]['XYZ'][1].accuracy(2) + ' cd/m²',
-				rLab = reference[j]['Lab_L100'],
-				Lab = results[i][j]['Lab_L100'];
+				rLab = reference[j]['Lab_scaled'],
+				Lab = results[i][j]['Lab_scaled'];
+			CCT.push(results[i][j]['CCT']);
+			CT.push(results[i][j]['C' + locus.substr(0, 1) + 'T']);
 			if (results[i] == reference) {
-				CCT.push(reference[j]['CCT']);
-				CT.push(reference[j]['CT']);
-				line += ' (' + (reference[j]['XYZ'][1] / reference[0]['XYZ'][1] * 100).accuracy(2) + '%)' + /*', D50 L*a*b* = ' + results[i][j]['Lab_L100'][0].accuracy(2) + ' ' + results[i][j]['Lab_L100'][1].accuracy(2) + ' ' + results[i][j]['Lab_L100'][2].accuracy(2) +*/ '\n<br><abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(CCT[j]) + 'K, <abbr title="Closest ' + locus + ' Temperature">C' + locus[0] + 'T</abbr> ' + Math.round(CT[j]) + 'K';
+				line += ' (' + (reference[j]['XYZ'][1] / reference[0]['XYZ'][1] * 100).accuracy(2) + '%)' + /*', D50 L*a*b* = ' + results[i][j]['Lab_scaled'][0].accuracy(2) + ' ' + results[i][j]['Lab_scaled'][1].accuracy(2) + ' ' + results[i][j]['Lab_scaled'][2].accuracy(2) +*/ '\n<br><abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(CCT[j]) + 'K, <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(CT[j]) + 'K';
 			}
 			else {
 				var delta = jsapi.math.color.delta(rLab[0], rLab[1], rLab[2], Lab[0], Lab[1], Lab[2], "2k");
 				delta_C.push(delta["C"]);
-				CCT.push(results[i][j]['CCT']);
 				CCT_diff.push(-(reference[j]['CCT'] - results[i][j]['CCT']));
 				CCT_diff_percent.push(100.0 / reference[j]['CCT'] * CCT_diff[j]);
-				CT.push(results[i][j]['CT']);
-				CT_diff.push(-(reference[j]['CT'] - results[i][j]['CT']));
-				CT_diff_percent.push(100.0 / reference[j]['CT'] * CT_diff[j]);
+				CT_diff.push(-(reference[j]['C' + locus.substr(0, 1) + 'T'] - CT[j]));
+				CT_diff_percent.push(100.0 / reference[j]['C' + locus.substr(0, 1) + 'T'] * CT_diff[j]);
 				Y_diff.push(-(reference[j]['XYZ'][1] - results[i][j]['XYZ'][1]));
 				Y_diff_percent.push(100.0 / reference[0]['XYZ'][1] * Y_diff[j]);
-				line += ' (' + (Y_diff_percent[j] > 0 ? '+' : '') + Y_diff_percent[j].accuracy(2) + '%), ' + delta_C[j].accuracy(2) + ' ΔC*00<br>\n<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(CCT[j]) + 'K (' + (CCT_diff_percent[j] > 0 ? '+' : '') + CCT_diff_percent[j].accuracy(2) + '%), <abbr title="Closest ' + locus + ' Temperature">C' + locus[0] + 'T</abbr> ' + Math.round(CT[j]) + 'K (' + (CT_diff_percent[j] > 0 ? '+' : '') + CT_diff_percent[j].accuracy(2) + '%)';
+				line += ' (' + (Y_diff_percent[j] > 0 ? '+' : '') + Y_diff_percent[j].accuracy(2) + '%), ' + delta_C[j].accuracy(2) + ' ΔC*00<br>\n<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(CCT[j]) + 'K (' + (CCT_diff_percent[j] > 0 ? '+' : '') + CCT_diff_percent[j].accuracy(2) + '%), <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(CT[j]) + 'K (' + (CT_diff_percent[j] > 0 ? '+' : '') + CT_diff_percent[j].accuracy(2) + '%)';
 			}
 			if (j == 0) {
 				// 100% RGB
@@ -75,10 +80,10 @@ window.onload = function () {
 		cellcontent.push('');
 		cellcontent.push('<strong>Average:</strong>');
 		if (results[i] == reference) {
-			line = '<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K, <abbr title="Closest ' + locus + ' Temperature">C' + locus[0] + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K';
+			line = '<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K, <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K';
 		}
 		else {
-			line = jsapi.math.avg(Y_diff).accuracy(2) + ' ΔY (' + (jsapi.math.avg(Y_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(Y_diff_percent).accuracy(2) + '%), ' + jsapi.math.avg(delta_C).accuracy(2) + ' ΔC*00<br>\n<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K (' + jsapi.math.avg(CCT_diff_percent).accuracy(2) + '%), <abbr title="Closest ' + locus + ' Temperature">C' + locus[0] + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K (' + jsapi.math.avg(CT_diff_percent).accuracy(2) + '%)';
+			line = jsapi.math.avg(Y_diff).accuracy(2) + ' ΔY (' + (jsapi.math.avg(Y_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(Y_diff_percent).accuracy(2) + '%), ' + jsapi.math.avg(delta_C).accuracy(2) + ' ΔC*00<br>\n<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K (' + (jsapi.math.avg(CCT_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(CCT_diff_percent).accuracy(2) + '%), <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K (' + (jsapi.math.avg(CT_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(CT_diff_percent).accuracy(2) + '%)';
 		}
 		cellcontent.push(line);
 		cells.push('<td id="cell-' + i + '" style="background-color: rgb(' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + '); ' + (i == reference_index ? 'border: 1px dashed #666; ' : '') + 'height: ' + (100 / cols) + '%; width: ' + (100 / rows) + '%;">' + cellcontent.join('<br>\n') + '</td>');
@@ -88,3 +93,4 @@ window.onload = function () {
 	}
 	document.getElementsByTagName('body')[0].innerHTML = '<table><tr>' + cells.join('') + '</tr></table>';
 };
+window.onload = generate_report;
