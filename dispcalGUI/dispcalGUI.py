@@ -4669,6 +4669,14 @@ class MainFrame(BaseFrame):
 							 'XYZ_Y': wtpt_measured_norm[1], 
 							 'XYZ_Z': wtpt_measured_norm[2]})
 		
+		black = ti3_joined.queryi1({'RGB_R': 0, 'RGB_G': 0, 'RGB_B': 0})
+		if black:
+			bkpt_measured_norm = black["XYZ_X"], black["XYZ_Y"], black["XYZ_Z"]
+			bkpt_measured = tuple(wtpt_measured[1] / 100 * n for n in bkpt_measured_norm)
+		else:
+			bkpt_measured_norm = None
+			bkpt_measured = None
+		
 		# set Lab values
 		labels_Lab = ("LAB_L", "LAB_A", "LAB_B")
 		for data in (ti3_ref, ti3_joined):
@@ -4747,6 +4755,8 @@ class MainFrame(BaseFrame):
 							 "${DISPLAY}": self.display_ctrl.GetStringSelection(),
 							 "${INSTRUMENT}": instrument,
 							 "${CORRECTION_MATRIX}": ccmx,
+							 "${BLACKPOINT}": "%f %f %f" % (bkpt_measured if
+											  bkpt_measured else (-1, ) * 3),
 							 "${WHITEPOINT}": "%f %f %f" % wtpt_measured,
 							 "${WHITEPOINT_NORMALIZED}": "%f %f %f" % 
 														 wtpt_measured_norm,

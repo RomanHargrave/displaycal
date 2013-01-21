@@ -170,6 +170,7 @@ p.generate_report = function(set_delta_calc_method) {
 		profile_wp_norm = e['FF_profile_whitepoint_normalized'].value.split(/\s+/),
 		profile_wp_norm_round = [],
 		profile_colortemp,
+		bp = e['FF_blackpoint'].value.split(/\s+/),
 		wp = e['FF_whitepoint'].value.split(/\s+/),
 		wp_round = [],
 		wp_norm = e['FF_whitepoint_normalized'].value.split(/\s+/),
@@ -208,6 +209,12 @@ p.generate_report = function(set_delta_calc_method) {
 			profile_wp_norm_round[i] = profile_wp_norm[i].accuracy(2)
 		};
 		profile_colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]));
+	}
+	
+	if (bp.length == 3) {
+		for (var i=0; i<bp.length; i++) {
+			bp[i] = parseFloat(bp[i]);
+		};
 	}
 	
 	if (wp.length == 3) {
@@ -266,6 +273,16 @@ p.generate_report = function(set_delta_calc_method) {
 		'		<tr>',
 		'			<th>Assumed target whitepoint (XYZ):</th>',
 		'			<td>' + colortemp_assumed + 'K ' + (planckian ? 'blackbody' : 'daylight') + ' (' + wp_assumed_round.join(' ') + ')</td>'
+	]);
+	if (bp.length == 3 && bp[0] > -1 && bp[1] > -1 && bp[2] > -1) this.report_html = this.report_html.concat([
+		'		<tr>',
+		'			<th>Measured black luminance:</th>',
+		'			<td>' + bp[1].accuracy(4) + ' cd/m²</td>',
+		'		</tr>',
+		'		<tr>',
+		'			<th>Contrast:</th>',
+		'			<td>' + (wp[1] / bp[1]).accuracy(1) + ':1</td>',
+		'		</tr>'
 	]);
 	this.report_html = this.report_html.concat([
 		'		</tr>',

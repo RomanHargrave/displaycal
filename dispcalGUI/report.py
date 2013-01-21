@@ -94,6 +94,7 @@ def update(report_path, pack=True):
 			("${INSTRUMENT}", '"FF_instrument"\s*value="(.+?)"\s\/>', 0),
 			("${CORRECTION_MATRIX}", 
 			 '"FF_correction_matrix"\s*value="(.+?)"\s\/>', 0),
+			("${BLACKPOINT}", '"FF_blackpoint"\s*value="(.+?)"\s\/>', 0),
 			("${WHITEPOINT}", '"FF_whitepoint"\s*value="(.+?)"\s\/>', 0),
 			("${WHITEPOINT_NORMALIZED}", 
 			 '"FF_whitepoint_normalized"\s*value="(.+?)"\s\/>', 0),
@@ -118,7 +119,8 @@ def update(report_path, pack=True):
 						 "${ADAPTION}": "None",
 						 "${CAL_ENTRYCOUNT}": "null",
 						 "${CAL_RGBLEVELS}": "null",
-						 "${GRAYSCALE}": "null"}
+						 "${GRAYSCALE}": "null",
+						 "${BLACKPOINT}": "-1 -1 -1"}
 	
 	for placeholder, pattern, flags in data:
 		result = re.search(pattern, orig_report_html, flags)
