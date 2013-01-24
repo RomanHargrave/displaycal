@@ -74,6 +74,8 @@ def apply_profiles():
 	for i, display in enumerate([display.replace("[PRIMARY]", 
 												 lang.getstr("display.primary")) 
 								 for display in worker.displays]):
+		if display == "Web @ localhost":
+			continue
 		# Load profile and set vcgt
 		if sys.platform != "win32" and oyranos_monitor:
 			display_conf_oy_compat = worker.check_display_conf_oy_compat(i + 1)

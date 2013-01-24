@@ -203,9 +203,10 @@ def get_bitmap_as_icon(size, name):
 	return icon
 
 
-def get_display_name():
+def get_display_name(n=None):
 	""" Return name of currently configured display """
-	n = getcfg("display.number") - 1
+	if n is None:
+		n = getcfg("display.number") - 1
 	displays = getcfg("displays").split(os.pathsep)
 	if n >= 0 and n < len(displays):
 		return displays[n].split("@")[0].strip()
@@ -220,6 +221,8 @@ def get_display_number(display_no):
 	except IndexError:
 		pass
 	else:
+		if display == "Web @ localhost":
+			return 0
 		for i in xrange(wx.Display.GetCount()):
 			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
 			if display.find("@ " + geometry) > -1:
@@ -389,6 +392,7 @@ valid_ranges = {
 	"gamap_default_intent": [0, 3],
 	"measure.uniformity.show_detail": [0, 1],
 	"profile.black_point_compensation": [0, 1],
+	"webserver.portnumber": [1, 65535],
 	"whitepoint.colortemp": [1000, 15000],
 }
 
@@ -575,6 +579,7 @@ defaults = {
 	"trc.type": "g",
 	"update_check": 1,
 	"use_separate_lut_access": 0,
+	"webserver.portnumber": 8080,
 	"whitepoint.colortemp": 5000,
 	"whitepoint.colortemp.locus": "t",
 	"whitepoint.x": 0.345741,
@@ -744,6 +749,8 @@ def get_current_profile(include_display_profile=False):
 def get_display_profile(display_no=None):
 	if display_no is None:
 		display_no = max(getcfg("display.number") - 1, 0)
+	if get_display_name(display_no) == "Web":
+		return None
 	import ICCProfile as ICCP
 	try:
 		return ICCP.get_display_profile(display_no)

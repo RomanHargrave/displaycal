@@ -22,6 +22,7 @@ from config import (get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg,
 					valid_values)
 from meta import name as appname
 from ordereddict import OrderedDict
+from util_str import wrap
 from wxwindows import FlatShadedButton, numpad_keycodes
 import colormath
 import config
@@ -802,8 +803,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 	def Pulse(self, msg=""):
 		if ((msg in (lang.getstr("instrument.initializing"),
 					 lang.getstr("instrument.calibrating"),
-					 lang.getstr("please_wait")) or msg == " " * 4 or
-			 "error" in msg.lower() or "failed" in msg.lower()) and
+					 lang.getstr("please_wait"),
+					 lang.getstr("aborting")) or msg == " " * 4 or
+			 "error" in msg.lower() or "failed" in msg.lower() or
+			 msg.startswith(lang.getstr("webserver.waiting"))) and
 			msg != self.lastmsg):
 			self.lastmsg = msg
 			self.Freeze()
@@ -811,8 +814,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 				txt.checkmark.GetContainingSizer().Hide(txt.checkmark)
 				txt.SetLabel(" ")
 			txt = self.lb.GetCurrentPage().txt.values()[0]
-			if txt.GetLabel() != msg:
-				txt.SetLabel(msg)
+			if txt.GetLabel() != wrap(msg, 46):
+				txt.SetLabel(wrap(msg, 46))
 				txt.SetForegroundColour(FGCOLOUR)
 			self.Thaw()
 		return self.keepGoing, False

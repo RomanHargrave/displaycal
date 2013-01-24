@@ -1033,7 +1033,6 @@ class Worker(object):
 			"Calibration complete" in msgs and
 			"key to continue" in self.lastmsg.read()):
 			self.instrument_calibration_complete = True
-			wx.CallAfter(self.instrument_calibration_finish)
 		elif (not getattr(self, "instrument_calibration_complete", False) or
 			  "Calibration failed" in msgs):
 			for calmsg in INST_CAL_MSGS:
@@ -1041,6 +1040,30 @@ class Worker(object):
 					self.recent.clear()
 					wx.CallAfter(self.do_instrument_calibration)
 					break
+	
+	def check_instrument_place_on_screen(self):
+		msg = self.recent.read()
+		lastmsg = self.lastmsg.read().strip()
+		if ("key to continue" in lastmsg.lower() and
+			"place instrument on test window" in
+			"".join(msg.splitlines()[-2:-1]).lower()):
+			self.recent.clear()
+			if (getattr(self, "instrument_calibration_complete", False) or
+				config.get_display_name() == "Web"):
+				wx.CallAfter(self.instrument_place_on_screen)
+			else:
+				if getcfg("measure.darken_background"):
+					# Allow the user to move the terminal 
+					# window if using black background, 
+					# otherwise send space key to start
+					# measurements right away
+					sleep(3)
+				if sys.platform != "win32":
+					sleep(.5)
+				if self.subprocess.isalive():
+					if debug or test:
+						safe_print('Sending SPACE key')
+					self.safe_send(" ")
 	
 	def do_instrument_calibration(self):
 		""" Ask user to initiate sensor calibration and execute.
@@ -1062,6 +1085,8 @@ class Worker(object):
 			self.abort_subprocess()
 			return False
 		self.progress_wnd.Pulse(lang.getstr("please_wait"))
+		if debug or test:
+			safe_print('Sending SPACE key')
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 	
@@ -1072,8 +1097,8 @@ class Worker(object):
 		delayedresult.startWorker(lambda result: None, 
 								  self.quit_terminate_cmd)
 	
-	def instrument_calibration_finish(self):
-		""" Show a dialog confirming sensor calibration has been finished
+	def instrument_place_on_screen(self):
+		""" Show a dialog asking user to place the instrument on the screen
 		and give an option to cancel """
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
@@ -1087,6 +1112,8 @@ class Worker(object):
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
+		if debug or test:
+			safe_print('Sending SPACE key')
 		self.safe_send(" ")
 	
 	def clear_argyll_info(self):
@@ -1604,8 +1631,15 @@ class Worker(object):
 												 display.split("@")[1]])
 					self.display_manufacturers.append(" ".join(manufacturer))
 					self.display_names.append(displays[i].split("@")[0].strip())
+				if self.argyll_version >= [1, 4, 0]:
+					displays.append("Web @ localhost")
+					self.display_edid.append({})
+					self.display_manufacturers.append("Argyll CMS")
+					self.display_names.append("Web")
 				self.displays = displays
 				setcfg("displays", os.pathsep.join(displays))
+				if self.argyll_version >= [1, 4, 0]:
+					displays = displays[:-1]
 				if check_lut_access:
 					dispwin = get_argyll_util("dispwin")
 					for i, disp in enumerate(displays):
@@ -1659,6 +1693,9 @@ class Worker(object):
 							wx.GetApp().progress_dlg.Pulse(
 								lang.getstr("success" if retcode == 0 else
 											"failure"))
+				if self.argyll_version >= [1, 4, 0]:
+					# Web @ localhost
+					lut_access.append(False)
 				self.lut_access = lut_access
 		elif silent or not check_argyll_bin():
 			self.clear_argyll_info()
@@ -2096,25 +2133,8 @@ class Worker(object):
 					if self.subprocess.isalive():
 						try:
 							if self.measure_cmd:
-								self.subprocess.expect([" or Q to "])
-								msg = self.recent.read()
-								lastmsg = self.lastmsg.read().strip()
-								if "key to continue" in lastmsg.lower() and \
-								   "place instrument on test window" in \
-								   "".join(msg.splitlines()[-2:-1]).lower():
-									self.recent.clear()
-									if "-F" in args:
-										# Allow the user to move the terminal 
-										# window if using black background, 
-										# otherwise send space key to start
-										# measurements right away
-										sleep(3)
-									if sys.platform != "win32":
-										sleep(.5)
-									if self.subprocess.isalive():
-										if debug or test:
-											safe_print('Sending SPACE key')
-										self.subprocess.send(" ")
+								self.subprocess.expect(" or Q to ",
+													   timeout=None)
 								if needs_user_interaction and \
 								   sys.platform == "darwin":
 									# On the Mac dispcal's test window
@@ -2269,6 +2289,8 @@ class Worker(object):
 	def get_device_id(self):
 		""" Get org.freedesktop.ColorManager device key """
 		if colord:
+			if config.get_display_name() == "Web":
+				return None
 			edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 												getcfg("display.number") - 1))]
 			return colord.device_id_from_edid(edid)
@@ -2279,6 +2301,8 @@ class Worker(object):
 		Returned is the Argyll CMS dispcal/dispread -d argument
 		
 		"""
+		if config.get_display_name() == "Web":
+			return "web:%i" % getcfg("webserver.portnumber")
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 
@@ -2374,7 +2398,7 @@ class Worker(object):
 			profile = ICCP.get_display_profile(display_no)
 		except Exception, exception:
 			safe_print("Error - couldn't get profile for display %s" % 
-					   getcfg("display.number"))
+					   display_no)
 		else:
 			if profile and profile.fileName:
 				arg = profile.fileName
@@ -2437,9 +2461,13 @@ class Worker(object):
 	
 	def has_separate_lut_access(self):
 		""" Return True if separate LUT access is possible and needed. """
-		return (len(self.displays) > 1 and False in 
-				self.lut_access and True in 
-				self.lut_access)
+		if self.argyll_version >= [1, 4, 0]:
+			# filter out Web @ localhost
+			lut_access = self.lut_access[:-1]
+		else:
+			lut_access = self.lut_access
+		return (len(self.displays) > 1 and False in lut_access and True in 
+				lut_access)
 	
 	def import_colorimeter_corrections(self, cmd, args=None):
 		""" Import colorimeter corrections. cmd can be 'i1d3ccss', 'spyd4en'
@@ -3667,7 +3695,11 @@ class Worker(object):
 		   self.argyll_version >= [1, 1, 0]:
 			args += ["-N"]
 		if apply_calibration is not False:
-			args += ["-k"]
+			if (config.get_display_name() == "Web" and
+				self.argyll_version >= [1, 4, 0]):
+				args += ["-K"]
+			else:
+				args += ["-k"]
 			args += [cal]
 		if self.get_instrument_features().get("spectral"):
 			args += ["-s"]
@@ -3830,6 +3862,7 @@ class Worker(object):
 			self.progress_wnd.Pulse(lang.getstr("aborting"))
 			return
 		self.check_instrument_calibration()
+		self.check_instrument_place_on_screen()
 		percentage = None
 		msg = self.recent.read(FilteredStream.triggers)
 		lastmsg = self.lastmsg.read(FilteredStream.triggers).strip()
@@ -3885,6 +3918,11 @@ class Worker(object):
 			else:
 				if "Setting up the instrument" in lastmsg:
 					msg = lang.getstr("instrument.initializing")
+				elif "Created web server at" in lastmsg:
+					webserver = re.search("(http\:\/\/[^']+)", lastmsg)
+					if webserver:
+						msg = (lang.getstr("webserver.waiting") +
+							   " " + webserver.groups()[0])
 				keepGoing, skip = self.progress_wnd.Pulse(msg)
 		if not keepGoing:
 			if getattr(self, "subprocess", None) and \

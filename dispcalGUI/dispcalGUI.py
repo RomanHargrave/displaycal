@@ -133,7 +133,7 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
-from worker import (Error, FilteredStream, LineCache, Warn, Worker,
+from worker import (Error, FilteredStream, Info, LineCache, Warn, Worker,
 					check_cal_isfile, check_create_dir, check_file_isfile,
 					check_profile_isfile, check_set_argyll_bin, get_argyll_util,
 					get_options_from_cal, get_options_from_profile,
@@ -1563,8 +1563,10 @@ class MainFrame(BaseFrame):
 		self.menuitem_show_lut.Check(bool(getcfg("lut_viewer.show")))
 		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
 											 self.worker.argyll_version >= [1, 1, 0] and 
-											 not "Beta" in self.worker.argyll_version_string)
-		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")))
+											 not "Beta" in self.worker.argyll_version_string and
+											 not config.get_display_name() == "Web")
+		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")) and
+											not config.get_display_name() == "Web")
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays))
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments))
@@ -4273,6 +4275,8 @@ class MainFrame(BaseFrame):
 					skip_scripts=False, silent=False, title=appname):
 		""" 'Install' (load) a calibration from a calibration file or
 		profile """
+		if config.get_display_name() == "Web":
+			return True
 		# Install using dispwin
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
 		if not isinstance(cmd, Exception):
@@ -4539,8 +4543,12 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(show_result_dialog, result, self)
 			self.Show()
 		else:
-			result = self.worker.exec_cmd(cmd, args, capture_output=True,
-										  skip_scripts=True)
+			if config.get_display_name() == "Web":
+				# Nothing to do
+				result = True
+			else:
+				result = self.worker.exec_cmd(cmd, args, capture_output=True,
+											  skip_scripts=True)
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
 				self.Show()
@@ -4965,7 +4973,9 @@ class MainFrame(BaseFrame):
 		self.HideAll()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
-		if sys.platform in ("darwin", "win32") or isexe:
+		if config.get_display_name() == "Web":
+			self.call_pending_function()
+		elif sys.platform in ("darwin", "win32") or isexe:
 			self.measureframe.Show()
 		else:
 			wx.CallAfter(self.measureframe_subprocess)
@@ -5150,6 +5160,8 @@ class MainFrame(BaseFrame):
 	
 	def current_cal_choice(self):
 		""" Prompt user to either keep or clear the current calibration """
+		if config.get_display_name() == "Web":
+			return False
 		dlg = ConfirmDialog(self, 
 							msg=lang.getstr("dialog.current_cal_warning"), 
 							ok=lang.getstr("continue"), 
@@ -5582,12 +5594,16 @@ class MainFrame(BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			safe_print("-" * 80)
-			safe_print(lang.getstr("profile.install"))
-			result = self.worker.install_profile(profile_path=self.modaldlg.profile_path, 
-												 skip_scripts=self.modaldlg.skip_scripts)
-			if isinstance(result, Exception):
-				show_result_dialog(result, parent=self.modaldlg)
+			if config.get_display_name() == "Web":
+				show_result_dialog(Info(lang.getstr("profile.install.web.unsupported")),
+								   parent=self.modaldlg)
+			else:
+				safe_print("-" * 80)
+				safe_print(lang.getstr("profile.install"))
+				result = self.worker.install_profile(profile_path=self.modaldlg.profile_path, 
+													 skip_scripts=self.modaldlg.skip_scripts)
+				if isinstance(result, Exception):
+					show_result_dialog(result, parent=self.modaldlg)
 		elif self.modaldlg.preview:
 			if getcfg("calibration.file"):
 				# Load LUT curves from last used .cal file
@@ -5703,9 +5719,10 @@ class MainFrame(BaseFrame):
 			self.current_cal = profile
 		if getattr(self, "lut_viewer", None) and \
 		   (self.lut_viewer.IsShownOnScreen() or force_draw):
-			if getcfg("lut_viewer.show_actual_lut") and \
-			   self.worker.argyll_version >= [1, 1, 0] and \
-			   not "Beta" in self.worker.argyll_version_string:
+			if (getcfg("lut_viewer.show_actual_lut") and
+				self.worker.argyll_version >= [1, 1, 0] and
+				not "Beta" in self.worker.argyll_version_string and
+				not config.get_display_name() == "Web"):
 				tmp = self.worker.create_tempdir()
 				if isinstance(tmp, Exception):
 					show_result_dialog(tmp, self)
