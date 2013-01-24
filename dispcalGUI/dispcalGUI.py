@@ -8041,6 +8041,12 @@ class MainFrame(BaseFrame):
 							if "w" in o[1:]:
 								setcfg("drift_compensation.whitelevel", 1)
 							continue
+				if ccmx in (":", "AUTO:"):
+					ccxx = (glob.glob(os.path.join(os.path.dirname(path), "*.ccmx")) or
+							glob.glob(os.path.join(os.path.dirname(path), "*.ccss")))
+					if ccxx and len(ccxx) == 1:
+						ccmx += ccxx[0]
+						update_ccmx_items = True
 				setcfg("colorimeter_correction_matrix_file", ccmx)
 				if options_colprof:
 					# restore defaults
