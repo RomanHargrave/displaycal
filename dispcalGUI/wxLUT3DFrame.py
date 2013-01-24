@@ -289,7 +289,7 @@ class LUT3DFrame(BaseFrame):
 				else:
 					profile_path = profile.fileName
 			self.output_profile_current_btn.Enable(self.output_profile_ctrl.Enabled and
-												   profile_path and
+												   bool(profile_path) and
 												   os.path.isfile(profile_path) and
 												   profile_path != path)
 		if path:
