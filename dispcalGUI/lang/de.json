@@ -61,6 +61,7 @@
 	"calibration.complete": "Kalibrierung abgeschlossen!",
 	"calibration.create_fast_matrix_shaper": "Matrix-Profil erstellen",
 	"calibration.create_fast_matrix_shaper_choice": "Möchten Sie aus den Messwerten der Kalibrierung ein einfaches Matrix-Profil erstellen oder nur kalibrieren?",
+	"calibration.embed": "Kalibrierungskurven in Profil einbetten",
 	"calibration.file": "Einstellungen",
 	"calibration.file.invalid": "Die gewählte Einstellungsdatei ist ungültig.",
 	"calibration.file.none": "<Ausgeschaltet>",

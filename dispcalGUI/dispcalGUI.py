@@ -5159,7 +5159,15 @@ class MainFrame(BaseFrame):
 			self.gamapframe.Show(not self.gamapframe.IsShownOnScreen())
 	
 	def current_cal_choice(self):
-		""" Prompt user to either keep or clear the current calibration """
+		""" Prompt user to either keep or clear the current calibration,
+		with option to embed or not embed
+		
+		Return None if the current calibration should be embedded
+		Return False if no calibration should be embedded
+		Return filename if a .cal file should be used
+		Return wx.ID_CANCEL if whole operation should be cancelled
+		
+		"""
 		if config.get_display_name() == "Web":
 			return False
 		dlg = ConfirmDialog(self, 
@@ -5167,21 +5175,34 @@ class MainFrame(BaseFrame):
 							ok=lang.getstr("continue"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-warning"))
+		dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
+								   lang.getstr("calibration.embed"))
+		def embed_cal_ctrl_handler(event):
+			embed_cal = dlg.embed_cal_ctrl.GetValue()
+			dlg.reset_cal_ctrl.Enable(embed_cal)
+			if not embed_cal:
+				dlg.reset_cal_ctrl.SetValue(True)
+		dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
+		dlg.embed_cal_ctrl.SetValue(True)
+		dlg.sizer3.Add(dlg.embed_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
+					   border=12)
 		dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
 								   lang.getstr("calibration.reset"))
 		dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
-					   border=12)
+					   border=4)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		result = dlg.ShowModal()
 		reset_cal = dlg.reset_cal_ctrl.GetValue()
+		embed_cal = dlg.embed_cal_ctrl.GetValue()
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			self.update_profile_name_timer.Start(1000)
 			return wx.ID_CANCEL
 		if reset_cal:
 			self.reset_cal()
-			return False
+			if not embed_cal:
+				return False
 		else:
 			cal = getcfg("calibration.file")
 			if cal:
