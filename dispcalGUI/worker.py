@@ -891,6 +891,11 @@ class Worker(object):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
 				# Only ColorHug supports -yp parameter
+				if self.argyll_version >= [1, 5, 0]:
+					measurement_mode_map = instrument_features.get("measurement_mode_map",
+																   {})
+					measurement_mode = measurement_mode_map.get(measurement_mode[0],
+																measurement_mode)
 				args += ["-y" + measurement_mode[0]]
 		if getcfg("measurement_mode.projector") and \
 		   instrument_features.get("projector_mode") and \
