@@ -2258,8 +2258,11 @@ class MainFrame(BaseFrame):
 				if (re.sub(r"[\\/:*?\"<>|]+", "_",
 						   make_argyll_compatible_path(desc)) !=
 					os.path.splitext(os.path.basename(path))[0]):
-					desc = "%s <%s>" % (desc, ellipsis(os.path.basename(path),
-													   31, "m"))
+					desc = "%s <%s>" % (ellipsis(desc, 66, "m"),
+										ellipsis(os.path.basename(path), 31,
+												 "m"))
+				else:
+					desc = ellipsis(desc, 100, "m")
 				self.ccmx_cached_descriptors[path] = desc
 				self.ccmx_instruments[path] = get_canonical_instrument_name(
 					str(cgats.queryv1("INSTRUMENT") or
@@ -2305,9 +2308,11 @@ class MainFrame(BaseFrame):
 					if (re.sub(r"[\\/:*?\"<>|]+", "_",
 							   make_argyll_compatible_path(desc)) !=
 						os.path.splitext(os.path.basename(ccmx[1]))[0]):
-						desc = "%s <%s>" % (desc,
+						desc = "%s <%s>" % (ellipsis(desc, 66, "m"),
 											ellipsis(os.path.basename(ccmx[1]),
 													 31, "m"))
+					else:
+						desc = ellipsis(desc, 100, "m")
 					self.ccmx_cached_descriptors[ccmx[1]] = desc
 					self.ccmx_instruments[ccmx[1]] = get_canonical_instrument_name(
 						str(cgats.queryv1("INSTRUMENT") or
