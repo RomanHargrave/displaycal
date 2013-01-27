@@ -1578,6 +1578,8 @@ class MainFrame(BaseFrame):
 											bool(self.worker.instruments))
 		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments))
+		self.menuitem_create_colorimeter_correction.Enable(bool(get_argyll_util("ccxxmake")))
+		self.menuitem_lut3d_create.Enable(bool(get_argyll_util("icclu")))
 		self.menuitem_show_log.Check(bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Enable(not bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Check(bool(getcfg("log.autoshow")))

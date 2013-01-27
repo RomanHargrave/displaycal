@@ -13,7 +13,8 @@ from config import (defaults, fs_enc, get_bitmap_as_icon, get_data_path,
 from meta import name as appname
 from ordereddict import OrderedDict
 from util_str import universal_newlines, wrap
-from worker import Error, get_argyll_util, show_result_dialog
+from worker import (Error, check_set_argyll_bin, get_argyll_util,
+					show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxenhancedplot import _Numeric
 from wxLUTViewer import LUTCanvas, LUTFrame
@@ -408,6 +409,9 @@ class GamutCanvas(LUTCanvas):
 	
 	def setup(self, profiles=None, profile_no=None, intent="a"):
 		self.size = 40  # Number of segments from one primary to the next secondary color
+		
+		if not check_set_argyll_bin():
+			return
 		
 		# Setup xicclu
 		xicclu = get_argyll_util("xicclu")

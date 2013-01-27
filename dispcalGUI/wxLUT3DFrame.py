@@ -15,6 +15,7 @@ import ICCProfile as ICCP
 import config
 import localization as lang
 import worker
+from worker import check_set_argyll_bin
 from wxaddons import FileDrop
 from wxwindows import BaseFrame, InfoDialog, wx
 
@@ -198,6 +199,8 @@ class LUT3DFrame(BaseFrame):
 					show_result_dialog(exception, self)
 	
 	def lut3d_create_handler(self, event):
+		if not check_set_argyll_bin():
+			return
 		profile_in = self.set_profile("input")
 		if getcfg("3dlut.use_abstract_profile"):
 			profile_abst = self.set_profile("abstract")

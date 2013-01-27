@@ -499,7 +499,9 @@ class LUTFrame(wx.Frame):
 		self.toggle_clut = wx.CheckBox(self.box_panel, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		self.toggle_clut.SetMaxFontSize(11)
-		self.toggle_clut.SetValue(True)
+		xicclu = get_argyll_util("xicclu")
+		self.toggle_clut.SetValue(bool(xicclu))
+		self.toggle_clut.Enable(bool(xicclu))
 		self.cbox_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
 												   wx.LEFT, border=16)
 		self.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler,
@@ -669,9 +671,10 @@ class LUTFrame(wx.Frame):
 									 profile.colorSpace)))
 		
 		# Setup xicclu
-		xicclu = get_argyll_util("xicclu").encode(fs_enc)
+		xicclu = get_argyll_util("xicclu")
 		if not xicclu:
 			return
+		xicclu = xicclu.encode(fs_enc)
 		cwd = self.client.worker.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
