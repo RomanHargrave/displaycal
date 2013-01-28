@@ -353,6 +353,7 @@
 	"measurement_mode": "Mode",
 	"measurement_mode.adaptive": "Adaptive",
 	"measurement_mode.factory": "Factory calibration",
+	"measurement_mode.generic": "Generic",
 	"measurement_mode.highres": "HiRes",
 	"measurement_mode.lcd": "LCD (generic)",
 	"measurement_mode.lcd.ccfl": "LCD (CCFL)",

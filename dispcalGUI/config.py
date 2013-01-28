@@ -411,8 +411,8 @@ valid_values = {
 	# See http://www.argyllcms.com/doc/instruments.html
 	# for description of per-instrument supported modes
 	"measurement_mode": [None, "B", "F", "L", "R", "a", "b", "c", "e", "f", "g",
-						 "l", "m", "n", "o", "p", "r", "1", "2", "3", "4", "5",
-						 "6", "7", "8", "9"],
+						 "l", "m", "n", "o", "p", "r", "x", "1", "2", "3", "4", 
+						 "5", "6", "7", "8", "9"],
 	"gamap_perceptual_intent": intents,
 	"gamap_saturation_intent": intents,
 	"gamap_src_viewcond": viewconds,

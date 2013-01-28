@@ -2104,8 +2104,12 @@ class MainFrame(BaseFrame):
 													   lang.getstr("measurement_mode.lcd.white_led"),
 													   lang.getstr("measurement_mode.lcd.wide_gamut.rgb_led"),
 													   lang.getstr("measurement_mode.lcd.ccfl.2")])
-			measurement_modes_ab[instrument_type].extend(["3", "4", "5",
-														  "6", "7", "8"])
+			if self.worker.argyll_version >= [1, 5, 0]:
+				measurement_modes_ab[instrument_type].extend(["f", "L", "e",
+															  "B", "x"])
+			else:
+				measurement_modes_ab[instrument_type].extend(["3", "4", "5",
+															  "6", "7"])
 		elif instrument_name == "ColorHug":
 			# Argyll CMS 1.3.6, spectro/colorhug.c, colorhug_disptypesel
 			# Note: projector mode (-yp) is not the same as ColorMunki
@@ -2115,6 +2119,21 @@ class MainFrame(BaseFrame):
 													   lang.getstr("measurement_mode.factory"),
 													   lang.getstr("measurement_mode.raw")])
 			measurement_modes_ab[instrument_type].extend(["p", "e", "F", "R"])
+		elif (instrument_name == "DTP94" and
+			  self.worker.argyll_version >= [1, 5, 0]):
+			# Argyll CMS 1.5.x introduces new measurement mode
+			measurement_modes[instrument_type].extend([lang.getstr("measurement_mode.generic")])
+			measurement_modes_ab[instrument_type].append("g")
+		elif instrument_name == "ColorMunki Smile":
+			# Only supported in Argyll CMS 1.5.x and newer
+			measurement_modes[instrument_type] = [lang.getstr("measurement_mode.lcd.ccfl"),
+												  lang.getstr("measurement_mode.lcd.white_led")]
+			measurement_modes_ab[instrument_type] = ["f", "e"]
+		elif (instrument_name == "Colorimtre HCFR" and
+			  self.worker.argyll_version >= [1, 5, 0]):
+			# Argyll CMS 1.5.x introduces new measurement mode
+			measurement_modes[instrument_type].extend([lang.getstr("measurement_mode.raw")])
+			measurement_modes_ab[instrument_type].append("R")
 		instrument_features = self.worker.get_instrument_features()
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
