@@ -7825,6 +7825,7 @@ class MainFrame(BaseFrame):
 									   argyll_version, displays, comports):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
+			self.update_measurement_modes()
 			if comports == self.worker.instruments:
 				self.update_colorimeter_correction_matrix_ctrl()
 			self.update_black_point_rate_ctrl()
