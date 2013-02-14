@@ -240,6 +240,8 @@ class DisplayUniformityFrame(wx.Frame):
 			return
 		if "Setting up the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
+		if "Spot read failed" in txt:
+			self.last_error = txt
 		if "Result is XYZ:" in txt:
 			# Result is XYZ: d.dddddd d.dddddd d.dddddd, D50 Lab: d.dddddd d.dddddd d.dddddd
 			#							CCT = ddddK (Delta E d.dddddd)
@@ -248,13 +250,14 @@ class DisplayUniformityFrame(wx.Frame):
 			XYZ = re.search("XYZ:\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)", txt)
 			self.results[self.index].append({"XYZ": [float(value) for value in
 													 XYZ.groups()]})
+			self.last_error = None
 		loci = {"t": "Daylight", "T": "Planckian"}
 		for locus in loci.values():
 			if locus in txt:
 				CT = re.search("Closest\s+%s\s+temperature\s+=\s+(\d+)K" % locus,
 							   txt, re.I)
 				self.results[self.index][-1]["C%sT" % locus[0]] = int(CT.groups()[0])
-		if "key to take a reading" in txt:
+		if "key to take a reading" in txt and not self.last_error:
 			if not self.is_measuring:
 				self.enable_buttons()
 				return
@@ -323,6 +326,7 @@ class DisplayUniformityFrame(wx.Frame):
 		self.index = -1
 		self.is_measuring = False
 		self.keepGoing = True
+		self.last_error = None
 		self.results = {}
 	
 	def show_cursor(self):
