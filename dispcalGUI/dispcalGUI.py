@@ -1543,11 +1543,14 @@ class MainFrame(BaseFrame):
 														   and edid["green_y"]
 														   and edid["blue_x"]
 														   and edid["blue_y"]))
-		self.menuitem_install_display_profile.Enable(bool(self.worker.displays))
+		self.menuitem_install_display_profile.Enable(bool(self.worker.displays) and
+			not config.get_display_name() == "Web")
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
-			bool(self.worker.displays))
+			bool(self.worker.displays) and
+			not config.get_display_name() == "Web")
 		self.menuitem_load_lut_from_display_profile.Enable(
-			bool(self.worker.displays))
+			bool(self.worker.displays) and
+			not config.get_display_name() == "Web")
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
@@ -1567,7 +1570,8 @@ class MainFrame(BaseFrame):
 											 not config.get_display_name() == "Web")
 		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")) and
 											not config.get_display_name() == "Web")
-		self.menuitem_lut_reset.Enable(bool(self.worker.displays))
+		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
+									   not config.get_display_name() == "Web")
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments))
 		self.menuitem_report_uncalibrated.Enable(bool(self.worker.displays) and 
