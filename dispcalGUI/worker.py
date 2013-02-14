@@ -3154,7 +3154,7 @@ class Worker(object):
 		if (os.path.isfile(args[-1] + ".ti3.backup") and
 			os.path.isfile(args[-1] + ".ti3")):
 			# Restore backed up TI3
-			os.remove(args[-1] + ".ti3")
+			os.rename(args[-1] + ".ti3", args[-1] + ".bpc.ti3")
 			os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
 			ti3_file = open(args[-1] + ".ti3", "rb")
 			ti3 = ti3_file.read()
