@@ -233,7 +233,7 @@ class DisplayUniformityFrame(wx.Frame):
 		self.panels[self.index].Refresh()
 		self.panels[self.index].Update()
 		# Use a delay to allow for TFT lag
-		wx.CallLater(125, self.worker.safe_send, " ")
+		wx.CallLater(200, self.worker.safe_send, " ")
 
 	def parse_txt(self, txt):
 		if not txt:
