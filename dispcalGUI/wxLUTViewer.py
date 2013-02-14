@@ -750,13 +750,6 @@ class LUTFrame(wx.Frame):
 			profile = ICCP.ICCProfile()
 			profile._data = "\0" * 128
 			profile._tags.desc = ICCP.TextDescriptionType("", "desc")
-			profile._tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
-			profile._tags.vcgt.update({
-				"channels": 3,
-				"entryCount": 256,
-				"entrySize": 1,
-				"data": [range(0, 256), range(0, 256), range(0, 256)]
-			})
 			profile.size = len(profile.data)
 			profile.is_loaded = True
 		elif not isinstance(profile, ICCP.ICCProfile):

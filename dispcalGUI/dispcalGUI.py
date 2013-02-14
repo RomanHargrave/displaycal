@@ -4854,7 +4854,19 @@ class MainFrame(BaseFrame):
 			if self.install_cal(capture_output=True, cal=False, 
 								skip_scripts=True, silent=True,
 								title=lang.getstr("calibration.reset")) is True:
-				self.lut_viewer_load_lut(profile=None)
+				profile = ICCP.ICCProfile()
+				profile._data = "\0" * 128
+				profile._tags.desc = ICCP.TextDescriptionType("", "desc")
+				profile._tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
+				profile._tags.vcgt.update({
+					"channels": 3,
+					"entryCount": 256,
+					"entrySize": 1,
+					"data": [range(0, 256), range(0, 256), range(0, 256)]
+				})
+				profile.size = len(profile.data)
+				profile.is_loaded = True
+				self.lut_viewer_load_lut(profile=profile)
 				if verbose >= 1:
 					safe_print(lang.getstr("success"))
 				return True
