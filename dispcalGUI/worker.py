@@ -86,7 +86,6 @@ INST_CAL_MSGS = ["Do a reflective white calibration",
 				 "Click the instrument on its reflective white reference",
 				 "Place the instrument in the dark",
 				 "Place cap on the instrument",  # i1 Pro
-				 "place on the white calibration reference",  # i1 Pro
 				 "Set instrument sensor to calibration position",  # ColorMunki
 				 "Place the instrument on its transmissive white source",
 				 "Use the appropriate tramissive blocking",
@@ -598,7 +597,10 @@ class FilteredStream():
 				"key to continue",
 				"key to retry",
 				"key to take a reading",
-				" or Q to "] + INST_CAL_MSGS
+				" or Q to ",
+				"place on the white calibration reference",
+				"read failed due to the sensor being in the wrong position",
+				"Ambient filter should be removed"] + INST_CAL_MSGS
 	
 	substitutions = {" peqDE ": " previous pass DE ",
 					 "patch ": "Patch ",
@@ -1030,45 +1032,54 @@ class Worker(object):
 					break
 		return oyranos
 	
-	def check_instrument_calibration(self):
+	def check_instrument_calibration(self, txt):
 		""" Check if current instrument needs sensor calibration by looking
 		at Argyll CMS command output """
-		msgs = self.recent.read()
-		if (not getattr(self, "instrument_calibration_complete", False) and
-			"Calibration complete" in msgs and
-			"key to continue" in self.lastmsg.read()):
-			self.instrument_calibration_complete = True
-		elif (not getattr(self, "instrument_calibration_complete", False) or
-			  "Calibration failed" in msgs):
-			for calmsg in INST_CAL_MSGS:
-				if calmsg in msgs or "Calibration failed" in msgs:
-					self.recent.clear()
-					wx.CallAfter(self.do_instrument_calibration)
-					break
-	
-	def check_instrument_place_on_screen(self):
-		msg = self.recent.read()
-		lastmsg = self.lastmsg.read().strip()
-		if ("key to continue" in lastmsg.lower() and
-			"place instrument on test window" in
-			"".join(msg.splitlines()[-2:-1]).lower()):
-			self.recent.clear()
-			if (getattr(self, "instrument_calibration_complete", False) or
-				config.get_display_name() == "Web"):
-				wx.CallAfter(self.instrument_place_on_screen)
+		if not self.instrument_calibration_complete:
+			if "calibration complete" in txt.lower():
+				self.instrument_calibration_complete = True
 			else:
-				if getcfg("measure.darken_background"):
-					# Allow the user to move the terminal 
-					# window if using black background, 
-					# otherwise send space key to start
-					# measurements right away
-					sleep(3)
+				for calmsg in INST_CAL_MSGS:
+					if calmsg in txt or "calibration failed" in txt.lower():
+						self.do_instrument_calibration()
+						break
+	
+	def check_instrument_place_on_screen(self, txt):
+		""" Check if instrument should be placed on screen by looking
+		at Argyll CMS command output """
+		if "place instrument on test window" in txt.lower():
+			self.instrument_place_on_screen_msg = True
+		if (self.instrument_place_on_screen_msg and
+			"key to continue" in txt.lower()):
+			if (self.instrument_calibration_complete or
+				((config.get_display_name() == "Web" or
+				  getcfg("measure.darken_background")) and
+				 (not self.dispread_after_dispcal or
+				  self.cmdname == "dispcal"))):
+				# Show a dialog asking user to place the instrument on the
+				# screen if the instrument calibration was completed,
+				# or if we measure a remote ("Web") display,
+				# or if we use a black background during measurements,
+				# but in case of the latter two only if dispread is not
+				# run directly after dispcal
+				self.instrument_place_on_screen()
+			else:
 				if sys.platform != "win32":
 					sleep(.5)
 				if self.subprocess.isalive():
 					if debug or test:
 						safe_print('Sending SPACE key')
 					self.safe_send(" ")
+	
+	def check_instrument_sensor_position(self, txt):
+		""" Check instrument sensor position by looking
+		at Argyll CMS command output """
+		if "read failed due to the sensor being in the wrong position" in txt.lower():
+			self.instrument_sensor_position_msg = True
+		if (self.instrument_sensor_position_msg and
+			" or q to " in txt.lower()):
+			self.instrument_sensor_position_msg = False
+			self.instrument_reposition_sensor()
 	
 	def do_instrument_calibration(self):
 		""" Ask user to initiate sensor calibration and execute.
@@ -1107,10 +1118,29 @@ class Worker(object):
 		and give an option to cancel """
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
-		dlg = ConfirmDialog(self.progress_wnd, msg=lang.getstr("instrument.place_on_screen"), 
+		dlg = ConfirmDialog(self.progress_wnd,
+							msg=lang.getstr("instrument.place_on_screen"), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
+		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
+		self.progress_wnd.MakeModal(True)
+		if dlg_result != wx.ID_OK:
+			self.abort_subprocess()
+			return False
+		if debug or test:
+			safe_print('Sending SPACE key')
+		self.safe_send(" ")
+	
+	def instrument_reposition_sensor(self):
+		self.progress_wnd.Pulse(" " * 4)
+		self.progress_wnd.MakeModal(False)
+		dlg = ConfirmDialog(self.progress_wnd,
+							msg=lang.getstr("instrument.reposition_sensor"), 
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-warning"))
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		self.progress_wnd.MakeModal(True)
@@ -2108,10 +2138,10 @@ class Worker(object):
 												 linesep_in="\n", 
 												 triggers=[]))
 					logfile = Files((logfile, stdout, self.recent,
-									 self.lastmsg))
+									 self.lastmsg, self))
 				else:
 					logfile = Files((stdout, self.recent,
-									 self.lastmsg))
+									 self.lastmsg, self))
 				if (self.interactive and getattr(self, "terminal", None)):
 					logfile = Files((FilteredStream(self.terminal,
 													discard="",
@@ -2263,6 +2293,9 @@ class Worker(object):
 						return UnloggedError("".join(self.output[i:]))
 			return False
 		return True
+	
+	def flush(self):
+		pass
 
 	def _generic_consumer(self, delayedResult, consumer, continue_next, *args, 
 						 **kwargs):
@@ -3285,6 +3318,13 @@ class Worker(object):
 		self.wrapup(not isinstance(result, Exception) and result,
 					isinstance(result, Exception) or not result)
 		return result
+	
+	def parse(self, txt):
+		if not txt:
+			return
+		self.check_instrument_calibration(txt)
+		self.check_instrument_place_on_screen(txt)
+		self.check_instrument_sensor_position(txt)
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
 						display_manufacturer=None):
@@ -3866,8 +3906,6 @@ class Worker(object):
 		   getattr(self, "thread_abort", False):
 			self.progress_wnd.Pulse(lang.getstr("aborting"))
 			return
-		self.check_instrument_calibration()
-		self.check_instrument_place_on_screen()
 		percentage = None
 		msg = self.recent.read(FilteredStream.triggers)
 		lastmsg = self.lastmsg.read(FilteredStream.triggers).strip()
@@ -3923,8 +3961,8 @@ class Worker(object):
 			else:
 				if "Setting up the instrument" in lastmsg:
 					msg = lang.getstr("instrument.initializing")
-				elif "Created web server at" in lastmsg:
-					webserver = re.search("(http\:\/\/[^']+)", lastmsg)
+				elif "Created web server at" in msg:
+					webserver = re.search("(http\:\/\/[^']+)", msg)
 					if webserver:
 						msg = (lang.getstr("webserver.waiting") +
 							   " " + webserver.groups()[0])
@@ -4162,6 +4200,8 @@ class Worker(object):
 			progress_start = 100
 		self.resume = resume
 		self.instrument_calibration_complete = False
+		self.instrument_place_on_screen_msg = False
+		self.instrument_sensor_position_msg = False
 		if self.interactive:
 			self.progress_start_timer = wx.Timer()
 			if getattr(self, "progress_wnd", None) and \
@@ -5151,3 +5191,6 @@ class Worker(object):
 								   tuple(safe_unicode(s) for s in 
 										 (self.tempdir, exception)))
 		return True
+	
+	def write(self, txt):
+		wx.CallAfter(self.parse, txt)
