@@ -16,6 +16,8 @@ p.lead=function(ln) {
 	return v
 };
 
+var selected_index = 0;
+
 // Main
 function generate_report() {
 	var cells = [],
@@ -52,7 +54,7 @@ function generate_report() {
 			CT_diff = [],
 			CT_diff_percent = [];
 		for (var j = 0; j < results[i].length; j ++) {
-			var line = '<strong>' + (100 - j * 25) + '% RGB:</strong> Y = ' + results[i][j]['XYZ'][1].accuracy(2) + ' cd/m²',
+			var line = '<strong class="rgb_toggle" onclick="window.selected_index = ' + j + '; generate_report()">' + (100 - j * 25) + '% RGB:</strong> Y = ' + results[i][j]['XYZ'][1].accuracy(2) + ' cd/m²',
 				rLab = reference[j]['Lab_scaled'],
 				Lab = results[i][j]['Lab_scaled'];
 			CCT.push(results[i][j]['CCT']);
@@ -71,9 +73,12 @@ function generate_report() {
 				Y_diff_percent.push(100.0 / reference[0]['XYZ'][1] * Y_diff[j]);
 				line += ' (' + (Y_diff_percent[j] > 0 ? '+' : '') + Y_diff_percent[j].accuracy(2) + '%), ' + delta_C[j].accuracy(2) + ' ΔC*00<br>\n<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(CCT[j]) + 'K (' + (CCT_diff_percent[j] > 0 ? '+' : '') + CCT_diff_percent[j].accuracy(2) + '%), <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(CT[j]) + 'K (' + (CT_diff_percent[j] > 0 ? '+' : '') + CT_diff_percent[j].accuracy(2) + '%)';
 			}
-			if (j == 0) {
-				// 100% RGB
+			if (j == selected_index) {
 				rgb = jsapi.math.color.Lab2RGB(Lab[0], Lab[1] - rLab[1], Lab[2] - rLab[2], 'D50', 255, true);
+				if (rgb[0] < 128 || rgb[1] < 128 || rgb[2] < 128)
+					document.getElementsByTagName('body')[0].style.color = '#fff';
+				else
+					document.getElementsByTagName('body')[0].style.color = '#000';
 			}
 			cellcontent.push(line);
 		}
