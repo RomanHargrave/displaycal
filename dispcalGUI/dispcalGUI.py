@@ -7264,8 +7264,6 @@ class MainFrame(BaseFrame):
 			profile_name = re.sub("[-_\s]+%dns?|%dns?[-_\s]*", "", profile_name)
 		instrument = self.comport_ctrl.GetStringSelection()
 		if instrument:
-			instrument = instrument.replace("Colorimetre", "")
-			instrument = instrument.replace(" ", "")
 			profile_name = profile_name.replace("%in", instrument)
 		else:
 			profile_name = re.sub("[-_\s]+%in|%in[-_\s]*", "", profile_name)
