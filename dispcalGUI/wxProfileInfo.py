@@ -666,12 +666,12 @@ class GamutViewOptions(wx.Panel):
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profiles = OrderedDict([(lang.getstr("calibration.file.none"),
 												 None)])
-		for name in ["sRGB", "ClayRGB1998", "Rec601_525_60", "Rec601_625_50",
-					 "Rec709", "SMPTE240M"]:
+		for name in ["sRGB", "ClayRGB1998", "DCI_P3", "Rec601_525_60",
+					 "Rec601_625_50", "Rec709", "SMPTE240M"]:
 			path = get_data_path("ref/%s.icm" % name)
 			if path:
 				profile = ICCP.ICCProfile(path)
-				self.comparison_profiles[name] = profile
+				self.comparison_profiles[profile.getDescription()] = profile
 		for path in ["AdobeRGB1998.icc",
 					 "ECI-RGB.V1.0.icc",
 					 "eciRGB_v2.icc",
@@ -702,9 +702,20 @@ class GamutViewOptions(wx.Panel):
 				pass
 			else:
 				self.comparison_profiles[profile.getDescription()] = profile
+		comparison_profiles = self.comparison_profiles[2:]
+		def cmp(x, y):
+			if x.lower() > y.lower():
+				return 1
+			if x.lower() < y.lower():
+				return -1
+			return 0
+		comparison_profiles.sort(cmp)
+		self.comparison_profiles = self.comparison_profiles[:2]
+		self.comparison_profiles.update(comparison_profiles)
 		self.comparison_profile_select = wx.Choice(self, -1,
 												   size=(150, -1), 
-												   choices=self.comparison_profiles.keys())
+												   choices=self.comparison_profiles.keys()[:2] +
+														   comparison_profiles.keys())
 		self.options_sizer.Add(self.comparison_profile_select, 
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profile_select.Bind(wx.EVT_CHOICE,
