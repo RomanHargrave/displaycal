@@ -1632,7 +1632,7 @@ class MainFrame(BaseFrame):
 				  id=self.comport_ctrl.GetId())
 		self.Bind(wx.EVT_CHOICE, self.measurement_mode_ctrl_handler, 
 				  id=self.measurement_mode_ctrl.GetId())
-		self.detect_displays_and_ports_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.detect_displays_and_ports_btn.SetBitmapDisabled(getbitmap("32x16/empty"))
 		self.Bind(wx.EVT_BUTTON, self.check_update_controls, 
 				  id=self.detect_displays_and_ports_btn.GetId())
 		
