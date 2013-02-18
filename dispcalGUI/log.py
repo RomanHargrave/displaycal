@@ -17,6 +17,30 @@ import config
 
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
+class DummyLogger():
+
+	def critical(self, msg, *args, **kwargs):
+		pass
+
+	def debug(self, msg, *args, **kwargs):
+		pass
+
+	def error(self, msg, *args, **kwargs):
+		pass
+
+	def exception(self, msg, *args, **kwargs):
+		pass
+
+	def info(self, msg, *args, **kwargs):
+		pass
+
+	def log(self, level, msg, *args, **kwargs):
+		pass
+
+	def warning(self, msg, *args, **kwargs):
+		pass
+
+
 class Log():
 	
 	def __call__(self, msg, fn=None):
@@ -26,8 +50,8 @@ class Log():
 		Optionally use function 'fn' instead of logging.info.
 		
 		"""
-		if fn is None and logging.root.handlers:
-			fn = logging.info
+		if fn is None and logging.getLogger(appname).handlers:
+			fn = logging.getLogger(appname).info
 		if fn:
 			for line in universal_newlines(msg).split("\n"):
 				fn(line)
@@ -72,19 +96,21 @@ safe_log = SafeLogger(print_=False)
 safe_print = SafeLogger()
 
 
-def setup_logging():
-	"""
-	Setup the logging facility.
-	"""
-	logfile = os.path.join(logdir, appname + ".log")
-	backupCount = 5
+def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0):
+	logger = logging.getLogger(name)
+	logger.setLevel(level)
+	logfile = os.path.join(logdir, name + ".log")
+	for handler in logger.handlers:
+		if (isinstance(handler, logging.handlers.TimedRotatingFileHandler) and
+			handler.baseFilename == os.path.abspath(logfile)):
+			return logger
 	if not os.path.exists(logdir):
 		try:
 			os.makedirs(logdir)
 		except Exception, exception:
 			safe_print(u"Warning - log directory '%s' could not be created: %s" 
 					   % tuple(safe_unicode(s) for s in (logdir, exception)))
-	if os.path.exists(logfile):
+	elif os.path.exists(logfile):
 		try:
 			logstat = os.stat(logfile)
 		except Exception, exception:
@@ -152,18 +178,25 @@ def setup_logging():
 										   u"rollover: %s" % 
 										   tuple(safe_unicode(s) for s in 
 												 (logbackup, exception)))
-	logger = logging.getLogger()
-	logger.setLevel(logging.DEBUG)
 	if os.path.exists(logdir):
 		try:
-			filehandler = logging.handlers.TimedRotatingFileHandler(logfile, 
-				when = "midnight", backupCount = backupCount)
+			filehandler = logging.handlers.TimedRotatingFileHandler(logfile,
+																	when=when,
+																	backupCount=backupCount)
 			fileformatter = logging.Formatter("%(asctime)s %(message)s")
 			filehandler.setFormatter(fileformatter)
 			logger.addHandler(filehandler)
 		except Exception, exception:
 			safe_print(u"Warning - logging to file '%s' not possible: %s" % 
 					   tuple(safe_unicode(s) for s in (logfile, exception)))
+	return logger
+
+
+def setup_logging():
+	"""
+	Setup the logging facility.
+	"""
+	logger = get_file_logger(appname, logging.DEBUG, "midnight", 5)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")
 	streamhandler.setFormatter(streamformatter)

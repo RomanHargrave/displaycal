@@ -20,6 +20,7 @@ from lib.agw.artmanager import ArtManager
 
 from config import (get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg,
 					valid_values)
+from log import get_file_logger
 from meta import name as appname
 from ordereddict import OrderedDict
 from util_str import wrap
@@ -756,6 +757,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
 		# Final initialization steps
+		self.logger = get_file_logger("adjust")
 		self._setup(True)
 		
 		self.Show()
@@ -842,6 +844,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.lb.AssignImageList(imagelist)
 	
 	def _setup(self, init=False):
+		self.logger.info("-" * 80)
 		self.cold_run = True
 		self.is_busy = None
 		self.is_measuring = None
@@ -1039,6 +1042,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 				  False: FGCOLOUR}
 		if not txt:
 			return
+		self.logger.info("%r" % txt)
 		if "Setting up the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
 		# Argyll CMS < 1.3.6: "Display type is (CRT|LCD)"

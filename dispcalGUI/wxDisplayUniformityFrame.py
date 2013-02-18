@@ -20,6 +20,7 @@ from wxaddons import wx
 
 from config import (getbitmap, getcfg, get_icon_bundle, get_data_path,
 					get_display_number, get_verified_path, setcfg)
+from log import get_file_logger
 from meta import name as appname, version as appversion
 from util_os import launch_file, waccess
 from util_str import center
@@ -119,6 +120,7 @@ class DisplayUniformityFrame(wx.Frame):
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
 		# Final initialization steps
+		self.logger = get_file_logger("uniformity")
 		self._setup()
 		
 		self.Show()
@@ -238,6 +240,7 @@ class DisplayUniformityFrame(wx.Frame):
 	def parse_txt(self, txt):
 		if not txt:
 			return
+		self.logger.info("%r" % txt)
 		if "Setting up the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
 		if "Spot read failed" in txt:
@@ -323,6 +326,7 @@ class DisplayUniformityFrame(wx.Frame):
 		self.show_cursor()
 	
 	def _setup(self):
+		self.logger.info("-" * 80)
 		self.index = -1
 		self.is_measuring = False
 		self.keepGoing = True

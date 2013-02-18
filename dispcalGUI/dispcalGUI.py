@@ -8846,7 +8846,7 @@ def main():
 	except Exception, exception:
 		handle_error(u"Fatal error: " + safe_unicode(traceback.format_exc()))
 	try:
-		logger = logging.getLogger()
+		logger = logging.getLogger(appname)
 		for handler in logger.handlers:
 			logger.removeHandler(handler)
 		logging.shutdown()

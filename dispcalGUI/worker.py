@@ -54,7 +54,7 @@ if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import (iccprofiles_home, iccprofiles_display_home, 
 							  xdg_config_home, xdg_config_dirs)
 from edid import WMIError, get_edid
-from log import log, safe_print
+from log import DummyLogger, get_file_logger, log, safe_print
 from meta import name as appname, version
 from options import ascii, debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
@@ -1180,6 +1180,20 @@ class Worker(object):
 		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
+		if not hasattr(self, "logger") or (self.interactive and self.owner and
+										   isinstance(self.logger,
+													  DummyLogger)):
+			# Log interaction with Argyll tools that run interactively
+			if self.interactive and self.owner:
+				if self.owner.Name != "mainframe":
+					name = "interact.%s" % self.owner.Name
+				else:
+					name = "interact"
+				self.logger = get_file_logger(name)
+			else:
+				self.logger = DummyLogger()
+		if self.interactive:
+			self.logger.info("-" * 80)
 
 	def create_3dlut(self, profile_in, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", bpc=True, format="3dl",
@@ -2196,6 +2210,7 @@ class Worker(object):
 										retrycount += 1
 										logfile.write("\r\n%s: Retrying (%s)..." % 
 													  (appname, retrycount))
+										self.logger.info("Sending key(s) ' ' (%i)" % retrycount)
 										self.subprocess.send(" ")
 							else:
 								self.subprocess.expect(wexpect.EOF, 
@@ -3322,6 +3337,7 @@ class Worker(object):
 	def parse(self, txt):
 		if not txt:
 			return
+		self.logger.info("%r" % txt)
 		self.check_instrument_calibration(txt)
 		self.check_instrument_place_on_screen(txt)
 		self.check_instrument_sensor_position(txt)
@@ -4039,8 +4055,7 @@ class Worker(object):
 			try:
 				if self.measure_cmd and hasattr(self.subprocess, "send"):
 					try:
-						if debug or test:
-							safe_print('Sending ESC (1)')
+						self.logger.info("Sending key(s) %r (1)" % "\x1b")
 						self.subprocess.send("\x1b")
 						ts = time()
 						while getattr(self, "subprocess", None) and \
@@ -4051,20 +4066,17 @@ class Worker(object):
 							sleep(1)
 						if getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
-							if debug or test:
-								safe_print('Sending ESC (2)')
+							self.logger.info("Sending key(s) %r (2)" % "\x1b")
 							self.subprocess.send("\x1b")
 							sleep(.5)
 					except Exception, exception:
-						if debug:
-							safe_print(traceback.format_exc())
+						self.logger.exception("Exception")
 				if getattr(self, "subprocess", None) and \
 				   (hasattr(self.subprocess, "poll") and 
 					self.subprocess.poll() is None) or \
 				   (hasattr(self.subprocess, "isalive") and 
 					self.subprocess.isalive()):
-					if debug or test:
-						safe_print('Trying to terminate subprocess...')
+					self.logger.info("Trying to terminate subprocess...")
 					self.subprocess.terminate()
 					ts = time()
 					while getattr(self, "subprocess", None) and \
@@ -4076,12 +4088,10 @@ class Worker(object):
 					if getattr(self, "subprocess", None) and \
 					   hasattr(self.subprocess, "isalive") and \
 					   self.subprocess.isalive():
-						if debug or test:
-							safe_print('Trying to terminate subprocess forcefully...')
+						self.logger.info("Trying to terminate subprocess forcefully...")
 						self.subprocess.terminate(force=True)
 			except Exception, exception:
-				if debug:
-					safe_print(traceback.format_exc())
+				self.logger.exception("Exception")
 			if debug:
 				safe_print('[D] end try')
 		elif debug:
@@ -4114,9 +4124,11 @@ class Worker(object):
 		""" Safely send a keystroke to the current subprocess """
 		for i in xrange(0, retry):
 			sleep(.25)
+			self.logger.info("Sending key(s) %r (%i)" % (bytes, i + 1))
 			try:
 				self.subprocess.send(bytes)
-			except:
+			except Exception, exception:
+				self.logger.exception("Exception")
 				if i == retry - 2:
 					return False
 			else:
@@ -4296,6 +4308,7 @@ class Worker(object):
 				# exit
 				self.abort_subprocess()
 				return
+			self.logger.info("Sending key(s) %r" % chr(keycode))
 			try:
 				self.subprocess.send(chr(keycode))
 			except:
