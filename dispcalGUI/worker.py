@@ -4129,10 +4129,9 @@ class Worker(object):
 				self.subprocess.send(bytes)
 			except Exception, exception:
 				self.logger.exception("Exception")
-				if i == retry - 2:
-					return False
 			else:
 				return True
+		return False
 
 	def spyder2_firmware_exists(self):
 		""" Check if the Spyder 2 firmware file exists in any of the known
