@@ -2210,8 +2210,7 @@ class Worker(object):
 										retrycount += 1
 										logfile.write("\r\n%s: Retrying (%s)..." % 
 													  (appname, retrycount))
-										self.logger.info("Sending key(s) ' ' (%i)" % retrycount)
-										self.subprocess.send(" ")
+										self.safe_send(" ")
 							else:
 								self.subprocess.expect(wexpect.EOF, 
 													   timeout=None)
@@ -4055,8 +4054,7 @@ class Worker(object):
 			try:
 				if self.measure_cmd and hasattr(self.subprocess, "send"):
 					try:
-						self.logger.info("Sending key(s) %r (1)" % "\x1b")
-						self.subprocess.send("\x1b")
+						self.safe_send("\x1b")
 						ts = time()
 						while getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
@@ -4066,8 +4064,7 @@ class Worker(object):
 							sleep(1)
 						if getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
-							self.logger.info("Sending key(s) %r (2)" % "\x1b")
-							self.subprocess.send("\x1b")
+							self.safe_send("\x1b")
 							sleep(.5)
 					except Exception, exception:
 						self.logger.exception("Exception")
@@ -4123,7 +4120,6 @@ class Worker(object):
 	def safe_send(self, bytes, retry=3):
 		""" Safely send a keystroke to the current subprocess """
 		for i in xrange(0, retry):
-			sleep(.25)
 			self.logger.info("Sending key(s) %r (%i)" % (bytes, i + 1))
 			try:
 				self.subprocess.send(bytes)
@@ -4131,6 +4127,7 @@ class Worker(object):
 				self.logger.exception("Exception")
 			else:
 				return True
+			sleep(.25)
 		return False
 
 	def spyder2_firmware_exists(self):
@@ -4307,9 +4304,8 @@ class Worker(object):
 				# exit
 				self.abort_subprocess()
 				return
-			self.logger.info("Sending key(s) %r" % chr(keycode))
 			try:
-				self.subprocess.send(chr(keycode))
+				self.safe_send(chr(keycode))
 			except:
 				pass
 	
