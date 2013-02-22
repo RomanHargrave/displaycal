@@ -75,7 +75,7 @@ function generate_report() {
 			}
 			if (j == selected_index) {
 				rgb = jsapi.math.color.Lab2RGB(Lab[0], Lab[1] - rLab[1], Lab[2] - rLab[2], 'D50', 255, true);
-				if (rgb[0] < 128 || rgb[1] < 128 || rgb[2] < 128)
+				if (results[i] == reference && rgb[0] < 128 && rgb[1] < 128 && rgb[2] < 128)
 					document.getElementsByTagName('body')[0].style.color = '#fff';
 				else
 					document.getElementsByTagName('body')[0].style.color = '#000';
