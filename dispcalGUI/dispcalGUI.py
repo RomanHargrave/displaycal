@@ -5686,6 +5686,11 @@ class MainFrame(BaseFrame):
 		# dereference it before we can delete the python attribute
 		self.modaldlg = None
 		del self.modaldlg
+		if sys.platform == "darwin":
+			# For some reason, the call to enable_menus() in Show()
+			# sometimes isn't enough under Mac OS X (e.g. after calibrate &
+			# profile)
+			self.enable_menus()
 		self.start_timers(True)
 		setcfg("calibration.file.previous", None)
 	
