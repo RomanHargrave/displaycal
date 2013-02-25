@@ -4122,11 +4122,12 @@ class Worker(object):
 		for i in xrange(0, retry):
 			self.logger.info("Sending key(s) %r (%i)" % (bytes, i + 1))
 			try:
-				self.subprocess.send(bytes)
+				wrote = self.subprocess.send(bytes)
 			except Exception, exception:
 				self.logger.exception("Exception")
 			else:
-				return True
+				if wrote == len(bytes):
+					return True
 			sleep(.25)
 		return False
 
