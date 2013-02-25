@@ -1972,6 +1972,7 @@ class Wtty:
                     self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, False, childPid)
                 except pywintypes.error, e:
                     if time.time() > ts + self.timeout:
+                        log('Timeout exceeded in Wtty.spawn().')
                         break
                 else:
                     self.pid = childPid
@@ -2049,33 +2050,19 @@ class Wtty:
                                                                   CREATE_NEW_CONSOLE, env, None, si)
             
    
-    def switchTo(self, attatched=True):
+    def switchTo(self, attached=True):
         """Releases from the current console and attatches
         to the childs."""
         
         if not self.__switch:
             return
         
-        if attatched:
+        if attached:
             FreeConsole()
         
-        try:
-            AttachConsole(self.conpid)
-            self.__consin = GetStdHandle(STD_INPUT_HANDLE)
-            self.__consout = self.getConsoleOut()
-        except Exception, e:
-            #e = traceback.format_exc()
-            try:
-                AttachConsole(self.__parentPid)
-            except Exception, ex:
-                pass
-                #log(e)
-                #log(ex)
-            return
-            #self.__consin = None
-            #self.__consout = None
-            #raise e
-                
+        AttachConsole(self.conpid)
+        self.__consin = GetStdHandle(STD_INPUT_HANDLE)
+        self.__consout = self.getConsoleOut()
         
     def switchBack(self):
         """Releases from the current console and attaches 
@@ -2133,26 +2120,21 @@ class Wtty:
     def write(self, s):
         """Writes input into the child consoles input buffer."""
     
+        if s[-1] == '\n':
+            s = s[:-1]
         if len(s) == 0:
             return 0
+        records = [self.createKeyEvent(c) for c in unicode(s)]
         self.switchTo()
         try:
-            if s[-1] == '\n':
-                s = s[:-1]
-            records = [self.createKeyEvent(c) for c in unicode(s)]
-            if not self.__consout:
-                return ""
             consinfo = self.__consout.GetConsoleScreenBufferInfo()
             startCo = consinfo['CursorPosition']
             wrote = self.__consin.WriteConsoleInput(records)
-            ts = time.time()
-            while self.__consin and self.__consin.PeekConsoleInput(8) != ():
-                if time.time() > ts + len(s) * .05:
-                    break
-                time.sleep(.05)
-            if self.__consout:
-                self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, len(s), startCo)
-        except:
+            while self.__consin.PeekConsoleInput(8) != ():
+                time.sleep(0)
+            self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, len(s), startCo)
+        except Exception, e:
+            log(e, '_exceptions')
             self.switchBack()
             raise
         self.switchBack()
@@ -2340,13 +2322,10 @@ class Wtty:
                 timeout -= end - start
         
         except Exception, e:
-            log(e)
+            log(e, '_exceptions')
             log('End Of File (EOF) in Wtty.read_nonblocking().')
             self.switchBack()
             raise EOF('End Of File (EOF) in Wtty.read_nonblocking().')
-            
-        self.switchBack()    
-        return s
     
     def refreshConsole(self):
         """Clears the console after pausing the child and
@@ -2479,7 +2458,7 @@ class ConsoleReader:
             try:
                 SetConsoleOutputCP(cp)
             except Exception, e:
-                log(e, 'consolereader', logdir)
+                log(e, 'consolereader_exceptions', logdir)
             else:
                 log("Console output code page: %s" % windll.kernel32.GetConsoleOutputCP(), 'consolereader', logdir)
         log('Spawning %s' % path, 'consolereader', logdir)
@@ -2492,7 +2471,7 @@ class ConsoleReader:
                 self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
                                                                              0, None, None, si)
             except Exception, e:
-                log(e, 'consolereader', logdir)
+                log(e, 'consolereader_exceptions', logdir)
                 time.sleep(.1)
                 win32api.PostThreadMessage(int(tid), WM_USER, 0, 0)
                 sys.exit()
@@ -2518,7 +2497,7 @@ class ConsoleReader:
                         # Don't log. Child process will exit regardless when 
                         # calling sys.exit
                         if e.args[0] != winerror.ERROR_ACCESS_DENIED:
-                            log(e, 'consolereader', logdir)
+                            log(e, 'consolereader_exceptions', logdir)
                     sys.exit()
                 
                 if cursorPos.Y > maxconsoleY and not paused:
@@ -2537,7 +2516,7 @@ class ConsoleReader:
                                     
                 time.sleep(.1)
         except Exception, e:
-            log(e, 'consolereader', logdir)
+            log(e, 'consolereader_exceptions', logdir)
             time.sleep(.1)
     
     def handler(self, sig):       
