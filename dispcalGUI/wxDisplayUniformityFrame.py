@@ -235,7 +235,7 @@ class DisplayUniformityFrame(wx.Frame):
 		self.panels[self.index].Refresh()
 		self.panels[self.index].Update()
 		# Use a delay to allow for TFT lag
-		wx.CallLater(200, self.worker.safe_send, " ")
+		wx.CallLater(200, self.safe_send, " ")
 
 	def parse_txt(self, txt):
 		if not txt:
@@ -332,6 +332,10 @@ class DisplayUniformityFrame(wx.Frame):
 		self.keepGoing = True
 		self.last_error = None
 		self.results = {}
+	
+	def safe_send(self, bytes):
+		if self.has_worker_subprocess() and not self.worker.subprocess_abort:
+			self.worker.safe_send(bytes)
 	
 	def show_cursor(self):
 		cursor = wx.StockCursor(wx.CURSOR_ARROW)
