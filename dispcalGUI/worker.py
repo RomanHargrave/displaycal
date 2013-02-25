@@ -869,6 +869,7 @@ class Worker(object):
 		self.options_dispread = []
 		self.options_targen = []
 		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
+		self.send_buffer = None
 		self.subprocess_abort = False
 		self.sudo_availoptions = None
 		self.auth_timestamp = 0
@@ -1051,6 +1052,12 @@ class Worker(object):
 			self.instrument_place_on_screen_msg = True
 		if (self.instrument_place_on_screen_msg and
 			"key to continue" in txt.lower()):
+			if (self.cmdname == get_argyll_utilname("dispcal") and
+				sys.platform == "darwin"):
+				# On the Mac dispcal's test window
+				# hides the cursor and steals focus
+				start_new_thread(mac_app_activate, (1, appname if isapp 
+													else "Python"))
 			if (self.instrument_calibration_complete or
 				((config.get_display_name() == "Web" or
 				  getcfg("measure.darken_background")) and
@@ -1080,6 +1087,20 @@ class Worker(object):
 			" or q to " in txt.lower()):
 			self.instrument_sensor_position_msg = False
 			self.instrument_reposition_sensor()
+	
+	def check_retry_measurement(self, txt):
+		if ("key to retry:" in txt and
+			not "read stopped at user request!"
+			in self.recent.read() and
+			("Sample read failed due to misread"
+			 in self.recent.read() or 
+			 "Sample read failed due to communication problem"
+			 in self.recent.read()) and
+			not self.subprocess_abort):
+			self.retrycount += 1
+			self.recent.write("\r\n%s: Retrying (%s)..." % 
+							  (appname, self.retrycount))
+			self.safe_send(" ")
 	
 	def do_instrument_calibration(self):
 		""" Ask user to initiate sensor calibration and execute.
@@ -1177,6 +1198,7 @@ class Worker(object):
 		self.recent = FilteredStream(LineCache(maxlines=3), self.data_encoding, 
 									 discard=self.recent_discard,
 									 triggers=self.triggers)
+		self.retrycount = 0
 		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
@@ -2180,42 +2202,24 @@ class Worker(object):
 							self.subprocess.interact()
 					self.subprocess.logfile_read = logfile
 					if self.subprocess.isalive():
-						try:
-							if self.measure_cmd:
-								self.subprocess.expect(" or Q to ",
+						if self.measure_cmd:
+							while self.subprocess.isalive():
+								self.subprocess.expect([r" or Q to ",
+														r"8\) Exit",
+														wexpect.EOF],
 													   timeout=None)
-								if needs_user_interaction and \
-								   sys.platform == "darwin":
-									# On the Mac dispcal's test window
-									# hides the cursor and steals focus
-									start_new_thread(mac_app_activate, 
-													 (1, appname if isapp 
-													 	 else "Python"))
-								retrycount = 0
-								while self.subprocess.isalive():
-									# Automatically retry on error, user can 
-									# cancel via progress dialog
-									self.subprocess.expect("key to retry:", 
-														   timeout=None)
-									if sys.platform != "win32":
-										sleep(.5)
-									if (self.subprocess.isalive() and
-									    not "Sample read stopped at user request!"
-									    in self.recent.read() and
-									    ("Sample read failed due to misread"
-									     in self.recent.read() or 
-									     "Sample read failed due to communication problem"
-									     in self.recent.read()) and
-									    not self.subprocess_abort):
-										retrycount += 1
-										logfile.write("\r\n%s: Retrying (%s)..." % 
-													  (appname, retrycount))
-										self.safe_send(" ")
-							else:
-								self.subprocess.expect(wexpect.EOF, 
-													   timeout=None)
-						except (wexpect.EOF, wexpect.TIMEOUT), exception:
-							pass
+								while not self.send_buffer:
+									if not self.subprocess.isalive():
+										break
+									sleep(.05)
+								if sys.platform != "win32":
+									sleep(.5)
+								if self.send_buffer:
+									self._safe_send(self.send_buffer)
+									self.send_buffer = None
+						else:
+							self.subprocess.expect(wexpect.EOF, 
+												   timeout=None)
 					if self.subprocess.after not in (wexpect.EOF, 
 													 wexpect.TIMEOUT):
 						self.subprocess.expect(wexpect.EOF, timeout=None)
@@ -3340,6 +3344,7 @@ class Worker(object):
 		self.check_instrument_calibration(txt)
 		self.check_instrument_place_on_screen(txt)
 		self.check_instrument_sensor_position(txt)
+		self.check_retry_measurement(txt)
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
 						display_manufacturer=None):
@@ -4054,17 +4059,12 @@ class Worker(object):
 			try:
 				if self.measure_cmd and hasattr(self.subprocess, "send"):
 					try:
-						self.safe_send("\x1b")
 						ts = time()
 						while getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
-							if time() > ts + 9 or \
-							   " or Q to " in self.lastmsg.read():
-								break
-							sleep(1)
-						if getattr(self, "subprocess", None) and \
-						   self.subprocess.isalive():
 							self.safe_send("\x1b")
+							if time() > ts + 9:
+								break
 							sleep(.5)
 					except Exception, exception:
 						self.logger.exception("Exception")
@@ -4117,7 +4117,10 @@ class Worker(object):
 				args += ["-R"]
 		return self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
 	
-	def safe_send(self, bytes, retry=3):
+	def safe_send(self, bytes):
+		self.send_buffer = bytes
+	
+	def _safe_send(self, bytes, retry=3):
 		""" Safely send a keystroke to the current subprocess """
 		for i in xrange(0, retry):
 			self.logger.info("Sending key(s) %r (%i)" % (bytes, i + 1))
