@@ -5648,6 +5648,11 @@ class MainFrame(BaseFrame):
 			InfoDialog(self, msg=failure_msg, 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
+			if sys.platform == "darwin":
+				# For some reason, the call to enable_menus() in Show()
+				# sometimes isn't enough under Mac OS X (e.g. after calibrate &
+				# profile)
+				self.enable_menus()
 			self.start_timers(True)
 			setcfg("calibration.file.previous", None)
 	
