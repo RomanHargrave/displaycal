@@ -497,6 +497,7 @@ defaults = {
 	"measurement_mode.backup": "l",
 	"measurement_mode.highres": 0,
 	"measurement_mode.projector": 0,
+	"measurement.continuous": 0,
 	"measurement.name.expanded": u"",
 	"measurement.play_sound": 1,
 	"measurement.save_path": expanduseru("~"),

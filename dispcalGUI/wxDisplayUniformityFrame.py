@@ -312,6 +312,8 @@ class DisplayUniformityFrame(wx.Frame):
 								   "${LOCUS}": locus},
 								  getcfg("report.pack_js"), "uniformity")
 					launch_file(save_path)
+				if getcfg("measurement.continuous"):
+					self.measure(event=Event(self.buttons[self.index]))
 	
 	def reset(self):
 		self._setup()
@@ -355,6 +357,15 @@ class DisplayUniformityFrame(wx.Frame):
 	
 	def write(self, txt):
 		wx.CallAfter(self.parse_txt, txt)
+
+
+class Event():
+
+	def __init__(self, evtobj):
+		self.evtobj = evtobj
+
+	def GetEventObject(self):
+		return self.evtobj
 
 
 if __name__ == "__main__":
