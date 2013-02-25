@@ -3958,7 +3958,8 @@ class Worker(object):
 				pass
 			else:
 				percentage = start / end * 100
-		if percentage and self.progress_wnd is getattr(self, "terminal", None):
+		if (percentage and time() > self.starttime + 3 and
+			self.progress_wnd is getattr(self, "terminal", None)):
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
@@ -4222,6 +4223,7 @@ class Worker(object):
 		self.instrument_calibration_complete = False
 		self.instrument_place_on_screen_msg = False
 		self.instrument_sensor_position_msg = False
+		self.starttime = time()
 		if self.interactive:
 			self.progress_start_timer = wx.Timer()
 			if getattr(self, "progress_wnd", None) and \
