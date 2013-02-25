@@ -2214,8 +2214,6 @@ class Worker(object):
 										if not self.subprocess.isalive():
 											break
 										sleep(.05)
-								if sys.platform != "win32":
-									sleep(.5)
 								if (self.send_buffer and
 									self.subprocess.isalive()):
 									self._safe_send(self.send_buffer)
