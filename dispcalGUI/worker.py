@@ -869,7 +869,6 @@ class Worker(object):
 		self.options_dispread = []
 		self.options_targen = []
 		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
-		self.send_buffer = None
 		self.subprocess_abort = False
 		self.sudo_availoptions = None
 		self.auth_timestamp = 0
@@ -1071,8 +1070,6 @@ class Worker(object):
 				# run directly after dispcal
 				self.instrument_place_on_screen()
 			else:
-				if sys.platform != "win32":
-					sleep(.5)
 				if self.subprocess.isalive():
 					if debug or test:
 						safe_print('Sending SPACE key')
@@ -1202,6 +1199,7 @@ class Worker(object):
 		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
+		self.send_buffer = None
 		if not hasattr(self, "logger") or (self.interactive and self.owner and
 										   isinstance(self.logger,
 													  DummyLogger)):
@@ -2206,15 +2204,20 @@ class Worker(object):
 							while self.subprocess.isalive():
 								self.subprocess.expect([r" or Q to ",
 														r"8\) Exit",
+														r"Current",
 														wexpect.EOF],
 													   timeout=None)
-								while not self.send_buffer:
-									if not self.subprocess.isalive():
-										break
-									sleep(.05)
+								if self.subprocess.after == wexpect.EOF:
+									break
+								if self.subprocess.after != "Current":
+									while not self.send_buffer:
+										if not self.subprocess.isalive():
+											break
+										sleep(.05)
 								if sys.platform != "win32":
 									sleep(.5)
-								if self.send_buffer:
+								if (self.send_buffer and
+									self.subprocess.isalive()):
 									self._safe_send(self.send_buffer)
 									self.send_buffer = None
 						else:
@@ -4059,6 +4062,10 @@ class Worker(object):
 			try:
 				if self.measure_cmd and hasattr(self.subprocess, "send"):
 					try:
+						if self.subprocess.after == "Current":
+							# Stop measurement
+							self.safe_send(" ")
+							sleep(1)
 						ts = time()
 						while getattr(self, "subprocess", None) and \
 						   self.subprocess.isalive():
@@ -4119,6 +4126,7 @@ class Worker(object):
 	
 	def safe_send(self, bytes):
 		self.send_buffer = bytes
+		return True
 	
 	def _safe_send(self, bytes, retry=3):
 		""" Safely send a keystroke to the current subprocess """
