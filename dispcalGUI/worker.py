@@ -3294,8 +3294,8 @@ class Worker(object):
 				try:
 					proxy = dbus_session.get_object("org.gnome.SettingsDaemon",
 													"/org/gnome/SettingsDaemon/Power")
-					iface = dbus_session.Interface(proxy,
-												   dbus_interface="org.gnome.SettingsDaemon.Power.Screen")
+					iface = dbus.Interface(proxy,
+										   dbus_interface="org.gnome.SettingsDaemon.Power.Screen")
 					brightness = iface.GetPercentage()
 				except dbus.exceptions.DBusException:
 					pass
