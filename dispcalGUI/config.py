@@ -525,6 +525,7 @@ defaults = {
 									# (sys.platform == "win32" and 
 									 # sys.getwindowsversion() >= (6, )) 
 								else "u",  # Linux, OSX
+	"profile.license": "Public Domain",
 	"profile.load_on_login": 1,
 	"profile.name": u" ".join([
 		u"%dns",

@@ -1904,6 +1904,7 @@ class MainFrame(BaseFrame):
 			"measurement.play_sound",
 			"measurement.save_path",
 			"profile.install_scope",
+			"profile.license",
 			"profile.load_on_login",
 			"profile.name",
 			"profile.save_path",
@@ -7161,6 +7162,15 @@ class MainFrame(BaseFrame):
 		elif result:
 			if isinstance(result, tuple):
 				profile.set_gamut_metadata(result[0], result[1])
+				prefixes = profile.tags.meta.getvalue("prefix", "", None).split(",")
+				# Set license
+				profile.tags.meta["License"] = getcfg("profile.license")
+				# Set device ID
+				device_id = self.worker.get_device_id()
+				if device_id:
+					profile.tags.meta["MAPPING_device_id"] = device_id
+					prefixes.append("MAPPING_")
+					profile.tags.meta["prefix"] = ",".join(prefixes)
 				profile.calculateID()
 				safe_print("-" * 80)
 			try:

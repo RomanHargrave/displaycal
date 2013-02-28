@@ -77,11 +77,10 @@ if sys.platform == "darwin":
 						  mac_terminal_set_colors, osascript)
 elif sys.platform == "win32":
 	import util_win
-else:
-	try:
-		import colord
-	except ImportError:
-		colord = None
+try:
+	import colord
+except ImportError:
+	colord = None
 from util_os import getenvu, is_superuser, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
@@ -3205,12 +3204,13 @@ class Worker(object):
 									result, dst_path=dst_path)
 		if not isinstance(result, Exception) and result:
 			result = self.update_profile(dst_path, ti3, chrm, tags, avg, peak,
-										 rms, gamut_volume, gamut_coverage)
+										 rms, gamut_volume, gamut_coverage,
+										 quality=getcfg("profile.quality"))
 		return result
 	
 	def update_profile(self, profile, ti3=None, chrm=None, tags=None,
 					   avg=None, peak=None, rms=None, gamut_volume=None,
-					   gamut_coverage=None):
+					   gamut_coverage=None, quality=None):
 		""" Update profile tags and metadata """
 		if isinstance(profile, basestring):
 			profile_path = profile
@@ -3273,6 +3273,15 @@ class Worker(object):
 			elif not "meta" in profile.tags:
 				# Make sure meta tag exists
 				profile.tags.meta = ICCP.DictType()
+			# Set license
+			profile.tags.meta["License"] = getcfg("profile.license")
+			# Set profile quality
+			quality = {"v": "very low",
+					   "l": "low",
+					   "m": "medium",
+					   "h": "high"}.get(quality)
+			if quality:
+				profile.tags.meta["Quality"] = quality
 			# Set OPENICC_automatic_generated to "0"
 			profile.tags.meta["OPENICC_automatic_generated"] = "0"
 			# Set GCM DATA_source to "calib"
@@ -3293,6 +3302,11 @@ class Worker(object):
 				else:
 					profile.tags.meta["SCREEN_brightness"] = str(brightness)
 					spec_prefixes += ",SCREEN_"
+			# Set device ID
+			device_id = self.get_device_id()
+			if device_id:
+				profile.tags.meta["MAPPING_device_id"] = device_id
+				spec_prefixes += ",MAPPING_"
 			prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
 			for prefix in spec_prefixes.split(","):
 				if not prefix in prefixes:
@@ -4523,7 +4537,8 @@ class Worker(object):
 												chrm=None, tags=True, avg=None,
 												peak=None, rms=None,
 												gamut_volume=gamut_volume,
-												gamut_coverage=gamut_coverage)
+												gamut_coverage=gamut_coverage,
+												quality=getcfg("calibration.quality"))
 						else:
 							# Update desc tag - ASCII needs to be 7-bit
 							# also add Unicode string if different from ASCII
