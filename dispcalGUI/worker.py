@@ -4449,6 +4449,8 @@ class Worker(object):
 						gz.write(data)
 					if outfilename != filename + ".gz":
 						# Rename the file afterwards if outfilename is different
+						if os.path.exists(outfilename):
+							os.remove(outfilename)
 						os.rename(filename + ".gz", outfilename)
 					# Remove uncompressed file
 					os.remove(tmpfilename)
