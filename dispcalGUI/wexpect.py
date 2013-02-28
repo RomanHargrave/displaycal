@@ -2336,8 +2336,6 @@ class Wtty:
         self.__currentReadCo.X = 0
         self.__currentReadCo.Y = 0
         writelen = self.__consSize[0] * self.__consSize[1]
-        # Use NUL as fill char because it displays as whitespace
-        # (if we interact() with the child)
         self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, writelen, orig)
         
         self.__bufferY = 0
@@ -2540,8 +2538,6 @@ class ConsoleReader:
         size = PyCOORDType(80, 16000)
         consout.SetConsoleScreenBufferSize(size)
         pos = PyCOORDType(0, 0)
-        # Use NUL as fill char because it displays as whitespace
-        # (if we interact() with the child)
         consout.FillConsoleOutputCharacter(screenbufferfillchar, size.X * size.Y, pos)   
     
     def suspendThread(self):
