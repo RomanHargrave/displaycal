@@ -3,15 +3,20 @@
 
 import os
 import shutil
+import sys
 from time import sleep
 
-from gi.repository import Colord
-from gi.repository import Gio
+try:
+	from gi.repository import Colord
+	from gi.repository import Gio
+except ImportError:
+	if sys.platform not in ("darwin", "win32"):
+		raise
+else:
+	cancellable = Gio.Cancellable.new();
 
 from defaultpaths import xdg_data_home
 
-
-cancellable = Gio.Cancellable.new();
 
 def client_connect():
 	""" Connect to colord """
