@@ -29,6 +29,17 @@ elif sys.platform == "win32":
 if sys.platform == "win32":
 	import pywintypes
 	import win32api
+elif sys.platform != "darwin":
+	try:
+		import dbus
+	except ImportError:
+		dbus = None
+		dbus_session = None
+	else:
+		try:
+			dbus_session = dbus.SessionBus()
+		except dbus.exceptions.DBusException:
+			dbus_session = None
 
 # custom
 import CGATS
@@ -3269,6 +3280,19 @@ class Worker(object):
 			# Add instrument
 			profile.tags.meta["MEASUREMENT_device"] = self.get_instrument_name().lower()
 			spec_prefixes = "DATA_,MEASUREMENT_,OPENICC_"
+			# Add screen brightness if applicable
+			if sys.platform not in ("darwin", "win32") and dbus_session:
+				try:
+					proxy = dbus_session.get_object("org.gnome.SettingsDaemon",
+													"/org/gnome/SettingsDaemon/Power")
+					iface = dbus_session.Interface(proxy,
+												   dbus_interface="org.gnome.SettingsDaemon.Power.Screen")
+					brightness = iface.GetPercentage()
+				except dbus.exceptions.DBusException:
+					pass
+				else:
+					profile.tags.meta["SCREEN_brightness"] = str(brightness)
+					spec_prefixes += ",SCREEN_"
 			prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
 			for prefix in spec_prefixes.split(","):
 				if not prefix in prefixes:
