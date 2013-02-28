@@ -1812,13 +1812,13 @@ class spawn_windows (spawn_unix, object):
                 time.sleep(.05)
             else:
                 raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
-        
-        if self.logfile is not None:
-            self.logfile.write (s)
-            self.logfile.flush()
-        if self.logfile_read is not None:
-            self.logfile_read.write (s)
-            self.logfile_read.flush()
+        else:
+            if self.logfile is not None:
+                self.logfile.write (s)
+                self.logfile.flush()
+            if self.logfile_read is not None:
+                self.logfile_read.write (s)
+                self.logfile_read.flush()
 
         return s
 
