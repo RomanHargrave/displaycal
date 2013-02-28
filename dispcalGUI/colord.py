@@ -15,7 +15,8 @@ except ImportError:
 else:
 	cancellable = Gio.Cancellable.new();
 
-from defaultpaths import xdg_data_home
+if sys.platform not in ("darwin", "win32"):
+	from defaultpaths import xdg_data_home
 
 
 def client_connect():
