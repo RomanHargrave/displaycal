@@ -928,7 +928,7 @@ class Worker(object):
 			else:
 				if self.argyll_version[0:3] >= [1, 5, 0]:
 					# Disable adaptive measurement mode
-					args += ["-ZA"]
+					args += ["-YA"]
 		if display:
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
