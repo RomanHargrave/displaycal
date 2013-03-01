@@ -113,6 +113,7 @@
 						<li><a href="#settings_calibration">Calibration settings</a></li>
 						<li><a href="#settings_profiling">Profiling settings</a></li>
 						<li><a href="#calibrating">Calibrating / profiling</a>
+						<li><a href="#remote">Remote measurements and profiling</a>
 						</li>
 					</ul>
 				</li>
@@ -219,6 +220,11 @@
 								<a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>Debian 5 (Lenny)</span>
+								<span><a href="http://dispcalgui.hoech.net/download/Debian_5.0/i386/dispcalGUI.deb">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/Debian_5.0/amd64/dispcalGUI.deb">x86_64</a></span>
+							</li>
+							<li>
 								<span>Debian 6 (Squeezy)</span>
 								<span><a href="http://dispcalgui.hoech.net/download/Debian_6.0/i386/dispcalGUI.deb">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/Debian_6.0/amd64/dispcalGUI.deb">x86_64</a></span>
@@ -242,6 +248,11 @@
 								<span>Fedora 17</span>
 								<span><a href="http://dispcalgui.hoech.net/download/Fedora_17/i386/dispcalGUI.rpm">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/Fedora_17/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
+								<span>Fedora 18</span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_18/i386/dispcalGUI.rpm">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/Fedora_18/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Mandriva 2009.1</span>
@@ -307,6 +318,11 @@
 								<span>SUSE Linux Enterprise 11 SP1</span>
 								<span><a href="http://dispcalgui.hoech.net/download/SLE_11_SP1/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP1/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
+								<span>Ubuntu 10.04 (Lucid)</span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/i386/dispcalGUI.deb">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 10.10 (Maverick)</span>
@@ -1092,12 +1108,18 @@
 						</dd>
 				</dl>
 
-				<h5>Finishing adjustments (CRT/LCD) and starting calibration/charaterisation</h5>
+				<h5>Finishing adjustments (CRT/LCD) and starting calibration/characterisation</h5>
 
 				<p>After the adjustments, you can run a check on all the settings by choosing the last option from the left-hand menu to verify the achieved values. If adjusting one setting adversely affected another, you can then simply repeat the respective option as necessary until the target parameters are met.</p>
 
 				<p>Finally, select “Continue on to calibration” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted help to adjust the display and don't want/need calibration curves to be created, you can also choose to exit by closing the interactive display adjustment window and then select “Profile only” from the main window.<br />
 				If you originally selected “Calibrate &amp; profile” and fulfil the requirements for <a href="#requirements-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, you may be forced to take the instrument off the screen to do a sensor self-calibration before starting the profiling measurements.</p>
+				
+				<h4 id="remote">Remote measurements and profiling</h4>
+				
+				<p>When using Argyll CMS 1.4.0 and newer, remote measurements on a device not directly connected to the machine that is running dispcalGUI is possible (e.g. a smartphone or tablet). The remote device needs to be able to run a web browser (Firefox recommended), and the local machine running dispcalGUI may need firewall rules added or altered to allow incoming connections. To set up remote profiling, select “Web @ localhost” from the display device dropdown menu, then choose the desired action (e.g. “Profile only”). When the message “Webserver waiting at http://&lt;IP&gt;:&lt;Port&gt;” appears, open the shown address in the remote browser and attach the measurement device.<br />
+				<strong>NOTE:</strong> If you use this method of displaying test patches, there is no access to the display video <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>s and hardware calibration is not possible. The colors will be displayed with 8 bit per component precision, and any screen-saver or power-saver will not be automatically disabled. You will also be at the mercy of any color management applied by the web browser, and may have to carefully review and configure such color management.<br />
+				<strong>NOTE:</strong> Close the web browser window or tab after each run, otherwise reconnection may fail upon further runs.</p>
 
 				<h4>Profile installation</h4>
 
@@ -1251,7 +1273,7 @@
 						<dd>This allows to update an existing report HTML file with the template and functionality from a newer version of dispcalGUI (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
 
 					<dt>Measure display device uniformity...</dt>
-						<dd>Measure the display at several points to evaluate evenness of illumination and chroma errors.</dd>
+						<dd>Measure the display at several points to evaluate evenness of illumination and chroma errors. The results are shown after all patches are measured, and include the luminance difference, delta C, which is the chrominance difference, CCT (correlated color temperature), and CDT (closest daylight temperature) or CPT (closest planckian temperature) depending on the selection for the whitepoint locus in the main window. Differences are computed in comparison to the center point, which is used as reference.</dd>
 
 
 					<dt id="import-correction-matrices">Import colorimeter corrections from other display profiling software...</dt>
@@ -1414,8 +1436,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						<li>Windows 2000, XP:
 							<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\logs</samp></li>
 					</ul>
-					<p>As the folder may contain several logfiles, it is a good idea to compress the whole folder to a ZIP or tar.gz archive that you can easily attach to a bug report.
-					If you cannot or don't want to attach all logs, please make sure to atleast include <strong>dispcalGUI.log</strong>, <strong>wexpect.log</strong> and <strong>wexpectconsolereader.log</strong> (the latter only exists on Windows systems).</p>
+					<p>As the folder may contain several logfiles, it is a good idea to compress the whole folder to a ZIP or tar.gz archive that you can easily attach to a bug report.</p>
 					<p><em>Please note the logfiles may contain your username as well as paths of files you may have used in dispcalGUI. I will respect your privacy at all times, but you may want to consider this when attaching logfiles to public places like the <a href="https://sourceforge.net/p/dispcalgui/bug-reports/">bug tracker</a>.</em></p>
 				</li>
 			</ul>
@@ -1462,7 +1483,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Nejib Boubaker, Mason Livingston, Daniel Lenardon, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
+			<p>Recent donors: Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1478,6 +1499,61 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="changelog-${VERSION}">${DATE} ${TIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Argyll CMS 1.5.0 compatibility.</li>
+							<li>Ability to do remote measurements using Argyll CMS 1.4.0 and newer (Firefox is recommended as client). See <a href="#remote">remote measurements and profiling</a>.</li>
+							<li>Include black level and contrast in profile verification reports (if possible, i.e. if the test chart contains a RGB=0 patch).</li>
+							<li>3D LUT: Support color space conversion ('spac') profiles.</li>
+							<li>DCI P3 reference profile.</li>
+							<li>Add “Quality” (if applicable) and “License” metadata to profiles.</li>
+							<li>Add colord device ID mapping to profile metadata.</li>
+							<li>Linux: Add screen brightness to profile metadata if profiling a mobile computer's screen (using the org.gnome.SettingsDaemon.Power DBus interface).</li>
+							<li>Additional logging.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Revised display uniformity test to generate HTML reports.</li>
+							<li>Use a delay of 200 ms for display uniformity measurements.</li>
+							<li>Detect “Calibrate failed with 'User hit Abort Key' (No device error)” Argyll CMS error message and ignore further errors to prevent popping up multiple error dialogs.</li>
+							<li>Reload currently selected calibration after verifying a profile.</li>
+							<li>Add metadata to fast shaper matrix profiles (e.g. gamut volume and coverage).</li>
+							<li>When deleting a settings file, also offer CCSS, CCMX and files starting with the settings file basename in the same directory for deletion.</li>
+							<li>Enable use of absolute values in profile verification reports regardless of testchart.</li>
+							<li>When loading a profile without calibration settings, look for an accompanying colorimeter correction in the same directory.</li>
+							<li>When only creating a profile and not calibrating, give a clear choice whether to embed current calibration curves in a profile or not.</li>
+							<li>When using black point compensation, keep the black point compensated TI3 measurement file in addition to the unaltered file.</li>
+							<li>When restoring default settings, don't reset the 3D LUT abstract profile as well as 3D LUT and profile info window positions.</li>
+							<li>Truncate the colorimeter correction description displayed in the dropdown if it's overly long.</li>
+							<li>Only load linear calibration curves into the curve viewer when resetting the video card gamma table.</li>
+							<li>Do not remove spaces from the instrument name when assembling the profile name.</li>
+							<li>Only compress JavaScript in HTML reports if the <code>report.pack_js</code> configuration option is set (default 1 = compress).</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Improved instrument event handling.</li>
+							<li>When measuring the screen using a spectrometer, make sure to repeat the instrument calibration until it is successfully completed or canceled (ColorMunki Design/Photo).</li>
+							<li>When measuring ambient light with a spectrometer, abort after a 30 second timeout if instrument calibration did not complete.</li>
+							<li>Correctly react if the instrument sensor is in the wrong position and prompt the user to set the correct position.</li>
+							<li>Mouse cursor and clicked “Measure” button stayed hidden when aborting a measurement in the display device uniformity test window.</li>
+							<li>Updating the calibration (vcgt) of a profile didn't work if first selecting a <code>.cal</code> file, ticking the “Update calibration” checkbox and then switching to the profile.</li>
+							<li>Disable all calibration controls (except the quality slider) when “Update calibration” is ticked.</li>
+							<li>Only enable “Update calibration” checkbox if calibration can actually be updated.</li>
+							<li>Disable the “Create colorimeter correction...” and “Create 3D LUT...” menu items as well as the “LUT” checkbox in the curves and profile information windows if Argyll CMS executables are not found.</li>
+							<li>Update measurement modes when switching Argyll versions.</li>
+							<li>wxPython 2.9 compatibility.</li>
+							<li>Set manufacturer, model, creator and ID in reference profiles (except ClayRGB and sRGB from Argyll).</li>
+							<li>Only switch over to progress dialog after a three second delay (fixes erroneously switching over to progress dialog under Windows when running calibration or display uniformity measurements directly after a canceled testchart measurement).</li>
+							<li>If using a DTP92, only offer refresh measurement mode.</li>
+							<li>Make sure updated profiles also have updated descriptions.</li>
+							<li>Also overwrite .gam.gz and .wrz files if overwriting an existing profile.</li>
+							<li>Mac OS X: Make sure the menus are re-enabled after calibrate &amp; profile.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-1.1.8.3">2013-01-07 19:41 (UTC) 1.1.8.3</dt>
+					<dd>
+						<h3>1.1.8.3</h3>
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>Show display device uniformity measurement window on selected display device if multiple display devices are connected.</li>
