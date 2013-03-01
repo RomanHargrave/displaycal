@@ -1045,22 +1045,6 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.logger.info("%r" % txt)
 		if "Setting up the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
-		# Argyll CMS < 1.3.6: "Display type is (CRT|LCD)"
-		# Argyll CMS >= 1.3.6: "Display type is '(c|l|n|r|1|2|3|4|5|6|7)'"
-		modes = filter(None, valid_values["measurement_mode"])
-		dtype = re.search("Display type is '?(CRT|LCD|%s)'?".replace(" ", "\s+") % "|".join(modes), txt, re.I)
-		if dtype and dtype.groups()[0][0].lower() != getcfg("measurement_mode"):
-			#print "INFO: Changing mode to", dtype.groups()[0]
-			label = self.lb.GetCurrentPage().txt.values()[0].GetLabel()
-			self.Pulse(" " * 4)
-			mode = dtype.groups()[0]
-			if mode not in modes and mode[0].lower() in modes:
-				mode = mode[0].lower()
-			setcfg("measurement_mode", mode)
-			self.Freeze()
-			self._setup()
-			self.Thaw()
-			self.Pulse(label)
 		
 		if "/ Current" in txt:
 			indicator = getbitmap("theme/icons/10x10/record")
