@@ -1592,6 +1592,7 @@ class Worker(object):
 						if (argyll_version_string != self.argyll_version_string):
 							self.argyll_version_string = argyll_version_string
 							safe_print("Argyll CMS " + self.argyll_version_string)
+							setcfg("argyll.version", argyll_version_string)
 						config.defaults["copyright"] = ("No copyright. Created "
 														"with %s %s and Argyll "
 														"CMS %s" % 
@@ -4190,7 +4191,9 @@ class Worker(object):
 		else:
 			pldpaths = [os.path.join(dir_, "color", "spyd2PLD.bin") 
 						for dir_ in [defaultpaths.appdata, 
-									 defaultpaths.home] + 
+									 defaultpaths.home,
+									 defaultpaths.library,
+									 defaultpaths.library_home] + 
 									defaultpaths.commonappdata]
 			pldpaths += [os.path.join(dir_, "ArgyllCMS", "spyd2PLD.bin") 
 						 for dir_ in [defaultpaths.appdata, 
@@ -4209,7 +4212,9 @@ class Worker(object):
 			return False
 		paths = [os.path.join(dir_, "color", "spyd4cal.bin") 
 				 for dir_ in [defaultpaths.appdata, 
-							  defaultpaths.home] + defaultpaths.commonappdata]
+							  defaultpaths.home,
+							  defaultpaths.library,
+							  defaultpaths.library_home] + defaultpaths.commonappdata]
 		paths += [os.path.join(dir_, "ArgyllCMS", "spyd4cal.bin") 
 				  for dir_ in [defaultpaths.appdata, 
 							   defaultpaths.home] + defaultpaths.commonappdata]

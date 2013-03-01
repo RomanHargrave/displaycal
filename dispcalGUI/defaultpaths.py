@@ -31,8 +31,9 @@ home = expanduseru("~")
 if sys.platform == "win32":
 	# Always specify create=1 for SHGetSpecialFolderPath so we don't get an
 	# exception if the folder does not yet exist
-	appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
+	library_home = appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
 	commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA, 1)]
+	library = commonappdata[0]
 	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON, 1)
 	autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP, 1)
 	autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP, 1)
@@ -40,12 +41,12 @@ if sys.platform == "win32":
 								"spool", "drivers", "color")]
 	iccprofiles_home = iccprofiles
 elif sys.platform == "darwin":
-	appdata = os.path.join(home, "Library")
-	commonappdata = [os.path.join(os.path.sep, "Library")]
+	library_home = os.path.join(home, "Library")
+	library = os.path.join(os.path.sep, "Library")
 	prefs = os.path.join(os.path.sep, "Library", "Preferences")
 	prefs_home = os.path.join(home, "Library", "Preferences")
-	appsupport = os.path.join(os.path.sep, "Library", "Application Support")
-	appsupport_home = os.path.join(home, "Library", "Application Support")
+	appdata = os.path.join(os.path.sep, "Library", "Application Support")
+	commonappdata = [os.path.join(home, "Library", "Application Support")]
 	autostart = autostart_home = None
 	iccprofiles = [os.path.join(os.path.sep, "Library", "ColorSync", 
 								"Profiles"),
@@ -62,7 +63,7 @@ else:
 	if not xdg_config_dir_default in xdg_config_dirs:
 		xdg_config_dirs += [xdg_config_dir_default]
 	xdg_data_home_default = expandvarsu("$HOME/.local/share")
-	appdata = xdg_data_home = getenvu("XDG_DATA_HOME", xdg_data_home_default)
+	library_home = appdata = xdg_data_home = getenvu("XDG_DATA_HOME", xdg_data_home_default)
 	xdg_data_dirs_default = "/usr/local/share:/usr/share:/var/lib"
 	xdg_data_dirs = [os.path.normpath(pth) for pth in 
 					 getenvu("XDG_DATA_DIRS", 
@@ -71,6 +72,7 @@ else:
 		if not dir_ in xdg_data_dirs:
 			xdg_data_dirs += [dir_]
 	commonappdata = xdg_data_dirs
+	library = commonappdata[0]
 	autostart = None
 	for dir_ in xdg_config_dirs:
 		if os.path.exists(dir_):

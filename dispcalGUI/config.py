@@ -21,7 +21,7 @@ from defaultpaths import appdata, commonappdata
 if sys.platform == "win32":
 	from defaultpaths import commonprogramfiles
 elif sys.platform == "darwin":
-	from defaultpaths import appsupport, appsupport_home, prefs, prefs_home
+	from defaultpaths import library, library_home, prefs, prefs_home
 else:
 	from defaultpaths import (xdg_config_dir_default, xdg_config_home, 
 							  xdg_data_home, xdg_data_home_default, 
@@ -92,10 +92,10 @@ else:
 		scale_adjustment_factor = 1.0
 		config_sys = os.path.join(prefs, appname)
 		confighome = os.path.join(prefs_home, appname)
-		datahome = os.path.join(appsupport_home, appname)
+		datahome = os.path.join(appdata, appname)
 		logdir = os.path.join(expanduseru("~"), "Library", 
 							  "Logs", appname)
-		data_dirs += [datahome, os.path.join(appsupport, appname)]
+		data_dirs += [datahome, os.path.join(commonappdata[0], appname)]
 	else:
 		script_ext = ".sh"
 		scale_adjustment_factor = 1.0
@@ -201,6 +201,19 @@ def get_bitmap_as_icon(size, name):
 	bmp = geticon(size, name)
 	icon.CopyFromBitmap(bmp)
 	return icon
+
+
+def get_argyll_data_dir():
+	if getcfg("argyll.version") < "1.5.0":
+		argyll_data_dirname = "color"
+	else:
+		argyll_data_dirname = "ArgyllCMS"
+	if sys.platform == "darwin" and getcfg("argyll.version") < "1.5.0":
+		return os.path.join(library if is_superuser() else library_home,
+							argyll_data_dirname)
+	else:
+		return os.path.join(commonappdata[0] if is_superuser() else appdata,
+							argyll_data_dirname)
 
 
 def get_display_name(n=None):
@@ -441,6 +454,7 @@ defaults = {
 	"allow_skip_sensor_cal": 0,
 	"argyll.debug": 0,
 	"argyll.dir": expanduseru("~"), # directory
+	"argyll.version": "0.0.0",
 	"drift_compensation.blacklevel": 0,
 	"drift_compensation.whitelevel": 0,
 	"calibration.ambient_viewcond_adjust": 0,
@@ -460,8 +474,6 @@ defaults = {
 	"calibration.update": 0,
 	"colorimeter_correction.testchart": "ccxx.ti1",
 	"colorimeter_correction_matrix_file": "AUTO:",
-	"color.dir": os.path.join(commonappdata[0] if is_superuser() else 
-							  appdata, "color"),
 	"comport.number": 1,
 	# Note: worker.Worker.enumerate_displays_and_ports() overwrites copyright
 	"copyright": "No copyright. Created with %s %s and Argyll CMS" % (appname, 

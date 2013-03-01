@@ -381,7 +381,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	""" Check if a colorimeter correction file will be overwritten and 
 	present a dialog to confirm or cancel the operation. Write the file. """
-	result = check_create_dir(defaults["color.dir"])
+	result = check_create_dir(config.get_argyll_data_dir())
 	if isinstance(result, Exception):
 		show_result_dialog(result, parent)
 		return
@@ -392,7 +392,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 							   lang.getstr("unnamed"), "UTF-8")
 	name = re.sub(r"[\\/:*?\"<>|]+", "_", 
 				  make_argyll_compatible_path(description))[:255]
-	path = os.path.join(defaults["color.dir"], 
+	path = os.path.join(config.get_argyll_data_dir(), 
 						"%s.%s" % (name, cgats[:7].strip().lower()))
 	if os.path.isfile(path):
 		dlg = ConfirmDialog(parent,
@@ -1875,7 +1875,6 @@ class MainFrame(BaseFrame):
 			"allow_skip_sensor_cal",
 			"argyll.dir",
 			"calibration.black_point_rate.enabled",
-			"color.dir",
 			"comport.number",
 			"copyright",
 			"display.number",
@@ -2242,13 +2241,24 @@ class MainFrame(BaseFrame):
 			ccmx_paths = []
 			ccss_paths = []
 			for commonappdata in config.commonappdata:
-				ccmx_paths += glob.glob(os.path.join(commonappdata, "color",
-													 "*.ccmx"))
+				if sys.platform != "darwin":
+					ccmx_paths += glob.glob(os.path.join(commonappdata, "color",
+														 "*.ccmx"))
 				ccmx_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
 													 "*.ccmx"))
-				ccss_paths += glob.glob(os.path.join(commonappdata, "color",
-													 "*.ccss"))
+				if sys.platform != "darwin":
+					ccss_paths += glob.glob(os.path.join(commonappdata, "color",
+														 "*.ccss"))
 				ccss_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+													 "*.ccss"))
+			if sys.platform == "darwin":
+				ccmx_paths += glob.glob(os.path.join(config.library, "color",
+													 "*.ccmx"))
+				ccmx_paths += glob.glob(os.path.join(config.library_home, "color",
+													 "*.ccmx"))
+				ccmx_paths += glob.glob(os.path.join(config.library, "color",
+													 "*.ccss"))
+				ccmx_paths += glob.glob(os.path.join(config.library_home, "color",
 													 "*.ccss"))
 			ccmx_paths += glob.glob(os.path.join(config.appdata, "color",
 												 "*.ccmx"))
@@ -5953,7 +5963,7 @@ class MainFrame(BaseFrame):
 			defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction_matrix_file.choose"), 
-								defaultDir=defaultDir if defaultFile else defaults["color.dir"], 
+								defaultDir=defaultDir if defaultFile else config.get_argyll_data_dir(), 
 								defaultFile=defaultFile,
 								wildcard=lang.getstr("filetype.ccmx") + 
 										 "|*.ccmx;*.ccss", 
@@ -6383,7 +6393,7 @@ class MainFrame(BaseFrame):
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "MANUFACTURER"\nMANUFACTURER "%s"\\1' %
 							   safe_str(manufacturer, "UTF-8"), cgats)
-			result = check_create_dir(defaults["color.dir"])
+			result = check_create_dir(config.get_argyll_data_dir())
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
@@ -6593,7 +6603,7 @@ class MainFrame(BaseFrame):
 						type = "spyder4"
 			if type == ".txt":
 				# Assume iColorDisplay DeviceCorrections.txt
-				ccmx_dir = defaults["color.dir"]
+				ccmx_dir = config.get_argyll_data_dir()
 				if not os.path.exists(ccmx_dir):
 					result = check_create_dir(ccmx_dir)
 					if isinstance(result, Exception):
