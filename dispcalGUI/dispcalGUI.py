@@ -6206,6 +6206,12 @@ class MainFrame(BaseFrame):
 												   white["XYZ_Y"],
 												   white["XYZ_Z"])])
 				colorimeter_ti3.queryi1("DATA").LUMINANCE_XYZ_CDM2 = white
+			# Add display base ID
+			if not colorimeter_ti3.queryv1("DISPLAY_TYPE_BASE_ID"):
+				colorimeter_ti3[0].add_keyword("DISPLAY_TYPE_BASE_ID",
+											   {"c": 2,
+												"l": 1}.get(getcfg("measurement_mode"),
+															1))
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
@@ -6215,6 +6221,13 @@ class MainFrame(BaseFrame):
 			return
 		else:
 			description = self.worker.get_display_name(True)
+		# Add display type
+		for cgats in cgats_list:
+			if not cgats.queryv1("DISPLAY_TYPE_REFRESH"):
+				cgats[0].add_keyword("DISPLAY_TYPE_REFRESH",
+									 {"c": "YES",
+									  "l": "NO"}.get(getcfg("measurement_mode"),
+													 "NO"))
 		options_dispcal, options_colprof = get_options_from_ti3(reference_ti3)
 		display = None
 		manufacturer = None
