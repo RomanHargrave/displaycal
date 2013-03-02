@@ -45,8 +45,8 @@ elif sys.platform == "darwin":
 	library = os.path.join(os.path.sep, "Library")
 	prefs = os.path.join(os.path.sep, "Library", "Preferences")
 	prefs_home = os.path.join(home, "Library", "Preferences")
-	appdata = os.path.join(os.path.sep, "Library", "Application Support")
-	commonappdata = [os.path.join(home, "Library", "Application Support")]
+	appdata = os.path.join(home, "Library", "Application Support")
+	commonappdata = [os.path.join(os.path.sep, "Library", "Application Support")]
 	autostart = autostart_home = None
 	iccprofiles = [os.path.join(os.path.sep, "Library", "ColorSync", 
 								"Profiles"),
