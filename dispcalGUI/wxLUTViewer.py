@@ -844,25 +844,18 @@ class LUTFrame(wx.Frame):
 				if isinstance(self.rTRC, ICCP.CurveType):
 					self.trc = ICCP.CurveType()
 					for i in xrange(len(self.rTRC)):
-						#self.trc.append(int(round((self.rTRC[i] +
-												   #self.gTRC[i] +
-												   #self.bTRC[i]) / 3.0)))
-						self.trc.append(sorted([self.rTRC[i][0],
-												self.gTRC[i][0],
-												self.bTRC[i][0]])[1])
+						self.trc.append(int(round((self.rTRC[i] +
+												   self.gTRC[i] +
+												   self.bTRC[i]) / 3.0)))
 				else:
 					self.trc = CoordinateType()
 					for i in xrange(len(self.rTRC)):
-						#self.trc.append([(self.rTRC[i][0] +
-										  #self.gTRC[i][0] +
-										  #self.bTRC[i][0]) / 3.0,
-										 #(self.rTRC[i][1] +
-										  #self.gTRC[i][1] +
-										  #self.bTRC[i][1]) / 3.0])
-						coord = sorted([self.rTRC[i],
-										self.gTRC[i],
-										self.bTRC[i]])
-						self.trc.append([coord[1][0], coord[1][1]])
+						self.trc.append([(self.rTRC[i][0] +
+										  self.gTRC[i][0] +
+										  self.bTRC[i][0]) / 3.0,
+										 (self.rTRC[i][1] +
+										  self.gTRC[i][1] +
+										  self.bTRC[i][1]) / 3.0])
 			if getattr(self, "trc", None):
 				transfer_function = self.trc.get_transfer_function(slice=(0.00, 1.00))
 			#if "R" in colorants and "G" in colorants and "B" in colorants:
