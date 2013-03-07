@@ -6788,7 +6788,7 @@ class MainFrame(BaseFrame):
 		# ColorMunki projector mode is an actual special sensor dial position
 		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
 		self.update_colorimeter_correction_matrix_ctrl()
-		if (v and ((("l" in v or "p" in v) and
+		if (v and (((not "c" in v or "p" in v) and
 					float(self.get_black_point_correction()) > 0) or
 				   ("c" in v and
 					float(self.get_black_point_correction()) == 0)) and
