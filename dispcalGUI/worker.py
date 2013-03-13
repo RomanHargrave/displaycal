@@ -1248,12 +1248,17 @@ class Worker(object):
 		RGB_in = []
 		RGB_indexes = []
 		seen = {}
+		if format == "eeColor":
+			# Fixed size
+			size = 65
 		step = 1.0 / (size - 1)
 		RGB_triplet = [0.0, 0.0, 0.0]
 		RGB_index = [0, 0, 0]
 		# Set the fastest and slowest changing columns, from right to left
 		if format in ("3dl", "spi3d"):
 			columns = (0, 1, 2)
+		elif format == "eeColor":
+			columns = (2, 0, 1)
 		else:
 			columns = (2, 1, 0)
 		for i in xrange(0, size):
@@ -1470,6 +1475,7 @@ class Worker(object):
 			safe_print("\n".join(RGB_out))
 
 		lut = [["# Created with %s %s" % (appname, version)]]
+		linesep = "\n"
 		if format == "3dl":
 			if maxval is None:
 				maxval = 1023
@@ -1514,10 +1520,20 @@ class Worker(object):
 				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
 					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
+		elif format == "eeColor":
+			if maxval is None:
+				maxval = 1.0
+			lut = []
+			for i, RGB_triplet in enumerate(RGB_out):
+				lut.append(["%.6f" % (float(component) * maxval) for component in RGB_in[i].split()])
+				RGB_triplet = RGB_triplet.split()
+				for component in (0, 1, 2):
+					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
+			linesep = "\r\n"
 		lut.append([])
 		for i, line in enumerate(lut):
 			lut[i] = " ".join(line)
-		return "\n".join(lut)
+		return linesep.join(lut)
 
 	def create_tempdir(self):
 		""" Create a temporary working directory and return its path. """

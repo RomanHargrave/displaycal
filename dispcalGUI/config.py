@@ -412,9 +412,9 @@ valid_ranges = {
 valid_values = {
 	"3dlut.bitdepth.input": [0, 1, 2, 3, 4],
 	"3dlut.bitdepth.output": [0, 1, 2, 3, 4],
-	"3dlut.format": [0, 1, 2],
+	"3dlut.format": [0, 1, 2, 3],
 	"3dlut.rendering_intent": [0, 1, 2, 3],
-	"3dlut.size": [0, 1, 2],
+	"3dlut.size": [0, 1, 2, 3],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	# Measurement modes as supported by Argyll -y parameter
 	# 'l' = 'n' (non-refresh-type display, e.g. LCD)

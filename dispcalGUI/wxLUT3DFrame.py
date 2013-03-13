@@ -170,7 +170,8 @@ class LUT3DFrame(BaseFrame):
 			defaultDir, defaultFile = get_verified_path("last_3dlut_path")
 			format = {0: "3dl",
 					  1: "cube",
-					  2: "spi3d"}.get(getcfg("3dlut.format"), "3dl")
+					  2: "spi3d",
+					  3: "txt"}.get(getcfg("3dlut.format"), "3dl")
 			defaultFile = os.path.splitext(defaultFile or
 										   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + format
 			dlg = wx.FileDialog(self, 
@@ -225,10 +226,12 @@ class LUT3DFrame(BaseFrame):
 		bpc = bool(getcfg("3dlut.black_point_compensation"))
 		format = {0: "3dl",
 				  1: "cube",
-				  2: "spi3d"}.get(getcfg("3dlut.format"), "3dl")
+				  2: "spi3d",
+				  3: "eeColor"}.get(getcfg("3dlut.format"), "3dl")
 		size = {0: 17,
 				1: 24,
-				2: 32}.get(getcfg("3dlut.size"), 17)
+				2: 32,
+				3: 65}.get(getcfg("3dlut.size"), 17)
 		input_bits = {0: 8,
 					  1: 10,
 					  2: 12,
@@ -253,7 +256,12 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_format_ctrl_handler(self, event):
 		setcfg("3dlut.format", int(self.lut3d_format_ctrl.GetSelection()))
+		if getcfg("3dlut.format") == 3:
+			# eeColor uses a fixed size of 65x65x65
+			setcfg("3dlut.size", 3)
+			self.lut3d_size_ctrl.SetSelection(3)
 		config.writecfg()
+		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format") != 3)
 		self.enable_bitdepth_controls(getcfg("3dlut.format") == 0)
 	
 	def lut3d_size_ctrl_handler(self, event):
@@ -429,6 +437,7 @@ class LUT3DFrame(BaseFrame):
 		self.black_point_compensation_cb.SetValue(bool(getcfg("3dlut.black_point_compensation")))
 		self.lut3d_format_ctrl.SetSelection(getcfg("3dlut.format"))
 		self.lut3d_size_ctrl.SetSelection(getcfg("3dlut.size"))
+		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format") != 3)
 		self.lut3d_bitdepth_input_ctrl.SetSelection(getcfg("3dlut.bitdepth.input"))
 		self.lut3d_bitdepth_output_ctrl.SetSelection(getcfg("3dlut.bitdepth.output"))
 		self.enable_bitdepth_controls(getcfg("3dlut.format") == 0)
