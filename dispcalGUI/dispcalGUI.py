@@ -6779,8 +6779,8 @@ class MainFrame(BaseFrame):
 			self.cal_changed()
 		setcfg("measurement_mode", (strtr(v, {"V": "", 
 											  "H": ""}) if v else None) or None)
-		setcfg("measurement_mode.adaptive", 1 if v and "V" in v else None)
-		setcfg("measurement_mode.highres", 1 if v and "H" in v else None)
+		setcfg("measurement_mode.adaptive", 1 if v and "V" in v else 0)
+		setcfg("measurement_mode.highres", 1 if v and "H" in v else 0)
 		if v and self.worker.get_instrument_name() == "ColorHug" and "p" in v:
 			# ColorHug projector mode is just a correction matrix
 			# Avoid setting ColorMunki projector mode
