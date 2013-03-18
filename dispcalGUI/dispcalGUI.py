@@ -6203,9 +6203,18 @@ class MainFrame(BaseFrame):
 				colorimeter_ti3.queryi1("DATA").LUMINANCE_XYZ_CDM2 = white
 			# Add display base ID
 			if not colorimeter_ti3.queryv1("DISPLAY_TYPE_BASE_ID"):
+				# c, l (most colorimeters)
+				# R (ColorHug and Colorimétre HCFR)
+				# F (ColorHug)
+				# f (ColorMunki Smile)
+				# g (DTP94)
 				colorimeter_ti3[0].add_keyword("DISPLAY_TYPE_BASE_ID",
 											   {"c": 2,
-												"l": 1}.get(getcfg("measurement_mode"),
+												"l": 1,
+												"R": 1,
+												"F": 2,
+												"f": 1,
+												"g": 3}.get(getcfg("measurement_mode"),
 															1))
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
