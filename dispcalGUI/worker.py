@@ -942,8 +942,6 @@ class Worker(object):
 		if (self.instrument_can_use_ccxx() and
 		    not is_ccxx_testchart() and not get_arg("-X", args)):
 			# Use colorimeter correction?
-			# Special case: Spectrometer (not needed) and ColorHug
-			# (only sensible in factory or raw measurement mode)
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if len(ccmx) > 1 and ccmx[1]:
 				ccmx = ccmx[1]
@@ -1000,10 +998,25 @@ class Worker(object):
 		can use a CCMX or CCSS colorimeter correction
 		
 		"""
+		# Special cases:
+		# Spectrometer (not needed), 
+		# ColorHug (only sensible in factory or raw measurement mode),
+		# ColorMunki Smile (only generic LCD CCFL measurement mode),
+		# Colorimétre HCFR (only raw measurement mode),
+		# DTP94 (only LCD, refresh and generic measurement modes)
+		# Spyder 4 (only generic LCD and refresh measurement modes)
 		return (self.argyll_version >= [1, 3, 0] and
 				not self.get_instrument_features().get("spectral") and
 				(self.get_instrument_name() != "ColorHug" or
-				 getcfg("measurement_mode") in ("F", "R")))
+				 getcfg("measurement_mode") in ("F", "R")) and
+				(self.get_instrument_name() != "ColorMunki Smile" or
+				 getcfg("measurement_mode") == "f") and
+				(self.get_instrument_name() != "Colorimtre HCFR" or  # Missing é is NOT a typo
+				 getcfg("measurement_mode") == "R") and
+				(self.get_instrument_name() != "DTP94" or
+				 getcfg("measurement_mode") in ("l", "c", "g")) and
+				(self.get_instrument_name() != "Spyder4" or
+				 getcfg("measurement_mode") in ("l", "c")))
 	
 	@Property
 	def pwd():

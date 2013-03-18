@@ -2207,13 +2207,8 @@ class MainFrame(BaseFrame):
 		""" Show or hide the colorimeter correction matrix controls """
 		self.calpanel.Freeze()
 		instrument_features = self.worker.get_instrument_features()
-		# Special case: Spectrometer (not needed) and ColorHug
-		# (only sensible in factory or raw measurement mode)
-		show_control = (self.worker.argyll_version >= [1, 3, 0] and 
-						not instrument_features.get("spectral") and
-						not is_ccxx_testchart() and
-						(self.worker.get_instrument_name() != "ColorHug" or
-						 getcfg("measurement_mode") in ("F", "R")))
+		show_control = (self.worker.instrument_can_use_ccxx() and
+						not is_ccxx_testchart())
 		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_ctrl, show_control)
 		self.colorimeter_correction_matrix_label.GetContainingSizer().Show(
