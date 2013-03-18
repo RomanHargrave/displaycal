@@ -7812,12 +7812,30 @@ class MainFrame(BaseFrame):
 				getcfg("testchart.file") != self.tcframe.ti1.filename):
 				self.tcframe.tc_load_cfg_from_ti1()
 		if is_ccxx_testchart():
+			measurement_mode = None
 			if (self.worker.get_instrument_name() == "ColorHug"
 				and getcfg("measurement_mode") not in ("F", "R")):
 				# Automatically set factory measurement mode if not already
 				# factory or raw measurement mode
+				measurement_mode = "F"
+			elif (self.worker.get_instrument_name() == "ColorMunki Smile"
+				and getcfg("measurement_mode") != "f"):
+				# Automatically set LCD measurement mode if not already
+				# LCD CCFL measurement mode
+				measurement_mode = "f"
+			elif (self.worker.get_instrument_name() == "Colorimtre HCFR"
+				and getcfg("measurement_mode") != "R"):
+				# Automatically set raw measurement mode if not already
+				# raw measurement mode
+				measurement_mode = "R"
+			elif (self.worker.get_instrument_name() == "Spyder4"
+				and getcfg("measurement_mode") not in ("l", "c")):
+				# Automatically set LCD measurement mode if not already
+				# LCD or refresh measurement mode
+				measurement_mode = "l"
+			if measurement_mode:
 				setcfg("measurement_mode.backup", getcfg("measurement_mode"))
-				setcfg("measurement_mode", "F")
+				setcfg("measurement_mode", measurement_mode)
 				self.update_measurement_mode()
 		else:
 			self.restore_measurement_mode()
