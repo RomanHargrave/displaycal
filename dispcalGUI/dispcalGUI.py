@@ -2200,7 +2200,8 @@ class MainFrame(BaseFrame):
 		setcfg("measurement_mode", (self.get_measurement_mode() or "l")[0])
 		self.measurement_mode_ctrl.Enable(
 			bool(self.worker.instruments) and 
-			len(measurement_modes[instrument_type]) > 1)
+			len(measurement_modes[instrument_type]) > 1 and
+			bool(getcfg("measurement_mode_unlocked")))
 		self.measurement_mode_ctrl.Thaw()
 	
 	def update_colorimeter_correction_matrix_ctrl(self):
@@ -2394,10 +2395,36 @@ class MainFrame(BaseFrame):
 		setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
+		setcfg("measurement_mode_unlocked", 1)
 		if len(ccmx) > 1 and ccmx[1]:
 			tooltip = ccmx[1]
+			try:
+				cgats = CGATS.CGATS(ccmx[1])
+			except CGATS.CGATSError, exception:
+				safe_print("%s:" % ccmx[1], exception)
+			else:
+				base_id = cgats.queryv1("DISPLAY_TYPE_BASE_ID")
+				if base_id:
+					# Set measurement mode according to base ID
+					mode = None
+					if self.worker.get_instrument_name() == "ColorHug":
+						mode = {1: "R",
+								2: "F"}.get(base_id)
+					elif self.worker.get_instrument_name() == "ColorMunki Smile":
+						mode = {1: "f"}.get(base_id)
+					elif self.worker.get_instrument_name() == "Colorimtre HCFR":
+						mode = {1: "R"}.get(base_id)
+					else:
+						mode = {1: "l",
+								2: "c",
+								3: "g"}.get(base_id)
+					if mode:
+						setcfg("measurement_mode", mode)
+						setcfg("measurement_mode_unlocked", 0)
+						self.update_measurement_mode()
 		else:
 			tooltip = ""
+		self.update_main_controls()
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
 
 	def update_main_controls(self):
@@ -2409,7 +2436,8 @@ class MainFrame(BaseFrame):
 
 		self.measurement_mode_ctrl.Enable(
 			not update_cal and bool(self.worker.instruments) and 
-			len(self.measurement_mode_ctrl.GetItems()) > 1)
+			len(self.measurement_mode_ctrl.GetItems()) > 1 and
+			bool(getcfg("measurement_mode_unlocked")))
 		
 		update_profile = self.calibration_update_cb.GetValue() and is_profile()
 		enable_profile = not update_profile and not is_ccxx_testchart()
@@ -5952,10 +5980,7 @@ class MainFrame(BaseFrame):
 					self.colorimeter_correction_matrix_ctrl.GetSelection() - 2]
 				ccmx = ["", path]
 			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
-			if ccmx[0] == "AUTO":
-				self.update_colorimeter_correction_matrix_ctrl_items()
-			else:
-				self.colorimeter_correction_matrix_ctrl.SetToolTipString(path or "")
+			self.update_colorimeter_correction_matrix_ctrl_items()
 		else:
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)

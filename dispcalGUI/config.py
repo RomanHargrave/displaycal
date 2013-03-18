@@ -505,6 +505,7 @@ defaults = {
 	"lut_viewer.show": 0,
 	"lut_viewer.show_actual_lut": 0,
 	"measurement_mode": "l",
+	"measurement_mode_unlocked": 1,
 	"measurement_mode.adaptive": 1,
 	"measurement_mode.backup": "l",
 	"measurement_mode.highres": 0,
