@@ -53,8 +53,10 @@ def get_default_size():
 		if debug:
 			safe_print("[D]  display_size_mm:", display_size_mm)
 		if not len(display_size_mm) or 0 in display_size_mm:
-			ppi_def = 100.0
-			ppi_mac = 72.0
+			if sys.platform == "darwin":
+				ppi_def = 72.0
+			else:
+				ppi_def = 96.0
 			method = 1
 			if method == 0:
 				# use configurable screen diagonal
@@ -70,10 +72,11 @@ def get_default_size():
 			elif method == 1:
 				# use the first display
 				display_size_1st = wx.DisplaySize()
-				display_size_mm = list(wx.DisplaySizeMM())
-				if sys.platform == "darwin":
-					display_size_mm[0] /= (ppi_def / ppi_mac)
-					display_size_mm[1] /= (ppi_def / ppi_mac)
+				display_size_mm = floatlist(wx.DisplaySizeMM())
+				if 0 in display_size_mm:
+					# bogus
+					display_size_mm = [display_size_1st[0] / ppi_def * 25.4,
+									   display_size_1st[1] / ppi_def * 25.4]
 				if display_no > 0:
 					display_size_mm[0] = display_size[0] / (
 						display_size_1st[0] / display_size_mm[0])
