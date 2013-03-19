@@ -909,17 +909,24 @@ class TestchartEditor(wx.Frame):
 							style=wx.SAVE | wx.OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
+			filter_index = dlg.GetFilterIndex()
 			path = dlg.GetPath()
 		dlg.Destroy()
 		if path:
 			setcfg("last_testchart_export_path", path)
 			writecfg()
-			self.worker.start(lambda result: None, self.tc_export, wargs=(path, ),
-							  wkwargs={}, progress_msg=lang.getstr("export"),
-							  parent=self, progress_start=500)
+			if sys.platform not in ("darwin", "win32"):
+				# Linux segfaults if running the export threaded
+				self.tc_export(path, filter_index)
+			else:
+				self.worker.start(lambda result: None, self.tc_export,
+								  wargs=(path, filter_index), wkwargs={},
+								  progress_msg=lang.getstr("export"),
+								  parent=self, progress_start=500)
 	
-	def tc_export(self, path):
-		name, ext = os.path.splitext(path)
+	def tc_export(self, path, filter_index):
+		name, ext = os.path.splitext(path)[0], {0: ".png",
+												1: ".tif"}.get(filter_index)
 		ext2type = {".jpg": wx.BITMAP_TYPE_JPEG,
 					".png": wx.BITMAP_TYPE_PNG,
 					".tif": wx.BITMAP_TYPE_TIF}
