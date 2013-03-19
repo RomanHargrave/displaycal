@@ -49,6 +49,8 @@ def update_defaults():
 		"last_cal_or_icc_path": os.path.join(storage, getstr("unnamed")),
 		"last_colorimeter_ti3_path": os.path.join(expanduseru("~"),
 												  getstr("unnamed")),
+		"last_testchart_export_path": os.path.join(expanduseru("~"),
+												   getstr("unnamed")),
 		"last_filedialog_path": os.path.join(expanduseru("~"),
 											 getstr("unnamed")),
 		"last_icc_path": os.path.join(storage, getstr("unnamed")),

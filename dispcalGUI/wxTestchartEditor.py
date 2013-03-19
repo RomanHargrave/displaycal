@@ -27,6 +27,7 @@ from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin,
 					get_argyll_version, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import ConfirmDialog, InfoDialog
+from wxMeasureFrame import get_default_size
 
 
 def swap_dict_keys_values(mydict):
@@ -244,6 +245,12 @@ class TestchartEditor(wx.Frame):
 		self.save_as_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_save_as_handler, id = self.save_as_btn.GetId())
 		hsizer.Add(self.save_as_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
+
+		self.export_btn = wx.Button(panel, -1, lang.getstr("export"), name = "tc_export")
+		self.export_btn.SetInitialSize((self.export_btn.GetSize()[0] + btn_width_correction, -1))
+		self.export_btn.Disable()
+		self.Bind(wx.EVT_BUTTON, self.tc_export_handler, id = self.export_btn.GetId())
+		hsizer.Add(self.export_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		self.clear_btn = wx.Button(panel, -1, lang.getstr("testchart.discard"), name = "tc_clear")
 		self.clear_btn.SetInitialSize((self.clear_btn.GetSize()[0] + btn_width_correction, -1))
@@ -812,6 +819,7 @@ class TestchartEditor(wx.Frame):
 		self.clear_btn.Enable(hasattr(self, "ti1"))
 		self.tc_save_check()
 		self.save_as_btn.Enable(hasattr(self, "ti1"))
+		self.export_btn.Enable(hasattr(self, "ti1"))
 		self.tc_set_default_status()
 	
 	def tc_save_check(self):
@@ -883,6 +891,54 @@ class TestchartEditor(wx.Frame):
 		# segfault under Arch Linux when setting the window title
 		safe_print("")
 		self.SetTitle(lang.getstr("testchart.edit"))
+
+	def tc_export_handler(self, event):
+		if not hasattr(self, "ti1"):
+			return
+		path = None
+		(defaultDir,
+		 defaultFile) = (get_verified_path("last_testchart_export_path")[0],
+						 os.path.basename(os.path.splitext(self.ti1.filename or
+														   getcfg("last_testchart_export_path"))[0]))
+		dlg = wx.FileDialog(self, lang.getstr("export"), defaultDir=defaultDir,
+							defaultFile=defaultFile,
+							# Disable JPEG as it introduces slight color errors
+							wildcard=##lang.getstr("filetype.jpg") + "|*.jpg|" +
+									 lang.getstr("filetype.png") + "|*.png|" +
+									 lang.getstr("filetype.tif") + "|*.tif",
+							style=wx.SAVE | wx.OVERWRITE_PROMPT)
+		dlg.Center(wx.BOTH)
+		if dlg.ShowModal() == wx.ID_OK:
+			path = dlg.GetPath()
+		dlg.Destroy()
+		if path:
+			setcfg("last_testchart_export_path", path)
+			writecfg()
+			self.worker.start(lambda result: None, self.tc_export, wargs=(path, ),
+							  wkwargs={}, progress_msg=lang.getstr("export"),
+							  parent=self, progress_start=500)
+	
+	def tc_export(self, path):
+		name, ext = os.path.splitext(path)
+		ext2type = {".jpg": wx.BITMAP_TYPE_JPEG,
+					".png": wx.BITMAP_TYPE_PNG,
+					".tif": wx.BITMAP_TYPE_TIF}
+		maxlen = len(self.ti1[0].DATA)
+		size = int(round(get_default_size() * float(getcfg("dimensions.measureframe").split(",")[-1])))
+		for index in self.ti1[0].DATA:
+			if self.worker.thread_abort:
+				break
+			self.worker.lastmsg.write("%d%%\n" % (100.0 / maxlen * (index + 1)))
+			bitmap = wx.EmptyBitmap(size, size)
+			dc = wx.MemoryDC()
+			dc.SelectObject(bitmap)
+			color = wx.Colour(int(round(self.ti1[0].DATA[index]["RGB_R"] * 2.55)),
+							  int(round(self.ti1[0].DATA[index]["RGB_G"] * 2.55)),
+							  int(round(self.ti1[0].DATA[index]["RGB_B"] * 2.55)))
+			dc.SetBackground(wx.Brush(color))
+			dc.Clear()
+			bitmap.SaveFile("%s-%04d%s" % (name, index + 1, ext),
+							ext2type.get(ext, ext2type[".png"]))
 
 	def tc_save_handler(self, event = None):
 		self.tc_save_as_handler(event, path = self.ti1.filename)
