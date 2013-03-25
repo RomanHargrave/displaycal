@@ -1544,13 +1544,13 @@ class MainFrame(BaseFrame):
 														   and edid["blue_x"]
 														   and edid["blue_y"]))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays) and
-			not config.get_display_name() == "Web")
+			not config.get_display_name() in ("Web", "Untethered"))
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() == "Web")
+			not config.get_display_name() in ("Web", "Untethered"))
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() == "Web")
+			not config.get_display_name() in ("Web", "Untethered"))
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
@@ -1567,17 +1567,23 @@ class MainFrame(BaseFrame):
 		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
 											 self.worker.argyll_version >= [1, 1, 0] and 
 											 not "Beta" in self.worker.argyll_version_string and
-											 not config.get_display_name() == "Web")
+											 not config.get_display_name() in
+											 ("Web", "Untethered"))
 		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")) and
-											not config.get_display_name() == "Web")
+											not config.get_display_name() in
+											("Web", "Untethered"))
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
-									   not config.get_display_name() == "Web")
+									   not config.get_display_name() in
+									   ("Web", "Untethered"))
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
-											   bool(self.worker.instruments))
+											   bool(self.worker.instruments) and
+											   config.get_display_name() != "Untethered")
 		self.menuitem_report_uncalibrated.Enable(bool(self.worker.displays) and 
-												 bool(self.worker.instruments))
+												 bool(self.worker.instruments) and
+												 config.get_display_name() != "Untethered")
 		self.menuitem_calibration_verify.Enable(bool(self.worker.displays) and 
-												bool(self.worker.instruments))
+												bool(self.worker.instruments) and
+												config.get_display_name() != "Untethered")
 		self.menuitem_profile_verify.Enable(bool(self.worker.displays) and 
 											bool(self.worker.instruments))
 		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
@@ -2010,6 +2016,7 @@ class MainFrame(BaseFrame):
 		for item in self.worker.displays:
 			self.displays += [item.replace("[PRIMARY]", 
 										   lang.getstr("display.primary"))]
+			self.displays[-1] = lang.getstr(self.displays[-1])
 		self.display_ctrl.SetItems(self.displays)
 		self.get_set_display(update_ccmx_items)
 		self.display_ctrl.Enable(len(self.worker.displays) > 1)
@@ -2450,11 +2457,13 @@ class MainFrame(BaseFrame):
 		self.calibrate_btn.Enable(not is_ccxx_testchart() and
 								  bool(self.worker.displays) and 
 								  True in self.worker.lut_access and 
-								  bool(self.worker.instruments))
+								  bool(self.worker.instruments) and
+								  config.get_display_name() != "Untethered")
 		self.calibrate_and_profile_btn.Enable(enable_profile and 
 											  bool(self.worker.displays) and 
 											  True in self.worker.lut_access and 
-											  bool(self.worker.instruments))
+											  bool(self.worker.instruments) and
+											  config.get_display_name() != "Untethered")
 		self.profile_btn.Enable(enable_profile and not update_cal and 
 								bool(self.worker.displays) and 
 								bool(self.worker.instruments))
@@ -4343,7 +4352,7 @@ class MainFrame(BaseFrame):
 					skip_scripts=False, silent=False, title=appname):
 		""" 'Install' (load) a calibration from a calibration file or
 		profile """
-		if config.get_display_name() == "Web":
+		if config.get_display_name() in ("Web", "Untethered"):
 			return True
 		# Install using dispwin
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
@@ -4611,7 +4620,7 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(show_result_dialog, result, self)
 			self.Show()
 		else:
-			if config.get_display_name() == "Web":
+			if config.get_display_name() in ("Web", "Untethered"):
 				# Nothing to do
 				result = True
 			else:
@@ -4624,7 +4633,7 @@ class MainFrame(BaseFrame):
 		
 			# start readings
 			self.worker.dispread_after_dispcal = False
-			self.worker.interactive = False
+			self.worker.interactive = config.get_display_name() == "Untethered"
 			self.worker.start(self.verify_profile_consumer, 
 							  self.worker.measure_ti1, 
 							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
@@ -5053,7 +5062,7 @@ class MainFrame(BaseFrame):
 		self.HideAll()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
-		if config.get_display_name() == "Web":
+		if config.get_display_name() in ("Web", "Untethered"):
 			self.call_pending_function()
 		elif sys.platform in ("darwin", "win32") or isexe:
 			self.measureframe.Show()
@@ -5248,7 +5257,7 @@ class MainFrame(BaseFrame):
 		Return wx.ID_CANCEL if whole operation should be cancelled
 		
 		"""
-		if config.get_display_name() == "Web":
+		if config.get_display_name() in ("Web", "Untethered"):
 			return False
 		dlg = ConfirmDialog(self, 
 							msg=lang.getstr("dialog.current_cal_warning"), 
@@ -5370,7 +5379,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("measure"))
 		self.worker.dispread_after_dispcal = False
-		self.worker.interactive = False
+		self.worker.interactive = config.get_display_name() == "Untethered"
 		setcfg("calibration.file.previous", None)
 		self.worker.start_measurement(self.just_measure_finish, apply_calibration,
 									  progress_msg=lang.getstr("measuring.characterization"), 
@@ -5421,11 +5430,11 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.profile"))
 		self.worker.dispread_after_dispcal = False
-		self.worker.interactive = False
+		self.worker.interactive = config.get_display_name() == "Untethered"
 		setcfg("calibration.file.previous", None)
 		self.worker.start_measurement(self.just_profile_finish, apply_calibration,
 									  progress_msg=lang.getstr("measuring.characterization"), 
-									  continue_next=True)
+									  continue_next=config.get_display_name() != "Untethered")
 	
 	def just_profile_finish(self, result):
 		""" Build profile from characterization measurements """
@@ -5700,7 +5709,7 @@ class MainFrame(BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			if config.get_display_name() == "Web":
+			if config.get_display_name() in ("Web", "Untethered"):
 				show_result_dialog(Info(lang.getstr("profile.install.web.unsupported")),
 								   parent=self.modaldlg)
 			else:
@@ -5833,7 +5842,7 @@ class MainFrame(BaseFrame):
 			if (getcfg("lut_viewer.show_actual_lut") and
 				self.worker.argyll_version >= [1, 1, 0] and
 				not "Beta" in self.worker.argyll_version_string and
-				not config.get_display_name() == "Web"):
+				not config.get_display_name() in ("Web", "Untethered")):
 				tmp = self.worker.create_tempdir()
 				if isinstance(tmp, Exception):
 					show_result_dialog(tmp, self)
@@ -6730,6 +6739,7 @@ class MainFrame(BaseFrame):
 		if (update_ccmx_items and
 			getcfg("colorimeter_correction_matrix_file").split(":")[0] == "AUTO"):
 			self.update_colorimeter_correction_matrix_ctrl_items()
+		self.update_main_controls()
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:

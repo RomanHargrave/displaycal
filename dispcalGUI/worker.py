@@ -87,6 +87,7 @@ from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
+from wxUntetheredFrame import UntetheredFrame
 import wx.lib.delayedresult as delayedresult
 
 INST_CAL_MSGS = ["Do a reflective white calibration",
@@ -1745,9 +1746,16 @@ class Worker(object):
 					self.display_edid.append({})
 					self.display_manufacturers.append("Argyll CMS")
 					self.display_names.append("Web")
+				displays.append("Untethered")
+				self.display_edid.append({})
+				self.display_manufacturers.append("Argyll CMS")
+				self.display_names.append("Untethered")
 				self.displays = displays
 				setcfg("displays", os.pathsep.join(displays))
+				# Filter out Untethered
+				displays = displays[:-1]
 				if self.argyll_version >= [1, 4, 0]:
+					# Filter out Web @ localhost
 					displays = displays[:-1]
 				if check_lut_access:
 					dispwin = get_argyll_util("dispwin")
@@ -1805,6 +1813,8 @@ class Worker(object):
 				if self.argyll_version >= [1, 4, 0]:
 					# Web @ localhost
 					lut_access.append(False)
+				# Untethered
+				lut_access.append(False)
 				self.lut_access = lut_access
 		elif silent or not check_argyll_bin():
 			self.clear_argyll_info()
@@ -1863,6 +1873,7 @@ class Worker(object):
 				# In all other cases, root is only required if installing a
 				# profile to a system location
 				asroot = True
+		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
 			if cmdname in (get_argyll_utilname("dispwin"),
@@ -2048,7 +2059,7 @@ class Worker(object):
 				cmdline.insert(1, "-E")
 			if not interact:
 				cmdline.insert(1, "-S")
-		if working_dir and not skip_scripts:
+		if working_dir and working_basename and not skip_scripts:
 			try:
 				cmdfilename = os.path.join(working_dir, working_basename + 
 										   "." + cmdname + script_ext)
@@ -2386,7 +2397,7 @@ class Worker(object):
 	def get_device_id(self):
 		""" Get org.freedesktop.ColorManager device key """
 		if colord:
-			if config.get_display_name() == "Web":
+			if config.get_display_name() in ("Web", "Untethered"):
 				return None
 			edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 												getcfg("display.number") - 1))]
@@ -2400,6 +2411,8 @@ class Worker(object):
 		"""
 		if config.get_display_name() == "Web":
 			return "web:%i" % getcfg("webserver.portnumber")
+		if config.get_display_name() == "Untethered":
+			return "0"
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 
@@ -2559,10 +2572,11 @@ class Worker(object):
 	def has_separate_lut_access(self):
 		""" Return True if separate LUT access is possible and needed. """
 		if self.argyll_version >= [1, 4, 0]:
-			# filter out Web @ localhost
-			lut_access = self.lut_access[:-1]
+			# filter out Web @ localhost and Untethered
+			lut_access = self.lut_access[:-2]
 		else:
-			lut_access = self.lut_access
+			# filter out Untethered
+			lut_access = self.lut_access[:-1]
 		return (len(self.displays) > 1 and False in lut_access and True in 
 				lut_access)
 	
@@ -3397,7 +3411,16 @@ class Worker(object):
 		""" Measure the configured testchart """
 		cmd, args = self.prepare_dispread(apply_calibration)
 		if not isinstance(cmd, Exception):
-			result = self.exec_cmd(cmd, args)
+			if config.get_display_name() == "Untethered":
+				cmd, args2 = get_argyll_util("spotread"), ["-v", "-e", "-T"]
+				if getcfg("extra_args.spotread").strip():
+					args2 += parse_argument_string(getcfg("extra_args.spotread"))
+				result = self.add_measurement_features(args2, False)
+				if isinstance(result, Exception):
+					return result
+			else:
+				args2 = args
+			result = self.exec_cmd(cmd, args2)
 			if not isinstance(result, Exception) and result:
 				self.update_display_name_manufacturer(args[-1] + ".ti3")
 		else:
@@ -3840,6 +3863,9 @@ class Worker(object):
 		if getcfg("extra_args.dispread").strip():
 			args += parse_argument_string(getcfg("extra_args.dispread"))
 		self.options_dispread = list(args)
+		if getattr(self, "terminal", None) and isinstance(self.terminal,
+														  UntetheredFrame):
+			self.set_terminal_cgats(inoutfile + ".ti1")
 		return cmd, self.options_dispread + [inoutfile]
 
 	def prepare_dispwin(self, cal=None, profile_path=None, install=True):
@@ -4208,6 +4234,9 @@ class Worker(object):
 					return True
 			sleep(.25)
 		return False
+	
+	def set_terminal_cgats(self, cgats_filename):
+		self.terminal.cgats = CGATS.CGATS(cgats_filename)
 
 	def spyder2_firmware_exists(self):
 		""" Check if the Spyder 2 firmware file exists in any of the known
@@ -4302,10 +4331,15 @@ class Worker(object):
 				self.progress_dlg = None
 			if progress_msg and progress_title == appname:
 				progress_title = progress_msg
+			if (config.get_display_name() == "Untethered" and
+				interactive_frame != "uniformity"):
+				interactive_frame = "untethered"
 			if interactive_frame == "adjust":
 				windowclass = DisplayAdjustmentFrame
 			elif interactive_frame == "uniformity":
 				windowclass = DisplayUniformityFrame
+			elif interactive_frame == "untethered":
+				windowclass = UntetheredFrame
 			else:
 				windowclass = SimpleTerminal
 			if getattr(self, "terminal", None) and isinstance(self.terminal,
@@ -4315,7 +4349,8 @@ class Worker(object):
 					if isinstance(self.progress_wnd, SimpleTerminal):
 						self.progress_wnd.console.SetValue("")
 					elif (isinstance(self.progress_wnd, DisplayAdjustmentFrame) or
-						  isinstance(self.progress_wnd, DisplayUniformityFrame)):
+						  isinstance(self.progress_wnd, DisplayUniformityFrame) or
+						  isinstance(self.progress_wnd, UntetheredFrame)):
 						self.progress_wnd.reset()
 				self.progress_wnd.stop_timer()
 				self.progress_wnd.Resume()
@@ -4338,6 +4373,10 @@ class Worker(object):
 					self.terminal = DisplayUniformityFrame(parent,
 														   handler=self.progress_handler,
 														   keyhandler=self.terminal_key_handler)
+				elif interactive_frame == "untethered":
+					self.terminal = UntetheredFrame(parent,
+													handler=self.progress_handler,
+													keyhandler=self.terminal_key_handler)
 				else:
 					self.terminal = SimpleTerminal(parent, title=progress_title,
 												   handler=self.progress_handler,
@@ -5116,14 +5155,22 @@ class Worker(object):
 
 	def measure_ti1(self, ti1_path):
 		""" Measure a TI1 testchart file """
-		cmd = get_argyll_util("dispread")
-		args = ["-v"]
-		result = self.add_measurement_features(args)
+		if config.get_display_name() == "Untethered":
+			cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-T"]
+			if getcfg("extra_args.spotread").strip():
+				args += parse_argument_string(getcfg("extra_args.spotread"))
+			self.set_terminal_cgats(ti1_path)
+		else:
+			cmd = get_argyll_util("dispread")
+			args = ["-v"]
+			if getcfg("extra_args.dispread").strip():
+				args += parse_argument_string(getcfg("extra_args.dispread"))
+		result = self.add_measurement_features(args,
+											   cmd == get_argyll_util("dispread"))
 		if isinstance(result, Exception):
 			return result
-		if getcfg("extra_args.dispread").strip():
-			args += parse_argument_string(getcfg("extra_args.dispread"))
-		args += [os.path.splitext(ti1_path)[0]]
+		if config.get_display_name() != "Untethered":
+			args += [os.path.splitext(ti1_path)[0]]
 		return self.exec_cmd(cmd, args, skip_scripts=True)
 
 	def wrapup(self, copy=True, remove=True, dst_path=None, ext_filter=None):
