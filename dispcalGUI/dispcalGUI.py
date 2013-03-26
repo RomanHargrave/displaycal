@@ -8581,7 +8581,8 @@ class MainFrame(BaseFrame):
 					if recent_cal not in self.presets:
 						recent_cals += [recent_cal]
 				setcfg("recent_cals", os.pathsep.join(recent_cals))
-				self.update_controls(False)
+				self.update_controls(False, False)
+				self.update_colorimeter_correction_matrix_ctrl_items(True)
 				self.load_display_profile_cal()
 	
 	def delete_calibration_related_handler(self, event):
