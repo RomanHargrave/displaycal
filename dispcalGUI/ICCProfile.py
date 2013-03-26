@@ -32,7 +32,6 @@ import edid
 from colormath import NumberTuple
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
-from meta import version
 from ordereddict import OrderedDict
 try:
 	from log import safe_print
@@ -3091,7 +3090,7 @@ class ICCProfile:
 		"""
 		if not "meta" in self.tags:
 			self.tags.meta = DictType()
-		spec_prefixes = "EDID_,CMF_"
+		spec_prefixes = "EDID_"
 		prefixes = (self.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
 		for prefix in spec_prefixes.split(","):
 			if not prefix in prefixes:
@@ -3122,10 +3121,7 @@ class ICCProfile:
 		if edid.get("serial_ascii"):
 			self.tags.meta["EDID_serial"] = edid["serial_ascii"]
 		# GCM keys
-		self.tags.meta.update((("EDID_md5", edid["hash"]),
-							   ("CMF_product", "dispcalGUI"),
-							   ("CMF_binary", "dispcalGUI"),
-							   ("CMF_version", version)))
+		self.tags.meta["EDID_md5"] = edid["hash"]
 	
 	def set_gamut_metadata(self, gamut_volume=None, gamut_coverage=None):
 		""" Sets gamut volume and coverage metadata keys """

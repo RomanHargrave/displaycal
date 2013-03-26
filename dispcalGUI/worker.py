@@ -3317,6 +3317,9 @@ class Worker(object):
 			elif not "meta" in profile.tags:
 				# Make sure meta tag exists
 				profile.tags.meta = ICCP.DictType()
+			profile.tags.meta.update({"CMF_product": appname,
+									  "CMF_binary": appname,
+									  "CMF_version": version})
 			# Set license
 			profile.tags.meta["License"] = getcfg("profile.license")
 			# Set profile quality
@@ -3332,7 +3335,7 @@ class Worker(object):
 			profile.tags.meta["DATA_source"] = "calib"
 			# Add instrument
 			profile.tags.meta["MEASUREMENT_device"] = self.get_instrument_name().lower()
-			spec_prefixes = "DATA_,MEASUREMENT_,OPENICC_"
+			spec_prefixes = "CMF_,DATA_,MEASUREMENT_,OPENICC_"
 			# Add screen brightness if applicable
 			if sys.platform not in ("darwin", "win32") and dbus_session:
 				try:
