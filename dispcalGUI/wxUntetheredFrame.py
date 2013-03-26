@@ -200,7 +200,16 @@ class UntetheredFrame(wx.Frame):
 					self.panel_RGB.Update()
 					self.label_XYZ.SetLabel("XYZ = %.2f %.2f %.2f" % tuple(XYZ))
 					rgb_space = list(colormath.rgb_spaces["sRGB"])
-					rgb_space[1] = tuple([v / 100.0 for v in self.white_XYZ_Y100])
+					white_CCT = colormath.XYZ2CCT(*self.white_XYZ_Y100)
+					if white_CCT:
+						white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
+																				 scale=100.0))
+						white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
+																							  scale=100.0))
+						white_Lab = colormath.XYZ2Lab(*self.white_XYZ_Y100)
+						if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
+							colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
+							rgb_space[1] = tuple([v / 100.0 for v in self.white_XYZ_Y100])
 					color = [int(round(v)) for v in
 							 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ_Y100],
 											   rgb_space=rgb_space,
