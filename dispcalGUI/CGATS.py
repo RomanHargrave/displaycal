@@ -396,7 +396,7 @@ class CGATS(dict):
 			context = self.parent.parent
 		else:
 			context = self
-		for key in context['KEYWORDS']:
+		for key in context['KEYWORDS'].keys():
 			if context['KEYWORDS'][key] == keyword:
 				del context['KEYWORDS'][key]
 		if remove_value:
