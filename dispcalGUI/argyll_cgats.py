@@ -284,38 +284,23 @@ def ti3_to_ti1(ti3_data):
 	"""
 	Create and return TI1 data converted from TI3.
 	
-	ti3_data can be a file object or a string holding the data.
+	ti3_data can be a file object, a list of strings or a string holding the data.
 	
 	"""
-	if isinstance(ti3_data, (str, unicode)):
-		ti3 = StringIO(ti3_data)
+	ti3 = CGATS.CGATS(ti3_data)
+	ti3[0].type = "CTI1"
+	ti3[0].DESCRIPTOR = "Argyll Calibration Target chart information 1"
+	ti3[0].ORIGINATOR = "Argyll targen"
+	if hasattr(ti3[0], "COLOR_REP"):
+		color_rep = ti3[0].COLOR_REP.split('_')[0]
 	else:
-		ti3 = ti3_data
-	ti1_lines = []
-	for line in ti3:
-		line = line.strip()
-		if line == "CTI3":
-			line = 'CTI1   '  # Make sure CGATS file identifiers are 
-							  # always a minimum of 7 characters
-		else:
-			values = line.split(None, 1)
-			if len(values) > 1:
-				if "DEVICE_CLASS" in values or "LUMINANCE_XYZ_CDM2" in values:
-					continue
-				if values[0] == "DESCRIPTOR":
-					values[1] = ('"Argyll Calibration Target chart '
-								 'information 1"')
-				elif values[0] == "ORIGINATOR":
-					values[1] = '"Argyll targen"'
-				elif values[0] == "COLOR_REP":
-					values[1] = '"%s"' % values[1].strip('"').split('_')[0]
-				line = " ".join(values)
-		ti1_lines += [line]
-		if line == 'END_DATA':
-			break
-	if isinstance(ti3, file):
-		ti3.close()
-	return "\n".join(ti1_lines)
+		color_rep = "RGB"
+	ti3[0].add_keyword("COLOR_REP", color_rep)
+	ti3[0].remove_keyword("DEVICE_CLASS")
+	ti3[0].remove_keyword("LUMINANCE_XYZ_CDM2")
+	if hasattr(ti3[0], "ARGYLL_COLPROF_ARGS"):
+		del ti3[0].ARGYLL_COLPROF_ARGS
+	return str(ti3[0])
 
 
 def vcgt_to_cal(profile):
