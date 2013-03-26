@@ -2244,6 +2244,8 @@ class MainFrame(BaseFrame):
 		self.ccmx_item_paths = []
 		index = 0
 		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+		if len(ccmx) > 1 and not os.path.isfile(ccmx[1]):
+			ccmx = ccmx[:1]
 		if force or not getattr(self, "ccmx_cached_paths", None):
 			ccmx_paths = []
 			ccss_paths = []
