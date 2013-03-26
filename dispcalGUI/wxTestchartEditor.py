@@ -939,9 +939,12 @@ class TestchartEditor(wx.Frame):
 			bitmap = wx.EmptyBitmap(size, size)
 			dc = wx.MemoryDC()
 			dc.SelectObject(bitmap)
-			color = wx.Colour(int(round(self.ti1[0].DATA[index]["RGB_R"] * 2.55)),
-							  int(round(self.ti1[0].DATA[index]["RGB_G"] * 2.55)),
-							  int(round(self.ti1[0].DATA[index]["RGB_B"] * 2.55)))
+			# Careful when rounding floats!
+			# Incorrect: int(round(50 * 2.55)) = 127 (127.499999)
+			# Correct: int(round(float(str(50 * 2.55)))) = 128 (127.5)
+			color = wx.Colour(int(round(float(str(self.ti1[0].DATA[index]["RGB_R"] * 2.55)))),
+							  int(round(float(str(self.ti1[0].DATA[index]["RGB_G"] * 2.55)))),
+							  int(round(float(str(self.ti1[0].DATA[index]["RGB_B"] * 2.55)))))
 			dc.SetBackground(wx.Brush(color))
 			dc.Clear()
 			bitmap.SaveFile("%s-%04d%s" % (name, index + 1, ext),
