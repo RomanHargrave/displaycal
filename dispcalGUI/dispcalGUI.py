@@ -3759,7 +3759,7 @@ class MainFrame(BaseFrame):
 			setcfg("calibration.black_output_offset", 0)
 			self.black_output_offset_ctrl.SetValue(0)
 			self.black_output_offset_intctrl.SetValue(0)
-		else:
+		elif event.GetId() == self.trc_ctrl.GetId():
 			if getcfg("trc.backup", False):
 				self.trc_textctrl.SetValue(str(getcfg("trc.backup")))
 				setcfg("trc.backup", None)
