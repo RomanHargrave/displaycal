@@ -1256,7 +1256,8 @@ class MainFrame(BaseFrame):
 								lang.getstr("trc.lstar"),
 								lang.getstr("trc.rec709"),
 								lang.getstr("trc.smpte240m"),
-								lang.getstr("trc.srgb")])
+								lang.getstr("trc.srgb"),
+								"BT.1886"])
 		
 		self.trc_types = [
 			lang.getstr("trc.type.relative"),
@@ -2649,6 +2650,8 @@ class MainFrame(BaseFrame):
 			bool(getcfg("drift_compensation.blacklevel")))
 
 		trc = getcfg("trc")
+		bt1886 = (trc == 2.4 and getcfg("trc.type") == "G" and
+				  getcfg("calibration.black_output_offset") == 0)
 		if trc in ("l", "709", "240", "s"):
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.SetSelection(0)
@@ -2661,6 +2664,12 @@ class MainFrame(BaseFrame):
 			self.trc_ctrl.SetSelection(3)
 		elif trc == "s":
 			self.trc_ctrl.SetSelection(4)
+		elif bt1886:
+			self.trc_ctrl.SetSelection(5)
+			self.trc_textctrl.SetValue(str(trc))
+			self.trc_textctrl.Hide()
+			self.trc_type_ctrl.SetSelection(1)
+			self.trc_type_ctrl.Hide()
 		elif trc:
 			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.SetValue(str(trc))
@@ -2684,10 +2693,7 @@ class MainFrame(BaseFrame):
 			self.profile_types_ba.get(getcfg("profile.type"), 
 			self.profile_types_ba.get(defaults["profile.type"])))
 
-		self.black_output_offset_ctrl.SetValue(
-			int(Decimal(str(getcfg("calibration.black_output_offset"))) * 100))
-		self.black_output_offset_intctrl.SetValue(
-			int(Decimal(str(getcfg("calibration.black_output_offset"))) * 100))
+		self.update_black_output_offset_ctrl()
 
 		self.black_point_correction_ctrl.SetValue(
 			int(Decimal(str(getcfg("calibration.black_point_correction"))) * 
@@ -2772,6 +2778,12 @@ class MainFrame(BaseFrame):
 		self.panel.Thaw()
 
 		self.updatingctrls = False
+	
+	def update_black_output_offset_ctrl(self):
+		self.black_output_offset_ctrl.SetValue(
+			int(Decimal(str(getcfg("calibration.black_output_offset"))) * 100))
+		self.black_output_offset_intctrl.SetValue(
+			int(Decimal(str(getcfg("calibration.black_output_offset"))) * 100))
 	
 	def update_black_point_rate_ctrl(self):
 		self.calpanel.Freeze()
@@ -3191,6 +3203,10 @@ class MainFrame(BaseFrame):
 			self.black_output_offset_intctrl.SetValue(
 				self.black_output_offset_ctrl.GetValue())
 		v = self.get_black_output_offset()
+		if float(v) > 0 and self.trc_ctrl.GetSelection() == 5:
+			self.trc_ctrl.SetSelection(0)
+			self.trc_textctrl.Show()
+			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
 		if float(v) != getcfg("calibration.black_output_offset"):
 			self.cal_changed()
 		setcfg("calibration.black_output_offset", v)
@@ -3731,6 +3747,33 @@ class MainFrame(BaseFrame):
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
 		self.calpanel.Freeze()
+		if self.trc_ctrl.GetSelection() == 5:
+			# BT.1886
+			setcfg("trc.backup", getcfg("trc"))
+			self.trc_textctrl.SetValue("2.4")
+			setcfg("trc.type.backup", getcfg("trc.type"))
+			setcfg("trc.type", "G")
+			self.trc_type_ctrl.SetSelection(1)
+			setcfg("calibration.black_output_offset.backup",
+				   getcfg("calibration.black_output_offset"))
+			setcfg("calibration.black_output_offset", 0)
+			self.black_output_offset_ctrl.SetValue(0)
+			self.black_output_offset_intctrl.SetValue(0)
+		else:
+			if getcfg("trc.backup", False):
+				self.trc_textctrl.SetValue(str(getcfg("trc.backup")))
+				setcfg("trc.backup", None)
+			if getcfg("trc.type.backup", False):
+				setcfg("trc.type", getcfg("trc.type.backup"))
+				setcfg("trc.type.backup", None)
+				self.trc_type_ctrl.SetSelection(
+					self.trc_types_ba.get(getcfg("trc.type"), 
+										  self.trc_types_ba.get(defaults["trc.type"])))
+			if getcfg("calibration.black_output_offset.backup", False):
+				setcfg("calibration.black_output_offset",
+					   getcfg("calibration.black_output_offset.backup"))
+				setcfg("calibration.black_output_offset.backup", None)
+				self.update_black_output_offset_ctrl()
 		if self.trc_ctrl.GetSelection() == 0:
 			self.trc_textctrl.Show()
 			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
@@ -7264,6 +7307,8 @@ class MainFrame(BaseFrame):
 		trc_type = self.get_trc_type()
 		ambient = self.get_ambient()
 		black_output_offset = self.get_black_output_offset()
+		bt1886 = (trc == "2.4" and trc_type == "G" and
+				  black_output_offset == "0")
 		black_point_correction = self.get_black_point_correction()
 		black_point_rate = self.get_black_point_rate()
 		calibration_quality = self.get_calibration_quality()
@@ -7395,7 +7440,9 @@ class MainFrame(BaseFrame):
 											"\0" if 
 											black_luminance is None else 
 											black_luminance + u"cdm²")
-		if trc not in ("l", "709", "s", "240"):
+		if bt1886:
+			trc = "BT.1886"
+		elif trc not in ("l", "709", "s", "240"):
 			if trc_type == "G":
 				trc += " (%s)" % lang.getstr("trc.type.absolute").lower()
 		else:
@@ -7595,7 +7642,9 @@ class MainFrame(BaseFrame):
 			return None
 
 	def get_trc_type(self):
-		if self.trc_type_ctrl.GetSelection() == 1 and self.trc_ctrl.GetSelection() == 0:
+		if ((self.trc_type_ctrl.GetSelection() == 1 and
+			 self.trc_ctrl.GetSelection() == 0) or
+			self.trc_ctrl.GetSelection() == 5):
 			return "G"
 		else:
 			return "g"
@@ -7610,8 +7659,13 @@ class MainFrame(BaseFrame):
 			return "709"
 		elif self.trc_ctrl.GetSelection() == 3:
 			return "240"
-		else:
+		elif self.trc_ctrl.GetSelection() == 4:
 			return "s"
+		elif self.trc_ctrl.GetSelection() == 5:
+			# BT.1886
+			return "2.4"
+		else:
+			raise ValueError("Invalid TRC selection")
 
 	def get_calibration_quality(self):
 		return self.quality_ab[self.calibration_quality_ctrl.GetValue()]
