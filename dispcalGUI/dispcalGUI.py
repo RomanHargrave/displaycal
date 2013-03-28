@@ -3204,6 +3204,9 @@ class MainFrame(BaseFrame):
 				self.black_output_offset_ctrl.GetValue())
 		v = self.get_black_output_offset()
 		if float(v) > 0 and self.trc_ctrl.GetSelection() == 3:
+			self.restore_trc_backup()
+			if getcfg("calibration.black_output_offset.backup", False):
+				setcfg("calibration.black_output_offset.backup", None)
 			self.calpanel.Freeze()
 			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.Show()
@@ -3764,15 +3767,7 @@ class MainFrame(BaseFrame):
 			self.black_output_offset_ctrl.SetValue(0)
 			self.black_output_offset_intctrl.SetValue(0)
 		elif event.GetId() == self.trc_ctrl.GetId():
-			if getcfg("trc.backup", False):
-				self.trc_textctrl.SetValue(str(getcfg("trc.backup")))
-				setcfg("trc.backup", None)
-			if getcfg("trc.type.backup", False):
-				setcfg("trc.type", getcfg("trc.type.backup"))
-				setcfg("trc.type.backup", None)
-				self.trc_type_ctrl.SetSelection(
-					self.trc_types_ba.get(getcfg("trc.type"), 
-										  self.trc_types_ba.get(defaults["trc.type"])))
+			self.restore_trc_backup()
 			if getcfg("calibration.black_output_offset.backup", False):
 				setcfg("calibration.black_output_offset",
 					   getcfg("calibration.black_output_offset.backup"))
@@ -3824,6 +3819,18 @@ class MainFrame(BaseFrame):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ShowModalThenDestroy()
+	
+	def restore_trc_backup(self):
+		if getcfg("trc.backup", False):
+			setcfg("trc", getcfg("trc.backup"))
+			setcfg("trc.backup", None)
+			self.trc_textctrl.SetValue(str(getcfg("trc")))
+		if getcfg("trc.type.backup", False):
+			setcfg("trc.type", getcfg("trc.type.backup"))
+			setcfg("trc.type.backup", None)
+			self.trc_type_ctrl.SetSelection(
+				self.trc_types_ba.get(getcfg("trc.type"), 
+									  self.trc_types_ba.get(defaults["trc.type"])))
 
 	def should_use_viewcond_adjust_handler(self, event):
 		setcfg("trc.should_use_viewcond_adjust.show_msg", 
