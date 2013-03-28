@@ -537,6 +537,7 @@
 	"trc.gamma": "Gamma",
 	"trc.lstar": "L*",
 	"trc.rec709": "Rec. 709",
+	"trc.rec1886": "Rec. 1886",
 	"trc.should_use_viewcond_adjust": "Wenn Sie die Rec.-709-, SMPTE-240M- oder sRGB-Kurven verwenden, sollten Sie auch eine Anpassung der Betrachtungsbedingungen an Ihr Umgebungslicht durchführen, um ein korrektes Ergebnis zu erhalten. Aktivieren Sie hierzu das Kontrollkästchen „Umgebungshelligkeit“ und geben Sie einen Wert in Lux ein, oder messen Sie das Umgebungslicht während der Kalibrierung (falls von Ihrem Messgerät unterstützt).",
 	"trc.smpte240m": "SMPTE 240M",
 	"trc.srgb": "sRGB",

@@ -537,6 +537,7 @@
 	"trc.gamma": "Gamma",
 	"trc.lstar": "L*",
 	"trc.rec709": "Rec. 709",
+	"trc.rec1886": "Rec. 1886",
 	"trc.should_use_viewcond_adjust": "When using the SMPTE 240M, Rec. 709 or sRGB curves, you should use an adjustment for your ambient light levels as well to get correct results. To do that, tick the checkbox near “Ambient light level” and enter a value in Lux. You can also optionally measure ambient light while calibrating, if supported by your instrument.",
 	"trc.smpte240m": "SMPTE 240M",
 	"trc.srgb": "sRGB",

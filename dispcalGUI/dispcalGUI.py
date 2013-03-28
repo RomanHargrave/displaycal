@@ -1255,9 +1255,9 @@ class MainFrame(BaseFrame):
 		self.trc_ctrl.SetItems([lang.getstr("trc.gamma"),
 								lang.getstr("trc.lstar"),
 								lang.getstr("trc.rec709"),
+								lang.getstr("trc.rec1886"),
 								lang.getstr("trc.smpte240m"),
-								lang.getstr("trc.srgb"),
-								"BT.1886"])
+								lang.getstr("trc.srgb")])
 		
 		self.trc_types = [
 			lang.getstr("trc.type.relative"),
@@ -2661,11 +2661,11 @@ class MainFrame(BaseFrame):
 		elif trc == "709":
 			self.trc_ctrl.SetSelection(2)
 		elif trc == "240":
-			self.trc_ctrl.SetSelection(3)
-		elif trc == "s":
 			self.trc_ctrl.SetSelection(4)
-		elif bt1886:
+		elif trc == "s":
 			self.trc_ctrl.SetSelection(5)
+		elif bt1886:
+			self.trc_ctrl.SetSelection(3)
 			self.trc_textctrl.SetValue(str(trc))
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.SetSelection(1)
@@ -3203,7 +3203,7 @@ class MainFrame(BaseFrame):
 			self.black_output_offset_intctrl.SetValue(
 				self.black_output_offset_ctrl.GetValue())
 		v = self.get_black_output_offset()
-		if float(v) > 0 and self.trc_ctrl.GetSelection() == 5:
+		if float(v) > 0 and self.trc_ctrl.GetSelection() == 3:
 			self.calpanel.Freeze()
 			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.Show()
@@ -3751,7 +3751,7 @@ class MainFrame(BaseFrame):
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
 		self.calpanel.Freeze()
-		if self.trc_ctrl.GetSelection() == 5:
+		if self.trc_ctrl.GetSelection() == 3:
 			# BT.1886
 			setcfg("trc.backup", getcfg("trc"))
 			self.trc_textctrl.SetValue("2.4")
@@ -7445,7 +7445,7 @@ class MainFrame(BaseFrame):
 											black_luminance is None else 
 											black_luminance + u"cdm²")
 		if bt1886:
-			trc = "BT.1886"
+			trc = "Rec. 1886"
 		elif trc not in ("l", "709", "s", "240"):
 			if trc_type == "G":
 				trc += " (%s)" % lang.getstr("trc.type.absolute").lower()
@@ -7648,7 +7648,7 @@ class MainFrame(BaseFrame):
 	def get_trc_type(self):
 		if ((self.trc_type_ctrl.GetSelection() == 1 and
 			 self.trc_ctrl.GetSelection() == 0) or
-			self.trc_ctrl.GetSelection() == 5):
+			self.trc_ctrl.GetSelection() == 3):
 			return "G"
 		else:
 			return "g"
@@ -7662,12 +7662,12 @@ class MainFrame(BaseFrame):
 		elif self.trc_ctrl.GetSelection() == 2:
 			return "709"
 		elif self.trc_ctrl.GetSelection() == 3:
-			return "240"
-		elif self.trc_ctrl.GetSelection() == 4:
-			return "s"
-		elif self.trc_ctrl.GetSelection() == 5:
 			# BT.1886
 			return "2.4"
+		elif self.trc_ctrl.GetSelection() == 4:
+			return "240"
+		elif self.trc_ctrl.GetSelection() == 5:
+			return "s"
 		else:
 			raise ValueError("Invalid TRC selection")
 
