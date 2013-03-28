@@ -3204,9 +3204,13 @@ class MainFrame(BaseFrame):
 				self.black_output_offset_ctrl.GetValue())
 		v = self.get_black_output_offset()
 		if float(v) > 0 and self.trc_ctrl.GetSelection() == 5:
+			self.calpanel.Freeze()
 			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.Show()
 			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
+			self.calpanel.Layout()
+			self.calpanel.Refresh()
+			self.calpanel.Thaw()
 		if float(v) != getcfg("calibration.black_output_offset"):
 			self.cal_changed()
 		setcfg("calibration.black_output_offset", v)
