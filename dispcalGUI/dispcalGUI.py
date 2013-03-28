@@ -3756,7 +3756,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.Freeze()
 		if self.trc_ctrl.GetSelection() == 3:
 			# BT.1886
-			setcfg("trc.backup", getcfg("trc"))
+			setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
 			self.trc_textctrl.SetValue("2.4")
 			setcfg("trc.type.backup", getcfg("trc.type"))
 			setcfg("trc.type", "G")
