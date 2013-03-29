@@ -2230,6 +2230,21 @@ class MainFrame(BaseFrame):
 		self.calpanel.Thaw()
 		self.update_scrollbars()
 	
+	def delete_colorimeter_correction_matrix_ctrl_item(self, path):
+		if path in self.ccmx_cached_paths:
+			self.ccmx_cached_paths.remove(path)
+		if path in self.ccmx_cached_descriptors:
+			del self.ccmx_cached_descriptors[path]
+		if path in self.ccmx_instruments:
+			del self.ccmx_instruments[path]
+		delete = False
+		for key, value in self.ccmx_mapping.iteritems():
+			if value == path:
+				delete = True
+				break
+		if delete:
+			del self.ccmx_mapping[key]
+	
 	def update_colorimeter_correction_matrix_ctrl_items(self, force=False,
 														warn_on_mismatch=False):
 		"""
@@ -8646,8 +8661,15 @@ class MainFrame(BaseFrame):
 					if recent_cal not in self.presets:
 						recent_cals += [recent_cal]
 				setcfg("recent_cals", os.pathsep.join(recent_cals))
-				self.update_controls(False, False)
-				self.update_colorimeter_correction_matrix_ctrl_items(True)
+				update_colorimeter_correction_matrix_ctrl_items = False
+				for path in delete_related_files:
+					if (os.path.splitext(path)[1].lower() in (".ccss",
+															  ".ccmx") and
+						path not in orphan_related_files):
+						self.delete_colorimeter_correction_matrix_ctrl_item(path)
+						update_colorimeter_correction_matrix_ctrl_items = True
+				self.update_controls(False,
+									 update_colorimeter_correction_matrix_ctrl_items)
 				self.load_display_profile_cal()
 	
 	def delete_calibration_related_handler(self, event):
