@@ -3214,9 +3214,9 @@ class Worker(object):
 		rms = None
 		for line in self.output:
 			if line.startswith("Profile check complete"):
-				peak = re.search("peak err = (\d(?:\.\d+))", line)
-				avg = re.search("avg err = (\d(?:\.\d+))", line)
-				rms = re.search("RMS = (\d(?:\.\d+))", line)
+				peak = re.search("peak err = (\d+(?:\.\d+))", line)
+				avg = re.search("avg err = (\d+(?:\.\d+))", line)
+				rms = re.search("RMS = (\d+(?:\.\d+))", line)
 				if peak:
 					peak = peak.groups()[0]
 				if avg:
