@@ -597,6 +597,7 @@ defaults = {
 	"trc.should_use_viewcond_adjust.show_msg": 1,
 	"trc.type": "g",
 	"trc.type.backup": "g",
+	"untethered.measure.auto": 1,
 	"update_check": 1,
 	"use_separate_lut_access": 0,
 	"webserver.portnumber": 8080,

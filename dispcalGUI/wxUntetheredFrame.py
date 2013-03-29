@@ -14,17 +14,17 @@ import time
 
 from wxaddons import wx
 
-from config import getcfg, get_icon_bundle
+from config import getcfg, geticon, get_data_path, get_icon_bundle, setcfg
 from log import get_file_logger
 from meta import name as appname
-from wxwindows import numpad_keycodes
+from wxwindows import FlatShadedButton, numpad_keycodes
 import CGATS
 import colormath
 import config
 import localization as lang
 
 BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
-WHITE = wx.Colour(0xff, 0xff, 0xff)
+FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 
 
 class UntetheredFrame(wx.Frame):
@@ -33,21 +33,75 @@ class UntetheredFrame(wx.Frame):
 				 keyhandler=None, start_timer=True):
 		wx.Frame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("measurement.untethered"),
-						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
+						  style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER |
+														   wx.MAXIMIZE_BOX))
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
-		self.SetBackgroundColour(BGCOLOUR)
-		self.sizer = wx.FlexGridSizer(2, 2, 8, 8)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.panel = wx.Panel(self)
 		self.SetSizer(self.sizer)
-		self.label_RGB = wx.StaticText(self, wx.ID_ANY, " ")
-		self.label_RGB.SetForegroundColour(WHITE)
-		self.sizer.Add(self.label_RGB, 0, wx.TOP | wx.LEFT | wx.EXPAND, border=8)
-		self.label_XYZ = wx.StaticText(self, wx.ID_ANY, " ")
-		self.label_XYZ.SetForegroundColour(WHITE)
-		self.sizer.Add(self.label_XYZ, 0, wx.TOP | wx.RIGHT | wx.EXPAND, border=8)
-		self.panel_RGB = wx.Panel(self, size=(256, 256), style=wx.BORDER_SIMPLE)
-		self.sizer.Add(self.panel_RGB, 1, wx.LEFT | wx.BOTTOM | wx.EXPAND, border=8)
-		self.panel_XYZ = wx.Panel(self, size=(256, 256), style=wx.BORDER_SIMPLE)
-		self.sizer.Add(self.panel_XYZ, 1, wx.RIGHT | wx.BOTTOM | wx.EXPAND, border=8)
+		self.sizer.Add(self.panel, 1, wx.EXPAND)
+		self.panel.SetBackgroundColour(BGCOLOUR)
+		panelsizer = wx.FlexGridSizer(3, 2, 8, 8)
+		self.panel.SetSizer(panelsizer)
+		self.label_RGB = wx.StaticText(self.panel, wx.ID_ANY, " ")
+		self.label_RGB.SetForegroundColour(FGCOLOUR)
+		panelsizer.Add(self.label_RGB, 0, wx.TOP | wx.LEFT | wx.EXPAND,
+					   border=8)
+		self.label_XYZ = wx.StaticText(self.panel, wx.ID_ANY, " ")
+		self.label_XYZ.SetForegroundColour(FGCOLOUR)
+		panelsizer.Add(self.label_XYZ, 0, wx.TOP | wx.RIGHT | wx.EXPAND,
+					   border=8)
+		self.panel_RGB = wx.Panel(self.panel, size=(256, 256),
+								  style=wx.BORDER_SIMPLE)
+		panelsizer.Add(self.panel_RGB, 1, wx.LEFT | wx.EXPAND, border=8)
+		self.panel_XYZ = wx.Panel(self.panel, size=(256, 256),
+								  style=wx.BORDER_SIMPLE)
+		panelsizer.Add(self.panel_XYZ, 1, wx.RIGHT | wx.EXPAND, border=8)
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.back_btn = FlatShadedButton(self.panel, bitmap=geticon(10, "back"),
+										 label="",
+										 fgcolour=FGCOLOUR)
+		self.back_btn.Bind(wx.EVT_BUTTON, self.back_btn_handler)
+		sizer.Add(self.back_btn, 0, wx.LEFT | wx.RIGHT, border=8)
+		self.label_index = wx.StaticText(self.panel, wx.ID_ANY, " ")
+		self.label_index.SetForegroundColour(FGCOLOUR)
+		sizer.Add(self.label_index, 0, wx.ALIGN_CENTER_VERTICAL)
+		self.next_btn = FlatShadedButton(self.panel, bitmap=geticon(10, "play"),
+										 label="",
+										 fgcolour=FGCOLOUR)
+		self.next_btn.Bind(wx.EVT_BUTTON, self.next_btn_handler)
+		sizer.Add(self.next_btn, 0, wx.LEFT, border=8)
+		panelsizer.Add(sizer, 0, wx.BOTTOM, border=8)
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.measure_auto_cb = wx.CheckBox(self.panel, wx.ID_ANY,
+										   lang.getstr("auto"))
+		self.measure_auto_cb.SetForegroundColour(FGCOLOUR)
+		self.measure_auto_cb.Bind(wx.EVT_CHECKBOX, self.measure_auto_ctrl_handler)
+		sizer.Add(self.measure_auto_cb, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+				  border=8)
+		self.measure_btn = FlatShadedButton(self.panel,
+											bitmap=geticon(10, "play"),
+											label=lang.getstr("measure"),
+											fgcolour=FGCOLOUR)
+		self.measure_btn.Bind(wx.EVT_BUTTON, self.measure_btn_handler)
+		sizer.Add(self.measure_btn, 0, wx.RIGHT, border=6)
+		# Sound when measuring
+		# Needs to be stereo!
+		try:
+			self.measurement_sound = wx.Sound(get_data_path("beep.wav") or "")
+		except NotImplementedError:
+			pass
+		if getcfg("measurement.play_sound"):
+			bitmap = geticon(16, "sound_volume_full")
+		else:
+			bitmap = geticon(16, "sound_off")
+		self.sound_on_off_btn = FlatShadedButton(self.panel, bitmap=bitmap,
+												 fgcolour=FGCOLOUR)
+		self.sound_on_off_btn.SetToolTipString(lang.getstr("measurement.play_sound"))
+		self.sound_on_off_btn.Bind(wx.EVT_BUTTON,
+								   self.measurement_play_sound_handler)
+		sizer.Add(self.sound_on_off_btn, 0)
+		panelsizer.Add(sizer, 0, wx.BOTTOM, border=8)
 		self.Fit()
 		
 		self.keyhandler = keyhandler
@@ -91,6 +145,7 @@ class UntetheredFrame(wx.Frame):
 		pass
 	
 	def OnClose(self, event):
+		config.writecfg()
 		if not self.timer.IsRunning():
 			self.Destroy()
 		else:
@@ -101,7 +156,15 @@ class UntetheredFrame(wx.Frame):
 		del self.timer
 		
 	def OnMove(self, event):
-		pass
+		if self.IsShownOnScreen() and not self.IsIconized() and \
+		   (not self.GetParent() or
+		    not self.GetParent().IsShownOnScreen()):
+			prev_x = getcfg("position.progress.x")
+			prev_y = getcfg("position.progress.y")
+			x, y = self.GetScreenPosition()
+			if x != prev_x or y != prev_y:
+				setcfg("position.progress.x", x)
+				setcfg("position.progress.y", y)
 
 	def Pulse(self, msg=""):
 		if msg == lang.getstr("instrument.initializing"):
@@ -111,17 +174,23 @@ class UntetheredFrame(wx.Frame):
 	def Resume(self):
 		self.keepGoing = True
 	
-	def Show(self, show=True):
-		if show:
-			x, y, w, h = wx.Display(0).ClientArea
-			self.SetPosition((x, y))
-		wx.Frame.Show(self, show)
-	
 	def Update(self, value, msg=""):
 		return self.Pulse(msg)
 	
 	def UpdatePulse(self, msg=""):
 		return self.Pulse(msg)
+	
+	def back_btn_handler(self, event):
+		if self.index > 0:
+			self.index -= 1
+			self.show_RGB(False)
+			self.show_XYZ()
+			self.enable_btns()
+	
+	def enable_btns(self, enable=True):
+		self.back_btn.Enable(enable and self.index > 0)
+		self.next_btn.Enable(enable and self.index < self.index_max)
+		self.measure_btn.Enable(enable)
 	
 	def flush(self):
 		pass
@@ -153,9 +222,37 @@ class UntetheredFrame(wx.Frame):
 			event.Skip()
 	
 	def measure(self, event=None):
+		self.enable_btns(False)
 		self.is_measuring = True
 		# Use a delay to allow for TFT lag
 		wx.CallLater(200, self.safe_send, " ")
+	
+	def measure_auto_ctrl_handler(self, event):
+		auto = self.measure_auto_cb.GetValue()
+		setcfg("untethered.measure.auto", int(auto))
+	
+	def measure_btn_handler(self, event):
+		self.last_XYZ_Y100 = (-1, -1, -1)
+		self.measure_count = 1
+		self.measure_auto_cb.Disable()
+		self.measure()
+	
+	def measurement_play_sound_handler(self, event):
+		setcfg("measurement.play_sound",
+			   int(not(bool(getcfg("measurement.play_sound")))))
+		if getcfg("measurement.play_sound"):
+			bitmap = geticon(16, "sound_volume_full")
+		else:
+			bitmap = geticon(16, "sound_off")
+		self.sound_on_off_btn._bitmap = bitmap
+	
+	def next_btn_handler(self, event):
+		if self.index < self.index_max:
+			self.index += 1
+			self.show_RGB(self.index == self.index_max)
+			if self.index < self.index_max:
+				self.show_XYZ()
+			self.enable_btns()
 
 	def parse_txt(self, txt):
 		if not txt or not self.keepGoing or self.finished:
@@ -167,6 +264,10 @@ class UntetheredFrame(wx.Frame):
 			self.last_error = txt
 		if "Result is XYZ:" in txt:
 			self.last_error = None
+			if (getattr(self, "measurement_sound", None) and
+				getcfg("measurement.play_sound") and
+				self.measurement_sound.IsOk()):
+				self.measurement_sound.Play(wx.SOUND_ASYNC)
 			# Result is XYZ: d.dddddd d.dddddd d.dddddd, D50 Lab: d.dddddd d.dddddd d.dddddd
 			XYZ = [float(v) for v in
 				   re.search("XYZ:\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)",
@@ -174,65 +275,48 @@ class UntetheredFrame(wx.Frame):
 			row = self.cgats[0].DATA[self.index]
 			if (row["RGB_R"] == 100 and
 				row["RGB_G"] == 100 and
-				row["RGB_B"] == 100 and self.white_XYZ == (100, 100, 100)):
+				row["RGB_B"] == 100):
 				# White
 				self.cgats[0].add_keyword("LUMINANCE_XYZ_CDM2",
 										  "%.6f %.6f %.6f" % tuple(XYZ))
 				self.white_XYZ = XYZ
-				self.white_XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in XYZ]
-			XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in XYZ]
+				if self.white_XYZ[1] > 0:
+					# Protect against division by zero
+					self.white_XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in XYZ]
+				else:
+					self.white_XYZ_Y100 = XYZ
+			if self.white_XYZ[1] > 0:
+				# Protect against division by zero
+				XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in XYZ]
+			else:
+				XYZ_Y100 = XYZ
 			Lab1 = colormath.XYZ2Lab(*self.last_XYZ_Y100)
 			Lab2 = colormath.XYZ2Lab(*XYZ_Y100)
 			delta = colormath.delta(*Lab1 + Lab2)
-			if delta["E"] > 1:
+			if delta["E"] > 1 or (abs(delta["L"]) > .3 and abs(delta["C"]) < 1):
 				self.measure_count += 1
 				if self.measure_count == 2:
 					self.measure_count = 0
-					self.label_RGB.SetLabel("%i/%i RGB = %i %i %i" % (self.index + 1,
-																	  len(self.cgats[0].DATA),
-																	  round(row["RGB_R"] * 2.55),
-																	  round(row["RGB_G"] * 2.55),
-																	  round(row["RGB_B"] * 2.55)))
-					color = [int(round(v * 2.55)) for v in
-							 (row["RGB_R"], row["RGB_G"], row["RGB_B"])]
-					self.panel_RGB.SetBackgroundColour(wx.Colour(*color))
-					self.panel_RGB.Refresh()
-					self.panel_RGB.Update()
-					self.label_XYZ.SetLabel("XYZ = %.2f %.2f %.2f" % tuple(XYZ))
-					rgb_space = list(colormath.rgb_spaces["sRGB"])
-					white_CCT = colormath.XYZ2CCT(*self.white_XYZ_Y100)
-					if white_CCT:
-						white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
-																				 scale=100.0))
-						white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
-																							  scale=100.0))
-						white_Lab = colormath.XYZ2Lab(*self.white_XYZ_Y100)
-						if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
-							colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
-							rgb_space[1] = tuple([v / 100.0 for v in self.white_XYZ_Y100])
-					color = [int(round(v)) for v in
-							 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ_Y100],
-											   rgb_space=rgb_space,
-											   scale=255)]
-					self.panel_XYZ.SetBackgroundColour(wx.Colour(*color))
-					self.panel_XYZ.Refresh()
-					self.panel_XYZ.Update()
 					# Update CGATS
 					query = self.cgats[0].queryi({"RGB_R": row["RGB_R"],
 												  "RGB_G": row["RGB_G"],
 												  "RGB_B": row["RGB_B"]})
 					for i in query:
 						query[i]["XYZ_X"], query[i]["XYZ_Y"], query[i]["XYZ_Z"] = XYZ_Y100
-						self.index += 1
-					self.last_XYZ_Y100 = XYZ_Y100
+					self.index = query[i].SAMPLE_ID - 1
+					if getcfg("untethered.measure.auto"):
+						self.show_RGB(False)
+					self.show_XYZ()
+					self.index += 1
+					self.index_max = max(self.index, self.index_max)
 					if len(self.cgats[0].DATA) == self.index:
 						self.cgats[0].type = "CTI3"
 						self.cgats[0].add_keyword("COLOR_REP", "RGB_XYZ")
 						self.cgats[0].add_keyword("NORMALIZED_TO_Y_100", "YES")
 						self.cgats[0].add_keyword("DEVICE_CLASS", "DISPLAY")
 						self.cgats[0].add_keyword("INSTRUMENT_TYPE_SPECTRAL", "NO")
-						self.cgats.write(os.path.splitext(self.cgats.filename)[0] +
-										 ".ti3")
+						self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] +
+											".ti3")
 						self.safe_send("Q")
 						time.sleep(.5)
 						self.safe_send("Q")
@@ -240,7 +324,14 @@ class UntetheredFrame(wx.Frame):
 						return
 		if "key to take a reading" in txt and not self.last_error:
 			self.is_measuring = False
-			self.measure()
+			self.measure_auto_cb.Enable()
+			if getcfg("untethered.measure.auto") and self.index > 0:
+				self.measure()
+			else:
+				wx.CallLater(1000, self.show_RGB, self.index == self.index_max)
+				if self.index < self.index_max:
+					wx.CallLater(1000, self.show_XYZ)
+				wx.CallLater(1000, self.enable_btns)
 	
 	def reset(self):
 		self._setup()
@@ -251,7 +342,8 @@ class UntetheredFrame(wx.Frame):
 		self.keepGoing = True
 		self.last_error = None
 		self.index = 0
-		self.last_XYZ_Y100 = (100.0, 100.0, 100.0)
+		self.index_max = 0
+		self.last_XYZ_Y100 = (-1, -1, -1)
 		self.white_XYZ = (100.0, 100.0, 100.0)
 		self.measure_count = 0
 		self.finished = False
@@ -263,10 +355,75 @@ class UntetheredFrame(wx.Frame):
 		self.panel_XYZ.SetBackgroundColour(BGCOLOUR)
 		self.panel_XYZ.Refresh()
 		self.panel_XYZ.Update()
+		self.label_index.SetLabel(" ")
+		self.back_btn.Disable()
+		self.next_btn.Disable()
+		self.measure_btn.Disable()
+		self.measure_auto_cb.SetValue(bool(getcfg("untethered.measure.auto")))
+		self.measure_auto_cb.Disable()
+		
+		# Set position
+		placed = False
+		if self.GetParent():
+			if self.GetParent().IsShownOnScreen():
+				self.Center()
+				placed = True
+			else:
+				x = getcfg("position.progress.x", False) or self.GetParent().GetScreenPosition()[0]
+				y = getcfg("position.progress.y", False) or self.GetParent().GetScreenPosition()[1]
+		else:
+			x = getcfg("position.progress.x")
+			y = getcfg("position.progress.y")
+		if not placed:
+			self.SetSaneGeometry(x, y)
 	
 	def safe_send(self, bytes):
 		if self.has_worker_subprocess() and not self.worker.subprocess_abort:
 			self.worker.safe_send(bytes)
+	
+	def show_RGB(self, clear_XYZ=True):
+		row = self.cgats[0].DATA[self.index]
+		self.label_RGB.SetLabel("RGB %i %i %i" % (round(row["RGB_R"] * 2.55),
+												  round(row["RGB_G"] * 2.55),
+												  round(row["RGB_B"] * 2.55)))
+		color = [int(round(v * 2.55)) for v in
+				 (row["RGB_R"], row["RGB_G"], row["RGB_B"])]
+		self.panel_RGB.SetBackgroundColour(wx.Colour(*color))
+		self.panel_RGB.Refresh()
+		self.panel_RGB.Update()
+		if clear_XYZ:
+			self.label_XYZ.SetLabel(" ")
+			self.panel_XYZ.SetBackgroundColour(BGCOLOUR)
+			self.panel_XYZ.Refresh()
+			self.panel_XYZ.Update()
+		self.label_index.SetLabel("%i/%i" % (self.index + 1,
+											 len(self.cgats[0].DATA)))
+		self.label_index.GetContainingSizer().Layout()
+	
+	def show_XYZ(self):
+		row = self.cgats[0].DATA[self.index]
+		XYZ_Y100 = row["XYZ_X"], row["XYZ_Y"], row["XYZ_Z"]
+		self.last_XYZ_Y100 = XYZ_Y100
+		Lab = colormath.XYZ2Lab(*XYZ_Y100)
+		self.label_XYZ.SetLabel("L*a*b* %.2f %.2f %.2f" % Lab)
+		rgb_space = list(colormath.rgb_spaces["sRGB"])
+		white_CCT = colormath.XYZ2CCT(*self.white_XYZ_Y100)
+		if white_CCT:
+			white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
+																	 scale=100.0))
+			white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
+																				  scale=100.0))
+			white_Lab = colormath.XYZ2Lab(*self.white_XYZ_Y100)
+			if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
+				colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
+				rgb_space[1] = tuple([v / 100.0 for v in self.white_XYZ_Y100])
+		color = [int(round(v)) for v in
+				 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ_Y100],
+								   rgb_space=rgb_space,
+								   scale=255)]
+		self.panel_XYZ.SetBackgroundColour(wx.Colour(*color))
+		self.panel_XYZ.Refresh()
+		self.panel_XYZ.Update()
 	
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
