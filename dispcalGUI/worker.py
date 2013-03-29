@@ -3415,7 +3415,7 @@ class Worker(object):
 		cmd, args = self.prepare_dispread(apply_calibration)
 		if not isinstance(cmd, Exception):
 			if config.get_display_name() == "Untethered":
-				cmd, args2 = get_argyll_util("spotread"), ["-v", "-e", "-T"]
+				cmd, args2 = get_argyll_util("spotread"), ["-v", "-e"]
 				if getcfg("extra_args.spotread").strip():
 					args2 += parse_argument_string(getcfg("extra_args.spotread"))
 				result = self.add_measurement_features(args2, False)
@@ -5159,7 +5159,7 @@ class Worker(object):
 	def measure_ti1(self, ti1_path):
 		""" Measure a TI1 testchart file """
 		if config.get_display_name() == "Untethered":
-			cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-T"]
+			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 			if getcfg("extra_args.spotread").strip():
 				args += parse_argument_string(getcfg("extra_args.spotread"))
 			self.set_terminal_cgats(ti1_path)
