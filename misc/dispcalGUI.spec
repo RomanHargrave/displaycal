@@ -79,7 +79,7 @@ ${DESC}
 %prep
 %setup
 # Convert line endings in LICENSE.txt
-python -c "f = open('LICENSE.txt', 'rb')
+%{__python} -c "f = open('LICENSE.txt', 'rb')
 d = f.read().replace('\r\n', '\n').replace('\r', '\n')
 f.close()
 f = open('LICENSE.txt', 'wb')
@@ -87,15 +87,11 @@ f.write(d)
 f.close()"
 
 %build
-python_version=`python -c "import sys;print sys.version[:3]"`
-python=`which python${python_version} 2>/dev/null || which python`
-${python} setup.py build --use-distutils
+%{__python} setup.py build --use-distutils
 
 %install
-python_version=`python -c "import sys;print sys.version[:3]"`
-python=`which python${python_version} 2>/dev/null || which python`
-install_lib=`python -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)"`
-${python} setup.py install --no-compile --use-distutils \
+install_lib=`%{__python} -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)"`
+%{__python} setup.py install --no-compile --use-distutils \
 	--root=$RPM_BUILD_ROOT \
 	--prefix=%_prefix \
 	--exec-prefix=%_exec_prefix \
@@ -105,13 +101,13 @@ ${python} setup.py install --no-compile --use-distutils \
 	--skip-postinstall \
 	--record=INSTALLED_FILES
 # Strip extensions
-bits=`python -c "import platform;print platform.architecture()[0][:2]"`
-python_shortversion=`python -c "import sys;print ''.join(map(str, sys.version_info[:2]))"`
+bits=`%{__python} -c "import platform;print platform.architecture()[0][:2]"`
+python_shortversion=`%{__python} -c "import sys;print ''.join(map(str, sys.version_info[:2]))"`
 strip --strip-unneeded ${RPM_BUILD_ROOT}${install_lib}/%{name}/lib${bits}/python${python_shortversion}/*.so
 # Byte-compile *.py files and remove traces of RPM_BUILD_ROOT
 %if 0%{?mandriva_version} < 201010
 # Mandriva 2010.1 got rid of byte-compilation
-python -c "import glob
+%{__python} -c "import glob
 import os
 import platform
 import sys
@@ -139,7 +135,7 @@ fi
 %endif
 # Remove unused files from list of installed files and add directories
 # as well as mark files as executable where needed
-python -c "import os
+%{__python} -c "import os
 f = open('INSTALLED_FILES')
 paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in 
 		 filter(lambda path: not '/doc/' in path and not '/etc/' in path and
