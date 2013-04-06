@@ -409,7 +409,7 @@ valid_values = {
 	"3dlut.bitdepth.input": [8, 10, 12, 14, 16],
 	"3dlut.bitdepth.output": [8, 10, 12, 14, 16],
 	"3dlut.black_point_compensation": [0, 1],
-	"3dlut.format": ["3dl", "cube", "eeColor", "spi3d"],
+	"3dlut.format": ["3dl", "cube", "eeColor", "mga", "spi3d"],
 	"3dlut.rendering_intent": ["a", "r", "p", "s"],
 	"3dlut.size": [17, 24, 32, 33, 64, 65],
 	"calibration.quality": ["v", "l", "m", "h", "u"],

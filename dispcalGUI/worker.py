@@ -1269,7 +1269,7 @@ class Worker(object):
 		RGB_triplet = [0.0, 0.0, 0.0]
 		RGB_index = [0, 0, 0]
 		# Set the fastest and slowest changing columns, from right to left
-		if format in ("3dl", "spi3d"):
+		if format in ("3dl", "mga", "spi3d"):
 			columns = (0, 1, 2)
 		elif format == "eeColor":
 			columns = (2, 0, 1)
@@ -1489,6 +1489,7 @@ class Worker(object):
 			safe_print("\n".join(RGB_out))
 
 		lut = [["# Created with %s %s" % (appname, version)]]
+		valsep = " "
 		linesep = "\n"
 		if format == "3dl":
 			if maxval is None:
@@ -1544,9 +1545,33 @@ class Worker(object):
 				for component in (0, 1, 2):
 					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
 			linesep = "\r\n"
+		elif format == "mga":
+			lut = [["#HEADER"],
+				   ["#filename: ${FILENAME}"],
+				   ["#type: 3D cube file"],
+				   ["#format: 1.00"],
+				   ["#created:"],
+				   ["#owner:"],
+				   ["#title: ${TITLE}"],
+				   ["#END"]]
+			lut.append([])
+			lut.append(["channel 3d"])
+			lut.append(["in %i" % (size ** 3)])
+			maxval = 2 ** output_bits - 1
+			lut.append(["out %i" % (maxval + 1)])
+			lut.append([""])
+			lut.append(["format lut"])
+			lut.append([""])
+			lut.append(["values\tred\tgreen\tblue"])
+			for i, RGB_triplet in enumerate(RGB_out):
+				lut.append(["%i" % i])
+				RGB_triplet = RGB_triplet.split()
+				for component in (0, 1, 2):
+					lut[-1] += [("%i" % int(round(float(RGB_triplet[component]) * maxval)))]
+			valsep = "\t"
 		lut.append([])
 		for i, line in enumerate(lut):
-			lut[i] = " ".join(line)
+			lut[i] = valsep.join(line)
 		return linesep.join(lut)
 
 	def create_tempdir(self):

@@ -191,6 +191,9 @@ class LUT3DFrame(BaseFrame):
 					return
 				setcfg("last_3dlut_path", path)
 				config.writecfg()
+				result = result.replace("${FILENAME}", os.path.basename(path))
+				result = result.replace("${TITLE}",
+										os.path.splitext(os.path.basename(path))[0])
 				try:
 					lut_file = open(path, "wb")
 					lut_file.write(result)
@@ -242,6 +245,13 @@ class LUT3DFrame(BaseFrame):
 			# eeColor uses a fixed size of 65x65x65
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
+		elif getcfg("3dlut.format") == "mga":
+			# Pandora uses a fixed size of 33x33x33
+			setcfg("3dlut.size", 33)
+			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[33])
+			# Pandora uses a fixed bitdepth of 16
+			setcfg("3dlut.bitdepth.output", 16)
+			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
 		config.writecfg()
 		self.enable_size_controls()
 		self.enable_bitdepth_controls()
@@ -454,7 +464,7 @@ class LUT3DFrame(BaseFrame):
 		input_enable = getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_input_label.Show(input_enable)
 		self.lut3d_bitdepth_input_ctrl.Show(input_enable)
-		output_enable = getcfg("3dlut.format") == "3dl"
+		output_enable = getcfg("3dlut.format") in ("3dl", "mga")
 		self.lut3d_bitdepth_output_label.Show(output_enable)
 		self.lut3d_bitdepth_output_ctrl.Show(output_enable)
 		self.panel.GetSizer().Layout()

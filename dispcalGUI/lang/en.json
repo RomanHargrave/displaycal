@@ -10,6 +10,7 @@
 	"3dlut.format.3dl": "Autodesk Lustre / Kodak Look Manager System (.3dl)",
 	"3dlut.format.cube": "IRIDAS (.cube)",
 	"3dlut.format.eeColor": "eeColor Box (.txt)",
+	"3dlut.format.mga": "Pandora (.mga)",
 	"3dlut.format.spi3d": "Sony Imageworks (.spi3d)",
 	"3dlut.frame.title": "Create 3D LUT",
 	"3dlut.input.profile": "Source profile",
