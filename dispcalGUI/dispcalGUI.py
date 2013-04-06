@@ -595,6 +595,12 @@ class GamapFrame(BaseFrame):
 		self.intents_ab = OrderedDict()
 		self.intents_ba = OrderedDict()
 		
+		self.default_intent_ab = {}
+		self.default_intent_ba = {}
+		for i, ri in enumerate(config.valid_values["gamap_default_intent"]):
+			self.default_intent_ab[i] = ri
+			self.default_intent_ba[ri] = i
+		
 		self.setup_language()
 		self.update_controls()
 		self.update_layout()
@@ -692,10 +698,10 @@ class GamapFrame(BaseFrame):
 	
 	def gamap_default_intent_handler(self, event=None):
 		v = self.gamap_default_intent_ctrl.GetSelection()
-		if (self.rendering_intents_ab[v] != getcfg("gamap_default_intent") and
+		if (self.default_intent_ab[v] != getcfg("gamap_default_intent") and
 			self.Parent and hasattr(self.Parent, "profile_settings_changed")):
 			self.Parent.profile_settings_changed()
-		setcfg("gamap_default_intent", self.rendering_intents_ab[v])
+		setcfg("gamap_default_intent", self.default_intent_ab[v])
 	
 	def setup_language(self):
 		"""
@@ -766,7 +772,7 @@ class GamapFrame(BaseFrame):
 		self.gamap_out_viewcond_ctrl.SetStringSelection(
 			self.viewconds_ab.get(getcfg("gamap_out_viewcond"), 
 			self.viewconds_ab.get(defaults.get("gamap_out_viewcond"))))
-		self.gamap_default_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("gamap_default_intent")])
+		self.gamap_default_intent_ctrl.SetSelection(self.default_intent_ba[getcfg("gamap_default_intent")])
 		self.gamap_profile_handler()
 
 
@@ -979,12 +985,6 @@ class MainFrame(BaseFrame):
 		
 		defaults["use_separate_lut_access"] = int(
 			self.worker.has_separate_lut_access() or test)
-		
-		self.rendering_intents_ab = {}
-		self.rendering_intents_ba = {}
-		for i, ri in enumerate(config.valid_values["gamap_default_intent"]):
-			self.rendering_intents_ab[i] = ri
-			self.rendering_intents_ba[ri] = i
 
 	def init_frame(self):
 		"""
