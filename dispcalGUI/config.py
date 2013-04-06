@@ -393,7 +393,6 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 valid_ranges = {
-	"3dlut.black_point_compensation": [0, 1],
 	"gamma": [0.000001, 10],
 	"trc": [0.000001, 10],
 	"calibration.ambient_viewcond_adjust.lux": [0, sys.maxint],
@@ -402,19 +401,17 @@ valid_ranges = {
 	"calibration.black_point_correction": [0, 1],
 	"calibration.black_point_rate": [0.05, 20],
 	"calibration.luminance": [0.000001, 100000],
-	"gamap_default_intent": [0, 3],
-	"measure.uniformity.show_detail": [0, 1],
-	"profile.black_point_compensation": [0, 1],
 	"webserver.portnumber": [1, 65535],
 	"whitepoint.colortemp": [1000, 15000],
 }
 
 valid_values = {
-	"3dlut.bitdepth.input": [0, 1, 2, 3, 4],
-	"3dlut.bitdepth.output": [0, 1, 2, 3, 4],
-	"3dlut.format": [0, 1, 2, 3],
-	"3dlut.rendering_intent": [0, 1, 2, 3],
-	"3dlut.size": [0, 1, 2, 3],
+	"3dlut.bitdepth.input": [8, 10, 12, 14, 16],
+	"3dlut.bitdepth.output": [8, 10, 12, 14, 16],
+	"3dlut.black_point_compensation": [0, 1],
+	"3dlut.format": ["3dl", "cube", "eeColor", "spi3d"],
+	"3dlut.rendering_intent": ["a", "r", "p", "s"],
+	"3dlut.size": [17, 24, 32, 33, 64, 65],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	# Measurement modes as supported by Argyll -y parameter
 	# 'l' = 'n' (non-refresh-type display, e.g. LCD)
@@ -426,10 +423,13 @@ valid_values = {
 	"measurement_mode": [None, "B", "F", "L", "R", "a", "b", "c", "e", "f", "g",
 						 "l", "m", "n", "o", "p", "r", "x", "1", "2", "3", "4", 
 						 "5", "6", "7", "8", "9"],
+	"gamap_default_intent": ["a", "r", "p", "s"],
 	"gamap_perceptual_intent": intents,
 	"gamap_saturation_intent": intents,
 	"gamap_src_viewcond": viewconds,
 	"gamap_out_viewcond": ["mt", "mb", "md", "jm", "jd"],
+	"measure.uniformity.show_detail": [0, 1],
+	"profile.black_point_compensation": [0, 1],
 	"profile.install_scope": ["l", "u"],
 	"profile.quality": ["l", "m", "h", "u"],
 	"profile.type": ["g", "G", "l", "s", "S", "x", "X"],
@@ -441,16 +441,16 @@ valid_values = {
 
 defaults = {
 	"3dlut.black_point_compensation": 0,
-	"3dlut.bitdepth.input": 2,
-	"3dlut.bitdepth.output": 2,
-	"3dlut.format": 0,
+	"3dlut.bitdepth.input": 10,
+	"3dlut.bitdepth.output": 10,
+	"3dlut.format": "3dl",
 	"3dlut.input.profile": "",
 	"3dlut.abstract.profile": "",
 	"3dlut.output.profile": "",
 	"3dlut.output.profile.apply_cal": 1,
-	"3dlut.rendering_intent": 1,
+	"3dlut.rendering_intent": "r",
 	"3dlut.use_abstract_profile": 0,
-	"3dlut.size": 0,
+	"3dlut.size": 17,
 	"allow_skip_sensor_cal": 0,
 	"argyll.debug": 0,
 	"argyll.dir": expanduseru("~"), # directory
@@ -495,7 +495,7 @@ defaults = {
 	"gamap_perceptual_intent": "la",
 	"gamap_saturation": 0,
 	"gamap_saturation_intent": "s",
-	"gamap_default_intent": 0,
+	"gamap_default_intent": "p",
 	"gamma": 2.2,
 	"instruments": "",
 	"log.autoshow": int(not(hasattr(sys.stdout, "isatty") and 

@@ -692,10 +692,10 @@ class GamapFrame(BaseFrame):
 	
 	def gamap_default_intent_handler(self, event=None):
 		v = self.gamap_default_intent_ctrl.GetSelection()
-		if v != getcfg("gamap_default_intent") and self.Parent and \
-		   hasattr(self.Parent, "profile_settings_changed"):
+		if (self.rendering_intents_ab[v] != getcfg("gamap_default_intent") and
+			self.Parent and hasattr(self.Parent, "profile_settings_changed")):
 			self.Parent.profile_settings_changed()
-		setcfg("gamap_default_intent", v)
+		setcfg("gamap_default_intent", self.rendering_intents_ab[v])
 	
 	def setup_language(self):
 		"""
@@ -747,7 +747,7 @@ class GamapFrame(BaseFrame):
 			[lang.getstr("default")] + self.viewconds_out_ab.values())
 		
 		self.gamap_default_intent_ctrl.SetItems([lang.getstr("gamap.intents." + v)
-												 for v in ["p", "r", "s", "a"]])
+												 for v in config.valid_values["gamap_default_intent"]])
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
@@ -766,7 +766,7 @@ class GamapFrame(BaseFrame):
 		self.gamap_out_viewcond_ctrl.SetStringSelection(
 			self.viewconds_ab.get(getcfg("gamap_out_viewcond"), 
 			self.viewconds_ab.get(defaults.get("gamap_out_viewcond"))))
-		self.gamap_default_intent_ctrl.SetSelection(getcfg("gamap_default_intent"))
+		self.gamap_default_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("gamap_default_intent")])
 		self.gamap_profile_handler()
 
 
@@ -979,6 +979,12 @@ class MainFrame(BaseFrame):
 		
 		defaults["use_separate_lut_access"] = int(
 			self.worker.has_separate_lut_access() or test)
+		
+		self.rendering_intents_ab = {}
+		self.rendering_intents_ba = {}
+		for i, ri in enumerate(config.valid_values["gamap_default_intent"]):
+			self.rendering_intents_ab[i] = ri
+			self.rendering_intents_ba[ri] = i
 
 	def init_frame(self):
 		"""

@@ -154,12 +154,12 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_bitdepth_input_ctrl_handler(self, event):
 		setcfg("3dlut.bitdepth.input",
-			   int(self.lut3d_bitdepth_input_ctrl.GetSelection()))
+			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_input_ctrl.GetSelection()])
 		config.writecfg()
 	
 	def lut3d_bitdepth_output_ctrl_handler(self, event):
 		setcfg("3dlut.bitdepth.output",
-			   int(self.lut3d_bitdepth_output_ctrl.GetSelection()))
+			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()])
 		config.writecfg()
 	
 	def lut3d_create_consumer(self, result):
@@ -168,10 +168,9 @@ class LUT3DFrame(BaseFrame):
 		else:
 			path = None
 			defaultDir, defaultFile = get_verified_path("last_3dlut_path")
-			format = {0: "3dl",
-					  1: "cube",
-					  2: "spi3d",
-					  3: "txt"}.get(getcfg("3dlut.format"), "3dl")
+			format = getcfg("3dlut.format")
+			if format == "eeColor":
+				format = "txt"
 			defaultFile = os.path.splitext(defaultFile or
 										   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + format
 			dlg = wx.FileDialog(self, 
@@ -219,29 +218,12 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_create_producer(self, profile_in, profile_abst, profile_out):
 		apply_cal = (profile_out and "vcgt" in profile_out.tags and
 					 getcfg("3dlut.output.profile.apply_cal"))
-		intent = {0: "a",
-				  1: "r",
-				  2: "p",
-				  3: "s"}.get(getcfg("3dlut.rendering_intent"), "r")
+		intent = getcfg("3dlut.rendering_intent")
 		bpc = bool(getcfg("3dlut.black_point_compensation"))
-		format = {0: "3dl",
-				  1: "cube",
-				  2: "spi3d",
-				  3: "eeColor"}.get(getcfg("3dlut.format"), "3dl")
-		size = {0: 17,
-				1: 24,
-				2: 32,
-				3: 65}.get(getcfg("3dlut.size"), 17)
-		input_bits = {0: 8,
-					  1: 10,
-					  2: 12,
-					  3: 14,
-					  4: 16}.get(getcfg("3dlut.bitdepth.input"), 12)
-		output_bits = {0: 8,
-					   1: 10,
-					   2: 12,
-					   3: 14,
-					   4: 16}.get(getcfg("3dlut.bitdepth.output"), 12)
+		format = getcfg("3dlut.format")
+		size = getcfg("3dlut.size")
+		input_bits = getcfg("3dlut.bitdepth.input")
+		output_bits = getcfg("3dlut.bitdepth.output")
 		try:
 			lut = self.worker.create_3dlut(profile_in, profile_abst,
 										   profile_out, apply_cal=apply_cal,
@@ -255,17 +237,18 @@ class LUT3DFrame(BaseFrame):
 			return lut
 	
 	def lut3d_format_ctrl_handler(self, event):
-		setcfg("3dlut.format", int(self.lut3d_format_ctrl.GetSelection()))
-		if getcfg("3dlut.format") == 3:
+		setcfg("3dlut.format", self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()])
+		if getcfg("3dlut.format") == "eeColor":
 			# eeColor uses a fixed size of 65x65x65
-			setcfg("3dlut.size", 3)
-			self.lut3d_size_ctrl.SetSelection(3)
+			setcfg("3dlut.size", 65)
+			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		config.writecfg()
-		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format") != 3)
-		self.enable_bitdepth_controls(getcfg("3dlut.format") == 0)
+		self.enable_size_controls()
+		self.enable_bitdepth_controls()
 	
 	def lut3d_size_ctrl_handler(self, event):
-		setcfg("3dlut.size", int(self.lut3d_size_ctrl.GetSelection()))
+		setcfg("3dlut.size",
+			   self.lut3d_size_ab[self.lut3d_size_ctrl.GetSelection()])
 		config.writecfg()
 	
 	def output_profile_ctrl_handler(self, event):
@@ -285,7 +268,7 @@ class LUT3DFrame(BaseFrame):
 	
 	def rendering_intent_ctrl_handler(self, event):
 		setcfg("3dlut.rendering_intent",
-			   int(self.rendering_intent_ctrl.GetSelection()))
+			   self.rendering_intents_ab[self.rendering_intent_ctrl.GetSelection()])
 		config.writecfg()
 	
 	def set_profile(self, which, silent=False):
@@ -416,10 +399,34 @@ class LUT3DFrame(BaseFrame):
 						  % which).SetDropTarget(getattr(self, "%s_droptarget"
 														 % which))
 		
-		rendering_intents = []
-		for ri in ("a", "r", "p", "s"):
-			rendering_intents.append(lang.getstr("gamap.intents." + ri))
-		self.rendering_intent_ctrl.SetItems(rendering_intents)
+		self.rendering_intents_ab = {}
+		self.rendering_intents_ba = {}
+		for i, ri in enumerate(config.valid_values["3dlut.rendering_intent"]):
+			self.rendering_intent_ctrl.Append(lang.getstr("gamap.intents." + ri))
+			self.rendering_intents_ab[i] = ri
+			self.rendering_intents_ba[ri] = i
+		
+		self.lut3d_formats_ab = {}
+		self.lut3d_formats_ba = {}
+		for i, format in enumerate(config.valid_values["3dlut.format"]):
+			self.lut3d_format_ctrl.Append(lang.getstr("3dlut.format.%s" % format))
+			self.lut3d_formats_ab[i] = format
+			self.lut3d_formats_ba[format] = i
+		
+		self.lut3d_size_ab = {}
+		self.lut3d_size_ba = {}
+		for i, size in enumerate(config.valid_values["3dlut.size"]):
+			self.lut3d_size_ctrl.Append("%sx%sx%s" % ((size, ) * 3))
+			self.lut3d_size_ab[i] = size
+			self.lut3d_size_ba[size] = i
+		
+		self.lut3d_bitdepth_ab = {}
+		self.lut3d_bitdepth_ba = {}
+		for i, bitdepth in enumerate(config.valid_values["3dlut.bitdepth.input"]):
+			self.lut3d_bitdepth_input_ctrl.Append(str(bitdepth))
+			self.lut3d_bitdepth_output_ctrl.Append(str(bitdepth))
+			self.lut3d_bitdepth_ab[i] = bitdepth
+			self.lut3d_bitdepth_ba[bitdepth] = i
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
@@ -433,18 +440,29 @@ class LUT3DFrame(BaseFrame):
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.apply_cal_cb.Disable()
 		self.output_profile_ctrl_handler(None)
-		self.rendering_intent_ctrl.SetSelection(getcfg("3dlut.rendering_intent"))
+		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
 		self.black_point_compensation_cb.SetValue(bool(getcfg("3dlut.black_point_compensation")))
-		self.lut3d_format_ctrl.SetSelection(getcfg("3dlut.format"))
-		self.lut3d_size_ctrl.SetSelection(getcfg("3dlut.size"))
-		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format") != 3)
-		self.lut3d_bitdepth_input_ctrl.SetSelection(getcfg("3dlut.bitdepth.input"))
-		self.lut3d_bitdepth_output_ctrl.SetSelection(getcfg("3dlut.bitdepth.output"))
-		self.enable_bitdepth_controls(getcfg("3dlut.format") == 0)
+		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
+		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
+		self.enable_size_controls()
+		self.lut3d_bitdepth_input_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.input")])
+		self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
+		self.enable_bitdepth_controls()
 	
-	def enable_bitdepth_controls(self, enable=True):
-		self.lut3d_bitdepth_input_ctrl.Enable(enable)
-		self.lut3d_bitdepth_output_ctrl.Enable(enable)
+	def enable_bitdepth_controls(self):
+		self.Freeze()
+		input_enable = getcfg("3dlut.format") == "3dl"
+		self.lut3d_bitdepth_input_label.Show(input_enable)
+		self.lut3d_bitdepth_input_ctrl.Show(input_enable)
+		output_enable = getcfg("3dlut.format") == "3dl"
+		self.lut3d_bitdepth_output_label.Show(output_enable)
+		self.lut3d_bitdepth_output_ctrl.Show(output_enable)
+		self.panel.GetSizer().Layout()
+		self.Thaw()
+	
+	def enable_size_controls(self):
+		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format") != "eeColor")
+		
 
 
 def main():

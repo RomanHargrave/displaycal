@@ -3379,7 +3379,10 @@ class Worker(object):
 		# Set default rendering intent
 		if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
 			(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
-			profile.intent = getcfg("gamap_default_intent")
+			profile.intent = {"p": 0,
+							  "r": 1,
+							  "s": 2,
+							  "a": 3}[getcfg("gamap_default_intent")]
 		# Calculate profile ID
 		profile.calculateID()
 		try:

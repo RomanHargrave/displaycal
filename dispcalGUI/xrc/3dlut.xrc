@@ -135,9 +135,6 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="wxChoice" name="rendering_intent_ctrl">
-                        <content>
-                          <item/>
-                        </content>
                       </object>
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
@@ -161,18 +158,12 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxChoice" name="lut3d_format_ctrl">
-                    <content>
-                      <item>Autodesk Lustre / Kodak Look Manager System (.3dl)</item>
-                      <item>IRIDAS (.cube)</item>
-                      <item>Sony Imageworks (.spi3d)</item>
-                      <item>eeColor Box</item>
-                    </content>
                     <selection>0</selection>
                   </object>
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxStaticText">
+                  <object class="wxStaticText" name="lut3d_size_label">
                     <label>3dlut.size</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -180,18 +171,12 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxChoice" name="lut3d_size_ctrl">
-                    <content>
-                      <item>17x17x17</item>
-                      <item>24x24x24</item>
-                      <item>32x32x32</item>
-                      <item>65x65x65</item>
-                    </content>
                     <selection>0</selection>
                   </object>
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxStaticText">
+                  <object class="wxStaticText" name="lut3d_bitdepth_input_label">
                     <label>3dlut.bitdepth.input</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -199,19 +184,12 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxChoice" name="lut3d_bitdepth_input_ctrl">
-                    <content>
-                      <item>8</item>
-                      <item>10</item>
-                      <item>12</item>
-                      <item>14</item>
-                      <item>16</item>
-                    </content>
                     <selection>4</selection>
                   </object>
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxStaticText">
+                  <object class="wxStaticText" name="lut3d_bitdepth_output_label">
                     <label>3dlut.bitdepth.output</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -221,13 +199,6 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="wxChoice" name="lut3d_bitdepth_output_ctrl">
-                        <content>
-                          <item>8</item>
-                          <item>10</item>
-                          <item>12</item>
-                          <item>14</item>
-                          <item>16</item>
-                        </content>
                         <selection>4</selection>
                       </object>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
