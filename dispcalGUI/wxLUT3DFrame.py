@@ -4,7 +4,7 @@
 import os
 import sys
 
-from ICCProfile import get_display_profile
+from ICCProfile import ICCProfile, get_display_profile
 from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
 					setcfg)
 from log import safe_print
@@ -20,6 +20,24 @@ from wxaddons import FileDrop
 from wxwindows import BaseFrame, InfoDialog, wx
 
 from wx import xrc
+
+
+def get_current_profile_path():
+	profile = None
+	profile_path = getcfg("calibration.file")
+	if profile_path:
+		try:
+			profile = ICCProfile(profile_path)
+		except Exception, exception:
+			return
+	else:
+		try:
+			profile = get_display_profile(getcfg("display.number") - 1)
+		except Exception, exception:
+			return
+	if profile:
+		return profile.fileName
+
 
 class LUT3DFrame(BaseFrame):
 
@@ -265,33 +283,21 @@ class LUT3DFrame(BaseFrame):
 		self.set_profile("output", silent=not event)
 	
 	def output_profile_current_ctrl_handler(self, event):
-		profile_path = getcfg("calibration.file")
-		if not profile_path:
-			try:
-				profile = get_display_profile(getcfg("display.number") - 1)
-			except Exception, exception:
-				return
-			profile_path = profile.fileName
+		profile_path = get_current_profile_path()
 		if profile_path and os.path.isfile(profile_path):
 			self.output_profile_ctrl.SetPath(profile_path)
-			self.set_profile("output", silent=not event)
+			self.set_profile("output", profile_path or False, silent=not event)
 	
 	def rendering_intent_ctrl_handler(self, event):
 		setcfg("3dlut.rendering_intent",
 			   self.rendering_intents_ab[self.rendering_intent_ctrl.GetSelection()])
 		config.writecfg()
 	
-	def set_profile(self, which, silent=False):
+	def set_profile(self, which, profile_path=None, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
 		if which == "output":
-			profile_path = getcfg("calibration.file")
-			if not profile_path:
-				try:
-					profile = get_display_profile(getcfg("display.number") - 1)
-				except Exception, exception:
-					pass
-				else:
-					profile_path = profile.fileName
+			if profile_path is None:
+				profile_path = get_current_profile_path()
 			self.output_profile_current_btn.Enable(self.output_profile_ctrl.Enabled and
 												   bool(profile_path) and
 												   os.path.isfile(profile_path) and
@@ -327,7 +333,7 @@ class LUT3DFrame(BaseFrame):
 						if which == "output":
 							self.input_profile_ctrl.SetPath(path)
 							self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
-							self.set_profile("input", silent)
+							self.set_profile("input", silent=silent)
 							return
 						else:
 							self.abstract_profile_cb.SetValue(False)
