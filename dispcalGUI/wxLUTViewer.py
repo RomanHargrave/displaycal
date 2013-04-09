@@ -170,7 +170,7 @@ class LUTCanvas(plot.PlotCanvas):
 			yLabel = ""
 		
 		detect_increments = False
-		Plot = plot.PolySpline
+		Plot = plot.PolyLine
 
 		lines = []
 		linear_points = []
