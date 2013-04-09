@@ -171,6 +171,7 @@ class LUTCanvas(plot.PlotCanvas):
 		
 		detect_increments = False
 		Plot = plot.PolyLine
+		Plot._attributes["width"] = 1
 
 		lines = []
 		linear_points = []
