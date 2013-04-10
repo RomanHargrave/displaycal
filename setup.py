@@ -464,7 +464,7 @@ def setup():
 			if not os.path.exists("dist"):
 				os.makedirs("dist")
 			inno_file = open(inno_path, "w")
-			inno_file.write(inno_script.encode("UTF-8", "replace"))
+			inno_file.write(inno_script.encode("MBCS", "replace"))
 			inno_file.close()
 		sys.argv.remove("inno")
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
