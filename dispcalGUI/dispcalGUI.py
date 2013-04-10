@@ -2401,6 +2401,8 @@ class MainFrame(BaseFrame):
 				if ccmx[0] != "AUTO":
 					index = 2
 		if ccmx[0] == "AUTO":
+			if len(ccmx) < 2:
+				ccmx.append("")
 			display_name = self.worker.get_display_name(False, True)
 			if self.worker.instrument_supports_ccss():
 				# Prefer CCSS
