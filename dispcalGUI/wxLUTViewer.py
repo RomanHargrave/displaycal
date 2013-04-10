@@ -1142,7 +1142,7 @@ def main(profile=None):
 	lang.init()
 	lang.update_defaults()
 	app = LUTViewer(0)
-	app.frame.LoadProfile(profile or ICCP.get_display_profile())
+	app.frame.drop_handler(profile or ICCP.get_display_profile())
 	app.frame.DrawLUT()
 	app.MainLoop()
 
