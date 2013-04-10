@@ -269,9 +269,11 @@ class UntetheredFrame(wx.Frame):
 				self.measurement_sound.IsOk()):
 				self.measurement_sound.Play(wx.SOUND_ASYNC)
 			# Result is XYZ: d.dddddd d.dddddd d.dddddd, D50 Lab: d.dddddd d.dddddd d.dddddd
-			XYZ = [float(v) for v in
-				   re.search("XYZ:\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)",
-							 txt).groups()]
+			XYZ = re.search("XYZ:\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)",
+							txt)
+			if not XYZ:
+				return
+			XYZ = [float(v) for v in XYZ.groups()]
 			row = self.cgats[0].DATA[self.index]
 			if (row["RGB_R"] == 100 and
 				row["RGB_G"] == 100 and
