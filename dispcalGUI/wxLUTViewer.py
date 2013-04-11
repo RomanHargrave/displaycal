@@ -1107,7 +1107,7 @@ class LUTFrame(wx.Frame):
 					pointXY = pointXY[1], pointXY[0]
 				else:
 					joiner = u" \u2192 "
-					format = "%i", "%.2f"
+					format = "%.2f", "%.2f"
 					axis_y = 255.0
 					legend[0] += " " + joiner.join([format[i] % point
 													for i, point in
