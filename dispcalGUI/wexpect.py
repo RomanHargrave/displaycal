@@ -2042,8 +2042,8 @@ class Wtty:
                                         os.path.join(os.path.dirname(sys.executable), 'python.exe'), 
                                         ' '.join(pyargs), 
                                         "import sys; sys.path = %r + sys.path;"
-                                        "args = %r; import wexpect;"
-                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (spath, args, pid, tid, cp, logdir))
+                                        "args = %s; import wexpect;"
+                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (spath, ("%r" % args).replace('"', r'\"'), pid, tid, cp, logdir))
                      
         
         self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
