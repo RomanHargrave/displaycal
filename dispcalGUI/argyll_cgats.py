@@ -297,7 +297,8 @@ def ti3_to_ti1(ti3_data):
 		color_rep = "RGB"
 	ti3[0].add_keyword("COLOR_REP", color_rep)
 	ti3[0].remove_keyword("DEVICE_CLASS")
-	ti3[0].remove_keyword("LUMINANCE_XYZ_CDM2")
+	if hasattr(ti3[0], "LUMINANCE_XYZ_CDM2"):
+		ti3[0].remove_keyword("LUMINANCE_XYZ_CDM2")
 	if hasattr(ti3[0], "ARGYLL_COLPROF_ARGS"):
 		del ti3[0].ARGYLL_COLPROF_ARGS
 	return str(ti3[0])
