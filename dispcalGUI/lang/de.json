@@ -486,6 +486,7 @@
 	"settings_loaded.profile": "Das Profil enthielt nur Profilierungseinstellungen. Andere Einstellungen wurden nicht verändert. Keine Kalibrierungskurven gefunden.",
 	"settings_loaded.profile_and_lut": "Das Profil enthielt nur Profilierungseinstellungen. Andere Einstellungen wurden nicht verändert und die Kalibrierungskurven geladen.",
 	"show_advanced_calibration_options": "Erweiterte Kalibrierungsoptionen zeigen",
+	"softproof.icc": "Softproof",
 	"spectral": "Spektral",
 	"startup": "Starte...",
 	"success": "...ok.",

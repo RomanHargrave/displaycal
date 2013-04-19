@@ -19,6 +19,9 @@ for name in "laptop" "office_web" "prepress" "photo" "video" ; do
 		photo)
 		colprof  -v -ql -aG -C "$cprt" -D "$desc Photo"        "$name";;
 	case "$name" in
+		softproof)
+		colprof  -v -ql -aG -C "$cprt" -D "$desc Softproof"    "$name";;
+	case "$name" in
 		video)
 		colprof  -v -ql -aG -C "$cprt" -D "$desc Video"        "$name";;
 	esac

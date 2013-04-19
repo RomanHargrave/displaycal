@@ -481,6 +481,7 @@
 	"settings_loaded.profile": "Il profilo contiene solo le impostazioni del profilo. Le altre opzioni non sono state modificate. Le curve calibrazione non sono state trovate.",
 	"settings_loaded.profile_and_lut": "Il profilo contiene solo le impostazioni del profilo. Le altre opzioni non sono state modificate e le curve calibrazione sono state caricate.",
 		"*show_advanced_calibration_options": "Show advanced calibration options",
+	"softproof.icc": "Softproof",
 		"*spectral": "Spectral",
 	"startup": "Avvio...",
 	"success": "...ok.",

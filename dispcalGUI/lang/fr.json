@@ -486,6 +486,7 @@
 	"settings_loaded.profile": "Le profil ne contenait que des réglages de caractérisation. Les autres options n'ont pas été modifiées. Aucune courbe d'une table de correspondance n'a été trouvée.",
 	"settings_loaded.profile_and_lut": "Le profil ne contenait que des réglages de caractérisation. Les autres options n'ont pas été modifiées et les courbes de la table de correspondance ont été chargées.",
 	"show_advanced_calibration_options": "Afficher les options de calibrage avancées",
+	"softproof.icc": "Softproof",
 	"spectral": "Spectral",
 	"startup": "Démarrage...",
 	"success": "... opération effectuée.",
