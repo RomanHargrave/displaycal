@@ -1887,6 +1887,7 @@ class MainFrame(BaseFrame):
 			"3dlut.size",
 			"allow_skip_sensor_cal",
 			"argyll.dir",
+			"calibration.black_output_offset.backup",
 			"calibration.black_point_rate.enabled",
 			"comport.number",
 			"copyright",
@@ -1910,6 +1911,7 @@ class MainFrame(BaseFrame):
 			"lut_viewer.show",
 			"lut_viewer.show_actual_lut",
 			"measurement_mode",
+			"measurement_mode.backup",
 			"measurement_mode.adaptive",
 			"measurement_mode.highres",
 			"measurement_mode.projector",
@@ -1942,6 +1944,9 @@ class MainFrame(BaseFrame):
 			"skip_legacy_serial_ports",
 			"sudo.preserve_environment",
 			"tc_precond_profile",
+			"testchart.file.backup",
+			"trc.backup",
+			"trc.type.backup",
 			"update_check"
 		]
 		override = {
