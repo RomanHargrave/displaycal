@@ -2734,21 +2734,7 @@ class MainFrame(BaseFrame):
 								self.quality_ba.get(
 									defaults["calibration.quality"]))
 		self.calibration_quality_ctrl.SetValue(q)
-		if q == 1:
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.verylow"))
-		elif q == 2:
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.low"))
-		elif q == 3:
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.medium"))
-		elif q == 4:
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.high"))
-		elif q == 5:
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.ultra"))
+		self.set_calibration_quality_label(self.quality_ab[q])
 
 		self.interactive_display_adjustment_cb.SetValue(not update_cal and 
 			bool(int(getcfg("calibration.interactive_display_adjustment"))))
@@ -3112,25 +3098,28 @@ class MainFrame(BaseFrame):
 												event.GetEventType(), 
 												getevttype(event)))
 		q = self.get_calibration_quality()
-		if q == "v":
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.verylow"))
-		elif q == "l":
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.low"))
-		elif q == "m":
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.medium"))
-		elif q == "h":
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.high"))
-		elif q == "u":
-			self.calibration_quality_info.SetLabel(
-				lang.getstr("calibration.quality.ultra"))
+		self.set_calibration_quality_label(q)
 		if q != getcfg("calibration.quality"):
 			self.profile_settings_changed()
 		setcfg("calibration.quality", q)
 		self.update_profile_name()
+	
+	def set_calibration_quality_label(self, q):
+		if q == "v":
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.speed.veryhigh"))
+		elif q == "l":
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.speed.high"))
+		elif q == "m":
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.speed.medium"))
+		elif q == "h":
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.speed.low"))
+		elif q == "u":
+			self.calibration_quality_info.SetLabel(
+				lang.getstr("calibration.speed.verylow"))
 
 	def interactive_display_adjustment_ctrl_handler(self, event):
 		if debug:
@@ -7073,7 +7062,7 @@ class MainFrame(BaseFrame):
 			"%ca	" + lang.getstr("calibration.ambient_viewcond_adjust"),
 			"%cf	" + lang.getstr("calibration.black_output_offset"),
 			"%ck	" + lang.getstr("calibration.black_point_correction"),
-			"%cq	" + lang.getstr("calibration.quality"),
+			"%cq	" + lang.getstr("calibration.speed"),
 			"%pq	" + lang.getstr("profile.quality"),
 			"%pt	" + lang.getstr("profile.type"),
 			"%tpa	" + lang.getstr("testchart.info")
@@ -7504,11 +7493,11 @@ class MainFrame(BaseFrame):
 			"p": profile_quality
 		}
 		msgs = {
-			"u": "UQ", 
-			"h": "HQ", 
-			"m": "MQ", 
-			"l": "LQ", 
-			"v": "VLQ"
+			"u": "VS", 
+			"h": "S", 
+			"m": "M", 
+			"l": "F", 
+			"v": "VF"
 		}
 		for a in aspects:
 			profile_name = profile_name.replace("%%%sq" % a, msgs[aspects[a]])

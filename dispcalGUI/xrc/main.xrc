@@ -823,7 +823,7 @@
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="calibration_quality_label">
-                          <label>calibration.quality</label>
+                          <label>calibration.speed</label>
                         </object>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                         <border>8</border>
