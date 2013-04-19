@@ -3797,7 +3797,8 @@ class MainFrame(BaseFrame):
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
 					raise ValueError()
-				self.trc_textctrl.SetValue(str(v))
+				if str(v) != self.trc_textctrl.GetValue():
+					self.trc_textctrl.SetValue(str(v))
 			except ValueError:
 				wx.Bell()
 				self.trc_textctrl.SetValue(str(getcfg("trc")))
