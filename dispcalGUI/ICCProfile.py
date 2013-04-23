@@ -1076,7 +1076,7 @@ class CurveType(ICCProfileTag, list):
 						  ("SMPTE 240M", -240),
 						  ("L*", -3.0),
 						  ("sRGB", -2.4),
-						  (("Gamma %.2f" % gamma).rstrip("0"), gamma)):
+						  ("Gamma %.2f" % gamma, gamma)):
 			trc.set_trc(exp, len(self), vmin, vmax)
 			if self == trc:
 				match[(name, exp)] = 1.0

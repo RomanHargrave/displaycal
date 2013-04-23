@@ -96,7 +96,7 @@ class CoordinateType(list):
 						  ("SMPTE 240M", -240),
 						  ("L*", -3.0),
 						  ("sRGB", -2.4),
-						  (("Gamma %.2f" % gamma).rstrip("0"), gamma)):
+						  ("Gamma %.2f" % gamma, gamma)):
 			trc.set_trc(exp, self, vmin, vmax)
 			match[(name, exp)] = 0.0
 			count = 0
