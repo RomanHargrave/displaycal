@@ -2625,41 +2625,81 @@ class ICCProfile:
 		values.
 		
 		"""
-		profile = ICCProfile()
-		monitor_name = edid.get("monitor_name",
+		description = edid.get("monitor_name",
 								edid.get("ascii", str(edid["product_id"] or
 													  edid["hash"])))
+		manufacturer = edid.get("manufacturer", "")
+		manufacturer_id = edid["edid"][8:10]
+		model_name = description
+		model_id = edid["edid"][10:12]
+		copyright = "Created from EDID"
+		# Get chromaticities of primaries
+		xy = {}
+		for color in ("red", "green", "blue", "white"):
+			x, y = edid.get(color + "_x", 0.0), edid.get(color + "_y", 0.0)
+			xy[color[0] + "x"] = x
+			xy[color[0] + "y"] = y
+		gamma = edid.get("gamma", 2.2)
+		profile = ICCProfile.from_chromaticities(xy["rx"], xy["ry"],
+												 xy["gx"], xy["gy"],
+												 xy["bx"], xy["by"],
+												 xy["wx"], xy["wy"], gamma,
+												 description, copyright,
+												 manufacturer, model_name,
+												 manufacturer_id, model_id,
+												 iccv4, cat)
+		profile.set_edid_metadata(edid)
+		spec_prefixes = "DATA_,OPENICC_"
+		prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
+		for prefix in spec_prefixes.split(","):
+			if not prefix in prefixes:
+				prefixes.append(prefix)
+		profile.tags.meta["prefix"] = ",".join(prefixes)
+		profile.tags.meta["OPENICC_automatic_generated"] = "1"
+		profile.tags.meta["DATA_source"] = "edid"
+		profile.calculateID()
+		return profile
+
+	@staticmethod
+	def from_chromaticities(rx, ry, gx, gy, bx, by, wx, wy, gamma, description,
+							copyright, manufacturer=None, model_name=None,
+							manufacturer_id="\0\0", model_id="\0\0",
+							iccv4=False, cat="Bradford"):
+		""" Create an ICC Profile from chromaticities and return it
+		
+		"""
+		profile = ICCProfile()
 		if iccv4:
 			profile.version = 4.2
 			profile.tags.desc = MultiLocalizedUnicodeType()
-			profile.tags.desc.add_localized_string("en", "US", monitor_name)
+			profile.tags.desc.add_localized_string("en", "US", description)
 			profile.tags.cprt = MultiLocalizedUnicodeType()
-			profile.tags.cprt.add_localized_string("en", "US",
-												   "Created from EDID")
-			profile.tags.dmnd = MultiLocalizedUnicodeType()
-			profile.tags.dmnd.add_localized_string("en", "US",
-												   edid.get("manufacturer", ""))
-			profile.tags.dmdd = MultiLocalizedUnicodeType()
-			profile.tags.dmdd.add_localized_string("en", "US", monitor_name)
+			profile.tags.cprt.add_localized_string("en", "US", copyright)
+			if manufacturer:
+				profile.tags.dmnd = MultiLocalizedUnicodeType()
+				profile.tags.dmnd.add_localized_string("en", "US", manufacturer)
+			if model_name:
+				profile.tags.dmdd = MultiLocalizedUnicodeType()
+				profile.tags.dmdd.add_localized_string("en", "US", model_name)
 		else:
 			profile.tags.desc = TextDescriptionType()
-			profile.tags.desc.ASCII = monitor_name
-			profile.tags.dmnd = TextDescriptionType()
-			profile.tags.dmnd.ASCII = edid.get("manufacturer",
-											   "").encode("ASCII", "replace")
-			profile.tags.dmdd = TextDescriptionType()
-			profile.tags.dmdd.ASCII = monitor_name
-			profile.tags.cprt = TextType("text\0\0\0\0Created from EDID\0",
-										 "cprt")
-		profile.device["manufacturer"] = "\0\0" + edid["edid"][9] + edid["edid"][8]
-		profile.device["model"] = "\0\0" + edid["edid"][11] + edid["edid"][10]
+			profile.tags.desc.ASCII = description
+			profile.tags.cprt = TextType("text\0\0\0\0%s\0" % copyright, "cprt")
+			if manufacturer:
+				profile.tags.dmnd = TextDescriptionType()
+				profile.tags.dmnd.ASCII = manufacturer.encode("ASCII", "replace")
+			if model_name:
+				profile.tags.dmdd = TextDescriptionType()
+				profile.tags.dmdd.ASCII = model_name
+		profile.device["manufacturer"] = "\0\0" + manufacturer_id[1] + manufacturer_id[0]
+		profile.device["model"] = "\0\0" + model_id[1] + model_id[0]
 		# Add Apple-specific 'mmod' tag (TODO: need full spec)
-		mmod = ("mmod" + ("\x00" * 6) + edid["edid"][8:10] +
-				("\x00" * 2) + edid["edid"][11] + edid["edid"][10] +
-				("\x00" * 4) + ("\x00" * 20))
-		profile.tags.mmod = ICCProfileTag(mmod, "mmod")
-		white = colormath.xyY2XYZ(edid.get("white_x", 0.0),
-								  edid.get("white_y", 0.0), 1.0)
+		if manufacturer_id != "\0\0" or  model_id != "\0\0":
+			mmod = ("mmod" + ("\x00" * 6) + manufacturer_id +
+					("\x00" * 2) + model_id[1] + model_id[0] +
+					("\x00" * 4) + ("\x00" * 20))
+			profile.tags.mmod = ICCProfileTag(mmod, "mmod")
+		white = colormath.xyY2XYZ(wx, wy, 1.0)
 		profile.tags.wtpt = XYZType()
 		D50 = colormath.get_whitepoint("D50")
 		if iccv4:
@@ -2676,16 +2716,13 @@ class ICCProfile:
 		profile.tags.chrm = ChromaticityType()
 		profile.tags.chrm.type = 0
 		# Get chromaticities of primaries
-		xy = {}
 		for color in ("red", "green", "blue"):
-			x, y = edid.get(color + "_x", 0.0), edid.get(color + "_y", 0.0)
-			xy[color[0] + "x"] = x
-			xy[color[0] + "y"] = y
+			x, y = locals()[color[0] + "x"], locals()[color[0] + "y"]
 			profile.tags.chrm.channels.append((x, y))
 		# Calculate RGB to XYZ matrix from chromaticities and white
-		mtx = colormath.rgb_to_xyz_matrix(xy["rx"], xy["ry"],
-										  xy["gx"], xy["gy"],
-										  xy["bx"], xy["by"], white)
+		mtx = colormath.rgb_to_xyz_matrix(locals()["rx"], locals()["ry"],
+										  locals()["gx"], locals()["gy"],
+										  locals()["bx"], locals()["by"], white)
 		rgb = {"r": (1.0, 0.0, 0.0),
 			   "g": (0.0, 1.0, 0.0),
 			   "b": (0.0, 0.0, 1.0)}
@@ -2699,19 +2736,9 @@ class ICCProfile:
 			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, white, D50, cat)
 			tagname = color + "TRC"
 			profile.tags[tagname] = CurveType()
-			gamma = edid.get("gamma", 2.2)
 			if not isinstance(gamma, (list, tuple)):
 				gamma = [gamma]
 			profile.tags[tagname].extend(gamma)
-		profile.set_edid_metadata(edid)
-		spec_prefixes = "DATA_,OPENICC_"
-		prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
-		for prefix in spec_prefixes.split(","):
-			if not prefix in prefixes:
-				prefixes.append(prefix)
-		profile.tags.meta["prefix"] = ",".join(prefixes)
-		profile.tags.meta["OPENICC_automatic_generated"] = "1"
-		profile.tags.meta["DATA_source"] = "edid"
 		profile.calculateID()
 		return profile
 	
