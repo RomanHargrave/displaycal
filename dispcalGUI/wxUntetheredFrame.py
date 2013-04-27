@@ -89,6 +89,7 @@ class UntetheredFrame(wx.Frame):
 		# Needs to be stereo!
 		try:
 			self.measurement_sound = wx.Sound(get_data_path("beep.wav") or "")
+			self.commit_sound = wx.Sound(get_data_path("camera_shutter.wav") or "")
 		except NotImplementedError:
 			pass
 		if getcfg("measurement.play_sound"):
@@ -298,6 +299,10 @@ class UntetheredFrame(wx.Frame):
 			if delta["E"] > 1 or (abs(delta["L"]) > .3 and abs(delta["C"]) < 1):
 				self.measure_count += 1
 				if self.measure_count == 2:
+					if (getattr(self, "commit_sound", None) and
+						getcfg("measurement.play_sound") and
+						self.commit_sound.IsOk()):
+						self.commit_sound.Play(wx.SOUND_ASYNC)
 					self.measure_count = 0
 					# Update CGATS
 					query = self.cgats[0].queryi({"RGB_R": row["RGB_R"],
