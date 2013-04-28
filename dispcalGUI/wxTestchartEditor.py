@@ -969,7 +969,9 @@ class TestchartEditor(wx.Frame):
 							  int(round(float(str(self.ti1[0].DATA[index]["RGB_B"] * 2.55)))))
 			dc.SetBackground(wx.Brush(color))
 			dc.Clear()
-			bitmap.SaveFile("%s-%04d%s" % (name, i + 1, ext),
+			filename = "%%s-%%0%id%%s" % len(str(maxlen))
+			filename = filename % (name, i + 1, ext)
+			bitmap.SaveFile(filename,
 							ext2type.get(ext, ext2type[".png"]))
 			if (i + 1) % repeat == 0:
 				index += 1
