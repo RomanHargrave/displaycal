@@ -278,15 +278,16 @@ class UntetheredFrame(wx.Frame):
 		return Lab, color
 	
 	def grid_label_left_click_handler(self, event):
-		row, col = event.GetRow(), event.GetCol()
-		if row == -1 and col > -1: # col label clicked
-			pass
-		elif col == -1 and row > -1: # row label clicked
-			self.index = row
-			self.finished = False
-			self.show_RGB(False)
-			self.show_XYZ()
-			self.enable_btns()
+		if not self.is_measuring:
+			row, col = event.GetRow(), event.GetCol()
+			if row == -1 and col > -1: # col label clicked
+				pass
+			elif col == -1 and row > -1: # row label clicked
+				self.index = row
+				self.finished = False
+				self.show_RGB(False)
+				self.show_XYZ()
+				self.enable_btns()
 		event.Skip()
 	
 	def has_worker_subprocess(self):
