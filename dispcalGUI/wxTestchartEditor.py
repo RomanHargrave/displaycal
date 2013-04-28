@@ -896,6 +896,25 @@ class TestchartEditor(wx.Frame):
 	def tc_export_handler(self, event):
 		if not hasattr(self, "ti1"):
 			return
+		dlg = ConfirmDialog(self, msg=lang.getstr("testchart.export.repeat_patch"),
+							ok=lang.getstr("ok"),
+							cancel=lang.getstr("cancel"),
+							bitmap=geticon(32, "dialog-question"))
+		intctrl = wx.SpinCtrl(dlg, -1, size=(60, -1),
+							  min=config.valid_ranges["tc_export_repeat_patch"][0],
+							  max=config.valid_ranges["tc_export_repeat_patch"][1],
+							  initial=getcfg("tc_export_repeat_patch"))
+		dlg.sizer3.Add(intctrl, 0, flag=wx.TOP | wx.ALIGN_LEFT,
+					   border=12)
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		result = dlg.ShowModal()
+		repeat = intctrl.GetValue()
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		setcfg("tc_export_repeat_patch", repeat)
+		writecfg()
 		path = None
 		(defaultDir,
 		 defaultFile) = (get_verified_path("last_testchart_export_path")[0],
@@ -931,12 +950,14 @@ class TestchartEditor(wx.Frame):
 		ext2type = {".jpg": wx.BITMAP_TYPE_JPEG,
 					".png": wx.BITMAP_TYPE_PNG,
 					".tif": wx.BITMAP_TYPE_TIF}
-		maxlen = len(self.ti1[0].DATA)
+		repeat = getcfg("tc_export_repeat_patch")
+		maxlen = len(self.ti1[0].DATA) * repeat
 		size = int(round(get_default_size() * float(getcfg("dimensions.measureframe").split(",")[-1])))
-		for index in self.ti1[0].DATA:
+		index = 0
+		for i in xrange(maxlen):
 			if self.worker.thread_abort:
 				break
-			self.worker.lastmsg.write("%d%%\n" % (100.0 / maxlen * (index + 1)))
+			self.worker.lastmsg.write("%d%%\n" % (100.0 / maxlen * (i + 1)))
 			bitmap = wx.EmptyBitmap(size, size)
 			dc = wx.MemoryDC()
 			dc.SelectObject(bitmap)
@@ -948,8 +969,10 @@ class TestchartEditor(wx.Frame):
 							  int(round(float(str(self.ti1[0].DATA[index]["RGB_B"] * 2.55)))))
 			dc.SetBackground(wx.Brush(color))
 			dc.Clear()
-			bitmap.SaveFile("%s-%04d%s" % (name, index + 1, ext),
+			bitmap.SaveFile("%s-%04d%s" % (name, i + 1, ext),
 							ext2type.get(ext, ext2type[".png"]))
+			if (i + 1) % repeat == 0:
+				index += 1
 
 	def tc_save_handler(self, event = None):
 		self.tc_save_as_handler(event, path = self.ti1.filename)

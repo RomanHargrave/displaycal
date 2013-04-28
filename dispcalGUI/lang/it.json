@@ -521,6 +521,7 @@
 	"testchart.discard": "Scartare",
 	"testchart.dont_select": "Non selezionare",
 	"testchart.edit": "Modifica testchart...",
+		"*testchart.export.repeat_patch": "Repeat each patch:",
 	"testchart.file": "File di testchart",
 	"testchart.info": "Numero di campioni nel testchart selezionati",
 	"testchart.invalid": "Il file di testchart non è valido!",

@@ -531,6 +531,7 @@
 	"testchart.discard": "Discard",
 	"testchart.dont_select": "Don't select",
 	"testchart.edit": "Edit testchart...",
+	"testchart.export.repeat_patch": "Repeat each patch:",
 	"testchart.file": "Testchart file",
 	"testchart.info": "Number of patches in selected testchart",
 	"testchart.invalid": "The testchart file is invalid!",

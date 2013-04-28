@@ -521,6 +521,7 @@
 	"testchart.discard": "Descartar",
 	"testchart.dont_select": "No seleccionar",
 	"testchart.edit": "Editar carta de ajustes...",
+		"*testchart.export.repeat_patch": "Repeat each patch:",
 	"testchart.file": "Archivo Carta de ajustes",
 	"testchart.info": "Numero de parches en la carta de ajustes seleccionado",
 	"testchart.invalid": "El archivo carta de ajustes no es valido!",

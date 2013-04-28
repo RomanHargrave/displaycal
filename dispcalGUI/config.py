@@ -401,6 +401,7 @@ valid_ranges = {
 	"calibration.black_point_correction": [0, 1],
 	"calibration.black_point_rate": [0.05, 20],
 	"calibration.luminance": [0.000001, 100000],
+	"tc_export_repeat_patch": [1, 1000],
 	"webserver.portnumber": [1, 65535],
 	"whitepoint.colortemp": [1000, 15000],
 }
@@ -577,6 +578,7 @@ defaults = {
 	"tc_adaption": 0.1,
 	"tc_algo": "",
 	"tc_angle": 0.3333,
+	"tc_export_repeat_patch": 1,
 	"tc_filter": 0,
 	"tc_filter_L": 50,
 	"tc_filter_a": 0,

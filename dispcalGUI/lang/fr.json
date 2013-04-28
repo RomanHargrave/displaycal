@@ -526,6 +526,7 @@
 	"testchart.discard": "Supprimer",
 	"testchart.dont_select": "Ne pas sélectionner",
 	"testchart.edit": "Éditer la grille de tests...",
+		"*testchart.export.repeat_patch": "Repeat each patch:",
 	"testchart.file": "Fichier de grille de tests",
 	"testchart.info": "Nombre d'échantillons de la grille de tests sélectionnée",
 	"testchart.invalid": "Le fichier de grille de tests est invalide.",

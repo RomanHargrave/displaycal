@@ -526,6 +526,7 @@
 	"testchart.discard": "Verwerfen",
 	"testchart.dont_select": "Nicht auswählen",
 	"testchart.edit": "Testform bearbeiten...",
+	"testchart.export.repeat_patch": "Jedes Feld wiederholen:",
 	"testchart.file": "Testform",
 	"testchart.info": "Anzahl Felder in gewählter Testform",
 	"testchart.invalid": "Testform ungültig!",
