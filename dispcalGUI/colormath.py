@@ -898,7 +898,8 @@ def XYZ2CCT(X, Y, Z):
 		[0.32931, 0.36038, -40.770],
 		[0.33724, 0.36051, -116.45]
 	]
-	if ((X < 1.0e-20) and (Y < 1.0e-20) and (Z < 1.0e-20)):
+	if ((X < 1.0e-20 and Y < 1.0e-20 and Z < 1.0e-20) or
+		X + 15.0 * Y + 3.0 * Z == 0):
 		return None	# protect against possible divide-by-zero failure
 	us = (4.0 * X) / (X + 15.0 * Y + 3.0 * Z)
 	vs = (6.0 * Y) / (X + 15.0 * Y + 3.0 * Z)
