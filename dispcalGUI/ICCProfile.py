@@ -2668,6 +2668,31 @@ class ICCProfile:
 		""" Create an ICC Profile from chromaticities and return it
 		
 		"""
+		wXYZ = colormath.xyY2XYZ(wx, wy, 1.0)
+		# Calculate RGB to XYZ matrix from chromaticities and white
+		mtx = colormath.rgb_to_xyz_matrix("rx", "ry",
+										  "gx", "gy",
+										  "bx", "by", wXYZ)
+		rgb = {"r": (1.0, 0.0, 0.0),
+			   "g": (0.0, 1.0, 0.0),
+			   "b": (0.0, 0.0, 1.0)}
+		XYZ = {}
+		for color in "rgb":
+			# Calculate XYZ for primaries
+			XYZ[color] = mtx * rgb[color]
+		profile = ICCProfile.from_XYZ(XYZ["r"], XYZ["g"], XYZ["b"], wXYZ,
+									  gamma, description, copyright,
+									  manufacturer, model_name, manufacturer_id,
+									  model_id, iccv4, cat)
+		return profile
+	
+	@staticmethod
+	def from_XYZ(rXYZ, gXYZ, bXYZ, wXYZ, gamma, description, copyright,
+				 manufacturer=None, model_name=None, manufacturer_id="\0\0",
+				 model_id="\0\0", iccv4=False, cat="Bradford"):
+		""" Create an ICC Profile from XYZ values and return it
+		
+		"""
 		profile = ICCProfile()
 		if iccv4:
 			profile.version = 4.2
@@ -2699,41 +2724,31 @@ class ICCProfile:
 					("\x00" * 2) + model_id[1] + model_id[0] +
 					("\x00" * 4) + ("\x00" * 20))
 			profile.tags.mmod = ICCProfileTag(mmod, "mmod")
-		white = colormath.xyY2XYZ(wx, wy, 1.0)
-		profile.tags.wtpt = XYZType()
+		profile.tags.wtpt = XYZType(profile=profile)
 		D50 = colormath.get_whitepoint("D50")
 		if iccv4:
 			# Set wtpt to D50 and store actual white -> D50 transform in chad
 			(profile.tags.wtpt.X, profile.tags.wtpt.Y,
 			 profile.tags.wtpt.Z) = D50
 			profile.tags.chad = chromaticAdaptionTag()
-			matrix = colormath.wp_adaption_matrix(white, D50, cat)
+			matrix = colormath.wp_adaption_matrix(wXYZ, D50, cat)
 			profile.tags.chad.update(matrix)
 		else:
 			# Store actual white in wtpt
 			(profile.tags.wtpt.X, profile.tags.wtpt.Y,
-			 profile.tags.wtpt.Z) = white
+			 profile.tags.wtpt.Z) = wXYZ
 		profile.tags.chrm = ChromaticityType()
 		profile.tags.chrm.type = 0
-		# Get chromaticities of primaries
-		for color in ("red", "green", "blue"):
-			x, y = locals()[color[0] + "x"], locals()[color[0] + "y"]
-			profile.tags.chrm.channels.append((x, y))
-		# Calculate RGB to XYZ matrix from chromaticities and white
-		mtx = colormath.rgb_to_xyz_matrix(locals()["rx"], locals()["ry"],
-										  locals()["gx"], locals()["gy"],
-										  locals()["bx"], locals()["by"], white)
-		rgb = {"r": (1.0, 0.0, 0.0),
-			   "g": (0.0, 1.0, 0.0),
-			   "b": (0.0, 0.0, 1.0)}
 		for color in "rgb":
-			# Calculate XYZ for primaries
-			X, Y, Z = mtx * rgb[color]
+			X, Y, Z = locals()[color + "XYZ"]
+			# Get chromaticity of primary
+			x, y = colormath.XYZ2xyY(X, Y, Z)[:2]
+			profile.tags.chrm.channels.append((x, y))
 			# Write XYZ and TRC tags (don't forget to adapt to D50)
 			tagname = color + "XYZ"
-			profile.tags[tagname] = XYZType()
+			profile.tags[tagname] = XYZType(profile=profile)
 			(profile.tags[tagname].X, profile.tags[tagname].Y,
-			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, white, D50, cat)
+			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, wXYZ, D50, cat)
 			tagname = color + "TRC"
 			profile.tags[tagname] = CurveType()
 			if not isinstance(gamma, (list, tuple)):
