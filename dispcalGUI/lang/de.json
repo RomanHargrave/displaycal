@@ -272,6 +272,7 @@
 	"filetype.ti1_ti3_txt": "Testformdateien (*.ti1), Messwertdateien (*.ti3;*.txt)",
 	"filetype.ti3": "Messwertdateien (*.ti3)",
 	"filetype.txt": "DeviceCorrections.txt",
+	"finish": "Fertigstellen",
 	"gamap.default_intent": "Standard-Intent für Anzeigegeräteprofil",
 	"gamap.intents.a": "Absolut farbmetrisch",
 	"gamap.intents.aa": "Absolutes Erscheinungsbild",

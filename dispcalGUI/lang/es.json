@@ -270,6 +270,7 @@
 	"filetype.ti1_ti3_txt": "Archivos de carta de ajustes (*.ti1), Archivos de medicion (*.ti3;*.txt)",
 	"filetype.ti3": "Archivos de medicion (*.icc;*.icm;*.ti3)",
 	"filetype.txt": "Correcciones periferico.txt",
+		"*finish": "Finish",
 	"gamap.default_intent": "Intento de renderizado por defecto para el perfil de la pantalla",
 	"gamap.intents.a": "Absoluto colorimetrico",
 	"gamap.intents.aa": "Apariencia absoluto",

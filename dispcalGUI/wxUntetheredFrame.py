@@ -26,6 +26,15 @@ import localization as lang
 BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
 FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 
+if sys.platform == "darwin":
+	FONTSIZE_LARGE = 11
+	FONTSIZE_MEDIUM = 11
+	FONTSIZE_SMALL = 10
+else:
+	FONTSIZE_LARGE = 10
+	FONTSIZE_MEDIUM = 8
+	FONTSIZE_SMALL = 8
+
 
 class UntetheredFrame(wx.Frame):
 
@@ -36,7 +45,7 @@ class UntetheredFrame(wx.Frame):
 						  style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER |
 														   wx.MAXIMIZE_BOX))
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer = wx.FlexGridSizer(2, 1)
 		self.panel = wx.Panel(self)
 		self.SetSizer(self.sizer)
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
@@ -71,14 +80,15 @@ class UntetheredFrame(wx.Frame):
 										 fgcolour=FGCOLOUR)
 		self.next_btn.Bind(wx.EVT_BUTTON, self.next_btn_handler)
 		sizer.Add(self.next_btn, 0, wx.LEFT, border=8)
-		panelsizer.Add(sizer, 0, wx.BOTTOM, border=8)
-		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		sizer.Add((12, 1), 1)
 		self.measure_auto_cb = wx.CheckBox(self.panel, wx.ID_ANY,
 										   lang.getstr("auto"))
 		self.measure_auto_cb.SetForegroundColour(FGCOLOUR)
 		self.measure_auto_cb.Bind(wx.EVT_CHECKBOX, self.measure_auto_ctrl_handler)
-		sizer.Add(self.measure_auto_cb, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
-				  border=8)
+		sizer.Add(self.measure_auto_cb, 0, wx.ALIGN_CENTER_VERTICAL |
+										   wx.ALIGN_RIGHT)
+		panelsizer.Add(sizer, 0, wx.BOTTOM | wx.EXPAND, border=8)
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.measure_btn = FlatShadedButton(self.panel,
 											bitmap=geticon(10, "play"),
 											label=lang.getstr("measure"),
@@ -102,7 +112,43 @@ class UntetheredFrame(wx.Frame):
 		self.sound_on_off_btn.Bind(wx.EVT_BUTTON,
 								   self.measurement_play_sound_handler)
 		sizer.Add(self.sound_on_off_btn, 0)
-		panelsizer.Add(sizer, 0, wx.BOTTOM, border=8)
+		sizer.Add((12, 1), 1)
+		self.finish_btn = FlatShadedButton(self.panel,
+										   label=lang.getstr("finish"),
+										   fgcolour=FGCOLOUR)
+		self.finish_btn.Bind(wx.EVT_BUTTON, self.finish_btn_handler)
+		sizer.Add(self.finish_btn, 0, wx.RIGHT, border=8)
+		panelsizer.Add(sizer, 0, wx.BOTTOM | wx.EXPAND, border=8)
+		
+		self.grid = wx.grid.Grid(self, -1, size=(-1, 256))
+		self.grid.CreateGrid(0, 8)
+		for i in xrange(8):
+			if i in (3, 4):
+				size = 20
+			else:
+				size = 50
+			self.grid.SetColSize(i, size)
+		for i, label in enumerate(["R", "G", "B", "", "", "L*", "a*", "b*"]):
+			self.grid.SetColLabelValue(i, label)
+		gridbgcolor = wx.Colour(234, 234, 234)
+		self.grid.SetCellHighlightColour(gridbgcolor)
+		self.grid.SetCellHighlightPenWidth(0)
+		self.grid.SetCellHighlightROPenWidth(0)
+		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
+		self.grid.SetDefaultCellTextColour(BGCOLOUR)
+		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
+					   wx.FONTWEIGHT_NORMAL)
+		self.grid.SetDefaultCellFont(font)
+		self.grid.SetDefaultRowSize(20)
+		self.grid.SetLabelBackgroundColour(gridbgcolor)
+		self.grid.DisableDragRowSize()
+		self.grid.EnableDragColSize()
+		self.grid.EnableEditing(False)
+		self.grid.EnableGridLines(True)
+		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
+					   self.grid_label_left_click_handler)
+		self.sizer.Add(self.grid, 1, wx.EXPAND)
+		
 		self.Fit()
 		
 		self.keyhandler = keyhandler
@@ -184,6 +230,7 @@ class UntetheredFrame(wx.Frame):
 	def back_btn_handler(self, event):
 		if self.index > 0:
 			self.index -= 1
+			self.finished = False
 			self.show_RGB(False)
 			self.show_XYZ()
 			self.enable_btns()
@@ -193,8 +240,54 @@ class UntetheredFrame(wx.Frame):
 		self.next_btn.Enable(enable and self.index < self.index_max)
 		self.measure_btn.Enable(enable)
 	
+	def finish_btn_handler(self, event):
+		self.cgats[0].type = "CTI3"
+		self.cgats[0].add_keyword("COLOR_REP", "RGB_XYZ")
+		self.cgats[0].add_keyword("NORMALIZED_TO_Y_100", "YES")
+		self.cgats[0].add_keyword("DEVICE_CLASS", "DISPLAY")
+		self.cgats[0].add_keyword("INSTRUMENT_TYPE_SPECTRAL", "NO")
+		self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] +
+							".ti3")
+		self.safe_send("Q")
+		time.sleep(.5)
+		self.safe_send("Q")
+	
 	def flush(self):
 		pass
+	
+	def get_Lab_RGB(self):
+		row = self.cgats[0].DATA[self.index]
+		XYZ_Y100 = row["XYZ_X"], row["XYZ_Y"], row["XYZ_Z"]
+		self.last_XYZ_Y100 = XYZ_Y100
+		Lab = colormath.XYZ2Lab(*XYZ_Y100)
+		rgb_space = list(colormath.rgb_spaces["sRGB"])
+		white_CCT = colormath.XYZ2CCT(*self.white_XYZ_Y100)
+		if white_CCT:
+			white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
+																	 scale=100.0))
+			white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
+																				  scale=100.0))
+			white_Lab = colormath.XYZ2Lab(*self.white_XYZ_Y100)
+			if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
+				colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
+				rgb_space[1] = tuple([v / 100.0 for v in self.white_XYZ_Y100])
+		color = [int(round(v)) for v in
+				 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ_Y100],
+								   rgb_space=rgb_space,
+								   scale=255)]
+		return Lab, color
+	
+	def grid_label_left_click_handler(self, event):
+		row, col = event.GetRow(), event.GetCol()
+		if row == -1 and col > -1: # col label clicked
+			pass
+		elif col == -1 and row > -1: # row label clicked
+			self.index = row
+			self.finished = False
+			self.show_RGB(False)
+			self.show_XYZ()
+			self.enable_btns()
+		event.Skip()
 	
 	def has_worker_subprocess(self):
 		return bool(getattr(self, "worker", None) and
@@ -250,13 +343,15 @@ class UntetheredFrame(wx.Frame):
 	def next_btn_handler(self, event):
 		if self.index < self.index_max:
 			self.index += 1
-			self.show_RGB(self.index == self.index_max)
-			if self.index < self.index_max:
+			show_XYZ = (self.index < self.index_max or
+						self.index_max == len(self.cgats[0].DATA) - 1)
+			self.show_RGB(not show_XYZ)
+			if show_XYZ:
 				self.show_XYZ()
 			self.enable_btns()
 
 	def parse_txt(self, txt):
-		if not txt or not self.keepGoing or self.finished:
+		if not txt or not self.keepGoing:
 			return
 		self.logger.info("%r" % txt)
 		if "Connecting to the instrument" in txt:
@@ -268,7 +363,7 @@ class UntetheredFrame(wx.Frame):
 			if (getattr(self, "measurement_sound", None) and
 				getcfg("measurement.play_sound") and
 				self.measurement_sound.IsOk()):
-				self.measurement_sound.Play(wx.SOUND_ASYNC)
+				self.measurement_sound.Play(wx.SOUND_SYNC)
 			# Result is XYZ: d.dddddd d.dddddd d.dddddd, D50 Lab: d.dddddd d.dddddd d.dddddd
 			XYZ = re.search("XYZ:\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)",
 							txt)
@@ -302,7 +397,7 @@ class UntetheredFrame(wx.Frame):
 					if (getattr(self, "commit_sound", None) and
 						getcfg("measurement.play_sound") and
 						self.commit_sound.IsOk()):
-						self.commit_sound.Play(wx.SOUND_ASYNC)
+						self.commit_sound.Play(wx.SOUND_SYNC)
 					self.measure_count = 0
 					# Update CGATS
 					query = self.cgats[0].queryi({"RGB_R": row["RGB_R"],
@@ -314,29 +409,46 @@ class UntetheredFrame(wx.Frame):
 					if getcfg("untethered.measure.auto"):
 						self.show_RGB(False)
 					self.show_XYZ()
+					Lab, color = self.get_Lab_RGB()
+					if (self.index >= self.index_max and
+						self.grid.GetNumberRows() < len(self.cgats[0].DATA)):
+						self.grid.AppendRows(len(query))
+					for i in query:
+						row = query[i]
+						RGB = []
+						for j, label in enumerate("RGB"):
+							value = int(round(float(str(row["RGB_%s" % label] *
+														2.55))))
+							self.grid.SetCellValue(query[i].SAMPLE_ID - 1, j,
+												   "%i" % value)
+							RGB.append(value)
+						self.grid.SetCellBackgroundColour(query[i].SAMPLE_ID - 1,
+														  3, wx.Colour(*RGB))
+						self.grid.SetCellBackgroundColour(query[i].SAMPLE_ID - 1,
+														  4, wx.Colour(*color))
+						for j in xrange(3):
+							self.grid.SetCellValue(query[i].SAMPLE_ID - 1, 5 + j, "%.2f" % Lab[j])
+					self.grid.MakeCellVisible(self.index, 0)
+					self.grid.ForceRefresh()
+					if len(self.cgats[0].DATA) == self.index + 1:
+						self.finished = True
+						self.finish_btn.Enable()
+						return
 					self.index += 1
 					self.index_max = max(self.index, self.index_max)
-					if len(self.cgats[0].DATA) == self.index:
-						self.cgats[0].type = "CTI3"
-						self.cgats[0].add_keyword("COLOR_REP", "RGB_XYZ")
-						self.cgats[0].add_keyword("NORMALIZED_TO_Y_100", "YES")
-						self.cgats[0].add_keyword("DEVICE_CLASS", "DISPLAY")
-						self.cgats[0].add_keyword("INSTRUMENT_TYPE_SPECTRAL", "NO")
-						self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] +
-											".ti3")
-						self.safe_send("Q")
-						time.sleep(.5)
-						self.safe_send("Q")
-						self.finished = True
-						return
 		if "key to take a reading" in txt and not self.last_error:
 			self.is_measuring = False
 			self.measure_auto_cb.Enable()
 			if getcfg("untethered.measure.auto") and self.index > 0:
-				self.measure()
+				if not self.finished:
+					self.measure()
+				else:
+					self.enable_btns()
 			else:
-				wx.CallLater(1000, self.show_RGB, self.index == self.index_max)
-				if self.index < self.index_max:
+				show_XYZ = (self.index < self.index_max or
+							self.grid.GetNumberRows() == len(self.cgats[0].DATA))
+				wx.CallLater(1000, self.show_RGB, not show_XYZ)
+				if show_XYZ:
 					wx.CallLater(1000, self.show_XYZ)
 				wx.CallLater(1000, self.enable_btns)
 	
@@ -363,11 +475,13 @@ class UntetheredFrame(wx.Frame):
 		self.panel_XYZ.Refresh()
 		self.panel_XYZ.Update()
 		self.label_index.SetLabel(" ")
-		self.back_btn.Disable()
-		self.next_btn.Disable()
-		self.measure_btn.Disable()
+		self.enable_btns(False)
 		self.measure_auto_cb.SetValue(bool(getcfg("untethered.measure.auto")))
 		self.measure_auto_cb.Disable()
+		self.finish_btn.Disable()
+		
+		if self.grid.GetNumberRows():
+			self.grid.DeleteRows(0, self.grid.GetNumberRows())
 		
 		# Set position
 		placed = False
@@ -403,31 +517,17 @@ class UntetheredFrame(wx.Frame):
 			self.panel_XYZ.SetBackgroundColour(BGCOLOUR)
 			self.panel_XYZ.Refresh()
 			self.panel_XYZ.Update()
+			self.grid.SelectRow(-1)
+		else:
+			self.grid.SelectRow(self.index)
+		self.grid.MakeCellVisible(self.index, 0)
 		self.label_index.SetLabel("%i/%i" % (self.index + 1,
 											 len(self.cgats[0].DATA)))
 		self.label_index.GetContainingSizer().Layout()
 	
 	def show_XYZ(self):
-		row = self.cgats[0].DATA[self.index]
-		XYZ_Y100 = row["XYZ_X"], row["XYZ_Y"], row["XYZ_Z"]
-		self.last_XYZ_Y100 = XYZ_Y100
-		Lab = colormath.XYZ2Lab(*XYZ_Y100)
+		Lab, color = self.get_Lab_RGB()
 		self.label_XYZ.SetLabel("L*a*b* %.2f %.2f %.2f" % Lab)
-		rgb_space = list(colormath.rgb_spaces["sRGB"])
-		white_CCT = colormath.XYZ2CCT(*self.white_XYZ_Y100)
-		if white_CCT:
-			white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
-																	 scale=100.0))
-			white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
-																				  scale=100.0))
-			white_Lab = colormath.XYZ2Lab(*self.white_XYZ_Y100)
-			if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
-				colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
-				rgb_space[1] = tuple([v / 100.0 for v in self.white_XYZ_Y100])
-		color = [int(round(v)) for v in
-				 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ_Y100],
-								   rgb_space=rgb_space,
-								   scale=255)]
 		self.panel_XYZ.SetBackgroundColour(wx.Colour(*color))
 		self.panel_XYZ.Refresh()
 		self.panel_XYZ.Update()

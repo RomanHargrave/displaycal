@@ -272,6 +272,7 @@
 	"filetype.ti1_ti3_txt": "Fichiers de grilles de tests (*.ti1), fichiers de mesures (*.ti3;*.txt)",
 	"filetype.ti3": "Fichiers de mesures (*.icc;*.icm;*.ti3)",
 	"filetype.txt": "Corrections_du_peripherique.txt",
+		"*finish": "Finish",
 	"gamap.default_intent": "Intention de rendu par défaut pour le profil du périphérique d'affichage",
 	"gamap.intents.a": "Colorimétrie absolue",
 	"gamap.intents.aa": "Apparence absolue",

@@ -270,6 +270,7 @@
 		"*filetype.ti1_ti3_txt": "Testchart files (*.ti1), Measurement files (*.ti3;*.txt)",
 	"filetype.ti3": "File di misurazioni (*.icc;*.icm;*.ti3)",
 		"*filetype.txt": "DeviceCorrections.txt",
+		"*finish": "Finish",
 		"*gamap.default_intent": "Default rendering intent for display device profile",
 		"*gamap.intents.a": "Absolute colorimetric",
 		"*gamap.intents.aa": "Absolute appearance",
