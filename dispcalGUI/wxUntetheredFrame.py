@@ -120,13 +120,14 @@ class UntetheredFrame(wx.Frame):
 		sizer.Add(self.finish_btn, 0, wx.RIGHT, border=8)
 		panelsizer.Add(sizer, 0, wx.BOTTOM | wx.EXPAND, border=8)
 		
-		self.grid = wx.grid.Grid(self, -1, size=(-1, 256))
+		self.grid = wx.grid.Grid(self, -1, size=(536, 256))
 		self.grid.CreateGrid(0, 8)
+		self.grid.SetRowLabelSize(62)
 		for i in xrange(8):
 			if i in (3, 4):
 				size = 20
 			else:
-				size = 50
+				size = 62
 			self.grid.SetColSize(i, size)
 		for i, label in enumerate(["R", "G", "B", "", "", "L*", "a*", "b*"]):
 			self.grid.SetColLabelValue(i, label)
