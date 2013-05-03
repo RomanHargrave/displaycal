@@ -907,7 +907,7 @@ class TestchartEditor(wx.Frame):
 		intctrl = wx.SpinCtrl(dlg, -1, size=(60, -1),
 							  min=config.valid_ranges["tc_export_repeat_patch_max"][0],
 							  max=config.valid_ranges["tc_export_repeat_patch_max"][1],
-							  initial=getcfg("tc_export_repeat_patch_max"))
+							  value=str(getcfg("tc_export_repeat_patch_max")))
 		sizer.Add(intctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 				  border=4)
 		sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("max")), 0,
@@ -916,7 +916,7 @@ class TestchartEditor(wx.Frame):
 		intctrl2 = wx.SpinCtrl(dlg, -1, size=(60, -1),
 							   min=config.valid_ranges["tc_export_repeat_patch_min"][0],
 							   max=config.valid_ranges["tc_export_repeat_patch_min"][1],
-							   initial=getcfg("tc_export_repeat_patch_min"))
+							   value=str(getcfg("tc_export_repeat_patch_min")))
 		sizer.Add(intctrl2, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 				  border=4)
 		sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("min")), 0,
