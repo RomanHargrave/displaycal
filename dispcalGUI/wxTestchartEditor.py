@@ -4,6 +4,7 @@
 import math
 import os
 import re
+import shutil
 import sys
 
 import CGATS
@@ -900,20 +901,37 @@ class TestchartEditor(wx.Frame):
 							ok=lang.getstr("ok"),
 							cancel=lang.getstr("cancel"),
 							bitmap=geticon(32, "dialog-question"))
-		intctrl = wx.SpinCtrl(dlg, -1, size=(60, -1),
-							  min=config.valid_ranges["tc_export_repeat_patch"][0],
-							  max=config.valid_ranges["tc_export_repeat_patch"][1],
-							  initial=getcfg("tc_export_repeat_patch"))
-		dlg.sizer3.Add(intctrl, 0, flag=wx.TOP | wx.ALIGN_LEFT,
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
 					   border=12)
+		intctrl = wx.SpinCtrl(dlg, -1, size=(60, -1),
+							  min=config.valid_ranges["tc_export_repeat_patch_max"][0],
+							  max=config.valid_ranges["tc_export_repeat_patch_max"][1],
+							  initial=getcfg("tc_export_repeat_patch_max"))
+		sizer.Add(intctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+				  border=4)
+		sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("max")), 0,
+								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+								border=12)
+		intctrl2 = wx.SpinCtrl(dlg, -1, size=(60, -1),
+							   min=config.valid_ranges["tc_export_repeat_patch_min"][0],
+							   max=config.valid_ranges["tc_export_repeat_patch_min"][1],
+							   initial=getcfg("tc_export_repeat_patch_min"))
+		sizer.Add(intctrl2, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+				  border=4)
+		sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("min")), 0,
+								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+								border=12)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		result = dlg.ShowModal()
-		repeat = intctrl.GetValue()
+		repeatmax = intctrl.GetValue()
+		repeatmin = intctrl2.GetValue()
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
-		setcfg("tc_export_repeat_patch", repeat)
+		setcfg("tc_export_repeat_patch_max", repeatmax)
+		setcfg("tc_export_repeat_patch_min", repeatmin)
 		writecfg()
 		path = None
 		(defaultDir,
@@ -950,31 +968,49 @@ class TestchartEditor(wx.Frame):
 		ext2type = {".jpg": wx.BITMAP_TYPE_JPEG,
 					".png": wx.BITMAP_TYPE_PNG,
 					".tif": wx.BITMAP_TYPE_TIF}
-		repeat = getcfg("tc_export_repeat_patch")
-		maxlen = len(self.ti1[0].DATA) * repeat
-		size = int(round(get_default_size() * float(getcfg("dimensions.measureframe").split(",")[-1])))
-		index = 0
+		repeatmax = getcfg("tc_export_repeat_patch_max")
+		repeatmin = getcfg("tc_export_repeat_patch_min")
+		repeats = []
+		for i in xrange(101):
+			repeats.append(int(round(repeatmin + ((repeatmax - repeatmin) / 100.0 * i))))
+		maxlen = len(self.ti1[0].DATA)
+		maxcount = maxlen * repeatmax
+		filenameformat = "%%s-%%0%id%%s" % len(str(maxcount))
+		size = int(round(get_default_size() *
+						 float(getcfg("dimensions.measureframe").split(",")[-1])))
+		count = 0
+		bitmap = wx.EmptyBitmap(size, size)
+		dc = wx.MemoryDC()
+		dc.SelectObject(bitmap)
 		for i in xrange(maxlen):
 			if self.worker.thread_abort:
 				break
 			self.worker.lastmsg.write("%d%%\n" % (100.0 / maxlen * (i + 1)))
-			bitmap = wx.EmptyBitmap(size, size)
-			dc = wx.MemoryDC()
-			dc.SelectObject(bitmap)
+			R, G, B = (self.ti1[0].DATA[i]["RGB_R"],
+			           self.ti1[0].DATA[i]["RGB_G"],
+			           self.ti1[0].DATA[i]["RGB_B"])
+			X, Y, Z = colormath.RGB2XYZ(R / 100.0, G / 100.0, B / 100.0,
+										scale=100.0)
+			L, a, b = colormath.XYZ2Lab(X, Y, Z)
 			# Careful when rounding floats!
 			# Incorrect: int(round(50 * 2.55)) = 127 (127.499999)
 			# Correct: int(round(float(str(50 * 2.55)))) = 128 (127.5)
-			color = wx.Colour(int(round(float(str(self.ti1[0].DATA[index]["RGB_R"] * 2.55)))),
-							  int(round(float(str(self.ti1[0].DATA[index]["RGB_G"] * 2.55)))),
-							  int(round(float(str(self.ti1[0].DATA[index]["RGB_B"] * 2.55)))))
+			color = wx.Colour(int(round(float(str(R * 2.55)))),
+							  int(round(float(str(G * 2.55)))),
+							  int(round(float(str(B * 2.55)))))
 			dc.SetBackground(wx.Brush(color))
 			dc.Clear()
-			filename = "%%s-%%0%id%%s" % len(str(maxlen))
-			filename = filename % (name, i + 1, ext)
-			bitmap.SaveFile(filename,
-							ext2type.get(ext, ext2type[".png"]))
-			if (i + 1) % repeat == 0:
-				index += 1
+			count += 1
+			filename = filenameformat % (name, count, ext)
+			bitmap.SaveFile(filename, ext2type.get(ext, ext2type[".png"]))
+			index = int(100 - (L / 100.0) * 100)
+			repeat = repeats[index]
+			##safe_print("RGB", R, G, B, "L*", L, "repeat[%s]" % index, repeat)
+			if repeat > 1:
+				for j in xrange(repeat - 1):
+					count += 1
+					filecopyname = filenameformat % (name, count, ext)
+					shutil.copyfile(filename, filecopyname)
 
 	def tc_save_handler(self, event = None):
 		self.tc_save_as_handler(event, path = self.ti1.filename)
