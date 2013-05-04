@@ -970,9 +970,6 @@ class TestchartEditor(wx.Frame):
 					".tif": wx.BITMAP_TYPE_TIF}
 		repeatmax = getcfg("tc_export_repeat_patch_max")
 		repeatmin = getcfg("tc_export_repeat_patch_min")
-		repeats = []
-		for i in xrange(101):
-			repeats.append(int(round(repeatmin + ((repeatmax - repeatmin) / 100.0 * i))))
 		maxlen = len(self.ti1[0].DATA)
 		maxcount = maxlen * repeatmax
 		filenameformat = "%%s-%%0%id%%s" % len(str(maxcount))
@@ -1003,9 +1000,8 @@ class TestchartEditor(wx.Frame):
 			count += 1
 			filename = filenameformat % (name, count, ext)
 			bitmap.SaveFile(filename, ext2type.get(ext, ext2type[".png"]))
-			index = int(100 - (L / 100.0) * 100)
-			repeat = repeats[index]
-			##safe_print("RGB", R, G, B, "L*", L, "repeat[%s]" % index, repeat)
+			repeat = int(round(repeatmin + ((repeatmax - repeatmin) / 100.0 * (100 - L))))
+			##safe_print("RGB", R, G, B, "L* %.2f" % L, "repeat", repeat)
 			if repeat > 1:
 				for j in xrange(repeat - 1):
 					count += 1
