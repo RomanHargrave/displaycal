@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource>
+  <object class="wxFrame" name="synthiccframe" subclass="dispcalGUI.LUT3DFrame">
+    <object class="wxBoxSizer">
+      <orient>wxVERTICAL</orient>
+      <object class="sizeritem">
+        <object class="wxPanel" name="panel">
+          <object class="wxBoxSizer">
+            <orient>wxVERTICAL</orient>
+            <object class="sizeritem">
+              <object class="wxFlexGridSizer">
+                <cols>2</cols>
+                <rows>8</rows>
+                <vgap>8</vgap>
+                <growablecols>1</growablecols>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="profile_ctrl_label">
+                    <label>profile</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxFilePickerCtrl" name="profile_ctrl"/>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="preset_ctrl_label">
+                    <label>preset</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxChoice" name="preset_ctrl"/>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="label_X">
+                        <size>75, -1</size>
+                        <label>X</label>
+                      </object>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="label_Y">
+                        <size>75, -1</size>
+                        <label>Y</label>
+                      </object>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="label_Z">
+                        <size>75, -1</size>
+                        <label>Z</label>
+                      </object>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="label_x">
+                        <size>75, -1</size>
+                        <label>x</label>
+                      </object>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="label_y">
+                        <size>65, -1</size>
+                        <label>y</label>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="label_white">
+                    <label>whitepoint</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="white_X">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="white_Y">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="white_Z">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="white_x">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="white_y">
+                        <size>65, -1</size>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="label_red">
+                    <label>red</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="red_X">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="red_Y">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="red_Z">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="red_x">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="red_y">
+                        <size>65, -1</size>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="label_green">
+                    <label>green</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="green_X">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="green_Y">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="green_Z">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="green_x">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="green_y">
+                        <size>65, -1</size>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="label_blue">
+                    <label>blue</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="blue_X">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="blue_Y">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="blue_Z">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="blue_x">
+                        <size>65, -1</size>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxTextCtrl" name="blue_y">
+                        <size>65, -1</size>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="label_trc">
+                    <label>trc</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxChoice" name="trc_ctrl">
+                        <content>
+                          <item>trc.gamma</item>
+                          <item>trc.lstar</item>
+                          <item>trc.rec709</item>
+                          <item>trc.smpte240m</item>
+                          <item>trc.srgb</item>
+                        </content>
+                        <selection>0</selection>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxComboBox" name="trc_textctrl">
+                        <size>75, -1</size>
+                        <content>
+                          <item>1.0</item>
+                          <item>1.2</item>
+                          <item>1.4</item>
+                          <item>1.6</item>
+                          <item>1.8</item>
+                          <item>2.0</item>
+                          <item>2.2</item>
+                          <item>2.4</item>
+                          <item>2.6</item>
+                          <item>2.8</item>
+                          <item>3.0</item>
+                        </content>
+                        <selection>6</selection>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="label_desc">
+                    <label>profile.name</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxTextCtrl" name="profile_name_textctrl"/>
+                  <flag>wxEXPAND</flag>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxStaticText"/>
+                      <option>1</option>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxButton" name="save_btn">
+                        <label>save</label>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxButton" name="save_as_btn">
+                        <label>save_as</label>
+                      </object>
+                    </object>
+                  </object>
+                  <flag>wxEXPAND</flag>
+                </object>
+              </object>
+              <flag>wxALL|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+          </object>
+        </object>
+        <option>1</option>
+        <flag>wxEXPAND</flag>
+      </object>
+    </object>
+    <pos>-1,100</pos>
+    <title>synthicc.create</title>
+    <style>wxDEFAULT_FRAME_STYLE</style>
+    <XRCED>
+      <events>EVT_CLOSE</events>
+    </XRCED>
+  </object>
+</resource>

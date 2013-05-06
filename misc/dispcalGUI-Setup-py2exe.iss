@@ -58,6 +58,7 @@ Name: {group}\dispcalGUI; Filename: {app}\dispcalGUI.exe; IconFilename: {app}\di
 Name: "{group}\dispcalGUI Profile Loader"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-apply-profiles"" --force"; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
 Name: "{group}\3DLUT Maker"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-3DLUT-maker"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
 Name: "{group}\Profile Info"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-profile-info"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
+Name: "{group}\Synthetic Profile Creator"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-synthprofile"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
 Name: "{group}\Testchart Editor"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-testchart-editor"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\dispcalGUI-uninstall.ico; Tasks: ; Languages: 
 Name: {commondesktop}\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: desktopicon; IconFilename: {app}\dispcalGUI.exe

@@ -331,6 +331,8 @@ def setup():
 					(os.path.join(data, "scripts"), 
 					 [os.path.join("scripts", name + "-profile-info")]),
 					(os.path.join(data, "scripts"), 
+					 [os.path.join("scripts", name + "-synthprofile")]),
+					(os.path.join(data, "scripts"), 
 					 [os.path.join("scripts", name + "-testchart-editor")])]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
@@ -555,6 +557,7 @@ setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["scripts"] += [os.path.join("scripts", name)]
 		attrs["scripts"] += [os.path.join("scripts", name + "-3DLUT-maker")]
 		attrs["scripts"] += [os.path.join("scripts", name + "-profile-info")]
+		attrs["scripts"] += [os.path.join("scripts", name + "-synthprofile")]
 		attrs["scripts"] += [os.path.join("scripts", name + "-testchart-editor")]
 	
 	if sys.platform != "darwin" and (sys.platform != "win32" or not do_py2exe):

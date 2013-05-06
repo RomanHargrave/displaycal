@@ -109,6 +109,9 @@
         <label>colorimeter_correction.upload</label>
       </object>
       <object class="separator"/>
+      <object class="wxMenuItem" name="synthicc.create">
+        <label>synthicc.create</label>
+      </object>
       <object class="wxMenuItem" name="3dlut.create">
         <label>3dlut.create</label>
       </object>

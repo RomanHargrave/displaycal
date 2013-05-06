@@ -148,6 +148,7 @@ except ImportError:
 if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
 from wxProfileInfo import ProfileInfoFrame
+from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
 from wxwindows import (AboutDialog, BaseFrame, ConfirmDialog, InfoDialog,
@@ -1217,6 +1218,13 @@ class MainFrame(BaseFrame):
 		
 		"""
 		self.lut3dframe = LUT3DFrame(self)
+
+	def init_synthiccframe(self):
+		"""
+		Create & initialize the 3D LUT creation window and its controls.
+		
+		"""
+		self.synthiccframe = SynthICCFrame(self)
 	
 	def infoframe_close_handler(self, event):
 		self.infoframe_toggle_handler(event)
@@ -1459,6 +1467,10 @@ class MainFrame(BaseFrame):
 			tools.FindItem("colorimeter_correction.upload"))
 		self.Bind(wx.EVT_MENU, self.upload_colorimeter_correction_handler, 
 				  self.menuitem_upload_colorimeter_correction)
+		self.menuitem_synthicc_create = tools.FindItemById(
+			tools.FindItem("synthicc.create"))
+		self.Bind(wx.EVT_MENU, self.synthicc_create_handler, 
+				  self.menuitem_synthicc_create)
 		self.menuitem_lut3d_create = tools.FindItemById(
 			tools.FindItem("3dlut.create"))
 		self.Bind(wx.EVT_MENU, self.lut3d_create_handler, 
@@ -1831,6 +1843,12 @@ class MainFrame(BaseFrame):
 					self.lut3dframe.update_controls()
 					self.lut3dframe.update_layout()
 					self.lut3dframe.panel.Thaw()
+				if getattr(self, "synthiccframe", None):
+					self.synthiccframe.panel.Freeze()
+					self.synthiccframe.setup_language()
+					self.synthiccframe.update_controls()
+					self.synthiccframe.update_layout()
+					self.synthiccframe.panel.Thaw()
 				self.update_measurement_modes()
 				self.update_controls()
 				self.update_displays()
@@ -1932,6 +1950,8 @@ class MainFrame(BaseFrame):
 			"position.lut_viewer.y",
 			"position.lut3dframe.x",
 			"position.lut3dframe.y",
+			"position.synthiccframe.x",
+			"position.synthiccframe.y",
 			"position.profile_info.x",
 			"position.profile_info.y",
 			"position.progress.x",
@@ -6047,6 +6067,15 @@ class MainFrame(BaseFrame):
 	def stop_timers(self):
 		self.plugplay_timer.Stop()
 		self.update_profile_name_timer.Stop()
+
+	def synthicc_create_handler(self, event):
+		""" Assign and initialize the synthetic ICC creation window """
+		if not getattr(self, "synthiccframe", None):
+			self.init_synthiccframe()
+		if self.synthiccframe.IsShownOnScreen():
+			self.synthiccframe.Raise()
+		else:
+			self.synthiccframe.Show(not self.synthiccframe.IsShownOnScreen())
 	
 	def colorimeter_correction_matrix_ctrl_handler(self, event):
 		if event.GetId() == self.colorimeter_correction_matrix_ctrl.GetId():
@@ -8809,6 +8838,8 @@ class MainFrame(BaseFrame):
 			self.lut_viewer.Hide()
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.Hide()
+		if getattr(self, "synthiccframe", None):
+			self.synthiccframe.Hide()
 		for profile_info in self.profile_info.itervalues():
 			profile_info.Hide()
 		self.Hide()
