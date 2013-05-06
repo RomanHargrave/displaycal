@@ -2708,7 +2708,13 @@ class ICCProfile:
 				profile.tags.dmdd.add_localized_string("en", "US", model_name)
 		else:
 			profile.tags.desc = TextDescriptionType()
-			profile.tags.desc.ASCII = description
+			if isinstance(description, unicode):
+				asciidesc = description.encode("ASCII", "asciize")
+			else:
+				asciidesc = description
+			profile.tags.desc.ASCII = asciidesc
+			if asciidesc != description:
+				profile.tags.desc.Unicode = description
 			profile.tags.cprt = TextType("text\0\0\0\0%s\0" % copyright, "cprt")
 			if manufacturer:
 				profile.tags.dmnd = TextDescriptionType()
