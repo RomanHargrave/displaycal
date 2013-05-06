@@ -1135,7 +1135,7 @@ class CurveType(ICCProfileTag, list):
 			size = len(self) or 1024
 		if size == 1:
 			if power >= 0.0:
-				self[0] = power
+				self[:] = [power]
 				return
 			else:
 				size = 1024
@@ -2757,9 +2757,10 @@ class ICCProfile:
 			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, wXYZ, D50, cat)
 			tagname = color + "TRC"
 			profile.tags[tagname] = CurveType()
-			if not isinstance(gamma, (list, tuple)):
-				gamma = [gamma]
-			profile.tags[tagname].extend(gamma)
+			if isinstance(gamma, (list, tuple)):
+				profile.tags[tagname].extend(gamma)
+			else:
+				profile.tags[tagname].set_trc(gamma, 1)
 		profile.calculateID()
 		return profile
 	
