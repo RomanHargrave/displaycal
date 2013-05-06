@@ -365,7 +365,7 @@ class UntetheredFrame(wx.Frame):
 			if (getattr(self, "measurement_sound", None) and
 				getcfg("measurement.play_sound") and
 				self.measurement_sound.IsOk()):
-				self.measurement_sound.Play(wx.SOUND_SYNC)
+				self.measurement_sound.Play(wx.SOUND_ASYNC)
 			# Result is XYZ: d.dddddd d.dddddd d.dddddd, D50 Lab: d.dddddd d.dddddd d.dddddd
 			XYZ = re.search("XYZ:\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)",
 							txt)
@@ -399,7 +399,7 @@ class UntetheredFrame(wx.Frame):
 					if (getattr(self, "commit_sound", None) and
 						getcfg("measurement.play_sound") and
 						self.commit_sound.IsOk()):
-						self.commit_sound.Play(wx.SOUND_SYNC)
+						self.commit_sound.Play(wx.SOUND_ASYNC)
 					self.measure_count = 0
 					# Update CGATS
 					query = self.cgats[0].queryi({"RGB_R": row["RGB_R"],
