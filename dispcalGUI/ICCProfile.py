@@ -2670,9 +2670,9 @@ class ICCProfile:
 		"""
 		wXYZ = colormath.xyY2XYZ(wx, wy, 1.0)
 		# Calculate RGB to XYZ matrix from chromaticities and white
-		mtx = colormath.rgb_to_xyz_matrix("rx", "ry",
-										  "gx", "gy",
-										  "bx", "by", wXYZ)
+		mtx = colormath.rgb_to_xyz_matrix(rx, ry,
+										  gx, gy,
+										  bx, by, wXYZ)
 		rgb = {"r": (1.0, 0.0, 0.0),
 			   "g": (0.0, 1.0, 0.0),
 			   "b": (0.0, 0.0, 1.0)}
