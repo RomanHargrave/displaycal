@@ -2462,9 +2462,10 @@ class MainFrame(BaseFrame):
 				safe_print("%s:" % ccmx[1], exception)
 			else:
 				base_id = cgats.queryv1("DISPLAY_TYPE_BASE_ID")
+				refresh = cgats.queryv1("DISPLAY_TYPE_REFRESH")
+				mode = None
 				if base_id:
 					# Set measurement mode according to base ID
-					mode = None
 					if self.worker.get_instrument_name() == "ColorHug":
 						mode = {1: "R",
 								2: "F"}.get(base_id)
@@ -2476,10 +2477,14 @@ class MainFrame(BaseFrame):
 						mode = {1: "l",
 								2: "c",
 								3: "g"}.get(base_id)
-					if mode:
-						setcfg("measurement_mode", mode)
-						setcfg("measurement_mode_unlocked", 0)
-						self.update_measurement_mode()
+				elif refresh == "NO":
+					mode = "l"
+				elif refresh == "YES":
+					mode = "c"
+				if mode:
+					setcfg("measurement_mode", mode)
+					setcfg("measurement_mode_unlocked", 0)
+					self.update_measurement_mode()
 		else:
 			tooltip = ""
 		self.update_main_controls()
