@@ -2715,6 +2715,8 @@ class ICCProfile:
 			profile.tags.desc.ASCII = asciidesc
 			if asciidesc != description:
 				profile.tags.desc.Unicode = description
+			if isinstance(copyright, unicode):
+				copyright = copyright.encode("ASCII", "asciize")
 			profile.tags.cprt = TextType("text\0\0\0\0%s\0" % copyright, "cprt")
 			if manufacturer:
 				profile.tags.dmnd = TextDescriptionType()
