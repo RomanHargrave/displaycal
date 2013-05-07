@@ -8840,8 +8840,8 @@ class MainFrame(BaseFrame):
 			self.lut3dframe.Hide()
 		if getattr(self, "synthiccframe", None):
 			self.synthiccframe.Hide()
-		for profile_info in self.profile_info.itervalues():
-			profile_info.Hide()
+		for profile_info in self.profile_info.values():
+			profile_info.Close()
 		self.Hide()
 		self.enable_menus(False)
 
