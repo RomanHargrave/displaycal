@@ -1728,7 +1728,7 @@ class spawn_windows (spawn_unix, object):
         #assert self.pid is None, 'The pid member should be None.'
         #assert self.command is not None, 'The command member should not be None.'
 
-        self.wtty = Wtty(codepage=self.codepage)        
+        self.wtty = Wtty(timeout=self.timeout, codepage=self.codepage)        
     
         if self.cwd is not None:
             os.chdir(self.cwd)
@@ -1971,12 +1971,13 @@ class Wtty:
                 try:
                     self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, False, childPid)
                 except pywintypes.error, e:
-                    if time.time() > ts + self.timeout:
-                        log('Timeout exceeded in Wtty.spawn().')
-                        break
+                    pass
                 else:
                     self.pid = childPid
                     break
+            if time.time() > ts + self.timeout:
+                log('Timeout exceeded in Wtty.spawn().')
+                break
             time.sleep(.05)
         
         if not self.__childProcess:
