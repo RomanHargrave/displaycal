@@ -1962,7 +1962,7 @@ class Wtty:
         self.startChild(args, env)
             
         while True:
-            msg = GetMessage(0, 0, 0)
+            msg = PeekMessage(0, 0, 0, PM_REMOVE)
             childPid = msg[1][2]
             # Sometimes GetMessage returns a bogus PID, so keep calling it
             # until we can successfully connect to the child or timeout is
