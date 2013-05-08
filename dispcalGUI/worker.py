@@ -2228,7 +2228,7 @@ class Worker(object):
 				else:
 					stdin = sp.PIPE
 			else:
-				kwargs = dict(timeout=30, cwd=working_dir,
+				kwargs = dict(timeout=5, cwd=working_dir,
 							  env=os.environ)
 				if sys.platform == "win32":
 					kwargs["codepage"] = windll.kernel32.GetACP()
