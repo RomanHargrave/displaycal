@@ -2270,8 +2270,13 @@ class Worker(object):
 												 shell=shell, cwd=working_dir, 
 												 startupinfo=startupinfo)
 					else:
-						self.subprocess = wexpect.spawn(cmdline[0], cmdline[1:], 
-														**kwargs)
+						try:
+							self.subprocess = wexpect.spawn(cmdline[0],
+															cmdline[1:], 
+															**kwargs)
+						except wexpect.ExceptionPexpect, exception:
+							self.retcode = -1
+							return Error(safe_unicode(exception))
 						if debug >= 9 or (test and not "-?" in args):
 							self.subprocess.interact()
 					self.subprocess.logfile_read = logfile
