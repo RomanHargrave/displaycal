@@ -2041,11 +2041,11 @@ class Wtty:
                                         if getattr(sys, 'frozen', False) else 
                                         os.path.join(os.path.dirname(sys.executable), 'python.exe'), 
                                         ' '.join(pyargs), 
-                                        "import sys; sys.path = %r + sys.path;"
+                                        "import sys; sys.path = %s + sys.path;"
                                         "args = %s; import wexpect;"
-                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (spath, ("%r" % args).replace('"', r'\"'), pid, tid, cp, logdir))
+                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (("%r" % spath).replace('"', r'\"'), ("%r" % args).replace('"', r'\"'), pid, tid, cp, logdir))
                      
-        
+        log(commandLine)
         self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
                                                                   CREATE_NEW_CONSOLE, env, None, si)
             
