@@ -1,5 +1,5 @@
 # udev rule to change permissions so that the USB instruments can be accessed by Argyll
-# where the udev is old and doesn't understand the more modern sytax in 55-Argyll.rules.
+# where the udev is old and doesn't understand the more modern syntax in 55-Argyll.rules.
 # Copy to /etc/udev/rules.d/45-Argyll.rules
 	
 # Colorimtre HCFR
