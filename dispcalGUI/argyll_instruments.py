@@ -13,6 +13,7 @@ vendors = [
 	"Datacolor",
 	"GretagMacbeth",
 	"Hughski",
+	"JETI",
 	"X-Rite",
 	"Xrite"
 ]
