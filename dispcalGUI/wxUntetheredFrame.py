@@ -435,9 +435,9 @@ class UntetheredFrame(wx.Frame):
 					if len(self.cgats[0].DATA) == self.index + 1:
 						self.finished = True
 						self.finish_btn.Enable()
-						return
-					self.index += 1
-					self.index_max = max(self.index, self.index_max)
+					else:
+						self.index += 1
+						self.index_max = max(self.index, self.index_max)
 		if "key to take a reading" in txt and not self.last_error:
 			self.is_measuring = False
 			self.measure_auto_cb.Enable()
