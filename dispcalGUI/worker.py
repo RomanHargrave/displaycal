@@ -97,6 +97,7 @@ INST_CAL_MSGS = ["Do a reflective white calibration",
 				 "Click the instrument on its reflective white reference",
 				 "Place the instrument in the dark",
 				 "Place cap on the instrument",  # i1 Pro
+				 "Place ambient adapter and cap on the instrument",
 				 "Set instrument sensor to calibration position",  # ColorMunki
 				 "Place the instrument on its transmissive white source",
 				 "Use the appropriate tramissive blocking",
