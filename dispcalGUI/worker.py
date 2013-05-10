@@ -1962,16 +1962,6 @@ class Worker(object):
 						get_argyll_utilname("targen"))
 		interact = args and not "-?" in args and cmdname in measure_cmds + process_cmds
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
-		if self.measure_cmd:
-			# TTBD/FIXME: Skipping of sensor calibration can't be done in
-			# emissive mode (see Argyll source spectro/ss.c, around line 40)
-			skip_sensor_cal = not self.get_instrument_features().get("sensor_cal")
-		dispcal = cmdname == get_argyll_utilname("dispcal")
-		needs_user_interaction = args and (dispcal and not "-?" in args and 
-									   not "-E" in args and not "-R" in args and 
-									   not "-m" in args and not "-r" in args and 
-									   not "-u" in args) or (self.measure_cmd and 
-															 not skip_sensor_cal)
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
 					    sys.getwindowsversion() >= (6, ))):
