@@ -8,14 +8,18 @@ import string
 import struct
 import sys
 if sys.platform == "win32":
+	wmi_connection = None
 	if sys.getwindowsversion() >= (6, ):
 		# Use WMI for Vista/Win7
-		import wmi
-		wmi_connection = wmi.WMI(namespace="WMI")
+		try:
+			import wmi
+		except:
+			pass
+		else:
+			wmi_connection = wmi.WMI(namespace="WMI")
 	else:
 		# Use registry as fallback for Win2k/XP/2003
 		import _winreg
-		wmi_connection = None
 	import pywintypes
 	import win32api
 elif sys.platform != "darwin":
@@ -109,7 +113,7 @@ def get_edid(display_no=0, display_name=None):
 					else:
 						edid = "".join(chr(i) for i in edid[0])
 					break
-		else:
+		elif sys.getwindowsversion() < (6, ):
 			# Use registry as fallback for Win2k/XP/2003
 			# http://msdn.microsoft.com/en-us/library/ff546173%28VS.85%29.aspx
 			# "The Enum tree is reserved for use by operating system components, 
