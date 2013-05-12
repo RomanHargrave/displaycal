@@ -324,7 +324,11 @@ class TestchartEditor(wx.Frame):
 
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.tc_destroy_handler)
 
-		if __name__ != "__main__" or not sys.argv[1:]:
+		argv = []
+		for arg in sys.argv:
+			if arg[0] != "-":
+				argv.append(arg)
+		if __name__ != "__main__" or not argv[1:]:
 			wx.CallAfter(self.tc_load_cfg_from_ti1)
 
 	def ti1_drop_handler(self, path):
@@ -1824,4 +1828,8 @@ def main(testchart=None):
 	app.MainLoop()
 
 if __name__ == "__main__":
-    main(*sys.argv[1:2])
+	argv = []
+	for arg in sys.argv:
+		if arg[0] != "-":
+			argv.append(arg)
+	main(*argv[1:2])
