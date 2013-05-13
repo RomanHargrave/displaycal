@@ -118,6 +118,7 @@
 	"cancel": "Cancelar",
 	"ccxx.ti1": "Carta de ajustes para correcion de colorimetro",
 	"checking_lut_access": "Chequeando acceso calibración para la pantalla %s...",
+		"*centered": "Centered",
 	"clear": "Limpiar",
 	"colorconfig_remove_old": "Eliminando archivo de ajustes de pantalla antiguo",
 	"colorimeter_correction.create": "Crear correccion de colorimetro...",

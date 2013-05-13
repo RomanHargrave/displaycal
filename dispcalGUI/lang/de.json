@@ -120,6 +120,7 @@
 	"cancel": "Abbrechen",
 	"ccxx.ti1": "Testform für Colorimeter-Korrektur",
 	"checking_lut_access": "Überprüfe Grafikkarten-Gammatabellen-Zugriff auf Anzeigegerät %s...",
+	"centered": "Zentriert",
 	"clear": "Löschen",
 	"colorconfig_remove_old": "Entferne alte Anzeigegeräte-Konfigurationsdatei",
 	"colorimeter_correction.create": "Colorimeter-Korrektur erstellen...",

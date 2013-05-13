@@ -132,6 +132,10 @@ class TestchartEditor(wx.Frame):
 		self.tc_multi_steps.Bind(wx.EVT_KILL_FOCUS, self.tc_multi_steps_handler)
 		self.Bind(wx.EVT_SPINCTRL, self.tc_multi_steps_handler, id = self.tc_multi_steps.GetId())
 		hsizer.Add(self.tc_multi_steps, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
+		if self.worker.argyll_version >= [1, 6, 0]:
+			self.tc_multi_bcc_cb = wx.CheckBox(panel, -1, lang.getstr("centered"))
+			self.tc_multi_bcc_cb.Bind(wx.EVT_CHECKBOX, self.tc_multi_bcc_cb_handler)
+			hsizer.Add(self.tc_multi_bcc_cb, flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=border)
 		self.tc_multi_patches = wx.StaticText(panel, -1, "", name = "tc_multi_patches")
 		hsizer.Add(self.tc_multi_patches, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
@@ -687,7 +691,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_algo_handler()
 		self.tc_check()
 
-	def tc_get_total_patches(self, white_patches = None, single_channel_patches = None, gray_patches = None, multi_steps = None, fullspread_patches = None):
+	def tc_get_total_patches(self, white_patches = None, single_channel_patches = None, gray_patches = None, multi_steps = None, multi_bcc_steps=None, fullspread_patches = None):
 		if hasattr(self, "ti1") and [white_patches, single_channel_patches, gray_patches, multi_steps, fullspread_patches] == [None] * 5:
 			return self.ti1.queryv1("NUMBER_OF_SETS")
 		if white_patches is None:
@@ -701,9 +705,11 @@ class TestchartEditor(wx.Frame):
 			gray_patches = 2
 		if multi_steps is None:
 			multi_steps = self.tc_multi_steps.GetValue()
+		if multi_bcc_steps is None and getcfg("tc_multi_bcc"):
+			multi_bcc_steps = self.tc_multi_steps.GetValue()
 		if fullspread_patches is None:
 			fullspread_patches = self.tc_fullspread_patches.GetValue()
-		return get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, fullspread_patches)
+		return get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches)
 	
 	def tc_get_white_patches(self):
 		white_patches = self.tc_white_patches.GetValue()
@@ -732,8 +738,16 @@ class TestchartEditor(wx.Frame):
 				self.tc_multi_steps.SetValue(2)
 		multi_steps = self.tc_multi_steps.GetValue()
 		multi_patches = int(math.pow(multi_steps, 3))
+		if getcfg("tc_multi_bcc"):
+			pref = "tc_multi_bcc_steps"
+			multi_patches += int(math.pow(multi_steps - 1, 3))
+			multi_steps += multi_steps - 1
+			setcfg("tc_multi_steps", self.tc_multi_steps.GetValue())
+		else:
+			pref = "tc_multi_steps"
+			setcfg("tc_multi_bcc_steps", 0)
 		self.tc_multi_patches.SetLabel(lang.getstr("tc.multidim.patches", (multi_patches, multi_steps)))
-		setcfg("tc_multi_steps", self.tc_multi_steps.GetValue())
+		setcfg(pref, self.tc_multi_steps.GetValue())
 		self.tc_check()
 
 	def tc_algo_handler(self, event = None):
@@ -767,6 +781,10 @@ class TestchartEditor(wx.Frame):
 		else:
 			self.tc_angle_slider.SetValue(self.tc_angle_intctrl.GetValue())
 		setcfg("tc_angle", self.tc_angle_intctrl.GetValue() / 10000.0)
+
+	def tc_multi_bcc_cb_handler(self, event=None):
+		setcfg("tc_multi_bcc", int(self.tc_multi_bcc_cb.GetValue()))
+		self.tc_multi_steps_handler2()
 
 	def tc_precond_handler(self, event = None):
 		setcfg("tc_precond", int(self.tc_precond.GetValue()))
@@ -802,7 +820,13 @@ class TestchartEditor(wx.Frame):
 		self.tc_white_patches.SetValue(getcfg("tc_white_patches"))
 		self.tc_single_channel_patches.SetValue(getcfg("tc_single_channel_patches"))
 		self.tc_gray_patches.SetValue(getcfg("tc_gray_patches"))
-		self.tc_multi_steps.SetValue(getcfg("tc_multi_steps"))
+		if getcfg("tc_multi_bcc_steps"):
+			setcfg("tc_multi_bcc", 1)
+			self.tc_multi_steps.SetValue(getcfg("tc_multi_bcc_steps"))
+		else:
+			setcfg("tc_multi_bcc", 0)
+			self.tc_multi_steps.SetValue(getcfg("tc_multi_steps"))
+		self.tc_multi_bcc_cb.SetValue(bool(getcfg("tc_multi_bcc")))
 		self.tc_multi_steps_handler2()
 		self.tc_fullspread_patches.SetValue(getcfg("tc_fullspread_patches"))
 		self.tc_angle_slider.SetValue(getcfg("tc_angle") * 10000)
@@ -1196,7 +1220,8 @@ class TestchartEditor(wx.Frame):
 		white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None
 		single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
 		gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or 0
-		multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or 0
+		multi_bcc_steps = self.ti1.queryv1("MULTI_DIM_BCC_STEPS") or 0
+		multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or multi_bcc_steps
 		fullspread_patches = self.ti1.queryv1("NUMBER_OF_SETS")
 
 		if None in (white_patches, single_channel_patches, gray_patches, multi_steps):
@@ -1462,12 +1487,12 @@ class TestchartEditor(wx.Frame):
 			fullspread_patches -= gray_patches
 			fullspread_patches -= int(float(str(math.pow(multi_steps, 3)))) - single_channel_patches * 3
 
-		return white_patches, single_channel_patches, gray_patches, multi_steps, fullspread_patches
+		return white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches
 
 	def tc_load_cfg_from_ti1_finish(self, result):
 		if result:
 			safe_print(lang.getstr("success"))
-			white_patches, single_channel_patches, gray_patches, multi_steps, fullspread_patches = result
+			white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches = result
 
 			fullspread_ba = {
 				"ERROR_OPTIMISED_PATCHES": "", # OFPS
@@ -1491,7 +1516,9 @@ class TestchartEditor(wx.Frame):
 			if single_channel_patches != None: setcfg("tc_single_channel_patches", single_channel_patches)
 			if gray_patches != None: setcfg("tc_gray_patches", gray_patches)
 			if multi_steps != None: setcfg("tc_multi_steps", multi_steps)
-			setcfg("tc_fullspread_patches", self.ti1.queryv1("NUMBER_OF_SETS") - self.tc_get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, 0))
+			if multi_bcc_steps != None:
+				setcfg("tc_multi_bcc_steps", multi_bcc_steps)
+			setcfg("tc_fullspread_patches", self.ti1.queryv1("NUMBER_OF_SETS") - self.tc_get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, 0))
 			if algo != None: setcfg("tc_algo", algo)
 			writecfg()
 

@@ -4015,6 +4015,8 @@ class Worker(object):
 		args += ['-s%s' % getcfg("tc_single_channel_patches")]
 		args += ['-g%s' % getcfg("tc_gray_patches")]
 		args += ['-m%s' % getcfg("tc_multi_steps")]
+		if self.argyll_version >= [1, 6, 0]:
+			args += ['-b%s' % getcfg("tc_multi_bcc_steps")]
 		if getcfg("tc_fullspread_patches") > 0:
 			args += ['-f%s' % config.get_total_patches()]
 			tc_algo = getcfg("tc_algo")

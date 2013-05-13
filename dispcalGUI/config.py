@@ -592,6 +592,8 @@ defaults = {
 	"tc_filter_rad": 255,
 	"tc_fullspread_patches": 0,
 	"tc_gray_patches": 9,
+	"tc_multi_bcc": 0,
+	"tc_multi_bcc_steps": 0,
 	"tc_multi_steps": 3,
 	"tc_precond": 0,
 	"tc_precond_profile": "",
@@ -790,7 +792,7 @@ def get_display_profile(display_no=None):
 
 
 def get_total_patches(white_patches=None, single_channel_patches=None, 
-					  gray_patches=None, multi_steps=None, 
+					  gray_patches=None, multi_steps=None, multi_bcc_steps=None,
 					  fullspread_patches=None):
 	if white_patches is None:
 		white_patches = getcfg("tc_white_patches")
@@ -803,18 +805,27 @@ def get_total_patches(white_patches=None, single_channel_patches=None,
 		gray_patches = 2
 	if multi_steps is None:
 		multi_steps = getcfg("tc_multi_steps")
+	if multi_bcc_steps is None:
+		multi_bcc_steps = getcfg("tc_multi_bcc_steps")
 	if fullspread_patches is None:
 		fullspread_patches = getcfg("tc_fullspread_patches")
 	total_patches = 0
 	if multi_steps > 1:
 		multi_patches = int(math.pow(multi_steps, 3))
+		if multi_bcc_steps > 1:
+			multi_patches += int(math.pow(multi_bcc_steps - 1, 3))
 		total_patches += multi_patches
 		white_patches -= 1 # white always in multi channel patches
 
 		multi_step = 255.0 / (multi_steps - 1)
 		multi_values = []
-		for i in range(multi_steps):
-			multi_values += [str(multi_step * i)]
+		if multi_bcc_steps > 1:
+			multi_bcc_step = multi_step / 2.0
+			for i in range(multi_steps + multi_bcc_steps - 1):
+				multi_values += [str(multi_bcc_step  * i)]
+		else:
+			for i in range(multi_steps):
+				multi_values += [str(multi_step * i)]
 		if single_channel_patches > 1:
 			single_channel_step = 255.0 / (single_channel_patches - 1)
 			for i in range(single_channel_patches):

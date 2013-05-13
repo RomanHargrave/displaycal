@@ -120,6 +120,7 @@
 	"cancel": "Annuler",
 	"ccxx.ti1": "Grille de test pour la correction du colorimètre",
 	"checking_lut_access": "Contrôle de l'accès à la table de correspondance pour l'écran %s...",
+		"*centered": "Centered",
 	"clear": "Effacer",
 	"colorconfig_remove_old": "Suppression de l'ancien fichier de configuration de l'écran",
 	"colorimeter_correction.create": "Créer une correction du colorimètre...",

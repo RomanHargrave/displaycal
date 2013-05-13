@@ -125,6 +125,7 @@
 	"cancel": "Cancel",
 	"ccxx.ti1": "Testchart for colorimeter correction",
 	"checking_lut_access": "Checking video card gamma table access for display %s...",
+	"centered": "Centered",
 	"clear": "Clear",
 	"colorconfig_remove_old": "Removing old display configuration file",
 	"colorimeter_correction.create": "Create colorimeter correction...",
