@@ -623,7 +623,7 @@ if lcode:
 testchart_defaults = {
 	"s": {None: "d3-e4-s0-g9-m0-f0-cubic2-crossover.ti1"},  # shaper + matrix
 	"l": {None: "d3-e4-s0-g49-m0-f0-cubic4-crossover.ti1"},  # lut
-	"g": {None: "d3-e4-s3-g3-m0-f0.ti1"}  # gamma + matrix
+	"g": {None: "d3-e4-s0-g9-m0-f0-cubic2-crossover.ti1"}  # gamma + matrix
 }
 
 def _init_testcharts():
