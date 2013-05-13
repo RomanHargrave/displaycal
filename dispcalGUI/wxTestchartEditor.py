@@ -402,9 +402,6 @@ class TestchartEditor(wx.Frame):
 					if self.grid.GetColLabelValue(col) == label:
 						self.grid.SetCellValue(row + 1, col, str(round(float(newdata[label]), 4)))
 			self.tc_grid_setcolorlabel(row + 1)
-			self.tc_vrml_device.SetValue(False)
-			self.tc_vrml_lab.SetValue(False)
-			self.ti1_wrl = None
 			self.tc_save_check()
 			if hasattr(self, "preview"):
 				self.preview.Freeze()
@@ -636,9 +633,6 @@ class TestchartEditor(wx.Frame):
 						if self.grid.GetColLabelValue(col) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
 			self.tc_grid_setcolorlabel(event.GetRow())
-			self.tc_vrml_device.SetValue(False)
-			self.tc_vrml_lab.SetValue(False)
-			self.ti1_wrl = None
 			self.tc_save_check()
 			if hasattr(self, "preview"):
 				patch = self.patchsizer.GetItem(event.GetRow()).GetWindow()
@@ -802,18 +796,8 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_filter_rad", self.tc_filter_rad.GetValue())
 
 	def tc_vrml_handler(self, event = None):
-		if get_argyll_version("targen", silent=True) < [1, 1, 0]:
-			if event.GetId() == self.tc_vrml_device.GetId():
-				self.tc_vrml_lab.SetValue(False)
-			else:
-				self.tc_vrml_device.SetValue(False)
 		setcfg("tc_vrml_device", int(self.tc_vrml_device.GetValue()))
 		setcfg("tc_vrml_lab", int(self.tc_vrml_lab.GetValue()))
-		if hasattr(self, "ti1") and (self.tc_vrml_device.GetValue() or
-									 self.tc_vrml_lab.GetValue()):
-			self.tc_vrml_device.SetValue(False)
-			self.tc_vrml_lab.SetValue(False)
-			InfoDialog(self, msg = lang.getstr("testchart.vrml_denied"), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"), log=False)
 
 	def tc_update_controls(self):
 		self.tc_algo.SetStringSelection(self.tc_algos_ab.get(getcfg("tc_algo"), self.tc_algos_ab.get(defaults["tc_algo"])))
@@ -915,7 +899,6 @@ class TestchartEditor(wx.Frame):
 			self.preview.Thaw()
 		if hasattr(self, "ti1"):
 			del self.ti1
-		self.ti1_wrl = None
 		self.tc_update_controls()
 		self.tc_check()
 		# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
@@ -1079,13 +1062,18 @@ class TestchartEditor(wx.Frame):
 			except Exception, exception:
 				handle_error(u"Error - testchart could not be saved: " + safe_unicode(exception), parent = self)
 			else:
-				if hasattr(self, "ti1_wrl") and self.ti1_wrl != None:
-					for vrml_type in self.ti1_wrl:
+				if getcfg("tc_vrml_device") or getcfg("tc_vrml_lab"):
+					vrml_types = []
+					if getcfg("tc_vrml_device"):
+						vrml_types.append("d")
+					if getcfg("tc_vrml_lab"):
+						vrml_types.append("l")
+					for vrml_type in vrml_types:
 						wrlsuffix = "%s.wrl" % vrml_type
 						try:
-							wrl = open(os.path.splitext(path)[0] + wrlsuffix, "wb")
-							wrl.write(self.ti1_wrl[vrml_type])
-							wrl.close()
+							self.ti1[0].export_vrml(os.path.splitext(path)[0] +
+													wrlsuffix,
+													wrlsuffix == "d.wrl")
 						except Exception, exception:
 							handle_error(u"Warning - VRML file could not be saved: " + safe_unicode(exception), parent = self)
 				if path != getcfg("testchart.file"):
@@ -1524,9 +1512,6 @@ class TestchartEditor(wx.Frame):
 			writecfg()
 
 			self.tc_update_controls()
-			self.tc_vrml_device.SetValue(False)
-			self.tc_vrml_lab.SetValue(False)
-			self.ti1_wrl = None
 			self.tc_preview(True)
 			return True
 		else:
@@ -1570,21 +1555,6 @@ class TestchartEditor(wx.Frame):
 						safe_print(lang.getstr("success"))
 					except Exception, exception:
 						return Error(u"Error - testchart file could not be read: " + safe_unicode(exception))
-					self.ti1_wrl = {}
-					for ctrl in (self.tc_vrml_device, 
-								 self.tc_vrml_lab):
-						if ctrl.GetValue():
-							vrml_type = "l" if ctrl.Name == "tc_vrml_lab" else "d"
-							if self.worker.argyll_version >= [1, 1, 0]:
-								wrlname = "temp%s.wrl" % vrml_type
-							else:
-								wrlname = "temp.wrl"
-							try:
-								wrl = open(os.path.join(self.worker.tempdir, wrlname), "rb")
-								self.ti1_wrl[vrml_type] = wrl.read()
-								wrl.close()
-							except Exception, exception:
-								return Error(u"Warning - VRML file could not be read: " + safe_unicode(exception))
 		self.worker.wrapup(False)
 		return result
 
@@ -1816,9 +1786,6 @@ class TestchartEditor(wx.Frame):
 		return
 
 	def tc_delete_rows(self, rows):
-		self.tc_vrml_device.SetValue(False)
-		self.tc_vrml_lab.SetValue(False)
-		self.ti1_wrl = None
 		self.grid.Freeze()
 		if hasattr(self, "preview"):
 			self.preview.Freeze()

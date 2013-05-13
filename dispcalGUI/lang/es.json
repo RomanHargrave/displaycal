@@ -534,7 +534,6 @@
 	"testchart.save_or_discard": "La carta de ajustes no ha sido guardado.",
 	"testchart.select": "Seleccionar",
 	"testchart.set": "Seleccione archivo carta de ajustes...",
-	"testchart.vrml_denied": "Los archivos VRML solo pueden ser generados cuando se crea una nueva carta de ajustes. Por favor descartar la actual carta de ajustes.",
 	"tone_values": "valores tonales",
 	"translations": "Traducciones",
 	"trashcan.linux": "papelera",

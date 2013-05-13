@@ -6,6 +6,7 @@ Simple CGATS file parser class
 Copyright (C) 2008 Florian Hoech
 """
 
+from __future__ import with_statement
 import os, re, sys
 
 import colormath
@@ -590,6 +591,267 @@ class CGATS(dict):
 			raise CGATSInvalidOperationError('Cannot add data to %s' % 
 											 self.type)
 		return context
+	
+	def export_vrml(self, filename, devicelocations=True):
+		data = self.queryv1("DATA")
+		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+		vrml = """#VRML V2.0 utf8
+
+Transform {
+	children [
+
+		NavigationInfo {
+			type "EXAMINE"
+		}
+
+		%(viewpoint)s
+%(children)s
+
+	]
+}
+"""
+		child = """		Transform {
+			translation %(x).2f %(y).2f %(z).2f
+			children [
+				Shape{
+					geometry Sphere { radius 2.0}
+					appearance Appearance { material Material { diffuseColor %(R).2f %(G).2f %(B).2f} }
+				}
+			]
+		}
+"""
+		if devicelocations:
+			viewpoint = """Viewpoint {
+			position 50 50 250
+		}
+"""
+			axes = ""
+		else:
+			viewpoint = """Viewpoint {
+			position 0 0 400
+		}
+"""
+			axes = """# L* axis
+		Transform {
+			translation 50.0 0.0 0.0
+			rotation 0 1 0 -1.5707963267948966
+			children [
+				Shape {
+					geometry Box { size 2.0 2.0 100.0 }
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+		# L* axis label
+		Transform {
+			translation 103.0 -2.5 -2.5
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 1.5707963267948966
+					children [
+						Shape {
+							geometry Text {
+								string ["L"]
+								fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+							}
+							appearance Appearance {
+								material Material { diffuseColor 0.7 0.7 0.7}
+							}
+						}
+					]
+				}
+			]
+		}
+		# +a axis
+		Transform {
+			translation 0.0 50.0 0.0
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 1.5707963267948966
+					children [
+						Shape {
+							geometry Box { size 100.0 2.0 2.0 }
+							appearance Appearance {
+								material Material { diffuseColor 1.0 0.0 0.0 }
+							}
+						}
+					]
+				}
+			]
+		}
+		# +a axis label
+		Transform {
+			translation 0.0 103 -2.5
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 1.5707963267948966
+					children [
+						Shape {
+							geometry Text {
+								string ["+a"]
+								fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+							}
+							appearance Appearance {
+								material Material { diffuseColor 1.0 0.0 0.0}
+							}
+						}
+					]
+				}
+			]
+		}
+		# -a axis
+		Transform {
+			translation 0.0 -50.0 0.0
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 1.5707963267948966
+					children [
+						Shape {
+							geometry Box { size 100.0 2.0 2.0 }
+							appearance Appearance {
+								material Material { diffuseColor 0.0 1.0 0.0 }
+							}
+						}
+					]
+				}
+			]
+		}
+		# -a axis label
+		Transform {
+			translation 0.0 -110 -2.5
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 1.5707963267948966
+					children [
+						Shape {
+							geometry Text {
+								string ["-a"]
+								fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+							}
+							appearance Appearance {
+								material Material { diffuseColor 0.0 1.0 0.0}
+							}
+						}
+					]
+				}
+			]
+		}
+		# +b axis
+		Transform {
+			translation 0.0 0.0 50.0
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Shape {
+					geometry Box { size 100.0 2.0 2.0 }
+					appearance Appearance {
+						material Material { diffuseColor 1.0 1.0 0.0 }
+					}
+				}
+			]
+		}
+		# +b axis label
+		Transform {
+			translation 0.0 -2.5 103
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 1.5707963267948966
+					children [
+						Shape {
+							geometry Text {
+								string ["+b"]
+								fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+							}
+							appearance Appearance {
+								material Material { diffuseColor 1.0 1.0 0.0}
+							}
+						}
+					]
+				}
+			]
+		}
+		# -b axis
+		Transform {
+			translation 0.0 0.0 -50.0
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Shape {
+					geometry Box { size 100.0 2.0 2.0 }
+					appearance Appearance {
+						material Material { diffuseColor 0.0 0.0 1.0 }
+					}
+				}
+			]
+		}
+		# -b axis label
+		Transform {
+			translation 0.0 -2.5 -110
+			rotation 0 1 0 1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 1.5707963267948966
+					children [
+						Shape {
+							geometry Text {
+								string ["-b"]
+								fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+							}
+							appearance Appearance {
+								material Material { diffuseColor 0.0 0.0 1.0}
+							}
+						}
+					]
+				}
+			]
+		}
+"""
+		children = []
+		for entry in data.itervalues():
+			if devicelocations:
+				x, y, z = entry["RGB_G"], entry["RGB_B"], entry["RGB_R"]
+			else:
+				x, y, z = colormath.XYZ2Lab(entry["XYZ_X"],
+											entry["XYZ_Y"],
+											entry["XYZ_Z"],
+											whitepoint=(white["XYZ_X"],
+														white["XYZ_Y"],
+														white["XYZ_Z"]))
+			R, G, B = colormath.XYZ2RGB(entry["XYZ_X"] / 100.0,
+										entry["XYZ_Y"] / 100.0,
+										entry["XYZ_Z"] / 100.0)
+			children.append(child % {"x": x,
+									 "y": y,
+									 "z": z,
+									 "R": R,
+									 "G": G,
+									 "B": B})
+		children = "\n".join(children)
+		if not devicelocations:
+			children = """		Transform {
+			rotation 1 0 0 -1.5707963267948966
+			children [
+				Transform {
+					rotation 0 0 1 -1.5707963267948966
+					children [
+		%(axes)s
+%(children)s
+					]
+				}
+			]
+		}
+""" % {"children": children, "axes": axes}
+		vrml = vrml % {"children": children,
+					   "viewpoint": viewpoint,
+					   "axes": axes}
+		with open(filename, 'w') as vrmlfile:
+			vrmlfile.write(vrml)
 	
 	@property
 	def NUMBER_OF_FIELDS(self):

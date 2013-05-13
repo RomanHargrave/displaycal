@@ -539,7 +539,6 @@
 	"testchart.save_or_discard": "Die Testform wurde nicht gesichert.",
 	"testchart.select": "Auswählen",
 	"testchart.set": "Testform auswählen...",
-	"testchart.vrml_denied": "VRML-Dateien können nur zusammen mit einer neuen Testform erstellt werden. Bitte verwerfen Sie die aktuelle Testform, um diese Option wählen zu können.",
 	"tone_values": "Tonwertstufen",
 	"translations": "Übersetzungen",
 	"trashcan.linux": "Mülleimer",

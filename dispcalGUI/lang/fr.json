@@ -539,7 +539,6 @@
 	"testchart.save_or_discard": "La grille de tests n'a pas été enregistrée.",
 	"testchart.select": "Sélectionner",
 	"testchart.set": "Sélectionner un fichier de grille de tests",
-	"testchart.vrml_denied": "Les fichiers VRML ne peuvent être générés que lors de la création d'une nouvelle grille de tests. Veuillez supprimer la grille de tests actuelle.",
 	"tone_values": "valeurs de teinte",
 	"translations": "Traductions ",
 	"trashcan.linux": "corbeille",

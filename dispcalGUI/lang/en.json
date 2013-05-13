@@ -544,7 +544,6 @@
 	"testchart.save_or_discard": "The testchart has not been saved.",
 	"testchart.select": "Select",
 	"testchart.set": "Choose testchart file...",
-	"testchart.vrml_denied": "VRML files can only be generated when creating a new testchart. Please discard the current testchart.",
 	"tone_values": "tone values",
 	"translations": "Translations",
 	"trashcan.linux": "trash",
