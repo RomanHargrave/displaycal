@@ -826,7 +826,8 @@ class TestchartEditor(wx.Frame):
 		else:
 			setcfg("tc_multi_bcc", 0)
 			self.tc_multi_steps.SetValue(getcfg("tc_multi_steps"))
-		self.tc_multi_bcc_cb.SetValue(bool(getcfg("tc_multi_bcc")))
+		if hasattr(self, "tc_multi_bcc_cb"):
+			self.tc_multi_bcc_cb.SetValue(bool(getcfg("tc_multi_bcc")))
 		self.tc_multi_steps_handler2()
 		self.tc_fullspread_patches.SetValue(getcfg("tc_fullspread_patches"))
 		self.tc_angle_slider.SetValue(getcfg("tc_angle") * 10000)
