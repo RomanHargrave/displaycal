@@ -40,7 +40,7 @@ def create_cubic_grid(res=4, skip_grayscale=False, hires_outergamut=False):
 					if len(outer) == 3 and (not skip_grayscale or 
 											outer != [outer[0]] * 3):
 						grid.append(outer)
-		grid.sort()
+	grid.sort()
 	return grid
 
 if __name__ == "__main__":
