@@ -531,6 +531,8 @@ class ExtraArgsFrame(BaseFrame):
 				   id=self.extra_args_spotread_ctrl.GetId())
 		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
 				   id=self.extra_args_colprof_ctrl.GetId())
+		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
+				   id=self.extra_args_targen_ctrl.GetId())
 		
 		self.setup_language()
 		self.update_controls()
@@ -543,7 +545,8 @@ class ExtraArgsFrame(BaseFrame):
 		mapping = {self.extra_args_dispcal_ctrl.GetId(): "extra_args.dispcal",
 				   self.extra_args_dispread_ctrl.GetId(): "extra_args.dispread",
 				   self.extra_args_spotread_ctrl.GetId(): "extra_args.spotread",
-				   self.extra_args_colprof_ctrl.GetId(): "extra_args.colprof"}
+				   self.extra_args_colprof_ctrl.GetId(): "extra_args.colprof",
+				   self.extra_args_targen_ctrl.GetId(): "extra_args.targen"}
 		pref = mapping.get(event.GetId())
 		if pref:
 			setcfg(pref, self.FindWindowById(event.GetId()).Value)
@@ -553,6 +556,7 @@ class ExtraArgsFrame(BaseFrame):
 		self.extra_args_dispread_ctrl.ChangeValue(getcfg("extra_args.dispread"))
 		self.extra_args_spotread_ctrl.ChangeValue(getcfg("extra_args.spotread"))
 		self.extra_args_colprof_ctrl.ChangeValue(getcfg("extra_args.colprof"))
+		self.extra_args_targen_ctrl.ChangeValue(getcfg("extra_args.targen"))
 
 
 class GamapFrame(BaseFrame):

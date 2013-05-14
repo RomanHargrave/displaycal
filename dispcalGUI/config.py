@@ -492,6 +492,7 @@ defaults = {
 	"extra_args.dispcal": "",
 	"extra_args.dispread": "",
 	"extra_args.spotread": "",
+	"extra_args.targen": "",
 	"gamap_profile": "",
 	"gamap_perceptual": 0,
 	"gamap_perceptual_intent": "la",

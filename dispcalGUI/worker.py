@@ -4036,6 +4036,8 @@ class Worker(object):
 											getcfg("tc_filter_rad"))]
 		else:
 			args += ['-f0']
+		if getcfg("extra_args.targen").strip():
+			args += parse_argument_string(getcfg("extra_args.targen"))
 		self.options_targen = list(args)
 		args += [inoutfile]
 		return cmd, args

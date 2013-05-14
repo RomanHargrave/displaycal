@@ -61,6 +61,19 @@
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>targen</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxTextCtrl" name="extra_args_targen_ctrl">
+                    <size>320,-1</size>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
                 <cols>2</cols>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
