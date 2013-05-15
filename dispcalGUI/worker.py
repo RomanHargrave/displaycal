@@ -4037,7 +4037,10 @@ class Worker(object):
 		else:
 			args += ['-f0']
 		if getcfg("extra_args.targen").strip():
-			args += parse_argument_string(getcfg("extra_args.targen"))
+			# Disallow -d and -D as the testchart editor only supports
+			# video RGB (-d3)
+			args += filter(lambda arg: not arg.lower().startswith("-d"),
+						   parse_argument_string(getcfg("extra_args.targen")))
 		self.options_targen = list(args)
 		args += [inoutfile]
 		return cmd, args
