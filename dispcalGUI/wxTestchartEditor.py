@@ -782,8 +782,9 @@ class TestchartEditor(wx.Frame):
 		multi_patches = int(math.pow(multi_steps, 3))
 		if getcfg("tc_multi_bcc"):
 			pref = "tc_multi_bcc_steps"
-			multi_patches += int(math.pow(multi_steps - 1, 3))
-			multi_steps += multi_steps - 1
+			if multi_steps:
+				multi_patches += int(math.pow(multi_steps - 1, 3))
+				multi_steps += multi_steps - 1
 			setcfg("tc_multi_steps", self.tc_multi_steps.GetValue())
 		else:
 			pref = "tc_multi_steps"
