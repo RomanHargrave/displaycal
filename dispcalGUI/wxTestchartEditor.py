@@ -28,6 +28,10 @@ from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin,
 					get_argyll_version, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import ConfirmDialog, InfoDialog
+try:
+	import wx.lib.agw.floatspin as floatspin
+except ImportError:
+	import floatspin
 from wxMeasureFrame import get_default_size
 
 
@@ -178,6 +182,47 @@ class TestchartEditor(wx.Frame):
 		self.tc_angle_intctrl = wx.SpinCtrl(panel, -1, size = (75, -1), min = 0, max = 5000, name = "tc_angle_intctrl")
 		self.Bind(wx.EVT_TEXT, self.tc_angle_handler, id = self.tc_angle_intctrl.GetId())
 		hsizer.Add(self.tc_angle_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
+		
+		# gamma
+		sizer.Add(wx.StaticText(panel, -1, lang.getstr("trc.gamma")),
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+				   border=border)
+		self.tc_gamma_floatctrl = floatspin.FloatSpin(panel, -1, size=(65, -1),
+													  min_val=0.0,
+													  max_val=9.9,
+													  increment=0.05,
+													  digits=2,
+													  name="tc_gamma_floatctrl")
+		self.Bind(floatspin.EVT_FLOATSPIN, self.tc_gamma_handler,
+				  id=self.tc_gamma_floatctrl.GetId())
+		sizer.Add(self.tc_gamma_floatctrl,
+				  flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+
+		# neutral axis emphasis
+		sizer.Add(wx.StaticText(panel, -1,
+								 lang.getstr("tc.neutral_axis_emphasis")),
+								 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+								 border=border)
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		sizer.Add(hsizer, 1, flag = wx.EXPAND)
+		self.tc_neutral_axis_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
+														 size=(64, -1),
+														 name="tc_neutral_axis_emphasis_slider")
+		self.Bind(wx.EVT_SLIDER, self.tc_neutral_axis_emphasis_handler,
+				  id=self.tc_neutral_axis_emphasis_slider.GetId())
+		hsizer.Add(self.tc_neutral_axis_emphasis_slider,
+				   flag=wx.ALIGN_CENTER_VERTICAL)
+		self.tc_neutral_axis_emphasis_intctrl = wx.SpinCtrl(panel, -1,
+															size=(65, -1),
+															min=0,
+															max=100,
+															name="tc_neutral_axis_emphasis_intctrl")
+		self.Bind(wx.EVT_TEXT, self.tc_neutral_axis_emphasis_handler,
+				  id=self.tc_neutral_axis_emphasis_intctrl.GetId())
+		hsizer.Add(self.tc_neutral_axis_emphasis_intctrl,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		hsizer.Add(wx.StaticText(panel, -1, "%"),
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
 		# precond profile
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -685,6 +730,9 @@ class TestchartEditor(wx.Frame):
 		self.tc_algo_handler()
 		self.tc_check()
 
+	def tc_gamma_handler(self, event):
+		setcfg("tc_gamma", self.tc_gamma_floatctrl.GetValue())
+
 	def tc_get_total_patches(self, white_patches = None, single_channel_patches = None, gray_patches = None, multi_steps = None, multi_bcc_steps=None, fullspread_patches = None):
 		if hasattr(self, "ti1") and [white_patches, single_channel_patches, gray_patches, multi_steps, fullspread_patches] == [None] * 5:
 			return self.ti1.queryv1("NUMBER_OF_SETS")
@@ -744,6 +792,15 @@ class TestchartEditor(wx.Frame):
 		setcfg(pref, self.tc_multi_steps.GetValue())
 		self.tc_check()
 
+	def tc_neutral_axis_emphasis_handler(self, event=None):
+		if event.GetId() == self.tc_neutral_axis_emphasis_slider.GetId():
+			self.tc_neutral_axis_emphasis_intctrl.SetValue(self.tc_neutral_axis_emphasis_slider.GetValue())
+		else:
+			self.tc_neutral_axis_emphasis_slider.SetValue(self.tc_neutral_axis_emphasis_intctrl.GetValue())
+		setcfg("tc_neutral_axis_emphasis",
+			   self.tc_neutral_axis_emphasis_intctrl.GetValue() / 100.0)
+		self.tc_algo_handler()
+
 	def tc_algo_handler(self, event = None):
 		tc_algo_enable = self.tc_fullspread_patches.GetValue() > 0
 		self.tc_algo.Enable(tc_algo_enable)
@@ -751,6 +808,10 @@ class TestchartEditor(wx.Frame):
 		self.tc_adaption_slider.Enable(tc_algo_enable and tc_algo == "")
 		self.tc_adaption_intctrl.Enable(tc_algo_enable and tc_algo == "")
 		tc_precond_enable = (tc_algo in ("I", "Q", "R", "t") or (tc_algo == "" and self.tc_adaption_slider.GetValue() > 0))
+		self.tc_neutral_axis_emphasis_slider.Enable(tc_algo_enable and
+													tc_precond_enable)
+		self.tc_neutral_axis_emphasis_intctrl.Enable(tc_algo_enable and
+													 tc_precond_enable)
 		self.tc_precond.Enable(tc_algo_enable and tc_precond_enable and bool(getcfg("tc_precond_profile")))
 		if not tc_precond_enable:
 			self.tc_precond.SetValue(False)
@@ -818,6 +879,9 @@ class TestchartEditor(wx.Frame):
 		self.tc_angle_handler(self.tc_angle_slider)
 		self.tc_adaption_slider.SetValue(getcfg("tc_adaption") * 100)
 		self.tc_adaption_handler(self.tc_adaption_slider)
+		self.tc_gamma_floatctrl.SetValue(getcfg("tc_gamma"))
+		self.tc_neutral_axis_emphasis_slider.SetValue(getcfg("tc_neutral_axis_emphasis") * 100)
+		self.tc_neutral_axis_emphasis_handler(self.tc_neutral_axis_emphasis_slider)
 		self.tc_precond_profile.SetPath(getcfg("tc_precond_profile"))
 		self.tc_filter.SetValue(bool(int(getcfg("tc_filter"))))
 		self.tc_filter_L.SetValue(getcfg("tc_filter_L"))
@@ -1140,6 +1204,7 @@ class TestchartEditor(wx.Frame):
 				setcfg("tc.show", 0)
 				return True
 			else:
+				writecfg()
 				self.Destroy()
 
 	def tc_move_handler(self, event = None):
@@ -1212,6 +1277,7 @@ class TestchartEditor(wx.Frame):
 		multi_bcc_steps = self.ti1.queryv1("MULTI_DIM_BCC_STEPS") or 0
 		multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or multi_bcc_steps
 		fullspread_patches = self.ti1.queryv1("NUMBER_OF_SETS")
+		gamma = self.ti1.queryv1("EXTRA_DEV_POW") or 1.0
 
 		if None in (white_patches, single_channel_patches, gray_patches, multi_steps):
 			if None in (single_channel_patches, gray_patches, multi_steps):
@@ -1476,12 +1542,12 @@ class TestchartEditor(wx.Frame):
 			fullspread_patches -= gray_patches
 			fullspread_patches -= int(float(str(math.pow(multi_steps, 3)))) - single_channel_patches * 3
 
-		return white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches
+		return white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma
 
 	def tc_load_cfg_from_ti1_finish(self, result):
 		if result:
 			safe_print(lang.getstr("success"))
-			white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches = result
+			white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma = result
 
 			fullspread_ba = {
 				"ERROR_OPTIMISED_PATCHES": "", # OFPS
@@ -1508,6 +1574,7 @@ class TestchartEditor(wx.Frame):
 			if multi_bcc_steps != None:
 				setcfg("tc_multi_bcc_steps", multi_bcc_steps)
 			setcfg("tc_fullspread_patches", self.ti1.queryv1("NUMBER_OF_SETS") - self.tc_get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, 0))
+			if gamma != None: setcfg("tc_gamma", gamma)
 			if algo != None: setcfg("tc_algo", algo)
 			writecfg()
 

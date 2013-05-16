@@ -4034,8 +4034,12 @@ class Worker(object):
 											getcfg("tc_filter_a"), 
 											getcfg("tc_filter_b"), 
 											getcfg("tc_filter_rad"))]
+			if self.argyll_version >= [1, 3, 3]:
+				args += ['-N%s' % getcfg("tc_neutral_axis_emphasis")]
 		else:
 			args += ['-f0']
+		if self.argyll_version == [1, 1, "RC2"] or self.argyll_version >= [1, 1]:
+			args += ['-p%s' % getcfg("tc_gamma")]
 		if getcfg("extra_args.targen").strip():
 			# Disallow -d and -D as the testchart editor only supports
 			# video RGB (-d3)

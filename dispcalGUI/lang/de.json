@@ -508,6 +508,7 @@
 	"tc.limit.sphere_radius": "Radius",
 	"tc.multidim": "Multidimensional",
 	"tc.multidim.patches": "Schritte = %s Felder (%s neutrale)",
+	"tc.neutral_axis_emphasis": "Grauachsengewichtung",
 	"tc.ofp": "Optimierte Fernste-Punkte-Abtastung",
 	"tc.patch": "Feld",
 	"tc.patches.gray": "grau",

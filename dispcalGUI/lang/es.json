@@ -503,6 +503,7 @@
 	"tc.limit.sphere_radius": "Radio",
 	"tc.multidim": "Multidimensional",
 	"tc.multidim.patches": "pasos = %s parches (%s neutral)",
+		"*tc.neutral_axis_emphasis": "Neutral axis emphasis",
 	"tc.ofp": "Punto de ejemplo mas lejano optimizado",
 	"tc.patch": "Parche",
 	"tc.patches.gray": "Neutral",

@@ -513,6 +513,7 @@
 	"tc.limit.sphere_radius": "Radius",
 	"tc.multidim": "Multidimensional",
 	"tc.multidim.patches": "steps = %s patches (%s neutral)",
+	"tc.neutral_axis_emphasis": "Neutral axis emphasis",
 	"tc.ofp": "Optimized farthest point sampling",
 	"tc.patch": "Patch",
 	"tc.patches.gray": "neutral",

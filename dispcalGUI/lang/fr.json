@@ -508,6 +508,7 @@
 	"tc.limit.sphere_radius": "Rayon",
 	"tc.multidim": "Multidimensionnel",
 	"tc.multidim.patches": "étapes = %s échantillons (%s neutres)",
+		"*tc.neutral_axis_emphasis": "Neutral axis emphasis",
 	"tc.ofp": "Échantillonnage optimisé du point le plus éloigné",
 	"tc.patch": "Échantillon",
 	"tc.patches.gray": "neutre",

@@ -503,6 +503,7 @@
 	"tc.limit.sphere_radius": "Raggio",
 	"tc.multidim": "Multidimensionale",
 	"tc.multidim.patches": "passi = %s Campioni (%s neutri)",
+		"*tc.neutral_axis_emphasis": "Neutral axis emphasis",
 	"tc.ofp": "Campionamento con punto più remoto ottimizzato",
 	"tc.patch": "Campione",
 	"tc.patches.gray": "neutro",
