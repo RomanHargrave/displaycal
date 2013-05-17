@@ -6086,6 +6086,7 @@ class MainFrame(BaseFrame):
 			self.synthiccframe.Show(not self.synthiccframe.IsShownOnScreen())
 	
 	def colorimeter_correction_matrix_ctrl_handler(self, event):
+		measurement_mode = getcfg("measurement_mode")
 		if event.GetId() == self.colorimeter_correction_matrix_ctrl.GetId():
 			path = None
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
@@ -6121,6 +6122,9 @@ class MainFrame(BaseFrame):
 					path not in self.ccmx_cached_paths):
 					setcfg("colorimeter_correction_matrix_file", ":" + path)
 				self.update_colorimeter_correction_matrix_ctrl_items(warn_on_mismatch=True)
+		if measurement_mode != getcfg("measurement_mode"):
+			# Check if black point correction should be turned on
+			self.measurement_mode_ctrl_handler()
 	
 	def colorimeter_correction_web_handler(self, event):
 		""" Check the web for cccmx or ccss files """
