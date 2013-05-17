@@ -1934,7 +1934,6 @@ class MainFrame(BaseFrame):
 			"lut_viewer.show_actual_lut",
 			"measurement_mode",
 			"measurement_mode.backup",
-			"measurement_mode.adaptive",
 			"measurement_mode.highres",
 			"measurement_mode.projector",
 			"measurement.play_sound",
