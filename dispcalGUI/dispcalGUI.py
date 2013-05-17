@@ -2458,7 +2458,7 @@ class MainFrame(BaseFrame):
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
 		setcfg("measurement_mode_unlocked", 1)
-		if len(ccmx) > 1 and ccmx[1]:
+		if self.worker.instrument_can_use_ccxx() and len(ccmx) > 1 and ccmx[1]:
 			tooltip = ccmx[1]
 			try:
 				cgats = CGATS.CGATS(ccmx[1])
