@@ -8302,6 +8302,9 @@ class MainFrame(BaseFrame):
 						if o[0] == "V":
 							setcfg("measurement_mode.adaptive", 1)
 							continue
+						if o[0:2] == "YA":
+							setcfg("measurement_mode.adaptive", 0)
+							continue
 						if o[0] == "H":
 							setcfg("measurement_mode.highres", 1)
 							continue
