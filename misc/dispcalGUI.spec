@@ -162,6 +162,7 @@ executables = ['argyll_RGB2XYZ.py',
 			   'wxLUTViewer.py',
 			   'wxMeasureFrame.py',
 			   'wxProfileInfo.py',
+			   'wxSynthICCFrame.py',
 			   'wxTestchartEditor.py',
 			   'wxUntetheredFrame.py',
 			   'wxwindows.py',
@@ -171,6 +172,7 @@ executables = ['argyll_RGB2XYZ.py',
 			   'dispcalGUI-3DLUT-maker',
 			   'dispcalGUI-apply-profiles',
 			   'dispcalGUI-profile-info',
+			   'dispcalGUI-synthprofile',
 			   'dispcalGUI-testchart-editor']
 for path in list(paths):
 	if path.endswith('.py') and %{?mandriva_version}.0 < 201010:
