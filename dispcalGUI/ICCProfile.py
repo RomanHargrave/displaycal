@@ -616,7 +616,7 @@ def u16Fixed16Number(binaryString):
 
 
 def u16Fixed16Number_tohex(num):
-	return struct.pack(">I", int(num * 65536))
+	return struct.pack(">I", int(num * 65536) & 0xFFFFFFFF)
 
 
 def u8Fixed8Number(binaryString):
