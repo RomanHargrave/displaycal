@@ -2400,9 +2400,9 @@ class Worker(object):
 						   safe_unicode(traceback.format_exc()))
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
-		if hasattr(self, "progress_wnd") and (not continue_next or 
-											  isinstance(result, Exception) or 
-											  not result):
+		if getattr(self, "progress_wnd", False) and (not continue_next or 
+													 isinstance(result, Exception) or 
+													 not result):
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
 			# under Linux, destroying it here causes segfault
