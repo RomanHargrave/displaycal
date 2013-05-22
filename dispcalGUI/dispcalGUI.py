@@ -8712,12 +8712,17 @@ class MainFrame(BaseFrame):
 						recent_cals += [recent_cal]
 				setcfg("recent_cals", os.pathsep.join(recent_cals))
 				update_colorimeter_correction_matrix_ctrl_items = False
+				update_testcharts = False
 				for path in delete_related_files:
-					if (os.path.splitext(path)[1].lower() in (".ccss",
-															  ".ccmx") and
-						path not in orphan_related_files):
-						self.delete_colorimeter_correction_matrix_ctrl_item(path)
-						update_colorimeter_correction_matrix_ctrl_items = True
+					if path not in orphan_related_files:
+						if (os.path.splitext(path)[1].lower() in (".ccss",
+																  ".ccmx")):
+							self.delete_colorimeter_correction_matrix_ctrl_item(path)
+							update_colorimeter_correction_matrix_ctrl_items = True
+						elif path in self.testcharts:
+							update_testcharts = True
+				if update_testcharts:
+					self.set_testcharts()
 				self.update_controls(False,
 									 update_colorimeter_correction_matrix_ctrl_items)
 				self.load_display_profile_cal()
