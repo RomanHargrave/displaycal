@@ -10,7 +10,6 @@
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
                 <cols>2</cols>
-                <rows>8</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
                 <object class="sizeritem">
