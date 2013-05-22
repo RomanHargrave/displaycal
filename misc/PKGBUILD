@@ -1,0 +1,50 @@
+# Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
+
+pkgname=dispcalgui
+_pkgname=${PACKAGE}
+pkgver=${VERSION}
+pkgrel=1
+pkgdesc="${SUMMARY}"
+arch=('i686' 'x86_64')
+url="http://dispcalgui.hoech.net/"
+license=('GPL3')
+makedepends=('libx11' 'libxinerama' 'libxrandr' 'libxxf86vm')
+depends=('python2>=2.5' 'wxpython>=2.8.6' 'python2-numpy' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils')
+optdepends=('argyllcms: calibration & profiling support')
+install=${pkgname}.install
+
+source=("http://dispcalgui.hoech.net/download/${_pkgname}-${pkgver}.tar.gz")
+
+md5sums=('ffffffffffffffffffffffffffffffff')
+
+build() {
+    cd "${srcdir}/${_pkgname}-${pkgver}"
+
+    # Convert line endings in LICENSE.txt
+    python2 -c "f = open('LICENSE.txt', 'rb')
+d = f.read().replace('\r\n', '\n').replace('\r', '\n')
+f.close()
+f = open('LICENSE.txt', 'wb')
+f.write(d)
+f.close()"
+
+    python2 setup.py build --use-distutils
+}
+
+package() {
+	cd "${srcdir}/${_pkgname}-${pkgver}"
+
+	python2 setup.py install --root="${pkgdir}" --optimize=1 --skip-instrument-configuration-files --skip-postinstall
+    
+    # udev/hotplug
+    mkdir -p "${pkgdir}/usr/share/${_pkgname}/usb"
+    # USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
+    cp -f "misc/55-Argyll.rules" "${pkgdir}/usr/share/${_pkgname}/usb/55-Argyll.rules"
+    # USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
+    cp -f  "misc/45-Argyll.rules" "${pkgdir}/usr/share/${_pkgname}/usb/45-Argyll.rules"
+    # USB using hotplug and Serial using udev (older versions of Linux)
+    cp -f "misc/Argyll" "${pkgdir}/usr/share/${_pkgname}/usb/Argyll"
+    cp -f "misc/Argyll.usermap" "${pkgdir}/usr/share/${_pkgname}/usb/Argyll.usermap"
+}
+
+# vim:set ts=2 sw=2 et:

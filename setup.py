@@ -347,7 +347,7 @@ def setup():
 								 "rpm_postinstall.sh"), "r").read().strip()
 		postun = open(os.path.join(pydir, "util",
 								   "rpm_postuninstall.sh"), "r").read().strip()
-		for tmpl_name in ("debian.changelog", "debian.control",
+		for tmpl_name in ("PKGBUILD", "debian.changelog", "debian.control",
 						  "debian.copyright", "debian.rules",
 						  "dispcalGUI.changes", "dispcalGUI.dsc",
 						  "dispcalGUI.spec", 
