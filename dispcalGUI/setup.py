@@ -436,8 +436,8 @@ def setup():
 			p = sp.Popen([sys.executable, '-c', '''import os
 from distutils.core import setup, Extension
 
-setup(ext_modules = [Extension("%s.RealDisplaySizeMM", sources=%r, 
-							   define_macros=%r, extra_link_args=%r)''' % 
+setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r, 
+							 define_macros=%r, extra_link_args=%r)])''' % 
 						  (name, sources, macros, link_args)] + sys.argv[1:], 
 						 stdout = sp.PIPE, stderr = sp.STDOUT)
 			lines = []
