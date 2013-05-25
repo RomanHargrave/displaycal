@@ -584,6 +584,7 @@
 	"whitepoint.set": "¿También desea establecer el punto blanco con el valor medido?",
 	"whitepoint.xy": "Coordenadas cromaticidad",
 	"window.title": "dispcalGUI",
+		"*windows.version.unsupported": "This version of Windows is not supported.",
 		"*windows_only": "Windows only",
 	"working_dir": "Directorio de trabajo:",
 	"yellow": "Amarillo",

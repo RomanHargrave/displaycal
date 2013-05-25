@@ -32,7 +32,7 @@ UninstallDisplayName=dispcalGUI
 UninstallDisplayIcon={app}\dispcalGUI.exe
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
-MinVersion=,5.0.2195
+MinVersion=,5.1.2600
 
 [Languages]
 Name: english; MessagesFile: ..\misc\InnoSetup\v5\Default.isl; 

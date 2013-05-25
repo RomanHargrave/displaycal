@@ -590,6 +590,7 @@
 	"whitepoint.set": "Möchten sie auch den Weißpunkt auf den gemessenen Wert setzen?",
 	"whitepoint.xy": "Farbort",
 	"window.title": "dispcalGUI",
+	"windows.version.unsupported": "Diese Version von Windows wird nicht unterstützt.",
 	"windows_only": "Nur Windows",
 	"working_dir": "Arbeitsverzeichnis:",
 	"yellow": "Gelb",

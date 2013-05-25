@@ -2261,6 +2261,9 @@ class Worker(object):
 												 shell=shell, cwd=working_dir, 
 												 startupinfo=startupinfo)
 					else:
+						# Minimum Windows version: XP or Server 2003
+						if sys.getwindowsversion() < (7, 1):
+							return Error(lang.getstr("windows.version.unsupported"))
 						try:
 							self.subprocess = wexpect.spawn(cmdline[0],
 															cmdline[1:], 

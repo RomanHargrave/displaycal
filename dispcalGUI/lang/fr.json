@@ -590,6 +590,7 @@
 	"whitepoint.set": "Voulez-vous également régler le point blanc à la valeur mesurée ?",
 	"whitepoint.xy": "Coordonnées chromatiques",
 	"window.title": "dispcalGUI",
+		"*windows.version.unsupported": "This version of Windows is not supported.",
 	"windows_only": "Windows uniquement",
 	"working_dir": "Répertoire de travail :",
 	"yellow": "Jaune",
