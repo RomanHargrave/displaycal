@@ -149,6 +149,7 @@
 	"commandline": "Linea de comandos:",
 	"comparison_profile": "Perfil de comparacion",
 	"comport_detected": "Ha sido detectado un cambio en el instrumento/puerto de ajustes.",
+		"*computer.name": "Computername",
 	"connection.fail": "Error de Conexion (%s)",
 	"connection.fail.http": "Error HTTP %s",
 	"continue": "Continuar",

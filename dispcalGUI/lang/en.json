@@ -156,6 +156,7 @@
 	"commandline": "Command line:",
 	"comparison_profile": "Comparison profile",
 	"comport_detected": "A change in the instrument/port configuration has been detected.",
+	"computer.name": "Computername",
 	"connection.fail": "Connection error (%s)",
 	"connection.fail.http": "HTTP error %s",
 	"continue": "Continue",

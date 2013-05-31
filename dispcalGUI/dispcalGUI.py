@@ -7101,6 +7101,7 @@ class MainFrame(BaseFrame):
 
 	def profile_name_info(self):
 		info = [
+			"%nn	" + lang.getstr("computer.name"),
 			"%dn	" + lang.getstr("display"),
 			"%dns	" + lang.getstr("display_short"),
 			"%dnw	" + lang.getstr("display") + " (" +
@@ -7444,6 +7445,12 @@ class MainFrame(BaseFrame):
 		legacy_profile_name += "-" + profile_type
 		legacy_profile_name += "-" + strftime("%Y%m%d%H%M")
 		profile_name = profile_name.replace("%legacy", legacy_profile_name)
+		
+		# Computername
+		if platform.node():
+			profile_name = profile_name.replace("%nn", platform.node())
+		else:
+			profile_name = re.sub("[-_\s]+%nn|%nn[-_\s]*", "", profile_name)
 
 		# Windows display name (EnumDisplayDevices / DeviceString)
 		display_win32 = self.worker.get_display_name(True, False)
