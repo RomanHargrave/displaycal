@@ -7107,6 +7107,10 @@ class MainFrame(BaseFrame):
 						lang.getstr("windows_only") + ")",
 			"%dnws	" + lang.getstr("display_short") + " (" +
 						lang.getstr("windows_only") + ")",
+			"%ds	" + lang.getstr("edid.serial") + " (" +
+						lang.getstr("if_available") + ")",
+			"%crc32	" + lang.getstr("edid.crc32") + " (" +
+						lang.getstr("if_available") + ")",
 			"%in	" + lang.getstr("instrument"),
 			"%im	" + lang.getstr("measurement_mode"),
 			"%wp	" + lang.getstr("whitepoint"),
@@ -7455,14 +7459,17 @@ class MainFrame(BaseFrame):
 		# Serial
 		edid = self.worker.get_display_edid()
 		serial = edid.get("serial_ascii", hex(edid.get("serial_32", 0))[2:])
-		if serial and serial != "0x1010101" and serial != "0x0":
+		if serial and serial != "1010101" and serial != "0":
 			profile_name = profile_name.replace("%ds", serial)
 		else:
-			profile_name = profile_name.replace("%ds", "")
+			profile_name = re.sub("[-_\s]+%ds|%ds[-_\s]*", "", profile_name)
 		# CRC32
-		profile_name = profile_name.replace("%crc32",
-											"%X" % (crc32(edid.get("edid", ""))
-													& 0xFFFFFFFF))
+		if edid.get("edid"):
+			profile_name = profile_name.replace("%crc32",
+												"%X" % (crc32(edid.get("edid", ""))
+														& 0xFFFFFFFF))
+		else:
+			profile_name = re.sub("[-_\s]+%crc32|%crc32[-_\s]*", "", profile_name)
 
 		# default v0.2.2b profile name
 		display = self.worker.get_display_name(True, True)
