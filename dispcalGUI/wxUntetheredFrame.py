@@ -244,11 +244,20 @@ class UntetheredFrame(wx.Frame):
 	def finish_btn_handler(self, event):
 		self.cgats[0].type = "CTI3"
 		self.cgats[0].add_keyword("COLOR_REP", "RGB_XYZ")
-		self.cgats[0].add_keyword("NORMALIZED_TO_Y_100", "YES")
+		if self.white_XYZ[1] > 0:
+			# Normalize to Y = 100
+			query = self.cgats[0].DATA
+			for i in query:
+				XYZ = query[i]["XYZ_X"], query[i]["XYZ_Y"], query[i]["XYZ_Z"]
+				XYZ = [v / self.white_XYZ[1] * 100 for v in XYZ]
+				query[i]["XYZ_X"], query[i]["XYZ_Y"], query[i]["XYZ_Z"] = XYZ
+			normalized = "YES"
+		else:
+			normalized = "NO"
+		self.cgats[0].add_keyword("NORMALIZED_TO_Y_100", normalized)
 		self.cgats[0].add_keyword("DEVICE_CLASS", "DISPLAY")
 		self.cgats[0].add_keyword("INSTRUMENT_TYPE_SPECTRAL", "NO")
-		self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] +
-							".ti3")
+		self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] + ".ti3")
 		self.safe_send("Q")
 		time.sleep(.5)
 		self.safe_send("Q")
@@ -258,22 +267,26 @@ class UntetheredFrame(wx.Frame):
 	
 	def get_Lab_RGB(self):
 		row = self.cgats[0].DATA[self.index]
-		XYZ_Y100 = row["XYZ_X"], row["XYZ_Y"], row["XYZ_Z"]
-		self.last_XYZ_Y100 = XYZ_Y100
-		Lab = colormath.XYZ2Lab(*XYZ_Y100)
+		XYZ = row["XYZ_X"], row["XYZ_Y"], row["XYZ_Z"]
+		self.last_XYZ = XYZ
+		Lab = colormath.XYZ2Lab(*XYZ)
 		rgb_space = list(colormath.rgb_spaces["sRGB"])
-		white_CCT = colormath.XYZ2CCT(*self.white_XYZ_Y100)
-		if white_CCT:
-			white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
-																	 scale=100.0))
-			white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
-																				  scale=100.0))
-			white_Lab = colormath.XYZ2Lab(*self.white_XYZ_Y100)
-			if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
-				colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
-				rgb_space[1] = tuple([v / 100.0 for v in self.white_XYZ_Y100])
+		if self.white_XYZ[1] > 0:
+			XYZ = [v / self.white_XYZ[1] * 100 for v in XYZ]
+			white_XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in self.white_XYZ]
+			white_CCT = colormath.XYZ2CCT(*white_XYZ_Y100)
+			if white_CCT:
+				white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
+																			 scale=100.0))
+				white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
+																					  scale=100.0))
+				white_Lab = colormath.XYZ2Lab(*white_XYZ_Y100)
+				if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
+					colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
+					# Is white close enough to daylight or planckian locus?
+					rgb_space[1] = tuple([v / 100.0 for v in white_XYZ_Y100])
 		color = [int(round(v)) for v in
-				 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ_Y100],
+				 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ],
 								   rgb_space=rgb_space,
 								   scale=255)]
 		return Lab, color
@@ -328,7 +341,7 @@ class UntetheredFrame(wx.Frame):
 		setcfg("untethered.measure.auto", int(auto))
 	
 	def measure_btn_handler(self, event):
-		self.last_XYZ_Y100 = (-1, -1, -1)
+		self.last_XYZ = (-1, -1, -1)
 		self.measure_count = 1
 		self.measure_auto_cb.Disable()
 		self.measure()
@@ -377,21 +390,12 @@ class UntetheredFrame(wx.Frame):
 				row["RGB_G"] == 100 and
 				row["RGB_B"] == 100):
 				# White
-				self.cgats[0].add_keyword("LUMINANCE_XYZ_CDM2",
-										  "%.6f %.6f %.6f" % tuple(XYZ))
-				self.white_XYZ = XYZ
-				if self.white_XYZ[1] > 0:
-					# Protect against division by zero
-					self.white_XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in XYZ]
-				else:
-					self.white_XYZ_Y100 = XYZ
-			if self.white_XYZ[1] > 0:
-				# Protect against division by zero
-				XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in XYZ]
-			else:
-				XYZ_Y100 = XYZ
-			Lab1 = colormath.XYZ2Lab(*self.last_XYZ_Y100)
-			Lab2 = colormath.XYZ2Lab(*XYZ_Y100)
+				if XYZ[1] > 0:
+					self.cgats[0].add_keyword("LUMINANCE_XYZ_CDM2",
+											  "%.6f %.6f %.6f" % tuple(XYZ))
+					self.white_XYZ = XYZ
+			Lab1 = colormath.XYZ2Lab(*self.last_XYZ)
+			Lab2 = colormath.XYZ2Lab(*XYZ)
 			delta = colormath.delta(*Lab1 + Lab2)
 			if delta["E"] > 1 or (abs(delta["L"]) > .3 and abs(delta["C"]) < 1):
 				self.measure_count += 1
@@ -406,7 +410,7 @@ class UntetheredFrame(wx.Frame):
 												  "RGB_G": row["RGB_G"],
 												  "RGB_B": row["RGB_B"]})
 					for i in query:
-						query[i]["XYZ_X"], query[i]["XYZ_Y"], query[i]["XYZ_Z"] = XYZ_Y100
+						query[i]["XYZ_X"], query[i]["XYZ_Y"], query[i]["XYZ_Z"] = XYZ
 					self.index = query[i].SAMPLE_ID - 1
 					if getcfg("untethered.measure.auto"):
 						self.show_RGB(False)
@@ -464,8 +468,8 @@ class UntetheredFrame(wx.Frame):
 		self.last_error = None
 		self.index = 0
 		self.index_max = 0
-		self.last_XYZ_Y100 = (-1, -1, -1)
-		self.white_XYZ = (100.0, 100.0, 100.0)
+		self.last_XYZ = (-1, -1, -1)
+		self.white_XYZ = (-1, -1, -1)
 		self.measure_count = 0
 		self.finished = False
 		self.label_RGB.SetLabel(" ")
