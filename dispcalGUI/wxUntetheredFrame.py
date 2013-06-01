@@ -258,6 +258,8 @@ class UntetheredFrame(wx.Frame):
 		self.cgats[0].add_keyword("NORMALIZED_TO_Y_100", normalized)
 		self.cgats[0].add_keyword("DEVICE_CLASS", "DISPLAY")
 		self.cgats[0].add_keyword("INSTRUMENT_TYPE_SPECTRAL", "NO")
+		if hasattr(self.cgats[0], "APPROX_WHITE_POINT"):
+			self.cgats[0].remove_keyword("APPROX_WHITE_POINT")
 		self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] + ".ti3")
 		self.safe_send("Q")
 		time.sleep(.5)
