@@ -242,6 +242,7 @@ class UntetheredFrame(wx.Frame):
 		self.measure_btn.Enable(enable)
 	
 	def finish_btn_handler(self, event):
+		self.finish_btn.Disable()
 		self.cgats[0].type = "CTI3"
 		self.cgats[0].add_keyword("COLOR_REP", "RGB_XYZ")
 		if self.white_XYZ[1] > 0:
