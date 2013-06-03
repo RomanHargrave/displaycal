@@ -4295,7 +4295,9 @@ class Worker(object):
 									defaultpaths.commonappdata]
 			pldpaths += [os.path.join(dir_, "ArgyllCMS", "spyd2PLD.bin") 
 						 for dir_ in [defaultpaths.appdata, 
-									  defaultpaths.home] + 
+									  defaultpaths.home,
+									  defaultpaths.library,
+									  defaultpaths.library_home] + 
 									 defaultpaths.commonappdata]
 		for pldpath in pldpaths:
 			if os.path.isfile(pldpath):
@@ -4315,7 +4317,9 @@ class Worker(object):
 							  defaultpaths.library_home] + defaultpaths.commonappdata]
 		paths += [os.path.join(dir_, "ArgyllCMS", "spyd4cal.bin") 
 				  for dir_ in [defaultpaths.appdata, 
-							   defaultpaths.home] + defaultpaths.commonappdata]
+							   defaultpaths.home,
+							   defaultpaths.library,
+							   defaultpaths.library_home] + defaultpaths.commonappdata]
 		for path in paths:
 			if os.path.isfile(path):
 				return True
