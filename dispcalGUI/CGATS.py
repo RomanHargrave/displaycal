@@ -377,7 +377,7 @@ class CGATS(dict):
 			context['KEYWORDS'].root = self.root
 			context['KEYWORDS'].type = 'KEYWORDS'
 		if not keyword in context['KEYWORDS'].values():
-			newkey = 0
+			newkey = len(context['KEYWORDS'])
 			while newkey in context['KEYWORDS']:
 				newkey += 1
 			context['KEYWORDS'][newkey] = keyword
