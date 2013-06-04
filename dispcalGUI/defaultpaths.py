@@ -32,7 +32,16 @@ if sys.platform == "win32":
 	# Always specify create=1 for SHGetSpecialFolderPath so we don't get an
 	# exception if the folder does not yet exist
 	library_home = appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
-	commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA, 1)]
+	# Argyll CMS uses ALLUSERSPROFILE for local system wide app related data
+	# Note: On Windows Vista and later, ALLUSERSPROFILE and COMMON_APPDATA
+	# are actually the same ('C:\ProgramData'), but under Windows XP the former
+	# points to 'C:\Documents and Settings\All Users' while COMMON_APPDATA
+	# points to 'C:\Documents and Settings\All Users\Application Data'
+	allusersprofile = getenvu("ALLUSERSPROFILE")
+	if allusersprofile:
+		commonappdata = [allusersprofile]
+	else:
+		commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA, 1)]
 	library = commonappdata[0]
 	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON, 1)
 	autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP, 1)

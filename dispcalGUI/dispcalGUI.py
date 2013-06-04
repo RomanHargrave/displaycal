@@ -2299,32 +2299,35 @@ class MainFrame(BaseFrame):
 		if force or not getattr(self, "ccmx_cached_paths", None):
 			ccmx_paths = []
 			ccss_paths = []
-			for commonappdata in config.commonappdata:
-				if sys.platform != "darwin":
+			if sys.platform != "darwin":
+				for commonappdata in config.commonappdata:
 					ccmx_paths += glob.glob(os.path.join(commonappdata, "color",
 														 "*.ccmx"))
-				ccmx_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
-													 "*.ccmx"))
-				if sys.platform != "darwin":
+					ccmx_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+														 "*.ccmx"))
 					ccss_paths += glob.glob(os.path.join(commonappdata, "color",
 														 "*.ccss"))
-				ccss_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+					ccss_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+														 "*.ccss"))
+				ccmx_paths += glob.glob(os.path.join(config.appdata, "color",
+													 "*.ccmx"))
+				ccss_paths += glob.glob(os.path.join(config.appdata, "color",
 													 "*.ccss"))
-			if sys.platform == "darwin":
+			else:
 				ccmx_paths += glob.glob(os.path.join(config.library, "color",
+													 "*.ccmx"))
+				ccmx_paths += glob.glob(os.path.join(config.library, "ArgyllCMS",
 													 "*.ccmx"))
 				ccmx_paths += glob.glob(os.path.join(config.library_home, "color",
 													 "*.ccmx"))
-				ccmx_paths += glob.glob(os.path.join(config.library, "color",
+				ccss_paths += glob.glob(os.path.join(config.library, "color",
 													 "*.ccss"))
-				ccmx_paths += glob.glob(os.path.join(config.library_home, "color",
+				ccss_paths += glob.glob(os.path.join(config.library, "ArgyllCMS",
 													 "*.ccss"))
-			ccmx_paths += glob.glob(os.path.join(config.appdata, "color",
-												 "*.ccmx"))
+				ccss_paths += glob.glob(os.path.join(config.library_home, "color",
+													 "*.ccss"))
 			ccmx_paths += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
 												 "*.ccmx"))
-			ccss_paths += glob.glob(os.path.join(config.appdata, "color",
-												 "*.ccss"))
 			ccss_paths += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
 												 "*.ccss"))
 			ccmx_paths.sort(key=os.path.basename)

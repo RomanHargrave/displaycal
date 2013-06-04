@@ -4277,53 +4277,48 @@ class Worker(object):
 	
 	def set_terminal_cgats(self, cgats_filename):
 		self.terminal.cgats = CGATS.CGATS(cgats_filename)
+	
+	def argyll_support_file_exists(self, name):
+		""" Check if named file exists in any of the known Argyll support
+		locations valid for the chosen Argyll CMS version. """
+		if sys.platform != "darwin":
+			paths = [defaultpaths.appdata] + defaultpaths.commonappdata
+		else:
+			paths = [defaultpaths.library_home, defaultpaths.library]
+		searchpaths = []
+		if self.argyll_version >= [1, 5, 0]:
+			if sys.platform != "darwin":
+				searchpaths += [os.path.join(dir_, "ArgyllCMS", name)
+								for dir_ in paths]
+			else:
+				searchpaths += [os.path.join(dir_, "ArgyllCMS", name)
+								for dir_ in [defaultpaths.appdata,
+											 defaultpaths.library]]
+		searchpaths += [os.path.join(dir_, "color", name) for dir_ in paths]
+		for searchpath in searchpaths:
+			if os.path.isfile(searchpath):
+				return True
+		return False
 
 	def spyder2_firmware_exists(self):
 		""" Check if the Spyder 2 firmware file exists in any of the known
-		locations. """
+		locations valid for the chosen Argyll CMS version. """
 		if self.argyll_version < [1, 2, 0]:
 			spyd2en = get_argyll_util("spyd2en")
 			if not spyd2en:
 				return False
-			pldpaths = [os.path.join(os.path.dirname(spyd2en), "spyd2PLD.bin")]
+			return os.path.isfile(os.path.join(os.path.dirname(spyd2en),
+											   "spyd2PLD.bin"))
 		else:
-			pldpaths = [os.path.join(dir_, "color", "spyd2PLD.bin") 
-						for dir_ in [defaultpaths.appdata, 
-									 defaultpaths.home,
-									 defaultpaths.library,
-									 defaultpaths.library_home] + 
-									defaultpaths.commonappdata]
-			pldpaths += [os.path.join(dir_, "ArgyllCMS", "spyd2PLD.bin") 
-						 for dir_ in [defaultpaths.appdata, 
-									  defaultpaths.home,
-									  defaultpaths.library,
-									  defaultpaths.library_home] + 
-									 defaultpaths.commonappdata]
-		for pldpath in pldpaths:
-			if os.path.isfile(pldpath):
-				return True
-		return False
+			return self.argyll_support_file_exists("spyd2PLD.bin")
 
 	def spyder4_cal_exists(self):
 		""" Check if the Spyder 4 calibration file exists in any of the known
-		locations. """
+		locations valid for the chosen Argyll CMS version. """
 		if self.argyll_version < [1, 3, 6]:
 			# We couldn't use it even if it exists
 			return False
-		paths = [os.path.join(dir_, "color", "spyd4cal.bin") 
-				 for dir_ in [defaultpaths.appdata, 
-							  defaultpaths.home,
-							  defaultpaths.library,
-							  defaultpaths.library_home] + defaultpaths.commonappdata]
-		paths += [os.path.join(dir_, "ArgyllCMS", "spyd4cal.bin") 
-				  for dir_ in [defaultpaths.appdata, 
-							   defaultpaths.home,
-							   defaultpaths.library,
-							   defaultpaths.library_home] + defaultpaths.commonappdata]
-		for path in paths:
-			if os.path.isfile(path):
-				return True
-		return False
+		return self.argyll_support_file_exists("spyd4cal.bin")
 
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 
