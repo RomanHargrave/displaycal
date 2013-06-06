@@ -321,7 +321,8 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"(?:g(?:240|709|l|s)|[gG]\d+(?:\.\d+)?)",
 		"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
 		'X(?:\s*\d+|\s+["\'][^"\']+?["\'])',  # Argyll >= 1.3.0 colorimeter correction matrix / Argyll >= 1.3.4 calibration spectral sample
-		"I[bw]{,2}"  # Argyll >= 1.3.0 drift compensation
+		"I[bw]{,2}",  # Argyll >= 1.3.0 drift compensation
+		"YA"  # Argyll >= 1.5.0 disable adaptive mode
 	]
 	re_options_colprof = [
 		"q[lmh]",
