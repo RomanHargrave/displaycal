@@ -3699,6 +3699,8 @@ class Worker(object):
 			if verify:
 				if calibrate and type(verify) == int:
 					args += ["-e%s" % verify]  # Verify final computed curves
+				elif self.argyll_version >= [1, 6]:
+					args += ["-z"]  # Verify current curves
 				else:
 					args += ["-E"]  # Verify current curves
 		if getcfg("extra_args.dispcal").strip():
