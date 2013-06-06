@@ -310,14 +310,14 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 	Extract options used for dispcal and colprof from argument strings.
 	"""
 	re_options_dispcal = [
-		"[moupHV]",
+		"[moupHVF]",
 		"d\d+(?:,\d+)?",
 		"[cv]\d+",
 		"q(?:%s)" % "|".join(config.valid_values["calibration.quality"]),
 		"y(?:%s)" % "|".join(filter(None, config.valid_values["measurement_mode"])),
 		"[tT](?:\d+(?:\.\d+)?)?",
 		"w\d+(?:\.\d+)?,\d+(?:\.\d+)?",
-		"[bfakABF]\d+(?:\.\d+)?",
+		"[bfakAB]\d+(?:\.\d+)?",
 		"(?:g(?:240|709|l|s)|[gG]\d+(?:\.\d+)?)",
 		"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
 		'X(?:\s*\d+|\s+["\'][^"\']+?["\'])',  # Argyll >= 1.3.0 colorimeter correction matrix / Argyll >= 1.3.4 calibration spectral sample
