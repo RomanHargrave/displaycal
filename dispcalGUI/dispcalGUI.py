@@ -3272,7 +3272,7 @@ class MainFrame(BaseFrame):
 		if not check_set_argyll_bin():
 			return
 		# Minimum Windows version: XP or Server 2003
-		if sys.getwindowsversion() < (5, 1):
+		if sys.platform == "win32" and sys.getwindowsversion() < (5, 1):
 			show_result_dialog(Error(lang.getstr("windows.version.unsupported")))
 			return
 		safe_print("-" * 80)
