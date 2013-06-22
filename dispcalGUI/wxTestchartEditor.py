@@ -1091,7 +1091,13 @@ class TestchartEditor(wx.Frame):
 	def tc_save_as_handler(self, event = None, path = None):
 		if path is None or not os.path.exists(path):
 			path = None
-			defaultDir, defaultFile = get_verified_path("last_ti1_path")[0], os.path.basename(getcfg("last_ti1_path"))
+			if (hasattr(self, "ti1") and self.ti1.filename and
+				os.path.isfile(self.ti1.filename)):
+				defaultDir = os.path.dirname(self.ti1.filename)
+				defaultFile = os.path.basename(self.ti1.filename)
+			else:
+				defaultDir = get_verified_path("last_ti1_path")[0]
+				defaultFile = os.path.basename(getcfg("last_ti1_path"))
 			dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = lang.getstr("filetype.ti1") + "|*.ti1", style = wx.SAVE | wx.OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
