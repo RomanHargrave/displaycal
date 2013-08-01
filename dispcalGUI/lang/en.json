@@ -428,7 +428,7 @@
 	"profile.install.error": "The profile could not be installed/activated.",
 	"profile.install.osx_manual_select": "The profile has been installed. Please activate it in the “Displays” system preferences pane.",
 	"profile.install.success": "The profile has been installed and activated.",
-	"profile.install.web.unsupported": "Profiles cannot be installed for the virtual web display device.",
+	"profile.install.virtual.unsupported": "Profiles cannot be installed for virtual display devices.",
 	"profile.install_local_system": "Install profile system-wide",
 	"profile.install_network": "Install profile network-wide",
 	"profile.install_user": "Install profile for current user only",

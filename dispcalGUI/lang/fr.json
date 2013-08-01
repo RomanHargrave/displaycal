@@ -423,7 +423,7 @@
 	"profile.install.error": "Le profil n'a pas pu être installé/activé.",
 	"profile.install.osx_manual_select": "Le profil a été installé. Veuillez l'activer dans le panneau « Écrans » des préférences du système.",
 	"profile.install.success": "Le profil a été installé et activé.",
-	"profile.install.web.unsupported": "Les profils ne peuvent être installés pour le périphérique d'affichage web virtuel.",
+	"profile.install.virtual.unsupported": "Les profils ne peuvent être installés pour le périphérique d'affichage virtuel.",
 	"profile.install_local_system": "Installer le profil sur l'ensemble du système",
 	"profile.install_network": "Installer le profil sur l'ensemble du réseau",
 	"profile.install_user": "Installer le profil pour l'utilisateur courant uniquement",

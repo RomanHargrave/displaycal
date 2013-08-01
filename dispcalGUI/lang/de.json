@@ -423,7 +423,7 @@
 	"profile.install.error": "Das Profil konnte nicht installiert/aktiviert werden.",
 	"profile.install.osx_manual_select": "Das Profil wurde installiert. Bitte aktivieren Sie es in der Systemeinstellung „Monitore“.",
 	"profile.install.success": "Das Profil wurde installiert und aktiviert.",
-	"profile.install.web.unsupported": "Profile können nicht für das virtuelle Web-Anzeigegerät installiert werden.",
+	"profile.install.virtual.unsupported": "Profile können nicht für virtuelle Anzeigegeräte installiert werden.",
 	"profile.install_local_system": "Profil systemweit installieren",
 	"profile.install_network": "Profil im Netzwerk installieren",
 	"profile.install_user": "Profil nur für aktuellen Benutzer installieren",

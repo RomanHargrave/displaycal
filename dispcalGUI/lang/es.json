@@ -420,6 +420,7 @@
 	"profile.install.error": "El perfil no puede ser instalado/activado.",
 	"profile.install.osx_manual_select": "El perfil ha sido instalado. Por favor activelo en el panel de preferencias del sistema “Pantallas”.",
 	"profile.install.success": "El perfil ha sido instalado y activado.",
+		"*profile.install.virtual.unsupported": "Profiles cannot be installed for virtual display devices.",
 	"profile.install_local_system": "Instalar perfil en todo el sistema",
 	"profile.install_network": "Instalar perfil en toda la red",
 	"profile.install_user": "Instalar perfil solo para el usuario actual",

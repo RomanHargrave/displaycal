@@ -5819,7 +5819,7 @@ class MainFrame(BaseFrame):
 			result = event.GetId()
 		if result == wx.ID_OK:
 			if config.get_display_name() in ("Web", "Untethered"):
-				show_result_dialog(Info(lang.getstr("profile.install.web.unsupported")),
+				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
 								   parent=self.modaldlg)
 			else:
 				safe_print("-" * 80)
