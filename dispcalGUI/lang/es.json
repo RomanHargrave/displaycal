@@ -491,6 +491,7 @@
 	"show_advanced_calibration_options": "Mostar opciones avanzadas de calibracion",
 	"softproof.icc": "Softproof",
 	"spectral": "Espectral",
+	"sRGB.icc": "sRGB",
 	"startup": "Comenzando...",
 	"success": "...hecho.",
 		"*synthicc.create": "Create synthetic ICC profile...",

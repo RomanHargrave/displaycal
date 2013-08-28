@@ -5,7 +5,7 @@ desc="dispcalGUI calibration preset:"
 
 pushd "`dirname \"$0\"`/../misc/ti3"
 
-for name in "laptop" "office_web" "prepress" "photo" "video" ; do
+for name in "laptop" "office_web" "prepress" "photo" "sRGB" "video" ; do
 	case "$name" in
 		laptop)
 		colprof  -v -ql -aG -C "$cprt" -D "$desc Laptop"       "$name";;
@@ -21,6 +21,9 @@ for name in "laptop" "office_web" "prepress" "photo" "video" ; do
 	case "$name" in
 		softproof)
 		colprof  -v -ql -aG -C "$cprt" -D "$desc Softproof"    "$name";;
+	case "$name" in
+		sRGB)
+		colprof  -v -ql -aG -C "$cprt" -D "$desc sRGB"         "$name";;
 	case "$name" in
 		video)
 		colprof  -v -ql -aG -C "$cprt" -D "$desc Video"        "$name";;
