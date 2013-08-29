@@ -338,7 +338,7 @@
 	"license_info": "Lizensiert unter der GPL",
 	"linear": "linear",
 	"locale.set": "Setze Lokalisierung: %s",
-	"locate_spyder2_setup": "Bitte wählen Sie im folgenden Auswahldialog die Datei “Spyder2express_2.3.6_Setup.exe” oder “Spyder2PRO_2.3.5_Setup.exe”, welche Sie unter http://spyder.datacolor.com/consumer-support/#jtabs-2 herunterladen können.",
+	"locate_spyder2_setup": "Bitte wählen Sie im folgenden Auswahldialog die Datei “Spyder2express_2.3.6_Setup.exe” oder “Spyder2PRO_2.3.5_Setup.exe”, welche Sie unter http://support.datacolor.com/index.php?/Knowledgebase/List/Index/88/windows herunterladen können.",
 	"locate_spyder2_setup_mac": "Bitte wählen Sie im folgenden Auswahldialog die Datei “Spyder2express_2.3.6_Setup.exe” bzw. “Spyder2PRO_2.3.5_Setup.exe”, oder falls Sie die Software bereits installiert haben, suchen Sie die Datei Spyder.lib (eventuell müssen Sie dazu in den Finder wechseln und einen Ctrl-Klick auf das Spyder2-Programm ausführen, das sich normalerweise unter „Programme/Spyder2express 2.3“ bzw. „Programme/Spyder2PRO 2.2“  befindet, und dann „Paketinhalt zeigen“ aus dem Popup-Menü wählen – anschließend kopieren Sie die Datei aus „Contents/Mac OS Classic“, um Sie auswählen zu können).",
 	"locate_spyder2_setup_win": "Bitte wählen Sie im folgenden Auswahldialog die Datei “Spyder2express_2.3.6_Setup.exe” bzw. “Spyder2PRO_2.3.5_Setup.exe”, oder falls Sie die Software bereits installiert haben, suchen Sie die Datei CVSpyder.dll (die sich normalerweise unter “C:\\Programme\\ColorVision\\Spyder2express” bzw. “C:\\Programme\\ColorVision\\Spyder2PRO” befindet).",
 	"log.autoshow": "Protokollfenster automatisch zeigen",
