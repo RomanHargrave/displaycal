@@ -11,7 +11,8 @@ try:
 	from gi.repository import Gio
 except ImportError:
 	if sys.platform not in ("darwin", "win32"):
-		raise
+		Colord = None
+		Gio = None
 else:
 	cancellable = Gio.Cancellable.new();
 

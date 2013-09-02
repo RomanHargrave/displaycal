@@ -44,10 +44,7 @@ from util_str import hexunescape, safe_unicode
 if sys.platform not in ("darwin", "win32"):
 	from edid import get_edid
 	from util_x import get_display
-	try:
-		import colord
-	except ImportError:
-		colord = None
+	import colord
 	try:
 		import xrandr
 	except ImportError:
@@ -509,7 +506,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			else:
 				# Linux
 				# Try colord
-				if colord:
+				if colord.Colord:
 					try:
 						profile = _colord_get_display_profile(display_no)
 					except colord.CDError, exception:

@@ -77,10 +77,7 @@ if sys.platform == "darwin":
 						  mac_terminal_set_colors, osascript)
 elif sys.platform == "win32":
 	import util_win
-try:
-	import colord
-except ImportError:
-	colord = None
+import colord
 from util_os import getenvu, is_superuser, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
@@ -2422,12 +2419,11 @@ class Worker(object):
 	
 	def get_device_id(self):
 		""" Get org.freedesktop.ColorManager device key """
-		if colord:
-			if config.get_display_name() in ("Web", "Untethered"):
-				return None
-			edid = self.display_edid[max(0, min(len(self.displays) - 1, 
-												getcfg("display.number") - 1))]
-			return colord.device_id_from_edid(edid)
+		if config.get_display_name() in ("Web", "Untethered"):
+			return None
+		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
+											getcfg("display.number") - 1))]
+		return colord.device_id_from_edid(edid)
 
 	def get_display(self):
 		""" Get the currently configured display number.
@@ -2643,12 +2639,12 @@ class Worker(object):
 													  skip_scripts, silent)
 		if sys.platform not in ("darwin", "win32"):
 			device_id = self.get_device_id()
-			if device_id:
+			if device_id and colord.Colord:
 				# FIXME: This can block, so should really be run in separate
 				# thread with progress dialog in 'indeterminate' mode
 				result = self._install_profile_colord(profile_path, device_id)
 				colord_install = result
-			if (not device_id or not colord or
+			if (not device_id or not colord.Colord or
 				isinstance(result, Exception) or not result):
 				gcm_import = bool(which("gcm-import"))
 				if (isinstance(result, Exception) or not result) and gcm_import:
