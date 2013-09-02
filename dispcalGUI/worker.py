@@ -308,7 +308,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 	"""
 	re_options_dispcal = [
 		"[moupHVF]",
-		"d\d+(?:,\d+)?",
+		"d(?:\d+(?:,\d+)?|web)",
 		"[cv]\d+",
 		"q(?:%s)" % "|".join(config.valid_values["calibration.quality"]),
 		"y(?:%s)" % "|".join(filter(None, config.valid_values["measurement_mode"])),
