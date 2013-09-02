@@ -1891,8 +1891,8 @@ class Worker(object):
 		if cmdname == get_argyll_utilname("dispwin"):
 			if "-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
 												  not "-I" in args and
-												  mac_ver()[0] >= '10.7'):
-				# Mac OS X 10.7 Lion needs root privileges if loading/clearing 
+												  mac_ver()[0] >= '10.6'):
+				# Mac OS X 10.6 and up needs root privileges if loading/clearing 
 				# calibration
 				# In all other cases, root is only required if installing a
 				# profile to a system location
