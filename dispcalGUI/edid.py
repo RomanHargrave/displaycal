@@ -235,8 +235,9 @@ def get_manufacturer_name(manufacturer_id):
 	if not pnpidcache:
 		paths = ["/usr/share/hwdata/pnp.ids",  # hwdata, e.g. Red Hat
 				 "/usr/share/misc/pnp.ids",  # pnputils, e.g. Debian
-				 "/usr/share/libgnome-desktop/pnp.ids",  # fallback gnome-desktop
-				 os.path.join(config.pydir, "pnp.ids")]  # fallback
+				 "/usr/share/libgnome-desktop/pnp.ids"]  # fallback gnome-desktop
+		if sys.platform in ("darwin", "win32"):
+			paths.append(os.path.join(config.pydir, "pnp.ids"))  # fallback
 		for path in paths:
 			if os.path.isfile(path):
 				try:
