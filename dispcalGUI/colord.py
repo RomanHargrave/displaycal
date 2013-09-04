@@ -10,9 +10,8 @@ try:
 	from gi.repository import Colord
 	from gi.repository import Gio
 except ImportError:
-	if sys.platform not in ("darwin", "win32"):
-		Colord = None
-		Gio = None
+	Colord = None
+	Gio = None
 else:
 	cancellable = Gio.Cancellable.new();
 
