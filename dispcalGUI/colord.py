@@ -18,6 +18,13 @@ else:
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import xdg_data_home
 
+if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
+	from config import get_data_path
+	import demjson
+
+	quirk_cache = {'suffixes': [],
+				   'vendor_names': {}}
+
 
 def client_connect():
 	""" Connect to colord """
@@ -44,7 +51,7 @@ def device_connect(client, device_id):
 	return device
 
 
-def device_id_from_edid(edid, use_unused_edid_keys=False):
+def device_id_from_edid(edid, quirk=True, use_unused_edid_keys=False):
 	""" Assemble device key from EDID """
 	# https://gitorious.org/colord/master/blobs/master/doc/device-and-profile-naming-spec.txt
 	incomplete = False
@@ -61,6 +68,8 @@ def device_id_from_edid(edid, use_unused_edid_keys=False):
 			if name == "serial_32" and "serial_ascii" in edid:
 				# Only add numeric serial if no ascii serial
 				continue
+			elif name == "manufacturer" and quirk:
+				value = quirk_manufacturer(value)
 			parts.append(str(value))
 		elif name == "manufacturer":
 			# Do not allow the manufacturer to be missing or empty
@@ -155,6 +164,34 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 	if not device.make_profile_default_sync(profile, cancellable):
 		raise CDError("Could not make profile %r default for device ID %s" %
 					  (profile.get_filename(), device_id))
+
+
+def quirk_manufacturer(manufacturer):
+	if Colord and hasattr(Colord, 'quirk_vendor_name'):
+		return Colord.quirk_vendor_name(manufacturer)
+
+	if not quirk_cache['suffixes'] or not quirk_cache['vendor_names']:
+		quirk_filename = get_data_path('quirk.json')
+		if quirk_filename:
+			with open(quirk_filename) as quirk_file:
+				quirk = demjson.decode(quirk_file.read())
+				quirk_cache['suffixes'] = quirk['suffixes']
+				quirk_cache['vendor_names'] = quirk['vendor_names']
+
+	# Correct some company names
+	for old, new in quirk_cache['vendor_names'].iteritems():
+		if manufacturer.startswith(old):
+			manufacturer = new
+			break
+
+	# Get rid of suffixes
+	for suffix in quirk_cache['suffixes']:
+		if manufacturer.endswith(suffix):
+			manufacturer = manufacturer[0:len(manufacturer) - len(suffix)]
+
+	manufacturer = manufacturer.rstrip()
+
+	return manufacturer
 
 
 class CDError(Exception):

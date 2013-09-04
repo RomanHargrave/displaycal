@@ -451,49 +451,6 @@ def make_argyll_compatible_path(path):
 	return os.path.sep.join(parts)
 
 
-def normalize_manufacturer_name(vendor):
-	""" Strip certain redundant info from vendor name """
-	subs = {"Acer .+": "Acer",
-			"Apple .+": "Apple",
-			"Compaq .+": "Compaq",
-			"Daewoo .+": "Daewoo",
-			"Eizo .+": "EIZO",
-			"Envision .+": "Envision",
-			"Fujitsu( Siemens|) .+": "Fujitsu\\1",
-			"Gateway .+": "Gateway",
-			"Goldstar .+": "LG",  # GoldStar no longer exists
-			"HannStar .+": "HannStar",
-			"Hitachi .+": "Hitachi",
-			"Lenovo .+": "Lenovo",
-			"Liyama .+": "Iiyama",  # Typo in pnp.ids
-			"Mitsubishi .+": "Mitsubishi",
-			"Panasonic .+": "Panasonic",
-			"Philips .+": "Philips",
-			"Proview .+": "Proview",
-			"Samsung .+": "Samsung",
-			"Tatung .+": "Tatung",
-			"Zalman .+": "Zalman"}
-	for sub in subs.iteritems():
-		vendor = re.sub(sub[0], sub[1], vendor)
-	strings = ["AG", "KG", "[Ii][Nn][Cc]", "Asia", "Germany", "Spain",
-			   "(?:North\s+)?America","\w?mbH", "[Cc]o(?:mpany)?", "CO(?:MPANY)?",
-			   "[Ll]\.?[Tt]\.?[Dd]\.?(?:[Aa]\.?)?", "[Ll]imited", "LIMITED",
-			   "CORP(?:ORATION)?", "[Cc]orp(?:oration)?", "[Ii]nt'l", "L\.P",
-			   "[Pp]\.?[Tt]\.?[EeYy]", "[Ss]\.?[Pp]?\.?[Aa]", "K\.?K\.?", "AB",
-			   "[Ss]\.?[Rr]\.?[Ll]", "[Pp]\.?[Ll]\.?[Cc]", "P/?L", "[Nn]\.[Vv]",
-			   "A[/.]?S", "[Bb]\.?[Vv]", "[Ss]\.?[Aa]\.?[Ss]",
-			   "[Dd]\.?[Bb]\.?[Aa]", "LLC", "S\.?A", "Sdn", "Bhd", "I[Nn][Dd]",
-			   "[Ii]nternational", "INTERNATIONAL",
-			   "GmbH\s*&\s*Co(?:\.|mpany)?\s*KG", "M[Ff][Gg]"]
-	previous = None
-	while previous != vendor:
-		previous = vendor
-		vendor = re.sub("\s*\([^)]+\)\s*$", "", vendor)
-		vendor = re.sub("([,.\s])\s*(?:%s)(?:[,.]+|\s*$)" % "|".join(strings),
-					    "\\1", vendor).strip(",").strip()
-	return vendor
-
-
 def printcmdline(cmd, args=None, fn=None, cwd=None):
 	"""
 	Pretty-print a command line.
@@ -2417,13 +2374,13 @@ class Worker(object):
 		self.thread_abort = False
 		wx.CallAfter(consumer, result, *args, **kwargs)
 	
-	def get_device_id(self):
+	def get_device_id(self, quirk=True):
 		""" Get org.freedesktop.ColorManager device key """
 		if config.get_display_name() in ("Web", "Untethered"):
 			return None
 		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 											getcfg("display.number") - 1))]
-		return colord.device_id_from_edid(edid)
+		return colord.device_id_from_edid(edid, quirk=quirk)
 
 	def get_display(self):
 		""" Get the currently configured display number.
@@ -2478,7 +2435,7 @@ class Worker(object):
 			if manufacturer:
 				if prepend_manufacturer:
 					if manufacturer.lower() not in display_name.lower():
-						display.append(normalize_manufacturer_name(manufacturer))
+						display.append(colord.quirk_manufacturer(manufacturer))
 				else:
 					start = display_name.lower().find(manufacturer.lower())
 					if start > -1:
@@ -2638,8 +2595,13 @@ class Worker(object):
 													  capture_output,
 													  skip_scripts, silent)
 		if sys.platform not in ("darwin", "win32"):
-			device_id = self.get_device_id()
+			device_id = self.get_device_id(quirk=True)
 			if device_id and colord.Colord:
+				try:
+					client = colord.client_connect()
+					device = colord.device_connect(client, device_id)
+				except colord.CDError:
+					device_id = self.get_device_id(quirk=False)
 				# FIXME: This can block, so should really be run in separate
 				# thread with progress dialog in 'indeterminate' mode
 				result = self._install_profile_colord(profile_path, device_id)
@@ -3372,7 +3334,7 @@ class Worker(object):
 					profile.tags.meta["SCREEN_brightness"] = str(brightness)
 					spec_prefixes += ",SCREEN_"
 			# Set device ID
-			device_id = self.get_device_id()
+			device_id = self.get_device_id(quirk=True)
 			if device_id:
 				profile.tags.meta["MAPPING_device_id"] = device_id
 				spec_prefixes += ",MAPPING_"

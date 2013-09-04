@@ -98,6 +98,7 @@ from config import (autostart, autostart_home, btn_width_correction, build,
 import CGATS
 import ICCProfile as ICCP
 import ccmx
+import colord
 import colormath
 import localization as lang
 import pyi_md5pickuphelper
@@ -138,8 +139,8 @@ from worker import (Error, FilteredStream, Info, LineCache, Warn, Worker,
 					check_profile_isfile, check_set_argyll_bin, get_argyll_util,
 					get_options_from_cal, get_options_from_profile,
 					get_options_from_ti3, make_argyll_compatible_path,
-					normalize_manufacturer_name, parse_argument_string,
-					printcmdline, set_argyll_bin, show_result_dialog)
+					parse_argument_string, printcmdline, set_argyll_bin,
+					show_result_dialog)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -6398,7 +6399,7 @@ class MainFrame(BaseFrame):
 			elif option.startswith("A"):
 				manufacturer = option[1:].strip(' "')
 		if manufacturer and display:
-			manufacturer_display = " ".join([normalize_manufacturer_name(manufacturer),
+			manufacturer_display = " ".join([colord.quirk_manufacturer(manufacturer),
 											 display])
 		elif display:
 			manufacturer_display = display
@@ -7362,7 +7363,7 @@ class MainFrame(BaseFrame):
 				# Set license
 				profile.tags.meta["License"] = getcfg("profile.license")
 				# Set device ID
-				device_id = self.worker.get_device_id()
+				device_id = self.worker.get_device_id(quirk=True)
 				if device_id:
 					profile.tags.meta["MAPPING_device_id"] = device_id
 					prefixes.append("MAPPING_")

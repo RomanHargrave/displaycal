@@ -353,9 +353,14 @@ def _colord_get_display_profile(display_no=0):
 	except (TypeError, ValueError):
 		return None
 	if edid:
-		device_id = colord.device_id_from_edid(edid)
+		device_id = colord.device_id_from_edid(edid, quirk=True)
 		if device_id:
-			profile_path = colord.get_default_profile(device_id)
+			try:
+				profile_path = colord.get_default_profile(device_id)
+			except colord.CDError:
+				# Try unmodified vendor name
+				device_id = colord.device_id_from_edid(edid, quirk=False)
+				profile_path = colord.get_default_profile(device_id)
 			if profile_path:
 				return ICCProfile(profile_path)
 	return None
@@ -3146,7 +3151,8 @@ class ICCProfile:
 		# OpenICC keys (some shared with GCM)
 		self.tags.meta.update((("prefix", ",".join(prefixes)),
 							   ("EDID_mnft", edid["manufacturer_id"]),
-							   ("EDID_manufacturer", edid["manufacturer"]),
+							   ("EDID_manufacturer",
+								colord.quirk_manufacturer(edid["manufacturer"])),
 							   ("EDID_mnft_id", struct.unpack(">H",
 															  edid["edid"][8:10])[0]),
 							   ("EDID_model_id", edid["product_id"]),

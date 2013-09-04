@@ -229,6 +229,7 @@ def setup():
 			"pnp.ids",
 			"lang/*.json",
 			"presets/*.icc",
+			"quirk.json",
 			"ref/*.cie",
 			"ref/*.gam",
 			"ref/*.icm",
@@ -288,6 +289,7 @@ def setup():
 			(data, [os.path.join(pydir, "beep.wav")]), 
 			(data, [os.path.join(pydir, "camera_shutter.wav")]), 
 			(data, [os.path.join(pydir, "pnp.ids")]), 
+			(data, [os.path.join(pydir, "quirk.json")]), 
 			(os.path.join(data, "lang"), 
 				glob.glob(os.path.join(pydir, "lang", "*.json"))), 
 			(os.path.join(data, "presets"), 
@@ -810,6 +812,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 					"camera_shutter.wav",
 					name + ".desktop",
 					"pnp.ids",
+					"quirk.json",
 					"test.cal"
 				]:
 					path = os.path.join(data, fname)
