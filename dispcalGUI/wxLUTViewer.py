@@ -584,6 +584,7 @@ class LUTFrame(wx.Frame):
 		except Exception, exception:
 			show_result_dialog(exception, self)
 		else:
+			self.trc = None
 			self.DrawLUT()
 	
 	def lookup_tone_response_curves(self, intent="r"):
