@@ -27,6 +27,7 @@ if sys.platform == "win32":
 	except ImportError:
 		pass
 
+import colord
 import colormath
 import edid
 from colormath import NumberTuple
@@ -44,7 +45,6 @@ from util_str import hexunescape, safe_unicode
 if sys.platform not in ("darwin", "win32"):
 	from edid import get_edid
 	from util_x import get_display
-	import colord
 	try:
 		import xrandr
 	except ImportError:
