@@ -301,7 +301,7 @@ def parse_edid(edid):
 	red_x = edid_decode_fraction(ord(edid[HI_R_X]), 
 								 edid_get_bits(ord(edid[LO_RG_XY]), 6, 7))
 	red_y = edid_decode_fraction(ord(edid[HI_R_Y]), 
-								 edid_get_bits(ord(edid[LO_RG_XY]), 5, 4))
+								 edid_get_bits(ord(edid[LO_RG_XY]), 4, 5))
 	
 	green_x = edid_decode_fraction(ord(edid[HI_G_X]), 
 								   edid_get_bits(ord(edid[LO_RG_XY]), 2, 3))
