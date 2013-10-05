@@ -308,7 +308,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 	"""
 	re_options_dispcal = [
 		"[moupHVF]",
-		"d(?:\d+(?:,\d+)?|web)",
+		"d(?:\d+(?:,\d+)?|madvr|web)",
 		"[cv]\d+",
 		"q(?:%s)" % "|".join(config.valid_values["calibration.quality"]),
 		"y(?:%s)" % "|".join(filter(None, config.valid_values["measurement_mode"])),
@@ -1727,6 +1727,11 @@ class Worker(object):
 					self.display_edid.append({})
 					self.display_manufacturers.append("Argyll CMS")
 					self.display_names.append("Web")
+				if self.argyll_version >= [1, 6, 0]:
+					displays.append("madVR")
+					self.display_edid.append({})
+					self.display_manufacturers.append("Argyll CMS")
+					self.display_names.append("madVR")
 				displays.append("Untethered")
 				self.display_edid.append({})
 				self.display_manufacturers.append("Argyll CMS")
@@ -1735,6 +1740,9 @@ class Worker(object):
 				setcfg("displays", os.pathsep.join(displays))
 				# Filter out Untethered
 				displays = displays[:-1]
+				if self.argyll_version >= [1, 6, 0]:
+					# Filter out madVR
+					displays = displays[:-1]
 				if self.argyll_version >= [1, 4, 0]:
 					# Filter out Web @ localhost
 					displays = displays[:-1]
@@ -1794,6 +1802,9 @@ class Worker(object):
 				if self.argyll_version >= [1, 4, 0]:
 					# Web @ localhost
 					lut_access.append(False)
+				if self.argyll_version >= [1, 6, 0]:
+					# madVR
+					lut_access.append(True)
 				# Untethered
 				lut_access.append(False)
 				self.lut_access = lut_access
@@ -2376,7 +2387,7 @@ class Worker(object):
 	
 	def get_device_id(self, quirk=True):
 		""" Get org.freedesktop.ColorManager device key """
-		if config.get_display_name() in ("Web", "Untethered"):
+		if config.get_display_name() in ("Web", "Untethered", "madVR"):
 			return None
 		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 											getcfg("display.number") - 1))]
@@ -2390,6 +2401,8 @@ class Worker(object):
 		"""
 		if config.get_display_name() == "Web":
 			return "web:%i" % getcfg("webserver.portnumber")
+		if config.get_display_name() == "madVR":
+			return "madvr"
 		if config.get_display_name() == "Untethered":
 			return "0"
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
@@ -2550,7 +2563,10 @@ class Worker(object):
 	
 	def has_separate_lut_access(self):
 		""" Return True if separate LUT access is possible and needed. """
-		if self.argyll_version >= [1, 4, 0]:
+		if self.argyll_version >= [1, 6, 0]:
+			# filter out Web @ localhost, madVR and Untethered
+			lut_access = self.lut_access[:-3]
+		elif self.argyll_version >= [1, 4, 0]:
 			# filter out Web @ localhost and Untethered
 			lut_access = self.lut_access[:-2]
 		else:

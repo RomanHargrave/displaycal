@@ -234,7 +234,7 @@ def get_display_number(display_no):
 	except IndexError:
 		pass
 	else:
-		if display in ("Web @ localhost", "Untethered"):
+		if display in ("Web @ localhost", "Untethered", "madVR"):
 			return 0
 		for i in xrange(wx.Display.GetCount()):
 			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
@@ -783,7 +783,7 @@ def get_current_profile(include_display_profile=False):
 def get_display_profile(display_no=None):
 	if display_no is None:
 		display_no = max(getcfg("display.number") - 1, 0)
-	if get_display_name(display_no) in ("Web", "Untethered"):
+	if get_display_name(display_no) in ("Web", "Untethered", "madVR"):
 		return None
 	import ICCProfile as ICCP
 	try:

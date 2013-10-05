@@ -1568,13 +1568,13 @@ class MainFrame(BaseFrame):
 														   and edid["blue_x"]
 														   and edid["blue_y"]))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered"))
+			not config.get_display_name() in ("Web", "Untethered", "madVR"))
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered"))
+			not config.get_display_name() in ("Web", "Untethered", "madVR"))
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered"))
+			not config.get_display_name() in ("Web", "Untethered", "madVR"))
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
@@ -1592,13 +1592,13 @@ class MainFrame(BaseFrame):
 											 self.worker.argyll_version >= [1, 1, 0] and 
 											 not "Beta" in self.worker.argyll_version_string and
 											 not config.get_display_name() in
-											 ("Web", "Untethered"))
+											 ("Web", "Untethered", "madVR"))
 		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")) and
 											not config.get_display_name() in
-											("Web", "Untethered"))
+											("Web", "Untethered", "madVR"))
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
 									   not config.get_display_name() in
-									   ("Web", "Untethered"))
+									   ("Web", "Untethered", "madVR"))
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
 											   config.get_display_name() != "Untethered")
@@ -4462,7 +4462,7 @@ class MainFrame(BaseFrame):
 					skip_scripts=False, silent=False, title=appname):
 		""" 'Install' (load) a calibration from a calibration file or
 		profile """
-		if config.get_display_name() in ("Web", "Untethered"):
+		if config.get_display_name() in ("Web", "Untethered", "madVR"):
 			return True
 		# Install using dispwin
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
@@ -4730,7 +4730,7 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(show_result_dialog, result, self)
 			self.Show()
 		else:
-			if config.get_display_name() in ("Web", "Untethered"):
+			if config.get_display_name() in ("Web", "Untethered", "madVR"):
 				# Nothing to do
 				result = True
 			else:
@@ -5172,7 +5172,7 @@ class MainFrame(BaseFrame):
 		self.HideAll()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
-		if config.get_display_name() in ("Web", "Untethered"):
+		if config.get_display_name() in ("Web", "Untethered", "madVR"):
 			self.call_pending_function()
 		elif sys.platform in ("darwin", "win32") or isexe:
 			self.measureframe.Show()
@@ -5819,7 +5819,7 @@ class MainFrame(BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			if config.get_display_name() in ("Web", "Untethered"):
+			if config.get_display_name() in ("Web", "Untethered", "madVR"):
 				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
 								   parent=self.modaldlg)
 			else:
@@ -5952,7 +5952,7 @@ class MainFrame(BaseFrame):
 			if (getcfg("lut_viewer.show_actual_lut") and
 				self.worker.argyll_version >= [1, 1, 0] and
 				not "Beta" in self.worker.argyll_version_string and
-				not config.get_display_name() in ("Web", "Untethered")):
+				not config.get_display_name() in ("Web", "Untethered", "madVR")):
 				tmp = self.worker.create_tempdir()
 				if isinstance(tmp, Exception):
 					show_result_dialog(tmp, self)
