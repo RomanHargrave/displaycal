@@ -3860,7 +3860,7 @@ class Worker(object):
 		   self.argyll_version >= [1, 1, 0]:
 			args += ["-N"]
 		if apply_calibration is not False:
-			if (config.get_display_name() == "Web" and
+			if (config.get_display_name() in ("Web", "madVR") and
 				self.argyll_version >= [1, 4, 0]):
 				args += ["-K"]
 			else:
@@ -5170,7 +5170,7 @@ class Worker(object):
 			result = cmd
 		return result
 
-	def measure_ti1(self, ti1_path):
+	def measure_ti1(self, ti1_path, cal_path=None):
 		""" Measure a TI1 testchart file """
 		if config.get_display_name() == "Untethered":
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
@@ -5180,6 +5180,13 @@ class Worker(object):
 		else:
 			cmd = get_argyll_util("dispread")
 			args = ["-v"]
+			if cal_path:
+				if (config.get_display_name() in ("Web", "madVR") and
+					self.argyll_version >= [1, 4, 0]):
+					args += ["-K"]
+				else:
+					args += ["-k"]
+				args += [cal_path]
 			if getcfg("extra_args.dispread").strip():
 				args += parse_argument_string(getcfg("extra_args.dispread"))
 		result = self.add_measurement_features(args,

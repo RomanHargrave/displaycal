@@ -107,7 +107,8 @@ if sys.platform == "win32":
 	import util_win
 import wexpect
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
-						  extract_cal_from_ti3, ti3_to_ti1, verify_ti1_rgb_xyz)
+						  extract_cal_from_ti3, ti3_to_ti1, vcgt_to_cal,
+						  verify_ti1_rgb_xyz)
 from argyll_instruments import (get_canonical_instrument_name, instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  viewconds)
@@ -4723,34 +4724,34 @@ class MainFrame(BaseFrame):
 		# write profile to temp dir
 		profile.write(profile_path)
 		
-		# load calibration from profile
-		cmd, args = self.worker.prepare_dispwin(profile_path=profile_path, 
-												install=False)
-		if isinstance(cmd, Exception):
-			wx.CallAfter(show_result_dialog, result, self)
-			self.Show()
-		else:
-			if config.get_display_name() in ("Web", "Untethered", "madVR"):
-				# Nothing to do
-				result = True
-			else:
-				result = self.worker.exec_cmd(cmd, args, capture_output=True,
-											  skip_scripts=True)
-			if isinstance(result, Exception):
-				wx.CallAfter(show_result_dialog, result, self)
+		# extract calibration from profile
+		cal_path = None
+		if "vcgt" in profile.tags:
+			try:
+				cgats = vcgt_to_cal(profile)
+			except (CGATS.CGATSInvalidError, 
+					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+				wx.CallAfter(show_result_dialog,
+							 Error(lang.getstr("cal_extraction_failed")), self)
 				self.Show()
 				return
+			cal_path = os.path.join(temp, name + ".cal")
+			cgats.write(cal_path)
+		else:
+			# Use linear calibration
+			cal_path = get_data_path("linear.cal")
 		
-			# start readings
-			self.worker.dispread_after_dispcal = False
-			self.worker.interactive = config.get_display_name() == "Untethered"
-			self.worker.start(self.verify_profile_consumer, 
-							  self.worker.measure_ti1, 
-							  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
-									 profile, sim_profile, ti3_ref, sim_ti3, 
-									 save_path, chart, gray),
-							  wargs=(ti1_path, ),
-							  progress_msg=progress_msg)
+		# start readings
+		self.worker.dispread_after_dispcal = False
+		self.worker.interactive = config.get_display_name() == "Untethered"
+		self.worker.start(self.verify_profile_consumer, 
+						  self.worker.measure_ti1, 
+						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
+								 profile, sim_profile, ti3_ref, sim_ti3, 
+								 save_path, chart, gray),
+						  wargs=(ti1_path, cal_path),
+						  progress_msg=progress_msg)
 	
 	def verify_profile_consumer(self, result, ti3_path, profile, sim_profile,
 								ti3_ref, sim_ti3, save_path, chart, gray):
@@ -4764,8 +4765,6 @@ class MainFrame(BaseFrame):
 		self.worker.wrapup(False)
 		
 		self.Show()
-		
-		self.load_cal(silent=True) or self.load_display_profile_cal()
 		
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):

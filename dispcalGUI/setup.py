@@ -244,6 +244,7 @@ def setup():
 			"theme/icons/72x72/*.png",
 			"ti1/*.ti1",
 			"xrc/*.xrc",
+			"linear.cal",
 			"test.cal"
 		] if sys.platform in ("darwin", "win32") and not do_py2app and not 
 		do_py2exe else []
@@ -316,6 +317,7 @@ def setup():
 				glob.glob(os.path.join(pydir, "ti1", "*.ti1"))), 
 			(os.path.join(data, "xrc"), 
 				glob.glob(os.path.join(pydir, "xrc", "*.xrc"))),
+			(data, [os.path.join(pydir, "linear.cal")]),
 			(data, [os.path.join(pydir, "test.cal")])
 		]
 		if sys.platform == "win32":
@@ -813,6 +815,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 					name + ".desktop",
 					"pnp.ids",
 					"quirk.json",
+					"linear.cal",
 					"test.cal"
 				]:
 					path = os.path.join(data, fname)

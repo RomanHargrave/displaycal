@@ -120,6 +120,7 @@ resfiles = [
 	"lang/en.json",
 	"beep.wav",
 	"camera_shutter.wav",
+	"linear.cal",
 	"test.cal",
 	"ref/ClayRGB1998.gam",
 	"ref/Rec709.icm",
