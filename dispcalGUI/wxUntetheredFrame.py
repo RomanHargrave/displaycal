@@ -627,9 +627,7 @@ if __name__ == "__main__":
 	frame.cgats = CGATS.CGATS(getcfg("testchart.file"))
 	frame.worker = Worker()
 	frame.Show()
-	i = 0
 	def test(bytes=None):
-		global i
 		menu = r"""Place instrument on spot to be measured,
 and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
@@ -639,43 +637,19 @@ Hit ESC or Q to exit, any other key to take a reading:"""
 		if not bytes:
 			txt = menu
 		elif bytes == " ":
-			txt = ["""
- Result is XYZ: 95.153402 100.500147 109.625585
+			i = frame.index
+			row = frame.cgats[0].DATA[i]
+			txt = """
+ Result is XYZ: %.6f %.6f %.6f
 
 Place instrument on spot to be measured,
 and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
 'r' to set reference, 's' to save spectrum,
 'h' to toggle high res., 'k' to do a calibration
-Hit ESC or Q to exit, any other key to take a reading:""", """
- Result is XYZ: 41.629826 21.903717 1.761510
-
-Place instrument on spot to be measured,
-and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
-[a-z] to read and make FWA compensated reading from keyed reference
-'r' to set reference, 's' to save spectrum,
-'h' to toggle high res., 'k' to do a calibration
-Hit ESC or Q to exit, any other key to take a reading:""", """
- Result is XYZ: 35.336831 71.578641 11.180005
-
-Place instrument on spot to be measured,
-and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
-[a-z] to read and make FWA compensated reading from keyed reference
-'r' to set reference, 's' to save spectrum,
-'h' to toggle high res., 'k' to do a calibration
-Hit ESC or Q to exit, any other key to take a reading:""", """
- Result is XYZ: 18.944662 7.614568 95.107897
-
-Place instrument on spot to be measured,
-and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
-[a-z] to read and make FWA compensated reading from keyed reference
-'r' to set reference, 's' to save spectrum,
-'h' to toggle high res., 'k' to do a calibration
-Hit ESC or Q to exit, any other key to take a reading:"""][i]
-			if i < 3:
-				i += 1
-			else:
-				i -= 3
+Hit ESC or Q to exit, any other key to take a reading:""" % (row.XYZ_X,
+															 row.XYZ_Y,
+															 row.XYZ_Z)
 		elif bytes in ("Q", "q"):
 			wx.CallAfter(frame.Close)
 			return
