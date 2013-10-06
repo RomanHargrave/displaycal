@@ -172,6 +172,8 @@ class UntetheredFrame(wx.Frame):
 		else:
 			self.Bind(wx.EVT_CHAR_HOOK, self.key_handler)
 		
+		self.Bind(wx.EVT_KEY_DOWN, self.key_handler)
+		
 		# Event handlers
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -318,15 +320,45 @@ class UntetheredFrame(wx.Frame):
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
 			keycode = self.id_to_keycode.get(event.GetId())
 		if keycode is not None:
-			if self.has_worker_subprocess():
+			if event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
+				if event.ControlDown() or event.CmdDown():
+					# CTRL (Linux/Mac/Windows) / CMD (Mac)
+					if keycode == 65: # A
+						self.grid.SelectAll()
+						return
+					elif keycode in (67, 88): # C / X
+						clip = []
+						cells = self.grid.GetSelection()
+						i = -1
+						start_col = self.grid.GetNumberCols()
+						for cell in cells:
+							row = cell[0]
+							col = cell[1]
+							if i < row:
+								clip += [[]]
+								i = row
+							if col < start_col:
+								start_col = col
+							while len(clip[-1]) - 1 < col:
+								clip[-1] += [""]
+							clip[-1][col] = self.grid.GetCellValue(row, col)
+						for i, row in enumerate(clip):
+							clip[i] = "\t".join(row[start_col:])
+						clipdata = wx.TextDataObject()
+						clipdata.SetText("\n".join(clip))
+						wx.TheClipboard.Open()
+						wx.TheClipboard.SetData(clipdata)
+						wx.TheClipboard.Close()
+						return
+			elif self.has_worker_subprocess() and keycode < 255:
 				if keycode == 27 or chr(keycode) == "Q":
 					# ESC or Q
 					self.worker.safe_send(chr(keycode))
 				elif not self.is_measuring:
 					# Any other key
 					self.measure()
-		else:
-			event.Skip()
+				return
+		event.Skip()
 	
 	def measure(self, event=None):
 		self.enable_btns(False)
