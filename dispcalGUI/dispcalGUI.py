@@ -4312,10 +4312,6 @@ class MainFrame(BaseFrame):
 			setcfg("calibration.file.previous", None)
 			self.profile_finish(
 				True, profile_path=profile_path, 
-				success_msg=lang.getstr(
-					"dialog.install_profile", 
-					(os.path.basename(profile_path), 
-					 self.display_ctrl.GetStringSelection())), 
 				skip_scripts=True,
 				allow_show_log=False)
 
@@ -5590,6 +5586,10 @@ class MainFrame(BaseFrame):
 										getcfg("profile.name.expanded"), 
 										getcfg("profile.name.expanded"))
 				profile_path = profile_save_path + profile_ext
+			if not success_msg:
+				success_msg = lang.getstr("dialog.install_profile", 
+										  (os.path.basename(profile_path), 
+										   self.display_ctrl.GetStringSelection()))
 			self.cal = profile_path
 			profile = None
 			filename, ext = os.path.splitext(profile_path)
@@ -7318,10 +7318,6 @@ class MainFrame(BaseFrame):
 				self.worker.start(
 					self.profile_finish, self.worker.create_profile, ckwargs={
 						"profile_path": profile_save_path, 
-						"success_msg": lang.getstr(
-							"dialog.install_profile", 
-							(profile_name, 
-							 self.display_ctrl.GetStringSelection())), 
 						"failure_msg": lang.getstr(
 							"error.profile.file_not_created")}, 
 					wkwargs={"dst_path": profile_save_path, 
@@ -7398,10 +7394,7 @@ class MainFrame(BaseFrame):
 			except Exception, exception:
 				show_result_dialog(exception, self)
 				return
-			self.profile_finish(True, profile.fileName, 
-								success_msg=lang.getstr("dialog.install_profile", 
-														(os.path.basename(profile.fileName), 
-														 self.display_ctrl.GetStringSelection())))
+			self.profile_finish(True, profile.fileName)
 	
 	def create_profile_name(self):
 		profile_name = self.profile_name_textctrl.GetValue()
