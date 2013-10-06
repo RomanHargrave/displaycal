@@ -214,7 +214,7 @@ class DisplayUniformityFrame(wx.Frame):
 			if self.has_worker_subprocess():
 				if keycode == 27 or chr(keycode) == "Q":
 					# ESC or Q
-					self.worker.safe_send(chr(keycode))
+					self.worker.abort_subprocess()
 				elif self.index > -1 and not self.is_measuring:
 					# Any other key
 					self.measure(CustomEvent(wx.EVT_BUTTON.typeId,
@@ -377,6 +377,8 @@ if __name__ == "__main__":
 	class Worker(object):
 		def __init__(self):
 			self.subprocess = Subprocess()
+		def abort_subprocess(self):
+			self.subprocess.send("Q")
 		def safe_send(self, bytes):
 			self.subprocess.send(bytes)
 			return True

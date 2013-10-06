@@ -353,7 +353,7 @@ class UntetheredFrame(wx.Frame):
 			elif self.has_worker_subprocess() and keycode < 255:
 				if keycode == 27 or chr(keycode) == "Q":
 					# ESC or Q
-					self.worker.safe_send(chr(keycode))
+					self.worker.abort_subprocess()
 				elif not self.is_measuring:
 					# Any other key
 					self.measure()
@@ -614,6 +614,8 @@ if __name__ == "__main__":
 		def __init__(self):
 			self.subprocess = Subprocess()
 			self.subprocess_abort = False
+		def abort_subprocess(self):
+			self.subprocess.send("Q")
 		def safe_send(self, bytes):
 			self.subprocess.send(bytes)
 			return True
