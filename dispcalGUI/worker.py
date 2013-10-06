@@ -2249,15 +2249,19 @@ class Worker(object):
 					self.subprocess.logfile_read = logfile
 					if self.subprocess.isalive():
 						if self.measure_cmd:
+							keyhit_strs = [" or Q to ",
+										  "8\) Exit"]
 							while self.subprocess.isalive():
-								self.subprocess.expect([r" or Q to ",
-														r"8\) Exit",
-														r"Current",
+								self.subprocess.expect(keyhit_strs + ["Current",
+														r" \d+ of \d+",
 														wexpect.EOF],
 													   timeout=None)
 								if self.subprocess.after == wexpect.EOF:
 									break
-								if self.subprocess.after != "Current":
+								if filter(lambda keyhit_str:
+											  keyhit_str in self.subprocess.after,
+											  keyhit_strs):
+									# Wait for the keypress
 									while not self.send_buffer:
 										if not self.subprocess.isalive():
 											break
