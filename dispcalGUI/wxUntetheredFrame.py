@@ -142,12 +142,15 @@ class UntetheredFrame(wx.Frame):
 		self.grid.SetDefaultCellFont(font)
 		self.grid.SetDefaultRowSize(20)
 		self.grid.SetLabelBackgroundColour(gridbgcolor)
+		self.grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
 		self.grid.DisableDragRowSize()
 		self.grid.EnableDragColSize()
 		self.grid.EnableEditing(False)
 		self.grid.EnableGridLines(True)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
-					   self.grid_label_left_click_handler)
+					   self.grid_left_click_handler)
+		self.grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK,
+					   self.grid_left_click_handler)
 		self.sizer.Add(self.grid, 1, wx.EXPAND)
 		
 		self.Fit()
@@ -291,14 +294,13 @@ class UntetheredFrame(wx.Frame):
 								   scale=255)]
 		return Lab, color
 	
-	def grid_label_left_click_handler(self, event):
+	def grid_left_click_handler(self, event):
 		if not self.is_measuring:
 			row, col = event.GetRow(), event.GetCol()
 			if row == -1 and col > -1: # col label clicked
 				pass
-			elif col == -1 and row > -1: # row label clicked
+			elif row > -1: # row clicked
 				self.update(row)
-			event.Skip()
 	
 	def has_worker_subprocess(self):
 		return bool(getattr(self, "worker", None) and
@@ -537,7 +539,7 @@ class UntetheredFrame(wx.Frame):
 		if mark_current_row:
 			self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
 		self.grid.SelectRow(self.index)
-		self.grid.MakeCellVisible(self.index, 0)
+		self.grid.SetGridCursor(self.index, 0)
 		self.label_index.SetLabel("%i/%i" % (self.index + 1,
 											 len(self.cgats[0].DATA)))
 		self.label_index.GetContainingSizer().Layout()
