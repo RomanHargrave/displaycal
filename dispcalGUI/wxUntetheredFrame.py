@@ -506,10 +506,11 @@ class UntetheredFrame(wx.Frame):
 					self.enable_btns()
 			else:
 				show_XYZ = self.index in self.measured
-				wx.CallLater(1000, self.show_RGB, not show_XYZ)
+				delay = getcfg("untethered.measure.manual.delay") * 1000
+				wx.CallLater(delay, self.show_RGB, not show_XYZ)
 				if show_XYZ:
-					wx.CallLater(1000, self.show_XYZ)
-				wx.CallLater(1000, self.enable_btns)
+					wx.CallLater(delay, self.show_XYZ)
+				wx.CallLater(delay, self.enable_btns)
 	
 	def reset(self):
 		self._setup()

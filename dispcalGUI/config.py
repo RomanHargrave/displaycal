@@ -612,6 +612,7 @@ defaults = {
 	"trc.type": "g",
 	"trc.type.backup": "g",
 	"untethered.measure.auto": 1,
+	"untethered.measure.manual.delay": 0.75,
 	"untethered.max_delta.chroma": 0.6,
 	"untethered.min_delta": 1.0,
 	"untethered.min_delta.lightness": 0.4,
