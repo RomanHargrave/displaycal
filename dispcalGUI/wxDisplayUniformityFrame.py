@@ -377,6 +377,7 @@ if __name__ == "__main__":
 	class Worker(object):
 		def __init__(self):
 			self.subprocess = Subprocess()
+			self.subprocess_abort = False
 		def abort_subprocess(self):
 			self.subprocess.send("Q")
 		def safe_send(self, bytes):
