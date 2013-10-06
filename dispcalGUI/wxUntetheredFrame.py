@@ -233,6 +233,7 @@ class UntetheredFrame(wx.Frame):
 			self.update(self.index - 1)
 	
 	def enable_btns(self, enable=True):
+		self.is_measuring = False
 		self.back_btn.Enable(enable and self.index > 0)
 		self.next_btn.Enable(enable and self.index < self.index_max)
 		self.measure_btn.Enable(enable)
@@ -297,7 +298,7 @@ class UntetheredFrame(wx.Frame):
 				pass
 			elif col == -1 and row > -1: # row label clicked
 				self.update(row)
-		event.Skip()
+			event.Skip()
 	
 	def has_worker_subprocess(self):
 		return bool(getattr(self, "worker", None) and
@@ -454,7 +455,6 @@ class UntetheredFrame(wx.Frame):
 							self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
 							self.grid.MakeCellVisible(self.index, 0)
 		if "key to take a reading" in txt and not self.last_error:
-			self.is_measuring = False
 			self.measure_auto_cb.Enable()
 			if getcfg("untethered.measure.auto") and self.index > 0:
 				if not self.finished:
