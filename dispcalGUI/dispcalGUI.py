@@ -5609,7 +5609,7 @@ class MainFrame(BaseFrame):
 				has_cal = "vcgt" in profile.tags
 				if profile.profileClass != "mntr" or \
 				   profile.colorSpace != "RGB":
-					InfoDialog(self, msg=success_msg, 
+					InfoDialog(self, msg=lang.getstr("profiling.complete"), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-information"))
 					self.start_timers(True)
