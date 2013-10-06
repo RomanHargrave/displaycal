@@ -6225,12 +6225,23 @@ class MainFrame(BaseFrame):
 										  profile.tags.get("meta",
 														   {}).get("DATA_source",
 																   {}).get("value",
-																		   "unknown").upper())
-						cgats.add_keyword("TARGET_INSTRUMENT",
-										  profile.tags.get("meta",
-														   {}).get("MEASUREMENT_device",
-																   {}).get("value",
-																		   cgats.DATA_SOURCE).upper())
+																		   "").upper() or
+										  "Unknown")
+						if cgats.DATA_SOURCE == "EDID":
+							instrument = "EDID"
+						else:
+							targ = profile.tags.get("CIED",
+													profile.tags.get("targ", ""))
+							instrument = None
+							if targ[0:4] == "CTI3":
+								targ = CGATS.CGATS(targ)
+								instrument = targ.queryv1("TARGET_INSTRUMENT")
+							if not instrument:
+								instrument = profile.tags.get("meta",
+															  {}).get("MEASUREMENT_device",
+																	  {}).get("value",
+																			  "Unknown")
+						cgats.add_keyword("TARGET_INSTRUMENT", instrument)
 						spectral = "YES" if instruments.get(get_canonical_instrument_name(cgats.TARGET_INSTRUMENT),
 															{}).get("spectral", False) else "NO"
 						cgats.add_keyword("INSTRUMENT_TYPE_SPECTRAL", spectral)
