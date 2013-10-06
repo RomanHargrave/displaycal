@@ -5366,8 +5366,44 @@ class MainFrame(BaseFrame):
 		Return wx.ID_CANCEL if whole operation should be cancelled
 		
 		"""
-		if config.get_display_name() in ("Web", "Untethered"):
+		if config.get_display_name() == "Untethered":
 			return False
+		cal = getcfg("calibration.file")
+		if cal:
+			filename, ext = os.path.splitext(cal)
+			if ext.lower() in (".icc", ".icm"):
+				self.worker.options_dispcal = []
+				try:
+					profile = ICCP.ICCProfile(cal)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
+									 "\n" + path, 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
+					self.update_profile_name_timer.Start(1000)
+					return wx.ID_CANCEL
+				else:
+					# get dispcal options if present
+					self.worker.options_dispcal = [
+						"-" + arg for arg in 
+						get_options_from_profile(profile)[0]]
+			if (os.path.isfile(filename + ".cal") and
+				can_update_cal(filename + ".cal")):
+				cal = filename + ".cal"
+			else:
+				cal = None
+		if (self.worker.argyll_version < [1, 1, 0] or
+			config.get_display_name() in ("Web", "madVR")):
+			# If Argyll < 1.1, we cannot save the current VideoLUT to use it.
+			# For web and madVR, there is no point in using the current
+			# VideoLUT as it may not be from the display we render on (and in 
+			# case of web we cannot save it to begin with as there is no
+			# VideoLUT access).
+			# So an existing .cal file or no calibration are the only options.
+			if cal:
+				return cal
+			else:
+				return False
 		dlg = ConfirmDialog(self, 
 							msg=lang.getstr("dialog.current_cal_warning"), 
 							ok=lang.getstr("continue"), 
@@ -5401,29 +5437,6 @@ class MainFrame(BaseFrame):
 			self.reset_cal()
 			if not embed_cal:
 				return False
-		else:
-			cal = getcfg("calibration.file")
-			if cal:
-				filename, ext = os.path.splitext(cal)
-				if ext.lower() in (".icc", ".icm"):
-					self.worker.options_dispcal = []
-					try:
-						profile = ICCP.ICCProfile(cal)
-					except (IOError, ICCP.ICCProfileInvalidError), exception:
-						InfoDialog(self, msg=lang.getstr("profile.invalid") + 
-										 "\n" + path, 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-						self.update_profile_name_timer.Start(1000)
-						return wx.ID_CANCEL
-					else:
-						# get dispcal options if present
-						self.worker.options_dispcal = [
-							"-" + arg for arg in 
-							get_options_from_profile(profile)[0]]
-				if os.path.exists(filename + ".cal") and \
-				   can_update_cal(filename + ".cal"):
-					return filename + ".cal"
 	
 	def restore_measurement_mode(self):
 		if getcfg("measurement_mode.backup", False):
