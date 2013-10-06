@@ -435,7 +435,9 @@ class UntetheredFrame(wx.Frame):
 			Lab1 = colormath.XYZ2Lab(*self.last_XYZ)
 			Lab2 = colormath.XYZ2Lab(*XYZ)
 			delta = colormath.delta(*Lab1 + Lab2)
-			if delta["E"] > 1 or (abs(delta["L"]) > .3 and abs(delta["C"]) < 1):
+			if (delta["E"] > getcfg("untethered.min_delta") or
+				(abs(delta["L"]) > getcfg("untethered.min_delta.lightness") and
+				 abs(delta["C"]) < getcfg("untethered.max_delta.chroma"))):
 				self.measure_count += 1
 				if self.measure_count == 2:
 					if (getattr(self, "commit_sound", None) and
@@ -620,6 +622,9 @@ if __name__ == "__main__":
 			self.subprocess.send(bytes)
 			return True
 	config.initcfg()
+	print "untethered.min_delta", getcfg("untethered.min_delta")
+	print "untethered.min_delta.lightness", getcfg("untethered.min_delta.lightness")
+	print "untethered.max_delta.chroma", getcfg("untethered.max_delta.chroma")
 	lang.init()
 	lang.update_defaults()
 	app = wx.App(0)
