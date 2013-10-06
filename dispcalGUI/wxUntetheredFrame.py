@@ -230,11 +230,7 @@ class UntetheredFrame(wx.Frame):
 	
 	def back_btn_handler(self, event):
 		if self.index > 0:
-			self.index -= 1
-			self.finished = False
-			self.show_RGB(False)
-			self.show_XYZ()
-			self.enable_btns()
+			self.update(self.index - 1)
 	
 	def enable_btns(self, enable=True):
 		self.back_btn.Enable(enable and self.index > 0)
@@ -300,11 +296,7 @@ class UntetheredFrame(wx.Frame):
 			if row == -1 and col > -1: # col label clicked
 				pass
 			elif col == -1 and row > -1: # row label clicked
-				self.index = row
-				self.finished = False
-				self.show_RGB(False)
-				self.show_XYZ()
-				self.enable_btns()
+				self.update(row)
 		event.Skip()
 	
 	def has_worker_subprocess(self):
@@ -360,18 +352,26 @@ class UntetheredFrame(wx.Frame):
 	
 	def next_btn_handler(self, event):
 		if self.index < self.index_max:
-			self.index += 1
-			show_XYZ = (self.index < self.index_max or
-						self.index_max == len(self.cgats[0].DATA) - 1)
-			self.show_RGB(not show_XYZ)
-			if show_XYZ:
-				self.show_XYZ()
-			self.enable_btns()
+			self.update(self.index + 1)
 
 	def parse_txt(self, txt):
 		if not txt or not self.keepGoing:
 			return
 		self.logger.info("%r" % txt)
+		data_len = len(self.cgats[0].DATA)
+		if (self.grid.GetNumberRows() < data_len):
+			self.index_max = data_len - 1
+			self.grid.AppendRows(data_len - self.grid.GetNumberRows())
+			for i in self.cgats[0].DATA:
+				self.grid.SetRowLabelValue(i, "%i" % (i + 1))
+				row = self.cgats[0].DATA[i]
+				RGB = []
+				for j, label in enumerate("RGB"):
+					value = int(round(float(str(row["RGB_%s" % label] * 2.55))))
+					self.grid.SetCellValue(row.SAMPLE_ID - 1, j, "%i" % value)
+					RGB.append(value)
+				self.grid.SetCellBackgroundColour(row.SAMPLE_ID - 1, 3,
+												  wx.Colour(*RGB))
 		if "Connecting to the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
 		if "Spot read failed" in txt:
@@ -408,43 +408,51 @@ class UntetheredFrame(wx.Frame):
 						self.commit_sound.IsOk()):
 						self.commit_sound.Play(wx.SOUND_ASYNC)
 					self.measure_count = 0
+					# Reset row label
+					self.grid.SetRowLabelValue(self.index, "%i" % (self.index + 1))
 					# Update CGATS
 					query = self.cgats[0].queryi({"RGB_R": row["RGB_R"],
 												  "RGB_G": row["RGB_G"],
 												  "RGB_B": row["RGB_B"]})
 					for i in query:
+						index = query[i].SAMPLE_ID - 1
+						if index not in self.measured:
+							self.measured.append(index)
+						if index == self.index + 1:
+							# Increment the index if we have consecutive patches
+							self.index = index
 						query[i]["XYZ_X"], query[i]["XYZ_Y"], query[i]["XYZ_Z"] = XYZ
-					self.index = query[i].SAMPLE_ID - 1
 					if getcfg("untethered.measure.auto"):
-						self.show_RGB(False)
+						self.show_RGB(False, False)
 					self.show_XYZ()
 					Lab, color = self.get_Lab_RGB()
-					if (self.index >= self.index_max and
-						self.grid.GetNumberRows() < len(self.cgats[0].DATA)):
-						self.grid.AppendRows(len(query))
 					for i in query:
 						row = query[i]
-						RGB = []
-						for j, label in enumerate("RGB"):
-							value = int(round(float(str(row["RGB_%s" % label] *
-														2.55))))
-							self.grid.SetCellValue(query[i].SAMPLE_ID - 1, j,
-												   "%i" % value)
-							RGB.append(value)
-						self.grid.SetCellBackgroundColour(query[i].SAMPLE_ID - 1,
-														  3, wx.Colour(*RGB))
 						self.grid.SetCellBackgroundColour(query[i].SAMPLE_ID - 1,
 														  4, wx.Colour(*color))
 						for j in xrange(3):
 							self.grid.SetCellValue(query[i].SAMPLE_ID - 1, 5 + j, "%.2f" % Lab[j])
 					self.grid.MakeCellVisible(self.index, 0)
 					self.grid.ForceRefresh()
-					if len(self.cgats[0].DATA) == self.index + 1:
+					if len(self.measured) == data_len:
 						self.finished = True
 						self.finish_btn.Enable()
 					else:
-						self.index += 1
-						self.index_max = max(self.index, self.index_max)
+						# Jump to the next or previous unmeasured patch, if any
+						index = self.index
+						for i in xrange(self.index + 1, data_len):
+							if not i in self.measured:
+								self.index = i
+								break
+						if self.index == index:
+							for i in xrange(self.index - 1, -1, -1):
+								if not i in self.measured:
+									self.index = i
+									break
+						if self.index != index:
+							# Mark the row containing the next/previous patch
+							self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
+							self.grid.MakeCellVisible(self.index, 0)
 		if "key to take a reading" in txt and not self.last_error:
 			self.is_measuring = False
 			self.measure_auto_cb.Enable()
@@ -454,8 +462,7 @@ class UntetheredFrame(wx.Frame):
 				else:
 					self.enable_btns()
 			else:
-				show_XYZ = (self.index < self.index_max or
-							self.grid.GetNumberRows() == len(self.cgats[0].DATA))
+				show_XYZ = self.index in self.measured
 				wx.CallLater(1000, self.show_RGB, not show_XYZ)
 				if show_XYZ:
 					wx.CallLater(1000, self.show_XYZ)
@@ -474,6 +481,7 @@ class UntetheredFrame(wx.Frame):
 		self.last_XYZ = (-1, -1, -1)
 		self.white_XYZ = (-1, -1, -1)
 		self.measure_count = 0
+		self.measured = []
 		self.finished = False
 		self.label_RGB.SetLabel(" ")
 		self.label_XYZ.SetLabel(" ")
@@ -511,7 +519,7 @@ class UntetheredFrame(wx.Frame):
 		if self.has_worker_subprocess() and not self.worker.subprocess_abort:
 			self.worker.safe_send(bytes)
 	
-	def show_RGB(self, clear_XYZ=True):
+	def show_RGB(self, clear_XYZ=True, mark_current_row=True):
 		row = self.cgats[0].DATA[self.index]
 		self.label_RGB.SetLabel("RGB %i %i %i" % (round(row["RGB_R"] * 2.55),
 												  round(row["RGB_G"] * 2.55),
@@ -526,9 +534,9 @@ class UntetheredFrame(wx.Frame):
 			self.panel_XYZ.SetBackgroundColour(BGCOLOUR)
 			self.panel_XYZ.Refresh()
 			self.panel_XYZ.Update()
-			self.grid.SelectRow(-1)
-		else:
-			self.grid.SelectRow(self.index)
+		if mark_current_row:
+			self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
+		self.grid.SelectRow(self.index)
 		self.grid.MakeCellVisible(self.index, 0)
 		self.label_index.SetLabel("%i/%i" % (self.index + 1,
 											 len(self.cgats[0].DATA)))
@@ -546,6 +554,17 @@ class UntetheredFrame(wx.Frame):
 	
 	def stop_timer(self):
 		self.timer.Stop()
+	
+	def update(self, index):
+		# Reset row label
+		self.grid.SetRowLabelValue(self.index, "%i" % (self.index + 1))
+
+		self.index = index
+		show_XYZ = self.index in self.measured
+		self.show_RGB(not show_XYZ)
+		if show_XYZ:
+			self.show_XYZ()
+		self.enable_btns()
 	
 	def write(self, txt):
 		wx.CallAfter(self.parse_txt, txt)
