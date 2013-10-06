@@ -311,9 +311,8 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None):
 			C1 = math.sqrt(math.pow(a1, 2) + math.pow(b1, 2))
 			C2 = math.sqrt(math.pow(a2, 2) + math.pow(b2, 2))
 			dC = C1 - C2
-			da = a1 - a2
-			db = b1 - b2
-			dH = math.sqrt(math.pow(da, 2) + math.pow(db, 2) - math.pow(dC, 2))
+			dH2 = math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2) - math.pow(dC, 2)
+			dH = math.sqrt(dH2) if dH2 > 0 else 0
 			SL = 1.0
 			K1 = 0.048 if textiles else 0.045
 			K2 = 0.014 if textiles else 0.015
@@ -337,9 +336,8 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None):
 			C1 = math.sqrt(math.pow(a1, 2) + math.pow(b1, 2))
 			C2 = math.sqrt(math.pow(a2, 2) + math.pow(b2, 2))
 			dC = C1 - C2
-			da = a1 - a2
-			db = b1 - b2
-			dH = math.sqrt(math.pow(da, 2) + math.pow(db, 2) - math.pow(dC, 2))
+			dH2 = math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2) - math.pow(dC, 2)
+			dH = math.sqrt(dH2) if dH2 > 0 else 0
 			SL = 0.511 if L1 < 16 else (0.040975 * L1) / (1 + 0.01765 * L1)
 			SC = (0.0638 * C1) / (1 + 0.0131 * C1) + 0.638
 			F = math.sqrt(math.pow(C1, 4) / (math.pow(C1, 4) + 1900.0))
@@ -397,7 +395,8 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None):
 			C1 = math.sqrt(math.pow(a1, 2) + math.pow(b1, 2))
 			C2 = math.sqrt(math.pow(a2, 2) + math.pow(b2, 2))
 			dC = C1 - C2
-			dH = math.sqrt(math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2) - math.pow(dC, 2))
+			dH2 = math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2) - math.pow(dC, 2)
+			dH = math.sqrt(dH2) if dH2 > 0 else 0
 			dE = math.sqrt(math.pow(dL, 2) + math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2))
 		
 		return {"E": dE,

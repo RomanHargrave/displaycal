@@ -971,12 +971,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					C1 = Math.sqrt(Math.pow(a1, 2) + Math.pow(b1, 2)),
 					C2 = Math.sqrt(Math.pow(a2, 2) + Math.pow(b2, 2)),
 					dC = C1 - C2,
-					da = a1 - a2,
-					db = b1 - b2,
-					dH = Math.sqrt(Math.round((Math.pow(da, 2) + Math.pow(db, 2) - Math.pow(dC, 2))*100000000000000)/100000000000000),
-					// this is merely a bugfix for browser quirks experienced in mozilla:
-					//dH = isNaN(dH) ? Math.sqrt(Math.pow(da, 2) + Math.pow(db, 2) - Math.round(Math.pow(dC, 2)*100000000000000)/100000000000000) : dH,
-					// --
+					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
+					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
 					SL = 1,
 					K1 = textiles ? 0.048 : 0.045,
 					K2 = textiles ? 0.014 : 0.015,
@@ -1000,12 +996,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					C1 = Math.sqrt(Math.pow(a1, 2) + Math.pow(b1, 2)),
 					C2 = Math.sqrt(Math.pow(a2, 2) + Math.pow(b2, 2)),
 					dC = C1 - C2,
-					da = a1 - a2,
-					db = b1 - b2,
-					dH = Math.sqrt(Math.round((Math.pow(da, 2) + Math.pow(db, 2) - Math.pow(dC, 2))*100000000000000)/100000000000000),
-					// this is merely a bugfix for browser quirks experienced in mozilla:
-					//dH = isNaN(dH) ? Math.sqrt(Math.pow(da, 2) + Math.pow(db, 2) - Math.round(Math.pow(dC, 2)*100000000000000)/100000000000000) : dH,
-					// --
+					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
+					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
 					SL = L1 < 16 ? 0.511 : (0.040975 * L1) / (1 + 0.01765 * L1),
 					SC = (0.0638 * C1) / (1 + 0.0131 * C1) + 0.638,
 					F = Math.sqrt(Math.pow(C1, 4) / (Math.pow(C1, 4) + 1900)),
@@ -1082,9 +1074,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					C1 = Math.sqrt(Math.pow(a1, 2) + Math.pow(b1, 2)),
 					C2 = Math.sqrt(Math.pow(a2, 2) + Math.pow(b2, 2)),
 					dC = C1 - C2,
-					dH = Math.sqrt(Math.round((Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2))*100000000000000)/100000000000000),
-					// this is merely a bugfix for browser quirks experienced in mozilla:
-					//dH = isNaN(dH) ? Math.sqrt(Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.round(Math.pow(dC, 2)*100000000000000)/100000000000000) : dH,
+					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
+					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
 					dE = Math.sqrt(Math.pow(dL, 2) + Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2));
 					if (isNaN(dH)) {
 						if (window.location.href.indexOf("?debug")>-1) alert('a1: ' + a1 + '\na2: ' + a2 + '\nMath.pow(a1 - a2, 2): ' + Math.pow(a1 - a2, 2) + '\nb1: ' + b1 + '\nb2: ' + b2 + '\nMath.pow(b1 - b2, 2): ' + Math.pow(b1 - b2, 2) + '\ndC: ' + dC + '\nMath.pow(dC, 2): ' + Math.pow(dC, 2) + '\nMath.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2): ' + (Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2)));
