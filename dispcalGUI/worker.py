@@ -1593,6 +1593,7 @@ class Worker(object):
 			defaults["calibration.black_point_rate.enabled"] = 0
 			n = -1
 			self.display_rects = []
+			non_standard_display_args = ("-dweb[:port]", "-dmadvr")
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
@@ -1627,6 +1628,8 @@ class Worker(object):
 						if arg == "-A":
 							# Rate of blending from neutral to black point.
 							defaults["calibration.black_point_rate.enabled"] = 1
+						elif arg in non_standard_display_args:
+							displays.append(arg)
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
 						if arg == "-d":
@@ -1674,6 +1677,9 @@ class Worker(object):
 				setcfg("instruments", os.pathsep.join(instruments))
 			if displays != self._displays:
 				self._displays = list(displays)
+				displays = filter(lambda display:
+									  not display in non_standard_display_args,
+								  displays)
 				self.display_edid = []
 				self.display_manufacturers = []
 				self.display_names = []
