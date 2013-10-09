@@ -435,7 +435,7 @@ class GamutCanvas(LUTCanvas):
 			if profile_no is not None and i != profile_no:
 				continue
 
-			if not profile:
+			if not profile or profile.profileClass == "link":
 				self.set_pcs_data(i)
 				self.profiles[i] = ""
 				continue
@@ -505,10 +505,7 @@ class GamutCanvas(LUTCanvas):
 
 			# Lookup RGB -> XYZ values through profile using xicclu
 			stderr = tempfile.SpooledTemporaryFile()
-			args = ["-ff", "-px"]
-			if profile.profileClass != "link":
-				args += ["-i" + intent]
-			p = sp.Popen([xicclu] + args + ["profile.icc"], 
+			p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 			self.worker.subprocess = p
