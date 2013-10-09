@@ -1610,14 +1610,7 @@ class Worker(object):
 														"CMS %s" % 
 														(appname, version, 
 														 argyll_version))
-						argyll_version = re.findall("(\d+|[^.\d]+)", 
-													argyll_version)
-						for i, v in enumerate(argyll_version):
-							try:
-								argyll_version[i] = int(v)
-							except ValueError:
-								pass
-						self.argyll_version = argyll_version
+						self.set_argyll_version(argyll_version)
 						if argyll_version > [1, 0, 4]:
 							# Rate of blending from neutral to black point.
 							defaults["calibration.black_point_rate.enabled"] = 1
@@ -4262,6 +4255,16 @@ class Worker(object):
 					return True
 			sleep(.25)
 		return False
+	
+	def set_argyll_version(self, argyll_version):
+		argyll_version = re.findall("(\d+|[^.\d]+)", 
+									argyll_version)
+		for i, v in enumerate(argyll_version):
+			try:
+				argyll_version[i] = int(v)
+			except ValueError:
+				pass
+		self.argyll_version = argyll_version
 	
 	def set_terminal_cgats(self, cgats_filename):
 		self.terminal.cgats = CGATS.CGATS(cgats_filename)
