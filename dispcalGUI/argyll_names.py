@@ -6,6 +6,7 @@ names = [
 	"ccxxmake",
 	"dispcal",
 	"dispread",
+	"collink",
 	"colprof",
 	"dispwin",
 	"iccgamut",
