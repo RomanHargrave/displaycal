@@ -505,7 +505,10 @@ class GamutCanvas(LUTCanvas):
 
 			# Lookup RGB -> XYZ values through profile using xicclu
 			stderr = tempfile.SpooledTemporaryFile()
-			p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
+			args = ["-ff", "-px"]
+			if profile.profileClass != "link":
+				args += ["-i" + intent]
+			p = sp.Popen([xicclu] + args + ["profile.icc"], 
 						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 			self.worker.subprocess = p
