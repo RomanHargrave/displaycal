@@ -5396,15 +5396,24 @@ class MainFrame(BaseFrame):
 			# case of web we cannot save it to begin with as there is no
 			# VideoLUT access).
 			# So an existing .cal file or no calibration are the only options.
-			if cal:
-				return cal
-			else:
-				return False
+			can_use_current_cal = False
+		else:
+			can_use_current_cal = True
+		if cal:
+			msgstr = "dialog.cal_info"
+			icon = "information"
+		elif can_use_current_cal:
+			msgstr = "dialog.current_cal_warning"
+			icon = "warning"
+		else:
+			msgstr = "dialog.linear_cal_info"
+			icon = "information"
 		dlg = ConfirmDialog(self, 
-							msg=lang.getstr("dialog.current_cal_warning"), 
+							msg=lang.getstr(msgstr, os.path.basename(cal)
+													if cal else None), 
 							ok=lang.getstr("continue"), 
 							cancel=lang.getstr("cancel"), 
-							bitmap=geticon(32, "dialog-warning"))
+							bitmap=geticon(32, "dialog-%s" % icon))
 		dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
 								   lang.getstr("calibration.embed"))
 		def embed_cal_ctrl_handler(event):
@@ -5412,27 +5421,34 @@ class MainFrame(BaseFrame):
 			dlg.reset_cal_ctrl.Enable(embed_cal)
 			if not embed_cal:
 				dlg.reset_cal_ctrl.SetValue(True)
-		dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
-		dlg.embed_cal_ctrl.SetValue(True)
+		if can_use_current_cal or cal:
+			dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
+		dlg.embed_cal_ctrl.SetValue(bool(can_use_current_cal or cal))
 		dlg.sizer3.Add(dlg.embed_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
 					   border=12)
-		dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
-								   lang.getstr("calibration.reset"))
-		dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
-					   border=4)
+		if can_use_current_cal or cal:
+			dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
+									   lang.getstr("calibration.reset"))
+			dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
+						   border=4)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		result = dlg.ShowModal()
-		reset_cal = dlg.reset_cal_ctrl.GetValue()
+		if can_use_current_cal or cal:
+			reset_cal = dlg.reset_cal_ctrl.GetValue()
 		embed_cal = dlg.embed_cal_ctrl.GetValue()
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			self.update_profile_name_timer.Start(1000)
 			return wx.ID_CANCEL
-		if reset_cal:
-			self.reset_cal()
-			if not embed_cal:
-				return False
+		if not embed_cal:
+			if can_use_current_cal and reset_cal:
+				self.reset_cal()
+			return False
+		elif not (can_use_current_cal or cal) or reset_cal:
+			return get_data_path("linear.cal")
+		elif cal:
+			return cal
 	
 	def restore_measurement_mode(self):
 		if getcfg("measurement_mode.backup", False):
