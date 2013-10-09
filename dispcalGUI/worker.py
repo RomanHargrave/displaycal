@@ -241,7 +241,7 @@ def get_argyll_util(name, paths=None):
 		safe_print("Info: Searching for", name, "in", os.pathsep.join(paths))
 	exe = None
 	for path in paths:
-		for altname in argyll_altnames[name]:
+		for altname in argyll_altnames.get(name, []):
 			exe = which(altname + exe_ext, [path])
 			if exe:
 				break
