@@ -1143,7 +1143,7 @@ class CurveType(ICCProfileTag, list):
 				size = 1024
 		self[:] = []
 		for i in xrange(0, size):
-			self.append(vmin + int(round(colormath.specialpow(float(i) / (size - 1), power) * (vmax - vmin))))
+			self.append(int(round(vmin + colormath.specialpow(float(i) / (size - 1), power) * (vmax - vmin))))
 	
 	def sort(self, cmp=None, key=None, reverse=False):
 		list.sort(self, cmp, key, reverse)
