@@ -3282,22 +3282,15 @@ class Worker(object):
 		# also add Unicode strings if different from ASCII
 		if "desc" in profile.tags and isinstance(profile.tags.desc, 
 												 ICCP.TextDescriptionType):
-			desc = profile.getDescription()
-			profile.tags.desc["ASCII"] = desc.encode("ascii", "asciize")
-			if desc != profile.tags.desc["ASCII"]:
-				profile.tags.desc["Unicode"] = desc
+			profile.setDescription(profile.getDescription())
 		if "dmdd" in profile.tags and isinstance(profile.tags.dmdd, 
 												 ICCP.TextDescriptionType):
-			ddesc = profile.getDeviceModelDescription()
-			profile.tags.dmdd["ASCII"] = ddesc.encode("ascii", "asciize")
-			if ddesc != profile.tags.dmdd["ASCII"]:
-				profile.tags.dmdd["Unicode"] = ddesc
+			profile.setDeviceModelDescription(
+				profile.getDeviceModelDescription())
 		if "dmnd" in profile.tags and isinstance(profile.tags.dmnd, 
 												 ICCP.TextDescriptionType):
-			mdesc = profile.getDeviceManufacturerDescription()
-			profile.tags.dmnd["ASCII"] = mdesc.encode("ascii", "asciize")
-			if mdesc != profile.tags.dmnd["ASCII"]:
-				profile.tags.dmnd["Unicode"] = mdesc
+			profile.setDeviceManufacturerDescription(
+				profile.getDeviceManufacturerDescription())
 		if tags and tags is not True:
 			# Add custom tags
 			for tagname, tag in tags.iteritems():
@@ -4611,11 +4604,7 @@ class Worker(object):
 						if not getcfg("profile.update"):
 							# Created fast matrix shaper profile
 							# we need to set cprt, targ and a few other things
-							profile.tags.cprt = ICCP.TextType(
-								"text\0\0\0\0" + 
-								getcfg("copyright").encode("ASCII", "asciize") + 
-								"\0",
-								"cprt")
+							profile.setCopyright(getcfg("copyright"))
 							# Fast matrix shaper profiles currently don't
 							# contain TI3 data, but look for it anyways
 							# to be future-proof
@@ -4632,10 +4621,9 @@ class Worker(object):
 													edid.get("ascii",
 															 str(edid.get("product_id") or "")))
 							display_manufacturer = edid.get("manufacturer")
-							profile.tags.dmdd = ICCP.TextDescriptionType()
-							profile.tags.dmdd.ASCII = display_name
-							profile.tags.dmnd = ICCP.TextDescriptionType()
-							profile.tags.dmnd.ASCII = display_manufacturer
+							profile.setDeviceModelDescription(display_name)
+							profile.setDeviceManufacturerDescription(
+								display_manufacturer)
 							(gamut_volume,
 							 gamut_coverage) = self.create_gamut_views(profile_path)
 							self.update_profile(profile, ti3=str(ti3),
@@ -4649,11 +4637,8 @@ class Worker(object):
 							# also add Unicode string if different from ASCII
 							if "desc" in profile.tags and isinstance(profile.tags.desc, 
 																	 ICCP.TextDescriptionType):
-								desc = getcfg("profile.name.expanded")
-								profile.tags.desc["ASCII"] = desc.encode("ascii",
-																		 "asciize")
-								if desc != profile.tags.desc["ASCII"]:
-									profile.tags.desc["Unicode"] = desc
+								profile.setDescription(
+									getcfg("profile.name.expanded"))
 							# Calculate profile ID
 							profile.calculateID()
 							try:

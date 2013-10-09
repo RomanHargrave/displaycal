@@ -2698,34 +2698,12 @@ class ICCProfile:
 		profile = ICCProfile()
 		if iccv4:
 			profile.version = 4.2
-			profile.tags.desc = MultiLocalizedUnicodeType()
-			profile.tags.desc.add_localized_string("en", "US", description)
-			profile.tags.cprt = MultiLocalizedUnicodeType()
-			profile.tags.cprt.add_localized_string("en", "US", copyright)
-			if manufacturer:
-				profile.tags.dmnd = MultiLocalizedUnicodeType()
-				profile.tags.dmnd.add_localized_string("en", "US", manufacturer)
-			if model_name:
-				profile.tags.dmdd = MultiLocalizedUnicodeType()
-				profile.tags.dmdd.add_localized_string("en", "US", model_name)
-		else:
-			profile.tags.desc = TextDescriptionType()
-			if isinstance(description, unicode):
-				asciidesc = description.encode("ASCII", "asciize")
-			else:
-				asciidesc = description
-			profile.tags.desc.ASCII = asciidesc
-			if asciidesc != description:
-				profile.tags.desc.Unicode = description
-			if isinstance(copyright, unicode):
-				copyright = copyright.encode("ASCII", "asciize")
-			profile.tags.cprt = TextType("text\0\0\0\0%s\0" % copyright, "cprt")
-			if manufacturer:
-				profile.tags.dmnd = TextDescriptionType()
-				profile.tags.dmnd.ASCII = manufacturer.encode("ASCII", "replace")
-			if model_name:
-				profile.tags.dmdd = TextDescriptionType()
-				profile.tags.dmdd.ASCII = model_name
+		profile.setDescription(description)
+		profile.setCopyright(copyright)
+		if manufacturer:
+			profile.setDeviceManufacturerDescription(manufacturer)
+		if model_name:
+			profile.setDeviceModelDescription(model_name)
 		profile.device["manufacturer"] = "\0\0" + manufacturer_id[1] + manufacturer_id[0]
 		profile.device["model"] = "\0\0" + model_id[1] + model_id[0]
 		# Add Apple-specific 'mmod' tag (TODO: need full spec)
@@ -2768,6 +2746,49 @@ class ICCProfile:
 		profile.calculateID()
 		return profile
 	
+	def set_localizable_desc(self, tagname, description, languagecode="en",
+							 countrycode="US"):
+		# Handle ICCv2 <> v4 differences and encoding
+		if self.version < 4:
+			self.tags[tagname] = TextDescriptionType()
+			if isinstance(description, unicode):
+				asciidesc = description.encode("ASCII", "asciize")
+			else:
+				asciidesc = description
+			self.tags[tagname].ASCII = asciidesc
+			if asciidesc != description:
+				self.tags[tagname].Unicode = description
+		else:
+			self.set_localizable_text(self, tagname, description, languagecode,
+									  countrycode)
+
+	def set_localizable_text(self, tagname, text, languagecode="en",
+							 countrycode="US"):
+		# Handle ICCv2 <> v4 differences and encoding
+		if self.version < 4:
+			if isinstance(text, unicode):
+				text = text.encode("ASCII", "asciize")
+			self.tags[tagname] = TextType("text\0\0\0\0%s\0" % text, tagname)
+		else:
+			self.tags[tagname] = MultiLocalizedUnicodeType()
+			self.tags[tagname].add_localized_string(languagecode,
+													   countrycode, text)
+
+	def setCopyright(self, copyright, languagecode="en", countrycode="US"):
+		self.set_localizable_text("cprt", copyright, languagecode, countrycode)
+
+	def setDescription(self, description, languagecode="en", countrycode="US"):
+		self.set_localizable_desc("desc", description, languagecode, countrycode)
+
+	def setDeviceManufacturerDescription(self, description, languagecode="en",
+										 countrycode="US"):
+		self.set_localizable_desc("dmnd", description, languagecode, countrycode)
+
+	def setDeviceModelDescription(self, description, languagecode="en",
+								  countrycode="US"):
+		self.set_localizable_desc("dmdd", description, languagecode, countrycode)
+		
+
 	def getCopyright(self):
 		"""
 		Return profile copyright.
