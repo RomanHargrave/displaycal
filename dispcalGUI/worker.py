@@ -1307,8 +1307,7 @@ class Worker(object):
 		if (profile_in.profileClass != "link" and save_link_icc and
 			os.path.isfile(link_filename)):
 			profile_link = ICCP.ICCProfile(link_filename)
-			profile_link.setDescription("%s -> %s" % (profile_in.getDescription(),
-													  profile_out.getDescription()))
+			profile_link.setDescription(os.path.basename(filename))
 			profile_link.setCopyright(getcfg("copyright"))
 			manufacturer = profile_out.getDeviceManufacturerDescription()
 			if manufacturer:
