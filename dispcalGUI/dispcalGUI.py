@@ -8144,7 +8144,7 @@ class MainFrame(BaseFrame):
 				del self.gamapframe
 				if visible:
 					self.gamap_btn_handler(None)
-			if hasattr(self, "lut3dframe"):
+			if getattr(self, "lut3dframe", None):
 				visible = self.lut3dframe.IsShownOnScreen()
 				self.lut3dframe.Close()
 				self.lut3dframe.Destroy()
