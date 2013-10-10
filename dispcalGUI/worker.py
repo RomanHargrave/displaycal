@@ -1478,12 +1478,12 @@ class Worker(object):
 			linesep = "\r\n"
 		elif format == "mga":
 			lut = [["#HEADER"],
-				   ["#filename: ${FILENAME}"],
+				   ["#filename: %s" % os.path.basename(path)],
 				   ["#type: 3D cube file"],
 				   ["#format: 1.00"],
-				   ["#created:"],
-				   ["#owner:"],
-				   ["#title: ${TITLE}"],
+				   ["#created: %s" % strftime("%d %B %Y")],
+				   ["#owner: %s" % getpass.getuser()],
+				   ["#title: %s" % os.path.splitext(os.path.basename(path))[0]],
 				   ["#END"]]
 			lut.append([])
 			lut.append(["channel 3d"])
@@ -1504,11 +1504,6 @@ class Worker(object):
 		for i, line in enumerate(lut):
 			lut[i] = valsep.join(line)
 		result = linesep.join(lut)
-
-		# Update placeholders
-		result = result.replace("${FILENAME}", os.path.basename(path))
-		result = result.replace("${TITLE}",
-								os.path.splitext(os.path.basename(path))[0])
 
 		# Write 3DLUT
 		lut_file = open(path, "wb")
