@@ -51,4 +51,4 @@ if __name__ == "__main__":
 		for v in grid:
 			print " ".join(str(n) for n in v)
 	else:
-		print "Usage: cubicgrid.py <res>"
+		print "Usage: cubicgrid.py <res> [skip grayscale 0|1 [hires_outer gamut 0|1]]"
