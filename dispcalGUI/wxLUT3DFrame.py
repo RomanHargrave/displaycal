@@ -407,6 +407,8 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_current_btn.Enable()
 							self.output_profile_desc.Enable()
 							self.rendering_intent_ctrl.Enable()
+							# Update controls related to output profile
+							self.set_profile("output", silent=silent)
 						elif which == "output":
 							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
