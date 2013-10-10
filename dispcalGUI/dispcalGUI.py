@@ -8135,22 +8135,29 @@ class MainFrame(BaseFrame):
 				self.profile_types_ba.get(getcfg("profile.type"), 
 				self.profile_types_ba.get(defaults["profile.type"])))
 			if hasattr(self, "aboutdialog"):
-				self.aboutdialog_handler(None)
+				if self.aboutdialog.IsShownOnScreen():
+					self.aboutdialog_handler(None)
 			if hasattr(self, "gamapframe"):
+				visible = self.gamapframe.IsShownOnScreen()
 				self.gamapframe.Close()
 				self.gamapframe.Destroy()
 				del self.gamapframe
-				self.gamap_btn_handler(None)
+				if visible:
+					self.gamap_btn_handler(None)
 			if hasattr(self, "lut3dframe"):
+				visible = self.lut3dframe.IsShownOnScreen()
 				self.lut3dframe.Close()
 				self.lut3dframe.Destroy()
 				del self.lut3dframe
-				self.lut3d_create_handler(None)
+				if visible:
+					self.lut3d_create_handler(None)
 			if hasattr(self, "tcframe"):
+				visible = self.tcframe.IsShownOnScreen()
 				self.tcframe.tc_close_handler()
 				self.tcframe.Destroy()
 				del self.tcframe
-				self.create_testchart_btn_handler(None)
+				if visible:
+					self.create_testchart_btn_handler(None)
 		if displays != self.worker.displays:
 			self.update_displays(update_ccmx_items=True)
 			if verbose >= 1: safe_print(lang.getstr("display_detected"))
