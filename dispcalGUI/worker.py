@@ -1207,6 +1207,7 @@ class Worker(object):
 		# .3dl: http://www.kodak.com/US/plugins/acrobat/en/motion/products/look/UserGuide.pdf
 		#       http://download.autodesk.com/us/systemdocs/pdf/lustre_color_management_user_guide.pdf
 		# .spi3d: https://github.com/imageworks/OpenColorIO/blob/master/src/core/FileFormatSpi3D.cpp
+		# .mga: http://pogle.pandora-int.com/download/manual/lut3d_format.html
 		
 		for profile in (profile_in, profile_out):
 			if (profile.profileClass not in ("mntr", "link", "scnr", "spac") or 
