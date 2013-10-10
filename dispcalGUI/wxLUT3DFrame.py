@@ -58,7 +58,6 @@ class LUT3DFrame(BaseFrame):
 		self.panel = self.FindWindowByName("panel")
 
 		self.worker = worker.Worker(self)
-		self.worker.set_argyll_version(getcfg("argyll.version"))
 
 		# Bind event handlers
 		self.abstract_profile_cb.Bind(wx.EVT_CHECKBOX,
@@ -345,7 +344,7 @@ class LUT3DFrame(BaseFrame):
 		if which == "output":
 			if profile_path is None:
 				profile_path = get_current_profile_path()
-			self.output_profile_current_btn.Enable(self.output_profile_ctrl.Enabled and
+			self.output_profile_current_btn.Enable(self.output_profile_ctrl.IsShown() and
 												   bool(profile_path) and
 												   os.path.isfile(profile_path) and
 												   profile_path != path)
@@ -387,15 +386,19 @@ class LUT3DFrame(BaseFrame):
 							self.abstract_profile_cb.Disable()
 							self.abstract_profile_ctrl.Disable()
 							self.abstract_profile_desc.Disable()
-							self.output_profile_ctrl.Disable()
-							self.output_profile_current_btn.Disable()
-							self.output_profile_desc.Disable()
-							self.apply_cal_cb.SetValue(False)
-							self.apply_cal_cb.Disable()
-							self.apply_bt1886_cb.Disable()
-							self.bt1886_gamma_ctrl.Disable()
-							self.bt1886_gamma_type_ctrl.Disable()
-							self.rendering_intent_ctrl.Disable()
+							self.Freeze()
+							self.output_profile_label.Hide()
+							self.output_profile_ctrl.Hide()
+							self.output_profile_current_btn.Hide()
+							self.output_profile_desc.Hide()
+							self.output_profile_desc.GetContainingSizer().GetStaticBox().Hide()
+							self.apply_cal_cb.Hide()
+							self.enable_encoding_controls(False)
+							self.enable_bt1886_controls(False)
+							self.rendering_intent_label.Hide()
+							self.rendering_intent_ctrl.Hide()
+							self.panel.GetSizer().Layout()
+							self.Thaw()
 					else:
 						if which == "input":
 							enable = bool(getcfg("3dlut.use_abstract_profile"))
@@ -403,24 +406,31 @@ class LUT3DFrame(BaseFrame):
 							self.abstract_profile_cb.Enable()
 							self.abstract_profile_ctrl.Enable(enable)
 							self.abstract_profile_desc.Enable(enable)
-							self.output_profile_ctrl.Enable()
-							self.output_profile_current_btn.Enable()
-							self.output_profile_desc.Enable()
-							self.rendering_intent_ctrl.Enable()
+							self.Freeze()
+							self.output_profile_label.Show()
+							self.output_profile_ctrl.Show()
+							self.output_profile_current_btn.Show()
+							self.output_profile_desc.Show()
+							self.output_profile_desc.GetContainingSizer().GetStaticBox().Show()
+							self.apply_cal_cb.Show()
+							self.enable_encoding_controls()
+							self.enable_bt1886_controls()
+							self.apply_bt1886_cb.SetValue(bool(getcfg("3dlut.apply_bt1886_gamma_mapping")))
+							enable_bt1886_gamma = self.apply_bt1886_cb.GetValue()
+							self.bt1886_gamma_ctrl.Enable(enable_bt1886_gamma)
+							self.bt1886_gamma_type_ctrl.Enable(enable_bt1886_gamma)
+							self.rendering_intent_label.Show()
+							self.rendering_intent_ctrl.Show()
 							# Update controls related to output profile
 							self.set_profile("output", silent=silent)
+							self.panel.GetSizer().Layout()
+							self.Thaw()
 						elif which == "output":
 							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
 							self.apply_cal_cb.Enable("vcgt" in profile.tags)
-							if self.worker.argyll_version >= [1, 6]:
-								self.apply_bt1886_cb.Enable()
-								self.apply_bt1886_cb.SetValue(bool(getcfg("3dlut.apply_bt1886_gamma_mapping")))
-								enable_bt1886_gamma = self.apply_bt1886_cb.GetValue()
-								self.bt1886_gamma_ctrl.Enable(enable_bt1886_gamma)
-								self.bt1886_gamma_type_ctrl.Enable(enable_bt1886_gamma)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
-					if which == "output" and not self.output_profile_ctrl.Enabled:
+					if which == "output" and not self.output_profile_ctrl.IsShown():
 						return
 					setcfg("3dlut.%s.profile" % which, profile.fileName)
 					config.writecfg()
@@ -516,6 +526,7 @@ class LUT3DFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
+		self.worker.set_argyll_version(getcfg("argyll.version"))
 		self.lut3d_create_btn.Disable()
 		self.input_profile_ctrl.SetPath(getcfg("3dlut.input.profile"))
 		self.input_profile_ctrl_handler(None)
@@ -524,13 +535,9 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl.SetPath(getcfg("3dlut.abstract.profile"))
 		self.abstract_profile_ctrl_handler(None)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
-		self.apply_cal_cb.Disable()
-		self.apply_bt1886_cb.Disable()
-		self.bt1886_gamma_ctrl.Disable()
-		self.bt1886_gamma_ctrl.SetValue(str(getcfg("3dlut.bt1886_gamma")))
-		self.bt1886_gamma_type_ctrl.Disable()
-		self.bt1886_gamma_type_ctrl.SetSelection(self.bt1886_gamma_types_ba[getcfg("3dlut.bt1886_gamma_type")])
 		self.output_profile_ctrl_handler(None)
+		self.bt1886_gamma_ctrl.SetValue(str(getcfg("3dlut.bt1886_gamma")))
+		self.bt1886_gamma_type_ctrl.SetSelection(self.bt1886_gamma_types_ba[getcfg("3dlut.bt1886_gamma_type")])
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
 		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
@@ -540,7 +547,6 @@ class LUT3DFrame(BaseFrame):
 		self.enable_bitdepth_controls()
 		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
 		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
-		self.enable_encoding_controls()
 	
 	def enable_bitdepth_controls(self):
 		self.Freeze()
@@ -552,14 +558,19 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_bitdepth_output_ctrl.Show(output_enable)
 		self.panel.GetSizer().Layout()
 		self.Thaw()
+
+	def enable_bt1886_controls(self, enable=True):
+		enable = enable and self.worker.argyll_version >= [1, 6]
+		self.apply_bt1886_cb.Show(enable)
+		self.bt1886_gamma_ctrl.Show(enable)
+		self.bt1886_gamma_type_ctrl.Show(enable)
 	
-	def enable_encoding_controls(self):
-		self.Freeze()
-		enable = self.worker.argyll_version >= [1, 6]
+	def enable_encoding_controls(self, enable=True):
+		enable = enable and self.worker.argyll_version >= [1, 6]
 		self.encoding_input_label.Show(enable)
 		self.encoding_input_ctrl.Show(enable)
-		self.panel.GetSizer().Layout()
-		self.Thaw()
+		self.encoding_output_label.Show(enable)
+		self.encoding_output_ctrl.Show(enable)
 	
 	def enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")

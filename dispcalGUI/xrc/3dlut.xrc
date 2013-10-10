@@ -72,7 +72,7 @@
                   <border>-8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxStaticText">
+                  <object class="wxStaticText" name="output_profile_label">
                     <label>3dlut.output.profile</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -180,7 +180,7 @@
                   </object>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxStaticText">
+                  <object class="wxStaticText" name="rendering_intent_label">
                     <label>rendering_intent</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
