@@ -8259,10 +8259,34 @@ class MainFrame(BaseFrame):
 			ti3_lines = [line.strip() for line in cal]
 			cal.close()
 			setcfg("last_cal_or_icc_path", path)
+			update_ccmx_items = True
 			if ext.lower() in (".icc", ".icm"):
 				setcfg("last_icc_path", path)
 				(options_dispcal, 
 				 options_colprof) = get_options_from_profile(profile)
+				# Get and set the display
+				display_name = profile.getDeviceModelDescription()
+				if display_name:
+					for i, edid in enumerate(self.worker.display_edid):
+						if edid.get("monitor_name") == display_name:
+							# Found it
+							setcfg("display.number", i + 1)
+							self.get_set_display()
+							break
+				# Get and set the instrument
+				instrument_id = profile.tags.get("meta",
+												 {}).get("MEASUREMENT_device",
+														 {}).get("value")
+				if instrument_id:
+					for i, instrument in enumerate(self.worker.instruments):
+						if instrument.lower() == instrument_id:
+							# Found it
+							setcfg("comport.number", i + 1)
+							self.update_comports()
+							# No need to update ccmx items in update_controls,
+							# as comport_ctrl_handler took care of it
+							update_ccmx_items = False
+							break
 			else:
 				try:
 					(options_dispcal, 
@@ -8278,7 +8302,6 @@ class MainFrame(BaseFrame):
 					safe_print("[D] options_dispcal:", options_dispcal)
 				if debug:
 					safe_print("[D] options_colprof:", options_colprof)
-				update_ccmx_items = True
 				ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] + ":"
 				# Parse options
 				if options_dispcal:
@@ -8296,24 +8319,15 @@ class MainFrame(BaseFrame):
 					self.worker.options_dispcal = ["-" + arg for arg 
 												   in options_dispcal]
 					for o in options_dispcal:
-						##if o[0] == "d":
-							##o = o[1:].split(",")
-							##setcfg("display.number", o[0])
-							##self.get_set_display()
-							##if len(o) > 1:
-								##setcfg("display_lut.number", o[1])
-								##setcfg("display_lut.link", 
-									   ##int(o[0] == o[1]))
-							##else:
-								##setcfg("display_lut.number", o[0])
-								##setcfg("display_lut.link", 1)
-							##continue
-						if o[0] == "c" and o[1:] != str(getcfg("comport.number")):
-							setcfg("comport.number", o[1:])
-							self.update_comports()
-							# No need to update ccmx items in update_controls,
-							# as comport_ctrl_handler took care of it
-							update_ccmx_items = False
+						if o[0] == "d" and o[1:] in ("web", "madvr"):
+							# Special case web and madvr so it can be used in
+							# preset templates which are TI3 files
+							for i, display_name in enumerate(self.worker.display_names):
+								if display_name.lower() == o[1:]:
+									# Found it
+									setcfg("display.number", i + 1)
+									self.get_set_display()
+									break
 							continue
 						if o[0] == "m":
 							setcfg("calibration.interactive_display_adjustment", 0)
