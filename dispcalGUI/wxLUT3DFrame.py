@@ -301,6 +301,10 @@ class LUT3DFrame(BaseFrame):
 			return exception
 	
 	def lut3d_format_ctrl_handler(self, event):
+		if getcfg("3dlut.format") == "madVR":
+			# If previous format was madVR, restore video encoding
+			setcfg("3dlut.encoding.input", getcfg("3dlut.encoding.input.backup"))
+			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.output.backup"))
 		setcfg("3dlut.format", self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()])
 		if getcfg("3dlut.format") == "eeColor":
 			# eeColor uses a fixed size of 65x65x65
@@ -314,12 +318,18 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
 		elif getcfg("3dlut.format") == "madVR":
+			# -et -Et REQUIRED for madVR
+			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
+			setcfg("3dlut.encoding.input", "t")
+			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
+			setcfg("3dlut.encoding.output", "t")
 			# collink says madVR works best with 65
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		config.writecfg()
+		self.show_encoding_controls()
 		self.enable_size_controls()
-		self.enable_bitdepth_controls()
+		self.show_bitdepth_controls()
 	
 	def lut3d_size_ctrl_handler(self, event):
 		setcfg("3dlut.size",
@@ -394,8 +404,8 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_desc.Hide()
 							self.output_profile_desc.GetContainingSizer().GetStaticBox().Hide()
 							self.apply_cal_cb.Hide()
-							self.enable_encoding_controls(False)
-							self.enable_bt1886_controls(False)
+							self.show_encoding_controls(False)
+							self.show_bt1886_controls(False)
 							self.rendering_intent_label.Hide()
 							self.rendering_intent_ctrl.Hide()
 							self.panel.GetSizer().Layout()
@@ -414,8 +424,8 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_desc.Show()
 							self.output_profile_desc.GetContainingSizer().GetStaticBox().Show()
 							self.apply_cal_cb.Show()
-							self.enable_encoding_controls()
-							self.enable_bt1886_controls()
+							self.show_encoding_controls()
+							self.show_bt1886_controls()
 							self.apply_bt1886_cb.SetValue(bool(getcfg("3dlut.apply_bt1886_gamma_mapping")))
 							enable_bt1886_gamma = self.apply_bt1886_cb.GetValue()
 							self.bt1886_gamma_ctrl.Enable(enable_bt1886_gamma)
@@ -550,33 +560,36 @@ class LUT3DFrame(BaseFrame):
 		self.enable_size_controls()
 		self.lut3d_bitdepth_input_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.input")])
 		self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
-		self.enable_bitdepth_controls()
-		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
-		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
+		self.show_bitdepth_controls()
 	
-	def enable_bitdepth_controls(self):
+	def show_bitdepth_controls(self):
 		self.Freeze()
-		input_enable = getcfg("3dlut.format") == "3dl"
-		self.lut3d_bitdepth_input_label.Show(input_enable)
-		self.lut3d_bitdepth_input_ctrl.Show(input_enable)
-		output_enable = getcfg("3dlut.format") in ("3dl", "mga")
-		self.lut3d_bitdepth_output_label.Show(output_enable)
-		self.lut3d_bitdepth_output_ctrl.Show(output_enable)
+		input_show = getcfg("3dlut.format") == "3dl"
+		self.lut3d_bitdepth_input_label.Show(input_show)
+		self.lut3d_bitdepth_input_ctrl.Show(input_show)
+		output_show = getcfg("3dlut.format") in ("3dl", "mga")
+		self.lut3d_bitdepth_output_label.Show(output_show)
+		self.lut3d_bitdepth_output_ctrl.Show(output_show)
 		self.panel.GetSizer().Layout()
 		self.Thaw()
 
-	def enable_bt1886_controls(self, enable=True):
-		enable = enable and self.worker.argyll_version >= [1, 6]
-		self.apply_bt1886_cb.Show(enable)
-		self.bt1886_gamma_ctrl.Show(enable)
-		self.bt1886_gamma_type_ctrl.Show(enable)
+	def show_bt1886_controls(self, show=True):
+		show = show and self.worker.argyll_version >= [1, 6]
+		self.apply_bt1886_cb.Show(show)
+		self.bt1886_gamma_ctrl.Show(show)
+		self.bt1886_gamma_type_ctrl.Show(show)
 	
-	def enable_encoding_controls(self, enable=True):
-		enable = enable and self.worker.argyll_version >= [1, 6]
-		self.encoding_input_label.Show(enable)
-		self.encoding_input_ctrl.Show(enable)
-		self.encoding_output_label.Show(enable)
-		self.encoding_output_ctrl.Show(enable)
+	def show_encoding_controls(self, show=True):
+		show = show and self.worker.argyll_version >= [1, 6]
+		enable = getcfg("3dlut.format") != "madVR"
+		self.encoding_input_label.Show(show)
+		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
+		self.encoding_input_ctrl.Enable(enable)
+		self.encoding_input_ctrl.Show(show)
+		self.encoding_output_label.Show(show)
+		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
+		self.encoding_output_ctrl.Enable(enable)
+		self.encoding_output_ctrl.Show(show)
 	
 	def enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
