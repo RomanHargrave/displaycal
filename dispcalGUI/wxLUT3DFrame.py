@@ -58,6 +58,7 @@ class LUT3DFrame(BaseFrame):
 		self.panel = self.FindWindowByName("panel")
 
 		self.worker = worker.Worker(self)
+		self.worker.set_argyll_version(getcfg("argyll.version"))
 
 		# Bind event handlers
 		self.abstract_profile_cb.Bind(wx.EVT_CHECKBOX,
@@ -496,9 +497,10 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_formats_ab = {}
 		self.lut3d_formats_ba = {}
 		for i, format in enumerate(config.valid_values["3dlut.format"]):
-			self.lut3d_format_ctrl.Append(lang.getstr("3dlut.format.%s" % format))
-			self.lut3d_formats_ab[i] = format
-			self.lut3d_formats_ba[format] = i
+			if format != "madVR" or self.worker.argyll_version >= [1, 6]:
+				self.lut3d_format_ctrl.Append(lang.getstr("3dlut.format.%s" % format))
+				self.lut3d_formats_ab[i] = format
+				self.lut3d_formats_ba[format] = i
 		
 		self.lut3d_size_ab = {}
 		self.lut3d_size_ba = {}
@@ -526,7 +528,6 @@ class LUT3DFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
-		self.worker.set_argyll_version(getcfg("argyll.version"))
 		self.lut3d_create_btn.Disable()
 		self.input_profile_ctrl.SetPath(getcfg("3dlut.input.profile"))
 		self.input_profile_ctrl_handler(None)
@@ -539,6 +540,11 @@ class LUT3DFrame(BaseFrame):
 		self.bt1886_gamma_ctrl.SetValue(str(getcfg("3dlut.bt1886_gamma")))
 		self.bt1886_gamma_type_ctrl.SetSelection(self.bt1886_gamma_types_ba[getcfg("3dlut.bt1886_gamma_type")])
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
+		format = getcfg("3dlut.format")
+		if format == "madVR" and self.worker.argyll_version < [1, 6]:
+			# MadVR only available with Argyll 1.6+, fall back to 3dl
+			format = "3dl"
+			setcfg("3dlut.format", format)
 		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.enable_size_controls()

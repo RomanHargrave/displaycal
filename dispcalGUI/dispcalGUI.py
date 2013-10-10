@@ -8142,7 +8142,10 @@ class MainFrame(BaseFrame):
 				del self.gamapframe
 				self.gamap_btn_handler(None)
 			if hasattr(self, "lut3dframe"):
-				self.lut3dframe.update_controls()
+				self.lut3dframe.Close()
+				self.lut3dframe.Destroy()
+				del self.lut3dframe
+				self.lut3d_create_handler(None)
 			if hasattr(self, "tcframe"):
 				self.tcframe.tc_close_handler()
 				self.tcframe.Destroy()
