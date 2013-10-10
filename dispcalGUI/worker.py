@@ -1413,11 +1413,10 @@ class Worker(object):
 		# Convert icclu output to RGB triplets
 		RGB_out = []
 		for line in odata:
-			line = "".join(line.strip().split("->")).split()
-			RGB_out.append(" ".join([n for n in line[5:8]]))
+			RGB_out.append([float(n) for n in line.strip().split()])
 		if debug:
-			safe_print(len(RGB_out), "RGB triplets")
-			safe_print("\n".join(RGB_out))
+			safe_print(len(odata), "RGB triplets")
+			safe_print("\n".join(odata))
 
 		lut = [["# Created with %s %s" % (appname, version)]]
 		valsep = " "
@@ -1438,9 +1437,8 @@ class Worker(object):
 				lut[-1] += ["%i" % int(round(i * step * (math.pow(2, input_bits) - 1)))]
 			for RGB_triplet in RGB_out:
 				lut.append([])
-				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
-					lut[-1] += [("%i" % int(round(float(RGB_triplet[component]) * maxval))).rjust(pad, " ")]
+					lut[-1] += [("%i" % int(round(RGB_triplet[component] * maxval))).rjust(pad, " ")]
 		elif format == "cube":
 			if maxval is None:
 				maxval = 1.0
@@ -1452,9 +1450,8 @@ class Worker(object):
 			lut.append([])
 			for RGB_triplet in RGB_out:
 				lut.append([])
-				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
-					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
+					lut[-1] += ["%.6f" % (RGB_triplet[component] * maxval)]
 		elif format == "spi3d":
 			if maxval is None:
 				maxval = 1.0
@@ -1463,18 +1460,16 @@ class Worker(object):
 			lut.append(["%i %i %i" % ((size, ) * 3)])
 			for i, RGB_triplet in enumerate(RGB_out):
 				lut.append([str(index) for index in RGB_indexes[i]])
-				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
-					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
+					lut[-1] += ["%.6f" % (RGB_triplet[component] * maxval)]
 		elif format == "eeColor":
 			if maxval is None:
 				maxval = 1.0
 			lut = []
 			for i, RGB_triplet in enumerate(RGB_out):
 				lut.append(["%.6f" % (float(component) * maxval) for component in RGB_in[i].split()])
-				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
-					lut[-1] += ["%.6f" % (float(RGB_triplet[component]) * maxval)]
+					lut[-1] += ["%.6f" % (RGB_triplet[component] * maxval)]
 			linesep = "\r\n"
 		elif format == "mga":
 			lut = [["#HEADER"],
@@ -1496,9 +1491,8 @@ class Worker(object):
 			lut.append(["values\tred\tgreen\tblue"])
 			for i, RGB_triplet in enumerate(RGB_out):
 				lut.append(["%i" % i])
-				RGB_triplet = RGB_triplet.split()
 				for component in (0, 1, 2):
-					lut[-1] += [("%i" % int(round(float(RGB_triplet[component]) * maxval)))]
+					lut[-1] += [("%i" % int(round(RGB_triplet[component] * maxval)))]
 			valsep = "\t"
 		lut.append([])
 		for i, line in enumerate(lut):
