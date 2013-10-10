@@ -327,9 +327,11 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		config.writecfg()
-		self.show_encoding_controls()
+		self.enable_encoding_controls()
 		self.enable_size_controls()
 		self.show_bitdepth_controls()
+		self.lut3d_create_btn.Enable(getcfg("3dlut.format") != "madVR" or
+									 self.output_profile_ctrl.IsShown())
 	
 	def lut3d_size_ctrl_handler(self, event):
 		setcfg("3dlut.size",
@@ -425,6 +427,7 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_desc.GetContainingSizer().GetStaticBox().Show()
 							self.apply_cal_cb.Show()
 							self.show_encoding_controls()
+							self.enable_encoding_controls()
 							self.show_bt1886_controls()
 							self.apply_bt1886_cb.SetValue(bool(getcfg("3dlut.apply_bt1886_gamma_mapping")))
 							enable_bt1886_gamma = self.apply_bt1886_cb.GetValue()
@@ -449,7 +452,9 @@ class LUT3DFrame(BaseFrame):
 												 os.path.isfile(getcfg("3dlut.input.profile")) and
 												 ((bool(getcfg("3dlut.output.profile")) and
 												   os.path.isfile(getcfg("3dlut.output.profile"))) or
-												  profile.profileClass == "link"))
+												  profile.profileClass == "link") and
+												 (getcfg("3dlut.format") != "madVR" or
+												  self.output_profile_ctrl.IsShown()))
 					return profile
 			getattr(self, "%s_profile_ctrl" %
 						  which).SetPath(getcfg("3dlut.%s.profile" % which))
@@ -581,15 +586,17 @@ class LUT3DFrame(BaseFrame):
 	
 	def show_encoding_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]
-		enable = getcfg("3dlut.format") != "madVR"
 		self.encoding_input_label.Show(show)
-		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
-		self.encoding_input_ctrl.Enable(enable)
 		self.encoding_input_ctrl.Show(show)
 		self.encoding_output_label.Show(show)
+		self.encoding_output_ctrl.Show(show)
+	
+	def enable_encoding_controls(self):
+		enable = getcfg("3dlut.format") != "madVR"
+		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
+		self.encoding_input_ctrl.Enable(enable)
 		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
 		self.encoding_output_ctrl.Enable(enable)
-		self.encoding_output_ctrl.Show(show)
 	
 	def enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
