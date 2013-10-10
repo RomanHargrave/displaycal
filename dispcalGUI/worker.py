@@ -2224,10 +2224,11 @@ class Worker(object):
 														r" \d+ of \d+",
 														wexpect.EOF],
 													   timeout=None)
-								if self.subprocess.after == wexpect.EOF:
+								if self.subprocess.after in (wexpect.EOF, None):
 									break
 								if filter(lambda keyhit_str:
-											  keyhit_str in self.subprocess.after,
+											  re.search(keyhit_str,
+														self.subprocess.after),
 											  keyhit_strs):
 									# Wait for the keypress
 									while not self.send_buffer:
