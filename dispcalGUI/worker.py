@@ -1391,7 +1391,7 @@ class Worker(object):
 
 		# Lookup RGB -> XYZ values through devicelink profile using icclu
 		stderr = tempfile.SpooledTemporaryFile()
-		p = sp.Popen([icclu, "-ff", "-px", "link.icc"], 
+		p = sp.Popen([icclu, "-v0", "link.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		self.subprocess = p
