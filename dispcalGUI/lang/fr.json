@@ -170,7 +170,7 @@
 	"d3-e4-s0-g49-m0-f0-cubic2-crossover.ti1": "Grande grille de tests pour les profils « courbes + matrice »",
 	"d3-e4-s0-g51-m0-f0-cubic5-crossover.ti1": "Grande grille de tests pour les profils de table de correspondance (LUT)",
 	"d3-e4-s0-g57-m0-f0-cubic7-crossover.ti1": "Très grande grille de tests pour les profils de table de correspondance (LUT)",
-	"d3-e4-s0-g61-m0-f0-cubic10-crossover.ti1": "Énorme grille de tests pour les profils de table de correspondance (LUT)",
+	"d3-e4-s0-g73-m0-f0-cubic9-crossover.ti1": "Énorme grille de tests pour les profils de table de correspondance (LUT)",
 	"d3-e4-s0-g9-m0-f0-cubic2-crossover.ti1": "Grille de tests par défaut pour les profils « courbes + matrice »",
 	"d3-e4-s3-g3-m0-f0.ti1": "Grille de tests par défaut pour les profils « gamma + matrice »",
 	"default": "Valeur par défaut",
