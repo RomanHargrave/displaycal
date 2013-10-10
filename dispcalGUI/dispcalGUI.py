@@ -1898,7 +1898,6 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result != wx.ID_OK: return
 		skip = [
-			"3dlut.black_point_compensation",
 			"3dlut.bitdepth.input",
 			"3dlut.bitdepth.output",
 			"3dlut.format",

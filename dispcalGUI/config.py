@@ -16,7 +16,7 @@ from time import gmtime, strftime, timezone
 if sys.platform == "win32":
 	import _winreg
 
-from argyll_names import viewconds, intents
+from argyll_names import viewconds, intents, video_encodings
 from defaultpaths import appdata, commonappdata
 if sys.platform == "win32":
 	from defaultpaths import commonprogramfiles
@@ -394,6 +394,7 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 valid_ranges = {
+	"3dlut.bt1886_gamma": [0.000001, 10],
 	"gamma": [0.000001, 10],
 	"trc": [0.000001, 10],
 	"calibration.ambient_viewcond_adjust.lux": [0, sys.maxint],
@@ -411,9 +412,11 @@ valid_ranges = {
 valid_values = {
 	"3dlut.bitdepth.input": [8, 10, 12, 14, 16],
 	"3dlut.bitdepth.output": [8, 10, 12, 14, 16],
-	"3dlut.black_point_compensation": [0, 1],
-	"3dlut.format": ["3dl", "cube", "eeColor", "mga", "spi3d"],
-	"3dlut.rendering_intent": ["a", "r", "p", "s"],
+	"3dlut.bt1886_gamma_type": ["b", "B"],
+	"3dlut.encoding.input": video_encodings,
+	"3dlut.encoding.output": video_encodings,
+	"3dlut.format": ["3dl", "cube", "eeColor", "madVR", "mga", "spi3d"],
+	"3dlut.rendering_intent": intents,
 	"3dlut.size": [17, 24, 32, 33, 64, 65],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	# Measurement modes as supported by Argyll -y parameter
@@ -443,9 +446,13 @@ valid_values = {
 }
 
 defaults = {
-	"3dlut.black_point_compensation": 0,
+	"3dlut.apply_bt1886_gamma_mapping": 0,
 	"3dlut.bitdepth.input": 10,
 	"3dlut.bitdepth.output": 10,
+	"3dlut.bt1886_gamma": 2.2,
+	"3dlut.bt1886_gamma_type": "b",
+	"3dlut.encoding.input": "n",
+	"3dlut.encoding.output": "n",
 	"3dlut.format": "3dl",
 	"3dlut.input.profile": "",
 	"3dlut.abstract.profile": "",

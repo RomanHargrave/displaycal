@@ -58,6 +58,7 @@ class LUT3DFrame(BaseFrame):
 		self.panel = self.FindWindowByName("panel")
 
 		self.worker = worker.Worker(self)
+		self.worker.set_argyll_version(getcfg("argyll.version"))
 
 		# Bind event handlers
 		self.abstract_profile_cb.Bind(wx.EVT_CHECKBOX,
@@ -65,10 +66,17 @@ class LUT3DFrame(BaseFrame):
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
 		self.apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.apply_cal_ctrl_handler)
+		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
+											self.encoding_input_ctrl_handler)
+		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
+											 self.encoding_output_ctrl_handler)
+		self.apply_bt1886_cb.Bind(wx.EVT_CHECKBOX, self.apply_bt1886_ctrl_handler)
+		self.bt1886_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
+									self.bt1886_gamma_ctrl_handler)
+		self.bt1886_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
+										 self.bt1886_gamma_type_ctrl_handler)
 		self.rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
 										self.rendering_intent_ctrl_handler)
-		self.black_point_compensation_cb.Bind(wx.EVT_CHECKBOX,
-											  self.black_point_compensation_ctrl_handler)
 		self.lut3d_format_ctrl.Bind(wx.EVT_CHOICE,
 									self.lut3d_format_ctrl_handler)
 		self.lut3d_size_ctrl.Bind(wx.EVT_CHOICE,
@@ -122,18 +130,41 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl.Enable(enable)
 		self.abstract_profile_desc.Enable(enable)
 	
+	def apply_bt1886_ctrl_handler(self, event):
+		v = self.apply_bt1886_cb.GetValue()
+		self.bt1886_gamma_ctrl.Enable(v)
+		self.bt1886_gamma_type_ctrl.Enable(v)
+		setcfg("3dlut.apply_bt1886_gamma_mapping", int(v))
+		config.writecfg()
+	
 	def apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
 			   int(self.apply_cal_cb.GetValue()))
 		config.writecfg()
-	
-	def black_point_compensation_ctrl_handler(self, event):
-		setcfg("3dlut.black_point_compensation",
-			   int(self.black_point_compensation_cb.GetValue()))
-		config.writecfg()
 
 	def abstract_drop_unsupported_handler(self):
 		self.drop_unsupported("abstract")
+
+	def bt1886_gamma_ctrl_handler(self, event):
+		try:
+			v = float(self.bt1886_gamma_ctrl.GetValue().replace(",", "."))
+			if (v < config.valid_ranges["3dlut.bt1886_gamma"][0] or
+				v > config.valid_ranges["3dlut.bt1886_gamma"][1]):
+				raise ValueError()
+		except ValueError:
+			wx.Bell()
+			self.bt1886_gamma_ctrl.SetValue(str(getcfg("3dlut.bt1886_gamma")))
+		else:
+			if str(v) != self.bt1886_gamma_ctrl.GetValue():
+				self.bt1886_gamma_ctrl.SetValue(str(v))
+			setcfg("3dlut.bt1886_gamma", v)
+			config.writecfg()
+		event.Skip()
+
+	def bt1886_gamma_type_ctrl_handler(self, event):
+		setcfg("3dlut.bt1886_gamma_type",
+			   self.bt1886_gamma_types_ab[self.bt1886_gamma_type_ctrl.GetSelection()])
+		config.writecfg()
 
 	def input_drop_unsupported_handler(self):
 		self.drop_unsupported("input")
@@ -153,6 +184,16 @@ class LUT3DFrame(BaseFrame):
 		if not self.worker.is_working():
 			self.abstract_profile_ctrl.SetPath(path)
 			self.set_profile("abstract")
+	
+	def encoding_input_ctrl_handler(self, event):
+		setcfg("3dlut.encoding.input",
+			   self.encoding_ab[self.encoding_input_ctrl.GetSelection()])
+		config.writecfg()
+	
+	def encoding_output_ctrl_handler(self, event):
+		setcfg("3dlut.encoding.output",
+			   self.encoding_ab[self.encoding_output_ctrl.GetSelection()])
+		config.writecfg()
 
 	def input_drop_handler(self, path):
 		if not self.worker.is_working():
@@ -180,22 +221,37 @@ class LUT3DFrame(BaseFrame):
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()])
 		config.writecfg()
 	
-	def lut3d_create_consumer(self, result):
+	def lut3d_create_consumer(self, result=None):
 		if isinstance(result, Exception) and result:
 			show_result_dialog(result, self)
+		# Remove temporary files
+		self.worker.wrapup(False)
+	
+	def lut3d_create_handler(self, event):
+		if not check_set_argyll_bin():
+			return
+		profile_in = self.set_profile("input")
+		if getcfg("3dlut.use_abstract_profile"):
+			profile_abst = self.set_profile("abstract")
 		else:
+			profile_abst = None
+		profile_out = self.set_profile("output")
+		if (not None in (profile_in, profile_out) or
+			(profile_in and profile_in.profileClass == "link")):
 			path = None
 			defaultDir, defaultFile = get_verified_path("last_3dlut_path")
-			format = getcfg("3dlut.format")
-			if format == "eeColor":
-				format = "txt"
+			ext = getcfg("3dlut.format")
+			if ext == "eeColor":
+				ext = "txt"
+			elif ext == "madVR":
+				ext = "3dlut"
 			defaultFile = os.path.splitext(defaultFile or
-										   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + format
+										   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + ext
 			dlg = wx.FileDialog(self, 
 								lang.getstr("3dlut.create"),
 								defaultDir=defaultDir,
 								defaultFile=defaultFile,
-								wildcard="*." + format, 
+								wildcard="*." + ext, 
 								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
@@ -209,53 +265,40 @@ class LUT3DFrame(BaseFrame):
 					return
 				setcfg("last_3dlut_path", path)
 				config.writecfg()
-				result = result.replace("${FILENAME}", os.path.basename(path))
-				result = result.replace("${TITLE}",
-										os.path.splitext(os.path.basename(path))[0])
-				try:
-					lut_file = open(path, "wb")
-					lut_file.write(result)
-					lut_file.close()
-				except Exception, exception:
-					show_result_dialog(exception, self)
+				self.worker.interactive = False
+				self.worker.start(self.lut3d_create_consumer,
+								  self.lut3d_create_producer,
+								  wargs=(profile_in, profile_abst, profile_out,
+										 path),
+								  progress_msg=lang.getstr("3dlut.create"))
 	
-	def lut3d_create_handler(self, event):
-		if not check_set_argyll_bin():
-			return
-		profile_in = self.set_profile("input")
-		if getcfg("3dlut.use_abstract_profile"):
-			profile_abst = self.set_profile("abstract")
-		else:
-			profile_abst = None
-		profile_out = self.set_profile("output")
-		if (not None in (profile_in, profile_out) or
-			(profile_in and profile_in.profileClass == "link")):
-			self.worker.interactive = False
-			self.worker.start(self.lut3d_create_consumer,
-							  self.lut3d_create_producer,
-							  wargs=(profile_in, profile_abst, profile_out),
-							  progress_msg=lang.getstr("3dlut.create"))
-	
-	def lut3d_create_producer(self, profile_in, profile_abst, profile_out):
+	def lut3d_create_producer(self, profile_in, profile_abst, profile_out, path):
 		apply_cal = (profile_out and "vcgt" in profile_out.tags and
 					 getcfg("3dlut.output.profile.apply_cal"))
+		input_encoding = getcfg("3dlut.encoding.input")
+		output_encoding = getcfg("3dlut.encoding.output")
+		if getcfg("3dlut.apply_bt1886_gamma_mapping"):
+			bt1886_gamma = getcfg("3dlut.bt1886_gamma")
+		else:
+			bt1886_gamma = None
+		bt1886_gamma_type = getcfg("3dlut.bt1886_gamma_type")
 		intent = getcfg("3dlut.rendering_intent")
-		bpc = bool(getcfg("3dlut.black_point_compensation"))
 		format = getcfg("3dlut.format")
 		size = getcfg("3dlut.size")
 		input_bits = getcfg("3dlut.bitdepth.input")
 		output_bits = getcfg("3dlut.bitdepth.output")
 		try:
-			lut = self.worker.create_3dlut(profile_in, profile_abst,
-										   profile_out, apply_cal=apply_cal,
-										   intent=intent, bpc=bpc, 
-										   format=format, size=size,
-										   input_bits=input_bits,
-										   output_bits=output_bits)
+			self.worker.create_3dlut(profile_in, path, profile_abst,
+									 profile_out, apply_cal=apply_cal,
+									 intent=intent, format=format, size=size,
+									 input_bits=input_bits,
+									 output_bits=output_bits,
+									 input_encoding=input_encoding,
+									 output_encoding=output_encoding,
+									 bt1886_gamma=bt1886_gamma,
+									 bt1886_gamma_type=bt1886_gamma_type)
 		except Exception, exception:
 			return exception
-		else:
-			return lut
 	
 	def lut3d_format_ctrl_handler(self, event):
 		setcfg("3dlut.format", self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()])
@@ -270,6 +313,10 @@ class LUT3DFrame(BaseFrame):
 			# Pandora uses a fixed bitdepth of 16
 			setcfg("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
+		elif getcfg("3dlut.format") == "madVR":
+			# collink says madVR works best with 65
+			setcfg("3dlut.size", 65)
+			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		config.writecfg()
 		self.enable_size_controls()
 		self.enable_bitdepth_controls()
@@ -345,8 +392,10 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_desc.Disable()
 							self.apply_cal_cb.SetValue(False)
 							self.apply_cal_cb.Disable()
+							self.apply_bt1886_cb.Disable()
+							self.bt1886_gamma_ctrl.Disable()
+							self.bt1886_gamma_type_ctrl.Disable()
 							self.rendering_intent_ctrl.Disable()
-							self.black_point_compensation_cb.Disable()
 					else:
 						if which == "input":
 							enable = bool(getcfg("3dlut.use_abstract_profile"))
@@ -358,11 +407,16 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_current_btn.Enable()
 							self.output_profile_desc.Enable()
 							self.rendering_intent_ctrl.Enable()
-							self.black_point_compensation_cb.Enable()
 						elif which == "output":
 							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
 							self.apply_cal_cb.Enable("vcgt" in profile.tags)
+							if self.worker.argyll_version >= [1, 6]:
+								self.apply_bt1886_cb.Enable()
+								self.apply_bt1886_cb.SetValue(bool(getcfg("3dlut.apply_bt1886_gamma_mapping")))
+								enable_bt1886_gamma = self.apply_bt1886_cb.GetValue()
+								self.bt1886_gamma_ctrl.Enable(enable_bt1886_gamma)
+								self.bt1886_gamma_type_ctrl.Enable(enable_bt1886_gamma)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					if which == "output" and not self.output_profile_ctrl.Enabled:
 						return
@@ -415,6 +469,11 @@ class LUT3DFrame(BaseFrame):
 						  % which).SetDropTarget(getattr(self, "%s_droptarget"
 														 % which))
 		
+		self.bt1886_gamma_types_ab = {0: "b", 1: "B"}
+		self.bt1886_gamma_types_ba = {"b": 0, "B": 1}
+		self.bt1886_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
+											  lang.getstr("trc.type.absolute")])
+		
 		self.rendering_intents_ab = {}
 		self.rendering_intents_ba = {}
 		for i, ri in enumerate(config.valid_values["3dlut.rendering_intent"]):
@@ -443,6 +502,15 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_bitdepth_output_ctrl.Append(str(bitdepth))
 			self.lut3d_bitdepth_ab[i] = bitdepth
 			self.lut3d_bitdepth_ba[bitdepth] = i
+		
+		self.encoding_ab = {}
+		self.encoding_ba = {}
+		for i, encoding in enumerate(config.valid_values["3dlut.encoding.input"]):
+			lstr = lang.getstr("3dlut.encoding.type_%s" % encoding)
+			self.encoding_input_ctrl.Append(lstr)
+			self.encoding_output_ctrl.Append(lstr)
+			self.encoding_ab[i] = encoding
+			self.encoding_ba[encoding] = i
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
@@ -455,15 +523,22 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl_handler(None)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.apply_cal_cb.Disable()
+		self.apply_bt1886_cb.Disable()
+		self.bt1886_gamma_ctrl.Disable()
+		self.bt1886_gamma_ctrl.SetValue(str(getcfg("3dlut.bt1886_gamma")))
+		self.bt1886_gamma_type_ctrl.Disable()
+		self.bt1886_gamma_type_ctrl.SetSelection(self.bt1886_gamma_types_ba[getcfg("3dlut.bt1886_gamma_type")])
 		self.output_profile_ctrl_handler(None)
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
-		self.black_point_compensation_cb.SetValue(bool(getcfg("3dlut.black_point_compensation")))
 		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.enable_size_controls()
 		self.lut3d_bitdepth_input_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.input")])
 		self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
 		self.enable_bitdepth_controls()
+		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
+		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
+		self.enable_encoding_controls()
 	
 	def enable_bitdepth_controls(self):
 		self.Freeze()
@@ -476,8 +551,17 @@ class LUT3DFrame(BaseFrame):
 		self.panel.GetSizer().Layout()
 		self.Thaw()
 	
+	def enable_encoding_controls(self):
+		self.Freeze()
+		enable = self.worker.argyll_version >= [1, 6]
+		self.encoding_input_label.Show(enable)
+		self.encoding_input_ctrl.Show(enable)
+		self.panel.GetSizer().Layout()
+		self.Thaw()
+	
 	def enable_size_controls(self):
-		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format") != "eeColor")
+		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
+									not in ("eeColor", "madVR"))
 		
 
 

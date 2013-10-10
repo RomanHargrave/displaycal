@@ -1195,11 +1195,14 @@ class Worker(object):
 		if self.interactive:
 			self.logger.info("-" * 80)
 
-	def create_3dlut(self, profile_in, profile_abst=None, profile_out=None,
-					 apply_cal=True, intent="r", bpc=True, format="3dl",
-					 size=17, input_bits=10, output_bits=12, maxval=1.0):
-		""" Create a 3D LUT from two profiles, optionally incorporating
-		an abstract profile. """
+	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
+					 apply_cal=True, intent="r", format="3dl",
+					 size=17, input_bits=10, output_bits=12, maxval=1.0,
+					 input_encoding="n", output_encoding="n",
+					 bt1886_gamma=None, bt1886_gamma_type="b",
+					 save_link_icc=True):
+		""" Create a 3D LUT from one (device link) or two (device) profiles,
+		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
 		# .3dl: http://www.kodak.com/US/plugins/acrobat/en/motion/products/look/UserGuide.pdf
 		#       http://download.autodesk.com/us/systemdocs/pdf/lustre_color_management_user_guide.pdf
@@ -1214,6 +1217,130 @@ class Worker(object):
 			if profile_in.profileClass == "link":
 				break
 		
+		# Setup temp dir
+		cwd = self.create_tempdir()
+		if isinstance(cwd, Exception):
+			raise cwd
+		
+		if profile_in.profileClass == "link":
+			profile_in.write(os.path.join(cwd, "link.icc"))
+		else:
+			# Build a device link
+
+			profile_in.write(os.path.join(cwd, "profile_in.icc"))
+			profile_out.write(os.path.join(cwd, "profile_out.icc"))
+			
+			# Apply calibration?
+			if apply_cal:
+				# Get the calibration from profile vcgt
+				if not profile_out.tags.get("vcgt", None):
+					raise Error(lang.getstr("profile.no_vcgt"))
+				try:
+					cgats = vcgt_to_cal(profile_out)
+				except (CGATS.CGATSInvalidError, 
+						CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+						CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+					raise Error(lang.getstr("cal_extraction_failed"))
+				cgats.write(os.path.join(cwd, "profile_out.cal"))
+				
+				if self.argyll_version < [1, 6]:
+					# Can't apply the calibration with old collink versions -
+					# apply the calibration to the 'out' profile prior to
+					# device linking instead
+					applycal = get_argyll_util("applycal")
+					if not applycal:
+						raise NotImplementedError(lang.getstr("argyll.util.not_found",
+															  "applycal"))
+					safe_print(lang.getstr("3dlut.output.profile.apply_cal"))
+					result = self.exec_cmd(applycal, ["-v",
+													  "profile_out.cal",
+													  "profile_out.icc",
+													  "profile_out.icc"],
+										   capture_output=True, skip_scripts=True,
+										   working_dir=cwd)
+					if isinstance(result, Exception):
+						raise result
+					elif not result:
+						raise Error("\n\n".join([lang.getstr("3dlut.output.profile.apply_cal.error"),
+												 "\n".join(self.errors)]))
+
+			# Now build the device link
+			collink = get_argyll_util("collink")
+			if not collink:
+				raise NotImplementedError(lang.getstr("argyll.util.not_found",
+													  "collink"))
+			args = ["-v", "-qh", "-G", "-i%s" % intent]
+			if profile_abst:
+				profile_abst.write(os.path.join(cwd, "abstract.icc"))
+				args += ["-p", "abstract.icc"]
+			if self.argyll_version >= [1, 6]:
+				if format == "madVR":
+					# -et -Et REQUIRED for madVR
+					args += ["-3m", "-et", "-Et"]
+				else:
+					if format == "eeColor":
+						args += ["-3e"]
+					args += ["-e%s" % input_encoding]
+					args += ["-E%s" % output_encoding]
+				if bt1886_gamma:
+					args += ["-I%s:%s" % (bt1886_gamma_type, bt1886_gamma)]
+				if apply_cal:
+					# Apply the calibration when building our device link
+					# i.e. use collink -a parameter (apply calibration curves
+					# to link output and append linear)
+					args += ["-a", "profile_out.cal"]
+			result = self.exec_cmd(collink, args + ["profile_in.icc",
+													"profile_out.icc",
+													"link.icc"],
+								   capture_output=True, skip_scripts=True,
+								   working_dir=cwd)
+			if isinstance(result, Exception):
+				raise result
+			elif not result:
+				raise Error("\n\n".join([lang.getstr("aborted"),
+										 "\n".join(self.errors)]))
+
+		filename, ext = os.path.splitext(path)
+
+		link_filename = os.path.join(cwd, "link.icc")
+		if (profile_in.profileClass != "link" and save_link_icc and
+			os.path.isfile(link_filename)):
+			profile_link = ICCP.ICCProfile(link_filename)
+			profile_link.setDescription("%s -> %s" % (profile_in.getDescription(),
+													  profile_out.getDescription()))
+			profile_link.setCopyright(getcfg("copyright"))
+			manufacturer = profile_out.getDeviceManufacturerDescription()
+			if manufacturer:
+				profile_link.setDeviceManufacturerDescription(manufacturer)
+			model = profile_out.getDeviceModelDescription()
+			if model:
+				profile_link.setDeviceModelDescription(model)
+			profile_link.device["manufacturer"] = profile_out.device["manufacturer"]
+			profile_link.device["model"] = profile_out.device["model"]
+			if "mmod" in profile_out.tags:
+				profile_link.tags.mmod = profile_out.tags.mmod
+			profile_link.calculateID()
+			profile_link.write(filename + profile_ext)
+
+		if self.argyll_version >= [1, 6]:
+			if format in ("eeColor", "madVR"):
+				# Collink has already written the 3DLUT for us
+				if format == "eeColor":
+					shutil.move(os.path.join(cwd, "link.txt"), path)
+					for suffix in ("first", "second"):
+						for channel in ("red", "green", "blue"):
+							template = "-%s1d%s%s" % (suffix, channel, ext)
+							src = os.path.join(cwd, "link%s" % template)
+							dst = "%s%s" % (filename, template)
+							shutil.move(src, dst)
+				elif format == "madVR":
+					shutil.move(os.path.join(cwd, "link.3dlut"), path)
+				# Remove temporary files
+				self.wrapup(False)
+				return
+
+		# We have to create the 3DLUT ourselves
+
 		# Create input RGB values
 		RGB_in = []
 		RGB_indexes = []
@@ -1255,9 +1382,6 @@ class Worker(object):
 		
 		# Setup icclu
 		icclu = get_argyll_util("icclu").encode(fs_enc)
-		cwd = self.create_tempdir()
-		if isinstance(cwd, Exception):
-			raise cwd
 		if sys.platform == "win32":
 			startupinfo = sp.STARTUPINFO()
 			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
@@ -1265,17 +1389,9 @@ class Worker(object):
 		else:
 			startupinfo = None
 
-		pcs = "x"
-
-		# Prepare 'input' profile
-		profile_in.write(os.path.join(cwd, "profile_in.icc"))
-
-		# Lookup RGB -> XYZ values through 'input' profile using icclu
+		# Lookup RGB -> XYZ values through devicelink profile using icclu
 		stderr = tempfile.SpooledTemporaryFile()
-		args = ["-ff", "-p" + pcs, "profile_in.icc"]
-		if profile_in.profileClass != "link":
-			args.insert(1, "-i" + intent)
-		p = sp.Popen([icclu] + args, 
+		p = sp.Popen([icclu, "-ff", "-px", "link.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		self.subprocess = p
@@ -1290,147 +1406,6 @@ class Worker(object):
 		if p.wait() != 0:
 			raise IOError(''.join(odata))
 		stderr.close()
-
-		if profile_in.profileClass != "link":
-			# Convert icclu output to XYZ triplets
-			XYZ_triplets = []
-			for line in odata:
-				line = "".join(line.strip().split("->")).split()
-				XYZ_triplets.append(" ".join([n for n in line[5:8]]))
-			if debug:
-				safe_print(len(XYZ_triplets), "XYZ triplets")
-				safe_print("\n".join(XYZ_triplets))
-
-			# Prepare 'output' profile
-			profile_out.write(os.path.join(cwd, "profile_out.icc"))
-			
-			# Apply calibration?
-			if apply_cal:
-				if not profile_out.tags.get("vcgt", None):
-					raise Error(lang.getstr("profile.no_vcgt"))
-				try:
-					cgats = vcgt_to_cal(profile_out)
-				except (CGATS.CGATSInvalidError, 
-						CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-						CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-					raise Error(lang.getstr("cal_extraction_failed"))
-				cgats.write(os.path.join(cwd, "profile_out.cal"))
-				applycal = get_argyll_util("applycal")
-				if not applycal:
-					raise NotImplementedError(lang.getstr("argyll.util.not_found",
-														  "applycal"))
-				safe_print(lang.getstr("3dlut.output.profile.apply_cal"))
-				result = self.exec_cmd(applycal, ["-v",
-												  "profile_out.cal",
-												  "profile_out.icc",
-												  "profile_out.icc"],
-									   capture_output=True, skip_scripts=True,
-									   working_dir=cwd)
-				if isinstance(result, Exception):
-					raise result
-				elif not result:
-					raise Error("\n\n".join(lang.getstr("3dlut.output.profile.apply_cal.error"),
-											"\n".join(self.errors)))
-				profile_out = ICCP.ICCProfile(os.path.join(cwd,
-														   "profile_out.icc"))
-
-			if bpc:
-				# Black point compensation
-				
-				# Get 'input' profile black point
-				bp_in = [float(n) for n in XYZ_triplets[0].split()]
-				if debug:
-					safe_print("bp_in", bp_in)
-
-				# Lookup 'output' profile black point
-				stderr = tempfile.SpooledTemporaryFile()
-				p = sp.Popen([icclu, "-ff", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
-							 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-							 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-				self.subprocess = p
-				if p.poll() not in (0, None):
-					stderr.seek(0)
-					raise Error(stderr.read().strip())
-				try:
-					odata = p.communicate("0 0 0\n1 1 1")[0].splitlines()
-				except IOError:
-					stderr.seek(0)
-					raise Error(stderr.read().strip())
-				if p.wait() != 0:
-					# error
-					raise IOError(''.join(odata))
-				stderr.close()
-
-				bp_out = [float(n) for n in "".join(odata[0].strip().split("->")).split()[5:8]]
-				if debug:
-					safe_print("bp_out", bp_out)
-
-				# Get 'output' profile white point
-				wp_out = [float(n) for n in "".join(odata[1].strip().split("->")).split()[5:8]]
-				if debug:
-					safe_print("wp_out", wp_out)
-				
-				# Apply black point compensation
-				for i, XYZ_triplet in enumerate(XYZ_triplets):
-					X, Y, Z = [float(n) for n in XYZ_triplet.split()]
-					XYZ_triplets[i] = " ".join(str(n) for n in
-											   colormath.apply_bpc(X, Y, Z, bp_in,
-																   bp_out, wp_out))
-			if debug:
-				safe_print(len(XYZ_triplets), "XYZ triplets")
-				safe_print("\n".join(XYZ_triplets))
-
-			# Use abstract profile?
-			if profile_abst is not None:
-				# Prepare abstract profile
-				profile_abst.write(os.path.join(cwd, "profile_abst.icc"))
-
-				# Lookup XYZ -> XYZ values through abstract profile using icclu
-				stderr = tempfile.SpooledTemporaryFile()
-				args = ["-ff", "-p" + pcs, "profile_abst.icc"]
-				p = sp.Popen([icclu] + args, 
-							 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-							 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-				self.subprocess = p
-				if p.poll() not in (0, None):
-					stderr.seek(0)
-					raise Error(stderr.read().strip())
-				try:
-					odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
-				except IOError:
-					stderr.seek(0)
-					raise Error(stderr.read().strip())
-				if p.wait() != 0:
-					raise IOError(''.join(odata))
-				stderr.close()
-
-				# Convert icclu output to XYZ triplets
-				XYZ_triplets = []
-				for line in odata:
-					line = "".join(line.strip().split("->")).split()
-					XYZ_triplets.append(" ".join([n for n in line[5:8]]))
-				if debug:
-					safe_print(len(XYZ_triplets), "XYZ triplets")
-					safe_print("\n".join(XYZ_triplets))
-
-			# Lookup XYZ -> RGB values through 'output' profile using icclu
-			stderr = tempfile.SpooledTemporaryFile()
-			p = sp.Popen([icclu, "-fb", "-i" + intent, "-p" + pcs, "profile_out.icc"], 
-						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-			self.subprocess = p
-			if p.poll() not in (0, None):
-				stderr.seek(0)
-				raise Error(stderr.read().strip())
-			try:
-				odata = p.communicate("\n".join(XYZ_triplets))[0].splitlines()
-			except IOError:
-				stderr.seek(0)
-				raise Error(stderr.read().strip())
-			if p.wait() != 0:
-				# error
-				raise IOError(''.join(odata))
-			stderr.close()
 
 		# Remove temporary files
 		self.wrapup(False)
@@ -1528,7 +1503,17 @@ class Worker(object):
 		lut.append([])
 		for i, line in enumerate(lut):
 			lut[i] = valsep.join(line)
-		return linesep.join(lut)
+		result = linesep.join(lut)
+
+		# Update placeholders
+		result = result.replace("${FILENAME}", os.path.basename(path))
+		result = result.replace("${TITLE}",
+								os.path.splitext(os.path.basename(path))[0])
+
+		# Write 3DLUT
+		lut_file = open(path, "wb")
+		lut_file.write(result)
+		lut_file.close()
 
 	def create_tempdir(self):
 		""" Create a temporary working directory and return its path. """
@@ -1924,7 +1909,8 @@ class Worker(object):
 		measure_cmds = (get_argyll_utilname("dispcal"), 
 						get_argyll_utilname("dispread"), 
 						get_argyll_utilname("spotread"))
-		process_cmds = (get_argyll_utilname("colprof"),
+		process_cmds = (get_argyll_utilname("collink"),
+						get_argyll_utilname("colprof"),
 						get_argyll_utilname("targen"))
 		interact = args and not "-?" in args and cmdname in measure_cmds + process_cmds
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds

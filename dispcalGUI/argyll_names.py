@@ -68,3 +68,6 @@ viewconds = [
 
 # Intents supported by colprof
 intents = ["a", "aa", "aw", "la", "ms", "p", "pa", "r", "s"]  # pa = Argyll >= 1.3.3
+
+# Video input/output encodings supported by collink (Argyll >= 1.6)
+video_encodings = ["n", "t", "6", "7", "5", "2", "C", "x", "X"]

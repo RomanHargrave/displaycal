@@ -57,7 +57,6 @@
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
-                
                 <object class="spacer"/>
                 <object class="sizeritem">
                   <object class="wxStaticBoxSizer">
@@ -125,6 +124,62 @@
                   </object>
                 </object>
                 <object class="sizeritem">
+                  <object class="wxStaticText" name="encoding_input_label">
+                    <label>3dlut.encoding.input</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxChoice" name="encoding_input_ctrl">
+                    <selection>4</selection>
+                  </object>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="encoding_output_label">
+                    <label>3dlut.encoding.output</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxChoice" name="encoding_output_ctrl">
+                    <selection>4</selection>
+                  </object>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="apply_bt1886_cb">
+                    <label>3dlut.apply_bt1886_gamma_mapping</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxComboBox" name="bt1886_gamma_ctrl">
+                        <size>75,-1</size>
+                        <content>
+                          <item>2.2</item>
+                          <item>2.4</item>
+                        </content>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxChoice" name="bt1886_gamma_type_ctrl">
+                        <content>
+                          <item></item>
+                        </content>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="sizeritem">
                   <object class="wxStaticText">
                     <label>rendering_intent</label>
                   </object>
@@ -138,12 +193,6 @@
                       </object>
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxCheckBox" name="black_point_compensation_cb">
-                        <label>black_point_compensation</label>
-                      </object>
-                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
                     <orient>wxHORIZONTAL</orient>
                   </object>
