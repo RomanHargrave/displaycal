@@ -1038,7 +1038,7 @@ class Worker(object):
 				start_new_thread(mac_app_activate, (1, appname if isapp 
 													else "Python"))
 			if (self.instrument_calibration_complete or
-				((config.get_display_name() in ("Web", "madVR") or
+				((config.get_display_name() == "Web" or
 				  getcfg("measure.darken_background")) and
 				 (not self.dispread_after_dispcal or
 				  self.cmdname == "dispcal"))):
