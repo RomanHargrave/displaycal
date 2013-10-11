@@ -72,6 +72,10 @@
         <label>enable_argyll_debug</label>
         <checkable>1</checkable>
       </object>
+      <object class="wxMenuItem" name="enable_dry_run">
+        <label>dry_run</label>
+        <checkable>1</checkable>
+      </object>
       <object class="separator"/>
       <object class="wxMenuItem" name="restore_defaults">
         <label>restore_defaults</label>

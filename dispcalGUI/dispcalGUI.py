@@ -1433,6 +1433,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("enable_argyll_debug"))
 		self.Bind(wx.EVT_MENU, self.enable_argyll_debug_handler, 
 				  self.menuitem_enable_argyll_debug)
+		self.menuitem_enable_dry_run = options.FindItemById(
+			options.FindItem("dry_run"))
+		self.Bind(wx.EVT_MENU, self.enable_dry_run_handler, 
+				  self.menuitem_enable_dry_run)
 		menuitem = options.FindItemById(options.FindItem("restore_defaults"))
 		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
 		
@@ -1582,6 +1586,7 @@ class MainFrame(BaseFrame):
 		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
+		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
@@ -2909,7 +2914,7 @@ class MainFrame(BaseFrame):
 					args += [path]
 					break
 			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-										  skip_scripts=True, silent=True,
+										  skip_scripts=True, silent=False,
 										  asroot=self.worker.argyll_version < [1, 2, 0] or 
 												 (sys.platform == "darwin" and mac_ver()[0] >= '10.6'),
 										  title=lang.getstr("enable_spyder2"))
@@ -2921,7 +2926,9 @@ class MainFrame(BaseFrame):
 				self.update_menus()
 			else:
 				if isinstance(result, Exception):
-					show_result_dialog(result, self) 
+					show_result_dialog(result, self)
+					if getcfg("dry_run"):
+						return
 				# prompt for installer executable
 				dlg = ConfirmDialog(self, 
 									msg=lang.getstr("locate_spyder2_setup"), 
@@ -2951,7 +2958,7 @@ class MainFrame(BaseFrame):
 					result = self.worker.exec_cmd(cmd, args, 
 												  capture_output=True, 
 												  skip_scripts=True, 
-												  silent=True,
+												  silent=False,
 												  asroot=self.worker.argyll_version < [1, 2, 0] or 
 														 (sys.platform == "darwin" and mac_ver()[0] >= '10.6'),
 												  title=lang.getstr("enable_spyder2"))
@@ -3004,6 +3011,9 @@ class MainFrame(BaseFrame):
 					   bitmap=geticon(32, "dialog-warning"), log=False)
 		setcfg("argyll.debug", 
 			   int(self.menuitem_enable_argyll_debug.IsChecked()))
+
+	def enable_dry_run_handler(self, event):
+		setcfg("dry_run", int(self.menuitem_enable_dry_run.IsChecked()))
 	
 	def enable_menus(self, enable=True):
 		for menu, label in self.menubar.GetMenus():
@@ -3917,7 +3927,7 @@ class MainFrame(BaseFrame):
 		cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-T"]
 		if cmd:
 			self.worker.add_measurement_features(args, display=False)
-			result = self.worker.exec_cmd(cmd, args, skip_scripts=True)
+			return self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		else:
 			wx.CallAfter(show_result_dialog,
 						 Error(lang.getstr("argyll.util.not_found",
@@ -3925,6 +3935,10 @@ class MainFrame(BaseFrame):
 	
 	def measure_uniformity_consumer(self, result):
 		self.Show()
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+			if getcfg("dry_run"):
+				return
 		for i, line in enumerate(self.worker.output):
 			if line.startswith("spotread: Error"):
 				show_result_dialog(Error(line.strip()), self)
@@ -4371,11 +4385,11 @@ class MainFrame(BaseFrame):
 				if self.install_cal(capture_output=True, 
 									profile_path=path, 
 									skip_scripts=True, 
-									silent=True,
+									silent=not getcfg("dry_run"),
 									title=lang.getstr("calibration.load_from_profile")) is True:
 					self.lut_viewer_load_lut(profile=profile)
 					if verbose >= 1: safe_print(lang.getstr("success"))
-				else:
+				elif not getcfg("dry_run"):
 					if verbose >= 1: safe_print(lang.getstr("failure"))
 					InfoDialog(self, msg=lang.getstr("calibration.load_error") + 
 										 "\n" + path, 
@@ -4384,11 +4398,11 @@ class MainFrame(BaseFrame):
 			else:
 				setcfg("last_cal_path", path)
 				if self.install_cal(capture_output=True, cal=path, 
-									skip_scripts=True, silent=True,
+									skip_scripts=True, silent=not getcfg("dry_run"),
 									title=lang.getstr("calibration.load_from_cal")) is True:
 					self.lut_viewer_load_lut(profile=cal_to_fake_profile(path))
 					if verbose >= 1: safe_print(lang.getstr("success"))
-				else:
+				elif not getcfg("dry_run"):
 					if verbose >= 1: safe_print(lang.getstr("failure"))
 
 	def preview_handler(self, event=None, preview=False):
@@ -4485,6 +4499,9 @@ class MainFrame(BaseFrame):
 							   bitmap=geticon(32, "dialog-information"),
 							   log=False)
 		elif not silent:
+			if isinstance(result, Exception) and getcfg("dry_run"):
+				show_result_dialog(result, self)
+				return
 			if cal is False:
 				InfoDialog(self, 
 						   msg=lang.getstr("calibration.reset_error"), 
@@ -5007,7 +5024,7 @@ class MainFrame(BaseFrame):
 			if verbose >= 1:
 				safe_print(lang.getstr("calibration.resetting"))
 			if self.install_cal(capture_output=True, cal=False, 
-								skip_scripts=True, silent=True,
+								skip_scripts=True, silent=not getcfg("dry_run"),
 								title=lang.getstr("calibration.reset")) is True:
 				profile = ICCP.ICCProfile()
 				profile._data = "\0" * 128
@@ -5025,7 +5042,7 @@ class MainFrame(BaseFrame):
 				if verbose >= 1:
 					safe_print(lang.getstr("success"))
 				return True
-			if verbose >= 1:
+			if verbose >= 1 and not getcfg("dry_run"):
 				safe_print(lang.getstr("failure"))
 		return False
 
@@ -5039,13 +5056,13 @@ class MainFrame(BaseFrame):
 				if profile and profile.fileName:
 					safe_print(profile.fileName)
 			if self.install_cal(capture_output=True, cal=True, 
-								skip_scripts=True, silent=True,
+								skip_scripts=True, silent=not getcfg("dry_run"),
 								title=lang.getstr("calibration.load_from_display_profile")) is True:
 				self.lut_viewer_load_lut(profile=profile)
 				if verbose >= 1:
 					safe_print(lang.getstr("success"))
 				return True
-			if verbose >= 1:
+			if verbose >= 1 and not getcfg("dry_run"):
 				safe_print(lang.getstr("failure"))
 		return False
 
@@ -5150,10 +5167,11 @@ class MainFrame(BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			wx.CallAfter(InfoDialog, self, 
-						 msg=lang.getstr("calibration.incomplete"), 
-						 ok=lang.getstr("ok"), 
-						 bitmap=geticon(32, "dialog-error"))
+			if not getcfg("dry_run"):
+				wx.CallAfter(InfoDialog, self, 
+							 msg=lang.getstr("calibration.incomplete"), 
+							 ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
@@ -5166,7 +5184,8 @@ class MainFrame(BaseFrame):
 		self.HideAll()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
-		if config.get_display_name() in ("Web", "Untethered", "madVR"):
+		if (config.get_display_name() in ("Web", "Untethered", "madVR") or
+			getcfg("dry_run")):
 			self.call_pending_function()
 		elif sys.platform in ("darwin", "win32") or isexe:
 			self.measureframe.Show()
@@ -5305,10 +5324,11 @@ class MainFrame(BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			wx.CallAfter(InfoDialog, self, 
-						 msg=lang.getstr("calibration.incomplete"), 
-						 ok=lang.getstr("ok"), 
-						 bitmap=geticon(32, "dialog-error"))
+			if not getcfg("dry_run"):
+				wx.CallAfter(InfoDialog, self, 
+							 msg=lang.getstr("calibration.incomplete"), 
+							 ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, "dialog-error"))
 			self.Show()
 	
 	def calibrate_and_profile_finish(self, result):
@@ -5322,10 +5342,11 @@ class MainFrame(BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			wx.CallAfter(InfoDialog, self, 
-						 msg=lang.getstr("profiling.incomplete"), 
-						 ok=lang.getstr("ok"), 
-						 bitmap=geticon(32, "dialog-error"))
+			if not getcfg("dry_run"):
+				wx.CallAfter(InfoDialog, self, 
+							 msg=lang.getstr("profiling.incomplete"), 
+							 ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
 	def start_profile_worker(self, success_msg, resume=False):
@@ -5579,10 +5600,11 @@ class MainFrame(BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			wx.CallAfter(InfoDialog, self, 
-						 msg=lang.getstr("profiling.incomplete"), 
-						 ok=lang.getstr("ok"), 
-						 bitmap=geticon(32, "dialog-error"))
+			if not getcfg("dry_run"):
+				wx.CallAfter(InfoDialog, self, 
+							 msg=lang.getstr("profiling.incomplete"), 
+							 ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
 
 	def profile_finish(self, result, profile_path=None, success_msg="", 
@@ -6818,22 +6840,23 @@ class MainFrame(BaseFrame):
 						# Assume Spyder4
 						type = "spyder4"
 			if type == ".txt":
-				# Assume iColorDisplay DeviceCorrections.txt
-				ccmx_dir = config.get_argyll_data_dir()
-				if not os.path.exists(ccmx_dir):
-					result = check_create_dir(ccmx_dir)
-					if isinstance(result, Exception):
-						show_result_dialog(result, self)
-						return
-				safe_print(lang.getstr("colorimeter_correction.import"))
-				safe_print(path)
-				try:
-					ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
-				except (OSError, UnicodeDecodeError,
-						demjson.JSONDecodeError), exception:
-					result = Error(lang.getstr("file.invalid"))
-				else:
-					result = icd = True
+				if not getcfg("dry_run"):
+					# Assume iColorDisplay DeviceCorrections.txt
+					ccmx_dir = config.get_argyll_data_dir()
+					if not os.path.exists(ccmx_dir):
+						result = check_create_dir(ccmx_dir)
+						if isinstance(result, Exception):
+							show_result_dialog(result, self)
+							return
+					safe_print(lang.getstr("colorimeter_correction.import"))
+					safe_print(path)
+					try:
+						ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
+					except (OSError, UnicodeDecodeError,
+							demjson.JSONDecodeError), exception:
+						result = Error(lang.getstr("file.invalid"))
+					else:
+						result = icd = True
 			elif type == "xrite":
 				# Import .edr
 				result = i1d3 = self.worker.import_edr([path])

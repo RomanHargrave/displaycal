@@ -533,7 +533,8 @@ def show_result_dialog(result, parent=None, pos=None):
 	else:
 		bitmap = geticon(32, "dialog-error")
 	InfoDialog(parent, pos=pos, msg=msg, ok=lang.getstr("ok"), bitmap=bitmap, 
-			   log=not isinstance(result, UnloggedError))
+			   log=not isinstance(result, (UnloggedError, UnloggedInfo,
+										   UnloggedWarning)))
 
 
 class Error(Exception):
@@ -545,6 +546,14 @@ class Info(UserWarning):
 
 
 class UnloggedError(Error):
+	pass
+
+
+class UnloggedInfo(Info):
+	pass
+
+
+class UnloggedWarning(UserWarning):
 	pass
 
 
@@ -1259,7 +1268,7 @@ class Worker(object):
 													  "profile_out.icc"],
 										   capture_output=True, skip_scripts=True,
 										   working_dir=cwd)
-					if isinstance(result, Exception):
+					if isinstance(result, Exception) and not getcfg("dry_run"):
 						raise result
 					elif not result:
 						raise Error("\n\n".join([lang.getstr("3dlut.output.profile.apply_cal.error"),
@@ -1787,7 +1796,7 @@ class Worker(object):
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
-				 title=appname, shell=False, working_dir=None):
+				 title=appname, shell=False, working_dir=None, dry_run=False):
 		"""
 		Execute a command.
 		
@@ -1852,8 +1861,10 @@ class Worker(object):
 			working_dir = self.tempdir
 		if working_dir and not os.path.isdir(working_dir):
 			working_dir = None
-		if verbose >= 1:
+		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
+				if not silent and (dry_run or getcfg("dry_run")):
+					safe_print(lang.getstr("dry_run"), fn=fn)
 				safe_print("", fn=fn)
 				if working_dir:
 					safe_print(lang.getstr("working_dir"), fn=fn)
@@ -1871,6 +1882,11 @@ class Worker(object):
 				printcmdline(cmd if verbose >= 2 else os.path.basename(cmd), 
 							 args, fn=fn, cwd=working_dir)
 				safe_print("", fn=fn)
+				if not silent and (dry_run or getcfg("dry_run")):
+					safe_print(lang.getstr("dry_run.end"), fn=fn)
+					if self.owner and hasattr(self.owner, "infoframe"):
+						wx.CallAfter(self.owner.infoframe.Show)
+					return UnloggedInfo(lang.getstr("dry_run.info"))
 		cmdline = [cmd] + args
 		if working_dir:
 			for i, item in enumerate(cmdline):
@@ -2589,7 +2605,7 @@ class Worker(object):
 		argyll_install = self._install_profile_argyll(profile_path,
 													  capture_output,
 													  skip_scripts, silent)
-		if sys.platform not in ("darwin", "win32"):
+		if sys.platform not in ("darwin", "win32") and not getcfg("dry_run"):
 			device_id = self.get_device_id(quirk=True)
 			if device_id and colord.Colord:
 				try:
@@ -2654,7 +2670,7 @@ class Worker(object):
 					msg = lang.getstr("profile.install.success")
 				result = Info(msg)
 		else:
-			if result is not None:
+			if result is not None and not getcfg("dry_run"):
 				if verbose >= 1: safe_print(lang.getstr("failure"))
 				result = Error(lang.getstr("profile.install.error"))
 		return result
