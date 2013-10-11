@@ -8268,7 +8268,8 @@ class MainFrame(BaseFrame):
 				display_name = profile.getDeviceModelDescription()
 				if display_name:
 					for i, edid in enumerate(self.worker.display_edid):
-						if edid.get("monitor_name") == display_name:
+						if display_name in (edid.get("monitor_name"),
+											self.worker.display_names[i]):
 							# Found it
 							setcfg("display.number", i + 1)
 							self.get_set_display()
@@ -8324,7 +8325,8 @@ class MainFrame(BaseFrame):
 							# Special case web and madvr so it can be used in
 							# preset templates which are TI3 files
 							for i, display_name in enumerate(self.worker.display_names):
-								if display_name.lower() == o[1:]:
+								if (display_name.lower() == o[1:] and
+									getcfg("display.number") != i + 1):
 									# Found it
 									setcfg("display.number", i + 1)
 									self.get_set_display()
