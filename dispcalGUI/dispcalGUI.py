@@ -5024,7 +5024,7 @@ class MainFrame(BaseFrame):
 			if verbose >= 1:
 				safe_print(lang.getstr("calibration.resetting"))
 			if self.install_cal(capture_output=True, cal=False, 
-								skip_scripts=True, silent=not getcfg("dry_run"),
+								skip_scripts=True, silent=not (getcfg("dry_run") and event),
 								title=lang.getstr("calibration.reset")) is True:
 				profile = ICCP.ICCProfile()
 				profile._data = "\0" * 128
@@ -5056,7 +5056,7 @@ class MainFrame(BaseFrame):
 				if profile and profile.fileName:
 					safe_print(profile.fileName)
 			if self.install_cal(capture_output=True, cal=True, 
-								skip_scripts=True, silent=not getcfg("dry_run"),
+								skip_scripts=True, silent=not (getcfg("dry_run") and event),
 								title=lang.getstr("calibration.load_from_display_profile")) is True:
 				self.lut_viewer_load_lut(profile=profile)
 				if verbose >= 1:
