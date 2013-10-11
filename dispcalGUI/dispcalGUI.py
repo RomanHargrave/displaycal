@@ -8302,7 +8302,8 @@ class MainFrame(BaseFrame):
 					safe_print("[D] options_dispcal:", options_dispcal)
 				if debug:
 					safe_print("[D] options_colprof:", options_colprof)
-				ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] + ":"
+				ccxxsetting = getcfg("colorimeter_correction_matrix_file").split(":", 1)[0]
+				ccmx = None
 				# Parse options
 				if options_dispcal:
 					# Restore defaults
@@ -8413,10 +8414,6 @@ class MainFrame(BaseFrame):
 							ccmx = o[-1][1:-1]
 							if not os.path.isabs(ccmx):
 								ccmx = os.path.join(os.path.dirname(path), ccmx)
-							if getcfg("colorimeter_correction_matrix_file").split(":", 1)[0] == "AUTO":
-								ccmx = "AUTO:" + ccmx
-							else:
-								ccmx = ":" + ccmx
 							# Need to update ccmx items again even if
 							# comport_ctrl_handler already did
 							update_ccmx_items = True
@@ -8427,13 +8424,15 @@ class MainFrame(BaseFrame):
 							if "w" in o[1:]:
 								setcfg("drift_compensation.whitelevel", 1)
 							continue
-				if ccmx in (":", "AUTO:"):
+				if not ccmx:
 					ccxx = (glob.glob(os.path.join(os.path.dirname(path), "*.ccmx")) or
 							glob.glob(os.path.join(os.path.dirname(path), "*.ccss")))
 					if ccxx and len(ccxx) == 1:
-						ccmx += ccxx[0]
+						ccmx = ccxx[0]
 						update_ccmx_items = True
-				setcfg("colorimeter_correction_matrix_file", ccmx)
+				if ccmx:
+					setcfg("colorimeter_correction_matrix_file",
+						   "%s:%s" % (ccxxsetting, ccmx))
 				if options_colprof:
 					# restore defaults
 					self.restore_defaults_handler(
