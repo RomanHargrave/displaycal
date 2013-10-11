@@ -2160,13 +2160,12 @@ class Wtty:
         buff = []
         self.lastRead = 0
 
-        startX = startCo.X
-        startY = startCo.Y
+        startCo = PyCOORDType(startCo.X, startCo.Y)
         endX = endCo.X
         endY = endCo.Y
 
         while True:
-            startOff = self.getOffset(startX, startY)
+            startOff = self.getOffset(startCo.X, startCo.Y)
             endOff = self.getOffset(endX, endY)
             readlen = endOff - startOff
             
@@ -2182,8 +2181,8 @@ class Wtty:
             self.totalRead += ln
             buff.append(s)
             
-            startX, startY = endPoint[0], endPoint[1]
-            if readlen <= 0 or (startX >= endX and startY >= endY):
+            startCo.X, startCo.Y = endPoint[0], endPoint[1]
+            if readlen <= 0 or (startCo.X >= endX and startCo.Y >= endY):
                 break
             
         return ''.join(buff)
