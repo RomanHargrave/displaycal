@@ -2643,6 +2643,8 @@ class Worker(object):
 					result = colord_install
 				elif not isinstance(oy_install, Exception) and oy_install:
 					result = oy_install
+				else:
+					result = argyll_install
 		if not isinstance(result, Exception) and result:
 			if getcfg("profile.install_scope") == "l":
 				# We need a system-wide config file to store the path to 
