@@ -5850,7 +5850,9 @@ class MainFrame(BaseFrame):
 			wx.CallAfter(dlg.Show)
 		else:
 			if isinstance(result, Exception):
-				show_result_dialog(result, self) 
+				show_result_dialog(result, self)
+				if getcfg("dry_run"):
+					return
 			InfoDialog(self, msg=failure_msg, 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
