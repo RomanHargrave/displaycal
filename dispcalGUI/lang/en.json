@@ -363,6 +363,7 @@
 	"locate_spyder2_setup_win": "In the following file dialog, please select the Spyder 2 software installer, or if the software has already been installed, locate the file CVSpyder.dll (which is usually located under “Program Files\\ColorVision\\Spyder2<express or PRO>”).",
 	"log.autoshow": "Show log window automatically",
 	"lut_access": "Video card gamma table access",
+	"madVR.icc": "madVR",
 	"magenta": "Magenta",
 	"matrix": "Matrix",
 	"matte": "Matte",

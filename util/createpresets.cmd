@@ -3,6 +3,7 @@ setlocal
 
 for %%a in ("%~dp0..\misc\ti3\*.ti3") do (
 	if /i "%%~na"=="laptop"     call :createpreset "Laptop"       "%%~dpna"
+	if /i "%%~na"=="madVR"      call :createpreset "madVR"        "%%~dpna"
 	if /i "%%~na"=="office_web" call :createpreset "Office & Web" "%%~dpna"
 	if /i "%%~na"=="prepress"   call :createpreset "Prepress"     "%%~dpna"
 	if /i "%%~na"=="photo"      call :createpreset "Photo"        "%%~dpna"
