@@ -268,7 +268,7 @@ class MeasureFrame(InvincibleFrame):
 			self.place_n_zoom(
 				*floatlist(getcfg("dimensions.measureframe").split(",")))
 			self.display_no = wx.Display.GetFromWindow(self)
-		else:
+		elif self.IsShownOnScreen():
 			setcfg("dimensions.measureframe", self.get_dimensions())
 			if self.Parent and hasattr(self.Parent, "get_set_display"):
 				self.Parent.get_set_display()
