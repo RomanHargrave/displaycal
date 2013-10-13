@@ -7143,16 +7143,28 @@ class MainFrame(BaseFrame):
 
 	def profile_save_path_btn_handler(self, event):
 		defaultPath = os.path.sep.join(get_verified_path("profile.save_path"))
+		profile_name = getcfg("profile.name.expanded")
 		dlg = wx.DirDialog(self, lang.getstr("dialog.set_profile_save_path", 
-						   getcfg("profile.name.expanded")), 
+											 profile_name), 
 						   defaultPath=defaultPath)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
 			path = dlg.GetPath()
-			if not waccess(path, os.W_OK):
+			profile_save_dir = os.path.join(path, profile_name)
+			if not os.path.isdir(profile_save_dir):
+				try:
+					os.makedirs(profile_save_dir)
+				except:
+					pass
+			if not waccess(os.path.join(profile_save_dir, profile_name),
+						   os.W_OK):
 				show_result_dialog(Error(lang.getstr("error.access_denied.write",
 													 path)), self)
 				return
+			try:
+				os.rmdir(profile_save_dir)
+			except:
+				pass
 			setcfg("profile.save_path", path)
 			self.update_profile_name()
 		dlg.Destroy()
