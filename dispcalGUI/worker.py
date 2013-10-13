@@ -65,7 +65,7 @@ if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import (iccprofiles_home, iccprofiles_display_home, 
 							  xdg_config_home, xdg_config_dirs)
 from edid import WMIError, get_edid
-from log import DummyLogger, get_file_logger, log, safe_print
+from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 from meta import name as appname, version
 from options import ascii, debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
@@ -78,7 +78,7 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
 	import util_win
 import colord
-from util_os import getenvu, is_superuser, putenvu, quote_args, which
+from util_os import getenvu, is_superuser, movefile, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
@@ -451,7 +451,7 @@ def make_argyll_compatible_path(path):
 	return os.path.sep.join(parts)
 
 
-def printcmdline(cmd, args=None, fn=None, cwd=None):
+def printcmdline(cmd, args=None, fn=safe_print, cwd=None):
 	"""
 	Pretty-print a command line.
 	"""
@@ -459,7 +459,7 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 		args = []
 	if cwd is None:
 		cwd = os.getcwdu()
-	safe_print("  " + cmd, fn=fn)
+	fn("  " + cmd)
 	i = 0
 	lines = []
 	for item in args:
@@ -472,9 +472,9 @@ def printcmdline(cmd, args=None, fn=None, cwd=None):
 		lines.append(item)
 		i += 1
 	for line in lines:
-		safe_print(textwrap.fill(line, 80, expand_tabs = False, 
+		fn(textwrap.fill(line, 80, expand_tabs = False, 
 				   replace_whitespace = False, initial_indent = "    ", 
-				   subsequent_indent = "      "), fn = fn)
+				   subsequent_indent = "      "))
 
 
 def set_argyll_bin(parent=None):
@@ -578,7 +578,7 @@ class FilteredStream():
 				"read failed due to the sensor being in the wrong position",
 				"Ambient filter should be removed"] + INST_CAL_MSGS
 	
-	substitutions = {" peqDE ": " previous pass DE ",
+	substitutions = {" peqDE ": " DE to previous pass ",
 					 "patch ": "Patch ",
 					 re.compile("Point (\\d+ Delta E)", re.I): " point \\1"}
 	
@@ -698,7 +698,7 @@ class LineBufferedStream():
 	
 	def commit(self):
 		if self.buf:
-			if self.data_encoding:
+			if self.data_encoding and not isinstance(self.buf, unicode):
 				self.buf = self.buf.decode(self.data_encoding, self.errors)
 			if self.file_encoding:
 				self.buf = self.buf.encode(self.file_encoding, self.errors)
@@ -707,8 +707,6 @@ class LineBufferedStream():
 	
 	def write(self, data):
 		data = data.replace(self.linesep_in, "\n")
-		if self.data_encoding and isinstance(data, unicode):
-			data = data.encode(self.data_encoding)
 		for char in data:
 			if char == "\r":
 				while self.buf and not self.buf.endswith(self.linesep_out):
@@ -848,6 +846,7 @@ class Worker(object):
 		self.subprocess_abort = False
 		self.sudo_availoptions = None
 		self.auth_timestamp = 0
+		self.sessionlogfiles = {}
 		self.tempdir = None
 		self.thread_abort = False
 		self.triggers = []
@@ -1203,6 +1202,7 @@ class Worker(object):
 				self.logger = DummyLogger()
 		if self.interactive:
 			self.logger.info("-" * 80)
+		self.sessionlogfile = None
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="3dl",
@@ -1231,14 +1231,33 @@ class Worker(object):
 		cwd = self.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
+
+		path = os.path.split(path)
+		path = os.path.join(path[0], make_argyll_compatible_path(path[1]))
+		filename, ext = os.path.splitext(path)
+		name = os.path.basename(filename)
 		
 		if profile_in.profileClass == "link":
-			profile_in.write(os.path.join(cwd, "link.icc"))
+			link_basename = os.path.basename(profile_in.fileName)
+			link_filename = os.path.join(cwd, link_basename)
+			profile_in.write(link_filename)
 		else:
-			# Build a device link
+			# Prepare building a device link
+			link_basename = name + profile_ext
+			link_filename = os.path.join(cwd, link_basename)
 
-			profile_in.write(os.path.join(cwd, "profile_in.icc"))
-			profile_out.write(os.path.join(cwd, "profile_out.icc"))
+			profile_in_basename = make_argyll_compatible_path(os.path.basename(profile_in.fileName))
+			profile_out_basename = make_argyll_compatible_path(os.path.basename(profile_out.fileName))
+			if profile_in_basename == profile_out_basename:
+				(profile_out_filename,
+				 profile_out_ext) = os.path.splitext(profile_out_basename)
+				profile_out_basename = "%s (2)%s" % (profile_out_filename,
+													 profile_out_ext)
+			profile_in.fileName = os.path.join(cwd, profile_in_basename)
+			profile_in.write()
+			profile_out.fileName = os.path.join(cwd, profile_out_basename)
+			profile_out.write()
+			profile_out_cal_path = os.path.splitext(profile_out.fileName)[0] + ".cal"
 			
 			# Apply calibration?
 			if apply_cal:
@@ -1251,7 +1270,7 @@ class Worker(object):
 						CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 						CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 					raise Error(lang.getstr("cal_extraction_failed"))
-				cgats.write(os.path.join(cwd, "profile_out.cal"))
+				cgats.write(profile_out_cal_path)
 				
 				if self.argyll_version < [1, 6]:
 					# Can't apply the calibration with old collink versions -
@@ -1263,11 +1282,11 @@ class Worker(object):
 															  "applycal"))
 					safe_print(lang.getstr("3dlut.output.profile.apply_cal"))
 					result = self.exec_cmd(applycal, ["-v",
-													  "profile_out.cal",
-													  "profile_out.icc",
-													  "profile_out.icc"],
-										   capture_output=True, skip_scripts=True,
-										   working_dir=cwd)
+													  profile_out_cal_path,
+													  profile_out_basename,
+													  profile_out.fileName],
+										   capture_output=True,
+										   skip_scripts=True)
 					if isinstance(result, Exception) and not getcfg("dry_run"):
 						raise result
 					elif not result:
@@ -1298,25 +1317,21 @@ class Worker(object):
 					# Apply the calibration when building our device link
 					# i.e. use collink -a parameter (apply calibration curves
 					# to link output and append linear)
-					args += ["-a", "profile_out.cal"]
-			result = self.exec_cmd(collink, args + ["profile_in.icc",
-													"profile_out.icc",
-													"link.icc"],
-								   capture_output=True, skip_scripts=True,
-								   working_dir=cwd)
+					args += ["-a", profile_out_cal_path]
+			result = self.exec_cmd(collink, args + [profile_in_basename,
+													profile_out_basename,
+													link_filename],
+								   capture_output=True, skip_scripts=True)
 			if isinstance(result, Exception):
 				raise result
 			elif not result:
-				raise Error("\n\n".join([lang.getstr("aborted"),
-										 "\n".join(self.errors)]))
+				raise UnloggedError("\n\n".join([lang.getstr("aborted"),
+												 "\n".join(self.errors)]))
 
-		filename, ext = os.path.splitext(path)
-
-		link_filename = os.path.join(cwd, "link.icc")
 		if (profile_in.profileClass != "link" and save_link_icc and
 			os.path.isfile(link_filename)):
 			profile_link = ICCP.ICCProfile(link_filename)
-			profile_link.setDescription(os.path.basename(filename))
+			profile_link.setDescription(name)
 			profile_link.setCopyright(getcfg("copyright"))
 			manufacturer = profile_out.getDeviceManufacturerDescription()
 			if manufacturer:
@@ -1334,18 +1349,10 @@ class Worker(object):
 		if self.argyll_version >= [1, 6]:
 			if format in ("eeColor", "madVR"):
 				# Collink has already written the 3DLUT for us
-				if format == "eeColor":
-					shutil.move(os.path.join(cwd, "link.txt"), path)
-					for suffix in ("first", "second"):
-						for channel in ("red", "green", "blue"):
-							template = "-%s1d%s%s" % (suffix, channel, ext)
-							src = os.path.join(cwd, "link%s" % template)
-							dst = "%s%s" % (filename, template)
-							shutil.move(src, dst)
-				elif format == "madVR":
-					shutil.move(os.path.join(cwd, "link.3dlut"), path)
-				# Remove temporary files
-				self.wrapup(False)
+				self.wrapup(dst_path=path, ext_filter=[".3dlut",
+													   ".cal",
+													   ".log",
+													   ".txt"])
 				return
 
 		# We have to create the 3DLUT ourselves
@@ -1400,7 +1407,7 @@ class Worker(object):
 
 		# Lookup RGB -> XYZ values through devicelink profile using icclu
 		stderr = tempfile.SpooledTemporaryFile()
-		p = sp.Popen([icclu, "-v0", "link.icc"], 
+		p = sp.Popen([icclu, "-v0", link_basename], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		self.subprocess = p
@@ -1830,11 +1837,10 @@ class Worker(object):
 				parent = self.owner
 		if not capture_output:
 			capture_output = not sys.stdout.isatty()
-		fn = None
 		self.clear_cmd_output()
 		if None in [cmd, args]:
 			if verbose >= 1 and not silent:
-				safe_print(lang.getstr("aborted"), fn=fn)
+				safe_print(lang.getstr("aborted"))
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
 		self.cmdname = cmdname
@@ -1850,10 +1856,12 @@ class Worker(object):
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
-			if cmdname in (get_argyll_utilname("dispwin"),
-						   "oyranos-monitor"):
-				# Last arg is without extension, only for dispwin we need to 
-				# strip it
+			if cmdname not in (get_argyll_utilname("dispcal"),
+							   get_argyll_utilname("dispread"),
+							   get_argyll_utilname("colprof"),
+							   get_argyll_utilname("targen"),
+							   get_argyll_utilname("txt2ti3")):
+				# Last arg is with extension
 				working_basename = os.path.splitext(working_basename)[0]
 			if working_dir is None:
 				working_dir = os.path.dirname(args[-1])
@@ -1861,29 +1869,36 @@ class Worker(object):
 			working_dir = self.tempdir
 		if working_dir and not os.path.isdir(working_dir):
 			working_dir = None
+		if (working_basename and working_dir == self.tempdir and not silent
+			and log_output and not getcfg("dry_run")):
+			self.sessionlogfile = LogFile(working_basename, working_dir)
+			self.sessionlogfiles[working_basename] = self.sessionlogfile
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
+				self.log("-" * 80)
+				if self.sessionlogfile:
+					safe_print("Session log: %s" % working_basename + ".log")
+					safe_print("")
 				if not silent and (dry_run or getcfg("dry_run")):
-					safe_print(lang.getstr("dry_run"), fn=fn)
-				safe_print("", fn=fn)
+					safe_print(lang.getstr("dry_run"))
+					safe_print("")
 				if working_dir:
-					safe_print(lang.getstr("working_dir"), fn=fn)
+					self.log(lang.getstr("working_dir"))
 					indent = "  "
 					for name in working_dir.split(os.path.sep):
-						safe_print(textwrap.fill(name + os.path.sep, 80, 
-												 expand_tabs=False, 
-												 replace_whitespace=False, 
-												 initial_indent=indent, 
-												 subsequent_indent=indent), 
-								   fn=fn)
+						self.log(textwrap.fill(name + os.path.sep, 80, 
+											   expand_tabs=False, 
+											   replace_whitespace=False, 
+											   initial_indent=indent, 
+											   subsequent_indent=indent))
 						indent += " "
-					safe_print("", fn=fn)
-				safe_print(lang.getstr("commandline"), fn=fn)
+					self.log("")
+				self.log(lang.getstr("commandline"))
 				printcmdline(cmd if verbose >= 2 else os.path.basename(cmd), 
-							 args, fn=fn, cwd=working_dir)
-				safe_print("", fn=fn)
+							 args, fn=self.log, cwd=working_dir)
+				self.log("")
 				if not silent and (dry_run or getcfg("dry_run")):
-					safe_print(lang.getstr("dry_run.end"), fn=fn)
+					safe_print(lang.getstr("dry_run.end"))
 					if self.owner and hasattr(self.owner, "infoframe"):
 						wx.CallAfter(self.owner.infoframe.Show)
 					return UnloggedInfo(lang.getstr("dry_run.info"))
@@ -1995,7 +2010,7 @@ class Worker(object):
 							progress_dlg.MakeModal(True)
 						pwd = dlg.pwd_txt_ctrl.GetValue()
 						if result != wx.ID_OK:
-							safe_print(lang.getstr("aborted"), fn=fn)
+							safe_print(lang.getstr("aborted"))
 							return None
 						stdin = tempfile.SpooledTemporaryFile()
 						stdin.write(pwd.encode(enc, "replace") + os.linesep)
@@ -2181,30 +2196,26 @@ class Worker(object):
 					kwargs["codepage"] = windll.kernel32.GetACP()
 				stderr = StringIO()
 				stdout = StringIO()
-				if log_output:
-					if sys.stdout.isatty():
-						logfile = LineBufferedStream(
-								  FilteredStream(safe_print, self.data_encoding,
-												 discard="", 
-												 linesep_in="\n", 
-												 triggers=[]))
-					else:
-						logfile = LineBufferedStream(
-								  FilteredStream(log, self.data_encoding,
-												 discard="",
-												 linesep_in="\n", 
-												 triggers=[]))
-					logfile = Files((logfile, stdout, self.recent,
-									 self.lastmsg, self))
-				else:
-					logfile = Files((stdout, self.recent,
-									 self.lastmsg, self))
+				logfiles = []
 				if (self.interactive and getattr(self, "terminal", None)):
-					logfile = Files((FilteredStream(self.terminal,
-													discard="",
-													triggers=self.triggers), 
-									logfile))
-			logfn = log
+					logfiles.append(FilteredStream(self.terminal,
+												   discard="",
+												   triggers=self.triggers))
+				if log_output:
+					linebuffered_logfiles = []
+					if sys.stdout.isatty():
+						linebuffered_logfiles.append(safe_print)
+					else:
+						linebuffered_logfiles.append(log)
+					if self.sessionlogfile:
+						linebuffered_logfiles.append(self.sessionlogfile)
+					logfiles.append(LineBufferedStream(
+									FilteredStream(Files(linebuffered_logfiles),
+												   self.data_encoding,
+												   discard="",
+												   linesep_in="\n", 
+												   triggers=[])))
+				logfiles += [stdout, self.recent, self.lastmsg, self]
 			tries = 1
 			while tries > 0:
 				if interact:
@@ -2230,7 +2241,7 @@ class Worker(object):
 							return Error(safe_unicode(exception))
 						if debug >= 9 or (test and not "-?" in args):
 							self.subprocess.interact()
-					self.subprocess.logfile_read = logfile
+					self.subprocess.logfile_read = Files(logfiles)
 					if self.subprocess.isalive():
 						if self.measure_cmd:
 							keyhit_strs = [" or Q to ",
@@ -2300,7 +2311,7 @@ class Worker(object):
 								self.errors += [line.decode(enc, "replace")]
 						if len(self.errors):
 							errstr = "".join(self.errors).strip()
-							safe_print(errstr, fn=fn)
+							self.log(errstr)
 					if tries > 0 and not interact:
 						stderr = tempfile.SpooledTemporaryFile()
 				if capture_output or interact:
@@ -2312,7 +2323,7 @@ class Worker(object):
 					if len(self.output) and log_output:
 						if not interact:
 							logfn = log if silent else safe_print
-							logfn("".join(self.output).strip())
+							self.log("".join(self.output).strip(), logfn)
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
@@ -2329,7 +2340,7 @@ class Worker(object):
 			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
 			if interact and verbose >= 1 and not silent:
-				safe_print(lang.getstr("aborted"), fn=fn)
+				safe_print(lang.getstr("aborted"))
 			if interact and len(self.output):
 				for i, line in enumerate(self.output):
 					if "Calibrate failed with 'User hit Abort Key' (No device error)" in line:
@@ -3384,6 +3395,11 @@ class Worker(object):
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
 		return not getattr(self, "finished", True)
+	
+	def log(self, msg, fn=safe_print):
+		fn(msg)
+		if self.sessionlogfile:
+			self.sessionlogfile.write(msg + "\n")
 
 	def start_measurement(self, consumer, apply_calibration=True,
 						  progress_msg="", resume=False, continue_next=False):
@@ -4577,7 +4593,7 @@ class Worker(object):
 					if not remove:
 						# Remove the temp .cal file
 						self.wrapup(False, True, ext_filter=[script_ext,
-																	".app"])
+															 ".app", ".log"])
 				setcfg("last_cal_path", cal)
 				setcfg("calibration.file.previous", getcfg("calibration.file"))
 				if getcfg("profile.update") or \
@@ -5197,10 +5213,12 @@ class Worker(object):
 		if debug: safe_print("[D] wrapup(copy=%s, remove=%s)" % (copy, remove))
 		if not self.tempdir or not os.path.isdir(self.tempdir):
 			return # nothing to do
+		while self.sessionlogfiles:
+			self.sessionlogfiles.popitem()[1].close()
 		if copy:
 			if not ext_filter:
 				ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
-							  ".command", ".gam", ".gz", ".icc", ".icm",
+							  ".command", ".gam", ".gz", ".icc", ".icm", ".log",
 							  ".sh", ".ti1", ".ti3", ".wrl", ".wrz"]
 			if dst_path is None:
 				dst_path = os.path.join(getcfg("profile.save_path"), 
@@ -5251,7 +5269,7 @@ class Worker(object):
 												   tuple(safe_unicode(s) 
 														 for s in (dst, 
 																   exception)))
-							if remove:
+							if remove and ext.lower() != ".log":
 								if verbose >= 2:
 									safe_print(appname + ": Moving temporary "
 											   "object %s to %s" % (src, dst))

@@ -6032,6 +6032,7 @@ class MainFrame(BaseFrame):
 														   ".cmd", ".command", 
 														   ".gam", ".gz",
 														   ".icc", ".icm",
+														   ".log",
 														   ".sh", ".ti1",
 														   ".ti3", ".wrl",
 														   ".wrz"])

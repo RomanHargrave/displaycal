@@ -71,6 +71,19 @@ class Log():
 log = Log()
 
 
+class LogFile():
+	
+	def __init__(self, name, logdir=logdir):
+		self._logger = get_file_logger(name, logdir=logdir)
+	
+	def __getattr__(self, name):
+		return getattr(self._logger.handlers[0], name)
+
+	def write(self, msg):
+		for line in universal_newlines(msg.rstrip()).split("\n"):
+			self._logger.info(line)
+
+
 class SafeLogger(SafePrinter):
 	
 	"""
@@ -96,7 +109,8 @@ safe_log = SafeLogger(print_=False)
 safe_print = SafeLogger()
 
 
-def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0):
+def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
+					logdir=logdir):
 	logger = logging.getLogger(name)
 	logger.setLevel(level)
 	logfile = os.path.join(logdir, name + ".log")

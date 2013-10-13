@@ -3,6 +3,7 @@
 import locale
 import os
 import re
+import shutil
 import subprocess as sp
 import sys
 import tempfile
@@ -197,6 +198,22 @@ def listdir_re(path, rex = None):
 		rex = re.compile(rex, re.IGNORECASE)
 		files = filter(rex.search, files)
 	return files
+
+
+def movefile(src, dst, overwrite=True):
+	""" Move a file to another location.
+	
+	dst can be a directory in which case a file with the same basename as src
+	will be created in it.
+	
+	Set overwrite to True to make sure existing files are overwritten.
+
+	"""
+	if os.path.isdir(dst):
+		dst = os.path.join(dst, os.path.basename(src))
+	if os.path.isfile(dst) and overwrite:
+		os.remove(dst)
+	shutil.move(src, dst)
 
 
 def putenvu(name, value):
