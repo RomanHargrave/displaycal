@@ -250,7 +250,10 @@ def waccess(path, mode):
 		else:
 			dir = os.path.dirname(path)
 		try:
-			test = tempfile.TemporaryFile(prefix=".", dir=dir)
+			if os.path.isfile(path):
+				test = open(path, "ab")
+			else:
+				test = tempfile.TemporaryFile(prefix=".", dir=dir)
 		except EnvironmentError:
 			return False
 		test.close()
