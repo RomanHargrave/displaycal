@@ -4676,9 +4676,9 @@ class MainFrame(BaseFrame):
 		result = dlg.ShowModal()
 		if result == wx.ID_OK:
 			path = dlg.GetPath()
-			if not waccess(os.path.dirname(path), os.W_OK):
+			if not waccess(path, os.W_OK):
 				show_result_dialog(Error(lang.getstr("error.access_denied.write",
-													 os.path.dirname(path))),
+													 path)),
 								   self)
 				return
 			save_path = os.path.splitext(path)[0] + ".html"
@@ -7283,9 +7283,9 @@ class MainFrame(BaseFrame):
 											 make_argyll_compatible_path(profile_save_path[1]))
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				if not waccess(os.path.dirname(profile_save_path), os.W_OK):
+				if not waccess(profile_save_path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
-														 os.path.dirname(profile_save_path))),
+														 profile_save_path)),
 									   self)
 					return
 				filename, ext = os.path.splitext(profile_save_path)
@@ -7387,9 +7387,9 @@ class MainFrame(BaseFrame):
 										 make_argyll_compatible_path(profile_save_path[1]))
 		dlg.Destroy()
 		if result == wx.ID_OK:
-			if not waccess(os.path.dirname(profile_save_path), os.W_OK):
+			if not waccess(profile_save_path, os.W_OK):
 				show_result_dialog(Error(lang.getstr("error.access_denied.write",
-													 os.path.dirname(profile_save_path))),
+													 profile_save_path)),
 								   self)
 				return
 			profile = ICCP.ICCProfile.from_edid(edid)

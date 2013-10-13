@@ -1048,9 +1048,9 @@ class LUTFrame(wx.Frame):
 
 			if dlg1.ShowModal() == wx.ID_OK:
 				fileName = dlg1.GetPath()
-				if not waccess(os.path.dirname(fileName), os.W_OK):
+				if not waccess(fileName, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
-														 os.path.dirname(fileName))), self)
+														 fileName)), self)
 					return
 				fType = fileName[-3:].lower()
 			else:                      # exit without saving

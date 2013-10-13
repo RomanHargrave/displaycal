@@ -291,10 +291,10 @@ class DisplayUniformityFrame(wx.Frame):
 					result = dlg.ShowModal()
 					if result == wx.ID_OK:
 						path = dlg.GetPath()
-						if not waccess(os.path.dirname(path), os.W_OK):
+						if not waccess(path, os.W_OK):
 							from worker import show_result_dialog
 							show_result_dialog(Error(lang.getstr("error.access_denied.write",
-																 os.path.dirname(path))),
+																 path)),
 											   self)
 							return
 						save_path = os.path.splitext(path)[0] + ".html"

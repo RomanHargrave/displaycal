@@ -263,9 +263,9 @@ class LUT3DFrame(BaseFrame):
 				path = dlg.GetPath()
 			dlg.Destroy()
 			if path:
-				if not waccess(os.path.dirname(path), os.W_OK):
+				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
-														 os.path.dirname(path))),
+														 path)),
 									   self)
 					return
 				setcfg("last_3dlut_path", path)

@@ -708,9 +708,9 @@ class LogWindow(InvincibleFrame):
 		path = dlg.GetPath()
 		dlg.Destroy()
 		if result == wx.ID_OK:
-			if not waccess(os.path.dirname(path), os.W_OK):
+			if not waccess(path, os.W_OK):
 				InfoDialog(self, msg=lang.getstr("error.access_denied.write",
-												 os.path.dirname(path)),
+												 path),
 						   ok=lang.getstr("ok"),
 						   bitmap=geticon(32, "dialog-error"))
 				return
