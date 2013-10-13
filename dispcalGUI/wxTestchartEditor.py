@@ -1028,6 +1028,10 @@ class TestchartEditor(wx.Frame):
 			path = dlg.GetPath()
 		dlg.Destroy()
 		if path:
+			if not waccess(path, os.W_OK):
+				show_result_dialog(Error(lang.getstr("error.access_denied.write",
+													 path)), self)
+				return
 			setcfg("last_testchart_export_path", path)
 			writecfg()
 			if sys.platform not in ("darwin", "win32"):
