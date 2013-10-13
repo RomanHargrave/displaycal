@@ -238,6 +238,11 @@ class LUT3DFrame(BaseFrame):
 		profile_out = self.set_profile("output")
 		if (not None in (profile_in, profile_out) or
 			(profile_in and profile_in.profileClass == "link")):
+			if profile_out and profile_in.isSame(profile_out,
+												 force_calculation=True):
+				show_result_dialog(Error(lang.getstr("error.source_dest_same")),
+								   self)
+				return
 			path = None
 			defaultDir, defaultFile = get_verified_path("last_3dlut_path")
 			ext = getcfg("3dlut.format")
