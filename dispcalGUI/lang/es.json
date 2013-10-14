@@ -531,6 +531,7 @@
 	"tc.vrml.device": "Localizacion de dispositivos",
 	"tc.vrml.lab": "Localizaciones Lab",
 	"tc.white": "Parches blancos",
+		"*tempdir_should_still_contain_files": "Created files should still be in the temporary directory “%s”.",
 	"testchart.confirm_select": "Archivo guardado. Desea seleccionar este testchart?",
 	"testchart.create": "Crear archivo de carta de ajustes",
 	"testchart.discard": "Descartar",

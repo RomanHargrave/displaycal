@@ -547,6 +547,7 @@
 	"tc.vrml.device": "Geräte-Farborte",
 	"tc.vrml.lab": "Lab-Farborte",
 	"tc.white": "Weiße Felder",
+	"tempdir_should_still_contain_files": "Erzeugte Dateien sollten sich noch im temporären Verzeichnis „%s“ befinden.",
 	"testchart.confirm_select": "Datei gespeichert. Möchten Sie diese Testform auswählen?",
 	"testchart.create": "Testform erstellen",
 	"testchart.discard": "Verwerfen",

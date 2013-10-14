@@ -535,6 +535,7 @@
 	"tc.vrml.device": "Emplacements des périphériques",
 	"tc.vrml.lab": "Emplacements des Lab",
 	"tc.white": "Échantillons de blancs",
+		"*tempdir_should_still_contain_files": "Created files should still be in the temporary directory “%s”.",
 	"testchart.confirm_select": "Fichier enregistré. Voulez-vous sélectionner cette grille de tests ?",
 	"testchart.create": "Créer une grille de tests",
 	"testchart.discard": "Supprimer",

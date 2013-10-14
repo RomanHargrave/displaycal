@@ -554,6 +554,7 @@
 	"tc.vrml.device": "Device locations",
 	"tc.vrml.lab": "Lab locations",
 	"tc.white": "White patches",
+	"tempdir_should_still_contain_files": "Created files should still be in the temporary directory “%s”.",
 	"testchart.confirm_select": "File saved. Do you want to select this testchart?",
 	"testchart.create": "Create testchart",
 	"testchart.discard": "Discard",

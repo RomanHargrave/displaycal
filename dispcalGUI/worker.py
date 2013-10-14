@@ -1232,6 +1232,8 @@ class Worker(object):
 		if isinstance(cwd, Exception):
 			raise cwd
 
+		result = None
+
 		path = os.path.split(path)
 		path = os.path.join(path[0], make_argyll_compatible_path(path[1]))
 		filename, ext = os.path.splitext(path)
@@ -1326,38 +1328,45 @@ class Worker(object):
 													profile_out_basename,
 													link_filename],
 								   capture_output=True, skip_scripts=True)
-			if isinstance(result, Exception):
-				raise result
-			elif not result:
-				raise UnloggedError("\n\n".join([lang.getstr("aborted"),
-												 "\n".join(self.errors)]))
 
-		if (profile_in.profileClass != "link" and save_link_icc and
-			os.path.isfile(link_filename)):
-			profile_link = ICCP.ICCProfile(link_filename)
-			profile_link.setDescription(name)
-			profile_link.setCopyright(getcfg("copyright"))
-			manufacturer = profile_out.getDeviceManufacturerDescription()
-			if manufacturer:
-				profile_link.setDeviceManufacturerDescription(manufacturer)
-			model = profile_out.getDeviceModelDescription()
-			if model:
-				profile_link.setDeviceModelDescription(model)
-			profile_link.device["manufacturer"] = profile_out.device["manufacturer"]
-			profile_link.device["model"] = profile_out.device["model"]
-			if "mmod" in profile_out.tags:
-				profile_link.tags.mmod = profile_out.tags.mmod
-			profile_link.calculateID()
-			profile_link.write(filename + profile_ext)
+			if (save_link_icc and
+				os.path.isfile(link_filename)):
+				profile_link = ICCP.ICCProfile(link_filename)
+				profile_link.setDescription(name)
+				profile_link.setCopyright(getcfg("copyright"))
+				manufacturer = profile_out.getDeviceManufacturerDescription()
+				if manufacturer:
+					profile_link.setDeviceManufacturerDescription(manufacturer)
+				model = profile_out.getDeviceModelDescription()
+				if model:
+					profile_link.setDeviceModelDescription(model)
+				profile_link.device["manufacturer"] = profile_out.device["manufacturer"]
+				profile_link.device["model"] = profile_out.device["model"]
+				if "mmod" in profile_out.tags:
+					profile_link.tags.mmod = profile_out.tags.mmod
+				profile_link.calculateID()
+				profile_link.write(filename + profile_ext)
 
-		if self.argyll_version >= [1, 6]:
-			if format in ("eeColor", "madVR"):
+			if self.argyll_version >= [1, 6] and format in ("eeColor", "madVR"):
 				# Collink has already written the 3DLUT for us
-				self.wrapup(dst_path=path, ext_filter=[".3dlut",
-													   ".cal",
-													   ".log",
-													   ".txt"])
-				return
+				result2 = self.wrapup(not isinstance(result, UnloggedInfo) and
+									  result, dst_path=path,
+									  ext_filter=[".3dlut", ".cal", ".log",
+												  ".txt"])
+				if not result:
+					result = UnloggedError("\n\n".join([lang.getstr("aborted"),
+														"\n".join(self.errors)]))
+				if isinstance(result2, Exception):
+					if isinstance(result, Exception):
+						result = Error(safe_unicode(result) + "\n\n" +
+									   safe_unicode(result2))
+					else:
+						result = result2
+				if not isinstance(result, Exception):
+					return
+
+		if isinstance(result, Exception):
+			raise result
 
 		# We have to create the 3DLUT ourselves
 
@@ -3256,12 +3265,19 @@ class Worker(object):
 			(gamut_volume,
 			 gamut_coverage) = self.create_gamut_views(args[-1] + profile_ext)
 		safe_print("-" * 80)
-		self.wrapup(not isinstance(result, Exception) and 
-									result, dst_path=dst_path)
 		if not isinstance(result, Exception) and result:
-			result = self.update_profile(dst_path, ti3, chrm, tags, avg, peak,
-										 rms, gamut_volume, gamut_coverage,
+			result = self.update_profile(args[-1] + profile_ext, ti3, chrm,
+										 tags, avg, peak, rms, gamut_volume,
+										 gamut_coverage,
 										 quality=getcfg("profile.quality"))
+		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
+							  dst_path=dst_path)
+		if isinstance(result2, Exception):
+			if isinstance(result, Exception):
+				result = Error(safe_unicode(result) + "\n\n" +
+							   safe_unicode(result2))
+			else:
+				result = result2
 		return result
 	
 	def update_profile(self, profile, ti3=None, chrm=None, tags=None,
@@ -3441,8 +3457,14 @@ class Worker(object):
 				self.update_display_name_manufacturer(args[-1] + ".ti3")
 		else:
 			result = cmd
-		self.wrapup(not isinstance(result, Exception) and result,
-					isinstance(result, Exception) or not result)
+		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
+							  isinstance(result, Exception) or not result)
+		if isinstance(result2, Exception):
+			if isinstance(result, Exception):
+				result = Error(safe_unicode(result) + "\n\n" +
+							   safe_unicode(result2))
+			else:
+				result = result2
 		return result
 	
 	def parse(self, txt):
@@ -4579,14 +4601,11 @@ class Worker(object):
 			result = self.exec_cmd(cmd, args, capture_output=capture_output)
 		else:
 			result = cmd
-		self.wrapup(not isinstance(result, Exception) and 
-									result, remove or isinstance(result, 
-																 Exception) or 
-									not result)
 		if not isinstance(result, Exception) and result:
-			cal = os.path.join(getcfg("profile.save_path"), 
-							   getcfg("profile.name.expanded"), 
-							   getcfg("profile.name.expanded") + ".cal")
+			dst_pathname = os.path.join(getcfg("profile.save_path"), 
+										getcfg("profile.name.expanded"), 
+										getcfg("profile.name.expanded"))
+			cal = args[-1] + ".cal"
 			result = check_cal_isfile(
 				cal, lang.getstr("error.calibration.file_not_created"))
 			if not isinstance(result, Exception) and result:
@@ -4594,18 +4613,9 @@ class Worker(object):
 													   self.options_dispcal)
 				if cal_cgats:
 					cal_cgats.write()
-					if not remove:
-						# Remove the temp .cal file
-						self.wrapup(False, True, ext_filter=[script_ext,
-															 ".app", ".log"])
-				setcfg("last_cal_path", cal)
-				setcfg("calibration.file.previous", getcfg("calibration.file"))
 				if getcfg("profile.update") or \
 				   self.dispcal_create_fast_matrix_shaper:
-					profile_path = os.path.join(getcfg("profile.save_path"), 
-												getcfg("profile.name.expanded"), 
-												getcfg("profile.name.expanded") + 
-												profile_ext)
+					profile_path = args[-1] + profile_ext
 					result = check_profile_isfile(
 						profile_path, 
 						lang.getstr("error.profile.file_not_created"))
@@ -4613,8 +4623,9 @@ class Worker(object):
 						try:
 							profile = ICCP.ICCProfile(profile_path)
 						except (IOError, ICCP.ICCProfileInvalidError), exception:
-							return Error(lang.getstr("profile.invalid") + "\n"
-										 + dst_path)
+							result = Error(lang.getstr("profile.invalid") + "\n"
+										   + profile_path)
+					if not isinstance(result, Exception) and result:
 						if not getcfg("profile.update"):
 							# Created fast matrix shaper profile
 							# we need to set cprt, targ and a few other things
@@ -4658,13 +4669,28 @@ class Worker(object):
 							try:
 								profile.write()
 							except Exception, exception:
-								return exception
-							setcfg("last_cal_or_icc_path", profile_path)
-							setcfg("last_icc_path", profile_path)
-						setcfg("calibration.file", profile_path)
-				else:
-					setcfg("calibration.file", cal)
-					setcfg("last_cal_or_icc_path", cal)
+								safe_print(exception)
+		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
+							  remove or isinstance(result, Exception) or
+							  not result)
+		if isinstance(result2, Exception):
+			if isinstance(result, Exception):
+				result = Error(safe_unicode(result) + "\n\n" +
+							   safe_unicode(result2))
+			else:
+				result = result2
+		elif not isinstance(result, Exception) and result:
+			setcfg("last_cal_path", dst_pathname + ".cal")
+			setcfg("calibration.file.previous", getcfg("calibration.file"))
+			if (getcfg("profile.update") or
+				self.dispcal_create_fast_matrix_shaper):
+				if getcfg("profile.update"):
+					setcfg("last_cal_or_icc_path", dst_pathname + profile_ext)
+					setcfg("last_icc_path", dst_pathname + profile_ext)
+				setcfg("calibration.file", dst_pathname + profile_ext)
+			else:
+				setcfg("calibration.file", dst_pathname + ".cal")
+				setcfg("last_cal_or_icc_path", dst_pathname + ".cal")
 		return result
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, 
@@ -5219,26 +5245,26 @@ class Worker(object):
 			return # nothing to do
 		while self.sessionlogfiles:
 			self.sessionlogfiles.popitem()[1].close()
+		result = True
 		if copy:
-			if not ext_filter:
-				ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
-							  ".command", ".gam", ".gz", ".icc", ".icm", ".log",
-							  ".sh", ".ti1", ".ti3", ".wrl", ".wrz"]
-			if dst_path is None:
-				dst_path = os.path.join(getcfg("profile.save_path"), 
-										getcfg("profile.name.expanded"), 
-										getcfg("profile.name.expanded") + 
-										".ext")
-			result = check_create_dir(os.path.dirname(dst_path))
-			if isinstance(result, Exception):
-				return result
-			if result:
-				try:
-					src_listdir = os.listdir(self.tempdir)
-				except Exception, exception:
-					safe_print(u"Error - directory '%s' listing failed: %s" % 
-							   tuple(safe_unicode(s) for s in (self.tempdir, 
-															   exception)))
+			try:
+				src_listdir = os.listdir(self.tempdir)
+			except Exception, exception:
+				result = exception
+				remove = False
+			if not isinstance(result, Exception) and src_listdir:
+				if not ext_filter:
+					ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
+								  ".command", ".gam", ".gz", ".icc", ".icm", ".log",
+								  ".sh", ".ti1", ".ti3", ".wrl", ".wrz"]
+				if dst_path is None:
+					dst_path = os.path.join(getcfg("profile.save_path"), 
+											getcfg("profile.name.expanded"), 
+											getcfg("profile.name.expanded") + 
+											".ext")
+				result = check_create_dir(os.path.dirname(dst_path))
+				if isinstance(result, Exception):
+					remove = False
 				else:
 					for basename in src_listdir:
 						name, ext = os.path.splitext(basename)
@@ -5273,7 +5299,7 @@ class Worker(object):
 												   tuple(safe_unicode(s) 
 														 for s in (dst, 
 																   exception)))
-							if remove and ext.lower() != ".log":
+							if remove:
 								if verbose >= 2:
 									safe_print(appname + ": Moving temporary "
 											   "object %s to %s" % (src, dst))
@@ -5285,6 +5311,11 @@ class Worker(object):
 											   u"'%s': %s" % 
 											   tuple(safe_unicode(s) for s in 
 													 (src, dst, exception)))
+									try:
+										shutil.copyfile(src, dst)
+									except Exception, exception:
+										result = Error(lang.getstr("error.copy_failed",
+																   (src, dst)))
 							else:
 								if os.path.isdir(src):
 									if verbose >= 2:
@@ -5347,7 +5378,7 @@ class Worker(object):
 							try:
 								os.remove(src)
 							except Exception, exception:
-								safe_print(u"Warning - temporary directory "
+								safe_print(u"Warning - temporary file "
 										   u"'%s' could not be removed: %s" % 
 										   tuple(safe_unicode(s) for s in 
 												 (src, exception)))
@@ -5370,7 +5401,11 @@ class Worker(object):
 								   u"not be removed: %s" % 
 								   tuple(safe_unicode(s) for s in 
 										 (self.tempdir, exception)))
-		return True
+		if isinstance(result, Exception):
+			result = Error(safe_unicode(result) + "\n\n" +
+						   lang.getstr("tempdir_should_still_contain_files",
+									   self.tempdir))
+		return result
 	
 	def write(self, txt):
 		wx.CallAfter(self.parse, txt)

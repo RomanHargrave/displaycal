@@ -531,6 +531,7 @@
 	"tc.vrml.device": "Posizioni del dispositivo",
 	"tc.vrml.lab": "Posizioni del Lab",
 	"tc.white": "Campioni bianchi",
+		"*tempdir_should_still_contain_files": "Created files should still be in the temporary directory “%s”.",
 	"testchart.confirm_select": "File salvato. Selezionare il testchart?",
 	"testchart.create": "Creazione testchart",
 	"testchart.discard": "Scartare",
