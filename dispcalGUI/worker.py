@@ -3278,6 +3278,9 @@ class Worker(object):
 							   safe_unicode(result2))
 			else:
 				result = result2
+		elif not isinstance(result, Exception) and result:
+			setcfg("last_cal_or_icc_path", dst_path)
+			setcfg("last_icc_path", dst_path)
 		return result
 	
 	def update_profile(self, profile, ti3=None, chrm=None, tags=None,
@@ -3292,7 +3295,8 @@ class Worker(object):
 				return Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 		else:
 			profile_path = profile.fileName
-		if profile.profileClass == "mntr" and profile.colorSpace == "RGB":
+		if (profile.profileClass == "mntr" and profile.colorSpace == "RGB" and
+			not (self.tempdir and profile_path.startswith(self.tempdir))):
 			setcfg("last_cal_or_icc_path", profile_path)
 			setcfg("last_icc_path", profile_path)
 		if ti3:
@@ -4684,9 +4688,8 @@ class Worker(object):
 			setcfg("calibration.file.previous", getcfg("calibration.file"))
 			if (getcfg("profile.update") or
 				self.dispcal_create_fast_matrix_shaper):
-				if getcfg("profile.update"):
-					setcfg("last_cal_or_icc_path", dst_pathname + profile_ext)
-					setcfg("last_icc_path", dst_pathname + profile_ext)
+				setcfg("last_cal_or_icc_path", dst_pathname + profile_ext)
+				setcfg("last_icc_path", dst_pathname + profile_ext)
 				setcfg("calibration.file", dst_pathname + profile_ext)
 			else:
 				setcfg("calibration.file", dst_pathname + ".cal")
