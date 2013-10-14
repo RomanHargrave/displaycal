@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from codecs import EncodedFile
+from hashlib import md5
 import logging
 import logging.handlers
 import os
@@ -73,11 +74,17 @@ log = Log()
 
 class LogFile():
 	
-	def __init__(self, name, logdir=logdir):
-		self._logger = get_file_logger(name, logdir=logdir)
+	def __init__(self, filename, logdir=logdir):
+		self._logger = get_file_logger(filename, logdir=logdir)
 	
-	def __getattr__(self, name):
-		return getattr(self._logger.handlers[0], name)
+	def close(self):
+		for handler in reversed(self._logger.handlers):
+			handler.close()
+			self._logger.removeHandler(handler)
+	
+	def flush(self):
+		for handler in self._logger.handlers:
+			handler.flush()
 
 	def write(self, msg):
 		for line in universal_newlines(msg.rstrip()).split("\n"):
@@ -109,11 +116,11 @@ safe_log = SafeLogger(print_=False)
 safe_print = SafeLogger()
 
 
-def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
+def get_file_logger(filename, level=logging.DEBUG, when="midnight", backupCount=0,
 					logdir=logdir):
-	logger = logging.getLogger(name)
+	logger = logging.getLogger(md5(filename).hexdigest())
 	logger.setLevel(level)
-	logfile = os.path.join(logdir, name + ".log")
+	logfile = os.path.join(logdir, filename + ".log")
 	for handler in logger.handlers:
 		if (isinstance(handler, logging.handlers.TimedRotatingFileHandler) and
 			handler.baseFilename == os.path.abspath(logfile)):
