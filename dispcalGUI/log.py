@@ -75,7 +75,8 @@ log = Log()
 class LogFile():
 	
 	def __init__(self, filename, logdir=logdir):
-		self._logger = get_file_logger(filename, logdir=logdir)
+		self._logger = get_file_logger(md5(filename).hexdigest(),
+									   logdir=logdir, filename=filename)
 	
 	def close(self):
 		for handler in reversed(self._logger.handlers):
@@ -116,10 +117,12 @@ safe_log = SafeLogger(print_=False)
 safe_print = SafeLogger()
 
 
-def get_file_logger(filename, level=logging.DEBUG, when="midnight", backupCount=0,
-					logdir=logdir):
-	logger = logging.getLogger(md5(filename).hexdigest())
+def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
+					logdir=logdir, filename=None):
+	logger = logging.getLogger(name)
 	logger.setLevel(level)
+	if not filename:
+		filename = name
 	logfile = os.path.join(logdir, filename + ".log")
 	for handler in logger.handlers:
 		if (isinstance(handler, logging.handlers.TimedRotatingFileHandler) and
