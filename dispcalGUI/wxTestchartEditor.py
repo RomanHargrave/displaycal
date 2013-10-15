@@ -15,8 +15,9 @@ import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ, XYZ2RGB as argyll_XYZ2RGB
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
 from config import (btn_width_correction, defaults, getcfg, geticon, 
-					get_bitmap_as_icon, get_data_path, get_total_patches, 
-					get_verified_path, hascfg, setcfg, writecfg)
+					get_bitmap_as_icon, get_current_profile, get_data_path,
+					get_total_patches, get_verified_path, hascfg, setcfg,
+					writecfg)
 from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
@@ -235,6 +236,14 @@ class TestchartEditor(wx.Frame):
 			self.tc_precond_profile.PickerCtrl.Label = lang.getstr("browse")
 		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.tc_precond_profile_handler, id = self.tc_precond_profile.GetId())
 		hsizer.Add(self.tc_precond_profile, 1, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
+		
+		self.tc_precond_profile_current_btn = wx.Button(panel, -1,
+														lang.getstr("profile.current"),
+														name="tc_precond_profile_current")
+		self.Bind(wx.EVT_BUTTON, self.tc_precond_profile_current_ctrl_handler,
+				  id=self.tc_precond_profile_current_btn.GetId())
+		hsizer.Add(self.tc_precond_profile_current_btn, 0,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
 		# limit samples to lab sphere
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -849,6 +858,14 @@ class TestchartEditor(wx.Frame):
 		tc_precond_enable = bool(self.tc_precond_profile.GetPath())
 		self.tc_precond.Enable(tc_precond_enable)
 		setcfg("tc_precond_profile", self.tc_precond_profile.GetPath())
+	
+	def tc_precond_profile_current_ctrl_handler(self, event):
+		profile = get_current_profile()
+		if profile:
+			self.tc_precond_profile.SetPath(profile.fileName)
+			self.tc_precond_profile_handler()
+		else:
+			wx.Bell()
 
 	def tc_filter_handler(self, event = None):
 		setcfg("tc_filter", int(self.tc_filter.GetValue()))
