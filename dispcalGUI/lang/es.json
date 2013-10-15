@@ -439,6 +439,8 @@
 	"profile.no_embedded_ti3": "El perfil no contiene datos de medicion compatibles con Argyll.",
 	"profile.no_vcgt": "El perfil no contiene curvas de calibracion.",
 	"profile.quality": "Calidad del perfil",
+		"*profile.quality.b2a.low": "Low quality B2A table",
+		"*profile.quality.b2a.low.info": "Choose this option if the profile is only going to be used with inverse A2B gamut mapping to create a DeviceLink or 3D LUT",
 	"profile.set_save_path": "Seleccionar ruta de guardado...",
 	"profile.settings": "Opciones de perfilado",
 	"profile.share": "Subido perfil...",

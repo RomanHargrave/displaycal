@@ -966,9 +966,24 @@
                           </object>
                           <object class="spacer"/>
                           <object class="sizeritem">
-                            <object class="wxCheckBox" name="black_point_compensation_cb">
-                              <label>black_point_compensation</label>
-                              <tooltip>black_point_compensation.info</tooltip>
+                            <object class="wxBoxSizer">
+                              <orient>wxHORIZONTAL</orient>
+                              <object class="sizeritem">
+                                <object class="wxCheckBox" name="black_point_compensation_cb">
+                                  <label>black_point_compensation</label>
+                                  <tooltip>black_point_compensation.info</tooltip>
+                                </object>
+                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>8</border>
+                                <minsize>159,-1</minsize>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxCheckBox" name="low_quality_b2a_cb">
+                                  <label>profile.quality.b2a.low</label>
+                                  <tooltip>profile.quality.b2a.low.info</tooltip>
+                                </object>
+                                <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                              </object>
                             </object>
                             <flag>wxTOP|wxBOTTOM</flag>
                             <border>5</border>

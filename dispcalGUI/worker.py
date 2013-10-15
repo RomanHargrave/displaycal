@@ -323,6 +323,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 	]
 	re_options_colprof = [
 		"q[lmh]",
+		"b[lmh]",  # B2A quality
 		"a(?:%s)" % "|".join(config.valid_values["profile.type"]),
 		'[sSMA]\s+["\'][^"\']+?["\']',
 		"[cd](?:%s)" % "|".join(viewconds),
@@ -3512,6 +3513,9 @@ class Worker(object):
 		args = []
 		args += ["-v"] # verbose
 		args += ["-q" + getcfg("profile.quality")]
+		b2a_q = getcfg("profile.quality.b2a")
+		if b2a_q:
+			args += ["-b" + b2a_q]
 		args += ["-a" + getcfg("profile.type")]
 		if getcfg("profile.type") in ["l", "x", "X"]:
 			if getcfg("gamap_saturation"):

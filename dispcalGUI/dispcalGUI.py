@@ -948,6 +948,13 @@ class MainFrame(BaseFrame):
 			4: "h",
 			5: "u"
 		}
+		self.quality_b2a_ab = {
+			0: "n",
+			1: "l",
+			2: "m",
+			3: "h",
+			4: "u"
+		}
 		
 		# Left side - commmandline, right side - internal enumeration
 		self.quality_ba = swap_dict_keys_values(self.quality_ab)
@@ -1781,6 +1788,8 @@ class MainFrame(BaseFrame):
 		# Profile quality
 		self.Bind(wx.EVT_SLIDER, self.profile_quality_ctrl_handler, 
 				  id=self.profile_quality_ctrl.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
+				  id=self.low_quality_b2a_cb.GetId())
 
 		# Profile type
 		self.Bind(wx.EVT_CHOICE, self.profile_type_ctrl_handler, 
@@ -2814,6 +2823,10 @@ class MainFrame(BaseFrame):
 		enable_gamap = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
 
+		self.low_quality_b2a_cb.SetValue(enable_gamap and
+										 getcfg("profile.quality.b2a") == "l")
+		self.low_quality_b2a_cb.Enable(enable_gamap)
+
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
 
@@ -3046,6 +3059,15 @@ class MainFrame(BaseFrame):
 			InfoDialog(self, msg=lang.getstr("quality.ultra.warning"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-warning"), log=False)
+
+	def profile_quality_b2a_ctrl_handler(self, event):
+		if self.low_quality_b2a_cb.GetValue():
+			v = "l"
+		else:
+			v = None
+		if v != getcfg("profile.quality.b2a"):
+			self.profile_settings_changed()
+		setcfg("profile.quality.b2a", v)
 
 	def profile_quality_ctrl_handler(self, event):
 		if debug:
@@ -7067,7 +7089,11 @@ class MainFrame(BaseFrame):
 											 event.GetEventType(), 
 											 getevttype(event)))
 		v = self.get_profile_type()
-		self.gamap_btn.Enable(v in ("l", "x", "X"))
+		lut_type = v in ("l", "x", "X")
+		self.gamap_btn.Enable(lut_type)
+		self.low_quality_b2a_cb.SetValue(lut_type and
+										 getcfg("profile.quality.b2a") == "l")
+		self.low_quality_b2a_cb.Enable(lut_type)
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v in ("g", "G"):
 			self.profile_quality_ctrl.SetValue(3)
@@ -8482,6 +8508,9 @@ class MainFrame(BaseFrame):
 					for o in options_colprof:
 						if o[0] == "q":
 							setcfg("profile.quality", o[1])
+							continue
+						if o[0] == "b":
+							setcfg("profile.quality.b2a", o[1] or "l")
 							continue
 						if o[0] == "a":
 							setcfg("profile.type", o[1])

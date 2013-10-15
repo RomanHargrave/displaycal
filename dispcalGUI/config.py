@@ -438,6 +438,7 @@ valid_values = {
 	"profile.black_point_compensation": [0, 1],
 	"profile.install_scope": ["l", "u"],
 	"profile.quality": ["l", "m", "h", "u"],
+	"profile.quality.b2a": ["l", "m", "h", "u", "n", None],
 	"profile.type": ["g", "G", "l", "s", "S", "x", "X"],
 	"tc_algo": ["", "t", "r", "R", "q", "Q", "i", "I"],  # Q = Argyll >= 1.1.0
 	"trc": ["240", "709", "l", "s"],
@@ -570,6 +571,7 @@ defaults = {
 	]),
 	"profile.name.expanded": u"",
 	"profile.quality": "h",
+	"profile.quality.b2a": None,
 	"profile.save_path": storage, # directory
 	"profile.type": "s",
 	"profile.update": 0,
