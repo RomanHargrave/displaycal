@@ -299,7 +299,8 @@ def get_argyll_version(name, silent=False):
 
 def parse_argument_string(args):
 	""" Parses an argument string and returns a list of arguments. """
-	return [arg.strip('"\'') for arg in re.findall('(?:^|\s+)(-[^\s]+|["\'][^"\']+?["\']|\S+)', args)]
+	return [re.sub('^["\']|["\']$', '', arg) for arg in
+			re.findall('(?:^|\s+)(-[^\s"\']+|"[^"]+?"|\'[^\']+?\'|[^\s"\']+)', args)]
 
 
 def get_options_from_args(dispcal_args=None, colprof_args=None):
