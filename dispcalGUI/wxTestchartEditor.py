@@ -661,15 +661,16 @@ class TestchartEditor(wx.Frame):
 		if event:
 			event.Skip()
 
-	def tc_grid_cell_change_handler(self, event):
-		data = self.ti1.queryv1("DATA")
+	def tc_grid_cell_change_handler(self, event, save_check=True):
+		data = self.ti1[0]["DATA"]
 		sample = data[event.GetRow()]
 		label = self.grid.GetColLabelValue(event.GetCol())
 		value = self.grid.GetCellValue(event.GetRow(), event.GetCol()).replace(",", ".")
+		value_set = False
 		try:
 			value = float(value)
 		except ValueError, exception:
-			if label in self.ti1.queryv1("DATA_FORMAT").values():
+			if label in self.ti1[0]["DATA_FORMAT"].values():
 				value = sample[label]
 			else:
 				value = ""
@@ -682,24 +683,27 @@ class TestchartEditor(wx.Frame):
 				sample[label] = value
 				# If the same RGB combo is already in the ti1, use its XYZ
 				# TODO: Implement proper lookup when using precond profile
-				ref = data.queryi({"RGB_R": sample["RGB_R"],
-								   "RGB_G": sample["RGB_G"],
-								   "RGB_B": sample["RGB_B"]})
-				if ref:
-					for i in ref:
-						if ref[i] != sample:
-							ref = ref[i]
-							break
-				if "XYZ_X" in ref:
-					XYZ = [component / 100.0 for component in (ref["XYZ_X"], ref["XYZ_Y"], ref["XYZ_Z"])]
-				else:
-					# Fall back to default D65-ish values
-					XYZ = argyll_RGB2XYZ(*[component / 100.0 for component in (sample["RGB_R"], sample["RGB_G"], sample["RGB_B"])])
+				# This costs too much performance when updating multiple cells!
+				# (e.g. paste operation from spreadsheet)
+				##ref = data.queryi({"RGB_R": sample["RGB_R"],
+								   ##"RGB_G": sample["RGB_G"],
+								   ##"RGB_B": sample["RGB_B"]})
+				##if ref:
+					##for i in ref:
+						##if ref[i] != sample:
+							##ref = ref[i]
+							##break
+				##if "XYZ_X" in ref:
+					##XYZ = [component / 100.0 for component in (ref["XYZ_X"], ref["XYZ_Y"], ref["XYZ_Z"])]
+				##else:
+				# Fall back to default D65-ish values
+				XYZ = argyll_RGB2XYZ(*[component / 100.0 for component in (sample["RGB_R"], sample["RGB_G"], sample["RGB_B"])])
 				sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"] = [component * 100.0 for component in XYZ]
 				for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
 					for col in range(self.grid.GetNumberCols()):
 						if self.grid.GetColLabelValue(col) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
+							value_set = True
 			elif label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
 				# FIXME: Should this be removed? There are no XYZ fields in the editor 
 				if value < 0:
@@ -711,13 +715,16 @@ class TestchartEditor(wx.Frame):
 					for col in range(self.grid.GetNumberCols()):
 						if self.grid.GetColLabelValue(col) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
+							value_set = True
 			self.tc_grid_setcolorlabel(event.GetRow())
-			self.tc_save_check()
+			if save_check:
+				self.tc_save_check()
 			if hasattr(self, "preview"):
 				patch = self.patchsizer.GetItem(event.GetRow()).GetWindow()
 				self.tc_patch_setcolorlabel(patch)
 				patch.Refresh()
-		self.grid.SetCellValue(event.GetRow(), event.GetCol(), CGATS.rcut(value, sample.parent.vmaxlen))
+		if not value_set:
+			self.grid.SetCellValue(event.GetRow(), event.GetCol(), CGATS.rcut(value, sample.parent.vmaxlen))
 
 	def tc_white_patches_handler(self, event = None):
 		setcfg("tc_white_patches", self.tc_white_patches.GetValue())
