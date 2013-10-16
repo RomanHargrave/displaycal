@@ -1325,6 +1325,8 @@ class Worker(object):
 					# i.e. use collink -a parameter (apply calibration curves
 					# to link output and append linear)
 					args += ["-a", profile_out_cal_path]
+			if getcfg("extra_args.collink").strip():
+				args += parse_argument_string(getcfg("extra_args.collink"))
 			result = self.exec_cmd(collink, args + [profile_in_basename,
 													profile_out_basename,
 													link_filename],

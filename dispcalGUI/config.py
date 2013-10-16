@@ -502,6 +502,7 @@ defaults = {
 	"displays": "",
 	"dry_run": 0,
 	"enumerate_ports.auto": 0,
+	"extra_args.collink": "",
 	"extra_args.colprof": "",
 	"extra_args.dispcal": "",
 	"extra_args.dispread": "",

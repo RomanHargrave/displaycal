@@ -63,6 +63,19 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText">
+                    <label>collink</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxTextCtrl" name="extra_args_collink_ctrl">
+                    <size>320,-1</size>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText">
                     <label>targen</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
