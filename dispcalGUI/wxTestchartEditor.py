@@ -291,7 +291,6 @@ class TestchartEditor(wx.Frame):
 														size=(55, -1), min=0,
 														max=40,
 														name="tc_vrml_black_offset_intctrl")
-		self.tc_vrml_black_offset_intctrl.SetValue(getcfg("tc_vrml_black_offset"))
 		self.Bind(wx.EVT_TEXT, self.tc_vrml_black_offset_ctrl_handler,
 				  id=self.tc_vrml_black_offset_intctrl.GetId())
 		hsizer.Add(self.tc_vrml_black_offset_intctrl,
@@ -299,7 +298,6 @@ class TestchartEditor(wx.Frame):
 		self.tc_vrml_use_D50_cb = wx.CheckBox(panel, -1,
 											  lang.getstr("tc.vrml.use_D50"),
 											  name="tc_vrml_use_D50_cb")
-		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
 		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_use_D50_handler,
 				  id=self.tc_vrml_use_D50_cb.GetId())
 		hsizer.Add(self.tc_vrml_use_D50_cb, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
@@ -946,6 +944,8 @@ class TestchartEditor(wx.Frame):
 		self.tc_filter_rad.SetValue(getcfg("tc_filter_rad"))
 		self.tc_vrml_lab.SetValue(bool(int(getcfg("tc_vrml_lab"))))
 		self.tc_vrml_device.SetValue(bool(int(getcfg("tc_vrml_device"))))
+		self.tc_vrml_black_offset_intctrl.SetValue(getcfg("tc_vrml_black_offset"))
+		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
 		self.tc_vrml_handler()
 
 	def tc_check(self, event = None):

@@ -1912,8 +1912,15 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result != wx.ID_OK: return
 		skip = [
+			"3dlut.apply_bt1886_gamma_mapping",
 			"3dlut.bitdepth.input",
 			"3dlut.bitdepth.output",
+			"3dlut.bt1886_gamma",
+			"3dlut.bt1886_gamma_type",
+			"3dlut.encoding.input",
+			"3dlut.encoding.input.backup",
+			"3dlut.encoding.output",
+			"3dlut.encoding.output.backup",
 			"3dlut.format",
 			"3dlut.input.profile",
 			"3dlut.abstract.profile",
@@ -1924,8 +1931,12 @@ class MainFrame(BaseFrame):
 			"3dlut.size",
 			"allow_skip_sensor_cal",
 			"argyll.dir",
+			"argyll.version",
 			"calibration.black_output_offset.backup",
 			"calibration.black_point_rate.enabled",
+			"calibration.file.previous",
+			"calibration.update",
+			"colorimeter_correction_matrix_file",
 			"comport.number",
 			"copyright",
 			"display.number",
@@ -1950,17 +1961,19 @@ class MainFrame(BaseFrame):
 			"lut_viewer.show_actual_lut",
 			"measurement_mode",
 			"measurement_mode.backup",
-			"measurement_mode.highres",
 			"measurement_mode.projector",
+			"measurement.name.expanded",
 			"measurement.play_sound",
 			"measurement.save_path",
 			"profile.install_scope",
 			"profile.license",
 			"profile.load_on_login",
 			"profile.name",
+			"profile.name.expanded",
 			"profile.save_path",
 			"profile_loader.error.show_msg",
 			"profile_loader.verify_calibration",
+			"profile.update",
 			"position.x",
 			"position.y",
 			"position.info.x",
@@ -1979,13 +1992,18 @@ class MainFrame(BaseFrame):
 			"position.tcgen.y",
 			"recent_cals",
 			"report.pack_js",
+			"settings.changed",
 			"show_advanced_calibration_options",
 			"skip_legacy_serial_ports",
 			"sudo.preserve_environment",
 			"tc_precond_profile",
+			"tc_vrml_lab",
+			"tc_vrml_device",
+			"tc.show",
 			"testchart.file.backup",
 			"trc.backup",
 			"trc.type.backup",
+			"untethered.measure.auto",
 			"update_check"
 		]
 		override = {
@@ -2020,6 +2038,8 @@ class MainFrame(BaseFrame):
 			self.update_displays()
 			self.update_controls()
 			self.update_menus()
+			if hasattr(self, "gamapframe"):
+				self.gamapframe.update_controls()
 			if hasattr(self, "tcframe"):
 				self.tcframe.tc_update_controls()
 
