@@ -57,7 +57,8 @@ def update_defaults():
 		"last_reference_ti3_path": os.path.join(expanduseru("~"),
 												getstr("unnamed")),
 		"last_ti1_path": os.path.join(storage, getstr("unnamed")),
-		"last_ti3_path": os.path.join(storage, getstr("unnamed"))
+		"last_ti3_path": os.path.join(storage, getstr("unnamed")),
+		"last_vrml_path": os.path.join(storage, getstr("unnamed"))
 	})
 
 

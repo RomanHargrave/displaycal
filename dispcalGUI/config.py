@@ -405,6 +405,7 @@ valid_ranges = {
 	"calibration.luminance": [0.000001, 100000],
 	"tc_export_repeat_patch_max": [1, 1000],
 	"tc_export_repeat_patch_min": [1, 1000],
+	"tc_vrml_black_offset": [0, 40],
 	"webserver.portnumber": [1, 65535],
 	"whitepoint.colortemp": [1000, 15000],
 }
@@ -441,6 +442,7 @@ valid_values = {
 	"profile.quality.b2a": ["l", "m", "h", "u", "n", None],
 	"profile.type": ["g", "G", "l", "s", "S", "x", "X"],
 	"tc_algo": ["", "t", "r", "R", "q", "Q", "i", "I"],  # Q = Argyll >= 1.1.0
+	"tc_vrml_use_D50": [0, 1],
 	"trc": ["240", "709", "l", "s"],
 	"trc.type": ["g", "G"],
 	"whitepoint.colortemp.locus": ["t", "T"]
@@ -614,8 +616,10 @@ defaults = {
 	"tc_precond": 0,
 	"tc_precond_profile": "",
 	"tc_single_channel_patches": 0,
+	"tc_vrml_black_offset": 40,
 	"tc_vrml_lab": 0,
 	"tc_vrml_device": 1,
+	"tc_vrml_use_D50": 0,
 	"tc_white_patches": 4,
 	"tc.show": 0,
 	"trc": 2.2,

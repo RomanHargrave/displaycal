@@ -595,7 +595,8 @@ class CGATS(dict):
 											 self.type)
 		return context
 	
-	def export_vrml(self, filename, devicelocations=True):
+	def export_vrml(self, filename, devicelocations=True, RGB_black_offset=40,
+					normalize_RGB_white=False):
 		data = self.queryv1("DATA")
 		radius = 15.0 / (len(data) ** (1.0 / 3.0))
 		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
@@ -603,6 +604,9 @@ class CGATS(dict):
 			white = colormath.get_whitepoint((white["XYZ_X"],
 											  white["XYZ_Y"],
 											  white["XYZ_Z"]))
+		rgb_space = list(colormath.rgb_spaces["sRGB"])
+		if normalize_RGB_white:
+			rgb_space[1] = "D50"
 		vrml = """#VRML V2.0 utf8
 
 Transform {
@@ -790,7 +794,20 @@ Transform {
 						   entry["RGB_R"] - 50)
 			else:
 				x, y, z = a, b, L - 50
-			R, G, B = colormath.Lab2RGB(L * (100.0 - 40.0) / 100.0 + 40.0, a, b, scale=.7)
+			if RGB_black_offset != 40:
+				# Keep reference hue and saturation
+				# Lab to sRGB using reference black offset of 40 like Argyll CMS
+				R, G, B = colormath.Lab2RGB(L * (100.0 - 40.0) / 100.0 + 40.0,
+											a, b, rgb_space, scale=.7)
+				H_ref, S_ref, V_ref = colormath.RGB2HSV(R, G, B)
+			# Lab to sRGB using actual black offset
+			R, G, B = colormath.Lab2RGB(L * (100.0 - RGB_black_offset) / 100.0 +
+										RGB_black_offset, a, b, rgb_space,
+										scale=.7)
+			if RGB_black_offset != 40:
+				H, S, V = colormath.RGB2HSV(R, G, B)
+				# Use reference H and S to go back to RGB
+				R, G, B = colormath.HSV2RGB(H_ref, S_ref, V)
 			children.append(child % {"x": x,
 									 "y": y,
 									 "z": z,

@@ -284,6 +284,27 @@ class TestchartEditor(wx.Frame):
 		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_device.GetId())
 		hsizer.Add(self.tc_vrml_device, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
 
+		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.vrml.black_offset")),
+								 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+								 border=border)
+		self.tc_vrml_black_offset_intctrl = wx.SpinCtrl(panel, -1,
+														size=(55, -1), min=0,
+														max=40,
+														name="tc_vrml_black_offset_intctrl")
+		self.tc_vrml_black_offset_intctrl.SetValue(getcfg("tc_vrml_black_offset"))
+		self.Bind(wx.EVT_TEXT, self.tc_vrml_black_offset_ctrl_handler,
+				  id=self.tc_vrml_black_offset_intctrl.GetId())
+		hsizer.Add(self.tc_vrml_black_offset_intctrl,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		self.tc_vrml_use_D50_cb = wx.CheckBox(panel, -1,
+											  lang.getstr("tc.vrml.use_D50"),
+											  name="tc_vrml_use_D50_cb")
+		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
+		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_use_D50_handler,
+				  id=self.tc_vrml_use_D50_cb.GetId())
+		hsizer.Add(self.tc_vrml_use_D50_cb, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+				   border=border)
+
 		# buttons
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag = (wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER, border = 12)
@@ -310,6 +331,12 @@ class TestchartEditor(wx.Frame):
 		self.export_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_export_handler, id = self.export_btn.GetId())
 		hsizer.Add(self.export_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
+
+		self.vrml_save_as_btn = wx.Button(panel, -1, lang.getstr("tc.vrml.save_as"))
+		self.vrml_save_as_btn.SetInitialSize((self.vrml_save_as_btn.GetSize()[0] + btn_width_correction, -1))
+		self.vrml_save_as_btn.Disable()
+		self.Bind(wx.EVT_BUTTON, self.tc_vrml_save_as_handler, id = self.vrml_save_as_btn.GetId())
+		hsizer.Add(self.vrml_save_as_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		self.clear_btn = wx.Button(panel, -1, lang.getstr("testchart.discard"), name = "tc_clear")
 		self.clear_btn.SetInitialSize((self.clear_btn.GetSize()[0] + btn_width_correction, -1))
@@ -874,9 +901,20 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_filter_b", self.tc_filter_b.GetValue())
 		setcfg("tc_filter_rad", self.tc_filter_rad.GetValue())
 
+	def tc_vrml_black_offset_ctrl_handler(self, event):
+		setcfg("tc_vrml_black_offset",
+			   self.tc_vrml_black_offset_intctrl.GetValue())
+
 	def tc_vrml_handler(self, event = None):
-		setcfg("tc_vrml_device", int(self.tc_vrml_device.GetValue()))
-		setcfg("tc_vrml_lab", int(self.tc_vrml_lab.GetValue()))
+		d = self.tc_vrml_device.GetValue()
+		l = self.tc_vrml_lab.GetValue()
+		setcfg("tc_vrml_device", int(d))
+		setcfg("tc_vrml_lab", int(l))
+		self.vrml_save_as_btn.Enable(d or l)
+
+	def tc_vrml_use_D50_handler(self, event):
+		setcfg("tc_vrml_use_D50",
+			   int(self.tc_vrml_use_D50_cb.GetValue()))
 
 	def tc_update_controls(self):
 		self.tc_algo.SetStringSelection(self.tc_algos_ab.get(getcfg("tc_algo"), self.tc_algos_ab.get(defaults["tc_algo"])))
@@ -908,6 +946,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_filter_rad.SetValue(getcfg("tc_filter_rad"))
 		self.tc_vrml_lab.SetValue(bool(int(getcfg("tc_vrml_lab"))))
 		self.tc_vrml_device.SetValue(bool(int(getcfg("tc_vrml_device"))))
+		self.tc_vrml_handler()
 
 	def tc_check(self, event = None):
 		white_patches = self.tc_white_patches.GetValue()
@@ -1154,20 +1193,7 @@ class TestchartEditor(wx.Frame):
 			except Exception, exception:
 				handle_error(u"Error - testchart could not be saved: " + safe_unicode(exception), parent = self)
 			else:
-				if getcfg("tc_vrml_device") or getcfg("tc_vrml_lab"):
-					vrml_types = []
-					if getcfg("tc_vrml_device"):
-						vrml_types.append("d")
-					if getcfg("tc_vrml_lab"):
-						vrml_types.append("l")
-					for vrml_type in vrml_types:
-						wrlsuffix = "%s.wrl" % vrml_type
-						try:
-							self.ti1[0].export_vrml(os.path.splitext(path)[0] +
-													wrlsuffix,
-													wrlsuffix == "d.wrl")
-						except Exception, exception:
-							handle_error(u"Warning - VRML file could not be saved: " + safe_unicode(exception), parent = self)
+				self.tc_vrml_save(path)
 				if path != getcfg("testchart.file"):
 					dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
 					result = dlg.ShowModal()
@@ -1181,6 +1207,65 @@ class TestchartEditor(wx.Frame):
 					self.save_btn.Disable()
 				return True
 		return False
+
+	def tc_vrml_save_as_handler(self, event):
+		path = None
+		if (hasattr(self, "ti1") and self.ti1.filename and
+			os.path.isfile(self.ti1.filename)):
+			defaultDir = os.path.dirname(self.ti1.filename)
+			defaultFile = os.path.splitext(os.path.basename(self.ti1.filename))[0]
+		else:
+			defaultDir = get_verified_path("last_vrml_path")[0]
+			defaultFile = os.path.basename(getcfg("last_vrml_path"))
+		dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"),
+							defaultDir=defaultDir, defaultFile=defaultFile,
+							wildcard=lang.getstr("filetype.vrml") + "|*.wrl",
+							style=wx.SAVE | wx.OVERWRITE_PROMPT)
+		dlg.Center(wx.BOTH)
+		if dlg.ShowModal() == wx.ID_OK:
+			path = dlg.GetPath()
+		dlg.Destroy()
+		if path:
+			if not waccess(path, os.W_OK):
+				show_result_dialog(Error(lang.getstr("error.access_denied.write",
+													 path)),
+								   self)
+				return
+			filename, ext = os.path.splitext(path)
+			if ext.lower() != ".wrl":
+				path += ".wrl"
+			setcfg("last_vrml_path", path)
+			self.tc_vrml_save(path)
+	
+	def tc_vrml_save(self, path):
+		if getcfg("tc_vrml_device") or getcfg("tc_vrml_lab"):
+			opath = path
+			vrml_types = []
+			if getcfg("tc_vrml_device"):
+				vrml_types.append("d")
+			if getcfg("tc_vrml_lab"):
+				vrml_types.append("l")
+			for vrml_type in vrml_types:
+				wrlsuffix = "%s.wrl" % vrml_type
+				path = os.path.splitext(opath)[0] + wrlsuffix
+				if os.path.exists(path):
+					dlg = ConfirmDialog(self,
+										msg=lang.getstr("dialog.confirm_overwrite",
+														(path)),
+										ok=lang.getstr("overwrite"),
+										cancel=lang.getstr("cancel"),
+										bitmap=geticon(32, "dialog-warning"))
+					result = dlg.ShowModal()
+					dlg.Destroy()
+					if result != wx.ID_OK:
+						return
+				try:
+					self.ti1[0].export_vrml(path,
+											wrlsuffix == "d.wrl",
+											RGB_black_offset=getcfg("tc_vrml_black_offset"),
+											normalize_RGB_white=getcfg("tc_vrml_use_D50"))
+				except Exception, exception:
+					handle_error(u"Warning - VRML file could not be saved: " + safe_unicode(exception), parent = self)
 
 	def tc_check_save_ti1(self, clear = True):
 		if hasattr(self, "ti1"):

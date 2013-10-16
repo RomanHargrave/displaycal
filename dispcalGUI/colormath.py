@@ -496,6 +496,44 @@ def CIEDCCT2XYZ(T, scale=1.0):
 	return xyY2XYZ(*CIEDCCT2xyY(T, scale))
 
 
+def HSV2RGB(H, S, V, scale=1.0):
+	if S == 0:
+		return (V * scale, ) * 3
+	else:
+		h = H * 6.0
+		if h == 6:
+			h = 0
+		i = int(h)
+		component_1 = V * (1.0 - S)
+		component_2 = V * (1.0 - S * (h - i))
+		component_3 = V * (1.0 - S * (1.0 - (h - i)))
+		if i == 0:
+			R = V
+			G = component_3
+			B = component_1
+		elif i == 1:
+			R = component_2
+			G = V
+			B = component_1
+		elif i == 2:
+			R = component_1
+			G = V
+			B = component_3
+		elif i == 3:
+			R = component_1
+			G = component_2
+			B = V
+		elif i == 4:
+			R = component_3
+			G = component_1
+			B = V
+		else:
+			R = V
+			G = component_1
+			B = component_2
+		return R * scale, G * scale, B * scale
+
+
 def get_DBL_MIN():
 	t = "0.0"
 	i = 10
@@ -520,6 +558,25 @@ def get_DBL_MIN():
 
 
 DBL_MIN = get_DBL_MIN()
+
+
+def LCHab2Lab(L, C, H):
+	a = C * math.cos(H * math.pi / 180.0)
+	b = C * math.sin(H * math.pi / 180.0)
+	return L, a, b
+
+
+def Lab2LCHab(L, a, b):
+	C = math.sqrt(math.pow(a, 2) + math.pow(b, 2))
+	H = 180.0 * math.atan2(b, a) / math.pi
+	if (H < 0.0):
+		H += 360.0
+	return L, C, H
+
+
+def Lab2Luv(L, a, b, whitepoint=None, scale=100):
+	X, Y, Z = Lab2XYZ(L, a, b, whitepoint, scale)
+	return XYZ2Luv(X, Y, Z, whitepoint)
 
 
 def Lab2RGB(L, a, b, rgb_space=None, scale=1.0, round_=False, clamp=True,
@@ -611,6 +668,33 @@ def Luv2XYZ(L, u, v, whitepoint=None, scale=1.0):
 	Z = X * a + b
 	
 	return tuple([v * scale for v in X, Y, Z])
+
+
+def RGB2HSV(R, G, B, scale=1.0):
+	RGB_min = min( R, G, B )
+	RGB_max = max( R, G, B )
+	delta = RGB_max - RGB_min
+	V = RGB_max
+	if ( delta == 0 ):
+		# Gray
+		H = 0
+		S = 0
+	else:
+		S = delta / RGB_max
+		delta_R = (((RGB_max - R) / 6.0) + (delta / 2.0) ) / delta
+		delta_G = (((RGB_max - G) / 6.0) + (delta / 2.0) ) / delta
+		delta_B = (((RGB_max - B) / 6.0) + (delta / 2.0) ) / delta
+		if R == RGB_max:
+			H = delta_B - delta_G
+		elif G == RGB_max:
+			H = (1.0 / 3.0) + delta_R - delta_B
+		elif B == RGB_max:
+			H = (2.0 / 3.0) + delta_G - delta_R
+		if H < 0:
+			H += 1.0
+		if H > 1:
+			H -= 1.0
+	return H * scale, S * scale, V * scale
 
 
 def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):

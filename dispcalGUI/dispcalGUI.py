@@ -1943,6 +1943,7 @@ class MainFrame(BaseFrame):
 			"last_icc_path",
 			"last_ti1_path",
 			"last_ti3_path",
+			"last_vrml_path",
 			"log.autoshow",
 			"log.show",
 			"lut_viewer.show",
