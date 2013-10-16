@@ -1,37 +1,18 @@
 #!/bin/sh
 
-cprt="Created with dispcalGUI and Argyll CMS"
-desc="dispcalGUI calibration preset:"
+function createpreset() {
+	local root="`dirname \"$0\"`/.."
+	echo "$1"
+	colprof  -ql -aG -C "Created with dispcalGUI and Argyll CMS" -D "dispcalGUI calibration preset: $1" "$root/misc/ti3/$2"
+	mv -i "$root/misc/ti3/$2".ic? "$root/dispcalGUI/presets/$2.icc" && python "$root/util/update_presets.py" "$2"
+	echo ""
+}
 
-pushd "`dirname \"$0\"`/../misc/ti3"
-
-for name in "laptop" "office_web" "madVR" "prepress" "photo" "softproof" "sRGB" "video" ; do
-	case "$name" in
-		laptop)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc Laptop"       "$name";;
-	case "$name" in
-		madVR)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc madVR"        "$name";;
-	case "$name" in
-		office_web)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc Office & Web" "$name";;
-	case "$name" in
-		prepress)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc Prepress"     "$name";;
-	case "$name" in
-		photo)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc Photo"        "$name";;
-	case "$name" in
-		softproof)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc Softproof"    "$name";;
-	case "$name" in
-		sRGB)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc sRGB"         "$name";;
-	case "$name" in
-		video)
-		colprof  -v -ql -aG -C "$cprt" -D "$desc Video"        "$name";;
-	esac
-	mv -i "$name.icc" "`dirname \"$0\"`/../../dispcalGUI/presets/$name.icc"
-done
-
-popd
+createpreset "Laptop"       "laptop"
+createpreset "madVR"        "madVR"
+createpreset "Office & Web" "office_web"
+createpreset "Photo"        "photo"
+createpreset "Prepress"     "prepress"
+createpreset "Softproof"    "softproof"
+createpreset "sRGB"         "sRGB"
+createpreset "Video"        "video"

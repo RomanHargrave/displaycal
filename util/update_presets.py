@@ -1,0 +1,98 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
+import glob
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from dispcalGUI import ICCProfile as ICCP, colormath, config, worker
+
+
+sRGB = ICCP.ICCProfile(config.get_data_path("ref/sRGB.icm"))
+
+
+def update_preset(name):
+	print "Preset name:", name
+	pth = config.get_data_path("presets/%s.icc" % name)
+	if not pth:
+		print "ERROR: Preset not found"
+		return False
+	print "Path:", pth
+	with open(os.path.join(os.path.dirname(__file__), "..", "misc",
+						   "ti3", "%s.ti3" % name), "rb") as f:
+		ti3 = f.read()
+	prof = ICCP.ICCProfile(pth)
+	if prof.tags.targ != ti3:
+		print "Updating 'targ'..."
+		prof.tags.targ = ICCP.TextType("text\0\0\0\0%s\0" % ti3, "targ")
+	options_dispcal, options_colprof = worker.get_options_from_profile(prof)
+	trc_a2b = {"240": -240, "709": -709, "l": -3, "s": -2.4}
+	t_a2b = {"t": colormath.CIEDCCT2XYZ, "T": colormath.planckianCT2XYZ}
+	trc = None
+	for option in options_dispcal:
+		if option[0] == "g":
+			trc = trc_a2b.get(option[1:])
+			if not trc:
+				try:
+					trc = float(option[1:])
+				except ValueError:
+					trc = False
+					print "Invalid dispcal -g parameter:", option[1:]
+			if trc:
+				print "dispcal -g parameter:", option[1:]
+				print "Updating tone response curves..."
+				for chan in ("r", "g", "b"):
+					prof.tags["%sTRC" % chan].set_trc(trc, 256)
+				print "Transfer function:", prof.tags["%sTRC" % chan].get_transfer_function()[0][0]
+		elif option[0] in ("t", "T"):
+			print "dispcal -t parameter:", option[1:]
+			print "Updating white point..."
+			t = colormath.XYZ2CCT(prof.tags.wtpt.X,
+								  prof.tags.wtpt.Y,
+								  prof.tags.wtpt.Z)
+			(prof.tags.wtpt.X,
+			 prof.tags.wtpt.Y,
+			 prof.tags.wtpt.Z) = t_a2b[option[0]](float(option[1:] or t))
+		elif option[0] == "w":
+			print "dispcal -w parameter:", option[1:]
+			x, y = [float(v) for v in option[1:].split(",")]
+			print "Updating white point..."
+			(prof.tags.wtpt.X,
+			 prof.tags.wtpt.Y,
+			 prof.tags.wtpt.Z) = colormath.xyY2XYZ(x, y)
+	if "CIED" in prof.tags:
+		print "Removing 'CIED'..."
+		del prof.tags["CIED"]
+	if "DevD" in prof.tags:
+		print "Removing 'DevD'..."
+		del prof.tags["DevD"]
+	if "clrt" in prof.tags:
+		print "Removing 'clrt'..."
+		del prof.tags["clrt"]
+	print "Setting RGB matrix column tags to sRGB values..."
+	prof.tags.rXYZ = sRGB.tags.rXYZ
+	prof.tags.gXYZ = sRGB.tags.gXYZ
+	prof.tags.bXYZ = sRGB.tags.bXYZ
+	print "Updating profile ID..."
+	prof.calculateID()
+	prof.write()
+	print ""
+	return True
+
+
+def update_presets():
+	presets = config.get_data_path("presets", "\.icc$")
+	for fn in presets:
+		update_preset(os.path.splitext(os.path.basename(fn))[0])
+
+
+if __name__ == "__main__":
+	if "--help" in sys.argv[1:]:
+		print "Usage: %s [ preset_name [ preset_name ] ... ]" % __file__
+	elif sys.argv[1:]:
+		for name in sys.argv[1:]:
+			update_preset(name)
+	else:
+		update_presets()
