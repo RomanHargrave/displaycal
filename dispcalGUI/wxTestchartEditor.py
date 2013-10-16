@@ -913,9 +913,10 @@ class TestchartEditor(wx.Frame):
 	def tc_vrml_handler(self, event = None):
 		d = self.tc_vrml_device.GetValue()
 		l = self.tc_vrml_lab.GetValue()
-		setcfg("tc_vrml_device", int(d))
-		setcfg("tc_vrml_lab", int(l))
-		self.vrml_save_as_btn.Enable(d or l)
+		if event:
+			setcfg("tc_vrml_device", int(d))
+			setcfg("tc_vrml_lab", int(l))
+		self.vrml_save_as_btn.Enable(hasattr(self, "ti1") and (d or l))
 
 	def tc_vrml_use_D50_handler(self, event):
 		setcfg("tc_vrml_use_D50",
@@ -963,6 +964,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_save_check()
 		self.save_as_btn.Enable(hasattr(self, "ti1"))
 		self.export_btn.Enable(hasattr(self, "ti1"))
+		self.tc_vrml_handler()
 		self.tc_set_default_status()
 	
 	def tc_save_check(self):
