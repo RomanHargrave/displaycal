@@ -1947,6 +1947,7 @@ class MainFrame(BaseFrame):
 			"display_lut.link",
 			"display_lut.number",
 			"displays",
+			"dry_run",
 			"enumerate_ports.auto",
 			"gamma",
 			"instruments",
