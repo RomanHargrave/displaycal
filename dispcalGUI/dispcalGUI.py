@@ -2042,6 +2042,8 @@ class MainFrame(BaseFrame):
 			self.update_displays()
 			self.update_controls()
 			self.update_menus()
+			if hasattr(self, "extra_args"):
+				self.extra_args.update_controls()
 			if hasattr(self, "gamapframe"):
 				self.gamapframe.update_controls()
 			if hasattr(self, "tcframe"):
