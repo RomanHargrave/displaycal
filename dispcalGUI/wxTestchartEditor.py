@@ -885,7 +885,7 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_precond_profile", self.tc_precond_profile.GetPath())
 	
 	def tc_precond_profile_current_ctrl_handler(self, event):
-		profile = get_current_profile()
+		profile = get_current_profile(include_display_profile=True)
 		if profile:
 			self.tc_precond_profile.SetPath(profile.fileName)
 			self.tc_precond_profile_handler()
