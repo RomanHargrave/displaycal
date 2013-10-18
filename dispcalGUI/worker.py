@@ -483,7 +483,7 @@ def set_argyll_bin(parent=None):
 	""" Set the directory containing the Argyll CMS binary executables """
 	if parent and not parent.IsShownOnScreen():
 		parent = None # do not center on parent if not visible
-	defaultPath = os.path.sep.join(get_verified_path("argyll.dir"))
+	defaultPath = os.path.join(*get_verified_path("argyll.dir"))
 	dlg = wx.DirDialog(parent, lang.getstr("dialog.set_argyll_bin"), 
 					   defaultPath=defaultPath, style=wx.DD_DIR_MUST_EXIST)
 	dlg.Center(wx.BOTH)

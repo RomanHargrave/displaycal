@@ -5535,7 +5535,7 @@ class MainFrame(BaseFrame):
 		if is_ccxx_testchart():
 			# Allow different location to store measurements
 			path = None
-			defaultPath = os.path.sep.join(get_verified_path("measurement.save_path"))
+			defaultPath = os.path.join(*get_verified_path("measurement.save_path"))
 			dlg = wx.DirDialog(self, lang.getstr("measurement.set_save_path"), 
 							   defaultPath=defaultPath)
 			dlg.Center(wx.BOTH)
@@ -7196,7 +7196,7 @@ class MainFrame(BaseFrame):
 		self.update_profile_name()
 
 	def profile_save_path_btn_handler(self, event):
-		defaultPath = os.path.sep.join(get_verified_path("profile.save_path"))
+		defaultPath = os.path.join(*get_verified_path("profile.save_path"))
 		profile_name = getcfg("profile.name.expanded")
 		dlg = wx.DirDialog(self, lang.getstr("dialog.set_profile_save_path", 
 											 profile_name), 
@@ -8162,7 +8162,7 @@ class MainFrame(BaseFrame):
 		for chart in self.testcharts:
 			chart = chart.split(os.pathsep)
 			chart.reverse()
-			self.testcharts[i] = os.path.sep.join(chart)
+			self.testcharts[i] = os.path.join(*chart)
 			self.testchart_names += [lang.getstr(chart[-1])]
 			i += 1
 		return self.testchart_names
