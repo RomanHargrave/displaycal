@@ -1166,7 +1166,7 @@ class TestchartEditor(wx.Frame):
 				defaultFile = os.path.basename(self.ti1.filename)
 			else:
 				defaultDir = get_verified_path("last_ti1_path")[0]
-				defaultFile = os.path.basename(getcfg("last_ti1_path"))
+				defaultFile = os.path.basename(config.defaults["last_ti1_path"])
 			dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = lang.getstr("filetype.ti1") + "|*.ti1", style = wx.SAVE | wx.OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
@@ -1225,7 +1225,7 @@ class TestchartEditor(wx.Frame):
 			defaultFile = os.path.splitext(os.path.basename(self.ti1.filename))[0]
 		else:
 			defaultDir = get_verified_path("last_vrml_path")[0]
-			defaultFile = os.path.basename(getcfg("last_vrml_path"))
+			defaultFile = os.path.basename(config.defaults["last_vrml_path"])
 		dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"),
 							defaultDir=defaultDir, defaultFile=defaultFile,
 							wildcard=lang.getstr("filetype.vrml") + "|*.wrl",
