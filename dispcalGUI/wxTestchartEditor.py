@@ -774,11 +774,13 @@ class TestchartEditor(wx.Frame):
 	def tc_gamma_handler(self, event):
 		setcfg("tc_gamma", self.tc_gamma_floatctrl.GetValue())
 
-	def tc_get_total_patches(self, white_patches = None, single_channel_patches = None, gray_patches = None, multi_steps = None, multi_bcc_steps=None, fullspread_patches = None):
-		if hasattr(self, "ti1") and [white_patches, single_channel_patches, gray_patches, multi_steps, fullspread_patches] == [None] * 5:
+	def tc_get_total_patches(self, white_patches = None, black_patches=None, single_channel_patches = None, gray_patches = None, multi_steps = None, multi_bcc_steps=None, fullspread_patches = None):
+		if hasattr(self, "ti1") and [white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches] == [None] * 7:
 			return self.ti1.queryv1("NUMBER_OF_SETS")
 		if white_patches is None:
 			white_patches = self.tc_white_patches.GetValue()
+		if black_patches is None and hasattr(self, "ti1"):
+			black_patches = self.ti1.queryv1("BLACK_COLOR_PATCHES")
 		if single_channel_patches is None:
 			single_channel_patches = self.tc_single_channel_patches.GetValue()
 		single_channel_patches_total = single_channel_patches * 3
@@ -788,11 +790,11 @@ class TestchartEditor(wx.Frame):
 			gray_patches = 2
 		if multi_steps is None:
 			multi_steps = self.tc_multi_steps.GetValue()
-		if multi_bcc_steps is None and getcfg("tc_multi_bcc"):
+		if multi_bcc_steps is None and getcfg("tc_multi_bcc") and self.worker.argyll_version >= [1, 6]:
 			multi_bcc_steps = self.tc_multi_steps.GetValue()
 		if fullspread_patches is None:
 			fullspread_patches = self.tc_fullspread_patches.GetValue()
-		return get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches)
+		return get_total_patches(white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches)
 	
 	def tc_get_white_patches(self):
 		white_patches = self.tc_white_patches.GetValue()
@@ -821,7 +823,7 @@ class TestchartEditor(wx.Frame):
 				self.tc_multi_steps.SetValue(2)
 		multi_steps = self.tc_multi_steps.GetValue()
 		multi_patches = int(math.pow(multi_steps, 3))
-		if getcfg("tc_multi_bcc"):
+		if getcfg("tc_multi_bcc") and self.worker.argyll_version >= [1, 6]:
 			pref = "tc_multi_bcc_steps"
 			if multi_steps:
 				multi_patches += int(math.pow(multi_steps - 1, 3))
@@ -1394,6 +1396,7 @@ class TestchartEditor(wx.Frame):
 
 	def tc_load_cfg_from_ti1_worker(self):
 		white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None
+		black_patches = self.ti1.queryv1("BLACK_COLOR_PATCHES") or None
 		single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
 		gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or 0
 		multi_bcc_steps = self.ti1.queryv1("MULTI_DIM_BCC_STEPS") or 0
@@ -1664,12 +1667,12 @@ class TestchartEditor(wx.Frame):
 			fullspread_patches -= gray_patches
 			fullspread_patches -= int(float(str(math.pow(multi_steps, 3)))) - single_channel_patches * 3
 
-		return white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma
+		return white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma
 
 	def tc_load_cfg_from_ti1_finish(self, result):
 		if result:
 			safe_print(lang.getstr("success"))
-			white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma = result
+			white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma = result
 
 			fullspread_ba = {
 				"ERROR_OPTIMISED_PATCHES": "", # OFPS
@@ -1695,7 +1698,7 @@ class TestchartEditor(wx.Frame):
 			if multi_steps != None: setcfg("tc_multi_steps", multi_steps)
 			if multi_bcc_steps != None:
 				setcfg("tc_multi_bcc_steps", multi_bcc_steps)
-			setcfg("tc_fullspread_patches", self.ti1.queryv1("NUMBER_OF_SETS") - self.tc_get_total_patches(white_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, 0))
+			setcfg("tc_fullspread_patches", self.ti1.queryv1("NUMBER_OF_SETS") - self.tc_get_total_patches(white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, 0))
 			if gamma != None: setcfg("tc_gamma", gamma)
 			if algo != None: setcfg("tc_algo", algo)
 			writecfg()

@@ -816,11 +816,14 @@ def get_display_profile(display_no=None):
 					exception, fn=log)
 
 
-def get_total_patches(white_patches=None, single_channel_patches=None, 
-					  gray_patches=None, multi_steps=None, multi_bcc_steps=None,
+def get_total_patches(white_patches=None, black_patches=None,
+					  single_channel_patches=None, gray_patches=None,
+					  multi_steps=None, multi_bcc_steps=None,
 					  fullspread_patches=None):
 	if white_patches is None:
 		white_patches = getcfg("tc_white_patches")
+	if black_patches is None and getcfg("argyll.version") >= "1.6":
+		black_patches = 4
 	if single_channel_patches is None:
 		single_channel_patches = getcfg("tc_single_channel_patches")
 	single_channel_patches_total = single_channel_patches * 3
@@ -830,7 +833,7 @@ def get_total_patches(white_patches=None, single_channel_patches=None,
 		gray_patches = 2
 	if multi_steps is None:
 		multi_steps = getcfg("tc_multi_steps")
-	if multi_bcc_steps is None:
+	if multi_bcc_steps is None and getcfg("argyll.version") >= "1.6":
 		multi_bcc_steps = getcfg("tc_multi_bcc_steps")
 	if fullspread_patches is None:
 		fullspread_patches = getcfg("tc_fullspread_patches")
@@ -844,10 +847,13 @@ def get_total_patches(white_patches=None, single_channel_patches=None,
 
 		multi_step = 255.0 / (multi_steps - 1)
 		multi_values = []
+		multi_bcc_values = []
 		if multi_bcc_steps > 1:
-			multi_bcc_step = multi_step / 2.0
-			for i in range(multi_steps + multi_bcc_steps - 1):
+			multi_bcc_step = multi_step
+			for i in range(multi_bcc_steps):
 				multi_values += [str(multi_bcc_step  * i)]
+			for i in range(multi_bcc_steps * 2 - 1):
+				multi_bcc_values += [str(multi_bcc_step / 2.0  * i)]
 		else:
 			for i in range(multi_steps):
 				multi_values += [str(multi_step * i)]
@@ -859,17 +865,21 @@ def get_total_patches(white_patches=None, single_channel_patches=None,
 		if gray_patches > 1:
 			gray_step = 255.0 / (gray_patches - 1)
 			for i in range(gray_patches):
-				if str(gray_step * i) in multi_values:
+				if (str(gray_step * i) in multi_values or
+					str(gray_step * i) in multi_bcc_values):
 					gray_patches -= 1
 	elif gray_patches > 1:
 		white_patches -= 1  # white always in gray patches
 		single_channel_patches_total -= 3  # black always in gray patches
 	else:
 		# black always only once in single channel patches
-		single_channel_patches_total -= 2 
+		single_channel_patches_total -= 2
 	total_patches += max(0, white_patches) + \
 					 max(0, single_channel_patches_total) + \
 					 max(0, gray_patches) + fullspread_patches
+	if black_patches:
+		black_patches -= 1  # black always in other patches
+		total_patches += black_patches
 	return total_patches
 
 
