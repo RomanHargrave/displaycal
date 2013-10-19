@@ -647,9 +647,9 @@ if lcode:
 	defaults["lang"] = lcode.split("_")[0].lower()
 
 testchart_defaults = {
-	"s": {None: "d3-e4-s0-g9-m0-f0-cubic2-crossover.ti1"},  # shaper + matrix
-	"l": {None: "d3-e4-s17-g65-m0-f0-cubic4-crossover.ti1"},  # lut
-	"g": {None: "d3-e4-s0-g9-m0-f0-cubic2-crossover.ti1"}  # gamma + matrix
+	"s": {None: "d3-e4-s0-g9-m3-b3-f0-crossover.ti1"},  # shaper + matrix
+	"l": {None: "d3-e4-s17-g49-m5-b5-f0.ti1"},  # lut
+	"g": {None: "d3-e4-s0-g9-m3-b3-f0-crossover.ti1"}  # gamma + matrix
 }
 
 def _init_testcharts():
