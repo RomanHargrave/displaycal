@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import gzip
+import os
+import sys
 from StringIO import StringIO
+from time import time
 
 from safe_print import safe_print
 from util_str import universal_newlines
@@ -51,6 +55,46 @@ class Files():
 
 	def writelines(self, str_sequence):
 		self.write("".join(str_sequence))
+
+
+class GzipFileProper(gzip.GzipFile):
+
+	"""
+	Proper GZIP file implementation, where the optional filename in the
+	header has directory components removed, and is converted to ISO 8859-1
+	(Latin-1). On Windows, the filename will also be forced to lowercase.
+	
+	See RFC 1952 GZIP File Format Specification	version 4.3
+	
+	"""
+
+	def _write_gzip_header(self):
+		self.fileobj.write('\037\213')             # magic header
+		self.fileobj.write('\010')                 # compression method
+		fname = os.path.basename(self.name)
+		if fname.endswith(".gz"):
+			fname = fname[:-3]
+		flags = 0
+		if fname:
+			flags = gzip.FNAME
+		self.fileobj.write(chr(flags))
+		gzip.write32u(self.fileobj, long(time()))
+		self.fileobj.write('\002')
+		self.fileobj.write('\377')
+		if fname:
+			if sys.platform == "win32":
+				# Windows is case insensitive by default (although it can be
+				# set to case sensitive), so according to the GZIP spec, we
+				# force the name to lowercase
+				fname = fname.lower()
+			self.fileobj.write(fname.encode("ISO-8859-1", "replace")
+							   .replace("?", "_") + '\000')
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, type, value, tb):
+		self.close()
 
 
 class StringIOu(StringIO):

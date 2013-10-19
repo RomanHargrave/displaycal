@@ -149,6 +149,7 @@
 	"commandline": "Linea di comando:",
 		"*comparison_profile": "Comparison profile",
 	"comport_detected": "È stata rilevata una modifica nella configurazione dello strumento o della porta.",
+		"*compression.gzip": "GZIP compression",
 		"*computer.name": "Computername",
 		"*connection.fail": "Connection error (%s)",
 		"*connection.fail.http": "HTTP error %s",

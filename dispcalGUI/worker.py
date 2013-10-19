@@ -3,7 +3,6 @@
 # stdlib
 from __future__ import with_statement
 import getpass
-import gzip
 import math
 import os
 import re
@@ -70,7 +69,7 @@ from meta import name as appname, version
 from options import ascii, debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from trash import trash
-from util_io import Files, StringIOu as StringIO
+from util_io import Files, GzipFileProper, StringIOu as StringIO
 from util_list import intlist
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
@@ -631,46 +630,6 @@ class FilteredStream():
 				lines.append(line)
 		if lines:
 			self.stream.write(self.linesep_out.join(lines))
-
-
-class GzipFileProper(gzip.GzipFile):
-
-	"""
-	Proper GZIP file implementation, where the optional filename in the
-	header has directory components removed, and is converted to ISO 8859-1
-	(Latin-1). On Windows, the filename will also be forced to lowercase.
-	
-	See RFC 1952 GZIP File Format Specification	version 4.3
-	
-	"""
-
-	def _write_gzip_header(self):
-		self.fileobj.write('\037\213')             # magic header
-		self.fileobj.write('\010')                 # compression method
-		fname = os.path.basename(self.name)
-		if fname.endswith(".gz"):
-			fname = fname[:-3]
-		flags = 0
-		if fname:
-			flags = gzip.FNAME
-		self.fileobj.write(chr(flags))
-		gzip.write32u(self.fileobj, long(time()))
-		self.fileobj.write('\002')
-		self.fileobj.write('\377')
-		if fname:
-			if sys.platform == "win32":
-				# Windows is case insensitive by default (although it can be
-				# set to case sensitive), so according to the GZIP spec, we
-				# force the name to lowercase
-				fname = fname.lower()
-			self.fileobj.write(fname.encode("ISO-8859-1", "replace")
-							   .replace("?", "_") + '\000')
-
-	def __enter__(self):
-		return self
-
-	def __exit__(self, type, value, tb):
-		self.close()
 
 
 class LineBufferedStream():
@@ -4567,36 +4526,37 @@ class Worker(object):
 							gamut_coverage[key] = float(match.groups()[0]) / 100.0
 							break
 		if not isinstance(result, Exception) and result:
-			# Compress gam and wrl files using gzip
 			for tmpfilename in tmpfilenames:
+				if (tmpfilename == gamfilename and
+					tmpfilename != outname + ".gam"):
+					# Use the original file name
+					filename = outname + ".gam"
+				elif (tmpfilename == wrlfilename and
+					  tmpfilename != outname + ".wrl"):
+					# Use the original file name
+					filename = outname + ".wrl"
+				else:
+					filename = tmpfilename
 				try:
-					with open(tmpfilename, "rb") as infile:
-						data = infile.read()
-					if (tmpfilename == gamfilename and
-						tmpfilename != outname + ".gam"):
-						# Use the original file name
-						filename = outname + ".gam"
-					elif (tmpfilename == wrlfilename and
-						  tmpfilename != outname + ".wrl"):
-						# Use the original file name
-						filename = outname + ".wrl"
-					else:
-						filename = tmpfilename
-					if filename.endswith(".wrl"):
-						outfilename = filename[:-4] + ".wrz"
-					else:
-						outfilename = filename + ".gz"
-					with GzipFileProper(filename + ".gz", "wb") as gz:
-						# Always use original filename with '.gz' extension,
-						# that way the filename in the header will be correct
-						gz.write(data)
-					if outfilename != filename + ".gz":
-						# Rename the file afterwards if outfilename is different
-						if os.path.exists(outfilename):
-							os.remove(outfilename)
-						os.rename(filename + ".gz", outfilename)
-					# Remove uncompressed file
-					os.remove(tmpfilename)
+					if getcfg("vrml.compress"):
+						# Compress gam and wrl files using gzip
+						if filename.endswith(".wrl"):
+							filename = filename[:-4] + ".wrz"
+						else:
+							filename = filename + ".gz"
+						with GzipFileProper(tmpfilename + ".gz", "wb") as gz:
+							# Always use original filename with '.gz' extension,
+							# that way the filename in the header will be correct
+							with open(tmpfilename, "rb") as infile:
+								gz.write(infile.read())
+						# Remove uncompressed file
+						os.remove(tmpfilename)
+						tmpfilename = tmpfilename + ".gz"
+					if tmpfilename != filename:
+						# Rename the file if filename is different
+						if os.path.exists(filename):
+							os.remove(filename)
+						os.rename(tmpfilename, filename)
 				except Exception, exception:
 					safe_print(safe_unicode(exception))
 		elif result:

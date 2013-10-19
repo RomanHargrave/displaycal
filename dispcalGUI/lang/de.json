@@ -163,6 +163,7 @@
 	"commandline": "Befehlszeile:",
 	"comparison_profile": "Vergleichsprofil",
 	"comport_detected": "Eine Änderung in der Messgeräte-/Port-Konfiguration wurde erkannt.",
+	"compression.gzip": "GZIP-Komprimierung",
 	"computer.name": "Computername",
 	"connection.fail": "Verbindungs-Fehler (%s)",
 	"connection.fail.http": "HTTP-Fehler %s",

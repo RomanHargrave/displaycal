@@ -635,6 +635,7 @@ defaults = {
 	"untethered.min_delta.lightness": 0.4,
 	"update_check": 1,
 	"use_separate_lut_access": 0,
+	"vrml.compress": 1,
 	"webserver.portnumber": 8080,
 	"whitepoint.colortemp": 5000,
 	"whitepoint.colortemp.locus": "t",

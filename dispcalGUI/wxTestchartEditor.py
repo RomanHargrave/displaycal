@@ -302,6 +302,13 @@ class TestchartEditor(wx.Frame):
 				  id=self.tc_vrml_use_D50_cb.GetId())
 		hsizer.Add(self.tc_vrml_use_D50_cb, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
 				   border=border)
+		self.tc_vrml_compress_cb = wx.CheckBox(panel, -1,
+											   lang.getstr("compression.gzip"),
+											   name="tc_vrml_compress_cb")
+		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_compress_handler,
+				  id=self.tc_vrml_compress_cb.GetId())
+		hsizer.Add(self.tc_vrml_compress_cb, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+				   border=border)
 
 		# buttons
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -912,6 +919,10 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_vrml_black_offset",
 			   self.tc_vrml_black_offset_intctrl.GetValue())
 
+	def tc_vrml_compress_handler(self, event):
+		setcfg("vrml.compress",
+			   int(self.tc_vrml_compress_cb.GetValue()))
+
 	def tc_vrml_handler(self, event = None):
 		d = self.tc_vrml_device.GetValue()
 		l = self.tc_vrml_lab.GetValue()
@@ -957,6 +968,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_vrml_black_offset_intctrl.SetValue(getcfg("tc_vrml_black_offset"))
 		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
 		self.tc_vrml_handler()
+		self.tc_vrml_compress_cb.SetValue(bool(getcfg("vrml.compress")))
 
 	def tc_check(self, event = None):
 		white_patches = self.tc_white_patches.GetValue()
@@ -1228,9 +1240,14 @@ class TestchartEditor(wx.Frame):
 		else:
 			defaultDir = get_verified_path("last_vrml_path")[0]
 			defaultFile = os.path.basename(config.defaults["last_vrml_path"])
+		wildcard = lang.getstr("filetype.vrml") + "|*.wrl"
+		vrmlext = ".wrl"
+		if getcfg("vrml.compress"):
+			vrmlext = ".wrz"
+			wildcard = wildcard.replace(".wrl", vrmlext)
 		dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"),
 							defaultDir=defaultDir, defaultFile=defaultFile,
-							wildcard=lang.getstr("filetype.vrml") + "|*.wrl",
+							wildcard=wildcard,
 							style=wx.SAVE | wx.OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
@@ -1243,8 +1260,8 @@ class TestchartEditor(wx.Frame):
 								   self)
 				return
 			filename, ext = os.path.splitext(path)
-			if ext.lower() != ".wrl":
-				path += ".wrl"
+			if ext.lower() != vrmlext:
+				path += vrmlext
 			setcfg("last_vrml_path", path)
 			self.tc_vrml_save(path)
 	
@@ -1258,6 +1275,8 @@ class TestchartEditor(wx.Frame):
 				vrml_types.append("l")
 			for vrml_type in vrml_types:
 				wrlsuffix = "%s.wrl" % vrml_type
+				if getcfg("vrml.compress"):
+					wrlsuffix = wrlsuffix.replace(".wrl", ".wrz")
 				path = os.path.splitext(opath)[0] + wrlsuffix
 				if os.path.exists(path):
 					dlg = ConfirmDialog(self,
@@ -1269,12 +1288,13 @@ class TestchartEditor(wx.Frame):
 					result = dlg.ShowModal()
 					dlg.Destroy()
 					if result != wx.ID_OK:
-						return
+						continue
 				try:
 					self.ti1[0].export_vrml(path,
-											wrlsuffix == "d.wrl",
+											wrlsuffix in ("d.wrl", "d.wrz"),
 											RGB_black_offset=getcfg("tc_vrml_black_offset"),
-											normalize_RGB_white=getcfg("tc_vrml_use_D50"))
+											normalize_RGB_white=getcfg("tc_vrml_use_D50"),
+											compress=getcfg("vrml.compress"))
 				except Exception, exception:
 					handle_error(u"Warning - VRML file could not be saved: " + safe_unicode(exception), parent = self)
 

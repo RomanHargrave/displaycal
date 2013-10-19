@@ -151,6 +151,7 @@
 	"commandline": "Ligne de commande :",
 	"comparison_profile": "Profil de comparaison",
 	"comport_detected": "Une modification de la configuration de l'instrument ou du port a été détectée.",
+		"*compression.gzip": "GZIP compression",
 		"*computer.name": "Computername",
 	"connection.fail": "Erreur de connexion (%s)",
 	"connection.fail.http": "Erreur HTTP %s",

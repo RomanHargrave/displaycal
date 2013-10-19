@@ -12,7 +12,7 @@ import os, re, sys
 import colormath
 
 from safe_print import safe_print
-from util_io import StringIOu as StringIO
+from util_io import GzipFileProper, StringIOu as StringIO
 
 
 def rpad(value, width):
@@ -596,7 +596,7 @@ class CGATS(dict):
 		return context
 	
 	def export_vrml(self, filename, devicelocations=True, RGB_black_offset=40,
-					normalize_RGB_white=False):
+					normalize_RGB_white=False, compress=True):
 		data = self.queryv1("DATA")
 		radius = 15.0 / (len(data) ** (1.0 / 3.0))
 		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
@@ -818,7 +818,11 @@ Transform {
 		children = "".join(children)
 		vrml = vrml % {"children": children,
 					   "axes": axes}
-		with open(filename, 'w') as vrmlfile:
+		if compress:
+			writer = GzipFileProper
+		else:
+			writer = open
+		with writer(filename, 'w') as vrmlfile:
 			vrmlfile.write(vrml)
 	
 	@property
