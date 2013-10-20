@@ -138,9 +138,10 @@ class UntetheredFrame(wx.Frame):
 		for i, label in enumerate(["R", "G", "B", "", "", "L*", "a*", "b*"]):
 			self.grid.SetColLabelValue(i, label)
 		gridbgcolor = wx.Colour(234, 234, 234)
-		self.grid.SetCellHighlightColour(gridbgcolor)
+		if sys.version_info >= (2, 6):
+			self.grid.SetCellHighlightColour(gridbgcolor)
+			self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetCellHighlightPenWidth(0)
-		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
 		self.grid.SetDefaultCellTextColour(BGCOLOUR)
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
@@ -296,8 +297,9 @@ class UntetheredFrame(wx.Frame):
 					colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
 					# Is white close enough to daylight or planckian locus?
 					rgb_space[1] = tuple([v / 100.0 for v in white_XYZ_Y100])
+		X, Y, Z = [v / 100.0 for v in XYZ]
 		color = [int(round(v)) for v in
-				 colormath.XYZ2RGB(*[v / 100.0 for v in XYZ],
+				 colormath.XYZ2RGB(X, Y, Z,
 								   rgb_space=rgb_space,
 								   scale=255)]
 		return Lab, color
