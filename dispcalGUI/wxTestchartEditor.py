@@ -622,6 +622,10 @@ class TestchartEditor(wx.Frame):
 						for cell in cells:
 							row = cell[0]
 							col = cell[1]
+							# Skip read-only cells
+							if (self.grid.IsReadOnly(row, col) or
+								not self.grid.GetColLabelValue(col)):
+								continue
 							if i < row:
 								grid += [[]]
 								i = row
@@ -1841,6 +1845,7 @@ class TestchartEditor(wx.Frame):
 		grid.SetCellValue(row, col, labeltext)
 		if labelcolour:
 			grid.SetCellTextColour(row, col, labelcolour)
+		self.grid.Refresh()
 
 	def tc_getcolorlabel(self, sample):
 		scale = 2.55
