@@ -43,15 +43,20 @@ class UntetheredFrame(wx.Frame):
 				 keyhandler=None, start_timer=True):
 		wx.Frame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("measurement.untethered"),
-						  style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER |
-														   wx.MAXIMIZE_BOX))
+						  style=wx.DEFAULT_FRAME_STYLE)
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.sizer = wx.FlexGridSizer(2, 1)
+		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableRow(0)
+		self.sizer.AddGrowableRow(1)
 		self.panel = wx.Panel(self)
 		self.SetSizer(self.sizer)
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
 		self.panel.SetBackgroundColour(BGCOLOUR)
 		panelsizer = wx.FlexGridSizer(3, 2, 8, 8)
+		panelsizer.AddGrowableCol(0)
+		panelsizer.AddGrowableCol(1)
+		panelsizer.AddGrowableRow(1)
 		self.panel.SetSizer(panelsizer)
 		self.label_RGB = wx.StaticText(self.panel, wx.ID_ANY, " ")
 		self.label_RGB.SetForegroundColour(FGCOLOUR)
@@ -144,7 +149,6 @@ class UntetheredFrame(wx.Frame):
 		self.grid.SetDefaultRowSize(20)
 		self.grid.SetLabelBackgroundColour(gridbgcolor)
 		self.grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
-		self.grid.DisableDragRowSize()
 		self.grid.EnableDragColSize()
 		self.grid.EnableEditing(False)
 		self.grid.EnableGridLines(True)
@@ -155,6 +159,7 @@ class UntetheredFrame(wx.Frame):
 		self.sizer.Add(self.grid, 1, wx.EXPAND)
 		
 		self.Fit()
+		self.SetMinSize(self.GetSize())
 		
 		self.keyhandler = keyhandler
 		if sys.platform in ("darwin", "win32"):
