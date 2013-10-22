@@ -492,7 +492,8 @@ class UntetheredFrame(wx.Frame):
 						# Jump to the next or previous unmeasured patch, if any
 						index = self.index
 						for i in xrange(self.index + 1, data_len):
-							if not i in self.measured:
+							if (getcfg("untethered.measure.auto") or
+								not i in self.measured):
 								self.index = i
 								break
 						if self.index == index:

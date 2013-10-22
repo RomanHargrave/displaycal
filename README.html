@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>1.4.4.8</h2>
-					<p>2013-10-06 20:24 UTC</p>
+					<h2>1.5.2.5</h2>
+					<p>2013-10-22 15:56 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -112,10 +112,9 @@
 						<li><a href="#display_instrument">Choosing a display and measurement device</a></li>
 						<li><a href="#settings_calibration">Calibration settings</a></li>
 						<li><a href="#settings_profiling">Profiling settings</a></li>
-						<li><a href="#calibrating">Calibrating / profiling</a>
-						<li><a href="#remote">Remote measurements and profiling</a>
-						<li><a href="#untethered">Untethered display measurement and profiling</a>
-						</li>
+						<li><a href="#calibrating">Calibrating / profiling</a></li>
+						<li><a href="#remote">Remote measurements and profiling</a></li>
+						<li><a href="#untethered">Untethered display measurement and profiling</a></li>
 					</ul>
 				</li>
 				<li><a href="#menu">Menu commands</a>
@@ -579,7 +578,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.4.4.8</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.5.2.5</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -995,7 +994,7 @@
 
 					<dt id="testchart_editor">Testchart editor</dt>
 						<dd>
-							<p>Normally you will not need or want to create your own test charts, but allowing you to do so ensures maximum flexibility when characterizing a display.</p>
+							<p>The provided default testcharts should work well in most situations, but allowing you to create custom charts ensures maximum flexibility when characterizing a display and can improve profiling accuracy and efficiency. See also <a href="#optimizecharts">optimizing testcharts</a>.
 
 							<p>You can enter the amount of patches to be generated for each patch type (white, gray, single channel, iterative and multidimensional cube steps). The iterative algorythm can be tuned if more than zero patches are to be generated. What follows is a quick description of the several available iterative algorythms, with “device space” meaning in this case RGB coordinates, and “perceptual space” meaning the (assumed) XYZ numbers of those RGB coordinates. The assumed XYZ numbers can be influenced by providing a previous profile, thus allowing optimized test point placement.</p>
 
@@ -1147,6 +1146,19 @@
 
 				<p>Finally, select “Continue on to calibration” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted help to adjust the display and don't want/need calibration curves to be created, you can also choose to exit by closing the interactive display adjustment window and then select “Profile only” from the main window.<br />
 				If you originally selected “Calibrate &amp; profile” and fulfil the requirements for <a href="#requirements-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, you may be forced to take the instrument off the screen to do a sensor self-calibration before starting the profiling measurements.</p>
+				
+				<h5 id="optimizecharts">Optimizing testcharts for improved profiling accuracy and efficiency</h5>
+				
+				<p>A good way to generate a custom testchart to improve profiling is to use one of the default testcharts as base, altering the parameters as necessary and desired. Especially the use of an existing display profile to precondition generated test patches for improved profiling performance is recommended. You could go about this in the following way:</p>
+				
+				<ul>
+					<li>When calibrating, choose “just calibrate” and the option to create a fast curves + matrix profile.</li>
+					<li>After calibration, select a testchart to use as base (preferably one of the optimized ones) and bring up the testchart editor.</li>
+					<li>Place a check in the “preconditioning profile” checkbox and click on “current profile”. It should automatically select the curves + matrix profile that was created during calibration. Make sure adaptation is set to a high level (e.g. 100%)</li>
+					<li>If desired, adjust the number of patches and make sure the iterative patches amount is not zero.</li>
+					<li>Create the chart and save it. Click “yes” when asked to select the newly generated chart.</li>
+					<li>Start the profiling measurements (e.g. click “profile only”).</li>
+				</ul>
 
 				<h4>Profile installation</h4>
 
@@ -1163,7 +1175,15 @@
 				
 				<h4 id="untethered">Untethered display measurements</h4>
 				
-				<p>Untethered mode is another option to measure and profile a remote display that is not connected via standard means (calibration is not supported). To use untethered mode, the testchart that should be used needs to be exported as image files (via the testchart editor) and those image files need to be displayed on the device that should be measured, in successive order. The procedure is as follows: Export the testchart. Burn the images to a DVD, copy them on an USB stick or use any other available means to get them onto the device that should be measured. In dispcalGUI's display dropdown, select “Untethered” (the last option). Show the first image on the remote display, and attach the instrument. Then select “Profile only”. Measurements will commence, and changes in the displayed image will be automatically detected. Use whatever means available to you to cycle through the images from first to last, carefully monitoring the measurement process and only changing to the next image if the current one has been successfully measured (as will be shown in the untethered measurement window). Note that untethered mode will be (atleast) twice as slow as normal display measurements.</p>
+				<p>Untethered mode is another option to measure and profile a remote display that is not connected via standard means (calibration is not supported). To use untethered mode, the testchart that should be used needs to be optimized, then exported as image files (via the testchart editor) and those image files need to be displayed on the device that should be measured, in successive order. The procedure is as follows:</p>
+				<ul>
+					<li>Select the desired testchart, then open the testchart editor.</li>
+					<li>Click “Optimize for untethered in auto mode”, then export the testchart.</li>
+					<li>Burn the images to a DVD, copy them on an USB stick or use any other available means to get them to display onto the device that should be measured.</li>
+					<li>In dispcalGUI's display dropdown, select “Untethered” (the last option).</li>
+					<li>Show the first image on the remote display, and attach the instrument. Then select “Profile only”.</li>
+				</ul>
+				<p>Measurements will commence, and changes in the displayed image should be automatically detected if “auto” mode is enabled. Use whatever means available to you to cycle through the images from first to last, carefully monitoring the measurement process and only changing to the next image if the current one has been successfully measured (as will be shown in the untethered measurement window). Note that untethered mode will be (atleast) twice as slow as normal display measurements.</p>
 			</div>
 		</div>
 
@@ -1242,6 +1262,9 @@
 
 					<dt>Enable Argyll CMS diagnostic output</dt>
 						<dd>When checked, outputs diagnostic information for measurements. Useful for debugging. Warning: Very verbose.</dd>
+
+					<dt>Dry run</dt>
+						<dd>When enabled, all functionality that calls Argyll CMS executables will effectively do nothing. This allows review of the used command line parameters by checking the log.</dd>
 
 					<dt>Restore defaults</dt>
 						<dd>Restores all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
@@ -1544,51 +1567,85 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2013-10-06 20:24 (UTC) 1.4.4.8 -->
+			<!-- 2013-10-22 15:56 (UTC) 1.5.2.5 -->
 			<dl>
-				<dt id="changelog-1.4.4.8">2013-10-06 20:24 (UTC) 1.4.4.8</dt>
+				<dt id="changelog-1.5.2.5">2013-10-22 15:56 (UTC) 1.5.2.5</dt>
 					<dd>
-						<h3>1.4.4.8</h3>
+						<h3>1.5.2.5</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Argyll CMS 1.6.0 support (e.g. JETI specbos 1211/1201, madVR calibration and 3D LUT generation, body centered cubic grid option for creating testcharts).</li>
-							<li>Testcharts can be exported as PNG or TIFF files.</li>
-							<li><a href="#untethered">Untethered display measurement and profiling</a>.</li>
+							<li><strong>Full Argyll CMS 1.6.0 support</strong> (e.g. JETI specbos 1211/1201, madVR calibration and 3D LUT generation, body centered cubic grid option for creating testcharts).</li>
+							<li>Testchart editor: Charts can be exported as PNG or TIFF files.</li>
+							<li>Testchart editor: Gamma and neutral axis emphasis controls.</li>
+							<li>Testchart editor: “Use current profile as preconditioning profile” button.</li>
+							<li>Testchart editor: Save VRML diagnostic files for testcharts without the need to re-generate the chart.</li>
+							<li>Testchart editor: Sort patches by L*, RGB, sum of RGB or sort RGB gray and white to top.</li>
+							<li><a href="#untethered">Untethered display measurement and profiling</a>. Be sure to read the note on optimizing testcharts for untethered measurements in automatic mode.</li>
 							<li>Shortcut for the BT.1886 tone curve (previously available by setting gamma to 2.4, absolute, and black output offset to zero).</li>
-							<li>3D LUT: Support eeColor and Pandora LUT formats.</li>
+							<li>3D LUT: Enable additional intents.</li>
+							<li>3D LUT: Support eeColor and <a href="http://pogle.pandora-int.com/download/manual/lut3d_format.html" title="Pandora 3D LUT format specification">Pandora</a> LUT formats.</li>
+							<li>3D LUT: Support Argyll CMS 1.6 video encodings and BT.1886 gamma mapping.</li>
 							<li><a href="#install-windows-driver">Windows 8 Argyll CMS driver installation instructions</a> to the ReadMe.</li>
 							<li><a href="#issue-win-process-startfail">Instructions how to proceed when a process cannot be started</a> to the ReadMe.</li>
 							<li>Softproof preset (based on FOGRA recommendation).</li>
-							<li>Ability to create diagnostic VRML files for any testchart.</li>
-							<li>Gamma and neutral axis emphasis controls to testchart editor.</li>
+							<li>madVR preset.</li>
+							<li>sRGB preset.</li>
 							<li>Allow specifying extra arguments for Argyll's <code>targen</code> command.</li>
 							<li>Computer name, EDID serial and EDID CRC32 placeholders for use in the profile name.</li>
 							<li>Synthetic profile creation facility (e.g. for use as source in 3D LUT generation).</li>
-							<li>sRGB preset.</li>
-							<li>Use Rec. 709 whitepoint chromaticity coordinates for video preset.</li>
+							<li>ACES RGB and DCI P3 colorspace definitions and reference profiles.</li>
+							<li><strong>Dry run.</strong> If enabled in the options menu, all functionality that calls Argyll CMS executables will effectively do nothing. This allows review of the used command line parameters by checking the log.</li>
+							<li>Additional session logs are saved for most operations involving the Argyll tools (i.e. directly in the folder where created files are saved to).</li>
+							<li>Show profile self check ΔE*76 info in profile installation dialog.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li><strong>Testchart and preset improvements:</strong>
+								<ul>
+									<li>All testcharts for LUT profiles have been complemented with additional single channel patches. This should in most cases improve average and maximum delta E of generated profiles, in some cases significantly. In fact, testing has shown that the new “small testchart for LUT profiles” with 154 patches total yields better results than the previous “extended testchart for LUT profiles” with 238 patches.</li>
+									<li>The charts for curves + matrix profiles have been improved by adding a few additional body centered cubic grid patches - all the charts which are not tuned for a certain display type are body centered cubic grid based (this was also the case previously for the LUT testcharts, but not for the matrix charts).</li>
+									<li>The patch order in the LUT charts has been optimized to improve measurement speed.</li>
+									<li>The chart for gamma + matrix profiles has been removed in favor of the updated default chart for matrix profiles.</li>
+									<li>New additional charts for LUT profiles have been added in various sizes.</li>
+									<li>For each of the new charts for LUT profiles, starting from the “very large” size, optimized farthest-point-sampled versions have been added which are pre-conditioned for several common display types: sRGB tone response with Rec. 709 primaries and D65 whitepoint (consumer-grade displays), gamma 2.2 with Rec. 709 primaries and D65 whitepoint (consumer-grade displays, TVs), gamma 2.2 with AdobeRGB primaries and D65 whitepoint (entry-level and high-end graphics displays), L* tone response with NTSC primaries and D50 whitepoint (high-end graphics displays).</li>
+									<li>The naming and patch count of the testcharts for LUT profiles has changed. The mapping that most closely resembles the old testcharts is as follows (total number of patches in parentheses):
+										<ul>
+											<li>Old “Default testchart for LUT profiles” (124) → new “Small testchart for LUT profiles” (154)</li>
+											<li>Old “Extended testchart for LUT profiles” (238) → new “Default testchart for LUT profiles” (270)</li>
+											<li>Old “Large testchart for LUT profiles” (396) → new “Extended testchart for LUT profiles” (442)</li>
+											<li>Old “Very large testchart for LUT profiles” (912) → new “Very large testchart for LUT profiles” (994)</li>
+											<li>Old “Massive testchart for LUT profiles” (2386) → new “Massive testchart for LUT profiles” (2527)</li>
+										</ul>
+									</li>
+								</ul>
+							Use of the new charts is highly recommended. All presets have been updated to use the new chart types. The “prepress" preset has also been updated to generate a XYZ LUT profile by default.</li>
 							<li>Detect if the instrument can use CCMX or CCSS colorimeter corrections based on the measurement mode. Disable colorimeter corrections for non-base display types.</li>
 							<li>Correctly map measurement mode to DISPLAY_TYPE_BASE_ID for all supported instruments when creating CCMX.</li>
 							<li>If a colorimeter correction with DISPLAY_TYPE_BASE_ID or DISPLAY_TYPE_REFRESH is selected, automatically set the correct measurement mode.</li>
-							<li>If measuring the colorimeter correction testchart, automatically ensure a suitable measurement mode for colorimeters with more than refresh and non-refresh measurement modes.</li>
+							<li>If measuring the colorimeter correction testchart, automatically ensure a suitable measurement mode for colorimeters (if they support more than refresh and non-refresh measurement modes).</li>
 							<li>Do not use spline interpolation for curve plots.</li>
 							<li>Updated french translation, thanks to Loïc Guégant.</li>
 							<li>Renamed calibration quality to calibration speed.</li>
 							<li>Set calibration speed for all presets to medium.</li>
-							<li>Parse first non-option argument to standalone testchart editor as file to be opened.</li>
-							<li>Optimized patch layout of testcharts.</li>
-							<li>Use the new default curves + matrix testchart with 54 patches for all presets.</li>
+							<li>Standalone testchart editor: Parse first non-option argument as file to be opened.</li>
 							<li>Testchart editor: Always generate good optimized points rather than fast.</li>
+							<li>Testchart editor: Use existing file path when saving testchart.</li>
+							<li>Testchart editor: Greatly improved the speed of paste operations when comparatively large data sets are used.</li>
+							<li>Disallow -d and -D as extra arguments for Argyll's <code>targen</code> as the testchart editor only supports video RGB.</li>
 							<li>Reset adaptive measurement mode when restoring defaults.</li>
 							<li>Close all profile information windows when hiding the main window instead of just hiding them (don't reopen them when the main window is shown again).</li>
 							<li>Curve viewer: Use float formatting for input RGB display.</li>
 							<li>Only skip legacy serial ports if no instrument detected.</li>
+							<li>Also specify Argyll <code>dispcal</code>/<code>dispread</code> -y parameter for spectrometers.</li>
+							<li>Use Rec. 709 whitepoint chromaticity coordinates for “Video” preset.</li>
 							<li>Changed profile installation error message for virtual display devices.</li>
-							<li>A selected .cal file no longer has precedence over the currently loaded calibration curves (so the message “The current calibration curves will be used” is now correct when doing a profile only. In most cases they will be the same though so it will only make a difference when the currently loaded calibration is <strong>not</strong> the one selected under settings, e.g. if you have used “Load calibration curves from calibration file or profile” in the options menu).</li>
+							<li>Make it clearer which calibration is used when doing a “Profile only”: When a calibration file is going to be used, change the message from the warning “The current calibration curves will be used” to the informational “The calibration file <code>&lt;x&gt;</code> will be used” with the usual options to embed/not embed/reset video card gamma table.</li>
 							<li>Allow the use of calibration curves when profiling a web display.</li>
-							<li>Windows: Disable broken Windows 2000 support (was broken since 0.8.5.6 when the interactive display adjustment GUI was introduced and is not fixable as Windows 2000 does not implement the required AttachConsole functionality).</li>
+							<li>When creating a colorimeter correction from profile(s), get the instrument name from the embedded TI3 if the data source is not EDID.</li>
+							<li>Do not specify (superfluous and thus ignored) patch window positioning arguments for <code>dispcal</code>/<code>dispread</code> when using a virtual display.</li>
+							<li>3D LUT: Removed black point compensation option (no longer easily possible because it now uses Argyll's <code>collink</code> internally. You can still have the effect of BPC by creating a display profile with BPC enabled and using it as destination profile during 3D LUT creation).</li>
+							<li>Always copy/move temporary files to the save location if not a dry run, also in case of an error. If copy/move fails, keep them in the temporary directory and inform the user.</li>
+							<li>Disable black point compensation for the “Prepress” preset (there are three presets without bpc - “madVR”, “Prepress” and “Softproof”) and use L* as calibration tone curve.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>
@@ -1602,6 +1659,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>Average, RMS and maximum delta E metadata was not added to profiles if equal to or greater than 10.</li>
 							<li>Unhandled exception when 3D LUT window was opened and there was no profile selected under settings and also no display profile set.</li>
 							<li>Unhandled exception if colorimeter correction does not exist.</li>
+							<li>Standalone curve viewer: Fix loading of .cal file via commandline argument.</li>
 							<li>Don't strip trailing zeros when displaying average gamma in the status bar of the profile information or curve window.</li>
 							<li>Only set adaptive and hires measurement mode when the instrument supports it (fixes measurement mode switching to non-adaptive if toggling betweeen a colorimeter and a spectrometer).</li>
 							<li>Mac OS X with Argyll CMS 1.5 and newer: Also search library folders for Argyll CMS support files (fixes imported colorimeter corrections not found).</li>
@@ -1609,17 +1667,25 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>Updated link to Datacolor website download section for the Spyder 2 Windows installers.</li>
 							<li>Transposed bits for EDID red y chromaticity coordinate.</li>
 							<li>Curve viewer / profile info window: Reset tone response curve calculation when toggling LUT checkbox.</li>
-							<li>Correctly react to detected display changes (e.g. when switching Argyll versions).</li>
+							<li>Correctly react to detected display changes when the actual physical displays didn't change (e.g. when switching Argyll between versions supporting and not supporting the virtual “Web” display).</li>
 							<li>Keypresses or cancel were not recognized during patch reading.</li>
+							<li>Display uniformity measurements: Q or ESC had to be pressed twice to exit.</li>
 							<li>Do not use “install profile” message for non-display profiles.</li>
+							<li>3D LUT: “apply vcgt” checkbox stayed disabled after switching from a devicelink source profile to a non-devicelink source profile.</li>
+							<li>Update all open windows when switching Argyll versions</li>
+							<li>Do not reset selected colorimeter correction to none when selecting a preset or a settings file.</li>
+							<li>Measurement window position was not correct when switching from web display.</li>
+							<li>Show an error message when choosing a directory as profile save path where no subdirectories can be created.</li>
 							<li>Python 2.7 compatibility: Mask u16Fixed16Number (fixes profile information not working for profiles with negative XYZ or chromaticity values when using Python 2.7).</li>
-							<li>wxPython 2.9 compatibility: Do not specify number of rows in dynamically growwing FlexGridSizer.</li>
+							<li>wxPython 2.9 compatibility: Do not specify number of rows in dynamically growing FlexGridSizer.</li>
 							<li>Linux: Use colord's quirk_vendor_name to fix the manufacturer string.</li>
-							<li>Mac OS X 10.6 and up: Clearing and loading calubration needs root privileges in some circumstances.</li>
+							<li>Mac OS X 10.6 and up: Clearing and loading calibration needs root privileges in some circumstances.</li>
 							<li>Windows: Correctly escape quotes in arguments (fixes hang when profile name, program path or Argyll path contains a single quote).</li>
 							<li>Windows: Show a meaningful error message when a subprocess can't be started instead of hanging indefinitely.</li>
 							<li>Windows: Ignore WMI errors.</li>
-							<li>Windows / wxPython 2.9 compatibility: Correctly check for deleted progress window.</li>
+							<li>Windows: Selecting testcharts saved in the root of a drive under Windows.</li>
+							<li>Windows: Disable broken Windows 2000 support (was broken since 0.8.5.6 when the interactive display adjustment GUI was introduced and is not fixable as Windows 2000 does not implement the required AttachConsole functionality).</li>
+							<li>Windows/Mac OS X: If Argyll profile installation failed, a success message was still shown.</li>
 						</ul>
 					</dd>
 
