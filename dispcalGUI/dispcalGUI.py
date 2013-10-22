@@ -5764,6 +5764,21 @@ class MainFrame(BaseFrame):
 							setcfg("calibration.file", profile_path)
 							self.update_controls(update_profile_name=False)
 				if "meta" in profile.tags:
+					for key in ("avg", "max", "rms"):
+						try:
+							dE = float(profile.tags.meta.getvalue("ACCURACY_dE76_%s" % key))
+						except (TypeError, ValueError):
+							pass
+						else:
+							lstr = lang.getstr("profile.self_check") + ":"
+							if not lstr in extra:
+								extra.append(lstr)
+							extra.append(u" %s %.2f" %
+										 (lang.getstr("profile.self_check.%s" %
+													  key), dE))
+					if extra:
+						extra.append("")
+						extra.append("")
 					for key, name in (("srgb", "sRGB"),
 									  ("adobe-rgb", "Adobe RGB")):
 						try:
@@ -5772,6 +5787,8 @@ class MainFrame(BaseFrame):
 							gamut_coverage = None
 						if gamut_coverage:
 							if not lang.getstr("gamut.coverage") + ":" in extra:
+								if extra:
+									extra.append("")
 								extra.append(lang.getstr("gamut.coverage") + ":")
 							extra.append(" %.1f%% %s" % (gamut_coverage * 100,
 														 name))
