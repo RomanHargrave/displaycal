@@ -5493,8 +5493,9 @@ class MainFrame(BaseFrame):
 				cal = filename + ".cal"
 			else:
 				cal = None
+		display_name = config.get_display_name()
 		if (self.worker.argyll_version < [1, 1, 0] or
-			config.get_display_name() in ("Web", "madVR")):
+			display_name in ("Web", "madVR")):
 			# If Argyll < 1.1, we cannot save the current VideoLUT to use it.
 			# For web and madVR, there is no point in using the current
 			# VideoLUT as it may not be from the display we render on (and in 
@@ -5507,7 +5508,7 @@ class MainFrame(BaseFrame):
 		if cal:
 			msgstr = "dialog.cal_info"
 			icon = "information"
-		elif can_use_current_cal:
+		elif can_use_current_cal or display_name == "madVR":
 			msgstr = "dialog.current_cal_warning"
 			icon = "warning"
 		else:
@@ -5521,6 +5522,8 @@ class MainFrame(BaseFrame):
 							bitmap=geticon(32, "dialog-%s" % icon))
 		dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
 								   lang.getstr("calibration.embed"))
+		if not cal and display_name == "madVR":
+			dlg.embed_cal_ctrl.Disable()
 		def embed_cal_ctrl_handler(event):
 			embed_cal = dlg.embed_cal_ctrl.GetValue()
 			dlg.reset_cal_ctrl.Enable(embed_cal)
