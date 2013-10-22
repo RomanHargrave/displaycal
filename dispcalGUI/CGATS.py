@@ -7,7 +7,7 @@ Copyright (C) 2008 Florian Hoech
 """
 
 from __future__ import with_statement
-import os, re, sys
+import math, os, re, sys
 
 import colormath
 
@@ -47,6 +47,53 @@ def rcut(value, width):
 		else:
 			strval = str(int(round(value)))
 	return strval
+
+
+def sort_RGB_gray_to_top(a, b):
+	if a[0] == a[1] == a[2]:
+		if b[0] == b[1] == b[2] and a[0] > b[0]:
+			return 1
+		return -1
+	else:
+		return 0
+
+
+def sort_RGB_white_to_top(a, b):
+	sum1, sum2 = sum(a[:3]), sum(b[:3])
+	if sum1 == 300:
+		return -1
+	else:
+		return 0
+
+
+def sort_by_RGB(a, b):
+	if a[:3] > b[:3]:
+		return 1
+	elif a[:3] < b[:3]:
+		return -1
+	else:
+		return 0
+
+
+def sort_by_RGB_sum(a, b):
+	sum1, sum2 = sum(a[:3]), sum(b[:3])
+	if sum1 > sum2:
+		return 1
+	elif sum1 < sum2:
+		return -1
+	else:
+		return 0
+
+
+def sort_by_L(a, b):
+	Lab1 = colormath.XYZ2Lab(*a[3:])
+	Lab2 = colormath.XYZ2Lab(*b[3:])
+	if Lab1[0] > Lab2[0]:
+		return 1
+	elif Lab1[0] < Lab2[0]:
+		return -1
+	else:
+		return 0
 
 
 class CGATSError(Exception):
@@ -413,6 +460,92 @@ class CGATS(dict):
 	def append(self, data):
 		""" Append data. Also see add_data method. """
 		self.add_data(data)
+	
+	def get_data(self, field_names=None):
+		data = self.queryv1("DATA")
+		if not data:
+			return False
+		elif field_names:
+			data = data.queryi(field_names)
+		return data
+	
+	def get_RGB_XYZ_values(self):
+		field_names = ("RGB_R", "RGB_G", "RGB_B", "XYZ_X", "XYZ_Y", "XYZ_Z")
+		data = self.get_data(field_names)
+		if not data:
+			return False
+		valueslist = []
+		for key, item in data.iteritems():
+			values = []
+			for field_name in field_names:
+				values.append(item[field_name])
+			valueslist.append(values)
+		return data, valueslist
+	
+	def set_RGB_XYZ_values(self, valueslist):
+		field_names = ("RGB_R", "RGB_G", "RGB_B", "XYZ_X", "XYZ_Y", "XYZ_Z")
+		for i, values in enumerate(valueslist):
+			for j, field_name in enumerate(field_names):
+				self[i][field_name] = values[j]
+	
+	def checkerboard(self):
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		valueslist.sort(sort_by_L)
+		valueslist.sort(sort_RGB_white_to_top)
+		split = int(math.floor(len(valueslist) / 2.0))
+		split = split - (split % 2)
+		valueslist1 = valueslist[:split]
+		valueslist2 = valueslist[split:]
+		valueslist2.reverse()
+		valueslist = valueslist1 + valueslist2
+		checkerboard = []
+		for i, values in enumerate(valueslist):
+			if i % 2 == 1:
+				i = len(valueslist) - 1 - i
+				values = valueslist[i]
+			checkerboard.append(values)
+		valueslist1 = checkerboard[:split]
+		valueslist2 = checkerboard[split:]
+		valueslist2.reverse()
+		checkerboard = valueslist1 + valueslist2
+		return data.set_RGB_XYZ_values(checkerboard)
+	
+	def sort_RGB_gray_to_top(self):
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		valueslist.sort(sort_RGB_gray_to_top)
+		return data.set_RGB_XYZ_values(valueslist)
+	
+	def sort_RGB_white_to_top(self):
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		valueslist.sort(sort_RGB_white_to_top)
+		return data.set_RGB_XYZ_values(valueslist)
+	
+	def sort_by_L(self):
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		valueslist.sort(sort_by_L)
+		return data.set_RGB_XYZ_values(valueslist)
+	
+	def sort_by_RGB(self):
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		valueslist.sort(sort_by_RGB)
+		return data.set_RGB_XYZ_values(valueslist)
+	
+	def sort_by_RGB_sum(self):
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		valueslist.sort(sort_by_RGB_sum)
+		return data.set_RGB_XYZ_values(valueslist)
 	
 	def moveby1(self, start, inc=1):
 		"""

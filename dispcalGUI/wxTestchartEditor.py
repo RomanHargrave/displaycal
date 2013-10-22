@@ -349,6 +349,58 @@ class TestchartEditor(wx.Frame):
 		self.Bind(wx.EVT_BUTTON, self.tc_clear_handler, id = self.clear_btn.GetId())
 		hsizer.Add(self.clear_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
+		# buttons row 2
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer.Add(hsizer, flag=(wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER,
+					   border = 12)
+
+		self.sort_RGB_gray_to_top_btn = wx.Button(panel, -1,
+			lang.getstr("testchart.sort_RGB_gray_to_top"))
+		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
+				  id=self.sort_RGB_gray_to_top_btn.GetId())
+		hsizer.Add(self.sort_RGB_gray_to_top_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
+
+		self.sort_RGB_white_to_top_btn = wx.Button(panel, -1,
+			lang.getstr("testchart.sort_RGB_white_to_top"))
+		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
+				  id=self.sort_RGB_white_to_top_btn.GetId())
+		hsizer.Add(self.sort_RGB_white_to_top_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
+
+		self.sort_by_L_btn = wx.Button(panel, -1,
+			lang.getstr("testchart.sort_by_L"))
+		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
+				  id=self.sort_by_L_btn.GetId())
+		hsizer.Add(self.sort_by_L_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+
+		self.sort_by_RGB_btn = wx.Button(panel, -1,
+			lang.getstr("testchart.sort_by_RGB"))
+		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
+				  id=self.sort_by_RGB_btn.GetId())
+		hsizer.Add(self.sort_by_RGB_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
+
+		self.sort_by_RGB_sum_btn = wx.Button(panel, -1,
+			lang.getstr("testchart.sort_by_RGB_sum"))
+		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
+				  id=self.sort_by_RGB_sum_btn.GetId())
+		hsizer.Add(self.sort_by_RGB_sum_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
+
+		# buttons row 3
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer.Add(hsizer, flag=(wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER,
+					   border = 12)
+
+		self.optimize_for_untethered_auto_mode_btn = wx.Button(panel, -1,
+			lang.getstr("testchart.optimize_for_untethered_auto_mode"))
+		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
+				  id=self.optimize_for_untethered_auto_mode_btn.GetId())
+		hsizer.Add(self.optimize_for_untethered_auto_mode_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
+
 
 		# grid
 		self.grid = wx.grid.Grid(panel, -1, size = (-1, 150), style = wx.BORDER_STATIC)
@@ -671,6 +723,32 @@ class TestchartEditor(wx.Frame):
 			setcfg("size.tcgen.h", h)
 		if event:
 			event.Skip()
+	
+	def tc_sort_handler(self, event):
+		id = event.GetId()
+		if id == self.sort_RGB_gray_to_top_btn.GetId():
+			self.ti1.sort_RGB_gray_to_top()
+		elif id == self.sort_RGB_white_to_top_btn.GetId():
+			self.ti1.sort_RGB_white_to_top()
+		elif id == self.sort_by_L_btn.GetId():
+			self.ti1.sort_by_L()
+		elif id == self.sort_by_RGB_btn.GetId():
+			self.ti1.sort_by_RGB()
+		elif id == self.sort_by_RGB_sum_btn.GetId():
+			self.ti1.sort_by_RGB_sum()
+		elif id == self.optimize_for_untethered_auto_mode_btn.GetId():
+			self.ti1.checkerboard()
+		self.tc_clear(False)
+		self.tc_preview(True)
+	
+	def tc_enable_sort_controls(self):
+		enable = hasattr(self, "ti1")
+		self.sort_RGB_gray_to_top_btn.Enable(enable)
+		self.sort_RGB_white_to_top_btn.Enable(enable)
+		self.sort_by_L_btn.Enable(enable)
+		self.sort_by_RGB_btn.Enable(enable)
+		self.sort_by_RGB_sum_btn.Enable(enable)
+		self.optimize_for_untethered_auto_mode_btn.Enable(enable)
 
 	def tc_grid_cell_change_handler(self, event, save_check=True):
 		data = self.ti1[0]["DATA"]
@@ -973,6 +1051,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
 		self.tc_vrml_handler()
 		self.tc_vrml_compress_cb.SetValue(bool(getcfg("vrml.compress")))
+		self.tc_enable_sort_controls()
 
 	def tc_check(self, event = None):
 		white_patches = self.tc_white_patches.GetValue()
@@ -983,6 +1062,7 @@ class TestchartEditor(wx.Frame):
 		self.save_as_btn.Enable(hasattr(self, "ti1"))
 		self.export_btn.Enable(hasattr(self, "ti1"))
 		self.tc_vrml_handler()
+		self.tc_enable_sort_controls()
 		self.tc_set_default_status()
 	
 	def tc_save_check(self):
@@ -1032,7 +1112,7 @@ class TestchartEditor(wx.Frame):
 	def tc_clear_handler(self, event):
 		self.tc_check_save_ti1()
 
-	def tc_clear(self):
+	def tc_clear(self, clear_ti1=True):
 		grid = self.grid
 		if grid.GetNumberRows() > 0:
 			grid.DeleteRows(0, grid.GetNumberRows())
@@ -1045,14 +1125,15 @@ class TestchartEditor(wx.Frame):
 			self.preview.FitInside()
 			self.preview.SetScrollbars(20, 20, 0, 0)
 			self.preview.Thaw()
-		if hasattr(self, "ti1"):
-			del self.ti1
-		self.tc_update_controls()
-		self.tc_check()
-		# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
-		# segfault under Arch Linux when setting the window title
-		safe_print("")
-		self.SetTitle(lang.getstr("testchart.edit"))
+		if clear_ti1:
+			if hasattr(self, "ti1"):
+				del self.ti1
+			self.tc_update_controls()
+			self.tc_check()
+			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+			# segfault under Arch Linux when setting the window title
+			safe_print("")
+			self.SetTitle(lang.getstr("testchart.edit"))
 
 	def tc_export_handler(self, event):
 		if not hasattr(self, "ti1"):
