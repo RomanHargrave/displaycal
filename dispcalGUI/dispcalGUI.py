@@ -135,13 +135,14 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
-from worker import (Error, FilteredStream, Info, LineCache, Warn, Worker,
-					check_cal_isfile, check_create_dir, check_file_isfile,
-					check_profile_isfile, check_set_argyll_bin, get_argyll_util,
-					get_options_from_cal, get_options_from_profile,
-					get_options_from_ti3, make_argyll_compatible_path,
-					parse_argument_string, printcmdline, set_argyll_bin,
-					show_result_dialog)
+from worker import (Error, FilteredStream, Info, LineCache, UnloggedInfo, Warn,
+					Worker, check_cal_isfile, check_create_dir,
+					check_file_isfile, check_profile_isfile,
+					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
+					check_ti3_criteria2, get_argyll_util, get_options_from_cal,
+					get_options_from_profile, get_options_from_ti3,
+					make_argyll_compatible_path, parse_argument_string,
+					printcmdline, set_argyll_bin, show_result_dialog)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -173,6 +174,16 @@ def _excepthook(etype, value, tb):
 	safe_print("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
 
 sys.excepthook = _excepthook
+
+
+if sys.platform == "darwin":
+	FONTSIZE_LARGE = 11
+	FONTSIZE_MEDIUM = 11
+	FONTSIZE_SMALL = 10
+else:
+	FONTSIZE_LARGE = 10
+	FONTSIZE_MEDIUM = 8
+	FONTSIZE_SMALL = 8
 
 
 def swap_dict_keys_values(mydict):
@@ -1476,6 +1487,17 @@ class MainFrame(BaseFrame):
 			tools.FindItem("report.uniformity"))
 		self.Bind(wx.EVT_MENU, self.measure_uniformity_handler, 
 				  self.menuitem_measure_uniformity)
+
+		self.menuitem_measurement_file_check = tools.FindItemById(
+			tools.FindItem("measurement_file.check_sanity"))
+		self.Bind(wx.EVT_MENU, self.measurement_file_check_handler, 
+				  self.menuitem_measurement_file_check)
+
+		self.menuitem_measurement_file_check_auto = tools.FindItemById(
+			tools.FindItem("measurement_file.check_sanity.auto"))
+		self.Bind(wx.EVT_MENU, self.measurement_file_check_auto_handler, 
+				  self.menuitem_measurement_file_check_auto)
+
 		self.menuitem_import_colorimeter_correction = tools.FindItemById(
 			tools.FindItem("colorimeter_correction.import"))
 		self.Bind(wx.EVT_MENU, self.import_colorimeter_correction_handler, 
@@ -1629,6 +1651,7 @@ class MainFrame(BaseFrame):
 											bool(self.worker.instruments))
 		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments))
+		self.menuitem_measurement_file_check_auto.Check(bool(getcfg("ti3.check_sanity.auto")))
 		self.menuitem_create_colorimeter_correction.Enable(bool(get_argyll_util("ccxxmake")))
 		self.menuitem_lut3d_create.Enable(bool(get_argyll_util("icclu")))
 		self.menuitem_show_log.Check(bool(getcfg("log.show")))
@@ -4822,6 +4845,7 @@ class MainFrame(BaseFrame):
 			# get item 0 of the ti3 to strip the CAL part from the measured data
 			ti3_measured = CGATS.CGATS(ti3_path)[0]
 			safe_print(lang.getstr("success"))
+			result = self.measurement_file_check_confirm(ti3_measured)
 		
 		# cleanup
 		self.worker.wrapup(False)
@@ -5385,6 +5409,8 @@ class MainFrame(BaseFrame):
 		""" Build profile from characterization measurements """
 		start_timers = True
 		if not isinstance(result, Exception) and result:
+			result = self.check_copy_ti3()
+		if not isinstance(result, Exception) and result:
 			start_timers = False
 			wx.CallAfter(self.start_profile_worker, 
 						 lang.getstr("calibration_profiling.complete"), 
@@ -5398,6 +5424,15 @@ class MainFrame(BaseFrame):
 							 ok=lang.getstr("ok"), 
 							 bitmap=geticon(32, "dialog-error"))
 		self.Show(start_timers=start_timers)
+	
+	def check_copy_ti3(self):
+		result = self.measurement_file_check_confirm(parent=getattr(self.worker, "progress_wnd", self))
+		if isinstance(result, CGATS.CGATS):
+			result = self.worker.wrapup(copy=True, remove=False,
+										ext_filter=[".ti3"])
+		if isinstance(result, Exception) or not result:
+			self.worker.stop_progress()
+		return result
 
 	def start_profile_worker(self, success_msg, resume=False):
 		self.worker.interactive = False
@@ -5590,6 +5625,8 @@ class MainFrame(BaseFrame):
 									  continue_next=False)
 	
 	def just_measure_finish(self, result):
+		if not isinstance(result, Exception) and result:
+			result = self.check_copy_ti3()
 		self.worker.wrapup(copy=False, remove=True)
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
@@ -5643,6 +5680,8 @@ class MainFrame(BaseFrame):
 	def just_profile_finish(self, result):
 		""" Build profile from characterization measurements """
 		start_timers = True
+		if not isinstance(result, Exception) and result:
+			result = self.check_copy_ti3()
 		if not isinstance(result, Exception) and result:
 			start_timers = False
 			wx.CallAfter(self.start_profile_worker, 
@@ -7171,6 +7210,184 @@ class MainFrame(BaseFrame):
 					self.testchart_defaults[self.get_profile_type()][None])
 				self.set_testchart(get_data_path(os.path.join("ti1", 
 															  testchart)))
+	
+	def measurement_file_check_auto_handler(self, event):
+		if not getcfg("ti3.check_sanity.auto"):
+			dlg = ConfirmDialog(self,
+								msg=lang.getstr("measurement_file.check_sanity.auto.warning"),  
+								ok=lang.getstr("ok"), 
+								cancel=lang.getstr("cancel"), 
+								bitmap=geticon(32, "dialog-warning"), log=False)
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				self.menuitem_measurement_file_check_auto.Check(False)
+				return
+		setcfg("ti3.check_sanity.auto", 
+			   int(self.menuitem_measurement_file_check_auto.IsChecked()))
+	
+	def measurement_file_check_handler(self, event):
+		# select measurement data (ti3 or profile)
+		path = None
+		defaultDir, defaultFile = get_verified_path("last_ti3_path")
+		dlg = wx.FileDialog(self, lang.getstr("measurement_file.choose"), 
+							defaultDir=defaultDir, defaultFile=defaultFile, 
+							wildcard=lang.getstr("filetype.icc_ti3") + 
+									 "|*.icc;*.icm;*.ti3", 
+							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		if result == wx.ID_OK:
+			path = dlg.GetPath()
+		dlg.Destroy()
+		if path:
+			if not os.path.exists(path):
+				show_result_dialog(Error(lang.getstr("file.missing", path)),
+								   self)
+				return
+			tags = OrderedDict()
+			# Get filename and extension of file
+			filename, ext = os.path.splitext(path)
+			if ext.lower() != ".ti3":
+				try:
+					profile = ICCP.ICCProfile(path)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					show_result_dialog(Error(lang.getstr("profile.invalid") + 
+											 "\n" + path), self)
+					return
+				if (profile.tags.get("CIED", "") or 
+					profile.tags.get("targ", ""))[0:4] != "CTI3":
+					show_result_dialog(Error(lang.getstr("profile.no_embedded_ti3") + 
+											 "\n" + path), self)
+					return
+				ti3 = StringIO(profile.tags.get("CIED", "") or 
+							   profile.tags.get("targ", ""))
+			else:
+				profile = None
+				try:
+					ti3 = open(path, "rU")
+				except Exception, exception:
+					show_result_dialog(Error(lang.getstr("error.file.open", path)),
+									   self)
+					return
+			setcfg("last_ti3_path", path)
+			ti3 = CGATS.CGATS(ti3)
+			if self.measurement_file_check_confirm(ti3, True):
+				if ti3.modified:
+					if profile:
+						# Regenerate the profile?
+						dlg = ConfirmDialog(self,
+											msg=lang.getstr("profile.confirm_regeneration"), 
+											ok=lang.getstr("ok"),
+											cancel=lang.getstr("cancel"),
+											bitmap=geticon(32, "dialog-information"))
+						dlg.Center()
+						result = dlg.ShowModal()
+						if result == wx.ID_OK:
+							self.worker.wrapup(False)
+							tmp_working_dir = self.worker.create_tempdir()
+							if isinstance(tmp_working_dir, Exception):
+								show_result_dialog(tmp_working_dir, self)
+								return
+							profile.tags.targ = ICCP.TextType("text\0\0\0\0" +
+															  str(ti3) + "\0", 
+															  "targ")
+							profile.tags.DevD = profile.tags.CIED = profile.tags.targ
+							tmp_path = os.path.join(tmp_working_dir,
+													os.path.basename(path))
+							profile.write(tmp_path)
+							self.create_profile_handler(None, tmp_path, True)
+					else:
+						dlg = wx.FileDialog(self, lang.getstr("save_as"), 
+											os.path.dirname(path), 
+											os.path.basename(path), 
+											wildcard=lang.getstr("filetype.ti3") + 
+													 "|*.ti3", 
+											style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+						dlg.Center(wx.BOTH)
+						result = dlg.ShowModal()
+						path = dlg.GetPath()
+						dlg.Destroy()
+						if result == wx.ID_OK:
+							if not waccess(path, os.W_OK):
+								show_result_dialog(Error(lang.getstr("error.access_denied.write",
+																	 path)),
+												   self)
+								return
+							ti3.write(path)
+				else:
+					show_result_dialog(UnloggedInfo(lang.getstr("errors.none_found")),
+									   self)
+
+	def measurement_file_check_confirm(self, ti3=None, force=False, parent=None):
+		if not getcfg("ti3.check_sanity.auto") and not force:
+			return True
+		if not ti3:
+			profile_save_path = self.worker.tempdir
+			if profile_save_path and os.path.isdir(profile_save_path):
+				profile_name = getcfg("profile.name.expanded")
+				ti3 = os.path.join(profile_save_path, 
+								   make_argyll_compatible_path(profile_name) +
+								   ".ti3")
+				if not os.path.isfile(ti3):
+					ti3 = None
+			if not ti3:
+				# Let the caller handle missing files
+				return True
+		if not isinstance(ti3, CGATS.CGATS):
+			ti3 = CGATS.CGATS(ti3)
+		try:
+			ti3_1 = verify_ti1_rgb_xyz(ti3)
+		except CGATS.CGATSError, exception:
+			show_result_dialog(exception, self)
+			return False
+		suspicious = check_ti3(ti3_1)
+		if not suspicious:
+			return True
+		self.Show(start_timers=False)
+		dlg = MeasurementFileCheckSanityDialog(parent or self, ti3_1,
+											   suspicious, force)
+		result = dlg.ShowModal()
+		if result == wx.ID_OK:
+			indexes = []
+			for index in xrange(dlg.grid.GetNumberRows()):
+				if dlg.grid.GetCellValue(index, 0) == "":
+					indexes.insert(0, index)
+			data = ti3_1.queryv1("DATA")
+			removed = []
+			for index in indexes:
+				removed.insert(0, data.pop(dlg.suspicious_items[index]))
+			for item in removed:
+				safe_print("Removed patch #%s from TI3" % item.SAMPLE_ID)
+			for index, (RGB, XYZ) in dlg.mods.iteritems():
+				if index not in indexes:
+					item = dlg.suspicious_items[index]
+					oldRGB = []
+					for i, label in enumerate("RGB"):
+						oldRGB.append(item["RGB_%s" % label])
+					if RGB != oldRGB:
+						for i, label in enumerate("RGB"):
+							item["RGB_%s" % label] = RGB[i]
+					safe_print(u"Updated patch #%s in TI3: RGB %.4f %.4f %.4f \u2192 %.4f %.4f %.4f" % 
+							   tuple([item.SAMPLE_ID] + oldRGB + RGB))
+					oldXYZ = []
+					for i, label in enumerate("XYZ"):
+						oldXYZ.append(item["XYZ_%s" % label])
+					if XYZ != oldXYZ:
+						for i, label in enumerate("XYZ"):
+							item["XYZ_%s" % label] = XYZ[i]
+					safe_print(u"Updated patch #%s in TI3: XYZ %.4f %.4f %.4f \u2192 %.4f %.4f %.4f" % 
+							   tuple([item.SAMPLE_ID] + oldXYZ + XYZ))
+		dlg.Destroy()
+		if result == wx.ID_CANCEL:
+			return False
+		elif result == wx.ID_OK:
+			if ti3.modified:
+				if ti3.filename and os.path.exists(ti3.filename) and not force:
+					ti3.write()
+					safe_print("Written updated TI3 to", ti3.filename)
+				return ti3
+		return True
 
 	def profile_name_ctrl_handler(self, event):
 		if debug:
@@ -7265,7 +7482,7 @@ class MainFrame(BaseFrame):
 		return lang.getstr("profile.name.placeholders") + "\n\n" + \
 			   "\n".join(info)
 
-	def create_profile_handler(self, event, path=None):
+	def create_profile_handler(self, event, path=None, skip_ti3_check=False):
 		""" Create profile from existing measurements """
 		if not check_set_argyll_bin():
 			return
@@ -7333,6 +7550,18 @@ class MainFrame(BaseFrame):
 				result = dlg.ShowModal()
 				dlg.Destroy()
 				if result != wx.ID_OK: return
+			is_tmp = False
+			tmp_working_dir = self.worker.create_tempdir()
+			if tmp_working_dir:
+				if sys.platform == "win32":
+					if path.lower().startswith(tmp_working_dir.lower()):
+						is_tmp = True
+				elif path.startswith(tmp_working_dir):
+					is_tmp = True
+			if is_tmp:
+				(defaultDir,
+				 defaultFile) = get_verified_path("last_ti3_path")
+				path = os.path.join(defaultDir, defaultFile)
 			setcfg("last_ti3_path", path)
 			# let the user choose a location for the profile
 			dlg = wx.FileDialog(self, lang.getstr("save_as"), 
@@ -7420,6 +7649,10 @@ class MainFrame(BaseFrame):
 					return
 				setcfg("calibration.file.previous", None)
 				safe_print("-" * 80)
+				if (not skip_ti3_check and
+					not self.measurement_file_check_confirm(ti3)):
+					self.worker.wrapup(False)
+					return
 				# Run colprof
 				self.worker.interactive = False
 				self.worker.start(
@@ -9053,13 +9286,14 @@ class MainFrame(BaseFrame):
 		self.enable_menus(False)
 
 	def Show(self, show=True, start_timers=True):
-		if hasattr(self, "tcframe"):
-			self.tcframe.Show(getcfg("tc.show"))
-		self.infoframe.Show(getcfg("log.show"))
-		if LUTFrame and getcfg("lut_viewer.show"):
-			self.init_lut_viewer(show=True)
-		for profile_info in reversed(self.profile_info.values()):
-			profile_info.Show()
+		if not self.IsShownOnScreen():
+			if hasattr(self, "tcframe"):
+				self.tcframe.Show(getcfg("tc.show"))
+			self.infoframe.Show(getcfg("log.show"))
+			if LUTFrame and getcfg("lut_viewer.show"):
+				self.init_lut_viewer(show=True)
+			for profile_info in reversed(self.profile_info.values()):
+				profile_info.Show()
 		if start_timers:
 			self.start_timers()
 		self.enable_menus()
@@ -9110,6 +9344,413 @@ class MainApp(wx.App):
 	
 	def startup_progress_handler(self, event):
 		self.progress_dlg.Pulse()
+
+
+class MeasurementFileCheckSanityDialog(ConfirmDialog):
+	
+	def __init__(self, parent, ti3, suspicious, force=False):
+		ConfirmDialog.__init__(self, parent,
+							   title=os.path.basename(ti3.filename)
+									 if ti3.filename else appname,
+							   ok=lang.getstr("ok"),
+							   cancel=lang.getstr("cancel"),
+							   alt=lang.getstr("invert_selection"),
+							   bitmap=geticon(32, "dialog-warning"), wrap=120)
+		msg_col1 = lang.getstr("warning.suspicious_delta_e")
+		msg_col2 = lang.getstr("warning.suspicious_delta_e.info")
+
+		margin = 12
+
+		dlg = self
+		
+		dlg.sizer3.Remove(dlg.message)
+		dlg.message.Destroy()
+		dlg.sizer4 = wx.BoxSizer(wx.HORIZONTAL)
+		dlg.sizer3.Add(dlg.sizer4)
+		dlg.message_col1 = wx.StaticText(dlg, -1, msg_col1)
+		dlg.message_col1.Wrap(470)
+		dlg.sizer4.Add(dlg.message_col1, flag=wx.RIGHT, border = 20)
+		dlg.message_col2 = wx.StaticText(dlg, -1, msg_col2)
+		dlg.message_col2.Wrap(470)
+		dlg.sizer4.Add(dlg.message_col2, flag=wx.LEFT, border = 20)
+
+		dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
+		dlg.Bind(wx.EVT_BUTTON, dlg.invert_selection_handler, id=dlg.alt.GetId())
+
+		dlg.select_all_btn = wx.Button(dlg, -1, lang.getstr("deselect_all"))
+		dlg.select_all_btn.SetInitialSize((dlg.select_all_btn.GetSize()[0] + 
+										   btn_width_correction, -1))
+		dlg.sizer2.Insert(2, (margin, margin))
+		dlg.sizer2.Insert(2, dlg.select_all_btn)
+		dlg.Bind(wx.EVT_BUTTON, dlg.select_all_handler,
+				 id=dlg.select_all_btn.GetId())
+
+		dlg.ti3 = ti3
+		dlg.suspicious = suspicious
+		dlg.mods = {}
+		dlg.force = force
+
+		dlg.grid = wx.grid.Grid(dlg, -1, size=(981, 240),
+								style=wx.BORDER_SIMPLE)
+		grid = dlg.grid
+		grid.CreateGrid(0, 15)
+		grid.SetRowLabelSize(60)
+		attr = wx.grid.GridCellAttr()
+		attr.SetReadOnly(True) 
+		for i in xrange(grid.GetNumberCols()):
+			if i in (4, 5) or i > 8:
+				grid.SetColAttr(i, attr)
+			if i == 0:
+				size = 22
+			elif i in (4, 5):
+				size = 20
+			elif i > 8:
+				size = 80
+			else:
+				size = 60
+			grid.SetColSize(i, size)
+		for i, label in enumerate(["", "R %", "G %", "B %", "", "", "X", "Y", "Z",
+								   u"\u0394E*00\nXYZ A/B",
+								   u"0.5 \u0394E*00\nRGB A/B",
+								   u"\u0394E*00\nRGB-XYZ",
+								   u"\u0394L*00\nRGB-XYZ",
+								   u"\u0394C*00\nRGB-XYZ",
+								   u"\u0394H*00\nRGB-XYZ"]):
+			grid.SetColLabelValue(i, label)
+		attr = wx.grid.GridCellAttr()
+		attr.SetEditor(wx.grid.GridCellBoolEditor())
+		attr.SetRenderer(wx.grid.GridCellBoolRenderer())
+		grid.SetColAttr(0, attr)
+		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
+					   wx.FONTWEIGHT_NORMAL)
+		grid.SetDefaultCellFont(font)
+		grid.SetDefaultRowSize(20)
+		grid.EnableDragColSize()
+		grid.EnableGridLines(True)
+
+		dlg.rgb_space = list(colormath.rgb_spaces["sRGB"])
+		black = ti3.queryi1({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
+		if black:
+			black = black["XYZ_X"], black["XYZ_Y"], black["XYZ_Z"]
+		dlg.black = black
+		white = ti3.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+		if white:
+			white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
+			dlg.rgb_space[1] = colormath.get_whitepoint("D50", scale=100)
+		dlg.white = white
+		dlg.suspicious_items = []
+		for i, (prev, item, delta, sRGB_delta, prev_delta_to_sRGB,
+				delta_to_sRGB) in enumerate(suspicious):
+			for cur in (prev, item):
+				if cur and cur not in dlg.suspicious_items:
+					dlg.suspicious_items.append(cur)
+					grid.AppendRows(1)
+					row = grid.GetNumberRows() - 1
+					grid.SetRowLabelValue(row, "%d" % cur.SAMPLE_ID)
+					RGB = []
+					for k, label in enumerate("RGB"):
+						value = cur["RGB_%s" % label]
+						grid.SetCellValue(row, 1 + k, "%.4f" % value)
+						RGB.append(value)
+					XYZ = []
+					for k, label in enumerate("XYZ"):
+						value = cur["XYZ_%s" % label]
+						grid.SetCellValue(row, 6 + k, "%.4f" % value)
+						XYZ.append(value)
+					if cur is prev:
+						dlg.update_row(row, RGB, XYZ, None, None,
+									   prev_delta_to_sRGB)
+					else:
+						dlg.update_row(row, RGB, XYZ, delta, sRGB_delta,
+									   delta_to_sRGB)
+
+		grid.Bind(wx.EVT_KEY_DOWN, dlg.key_handler)
+		grid.Bind(wx.grid.EVT_GRID_CELL_CHANGE, dlg.cell_change_handler)
+		grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, dlg.cell_click_handler)
+		grid.Bind(wx.grid.EVT_GRID_SELECT_CELL, dlg.cell_select_handler)
+		grid.Bind(wx.grid.EVT_GRID_EDITOR_CREATED, dlg.editor_created_handler)
+
+		dlg.sizer3.Add(grid, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+
+		# This workaround is needed to update cell colours
+		grid.SelectAll()
+		grid.ClearSelection()
+
+		dlg.Center()
+	
+	def cell_change_handler(self, event):
+		dlg = self
+		grid = dlg.grid
+		if event.Col == 0:
+			self.check_select_status()
+		else:
+			try:
+				value = float(grid.GetCellValue(event.Row, event.Col).replace(",", "."))
+			except ValueError:
+				wx.Bell()
+				item = dlg.suspicious_items[event.Row]
+				label = "_RGB__XYZ"[event.Col]
+				if event.Col < 6:
+					label = "RGB_%s" % label
+				else:
+					label = "XYZ_%s" % label
+				grid.SetCellValue(event.Row, event.Col,
+									  "%.4f" % item[label])
+			else:
+				if event.Col < 4: 
+					value = max(min(value, 100), 0)
+				grid.SetCellValue(event.Row, event.Col, str(value))
+				RGB = []
+				for i in (1, 2, 3):
+					RGB.append(float(grid.GetCellValue(event.Row, i)))
+				XYZ = []
+				for i in (6, 7, 8):
+					XYZ.append(float(grid.GetCellValue(event.Row, i)))
+				dlg.mods[event.Row] = (RGB, XYZ)
+				# Update row
+				(sRGBLab, Lab, delta_to_sRGB,
+				 criteria1,
+				 debuginfo) = check_ti3_criteria1(RGB, XYZ, dlg.black,
+												  dlg.white,
+												  print_debuginfo=True)
+				if grid.GetCellValue(event.Row, 9):
+					prev = dlg.suspicious_items[event.Row - 1]
+					prev_RGB = prev["RGB_R"], prev["RGB_G"], prev["RGB_B"]
+					prev_XYZ = prev["XYZ_X"], prev["XYZ_Y"], prev["XYZ_Z"]
+					(prev_sRGBLab, prev_Lab, prev_delta_to_sRGB,
+					 prev_criteria1,
+					 prev_debuginfo) = check_ti3_criteria1(prev_RGB, prev_XYZ,
+														   dlg.black, dlg.white,
+														   print_debuginfo=False)
+					(delta,
+					 sRGB_delta,
+					 criteria2) = check_ti3_criteria2(prev_Lab, Lab,
+													  prev_sRGBLab, sRGBLab,
+													  prev_RGB, RGB)
+				else:
+					delta, sRGB_delta = (None, ) * 2
+				dlg.update_row(event.Row, RGB, XYZ, delta, sRGB_delta,
+							   delta_to_sRGB)
+
+				# This workaround is needed to update cell colours
+				cells = grid.GetSelectedCells()
+				grid.SelectAll()
+				grid.ClearSelection()
+				if cells:
+					grid.SelectBlock(cells[0][0], cells[0][1],
+									 cells[-1][0], cells[-1][0])
+
+	def cell_click_handler(self, event):
+		if event.Col == 0:
+			wx.CallLater(100, self.toggle_cb)
+		event.Skip()
+
+	def cell_select_handler(self, event):
+		dlg = self
+		if event.Col == 0:
+			wx.CallAfter(dlg.grid.EnableCellEditControl)
+		event.Skip()
+	
+	def check_enable_ok(self):
+		dlg = self
+		for index in xrange(dlg.grid.GetNumberRows()):
+			if dlg.grid.GetCellValue(index, 0) == "":
+				dlg.ok.Enable()
+				return
+		dlg.ok.Enable(not dlg.force)
+	
+	def check_select_status(self, has_false_values=None, has_true_values=None):
+		dlg = self
+		if None in (has_false_values, has_true_values):
+			for index in xrange(dlg.grid.GetNumberRows()):
+				if dlg.grid.GetCellValue(index, 0) == "":
+					has_false_values = True
+				else:
+					has_true_values = True
+		if has_false_values:
+			dlg.ok.Enable()
+		else:
+			dlg.ok.Enable(not self.force)
+		if has_true_values:
+			dlg.select_all_btn.SetLabel(lang.getstr("deselect_all"))
+		else:
+			dlg.select_all_btn.SetLabel(lang.getstr("select_all"))
+
+	def editor_created_handler(self, event):
+		dlg = self
+		if event.Col == 0:
+			dlg.grid.cb = event.Control
+			dlg.grid.cb.WindowStyle |= wx.WANTS_CHARS
+			dlg.grid.cb.Bind(wx.EVT_KEY_DOWN, dlg.key_handler)
+		event.Skip()
+	
+	def invert_selection_handler(self, event):
+		dlg = self
+		has_false_values = False
+		has_true_values = False
+		for index in xrange(dlg.grid.GetNumberRows()):
+			if dlg.grid.GetCellValue(index, 0) == "1":
+				value = ""
+				has_false_values = True
+			else:
+				value = "1"
+				has_true_values = True
+			dlg.grid.SetCellValue(index, 0, value)
+		self.check_select_status(has_false_values, has_true_values)
+
+	def key_handler(self, event):
+		dlg = self
+		if event.KeyCode == wx.WXK_UP:
+			if dlg.grid.GridCursorRow > 0:
+				dlg.grid.DisableCellEditControl()
+				dlg.grid.MoveCursorUp(False)
+		elif event.KeyCode == wx.WXK_DOWN:
+			if dlg.grid.GridCursorRow < dlg.grid.NumberRows -1:
+				dlg.grid.DisableCellEditControl()
+				dlg.grid.MoveCursorDown(False)
+		elif event.KeyCode == wx.WXK_LEFT:
+			if dlg.grid.GridCursorCol > 0:
+				dlg.grid.DisableCellEditControl()
+				dlg.grid.MoveCursorLeft(False)
+		elif event.KeyCode == wx.WXK_RIGHT:
+			if dlg.grid.GridCursorCol < dlg.grid.NumberCols - 1:
+				dlg.grid.DisableCellEditControl()
+				dlg.grid.MoveCursorRight(False)
+		elif event.KeyCode == wx.WXK_SPACE:
+			if dlg.grid.GridCursorRow == 0:
+				wx.CallLater(100, dlg.toggle_cb)
+		else:
+			if event.ControlDown() or event.CmdDown():
+				keycode = event.KeyCode
+				# CTRL (Linux/Mac/Windows) / CMD (Mac)
+				if keycode == 65: # A
+					dlg.grid.SelectAll()
+					return
+				elif keycode in (67, 88): # C / X
+					clip = []
+					cells = dlg.grid.GetSelection()
+					i = -1
+					start_col = dlg.grid.GetNumberCols()
+					for cell in cells:
+						row = cell[0]
+						col = cell[1]
+						if i < row:
+							clip += [[]]
+							i = row
+						if col < start_col:
+							start_col = col
+						while len(clip[-1]) - 1 < col:
+							clip[-1] += [""]
+						clip[-1][col] = dlg.grid.GetCellValue(row, col)
+					# Skip first col with the checkbox
+					if start_col == 0:
+						start_col = 1
+					for i, row in enumerate(clip):
+						clip[i] = "\t".join(row[start_col:])
+					clipdata = wx.TextDataObject()
+					clipdata.SetText("\n".join(clip))
+					wx.TheClipboard.Open()
+					wx.TheClipboard.SetData(clipdata)
+					wx.TheClipboard.Close()
+					return
+				elif keycode == 86: # V
+					do = wx.TextDataObject()
+					wx.TheClipboard.Open()
+					success = wx.TheClipboard.GetData(do)
+					wx.TheClipboard.Close()
+					if success:
+						txt = StringIO(do.GetText())
+						lines = txt.readlines()
+						txt.close()
+						for i, line in enumerate(lines):
+							lines[i] = re.sub("\s+", "\t", line).split("\t")
+						# translate from selected cells into a grid with None values for not selected cells
+						grid = []
+						cells = dlg.grid.GetSelection()
+						i = -1
+						for cell in cells:
+							row = cell[0]
+							col = cell[1]
+							# Skip read-only cells
+							if (dlg.grid.IsReadOnly(row, col) or
+								not dlg.grid.GetColLabelValue(col)):
+								continue
+							if i < row:
+								grid += [[]]
+								i = row
+							grid[-1].append(cell)
+						# 'paste' values from clipboard
+						for i, row in enumerate(grid):
+							for j, cell in enumerate(row):
+								if (cell != None and len(lines) > i and
+									len(lines[i]) > j):
+									dlg.grid.SetCellValue(cell[0], cell[1], lines[i][j])
+									dlg.cell_change_handler(CustomGridCellEvent(wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
+																				dlg.grid, cell[0], cell[1]))
+					return
+			event.Skip()
+	
+	def mark_cell(self, row, col, ok=False):
+		grid = self.grid
+		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
+					   wx.FONTWEIGHT_NORMAL if ok else wx.FONTWEIGHT_BOLD)
+		grid.SetCellFont(row, col, font)
+		grid.SetCellTextColour(row, col, grid.GetDefaultCellTextColour() if ok
+										 else wx.Colour(204, 0, 0))
+	
+	def select_all_handler(self, event):
+		dlg = self
+		if dlg.select_all_btn.GetLabel() == lang.getstr("select_all"):
+			value = "1"
+		else:
+			value = ""
+		for index in xrange(dlg.grid.GetNumberRows()):
+			dlg.grid.SetCellValue(index, 0, value)
+		self.check_select_status(not value, value)
+
+	def toggle_cb(self):
+		dlg = self
+		if hasattr(dlg.grid, "cb"):
+			# Click on the cell border does not cause the editor to be
+			# created
+			dlg.grid.cb.Value = not dlg.grid.cb.Value
+		wx.CallLater(100, dlg.grid.DisableCellEditControl)
+	
+	def update_row(self, row, RGB, XYZ, delta, sRGB_delta, delta_to_sRGB):
+		dlg = self
+		grid = dlg.grid
+		RGB255 = [int(round(float(str(v * 2.55)))) for v in RGB]
+		dlg.grid.SetCellBackgroundColour(row, 4,
+										 wx.Colour(*RGB255))
+		if dlg.white:
+			XYZ = colormath.adapt(XYZ[0], XYZ[1], XYZ[2],
+								  whitepoint_source=dlg.white)
+		RGB255 = [int(round(float(str(v)))) for v in
+				  colormath.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2],
+									rgb_space=dlg.rgb_space, scale=255)]
+		dlg.grid.SetCellBackgroundColour(row, 5,
+										 wx.Colour(*RGB255))
+		grid.SetCellValue(row, 0, "1" if (not delta or (delta["E_ok"] and
+														delta["L_ok"])) and
+										 delta_to_sRGB["ok"]
+									  else "")
+		for col in xrange(3):
+			dlg.mark_cell(row, 6 + col, (not delta or (delta["E_ok"] and
+													   (delta["L_ok"] or
+														col != 1))) and
+										delta_to_sRGB["ok"])
+		if delta:
+			grid.SetCellValue(row, 9, "%.2f" % delta["E"])
+			dlg.mark_cell(row, 9, delta["E_ok"])
+			if sRGB_delta:
+				grid.SetCellValue(row, 10, "%.2f" % sRGB_delta["E"])
+		for col, ELCH in enumerate("ELCH"):
+			grid.SetCellValue(row, 11 + col, "%.2f" % delta_to_sRGB[ELCH])
+			dlg.mark_cell(row, 11 + col, delta_to_sRGB["%s_ok" % ELCH])
+
 
 def main():
 	log("=" * 80)

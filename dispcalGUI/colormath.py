@@ -697,6 +697,11 @@ def RGB2HSV(R, G, B, scale=1.0):
 	return H * scale, S * scale, V * scale
 
 
+def RGB2Lab(R, G, B, rgb_space=None, whitepoint=None):
+	X, Y, Z = RGB2XYZ(R, G, B, rgb_space, scale=100)
+	return XYZ2Lab(X, Y, Z, whitepoint=whitepoint)
+
+
 def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 	"""
 	Convert from RGB to XYZ.

@@ -188,11 +188,19 @@ class CustomGridCellEvent(CustomEvent):
 		self.row = row
 		self.col = col
 
+	@property
+	def Col(self):
+		return self.col
+
 	def GetRow(self):
 		return self.row
 
 	def GetCol(self):
 		return self.col
+
+	@property
+	def Row(self):
+		return self.row
 
 
 class FileDrop(wx.FileDropTarget):

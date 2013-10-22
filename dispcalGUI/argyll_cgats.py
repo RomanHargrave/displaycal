@@ -360,7 +360,9 @@ def verify_cgats(cgats, required, ignore_unknown=True):
 				raise CGATS.CGATSInvalidError("Missing DATA_FORMAT")
 		else:
 			raise CGATS.CGATSInvalidError("Missing NUMBER_OF_SETS")
+		modified = cgats_1.modified
 		cgats_1.filename = cgats.filename
+		cgats_1.modified = modified
 		return cgats_1
 	else:
 		raise CGATS.CGATSKeyError("Missing required fields: %s" % 

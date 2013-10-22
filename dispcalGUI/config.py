@@ -623,6 +623,7 @@ defaults = {
 	"tc_vrml_use_D50": 0,
 	"tc_white_patches": 4,
 	"tc.show": 0,
+	"ti3.check_sanity.auto": 0,
 	"trc": 2.2,
 	"trc.backup": 2.2,
 	"trc.should_use_viewcond_adjust.show_msg": 1,

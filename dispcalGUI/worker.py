@@ -227,6 +227,207 @@ def check_set_argyll_bin():
 		return set_argyll_bin()
 
 
+def check_ti3_criteria1(RGB, XYZ, black_XYZ, white_XYZ,
+						delta_to_sRGB_threshold_E=10,
+						delta_to_sRGB_threshold_L=10,
+						delta_to_sRGB_threshold_C=75,
+						delta_to_sRGB_threshold_H=75,
+						print_debuginfo=True):
+	sRGBLab = colormath.RGB2Lab(RGB[0] / 100.0,
+								RGB[1] / 100.0,
+								RGB[2] / 100.0, whitepoint="D65")
+	if white_XYZ:
+		if black_XYZ:
+			black_Lab = colormath.XYZ2Lab(*colormath.adapt(black_XYZ[0],
+														   black_XYZ[1],
+														   black_XYZ[2],
+														   white_XYZ))
+			black_C = math.sqrt(math.pow(black_Lab[1], 2) +
+								math.pow(black_Lab[2], 2))
+			if black_Lab[0] < 3 and black_C < 3:
+				# Sanity check: Is this color reasonably dark and achromatic?
+				# Then do BPC so we can compare better to perfect black sRGB
+				XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black_XYZ,
+										  (0, 0, 0), white_XYZ)
+		XYZ = colormath.adapt(XYZ[0], XYZ[1], XYZ[2], white_XYZ)
+	Lab = colormath.XYZ2Lab(*XYZ)
+
+	delta_to_sRGB = colormath.delta(*sRGBLab + Lab + (2000, ))
+
+	# Depending on how (a)chromatic the sRGB color is, scale the thresholds
+	# Use math derived from DE2000 formula to get chroma and hue angle
+	L, a, b = sRGBLab
+	b_pow = math.pow(b, 2)
+	C = math.sqrt(math.pow(a, 2) + b_pow)
+	C_pow = math.pow(C, 7)
+	G = .5 * (1 - math.sqrt(C_pow / (C_pow + math.pow(25, 7))))
+	a = (1 + G) * a
+	C = math.sqrt(math.pow(a, 2) + b_pow)
+	h = 0 if a == 0 and b == 0 else math.degrees(math.atan2(b, a)) + (0 if b >= 0 else 360.0)
+	# C and h scaling factors
+	C_scale = C / 100.0
+	h_scale = h / 360.0
+	# RGB hue, saturation and value scaling factors
+	H, S, V = colormath.RGB2HSV(*[v / 100.0 for v in RGB])
+	SV_scale = S * V
+	# Scale the thresholds
+	delta_to_sRGB_threshold_E += (delta_to_sRGB_threshold_E *
+								  max(C_scale, SV_scale))
+	delta_to_sRGB_threshold_L += (delta_to_sRGB_threshold_L *
+								  max(C_scale, SV_scale))
+	# Allow higher chroma errors as luminance of reference decreases
+	L_scale = max(1 - (1 * C_scale) + (100.0 - L) / 100.0, 1)
+	delta_to_sRGB_threshold_C = ((delta_to_sRGB_threshold_C *
+								  max(C_scale, SV_scale) + 2) * L_scale)
+	delta_to_sRGB_threshold_H = ((delta_to_sRGB_threshold_H *
+								  max(C_scale, h_scale, H, SV_scale) + 2) *
+								 L_scale)
+
+	criteria1 = (delta_to_sRGB["E"] > delta_to_sRGB_threshold_E and
+				 (abs(delta_to_sRGB["L"]) > delta_to_sRGB_threshold_L or
+				  abs(delta_to_sRGB["C"]) > delta_to_sRGB_threshold_C or
+				  abs(delta_to_sRGB["H"]) > delta_to_sRGB_threshold_H))
+	# This patch has an unusually high delta 00 to its sRGB equivalent
+
+	delta_to_sRGB["E_ok"] = delta_to_sRGB["E"] <= delta_to_sRGB_threshold_E
+	delta_to_sRGB["L_ok"] = (abs(delta_to_sRGB["L"]) <=
+							 delta_to_sRGB_threshold_L)
+	delta_to_sRGB["C_ok"] = (abs(delta_to_sRGB["C"]) <=
+							 delta_to_sRGB_threshold_C)
+	delta_to_sRGB["H_ok"] = (abs(delta_to_sRGB["H"]) <=
+							 delta_to_sRGB_threshold_H)
+	delta_to_sRGB["ok"] = (delta_to_sRGB["E_ok"] and
+						   delta_to_sRGB["L_ok"] and
+						   delta_to_sRGB["C_ok"] and
+						   delta_to_sRGB["H_ok"])
+
+	debuginfo = ("RGB: %6.2f %6.2f %6.2f  RGB(sRGB)->Lab(D50): %6.2f %6.2f %6.2f  "
+				 "L_scale: %5.3f   C: %5.2f C_scale: %5.3f  h: %5.2f  "
+				 "h_scale: %5.3f  H: %5.2f  H_scale: %5.3f  S: %5.2f  "
+				 "V: %5.2f  SV_scale: %5.3f  Thresholds: E %5.2f  L %5.2f  "
+				 "C %5.2f  H %5.2f   XYZ->Lab(D50): %6.2f %6.2f %6.2f  delta "
+				 "RGB(sRGB)->Lab(D50) to XYZ->Lab(D50): dE %5.2f  dL %5.2f  dC "
+				 "%5.2f  dH %5.2f" %
+				 (RGB[0], RGB[1], RGB[2], sRGBLab[0], sRGBLab[1], sRGBLab[2],
+				  L_scale, C, C_scale, h, h_scale, H * 360, H, S, V, SV_scale,
+				  delta_to_sRGB_threshold_E, delta_to_sRGB_threshold_L,
+				  delta_to_sRGB_threshold_C, delta_to_sRGB_threshold_H,
+				  Lab[0], Lab[1], Lab[2],
+				  delta_to_sRGB["E"], delta_to_sRGB["L"], delta_to_sRGB["C"],
+				  delta_to_sRGB["H"]))
+	if print_debuginfo:
+		safe_print(debuginfo)
+
+	return sRGBLab, Lab, delta_to_sRGB, criteria1, debuginfo
+
+
+def check_ti3_criteria2(prev_Lab, Lab, prev_sRGBLab, sRGBLab,
+						prev_RGB, RGB, sRGB_delta_E_scale_factor=.5):
+	delta = colormath.delta(*prev_Lab + Lab + (2000, ))
+	sRGB_delta = colormath.delta(*prev_sRGBLab + sRGBLab + (2000, ))
+	sRGB_delta["E"] *= sRGB_delta_E_scale_factor
+
+	criteria2 =  delta["E"] < sRGB_delta["E"]
+	# These two patches have different RGB values
+	# but suspiciously low delta E 76.
+
+	
+	if criteria2 and (prev_RGB[0] == prev_RGB[1] == prev_RGB[2] and
+					  RGB[0] == RGB[1] == RGB[2]):
+		# If RGB gray, check if the Y difference makes sense
+		criteria2 = ((RGB[0] > prev_RGB[0] and Lab[0] <= prev_Lab[0]) or
+					 (RGB[0] < prev_RGB[0] and Lab[0] >= prev_Lab[0]))
+		delta["L_ok"] = not criteria2
+		delta["E_ok"] = True
+	else:
+		delta["E_ok"] = not criteria2
+		delta["L_ok"] = True
+
+	return delta, sRGB_delta, criteria2
+
+
+def check_ti3(ti3, print_debuginfo=True):
+	""" Check subsequent patches' expected vs real deltaE and collect patches
+	with different RGB values, but suspiciously low delta E
+	
+	Used as a means to find misreads.
+	
+	The expected dE is calculated by converting from a patches RGB values
+	(assuming sRGB) to Lab and comparing the values.
+	
+	"""
+	if not isinstance(ti3, CGATS.CGATS):
+		ti3 = CGATS.CGATS(ti3)
+	data = ti3.queryv1("DATA")
+	datalen = len(data)
+	black = data.queryi1({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
+	white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+	suspicious = []
+	prev = {}
+	delta = {}
+	for index, item in data.iteritems():
+		(sRGBLab,
+		 Lab,
+		 delta_to_sRGB,
+		 criteria1,
+		 debuginfo) = check_ti3_criteria1((item["RGB_R"],
+										   item["RGB_G"],
+										   item["RGB_B"]),
+										  (item["XYZ_X"],
+										   item["XYZ_Y"],
+										   item["XYZ_Z"]),
+										  (black["XYZ_X"],
+										   black["XYZ_Y"],
+										   black["XYZ_Z"]),
+										  (white["XYZ_X"],
+										   white["XYZ_Y"],
+										   white["XYZ_Z"]),
+										  print_debuginfo=False)
+		if (criteria1 or (prev and (max(prev["item"]["RGB_R"], item["RGB_R"]) -
+									min(prev["item"]["RGB_R"], item["RGB_R"]) >
+									1.0 / 2.55 or
+									max(prev["item"]["RGB_G"], item["RGB_G"]) -
+									min(prev["item"]["RGB_G"], item["RGB_G"]) >
+									1.0 / 2.55 or
+									max(prev["item"]["RGB_B"], item["RGB_B"]) -
+									min(prev["item"]["RGB_B"], item["RGB_B"]) >
+									1.0 / 2.55))):
+			if prev:
+				(delta,
+				 sRGB_delta,
+				 criteria2) = check_ti3_criteria2(prev["Lab"], Lab,
+												  prev["sRGBLab"], sRGBLab,
+												  (prev["item"]["RGB_R"],
+												   prev["item"]["RGB_G"],
+												   prev["item"]["RGB_B"]),
+												  (item["RGB_R"],
+												   item["RGB_G"],
+												   item["RGB_B"]))
+			else:
+				criteria2 = False
+			if criteria1 or criteria2:
+				if print_debuginfo:
+					if criteria2:
+						debuginfo = (("%s  dE to previous XYZ->Lab(D50): "
+									  "%5.3f  dE_OK: %s  L_OK: %s  "
+									  "0.5 dE RGB(sRGB)->Lab(D50) to previous "
+									  "RGB(sRGB)->Lab(D50): %5.3f") % 
+									 (debuginfo, delta["E"], delta["E_ok"],
+									  delta["L_ok"], sRGB_delta["E"]))
+					sample_id = "Patch #%%.0%id" % len(str(datalen))
+					safe_print(sample_id % item.SAMPLE_ID, debuginfo)
+				suspicious.append((prev["item"] if criteria2 else None,
+								   item, delta if criteria2 else None,
+								   sRGB_delta if criteria2 else None,
+								   prev["delta_to_sRGB"] if criteria2 else None,
+								   delta_to_sRGB))
+		prev["item"] = item
+		prev["sRGBLab"] = sRGBLab
+		prev["Lab"] = Lab
+		prev["delta_to_sRGB"] = delta_to_sRGB
+	return suspicious
+
+
 def get_argyll_util(name, paths=None):
 	""" Find a single Argyll utility. Return the full path. """
 	if not paths:
@@ -2352,16 +2553,8 @@ class Worker(object):
 						   safe_unicode(traceback.format_exc()))
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
-		if getattr(self, "progress_wnd", False) and (not continue_next or 
-													 isinstance(result, Exception) or 
-													 not result):
-			self.progress_wnd.stop_timer()
-			self.progress_wnd.MakeModal(False)
-			# under Linux, destroying it here causes segfault
-			if sys.platform == "win32" and wx.VERSION >= (2, 9):
-				self.progress_wnd.Destroy()
-			else:
-				self.progress_wnd.Hide()
+		if not continue_next or isinstance(result, Exception) or not result:
+			self.stop_progress()
 		self.finished = True
 		self.subprocess_abort = False
 		self.thread_abort = False
@@ -4431,6 +4624,16 @@ class Worker(object):
 												list(cargs), ckwargs, wargs, 
 												wkwargs)
 		return True
+	
+	def stop_progress(self):
+		if getattr(self, "progress_wnd", False):
+			self.progress_wnd.stop_timer()
+			self.progress_wnd.MakeModal(False)
+			# under Linux, destroying it here causes segfault
+			if sys.platform == "win32" and wx.VERSION >= (2, 9):
+				self.progress_wnd.Destroy()
+			else:
+				self.progress_wnd.Hide()
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
