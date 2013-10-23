@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>1.5.3.0</h2>
-					<p>2013-10-23 19:27 UTC</p>
+					<h2>1.5.3.1</h2>
+					<p>2013-10-23 22:09 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -578,7 +578,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.5.3.0</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.5.3.1</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -1567,15 +1567,16 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2013-10-23 19:27 (UTC) 1.5.3.0 -->
+			<!-- 2013-10-23 22:09 (UTC) 1.5.3.1 -->
 			<dl>
-				<dt id="changelog-1.5.3.0">2013-10-23 19:27 (UTC) 1.5.3.0</dt>
+				<dt id="changelog-1.5.3.1">2013-10-23 22:09 (UTC) 1.5.3.1</dt>
 					<dd>
-						<h3>1.5.3.0</h3>
+						<h3>1.5.3.1</h3>
 						<ul>
 							<li>Fixed possible unicode error in logging module.</li>
 							<li>Fixed a bug with optimizing a testchart for untethered measurements halving the amount of different device combinations by repeating patches if the total patch count was even.</li>
-							<li>When creating a profile from existing measurement data, averaging of measurements can be performed by selecting multiple files.</li>
+							<li>Mac OS X 10.6: Fixed weird behavior due to a bug in OS X 10.6's version of <code>sudo</code>.</li>
+							<li>New feature: When creating a profile from existing measurement data, averaging of measurements can be performed by selecting multiple files.</li>
 						</ul>
 						<p id="changelog-1.5.2.5">1.5.2.5</p>
 						<h4>Added in this release:</h4>

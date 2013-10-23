@@ -2144,7 +2144,9 @@ class Worker(object):
 													self.sudo_availoptions.keys())))
 				# Set sudo args based on available options
 				if self.sudo_availoptions["l [command]"]:
-					sudo_args = ["-l", "-n" if self.sudo_availoptions["n"] else "-S", cmd]
+					sudo_args = ["-l",
+								 "-n" if self.sudo_availoptions["n"] else "-S",
+								 cmd, "-?"]
 				else:
 					sudo_args = ["-l", "-S"]
 				# Set stdin based on -n option availability
@@ -2180,7 +2182,7 @@ class Worker(object):
 					dlg.sizer0.Layout()
 					sudo_args = ["-l", "-S"]
 					if self.sudo_availoptions["l [command]"]:
-						sudo_args.append(cmd)
+						sudo_args += [cmd, "-?"]
 					while True:
 						if parent and parent is progress_dlg:
 							progress_dlg.MakeModal(False)
