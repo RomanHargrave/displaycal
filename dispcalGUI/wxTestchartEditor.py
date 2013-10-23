@@ -352,10 +352,12 @@ class TestchartEditor(wx.Frame):
 		# buttons row 2
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag=(wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER,
-					   border = 12)
+					   border=6)
 
 		self.sort_RGB_gray_to_top_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.sort_RGB_gray_to_top"))
+		self.sort_RGB_gray_to_top_btn.SetInitialSize(
+			(self.sort_RGB_gray_to_top_btn.GetSize()[0] + btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
 				  id=self.sort_RGB_gray_to_top_btn.GetId())
 		hsizer.Add(self.sort_RGB_gray_to_top_btn,
@@ -363,6 +365,8 @@ class TestchartEditor(wx.Frame):
 
 		self.sort_RGB_white_to_top_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.sort_RGB_white_to_top"))
+		self.sort_RGB_white_to_top_btn.SetInitialSize(
+			(self.sort_RGB_white_to_top_btn.GetSize()[0] + btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
 				  id=self.sort_RGB_white_to_top_btn.GetId())
 		hsizer.Add(self.sort_RGB_white_to_top_btn,
@@ -370,6 +374,8 @@ class TestchartEditor(wx.Frame):
 
 		self.sort_by_L_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.sort_by_L"))
+		self.sort_by_L_btn.SetInitialSize(
+			(self.sort_by_L_btn.GetSize()[0] + btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
 				  id=self.sort_by_L_btn.GetId())
 		hsizer.Add(self.sort_by_L_btn,
@@ -377,6 +383,8 @@ class TestchartEditor(wx.Frame):
 
 		self.sort_by_RGB_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.sort_by_RGB"))
+		self.sort_by_RGB_btn.SetInitialSize(
+			(self.sort_by_RGB_btn.GetSize()[0] + btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
 				  id=self.sort_by_RGB_btn.GetId())
 		hsizer.Add(self.sort_by_RGB_btn,
@@ -384,6 +392,8 @@ class TestchartEditor(wx.Frame):
 
 		self.sort_by_RGB_sum_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.sort_by_RGB_sum"))
+		self.sort_by_RGB_sum_btn.SetInitialSize(
+			(self.sort_by_RGB_sum_btn.GetSize()[0] + btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
 				  id=self.sort_by_RGB_sum_btn.GetId())
 		hsizer.Add(self.sort_by_RGB_sum_btn,
@@ -392,10 +402,13 @@ class TestchartEditor(wx.Frame):
 		# buttons row 3
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag=(wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER,
-					   border = 12)
+					   border=6)
 
 		self.optimize_for_untethered_auto_mode_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.optimize_for_untethered_auto_mode"))
+		self.optimize_for_untethered_auto_mode_btn.SetInitialSize(
+			(self.optimize_for_untethered_auto_mode_btn.GetSize()[0] +
+			 btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
 				  id=self.optimize_for_untethered_auto_mode_btn.GetId())
 		hsizer.Add(self.optimize_for_untethered_auto_mode_btn,

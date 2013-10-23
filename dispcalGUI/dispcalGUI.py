@@ -4856,6 +4856,32 @@ class MainFrame(BaseFrame):
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
 			return
+
+		# Account for additional white patches
+		white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
+		white_measured = ti3_measured.queryi(white_rgb)
+		white_ref = ti3_ref.queryi(white_rgb)
+		offset = max(len(white_measured) - len(white_ref), 0)
+
+		# If patches were removed from the measured TI3, we need to remove them
+		# from reference and simulation TI3
+		if isinstance(result, tuple):
+			ref_removed = []
+			sim_removed = []
+			for item in reversed(result[0]):
+				key = item.key - offset
+				ref_removed.insert(0, ti3_ref.DATA.pop(key))
+				if sim_ti3:
+					sim_removed.insert(0, sim_ti3.DATA.pop(key))
+			for item in ref_removed:
+				safe_print("Removed patch #%i from reference TI3: %s" %
+						   (item.key, item))
+			for item in sim_removed:
+				safe_print("Removed patch #%i from simulation TI3: %s" %
+						   (item.key, item))
+			# Update offset
+			white_ref = ti3_ref.queryi(white_rgb)
+			offset = max(len(white_measured) - len(white_ref), 0)
 		
 		# Determine if we should use planckian locus for assumed target wp
 		# Detection will only work for profiles created by dispcalGUI
@@ -4895,7 +4921,6 @@ class MainFrame(BaseFrame):
 			# Assume linear with all steps
 			cal_rgblevels = [256, 256, 256]
 		
-		offset = len(ti3_measured.DATA) - len(ti3_ref.DATA)
 		if not chart.lower().endswith(".ti1") or sim_ti3:
 			# make the device values match
 			for i in ti3_ref.DATA:
@@ -4942,7 +4967,6 @@ class MainFrame(BaseFrame):
 		# normalize so that Y = 100
 		wtpt_measured_norm = tuple((n / wtpt_measured[1]) * 100 for n in wtpt_measured)
 		
-		white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
 		white = ti3_joined.queryi(white_rgb)
 		for i in white:
 			white[i].update({'XYZ_X': wtpt_measured_norm[0], 
@@ -5427,7 +5451,7 @@ class MainFrame(BaseFrame):
 	
 	def check_copy_ti3(self):
 		result = self.measurement_file_check_confirm(parent=getattr(self.worker, "progress_wnd", self))
-		if isinstance(result, CGATS.CGATS):
+		if isinstance(result, tuple):
 			result = self.worker.wrapup(copy=True, remove=False,
 										ext_filter=[".ti3"])
 		if isinstance(result, Exception) or not result:
@@ -7378,7 +7402,7 @@ class MainFrame(BaseFrame):
 			for index in indexes:
 				removed.insert(0, data.pop(dlg.suspicious_items[index]))
 			for item in removed:
-				safe_print("Removed patch #%s from TI3" % item.SAMPLE_ID)
+				safe_print("Removed patch #%i from TI3: %s" % (item.key, item))
 			for index, (RGB, XYZ) in dlg.mods.iteritems():
 				if index not in indexes:
 					item = dlg.suspicious_items[index]
@@ -7406,7 +7430,7 @@ class MainFrame(BaseFrame):
 				if ti3.filename and os.path.exists(ti3.filename) and not force:
 					ti3.write()
 					safe_print("Written updated TI3 to", ti3.filename)
-				return ti3
+				return removed, ti3
 		return True
 
 	def profile_name_ctrl_handler(self, event):
@@ -7507,6 +7531,7 @@ class MainFrame(BaseFrame):
 		if not check_set_argyll_bin():
 			return
 		if path is None:
+			selectedpaths = []
 			# select measurement data (ti3 or profile)
 			defaultDir, defaultFile = get_verified_path("last_ti3_path")
 			dlg = wx.FileDialog(self, lang.getstr("create_profile"), 

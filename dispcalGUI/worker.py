@@ -361,7 +361,15 @@ def check_ti3(ti3, print_debuginfo=True):
 	data = ti3.queryv1("DATA")
 	datalen = len(data)
 	black = data.queryi1({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
+	if black:
+		black = black["XYZ_X"], black["XYZ_Y"], black["XYZ_Z"]
+	elif print_debuginfo:
+		safe_print("Warning - no black patch found in CGATS")
 	white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+	if white:
+		white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
+	elif print_debuginfo:
+		safe_print("Warning - no white patch found in CGATS")
 	suspicious = []
 	prev = {}
 	delta = {}
@@ -376,13 +384,7 @@ def check_ti3(ti3, print_debuginfo=True):
 										  (item["XYZ_X"],
 										   item["XYZ_Y"],
 										   item["XYZ_Z"]),
-										  (black["XYZ_X"],
-										   black["XYZ_Y"],
-										   black["XYZ_Z"]),
-										  (white["XYZ_X"],
-										   white["XYZ_Y"],
-										   white["XYZ_Z"]),
-										  print_debuginfo=False)
+										  black, white, print_debuginfo=False)
 		if (criteria1 or (prev and (max(prev["item"]["RGB_R"], item["RGB_R"]) -
 									min(prev["item"]["RGB_R"], item["RGB_R"]) >
 									1.0 / 2.55 or

@@ -133,7 +133,7 @@ class CGATS(dict):
 	datetime = None
 	filename = None
 	key = None
-	modified = False
+	_modified = False
 	mtime = None
 	parent = None
 	root = None
@@ -262,11 +262,6 @@ class CGATS(dict):
 		self.setmodified()
 
 	def __getattr__(self, name):
-		if name == 'modified':
-			try:
-				return getattr(self.root, name)
-			except AttributeError:
-				pass
 		if name in self:
 			return self[name]
 		else:
@@ -339,8 +334,8 @@ class CGATS(dict):
 	
 	def setmodified(self, modified=True):
 		""" Set 'modified' state on the 'root' object. """
-		if self.root and self.root.modified != modified:
-			object.__setattr__(self.root, 'modified', modified)
+		if self.root and self.root._modified != modified:
+			object.__setattr__(self.root, '_modified', modified)
 	
 	def __str__(self):
 		result = []
@@ -492,24 +487,20 @@ class CGATS(dict):
 		data, valueslist = self.get_RGB_XYZ_values()
 		if not valueslist:
 			return False
+		valueslist *= 2
 		valueslist.sort(sort_by_L)
 		valueslist.sort(sort_RGB_white_to_top)
-		split = int(math.floor(len(valueslist) / 2.0))
-		split = split - (split % 2)
+		split = len(valueslist) / 2
 		valueslist1 = valueslist[:split]
 		valueslist2 = valueslist[split:]
 		valueslist2.reverse()
 		valueslist = valueslist1 + valueslist2
 		checkerboard = []
-		for i, values in enumerate(valueslist):
+		for i in xrange(split):
 			if i % 2 == 1:
 				i = len(valueslist) - 1 - i
-				values = valueslist[i]
+			values = valueslist[i]
 			checkerboard.append(values)
-		valueslist1 = checkerboard[:split]
-		valueslist2 = checkerboard[split:]
-		valueslist2.reverse()
-		checkerboard = valueslist1 + valueslist2
 		return data.set_RGB_XYZ_values(checkerboard)
 	
 	def sort_RGB_gray_to_top(self):
@@ -546,6 +537,12 @@ class CGATS(dict):
 			return False
 		valueslist.sort(sort_by_RGB_sum)
 		return data.set_RGB_XYZ_values(valueslist)
+	
+	@property
+	def modified(self):
+		if self.root:
+			return self.root._modified
+		return self._modified
 	
 	def moveby1(self, start, inc=1):
 		"""
@@ -981,6 +978,7 @@ Transform {
 		Return empty CGATS object if no matching items found.
 		
 		"""
+		modified = self.modified
 		
 		if not get_first:
 			result = CGATS()
@@ -1029,9 +1027,10 @@ Transform {
 						if get_first:
 							if get_value and isinstance(result_n, dict) and \
 							   len(result_n) == 1:
-								return result_n[0]
+								result = result_n[0]
 							else:
-								return result_n
+								result = result_n
+							break
 						elif len(result_n):
 							if get_value and isinstance(result_n, dict) and \
 							   len(result_n) == 1:
@@ -1044,13 +1043,16 @@ Transform {
 										  get_first)
 					if result_n != None:
 						if get_first:
-							return result_n
+							result = result_n
+							break
 						elif len(result_n):
 							for i in result_n:
 								n = len(result)
 								if result_n[i] not in result.values():
 									result[n] = result_n[i]
 		
+		if isinstance(result, CGATS):
+			result.setmodified(modified)
 		return result
 	
 	def queryi(self, query, query_value=None):
