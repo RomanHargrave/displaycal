@@ -13,7 +13,7 @@ from config import isapp, logdir
 from meta import name as appname
 from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO
-from util_str import safe_unicode, universal_newlines
+from util_str import safe_str, safe_unicode, universal_newlines
 import config
 
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
@@ -75,7 +75,8 @@ log = Log()
 class LogFile():
 	
 	def __init__(self, filename, logdir=logdir):
-		self._logger = get_file_logger(md5(filename).hexdigest(),
+		self._logger = get_file_logger(md5(safe_str(filename,
+													"UTF-8")).hexdigest(),
 									   logdir=logdir, filename=filename)
 	
 	def close(self):
