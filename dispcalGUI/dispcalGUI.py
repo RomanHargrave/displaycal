@@ -7578,6 +7578,7 @@ class MainFrame(BaseFrame):
 		if collected_ti3s:
 			if len(collected_ti3s) > 1:
 				source_filename = os.path.splitext(defaults["last_ti3_path"])[0]
+				source_ext = ".ti3"
 			path = collected_ti3s[0][0]
 			is_tmp = False
 			tmp_working_dir = self.worker.tempdir
@@ -7686,6 +7687,9 @@ class MainFrame(BaseFrame):
 							display_name = profile.getDeviceModelDescription()
 						if "dmnd" in profile.tags:
 							display_manufacturer = profile.getDeviceManufacturerDescription()
+						if is_tmp and path != ti3_tmp_path:
+							profile.close()
+							os.remove(path)
 					ti3 = CGATS.CGATS(ti3_tmp_path)
 					if ti3.queryv1("COLOR_REP") and \
 					   ti3.queryv1("COLOR_REP")[:3] == "RGB":
