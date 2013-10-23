@@ -7513,13 +7513,17 @@ class MainFrame(BaseFrame):
 								defaultDir=defaultDir, defaultFile=defaultFile, 
 								wildcard=lang.getstr("filetype.icc_ti3") + 
 										 "|*.icc;*.icm;*.ti3", 
-								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST |
+									  wx.FD_MULTIPLE)
 			dlg.Center(wx.BOTH)
 			result = dlg.ShowModal()
 			if result == wx.ID_OK:
-				path = dlg.GetPath()
+				selectedpaths = dlg.GetPaths()
 			dlg.Destroy()
-		if path:
+		elif path:
+			selectedpaths = [path]
+		collected_ti3s = []
+		for path in selectedpaths:
 			if not os.path.exists(path):
 				InfoDialog(self, msg=lang.getstr("file.missing", path), 
 						   ok=lang.getstr("ok"), 
@@ -7570,8 +7574,13 @@ class MainFrame(BaseFrame):
 				result = dlg.ShowModal()
 				dlg.Destroy()
 				if result != wx.ID_OK: return
+			collected_ti3s.append((path, ti3_lines))
+		if collected_ti3s:
+			if len(collected_ti3s) > 1:
+				source_filename = os.path.splitext(defaults["last_ti3_path"])[0]
+			path = collected_ti3s[0][0]
 			is_tmp = False
-			tmp_working_dir = self.worker.create_tempdir()
+			tmp_working_dir = self.worker.tempdir
 			if tmp_working_dir:
 				if sys.platform == "win32":
 					if path.lower().startswith(tmp_working_dir.lower()):
@@ -7579,13 +7588,13 @@ class MainFrame(BaseFrame):
 				elif path.startswith(tmp_working_dir):
 					is_tmp = True
 			if is_tmp:
-				(defaultDir,
-				 defaultFile) = get_verified_path("last_ti3_path")
-				path = os.path.join(defaultDir, defaultFile)
-			setcfg("last_ti3_path", path)
+				defaultDir, defaultFile = get_verified_path("last_ti3_path")
+			else:
+				defaultDir, defaultFile = os.path.split(path)
+				setcfg("last_ti3_path", path)
 			# let the user choose a location for the profile
 			dlg = wx.FileDialog(self, lang.getstr("save_as"), 
-								os.path.dirname(path), 
+								defaultDir, 
 								os.path.basename(source_filename) + 
 								profile_ext, 
 								wildcard=lang.getstr("filetype.icc") + 
@@ -7623,26 +7632,45 @@ class MainFrame(BaseFrame):
 				profile_name = os.path.basename(
 					os.path.splitext(profile_save_path)[0])
 				# create temporary working dir
-				self.worker.wrapup(False)
 				tmp_working_dir = self.worker.create_tempdir()
 				if isinstance(tmp_working_dir, Exception):
+					self.worker.wrapup(False)
 					show_result_dialog(tmp_working_dir, self)
 					return
-				# Check directory and in/output file(s)
-				result = check_create_dir(tmp_working_dir)
-				if isinstance(result, Exception):
-					show_result_dialog(result, self)
 				# Copy ti3 to temp dir
 				ti3_tmp_path = os.path.join(tmp_working_dir, 
 											make_argyll_compatible_path(profile_name + 
 																		".ti3"))
+				if len(collected_ti3s) > 1:
+					# Collect files for averaging
+					collected_paths = []
+					for ti3_path, ti3_lines in collected_ti3s:
+						collected_path = os.path.join(tmp_working_dir,
+													  os.path.basename(ti3_path))
+						with open(collected_path, "w") as ti3_file:
+							ti3_file.write("\n".join(ti3_lines))
+						collected_paths.append(collected_path)
+					# Average the TI3 files
+					args = ["-v"] + collected_paths + [ti3_tmp_path]
+					cmd = get_argyll_util("average")
+					result = self.worker.exec_cmd(cmd, args, capture_output=True,
+												  skip_scripts=True)
+					for collected_path in collected_paths:
+						os.remove(collected_path)
+					if isinstance(result, Exception) or not result:
+						self.worker.wrapup(False)
+						show_result_dialog(result or
+										   Error("\n".join(self.worker.errors)), self)
+						return
+					path = ti3_tmp_path
 				self.worker.options_dispcal = []
 				self.worker.options_targen = []
 				display_name = None
 				display_manufacturer = None
 				try:
 					if source_ext.lower() == ".ti3":
-						shutil.copyfile(path, ti3_tmp_path)
+						if path != ti3_tmp_path:
+							shutil.copyfile(path, ti3_tmp_path)
 					else:
 						# Binary mode because we want to avoid automatic 
 						# newlines conversion
