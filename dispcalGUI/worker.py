@@ -1893,16 +1893,16 @@ class Worker(object):
 				if self.argyll_version >= [1, 4, 0]:
 					displays.append("Web @ localhost")
 					self.display_edid.append({})
-					self.display_manufacturers.append("Argyll CMS")
+					self.display_manufacturers.append("")
 					self.display_names.append("Web")
 				if self.argyll_version >= [1, 6, 0]:
 					displays.append("madVR")
 					self.display_edid.append({})
-					self.display_manufacturers.append("Argyll CMS")
+					self.display_manufacturers.append("")
 					self.display_names.append("madVR")
 				displays.append("Untethered")
 				self.display_edid.append({})
-				self.display_manufacturers.append("Argyll CMS")
+				self.display_manufacturers.append("")
 				self.display_names.append("Untethered")
 				self.displays = displays
 				setcfg("displays", os.pathsep.join(displays))
@@ -2625,9 +2625,10 @@ class Worker(object):
 			if not display_name:
 				display_name = self.display_names[n]
 			if manufacturer:
+				manufacturer = colord.quirk_manufacturer(manufacturer)
 				if prepend_manufacturer:
 					if manufacturer.lower() not in display_name.lower():
-						display.append(colord.quirk_manufacturer(manufacturer))
+						display.append(manufacturer)
 				else:
 					start = display_name.lower().find(manufacturer.lower())
 					if start > -1:

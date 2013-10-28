@@ -7495,34 +7495,32 @@ class MainFrame(BaseFrame):
 			self.profile_name_tooltip_window.Raise()
 
 	def profile_name_info(self):
-		info = [
-			"%nn	" + lang.getstr("computer.name"),
-			"%dn	" + lang.getstr("display"),
-			"%dns	" + lang.getstr("display_short"),
-			"%dnw	" + lang.getstr("display") + " (" +
-						lang.getstr("windows_only") + ")",
-			"%dnws	" + lang.getstr("display_short") + " (" +
-						lang.getstr("windows_only") + ")",
-			"%ds	" + lang.getstr("edid.serial") + " (" +
-						lang.getstr("if_available") + ")",
-			"%crc32	" + lang.getstr("edid.crc32") + " (" +
-						lang.getstr("if_available") + ")",
-			"%in	" + lang.getstr("instrument"),
-			"%im	" + lang.getstr("measurement_mode"),
-			"%wp	" + lang.getstr("whitepoint"),
-			"%cb	" + lang.getstr("calibration.luminance"),
-			"%cB	" + lang.getstr("calibration.black_luminance"),
-			"%cg	" + lang.getstr("trc"),
-			"%ca	" + lang.getstr("calibration.ambient_viewcond_adjust"),
-			"%cf	" + lang.getstr("calibration.black_output_offset"),
-			"%ck	" + lang.getstr("calibration.black_point_correction"),
-			"%cq	" + lang.getstr("calibration.speed"),
-			"%pq	" + lang.getstr("profile.quality"),
-			"%pt	" + lang.getstr("profile.type"),
-			"%tpa	" + lang.getstr("testchart.info")
-		]
+		info = ["%nn	" + lang.getstr("computer.name"),
+				"%dn	" + lang.getstr("display"),
+				"%dns	" + lang.getstr("display_short"),
+				"%dnw	" + lang.getstr("display") + " (" +
+							lang.getstr("windows_only") + ")",
+				"%dnws	" + lang.getstr("display_short") + " (" +
+							lang.getstr("windows_only") + ")",
+				"%ds	" + lang.getstr("edid.serial") + " (" +
+							lang.getstr("if_available") + ")",
+				"%crc32	" + lang.getstr("edid.crc32") + " (" +
+							lang.getstr("if_available") + ")",
+				"%in	" + lang.getstr("instrument"),
+				"%im	" + lang.getstr("measurement_mode"),
+				"%wp	" + lang.getstr("whitepoint"),
+				"%cb	" + lang.getstr("calibration.luminance"),
+				"%cB	" + lang.getstr("calibration.black_luminance"),
+				"%cg	" + lang.getstr("trc"),
+				"%ca	" + lang.getstr("calibration.ambient_viewcond_adjust"),
+				"%cf	" + lang.getstr("calibration.black_output_offset"),
+				"%ck	" + lang.getstr("calibration.black_point_correction")]
 		if defaults["calibration.black_point_rate.enabled"]:
-			info.insert(9, "%cA	" + lang.getstr("calibration.black_point_rate"))
+			info.append("%cA	" + lang.getstr("calibration.black_point_rate"))
+		info += ["%cq	" + lang.getstr("calibration.speed"),
+				 "%pq	" + lang.getstr("profile.quality"),
+				 "%pt	" + lang.getstr("profile.type"),
+				 "%tpa	" + lang.getstr("testchart.info")]
 		return lang.getstr("profile.name.placeholders") + "\n\n" + \
 			   "\n".join(info)
 
@@ -7814,215 +7812,215 @@ class MainFrame(BaseFrame):
 			self.profile_finish(True, profile.fileName)
 	
 	def create_profile_name(self):
+		"""
+		Replace placeholders in profile name with values from configuration
+		
+		"""
 		profile_name = self.profile_name_textctrl.GetValue()
 		
-		# values
-		measurement_mode = self.get_measurement_mode()
-		whitepoint = self.get_whitepoint()
-		whitepoint_locus = self.get_whitepoint_locus()
-		luminance = self.get_luminance()
-		black_luminance = self.get_black_luminance()
-		trc = self.get_trc()
-		trc_type = self.get_trc_type()
-		ambient = self.get_ambient()
-		black_output_offset = self.get_black_output_offset()
-		bt1886 = (trc == "2.4" and trc_type == "G" and
-				  black_output_offset == "0")
-		black_point_correction = self.get_black_point_correction()
-		black_point_rate = self.get_black_point_rate()
-		calibration_quality = self.get_calibration_quality()
-		profile_quality = getcfg("profile.quality")
-		profile_type = self.get_profile_type()
-		
-		# legacy (pre v0.2.2b) profile name
-		legacy_profile_name = ""
-		if measurement_mode:
-			if "c" in measurement_mode:
-				legacy_profile_name += "crt"
-			elif "l" in measurement_mode:
-				legacy_profile_name += "lcd"
-			if "p" in measurement_mode:
-				if legacy_profile_name:
-					legacy_profile_name += "-"
-				legacy_profile_name += lang.getstr("projector").lower()
-			if "V" in measurement_mode:
-				if legacy_profile_name:
-					legacy_profile_name += "-"
-				legacy_profile_name += lang.getstr("measurement_mode.adaptive").lower()
-			if "H" in measurement_mode:
-				if legacy_profile_name:
-					legacy_profile_name += "-"
-				legacy_profile_name += lang.getstr("measurement_mode.highres").lower()
-		else:
-			legacy_profile_name += lang.getstr("default").lower()
-		if legacy_profile_name:
-			legacy_profile_name += "-"
-		if not whitepoint or whitepoint.find(",") < 0:
-			legacy_profile_name += whitepoint_locus
-			if whitepoint:
-				legacy_profile_name += whitepoint
-		else:
-			legacy_profile_name += "w" + whitepoint
-		if luminance:
-			legacy_profile_name += "-b" + luminance
-		if black_luminance:
-			legacy_profile_name += "-B" + black_luminance
-		legacy_profile_name += "-" + trc_type + trc
-		if ambient:
-			legacy_profile_name += "-a" + ambient
-		legacy_profile_name += "-f" + black_output_offset
-		legacy_profile_name += "-k" + black_point_correction
-		if black_point_rate and float(black_point_correction) < 1:
-			legacy_profile_name += "-A" + black_point_rate
-		legacy_profile_name += "-q" + calibration_quality + profile_quality
-		if profile_type == "l":
-			profile_type = "lut"
-		else:
-			profile_type = "matrix"
-		legacy_profile_name += "-" + profile_type
-		legacy_profile_name += "-" + strftime("%Y%m%d%H%M")
-		profile_name = profile_name.replace("%legacy", legacy_profile_name)
-		
 		# Computername
-		if platform.node():
+		if "%nn" in profile_name:
 			profile_name = profile_name.replace("%nn",
-												safe_unicode(platform.node()))
-		else:
-			profile_name = re.sub("[-_\s]+%nn|%nn[-_\s]*", "", profile_name)
+												safe_unicode(platform.node()) or
+												"\0")
 
 		# Windows display name (EnumDisplayDevices / DeviceString)
-		display_win32 = self.worker.get_display_name(True, False)
-		if display_win32:
+		if "%dnws" in profile_name:
 			display_win32_short = self.worker.get_display_name_short(False,
 																	 False)
-			profile_name = profile_name.replace("%dnws", display_win32_short)
-			profile_name = profile_name.replace("%dnw", display_win32)
-		else:
-			profile_name = re.sub("[-_\s]+%dnws?|%dnws?[-_\s]*", "", profile_name)
+			profile_name = profile_name.replace("%dnws", display_win32_short or
+														 "\0")
+		if "%dnw" in profile_name:
+			display_win32 = self.worker.get_display_name(True, False)
+			profile_name = profile_name.replace("%dnw", display_win32 or "\0")
 
 		# EDID
+		if "%ds" in profile_name or "%crc32" in profile_name:
+			edid = self.worker.get_display_edid()
 		# Serial
-		edid = self.worker.get_display_edid()
-		serial = edid.get("serial_ascii", hex(edid.get("serial_32", 0))[2:])
-		if serial and serial != "1010101" and serial != "0":
-			profile_name = profile_name.replace("%ds", serial)
-		else:
-			profile_name = re.sub("[-_\s]+%ds|%ds[-_\s]*", "", profile_name)
-		# CRC32
-		if edid.get("edid"):
-			profile_name = profile_name.replace("%crc32",
-												"%X" % (crc32(edid.get("edid", ""))
-														& 0xFFFFFFFF))
-		else:
-			profile_name = re.sub("[-_\s]+%crc32|%crc32[-_\s]*", "", profile_name)
-
-		# default v0.2.2b profile name
-		display = self.worker.get_display_name(True, True)
-		if display:
-			display_short = self.worker.get_display_name_short(False, True)
-			profile_name = profile_name.replace("%dns", display_short)
-			profile_name = profile_name.replace("%dn", display)
-		else:
-			profile_name = re.sub("[-_\s]+%dns?|%dns?[-_\s]*", "", profile_name)
-		instrument = self.comport_ctrl.GetStringSelection()
-		if instrument:
-			profile_name = profile_name.replace("%in", instrument)
-		else:
-			profile_name = re.sub("[-_\s]+%in|%in[-_\s]*", "", profile_name)
-		mode = ""
-		if measurement_mode:
-			if "c" in measurement_mode:
-				mode += lang.getstr("measurement_mode.refresh")
-			elif "l" in measurement_mode:
-				mode += lang.getstr("measurement_mode.lcd")
-			if "p" in measurement_mode:
-				if mode:
-					mode += "-"
-				mode += lang.getstr("projector")
-			if "V" in measurement_mode:
-				if mode:
-					mode += "-"
-				mode += lang.getstr("measurement_mode.adaptive")
-			if "H" in measurement_mode:
-				if mode:
-					mode += "-"
-				mode += lang.getstr("measurement_mode.highres")
-		else:
-			mode += lang.getstr("default")
-		profile_name = profile_name.replace("%im", mode)
-		if isinstance(whitepoint, str):
-			if whitepoint.find(",") < 0:
-				if self.get_whitepoint_locus() == "t":
-					whitepoint = "D" + whitepoint
-				else:
-					whitepoint += "K"
+		if "%ds" in profile_name:
+			serial = edid.get("serial_ascii", hex(edid.get("serial_32", 0))[2:])
+			if serial and serial not in ("0", "1010101", "fffffff"):
+				profile_name = profile_name.replace("%ds", serial)
 			else:
-				whitepoint = "x ".join(whitepoint.split(",")) + "y"
-		profile_name = profile_name.replace("%wp", 
-											"\0" if 
-											whitepoint is None else whitepoint)
-		profile_name = profile_name.replace("%cb", 
-											"\0" if 
-											luminance is None else 
-											luminance + u"cdm²")
-		profile_name = profile_name.replace("%cB", 
-											"\0" if 
-											black_luminance is None else 
-											black_luminance + u"cdm²")
-		if bt1886:
-			trc = "Rec. 1886"
-		elif trc not in ("l", "709", "s", "240"):
-			if trc_type == "G":
-				trc += " (%s)" % lang.getstr("trc.type.absolute").lower()
-		else:
-			trc = strtr(trc, {"l": "L", 
-							  "709": "Rec. 709", 
-							  "s": "sRGB", 
-							  "240": "SMPTE240M"})
-		profile_name = profile_name.replace("%cg", trc)
-		profile_name = profile_name.replace("%ca", ambient + "lx" if ambient 
-												   else "")
-		f = int(float(black_output_offset) * 100)
-		profile_name = profile_name.replace("%cf", str(f if f > 0 else 0) + 
-												   "%")
-		k = int(float(black_point_correction) * 100)
-		profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and 
-													k < 100 else "") + 
-												   (lang.getstr("neutral") if 
-													k > 0 else 
-													"\0"
-												   ).lower())
-		if black_point_rate and float(black_point_correction) < 1:
-			profile_name = profile_name.replace("%cA", black_point_rate)
-		aspects = {
-			"c": calibration_quality,
-			"p": profile_quality
-		}
-		msgs = {
-			"u": "VS", 
-			"h": "S", 
-			"m": "M", 
-			"l": "F", 
-			"v": "VF"
-		}
-		for a in aspects:
-			profile_name = profile_name.replace("%%%sq" % a, msgs[aspects[a]])
-		for q in msgs:
-			pat = re.compile("(" + msgs[q] + ")\W" + msgs[q], re.I)
-			profile_name = re.sub(pat, "\\1", profile_name)
-		profile_type = {
-			"G": "1xGamma+MTX",
-			"g": "3xGamma+MTX",
-			"l": "LabLUT",
-			"S": "1xCurve+MTX",
-			"s": "3xCurve+MTX",
-			"X": "XYZLUT+MTX",
-			"x": "XYZLUT"
-		}.get(self.get_profile_type())
-		if profile_type:
-			profile_name = profile_name.replace("%pt", profile_type)
-		profile_name = profile_name.replace("%tpa", 
-											self.testchart_patches_amount.GetLabel())
+				profile_name = profile_name.replace("%ds", "\0")
+		# CRC32
+		if "%crc32" in profile_name:
+			if edid.get("edid"):
+				profile_name = profile_name.replace("%crc32",
+													"%X" %
+													(crc32(edid["edid"])
+													 & 0xFFFFFFFF))
+			else:
+				profile_name = profile_name.replace("%crc32", "\0")
+
+		# Display name
+		if "%dns" in profile_name:
+			display_short = self.worker.get_display_name_short(False, True)
+			profile_name = profile_name.replace("%dns", display_short or "\0")
+		if "%dn" in profile_name:
+			display = self.worker.get_display_name(True, True)
+			profile_name = profile_name.replace("%dn", display or "\0")
+
+		# Instrument name
+		if "%in" in profile_name:
+			instrument = self.comport_ctrl.GetStringSelection()
+			profile_name = profile_name.replace("%in", instrument or "\0")
+
+		# Measurement mode
+		if "%im" in profile_name:
+			mode = ""
+			measurement_mode = self.get_measurement_mode()
+			if measurement_mode:
+				if "c" in measurement_mode:
+					mode += lang.getstr("measurement_mode.refresh")
+				elif "l" in measurement_mode:
+					mode += lang.getstr("measurement_mode.lcd")
+				if "p" in measurement_mode:
+					if mode:
+						mode += "-"
+					mode += lang.getstr("projector")
+				if "V" in measurement_mode:
+					if mode:
+						mode += "-"
+					mode += lang.getstr("measurement_mode.adaptive")
+				if "H" in measurement_mode:
+					if mode:
+						mode += "-"
+					mode += lang.getstr("measurement_mode.highres")
+			else:
+				mode += lang.getstr("default")
+			profile_name = profile_name.replace("%im", mode)
+
+		# Whitepoint
+		if "%wp" in profile_name:
+			whitepoint = self.get_whitepoint()
+			whitepoint_locus = self.get_whitepoint_locus()
+			if isinstance(whitepoint, str):
+				if whitepoint.find(",") < 0:
+					if whitepoint_locus == "t":
+						whitepoint = "D" + whitepoint
+					else:
+						whitepoint += "K"
+				else:
+					whitepoint = "x ".join(whitepoint.split(",")) + "y"
+			profile_name = profile_name.replace("%wp", whitepoint or "\0")
+
+		# Luminance
+		if "%cb" in profile_name:
+			luminance = self.get_luminance()
+			profile_name = profile_name.replace("%cb", 
+												"\0" if 
+												luminance is None
+												else luminance + u"cdm²")
+
+		# Black luminance
+		if "%cB" in profile_name:
+			black_luminance = self.get_black_luminance()
+			profile_name = profile_name.replace("%cB", 
+												"\0" if 
+												black_luminance is None
+												else black_luminance + u"cdm²")
+
+		# TRC / black output offset
+		if "%cg" in profile_name or "%cf" in profile_name:
+			black_output_offset = self.get_black_output_offset()
+
+		# TRC
+		if "%cg" in profile_name:
+			trc = self.get_trc()
+			trc_type = self.get_trc_type()
+			bt1886 = (trc == "2.4" and trc_type == "G" and
+					  black_output_offset == "0")
+			if bt1886:
+				trc = "Rec. 1886"
+			elif trc not in ("l", "709", "s", "240"):
+				if trc_type == "G":
+					trc += " (%s)" % lang.getstr("trc.type.absolute").lower()
+			else:
+				trc = strtr(trc, {"l": "L", 
+								  "709": "Rec. 709", 
+								  "s": "sRGB", 
+								  "240": "SMPTE240M"})
+			profile_name = profile_name.replace("%cg", trc)
+
+		# Ambient adjustment
+		if "%ca" in profile_name:
+			ambient = self.get_ambient()
+			profile_name = profile_name.replace("%ca", "\0" if ambient is None
+													   else ambient + "lx")
+
+		# Black output offset
+		if "%cf" in profile_name:
+			f = int(float(black_output_offset) * 100)
+			profile_name = profile_name.replace("%cf", "%i%%" % f)
+
+		# Black point correction / rate
+		if "%ck" in profile_name or "%cA" in profile_name:
+			black_point_correction = self.get_black_point_correction()
+
+		# Black point correction
+		if "%ck" in profile_name:
+			black_point_correction = self.get_black_point_correction()
+			k = int(float(black_point_correction) * 100)
+			profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and 
+														k < 100 else "") + 
+													   (lang.getstr("neutral") if 
+														k > 0 else "\0").lower())
+
+		# Black point rate
+		if "%cA" in profile_name:
+			black_point_rate = self.get_black_point_rate()
+			if black_point_rate and float(black_point_correction) < 1:
+				profile_name = profile_name.replace("%cA", black_point_rate)
+			else:
+				profile_name = profile_name.replace("%cA", "\0")
+
+		# Calibration / profile quality
+		if "%cq" in profile_name or "%pq" in profile_name:
+			calibration_quality = self.get_calibration_quality()
+			profile_quality = getcfg("profile.quality")
+			aspects = {
+				"c": calibration_quality,
+				"p": profile_quality
+			}
+			msgs = {
+				"u": "VS", 
+				"h": "S", 
+				"m": "M", 
+				"l": "F", 
+				"v": "VF"
+			}
+			quality = {}
+			if "%cq" in profile_name:
+				quality["c"] = msgs[aspects["c"]]
+			if "%pq" in profile_name:
+				quality["p"] = msgs[aspects["p"]]
+			if len(quality) == 2 and quality["c"] == quality["p"]:
+				profile_name = re.sub("%cq\W*%pq", quality["c"], profile_name)
+			for q in quality:
+				profile_name = profile_name.replace("%%%sq" % q, quality[q])
+
+		# Profile type
+		if "%pt" in profile_name:
+			profile_type = self.get_profile_type()
+			profile_type = {
+				"G": "1xGamma+MTX",
+				"g": "3xGamma+MTX",
+				"l": "LabLUT",
+				"S": "1xCurve+MTX",
+				"s": "3xCurve+MTX",
+				"X": "XYZLUT+MTX",
+				"x": "XYZLUT"
+			}.get(self.get_profile_type())
+			profile_name = profile_name.replace("%pt", profile_type or "\0")
+
+		# Amount of test patches
+		if "%tpa" in profile_name:
+			profile_name = profile_name.replace("%tpa", 
+												self.testchart_patches_amount.GetLabel())
+
+		# Date / time
 		directives = (
 			"a",
 			"A",
@@ -8043,18 +8041,43 @@ class MainFrame(BaseFrame):
 			"Y"
 		)
 		for directive in directives:
-			try:
-				profile_name = profile_name.replace("%%%s" % directive, 
-													strftime("%%%s" % 
-															 directive))
-			except UnicodeDecodeError:
-				pass
-		
-		profile_name = re.sub("(\W?%s)+" % lang.getstr("native").lower(), 
-							  "\\1", profile_name)
-		
-		profile_name = re.sub("\0\s?", "", profile_name)
-		
+			if "%%%s" % directive in profile_name:
+				try:
+					profile_name = profile_name.replace("%%%s" % directive, 
+														strftime("%%%s" % 
+																 directive))
+				except UnicodeDecodeError:
+					pass
+
+		# All whitespace to space
+		profile_name = re.sub("\s", " ", profile_name)
+
+		# Get rid of inserted NULL bytes
+		# Try to keep spacing intact
+		if "\0" in profile_name:
+			profile_name = re.sub("^(\0[_\- ]?)+|([_\- ]?\0)+$", "", profile_name)
+			# Surrounded by underscores
+			while "_\0" in profile_name or "\0_" in profile_name:
+				while re.search("_\0+_", profile_name):
+					profile_name = re.sub("_\0+_", "_", profile_name)
+				profile_name = re.sub("_\0+", "_", profile_name)
+				profile_name = re.sub("\0+_", "_", profile_name)
+			# Surrounded by dashes
+			while "-\0" in profile_name or "\0-" in profile_name:
+				while re.search("-\0+-", profile_name):
+					profile_name = re.sub("-\0+-", "-", profile_name)
+				profile_name = re.sub("-\0+", "-", profile_name)
+				profile_name = re.sub("\0+-", "-", profile_name)
+			# Surrounded by whitespace
+			while " \0" in profile_name or "\0 " in profile_name:
+				while re.search(" \0+ ", profile_name):
+					profile_name = re.sub(" \0+ ", " ", profile_name)
+				profile_name = re.sub(" \0+", " ", profile_name)
+				profile_name = re.sub("\0+ ", " ", profile_name)
+			profile_name = re.sub("\0+", "", profile_name)
+
+		# Get rid of characters considered invalid for filenames and shorten
+		# to a length of max 255 chars
 		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name)[:255]
 
 	def update_profile_name(self, event=None):
