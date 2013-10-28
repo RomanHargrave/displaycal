@@ -8667,15 +8667,38 @@ class MainFrame(BaseFrame):
 				(options_dispcal, 
 				 options_colprof) = get_options_from_profile(profile)
 				# Get and set the display
+				# First try to find the correct display by comparing
+				# the model (if present)
 				display_name = profile.getDeviceModelDescription()
-				if display_name:
+				# Second try to find the correct display by comparing
+				# the EDID hash (if present)
+				edid_md5 = profile.tags.get("meta", {}).get("EDID_md5",
+															{}).get("value")
+				if display_name or edid_md5:
+					display_name_indexes = []
+					edid_md5_indexes = []
 					for i, edid in enumerate(self.worker.display_edid):
-						if display_name in (edid.get("monitor_name"),
+						if display_name in (edid.get("monitor_name", False),
 											self.worker.display_names[i]):
-							# Found it
-							setcfg("display.number", i + 1)
-							self.get_set_display()
-							break
+							display_name_indexes.append(i)
+						if edid_md5 == edid.get("monitor_name", False):
+							edid_md5_indexes.append(i)
+					if len(display_name_indexes) == 1:
+						display_index = display_name_indexes[0]
+						safe_print("Found display device matching model "
+								   "description at index #%i" % display_index)
+					elif len(edid_md5_indexes) == 1:
+						display_index = edid_md5_indexes[0]
+						safe_print("Found display device matching EDID MD5 "
+								   "at index #%i" % display_index)
+					else:
+						# We got several matches. As we can't be sure which
+						# is the right one, do nothing.
+						display_index = None
+					if display_index is not None:
+						# Found it
+						setcfg("display.number", display_index + 1)
+						self.get_set_display()
 				# Get and set the instrument
 				instrument_id = profile.tags.get("meta",
 												 {}).get("MEASUREMENT_device",
