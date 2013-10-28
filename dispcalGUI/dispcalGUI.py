@@ -7885,7 +7885,8 @@ class MainFrame(BaseFrame):
 		
 		# Computername
 		if platform.node():
-			profile_name = profile_name.replace("%nn", platform.node())
+			profile_name = profile_name.replace("%nn",
+												safe_unicode(platform.node()))
 		else:
 			profile_name = re.sub("[-_\s]+%nn|%nn[-_\s]*", "", profile_name)
 
