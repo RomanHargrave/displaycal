@@ -2936,13 +2936,13 @@ class ICCProfile:
 				info["Chromatic adaptation transform"] = self.guess_cat() or "Unknown"
 			elif isinstance(tag, ChromaticityType):
 				info["Chromaticity (illuminant-relative)"] = ""
-				for i, colorant in enumerate(tag):
+				for i, channel in enumerate(tag.channels):
 					if self.colorSpace.endswith("CLR"):
 						colorant_name = ""
 					else:
 						colorant_name = "(%s) " % self.colorSpace[i:i + 1]
 					info["    Channel %i %sxy" % (i + 1, colorant_name)] = " ".join(
-						"%6.4f" % v for v in tag.channels[i])
+						"%6.4f" % v for v in channel)
 			elif isinstance(tag, ColorantTableType):
 				info["Colorants (PCS-relative)"] = ""
 				maxlen = max(map(len, tag.keys()))
