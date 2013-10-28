@@ -1046,13 +1046,18 @@ def XYZ2Lab(X, Y, Z, whitepoint=None):
 
 def XYZ2Lu_v_(X, Y, Z, whitepoint=None):
 	""" Convert from XYZ to CIE Lu'v' """
+
+	if X + Y + Z == 0:
+		# We can't check for X == Y == Z == 0 because they may actually add up
+		# to 0, thus resulting in ZeroDivisionError later
+		L, u_, v_ = XYZ2Lu_v_(*get_whitepoint(whitepoint))
+		return 0.0, u_, v_
+
+	Xr, Yr, Zr = get_whitepoint(whitepoint, 100)
 	
-	Xn, Yn, Zn = get_whitepoint(whitepoint, 100)
+	yr = Y / Yr
 	
-	if Y / Yn <= math.pow(6.0 / 29.0, 3):
-		L = math.pow(29.0 / 3.0, 3)
-	else:
-		L = 116.0 * math.pow(Y / Yn, 1.0 / 3.0) - 16.0
+	L = 116.0 * cbrt(yr) - 16.0 if yr > LSTAR_E else LSTAR_K * yr
 	
 	u_ = (4.0 * X) / (X + 15.0 * Y + 3.0 * Z)
 	v_ = (9.0 * Y) / (X + 15.0 * Y + 3.0 * Z)
@@ -1062,6 +1067,13 @@ def XYZ2Lu_v_(X, Y, Z, whitepoint=None):
 
 def XYZ2Luv(X, Y, Z, whitepoint=None):
 	""" Convert from XYZ to Luv """
+
+	if X + Y + Z == 0:
+		# We can't check for X == Y == Z == 0 because they may actually add up
+		# to 0, thus resulting in ZeroDivisionError later
+		L, u, v = XYZ2Luv(*get_whitepoint(whitepoint))
+		return 0.0, u, v
+
 	Xr, Yr, Zr = get_whitepoint(whitepoint, 100)
 	
 	yr = Y / Yr
