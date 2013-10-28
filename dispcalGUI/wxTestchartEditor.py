@@ -351,8 +351,7 @@ class TestchartEditor(wx.Frame):
 
 		# buttons row 2
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(hsizer, flag=(wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER,
-					   border=6)
+		self.sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
 
 		self.sort_RGB_gray_to_top_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.sort_RGB_gray_to_top"))
@@ -401,8 +400,7 @@ class TestchartEditor(wx.Frame):
 
 		# buttons row 3
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(hsizer, flag=(wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER,
-					   border=6)
+		self.sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
 
 		self.optimize_for_untethered_auto_mode_btn = wx.Button(panel, -1,
 			lang.getstr("testchart.optimize_for_untethered_auto_mode"))
