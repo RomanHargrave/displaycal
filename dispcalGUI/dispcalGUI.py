@@ -9494,6 +9494,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 								style=wx.BORDER_SIMPLE)
 		grid = dlg.grid
 		grid.CreateGrid(0, 15)
+		grid.SetColLabelSize(50)
 		grid.SetRowLabelSize(60)
 		attr = wx.grid.GridCellAttr()
 		attr.SetReadOnly(True) 
