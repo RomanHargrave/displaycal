@@ -16,6 +16,8 @@ from util_io import StringIOu as StringIO
 from util_str import safe_str, safe_unicode, universal_newlines
 import config
 
+logging.raiseExceptions = 0
+
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
 class DummyLogger():
