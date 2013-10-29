@@ -1613,10 +1613,10 @@ class MainFrame(BaseFrame):
 			not config.get_display_name() in ("Web", "Untethered", "madVR"))
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered", "madVR"))
+			not config.get_display_name() in ("Web", "Untethered"))
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered", "madVR"))
+			not config.get_display_name() in ("Web", "Untethered"))
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
@@ -1642,13 +1642,13 @@ class MainFrame(BaseFrame):
 											 self.worker.argyll_version >= [1, 1, 0] and 
 											 not "Beta" in self.worker.argyll_version_string and
 											 not config.get_display_name() in
-											 ("Web", "Untethered", "madVR"))
+											 ("Web", "Untethered"))
 		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")) and
 											not config.get_display_name() in
-											("Web", "Untethered", "madVR"))
+											("Web", "Untethered"))
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
 									   not config.get_display_name() in
-									   ("Web", "Untethered", "madVR"))
+									   ("Web", "Untethered"))
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
 											   config.get_display_name() != "Untethered")
@@ -6167,7 +6167,7 @@ class MainFrame(BaseFrame):
 			if (getcfg("lut_viewer.show_actual_lut") and
 				self.worker.argyll_version >= [1, 1, 0] and
 				not "Beta" in self.worker.argyll_version_string and
-				not config.get_display_name() in ("Web", "Untethered", "madVR")):
+				not config.get_display_name() in ("Web", "Untethered")):
 				tmp = self.worker.create_tempdir()
 				if isinstance(tmp, Exception):
 					show_result_dialog(tmp, self)
