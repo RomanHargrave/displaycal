@@ -5548,14 +5548,12 @@ class MainFrame(BaseFrame):
 				cal = filename + ".cal"
 			else:
 				cal = None
-		display_name = config.get_display_name()
 		if (self.worker.argyll_version < [1, 1, 0] or
-			display_name in ("Web", "madVR")):
+			not self.worker.has_lut_access()):
 			# If Argyll < 1.1, we cannot save the current VideoLUT to use it.
-			# For web and madVR, there is no point in using the current
-			# VideoLUT as it may not be from the display we render on (and in 
-			# case of web we cannot save it to begin with as there is no
-			# VideoLUT access).
+			# For web, there is no point in using the current VideoLUT as it
+			# may not be from the display we render on (and we cannot save it
+			# to begin with as there is no VideoLUT access).
 			# So an existing .cal file or no calibration are the only options.
 			can_use_current_cal = False
 		else:
@@ -5563,7 +5561,7 @@ class MainFrame(BaseFrame):
 		if cal:
 			msgstr = "dialog.cal_info"
 			icon = "information"
-		elif can_use_current_cal or display_name == "madVR":
+		elif can_use_current_cal:
 			msgstr = "dialog.current_cal_warning"
 			icon = "warning"
 		else:
@@ -5575,10 +5573,15 @@ class MainFrame(BaseFrame):
 							ok=lang.getstr("continue"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-%s" % icon))
+		border = 12
+		if can_use_current_cal or cal:
+			dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
+									   lang.getstr("calibration.use_linear_instead"))
+			dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
+						   border=border)
+			border = 4
 		dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
 								   lang.getstr("calibration.embed"))
-		if not cal and display_name == "madVR":
-			dlg.embed_cal_ctrl.Disable()
 		def embed_cal_ctrl_handler(event):
 			embed_cal = dlg.embed_cal_ctrl.GetValue()
 			dlg.reset_cal_ctrl.Enable(embed_cal)
@@ -5588,12 +5591,7 @@ class MainFrame(BaseFrame):
 			dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
 		dlg.embed_cal_ctrl.SetValue(bool(can_use_current_cal or cal))
 		dlg.sizer3.Add(dlg.embed_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
-					   border=12)
-		if can_use_current_cal or cal:
-			dlg.reset_cal_ctrl = wx.CheckBox(dlg, -1, 
-									   lang.getstr("calibration.reset"))
-			dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
-						   border=4)
+					   border=border)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		result = dlg.ShowModal()
