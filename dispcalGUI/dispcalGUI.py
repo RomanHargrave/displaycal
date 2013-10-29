@@ -1974,6 +1974,7 @@ class MainFrame(BaseFrame):
 			"calibration.black_point_rate.enabled",
 			"calibration.file.previous",
 			"calibration.update",
+			"calibration.use_video_lut.backup",
 			"colorimeter_correction_matrix_file",
 			"comport.number",
 			"copyright",
@@ -8802,6 +8803,7 @@ class MainFrame(BaseFrame):
 								 "whitepoint"), 
 						exclude=("calibration.black_point_correction_choice.show", 
 								 "calibration.update", 
+								 "calibration.use_video_lut",
 								 "measure.darken_background.show_warning", 
 								 "trc.should_use_viewcond_adjust.show_msg"))
 					self.worker.options_dispcal = ["-" + arg for arg 
