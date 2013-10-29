@@ -5543,8 +5543,7 @@ class MainFrame(BaseFrame):
 					self.worker.options_dispcal = [
 						"-" + arg for arg in 
 						get_options_from_profile(profile)[0]]
-			if (os.path.isfile(filename + ".cal") and
-				can_update_cal(filename + ".cal")):
+			if os.path.isfile(filename + ".cal"):
 				cal = filename + ".cal"
 			else:
 				cal = None
