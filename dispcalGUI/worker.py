@@ -997,10 +997,12 @@ class Worker(object):
 											 "ascii")
 		else:
 			self.data_encoding = enc
+		self.cmdrun = False
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
 		self.finished = True
 		self.interactive = False
+		self.lastcmdname = None
 		self.lastmsg_discard = re.compile("[\\*\\.]+")
 		self.options_colprof = []
 		self.options_dispcal = []
@@ -2060,9 +2062,11 @@ class Worker(object):
 				if self.sessionlogfile:
 					safe_print("Session log: %s" % working_basename + ".log")
 					safe_print("")
-				if not silent and (dry_run or getcfg("dry_run")):
+				if (not silent and (dry_run or getcfg("dry_run")) and
+					not self.cmdrun):
 					safe_print(lang.getstr("dry_run"))
 					safe_print("")
+					self.cmdrun = True
 				if working_dir:
 					self.log(lang.getstr("working_dir"))
 					indent = "  "
@@ -2079,7 +2083,8 @@ class Worker(object):
 							 args, fn=self.log, cwd=working_dir)
 				self.log("")
 				if not silent and (dry_run or getcfg("dry_run")):
-					safe_print(lang.getstr("dry_run.end"))
+					if not self.lastcmdname or self.lastcmdname == cmdname:
+						safe_print(lang.getstr("dry_run.end"))
 					if self.owner and hasattr(self.owner, "infoframe"):
 						wx.CallAfter(self.owner.infoframe.Show)
 					return UnloggedInfo(lang.getstr("dry_run.info"))
@@ -3902,6 +3907,7 @@ class Worker(object):
 		(current video card gamma table).
 		
 		"""
+		self.lastcmdname = get_argyll_utilname("dispread")
 		profile_save_path = self.create_tempdir()
 		if not profile_save_path or isinstance(profile_save_path, Exception):
 			return profile_save_path, None
@@ -3959,8 +3965,9 @@ class Worker(object):
 					cmd, args = (get_argyll_util("dispwin"), 
 								 ["-d" + self.get_display(), "-s", cal])
 					result = self.exec_cmd(cmd, args, capture_output=True, 
-										   skip_scripts=True, silent=True)
-					if isinstance(result, Exception):
+										   skip_scripts=True, silent=False)
+					if (isinstance(result, Exception) and
+						not isinstance(result, UnloggedInfo)):
 						return result, None
 				if not result:
 					return Error(lang.getstr("calibration.load_error")), None
@@ -3968,7 +3975,9 @@ class Worker(object):
 				cal = apply_calibration # can be .cal or .icc / .icm
 			calcopy = inoutfile + ".cal"
 			filename, ext = os.path.splitext(cal)
-			if ext.lower() == ".cal":
+			if getcfg("dry_run"):
+				options_dispcal = []
+			elif ext.lower() == ".cal":
 				result = check_cal_isfile(cal)
 				if isinstance(result, Exception):
 					return result, None
@@ -4640,7 +4649,9 @@ class Worker(object):
 													 progress_msg, parent,
 													 resume)
 		self.activated = False
+		self.cmdrun = False
 		self.finished = False
+		self.lastcmdname = None
 		self.subprocess_abort = False
 		self.thread_abort = False
 		self.thread = delayedresult.startWorker(self._generic_consumer, 
