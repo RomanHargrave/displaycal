@@ -4069,6 +4069,13 @@ class Worker(object):
 			if (self.argyll_version >= [1, 3, 3] and
 				(not self.has_lut_access() or
 				 not getcfg("calibration.use_video_lut"))):
+				if config.get_display_name() == "madVR":
+					# Normally -K will automatically reset the video LUT,
+					# but when using madVR, we have to do it explicitly
+					result = self.reset_cal()
+					if (isinstance(result, Exception) and
+						not isinstance(result, UnloggedInfo)):
+						return result, None
 				args += ["-K"]
 			else:
 				args += ["-k"]
@@ -4441,6 +4448,12 @@ class Worker(object):
 			else:
 				args += ["-R"]
 		return self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
+	
+	def reset_cal(self):
+		cmd, args = self.prepare_dispwin(False)
+		result = self.exec_cmd(cmd, args, capture_output=True, 
+							   skip_scripts=True, silent=False)
+		return result
 	
 	def safe_send(self, bytes):
 		self.send_buffer = bytes
@@ -5407,6 +5420,13 @@ class Worker(object):
 				if (self.argyll_version >= [1, 3, 3] and
 					(not self.has_lut_access() or
 					 not getcfg("calibration.use_video_lut"))):
+					if config.get_display_name() == "madVR":
+						# Normally -K will automatically reset the video LUT,
+						# but when using madVR, we have to do it explicitly
+						result = self.reset_cal()
+						if (isinstance(result, Exception) and
+							not isinstance(result, UnloggedInfo)):
+							return result, None
 					args += ["-K"]
 				else:
 					args += ["-k"]
