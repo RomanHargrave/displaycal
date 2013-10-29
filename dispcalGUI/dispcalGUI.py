@@ -1011,9 +1011,6 @@ class MainFrame(BaseFrame):
 			"6000",
 			"6500"
 		]
-		
-		defaults["use_separate_lut_access"] = int(
-			self.worker.has_separate_lut_access() or test)
 
 	def init_frame(self):
 		"""
@@ -1620,7 +1617,10 @@ class MainFrame(BaseFrame):
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
-		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
+		has_separate_lut_access = self.worker.has_separate_lut_access()
+		self.menuitem_use_separate_lut_access.Check(has_separate_lut_access or
+													bool(getcfg("use_separate_lut_access")))
+		self.menuitem_use_separate_lut_access.Enable(not has_separate_lut_access)
 		has_lut_access = self.worker.has_lut_access()
 		do_not_use_video_lut = (self.worker.argyll_version >= [1, 3, 3] and
 								(not has_lut_access or
@@ -2131,7 +2131,6 @@ class MainFrame(BaseFrame):
 										   lang.getstr("display.primary"))]
 			self.displays[-1] = lang.getstr(self.displays[-1])
 		self.display_ctrl.SetItems(self.displays)
-		self.get_set_display(update_ccmx_items)
 		self.display_ctrl.Enable(len(self.worker.displays) > 1)
 		display_lut_sizer = self.display_ctrl.GetContainingSizer()
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
@@ -2148,16 +2147,6 @@ class MainFrame(BaseFrame):
 			for i, disp in enumerate(self.displays):
 				if self.worker.lut_access[i]:
 					self.display_lut_ctrl.Append(disp)
-			display_lut_no = min(len(self.displays), 
-								 getcfg("display_lut.number")) - 1
-			if display_lut_no > -1 and not self.worker.lut_access[display_lut_no]:
-				for display_lut_no, disp in enumerate(self.worker.lut_access):
-					if disp:
-						break
-			self.display_lut_ctrl.SetSelection(display_lut_no)
-			self.display_lut_link_ctrl_handler(CustomEvent(
-				wx.EVT_BUTTON.evtType[0], self.display_lut_link_ctrl), 
-				bool(int(getcfg("display_lut.link"))))
 			comport_sizer.SetCols(1)
 			comport_sizer.SetRows(2)
 		else:
@@ -2168,6 +2157,7 @@ class MainFrame(BaseFrame):
 		display_lut_sizer.Show(self.display_lut_label, use_lut_ctrl)
 		display_lut_sizer.Show(self.display_lut_ctrl, use_lut_ctrl)
 		display_sizer.Show(self.display_lut_link_ctrl, use_lut_ctrl)
+		self.get_set_display(update_ccmx_items)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
@@ -7066,16 +7056,12 @@ class MainFrame(BaseFrame):
 		profile = None
 		if display_no > -1:
 			setcfg("display.number", display_no + 1)
-			if bool(int(getcfg("display_lut.link"))):
-				self.display_lut_ctrl.SetStringSelection(self.displays[display_no])
-				try:
-					i = self.displays.index(
-						self.display_lut_ctrl.GetStringSelection())
-				except ValueError:
-					i = min(0, self.display_ctrl.GetSelection())
-				setcfg("display_lut.number", i + 1)
 			if load_lut:
 				profile = get_display_profile(display_no)
+		if self.display_lut_link_ctrl.IsShown():
+			self.display_lut_link_ctrl_handler(CustomEvent(
+				wx.EVT_BUTTON.evtType[0], self.display_lut_link_ctrl), 
+				bool(int(getcfg("display_lut.link"))))
 		if load_lut:
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut", 
@@ -7123,23 +7109,33 @@ class MainFrame(BaseFrame):
 		bitmap_unlink = geticon(16, "stock_lock-open")
 		if link is None:
 			link = not bool(int(getcfg("display_lut.link")))
-		link = self.display_ctrl.GetCount() == 1 or (link and 
-			self.display_lut_ctrl.GetCount() > 1)
+		link = (not len(self.worker.displays) or
+				(link and self.worker.lut_access[max(min(len(self.worker.displays),
+														 getcfg("display.number")),
+													 0) - 1]))
+		lut_no = -1
 		if link:
 			self.display_lut_link_ctrl.SetBitmapLabel(bitmap_link)
-			lut_no = self.display_ctrl.GetSelection()
+			try:
+				lut_no = self.display_lut_ctrl.Items.index(self.display_ctrl.GetStringSelection())
+			except ValueError:
+				pass
 		else:
 			self.display_lut_link_ctrl.SetBitmapLabel(bitmap_unlink)
+		if lut_no < 0:
 			try:
-				lut_no = self.displays.index(
-					self.display_lut_ctrl.GetStringSelection())
-			except ValueError:
+				lut_no = self.display_lut_ctrl.Items.index(self.display_ctrl.Items[getcfg("display_lut.number") - 1])
+			except (IndexError, ValueError):
 				lut_no = min(0, self.display_ctrl.GetSelection())
 		self.display_lut_ctrl.SetSelection(lut_no)
 		self.display_lut_ctrl.Enable(not link and 
 									 self.display_lut_ctrl.GetCount() > 1)
 		setcfg("display_lut.link", int(link))
-		setcfg("display_lut.number", lut_no + 1)
+		try:
+			i = self.displays.index(self.display_lut_ctrl.Items[lut_no])
+		except (IndexError, ValueError):
+			i = min(0, self.display_ctrl.GetSelection())
+		setcfg("display_lut.number", i + 1)
 
 	def measurement_mode_ctrl_handler(self, event=None):
 		if debug:
