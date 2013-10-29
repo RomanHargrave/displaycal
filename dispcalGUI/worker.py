@@ -1967,6 +1967,8 @@ class Worker(object):
 							wx.GetApp().progress_dlg.Pulse(
 								lang.getstr("success" if retcode == 0 else
 											"failure"))
+				else:
+					lut_access += [None] * len(displays)
 				if self.argyll_version >= [1, 4, 0]:
 					# Web @ localhost
 					lut_access.append(False)
@@ -2740,6 +2742,10 @@ class Worker(object):
 		if n >= 0 and n < len(self.instruments):
 			return self.instruments[n]
 		return ""
+	
+	def has_lut_access(self):
+		display_no = min(len(self.lut_access), getcfg("display.number")) - 1
+		return display_no > -1 and self.lut_access[display_no]
 	
 	def has_separate_lut_access(self):
 		""" Return True if separate LUT access is possible and needed. """
@@ -4060,8 +4066,9 @@ class Worker(object):
 		   self.argyll_version >= [1, 1, 0]:
 			args += ["-N"]
 		if apply_calibration is not False:
-			if (config.get_display_name() in ("Web", "madVR") and
-				self.argyll_version >= [1, 4, 0]):
+			if (self.argyll_version >= [1, 3, 3] and
+				(not self.has_lut_access() or
+				 not getcfg("calibration.use_video_lut"))):
 				args += ["-K"]
 			else:
 				args += ["-k"]
@@ -5397,8 +5404,9 @@ class Worker(object):
 			cmd = get_argyll_util("dispread")
 			args = ["-v"]
 			if cal_path:
-				if (config.get_display_name() in ("Web", "madVR") and
-					self.argyll_version >= [1, 4, 0]):
+				if (self.argyll_version >= [1, 3, 3] and
+					(not self.has_lut_access() or
+					 not getcfg("calibration.use_video_lut"))):
 					args += ["-K"]
 				else:
 					args += ["-k"]

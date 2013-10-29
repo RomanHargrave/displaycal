@@ -488,6 +488,8 @@ defaults = {
 	"calibration.luminance": 120.0,
 	"calibration.quality": "m",
 	"calibration.update": 0,
+	"calibration.use_video_lut": 1,
+	"calibration.use_video_lut.backup": 1,
 	"colorimeter_correction.testchart": "ccxx.ti1",
 	"colorimeter_correction_matrix_file": "AUTO:",
 	"comport.number": 1,

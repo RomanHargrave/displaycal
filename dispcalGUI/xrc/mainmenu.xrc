@@ -57,6 +57,10 @@
         <label>use_separate_lut_access</label>
         <checkable>1</checkable>
       </object>
+      <object class="wxMenuItem" name="calibration.do_not_use_video_lut">
+        <label>calibration.do_not_use_video_lut</label>
+        <checkable>1</checkable>
+      </object>
       <object class="wxMenuItem" name="allow_skip_sensor_cal">
         <label>allow_skip_sensor_cal</label>
         <checkable>1</checkable>

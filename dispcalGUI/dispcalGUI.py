@@ -1441,6 +1441,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("use_separate_lut_access"))
 		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
 				  self.menuitem_use_separate_lut_access)
+		self.menuitem_do_not_use_video_lut = options.FindItemById(
+			options.FindItem("calibration.do_not_use_video_lut"))
+		self.Bind(wx.EVT_MENU, self.do_not_use_video_lut_handler, 
+				  self.menuitem_do_not_use_video_lut)
 		self.menuitem_allow_skip_sensor_cal = options.FindItemById(
 			options.FindItem("allow_skip_sensor_cal"))
 		self.Bind(wx.EVT_MENU, self.allow_skip_sensor_cal_handler, 
@@ -1617,6 +1621,13 @@ class MainFrame(BaseFrame):
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
 		self.menuitem_use_separate_lut_access.Check(bool(getcfg("use_separate_lut_access")))
+		has_lut_access = self.worker.has_lut_access()
+		do_not_use_video_lut = (self.worker.argyll_version >= [1, 3, 3] and
+								(not has_lut_access or
+								 not getcfg("calibration.use_video_lut")))
+		self.menuitem_do_not_use_video_lut.Check(do_not_use_video_lut)
+		self.menuitem_do_not_use_video_lut.Enable(self.worker.argyll_version >=
+												  [1, 3, 3] and has_lut_access)
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
@@ -3055,6 +3066,26 @@ class MainFrame(BaseFrame):
 		setcfg("use_separate_lut_access", 
 			   int(self.menuitem_use_separate_lut_access.IsChecked()))
 		self.update_displays()
+
+	def do_not_use_video_lut_handler(self, event):
+		do_not_use_video_lut = self.menuitem_do_not_use_video_lut.IsChecked()
+		display_name = config.get_display_name()
+		recommended = {"madVR": True}.get(display_name, False)
+		if do_not_use_video_lut != recommended:
+			dlg = ConfirmDialog(self,
+								msg=lang.getstr("calibration.do_not_use_video_lut.warning"),  
+								ok=lang.getstr("yes"), 
+								cancel=lang.getstr("no"), 
+								bitmap=geticon(32, "dialog-warning"), log=False)
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				self.menuitem_do_not_use_video_lut.Check(recommended)
+				return
+		setcfg("calibration.use_video_lut", 
+			   int(not do_not_use_video_lut))
+		if display_name != "madVR":
+			setcfg("calibration.use_video_lut.backup", None)
 
 	def allow_skip_sensor_cal_handler(self, event):
 		setcfg("allow_skip_sensor_cal", 
@@ -7054,6 +7085,15 @@ class MainFrame(BaseFrame):
 			self.lut_viewer_load_lut(profile=profile)
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
+		if config.get_display_name() == "madVR":
+			if getcfg("calibration.use_video_lut.backup", False) is None:
+				setcfg("calibration.use_video_lut.backup",
+					   getcfg("calibration.use_video_lut"))
+				setcfg("calibration.use_video_lut", 0)
+		elif getcfg("calibration.use_video_lut.backup", False):
+			setcfg("calibration.use_video_lut",
+				   getcfg("calibration.use_video_lut.backup"))
+			setcfg("calibration.use_video_lut.backup", None)
 		if self.IsShownOnScreen():
 			self.update_menus()
 		if (update_ccmx_items and
