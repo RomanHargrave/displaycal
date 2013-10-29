@@ -1880,9 +1880,6 @@ class Worker(object):
 														"")))
 						if monitor and not monitor in "".join(desc):
 							desc = [monitor]
-						if (manufacturer and 
-							"".join(desc).lower().startswith(manufacturer[0].lower())):
-							manufacturer = []
 					else:
 						manufacturer = []
 					if desc and desc[-1] not in display:
@@ -2640,7 +2637,7 @@ class Worker(object):
 					start = display_name.lower().find(manufacturer.lower())
 					if start > -1:
 						display_name = (display_name[:start] +
-										display_name[start + len(manufacturer):]).replace("  ", " ")
+										display_name[start + len(manufacturer):]).lstrip()
 			display.append(display_name)
 			return " ".join(display)
 		return ""
