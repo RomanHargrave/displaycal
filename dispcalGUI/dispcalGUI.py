@@ -7995,7 +7995,6 @@ class MainFrame(BaseFrame):
 
 		# Black point correction
 		if "%ck" in profile_name:
-			black_point_correction = self.get_black_point_correction()
 			k = int(float(black_point_correction) * 100)
 			profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and 
 														k < 100 else "") + 
@@ -8037,7 +8036,6 @@ class MainFrame(BaseFrame):
 
 		# Profile type
 		if "%pt" in profile_name:
-			profile_type = self.get_profile_type()
 			profile_type = {
 				"G": "1xGamma+MTX",
 				"g": "3xGamma+MTX",
