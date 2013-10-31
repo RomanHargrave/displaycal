@@ -248,7 +248,7 @@ class CGATS(dict):
 								context = context.add_data({key: value.strip('"')})
 							else:
 								context = context.add_data({key: ''})
-				elif line and values[0] not in ('Comment:', 'Date:') and \
+				elif values and values[0] not in ('Comment:', 'Date:') and \
 				     len(line) >= 3 and not re.search("[^ 0-9A-Za-z]", line):
 					context = self.add_data(line)
 			self.setmodified(False)
