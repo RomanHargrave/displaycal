@@ -332,7 +332,6 @@ class UntetheredFrame(wx.Frame):
 					# CTRL (Linux/Mac/Windows) / CMD (Mac)
 					if keycode == 65: # A
 						self.grid.SelectAll()
-						return
 					elif keycode in (67, 88): # C / X
 						clip = []
 						cells = self.grid.GetSelection()
@@ -356,7 +355,25 @@ class UntetheredFrame(wx.Frame):
 						wx.TheClipboard.Open()
 						wx.TheClipboard.SetData(clipdata)
 						wx.TheClipboard.Close()
-						return
+				elif keycode in (wx.WXK_UP, wx.WXK_NUMPAD_UP):
+					self.back_btn_handler(None)
+				elif keycode in (wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN):
+					self.next_btn_handler(None)
+				elif keycode in (wx.WXK_HOME, wx.WXK_NUMPAD_HOME):
+					if self.index > -1:
+						self.update(0)
+				elif keycode in (wx.WXK_END, wx.WXK_NUMPAD_END):
+					if self.index_max > -1:
+						self.update(self.index_max)
+				elif keycode in (wx.WXK_PAGEDOWN, wx.WXK_NUMPAD_PAGEDOWN):
+					if self.index > -1:
+						self.grid.MovePageDown()
+						self.update(self.grid.GetGridCursorRow())
+				elif keycode in (wx.WXK_PAGEUP, wx.WXK_NUMPAD_PAGEUP):
+					if self.index > -1:
+						self.grid.MovePageUp()
+						self.update(self.grid.GetGridCursorRow())
+				return
 			elif self.has_worker_subprocess() and keycode < 255:
 				if keycode == 27 or chr(keycode) == "Q":
 					# ESC or Q
@@ -402,6 +419,7 @@ class UntetheredFrame(wx.Frame):
 		self.logger.info("%r" % txt)
 		data_len = len(self.cgats[0].DATA)
 		if (self.grid.GetNumberRows() < data_len):
+			self.index = 0
 			self.index_max = data_len - 1
 			self.grid.AppendRows(data_len - self.grid.GetNumberRows())
 			for i in self.cgats[0].DATA:
@@ -527,8 +545,8 @@ class UntetheredFrame(wx.Frame):
 		self.is_measuring = False
 		self.keepGoing = True
 		self.last_error = None
-		self.index = 0
-		self.index_max = 0
+		self.index = -1
+		self.index_max = -1
 		self.last_XYZ = (-1, -1, -1)
 		self.white_XYZ = (-1, -1, -1)
 		self.measure_count = 0
@@ -587,6 +605,7 @@ class UntetheredFrame(wx.Frame):
 			self.panel_XYZ.Update()
 		if mark_current_row:
 			self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
+			self.grid.MakeCellVisible(self.index, 0)
 		self.grid.SelectRow(self.index)
 		self.grid.SetGridCursor(self.index, 0)
 		self.label_index.SetLabel("%i/%i" % (self.index + 1,
