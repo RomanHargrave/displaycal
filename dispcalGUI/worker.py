@@ -235,7 +235,8 @@ def check_ti3_criteria1(RGB, XYZ, black_XYZ, white_XYZ,
 						print_debuginfo=True):
 	sRGBLab = colormath.RGB2Lab(RGB[0] / 100.0,
 								RGB[1] / 100.0,
-								RGB[2] / 100.0, whitepoint="D65")
+								RGB[2] / 100.0,
+								noadapt=not white_XYZ)
 	if white_XYZ:
 		if black_XYZ:
 			black_Lab = colormath.XYZ2Lab(*colormath.adapt(black_XYZ[0],

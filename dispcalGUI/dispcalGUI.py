@@ -9586,7 +9586,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		grid.EnableDragColSize()
 		grid.EnableGridLines(True)
 
-		dlg.rgb_space = list(colormath.rgb_spaces["sRGB"])
 		black = ti3.queryi1({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
 		if black:
 			black = black["XYZ_X"], black["XYZ_Y"], black["XYZ_Z"]
@@ -9594,7 +9593,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		white = ti3.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
 		if white:
 			white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
-			dlg.rgb_space[1] = colormath.get_whitepoint("D50", scale=100)
 		dlg.white = white
 		dlg.suspicious_items = []
 		for i, (prev, item, delta, sRGB_delta, prev_delta_to_sRGB,
@@ -9885,10 +9883,11 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 										 wx.Colour(*RGB255))
 		if dlg.white:
 			XYZ = colormath.adapt(XYZ[0], XYZ[1], XYZ[2],
-								  whitepoint_source=dlg.white)
+								  dlg.white, "D65")
 		RGB255 = [int(round(float(str(v)))) for v in
-				  colormath.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2],
-									rgb_space=dlg.rgb_space, scale=255)]
+				  colormath.XYZ2RGB(XYZ[0] / 100.0,
+									XYZ[1] / 100.0,
+									XYZ[2] / 100.0, scale=255)]
 		dlg.grid.SetCellBackgroundColour(row, 5,
 										 wx.Colour(*RGB255))
 		grid.SetCellValue(row, 0, "1" if (not delta or (delta["E_ok"] and

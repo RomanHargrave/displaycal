@@ -734,9 +734,6 @@ class CGATS(dict):
 			white = colormath.get_whitepoint((white["XYZ_X"],
 											  white["XYZ_Y"],
 											  white["XYZ_Z"]))
-		rgb_space = list(colormath.rgb_spaces["sRGB"])
-		if normalize_RGB_white:
-			rgb_space[1] = "D50"
 		vrml = """#VRML V2.0 utf8
 
 Transform {
@@ -928,12 +925,13 @@ Transform {
 				# Keep reference hue and saturation
 				# Lab to sRGB using reference black offset of 40 like Argyll CMS
 				R, G, B = colormath.Lab2RGB(L * (100.0 - 40.0) / 100.0 + 40.0,
-											a, b, rgb_space, scale=.7)
+											a, b, scale=.7,
+											noadapt=not normalize_RGB_white)
 				H_ref, S_ref, V_ref = colormath.RGB2HSV(R, G, B)
 			# Lab to sRGB using actual black offset
 			R, G, B = colormath.Lab2RGB(L * (100.0 - RGB_black_offset) / 100.0 +
-										RGB_black_offset, a, b, rgb_space,
-										scale=.7)
+										RGB_black_offset, a, b, scale=.7,
+										noadapt=not normalize_RGB_white)
 			if RGB_black_offset != 40:
 				H, S, V = colormath.RGB2HSV(R, G, B)
 				# Use reference H and S to go back to RGB
