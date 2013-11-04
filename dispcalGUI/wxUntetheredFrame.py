@@ -97,7 +97,7 @@ class UntetheredFrame(wx.Frame):
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.measure_btn = FlatShadedButton(self.panel,
 											bitmap=geticon(10, "play"),
-											label=lang.getstr("measure"),
+											label=" " + lang.getstr("measure"),
 											fgcolour=FGCOLOUR)
 		self.measure_btn.Bind(wx.EVT_BUTTON, self.measure_btn_handler)
 		sizer.Add(self.measure_btn, 0, wx.RIGHT, border=6)
@@ -244,11 +244,13 @@ class UntetheredFrame(wx.Frame):
 		if self.index > 0:
 			self.update(self.index - 1)
 	
-	def enable_btns(self, enable=True):
-		self.is_measuring = False
+	def enable_btns(self, enable=True, enable_measure_button=False):
+		self.is_measuring = not enable
 		self.back_btn.Enable(enable and self.index > 0)
 		self.next_btn.Enable(enable and self.index < self.index_max)
-		self.measure_btn.Enable(enable)
+		self.measure_btn._bitmap = geticon(10, {True: "play",
+												False: "pause"}.get(enable))
+		self.measure_btn.Enable(enable or enable_measure_button)
 	
 	def finish_btn_handler(self, event):
 		self.finish_btn.Disable()
@@ -378,15 +380,14 @@ class UntetheredFrame(wx.Frame):
 				if keycode == 27 or chr(keycode) == "Q":
 					# ESC or Q
 					self.worker.abort_subprocess()
-				elif not self.is_measuring:
-					# Any other key
-					self.measure()
+				elif (not isinstance(self.FindFocus(), wx.Control) or
+					  keycode != 32):
+					self.measure_btn_handler(None)
 				return
 		event.Skip()
 	
 	def measure(self, event=None):
-		self.enable_btns(False)
-		self.is_measuring = True
+		self.enable_btns(False, True)
 		# Use a delay to allow for TFT lag
 		wx.CallLater(200, self.safe_send, " ")
 	
@@ -395,10 +396,12 @@ class UntetheredFrame(wx.Frame):
 		setcfg("untethered.measure.auto", int(auto))
 	
 	def measure_btn_handler(self, event):
-		self.last_XYZ = (-1, -1, -1)
-		self.measure_count = 1
-		self.measure_auto_cb.Disable()
-		self.measure()
+		if self.is_measuring:
+			self.is_measuring = False
+		else:
+			self.last_XYZ = (-1, -1, -1)
+			self.measure_count = 1
+			self.measure()
 	
 	def measurement_play_sound_handler(self, event):
 		setcfg("measurement.play_sound",
@@ -523,8 +526,7 @@ class UntetheredFrame(wx.Frame):
 							self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
 							self.grid.MakeCellVisible(self.index, 0)
 		if "key to take a reading" in txt and not self.last_error:
-			self.measure_auto_cb.Enable()
-			if getcfg("untethered.measure.auto") and self.index > 0:
+			if getcfg("untethered.measure.auto") and self.is_measuring:
 				if not self.finished:
 					self.measure()
 				else:
@@ -563,7 +565,6 @@ class UntetheredFrame(wx.Frame):
 		self.label_index.SetLabel(" ")
 		self.enable_btns(False)
 		self.measure_auto_cb.SetValue(bool(getcfg("untethered.measure.auto")))
-		self.measure_auto_cb.Disable()
 		self.finish_btn.Disable()
 		
 		if self.grid.GetNumberRows():
