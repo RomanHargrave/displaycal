@@ -388,8 +388,7 @@ class BitmapBackgroundPanel(wx.Panel):
 		self._draw(dc)
 
 	def OnSize(self,event):
-		dc = wx.BufferedDC(wx.ClientDC(self))
-		self._draw(dc)
+		self.Refresh()
 	
 	def _draw(self, dc):
 		bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
