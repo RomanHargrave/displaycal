@@ -245,7 +245,7 @@ class UntetheredFrame(wx.Frame):
 			self.update(self.index - 1)
 	
 	def enable_btns(self, enable=True, enable_measure_button=False):
-		self.is_measuring = not enable
+		self.is_measuring = not enable and enable_measure_button
 		self.back_btn.Enable(enable and self.index > 0)
 		self.next_btn.Enable(enable and self.index < self.index_max)
 		self.measure_btn._bitmap = geticon(10, {True: "play",
