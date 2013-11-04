@@ -14,11 +14,12 @@ import time
 
 from wxaddons import wx
 
-from config import getcfg, geticon, get_data_path, get_icon_bundle, setcfg
+from config import (getbitmap, getcfg, geticon, get_data_path, get_icon_bundle,
+					setcfg)
 from log import get_file_logger, safe_print
 from meta import name as appname
 from options import debug, test, verbose
-from wxwindows import FlatShadedButton, numpad_keycodes
+from wxwindows import BitmapBackgroundPanel, FlatShadedButton, numpad_keycodes
 import CGATS
 import colormath
 import config
@@ -66,11 +67,15 @@ class UntetheredFrame(wx.Frame):
 		self.label_XYZ.SetForegroundColour(FGCOLOUR)
 		panelsizer.Add(self.label_XYZ, 0, wx.TOP | wx.RIGHT | wx.EXPAND,
 					   border=8)
-		self.panel_RGB = wx.Panel(self.panel, size=(256, 256),
-								  style=wx.BORDER_SIMPLE)
+		self.panel_RGB = BitmapBackgroundPanel(self.panel, size=(256, 256),
+											   style=wx.BORDER_SIMPLE)
+		self.panel_RGB.scalebitmap = (True, True)
+		self.panel_RGB.SetBitmap(getbitmap("theme/checkerboard-32x32x5-333-444"))
 		panelsizer.Add(self.panel_RGB, 1, wx.LEFT | wx.EXPAND, border=8)
-		self.panel_XYZ = wx.Panel(self.panel, size=(256, 256),
-								  style=wx.BORDER_SIMPLE)
+		self.panel_XYZ = BitmapBackgroundPanel(self.panel, size=(256, 256),
+											   style=wx.BORDER_SIMPLE)
+		self.panel_XYZ.scalebitmap = (True, True)
+		self.panel_XYZ.SetBitmap(getbitmap("theme/checkerboard-32x32x5-333-444"))
 		panelsizer.Add(self.panel_XYZ, 1, wx.RIGHT | wx.EXPAND, border=8)
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.back_btn = FlatShadedButton(self.panel, bitmap=geticon(10, "back"),
@@ -597,11 +602,13 @@ class UntetheredFrame(wx.Frame):
 		color = [int(round(v * 2.55)) for v in
 				 (row["RGB_R"], row["RGB_G"], row["RGB_B"])]
 		self.panel_RGB.SetBackgroundColour(wx.Colour(*color))
+		self.panel_RGB.SetBitmap(None)
 		self.panel_RGB.Refresh()
 		self.panel_RGB.Update()
 		if clear_XYZ:
 			self.label_XYZ.SetLabel(" ")
 			self.panel_XYZ.SetBackgroundColour(BGCOLOUR)
+			self.panel_XYZ.SetBitmap(getbitmap("theme/checkerboard-32x32x5-333-444"))
 			self.panel_XYZ.Refresh()
 			self.panel_XYZ.Update()
 		if mark_current_row:
@@ -617,6 +624,7 @@ class UntetheredFrame(wx.Frame):
 		Lab, color = self.get_Lab_RGB()
 		self.label_XYZ.SetLabel("L*a*b* %.2f %.2f %.2f" % Lab)
 		self.panel_XYZ.SetBackgroundColour(wx.Colour(*color))
+		self.panel_XYZ.SetBitmap(None)
 		self.panel_XYZ.Refresh()
 		self.panel_XYZ.Update()
 	
