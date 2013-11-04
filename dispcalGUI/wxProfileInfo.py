@@ -1221,7 +1221,6 @@ class ProfileInfoFrame(LUTFrame):
 		wx.CallAfter(self.resize_grid)
 	
 	def OnSize(self, event=None):
-		self.title_txt.Refresh()
 		if self.IsShownOnScreen() and self.IsMaximized():
 			self.splitter.AdjustLayout()
 		self.splitter.Refresh()

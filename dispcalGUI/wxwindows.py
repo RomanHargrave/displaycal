@@ -366,13 +366,16 @@ class BitmapBackgroundBitmapButton(wx.BitmapButton):
 
 class BitmapBackgroundPanel(wx.Panel):
 	
-	""" A panel with a background bitmap and text label """
+	""" A panel with a background bitmap """
 
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
-		self._bitmap = getbitmap("empty")
+		self._bitmap = None
+		self.scalebitmap = (True, False)
+		self.scalequality = wx.IMAGE_QUALITY_NORMAL
 		self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
-		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+		self.Bind(wx.EVT_SIZE, self.OnSize)
 	
 	def GetBitmap(self):
 		return self._bitmap
@@ -380,21 +383,33 @@ class BitmapBackgroundPanel(wx.Panel):
 	def SetBitmap(self, bitmap):
 		self._bitmap = bitmap
 
-	def OnEraseBackground(self, event):
-		dc = event.GetDC()
-		if not dc:
-			dc = wx.ClientDC(self)
-			rect = self.GetUpdateRegion().GetBox()
-			dc.SetClippingRect(rect)
-		dc.Clear()
-		self._drawbitmap(dc)
+	def OnPaint(self, event):
+		dc = wx.BufferedPaintDC(self)
+		self._draw(dc)
+
+	def OnSize(self,event):
+		dc = wx.BufferedDC(wx.ClientDC(self))
+		self._draw(dc)
 	
-	def _drawbitmap(self, dc):
-		dc.DrawBitmap(self._bitmap, 0, 0)
-		pen = wx.Pen(wx.Colour(0x66, 0x66, 0x66), 1, wx.SOLID)
-		pen.SetCap(wx.CAP_BUTT)
-		dc.SetPen(pen)
-		dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
+	def _draw(self, dc):
+		bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
+		dc.SetBackground(bbr)
+		dc.SetBackgroundMode(wx.SOLID)
+		dc.Clear()
+		dc.SetTextForeground(self.GetForegroundColour())
+		dc.SetTextBackground(self.GetBackgroundColour())
+		bmp = self._bitmap
+		if bmp:
+			if True in self.scalebitmap:
+				img = bmp.ConvertToImage()
+				bmp = wx.BitmapFromImage(img.Rescale(self.GetSize()[0]
+													 if self.scalebitmap[0]
+													 else img.GetSize()[0],
+													 self.GetSize()[1]
+													 if self.scalebitmap[1]
+													 else img.GetSize()[1],
+													 quality=self.scalequality))
+			dc.DrawBitmap(bmp, 0, 0)
 
 
 class BitmapBackgroundPanelText(BitmapBackgroundPanel):
@@ -404,8 +419,6 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	def __init__(self, *args, **kwargs):
 		BitmapBackgroundPanel.__init__(self, *args, **kwargs)
 		self._label = ""
-		self.Unbind(wx.EVT_ERASE_BACKGROUND)
-		self.Bind(wx.EVT_PAINT, self.OnPaint)
 	
 	def _set_font(self, dc):
 		try:
@@ -422,10 +435,13 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	
 	def SetLabel(self, label):
 		self._label = label
-
-	def OnPaint(self, dc):
-		dc = wx.PaintDC(self)
-		self._drawbitmap(dc)
+	
+	def _draw(self, dc):
+		BitmapBackgroundPanel._draw(self, dc)
+		pen = wx.Pen(wx.Colour(0x66, 0x66, 0x66), 1, wx.SOLID)
+		pen.SetCap(wx.CAP_BUTT)
+		dc.SetPen(pen)
+		dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
 		dc = self._set_font(dc)
 		w1, h1 = self.GetTextExtent(self.GetLabel())
 		w2, h2 = dc.GetTextExtent(self.GetLabel())
