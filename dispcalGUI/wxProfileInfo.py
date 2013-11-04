@@ -1375,8 +1375,10 @@ class ProfileInfoFrame(LUTFrame):
 			self.client.Parent.Thaw()
 	
 	def resize_grid(self, event=None):
-		self.grid.SetColSize(1, self.grid.GetSize()[0] -
-								self.grid.GetColSize(0) - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X))
+		self.grid.SetColSize(1, max(self.grid.GetSize()[0] -
+									self.grid.GetColSize(0) -
+									wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+									0))
 		self.grid.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 							 0 - wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y))
 		self.grid.ForceRefresh()
