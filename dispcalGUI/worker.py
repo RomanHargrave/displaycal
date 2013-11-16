@@ -1192,7 +1192,8 @@ class Worker(object):
 		return oyranos
 	
 	def check_is_ambient_measuring(self, txt):
-		if ("ambient light measuring" in txt.lower() and
+		if (("ambient light measuring" in txt.lower() or
+			 "Will use emissive mode instead" in txt) and
 			not getattr(self, "is_ambient_measuring", False)):
 			self.is_ambient_measuring = True
 		if (getattr(self, "is_ambient_measuring", False) and
@@ -2593,7 +2594,8 @@ class Worker(object):
 					     not "failed with 'User Aborted'" in line and
 					     not "test_crt returned error code 1" in line) or
 					    line.startswith("Failed to") or
-					    "Requested ambient light capability" in line):
+					    ("Requested ambient light capability" in line and
+					     len(self.output) == i + 2)):
 						# "test_crt returned error code 1" == user aborted
 						if (sys.platform == "win32" and
 							("config 1 failed (Operation not supported or "
