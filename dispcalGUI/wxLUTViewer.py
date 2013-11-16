@@ -9,7 +9,7 @@ import sys
 import tempfile
 import traceback
 
-import numpy
+from numpy import interp
 
 from argyll_cgats import cal_to_fake_profile
 from config import fs_enc, get_bitmap_as_icon, getcfg, geticon, setcfg
@@ -631,8 +631,8 @@ class LUTFrame(wx.Frame):
 				for i in xrange(size):
 					x.append(i / (size - 1.0) * 255)
 					y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
-				yi = numpy.interp(x, xp, yp)
-				xi = numpy.interp(y, yi, x)
+				yi = interp(x, xp, yp)
+				xi = interp(y, yi, x)
 				setattr(self, sig, CoordinateType())
 				for v, Y in zip(xi, y):
 					if Y <= yp[0]:
