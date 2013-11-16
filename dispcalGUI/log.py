@@ -123,6 +123,7 @@ safe_print = SafeLogger()
 def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
 					logdir=logdir, filename=None):
 	logger = logging.getLogger(name)
+	logger.propagate = 0
 	logger.setLevel(level)
 	if not filename:
 		filename = name
