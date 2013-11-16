@@ -3385,154 +3385,36 @@ class MainFrame(BaseFrame):
 		safe_print(lang.getstr("ambient.measure"))
 		self.stop_timers()
 		self.worker.interactive = False
-		self.worker.start(self.ambient_measure_process, 
-						  self.ambient_measure_process, 
-						  ckwargs={"event_id": event.GetId(),
-								   "phase": "instcal_prepare"}, 
-						  wkwargs={"result": True,
-								   "phase": "init"},
-						  progress_msg=lang.getstr("instrument.initializing"))
+		self.worker.start(self.ambient_measure_consumer, 
+						  self.ambient_measure_producer, 
+						  ckwargs={"event_id": event.GetId()},
+						  progress_title=lang.getstr("ambient.measure"),
+						  interactive_frame="ambient")
 	
-	def ambient_measure_process(self, result=None, event_id=None, phase=None):
+	def ambient_measure_producer(self):
 		""" Process spotread output for ambient readings """
+		cmd = get_argyll_util("spotread")
+		args = ["-v", "-a", "-x"]
+		if getcfg("extra_args.spotread").strip():
+			args += parse_argument_string(getcfg("extra_args.spotread"))
+		self.worker.add_measurement_features(args, False)
+		return self.worker.exec_cmd(cmd, args, capture_output=True,
+									skip_scripts=True)
+	
+	def ambient_measure_consumer(self, result=None, event_id=None):
+		self.start_timers()
 		if not result or isinstance(result, Exception):
 			if getattr(self.worker, "subprocess", None):
 				self.worker.quit_terminate_cmd()
-				self.worker.subprocess = None
-			self.start_timers()
-			safe_print(lang.getstr("aborted"))
-			if result is False:
-				return
-		if phase == "init":
-			cmd = get_argyll_util("spotread")
-			args = ["-v", "-c%s" % getcfg("comport.number"), "-a", "-x"]
-			if getcfg("extra_args.spotread").strip():
-				args += parse_argument_string(getcfg("extra_args.spotread"))
-			measurement_mode = getcfg("measurement_mode")
-			instrument_features = self.worker.get_instrument_features()
-			if (measurement_mode and (measurement_mode != "p" or
-									  self.worker.get_instrument_name() == "ColorHug") and
-				not instrument_features.get("spectral")):
-				# Always specify -y for colorimeters
-				# Only ColorHug supports -yp parameter
-				args += ["-y" + measurement_mode[0]]
-			safe_print("")
-			safe_print(lang.getstr("commandline"))
-			printcmdline(cmd, args)
-			safe_print("")
-			kwargs = dict(timeout=30)
-			if sys.platform == "win32":
-				kwargs["codepage"] = windll.kernel32.GetACP()
-			self.worker.clear_cmd_output()
-			self.worker.measure_cmd = True
-			if "ARGYLL_NOT_INTERACTIVE" in os.environ:
-				del os.environ["ARGYLL_NOT_INTERACTIVE"]
-			try:
-				args = [arg.encode(fs_enc) for arg in args]
-				result = self.worker.subprocess = wexpect.spawn(cmd, args, 
-																**kwargs)
-				result.logfile_read = Files([FilteredStream(safe_print, 
-															triggers=[]),
-											 self.worker.lastmsg])
-			except Exception, exception:
-				return exception
-			if not result or not result.isalive():
-				return
-			phase = "measure_init"
-		if not result or isinstance(result, Exception) or \
-		   hasattr(result, "isalive") and not result.isalive():
-			if debug and isinstance(result, Exception):
-				log(safe_unicode(result))
-			InfoDialog(self,
-					   msg=lang.getstr("aborted"), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"), log=False)
+			if isinstance(result, Exception):
+				show_result_dialog(result, self)
 			return
-		if phase == "instcal_prepare":
-			if self.worker.get_instrument_features().get("sensor_cal"):
-				if self.worker.get_instrument_name() == "ColorMunki":
-					lstr ="instrument.calibrate.colormunki"
-				else:
-					lstr = "instrument.calibrate"
-				dlg = ConfirmDialog(self, msg=lang.getstr(lstr), 
-									ok=lang.getstr("ok"), 
-									cancel=lang.getstr("cancel"), 
-									bitmap=geticon(32, "dialog-information"))
-				dlg_result = dlg.ShowModal()
-				dlg.Destroy()
-				if dlg_result != wx.ID_OK:
-					self.worker.quit_terminate_cmd()
-					self.worker.subprocess = None
-					self.start_timers()
-					safe_print(lang.getstr("aborted"))
-					return False
-				self.worker.start(self.ambient_measure_process, 
-								  self.ambient_measure_process, 
-								  ckwargs={"event_id": event_id, 
-										   "phase": "measure_prepare"}, 
-								  wkwargs={"result": result, 
-										   "phase": "instcal"},
-								  progress_msg=lang.getstr("instrument.calibrating"))
-				return
-			else:
-				phase = "measure_prepare"
-		elif phase == "instcal":
-			# the only optional phase
-			try:
-				result.send(" ")
-				result.expect("Calibration complete")
-				if not self.worker.get_instrument_features().get("sensor_cal"):
-					# Just for testing purposes
-					sleep(5)
-			except Exception, exception:
-				return exception
-			phase = "measure_init"
-		pat = ["key to take a reading:", "Esc or Q", "ESC or Q"]
-		if phase == "measure_init":
-			try:
-				result.expect(pat)
-			except Exception, exception:
-				if isinstance(exception, wexpect.EOF) and result.isalive():
-					result.wait()
-				return exception
-			return result
-		elif phase == "measure_prepare":
-			dlg = ConfirmDialog(self, msg=lang.getstr("instrument.measure_ambient"), 
-								ok=lang.getstr("ok"), 
-								cancel=lang.getstr("cancel"), 
-								bitmap=geticon(32, "dialog-information"))
-			dlg_result = dlg.ShowModal()
-			dlg.Destroy()
-			if dlg_result != wx.ID_OK:
-				self.worker.quit_terminate_cmd()
-				self.worker.subprocess = None
-				self.start_timers()
-				safe_print(lang.getstr("aborted"))
-				return False
-			self.worker.start(self.ambient_measure_process, 
-							  self.ambient_measure_process, 
-							  ckwargs={"event_id": event_id}, 
-							  wkwargs={"result": result, 
-									   "phase": "measure"},
-							  progress_msg=lang.getstr("ambient.measure"))
+		safe_print(lang.getstr("success"))
+		result = re.sub("[^\t\n\r\x20-\x7f]", "",
+						"".join(self.worker.output)).strip()
+		if not result:
+			wx.Bell()
 			return
-		elif phase == "measure":
-			try:
-				result.send(" ")
-				result.expect("Place instrument")
-			except Exception, exception:
-				if isinstance(exception, wexpect.EOF) and result.isalive():
-					result.wait()
-				return exception
-			data = result.before if isinstance(result.before, basestring) else ""
-			data = re.sub("[^\t\n\r\x20-\x7f]", "", data).strip()
-			self.worker.quit_terminate_cmd()
-			self.worker.subprocess = None
-			safe_print(lang.getstr("aborted"))
-			return data
-		# finish
-		# result = data
-		self.start_timers()
 		if getcfg("whitepoint.colortemp.locus") == "T":
 			K = re.search("Planckian temperature += (\d+(?:\.\d+)?)K", 
 						  result, re.I)

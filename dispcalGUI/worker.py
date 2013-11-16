@@ -778,6 +778,10 @@ class FilteredStream():
 				"key to continue",
 				"key to retry",
 				"key to take a reading",
+				"] to read",
+				"' to set",
+				"' to report",
+				"' to toggle",
 				" or Q to ",
 				"place on the white calibration reference",
 				"read failed due to the sensor being in the wrong position",
@@ -1187,6 +1191,32 @@ class Worker(object):
 					break
 		return oyranos
 	
+	def check_is_ambient_measuring(self, txt):
+		if ("ambient light measuring" in txt.lower() and
+			not getattr(self, "is_ambient_measuring", False)):
+			self.is_ambient_measuring = True
+		if (getattr(self, "is_ambient_measuring", False) and
+			"Place instrument on spot to be measured" in txt):
+			self.is_ambient_measuring = False
+			self.do_ambient_measurement()
+	
+	def do_ambient_measurement(self):
+		self.progress_wnd.Pulse(" " * 4)
+		self.progress_wnd.MakeModal(False)
+		dlg = ConfirmDialog(self.progress_wnd,
+							msg=lang.getstr("instrument.measure_ambient"), 
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-information"))
+		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
+		self.progress_wnd.MakeModal(True)
+		if dlg_result != wx.ID_OK:
+			self.abort_subprocess()
+			return False
+		if self.safe_send(" "):
+			self.progress_wnd.Pulse(lang.getstr("please_wait"))
+	
 	def check_instrument_calibration(self, txt):
 		""" Check if current instrument needs sensor calibration by looking
 		at Argyll CMS command output """
@@ -1253,6 +1283,14 @@ class Worker(object):
 			self.recent.write("\r\n%s: Retrying (%s)..." % 
 							  (appname, self.retrycount))
 			self.safe_send(" ")
+	
+	def check_spotread_result(self, txt):
+		""" Check if spotread returned a result """
+		if (self.cmdname == "spotread" and
+			getattr(self, "terminal", None) is None and
+			"Result is XYZ:" in txt):
+			# Single spotread reading, we are done
+			wx.CallLater(1000, self.quit_terminate_cmd)
 	
 	def do_instrument_calibration(self):
 		""" Ask user to initiate sensor calibration and execute.
@@ -3649,6 +3687,8 @@ class Worker(object):
 		self.check_instrument_place_on_screen(txt)
 		self.check_instrument_sensor_position(txt)
 		self.check_retry_measurement(txt)
+		self.check_is_ambient_measuring(txt)
+		self.check_spotread_result(txt)
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
 						display_manufacturer=None):
@@ -4572,11 +4612,18 @@ class Worker(object):
 			parent = self.owner
 		if progress_start < 100:
 			progress_start = 100
-		self.resume = resume
+		self.activated = False
+		self.cmdrun = False
+		self.finished = False
 		self.instrument_calibration_complete = False
 		self.instrument_place_on_screen_msg = False
 		self.instrument_sensor_position_msg = False
+		self.is_ambient_measuring = False
+		self.lastcmdname = None
+		self.resume = resume
+		self.subprocess_abort = False
 		self.starttime = time()
+		self.thread_abort = False
 		if self.interactive:
 			self.progress_start_timer = wx.Timer()
 			if getattr(self, "progress_wnd", None) and \
@@ -4646,12 +4693,6 @@ class Worker(object):
 													 progress_title, 
 													 progress_msg, parent,
 													 resume)
-		self.activated = False
-		self.cmdrun = False
-		self.finished = False
-		self.lastcmdname = None
-		self.subprocess_abort = False
-		self.thread_abort = False
 		self.thread = delayedresult.startWorker(self._generic_consumer, 
 												producer, [consumer, 
 														   continue_next] + 
