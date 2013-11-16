@@ -4533,7 +4533,7 @@ class Worker(object):
 			try:
 				wrote = self.subprocess.send(bytes)
 			except Exception, exception:
-				self.logger.exception("Exception")
+				self.logger.exception("Exception: %s" % safe_unicode(exception))
 			else:
 				if wrote == len(bytes):
 					return True
