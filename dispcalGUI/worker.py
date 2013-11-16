@@ -1201,6 +1201,10 @@ class Worker(object):
 			self.do_ambient_measurement()
 	
 	def do_ambient_measurement(self):
+		if getattr(self, "subprocess_abort", False) or \
+		   getattr(self, "thread_abort", False):
+			# If we are aborting, ignore request
+			return
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
 		dlg = ConfirmDialog(self.progress_wnd,
@@ -1208,6 +1212,7 @@ class Worker(object):
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
+		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		self.progress_wnd.MakeModal(True)
@@ -1295,6 +1300,10 @@ class Worker(object):
 	def do_instrument_calibration(self):
 		""" Ask user to initiate sensor calibration and execute.
 		Give an option to cancel. """
+		if getattr(self, "subprocess_abort", False) or \
+		   getattr(self, "thread_abort", False):
+			# If we are aborting, ignore request
+			return
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
 		if self.get_instrument_name() == "ColorMunki":
@@ -1305,6 +1314,7 @@ class Worker(object):
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
+		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		self.progress_wnd.MakeModal(True)
@@ -1327,6 +1337,10 @@ class Worker(object):
 	def instrument_place_on_screen(self):
 		""" Show a dialog asking user to place the instrument on the screen
 		and give an option to cancel """
+		if getattr(self, "subprocess_abort", False) or \
+		   getattr(self, "thread_abort", False):
+			# If we are aborting, ignore request
+			return
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
 		dlg = ConfirmDialog(self.progress_wnd,
@@ -1334,6 +1348,7 @@ class Worker(object):
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
+		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		self.progress_wnd.MakeModal(True)
@@ -1345,6 +1360,10 @@ class Worker(object):
 		self.safe_send(" ")
 	
 	def instrument_reposition_sensor(self):
+		if getattr(self, "subprocess_abort", False) or \
+		   getattr(self, "thread_abort", False):
+			# If we are aborting, ignore request
+			return
 		self.progress_wnd.Pulse(" " * 4)
 		self.progress_wnd.MakeModal(False)
 		dlg = ConfirmDialog(self.progress_wnd,
@@ -1352,6 +1371,7 @@ class Worker(object):
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-warning"))
+		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		self.progress_wnd.MakeModal(True)
@@ -4702,6 +4722,12 @@ class Worker(object):
 	
 	def stop_progress(self):
 		if getattr(self, "progress_wnd", False):
+			if getattr(self.progress_wnd, "dlg", None):
+				self.progress_wnd.dlg.Close()
+				del self.progress_wnd.dlg
+				# Avoid blocking the main window
+				wx.CallLater(1, self.stop_progress)
+				return
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
 			# under Linux, destroying it here causes segfault
