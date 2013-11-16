@@ -2589,9 +2589,11 @@ class Worker(object):
 				for i, line in enumerate(self.output):
 					if "Calibrate failed with 'User hit Abort Key' (No device error)" in line:
 						break
-					if line.startswith(cmdname + ": Error") and \
-					   not "failed with 'User Aborted'" in line and \
-					   not "test_crt returned error code 1" in line:
+					if ((line.startswith(cmdname + ": Error") and
+					     not "failed with 'User Aborted'" in line and
+					     not "test_crt returned error code 1" in line) or
+					    line.startswith("Failed to") or
+					    "Requested ambient light capability" in line):
 						# "test_crt returned error code 1" == user aborted
 						if (sys.platform == "win32" and
 							("config 1 failed (Operation not supported or "
