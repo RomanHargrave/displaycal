@@ -493,7 +493,9 @@ def CIEDCCT2XYZ(T, scale=1.0):
 	T = temperature in Kelvin.
 	
 	"""
-	return xyY2XYZ(*CIEDCCT2xyY(T, scale))
+	xyY = CIEDCCT2xyY(T, scale)
+	if xyY:
+		return xyY2XYZ(*xyY)
 
 
 def HSV2RGB(H, S, V, scale=1.0):
@@ -850,7 +852,9 @@ def planckianCT2XYZ(T, scale=1.0):
 	T = temperature in Kelvin.
 	
 	"""
-	return xyY2XYZ(*planckianCT2xyY(T, scale))
+	xyY = planckianCT2xyY(T, scale)
+	if xyY:
+		return xyY2XYZ(*xyY)
 
 
 def planckianCT2xyY(T, scale=1.0):

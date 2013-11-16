@@ -294,13 +294,16 @@ class UntetheredFrame(wx.Frame):
 			white_XYZ_Y100 = [v / self.white_XYZ[1] * 100 for v in self.white_XYZ]
 			white_CCT = colormath.XYZ2CCT(*white_XYZ_Y100)
 			if white_CCT:
-				white_CIEDCCT_Lab = colormath.XYZ2Lab(*colormath.CIEDCCT2XYZ(white_CCT,
-																			 scale=100.0))
-				white_planckianCCT_Lab = colormath.XYZ2Lab(*colormath.planckianCT2XYZ(white_CCT,
-																					  scale=100.0))
+				DXYZ = colormath.CIEDCCT2XYZ(white_CCT, scale=100.0)
+				if DXYZ:
+					white_CIEDCCT_Lab = colormath.XYZ2Lab(*DXYZ)
+				PXYZ = colormath.planckianCT2XYZ(white_CCT, scale=100.0)
+				if PXYZ:
+					white_planckianCCT_Lab = colormath.XYZ2Lab(*PXYZ)
 				white_Lab = colormath.XYZ2Lab(*white_XYZ_Y100)
-				if (colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
-					colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6):
+				if (DXYZ and PXYZ and
+					(colormath.delta(*white_CIEDCCT_Lab + white_Lab)["E"] < 6 or
+					 colormath.delta(*white_planckianCCT_Lab + white_Lab)["E"] < 6)):
 					# Is white close enough to daylight or planckian locus?
 					XYZ = colormath.adapt(XYZ[0], XYZ[1], XYZ[2],
 										  white_XYZ_Y100, "D65")
