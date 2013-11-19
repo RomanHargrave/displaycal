@@ -537,6 +537,7 @@
 	"tc.adaption": "Adaptacion",
 	"tc.algo": "Distribucion",
 	"tc.angle": "Angulo",
+		"*tc.dark_emphasis": "Dark region emphasis",
 	"tc.fullspread": "Parches interactivos",
 	"tc.gray": "Parches neutros",
 	"tc.i": "Cuerpo espacial del dipositivo centrado en rejilla cubica",

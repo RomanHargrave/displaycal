@@ -616,6 +616,7 @@ defaults = {
 	"tc_multi_bcc_steps": 0,
 	"tc_multi_steps": 3,
 	"tc_neutral_axis_emphasis": 0.5,
+	"tc_dark_emphasis": 0.0,
 	"tc_precond": 0,
 	"tc_precond_profile": "",
 	"tc_single_channel_patches": 0,

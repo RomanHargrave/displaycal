@@ -205,7 +205,8 @@ class TestchartEditor(wx.Frame):
 		if self.worker.argyll_version >= [1, 3, 3]:
 			sizer.Add(wx.StaticText(panel, -1,
 									 lang.getstr("tc.neutral_axis_emphasis")),
-									 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+									 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL |
+										  wx.ALIGN_RIGHT,
 									 border=border)
 			hsizer = wx.BoxSizer(wx.HORIZONTAL)
 			sizer.Add(hsizer, 1, flag = wx.EXPAND)
@@ -224,6 +225,32 @@ class TestchartEditor(wx.Frame):
 			self.Bind(wx.EVT_TEXT, self.tc_neutral_axis_emphasis_handler,
 					  id=self.tc_neutral_axis_emphasis_intctrl.GetId())
 			hsizer.Add(self.tc_neutral_axis_emphasis_intctrl,
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+			hsizer.Add(wx.StaticText(panel, -1, "%"),
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+
+		# dark patch emphasis
+		if self.worker.argyll_version >= [1, 6, 2]:
+			hsizer.Add(wx.StaticText(panel, -1,
+									 lang.getstr("tc.dark_emphasis")),
+									 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL |
+										  wx.ALIGN_RIGHT,
+									 border=border)
+			self.tc_dark_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
+													 size=(64, -1),
+													 name="tc_dark_emphasis_slider")
+			self.Bind(wx.EVT_SLIDER, self.tc_dark_emphasis_handler,
+					  id=self.tc_dark_emphasis_slider.GetId())
+			hsizer.Add(self.tc_dark_emphasis_slider,
+					   flag=wx.ALIGN_CENTER_VERTICAL)
+			self.tc_dark_emphasis_intctrl = wx.SpinCtrl(panel, -1,
+														size=(65, -1),
+														min=0,
+														max=100,
+														name="tc_dark_emphasis_intctrl")
+			self.Bind(wx.EVT_TEXT, self.tc_dark_emphasis_handler,
+					  id=self.tc_dark_emphasis_intctrl.GetId())
+			hsizer.Add(self.tc_dark_emphasis_intctrl,
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 			hsizer.Add(wx.StaticText(panel, -1, "%"),
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
@@ -948,6 +975,15 @@ class TestchartEditor(wx.Frame):
 			   self.tc_neutral_axis_emphasis_intctrl.GetValue() / 100.0)
 		self.tc_algo_handler()
 
+	def tc_dark_emphasis_handler(self, event=None):
+		if event.GetId() == self.tc_dark_emphasis_slider.GetId():
+			self.tc_dark_emphasis_intctrl.SetValue(self.tc_dark_emphasis_slider.GetValue())
+		else:
+			self.tc_dark_emphasis_slider.SetValue(self.tc_dark_emphasis_intctrl.GetValue())
+		setcfg("tc_dark_emphasis",
+			   self.tc_dark_emphasis_intctrl.GetValue() / 100.0)
+		self.tc_algo_handler()
+
 	def tc_algo_handler(self, event = None):
 		tc_algo_enable = self.tc_fullspread_patches.GetValue() > 0
 		self.tc_algo.Enable(tc_algo_enable)
@@ -966,6 +1002,12 @@ class TestchartEditor(wx.Frame):
 		else:
 			self.tc_precond.SetValue(bool(int(getcfg("tc_precond"))))
 		self.tc_precond_profile.Enable(tc_algo_enable and tc_precond_enable)
+		if self.worker.argyll_version >= [1, 6, 2]:
+			tc_dark_emphasis_enable = (tc_precond_enable and
+									   bool(int(getcfg("tc_precond"))) and
+									   bool(getcfg("tc_precond_profile")))
+			self.tc_dark_emphasis_slider.Enable(tc_dark_emphasis_enable)
+			self.tc_dark_emphasis_intctrl.Enable(tc_dark_emphasis_enable)
 		self.tc_angle_slider.Enable(tc_algo_enable and tc_algo in ("i", "I"))
 		self.tc_angle_intctrl.Enable(tc_algo_enable and tc_algo in ("i", "I"))
 		setcfg("tc_algo", tc_algo)
@@ -991,11 +1033,13 @@ class TestchartEditor(wx.Frame):
 
 	def tc_precond_handler(self, event = None):
 		setcfg("tc_precond", int(self.tc_precond.GetValue()))
+		self.tc_algo_handler()
 
 	def tc_precond_profile_handler(self, event = None):
 		tc_precond_enable = bool(self.tc_precond_profile.GetPath())
 		self.tc_precond.Enable(tc_precond_enable)
 		setcfg("tc_precond_profile", self.tc_precond_profile.GetPath())
+		self.tc_algo_handler()
 	
 	def tc_precond_profile_current_ctrl_handler(self, event):
 		profile = get_current_profile(include_display_profile=True)
@@ -1057,6 +1101,9 @@ class TestchartEditor(wx.Frame):
 		if self.worker.argyll_version >= [1, 3, 3]:
 			self.tc_neutral_axis_emphasis_slider.SetValue(getcfg("tc_neutral_axis_emphasis") * 100)
 			self.tc_neutral_axis_emphasis_handler(self.tc_neutral_axis_emphasis_slider)
+		if self.worker.argyll_version >= [1, 6, 2]:
+			self.tc_dark_emphasis_slider.SetValue(getcfg("tc_dark_emphasis") * 100)
+			self.tc_dark_emphasis_handler(self.tc_dark_emphasis_slider)
 		self.tc_precond_profile.SetPath(getcfg("tc_precond_profile"))
 		self.tc_filter.SetValue(bool(int(getcfg("tc_filter"))))
 		self.tc_filter_L.SetValue(getcfg("tc_filter_L"))
@@ -1526,6 +1573,7 @@ class TestchartEditor(wx.Frame):
 		multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or multi_bcc_steps
 		fullspread_patches = self.ti1.queryv1("NUMBER_OF_SETS")
 		gamma = self.ti1.queryv1("EXTRA_DEV_POW") or 1.0
+		dark_emphasis = ((self.ti1.queryv1("DARK_REGION_EMPHASIS") or 1.0) - 1.0) / 3.0
 
 		if None in (white_patches, single_channel_patches, gray_patches, multi_steps):
 			if None in (single_channel_patches, gray_patches, multi_steps):
@@ -1790,12 +1838,16 @@ class TestchartEditor(wx.Frame):
 			fullspread_patches -= gray_patches
 			fullspread_patches -= int(float(str(math.pow(multi_steps, 3)))) - single_channel_patches * 3
 
-		return white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma
+		return (white_patches, black_patches, single_channel_patches,
+				gray_patches, multi_steps, multi_bcc_steps, fullspread_patches,
+				gamma, dark_emphasis)
 
 	def tc_load_cfg_from_ti1_finish(self, result):
 		if result:
 			safe_print(lang.getstr("success"))
-			white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches, gamma = result
+			(white_patches, black_patches, single_channel_patches, gray_patches,
+			 multi_steps, multi_bcc_steps, fullspread_patches, gamma,
+			 dark_emphasis) = result
 
 			fullspread_ba = {
 				"ERROR_OPTIMISED_PATCHES": "", # OFPS
@@ -1823,6 +1875,7 @@ class TestchartEditor(wx.Frame):
 				setcfg("tc_multi_bcc_steps", multi_bcc_steps)
 			setcfg("tc_fullspread_patches", self.ti1.queryv1("NUMBER_OF_SETS") - self.tc_get_total_patches(white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, 0))
 			if gamma != None: setcfg("tc_gamma", gamma)
+			if dark_emphasis != None: setcfg("tc_dark_emphasis", dark_emphasis)
 			if algo != None: setcfg("tc_algo", algo)
 			writecfg()
 

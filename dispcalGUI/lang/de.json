@@ -561,6 +561,7 @@
 	"tc.adaption": "Anpassung",
 	"tc.algo": "Verteilung",
 	"tc.angle": "Winkel",
+	"tc.dark_emphasis": "Betonung dunkler Bereiche",
 	"tc.fullspread": "Iterative Felder",
 	"tc.gray": "Neutrale Felder",
 	"tc.i": "Kubisches Raster (Geräte-Farbraum)",

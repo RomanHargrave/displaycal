@@ -537,6 +537,7 @@
 	"tc.adaption": "Adattamento",
 	"tc.algo": "Distribuzione",
 	"tc.angle": "Angolo",
+		"*tc.dark_emphasis": "Dark region emphasis",
 	"tc.fullspread": "Campioni iterativi",
 	"tc.gray": "Campioni neutri",
 	"tc.i": "Device space body centered cubic grid",
