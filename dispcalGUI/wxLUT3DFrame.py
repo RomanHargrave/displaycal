@@ -396,6 +396,10 @@ class LUT3DFrame(BaseFrame):
 					if profile.profileClass == "link":
 						if which == "output":
 							self.input_profile_ctrl.SetPath(path)
+							if getcfg("3dlut.output.profile") == path:
+								# The original file was probably overwritten
+								# by the device link. Reset.
+								setcfg("3dlut.output.profile", None)
 							self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 							self.set_profile("input", silent=silent)
 							return
