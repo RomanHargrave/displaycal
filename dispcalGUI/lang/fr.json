@@ -541,6 +541,7 @@
 	"tc.adaption": "Adaptation",
 	"tc.algo": "Distribution",
 	"tc.angle": "Angle",
+		"*tc.black": "Black patches",
 		"*tc.dark_emphasis": "Dark region emphasis",
 	"tc.fullspread": "Échantillons itératifs",
 	"tc.gray": "Échantillons neutres",

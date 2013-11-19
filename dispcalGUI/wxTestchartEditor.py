@@ -122,6 +122,18 @@ class TestchartEditor(wx.Frame):
 		hsizer.Add(self.tc_single_channel_patches, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.single.perchannel")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
+		# black patches
+		if self.worker.argyll_version >= [1, 6]:
+			hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.black")),
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT,
+					   border=border)
+			self.tc_black_patches = wx.SpinCtrl(panel, -1, size=(65, -1), min=0,
+												name="tc_black_patches")
+			self.Bind(wx.EVT_TEXT, self.tc_black_patches_handler,
+					  id=self.tc_black_patches.GetId())
+			hsizer.Add(self.tc_black_patches,
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+
 		# gray axis patches
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.gray")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		self.tc_gray_patches = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, max = 256, name = "tc_gray_patches")
@@ -862,6 +874,12 @@ class TestchartEditor(wx.Frame):
 		if event:
 			event.Skip()
 
+	def tc_black_patches_handler(self, event = None):
+		setcfg("tc_black_patches", self.tc_black_patches.GetValue())
+		self.tc_check()
+		if event:
+			event.Skip()
+
 	def tc_single_channel_patches_handler(self, event = None):
 		if event:
 			event = CustomEvent(event.GetEventType(), event.GetEventObject())
@@ -909,14 +927,18 @@ class TestchartEditor(wx.Frame):
 			return self.ti1.queryv1("NUMBER_OF_SETS")
 		if white_patches is None:
 			white_patches = self.tc_white_patches.GetValue()
-		if black_patches is None and hasattr(self, "ti1"):
-			black_patches = self.ti1.queryv1("BLACK_COLOR_PATCHES")
+		if black_patches is None:
+			if self.worker.argyll_version >= [1, 6]:
+				black_patches = self.tc_black_patches.GetValue()
+			elif hasattr(self, "ti1"):
+				black_patches = self.ti1.queryv1("BLACK_COLOR_PATCHES")
 		if single_channel_patches is None:
 			single_channel_patches = self.tc_single_channel_patches.GetValue()
 		single_channel_patches_total = single_channel_patches * 3
 		if gray_patches is None:
 			gray_patches = self.tc_gray_patches.GetValue()
-		if gray_patches == 0 and single_channel_patches > 0 and white_patches > 0:
+		if (gray_patches == 0 and (single_channel_patches > 0 or
+								   black_patches > 0) and white_patches > 0):
 			gray_patches = 2
 		if multi_steps is None:
 			multi_steps = self.tc_multi_steps.GetValue()
@@ -928,9 +950,14 @@ class TestchartEditor(wx.Frame):
 	
 	def tc_get_white_patches(self):
 		white_patches = self.tc_white_patches.GetValue()
+		if self.worker.argyll_version >= [1, 6]:
+			black_patches = self.tc_black_patches.GetValue()
+		else:
+			black_patches = 0
 		single_channel_patches = self.tc_single_channel_patches.GetValue()
 		gray_patches = self.tc_gray_patches.GetValue()
-		if gray_patches == 0 and single_channel_patches > 0 and white_patches > 0:
+		if gray_patches == 0 and (single_channel_patches > 0 or
+								  black_patches > 0) and white_patches > 0:
 			gray_patches = 2
 		multi_steps = self.tc_multi_steps.GetValue()
 		if multi_steps > 1 or gray_patches > 1: # white always in multi channel or gray patches
@@ -1079,6 +1106,8 @@ class TestchartEditor(wx.Frame):
 	def tc_update_controls(self):
 		self.tc_algo.SetStringSelection(self.tc_algos_ab.get(getcfg("tc_algo"), self.tc_algos_ab.get(defaults["tc_algo"])))
 		self.tc_white_patches.SetValue(getcfg("tc_white_patches"))
+		if self.worker.argyll_version >= [1, 6]:
+			self.tc_black_patches.SetValue(getcfg("tc_black_patches"))
 		self.tc_single_channel_patches.SetValue(getcfg("tc_single_channel_patches"))
 		self.tc_gray_patches.SetValue(getcfg("tc_gray_patches"))
 		if getcfg("tc_multi_bcc_steps"):
@@ -1137,6 +1166,8 @@ class TestchartEditor(wx.Frame):
 
 	def tc_save_cfg(self):
 		setcfg("tc_white_patches", self.tc_white_patches.GetValue())
+		if self.worker.argyll_version >= [1, 6]:
+			setcfg("tc_black_patches", self.tc_black_patches.GetValue())
 		setcfg("tc_single_channel_patches", self.tc_single_channel_patches.GetValue())
 		setcfg("tc_gray_patches", self.tc_gray_patches.GetValue())
 		setcfg("tc_multi_steps", self.tc_multi_steps.GetValue())
@@ -1578,6 +1609,7 @@ class TestchartEditor(wx.Frame):
 		if None in (white_patches, single_channel_patches, gray_patches, multi_steps):
 			if None in (single_channel_patches, gray_patches, multi_steps):
 				white_patches = 0
+				black_patches = 0
 				R = []
 				G = []
 				B = []
@@ -1602,6 +1634,7 @@ class TestchartEditor(wx.Frame):
 						if 255 not in gray_channel:
 							gray_channel += [255]
 					elif patch[0] == patch[1] == patch[2] == 0: # black
+						black_patches += 1
 						if 0 not in R and 0 not in G and 0 not in B:
 							R += [0]
 							G += [0]
@@ -1827,6 +1860,7 @@ class TestchartEditor(wx.Frame):
 					fullspread_patches += 2 # black and white always in MULTI_DIM_STEPS
 			else:
 				white_patches = len(self.ti1[0].queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100}))
+				black_patches = len(self.ti1[0].queryi({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0}))
 				if single_channel_patches >= 2:
 					fullspread_patches += 3 # black always in SINGLE_DIM_STEPS
 				if gray_patches >= 2:
@@ -1834,6 +1868,8 @@ class TestchartEditor(wx.Frame):
 				if multi_steps >= 2:
 					fullspread_patches += 2 # black and white always in MULTI_DIM_STEPS
 			fullspread_patches -= white_patches
+			if self.worker.argyll_version >= [1, 6]:
+				fullspread_patches -= black_patches
 			fullspread_patches -= single_channel_patches * 3
 			fullspread_patches -= gray_patches
 			fullspread_patches -= int(float(str(math.pow(multi_steps, 3)))) - single_channel_patches * 3
@@ -1873,6 +1909,7 @@ class TestchartEditor(wx.Frame):
 					break
 
 			if white_patches != None: setcfg("tc_white_patches", white_patches)
+			if black_patches != None: setcfg("tc_black_patches", black_patches)
 			if single_channel_patches != None: setcfg("tc_single_channel_patches", single_channel_patches)
 			if gray_patches != None: setcfg("tc_gray_patches", gray_patches)
 			if multi_steps != None: setcfg("tc_multi_steps", multi_steps)

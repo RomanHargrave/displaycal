@@ -4278,6 +4278,8 @@ class Worker(object):
 		args += ['-v']
 		args += ['-d3']
 		args += ['-e%s' % getcfg("tc_white_patches")]
+		if self.argyll_version >= [1, 6]:
+			args += ['-B%s' % getcfg("tc_black_patches")]
 		args += ['-s%s' % getcfg("tc_single_channel_patches")]
 		args += ['-g%s' % getcfg("tc_gray_patches")]
 		args += ['-m%s' % getcfg("tc_multi_steps")]

@@ -602,6 +602,7 @@ defaults = {
 	"tc_adaption": 0.1,
 	"tc_algo": "",
 	"tc_angle": 0.3333,
+	"tc_black_patches": 4,
 	"tc_export_repeat_patch_max": 1,
 	"tc_export_repeat_patch_min": 1,
 	"tc_filter": 0,
