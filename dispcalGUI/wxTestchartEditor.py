@@ -185,45 +185,48 @@ class TestchartEditor(wx.Frame):
 		hsizer.Add(self.tc_angle_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		
 		# gamma
-		sizer.Add(wx.StaticText(panel, -1, lang.getstr("trc.gamma")),
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
-				   border=border)
-		self.tc_gamma_floatctrl = floatspin.FloatSpin(panel, -1, size=(65, -1),
-													  min_val=0.0,
-													  max_val=9.9,
-													  increment=0.05,
-													  digits=2,
-													  name="tc_gamma_floatctrl")
-		self.Bind(floatspin.EVT_FLOATSPIN, self.tc_gamma_handler,
-				  id=self.tc_gamma_floatctrl.GetId())
-		sizer.Add(self.tc_gamma_floatctrl,
-				  flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		if (self.worker.argyll_version == [1, 1, "RC2"] or
+			self.worker.argyll_version >= [1, 1]):
+			sizer.Add(wx.StaticText(panel, -1, lang.getstr("trc.gamma")),
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+					   border=border)
+			self.tc_gamma_floatctrl = floatspin.FloatSpin(panel, -1, size=(65, -1),
+														  min_val=0.0,
+														  max_val=9.9,
+														  increment=0.05,
+														  digits=2,
+														  name="tc_gamma_floatctrl")
+			self.Bind(floatspin.EVT_FLOATSPIN, self.tc_gamma_handler,
+					  id=self.tc_gamma_floatctrl.GetId())
+			sizer.Add(self.tc_gamma_floatctrl,
+					  flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
 		# neutral axis emphasis
-		sizer.Add(wx.StaticText(panel, -1,
-								 lang.getstr("tc.neutral_axis_emphasis")),
-								 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
-								 border=border)
-		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		sizer.Add(hsizer, 1, flag = wx.EXPAND)
-		self.tc_neutral_axis_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
-														 size=(64, -1),
-														 name="tc_neutral_axis_emphasis_slider")
-		self.Bind(wx.EVT_SLIDER, self.tc_neutral_axis_emphasis_handler,
-				  id=self.tc_neutral_axis_emphasis_slider.GetId())
-		hsizer.Add(self.tc_neutral_axis_emphasis_slider,
-				   flag=wx.ALIGN_CENTER_VERTICAL)
-		self.tc_neutral_axis_emphasis_intctrl = wx.SpinCtrl(panel, -1,
-															size=(65, -1),
-															min=0,
-															max=100,
-															name="tc_neutral_axis_emphasis_intctrl")
-		self.Bind(wx.EVT_TEXT, self.tc_neutral_axis_emphasis_handler,
-				  id=self.tc_neutral_axis_emphasis_intctrl.GetId())
-		hsizer.Add(self.tc_neutral_axis_emphasis_intctrl,
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
-		hsizer.Add(wx.StaticText(panel, -1, "%"),
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		if self.worker.argyll_version >= [1, 3, 3]:
+			sizer.Add(wx.StaticText(panel, -1,
+									 lang.getstr("tc.neutral_axis_emphasis")),
+									 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+									 border=border)
+			hsizer = wx.BoxSizer(wx.HORIZONTAL)
+			sizer.Add(hsizer, 1, flag = wx.EXPAND)
+			self.tc_neutral_axis_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
+															 size=(64, -1),
+															 name="tc_neutral_axis_emphasis_slider")
+			self.Bind(wx.EVT_SLIDER, self.tc_neutral_axis_emphasis_handler,
+					  id=self.tc_neutral_axis_emphasis_slider.GetId())
+			hsizer.Add(self.tc_neutral_axis_emphasis_slider,
+					   flag=wx.ALIGN_CENTER_VERTICAL)
+			self.tc_neutral_axis_emphasis_intctrl = wx.SpinCtrl(panel, -1,
+																size=(65, -1),
+																min=0,
+																max=100,
+																name="tc_neutral_axis_emphasis_intctrl")
+			self.Bind(wx.EVT_TEXT, self.tc_neutral_axis_emphasis_handler,
+					  id=self.tc_neutral_axis_emphasis_intctrl.GetId())
+			hsizer.Add(self.tc_neutral_axis_emphasis_intctrl,
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+			hsizer.Add(wx.StaticText(panel, -1, "%"),
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
 		# precond profile
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -952,10 +955,11 @@ class TestchartEditor(wx.Frame):
 		self.tc_adaption_slider.Enable(tc_algo_enable and tc_algo == "")
 		self.tc_adaption_intctrl.Enable(tc_algo_enable and tc_algo == "")
 		tc_precond_enable = (tc_algo in ("I", "Q", "R", "t") or (tc_algo == "" and self.tc_adaption_slider.GetValue() > 0))
-		self.tc_neutral_axis_emphasis_slider.Enable(tc_algo_enable and
-													tc_precond_enable)
-		self.tc_neutral_axis_emphasis_intctrl.Enable(tc_algo_enable and
-													 tc_precond_enable)
+		if self.worker.argyll_version >= [1, 3, 3]:
+			self.tc_neutral_axis_emphasis_slider.Enable(tc_algo_enable and
+														tc_precond_enable)
+			self.tc_neutral_axis_emphasis_intctrl.Enable(tc_algo_enable and
+														 tc_precond_enable)
 		self.tc_precond.Enable(tc_algo_enable and tc_precond_enable and bool(getcfg("tc_precond_profile")))
 		if not tc_precond_enable:
 			self.tc_precond.SetValue(False)
@@ -1047,9 +1051,12 @@ class TestchartEditor(wx.Frame):
 		self.tc_angle_handler(self.tc_angle_slider)
 		self.tc_adaption_slider.SetValue(getcfg("tc_adaption") * 100)
 		self.tc_adaption_handler(self.tc_adaption_slider)
-		self.tc_gamma_floatctrl.SetValue(getcfg("tc_gamma"))
-		self.tc_neutral_axis_emphasis_slider.SetValue(getcfg("tc_neutral_axis_emphasis") * 100)
-		self.tc_neutral_axis_emphasis_handler(self.tc_neutral_axis_emphasis_slider)
+		if (self.worker.argyll_version == [1, 1, "RC2"] or
+			self.worker.argyll_version >= [1, 1]):
+			self.tc_gamma_floatctrl.SetValue(getcfg("tc_gamma"))
+		if self.worker.argyll_version >= [1, 3, 3]:
+			self.tc_neutral_axis_emphasis_slider.SetValue(getcfg("tc_neutral_axis_emphasis") * 100)
+			self.tc_neutral_axis_emphasis_handler(self.tc_neutral_axis_emphasis_slider)
 		self.tc_precond_profile.SetPath(getcfg("tc_precond_profile"))
 		self.tc_filter.SetValue(bool(int(getcfg("tc_filter"))))
 		self.tc_filter_L.SetValue(getcfg("tc_filter_L"))
