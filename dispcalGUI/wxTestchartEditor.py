@@ -1850,14 +1850,19 @@ class TestchartEditor(wx.Frame):
 			 dark_emphasis) = result
 
 			fullspread_ba = {
-				"ERROR_OPTIMISED_PATCHES": "", # OFPS
-				#"ERROR_OPTIMISED_PATCHES": "R", # Perc. space random - same keyword as OFPS :(
-				"INC_FAR_PATCHES": "t", # Inc. far point
-				"RANDOM_PATCHES": "r", # Dev. space random
-				"SIMPLEX_DEVICE_PATCHES": "i", # Dev. space cubic grid
-				"SIMPLEX_PERCEPTUAL_PATCHES": "I", # Perc. space cubic grid
-				"SPACEFILING_RANDOM_PATCHES": "q",
-				"SPACEFILLING_RANDOM_PATCHES": "q", # typo in Argyll. Corrected it here in advance so things don't break in the future.
+				"ERROR_OPTIMISED_PATCHES": "",  # OFPS in older Argyll CMS versions
+				#"ERROR_OPTIMISED_PATCHES": "R",  # Perc. space random - same keyword as OFPS in older Argyll CMS versions, don't use
+				"IFP_PATCHES": "t",  # Inc. far point
+				"INC_FAR_PATCHES": "t",  # Inc. far point in older Argyll CMS versions
+				"OFPS_PATCHES": "",  # OFPS
+				"RANDOM_DEVICE_PATCHES": "r",  # Dev. space random
+				"RANDOM_PATCHES": "r",  # Dev. space random in older Argyll CMS versions
+				"RANDOM_PERCEPTUAL_PATCHES": "R",  # Perc. space random
+				#"RANDOM_PERCEPTUAL_PATCHES": "Q",  # Perc. space filling quasi-random - same keyword as perc. space random, don't use
+				"SIMPLEX_DEVICE_PATCHES": "i",  # Dev. space body centered cubic grid
+				"SIMPLEX_PERCEPTUAL_PATCHES": "I",  # Perc. space body centered cubic grid
+				"SPACEFILING_RANDOM_PATCHES": "q",  # Device space filling quasi-random, typo in older Argyll CMS versions
+				"SPACEFILLING_RANDOM_PATCHES": "q",  # Device space filling quasi-random
 			}
 
 			algo = None
