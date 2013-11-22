@@ -28,6 +28,7 @@ import ICCProfile as ICCP
 
 BGCOLOUR = "#333333"
 FGCOLOUR = "#999999"
+TEXTCOLOUR = "#333333"
 
 if sys.platform == "darwin":
 	FONTSIZE_LARGE = 11
@@ -823,7 +824,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.SetSizer(self.sizer)
 		
 		self.title_panel = BitmapBackgroundPanelText(self)
-		self.title_panel.SetForegroundColour(BGCOLOUR)
+		self.title_panel.SetForegroundColour(TEXTCOLOUR)
 		self.title_panel.SetBitmap(getbitmap("theme/gradient"))
 		self.sizer.Add(self.title_panel, flag=wx.EXPAND)
 		
@@ -958,7 +959,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
-		self.grid.SetDefaultCellTextColour(BGCOLOUR)
+		self.grid.SetDefaultCellTextColour(TEXTCOLOUR)
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
 		self.grid.SetDefaultCellFont(font)
