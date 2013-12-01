@@ -1411,7 +1411,7 @@ class DictType(ICCProfileTag, AODict):
 				#try:
 					#value = str(float(value))
 				#except ValueError:
-			value = '"%s"' % repr(unicode(value))[2:-1]
+			value = '"%s"' % repr(unicode(value))[2:-1].replace('"', '\\"')
 			json.append('"%s": %s' % tuple([re.sub(r"\\x([0-9a-f]{2})",
 												   "\\u00\\1", item)
 											for item in [repr(unicode(name))[2:-1],
