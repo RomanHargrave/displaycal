@@ -9921,7 +9921,7 @@ def main():
 				# Linux: Try and fix v0.2.1b calibration loader, because 
 				# calibrationloader.sh is no longer present in v0.2.2b+
 				desktopfile_name = appname + "-Calibration-Loader-Display-"
-				if os.path.exists(autostart_home):
+				if autostart_home and os.path.exists(autostart_home):
 					try:
 						autostarts = os.listdir(autostart_home)
 					except Exception, exception:
