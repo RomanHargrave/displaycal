@@ -3265,9 +3265,15 @@ class Worker(object):
 						os.remove(autostart_home_lnkname)
 				else:
 					# Only create user loader if no system loader
-					scut.QueryInterface(
-						pythoncom.IID_IPersistFile).Save(
-							os.path.join(autostart_home_lnkname), 0)
+					try:
+						scut.QueryInterface(
+							pythoncom.IID_IPersistFile).Save(
+								autostart_home_lnkname, 0)
+					except Exception, exception:
+						if not silent:
+							result = Warning(lang.getstr("error.autostart_creation", 
+													     autostart_home) + "\n\n" + 
+										     safe_unicode(exception))
 			else:
 				if not silent:
 					result = Warning(lang.getstr("error.autostart_user"))
