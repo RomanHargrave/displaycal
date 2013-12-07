@@ -3287,22 +3287,22 @@ class Worker(object):
 	def _uninstall_profile_loader_win32(self):
 		""" Uninstall profile loader """
 		name = appname + " Profile Loader"
-		if autostart:
+		if autostart and is_superuser():
 			autostart_lnkname = os.path.join(autostart,
 											 name + ".lnk")
+			if os.path.exists(autostart_lnkname):
+				try:
+					os.remove(autostart_lnkname)
+				except Exception, exception:
+					safe_print(autostart_lnkname, exception)
 		if autostart_home:
 			autostart_home_lnkname = os.path.join(autostart_home, 
 												  name + ".lnk")
-		if os.path.exists(autostart_home_lnkname):
-			try:
-				os.remove(autostart_home_lnkname)
-			except Exception, exception:
-				safe_print(autostart_home_lnkname, exception)
-		if os.path.exists(autostart_lnkname) and is_superuser():
-			try:
-				os.remove(autostart_lnkname)
-			except Exception, exception:
-				safe_print(autostart_lnkname, exception)
+			if os.path.exists(autostart_home_lnkname):
+				try:
+					os.remove(autostart_home_lnkname)
+				except Exception, exception:
+					safe_print(autostart_home_lnkname, exception)
 		return True
 	
 	def _install_profile_loader_xdg(self, silent=False):

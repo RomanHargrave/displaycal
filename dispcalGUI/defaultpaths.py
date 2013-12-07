@@ -31,7 +31,11 @@ home = expanduseru("~")
 if sys.platform == "win32":
 	# Always specify create=1 for SHGetSpecialFolderPath so we don't get an
 	# exception if the folder does not yet exist
-	library_home = appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
+	try:
+		library_home = appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
+	except Exception, exception:
+		raise Exception("FATAL - Could not get/create user application data folder: %s"
+						% exception)
 	# Argyll CMS uses ALLUSERSPROFILE for local system wide app related data
 	# Note: On Windows Vista and later, ALLUSERSPROFILE and COMMON_APPDATA
 	# are actually the same ('C:\ProgramData'), but under Windows XP the former
@@ -41,13 +45,31 @@ if sys.platform == "win32":
 	if allusersprofile:
 		commonappdata = [allusersprofile]
 	else:
-		commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA, 1)]
+		try:
+			commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA, 1)]
+		except Exception, exception:
+			raise Exception("FATAL - Could not get/create common application data folder: %s"
+							% exception)
 	library = commonappdata[0]
-	commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON, 1)
-	autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP, 1)
-	autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP, 1)
-	iccprofiles = [os.path.join(SHGetSpecialFolderPath(0, CSIDL_SYSTEM), 
-								"spool", "drivers", "color")]
+	try:
+		commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON, 1)
+	except Exception, exception:
+		raise Exception("FATAL - Could not get/create common program files folder: %s"
+						% exception)
+	try:
+		autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP, 1)
+	except Exception, exception:
+		autostart = None
+	try:
+		autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP, 1)
+	except Exception, exception:
+		autostart_home = None
+	try:
+		iccprofiles = [os.path.join(SHGetSpecialFolderPath(0, CSIDL_SYSTEM), 
+									"spool", "drivers", "color")]
+	except Exception, exception:
+		raise Exception("FATAL - Could not get system folder: %s"
+						% exception)
 	iccprofiles_home = iccprofiles
 elif sys.platform == "darwin":
 	library_home = os.path.join(home, "Library")
