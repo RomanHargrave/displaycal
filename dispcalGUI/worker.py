@@ -4310,13 +4310,14 @@ class Worker(object):
 											getcfg("tc_filter_rad"))]
 			if self.argyll_version >= [1, 3, 3]:
 				args += ['-N%s' % getcfg("tc_neutral_axis_emphasis")]
-			if self.argyll_version >= [1, 6, 2] and "-c" in args:
-				args += ['-V%s' % (1 + getcfg("tc_dark_emphasis") * 3)]
 			if (self.argyll_version == [1, 1, "RC1"] or
 				self.argyll_version >= [1, 1]):
 				args += ['-G']
 		else:
 			args += ['-f0']
+		if (self.argyll_version >= [1, 6, 2] and
+			("-c" in args or self.argyll_version >= [1, 6, 3])):
+			args += ['-V%s' % (1 + getcfg("tc_dark_emphasis") * 3)]
 		if self.argyll_version == [1, 1, "RC2"] or self.argyll_version >= [1, 1]:
 			args += ['-p%s' % getcfg("tc_gamma")]
 		if getcfg("extra_args.targen").strip():

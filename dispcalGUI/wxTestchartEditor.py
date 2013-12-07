@@ -1030,9 +1030,10 @@ class TestchartEditor(wx.Frame):
 			self.tc_precond.SetValue(bool(int(getcfg("tc_precond"))))
 		self.tc_precond_profile.Enable(tc_algo_enable and tc_precond_enable)
 		if self.worker.argyll_version >= [1, 6, 2]:
-			tc_dark_emphasis_enable = (tc_precond_enable and
-									   bool(int(getcfg("tc_precond"))) and
-									   bool(getcfg("tc_precond_profile")))
+			tc_dark_emphasis_enable = (self.worker.argyll_version >= [1, 6, 3] or
+									   (tc_precond_enable and
+									    bool(int(getcfg("tc_precond"))) and
+									    bool(getcfg("tc_precond_profile"))))
 			self.tc_dark_emphasis_slider.Enable(tc_dark_emphasis_enable)
 			self.tc_dark_emphasis_intctrl.Enable(tc_dark_emphasis_enable)
 		self.tc_angle_slider.Enable(tc_algo_enable and tc_algo in ("i", "I"))
