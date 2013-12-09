@@ -728,6 +728,10 @@ class CGATS(dict):
 	def export_vrml(self, filename, devicelocations=True, RGB_black_offset=40,
 					normalize_RGB_white=False, compress=True):
 		data = self.queryv1("DATA")
+		if self.queryv1("ACCURATE_EXPECTED_VALUES") == "true":
+			cat = "Bradford"
+		else:
+			cat = "XYZ scaling"
 		radius = 15.0 / (len(data) ** (1.0 / 3.0))
 		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
 		if white:
@@ -912,7 +916,8 @@ Transform {
 			X, Y, Z = colormath.adapt(entry["XYZ_X"],
 									  entry["XYZ_Y"],
 									  entry["XYZ_Z"],
-									  white)
+									  white,
+									  cat=cat)
 			L, a, b = colormath.XYZ2Lab(X, Y, Z)
 			if devicelocations:
 				# Fudge device locations into Lab space
