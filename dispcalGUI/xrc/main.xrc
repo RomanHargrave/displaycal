@@ -973,8 +973,7 @@
                                   <tooltip>black_point_compensation.info</tooltip>
                                 </object>
                                 <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>8</border>
-                                <minsize>159,-1</minsize>
+                                <border>20</border>
                               </object>
                               <object class="sizeritem">
                                 <object class="wxCheckBox" name="low_quality_b2a_cb">
@@ -985,7 +984,7 @@
                               </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
-                            <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
+                            <flag>wxTOP|wxBOTTOM</flag>
                             <border>5</border>
                           </object>
                           <object class="sizeritem">
