@@ -967,7 +967,6 @@
                           <object class="spacer"/>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
-                              <orient>wxHORIZONTAL</orient>
                               <object class="sizeritem">
                                 <object class="wxCheckBox" name="black_point_compensation_cb">
                                   <label>black_point_compensation</label>
@@ -984,8 +983,9 @@
                                 </object>
                                 <flag>wxALIGN_CENTRE_VERTICAL</flag>
                               </object>
+                              <orient>wxHORIZONTAL</orient>
                             </object>
-                            <flag>wxTOP|wxBOTTOM</flag>
+                            <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
                             <border>5</border>
                           </object>
                           <object class="sizeritem">
