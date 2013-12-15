@@ -1242,6 +1242,7 @@ class Worker(object):
 			self.instrument_place_on_screen_msg = True
 		if (self.instrument_place_on_screen_msg and
 			"key to continue" in txt.lower()):
+			self.instrument_place_on_screen_msg = False
 			if (self.cmdname == get_argyll_utilname("dispcal") and
 				sys.platform == "darwin"):
 				# On the Mac dispcal's test window
@@ -1259,6 +1260,7 @@ class Worker(object):
 				# or if we use a black background during measurements,
 				# but in case of the latter two only if dispread is not
 				# run directly after dispcal
+				self.instrument_calibration_complete = False
 				self.instrument_place_on_screen()
 			else:
 				if self.subprocess.isalive():
