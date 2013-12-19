@@ -1126,6 +1126,12 @@ class Worker(object):
 				args[-1] += "b"
 			if getcfg("drift_compensation.whitelevel"):
 				args[-1] += "w"
+		# TTBD/FIXME: Skipping of sensor calibration can't be done in
+		# emissive mode (see Argyll source spectro/ss.c, around line 40)
+		if (getcfg("allow_skip_sensor_cal") and
+			instrument_features.get("skip_sensor_cal") and
+			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args)):
+			args += ["-N"]
 		return True
 	
 	def instrument_can_use_ccxx(self):
@@ -4138,12 +4144,6 @@ class Worker(object):
 		result = self.add_measurement_features(args)
 		if isinstance(result, Exception):
 			return result, None
-		# TTBD/FIXME: Skipping of sensor calibration can't be done in
-		# emissive mode (see Argyll source spectro/ss.c, around line 40)
-		if getcfg("allow_skip_sensor_cal") and self.dispread_after_dispcal and \
-		   self.get_instrument_features().get("skip_sensor_cal") and \
-		   self.argyll_version >= [1, 1, 0]:
-			args += ["-N"]
 		if apply_calibration is not False:
 			if (self.argyll_version >= [1, 3, 3] and
 				(not self.has_lut_access() or
