@@ -383,7 +383,7 @@ def runtimeconfig(pyfile):
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart)) or ""
 	defaults["testchart.file.backup"] = defaults["testchart.file"]
-	defaults["profile_verification_chart"] = get_data_path(os.path.join("ref", 
+	defaults["measurement_report_chart"] = get_data_path(os.path.join("ref", 
 															"verify.ti1")) or ""
 	defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm")) or ""
 	return runtype

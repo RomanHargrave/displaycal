@@ -249,7 +249,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'			<th>Instrument:</th>',
 		'			<td>' + e['FF_instrument'].value + '</td>',
 		'		</tr>',
-		(e['FF_correction_matrix'].value ? '<tr><th>Correction matrix:</th><td>' + e['FF_correction_matrix'].value + '</td></tr>' : ''),
+		(e['FF_correction_matrix'].value ? '<tr><th>Correction:</th><td>' + e['FF_correction_matrix'].value + '</td></tr>' : ''),
 		'		<tr>',
 		'			<th>Profile:</th>',
 		'			<td>' + e['FF_profile'].value + '</td>',

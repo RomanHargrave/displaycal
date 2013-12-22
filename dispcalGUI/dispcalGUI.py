@@ -1476,13 +1476,13 @@ class MainFrame(BaseFrame):
 			tools.FindItem("calibration.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_calibration_handler, 
 				  self.menuitem_calibration_verify)
-		self.menuitem_profile_verify = tools.FindItemById(
-			tools.FindItem("profile.verify"))
-		self.Bind(wx.EVT_MENU, self.verify_profile_handler, 
-				  self.menuitem_profile_verify)
+		self.menuitem_measurement_report = tools.FindItemById(
+			tools.FindItem("measurement_report"))
+		self.Bind(wx.EVT_MENU, self.measurement_report_handler, 
+				  self.menuitem_measurement_report)
 		menuitem = tools.FindItemById(
-			tools.FindItem("profile.verification_report.update"))
-		self.Bind(wx.EVT_MENU, self.update_profile_verification_report, 
+			tools.FindItem("measurement_report.update"))
+		self.Bind(wx.EVT_MENU, self.update_measurement_report, 
 				  menuitem)
 		self.menuitem_measure_uniformity = tools.FindItemById(
 			tools.FindItem("report.uniformity"))
@@ -1658,7 +1658,7 @@ class MainFrame(BaseFrame):
 		self.menuitem_calibration_verify.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments) and
 												config.get_display_name() != "Untethered")
-		self.menuitem_profile_verify.Enable(bool(self.worker.displays) and 
+		self.menuitem_measurement_report.Enable(bool(self.worker.displays) and 
 											bool(self.worker.instruments))
 		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments))
@@ -4490,11 +4490,11 @@ class MainFrame(BaseFrame):
 						   bitmap=geticon(32, "dialog-error"), log=False)
 		return result
 	
-	def update_profile_verification_report(self, event=None):
-		""" Show file dialog to select a HTML profile verification report
+	def update_measurement_report(self, event=None):
+		""" Show file dialog to select a HTML measurement report
 		for updating. Update the selected report and show it afterwards. """
 		defaultDir, defaultFile = get_verified_path("last_filedialog_path")
-		dlg = wx.FileDialog(self, lang.getstr("profile.verification_report.update"), 
+		dlg = wx.FileDialog(self, lang.getstr("measurement_report.update"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
 							wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
 							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -4572,7 +4572,7 @@ class MainFrame(BaseFrame):
 				return
 		return profile
 
-	def verify_profile_handler(self, event):
+	def measurement_report_handler(self, event):
 		if not check_set_argyll_bin():
 			return
 			
@@ -4581,9 +4581,9 @@ class MainFrame(BaseFrame):
 			
 		# select measurement data (ti1 or ti3)
 		sim_profile = None
-		msg_id = "profile_verification_choose_chart_or_reference"
+		msg_id = "measurement_report_choose_chart_or_reference"
 		while True:
-			defaultDir, defaultFile = get_verified_path("profile_verification_chart")
+			defaultDir, defaultFile = get_verified_path("measurement_report_chart")
 			dlg = wx.FileDialog(self, lang.getstr(msg_id), 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
 								wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
@@ -4613,7 +4613,7 @@ class MainFrame(BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
-				msg_id = "profile_verification_choose_chart"
+				msg_id = "measurement_report_choose_chart"
 			else:
 				if sim_profile:
 					sim_ti1, sim_ti3, sim_gray = self.worker.chart_lookup(chart, 
@@ -4625,10 +4625,10 @@ class MainFrame(BaseFrame):
 					if not sim_ti3:
 						return
 				break
-		setcfg("profile_verification_chart", chart)
+		setcfg("measurement_report_chart", chart)
 		
 		# select profile
-		profile = self.select_profile(msg=lang.getstr("profile_verification_choose_profile"))
+		profile = self.select_profile(msg=lang.getstr("measurement_report_choose_profile"))
 		if not profile:
 			return
 		
@@ -4641,7 +4641,9 @@ class MainFrame(BaseFrame):
 			gray = sim_gray
 		
 		# let the user choose a location for the result
-		defaultFile = "verify_" + strftime("%Y-%m-%d_%H-%M.html")
+		defaultFile = "%s %s" % (re.sub(r"[\\/:*?\"<>|]+", "_",
+										self.display_ctrl.GetStringSelection()),
+								 strftime("%Y-%m-%d %H-%M.html"))
 		defaultDir = get_verified_path(None, 
 									   os.path.join(getcfg("profile.save_path"), 
 									   defaultFile))[0]
@@ -4677,13 +4679,13 @@ class MainFrame(BaseFrame):
 					return
 		
 		# setup for measurement
-		self.setup_measurement(self.verify_profile, ti1, profile, sim_profile, 
+		self.setup_measurement(self.measurement_report, ti1, profile, sim_profile, 
 							   ti3_ref, sim_ti3, save_path, chart, gray)
 
-	def verify_profile(self, ti1, profile, sim_profile, ti3_ref, sim_ti3, 
+	def measurement_report(self, ti1, profile, sim_profile, ti3_ref, sim_ti3, 
 					   save_path, chart, gray):
 		safe_print("-" * 80)
-		progress_msg = lang.getstr("profile.verify")
+		progress_msg = lang.getstr("measurement_report")
 		safe_print(progress_msg)
 		
 		# setup temp dir
@@ -4734,7 +4736,7 @@ class MainFrame(BaseFrame):
 		# start readings
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = config.get_display_name() == "Untethered"
-		self.worker.start(self.verify_profile_consumer, 
+		self.worker.start(self.measurement_report_consumer, 
 						  self.worker.measure_ti1, 
 						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
 								 profile, sim_profile, ti3_ref, sim_ti3, 
@@ -4742,7 +4744,7 @@ class MainFrame(BaseFrame):
 						  wargs=(ti1_path, cal_path),
 						  progress_msg=progress_msg)
 	
-	def verify_profile_consumer(self, result, ti3_path, profile, sim_profile,
+	def measurement_report_consumer(self, result, ti3_path, profile, sim_profile,
 								ti3_ref, sim_ti3, save_path, chart, gray):
 		
 		if not isinstance(result, Exception) and result:
