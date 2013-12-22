@@ -8,7 +8,6 @@
 	</style>
 	<style type="text/css" media="screen,projection,tv">
 		@import "compare.css";
-		@import "compare-dark.css";
 	</style>
 	<style type="text/css" media="print">
 		@import "print.css";
@@ -30,6 +29,7 @@
 </head>
 <body>
 	<h1><span class="r"></span><span class="g"></span><span class="b"></span>Measurement Report ${REPORT_VERSION}</h1>
+	<h2 id="reporttitle" class="legend">${DISPLAY} — ${DATETIME}</h2>
 	<div><noscript><p class="error">Please enable JavaScript</p></noscript></div>
 	<form action="#" id="F_data">
 		<div>
@@ -51,35 +51,34 @@
 		</div>
 	</form>
 	<form action="#" id="F_out" onsubmit="return false">
-		<h2 id="reporttitle" class="legend">${DISPLAY} — ${DATETIME}</h2>
 		<div id="report" class="fieldset process">
 			<p class="functions">
-				<button onclick="plaintext('ref')">View raw reference data</button>&#160;
+				<button onclick="plaintext('ref')">View raw reference data</button>
 				<button onclick="plaintext('in')">View raw measurement data</button>
 			</p>
 			<p class="options">
-				Evaluation criteria:
+				<label for="FF_criteria" class="disabled">Evaluation criteria:</label>
 				<select name="FF_criteria" id="FF_criteria" onchange="compare()">
 				</select>
 			</p>
 			<p class="options">
-				<label for="FF_gray_balance_cal_only" class="disabled">Evaluate gray balance through calibration only: <input type="checkbox" name="FF_gray_balance_cal_only" id="FF_gray_balance_cal_only" disabled="disabled" onchange="compare(false)" /><br /></label>
-				<label for="FF_planckian" class="disabled">Use blackbody locus as assumed target whitepoint: <input type="checkbox" name="FF_planckian" id="FF_planckian" ${PLANCKIAN} disabled="disabled" onchange="compare(false)" /><br /></label>
-				<label for="FF_verbosestats" class="disabled">Show additional statistics: <input type="checkbox" name="FF_verbosestats" id="FF_verbosestats" disabled="disabled" onchange="togglestats()" /></label>
+				<label for="FF_gray_balance_cal_only" class="disabled">Evaluate gray balance through calibration only:</label> <input type="checkbox" name="FF_gray_balance_cal_only" id="FF_gray_balance_cal_only" disabled="disabled" onchange="compare(false)" /><br />
+				<label for="FF_planckian" class="disabled">Use blackbody locus as assumed target whitepoint:</label> <input type="checkbox" name="FF_planckian" id="FF_planckian" ${PLANCKIAN} disabled="disabled" onchange="compare(false)" /><br />
+				<label for="FF_verbosestats" class="disabled">Show additional statistics:</label> <input type="checkbox" name="FF_verbosestats" id="FF_verbosestats" disabled="disabled" onchange="togglestats()" />
 			</p>
 			<p class="options">
-				<label for="FF_mode" class="disabled">Show values as: <select name="FF_mode" id="FF_mode" disabled="disabled" onchange="compare(false)">
+				<label for="FF_mode" class="disabled">Show values as:</label> <select name="FF_mode" id="FF_mode" disabled="disabled" onchange="compare(false)">
 					<option value="Lab">L*a*b*</option>
 					<option value="XYZ">XYZ</option>
 					<option value="xyY">xyY</option>
-				</select><br /></label>
-				<label for="FF_absolute" class="disabled">Use absolute values: <input type="checkbox" name="FF_absolute" id="FF_absolute" disabled="disabled" onchange="compare(false)" /><br /></label>
-				<label for="FF_delta_calc_method" class="disabled">Delta E formula for results:
+				</select><br />
+				<label for="FF_absolute" class="disabled">Use absolute values:</label> <input type="checkbox" name="FF_absolute" id="FF_absolute" disabled="disabled" onchange="compare(false)" /><br />
+				<label for="FF_delta_calc_method" class="disabled">Delta E formula for results:</label>
 				<select name="FF_delta_calc_method" id="FF_delta_calc_method" disabled="disabled" onchange="compare(false)">
 					<option value="CIE76">CIE 1976</option>
 					<option value="CIE94">CIE 1994</option>
 					<option value="CIE00">CIE 2000</option>
-				</select></label>
+				</select>
 			</p>
 			<div id="result"></div>
 		</div>

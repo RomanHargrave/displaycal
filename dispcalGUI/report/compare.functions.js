@@ -239,8 +239,8 @@ p.generate_report = function(set_delta_calc_method) {
 	}
 	
 	this.report_html = [
-		'	<h3 onclick="document.getElementById(\'info\').style.display = document.getElementById(\'info\').style.display != \'none\' ? \'none\' : \'\'">Basic Information</h3>',
-		'	<table cellspacing="0" class="info" id="info">',
+		'	<div class="info"><h3 class="toggle" onclick="toggle(this)">Basic Information</h3>',
+		'	<table cellspacing="0" id="info">',
 		'		<tr>',
 		'			<th>Device:</th>',
 		'			<td>' + e['FF_display'].value + '</td>',
@@ -306,13 +306,14 @@ p.generate_report = function(set_delta_calc_method) {
 		'			<th>Date:</th>',
 		'			<td>' + e['FF_datetime'].value + '</td>',
 		'		</tr>',
-		'	</table>'
+		'	</table></div>'
 	]);
 	var result_start = this.report_html.length;
 	this.report_html = this.report_html.concat([
 		'	<div class="summary">',
-		'	<h3 onclick="document.getElementById(\'summary\').style.display = document.getElementById(\'summary\').style.display != \'none\' ? \'none\' : \'\'">Summary</h3>',
-		'	<table cellspacing="0" id="summary">',
+		'	<h3 class="toggle" onclick="toggle(this)">Summary</h3>',
+		'	<div id="summary">',
+		'	<table cellspacing="0">',
 		'		<tr>',
 		'			<th class="first-column">Criteria</th><th>Nominal</th><th>Recommended</th><th>#</th><th colspan="2">&#160;</th><th>Actual</th><th>&#160;</th><th>Result</th>',
 		'		</tr>'
@@ -418,14 +419,14 @@ p.generate_report = function(set_delta_calc_method) {
 			}
 		};
 		this.report_html.push('		<tr' + (!rules[j][3] || (rules[j][5] && rules[j][5].substr(3) != delta_calc_method.substr(3)) ? ' class="statonly' + (verbosestats ? '' : ' verbose') + '"' : '' ) + '>');
-		this.report_html.push('			<td class="first-column">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '&#160;') + '</td><td class="statonly">' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '&#160;') + '</td><td class="patch sample_id">');
+		this.report_html.push('			<td class="first-column">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '&#160;') + '</td><td class="statonly">' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '&#160;') + '</td><td class="sample_id">');
 		patch_number_html = [];
 		actual_rgb_html = [];
 		target_rgb_html = [];
 		var haspatchid = false;
 		if (rules[j][2].indexOf("_MAX") < 0 && rules[j][2].indexOf("_MIN") < 0) {
 			for (var k=0; k<rules[j][1].length; k++) if (rules[j][1].length > 1 && seen.indexOf(rules[j][1].join(',')) < 0 && rules[j][5].substr(3) == delta_calc_method.substr(3)) {
-				patch_number_html.push('<div class="patch sample_id">&#160;</div>');
+				patch_number_html.push('<div class="sample_id">&#160;</div>');
 				haspatchid = true;
 				if (rules[j][1][k].length == 4) // Assume CMYK
 					target_rgb = jsapi.math.color.CMYK2RGB(rules[j][1][k][0] / 100, rules[j][1][k][1] / 100, rules[j][1][k][2] / 100, rules[j][1][k][3] / 100, 255);
@@ -469,7 +470,7 @@ p.generate_report = function(set_delta_calc_method) {
 							// if (silent || !confirm('rules[j]: ' + rules[j] + '\nrules[j][1][k]: ' + rules[j][1][k] + '\nthis.data[' + i + ']: ' + this.data[i] + '\ncurrent_rgb: ' + current_rgb + '\ncurrent_cmyk: ' + current_cmyk)) silent = true;
 							if (rules[j][2].indexOf("_MAX") < 0 && rules[j][2].indexOf("_MIN") < 0 && seen.indexOf(rules[j][1].join(',')) < 0 && rules[j][5].substr(3) == delta_calc_method.substr(3)) {
 								if (rules[j][1].length) {
-									patch_number_html[k] = ('<div class="patch sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
+									patch_number_html[k] = ('<div class="sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 									haspatchid = true;
 								}
 								target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
@@ -675,7 +676,7 @@ p.generate_report = function(set_delta_calc_method) {
 				};
 			};
 			if (matched) {
-				this.report_html.push('<div class="patch sample_id">' + result[j].finalmatch[2].fill(String(number_of_sets).length) + '</div>');
+				this.report_html.push('<div class="sample_id">' + result[j].finalmatch[2].fill(String(number_of_sets).length) + '</div>');
 				haspatchid = true;
 				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true, profile_wp_norm, wp_norm, absolute, cat);
 				target_Lab = colors.target_Lab;
@@ -687,10 +688,10 @@ p.generate_report = function(set_delta_calc_method) {
 			};
 		}
 		if (!target_rgb_html.length) {
-			target_rgb_html.push('<div class="patch">&#160;</div>');
-			actual_rgb_html.push('<div class="patch">&#160;</div>');
+			target_rgb_html.push('&#160;');
+			actual_rgb_html.push('&#160;');
 		};
-		if (!haspatchid) this.report_html.push('<div class="patch sample_id">&#160;</div>');
+		if (!haspatchid) this.report_html.push('<div class="sample_id">&#160;</div>');
 		this.report_html.push('			</td>');
 		this.report_html.push('			<td class="patch">' + target_rgb_html.join('') + '</td>');
 		this.report_html.push('			<td class="patch">' + actual_rgb_html.join('') + '</td>');
@@ -756,13 +757,13 @@ p.generate_report = function(set_delta_calc_method) {
 			}
 		};
 	};
-	this.report_html.push('<div class="footer"><p><span class="' + (pass !== false ? 'ok"><span class="checkmark">✔</span> ' + criteria.passtext : 'ko"><span class="checkmark">\u2716</span> ' + (missing_data ? 'MISSING DATA' : criteria.failtext)) + '</span>' + ((overachieve !== false && criteria.passrecommendedtext) || (overachieve === false && criteria.failrecommendedtext) ? '<br /><span class="' + (overachieve !== false ? 'ok"><span class="checkmark">✔</span> ' + criteria.passrecommendedtext : 'info"><span class="checkmark">✘</span> ' + criteria.failrecommendedtext) + '</span>' : '') + '</p>');
+	this.report_html.push('<div class="footer"><p><span class="' + (pass !== false ? 'ok"><span class="checkmark">✔</span> ' + criteria.passtext : 'ko"><span class="checkmark">\u2716</span> ' + (missing_data ? 'MISSING DATA' : criteria.failtext)) + '</span>' + ((overachieve !== false && criteria.passrecommendedtext) || (overachieve === false && criteria.failrecommendedtext) ? '<br /><span class="' + (overachieve !== false ? 'ok"><span class="checkmark">✔</span> ' + criteria.passrecommendedtext : 'info"><span class="checkmark">✘</span> ' + criteria.failrecommendedtext) + '</span>' : '') + '</p></div>');
 	
 	this.result_html = this.report_html.slice(result_start);
-	this.report_html.push('	</div>');
+	this.report_html.push('	</div></div>');
 	
 	this.report_html.push('	<div class="overview">');
-	this.report_html.push('	<h3 onclick="document.getElementById(\'overview\').style.display = document.getElementById(\'overview\').style.display != \'none\' ? \'none\' : \'\'">Overview</h3>');
+	this.report_html.push('	<h3 class="toggle" onclick="toggle(this)">Overview</h3>');
 	this.report_html.push('	<table cellspacing="0" id="overview">');
 	this.report_html.push('		<tr>');
 	this.report_html.push('			<th>#</th><th colspan="' + fields_match.slice(devstart, devend + 1).length + '">Device Values</th><th colspan="' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '4' : '3') + '">Nominal Values</th><th colspan="2">&#160;</th><th colspan="' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '4' : '3') + '">Measured Values</th><th colspan="4">ΔE*' + delta_calc_method.substr(3) + '</th><th>&#160;</th>');
@@ -854,11 +855,11 @@ p.generate_report = function(set_delta_calc_method) {
 		var grid = 'background-image: url(\'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAIICAYAAABXZX+fAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAG9JREFUeNrt1SEBADAMA8HE7HTUeWdhaOiCD4V8dzcvKwiCSdKZOe4BQRAEdQYEQRDUGRAEQRDUGRAEQVBnQBAEQZ0BQRAEQZ0BQRAEdQYEQRDUGT+CIAiCOgOCIAjqDAiCIKgz7gFBEAR1BgS/wwvShwYgc/1YjwAAAABJRU5ErkJggg==\'); ';
 		
 		// CCT
-		var CCT = [];
+		var CCT = [], width = 100 / (grayscale_values.length + 1.5);
 		CCT.push('	<div class="CCT graph">');
-		CCT.push('	<h3 onclick="document.getElementById(\'CCT\').style.display = document.getElementById(\'CCT\').style.display != \'none\' ? \'none\' : \'\'">Correlated Color Temperature</h3>');
-		CCT.push('	<table cellspacing="0" id="CCT" style="' + grid + 'height: 340px;">');
-		CCT.push('<tr><th>10000K</th>');
+		CCT.push('	<h3 class="toggle" onclick="toggle(this)">Correlated Color Temperature</h3>');
+		CCT.push('	<table cellspacing="0" id="CCT" style="' + grid + 'height: 360px;">');
+		CCT.push('<tr><th style="height: 40px; width: ' + width * 1.5 + '%;">10000K</th>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			var target_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2]),
 				actual_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2]);
@@ -880,12 +881,13 @@ p.generate_report = function(set_delta_calc_method) {
 				rgb[0] = Math.round(rgb[0]);
 				rgb[1] = Math.round(rgb[1]);
 			}
-			CCT.push('<td rowspan="8"><div style="overflow: hidden; position: relative; height: 320px;"><div style="position: absolute; bottom: 0; left: 50%; margin-left: -10px; background: rgb(' + grayscale_values[i][6].join(', ') + '); border: 1px solid #000; border-top-color: rgb(' + rgb.join(', ') + '); height: ' + ((actual_CCT - 2000) / 1000 * 40 - 22) + 'px; width: 18px;" title="Nominal ' + target_CCT.accuracy(0) + ' | Actual ' + actual_CCT.accuracy(0) + '"></div><div style="position: absolute; bottom: ' + ((target_CCT - 2000) / 1000 * 40 - 21) + 'px; border-top: 1px solid rgba(0, 153, 0, .8); width: 100%;"></div></div></td>');
+			CCT.push('<td rowspan="8" style="width: ' + width + '%;"><div style="overflow: hidden; position: relative; height: 320px;"><div style="position: absolute; bottom: 0; left: 50%; margin-left: -10px; background: rgb(' + grayscale_values[i][6].join(', ') + '); border: 1px solid #000; border-top-color: rgb(' + rgb.join(', ') + '); height: ' + ((actual_CCT - 2000) / 1000 * 40 - 22) + 'px; width: 18px;" title="Nominal ' + target_CCT.accuracy(0) + ' | Actual ' + actual_CCT.accuracy(0) + '"></div><div style="position: absolute; bottom: ' + ((target_CCT - 2000) / 1000 * 40 - 21) + 'px; border-top: 1px solid rgba(0, 153, 0, .8); width: 100%;"></div></div></td>');
 		}
+		CCT.push('</tr>');
 		for (var i = 9000; i >= 3000; i -= 1000) {
-			CCT.push('<tr><th>' + i + 'K</th>');
+			CCT.push('<tr><th style="height: 40px;">' + i + 'K</th></tr>');
 		}
-		CCT.push('<tr style="height: 20px;"><td></td>');
+		CCT.push('<tr style="height: 40px;"><td></td>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			CCT.push('<td>' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%</td>');
 		}
@@ -894,11 +896,15 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html.splice(idx, 0, CCT.join('\n'));
 		
 		// Gamma tracking
-		var gamma_tracking = [];
+		var numgamma = 0;
+		for (var i = 0; i < grayscale_values.length; i ++) {
+			if (grayscale_values[i][1].gamma && grayscale_values[i][2].gamma) numgamma ++;
+		}
+		var gamma_tracking = [], width = 100 / (numgamma + 1);
 		gamma_tracking.push('	<div class="gamma_tracking graph">');
-		gamma_tracking.push('	<h3 onclick="document.getElementById(\'gamma_tracking\').style.display = document.getElementById(\'gamma_tracking\').style.display != \'none\' ? \'none\' : \'\'">Gamma</h3>');
-		gamma_tracking.push('	<table cellspacing="0" id="gamma_tracking" style="' + grid + 'height: 460px;">');
-		gamma_tracking.push('<tr><th>3.0</th>');
+		gamma_tracking.push('	<h3 class="toggle" onclick="toggle(this)">Gamma</h3>');
+		gamma_tracking.push('	<table cellspacing="0" id="gamma_tracking" style="' + grid + 'height: 480px;">');
+		gamma_tracking.push('<tr><th style="height: 40px; width: ' + width + '%;">3.0</th>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			if (!grayscale_values[i][1].gamma || !grayscale_values[i][2].gamma) continue;
 			var rgb = [0, 255, 0],
@@ -912,12 +918,13 @@ p.generate_report = function(set_delta_calc_method) {
 				rgb[0] = Math.round(rgb[0]);
 				rgb[1] = Math.round(rgb[1]);
 			}
-			gamma_tracking.push('<td rowspan="11"><div style="overflow: hidden; position: relative; height: 440px;"><div style="position: absolute; bottom: 0; left: 50%; margin-left: -10px; background: rgba(0, 0, 0, .2); height: ' + (grayscale_values[i][2].gamma * 200 - 181) + 'px; border-top: 1px solid rgb(' + rgb.join(', ') + '); width: 20px;" title="Nominal ' + grayscale_values[i][1].gamma.toFixed(2) + ' | Actual ' + grayscale_values[i][2].gamma.toFixed(2) + '"></div><div style="position: absolute; bottom: ' + (grayscale_values[i][1].gamma * 200 - 181) + 'px; border-top: 1px solid rgba(0, 153, 0, .8); width: 100%;"></div></div></td>');
+			gamma_tracking.push('<td rowspan="11" style="width: ' + width + '%;"><div style="overflow: hidden; position: relative; height: 440px;"><div style="position: absolute; bottom: 0; left: 50%; margin-left: -10px; background: rgba(0, 0, 0, .2); height: ' + (grayscale_values[i][2].gamma * 200 - 181) + 'px; border-top: 1px solid rgb(' + rgb.join(', ') + '); width: 20px;" title="Nominal ' + grayscale_values[i][1].gamma.toFixed(2) + ' | Actual ' + grayscale_values[i][2].gamma.toFixed(2) + '"></div><div style="position: absolute; bottom: ' + (grayscale_values[i][1].gamma * 200 - 181) + 'px; border-top: 1px solid rgba(0, 153, 0, .8); width: 100%;"></div></div></td>');
 		}
+		gamma_tracking.push('</tr>');
 		for (var i = 28; i >= 10; i -= 2) {
-			gamma_tracking.push('<tr><th>' + (i / 10).toFixed(1) + '</th>');
+			gamma_tracking.push('<tr><th style="height: 40px;">' + (i / 10).toFixed(1) + '</th></tr>');
 		}
-		gamma_tracking.push('<tr style="height: 20px;"><td></td>');
+		gamma_tracking.push('<tr style="height: 40px;"><td></td>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			if (!grayscale_values[i][1].gamma || !grayscale_values[i][2].gamma) continue;
 			gamma_tracking.push('<td>' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%</td>');
@@ -927,21 +934,22 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html.splice(idx, 0, gamma_tracking.join('\n'));
 		
 		// RGB Balance
-		var rgb_balance = [];
+		var rgb_balance = [], width = 100 / (grayscale_values.length + 1);
 		rgb_balance.push('	<div class="rgb_balance graph">');
-		rgb_balance.push('	<h3 onclick="document.getElementById(\'rgb_balance\').style.display = document.getElementById(\'rgb_balance\').style.display != \'none\' ? \'none\' : \'\'">RGB Gray Balance</h3>');
-		rgb_balance.push('	<table cellspacing="0" id="rgb_balance" style="' + grid + 'height: 540px;">');
-		rgb_balance.push('<tr><th>30%</th>');
+		rgb_balance.push('	<h3 class="toggle" onclick="toggle(this)">RGB Gray Balance</h3>');
+		rgb_balance.push('	<table cellspacing="0" id="rgb_balance" style="' + grid + 'height: 560px;">');
+		rgb_balance.push('<tr><th style="height: 40px; width: ' + width + '%;">30%</th>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			var target_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], 'D50', 100),
 				actual_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], 'D50', 100);
 			window.console && console.log(target_rgb.join(', '), actual_rgb.join(', '));
-			rgb_balance.push('<td rowspan="13"><div style="overflow: hidden; position: relative; width: 20px; height: 520px;"><div style="bottom: ' + (259 + (actual_rgb[0] * 8 - target_rgb[0] * 8)) + 'px; width: 20px; position: absolute; border-top: 2px solid #c00"></div><div style="bottom: ' + (259 + (actual_rgb[1] * 8 - target_rgb[1] * 8)) + 'px; width: 20px; position: absolute; border-top: 2px solid #0c0"></div><div style="bottom: ' + (259 + (actual_rgb[2] * 8 - target_rgb[2] * 8)) + 'px; width: 20px; position: absolute; border-top: 2px solid #0080ff"></div></div></td>');
+			rgb_balance.push('<td rowspan="13" style="width: ' + width + '%;"><div style="overflow: hidden; position: relative; width: 20px; height: 520px;"><div style="bottom: ' + (259 + (actual_rgb[0] * 8 - target_rgb[0] * 8)) + 'px; width: 20px; position: absolute; border-top: 2px solid #c00"></div><div style="bottom: ' + (259 + (actual_rgb[1] * 8 - target_rgb[1] * 8)) + 'px; width: 20px; position: absolute; border-top: 2px solid #0c0"></div><div style="bottom: ' + (259 + (actual_rgb[2] * 8 - target_rgb[2] * 8)) + 'px; width: 20px; position: absolute; border-top: 2px solid #0080ff"></div></div></td>');
 		}
+		rgb_balance.push('</tr>');
 		for (var i = 25; i >= -30; i -= 5) {
-			rgb_balance.push('<tr><th>' + i + '%</th>');
+			rgb_balance.push('<tr><th style="height: 40px;">' + i + '%</th></tr>');
 		}
-		rgb_balance.push('<tr style="height: 20px;"><td></td>');
+		rgb_balance.push('<tr style="height: 40px;"><td></td>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			rgb_balance.push('<td>' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%</td>');
 		}
@@ -1186,7 +1194,7 @@ function compare(set_delta_calc_method) {
 };
 
 function layout() {
-	var padding = 10, borderwidth = 4, margin = 20,
+	var padding = 0, borderwidth = 0, margin = 20,
 		maxwidth = (document.getElementById("report").offsetWidth || 900) - padding * 2 - borderwidth * 2,
 		tables = document.getElementsByTagName("table");
 	for (var i = 0; i < tables.length; i ++) {
@@ -1223,6 +1231,18 @@ function form_elements_set_disabled(form, disabled) {
 				else form_element_set_disabled(document.forms[i].elements[j], disabled);
 			}
 		}
+	}
+};
+
+function toggle(e) {
+	var target = document.getElementById(jsapi.dom.attr(e.parentNode, 'class').split(/\s+/)[0]);
+	if (jsapi.dom.attributeHasWord(e.parentNode, 'class', 'collapsed')) {
+		jsapi.dom.attributeRemoveWord(e.parentNode, 'class', 'collapsed');
+		jsapi.dom.attributeRemoveWord(target, 'class', 'collapsed');
+	}
+	else {
+		jsapi.dom.attributeAddWord(e.parentNode, 'class', 'collapsed');
+		jsapi.dom.attributeAddWord(target, 'class', 'collapsed');
 	}
 };
 

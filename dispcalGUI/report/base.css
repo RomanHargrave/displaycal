@@ -1,4 +1,10 @@
+* {
+	font-family: sans-serif;
+}
 h1 span {
+	border-radius: 4.5px;
+	-moz-border-radius: 4.5px;
+	-webkit-border-radius: 4.5px;
 	display: inline-block;
 	height: 9px;
 	font-size: 1px;
@@ -30,6 +36,7 @@ td, th {
 	border-bottom: 1px solid silver;
 	padding: .125em .25em .125em 0;
 	text-align: center;
+	vertical-align: middle;
 	white-space: nowrap;
 }
 .graph {
@@ -48,12 +55,13 @@ td, th {
 	padding: 0;
 }
 .graph table th {
-	padding: 0 .25em 0 0;
+	padding: 0 .5em 0 0;
+	text-align: right;
 }
-table.info td, table.info th, td.first-column, th.first-column {
+.info table td, .info table th, td.first-column, th.first-column {
 	text-align: left;
 }
-table.info th {
+.info table th {
 	padding-right: 1em;
 }
 td.bar {
@@ -66,6 +74,13 @@ td.patch {
 	padding: 0;
 	vertical-align: top;
 	width: 1.75em;
+}
+td + td.patch > .patch {
+	border-left: 1px solid silver;
+}
+td.patch + td.patch > .patch {
+	border-left: none;
+	border-right: 1px solid silver;
 }
 .overview td.patch {
 	border-bottom: none;
