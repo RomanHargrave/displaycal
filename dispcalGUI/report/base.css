@@ -32,6 +32,24 @@ td, th {
 	text-align: center;
 	white-space: nowrap;
 }
+.graph {
+	page-break-inside: avoid;
+}
+.graph table {
+	background-repeat: repeat-x;
+}
+.graph table td div {
+	margin: 0 auto;
+}
+.graph table td,
+.graph table th {
+	border-bottom: 0;
+	font-weight: normal;
+	padding: 0;
+}
+.graph table th {
+	padding: 0 .25em 0 0;
+}
 table.info td, table.info th, td.first-column, th.first-column {
 	text-align: left;
 }

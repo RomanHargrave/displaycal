@@ -26,3 +26,6 @@ h2 {
 p {
 	line-height: 1.5em;
 }
+.graph table th {
+	background: #fff;
+}
