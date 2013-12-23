@@ -19,12 +19,14 @@ import time
 from wxaddons import wx
 
 from config import (getbitmap, getcfg, get_icon_bundle, get_data_path,
-					get_display_number, get_verified_path, setcfg)
-from log import get_file_logger
+					get_display_number, get_display_rects, get_verified_path,
+					setcfg)
+from log import get_file_logger, safe_print
 from meta import name as appname, version as appversion
 from util_os import launch_file, waccess
 from util_str import center
 from wxaddons import CustomEvent
+from wxMeasureFrame import MeasureFrame
 from wxwindows import FlatShadedButton, numpad_keycodes
 import colormath
 import config
@@ -184,6 +186,8 @@ class DisplayUniformityFrame(wx.Frame):
 	def flush(self):
 		pass
 	
+	get_display = MeasureFrame.__dict__["get_display"]
+	
 	def has_worker_subprocess(self):
 		return bool(getattr(self, "worker", None) and
 					getattr(self.worker, "subprocess", None))
@@ -279,7 +283,19 @@ class DisplayUniformityFrame(wx.Frame):
 				if len(self.results) == self.rows * self.cols:
 					# All swatches have been measured, show results
 					# Let the user choose a location for the results html
-					defaultFile = "uniformity_" + strftime("%Y-%m-%d_%H-%M.html")
+					display_no, geometry, client_area = self.get_display()
+					# Translate from wx display index to Argyll display index
+					geometry = "%i, %i, %ix%i" % tuple(geometry)
+					for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+						if display.find("@ " + geometry) > -1:
+							safe_print("Found display %s at index %i" % 
+									   (display, i))
+							break
+					display = display.replace(" [PRIMARY]", "")
+					defaultFile = u"Uniformity Check %s — %s — %s" % (appversion,
+												  re.sub(r"[\\/:*?\"<>|]+", "_",
+													     display),
+												  strftime("%Y-%m-%d %H-%M.html"))
 					defaultDir = get_verified_path(None, 
 												   os.path.join(getcfg("profile.save_path"), 
 												   defaultFile))[0]
@@ -305,6 +321,7 @@ class DisplayUniformityFrame(wx.Frame):
 					locus = loci.get(getcfg("whitepoint.colortemp.locus"))
 					report.create(save_path,
 								  {"${REPORT_VERSION}": appversion,
+								   "${DISPLAY}": display,
 								   "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
 								   "${ROWS}": str(self.rows),
 								   "${COLS}": str(self.cols),
@@ -334,6 +351,7 @@ class DisplayUniformityFrame(wx.Frame):
 		self.keepGoing = True
 		self.last_error = None
 		self.results = {}
+		self.display_rects = get_display_rects()
 	
 	def safe_send(self, bytes):
 		if self.has_worker_subprocess() and not self.worker.subprocess_abort:
