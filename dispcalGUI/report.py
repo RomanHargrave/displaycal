@@ -37,9 +37,7 @@ def create(report_path, placeholders2data, pack=True, templatename="report"):
 	for placeholder, data in placeholders2data.iteritems():
 		report_html = report_html.replace(placeholder, data)
 	
-	for include in ("base.css", "compare.css", "compare-dark-light.css", 
-					"compare-dark.css", "compare-light.css", 
-					"compare-light-dark.css", "print.css", 
+	for include in ("base.css", "compare.css", "print.css", 
 					"jsapi-packages.js", "jsapi-patches.js", 
 					"compare.constants.js", "compare.variables.js", 
 					"compare.functions.js", "compare.init.js",
