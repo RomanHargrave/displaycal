@@ -247,9 +247,25 @@ def safe_basestring(obj):
 	string(obj), or repr(obj), whichever succeeds first.
 	
 	"""
-	if isinstance(obj, EnvironmentError) and obj.filename:
-		obj = u"[Error %i] %s: %s" % (obj.errno, obj.strerror, obj.filename)
-	elif not isinstance(obj, basestring):
+	if isinstance(obj, EnvironmentError):
+		# There are three possible variations of EnvironmentError instances:
+		# - instance with 'errno', 'strerror', 'filename' and 'args' attributes
+		#   (created by EnvironmentError with three arguments)
+		#   NOTE: The 'args' attribute will contain only the first two arguments
+		# - instance with 'errno', 'strerror' and 'args' attributes
+		#   (created by EnvironmentError with two arguments)
+		# - instance with just 'args' attribute
+		#   (created by EnvironmentError with one or more than three arguments)
+		args = [safe_unicode(arg) for arg in obj.args]
+		if obj.filename is not None:
+			obj = "[Errno %s] %s: %r" % (args[0], args[1], obj.filename)
+		elif obj.strerror is not None:
+			obj = "[Errno %s] %s" % (args[0], args[1])
+		elif obj.errno is not None:
+			obj = "[Errno %s]" % args[0]
+		else:
+			obj = " ".join(args)
+	if not isinstance(obj, basestring):
 		try:
 			obj = unicode(obj)
 		except UnicodeDecodeError:
