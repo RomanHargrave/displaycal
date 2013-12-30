@@ -2077,18 +2077,18 @@ class MainFrame(BaseFrame):
 		}
 		for name in defaults:
 			if name not in skip and name not in override:
-				if (len(include) == 0 or False in [name.find(item) < 0 for 
+				if (len(include) == 0 or False in [name.find(item) != 0 for 
 												   item in include]) and \
-				   (len(exclude) == 0 or not (False in [name.find(item) < 0 for 
+				   (len(exclude) == 0 or not (False in [name.find(item) != 0 for 
 														item in exclude])):
 					if verbose >= 3:
 						safe_print("Restoring %s to %s" % (name, 
 														   defaults[name]))
 					setcfg(name, defaults[name])
 		for name in override:
-			if (len(include) == 0 or False in [name.find(item) < 0 for item in 
+			if (len(include) == 0 or False in [name.find(item) != 0 for item in 
 											   include]) and \
-			   (len(exclude) == 0 or not (False in [name.find(item) < 0 for 
+			   (len(exclude) == 0 or not (False in [name.find(item) != 0 for 
 													item in exclude])):
 				setcfg(name, override[name])
 		if event:
