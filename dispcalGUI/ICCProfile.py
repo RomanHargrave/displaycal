@@ -2217,7 +2217,7 @@ class XYZType(ICCProfileTag, XYZNumber):
 	@property
 	def pcs(self):
 		""" Get PCS-relative values """
-		if (self is self.profile.tags.wtpt and
+		if (self in (self.profile.tags.wtpt, self.profile.tags.get("bkpt")) and
 			(not "chad" in self.profile.tags or self.profile.creator == "appl")):
 			# Apple profiles have a bug where they contain a 'chad' tag, 
 			# but the media white is not under PCS illuminant
