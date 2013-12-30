@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+import logging
 import math
 
 
@@ -1192,6 +1193,587 @@ def xy_CCT_delta(x, y, daylight=True, method=2000):
 			L2, a2, b2 = XYZ2Lab(*locus)
 			d = delta(L1, a1, b1, L2, a2, b2, method)
 	return cct, d
+
+
+def dmatrixz(nrl, nrh, ncl, nch):
+	# Adapted from ArgyllCMS numlib/numsup.c
+
+	#nrl  # Row low index
+	#nrh  # Row high index
+	#ncl  # Col low index
+	#nch  # Col high index
+	m = {}
+
+	if nrh < nrl:  # Prevent failure for 0 dimension
+		nrh = nrl
+	if nch < ncl:
+		nch = ncl
+
+	rows = nrh - nrl + 1
+	cols = nch - ncl + 1
+
+	for i in xrange(rows):
+		m[i + nrl] = {}
+		for j in xrange(cols):
+			m[i][j + ncl] = 0
+
+	return m
+
+
+def dvector(nl, nh):
+	# Adapted from ArgyllCMS numlib/numsup.c
+
+	#nl  # Lowest index
+	#nh  # Highest index
+	return {}
+
+
+def gam_fit(gf, v):
+	# Adapted from ArgyllCMS xicc/xicc.c
+	""" gamma + input offset function handed to powell() """
+	gamma = v[0]
+	rv = 0.0
+
+	if gamma < 0.0:
+		rv += 100.0 * -gamma
+		gamma = 1e-4
+
+	tt = math.pow(gf.roo, 1.0 / gamma)
+	b = tt / (1.0 - tt)  # Offset
+	a = math.pow(1.0 - tt, gamma)  # Gain
+
+	tt = a * math.pow(0.5 + b, gamma)
+	tt = tt - gf.thyr
+	rv += tt * tt
+	
+	return rv
+
+
+def linmin(cp, xi, di, ftol, func, fdata):
+	# Adapted from ArgyllCMS numlib/powell.c
+
+	"""
+	Line bracketing and minimisation routine.
+	Return value at minimum.
+
+	"""
+	POWELL_GOLD = 1.618034
+	POWELL_CGOLD = 0.3819660
+	POWELL_MAXIT = 100
+	#cp  # Start point, and returned value
+	#xi[]  # Search vector
+	#di  # Dimensionality
+	#ftol  # Tolerance to stop on
+	#func  # Error function to evaluate
+	#fdata  # Opaque data for func()
+	#ax, xx, bx  # Search vector multipliers
+	#af, xf, bf  # Function values at those points
+	#xt, XT  # Trial point
+	XT = {}
+
+	if di <= 10:
+		xt = XT
+	else:
+		xt = dvector(0, di-1)  # Vector for trial point
+
+	# --------------------------
+	# First bracket the solution
+
+	logging.debug("linmin: Bracketing solution")
+
+	# The line is measured as startpoint + offset * search vector.
+	# (Search isn't symetric, but it seems to depend on cp being
+	# best current solution ?)
+	ax = 0.0
+	for i in xrange(di):
+		xt[i] = cp[i] + ax * xi[i]
+	af = func(fdata, xt)
+
+	# xx being vector offset 0.618
+	xx =  1.0 / POWELL_GOLD
+	for i in xrange(di):
+		xt[i] = cp[i] + xx * xi[i]
+	xf = func(fdata, xt)
+
+	logging.debug("linmin: Initial points a:%f:%f -> b:%f:%f" % (ax, af, xx, xf))
+
+	# Fix it so that we are decreasing from point a -> x
+	if xf > af:
+		tt = ax
+		ax = xx
+		xx = tt
+		tt = af
+		af = xf
+		xf = tt
+
+	logging.debug("linmin: Ordered Initial points a:%f:%f -> b:%f:%f" % (ax, af,
+																		 xx, xf))
+
+	bx = xx + POWELL_GOLD * (xx-ax)  # Guess b beyond a -> x
+	for i in xrange(di):
+		xt[i] = cp[i] + bx * xi[i]
+	bf = func(fdata, xt)
+
+	logging.debug("linmin: Initial bracket a:%f:%f x:%f:%f b:%f:%f" % (ax, af,
+																	   xx, xf,
+																	   bx, bf))
+
+	# While not bracketed
+	while xf > bf:
+
+		logging.debug("linmin: Not bracketed because xf %f > bf %f" % (xf, bf))
+		logging.debug("        ax = %f, xx = %f, bx = %f" % (ax, xx, bx))
+
+		# Compute ux by parabolic interpolation from a, x & b
+		q = (xx - bx) * (xf - af)
+		r = (xx - ax) * (xf - bf)
+		tt = q - r
+		if tt >= 0.0 and tt < 1e-20:  # If +ve too small
+			tt = 1e-20
+		elif tt <= 0.0 and tt > -1e-20:  # If -ve too small
+			tt = -1e-20
+		ux = xx - ((xx - bx) * q - (xx - ax) * r) / (2.0 * tt)
+		ulim = xx + 100.0 * (bx - xx)  # Extrapolation limit
+
+		if (xx - ux) * (ux - bx) > 0.0:  # u is between x and b
+
+			for i in xrange(di):  # Evaluate u
+				xt[i] = cp[i] + ux * xi[i]
+			uf = func(fdata, xt)
+
+
+			if uf < bf:  # Minimum is between x and b
+				ax = xx
+				af = xf
+				xx = ux
+				xf = uf
+				break
+			elif uf > xf:  # Minimum is between a and u
+				bx = ux
+				bf = uf
+				break
+
+			# Parabolic fit didn't work, look further out in direction of b
+			ux = bx + POWELL_GOLD * (bx - xx)
+
+		elif (bx - ux) * (ux - ulim) > 0.0:  # u is between b and limit
+			for i in xrange(di):  # Evaluate u
+				xt[i] = cp[i] + ux * xi[i]
+			uf = func(fdata, xt)
+
+			if uf > bf:  # Minimum is between x and u
+				ax = xx
+				af = xf
+				xx = bx
+				xf = bf
+				bx = ux
+				bf = uf
+				break
+			xx = bx
+			xf = bf  # Continue looking
+			bx = ux
+			bf = uf
+			ux = bx + POWELL_GOLD * (bx - xx)  # Test beyond b
+
+		elif (ux - ulim) * (ulim - bx) >= 0.0:  # u is beyond limit 
+			ux = ulim
+		else:  # u is to left side of x ?
+			ux = bx + POWELL_GOLD * (bx - xx)
+		# Evaluate u, and move into place at b
+		for i in xrange(di):
+			xt[i] = cp[i] + ux * xi[i]
+		uf = func(fdata, xt)
+		ax = xx
+		af = xf
+		xx = bx
+		xf = bf
+		bx = ux
+		bf = uf
+	logging.debug("linmin: Got bracket a:%f:%f x:%f:%f b:%f:%f" % (ax, af,
+																   xx, xf,
+																   bx, bf))
+	# Got bracketed minimum between a -> x -> b
+
+	# ---------------------------------------
+	# Now use brent minimiser bewteen a and b
+	if True:
+		# a and b bracket solution
+		# x is best function value so far
+		# w is second best function value so far
+		# v is previous second best, or third best
+		# u is most recently tested point
+		#wx, vx, ux  # Search vector multipliers
+		#wf
+		vf = 0.0
+		#uf  # Function values at those points
+		de = 0.0  # Distance moved on previous step
+		e = 0.0  # Distance moved on 2nd previous step
+
+		# Make sure a and b are in ascending order
+		if ax > bx:
+			tt = ax
+			ax = bx
+			bx = tt
+			tt = af
+			af = bf
+			bf = tt
+
+		wx = vx = xx  # Initial values of other center points
+		wf = xf = xf
+
+		for iter in xrange(1, POWELL_MAXIT + 1):
+			mx = 0.5 * (ax + bx)  # m is center of bracket values
+			#if ABSTOL:
+				#tol1 = ftol  # Absolute tollerance
+			#else:
+			tol1 = ftol * abs(xx) + 1e-10
+			tol2 = 2.0 * tol1
+
+			logging.debug("linmin: Got bracket a:%f:%f x:%f:%f b:%f:%f" %
+						  (ax, af, xx, xf, bx, bf))
+
+			# See if we're done
+			if abs(xx - mx) <= (tol2 - 0.5 * (bx - ax)):
+				logging.debug("linmin: We're done because %f <= %f" %
+							  (abs(xx - mx), tol2 - 0.5 * (bx - ax)))
+				break
+
+			if abs(e) > tol1:  # Do a trial parabolic fit
+				r = (xx - wx) * (xf-vf)
+				q = (xx - vx) * (xf-wf)
+				p = (xx - vx) * q - (xx-wx) * r
+				q = 2.0 * (q - r)
+				if q > 0.0:
+					p = -p
+				else:
+					q = -q
+				te = e  # Save previous e value
+				e = de  # Previous steps distance moved
+
+				logging.debug("linmin: Trial parabolic fit")
+
+				if (abs(p) >= abs(0.5 * q * te) or p <= q * (ax - xx) or
+					p >= q * (bx - xx)):
+					# Give up on the parabolic fit, and use the golden section search
+					e = ax - xx if xx >= mx else bx - xx  # Override previous distance moved */
+					de = POWELL_CGOLD * e
+					logging.debug("linmin: Moving to golden section search")
+				else:  # Use parabolic fit
+					de = p / q  # Change in xb
+					ux = xx + de  # Trial point according to parabolic fit
+					if (ux - ax) < tol2 or (bx - ux) < tol2:
+						if (mx - xx) > 0.0:  # Don't use parabolic, use tol1
+							de = tol1  # tol1 is +ve
+						else:
+							de = -tol1
+					logging.debug("linmin: Using parabolic fit")
+			else:  # Keep using the golden section search
+				e = ax - xx if xx >= mx else bx - xx  # Override previous distance moved
+				de = POWELL_CGOLD * e
+				logging.debug("linmin: Continuing golden section search")
+
+			if abs(de) >= tol1:  # If de moves as much as tol1 would
+				ux = xx + de  # use it
+				logging.debug("linmin: ux = %f = xx %f + de %f" % (ux, xx, de))
+			else:  # else move by tol1 in direction de
+				if de > 0.0:
+					ux = xx + tol1
+					logging.debug("linmin: ux = %f = xx %f + tol1 %f" %
+								  (ux, xx, tol1))
+				else:
+					ux = xx - tol1
+					logging.debug("linmin: ux = %f = xx %f - tol1 %f" %
+								  (ux, xx, tol1))
+
+			# Evaluate function
+			for i in xrange(di):
+				xt[i] = cp[i] + ux * xi[i]
+			uf = func(fdata, xt)
+
+			if uf <= xf:  # Found new best solution
+				if ux >= xx:
+					ax = xx
+					af = xf  # New lower bracket
+				else:
+					bx = xx
+					bf = xf  # New upper bracket
+				vx = wx
+				vf = wf  # New previous 2nd best solution
+				wx = xx
+				wf = xf  # New 2nd best solution from previous best
+				xx = ux
+				xf = uf  # New best solution from latest
+				logging.debug("linmin: found new best solution")
+			else:  # Found a worse solution
+				if ux < xx:
+					ax = ux
+					af = uf  # New lower bracket
+				else:
+					bx = ux
+					bf = uf  # New upper bracket
+				if uf <= wf or wx == xx:  # New 2nd best solution, or equal best
+					vx = wx
+					vf = wf  # New previous 2nd best solution
+					wx = ux
+					wf = uf  # New 2nd best from latest 
+				elif uf <= vf or vx == xx or vx == wx:  # New 3rd best, or equal 1st & 2nd
+					vx = ux
+					vf = uf  # New previous 2nd best from latest
+				logging.debug("linmin: found new worse solution")
+		# !!! should do something if iter > POWELL_MAXIT !!!!
+		# Solution is at xx, xf
+
+		# Compute solution vector
+		for i in xrange(di):
+			cp[i] += xx * xi[i]
+
+	return xf
+
+def powell(di, cp, s, ftol, maxit, func, fdata, prog=None, pdata=None):
+	# Adapted from ArgyllCMS powell.c
+
+	"""
+	Standard interface for powell function
+	return True on sucess, False on failure due to excessive iterions
+	Result will be in cp
+	
+	"""
+	DBL_EPSILON = 2.2204460492503131e-016
+	#di  # Dimentionality
+	#cp  # Initial starting point
+	#s  # Size of initial search area
+	#ftol  # Tolerance of error change to stop on
+	#maxit  # Maximum iterations allowed
+	#func  # Error function to evaluate
+	#fdata  # Opaque data needed by function
+	#prog  # Optional progress percentage callback
+	#pdata  # Opaque data needed by prog()
+	
+	#dmtx  # Direction vector
+	#sp  # Sarting point before exploring all the directions
+	#xpt  # Extrapolated point
+	#svec  # Search vector
+	#retv  # Returned function value at p
+	#stopth  # Current stop threshold */
+	startdel = -1.0  # Initial change in function value
+	#curdel  # Current change in function value
+	pc = 0  # Percentage complete
+
+	dmtx = dmatrixz(0, di - 1, 0, di - 1)  # Zero filled
+	spt  = dvector(0, di - 1)
+	xpt  = dvector(0, di - 1)
+	svec = dvector(0, di - 1)
+
+	# Create initial direction matrix by
+	# placing search start on diagonal
+	for i in xrange(di):
+		dmtx[i][i] = s[i]
+		# Save the starting point
+		spt[i] = cp[i]
+
+	if prog:  # Report initial progress
+		prog(pdata, pc)
+
+	# Initial function evaluation
+	retv = func(fdata, cp)
+
+	# Iterate untill we converge on a solution, or give up.
+	for iter in xrange(1, maxit):
+		#lretv  # Last function return value
+		ibig = 0  # Index of biggest delta
+		del_ = 0.0  # Biggest function value decrease
+		#pretv  # Previous function return value
+
+		pretv = retv  # Save return value at top of iteration
+
+		# Loop over all directions in the set
+		for i in xrange(di):
+
+			logging.debug("Looping over direction %d" % i)
+
+			for j in xrange(di):  # Extract this direction to make search vector
+				svec[j] = dmtx[j][i]
+
+			# Minimize in that direction
+			lretv = retv
+			retv = linmin(cp, svec, di, ftol, func, fdata)
+
+			# Record bigest function decrease, and dimension it occured on
+			if abs(lretv - retv) > del_:
+				del_ = abs(lretv - retv)
+				ibig = i
+
+		#if ABSTOL:
+			#stopth = ftol  # Absolute tollerance
+		#else
+		stopth = ftol * 0.5 * (abs(pretv) + abs(retv) + DBL_EPSILON)
+		curdel = abs(pretv - retv)
+		if startdel < 0.0:
+			startdel = curdel
+		elif curdel > 0 and startdel > 0:
+			tt = (100.0 * math.pow((math.log(curdel) - math.log(startdel)) /
+								   (math.log(stopth) - math.log(startdel)),
+								   4.0) + 0.5)
+			if tt > pc and tt < 100:
+				pc = tt
+				if prog:  # Report initial progress
+					prog(pdata, pc)
+
+		# If we have had at least one change of direction and
+		# reached a suitable tollerance, then finish
+		if iter > 1 and curdel <= stopth:
+			logging.debug("Reached stop tollerance because curdel %f <= stopth "
+						  "%f" % (curdel, stopth))
+			break
+		logging.debug("Not stopping because curdel %f > stopth %f" % (curdel,
+																	  stopth))
+
+		for i in xrange(di):
+			svec[i] = cp[i] - spt[i]  # Average direction moved after minimization round
+			xpt[i]  = cp[i] + svec[i]  # Extrapolated point after round of minimization
+			spt[i]  = cp[i]  # New start point for next round
+
+		# Function value at extrapolated point
+		lretv = func(fdata, xpt)
+
+		if lretv < pretv:  # If extrapolation is an improvement
+
+			t1 = pretv - retv - del_
+			t2 = pretv - lretv
+			t = 2.0 * (pretv -2.0 * retv + lretv) * t1 * t1 - del_ * t2 * t2
+			if t < 0.0:
+				# Move to the minimum of the new direction
+				retv = linmin(cp, svec, di, ftol, func, fdata)
+
+				for i in xrange(di):  # Save the new direction
+					dmtx[i][ibig] = svec[i]  # by replacing best previous
+
+	if prog:  # Report final progress
+		prog(pdata, 100)
+
+	if iter < maxit:
+		return True
+
+	logging.debug("powell: returning False due to excessive iterations")
+	return False  # Failed due to execessive iterations
+
+
+def xicc_tech_gamma(egamma, off):
+	# Adapted from ArgyllCMS xicc.c
+
+	"""
+	Given the effective gamma and the output offset Y,
+	return the technical gamma needed for the correct 50% response.
+	
+	"""
+	gf = gam_fits()
+	op = {}
+	sa = {}
+
+	if off <= 0.0:
+		return egamma
+
+	gf.thyr = math.pow(0.5, egamma)  # Advetised 50% target
+	gf.roo = off
+
+	op[0] = egamma
+	sa[0] = 0.1
+
+	if not powell(1, op, sa, 1e-6, 500, gam_fit, gf):
+		logging.warn("Computing effective gamma and input offset is inaccurate")
+
+	return op[0]
+
+
+class gam_fits(object):
+	# Adapted from ArgyllCMS xicc/xicc.c
+
+	def __init__(self, thyr=.2, roo=0):
+		self.thyr = thyr  # 50% input target
+		self.roo = roo  # 0% input target
+
+
+class BT1886(object):
+	# Adapted from ArgyllCMS xicc/xicc.c
+
+	""" BT.1886 like transfer function """
+
+	def __init__(self, matrix, XYZbp, gamma):
+		""" Setup the bt1886_info for the given target """
+		self.bwd_matrix = matrix.inverted()
+		self.fwd_matrix = matrix
+		self.gamma = gamma
+
+		Lab = XYZ2Lab(*XYZbp)
+
+		self.outL = Lab[0]  # For bp blend
+		self.tab = Lab[1:]  # a* b* correction needed
+
+		bkipow = math.pow(XYZbp[1], 1.0 / self.gamma)
+		self.ingo = bkipow / (1.0 - bkipow)  # non-linear Y that makes out black point
+		self.outsc = pow(1.0 - bkipow, self.gamma)  # Scale to restore 1 -> 1
+
+	def apply(self, X, Y, Z):
+		"""
+		Apply BT.1886 black offset and gamma curve to the XYZ out of the input profile.
+		Do this in the colorspace defined by the input profile matrix lookup,
+		so it will be relative XYZ. We assume that BT.1886 does a Rec709 to gamma
+		viewing adjustment, irrespective of the source profile transfer curve.
+		
+		"""
+
+		logging.debug("bt1886 XYZ in %f %f %f" % (X, Y, Z))
+
+		out = self.bwd_matrix * (X, Y, Z)
+
+		logging.debug("bt1886 RGB in %f %f %f" % (out[0], out[1], out[2]))
+
+		for j in xrange(3):
+			vv = out[j]
+		
+			# Convert linear light to Rec709 transfer curve
+			if vv < 0.018:
+				vv = 4.5 * vv
+			else:
+				vv = 1.099 * math.pow(vv, 0.45) - 0.099
+			
+			# Apply input offset & re-scale, and then gamma of 2.4/custom gamma
+			vv = vv + self.ingo
+			
+			if vv > 0.0:
+				vv = self.outsc * math.pow(vv, self.gamma)
+
+			out[j] = vv
+
+		out = self.fwd_matrix * out
+
+		logging.debug("bt1886 RGB bt.1886 %f %f %f" % (out[0], out[1], out[2]))
+
+		out = list(XYZ2Lab(*[v * 100 for v in out]))
+
+		logging.debug("bt1886 Lab after Y adj. %f %f %f" % (out[0], out[1],
+															  out[2]))
+
+		# Blend ab to required black point offset self.tab[] as L approaches black.
+		vv = (out[0] - self.outL) / (100.0 - self.outL)  # 0 at bp, 1 at wp
+		vv = 1.0 - vv
+
+		if vv < 0.0:
+			vv = 0.0
+		elif vv > 1.0:
+			vv = 1.0
+		vv = math.pow(vv, 40.0)
+		out[1] += vv * self.tab[0]
+		out[2] += vv * self.tab[1]
+
+		logging.debug("bt1886 Lab after wp adj. %f %f %f" % (out[0], out[1],
+															   out[2]))
+
+		out = Lab2XYZ(*out)
+
+		logging.debug("bt1886 XYZ out %f %f %f" % (out[0], out[1], out[2]))
+
+		return out
 
 
 class Matrix3x3(list):
