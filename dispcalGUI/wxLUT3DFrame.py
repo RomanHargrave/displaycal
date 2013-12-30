@@ -4,13 +4,12 @@
 import os
 import sys
 
-from ICCProfile import ICCProfile, get_display_profile
 from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
 					setcfg)
 from log import safe_print
 from meta import name as appname
 from util_os import waccess
-from worker import Error, show_result_dialog
+from worker import Error, get_current_profile_path, show_result_dialog
 import ICCProfile as ICCP
 import config
 import localization as lang
@@ -20,23 +19,6 @@ from wxaddons import FileDrop
 from wxwindows import BaseFrame, InfoDialog, wx
 
 from wx import xrc
-
-
-def get_current_profile_path():
-	profile = None
-	profile_path = getcfg("calibration.file")
-	if profile_path:
-		try:
-			profile = ICCProfile(profile_path)
-		except Exception, exception:
-			return
-	else:
-		try:
-			profile = get_display_profile(getcfg("display.number") - 1)
-		except Exception, exception:
-			return
-	if profile:
-		return profile.fileName
 
 
 class LUT3DFrame(BaseFrame):

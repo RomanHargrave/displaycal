@@ -151,6 +151,7 @@ except ImportError:
 if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
 from wxProfileInfo import ProfileInfoFrame
+from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
@@ -1244,6 +1245,15 @@ class MainFrame(BaseFrame):
 		"""
 		self.lut3dframe = LUT3DFrame(self)
 
+	def init_reportframe(self):
+		"""
+		Create & initialize the measurement report creation window and its controls.
+		
+		"""
+		self.reportframe = ReportFrame(self)
+		self.reportframe.measure_btn.Bind(wx.EVT_BUTTON,
+										  self.measurement_report_handler)
+
 	def init_synthiccframe(self):
 		"""
 		Create & initialize the 3D LUT creation window and its controls.
@@ -1478,7 +1488,7 @@ class MainFrame(BaseFrame):
 				  self.menuitem_calibration_verify)
 		self.menuitem_measurement_report = tools.FindItemById(
 			tools.FindItem("measurement_report"))
-		self.Bind(wx.EVT_MENU, self.measurement_report_handler, 
+		self.Bind(wx.EVT_MENU, self.measurement_report_create_handler, 
 				  self.menuitem_measurement_report)
 		menuitem = tools.FindItemById(
 			tools.FindItem("measurement_report.update"))
@@ -1901,6 +1911,12 @@ class MainFrame(BaseFrame):
 					self.lut3dframe.update_controls()
 					self.lut3dframe.update_layout()
 					self.lut3dframe.panel.Thaw()
+				if getattr(self, "reportframe", None):
+					self.reportframe.panel.Freeze()
+					self.reportframe.setup_language()
+					self.reportframe.update_controls()
+					self.reportframe.update_layout()
+					self.reportframe.panel.Thaw()
 				if getattr(self, "synthiccframe", None):
 					self.synthiccframe.panel.Freeze()
 					self.synthiccframe.setup_language()
@@ -2028,6 +2044,8 @@ class MainFrame(BaseFrame):
 			"position.profile_info.y",
 			"position.progress.x",
 			"position.progress.y",
+			"position.reportframe.x",
+			"position.reportframe.y",
 			"position.tcgen.x",
 			"position.tcgen.y",
 			"recent_cals",
@@ -2886,6 +2904,9 @@ class MainFrame(BaseFrame):
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.set_profile("output")
 
+		if getattr(self, "reportframe", None):
+			self.reportframe.set_profile("output")
+
 		if update_profile_name:
 			self.profile_name_textctrl.ChangeValue(getcfg("profile.name"))
 			self.update_profile_name()
@@ -3185,6 +3206,8 @@ class MainFrame(BaseFrame):
 			self.cal_changed(setchanged=False)
 			if getattr(self, "lut3dframe", None):
 				self.lut3dframe.set_profile("output")
+			if getattr(self, "reportframe", None):
+				self.reportframe.set_profile("output")
 	
 	def settings_discard_changes(self, sel=None, keep_changed_state=False):
 		""" Update the calibration file control and remove the leading
@@ -4572,6 +4595,15 @@ class MainFrame(BaseFrame):
 				return
 		return profile
 
+	def measurement_report_create_handler(self, event):
+		""" Assign and initialize the report creation window """
+		if not getattr(self, "reportframe", None):
+			self.init_reportframe()
+		if self.reportframe.IsShownOnScreen():
+			self.reportframe.Raise()
+		else:
+			self.reportframe.Show(not self.reportframe.IsShownOnScreen())
+
 	def measurement_report_handler(self, event):
 		if not check_set_argyll_bin():
 			return
@@ -4580,74 +4612,128 @@ class MainFrame(BaseFrame):
 		sim_gray = None
 			
 		# select measurement data (ti1 or ti3)
-		sim_profile = None
-		msg_id = "measurement_report_choose_chart_or_reference"
-		while True:
-			defaultDir, defaultFile = get_verified_path("measurement_report_chart")
-			dlg = wx.FileDialog(self, lang.getstr(msg_id), 
-								defaultDir=defaultDir, defaultFile=defaultFile, 
-								wildcard=lang.getstr("filetype.ti1_ti3_txt") + 
-										 "|*.cgats;*.cie;*.icc;*.icm;*.ti1;*.ti3;*.txt", 
-								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-			dlg.Center(wx.BOTH)
-			result = dlg.ShowModal()
-			if result == wx.ID_OK:
-				chart = dlg.GetPath()
-			dlg.Destroy()
-			if result != wx.ID_OK:
-				return
-			if chart.lower().endswith(".icc") or chart.lower().endswith(".icm"):
-				try:
-					sim_profile = ICCP.ICCProfile(chart)
-				except ICCP.ICCProfileInvalidError, exception:
-					InfoDialog(self, msg=lang.getstr("profile.invalid") + 
-									 "\n" + path, 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return
-				if (sim_profile.profileClass not in ("mntr", "prtr") or 
-					sim_profile.colorSpace not in ("CMYK", "RGB")):
-					InfoDialog(self, msg=lang.getstr("profile.unsupported", 
-													 (sim_profile.profileClass, 
-													  sim_profile.colorSpace)), 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					return
-				msg_id = "measurement_report_choose_chart"
-			else:
-				if sim_profile:
-					sim_ti1, sim_ti3, sim_gray = self.worker.chart_lookup(chart, 
-															  sim_profile,
-															  check_missing_fields=True, 
-															  absolute=sim_profile.profileClass == "prtr")
-					# NOTE: we ignore the ti1 and gray patches here
-					# only the ti3 is valuable at this point
-					if not sim_ti3:
-						return
-				break
-		setcfg("measurement_report_chart", chart)
+		chart = getcfg("measurement_report.chart")
 		
-		# select profile
-		profile = self.select_profile(msg=lang.getstr("measurement_report_choose_profile"))
-		if not profile:
-			return
+		# profile(s)
+		paths = []
+		use_sim = getcfg("measurement_report.use_simulation_profile")
+		use_sim_as_output = getcfg("measurement_report.use_simulation_profile_as_output")
+		use_devlink = getcfg("measurement_report.use_devlink_profile")
+		#if not use_sim or not use_sim_as_output:
+		paths.append(getcfg("measurement_report.output_profile"))
+		if use_sim:
+			if use_sim_as_output and use_devlink:
+				paths.append(getcfg("measurement_report.devlink_profile"))
+			paths.append(getcfg("measurement_report.simulation_profile"))
+		sim_profile = None
+		devlink = None
+		oprof = None
+		for i, path in enumerate(paths):
+			try:
+				profile = ICCP.ICCProfile(path)
+			except ICCP.ICCProfileInvalidError, exception:
+				InfoDialog(self.reportframe, msg=lang.getstr("profile.invalid") + 
+								 "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				return
+			if i == 0:
+				oprof = profile
+			elif i in (1, 2) and use_sim:
+				if use_sim_as_output and profile.colorSpace == "RGB":
+					if i == 1 and use_devlink:
+						devlink = profile
+				else:
+					if profile.colorSpace != "RGB":
+						devlink = None
+					sim_profile = profile
+					profile = oprof
+		colormanaged = use_sim and use_sim_as_output and not sim_profile
+		if debug:
+			for n, p in {"profile": profile, "devlink": devlink,
+						 "sim_profile": sim_profile, "oprof": oprof}.iteritems():
+				if p:
+					safe_print(n, p.getDescription())
+
+		if use_sim:
+			if sim_profile:
+				mprof = sim_profile
+			else:
+				mprof = profile
+		apply_bt1886 = (use_sim and
+						getcfg("measurement_report.apply_bt1886_gamma_mapping") and
+						mprof.colorSpace == "RGB" and
+						isinstance(mprof.tags.get("rXYZ"), ICCP.XYZType) and
+						isinstance(mprof.tags.get("gXYZ"), ICCP.XYZType) and
+						isinstance(mprof.tags.get("bXYZ"), ICCP.XYZType))
+		bt1886 = None
+		if apply_bt1886:
+			# TRC BT.1886-like
+			if "bkpt" in oprof.tags:
+				XYZbp = oprof.tags.bkpt.pcs.values()
+			else:
+				XYZbp = (0, 0, 0)
+			gamma = getcfg("measurement_report.bt1886_gamma")
+			if getcfg("measurement_report.bt1886_gamma_type") == "b":
+				# Convert effective to technical gamma
+				gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1])
+			rXYZ = mprof.tags.rXYZ.values()
+			gXYZ = mprof.tags.gXYZ.values()
+			bXYZ = mprof.tags.bXYZ.values()
+			mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+									   [rXYZ[1], gXYZ[1], bXYZ[1]],
+									   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+			bt1886 = colormath.BT1886(mtx, XYZbp, gamma)
+
+		if sim_profile:
+			sim_intent = ("a"
+						  if getcfg("measurement_report.whitepoint.simulate")
+						  else "r")
+			void, sim_ti3, sim_gray = self.worker.chart_lookup(chart, 
+													  sim_profile,
+													  check_missing_fields=True, 
+													  intent=sim_intent,
+													  bt1886=bt1886)
+			# NOTE: we ignore the ti1 and gray patches here
+			# only the ti3 is valuable at this point
+			if not sim_ti3:
+				return
+			intent = ("r"
+					  if sim_intent == "r" or
+					  getcfg("measurement_report.whitepoint.simulate.relative")
+					  else "a")
+			bt1886 = None
+		else:
+			sim_intent = None
+			intent = "r"
 		
 		# lookup test patches
 		ti1, ti3_ref, gray = self.worker.chart_lookup(sim_ti3 or chart, 
-													  profile, bool(sim_ti3))
+													  profile, bool(sim_ti3),
+													  intent=intent,
+													  bt1886=bt1886)
 		if not ti3_ref:
 			return
 		if not gray and sim_gray:
 			gray = sim_gray
 		
+		if devlink:
+			void, ti1, void = self.worker.chart_lookup(chart, devlink,
+													   check_missing_fields=True)
+			if not ti1:
+				return
+		
 		# let the user choose a location for the result
-		defaultFile = "%s %s" % (re.sub(r"[\\/:*?\"<>|]+", "_",
-										self.display_ctrl.GetStringSelection()),
-								 strftime("%Y-%m-%d %H-%M.html"))
+		defaultFile = u"Measurement Report %s — %s — %s" % (version,
+			re.sub(r"[\\/:*?\"<>|]+", "_",
+			self.display_ctrl.GetStringSelection().replace(" " +
+														   lang.getstr("display.primary"),
+														   "")),
+			strftime("%Y-%m-%d %H-%M.html"))
 		defaultDir = get_verified_path(None, 
 									   os.path.join(getcfg("profile.save_path"), 
 									   defaultFile))[0]
-		dlg = wx.FileDialog(self, lang.getstr("save_as"), 
+		dlg = wx.FileDialog(self.reportframe, lang.getstr("save_as"), 
 							defaultDir, defaultFile, 
 							wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
 							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
@@ -4658,7 +4744,7 @@ class MainFrame(BaseFrame):
 			if not waccess(path, os.W_OK):
 				show_result_dialog(Error(lang.getstr("error.access_denied.write",
 													 path)),
-								   self)
+								   self.reportframe)
 				return
 			save_path = os.path.splitext(path)[0] + ".html"
 			setcfg("last_filedialog_path", save_path)
@@ -4668,7 +4754,7 @@ class MainFrame(BaseFrame):
 		# check if file(s) already exist
 		if os.path.exists(save_path):
 				dlg = ConfirmDialog(
-					self, msg=lang.getstr("dialog.confirm_overwrite", 
+					self.reportframe, msg=lang.getstr("dialog.confirm_overwrite", 
 										  save_path), 
 					ok=lang.getstr("overwrite"), 
 					cancel=lang.getstr("cancel"), 
@@ -4680,10 +4766,13 @@ class MainFrame(BaseFrame):
 		
 		# setup for measurement
 		self.setup_measurement(self.measurement_report, ti1, profile, sim_profile, 
-							   ti3_ref, sim_ti3, save_path, chart, gray)
+							   intent, sim_intent, devlink, ti3_ref, sim_ti3,
+							   save_path, chart, gray, apply_bt1886,
+							   colormanaged)
 
-	def measurement_report(self, ti1, profile, sim_profile, ti3_ref, sim_ti3, 
-					   save_path, chart, gray):
+	def measurement_report(self, ti1, profile, sim_profile, intent, sim_intent,
+						   devlink, ti3_ref, sim_ti3, save_path, chart, gray,
+						   apply_bt1886, colormanaged):
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("measurement_report")
 		safe_print(progress_msg)
@@ -4691,7 +4780,7 @@ class MainFrame(BaseFrame):
 		# setup temp dir
 		temp = self.worker.create_tempdir()
 		if isinstance(temp, Exception):
-			show_result_dialog(temp, self)
+			show_result_dialog(temp, self.reportframe)
 			return
 		
 		# filenames
@@ -4703,7 +4792,7 @@ class MainFrame(BaseFrame):
 		try:
 			ti1_file = open(ti1_path, "w")
 		except (IOError, OSError), exception:
-			InfoDialog(self, msg=lang.getstr("error.file.create", 
+			InfoDialog(self.reportframe, msg=lang.getstr("error.file.create", 
 											 ti1_path), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
@@ -4724,7 +4813,8 @@ class MainFrame(BaseFrame):
 					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 				wx.CallAfter(show_result_dialog,
-							 Error(lang.getstr("cal_extraction_failed")), self)
+							 Error(lang.getstr("cal_extraction_failed")),
+							 self.reportframe)
 				self.Show()
 				return
 			cal_path = os.path.join(temp, name + ".cal")
@@ -4739,13 +4829,16 @@ class MainFrame(BaseFrame):
 		self.worker.start(self.measurement_report_consumer, 
 						  self.worker.measure_ti1, 
 						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
-								 profile, sim_profile, ti3_ref, sim_ti3, 
-								 save_path, chart, gray),
-						  wargs=(ti1_path, cal_path),
+								 profile, sim_profile, intent, sim_intent,
+								 devlink, ti3_ref, sim_ti3, save_path, chart,
+								 gray, apply_bt1886),
+						  wargs=(ti1_path, cal_path, colormanaged),
 						  progress_msg=progress_msg)
 	
 	def measurement_report_consumer(self, result, ti3_path, profile, sim_profile,
-								ti3_ref, sim_ti3, save_path, chart, gray):
+									intent, sim_intent, devlink, ti3_ref,
+									sim_ti3, save_path, chart, gray,
+									apply_bt1886):
 		
 		if not isinstance(result, Exception) and result:
 			# get item 0 of the ti3 to strip the CAL part from the measured data
@@ -4760,7 +4853,7 @@ class MainFrame(BaseFrame):
 		
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
-				wx.CallAfter(show_result_dialog, result, self)
+				wx.CallAfter(show_result_dialog, result, self.reportframe)
 			return
 
 		# Account for additional white patches
@@ -4869,15 +4962,23 @@ class MainFrame(BaseFrame):
 		else:
 			wtpt_profile = wtpt_profile_norm
 		
+		if sim_profile:
+			wtpt_sim_profile_norm = tuple(n * 100 for n in sim_profile.tags.wtpt.values())
+			if "chad" in sim_profile.tags:
+				# undo chromatic adaption of profile whitepoint
+				WX, WY, WZ = sim_profile.tags.chad.inverted() * wtpt_sim_profile_norm
+				wtpt_sim_profile_norm = tuple((n / WY) * 100.0 for n in (WX, WY, WZ))
+		
 		wtpt_measured = tuple(float(n) for n in ti3_joined.LUMINANCE_XYZ_CDM2.split())
 		# normalize so that Y = 100
 		wtpt_measured_norm = tuple((n / wtpt_measured[1]) * 100 for n in wtpt_measured)
 		
-		white = ti3_joined.queryi(white_rgb)
-		for i in white:
-			white[i].update({'XYZ_X': wtpt_measured_norm[0], 
-							 'XYZ_Y': wtpt_measured_norm[1], 
-							 'XYZ_Z': wtpt_measured_norm[2]})
+		if intent != "a" and sim_intent != "a":
+			white = ti3_joined.queryi(white_rgb)
+			for i in white:
+				white[i].update({'XYZ_X': wtpt_measured_norm[0], 
+								 'XYZ_Y': wtpt_measured_norm[1], 
+								 'XYZ_Z': wtpt_measured_norm[2]})
 		
 		black = ti3_joined.queryi1({'RGB_R': 0, 'RGB_G': 0, 'RGB_B': 0})
 		if black:
@@ -4914,6 +5015,19 @@ class MainFrame(BaseFrame):
 						Lab = XYZ2Lab(X, Y, Z)
 						for j, color in enumerate(labels_Lab):
 							data.DATA[i][color] = Lab[j]
+			if data is ti3_ref and sim_profile and intent == "a":
+				for i in data.DATA:
+					# we need to adapt the reference values to D50
+					L, a, b = [data.DATA[i][color] for color in labels_Lab]
+					X, Y, Z = colormath.Lab2XYZ(L, a, b, scale=100)
+					#print X, Y, Z, '->',
+					X, Y, Z = colormath.adapt(X, Y, Z,
+											  wtpt_profile_norm,
+											  cat=cat)
+					#print X, Y, Z
+					Lab = XYZ2Lab(X, Y, Z)
+					for j, color in enumerate(labels_Lab):
+						data.DATA[i][color] = Lab[j]
 		
 		# gather data for report
 		
@@ -4960,9 +5074,16 @@ class MainFrame(BaseFrame):
 			else:
 				ccmx = "None"
 		
+		use_sim = getcfg("measurement_report.use_simulation_profile")
+		use_sim_as_output = getcfg("measurement_report.use_simulation_profile_as_output")
+		if not sim_profile and use_sim and use_sim_as_output:
+			sim_profile = profile
+		
 		placeholders2data = {"${PLANCKIAN}": 'checked="checked"' if planckian 
 											 else "",
-							 "${DISPLAY}": self.display_ctrl.GetStringSelection(),
+							 "${DISPLAY}": self.display_ctrl.GetStringSelection().replace(" " +
+																						  lang.getstr("display.primary"),
+																						  ""),
 							 "${INSTRUMENT}": instrument,
 							 "${CORRECTION_MATRIX}": ccmx,
 							 "${BLACKPOINT}": "%f %f %f" % (bkpt_measured if
@@ -4975,6 +5096,14 @@ class MainFrame(BaseFrame):
 							 "${PROFILE_WHITEPOINT_NORMALIZED}": "%f %f %f" % 
 																 wtpt_profile_norm,
 							 "${SIMULATION_PROFILE}": sim_profile.getDescription() if sim_profile else '',
+							 "${BT_1886_GAMMA}": str(getcfg("measurement_report.bt1886_gamma")
+													 if apply_bt1886 else 'null'),
+							 "${BT_1886_GAMMA_TYPE}": str(getcfg("measurement_report.bt1886_gamma_type")
+														  if apply_bt1886 else ''),
+							 "${WHITEPOINT_SIMULATION}": str(sim_intent == "a").lower(),
+							 "${WHITEPOINT_SIMULATION_RELATIVE}": str(sim_intent == "a" and
+																	  intent == "r").lower(),
+							 "${DEVICELINK_PROFILE}": devlink.getDescription() if devlink else '',
 							 "${TESTCHART}": os.path.basename(chart),
 							 "${ADAPTION}": str(cat),
 							 "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
@@ -6296,7 +6425,7 @@ class MainFrame(BaseFrame):
 						profile = ICCP.ICCProfile(path)
 						cgats = self.worker.ti1_lookup_to_ti3(ccxx, profile,
 															  pcs="x",
-															  absolute=True)[1]
+															  intent="a")[1]
 						cgats.add_keyword("DATA_SOURCE",
 										  profile.tags.get("meta",
 														   {}).get("DATA_source",
@@ -8493,6 +8622,13 @@ class MainFrame(BaseFrame):
 				del self.lut3dframe
 				if visible:
 					self.lut3d_create_handler(None)
+			if getattr(self, "reportframe", None):
+				visible = self.reportframe.IsShownOnScreen()
+				self.reportframe.Close()
+				self.reportframe.Destroy()
+				del self.reportdframe
+				if visible:
+					self.measurement_report_create_handler(None)
 			if hasattr(self, "tcframe"):
 				visible = self.tcframe.IsShownOnScreen()
 				self.tcframe.tc_close_handler()
@@ -9319,6 +9455,8 @@ class MainFrame(BaseFrame):
 			self.lut_viewer.Hide()
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.Hide()
+		if getattr(self, "reportframe", None):
+			self.reportframe.Hide()
 		if getattr(self, "synthiccframe", None):
 			self.synthiccframe.Hide()
 		for profile_info in self.profile_info.values():

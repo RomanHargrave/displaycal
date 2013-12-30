@@ -43,25 +43,59 @@ td, th {
 	page-break-inside: avoid;
 }
 .graph table {
-	background-repeat: repeat-x;
+	background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAIICAYAAABXZX+fAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAG9JREFUeNrt1SEBADAMA8HE7HTUeWdhaOiCD4V8dzcvKwiCSdKZOe4BQRAEdQYEQRDUGRAEQRDUGRAEQVBnQBAEQZ0BQRAEQZ0BQRAEdQYEQRDUGT+CIAiCOgOCIAjqDAiCIKgz7gFBEAR1BgS/wwvShwYgc/1YjwAAAABJRU5ErkJggg==') repeat-x 0 0;
 }
-.graph table td div {
+.graph td div {
 	margin: 0 auto;
 }
-.graph table td,
-.graph table th {
+.graph td,
+.graph th {
 	border-bottom: 0;
 	font-weight: normal;
 	padding: 0;
 }
-.graph table th {
+.graph th {
+	height: 40px;
 	padding: 0 .5em 0 0;
 	text-align: right;
 }
-.info table td, .info table th, td.first-column, th.first-column {
+.graph .last-col {
 	text-align: left;
 }
-.info table th {
+.graph .col,
+.graph .canvas {
+	overflow: hidden;
+	position: relative;
+}
+.graph .ref,
+.graph .act {
+	border: 2px solid silver;
+	height: 6px;
+	left: 50%;
+	position: absolute;
+}
+.graph .ref {
+	border-radius: 7px;
+	-moz-border-radius: 7px;
+	-webkit-border-radius: 7px;
+	height: 10px;
+	margin-bottom: -7px;
+	margin-left: -7px;
+	width: 10px;
+}
+.graph .act {
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	height: 6px;
+	margin-bottom: -5px;
+	margin-left: -5px;
+	width: 6px;
+}
+.info td, .info th, td.first-column, th.first-column {
+	text-align: left;
+}
+.info th {
 	padding-right: 1em;
 }
 td.bar {

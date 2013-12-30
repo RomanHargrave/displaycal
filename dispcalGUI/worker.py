@@ -500,6 +500,23 @@ def get_argyll_version(name, silent=False):
 	return argyll_version
 
 
+def get_current_profile_path():
+	profile = None
+	profile_path = getcfg("calibration.file")
+	if profile_path:
+		try:
+			profile = ICCP.ICCProfile(profile_path)
+		except Exception, exception:
+			return
+	else:
+		try:
+			profile = ICCP.get_display_profile(getcfg("display.number") - 1)
+		except Exception, exception:
+			return
+	if profile:
+		return profile.fileName
+
+
 def parse_argument_string(args):
 	""" Parses an argument string and returns a list of arguments. """
 	return [re.sub('^["\']|["\']$', '', arg) for arg in
@@ -1520,7 +1537,7 @@ class Worker(object):
 					if not applycal:
 						raise NotImplementedError(lang.getstr("argyll.util.not_found",
 															  "applycal"))
-					safe_print(lang.getstr("3dlut.output.profile.apply_cal"))
+					safe_print(lang.getstr("apply_cal"))
 					result = self.exec_cmd(applycal, ["-v",
 													  profile_out_cal_path,
 													  profile_out_basename,
@@ -1530,7 +1547,7 @@ class Worker(object):
 					if isinstance(result, Exception) and not getcfg("dry_run"):
 						raise result
 					elif not result:
-						raise Error("\n\n".join([lang.getstr("3dlut.output.profile.apply_cal.error"),
+						raise Error("\n\n".join([lang.getstr("apply_cal.error"),
 												 "\n".join(self.errors)]))
 
 			# Now build the device link
@@ -4985,7 +5002,8 @@ class Worker(object):
 		return result
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, 
-					 check_missing_fields=False, absolute=False):
+					 check_missing_fields=False, function="f", pcs="l",
+					 intent="r", bt1886=None):
 		""" Lookup CIE or device values through profile """
 		if profile.colorSpace == "RGB":
 			labels = ('RGB_R', 'RGB_G', 'RGB_B')
@@ -5019,18 +5037,42 @@ class Worker(object):
 				cgats.type = 'CTI1'
 				cgats.COLOR_REP = profile.colorSpace
 				ti1, ti3_ref, gray = self.ti1_lookup_to_ti3(cgats, profile, 
-															"l", absolute)
+															function, pcs,
+															"r")
+				if bt1886 or intent == "a":
+					cat = profile.guess_cat() or "Bradford"
+					for item in ti3_ref.DATA.itervalues():
+						if pcs == "l":
+							X, Y, Z = colormath.Lab2XYZ(item["LAB_L"],
+														item["LAB_A"],
+														item["LAB_B"])
+						else:
+							X, Y, Z = item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"]
+						if bt1886:
+							X, Y, Z = bt1886.apply(X, Y, Z)
+						if intent == "a":
+							X, Y, Z = colormath.adapt(X, Y, Z,
+													  "D50",
+													  profile.tags.wtpt.values(),
+													  cat=cat)
+						X, Y, Z = [v * 100 for v in (X, Y, Z)]
+						if pcs == "l":
+							(item["LAB_L"],
+							 item["LAB_A"],
+							 item["LAB_B"]) = colormath.XYZ2Lab(X, Y, Z)
+						else:
+							item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"] = X, Y, Z
 			else:
 				if not primaries and check_missing_fields:
 					raise ValueError(lang.getstr("error.testchart.missing_fields", 
 												 (cgats.filename, ", ".join(labels))))
-				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile)
+				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile, intent)
 		except Exception, exception:
 			InfoDialog(self.owner, msg=safe_unicode(exception), 
 					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
 		return ti1, ti3_ref, gray
 	
-	def ti1_lookup_to_ti3(self, ti1, profile, pcs=None, absolute=False):
+	def ti1_lookup_to_ti3(self, ti1, profile, function="f", pcs=None, intent="r"):
 		"""
 		Read TI1 (filename or CGATS instance), lookup device->pcs values 
 		colorimetrically through profile using Argyll's xicclu 
@@ -5053,14 +5095,17 @@ class Worker(object):
 							'ICCP.ICCProfile instance')
 		
 		# determine pcs for lookup
-		if not pcs:
-			color_rep = profile.connectionColorSpace.upper()
+		color_rep = profile.connectionColorSpace.upper()
+		if color_rep == "RGB":
+			pcs = None
+		elif not pcs:
 			if color_rep == 'LAB':
 				pcs = 'l'
 			elif color_rep == 'XYZ':
 				pcs = 'x'
 			else:
 				raise ValueError('Unknown CIE color representation ' + color_rep)
+		
 		
 		# get profile color space
 		colorspace = profile.colorSpace
@@ -5138,7 +5183,10 @@ class Worker(object):
 			startupinfo.wShowWindow = sp.SW_HIDE
 		else:
 			startupinfo = None
-		p = sp.Popen([xicclu, '-ff', '-i' + ('a' if absolute else 'r'), '-p' + pcs, '-s100', "temp.icc"], 
+		args = [xicclu, '-f' + function]
+		if pcs:
+			args += ['-i' + intent, '-p' + pcs]
+		p = sp.Popen(args + ['-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
 					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
@@ -5226,9 +5274,12 @@ class Worker(object):
 
 		# write output ti3
 		ofile = StringIO()
-		ofile.write('CTI3\n')
-		ofile.write('\n')
-		ofile.write('DESCRIPTOR "Argyll Calibration Target chart information 3"\n')
+		if pcs:
+			ofile.write('CTI3   \n')
+			ofile.write('\nDESCRIPTOR "Argyll Calibration Target chart information 3"\n')
+		else:
+			ofile.write('CTI1   \n')
+			ofile.write('\nDESCRIPTOR "Argyll Calibration Target chart information 1"\n')
 		ofile.write('KEYWORD "DEVICE_CLASS"\n')
 		ofile.write('DEVICE_CLASS "' + ('DISPLAY' if colorspace == 'RGB' else 
 										'OUTPUT') + '"\n')
@@ -5251,12 +5302,15 @@ class Worker(object):
 				ocolor = line[-1].strip('[]').upper()
 				if ocolor == 'LAB':
 					ilabel = 'LAB_L LAB_A LAB_B'
-				elif ocolor == 'XYZ':
+				elif ocolor in ('XYZ', 'RGB'):
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
 					raise ValueError('Unknown CIE color representation ' + ocolor)
 				ofile.write('KEYWORD "COLOR_REP"\n')
-				ofile.write('COLOR_REP "' + icolor + '_' + ocolor + '"\n')
+				if icolor == ocolor:
+					ofile.write('COLOR_REP "' + icolor + '"\n')
+				else:
+					ofile.write('COLOR_REP "' + icolor + '_' + ocolor + '"\n')
 				
 				ofile.write('\n')
 				ofile.write('NUMBER_OF_FIELDS ')
@@ -5280,6 +5334,10 @@ class Worker(object):
 				# Need to scale XYZ coming from xicclu, Lab is already scaled
 				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) 
 					   for n in cie]
+			elif not pcs:
+				line[:3] = line[5 + offset:-1]
+				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) 
+					   for n in colormath.RGB2XYZ(*[n / 100.0 for n in cie])]
 			cie = [str(n) for n in cie]
 			if include_sample_name:
 				ofile.write(str(i) + ' ' + data[i - 1][1].strip('"') + ' ' + 
@@ -5291,7 +5349,7 @@ class Worker(object):
 		ofile.seek(0)
 		return ti1, CGATS.CGATS(ofile)[0], map(list, gray)
 	
-	def ti3_lookup_to_ti1(self, ti3, profile):
+	def ti3_lookup_to_ti1(self, ti3, profile, intent="r"):
 		"""
 		Read TI3 (filename or CGATS instance), lookup cie->device values 
 		colorimetrically through profile using Argyll's xicclu 
@@ -5395,7 +5453,7 @@ class Worker(object):
 			startupinfo.wShowWindow = sp.SW_HIDE
 		else:
 			startupinfo = None
-		p = sp.Popen([xicclu, '-fb', '-ir', '-p' + pcs, '-s100', "temp.icc"], 
+		p = sp.Popen([xicclu, '-fb', '-i' + intent, '-p' + pcs, '-s100', "temp.icc"], 
 					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
 					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 		odata = p.communicate('\n'.join(idata))[0].splitlines()
@@ -5499,7 +5557,7 @@ class Worker(object):
 			result = cmd
 		return result
 
-	def measure_ti1(self, ti1_path, cal_path=None):
+	def measure_ti1(self, ti1_path, cal_path=None, colormanaged=False):
 		""" Measure a TI1 testchart file """
 		if config.get_display_name() == "Untethered":
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
@@ -5509,6 +5567,8 @@ class Worker(object):
 		else:
 			cmd = get_argyll_util("dispread")
 			args = ["-v"]
+			if config.get_display_name() == "madVR" and colormanaged:
+				args += ["-V"]
 			if cal_path:
 				if (self.argyll_version >= [1, 3, 3] and
 					(not self.has_lut_access() or

@@ -128,14 +128,52 @@ table {
 td, th {
 	font-size: 12px;
 }
+.graph {
+	position: relative;
+}
 .graph table,
-.graph table th,
-.graph table tr:last-child td {
+.graph th,
+.graph tr.x td,
+.graph .canvas {
 	background-color: #eee;
 	border-radius: 10px;
 	-moz-border-radius: 10px;
 	-webkit-border-radius: 10px;
 	color: #333;
+}
+.graph .canvas {
+	overflow: visible;
+}
+.graph th {
+	padding: 0 .5em 0;
+}
+.graph .ref {
+	background: #eee;
+}
+.graph .act {
+	-moz-transition: all .125s linear;
+	-webkit-transition: all .125s linear;
+	-o-transition: all .125s linear;
+	transition: all .125s linear;
+}
+.graph .act:hover,
+.graph .col:hover .act {
+	-moz-transform: scale(1.6);
+	-webkit-transform: scale(1.6);
+	-o-transform: scale(1.6);
+	-ms-transform: scale(1.6);
+	transform: scale(1.6);
+/*
+	border-radius: 8px;
+	border-width: 3px;
+	height: 10px;
+	margin-bottom: -8px;
+	margin-left: -8px;
+	width: 10px;
+*/
+}
+.graph .act:hover {
+	z-index: 999;
 }
 .toggle:before {
 	content: '▼ ';
@@ -148,4 +186,71 @@ td, th {
 }
 .collapsed .collapsed {
 	display: none;
+}
+/* Pure CSS3 Tooltips */
+[data-title] {
+	cursor: default;
+}
+a[data-title] {
+	cursor: pointer;
+}
+[data-title]:before {
+	/* Tooltip body */
+	background: #333;
+	border-radius: 7px;
+	-moz-border-radius: 7px;
+	-webkit-border-radius: 7px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+	color: #fff;
+	content: attr(data-title);
+	font-weight: normal;
+	margin-left: 19px;
+	max-width: 900px;
+	overflow: hidden;
+	padding: 4px 7px;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: pre;
+}
+[data-title]:after {
+	/* Tooltip arrow */
+	border-bottom: 7px solid transparent;
+	border-top: 7px solid transparent;
+	border-right: 7px solid #333;
+	content: "";
+	margin-left: 12px;
+	margin-top: 12px;
+}
+[data-title]:before,
+[data-title]:after {
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	top: 46%;
+	-moz-transform: translate3d(0, 0, 0) translateX(11px);
+	-webkit-transform: translate3d(0, 0, 0) translateX(11px);
+	-o-transform: translate3d(0, 0, 0) translateX(11px);
+	-ms-transform: translate3d(0, 0, 0) translateX(11px);
+	transform: translate3d(0, 0, 0) translateX(11px);
+	-moz-transition: -moz-transform .25s ease, opacity .25s ease, visibility .25s ease;
+	-webkit-transition: -webkit-transform .25s ease, opacity .25s ease, visibility .25s ease;
+	-o-transition: -o-transform .25s ease, opacity .25s ease, visibility .25s ease;
+	transition: transform .25s ease, opacity .25s ease, visibility .25s ease;
+	visibility: hidden;
+	z-index: 9999;
+}
+.graph .canvas [data-title]:before,
+.graph .canvas [data-title]:after {
+	left: 4px;
+	top: -14px;
+}
+[data-title]:hover:after,
+[data-title]:hover:before {
+	opacity: 1;
+	-moz-transform: translate3d(0, 0, 0) translateX(0);
+	-webkit-transform: translate3d(0, 0, 0) translateX(0);
+	-o-transform: translate3d(0, 0, 0) translateX(0);
+	-ms-transform: translate3d(0, 0, 0) translateX(0);
+	transform: translate3d(0, 0, 0) translateX(0);
+	visibility: visible;
 }

@@ -73,7 +73,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="output_profile_label">
-                    <label>3dlut.output.profile</label>
+                    <label>output.profile</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                   <border>8</border>
@@ -120,7 +120,7 @@
                 <object class="spacer"/>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="apply_cal_cb">
-                    <label>3dlut.output.profile.apply_cal</label>
+                    <label>apply_cal</label>
                   </object>
                 </object>
                 <object class="sizeritem">
@@ -151,7 +151,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="apply_bt1886_cb">
-                    <label>3dlut.apply_bt1886_gamma_mapping</label>
+                    <label>apply_bt1886_gamma_mapping</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                   <border>8</border>

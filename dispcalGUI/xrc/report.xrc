@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resource>
+  <object class="wxFrame" name="reportframe" subclass="dispcalGUI.ReportFrame">
+    <object class="wxBoxSizer">
+      <orient>wxVERTICAL</orient>
+      <object class="sizeritem">
+        <object class="wxPanel" name="panel">
+          <object class="wxBoxSizer">
+            <orient>wxVERTICAL</orient>
+            <object class="sizeritem">
+              <object class="wxFlexGridSizer">
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>testchart_or_reference</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxFilePickerCtrl" name="chart_ctrl">
+                    <message>measurement_report_choose_chart_or_reference</message>
+                    <wildcard>filetype.icc|*.icc;*.icm</wildcard>
+                    <XRCED>
+                      <events>EVT_FILEPICKER_CHANGED</events>
+                    </XRCED>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="simulation_profile_cb">
+                    <label>simulation_profile</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxFilePickerCtrl" name="simulation_profile_ctrl">
+                    <message>simulation_profile</message>
+                    <wildcard>filetype.icc|*.icc;*.icm</wildcard>
+                    <XRCED>
+                      <events>EVT_FILEPICKER_CHANGED</events>
+                    </XRCED>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxStaticBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="simulation_profile_desc">
+                        <label>-</label>
+                      </object>
+                      <option>1</option>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
+                  </object>
+                  <flag>wxTOP|wxEXPAND</flag>
+                  <border>-8</border>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="use_simulation_profile_as_output_cb">
+                    <label>use_simulation_profile_as_output</label>
+                  </object>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="apply_bt1886_cb">
+                        <label>apply_bt1886_gamma_mapping</label>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxComboBox" name="bt1886_gamma_ctrl">
+                        <size>75,-1</size>
+                        <content>
+                          <item>2.2</item>
+                          <item>2.4</item>
+                        </content>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxChoice" name="bt1886_gamma_type_ctrl">
+                        <content>
+                          <item/>
+                        </content>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
+                  </object>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="simulate_whitepoint_cb">
+                        <label>whitepoint.simulate</label>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="simulate_whitepoint_relative_cb">
+                        <label>whitepoint.simulate.relative</label>
+                      </object>
+                    </object>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="devlink_profile_cb">
+                    <label>devlink_profile</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxFilePickerCtrl" name="devlink_profile_ctrl">
+                    <message>devlink_profile</message>
+                    <wildcard>filetype.icc|*.icc;*.icm</wildcard>
+                    <XRCED>
+                      <events>EVT_FILEPICKER_CHANGED</events>
+                    </XRCED>
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxStaticBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="devlink_profile_desc">
+                        <label>-</label>
+                      </object>
+                      <option>1</option>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
+                  </object>
+                  <flag>wxTOP|wxEXPAND</flag>
+                  <border>-8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="output_profile_label">
+                    <label>output.profile</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxFilePickerCtrl" name="output_profile_ctrl">
+                        <message>measurement_report_choose_profile</message>
+                        <wildcard>filetype.icc|*.icc;*.icm</wildcard>
+                        <XRCED>
+                          <events>EVT_FILEPICKER_CHANGED</events>
+                        </XRCED>
+                      </object>
+                      <option>1</option>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxButton" name="output_profile_current_btn">
+                        <label>profile.current</label>
+                      </object>
+                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>4</border>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
+                  </object>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxStaticBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="output_profile_desc">
+                        <label>-</label>
+                      </object>
+                      <option>1</option>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
+                  </object>
+                  <flag>wxTOP|wxEXPAND</flag>
+                  <border>-8</border>
+                </object>
+                <cols>2</cols>
+                <rows>0</rows>
+                <vgap>8</vgap>
+                <growablecols>1</growablecols>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxButton" name="measure_btn">
+                    <label>measure</label>
+                  </object>
+                  <flag>wxALIGN_RIGHT|wxALIGN_BOTTOM</flag>
+                </object>
+              </object>
+              <flag>wxALL|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+          </object>
+        </object>
+        <option>1</option>
+        <flag>wxEXPAND</flag>
+      </object>
+    </object>
+    <pos>-1,100</pos>
+    <title>measurement_report</title>
+    <style>wxDEFAULT_FRAME_STYLE</style>
+    <XRCED>
+      <events>EVT_CLOSE</events>
+    </XRCED>
+  </object>
+</resource>

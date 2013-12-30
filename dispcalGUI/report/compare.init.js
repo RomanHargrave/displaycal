@@ -27,6 +27,7 @@ window.onload = function() {
 			};
 		};
 	};
+	if (WHITEPOINT_SIMULATION && !WHITEPOINT_SIMULATION_RELATIVE) document.forms['F_out'].elements['FF_absolute'].checked = true;
 	analyze()
 };
 };

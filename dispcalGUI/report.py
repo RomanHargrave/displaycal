@@ -102,7 +102,17 @@ def update(report_path, pack=True):
 			("${PROFILE_WHITEPOINT_NORMALIZED}", 
 			 '"FF_profile_whitepoint_normalized"\s*value="(.+?)"\s\/>', 0),
 			("${SIMULATION_PROFILE}",
-			 'SIMULATION_PROFILE\s*=\s*"(.+?)";', 0),
+			 'SIMULATION_PROFILE\s*=\s*"(.+?)"[;,]', 0),
+			("${BT_1886_GAMMA}",
+			 'BT_1886_GAMMA\s*=\s*(.+?)[;,]', 0),
+			("${BT_1886_GAMMA_TYPE}",
+			 'BT_1886_GAMMA_TYPE\s*=\s*"(.+?)"[;,]', 0),
+			("${WHITEPOINT_SIMULATION}",
+			 'WHITEPOINT_SIMULATION\s*=\s*(.+?)[;,]', 0),
+			("${WHITEPOINT_SIMULATION_RELATIVE}",
+			 'WHITEPOINT_SIMULATION_RELATIVE\s*=\s*(.+?)[;,]', 0),
+			("${DEVICELINK_PROFILE}",
+			 'DEVICELINK_PROFILE\s*=\s*"(.+?)"[;,]', 0),
 			("${TESTCHART}", '"FF_testchart"\s*value="(.+?)"\s\/>', 0),
 			("${ADAPTION}", '"FF_adaption"\s*value="(.+?)"\s\/>', 0),
 			("${DATETIME}", '"FF_datetime"\s*value="(.+?)"\s\/>', 0),
@@ -118,7 +128,10 @@ def update(report_path, pack=True):
 						 "${CAL_ENTRYCOUNT}": "null",
 						 "${CAL_RGBLEVELS}": "null",
 						 "${GRAYSCALE}": "null",
-						 "${BLACKPOINT}": "-1 -1 -1"}
+						 "${BLACKPOINT}": "-1 -1 -1",
+						 "${BT_1886_GAMMA}": "null",
+						 "${WHITEPOINT_SIMULATION}": "false",
+						 "${WHITEPOINT_SIMULATION_RELATIVE}": "false"}
 	
 	for placeholder, pattern, flags in data:
 		result = re.search(pattern, orig_report_html, flags)

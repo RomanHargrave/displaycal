@@ -26,8 +26,8 @@ h2 {
 p {
 	line-height: 1.5em;
 }
-.graph table th,
-.graph table tr:last-child td {
+.graph th,
+.graph tr.x td {
 	background: #fff;
 }
 .collapsed {
