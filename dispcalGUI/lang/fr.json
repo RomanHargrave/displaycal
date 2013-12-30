@@ -190,6 +190,7 @@
 	"d3-e4-s0-g25-m3-b3-f0-crossover.ti1": "Grille de test étendue pour profils de matrice",
 	"d3-e4-s0-g49-m3-b3-f0-crossover.ti1": "Grande grille de test pour profils de matrice",
 	"d3-e4-s0-g97-m3-b3-f0-crossover.ti1": "Très grande grille de test pour profils de matrice",
+	"d3-e4-s3-g3-m0-f0.ti1": "Grille de tests par défaut pour les profils « gamma + matrice »",
 	"d3-e4-s13-g37-m4-b4-f0.ti1": "Petite grille de test pour profils de tables de correspondance",
 	"d3-e4-s17-g49-m5-b5-f0.ti1": "Grille de test par défaut pour profils de tables de correspondance",
 	"d3-e4-s21-g61-m6-b6-f0.ti1": "Grille de test étendue pour profils de tables de correspondance",

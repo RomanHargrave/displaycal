@@ -184,6 +184,7 @@
 	"d3-e4-s0-g25-m3-b3-f0-crossover.ti1": "Erweiterte Testform für Matrix-Profile",
 	"d3-e4-s0-g49-m3-b3-f0-crossover.ti1": "Große Testform für Matrix-Profile",
 	"d3-e4-s0-g97-m3-b3-f0-crossover.ti1": "Sehr große Testform für Matrix-Profile",
+	"d3-e4-s3-g3-m0-f0.ti1": "Standard-Testform für „Gamma + Matrix“-Profile",
 	"d3-e4-s13-g37-m4-b4-f0.ti1": "Kleine Testform für LUT-Profile",
 	"d3-e4-s17-g49-m5-b5-f0.ti1": "Standard-Testform für LUT-Profile",
 	"d3-e4-s21-g61-m6-b6-f0.ti1": "Erweiterte Testform für LUT-Profile",
