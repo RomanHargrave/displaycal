@@ -1608,7 +1608,7 @@ class Worker(object):
 												  ".txt"])
 				if not result:
 					result = UnloggedError("\n\n".join([lang.getstr("aborted"),
-														"\n".join(self.errors)]))
+														"".join(self.output)]))
 				if isinstance(result2, Exception):
 					if isinstance(result, Exception):
 						result = Error(safe_unicode(result) + "\n\n" +
@@ -1620,6 +1620,9 @@ class Worker(object):
 
 		if isinstance(result, Exception):
 			raise result
+		elif not result:
+			raise UnloggedError("\n\n".join([lang.getstr("aborted"),
+											 "".join(self.output)]))
 
 		# We have to create the 3DLUT ourselves
 
