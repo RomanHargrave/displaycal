@@ -232,7 +232,7 @@ class ReportFrame(BaseFrame):
 					wildcard = lang.getstr("filetype.icc")  + "|*.icc;*.icm"
 				else:
 					wildcard = (lang.getstr("filetype.ti1_ti3_txt") + 
-								"|*.cgats;*.cie;*.ti1;*.ti3;*.txt")
+								"|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt")
 				msg = {"chart": "measurement_report_choose_chart_or_reference",
 					   "output_profile": "measurement_report_choose_profile"}.get(which, which)
 				setattr(self, "%s_ctrl" % which,
@@ -263,6 +263,7 @@ class ReportFrame(BaseFrame):
 				droptarget.drophandlers = {".cgats": handler,
 										   ".cie": handler,
 										   ".ti1": handler,
+										   ".ti2": handler,
 										   ".ti3": handler,
 										   ".txt": handler}
 			droptarget.unsupported_handler = getattr(self,
