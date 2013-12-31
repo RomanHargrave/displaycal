@@ -248,12 +248,9 @@ a[data-title] {
 	z-index: 99999;
 }
 .canvas [data-title]:before {
-	border-bottom-left-radius: 0;
-	-moz-border-radius-bottomleft: 0;
-	-webkit-border-bottom-left-radius: 0;
-	border-bottom-right-radius: 0;
-	-moz-border-radius-bottomright: 0;
-	-webkit-border-bottom-right-radius: 0;
+	border-radius: 0;
+	-moz-border-radius: 0;
+	-webkit-border-radius: 0;
 	bottom: 0;
 	height: 14px;
     left: 0;
