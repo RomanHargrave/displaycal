@@ -790,9 +790,11 @@ p.generate_report = function(set_delta_calc_method) {
 		labels = 'X,Y,Z';
 	else if (mode == 'xyY')
 		labels = 'x,y,Y';
+	else if (mode == "Lu'v'")
+		labels = "L*,u',v'";
 	this.report_html.push('			<th>&#160;</th><th>' + device_labels.join('</th><th>').replace(/\w+_/g, '') + '</th><th>' + labels.split(',').join('</th><th>') + '</th>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<th>γ</th>' : '') + '<th>&#160;</th><th>&#160;</th><th>' + labels.split(',').join('</th><th>') + '</th>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<th>γ</th>' : '') + '<th>ΔL*</th>' + /* '<th>Δa*</th><th>Δb*</th>' + */ '<th>ΔC*</th><th>ΔH*</th><th>ΔE*</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
-	var grayscale_values = [], gamut_html = [];
+	var grayscale_values = [], gamut_values = [];
 	for (var i=0, n=0; i<this.data.length; i++) {
 		n++;
 		target = data_ref.data[i];
@@ -810,12 +812,17 @@ p.generate_report = function(set_delta_calc_method) {
 			actual_color = actual_Lab;
 			accuracy = 2;
 		}
-		else if (mode == 'XYZ' || mode == 'xyY') {
+		else if (mode == 'XYZ' || mode == 'xyY' || mode == "Lu'v'") {
 			target_color = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2]);
 			actual_color = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
 			if (mode == 'xyY') {
 				target_color = jsapi.math.color.XYZ2xyY(target_color[0], target_color[1], target_color[2]);
 				actual_color = jsapi.math.color.XYZ2xyY(actual_color[0], actual_color[1], actual_color[2]);
+				accuracy = 4;
+			}
+			else if (mode == "Lu'v'") {
+				target_color = jsapi.math.color.XYZ2Lu_v_(target_color[0] * 100, target_color[1] * 100, target_color[2] * 100);
+				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0] * 100, actual_color[1] * 100, actual_color[2] * 100);
 				accuracy = 4;
 			}
 			else {
@@ -845,20 +852,16 @@ p.generate_report = function(set_delta_calc_method) {
 		bar_html.push(actual.actual_DE.accuracy(2) > 0 ? '<span style="display: block; width: ' + Math.round(10 * actual.actual_DE.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em 0 .125em 0; overflow: hidden;">&#160;</span>' : '&#160;');
 		if (criteria.fields_match.join(',').indexOf('CMYK') > -1) 
 			var device = current_cmyk;
-		else
+		else {
 			var device = current_rgb;
+			for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
+		}
 		if ((target.gamma && actual.gamma) ||
 			(current_rgb[0] == 0 && current_rgb[1] == 0 && current_rgb[2] == 0) ||
 			(current_rgb[0] == 255 && current_rgb[1] == 255 && current_rgb[2] == 255)) {
 			grayscale_values.push([current_rgb, target, actual, target_Lab, actual_Lab, target_rgb, actual_rgb]);
 		}
-		if ((device.length == 3 && (device[0] == 100 || device[1] == 100 || device[2] == 100)) || (device.length == 4 && (device[0] == 0 || device[1] == 0 || device[2] == 0) && !device[3])) {
-			// Add to gamut plot
-			var title = ' data-title="' + device_channels + ': ' + device.join('% ') + '%\nNominal L*a*b*: ' + [target_Lab[0].accuracy(2), target_Lab[1].accuracy(2), target_Lab[2].accuracy(2)].join(' ') + '\nMeasured L*a*b*: ' + [actual_Lab[0].accuracy(2), actual_Lab[1].accuracy(2), actual_Lab[2].accuracy(2)].join(' ') + '\nΔE*' + delta_calc_method.substr(3) + ': ' + delta.E.accuracy(2) + '"';
-			gamut_html.push('<div class="ref" style="left: ' + (150 + target_Lab[1]) * 3 + 'px; bottom: ' + (150 + target_Lab[2]) * 3 + 'px;"' + title + '></div><div style="position: absolute; left: ' + (150 + actual_Lab[1]) * 3 + 'px; bottom: ' + ((150 + actual_Lab[2]) * 3 + 5) + 'px;"' + title + '><div class="act" style="background-color: rgb(' + actual_rgb.join(', ') + '); border-color: rgb(' + [Math.round(actual_rgb[0] * .8), Math.round(actual_rgb[1] * .8), Math.round(actual_rgb[2] * .8)].join(', ') + ');"></div></div>');
-		}
-		if (device == current_rgb)
-			for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
+		gamut_values.push([device_channels, device, target_color, actual_Lab, actual_color, target_rgb, actual_rgb, delta_calc_method, delta.E]);
 		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_color[0].accuracy(accuracy) + '</td><td>' + target_color[1].accuracy(accuracy) + '</td><td>' + target_color[2].accuracy(accuracy) + '</td>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<td>' + (target.gamma ? target.gamma.accuracy(2) : '&#160;') + '</td>' : '') + '<td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_color[0].accuracy(accuracy) + '</td><td>' + actual_color[1].accuracy(accuracy) + '</td><td>' + actual_color[2].accuracy(accuracy) + '</td>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<td>' + (actual.gamma ? actual.gamma.accuracy(2) : '&#160;') + '</td>' : '') + '<td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.L.accuracy(2) + '</td>' + /* '<td class="' + (actual.actual_Da != null ? (actual.actual_Da.accuracy(2) < actual.tolerance_Da ? 'ok' : (actual.actual_Da.accuracy(2) == actual.tolerance_Da ? 'warn' : 'ko')) : 'info') + '">' + delta.a.accuracy(2) + '</td><td class="' + (actual.actual_Db != null ? (actual.actual_Db.accuracy(2) < actual.tolerance_Db ? 'ok' : (actual.actual_Db.accuracy(2) == actual.tolerance_Db ? 'warn' : 'ko')) : 'info') + '">' + delta.b.accuracy(2) + '</td>' + */ '<td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.C.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.H.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td class="bar">' + bar_html.join('') + '</td>');
 		this.report_html.push('		</tr>');
 	};
@@ -985,12 +988,68 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html = this.report_html.concat(rgb_balance);
 	}
 	
-	if (gamut_html.length) {
+	if (gamut_values.length) {
+		var accuracy, offset, multiplier;
+		switch (mode) {
+			case "Lu'v'":
+				xy = "u'v'";
+				accuracy = 4;
+				offset = [10, 95];
+				multiplier = 1200;
+				break;
+			case 'XYZ':
+				xy = 'XZ';
+				accuracy = 2;
+				offset = [5, 95];
+				multiplier = 8;
+				break;
+			case 'xyY':
+				xy = 'xy';
+				accuracy = 4;
+				offset = [10, 95];
+				multiplier = 1000;
+				break;
+			default:
+				xy = 'a*b*';
+				accuracy = 2;
+				offset = [50, 50];
+				multiplier = 3;
+		}
 		this.report_html.push('	<div class="gamut graph">');
-		this.report_html.push('	<h3 class="toggle" onclick="toggle(this)">Gamut CIE a*b*</h3>');
-		this.report_html.push('	<div class="canvas" id="gamut" style="height: 900px;">');
-		this.report_html = this.report_html.concat(gamut_html);
-		this.report_html.push('	</div>');
+		this.report_html.push('	<h3 class="toggle" onclick="toggle(this)">Gamut CIE ' + xy + '</h3>');
+		this.report_html.push('	<div class="canvas" id="gamut" style="height: 900px;"><div class="inner" style="left: ' + offset[0] + '%; top: ' + offset[1] + '%;"><div class="overlay" style="left: -' + offset[0] * 9 + 'px; top: -' + offset[1] * 9 + 'px;"></div>');
+		gamut_values.sort(function (a, b) {
+			if (a[3][0] < b[3][0]) return -1;
+			if (a[3][0] > b[3][0]) return 1;
+			return 0;
+		});
+		for (var i = 0; i < gamut_values.length; i ++) {
+			var device_channels = gamut_values[i][0],
+				device = gamut_values[i][1],
+				target_color = gamut_values[i][2],
+				target_xy,
+				actual_color = gamut_values[i][4],
+				actual_xy,
+				target_rgb = gamut_values[i][5],
+				actual_rgb = gamut_values[i][6],
+				delta_calc_method = gamut_values[i][7],
+				deltaE = gamut_values[i][8];
+			switch (mode) {
+				case 'XYZ':
+					target_xy = [target_color[2], target_color[0]];
+					actual_xy = [actual_color[2], actual_color[0]];
+					break;
+				case 'xyY':
+					target_xy = target_color;
+					actual_xy = actual_color;
+					break;
+				default:
+					target_xy = target_color.slice(1);
+					actual_xy = actual_color.slice(1);
+			}
+			this.report_html.push('<div class="wrap" style="left: ' + (target_xy[0] * multiplier).accuracy(8) + 'em; bottom: ' + (target_xy[1] * multiplier).accuracy(8) + 'em;" data-title="#' + i.fill(String(number_of_sets).length) + ' ' + device_channels + ': ' + device.join(' ') + '\nNominal ' + labels.split(',').join('') + ': ' + [target_color[0].accuracy(accuracy), target_color[1].accuracy(accuracy), target_color[2].accuracy(accuracy)].join(' ') + '\n(Measured ' + labels.split(',').join('') + ': ' + [actual_color[0].accuracy(accuracy), actual_color[1].accuracy(accuracy), actual_color[2].accuracy(accuracy)].join(' ') + ')\nΔE*' + delta_calc_method.substr(3) + ': ' + deltaE.accuracy(2) + '"><div class="ref patch-' + i + '" data-index="' + i + '" data-bgcolor="rgb(' + target_rgb.join(', ') + ')" data-bordercolor="rgb(' + [Math.round(target_rgb[0] * .8), Math.round(target_rgb[1] * .8), Math.round(target_rgb[2] * .8)].join(', ') + ')"></div></div><div class="wrap wrap-act" style="left: ' + (actual_xy[0] * multiplier).accuracy(8) + 'em; bottom: ' + (actual_xy[1] * multiplier).accuracy(8) + 'em;" data-title="#' + i.fill(String(number_of_sets).length) + ' ' + device_channels + ': ' + device.join(' ') + '\nMeasured ' + labels.split(',').join('') + ': ' + [actual_color[0].accuracy(accuracy), actual_color[1].accuracy(accuracy), actual_color[2].accuracy(accuracy)].join(' ') + '\n(Nominal ' + labels.split(',').join('') + ': ' + [target_color[0].accuracy(accuracy), target_color[1].accuracy(accuracy), target_color[2].accuracy(accuracy)].join(' ') + ')\nΔE*' + delta_calc_method.substr(3) + ': ' + deltaE.accuracy(2) + '"><div class="act patch-' + i + '" data-index="' + i + '" style="background-color: rgb(' + actual_rgb.join(', ') + '); border-color: rgb(' + [Math.round(actual_rgb[0] * .8), Math.round(actual_rgb[1] * .8), Math.round(actual_rgb[2] * .8)].join(', ') + ');"></div></div>');
+		}
+		this.report_html.push('	</div></div>');
 	}
 	
 	return this.report_html.join('\n')
@@ -1225,6 +1284,79 @@ function compare(set_delta_calc_method) {
 	document.getElementById('reporttitle').style.visibility = "visible";
 	document.getElementById('report').style.visibility = "visible";
 	form_elements_set_disabled(null, false);
+	if (document.getElementsByClassName) {
+		var canvas = document.getElementsByClassName('canvas'),
+			inner_coords, mouse_is_down, mouse_down_coords;
+		document.addEventListener('mouseup', function (e) {
+			for (var i = 0; i < canvas.length; i ++) {
+				jsapi.dom.attributeRemoveWord(canvas[i], 'class', 'dragging');
+			}
+			mouse_is_down = false;
+		});
+		for (var i = 0; i < canvas.length; i ++) {
+			var act = Array.prototype.slice.apply(canvas[i].getElementsByClassName('act')),
+				ref = Array.prototype.slice.apply(canvas[i].getElementsByClassName('ref')),
+				pts = act.concat(ref);
+			for (var j = 0; j < pts.length; j ++) {
+				pts[j].addEventListener('mouseenter', function (e) {
+					var linked = this.parentNode.parentNode.getElementsByClassName('patch-' + jsapi.dom.attr(this, 'data-index'));
+					jsapi.dom.attributeAddWord(this.parentNode.parentNode, 'class', 'hover');
+					for (var k = 0; k < linked.length; k ++) {
+						jsapi.dom.attributeAddWord(linked[k].parentNode, 'class', 'hover');
+						if (jsapi.dom.attributeHasWord(linked[k], 'class', 'ref')) {
+							linked[k].style.backgroundColor = jsapi.dom.attr(linked[k], 'data-bgcolor');
+							linked[k].style.borderColor = jsapi.dom.attr(linked[k], 'data-bordercolor');
+						}
+					}
+				});
+				pts[j].addEventListener('mouseleave', function (e) {
+					var linked = this.parentNode.parentNode.getElementsByClassName('patch-' + jsapi.dom.attr(this, 'data-index'));
+					jsapi.dom.attributeRemoveWord(this.parentNode.parentNode, 'class', 'hover');
+					for (var k = 0; k < linked.length; k ++) {
+						jsapi.dom.attributeRemoveWord(linked[k].parentNode, 'class', 'hover');
+						if (jsapi.dom.attributeHasWord(linked[k], 'class', 'ref')) {
+							linked[k].style.backgroundColor = '';
+							linked[k].style.borderColor = '';
+						}
+					}
+				});
+			}
+			// Reset viewport
+			canvas[i].addEventListener('dblclick', function () {
+				var inner = this.getElementsByClassName('inner')[0];
+				this.style.fontSize = '1px';
+				inner.style.marginLeft = '';
+				inner.style.marginTop = '';
+			});
+			// Click drag viewport
+			canvas[i].addEventListener('mousedown', function (e) {
+				var inner = this.getElementsByClassName('inner')[0];
+				inner_coords = [parseFloat(inner.style.marginLeft) || 0, parseFloat(inner.style.marginTop) || 0];
+				jsapi.dom.attributeAddWord(this, 'class', 'dragging');
+				mouse_is_down = true;
+				mouse_down_coords = [e.pageX, e.pageY];
+				e.preventDefault();
+			});
+			canvas[i].addEventListener('mousemove', function (e) {
+				if (mouse_is_down) {
+					var fontSize = parseFloat(this.style.fontSize) || 1,
+						inner = this.getElementsByClassName('inner')[0];
+					inner.style.marginLeft = inner_coords[0] + (e.pageX - mouse_down_coords[0]) / fontSize + 'em';
+					inner.style.marginTop = inner_coords[1] + (e.pageY - mouse_down_coords[1]) / fontSize + 'em';
+				}
+			});
+			// Mousewheel zoom
+			canvas[i].addEventListener('wheel', function (e) {
+				var fontSize = parseFloat(this.style.fontSize) || 1;
+				if ((e.deltaY < 0 && fontSize < 1000) || (e.deltaY > 0 && fontSize > 1)) {
+					if (e.deltaY < 0) fontSize += fontSize / 4;
+					else fontSize = Math.max(fontSize - fontSize / 4, 1);
+					this.style.fontSize = fontSize + 'px';
+					e.preventDefault();
+				}
+			});
+		}
+	}
 	return true
 };
 

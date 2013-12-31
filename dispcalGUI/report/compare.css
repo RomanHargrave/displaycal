@@ -134,46 +134,50 @@ td, th {
 .graph table,
 .graph th,
 .graph tr.x td,
-.graph .canvas {
+.graph .canvas,
+.canvas .overlay {
 	background-color: #eee;
 	border-radius: 10px;
 	-moz-border-radius: 10px;
 	-webkit-border-radius: 10px;
 	color: #333;
 }
-.graph .canvas {
-	overflow: visible;
+.canvas .overlay {
+	height: 900em;
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	width: 900em;
+	z-index: 9999;
 }
 .graph th {
 	padding: 0 .5em 0;
 }
-.graph .ref {
+.graph .ref,
+.graph .act,
+.canvas .overlay {
 	background: #eee;
-}
-.graph .act {
 	-moz-transition: all .125s linear;
 	-webkit-transition: all .125s linear;
 	-o-transition: all .125s linear;
 	transition: all .125s linear;
 }
-.graph .act:hover,
-.graph .col:hover .act {
+.graph .col:hover .ref,
+.graph .col:hover .act,
+.hover .wrap.hover .ref,
+.hover .wrap.hover .act {
 	-moz-transform: scale(1.6);
 	-webkit-transform: scale(1.6);
 	-o-transform: scale(1.6);
 	-ms-transform: scale(1.6);
 	transform: scale(1.6);
-/*
-	border-radius: 8px;
-	border-width: 3px;
-	height: 10px;
-	margin-bottom: -8px;
-	margin-left: -8px;
-	width: 10px;
-*/
 }
-.graph .act:hover {
-	z-index: 999;
+.hover .overlay {
+	opacity: .9375;
+}
+.graph .act:hover,
+.hover .wrap.hover {
+	z-index: 10000;
 }
 .toggle:before {
 	content: '▼ ';
@@ -186,6 +190,10 @@ td, th {
 }
 .collapsed .collapsed {
 	display: none;
+}
+.dragging,
+.dragging * {
+	cursor: move;
 }
 /* Pure CSS3 Tooltips */
 [data-title] {
@@ -203,9 +211,9 @@ a[data-title] {
 	box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
 	color: #fff;
 	content: attr(data-title);
+	font-size: 12px;
 	font-weight: normal;
 	margin-left: 19px;
-	max-width: 900px;
 	overflow: hidden;
 	padding: 4px 7px;
 	text-align: left;
@@ -237,12 +245,46 @@ a[data-title] {
 	-o-transition: -o-transform .25s ease, opacity .25s ease, visibility .25s ease;
 	transition: transform .25s ease, opacity .25s ease, visibility .25s ease;
 	visibility: hidden;
-	z-index: 9999;
+	z-index: 99999;
 }
-.graph .canvas [data-title]:before,
-.graph .canvas [data-title]:after {
-	left: 4px;
-	top: -14px;
+.canvas [data-title]:before {
+	border-bottom-left-radius: 0;
+	-moz-border-radius-bottomleft: 0;
+	-webkit-border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	-moz-border-radius-bottomright: 0;
+	-webkit-border-bottom-right-radius: 0;
+	bottom: 0;
+	height: 14px;
+    left: 0;
+	margin-left: 0;
+	margin-top: 7px;
+	text-align: center;
+	white-space: nowrap;
+	width: 100%;
+}
+.canvas [data-title]:after {
+	border-bottom: 7px solid #333;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
+	bottom: 22px;
+	margin-left: -6px;
+	margin-top: 0;
+}
+.canvas [data-title]:before,
+.canvas [data-title]:after {
+	position: fixed;
+	top: auto;
+	-moz-transform: translate3d(0, 0, 0) translateY(20px);
+	-webkit-transform: translate3d(0, 0, 0) translateY(20px);
+	-o-transform: translate3d(0, 0, 0) translateY(20px);
+	-ms-transform: translate3d(0, 0, 0) translateY(20px);
+	transform: translate3d(0, 0, 0) translateY(20px);
+}
+.canvas.dragging [data-title]:before,
+.canvas.dragging [data-title]:after {
+	opacity: 0;
+	visibility: hidden;
 }
 [data-title]:hover:after,
 [data-title]:hover:before {
@@ -253,4 +295,12 @@ a[data-title] {
 	-ms-transform: translate3d(0, 0, 0) translateX(0);
 	transform: translate3d(0, 0, 0) translateX(0);
 	visibility: visible;
+}
+.canvas [data-title]:hover:before,
+.canvas [data-title]:hover:after {
+	-moz-transform: translate3d(0, 0, 0) translateY(0);
+	-webkit-transform: translate3d(0, 0, 0) translateY(0);
+	-o-transform: translate3d(0, 0, 0) translateY(0);
+	-ms-transform: translate3d(0, 0, 0) translateY(0);
+	transform: translate3d(0, 0, 0) translateY(0);
 }

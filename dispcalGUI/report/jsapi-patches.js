@@ -198,6 +198,25 @@ jsapi.math.color.XYZ2Lab = function(X, Y, Z, whitepoint) {
 
 	return [L, a, b];
 };
+jsapi.math.color.XYZ2Lu_v_ = function(X, Y, Z, whitepoint) {
+	/* Convert from XYZ to CIE Lu'v' */
+
+	if (X + Y + Z == 0) {
+		// We can't check for X == Y == Z == 0 because they may actually add up
+		// to 0, thus resulting in ZeroDivisionError later
+		var XYZ = jsapi.math.color.get_whitepoint(whitepoint),
+			Lu_v_ = jsapi.math.color.XYZ2Lu_v_(XYZ[0], XYZ[1], XYZ[2]);
+		return [0, Lu_v_[1], Lu_v_[2]];
+	}
+
+	var XYZr = jsapi.math.color.get_whitepoint(whitepoint, 100),
+		yr = Y / XYZr[1],
+		L = yr > 216 / 24389 ? 116 * jsapi.math.cbrt(yr) - 16 : 24389 / 27 * yr,
+		u_ = (4 * X) / (X + 15 * Y + 3 * Z),
+		v_ = (9 * Y) / (X + 15 * Y + 3 * Z);
+	
+	return [L, u_, v_];
+};
 jsapi.math.color.xyY2XYZ = function(x, y, Y) {
 	/*
 	Convert from xyY to XYZ.

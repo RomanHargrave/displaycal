@@ -64,11 +64,25 @@ td, th {
 }
 .graph .col,
 .graph .canvas {
+	font-size: 1px;
 	overflow: hidden;
 	position: relative;
 }
+.canvas .inner {
+	position: absolute;
+}
+.graph .wrap {
+	height: 7px;
+	position: absolute;
+	z-index: 0;
+}
+.graph .wrap-act {
+	height: 5px;
+	z-index: 1;
+}
 .graph .ref,
 .graph .act {
+	background: #fff;
 	border: 2px solid silver;
 	height: 6px;
 	left: 50%;
