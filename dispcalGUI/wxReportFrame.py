@@ -315,7 +315,7 @@ class ReportFrame(BaseFrame):
 	
 	def update_main_controls(self):
 		enable1 = bool(getcfg("measurement_report.use_simulation_profile"))
-		sim_profile_is_rgb = (getattr(self, "simulation_profile", None) and
+		sim_profile_is_rgb = (bool(getattr(self, "simulation_profile", None)) and
 							  self.simulation_profile.colorSpace == "RGB")
 		enable2 = (sim_profile_is_rgb and
 				   bool(getcfg("measurement_report.use_simulation_profile_as_output")))
