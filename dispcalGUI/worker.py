@@ -5534,6 +5534,8 @@ class Worker(object):
 					device = '0 0 0 0'.split()
 			else:
 				device = line[5:-1]
+			# Make sure device values do not exceed valid range of 0..100
+			device = [str(max(0, min(float(v), 100))) for v in device]
 			cie = (wp + cie_data.values())[i].values()
 			cie = [str(n) for n in cie]
 			if include_sample_name:
