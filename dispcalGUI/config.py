@@ -383,6 +383,8 @@ def runtimeconfig(pyfile):
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart)) or ""
 	defaults["testchart.file.backup"] = defaults["testchart.file"]
+	defaults["testchart.reference"] = get_data_path(os.path.join("ref", 
+																 "ColorChecker.cie")) or ""
 	defaults["measurement_report.chart"] = get_data_path(os.path.join("ref", 
 															"verify.ti1")) or ""
 	defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm")) or ""
@@ -638,6 +640,10 @@ defaults = {
 	"tc_dark_emphasis": 0.0,
 	"tc_precond": 0,
 	"tc_precond_profile": "",
+	"tc.saturation_sweeps": 4,
+	"tc.saturation_sweeps.custom.R": 0.0,
+	"tc.saturation_sweeps.custom.G": 0.0,
+	"tc.saturation_sweeps.custom.B": 0.0,
 	"tc_single_channel_patches": 0,
 	"tc_vrml_black_offset": 40,
 	"tc_vrml_lab": 0,

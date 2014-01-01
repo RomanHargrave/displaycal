@@ -393,12 +393,65 @@ class TestchartEditor(wx.Frame):
 
 		# buttons row 2
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
+		self.sizer.Add(hsizer, flag=wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT,
+					   border=12)
+
+		hsizer.Add(wx.StaticText(panel, -1,
+								 lang.getstr("testchart.add_saturation_sweeps")),
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+				   border=border)
+		self.saturation_sweeps_intctrl = wx.SpinCtrl(panel, -1, size=(50, -1),
+													 initial=getcfg("tc.saturation_sweeps"),
+													 min=2, max=255)
+		hsizer.Add(self.saturation_sweeps_intctrl,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+
+		for color in ("R", "G", "B", "C", "M", "Y"):
+			name = "saturation_sweeps_%s_btn" % color
+			setattr(self, name, wx.Button(panel, -1, color, size=(30, -1)))
+			self.Bind(wx.EVT_BUTTON, self.tc_add_saturation_sweeps_handler,
+					  id=getattr(self, name).GetId())
+			hsizer.Add(getattr(self, name),
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		
+		self.saturation_sweeps_custom_btn = wx.Button(panel, -1, lang.getstr("color.custom"))
+		self.Bind(wx.EVT_BUTTON, self.tc_add_saturation_sweeps_handler,
+				  id=self.saturation_sweeps_custom_btn.GetId())
+		hsizer.Add(self.saturation_sweeps_custom_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		for component in ("R", "G", "B"):
+			hsizer.Add(wx.StaticText(panel, -1, component),
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+					   border=border)
+			name = "saturation_sweeps_custom_%s_ctrl" % component
+			setattr(self, name, floatspin.FloatSpin(panel, -1, size=(65, -1),
+													value=getcfg("tc.saturation_sweeps.custom.%s" %
+																 component),
+													min_val=0, max_val=100,
+													increment=100.0 / 255,
+													digits=2))
+			self.Bind(floatspin.EVT_FLOATSPIN, self.tc_algo_handler,
+					  id=getattr(self, name).GetId())
+			hsizer.Add(getattr(self, name),
+					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+
+		# buttons row 3
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer.Add(hsizer, flag=wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT,
+					   border=12)
+
+		self.add_ti3_btn = wx.Button(panel, -1, lang.getstr("testchart.add_ti3_patches"))
+		self.add_ti3_btn.SetInitialSize((self.add_ti3_btn.GetSize()[0] + btn_width_correction, -1))
+		self.Bind(wx.EVT_BUTTON, self.tc_add_ti3_handler,
+				  id=self.add_ti3_btn.GetId())
+		hsizer.Add(self.add_ti3_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		hsizer.Add((50, 1))
 
 		hsizer.Add(wx.StaticText(panel, -1,
 								 lang.getstr("testchart.change_patch_order")),
-								 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
-								 border=border)
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+				   border=border)
 		patch_order_choices = []
 		for lstr in ("testchart.sort_RGB_gray_to_top",
 					 "testchart.sort_RGB_white_to_top",
@@ -533,7 +586,6 @@ class TestchartEditor(wx.Frame):
 	def tc_grid_label_left_dclick_handler(self, event):
 		row, col = event.GetRow(), event.GetCol()
 		if col == -1: # row label clicked
-			self.grid.InsertRows(row + 1, 1)
 			data = self.ti1.queryv1("DATA")
 			wp = self.ti1.queryv1("APPROX_WHITE_POINT")
 			if wp:
@@ -544,27 +596,13 @@ class TestchartEditor(wx.Frame):
 			newdata = {
 				"SAMPLE_ID": row + 2,
 				"RGB_R": 100.0,
-				"RGB_B": 100.0,
 				"RGB_G": 100.0,
+				"RGB_B": 100.0,
 				"XYZ_X": wp[0],
 				"XYZ_Y": 100,
 				"XYZ_Z": wp[2]
 			}
-			data.add_data(newdata, row + 1)
-			self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
-			self.tc_set_default_status()
-			for label in ("RGB_R", "RGB_G", "RGB_B"):
-				for col in range(self.grid.GetNumberCols()):
-					if self.grid.GetColLabelValue(col) == label:
-						self.grid.SetCellValue(row + 1, col, str(round(float(newdata[label]), 4)))
-			self.tc_grid_setcolorlabel(row + 1)
-			self.tc_save_check()
-			if hasattr(self, "preview"):
-				self.preview.Freeze()
-				self.tc_add_patch(row + 1, data[row + 1])
-				self.preview.Layout()
-				self.preview.FitInside()
-				self.preview.Thaw()
+			self.tc_add_data(row, [newdata])
 		event.Skip()
 
 	def tc_grid_select_row_handler(self, row, shift = False, ctrl = False):
@@ -1000,6 +1038,24 @@ class TestchartEditor(wx.Frame):
 		self.tc_angle_slider.Enable(tc_algo_enable and tc_algo in ("i", "I"))
 		self.tc_angle_intctrl.Enable(tc_algo_enable and tc_algo in ("i", "I"))
 		setcfg("tc_algo", tc_algo)
+		add_preconditioned_enable = (hasattr(self, "ti1") and
+									 (tc_algo in ("I", "Q", "R", "t") or
+									  (tc_algo == "" and
+									   getcfg("tc_adaption") == 1)))
+		self.saturation_sweeps_intctrl.Enable(add_preconditioned_enable)
+		for color in ("R", "G", "B", "C", "M", "Y"):
+			getattr(self, "saturation_sweeps_%s_btn" % color).Enable(
+				add_preconditioned_enable)
+		RGB = {}
+		for component in ("R", "G", "B"):
+			ctrl = getattr(self, "saturation_sweeps_custom_%s_ctrl" %
+						   component)
+			ctrl.Enable(add_preconditioned_enable)
+			RGB[component] = ctrl.GetValue()
+		self.saturation_sweeps_custom_btn.Enable(
+			add_preconditioned_enable and
+			not (RGB["R"] == RGB["G"] == RGB["B"]))
+		self.add_ti3_btn.Enable(add_preconditioned_enable)
 
 	def tc_adaption_handler(self, event = None):
 		if event.GetId() == self.tc_adaption_slider.GetId():
@@ -1008,6 +1064,154 @@ class TestchartEditor(wx.Frame):
 			self.tc_adaption_slider.SetValue(self.tc_adaption_intctrl.GetValue())
 		setcfg("tc_adaption", self.tc_adaption_intctrl.GetValue() / 100.0)
 		self.tc_algo_handler()
+	
+	def tc_add_saturation_sweeps_handler(self, event):
+		try:
+			profile = ICCP.ICCProfile(getcfg("tc_precond_profile"))
+		except (IOError, ICCP.ICCProfileInvalidError), exception:
+			show_result_dialog(exception, self)
+		else:
+			tags = profile.tags
+			if not "wtpt" in tags:
+				show_result_dialog(Error(
+					lang.getstr("profile.required_tags_missing",
+								lang.getstr("whitepoint"))), self)
+				return
+			rgb_space = [[], tags.wtpt.ir.values()]
+			for component in ("r", "g", "b"):
+				if (not "%sXYZ" % component in tags or
+					not "%sTRC" % component in tags or
+					not isinstance(tags["%sTRC" % component],
+								   ICCP.CurveType)):
+					show_result_dialog(Error(
+						lang.getstr("profile.required_tags_missing",
+									lang.getstr("profile.type.shaper_matrix"))),
+						self)
+					return
+				rgb_space.append(tags["%sXYZ" % component].ir.xyY)
+				if len(tags["%sTRC" % component]) > 1:
+					rgb_space[0].append([v / 65535.0 for v in
+										 tags["%sTRC" % component]])
+				else:
+					rgb_space[0].append(tags["%sTRC" % component][0])
+			R, G, B = {self.saturation_sweeps_R_btn.GetId(): (1, 0, 0),
+					   self.saturation_sweeps_G_btn.GetId(): (0, 1, 0),
+					   self.saturation_sweeps_B_btn.GetId(): (0, 0, 1),
+					   self.saturation_sweeps_C_btn.GetId(): (0, 1, 1),
+					   self.saturation_sweeps_M_btn.GetId(): (1, 0, 1),
+					   self.saturation_sweeps_Y_btn.GetId(): (1, 1, 0),
+					   self.saturation_sweeps_custom_btn.GetId():
+						   (self.saturation_sweeps_custom_R_ctrl.GetValue() / 100.0,
+							self.saturation_sweeps_custom_G_ctrl.GetValue() / 100.0,
+							self.saturation_sweeps_custom_B_ctrl.GetValue() / 100.0)}[event.GetId()]
+			maxv = self.saturation_sweeps_intctrl.GetValue()
+			newdata = []
+			row = self.grid.GetSelectionRows()[-1]
+			for i in xrange(maxv + 1):
+				saturation = 1.0 / maxv * i
+				RGB, xyY = colormath.RGBsaturation(R, G, B, 1.0 / maxv * i,
+												   rgb_space)
+				X, Y, Z = colormath.xyY2XYZ(*xyY)
+				newdata.append({
+					"SAMPLE_ID": row + 2,
+					"RGB_R": round(RGB[0] * 100, 4),
+					"RGB_G": round(RGB[1] * 100, 4),
+					"RGB_B": round(RGB[2] * 100, 4),
+					"XYZ_X": X * 100,
+					"XYZ_Y": Y * 100,
+					"XYZ_Z": Z * 100
+				})
+			self.tc_add_data(row, newdata)
+	
+	def tc_add_ti3_handler(self, event):
+		defaultDir, defaultFile = get_verified_path("testchart.reference")
+		dlg = wx.FileDialog(self, lang.getstr("testchart_or_reference"), 
+							defaultDir=defaultDir, defaultFile=defaultFile, 
+							wildcard=(lang.getstr("filetype.ti1_ti3_txt") + 
+									  "|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt"), 
+							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		if result == wx.ID_OK:
+			path = dlg.GetPath()
+			setcfg("testchart.reference", path)
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		try:
+			profile = ICCP.ICCProfile(getcfg("tc_precond_profile"))
+		except (IOError, ICCP.ICCProfileInvalidError), exception:
+			show_result_dialog(exception, self)
+		else:
+			try:
+				chart = CGATS.CGATS(path)
+			except CGATS.CGATSError, exception:
+				show_result_dialog(exception, self)
+				return
+			white = chart.queryv1("APPROX_WHITE_POINT")
+			if white:
+				data_format = chart[0].DATA_FORMAT.values()
+				# Determine CIE colorspace in reference, if any
+				if ("LAB_L" in data_format and "LAB_A" in data_format and
+					"LAB_B" in data_format):
+					cie = "Lab"
+				elif ("XYZ_X" in data_format and "XYZ_Y" in data_format and
+					  "XYZ_Z" in data_format):
+					cie = "XYZ"
+				else:
+					cie = None
+				if cie in ("XYZ", "Lab"):
+					white = [float(v) for v in white.split()]
+					for i in chart[0].DATA:
+						if cie == "Lab":
+							(chart[0].DATA[i]["XYZ_X"],
+							 chart[0].DATA[i]["XYZ_Y"],
+							 chart[0].DATA[i]["XYZ_Z"]) = colormath.Lab2XYZ(
+															chart[0].DATA[i]["LAB_L"],
+															chart[0].DATA[i]["LAB_A"],
+															chart[0].DATA[i]["LAB_B"],
+															scale=100)
+						X, Y, Z = (chart[0].DATA[i]["XYZ_X"],
+								   chart[0].DATA[i]["XYZ_Y"],
+								   chart[0].DATA[i]["XYZ_Z"])
+						X, Y, Z = colormath.adapt(X, Y, Z, white)
+						(chart[0].DATA[i]["XYZ_X"],
+						 chart[0].DATA[i]["XYZ_Y"],
+						 chart[0].DATA[i]["XYZ_Z"]) = X, Y, Z
+						if cie == "Lab":
+							(chart[0].DATA[i]["LAB_L"],
+							 chart[0].DATA[i]["LAB_A"],
+							 chart[0].DATA[i]["LAB_B"]) = colormath.XYZ2Lab(X, Y, Z)
+			ti1, void, void = self.worker.chart_lookup(chart, 
+													   profile,
+													   True,
+													   add_white_patches=False)
+			if not ti1:
+				return
+			data_format = ti1[0].DATA_FORMAT.values()
+			# Returned ti1 CIE values are always either XYZ or Lab
+			if ("LAB_L" in data_format and "LAB_A" in data_format and
+				"LAB_B" in data_format):
+				cie = "Lab"
+			else:
+				cie = "XYZ"
+			newdata = []
+			row = self.grid.GetSelectionRows()[-1]
+			for i in ti1[0].DATA:
+				if cie == "Lab":
+					(ti1[0].DATA[i]["XYZ_X"],
+					 ti1[0].DATA[i]["XYZ_Y"],
+					 ti1[0].DATA[i]["XYZ_Z"]) = colormath.Lab2XYZ(
+													ti1[0].DATA[i]["LAB_L"],
+													ti1[0].DATA[i]["LAB_A"],
+													ti1[0].DATA[i]["LAB_B"],
+													scale=100)
+				entry = {"SAMPLE_ID": row + 2 + i}
+				for label in ("RGB_R", "RGB_G", "RGB_B",
+							  "XYZ_X", "XYZ_Y", "XYZ_Z"):
+					entry[label] = ti1[0].DATA[i][label]
+				newdata.append(entry)
+			self.tc_add_data(row, newdata)
 
 	def tc_angle_handler(self, event = None):
 		if event.GetId() == self.tc_angle_slider.GetId():
@@ -1486,6 +1690,12 @@ class TestchartEditor(wx.Frame):
 
 	def tc_close_handler(self, event = None):
 		if (not event or self.IsShownOnScreen()) and self.tc_check_save_ti1(False):
+			setcfg("tc.saturation_sweeps",
+				   self.saturation_sweeps_intctrl.GetValue())
+			for component in ("R", "G", "B"):
+				setcfg("tc.saturation_sweeps.custom.%s" % component,
+					   getattr(self, "saturation_sweeps_custom_%s_ctrl" %
+							   component).GetValue())
 			self.Hide()
 			if self.Parent:
 				setcfg("tc.show", 0)
@@ -1981,6 +2191,30 @@ class TestchartEditor(wx.Frame):
 			if verbose >= 1: safe_print(lang.getstr("success"))
 		if self.Parent and hasattr(self.Parent, "start_timers"):
 			self.Parent.start_timers()
+	
+	def tc_add_data(self, row, newdata):
+		self.grid.InsertRows(row + 1, len(newdata))
+		data = self.ti1.queryv1("DATA")
+		if hasattr(self, "preview"):
+			self.preview.Freeze()
+		for i in xrange(len(newdata)):
+			data.add_data(newdata[i], row + 1 + i)
+			for label in ("RGB_R", "RGB_G", "RGB_B"):
+				for col in range(self.grid.GetNumberCols()):
+					if self.grid.GetColLabelValue(col) == label:
+						self.grid.SetCellValue(row + 1 + i, col,
+											   str(round(float(newdata[i][label]),
+														 4)))
+			self.tc_grid_setcolorlabel(row + 1 + i)
+			if hasattr(self, "preview"):
+				self.tc_add_patch(row + 1 + i, data[row + 1 + i])
+		self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
+		self.tc_set_default_status()
+		self.tc_save_check()
+		if hasattr(self, "preview"):
+			self.preview.Layout()
+			self.preview.FitInside()
+			self.preview.Thaw()
 
 	def tc_add_patch(self, before, sample):
 		if hasattr(self, "preview"):

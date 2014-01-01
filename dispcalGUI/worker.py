@@ -5006,7 +5006,7 @@ class Worker(object):
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, 
 					 check_missing_fields=False, function="f", pcs="l",
-					 intent="r", bt1886=None):
+					 intent="r", bt1886=None, add_white_patches=True):
 		""" Lookup CIE or device values through profile """
 		if profile.colorSpace == "RGB":
 			labels = ('RGB_R', 'RGB_G', 'RGB_B')
@@ -5041,7 +5041,8 @@ class Worker(object):
 				cgats.COLOR_REP = profile.colorSpace
 				ti1, ti3_ref, gray = self.ti1_lookup_to_ti3(cgats, profile, 
 															function, pcs,
-															"r")
+															"r",
+															add_white_patches)
 				if bt1886 or intent == "a":
 					cat = profile.guess_cat() or "Bradford"
 					for item in ti3_ref.DATA.itervalues():
@@ -5069,13 +5070,15 @@ class Worker(object):
 				if not primaries and check_missing_fields:
 					raise ValueError(lang.getstr("error.testchart.missing_fields", 
 												 (cgats.filename, ", ".join(labels))))
-				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile, intent)
+				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile, intent,
+													  add_white_patches)
 		except Exception, exception:
 			InfoDialog(self.owner, msg=safe_unicode(exception), 
 					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
 		return ti1, ti3_ref, gray
 	
-	def ti1_lookup_to_ti3(self, ti1, profile, function="f", pcs=None, intent="r"):
+	def ti1_lookup_to_ti3(self, ti1, profile, function="f", pcs=None,
+						  intent="r", add_white_patches=True):
 		"""
 		Read TI1 (filename or CGATS instance), lookup device->pcs values 
 		colorimetrically through profile using Argyll's xicclu 
@@ -5138,7 +5141,7 @@ class Worker(object):
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti1_filename, ", ".join(required))))
 		
-		if colorspace == "RGB":
+		if colorspace == "RGB" and add_white_patches:
 			# make sure the first four patches are white so the whitepoint can be
 			# averaged
 			white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
@@ -5352,7 +5355,8 @@ class Worker(object):
 		ofile.seek(0)
 		return ti1, CGATS.CGATS(ofile)[0], map(list, gray)
 	
-	def ti3_lookup_to_ti1(self, ti3, profile, intent="r"):
+	def ti3_lookup_to_ti1(self, ti3, profile, intent="r",
+						  add_white_patches=True):
 		"""
 		Read TI3 (filename or CGATS instance), lookup cie->device values 
 		colorimetrically through profile using Argyll's xicclu 
@@ -5423,7 +5427,7 @@ class Worker(object):
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti3_filename, ", ".join(required))))
 		idata = []
-		if colorspace == "RGB":
+		if colorspace == "RGB" and add_white_patches:
 			# make sure the first four patches are white so the whitepoint can be
 			# averaged
 			wp = [n * 100.0 for n in profile.tags.wtpt.values()]

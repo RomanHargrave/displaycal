@@ -3,6 +3,7 @@
 
 import logging
 import math
+import sys
 
 
 def get_transfer_function_phi(alpha, gamma):
@@ -751,12 +752,28 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 	   with gamma = 2.2.
 	   
 	"""
-	gamma, whitepoint, rxyY, gxyY, bxyY, matrix = get_rgb_space(rgb_space)
+	trc, whitepoint, rxyY, gxyY, bxyY, matrix = get_rgb_space(rgb_space)
 	RGB = [R, G, B]
+	is_trc = isinstance(trc, (list, tuple))
 	for i, v in enumerate(RGB):
-		RGB[i] = specialpow(v, gamma)
+		if is_trc:
+			gamma = trc[i]
+		else:
+			gamma = trc
+		if isinstance(gamma, (list, tuple)):
+			RGB[i] = gamma[int(round((len(gamma) - 1) * v))]
+		else:
+			RGB[i] = specialpow(v, gamma)
 	XYZ = matrix * RGB
 	return tuple(v * scale for v in XYZ)
+
+
+def RGBsaturation(R, G, B, saturation, rgb_space=None):
+	""" (De)saturate a RGB color in CIE xy and return the RGB and xyY values """
+	wx, wy, wY = XYZ2xyY(*RGB2XYZ(1, 1, 1, rgb_space=rgb_space))
+	x, y, Y = XYZ2xyY(*RGB2XYZ(R, G, B, rgb_space=rgb_space))
+	x, y, Y = wx + (x - wx) * saturation,  wy + (y - wy) * saturation, Y
+	return xyY2RGB(x, y, Y, rgb_space=rgb_space), (x, y, Y)
 
 
 def rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, whitepoint=None, scale=1.0):
@@ -779,7 +796,7 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 		rgb_space = "sRGB"
 	if isinstance(rgb_space, basestring):
 		rgb_space = rgb_spaces[rgb_space]
-	cachehash = tuple(rgb_space), scale
+	cachehash = id(rgb_space), scale
 	cache = get_rgb_space.cache.get(cachehash, None)
 	if cache:
 		return cache
@@ -1140,10 +1157,31 @@ def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True):
 	   gamma = 2.2.
 	
 	"""
-	gamma, whitepoint, rxyY, gxyY, bxyY, matrix = get_rgb_space(rgb_space)
+	trc, whitepoint, rxyY, gxyY, bxyY, matrix = get_rgb_space(rgb_space)
 	RGB = matrix.inverted() * [X, Y, Z]
+	is_trc = isinstance(trc, (list, tuple))
 	for i, v in enumerate(RGB):
-		RGB[i] = specialpow(v, 1.0 / gamma)
+		if is_trc:
+			gamma = trc[i]
+		else:
+			gamma = trc
+		if isinstance(gamma, (list, tuple)):
+			yx = dict([(int(round(y * sys.maxint)), x / float(len(gamma) - 1)) for x, y in enumerate(gamma)])
+			key = int(round(v * sys.maxint))
+			if key in yx:
+				RGB[i] = yx[key]
+			else:
+				# Interpolate
+				lower = 0
+				higher = sys.maxint
+				for iterkey in yx.iterkeys():
+					if iterkey < key and iterkey > lower:
+						lower = iterkey
+					elif iterkey > key and iterkey < higher:
+						higher = iterkey
+				RGB[i] = (yx[lower] + yx[higher]) / 2.0
+		else:
+			RGB[i] = specialpow(v, 1.0 / gamma)
 		if clamp:
 			RGB[i] = min(1.0, max(0.0, RGB[i]))
 		RGB[i] *= scale
