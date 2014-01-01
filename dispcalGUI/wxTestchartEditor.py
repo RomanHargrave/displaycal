@@ -395,64 +395,29 @@ class TestchartEditor(wx.Frame):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
 
-		self.sort_RGB_gray_to_top_btn = wx.Button(panel, -1,
-			lang.getstr("testchart.sort_RGB_gray_to_top"))
-		self.sort_RGB_gray_to_top_btn.SetInitialSize(
-			(self.sort_RGB_gray_to_top_btn.GetSize()[0] + btn_width_correction, -1))
-		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
-				  id=self.sort_RGB_gray_to_top_btn.GetId())
-		hsizer.Add(self.sort_RGB_gray_to_top_btn,
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
-
-		self.sort_RGB_white_to_top_btn = wx.Button(panel, -1,
-			lang.getstr("testchart.sort_RGB_white_to_top"))
-		self.sort_RGB_white_to_top_btn.SetInitialSize(
-			(self.sort_RGB_white_to_top_btn.GetSize()[0] + btn_width_correction, -1))
-		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
-				  id=self.sort_RGB_white_to_top_btn.GetId())
-		hsizer.Add(self.sort_RGB_white_to_top_btn,
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
-
-		self.sort_by_L_btn = wx.Button(panel, -1,
-			lang.getstr("testchart.sort_by_L"))
-		self.sort_by_L_btn.SetInitialSize(
-			(self.sort_by_L_btn.GetSize()[0] + btn_width_correction, -1))
-		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
-				  id=self.sort_by_L_btn.GetId())
-		hsizer.Add(self.sort_by_L_btn,
+		hsizer.Add(wx.StaticText(panel, -1,
+								 lang.getstr("testchart.change_patch_order")),
+								 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
+								 border=border)
+		patch_order_choices = []
+		for lstr in ("testchart.sort_RGB_gray_to_top",
+					 "testchart.sort_RGB_white_to_top",
+					 "testchart.sort_by_L",
+					 "testchart.sort_by_RGB",
+					 "testchart.sort_by_RGB_sum",
+					 "testchart.optimize_for_untethered_auto_mode"):
+			patch_order_choices.append(lang.getstr(lstr))
+		self.change_patch_order_ctrl = wx.Choice(panel, -1,
+												 choices=patch_order_choices)
+		self.change_patch_order_ctrl.SetSelection(0)
+		hsizer.Add(self.change_patch_order_ctrl,
 				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
-		self.sort_by_RGB_btn = wx.Button(panel, -1,
-			lang.getstr("testchart.sort_by_RGB"))
-		self.sort_by_RGB_btn.SetInitialSize(
-			(self.sort_by_RGB_btn.GetSize()[0] + btn_width_correction, -1))
+		self.change_patch_order_btn = wx.Button(panel, -1, lang.getstr("apply"))
 		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
-				  id=self.sort_by_RGB_btn.GetId())
-		hsizer.Add(self.sort_by_RGB_btn,
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
-
-		self.sort_by_RGB_sum_btn = wx.Button(panel, -1,
-			lang.getstr("testchart.sort_by_RGB_sum"))
-		self.sort_by_RGB_sum_btn.SetInitialSize(
-			(self.sort_by_RGB_sum_btn.GetSize()[0] + btn_width_correction, -1))
-		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
-				  id=self.sort_by_RGB_sum_btn.GetId())
-		hsizer.Add(self.sort_by_RGB_sum_btn,
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
-
-		# buttons row 3
-		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
-
-		self.optimize_for_untethered_auto_mode_btn = wx.Button(panel, -1,
-			lang.getstr("testchart.optimize_for_untethered_auto_mode"))
-		self.optimize_for_untethered_auto_mode_btn.SetInitialSize(
-			(self.optimize_for_untethered_auto_mode_btn.GetSize()[0] +
-			 btn_width_correction, -1))
-		self.Bind(wx.EVT_BUTTON, self.tc_sort_handler,
-				  id=self.optimize_for_untethered_auto_mode_btn.GetId())
-		hsizer.Add(self.optimize_for_untethered_auto_mode_btn,
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border =border)
+				  id=self.change_patch_order_btn.GetId())
+		hsizer.Add(self.change_patch_order_btn,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
 
 		# grid
@@ -778,30 +743,26 @@ class TestchartEditor(wx.Frame):
 			event.Skip()
 	
 	def tc_sort_handler(self, event):
-		id = event.GetId()
-		if id == self.sort_RGB_gray_to_top_btn.GetId():
+		idx = self.change_patch_order_ctrl.GetSelection()
+		if idx == 0:
 			self.ti1.sort_RGB_gray_to_top()
-		elif id == self.sort_RGB_white_to_top_btn.GetId():
+		elif idx == 1:
 			self.ti1.sort_RGB_white_to_top()
-		elif id == self.sort_by_L_btn.GetId():
+		elif idx == 2:
 			self.ti1.sort_by_L()
-		elif id == self.sort_by_RGB_btn.GetId():
+		elif idx == 3:
 			self.ti1.sort_by_RGB()
-		elif id == self.sort_by_RGB_sum_btn.GetId():
+		elif idx == 4:
 			self.ti1.sort_by_RGB_sum()
-		elif id == self.optimize_for_untethered_auto_mode_btn.GetId():
+		elif idx == 5:
 			self.ti1.checkerboard()
 		self.tc_clear(False)
 		self.tc_preview(True)
 	
 	def tc_enable_sort_controls(self):
 		enable = hasattr(self, "ti1")
-		self.sort_RGB_gray_to_top_btn.Enable(enable)
-		self.sort_RGB_white_to_top_btn.Enable(enable)
-		self.sort_by_L_btn.Enable(enable)
-		self.sort_by_RGB_btn.Enable(enable)
-		self.sort_by_RGB_sum_btn.Enable(enable)
-		self.optimize_for_untethered_auto_mode_btn.Enable(enable)
+		self.change_patch_order_ctrl.Enable(enable)
+		self.change_patch_order_btn.Enable(enable)
 
 	def tc_grid_cell_change_handler(self, event, save_check=True):
 		data = self.ti1[0]["DATA"]
