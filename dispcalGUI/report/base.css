@@ -42,9 +42,6 @@ td, th {
 .graph {
 	page-break-inside: avoid;
 }
-.graph table {
-	background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAIICAYAAABXZX+fAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAG9JREFUeNrt1SEBADAMA8HE7HTUeWdhaOiCD4V8dzcvKwiCSdKZOe4BQRAEdQYEQRDUGRAEQRDUGRAEQVBnQBAEQZ0BQRAEQZ0BQRAEdQYEQRDUGT+CIAiCOgOCIAjqDAiCIKgz7gFBEAR1BgS/wwvShwYgc/1YjwAAAABJRU5ErkJggg==') repeat-x 0 0;
-}
 .graph td div {
 	margin: 0 auto;
 }
@@ -55,7 +52,6 @@ td, th {
 	padding: 0;
 }
 .graph th {
-	height: 40px;
 	padding: 0 .5em 0 0;
 	text-align: right;
 }

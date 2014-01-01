@@ -213,7 +213,7 @@ a[data-title] {
 	content: attr(data-title);
 	font-size: 12px;
 	font-weight: normal;
-	margin-left: 19px;
+	margin-left: 21px;
 	overflow: hidden;
 	padding: 4px 7px;
 	text-align: left;
@@ -226,7 +226,7 @@ a[data-title] {
 	border-top: 7px solid transparent;
 	border-right: 7px solid #333;
 	content: "";
-	margin-left: 12px;
+	margin-left: 14px;
 	margin-top: 12px;
 }
 [data-title]:before,
