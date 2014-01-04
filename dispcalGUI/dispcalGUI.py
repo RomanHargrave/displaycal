@@ -6757,13 +6757,18 @@ class MainFrame(BaseFrame):
 		args.append(",".join(ti3_tmp_names))
 		args.append(name + ext)
 		result = self.worker.create_ccxx(args, cwd)
+		source = os.path.join(self.worker.tempdir, name + ext)
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
-		elif result:
-			source = os.path.join(self.worker.tempdir, name + ext)
+		elif result and os.path.isfile(source):
 			# Important: Do not use parsed CGATS, order of keywords may be 
 			# different than raw data so MD5 will be different
-			cgatsfile = open(source, "rb")
+			try:
+				cgatsfile = open(source, "rb")
+			except Exception, exception:
+				show_result_dialog(exception, self)
+				self.worker.wrapup(False)
+				return
 			cgats = universal_newlines(cgatsfile.read())
 			cgatsfile.close()
 			if (reference_ti3[0].get("TARGET_INSTRUMENT") and
