@@ -2696,7 +2696,6 @@ class MainFrame(BaseFrame):
 										cal not in self.presets)
 		is_profile_ = is_profile(include_display_profile=True)
 		self.profile_info_btn.Enable(is_profile_)
-		self.menuitem_profile_info.Enable(is_profile_)
 		enable_update = (bool(cal) and os.path.exists(filename + ".cal") and
 						 can_update_cal(filename + ".cal"))
 		if not enable_update:
@@ -7071,6 +7070,7 @@ class MainFrame(BaseFrame):
 			setcfg("display.number", display_no + 1)
 			if load_lut:
 				profile = get_display_profile(display_no)
+			self.profile_info_btn.Enable(bool(profile))
 		if self.display_lut_link_ctrl.IsShown():
 			self.display_lut_link_ctrl_handler(CustomEvent(
 				wx.EVT_BUTTON.evtType[0], self.display_lut_link_ctrl), 
