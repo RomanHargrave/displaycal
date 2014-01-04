@@ -954,7 +954,7 @@ class ColorantTableType(ICCProfileTag, AODict):
 						 uInt16Number(data[34:36]),
 						 uInt16Number(data[36:38])]
 			for i, pcsvalue in enumerate(pcsvalues):
-				if pcs in ("Lab", "RGB", "CMYK"):
+				if pcs in ("Lab", "RGB", "CMYK", "YCbr"):
 					keys = ["L", "a", "b"]
 					if i == 0:
 						# L* range 0..100
@@ -967,8 +967,9 @@ class ColorantTableType(ICCProfileTag, AODict):
 					keys = ["X", "Y", "Z"]
 					pcsvalues[i] = pcsvalue / 65535.0 * 200
 				else:
-					raise NotImplementedError("Profile connection space '%s'"
-											  "not supported." % pcs)
+					safe_print("Warning: Non-standard profile connection "
+							   "space '%s'" % pcs)
+					return
 			self[data[:32].rstrip("\0")] = AODict(zip(keys, pcsvalues))
 			data = data[38:]
 
