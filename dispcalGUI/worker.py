@@ -5194,8 +5194,13 @@ class Worker(object):
 		for primaries in device_data.values():
 			idata.append(' '.join(str(n) for n in primaries.values()))
 
-		# lookup device->cie values through profile using xicclu
-		xicclu = get_argyll_util("xicclu").encode(fs_enc)
+		# lookup device->cie values through profile using (x)icclu
+		if pcs or self.argyll_version >= [1, 6]:
+			xicclu = get_argyll_util("xicclu").encode(fs_enc)
+		else:
+			# DeviceLink profile, we have to use icclu under older Argyll CMS
+			# versions because older xicclu cannot handle devicelink
+			xicclu = get_argyll_util("icclu").encode(fs_enc)
 		cwd = self.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
