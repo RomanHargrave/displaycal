@@ -1582,7 +1582,8 @@ class Worker(object):
 													link_filename],
 								   capture_output=True, skip_scripts=True)
 
-			if (save_link_icc and
+			if (result and not isinstance(result, Exception) and
+				save_link_icc and
 				os.path.isfile(link_filename)):
 				profile_link = ICCP.ICCProfile(link_filename)
 				profile_link.setDescription(name)
