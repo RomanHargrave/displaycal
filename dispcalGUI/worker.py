@@ -1564,7 +1564,7 @@ class Worker(object):
 					# -et -Et REQUIRED for madVR
 					args += ["-3m", "-et", "-Et"]
 				else:
-					if format == "eeColor":
+					if format == "eeColor" and not test:
 						args += ["-3e"]
 					else:
 						args += ["-r65"]
@@ -1607,7 +1607,9 @@ class Worker(object):
 				profile_link.calculateID()
 				profile_link.write(filename + profile_ext)
 
-			if self.argyll_version >= [1, 6] and format in ("eeColor", "madVR"):
+			if self.argyll_version >= [1, 6] and ((format == "eeColor" and
+												   not test) or
+												  format == "madVR"):
 				# Collink has already written the 3DLUT for us
 				result2 = self.wrapup(not isinstance(result, UnloggedInfo) and
 									  result, dst_path=path,
