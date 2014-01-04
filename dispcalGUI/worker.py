@@ -2619,7 +2619,7 @@ class Worker(object):
 				for i, line in enumerate(self.output):
 					if "Calibrate failed with 'User hit Abort Key' (No device error)" in line:
 						break
-					if ((line.startswith(cmdname + ": Error") and
+					if ((": Error" in line and
 					     not "failed with 'User Aborted'" in line and
 					     not "test_crt returned error code 1" in line) or
 					    line.startswith("Failed to") or
