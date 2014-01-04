@@ -1566,6 +1566,12 @@ class Worker(object):
 				else:
 					if format == "eeColor":
 						args += ["-3e"]
+					else:
+						args += ["-r65"]
+						if not (input_encoding in ("n", "t") and
+								output_encoding in ("n", "t")):
+							# Can't use device curves with YCbCr encoding
+							args += ["-n"]
 					args += ["-e%s" % input_encoding]
 					args += ["-E%s" % output_encoding]
 				if bt1886_gamma:
