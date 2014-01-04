@@ -8626,7 +8626,7 @@ class MainFrame(BaseFrame):
 				visible = self.reportframe.IsShownOnScreen()
 				self.reportframe.Close()
 				self.reportframe.Destroy()
-				del self.reportdframe
+				del self.reportframe
 				if visible:
 					self.measurement_report_create_handler(None)
 			if hasattr(self, "tcframe"):
