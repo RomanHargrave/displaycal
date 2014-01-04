@@ -1673,6 +1673,8 @@ class Worker(object):
 			safe_print("\n".join(RGB_in))
 		
 		# Setup icclu
+		# (Using icclu instead of xicclu because xicclu in versions
+		# prior to Argyll CMS 1.6.0 could not deal with devicelink profiles)
 		icclu = get_argyll_util("icclu").encode(fs_enc)
 		if sys.platform == "win32":
 			startupinfo = sp.STARTUPINFO()
@@ -1689,18 +1691,21 @@ class Worker(object):
 		self.subprocess = p
 		if p.poll() not in (0, None):
 			stderr.seek(0)
-			raise Error(stderr.read().strip())
+			result = Error(stderr.read().strip())
 		try:
 			odata = p.communicate("\n".join(RGB_in))[0].splitlines()
 		except IOError:
 			stderr.seek(0)
-			raise Error(stderr.read().strip())
+			result = Error(stderr.read().strip())
 		if p.wait() != 0:
-			raise IOError(''.join(odata))
+			result = IOError(''.join(odata))
 		stderr.close()
 
-		# Remove temporary files
-		self.wrapup(False)
+		# Remove temporary files, move .cal and .log files
+		result2 = self.wrapup(dst_path=path, ext_filter=[".cal", ".log"])
+
+		if isinstance(result, Exception):
+			raise result
 		
 		# Convert icclu output to RGB triplets
 		RGB_out = []
@@ -1795,6 +1800,9 @@ class Worker(object):
 		lut_file = open(path, "wb")
 		lut_file.write(result)
 		lut_file.close()
+
+		if isinstance(result2, Exception):
+			raise result2
 
 	def create_tempdir(self):
 		""" Create a temporary working directory and return its path. """
