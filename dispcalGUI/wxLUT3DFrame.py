@@ -16,7 +16,7 @@ import localization as lang
 import worker
 from worker import check_set_argyll_bin
 from wxaddons import FileDrop
-from wxwindows import BaseFrame, InfoDialog, wx
+from wxwindows import BaseFrame, ConfirmDialog, InfoDialog, wx
 
 from wx import xrc
 
@@ -173,8 +173,29 @@ class LUT3DFrame(BaseFrame):
 		config.writecfg()
 	
 	def encoding_output_ctrl_handler(self, event):
-		setcfg("3dlut.encoding.output",
-			   self.encoding_ab[self.encoding_output_ctrl.GetSelection()])
+		encoding = self.encoding_ab[self.encoding_output_ctrl.GetSelection()]
+		if getcfg("3dlut.format") == "madVR" and encoding != "t":
+			profile = getattr(self, "output_profile")
+			if (profile and "meta" in profile.tags and
+				isinstance(profile.tags.meta, ICCP.DictType) and
+				"EDID_model" in profile.tags.meta):
+				devicename = profile.tags.meta["EDID_model"]
+			else:
+				devicename = None
+			dlg = ConfirmDialog(self,
+						msg=lang.getstr("3dlut.encoding.output.warning.madvr",
+										devicename or
+										lang.getstr("device.name.placeholder")), 
+						ok=lang.getstr("ok"), 
+						cancel=lang.getstr("cancel"), 
+						bitmap=geticon(32, "dialog-warning"))
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				self.encoding_output_ctrl.SetSelection(
+					self.encoding_ba[getcfg("3dlut.encoding.output")])
+				return False
+		setcfg("3dlut.encoding.output", encoding)
 		config.writecfg()
 
 	def input_drop_handler(self, path):
@@ -290,6 +311,7 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_format_ctrl_handler(self, event):
 		if getcfg("3dlut.format") == "madVR":
 			# If previous format was madVR, restore video encoding
+			self.setup_encoding_ctrl()
 			setcfg("3dlut.encoding.input", getcfg("3dlut.encoding.input.backup"))
 			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.output.backup"))
 		setcfg("3dlut.format", self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()])
@@ -305,7 +327,8 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
 		elif getcfg("3dlut.format") == "madVR":
-			# -et -Et REQUIRED for madVR
+			# -et -Et for madVR
+			self.setup_encoding_ctrl("madVR")
 			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
 			setcfg("3dlut.encoding.input", "t")
 			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
@@ -434,6 +457,7 @@ class LUT3DFrame(BaseFrame):
 							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
 							self.apply_cal_cb.Enable("vcgt" in profile.tags)
+					setattr(self, "%s_profile" % which, profile)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					if which == "output" and not self.output_profile_ctrl.IsShown():
 						return
@@ -523,14 +547,27 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_bitdepth_ab[i] = bitdepth
 			self.lut3d_bitdepth_ba[bitdepth] = i
 		
+		self.setup_encoding_ctrl(getcfg("3dlut.format"))
+	
+	def setup_encoding_ctrl(self, format=None):
+		if format == "madVR":
+			encodings = ["n", "t"]
+		else:
+			encodings = config.valid_values["3dlut.encoding.input"]
 		self.encoding_ab = {}
 		self.encoding_ba = {}
-		for i, encoding in enumerate(config.valid_values["3dlut.encoding.input"]):
+		self.encoding_input_ctrl.Freeze()
+		self.encoding_input_ctrl.Clear()
+		self.encoding_output_ctrl.Freeze()
+		self.encoding_output_ctrl.Clear()
+		for i, encoding in enumerate(encodings):
 			lstr = lang.getstr("3dlut.encoding.type_%s" % encoding)
 			self.encoding_input_ctrl.Append(lstr)
 			self.encoding_output_ctrl.Append(lstr)
 			self.encoding_ab[i] = encoding
 			self.encoding_ba[encoding] = i
+		self.encoding_input_ctrl.Thaw()
+		self.encoding_output_ctrl.Thaw()
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
@@ -587,7 +624,7 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
 		self.encoding_input_ctrl.Enable(enable)
 		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
-		self.encoding_output_ctrl.Enable(enable)
+		#self.encoding_output_ctrl.Enable(enable)
 	
 	def enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")

@@ -1575,7 +1575,7 @@ class Worker(object):
 			if self.argyll_version >= [1, 6]:
 				if format == "madVR":
 					# -et -Et REQUIRED for madVR
-					args += ["-3m", "-et", "-Et"]
+					args += ["-3m"]
 				else:
 					if format == "eeColor" and not test:
 						args += ["-3e"]
@@ -1585,8 +1585,8 @@ class Worker(object):
 								output_encoding in ("n", "t")):
 							# Can't use device curves with YCbCr encoding
 							args += ["-n"]
-					args += ["-e%s" % input_encoding]
-					args += ["-E%s" % output_encoding]
+				args += ["-e%s" % input_encoding]
+				args += ["-E%s" % output_encoding]
 				if bt1886_gamma:
 					args += ["-I%s:%s" % (bt1886_gamma_type, bt1886_gamma)]
 				if apply_cal:
