@@ -487,8 +487,14 @@ def get_argyll_version_string(name, silent=False):
 			startupinfo.wShowWindow = sp.SW_HIDE
 		else:
 			startupinfo = None
-		p = sp.Popen([cmd.encode(fs_enc), "-?"], stdin=sp.PIPE, stdout=sp.PIPE, 
-					 stderr=sp.STDOUT, startupinfo=startupinfo)
+		try:
+			p = sp.Popen([cmd.encode(fs_enc), "-?"], stdin=sp.PIPE,
+						 stdout=sp.PIPE, stderr=sp.STDOUT,
+						 startupinfo=startupinfo)
+		except Exception, exception:
+			safe_print(cmd)
+			safe_print(exception)
+			return argyll_version_string
 		for i, line in enumerate((p.communicate()[0] or "").splitlines()):
 			if isinstance(line, basestring):
 				line = line.strip()
@@ -2576,11 +2582,16 @@ class Worker(object):
 						sleep(.1)
 					self.retcode = self.subprocess.exitstatus
 				else:
-					self.subprocess = sp.Popen(" ".join(cmdline) if shell else
-											   cmdline, stdin=stdin, 
-											   stdout=stdout, stderr=stderr, 
-											   shell=shell, cwd=working_dir, 
-											   startupinfo=startupinfo)
+					try:
+						self.subprocess = sp.Popen(" ".join(cmdline) if shell else
+												   cmdline, stdin=stdin, 
+												   stdout=stdout, stderr=stderr, 
+												   shell=shell, cwd=working_dir, 
+												   startupinfo=startupinfo)
+					except Exception, exception:
+						self.retcode = -1
+						return Error("\n".join([safe_unicode(v) for v in
+												(cmd, exception)]))
 					self.retcode = self.subprocess.wait()
 					if stdin and not getattr(stdin, "closed", True):
 						stdin.close()

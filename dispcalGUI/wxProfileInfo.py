@@ -9,10 +9,11 @@ import sys
 import tempfile
 
 from config import (defaults, fs_enc, get_bitmap_as_icon, get_data_path,
-					getbitmap, getcfg, geticon, setcfg, writecfg)
+					get_display_profile, getbitmap, getcfg, geticon, setcfg,
+					writecfg)
 from meta import name as appname
 from ordereddict import OrderedDict
-from util_str import universal_newlines, wrap
+from util_str import safe_unicode, universal_newlines, wrap
 from worker import (Error, check_set_argyll_bin, get_argyll_util,
 					show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
@@ -431,7 +432,7 @@ class GamutCanvas(LUTCanvas):
 		
 		if not profiles:
 			profiles = [ICCP.ICCProfile(get_data_path("ref/sRGB.icm")),
-						ICCP.get_display_profile()]
+						get_display_profile()]
 		for i, profile in enumerate(profiles):
 			if profile_no is not None and i != profile_no:
 				continue
@@ -506,9 +507,13 @@ class GamutCanvas(LUTCanvas):
 
 			# Lookup RGB -> XYZ values through profile using xicclu
 			stderr = tempfile.SpooledTemporaryFile()
-			p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
-						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+			try:
+				p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
+							 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+							 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+			except Exception, exception:
+				raise Error("\n".join([safe_unicode(v) for v in (xicclu,
+																 exception)]))
 			self.worker.subprocess = p
 			if p.poll() not in (0, None):
 				stderr.seek(0)
@@ -1406,7 +1411,7 @@ def main(profile=None):
 	lang.init()
 	lang.update_defaults()
 	app = ProfileInfoViewer(0)
-	app.frame.LoadProfile(profile or ICCP.get_display_profile())
+	app.frame.LoadProfile(profile or get_display_profile())
 	app.frame.Show(True)
 	app.MainLoop()
 	writecfg()
