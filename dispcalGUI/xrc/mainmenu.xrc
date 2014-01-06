@@ -141,10 +141,6 @@
         <label>calibration.show_lut</label>
         <checkable>1</checkable>
       </object>
-      <object class="wxMenuItem" name="calibration.show_actual_lut">
-        <label>calibration.show_actual_lut</label>
-        <checkable>1</checkable>
-      </object>
       <object class="separator"/>
       <object class="wxMenuItem" name="infoframe.toggle">
         <label>infoframe.toggle</label>
