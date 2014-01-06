@@ -40,7 +40,7 @@ class LUT3DFrame(BaseFrame):
 		self.panel = self.FindWindowByName("panel")
 
 		self.worker = worker.Worker(self)
-		self.worker.set_argyll_version(getcfg("argyll.version"))
+		self.worker.set_argyll_version("collink")
 
 		# Bind event handlers
 		self.abstract_profile_cb.Bind(wx.EVT_CHECKBOX,

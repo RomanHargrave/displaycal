@@ -472,7 +472,12 @@ def get_argyll_version(name, silent=False):
 	Determine version of a certain Argyll utility.
 	
 	"""
-	argyll_version = [0, 0, 0]
+	argyll_version_string = get_argyll_version_string(name, silent)
+	return parse_argyll_version_string(argyll_version_string)
+
+
+def get_argyll_version_string(name, silent=False):
+	argyll_version_string = "0.0.0"
 	if (silent and check_argyll_bin()) or (not silent and 
 										   check_set_argyll_bin()):
 		cmd = get_argyll_util(name)
@@ -482,22 +487,15 @@ def get_argyll_version(name, silent=False):
 			startupinfo.wShowWindow = sp.SW_HIDE
 		else:
 			startupinfo = None
-		p = sp.Popen([cmd.encode(fs_enc)], stdin=sp.PIPE, stdout=sp.PIPE, 
+		p = sp.Popen([cmd.encode(fs_enc), "-?"], stdin=sp.PIPE, stdout=sp.PIPE, 
 					 stderr=sp.STDOUT, startupinfo=startupinfo)
 		for i, line in enumerate((p.communicate()[0] or "").splitlines()):
 			if isinstance(line, basestring):
 				line = line.strip()
 				if i == 0 and "version" in line.lower():
 					argyll_version_string = line[line.lower().find("version")+8:]
-					argyll_version = re.findall("(\d+|[^.\d]+)", 
-												argyll_version_string)
-					for i, v in enumerate(argyll_version):
-						try:
-							argyll_version[i] = int(v)
-						except ValueError:
-							pass
 					break
-	return argyll_version
+	return argyll_version_string
 
 
 def get_current_profile_path():
@@ -522,6 +520,15 @@ def parse_argument_string(args):
 	return [re.sub('^["\']|["\']$', '', arg) for arg in
 			re.findall('(?:^|\s+)(-[^\s"\']+|"[^"]+?"|\'[^\']+?\'|[^\s"\']+)', args)]
 
+
+def parse_argyll_version_string(argyll_version_string):
+	argyll_version = re.findall("(\d+|[^.\d]+)", argyll_version_string)
+	for i, v in enumerate(argyll_version):
+		try:
+			argyll_version[i] = int(v)
+		except ValueError:
+			pass
+	return argyll_version
 
 def get_options_from_args(dispcal_args=None, colprof_args=None):
 	"""
@@ -1414,7 +1421,7 @@ class Worker(object):
 		"""
 		self.argyll_bin_dir = None
 		self.argyll_version = [0, 0, 0]
-		self.argyll_version_string = ""
+		self.argyll_version_string = "0.0.0"
 		self._displays = []
 		self.display_edid = []
 		self.display_manufacturers = []
@@ -1877,19 +1884,17 @@ class Worker(object):
 					n += 1
 					line = line.strip()
 					if n == 0 and "version" in line.lower():
-						argyll_version = line[line.lower().find("version")+8:]
-						argyll_version_string = argyll_version
+						argyll_version_string = line[line.lower().find("version")
+													 + 8:]
 						if (argyll_version_string != self.argyll_version_string):
-							self.argyll_version_string = argyll_version_string
+							self.set_argyll_version_from_string(argyll_version_string)
 							safe_print("Argyll CMS " + self.argyll_version_string)
-							setcfg("argyll.version", argyll_version_string)
 						config.defaults["copyright"] = ("No copyright. Created "
 														"with %s %s and Argyll "
 														"CMS %s" % 
 														(appname, version, 
-														 argyll_version))
-						self.set_argyll_version(argyll_version)
-						if argyll_version > [1, 0, 4]:
+														 argyll_version_string))
+						if self.argyll_version > [1, 0, 4]:
 							# Rate of blending from neutral to black point.
 							defaults["calibration.black_point_rate.enabled"] = 1
 						continue
@@ -4596,15 +4601,16 @@ class Worker(object):
 			sleep(.25)
 		return False
 	
-	def set_argyll_version(self, argyll_version):
-		argyll_version = re.findall("(\d+|[^.\d]+)", 
-									argyll_version)
-		for i, v in enumerate(argyll_version):
-			try:
-				argyll_version[i] = int(v)
-			except ValueError:
-				pass
-		self.argyll_version = argyll_version
+	def set_argyll_version(self, name, silent=False, cfg=False):
+		self.set_argyll_version_from_string(get_argyll_version_string(name,
+																	  silent),
+											cfg)
+	
+	def set_argyll_version_from_string(self, argyll_version_string, cfg=True):
+		self.argyll_version_string = argyll_version_string
+		if cfg:
+			setcfg("argyll.version", argyll_version_string)
+		self.argyll_version = parse_argyll_version_string(argyll_version_string)
 	
 	def set_terminal_cgats(self, cgats_filename):
 		self.terminal.cgats = CGATS.CGATS(cgats_filename)

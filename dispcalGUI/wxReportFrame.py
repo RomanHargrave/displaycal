@@ -37,7 +37,7 @@ class ReportFrame(BaseFrame):
 		self.panel = self.FindWindowByName("panel")
 
 		self.worker = worker.Worker(self)
-		self.worker.set_argyll_version(getcfg("argyll.version"))
+		self.worker.set_argyll_version("xicclu")
 
 		# Bind event handlers
 		self.simulation_profile_cb.Bind(wx.EVT_CHECKBOX,

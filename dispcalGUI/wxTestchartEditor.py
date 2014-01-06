@@ -26,7 +26,7 @@ from util_io import StringIOu as StringIO
 from util_os import waccess
 from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
-					get_argyll_version, show_result_dialog)
+					show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import ConfirmDialog, InfoDialog
 try:
@@ -57,7 +57,7 @@ class TestchartEditor(wx.Frame):
 		}
 		
 		self.worker = Worker()
-		self.worker.argyll_version = get_argyll_version("targen", silent=True)
+		self.worker.set_argyll_version("targen")
 		
 		if self.worker.argyll_version >= [1, 1, 0]:
 			self.tc_algos_ab["Q"] = lang.getstr("tc.Q")
@@ -2118,7 +2118,6 @@ class TestchartEditor(wx.Frame):
 
 	def tc_create(self):
 		writecfg()
-		self.worker.argyll_version = get_argyll_version("targen", silent=True)
 		cmd, args = self.worker.prepare_targen()
 		if not isinstance(cmd, Exception):
 			result = self.worker.exec_cmd(cmd, args, low_contrast = False, skip_scripts = True, silent = False, parent = self)
