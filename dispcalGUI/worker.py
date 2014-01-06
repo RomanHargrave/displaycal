@@ -3815,11 +3815,11 @@ class Worker(object):
 		args = []
 		args += ["-v"] # verbose
 		args += ["-q" + getcfg("profile.quality")]
-		b2a_q = getcfg("profile.quality.b2a")
-		if b2a_q:
-			args += ["-b" + b2a_q]
 		args += ["-a" + getcfg("profile.type")]
 		if getcfg("profile.type") in ["l", "x", "X"]:
+			b2a_q = getcfg("profile.quality.b2a")
+			if b2a_q:
+				args += ["-b" + b2a_q]
 			if getcfg("gamap_saturation"):
 				gamap = "S"
 			elif getcfg("gamap_perceptual"):
