@@ -1265,15 +1265,9 @@ def main(profile=None):
 	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
 	app.frame.Show(True)
 	if profile:
-		try:
-			profile = ICCP.ICCProfile(profile)
-		except Exception, exception:
-			show_result_dialog(exception, app.frame)
+		app.frame.drop_handler(profile)
 	else:
-		profile = get_display_profile()
-	if not isinstance(profile, ICCP.ICCProfile):
-		profile = None
-	app.frame.load_lut(profile)
+		app.frame.load_lut(get_display_profile())
 	app.MainLoop()
 	config.writecfg()
 
