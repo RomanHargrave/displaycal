@@ -1536,10 +1536,6 @@ class MainFrame(BaseFrame):
 		self.menuitem_show_lut = tools.FindItemById(
 			tools.FindItem("calibration.show_lut"))
 		self.Bind(wx.EVT_MENU, self.init_lut_viewer, self.menuitem_show_lut)
-		self.menuitem_show_actual_lut = tools.FindItemById(
-			tools.FindItem("calibration.show_actual_lut"))
-		self.Bind(wx.EVT_MENU, self.lut_viewer_show_actual_lut_handler, 
-							   self.menuitem_show_actual_lut)
 		self.menuitem_show_log = tools.FindItemById(tools.FindItem("infoframe.toggle"))
 		self.Bind(wx.EVT_MENU, self.infoframe_toggle_handler, 
 				  self.menuitem_show_log)
@@ -1648,14 +1644,8 @@ class MainFrame(BaseFrame):
 										   spyder2_firmware_exists)
 		self.menuitem_show_lut.Enable(bool(LUTFrame))
 		self.menuitem_show_lut.Check(bool(getcfg("lut_viewer.show")))
-		self.menuitem_show_actual_lut.Enable(bool(LUTFrame) and 
-											 self.worker.argyll_version >= [1, 1, 0] and 
-											 not "Beta" in self.worker.argyll_version_string and
-											 not config.get_display_name() in
-											 ("Web", "Untethered"))
-		self.menuitem_show_actual_lut.Check(bool(getcfg("lut_viewer.show_actual_lut")) and
-											not config.get_display_name() in
-											("Web", "Untethered"))
+		if hasattr(self, "lut_viewer"):
+			self.lut_viewer.update_controls()
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
 									   not config.get_display_name() in
 									   ("Web", "Untethered"))
@@ -3127,15 +3117,6 @@ class MainFrame(BaseFrame):
 				item.Enable(enable)
 		if enable:
 			self.update_menus()
-
-	def lut_viewer_show_actual_lut_handler(self, event):
-		setcfg("lut_viewer.show_actual_lut", 
-			   int(self.menuitem_show_actual_lut.IsChecked()))
-		if hasattr(self, "current_cal"):
-			profile = self.current_cal
-		else:
-			profile = None
-		self.lut_viewer_load_lut(profile=profile)
 
 	def lut3d_create_handler(self, event):
 		""" Assign and initialize the 3DLUT creation window """
@@ -6125,6 +6106,7 @@ class MainFrame(BaseFrame):
 		if LUTFrame:
 			if not getattr(self, "lut_viewer", None):
 				self.lut_viewer = LUTFrame(None, -1)
+				self.lut_viewer.client.worker = self.worker
 				self.lut_viewer.Bind(wx.EVT_CLOSE, 
 									 self.lut_viewer_close_handler, 
 									 self.lut_viewer)
@@ -6164,52 +6146,7 @@ class MainFrame(BaseFrame):
 			self.current_cal = profile
 		if getattr(self, "lut_viewer", None) and \
 		   (self.lut_viewer.IsShownOnScreen() or force_draw):
-			if (getcfg("lut_viewer.show_actual_lut") and
-				self.worker.argyll_version >= [1, 1, 0] and
-				not "Beta" in self.worker.argyll_version_string and
-				not config.get_display_name() in ("Web", "Untethered")):
-				tmp = self.worker.create_tempdir()
-				if isinstance(tmp, Exception):
-					show_result_dialog(tmp, self)
-					return
-				cmd, args = (get_argyll_util("dispwin"), 
-							 ["-d" + self.worker.get_display(), "-s", 
-							  os.path.join(tmp, 
-										   re.sub(r"[\\/:*?\"<>|]+",
-												  "",
-												  make_argyll_compatible_path(
-													self.display_ctrl.GetStringSelection() or 
-													"LUT")))])
-				result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-											  skip_scripts=True, silent=True)
-				if not isinstance(result, Exception) and result:
-					profile = cal_to_fake_profile(args[-1])
-				else:
-					if isinstance(result, Exception):
-						safe_print(result)
-				# Important: lut_viewer_load_lut is called after measurements,
-				# so make sure to only delete the temporary cal file we created
-				# (which hasn't an extension, so we can use ext_filter to 
-				# exclude files which should not be deleted)
-				self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
-														   ".ccmx", ".ccss",
-														   ".cmd", ".command", 
-														   ".gam", ".gz",
-														   ".icc", ".icm",
-														   ".log",
-														   ".sh", ".ti1",
-														   ".ti3", ".wrl",
-														   ".wrz"])
-			if profile and (profile.is_loaded or not profile.fileName or 
-							os.path.isfile(profile.fileName)):
-				if not self.lut_viewer.profile or \
-				   self.lut_viewer.profile.fileName != profile.fileName or \
-				   not self.lut_viewer.profile.isSame(profile):
-					self.lut_viewer.LoadProfile(profile)
-					self.lut_viewer.DrawLUT()
-			else:
-				self.lut_viewer.LoadProfile(None)
-				self.lut_viewer.DrawLUT()
+			self.lut_viewer.load_lut(profile)
 	
 	def show_lut_handler(self, event=None, profile=None, show=None):
 		if debug:

@@ -4,6 +4,7 @@
 from decimal import Decimal
 import math
 import os
+import re
 import subprocess as sp
 import sys
 import tempfile
@@ -12,13 +13,18 @@ import traceback
 from numpy import interp
 
 from argyll_cgats import cal_to_fake_profile
-from config import fs_enc, get_bitmap_as_icon, getcfg, geticon, setcfg
+from config import (fs_enc, get_bitmap_as_icon, get_display_profile,
+					get_display_rects, getcfg, geticon, setcfg)
+from log import safe_print
 from meta import name as appname
+from options import debug
 from util_decimal import float2dec
 from util_os import waccess
-from worker import Error, Worker, get_argyll_util, show_result_dialog
+from worker import (Error, Worker, get_argyll_util, make_argyll_compatible_path,
+					show_result_dialog)
 from wxaddons import FileDrop, wx
 from wxenhancedplot import _Numeric
+from wxMeasureFrame import MeasureFrame
 from wxwindows import InfoDialog
 import colormath
 import config
@@ -519,6 +525,19 @@ class LUTFrame(wx.Frame):
 		self.save_plot_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.save_plot_btn.Disable()
 
+		self.box_sizer.Add((0, 0))
+
+		self.show_actual_lut_cb = wx.CheckBox(self.box_panel, -1,
+											  lang.getstr("calibration.show_actual_lut"))
+		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
+		self.show_actual_lut_cb.SetMaxFontSize(11)
+		self.box_sizer.Add(self.show_actual_lut_cb,
+							flag=wx.ALIGN_CENTER | wx.BOTTOM, border=16)
+		self.Bind(wx.EVT_CHECKBOX, self.show_actual_lut_handler,
+				  id=self.show_actual_lut_cb.GetId())
+
+		self.box_sizer.Add((0, 0))
+
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
 		
 		self.droptarget = FileDrop()
@@ -538,6 +557,9 @@ class LUTFrame(wx.Frame):
 		
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
+		
+		self.display_no = -1
+		self.display_rects = get_display_rects()
 
 	def drop_handler(self, path):
 		"""
@@ -578,6 +600,8 @@ class LUTFrame(wx.Frame):
 				   ok=lang.getstr("ok"), 
 				   bitmap=geticon(32, "dialog-error"))
 	
+	get_display = MeasureFrame.__dict__["get_display"]
+	
 	def toggle_clut_handler(self, event):
 		try:
 			self.lookup_tone_response_curves()
@@ -585,6 +609,65 @@ class LUTFrame(wx.Frame):
 			show_result_dialog(exception, self)
 		else:
 			self.trc = None
+			self.DrawLUT()
+
+	def show_actual_lut_handler(self, event):
+		setcfg("lut_viewer.show_actual_lut", 
+			   int(self.show_actual_lut_cb.GetValue()))
+		if hasattr(self, "current_cal"):
+			profile = self.current_cal
+		else:
+			profile = None
+		self.load_lut(profile=profile)
+	
+	def load_lut(self, profile=None):
+		self.current_cal = profile
+		if (getcfg("lut_viewer.show_actual_lut") and
+			self.worker.argyll_version >= [1, 1, 0] and
+			not "Beta" in self.worker.argyll_version_string and
+			not config.get_display_name() in ("Web", "Untethered")):
+			tmp = self.worker.create_tempdir()
+			if isinstance(tmp, Exception):
+				show_result_dialog(tmp, self)
+				return
+			cmd, args = (get_argyll_util("dispwin"), 
+						 ["-d" + self.worker.get_display(), "-s", 
+						  os.path.join(tmp, 
+									   re.sub(r"[\\/:*?\"<>|]+",
+											  "",
+											  make_argyll_compatible_path(
+												config.get_display_name(
+													include_geometry=True) or 
+												"Video LUT")))])
+			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
+										  skip_scripts=True, silent=not __name__ == "__main__")
+			if not isinstance(result, Exception) and result:
+				profile = cal_to_fake_profile(args[-1])
+			else:
+				if isinstance(result, Exception):
+					safe_print(result)
+			# Important: lut_viewer_load_lut is called after measurements,
+			# so make sure to only delete the temporary cal file we created
+			# (which hasn't an extension, so we can use ext_filter to 
+			# exclude files which should not be deleted)
+			self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
+													   ".ccmx", ".ccss",
+													   ".cmd", ".command", 
+													   ".gam", ".gz",
+													   ".icc", ".icm",
+													   ".log",
+													   ".sh", ".ti1",
+													   ".ti3", ".wrl",
+													   ".wrz"])
+		if profile and (profile.is_loaded or not profile.fileName or 
+						os.path.isfile(profile.fileName)):
+			if not self.profile or \
+			   self.profile.fileName != profile.fileName or \
+			   not self.profile.isSame(profile):
+				self.LoadProfile(profile)
+				self.DrawLUT()
+		else:
+			self.LoadProfile(None)
 			self.DrawLUT()
 	
 	def lookup_tone_response_curves(self, intent="r"):
@@ -746,6 +829,25 @@ class LUTFrame(wx.Frame):
 					self.gTRC.append([y, v])
 				elif i == 2:
 					self.bTRC.append([y, v])
+
+	def move_handler(self, event):
+		if not self.IsShownOnScreen():
+			return
+		display_no, geometry, client_area = self.get_display()
+		if display_no != self.display_no:
+			self.display_no = display_no
+			# Translate from wx display index to Argyll display index
+			geometry = "%i, %i, %ix%i" % tuple(geometry)
+			for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+				if display.find("@ " + geometry) > -1:
+					if debug:
+						safe_print("[D] Found display %s at index %i" % 
+								   (geometry, i))
+					# Save Argyll display index to configuration
+					setcfg("display.number", i + 1)
+					self.load_lut(get_display_profile(i))
+					break
+		event.Skip()
 
 	def LoadProfile(self, profile):
 		if not profile:
@@ -957,6 +1059,8 @@ class LUTFrame(wx.Frame):
 							  isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType))
 		self.save_plot_btn.Enable(bool(curves))
 		self.show_as_L.GetContainingSizer().Layout()
+		if hasattr(self, "show_actual_lut_cb"):
+			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)
 		if hasattr(self, "cbox_sizer"):
 			self.cbox_sizer.Layout()
 		if hasattr(self, "box_sizer"):
@@ -1128,13 +1232,25 @@ class LUTFrame(wx.Frame):
 							"scaledXY": scaledXY}
 				# Pass dict to update the point label
 				self.client.UpdatePointLabel(mDataDict)
+	
+	def update_controls(self):
+		self.show_actual_lut_cb.Enable(self.worker.argyll_version >= [1, 1, 0] and 
+									   not "Beta" in self.worker.argyll_version_string and
+									   not config.get_display_name() in
+									   ("Web", "Untethered"))
+		self.show_actual_lut_cb.SetValue(bool(getcfg("lut_viewer.show_actual_lut")) and
+										 not config.get_display_name() in
+										 ("Web", "Untethered"))
+	
+	@property
+	def worker(self):
+		return self.client.worker
 
 
 class LUTViewer(wx.App):
 
 	def OnInit(self):
 		self.frame = LUTFrame(None, -1)
-		self.frame.Show(True)
 		return True
 
 
@@ -1143,14 +1259,23 @@ def main(profile=None):
 	lang.init()
 	lang.update_defaults()
 	app = LUTViewer(0)
-	if not profile:
-		profile = ICCP.get_display_profile()
-		if profile:
-			profile = profile.fileName
+	app.frame.worker.enumerate_displays_and_ports(check_lut_access=False,
+												  enumerate_ports=False)
+	app.frame.update_controls()
+	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
+	app.frame.Show(True)
 	if profile:
-		app.frame.drop_handler(profile)
-	app.frame.DrawLUT()
+		try:
+			profile = ICCP.ICCProfile(profile)
+		except Exception, exception:
+			show_result_dialog(exception, app.frame)
+	else:
+		profile = get_display_profile()
+	if not isinstance(profile, ICCP.ICCProfile):
+		profile = None
+	app.frame.load_lut(profile)
 	app.MainLoop()
+	config.writecfg()
 
 if __name__ == '__main__':
     main(*sys.argv[1:2])

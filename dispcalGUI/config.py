@@ -217,13 +217,16 @@ def get_argyll_data_dir():
 							argyll_data_dirname)
 
 
-def get_display_name(n=None):
+def get_display_name(n=None, include_geometry=False):
 	""" Return name of currently configured display """
 	if n is None:
 		n = getcfg("display.number") - 1
 	displays = getcfg("displays").split(os.pathsep)
 	if n >= 0 and n < len(displays):
-		return displays[n].split("@")[0].strip()
+		if include_geometry:
+			return displays[n]
+		else:
+			return displays[n].split("@")[0].strip()
 	return ""
 
 

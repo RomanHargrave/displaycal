@@ -171,6 +171,7 @@ executables = ['argyll_RGB2XYZ.py',
 			   'dispcalGUI',
 			   'dispcalGUI-3DLUT-maker',
 			   'dispcalGUI-apply-profiles',
+			   'dispcalGUI-curve-viewer',
 			   'dispcalGUI-profile-info',
 			   'dispcalGUI-synthprofile',
 			   'dispcalGUI-testchart-editor']
