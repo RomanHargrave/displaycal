@@ -1668,8 +1668,22 @@ class Worker(object):
 				for k in xrange(0, size):
 					# Blue
 					RGB_triplet[columns[2]] = step * k
+					RGB_copy = list(RGB_triplet)
+					if format == "eeColor":
+						# eeColor cLUT is fake 65^3 - only 64^3 is usable.
+						# This affects full range and xvYCC RGB, so un-map
+						# inputs to cLUT to only use 64^3
+						if input_encoding == "n":
+							for l in xrange(3):
+								RGB_copy[l] = min(RGB_copy[l] * (size - 1.0) /
+												  (size - 2.0), 100.0)
+						elif input_encoding in ("x", "X"):
+							for l in xrange(2):
+								RGB_copy[1 + l] = min((RGB_copy[1 + l] *
+													   (size - 1.0) -
+													   1.0) / (size - 3.0), 100.0)
 					RGB_index[columns[2]] = k
-					RGB_in.append(list(RGB_triplet))
+					RGB_in.append(RGB_copy)
 					RGB_indexes.append(list(RGB_index))
 
 		# Convert RGB triplets to list of strings
