@@ -1568,23 +1568,15 @@ class Worker(object):
 			if not collink:
 				raise NotImplementedError(lang.getstr("argyll.util.not_found",
 													  "collink"))
-			args = ["-v", "-qh", "-G", "-i%s" % intent]
+			args = ["-v", "-qh", "-G", "-i%s" % intent, "-r65", "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args += ["-p", "abstract.icc"]
 			if self.argyll_version >= [1, 6]:
 				if format == "madVR":
-					# -et -Et REQUIRED for madVR
 					args += ["-3m"]
-				else:
-					if format == "eeColor" and not test:
-						args += ["-3e"]
-					else:
-						args += ["-r65"]
-						if not (input_encoding in ("n", "t") and
-								output_encoding in ("n", "t")):
-							# Can't use device curves with YCbCr encoding
-							args += ["-n"]
+				elif format == "eeColor" and not test:
+					args += ["-3e"]
 				args += ["-e%s" % input_encoding]
 				args += ["-E%s" % output_encoding]
 				if bt1886_gamma:
@@ -1594,8 +1586,6 @@ class Worker(object):
 					# i.e. use collink -a parameter (apply calibration curves
 					# to link output and append linear)
 					args += ["-a", profile_out_cal_path]
-			else:
-				args += ["-r65"]
 			if getcfg("extra_args.collink").strip():
 				args += parse_argument_string(getcfg("extra_args.collink"))
 			result = self.exec_cmd(collink, args + [profile_in_basename,
