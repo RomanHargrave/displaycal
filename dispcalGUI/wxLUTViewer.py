@@ -1085,6 +1085,12 @@ class LUTFrame(wx.Frame):
 		self.Thaw()
 		wx.CallLater(125, self.UpdatePointLabel, pointXY)
 
+	def OnClose(self, event):
+		config.writecfg()
+		if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
+			self.worker.wrapup(False)
+		wx.GetApp().ExitMainLoop()
+
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):
 			xy = self.client._getXY(event)
@@ -1253,6 +1259,7 @@ class LUTViewer(wx.App):
 
 	def OnInit(self):
 		self.frame = LUTFrame(None, -1)
+		self.frame.Bind(wx.EVT_CLOSE, self.frame.OnClose, self.frame)
 		return True
 
 
@@ -1271,7 +1278,6 @@ def main(profile=None):
 	else:
 		app.frame.load_lut(get_display_profile())
 	app.MainLoop()
-	config.writecfg()
 
 if __name__ == '__main__':
     main(*sys.argv[1:2])
