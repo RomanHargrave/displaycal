@@ -312,38 +312,49 @@ class LUT3DFrame(BaseFrame):
 			return exception
 	
 	def lut3d_format_ctrl_handler(self, event):
-		if getcfg("3dlut.format") == "madVR":
-			# If previous format was madVR, restore video encoding
-			self.setup_encoding_ctrl()
+		if getcfg("3dlut.format") in ("eeColor", "madVR"):
+			# If previous format was eeColor or madVR, restore 3D LUT encoding
 			setcfg("3dlut.encoding.input", getcfg("3dlut.encoding.input.backup"))
 			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.output.backup"))
-		setcfg("3dlut.format", self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()])
-		if getcfg("3dlut.format") == "eeColor":
+		format = self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()]
+		setcfg("3dlut.format", format)
+		if format in ("eeColor", "madVR"):
+			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
+			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
+		if format == "eeColor":
+			if getcfg("3dlut.encoding.input") == "x":
+				# As eeColor usually needs same input & output encoding,
+				# and xvYCC output encoding is not supported generally, fall
+				# back to Rec601 YCbCr SD for xvYCC Rec601 YCbCr SD
+				setcfg("3dlut.encoding.input", "6")
+			elif getcfg("3dlut.encoding.input") == "X":
+				# As eeColor usually needs same input & output encoding,
+				# and xvYCC output encoding is not supported generally, fall
+				# back to Rec709 1125/60Hz YCbCr HD for xvYCC Rec709 YCbCr SD
+				setcfg("3dlut.encoding.input", "7")
 			# eeColor uses a fixed size of 65x65x65
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
-		elif getcfg("3dlut.format") == "mga":
+		elif format == "mga":
 			# Pandora uses a fixed size of 33x33x33
 			setcfg("3dlut.size", 33)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[33])
 			# Pandora uses a fixed bitdepth of 16
 			setcfg("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
-		elif getcfg("3dlut.format") == "madVR":
+		elif format == "madVR":
 			# -et -Et for madVR
-			self.setup_encoding_ctrl("madVR")
-			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
 			setcfg("3dlut.encoding.input", "t")
-			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
 			setcfg("3dlut.encoding.output", "t")
 			# collink says madVR works best with 65
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		config.writecfg()
+		self.setup_encoding_ctrl(format)
 		self.enable_encoding_controls()
 		self.enable_size_controls()
 		self.show_bitdepth_controls()
-		self.lut3d_create_btn.Enable(getcfg("3dlut.format") != "madVR" or
+		self.lut3d_create_btn.Enable(format != "madVR" or
 									 self.output_profile_ctrl.IsShown())
 	
 	def lut3d_size_ctrl_handler(self, event):
@@ -565,8 +576,14 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_output_ctrl.Clear()
 		for i, encoding in enumerate(encodings):
 			lstr = lang.getstr("3dlut.encoding.type_%s" % encoding)
-			self.encoding_input_ctrl.Append(lstr)
-			self.encoding_output_ctrl.Append(lstr)
+			if encoding not in ("x", "X") or format != "eeColor":
+				# As eeColor usually needs same input & output encoding,
+				# and xvYCC output encoding is not supported generally,
+				# don't add xvYCC input encoding choices for eeColor
+				self.encoding_input_ctrl.Append(lstr)
+			if encoding not in ("x", "X"):
+				# collink: xvYCC output encoding is not supported
+				self.encoding_output_ctrl.Append(lstr)
 			self.encoding_ab[i] = encoding
 			self.encoding_ba[encoding] = i
 		self.encoding_input_ctrl.Thaw()
