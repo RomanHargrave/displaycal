@@ -168,8 +168,11 @@ class LUT3DFrame(BaseFrame):
 			self.set_profile("abstract")
 	
 	def encoding_input_ctrl_handler(self, event):
-		setcfg("3dlut.encoding.input",
-			   self.encoding_ab[self.encoding_input_ctrl.GetSelection()])
+		encoding = self.encoding_ab[self.encoding_input_ctrl.GetSelection()]
+		setcfg("3dlut.encoding.input", encoding)
+		if getcfg("3dlut.format") == "eeColor":
+			self.encoding_output_ctrl.SetSelection(self.encoding_ba[encoding])
+			setcfg("3dlut.encoding.output", encoding)
 		config.writecfg()
 	
 	def encoding_output_ctrl_handler(self, event):
@@ -620,11 +623,12 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_output_ctrl.Show(show)
 	
 	def enable_encoding_controls(self):
-		enable = getcfg("3dlut.format") != "madVR"
 		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
-		self.encoding_input_ctrl.Enable(enable)
+		self.encoding_input_ctrl.Enable(getcfg("3dlut.format") != "madVR")
+		if getcfg("3dlut.format") == "eeColor":
+			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.input"))
 		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
-		#self.encoding_output_ctrl.Enable(enable)
+		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") != "eeColor")
 	
 	def enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
