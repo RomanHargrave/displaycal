@@ -1621,8 +1621,7 @@ class Worker(object):
 									  ext_filter=[".3dlut", ".cal", ".log",
 												  ".txt"])
 				if not result:
-					result = UnloggedError("\n\n".join([lang.getstr("aborted"),
-														"".join(self.output)]))
+					result = UnloggedError(lang.getstr("aborted"))
 				if isinstance(result2, Exception):
 					if isinstance(result, Exception):
 						result = Error(safe_unicode(result) + "\n\n" +
@@ -1635,8 +1634,7 @@ class Worker(object):
 		if isinstance(result, Exception):
 			raise result
 		elif not result:
-			raise UnloggedError("\n\n".join([lang.getstr("aborted"),
-											 "".join(self.output)]))
+			raise UnloggedError(lang.getstr("aborted"))
 
 		# We have to create the 3DLUT ourselves
 
@@ -2662,7 +2660,10 @@ class Worker(object):
 					     not "test_crt returned error code 1" in line) or
 					    line.startswith("Failed to") or
 					    ("Requested ambient light capability" in line and
-					     len(self.output) == i + 2)):
+					     len(self.output) == i + 2) or
+					    ("Diagnostic:" in line and
+					     (len(self.output) == i + 1 or
+						  self.output[i + 1].startswith("usage:")))):
 						# "test_crt returned error code 1" == user aborted
 						if (sys.platform == "win32" and
 							("config 1 failed (Operation not supported or "
@@ -2672,7 +2673,14 @@ class Worker(object):
 															  "\n\n" +
 															  lang.getstr("argyll.error.detail") +
 															  " ")
-						return UnloggedError("".join(self.output[i:]))
+						if "Diagnostic:" in line:
+							errmsg = line
+						else:
+							errmsg = "".join(self.output[i:])
+						startpos = errmsg.find(": Error")
+						if startpos > -1:
+							errmsg = errmsg[startpos + 2:]
+						return UnloggedError(errmsg.strip())
 			return False
 		return True
 	
