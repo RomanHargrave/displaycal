@@ -623,8 +623,9 @@ class LUTFrame(wx.Frame):
 	def load_lut(self, profile=None):
 		self.current_cal = profile
 		if (getcfg("lut_viewer.show_actual_lut") and
-			self.worker.argyll_version >= [1, 1, 0] and
-			not "Beta" in self.worker.argyll_version_string and
+			(self.worker.argyll_version[0:3] > [1, 1, 0] or
+			 (self.worker.argyll_version[0:3] == [1, 1, 0] and
+			  not "Beta" in self.worker.argyll_version_string)) and
 			not config.get_display_name() in ("Web", "Untethered")):
 			tmp = self.worker.create_tempdir()
 			if isinstance(tmp, Exception):
@@ -1234,8 +1235,9 @@ class LUTFrame(wx.Frame):
 				self.client.UpdatePointLabel(mDataDict)
 	
 	def update_controls(self):
-		self.show_actual_lut_cb.Enable(self.worker.argyll_version >= [1, 1, 0] and 
-									   not "Beta" in self.worker.argyll_version_string and
+		self.show_actual_lut_cb.Enable((self.worker.argyll_version[0:3] > [1, 1, 0] or
+										(self.worker.argyll_version[0:3] == [1, 1, 0] and
+										 not "Beta" in self.worker.argyll_version_string)) and
 									   not config.get_display_name() in
 									   ("Web", "Untethered"))
 		self.show_actual_lut_cb.SetValue(bool(getcfg("lut_viewer.show_actual_lut")) and
