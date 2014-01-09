@@ -4594,6 +4594,14 @@ class MainFrame(BaseFrame):
 		# select measurement data (ti1 or ti3)
 		chart = getcfg("measurement_report.chart")
 		
+		try:
+			chart = CGATS.CGATS(chart, True)
+		except CGATS.CGATSError, exception:
+			show_result_dialog(exception, self.reportframe)
+			return
+		
+		fields = getcfg("measurement_report.chart.fields")
+		
 		# profile(s)
 		paths = []
 		use_sim = getcfg("measurement_report.use_simulation_profile")
@@ -4686,10 +4694,23 @@ class MainFrame(BaseFrame):
 		else:
 			sim_intent = None
 			intent = "r"
+			if fields in ("LAB", "XYZ"):
+				if getcfg("measurement_report.whitepoint.simulate"):
+					sim_intent = "a"
+					if not getcfg("measurement_report.whitepoint.simulate.relative"):
+						intent = "a"
+				else:
+					chart.fix_device_values_scaling()
+					chart.adapt(cat=profile.guess_cat() or "Bradford")
 		
 		# lookup test patches
 		ti1, ti3_ref, gray = self.worker.chart_lookup(sim_ti3 or chart, 
-													  profile, bool(sim_ti3),
+													  profile,
+													  bool(sim_ti3) or
+													  fields in ("LAB", "XYZ"),
+													  fields=None
+															 if bool(sim_ti3)
+															 else fields,
 													  intent=intent,
 													  bt1886=bt1886)
 		if not ti3_ref:
@@ -4900,7 +4921,7 @@ class MainFrame(BaseFrame):
 			# Assume linear with all steps
 			cal_rgblevels = [256, 256, 256]
 		
-		if not chart.lower().endswith(".ti1") or sim_ti3:
+		if not chart.filename.lower().endswith(".ti1") or sim_ti3:
 			# make the device values match
 			for i in ti3_ref.DATA:
 				for color in ("RGB_R", "RGB_G", "RGB_B"):
@@ -4995,7 +5016,7 @@ class MainFrame(BaseFrame):
 						Lab = XYZ2Lab(X, Y, Z)
 						for j, color in enumerate(labels_Lab):
 							data.DATA[i][color] = Lab[j]
-			if data is ti3_ref and sim_profile and intent == "a":
+			if data is ti3_ref and sim_intent == "a" and intent == "a":
 				for i in data.DATA:
 					# we need to adapt the reference values to D50
 					L, a, b = [data.DATA[i][color] for color in labels_Lab]
@@ -5084,7 +5105,7 @@ class MainFrame(BaseFrame):
 							 "${WHITEPOINT_SIMULATION_RELATIVE}": str(sim_intent == "a" and
 																	  intent == "r").lower(),
 							 "${DEVICELINK_PROFILE}": devlink.getDescription() if devlink else '',
-							 "${TESTCHART}": os.path.basename(chart),
+							 "${TESTCHART}": os.path.basename(chart.filename),
 							 "${ADAPTION}": str(cat),
 							 "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
 							 "${REF}":  str(ti3_ref).decode(enc, 

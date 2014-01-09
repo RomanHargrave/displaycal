@@ -8,6 +8,7 @@ from config import get_data_path, initcfg, getcfg, geticon, hascfg, setcfg
 from log import safe_print
 from meta import name as appname
 from worker import Error, get_current_profile_path, show_result_dialog
+import CGATS
 import ICCProfile as ICCP
 import config
 import localization as lang
@@ -40,6 +41,8 @@ class ReportFrame(BaseFrame):
 		self.worker.set_argyll_version("xicclu")
 
 		# Bind event handlers
+		self.fields_ctrl.Bind(wx.EVT_CHOICE,
+							  self.fields_ctrl_handler)
 		self.simulation_profile_cb.Bind(wx.EVT_CHECKBOX,
 									  self.use_simulation_profile_ctrl_handler)
 		self.use_simulation_profile_as_output_cb.Bind(wx.EVT_CHECKBOX,
@@ -59,7 +62,7 @@ class ReportFrame(BaseFrame):
 											 self.output_profile_current_ctrl_handler)
 		
 		self.setup_language()
-		self.update_controls(silent=True)
+		self.update_controls()
 		self.update_layout()
 		
 		config.defaults.update({
@@ -119,14 +122,50 @@ class ReportFrame(BaseFrame):
 		config.writecfg()
 	
 	def chart_ctrl_handler(self, event):
-		setcfg("measurement_report.chart", self.chart_ctrl.GetPath())
-		config.writecfg()
-		self.update_main_controls()
+		chart = self.chart_ctrl.GetPath()
+		try:
+			cgats = CGATS.CGATS(chart)
+		except CGATS.CGATSErroor, exception:
+			show_result_dialog(exception, self)
+		else:
+			data_format = cgats.queryv1("DATA_FORMAT")
+			values = []
+			if data_format:
+				for column in data_format.itervalues():
+					column_prefix = column.split("_")[0]
+					if (column_prefix in ("CMYK", "LAB", "RGB", "XYZ") and
+						column_prefix not in values):
+						values.append(column_prefix)
+				if values:
+					self.panel.Freeze()
+					self.fields_ctrl.SetItems(values)
+					self.fields_ctrl.GetContainingSizer().Layout()
+					self.panel.Thaw()
+					fields = getcfg("measurement_report.chart.fields")
+					try:
+						index = values.index(fields)
+					except ValueError:
+						index = 0
+					self.fields_ctrl.SetSelection(index)
+					setcfg("measurement_report.chart", chart)
+					config.writecfg()
+					self.chart_white = cgats.get_white_cie()
+					if event:
+						v = int(not self.chart_white or not "RGB" in values)
+						setcfg("measurement_report.whitepoint.simulate", v)
+						setcfg("measurement_report.whitepoint.simulate.relative", v)
+			if not values:
+				show_result_dialog(lang.getstr("error.testchart.missing_fields",
+											   (chart, "RGB/CMYK %s LAB/XYZ" %
+													   lang.getstr("or"))), self)
+				self.chart_ctrl.SetPath(getcfg("measurement_report.chart"))
+		self.fields_ctrl.Enable(self.fields_ctrl.GetCount() > 1)
+		self.fields_ctrl_handler(None)
 
 	def chart_drop_handler(self, path):
 		if not self.worker.is_working():
 			self.chart_ctrl.SetPath(path)
-			self.chart_ctrl_handler(None)
+			self.chart_ctrl_handler(True)
 
 	def chart_drop_unsupported_handler(self):
 		self.drop_unsupported("chart")
@@ -149,6 +188,11 @@ class ReportFrame(BaseFrame):
 							 "\n\n" + "\n".join(files),
 					   ok=lang.getstr("ok"),
 					   bitmap=geticon(32, "dialog-error"))
+	
+	def fields_ctrl_handler(self, event):
+		setcfg("measurement_report.chart.fields",
+			   self.fields_ctrl.GetStringSelection())
+		self.update_main_controls()
 	
 	def output_profile_ctrl_handler(self, event):
 		self.set_profile("output")
@@ -205,13 +249,12 @@ class ReportFrame(BaseFrame):
 									   parent=self)
 				else:
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
-					if which == "simulation" and not silent:
-						v = int(profile.profileClass == "prtr")
-						setcfg("measurement_report.whitepoint.simulate", v)
-						setcfg("measurement_report.whitepoint.simulate.relative", v)
 					setcfg("measurement_report.%s_profile" % which, profile.fileName)
-					config.writecfg()
-					self.update_main_controls()
+					if not silent:
+						if which == "simulation":
+							self.use_simulation_profile_ctrl_handler(None)
+						else:
+							self.update_main_controls()
 					return profile
 			getattr(self,
 					"%s_profile_ctrl" %
@@ -300,32 +343,38 @@ class ReportFrame(BaseFrame):
 	def simulation_profile_drop_unsupported_handler(self):
 		self.drop_unsupported("simulation_profile")
 	
-	def update_controls(self, silent=False):
+	def update_controls(self):
 		""" Update controls with values from the configuration """
 		self.chart_ctrl.SetPath(getcfg("measurement_report.chart"))
 		self.simulation_profile_ctrl.SetPath(getcfg("measurement_report.simulation_profile"))
-		self.set_profile("simulation", silent=silent)
+		self.set_profile("simulation", silent=True)
 		self.bt1886_gamma_ctrl.SetValue(str(getcfg("measurement_report.bt1886_gamma")))
 		self.bt1886_gamma_type_ctrl.SetSelection(self.bt1886_gamma_types_ba[getcfg("measurement_report.bt1886_gamma_type")])
 		self.devlink_profile_ctrl.SetPath(getcfg("measurement_report.devlink_profile"))
-		self.set_profile("devlink", silent=silent)
+		self.set_profile("devlink", silent=True)
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
-		self.set_profile("output", silent=silent)
-		self.update_main_controls()
+		self.set_profile("output", silent=True)
+		self.chart_ctrl_handler(None)
 	
 	def update_main_controls(self):
+		chart_has_white = bool(getattr(self, "chart_white", None))
+		color = getcfg("measurement_report.chart.fields")
+		sim_profile_color = (getattr(self, "simulation_profile", None) and
+							 self.simulation_profile.colorSpace)
+		if getcfg("measurement_report.use_simulation_profile"):
+			setcfg("measurement_report.use_simulation_profile",
+				   int(sim_profile_color == color))
+		self.simulation_profile_cb.Enable(sim_profile_color == color)
 		enable1 = bool(getcfg("measurement_report.use_simulation_profile"))
-		sim_profile_is_rgb = (bool(getattr(self, "simulation_profile", None)) and
-							  self.simulation_profile.colorSpace == "RGB")
-		enable2 = (sim_profile_is_rgb and
+		enable2 = (sim_profile_color == "RGB" and
 				   bool(getcfg("measurement_report.use_simulation_profile_as_output")))
 		self.simulation_profile_cb.SetValue(enable1)
-		self.simulation_profile_ctrl.Enable(enable1)
-		self.simulation_profile_desc.Enable(enable1)
+		self.simulation_profile_ctrl.Enable(color in ("CMYK", "RGB"))
+		self.simulation_profile_desc.Enable(color in ("CMYK", "RGB"))
 		self.use_simulation_profile_as_output_cb.Enable(enable1 and
-														sim_profile_is_rgb)
-		self.use_simulation_profile_as_output_cb.SetValue(enable2)
-		enable5 = (sim_profile_is_rgb and
+														sim_profile_color == "RGB")
+		self.use_simulation_profile_as_output_cb.SetValue(enable1 and enable2)
+		enable5 = (sim_profile_color == "RGB" and
 				   isinstance(self.simulation_profile.tags.get("rXYZ"),
 							  ICCP.XYZType) and
 				   isinstance(self.simulation_profile.tags.get("gXYZ"),
@@ -338,29 +387,42 @@ class ReportFrame(BaseFrame):
 		self.apply_bt1886_cb.SetValue(enable6)
 		self.bt1886_gamma_ctrl.Enable(enable6)
 		self.bt1886_gamma_type_ctrl.Enable(enable6)
-		self.simulate_whitepoint_cb.Enable(enable1 and not enable2)
+		self.simulate_whitepoint_cb.Enable((enable1 and not enable2) or
+										   (color in ("LAB", "XYZ") and
+											chart_has_white))
 		enable3 = bool(getcfg("measurement_report.whitepoint.simulate"))
-		self.simulate_whitepoint_cb.SetValue(enable1 and not enable2 and enable3)
-		self.simulate_whitepoint_relative_cb.Enable(enable1 and not enable2 and
+		self.simulate_whitepoint_cb.SetValue(((enable1 and not enable2) or
+											  color in ("LAB", "XYZ")) and
+											 enable3)
+		self.simulate_whitepoint_relative_cb.Enable(((enable1 and not enable2) or
+													 color in ("LAB", "XYZ")) and
 													enable3)
-		self.simulate_whitepoint_relative_cb.SetValue(enable1 and
-			not enable2 and enable3 and
+		self.simulate_whitepoint_relative_cb.SetValue(
+			((enable1 and not enable2) or color in ("LAB", "XYZ")) and
+			enable3 and
 			bool(getcfg("measurement_report.whitepoint.simulate.relative")))
 		self.devlink_profile_cb.Enable(enable1 and enable2)
 		enable4 = bool(getcfg("measurement_report.use_devlink_profile"))
 		self.devlink_profile_cb.SetValue(enable1 and enable2 and enable4)
 		self.devlink_profile_ctrl.Enable(enable1 and enable2 and enable4)
 		self.devlink_profile_desc.Enable(enable1 and enable2 and enable4)
-		self.output_profile_label.Enable(not enable1 or not enable2 or
-										 self.apply_bt1886_cb.GetValue())
-		self.output_profile_ctrl.Enable(not enable1 or not enable2 or
-										self.apply_bt1886_cb.GetValue())
-		self.output_profile_desc.Enable(not enable1 or not enable2 or
-										self.apply_bt1886_cb.GetValue())
+		self.output_profile_label.Enable((color in ("LAB", "RGB", "XYZ") or
+										  enable1) and
+										 (not enable1 or not enable2 or
+										 self.apply_bt1886_cb.GetValue()))
+		self.output_profile_ctrl.Enable((color in ("LAB", "RGB", "XYZ") or
+										 enable1) and
+										(not enable1 or not enable2 or
+										self.apply_bt1886_cb.GetValue()))
+		self.output_profile_desc.Enable((color in ("LAB", "RGB", "XYZ") or
+										 enable1) and
+										(not enable1 or not enable2 or
+										self.apply_bt1886_cb.GetValue()))
 		self.measure_btn.Enable(((enable1 and
 								  bool(getcfg("measurement_report.simulation_profile")) and
 								  os.path.isfile(getcfg("measurement_report.simulation_profile"))) or
-								 not enable1) and
+								 (not enable1 and
+								  color in ("LAB", "RGB", "XYZ"))) and
 								bool(getcfg("measurement_report.chart")) and
 								os.path.isfile(getcfg("measurement_report.chart")) and
 								bool(getcfg("measurement_report.output_profile")) and
@@ -373,8 +435,14 @@ class ReportFrame(BaseFrame):
 		self.update_main_controls()
 	
 	def use_simulation_profile_ctrl_handler(self, event):
+		use_sim_profile = self.simulation_profile_cb.GetValue()
 		setcfg("measurement_report.use_simulation_profile",
-			   int(self.simulation_profile_cb.GetValue()))
+			   int(use_sim_profile))
+		sim_profile = getattr(self, "simulation_profile", None)
+		if use_sim_profile and sim_profile:
+			v = int(sim_profile.profileClass == "prtr")
+			setcfg("measurement_report.whitepoint.simulate", v)
+			setcfg("measurement_report.whitepoint.simulate.relative", v)
 		config.writecfg()
 		self.update_main_controls()
 
@@ -383,3 +451,13 @@ class ReportFrame(BaseFrame):
 			   int(self.use_simulation_profile_as_output_cb.GetValue()))
 		config.writecfg()
 		self.update_main_controls()
+
+
+if __name__ == "__main__":
+	config.initcfg()
+	lang.init()
+	lang.update_defaults()
+	app = wx.App(0)
+	frame = ReportFrame()
+	frame.Show()
+	app.MainLoop()

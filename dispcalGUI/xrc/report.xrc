@@ -17,14 +17,48 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="chart_ctrl">
-                    <message>measurement_report_choose_chart_or_reference</message>
-                    <wildcard>filetype.icc|*.icc;*.icm</wildcard>
-                    <XRCED>
-                      <events>EVT_FILEPICKER_CHANGED</events>
-                    </XRCED>
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxFilePickerCtrl" name="chart_ctrl">
+                        <message>measurement_report_choose_chart_or_reference</message>
+                        <wildcard>filetype.icc|*.icc;*.icm</wildcard>
+                        <XRCED>
+                          <events>EVT_FILEPICKER_CHANGED</events>
+                        </XRCED>
+                      </object>
+                      <option>1</option>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxChoice" name="fields_ctrl"/>
+                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>4</border>
+                    </object>
                   </object>
-                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                  <option>1</option>
+                  <flag>wxEXPAND</flag>
+                </object>
+                
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="simulate_whitepoint_cb">
+                        <label>whitepoint.simulate</label>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="simulate_whitepoint_relative_cb">
+                        <label>whitepoint.simulate.relative</label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                  </object>
                 </object>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="simulation_profile_cb">
@@ -93,24 +127,6 @@
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
                     <orient>wxHORIZONTAL</orient>
-                  </object>
-                </object>
-                <object class="spacer"/>
-                <object class="sizeritem">
-                  <object class="wxBoxSizer">
-                    <orient>wxHORIZONTAL</orient>
-                    <object class="sizeritem">
-                      <object class="wxCheckBox" name="simulate_whitepoint_cb">
-                        <label>whitepoint.simulate</label>
-                      </object>
-                      <flag>wxRIGHT</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxCheckBox" name="simulate_whitepoint_relative_cb">
-                        <label>whitepoint.simulate.relative</label>
-                      </object>
-                    </object>
                   </object>
                 </object>
                 <object class="sizeritem">

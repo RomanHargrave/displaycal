@@ -301,7 +301,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'		</tr>',
 		'		<tr>',
 		'			<th>Whitepoint simulation:</th>',
-		'			<td>' + (WHITEPOINT_SIMULATION ? 'Yes' + (WHITEPOINT_SIMULATION_RELATIVE ? ', relative to target profile whitepoint' : '') : (SIMULATION_PROFILE && !DEVICELINK_PROFILE ? 'No' : 'N/A')) + '</td>',
+		'			<td>' + (WHITEPOINT_SIMULATION ? 'Yes' + (WHITEPOINT_SIMULATION_RELATIVE ? ', relative to target profile whitepoint' : '') : (!DEVICELINK_PROFILE ? 'No' : 'N/A')) + '</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Chromatic adaption:</th>',

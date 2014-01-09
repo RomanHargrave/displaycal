@@ -5052,7 +5052,7 @@ class Worker(object):
 				setcfg("last_cal_or_icc_path", dst_pathname + ".cal")
 		return result
 	
-	def chart_lookup(self, cgats, profile, as_ti3=False, 
+	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
 					 check_missing_fields=False, function="f", pcs="l",
 					 intent="r", bt1886=None, add_white_patches=True):
 		""" Lookup CIE or device values through profile """
@@ -5063,7 +5063,6 @@ class Worker(object):
 		ti1 = None
 		ti3_ref = None
 		gray = None
-		scale = 1.0
 		try:
 			if not isinstance(cgats, CGATS.CGATS):
 				cgats = CGATS.CGATS(cgats, True)
@@ -5076,15 +5075,7 @@ class Worker(object):
 				cgats = cgats[0]
 			primaries = cgats.queryi(labels)
 			if primaries and not as_ti3:
-				for i in primaries:
-					for label in labels:
-						if primaries[i][label] > 100:
-							scale = 2.55
-							break
-				if scale > 1.0:
-					for i in primaries:
-						for label in labels:
-							primaries[i][label] = primaries[i][label] / scale
+				primaries.fix_device_values_scaling(profile.colorSpace)
 				cgats.type = 'CTI1'
 				cgats.COLOR_REP = profile.colorSpace
 				ti1, ti3_ref, gray = self.ti1_lookup_to_ti3(cgats, profile, 
@@ -5118,8 +5109,8 @@ class Worker(object):
 				if not primaries and check_missing_fields:
 					raise ValueError(lang.getstr("error.testchart.missing_fields", 
 												 (cgats.filename, ", ".join(labels))))
-				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile, intent,
-													  add_white_patches)
+				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile, fields,
+													  intent, add_white_patches)
 		except Exception, exception:
 			InfoDialog(self.owner, msg=safe_unicode(exception), 
 					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
@@ -5408,7 +5399,7 @@ class Worker(object):
 		ofile.seek(0)
 		return ti1, CGATS.CGATS(ofile)[0], map(list, gray)
 	
-	def ti3_lookup_to_ti1(self, ti3, profile, intent="r",
+	def ti3_lookup_to_ti1(self, ti3, profile, fields=None, intent="r",
 						  add_white_patches=True):
 		"""
 		Read TI3 (filename or CGATS instance), lookup cie->device values 
@@ -5430,25 +5421,34 @@ class Worker(object):
 			# Make a copy and do not alter a passed in CGATS instance!
 			ti3 = CGATS.CGATS(str(ti3))
 		
+		if fields == "XYZ":
+			labels = ("XYZ_X", "XYZ_Y", "XYZ_Z")
+		else:
+			labels = ("LAB_L", "LAB_A", "LAB_B")
+		
 		try:
-			ti3v = verify_cgats(ti3, ("LAB_L", "LAB_A", "LAB_B"), True)
+			ti3v = verify_cgats(ti3, labels, True)
 		except CGATS.CGATSInvalidError, exception:
 			raise ValueError(lang.getstr("error.testchart.invalid", 
 										 ti3_filename) + "\n" +
 										 lang.getstr(safe_str(exception)))
 		except CGATS.CGATSKeyError:
 			try:
-				ti3v = verify_cgats(ti3, ("XYZ_X", "XYZ_Y", "XYZ_Z"), True)
+				if fields:
+					raise
+				else:
+					labels = ("XYZ_X", "XYZ_Y", "XYZ_Z")
+				ti3v = verify_cgats(ti3, labels, True)
 			except CGATS.CGATSKeyError:
+				missing = ", ".join(labels)
+				if not fields:
+					missing += " " + lang.getstr("or") + " LAB_L, LAB_A, LAB_B"
 				raise ValueError(lang.getstr("error.testchart.missing_fields", 
-											 (ti3_filename, 
-											  "XYZ_X, XYZ_Y, XYZ_Z " +
-											  lang.getstr("or") + 
-											  " LAB_L, LAB_A, LAB_B")))
+											 (ti3_filename, missing)))
 			else:
 				color_rep = 'XYZ'
 		else:
-			color_rep = 'LAB'
+			color_rep = fields or 'LAB'
 		
 		# profile
 		if isinstance(profile, basestring):

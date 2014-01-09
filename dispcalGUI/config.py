@@ -542,6 +542,7 @@ defaults = {
 	"measurement_report.bt1886_gamma": 2.2,
 	"measurement_report.bt1886_gamma_type": "b",
 	"measurement_report.chart": "",
+	"measurement_report.chart.fields": "RGB",
 	"measurement_report.devlink_profile": "",
 	"measurement_report.output_profile": "",
 	"measurement_report.whitepoint.simulate": 0,
