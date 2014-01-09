@@ -15,6 +15,13 @@ from safe_print import safe_print
 from util_io import GzipFileProper, StringIOu as StringIO
 
 
+def get_device_value_labels(color_rep=None):
+	return filter(bool, map(lambda v: v[1] if not color_rep or v[0] == color_rep
+									  else False,
+							{"CMYK": ("CMYK_C", "CMYK_M", "CMYK_Y", "CMYK_K"),
+							 "RGB": ("RGB_R", "RGB_G", "RGB_B")}.iteritems()))
+
+
 def rpad(value, width):
 	"""
 	Right-pad a value to a given width.
@@ -1088,12 +1095,67 @@ Transform {
 		self.setmodified()
 		return result
 	
-	def scale_rgb(self, factor=2.55):
-		""" Scales RGB by multiplying with factor. """
-		data = self.queryi(("RGB_R", "RGB_G", "RGB_B"))
-		for i in data:
-			for label in ("RGB_R", "RGB_G", "RGB_B"):
-				data[i][label] *= factor
+	def fix_device_values_scaling(self, color_rep=None):
+		"""
+		Attempt to fix device value scaling so that max = 100
+		
+		Return number of fixed DATA sections
+
+		"""
+		fixed = 0
+		for labels in get_device_value_labels(color_rep):
+			for dataset in self.query("DATA").itervalues():
+				for item in dataset.queryi(labels).itervalues():
+					for label in labels:
+						if item[label] > 100:
+							dataset.scale_device_values(color_rep=color_rep)
+							fixed += 1
+							break
+		return fixed
+	
+	def scale_device_values(self, factor=100.0 / 255, color_rep=None):
+		""" Scales device values by multiplying with factor. """
+		for labels in get_device_value_labels(color_rep):
+			for data in self.queryv("DATA").itervalues():
+				for item in data.queryi(labels).itervalues():
+					for label in labels:
+						item[label] *= factor
+	
+	def adapt(self, whitepoint_source=None, whitepoint_destination=None,
+			  cat="Bradford"):
+		"""
+		Perform chromatic adaptation if possible (needs XYZ or LAB)
+		
+		Return number of affected DATA sections.
+		
+		"""
+		n = 0
+		for dataset in self.query("DATA").itervalues():
+			if not dataset.has_cie():
+				continue
+			if not whitepoint_source:
+				whitepoint_source = dataset.get_white_cie("XYZ")
+			if whitepoint_source:
+				n += 1
+				for item in dataset.queryv1("DATA").itervalues():
+					if "XYZ_X" in item:
+						X, Y, Z = item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"]
+					else:
+						X, Y, Z = colormath.Lab2XYZ(item["LAB_L"],
+													item["LAB_A"],
+													item["LAB_B"],
+													scale=100)
+					X, Y, Z = colormath.adapt(X, Y, Z,
+											  whitepoint_source,
+											  whitepoint_destination,
+											  cat)
+					if "LAB_L" in item:
+						(item["LAB_L"],
+						 item["LAB_A"],
+						 item["LAB_B"]) = colormath.XYZ2Lab(X, Y, Z)
+					if "XYZ_X" in item:
+						item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"] = X, Y, Z
+		return n
 	
 	def apply_bpc(self):
 		"""
@@ -1142,6 +1204,73 @@ Transform {
 				data[i][label] = XYZ[j]
 
 		return True
+	
+	def get_white_cie(self, colorspace=None):
+		"""
+		Get the 'white' from the CIE values (if any).
+		
+		"""
+		data_format = self.has_cie()
+		if data_format:
+			if "RGB_R" in data_format.values():
+				white = {"RGB_R": 100, "RGB_G": 100, "RGB_B": 100}
+			elif "CMYK_C" in data_format.values():
+				white = {"CMYK_C": 0, "CMYK_M": 0, "CMYK_Y": 0, "CMYK_K": 0}
+			else:
+				return
+			if white:
+				white = self.queryi1(white)
+				if not white:
+					white = self.queryv1("APPROX_WHITE_POINT")
+					if white:
+						try:
+							white = [float(v) for v in white.split()]
+						except ValueError:
+							white = None
+						else:
+							if len(white) == 3:
+								white = [v / v[1] * 100 for v in white]
+								white = {"XYZ_X": white[0],
+										 "XYZ_Y": white[1],
+										 "XYZ_Z": white[2]}
+							else:
+								return
+				if white:
+					if colorspace == "XYZ":
+						if "XYZ_X" in white:
+							return white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
+						else:
+							return colormath.Lab2XYZ(white["LAB_L"],
+													 white["LAB_A"],
+													 white["LAB_B"],
+													 scale=100)
+					elif colorspace == "Lab":
+						if "LAB_L" in white:
+							return white["LAB_L"], white["LAB_A"], white["LAB_B"]
+						else:
+							return colormath.XYZ2Lab(white["XYZ_X"],
+													 white["XYZ_Y"],
+													 white["XYZ_Z"])
+					return white
+	
+	def has_cie(self):
+		"""
+		Check if DATA_FORMAT defines any CIE XYZ or LAB columns.
+		
+		Return the DATA_FORMAT on success or None on failure.
+		
+		"""
+		data_format = self.queryv1("DATA_FORMAT")
+		if data_format:
+			cie = {}
+			for ch in ("L", "A", "B"):
+				cie[ch] = "LAB_%s" % ch in data_format.values()
+			if len(cie.values()) in (0, 3):
+				for ch in ("X", "Y", "Z"):
+					cie[ch] = "XYZ_%s" % ch in data_format.values()
+				if len(filter(lambda v: v is not None,
+							  cie.itervalues())) in (3, 6):
+					return data_format
 	
 	pop = remove
 	
