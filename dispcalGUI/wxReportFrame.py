@@ -43,6 +43,7 @@ class ReportFrame(BaseFrame):
 		# Bind event handlers
 		self.fields_ctrl.Bind(wx.EVT_CHOICE,
 							  self.fields_ctrl_handler)
+		self.chart_btn.Bind(wx.EVT_BUTTON, self.chart_btn_handler)
 		self.simulation_profile_cb.Bind(wx.EVT_CHECKBOX,
 									  self.use_simulation_profile_ctrl_handler)
 		self.use_simulation_profile_as_output_cb.Bind(wx.EVT_CHECKBOX,
@@ -121,6 +122,11 @@ class ReportFrame(BaseFrame):
 			   self.bt1886_gamma_types_ab[self.bt1886_gamma_type_ctrl.GetSelection()])
 		config.writecfg()
 	
+	def chart_btn_handler(self, event):
+		evt = wx.PyCommandEvent(wx.EVT_BUTTON.typeId,
+								self.chart_ctrl.GetPickerCtrl().GetId())
+		wx.PostEvent(self.chart_ctrl.GetPickerCtrl(), evt)
+	
 	def chart_ctrl_handler(self, event):
 		chart = self.chart_ctrl.GetPath()
 		try:
@@ -149,6 +155,8 @@ class ReportFrame(BaseFrame):
 					self.fields_ctrl.SetSelection(index)
 					setcfg("measurement_report.chart", chart)
 					config.writecfg()
+					self.chart_patches_amount.SetLabel(
+						str(cgats.queryv1("NUMBER_OF_SETS") or 0))
 					self.chart_white = cgats.get_white_cie()
 					if event:
 						v = int(not self.chart_white or not "RGB" in values)
