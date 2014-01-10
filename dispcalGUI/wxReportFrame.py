@@ -131,7 +131,7 @@ class ReportFrame(BaseFrame):
 		chart = self.chart_ctrl.GetPath()
 		try:
 			cgats = CGATS.CGATS(chart)
-		except CGATS.CGATSErroor, exception:
+		except (IOError, CGATS.CGATSInvalidError), exception:
 			show_result_dialog(exception, self)
 		else:
 			data_format = cgats.queryv1("DATA_FORMAT")
