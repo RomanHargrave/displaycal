@@ -489,6 +489,11 @@ class LUT3DFrame(BaseFrame):
 						  which).SetPath(getcfg("3dlut.%s.profile" % which))
 		else:
 			getattr(self, "%s_profile_desc" % which).SetLabel("")
+			if not silent:
+				setattr(self, "%s_profile" % which, None)
+				setcfg("3dlut.%s.profile" % which, None)
+				if which in ("input", "output"):
+					self.lut3d_create_btn.Disable()
 	
 	def setup_language(self):
 		BaseFrame.setup_language(self)

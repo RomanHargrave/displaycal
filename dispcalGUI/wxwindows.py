@@ -519,7 +519,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		self.Enable(False)
 	
 	def Enable(self, enable=True):
-		self.textControl.Enable(enable and bool(self.history))
+		self.textControl.Enable(enable and self.history != [""])
 		self.browseButton.Enable(enable)
 
 	def GetValue(self):
@@ -570,8 +570,6 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 				if index > -1:
 					self.history.pop(index)
 					self.textControl.Delete(index)
-					self.setupControl()
-			return
 		if not value in self.history:
 			self.history.append(value)
 			self.textControl.Append(os.path.basename(value))
@@ -634,7 +632,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		toolTip = (self.history[selectionIndex] if selectionIndex > -1 else
 				   self.toolTip)
 		control.SetToolTipString(toolTip)
-		control.Enable(bool(self.history))
+		control.Enable(self.history != [""])
 
 
 class FileDrop(_FileDrop):

@@ -260,8 +260,8 @@ class ReportFrame(BaseFrame):
 				else:
 					setattr(self, "%s_profile" % which, profile)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
-					setcfg("measurement_report.%s_profile" % which, profile.fileName)
 					if not silent:
+						setcfg("measurement_report.%s_profile" % which, profile.fileName)
 						if which == "simulation":
 							self.use_simulation_profile_ctrl_handler(None)
 						else:
@@ -272,6 +272,10 @@ class ReportFrame(BaseFrame):
 					which).SetPath(getcfg("measurement_report.%s_profile" % which))
 		else:
 			getattr(self, "%s_profile_desc" % which).SetLabel("")
+			if not silent:
+				setattr(self, "%s_profile" % which, None)
+				setcfg("measurement_report.%s_profile" % which, None)
+				self.update_main_controls()
 	
 	def setup_language(self):
 		BaseFrame.setup_language(self)
@@ -429,15 +433,19 @@ class ReportFrame(BaseFrame):
 										 enable1) and
 										(not enable1 or not enable2 or
 										self.apply_bt1886_cb.GetValue()))
-		self.measure_btn.Enable(((enable1 and
-								  bool(getcfg("measurement_report.simulation_profile")) and
-								  os.path.isfile(getcfg("measurement_report.simulation_profile"))) or
-								 (not enable1 and
-								  color in ("LAB", "RGB", "XYZ"))) and
-								bool(getcfg("measurement_report.chart")) and
-								os.path.isfile(getcfg("measurement_report.chart")) and
-								bool(getcfg("measurement_report.output_profile")) and
-								os.path.isfile(getcfg("measurement_report.output_profile")))
+		self.measure_btn.Enable((enable1 and
+								 bool(getcfg("measurement_report.simulation_profile")) and
+								 os.path.isfile(getcfg("measurement_report.simulation_profile")) and
+								 enable2) or
+								(((not enable1 and
+								   color in ("LAB", "RGB", "XYZ")) or
+								  (enable1 and
+								   bool(getcfg("measurement_report.simulation_profile")) and
+								   os.path.isfile(getcfg("measurement_report.simulation_profile")))) and
+								 bool(getcfg("measurement_report.chart")) and
+								 os.path.isfile(getcfg("measurement_report.chart")) and
+								 bool(getcfg("measurement_report.output_profile")) and
+								 os.path.isfile(getcfg("measurement_report.output_profile"))))
 	
 	def use_devlink_profile_ctrl_handler(self, event):
 		setcfg("measurement_report.use_devlink_profile",
