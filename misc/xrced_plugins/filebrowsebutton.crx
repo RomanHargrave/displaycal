@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<resource>
+  <component class="Component" name="FileBrowseButton">
+    <groups>
+      <item>control</item>
+    </groups>
+    <attributes>
+      <item>pos</item>
+      <item>size</item>
+      <item>labelText</item>
+      <item>buttonText</item>
+      <item>toolTip</item>
+      <item>dialogTitle</item>
+      <item>startDirectory</item>
+      <item>initialValue</item>
+      <item>fileMask</item>
+      <item>fileMode</item>
+      <item>labelWidth</item>
+    </attributes>
+    <has-name>1</has-name>
+    <module>xh_filebrowsebutton</module>
+    <handler>FileBrowseButtonXmlHandler</handler>
+    <menu>gizmo</menu>
+    <label>FileBrowseButton</label>
+    <help>A control to allow the user to type in a filename or browse with the standard file dialog to select file</help>
+    <index>10</index>
+  </component>
+  <component class="Component" name="FileBrowseButtonWithHistory">
+    <groups>
+      <item>control</item>
+    </groups>
+    <attributes>
+      <item>pos</item>
+      <item>size</item>
+      <item>labelText</item>
+      <item>buttonText</item>
+      <item>toolTip</item>
+      <item>dialogTitle</item>
+      <item>startDirectory</item>
+      <item>initialValue</item>
+      <item>fileMask</item>
+      <item>fileMode</item>
+      <item>labelWidth</item>
+    </attributes>
+    <has-name>1</has-name>
+    <module>xh_filebrowsebutton</module>
+    <handler>FileBrowseButtonWithHistoryXmlHandler</handler>
+    <menu>gizmo</menu>
+    <label>FileBrowseButtonWithHistory</label>
+    <help>A control to allow the user to type in a filename or browse with the standard file dialog to select file</help>
+    <index>10</index>
+  </component>
+</resource>

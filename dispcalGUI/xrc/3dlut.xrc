@@ -20,9 +20,6 @@
                   <object class="wxFilePickerCtrl" name="input_profile_ctrl">
                     <message>profile.input</message>
                     <wildcard>filetype.icc|*.icc;*.icm</wildcard>
-                    <XRCED>
-                      <events>EVT_FILEPICKER_CHANGED</events>
-                    </XRCED>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -51,9 +48,6 @@
                   <object class="wxFilePickerCtrl" name="abstract_profile_ctrl">
                     <message>profile.abstract</message>
                     <wildcard>filetype.icc|*.icc;*.icm</wildcard>
-                    <XRCED>
-                      <events>EVT_FILEPICKER_CHANGED</events>
-                    </XRCED>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -84,9 +78,6 @@
                       <object class="wxFilePickerCtrl" name="output_profile_ctrl">
                         <message>gamap.profile</message>
                         <wildcard>filetype.icc|*.icc;*.icm</wildcard>
-                        <XRCED>
-                          <events>EVT_FILEPICKER_CHANGED</events>
-                        </XRCED>
                       </object>
                       <option>1</option>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
@@ -96,7 +87,7 @@
                         <label>profile.current</label>
                       </object>
                       <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>4</border>
+                      <border>8</border>
                     </object>
                     <orient>wxHORIZONTAL</orient>
                   </object>
@@ -173,7 +164,7 @@
                     <object class="sizeritem">
                       <object class="wxChoice" name="bt1886_gamma_type_ctrl">
                         <content>
-                          <item></item>
+                          <item/>
                         </content>
                       </object>
                     </object>

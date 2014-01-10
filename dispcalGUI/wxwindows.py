@@ -31,6 +31,7 @@ try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
 	import floatspin
+import wx.lib.filebrowsebutton as filebrowse
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
 				   wx.WXK_NUMPAD1,
@@ -497,6 +498,139 @@ class ConfirmDialog(BaseInteractiveDialog):
 		else:
 			id = event.GetId()
 		self.EndModal(id)
+
+
+class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHistory):
+
+	def __init__(self, *arguments, **namedarguments):
+		self.history = namedarguments.get("history") or []
+		if self.history:
+			del namedarguments["history"]
+
+		self.historyCallBack = None
+		if callable(self.history):
+			self.historyCallBack = self.history
+			self.history = []
+		name = namedarguments.get('name', 'fileBrowseButtonWithHistory')
+		namedarguments['name'] = name
+		filebrowse.FileBrowseButton.__init__(self, *arguments, **namedarguments)
+	
+	def Disable(self):
+		self.Enable(False)
+	
+	def Enable(self, enable=True):
+		self.textControl.Enable(enable and bool(self.history))
+		self.browseButton.Enable(enable)
+
+	def GetValue(self):
+		"""
+		retrieve current value of text control
+		"""
+		if self.textControl.GetSelection() > -1:
+			return self.history[self.textControl.GetSelection()]
+		return ""
+	
+	GetPath = GetValue
+
+	def OnChanged(self, evt):
+		self.textControl.SetToolTipString(self.history[self.textControl.GetSelection()])
+		if self.callCallback and self.changeCallback:
+			self.changeCallback(evt)
+
+	def SetBackgroundColour(self,color):
+		wx.Panel.SetBackgroundColour(self,color)
+
+	def SetHistory(self, value=(), selectionIndex=None, control=None):
+		"""Set the current history list"""
+		if control is None:
+			control = self.textControl
+		if self.history == value:
+			return
+		index = control.GetSelection()
+		if self.history and index > -1:
+			tempValue = self.history[index]
+		else:
+			tempValue = None
+		self.history = value
+		control.Clear()
+		for path in value:
+			control.Append(os.path.basename(path))
+		if tempValue:
+			self.history.append(tempValue)
+			control.Append(os.path.basename(tempValue))
+		self.setupControl(selectionIndex, control)
+
+	def SetValue(self, value, callBack=1, clear_on_empty_value=False):
+		if not value:
+			if clear_on_empty_value and self.history:
+				index = self.textControl.GetSelection()
+				if index > -1:
+					self.history.pop(index)
+					self.textControl.Delete(index)
+					self.setupControl()
+			return
+		if not value in self.history:
+			self.history.append(value)
+			self.textControl.Append(os.path.basename(value))
+		self.setupControl(self.history.index(value))
+		if callBack:
+			self.changeCallback(CustomEvent(wx.EVT_CHOICE.typeId, 
+											self.textControl))
+	
+	def SetPath(self, path):
+		self.SetValue(path, 0, clear_on_empty_value=True)
+
+	def createBrowseButton(self):
+		"""Create the browse-button control"""
+		button = wx.BitmapButton(self, -1, geticon(16, "document-open"), 
+								 style=wx.NO_BORDER)
+		button.SetBitmapDisabled(geticon(16, "empty"))
+		button.SetToolTipString(self.toolTip)
+		button.Bind(wx.EVT_BUTTON, self.OnBrowse)
+		return button
+
+	def createDialog(self, parent, id, pos, size, style, name):
+		"""Setup the graphic representation of the dialog"""
+		wx.Panel.__init__ (self, parent, id, pos, size, style, name)
+		self.SetMinSize(size) # play nice with sizers
+
+		box = wx.BoxSizer(wx.HORIZONTAL)
+
+		self.textControl = self.createTextControl()
+		if self.history:
+			history = self.history
+			self.history = []
+			self.SetHistory(history)
+		box.Add(self.textControl, 1, wx.ALIGN_CENTER_VERTICAL)
+
+		self.browseButton = self.createBrowseButton()
+		box.Add(self.browseButton, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
+
+		self.SetAutoLayout(True)
+		self.SetSizer(box)
+		self.Layout()
+
+	def createLabel(self):
+		return (0, 0)
+
+	def createTextControl(self):
+		"""Create the text control"""
+		textControl = wx.Choice(self, -1)
+		textControl.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+		if self.changeCallback:
+			textControl.Bind(wx.EVT_CHOICE, self.OnChanged)
+		return textControl
+	
+	def setupControl(self, selectionIndex=None, control=None):
+		if control is None:
+			control = self.textControl
+		if selectionIndex is None:
+			selectionIndex = len(self.history) - 1
+		control.SetSelection(selectionIndex)
+		toolTip = (self.history[selectionIndex] if selectionIndex > -1 else
+				   self.toolTip)
+		control.SetToolTipString(toolTip)
+		control.Enable(bool(self.history))
 
 
 class FileDrop(_FileDrop):

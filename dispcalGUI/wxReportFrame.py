@@ -14,7 +14,9 @@ import config
 import localization as lang
 import worker
 from wxaddons import FileDrop
-from wxwindows import BaseFrame, InfoDialog, wx
+from wxwindows import (BaseFrame,
+					   FileBrowseBitmapButtonWithChoiceHistory as FileBrowse,
+					   InfoDialog, wx)
 
 from wx import xrc
 
@@ -123,9 +125,7 @@ class ReportFrame(BaseFrame):
 		config.writecfg()
 	
 	def chart_btn_handler(self, event):
-		evt = wx.PyCommandEvent(wx.EVT_BUTTON.typeId,
-								self.chart_ctrl.GetPickerCtrl().GetId())
-		wx.PostEvent(self.chart_ctrl.GetPickerCtrl(), evt)
+		self.chart_ctrl.OnBrowse()
 	
 	def chart_ctrl_handler(self, event):
 		chart = self.chart_ctrl.GetPath()
@@ -244,7 +244,6 @@ class ReportFrame(BaseFrame):
 				if not silent:
 					show_result_dialog(exception, parent=self)
 			else:
-				setattr(self, "%s_profile" % which, profile)
 				if ((which == "simulation" and
 					 (profile.profileClass not in ("mntr", "prtr") or 
 					  profile.colorSpace not in ("CMYK", "RGB"))) or
@@ -256,6 +255,7 @@ class ReportFrame(BaseFrame):
 																		profile.colorSpace))),
 									   parent=self)
 				else:
+					setattr(self, "%s_profile" % which, profile)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					setcfg("measurement_report.%s_profile" % which, profile.fileName)
 					if not silent:
@@ -286,23 +286,23 @@ class ReportFrame(BaseFrame):
 								"|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt")
 				msg = {"chart": "measurement_report_choose_chart_or_reference",
 					   "output_profile": "measurement_report_choose_profile"}.get(which, which)
+				kwargs = dict(toolTip=lang.getstr(msg).rstrip(":"),
+							  dialogTitle=lang.getstr(msg), 
+							  fileMask=wildcard,
+							  changeCallback=getattr(self, "%s_ctrl_handler" % 
+														   which))
+				if which not in ("devlink_profile", "output_profile"):
+					kwargs["history"] = get_data_path("ref",
+													  "\.(%s)$" % wildcard.split("|")[1].replace("*.",
+																								 "").replace(";",
+																											 "|"))
 				setattr(self, "%s_ctrl" % which,
-						wx.FilePickerCtrl(self.panel, -1, "",
-										  message=lang.getstr(msg), 
-										  wildcard=wildcard,
-										  name="%s_ctrl" % which))
-				getattr(self, "%s_ctrl" %
-							  which).PickerCtrl.Label = lang.getstr("browse")
-				getattr(self, "%s_ctrl" %
-							  which).PickerCtrl.SetMaxFontSize(11)
+						FileBrowse(self.panel, -1, **kwargs))
+				getattr(self, "%s_ctrl" % which).SetMaxFontSize(11)
 				hsizer.Replace(origpickerctrl,
 							   getattr(self, "%s_ctrl" % which))
 				origpickerctrl.Destroy()
 				hsizer.Layout()
-			getattr(self, "%s_ctrl"
-						  % which).Bind(wx.EVT_FILEPICKER_CHANGED,
-										getattr(self, "%s_ctrl_handler" % 
-													 which))
 			# Drop targets
 			setattr(self, "%s_droptarget" % which, FileDrop())
 			droptarget = getattr(self, "%s_droptarget" % which)
