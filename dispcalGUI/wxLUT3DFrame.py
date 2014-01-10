@@ -214,10 +214,10 @@ class LUT3DFrame(BaseFrame):
 			self.set_profile("output")
 	
 	def abstract_profile_ctrl_handler(self, event):
-		self.set_profile("abstract")
+		self.set_profile("abstract", silent=not event)
 	
 	def input_profile_ctrl_handler(self, event):
-		self.set_profile("input")
+		self.set_profile("input", silent=not event)
 	
 	def lut3d_bitdepth_input_ctrl_handler(self, event):
 		setcfg("3dlut.bitdepth.input",
@@ -488,12 +488,17 @@ class LUT3DFrame(BaseFrame):
 			getattr(self, "%s_profile_ctrl" %
 						  which).SetPath(getcfg("3dlut.%s.profile" % which))
 		else:
-			getattr(self, "%s_profile_desc" % which).SetLabel("")
-			if not silent:
-				setattr(self, "%s_profile" % which, None)
-				setcfg("3dlut.%s.profile" % which, None)
-				if which in ("input", "output"):
-					self.lut3d_create_btn.Disable()
+			if which == "input":
+				getattr(self, "%s_profile_ctrl" %
+							  which).SetPath(getcfg("3dlut.%s.profile" % which))
+			else:
+				getattr(self, "%s_profile_desc" % which).SetLabel("")
+				if not silent:
+					setattr(self, "%s_profile" % which, None)
+					setcfg("3dlut.%s.profile" % which, None)
+					if which == "output":
+						self.apply_cal_cb.Disable()
+						self.lut3d_create_btn.Disable()
 	
 	def setup_language(self):
 		BaseFrame.setup_language(self)

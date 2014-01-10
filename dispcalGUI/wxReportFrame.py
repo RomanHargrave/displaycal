@@ -166,9 +166,10 @@ class ReportFrame(BaseFrame):
 						setcfg("measurement_report.whitepoint.simulate", v)
 						setcfg("measurement_report.whitepoint.simulate.relative", v)
 			if not values:
-				show_result_dialog(lang.getstr("error.testchart.missing_fields",
-											   (chart, "RGB/CMYK %s LAB/XYZ" %
-													   lang.getstr("or"))), self)
+				if chart:
+					show_result_dialog(lang.getstr("error.testchart.missing_fields",
+												   (chart, "RGB/CMYK %s LAB/XYZ" %
+														   lang.getstr("or"))), self)
 				self.chart_ctrl.SetPath(getcfg("measurement_report.chart"))
 		self.fields_ctrl.Enable(self.fields_ctrl.GetCount() > 1)
 		self.fields_ctrl_handler(None)
