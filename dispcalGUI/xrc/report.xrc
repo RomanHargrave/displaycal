@@ -58,7 +58,8 @@
                         <style>wxALIGN_RIGHT</style>
                       </object>
                       <option>1</option>
-                      <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                      <flag>wxLEFT|wxEXPAND|wxALIGN_RIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
                     </object>
                     <object class="sizeritem">
                       <object class="wxBitmapButton" name="chart_btn">
