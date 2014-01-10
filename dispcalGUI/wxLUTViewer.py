@@ -1270,9 +1270,9 @@ def main(profile=None):
 	app = LUTViewer(0)
 	app.frame.worker.enumerate_displays_and_ports(check_lut_access=False,
 												  enumerate_ports=False)
-	app.frame.update_controls()
 	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
 	app.frame.Show(True)
+	app.frame.update_controls()
 	if profile:
 		app.frame.drop_handler(profile)
 	else:
