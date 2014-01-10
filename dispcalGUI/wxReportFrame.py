@@ -155,8 +155,11 @@ class ReportFrame(BaseFrame):
 					self.fields_ctrl.SetSelection(index)
 					setcfg("measurement_report.chart", chart)
 					config.writecfg()
+					self.chart_patches_amount.Freeze()
 					self.chart_patches_amount.SetLabel(
 						str(cgats.queryv1("NUMBER_OF_SETS") or 0))
+					self.chart_patches_amount.GetContainingSizer().Layout()
+					self.chart_patches_amount.Thaw()
 					self.chart_white = cgats.get_white_cie()
 					if event:
 						v = int(not self.chart_white or not "RGB" in values)
