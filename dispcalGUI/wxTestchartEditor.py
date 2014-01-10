@@ -1332,6 +1332,7 @@ class TestchartEditor(wx.Frame):
 	def tc_save_check(self):
 		self.save_btn.Enable(hasattr(self, "ti1") and self.ti1.modified and 
 							 os.path.exists(self.ti1.filename) and 
+							 get_data_path(os.path.join("ref", os.path.basename(self.ti1.filename))) != self.ti1.filename and 
 							 get_data_path(os.path.join("ti1", os.path.basename(self.ti1.filename))) != self.ti1.filename)
 
 	def tc_save_cfg(self):
