@@ -74,7 +74,8 @@
                     </object>
                     <orient>wxHORIZONTAL</orient>
                   </object>
-                  <flag>wxEXPAND</flag>
+                  <flag>wxLEFT|wxEXPAND</flag>
+                  <border>4</border>
                 </object>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="simulation_profile_cb">
@@ -92,23 +93,19 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
-                  <object class="wxStaticBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="simulation_profile_desc">
-                        <label>-</label>
-                      </object>
-                      <option>1</option>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxStaticText" name="simulation_profile_desc">
+                    <label>-</label>
                   </object>
-                  <flag>wxTOP|wxEXPAND</flag>
-                  <border>-8</border>
+                  <flag>wxBOTTOM|wxLEFT|wxEXPAND</flag>
+                  <border>4</border>
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="use_simulation_profile_as_output_cb">
                     <label>use_simulation_profile_as_output</label>
                   </object>
+                  <flag>wxLEFT</flag>
+                  <border>4</border>
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
@@ -141,6 +138,8 @@
                     </object>
                     <orient>wxHORIZONTAL</orient>
                   </object>
+                  <flag>wxLEFT</flag>
+                  <border>4</border>
                 </object>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="devlink_profile_cb">
@@ -158,17 +157,11 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
-                  <object class="wxStaticBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="devlink_profile_desc">
-                        <label>-</label>
-                      </object>
-                      <option>1</option>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxStaticText" name="devlink_profile_desc">
+                    <label>-</label>
                   </object>
-                  <flag>wxTOP|wxEXPAND</flag>
-                  <border>-8</border>
+                  <flag>wxLEFT|wxEXPAND</flag>
+                  <border>4</border>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="output_profile_label">
@@ -201,17 +194,11 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
-                  <object class="wxStaticBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="output_profile_desc">
-                        <label>-</label>
-                      </object>
-                      <option>1</option>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxStaticText" name="output_profile_desc">
+                    <label>-</label>
                   </object>
-                  <flag>wxTOP|wxEXPAND</flag>
-                  <border>-8</border>
+                  <flag>wxLEFT|wxEXPAND</flag>
+                  <border>4</border>
                 </object>
                 <cols>2</cols>
                 <rows>0</rows>

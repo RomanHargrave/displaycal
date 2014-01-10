@@ -25,18 +25,13 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
-                  <object class="wxStaticBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="input_profile_desc">
-                        <label>-</label>
-                      </object>
-                      <option>1</option>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxStaticText" name="input_profile_desc">
+                    <label>-</label>
                   </object>
-                  <flag>wxTOP|wxEXPAND</flag>
-                  <border>-8</border>
+                  <flag>wxLEFT|wxEXPAND</flag>
+                  <border>4</border>
                 </object>
+                
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="abstract_profile_cb">
                     <label>3dlut.use_abstract_profile</label>
@@ -53,18 +48,13 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
-                  <object class="wxStaticBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="abstract_profile_desc">
-                        <label>-</label>
-                      </object>
-                      <option>1</option>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxStaticText" name="abstract_profile_desc">
+                    <label>-</label>
                   </object>
-                  <flag>wxTOP|wxEXPAND</flag>
-                  <border>-8</border>
+                  <flag>wxLEFT|wxEXPAND</flag>
+                  <border>4</border>
                 </object>
+                
                 <object class="sizeritem">
                   <object class="wxStaticText" name="output_profile_label">
                     <label>output.profile</label>
@@ -96,23 +86,20 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
-                  <object class="wxStaticBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="output_profile_desc">
-                        <label>-</label>
-                      </object>
-                      <option>1</option>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxStaticText" name="output_profile_desc">
+                    <label>-</label>
                   </object>
-                  <flag>wxTOP|wxEXPAND</flag>
-                  <border>-8</border>
+                  <flag>wxBOTTOM|wxLEFT|wxEXPAND</flag>
+                  <border>4</border>
                 </object>
+                
                 <object class="spacer"/>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="apply_cal_cb">
                     <label>apply_cal</label>
                   </object>
+                  <flag>wxBOTTOM|wxLEFT</flag>
+                  <border>4</border>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="encoding_input_label">
@@ -149,7 +136,6 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxBoxSizer">
-                    <orient>wxHORIZONTAL</orient>
                     <object class="sizeritem">
                       <object class="wxComboBox" name="bt1886_gamma_ctrl">
                         <size>75,-1</size>
@@ -168,6 +154,7 @@
                         </content>
                       </object>
                     </object>
+                    <orient>wxHORIZONTAL</orient>
                   </object>
                 </object>
                 <object class="sizeritem">

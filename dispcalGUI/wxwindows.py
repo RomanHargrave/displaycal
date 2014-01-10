@@ -601,7 +601,8 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			history = self.history
 			self.history = []
 			self.SetHistory(history)
-		box.Add(self.textControl, 1, wx.ALIGN_CENTER_VERTICAL)
+		box.Add(self.textControl, 1, wx.ALIGN_CENTER_VERTICAL | wx.TOP |
+									 wx.BOTTOM, 4)
 
 		self.browseButton = self.createBrowseButton()
 		box.Add(self.browseButton, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
