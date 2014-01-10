@@ -559,6 +559,9 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			self.history.append(tempValue)
 			control.Append(os.path.basename(tempValue))
 		self.setupControl(selectionIndex, control)
+	
+	def SetMaxFontSize(self, pointsize=11):
+		self.textControl.SetMaxFontSize(pointsize)
 
 	def SetValue(self, value, callBack=1, clear_on_empty_value=False):
 		if not value:
