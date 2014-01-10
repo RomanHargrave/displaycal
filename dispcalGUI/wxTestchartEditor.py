@@ -28,7 +28,8 @@ from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
-from wxwindows import ConfirmDialog, InfoDialog
+from wxwindows import (ConfirmDialog, FileBrowseBitmapButtonWithChoiceHistory,
+					   InfoDialog)
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
@@ -273,10 +274,13 @@ class TestchartEditor(wx.Frame):
 		self.tc_precond = wx.CheckBox(panel, -1, lang.getstr("tc.precond"), name = "tc_precond")
 		self.Bind(wx.EVT_CHECKBOX, self.tc_precond_handler, id = self.tc_precond.GetId())
 		hsizer.Add(self.tc_precond, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_precond_profile = wx.FilePickerCtrl(panel, -1, "", message = lang.getstr("tc.precond"), wildcard = lang.getstr("filetype.icc_mpp") + "|*.icc;*.icm;*.mpp")
-		if sys.platform in ("darwin", "win32"):
-			self.tc_precond_profile.PickerCtrl.Label = lang.getstr("browse")
-		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.tc_precond_profile_handler, id = self.tc_precond_profile.GetId())
+		self.tc_precond_profile = FileBrowseBitmapButtonWithChoiceHistory(
+			panel, -1, toolTip=lang.getstr("tc.precond"),
+			dialogTitle=lang.getstr("tc.precond"),
+			fileMask=lang.getstr("filetype.icc_mpp") + "|*.icc;*.icm;*.mpp",
+			changeCallback=self.tc_precond_profile_handler,
+			history=get_data_path("ref", "\.(icm|icc)$"))
+		self.tc_precond_profile.SetMaxFontSize(11)
 		hsizer.Add(self.tc_precond_profile, 1, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		
 		self.tc_precond_profile_current_btn = wx.Button(panel, -1,

@@ -279,33 +279,33 @@ class ReportFrame(BaseFrame):
 		# Create the file picker ctrls dynamically to get translated strings
 		for which in ("chart", "simulation_profile", "devlink_profile",
 					  "output_profile"):
-			if sys.platform in ("darwin", "win32"):
-				origpickerctrl = self.FindWindowByName("%s_ctrl" % which)
-				hsizer = origpickerctrl.GetContainingSizer()
-				if which.endswith("_profile"):
-					wildcard = lang.getstr("filetype.icc")  + "|*.icc;*.icm"
-				else:
-					wildcard = (lang.getstr("filetype.ti1_ti3_txt") + 
-								"|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt")
-				msg = {"chart": "measurement_report_choose_chart_or_reference",
-					   "output_profile": "measurement_report_choose_profile"}.get(which, which)
-				kwargs = dict(toolTip=lang.getstr(msg).rstrip(":"),
-							  dialogTitle=lang.getstr(msg), 
-							  fileMask=wildcard,
-							  changeCallback=getattr(self, "%s_ctrl_handler" % 
-														   which))
-				if which not in ("devlink_profile", "output_profile"):
-					kwargs["history"] = get_data_path("ref",
-													  "\.(%s)$" % wildcard.split("|")[1].replace("*.",
-																								 "").replace(";",
-																											 "|"))
-				setattr(self, "%s_ctrl" % which,
-						FileBrowse(self.panel, -1, **kwargs))
-				getattr(self, "%s_ctrl" % which).SetMaxFontSize(11)
-				hsizer.Replace(origpickerctrl,
-							   getattr(self, "%s_ctrl" % which))
-				origpickerctrl.Destroy()
-				hsizer.Layout()
+			origpickerctrl = self.FindWindowByName("%s_ctrl" % which)
+			hsizer = origpickerctrl.GetContainingSizer()
+			if which.endswith("_profile"):
+				wildcard = lang.getstr("filetype.icc")  + "|*.icc;*.icm"
+			else:
+				wildcard = (lang.getstr("filetype.ti1_ti3_txt") + 
+							"|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt")
+			msg = {"chart": "measurement_report_choose_chart_or_reference",
+				   "output_profile": "measurement_report_choose_profile"}.get(which, which)
+			kwargs = dict(toolTip=lang.getstr(msg).rstrip(":"),
+						  dialogTitle=lang.getstr(msg), 
+						  fileMask=wildcard,
+						  changeCallback=getattr(self, "%s_ctrl_handler" % 
+													   which),
+						  name="%s_ctrl" % which)
+			if which not in ("devlink_profile", "output_profile"):
+				kwargs["history"] = get_data_path("ref",
+												  "\.(%s)$" % wildcard.split("|")[1].replace("*.",
+																							 "").replace(";",
+																										 "|"))
+			setattr(self, "%s_ctrl" % which,
+					FileBrowse(self.panel, -1, **kwargs))
+			getattr(self, "%s_ctrl" % which).SetMaxFontSize(11)
+			hsizer.Replace(origpickerctrl,
+						   getattr(self, "%s_ctrl" % which))
+			origpickerctrl.Destroy()
+			hsizer.Layout()
 			# Drop targets
 			setattr(self, "%s_droptarget" % which, FileDrop())
 			droptarget = getattr(self, "%s_droptarget" % which)

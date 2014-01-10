@@ -495,29 +495,29 @@ class LUT3DFrame(BaseFrame):
 		
 		# Create the file picker ctrls dynamically to get translated strings
 		for which in ("input", "abstract", "output"):
-			if sys.platform in ("darwin", "win32"):
-				origpickerctrl = self.FindWindowByName("%s_profile_ctrl" % which)
-				hsizer = origpickerctrl.GetContainingSizer()
-				msg = {"input": lang.getstr("3dlut.input.profile"),
-					   "abstract": lang.getstr("3dlut.use_abstract_profile"),
-					   "output": lang.getstr("output.profile")}[which]
-				kwargs = dict(toolTip=msg.rstrip(":"),
-							  dialogTitle=msg,
-							  fileMask=lang.getstr("filetype.icc")
-									   + "|*.icc;*.icm",
-							  changeCallback=getattr(self,
-													 "%s_profile_ctrl_handler" % 
-													 which))
-				if which not in ("abstract", "output"):
-					kwargs["history"] = get_data_path("ref", "\.(icc|icm)$")
-				setattr(self, "%s_profile_ctrl" % which,
-						FileBrowse(self.panel, -1, **kwargs))
-				getattr(self, "%s_profile_ctrl" %
-							  which).SetMaxFontSize(11)
-				hsizer.Replace(origpickerctrl,
-							   getattr(self, "%s_profile_ctrl" % which))
-				origpickerctrl.Destroy()
-				hsizer.Layout()
+			origpickerctrl = self.FindWindowByName("%s_profile_ctrl" % which)
+			hsizer = origpickerctrl.GetContainingSizer()
+			msg = {"input": lang.getstr("3dlut.input.profile"),
+				   "abstract": lang.getstr("3dlut.use_abstract_profile"),
+				   "output": lang.getstr("output.profile")}[which]
+			kwargs = dict(toolTip=msg.rstrip(":"),
+						  dialogTitle=msg,
+						  fileMask=lang.getstr("filetype.icc")
+								   + "|*.icc;*.icm",
+						  changeCallback=getattr(self,
+												 "%s_profile_ctrl_handler" % 
+												 which),
+						  name="%s_profile_ctrl" % which)
+			if which not in ("abstract", "output"):
+				kwargs["history"] = get_data_path("ref", "\.(icc|icm)$")
+			setattr(self, "%s_profile_ctrl" % which,
+					FileBrowse(self.panel, -1, **kwargs))
+			getattr(self, "%s_profile_ctrl" %
+						  which).SetMaxFontSize(11)
+			hsizer.Replace(origpickerctrl,
+						   getattr(self, "%s_profile_ctrl" % which))
+			origpickerctrl.Destroy()
+			hsizer.Layout()
 			# Drop targets
 			setattr(self, "%s_droptarget" % which, FileDrop())
 			getattr(self, "%s_droptarget" % which).drophandlers = {".icc": getattr(self, "%s_drop_handler" % which),

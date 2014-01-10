@@ -155,7 +155,8 @@ from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
-from wxwindows import (AboutDialog, BaseFrame, ConfirmDialog, InfoDialog,
+from wxwindows import (AboutDialog, BaseFrame, ConfirmDialog,
+					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
 					   InvincibleFrame, LogWindow, ProgressDialog,
 					   TooltipWindow)
 try:
@@ -734,18 +735,18 @@ class GamapFrame(BaseFrame):
 		BaseFrame.setup_language(self)
 		
 		# Create the profile picker ctrl dynamically to get translated strings
-		if sys.platform in ("darwin", "win32"):
-			origpickerctrl = self.FindWindowByName("gamap_profile")
-			hsizer = origpickerctrl.GetContainingSizer()
-			self.gamap_profile = wx.FilePickerCtrl(
-				self.panel, -1, "", message=lang.getstr("gamap.profile"), 
-				wildcard=lang.getstr("filetype.icc") + "|*.icc;*.icm",
-				name="gamap_profile")
-			self.gamap_profile.PickerCtrl.Label = lang.getstr("browse")
-			hsizer.Replace(origpickerctrl, self.gamap_profile)
-			origpickerctrl.Destroy()
-		self.Bind(wx.EVT_FILEPICKER_CHANGED, self.gamap_profile_handler, 
-				   id=self.gamap_profile.GetId())
+		origpickerctrl = self.FindWindowByName("gamap_profile")
+		hsizer = origpickerctrl.GetContainingSizer()
+		self.gamap_profile = FileBrowseBitmapButtonWithChoiceHistory(
+			self.panel, -1, toolTip=lang.getstr("gamap.profile"),
+			dialogTitle=lang.getstr("gamap.profile"),
+			fileMask=lang.getstr("filetype.icc") + "|*.icc;*.icm",
+			changeCallback=self.gamap_profile_handler,
+			history=get_data_path("ref", "\.(icm|icc)$"),
+			name="gamap_profile")
+		self.gamap_profile.SetMaxFontSize(11)
+		hsizer.Replace(origpickerctrl, self.gamap_profile)
+		origpickerctrl.Destroy()
 		
 		intents = ["a", "aa", "aw", "la", "ms", "p", "r", "s"]
 		if (self.Parent and hasattr(self.Parent, "worker") and
