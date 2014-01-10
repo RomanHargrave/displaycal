@@ -35,7 +35,7 @@
                     <object class="sizeritem">
                       <object class="wxBitmapButton" name="chart_btn">
                         <bitmap>../theme/icons/16x16/rgbsquares.png</bitmap>
-                        <tooltip>browse</tooltip>
+                        <tooltip>testchart.edit</tooltip>
                         <style>wxNO_BORDER</style>
                         <XRCED>
                           <events>EVT_BUTTON</events>
@@ -72,8 +72,6 @@
                       </object>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
-                    
-                    
                     <orient>wxHORIZONTAL</orient>
                   </object>
                   <flag>wxLEFT|wxEXPAND</flag>

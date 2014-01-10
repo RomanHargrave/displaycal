@@ -42,7 +42,7 @@ def swap_dict_keys_values(mydict):
 
 
 class TestchartEditor(wx.Frame):
-	def __init__(self, parent = None, id = -1):
+	def __init__(self, parent = None, id = -1, path=None):
 		wx.Frame.__init__(self, parent, id, lang.getstr("testchart.edit"))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.tc_close_handler)
@@ -541,16 +541,10 @@ class TestchartEditor(wx.Frame):
 
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.tc_destroy_handler)
 
-		argv = []
-		for arg in sys.argv:
-			if arg[0] != "-":
-				argv.append(arg)
-		if __name__ != "__main__" or not argv[1:]:
-			wx.CallAfter(self.tc_load_cfg_from_ti1)
+		wx.CallAfter(self.tc_load_cfg_from_ti1, None, path)
 
 	def ti1_drop_handler(self, path):
-		if not self.worker.is_working():
-			self.tc_load_cfg_from_ti1(None, path)
+		self.tc_load_cfg_from_ti1(None, path)
 
 	def drop_unsupported_handler(self):
 		if not self.worker.is_working():
@@ -2427,10 +2421,8 @@ def main(testchart=None):
 	lang.init()
 	lang.update_defaults()
 	app = wx.App(0)
-	app.tcframe = TestchartEditor()
+	app.tcframe = TestchartEditor(path=testchart)
 	app.tcframe.Show()
-	if testchart:
-		app.tcframe.ti1_drop_handler(testchart)
 	app.MainLoop()
 
 if __name__ == "__main__":

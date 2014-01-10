@@ -13,6 +13,7 @@ import ICCProfile as ICCP
 import config
 import localization as lang
 import worker
+from wxTestchartEditor import TestchartEditor
 from wxaddons import FileDrop
 from wxwindows import (BaseFrame,
 					   FileBrowseBitmapButtonWithChoiceHistory as FileBrowse,
@@ -45,6 +46,7 @@ class ReportFrame(BaseFrame):
 		# Bind event handlers
 		self.fields_ctrl.Bind(wx.EVT_CHOICE,
 							  self.fields_ctrl_handler)
+		self.chart_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.chart_btn.Bind(wx.EVT_BUTTON, self.chart_btn_handler)
 		self.simulation_profile_cb.Bind(wx.EVT_CHECKBOX,
 									  self.use_simulation_profile_ctrl_handler)
@@ -125,17 +127,29 @@ class ReportFrame(BaseFrame):
 		config.writecfg()
 	
 	def chart_btn_handler(self, event):
-		self.chart_ctrl.OnBrowse()
+		if self.Parent:
+			parent = self.Parent
+		else:
+			parent = self
+		chart = getcfg("measurement_report.chart")
+		if not hasattr(parent, "tcframe"):
+			parent.tcframe = TestchartEditor(parent, path=chart)
+		elif (not hasattr(parent.tcframe, "ti1") or
+			  chart != parent.tcframe.ti1.filename):
+			parent.tcframe.tc_load_cfg_from_ti1(None, chart)
+		setcfg("tc.show", 1)
+		parent.tcframe.Show()
+		parent.tcframe.Raise()
 	
 	def chart_ctrl_handler(self, event):
 		chart = self.chart_ctrl.GetPath()
+		values = []
 		try:
 			cgats = CGATS.CGATS(chart)
 		except (IOError, CGATS.CGATSInvalidError), exception:
 			show_result_dialog(exception, self)
 		else:
 			data_format = cgats.queryv1("DATA_FORMAT")
-			values = []
 			if data_format:
 				for column in data_format.itervalues():
 					column_prefix = column.split("_")[0]
@@ -157,7 +171,7 @@ class ReportFrame(BaseFrame):
 					config.writecfg()
 					self.chart_patches_amount.Freeze()
 					self.chart_patches_amount.SetLabel(
-						str(cgats.queryv1("NUMBER_OF_SETS") or 0))
+						str(cgats.queryv1("NUMBER_OF_SETS") or ""))
 					self.chart_patches_amount.GetContainingSizer().Layout()
 					self.chart_patches_amount.Thaw()
 					self.chart_white = cgats.get_white_cie()
@@ -171,6 +185,8 @@ class ReportFrame(BaseFrame):
 												   (chart, "RGB/CMYK %s LAB/XYZ" %
 														   lang.getstr("or"))), self)
 				self.chart_ctrl.SetPath(getcfg("measurement_report.chart"))
+		self.chart_btn.Enable("RGB" in values and
+							  "XYZ" in values)
 		self.fields_ctrl.Enable(self.fields_ctrl.GetCount() > 1)
 		self.fields_ctrl_handler(None)
 
