@@ -32,6 +32,26 @@
                       <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
                     </object>
+                    <object class="sizeritem">
+                      <object class="wxBitmapButton" name="chart_btn">
+                        <bitmap>../theme/icons/16x16/rgbsquares.png</bitmap>
+                        <tooltip>browse</tooltip>
+                        <style>wxNO_BORDER</style>
+                        <XRCED>
+                          <events>EVT_BUTTON</events>
+                        </XRCED>
+                      </object>
+                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="chart_patches_amount">
+                        <size>48,-1</size>
+                        <label>0</label>
+                      </object>
+                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
                   </object>
                   <option>1</option>
                   <flag>wxEXPAND</flag>
@@ -52,27 +72,8 @@
                       </object>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="chart_patches_amount">
-                        <label>0</label>
-                        <style>wxALIGN_RIGHT</style>
-                      </object>
-                      <option>1</option>
-                      <flag>wxLEFT|wxEXPAND|wxALIGN_RIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxBitmapButton" name="chart_btn">
-                        <bitmap>../theme/icons/16x16/rgbsquares.png</bitmap>
-                        <tooltip>browse</tooltip>
-                        <style>wxNO_BORDER</style>
-                        <XRCED>
-                          <events>EVT_BUTTON</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>6</border>
-                    </object>
+                    
+                    
                     <orient>wxHORIZONTAL</orient>
                   </object>
                   <flag>wxLEFT|wxEXPAND</flag>
