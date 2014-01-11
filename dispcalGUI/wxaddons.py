@@ -133,6 +133,23 @@ def IsSizer(self):
 wx.Window.IsSizer = IsSizer
 
 
+wx.BitmapButton._SetBitmapDisabled = wx.BitmapButton.SetBitmapDisabled
+
+def SetBitmapDisabled(self, bitmap=None):
+	image = self.GetBitmapLabel().ConvertToImage()
+	if image.HasMask():
+		image.InitAlpha()
+	if image.HasAlpha():
+		alphabuffer = image.GetAlphaBuffer()
+		for i, byte in enumerate(alphabuffer):
+			if byte > "\0":
+				alphabuffer[i] = chr(int(round(ord(byte) * .3)))
+		bitmap = image.ConvertToBitmap()
+	self._SetBitmapDisabled(bitmap)
+
+wx.BitmapButton.SetBitmapDisabled = SetBitmapDisabled
+
+
 def get_dc_font_size(size, dc):
 	""" Get correct font size for DC """
 	pointsize = (1.0, 1.0)
