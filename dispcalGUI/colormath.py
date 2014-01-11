@@ -238,6 +238,34 @@ def avg(*args):
 	return float(sum(args)) / len(args)
 
 
+def interp(x, xp, fp, left=None, right=None):
+	"""
+	One-dimensional linear interpolation similar to numpy.interp
+	
+	Values do NOT have to be monotonically increasing
+	interp(0, [0, 0], [0, 1]) will return 0
+	
+	"""
+	if x in xp:
+		return fp[xp.index(x)]
+	elif x < fp[0]:
+		return xp[0] if left is None else left
+	elif x > xp[-1]:
+		return fp[-1] if right is None else right
+	else:
+		# Interpolate
+		lower = 0
+		higher = len(fp) - 1
+		for i, v in enumerate(xp):
+			if v < x and i > lower:
+				lower = i
+			elif v > x and i < higher:
+				higher = i
+		step = x - xp[lower]
+		steps = (xp[higher] - xp[lower]) / step
+		return fp[lower] + (fp[higher] - fp[lower]) / steps
+
+
 def compute_bpc(bp_in, bp_out):
 	"""
 	Black point compensation. Implemented as a linear scaling in XYZ. 
@@ -761,7 +789,8 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 		else:
 			gamma = trc
 		if isinstance(gamma, (list, tuple)):
-			RGB[i] = gamma[int(round((len(gamma) - 1) * v))]
+			RGB[i] = interp(v, (n / float(len(gamma) - 1) for n in
+							    xrange(len(gamma))), gamma)
 		else:
 			RGB[i] = specialpow(v, gamma)
 	XYZ = matrix * RGB
@@ -1166,20 +1195,8 @@ def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True):
 		else:
 			gamma = trc
 		if isinstance(gamma, (list, tuple)):
-			yx = dict([(int(round(y * sys.maxint)), x / float(len(gamma) - 1)) for x, y in enumerate(gamma)])
-			key = int(round(v * sys.maxint))
-			if key in yx:
-				RGB[i] = yx[key]
-			else:
-				# Interpolate
-				lower = 0
-				higher = sys.maxint
-				for iterkey in yx.iterkeys():
-					if iterkey < key and iterkey > lower:
-						lower = iterkey
-					elif iterkey > key and iterkey < higher:
-						higher = iterkey
-				RGB[i] = (yx[lower] + yx[higher]) / 2.0
+			RGB[i] = interp(v, gamma, (n / float(len(gamma) - 1) for n in
+									   xrange(len(gamma))))
 		else:
 			RGB[i] = specialpow(v, 1.0 / gamma)
 		if clamp:
