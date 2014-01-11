@@ -1402,6 +1402,7 @@ class ProfileInfoFrame(LUTFrame):
 class ProfileInfoViewer(wx.App):
 
 	def OnInit(self):
+		check_set_argyll_bin()
 		self.frame = ProfileInfoFrame(None, -1)
 		return True
 
