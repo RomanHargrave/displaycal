@@ -186,8 +186,9 @@ class ReportFrame(BaseFrame):
 												   (chart, "RGB/CMYK %s LAB/XYZ" %
 														   lang.getstr("or"))), self)
 				self.chart_ctrl.SetPath(getcfg("measurement_report.chart"))
-		self.chart_btn.Enable("RGB" in values and
-							  "XYZ" in values)
+			else:
+				self.chart_btn.Enable("RGB" in values and
+									  "XYZ" in values)
 		self.fields_ctrl.Enable(self.fields_ctrl.GetCount() > 1)
 		self.fields_ctrl_handler(None)
 
