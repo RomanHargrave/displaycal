@@ -320,6 +320,12 @@ def get_data_path(relpath, rex=None):
 							paths += [os.path.join(curpath, filename)]
 			else:
 				return curpath
+	if paths:
+		paths = [os.pathsep.join(reversed(os.path.split(path))) for path in
+				 paths]
+		paths.sort()
+		paths = [os.path.join(*reversed(path.split(os.pathsep))) for path in
+				 paths]
 	return None if len(paths) == 0 else paths
 
 
