@@ -1120,9 +1120,9 @@ class TestchartEditor(wx.Frame):
 			maxv = self.saturation_sweeps_intctrl.GetValue()
 			newdata = []
 			row = self.grid.GetSelectionRows()[-1]
-			for i in xrange(maxv + 1):
-				saturation = 1.0 / maxv * i
-				RGB, xyY = colormath.RGBsaturation(R, G, B, 1.0 / maxv * i,
+			for i in xrange(maxv):
+				saturation = 1.0 / (maxv - 1) * i
+				RGB, xyY = colormath.RGBsaturation(R, G, B, 1.0 / (maxv - 1) * i,
 												   rgb_space)
 				X, Y, Z = colormath.xyY2XYZ(*xyY)
 				newdata.append({

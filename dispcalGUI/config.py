@@ -644,7 +644,7 @@ defaults = {
 	"tc_dark_emphasis": 0.0,
 	"tc_precond": 0,
 	"tc_precond_profile": "",
-	"tc.saturation_sweeps": 4,
+	"tc.saturation_sweeps": 5,
 	"tc.saturation_sweeps.custom.R": 0.0,
 	"tc.saturation_sweeps.custom.G": 0.0,
 	"tc.saturation_sweeps.custom.B": 0.0,
