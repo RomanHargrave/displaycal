@@ -632,7 +632,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		toolTip = (self.history[selectionIndex] if selectionIndex > -1 else
 				   self.toolTip)
 		control.SetToolTipString(toolTip)
-		control.Enable(self.history != [""])
+		control.Enable(control.Enabled and self.history != [""])
 
 
 class FileDrop(_FileDrop):
