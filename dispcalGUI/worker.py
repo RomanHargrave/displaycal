@@ -151,6 +151,10 @@ def check_argyll_bin(paths=None):
 					paths.remove(argyll_dir)
 				paths = [argyll_dir] + paths
 		safe_print("[D] Searchpath:\n  ", "\n  ".join(paths))
+	argyll_dir = os.path.dirname(cur_dir)
+	if (os.path.isdir(os.path.join(argyll_dir, "ref")) and
+		not argyll_dir in config.data_dirs):
+		config.data_dirs.append(argyll_dir)
 	return True
 
 
