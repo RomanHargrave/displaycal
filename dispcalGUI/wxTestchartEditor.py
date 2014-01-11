@@ -1050,6 +1050,10 @@ class TestchartEditor(wx.Frame):
 		self.tc_angle_slider.Enable(tc_algo_enable and tc_algo in ("i", "I"))
 		self.tc_angle_intctrl.Enable(tc_algo_enable and tc_algo in ("i", "I"))
 		setcfg("tc_algo", tc_algo)
+		self.tc_enable_add_precond_controls()
+	
+	def tc_enable_add_precond_controls(self):
+		tc_algo = getcfg("tc_algo")
 		add_preconditioned_enable = (hasattr(self, "ti1") and
 									 bool(getcfg("tc_precond_profile")) and
 									 (tc_algo in ("I", "Q", "R", "t") or
@@ -1335,6 +1339,7 @@ class TestchartEditor(wx.Frame):
 		self.save_as_btn.Enable(hasattr(self, "ti1"))
 		self.export_btn.Enable(hasattr(self, "ti1"))
 		self.tc_vrml_handler()
+		self.tc_enable_add_precond_controls()
 		self.tc_enable_sort_controls()
 		self.tc_set_default_status()
 	
