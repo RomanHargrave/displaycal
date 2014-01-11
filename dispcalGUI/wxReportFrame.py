@@ -7,6 +7,7 @@ import sys
 from config import get_data_path, initcfg, getcfg, geticon, hascfg, setcfg
 from log import safe_print
 from meta import name as appname
+from util_str import strtr
 from worker import Error, get_current_profile_path, show_result_dialog
 import CGATS
 import ICCProfile as ICCP
@@ -316,10 +317,7 @@ class ReportFrame(BaseFrame):
 													   which),
 						  name="%s_ctrl" % which)
 			if which not in ("devlink_profile", "output_profile"):
-				kwargs["history"] = get_data_path("ref",
-												  "\.(%s)$" % wildcard.split("|")[1].replace("*.",
-																							 "").replace(";",
-																										 "|"))
+				kwargs["history"] = get_data_path("ref", "\.(cie|ti1|ti3)$")
 			setattr(self, "%s_ctrl" % which,
 					FileBrowse(self.panel, -1, **kwargs))
 			getattr(self, "%s_ctrl" % which).SetMaxFontSize(11)
