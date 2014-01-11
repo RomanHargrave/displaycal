@@ -317,7 +317,11 @@ class ReportFrame(BaseFrame):
 													   which),
 						  name="%s_ctrl" % which)
 			if which not in ("devlink_profile", "output_profile"):
-				kwargs["history"] = get_data_path("ref", "\.(cie|ti1|ti3)$")
+				if which == "chart":
+					wildcard = "\.(cie|ti1|ti3)$"
+				else:
+					wildcard = "\.(icc|icm)$"
+				kwargs["history"] = get_data_path("ref", wildcard)
 			setattr(self, "%s_ctrl" % which,
 					FileBrowse(self.panel, -1, **kwargs))
 			getattr(self, "%s_ctrl" % which).SetMaxFontSize(11)
