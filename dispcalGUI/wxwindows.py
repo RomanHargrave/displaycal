@@ -512,8 +512,10 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			self.historyCallBack = self.history
 			self.history = []
 		name = namedarguments.get('name', 'fileBrowseButtonWithHistory')
-		namedarguments['name'] = name
+		if namedarguments.get('name'):
+			del namedarguments['name']
 		filebrowse.FileBrowseButton.__init__(self, *arguments, **namedarguments)
+		self.SetName(name)
 	
 	def Disable(self):
 		self.Enable(False)
@@ -590,9 +592,9 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		button.Bind(wx.EVT_BUTTON, self.OnBrowse)
 		return button
 
-	def createDialog(self, parent, id, pos, size, style, name):
+	def createDialog(self, parent, id, pos, size, style, name=None):
 		"""Setup the graphic representation of the dialog"""
-		wx.Panel.__init__ (self, parent, id, pos, size, style, name)
+		wx.Panel.__init__ (self, parent, id, pos, size, style)
 		self.SetMinSize(size) # play nice with sizers
 
 		box = wx.BoxSizer(wx.HORIZONTAL)
