@@ -789,8 +789,8 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 		else:
 			gamma = trc
 		if isinstance(gamma, (list, tuple)):
-			RGB[i] = interp(v, (n / float(len(gamma) - 1) for n in
-							    xrange(len(gamma))), gamma)
+			RGB[i] = interp(v, [n / float(len(gamma) - 1) for n in
+							    xrange(len(gamma))], gamma)
 		else:
 			RGB[i] = specialpow(v, gamma)
 	XYZ = matrix * RGB
@@ -1195,8 +1195,8 @@ def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True):
 		else:
 			gamma = trc
 		if isinstance(gamma, (list, tuple)):
-			RGB[i] = interp(v, gamma, (n / float(len(gamma) - 1) for n in
-									   xrange(len(gamma))))
+			RGB[i] = interp(v, gamma, [n / float(len(gamma) - 1) for n in
+									   xrange(len(gamma))])
 		else:
 			RGB[i] = specialpow(v, 1.0 / gamma)
 		if clamp:
