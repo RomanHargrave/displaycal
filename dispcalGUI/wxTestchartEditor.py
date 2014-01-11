@@ -2212,7 +2212,11 @@ class TestchartEditor(wx.Frame):
 		data = self.ti1.queryv1("DATA")
 		if hasattr(self, "preview"):
 			self.preview.Freeze()
+		data_format = self.ti1.queryv1("DATA_FORMAT")
 		for i in xrange(len(newdata)):
+			for label in data_format.itervalues():
+				if not label in newdata[i]:
+					newdata[i][label] = 0.0
 			data.add_data(newdata[i], row + 1 + i)
 			for label in ("RGB_R", "RGB_G", "RGB_B"):
 				for col in range(self.grid.GetNumberCols()):
