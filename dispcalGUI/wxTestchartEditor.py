@@ -168,6 +168,7 @@ class TestchartEditor(wx.Frame):
 		algos.sort()
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.algo")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT, border = border)
 		self.tc_algo = wx.Choice(panel, -1, choices = algos, name = "tc_algo")
+		self.tc_algo.Disable()
 		self.Bind(wx.EVT_CHOICE, self.tc_algo_handler, id = self.tc_algo.GetId())
 		sizer.Add(self.tc_algo, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
@@ -176,9 +177,11 @@ class TestchartEditor(wx.Frame):
 		sizer.Add(hsizer, 1, flag = wx.EXPAND)
 		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.adaption")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		self.tc_adaption_slider = wx.Slider(panel, -1, 0, 0, 100, size = (64, -1), name = "tc_adaption_slider")
+		self.tc_adaption_slider.Disable()
 		self.Bind(wx.EVT_SLIDER, self.tc_adaption_handler, id = self.tc_adaption_slider.GetId())
 		hsizer.Add(self.tc_adaption_slider, flag = wx.ALIGN_CENTER_VERTICAL)
 		self.tc_adaption_intctrl = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, max = 100, name = "tc_adaption_intctrl")
+		self.tc_adaption_intctrl.Disable()
 		self.Bind(wx.EVT_TEXT, self.tc_adaption_handler, id = self.tc_adaption_intctrl.GetId())
 		sizer.Add(self.tc_adaption_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
@@ -191,9 +194,11 @@ class TestchartEditor(wx.Frame):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		sizer.Add(hsizer, 1, flag = wx.EXPAND)
 		self.tc_angle_slider = wx.Slider(panel, -1, 0, 0, 5000, size = (128, -1), name = "tc_angle_slider")
+		self.tc_angle_slider.Disable()
 		self.Bind(wx.EVT_SLIDER, self.tc_angle_handler, id = self.tc_angle_slider.GetId())
 		hsizer.Add(self.tc_angle_slider, flag = wx.ALIGN_CENTER_VERTICAL)
 		self.tc_angle_intctrl = wx.SpinCtrl(panel, -1, size = (75, -1), min = 0, max = 5000, name = "tc_angle_intctrl")
+		self.tc_angle_intctrl.Disable()
 		self.Bind(wx.EVT_TEXT, self.tc_angle_handler, id = self.tc_angle_intctrl.GetId())
 		hsizer.Add(self.tc_angle_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		
@@ -226,6 +231,7 @@ class TestchartEditor(wx.Frame):
 			self.tc_neutral_axis_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
 															 size=(64, -1),
 															 name="tc_neutral_axis_emphasis_slider")
+			self.tc_neutral_axis_emphasis_slider.Disable()
 			self.Bind(wx.EVT_SLIDER, self.tc_neutral_axis_emphasis_handler,
 					  id=self.tc_neutral_axis_emphasis_slider.GetId())
 			hsizer.Add(self.tc_neutral_axis_emphasis_slider,
@@ -235,6 +241,7 @@ class TestchartEditor(wx.Frame):
 																min=0,
 																max=100,
 																name="tc_neutral_axis_emphasis_intctrl")
+			self.tc_neutral_axis_emphasis_intctrl.Disable()
 			self.Bind(wx.EVT_TEXT, self.tc_neutral_axis_emphasis_handler,
 					  id=self.tc_neutral_axis_emphasis_intctrl.GetId())
 			hsizer.Add(self.tc_neutral_axis_emphasis_intctrl,
@@ -252,6 +259,7 @@ class TestchartEditor(wx.Frame):
 			self.tc_dark_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
 													 size=(64, -1),
 													 name="tc_dark_emphasis_slider")
+			self.tc_dark_emphasis_slider.Disable()
 			self.Bind(wx.EVT_SLIDER, self.tc_dark_emphasis_handler,
 					  id=self.tc_dark_emphasis_slider.GetId())
 			hsizer.Add(self.tc_dark_emphasis_slider,
@@ -261,6 +269,7 @@ class TestchartEditor(wx.Frame):
 														min=0,
 														max=100,
 														name="tc_dark_emphasis_intctrl")
+			self.tc_dark_emphasis_intctrl.Disable()
 			self.Bind(wx.EVT_TEXT, self.tc_dark_emphasis_handler,
 					  id=self.tc_dark_emphasis_intctrl.GetId())
 			hsizer.Add(self.tc_dark_emphasis_intctrl,
@@ -272,6 +281,7 @@ class TestchartEditor(wx.Frame):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag = wx.ALL & ~(wx.BOTTOM | wx.TOP) | wx.EXPAND, border = 12)
 		self.tc_precond = wx.CheckBox(panel, -1, lang.getstr("tc.precond"), name = "tc_precond")
+		self.tc_precond.Disable()
 		self.Bind(wx.EVT_CHECKBOX, self.tc_precond_handler, id = self.tc_precond.GetId())
 		hsizer.Add(self.tc_precond, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		self.tc_precond_profile = FileBrowseBitmapButtonWithChoiceHistory(
@@ -407,18 +417,21 @@ class TestchartEditor(wx.Frame):
 		self.saturation_sweeps_intctrl = wx.SpinCtrl(panel, -1, size=(50, -1),
 													 initial=getcfg("tc.saturation_sweeps"),
 													 min=2, max=255)
+		self.saturation_sweeps_intctrl.Disable()
 		hsizer.Add(self.saturation_sweeps_intctrl,
 				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
 		for color in ("R", "G", "B", "C", "M", "Y"):
 			name = "saturation_sweeps_%s_btn" % color
 			setattr(self, name, wx.Button(panel, -1, color, size=(30, -1)))
+			getattr(self, "saturation_sweeps_%s_btn" % color).Disable()
 			self.Bind(wx.EVT_BUTTON, self.tc_add_saturation_sweeps_handler,
 					  id=getattr(self, name).GetId())
 			hsizer.Add(getattr(self, name),
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 		
 		self.saturation_sweeps_custom_btn = wx.Button(panel, -1, lang.getstr("color.custom"))
+		self.saturation_sweeps_custom_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_add_saturation_sweeps_handler,
 				  id=self.saturation_sweeps_custom_btn.GetId())
 		hsizer.Add(self.saturation_sweeps_custom_btn,
@@ -434,6 +447,7 @@ class TestchartEditor(wx.Frame):
 													min_val=0, max_val=100,
 													increment=100.0 / 255,
 													digits=2))
+			getattr(self, "saturation_sweeps_custom_%s_ctrl" % component).Disable()
 			self.Bind(floatspin.EVT_FLOATSPIN, self.tc_algo_handler,
 					  id=getattr(self, name).GetId())
 			hsizer.Add(getattr(self, name),
@@ -446,6 +460,7 @@ class TestchartEditor(wx.Frame):
 
 		self.add_ti3_btn = wx.Button(panel, -1, lang.getstr("testchart.add_ti3_patches"))
 		self.add_ti3_btn.SetInitialSize((self.add_ti3_btn.GetSize()[0] + btn_width_correction, -1))
+		self.add_ti3_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_add_ti3_handler,
 				  id=self.add_ti3_btn.GetId())
 		hsizer.Add(self.add_ti3_btn,
@@ -1021,11 +1036,10 @@ class TestchartEditor(wx.Frame):
 			self.tc_neutral_axis_emphasis_intctrl.Enable(tc_algo_enable and
 														 tc_precond_enable)
 		self.tc_precond.Enable(tc_algo_enable and tc_precond_enable and bool(getcfg("tc_precond_profile")))
-		if not tc_precond_enable:
+		if not (tc_algo_enable and tc_precond_enable):
 			self.tc_precond.SetValue(False)
 		else:
 			self.tc_precond.SetValue(bool(int(getcfg("tc_precond"))))
-		self.tc_precond_profile.Enable(tc_algo_enable and tc_precond_enable)
 		if self.worker.argyll_version >= [1, 6, 2]:
 			tc_dark_emphasis_enable = (self.worker.argyll_version >= [1, 6, 3] or
 									   (tc_precond_enable and
@@ -1037,6 +1051,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_angle_intctrl.Enable(tc_algo_enable and tc_algo in ("i", "I"))
 		setcfg("tc_algo", tc_algo)
 		add_preconditioned_enable = (hasattr(self, "ti1") and
+									 bool(getcfg("tc_precond_profile")) and
 									 (tc_algo in ("I", "Q", "R", "t") or
 									  (tc_algo == "" and
 									   getcfg("tc_adaption") == 1)))
