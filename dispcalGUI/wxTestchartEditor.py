@@ -1737,13 +1737,15 @@ class TestchartEditor(wx.Frame):
 			path = getcfg("testchart.file")
 		try:
 			filename, ext = os.path.splitext(path)
-			if ext.lower() in (".ti1", ".ti3"):
+			if ext.lower() not in (".icc", ".icm"):
 				if ext.lower() == ".ti3":
 					ti1 = CGATS.CGATS(ti3_to_ti1(open(path, "rU")))
 					ti1.filename = filename + ".ti1"
 				else:
 					ti1 = CGATS.CGATS(path)
 					ti1.filename = path
+				if ext.lower() not in (".ti1", ".ti3"):
+					ti1.fix_device_values_scaling()
 			else: # icc or icm profile
 				profile = ICCP.ICCProfile(path)
 				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.get("CIED", "") or 
