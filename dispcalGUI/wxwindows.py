@@ -504,7 +504,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 
 	def __init__(self, *arguments, **namedarguments):
 		self.history = namedarguments.get("history") or []
-		if self.history:
+		if 'history' in namedarguments:
 			del namedarguments["history"]
 
 		self.historyCallBack = None
@@ -512,7 +512,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			self.historyCallBack = self.history
 			self.history = []
 		name = namedarguments.get('name', 'fileBrowseButtonWithHistory')
-		if namedarguments.get('name'):
+		if 'name' in namedarguments:
 			del namedarguments['name']
 		filebrowse.FileBrowseButton.__init__(self, *arguments, **namedarguments)
 		self.SetName(name)
