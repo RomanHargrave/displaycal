@@ -1095,10 +1095,14 @@ class LUTFrame(wx.Frame):
 							  isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
 							  isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType))
 		self.save_plot_btn.Enable(bool(curves))
-		self.apply_bpc_btn.Enable(not(self.plot_mode_select.GetSelection()) and
-								  self.profile and "vcgt" in self.profile.tags)
-		self.save_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
-								  self.profile and "vcgt" in self.profile.tags)
+		if hasattr(self, "apply_bpc_btn"):
+			self.apply_bpc_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+									  self.profile and "vcgt" in self.profile.tags)
+			self.apply_bpc_btn.Show(not(self.plot_mode_select.GetSelection()))
+		if hasattr(self, "save_vcgt_btn"):
+			self.save_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+									  self.profile and "vcgt" in self.profile.tags)
+			self.save_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		self.show_as_L.GetContainingSizer().Layout()
 		if hasattr(self, "show_actual_lut_cb"):
 			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)
