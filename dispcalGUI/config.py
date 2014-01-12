@@ -383,8 +383,6 @@ def runtimeconfig(pyfile):
 						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 	if debug:
 		safe_print("[D] Data files search paths:\n[D]", "\n[D] ".join(data_dirs))
-	defaults["3dlut.input.profile"] = get_data_path(os.path.join("ref",
-																 "Rec709.icm")) or ""
 	defaultmmode = defaults["measurement_mode"]
 	defaultptype = defaults["profile.type"]
 	defaultchart = testchart_defaults.get(defaultptype, 
@@ -392,11 +390,8 @@ def runtimeconfig(pyfile):
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart)) or ""
 	defaults["testchart.file.backup"] = defaults["testchart.file"]
-	defaults["testchart.reference"] = get_data_path(os.path.join("ref", 
-																 "ColorChecker.cie")) or ""
 	defaults["measurement_report.chart"] = get_data_path(os.path.join("ref", 
 															"verify.ti1")) or ""
-	defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm")) or ""
 	return runtype
 
 # User settings
@@ -661,6 +656,7 @@ defaults = {
 	"tc_vrml_use_D50": 0,
 	"tc_white_patches": 4,
 	"tc.show": 0,
+	"testchart.reference": "",
 	"ti3.check_sanity.auto": 0,
 	"trc": 2.2,
 	"trc.backup": 2.2,

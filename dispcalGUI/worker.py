@@ -155,6 +155,11 @@ def check_argyll_bin(paths=None):
 	if (os.path.isdir(os.path.join(argyll_dir, "ref")) and
 		not argyll_dir in config.data_dirs):
 		config.data_dirs.append(argyll_dir)
+	config.defaults["3dlut.input.profile"] = get_data_path(os.path.join("ref",
+																		"Rec709.icm")) or ""
+	config.defaults["testchart.reference"] = get_data_path(os.path.join("ref", 
+																		"ColorChecker.cie")) or ""
+	config.defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm")) or ""
 	return True
 
 
