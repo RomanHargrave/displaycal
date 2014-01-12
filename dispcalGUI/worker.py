@@ -3904,7 +3904,7 @@ class Worker(object):
 				# Backup TI3
 				ti3.write(inoutfile + ".ti3.backup")
 				# Apply black point compensation
-				ti3[0].apply_bpc(True)
+				ti3[0].apply_bpc()
 			ti3.write()
 		return cmd, args
 
