@@ -1201,21 +1201,15 @@ Transform {
 
 				black = [0, 0, 0]
 				for i in blacks:
-					for j, label in enumerate(labels):
-						black[j] += blacks[i][label]
-					if blacks[i]["XYZ_Y"] == 0:
-						break
-				# Average blacks
-				black = [v / (i + 1.0) for v in black]
+					if blacks[i]["XYZ_Y"] > black[1]:
+						for j, label in enumerate(labels):
+							black[j] = blacks[i][label]
 
 				white = [0, 0, 0]
 				for i in whites:
-					for j, label in enumerate(labels):
-						white[j] += whites[i][label]
-					if whites[i]["XYZ_Y"] == 100:
-						break
-				# Average whites
-				white = [v / (i + 1.0) for v in white]
+					if whites[i]["XYZ_Y"] > white[1]:
+						for j, label in enumerate(labels):
+							white[j] = whites[i][label]
 
 			# Apply black point compensation
 			n += 1
@@ -1224,7 +1218,7 @@ Transform {
 				XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black,
 										  (0, 0, 0), white, weight)
 				for j, label in enumerate(labels):
-					data[i][label] = XYZ[j]
+					data[i][label] = max(0.0, XYZ[j])
 
 		return n
 	
