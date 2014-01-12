@@ -12,7 +12,7 @@ import traceback
 
 from numpy import interp
 
-from argyll_cgats import cal_to_fake_profile
+from argyll_cgats import cal_to_fake_profile, vcgt_to_cal
 from config import (fs_enc, get_bitmap_as_icon, get_display_profile,
 					get_display_rects, getcfg, geticon, setcfg)
 from log import safe_print
@@ -469,6 +469,30 @@ class LUTFrame(wx.Frame):
 		
 		self.cbox_sizer.Add((20, 0))
 		
+		self.apply_bpc_btn = wx.BitmapButton(self.box_panel, -1,
+											 geticon(16, "black_point"),
+											 style=wx.NO_BORDER)
+		self.apply_bpc_btn.SetBackgroundColour(BGCOLOUR)
+		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL)
+		self.apply_bpc_btn.Bind(wx.EVT_BUTTON, self.apply_bpc_handler)
+		self.apply_bpc_btn.SetToolTipString(lang.getstr("black_point_compensation"))
+		self.apply_bpc_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.apply_bpc_btn.Disable()
+
+		self.save_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
+											 geticon(16, "media-floppy"),
+											 style=wx.NO_BORDER)
+		self.save_vcgt_btn.SetBackgroundColour(BGCOLOUR)
+		self.cbox_sizer.Add(self.save_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
+													 wx.LEFT, border=16)
+		self.save_vcgt_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
+		self.save_vcgt_btn.SetToolTipString(lang.getstr("save_as") + " " +
+											"(*.cal)")
+		self.save_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.save_vcgt_btn.Disable()
+		
+		self.cbox_sizer.Add((20, 0))
+		
 		self.show_as_L = wx.CheckBox(self.box_panel, -1, u"L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
 		self.show_as_L.SetMaxFontSize(11)
@@ -521,9 +545,14 @@ class LUTFrame(wx.Frame):
 		self.cbox_sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 													 wx.LEFT, border=16)
 		self.save_plot_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
-		self.save_plot_btn.SetToolTipString(lang.getstr("save_as"))
+		self.save_plot_btn.SetToolTipString(lang.getstr("save_as") + " " +
+											"(*.bmp, *.xbm, *.xpm, *.jpg, *.png)")
 		self.save_plot_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.save_plot_btn.Disable()
+
+		self.box_sizer.Add((0, 6))
+		self.box_sizer.Add((0, 6))
+		self.box_sizer.Add((0, 6))
 
 		self.box_sizer.Add((0, 0))
 
@@ -560,6 +589,13 @@ class LUTFrame(wx.Frame):
 		
 		self.display_no = -1
 		self.display_rects = get_display_rects()
+	
+	def apply_bpc_handler(self, event):
+		cal = vcgt_to_cal(self.profile)
+		cal.filename = self.profile.fileName or ""
+		cal.apply_bpc(True)
+		self.LoadProfile(cal_to_fake_profile(cal))
+		self.DrawLUT()
 
 	def drop_handler(self, path):
 		"""
@@ -1059,6 +1095,10 @@ class LUTFrame(wx.Frame):
 							  isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
 							  isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType))
 		self.save_plot_btn.Enable(bool(curves))
+		self.apply_bpc_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+								  self.profile and "vcgt" in self.profile.tags)
+		self.save_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+								  self.profile and "vcgt" in self.profile.tags)
 		self.show_as_L.GetContainingSizer().Layout()
 		if hasattr(self, "show_actual_lut_cb"):
 			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)
@@ -1132,13 +1172,17 @@ class LUTFrame(wx.Frame):
 		fileName = " ".join([self.plot_mode_select.GetStringSelection(),
 							 os.path.basename(os.path.splitext(self.profile.fileName or
 															   lang.getstr("unnamed"))[0])])
-		extensions = {
-			"bmp": wx.BITMAP_TYPE_BMP,       # Save a Windows bitmap file.
-			"xbm": wx.BITMAP_TYPE_XBM,       # Save an X bitmap file.
-			"xpm": wx.BITMAP_TYPE_XPM,       # Save an XPM bitmap file.
-			"jpg": wx.BITMAP_TYPE_JPEG,      # Save a JPG file.
-			"png": wx.BITMAP_TYPE_PNG,       # Save a PNG file.
-			}
+		if (event and hasattr(self, "save_vcgt_btn") and
+			event.GetId() == self.save_vcgt_btn.GetId()):
+			extensions = {"cal": 1}
+		else:
+			extensions = {
+				"bmp": wx.BITMAP_TYPE_BMP,       # Save a Windows bitmap file.
+				"xbm": wx.BITMAP_TYPE_XBM,       # Save an X bitmap file.
+				"xpm": wx.BITMAP_TYPE_XPM,       # Save an XPM bitmap file.
+				"jpg": wx.BITMAP_TYPE_JPEG,      # Save a JPG file.
+				"png": wx.BITMAP_TYPE_PNG,       # Save a PNG file.
+				}
 
 		fType = fileName[-3:].lower()
 		dlg1 = None
@@ -1153,7 +1197,8 @@ class LUTFrame(wx.Frame):
 				dlg1 = wx.FileDialog(
 					self, 
 					lang.getstr("save_as"), ".", fileName,
-					"PNG (*.png)|*.png|BMP (*.bmp)|*.bmp|XBM (*.xbm)|*.xbm|XPM (*.xpm)|*.xpm|JPG (*.jpg)|*.jpg",
+					"|".join(["%s (*.%s)|*.%s" % (ext.upper(), ext, ext)
+							  for ext in extensions.keys()]),
 					wx.SAVE|wx.OVERWRITE_PROMPT
 					)
 
@@ -1172,7 +1217,12 @@ class LUTFrame(wx.Frame):
 			dlg1.Destroy()
 
 		# Save Bitmap
-		res= self.client._Buffer.SaveFile(fileName, extensions.get(fType, ".png"))
+		if (event and hasattr(self, "save_vcgt_btn") and
+			event.GetId() == self.save_vcgt_btn.GetId()):
+			res = vcgt_to_cal(self.profile)
+			res.write(fileName)
+		else:
+			res= self.client._Buffer.SaveFile(fileName, extensions.get(fType, ".png"))
 		return res
 	
 	def UpdatePointLabel(self, xy):
