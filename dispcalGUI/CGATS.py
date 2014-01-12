@@ -1157,7 +1157,7 @@ Transform {
 						item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"] = X, Y, Z
 		return n
 	
-	def apply_bpc(self):
+	def apply_bpc(self, weight=False):
 		"""
 		Apply black point compensation.
 		
@@ -1165,45 +1165,68 @@ Transform {
 		Needs a CGATS structure with RGB and XYZ data and atleast one black and
 		white patch.
 		
-		Return True if bpc was applied, False otherwise.
+		Return number of affected DATA sections.
 		
 		"""
-		data = self.queryi(("RGB_R", "RGB_G", "RGB_B", "XYZ_X", "XYZ_Y", "XYZ_Z"))
+		n = 0
+		for dataset in self.query("DATA").itervalues():
+			if dataset.type.strip() == "CAL":
+				labels = ("RGB_R", "RGB_G", "RGB_B")
+				data = dataset.queryi(labels)
 
-		# Get blacks
-		blacks = data.queryi({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
-		# Get whites
-		whites = data.queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
-		if not blacks or not whites:
-			# Can't apply bpc
-			return False
+				# Get black
+				black1 = data.queryi1({"RGB_I": 0})
+				# Get white
+				white1 = data.queryi1({"RGB_I": 1})
+				if not black1 or not white1:
+					# Can't apply bpc
+					continue
 
-		black = [0, 0, 0]
-		for i in blacks:
-			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
-				black[j] += blacks[i][label]
-			if blacks[i]["XYZ_Y"] == 0:
-				break
-		# Average blacks
-		black = [n / (i + 1.0) for n in black]
+				black = []
+				white = []
+				for label in labels:
+					black.append(black1[label])
+					white.append(white1[label])
+			else:
+				labels = ("XYZ_X", "XYZ_Y", "XYZ_Z")
+				data = dataset.queryi(("RGB_R", "RGB_G", "RGB_B") + labels)
 
-		white = [0, 0, 0]
-		for i in whites:
-			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
-				white[j] += whites[i][label]
-			if whites[i]["XYZ_Y"] == 100:
-				break
-		# Average whites
-		white = [n / (i + 1.0) for n in white]
+				# Get blacks
+				blacks = data.queryi({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
+				# Get whites
+				whites = data.queryi({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+				if not blacks or not whites:
+					# Can't apply bpc
+					continue
 
-		# Apply black point compensation
-		for i in data:
-			XYZ = data[i].queryv1(("XYZ_X", "XYZ_Y", "XYZ_Z"))
-			XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black, (0, 0, 0), white)
-			for j, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
-				data[i][label] = XYZ[j]
+				black = [0, 0, 0]
+				for i in blacks:
+					for j, label in enumerate(labels):
+						black[j] += blacks[i][label]
+					if blacks[i]["XYZ_Y"] == 0:
+						break
+				# Average blacks
+				black = [v / (i + 1.0) for v in black]
 
-		return True
+				white = [0, 0, 0]
+				for i in whites:
+					for j, label in enumerate(labels):
+						white[j] += whites[i][label]
+					if whites[i]["XYZ_Y"] == 100:
+						break
+				# Average whites
+				white = [v / (i + 1.0) for v in white]
+
+			# Apply black point compensation
+			n += 1
+			for i in data:
+				XYZ = data[i].queryv1(labels)
+				XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black,
+										  (0, 0, 0), white, weight)
+				for j, label in enumerate(labels):
+					data[i][label] = XYZ[j]
+
+		return n
 	
 	def get_white_cie(self, colorspace=None):
 		"""
