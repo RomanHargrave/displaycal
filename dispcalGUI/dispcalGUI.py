@@ -9124,48 +9124,24 @@ class MainFrame(BaseFrame):
 							"-q" + getcfg("calibration.quality")]
 						settings += [lang.getstr("calibration.quality")]
 
+			setcfg("calibration.file", path)
+			self.update_controls(update_profile_name=update_profile_name)
+			if "CTI3" in ti3_lines:
+				if debug:
+					safe_print("[D] load_cal_handler testchart.file:", path)
+				setcfg("testchart.file", path)
+			writecfg()
+			if load_vcgt:
+				# load calibration into lut
+				self.load_cal(silent=True)
 			if len(settings) == 0:
-				sel = self.calibration_file_ctrl.GetSelection()
-				if len(self.recent_cals) > sel and \
-				   self.recent_cals[sel] == path:
-					self.recent_cals.remove(self.recent_cals[sel])
-					self.calibration_file_ctrl.Delete(sel)
-					cal = getcfg("calibration.file") or ""
-					if not cal in self.recent_cals:
-						self.recent_cals.append(cal)
-					# The case-sensitive index could fail because of 
-					# case insensitive file systems, e.g. if the 
-					# stored filename string is 
-					# "C:\Users\Name\AppData\dispcalGUI\storage\MyFile"
-					# but the actual filename is 
-					# "C:\Users\Name\AppData\dispcalGUI\storage\myfile"
-					# (maybe because the user renamed the file)
-					idx = index_fallback_ignorecase(self.recent_cals, cal)
-					self.calibration_file_ctrl.SetSelection(idx)
-				writecfg()
-				if not silent:
-					InfoDialog(self, msg=lang.getstr("no_settings") + 
-										 "\n" + path, 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
+				msg = lang.getstr("no_settings")
 			else:
-				setcfg("calibration.file", path)
-				if "CTI3" in ti3_lines:
-					if debug:
-						safe_print("[D] load_cal_handler testchart.file:", path)
-					setcfg("testchart.file", path)
-				self.update_controls(update_profile_name=update_profile_name)
-				writecfg()
-				
-				if load_vcgt:
-					# load calibration into lut
-					self.load_cal(silent=True)
-				if not silent:
-					InfoDialog(self, msg=lang.getstr("settings_loaded", 
-													 ", ".join(settings)) + 
-										 "\n" + path, 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-information"))
+				msg = lang.getstr("settings_loaded", ", ".join(settings))
+			if not silent:
+				InfoDialog(self, msg=msg + "\n" + path, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-information"))
 
 	def delete_calibration_handler(self, event):
 		cal = getcfg("calibration.file")
