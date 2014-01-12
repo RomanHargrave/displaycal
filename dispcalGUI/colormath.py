@@ -222,7 +222,7 @@ def adapt(X, Y, Z, whitepoint_source=None, whitepoint_destination=None,
 							  cat) * (X, Y, Z)
 
 
-def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50"):
+def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50", weight=False):
 	"""
 	Apply black point compensation
 	
@@ -230,7 +230,10 @@ def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50"):
 	wp_out = get_whitepoint(wp_out)
 	XYZ = [X, Y, Z]
 	for i, v in enumerate(XYZ):
-		XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
+		if weight and v > 0:
+			XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] * (bp_in[i] / v) - bp_out[i])) / (wp_out[i] - bp_in[i] * (bp_in[i] / v))
+		else:
+			XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
 	return XYZ
 
 
