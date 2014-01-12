@@ -3847,7 +3847,7 @@ class Worker(object):
 				gamap = "s"
 			else:
 				gamap = None
-			if gamap:
+			if gamap and getcfg("gamap_profile"):
 				args += ["-" + gamap]
 				args += [getcfg("gamap_profile")]
 				args += ["-t" + getcfg("gamap_perceptual_intent")]
