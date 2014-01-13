@@ -462,7 +462,7 @@
 	"profile.invalid": "Perfil no valido.",
 	"profile.load_error": "El perfil de pantalla no puede ser cargado.",
 	"profile.load_on_login": "Cargar la calibracion en la entrada",
-	"profile.load_on_login.handled_by_os": "Dejar al sistema operativo el manejo de la carga de la calibracion",
+	"profile.load_on_login.handled_by_os": "Dejar al sistema operativo el manejo de la carga de la calibracion (baja calidad)",
 	"profile.name": "Nombre del perfil",
 	"profile.name.create": "Generar nombre del perfil",
 	"profile.name.placeholders": "Debe de utilizar los siguientes argumentos en el nombre de perfil:\n\n%a	Nombre del dia de la semana abreviado\n%A	Nombre del dia de la semana completo\n%b	Nombre del mes abreviado\n%B	Nombre del mes completo\n%d	Dia del mes\n%H	Hora (reloj 24-horas)\n%I	Hora (reloj12-horas)\n%j	Dia del año\n%m	Mes\n%M	Minuto\n%p	AM/PM\n%S	Segundos\n%U	Semana (Domingo como primer dia de la semana)\n%w	Dia de la semana (domingo es 0)\n%W	Semana (Lunes como primer dia de la semana)\n%y	Año sin el siglo\n%Y	Año con el siglo",

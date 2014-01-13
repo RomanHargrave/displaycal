@@ -317,5 +317,5 @@ AssocFileExtension=&Associate %1 with the %2 file extension
 AssocingFileExtension=Associating %1 with the %2 file extension...
 
 CalibrationLoading=Calibration loading on login:
-CalibrationLoadingHandledByDispcalGUI=Let dispcalGUI handle calibration loading
-CalibrationLoadingHandledByOS=Let the operating system handle calibration loading
+CalibrationLoadingHandledByDispcalGUI=Let dispcalGUI handle calibration loading (high quality)
+CalibrationLoadingHandledByOS=Let the operating system handle calibration loading (low quality)

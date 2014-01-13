@@ -45,7 +45,7 @@ Name: spanish; MessagesFile: ..\misc\InnoSetup\v5\Languages\Spanish.isl;
 Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 Name: quicklaunchicon; Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 Name: calibrationloadinghandledbydispcalgui; Description: {cm:CalibrationLoadingHandledByDispcalGUI}; Flags: exclusive; GroupDescription: {cm:CalibrationLoading}; 
-Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledByOS}; Flags: exclusive; GroupDescription: {cm:CalibrationLoading}; MinVersion: 0,6.1.7600; 
+Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledByOS}; Flags: exclusive unchecked; GroupDescription: {cm:CalibrationLoading}; MinVersion: 0,6.1.7600; 
 
 [Files]
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\*; DestDir: {app}; Flags: recursesubdirs replacesameversion; Excludes: \dispcalGUI.exe,\README.html; 

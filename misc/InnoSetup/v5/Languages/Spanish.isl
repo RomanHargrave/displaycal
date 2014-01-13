@@ -316,5 +316,5 @@ AssocFileExtension=&Asociar %1 con la extensión de archivo %2
 AssocingFileExtension=Asociando %1 con la extensión de archivo %2...
 
 CalibrationLoading=Calibración de la carga en inicio de sesión:
-CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profile Loader
-CalibrationLoadingHandledByOS=Sistema operativo
+CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profile Loader (calidad alta)
+CalibrationLoadingHandledByOS=Sistema operativo (baja calidad)

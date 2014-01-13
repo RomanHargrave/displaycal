@@ -322,5 +322,5 @@ AssocFileExtension=&Associer %1 avec l'extension de fichier %2
 AssocingFileExtension=Associe %1 avec l'extension de fichier %2...
 
 CalibrationLoading=Chargement d'étalonnage lors de la connexion:
-CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profile Loader
-CalibrationLoadingHandledByOS=Système d'exploitation
+CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profile Loader (haute qualité)
+CalibrationLoadingHandledByOS=Système d'exploitation (faible qualité)

@@ -306,5 +306,5 @@ AssocFileExtension=&Registriere %1 mit der %2-Dateierweiterung
 AssocingFileExtension=%1 wird mit der %2-Dateierweiterung registriert...
 
 CalibrationLoading=Kalibrierung bei Anmeldung laden:
-CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profil-Lader
-CalibrationLoadingHandledByOS=Betriebssystem
+CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profil-Lader (hohe Qualität)
+CalibrationLoadingHandledByOS=Betriebssystem (niedrige Qualität)

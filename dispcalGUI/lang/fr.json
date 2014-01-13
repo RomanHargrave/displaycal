@@ -491,7 +491,7 @@
 	"profile.invalid": "Profil invalide.",
 	"profile.load_error": "Le profil d'affichage n'a pu être chargé.",
 	"profile.load_on_login": "Charger le calibrage à la connexion",
-	"profile.load_on_login.handled_by_os": "Laisser le système d'exploitation traiter le chargement du calibrage",
+	"profile.load_on_login.handled_by_os": "Laisser le système d'exploitation traiter le chargement du calibrage (faible qualité)",
 	"profile.name": "Nom du profil",
 	"profile.name.create": "Générer le nom du profil",
 	"profile.name.placeholders": "Vous pouvez utiliser les paramètres de substitution suivants dans le nom du profil :\n\n%a	Nom du jour de la semaine abrégé\n%A	Nom complet du jour de la semaine\n%b	Nom du mois abrégé\n%B	Nom complet du mois\n%d	Jour du mois\n%H	Heure (sur 24 heures)\n%I	Heure (sur 12 heures)\n%j	Jour de l'année\n%m	Mois\n%M	Minute\n%p	AM/PM\n%S	Secondes\n%U	Semaine (avec dimanche comme premier jour de la semaine)\n%w	Jour de la semaine (dimanche correspondant à 0)\n%W	Semaine (avec lundi comme premier jour de la semaine)\n%y	Année sans le siècle\n%Y	Année avec le siècle",
