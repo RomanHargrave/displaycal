@@ -468,6 +468,13 @@ class TestchartEditor(wx.Frame):
 				  id=self.add_ti3_btn.GetId())
 		hsizer.Add(self.add_ti3_btn,
 				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		self.add_ti3_relative_cb = wx.CheckBox(panel, -1,
+											   lang.getstr("whitepoint.simulate.relative"))
+		self.add_ti3_relative_cb.Disable()
+		self.Bind(wx.EVT_CHECKBOX, self.tc_add_ti3_relative_handler,
+				  id=self.add_ti3_relative_cb.GetId())
+		hsizer.Add(self.add_ti3_relative_cb,
+				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 		hsizer.Add((50, 1))
 
 		hsizer.Add(wx.StaticText(panel, -1,
@@ -1085,6 +1092,7 @@ class TestchartEditor(wx.Frame):
 			add_preconditioned_enable and
 			not (RGB["R"] == RGB["G"] == RGB["B"]))
 		self.add_ti3_btn.Enable(add_preconditioned_enable)
+		self.add_ti3_relative_cb.Enable(add_preconditioned_enable)
 
 	def tc_adaption_handler(self, event = None):
 		if event.GetId() == self.tc_adaption_slider.GetId():
@@ -1177,15 +1185,30 @@ class TestchartEditor(wx.Frame):
 			except CGATS.CGATSError, exception:
 				show_result_dialog(exception, self)
 				return
-			adapted = chart[0].adapt()
-			ti1, void, void = self.worker.chart_lookup(chart, 
-													   profile,
-													   True,
-													   add_white_patches=False)
-			if not ti1:
+			chart.fix_device_values_scaling()
+			data_format = chart.queryv1("DATA_FORMAT").values()
+			as_ti3 = ("LAB_L" in data_format and "LAB_A" in data_format and
+					  "LAB_B" in data_format) or ("XYZ_X" in data_format and
+												  "XYZ_Y" in data_format and
+												  "XYZ_Z" in data_format)
+			if getcfg("tc_add_ti3_relative"):
+				adapted = chart.adapt()
+				intent = "r"
+			else:
+				intent = "a"
+			ti1, ti3, void = self.worker.chart_lookup(chart, 
+													  profile,
+													  as_ti3, intent=intent,
+													  add_white_patches=False)
+			if not ti1 or not ti3:
 				return
-			data_format = ti1[0].DATA_FORMAT.values()
-			# Returned ti1 CIE values are always either XYZ or Lab
+			if as_ti3:
+				cgats = ti1
+			else:
+				cgats = ti3
+			dataset = cgats.queryi1("DATA")
+			data_format = dataset.queryv1("DATA_FORMAT").values()
+			# Returned CIE values are always either XYZ or Lab
 			if ("LAB_L" in data_format and "LAB_A" in data_format and
 				"LAB_B" in data_format):
 				cie = "Lab"
@@ -1193,29 +1216,33 @@ class TestchartEditor(wx.Frame):
 				cie = "XYZ"
 			newdata = []
 			row = self.grid.GetSelectionRows()[-1]
-			for i in ti1[0].DATA:
+			for i in dataset.DATA:
 				if cie == "Lab":
-					(ti1[0].DATA[i]["XYZ_X"],
-					 ti1[0].DATA[i]["XYZ_Y"],
-					 ti1[0].DATA[i]["XYZ_Z"]) = colormath.Lab2XYZ(
-													ti1[0].DATA[i]["LAB_L"],
-													ti1[0].DATA[i]["LAB_A"],
-													ti1[0].DATA[i]["LAB_B"],
+					(dataset.DATA[i]["XYZ_X"],
+					 dataset.DATA[i]["XYZ_Y"],
+					 dataset.DATA[i]["XYZ_Z"]) = colormath.Lab2XYZ(
+													dataset.DATA[i]["LAB_L"],
+													dataset.DATA[i]["LAB_A"],
+													dataset.DATA[i]["LAB_B"],
 													scale=100)
-				(ti1[0].DATA[i]["XYZ_X"],
-				 ti1[0].DATA[i]["XYZ_Y"],
-				 ti1[0].DATA[i]["XYZ_Z"]) = colormath.adapt(
-												ti1[0].DATA[i]["XYZ_X"],
-												ti1[0].DATA[i]["XYZ_Y"],
-												ti1[0].DATA[i]["XYZ_Z"],
-												"D50",
-												profile.tags.wtpt.values())
+				if intent == "r":
+					(dataset.DATA[i]["XYZ_X"],
+					 dataset.DATA[i]["XYZ_Y"],
+					 dataset.DATA[i]["XYZ_Z"]) = colormath.adapt(
+													dataset.DATA[i]["XYZ_X"],
+													dataset.DATA[i]["XYZ_Y"],
+													dataset.DATA[i]["XYZ_Z"],
+													"D50",
+													profile.tags.wtpt.values())
 				entry = {"SAMPLE_ID": row + 2 + i}
 				for label in ("RGB_R", "RGB_G", "RGB_B",
 							  "XYZ_X", "XYZ_Y", "XYZ_Z"):
-					entry[label] = ti1[0].DATA[i][label]
+					entry[label] = dataset.DATA[i][label]
 				newdata.append(entry)
 			self.tc_add_data(row, newdata)
+	
+	def tc_add_ti3_relative_handler(self, event):
+		setcfg("tc_add_ti3_relative", int(self.add_ti3_relative_cb.GetValue()))
 
 	def tc_angle_handler(self, event = None):
 		if event.GetId() == self.tc_angle_slider.GetId():
@@ -1315,6 +1342,7 @@ class TestchartEditor(wx.Frame):
 		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
 		self.tc_vrml_handler()
 		self.tc_vrml_compress_cb.SetValue(bool(getcfg("vrml.compress")))
+		self.add_ti3_relative_cb.SetValue(bool(getcfg("tc_add_ti3_relative")))
 		self.tc_enable_sort_controls()
 
 	def tc_check(self, event = None):

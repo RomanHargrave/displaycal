@@ -625,6 +625,7 @@ defaults = {
 	"skip_legacy_serial_ports": 1,
 	"sudo.preserve_environment": 1,
 	"tc_adaption": 0.1,
+	"tc_add_ti3_relative": 1,
 	"tc_algo": "",
 	"tc_angle": 0.3333,
 	"tc_black_patches": 4,
