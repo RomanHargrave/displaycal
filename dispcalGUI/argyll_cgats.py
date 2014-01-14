@@ -377,5 +377,5 @@ def verify_ti1_rgb_xyz(cgats):
 	None on failure.
 	
 	"""
-	return verify_cgats(cgats, ("SAMPLE_ID", "RGB_R", "RGB_B", "RGB_G", 
+	return verify_cgats(cgats, ("RGB_R", "RGB_B", "RGB_G", 
 								"XYZ_X", "XYZ_Y", "XYZ_Z"))

@@ -67,10 +67,12 @@ class TestchartEditor(wx.Frame):
 		
 		self.droptarget = FileDrop()
 		self.droptarget.drophandlers = {
+			".cgats": self.ti1_drop_handler,
 			".icc": self.ti1_drop_handler,
 			".icm": self.ti1_drop_handler,
 			".ti1": self.ti1_drop_handler,
-			".ti3": self.ti1_drop_handler
+			".ti3": self.ti1_drop_handler,
+			".txt": self.ti1_drop_handler
 		}
 		self.droptarget.unsupported_handler = self.drop_unsupported_handler
 
