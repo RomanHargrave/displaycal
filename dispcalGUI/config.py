@@ -469,6 +469,7 @@ defaults = {
 	"3dlut.format": "3dl",
 	"3dlut.input.profile": "",
 	"3dlut.abstract.profile": "",
+	"3dlut.madVR.enable": 1,
 	"3dlut.output.profile": "",
 	"3dlut.output.profile.apply_cal": 1,
 	"3dlut.rendering_intent": "r",

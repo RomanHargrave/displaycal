@@ -11,6 +11,7 @@
 	"3dlut.format": "Formato de archivo 3D LUT",
 	"3dlut.frame.title": "Crear 3D LUT",
 	"3dlut.input.profile": "Perfil de origen",
+		"*3dlut.madVR.enable": "Enable madVR 3D LUT",
 	"output.profile": "Perfil de destino",
 	"apply_cal": "Aplicar calibracion (vcgt)",
 	"apply_cal.error": "La calibracion no puede ser aplicada.",

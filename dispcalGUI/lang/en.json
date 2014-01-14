@@ -29,6 +29,7 @@
 	"3dlut.format.spi3d": "Sony Imageworks (.spi3d)",
 	"3dlut.frame.title": "Create 3D LUT",
 	"3dlut.input.profile": "Source profile",
+	"3dlut.madVR.enable": "Enable madVR 3D LUT",
 	"output.profile": "Target profile",
 	"apply_cal": "Apply calibration (vcgt)",
 	"apply_cal.error": "Calibration could not be applied.",

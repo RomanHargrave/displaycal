@@ -53,6 +53,7 @@ class ReportFrame(BaseFrame):
 									  self.use_simulation_profile_ctrl_handler)
 		self.use_simulation_profile_as_output_cb.Bind(wx.EVT_CHECKBOX,
 													  self.use_simulation_profile_as_output_handler)
+		self.enable_3dlut_cb.Bind(wx.EVT_CHECKBOX, self.enable_3dlut_handler)
 		self.apply_bt1886_cb.Bind(wx.EVT_CHECKBOX, self.apply_bt1886_ctrl_handler)
 		self.bt1886_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
 									self.bt1886_gamma_ctrl_handler)
@@ -222,6 +223,10 @@ class ReportFrame(BaseFrame):
 							 "\n\n" + "\n".join(files),
 					   ok=lang.getstr("ok"),
 					   bitmap=geticon(32, "dialog-error"))
+	
+	def enable_3dlut_handler(self, event):
+		setcfg("3dlut.madVR.enable", int(self.enable_3dlut_cb.GetValue()))
+		config.writecfg()
 	
 	def fields_ctrl_handler(self, event):
 		setcfg("measurement_report.chart.fields",
@@ -416,6 +421,10 @@ class ReportFrame(BaseFrame):
 		self.use_simulation_profile_as_output_cb.Enable(enable1 and
 														sim_profile_color == "RGB")
 		self.use_simulation_profile_as_output_cb.SetValue(enable1 and enable2)
+		self.enable_3dlut_cb.Enable(enable1 and enable2)
+		self.enable_3dlut_cb.SetValue(enable1 and enable2 and
+									  getcfg("3dlut.madVR.enable"))
+		self.enable_3dlut_cb.Show(config.get_display_name() == "madVR")
 		enable5 = (sim_profile_color == "RGB" and
 				   isinstance(self.simulation_profile.tags.get("rXYZ"),
 							  ICCP.XYZType) and

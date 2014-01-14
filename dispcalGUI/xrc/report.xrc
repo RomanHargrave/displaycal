@@ -101,8 +101,20 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
-                  <object class="wxCheckBox" name="use_simulation_profile_as_output_cb">
-                    <label>use_simulation_profile_as_output</label>
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="use_simulation_profile_as_output_cb">
+                        <label>use_simulation_profile_as_output</label>
+                      </object>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="enable_3dlut_cb">
+                        <label>3dlut.madVR.enable</label>
+                      </object>
+                      <flag>wxLEFT</flag>
+                      <border>8</border>
+                    </object>
                   </object>
                   <flag>wxLEFT</flag>
                   <border>4</border>

@@ -4637,7 +4637,9 @@ class MainFrame(BaseFrame):
 						devlink = None
 					sim_profile = profile
 					profile = oprof
-		colormanaged = use_sim and use_sim_as_output and not sim_profile
+		colormanaged = (use_sim and use_sim_as_output and not sim_profile and
+						config.get_display_name() == "madVR" and
+						getcfg("3dlut.madVR.enable"))
 		if debug:
 			for n, p in {"profile": profile, "devlink": devlink,
 						 "sim_profile": sim_profile, "oprof": oprof}.iteritems():
@@ -7061,6 +7063,8 @@ class MainFrame(BaseFrame):
 			getcfg("colorimeter_correction_matrix_file").split(":")[0] == "AUTO"):
 			self.update_colorimeter_correction_matrix_ctrl_items()
 		self.update_main_controls()
+		if getattr(self, "reportframe", None):
+			self.reportframe.update_main_controls()
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
