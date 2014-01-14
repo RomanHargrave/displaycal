@@ -859,7 +859,7 @@ def get_total_patches(white_patches=None, black_patches=None,
 	if white_patches is None:
 		white_patches = getcfg("tc_white_patches")
 	if black_patches is None and getcfg("argyll.version") >= "1.6":
-		black_patches = 4
+		black_patches = getcfg("tc_black_patches")
 	if single_channel_patches is None:
 		single_channel_patches = getcfg("tc_single_channel_patches")
 	single_channel_patches_total = single_channel_patches * 3
@@ -907,14 +907,15 @@ def get_total_patches(white_patches=None, black_patches=None,
 	elif gray_patches > 1:
 		white_patches -= 1  # white always in gray patches
 		single_channel_patches_total -= 3  # black always in gray patches
-	else:
+	elif single_channel_patches_total:
 		# black always only once in single channel patches
 		single_channel_patches_total -= 2
 	total_patches += max(0, white_patches) + \
 					 max(0, single_channel_patches_total) + \
 					 max(0, gray_patches) + fullspread_patches
 	if black_patches:
-		black_patches -= 1  # black always in other patches
+		if gray_patches > 1 or single_channel_patches_total or multi_steps:
+			black_patches -= 1  # black always in other patches
 		total_patches += black_patches
 	return total_patches
 

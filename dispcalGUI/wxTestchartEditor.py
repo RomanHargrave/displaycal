@@ -962,16 +962,25 @@ class TestchartEditor(wx.Frame):
 			fullspread_patches = self.tc_fullspread_patches.GetValue()
 		return get_total_patches(white_patches, black_patches, single_channel_patches, gray_patches, multi_steps, multi_bcc_steps, fullspread_patches)
 	
-	def tc_get_white_patches(self):
-		white_patches = self.tc_white_patches.GetValue()
+	def tc_get_black_patches(self):
 		if self.worker.argyll_version >= [1, 6]:
 			black_patches = self.tc_black_patches.GetValue()
 		else:
 			black_patches = 0
 		single_channel_patches = self.tc_single_channel_patches.GetValue()
 		gray_patches = self.tc_gray_patches.GetValue()
-		if gray_patches == 0 and (single_channel_patches > 0 or
-								  black_patches > 0) and white_patches > 0:
+		if gray_patches == 0 and single_channel_patches > 0 and black_patches > 0:
+			gray_patches = 2
+		multi_steps = self.tc_multi_steps.GetValue()
+		if multi_steps > 1 or gray_patches > 1: # black always in multi channel or gray patches
+			black_patches -= 1
+		return max(0, black_patches)
+	
+	def tc_get_white_patches(self):
+		white_patches = self.tc_white_patches.GetValue()
+		single_channel_patches = self.tc_single_channel_patches.GetValue()
+		gray_patches = self.tc_gray_patches.GetValue()
+		if gray_patches == 0 and single_channel_patches > 0 and white_patches > 0:
 			gray_patches = 2
 		multi_steps = self.tc_multi_steps.GetValue()
 		if multi_steps > 1 or gray_patches > 1: # white always in multi channel or gray patches
@@ -1310,7 +1319,9 @@ class TestchartEditor(wx.Frame):
 	def tc_check(self, event = None):
 		white_patches = self.tc_white_patches.GetValue()
 		self.tc_amount = self.tc_get_total_patches(white_patches)
-		self.preview_btn.Enable(self.tc_amount - max(0, self.tc_get_white_patches()) >= 8)
+		self.preview_btn.Enable(self.tc_amount -
+								max(0, self.tc_get_white_patches()) -
+								max(0, self.tc_get_black_patches()) >= 8)
 		self.clear_btn.Enable(hasattr(self, "ti1"))
 		self.tc_save_check()
 		self.save_as_btn.Enable(hasattr(self, "ti1"))
