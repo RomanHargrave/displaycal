@@ -1035,8 +1035,8 @@ class TestchartEditor(wx.Frame):
 														tc_precond_enable)
 			self.tc_neutral_axis_emphasis_intctrl.Enable(tc_algo_enable and
 														 tc_precond_enable)
-		self.tc_precond.Enable(tc_algo_enable and tc_precond_enable and bool(getcfg("tc_precond_profile")))
-		if not (tc_algo_enable and tc_precond_enable):
+		self.tc_precond.Enable(bool(getcfg("tc_precond_profile")))
+		if not getcfg("tc_precond_profile"):
 			self.tc_precond.SetValue(False)
 		else:
 			self.tc_precond.SetValue(bool(int(getcfg("tc_precond"))))
