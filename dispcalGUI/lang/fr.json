@@ -622,6 +622,7 @@
 	"testchart.save_or_discard": "La grille de test n'a pas été enregistrée.",
 	"testchart.select": "Sélectionner",
 	"testchart.set": "Sélectionner un fichier de grille de test",
+		"*testchart.sort_by_HSV": "Sort by HSV",
 	"testchart.sort_by_L": "Trier par L*",
 	"testchart.sort_by_RGB": "Trier par RGB",
 	"testchart.sort_by_RGB_sum": "Trier par somme de RGB",

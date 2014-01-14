@@ -593,6 +593,7 @@
 	"testchart.save_or_discard": "Il testchart non è stato salvato.",
 	"testchart.select": "Selezionare",
 	"testchart.set": "Scegli il file di testchart...",
+		"*testchart.sort_by_HSV": "Sort by HSV",
 		"*testchart.sort_by_L": "Sort by L*",
 		"*testchart.sort_by_RGB": "Sort by RGB",
 		"*testchart.sort_by_RGB_sum": "Sort by sum of RGB",

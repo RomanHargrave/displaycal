@@ -618,6 +618,7 @@
 	"testchart.save_or_discard": "Die Testform wurde nicht gesichert.",
 	"testchart.select": "Auswählen",
 	"testchart.set": "Testform auswählen...",
+	"testchart.sort_by_HSV": "Nach HSV sortieren",
 	"testchart.sort_by_L": "Nach L* sortieren",
 	"testchart.sort_by_RGB": "Nach RGB sortieren",
 	"testchart.sort_by_RGB_sum": "Nach Summe von RGB sortieren",

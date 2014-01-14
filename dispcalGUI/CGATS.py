@@ -73,6 +73,19 @@ def sort_RGB_white_to_top(a, b):
 		return 0
 
 
+def sort_by_HSV(a, b):
+	a = list(colormath.RGB2HSV(*a[:3]))
+	b = list(colormath.RGB2HSV(*b[:3]))
+	a[0] = round(a[0], 12)
+	b[0] = round(b[0], 12)
+	if a > b:
+		return 1
+	elif a < b:
+		return -1
+	else:
+		return 0
+
+
 def sort_by_RGB(a, b):
 	if a[:3] > b[:3]:
 		return 1
@@ -522,6 +535,13 @@ class CGATS(dict):
 		if not valueslist:
 			return False
 		valueslist.sort(sort_RGB_white_to_top)
+		return data.set_RGB_XYZ_values(valueslist)
+	
+	def sort_by_HSV(self):
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		valueslist.sort(sort_by_HSV)
 		return data.set_RGB_XYZ_values(valueslist)
 	
 	def sort_by_L(self):
