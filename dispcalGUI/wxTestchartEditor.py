@@ -42,7 +42,8 @@ def swap_dict_keys_values(mydict):
 
 
 class TestchartEditor(wx.Frame):
-	def __init__(self, parent = None, id = -1, path=None):
+	def __init__(self, parent = None, id = -1, path=None,
+				 cfg=None, target=None):
 		wx.Frame.__init__(self, parent, id, lang.getstr("testchart.edit"))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.tc_close_handler)
@@ -558,7 +559,7 @@ class TestchartEditor(wx.Frame):
 
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.tc_destroy_handler)
 
-		wx.CallAfter(self.tc_load_cfg_from_ti1, None, path)
+		wx.CallAfter(self.tc_load_cfg_from_ti1, None, path, cfg, target)
 
 	def ti1_drop_handler(self, path):
 		self.tc_load_cfg_from_ti1(None, path)
@@ -1571,15 +1572,15 @@ class TestchartEditor(wx.Frame):
 				handle_error(u"Error - testchart could not be saved: " + safe_unicode(exception), parent = self)
 			else:
 				self.tc_vrml_save(path)
-				if path != getcfg("testchart.file"):
+				if path != getcfg(self.cfg):
 					dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
 					result = dlg.ShowModal()
 					dlg.Destroy()
 					if result == wx.ID_OK:
-						setcfg("testchart.file", path)
+						setcfg(self.cfg, path)
 						writecfg()
-				if path == getcfg("testchart.file") and self.Parent and hasattr(self.Parent, "set_testchart"):
-					self.Parent.set_testchart(path)
+				if path == getcfg(self.cfg) and self.target and hasattr(self.target, "set_testchart"):
+					self.target.set_testchart(path)
 				if not self.IsBeingDeleted():
 					self.save_btn.Disable()
 				return True
@@ -1722,12 +1723,16 @@ class TestchartEditor(wx.Frame):
 	def tc_destroy_handler(self, event):
 		event.Skip()
 
-	def tc_load_cfg_from_ti1(self, event = None, path = None):
+	def tc_load_cfg_from_ti1(self, event = None, path = None, cfg=None,
+							 target=None):
 		if self.worker.is_working():
 			return
 
+		self.cfg = cfg or "testchart.file"
+		self.target = target or self.Parent
+
 		if path is None:
-			path = getcfg("testchart.file")
+			path = getcfg(self.cfg)
 		try:
 			filename, ext = os.path.splitext(path)
 			if ext.lower() not in (".icc", ".icm"):

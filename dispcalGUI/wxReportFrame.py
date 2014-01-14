@@ -134,10 +134,14 @@ class ReportFrame(BaseFrame):
 			parent = self
 		chart = getcfg("measurement_report.chart")
 		if not hasattr(parent, "tcframe"):
-			parent.tcframe = TestchartEditor(parent, path=chart)
+			parent.tcframe = TestchartEditor(parent, path=chart,
+											 cfg="measurement_report.chart",
+											 target=self)
 		elif (not hasattr(parent.tcframe, "ti1") or
 			  chart != parent.tcframe.ti1.filename):
-			parent.tcframe.tc_load_cfg_from_ti1(None, chart)
+			parent.tcframe.tc_load_cfg_from_ti1(None, chart,
+												"measurement_report.chart",
+												self)
 		setcfg("tc.show", 1)
 		parent.tcframe.Show()
 		parent.tcframe.Raise()
@@ -380,7 +384,6 @@ class ReportFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
-		self.chart_ctrl.SetPath(getcfg("measurement_report.chart"))
 		self.simulation_profile_ctrl.SetPath(getcfg("measurement_report.simulation_profile"))
 		self.set_profile("simulation", silent=True)
 		self.bt1886_gamma_ctrl.SetValue(str(getcfg("measurement_report.bt1886_gamma")))
@@ -389,6 +392,10 @@ class ReportFrame(BaseFrame):
 		self.set_profile("devlink", silent=True)
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
 		self.set_profile("output", silent=True)
+		self.set_testchart(getcfg("measurement_report.chart"))
+	
+	def set_testchart(self, path):
+		self.chart_ctrl.SetPath(path)
 		self.chart_ctrl_handler(None)
 	
 	def update_main_controls(self):
