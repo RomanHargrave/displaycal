@@ -4369,23 +4369,15 @@ class Worker(object):
 		args += ['-m%s' % getcfg("tc_multi_steps")]
 		if self.argyll_version >= [1, 6, 0]:
 			args += ['-b%s' % getcfg("tc_multi_bcc_steps")]
+		tc_algo = getcfg("tc_algo")
 		if getcfg("tc_fullspread_patches") > 0:
 			args += ['-f%s' % config.get_total_patches()]
-			tc_algo = getcfg("tc_algo")
 			if tc_algo:
 				args += ['-' + tc_algo]
 			if tc_algo in ("i", "I"):
 				args += ['-a%s' % getcfg("tc_angle")]
 			if tc_algo == "":
 				args += ['-A%s' % getcfg("tc_adaption")]
-			if getcfg("tc_precond") and getcfg("tc_precond_profile"):
-				args += ['-c']
-				args += [getcfg("tc_precond_profile")]
-			if getcfg("tc_filter"):
-				args += ['-F%s,%s,%s,%s' % (getcfg("tc_filter_L"), 
-											getcfg("tc_filter_a"), 
-											getcfg("tc_filter_b"), 
-											getcfg("tc_filter_rad"))]
 			if self.argyll_version >= [1, 3, 3]:
 				args += ['-N%s' % getcfg("tc_neutral_axis_emphasis")]
 			if (self.argyll_version == [1, 1, "RC1"] or
@@ -4393,6 +4385,14 @@ class Worker(object):
 				args += ['-G']
 		else:
 			args += ['-f0']
+		if getcfg("tc_precond") and getcfg("tc_precond_profile"):
+			args += ['-c']
+			args += [getcfg("tc_precond_profile")]
+		if getcfg("tc_filter"):
+			args += ['-F%s,%s,%s,%s' % (getcfg("tc_filter_L"), 
+										getcfg("tc_filter_a"), 
+										getcfg("tc_filter_b"), 
+										getcfg("tc_filter_rad"))]
 		if (self.argyll_version >= [1, 6, 2] and
 			("-c" in args or self.argyll_version >= [1, 6, 3])):
 			args += ['-V%s' % (1 + getcfg("tc_dark_emphasis") * 3)]
