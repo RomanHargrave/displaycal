@@ -1167,40 +1167,7 @@ class TestchartEditor(wx.Frame):
 			except CGATS.CGATSError, exception:
 				show_result_dialog(exception, self)
 				return
-			white = chart.queryv1("APPROX_WHITE_POINT")
-			if white:
-				data_format = chart[0].DATA_FORMAT.values()
-				# Determine CIE colorspace in reference, if any
-				if ("LAB_L" in data_format and "LAB_A" in data_format and
-					"LAB_B" in data_format):
-					cie = "Lab"
-				elif ("XYZ_X" in data_format and "XYZ_Y" in data_format and
-					  "XYZ_Z" in data_format):
-					cie = "XYZ"
-				else:
-					cie = None
-				if cie in ("XYZ", "Lab"):
-					white = [float(v) for v in white.split()]
-					for i in chart[0].DATA:
-						if cie == "Lab":
-							(chart[0].DATA[i]["XYZ_X"],
-							 chart[0].DATA[i]["XYZ_Y"],
-							 chart[0].DATA[i]["XYZ_Z"]) = colormath.Lab2XYZ(
-															chart[0].DATA[i]["LAB_L"],
-															chart[0].DATA[i]["LAB_A"],
-															chart[0].DATA[i]["LAB_B"],
-															scale=100)
-						X, Y, Z = (chart[0].DATA[i]["XYZ_X"],
-								   chart[0].DATA[i]["XYZ_Y"],
-								   chart[0].DATA[i]["XYZ_Z"])
-						X, Y, Z = colormath.adapt(X, Y, Z, white)
-						(chart[0].DATA[i]["XYZ_X"],
-						 chart[0].DATA[i]["XYZ_Y"],
-						 chart[0].DATA[i]["XYZ_Z"]) = X, Y, Z
-						if cie == "Lab":
-							(chart[0].DATA[i]["LAB_L"],
-							 chart[0].DATA[i]["LAB_A"],
-							 chart[0].DATA[i]["LAB_B"]) = colormath.XYZ2Lab(X, Y, Z)
+			adapted = chart[0].adapt()
 			ti1, void, void = self.worker.chart_lookup(chart, 
 													   profile,
 													   True,
@@ -1225,6 +1192,14 @@ class TestchartEditor(wx.Frame):
 													ti1[0].DATA[i]["LAB_A"],
 													ti1[0].DATA[i]["LAB_B"],
 													scale=100)
+				(ti1[0].DATA[i]["XYZ_X"],
+				 ti1[0].DATA[i]["XYZ_Y"],
+				 ti1[0].DATA[i]["XYZ_Z"]) = colormath.adapt(
+												ti1[0].DATA[i]["XYZ_X"],
+												ti1[0].DATA[i]["XYZ_Y"],
+												ti1[0].DATA[i]["XYZ_Z"],
+												"D50",
+												profile.tags.wtpt.values())
 				entry = {"SAMPLE_ID": row + 2 + i}
 				for label in ("RGB_R", "RGB_G", "RGB_B",
 							  "XYZ_X", "XYZ_Y", "XYZ_Z"):
