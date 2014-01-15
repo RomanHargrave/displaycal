@@ -1266,7 +1266,7 @@ Transform {
 							white = None
 						else:
 							if len(white) == 3:
-								white = [v / v[1] * 100 for v in white]
+								white = [v / white[1] * 100 for v in white]
 								white = {"XYZ_X": white[0],
 										 "XYZ_Y": white[1],
 										 "XYZ_Z": white[2]}
