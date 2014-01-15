@@ -22,11 +22,12 @@ from debughelpers import handle_error
 from log import safe_print
 from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
+from ordereddict import OrderedDict
 from util_io import StringIOu as StringIO
 from util_os import waccess
 from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
-					show_result_dialog)
+					get_argyll_util, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import (ConfirmDialog, FileBrowseBitmapButtonWithChoiceHistory,
 					   InfoDialog)
@@ -1164,11 +1165,17 @@ class TestchartEditor(wx.Frame):
 			self.tc_add_data(row, newdata)
 	
 	def tc_add_ti3_handler(self, event):
+		try:
+			profile = ICCP.ICCProfile(getcfg("tc_precond_profile"))
+		except (IOError, ICCP.ICCProfileInvalidError), exception:
+			show_result_dialog(exception, self)
+			return
+
 		defaultDir, defaultFile = get_verified_path("testchart.reference")
 		dlg = wx.FileDialog(self, lang.getstr("testchart_or_reference"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
 							wildcard=(lang.getstr("filetype.ti1_ti3_txt") + 
-									  "|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt"), 
+									  "|*.cgats;*.cie;*.gam;*.jpg;*.jpeg;*.png;*.ti1;*.ti2;*.ti3;*.tif;*.tiff;*.txt"), 
 							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
@@ -1178,17 +1185,43 @@ class TestchartEditor(wx.Frame):
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
-		try:
-			profile = ICCP.ICCProfile(getcfg("tc_precond_profile"))
-		except (IOError, ICCP.ICCProfileInvalidError), exception:
-			show_result_dialog(exception, self)
-		else:
+
+		# Determine if this is an image
+		filename, ext = os.path.splitext(path)
+		if ext.lower() in (".jpg", ".jpeg", ".png", ".tif", ".tiff"):
+			llevel = wx.Log.GetLogLevel()
+			wx.Log.SetLogLevel(0)  # Suppress TIFF library related message popups
 			try:
-				chart = CGATS.CGATS(path)
-			except CGATS.CGATSError, exception:
+				img = wx.Image(path, wx.BITMAP_TYPE_ANY)
+				if not img.IsOk():
+					raise Error(lang.getstr("error.file_type_unsupported"))
+			except Exception, exception:
 				show_result_dialog(exception, self)
 				return
-			chart.fix_device_values_scaling()
+			finally:
+				wx.Log.SetLogLevel(llevel)
+			dlg = ConfirmDialog(self, msg=lang.getstr("gamut"),
+								ok="L*a*b*", alt="RGB",
+								bitmap=geticon(32, "dialog-question"))
+			result = dlg.ShowModal()
+			if result == wx.ID_CANCEL:
+				return
+			use_gamut = result == wx.ID_OK
+		else:
+			img = None
+			use_gamut = None
+
+		self.worker.start(self.tc_add_ti3_consumer,
+						  self.tc_add_ti3, cargs=(profile, ),
+						  wargs=(path, img, use_gamut), wkwargs={},
+						  progress_msg=lang.getstr("testchart.add_ti3_patches"),
+						  parent=self, progress_start=500)
+		
+	def tc_add_ti3_consumer(self, result, profile=None):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		else:
+			chart = result
 			data_format = chart.queryv1("DATA_FORMAT").values()
 			as_ti3 = ("LAB_L" in data_format and "LAB_A" in data_format and
 					  "LAB_B" in data_format) or ("XYZ_X" in data_format and
@@ -1240,9 +1273,142 @@ class TestchartEditor(wx.Frame):
 				entry = {"SAMPLE_ID": row + 2 + i}
 				for label in ("RGB_R", "RGB_G", "RGB_B",
 							  "XYZ_X", "XYZ_Y", "XYZ_Z"):
-					entry[label] = dataset.DATA[i][label]
+					entry[label] = round(dataset.DATA[i][label], 4)
 				newdata.append(entry)
 			self.tc_add_data(row, newdata)
+	
+	def tc_add_ti3(self, path, img=None, use_gamut=True):
+		if img:
+			ratio = float(img.Width) / float(img.Height)
+			size = 20.0
+			w, h = int(round(size * size / (size / ratio))), int(round(size / ratio))
+			img.Rescale(w, h)
+			colors = OrderedDict()
+			if not use_gamut:
+				# Select RGB colors
+				for y in xrange(h):
+					for x in xrange(w):
+						r, g, b = (img.GetRed(x, y) / 2.55,
+								   img.GetGreen(x, y) / 2.55,
+								   img.GetBlue(x, y) / 2.55)
+						color = round(r / 10), round(g / 10), round(b / 10)
+						if not color in colors:
+							colors[color] = []
+						colors[color].append((r, g, b))
+				# Fill chart
+				chart = ["TI1    ",
+						 "BEGIN_DATA_FORMAT",
+						 "RGB_R RGB_G RGB_B",
+						 "END_DATA_FORMAT",
+						 "BEGIN_DATA",
+						 "END_DATA"]
+				for color in colors.itervalues():
+					rr, gg, bb = 0, 0, 0
+					for r, g, b in color:
+						rr += r
+						gg += g
+						bb += b
+					rr /= len(color)
+					gg /= len(color)
+					bb /= len(color)
+					if not (rr, gg, bb) in chart:
+						chart.insert(-1, "%.4f %.4f %.4f" % (rr, gg, bb))
+				chart = "\n".join(chart)
+			else:
+				# Use tiffgamut
+				tiffgamut = get_argyll_util("tiffgamut")
+				if tiffgamut:
+					cwd = self.worker.create_tempdir()
+					if isinstance(cwd, Exception):
+						return cwd
+					else:
+						imgpath = os.path.join(cwd, "image.tif")
+						img.SaveFile(imgpath, wx.BITMAP_TYPE_TIF)
+						gam = os.path.join(cwd, "image.gam")
+						sRGB = get_data_path("ref/sRGB.icm")
+						intent = "r" if getcfg("tc_add_ti3_relative") else "a"
+						for n in xrange(2 if sRGB else 1):
+							res = 10 if imgpath == path else 1
+							args = ["-v", "-d%s" % res, "-i%s" % intent, "-O", gam]
+							#if self.worker.argyll_version >= [1, 0, 4]:
+								#args.append("-f100")
+							if n == 0 or imgpath == path:
+								# Try to use embedded profile
+								args.append(path)
+							else:
+								# Fall back to sRGB
+								args.append(sRGB)
+							args.append(imgpath)
+							result = self.worker.exec_cmd(tiffgamut, args,
+														  capture_output=True,
+														  skip_scripts=True)
+							if not result:
+								if ("Error - Can't open profile in file" in
+									"\n".join(self.worker.errors)):
+									# Try again?
+									continue
+								elif ("Error - TIFF Input file has 3 input "
+									  "chanels and is mismatched" in
+									"\n".join(self.worker.errors)):
+									# Try again?
+									imgpath = path
+									continue
+							break
+						if isinstance(result, Exception):
+							return result
+						elif result:
+							chart = path = gam
+						else:
+							return Error("\n".join(self.worker.errors or
+												   self.worker.output))
+				else:
+					return Error(lang.getstr("argyll.util.not_found",
+											 "tiffgamut"), self)
+		else:
+			chart = path
+		
+		try:
+			chart = CGATS.CGATS(chart)
+		except CGATS.CGATSError, exception:
+			return exception
+		finally:
+			if os.path.dirname(path) == self.worker.tempdir:
+				self.worker.wrapup(False)
+		if img and use_gamut:
+			# Select Lab colors
+			data = chart.queryv1("DATA")
+			for sample in data.itervalues():
+				L, a, b = (sample["LAB_L"],
+						   sample["LAB_A"],
+						   sample["LAB_B"])
+				color = round(L / 8.5), round(a / 8.5), round(b / 8.5)
+				if not color in colors:
+					colors[color] = []
+				colors[color].append((L, a, b))
+			# Fill chart
+			chart = ["GAMUT  ",
+					 "BEGIN_DATA_FORMAT",
+					 "LAB_L LAB_A LAB_B",
+					 "END_DATA_FORMAT",
+					 "BEGIN_DATA",
+					 "END_DATA"]
+			for color in colors.itervalues():
+				LL, aa, bb = 0, 0, 0
+				for L, a, b in color:
+					LL += L
+					aa += a
+					bb += b
+				LL /= len(color)
+				aa /= len(color)
+				bb /= len(color)
+				if not (LL, aa, bb) in chart:
+					chart.insert(-1, "%.4f %.4f %.4f" % (LL, aa, bb))
+				
+			chart = CGATS.CGATS("\n".join(chart))
+		else:
+			chart.fix_device_values_scaling()
+			
+		return chart
 	
 	def tc_add_ti3_relative_handler(self, event):
 		setcfg("tc_add_ti3_relative", int(self.add_ti3_relative_cb.GetValue()))
