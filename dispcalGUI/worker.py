@@ -2628,9 +2628,6 @@ class Worker(object):
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
 								self.errors += [line.decode(enc, "replace")]
-						if len(self.errors):
-							errstr = "".join(self.errors).strip()
-							self.log(errstr)
 					if tries > 0 and not interact:
 						stderr = tempfile.SpooledTemporaryFile()
 				if capture_output or interact:
@@ -2648,6 +2645,9 @@ class Worker(object):
 							wx.CallAfter(self.owner.infoframe.Show)
 					if tries > 0 and not interact:
 						stdout = tempfile.SpooledTemporaryFile()
+				if not silent and len(self.errors):
+					errstr = "".join(self.errors).strip()
+					self.log(errstr)
 		except Exception, exception:
 			if debug:
 				safe_print('[D] working_dir:', working_dir)
