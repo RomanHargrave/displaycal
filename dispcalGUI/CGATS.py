@@ -1272,7 +1272,11 @@ Transform {
 										 "XYZ_Z": white[2]}
 							else:
 								return
-				if white:
+				if white and (("XYZ_X" in white and
+							   "XYZ_Y" in white and
+							   "XYZ_Z" in white) or ("LAB_L" in white and
+													 "LAB_B" in white and
+													 "LAB_B" in white)):
 					if colorspace == "XYZ":
 						if "XYZ_X" in white:
 							return white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
