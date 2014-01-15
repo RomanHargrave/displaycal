@@ -575,9 +575,9 @@ class CGATS(dict):
 		"""
 		Move items from start by icrementing or decrementing their key by inc.
 		"""
-		r = range(start, len(self) + 1)
+		r = xrange(start, len(self) + 1)
 		if inc > 0:
-			r.reverse()
+			r = reversed(r)
 		for key in r:
 			if key in self:
 				if key + inc < 0:
@@ -1108,10 +1108,10 @@ Transform {
 		else:
 			key = item
 		maxindex = len(self) - 1
-		result = dict.pop(self, key)
+		result = self[key]
 		if type(key) == int and key != maxindex:
 			self.moveby1(key + 1, -1)
-			dict.pop(self, len(self) - 1)
+		dict.pop(self, len(self) - 1)
 		self.setmodified()
 		return result
 	

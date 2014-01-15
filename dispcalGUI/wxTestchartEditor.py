@@ -2221,7 +2221,7 @@ class TestchartEditor(wx.Frame):
 					label = grid.GetColLabelValue(j)
 					if label in ("RGB_R", "RGB_G", "RGB_B"):
 						grid.SetCellValue(i, j, str(sample[label]))
-				self.tc_grid_setcolorlabel(i)
+				self.tc_grid_setcolorlabel(i, data)
 				self.tc_add_patch(i, sample)
 
 			if hasattr(self, "preview"):
@@ -2253,7 +2253,7 @@ class TestchartEditor(wx.Frame):
 						self.grid.SetCellValue(row + 1 + i, col,
 											   str(round(float(newdata[i][label]),
 														 4)))
-			self.tc_grid_setcolorlabel(row + 1 + i)
+			self.tc_grid_setcolorlabel(row + 1 + i, data)
 			if hasattr(self, "preview"):
 				self.tc_add_patch(row + 1 + i, data[row + 1 + i])
 		self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
@@ -2274,10 +2274,12 @@ class TestchartEditor(wx.Frame):
 			self.patchsizer.Insert(before, patch)
 			self.tc_patch_setcolorlabel(patch)
 
-	def tc_grid_setcolorlabel(self, row):
+	def tc_grid_setcolorlabel(self, row, data=None):
 		grid = self.grid
 		col = grid.GetNumberCols() - 1
-		sample = self.ti1.queryv1("DATA")[row]
+		if data is None:
+			data = self.ti1.queryv1("DATA")
+		sample = data[row]
 		style, colour, labeltext, labelcolour = self.tc_getcolorlabel(sample)
 		grid.SetCellBackgroundColour(row, col, colour)
 		grid.SetCellValue(row, col, labeltext)
@@ -2446,13 +2448,18 @@ class TestchartEditor(wx.Frame):
 			self.preview.Freeze()
 		rows.sort()
 		rows.reverse()
-		for row in rows:
-			self.grid.DeleteRows(row)
-			self.ti1.queryv1("DATA").remove(row)
-			if hasattr(self, "preview"):
+		self.grid.DeleteRows(rows[-1], len(rows))
+		if hasattr(self, "preview"):
+			for row in rows:
 				patch = self.patchsizer.GetItem(row).GetWindow()
 				if self.patchsizer.Detach(patch):
 					patch.Destroy()
+		data = self.ti1.queryv1("DATA")
+		if rows[0] != len(data) - 1:
+			data.moveby1(rows[-1] + len(rows), -len(rows))
+		for row in rows:
+			dict.pop(data, len(data) - 1)
+		data.setmodified()
 		self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
 		row = min(rows[-1], self.grid.GetNumberRows() - 1)
 		self.grid.SelectRow(row)
