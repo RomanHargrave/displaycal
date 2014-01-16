@@ -466,18 +466,40 @@ class LUTFrame(wx.Frame):
 		self.plot_mode_select.SetMaxFontSize(11)
 		self.cbox_sizer.Add(self.plot_mode_select, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHOICE, self.DrawLUT, id=self.plot_mode_select.GetId())
-		
-		self.cbox_sizer.Add((20, 0))
+
+		self.reload_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
+											 geticon(16, "stock_refresh"),
+											 style=wx.NO_BORDER)
+		self.reload_vcgt_btn.SetBackgroundColour(BGCOLOUR)
+		self.cbox_sizer.Add(self.reload_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
+													   wx.LEFT, border=20)
+		self.reload_vcgt_btn.Bind(wx.EVT_BUTTON, self.reload_vcgt_handler)
+		self.reload_vcgt_btn.SetToolTipString(
+			lang.getstr("calibration.load_from_display_profile"))
+		self.reload_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.reload_vcgt_btn.Disable()
 		
 		self.apply_bpc_btn = wx.BitmapButton(self.box_panel, -1,
 											 geticon(16, "black_point"),
 											 style=wx.NO_BORDER)
 		self.apply_bpc_btn.SetBackgroundColour(BGCOLOUR)
-		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL)
+		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL |
+													 wx.LEFT, border=16)
 		self.apply_bpc_btn.Bind(wx.EVT_BUTTON, self.apply_bpc_handler)
 		self.apply_bpc_btn.SetToolTipString(lang.getstr("black_point_compensation"))
 		self.apply_bpc_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.apply_bpc_btn.Disable()
+
+		self.install_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
+												geticon(16, "install"),
+												style=wx.NO_BORDER)
+		self.install_vcgt_btn.SetBackgroundColour(BGCOLOUR)
+		self.cbox_sizer.Add(self.install_vcgt_btn,
+							flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=16)
+		self.install_vcgt_btn.Bind(wx.EVT_BUTTON, self.install_vcgt_handler)
+		self.install_vcgt_btn.SetToolTipString(lang.getstr("apply_cal"))
+		self.install_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.install_vcgt_btn.Disable()
 
 		self.save_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
 											 geticon(16, "media-floppy"),
@@ -637,6 +659,43 @@ class LUTFrame(wx.Frame):
 				   bitmap=geticon(32, "dialog-error"))
 	
 	get_display = MeasureFrame.__dict__["get_display"]
+	
+	def install_vcgt_handler(self, event):
+		cwd = self.worker.create_tempdir()
+		if isinstance(cwd, Exception):
+			show_result_dialog(cwd, self)
+		else:
+			cal = os.path.join(cwd, re.sub(r"[\\/:*?\"<>|]+",
+										   "",
+										   make_argyll_compatible_path(
+											   config.get_display_name(
+												   include_geometry=True) or 
+											   "Video LUT")))
+			vcgt_to_cal(self.profile).write(cal)
+			cmd, args = self.worker.prepare_dispwin(cal)
+			if isinstance(cmd, Exception):
+				show_result_dialog(cmd, self)
+			elif cmd:
+				result = self.worker.exec_cmd(cmd, args, capture_output=True, 
+											  skip_scripts=True)
+				if isinstance(result, Exception):
+					show_result_dialog(result, self)
+				elif not result:
+					show_result_dialog(Error("".join(self.worker.errors)),
+									   self)
+			# Important:
+			# Make sure to only delete the temporary cal file we created
+			# (which hasn't an extension, so we can use ext_filter to 
+			# exclude files which should not be deleted)
+			self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
+													   ".ccmx", ".ccss",
+													   ".cmd", ".command", 
+													   ".gam", ".gz",
+													   ".icc", ".icm",
+													   ".log",
+													   ".sh", ".ti1",
+													   ".ti3", ".wrl",
+													   ".wrz"])
 	
 	def toggle_clut_handler(self, event):
 		try:
@@ -885,6 +944,21 @@ class LUTFrame(wx.Frame):
 					self.load_lut(get_display_profile(i))
 					break
 		event.Skip()
+	
+	def reload_vcgt_handler(self, event):
+		cmd, args = self.worker.prepare_dispwin(True)
+		if isinstance(cmd, Exception):
+			show_result_dialog(cmd, self)
+		elif cmd:
+			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
+										  skip_scripts=True)
+			if isinstance(result, Exception):
+				show_result_dialog(result, self)
+			elif not result:
+				show_result_dialog(Error("".join(self.worker.errors)),
+								   self)
+			else:
+				self.load_lut(get_display_profile())
 
 	def LoadProfile(self, profile):
 		if not profile:
@@ -1095,13 +1169,24 @@ class LUTFrame(wx.Frame):
 							  isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
 							  isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType))
 		self.save_plot_btn.Enable(bool(curves))
+		if hasattr(self, "reload_vcgt_btn"):
+			self.reload_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+									    bool(self.profile))
+			self.reload_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		if hasattr(self, "apply_bpc_btn"):
-			self.apply_bpc_btn.Enable(not(self.plot_mode_select.GetSelection()) and
-									  self.profile and "vcgt" in self.profile.tags)
+			enable_bpc = (not(self.plot_mode_select.GetSelection()) and
+						  bool(self.profile) and "vcgt" in self.profile.tags)
+			if enable_bpc:
+				values = self.profile.tags.vcgt.getNormalizedValues()
+			self.apply_bpc_btn.Enable(enable_bpc and values[0] != (0, 0, 0))
 			self.apply_bpc_btn.Show(not(self.plot_mode_select.GetSelection()))
+		if hasattr(self, "install_vcgt_btn"):
+			self.install_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+										 bool(self.profile) and "vcgt" in self.profile.tags)
+			self.install_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		if hasattr(self, "save_vcgt_btn"):
 			self.save_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
-									  self.profile and "vcgt" in self.profile.tags)
+									  bool(self.profile) and "vcgt" in self.profile.tags)
 			self.save_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		self.show_as_L.GetContainingSizer().Layout()
 		if hasattr(self, "show_actual_lut_cb"):
