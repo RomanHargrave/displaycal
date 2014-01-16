@@ -4,6 +4,7 @@
 names = [
 	"applycal",
 	"average",
+	"cctiff",
 	"ccxxmake",
 	"dispcal",
 	"dispread",
@@ -24,8 +25,8 @@ names = [
 ]
 
 # Argyll CMS tools optionally used by dispcalGUI
-optional = ["applycal", "average", "ccxxmake", "i1d3ccss", "spyd2en", "spyd4en",
-			"tiffgamut"]
+optional = ["applycal", "average", "cctiff", "ccxxmake", "i1d3ccss", "spyd2en",
+			"spyd4en", "tiffgamut"]
 
 prefixes_suffixes = ["argyll"]
 

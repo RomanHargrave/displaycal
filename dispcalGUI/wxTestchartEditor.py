@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import sys
+from itertools import chain
 
 import CGATS
 import ICCProfile as ICCP
@@ -1112,29 +1113,13 @@ class TestchartEditor(wx.Frame):
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			show_result_dialog(exception, self)
 		else:
-			tags = profile.tags
-			if not "wtpt" in tags:
+			rgb_space = profile.get_rgb_space()
+			if not rgb_space:
 				show_result_dialog(Error(
 					lang.getstr("profile.required_tags_missing",
-								lang.getstr("whitepoint"))), self)
+								lang.getstr("profile.type.shaper_matrix"))),
+					self)
 				return
-			rgb_space = [[], tags.wtpt.ir.values()]
-			for component in ("r", "g", "b"):
-				if (not "%sXYZ" % component in tags or
-					not "%sTRC" % component in tags or
-					not isinstance(tags["%sTRC" % component],
-								   ICCP.CurveType)):
-					show_result_dialog(Error(
-						lang.getstr("profile.required_tags_missing",
-									lang.getstr("profile.type.shaper_matrix"))),
-						self)
-					return
-				rgb_space.append(tags["%sXYZ" % component].ir.xyY)
-				if len(tags["%sTRC" % component]) > 1:
-					rgb_space[0].append([v / 65535.0 for v in
-										 tags["%sTRC" % component]])
-				else:
-					rgb_space[0].append(tags["%sTRC" % component][0])
 			R, G, B = {self.saturation_sweeps_R_btn.GetId(): (1, 0, 0),
 					   self.saturation_sweeps_G_btn.GetId(): (0, 1, 0),
 					   self.saturation_sweeps_B_btn.GetId(): (0, 0, 1),
@@ -1170,6 +1155,14 @@ class TestchartEditor(wx.Frame):
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			show_result_dialog(exception, self)
 			return
+		else:
+			rgb_space = profile.get_rgb_space()
+			if not rgb_space:
+				show_result_dialog(Error(
+					lang.getstr("profile.required_tags_missing",
+								lang.getstr("profile.type.shaper_matrix"))),
+					self)
+				return
 
 		defaultDir, defaultFile = get_verified_path("testchart.reference")
 		dlg = wx.FileDialog(self, lang.getstr("testchart_or_reference"), 
@@ -1186,6 +1179,8 @@ class TestchartEditor(wx.Frame):
 		if result != wx.ID_OK:
 			return
 
+		use_gamut = False
+
 		# Determine if this is an image
 		filename, ext = os.path.splitext(path)
 		if ext.lower() in (".jpg", ".jpeg", ".png", ".tif", ".tiff"):
@@ -1200,20 +1195,20 @@ class TestchartEditor(wx.Frame):
 				return
 			finally:
 				wx.Log.SetLogLevel(llevel)
-			dlg = ConfirmDialog(self, msg=lang.getstr("gamut"),
-								ok="L*a*b*", alt="RGB",
-								bitmap=geticon(32, "dialog-question"))
-			result = dlg.ShowModal()
-			if result == wx.ID_CANCEL:
-				return
-			use_gamut = result == wx.ID_OK
+			if test:
+				dlg = ConfirmDialog(self, msg=lang.getstr("gamut"),
+									ok="L*a*b*", alt="RGB",
+									bitmap=geticon(32, "dialog-question"))
+				result = dlg.ShowModal()
+				if result == wx.ID_CANCEL:
+					return
+				use_gamut = result == wx.ID_OK
 		else:
 			img = None
-			use_gamut = None
 
 		self.worker.start(self.tc_add_ti3_consumer,
 						  self.tc_add_ti3, cargs=(profile, ),
-						  wargs=(path, img, use_gamut), wkwargs={},
+						  wargs=(path, img, use_gamut, rgb_space), wkwargs={},
 						  progress_msg=lang.getstr("testchart.add_ti3_patches"),
 						  parent=self, progress_start=500)
 		
@@ -1277,24 +1272,134 @@ class TestchartEditor(wx.Frame):
 				newdata.append(entry)
 			self.tc_add_data(row, newdata)
 	
-	def tc_add_ti3(self, path, img=None, use_gamut=True):
+	def tc_add_ti3(self, path, img=None, use_gamut=True, rgb_space=None):
 		if img:
-			ratio = float(img.Width) / float(img.Height)
-			size = 20.0
-			w, h = int(round(size * size / (size / ratio))), int(round(size / ratio))
-			img.Rescale(w, h)
-			colors = OrderedDict()
+			cwd = self.worker.create_tempdir()
+			if isinstance(cwd, Exception):
+				return cwd
+			size = 100.0
+			scale = math.sqrt((img.Width * img.Height) / (size * size))
+			w, h = int(round(img.Width / scale)), int(round(img.Height / scale))
+			print w, h
+			loresimg = img.Scale(w, h, wx.IMAGE_QUALITY_NORMAL)
+			if loresimg.CountColours() < img.CountColours(size * size + 1):
+				# Assume a photo
+				quality = wx.IMAGE_QUALITY_HIGH
+			else:
+				# Assume a target
+				quality = wx.IMAGE_QUALITY_NORMAL
+			img.Rescale(w, h, quality)
+			imgpath = os.path.join(cwd, "image.tif")
+			outpath = os.path.join(cwd, "imageout.tif")
+			img.SaveFile(imgpath, wx.BITMAP_TYPE_TIF)
+			# Process image to get colors
+			# Two ways to do this: Convert image using cctiff
+			# or use tiffgamut
+			# In both cases, a profile embedded in the image will be used
+			# with the preconditioning profile as fallback if there is no
+			# image profile
 			if not use_gamut:
+				# Use cctiff
+				cmdname = "cctiff"
+			else:
+				# Use tiffgamut
+				cmdname = "tiffgamut"
+				gam = os.path.join(cwd, "image.gam")
+			cmd = get_argyll_util(cmdname)
+			if cmd:
+				ppath = getcfg("tc_precond_profile")
+				intent = "r" if getcfg("tc_add_ti3_relative") else "a"
+				for n in xrange(2 if ppath else 1):
+					if use_gamut:
+						res = 10 if imgpath == path else 1
+						args = ["-d%s" % res, "-O", gam]
+						#if self.worker.argyll_version >= [1, 0, 4]:
+							#args.append("-f100")
+					else:
+						args = ["-a"]
+					args.append("-i%s" % intent)
+					if n == 0 or imgpath == path:
+						# Try to use embedded profile
+						args.append(path)
+					else:
+						# Fall back to preconditioning profile
+						args.append(ppath)
+					if not use_gamut:
+						# Target
+						args.append("-i%s" % intent)
+						args.append(ppath)
+					args.append(imgpath)
+					if not use_gamut:
+						args.append(outpath)
+					result = self.worker.exec_cmd(cmd, ["-v"] + args,
+												  capture_output=True,
+												  skip_scripts=True)
+					if not result:
+						errors = "".join(self.worker.errors)
+						if ("Error - Can't open profile in file" in errors or
+							"Error - Can't read profile" in errors):
+							# Try again?
+							if not use_gamut:
+								# No sense converting when input profile is
+								# same as output. Use image as-is.
+								outpath = imgpath
+								result = True
+								break
+							continue
+						elif ("Error - TIFF Input file has 3 input "
+							  "chanels and is mismatched" in errors or
+							  "Error - Last colorspace RGB from file" in errors):
+							# Try again?
+							imgpath = path
+							continue
+					break
+				if isinstance(result, Exception) or not result:
+					self.worker.wrapup(False)
+				if isinstance(result, Exception):
+					return result
+				elif result:
+					if use_gamut:
+						chart = path = gam
+					else:
+						path = outpath
+				else:
+					return Error("\n".join(self.worker.errors or
+										   self.worker.output))
+			else:
+				return Error(lang.getstr("argyll.util.not_found",
+										 cmdname), self)
+			
+			colorsets = OrderedDict()
+			if not use_gamut:
+				llevel = wx.Log.GetLogLevel()
+				wx.Log.SetLogLevel(0)  # Suppress TIFF library related message popups
+				try:
+					img = wx.Image(path, wx.BITMAP_TYPE_ANY)
+					if not img.IsOk():
+						raise Error(lang.getstr("error.file_type_unsupported"))
+				except Exception, exception:
+					return exception
+				finally:
+					wx.Log.SetLogLevel(llevel)
+					self.worker.wrapup(False)
+				if img.Width > w or img.Height > h:
+					img.Rescale(w, h, quality)
 				# Select RGB colors
 				for y in xrange(h):
 					for x in xrange(w):
-						r, g, b = (img.GetRed(x, y) / 2.55,
+						R, G, B = (img.GetRed(x, y) / 2.55,
 								   img.GetGreen(x, y) / 2.55,
 								   img.GetBlue(x, y) / 2.55)
-						color = round(r / 10), round(g / 10), round(b / 10)
-						if not color in colors:
-							colors[color] = []
-						colors[color].append((r, g, b))
+						L, a, b = colormath.RGB2Lab(R / 100.0,
+													G / 100.0,
+													B / 100.0, rgb_space)
+						if quality == wx.IMAGE_QUALITY_HIGH:
+							color = round(L / 10), round(a / 15), round(b / 15)
+						else:
+							color = round(L / 5), round(a / 7.5), round(b / 7.5)
+						if not color in colorsets:
+							colorsets[color] = []
+						colorsets[color].append((R, G, B))
 				# Fill chart
 				chart = ["TI1    ",
 						 "BEGIN_DATA_FORMAT",
@@ -1302,68 +1407,23 @@ class TestchartEditor(wx.Frame):
 						 "END_DATA_FORMAT",
 						 "BEGIN_DATA",
 						 "END_DATA"]
-				for color in colors.itervalues():
+				numcolorsets = float(len(colorsets))
+				numcolors = float(len(list(chain(*colorsets.values()))))
+				threshold = 6
+				for color in colorsets.itervalues():
+					if numcolors > numcolorsets and len(color) < threshold:
+						continue
 					rr, gg, bb = 0, 0, 0
-					for r, g, b in color:
-						rr += r
-						gg += g
-						bb += b
+					for R, G, B in color:
+						rr += R
+						gg += G
+						bb += B
 					rr /= len(color)
 					gg /= len(color)
 					bb /= len(color)
 					if not (rr, gg, bb) in chart:
 						chart.insert(-1, "%.4f %.4f %.4f" % (rr, gg, bb))
 				chart = "\n".join(chart)
-			else:
-				# Use tiffgamut
-				tiffgamut = get_argyll_util("tiffgamut")
-				if tiffgamut:
-					cwd = self.worker.create_tempdir()
-					if isinstance(cwd, Exception):
-						return cwd
-					else:
-						imgpath = os.path.join(cwd, "image.tif")
-						img.SaveFile(imgpath, wx.BITMAP_TYPE_TIF)
-						gam = os.path.join(cwd, "image.gam")
-						sRGB = get_data_path("ref/sRGB.icm")
-						intent = "r" if getcfg("tc_add_ti3_relative") else "a"
-						for n in xrange(2 if sRGB else 1):
-							res = 10 if imgpath == path else 1
-							args = ["-v", "-d%s" % res, "-i%s" % intent, "-O", gam]
-							#if self.worker.argyll_version >= [1, 0, 4]:
-								#args.append("-f100")
-							if n == 0 or imgpath == path:
-								# Try to use embedded profile
-								args.append(path)
-							else:
-								# Fall back to sRGB
-								args.append(sRGB)
-							args.append(imgpath)
-							result = self.worker.exec_cmd(tiffgamut, args,
-														  capture_output=True,
-														  skip_scripts=True)
-							if not result:
-								if ("Error - Can't open profile in file" in
-									"\n".join(self.worker.errors)):
-									# Try again?
-									continue
-								elif ("Error - TIFF Input file has 3 input "
-									  "chanels and is mismatched" in
-									"\n".join(self.worker.errors)):
-									# Try again?
-									imgpath = path
-									continue
-							break
-						if isinstance(result, Exception):
-							return result
-						elif result:
-							chart = path = gam
-						else:
-							return Error("\n".join(self.worker.errors or
-												   self.worker.output))
-				else:
-					return Error(lang.getstr("argyll.util.not_found",
-											 "tiffgamut"), self)
 		else:
 			chart = path
 		
@@ -1375,16 +1435,19 @@ class TestchartEditor(wx.Frame):
 			if os.path.dirname(path) == self.worker.tempdir:
 				self.worker.wrapup(False)
 		if img and use_gamut:
-			# Select Lab colors
+			# Select Lab color
 			data = chart.queryv1("DATA")
 			for sample in data.itervalues():
 				L, a, b = (sample["LAB_L"],
 						   sample["LAB_A"],
 						   sample["LAB_B"])
-				color = round(L / 8.5), round(a / 8.5), round(b / 8.5)
-				if not color in colors:
-					colors[color] = []
-				colors[color].append((L, a, b))
+				if quality == wx.IMAGE_QUALITY_HIGH:
+					color = round(L / 10), round(a / 15), round(b / 15)
+				else:
+					color = round(L / 5), round(a / 7.5), round(b / 7.5)
+				if not color in colorsets:
+					colorsets[color] = []
+				colorsets[color].append((L, a, b))
 			# Fill chart
 			chart = ["GAMUT  ",
 					 "BEGIN_DATA_FORMAT",
@@ -1392,7 +1455,12 @@ class TestchartEditor(wx.Frame):
 					 "END_DATA_FORMAT",
 					 "BEGIN_DATA",
 					 "END_DATA"]
-			for color in colors.itervalues():
+			numcolorsets = float(len(colorsets))
+			numcolors = float(len(list(chain(*colorsets.values()))))
+			threshold = 2
+			for color in colorsets.itervalues():
+				if numcolors > numcolorsets and len(color) < threshold:
+					continue
 				LL, aa, bb = 0, 0, 0
 				for L, a, b in color:
 					LL += L
@@ -1405,7 +1473,7 @@ class TestchartEditor(wx.Frame):
 					chart.insert(-1, "%.4f %.4f %.4f" % (LL, aa, bb))
 				
 			chart = CGATS.CGATS("\n".join(chart))
-		else:
+		elif not img:
 			chart.fix_device_values_scaling()
 			
 		return chart

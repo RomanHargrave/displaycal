@@ -3146,6 +3146,25 @@ class ICCProfile:
 				info[name] = "[%i Bytes]" % len(tag.tagData)
 		return info
 	
+	def get_rgb_space(self):
+		tags = self.tags
+		if not "wtpt" in tags:
+			return False
+		rgb_space = [[], tags.wtpt.ir.values()]
+		for component in ("r", "g", "b"):
+			if (not "%sXYZ" % component in tags or
+				not "%sTRC" % component in tags or
+				not isinstance(tags["%sTRC" % component],
+							   CurveType)):
+				return False
+			rgb_space.append(tags["%sXYZ" % component].ir.xyY)
+			if len(tags["%sTRC" % component]) > 1:
+				rgb_space[0].append([v / 65535.0 for v in
+									 tags["%sTRC" % component]])
+			else:
+				rgb_space[0].append(tags["%sTRC" % component][0])
+		return rgb_space
+	
 	def read(self, profile):
 		"""
 		Read profile from binary string, filename or file object.
