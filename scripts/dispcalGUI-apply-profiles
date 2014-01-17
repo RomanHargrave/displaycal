@@ -16,6 +16,8 @@ if sys.platform == "win32":
 
 import os
 
+isexe = sys.platform != "darwin" and getattr(sys, "frozen", False)
+
 if sys.platform == "win32" and os.path.isfile(libpath):
 	sys.frozen = True
 
@@ -158,7 +160,7 @@ def apply_profiles_and_warn_on_error():
 
 
 def main():
-	parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+	parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(sys.executable if isexe else __file__)))
 
 	if not getattr(sys, "frozen", False):
 		# Setup sys.path if running from source

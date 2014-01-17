@@ -32,7 +32,7 @@ UninstallDisplayName=dispcalGUI
 UninstallDisplayIcon={app}\dispcalGUI.exe
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
-MinVersion=,5.1.2600
+MinVersion=0,5.1.2600
 
 [Languages]
 Name: english; MessagesFile: ..\misc\InnoSetup\v5\Default.isl; 
@@ -55,18 +55,18 @@ Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly;
 
 [Icons]
 Name: {group}\dispcalGUI; Filename: {app}\dispcalGUI.exe; IconFilename: {app}\dispcalGUI.exe
-Name: "{group}\dispcalGUI Profile Loader"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-apply-profiles"" --force"; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
-Name: "{group}\3DLUT Maker"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-3DLUT-maker"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
-Name: "{group}\Curve Viewer"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-curve-viewer"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
-Name: "{group}\Profile Info"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-profile-info"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
-Name: "{group}\Synthetic Profile Creator"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-synthprofile"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
-Name: "{group}\Testchart Editor"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-testchart-editor"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; 
+Name: "{group}\dispcalGUI Profile Loader"; Filename: {app}\dispcalGUI-apply-profiles.exe; Parameters: --force; IconFilename: {app}\dispcalGUI-apply-profiles.exe; 
+Name: "{group}\3DLUT Maker"; Filename: {app}\dispcalGUI-3DLUT-maker.exe; IconFilename: {app}\dispcalGUI-3DLUT-maker.exe; 
+Name: "{group}\Curve Viewer"; Filename: {app}\dispcalGUI-curve-viewer.exe; IconFilename: {app}\dispcalGUI-curve-viewer.exe; 
+Name: "{group}\Profile Info"; Filename: {app}\dispcalGUI-profile-info.exe; IconFilename: {app}\dispcalGUI-profile-info.exe; 
+Name: "{group}\Synthetic Profile Creator"; Filename: {app}\dispcalGUI-synthprofile.exe; IconFilename: {app}\dispcalGUI-synthprofile.exe; 
+Name: "{group}\Testchart Editor"; Filename: {app}\dispcalGUI-testchart-editor.exe; IconFilename: {app}\dispcalGUI-testchart-editor.exe; 
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\dispcalGUI-uninstall.ico; Tasks: ; Languages: 
 Name: {commondesktop}\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: desktopicon; IconFilename: {app}\dispcalGUI.exe
 Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: quicklaunchicon; IconFilename: {app}\dispcalGUI.exe
 Name: {group}\LICENSE; Filename: {app}\LICENSE.txt
 Name: {group}\README; Filename: {app}\README.html; Tasks: ; Languages: 
-Name: "{commonstartup}\dispcalGUI Profile Loader"; Filename: {app}\lib\pythonw.exe; Parameters: "-S ""{app}\scripts\dispcalGUI-apply-profiles"""; WorkingDir: {app}; IconFilename: {app}\dispcalGUI.exe; Tasks: calibrationloadinghandledbydispcalgui; 
+Name: "{commonstartup}\dispcalGUI Profile Loader"; Filename: {app}\dispcalGUI-apply-profiles.exe; Tasks: calibrationloadinghandledbydispcalgui; 
 
 [Run]
 Filename: {app}\dispcalGUI.exe; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent;

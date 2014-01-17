@@ -3307,12 +3307,10 @@ class Worker(object):
 		if os.path.basename(sys.executable) in ("python.exe", 
 												"pythonw.exe"):
 			cmd = sys.executable
+			loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
+																 "dispcalGUI-apply-profiles"))]
 		else:
-			# Skip 'import site'
-			loader_args += ["-S"]
-			cmd = os.path.join(pydir, "lib", "pythonw.exe")
-		loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
-															 "dispcalGUI-apply-profiles"))]
+			cmd = os.path.join(pydir, "dispcalGUI-apply-profiles.exe")
 		try:
 			scut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink, None,
 											  pythoncom.CLSCTX_INPROC_SERVER, 

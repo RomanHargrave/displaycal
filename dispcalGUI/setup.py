@@ -625,13 +625,31 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
 		attrs["windows"] = [Target(**{
-			"script": os.path.join(pydir, "..", name + ".pyw"),
+			"script": os.path.join(pydir, "..", script),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
 												name + ".ico"))],
 			"other_resources": [(24, 1, manifest_xml)],
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
-			"description": name
-		})]
+			"description": desc
+		}) for desc, script in [(name, name + ".pyw"),
+								("Profile Loader",
+								 os.path.join("scripts",
+											  name + "-apply-profiles")),
+								("3DLUT Maker",
+								 os.path.join("scripts",
+											  name + "-3DLUT-maker")),
+								("Curve Viewer",
+								 os.path.join("scripts",
+											  name + "-curve-viewer")),
+								("Profile Info",
+								 os.path.join("scripts",
+											  name + "-profile-info")),
+								("Synthetic Profile Creator",
+								 os.path.join("scripts",
+											  name + "-synthprofile")),
+								("Testchart Editor",
+								 os.path.join("scripts",
+											  name + "-testchart-editor"))]]
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
