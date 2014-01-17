@@ -6,7 +6,6 @@ import os
 import re
 import shutil
 import sys
-from itertools import chain
 
 import CGATS
 import ICCProfile as ICCP
@@ -1155,14 +1154,6 @@ class TestchartEditor(wx.Frame):
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			show_result_dialog(exception, self)
 			return
-		else:
-			rgb_space = profile.get_rgb_space()
-			if not rgb_space:
-				show_result_dialog(Error(
-					lang.getstr("profile.required_tags_missing",
-								lang.getstr("profile.type.shaper_matrix"))),
-					self)
-				return
 
 		defaultDir, defaultFile = get_verified_path("testchart.reference")
 		dlg = wx.FileDialog(self, lang.getstr("testchart_or_reference"), 
@@ -1208,7 +1199,7 @@ class TestchartEditor(wx.Frame):
 
 		self.worker.start(self.tc_add_ti3_consumer,
 						  self.tc_add_ti3, cargs=(profile, ),
-						  wargs=(path, img, use_gamut, rgb_space), wkwargs={},
+						  wargs=(path, img, use_gamut, profile), wkwargs={},
 						  progress_msg=lang.getstr("testchart.add_ti3_patches"),
 						  parent=self, progress_start=500)
 		
@@ -1218,26 +1209,30 @@ class TestchartEditor(wx.Frame):
 		else:
 			chart = result
 			data_format = chart.queryv1("DATA_FORMAT").values()
-			as_ti3 = ("LAB_L" in data_format and "LAB_A" in data_format and
-					  "LAB_B" in data_format) or ("XYZ_X" in data_format and
-												  "XYZ_Y" in data_format and
-												  "XYZ_Z" in data_format)
 			if getcfg("tc_add_ti3_relative"):
-				adapted = chart.adapt()
 				intent = "r"
 			else:
 				intent = "a"
-			ti1, ti3, void = self.worker.chart_lookup(chart, 
-													  profile,
-													  as_ti3, intent=intent,
-													  add_white_patches=False)
-			if not ti1 or not ti3:
-				return
-			if as_ti3:
-				cgats = ti1
-			else:
-				cgats = ti3
-			dataset = cgats.queryi1("DATA")
+			if not (chart[0].type.strip() == "GAMUT" and
+					"RGB_R" in data_format and "RGB_G" in data_format and
+					"RGB_B" in data_format):
+				as_ti3 = ("LAB_L" in data_format and "LAB_A" in data_format and
+						  "LAB_B" in data_format) or ("XYZ_X" in data_format and
+													  "XYZ_Y" in data_format and
+													  "XYZ_Z" in data_format)
+				if getcfg("tc_add_ti3_relative"):
+					adapted = chart.adapt()
+				ti1, ti3, void = self.worker.chart_lookup(chart, 
+														  profile,
+														  as_ti3, intent=intent,
+														  add_white_patches=False)
+				if not ti1 or not ti3:
+					return
+				if as_ti3:
+					chart = ti1
+				else:
+					chart = ti3
+			dataset = chart.queryi1("DATA")
 			data_format = dataset.queryv1("DATA_FORMAT").values()
 			# Returned CIE values are always either XYZ or Lab
 			if ("LAB_L" in data_format and "LAB_A" in data_format and
@@ -1272,17 +1267,16 @@ class TestchartEditor(wx.Frame):
 				newdata.append(entry)
 			self.tc_add_data(row, newdata)
 	
-	def tc_add_ti3(self, path, img=None, use_gamut=True, rgb_space=None):
+	def tc_add_ti3(self, path, img=None, use_gamut=True, profile=None):
 		if img:
 			cwd = self.worker.create_tempdir()
 			if isinstance(cwd, Exception):
 				return cwd
-			size = 100.0
+			size = 70.0
 			scale = math.sqrt((img.Width * img.Height) / (size * size))
 			w, h = int(round(img.Width / scale)), int(round(img.Height / scale))
-			print w, h
 			loresimg = img.Scale(w, h, wx.IMAGE_QUALITY_NORMAL)
-			if loresimg.CountColours() < img.CountColours(size * size + 1):
+			if loresimg.CountColours() < img.CountColours(size * size):
 				# Assume a photo
 				quality = wx.IMAGE_QUALITY_HIGH
 			else:
@@ -1369,7 +1363,6 @@ class TestchartEditor(wx.Frame):
 				return Error(lang.getstr("argyll.util.not_found",
 										 cmdname), self)
 			
-			colorsets = OrderedDict()
 			if not use_gamut:
 				llevel = wx.Log.GetLogLevel()
 				wx.Log.SetLogLevel(0)  # Suppress TIFF library related message popups
@@ -1384,45 +1377,19 @@ class TestchartEditor(wx.Frame):
 					self.worker.wrapup(False)
 				if img.Width > w or img.Height > h:
 					img.Rescale(w, h, quality)
-				# Select RGB colors
-				for y in xrange(h):
-					for x in xrange(w):
-						R, G, B = (img.GetRed(x, y) / 2.55,
-								   img.GetGreen(x, y) / 2.55,
-								   img.GetBlue(x, y) / 2.55)
-						L, a, b = colormath.RGB2Lab(R / 100.0,
-													G / 100.0,
-													B / 100.0, rgb_space)
-						if quality == wx.IMAGE_QUALITY_HIGH:
-							color = round(L / 10), round(a / 15), round(b / 15)
-						else:
-							color = round(L / 5), round(a / 7.5), round(b / 7.5)
-						if not color in colorsets:
-							colorsets[color] = []
-						colorsets[color].append((R, G, B))
-				# Fill chart
+				# Select RGB colors and fill chart
 				chart = ["TI1    ",
 						 "BEGIN_DATA_FORMAT",
 						 "RGB_R RGB_G RGB_B",
 						 "END_DATA_FORMAT",
 						 "BEGIN_DATA",
 						 "END_DATA"]
-				numcolorsets = float(len(colorsets))
-				numcolors = float(len(list(chain(*colorsets.values()))))
-				threshold = 6
-				for color in colorsets.itervalues():
-					if numcolors > numcolorsets and len(color) < threshold:
-						continue
-					rr, gg, bb = 0, 0, 0
-					for R, G, B in color:
-						rr += R
-						gg += G
-						bb += B
-					rr /= len(color)
-					gg /= len(color)
-					bb /= len(color)
-					if not (rr, gg, bb) in chart:
-						chart.insert(-1, "%.4f %.4f %.4f" % (rr, gg, bb))
+				for y in xrange(h):
+					for x in xrange(w):
+						R, G, B = (img.GetRed(x, y) / 2.55,
+								   img.GetGreen(x, y) / 2.55,
+								   img.GetBlue(x, y) / 2.55)
+						chart.insert(-1, "%.4f %.4f %.4f" % (R, G, B))
 				chart = "\n".join(chart)
 		else:
 			chart = path
@@ -1434,46 +1401,82 @@ class TestchartEditor(wx.Frame):
 		finally:
 			if os.path.dirname(path) == self.worker.tempdir:
 				self.worker.wrapup(False)
-		if img and use_gamut:
+		if img:
+			if use_gamut:
+				threshold = 2
+			else:
+				threshold = 4
+				try:
+					void, ti3, void = self.worker.chart_lookup(chart, 
+															   profile,
+															   intent=intent,
+															   add_white_patches=False)
+				except Exception, exception:
+					return exception
+				if ti3:
+					chart = ti3
+				else:
+					return Error(lang.getstr("error.generic",
+											 (-1, lang.getstr("unknown"))))
+			colorsets = OrderedDict()
+			weights = {}
+			demph = getcfg("tc_dark_emphasis")
 			# Select Lab color
 			data = chart.queryv1("DATA")
 			for sample in data.itervalues():
+				if not use_gamut:
+					RGB = sample["RGB_R"],  sample["RGB_G"], sample["RGB_B"]
 				L, a, b = (sample["LAB_L"],
 						   sample["LAB_A"],
 						   sample["LAB_B"])
-				if quality == wx.IMAGE_QUALITY_HIGH:
-					color = round(L / 10), round(a / 15), round(b / 15)
-				else:
-					color = round(L / 5), round(a / 7.5), round(b / 7.5)
+				color = round(L / 10), round(a / 15), round(b / 15)
 				if not color in colorsets:
+					weights[color] = 0
 					colorsets[color] = []
+				if L >= 50:
+					weights[color] += L / 50 - demph
+				else:
+					weights[color] += L / 50 + demph
 				colorsets[color].append((L, a, b))
+				if not use_gamut:
+					colorsets[color][-1] += RGB
 			# Fill chart
+			data_format = "LAB_L LAB_A LAB_B"
+			if not use_gamut:
+				data_format += " RGB_R RGB_G RGB_B"
 			chart = ["GAMUT  ",
 					 "BEGIN_DATA_FORMAT",
-					 "LAB_L LAB_A LAB_B",
+					 data_format,
 					 "END_DATA_FORMAT",
 					 "BEGIN_DATA",
 					 "END_DATA"]
-			numcolorsets = float(len(colorsets))
-			numcolors = float(len(list(chain(*colorsets.values()))))
-			threshold = 2
-			for color in colorsets.itervalues():
-				if numcolors > numcolorsets and len(color) < threshold:
+			weight = bool(filter(lambda color: weights[color] >= threshold,
+								 colorsets.iterkeys()))
+			for color, colors in colorsets.iteritems():
+				if weight and weights[color] < threshold:
 					continue
-				LL, aa, bb = 0, 0, 0
-				for L, a, b in color:
-					LL += L
-					aa += a
-					bb += b
-				LL /= len(color)
-				aa /= len(color)
-				bb /= len(color)
-				if not (LL, aa, bb) in chart:
-					chart.insert(-1, "%.4f %.4f %.4f" % (LL, aa, bb))
+				L, a, b = 0, 0, 0
+				R, G, B = 0, 0, 0
+				for v in colors:
+					L += v[0]
+					a += v[1]
+					b += v[2]
+					if len(v) == 6:
+						R += v[3]
+						G += v[4]
+						B += v[5]
+				L /= len(colors)
+				a /= len(colors)
+				b /= len(colors)
+				R /= len(colors)
+				G /= len(colors)
+				B /= len(colors)
+				chart.insert(-1, "%.4f %.4f %.4f" % (L, a, b))
+				if not use_gamut:
+					chart[-2] += " %.4f %.4f %.4f" % (R, G, B)
 				
 			chart = CGATS.CGATS("\n".join(chart))
-		elif not img:
+		else:
 			chart.fix_device_values_scaling()
 			
 		return chart
