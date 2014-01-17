@@ -41,4 +41,8 @@ if pyver < py_minversion or pyver > py_maxversion:
 
 from dispcalGUI.wxTestchartEditor import main
 
-main()
+argv = []
+for arg in sys.argv:
+	if arg[0] != "-":
+		argv.append(arg)
+main(*argv[1:2])

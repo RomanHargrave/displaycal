@@ -41,4 +41,4 @@ if pyver < py_minversion or pyver > py_maxversion:
 
 from dispcalGUI.wxProfileInfo import main
 
-main()
+main(*sys.argv[1:2])
