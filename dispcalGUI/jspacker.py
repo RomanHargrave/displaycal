@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 ##  ParseMaster, version 1.0 (pre-release) (2005/05/12) x6

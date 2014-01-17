@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 """
@@ -333,6 +332,8 @@ def setup():
 					(os.path.join(data, "scripts"), 
 					 [os.path.join("scripts", name + "-apply-profiles")]),
 					(os.path.join(data, "scripts"), 
+					 [os.path.join("scripts", name + "-curve-viewer")]),
+					(os.path.join(data, "scripts"), 
 					 [os.path.join("scripts", name + "-profile-info")]),
 					(os.path.join(data, "scripts"), 
 					 [os.path.join("scripts", name + "-synthprofile")]),
@@ -560,6 +561,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 	else:
 		attrs["scripts"] += [os.path.join("scripts", name)]
 		attrs["scripts"] += [os.path.join("scripts", name + "-3DLUT-maker")]
+		attrs["scripts"] += [os.path.join("scripts", name + "-curve-viewer")]
 		attrs["scripts"] += [os.path.join("scripts", name + "-profile-info")]
 		attrs["scripts"] += [os.path.join("scripts", name + "-synthprofile")]
 		attrs["scripts"] += [os.path.join("scripts", name + "-testchart-editor")]
