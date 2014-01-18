@@ -1359,8 +1359,7 @@ class TestchartEditor(wx.Frame):
 					return Error("\n".join(self.worker.errors or
 										   self.worker.output))
 			else:
-				return Error(lang.getstr("argyll.util.not_found",
-										 cmdname), self)
+				return Error(lang.getstr("argyll.util.not_found", cmdname))
 			
 			if not use_gamut:
 				llevel = wx.Log.GetLogLevel()
