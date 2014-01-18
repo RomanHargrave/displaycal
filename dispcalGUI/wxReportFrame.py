@@ -225,7 +225,9 @@ class ReportFrame(BaseFrame):
 	
 	def enable_3dlut_handler(self, event):
 		setcfg("3dlut.madVR.enable", int(self.enable_3dlut_cb.GetValue()))
+		setcfg("measurement_report.use_devlink_profile", 0)
 		config.writecfg()
+		self.update_main_controls()
 	
 	def fields_ctrl_handler(self, event):
 		setcfg("measurement_report.chart.fields",
@@ -422,7 +424,7 @@ class ReportFrame(BaseFrame):
 		self.use_simulation_profile_as_output_cb.SetValue(enable1 and enable2)
 		self.enable_3dlut_cb.Enable(enable1 and enable2)
 		self.enable_3dlut_cb.SetValue(enable1 and enable2 and
-									  getcfg("3dlut.madVR.enable"))
+									  bool(getcfg("3dlut.madVR.enable")))
 		self.enable_3dlut_cb.Show(config.get_display_name() == "madVR")
 		enable5 = (sim_profile_color == "RGB" and
 				   isinstance(self.simulation_profile.tags.get("rXYZ"),
@@ -471,15 +473,20 @@ class ReportFrame(BaseFrame):
 		output_profile = (bool(getcfg("measurement_report.output_profile")) and
 						  os.path.isfile(getcfg("measurement_report.output_profile")))
 		self.measure_btn.Enable(((enable1 and enable2 and (not enable6 or
-														   output_profile)) or
+														   output_profile) and
+								  (not enable4 or
+								   (bool(getcfg("measurement_report.devlink_profile")) and
+								    os.path.isfile(getcfg("measurement_report.devlink_profile"))))) or
 								 (((not enable1 and
 								    color in ("LAB", "RGB", "XYZ")) or
-								   (enable1 and sim_profile_color == color)) and
+								   (enable1 and sim_profile_color == color and
+								    not enable2)) and
 								  output_profile)) and
 								 bool(getcfg("measurement_report.chart")) and
 								 os.path.isfile(getcfg("measurement_report.chart")))
 	
 	def use_devlink_profile_ctrl_handler(self, event):
+		setcfg("3dlut.madVR.enable", 0)
 		setcfg("measurement_report.use_devlink_profile",
 			   int(self.devlink_profile_cb.GetValue()))
 		config.writecfg()
