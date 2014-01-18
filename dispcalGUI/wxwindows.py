@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from time import gmtime, strftime, time
 import math
 import os
 import sys
@@ -901,21 +902,72 @@ class LogWindow(InvincibleFrame):
 			event.Skip()
 
 
-class ProgressDialog(wx.ProgressDialog):
+class ProgressDialog(wx.Dialog):
 	
 	""" A progress dialog. """
 	
 	def __init__(self, title=appname, msg="", maximum=100, parent=None, style=None, 
-				 handler=None, keyhandler=None, start_timer=True, pos=None):
+				 handler=None, keyhandler=None, start_timer=True, pos=None,
+				 pauseable=False):
 		if style is None:
 			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
-		wx.ProgressDialog.__init__(self, title, "", maximum, parent=parent, style=style)
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
 			self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		self.timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, handler or self.OnTimer, self.timer)
+		
+		self.keepGoing = True
+		self.skip = False
+		self.paused = False
+
+		margin = 12
+
+		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
+		self.SetSizer(self.sizer0)
+		self.sizer1 = wx.BoxSizer(wx.VERTICAL)
+		self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | 
+		   wx.RIGHT | wx.LEFT, border = margin)
+		self.sizer0.Add(self.sizer2, flag = wx.ALIGN_RIGHT | wx.ALL, 
+		   border = margin)
+
+		self.msg = wx.StaticText(self, -1, "")
+		self.sizer1.Add(self.msg, flag=wx.EXPAND | wx.BOTTOM, border=margin)
+		
+		gauge_style = wx.GA_HORIZONTAL
+		if style & wx.PD_SMOOTH:
+			gauge_style |= wx.GA_SMOOTH
+		
+		self.gauge = wx.Gauge(self, wx.ID_ANY, range=maximum, style=gauge_style)
+		self.sizer1.Add(self.gauge, flag=wx.EXPAND | wx.BOTTOM, border=margin)
+		
+		if style & wx.PD_ELAPSED_TIME:
+			self.sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+			self.sizer1.Add(self.sizer3, flag=wx.ALIGN_CENTER)
+			self.sizer3.Add(wx.StaticText(self, -1,
+										  lang.getstr("elapsed_time")))
+			self.time = time()
+			self.elapsed_time = wx.StaticText(self, -1, "")
+			self.elapsed_time_handler(None)
+			self.sizer3.Add(self.elapsed_time, flag=wx.LEFT, border=margin)
+			self.elapsed_timer = wx.Timer(self)
+			self.Bind(wx.EVT_TIMER, self.elapsed_time_handler,
+					  self.elapsed_timer)
+
+		if style & wx.PD_CAN_ABORT:
+			self.cancel = wx.Button(self, wx.ID_ANY, lang.getstr("cancel"))
+			self.sizer2.Add(self.cancel)
+			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.cancel.GetId())
+		
+		if pauseable:
+			self.pause_continue = wx.Button(self, wx.ID_ANY, lang.getstr("pause"))
+			self.sizer2.Prepend((margin, margin))
+			self.sizer2.Prepend(self.pause_continue)
+			self.Bind(wx.EVT_BUTTON, self.pause_continue_handler,
+					  id=self.pause_continue.GetId())
 		
 		# Use an accelerator table for 0-9, a-z, numpad
 		keycodes = range(48, 58) + range(97, 123) + numpad_keycodes
@@ -928,30 +980,14 @@ class ProgressDialog(wx.ProgressDialog):
 			accels += [(wx.ACCEL_NORMAL, keycode, id)]
 		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		
-		# custom localization
-		self.msg = None
-		for child in self.GetChildren():
-			if isinstance(child, wx.Button):
-				child.Label = lang.getstr("cancel")
-			elif isinstance(child, wx.StaticText):
-				if "Elapsed time" in child.Label:
-					child.Label = lang.getstr("elapsed_time").replace(" ", u"\xa0")
-				elif not child.Label:
-					self.msg = child
-					child.SetWindowStyle(wx.ST_NO_AUTORESIZE)
-		
-		if self.msg:
-			text_extent = self.msg.GetTextExtent("E")
-			w, h = (text_extent[0] * 80, 
-					text_extent[1] * 4)
-			self.msg.SetMinSize((w, h))
-			self.msg.SetSize((w, h))
+		text_extent = self.msg.GetTextExtent("E")
+		w, h = (text_extent[0] * 80, 
+				text_extent[1] * 4)
+		self.msg.SetMinSize((w, h))
+		self.msg.SetSize((w, h))
 		self.Fit()
 		self.SetMinSize(self.GetSize())
-		if self.msg:
-			self.msg.SetLabel(msg)
-		else:
-			self.Pulse(msg)
+		self.msg.SetLabel(msg.replace("&", "&&"))
 		
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
@@ -975,11 +1011,20 @@ class ProgressDialog(wx.ProgressDialog):
 		
 		if start_timer:
 			self.start_timer()
+		
+		self.Show()
+		if style & wx.PD_APP_MODAL:
+			self.MakeModal()
 	
 	def OnClose(self, event):
+		self.keepGoing = False
+		if hasattr(self, "cancel"):
+			self.cancel.Disable()
+		if hasattr(self, "pause_continue"):
+			self.pause_continue.Disable()
 		if not self.timer.IsRunning():
 			self.Destroy()
-		else:
+		elif self.gauge.GetValue() == self.gauge.GetRange():
 			event.Skip()
 	
 	def OnDestroy(self, event):
@@ -998,31 +1043,69 @@ class ProgressDialog(wx.ProgressDialog):
 				setcfg("position.progress.y", y)
 	
 	def OnTimer(self, event):
-		if getattr(self, "keepGoing", True):
-			if not hasattr(self, "i"):
-				self.i = 0
-			if self.i < 100:
-				self.i += 1
-				if self.i == 100:
-					self.stop_timer()
-				self.keepGoing, self.skip = self.Update(self.i)
-				if self.i == 100:
-					self.Destroy()
-		if not self.keepGoing:
+		if self.keepGoing:
+			if self.gauge.GetValue() < self.gauge.GetRange():
+				self.Update(self.gauge.GetValue() + 1)
+			else:
+				self.stop_timer()
+				self.Update(self.gauge.GetRange(),
+							"Finished. You may now close this window.")
+		else:
 			self.Pulse("Aborting...")
 			if not hasattr(self, "delayed_stop"):
 				self.delayed_stop = wx.CallLater(3000, self.stop_timer)
 				wx.CallLater(3000, self.Pulse, 
 							 "Aborted. You may now close this window.")
 	
+	def Pulse(self, msg=None):
+		if msg and msg != self.msg.Label:
+			self.msg.SetLabel(msg)
+			self.msg.Refresh()
+			self.msg.Update()
+		self.gauge.Pulse()
+		return self.keepGoing, self.skip
+	
+	def Resume(self):
+		self.keepGoing = True
+		if hasattr(self, "cancel"):
+			self.cancel.Enable()
+		if hasattr(self, "pause_continue"):
+			self.pause_continue.Enable()
+	
+	def Update(self, value, msg=None):
+		if msg and msg != self.msg.Label:
+			self.msg.SetLabel(msg)
+			self.msg.Refresh()
+			self.msg.Update()
+		self.gauge.SetValue(value)
+		return self.keepGoing, self.skip
+	
+	UpdatePulse = Pulse
+	
+	def elapsed_time_handler(self, event):
+		self.elapsed_time.Label = strftime("%H:%M:%S",
+										   gmtime(time() - self.time))
+	
 	def key_handler(self, event):
 		pass
-	
+
+	def pause_continue_handler(self, event=None):
+		self.paused = not self.paused
+		if self.paused:
+			self.pause_continue.Label = lang.getstr("continue")
+		else:
+			self.pause_continue.Label = lang.getstr("pause")
+		self.pause_continue.Enable(not event)
+
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
+		if hasattr(self, "elapsed_timer"):
+			self.elapsed_timer.Start(1000)
 	
 	def stop_timer(self):
 		self.timer.Stop()
+		if hasattr(self, "elapsed_timer"):
+			self.elapsed_timer.Stop()
 
 
 class SimpleBook(labelbook.FlatBookBase):

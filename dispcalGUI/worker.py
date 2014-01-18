@@ -1375,8 +1375,31 @@ class Worker(object):
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 	
-	def abort_subprocess(self):
+	def abort_subprocess(self, confirm=False):
 		""" Abort the current subprocess """
+		if confirm and getattr(self, "progress_wnd", None):
+			if getattr(self.progress_wnd, "dlg", None):
+				return
+			pause = (not getattr(self.progress_wnd, "paused", False) and
+					 hasattr(self.progress_wnd, "pause_continue"))
+			if pause:
+				self.progress_wnd.pause_continue_handler(True)
+			self.progress_wnd.MakeModal(False)
+			dlg = ConfirmDialog(self.progress_wnd,
+								msg=lang.getstr("dialog.confirm_cancel"), 
+								ok=lang.getstr("yes"), 
+								cancel=lang.getstr("no"), 
+								bitmap=geticon(32, "dialog-warning"))
+			self.progress_wnd.dlg = dlg
+			dlg_result = dlg.ShowModal()
+			if dlg:
+				dlg.Destroy()
+			self.progress_wnd.MakeModal(True)
+			if dlg_result != wx.ID_OK:
+				self.progress_wnd.Resume()
+				if pause:
+					self.progress_wnd.pause_continue_handler()
+				return
 		self.subprocess_abort = True
 		self.thread_abort = True
 		delayedresult.startWorker(lambda result: None, 
@@ -1438,6 +1461,7 @@ class Worker(object):
 		self.argyll_version = [0, 0, 0]
 		self.argyll_version_string = "0.0.0"
 		self._displays = []
+		self.cmdname = None
 		self.display_edid = []
 		self.display_manufacturers = []
 		self.display_names = []
@@ -4473,20 +4497,33 @@ class Worker(object):
 						msg = (lang.getstr("webserver.waiting") +
 							   " " + webserver.groups()[0])
 				keepGoing, skip = self.progress_wnd.Pulse(msg)
+		if (getattr(self.progress_wnd, "paused", False) and
+			  not getattr(self, "paused", False)):
+			self.paused = True
+			self.safe_send("\x1b")
+		elif (not getattr(self.progress_wnd, "paused", False) and
+			  getattr(self, "paused", False)):
+			self.paused = False
+			self.recent.clear()
+			self.safe_send(" ")
+		if (hasattr(self.progress_wnd, "pause_continue") and
+			"read stopped at user request!" in lastmsg):
+			self.progress_wnd.pause_continue.Enable()
 		if not keepGoing:
 			if getattr(self, "subprocess", None) and \
 			   not getattr(self, "subprocess_abort", False):
 				if debug:
 					safe_print('[D] calling quit_terminate_cmd')
-				self.abort_subprocess()
+				self.abort_subprocess(True)
 			elif not getattr(self, "thread_abort", False):
 				if debug:
 					safe_print('[D] thread_abort')
 				self.thread_abort = True
 		if self.finished is True:
 			return
-		if not self.activated and self.progress_wnd.IsShownOnScreen() and \
-		   (not wx.GetApp().IsActive() or not self.progress_wnd.IsActive()):
+		if (not self.activated and self.progress_wnd.IsShownOnScreen() and
+			(not wx.GetApp().IsActive() or not self.progress_wnd.IsActive()) and
+			not getattr(self.progress_wnd, "dlg", None)):
 		   	self.activated = True
 			self.progress_wnd.Raise()
 
@@ -4502,6 +4539,9 @@ class Worker(object):
 			self.terminal.Hide()
 		if self.finished is True:
 			return
+		pauseable = self.cmdname in (get_argyll_utilname("dispcal"), 
+									 get_argyll_utilname("dispread"), 
+									 get_argyll_utilname("spotread"))
 		if getattr(self, "progress_dlg", None):
 			self.progress_wnd = self.progress_dlg
 			self.progress_wnd.MakeModal(True)
@@ -4510,6 +4550,8 @@ class Worker(object):
 			safe_print("")
 			self.progress_wnd.SetTitle(progress_title)
 			self.progress_wnd.Update(0, progress_msg)
+			if hasattr(self.progress_wnd, "pause_continue"):
+				self.progress_wnd.pause_continue.Show(pauseable)
 			self.progress_wnd.Resume()
 			if not self.progress_wnd.IsShownOnScreen():
 				self.progress_wnd.Show()
@@ -4521,7 +4563,8 @@ class Worker(object):
 											   maximum=101, 
 											   parent=parent, 
 											   handler=self.progress_handler,
-											   keyhandler=self.terminal_key_handler)
+											   keyhandler=self.terminal_key_handler,
+											   pauseable=pauseable)
 			self.progress_wnd = self.progress_dlg
 		self.progress_wnd.original_msg = progress_msg
 	
@@ -4732,6 +4775,7 @@ class Worker(object):
 		self.instrument_sensor_position_msg = False
 		self.is_ambient_measuring = False
 		self.lastcmdname = None
+		self.paused = False
 		self.resume = resume
 		self.subprocess_abort = False
 		self.starttime = time()
@@ -4850,7 +4894,7 @@ class Worker(object):
 			keycode = keycodes.get(keycode, keycode)
 			if keycode in (ord("\x1b"), ord("8"), ord("Q"), ord("q")):
 				# exit
-				self.abort_subprocess()
+				self.abort_subprocess(True)
 				return
 			try:
 				self.safe_send(chr(keycode))
