@@ -545,6 +545,14 @@ class UntetheredFrame(wx.Frame):
 				if show_XYZ:
 					wx.CallLater(delay, self.show_XYZ)
 				wx.CallLater(delay, self.enable_btns)
+
+	def pause_continue_handler(self, event=None):
+		if not event:
+			self.parse_txt(self.worker.lastmsg.read())
+	
+	@property
+	def paused(self):
+		return False
 	
 	def reset(self):
 		self._setup()

@@ -1381,7 +1381,7 @@ class Worker(object):
 			if getattr(self.progress_wnd, "dlg", None):
 				return
 			pause = (not getattr(self.progress_wnd, "paused", False) and
-					 hasattr(self.progress_wnd, "pause_continue"))
+					 hasattr(self.progress_wnd, "pause_continue_handler"))
 			if pause:
 				self.progress_wnd.pause_continue_handler(True)
 			self.progress_wnd.MakeModal(False)
