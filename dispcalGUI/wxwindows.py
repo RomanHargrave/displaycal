@@ -961,13 +961,13 @@ class ProgressDialog(wx.Dialog):
 			self.cancel = wx.Button(self, wx.ID_ANY, lang.getstr("cancel"))
 			self.sizer2.Add(self.cancel)
 			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.cancel.GetId())
-		
-		if pauseable:
-			self.pause_continue = wx.Button(self, wx.ID_ANY, lang.getstr("pause"))
-			self.sizer2.Prepend((margin, margin))
-			self.sizer2.Prepend(self.pause_continue)
-			self.Bind(wx.EVT_BUTTON, self.pause_continue_handler,
-					  id=self.pause_continue.GetId())
+
+		self.pause_continue = wx.Button(self, wx.ID_ANY, lang.getstr("pause"))
+		self.sizer2.Prepend((margin, margin))
+		self.sizer2.Prepend(self.pause_continue)
+		self.Bind(wx.EVT_BUTTON, self.pause_continue_handler,
+				  id=self.pause_continue.GetId())
+		self.pause_continue.Show(pauseable)
 		
 		# Use an accelerator table for 0-9, a-z, numpad
 		keycodes = range(48, 58) + range(97, 123) + numpad_keycodes
@@ -1020,8 +1020,7 @@ class ProgressDialog(wx.Dialog):
 		self.keepGoing = False
 		if hasattr(self, "cancel"):
 			self.cancel.Disable()
-		if hasattr(self, "pause_continue"):
-			self.pause_continue.Disable()
+		self.pause_continue.Disable()
 		if not self.timer.IsRunning():
 			self.Destroy()
 		elif self.gauge.GetValue() == self.gauge.GetRange():
@@ -1069,8 +1068,7 @@ class ProgressDialog(wx.Dialog):
 		self.keepGoing = True
 		if hasattr(self, "cancel"):
 			self.cancel.Enable()
-		if hasattr(self, "pause_continue"):
-			self.pause_continue.Enable()
+		self.pause_continue.Enable()
 	
 	def Update(self, value, msg=None):
 		if msg and msg != self.msg.Label:
