@@ -3776,16 +3776,15 @@ class Worker(object):
 		self.start(consumer, self.measure, 
 				   wkwargs={"apply_calibration": apply_calibration},
 				   progress_msg=progress_msg, resume=resume, 
-				   continue_next=continue_next)
+				   continue_next=continue_next, pauseable=True)
 	
 	def start_calibration(self, consumer, remove=False, progress_msg="",
 						  continue_next=False):
 		""" Start a calibration and use a progress dialog for progress
 		information """
 		self.start(consumer, self.calibrate, wkwargs={"remove": remove},
-				   progress_msg=progress_msg, 
-				   continue_next=continue_next,
-				   interactive_frame="adjust")
+				   progress_msg=progress_msg, continue_next=continue_next,
+				   interactive_frame="adjust", pauseable=True)
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
@@ -4539,9 +4538,7 @@ class Worker(object):
 			self.terminal.Hide()
 		if self.finished is True:
 			return
-		pauseable = self.cmdname in (get_argyll_utilname("dispcal"), 
-									 get_argyll_utilname("dispread"), 
-									 get_argyll_utilname("spotread"))
+		pauseable = getattr(self, "pauseable", False)
 		if getattr(self, "progress_dlg", None):
 			self.progress_wnd = self.progress_dlg
 			self.progress_wnd.MakeModal(True)
@@ -4552,6 +4549,7 @@ class Worker(object):
 			self.progress_wnd.Update(0, progress_msg)
 			if hasattr(self.progress_wnd, "pause_continue"):
 				self.progress_wnd.pause_continue.Show(pauseable)
+				self.progress_wnd.Layout()
 			self.progress_wnd.Resume()
 			if not self.progress_wnd.IsShownOnScreen():
 				self.progress_wnd.Show()
@@ -4733,7 +4731,8 @@ class Worker(object):
 	def start(self, consumer, producer, cargs=(), ckwargs=None, wargs=(), 
 			  wkwargs=None, progress_title=appname, progress_msg="", 
 			  parent=None, progress_start=100, resume=False, 
-			  continue_next=False, stop_timers=True, interactive_frame=""):
+			  continue_next=False, stop_timers=True, interactive_frame="",
+			  pauseable=False):
 		"""
 		Start a worker process.
 		
@@ -4753,6 +4752,8 @@ class Worker(object):
 		stop_timers         stop the timers on the owner window if True
 		interactive_frame   "" or "uniformity" (selects the type of
 		                    interactive window)
+		pauseable           Is the operation pauseable? (show pause button on
+		                    progress dialog)
 		
 		""" % appname
 		if ckwargs is None:
@@ -4775,6 +4776,7 @@ class Worker(object):
 		self.instrument_sensor_position_msg = False
 		self.is_ambient_measuring = False
 		self.lastcmdname = None
+		self.pauseable = pauseable
 		self.paused = False
 		self.resume = resume
 		self.subprocess_abort = False

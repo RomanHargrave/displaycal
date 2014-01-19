@@ -4526,9 +4526,8 @@ class MainFrame(BaseFrame):
 		progress_msg = lang.getstr("calibration.verify")
 		safe_print(progress_msg)
 		self.worker.interactive = False
-		self.worker.start(self.result_consumer, 
-						  self.worker.verify_calibration, 
-						  progress_msg=progress_msg)
+		self.worker.start(self.result_consumer, self.worker.verify_calibration, 
+						  progress_msg=progress_msg, pauseable=True)
 	
 	def select_profile(self, parent=None, check_profile_class=True, msg=None):
 		"""
@@ -4836,7 +4835,7 @@ class MainFrame(BaseFrame):
 								 devlink, ti3_ref, sim_ti3, save_path, chart,
 								 gray, apply_bt1886),
 						  wargs=(ti1_path, cal_path, colormanaged),
-						  progress_msg=progress_msg)
+						  progress_msg=progress_msg, pauseable=True)
 	
 	def measurement_report_consumer(self, result, ti3_path, profile, sim_profile,
 									intent, sim_intent, devlink, ti3_ref,
@@ -5221,7 +5220,7 @@ class MainFrame(BaseFrame):
 			self.worker.interactive = False
 			self.worker.start(self.result_consumer, self.worker.report, 
 							  wkwargs={"report_calibrated": report_calibrated},
-							  progress_msg=progress_msg)
+							  progress_msg=progress_msg, pauseable=True)
 	
 	def result_consumer(self, result):
 		""" Generic result consumer. Shows the info window on success

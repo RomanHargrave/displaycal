@@ -1094,6 +1094,7 @@ class ProgressDialog(wx.Dialog):
 		else:
 			self.pause_continue.Label = lang.getstr("pause")
 		self.pause_continue.Enable(not event)
+		self.Layout()
 
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
