@@ -1262,6 +1262,8 @@ class Worker(object):
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
+		if self.finished:
+			return
 		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
@@ -1366,6 +1368,8 @@ class Worker(object):
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
+		if self.finished:
+			return
 		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
@@ -1393,8 +1397,9 @@ class Worker(object):
 								bitmap=geticon(32, "dialog-warning"))
 			self.progress_wnd.dlg = dlg
 			dlg_result = dlg.ShowModal()
-			if dlg:
-				dlg.Destroy()
+			dlg.Destroy()
+			if self.finished:
+				return
 			self.progress_wnd.MakeModal(True)
 			if dlg_result != wx.ID_OK:
 				self.progress_wnd.Resume()
@@ -1423,6 +1428,8 @@ class Worker(object):
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
+		if self.finished:
+			return
 		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
@@ -1446,6 +1453,8 @@ class Worker(object):
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
+		if self.finished:
+			return
 		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
@@ -2733,9 +2742,9 @@ class Worker(object):
 						   safe_unicode(traceback.format_exc()))
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
+		self.finished = True
 		if not continue_next or isinstance(result, Exception) or not result:
 			self.stop_progress()
-		self.finished = True
 		self.subprocess_abort = False
 		self.thread_abort = False
 		wx.CallAfter(consumer, result, *args, **kwargs)
@@ -4864,9 +4873,6 @@ class Worker(object):
 			if getattr(self.progress_wnd, "dlg", None):
 				self.progress_wnd.dlg.Close()
 				del self.progress_wnd.dlg
-				# Avoid blocking the main window
-				wx.CallLater(1, self.stop_progress)
-				return
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
 			# under Linux, destroying it here causes segfault
