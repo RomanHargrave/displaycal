@@ -165,11 +165,11 @@ acronym a {
 	display: none;
 }
 code {
+	background: rgba(0, 0, 0, .0625);
 	font-family: monospace;
 }
 code,
 samp {
-	background: rgba(0, 0, 0, .0625);
 	color: #666;
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
@@ -178,6 +178,11 @@ samp {
 	padding: 0 .5em;
 	text-shadow: 1px 1px 1px rgba(0, 0, 0, .125);
 	white-space: nowrap;
+}
+@media handheld, projection, screen, tv {
+	samp {
+		background: rgba(0, 0, 0, .0625);
+	}
 }
 pre code {
 	display: block;
@@ -236,6 +241,7 @@ ins {
 p {
 	margin: 1em 0;
 }
+h6,
 strong {
 	font-weight: 600;
 }
@@ -244,6 +250,7 @@ sup {
 	line-height: 9px;
 	vertical-align: super;
 }
+@media handheld, projection, screen, tv {
 #issues .collapsed,
 #issues .expanded {
 	padding-left: 1.5em;
@@ -257,6 +264,7 @@ sup {
 }
 .expanded:before {
 	content: '− ';
+}
 }
 .footnote {
 	color: #999;
@@ -488,6 +496,10 @@ sup {
 #toc li ul li ul li a {
 	padding-left: 36px;
 }
+#toc li a {
+	display: block;
+}
+@media handheld, projection, screen, tv {
 #toc li a:before {
 	color: transparent;
 	content: '+ ';
@@ -513,7 +525,6 @@ sup {
 	border-top: 1px solid rgba(0, 0, 0, .03125);
 }
 #toc li a {
-	display: block;
 	padding: .3em .5em;
 }
 #toc > ul > li:nth-child(odd) > a {
@@ -523,6 +534,7 @@ sup {
 	background: rgba(0, 0, 0, .0078125);
 	border-bottom: 2px dotted rgba(0, 0, 0, .125);
 	border-top: 1px solid rgba(0, 0, 0, .03125);
+}
 }
 
 
@@ -535,6 +547,8 @@ sup {
    IE9 with filter and border-radius doesn't work too well (border overlaps 
    gradient instead of clipping it)
 */
+
+@media handheld, projection, screen, tv {
 
 /* Greeen */
 
@@ -605,6 +619,9 @@ sup {
 #issues dd {
 	padding: 1em;
 }
+
+}
+
 #download > ul > li h3 {
 	margin: 0;
 }
@@ -654,7 +671,7 @@ sup {
 #quickstart > ol > li > div > ul {
 	padding-left: 32px;
 }
-#quickstart > ol > li > h3,
+#quickstart > ol > li h3,
 #quickstart > ol > li > div > h4,
 #quickstart > ol > li p.info {
 	color: #036;
@@ -672,22 +689,30 @@ sup {
 #quickstart > ol > li h3,
 #install-windows-driver h4,
 #install-windows-driver h5 {
-	border: 1px solid #9bc;
-
-	-moz-border-radius: 6px;
-	-webkit-border-radius: 6px;
-	border-radius: 6px;
-
-	color: #069;
 	display: inline-block;
 	font-family: Arial, sans-serif;
 	font-size: 14px;
 	font-style: normal;
 	font-weight: normal;
-	margin-bottom: 1px;
-	padding: .1em .3em;
-	line-height: 22px;
 	text-shadow: none;
+}
+@media handheld, projection, screen, tv {
+	.button,
+	#download div ul,
+	#quickstart > ol > li h3,
+	#install-windows-driver h4,
+	#install-windows-driver h5 {
+		border: 1px solid #9bc;
+
+		-moz-border-radius: 6px;
+		-webkit-border-radius: 6px;
+		border-radius: 6px;
+
+		color: #069;
+		margin-bottom: 1px;
+		padding: .1em .3em;
+		line-height: 22px;
+	}
 }
 #download div ul {
 	background-color: #fff;
@@ -750,6 +775,8 @@ sup {
 
 /* Issues & solutions */
 
+@media handheld, projection, screen, tv {
+
 #issues dt {
 	border: none;
 	font: 14px/22px Arial, sans-serif;
@@ -806,6 +833,8 @@ sup {
 	-moz-border-radius: 0;
 	-webkit-border-radius: 0;
 	border-radius: 0;
+}
+
 }
 
 
@@ -1182,9 +1211,13 @@ sup {
 	}
 	body {
 		background: transparent none;
+		max-width: 720px;
 		padding-top: 0;
+		width: auto;
 	}
-	#screenshots {
+	#intro,
+	#screenshots,
+	#totop {
 		display: none;
 	}
 	#issues .collapsed + dd,
