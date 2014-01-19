@@ -827,7 +827,7 @@ class FilteredStream():
 				"Ambient filter should be removed"] + INST_CAL_MSGS
 	
 	substitutions = {" peqDE ": " DE to previous pass ",
-					 "^[": "",  # ESC key on Linux/OSX
+					 r"\^\[": "",  # ESC key on Linux/OSX
 					 "patch ": "Patch ",
 					 re.compile("Point (\\d+ Delta E)", re.I): " point \\1"}
 	
