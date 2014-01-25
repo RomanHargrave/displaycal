@@ -374,7 +374,7 @@ class GamutCanvas(LUTCanvas):
 
 	def OnMouseDoubleClick(self, event):
 		self.resetzoom()
-		if self.last_draw:
+		if self.GetEnableDrag() and self.last_draw:
 			self.center()
 
 	def OnMouseLeftUp(self, event):
