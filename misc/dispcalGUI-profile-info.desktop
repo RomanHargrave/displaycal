@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=dispcalGUI ICC Profile Information
+Name[de]=dispcalGUI ICC-Profil-Information
+GenericName=ICC profile information
+GenericName[de]=ICC-Profil-Information
+Exec=dispcalGUI-profile-info
+Icon=dispcalGUI-profile-info
+Terminal=false
+Categories=Graphics;
+Comment[de]=Zeigt Informationen über ein ICC-Profil. Graphen unterstützen nur ICC v2.
+Comment=Shows information about an ICC profile. Graphs only support ICC v2.

@@ -23,6 +23,7 @@ the wrapper script in the root directory of the source tar.gz/zip
 
 """
 
+from ConfigParser import ConfigParser
 from distutils.command.install import install
 from distutils.util import change_root, get_platform
 import distutils.core
@@ -255,6 +256,16 @@ def setup():
 							   "theme/icons/256x256/*.png"]
 	if sys.platform == "win32" and not do_py2exe:
 		package_data[name] += ["theme/icons/*.ico"]
+	# Scripts
+	# It is required that each script has an accompanying .desktop file
+	scripts = {}
+	desktopfiles = glob.glob(os.path.join(pydir, "..", "misc", "*.desktop"))
+	for desktopfile in desktopfiles:
+		cfg = ConfigParser()
+		cfg.read(desktopfile)
+		scripts[cfg.get("Desktop Entry",
+						"Exec")] = cfg.get("Desktop Entry",
+										   "Name").decode("UTF-8")
 	# Doc files
 	data_files = [
 		(os.path.join(doc, "screenshots"), 
@@ -328,17 +339,8 @@ def setup():
 					(os.path.join(data, "lib"), 
 					 [sys.executable, sys.executable.replace(".exe", "w.exe")]),
 					(os.path.join(data, "scripts"), 
-					 [os.path.join("scripts", name + "-3DLUT-maker")]),
-					(os.path.join(data, "scripts"), 
-					 [os.path.join("scripts", name + "-apply-profiles")]),
-					(os.path.join(data, "scripts"), 
-					 [os.path.join("scripts", name + "-curve-viewer")]),
-					(os.path.join(data, "scripts"), 
-					 [os.path.join("scripts", name + "-profile-info")]),
-					(os.path.join(data, "scripts"), 
-					 [os.path.join("scripts", name + "-synthprofile")]),
-					(os.path.join(data, "scripts"), 
-					 [os.path.join("scripts", name + "-testchart-editor")])]
+					 [os.path.join("scripts", script)
+					  for script in filter(lambda script: script != name, scripts)])]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					glob.glob(os.path.join(pydir, "theme", 
@@ -348,7 +350,9 @@ def setup():
 			data_files += [(os.path.join(os.path.dirname(data), 
 										 "applications"), 
 							[os.path.join(pydir, "..", "misc", name + 
-												".desktop")])]
+												".desktop")] +
+							glob.glob(os.path.join(pydir, "..", "misc",
+												   name + "-*.desktop")))]
 			data_files += [(autostart if os.geteuid() == 0 or prefix.startswith("/")
 							else autostart_home, 
 							[os.path.join(pydir, "..", "misc", 
@@ -409,7 +413,7 @@ def setup():
 			desktopicons = []
 			for iconpath in glob.glob(os.path.join(pydir, "theme", "icons", 
 												   dname, "*.png")):
-				if os.path.basename(iconpath) != name + ".png" or (
+				if not os.path.basename(iconpath).startswith(name) or (
 					sys.platform in ("darwin", "win32") and 
 					dname in ("10x10", "16x16", "32x32", "72x72")):
 					icons.append(iconpath)
@@ -559,12 +563,11 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["install_requires"] = install_requires
 		attrs["zip_safe"] = False
 	else:
-		attrs["scripts"] += [os.path.join("scripts", name)]
-		attrs["scripts"] += [os.path.join("scripts", name + "-3DLUT-maker")]
-		attrs["scripts"] += [os.path.join("scripts", name + "-curve-viewer")]
-		attrs["scripts"] += [os.path.join("scripts", name + "-profile-info")]
-		attrs["scripts"] += [os.path.join("scripts", name + "-synthprofile")]
-		attrs["scripts"] += [os.path.join("scripts", name + "-testchart-editor")]
+		attrs["scripts"] += [os.path.join("scripts", script)
+							 for script in
+							 filter(lambda script:
+									script != name + "-apply-profiles",
+									scripts)]
 	
 	if sys.platform != "darwin" and (sys.platform != "win32" or not do_py2exe):
 		attrs["scripts"] += [os.path.join("scripts", name + "-apply-profiles")]
@@ -629,29 +632,16 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["windows"] = [Target(**{
 			"script": os.path.join(pydir, "..", script),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
-												name + ".ico"))],
+												os.path.splitext(os.path.basename(script))[0] +
+												".ico"))],
 			"other_resources": [(24, 1, manifest_xml)],
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
 			"description": desc
-		}) for desc, script in [(name, name + ".pyw"),
-								("Profile Loader",
-								 os.path.join("scripts",
-											  name + "-apply-profiles")),
-								("3DLUT Maker",
-								 os.path.join("scripts",
-											  name + "-3DLUT-maker")),
-								("Curve Viewer",
-								 os.path.join("scripts",
-											  name + "-curve-viewer")),
-								("Profile Info",
-								 os.path.join("scripts",
-											  name + "-profile-info")),
-								("Synthetic Profile Creator",
-								 os.path.join("scripts",
-											  name + "-synthprofile")),
-								("Testchart Editor",
-								 os.path.join("scripts",
-											  name + "-testchart-editor"))]]
+		}) for script, desc in [(name + ".pyw", name)] +
+							   [(os.path.join("scripts", script), desc)
+								for script, desc in
+								filter(lambda item: item[0] != name,
+									   scripts.iteritems())]]
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
@@ -833,6 +823,11 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 					"beep.wav",
 					"camera_shutter.wav",
 					name + ".desktop",
+					name + "-3DLUT-maker.desktop",
+					name + "-curve-viewer.desktop",
+					name + "-profile-info.desktop",
+					name + "-synthprofile.desktop",
+					name + "-testchart-editor.desktop",
 					"pnp.ids",
 					"quirk.json",
 					"linear.cal",

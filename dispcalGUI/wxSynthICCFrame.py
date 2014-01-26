@@ -33,7 +33,8 @@ class SynthICCFrame(BaseFrame):
 		self.PostCreate(pre)
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		
-		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
+											 appname + "-synthprofile"))
 		
 		self.set_child_ctrls_as_attrs(self)
 

@@ -130,7 +130,13 @@ if [ -e "${RPM_BUILD_ROOT}%_datadir/doc/%{name}-%{version}" ]; then
 fi
 %if 0%{?suse_version} > 0
 # Update desktop files to prevent buildservice from complaining
-%suse_update_desktop_file %{name} 2DGraphics
+desktopfilenames=`%{__python} -c "import glob
+import os
+print ' '.join([os.path.splitext(os.path.basename(path))[0] for path in
+				glob.glob('misc/%{name}*.desktop')])"`
+for desktopfilename in $desktopfilenames ; do
+	%suse_update_desktop_file $desktopfilename 2DGraphics
+done
 %suse_update_desktop_file "%{buildroot}/etc/xdg/autostart/z-%{name}-apply-profiles.desktop"
 %endif
 # Remove unused files from list of installed files and add directories
@@ -142,14 +148,7 @@ paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in
 				not '/man/' in path, 
 				f.readlines())]
 f.close()
-executables = ['Argyll',
-			   'dispcalGUI',
-			   'dispcalGUI-3DLUT-maker',
-			   'dispcalGUI-apply-profiles',
-			   'dispcalGUI-curve-viewer',
-			   'dispcalGUI-profile-info',
-			   'dispcalGUI-synthprofile',
-			   'dispcalGUI-testchart-editor']
+executables = ['Argyll'] + os.listdir('scripts')
 for path in list(paths):
 	if path.endswith('.py') and %{?mandriva_version}.0 < 201010:
 		# Mandriva 2010.1 got rid of byte-compilation

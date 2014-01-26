@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=dispcalGUI Synthetic ICC Profile Creator
+Name[de]=dispcalGUI Synthetik-ICC-Profil-Ersteller
+GenericName=Synthetic RGB ICC profile creator
+GenericName[de]=Ersteller für synthethische RGB-ICC-Profile
+Exec=dispcalGUI-synthprofile
+Icon=dispcalGUI-synthprofile
+Terminal=false
+Categories=Graphics;
+Comment[de]=Erstellt ICC-Profile von synthetischen RGB-Farbräumen
+Comment=Creates ICC profiles of synthetic RGB colorspaces

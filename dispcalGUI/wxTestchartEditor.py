@@ -45,7 +45,8 @@ class TestchartEditor(wx.Frame):
 	def __init__(self, parent = None, id = -1, path=None,
 				 cfg=None, target=None):
 		wx.Frame.__init__(self, parent, id, lang.getstr("testchart.edit"))
-		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
+											 appname + "-testchart-editor"))
 		self.Bind(wx.EVT_CLOSE, self.tc_close_handler)
 
 		self.tc_algos_ab = {

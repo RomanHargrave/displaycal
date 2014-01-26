@@ -177,8 +177,10 @@ installExe bin/*
 installIcon share/icons/hicolor
 installMan 1 share/man/man1/*
 if [ `whoami` != "root" ]; then
-	outputStatus "Adjusting desktop menu entry..."
-	safeSed share/applications/dispcalGUI.desktop "s|Exec=dispcalGUI|Exec=$PREFIX/bin/dispcalGUI|"
+	outputStatus "Adjusting desktop menu entries..."
+	for desktopfile in `ls share/applications` ; do
+		safeSed share/applications/$desktopfile "s|Exec=dispcalGUI|Exec=$PREFIX/bin/dispcalGUI|"
+	done
 fi
 # installMenuItem changes the .desktop file to include so-called 'Actions' 
 # which makes the menu entry vanish in recent GNOME versions after logout! So 
@@ -186,7 +188,9 @@ fi
 # autopackage's 'manage 3rd party software' utility
 installMenuItem "Graphics" share/applications/dispcalGUI.desktop
 # Install our proper one
-which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu install --novendor share/applications/dispcalGUI.desktop || true
+for desktopfile in `ls share/applications` ; do
+	which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu install --novendor share/applications/$desktopfile || true
+done
 
 if [ `whoami` = "root" ]; then
 	if [ -e "/etc/udev/rules.d" ]; then
@@ -249,6 +253,9 @@ for pyco in (glob.glob(os.path.join(mod, '*.py[co]')) +
 			 glob.glob(os.path.join(mod, 'lib' + bits, 'python%s%s' % sys.version_info[:2], '*.py[co]'))):
 	os.remove(pyco)"
 
-# Remove menu entry
-which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu uninstall dispcalGUI.desktop || true
+# Remove menu entries
+
+for suffix in "" "-3DLUT-maker" "-curve-viewer" "-profile-info" "-synthprofile" "-testchart-editor" ; do
+	which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu uninstall dispcalGUI$suffix.desktop || true
+done
 

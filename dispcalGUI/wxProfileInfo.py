@@ -816,7 +816,8 @@ class ProfileInfoFrame(LUTFrame):
 		
 		wx.Frame.__init__(self, *args, **kwargs)
 		
-		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
+											 appname + "-profile-info"))
 		
 		self.CreateStatusBar(1)
 		

@@ -6,6 +6,6 @@ Name=dispcalGUI ICC Profile Loader
 Name[de]=dispcalGUI ICC-Profil-Lader
 Comment=Sets ICC profiles and loads calibration curves for all configured display devices
 Comment[de]=Setzt ICC-Profile und lädt Kalibrierungskurven für alle konfigurierten Anzeigegeräte
-Icon=dispcalGUI
+Icon=dispcalGUI-apply-profiles
 Exec=dispcalGUI-apply-profiles
 Terminal=false
