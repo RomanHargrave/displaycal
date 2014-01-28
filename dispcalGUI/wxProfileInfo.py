@@ -1059,7 +1059,7 @@ class ProfileInfoFrame(LUTFrame):
 		if not isinstance(profile, ICCP.ICCProfile):
 			try:
 				profile = ICCP.ICCProfile(profile)
-			except ICCP.ICCProfileInvalidError, exception:
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
 									     "\n" + profile), self)
 				return

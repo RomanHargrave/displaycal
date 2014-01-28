@@ -46,8 +46,11 @@ def handle_error(error, parent=None, silent=False):
 	if not silent:
 		try:
 			from wxaddons import wx
-			if wx.GetApp() is None and parent is None:
+			app = wx.GetApp()
+			if app is None and parent is None:
 				app = wx.App(redirect=False)
+			if parent is None:
+				parent = app.GetTopWindow()
 			if parent:
 				try:
 					parent.IsShownOnScreen()

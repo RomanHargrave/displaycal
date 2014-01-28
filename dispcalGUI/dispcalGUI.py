@@ -24,19 +24,6 @@ with this program; if not, see <http://www.gnu.org/licenses/>
 from __future__ import with_statement
 import sys
 
-def _early_excepthook(etype, value, tb):
-	import traceback
-	traceback.print_exception(etype, value, tb)
-	try:
-		from util_os import expanduseru
-		logfile = open(os.path.join(expanduseru("~"), "dispcalGUI.error.log"), 
-					   "w")
-		traceback.print_exception(etype, value, tb, file=logfile)
-	except:
-		pass
-
-sys.excepthook = _early_excepthook
-
 # Standard modules
 
 import datetime
@@ -148,11 +135,6 @@ from wx.lib import delayedresult
 from wx.lib.art import flagart
 import wx.html
 import wx.lib.hyperlink
-
-def _excepthook(etype, value, tb):
-	safe_print("".join(safe_unicode(s) for s in traceback.format_exception(etype, value, tb)))
-
-sys.excepthook = _excepthook
 
 
 if sys.platform == "darwin":
@@ -397,9 +379,13 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return False
-	cgatsfile = open(path, 'wb')
-	cgatsfile.write(cgats)
-	cgatsfile.close()
+	try:
+		cgatsfile = open(path, 'wb')
+		cgatsfile.write(cgats)
+		cgatsfile.close()
+	except EnvironmentError, exception:
+		show_result_dialog(exception, parent)
+		return False
 	if getcfg("colorimeter_correction_matrix_file").split(":")[0] != "AUTO":
 		setcfg("colorimeter_correction_matrix_file", ":" + path)
 	parent.update_colorimeter_correction_matrix_ctrl_items(True)
@@ -2398,7 +2384,7 @@ class MainFrame(BaseFrame):
 			elif os.path.isfile(path):
 				try:
 					cgats = CGATS.CGATS(path)
-				except CGATS.CGATSError, exception:
+				except (IOError, CGATS.CGATSError), exception:
 					safe_print("%s:" % path, exception)
 					continue
 				desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
@@ -2448,7 +2434,7 @@ class MainFrame(BaseFrame):
 			if not desc and os.path.isfile(ccmx[1]):
 				try:
 					cgats = CGATS.CGATS(ccmx[1])
-				except CGATS.CGATSError, exception:
+				except (IOError, CGATS.CGATSError), exception:
 					safe_print("%s:" % ccmx[1], exception)
 				else:
 					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
@@ -2518,7 +2504,7 @@ class MainFrame(BaseFrame):
 			tooltip = ccmx[1]
 			try:
 				cgats = CGATS.CGATS(ccmx[1])
-			except CGATS.CGATSError, exception:
+			except (IOError, CGATS.CGATSError), exception:
 				safe_print("%s:" % ccmx[1], exception)
 			else:
 				base_id = cgats.queryv1("DISPLAY_TYPE_BASE_ID")
@@ -4197,7 +4183,10 @@ class MainFrame(BaseFrame):
 		# Calculate profile ID
 		profile.calculateID()
 		# Save profile
-		profile.write()
+		try:
+			profile.write()
+		except EnvironmentError, exception:
+			show_result_dialog(exception, self)
 		if result != wx.ID_OK:
 			return
 		# Get profile data
@@ -4386,7 +4375,11 @@ class MainFrame(BaseFrame):
 					cal = False
 			elif cal.lower().endswith(".icc") or \
 				 cal.lower().endswith(".icm"):
-				profile = ICCP.ICCProfile(cal)
+				try:
+					profile = ICCP.ICCProfile(cal)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					show_result_dialog(exception, self)
+					profile = None
 			else:
 				profile = cal_to_fake_profile(cal)
 		if profile:
@@ -4535,7 +4528,7 @@ class MainFrame(BaseFrame):
 				return
 			try:
 				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError, exception:
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				InfoDialog(parent, msg=lang.getstr("profile.invalid") + 
 								 "\n" + path, 
 						   ok=lang.getstr("ok"), 
@@ -4573,7 +4566,7 @@ class MainFrame(BaseFrame):
 		
 		try:
 			chart = CGATS.CGATS(chart, True)
-		except CGATS.CGATSError, exception:
+		except (IOError, CGATS.CGATSError), exception:
 			show_result_dialog(exception, self.reportframe)
 			return
 		
@@ -4596,7 +4589,7 @@ class MainFrame(BaseFrame):
 		for i, path in enumerate(paths):
 			try:
 				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError, exception:
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				InfoDialog(self.reportframe, msg=lang.getstr("profile.invalid") + 
 								 "\n" + path, 
 						   ok=lang.getstr("ok"), 
@@ -4771,7 +4764,7 @@ class MainFrame(BaseFrame):
 		# write ti1 to temp dir
 		try:
 			ti1_file = open(ti1_path, "w")
-		except (IOError, OSError), exception:
+		except EnvironmentError, exception:
 			InfoDialog(self.reportframe, msg=lang.getstr("error.file.create", 
 											 ti1_path), 
 					   ok=lang.getstr("ok"), 
@@ -4822,9 +4815,13 @@ class MainFrame(BaseFrame):
 		
 		if not isinstance(result, Exception) and result:
 			# get item 0 of the ti3 to strip the CAL part from the measured data
-			ti3_measured = CGATS.CGATS(ti3_path)[0]
-			safe_print(lang.getstr("success"))
-			result = self.measurement_file_check_confirm(ti3_measured)
+			try:
+				ti3_measured = CGATS.CGATS(ti3_path)[0]
+			except (IOError, CGATS.CGATSInvalidError, CGATS.CGATSKeyError), exc:
+				result = exc
+			else:
+				safe_print(lang.getstr("success"))
+				result = self.measurement_file_check_confirm(ti3_measured)
 		
 		# cleanup
 		self.worker.wrapup(False)
@@ -5036,7 +5033,7 @@ class MainFrame(BaseFrame):
 				ccmx = os.path.basename(ccmx[1])
 				try:
 					cgats = CGATS.CGATS(ccmxpath)
-				except CGATS.CGATSError, exception:
+				except (IOError, CGATS.CGATSError), exception:
 					safe_print("%s:" % ccmxpath, exception)
 				else:
 					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
@@ -5120,10 +5117,16 @@ class MainFrame(BaseFrame):
 				if self.install_cal(capture_output=True, cal=cal, 
 									skip_scripts=True, silent=silent,
 									title=lang.getstr("calibration.load_from_cal_or_profile")) is True:
-					self.lut_viewer_load_lut(profile=ICCP.ICCProfile(cal) if 
-											 cal.lower().endswith(".icc") or 
-											 cal.lower().endswith(".icm") else 
-											 cal_to_fake_profile(cal))
+					if (cal.lower().endswith(".icc") or 
+						cal.lower().endswith(".icm")):
+						try:
+							profile = ICCP.ICCProfile(cal)
+						except (IOError, ICCP.ICCProfileInvalidError), exception:
+							safe_print(exception)
+							profile = None
+					else:
+						profile = cal_to_fake_profile(cal)
+					self.lut_viewer_load_lut(profile=profile)
 					if verbose >= 1 and silent:
 						safe_print(lang.getstr("success"))
 					return True
@@ -6331,7 +6334,11 @@ class MainFrame(BaseFrame):
 			self.set_testchart(get_ccxx_testchart())
 			self.measure_handler()
 			return
-		ccxx = CGATS.CGATS(get_ccxx_testchart())
+		try:
+			ccxx = CGATS.CGATS(get_ccxx_testchart())
+		except (IOError, CGATS.CGATSInvalidError), exception:
+			show_result_dialog(exception, self)
+			return
 		cgats_list = []
 		reference_ti3 = None
 		colorimeter_ti3 = None
@@ -6961,7 +6968,7 @@ class MainFrame(BaseFrame):
 					safe_print(path)
 					try:
 						ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
-					except (OSError, UnicodeDecodeError,
+					except (EnvironmentError, UnicodeDecodeError,
 							demjson.JSONDecodeError), exception:
 						result = Error(lang.getstr("file.invalid"))
 					else:
@@ -7349,7 +7356,10 @@ class MainFrame(BaseFrame):
 																	 path)),
 												   self)
 								return
-							ti3.write(path)
+							try:
+								ti3.write(path)
+							except EnvironmentError, exception:
+								show_result_dialog(exception, self)
 				else:
 					show_result_dialog(UnloggedInfo(lang.getstr("errors.none_found")),
 									   self)
@@ -7369,11 +7379,11 @@ class MainFrame(BaseFrame):
 			if not ti3:
 				# Let the caller handle missing files
 				return True
-		if not isinstance(ti3, CGATS.CGATS):
-			ti3 = CGATS.CGATS(ti3)
 		try:
+			if not isinstance(ti3, CGATS.CGATS):
+				ti3 = CGATS.CGATS(ti3)
 			ti3_1 = verify_ti1_rgb_xyz(ti3)
-		except CGATS.CGATSError, exception:
+		except (IOError, CGATS.CGATSError), exception:
 			show_result_dialog(exception, self)
 			return False
 		suspicious = check_ti3(ti3_1)
@@ -7419,7 +7429,11 @@ class MainFrame(BaseFrame):
 		elif result == wx.ID_OK:
 			if ti3.modified:
 				if ti3.filename and os.path.exists(ti3.filename) and not force:
-					ti3.write()
+					try:
+						ti3.write()
+					except EnvironmentError, exception:
+						show_result_dialog(exception, self)
+						return False
 					safe_print("Written updated TI3 to", ti3.filename)
 				return removed, ti3
 		return True
@@ -8737,7 +8751,7 @@ class MainFrame(BaseFrame):
 				try:
 					(options_dispcal, 
 					 options_colprof) = get_options_from_cal(path)
-				except CGATS.CGATSError, exception:
+				except (IOError, CGATS.CGATSError), exception:
 					InfoDialog(self, msg=lang.getstr("calibration.file.invalid") + 
 										 "\n" + path, 
 							   ok=lang.getstr("ok"), 

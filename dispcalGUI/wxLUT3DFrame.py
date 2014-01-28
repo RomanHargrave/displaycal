@@ -395,7 +395,7 @@ class LUT3DFrame(BaseFrame):
 				return
 			try:
 				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError:
+			except (IOError, ICCP.ICCProfileInvalidError):
 				if not silent:
 					show_result_dialog(Error(lang.getstr("profile.invalid")),
 									   parent=self)

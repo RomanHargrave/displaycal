@@ -1395,7 +1395,7 @@ class TestchartEditor(wx.Frame):
 		
 		try:
 			chart = CGATS.CGATS(chart)
-		except CGATS.CGATSError, exception:
+		except (IOError, CGATS.CGATSError), exception:
 			return exception
 		finally:
 			if os.path.dirname(path) == self.worker.tempdir:

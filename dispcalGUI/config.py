@@ -834,7 +834,7 @@ def get_current_profile(include_display_profile=False):
 		import ICCProfile as ICCP
 		try:
 			profile = ICCP.ICCProfile(path)
-		except ICCP.ICCProfileInvalidError, exception:
+		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			return
 		return profile
 	elif include_display_profile:
@@ -955,7 +955,7 @@ def is_profile(filename=None, include_display_profile=False):
 			import ICCProfile as ICCP
 			try:
 				profile = ICCP.ICCProfile(filename)
-			except ICCP.ICCProfileInvalidError:
+			except (IOError, ICCP.ICCProfileInvalidError):
 				pass
 			else:
 				return True

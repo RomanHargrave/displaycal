@@ -1127,7 +1127,7 @@ class Worker(object):
 					return result
 				try:
 					cgats = CGATS.CGATS(ccmx)
-				except CGATS.CGATSError, exception:
+				except (IOError, CGATS.CGATSError), exception:
 					safe_print("%s:" % ccmx, exception)
 					instrument = None
 				else:
@@ -2877,7 +2877,12 @@ class Worker(object):
 		if not display_name and not display_manufacturer:
 			# Note: Do not mix'n'match display name and manufacturer from 
 			# different sources
-			for option in get_options_from_ti3(ti3)[1]:
+			try:
+				ti3_options_colprof = get_options_from_ti3(ti3)[1]
+			except (IOError, CGATS.CGATSInvalidError), exception:
+				safe_print(exception)
+				ti3_options_colprof = []
+			for option in ti3_options_colprof:
 				if option[0] == "M":
 					display_name = option.split(None, 1)[-1][1:-1]
 				elif option[0] == "A":
@@ -4164,7 +4169,10 @@ class Worker(object):
 				if not result:
 					return None, None
 				# Get dispcal options if present
-				options_dispcal = get_options_from_cal(cal)[0]
+				try:
+					options_dispcal = get_options_from_cal(cal)[0]
+				except (IOError, CGATS.CGATSInvalidError), exception:
+					return exception, None
 				if not os.path.exists(calcopy):
 					try:
 						# Copy cal to temp dir
@@ -4270,7 +4278,9 @@ class Worker(object):
 		self.options_dispread = list(args)
 		if getattr(self, "terminal", None) and isinstance(self.terminal,
 														  UntetheredFrame):
-			self.set_terminal_cgats(inoutfile + ".ti1")
+			result = self.set_terminal_cgats(inoutfile + ".ti1")
+			if isinstance(result, Exception):
+				return result, None
 		return cmd, self.options_dispread + [inoutfile]
 
 	def prepare_dispwin(self, cal=None, profile_path=None, install=True):
@@ -4691,7 +4701,10 @@ class Worker(object):
 		self.argyll_version = parse_argyll_version_string(argyll_version_string)
 	
 	def set_terminal_cgats(self, cgats_filename):
-		self.terminal.cgats = CGATS.CGATS(cgats_filename)
+		try:
+			self.terminal.cgats = CGATS.CGATS(cgats_filename)
+		except (IOError, CGATS.CGATSInvalidError), exception:
+			return exception
 	
 	def argyll_support_file_exists(self, name):
 		""" Check if named file exists in any of the known Argyll support
@@ -5682,7 +5695,9 @@ class Worker(object):
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 			if getcfg("extra_args.spotread").strip():
 				args += parse_argument_string(getcfg("extra_args.spotread"))
-			self.set_terminal_cgats(ti1_path)
+			result = self.set_terminal_cgats(ti1_path)
+			if isinstance(result, Exception):
+				return result
 		else:
 			cmd = get_argyll_util("dispread")
 			args = ["-v"]

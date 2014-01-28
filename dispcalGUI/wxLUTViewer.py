@@ -621,18 +621,17 @@ class LUTFrame(wx.Frame):
 		
 		"""
 		filename, ext = os.path.splitext(path)
-		if ext == ".cal":
+		if ext not in (".icc", ".icm"):
 			profile = cal_to_fake_profile(path)
 			if not profile:
-				InfoDialog(self, msg=lang.getstr("calibration.file.invalid") + 
-									 "\n" + path, 
+				InfoDialog(self, msg=lang.getstr("error.file.open", path), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
 		else:
 			try:
 				profile = ICCP.ICCProfile(path)
-			except ICCP.ICCProfileInvalidError, exception:
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				InfoDialog(self, msg=lang.getstr("profile.invalid") + 
 									 "\n" + path, 
 						   ok=lang.getstr("ok"), 
@@ -964,7 +963,12 @@ class LUTFrame(wx.Frame):
 			profile.size = len(profile.data)
 			profile.is_loaded = True
 		elif not isinstance(profile, ICCP.ICCProfile):
-			profile = ICCP.ICCProfile(profile)
+			try:
+				profile = ICCP.ICCProfile(profile)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				show_result_dialog(Error(lang.getstr("profile.invalid") + 
+									     "\n" + profile), self)
+				return
 		self.profile = profile
 		self.rTRC = profile.tags.get("rTRC")
 		self.gTRC = profile.tags.get("gTRC")

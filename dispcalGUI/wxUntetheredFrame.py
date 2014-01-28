@@ -662,6 +662,7 @@ class UntetheredFrame(wx.Frame):
 if __name__ == "__main__":
 	from thread import start_new_thread
 	from time import sleep
+	import ICCProfile as ICCP
 	class Subprocess():
 		def send(self, bytes):
 			start_new_thread(test, (bytes,))
@@ -682,7 +683,23 @@ if __name__ == "__main__":
 	lang.update_defaults()
 	app = wx.App(0)
 	frame = UntetheredFrame(start_timer=False)
-	frame.cgats = CGATS.CGATS(getcfg("testchart.file"))
+	testchart = getcfg("testchart.file")
+	if os.path.splitext(testchart)[1].lower() in (".icc", ".icm"):
+		try:
+			testchart = ICCP.ICCProfile(testchart).tags.targ
+		except:
+			pass
+	try:
+		frame.cgats = CGATS.CGATS(testchart)
+	except:
+		frame.cgats = CGATS.CGATS("""TI1    
+BEGIN_DATA_FORMAT
+SAMPLE_ID RGB_R RGB_G RGB_B XYZ_X XYZ_Y XYZ_Z
+END_DATA_FORMAT
+BEGIN_DATA
+1 0 0 0 0 0 0
+END_DATA
+""")
 	frame.worker = Worker()
 	frame.Show()
 	def test(bytes=None):
