@@ -23,13 +23,16 @@ the wrapper script in the root directory of the source tar.gz/zip
 
 """
 
+from __future__ import with_statement
 from ConfigParser import ConfigParser
 from distutils.command.install import install
 from distutils.util import change_root, get_platform
+import codecs
 import distutils.core
 import glob
 import os
 import platform
+import re
 import shutil
 import subprocess as sp
 import sys
@@ -337,10 +340,7 @@ def setup():
 					 [os.path.join(pydir, "theme", "icons", name + 
 					  "-uninstall.ico")]), 
 					(os.path.join(data, "lib"), 
-					 [sys.executable, sys.executable.replace(".exe", "w.exe")]),
-					(os.path.join(data, "scripts"), 
-					 [os.path.join("scripts", script)
-					  for script in filter(lambda script: script != name, scripts)])]
+					 [sys.executable, sys.executable.replace(".exe", "w.exe")])]
 			else:
 				data_files += [(os.path.join(data, "theme", "icons"), 
 					glob.glob(os.path.join(pydir, "theme", 
@@ -551,7 +551,10 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 	if setuptools:
 		attrs["entry_points"] = {
 			"gui_scripts": [
-				"%s = %s.%s:main" % (name, name, name),
+				"%s = %s.main:main%s" % (script, name,
+					"" if script == name
+					else script[len(name):].lower().replace("-", "_"))
+				for script in scripts
 			]
 		}
 		attrs["exclude_package_data"] = {
@@ -566,11 +569,9 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["scripts"] += [os.path.join("scripts", script)
 							 for script in
 							 filter(lambda script:
-									script != name + "-apply-profiles",
+									script != name + "-apply-profiles" or
+									sys.platform != "darwin",
 									scripts)]
-	
-	if sys.platform != "darwin" and (sys.platform != "win32" or not do_py2exe):
-		attrs["scripts"] += [os.path.join("scripts", name + "-apply-profiles")]
 	
 	if bdist_bbfreeze:
 		attrs["setup_requires"] = ["bbfreeze"]
@@ -582,7 +583,10 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		reversedomain = domain.split(".")
 		reversedomain.reverse()
 		reversedomain = ".".join(reversedomain)
-		attrs["app"] = [os.path.join(pydir, "main.py")]
+		mainpy = os.path.join(basedir, "main.py")
+		if not os.path.exists(mainpy):
+			shutil.copy(os.path.join(basedir, "scripts", name), mainpy)
+		attrs["app"] = [mainpy]
 		dist_dir = os.path.join(pydir, "..", "dist", 
 								"py2app.%s-py%s" % (get_platform(), 
 													sys.version[:3]), 
@@ -593,6 +597,13 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			for pycompat in ("25", "26", "27"):
 				excludes += ["lib%s.python%s" % (excludebits, pycompat),
 							 "lib%s.python%s.RealDisplaySizeMM" % (excludebits, pycompat)]
+		from py2app.build_app import py2app as py2app_cls
+		py2app_cls._copy_package_data = py2app_cls.copy_package_data
+		def copy_package_data(self, package, target_dir):
+			# Skip package data which is already included as data files
+			if package.identifier.split('.')[0] != name:
+				self._copy_package_data(package, target_dir)
+		py2app_cls.copy_package_data = copy_package_data
 		attrs["options"] = {
 			"py2app": {
 				"argv_emulation": True,
@@ -630,18 +641,14 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
 		attrs["windows"] = [Target(**{
-			"script": os.path.join(pydir, "..", script),
+			"script": os.path.join(basedir, "scripts", script),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
 												os.path.splitext(os.path.basename(script))[0] +
 												".ico"))],
 			"other_resources": [(24, 1, manifest_xml)],
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
 			"description": desc
-		}) for script, desc in [(name + ".pyw", name)] +
-							   [(os.path.join("scripts", script), desc)
-								for script, desc in
-								filter(lambda item: item[0] != name,
-									   scripts.iteritems())]]
+		}) for script, desc in scripts.iteritems()]
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
@@ -652,6 +659,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		else:
 			excludebits = "32"
 		excludes += ["dispcalGUI.lib%s" % excludebits,
+					 "lib%s" % excludebits,
 					 "lib%s.RealDisplaySizeMM" % excludebits]
 		for pycompat in ("25", "26", "27"):
 			excludes += ["lib%s.python%s" % (excludebits, pycompat),
@@ -917,7 +925,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 					   "edit"]
 		manifest_in += ["include LICENSE.txt", "include MANIFEST", 
 						"include MANIFEST.in", "include README.html", 
-						"include %s.pyw" % name, "include use-distutils"]
+						"include *.pyw", "include use-distutils"]
 		manifest_in += ["include " + os.path.basename(sys.argv[0])]
 		manifest_in += ["include " + 
 						os.path.splitext(os.path.basename(sys.argv[0]))[0] + 
@@ -1000,18 +1008,71 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			return
 		
 		if do_py2app:
+			mainapp = os.path.join(dist_dir, name + ".app", "Contents")
 			# Create ref, tests, ReadMe and license symlinks in directory
 			# containing the app bundle
-			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+			os.symlink(os.path.join(mainapp, "Resources",
 									"ref"), os.path.join(dist_dir, "ref"))
-			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+			os.symlink(os.path.join(mainapp, "Resources",
 									"tests"), os.path.join(dist_dir, "tests"))
-			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+			os.symlink(os.path.join(mainapp, "Resources",
 									"README.html"), os.path.join(dist_dir,
 																 "README.html"))
-			os.symlink(os.path.join("dispcalGUI.app", "Contents", "Resources",
+			os.symlink(os.path.join(mainapp, "Resources",
 									"LICENSE.txt"), os.path.join(dist_dir,
 																 "LICENSE.txt"))
+			# Py2App doesn't support multiple targets, so create our standalone
+			# tools app bundles by symlinking to the main bundle
+			for script, desc in scripts.iteritems():
+				if script in (name, name + "-apply-profiles"):
+					continue
+				toolname = desc.replace(name, "").strip()
+				toolapp = os.path.join(dist_dir, toolname + ".app", "Contents")
+				os.makedirs(toolapp)
+				for entry in os.listdir(mainapp):
+					if entry in ("Frameworks", "Resources"):
+						os.makedirs(os.path.join(toolapp, entry))
+						for subentry in os.listdir(os.path.join(mainapp,
+																entry)):
+							src = os.path.join(mainapp, entry, subentry)
+							tgt = os.path.join(toolapp, entry, subentry)
+							if subentry == "main.py":
+								with open(src, "rb") as main_in:
+									py = main_in.read()
+								py = py.replace("main()",
+												"main(%r)" %
+												script[len(name) + 1:])
+								with open(tgt, "wb") as main_out:
+									main_out.write(py)
+								continue
+							if subentry == name + ".icns":
+								shutil.copy(os.path.join(pydir, "theme",
+														 "icons", 
+														 "%s.icns" % script),
+											os.path.join(toolapp, entry, 
+														 "%s.icns" % script))
+								continue
+							os.symlink(src, tgt)
+					elif entry == "Info.plist":
+						with codecs.open(os.path.join(mainapp, entry), "r",
+										 "UTF-8") as info_in:
+							infoxml = info_in.read()
+						# CFBundleName / CFBundleDisplayName
+						infoxml = re.sub("(Name</key>\s*<string>)%s" % name,
+										 lambda match: match.group(1) +
+													   toolname, infoxml)
+						# CFBundleIdentifier
+						infoxml = infoxml.replace(".%s</string>" % name,
+												  ".%s</string>" % script)
+						# CFBundleIconFile
+						infoxml = infoxml.replace("%s.icns</string>" % name,
+												  "%s.icns</string>" % script)
+						with codecs.open(os.path.join(toolapp, entry), "w",
+										 "UTF-8") as info_out:
+							info_out.write(infoxml)
+					else:
+						os.symlink(os.path.join(mainapp, entry),
+								   os.path.join(toolapp, entry))
 		
 		if do_py2exe:
 			shutil.copy(os.path.join(dist_dir, "python26.dll"),

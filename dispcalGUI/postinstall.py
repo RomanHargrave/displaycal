@@ -2,7 +2,8 @@
 
 from StringIO import StringIO
 from subprocess import call
-from os.path import splitext
+from os.path import basename, splitext
+from glob import glob
 import os
 import shutil
 import sys
@@ -104,15 +105,14 @@ def postinstall(prefix=None):
 	elif sys.platform == "win32":
 		if prefix is None:
 			# assume we are running from bdist_wininst installer
-			import dispcalGUI
-			modpath = os.path.dirname(os.path.abspath(dispcalGUI.__file__))
+			modpath = os.path.dirname(os.path.abspath(__file__))
 		else:
 			# assume we are running from source dir,
 			# or from install dir
 			modpath = prefix
 		if os.path.exists(modpath):
-			icon = os.path.join(modpath, "theme", "icons", name + ".ico")
-			if os.path.exists(icon):
+			mainicon = os.path.join(modpath, "theme", "icons", name + ".ico")
+			if os.path.exists(mainicon):
 				try:
 					startmenu_programs_common = get_special_folder_path(
 						"CSIDL_COMMON_PROGRAMS")
@@ -125,8 +125,16 @@ def postinstall(prefix=None):
 					traceback.print_exc()
 					return
 				else:
-					filenames = [name + ".py", "LICENSE.txt", "README.html", 
-								 "Uninstall"]
+					filenames = (filter(lambda filename:
+										not filename.endswith("-script.py") and
+										not filename.endswith("-script.pyw") and
+										not filename.endswith(".manifest") and
+										not filename.endswith(".pyc") and
+										not filename.endswith(".pyo") and
+										not filename.endswith("_postinstall.py"),
+										glob(os.path.join(sys.prefix, "Scripts",
+														  name + "*"))) +
+								 ["LICENSE.txt", "README.html", "Uninstall"])
 					installed_shortcuts = []
 					for path in (startmenu_programs_common, 
 								 startmenu_programs):
@@ -162,15 +170,16 @@ def postinstall(prefix=None):
 								continue
 							directory_created(grppath)
 							for filename in filenames:
+								lnkname = splitext(basename(filename))[0]
 								lnkpath = os.path.join(
-									grppath, splitext(filename)[0] + ".lnk")
+									grppath, lnkname + ".lnk")
 								if os.path.exists(lnkpath):
 									try:
 										os.remove(lnkpath)
 									except Exception, exception:
 										# maybe insufficient privileges?
 										print ("Failed to create start menu entry '%s' in "
-											   "%s") % (splitext(filename)[0], 
+											   "%s") % (lnkname, 
 													  (unicode(grppath, "MBCS", 
 															   "replace") if 
 													   type(grppath) != unicode else 
@@ -178,18 +187,18 @@ def postinstall(prefix=None):
 																	   "replace"))
 										continue
 								if not os.path.exists(lnkpath):
-									if filename != "Uninstall":
+									if lnkname != "Uninstall":
 										tgtpath = os.path.join(modpath, 
 															   filename)
 									try:
-										if filename == "Uninstall":
+										if lnkname == "Uninstall":
 											uninstaller = os.path.join(
 												sys.prefix, "Remove%s.exe" % 
 												name)
 											if os.path.exists(uninstaller):
 												create_shortcut(
 													uninstaller, 
-													splitext(filename)[0], 
+													lnkname, 
 													lnkpath, 
 													'-u "%s-wininst.log"' % 
 													os.path.join(sys.prefix, 
@@ -208,7 +217,7 @@ def postinstall(prefix=None):
 												create_shortcut(
 													os.path.join(sys.prefix,
 																 "python.exe"), 
-													splitext(filename)[0], 
+													lnkname, 
 													lnkpath, 
 													'"%s" uninstall '
 													'--record="%s"' % (
@@ -224,27 +233,38 @@ def postinstall(prefix=None):
 														modpath, "theme", 
 														"icons", name + 
 														"-uninstall.ico"))
-										elif filename.endswith(".py"):
+										elif lnkname.startswith(name):
 											# When running from a 
 											# bdist_wininst or bdist_msi 
 											# installer, sys.executable 
 											# points to the installer 
 											# executable, not python.exe
-											create_shortcut(
-												os.path.join(sys.prefix,
-															 "pythonw.exe"), 
-												splitext(filename)[0], 
-												lnkpath, '"%s"' % tgtpath, 
-												modpath, icon)
+											icon = os.path.join(modpath,
+																"theme",
+																"icons",
+																lnkname +
+																".ico")
+											if not os.path.isfile(icon):
+												icon = mainicon
+											if filename.endswith(".exe"):
+												exe = filename
+												args = ""
+											else:
+												exe = os.path.join(sys.prefix,
+																   "pythonw.exe")
+												args = '"%s"' % tgtpath
+											create_shortcut(exe, lnkname, 
+															lnkpath, args, 
+															modpath, icon)
 										else:
 											create_shortcut(
 												tgtpath, 
-												splitext(filename)[0], 
+												lnkname, 
 												lnkpath, "", modpath)
 									except Exception, exception:
 										# maybe insufficient privileges?
 										print ("Failed to create start menu entry '%s' in "
-											   "%s") % (splitext(filename)[0], 
+											   "%s") % (lnkname, 
 													  (unicode(grppath, "MBCS", 
 															   "replace") if 
 													   type(grppath) != unicode else 
@@ -252,7 +272,7 @@ def postinstall(prefix=None):
 																	   "replace"))
 										continue
 									print ("Installed start menu entry '%s' to "
-										  "%s") % (splitext(filename)[0], 
+										  "%s") % (lnkname, 
 												  (unicode(group, "MBCS", 
 														   "replace") if 
 												   type(group) != unicode else 

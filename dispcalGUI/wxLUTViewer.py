@@ -1412,6 +1412,8 @@ def main(profile=None):
 	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
 	app.frame.Show(True)
 	app.frame.update_controls()
+	if profile and profile.startswith("-"):
+		profile = None
 	if profile:
 		app.frame.drop_handler(profile)
 	else:
@@ -1419,4 +1421,4 @@ def main(profile=None):
 	app.MainLoop()
 
 if __name__ == '__main__':
-    main(*sys.argv[1:2])
+    main(*sys.argv[max(len(sys.argv) - 1, 1):])

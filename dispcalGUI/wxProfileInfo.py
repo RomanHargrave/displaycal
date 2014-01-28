@@ -1418,4 +1418,4 @@ def main(profile=None):
 	writecfg()
 
 if __name__ == "__main__":
-	main(*sys.argv[1:2])
+	main(*sys.argv[max(len(sys.argv) - 1, 1):])

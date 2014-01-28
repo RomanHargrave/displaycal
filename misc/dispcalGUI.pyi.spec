@@ -2,7 +2,7 @@
 sys.path.insert(0, '')
 from dispcalGUI.meta import version
 
-a = Analysis([os.path.join('dispcalGUI', 'dispcalGUI.py')],
+a = Analysis([os.path.join('scripts', 'dispcalGUI')],
              pathex=['.'],
              hiddenimports=[],
              hookspath=None)
@@ -20,7 +20,7 @@ else:
 exe = EXE(pyz,
           a.scripts,
           exclude_binaries=1,
-          name=os.path.join('build', 'pyi.%s' % sys.platform, 'dispcalGUI', 'dispcalGUI%s' % exe_ext),
+          name=os.path.join('build', 'pyi.%s-%s' % (sys.platform, sys.version[:3]), 'dispcalGUI', 'dispcalGUI%s' % exe_ext),
           debug=False,
           strip=sys.platform != 'win32',
           upx=True,
@@ -31,9 +31,9 @@ if sys.platform == 'darwin':
 else:
     res_dir = '.'
 excludes = ['*.backup', '*.bak', '*.~', '.svn']
-dist_dir = os.path.join('dist', 'pyi.%s' % sys.platform, 'dispcalGUI-%s' % version)
+dist_dir = os.path.join('dist', 'pyi.%s-py%s' % (sys.platform, sys.version[:3]), 'dispcalGUI-%s' % version)
 if sys.platform == "darwin":
-    coll_dir = os.path.join('dist', 'pyi.%s' % sys.platform, 'dispcalGUI')
+    coll_dir = os.path.join(os.sep.join(dist_dir.split(os.sep)[:-1]), 'dispcalGUI')
 else:
     coll_dir = dist_dir
 coll = COLLECT(exe,
@@ -46,6 +46,7 @@ coll = COLLECT(exe,
                 (os.path.join(res_dir, 'beep.wav'), os.path.join('dispcalGUI', 'beep.wav'), 'DATA'),
                 (os.path.join(res_dir, 'camera_shutter.wav'), os.path.join('dispcalGUI', 'camera_shutter.wav'), 'DATA'),
                 (os.path.join(res_dir, 'pnp.ids'), os.path.join('dispcalGUI', 'pnp.ids'), 'DATA'),
+                (os.path.join(res_dir, 'quirk.json'), os.path.join('dispcalGUI', 'quirk.json'), 'DATA'),
                 (os.path.join(res_dir, 'linear.cal'), os.path.join('dispcalGUI', 'linear.cal'), 'DATA'),
                 (os.path.join(res_dir, 'test.cal'), os.path.join('dispcalGUI', 'test.cal'), 'DATA'),
                 (os.path.join(res_dir, 'icon-windowed.icns'), os.path.join('dispcalGUI', 'theme', 'icons', 'dispcalGUI.icns'), 'DATA')],

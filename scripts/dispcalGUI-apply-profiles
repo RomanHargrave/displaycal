@@ -8,19 +8,6 @@ Set ICC profiles and load calibration curves for all configured display devices
 
 import sys
 
-if sys.platform == "win32":
-	# Setup sys.path for running frozen
-	# i.e. add C:\Program Files\dispcalGUI\lib\library.zip
-	libpath = "\\".join(sys.executable.replace("/", "\\").split("\\")[:-1]) + "\\library.zip"
-	sys.path.insert(0, libpath)
-
-import os
-
-isexe = sys.platform != "darwin" and getattr(sys, "frozen", False)
-
-if sys.platform == "win32" and os.path.isfile(libpath):
-	sys.frozen = True
-
 
 def apply_profiles():
 	from dispcalGUI import config
@@ -160,13 +147,6 @@ def apply_profiles_and_warn_on_error():
 
 
 def main():
-	parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(sys.executable if isexe else __file__)))
-
-	if not getattr(sys, "frozen", False):
-		# Setup sys.path if running from source
-		if os.path.exists(os.path.join(parent_dir, "dispcalGUI", "__init__.py")):
-			sys.path.insert(0, parent_dir)
-
 	from dispcalGUI.meta import version
 	
 	unknown_option = None
@@ -203,10 +183,6 @@ def main():
 				sys.exit()
 
 		from dispcalGUI import config
-
-		if getattr(sys, "frozen", False):
-			# Add script parent directory to data directories if running frozen
-			config.data_dirs.insert(0, parent_dir)
 
 		config.initcfg()
 

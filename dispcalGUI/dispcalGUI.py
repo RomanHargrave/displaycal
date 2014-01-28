@@ -48,13 +48,11 @@ Decimal = decimal.Decimal
 import getpass
 import glob
 import httplib
-import logging
 import math
 import os
 import platform
 if sys.platform == "darwin":
 	from platform import mac_ver
-	import posix
 import re
 import shutil
 import socket
@@ -83,13 +81,13 @@ import jspacker
 # Config
 import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
-					script_ext, confighome, datahome, data_dirs, defaults, enc, 
-					exe, exe_ext, exedir, fs_enc, getbitmap, geticon, 
+					script_ext, confighome, data_dirs, defaults, enc, 
+					exe, fs_enc, getbitmap, geticon, 
 					get_bitmap_as_icon, get_ccxx_testchart, get_current_profile,
 					get_display_profile, get_data_path, getcfg,
 					get_verified_path, is_ccxx_testchart, is_profile,
 					original_codepage, initcfg, isapp, isexe, profile_ext,
-					pydir, pyext, pyname, pypath, resfiles, runtype, setcfg,
+					pydir, resfiles, setcfg,
 					storage, writecfg)
 
 # Custom modules
@@ -9874,181 +9872,10 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 
 
 def main():
-	log("=" * 80)
-	if verbose >= 1:
-		safe_print(appname + runtype, version, build)
-	if sys.platform == "darwin":
-		safe_print("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
-	else:
-		if sys.platform == "win32":
-			# http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832%28v=vs.85%29.aspx
-			ver2name = {(5, 0): "2000",
-						(5, 1): "XP",
-						(5, 2): "XP 64-Bit/Server 2003/Server 2003 R2",
-						(6, 0): "Vista/Server 2008",
-						(6, 1): "7/Server 2008 R2",
-						(6, 2): "8/Server 2012"}
-			dist = ver2name.get(sys.getwindowsversion()[:2], "N/A")
-		else:
-			dist = "%s %s %s" % getattr(platform, "linux_distribution", 
-										platform.dist)()
-		safe_print("%s %s (%s)" % (platform.system(), platform.version(), dist))
-	safe_print("Python " + sys.version)
-	safe_print("wxPython " + wx.version())
-	try:
-		# Force to run inside tty with the --terminal option
-		if "--terminal" in sys.argv[1:]:
-			terminals_opts = {
-				"Terminal": "-x",
-				"gnome-terminal": "-x",
-				"konsole": "-e",
-				"xterm": "-e"
-			}
-			terminals = terminals_opts.keys()
-			if isapp:
-				me = os.path.join(exedir, pyname)
-				cmd = u'"%s"' % me
-				cwd = None
-			elif isexe:
-				me = exe
-				if sys.platform == "win32":
-					cmd = u'"%s"' % win32api.GetShortPathName(exe)
-				else:
-					cmd = u'"%s"' % exe
-				cwd = None
-			else:
-				me = pypath
-				if os.path.basename(exe) == "pythonw" + exe_ext:
-					python = os.path.join(os.path.dirname(exe), 
-										  "python" + exe_ext)
-				if sys.platform == "win32":
-					cmd = u'"%s" "%s"' % tuple(
-						[win32api.GetShortPathName(path) for path in (python, 
-																	  pypath)])
-					cwd = win32api.GetShortPathName(pydir)
-				else:
-					cmd = u'"%s" "%s"' % (python, pypath)
-					cwd = pydir.encode(fs_enc)
-			safe_print("Re-launching instance in terminal")
-			if sys.platform == "win32":
-				cmd = u'start "%s" /WAIT %s' % (appname, cmd)
-				if debug: safe_print("[D]", cmd)
-				retcode = sp.call(cmd.encode(fs_enc), shell=True, cwd=cwd)
-			elif sys.platform == "darwin":
-				if debug: safe_print("[D]", cmd)
-				retcode, output, errors = mac_terminal_do_script(cmd)
-			else:
-				stdout = tempfile.SpooledTemporaryFile()
-				retcode = None
-				for terminal in terminals:
-					if which(terminal):
-						if debug:
-							safe_print("[D] %s %s %s" % 
-									   (terminal, terminals_opts[terminal], 
-										cmd))
-						stdout.write('%s %s %s' % 
-									 (terminal, terminals_opts[terminal], 
-									  cmd.encode(fs_enc)))
-						retcode = sp.call(
-							[terminal, terminals_opts[terminal]] + 
-							cmd.encode(fs_enc).strip('"').split('" "'), 
-							stdout=stdout, stderr=sp.STDOUT, cwd=cwd)
-						stdout.write('\n\n')
-						break
-				stdout.seek(0)
-			if retcode != 0:
-				app = wx.App(redirect=False)
-				if sys.platform == "win32":
-					msg = (u'Even though %s is a GUI application, it needs to '
-						   'be run from a command prompt. An attempt to '
-						   'automatically launch a command prompt failed.' % me)
-				elif sys.platform == "darwin":
-					msg = (u'Even though %s is a GUI application, it needs to '
-						   'be run from Terminal. An attempt to automatically '
-						   'launch Terminal failed.' % me)
-				else:
-					if retcode is None:
-						msg = (u'Even though %s is a GUI application, it needs '
-							   'to be run from a terminal. An attempt to '
-							   'automatically launch a terminal failed, '
-							   'because none of those known seem to be '
-							   'installed (%s).' % (me, ", ".join(terminals)))
-					else:
-						msg = (u'Even though %s is a GUI application, it needs '
-							   'to be run from a terminal. An attempt to '
-							   'automatically launch a terminal failed:\n\n%s' %
-							   (me, unicode(stdout.read(), enc, "replace")))
-				handle_error(msg)
-		else:
-			if sys.platform == "darwin" and ("--admin" not in sys.argv[1:] 
-											 and 80 not in posix.getgroups()):
-				# GID 80 is the admin group on Mac OS X
-				# Argyll dispwin/dispcal need admin (not root) privileges
-				if isapp:
-					cmd = os.path.join(exedir, pyname)
-				else:
-					cmd = u"'%s' '%s'" % (exe, pypath)
-				sp.Popen(['osascript', '-e', 
-						  'do shell script "%s --admin" with administrator privileges' 
-						 % cmd.encode(fs_enc)])
-				sys.exit(0)
-			# Create main data dir if it does not exist
-			if not os.path.exists(datahome):
-				try:
-					os.makedirs(datahome)
-				except Exception, exception:
-					handle_error("Warning - could not create directory '%s'" % 
-								 datahome)
-			if sys.platform not in ("darwin", "win32"):
-				# Linux: Try and fix v0.2.1b calibration loader, because 
-				# calibrationloader.sh is no longer present in v0.2.2b+
-				desktopfile_name = appname + "-Calibration-Loader-Display-"
-				if autostart_home and os.path.exists(autostart_home):
-					try:
-						autostarts = os.listdir(autostart_home)
-					except Exception, exception:
-						safe_print(u"Warning - directory '%s' listing failed: "
-								   u"%s" % tuple(safe_unicode(s) for s in 
-												 (autostarts, exception)))
-					for filename in autostarts:
-						if filename.startswith(desktopfile_name):
-							try:
-								desktopfile_path = os.path.join(autostart_home, 
-																filename)
-								cfg = ConfigParser.SafeConfigParser()
-								cfg.optionxform = str
-								cfg.read([desktopfile_path])
-								exec_ = cfg.get("Desktop Entry", "Exec")
-								if exec_.find("calibrationloader.sh") > -1:
-									cfg.set(
-										"Desktop Entry", "Exec", 
-										re.sub('"[^"]*calibrationloader.sh"\s*', 
-											   '', exec_, 1))
-									cfgio = StringIO()
-									cfg.write(cfgio)
-									desktopfile = open(desktopfile_path, "w")
-									cfgio.seek(0)
-									desktopfile.write("".join(["=".join(line.split(" = ", 1)) 
-															   for line in cfgio]))
-									desktopfile.close()
-							except Exception, exception:
-								safe_print("Warning - could not process old "
-										   "calibration loader:", 
-										   safe_unicode(exception))
-			# Initialize & run
-			initcfg()
-			lang.init()
-			app = MainApp(redirect=False)  # Don't redirect stdin/stdout
-			app.MainLoop()
-	except Exception, exception:
-		handle_error(u"Fatal error: " + safe_unicode(traceback.format_exc()))
-	try:
-		logger = logging.getLogger(appname)
-		for handler in logger.handlers:
-			logger.removeHandler(handler)
-		logging.shutdown()
-	except Exception, exception:
-		pass
+	initcfg()
+	lang.init()
+	app = MainApp(redirect=False)  # Don't redirect stdin/stdout
+	app.MainLoop()
 
 if __name__ == "__main__":
 	

@@ -2714,13 +2714,11 @@ def main(testchart=None):
 	lang.init()
 	lang.update_defaults()
 	app = wx.App(0)
+	if testchart and testchart.startswith("-"):
+		testchart = None
 	app.tcframe = TestchartEditor(path=testchart)
 	app.tcframe.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":
-	argv = []
-	for arg in sys.argv:
-		if arg[0] != "-":
-			argv.append(arg)
-	main(*argv[1:2])
+	main(*sys.argv[max(len(sys.argv) - 1, 1):])

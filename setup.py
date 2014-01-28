@@ -91,7 +91,6 @@ def setup():
 	onefile = "-F" in sys.argv[1:] or "--onefile" in sys.argv[1:]
 	purge = "purge" in sys.argv[1:]
 	purge_dist = "purge_dist" in sys.argv[1:]
-	suffix = "onefile" if onefile else "onedir"
 	use_setuptools = "--use-setuptools" in sys.argv[1:]
 	
 	argv = list(sys.argv[1:])
@@ -437,8 +436,7 @@ def setup():
 
 	if inno and sys.platform == "win32":
 		inno_template_path = os.path.join(pydir, "misc", "%s-Setup-%s.iss" % 
-										  (name, ("pyi-" + 
-												  suffix if bdist_pyi else 
+										  (name, ("pyi" if bdist_pyi else 
 												  bdist_cmd)))
 		inno_template = open(inno_template_path, "r")
 		inno_script = inno_template.read().decode("UTF-8", "replace") % {
@@ -671,26 +669,17 @@ def setup():
 
 		# create an executable using pyinstaller
 
-		if sys.platform != "win32": # Linux/Mac OS X
-			retcode = call([sys.executable, "Make.py"], 
-				cwd = os.path.join(pydir, "pyinstaller", "source", "linux"))
-			if retcode != 0:
-				sys.exit(retcode)
-			retcode = call(["make"], cwd = os.path.join(pydir, "pyinstaller", 
-														"source", "linux"))
-			if retcode != 0:
-				sys.exit(retcode)
-		retcode = call([sys.executable, "-O", os.path.join(pydir, 
-														   "pyinstaller", 
-														   "Configure.py")])
-		retcode = call([sys.executable, "-O", os.path.join(pydir, 
-														   "pyinstaller", 
-														   "Build.py"), 
-						"-o", os.path.join(pydir, "build", "pyi.%s-%s-%s" % 
-										   (get_platform(), sys.version[:3], 
-										   suffix), name + "-" + version), 
-						os.path.join(pydir, "misc", "%s-pyi-%s.spec" % 
-									 (name, suffix))])
+		retcode = call([sys.executable, os.path.join(pydir, "pyinstaller", 
+													 "pyinstaller.py"), 
+						"--workpath", os.path.join(pydir, "build",
+												   "pyi.%s-%s" %
+												   (get_platform(),
+												    sys.version[:3])),
+						"--distpath", os.path.join(pydir, "dist",
+												   "pyi.%s-py%s" %
+													(get_platform(),
+													 sys.version[:3])),
+						os.path.join(pydir, "misc", "%s.pyi.spec" % name)])
 		if retcode != 0:
 			sys.exit(retcode)
 
