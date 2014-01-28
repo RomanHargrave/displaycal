@@ -8,28 +8,23 @@ Interactive display calibration UI
 
 from __future__ import with_statement
 from time import strftime
-import codecs
-import math
 import os
 import re
 import sys
-import time
 
 from wxaddons import wx
 
-from config import (getbitmap, getcfg, get_icon_bundle, get_data_path,
+from config import (getbitmap, getcfg, get_icon_bundle,
 					get_display_number, get_display_rects, get_verified_path,
 					setcfg)
 from log import get_file_logger, safe_print
 from meta import name as appname, version as appversion
 from util_os import launch_file, waccess
-from util_str import center
 from wxaddons import CustomEvent
 from wxMeasureFrame import MeasureFrame
 from wxwindows import FlatShadedButton, numpad_keycodes
 import colormath
 import config
-import jspacker
 import localization as lang
 import report
 

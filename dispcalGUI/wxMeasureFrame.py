@@ -7,7 +7,7 @@ import sys
 import config
 import localization as lang
 from config import (btn_width_correction, defaults, getcfg, geticon, 
-					get_bitmap_as_icon, get_data_path, get_display_number, 
+					get_display_number, 
 					get_display_rects, scale_adjustment_factor, setcfg,
 					writecfg)
 from debughelpers import handle_error
@@ -16,7 +16,7 @@ from meta import name as appname
 from options import debug
 from util_list import floatlist, strlist
 from util_str import safe_unicode
-from wxaddons import CustomEvent, wx
+from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, InvincibleFrame
 try:
 	import RealDisplaySizeMM as RDSMM

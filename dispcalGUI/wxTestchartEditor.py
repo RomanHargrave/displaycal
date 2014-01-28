@@ -14,7 +14,7 @@ import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ, XYZ2RGB as argyll_XYZ2RGB
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
 from config import (btn_width_correction, defaults, getcfg, geticon, 
-					get_bitmap_as_icon, get_current_profile, get_data_path,
+					get_current_profile, get_data_path,
 					get_total_patches, get_verified_path, hascfg, setcfg,
 					writecfg)
 from debughelpers import handle_error

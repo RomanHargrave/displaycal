@@ -39,13 +39,9 @@ sys.excepthook = _early_excepthook
 
 # Standard modules
 
-import ConfigParser
-ConfigParser.DEFAULTSECT = "Default"
-import codecs
 import datetime
 import decimal
 Decimal = decimal.Decimal
-import getpass
 import glob
 import httplib
 import math
@@ -57,38 +53,28 @@ import re
 import shutil
 import socket
 import subprocess as sp
-import tempfile
 import threading
 import traceback
 import urllib
-from encodings.aliases import aliases
 from hashlib import md5
-from time import gmtime, sleep, strftime, strptime, time, struct_time
+from time import strftime, strptime, struct_time
 from zlib import crc32
 
 # 3rd party modules
 
 import demjson
-if sys.platform == "win32":
-	from ctypes import windll
-	from win32com.shell import shell
-	from win32console import SetConsoleOutputCP
-	import pythoncom
-	import win32api
-	import win32con
-import jspacker
 
 # Config
 import config
 from config import (autostart, autostart_home, btn_width_correction, build, 
-					script_ext, confighome, data_dirs, defaults, enc, 
+					script_ext, defaults, enc, 
 					exe, fs_enc, getbitmap, geticon, 
-					get_bitmap_as_icon, get_ccxx_testchart, get_current_profile,
+					get_ccxx_testchart, get_current_profile,
 					get_display_profile, get_data_path, getcfg,
 					get_verified_path, is_ccxx_testchart, is_profile,
-					original_codepage, initcfg, isapp, isexe, profile_ext,
+					initcfg, isapp, isexe, profile_ext,
 					pydir, resfiles, setcfg,
-					storage, writecfg)
+					writecfg)
 
 # Custom modules
 
@@ -104,42 +90,36 @@ if sys.platform == "win32":
 	import util_win
 import wexpect
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
-						  extract_cal_from_ti3, ti3_to_ti1, vcgt_to_cal,
+						  ti3_to_ti1, vcgt_to_cal,
 						  verify_ti1_rgb_xyz)
 from argyll_instruments import (get_canonical_instrument_name, instruments)
-from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
-						  viewconds)
+from argyll_names import viewconds
 from colormath import (CIEDCCT2xyY, planckianCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, 
 					   XYZ2xyY)
 from debughelpers import getevtobjname, getevttype, handle_error
-if sys.platform not in ("darwin", "win32"):
-	from defaultpaths import (iccprofiles_home, iccprofiles_display_home, 
-							  xdg_config_home, xdg_config_dirs)
 from edid import pnpidcache, get_manufacturer_name
-from log import _safe_print, log, logbuffer, safe_print
+from log import log, logbuffer, safe_print
 from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
 from ordereddict import OrderedDict
 from trash import trash, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_http import encode_multipart_formdata
-from util_io import Files, StringIOu as StringIO
-from util_list import index_fallback_ignorecase, intlist, natsort
-if sys.platform == "darwin":
-	from util_mac import mac_terminal_do_script
+from util_io import StringIOu as StringIO
+from util_list import index_fallback_ignorecase, natsort
 from util_os import (expanduseru, getenvu, is_superuser, launch_file, 
 					 listdir_re, waccess, which)
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
-from worker import (Error, FilteredStream, Info, LineCache, UnloggedInfo, Warn,
-					Worker, check_cal_isfile, check_create_dir,
-					check_file_isfile, check_profile_isfile,
+from worker import (Error, Info, UnloggedInfo, Warn,
+					Worker, check_create_dir,
+					check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
 					check_ti3_criteria2, get_argyll_util, get_options_from_cal,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path, parse_argument_string,
-					printcmdline, set_argyll_bin, show_result_dialog)
+					set_argyll_bin, show_result_dialog)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -151,10 +131,10 @@ from wxProfileInfo import ProfileInfoFrame
 from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
-from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop, IsSizer
+from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop
 from wxwindows import (AboutDialog, BaseFrame, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
-					   InvincibleFrame, LogWindow, ProgressDialog,
+					   LogWindow, ProgressDialog,
 					   TooltipWindow)
 try:
 	import wx.lib.agw.floatspin as floatspin

@@ -4,8 +4,7 @@ import os
 import sys
 
 from ICCProfile import ICCProfile
-from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
-					setcfg)
+from config import get_data_path, get_verified_path, getcfg, hascfg, setcfg
 from log import safe_print
 from meta import name as appname
 from util_os import waccess

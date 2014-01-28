@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from decimal import Decimal
 import math
 import os
 import re
 import subprocess as sp
 import sys
 import tempfile
-import traceback
 
 from numpy import interp
 
 from argyll_cgats import cal_to_fake_profile, vcgt_to_cal
-from config import (fs_enc, get_bitmap_as_icon, get_display_profile,
+from config import (fs_enc, get_display_profile,
 					get_display_rects, getcfg, geticon, setcfg)
 from log import safe_print
 from meta import name as appname
@@ -22,14 +20,12 @@ from util_os import waccess
 from worker import (Error, Worker, get_argyll_util, make_argyll_compatible_path,
 					show_result_dialog)
 from wxaddons import FileDrop, wx
-from wxenhancedplot import _Numeric
 from wxMeasureFrame import MeasureFrame
 from wxwindows import InfoDialog
 import colormath
 import config
 import wxenhancedplot as plot
 import localization as lang
-import CGATS
 import ICCProfile as ICCP
 
 BGCOLOUR = "#333333"

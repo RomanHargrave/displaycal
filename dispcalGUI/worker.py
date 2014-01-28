@@ -26,7 +26,6 @@ elif sys.platform == "win32":
 
 # 3rd party
 if sys.platform == "win32":
-	import pywintypes
 	import win32api
 elif sys.platform != "darwin":
 	try:
@@ -56,17 +55,15 @@ from argyll_instruments import (get_canonical_instrument_name,
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  optional as argyll_optional, viewconds, intents)
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
-					exe_ext, fs_enc, getcfg, geticon, get_ccxx_testchart,
+					exe_ext, fs_enc, getcfg, geticon,
 					get_data_path, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, profile_ext, pydir, setcfg, writecfg)
-from debughelpers import handle_error
 if sys.platform not in ("darwin", "win32"):
-	from defaultpaths import (iccprofiles_home, iccprofiles_display_home, 
-							  xdg_config_home, xdg_config_dirs)
+	from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 from meta import name as appname, version
-from options import ascii, debug, test, test_require_sensor_cal, verbose
+from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from trash import trash
 from util_io import Files, GzipFileProper, StringIOu as StringIO
@@ -77,7 +74,7 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
 	import util_win
 import colord
-from util_os import getenvu, is_superuser, movefile, putenvu, quote_args, which
+from util_os import getenvu, is_superuser, putenvu, quote_args, which
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal

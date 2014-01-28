@@ -11,20 +11,16 @@ import re
 import sys
 
 from wxaddons import wx
-from wx.lib import delayedresult
 from lib.agw import labelbook
 from lib.agw.fmresources import *
 from lib.agw.pygauge import PyGauge
-from lib.agw.artmanager import ArtManager
 
-from config import (get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg,
-					valid_values)
+from config import get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg
 from log import get_file_logger
 from meta import name as appname
 from ordereddict import OrderedDict
 from util_str import wrap
 from wxwindows import FlatShadedButton, numpad_keycodes
-import colormath
 import config
 import localization as lang
 

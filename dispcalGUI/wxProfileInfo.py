@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 
-from config import (defaults, fs_enc, get_bitmap_as_icon, get_data_path,
+from config import (defaults, fs_enc, get_data_path,
 					get_display_profile, getbitmap, getcfg, geticon, setcfg,
 					writecfg)
 from meta import name as appname
@@ -16,7 +16,6 @@ from util_str import safe_unicode, universal_newlines, wrap
 from worker import (Error, check_set_argyll_bin, get_argyll_util,
 					show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
-from wxenhancedplot import _Numeric
 from wxLUTViewer import LUTCanvas, LUTFrame
 from wxwindows import (BitmapBackgroundPanelText, FileDrop, InfoDialog,
 					   SimpleBook, TwoWaySplitter)

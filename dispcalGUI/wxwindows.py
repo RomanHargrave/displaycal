@@ -7,13 +7,11 @@ import sys
 
 import config
 from config import (btn_width_correction, defaults, getbitmap, getcfg, geticon, 
-					get_bitmap_as_icon, get_data_path, get_verified_path, 
-					setcfg)
+					get_verified_path, setcfg)
 from debughelpers import getevtobjname, getevttype
 from log import log as log_, safe_print
 from meta import name as appname
 from options import debug
-from thread import start_new_thread
 from util_os import waccess
 from util_str import safe_unicode, wrap
 from wxaddons import (CustomEvent, FileDrop as _FileDrop, get_dc_font_size,
