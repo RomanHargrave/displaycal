@@ -1254,11 +1254,12 @@ Transform {
 			elif "CMYK_C" in data_format.values():
 				white = {"CMYK_C": 0, "CMYK_M": 0, "CMYK_Y": 0, "CMYK_K": 0}
 			else:
-				return
+				white = None
 			if white:
 				white = self.queryi1(white)
-				if not white:
-					white = self.queryv1("APPROX_WHITE_POINT")
+			if not white:
+				for key in ("LUMINANCE_XYZ_CDM2", "APPROX_WHITE_POINT"):
+					white = self.queryv1(key)
 					if white:
 						try:
 							white = [float(v) for v in white.split()]
@@ -1270,29 +1271,32 @@ Transform {
 								white = {"XYZ_X": white[0],
 										 "XYZ_Y": white[1],
 										 "XYZ_Z": white[2]}
+								break
 							else:
-								return
-				if white and (("XYZ_X" in white and
-							   "XYZ_Y" in white and
-							   "XYZ_Z" in white) or ("LAB_L" in white and
-													 "LAB_B" in white and
-													 "LAB_B" in white)):
-					if colorspace == "XYZ":
-						if "XYZ_X" in white:
-							return white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
-						else:
-							return colormath.Lab2XYZ(white["LAB_L"],
-													 white["LAB_A"],
-													 white["LAB_B"],
-													 scale=100)
-					elif colorspace == "Lab":
-						if "LAB_L" in white:
-							return white["LAB_L"], white["LAB_A"], white["LAB_B"]
-						else:
-							return colormath.XYZ2Lab(white["XYZ_X"],
-													 white["XYZ_Y"],
-													 white["XYZ_Z"])
-					return white
+								white = None
+				if not white:
+					return
+			if white and (("XYZ_X" in white and
+						   "XYZ_Y" in white and
+						   "XYZ_Z" in white) or ("LAB_L" in white and
+												 "LAB_B" in white and
+												 "LAB_B" in white)):
+				if colorspace == "XYZ":
+					if "XYZ_X" in white:
+						return white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
+					else:
+						return colormath.Lab2XYZ(white["LAB_L"],
+												 white["LAB_A"],
+												 white["LAB_B"],
+												 scale=100)
+				elif colorspace == "Lab":
+					if "LAB_L" in white:
+						return white["LAB_L"], white["LAB_A"], white["LAB_B"]
+					else:
+						return colormath.XYZ2Lab(white["XYZ_X"],
+												 white["XYZ_Y"],
+												 white["XYZ_Z"])
+				return white
 	
 	def has_cie(self):
 		"""
