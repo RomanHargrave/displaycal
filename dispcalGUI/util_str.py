@@ -257,7 +257,7 @@ def safe_basestring(obj):
 		#   (created by EnvironmentError with one or more than three arguments)
 		args = [safe_unicode(arg) for arg in obj.args]
 		if obj.filename is not None:
-			obj = "[Errno %s] %s: %r" % (args[0], args[1], obj.filename)
+			obj = "[Errno %s] %s: %s" % (args[0], args[1], safe_unicode(obj.filename))
 		elif obj.strerror is not None:
 			obj = "[Errno %s] %s" % (args[0], args[1])
 		elif obj.errno is not None:
