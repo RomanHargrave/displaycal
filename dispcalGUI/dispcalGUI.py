@@ -6107,7 +6107,8 @@ class MainFrame(BaseFrame):
 					   profile.getDescription() if profile else None, 
 					   "show:", show)
 		if LUTFrame:
-			if not getattr(self, "lut_viewer", None):
+			lut_viewer = getattr(self, "lut_viewer", None)
+			if not lut_viewer:
 				self.lut_viewer = LUTFrame(None, -1)
 				self.lut_viewer.client.worker = self.worker
 				self.lut_viewer.Bind(wx.EVT_CLOSE, 
@@ -6122,12 +6123,12 @@ class MainFrame(BaseFrame):
 							profile = ICCP.ICCProfile(path)
 						except (IOError, ICCP.ICCProfileInvalidError), \
 							   exception:
-							InfoDialog(self, 
-									   msg=lang.getstr("profile.invalid") + 
-										   "\n" + path, 
-									   ok=lang.getstr("ok"), 
-									   bitmap=geticon(32, "dialog-error"))
-							return
+							msg = lang.getstr("profile.invalid") + "\n" + path
+							if event or not lut_viewer:
+								show_result_dialog(Error(msg), self)
+							else:
+								safe_print(msg)
+							profile = None
 					else:
 						profile = cal_to_fake_profile(path)
 				else:
