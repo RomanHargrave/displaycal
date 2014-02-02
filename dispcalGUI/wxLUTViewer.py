@@ -10,8 +10,8 @@ import tempfile
 from numpy import interp
 
 from argyll_cgats import cal_to_fake_profile, vcgt_to_cal
-from config import (fs_enc, get_display_profile,
-					get_display_rects, getcfg, geticon, setcfg)
+from config import (fs_enc, get_display_profile, get_display_rects, getcfg,
+					geticon, get_verified_path, setcfg)
 from log import safe_print
 from meta import name as appname
 from options import debug
@@ -1264,6 +1264,7 @@ class LUTFrame(wx.Frame):
 		if (event and hasattr(self, "save_vcgt_btn") and
 			event.GetId() == self.save_vcgt_btn.GetId()):
 			extensions = {"cal": 1}
+			defType = "cal"
 		else:
 			extensions = {
 				"bmp": wx.BITMAP_TYPE_BMP,       # Save a Windows bitmap file.
@@ -1272,8 +1273,11 @@ class LUTFrame(wx.Frame):
 				"jpg": wx.BITMAP_TYPE_JPEG,      # Save a JPG file.
 				"png": wx.BITMAP_TYPE_PNG,       # Save a PNG file.
 				}
+			defType = "png"
 
-		fType = fileName[-3:].lower()
+		fileName += "." + defType
+
+		fType = None
 		dlg1 = None
 		while fType not in extensions:
 
@@ -1285,11 +1289,13 @@ class LUTFrame(wx.Frame):
 			else:                      # FileDialog doesn't exist: just check one
 				dlg1 = wx.FileDialog(
 					self, 
-					lang.getstr("save_as"), ".", fileName,
+					lang.getstr("save_as"),
+					get_verified_path("last_filedialog_path")[0], fileName,
 					"|".join(["%s (*.%s)|*.%s" % (ext.upper(), ext, ext)
-							  for ext in extensions.keys()]),
+							  for ext in sorted(extensions.keys())]),
 					wx.SAVE|wx.OVERWRITE_PROMPT
 					)
+				dlg1.SetFilterIndex(sorted(extensions.keys()).index(defType))
 
 			if dlg1.ShowModal() == wx.ID_OK:
 				fileName = dlg1.GetPath()
@@ -1298,6 +1304,7 @@ class LUTFrame(wx.Frame):
 														 fileName)), self)
 					return
 				fType = fileName[-3:].lower()
+				setcfg("last_filedialog_path", fileName)
 			else:                      # exit without saving
 				dlg1.Destroy()
 				return False
