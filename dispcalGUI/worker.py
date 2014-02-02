@@ -5124,7 +5124,8 @@ class Worker(object):
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
 					 check_missing_fields=False, function="f", pcs="l",
-					 intent="r", bt1886=None, add_white_patches=True):
+					 intent="r", bt1886=None, add_white_patches=True,
+					 raise_exceptions=False):
 		""" Lookup CIE or device values through profile """
 		if profile.colorSpace == "RGB":
 			labels = ('RGB_R', 'RGB_G', 'RGB_B')
@@ -5182,6 +5183,8 @@ class Worker(object):
 				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile, fields,
 													  intent, add_white_patches)
 		except Exception, exception:
+			if raise_exceptions:
+				raise exception
 			InfoDialog(self.owner, msg=safe_unicode(exception), 
 					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
 		return ti1, ti3_ref, gray

@@ -1409,7 +1409,8 @@ class TestchartEditor(wx.Frame):
 					void, ti3, void = self.worker.chart_lookup(chart, 
 															   profile,
 															   intent=intent,
-															   add_white_patches=False)
+															   add_white_patches=False,
+															   raise_exceptions=True)
 				except Exception, exception:
 					return exception
 				if ti3:
