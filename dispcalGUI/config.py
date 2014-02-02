@@ -42,6 +42,7 @@ if ascii:
 
 exe = unicode(sys.executable, fs_enc)
 exedir = os.path.dirname(exe)
+exename = os.path.basename(exe)
 
 isexe = sys.platform != "darwin" and getattr(sys, "frozen", False)
 

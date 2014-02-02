@@ -19,8 +19,9 @@ if pyver < py_minversion or pyver > py_maxversion:
 						".".join(str(n) for n in py_maxversion),
 					    sys.version.split()[0]))
 
-from config import (autostart_home, datahome, enc, exe, exe_ext, exedir, fs_enc,
-					isapp, isexe, pydir, pyname, pypath, runtype)
+from config import (autostart_home, datahome, enc, exe, exe_ext, exedir, 
+					exename, fs_enc, isapp, isexe, pydir, pyname, pypath,
+					runtype)
 from debughelpers import handle_error
 from log import log, safe_print
 from meta import build, name as appname, version
@@ -150,7 +151,11 @@ def main(module=None):
 				# Argyll dispwin/dispcal need admin (not root) privileges
 				import subprocess as sp
 				if isapp:
-					cmd = u"'%s'" % os.path.join(exedir, appname)
+					# PyInstaller: executable is app-specific
+					# py2app: executable is always the same, differentiation
+					# occurs in Resources/main.py
+					cmd = u"'%s'" % (exe if exename.startswith(appname)
+									 else os.path.join(exedir, appname))
 				else:
 					cmd = u"'%s' '%s'" % (exe, pypath)
 				sp.Popen(['osascript', '-e', 

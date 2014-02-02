@@ -27,6 +27,7 @@ from __future__ import with_statement
 from ConfigParser import ConfigParser
 from distutils.command.install import install
 from distutils.util import change_root, get_platform
+from fnmatch import fnmatch
 import codecs
 import distutils.core
 import glob
@@ -45,14 +46,94 @@ from meta import (author, author_ascii, description, longdesc, domain, name,
 				  wx_minversion)
 from util_os import relpath
 
+bits = platform.architecture()[0][:2]
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 basedir = os.path.dirname(pydir)
+
+config = {"data": ["tests/*.icc"],
+		  "doc": ["LICENSE.txt",
+				  "README.html",
+				  "screenshots/*.png",
+				  "theme/*.png",
+				  "theme/*.css",
+				  "theme/*.js",
+				  "theme/icons/favicon.ico",
+				  "theme/slimbox2/*.css",
+				  "theme/slimbox2/*.js"],
+		  # Excludes for .app/.exe builds
+		  # numpy.lib.utils imports pydoc, which imports Tkinter, but 
+		  # numpy.lib.utils is not even used by dispcalGUI, so omit all 
+		  # Tk stuff
+		  "excludes": {"all": ["Tkconstants", "Tkinter", "setuptools", "tcl",
+							   "test"],
+					   "darwin": [],
+					   "win32": ["win32com.client.genpy"]},
+		  "package_data": {name: ["argyll_instruments.json",
+								  "beep.wav",
+								  "camera_shutter.wav",
+								  "lang/*.json",
+								  "linear.cal",
+								  "pnp.ids",
+								  "presets/*.icc",
+								  "quirk.json",
+								  "ref/*.cie",
+								  "ref/*.gam",
+								  "ref/*.icm",
+								  "ref/*.ti1",
+								  "report/*.css",
+								  "report/*.html",
+								  "report/*.js",
+								  "test.cal",
+								  "theme/*.png",
+								  "theme/icons/10x10/*.png",
+								  "theme/icons/16x16/*.png",
+								  "theme/icons/32x32/*.png",
+								  "theme/icons/72x72/*.png",
+								  "ti1/*.ti1",
+								  "xrc/*.xrc"]},
+		  "xtra_package_data": {name: {"win32": ["theme/icons/%s-uninstall.ico"
+												 % name]}}}
+
+
+def add_lib_excludes(key, excludebits):
+	for exclude in excludebits:
+		config["excludes"][key] += [name + ".lib" + exclude,
+									"lib" + exclude]
+	if len(excludebits) == 1:
+		config["excludes"][key] += [name + ".lib"]
+	for exclude in ("32", "64"):
+		for pycompat in ("25", "26", "27"):
+			if (len(excludebits) == 1 and
+				(pycompat == sys.version[0] + sys.version[2] or
+				 exclude == excludebits[0])):
+				continue
+			config["excludes"][key] += [name + ".lib%s.python%s" %
+										(exclude, pycompat),
+										name + ".lib%s.python%s.RealDisplaySizeMM" %
+										(exclude, pycompat)]
+
+
+add_lib_excludes("darwin", ["32", "64"])
+add_lib_excludes("win32", ["64" if bits == "32" else "32"])
 
 msiversion = ".".join((str(version_tuple[0]), 
 					   str(version_tuple[1]), 
 					   str(version_tuple[2]) + 
 					   str(version_tuple[3])))
+
+plist_dict = {"CFBundleDevelopmentRegion": "English",
+			  "CFBundleExecutable": name,
+			  "CFBundleGetInfoString": version,
+			  "CFBundleIdentifier": ".".join(reversed(domain.split("."))),
+			  "CFBundleInfoDictionaryVersion": "6.0",
+			  "CFBundleLongVersionString": version,
+			  "CFBundleName": name,
+			  "CFBundlePackageType": "APPL",
+			  "CFBundleShortVersionString": version,
+			  "CFBundleSignature": "????",
+			  "CFBundleVersion": ".".join(map(str, version_tuple)),
+			  "NSHumanReadableCopyright": u"© %s %s" % (strftime("%Y"), author)}
 
 
 class Target:
@@ -60,9 +141,143 @@ class Target:
 		self.__dict__.update(kwargs)
 
 
-def setup():
-	bits = platform.architecture()[0][:2]
+def create_app_symlinks(dist_dir, scripts):
+	maincontents = os.path.join(dist_dir, name + ".app", "Contents")
+	# Create ref, tests, ReadMe and license symlinks in directory
+	# containing the app bundle
+	for src, tgt in [("ref", "Reference"),
+					 ("tests", "Tests"),
+					 ("README.html", "README.html"),
+					 ("LICENSE.txt", "LICENSE.txt")]:
+		src = os.path.join(maincontents, "Resources", src)
+		tgt = os.path.join(dist_dir, tgt)
+		if os.path.islink(tgt):
+			os.unlink(tgt)
+		os.symlink(src, tgt)
+	# Create standalone tools app bundles by symlinking to the main bundle
+	toolscripts = filter(lambda script: script != name,
+						 [script for script, desc in scripts])
+	for script, desc in scripts:
+		if script in (name, name + "-apply-profiles"):
+			continue
+		toolname = desc.replace(name, "").strip()
+		toolapp = os.path.join(dist_dir, toolname + ".app")
+		if os.path.isdir(toolapp):
+			if raw_input('WARNING: The output directory "%s" and ALL ITS '
+                         'CONTENTS will be REMOVED! Continue? (y/n)' % toolapp).lower() == 'y':
+				print "Removing dir", toolapp
+				shutil.rmtree(toolapp)
+			else:
+				raise SystemExit('User aborted')
+		has_tool_script = os.path.exists(os.path.join(maincontents, 'MacOS',
+													  script))
+		toolcontents = os.path.join(toolapp, "Contents")
+		os.makedirs(toolcontents)
+		subdirs = ["Frameworks", "Resources"]
+		if has_tool_script:
+			# PyInstaller
+			subdirs.append("MacOS")
+		for entry in os.listdir(maincontents):
+			if entry in subdirs:
+				os.makedirs(os.path.join(toolcontents, entry))
+				for subentry in os.listdir(os.path.join(maincontents,
+														entry)):
+					src = os.path.join(maincontents, entry, subentry)
+					tgt = os.path.join(toolcontents, entry, subentry)
+					if subentry == "main.py":
+						# py2app
+						with open(src, "rb") as main_in:
+							py = main_in.read()
+						py = py.replace("main()",
+										"main(%r)" %
+										script[len(name) + 1:])
+						with open(tgt, "wb") as main_out:
+							main_out.write(py)
+						continue
+					if subentry == name + ".icns":
+						shutil.copy(os.path.join(pydir, "theme",
+												 "icons", 
+												 "%s.icns" % script),
+									os.path.join(toolcontents, entry, 
+												 "%s.icns" % script))
+						continue
+					if subentry == script:
+						# PyInstaller
+						os.rename(src, tgt)
+					elif subentry not in toolscripts:
+						os.symlink(src, tgt)
+			elif entry == "Info.plist":
+				with codecs.open(os.path.join(maincontents, entry), "r",
+								 "UTF-8") as info_in:
+					infoxml = info_in.read()
+				# CFBundleName / CFBundleDisplayName
+				infoxml = re.sub("(Name</key>\s*<string>)%s" % name,
+								 lambda match: match.group(1) +
+											   toolname, infoxml)
+				# CFBundleIdentifier
+				infoxml = infoxml.replace(".%s</string>" % name,
+										  ".%s</string>" % script)
+				# CFBundleIconFile
+				infoxml = infoxml.replace("%s.icns</string>" % name,
+										  "%s.icns</string>" % script)
+				if has_tool_script:
+					# PyInstaller
+					# CFBundleExecutable
+					infoxml = re.sub("(Executable</key>\s*<string>)%s" % name,
+									 lambda match: match.group(1) +
+												   script, infoxml)
+				with codecs.open(os.path.join(toolcontents, entry), "w",
+								 "UTF-8") as info_out:
+					info_out.write(infoxml)
+			else:
+				os.symlink(os.path.join(maincontents, entry),
+						   os.path.join(toolcontents, entry))
 
+
+def get_data(tgt_dir, key, pkgname=None, subkey=None, excludes=None):
+	""" Return configured data files """
+	files = config[key]
+	src_dir = basedir
+	if pkgname:
+		files = files[pkgname]
+		src_dir = os.path.join(src_dir, pkgname)
+		if subkey:
+			if subkey in files:
+				files = files[subkey]
+			else:
+				files = []
+	data = []
+	for pth in files:
+		if not filter(lambda exclude: fnmatch(pth, exclude), excludes or []):
+			data += [(os.path.normpath(os.path.join(tgt_dir, os.path.dirname(pth))),
+					  glob.glob(os.path.join(src_dir, pth)))]
+	return data
+
+
+def get_scripts(excludes=None):
+	# It is required that each script has an accompanying .desktop file
+	scripts = []
+	desktopfiles = glob.glob(os.path.join(pydir, "..", "misc", "*.desktop"))
+	def sortbyname(a, b):
+		a, b = [os.path.splitext(v)[0] for v in (a, b)]
+		if a > b:
+			return 1
+		elif a < b:
+			return -1
+		else:
+			return 0
+	desktopfiles.sort(sortbyname)
+	for desktopfile in desktopfiles:
+		cfg = ConfigParser()
+		cfg.read(desktopfile)
+		script = cfg.get("Desktop Entry", "Exec")
+		if not filter(lambda exclude: fnmatch(script, exclude), excludes or []):
+			scripts += [(script,
+						 cfg.get("Desktop Entry", "Name").decode("UTF-8"))]
+	return scripts
+
+
+def setup():
 	print "***", os.path.abspath(sys.argv[0]), " ".join(sys.argv[1:])
 
 	bdist_bbfreeze = "bdist_bbfreeze" in sys.argv[1:]
@@ -225,32 +440,9 @@ def setup():
 	# on Mac OS X and Windows, we want data files in the package dir
 	# (package_data will be ignored when using py2exe)
 	package_data = {
-		name: [
-			"argyll_instruments.json",
-			"beep.wav",
-			"camera_shutter.wav",
-			"pnp.ids",
-			"lang/*.json",
-			"presets/*.icc",
-			"quirk.json",
-			"ref/*.cie",
-			"ref/*.gam",
-			"ref/*.icm",
-			"ref/*.ti1",
-			"report/*.css",
-			"report/*.html",
-			"report/*.js",
-			"theme/*.png",
-			"theme/icons/10x10/*.png",
-			"theme/icons/16x16/*.png",
-			"theme/icons/32x32/*.png",
-			"theme/icons/72x72/*.png",
-			"ti1/*.ti1",
-			"xrc/*.xrc",
-			"linear.cal",
-			"test.cal"
-		] if sys.platform in ("darwin", "win32") and not do_py2app and not 
-		do_py2exe else []
+		name: config["package_data"][name]
+			  if sys.platform in ("darwin", "win32") and not do_py2app and not 
+			  do_py2exe else []
 	}
 	if sdist and sys.platform in ("darwin", "win32"):
 		package_data[name] += ["theme/icons/22x22/*.png",
@@ -260,33 +452,11 @@ def setup():
 	if sys.platform == "win32" and not do_py2exe:
 		package_data[name] += ["theme/icons/*.ico"]
 	# Scripts
-	# It is required that each script has an accompanying .desktop file
-	scripts = {}
-	desktopfiles = glob.glob(os.path.join(pydir, "..", "misc", "*.desktop"))
-	for desktopfile in desktopfiles:
-		cfg = ConfigParser()
-		cfg.read(desktopfile)
-		scripts[cfg.get("Desktop Entry",
-						"Exec")] = cfg.get("Desktop Entry",
-										   "Name").decode("UTF-8")
+	scripts = get_scripts()
 	# Doc files
-	data_files = [
-		(os.path.join(doc, "screenshots"), 
-			glob.glob(os.path.join(pydir, "..", "screenshots", "*.png"))),
-		(os.path.join(doc, "theme"), 
-			glob.glob(os.path.join(pydir, "..", "theme", "*.png"))), 
-		(os.path.join(doc, "theme"), 
-			glob.glob(os.path.join(pydir, "..", "theme", "*.css"))), 
-		(os.path.join(doc, "theme"), 
-			glob.glob(os.path.join(pydir, "..", "theme", "*.js"))), 
-		(os.path.join(doc, "theme", "slimbox2"), 
-			glob.glob(os.path.join(pydir, "..", "theme", "slimbox2", "*.css"))), 
-		(os.path.join(doc, "theme", "slimbox2"), 
-			glob.glob(os.path.join(pydir, "..", "theme", "slimbox2", "*.js"))), 
-		(os.path.join(doc, "theme", "icons"), 
-			[os.path.join(pydir, "..", "theme", "icons", "favicon.ico")]), 
-		(doc, [os.path.join(pydir, "..", "README.html")])
-	] if not is_rpm_build or doc_layout.startswith("deb") else []
+	data_files = []
+	if not is_rpm_build or doc_layout.startswith("deb"):
+		data_files += get_data(doc, "doc", excludes=["LICENSE.txt"])
 	if data_files:
 		if doc_layout.startswith("deb"):
 			data_files.append((doc, [os.path.join(pydir, "..", "dist", 
@@ -298,53 +468,12 @@ def setup():
 			data_files.append((doc, [os.path.join(pydir, "..", "LICENSE.txt")]))
 	if sys.platform not in ("darwin", "win32") or do_py2app or do_py2exe:
 		# Linux/Unix or py2app/py2exe
-		data_files += [
-			(data, [os.path.join(pydir, "argyll_instruments.json")]),
-			(data, [os.path.join(pydir, "beep.wav")]), 
-			(data, [os.path.join(pydir, "camera_shutter.wav")]), 
-			(data, [os.path.join(pydir, "pnp.ids")]), 
-			(data, [os.path.join(pydir, "quirk.json")]), 
-			(os.path.join(data, "lang"), 
-				glob.glob(os.path.join(pydir, "lang", "*.json"))), 
-			(os.path.join(data, "presets"), 
-				glob.glob(os.path.join(pydir, "presets", "*.icc"))),
-			(os.path.join(data, "ref"), 
-				glob.glob(os.path.join(pydir, "ref", "*.cie"))), 
-			(os.path.join(data, "ref"), 
-				glob.glob(os.path.join(pydir, "ref", "*.gam"))), 
-			(os.path.join(data, "ref"), 
-				glob.glob(os.path.join(pydir, "ref", "*.icm"))), 
-			(os.path.join(data, "ref"), 
-				glob.glob(os.path.join(pydir, "ref", "*.ti1"))), 
-			(os.path.join(data, "report"), 
-				glob.glob(os.path.join(pydir, "report", "*.css"))),
-			(os.path.join(data, "report"), 
-				glob.glob(os.path.join(pydir, "report", "*.html"))),
-			(os.path.join(data, "report"), 
-				glob.glob(os.path.join(pydir, "report", "*.js"))),
-			(os.path.join(data, "tests"), 
-				glob.glob(os.path.join(pydir, "..", "tests", "*.icc"))),
-			(os.path.join(data, "theme"), 
-				glob.glob(os.path.join(pydir, "theme", "*.png"))), 
-			(os.path.join(data, "ti1"), 
-				glob.glob(os.path.join(pydir, "ti1", "*.ti1"))), 
-			(os.path.join(data, "xrc"), 
-				glob.glob(os.path.join(pydir, "xrc", "*.xrc"))),
-			(data, [os.path.join(pydir, "linear.cal")]),
-			(data, [os.path.join(pydir, "test.cal")])
-		]
+		data_files += get_data(data, "package_data", name,
+							   excludes=["theme/icons/"])
+		data_files += get_data(data, "data")
+		data_files += get_data(data, "xtra_package_data", name, sys.platform)
 		if sys.platform == "win32":
-			if do_py2exe:
-				data_files += [
-					(os.path.join(data, "theme", "icons"), 
-					 [os.path.join(pydir, "theme", "icons", name + 
-					  "-uninstall.ico")]), 
-					(os.path.join(data, "lib"), 
-					 [sys.executable, sys.executable.replace(".exe", "w.exe")])]
-			else:
-				data_files += [(os.path.join(data, "theme", "icons"), 
-					glob.glob(os.path.join(pydir, "theme", 
-										   "icons", "*.icns|*.ico")))]
+			data_files += [(os.path.join(data, "lib"), [sys.executable])]
 		elif sys.platform != "darwin":
 			# Linux
 			data_files += [(os.path.join(os.path.dirname(data), 
@@ -415,7 +544,7 @@ def setup():
 												   dname, "*.png")):
 				if not os.path.basename(iconpath).startswith(name) or (
 					sys.platform in ("darwin", "win32") and 
-					dname in ("10x10", "16x16", "32x32", "72x72")):
+					dname in ("16x16", "32x32")):
 					icons.append(iconpath)
 				elif sys.platform not in ("darwin", "win32"):
 					desktopicons.append(iconpath)
@@ -554,7 +683,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 				"%s = %s.main:main%s" % (script, name,
 					"" if script == name
 					else script[len(name):].lower().replace("-", "_"))
-				for script in scripts
+				for script, desc in scripts
 			]
 		}
 		attrs["exclude_package_data"] = {
@@ -567,8 +696,8 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["zip_safe"] = False
 	else:
 		attrs["scripts"] += [os.path.join("scripts", script)
-							 for script in
-							 filter(lambda script:
+							 for script, desc in
+							 filter(lambda (script, desc):
 									script != name + "-apply-profiles" or
 									sys.platform != "darwin",
 									scripts)]
@@ -580,9 +709,6 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		attrs["scripts"] += [os.path.join("util", name + "_postinstall.py")]
 		
 	if do_py2app:
-		reversedomain = domain.split(".")
-		reversedomain.reverse()
-		reversedomain = ".".join(reversedomain)
 		mainpy = os.path.join(basedir, "main.py")
 		if not os.path.exists(mainpy):
 			shutil.copy(os.path.join(basedir, "scripts", name), mainpy)
@@ -591,12 +717,6 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 								"py2app.%s-py%s" % (get_platform(), 
 													sys.version[:3]), 
 								name + "-" + version)
-		excludes = ["test", "Tkconstants", "Tkinter", "tcl"]
-		for excludebits in ("32", "64"):
-			excludes += ["dispcalGUI.lib%s" % excludebits]
-			for pycompat in ("25", "26", "27"):
-				excludes += ["lib%s.python%s" % (excludebits, pycompat),
-							 "lib%s.python%s.RealDisplaySizeMM" % (excludebits, pycompat)]
 		from py2app.build_app import py2app as py2app_cls
 		py2app_cls._copy_package_data = py2app_cls.copy_package_data
 		def copy_package_data(self, package, target_dir):
@@ -608,28 +728,12 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			"py2app": {
 				"argv_emulation": True,
 				"dist_dir": dist_dir,
-				# numpy.lib.utils imports pydoc, which imports Tkinter, but 
-				# numpy.lib.utils is not even used by dispcalGUI, so omit all 
-				# Tk stuff
-				"excludes": excludes,
+				"excludes": config["excludes"]["all"] +
+							config["excludes"]["darwin"],
 				"iconfile": os.path.join(pydir, "theme", "icons", 
-										 "dispcalGUI.icns"),
+										 name + ".icns"),
 				"optimize": 0,
-				"plist": {
-					"CFBundleDevelopmentRegion": "English",
-					"CFBundleExecutable": name,
-					"CFBundleGetInfoString": version,
-					"CFBundleIdentifier": reversedomain,
-					"CFBundleInfoDictionaryVersion": "6.0",
-					"CFBundleLongVersionString": version,
-					"CFBundleName": name,
-					"CFBundlePackageType": "APPL",
-					"CFBundleShortVersionString": version,
-					"CFBundleSignature": "????",
-					"CFBundleVersion": ".".join(map(str, version_tuple)),
-					"NSHumanReadableCopyright": u"© %s %s" % (strftime("%Y"),
-															  author)
-				}
+				"plist": plist_dict
 			}
 		}
 		attrs["setup_requires"] = ["py2app"]
@@ -648,27 +752,16 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			"other_resources": [(24, 1, manifest_xml)],
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
 			"description": desc
-		}) for script, desc in scripts.iteritems()]
+		}) for script, desc in scripts]
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
-		excludes = ["Tkconstants", "Tkinter", "tcl", "dispcalGUI.lib",
-					"lib.RealDisplaySizeMM"]
-		if bits == "32":
-			excludebits = "64"
-		else:
-			excludebits = "32"
-		excludes += ["dispcalGUI.lib%s" % excludebits,
-					 "lib%s" % excludebits,
-					 "lib%s.RealDisplaySizeMM" % excludebits]
-		for pycompat in ("25", "26", "27"):
-			excludes += ["lib%s.python%s" % (excludebits, pycompat),
-						 "lib%s.python%s.RealDisplaySizeMM" % (excludebits, pycompat)]
 		attrs["options"] = {
 			"py2exe": {
 				"dist_dir": dist_dir,
 				"dll_excludes": [
 					"iertutil.dll", 
+					"MPR.dll",
 					"msvcm90.dll", 
 					"msvcp90.dll", 
 					"msvcr90.dll", 
@@ -676,10 +769,8 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 					"urlmon.dll",
 					"w9xpopen.exe"
 				],
-				# numpy.lib.utils imports pydoc, which imports Tkinter, but 
-				# numpy.lib.utils is not even used by dispcalGUI, so omit all 
-				# Tk stuff
-				"excludes": excludes, 
+				"excludes": config["excludes"]["all"] +
+							config["excludes"]["win32"], 
 				"bundle_files": 3 if wx.VERSION >= (2, 8, 10, 1) else 1,
 				"compressed": 1,
 				"optimize": 0  # 0 = don’t optimize (generate .pyc)
@@ -1008,75 +1099,13 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			return
 		
 		if do_py2app:
-			mainapp = os.path.join(dist_dir, name + ".app", "Contents")
-			# Create ref, tests, ReadMe and license symlinks in directory
-			# containing the app bundle
-			os.symlink(os.path.join(mainapp, "Resources",
-									"ref"), os.path.join(dist_dir, "ref"))
-			os.symlink(os.path.join(mainapp, "Resources",
-									"tests"), os.path.join(dist_dir, "tests"))
-			os.symlink(os.path.join(mainapp, "Resources",
-									"README.html"), os.path.join(dist_dir,
-																 "README.html"))
-			os.symlink(os.path.join(mainapp, "Resources",
-									"LICENSE.txt"), os.path.join(dist_dir,
-																 "LICENSE.txt"))
-			# Py2App doesn't support multiple targets, so create our standalone
-			# tools app bundles by symlinking to the main bundle
-			for script, desc in scripts.iteritems():
-				if script in (name, name + "-apply-profiles"):
-					continue
-				toolname = desc.replace(name, "").strip()
-				toolapp = os.path.join(dist_dir, toolname + ".app", "Contents")
-				os.makedirs(toolapp)
-				for entry in os.listdir(mainapp):
-					if entry in ("Frameworks", "Resources"):
-						os.makedirs(os.path.join(toolapp, entry))
-						for subentry in os.listdir(os.path.join(mainapp,
-																entry)):
-							src = os.path.join(mainapp, entry, subentry)
-							tgt = os.path.join(toolapp, entry, subentry)
-							if subentry == "main.py":
-								with open(src, "rb") as main_in:
-									py = main_in.read()
-								py = py.replace("main()",
-												"main(%r)" %
-												script[len(name) + 1:])
-								with open(tgt, "wb") as main_out:
-									main_out.write(py)
-								continue
-							if subentry == name + ".icns":
-								shutil.copy(os.path.join(pydir, "theme",
-														 "icons", 
-														 "%s.icns" % script),
-											os.path.join(toolapp, entry, 
-														 "%s.icns" % script))
-								continue
-							os.symlink(src, tgt)
-					elif entry == "Info.plist":
-						with codecs.open(os.path.join(mainapp, entry), "r",
-										 "UTF-8") as info_in:
-							infoxml = info_in.read()
-						# CFBundleName / CFBundleDisplayName
-						infoxml = re.sub("(Name</key>\s*<string>)%s" % name,
-										 lambda match: match.group(1) +
-													   toolname, infoxml)
-						# CFBundleIdentifier
-						infoxml = infoxml.replace(".%s</string>" % name,
-												  ".%s</string>" % script)
-						# CFBundleIconFile
-						infoxml = infoxml.replace("%s.icns</string>" % name,
-												  "%s.icns</string>" % script)
-						with codecs.open(os.path.join(toolapp, entry), "w",
-										 "UTF-8") as info_out:
-							info_out.write(infoxml)
-					else:
-						os.symlink(os.path.join(mainapp, entry),
-								   os.path.join(toolapp, entry))
+			create_app_symlinks(dist_dir, scripts)
 		
 		if do_py2exe:
-			shutil.copy(os.path.join(dist_dir, "python26.dll"),
-						os.path.join(dist_dir, "lib", "python26.dll"))
+			shutil.copy(os.path.join(dist_dir, "python%s.dll" %
+											   (sys.version[0] + sys.version[2])),
+						os.path.join(dist_dir, "lib", "python%s.dll" %
+											   (sys.version[0] + sys.version[2])))
 
 		if ((bdist_bbfreeze and sys.platform == "win32") or do_py2exe) and \
 		   sys.version_info[:2] >= (2,6):

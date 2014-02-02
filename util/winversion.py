@@ -9,9 +9,10 @@ sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from meta import author, description, domain, name, version, version_tuple
 
-def mktempver(version_template_path):
-	version_template = open(version_template_path, "r")
-	tempver_str = version_template.read().decode("MBCS", "replace") % {
+def mktempver(version_template_path, name=name, description=description,
+			  encoding="UTF-8"):
+	version_template = open(version_template_path, "rb")
+	tempver_str = version_template.read().decode(encoding, "replace") % {
 			"filevers": str(version_tuple),
 			"prodvers": str(version_tuple),
 			"CompanyName": domain,
@@ -28,7 +29,7 @@ def mktempver(version_template_path):
 	tempver_path = os.path.join(tempdir, "winversion.txt")
 	if not os.path.exists(tempdir):
 		os.makedirs(tempdir)
-	tempver = open(tempver_path, "w")
-	tempver.write(tempver_str.encode("MBCS", "replace"))
+	tempver = open(tempver_path, "wb")
+	tempver.write(tempver_str.encode(encoding, "replace"))
 	tempver.close()
 	return tempver_path
