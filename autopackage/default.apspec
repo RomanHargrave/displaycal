@@ -134,7 +134,7 @@ for script in `ls bin` ; do
 	safeSed bin/$script "s|/usr/bin/python|$python|"
 	if [ `whoami` != "root" ]; then
 		outputStatus "Adjusting module search path for $script..."
-		safeSed bin/$script "s|import sys|import sys\nsys.path.insert(0, '$platlib')|"
+		safeSed bin/$script "3iimport sys\nsys.path.insert(0, '$platlib')"
 	fi
 done
 
@@ -161,14 +161,17 @@ export PYTHONDONTWRITEBYTECODE=
 outputStatus "Byte-compiling pure python modules..."
 python -c "import glob
 import os
+import platform
+import sys
 from distutils.sysconfig import get_python_lib
 from distutils.util import byte_compile
+bits = platform.architecture()[0][:2]
 mod = os.path.join(get_python_lib(True, prefix=$python_lib_prefix), 'dispcalGUI')
 for py in (glob.glob(os.path.join(mod, '*.py')),
 		   glob.glob(os.path.join(mod, 'lib', '*.py')),
 		   glob.glob(os.path.join(mod, 'lib', 'agw', '*.py')),
-		   glob.glob(os.path.join(mod, 'lib$bits', '*.py')), 
-		   glob.glob(os.path.join(mod, 'lib$bits', 'python$pycompat', '*.py'))):
+		   glob.glob(os.path.join(mod, 'lib' + bits, '*.py')), 
+		   glob.glob(os.path.join(mod, 'lib' + bits, 'python%s%s' % sys.version_info[:2], '*.py'))):
 	byte_compile(py, optimize=0, force=1)
 	byte_compile(py, optimize=1, force=1)"
 
