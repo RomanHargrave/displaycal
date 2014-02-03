@@ -1282,10 +1282,15 @@ class TestchartEditor(wx.Frame):
 			else:
 				# Assume a target
 				quality = wx.IMAGE_QUALITY_NORMAL
-			img.Rescale(w, h, quality)
-			imgpath = os.path.join(cwd, "image.tif")
+			ext = os.path.splitext(path)[1]
+			if (ext.lower() in (".tif", ".tiff") or
+				(self.worker.argyll_version >= [1, 4] and
+				 ext.lower() in (".jpeg", ".jpg"))):
+				imgpath = path
+			else:
+				imgpath = os.path.join(cwd, "image.tif")
+				img.SaveFile(imgpath, wx.BITMAP_TYPE_TIF)
 			outpath = os.path.join(cwd, "imageout.tif")
-			img.SaveFile(imgpath, wx.BITMAP_TYPE_TIF)
 			# Process image to get colors
 			# Two ways to do this: Convert image using cctiff
 			# or use tiffgamut
@@ -1311,16 +1316,25 @@ class TestchartEditor(wx.Frame):
 							#args.append("-f100")
 					else:
 						args = ["-a"]
+						if self.worker.argyll_version >= [1, 4]:
+							# Always save as TIFF
+							args.append("-fT")
+						elif self.worker.argyll_version >= [1, 1]:
+							# TIFF photometric encoding 1..n
+							args.append("-t1")
+						else:
+							# TIFF photometric encoding 1..n
+							args.append("-e1")
 					args.append("-i%s" % intent)
-					if n == 0 or imgpath == path:
+					if n == 0:
 						# Try to use embedded profile
-						args.append(path)
+						args.append(imgpath)
+						if not use_gamut:
+							# Target
+							args.append("-i%s" % intent)
+							args.append(ppath)
 					else:
 						# Fall back to preconditioning profile
-						args.append(ppath)
-					if not use_gamut:
-						# Target
-						args.append("-i%s" % intent)
 						args.append(ppath)
 					args.append(imgpath)
 					if not use_gamut:
@@ -1333,18 +1347,6 @@ class TestchartEditor(wx.Frame):
 						if ("Error - Can't open profile in file" in errors or
 							"Error - Can't read profile" in errors):
 							# Try again?
-							if not use_gamut:
-								# No sense converting when input profile is
-								# same as output. Use image as-is.
-								outpath = imgpath
-								result = True
-								break
-							continue
-						elif ("Error - TIFF Input file has 3 input "
-							  "chanels and is mismatched" in errors or
-							  "Error - Last colorspace RGB from file" in errors):
-							# Try again?
-							imgpath = path
 							continue
 					break
 				if isinstance(result, Exception) or not result:
@@ -1355,7 +1357,14 @@ class TestchartEditor(wx.Frame):
 					if use_gamut:
 						chart = path = gam
 					else:
-						path = outpath
+						last_output_space = None
+						for line in self.worker.output:
+							if line.startswith("Output space ="):
+								last_output_space = line.split("=")[1].strip()
+						if last_output_space == "RGB":
+							path = outpath
+						else:
+							path = imgpath
 				else:
 					return Error("\n".join(self.worker.errors or
 										   self.worker.output))
