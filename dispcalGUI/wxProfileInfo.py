@@ -670,8 +670,8 @@ class GamutViewOptions(wx.Panel):
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profiles = OrderedDict([(lang.getstr("calibration.file.none"),
 												 None)])
-		for name in ["sRGB", "ClayRGB1998", "DCI_P3", "Rec601_525_60",
-					 "Rec601_625_50", "Rec709", "SMPTE240M"]:
+		for name in ["sRGB", "ClayRGB1998", "ProPhoto", "Rec601_525_60",
+					 "Rec601_625_50", "Rec709", "SMPTE240M", "SMPTE431_P3"]:
 			path = get_data_path("ref/%s.icm" % name)
 			if path:
 				profile = ICCP.ICCProfile(path)
@@ -688,7 +688,6 @@ class GamutViewOptions(wx.Panel):
 					 "ISOwebcoated.icc",
 					 "LStar-RGB.icc",
 					 "LStar-RGB-v2.icc",
-					 "ProPhoto.icm",
 					 "PSO_Coated_300_NPscreen_ISO12647_eci.icc",
 					 "PSO_Coated_NPscreen_ISO12647_eci.icc",
 					 "PSO_LWC_Improved_eci.icc",
