@@ -105,6 +105,7 @@ def main(module=None):
 				from util_mac import mac_terminal_do_script
 				retcode, output, errors = mac_terminal_do_script(cmd)
 			else:
+				import tempfile
 				stdout = tempfile.SpooledTemporaryFile()
 				retcode = None
 				terminals_opts = {
