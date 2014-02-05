@@ -69,18 +69,19 @@ def main(module=None):
 				import win32api
 			from util_os import which
 			if isapp:
-				me = os.path.join(exedir, appname)
-				cmd = u'"%s"' % me
+				# PyInstaller: executable is app-specific
+				# py2app: executable is always the same, differentiation
+				# occurs in Resources/main.py
+				cmd = u'"%s"' % (exe if exename.startswith(appname)
+								 else os.path.join(exedir, appname))
 				cwd = None
 			elif isexe:
-				me = exe
 				if sys.platform == "win32":
 					cmd = u'"%s"' % win32api.GetShortPathName(exe)
 				else:
 					cmd = u'"%s"' % exe
 				cwd = None
 			else:
-				me = pypath
 				if os.path.basename(exe) == "pythonw" + exe_ext:
 					python = os.path.join(os.path.dirname(exe), 
 										  "python" + exe_ext)
@@ -92,7 +93,7 @@ def main(module=None):
 																	  pypath)])
 					cwd = win32api.GetShortPathName(pydir)
 				else:
-					cmd = u'"%s" "%s"' % (python, pypath)
+					cmd = u'"%s" "%s"' % (exe, pypath)
 					cwd = pydir.encode(fs_enc)
 			safe_print("Re-launching instance in terminal")
 			if sys.platform == "win32":
