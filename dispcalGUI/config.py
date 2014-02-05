@@ -49,8 +49,8 @@ isexe = sys.platform != "darwin" and getattr(sys, "frozen", False)
 if isexe and os.getenv("_MEIPASS2"):
 	os.environ["_MEIPASS2"] = os.getenv("_MEIPASS2").replace("/", os.path.sep)
 
-pyfile = exe if isexe else sys.argv[0] or os.path.join(
-			os.path.dirname(__file__), "main.py")
+pyfile = (exe if isexe else (os.path.isfile(sys.argv[0]) and sys.argv[0]) or
+		  os.path.join(os.path.dirname(__file__), "main.py"))
 pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
 isapp = sys.platform == "darwin" and \
 		exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
@@ -60,7 +60,8 @@ if isapp:
 	pydir = os.path.normpath(os.path.join(exedir, "..", "Resources"))
 else:
 	pyname, pyext = os.path.splitext(os.path.basename(pypath))
-	pydir = os.path.dirname(pypath)
+	pydir = os.path.dirname(exe if isexe
+							else os.path.abspath(unicode(__file__, fs_enc)))
 
 data_dirs = [pydir]
 
