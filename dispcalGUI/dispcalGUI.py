@@ -859,11 +859,8 @@ class MainFrame(BaseFrame):
 			safe_print(lang.getstr("ready"))
 		
 		self.log()
-		if sys.platform == "win32" and wx.VERSION >= (2, 9):
-			wx.GetApp().progress_dlg.Destroy()
-			wx.GetApp().progress_dlg = None
-		else:
-			wx.GetApp().progress_dlg.Hide()
+		wx.GetApp().progress_dlg.stop_timer()
+		wx.GetApp().progress_dlg.Close()
 		
 		# Check for updates if configured
 		if getcfg("update_check"):

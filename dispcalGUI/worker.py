@@ -4885,11 +4885,7 @@ class Worker(object):
 				del self.progress_wnd.dlg
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
-			# under Linux, destroying it here causes segfault
-			if sys.platform == "win32" and wx.VERSION >= (2, 9):
-				self.progress_wnd.Destroy()
-			else:
-				self.progress_wnd.Hide()
+			self.progress_wnd.Close()
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
