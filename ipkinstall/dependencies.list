@@ -1,0 +1,7 @@
+Name: Python-Numpy
+ID: python-numpy
+Python2: numpy
+
+Name: Python-wxPython
+ID: python-wxpython
+Python2: wx-2.8-gtk2-unicode

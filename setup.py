@@ -1,9 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 from ConfigParser import RawConfigParser
 from distutils.sysconfig import get_python_lib
 from distutils.util import change_root, get_platform
+from hashlib import sha1
 from subprocess import call, Popen
 from time import gmtime, strftime, timezone
 import codecs
@@ -35,6 +37,74 @@ def create_appdmg():
 					(get_platform(), sys.version[:3]), name + "-" + version)])
 	if retcode != 0:
 		sys.exit(retcode)
+
+
+def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
+	global longdesc
+	with codecs.open(tmpl_path, "r", "UTF-8") as tmpl:
+		tmpl_data = tmpl.read()
+	if os.path.basename(tmpl_path).startswith("debian"):
+		longdesc_backup = longdesc
+		longdesc = "\n".join([" " + (line if line.strip() else ".") 
+							  for line in longdesc.splitlines()])
+	mapping = {
+		"DATE":
+			strftime("%a %b %d %Y",  # e.g. Tue Jul 06 2010
+					 gmtime(lastmod_time or 
+							os.stat(tmpl_path).st_mtime)),
+		"DATETIME": strftime("%a %b %d %H:%M:%S UTC %Y",  # e.g. Wed Jul 07 15:25:00 UTC 2010
+							  gmtime(lastmod_time or 
+									 os.stat(tmpl_path).st_mtime)),
+		"DEBPACKAGE": name.lower(),
+		"DEBDATETIME": strftime("%a, %d %b %Y %H:%M:%S ",  # e.g. Wed, 07 Jul 2010 15:25:00 +0100
+								 gmtime(lastmod_time or 
+										os.stat(tmpl_path).st_mtime)) +
+								 ("+" if timezone < 0 else "-") +
+								 strftime("%H%M", gmtime(abs(timezone))),
+		"ISODATE": 
+			strftime("%Y-%m-%d", 
+					 gmtime(lastmod_time or 
+							os.stat(tmpl_path).st_mtime)),
+		"ISODATETIME": 
+			strftime("%Y-%m-%dT%H:%M:%S", 
+					 gmtime(lastmod_time or 
+							os.stat(tmpl_path).st_mtime)) +
+					 ("+" if timezone < 0 else "-") +
+					 strftime("%H:%M", gmtime(abs(timezone))),
+		"ISOTIME": 
+			strftime("%H:%M", 
+					 gmtime(lastmod_time or 
+							os.stat(tmpl_path).st_mtime)),
+		"SUMMARY": description,
+		"DESC": longdesc,
+		"MAINTAINER": author,
+		"MAINTAINER_EMAIL": author_email,
+		"MAINTAINER_EMAIL_SHA1": sha1(author_email).hexdigest(),
+		"PACKAGE": name,
+		"PY_MAXVERSION": ".".join(str(n) for n in py_maxversion),
+		"PY_MINVERSION": ".".join(str(n) for n in py_minversion),
+		"VERSION": re.sub("(?:\.0){2}$", "", version),
+		"VERSION_LIN": re.sub("(?:\.0){2}$", "", version_lin),
+		"VERSION_MAC": re.sub("(?:\.0){2}$", "", version_mac),
+		"VERSION_WIN": re.sub("(?:\.0){2}$", "", version_win),
+		"VERSION_SRC": re.sub("(?:\.0){2}$", "", version_src),
+		"URL": "http://%s/" % domain,
+		"WX_MINVERSION": ".".join(str(n) for n in wx_minversion),
+		"YEAR": strftime("%Y", gmtime())}
+	mapping.update(iterable or {})
+	for key, val in mapping.iteritems():
+		tmpl_data = tmpl_data.replace("${%s}" % key, val)
+	if os.path.basename(tmpl_path).startswith("debian"):
+		longdesc = longdesc_backup
+	if os.path.isfile(out_path):
+		with codecs.open(out_path, "r", "UTF-8") as out:
+			data = out.read()
+		if data == tmpl_data:
+			return
+	elif not os.path.isdir(os.path.dirname(out_path)):
+		os.makedirs(os.path.dirname(out_path))
+	with codecs.open(out_path, "w", "UTF-8") as out:
+		out.write(tmpl_data)
 
 
 def svnversion_bump(svnversion):
@@ -83,6 +153,7 @@ def setup():
 	arch = None
 	bdist_appdmg = "bdist_appdmg" in sys.argv[1:]
 	bdist_deb = "bdist_deb" in sys.argv[1:]
+	bdist_lipa = "bdist_lipa" in sys.argv[1:]
 	bdist_pyi = "bdist_pyi" in sys.argv[1:]
 	setup_cfg = None
 	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
@@ -238,7 +309,11 @@ def setup():
 	if not sys.argv[1:]:
 		return
 	
-	global name, version
+	global name, author, author_email, description, longdesc
+	global domain, py_maxversion, py_minversion
+	global version, version_lin, version_mac
+	global version_src, version_tuple, version_win
+	global wx_minversion
 	from meta import (name, author, author_email, description, longdesc,
 					  domain, py_maxversion, py_minversion,
 					  version, version_lin, version_mac, 
@@ -295,43 +370,11 @@ def setup():
 			return
 
 	if "readme" in sys.argv[1:]:
-		readme_template_path = os.path.join(pydir, "misc", 
-											"README.template.html")
-		readme_template = open(readme_template_path, "rb")
-		readme_template_html = readme_template.read()
-		readme_template.close()
-		for key, val in [
-			("DATE", 
-				strftime("%Y-%m-%d", 
-						 gmtime(lastmod_time or 
-								os.stat(readme_template_path).st_mtime))),
-			("SUMMARY", description),
-			("TIME", 
-				strftime("%H:%M", 
-						 gmtime(lastmod_time or 
-								os.stat(readme_template_path).st_mtime))),
-			("TIMESTAMP", 
-				strftime("%Y-%m-%dT%H:%M:%S", 
-						 gmtime(lastmod_time or 
-								os.stat(readme_template_path).st_mtime)) +
-						 ("+" if timezone < 0 else "-") +
-						 strftime("%H:%M", gmtime(abs(timezone)))),
-			("VERSION", re.sub("(?:\.0){2}$", "", version)),
-			("VERSION_LIN", re.sub("(?:\.0){2}$", "", version_lin)),
-			("VERSION_MAC", re.sub("(?:\.0){2}$", "", version_mac)),
-			("VERSION_WIN", re.sub("(?:\.0){2}$", "", version_win)),
-			("VERSION_SRC", re.sub("(?:\.0){2}$", "", version_src)),
-			("YEAR", strftime("%Y", gmtime()))
-		]:
-			readme_template_html = readme_template_html.replace("${%s}" % key, 
-																val)
-		readme = open(os.path.join(pydir, "README.html"), "rb")
-		readme_html = readme.read()
-		readme.close()
-		if readme_html != readme_template_html and not dry_run:
-			readme = open(os.path.join(pydir, "README.html"), "wb")
-			readme.write(readme_template_html)
-			readme.close()
+		if not dry_run:
+			replace_placeholders(os.path.join(pydir, "misc", 
+											  "README.template.html"),
+								 os.path.join(pydir, "README.html"),
+								 lastmod_time)
 		sys.argv.remove("readme")
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
@@ -353,55 +396,14 @@ def setup():
 						  os.path.join("obs-autopackage-deploy",
 									   "dispcalGUI.spec"), 
 						  os.path.join("0install", "dispcalGUI.xml")):
-			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
-			tmpl = codecs.open(tmpl_path, "r", "UTF-8")
-			tmpl_data = tmpl.read()
-			tmpl.close()
-			if tmpl_name.startswith("debian"):
-				longdesc_backup = longdesc
-				longdesc = "\n".join([" " + (line if line.strip() else ".") 
-									  for line in longdesc.splitlines()])
-			for key, val in [
-				("DATE", 
-					strftime("%a %b %d %Y",  # e.g. Tue Jul 06 2010
-							 gmtime(lastmod_time or 
-									os.stat(tmpl_path).st_mtime))),
-				("DATETIME", strftime("%a %b %d %H:%M:%S UTC %Y",  # e.g. Wed Jul 07 15:25:00 UTC 2010
-									  gmtime(lastmod_time or 
-											 os.stat(tmpl_path).st_mtime))),
-				("DEBPACKAGE", name.lower()),
-				("DEBDATETIME", strftime("%a, %d %b %Y %H:%M:%S ",  # e.g. Wed, 07 Jul 2010 15:25:00 +0100
-										 gmtime(lastmod_time or 
-												os.stat(tmpl_path).st_mtime)) +
-										 ("+" if timezone < 0 else "-") +
-										 strftime("%H%M", gmtime(abs(timezone)))),
-				("SUMMARY", description),
-				("DESC", longdesc),
-				("MAINTAINER", author),
-				("MAINTAINER_EMAIL", author_email),
-				("PACKAGE", name),
-				("POST", post),
-				("POSTUN", postun),
-				("PY_MAXVERSION", ".".join(str(n) for n in py_maxversion)),
-				("PY_MINVERSION", ".".join(str(n) for n in py_minversion)),
-				("VERSION", version_src),
-				("URL", "http://%s.hoech.net/" % name),
-				("WX_MINVERSION", ".".join(str(n) for n in wx_minversion)),
-				("YEAR", strftime("%Y", gmtime())),
-			]:
-				tmpl_data = tmpl_data.replace("${%s}" % key, val)
-			if tmpl_name.startswith("debian"):
-				longdesc = longdesc_backup
 			if not dry_run:
+				tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 				if tmpl_name == "debian.copyright":
 					tmpl_name = "copyright"
-				out_filename = os.path.join(pydir, "dist", tmpl_name)
-				out_dir = os.path.dirname(out_filename)
-				if not os.path.isdir(out_dir):
-					os.makedirs(out_dir)
-				out = codecs.open(out_filename, "w", "UTF-8")
-				out.write(tmpl_data)
-				out.close()
+				replace_placeholders(tmpl_path,
+									 os.path.join(pydir, "dist", tmpl_name),
+									 lastmod_time, {"POST": post,
+													"POSTUN": postun})
 		if "buildservice" in sys.argv[1:]:
 			sys.argv.remove("buildservice")
 			if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
@@ -421,6 +423,10 @@ def setup():
 			bdist_args += ["--force-arch=" + arch]
 		i = sys.argv.index("bdist_deb")
 		sys.argv = sys.argv[:i] + bdist_args + sys.argv[i + 1:]
+	
+	if bdist_lipa:
+		i = sys.argv.index("bdist_lipa")
+		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
 
 	if bdist_pyi:
 		i = sys.argv.index("bdist_pyi")
@@ -557,8 +563,9 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	from setup import setup
-	setup()
+	if not bdist_lipa or sys.argv[1:]:
+		from setup import setup
+		setup()
 	
 	if bdist_appdmg and not dry_run and not help:
 		create_appdmg()
@@ -664,6 +671,89 @@ def setup():
 	if setup_cfg or ("bdist_msi" in sys.argv[1:] and use_setuptools):
 		shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), 
 					 os.path.join(pydir, "setup.cfg"))
+	
+	if bdist_lipa:
+		# Create a Listaller package using lipkgen
+		from setup import get_data, get_scripts
+		scripts = get_scripts()
+		ipkinstall = os.path.join(pydir, "ipkinstall")
+		# Generate doap file
+		replace_placeholders(os.path.join(pydir, "misc", name + ".doap"),
+							 os.path.join(ipkinstall, name + ".doap"),
+							 lastmod_time)
+		# Adjust .desktop files
+		for script, desc in scripts:
+			filename = os.path.join(pydir, "misc", script + ".desktop")
+			if os.path.exists(filename):
+				with open(filename) as file1:
+					filename = os.path.join(ipkinstall, script + ".desktop")
+					with open(filename, "w") as file2:
+						file2.write(file1.read().replace("Exec=" + script,
+														 "Exec=%s.pyw" % script))
+		# Collect data
+		collect = ([("%APP%", ["ipkinstall/%s.desktop" % script
+							   for script, desc in
+							   filter(lambda (script, desc):
+									  not script.endswith("-apply-profiles"),
+									  scripts)])] +
+				   [("%%ICON-%s%%" % size,
+					 ["%s/theme/icons/%sx%s/%s.png" %
+					  (name, size, size, script)
+					  for script, desc in scripts])
+					for size in (16, 24, 32, 48, 64, 128, 256)] +
+				   [("%INST%", ["%s.pyw" % script
+								for script, desc in scripts])] +
+				   get_data("%INST%", "data") +
+				   get_data("%INST%", "doc") +
+				   [("%INST%/" + name,
+					 glob.glob(os.path.join(name, "*.py")))] +
+				   [("%%INST%%/%s/lib" % name,
+					 glob.glob(os.path.join(name, "lib/*.py")))] +
+				   [("%%INST%%/%s/lib/agw" % name,
+					 glob.glob(os.path.join(name, "lib/agw/*.py")))] +
+				   get_data("%INST%/" + name, "package_data", name) +
+				   [("%INST%/scripts", ["scripts/%s" % script
+										for script, desc in scripts])])
+		for bits in (32, 64):
+			collect += [("%%INST%%/%s/lib%s" % (name, bits),
+						 glob.glob(os.path.join(name, "lib%s/*.py" % bits)))]
+			for pycompat in (25, 26, 27):
+				collect += [("%%INST%%/%s/lib%s/python%s"
+							 % (name, bits, pycompat),
+							 glob.glob(os.path.join(name, "lib%s/python%s/*.py"
+														  % (bits, pycompat))) +
+							 glob.glob(os.path.join(name, "lib%s/python%s/*.so"
+														  % (bits, pycompat))))]
+		data = {}
+		for tgt_dir, files in collect:
+			tgt_dir = tgt_dir.replace(os.sep, "/")
+			if not tgt_dir in data:
+				data[tgt_dir] = []
+			data[tgt_dir] += files
+		tgt_dirs = sorted(data.keys())
+		# Generate files list
+		with open(os.path.join(ipkinstall, "files-all.list"), "w") as fileslist:
+			fileslist.write("# IPK file list for dispcalGUI\n")
+			fileslist.write("# Generated by setup.py, do not edit\n")
+			fileslist.write("\n")
+			cur_tgt_dir = None
+			for tgt_dir in tgt_dirs:
+				if tgt_dir != cur_tgt_dir:
+					cur_tgt_dir = tgt_dir
+					fileslist.write(":: %s\n" % tgt_dir)
+				for filename in sorted(data[tgt_dir]):
+					fileslist.write(os.path.relpath(filename,
+													pydir).replace(os.sep,
+																   "/") + "\n")
+		# Create actual Listaller package
+		if not which("lipkgen"):
+			raise SystemExit("Error: No lipkgen in %s" % os.getenv("PATH"))
+		out_dir = os.path.join(pydir, "dist")
+		if not os.path.isdir(out_dir):
+			os.makedirs(out_dir)
+		retcode = call(["lipkgen", "-b", "-o", out_dir, "--sign"])
+		if retcode != 0:
+			sys.exit(retcode)
 
 	if bdist_pyi:
 
