@@ -4266,7 +4266,7 @@ class MainFrame(BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			setcfg("calibration.file.previous", None)
+			setcfg("calibration.file.previous", getcfg("calibration.file"))
 			self.profile_finish(
 				True, profile_path=profile_path, 
 				skip_scripts=True,
@@ -5741,8 +5741,6 @@ class MainFrame(BaseFrame):
 		if not isinstance(result, Exception) and result:
 			if getcfg("log.autoshow") and allow_show_log:
 				self.infoframe_toggle_handler(show=True)
-			if not getcfg("calibration.file.previous"):
-				setcfg("calibration.file.previous", getcfg("calibration.file"))
 			if profile_path:
 				profile_save_path = os.path.splitext(profile_path)[0]
 			else:
