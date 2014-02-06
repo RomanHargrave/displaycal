@@ -7,9 +7,9 @@ import os
 import sys
 import tempfile
 
-from config import (defaults, fs_enc, get_data_path,
-					get_display_profile, getbitmap, getcfg, geticon, setcfg,
-					writecfg)
+from config import (defaults, fs_enc, get_argyll_display_number, get_data_path,
+					get_display_profile, get_display_rects, getbitmap, getcfg,
+					geticon, setcfg, writecfg)
 from meta import name as appname
 from ordereddict import OrderedDict
 from util_str import safe_unicode, universal_newlines, wrap
@@ -1010,6 +1010,9 @@ class ProfileInfoFrame(LUTFrame):
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, self.OnSashPosChanging)
+		
+		self.display_no = -1
+		self.display_rects = get_display_rects()
 
 		children = self.GetAllChildren()
 
@@ -1410,8 +1413,9 @@ def main(profile=None):
 	lang.init()
 	lang.update_defaults()
 	app = ProfileInfoViewer(0)
-	app.frame.LoadProfile(profile or get_display_profile())
-	app.frame.Show(True)
+	display_no = get_argyll_display_number(app.frame.get_display()[1])
+	app.frame.LoadProfile(profile or get_display_profile(display_no))
+	app.frame.Show()
 	app.MainLoop()
 	writecfg()
 

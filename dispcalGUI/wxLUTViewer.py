@@ -10,8 +10,9 @@ import tempfile
 from numpy import interp
 
 from argyll_cgats import cal_to_fake_profile, vcgt_to_cal
-from config import (fs_enc, get_display_profile, get_display_rects, getcfg,
-					geticon, get_verified_path, setcfg)
+from config import (fs_enc, get_argyll_display_number, get_display_profile,
+					get_display_rects, getcfg, geticon, get_verified_path,
+					setcfg)
 from log import safe_print
 from meta import name as appname
 from options import debug
@@ -920,25 +921,6 @@ class LUTFrame(wx.Frame):
 					self.gTRC.append([y, v])
 				elif i == 2:
 					self.bTRC.append([y, v])
-
-	def move_handler(self, event):
-		if not self.IsShownOnScreen():
-			return
-		display_no, geometry, client_area = self.get_display()
-		if display_no != self.display_no:
-			self.display_no = display_no
-			# Translate from wx display index to Argyll display index
-			geometry = "%i, %i, %ix%i" % tuple(geometry)
-			for i, display in enumerate(getcfg("displays").split(os.pathsep)):
-				if display.find("@ " + geometry) > -1:
-					if debug:
-						safe_print("[D] Found display %s at index %i" % 
-								   (geometry, i))
-					# Save Argyll display index to configuration
-					setcfg("display.number", i + 1)
-					self.load_lut(get_display_profile(i))
-					break
-		event.Skip()
 	
 	def reload_vcgt_handler(self, event):
 		cmd, args = self.worker.prepare_dispwin(True)
@@ -1416,15 +1398,15 @@ def main(profile=None):
 	app = LUTViewer(0)
 	app.frame.worker.enumerate_displays_and_ports(check_lut_access=False,
 												  enumerate_ports=False)
-	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
-	app.frame.Show(True)
 	app.frame.update_controls()
 	if profile and profile.startswith("-"):
 		profile = None
 	if profile:
 		app.frame.drop_handler(profile)
 	else:
-		app.frame.load_lut(get_display_profile())
+		display_no = get_argyll_display_number(app.frame.get_display()[1])
+		app.frame.load_lut(get_display_profile(display_no))
+	app.frame.Show()
 	app.MainLoop()
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ import sys
 import config
 import localization as lang
 from config import (btn_width_correction, defaults, getcfg, geticon, 
-					get_display_number, 
+					get_argyll_display_number, get_display_number, 
 					get_display_rects, scale_adjustment_factor, setcfg,
 					writecfg)
 from debughelpers import handle_error
@@ -466,15 +466,10 @@ class MeasureFrame(InvincibleFrame):
 		if display_no != self.display_no:
 			self.display_no = display_no
 			# Translate from wx display index to Argyll display index
-			geometry = "%i, %i, %ix%i" % tuple(geometry)
-			for i, display in enumerate(getcfg("displays").split(os.pathsep)):
-				if display.find("@ " + geometry) > -1:
-					if debug:
-						safe_print("[D] Found display %s at index %i" % 
-								   (geometry, i))
-					# Save Argyll display index to configuration
-					setcfg("display.number", i + 1)
-					break
+			n = get_argyll_display_number(geometry)
+			if n is not None:
+				# Save Argyll display index to configuration
+				setcfg("display.number", i + 1)
 
 	def size_handler(self, event):
 		if debug: safe_print("[D] measureframe_size_handler")

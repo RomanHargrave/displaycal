@@ -233,6 +233,18 @@ def get_display_name(n=None, include_geometry=False):
 	return ""
 
 
+def get_argyll_display_number(geometry):
+	""" Translate from wx display geometry to Argyll display index """
+	geometry = "%i, %i, %ix%i" % tuple(geometry)
+	for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+		if display.find("@ " + geometry) > -1:
+			if debug:
+				from log import safe_print
+				safe_print("[D] Found display %s at index %i" % 
+						   (geometry, i))
+			return i
+
+
 def get_display_number(display_no):
 	""" Translate from Argyll display index to wx display index """
 	from wxaddons import wx
