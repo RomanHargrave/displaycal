@@ -3482,7 +3482,7 @@ class Worker(object):
 				desktopfile.write('Encoding=UTF-8\n')
 				desktopfile.write('Type=Application\n')
 				desktopfile.write('Name=%s\n' % (appname + 
-												 ' Profile Loader').encode("UTF-8"))
+												 ' ICC Profile Loader').encode("UTF-8"))
 				desktopfile.write('Comment=%s\n' % 
 								  lang.getstr("calibrationloader.description", 
 											  lcode="en").encode("UTF-8"))
@@ -3490,8 +3490,20 @@ class Worker(object):
 					desktopfile.write(('Comment[%s]=%s\n' % 
 									   (lang.getcode(),
 										lang.getstr("calibrationloader.description"))).encode("UTF-8"))
-				desktopfile.write('Icon=%s\n' % appname.encode("UTF-8"))
-				desktopfile.write('Exec=%s-apply-profiles\n' % appname.encode("UTF-8"))
+				pyw = os.path.normpath(os.path.join(pydir, "..",
+													appname +
+													"-apply-profiles.pyw"))
+				if os.path.exists(pyw):
+					# Running from source, or 0install/Listaller install
+					icon = os.path.join(pydir, "theme", "icons", "256x256",
+										appname + "-apply-profiles.png")
+					executable = pyw
+				else:
+					# Regular install
+					icon = appname + "-apply-profiles"
+					executable = appname + "-apply-profiles"
+				desktopfile.write('Icon=%s\n' % icon.encode("UTF-8"))
+				desktopfile.write('Exec=%s\n' % executable.encode("UTF-8"))
 				desktopfile.write('Terminal=false\n')
 				desktopfile.close()
 			except Exception, exception:
