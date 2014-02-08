@@ -27,7 +27,13 @@ if sys.platform == "win32":
 	except ImportError:
 		pass
 
-import colord
+try:
+	import colord
+except ImportError:
+	class colord:
+		Colord = None
+		def quirk_manufacturer(self, manufacturer):
+			return manufacturer
 import colormath
 import edid
 from colormath import NumberTuple
