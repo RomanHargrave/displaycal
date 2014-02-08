@@ -469,7 +469,7 @@ def setup():
 	if sys.platform not in ("darwin", "win32") or do_py2app or do_py2exe:
 		# Linux/Unix or py2app/py2exe
 		data_files += get_data(data, "package_data", name,
-							   excludes=["theme/icons/"])
+							   excludes=["theme/icons/*"])
 		data_files += get_data(data, "data")
 		data_files += get_data(data, "xtra_package_data", name, sys.platform)
 		if sys.platform == "win32":
