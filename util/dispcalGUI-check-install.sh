@@ -32,7 +32,7 @@ ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/doc/p
 
 ls -l -G -h --color=always --group-directories-first -R $HOME/.local/share/doc-base/dispcalgui* 2>/dev/null && echo
 
-ls -l -G -h --color=always $HOME/.local/share/icons/hicolor/*/apps/dispcalGUI.png 2>/dev/null
+ls -l -G -h --color=always $HOME/.local/share/icons/hicolor/*/apps/dispcalGUI* 2>/dev/null
 
 echo "--------------------------------------------------------------------------------"
 
@@ -78,7 +78,7 @@ ls -l -G -h --color=always --group-directories-first -R /usr/local/share/doc/pac
 
 ls -l -G -h --color=always --group-directories-first -R /usr/local/share/doc-base/dispcalgui* 2>/dev/null && echo
 
-ls -l -G -h --color=always /usr/local/share/icons/hicolor/*/apps/dispcalGUI.png 2>/dev/null
+ls -l -G -h --color=always /usr/local/share/icons/hicolor/*/apps/dispcalGUI* 2>/dev/null
 
 echo "--------------------------------------------------------------------------------"
 
@@ -106,7 +106,7 @@ ls -l -G -h --color=always --group-directories-first -R /usr/share/doc/packages/
 
 ls -l -G -h --color=always --group-directories-first -R /usr/share/doc-base/dispcalgui* 2>/dev/null && echo
 
-ls -l -G -h --color=always /usr/share/icons/hicolor/*/apps/dispcalGUI.png 2>/dev/null
+ls -l -G -h --color=always /usr/share/icons/hicolor/*/apps/dispcalGUI* 2>/dev/null
 
 echo "--------------------------------------------------------------------------------"
 
