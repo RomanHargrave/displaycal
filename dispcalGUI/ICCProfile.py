@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from copy import copy
 from hashlib import md5
 import binascii
 import datetime
@@ -316,6 +317,7 @@ tags = {"A2B0": "Device to PCS: Intent 0",
 		"lumi": "Luminance",
 		"meas": "Measurement type",
 		"mmod": "Make and model",
+		"ncl2": "Named Colors",
 		"rTRC": "Red tone response curve",
 		"rXYZ": "Red matrix column",
 		"targ": "Characterization target",
@@ -2298,6 +2300,218 @@ class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
 		return locals()
 
 
+class NamedColor2Value(object):
+
+	def __init__(self, valueData="\0" * 38, deviceCoordCount=0, pcs="XYZ"):
+		self._pcsname = pcs
+		end = valueData[0:32].find("\0")
+		if end < 0:
+			end = 32
+		self.rootName = valueData[0:end]
+		pcsvalues = [
+			uInt16Number(valueData[32:34]),
+			uInt16Number(valueData[34:36]),
+			uInt16Number(valueData[36:38])]
+		self.pcsvalues = copy(pcsvalues)
+		
+		for i, pcsvalue in enumerate(pcsvalues):
+			if pcs == "Lab":
+				keys = ["L", "a", "b"]
+				if i == 0:
+					# L* range 0..100
+					pcsvalues[i] = pcsvalue / 65535.0 * 100
+				else:
+					# a, b range -128..127
+					pcsvalues[i] = -128 + (pcsvalue / 65535.0 * 255)
+			elif pcs == "XYZ":
+				# X, Y, Z range 0..200
+				keys = ["X", "Y", "Z"]
+				pcsvalues[i] = pcsvalue / 32767.5 * 100
+		self.pcs = AODict(zip(keys, pcsvalues))
+		
+		deviceCoords = []
+		if deviceCoordCount > 0:
+			for i in xrange(38, 38+deviceCoordCount*2, 2):
+				deviceCoords.append(
+					uInt16Number(
+						valueData[i:i+2]))
+		self.devicevalues = tuple(deviceCoords)
+		self.device = tuple(v / 65535.0 * 100 for v in deviceCoords)
+	
+	@property
+	def name(self):
+		return unicode(Text(self.rootName.strip('\0')), 'latin-1')
+	
+	def __repr__(self):
+		pcs = []
+		dev = []
+		for key, value in self.pcs.iteritems():
+			pcs.append("%s=%s" % (str(key), str(value)))
+		for value in self.device:
+			dev.append("%s" % value)
+		return "%s(%s, {%s}, [%s])" % (
+								self.__class__.__name__,
+								self.name,
+								", ".join(pcs),
+								", ".join(dev))
+	
+	@Property
+	def tagData():
+		doc = """ Return raw tag data. """
+		
+		def fget(self):
+			valueData = []
+			valueData.append(self.rootName.ljust(32, "\0"))
+			valueData.extend(
+				[uInt16Number_tohex(pcsval) for pcsval in self.pcsvalues])
+			valueData.extend(
+				[uInt16Number_tohex(deviceval) for deviceval in self.devicevalues])
+			return "".join(valueData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
+
+
+class NamedColor2ValueTuple(tuple):
+	
+	__slots__ = ()
+	REPR_OUTPUT_SIZE = 10
+	
+	def __repr__(self):
+		data = list(self[:self.REPR_OUTPUT_SIZE + 1])
+		if len(data) > self.REPR_OUTPUT_SIZE:
+			data[-1] = "...(remaining elements truncated)..."
+		return repr(data)
+	
+	@Property
+	def tagData():
+		doc = """ Return raw tag data. """
+		
+		def fget(self):
+			return "".join([val.tagData for val in self])
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
+
+
+class NamedColor2Type(ICCProfileTag, AODict):
+	
+	REPR_OUTPUT_SIZE = 10
+	
+	def __init__(self, tagData="\0" * 84, tagSignature=None, pcs=None):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		AODict.__init__(self)
+		
+		colorCount = uInt32Number(tagData[12:16])
+		deviceCoordCount = uInt32Number(tagData[16:20])
+		stride = 38 + 2*deviceCoordCount
+		
+		self.vendorData = tagData[8:12]
+		self.colorCount = colorCount
+		self.deviceCoordCount = deviceCoordCount
+		self._prefix = Text(tagData[20:52])
+		self._suffix = Text(tagData[52:84])
+		self._pcsname = pcs
+		
+		keys = []
+		values = []
+		if colorCount > 0:
+			start = 84
+			end = start + (stride*colorCount)
+			for i in xrange(start, end, stride):
+				nc2 = NamedColor2Value(
+					tagData[i:i+stride],
+					deviceCoordCount, pcs=pcs)
+				keys.append(nc2.name)
+				values.append(nc2)
+		self.update(OrderedDict(zip(keys, values)))
+	
+	def __setattr__(self, name, value):
+		object.__setattr__(self, name, value)
+	
+	@property
+	def prefix(self):
+		return unicode(self._prefix.strip('\0'), 'latin-1')
+	
+	@property
+	def suffix(self):
+		return unicode(self._suffix.strip('\0'), 'latin-1')
+	
+	@property
+	def colorValues(self):
+		return NamedColor2ValueTuple(self.values())
+	
+	def add_color(self, rootName, *deviceCoordinates, **pcsCoordinates):
+		if self._pcsname == "Lab":
+			keys = ["L", "a", "b"]
+		elif self._pcsname == "XYZ":
+			keys = ["X", "Y", "Z"]
+		else:
+			keys = ["X", "Y", "Z"]
+		
+		if not set(pcsCoordinates.keys()).issuperset(set(keys)):
+			raise ICCProfileInvalidError("Can't add namedColor2 without all 3 PCS coordinates: '%s'" %
+				set(keys) - set(pcsCoordinates.keys()))
+		
+		if len(deviceCoordinates) != self.deviceCoordCount:
+			raise ICCProfileInvalidError("Can't add namedColor2 without all %s device coordinates (called with %s)" % (
+				self.deviceCoordCount, len(deviceCoordinates)))
+		
+		nc2value = NamedColor2Value()
+		nc2value._pcsname = self._pcsname
+		nc2value.rootName = rootName
+		
+		if rootName in self.keys():
+			raise ICCProfileInvalidError("Can't add namedColor2 with existant name: '%s'" % rootName)
+		
+		nc2value.devicevalues = tuple(deviceCoordinates)
+		nc2value.device = tuple(v / 65535.0 for v in deviceCoordinates)
+		nc2value.pcs = AODict(copy(pcsCoordinates))
+		pcsvalues = list()
+		
+		safe_print(nc2value.pcs)
+		
+		for idx, key in enumerate(keys):
+			val = nc2value.pcs[key]
+			if key == "L":
+				nc2value.pcsvalues[idx] = val * 65535 / 100.0
+			elif key in ("a", "b"):
+				nc2value.pcsvalues[idx] = (val * 65535 / 255.0) + 128
+			elif key in ("X", "Y", "Z"):
+				nc2value.pcsvalues[idx] = val * 32767.5 / 100.00
+		
+		self[nc2value.name] = nc2value
+	
+	def __repr__(self):
+		data = self.items()[:self.REPR_OUTPUT_SIZE + 1]
+		if len(data) > self.REPR_OUTPUT_SIZE:
+			data[-1] = ('...', "(remaining elements truncated)")
+		return repr(OrderedDict(data))
+	
+	@Property
+	def tagData():
+		doc = """ Return raw tag data. """
+		
+		def fget(self):
+			tagData = ["ncl2", "\0" * 4,
+				self.vendorData,
+				uInt32Number_tohex(len(self.items())),
+				uInt32Number_tohex(self.deviceCoordCount),
+				self._prefix.ljust(32), self._suffix.ljust(32)]
+			tagData.append(self.colorValues.tagData)
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
+
+
+
 tagSignature2Tag = {
 	"chad": chromaticAdaptionTag
 }
@@ -2312,6 +2526,7 @@ typeSignature2Type = {
 	"meas": MeasurementType,
 	"mluc": MultiLocalizedUnicodeType,  # ICC v4
 	"mmod": MakeAndModelType,  # Apple private tag
+	"ncl2": NamedColor2Type,
 	"sf32": s15Fixed16ArrayType,
 	"sig ": SignatureType,
 	"text": TextType,
@@ -2579,7 +2794,7 @@ class ICCProfile:
 									tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
 								elif typeSignature in typeSignature2Type:
 									args = tagData, tagSignature
-									if typeSignature == "clrt":
+									if typeSignature in ("clrt", "ncl2"):
 										args += (self.connectionColorSpace, )
 									elif typeSignature == "XYZ ":
 										args += (self, )
@@ -3019,6 +3234,25 @@ class ICCProfile:
 						if country.strip("\0 "):
 							country = "/" + country
 						info["    %s%s" % (language, country)] = value
+			elif isinstance(tag, NamedColor2Type):
+				info[name] = ""
+				info["    Device (Native) Components"] = "%i" % (
+			                tag.deviceCoordCount,)
+				info["    Colors"] = "%i (%i bytes) " % (
+					tag.colorCount, len(tag.tagData))
+				i = 1
+				for k, v in tag.iteritems():
+					pcsout = []
+					devout = []
+					for kk, vv in v.pcs.iteritems():
+						pcsout.append("%03.2f" % vv)
+					for vv in v.device:
+						devout.append("%03.2f" % vv)
+					info["        %03s %s%s%s" % (
+						i, tag.prefix, k, tag.suffix)] = "%s %s (Device %s)" % (
+							"".join(v.pcs.keys()), " ".join(pcsout),
+							" ".join(devout))
+					i += 1
 			elif isinstance(tag, Text):
 				if sig == "cprt":
 					info[name] = unicode(tag)
