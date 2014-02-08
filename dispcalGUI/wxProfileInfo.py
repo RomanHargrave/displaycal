@@ -435,9 +435,13 @@ class GamutCanvas(LUTCanvas):
 			if profile_no is not None and i != profile_no:
 				continue
 
-			if not profile or profile.profileClass == "link":
+			if (not profile or profile.profileClass == "link" or
+				profile.version >= 4):
 				self.set_pcs_data(i)
 				self.profiles[i] = ""
+				if profile.version >= 4:
+					self.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
+													    profile.getDescription()])))
 				continue
 
 			id = profile.calculateID(False)
@@ -475,9 +479,10 @@ class GamutCanvas(LUTCanvas):
 						'FCLR': 15}.get(profile.colorSpace)
 
 			if not channels:
-				raise Error(lang.getstr("profile.unsupported",
-										(profile.profileClass,
-										 profile.colorSpace)))
+				self.errors.append(Error(lang.getstr("profile.unsupported",
+													 (profile.profileClass,
+													  profile.colorSpace))))
+				continue
 
 			# Create input values
 			device_values = []
@@ -510,19 +515,24 @@ class GamutCanvas(LUTCanvas):
 							 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 							 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 			except Exception, exception:
-				raise Error("\n".join([safe_unicode(v) for v in (xicclu,
-																 exception)]))
-			self.worker.subprocess = p
-			if p.poll() not in (0, None):
-				stderr.seek(0)
-				raise Error(stderr.read().strip())
-			try:
-				odata = p.communicate("\n".join(device_values))[0].splitlines()
-			except IOError:
-				stderr.seek(0)
-				raise Error(stderr.read().strip())
-			if p.wait() != 0:
-				raise IOError(''.join(odata))
+				self.errors.append(Error("\n".join([safe_unicode(v) for v in (xicclu,
+																 exception)])))
+			else:
+				self.worker.subprocess = p
+				if p.poll() not in (0, None):
+					stderr.seek(0)
+					self.errors.append(Error(stderr.read().strip()))
+				else:
+					try:
+						odata = p.communicate("\n".join(device_values))[0].splitlines()
+					except IOError:
+						stderr.seek(0)
+						self.errors.append(Error(stderr.read().strip()))
+						odata = []
+					else:
+						if p.wait() != 0:
+							self.errors.append(IOError("\n".join(''.join(odata),
+																 stderr.read().strip())))
 			stderr.close()
 		
 			pcs_triplets = []
@@ -1075,6 +1085,7 @@ class ProfileInfoFrame(LUTFrame):
 		plot_mode_count = self.plot_mode_select.GetCount()
 		choice = []
 		info = profile.get_info()
+		self.client.errors = []
 		if (("rTRC" in self.profile.tags and "gTRC" in self.profile.tags and
 			 "bTRC" in self.profile.tags) or
 			("B2A0" in self.profile.tags and self.profile.colorSpace == "RGB")):
@@ -1160,6 +1171,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.resize_grid()
 		self.DrawCanvas()
 		self.Thaw()
+		self.handle_errors()
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):

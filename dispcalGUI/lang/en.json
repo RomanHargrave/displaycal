@@ -527,6 +527,7 @@
 	"profile.type.single_shaper_matrix": "Single curve + matrix",
 	"profile.unsupported": "Unsupported profile type (%s) and/or colorspace (%s).",
 	"profile.update": "Update profile",
+	"profile.iccv4.unsupported": "Version 4 ICC profiles are not supported.",
 	"measurement_report.update": "Update measurement report...",
 	"measurement_report": "Measurement report...",
 	"measurement_report_choose_chart": "Please choose the testchart to measure:",

@@ -18,6 +18,7 @@ from meta import name as appname
 from options import debug
 from util_decimal import float2dec
 from util_os import waccess
+from util_str import safe_unicode
 from worker import (Error, Worker, get_argyll_util, make_argyll_compatible_path,
 					show_result_dialog)
 from wxaddons import FileDrop, wx
@@ -161,6 +162,7 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetYSpec(5)
 		self.SetPointLabelFunc(self.DrawPointLabel)
 		self.worker = Worker()
+		self.errors = []
 
 	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, 
 				r=True, g=True, b=True):
@@ -614,7 +616,6 @@ class LUTFrame(wx.Frame):
 		cal.filename = self.profile.fileName or ""
 		cal.apply_bpc(True)
 		self.LoadProfile(cal_to_fake_profile(cal))
-		self.DrawLUT()
 
 	def drop_handler(self, path):
 		"""
@@ -639,7 +640,6 @@ class LUTFrame(wx.Frame):
 						   bitmap=geticon(32, "dialog-error"))
 				return
 		self.LoadProfile(profile)
-		self.DrawLUT()
 
 	def drop_unsupported_handler(self):
 		"""
@@ -655,6 +655,13 @@ class LUTFrame(wx.Frame):
 				   bitmap=geticon(32, "dialog-error"))
 	
 	get_display = MeasureFrame.__dict__["get_display"]
+	
+	def handle_errors(self):
+		if self.client.errors:
+			show_result_dialog(Error("\n\n".join(set(safe_unicode(error)
+													 for error in
+													 self.client.errors))),
+							   self)
 	
 	def install_vcgt_handler(self, event):
 		cwd = self.worker.create_tempdir()
@@ -757,10 +764,8 @@ class LUTFrame(wx.Frame):
 			   self.profile.fileName != profile.fileName or \
 			   not self.profile.isSame(profile):
 				self.LoadProfile(profile)
-				self.DrawLUT()
 		else:
 			self.LoadProfile(None)
-			self.DrawLUT()
 	
 	def lookup_tone_response_curves(self, intent="r"):
 		""" Lookup Y -> RGB tone values through TRC tags or LUT """
@@ -816,6 +821,12 @@ class LUTFrame(wx.Frame):
 			return
 
 		profile = self.profile
+
+		if profile.version >= 4:
+			self.client.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
+													   profile.getDescription()])))
+			return
+
 		channels = {'XYZ': 3,
 					'Lab': 3,
 					'Luv': 3,
@@ -843,9 +854,10 @@ class LUTFrame(wx.Frame):
 					'FCLR': 15}.get(profile.colorSpace)
 
 		if not channels:
-			raise Error(lang.getstr("profile.unsupported",
-									(profile.profileClass,
-									 profile.colorSpace)))
+			self.client.errors.append(Error(lang.getstr("profile.unsupported",
+														(profile.profileClass,
+														 profile.colorSpace))))
+			return
 		
 		# Setup xicclu
 		xicclu = get_argyll_util("xicclu")
@@ -883,24 +895,36 @@ class LUTFrame(wx.Frame):
 		
 		# Lookup Lab -> RGB values through 'input' profile using xicclu
 		stderr = tempfile.SpooledTemporaryFile()
-		p = sp.Popen([xicclu, "-fb", "-i" + intent, "-pl", "profile.icc"], 
-					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-		self.client.worker.subprocess = p
-		if p.poll() not in (0, None):
-			stderr.seek(0)
-			raise Error(stderr.read().strip())
 		try:
-			odata = p.communicate("\n".join(Lab_triplets))[0].splitlines()
-		except IOError:
-			stderr.seek(0)
-			raise Error(stderr.read().strip())
-		if p.wait() != 0:
-			raise IOError(''.join(odata))
+			p = sp.Popen([xicclu, "-fb", "-i" + intent, "-pl", "profile.icc"], 
+						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+		except Exception, exception:
+			self.client.errors.append(Error("\n".join([safe_unicode(v)
+													   for v in (xicclu,
+																 exception)])))
+		else:
+			self.client.worker.subprocess = p
+			if p.poll() not in (0, None):
+				stderr.seek(0)
+				self.client.errors.append(Error(stderr.read().strip()))
+			else:
+				try:
+					odata = p.communicate("\n".join(Lab_triplets))[0].splitlines()
+				except IOError:
+					stderr.seek(0)
+					self.client.errors.append(Error(stderr.read().strip()))
+				else:
+					if p.wait() != 0:
+						self.client.errors.append(IOError("\n".join(''.join(odata),
+																	stderr.read().strip())))
 		stderr.close()
 
 		# Remove temporary files
 		self.client.worker.wrapup(False)
+		
+		if self.client.errors:
+			return
 
 		rgb_triplets = []
 		for i, line in enumerate(odata):
@@ -958,6 +982,7 @@ class LUTFrame(wx.Frame):
 		self.trc = None
 		curves = []
 		curves.append(lang.getstr('vcgt'))
+		self.client.errors = []
 		if ((isinstance(self.rTRC, ICCP.CurveType) and
 			 isinstance(self.gTRC, ICCP.CurveType) and
 			 isinstance(self.bTRC, ICCP.CurveType)) or
@@ -976,6 +1001,8 @@ class LUTFrame(wx.Frame):
 		self.plot_mode_select.SetSelection(selection)
 		self.cbox_sizer.Layout()
 		self.box_sizer.Layout()
+		self.DrawLUT()
+		self.handle_errors()
 
 	def add_tone_values(self, legend):
 		if not self.profile:
