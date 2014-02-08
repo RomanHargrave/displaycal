@@ -299,41 +299,60 @@ class GamutCanvas(LUTCanvas):
 			for pcs_triplet in pcs_triplets:
 				coords.append(convert2coords(*pcs_triplet))
 
-			xy = []
-			for x, y in coords[:-1]:
-				xy.append((x, y))
-				if i == 0 or amount == 1:
-					if x > max_x:
-						max_x = x
-					if y > max_y:
-						max_y = y
-					if x < min_x:
-						min_x = x
-					if y < min_y:
-						min_y = y
+			profile = self.profiles.get(len(self.pcs_data) - 1 - i)
+			if (profile and profile.profileClass == "nmcl" and
+				"ncl2" in profile.tags and
+				isinstance(profile.tags.ncl2,
+						   ICCP.NamedColor2Type) and
+				profile.connectionColorSpace in ("Lab", "XYZ")):
+				# Named color profile
+				for j, (x, y) in enumerate(coords):
+					RGBA = colormath.XYZ2RGB(*pcs_triplets[j],
+											 **kwargs)
+					polys.append(plot.PolyMarker([(x, y)],
+												 colour=wx.Colour(*RGBA),
+												 size=2,
+												 marker="plus",
+												 width=1.75))
+			else:
+				xy = []
+				for x, y in coords[:-1]:
+					xy.append((x, y))
+					if i == 0 or amount == 1:
+						if x > max_x:
+							max_x = x
+						if y > max_y:
+							max_y = y
+						if x < min_x:
+							min_x = x
+						if y < min_y:
+							min_y = y
 
-			xy2 = []
-			for j, (x, y) in enumerate(xy):
-				xy2.append((x, y))
-				if len(xy2) == self.size:
-					xy3 = []
-					for k, (x, y) in enumerate(xy2):
-						xy3.append((x, y))
-						if len(xy3) == 2:
-							if i == 1:
-								# Draw comparison profile with grey outline
-								RGBA = 102, 102, 102, 255
-								w = 2
-							else:
-								RGBA = colormath.XYZ2RGB(*pcs_triplets[j - len(xy2) + k], **kwargs)
-								w = 3
-							polys.append(poly(list(xy3), colour=wx.Colour(*RGBA),
-											  width=w))
-							if i == 1:
-								xy3 = []
-							else:
-								xy3 = xy3[1:]
-					xy2 = xy2[self.size:]
+				xy2 = []
+				for j, (x, y) in enumerate(xy):
+					xy2.append((x, y))
+					if len(xy2) == self.size:
+						xy3 = []
+						for k, (x, y) in enumerate(xy2):
+							xy3.append((x, y))
+							if len(xy3) == 2:
+								if i == 1:
+									# Draw comparison profile with grey outline
+									RGBA = 102, 102, 102, 255
+									w = 2
+								else:
+									RGBA = colormath.XYZ2RGB(*pcs_triplets[j -
+																		   len(xy2) + k],
+															 **kwargs)
+									w = 3
+								polys.append(poly(list(xy3),
+												  colour=wx.Colour(*RGBA),
+												  width=w))
+								if i == 1:
+									xy3 = []
+								else:
+									xy3 = xy3[1:]
+						xy2 = xy2[self.size:]
 			
 			# Add whitepoint
 			x, y = coords[-1]
@@ -435,110 +454,126 @@ class GamutCanvas(LUTCanvas):
 			if profile_no is not None and i != profile_no:
 				continue
 
-			if (not profile or profile.profileClass == "link" or
-				profile.version >= 4):
+			if not profile or profile.profileClass == "link":
 				self.set_pcs_data(i)
-				self.profiles[i] = ""
-				if profile.version >= 4:
-					self.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
-													    profile.getDescription()])))
+				self.profiles[i] = None
 				continue
 
 			id = profile.calculateID(False)
-			if self.profiles.get(i) == id and intent == self.intent:
+			check = self.profiles.get(i)
+			if check and check.ID == id and intent == self.intent:
 				continue
 
-			self.profiles[i] = id
+			self.profiles[i] = profile
 
 			self.set_pcs_data(i)
 
-			channels = {'XYZ': 3,
-						'Lab': 3,
-						'Luv': 3,
-						'YCbr': 3,
-						'Yxy': 3,
-						'RGB': 3,
-						'GRAY': 1,
-						'HSV': 3,
-						'HLS': 3,
-						'CMYK': 4,
-						'CMY': 3,
-						'2CLR': 2,
-						'3CLR': 3,
-						'4CLR': 4,
-						'5CLR': 5,
-						'6CLR': 6,
-						'7CLR': 7,
-						'8CLR': 8,
-						'9CLR': 9,
-						'ACLR': 10,
-						'BCLR': 11,
-						'CCLR': 12,
-						'DCLR': 13,
-						'ECLR': 14,
-						'FCLR': 15}.get(profile.colorSpace)
-
-			if not channels:
-				self.errors.append(Error(lang.getstr("profile.unsupported",
-													 (profile.profileClass,
-													  profile.colorSpace))))
+			pcs_triplets = []
+			if (profile.profileClass == "nmcl" and "ncl2" in profile.tags and
+				isinstance(profile.tags.ncl2, ICCP.NamedColor2Type) and
+				profile.connectionColorSpace in ("Lab", "XYZ")):
+				for k, v in profile.tags.ncl2.iteritems():
+					color = v.pcs.values()
+					if profile.connectionColorSpace == "Lab":
+						# Need to convert to XYZ
+						color = colormath.Lab2XYZ(*color)
+					if intent == "a" and "wtpt" in profile.tags:
+						color = colormath.adapt(color[0], color[1], color[2],
+												whitepoint_destination=profile.tags.wtpt.ir.values())
+					pcs_triplets.append(color)
+			elif profile.version >= 4:
+				self.profiles[i] = None
+				self.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
+													profile.getDescription()])))
 				continue
-
-			# Create input values
-			device_values = []
-			step = 1.0 / (self.size - 1)
-			for j in xrange(min(3, channels)):
-				for k in xrange(min(3, channels)):
-					device_value = [0.0] * channels
-					device_value[j] = 1.0
-					if j != k:
-						for l in xrange(self.size):
-							device_value[k] = step * l
-							device_values.append(list(device_value))
-			# Add white
-			if profile.colorSpace in ("RGB", "GRAY"):
-				device_values.append([1.0] * channels)
 			else:
-				device_values.append([0.0] * channels)
+				channels = {'XYZ': 3,
+							'Lab': 3,
+							'Luv': 3,
+							'YCbr': 3,
+							'Yxy': 3,
+							'RGB': 3,
+							'GRAY': 1,
+							'HSV': 3,
+							'HLS': 3,
+							'CMYK': 4,
+							'CMY': 3,
+							'2CLR': 2,
+							'3CLR': 3,
+							'4CLR': 4,
+							'5CLR': 5,
+							'6CLR': 6,
+							'7CLR': 7,
+							'8CLR': 8,
+							'9CLR': 9,
+							'ACLR': 10,
+							'BCLR': 11,
+							'CCLR': 12,
+							'DCLR': 13,
+							'ECLR': 14,
+							'FCLR': 15}.get(profile.colorSpace)
 
-			# Convert RGB triplets to list of strings
-			for j, device_value in enumerate(device_values):
-				device_values[j] = " ".join(str(n) for n in device_value)
+				if not channels:
+					self.errors.append(Error(lang.getstr("profile.unsupported",
+														 (profile.profileClass,
+														  profile.colorSpace))))
+					continue
 
-			# Prepare profile
-			profile.write(os.path.join(cwd, "profile.icc"))
-
-			# Lookup RGB -> XYZ values through profile using xicclu
-			stderr = tempfile.SpooledTemporaryFile()
-			try:
-				p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
-							 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-							 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-			except Exception, exception:
-				self.errors.append(Error("\n".join([safe_unicode(v) for v in (xicclu,
-																 exception)])))
-			else:
-				self.worker.subprocess = p
-				if p.poll() not in (0, None):
-					stderr.seek(0)
-					self.errors.append(Error(stderr.read().strip()))
+				# Create input values
+				device_values = []
+				step = 1.0 / (self.size - 1)
+				for j in xrange(min(3, channels)):
+					for k in xrange(min(3, channels)):
+						device_value = [0.0] * channels
+						device_value[j] = 1.0
+						if j != k:
+							for l in xrange(self.size):
+								device_value[k] = step * l
+								device_values.append(list(device_value))
+				# Add white
+				if profile.colorSpace in ("RGB", "GRAY"):
+					device_values.append([1.0] * channels)
 				else:
-					try:
-						odata = p.communicate("\n".join(device_values))[0].splitlines()
-					except IOError:
+					device_values.append([0.0] * channels)
+
+				# Convert RGB triplets to list of strings
+				for j, device_value in enumerate(device_values):
+					device_values[j] = " ".join(str(n) for n in device_value)
+
+				# Prepare profile
+				profile.write(os.path.join(cwd, "profile.icc"))
+
+				# Lookup RGB -> XYZ values through profile using xicclu
+				stderr = tempfile.SpooledTemporaryFile()
+				try:
+					p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
+								 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
+								 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+				except Exception, exception:
+					self.errors.append(Error("\n".join([safe_unicode(v) for v in (xicclu,
+																	 exception)])))
+				else:
+					self.worker.subprocess = p
+					if p.poll() not in (0, None):
 						stderr.seek(0)
 						self.errors.append(Error(stderr.read().strip()))
-						odata = []
 					else:
-						if p.wait() != 0:
-							self.errors.append(IOError("\n".join(''.join(odata),
-																 stderr.read().strip())))
-			stderr.close()
-		
-			pcs_triplets = []
-			for line in odata:
-				line = "".join(line.strip().split("->")).split()
-				pcs_triplets.append([float(n) for n in line[channels + 2:channels + 5]])
+						try:
+							odata = p.communicate("\n".join(device_values))[0].splitlines()
+						except IOError:
+							stderr.seek(0)
+							self.errors.append(Error(stderr.read().strip()))
+							odata = []
+						else:
+							if p.wait() != 0:
+								self.errors.append(IOError("\n".join(''.join(odata),
+																	 stderr.read().strip())))
+				stderr.close()
+			
+				for line in odata:
+					line = "".join(line.strip().split("->")).split()
+					pcs_triplets.append([float(n) for n in line[channels + 2:channels + 5]])
+
 			if len(self.pcs_data) < i + 1:
 				self.pcs_data.append(pcs_triplets)
 			else:
@@ -966,7 +1001,7 @@ class ProfileInfoFrame(LUTFrame):
 		p2.SetSizer(p2.sizer)
 		self.splitter.AppendWindow(p2)
 		
-		self.grid = wx.grid.Grid(p2, -1)
+		self.grid = ProfileInfoGrid(p2, -1)
 		self.grid.CreateGrid(0, 2)
 		self.grid.SetCellHighlightColour(gridbgcolor)
 		self.grid.SetCellHighlightPenWidth(0)
@@ -978,7 +1013,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.SetDefaultCellFont(font)
 		self.grid.SetDefaultRowSize(20)
 		self.grid.SetLabelBackgroundColour(gridbgcolor)
-		self.grid.SetRowLabelSize(0)
+		self.grid.SetRowLabelSize(20)
 		self.grid.SetColLabelSize(0)
 		self.grid.DisableDragRowSize()
 		self.grid.EnableDragColSize()
@@ -1126,7 +1161,8 @@ class ProfileInfoFrame(LUTFrame):
 		lines = []
 		for label, value in info:
 			label = label.replace("\0", "")
-			value = wrap(universal_newlines(value.strip()), 52).replace("\0", "").split("\n")
+			value = wrap(universal_newlines(value.strip()).replace("\t", "\n"),
+						 52).replace("\0", "").split("\n")
 			linecount = len(value)
 			for i, line in enumerate(value):
 				value[i] = line.strip()
@@ -1159,11 +1195,34 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.AppendRows(len(rows))
 		labelcolor = wx.Colour(0x80, 0x80, 0x80)
 		altcolor = wx.Colour(230, 230, 230)
+		namedcolor = False
 		for i, (label, value) in enumerate(rows):
-			self.grid.SetCellValue(i, 0, " " * 4 + label)
+			self.grid.SetCellValue(i, 0, " " + label)
 			if i % 2:
 				self.grid.SetCellBackgroundColour(i, 0, altcolor)
 				self.grid.SetCellBackgroundColour(i, 1, altcolor)
+			if label == ICCP.tags["ncl2"]:
+				namedcolor = True
+			elif label.strip() and label.lstrip() == label:
+				namedcolor = False
+			if namedcolor:
+				color = re.match("(Lab|XYZ)((?:\s+-?\d+(?:\.\d+)){3,})", value)
+			else:
+				color = None
+			if color:
+				if color.groups()[0] == "Lab":
+					color = colormath.Lab2RGB(*[float(v) for v in
+												color.groups()[1].strip().split()],
+											  **dict(scale=255))
+				else:
+					# XYZ
+					color = colormath.XYZ2RGB(*[float(v) for v in
+												color.groups()[1].strip().split()],
+											  **dict(scale=255))
+				labelbgcolor = wx.Colour(*[int(round(v)) for v in color])
+			else:
+				labelbgcolor = self.grid.GetCellBackgroundColour(i, 0)
+			self.grid.SetRowLabelRenderer(i, ProfileInfoRowLabelRenderer(labelbgcolor))
 			self.grid.SetCellTextColour(i, 0, labelcolor)
 			self.grid.SetCellValue(i, 1, value)
 		
@@ -1395,6 +1454,7 @@ class ProfileInfoFrame(LUTFrame):
 	
 	def resize_grid(self, event=None):
 		self.grid.SetColSize(1, max(self.grid.GetSize()[0] -
+									self.grid.GetRowLabelSize() -
 									self.grid.GetColSize(0) -
 									wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 									0))
@@ -1410,6 +1470,76 @@ class ProfileInfoFrame(LUTFrame):
 			# Curves plot
 			self.options_panel.SetSelection(1)
 		self.splitter.GetTopLeft().Layout()
+
+
+class ProfileInfoGrid(wx.grid.Grid):
+
+	def __init__(self, *args, **kwargs):
+		wx.grid.Grid.__init__(self, *args, **kwargs)
+		self.GetGridRowLabelWindow().Bind(wx.EVT_PAINT, self._onPaintRowLabels)
+		
+		self._rowRenderers = {}
+
+	def _getRowTopBottom(self, row):
+		r = 0
+		top = 0
+		while r < row:
+			top += self.GetRowSize(r)
+			r += 1
+		bottom = top + self.GetRowSize(row) - 1
+		return top, bottom
+
+	def _onPaintRowLabels(self, evt):
+		window = evt.GetEventObject()
+		dc = wx.PaintDC(window)
+
+		if getattr(self, "CalcRowLabelsExposed", None):
+			# wxPython >= 2.8.10
+			rows = self.CalcRowLabelsExposed(window.GetUpdateRegion())
+			if rows == [-1]:
+				return
+		else:
+			# wxPython < 2.8.10
+			rows = xrange(self.GetNumberRows())
+			if not rows:
+				return
+
+		x, y = self.CalcUnscrolledPosition((0,0))
+		pt = dc.GetDeviceOrigin()
+		dc.SetDeviceOrigin(pt.x, pt.y-y)
+		for row in rows:
+			top, bottom = self._getRowTopBottom(row)
+			rect = wx.Rect()
+			rect.top = top
+			rect.bottom = bottom
+			rect.x = 0
+			rect.width = self.GetRowLabelSize()
+
+			renderer = self._rowRenderers.get(row, None) or \
+					   ProfileInfoRowLabelRenderer(self.GetLabelBackgroundColour(row, 0))
+			renderer.Draw(self, dc, rect, row)
+        
+	def SetRowLabelRenderer(self, row, renderer):
+		"""
+		Register a renderer to be used for drawing the label for the
+		given row.
+		"""
+		if renderer is None:
+			if row in self._rowRenderers:
+				del self._rowRenderers[row]
+		else:
+			self._rowRenderers[row] = renderer
+
+
+class ProfileInfoRowLabelRenderer(object):
+
+	def __init__(self, bgcolor):
+		self._bgcolor = bgcolor
+
+	def Draw(self, grid, dc, rect, row):
+		dc.SetBrush(wx.Brush(self._bgcolor))
+		dc.SetPen(wx.TRANSPARENT_PEN)
+		dc.DrawRectangleRect(rect)
 
 
 class ProfileInfoViewer(wx.App):
