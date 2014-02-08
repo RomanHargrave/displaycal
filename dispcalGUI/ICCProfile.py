@@ -1486,7 +1486,7 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 		""" Convenience function for adding localized strings """
 		if languagecode not in self:
 			self[languagecode] = AODict()
-		self[languagecode][countrycode] = localized_string
+		self[languagecode][countrycode] = localized_string.strip("\0")
 
 	def get_localized_string(self, languagecode="en", countrycode="US"):
 		""" Convenience function for retrieving localized strings
