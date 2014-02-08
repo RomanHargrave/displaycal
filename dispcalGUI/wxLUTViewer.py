@@ -983,9 +983,7 @@ class LUTFrame(wx.Frame):
 		curves = []
 		curves.append(lang.getstr('vcgt'))
 		self.client.errors = []
-		if ((isinstance(self.rTRC, ICCP.CurveType) and
-			 isinstance(self.gTRC, ICCP.CurveType) and
-			 isinstance(self.bTRC, ICCP.CurveType)) or
+		if ((self.rTRC and self.gTRC and self.bTRC) or
 			("B2A0" in profile.tags and profile.colorSpace == "RGB")):
 			try:
 				self.lookup_tone_response_curves()
