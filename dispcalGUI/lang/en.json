@@ -500,6 +500,7 @@
 	"profile.name.placeholders": "You may use the following placeholders in the profile name:\n\n%a	Abbreviated weekday name\n%A	Full weekday name\n%b	Abbreviated month name\n%B	Full month name\n%d	Day of the month\n%H	Hour (24-hour clock)\n%I	Hour (12-hour clock)\n%j	Day of the year\n%m	Month\n%M	Minute\n%p	AM/PM\n%S	Second\n%U	Week (Sunday as first day of the week)\n%w	Weekday (sunday is 0)\n%W	Week (Monday as first day of the week)\n%y	Year without century\n%Y	Year with century",
 	"profile.no_embedded_ti3": "The profile does not contain Argyll compatible measurement data.",
 	"profile.no_vcgt": "The profile does not contain calibration curves.",
+	"profile.only_named_color": "Only profiles of type “Named Color” can be used.",
 	"profile.quality": "Profile quality",
 	"profile.quality.b2a.low": "Low quality B2A table",
 	"profile.quality.b2a.low.info": "Choose this option if the profile is only going to be used with inverse A2B gamut mapping to create a DeviceLink or 3D LUT",
