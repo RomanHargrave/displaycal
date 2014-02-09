@@ -978,7 +978,11 @@ class ColorantTableType(ICCProfileTag, AODict):
 					safe_print("Warning: Non-standard profile connection "
 							   "space '%s'" % pcs)
 					return
-			self[data[:32].rstrip("\0")] = AODict(zip(keys, pcsvalues))
+			end = data[:32].find("\0")
+			if end < 0:
+				end = 32
+			name = data[:end]
+			self[name] = AODict(zip(keys, pcsvalues))
 			data = data[38:]
 
 
