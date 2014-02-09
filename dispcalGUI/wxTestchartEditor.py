@@ -1159,13 +1159,13 @@ class TestchartEditor(wx.Frame):
 		dlg = wx.FileDialog(self, lang.getstr("testchart_or_reference"), 
 							defaultDir=defaultDir, defaultFile=defaultFile, 
 							wildcard=(lang.getstr("filetype.ti1_ti3_txt") + 
-									  "|*.cgats;*.cie;*.gam;*.jpg;*.jpeg;*.png;*.ti1;*.ti2;*.ti3;*.tif;*.tiff;*.txt"), 
+									  "|*.cgats;*.cie;*.gam;*.icc;*.icm;*.jpg;*.jpeg;*.png;*.ti1;*.ti2;*.ti3;*.tif;*.tiff;*.txt"), 
 							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
 		if result == wx.ID_OK:
-			path = dlg.GetPath()
-			setcfg("testchart.reference", path)
+			chart = dlg.GetPath()
+			setcfg("testchart.reference", chart)
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
@@ -1173,12 +1173,12 @@ class TestchartEditor(wx.Frame):
 		use_gamut = False
 
 		# Determine if this is an image
-		filename, ext = os.path.splitext(path)
+		filename, ext = os.path.splitext(chart)
 		if ext.lower() in (".jpg", ".jpeg", ".png", ".tif", ".tiff"):
 			llevel = wx.Log.GetLogLevel()
 			wx.Log.SetLogLevel(0)  # Suppress TIFF library related message popups
 			try:
-				img = wx.Image(path, wx.BITMAP_TYPE_ANY)
+				img = wx.Image(chart, wx.BITMAP_TYPE_ANY)
 				if not img.IsOk():
 					raise Error(lang.getstr("error.file_type_unsupported"))
 			except Exception, exception:
@@ -1196,10 +1196,39 @@ class TestchartEditor(wx.Frame):
 				use_gamut = result == wx.ID_OK
 		else:
 			img = None
+			if ext.lower() in (".icc", ".icm"):
+				try:
+					nclprof = ICCP.ICCProfile(chart)
+					if (nclprof.profileClass != "nmcl" or
+						not "ncl2" in nclprof.tags or
+						not isinstance(nclprof.tags.ncl2, ICCP.NamedColor2Type) or
+						nclprof.connectionColorSpace not in ("Lab", "XYZ")):
+						raise Error(lang.getstr("profile.only_named_color"))
+				except Exception, exception:
+					show_result_dialog(exception, self)
+					return
+				if nclprof.connectionColorSpace == "Lab":
+					data_format = "LAB_L LAB_A LAB_B"
+				else:
+					data_format = " XYZ_X XYZ_Y XYZ_Z"
+				chart = ["GAMUT  ",
+						 "BEGIN_DATA_FORMAT",
+						 data_format,
+						 "END_DATA_FORMAT",
+						 "BEGIN_DATA",
+						 "END_DATA"]
+				if "wtpt" in nclprof.tags:
+					chart.insert(1, 'KEYWORD "APPROX_WHITE_POINT"')
+					chart.insert(2, 'APPROX_WHITE_POINT "%.4f %.4f %.4f"' %
+									tuple(v * 100 for v in
+										  nclprof.tags.wtpt.ir.values()))
+				for k, v in nclprof.tags.ncl2.iteritems():
+					chart.insert(-1, "%.4f %.4f %.4f" % tuple(v.pcs.values()))
+				chart = "\n".join(chart)
 
 		self.worker.start(self.tc_add_ti3_consumer,
 						  self.tc_add_ti3, cargs=(profile, ),
-						  wargs=(path, img, use_gamut, profile), wkwargs={},
+						  wargs=(chart, img, use_gamut, profile), wkwargs={},
 						  progress_msg=lang.getstr("testchart.add_ti3_patches"),
 						  parent=self, progress_start=500)
 		
@@ -1267,7 +1296,7 @@ class TestchartEditor(wx.Frame):
 				newdata.append(entry)
 			self.tc_add_data(row, newdata)
 	
-	def tc_add_ti3(self, path, img=None, use_gamut=True, profile=None):
+	def tc_add_ti3(self, chart, img=None, use_gamut=True, profile=None):
 		if img:
 			cwd = self.worker.create_tempdir()
 			if isinstance(cwd, Exception):
@@ -1282,11 +1311,11 @@ class TestchartEditor(wx.Frame):
 			else:
 				# Assume a target
 				quality = wx.IMAGE_QUALITY_NORMAL
-			ext = os.path.splitext(path)[1]
+			ext = os.path.splitext(chart)[1]
 			if (ext.lower() in (".tif", ".tiff") or
 				(self.worker.argyll_version >= [1, 4] and
 				 ext.lower() in (".jpeg", ".jpg"))):
-				imgpath = path
+				imgpath = chart
 			else:
 				imgpath = os.path.join(cwd, "image.tif")
 				img.SaveFile(imgpath, wx.BITMAP_TYPE_TIF)
@@ -1310,7 +1339,7 @@ class TestchartEditor(wx.Frame):
 				intent = "r" if getcfg("tc_add_ti3_relative") else "a"
 				for n in xrange(2 if ppath else 1):
 					if use_gamut:
-						res = 10 if imgpath == path else 1
+						res = 10 if imgpath == chart else 1
 						args = ["-d%s" % res, "-O", gam]
 						#if self.worker.argyll_version >= [1, 0, 4]:
 							#args.append("-f100")
@@ -1355,16 +1384,16 @@ class TestchartEditor(wx.Frame):
 					return result
 				elif result:
 					if use_gamut:
-						chart = path = gam
+						chart = gam
 					else:
 						last_output_space = None
 						for line in self.worker.output:
 							if line.startswith("Output space ="):
 								last_output_space = line.split("=")[1].strip()
 						if last_output_space == "RGB":
-							path = outpath
+							chart = outpath
 						else:
-							path = imgpath
+							chart = imgpath
 				else:
 					return Error("\n".join(self.worker.errors or
 										   self.worker.output))
@@ -1375,7 +1404,7 @@ class TestchartEditor(wx.Frame):
 				llevel = wx.Log.GetLogLevel()
 				wx.Log.SetLogLevel(0)  # Suppress TIFF library related message popups
 				try:
-					img = wx.Image(path, wx.BITMAP_TYPE_ANY)
+					img = wx.Image(chart, wx.BITMAP_TYPE_ANY)
 					if not img.IsOk():
 						raise Error(lang.getstr("error.file_type_unsupported"))
 				except Exception, exception:
@@ -1399,15 +1428,19 @@ class TestchartEditor(wx.Frame):
 								   img.GetBlue(x, y) / 2.55)
 						chart.insert(-1, "%.4f %.4f %.4f" % (R, G, B))
 				chart = "\n".join(chart)
-		else:
-			chart = path
 		
 		try:
 			chart = CGATS.CGATS(chart)
 		except (IOError, CGATS.CGATSError), exception:
 			return exception
 		finally:
-			if os.path.dirname(path) == self.worker.tempdir:
+			path = None
+			if isinstance(chart, CGATS.CGATS):
+				if chart.filename:
+					path = chart.filename
+			elif os.path.isfile(chart):
+				path = chart
+			if path and os.path.dirname(path) == self.worker.tempdir:
 				self.worker.wrapup(False)
 		if img:
 			if use_gamut:
