@@ -1201,7 +1201,7 @@ class ProfileInfoFrame(LUTFrame):
 			if i % 2:
 				self.grid.SetCellBackgroundColour(i, 0, altcolor)
 				self.grid.SetCellBackgroundColour(i, 1, altcolor)
-			if label == ICCP.tags["ncl2"]:
+			if label == lang.getstr(ICCP.tags["ncl2"]):
 				namedcolor = True
 			elif label.strip() and label.lstrip() == label:
 				namedcolor = False

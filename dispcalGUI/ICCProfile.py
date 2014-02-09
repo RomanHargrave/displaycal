@@ -291,7 +291,7 @@ profileclass = {"scnr": "Input device profile",
 				"link": "DeviceLink profile",
 				"spac": "Color space Conversion profile",
 				"abst": "Abstract profile",
-				"nmcl": "Named colour profile"}
+				"nmcl": "Named color profile"}
 
 tags = {"A2B0": "Device to PCS: Intent 0",
 		"A2B1": "Device to PCS: Intent 1",
@@ -317,7 +317,7 @@ tags = {"A2B0": "Device to PCS: Intent 0",
 		"lumi": "Luminance",
 		"meas": "Measurement type",
 		"mmod": "Make and model",
-		"ncl2": "Named Colors",
+		"ncl2": "Named colors",
 		"rTRC": "Red tone response curve",
 		"rXYZ": "Red matrix column",
 		"targ": "Characterization target",
@@ -3240,9 +3240,9 @@ class ICCProfile:
 						info["    %s%s" % (language, country)] = value
 			elif isinstance(tag, NamedColor2Type):
 				info[name] = ""
-				info["    Device (Native) Components"] = "%i" % (
+				info["    Device color components"] = "%i" % (
 			                tag.deviceCoordCount,)
-				info["    Colors"] = "%i (%i bytes) " % (
+				info["    Colors (PCS-relative)"] = "%i (%i Bytes) " % (
 					tag.colorCount, len(tag.tagData))
 				i = 1
 				for k, v in tag.iteritems():
@@ -3252,10 +3252,11 @@ class ICCProfile:
 						pcsout.append("%03.2f" % vv)
 					for vv in v.device:
 						devout.append("%03.2f" % vv)
-					info["        %03s %s%s%s" % (
-						i, tag.prefix, k, tag.suffix)] = "%s %s (Device %s)" % (
+					formatstr = "        %%0%is %%s%%s%%s" % len(str(tag.colorCount))
+					info[formatstr % (
+						i, tag.prefix, k, tag.suffix)] = "%s %s (%s %s)" % (
 							"".join(v.pcs.keys()), " ".join(pcsout),
-							" ".join(devout))
+							self.colorSpace, " ".join(devout))
 					i += 1
 			elif isinstance(tag, Text):
 				if sig == "cprt":
