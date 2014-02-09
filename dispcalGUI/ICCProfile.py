@@ -2306,32 +2306,31 @@ class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
 
 class NamedColor2Value(object):
 
-	def __init__(self, valueData="\0" * 38, deviceCoordCount=0, pcs="XYZ"):
+	def __init__(self, valueData="\0" * 38, deviceCoordCount=0, pcs="XYZ",
+				 device="RGB"):
 		self._pcsname = pcs
+		self._devicename = device
 		end = valueData[0:32].find("\0")
 		if end < 0:
 			end = 32
 		self.rootName = valueData[0:end]
-		pcsvalues = [
+		self.pcsvalues = [
 			uInt16Number(valueData[32:34]),
 			uInt16Number(valueData[34:36]),
 			uInt16Number(valueData[36:38])]
-		self.pcsvalues = copy(pcsvalues)
 		
-		for i, pcsvalue in enumerate(pcsvalues):
+		self.pcs = AODict()
+		for i, pcsvalue in enumerate(self.pcsvalues):
 			if pcs == "Lab":
-				keys = ["L", "a", "b"]
 				if i == 0:
 					# L* range 0..100
-					pcsvalues[i] = pcsvalue / 65535.0 * 100
+					self.pcs[pcs[i]] = pcsvalue / 65535.0 * 100
 				else:
 					# a, b range -128..127
-					pcsvalues[i] = -128 + (pcsvalue / 65535.0 * 255)
+					self.pcs[pcs[i]] = -128 + (pcsvalue / 65535.0 * 255)
 			elif pcs == "XYZ":
 				# X, Y, Z range 0..200
-				keys = ["X", "Y", "Z"]
-				pcsvalues[i] = pcsvalue / 32767.5 * 100
-		self.pcs = AODict(zip(keys, pcsvalues))
+				self.pcs[pcs[i]] = pcsvalue / 32767.5 * 100
 		
 		deviceCoords = []
 		if deviceCoordCount > 0:
@@ -2339,8 +2338,17 @@ class NamedColor2Value(object):
 				deviceCoords.append(
 					uInt16Number(
 						valueData[i:i+2]))
-		self.devicevalues = tuple(deviceCoords)
-		self.device = tuple(v / 65535.0 * 100 for v in deviceCoords)
+		self.devicevalues = deviceCoords
+		if device == "Lab":
+			self.device = tuple(v / 65535.0 * 100 if i == 0
+								else -128 + (v / 65535.0 * 255)
+								for i, v in enumerate(deviceCoords))
+		elif device == "XYZ":
+			# X, Y, Z range 0..200
+			self.device = tuple(v / 32767.5 * 100 for v in deviceCoords)
+		else:
+			# RGB, CMYK, ...
+			self.device = tuple(v / 65535.0 * 100 for v in deviceCoords)
 	
 	@property
 	def name(self):
@@ -2406,7 +2414,8 @@ class NamedColor2Type(ICCProfileTag, AODict):
 	
 	REPR_OUTPUT_SIZE = 10
 	
-	def __init__(self, tagData="\0" * 84, tagSignature=None, pcs=None):
+	def __init__(self, tagData="\0" * 84, tagSignature=None, pcs=None,
+				 device=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		AODict.__init__(self)
 		
@@ -2420,6 +2429,7 @@ class NamedColor2Type(ICCProfileTag, AODict):
 		self._prefix = Text(tagData[20:52])
 		self._suffix = Text(tagData[52:84])
 		self._pcsname = pcs
+		self._devicename = device
 		
 		keys = []
 		values = []
@@ -2429,7 +2439,7 @@ class NamedColor2Type(ICCProfileTag, AODict):
 			for i in xrange(start, end, stride):
 				nc2 = NamedColor2Value(
 					tagData[i:i+stride],
-					deviceCoordCount, pcs=pcs)
+					deviceCoordCount, pcs=pcs, device=device)
 				keys.append(nc2.name)
 				values.append(nc2)
 		self.update(OrderedDict(zip(keys, values)))
@@ -2467,17 +2477,15 @@ class NamedColor2Type(ICCProfileTag, AODict):
 		
 		nc2value = NamedColor2Value()
 		nc2value._pcsname = self._pcsname
+		nc2value._devicename = self._devicename
 		nc2value.rootName = rootName
 		
 		if rootName in self.keys():
 			raise ICCProfileInvalidError("Can't add namedColor2 with existant name: '%s'" % rootName)
 		
-		nc2value.devicevalues = tuple(deviceCoordinates)
-		nc2value.device = tuple(v / 65535.0 for v in deviceCoordinates)
+		nc2value.devicevalues = []
+		nc2value.device = tuple(deviceCoordinates)
 		nc2value.pcs = AODict(copy(pcsCoordinates))
-		pcsvalues = list()
-		
-		safe_print(nc2value.pcs)
 		
 		for idx, key in enumerate(keys):
 			val = nc2value.pcs[key]
@@ -2487,6 +2495,18 @@ class NamedColor2Type(ICCProfileTag, AODict):
 				nc2value.pcsvalues[idx] = (val * 65535 / 255.0) + 128
 			elif key in ("X", "Y", "Z"):
 				nc2value.pcsvalues[idx] = val * 32767.5 / 100.00
+		
+		for idx, val in enumerate(nc2value.device):
+			if self._devicename == "Lab":
+				if idx == 0:
+					nc2value.devicevalues[idx] = val * 65535 / 100.0
+				else:
+					nc2value.devicevalues[idx] = (val * 65535 / 255.0) + 128
+			elif self._devicename == "XYZ":
+				nc2value.devicevalues[idx] = val * 32767.5 / 100.00
+			else:
+				# RGB, CMYK, ...
+				nc2value.devicevalues[idx] = val * 65535 / 100.00
 		
 		self[nc2value.name] = nc2value
 	
@@ -2800,6 +2820,8 @@ class ICCProfile:
 									args = tagData, tagSignature
 									if typeSignature in ("clrt", "ncl2"):
 										args += (self.connectionColorSpace, )
+										if typeSignature == "ncl2":
+											args += (self.colorSpace, )
 									elif typeSignature == "XYZ ":
 										args += (self, )
 									tag = typeSignature2Type[typeSignature](*args)
@@ -3253,10 +3275,13 @@ class ICCProfile:
 					for vv in v.device:
 						devout.append("%03.2f" % vv)
 					formatstr = "        %%0%is %%s%%s%%s" % len(str(tag.colorCount))
-					info[formatstr % (
-						i, tag.prefix, k, tag.suffix)] = "%s %s (%s %s)" % (
-							"".join(v.pcs.keys()), " ".join(pcsout),
-							self.colorSpace, " ".join(devout))
+					key = formatstr % (i, tag.prefix, k, tag.suffix)
+					info[key] = "%s %s" % ("".join(v.pcs.keys()),
+										   " ".join(pcsout))
+					if (self.colorSpace != self.connectionColorSpace or
+						" ".join(pcsout) != " ".join(devout)):
+						info[key] += " (%s %s)" % (self.colorSpace,
+												   " ".join(devout))
 					i += 1
 			elif isinstance(tag, Text):
 				if sig == "cprt":
