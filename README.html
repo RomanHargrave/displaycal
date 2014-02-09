@@ -25,8 +25,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>1.7.1.6</h2>
-					<p>2014-01-19 10:02 UTC</p>
+					<h2>1.7.5.7</h2>
+					<p>2014-02-09 22:55 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -618,7 +618,7 @@
 
 						<ol>
 							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.7.1.6</code> or <code>dispcalgui</code>).</li>
+							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-1.7.5.7</code> or <code>dispcalgui</code>).</li>
 							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
 							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
 						</ol>
@@ -768,6 +768,8 @@
 							<dt><code>bdist_deb</code> (Linux/Debian-based)</dt>
 								<dd>Create an installable Debian (.deb) package, much like the standard distutils command bdist_rpm for RPM packages. Prerequisites:
 								You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example). Under Ubuntu, running utils/dist_ubuntu.sh will automatically use the correct setup.cfg. If you are using Ubuntu 11.04 or any other debian-based distribution which has Python 2.7 as default, you need to edit /usr/lib/python2.7/distutils/command/bdist_rpm.py, and change the line <code>install_cmd = ('%s install <span style="color: #c00">-O1</span> --root=$RPM_BUILD_ROOT '</code> to <code>install_cmd = ('%s install --root=$RPM_BUILD_ROOT '</code> by removing the <code><span style="color: #c00">-O1</span></code> flag. Also, you need to change /usr/lib/rpm/brp-compress to do nothing (e.g. change the file contents to <code>exit 0</code>, but don't forget to create a backup copy first) otherwise you will get errors when building.</dd>
+							<dt><code>bdist_pyi</code></dt>
+								<dd>An alternative to <code>bdist_standalone</code>, which uses <a href="http://www.pyinstaller.org/">PyInstaller</a> instead of bbfreeze/py2app/py2exe.</dd>
 							<dt><code>bdist_standalone</code></dt>
 								<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, older versions of py2app (before 0.4) are not able to access files inside python “egg” files (which are basically ZIP-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing those older py2app versions from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files. This is no longer an issue with py2app 0.4 and later.</dd>
 							<dt><code>buildservice</code></dt>
@@ -1658,8 +1660,34 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2014-01-19 10:02 (UTC) 1.7.1.6 -->
+			<!-- 2014-02-09 22:55 (UTC) 1.7.5.7 -->
 			<dl>
+				<dt id="changelog-1.7.5.7">2014-02-09 22:55 (UTC) 1.7.5.7</dt>
+					<dd>
+						<h3>1.7.5.7</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Unique icons for all standalone tools.</li>
+							<li>Profile information can plot and display colors from named color profiles (including ICC v4). Thanks to Alexander Bohn for adding the original named color support in the ICC profile module.</li>
+							<li>Testchart editor, “Add reference patches”: Named color profiles can be used as reference.</li>
+							<li>Linux: Desktop entries for standalone tools.</li>
+							<li>Mac OS X: Application bundles for standalone tools (Note: They won't work without the main application being present in the same folder, as the resources are shared and contained in the main application bundle).</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Error handling: Omit traceback from error messages for filesystem and operating system related errors (like disk full or no read permissions on a file) as such errors are not code-related.</li>
+							<li>Updated french translation (thanks to Loïc Guegant).</li>
+							<li>If a profile is corrupted, show the curves window regardless if enabled. Show the profile error message only when the corrupted profile is first accessed, not each time the curves window is shown/hidden.</li>
+							<li>Testchart editor, “Add reference patches” (dealing with image colorspaces): Support Lab TIFF images. Fail on colorspace mismatches.</li>
+							<li>Removed DCI_P3.icm profile (prefer SMPTE431_P3.icm which is part of recent Argyll CMS releases).</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Disable double-click centering and scaling for curve views (this was never supposed to be possible in the first place).</li>
+							<li>Testchart editor, “Add reference patches” (chromatic adaptation): When no device white is available, make sure alternate whitepoint definitions (APPROX_WHITE_POINT, LUMINANCE_XYZ_CDM2 fields) are actually used if present.</li>
+							<li>Always automatically add a file type extension to the filename in the curve/gamut saving dialog (fixes “unsupported filetype” error when trying to save under Mac OS X without manually adding the extension to the filename).</li>
+							<li>Calibration preview for calibration &amp; profile from “&lt;current&gt;” setting no longer switches between .cal and .icm file created in that same run.</li>
+						</ul>
 				<dt id="changelog-1.7.1.6">2014-01-19 10:02 (UTC) 1.7.1.6</dt>
 					<dd>
 						<h3>1.7.1.6</h3>
