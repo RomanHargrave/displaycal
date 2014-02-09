@@ -965,15 +965,15 @@ class ColorantTableType(ICCProfileTag, AODict):
 				if pcs in ("Lab", "RGB", "CMYK", "YCbr"):
 					keys = ["L", "a", "b"]
 					if i == 0:
-						# L* range 0..100
-						pcsvalues[i] = pcsvalue / 65535.0 * 100
+						# L* range 0..100 + (25500 / 65280.0)
+						pcsvalues[i] = pcsvalue / 65536.0 * 256 / 255.0 * 100
 					else:
-						# a, b range -128..127
-						pcsvalues[i] = -128 + (pcsvalue / 65535.0 * 255)
+						# a, b range -128..127 + (255 / 256.0)
+						pcsvalues[i] = -128 + (pcsvalue / 65536.0 * 256)
 				elif pcs == "XYZ":
-					# X, Y, Z range 0..200
+					# X, Y, Z range 0..100 + (32767 / 32768.0)
 					keys = ["X", "Y", "Z"]
-					pcsvalues[i] = pcsvalue / 65535.0 * 200
+					pcsvalues[i] = pcsvalue / 32768.0 * 100
 				else:
 					safe_print("Warning: Non-standard profile connection "
 							   "space '%s'" % pcs)
@@ -2323,14 +2323,14 @@ class NamedColor2Value(object):
 		for i, pcsvalue in enumerate(self.pcsvalues):
 			if pcs == "Lab":
 				if i == 0:
-					# L* range 0..100
-					self.pcs[pcs[i]] = pcsvalue / 65535.0 * 100
+					# L* range 0..100 + (25500 / 65280.0)
+					self.pcs[pcs[i]] = pcsvalue / 65536.0 * 256 / 255.0 * 100
 				else:
-					# a, b range -128..127
-					self.pcs[pcs[i]] = -128 + (pcsvalue / 65535.0 * 255)
+					# a, b range -128..127 + (255/256.0)
+					self.pcs[pcs[i]] = -128 + (pcsvalue / 65536.0 * 256)
 			elif pcs == "XYZ":
-				# X, Y, Z range 0..200
-				self.pcs[pcs[i]] = pcsvalue / 32767.5 * 100
+				# X, Y, Z range 0..100 + (32767 / 32768.0)
+				self.pcs[pcs[i]] = pcsvalue / 32768.0 * 100
 		
 		deviceCoords = []
 		if deviceCoordCount > 0:
@@ -2340,14 +2340,16 @@ class NamedColor2Value(object):
 						valueData[i:i+2]))
 		self.devicevalues = deviceCoords
 		if device == "Lab":
-			self.device = tuple(v / 65535.0 * 100 if i == 0
-								else -128 + (v / 65535.0 * 255)
+			# L* range 0..100 + (25500 / 65280.0)
+			# a, b range range -128..127 + (255 / 256.0)
+			self.device = tuple(v / 65536.0 * 256 / 255.0 * 100 if i == 0
+								else -128 + (v / 65536.0 * 256)
 								for i, v in enumerate(deviceCoords))
 		elif device == "XYZ":
-			# X, Y, Z range 0..200
-			self.device = tuple(v / 32767.5 * 100 for v in deviceCoords)
+			# X, Y, Z range 0..100 + (32767 / 32768.0)
+			self.device = tuple(v / 32768.0 * 100 for v in deviceCoords)
 		else:
-			# RGB, CMYK, ...
+			# Device range 0..100
 			self.device = tuple(v / 65535.0 * 100 for v in deviceCoords)
 	
 	@property
@@ -2490,23 +2492,26 @@ class NamedColor2Type(ICCProfileTag, AODict):
 		for idx, key in enumerate(keys):
 			val = nc2value.pcs[key]
 			if key == "L":
-				nc2value.pcsvalues[idx] = val * 65535 / 100.0
+				nc2value.pcsvalues[idx] = val * 65536 / (256 / 255.0) / 100.0
 			elif key in ("a", "b"):
-				nc2value.pcsvalues[idx] = (val * 65535 / 255.0) + 128
+				nc2value.pcsvalues[idx] = (val + 128) * 65536 / 256.0
 			elif key in ("X", "Y", "Z"):
-				nc2value.pcsvalues[idx] = val * 32767.5 / 100.00
+				nc2value.pcsvalues[idx] = val * 32768 / 100.0
 		
 		for idx, val in enumerate(nc2value.device):
 			if self._devicename == "Lab":
 				if idx == 0:
-					nc2value.devicevalues[idx] = val * 65535 / 100.0
+					# L* range 0..100 + (25500 / 65280.0)
+					nc2value.devicevalues[idx] = val * 65536 / (256 / 255.0) / 100.0
 				else:
-					nc2value.devicevalues[idx] = (val * 65535 / 255.0) + 128
+					# a, b range -128..127 + (255/256.0)
+					nc2value.devicevalues[idx] = (val + 128) * 65536 / 256.0
 			elif self._devicename == "XYZ":
-				nc2value.devicevalues[idx] = val * 32767.5 / 100.00
+				# X, Y. Z range 0..100 + (32767 / 32768.0)
+				nc2value.devicevalues[idx] = val * 32768 / 100.0
 			else:
-				# RGB, CMYK, ...
-				nc2value.devicevalues[idx] = val * 65535 / 100.00
+				# Device range 0..100
+				nc2value.devicevalues[idx] = val * 65535 / 100.0
 		
 		self[nc2value.name] = nc2value
 	
