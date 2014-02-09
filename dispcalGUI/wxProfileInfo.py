@@ -481,6 +481,7 @@ class GamutCanvas(LUTCanvas):
 						color = colormath.adapt(color[0], color[1], color[2],
 												whitepoint_destination=profile.tags.wtpt.ir.values())
 					pcs_triplets.append(color)
+				pcs_triplets.sort()
 			elif profile.version >= 4:
 				self.profiles[i] = None
 				self.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
@@ -521,29 +522,71 @@ class GamutCanvas(LUTCanvas):
 
 				# Create input values
 				device_values = []
-				step = 1.0 / (self.size - 1)
+				if profile.colorSpace in ("Lab", "Luv", "XYZ", "Yxy"):
+					# Use ICC PCSXYZ encoding range
+					minv = 0.0
+					maxv = 0xffff / 32768.0
+				else:
+					minv = 0.0
+					maxv = 1.0
+				step = (maxv - minv) / (self.size - 1)
 				for j in xrange(min(3, channels)):
 					for k in xrange(min(3, channels)):
 						device_value = [0.0] * channels
-						device_value[j] = 1.0
-						if j != k:
+						device_value[j] = maxv
+						if j != k or channels == 1:
 							for l in xrange(self.size):
-								device_value[k] = step * l
+								device_value[k] = minv + step * l
 								device_values.append(list(device_value))
+				if profile.colorSpace in ("HLS", "HSV", "Lab", "Luv", "YCbr", "Yxy"):
+					# Convert to actual color space
+					# TODO: Handle HLS and YCbr
+					tmp = list(device_values)
+					device_values = []
+					for j, values in enumerate(tmp):
+						if profile.colorSpace == "HSV":
+							HSV = list(colormath.RGB2HSV(*values))
+							device_values.append(HSV)
+						elif profile.colorSpace == "Lab":
+							Lab = list(colormath.XYZ2Lab(*[v * 100
+														   for v in values]))
+							device_values.append(Lab)
+						elif profile.colorSpace == "Luv":
+							Luv = list(colormath.XYZ2Luv(*[v * 100
+														   for v in values]))
+							device_values.append(Luv)
+						elif profile.colorSpace == "Yxy":
+							xyY = list(colormath.XYZ2xyY(*values))
+							device_values.append(xyY)
+				
 				# Add white
-				if profile.colorSpace in ("RGB", "GRAY"):
+				if profile.colorSpace == "RGB":
 					device_values.append([1.0] * channels)
-				else:
+				elif profile.colorSpace == "HLS":
+					device_values.append([0, 1, 0])
+				elif profile.colorSpace == "HSV":
+					device_values.append([0, 0, 1])
+				elif profile.colorSpace in ("Lab", "Luv", "YCbr"):
+					if profile.colorSpace == "YCbr":
+						device_values.append([1.0, 0.0, 0.0])
+					else:
+						device_values.append([100.0, 0.0, 0.0])
+				elif profile.colorSpace in ("XYZ", "Yxy"):
+					if profile.colorSpace == "XYZ":
+						device_values.append(profile.tags.wtpt.pcs.values())
+					else:
+						device_values.append(profile.tags.wtpt.pcs.xyY)
+				elif profile.colorSpace != "GRAY":
 					device_values.append([0.0] * channels)
 
-				# Convert RGB triplets to list of strings
+				# Convert device triplets to list of strings
 				for j, device_value in enumerate(device_values):
 					device_values[j] = " ".join(str(n) for n in device_value)
 
 				# Prepare profile
 				profile.write(os.path.join(cwd, "profile.icc"))
 
-				# Lookup RGB -> XYZ values through profile using xicclu
+				# Lookup device -> XYZ values through profile using xicclu
 				stderr = tempfile.SpooledTemporaryFile()
 				try:
 					p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
