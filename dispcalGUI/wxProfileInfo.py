@@ -589,7 +589,7 @@ class GamutCanvas(LUTCanvas):
 				# Lookup device -> XYZ values through profile using xicclu
 				stderr = tempfile.SpooledTemporaryFile()
 				try:
-					p = sp.Popen([xicclu, "-ff", "-i" + intent, "-px", "profile.icc"], 
+					p = sp.Popen([xicclu, "-ff", "-i" + intent, "profile.icc"], 
 								 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
 								 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
 				except Exception, exception:
@@ -616,6 +616,8 @@ class GamutCanvas(LUTCanvas):
 				for line in odata:
 					line = "".join(line.strip().split("->")).split()
 					pcs_triplets.append([float(n) for n in line[channels + 2:channels + 5]])
+					if profile.connectionColorSpace == "Lab":
+						pcs_triplets[-1] = list(colormath.Lab2XYZ(*pcs_triplets[-1]))
 
 			if len(self.pcs_data) < i + 1:
 				self.pcs_data.append(pcs_triplets)
