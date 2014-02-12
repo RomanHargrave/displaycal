@@ -83,7 +83,7 @@ from argyll_instruments import (get_canonical_instrument_name, instruments)
 from argyll_names import viewconds
 from colormath import (CIEDCCT2xyY, planckianCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab, 
 					   XYZ2xyY)
-from debughelpers import getevtobjname, getevttype, handle_error
+from debughelpers import ResourceError, getevtobjname, getevttype, handle_error
 from edid import pnpidcache, get_manufacturer_name
 from log import log, logbuffer, safe_print
 from meta import (author, name as appname, domain, version, VERSION_BASE)
@@ -791,13 +791,8 @@ class MainFrame(BaseFrame):
 				self.dist_testchart_names += [os.path.basename(path)]
 			wx.GetApp().progress_dlg.Pulse()
 		if missing:
-			handle_error(lang.getstr("resources.notfound.warning") + "\n" +
-						 "\n".join(missing), False)
-			for filename in missing:
-				if filename.lower().endswith(".xrc"):
-					handle_error(lang.getstr("resources.notfound.error") + 
-						 "\n" + filename, False)
-				wx.GetApp().progress_dlg.Pulse()
+			raise ResourceError(safe_str(lang.getstr("resources.notfound.warning") + "\n" +
+								"\n".join(missing)))
 		wx.GetApp().progress_dlg.Pulse()
 		
 		# Create main worker instance
@@ -5096,7 +5091,7 @@ class MainFrame(BaseFrame):
 		try:
 			report.create(save_path, placeholders2data, getcfg("report.pack_js"))
 		except (IOError, OSError), exception:
-			show_result_dialog(exception)
+			show_result_dialog(exception, self)
 		else:
 			# show report
 			wx.CallAfter(launch_file, save_path)

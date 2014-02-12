@@ -20,9 +20,9 @@ if pyver < py_minversion or pyver > py_maxversion:
 					    sys.version.split()[0]))
 
 from config import (autostart_home, datahome, enc, exe, exe_ext, exedir, 
-					exename, fs_enc, isapp, isexe, pydir, pyname, pypath,
-					runtype)
-from debughelpers import handle_error
+					exename, get_data_path,fs_enc, isapp, isexe, pydir,
+					pyname, pypath, resfiles, runtype)
+from debughelpers import ResourceError, handle_error
 from log import log, safe_print
 from meta import build, name as appname, version
 from options import debug, verbose
@@ -62,6 +62,22 @@ def main(module=None):
 	safe_print("Python " + sys.version)
 	safe_print("wxPython " + wx.version())
 	try:
+		# Check for required resource files
+		mod2res = {None: resfiles,
+				   "3DLUT-maker": ["3dlut.xrc"],
+				   "curve-viewer": [],
+				   "profile-info": [],
+				   "synthprofile": ["synthicc.xrc"],
+				   "testchart-editor": []}
+		if module not in mod2res:
+			module = None
+		for filename in mod2res[module]:
+			path = get_data_path(os.path.sep.join(filename.split("/")))
+			if not path or not os.path.isfile(path):
+				import localization as lang
+				lang.init()
+				raise ResourceError(lang.getstr("resources.notfound.error") + 
+									"\n" + filename)
 		# Force to run inside tty with the --terminal option
 		if "--terminal" in sys.argv[1:]:
 			import subprocess as sp
@@ -231,7 +247,11 @@ def main(module=None):
 			else:
 				main()
 	except Exception, exception:
-		handle_error(u"Fatal error: " + safe_unicode(traceback.format_exc()))
+		if isinstance(exception, ResourceError):
+			error = exception
+		else:
+			error = u"Fatal error: " + safe_unicode(traceback.format_exc())
+		handle_error(error)
 	try:
 		logger = logging.getLogger(appname)
 		for handler in logger.handlers:

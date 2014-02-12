@@ -136,7 +136,10 @@ wx.Window.IsSizer = IsSizer
 wx.BitmapButton._SetBitmapDisabled = wx.BitmapButton.SetBitmapDisabled
 
 def SetBitmapDisabled(self, bitmap=None):
-	image = self.GetBitmapLabel().ConvertToImage()
+	bitmap = self.GetBitmapLabel()
+	if not bitmap:
+		return
+	image = bitmap.ConvertToImage()
 	if image.HasMask():
 		image.InitAlpha()
 	if image.HasAlpha():

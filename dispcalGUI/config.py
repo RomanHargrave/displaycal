@@ -134,7 +134,9 @@ resfiles = [
 	"xrc/extra.xrc",
 	"xrc/gamap.xrc",
 	"xrc/main.xrc",
-	"xrc/mainmenu.xrc"
+	"xrc/mainmenu.xrc",
+	"xrc/report.xrc",
+	"xrc/synthicc.xrc"
 ]
 
 bitmaps = {}

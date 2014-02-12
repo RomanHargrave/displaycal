@@ -313,16 +313,21 @@ class DisplayUniformityFrame(wx.Frame):
 					if result != wx.ID_OK:
 						return
 					locus = loci.get(getcfg("whitepoint.colortemp.locus"))
-					report.create(save_path,
-								  {"${REPORT_VERSION}": appversion,
-								   "${DISPLAY}": display,
-								   "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
-								   "${ROWS}": str(self.rows),
-								   "${COLS}": str(self.cols),
-								   "${RESULTS}": str(self.results),
-								   "${LOCUS}": locus},
-								  getcfg("report.pack_js"), "uniformity")
-					launch_file(save_path)
+					try:
+						report.create(save_path,
+									  {"${REPORT_VERSION}": appversion,
+									   "${DISPLAY}": display,
+									   "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
+									   "${ROWS}": str(self.rows),
+									   "${COLS}": str(self.cols),
+									   "${RESULTS}": str(self.results),
+									   "${LOCUS}": locus},
+									  getcfg("report.pack_js"), "uniformity")
+					except (IOError, OSError), exception:
+						from worker import show_result_dialog
+						show_result_dialog(exception, self)
+					else:
+						launch_file(save_path)
 				if getcfg("measurement.continuous"):
 					self.measure(event=Event(self.buttons[self.index]))
 	

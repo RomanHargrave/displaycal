@@ -64,3 +64,7 @@ def handle_error(error, parent=None, silent=False):
 			dlg.Destroy()
 		except Exception, exception:
 			safe_print("Warning: handle_error():", safe_unicode(exception))
+
+
+class ResourceError(Exception):
+	pass

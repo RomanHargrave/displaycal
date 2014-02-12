@@ -17,12 +17,11 @@ import localization as lang
 def create(report_path, placeholders2data, pack=True, templatename="report"):
 	""" Create a report with all placeholders substituted by data. """
 	# read report template
-	report_html_template_path = get_data_path(os.path.join("report", 
-														   "%s.html" %
-														   templatename))
+	templatefilename = "%s.html" % templatename
+	report_html_template_path = get_data_path(os.path.join("report",
+														   templatefilename))
 	if not report_html_template_path:
-		raise IOError(lang.getstr("file.missing", 
-								  report_html_template_path))
+		raise IOError(lang.getstr("file.missing", templatefilename))
 	try:
 		report_html_template = codecs.open(report_html_template_path, "r", 
 										   "UTF-8")
