@@ -907,19 +907,9 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.SetMinSize(self.GetSize())
 		
 		# Set position
-		placed = False
-		if self.GetParent():
-			if self.GetParent().IsShownOnScreen():
-				self.Center()
-				placed = True
-			else:
-				x = getcfg("position.progress.x", False) or self.GetParent().GetScreenPosition()[0]
-				y = getcfg("position.progress.y", False) or self.GetParent().GetScreenPosition()[1]
-		else:
-			x = getcfg("position.progress.x")
-			y = getcfg("position.progress.y")
-		if not placed:
-			self.SetSaneGeometry(x, y)
+		x = getcfg("position.progress.x")
+		y = getcfg("position.progress.y")
+		self.SetSaneGeometry(x, y)
 	
 	def abort(self):
 		if self.has_worker_subprocess():

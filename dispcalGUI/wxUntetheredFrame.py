@@ -586,19 +586,9 @@ class UntetheredFrame(wx.Frame):
 			self.grid.DeleteRows(0, self.grid.GetNumberRows())
 		
 		# Set position
-		placed = False
-		if self.GetParent():
-			if self.GetParent().IsShownOnScreen():
-				self.Center()
-				placed = True
-			else:
-				x = getcfg("position.progress.x", False) or self.GetParent().GetScreenPosition()[0]
-				y = getcfg("position.progress.y", False) or self.GetParent().GetScreenPosition()[1]
-		else:
-			x = getcfg("position.progress.x")
-			y = getcfg("position.progress.y")
-		if not placed:
-			self.SetSaneGeometry(x, y)
+		x = getcfg("position.progress.x")
+		y = getcfg("position.progress.y")
+		self.SetSaneGeometry(x, y)
 	
 	def safe_send(self, bytes):
 		if self.has_worker_subprocess() and not self.worker.subprocess_abort:
