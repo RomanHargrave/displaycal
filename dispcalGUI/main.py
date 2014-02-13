@@ -64,10 +64,10 @@ def main(module=None):
 	try:
 		# Check for required resource files
 		mod2res = {None: resfiles,
-				   "3DLUT-maker": ["3dlut.xrc"],
+				   "3DLUT-maker": ["xrc/3dlut.xrc"],
 				   "curve-viewer": [],
 				   "profile-info": [],
-				   "synthprofile": ["synthicc.xrc"],
+				   "synthprofile": ["xrc/synthicc.xrc"],
 				   "testchart-editor": []}
 		if module not in mod2res:
 			module = None
