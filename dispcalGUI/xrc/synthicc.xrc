@@ -403,17 +403,6 @@
                 <object class="spacer">
                   <size>0, 0</size>
                 </object>
-                <object class="sizeritem">
-                  <object class="wxStaticText" name="label_desc">
-                    <label>profile.name</label>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>10</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxTextCtrl" name="profile_name_textctrl"/>
-                  <flag>wxEXPAND</flag>
-                </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
                   <object class="wxBoxSizer">

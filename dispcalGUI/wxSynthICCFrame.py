@@ -73,8 +73,6 @@ class SynthICCFrame(BaseFrame):
 									   self.black_luminance_ctrl_handler)
 		self.luminance_ctrl.Bind(floatspin.EVT_FLOATSPIN,
 								 self.luminance_ctrl_handler)
-		self.profile_name_textctrl.Bind(wx.EVT_TEXT,
-										self.profile_name_ctrl_handler)
 		self.save_as_btn.Bind(wx.EVT_BUTTON, self.save_as_btn_handler)
 
 		self.save_as_btn.SetDefault()
@@ -145,8 +143,7 @@ class SynthICCFrame(BaseFrame):
 		pass
 	
 	def enable_save_as_btn(self):
-		self.save_as_btn.Enable(bool(self.get_XYZ() and
-									 self.profile_name_textctrl.Value))
+		self.save_as_btn.Enable(bool(self.get_XYZ()))
 	
 	def get_XYZ(self):
 		XYZ = {}
@@ -263,7 +260,6 @@ class SynthICCFrame(BaseFrame):
 				self.trc_textctrl.SetValue(str(gamma))
 			self.trc_ctrl_handler()
 			self._updating_ctrls = False
-			self.profile_name_textctrl.SetValue(preset_name)
 	
 	def profile_ctrl_handler(self, event):
 		pass
@@ -307,7 +303,7 @@ class SynthICCFrame(BaseFrame):
 			# sRGB
 			trc = -2.4
 		defaultDir, defaultFile = get_verified_path("last_icc_path")
-		defaultFile = self.profile_name_textctrl.Value
+		defaultFile = lang.getstr("unnamed")
 		if self.colorspace_rgb_ctrl.Value:
 			# Color profile
 			profile = ICCP.ICCProfile.from_XYZ((XYZ["rX"], XYZ["rY"], XYZ["rZ"]),
@@ -317,13 +313,11 @@ class SynthICCFrame(BaseFrame):
 											   trc,
 											   defaultFile,
 											   getcfg("copyright"))
-			profile.tags.lumi = ICCP.XYZType()
 			TRC = profile.tags.rTRC = profile.tags.gTRC = profile.tags.bTRC
 		else:
 			# Grayscale profile
 			profile = ICCP.ICCProfile()
 			profile.colorSpace = "GRAY"
-			profile.setDescription(defaultFile)
 			profile.setCopyright(getcfg("copyright"))
 			profile.tags.wtpt = ICCP.XYZType()
 			(profile.tags.wtpt.X,
@@ -341,8 +335,8 @@ class SynthICCFrame(BaseFrame):
 			black_Y = getcfg("profile.black_luminance") / getcfg("profile.luminance")
 			TRC.set_bt1886_trc(black_Y,
 							   colormath.xicc_tech_gamma(gamma, black_Y))
-		elif trc > 0 and getcfg("profile.black_luminance"):
-			# allow black offset for pure power
+		elif not TRC or getcfg("profile.black_luminance"):
+			# Allow black offset
 			TRC.set_trc(trc, vmin=getcfg("profile.black_luminance") /
 								  getcfg("profile.luminance") * 65535)
 		if self.bpc_ctrl.Value:
@@ -355,8 +349,9 @@ class SynthICCFrame(BaseFrame):
 				X, Y, Z = [v / XYZ["wY"] * Y
 						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
 			else:
-				X, Y, Z = [Y / (v / XYZ["wY"] * getcfg("profile.luminance"))
-						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
+				x, y = colormath.XYZ2xyY(XYZ["wX"], XYZ["wY"], XYZ["wZ"])[:2]
+				X, Y, Z = colormath.xyY2XYZ(x, y,
+											Y / getcfg("profile.luminance"))
 			profile.tags[tagname] = ICCP.XYZType()
 			(profile.tags[tagname].X,
 			 profile.tags[tagname].Y,
@@ -382,6 +377,8 @@ class SynthICCFrame(BaseFrame):
 				return
 			setcfg("last_icc_path", path)
 			config.writecfg()
+			profile.setDescription(os.path.splitext(os.path.basename(path))[0])
+			profile.calculateID()
 			try:
 				profile.write(path)
 			except Exception, exception:
