@@ -31,8 +31,29 @@
                   <border>10</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxChoice" name="preset_ctrl"/>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="wxChoice" name="preset_ctrl"/>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>20</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxRadioButton" name="colorspace_rgb_ctrl">
+                        <label>RGB</label>
+                        <value>1</value>
+                        <style>wxRB_GROUP</style>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxRadioButton" name="colorspace_gray_ctrl">
+                        <label>grayscale</label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                  </object>
                 </object>
                 <object class="spacer">
                   <size>0, 0</size>
@@ -266,6 +287,62 @@
                   <size>0, 0</size>
                 </object>
                 <object class="sizeritem">
+                  <object class="wxStaticText" name="label_luminance">
+                    <label>calibration.luminance</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>10</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <orient>wxHORIZONTAL</orient>
+                    <object class="sizeritem">
+                      <object class="FloatSpin" name="luminance_ctrl">
+                        <size>65, -1</size>
+                        <min_val>40.0</min_val>
+                        <max_val>3993.3295858873271</max_val>
+                        <increment>0.1</increment>
+                        <digits>2</digits>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText">
+                        <label>cd/m²</label>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>20</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="label_black_luminance">
+                        <label>calibration.black_luminance</label>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>10</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="FloatSpin" name="black_luminance_ctrl">
+                        <size>65, -1</size>
+                        <min_val>0.0</min_val>
+                        <max_val>10.0</max_val>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
+                      </object>
+                      <flag>wxRIGHT</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText">
+                        <label>cd/m²</label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                  </object>
+                </object>
+                <object class="spacer"/>
+                <object class="spacer"/>
+                <object class="sizeritem">
                   <object class="wxStaticText" name="label_trc">
                     <label>trc</label>
                   </object>
@@ -279,15 +356,16 @@
                       <object class="wxChoice" name="trc_ctrl">
                         <content>
                           <item>trc.gamma</item>
+                          <item>trc.dicom</item>
                           <item>trc.lstar</item>
                           <item>trc.rec709</item>
+                          <item>trc.rec1886</item>
                           <item>trc.smpte240m</item>
                           <item>trc.srgb</item>
                         </content>
                         <selection>0</selection>
                       </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE</flag>
-                      <border>8</border>
+                      <flag>wxALIGN_CENTRE</flag>
                     </object>
                     <object class="sizeritem">
                       <object class="wxComboBox" name="trc_textctrl">
@@ -307,6 +385,15 @@
                         </content>
                         <selection>6</selection>
                       </object>
+                      <flag>wxLEFT</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="bpc_ctrl">
+                        <label>black_point_compensation</label>
+                      </object>
+                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>20</border>
                     </object>
                   </object>
                 </object>

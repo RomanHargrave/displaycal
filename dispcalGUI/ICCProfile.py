@@ -1035,6 +1035,16 @@ class CurveType(ICCProfileTag, list):
 		list.append(self, object)
 		self._transfer_function = {}
 	
+	def apply_bpc(self):
+		if len(self) < 2:
+			return
+		bp_in = colormath.xyY2XYZ(.333, .333, self[0] / 65535.0)
+		wp_out = colormath.xyY2XYZ(.333, .333, self[-1] / 65535.0)
+		for i, v in enumerate(self):
+			X, Y, Z = colormath.xyY2XYZ(.333, .333, v / 65535.0)
+			self[i] = int(round(colormath.apply_bpc(X, Y, Z, bp_in, (0, 0, 0),
+													wp_out)[1] * 65535.0))
+	
 	def extend(self, iterable):
 		list.extend(self, iterable)
 		self._transfer_function = {}
@@ -1137,6 +1147,58 @@ class CurveType(ICCProfileTag, list):
 		list.reverse(self)
 		self._transfer_function = {}
 	
+	def set_bt1886_trc(self, black_Y=0, gamma=2.2, size=None):
+		"""
+		Set the response to the BT. 1886 curve
+		
+		This response is special in that it depends on the actual black
+		level of the display.
+		
+		"""
+		rXYZ = colormath.RGB2XYZ(1.0, 0, 0)
+		gXYZ = colormath.RGB2XYZ(0, 1.0, 0)
+		bXYZ = colormath.RGB2XYZ(0, 0, 1.0)
+		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+								   [rXYZ[1], gXYZ[1], bXYZ[1]],
+								   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+		wXYZ = colormath.RGB2XYZ(1.0, 1.0, 1.0)
+		x, y = colormath.XYZ2xyY(*wXYZ)[:2]
+		XYZbp = colormath.xyY2XYZ(x, y, black_Y)
+		bt1886 = colormath.BT1886(mtx, XYZbp, gamma)
+		self.set_trc(-709, size)
+		for i, v in enumerate(self):
+			X, Y, Z = colormath.xyY2XYZ(x, y, v / 65535.0)
+			self[i] = int(round(bt1886.apply(X, Y, Z)[1] * 65535.0))
+	
+	def set_dicom_trc(self, black_Y=0, white_Y=100, size=None):
+		"""
+		Set the response to the DICOM Grayscale Standard Display Function
+		
+		This response is special in that it depends on the actual black
+		and white level of the display.
+		
+		"""
+		# See http://medical.nema.org/Dicom/2011/11_14pu.pdf
+		# Luminance levels depend on the start level of 0.05 cd/m2
+		black_Y += .05
+		black_jndi = colormath.DICOM(black_Y, True) if black_Y else 0
+		white_jndi = colormath.DICOM(white_Y, True) if white_Y else 1023
+		black_dicomY = math.pow(10, colormath.DICOM(black_jndi)) if black_jndi else 0
+		white_dicomY = math.pow(10, colormath.DICOM(white_jndi))
+		vmin = 0 ##-black_dicomY / white_dicomY * 65535
+		if not size:
+			size = len(self)
+		if size < 2:
+			size = 1024
+		self[:] = []
+		for v in xrange(size):
+			if black_jndi or (v and white_jndi - black_jndi):
+				v = math.pow(10, colormath.DICOM(black_jndi +
+												 (float(v) / (size - 1)) *
+												 (white_jndi -
+												  black_jndi))) / white_dicomY
+			self.append(int(round(vmin + v * (65535 - vmin))))
+	
 	def set_trc(self, power=2.2, size=None, vmin=0, vmax=65535):
 		"""
 		Set the response to a certain function.
@@ -1149,7 +1211,7 @@ class CurveType(ICCProfileTag, list):
 		if not size:
 			size = len(self) or 1024
 		if size == 1:
-			if power >= 0.0:
+			if power >= 0.0 and not vmin:
 				self[:] = [power]
 				return
 			else:

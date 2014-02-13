@@ -595,6 +595,7 @@ defaults = {
 	"position.synthiccframe.y": 50,
 	"position.tcgen.x": 50,
 	"position.tcgen.y": 50,
+	"profile.black_luminance": 0.0,
 	"profile.black_point_compensation": 1,
 	"profile.create_gamut_views": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
@@ -603,6 +604,7 @@ defaults = {
 									 # sys.getwindowsversion() >= (6, )) 
 								else "u",  # Linux, OSX
 	"profile.license": "Public Domain",
+	"profile.luminance": 120.0,
 	"profile.load_on_login": 1,
 	"profile.name": u" ".join([
 		u"%dns",

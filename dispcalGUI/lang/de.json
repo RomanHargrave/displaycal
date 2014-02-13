@@ -636,6 +636,7 @@
 	"trashcan.mac": "Papierkorb",
 	"trashcan.windows": "Papierkorb",
 	"trc": "Tonwertkurve",
+	"trc.dicom": "DICOM",
 	"trc.gamma": "Gamma",
 	"trc.lstar": "L*",
 	"trc.rec709": "Rec. 709",

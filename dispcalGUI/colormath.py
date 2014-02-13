@@ -116,6 +116,41 @@ def specialpow(a, b):
 	return v * signScale
 
 
+def DICOM(j, inverse=False):
+	if inverse:
+		log10Y = math.log10(j)
+		A = 71.498068
+		B = 94.593053
+		C = 41.912053
+		D = 9.8247004
+		E = 0.28175407
+		F = -1.1878455
+		G = -0.18014349
+		H = 0.14710899
+		I = -0.017046845
+		return (A + B * log10Y + C * math.pow(log10Y, 2) +
+				D * math.pow(log10Y, 3) + E * math.pow(log10Y, 4) +
+				F * math.pow(log10Y, 5) + G * math.pow(log10Y, 6) +
+				H * math.pow(log10Y, 7) + I * math.pow(log10Y, 8))
+	else:
+		logj = math.log(j)
+		a = -1.3011877
+		b = -2.5840191E-2
+		c = 8.0242636E-2
+		d = -1.0320229E-1
+		e = 1.3646699E-1
+		f = 2.8745620E-2
+		g = -2.5468404E-2
+		h = -3.1978977E-3
+		k = 1.2992634E-4
+		m = 1.3635334E-3
+		return ((a + c * logj + e * math.pow(logj, 2) +
+				 g * math.pow(logj, 3) + m * math.pow(logj, 4))
+				/
+				(1 + b * logj + d * math.pow(logj, 2) + f * math.pow(logj, 3) +
+				 h * math.pow(logj, 4) + k * math.pow(logj, 5)))
+
+
 rgb_spaces = {
 	# http://brucelindbloom.com/WorkingSpaceInfo.html
 	# ACES: https://github.com/ampas/aces-dev/blob/master/docs/ACES_1.0.1.pdf?raw=true

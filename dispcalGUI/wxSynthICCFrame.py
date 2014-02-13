@@ -16,6 +16,11 @@ import localization as lang
 import worker
 from wxaddons import FileDrop
 from wxwindows import BaseFrame, InfoDialog, wx
+try:
+	import wx.lib.agw.floatspin as floatspin
+except ImportError:
+	import floatspin
+import xh_floatspin
 
 from wx import xrc
 
@@ -27,6 +32,7 @@ class SynthICCFrame(BaseFrame):
 	def __init__(self, parent=None):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "synthicc.xrc")))
+		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, parent, "synthiccframe")
 		self.PostCreate(pre)
@@ -59,6 +65,14 @@ class SynthICCFrame(BaseFrame):
 		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
 		self.trc_textctrl.Bind(wx.EVT_COMBOBOX, self.trc_textctrl_handler)
 		self.trc_textctrl.Bind(wx.EVT_TEXT, self.trc_textctrl_handler)
+		self.colorspace_rgb_ctrl.Bind(wx.EVT_RADIOBUTTON,
+									  self.colorspace_ctrl_handler)
+		self.colorspace_gray_ctrl.Bind(wx.EVT_RADIOBUTTON,
+									   self.colorspace_ctrl_handler)
+		self.black_luminance_ctrl.Bind(floatspin.EVT_FLOATSPIN,
+									   self.black_luminance_ctrl_handler)
+		self.luminance_ctrl.Bind(floatspin.EVT_FLOATSPIN,
+								 self.luminance_ctrl_handler)
 		self.profile_name_textctrl.Bind(wx.EVT_TEXT,
 										self.profile_name_ctrl_handler)
 		self.save_as_btn.Bind(wx.EVT_BUTTON, self.save_as_btn_handler)
@@ -98,15 +112,31 @@ class SynthICCFrame(BaseFrame):
 			setcfg("position.synthiccframe.y", y)
 			setcfg("size.synthiccframe.w", self.GetSize()[0])
 			setcfg("size.synthiccframe.h", self.GetSize()[1])
-			config.writecfg()
+		config.writecfg()
 		if event:
 			event.Skip()
+	
+	def black_luminance_ctrl_handler(self, event):
+		v = self.black_luminance_ctrl.GetValue()
+		setcfg("profile.black_luminance", v)
+		if not bool(v):
+			self.bpc_ctrl.SetValue(False)
+		self.bpc_ctrl.Enable(bool(v))
 	
 	def blue_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("blue")
 	
 	def blue_xy_ctrl_handler(self, event):
 		self.parse_xy("blue")
+	
+	def colorspace_ctrl_handler(self, event):
+		show = bool(self.colorspace_rgb_ctrl.Value)
+		for color in ("red", "green", "blue"):
+			getattr(self, "label_%s" % color).Show(show)
+			for component in "XYZxy":
+				getattr(self, "%s_%s" % (color, component)).Show(show)
+		self.enable_save_as_btn()
+		self.update_layout()
 	
 	def drop_handler(self, path):
 		pass
@@ -129,9 +159,10 @@ class SynthICCFrame(BaseFrame):
 				except ValueError:
 					pass
 		if ("wX" in XYZ and "wY" in XYZ and "wZ" in XYZ and
-			"rX" in XYZ and "rY" in XYZ and "rZ" in XYZ and
-			"gX" in XYZ and "gY" in XYZ and "gZ" in XYZ and
-			"bX" in XYZ and "bY" in XYZ and "bZ" in XYZ):
+			(self.colorspace_gray_ctrl.Value or
+			 ("rX" in XYZ and "rY" in XYZ and "rZ" in XYZ and
+			  "gX" in XYZ and "gY" in XYZ and "gZ" in XYZ and
+			  "bX" in XYZ and "bY" in XYZ and "bZ" in XYZ))):
 			return XYZ
 	
 	def green_XYZ_ctrl_handler(self, event):
@@ -139,6 +170,11 @@ class SynthICCFrame(BaseFrame):
 	
 	def green_xy_ctrl_handler(self, event):
 		self.parse_xy("green")
+	
+	def luminance_ctrl_handler(self, event):
+		v = self.luminance_ctrl.GetValue()
+		setcfg("profile.luminance", v)
+		self.bpc_ctrl.Enable(bool(v))
 	
 	def parse_XYZ(self, name):
 		if not self._updating_ctrls:
@@ -203,18 +239,24 @@ class SynthICCFrame(BaseFrame):
 			for color in ("red", "green", "blue"):
 				for i, component in enumerate("xy"):
 					getattr(self, "%s_%s" % (color, component)).SetValue(str(locals()[color][i]))
-			if gamma == -3.0:
-				# L*
+			if gamma == -1023:
+				# DICOM
 				self.trc_ctrl.SetSelection(1)
+			elif gamma == -3.0:
+				# L*
+				self.trc_ctrl.SetSelection(2)
 			elif gamma == -709:
 				# Rec. 709
-				self.trc_ctrl.SetSelection(2)
+				self.trc_ctrl.SetSelection(3)
+			elif gamma == -1886:
+				# Rec. 1886
+				self.trc_ctrl.SetSelection(4)
 			elif gamma == -240:
 				# SMPTE 240M
-				self.trc_ctrl.SetSelection(3)
+				self.trc_ctrl.SetSelection(5)
 			elif gamma == -2.4:
 				# sRGB
-				self.trc_ctrl.SetSelection(4)
+				self.trc_ctrl.SetSelection(6)
 			else:
 				# Gamma
 				self.trc_ctrl.SetSelection(0)
@@ -237,35 +279,88 @@ class SynthICCFrame(BaseFrame):
 	
 	def save_as_btn_handler(self, event):
 		XYZ = self.get_XYZ()
+		try:
+			gamma = float(self.trc_textctrl.Value)
+		except ValueError:
+			wx.Bell()
+			gamma = 2.2
+			self.trc_textctrl.Value = str(gamma)
 		if self.trc_ctrl.GetSelection() == 0:
 			# Gamma
-			try:
-				trc = float(self.trc_textctrl.Value)
-			except ValueError:
-				wx.Bell()
-				trc = 2.2
-				self.trc_textctrl.Value = str(trc)
+			trc = gamma
 		elif self.trc_ctrl.GetSelection() == 1:
+			# DICOM - gamma set here is not actually used
+			trc = 2.2
+		elif self.trc_ctrl.GetSelection() == 2:
 			# L*
 			trc = -3.0
-		elif self.trc_ctrl.GetSelection() == 2:
+		elif self.trc_ctrl.GetSelection() == 3:
 			# Rec. 709
 			trc = -709
-		elif self.trc_ctrl.GetSelection() == 3:
+		elif self.trc_ctrl.GetSelection() == 4:
+			# Rec. 1886 - gamma set here is not actually used
+			trc = 2.2
+		elif self.trc_ctrl.GetSelection() == 5:
 			# SMPTE 240M
 			trc = -240
-		elif self.trc_ctrl.GetSelection() == 4:
+		elif self.trc_ctrl.GetSelection() == 6:
 			# sRGB
 			trc = -2.4
 		defaultDir, defaultFile = get_verified_path("last_icc_path")
 		defaultFile = self.profile_name_textctrl.Value
-		profile = ICCP.ICCProfile.from_XYZ((XYZ["rX"], XYZ["rY"], XYZ["rZ"]),
-										   (XYZ["gX"], XYZ["gY"], XYZ["gZ"]),
-										   (XYZ["bX"], XYZ["bY"], XYZ["bZ"]),
-										   (XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
-										   trc,
-										   defaultFile,
-										   getcfg("copyright"))
+		if self.colorspace_rgb_ctrl.Value:
+			# Color profile
+			profile = ICCP.ICCProfile.from_XYZ((XYZ["rX"], XYZ["rY"], XYZ["rZ"]),
+											   (XYZ["gX"], XYZ["gY"], XYZ["gZ"]),
+											   (XYZ["bX"], XYZ["bY"], XYZ["bZ"]),
+											   (XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
+											   trc,
+											   defaultFile,
+											   getcfg("copyright"))
+			profile.tags.lumi = ICCP.XYZType()
+			TRC = profile.tags.rTRC = profile.tags.gTRC = profile.tags.bTRC
+		else:
+			# Grayscale profile
+			profile = ICCP.ICCProfile()
+			profile.colorSpace = "GRAY"
+			profile.setDescription(defaultFile)
+			profile.setCopyright(getcfg("copyright"))
+			profile.tags.wtpt = ICCP.XYZType()
+			(profile.tags.wtpt.X,
+			 profile.tags.wtpt.Y,
+			 profile.tags.wtpt.Z) = (XYZ["wX"], XYZ["wY"], XYZ["wZ"])
+			TRC = profile.tags.rTRC = profile.tags.gTRC = profile.tags.bTRC = \
+				  profile.tags.kTRC = ICCP.CurveType()
+		if self.trc_ctrl.GetSelection() == 1:
+			# DICOM
+			# Absolute luminance values!
+			TRC.set_dicom_trc(getcfg("profile.black_luminance"),
+							  getcfg("profile.luminance"))
+		elif self.trc_ctrl.GetSelection() == 4:
+			# Rec. 1886
+			black_Y = getcfg("profile.black_luminance") / getcfg("profile.luminance")
+			TRC.set_bt1886_trc(black_Y,
+							   colormath.xicc_tech_gamma(gamma, black_Y))
+		elif trc > 0 and getcfg("profile.black_luminance"):
+			# allow black offset for pure power
+			TRC.set_trc(trc, vmin=getcfg("profile.black_luminance") /
+								  getcfg("profile.luminance") * 65535)
+		if self.bpc_ctrl.Value:
+			TRC.apply_bpc()
+		for tagname, cfgname in [("lumi", "luminance"),
+								 ("bkpt", "black_luminance")]:
+			Y = getcfg("profile." + cfgname)
+			if tagname == "lumi":
+				# absolute
+				X, Y, Z = [v / XYZ["wY"] * Y
+						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
+			else:
+				X, Y, Z = [Y / (v / XYZ["wY"] * getcfg("profile.luminance"))
+						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
+			profile.tags[tagname] = ICCP.XYZType()
+			(profile.tags[tagname].X,
+			 profile.tags[tagname].Y,
+			 profile.tags[tagname].Z) = X, Y, Z
 		path = None
 		dlg = wx.FileDialog(self, 
 							lang.getstr("save_as"),
@@ -331,7 +426,7 @@ class SynthICCFrame(BaseFrame):
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
 		self.panel.Freeze()
-		self.trc_textctrl.Show(self.trc_ctrl.GetSelection() == 0)
+		self.trc_textctrl.Show(self.trc_ctrl.GetSelection() in (0, 4))
 		self.panel.GetSizer().Layout()
 		self.panel.Thaw()
 	
@@ -341,7 +436,9 @@ class SynthICCFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
-		pass
+		self.luminance_ctrl.SetValue(getcfg("profile.luminance"))
+		self.black_luminance_ctrl.SetValue(getcfg("profile.black_luminance"))
+		self.black_luminance_ctrl_handler(None)
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")
