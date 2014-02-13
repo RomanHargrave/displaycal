@@ -618,7 +618,7 @@ def s15Fixed16Number(binaryString):
 
 
 def s15Fixed16Number_tohex(num):
-	return struct.pack(">i", num * 65536)
+	return struct.pack(">i", int(round(num * 65536)))
 
 
 def u16Fixed16Number(binaryString):
@@ -626,7 +626,7 @@ def u16Fixed16Number(binaryString):
 
 
 def u16Fixed16Number_tohex(num):
-	return struct.pack(">I", int(num * 65536) & 0xFFFFFFFF)
+	return struct.pack(">I", int(round(num * 65536)) & 0xFFFFFFFF)
 
 
 def u8Fixed8Number(binaryString):
@@ -634,7 +634,7 @@ def u8Fixed8Number(binaryString):
 
 
 def u8Fixed8Number_tohex(num):
-	return struct.pack(">H", int(num * 256))
+	return struct.pack(">H", int(round(num * 256)))
 
 
 def uInt16Number(binaryString):
