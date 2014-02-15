@@ -39,7 +39,8 @@ def get_default_size():
 	display_sizes = []
 	display_sizes_mm = []
 	for display_no in xrange(len(getcfg("displays").split(os.pathsep))):
-		display_size = wx.Display(get_display_number(display_no)).Geometry[2:]
+		display_no = get_display_number(display_no)
+		display_size = wx.Display(display_no).Geometry[2:]
 		display_size_mm = []
 		if RDSMM:
 			try:

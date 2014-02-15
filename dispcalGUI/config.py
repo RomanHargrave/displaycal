@@ -253,7 +253,7 @@ def get_display_number(display_no):
 	try:
 		display = getcfg("displays").split(os.pathsep)[display_no]
 	except IndexError:
-		pass
+		return 0
 	else:
 		if display in ("Web @ localhost", "Untethered", "madVR"):
 			return 0
@@ -264,9 +264,8 @@ def get_display_number(display_no):
 					from log import safe_print
 					safe_print("[D] Found display %s at index %i" % 
 							   (geometry, i))
-				display_no = i
-				break
-	return display_no
+				return i
+	return 0
 
 
 def get_display_rects():
