@@ -1034,6 +1034,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			pkgdir = os.path.sep.join(attrs.get("package_dir", 
 												{}).get(pkg, pkg).split("/"))
 			manifest_in += ["include " + os.path.join(pkgdir, "*.py")]
+			manifest_in += ["include " + os.path.join(pkgdir, "*.pyd")]
 			manifest_in += ["include " + os.path.join(pkgdir, "*.so")]
 			for obj in attrs.get("package_data", {}).get(pkg, []):
 				manifest_in += ["include " + os.path.sep.join([pkgdir] + 
