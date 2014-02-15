@@ -2698,7 +2698,8 @@ class Worker(object):
 					if ((": Error" in line and
 					     not "failed with 'User Aborted'" in line and
 					     not "test_crt returned error code 1" in line) or
-					    line.startswith("Failed to") or
+					    (line.startswith("Failed to") and
+					     not "Failed to meet target" in line) or
 					    ("Requested ambient light capability" in line and
 					     len(self.output) == i + 2) or
 					    ("Diagnostic:" in line and
