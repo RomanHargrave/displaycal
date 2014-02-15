@@ -171,7 +171,6 @@ class SynthICCFrame(BaseFrame):
 	def luminance_ctrl_handler(self, event):
 		v = self.luminance_ctrl.GetValue()
 		setcfg("profile.luminance", v)
-		self.bpc_ctrl.Enable(bool(v))
 	
 	def parse_XYZ(self, name):
 		if not self._updating_ctrls:
