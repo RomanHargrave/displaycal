@@ -100,11 +100,9 @@ def add_lib_excludes(key, excludebits):
 	for exclude in excludebits:
 		config["excludes"][key] += [name + ".lib" + exclude,
 									"lib" + exclude]
-	if len(excludebits) == 1:
-		config["excludes"][key] += [name + ".lib"]
 	for exclude in ("32", "64"):
 		for pycompat in ("25", "26", "27"):
-			if (len(excludebits) == 1 and
+			if (key == "win32" and
 				(pycompat == sys.version[0] + sys.version[2] or
 				 exclude == excludebits[0])):
 				continue
