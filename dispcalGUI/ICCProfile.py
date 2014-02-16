@@ -2760,6 +2760,16 @@ class ICCProfile:
 	def __del__(self):
 		self.close()
 	
+	def __len__(self):
+		"""
+		Return the number of tags. 
+		
+		Can also be used in boolean comparisons (profiles with no tags
+		evaluate to false)
+		
+		"""
+		return len(self.tags)
+	
 	@property
 	def data(self):
 		"""
