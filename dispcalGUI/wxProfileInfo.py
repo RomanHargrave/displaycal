@@ -609,8 +609,8 @@ class GamutCanvas(LUTCanvas):
 							odata = []
 						else:
 							if p.wait() != 0:
-								self.errors.append(IOError("\n".join(''.join(odata),
-																	 stderr.read().strip())))
+								self.errors.append(IOError("\n".join([''.join(odata),
+																	  stderr.read().strip()])))
 				stderr.close()
 			
 				for line in odata:
