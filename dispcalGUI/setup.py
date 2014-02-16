@@ -114,7 +114,7 @@ def add_lib_excludes(key, excludebits):
 										(exclude, pycompat)]
 
 
-add_lib_excludes("darwin", ["32", "64"])
+add_lib_excludes("darwin", ["64" if bits == "32" else "32"])
 add_lib_excludes("win32", ["64" if bits == "32" else "32"])
 
 msiversion = ".".join((str(version_tuple[0]), 
@@ -574,9 +574,9 @@ def setup():
 			p = sp.Popen([sys.executable, '-c', '''import os
 from distutils.core import setup, Extension
 
-setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r, 
+setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r, 
 							 define_macros=%r, extra_link_args=%r)])''' % 
-						  (name, sources, macros, link_args)] + sys.argv[1:], 
+						  (name, bits, sources, macros, link_args)] + sys.argv[1:], 
 						 stdout = sp.PIPE, stderr = sp.STDOUT)
 			lines = []
 			while True:
@@ -594,7 +594,7 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 		libraries = ["X11", "Xinerama", "Xrandr", "Xxf86vm"]
 		link_args = None
 	if sys.platform == "darwin":
-		extname = "%s.lib.RealDisplaySizeMM" % name
+		extname = "%s.lib%s.RealDisplaySizeMM" % (name, bits)
 	else:
 		extname = "%s.lib%s.python%s%s.RealDisplaySizeMM" % ((name, bits) + 
 															 sys.version_info[:2])
@@ -625,8 +625,8 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 				packages += ["%s.lib%s" % (name, tmpbits),
 							 "%s.lib%s.python%s" % (name, tmpbits, pycompat)]
 	elif sys.platform == "darwin":
-		# On Mac OS X we only want the universal binary in lib
-		pass
+		# On Mac OS X we only want the universal binaries
+		packages += ["%s.lib%s" % (name, bits)]
 	else:
 		# On Linux/Windows we want separate libraries
 		packages += ["%s.lib%s" % (name, bits),
@@ -1090,9 +1090,6 @@ setup(ext_modules=[Extension("%s.RealDisplaySizeMM", sources=%r,
 			i = sys.argv.index("py2app" if do_py2app else "py2exe")
 			if not "build_ext" in sys.argv[1:i]:
 				sys.argv.insert(i, "build_ext")
-			if len(sys.argv) < i + 2 or sys.argv[i + 1] not in ("--inplace", 
-																"-i"):
-				sys.argv.insert(i + 1, "-i")
 
 		setup(**attrs)
 		

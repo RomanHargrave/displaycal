@@ -433,8 +433,6 @@ def setup():
 		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
 		if not "build_ext" in sys.argv[1:i]:
 			sys.argv.insert(i, "build_ext")
-		if len(sys.argv) < i + 2 or sys.argv[i + 1] not in ("--inplace", "-i"):
-			sys.argv.insert(i + 1, "-i")
 		if "-F" in sys.argv[1:]:
 			sys.argv.remove("-F")
 		if "--onefile" in sys.argv[1:]:
