@@ -140,14 +140,14 @@ class Target:
 
 
 def create_app_symlinks(dist_dir, scripts):
-	maincontents = os.path.join(dist_dir, name + ".app", "Contents")
+	maincontents_rel = os.path.join(name + ".app", "Contents")
 	# Create ref, tests, ReadMe and license symlinks in directory
 	# containing the app bundle
 	for src, tgt in [("ref", "Reference"),
 					 ("tests", "Tests"),
 					 ("README.html", "README.html"),
 					 ("LICENSE.txt", "LICENSE.txt")]:
-		src = os.path.join(maincontents, "Resources", src)
+		src = os.path.join(maincontents_rel, "Resources", src)
 		tgt = os.path.join(dist_dir, tgt)
 		if os.path.islink(tgt):
 			os.unlink(tgt)
@@ -167,20 +167,23 @@ def create_app_symlinks(dist_dir, scripts):
 				shutil.rmtree(toolapp)
 			else:
 				raise SystemExit('User aborted')
-		has_tool_script = os.path.exists(os.path.join(maincontents, 'MacOS',
-													  script))
+		has_tool_script = os.path.exists(os.path.join(dist_dir,
+													  maincontents_rel,
+													  'MacOS', script))
 		toolcontents = os.path.join(toolapp, "Contents")
 		os.makedirs(toolcontents)
 		subdirs = ["Frameworks", "Resources"]
 		if has_tool_script:
 			# PyInstaller
 			subdirs.append("MacOS")
-		for entry in os.listdir(maincontents):
+		for entry in os.listdir(os.path.join(dist_dir, maincontents_rel)):
 			if entry in subdirs:
 				os.makedirs(os.path.join(toolcontents, entry))
-				for subentry in os.listdir(os.path.join(maincontents,
+				for subentry in os.listdir(os.path.join(dist_dir,
+														maincontents_rel,
 														entry)):
-					src = os.path.join(maincontents, entry, subentry)
+					src = os.path.join("..", "..", "..", maincontents_rel,
+									   entry, subentry)
 					tgt = os.path.join(toolcontents, entry, subentry)
 					if subentry == "main.py":
 						# py2app
@@ -205,8 +208,8 @@ def create_app_symlinks(dist_dir, scripts):
 					elif subentry not in toolscripts:
 						os.symlink(src, tgt)
 			elif entry == "Info.plist":
-				with codecs.open(os.path.join(maincontents, entry), "r",
-								 "UTF-8") as info_in:
+				with codecs.open(os.path.join(dist_dir, maincontents_rel,
+											  entry), "r", "UTF-8") as info_in:
 					infoxml = info_in.read()
 				# CFBundleName / CFBundleDisplayName
 				infoxml = re.sub("(Name</key>\s*<string>)%s" % name,
@@ -228,7 +231,7 @@ def create_app_symlinks(dist_dir, scripts):
 								 "UTF-8") as info_out:
 					info_out.write(infoxml)
 			else:
-				os.symlink(os.path.join(maincontents, entry),
+				os.symlink(os.path.join(maincontents_rel, entry),
 						   os.path.join(toolcontents, entry))
 
 
