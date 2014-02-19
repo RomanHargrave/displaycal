@@ -147,11 +147,10 @@ def create_app_symlinks(dist_dir, scripts):
 					 ("tests", "Tests"),
 					 ("README.html", "README.html"),
 					 ("LICENSE.txt", "LICENSE.txt")]:
-		src = os.path.join(maincontents_rel, "Resources", src)
 		tgt = os.path.join(dist_dir, tgt)
 		if os.path.islink(tgt):
 			os.unlink(tgt)
-		os.symlink(src, tgt)
+		os.symlink(os.path.join(maincontents_rel, "Resources", src), tgt)
 	# Create standalone tools app bundles by symlinking to the main bundle
 	toolscripts = filter(lambda script: script != name,
 						 [script for script, desc in scripts])
@@ -182,7 +181,7 @@ def create_app_symlinks(dist_dir, scripts):
 				for subentry in os.listdir(os.path.join(dist_dir,
 														maincontents_rel,
 														entry)):
-					src = os.path.join("..", "..", "..", maincontents_rel,
+					src = os.path.join(dist_dir, maincontents_rel,
 									   entry, subentry)
 					tgt = os.path.join(toolcontents, entry, subentry)
 					if subentry == "main.py":
@@ -206,7 +205,9 @@ def create_app_symlinks(dist_dir, scripts):
 						# PyInstaller
 						os.rename(src, tgt)
 					elif subentry not in toolscripts:
-						os.symlink(src, tgt)
+						os.symlink(os.path.join("..", "..", "..",
+												maincontents_rel, entry,
+												subentry), tgt)
 			elif entry == "Info.plist":
 				with codecs.open(os.path.join(dist_dir, maincontents_rel,
 											  entry), "r", "UTF-8") as info_in:
@@ -231,7 +232,7 @@ def create_app_symlinks(dist_dir, scripts):
 								 "UTF-8") as info_out:
 					info_out.write(infoxml)
 			else:
-				os.symlink(os.path.join(maincontents_rel, entry),
+				os.symlink(os.path.join("..", "..", maincontents_rel, entry),
 						   os.path.join(toolcontents, entry))
 
 
