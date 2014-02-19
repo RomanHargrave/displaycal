@@ -444,6 +444,8 @@ class UntetheredFrame(wx.Frame):
 												  wx.Colour(*RGB))
 		if "Connecting to the instrument" in txt:
 			self.Pulse(lang.getstr("instrument.initializing"))
+		if "Spot read needs a calibration" in txt:
+			self.is_measuring = False
 		if "Spot read failed" in txt:
 			self.last_error = txt
 		if "Result is XYZ:" in txt:
@@ -652,17 +654,27 @@ class UntetheredFrame(wx.Frame):
 if __name__ == "__main__":
 	from thread import start_new_thread
 	from time import sleep
+	import random
+	from util_io import Files
 	import ICCProfile as ICCP
+	import worker
 	class Subprocess():
 		def send(self, bytes):
 			start_new_thread(test, (bytes,))
-	class Worker(object):
+	class Worker(worker.Worker):
 		def __init__(self):
+			worker.Worker.__init__(self)
+			self.finished = False
+			self.instrument_calibration_complete = False
+			self.instrument_place_on_screen_msg = False
+			self.instrument_sensor_position_msg = False
+			self.is_ambient_measuring = False
 			self.subprocess = Subprocess()
 			self.subprocess_abort = False
 		def abort_subprocess(self):
-			self.subprocess.send("Q")
+			self.safe_send("Q")
 		def safe_send(self, bytes):
+			print "*** Sending %r" % bytes
 			self.subprocess.send(bytes)
 			return True
 	config.initcfg()
@@ -691,8 +703,11 @@ BEGIN_DATA
 END_DATA
 """)
 	frame.worker = Worker()
+	frame.worker.progress_wnd = frame
 	frame.Show()
+	files = Files([frame.worker, frame])
 	def test(bytes=None):
+		print "*** Received %r" % bytes
 		menu = r"""Place instrument on spot to be measured,
 and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
@@ -704,7 +719,7 @@ Hit ESC or Q to exit, any other key to take a reading:"""
 		elif bytes == " ":
 			i = frame.index
 			row = frame.cgats[0].DATA[i]
-			txt = """
+			txt = ["""
  Result is XYZ: %.6f %.6f %.6f
 
 Place instrument on spot to be measured,
@@ -714,7 +729,17 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 'h' to toggle high res., 'k' to do a calibration
 Hit ESC or Q to exit, any other key to take a reading:""" % (row.XYZ_X,
 															 row.XYZ_Y,
-															 row.XYZ_Z)
+															 row.XYZ_Z),
+				    """"
+ Result is XYZ: %.6f %.6f %.6f
+
+Spot read needs a calibration before continuing
+Place cap on the instrument, or place on a dark surface,
+or place on the white calibration reference,
+ and then hit any key to continue,
+ or hit Esc or Q to abort:""" % (row.XYZ_X,
+								 row.XYZ_Y,
+								 row.XYZ_Z)][random.choice([0, 1])]
 		elif bytes in ("Q", "q"):
 			wx.CallAfter(frame.Close)
 			return
@@ -723,7 +748,7 @@ Hit ESC or Q to exit, any other key to take a reading:""" % (row.XYZ_X,
 		for line in txt.split("\n"):
 			sleep(.03125)
 			if frame:
-				wx.CallAfter(frame.write, line)
+				wx.CallAfter(files.write, line)
 				print line
 	start_new_thread(test, tuple())
 	app.MainLoop()

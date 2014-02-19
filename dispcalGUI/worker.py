@@ -1285,8 +1285,10 @@ class Worker(object):
 		at Argyll CMS command output """
 		if "place instrument on test window" in txt.lower():
 			self.instrument_place_on_screen_msg = True
-		if (self.instrument_place_on_screen_msg and
-			"key to continue" in txt.lower()):
+		if ((self.instrument_place_on_screen_msg and
+			 "key to continue" in txt.lower()) or
+			(self.instrument_calibration_complete and
+			 "place instrument on spot" in txt.lower())):
 			self.instrument_place_on_screen_msg = False
 			if (self.cmdname == get_argyll_utilname("dispcal") and
 				sys.platform == "darwin"):
@@ -1431,9 +1433,10 @@ class Worker(object):
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
-		if debug or test:
-			safe_print('Sending SPACE key')
-		self.safe_send(" ")
+		if not isinstance(self.progress_wnd, UntetheredFrame):
+			if debug or test:
+				safe_print('Sending SPACE key')
+			self.safe_send(" ")
 	
 	def instrument_reposition_sensor(self):
 		if getattr(self, "subprocess_abort", False) or \
