@@ -1674,10 +1674,10 @@ class Worker(object):
 				if not isinstance(result, Exception):
 					return
 
-		if isinstance(result, Exception):
-			raise result
-		elif not result:
-			raise UnloggedError(lang.getstr("aborted"))
+			if isinstance(result, Exception):
+				raise result
+			elif not result:
+				raise UnloggedError(lang.getstr("aborted"))
 
 		# We have to create the 3DLUT ourselves
 
