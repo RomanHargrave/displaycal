@@ -139,18 +139,22 @@ class _RandomNameSequence:
 
 def _candidate_tempdir_list():
     """Generate a list of candidate temporary directories which
-    _get_default_tempdir will try."""
+    _get_default_tempdir will try.
+
+    Unlike the _candidate_tempdir_list of tempfile.py from the stdlib, this one
+    supports Unicode."""
+    from util_os import getenvu
 
     dirlist = []
 
     # First, try the environment.
     for envname in 'TMPDIR', 'TEMP', 'TMP':
-        dirname = _os.getenv(envname)
+        dirname = getenvu(envname)
         if dirname: dirlist.append(dirname)
 
     # Failing that, try OS-specific locations.
     if _os.name == 'riscos':
-        dirname = _os.getenv('Wimp$ScrapDir')
+        dirname = getenvu('Wimp$ScrapDir')
         if dirname: dirlist.append(dirname)
     elif _os.name == 'nt':
         dirlist.extend([ r'c:\temp', r'c:\tmp', r'\temp', r'\tmp' ])
