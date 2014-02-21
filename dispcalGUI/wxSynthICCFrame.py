@@ -116,9 +116,11 @@ class SynthICCFrame(BaseFrame):
 	
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
-		setcfg("profile.black_luminance", v)
+		setcfg("synthprofile.black_luminance", v)
 		if not bool(v):
 			self.bpc_ctrl.SetValue(False)
+			self.trc_type_ctrl.SetSelection(self.trc_types_ba["G"])
+		self.trc_type_ctrl.Enable(bool(v))
 		self.bpc_ctrl.Enable(bool(v))
 	
 	def blue_XYZ_ctrl_handler(self, event):
@@ -170,7 +172,7 @@ class SynthICCFrame(BaseFrame):
 	
 	def luminance_ctrl_handler(self, event):
 		v = self.luminance_ctrl.GetValue()
-		setcfg("profile.luminance", v)
+		setcfg("synthprofile.luminance", v)
 	
 	def parse_XYZ(self, name):
 		if not self._updating_ctrls:
@@ -280,6 +282,11 @@ class SynthICCFrame(BaseFrame):
 			wx.Bell()
 			gamma = 2.2
 			self.trc_textctrl.Value = str(gamma)
+		# Black Y scaled to 0..1 range
+		black_Y = (getcfg("synthprofile.black_luminance") /
+				   getcfg("synthprofile.luminance"))
+		if getcfg("synthprofile.trc_type") == "b":
+			gamma = colormath.xicc_tech_gamma(gamma, black_Y)
 		if self.trc_ctrl.GetSelection() == 0:
 			# Gamma
 			trc = gamma
@@ -327,30 +334,26 @@ class SynthICCFrame(BaseFrame):
 		if self.trc_ctrl.GetSelection() == 1:
 			# DICOM
 			# Absolute luminance values!
-			TRC.set_dicom_trc(getcfg("profile.black_luminance"),
-							  getcfg("profile.luminance"))
+			TRC.set_dicom_trc(getcfg("synthprofile.black_luminance"),
+							  getcfg("synthprofile.luminance"))
 		elif self.trc_ctrl.GetSelection() == 4:
 			# Rec. 1886
-			black_Y = getcfg("profile.black_luminance") / getcfg("profile.luminance")
-			TRC.set_bt1886_trc(black_Y,
-							   colormath.xicc_tech_gamma(gamma, black_Y))
-		elif not TRC or getcfg("profile.black_luminance"):
+			TRC.set_bt1886_trc(black_Y, gamma)
+		elif getcfg("synthprofile.black_luminance"):
 			# Allow black offset
-			TRC.set_trc(trc, vmin=getcfg("profile.black_luminance") /
-								  getcfg("profile.luminance") * 65535)
+			TRC.set_trc(trc, vmin=black_Y * 65535)
+		elif not TRC:
+			TRC.set_trc(trc, 1)
 		if self.bpc_ctrl.Value:
 			TRC.apply_bpc()
-		for tagname, cfgname in [("lumi", "luminance"),
-								 ("bkpt", "black_luminance")]:
-			Y = getcfg("profile." + cfgname)
+		for tagname in ("lumi", "bkpt"):
 			if tagname == "lumi":
-				# absolute
-				X, Y, Z = [v / XYZ["wY"] * Y
+				# Absolute
+				X, Y, Z = [v * getcfg("synthprofile.luminance")
 						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
 			else:
 				x, y = colormath.XYZ2xyY(XYZ["wX"], XYZ["wY"], XYZ["wZ"])[:2]
-				X, Y, Z = colormath.xyY2XYZ(x, y,
-											Y / getcfg("profile.luminance"))
+				X, Y, Z = colormath.xyY2XYZ(x, y, black_Y)
 			profile.tags[tagname] = ICCP.XYZType()
 			(profile.tags[tagname].X,
 			 profile.tags[tagname].Y,
@@ -417,14 +420,28 @@ class SynthICCFrame(BaseFrame):
 			items.append(lang.getstr(item))
 		self.trc_ctrl.SetItems(items)
 		self.trc_ctrl.SetSelection(0)
+		
+		self.trc_types_ab = {0: "g", 1: "G"}
+		self.trc_types_ba = {"g": 0, "G": 1}
+		self.trc_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
+									 lang.getstr("trc.type.absolute")])
 	
 	def trc_ctrl_handler(self, event=None):
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
 		self.panel.Freeze()
-		self.trc_textctrl.Show(self.trc_ctrl.GetSelection() in (0, 4))
+		i = self.trc_ctrl.GetSelection()
+		if i == 4:
+			self.trc_textctrl.SetValue("2.4")
+		self.trc_textctrl.Show(i in (0, 4))
+		self.trc_type_ctrl.Show(i in (0, 4))
 		self.panel.GetSizer().Layout()
 		self.panel.Thaw()
+
+	def trc_type_ctrl_handler(self, event):
+		setcfg("synthprofile.trc_type",
+			   self.trc_types_ab[self.trc_type_ctrl.GetSelection()])
+		config.writecfg()
 	
 	def trc_textctrl_handler(self, event=None):
 		if not self._updating_ctrls:
@@ -432,9 +449,10 @@ class SynthICCFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
-		self.luminance_ctrl.SetValue(getcfg("profile.luminance"))
-		self.black_luminance_ctrl.SetValue(getcfg("profile.black_luminance"))
+		self.luminance_ctrl.SetValue(getcfg("synthprofile.luminance"))
+		self.black_luminance_ctrl.SetValue(getcfg("synthprofile.black_luminance"))
 		self.black_luminance_ctrl_handler(None)
+		self.trc_type_ctrl.SetSelection(self.trc_types_ba[getcfg("synthprofile.trc_type")])
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")

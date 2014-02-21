@@ -465,6 +465,8 @@ valid_values = {
 	"profile.quality": ["l", "m", "h", "u"],
 	"profile.quality.b2a": ["l", "m", "h", "u", "n", None],
 	"profile.type": ["g", "G", "l", "s", "S", "x", "X"],
+	"synthprofile.black_point_compensation": [0, 1],
+	"synthprofile.trc_type": ["g", "G"],
 	"tc_algo": ["", "t", "r", "R", "q", "Q", "i", "I"],  # Q = Argyll >= 1.1.0
 	"tc_vrml_use_D50": [0, 1],
 	"trc": ["240", "709", "l", "s"],
@@ -594,7 +596,6 @@ defaults = {
 	"position.synthiccframe.y": 50,
 	"position.tcgen.x": 50,
 	"position.tcgen.y": 50,
-	"profile.black_luminance": 0.0,
 	"profile.black_point_compensation": 1,
 	"profile.create_gamut_views": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
@@ -603,7 +604,6 @@ defaults = {
 									 # sys.getwindowsversion() >= (6, )) 
 								else "u",  # Linux, OSX
 	"profile.license": "Public Domain",
-	"profile.luminance": 120.0,
 	"profile.load_on_login": 1,
 	"profile.name": u" ".join([
 		u"%dns",
@@ -643,6 +643,10 @@ defaults = {
 	"size.synthiccframe.h": 384,
 	"skip_legacy_serial_ports": 1,
 	"sudo.preserve_environment": 1,
+	"synthprofile.black_luminance": 0.0,
+	"synthprofile.gamma": 2.4,
+	"synthprofile.luminance": 120.0,
+	"synthprofile.trc_type": "G",
 	"tc_adaption": 0.1,
 	"tc_add_ti3_relative": 1,
 	"tc_algo": "",
