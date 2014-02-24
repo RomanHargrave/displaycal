@@ -903,6 +903,155 @@ class Illuminant(ADict):
 		self.description = illuminants[self.type]
 
 
+class LUT16Type(ICCProfileTag):
+
+	def __init__(self, tagData=None, tagSignature=None):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		self._matrix = None
+		self._input = None
+		self._clut = None
+		self._output = None
+		if tagData:
+			self._i = uInt8Number(tagData[8])  # Input channel count
+			self._o = uInt8Number(tagData[9])  # Output channel count
+			self._g = uInt8Number(tagData[10])  # cLUT grid res
+			self._n = uInt16Number(tagData[48:50])  # Input channel entries count
+			self._m = uInt16Number(tagData[50:52])  # Output channel entries count
+	
+	@Property
+	def clut():
+		def fget(self):
+			if self._clut is None:
+				i, g, n = self._i, self._g, self._n
+				tagData = self._tagData
+				self._clut = [[[uInt16Number(tagData[52 + n * i * 2 + i * 2 * (g * x + y) + z * 2:
+													 54 + n * i * 2 + i * 2 * (g * x + y) + z * 2])
+								for z in xrange(i)]
+							   for y in xrange(g)] for x in xrange(g ** i / g)]
+			return self._clut
+		
+		def fset(self, value):
+			self._clut = value
+		
+		return locals()
+	
+	@Property
+	def input():
+		def fget(self):
+			if self._input is None:
+				i, n = self._i, self._n
+				tagData = self._tagData
+				self._input = [[uInt16Number(tagData[52 + n * 2 * z + y * 2:
+													 54 + n * 2 * z + y * 2])
+								for y in xrange(n)]
+							   for z in xrange(i)]
+			return self._input
+		
+		def fset(self, value):
+			self._input = value
+		
+		return locals()
+	
+	def invert(self):
+		"""
+		Invert input and output tables.
+		
+		"""
+		# Invert input/output 1d LUTs
+		for channel in (self.input, self.output):
+			for e, entries in enumerate(channel):
+				lut = OrderedDict()
+				maxv = len(entries) - 1.0
+				for i, entry in enumerate(entries):
+					lut[int(round(entry / 65535.0 * maxv))] = int(round(i / maxv * 65535))
+				xp = lut.keys()
+				fp = lut.values()
+				for i in xrange(len(entries)):
+					if not i in lut:
+						lut[i] = int(round(colormath.interp(i, xp, fp)))
+				lut.sort()
+				channel[e] = lut.values()
+	
+	@Property
+	def matrix():
+		def fget(self):
+			if self._matrix is None:
+				tagData = self._tagData
+				self._matrix = colormath.Matrix3x3([(s15Fixed16Number(tagData[12:16]),
+													 s15Fixed16Number(tagData[16:20]),
+													 s15Fixed16Number(tagData[20:24])),
+													(s15Fixed16Number(tagData[24:28]),
+													 s15Fixed16Number(tagData[28:32]),
+													 s15Fixed16Number(tagData[32:36])),
+													(s15Fixed16Number(tagData[36:40]),
+													 s15Fixed16Number(tagData[40:44]),
+													 s15Fixed16Number(tagData[44:48]))])
+			return self._matrix
+		
+		def fset(self, value):
+			self._matrix = value
+		
+		return locals()
+	
+	@Property
+	def output():
+		def fget(self):
+			if self._output is None:
+				i, o, g, n, m = self._i, self._o,self._g,  self._n, self._m
+				tagData = self._tagData
+				self._output = [[uInt16Number(tagData[52 + n * i * 2 + m * 2 * z + y * 2 +
+													  g ** i * o * 2:
+													  54 + n * i * 2 + m * 2 * z + y * 2 +
+													  g ** i * o * 2])
+								 for y in xrange(m)]
+								for z in xrange(o)]
+			return self._output
+		
+		def fset(self, value):
+			self._output = value
+		
+		return locals()
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			if (self._matrix, self._input, self._clut, self._output) == (None, ) * 4:
+				return self._tagData
+			tagData = ["mft2", "\0" * 4,
+					   uInt8Number_tohex(len(self.input)),
+					   uInt8Number_tohex(len(self.output)),
+					   uInt8Number_tohex(len(self.clut and self.clut[0])),
+					   "\0",
+					   s15Fixed16Number_tohex(self.matrix[0][0]),
+					   s15Fixed16Number_tohex(self.matrix[0][1]),
+					   s15Fixed16Number_tohex(self.matrix[0][2]),
+					   s15Fixed16Number_tohex(self.matrix[1][0]),
+					   s15Fixed16Number_tohex(self.matrix[1][1]),
+					   s15Fixed16Number_tohex(self.matrix[1][2]),
+					   s15Fixed16Number_tohex(self.matrix[2][0]),
+					   s15Fixed16Number_tohex(self.matrix[2][1]),
+					   s15Fixed16Number_tohex(self.matrix[2][2]),
+					   uInt16Number_tohex(len(self.input and self.input[0])),
+					   uInt16Number_tohex(len(self.output and self.output[0]))]
+			for entries in self.input:
+				tagData += [uInt16Number_tohex(v) for v in entries]
+			for block in self.clut:
+				for entries in block:
+					tagData += [uInt16Number_tohex(v) for v in entries]
+			for entries in self.output:
+				tagData += [uInt16Number_tohex(v) for v in entries]
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			self._tagData = tagData
+		
+		return locals()
+
+
 class Observer(ADict):
 
 	def __init__(self, binaryString):
@@ -2616,6 +2765,7 @@ typeSignature2Type = {
 	"dtim": DateTimeType,
 	"meas": MeasurementType,
 	"mluc": MultiLocalizedUnicodeType,  # ICC v4
+	"mft2": LUT16Type,
 	"mmod": MakeAndModelType,  # Apple private tag
 	"ncl2": NamedColor2Type,
 	"sf32": s15Fixed16ArrayType,
@@ -3316,6 +3466,23 @@ class ICCProfile:
 					if key == "prefix":
 						value = "\n".join(value.split(","))
 					info["    %s" % key] = value
+			elif isinstance(tag, LUT16Type):
+				info[name] = ""
+				name = "    Matrix"
+				for i, row in enumerate(tag.matrix):
+					if i > 0:
+						name = "    " * 2
+					info[name] = " ".join("%6.4f" % v for v in row)
+				info["    Input Table"] = ""
+				info["        Channels"] = "%i" % len(tag.input)
+				info["        Number of entries per channel"] = "%i" % len(tag.input and tag.input[0])
+				info["    Color Look Up Table"] = ""
+				info["        Grid Points"] = "%i" % len(tag.clut and tag.clut[0])
+				info["        Entries"] = "%i" % (len(tag.clut and tag.clut[0])
+												  ** len(tag.input))
+				info["    Output Table"] = ""
+				info["        Channels"] = "%i" % len(tag.output)
+				info["        Number of entries per channel"] = "%i" % len(tag.output and tag.output[0])
 			elif isinstance(tag, MakeAndModelType):
 				info[name] = ""
 				info["    Manufacturer"] = "0x%s %s" % (
