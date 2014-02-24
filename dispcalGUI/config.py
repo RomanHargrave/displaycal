@@ -475,11 +475,11 @@ valid_values = {
 }
 
 defaults = {
-	"3dlut.apply_bt1886_gamma_mapping": 0,
+	"3dlut.apply_bt1886_gamma_mapping": 1,
 	"3dlut.bitdepth.input": 10,
 	"3dlut.bitdepth.output": 10,
-	"3dlut.bt1886_gamma": 2.2,
-	"3dlut.bt1886_gamma_type": "b",
+	"3dlut.bt1886_gamma": 2.4,
+	"3dlut.bt1886_gamma_type": "B",
 	"3dlut.encoding.input": "n",
 	"3dlut.encoding.input.backup": "n",
 	"3dlut.encoding.output": "n",
@@ -559,8 +559,8 @@ defaults = {
 	"measurement_mode.highres": 0,
 	"measurement_mode.projector": 0,
 	"measurement_report.apply_bt1886_gamma_mapping": 0,
-	"measurement_report.bt1886_gamma": 2.2,
-	"measurement_report.bt1886_gamma_type": "b",
+	"measurement_report.bt1886_gamma": 2.4,
+	"measurement_report.bt1886_gamma_type": "B",
 	"measurement_report.chart": "",
 	"measurement_report.chart.fields": "RGB",
 	"measurement_report.devlink_profile": "",
