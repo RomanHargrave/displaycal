@@ -1208,16 +1208,17 @@ class LUTFrame(wx.Frame):
 			self.client.last_PointLabel = None
 		else:
 			pointXY = (127.5, 127.5)
-		self.client.DrawLUT(curves, title=self.profile.getDescription() if 
-										  self.profile else None, 
-							xLabel=self.xLabel,
-							yLabel=self.yLabel,
-							r=self.toggle_red.GetValue() if 
-							  hasattr(self, "toggle_red") else False, 
-							g=self.toggle_green.GetValue() if 
-							  hasattr(self, "toggle_green") else False, 
-							b=self.toggle_blue.GetValue() if 
-							  hasattr(self, "toggle_blue") else False)
+		wx.CallAfter(self.client.DrawLUT, curves,
+					 title=self.profile.getDescription() if 
+					 self.profile else None, 
+					 xLabel=self.xLabel,
+					 yLabel=self.yLabel,
+					 r=self.toggle_red.GetValue() if 
+					   hasattr(self, "toggle_red") else False, 
+					 g=self.toggle_green.GetValue() if 
+					   hasattr(self, "toggle_green") else False, 
+					 b=self.toggle_blue.GetValue() if 
+					   hasattr(self, "toggle_blue") else False)
 		self.Thaw()
 		wx.CallLater(125, self.UpdatePointLabel, pointXY)
 

@@ -859,7 +859,7 @@ class GamutViewOptions(wx.Panel):
 		if reset:
 			parent.client.reset()
 			parent.client.resetzoom()
-		self.draw(center=reset)
+		wx.CallAfter(self.draw, center=reset)
 	
 	def comparison_profile_select_handler(self, event):
 		self.comparison_whitepoint_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
