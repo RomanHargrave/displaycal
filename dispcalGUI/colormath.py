@@ -285,8 +285,8 @@ def interp(x, xp, fp, left=None, right=None):
 	"""
 	if x in xp:
 		return fp[xp.index(x)]
-	elif x < fp[0]:
-		return xp[0] if left is None else left
+	elif x < xp[0]:
+		return fp[0] if left is None else left
 	elif x > xp[-1]:
 		return fp[-1] if right is None else right
 	else:
@@ -298,7 +298,7 @@ def interp(x, xp, fp, left=None, right=None):
 				lower = i
 			elif v > x and i < higher:
 				higher = i
-		step = x - xp[lower]
+		step = float(x - xp[lower])
 		steps = (xp[higher] - xp[lower]) / step
 		return fp[lower] + (fp[higher] - fp[lower]) / steps
 
@@ -1783,6 +1783,21 @@ class gam_fits(object):
 	def __init__(self, thyr=.2, roo=0):
 		self.thyr = thyr  # 50% input target
 		self.roo = roo  # 0% input target
+
+
+class Interp(object):
+
+	def __init__(self, xp, fp, left=None, right=None):
+		self.xp = xp
+		self.fp = fp
+		self.left = left
+		self.right = right
+		self.lookup = {}
+
+	def __call__(self, x):
+		if not x in self.lookup:
+			self.lookup[x] = interp(x, self.xp, self.fp, self.left, self.right)
+		return self.lookup[x]
 
 
 class BT1886(object):
