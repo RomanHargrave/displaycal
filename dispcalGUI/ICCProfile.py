@@ -922,10 +922,10 @@ class LUT16Type(ICCProfileTag):
 	def clut():
 		def fget(self):
 			if self._clut is None:
-				i, g, n = self._i, self._g, self._n
+				i, o, g, n = self._i, self._o, self._g, self._n
 				tagData = self._tagData
-				self._clut = [[[uInt16Number(tagData[52 + n * i * 2 + i * 2 * (g * x + y) + z * 2:
-													 54 + n * i * 2 + i * 2 * (g * x + y) + z * 2])
+				self._clut = [[[uInt16Number(tagData[52 + n * i * 2 + o * 2 * (g * x + y) + z * 2:
+													 54 + n * i * 2 + o * 2 * (g * x + y) + z * 2])
 								for z in xrange(i)]
 							   for y in xrange(g)] for x in xrange(g ** i / g)]
 			return self._clut
