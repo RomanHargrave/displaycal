@@ -450,6 +450,42 @@ class LUTFrame(wx.Frame):
 		self.box_sizer.AddGrowableCol(0)
 		self.box_sizer.AddGrowableCol(2)
 		self.box_panel.SetSizer(self.box_sizer)
+
+		self.box_sizer.Add((0, 0))
+
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+				  
+		self.box_sizer.Add(hsizer,
+						   flag=wx.ALIGN_CENTER | wx.BOTTOM, border=8)
+		
+		self.plot_mode_select = wx.Choice(self.box_panel, -1, size=(-1, -1), 
+										  choices=[])
+		self.plot_mode_select.SetMaxFontSize(11)
+		hsizer.Add(self.plot_mode_select, flag=wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHOICE, self.DrawLUT, id=self.plot_mode_select.GetId())
+
+		self.rendering_intent_select = wx.Choice(self.box_panel, -1,
+												 choices=[lang.getstr("gamap.intents.a"),
+														  lang.getstr("gamap.intents.r"),
+														  lang.getstr("gamap.intents.p"),
+														  lang.getstr("gamap.intents.s")])
+		hsizer.Add(self.rendering_intent_select, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+				   border=10)
+		self.rendering_intent_select.Bind(wx.EVT_CHOICE,
+										  self.rendering_intent_select_handler)
+		self.rendering_intent_select.SetSelection(1)
+		
+		self.direction_select = wx.Choice(self.box_panel, -1,
+										  choices=[lang.getstr("direction.backward"),
+												   lang.getstr("direction.forward.inverted"),
+												   lang.getstr("direction.forward"),
+												   lang.getstr("direction.backward.inverted")])
+		hsizer.Add(self.direction_select, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+				   border=10)
+		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
+		self.direction_select.SetSelection(0)
+
+		self.box_sizer.Add((0, 0))
 		
 		self.box_sizer.Add((0, 0))
 		
@@ -459,19 +495,13 @@ class LUTFrame(wx.Frame):
 						   border=8)
 		
 		self.box_sizer.Add((0, 0))
-		
-		self.plot_mode_select = wx.Choice(self.box_panel, -1, size=(-1, -1), 
-										  choices=[])
-		self.plot_mode_select.SetMaxFontSize(11)
-		self.cbox_sizer.Add(self.plot_mode_select, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHOICE, self.DrawLUT, id=self.plot_mode_select.GetId())
 
 		self.reload_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
 											 geticon(16, "stock_refresh"),
 											 style=wx.NO_BORDER)
 		self.reload_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.reload_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													   wx.LEFT, border=20)
+													   wx.RIGHT, border=16)
 		self.reload_vcgt_btn.Bind(wx.EVT_BUTTON, self.reload_vcgt_handler)
 		self.reload_vcgt_btn.SetToolTipString(
 			lang.getstr("calibration.load_from_display_profile"))
@@ -483,7 +513,7 @@ class LUTFrame(wx.Frame):
 											 style=wx.NO_BORDER)
 		self.apply_bpc_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													 wx.LEFT, border=16)
+													 wx.RIGHT, border=16)
 		self.apply_bpc_btn.Bind(wx.EVT_BUTTON, self.apply_bpc_handler)
 		self.apply_bpc_btn.SetToolTipString(lang.getstr("black_point_compensation"))
 		self.apply_bpc_btn.SetBitmapDisabled(geticon(16, "empty"))
@@ -494,7 +524,7 @@ class LUTFrame(wx.Frame):
 												style=wx.NO_BORDER)
 		self.install_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.install_vcgt_btn,
-							flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=16)
+							flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=16)
 		self.install_vcgt_btn.Bind(wx.EVT_BUTTON, self.install_vcgt_handler)
 		self.install_vcgt_btn.SetToolTipString(lang.getstr("apply_cal"))
 		self.install_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
@@ -505,14 +535,12 @@ class LUTFrame(wx.Frame):
 											 style=wx.NO_BORDER)
 		self.save_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.save_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													 wx.LEFT, border=16)
+													 wx.RIGHT, border=20)
 		self.save_vcgt_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
 		self.save_vcgt_btn.SetToolTipString(lang.getstr("save_as") + " " +
 											"(*.cal)")
 		self.save_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.save_vcgt_btn.Disable()
-		
-		self.cbox_sizer.Add((20, 0))
 		
 		self.show_as_L = wx.CheckBox(self.box_panel, -1, u"L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
@@ -559,6 +587,28 @@ class LUTFrame(wx.Frame):
 		self.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler,
 				  id=self.toggle_clut.GetId())
 
+		self.box_sizer.Add((0, 6))
+		self.box_sizer.Add((0, 6))
+		self.box_sizer.Add((0, 6))
+
+		self.box_sizer.Add((0, 32))
+
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+				  
+		self.box_sizer.Add(hsizer,
+						   flag=wx.ALIGN_CENTER | wx.BOTTOM, border=8)
+
+		self.show_actual_lut_cb = wx.CheckBox(self.box_panel, -1,
+											  lang.getstr("calibration.show_actual_lut"))
+		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
+		self.show_actual_lut_cb.SetMaxFontSize(11)
+		hsizer.Add(self.show_actual_lut_cb, flag=wx.ALIGN_CENTER |
+						   wx.BOTTOM, border=8)
+		self.Bind(wx.EVT_CHECKBOX, self.show_actual_lut_handler,
+				  id=self.show_actual_lut_cb.GetId())
+
+		self.box_sizer.Add((0, 32))
+
 		self.save_plot_btn = wx.BitmapButton(self.box_panel, -1,
 											 geticon(16, "media-floppy"),
 											 style=wx.NO_BORDER)
@@ -570,23 +620,6 @@ class LUTFrame(wx.Frame):
 											"(*.bmp, *.xbm, *.xpm, *.jpg, *.png)")
 		self.save_plot_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.save_plot_btn.Disable()
-
-		self.box_sizer.Add((0, 6))
-		self.box_sizer.Add((0, 6))
-		self.box_sizer.Add((0, 6))
-
-		self.box_sizer.Add((0, 0))
-
-		self.show_actual_lut_cb = wx.CheckBox(self.box_panel, -1,
-											  lang.getstr("calibration.show_actual_lut"))
-		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
-		self.show_actual_lut_cb.SetMaxFontSize(11)
-		self.box_sizer.Add(self.show_actual_lut_cb,
-							flag=wx.ALIGN_CENTER | wx.BOTTOM, border=16)
-		self.Bind(wx.EVT_CHECKBOX, self.show_actual_lut_handler,
-				  id=self.show_actual_lut_cb.GetId())
-
-		self.box_sizer.Add((0, 0))
 
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
 		
@@ -700,6 +733,12 @@ class LUTFrame(wx.Frame):
 													   ".ti3", ".wrl",
 													   ".wrz"])
 	
+	def direction_select_handler(self, event):
+		self.toggle_clut_handler(event)
+
+	def rendering_intent_select_handler(self, event):
+		self.toggle_clut_handler(event)
+	
 	def toggle_clut_handler(self, event):
 		try:
 			self.lookup_tone_response_curves()
@@ -772,6 +811,12 @@ class LUTFrame(wx.Frame):
 		
 		mult = 2
 		size = 256 * mult  # Final number of coordinates
+
+		if hasattr(self, "rendering_intent_select"):
+			intent = {0: "a",
+					  1: "r",
+					  2: "p",
+					  3: "s"}.get(self.rendering_intent_select.GetSelection())
 
 		if (intent == "r" and (not "B2A0" in self.profile.tags or
 						       not self.toggle_clut.GetValue()) and
@@ -873,52 +918,46 @@ class LUTFrame(wx.Frame):
 			startupinfo.wShowWindow = sp.SW_HIDE
 		else:
 			startupinfo = None
-
-		# Prepare profile
-		profile.write(os.path.join(cwd, "profile.icc"))
+		
+		direction = {0: "b",
+					 1: "if",
+					 2: "f",
+					 3: "ib"}.get(self.direction_select.GetSelection())
 		
 		# Prepare input Lab values
 		XYZ_triplets = []
 		Lab_triplets = []
+		RGB_triplets = []
 		for i in xrange(0, size):
-			if intent == "a":
-				# Experimental - basically this makes the resulting
-				# response match relative colorimetric
-				X, Y, Z = colormath.Lab2XYZ(i * (100.0 / (size - 1)), 0, 0)
-				L, a, b = colormath.XYZ2Lab(*[v * 100 for v in
-											  colormath.adapt(X, Y, Z,
-															  whitepoint_destination=profile.tags.wtpt.values())])
-			else:
+			if direction in ("b", "if"):
+				##if intent == "a":
+					### Experimental - basically this makes the resulting
+					### response match relative colorimetric
+					##X, Y, Z = colormath.Lab2XYZ(i * (100.0 / (size - 1)), 0, 0)
+					##L, a, b = colormath.XYZ2Lab(*[v * 100 for v in
+												  ##colormath.adapt(X, Y, Z,
+																  ##whitepoint_destination=profile.tags.wtpt.values())])
+				##else:
 				a = b = 0
-			Lab_triplets.append(" ".join([str(i * (100.0 / (size - 1))),
-										  str(a), str(b)]))
+				Lab_triplets.append([i * (100.0 / (size - 1)), a, b])
+			else:
+				RGB_triplets.append([i * (1.0 / (size - 1))] * 3)
+		if direction in ("b", "if"):
+			idata = Lab_triplets
+		else:
+			idata = RGB_triplets
 		
-		# Lookup Lab -> RGB values through 'input' profile using xicclu
-		stderr = tempfile.SpooledTemporaryFile()
+		order = {True: "n",
+				 False: "r"}.get(self.toggle_clut.GetValue())
+
+		# Lookup values through 'input' profile using xicclu
 		try:
-			p = sp.Popen([xicclu, "-fb", "-i" + intent, "-pl", "profile.icc"], 
-						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+			odata = self.worker.xicclu(profile, idata, intent,
+									   direction, order, "l")
 		except Exception, exception:
 			self.client.errors.append(Error("\n".join([safe_unicode(v)
 													   for v in (xicclu,
 																 exception)])))
-		else:
-			self.client.worker.subprocess = p
-			if p.poll() not in (0, None):
-				stderr.seek(0)
-				self.client.errors.append(Error(stderr.read().strip()))
-			else:
-				try:
-					odata = p.communicate("\n".join(Lab_triplets))[0].splitlines()
-				except IOError:
-					stderr.seek(0)
-					self.client.errors.append(Error(stderr.read().strip()))
-				else:
-					if p.wait() != 0:
-						self.client.errors.append(IOError("\n".join(''.join(odata),
-																	stderr.read().strip())))
-		stderr.close()
 
 		# Remove temporary files
 		self.client.worker.wrapup(False)
@@ -926,25 +965,29 @@ class LUTFrame(wx.Frame):
 		if self.client.errors:
 			return
 
-		rgb_triplets = []
-		for i, line in enumerate(odata):
-			line = "".join(line.strip().split("->")).split()
-			rgb_triplet = [float(n) for n in line[channels + 2:channels + 5]]
-			rgb_triplets.append(rgb_triplet)
-		
+		if direction in ("b", "if"):
+			RGB_triplets = odata
+		else:
+			Lab_triplets = odata
+
 		self.rTRC = CoordinateType()
 		self.gTRC = CoordinateType()
 		self.bTRC = CoordinateType()
-		for j, rgb in enumerate(rgb_triplets):
-			for i, v in enumerate(rgb):
+		for j, RGB in enumerate(RGB_triplets):
+			for i, v in enumerate(RGB):
 				v *= 255
-				y = colormath.Lab2XYZ(float(Lab_triplets[j].split()[0]), 0, 0)[1] * 100
+				X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], scale=100)
+				if direction in ("b", "if"):
+					X = Z = Y
+				elif intent == "a":
+					wp = profile.tags.wtpt.ir.values()
+					X, Y, Z = colormath.adapt(X, Y, Z, wp, (1, 1, 1))
 				if i == 0:
-					self.rTRC.append([y, v])
+					self.rTRC.append([X, v])
 				elif i == 1:
-					self.gTRC.append([y, v])
+					self.gTRC.append([Y, v])
 				elif i == 2:
-					self.bTRC.append([y, v])
+					self.bTRC.append([Z, v])
 	
 	def reload_vcgt_handler(self, event):
 		cmd, args = self.worker.prepare_dispwin(True)
@@ -1198,6 +1241,11 @@ class LUTFrame(wx.Frame):
 		self.show_as_L.GetContainingSizer().Layout()
 		if hasattr(self, "show_actual_lut_cb"):
 			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)
+		if hasattr(self, "rendering_intent_select"):
+			self.rendering_intent_select.Show(self.plot_mode_select.GetSelection() == 1)
+		if hasattr(self, "direction_select"):
+			self.direction_select.Show(self.toggle_clut.IsShown() and
+									   self.toggle_clut.GetValue())
 		if hasattr(self, "cbox_sizer"):
 			self.cbox_sizer.Layout()
 		if hasattr(self, "box_sizer"):
