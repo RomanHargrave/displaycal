@@ -5412,7 +5412,7 @@ class Worker(object):
 	def stop_progress(self):
 		if getattr(self, "progress_wnd", False):
 			if getattr(self.progress_wnd, "dlg", None):
-				self.progress_wnd.dlg.Close()
+				self.progress_wnd.dlg.EndModal()
 				del self.progress_wnd.dlg
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
