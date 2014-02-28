@@ -68,8 +68,12 @@ def device_id_from_edid(edid, quirk=True, use_unused_edid_keys=False):
 			if name == "serial_32" and "serial_ascii" in edid:
 				# Only add numeric serial if no ascii serial
 				continue
-			elif name == "manufacturer" and quirk:
-				value = quirk_manufacturer(value)
+			elif name == "manufacturer":
+				if quirk:
+					value = quirk_manufacturer(value)
+				if value == edid.get("manufacturer_id"):
+					# Skip manufacturer if it couldn't be expanded
+					continue
 			parts.append(str(value))
 		elif name == "manufacturer":
 			# Do not allow the manufacturer to be missing or empty
