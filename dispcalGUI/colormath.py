@@ -263,11 +263,13 @@ def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50", weight=False):
 	"""
 	wp_out = get_whitepoint(wp_out)
 	XYZ = [X, Y, Z]
+	bp_in = list(bp_in)
+	bp_out = list(bp_out)
 	for i, v in enumerate(XYZ):
 		if weight and v > 0:
-			XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] * (bp_in[i] / v) - bp_out[i])) / (wp_out[i] - bp_in[i] * (bp_in[i] / v))
-		else:
-			XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
+			bp_in[i] *= (bp_in[i] / v)
+			bp_out[i] *= (bp_out[i] / v)
+		XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
 	return XYZ
 
 
