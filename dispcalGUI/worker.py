@@ -2952,7 +2952,7 @@ class Worker(object):
 				# Get the primaries
 				XYZrgb = [XYZr, XYZg, XYZb]
 			
-				if i > 0 and source == "A2B" and tableno == 0:
+				if source == "A2B" and tableno == 0:
 					# When doing an inverse lookup through a perceptual A2B0
 					# table, apply linear desaturation in xy space to smooth 
 					# the clipping  behavior (e.g. this will cause the cLUT
@@ -2962,8 +2962,8 @@ class Worker(object):
 					# accurate, but very smooth).
 					# Saturation factors have been chosen roughly relative
 					# to human color perception - greens are desaturated the
-					# least, blues the most.
-					S = [.95, .97, .9]
+					# least, blues and purples the most.
+					S = [.95, .97, .95]
 						
 					xyYRGB = []
 					for i, (X, Y, Z) in enumerate(XYZrgb):
