@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dispcalGUI import ICCProfile as ICCP, colormath, config, worker
 
 
-sRGB = ICCP.ICCProfile(config.get_data_path("ref/sRGB.icm"))
+ref = ICCP.ICCProfile(config.get_data_path("ref/Rec709_Gamma22.icm"))
 
 
 def update_preset(name):
@@ -71,10 +71,10 @@ def update_preset(name):
 	if "clrt" in prof.tags:
 		print "Removing 'clrt'..."
 		del prof.tags["clrt"]
-	print "Setting RGB matrix column tags to sRGB values..."
-	prof.tags.rXYZ = sRGB.tags.rXYZ
-	prof.tags.gXYZ = sRGB.tags.gXYZ
-	prof.tags.bXYZ = sRGB.tags.bXYZ
+	print "Setting RGB matrix column tags to reference values..."
+	prof.tags.rXYZ = ref.tags.rXYZ
+	prof.tags.gXYZ = ref.tags.gXYZ
+	prof.tags.bXYZ = ref.tags.bXYZ
 	print "Updating profile ID..."
 	prof.calculateID()
 	prof.write()
