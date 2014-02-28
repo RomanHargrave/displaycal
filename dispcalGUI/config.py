@@ -464,6 +464,7 @@ valid_values = {
 	"profile.install_scope": ["l", "u"],
 	"profile.quality": ["l", "m", "h", "u"],
 	"profile.quality.b2a": ["l", "m", "h", "u", "n", None],
+	"profile.b2a.smooth.size": [9, 17, 33, 45, 65],
 	"profile.type": ["g", "G", "l", "s", "S", "x", "X"],
 	"synthprofile.black_point_compensation": [0, 1],
 	"synthprofile.trc_type": ["g", "G"],
@@ -618,7 +619,9 @@ defaults = {
 	]),
 	"profile.name.expanded": u"",
 	"profile.quality": "h",
-	"profile.quality.b2a": None,
+	"profile.quality.b2a": "h",
+	"profile.b2a.smooth": 1,
+	"profile.b2a.smooth.size": 33,
 	"profile.save_path": storage, # directory
 	"profile.type": "s",
 	"profile.update": 0,

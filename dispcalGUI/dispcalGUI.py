@@ -1374,6 +1374,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("create_profile_from_edid"))
 		self.Bind(wx.EVT_MENU, self.create_profile_from_edid, 
 				  self.menuitem_create_profile_from_edid)
+		self.menuitem_profile_smooth_b2a = options.FindItemById(
+			options.FindItem("profile.b2a.smooth"))
+		self.Bind(wx.EVT_MENU, self.profile_smooth_b2a_handler, 
+				  self.menuitem_profile_smooth_b2a)
 		self.menuitem_install_display_profile = options.FindItemById(
 			options.FindItem("install_display_profile"))
 		self.Bind(wx.EVT_MENU, self.select_install_profile_handler, 
@@ -1784,6 +1788,12 @@ class MainFrame(BaseFrame):
 				  id=self.profile_quality_ctrl.GetId())
 		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
 				  id=self.low_quality_b2a_cb.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
+				  id=self.b2a_extra_cb.GetId())
+		for v in config.valid_values["profile.b2a.smooth.size"]:
+			self.b2a_size_ctrl.Append("%sx%sx%s" % ((v, ) * 3))
+		self.Bind(wx.EVT_CHOICE, self.b2a_size_ctrl_handler, 
+				  id=self.b2a_size_ctrl.GetId())
 
 		# Profile type
 		self.Bind(wx.EVT_CHOICE, self.profile_type_ctrl_handler, 
@@ -2840,8 +2850,20 @@ class MainFrame(BaseFrame):
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
 
 		self.low_quality_b2a_cb.SetValue(enable_gamap and
-										 getcfg("profile.quality.b2a") == "l")
+										 getcfg("profile.quality.b2a") in
+										 ("l", "n"))
 		self.low_quality_b2a_cb.Enable(enable_gamap)
+		
+		enable_b2a_extra = self.get_profile_type() in ("x", "X")
+		self.b2a_extra_cb.SetValue(enable_b2a_extra and
+								   bool(getcfg("profile.b2a.smooth")))
+		self.b2a_extra_cb.Enable(enable_b2a_extra)
+		self.b2a_size_ctrl.SetSelection(
+			config.valid_values["profile.b2a.smooth.size"].index(
+				getcfg("profile.b2a.smooth.size")))
+		self.b2a_size_ctrl.Enable(enable_b2a_extra and
+								  bool(getcfg("profile.b2a.smooth")))
+		
 
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
@@ -3095,9 +3117,17 @@ class MainFrame(BaseFrame):
 			v = "l"
 		else:
 			v = None
-		if v != getcfg("profile.quality.b2a"):
+		smooth = self.b2a_extra_cb.GetValue()
+		if (v != getcfg("profile.quality.b2a") or
+			smooth != getcfg("profile.b2a.smooth")):
 			self.profile_settings_changed()
 		setcfg("profile.quality.b2a", v)
+		setcfg("profile.b2a.smooth", int(smooth))
+		self.b2a_size_ctrl.Enable(smooth)
+	
+	def b2a_size_ctrl_handler(self, event):
+		setcfg("profile.b2a.smooth.size",
+			   config.valid_values["profile.b2a.smooth.size"][self.b2a_size_ctrl.GetSelection()])
 
 	def profile_quality_ctrl_handler(self, event):
 		if debug:
@@ -4492,7 +4522,9 @@ class MainFrame(BaseFrame):
 		self.worker.start(self.result_consumer, self.worker.verify_calibration, 
 						  progress_msg=progress_msg, pauseable=True)
 	
-	def select_profile(self, parent=None, check_profile_class=True, msg=None):
+	def select_profile(self, parent=None, check_profile_class=True, msg=None,
+					   ignore_current_profile=False,
+					   prefer_current_profile=False):
 		"""
 		Selects the currently configured profile or display profile. Falls
 		back to user choice via FileDialog if both not set.
@@ -4502,7 +4534,21 @@ class MainFrame(BaseFrame):
 			parent = self
 		if not msg:
 			msg = lang.getstr("profile.choose")
-		profile = get_current_profile(include_display_profile=True)
+		if ignore_current_profile:
+			profile = None
+		else:
+			profile = get_current_profile(include_display_profile=True)
+			if profile and not prefer_current_profile:
+				dlg = ConfirmDialog(self, msg=msg,
+									ok=lang.getstr("profile.current"),
+									cancel=lang.getstr("cancel"),
+									alt=lang.getstr("browse"),
+									bitmap=geticon(32, "dialog-question"))
+				result = dlg.ShowModal()
+				if result == wx.ID_CANCEL:
+					return
+				elif result != wx.ID_OK:
+					profile = None
 		if not profile:
 			defaultDir, defaultFile = get_verified_path("last_icc_path")
 			dlg = wx.FileDialog(parent, msg, 
@@ -4529,8 +4575,8 @@ class MainFrame(BaseFrame):
 			if check_profile_class and (profile.profileClass != "mntr" or
 										profile.colorSpace != "RGB"):
 				InfoDialog(parent, msg=lang.getstr("profile.unsupported", 
-												 profile.profileClass, 
-												 profile.colorSpace) + 
+												   (profile.profileClass, 
+													profile.colorSpace)) + 
 								 "\n" + path, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
@@ -6061,7 +6107,8 @@ class MainFrame(BaseFrame):
 			# Use the profile that was requested to be installed
 			profile = self.modaldlg.profile
 		else:
-			profile = self.select_profile(check_profile_class=False)
+			profile = self.select_profile(check_profile_class=False,
+										  prefer_current_profile=True)
 		if not profile:
 			return
 		if profile.ID == "\0" * 16:
@@ -7192,8 +7239,12 @@ class MainFrame(BaseFrame):
 		lut_type = v in ("l", "x", "X")
 		self.gamap_btn.Enable(lut_type)
 		self.low_quality_b2a_cb.SetValue(lut_type and
-										 getcfg("profile.quality.b2a") == "l")
+										 getcfg("profile.quality.b2a") in
+										 ("l", "n"))
 		self.low_quality_b2a_cb.Enable(lut_type)
+		enable_b2a_extra = v in ("x", "X")
+		self.b2a_extra_cb.SetValue(enable_b2a_extra)
+		self.b2a_extra_cb.Enable(enable_b2a_extra)
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v in ("g", "G"):
 			self.profile_quality_ctrl.SetValue(3)
@@ -7519,6 +7570,57 @@ class MainFrame(BaseFrame):
 				 "%tpa	" + lang.getstr("testchart.info")]
 		return lang.getstr("profile.name.placeholders") + "\n\n" + \
 			   "\n".join(info)
+	
+	def profile_smooth_b2a_handler(self, event):
+		profile = self.select_profile(ignore_current_profile=True)
+		if profile:
+			if not ("A2B0" in profile.tags or "A2B1" in profile.tags):
+				result = Error(lang.getstr("profile.required_tags_missing",
+										   " %s ".join(["A2B0", "A2B1"]) %
+										   lang.getstr("or")))
+			elif profile.connectionColorSpace != "XYZ":
+				result = Error(lang.getstr("profile.unsupported",
+										   (profile.connectionColorSpace,
+											profile.connectionColorSpace)))
+			else:
+				result = None
+			if result:
+				show_result_dialog(result, self)
+			else:
+				self.interactive = False
+				##self.profile_smooth_b2a_consumer(self.worker.update_profile_B2A(profile), profile)
+				self.worker.start(self.profile_smooth_b2a_consumer,
+								  self.worker.update_profile_B2A,
+								  cargs=(profile, ),
+								  wargs=(profile, ))
+
+	def profile_smooth_b2a_consumer(self, result, profile):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		elif result:
+			# Let the user choose a location for the profile
+			defaultDir, defaultFile = os.path.split(profile.fileName)
+			dlg = wx.FileDialog(self, lang.getstr("save_as"), 
+								defaultDir, defaultFile, 
+								wildcard=lang.getstr("filetype.icc") + 
+										 "|*" + profile_ext, 
+								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			profile_save_path = dlg.GetPath()
+			dlg.Destroy()
+			if result == wx.ID_OK:
+				filename, ext = os.path.splitext(profile_save_path)
+				if ext.lower() not in (".icc", ".icm"):
+					profile_save_path += profile_ext
+				if not waccess(profile_save_path, os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 profile_save_path)),
+									   self)
+					return
+				profile.setDescription(os.path.basename(filename))
+				profile.calculateID()
+				profile.write(profile_save_path)
 
 	def create_profile_handler(self, event, path=None, skip_ti3_check=False):
 		""" Create profile from existing measurements """
@@ -8930,6 +9032,18 @@ class MainFrame(BaseFrame):
 					setcfg("profile.black_point_compensation", 1)
 				elif 'USE_BLACK_POINT_COMPENSATION "NO"' in ti3_lines:
 					setcfg("profile.black_point_compensation", 0)
+				if 'SMOOTH_B2A "YES"' in ti3_lines:
+					setcfg("profile.b2a.smooth", 1)
+				elif 'SMOOTH_B2A "NO"' in ti3_lines:
+					setcfg("profile.b2a.smooth", 0)
+				if 'BEGIN_DATA_FORMAT' in ti3_lines:
+					cfgend = ti3_lines.index['BEGIN_DATA_FORMAT']
+					cfgpart = CGATS.CGATS("\n".join(ti3_lines[:cfgend]))
+					for keyword, cfgname in {"SMOOTH_B2A_SIZE":
+											 "profile.b2a.smooth.size"}:
+						cfgvalue = cfgpart.queryv1(keyword)
+						if cfgvalue is not None:
+							setcfg(cfgname, cfgvalue)
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)

@@ -2750,6 +2750,433 @@ class Worker(object):
 		self.thread_abort = False
 		wx.CallAfter(consumer, result, *args, **kwargs)
 	
+	def generate_A2B0(self, profile, clutres=None, logfile=None):
+		
+		# Lab cLUT is currently not implemented and should NOT be used!
+		if profile.connectionColorSpace != "XYZ":
+			raise Error(lang.getstr("profile.unsupported",
+									(profile.connectionColorSpace,
+									 profile.connectionColorSpace)))
+
+		if logfile:
+			safe_print("-" * 80)
+			logfile.write("Creating perceptual A2B0 table\n")
+			logfile.write("\n")
+		# Copy A2B0
+		profile.tags.A2B1 = profile.tags.A2B0
+		if "B2A0" in profile.tags:
+			# Copy B2A0
+			B2A0 = profile.tags.B2A0
+			profile.tags.B2A1 = B2A1 = ICCP.LUT16Type()
+			B2A1.matrix = []
+			for row in B2A0.matrix:
+				B2A1.matrix.append(list(row))
+			B2A1.input = []
+			B2A1.output = []
+			for table in ("input", "output"):
+				for channel in getattr(B2A0, table):
+					getattr(B2A1, table).append(list(channel))
+			B2A1.clut = []
+			for block in B2A0.clut:
+				B2A1.clut.append([])
+				for row in block:
+					B2A1.clut[-1].append(list(row))
+		# Make new A2B0
+		profile.tags.A2B0 = A2B0 = ICCP.LUT16Type()
+		# Matrix (identity)
+		A2B0.matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+		# Input / output curves (linear)
+		A2B0.input = []
+		A2B0.output = []
+		channel = []
+		for j in xrange(256):
+			channel.append(j * 257)
+		for table in (A2B0.input, A2B0.output):
+			for i in xrange(3):
+				table.append(channel)
+		# cLUT
+		if logfile:
+			logfile.write("Generating A2B0 table lookup input values...\n")
+		A2B0.clut = []
+		clutres = len(profile.tags.A2B1.clut[0])
+		if logfile:
+			logfile.write("cLUT grid res: %i\n" % clutres)
+		vrange = xrange(clutres)
+		step = 1.0 / (clutres - 1.0)
+		idata = []
+		for R in vrange:
+			for G in vrange:
+				for B in vrange:
+					idata.append([v * step for v in (R, G, B)])
+		if logfile:
+			logfile.write("Looking up input values through A2B0 table...\n")
+		odata = self.xicclu(profile, idata, pcs="x", logfile=logfile)
+		if not (self.tempdir and profile.fileName.startswith(self.tempdir)):
+			self.wrapup(False)
+		else:
+			os.remove(os.path.join(self.tempdir,
+								   os.path.basename(profile.fileName)))
+		numrows = len(odata)
+		if numrows != clutres ** 3:
+			raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
+							 "maximum (%s^3 = %s)" % (numrows, clutres,
+													  clutres ** 3))
+		XYZbp = list(odata[0])
+		XYZwp = list(odata[-1])
+		if logfile:
+			logfile.write("Filling cLUT...\n")
+		for i, (X, Y, Z) in enumerate(odata):
+			if i in (0, clutres ** 3 - 1) or i % clutres == 0:
+				if self.thread_abort:
+					return False
+				A2B0.clut.append([])
+				if logfile:
+					logfile.write("\r%i%%" % round(i / (numrows - 1.0) * 100))
+			# Apply black point compensation
+			XYZ = colormath.apply_bpc(X, Y, Z, XYZbp, (0, 0, 0), XYZwp)
+			XYZ = [v / XYZwp[1] for v in XYZ]
+			A2B0.clut[-1].append([int(round(max(v * 32768, 0))) for v in XYZ])
+		if logfile:
+			logfile.write("\n")
+		return True
+	
+	def generate_B2A_from_inverse_table(self, profile, clutres=None,
+										source="A2B", tableno=None,
+										logfile=None):
+		"""
+		Generate a profile's B2A table by inverting the A2B table 
+		(default A2B1 or A2B0)
+		
+		It is also poosible to re-generate a B2A table by interpolating
+		the B2A table itself.
+		
+		"""
+
+		if tableno is None:
+			if "A2B1" in profile.tags:
+				tableno = 1
+			else:
+				tableno = 0
+		if not clutres:
+			if "B2A%i" % tableno in profile.tags:
+				tablename = "B2A%i" % tableno
+			else:
+				tablename = "A2B%i" % tableno
+			clutres = len(profile.tags[tablename].clut[0])
+		
+		if source == "B2A" and clutres > 23:
+			# B2A interpolation is smoothest when used with a lower cLUT res
+			clutres = 23
+
+		if logfile:
+			safe_print("-" * 80)
+			if source == "A2B":
+				msg = ("Generating B2A%i table by inverting A2B%i table\n" %
+					   (tableno, tableno))
+			else:
+				msg = "Re-generating B2A%i table by interpolation\n" % tableno
+			logfile.write(msg)
+			logfile.write("\n")
+
+		# Note that intent 0 will be colorimetric if no other tables are present
+		intent = {0: "p",
+				  1: "r",
+				  2: "s"}[tableno]
+		
+		# Lookup RGB -> XYZ for primaries, black- and white point
+		idata = [[0, 0, 0], [1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
+		
+		direction = {"A2B": "f", "B2A": "ib"}[source]
+		odata = self.xicclu(profile, idata, intent, direction, pcs="x")
+		
+		# Scale to Y = 1
+		XYZwpY = odata[1][1]
+		odata = [[n / XYZwpY for n in v] for v in odata]
+
+		XYZbp = odata[0]
+		XYZwp = odata[1]
+		XYZr = odata[2]
+		XYZg = odata[3]
+		XYZb = odata[4]
+		
+		# Prepare input PCS values
+		if logfile:
+			logfile.write("Generating input curve PCS values...\n")
+		idata = []
+		numentries = 4096
+		maxval = numentries - 1.0
+		for i in xrange(numentries):
+			# Lab
+			idata.append((i / maxval * 100, 0, 0))
+		
+		pcs = profile.connectionColorSpace[0].lower()
+
+		if logfile:
+			logfile.write("Looking up input curve RGB values...\n")
+		
+		if source == "B2A":
+			# NOTE:
+			# Argyll's B2A tables are slightly inaccurate:
+			# 0 0 0 PCS -> RGB may give RGB levels > 0 (it should clip
+			# instead). Inversely, 0 0 0 RGB -> PCS (through inverted B2A)
+			# will return PCS values that are too low or zero (ie. not the
+			# black point as expected)
+			
+			# TODO: How to deal with this?
+			pass
+
+		oXYZ = [colormath.Lab2XYZ(*v) for v in idata]
+		fpL = [v[0] for v in idata]
+		fpX = [v[0] for v in oXYZ]
+		fpY = [v[1] for v in oXYZ]
+		fpZ = [v[2] for v in oXYZ]
+		
+		# Lookup Lab -> RGB values through profile using xicclu to get TRC
+		direction = {"A2B": "if", "B2A": "b"}[source]
+		odata = self.xicclu(profile, idata, intent, direction, pcs="l")
+
+		xpR = [v[0] for v in odata]
+		xpG = [v[1] for v in odata]
+		xpB = [v[2] for v in odata]
+
+		# Initialize B2A
+		itable = ICCP.LUT16Type()
+		
+		# Setup matrix
+		if profile.connectionColorSpace == "XYZ":
+			# Use a matrix that scales the profile colorspace into the XYZ
+			# encoding range, to make optimal use of the cLUT grid points
+
+			matrices = []
+			for m in xrange(2):
+				# Get the primaries
+				XYZrgb = [XYZr, XYZg, XYZb]
+			
+				if i > 0 and source == "A2B" and tableno == 0:
+					# When doing an inverse lookup through a perceptual A2B0
+					# table, apply linear desaturation in xy space to smooth 
+					# the clipping  behavior (e.g. this will cause the cLUT
+					# to never hit full range output of any single device
+					# channel, which means a color transform will be
+					# extrapolating each channel past a certain point - not
+					# accurate, but very smooth).
+					# Saturation factors have been chosen roughly relative
+					# to human color perception - greens are desaturated the
+					# least, blues the most.
+					S = [.95, .97, .9]
+						
+					xyYRGB = []
+					for i, (X, Y, Z) in enumerate(XYZrgb):
+						xyYRGB.append(colormath.XYZ2xyY(X, Y, Z))
+					rgb_space = colormath.get_rgb_space((-2.4, XYZwp, xyYRGB[0],
+														 xyYRGB[1], xyYRGB[2]))
+					RGBS = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+					for i, (R, G, B) in enumerate(RGBS):
+						x, y, Y = colormath.RGBsaturation(R, G, B, S[i],
+														  rgb_space)[1]
+						XYZrgb[i] = colormath.xyY2XYZ(x, y, Y)
+				
+				### Scale XYZrgb to Y = 1
+				##XYZrgbw = [XYZrgb[0][0] + XYZrgb[1][0] + XYZrgb[2][0],
+						   ##XYZrgb[0][1] + XYZrgb[1][1] + XYZrgb[2][1],
+						   ##XYZrgb[0][2] + XYZrgb[1][2] + XYZrgb[2][2]]
+				##XYZrgbwY = XYZrgbw[1]
+				##for i, XYZ in enumerate(XYZrgb):
+					##XYZrgb[i] = [v / XYZrgbwY for v in XYZ]
+				### Scale XYZrgb white to Y = 1
+				##XYZrgbw = [v / XYZrgbwY for v in XYZrgbw]
+				### Adapt to whitepoint?
+				##if logfile:
+					##logfile.write("Whitepoint XYZ: %.4f %.4f %.4f\n" %
+								  ##tuple(XYZwp))
+					##logfile.write("Sum of primaries XYZ: %.4f %.4f %.4f\n" %
+								  ##tuple(XYZrgbw))
+				##for i, (X, Y, Z) in enumerate(XYZrgb):
+					##XYZrgb[i] = colormath.adapt(X, Y, Z, XYZrgbw, XYZwp)
+				##XYZrgbw = (XYZrgb[0][0] + XYZrgb[1][0] + XYZrgb[2][0],
+						   ##XYZrgb[0][1] + XYZrgb[1][1] + XYZrgb[2][1],
+						   ##XYZrgb[0][2] + XYZrgb[1][2] + XYZrgb[2][2])
+				##if logfile:
+					##logfile.write("After adaptation: %.4f %.4f %.4f\n" %
+								  ##tuple(XYZrgbw))
+		
+				# Construct the final matrix
+				Xr, Yr, Zr = XYZrgb[0]
+				Xg, Yg, Zg = XYZrgb[1]
+				Xb, Yb, Zb = XYZrgb[2]
+				m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
+										  (Yr, Yg, Yb),
+										  (Zr, Zg, Zb))).inverted()
+				Sr, Sg, Sb = m1 * XYZwp
+				m2 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
+										  (Sr * Yr, Sg * Yg, Sb * Yb),
+										  (Sr * Zr, Sg * Zg, Sb * Zb))).inverted()
+				matrices.append(m2)
+				if logfile:
+					logfile.write("Matrix %i:\n" % (m + 1))
+					for row in matrices[m]:
+						logfile.write("%r\n" % row)
+
+			scale = 1 + (32767 / 32768.0)
+			m3 = colormath.Matrix3x3(((scale, 0, 0),
+									  (0, scale, 0),
+									  (0, 0, scale)))
+			
+			itable.matrix = matrices[0] * m3
+		else:
+			# Use identity matrix for Lab as mandated by ICC spec
+			itable.matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+		numentries = 4096
+		maxval = numentries - 1.0
+		vrange = xrange(numentries)
+		if profile.connectionColorSpace == "XYZ":
+			if logfile:
+				logfile.write("Applying matrix to input curve XYZ values...\n")
+			# Apply matrix
+			rX = []
+			rY = []
+			rZ = []
+			for i in vrange:
+				X, Y, Z = fpX[i], fpY[i], fpZ[i]
+				X, Y, Z = matrices[0] * (X, Y, Z)
+				rX.append(X)
+				rY.append(Y)
+				rZ.append(Z)
+			interp = (colormath.Interp(xpR, rX),
+					  colormath.Interp(xpG, rY),
+					  colormath.Interp(xpB, rZ))
+			rinterp = (colormath.Interp(rX, xpR),
+					   colormath.Interp(rY, xpG),
+					   colormath.Interp(rZ, xpB))
+		else:
+			Linterp = (colormath.Interp(xpR, fpL),
+					   colormath.Interp(xpG, fpL),
+					   colormath.Interp(xpB, fpL))
+			rLinterp = (colormath.Interp(fpL, xpR),
+						colormath.Interp(fpL, xpG),
+						colormath.Interp(fpL, xpB))
+			maxL = 100.0 + 25500.0 / 65280.0
+		# Set input curves
+		# Apply inverse TRC to input values to distribute them
+		# optimally across cLUT grid points
+		if logfile:
+			logfile.write("Generating input curves...\n")
+		itable.input = [[], [], []]
+		for j in vrange:
+			if self.thread_abort:
+				return False
+			if profile.connectionColorSpace == "XYZ":
+				v = [rinterp[i](j / maxval) for i in xrange(3)]
+			else:
+				XYZ = fpX[j], fpY[j], fpZ[j]
+				v = list(colormath.XYZ2Lab(*[n * 100 for n in XYZ]))
+				v[0] = j / maxval
+				v[1] = j / maxval + v[1] / (127 + (255 / 256.0))
+				v[2] = j / maxval + v[2] / (127 + (255 / 256.0))
+			for i in xrange(len(itable.input)):
+				if profile.connectionColorSpace == "Lab":
+					if i == 0:
+						# L*
+						v[0] = rLinterp[i](v[0] * maxL)
+				itable.input[i].append(int(round(v[i] * 65535)))
+			if logfile and j % math.floor(maxval / 100.0) == 0:
+				logfile.write("\r%i%%" % round(j / maxval * 100))
+
+		# Generate inverse table lookup input values
+		if logfile:
+			logfile.write("\n")
+			logfile.write("Generating %s%i table lookup input values...\n" %
+						  (source, tableno))
+			logfile.write("cLUT grid res: %i\n" % clutres)
+		step = 1.0 / (clutres - 1.0)
+		idata = []
+		abmaxval = 255 + (255 / 256.0)
+		for a in xrange(clutres):
+			if self.thread_abort:
+				return False
+			for b in xrange(clutres):
+				for c in xrange(clutres):
+					d, e, f = [v * step for v in (a, b, c)]
+					if profile.connectionColorSpace == "XYZ":
+						# Apply TRC to XYZ values to distribute them optimally
+						# across cLUT grid points.
+						XYZ = [interp[i](v) for i, v in enumerate((d, e, f))]
+						##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
+						# Scale into device colorspace
+						v = matrices[1].inverted() * XYZ
+						##print "%3.6f %3.6f %3.6f" % tuple(v)
+						##raw_input()
+						if intent == "a":
+							v = colormath.adapt(*v + [XYZwp,
+													  profile.tags.wtpt.ir.values()])
+					else:
+						# Legacy CIELAB
+						d = Linterp[1](d)
+						v = d, -128 + e * abmaxval, -128 + f * abmaxval
+					idata.append("%.6f %.6f %.6f" % tuple(v))
+			if logfile:
+				logfile.write("\r%i%%" % round((a * b * c) /
+											   ((clutres - 1.0) ** 3) * 100))
+
+		# Lookup CIE -> device values through profile using xicclu
+		if logfile:
+			logfile.write("\n")
+			logfile.write("Input black XYZ: %s\n" % idata[0])
+			logfile.write("Input white XYZ: %s\n" % idata[-1])
+			logfile.write("Looking up input values through %s%i table...\n" %
+						  (source, tableno))
+		odata = self.xicclu(profile, idata, intent, direction, "n", pcs, 100,
+							logfile=logfile)
+		if not (self.tempdir and profile.fileName.startswith(self.tempdir)):
+			self.wrapup(False)
+		else:
+			os.remove(os.path.join(self.tempdir,
+								   os.path.basename(profile.fileName)))
+
+		# Fill cCLUT
+		itable.clut = []
+		numrows = len(odata)
+		if numrows != clutres ** 3:
+			raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
+							 "maximum (%s^3 = %s)" % (numrows, clutres,
+													  clutres ** 3))
+		if logfile:
+			logfile.write("Output black RGB: %.4f %.4f %.4f\n" %
+						  tuple(odata[0]))
+			logfile.write("Output white RGB: %.4f %.4f %.4f\n" %
+						  tuple(odata[-1]))
+		odata = [[n / 100.0 for n in v] for v in odata]
+		if logfile:
+			logfile.write("Filling cLUT...\n")
+		for i, RGB in enumerate(odata):
+			if i in (0, clutres ** 3 - 1) or i % clutres == 0:
+				if self.thread_abort:
+					return False
+				itable.clut.append([])
+				if logfile:
+					logfile.write("\r%i%%" % round(i / (numrows - 1.0) * 100))
+			# Set RGB black and white explicitly
+			if i == 0:
+				RGB = 0, 0, 0
+			elif i == numrows - 1.0:
+				RGB = 1, 1, 1
+			itable.clut[-1].append([int(round(v * 65535)) for v in RGB])
+		if logfile:
+			logfile.write("\n")
+
+		# Set output curves
+		itable.output = [[], [], []]
+		numentries = 256
+		maxval = numentries - 1.0
+		for i in xrange(len(itable.output)):
+			for j in xrange(numentries):
+				itable.output[i].append(int(round(j / maxval * 65535)))
+		
+		# Update profile
+		profile.tags["B2A%i" % tableno] = itable
+		return True
+	
 	def get_device_id(self, quirk=True):
 		""" Get org.freedesktop.ColorManager device key """
 		if config.get_display_name() in ("Web", "Untethered", "madVR"):
@@ -3634,11 +4061,23 @@ class Worker(object):
 		else:
 			chrm = None
 		if not isinstance(result, Exception) and result:
+			profile_path = args[-1] + profile_ext
+			try:
+				profile = ICCP.ICCProfile(profile_path)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
+			else:
+				if (profile.profileClass == "mntr" and
+					profile.colorSpace == "RGB" and "A2B0" in profile.tags and
+					getcfg("profile.b2a.smooth") and
+					getcfg("profile.type") in ("x", "X")):
+					result = self.update_profile_B2A(profile)
+		if not isinstance(result, Exception) and result:
 			(gamut_volume,
-			 gamut_coverage) = self.create_gamut_views(args[-1] + profile_ext)
+			 gamut_coverage) = self.create_gamut_views(profile_path)
 		safe_print("-" * 80)
 		if not isinstance(result, Exception) and result:
-			result = self.update_profile(args[-1] + profile_ext, ti3, chrm,
+			result = self.update_profile(profile, ti3, chrm,
 										 tags, avg, peak, rms, gamut_volume,
 										 gamut_coverage,
 										 quality=getcfg("profile.quality"))
@@ -3787,6 +4226,70 @@ class Worker(object):
 		except Exception, exception:
 			return exception
 		return True
+	
+	def update_profile_B2A(self, profile):
+		# Use reverse A2B interpolation to generate B2A table
+		clutres = getcfg("profile.b2a.smooth.size")
+		linebuffered_logfiles = []
+		if sys.stdout.isatty():
+			linebuffered_logfiles.append(safe_print)
+		else:
+			linebuffered_logfiles.append(log)
+		if self.sessionlogfile:
+			linebuffered_logfiles.append(self.sessionlogfile)
+		logfiles = Files([LineBufferedStream(
+							FilteredStream(Files(linebuffered_logfiles),
+										   self.data_encoding,
+										   discard="",
+										   linesep_in="\n", 
+										   triggers=[])), self.recent,
+							self.lastmsg])
+		# Add perceptual tables if not present
+		if "A2B0" in profile.tags and not "A2B1" in profile.tags:
+			q2res = {"n": 9,
+					 "l": 9,
+					 "m": 17,
+					 "h": 33,
+					 "u": 45}
+			a2bclutres = q2res.get(getcfg("profile.quality"), 33)
+			try:
+				result = self.generate_A2B0(profile, a2bclutres, logfiles)
+			except Exception, exception:
+				return exception
+			else:
+				if not result:
+					return False
+		# Invert A2B tables if present. Always invert colorimetric A2B table.
+		results = []
+		A2B = []
+		for tableno in (1, 0, 2):
+			if "A2B%i" % tableno in profile.tags:
+				if ("B2A%i" % tableno in profile.tags and
+					profile.tags["B2A%i" % tableno] in results):
+					continue
+				if profile.tags["A2B%i" % tableno] in A2B:
+					# Interpolate B2A? It makes the gamut mapping smoother,
+					# but we probably shouldn't
+					continue
+					source = "B2A"
+				else:
+					# Invert A2B
+					source = "A2B"
+				try:
+					result = self.generate_B2A_from_inverse_table(profile,
+																  clutres,
+																  source,
+																  tableno,
+																  logfiles)
+				except Exception, exception:
+					return exception
+				else:
+					if result:
+						results.append(profile.tags["B2A%i" % tableno])
+						A2B.append(profile.tags["A2B%i" % tableno])
+					else:
+						return False
+		return results
 
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
@@ -3887,9 +4390,6 @@ class Worker(object):
 		args += ["-q" + getcfg("profile.quality")]
 		args += ["-a" + getcfg("profile.type")]
 		if getcfg("profile.type") in ["l", "x", "X"]:
-			b2a_q = getcfg("profile.quality.b2a")
-			if b2a_q:
-				args += ["-b" + b2a_q]
 			if getcfg("gamap_saturation"):
 				gamap = "S"
 			elif getcfg("gamap_perceptual"):
@@ -3906,6 +4406,15 @@ class Worker(object):
 					args += ["-c" + getcfg("gamap_src_viewcond")]
 				if getcfg("gamap_out_viewcond"):
 					args += ["-d" + getcfg("gamap_out_viewcond")]
+			b2a_q = getcfg("profile.quality.b2a")
+			if (getcfg("profile.b2a.smooth") and
+				getcfg("profile.type") in ("x", "X") and
+				not (gamap and getcfg("gamap_profile"))):
+				# Disable B2A creation in colprof, B2A is handled
+				# by A2B inversion code
+				b2a_q = "n"
+			if b2a_q and b2a_q != getcfg("profile.quality"):
+				args += ["-b" + b2a_q]
 		args += ["-C"]
 		args += [getcfg("copyright").encode("ASCII", "asciize")]
 		if getcfg("extra_args.colprof").strip():
@@ -3949,6 +4458,12 @@ class Worker(object):
 			ti3[0].add_keyword("USE_BLACK_POINT_COMPENSATION",
 							   "YES" if getcfg("profile.black_point_compensation")
 							   else "NO")
+			# Smooth B2A
+			ti3[0].add_keyword("SMOOTH_B2A",
+							   "YES" if getcfg("profile.b2a.smooth")
+							   else "NO")
+			ti3[0].add_keyword("SMOOTH_B2A_SIZE",
+							   getcfg("profile.b2a.smooth.size"))
 			if getcfg("profile.black_point_compensation"):
 				# Backup TI3
 				ti3.write(inoutfile + ".ti3.backup")
@@ -5917,3 +6432,76 @@ class Worker(object):
 	
 	def write(self, txt):
 		wx.CallAfter(self.parse, txt)
+	
+	def xicclu(self, profile, idata, intent="r", direction="f", order="n",
+			   pcs="l", scale=1, cwd=None, startupinfo=None, raw=False,
+			   logfile=None):
+		"""
+		Call xicclu, feed input floats into stdin, return output floats.
+		
+		input data needs to be a list of 3-tuples (or lists) with floats.
+		output data will be returned in same format.
+		
+		"""
+		xicclu = get_argyll_util("xicclu")
+		if not xicclu:
+			raise Error(lang.getstr("argyll.util.not_found", "xicclu"))
+		if not cwd:
+			cwd = self.create_tempdir()
+		if isinstance(cwd, Exception):
+			raise cwd
+		if isinstance(profile, ICCP.ICCProfile):
+			profile_basename = os.path.basename(profile.fileName)
+			profile_path = os.path.join(cwd, profile_basename)
+			if not os.path.isfile(profile_path):
+				profile.write(profile_path)
+		else:
+			profile_basename = os.path.basename(profile)
+			profile_path = profile
+		profile_path = safe_str(win32api.GetShortPathName(profile_path))
+		if sys.platform == "win32" and not startupinfo:
+			startupinfo = sp.STARTUPINFO()
+			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+			startupinfo.wShowWindow = sp.SW_HIDE
+		idata = list(idata)  # Make a copy
+		if not isinstance(idata, basestring):
+			for i, v in enumerate(idata):
+				if not isinstance(v, basestring):
+					for n in v:
+						if not isinstance(n, (float, int, long)):
+							raise TypeError("xicclu: Expecting list of strings or 3-tuples with floats")
+					idata[i] = " ".join([str(n) for n in v])
+		else:
+			idata = idata.splitlines()
+		numrows = len(idata)
+		chunklen = 1000
+		i = 0
+		odata = []
+		xicclu = safe_str(xicclu)
+		cwd = safe_str(cwd)
+		while True:
+			# Process in chunks
+			if self.subprocess_abort:
+				raise UnloggedInfo(lang.getstr("aborted"))
+			p = sp.Popen([xicclu, "-v0", "-f" + direction, "-i" + intent,
+						  "-p" + pcs, "-s%s" % scale, profile_path], stdin=sp.PIPE,
+						  stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd,
+						  startupinfo=startupinfo)
+			if p.poll() is None:
+				odata += p.communicate("\n".join(idata[chunklen * i:
+													   chunklen * (i + 1)]))[0].splitlines()
+			if p.wait() != 0:
+				# Error
+				raise IOError(odata)
+			if logfile:
+				logfile.write("\r%i%%" % min(round(chunklen * (i + 1) /
+												   float(numrows) * 100),
+											 100))
+			if chunklen * (i + 1) > numrows - 1:
+				break
+			i += 1
+		if logfile:
+			logfile.write("\n")
+		if raw:
+			return odata
+		return [[float(n) for n in v.strip().split()] for v in odata]

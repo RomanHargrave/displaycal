@@ -30,6 +30,9 @@
       <object class="wxMenuItem" name="create_profile_from_edid">
         <label>create_profile_from_edid</label>
       </object>
+      <object class="wxMenuItem" name="profile.b2a.smooth">
+        <label>profile.b2a.smooth</label>
+      </object>
       <object class="wxMenuItem" name="install_display_profile">
         <label>install_display_profile</label>
       </object>
