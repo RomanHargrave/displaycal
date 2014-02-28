@@ -904,21 +904,6 @@ class LUTFrame(wx.Frame):
 														 profile.colorSpace))))
 			return
 		
-		# Setup xicclu
-		xicclu = get_argyll_util("xicclu")
-		if not xicclu:
-			return
-		xicclu = xicclu.encode(fs_enc)
-		cwd = self.client.worker.create_tempdir()
-		if isinstance(cwd, Exception):
-			raise cwd
-		if sys.platform == "win32":
-			startupinfo = sp.STARTUPINFO()
-			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-			startupinfo.wShowWindow = sp.SW_HIDE
-		else:
-			startupinfo = None
-		
 		direction = {0: "b",
 					 1: "if",
 					 2: "f",
@@ -955,9 +940,7 @@ class LUTFrame(wx.Frame):
 			odata = self.worker.xicclu(profile, idata, intent,
 									   direction, order, "l")
 		except Exception, exception:
-			self.client.errors.append(Error("\n".join([safe_unicode(v)
-													   for v in (xicclu,
-																 exception)])))
+			self.client.errors.append(Error(safe_unicode(exception)))
 
 		# Remove temporary files
 		self.client.worker.wrapup(False)

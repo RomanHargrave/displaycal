@@ -436,16 +436,9 @@ class GamutCanvas(LUTCanvas):
 		xicclu = get_argyll_util("xicclu")
 		if not xicclu:
 			return
-		xicclu = xicclu.encode(fs_enc)
 		cwd = self.worker.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
-		if sys.platform == "win32":
-			startupinfo = sp.STARTUPINFO()
-			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-			startupinfo.wShowWindow = sp.SW_HIDE
-		else:
-			startupinfo = None
 		
 		if not profiles:
 			profiles = [ICCP.ICCProfile(get_data_path("ref/sRGB.icm")),
@@ -579,44 +572,15 @@ class GamutCanvas(LUTCanvas):
 				elif profile.colorSpace != "GRAY":
 					device_values.append([0.0] * channels)
 
-				# Convert device triplets to list of strings
-				for j, device_value in enumerate(device_values):
-					device_values[j] = " ".join(str(n) for n in device_value)
-
-				# Prepare profile
-				profile.write(os.path.join(cwd, "profile.icc"))
-
 				# Lookup device -> XYZ values through profile using xicclu
-				stderr = tempfile.SpooledTemporaryFile()
 				try:
-					p = sp.Popen([xicclu, "-ff", "-i" + intent, "profile.icc"], 
-								 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-								 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
+					odata = self.worker.xicclu(profile, device_values, intent,
+											   "f")
 				except Exception, exception:
-					self.errors.append(Error("\n".join([safe_unicode(v) for v in (xicclu,
-																	 exception)])))
-				else:
-					self.worker.subprocess = p
-					if p.poll() not in (0, None):
-						stderr.seek(0)
-						self.errors.append(Error(stderr.read().strip()))
-					else:
-						try:
-							odata = p.communicate("\n".join(device_values))[0].splitlines()
-						except IOError:
-							stderr.seek(0)
-							self.errors.append(Error(stderr.read().strip()))
-							odata = []
-						else:
-							if p.wait() != 0:
-								stderr.seek(0)
-								self.errors.append(IOError("\n".join([''.join(odata),
-																	  stderr.read().strip()])))
-				stderr.close()
+					self.errors.append(Error(safe_unicode(exception)))
 			
-				for line in odata:
-					line = "".join(line.strip().split("->")).split()
-					pcs_triplets.append([float(n) for n in line[channels + 2:channels + 5]])
+				for pcs_triplet in odata:
+					pcs_triplets.append(pcs_triplet)
 					if profile.connectionColorSpace == "Lab":
 						pcs_triplets[-1] = list(colormath.Lab2XYZ(*pcs_triplets[-1]))
 

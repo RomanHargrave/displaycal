@@ -1727,55 +1727,16 @@ class Worker(object):
 					RGB_in.append(RGB_copy)
 					RGB_indexes.append(list(RGB_index))
 
-		# Convert RGB triplets to list of strings
-		for i, RGB_triplet in enumerate(RGB_in):
-			RGB_in[i] = " ".join(str(n) for n in RGB_triplet)
-		if debug:
-			safe_print(len(RGB_in), "RGB triplets")
-			safe_print("\n".join(RGB_in))
-		
-		# Setup icclu
+		# Lookup RGB -> XYZ values through devicelink profile using icclu
 		# (Using icclu instead of xicclu because xicclu in versions
 		# prior to Argyll CMS 1.6.0 could not deal with devicelink profiles)
-		icclu = get_argyll_util("icclu").encode(fs_enc)
-		if sys.platform == "win32":
-			startupinfo = sp.STARTUPINFO()
-			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-			startupinfo.wShowWindow = sp.SW_HIDE
-		else:
-			startupinfo = None
-
-		# Lookup RGB -> XYZ values through devicelink profile using icclu
-		stderr = tempfile.SpooledTemporaryFile()
-		p = sp.Popen([icclu, "-v0", link_basename], 
-					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=stderr, 
-					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-		self.subprocess = p
-		if p.poll() not in (0, None):
-			stderr.seek(0)
-			result = Error(stderr.read().strip())
-		try:
-			odata = p.communicate("\n".join(RGB_in))[0].splitlines()
-		except IOError:
-			stderr.seek(0)
-			result = Error(stderr.read().strip())
-		if p.wait() != 0:
-			result = IOError(''.join(odata))
-		stderr.close()
+		RGB_out = self.xicclu(link_filename, RGB_in, use_icclu=True)
 
 		# Remove temporary files, move .cal and .log files
 		result2 = self.wrapup(dst_path=path, ext_filter=[".cal", ".log"])
 
 		if isinstance(result, Exception):
 			raise result
-		
-		# Convert icclu output to RGB triplets
-		RGB_out = []
-		for line in odata:
-			RGB_out.append([float(n) for n in line.strip().split()])
-		if debug:
-			safe_print(len(odata), "RGB triplets")
-			safe_print("\n".join(odata))
 
 		lut = [["# Created with %s %s" % (appname, version)]]
 		valsep = " "
@@ -2811,11 +2772,6 @@ class Worker(object):
 		if logfile:
 			logfile.write("Looking up input values through A2B0 table...\n")
 		odata = self.xicclu(profile, idata, pcs="x", logfile=logfile)
-		if not (self.tempdir and profile.fileName.startswith(self.tempdir)):
-			self.wrapup(False)
-		else:
-			os.remove(os.path.join(self.tempdir,
-								   os.path.basename(profile.fileName)))
 		numrows = len(odata)
 		if numrows != clutres ** 3:
 			raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
@@ -3128,11 +3084,6 @@ class Worker(object):
 						  (source, tableno))
 		odata = self.xicclu(profile, idata, intent, direction, "n", pcs, 100,
 							logfile=logfile)
-		if not (self.tempdir and profile.fileName.startswith(self.tempdir)):
-			self.wrapup(False)
-		else:
-			os.remove(os.path.join(self.tempdir,
-								   os.path.basename(profile.fileName)))
 
 		# Fill cCLUT
 		itable.clut = []
@@ -5750,6 +5701,11 @@ class Worker(object):
 				pcs = 'x'
 			else:
 				raise ValueError('Unknown CIE color representation ' + color_rep)
+		else:
+			if pcs == "l":
+				color_rep = "LAB"
+			elif pcs == "x":
+				color_rep = "XYZ"
 		
 		
 		# get profile color space
@@ -5814,50 +5770,34 @@ class Worker(object):
 		
 		idata = []
 		for primaries in device_data.values():
-			idata.append(' '.join(str(n) for n in primaries.values()))
+			idata.append(primaries.values())
+		
+		if debug:
+			safe_print("ti1_lookup_to_ti3 %s -> %s idata" % (profile.colorSpace,
+														  color_rep))
+			for v in idata:
+				safe_print(" ".join(("%3.4f", ) * len(v)) % tuple(v))
 
 		# lookup device->cie values through profile using (x)icclu
 		if pcs or self.argyll_version >= [1, 6]:
-			xicclu = get_argyll_util("xicclu").encode(fs_enc)
+			use_icclu = False
 		else:
 			# DeviceLink profile, we have to use icclu under older Argyll CMS
 			# versions because older xicclu cannot handle devicelink
-			xicclu = get_argyll_util("icclu").encode(fs_enc)
-		cwd = self.create_tempdir()
-		if isinstance(cwd, Exception):
-			raise cwd
-		profile.write(os.path.join(cwd, "temp.icc"))
-		if sys.platform == "win32":
-			startupinfo = sp.STARTUPINFO()
-			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-			startupinfo.wShowWindow = sp.SW_HIDE
-		else:
-			startupinfo = None
-		args = [xicclu, '-f' + function]
-		if pcs:
-			args += ['-i' + intent, '-p' + pcs]
-		p = sp.Popen(args + ['-s100', "temp.icc"], 
-					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
-					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-		odata = p.communicate('\n'.join(idata))[0].splitlines()
-		if p.wait() != 0:
-			# error
-			raise IOError(''.join(odata))
+			use_icclu = True
+			
+		odata = self.xicclu(profile, idata, intent, function, pcs=pcs,
+							scale=100, use_icclu=use_icclu)
 		
 		gray = []
 		igray = []
 		igray_idx = []
 		if colorspace == "RGB":
 			# treat r=g=b specially: set expected a=b=0
-			for i, line in enumerate(odata):
-				line = line.strip().split('->')
-				line = ''.join(line).split()
-				if line[-1] == '(clip)':
-					line.pop()
-				r, g, b = [float(n) for n in line[:3]]
+			for i, cie in enumerate(odata):
+				r, g, b = idata[i]
 				if r == g == b < 100:
 					# if grayscale and not white
-					cie = [float(n) for n in line[5:-1]]
 					if pcs == 'x':
 						# Need to scale XYZ coming from xicclu
 						# Lab is already scaled
@@ -5876,38 +5816,14 @@ class Worker(object):
 						gray.append((r, g, b))
 					if False:  # NEVER?
 						# set cie in odata to a=b=0
-						line[5:-1] = [str(n) for n in cie]
-						odata[i] = ' -> '.join([' '.join(line[:4]), line[4], 
-												' '.join(line[5:])])
+						odata[i] = cie
 			
 		if igray and False:  # NEVER?
 			# lookup cie->device values for grays through profile using xicclu
 			gray = []
-			xicclu = get_argyll_util("xicclu").encode(fs_enc)
-			cwd = self.create_tempdir()
-			if isinstance(cwd, Exception):
-				raise cwd
-			profile.write(os.path.join(cwd, "temp.icc"))
-			if sys.platform == "win32":
-				startupinfo = sp.STARTUPINFO()
-				startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-				startupinfo.wShowWindow = sp.SW_HIDE
-			else:
-				startupinfo = None
-			p = sp.Popen([xicclu, '-fb', '-ir', '-pl', '-s100', "temp.icc"], 
-						 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
-						 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-			ogray = p.communicate('\n'.join(igray))[0].splitlines()
-			if p.wait() != 0:
-				# error
-				raise IOError(''.join(odata))
-			for i, line in enumerate(ogray):
-				line = line.strip().split('->')
-				line = ''.join(line).split()
-				if line[-1] == '(clip)':
-					line.pop()
-				cie = [float(n) for n in line[:3]]
-				rgb = [float(n) for n in line[5:-1]]
+			ogray = self.xicclu(profile, igray, "r", "b", pcs="l", scale=100)
+			for i, rgb in enumerate(ogray):
+				cie = idata[i]
 				if colormath.Lab2XYZ(cie[0], 0, 0)[1] * 100.0 >= 1:
 					# only add if luminance is greater or equal 1% because 
 					# dark tones fluctuate too much
@@ -5916,9 +5832,7 @@ class Worker(object):
 				for n, channel in enumerate(("R", "G", "B")):
 					data[igray_idx[i] + 
 						 white_added_count]["RGB_" + channel] = rgb[n]
-				oline = odata[igray_idx[i]].strip().split('->', 1)
-				odata[igray_idx[i]] = ' [RGB] ->'.join([' '.join(line[5:-1])] + 
-													   oline[1:])
+				odata[igray_idx[i]] = cie
 		
 		self.wrapup(False)
 
@@ -5934,40 +5848,33 @@ class Worker(object):
 		ofile.write('DEVICE_CLASS "' + ('DISPLAY' if colorspace == 'RGB' else 
 										'OUTPUT') + '"\n')
 		include_sample_name = False
-		i = 0
-		offset = 0 if colorspace == "RGB" else 1
-		for line in odata:
-			line = line.strip().split('->')
-			line = ''.join(line).split()
-			if line[-1] == '(clip)':
-				line.pop()
+		for i, cie in enumerate(odata):
 			if i == 0:
-				icolor = line[3 + offset].strip('[]')
+				icolor = profile.colorSpace
 				if icolor == 'RGB':
 					olabel = 'RGB_R RGB_G RGB_B'
 				elif icolor == 'CMYK':
 					olabel = 'CMYK_C CMYK_M CMYK_Y CMYK_K'
 				else:
 					raise ValueError('Unknown color representation ' + icolor)
-				ocolor = line[-1].strip('[]').upper()
-				if ocolor == 'LAB':
+				if color_rep == 'LAB':
 					ilabel = 'LAB_L LAB_A LAB_B'
-				elif ocolor in ('XYZ', 'RGB'):
+				elif color_rep in ('XYZ', 'RGB'):
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
-					raise ValueError('Unknown CIE color representation ' + ocolor)
+					raise ValueError('Unknown CIE color representation ' + color_rep)
 				ofile.write('KEYWORD "COLOR_REP"\n')
-				if icolor == ocolor:
+				if icolor == color_rep:
 					ofile.write('COLOR_REP "' + icolor + '"\n')
 				else:
-					ofile.write('COLOR_REP "' + icolor + '_' + ocolor + '"\n')
+					ofile.write('COLOR_REP "' + icolor + '_' + color_rep + '"\n')
 				
 				ofile.write('\n')
 				ofile.write('NUMBER_OF_FIELDS ')
 				if include_sample_name:
-					ofile.write(str(2 + len(icolor) + len(ocolor)) + '\n')
+					ofile.write(str(2 + len(icolor) + len(color_rep)) + '\n')
 				else:
-					ofile.write(str(1 + len(icolor) + len(ocolor)) + '\n')
+					ofile.write(str(1 + len(icolor) + len(color_rep)) + '\n')
 				ofile.write('BEGIN_DATA_FORMAT\n')
 				ofile.write('SAMPLE_ID ')
 				if include_sample_name:
@@ -5978,26 +5885,29 @@ class Worker(object):
 				ofile.write('\n')
 				ofile.write('NUMBER_OF_SETS ' + str(len(odata)) + '\n')
 				ofile.write('BEGIN_DATA\n')
-			i += 1
-			cie = [float(n) for n in line[5 + offset:-1]]
 			if pcs == 'x':
 				# Need to scale XYZ coming from xicclu, Lab is already scaled
 				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) 
 					   for n in cie]
 			elif not pcs:
-				line[:3] = line[5 + offset:-1]
+				# Actually CIE = RGB because Devicelink
+				idata[i] = cie
 				cie = [round(n * 100.0, 5 - len(str(int(abs(n * 100.0))))) 
 					   for n in colormath.RGB2XYZ(*[n / 100.0 for n in cie])]
+			device = [str(n) for n in idata[i]]
 			cie = [str(n) for n in cie]
 			if include_sample_name:
 				ofile.write(str(i) + ' ' + data[i - 1][1].strip('"') + ' ' + 
-							' '.join(line[:3 + offset]) + ' ' + ' '.join(cie) + '\n')
+							' '.join(device) + ' ' + ' '.join(cie) + '\n')
 			else:
-				ofile.write(str(i) + ' ' + ' '.join(line[:3 + offset]) + ' ' + 
+				ofile.write(str(i) + ' ' + ' '.join(device) + ' ' + 
 							' '.join(cie) + '\n')
 		ofile.write('END_DATA\n')
 		ofile.seek(0)
-		return ti1, CGATS.CGATS(ofile)[0], map(list, gray)
+		ti3 = CGATS.CGATS(ofile)[0]
+		if debug:
+			safe_print(ti3)
+		return ti1, ti3, map(list, gray)
 	
 	def ti3_lookup_to_ti1(self, ti3, profile, fields=None, intent="r",
 						  add_white_patches=True):
@@ -6099,28 +6009,16 @@ class Worker(object):
 			if color_rep == 'XYZ':
 				# assume scale 0...100 in ti3, we need to convert to 0...1
 				cie = [n / 100.0 for n in cie]
-			idata.append(' '.join(str(n) for n in cie))
+			idata.append(cie)
+		
+		if debug:
+			safe_print("ti3_lookup_to_ti1 %s -> %s idata" % (color_rep,
+														  profile.colorSpace))
+			for v in idata:
+				safe_print(" ".join(("%3.4f", ) * len(v)) % tuple(v))
 
 		# lookup cie->device values through profile.icc using xicclu
-		xicclu = get_argyll_util("xicclu").encode(fs_enc)
-		cwd = self.create_tempdir()
-		if isinstance(cwd, Exception):
-			raise cwd
-		profile.write(os.path.join(cwd, "temp.icc"))
-		if sys.platform == "win32":
-			startupinfo = sp.STARTUPINFO()
-			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-			startupinfo.wShowWindow = sp.SW_HIDE
-		else:
-			startupinfo = None
-		p = sp.Popen([xicclu, '-fb', '-i' + intent, '-p' + pcs, '-s100', "temp.icc"], 
-					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT, 
-					 cwd=cwd.encode(fs_enc), startupinfo=startupinfo)
-		odata = p.communicate('\n'.join(idata))[0].splitlines()
-		if p.wait() != 0:
-			# error
-			raise IOError(''.join(odata))
-		self.wrapup(False)
+		odata = self.xicclu(profile, idata, intent, "b", pcs=pcs, scale=100)
 		
 		# write output ti1/ti3
 		ti1out = StringIO()
@@ -6128,21 +6026,15 @@ class Worker(object):
 		ti1out.write('\n')
 		ti1out.write('DESCRIPTOR "Argyll Calibration Target chart information 1"\n')
 		include_sample_name = False
-		i = 0
-		for line in odata:
-			line = line.strip().split('->')
-			line = ''.join(line).split()
-			if line[-1] == '(clip)':
-				line.pop()
+		for i, device in enumerate(odata):
 			if i == 0:
-				icolor = line[3].strip('[]').upper()
-				if icolor == 'LAB':
+				if color_rep == 'LAB':
 					ilabel = 'LAB_L LAB_A LAB_B'
-				elif icolor == 'XYZ':
+				elif color_rep == 'XYZ':
 					ilabel = 'XYZ_X XYZ_Y XYZ_Z'
 				else:
-					raise ValueError('Unknown CIE color representation ' + icolor)
-				ocolor = line[-1].strip('[]')
+					raise ValueError('Unknown CIE color representation ' + color_rep)
+				ocolor = profile.colorSpace.upper()
 				if ocolor == 'RGB':
 					olabel = 'RGB_R RGB_G RGB_B'
 				elif ocolor == 'CMYK':
@@ -6167,9 +6059,9 @@ class Worker(object):
 				ti1out.write('\n')
 				ti1out.write('NUMBER_OF_FIELDS ')
 				if include_sample_name:
-					ti1out.write(str(2 + len(icolor) + len(ocolor)) + '\n')
+					ti1out.write(str(2 + len(color_rep) + len(ocolor)) + '\n')
 				else:
-					ti1out.write(str(1 + len(icolor) + len(ocolor)) + '\n')
+					ti1out.write(str(1 + len(color_rep) + len(ocolor)) + '\n')
 				ti1out.write('BEGIN_DATA_FORMAT\n')
 				ti1out.write('SAMPLE_ID ')
 				if include_sample_name:
@@ -6182,13 +6074,11 @@ class Worker(object):
 				ti1out.write('BEGIN_DATA\n')
 			if i < len(wp):
 				if ocolor == 'RGB':
-					device = '100.00 100.00 100.00'.split()
+					device = [100.00, 100.00, 100.00]
 				else:
-					device = '0 0 0 0'.split()
-			else:
-				device = line[5:-1]
+					device = [0, 0, 0, 0]
 			# Make sure device values do not exceed valid range of 0..100
-			device = [str(max(0, min(float(v), 100))) for v in device]
+			device = [str(max(0, min(v, 100))) for v in device]
 			cie = (wp + cie_data.values())[i].values()
 			cie = [str(n) for n in cie]
 			if include_sample_name:
@@ -6200,14 +6090,16 @@ class Worker(object):
 			if i > len(wp) - 1:  # don't include whitepoint patches in ti3
 				# set device values in ti3
 				for n, v in enumerate(olabels):
-					ti3v.DATA[i - len(wp)][v] = float(line[5 + n])
+					ti3v.DATA[i - len(wp)][v] = device[n]
 				# set PCS values in ti3
 				for n, v in enumerate(cie):
 					ti3v.DATA[i - len(wp)][required[n]] = float(v)
-			i += 1
 		ti1out.write('END_DATA\n')
 		ti1out.seek(0)
-		return CGATS.CGATS(ti1out), ti3v
+		ti1 = CGATS.CGATS(ti1out)
+		if debug:
+			safe_print(ti1)
+		return ti1, ti3v
 
 	def verify_calibration(self):
 		""" Verify the current calibration """
@@ -6434,74 +6326,100 @@ class Worker(object):
 		wx.CallAfter(self.parse, txt)
 	
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",
-			   pcs="l", scale=1, cwd=None, startupinfo=None, raw=False,
-			   logfile=None):
+			   pcs=None, scale=1, cwd=None, startupinfo=None, raw=False,
+			   logfile=None, use_icclu=False):
 		"""
 		Call xicclu, feed input floats into stdin, return output floats.
 		
-		input data needs to be a list of 3-tuples (or lists) with floats.
-		output data will be returned in same format.
+		input data needs to be a list of 3-tuples (or lists) with floats,
+		alternatively a list of strings.
+		output data will be returned in same format, or as list of strings
+		if 'raw' is true.
 		
 		"""
-		xicclu = get_argyll_util("xicclu")
+		utilname = "icclu" if use_icclu else "xicclu"
+		xicclu = get_argyll_util(utilname)
 		if not xicclu:
-			raise Error(lang.getstr("argyll.util.not_found", "xicclu"))
+			raise NotImplementedError(lang.getstr("argyll.util.not_found",
+												  utilname))
 		if not cwd:
 			cwd = self.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
-		if isinstance(profile, ICCP.ICCProfile):
-			profile_basename = os.path.basename(profile.fileName)
-			profile_path = os.path.join(cwd, profile_basename)
-			if not os.path.isfile(profile_path):
-				profile.write(profile_path)
-		else:
-			profile_basename = os.path.basename(profile)
-			profile_path = profile
+		if not isinstance(profile, ICCP.ICCProfile):
+			profile = ICCP.ICCProfile(profile)
+		temp = False
+		if not profile.fileName:
+			fd, profile.fileName = tempfile.mkstemp(profile_ext, dir=cwd)
+			profile.write(fd)
+			profile.close()
+			temp = True
+		profile_basename = os.path.basename(profile.fileName)
+		profile_path = os.path.join(cwd, profile_basename)
+		if not os.path.isfile(profile_path):
+			profile.write(profile_path)
+			temp = True
 		profile_path = safe_str(win32api.GetShortPathName(profile_path))
 		if sys.platform == "win32" and not startupinfo:
 			startupinfo = sp.STARTUPINFO()
 			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
 			startupinfo.wShowWindow = sp.SW_HIDE
 		idata = list(idata)  # Make a copy
-		if not isinstance(idata, basestring):
-			for i, v in enumerate(idata):
-				if not isinstance(v, basestring):
-					for n in v:
-						if not isinstance(n, (float, int, long)):
-							raise TypeError("xicclu: Expecting list of strings or 3-tuples with floats")
-					idata[i] = " ".join([str(n) for n in v])
-		else:
-			idata = idata.splitlines()
-		numrows = len(idata)
-		chunklen = 1000
-		i = 0
-		odata = []
-		xicclu = safe_str(xicclu)
-		cwd = safe_str(cwd)
-		while True:
-			# Process in chunks
-			if self.subprocess_abort:
-				raise UnloggedInfo(lang.getstr("aborted"))
-			p = sp.Popen([xicclu, "-v0", "-f" + direction, "-i" + intent,
-						  "-p" + pcs, "-s%s" % scale, profile_path], stdin=sp.PIPE,
-						  stdout=sp.PIPE, stderr=sp.STDOUT, cwd=cwd,
-						  startupinfo=startupinfo)
-			if p.poll() is None:
-				odata += p.communicate("\n".join(idata[chunklen * i:
-													   chunklen * (i + 1)]))[0].splitlines()
-			if p.wait() != 0:
-				# Error
-				raise IOError(odata)
+		if not logfile:
+			logfile = Files([self.recent, self.lastmsg])
+		try:
+			if not isinstance(idata, basestring):
+				for i, v in enumerate(idata):
+					if not isinstance(v, basestring):
+						for n in v:
+							if not isinstance(n, (float, int, long)):
+								raise TypeError("xicclu: Expecting list of "
+											    "strings or 3-tuples with "
+											    "floats")
+						idata[i] = " ".join([str(n) for n in v])
+			else:
+				idata = idata.splitlines()
+			numrows = len(idata)
+			chunklen = 1000
+			i = 0
+			odata = []
+			xicclu = safe_str(xicclu)
+			cwd = safe_str(cwd)
+			args = [xicclu, "-v0", "-s%s" % scale]
+			if profile.profileClass != "link":
+				args += ["-f" + direction, "-i" + intent]
+				if pcs:
+					args.append("-p" + pcs)
+			args.append(profile_path)
+			while True:
+				# Process in chunks to prevent broken pipe if input data is too
+				# large
+				if self.subprocess_abort:
+					raise Info(lang.getstr("aborted"))
+				p = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT,
+							 cwd=cwd, startupinfo=startupinfo)
+				if p.poll() is None:
+					odata += p.communicate("\n".join(idata[chunklen * i:
+														   chunklen * (i + 1)]))[0].splitlines()
+				if p.wait() != 0:
+					# Error
+					raise IOError(odata)
+				if logfile:
+					logfile.write("\r%i%%" % min(round(chunklen * (i + 1) /
+													   float(numrows) * 100),
+												 100))
+				if chunklen * (i + 1) > numrows - 1:
+					break
+				i += 1
+		except:
+			raise
+		finally:
+			if temp:
+				os.remove(profile_path)
+				if self.tempdir and not os.listdir(self.tempdir):
+					self.wrapup(False)
 			if logfile:
-				logfile.write("\r%i%%" % min(round(chunklen * (i + 1) /
-												   float(numrows) * 100),
-											 100))
-			if chunklen * (i + 1) > numrows - 1:
-				break
-			i += 1
-		if logfile:
-			logfile.write("\n")
+				logfile.write("\n")
 		if raw:
 			return odata
 		return [[float(n) for n in v.strip().split()] for v in odata]
