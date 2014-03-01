@@ -1476,7 +1476,8 @@ class ProfileInfoFrame(LUTFrame):
 		key = event.GetKeyCode()
 		if (event.ControlDown() or event.CmdDown()): # CTRL (Linux/Mac/Windows) / CMD (Mac)
 			focus = self.FindFocus()
-			if self.grid in (focus, focus.GetParent(), focus.GetGrandParent()):
+			if focus self.grid in (focus, focus.GetParent(),
+								   focus.GetGrandParent()):
 				if key == 65: # A
 					self.grid.SelectAll()
 					return

@@ -700,7 +700,8 @@ class TestchartEditor(wx.Frame):
 		if (event.ControlDown() or event.CmdDown()): # CTRL (Linux/Mac/Windows) / CMD (Mac)
 			key = event.GetKeyCode()
 			focus = self.FindFocus()
-			if self.grid in (focus, focus.GetParent(), focus.GetGrandParent()):
+			if focus and self.grid in (focus, focus.GetParent(),
+									   focus.GetGrandParent()):
 				if key in (8, 127): # BACKSPACE / DEL
 					rows = self.grid.GetSelectionRows()
 					if rows and len(rows) and min(rows) >= 0 and max(rows) + 1 <= self.grid.GetNumberRows():
