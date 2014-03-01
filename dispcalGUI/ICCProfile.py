@@ -911,12 +911,11 @@ class LUT16Type(ICCProfileTag):
 		self._input = None
 		self._clut = None
 		self._output = None
-		if tagData:
-			self._i = uInt8Number(tagData[8])  # Input channel count
-			self._o = uInt8Number(tagData[9])  # Output channel count
-			self._g = uInt8Number(tagData[10])  # cLUT grid res
-			self._n = uInt16Number(tagData[48:50])  # Input channel entries count
-			self._m = uInt16Number(tagData[50:52])  # Output channel entries count
+		self._i = (tagData and uInt8Number(tagData[8])) or 0  # Input channel count
+		self._o = (tagData and uInt8Number(tagData[9])) or 0  # Output channel count
+		self._g = (tagData and uInt8Number(tagData[10])) or 0  # cLUT grid res
+		self._n = (tagData and uInt16Number(tagData[48:50])) or 0  # Input channel entries count
+		self._m = (tagData and uInt16Number(tagData[50:52])) or 0  # Output channel entries count
 	
 	@Property
 	def clut():
@@ -935,6 +934,11 @@ class LUT16Type(ICCProfileTag):
 		
 		return locals()
 	
+	@property
+	def clut_grid_steps(self):
+		""" Return number of grid points per dimension. """
+		return self._g
+	
 	@Property
 	def input():
 		def fget(self):
@@ -951,6 +955,16 @@ class LUT16Type(ICCProfileTag):
 			self._input = value
 		
 		return locals()
+	
+	@property
+	def input_channels_count(self):
+		""" Return number of input channels. """
+		return self._i
+	
+	@property
+	def input_entries_count(self):
+		""" Return number of entries per input channel. """
+		return self._n
 	
 	def invert(self):
 		"""
@@ -977,15 +991,15 @@ class LUT16Type(ICCProfileTag):
 		def fget(self):
 			if self._matrix is None:
 				tagData = self._tagData
-				self._matrix = colormath.Matrix3x3([(s15Fixed16Number(tagData[12:16]),
-													 s15Fixed16Number(tagData[16:20]),
-													 s15Fixed16Number(tagData[20:24])),
-													(s15Fixed16Number(tagData[24:28]),
-													 s15Fixed16Number(tagData[28:32]),
-													 s15Fixed16Number(tagData[32:36])),
-													(s15Fixed16Number(tagData[36:40]),
-													 s15Fixed16Number(tagData[40:44]),
-													 s15Fixed16Number(tagData[44:48]))])
+				return colormath.Matrix3x3([(s15Fixed16Number(tagData[12:16]),
+											 s15Fixed16Number(tagData[16:20]),
+											 s15Fixed16Number(tagData[20:24])),
+											(s15Fixed16Number(tagData[24:28]),
+											 s15Fixed16Number(tagData[28:32]),
+											 s15Fixed16Number(tagData[32:36])),
+											(s15Fixed16Number(tagData[36:40]),
+											 s15Fixed16Number(tagData[40:44]),
+											 s15Fixed16Number(tagData[44:48]))])
 			return self._matrix
 		
 		def fset(self, value):
@@ -1011,6 +1025,16 @@ class LUT16Type(ICCProfileTag):
 			self._output = value
 		
 		return locals()
+	
+	@property
+	def output_channels_count(self):
+		""" Return number of output channels. """
+		return self._o
+	
+	@property
+	def output_entries_count(self):
+		""" Return number of entries per output channel. """
+		return self._m
 	
 	@Property
 	def tagData():
@@ -3474,15 +3498,15 @@ class ICCProfile:
 						name = "    " * 2
 					info[name] = " ".join("%6.4f" % v for v in row)
 				info["    Input Table"] = ""
-				info["        Channels"] = "%i" % len(tag.input)
-				info["        Number of entries per channel"] = "%i" % len(tag.input and tag.input[0])
+				info["        Channels"] = "%i" % tag.input_channels_count
+				info["        Number of entries per channel"] = "%i" % tag.input_entries_count
 				info["    Color Look Up Table"] = ""
-				info["        Grid Points"] = "%i" % len(tag.clut and tag.clut[0])
-				info["        Entries"] = "%i" % (len(tag.clut and tag.clut[0])
-												  ** len(tag.input))
+				info["        Grid Steps"] = "%i" % tag.clut_grid_steps
+				info["        Entries"] = "%i" % (tag.clut_grid_steps **
+												  tag.input_channels_count)
 				info["    Output Table"] = ""
-				info["        Channels"] = "%i" % len(tag.output)
-				info["        Number of entries per channel"] = "%i" % len(tag.output and tag.output[0])
+				info["        Channels"] = "%i" % tag.output_channels_count
+				info["        Number of entries per channel"] = "%i" % tag.output_entries_count
 			elif isinstance(tag, MakeAndModelType):
 				info[name] = ""
 				info["    Manufacturer"] = "0x%s %s" % (
