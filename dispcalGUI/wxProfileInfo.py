@@ -10,7 +10,9 @@ import tempfile
 from config import (defaults, fs_enc, get_argyll_display_number, get_data_path,
 					get_display_profile, get_display_rects, getbitmap, getcfg,
 					geticon, setcfg, writecfg)
+from log import safe_print
 from meta import name as appname
+from options import debug
 from ordereddict import OrderedDict
 from util_str import safe_unicode, universal_newlines, wrap
 from worker import (Error, check_set_argyll_bin, get_argyll_util,
@@ -426,7 +428,7 @@ class GamutCanvas(LUTCanvas):
 		else:
 			self.pcs_data[i] = []
 	
-	def setup(self, profiles=None, profile_no=None, intent="a"):
+	def setup(self, profiles=None, profile_no=None, intent="a", direction="f"):
 		self.size = 40  # Number of segments from one primary to the next secondary color
 		
 		if not check_set_argyll_bin():
@@ -572,14 +574,24 @@ class GamutCanvas(LUTCanvas):
 				elif profile.colorSpace != "GRAY":
 					device_values.append([0.0] * channels)
 
+				if debug:
+					safe_print("In:")
+					for v in device_values:
+						safe_print(" ".join(("%3.4f", ) * len(v)) % tuple(v))
+
 				# Lookup device -> XYZ values through profile using xicclu
 				try:
 					odata = self.worker.xicclu(profile, device_values, intent,
-											   "f")
+											   direction)
 				except Exception, exception:
 					self.errors.append(Error(safe_unicode(exception)))
-			
+					continue
+
+				if debug:
+					safe_print("Out:")
 				for pcs_triplet in odata:
+					if debug:
+						safe_print(" ".join(("%3.4f", ) * len(pcs_triplet)) % tuple(pcs_triplet))
 					pcs_triplets.append(pcs_triplet)
 					if profile.connectionColorSpace == "Lab":
 						pcs_triplets[-1] = list(colormath.Lab2XYZ(*pcs_triplets[-1]))
@@ -799,6 +811,18 @@ class GamutViewOptions(wx.Panel):
 		self.rendering_intent_select.Bind(wx.EVT_CHOICE,
 										  self.rendering_intent_select_handler)
 		self.rendering_intent_select.SetSelection(0)
+		
+		# Direction selection
+		self.options_sizer.Add((0, 0))
+		self.options_sizer.Add((0, 0))
+		self.direction_select = wx.Choice(self, -1,
+										  size=(150, -1),
+										  choices=[lang.getstr("direction.forward"),
+												   lang.getstr("direction.backward.inverted")])
+		self.options_sizer.Add(self.direction_select,
+							   flag=wx.ALIGN_CENTER_VERTICAL)
+		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
+		self.direction_select.SetSelection(0)
 
 		self.sizer.Add((0, 0))
 
@@ -817,13 +841,16 @@ class GamutViewOptions(wx.Panel):
 								intent={0: "a",
 										1: "r",
 										2: "p",
-										3: "s"}.get(self.rendering_intent_select.GetSelection()))
+										3: "s"}.get(self.rendering_intent_select.GetSelection()),
+								direction={0: "f",
+										   1: "ib"}.get(self.direction_select.GetSelection()))
 		except Exception, exception:
 			show_result_dialog(exception, parent)
 		if reset:
 			parent.client.reset()
 			parent.client.resetzoom()
 		wx.CallAfter(self.draw, center=reset)
+		wx.CallAfter(parent.handle_errors)
 	
 	def comparison_profile_select_handler(self, event):
 		self.comparison_whitepoint_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
@@ -857,6 +884,9 @@ class GamutViewOptions(wx.Panel):
 			self.DrawCanvas()
 
 	def rendering_intent_select_handler(self, event):
+		self.DrawCanvas(reset=False)
+
+	def direction_select_handler(self, event):
 		self.DrawCanvas(reset=False)
 
 
@@ -952,53 +982,86 @@ class ProfileInfoFrame(LUTFrame):
 		p1.sizer.Add(self.options_panel, flag=wx.EXPAND | wx.BOTTOM, border=12)
 		
 		# Gamut view options
-		self.options_panel.AddPage(GamutViewOptions(p1), "")
+		self.gamut_view_options = GamutViewOptions(p1)
+		self.options_panel.AddPage(self.gamut_view_options, "")
 		
 		# Curve view options
 		self.lut_view_options = wx.Panel(p1)
 		self.lut_view_options.SetBackgroundColour(BGCOLOUR)
-		self.lut_view_options_sizer = wx.FlexGridSizer(0, 8, 4, 4)
+		self.lut_view_options_sizer = self.box_sizer = wx.FlexGridSizer(0, 3, 4, 4)
 		self.lut_view_options_sizer.AddGrowableCol(0)
-		self.lut_view_options_sizer.AddGrowableCol(7)
+		self.lut_view_options_sizer.AddGrowableCol(2)
 		self.lut_view_options.SetSizer(self.lut_view_options_sizer)
 		self.options_panel.AddPage(self.lut_view_options, "")
 		
 		self.lut_view_options_sizer.Add((0, 0))
 		
-		self.lut_view_options_sizer.Add((26, 0))
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		self.lut_view_options_sizer.Add(hsizer, flag=wx.ALIGN_CENTER |
+													 wx.BOTTOM, border=8)
+
+		self.rendering_intent_select = wx.Choice(self.lut_view_options, -1,
+												 choices=[lang.getstr("gamap.intents.a"),
+														  lang.getstr("gamap.intents.r"),
+														  lang.getstr("gamap.intents.p"),
+														  lang.getstr("gamap.intents.s")])
+		hsizer.Add(self.rendering_intent_select, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+				   border=10)
+		self.rendering_intent_select.Bind(wx.EVT_CHOICE,
+										  self.rendering_intent_select_handler)
+		self.rendering_intent_select.SetSelection(1)
+		
+		self.direction_select = wx.Choice(self.lut_view_options, -1,
+										  choices=[lang.getstr("direction.backward"),
+												   lang.getstr("direction.forward.inverted")])
+		hsizer.Add(self.direction_select, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+				   border=10)
+		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
+		self.direction_select.SetSelection(0)
+		
+		self.lut_view_options_sizer.Add((0, 0))
+		
+		self.lut_view_options_sizer.Add((0, 0))
+		
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		self.lut_view_options_sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
+		
+		hsizer.Add((16, 0))
 		
 		self.show_as_L = wx.CheckBox(self.lut_view_options, -1, u"L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
 		self.show_as_L.SetValue(True)
-		self.lut_view_options_sizer.Add(self.show_as_L,
+		hsizer.Add(self.show_as_L,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.show_as_L.GetId())
 		
 		self.toggle_red = wx.CheckBox(self.lut_view_options, -1, "R")
 		self.toggle_red.SetForegroundColour(FGCOLOUR)
 		self.toggle_red.SetValue(True)
-		self.lut_view_options_sizer.Add(self.toggle_red,
+		hsizer.Add(self.toggle_red,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_red.GetId())
 		
 		self.toggle_green = wx.CheckBox(self.lut_view_options, -1, "G")
 		self.toggle_green.SetForegroundColour(FGCOLOUR)
 		self.toggle_green.SetValue(True)
-		self.lut_view_options_sizer.Add(self.toggle_green,
+		hsizer.Add(self.toggle_green,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_green.GetId())
 		
 		self.toggle_blue = wx.CheckBox(self.lut_view_options, -1, "B")
 		self.toggle_blue.SetForegroundColour(FGCOLOUR)
 		self.toggle_blue.SetValue(True)
-		self.lut_view_options_sizer.Add(self.toggle_blue,
+		hsizer.Add(self.toggle_blue,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_blue.GetId())
 		
 		self.toggle_clut = wx.CheckBox(self.lut_view_options, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		self.toggle_clut.SetValue(True)
-		self.lut_view_options_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
+		hsizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
 												   wx.LEFT, border=16)
 		self.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler,
 				  id=self.toggle_clut.GetId())
@@ -1104,6 +1167,7 @@ class ProfileInfoFrame(LUTFrame):
 				self.toggle_green.Enable()
 				self.toggle_blue.Enable()
 				self.DrawLUT()
+				self.handle_errors()
 			else:
 				self.toggle_red.Disable()
 				self.toggle_green.Disable()
@@ -1125,6 +1189,9 @@ class ProfileInfoFrame(LUTFrame):
 		self.gTRC = profile.tags.get("gTRC")
 		self.bTRC = profile.tags.get("bTRC")
 		self.trc = None
+		
+		self.gamut_view_options.direction_select.Show("B2A0" in
+													  self.profile.tags)
 		
 		plot_mode = self.plot_mode_select.GetSelection()
 		plot_mode_count = self.plot_mode_select.GetCount()
@@ -1240,7 +1307,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.resize_grid()
 		self.DrawCanvas()
 		self.Thaw()
-		self.handle_errors()
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):

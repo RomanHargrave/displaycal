@@ -477,9 +477,7 @@ class LUTFrame(wx.Frame):
 		
 		self.direction_select = wx.Choice(self.box_panel, -1,
 										  choices=[lang.getstr("direction.backward"),
-												   lang.getstr("direction.forward.inverted"),
-												   lang.getstr("direction.forward"),
-												   lang.getstr("direction.backward.inverted")])
+												   lang.getstr("direction.forward.inverted")])
 		hsizer.Add(self.direction_select, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
 				   border=10)
 		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
@@ -695,6 +693,7 @@ class LUTFrame(wx.Frame):
 													 for error in
 													 self.client.errors))),
 							   self)
+			self.client.errors = []
 	
 	def install_vcgt_handler(self, event):
 		cwd = self.worker.create_tempdir()
@@ -1221,7 +1220,6 @@ class LUTFrame(wx.Frame):
 			self.save_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
 									  bool(self.profile) and "vcgt" in self.profile.tags)
 			self.save_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
-		self.show_as_L.GetContainingSizer().Layout()
 		if hasattr(self, "show_actual_lut_cb"):
 			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)
 		if hasattr(self, "rendering_intent_select"):
@@ -1229,6 +1227,7 @@ class LUTFrame(wx.Frame):
 		if hasattr(self, "direction_select"):
 			self.direction_select.Show(self.toggle_clut.IsShown() and
 									   self.toggle_clut.GetValue())
+		self.show_as_L.GetContainingSizer().Layout()
 		if hasattr(self, "cbox_sizer"):
 			self.cbox_sizer.Layout()
 		if hasattr(self, "box_sizer"):
