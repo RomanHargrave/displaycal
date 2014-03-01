@@ -6359,7 +6359,9 @@ class Worker(object):
 		if not os.path.isfile(profile_path):
 			profile.write(profile_path)
 			temp = True
-		profile_path = safe_str(win32api.GetShortPathName(profile_path))
+		if sys.platform == "win32":
+			profile_path = win32api.GetShortPathName(profile_path)
+		profile_path = safe_str(profile_path)
 		if sys.platform == "win32" and not startupinfo:
 			startupinfo = sp.STARTUPINFO()
 			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
