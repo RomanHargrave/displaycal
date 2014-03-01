@@ -56,6 +56,7 @@ class GamutCanvas(LUTCanvas):
 		self.profiles = {}
 		self.colorspace = "a*b*"
 		self.intent = ""
+		self.direction = ""
 		self.reset()
 		self.resetzoom()
 		self.HandCursor = wx.StockCursor(wx.CURSOR_CROSS)
@@ -456,7 +457,8 @@ class GamutCanvas(LUTCanvas):
 
 			id = profile.calculateID(False)
 			check = self.profiles.get(i)
-			if check and check.ID == id and intent == self.intent:
+			if (check and check.ID == id and intent == self.intent and
+				direction == self.direction):
 				continue
 
 			self.profiles[i] = profile
@@ -605,6 +607,7 @@ class GamutCanvas(LUTCanvas):
 		self.worker.wrapup(False)
 		
 		self.intent = intent
+		self.direction = direction
 	
 	def zoom(self, direction=1):
 		_zoomfactor = .025 * direction
