@@ -1511,9 +1511,14 @@ class MainFrame(BaseFrame):
 		for lstr, lcode in llist:
 			menuitem = languages.Append(-1, "&" + lstr, kind=wx.ITEM_RADIO)
 			if (lcode.upper().replace("EN", "US") in flagart.catalog):
-				menuitem.SetBitmap(
-					flagart.catalog[lcode.upper().replace("EN", 
-														  "US")].getBitmap())
+				if (sys.platform in ("darwin", "win32") or
+					menuitem.GetKind() == wx.ITEM_NORMAL):
+					# This can fail under Linux with wxPython 3.0
+					# because only normal menu items can have bitmaps
+					# there. Working fine on all other platforms.
+					menuitem.SetBitmap(
+						flagart.catalog[lcode.upper().replace("EN", 
+															  "US")].getBitmap())
 			if lang.getcode() == lcode:
 				menuitem.Check()
 				font = menuitem.Font
