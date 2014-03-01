@@ -150,7 +150,8 @@ def getenvu(name, default = None):
 		ctypes.windll.kernel32.GetEnvironmentVariableW(name, buffer, length)
 		return buffer.value
 	var = os.getenv(name, default)
-	return var if isinstance(var, unicode) else unicode(var, fs_enc)
+	if isinstance(var, basestring):
+		return var if isinstance(var, unicode) else unicode(var, fs_enc)
 
 
 def is_superuser():
