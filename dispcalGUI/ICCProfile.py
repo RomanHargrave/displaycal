@@ -926,7 +926,7 @@ class LUT16Type(ICCProfileTag):
 				tagData = self._tagData
 				self._clut = [[[uInt16Number(tagData[52 + n * i * 2 + o * 2 * (g * x + y) + z * 2:
 													 54 + n * i * 2 + o * 2 * (g * x + y) + z * 2])
-								for z in xrange(i)]
+								for z in xrange(o)]
 							   for y in xrange(g)] for x in xrange(g ** i / g)]
 			return self._clut
 		
