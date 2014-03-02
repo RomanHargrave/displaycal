@@ -9042,10 +9042,10 @@ class MainFrame(BaseFrame):
 				elif 'SMOOTH_B2A "NO"' in ti3_lines:
 					setcfg("profile.b2a.smooth", 0)
 				if 'BEGIN_DATA_FORMAT' in ti3_lines:
-					cfgend = ti3_lines.index['BEGIN_DATA_FORMAT']
+					cfgend = ti3_lines.index('BEGIN_DATA_FORMAT')
 					cfgpart = CGATS.CGATS("\n".join(ti3_lines[:cfgend]))
 					for keyword, cfgname in {"SMOOTH_B2A_SIZE":
-											 "profile.b2a.smooth.size"}:
+											 "profile.b2a.smooth.size"}.iteritems():
 						cfgvalue = cfgpart.queryv1(keyword)
 						if cfgvalue is not None:
 							setcfg(cfgname, cfgvalue)
