@@ -2091,6 +2091,8 @@ class TestchartEditor(wx.Frame):
 			else:
 				if not self.tc_check_save_ti1():
 					return
+				if ext.lower() not in (".ti1", ".ti2") and ti1_1:
+					ti1_1.add_keyword("ACCURATE_EXPECTED_VALUES", "true")
 				ti1.root.setmodified(False)
 				self.ti1 = ti1
 				# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
