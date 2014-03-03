@@ -752,8 +752,11 @@ class CGATS(dict):
 											 self.type)
 		return context
 	
-	def export_vrml(self, filename, devicelocations=True, RGB_black_offset=40,
+	def export_vrml(self, filename, colorspace="RGB", RGB_black_offset=40,
 					normalize_RGB_white=False, compress=True):
+		if colorspace not in ("LCH(ab)", "LCH(uv)", "Lab", "Luv", "Lu'v'",
+							  "RGB", "xyY"):
+			raise ValueError("export_vrml: Unknown colorspace %r" % colorspace)
 		data = self.queryv1("DATA")
 		if self.queryv1("ACCURATE_EXPECTED_VALUES") == "true":
 			cat = "Bradford"
@@ -762,9 +765,15 @@ class CGATS(dict):
 		radius = 15.0 / (len(data) ** (1.0 / 3.0))
 		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
 		if white:
-			white = colormath.get_whitepoint((white["XYZ_X"],
-											  white["XYZ_Y"],
-											  white["XYZ_Z"]))
+			white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
+		else:
+			white = "D50"
+		white = colormath.get_whitepoint(white)
+		d50 = colormath.get_whitepoint("D50")
+		if colorspace == "Lu'v'":
+			white_u_, white_v_ = colormath.XYZ2Lu_v_(*d50)[1:]
+		elif colorspace == "xyY":
+			white_x, white_y = colormath.XYZ2xyY(*d50)[:2]
 		vrml = """#VRML V2.0 utf8
 
 Transform {
@@ -780,7 +789,8 @@ Transform {
 		}
 
 		Viewpoint {
-			position 0 0 340
+			fieldOfView %(fov)s
+			position 0 0 %(z)s
 		}
 
 		#%(axes)s
@@ -799,7 +809,7 @@ Transform {
 			]
 		}
 """
-		if devicelocations:
+		if colorspace != "Lab":
 			axes = ""
 		else:
 			axes = """# L* axis
@@ -946,13 +956,34 @@ Transform {
 									  white,
 									  cat=cat)
 			L, a, b = colormath.XYZ2Lab(X, Y, Z)
-			if devicelocations:
+			if colorspace == "RGB":
 				# Fudge device locations into Lab space
 				x, y, z = (entry["RGB_G"] - 50,
 						   entry["RGB_B"] - 50,
 						   entry["RGB_R"] - 50)
-			else:
+			elif colorspace == "Lab":
 				x, y, z = a, b, L - 50
+			elif colorspace in ("LCH(ab)", "LCH(uv)"):
+				if colorspace == "LCH(ab)":
+					L, C, H = colormath.Lab2LCHab(L, a, b)
+				else:
+					L, u, v = colormath.XYZ2Luv(X, Y, Z)
+					L, C, H = colormath.Luv2LCHuv(L, u, v)
+				x, y, z = H - 180, C - 100, L - 50
+			elif colorspace == "LCH(uv)":
+				x, y, z = C, H, L - 50
+			elif colorspace == "Luv":
+				L, u, v = colormath.XYZ2Luv(X, Y, Z)
+				x, y, z = u, v, L - 50
+			elif colorspace == "Lu'v'":
+				L, u_, v_ = colormath.XYZ2Lu_v_(X, Y, Z)
+				x, y, z = ((u_ - white_u_ - .0625) * 500,
+						   (v_ - white_v_ + .15625) * 500, L * 5 - 50)
+			elif colorspace == "xyY":
+				x, y, Y = colormath.XYZ2xyY(X, Y, Z)
+				x, y, z = ((x - white_x) * 400,
+						   (y - white_y - .0625) * 400,
+						   Y * 4 - 50)
 			if RGB_black_offset != 40:
 				# Keep reference hue and saturation
 				# Lab to sRGB using reference black offset of 40 like Argyll CMS
@@ -976,8 +1007,14 @@ Transform {
 									 "B": B + .05,
 									 "radius": radius})
 		children = "".join(children)
+		# Use a very narrow field of view for LCH, Lu'v' and xyY
 		vrml = vrml % {"children": children,
-					   "axes": axes}
+					   "axes": axes,
+					   "fov": 45 / (8.0 if colorspace in ("LCH(ab)", "LCH(uv)",
+														  "Lu'v'", "xyY")
+									else 1.0) / 180.0 * math.pi,
+					   "z": 3400 if colorspace in ("LCH(ab)", "LCH(uv)",
+												   "Lu'v'", "xyY") else 340}
 		if compress:
 			writer = GzipFileProper
 		else:

@@ -707,6 +707,14 @@ def Lab2xyY(L, a, b, whitepoint=None, scale=1.0):
 	return XYZ2xyY(X, Y, Z, whitepoint)
 
 
+def Luv2LCHuv(L, u, v):
+	C = math.sqrt(math.pow(u, 2) + math.pow(v, 2))
+	H = 180.0 * math.atan2(v, u) / math.pi
+	if (H < 0.0):
+		H += 360.0
+	return L, C, H
+
+
 def Luv2RGB(L, u, v, rgb_space=None, scale=1.0, round_=False, clamp=True,
 			whitepoint=None):
 	""" Convert from Luv to RGB """

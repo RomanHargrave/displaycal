@@ -337,9 +337,16 @@ class TestchartEditor(wx.Frame):
 		self.sizer.Add(hsizer, flag = wx.ALL & ~(wx.BOTTOM | wx.TOP), border = 12 + border)
 		self.tc_vrml_label = wx.StaticText(panel, -1, lang.getstr("tc.vrml"), name = "tc_vrml_label")
 		hsizer.Add(self.tc_vrml_label, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
-		self.tc_vrml_lab = wx.CheckBox(panel, -1, lang.getstr("tc.vrml.lab"), name = "tc_vrml_lab", style = wx.RB_GROUP)
-		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_lab.GetId())
-		hsizer.Add(self.tc_vrml_lab, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
+		self.tc_vrml_cie = wx.CheckBox(panel, -1, "", name = "tc_vrml_cie", style = wx.RB_GROUP)
+		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_cie.GetId())
+		hsizer.Add(self.tc_vrml_cie, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
+		self.tc_vrml_cie_colorspace_ctrl = wx.Choice(panel, -1,
+			choices=config.valid_values["tc_vrml_cie_colorspace"])
+		self.Bind(wx.EVT_CHOICE, self.tc_vrml_handler,
+				  id=self.tc_vrml_cie_colorspace_ctrl.GetId())
+		hsizer.Add(self.tc_vrml_cie_colorspace_ctrl,
+				   flag=(wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL,
+				   border=border * 2)
 		self.tc_vrml_device = wx.CheckBox(panel, -1, lang.getstr("tc.vrml.device"), name = "tc_vrml_device")
 		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_device.GetId())
 		hsizer.Add(self.tc_vrml_device, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
@@ -1573,10 +1580,12 @@ class TestchartEditor(wx.Frame):
 
 	def tc_vrml_handler(self, event = None):
 		d = self.tc_vrml_device.GetValue()
-		l = self.tc_vrml_lab.GetValue()
+		l = self.tc_vrml_cie.GetValue()
 		if event:
 			setcfg("tc_vrml_device", int(d))
-			setcfg("tc_vrml_lab", int(l))
+			setcfg("tc_vrml_cie", int(l))
+			setcfg("tc_vrml_cie_colorspace",
+				   self.tc_vrml_cie_colorspace_ctrl.GetStringSelection())
 		self.vrml_save_as_btn.Enable(hasattr(self, "ti1") and (d or l))
 
 	def tc_vrml_use_D50_handler(self, event):
@@ -1619,7 +1628,9 @@ class TestchartEditor(wx.Frame):
 		self.tc_filter_a.SetValue(getcfg("tc_filter_a"))
 		self.tc_filter_b.SetValue(getcfg("tc_filter_b"))
 		self.tc_filter_rad.SetValue(getcfg("tc_filter_rad"))
-		self.tc_vrml_lab.SetValue(bool(int(getcfg("tc_vrml_lab"))))
+		self.tc_vrml_cie.SetValue(bool(int(getcfg("tc_vrml_cie"))))
+		self.tc_vrml_cie_colorspace_ctrl.SetSelection(
+			config.valid_values["tc_vrml_cie_colorspace"].index(getcfg("tc_vrml_cie_colorspace")))
 		self.tc_vrml_device.SetValue(bool(int(getcfg("tc_vrml_device"))))
 		self.tc_vrml_black_offset_intctrl.SetValue(getcfg("tc_vrml_black_offset"))
 		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
@@ -1670,7 +1681,7 @@ class TestchartEditor(wx.Frame):
 		setcfg("tc_filter_a", self.tc_filter_a.GetValue())
 		setcfg("tc_filter_b", self.tc_filter_b.GetValue())
 		setcfg("tc_filter_rad", self.tc_filter_rad.GetValue())
-		setcfg("tc_vrml_lab", int(self.tc_vrml_lab.GetValue()))
+		setcfg("tc_vrml_cie", int(self.tc_vrml_cie.GetValue()))
 		setcfg("tc_vrml_device", int(self.tc_vrml_device.GetValue()))
 
 	def tc_preview_handler(self, event = None):
@@ -1932,15 +1943,16 @@ class TestchartEditor(wx.Frame):
 			self.tc_vrml_save(path)
 	
 	def tc_vrml_save(self, path):
-		if getcfg("tc_vrml_device") or getcfg("tc_vrml_lab"):
+		if getcfg("tc_vrml_device") or getcfg("tc_vrml_cie"):
 			opath = path
 			vrml_types = []
 			if getcfg("tc_vrml_device"):
 				vrml_types.append("d")
-			if getcfg("tc_vrml_lab"):
-				vrml_types.append("l")
+			if getcfg("tc_vrml_cie"):
+				vrml_types.append("c")
 			for vrml_type in vrml_types:
-				wrlsuffix = "%s.wrl" % vrml_type
+				colorspace = "RGB" if vrml_type == "d" else getcfg("tc_vrml_cie_colorspace")
+				wrlsuffix = " %s.wrl" % colorspace
 				if getcfg("vrml.compress"):
 					wrlsuffix = wrlsuffix.replace(".wrl", ".wrz")
 				path = os.path.splitext(opath)[0] + wrlsuffix
@@ -1957,7 +1969,7 @@ class TestchartEditor(wx.Frame):
 						continue
 				try:
 					self.ti1[0].export_vrml(path,
-											wrlsuffix in ("d.wrl", "d.wrz"),
+											colorspace,
 											RGB_black_offset=getcfg("tc_vrml_black_offset"),
 											normalize_RGB_white=getcfg("tc_vrml_use_D50"),
 											compress=getcfg("vrml.compress"))

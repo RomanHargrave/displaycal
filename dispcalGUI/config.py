@@ -470,6 +470,8 @@ valid_values = {
 	"synthprofile.trc_type": ["g", "G"],
 	"tc_algo": ["", "t", "r", "R", "q", "Q", "i", "I"],  # Q = Argyll >= 1.1.0
 	"tc_vrml_use_D50": [0, 1],
+	"tc_vrml_cie_colorspace": ["LCH(ab)", "LCH(uv)", "Lab", "Luv", "Lu'v'",
+							   "xyY"],
 	"trc": ["240", "709", "l", "s"],
 	"trc.type": ["g", "G"],
 	"whitepoint.colortemp.locus": ["t", "T"]
@@ -678,7 +680,8 @@ defaults = {
 	"tc.saturation_sweeps.custom.B": 0.0,
 	"tc_single_channel_patches": 0,
 	"tc_vrml_black_offset": 40,
-	"tc_vrml_lab": 0,
+	"tc_vrml_cie": 0,
+	"tc_vrml_cie_colorspace": "Lab",
 	"tc_vrml_device": 1,
 	"tc_vrml_use_D50": 0,
 	"tc_white_patches": 4,
