@@ -6190,7 +6190,7 @@ class Worker(object):
 				if not ext_filter:
 					ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
 								  ".command", ".gam", ".gz", ".icc", ".icm", ".log",
-								  ".sh", ".ti1", ".ti3", ".wrl", ".wrz"]
+								  ".png", ".sh", ".ti1", ".ti3", ".wrl", ".wrz"]
 				if dst_path is None:
 					dst_path = os.path.join(getcfg("profile.save_path"), 
 											getcfg("profile.name.expanded"), 

@@ -727,7 +727,7 @@ class LUTFrame(wx.Frame):
 													   ".cmd", ".command", 
 													   ".gam", ".gz",
 													   ".icc", ".icm",
-													   ".log",
+													   ".log", ".png",
 													   ".sh", ".ti1",
 													   ".ti3", ".wrl",
 													   ".wrz"])
@@ -792,7 +792,7 @@ class LUTFrame(wx.Frame):
 													   ".cmd", ".command", 
 													   ".gam", ".gz",
 													   ".icc", ".icm",
-													   ".log",
+													   ".log", ".png",
 													   ".sh", ".ti1",
 													   ".ti3", ".wrl",
 													   ".wrz"])
