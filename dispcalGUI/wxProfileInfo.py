@@ -123,6 +123,47 @@ class GamutCanvas(LUTCanvas):
 		poly = plot.PolyLine
 		poly._attributes["width"] = 3
 		polys = []
+
+		# Very rough (in a*b*)
+		optimalcolors = [(102, -131),
+						 (119, -134),
+						 (128, -133),
+						 (127, -123),
+						 (124, -118),
+						 (114, -108),
+						 (115, -94),
+						 (116, -77),
+						 (114, -63),
+						 (110, -46),
+						 (104, -27),
+						 (97, -1),
+						 (92, 32),
+						 (90, 53),
+						 (89, 73),
+						 (88, 90),
+						 (84, 102),
+						 (75, 114),
+						 (64, 124),
+						 (50, 133),
+						 (35, 141),
+						 (17, 145),
+						 (-6, 140),
+						 (-46, 129),
+						 (-81, 116),
+						 (-113, 97),
+						 (-144, 68),
+						 (-160, 39),
+						 (-163, 26),
+						 (-162, 16),
+						 (-155, 4),
+						 (-135, -12),
+						 (-89, -46),
+						 (-58, -67),
+						 (-29, -83),
+						 (17, -103),
+						 (67, -121),
+						 (102, -131)]
+
 		if self.colorspace == "xy":
 			self.spec_x = 8
 			self.spec_y = 8
@@ -216,51 +257,29 @@ class GamutCanvas(LUTCanvas):
 			min_x = -50.0
 			min_y = -50.0
 			step = 50
+		elif self.colorspace == "DIN99":
+			label_x = "a99"
+			label_y = "b99"
+			max_x = 50.0
+			max_y = 50.0
+			min_x = -50.0
+			min_y = -50.0
+			step = 50
+		elif self.colorspace in ("DIN99b", "DIN99c", "DIN99d"):
+			if self.colorspace == "DIN99c":
+				label_x = "a99c"
+				label_y = "b99c"
+			else:
+				label_x = "a99d"
+				label_y = "b99d"
+			max_x = 65.0
+			max_y = 65.0
+			min_x = -65.0
+			min_y = -65.0
+			step = 50
 		else:
 			label_x = "a*"
 			label_y = "b*"
-			if show_outline:
-				# Very rough
-				polys.append(plot.PolySpline([(102, -131),
-											  (119, -134),
-											  (128, -133),
-											  (127, -123),
-											  (124, -118),
-											  (114, -108),
-											  (115, -94),
-											  (116, -77),
-											  (114, -63),
-											  (110, -46),
-											  (104, -27),
-											  (97, -1),
-											  (92, 32),
-											  (90, 53),
-											  (89, 73),
-											  (88, 90),
-											  (84, 102),
-											  (75, 114),
-											  (64, 124),
-											  (50, 133),
-											  (35, 141),
-											  (17, 145),
-											  (-6, 140),
-											  (-46, 129),
-											  (-81, 116),
-											  (-113, 97),
-											  (-144, 68),
-											  (-160, 39),
-											  (-163, 26),
-											  (-162, 16),
-											  (-155, 4),
-											  (-135, -12),
-											  (-89, -46),
-											  (-58, -67),
-											  (-29, -83),
-											  (17, -103),
-											  (67, -121),
-											  (102, -131)],
-											 colour=wx.Colour(102, 102, 102, 153),
-											 width=1.75))
 			max_x = 130.0
 			max_y = 146.0
 			min_x = -166.0
@@ -270,7 +289,18 @@ class GamutCanvas(LUTCanvas):
 		convert2coords = {"a*b*": lambda X, Y, Z: colormath.XYZ2Lab(*[v * 100 for v in X, Y, Z])[1:],
 						  "xy": lambda X, Y, Z: colormath.XYZ2xyY(X, Y, Z)[:2],
 						  "u*v*": lambda X, Y, Z: colormath.XYZ2Luv(*[v * 100 for v in X, Y, Z])[1:],
-						  "u'v'": lambda X, Y, Z: colormath.XYZ2Lu_v_(X, Y, Z)[1:]}[self.colorspace]
+						  "u'v'": lambda X, Y, Z: colormath.XYZ2Lu_v_(X, Y, Z)[1:],
+						  "DIN99": lambda X, Y, Z: colormath.XYZ2DIN99(*[v * 100 for v in X, Y, Z])[1:],
+						  "DIN99b": lambda X, Y, Z: colormath.XYZ2DIN99b(*[v * 100 for v in X, Y, Z])[1:],
+						  "DIN99c": lambda X, Y, Z: colormath.XYZ2DIN99c(*[v * 100 for v in X, Y, Z])[1:],
+						  "DIN99d": lambda X, Y, Z: colormath.XYZ2DIN99d(*[v * 100 for v in X, Y, Z])[1:]}[self.colorspace]
+
+		if show_outline and self.colorspace in ("a*b*", "DIN99", "DIN99b",
+												"DIN99c", "DIN99d"):
+			polys.append(plot.PolySpline([convert2coords(*colormath.Lab2XYZ(0, a, b))
+										  for a, b in optimalcolors],
+										 colour=wx.Colour(102, 102, 102, 153),
+										 width=1.75))
 		
 		# Add color temp graph from 4000 to 9000K
 		if whitepoint == 1:
@@ -385,7 +415,7 @@ class GamutCanvas(LUTCanvas):
 			self.center_y = 0 + (min_y + max_y) / 2
 		self.ratio = [max(max_abs_x, max_abs_y) /
 					  max(max_abs_x, max_abs_y)] * 2
-		if colorspace == "ab":
+		if colorspace == "ab" or colorspace.startswith("DIN99"):
 			ab_range = max(abs(min_x), abs(min_y)) + max(max_x, max_y)
 			self.spec_x = ab_range / step
 			self.spec_y = ab_range / step
@@ -685,7 +715,11 @@ class GamutViewOptions(wx.Panel):
 												 choices=["CIE a*b*",
 														  #"CIE u*v*",
 														  "CIE u'v'",
-														  "CIE xy"])
+														  "CIE xy",
+														  "DIN99",
+														  "DIN99b",
+														  "DIN99c",
+														  "DIN99d"])
 		self.options_sizer.Add(self.colorspace_select, 
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.colorspace_select.Bind(wx.EVT_CHOICE, self.generic_select_handler)
@@ -864,7 +898,11 @@ class GamutViewOptions(wx.Panel):
 	def draw(self, center=False):
 		colorspace = {0: "a*b*",
 					  1: "u'v'",
-					  2: "xy"}.get(self.colorspace_select.GetSelection(),
+					  2: "xy",
+					  3: "DIN99",
+					  4: "DIN99b",
+					  5: "DIN99c",
+					  6: "DIN99d"}.get(self.colorspace_select.GetSelection(),
 								   "a*b*")
 		parent = self.Parent.Parent.Parent.Parent
 		parent.client.DrawCanvas("%s %s" % (colorspace,
@@ -1335,7 +1373,23 @@ class ProfileInfoFrame(LUTFrame):
 				elif colorspace_no == 1:
 					# u' v'
 					x, y = colormath.u_v_2xy(xy[0], xy[1])
+				elif colorspace_no in (3, 4, 5, 6):
+					# DIN99
+					L99 = colormath.Lab2DIN99(100, 0, 0)[0]
+					if colorspace_no == 4:
+						# DIN99b
+						a, b = colormath.DIN99b2Lab(L99, xy[0], xy[1])[1:]
+					elif colorspace_no == 5:
+						# DIN99c
+						a, b = colormath.DIN99c2Lab(L99, xy[0], xy[1])[1:]
+					elif colorspace_no == 6:
+						# DIN99d
+						a, b = colormath.DIN99d2Lab(L99, xy[0], xy[1])[1:]
+					else:
+						a, b = colormath.DIN992Lab(L99, xy[0], xy[1])[1:]
+					x, y = colormath.Lab2xyY(100.0, a, b)[:2]
 				else:
+					# xy
 					x, y = xy
 				cct, delta = colormath.xy_CCT_delta(x, y,
 													daylight=whitepoint_no == 1)

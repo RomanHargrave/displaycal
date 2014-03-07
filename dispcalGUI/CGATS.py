@@ -754,8 +754,8 @@ class CGATS(dict):
 	
 	def export_vrml(self, filename, colorspace="RGB", RGB_black_offset=40,
 					normalize_RGB_white=False, compress=True):
-		if colorspace not in ("LCH(ab)", "LCH(uv)", "Lab", "Luv", "Lu'v'",
-							  "RGB", "xyY"):
+		if colorspace not in ("DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
+							  "LCH(uv)", "Lab", "Luv", "Lu'v'", "RGB", "xyY"):
 			raise ValueError("export_vrml: Unknown colorspace %r" % colorspace)
 		data = self.queryv1("DATA")
 		if self.queryv1("ACCURATE_EXPECTED_VALUES") == "true":
@@ -763,6 +763,11 @@ class CGATS(dict):
 		else:
 			cat = "XYZ scaling"
 		radius = 15.0 / (len(data) ** (1.0 / 3.0))
+		if colorspace.startswith("DIN99"):
+			if colorspace == "DIN99":
+				radius /= 3.0
+			else:
+				radius /= 2.25
 		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
 		if white:
 			white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
@@ -809,15 +814,52 @@ Transform {
 			]
 		}
 """
-		if colorspace != "Lab":
+		if colorspace != "Lab" and not colorspace.startswith("DIN99"):
 			axes = ""
 		else:
+			if colorspace.startswith("DIN99"):
+				if colorspace == "DIN99":
+					values = {"wh": .75,
+							  "ab": 40.0,
+							  "aboffset": 20.0,
+							  "fontsize": 4.0,
+							  "ap": 41.0,
+							  "an": 44.0,
+							  "Ln": 1.2,
+							  "bp0": 1.2,
+							  "bp1": 41.2,
+							  "bn0": 1.2,
+							  "bn1": 43.2}
+				else:
+					values = {"wh": 1.0,
+							  "ab": 50.0,
+							  "aboffset": 25.0,
+							  "fontsize": 5.0,
+							  "ap": 51.0,
+							  "an": 54.0,
+							  "Ln": 1.5,
+							  "bp0": 1.5,
+							  "bp1": 51.5,
+							  "bn0": 1.5,
+							  "bn1": 53.5}
+			else:
+				values = {"wh": 2.0,
+						  "ab": 100.0,
+						  "aboffset": 50.0,
+						  "fontsize": 10.0,
+						  "ap": 102.0,
+						  "an": 108.0,
+						  "Ln": 3.0,
+						  "bp0": 3.0,
+						  "bp1": 103.0,
+						  "bn0": 3.0,
+						  "bn1": 107.0}
 			axes = """# L* axis
 		Transform {
 			translation 0.0 0.0 0.0
 			children [
 				Shape {
-					geometry Box { size 2.0 2.0 100.0 }
+					geometry Box { size %(wh).1f %(wh).1f 100.0 }
 					appearance Appearance {
 						material Material { diffuseColor 0.7 0.7 0.7 }
 					}
@@ -826,12 +868,12 @@ Transform {
 		}
 		# L* axis label
 		Transform {
-			translation -3.0 -2.0 55.0
+			translation -%(Ln).1f -%(wh).1f 55.0
 			children [
 				Shape {
 					geometry Text {
 						string ["L"]
-						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
 						material Material { diffuseColor 0.7 0.7 0.7}
@@ -841,10 +883,10 @@ Transform {
 		}
 		# +a axis
 		Transform {
-			translation 50.0 0.0 -50.0
+			translation %(aboffset).1f 0.0 -50.0
 			children [
 				Shape {
-					geometry Box { size 100.0 2.0 2.0 }
+					geometry Box { size %(ab).1f %(wh).1f %(wh).1f }
 					appearance Appearance {
 						material Material { diffuseColor 1.0 0.0 0.0 }
 					}
@@ -853,12 +895,12 @@ Transform {
 		}
 		# +a axis label
 		Transform {
-			translation 102.0 -2.0 -50.0
+			translation %(ap).1f -%(wh).1f -50.0
 			children [
 				Shape {
 					geometry Text {
 						string ["+a"]
-						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
 						material Material { diffuseColor 1.0 0.0 0.0}
@@ -868,10 +910,10 @@ Transform {
 		}
 		# -a axis
 		Transform {
-			translation -50.0 0.0 -50.0
+			translation -%(aboffset).1f 0.0 -50.0
 			children [
 				Shape {
-					geometry Box { size 100.0 2.0 2.0 }
+					geometry Box { size %(ab).1f %(wh).1f %(wh).1f }
 					appearance Appearance {
 						material Material { diffuseColor 0.0 1.0 0.0 }
 					}
@@ -880,12 +922,12 @@ Transform {
 		}
 		# -a axis label
 		Transform {
-			translation -108.0 -2.0 -50.0
+			translation -%(an).1f -%(wh).1f -50.0
 			children [
 				Shape {
 					geometry Text {
 						string ["-a"]
-						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
 						material Material { diffuseColor 0.0 1.0 0.0}
@@ -895,10 +937,10 @@ Transform {
 		}
 		# +b axis
 		Transform {
-			translation 0.0 50.0 -50.0
+			translation 0.0 %(aboffset).1f -50.0
 			children [
 				Shape {
-					geometry Box { size 2.0 100.0 2.0 }
+					geometry Box { size %(wh).1f %(ab).1f %(wh).1f }
 					appearance Appearance {
 						material Material { diffuseColor 1.0 1.0 0.0 }
 					}
@@ -907,12 +949,12 @@ Transform {
 		}
 		# +b axis label
 		Transform {
-			translation -3.0 103.0 -50.0
+			translation -%(bp0).1f %(bp1).1f -50.0
 			children [
 				Shape {
 					geometry Text {
 						string ["+b"]
-						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
 						material Material { diffuseColor 1.0 1.0 0.0}
@@ -922,10 +964,10 @@ Transform {
 		}
 		# -b axis
 		Transform {
-			translation 0.0 -50.0 -50.0
+			translation 0.0 -%(aboffset).1f -50.0
 			children [
 				Shape {
-					geometry Box { size 2.0 100.0 2.0 }
+					geometry Box { size %(wh).1f %(ab).1f %(wh).1f }
 					appearance Appearance {
 						material Material { diffuseColor 0.0 0.0 1.0 }
 					}
@@ -934,12 +976,12 @@ Transform {
 		}
 		# -b axis label
 		Transform {
-			translation -3.0 -107.0 -50.0
+			translation -%(bn0).1f -%(bn1).1f -50.0
 			children [
 				Shape {
 					geometry Text {
 						string ["-b"]
-						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
 						material Material { diffuseColor 0.0 0.0 1.0}
@@ -947,7 +989,7 @@ Transform {
 				}
 			]
 		}
-"""
+""" % values
 		children = []
 		for entry in data.itervalues():
 			X, Y, Z = colormath.adapt(entry["XYZ_X"],
@@ -963,6 +1005,18 @@ Transform {
 						   entry["RGB_R"] - 50)
 			elif colorspace == "Lab":
 				x, y, z = a, b, L - 50
+			elif colorspace in ("DIN99", "DIN99b"):
+				if colorspace == "DIN99":
+					L99, a99, b99 = colormath.Lab2DIN99(L, a, b)
+				else:
+					L99, a99, b99 = colormath.Lab2DIN99b(L, a, b)
+				x, y, z = a99, b99, L99 - 50
+			elif colorspace in ("DIN99c", "DIN99d"):
+				if colorspace == "DIN99c":
+					L99, a99, b99 = colormath.XYZ2DIN99c(X, Y, Z)
+				else:
+					L99, a99, b99 = colormath.XYZ2DIN99d(X, Y, Z)
+				x, y, z = a99, b99, L99 - 50
 			elif colorspace in ("LCH(ab)", "LCH(uv)"):
 				if colorspace == "LCH(ab)":
 					L, C, H = colormath.Lab2LCHab(L, a, b)
@@ -1007,14 +1061,25 @@ Transform {
 									 "B": B + .05,
 									 "radius": radius})
 		children = "".join(children)
+		# Choose z based on colorspace
+		if colorspace in ("LCH(ab)", "LCH(uv)", "Lu'v'", "xyY"):
+			fov = 45 / 8.0
+			z = 3400
+		elif colorspace.startswith("DIN99"):
+			if colorspace == "DIN99":
+				fov = 45 / 2.0
+				z = 270
+			else:
+				fov = 45 / 1.75
+				z = 300
+		else:
+			fov = 45
+			z = 340
 		# Use a very narrow field of view for LCH, Lu'v' and xyY
 		vrml = vrml % {"children": children,
 					   "axes": axes,
-					   "fov": 45 / (8.0 if colorspace in ("LCH(ab)", "LCH(uv)",
-														  "Lu'v'", "xyY")
-									else 1.0) / 180.0 * math.pi,
-					   "z": 3400 if colorspace in ("LCH(ab)", "LCH(uv)",
-												   "Lu'v'", "xyY") else 340}
+					   "fov": fov / 180.0 * math.pi,
+					   "z": z}
 		if compress:
 			writer = GzipFileProper
 		else:

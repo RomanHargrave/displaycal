@@ -567,6 +567,79 @@ def CIEDCCT2XYZ(T, scale=1.0):
 		return xyY2XYZ(*xyY)
 
 
+def DIN992Lab(L99, a99, b99, kCH=1.0, kE=1.0):
+	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
+	return DIN99LCH2Lab(L99, C99, H99, kCH, kE)
+
+
+def DIN99b2Lab(L99, a99, b99):
+	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
+	return DIN99bcdLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
+
+
+def DIN99c2Lab(L99, a99, b99, whitepoint=None):
+	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
+	return DIN99bcdLCH2Lab(L99, C99, H99, .1, 317.651, .0037, 0, .94, 23, .066,
+						   whitepoint)
+
+
+def DIN99d2Lab(L99, a99, b99, whitepoint=None):
+	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
+	return DIN99bcdLCH2Lab(L99, C99, H99, .12, 325.221, .0036, 50, 1.14, 22.5,
+						   .06, whitepoint)
+
+
+def DIN99LCH2Lab(L99, C99, H99, kCH, kE=1.0):
+	G = (math.exp(.045 * C99 * kCH * kE) - 1) / .045
+	return DIN99familyLHCG2Lab(L99, H99, C99, G, kE, 105.51, .0158, 16, .7)
+
+
+def DIN99bcdLCH2Lab(L99, C99, H99, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
+	G = (math.exp(C99 / c1) - 1) / c2
+	H99 -= deg
+	L, a, b = DIN99familyLHCG2Lab(L99, H99, C99, G, 1.0, l1, l2, deg, f1)
+	if x:
+		X, Y, Z = [v * 100 for v in Lab2XYZ(L, a, b, whitepoint)]
+		X = (X + x * Z) / (1 + x)
+		L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	return L, a, b
+
+
+def DIN99familyLHCG2Lab(L99, H99, C99, G, kE, l1, l2, deg, f1):
+	L = (math.exp((L99 * kE) / l1) - 1) / l2
+	h99ef = H99 * math.pi / 180
+	e = G * math.cos(h99ef)
+	f = G * math.sin(h99ef)
+	rad = deg * math.pi / 180
+	a = e * math.cos(rad) - (f / f1) * math.sin(rad)
+	b = e * math.sin(rad) + (f / f1) * math.cos(rad)
+	return L, a, b
+
+def DIN99familyCH2DIN99ab(C99, H99):
+	h99ef = H99 * math.pi / 180
+	return C99 * math.cos(h99ef), C99 * math.sin(h99ef)
+
+
+def DIN99familyab2DIN99CH(a99, b99):
+	C99 = math.sqrt(math.pow(a99, 2) + math.pow(b99, 2))
+	if a99 > 0:
+		if b99 >= 0:
+			h99ef = math.atan2(b99, a99)
+		else:
+			h99ef = 2 * math.pi + math.atan2(b99, a99)
+	elif a99 < 0:
+		h99ef = math.atan2(b99, a99)
+	else:
+		if b99 > 0:
+			h99ef = math.pi / 2
+		elif b99 < 0:
+			h99ef = (3 * math.pi) / 2
+		else:
+			h99ef = 0.0
+	H99 = h99ef * 180 / math.pi
+	return C99, H99
+
+
 def HSV2RGB(H, S, V, scale=1.0):
 	if S == 0:
 		return (V * scale, ) * 3
@@ -635,6 +708,62 @@ def LCHab2Lab(L, C, H):
 	a = C * math.cos(H * math.pi / 180.0)
 	b = C * math.sin(H * math.pi / 180.0)
 	return L, a, b
+
+
+def Lab2DIN99(L, a, b, kCH=1.0, kE=1.0):
+	L99, C99, H99 = Lab2DIN99LCH(L, a, b, kCH, kE)
+	a99, b99 = DIN99familyCH2DIN99ab(C99, H99)
+	return L99, a99, b99
+
+
+def Lab2DIN99b(L, a, b, kE=1.0):
+	L99, C99, H99 = Lab2DIN99bLCH(L, a, b, kE)
+	a99, b99 = DIN99familyCH2DIN99ab(C99, H99)
+	return L99, a99, b99
+
+
+def Lab2DIN99c(L, a, b, kE=1.0, whitepoint=None):
+	X, Y, Z = [v * 100 for v in Lab2XYZ(L, a, b, whitepoint)]
+	return XYZ2DIN99c(X, Y, Z, whitepoint)
+
+
+def Lab2DIN99d(L, a, b, kE=1.0, whitepoint=None):
+	X, Y, Z = [v * 100 for v in Lab2XYZ(L, a, b, whitepoint)]
+	return XYZ2DIN99d(X, Y, Z, whitepoint)
+
+
+def Lab2DIN99LCH(L, a, b, kCH=1.0, kE=1.0):
+	L99, G, h99ef, rad = Lab2DIN99familyLGhrad(L, a, b, kE, 105.51, .0158, 16, .7)
+	C99 = math.log(1 + .045 * G) / .045 * kCH * kE
+	H99 = h99ef * 180 / math.pi
+	return L99, C99, H99
+
+
+def Lab2DIN99bLCH(L, a, b, kE=1.0):
+	return Lab2DIN99bcdLCH(L, a, b, 303.67, .0039, 26, .83, 23, .075)
+
+
+def Lab2DIN99bcdLCH(L, a, b, l1, l2, deg, f1, c1, c2):
+	L99, G, h99ef, rad = Lab2DIN99familyLGhrad(L, a, b, 1.0, l1, l2, deg, f1)
+	C99 = c1 * math.log(1 + c2 * G)
+	H99 = h99ef * 180 / math.pi + deg
+	return L99, C99, H99
+
+
+def Lab2DIN99familyLGhrad(L, a, b, kE, l1, l2, deg, f1):
+	L99 = (1.0 / kE) * l1 * math.log(1 + l2 * L)
+	rad = deg * math.pi / 180
+	if rad:
+		ar = math.cos(rad)  # a rotation term
+		br = math.sin(rad)  # b rotation term
+		e = a * ar + b * br
+		f = f1 * (b * ar - a * br)
+	else:
+		e = a
+		f = f1 * b
+	G = math.sqrt(math.pow(e, 2) + math.pow(f, 2))
+	h99ef = math.atan2(f, e)
+	return L99, G, h99ef, rad
 
 
 def Lab2LCHab(L, a, b):
@@ -1118,6 +1247,39 @@ def XYZ2CCT(X, Y, Z):
 	p = dm / (dm - di)	# p = interpolation parameter, 0.0 : i-1, 1.0 : i
 	p = 1.0 / (LERP(rt[i - 1], rt[i], p))
 	return p
+
+
+def XYZ2DIN99(X, Y, Z, whitepoint=None):
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	return Lab2DIN99(L, a, b)
+
+
+def XYZ2DIN99b(X, Y, Z, whitepoint=None):
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	return Lab2DIN99b(L, a, b)
+
+
+def XYZ2DIN99c(X, Y, Z, whitepoint=None):
+	return XYZ2DIN99cd(X, Y, Z, .1, 317.651, .0037, 0, .94, 23, .066,
+					   whitepoint)
+
+
+def XYZ2DIN99cd(X, Y, Z, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
+	L99, C99, H99 = XYZ2DIN99cdLCH(X, Y, Z, x, l1, l2, deg, f1, c1, c2,
+								   whitepoint)
+	a99, b99 = DIN99familyCH2DIN99ab(C99, H99)
+	return L99, a99, b99
+
+
+def XYZ2DIN99cdLCH(X, Y, Z, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
+	X = (1 + x) * X - x * Z
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	return Lab2DIN99bcdLCH(L, a, b, l1, l2, deg, f1, c1, c2)
+
+
+def XYZ2DIN99d(X, Y, Z, whitepoint=None):
+	return XYZ2DIN99cd(X, Y, Z, .12, 325.221, .0036, 50, 1.14, 22.5, .06,
+					   whitepoint)
 
 
 def XYZ2Lab(X, Y, Z, whitepoint=None):

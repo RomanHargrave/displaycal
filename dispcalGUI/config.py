@@ -470,8 +470,8 @@ valid_values = {
 	"synthprofile.trc_type": ["g", "G"],
 	"tc_algo": ["", "t", "r", "R", "q", "Q", "i", "I"],  # Q = Argyll >= 1.1.0
 	"tc_vrml_use_D50": [0, 1],
-	"tc_vrml_cie_colorspace": ["LCH(ab)", "LCH(uv)", "Lab", "Luv", "Lu'v'",
-							   "xyY"],
+	"tc_vrml_cie_colorspace": ["DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
+							   "LCH(uv)", "Lab", "Luv", "Lu'v'", "xyY"],
 	"trc": ["240", "709", "l", "s"],
 	"trc.type": ["g", "G"],
 	"whitepoint.colortemp.locus": ["t", "T"]
