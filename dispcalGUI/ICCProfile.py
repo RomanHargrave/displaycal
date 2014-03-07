@@ -10,6 +10,7 @@ import os
 import re
 import struct
 import sys
+import zlib
 from itertools import izip, imap
 from time import localtime, mktime, strftime
 from UserString import UserString
@@ -933,6 +934,59 @@ class LUT16Type(ICCProfileTag):
 			self._clut = value
 		
 		return locals()
+
+	def clut_writepng(self, stream_or_filename):
+		""" Write the cLUT as PNG image organized in <grid steps> * <grid steps>
+		sized squares, ordered vertically """
+		if len(self.clut[0][0]) != 3:
+			raise NotImplementedError("clut_writepng: output channels != 3")
+		if isinstance(stream_or_filename, basestring):
+			stream = open(stream_or_filename, "wb")
+		else:
+			stream = stream_or_filename
+		# Header
+		stream.write("\x89PNG\r\n\x1a\n")
+		# IHDR image header length
+		stream.write(uInt32Number_tohex(13))
+		# IHDR image header chunk type
+		ihdr = ["IHDR"]
+		# IHDR: width, height
+		w, h = len(self.clut[0]), len(self.clut)
+		ihdr += [uInt32Number_tohex(w), uInt32Number_tohex(h)]
+		# IHDR: Bit depth 16
+		ihdr.append(uInt8Number_tohex(16))
+		# IHDR: Color type 2 (truecolor)
+		ihdr.append("\2")
+		# IHDR: Compression method 0 (deflate)
+		ihdr.append("\0")
+		# IHDR: Filter method 0 (adaptive)
+		ihdr.append("\0")
+		# IHDR: Interlace method 0 (none)
+		ihdr.append("\0")
+		ihdr = "".join(ihdr)
+		stream.write(ihdr)
+		stream.write(uInt32Number_tohex(zlib.crc32(ihdr) & 0xFFFFFFFF))
+		# IDAT image data chunk type
+		scanlines = []
+		for i, block in enumerate(self.clut):
+			# Add a scanline, filter type 0
+			scanlines.append(["\0"])
+			for RGB in block:
+				scanlines[-1] += [uInt16Number_tohex(v) for v in RGB]
+		imgdata = "".join(["".join(scanline)
+						   for scanline in scanlines])
+		imgdata = zlib.compress(imgdata, 9)
+		stream.write(uInt32Number_tohex(len(imgdata)))
+		idat = ["IDAT"]
+		idat.append(imgdata)
+		idat = "".join(idat)
+		stream.write(idat)
+		stream.write(uInt32Number_tohex(zlib.crc32(idat) & 0xFFFFFFFF))
+		# IEND chunk
+		stream.write("\0" * 4)
+		stream.write("IEND")
+		stream.write(uInt32Number_tohex(zlib.crc32("IEND") & 0xFFFFFFFF))
+		stream.close()
 	
 	@property
 	def clut_grid_steps(self):
