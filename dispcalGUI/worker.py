@@ -3079,8 +3079,8 @@ class Worker(object):
 		if logfile:
 			logfile.write("\n")
 		
-		# Generate diagnostic images
-		if profile.fileName:
+		if getcfg("profile.b2a.smooth.diagpng") and profile.fileName:
+			# Generate diagnostic images
 			fname, ext = os.path.splitext(profile.fileName)
 			for suffix, table in [("pre", profile.tags["B2A%i" % tableno]),
 								  ("post", itable)]:
@@ -3119,7 +3119,7 @@ class Worker(object):
 					itable.clut[i * clutres + j] = [[int(round(v))
 													 for v in RGB]
 													for RGB in row]
-			if profile.fileName:
+			if getcfg("profile.b2a.smooth.diagpng") and profile.fileName:
 				itable.clut_writepng(fname + ".B2A%i.post.CLUT.extrasmooth.png" %
 									 tableno)
 

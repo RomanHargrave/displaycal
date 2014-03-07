@@ -623,6 +623,7 @@ defaults = {
 	"profile.quality": "h",
 	"profile.quality.b2a": "h",
 	"profile.b2a.smooth": 1,
+	"profile.b2a.smooth.diagpng": 1,
 	"profile.b2a.smooth.extra": 1,
 	"profile.b2a.smooth.size": 33,
 	"profile.save_path": storage, # directory
