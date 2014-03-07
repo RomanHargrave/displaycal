@@ -703,8 +703,7 @@ class LUTFrame(wx.Frame):
 			cal = os.path.join(cwd, re.sub(r"[\\/:*?\"<>|]+",
 										   "",
 										   make_argyll_compatible_path(
-											   config.get_display_name(
-												   include_geometry=True) or 
+											   self.profile.getDescription() or 
 											   "Video LUT")))
 			vcgt_to_cal(self.profile).write(cal)
 			cmd, args = self.worker.prepare_dispwin(cal)
