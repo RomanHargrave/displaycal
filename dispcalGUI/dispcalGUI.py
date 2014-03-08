@@ -7249,7 +7249,8 @@ class MainFrame(BaseFrame):
 										 ("l", "n"))
 		self.low_quality_b2a_cb.Enable(lut_type)
 		enable_b2a_extra = v in ("x", "X")
-		self.b2a_extra_cb.SetValue(enable_b2a_extra)
+		self.b2a_extra_cb.SetValue(enable_b2a_extra and
+								   bool(getcfg("profile.b2a.smooth")))
 		self.b2a_extra_cb.Enable(enable_b2a_extra)
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v in ("g", "G"):
