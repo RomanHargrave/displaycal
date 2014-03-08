@@ -745,6 +745,7 @@ class LUTFrame(wx.Frame):
 		else:
 			self.trc = None
 			self.DrawLUT()
+			self.handle_errors()
 
 	def show_actual_lut_handler(self, event):
 		setcfg("lut_viewer.show_actual_lut", 
