@@ -6449,8 +6449,12 @@ class Worker(object):
 		j = 0
 		for i, line in enumerate(odata):
 			if line.startswith("["):
-				if i > 0 and (line.strip("[]").split()[-1] > "1" or debug):
-					safe_print(j - 1, odata[i - 1], line)
+				if j > 0 and debug:
+					safe_print(j - 1, odata[j - 1], line)
+				continue
+			elif not "->" in line:
+				if line.strip() and debug:
+					safe_print(line)
 				continue
 			parts = line.split("->")[-1].strip().split()
 			if parts.pop() == "(clip)":
