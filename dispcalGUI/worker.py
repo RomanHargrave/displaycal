@@ -6413,6 +6413,8 @@ class Worker(object):
 				args += ["-f" + direction, "-i" + intent]
 				if pcs:
 					args.append("-p" + pcs)
+				if order != "n":
+					args.append("-o" + order)
 			args.append(profile_path)
 			while True:
 				# Process in chunks to prevent broken pipe if input data is too
