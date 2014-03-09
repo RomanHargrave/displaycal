@@ -2773,9 +2773,9 @@ class MainFrame(BaseFrame):
 		elif bt1886:
 			self.trc_ctrl.SetSelection(3)
 			self.trc_textctrl.SetValue(str(trc))
-			self.trc_textctrl.Hide()
+			self.trc_textctrl.Show()
 			self.trc_type_ctrl.SetSelection(1)
-			self.trc_type_ctrl.Hide()
+			self.trc_type_ctrl.Show()
 		elif trc:
 			self.trc_ctrl.SetSelection(0)
 			self.trc_textctrl.SetValue(str(trc))
@@ -3780,7 +3780,7 @@ class MainFrame(BaseFrame):
 
 	def trc_ctrl_handler(self, event, cal_changed=True):
 		if event.GetId() == self.trc_textctrl.GetId() and (
-		   self.trc_ctrl.GetSelection() != 0 or stripzeros(getcfg("trc")) == 
+		   self.trc_ctrl.GetSelection() not in (0, 3) or stripzeros(getcfg("trc")) == 
 		   stripzeros(self.trc_textctrl.GetValue())):
 			event.Skip()
 			return
@@ -3789,28 +3789,30 @@ class MainFrame(BaseFrame):
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
 		self.calpanel.Freeze()
-		if self.trc_ctrl.GetSelection() == 3:
-			# BT.1886
-			setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
-			self.trc_textctrl.SetValue("2.4")
-			setcfg("trc.type.backup", getcfg("trc.type"))
-			setcfg("trc.type", "G")
-			self.trc_type_ctrl.SetSelection(1)
-			setcfg("calibration.black_output_offset.backup",
-				   getcfg("calibration.black_output_offset"))
-			setcfg("calibration.black_output_offset", 0)
-			self.black_output_offset_ctrl.SetValue(0)
-			self.black_output_offset_intctrl.SetValue(0)
-		elif event.GetId() == self.trc_ctrl.GetId():
-			self.restore_trc_backup()
-			if getcfg("calibration.black_output_offset.backup", False):
-				setcfg("calibration.black_output_offset",
-					   getcfg("calibration.black_output_offset.backup"))
-				setcfg("calibration.black_output_offset.backup", None)
-				self.update_black_output_offset_ctrl()
-		if self.trc_ctrl.GetSelection() == 0:
+		if event.GetId() == self.trc_ctrl.GetId():
+			if self.trc_ctrl.GetSelection() == 3:
+				# BT.1886
+				setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
+				self.trc_textctrl.SetValue("2.4")
+				setcfg("trc.type.backup", getcfg("trc.type"))
+				setcfg("trc.type", "G")
+				self.trc_type_ctrl.SetSelection(1)
+				setcfg("calibration.black_output_offset.backup",
+					   getcfg("calibration.black_output_offset"))
+				setcfg("calibration.black_output_offset", 0)
+				self.black_output_offset_ctrl.SetValue(0)
+				self.black_output_offset_intctrl.SetValue(0)
+			else:
+				self.restore_trc_backup()
+				if getcfg("calibration.black_output_offset.backup", False):
+					setcfg("calibration.black_output_offset",
+						   getcfg("calibration.black_output_offset.backup"))
+					setcfg("calibration.black_output_offset.backup", None)
+					self.update_black_output_offset_ctrl()
+		if self.trc_ctrl.GetSelection() in (0, 3):
 			self.trc_textctrl.Show()
-			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
+			self.trc_type_ctrl.Show(self.trc_ctrl.GetSelection() == 3 or
+									getcfg("show_advanced_calibration_options"))
 			try:
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
@@ -6253,8 +6255,10 @@ class MainFrame(BaseFrame):
 					 self.black_point_rate_ctrl,
 					 self.black_point_rate_floatctrl):
 			if (ctrl is not self.trc_type_ctrl or
-				self.trc_ctrl.GetSelection() == 0):
+				self.trc_ctrl.GetSelection() in (0, 3)):
 				ctrl.GetContainingSizer().Show(ctrl,
+											   (ctrl is self.trc_type_ctrl and
+												self.trc_ctrl.GetSelection() == 3) or
 											   show_advanced_calibration_options)
 		self.black_point_correction_auto_handler()
 		self.calpanel.Layout()
@@ -8297,24 +8301,19 @@ class MainFrame(BaseFrame):
 			return None
 
 	def get_trc_type(self):
-		if ((self.trc_type_ctrl.GetSelection() == 1 and
-			 self.trc_ctrl.GetSelection() == 0) or
-			self.trc_ctrl.GetSelection() == 3):
+		if self.trc_type_ctrl.GetSelection() == 1:
 			return "G"
 		else:
 			return "g"
 
 	def get_trc(self):
-		if self.trc_ctrl.GetSelection() == 0:
+		if self.trc_ctrl.GetSelection() in (0, 3):
 			return str(stripzeros(self.trc_textctrl.GetValue().replace(",", 
 																	   ".")))
 		elif self.trc_ctrl.GetSelection() == 1:
 			return "l"
 		elif self.trc_ctrl.GetSelection() == 2:
 			return "709"
-		elif self.trc_ctrl.GetSelection() == 3:
-			# BT.1886
-			return "2.4"
 		elif self.trc_ctrl.GetSelection() == 4:
 			return "240"
 		elif self.trc_ctrl.GetSelection() == 5:
