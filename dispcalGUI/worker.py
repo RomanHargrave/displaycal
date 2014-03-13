@@ -6407,10 +6407,14 @@ class Worker(object):
 			xicclu = safe_str(xicclu)
 			cwd = safe_str(cwd)
 			args = [xicclu, "-s%s" % scale]
-			if utilname == "xicclu":
+			if (utilname == "xicclu" and
+				profile.profileClass not in ("abst", "link")):
 				args.append("-a")
 			if profile.profileClass != "link":
-				args += ["-f" + direction, "-i" + intent]
+				if profile.profileClass != "abst" or direction in ("f", "if"):
+					args.append("-f" + direction)
+				if profile.profileClass != "abst":
+					args.append("-i" + intent)
 				if pcs:
 					args.append("-p" + pcs)
 				if order != "n":
