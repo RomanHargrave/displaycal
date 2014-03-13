@@ -6403,7 +6403,6 @@ class Worker(object):
 			numrows = len(idata)
 			chunklen = 1000
 			i = 0
-			odata = []
 			xicclu = safe_str(xicclu)
 			cwd = safe_str(cwd)
 			args = [xicclu, "-s%s" % scale]
@@ -6421,7 +6420,8 @@ class Worker(object):
 					args.append("-o" + order)
 			args.append(profile_path)
 			stdout = tempfile.SpooledTemporaryFile()
-			p = sp.Popen(args, stdin=sp.PIPE, stdout=stdout, stderr=sp.STDOUT,
+			stderr = tempfile.SpooledTemporaryFile()
+			p = sp.Popen(args, stdin=sp.PIPE, stdout=stdout, stderr=stderr,
 						 cwd=cwd, startupinfo=startupinfo)
 			while True:
 				# Process in chunks to prevent broken pipe if input data is too
@@ -6447,11 +6447,12 @@ class Worker(object):
 			if p.poll() is None:
 				p.stdin.close()
 			returncode = p.wait()
-			stdout.seek(0)
-			odata += stdout.readlines()
 			if returncode:
 				# Error
-				raise IOError("\n".join(odata))
+				stderr.seek(0)
+				raise IOError(stderr.read())
+			stdout.seek(0)
+			odata = stdout.readlines()
 		except:
 			raise
 		finally:
