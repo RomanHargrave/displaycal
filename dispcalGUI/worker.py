@@ -6416,19 +6416,23 @@ class Worker(object):
 				if order != "n":
 					args.append("-o" + order)
 			args.append(profile_path)
+			stdout = tempfile.SpooledTemporaryFile()
+			p = sp.Popen(args, stdin=sp.PIPE, stdout=stdout, stderr=sp.STDOUT,
+						 cwd=cwd, startupinfo=startupinfo)
 			while True:
 				# Process in chunks to prevent broken pipe if input data is too
 				# large
 				if self.subprocess_abort or self.thread_abort:
 					raise Info(lang.getstr("aborted"))
-				p = sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT,
-							 cwd=cwd, startupinfo=startupinfo)
 				if p.poll() is None:
-					odata += p.communicate("\n".join(idata[chunklen * i:
-														   chunklen * (i + 1)]))[0].splitlines()
-				if p.wait() != 0:
+					# We don't use communicate() because it will end the
+					# process
+					p.stdin.write("\n".join(idata[chunklen * i:
+												  chunklen * (i + 1)]) + "\n")
+					p.stdin.flush()
+				else:
 					# Error
-					raise IOError(odata)
+					break
 				if logfile:
 					logfile.write("\r%i%%" % min(round(chunklen * (i + 1) /
 													   float(numrows) * 100),
@@ -6436,6 +6440,14 @@ class Worker(object):
 				if chunklen * (i + 1) > numrows - 1:
 					break
 				i += 1
+			if p.poll() is None:
+				p.stdin.close()
+			returncode = p.wait()
+			stdout.seek(0)
+			odata += stdout.readlines()
+			if returncode:
+				# Error
+				raise IOError("\n".join(odata))
 		except:
 			raise
 		finally:
@@ -6450,12 +6462,13 @@ class Worker(object):
 		parsed = []
 		j = 0
 		for i, line in enumerate(odata):
+			line = line.strip()
 			if line.startswith("["):
 				if j > 0 and debug:
 					safe_print(j - 1, odata[j - 1], line)
 				continue
 			elif not "->" in line:
-				if line.strip() and debug:
+				if line and debug:
 					safe_print(line)
 				continue
 			parts = line.split("->")[-1].strip().split()
