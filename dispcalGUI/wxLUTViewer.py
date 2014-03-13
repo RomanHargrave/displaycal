@@ -1196,10 +1196,11 @@ class LUTFrame(wx.Frame):
 		self.show_as_L.Enable(bool(curves))
 		self.show_as_L.Show(self.plot_mode_select.GetSelection() != 0)
 		self.toggle_clut.Show(self.plot_mode_select.GetSelection() == 1 and
-							  "B2A0" in self.profile.tags and
-							  isinstance(self.profile.tags.get("rTRC"), ICCP.CurveType) and
-							  isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
-							  isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType))
+							  "B2A0" in self.profile.tags)
+		self.toggle_clut.Enable(self.plot_mode_select.GetSelection() == 1 and
+								isinstance(self.profile.tags.get("rTRC"), ICCP.CurveType) and
+								isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
+								isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType))
 		self.save_plot_btn.Enable(bool(curves))
 		if hasattr(self, "reload_vcgt_btn"):
 			self.reload_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
