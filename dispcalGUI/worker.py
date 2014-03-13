@@ -6109,7 +6109,7 @@ class Worker(object):
 			if i > len(wp) - 1:  # don't include whitepoint patches in ti3
 				# set device values in ti3
 				for n, v in enumerate(olabels):
-					ti3v.DATA[i - len(wp)][v] = device[n]
+					ti3v.DATA[i - len(wp)][v] = float(device[n])
 				# set PCS values in ti3
 				for n, v in enumerate(cie):
 					ti3v.DATA[i - len(wp)][required[n]] = float(v)
