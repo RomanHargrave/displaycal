@@ -28,8 +28,12 @@ def rpad(value, width):
 	
 	value is converted to a string first.
 	
+	If value wasn't a number originally, return the quoted string.
+	
 	"""
 	strval = str(value)
+	if not isinstance(value, (int, float, long, complex)):
+		return '"%s"' % strval
 	i = strval.find(".")
 	if i > -1:
 		if i < width - 1:
@@ -45,8 +49,12 @@ def rcut(value, width):
 	
 	value is converted to a string first.
 	
+	If value wasn't a number originally, return the quoted string.
+	
 	"""
 	strval = str(value)
+	if not isinstance(value, (int, float, long, complex)):
+		return '"%s"' % strval
 	i = strval.find(".")
 	if i > -1:
 		if i < width - 1:
