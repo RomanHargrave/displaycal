@@ -1346,6 +1346,7 @@ class ProfileInfoFrame(LUTFrame):
 		
 		self.grid.AutoSizeColumn(0)
 		self.resize_grid()
+		self.Layout()
 		self.DrawCanvas()
 		self.Thaw()
 
