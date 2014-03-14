@@ -3101,20 +3101,17 @@ class Worker(object):
 			for i, grid in enumerate(grids):
 				for y in xrange(clutres):
 					for x in xrange(clutres):
-						R, G, B = grid[y][x]
-						if x > 0 and x < clutres - 1:
-							Ryb, Gyb, Byb = grid[y][x - 1]
-							Rya, Gya, Bya = grid[y][x + 1]
-							R = (R + Ryb + Rya) / 3.0
-							G = (G + Gyb + Gya) / 3.0
-							B = (B + Byb + Bya) / 3.0
-						if y > 0 and y < clutres - 1:
-							Rxb, Gxb, Bxb = grid[y - 1][x]
-							Rxa, Gxa, Bxa = grid[y + 1][x]
-							R = (R + Rxb + Rxa) / 3.0
-							G = (G + Gxb + Gxa) / 3.0
-							B = (B + Bxb + Bxa) / 3.0
-						grid[y][x] = [R, G, B]
+						if sum(grid[y][x]) < 65535 * .0625 * 3 or x == y == i:
+							# Don't smooth dark colors and gray axis
+							continue
+						RGB = [[v] for v in grid[y][x]]
+						for j, c in enumerate((x, y)):
+							if c > 0 and c < clutres - 1 and y < clutres - 1:
+								for n in (-1, 1):
+									RGBn = grid[(y, y + n)[j]][(x + n, x)[j]]
+									for k in xrange(3):
+										RGB[k].append(RGBn[k])
+						grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
 				for j, row in enumerate(grid):
 					itable.clut[i * clutres + j] = [[int(round(v))
 													 for v in RGB]
