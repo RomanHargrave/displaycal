@@ -7505,7 +7505,7 @@ class MainFrame(BaseFrame):
 			if oldval == "":
 				newval = defaults.get("profile.name", "")
 			else:
-				newval = re.sub(r"[\\/:*?\"<>|]+", "", oldval)[:255]
+				newval = re.sub(r"[\\/:*?\"<>|]+", "", oldval).lstrip("-")[:255]
 			self.profile_name_textctrl.ChangeValue(newval)
 			self.profile_name_textctrl.SetInsertionPoint(x - (len(oldval) - 
 															  len(newval)))
@@ -8185,7 +8185,9 @@ class MainFrame(BaseFrame):
 
 		# Get rid of characters considered invalid for filenames and shorten
 		# to a length of max 255 chars
-		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name)[:255]
+		# Also strip leading dashes which might trick Argyll tools into
+		# mistaking parts of the profile name as an option parameter
+		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name).lstrip("-")[:255]
 
 	def update_profile_name(self, event=None):
 		profile_name = self.create_profile_name()
@@ -8204,9 +8206,10 @@ class MainFrame(BaseFrame):
 			setcfg("profile.name.expanded", profile_name)
 
 	def check_profile_name(self, profile_name=None):
-		if re.match(re.compile(r"^[^\\/:*?\"<>|]+$"), 
-					profile_name if profile_name is not None else 
-					self.create_profile_name()):
+		if profile_name is None:
+			profile_name = self.profile_name_textctrl.GetValue()
+		if (re.match(r"^[^\\/:*?\"<>|]+$", profile_name) and
+			not profile_name.startswith("-")):
 			return True
 		else:
 			return False
