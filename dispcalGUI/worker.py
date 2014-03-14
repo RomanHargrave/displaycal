@@ -6370,7 +6370,7 @@ class Worker(object):
 		temp = False
 		if not profile.fileName:
 			fd, profile.fileName = tempfile.mkstemp(profile_ext, dir=cwd)
-			profile.write(fd)
+			profile.write(os.fdopen(fd, "wb"))
 			profile.close()
 			temp = True
 		profile_basename = os.path.basename(profile.fileName)
