@@ -3651,8 +3651,14 @@ class ICCProfile:
 						scale = math.pow(2, tag.entrySize * 8) - 1
 						vmin = 0
 						vmax = scale
-						info["    Channel %i gamma at 50%% input" % (i + 1)] = "%.2f" % colormath.get_gamma([((len(channel) / 2 - 1) / (len(channel) - 1.0) * scale,
-																											  channel[len(channel) / 2 - 1])], scale, vmin, vmax, False, False)[0]
+						gamma = colormath.get_gamma([((len(channel) / 2 - 1) /
+													  (len(channel) - 1.0) * scale,
+													  channel[len(channel) / 2 - 1])],
+													scale, vmin, vmax, False,
+													False)
+						if gamma:
+							info["    Channel %i gamma at 50%% input" %
+								 (i + 1)] = "%.2f" % gamma[0]
 						vmin = channel[0]
 						vmax = channel[-1]
 						info["    Channel %i minimum" % (i + 1)] = "%6.4f%%" % (vmin / scale * 100)
