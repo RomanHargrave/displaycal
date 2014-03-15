@@ -319,6 +319,13 @@ def get_data_path(relpath, rex=None):
 	paths = []
 	for dir_ in data_dirs:
 		curpath = os.path.join(dir_, relpath)
+		if (dir_.endswith("/argyll") and (relpath + "/").startswith("ref/") and
+			not os.path.exists(curpath)):
+			# Work-around distribution-specific differences for location
+			# of Argyll reference files
+			# Fedora and Ubuntu: /usr/share/color/argyll/ref
+			# openSUSE: /usr/share/color/argyll
+			curpath = os.path.join(dir_, relpath.split("/", 1)[1])
 		if os.path.exists(curpath):
 			if os.path.isdir(curpath):
 				try:
