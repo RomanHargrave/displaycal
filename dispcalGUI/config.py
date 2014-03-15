@@ -325,7 +325,11 @@ def get_data_path(relpath, rex=None):
 			# of Argyll reference files
 			# Fedora and Ubuntu: /usr/share/color/argyll/ref
 			# openSUSE: /usr/share/color/argyll
-			curpath = os.path.join(dir_, relpath.split("/", 1)[1])
+			pth = relpath.split("/", 1)[-1]
+			if pth != "ref":
+				curpath = os.path.join(dir_, pth)
+			else:
+				curpath = dir_
 		if os.path.exists(curpath):
 			if os.path.isdir(curpath):
 				try:
