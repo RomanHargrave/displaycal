@@ -651,7 +651,7 @@ class LUTFrame(wx.Frame):
 		
 		"""
 		filename, ext = os.path.splitext(path)
-		if ext not in (".icc", ".icm"):
+		if ext.lower() not in (".icc", ".icm"):
 			profile = cal_to_fake_profile(path)
 			if not profile:
 				InfoDialog(self, msg=lang.getstr("error.file.open", path), 
