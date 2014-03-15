@@ -57,6 +57,7 @@ class GamutCanvas(LUTCanvas):
 		self.colorspace = "a*b*"
 		self.intent = ""
 		self.direction = ""
+		self.order = ""
 		self.reset()
 		self.resetzoom()
 		self.HandCursor = wx.StockCursor(wx.CURSOR_CROSS)
@@ -459,7 +460,8 @@ class GamutCanvas(LUTCanvas):
 		else:
 			self.pcs_data[i] = []
 	
-	def setup(self, profiles=None, profile_no=None, intent="a", direction="f"):
+	def setup(self, profiles=None, profile_no=None, intent="a", direction="f",
+			  order="n"):
 		self.size = 40  # Number of segments from one primary to the next secondary color
 		
 		if not check_set_argyll_bin():
@@ -488,7 +490,7 @@ class GamutCanvas(LUTCanvas):
 			id = profile.calculateID(False)
 			check = self.profiles.get(i)
 			if (check and check.ID == id and intent == self.intent and
-				direction == self.direction):
+				direction == self.direction and order == self.order):
 				continue
 
 			self.profiles[i] = profile
@@ -614,7 +616,7 @@ class GamutCanvas(LUTCanvas):
 				# Lookup device -> XYZ values through profile using xicclu
 				try:
 					odata = self.worker.xicclu(profile, device_values, intent,
-											   direction)
+											   direction, order)
 				except Exception, exception:
 					self.errors.append(Error(safe_unicode(exception)))
 					continue
@@ -638,6 +640,7 @@ class GamutCanvas(LUTCanvas):
 		
 		self.intent = intent
 		self.direction = direction
+		self.order = order
 	
 	def zoom(self, direction=1):
 		_zoomfactor = .025 * direction
@@ -849,9 +852,16 @@ class GamutViewOptions(wx.Panel):
 										  self.rendering_intent_select_handler)
 		self.rendering_intent_select.SetSelection(0)
 		
+		self.options_sizer.Add((0, 0))
+		
+		# LUT toggle
+		self.toggle_clut = wx.CheckBox(self, -1, "LUT")
+		self.toggle_clut.SetForegroundColour(FGCOLOUR)
+		self.toggle_clut.SetMaxFontSize(11)
+		self.options_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL)
+		self.toggle_clut.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler)
+		
 		# Direction selection
-		self.options_sizer.Add((0, 0))
-		self.options_sizer.Add((0, 0))
 		self.direction_select = wx.Choice(self, -1,
 										  size=(150, -1),
 										  choices=[lang.getstr("direction.forward"),
@@ -876,6 +886,10 @@ class GamutViewOptions(wx.Panel):
 						 1: "ib"}.get(self.direction_select.GetSelection())
 		else:
 			direction = "f"
+		order = {True: "n",
+				 False: "r"}.get(("B2A0" in parent.profile.tags or
+								  "A2B0" in parent.profile.tags) and
+								 self.toggle_clut.GetValue())
 		try:
 			parent.client.setup([self.comparison_profiles.values()[self.comparison_profile_select.GetSelection()],
 								 parent.profile],
@@ -884,7 +898,7 @@ class GamutViewOptions(wx.Panel):
 										1: "r",
 										2: "p",
 										3: "s"}.get(self.rendering_intent_select.GetSelection()),
-								direction=direction)
+								direction=direction, order=order)
 		except Exception, exception:
 			show_result_dialog(exception, parent)
 		if reset:
@@ -933,6 +947,15 @@ class GamutViewOptions(wx.Panel):
 
 	def direction_select_handler(self, event):
 		self.DrawCanvas(reset=False)
+
+	def toggle_clut_handler(self, event):
+		parent = self.Parent.Parent.Parent.Parent
+		self.Freeze()
+		self.direction_select.Show("B2A0" in parent.profile.tags and
+								   "A2B0" in parent.profile.tags and
+								   self.toggle_clut.GetValue())
+		self.DrawCanvas(reset=False)
+		self.Thaw()
 
 
 class ProfileInfoFrame(LUTFrame):
@@ -1239,6 +1262,16 @@ class ProfileInfoFrame(LUTFrame):
 													  self.profile.tags and
 													  "A2B0" in
 													  self.profile.tags)
+		self.gamut_view_options.toggle_clut.SetValue("B2A0" in profile.tags or
+													 "A2B0" in profile.tags)
+		self.gamut_view_options.toggle_clut.Show("B2A0" in profile.tags or
+												 "A2B0" in profile.tags)
+		self.gamut_view_options.toggle_clut.Enable(isinstance(profile.tags.get("rTRC"),
+															  ICCP.CurveType) and
+												   isinstance(profile.tags.get("gTRC"),
+															  ICCP.CurveType) and
+												   isinstance(profile.tags.get("bTRC"),
+															  ICCP.CurveType))
 		self.toggle_clut.SetValue("B2A0" in profile.tags or
 								  "A2B0" in profile.tags)
 		
