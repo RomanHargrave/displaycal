@@ -6403,19 +6403,34 @@ class Worker(object):
 			xicclu = safe_str(xicclu)
 			cwd = safe_str(cwd)
 			args = [xicclu, "-s%s" % scale]
-			if (utilname == "xicclu" and
-				profile.profileClass not in ("abst", "link")):
+			if (utilname == "xicclu" and raw and
+				"A2B0" in profile.tags and ("B2A0" in profile.tags or
+											direction == "if")):
 				args.append("-a")
-			if profile.profileClass != "link":
-				if profile.profileClass != "abst" or direction in ("f", "if"):
-					args.append("-f" + direction)
-				if profile.profileClass != "abst":
-					args.append("-i" + intent)
-				if pcs:
-					args.append("-p" + pcs)
+			args.append("-f" + direction)
+			if profile.profileClass not in ("abst", "link"):
+				args.append("-i" + intent)
 				if order != "n":
 					args.append("-o" + order)
+			if pcs and profile.profileClass != "link":
+				args.append("-p" + pcs)
 			args.append(profile_path)
+			if debug or verbose > 1:
+				if cwd:
+					self.log(lang.getstr("working_dir"))
+					indent = "  "
+					for name in cwd.split(os.path.sep):
+						self.log(textwrap.fill(name + os.path.sep, 80, 
+											   expand_tabs=False, 
+											   replace_whitespace=False, 
+											   initial_indent=indent, 
+											   subsequent_indent=indent))
+						indent += " "
+					self.log("")
+				self.log(lang.getstr("commandline"))
+				printcmdline(xicclu if debug or verbose > 2 else
+							 os.path.basename(xicclu), args[1:], cwd=cwd)
+				self.log("")
 			stdout = tempfile.SpooledTemporaryFile()
 			stderr = tempfile.SpooledTemporaryFile()
 			p = sp.Popen(args, stdin=sp.PIPE, stdout=stdout, stderr=stderr,
@@ -6428,9 +6443,12 @@ class Worker(object):
 				if p.poll() is None:
 					# We don't use communicate() because it will end the
 					# process
-					p.stdin.write("\n".join(idata[chunklen * i:
-												  chunklen * (i + 1)]) + "\n")
-					p.stdin.flush()
+					try:
+						p.stdin.write("\n".join(idata[chunklen * i:
+													  chunklen * (i + 1)]) + "\n")
+						p.stdin.flush()
+					except IOError:
+						break
 				else:
 					# Error
 					break
@@ -6453,12 +6471,12 @@ class Worker(object):
 		except:
 			raise
 		finally:
+			if logfile:
+				logfile.write("\n")
 			if temp:
 				os.remove(profile_path)
 				if self.tempdir and not os.listdir(self.tempdir):
 					self.wrapup(False)
-			if logfile:
-				logfile.write("\n")
 		if raw:
 			return odata
 		parsed = []
@@ -6466,13 +6484,15 @@ class Worker(object):
 		for i, line in enumerate(odata):
 			line = line.strip()
 			if line.startswith("["):
-				if j > 0 and debug:
-					safe_print(j - 1, odata[j - 1], line)
+				if j > 0 and (debug or verbose > 3):
+					self.log(j - 1, odata[j - 1], line)
 				continue
 			elif not "->" in line:
-				if line and debug:
-					safe_print(line)
+				if line and (debug or verbose > 3):
+					self.log(line)
 				continue
+			elif debug or verbose > 3:
+				self.log(line)
 			parts = line.split("->")[-1].strip().split()
 			if parts.pop() == "(clip)":
 				parts.pop()
