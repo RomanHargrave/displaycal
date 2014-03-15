@@ -577,9 +577,6 @@ class LUTFrame(wx.Frame):
 		self.toggle_clut = wx.CheckBox(self.box_panel, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		self.toggle_clut.SetMaxFontSize(11)
-		xicclu = get_argyll_util("xicclu")
-		self.toggle_clut.SetValue(bool(xicclu))
-		self.toggle_clut.Enable(bool(xicclu))
 		self.cbox_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
 												   wx.LEFT, border=16)
 		self.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler,
@@ -817,7 +814,8 @@ class LUTFrame(wx.Frame):
 					  2: "p",
 					  3: "s"}.get(self.rendering_intent_select.GetSelection())
 
-		if (intent == "r" and (not "B2A0" in self.profile.tags or
+		if (intent == "r" and (not ("B2A0" in self.profile.tags or
+									"A2B0" in self.profile.tags) or
 						       not self.toggle_clut.GetValue()) and
 			isinstance(self.profile.tags.get("rTRC"), ICCP.CurveType) and
 			isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
@@ -903,10 +901,13 @@ class LUTFrame(wx.Frame):
 														 profile.colorSpace))))
 			return
 		
-		direction = {0: "b",
-					 1: "if",
-					 2: "f",
-					 3: "ib"}.get(self.direction_select.GetSelection())
+		if "B2A0" in profile.tags:
+			direction = {0: "b",
+						 1: "if",
+						 2: "f",
+						 3: "ib"}.get(self.direction_select.GetSelection())
+		else:
+			direction = "if"
 		
 		# Prepare input Lab values
 		XYZ_triplets = []
@@ -932,7 +933,9 @@ class LUTFrame(wx.Frame):
 			idata = RGB_triplets
 		
 		order = {True: "n",
-				 False: "r"}.get(self.toggle_clut.GetValue())
+				 False: "r"}.get(("B2A0" in self.profile.tags or
+								  "A2B0" in self.profile.tags) and
+								 self.toggle_clut.GetValue())
 
 		# Lookup values through 'input' profile using xicclu
 		try:
@@ -1008,8 +1011,11 @@ class LUTFrame(wx.Frame):
 		curves = []
 		curves.append(lang.getstr('vcgt'))
 		self.client.errors = []
+		self.toggle_clut.SetValue("B2A0" in profile.tags or
+								  "A2B0" in profile.tags)
 		if ((self.rTRC and self.gTRC and self.bTRC) or
-			("B2A0" in profile.tags and profile.colorSpace == "RGB")):
+			(self.toggle_clut.GetValue() and
+			 profile.colorSpace == "RGB")):
 			try:
 				self.lookup_tone_response_curves()
 			except Exception, exception:
@@ -1196,7 +1202,8 @@ class LUTFrame(wx.Frame):
 		self.show_as_L.Enable(bool(curves))
 		self.show_as_L.Show(self.plot_mode_select.GetSelection() != 0)
 		self.toggle_clut.Show(self.plot_mode_select.GetSelection() == 1 and
-							  "B2A0" in self.profile.tags)
+							  ("B2A0" in self.profile.tags or
+							   "A2B0" in self.profile.tags))
 		self.toggle_clut.Enable(self.plot_mode_select.GetSelection() == 1 and
 								isinstance(self.profile.tags.get("rTRC"), ICCP.CurveType) and
 								isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
@@ -1227,7 +1234,9 @@ class LUTFrame(wx.Frame):
 			self.rendering_intent_select.Show(self.plot_mode_select.GetSelection() == 1)
 		if hasattr(self, "direction_select"):
 			self.direction_select.Show(self.toggle_clut.IsShown() and
-									   self.toggle_clut.GetValue())
+									   self.toggle_clut.GetValue() and
+									   "B2A0" in self.profile.tags and
+									   "A2B0" in self.profile.tags)
 		self.show_as_L.GetContainingSizer().Layout()
 		if hasattr(self, "cbox_sizer"):
 			self.cbox_sizer.Layout()

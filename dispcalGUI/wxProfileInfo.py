@@ -871,6 +871,11 @@ class GamutViewOptions(wx.Panel):
 		parent.client.SetEnableDrag(True)
 		parent.client.SetEnableGrid(True)
 		parent.client.SetEnablePointLabel(False)
+		if self.direction_select.IsShown():
+			direction = {0: "f",
+						 1: "ib"}.get(self.direction_select.GetSelection())
+		else:
+			direction = "f"
 		try:
 			parent.client.setup([self.comparison_profiles.values()[self.comparison_profile_select.GetSelection()],
 								 parent.profile],
@@ -879,8 +884,7 @@ class GamutViewOptions(wx.Panel):
 										1: "r",
 										2: "p",
 										3: "s"}.get(self.rendering_intent_select.GetSelection()),
-								direction={0: "f",
-										   1: "ib"}.get(self.direction_select.GetSelection()))
+								direction=direction)
 		except Exception, exception:
 			show_result_dialog(exception, parent)
 		if reset:
@@ -1101,7 +1105,6 @@ class ProfileInfoFrame(LUTFrame):
 		
 		self.toggle_clut = wx.CheckBox(self.lut_view_options, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
-		self.toggle_clut.SetValue(True)
 		hsizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
 												   wx.LEFT, border=16)
 		self.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler,
@@ -1202,7 +1205,8 @@ class ProfileInfoFrame(LUTFrame):
 				("rTRC" in self.profile.tags and
 				 "gTRC" in self.profile.tags and
 				 "bTRC" in self.profile.tags) or
-				("B2A0" in self.profile.tags and
+				(("B2A0" in self.profile.tags or
+				  "A2B0" in self.profile.tags) and
 				 self.profile.colorSpace == "RGB")):
 				self.toggle_red.Enable()
 				self.toggle_green.Enable()
@@ -1232,7 +1236,11 @@ class ProfileInfoFrame(LUTFrame):
 		self.trc = None
 		
 		self.gamut_view_options.direction_select.Show("B2A0" in
+													  self.profile.tags and
+													  "A2B0" in
 													  self.profile.tags)
+		self.toggle_clut.SetValue("B2A0" in profile.tags or
+								  "A2B0" in profile.tags)
 		
 		plot_mode = self.plot_mode_select.GetSelection()
 		plot_mode_count = self.plot_mode_select.GetCount()
@@ -1241,7 +1249,8 @@ class ProfileInfoFrame(LUTFrame):
 		self.client.errors = []
 		if (("rTRC" in self.profile.tags and "gTRC" in self.profile.tags and
 			 "bTRC" in self.profile.tags) or
-			("B2A0" in self.profile.tags and self.profile.colorSpace == "RGB")):
+			(("B2A0" in self.profile.tags or "A2B0" in self.profile.tags) and
+			 self.profile.colorSpace == "RGB")):
 			# vcgt needs to be in here for compatibility with LUTFrame
 			choice.append(lang.getstr("vcgt"))
 			try:
