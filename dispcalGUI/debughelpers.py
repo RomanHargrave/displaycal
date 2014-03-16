@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import traceback
 
 import config
 from config import fs_enc
 from log import logbuffer, safe_print
 from meta import name as appname
+from options import debug
 from util_str import safe_unicode
 
 wxEventTypes = {}
@@ -41,7 +43,10 @@ def getevttype(event):
 
 def handle_error(error, parent=None, silent=False):
 	""" Log an error string and show an error dialog. """
-	error = safe_unicode(error)
+	if debug:
+		error = safe_unicode(traceback.format_exc())
+	else:
+		error = safe_unicode(error)
 	safe_print(error)
 	if not silent:
 		try:
