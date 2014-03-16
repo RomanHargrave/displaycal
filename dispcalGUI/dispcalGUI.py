@@ -6899,6 +6899,9 @@ class MainFrame(BaseFrame):
 			# Automatically import X-Rite .edr files
 			result = self.worker.import_edr()
 			if not isinstance(result, Exception):
+				if result is None:
+					# Cancelled
+					return
 				i1d3 = result
 		spyd4 = False
 		spyd4en = get_argyll_util("spyd4en")
@@ -6906,6 +6909,9 @@ class MainFrame(BaseFrame):
 			# Automatically import Spyder4 calibrations
 			result = self.worker.import_spyd4cal()
 			if not isinstance(result, Exception):
+				if result is None:
+					# Cancelled
+					return
 				spyd4 = result
 		# Import iColorDisplay device corrections or let the user choose
 		defaultDir = ""
