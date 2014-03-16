@@ -2289,14 +2289,15 @@ class Worker(object):
 				stdout, stderr = sudoproc.communicate()
 				if stdin and not stdin.closed:
 					stdin.close()
-				if not stdout.strip():
+				pwd = self.pwd
+				if not stdout.strip() or not pwd:
 					# ask for password
 					dlg = ConfirmDialog(
 						parent, title=title, 
 						msg=lang.getstr("dialog.enter_password"), 
 						ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
-						bitmap=geticon(32, "dialog-question"))
-					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, "", 
+						bitmap=geticon(32, "lock"))
+					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, pwd, 
 												   size=(320, -1), 
 												   style=wx.TE_PASSWORD | 
 														 wx.TE_PROCESS_ENTER)
@@ -2335,14 +2336,15 @@ class Worker(object):
 							self.pwd = pwd
 							break
 						else:
+							pwd = ""
 							errstr = unicode(stderr, enc, "replace")
+							errstr = "\n".join([re.sub("^[^:]+:\s*", "", line)
+												for line in errstr.splitlines()])
 							if not silent:
 								safe_print(errstr)
 							else:
 								log(errstr)
-							dlg.message.SetLabel(
-								lang.getstr("auth.failed") + "\n" + 
-								errstr)
+							dlg.message.SetLabel(errstr)
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
 					dlg.Destroy()
