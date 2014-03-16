@@ -104,7 +104,7 @@ def get_default_profile(device_id):
 			p = sp.Popen([safe_str(colormgr), "device-get-default-profile",
 						  device_id],
 						 stdout=sp.PIPE, stderr=sp.PIPE)
-			stdout, stderr = sp.communicate()
+			stdout, stderr = p.communicate()
 		except Exception, exception:
 			raise CDError(safe_str(exception))
 		else:
