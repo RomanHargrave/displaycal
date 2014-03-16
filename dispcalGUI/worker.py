@@ -2306,13 +2306,13 @@ class Worker(object):
 					dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, 
 								   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 					dlg.ok.SetDefault()
-					dlg.pwd_txt_ctrl.SetFocus()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
 					sudo_args = ["-l", "-S"]
 					if self.sudo_availoptions["l [command]"]:
 						sudo_args += [cmd, "-?"]
 					while True:
+						dlg.pwd_txt_ctrl.SetFocus()
 						if parent and parent is progress_dlg:
 							progress_dlg.MakeModal(False)
 						result = dlg.ShowModal()
@@ -2336,7 +2336,6 @@ class Worker(object):
 							self.pwd = pwd
 							break
 						else:
-							pwd = ""
 							errstr = unicode(stderr, enc, "replace")
 							errstr = "\n".join([re.sub("^[^:]+:\s*", "", line)
 												for line in errstr.splitlines()])
@@ -2345,6 +2344,7 @@ class Worker(object):
 							else:
 								log(errstr)
 							dlg.message.SetLabel(errstr)
+							dlg.pwd_txt_ctrl.SetValue("")
 							dlg.sizer0.SetSizeHints(dlg)
 							dlg.sizer0.Layout()
 					dlg.Destroy()
