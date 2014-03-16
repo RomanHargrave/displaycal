@@ -2308,7 +2308,7 @@ class Worker(object):
 					dlg.ok.SetDefault()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
-					sudo_args = ["-l", "-S"]
+					sudo_args = ["-k", "-l", "-S"]
 					if self.sudo_availoptions["l [command]"]:
 						sudo_args += [cmd, "-?"]
 					while True:
