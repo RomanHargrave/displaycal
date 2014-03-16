@@ -2,11 +2,15 @@
 
 from __future__ import with_statement
 import os
+import re
 import shutil
+import subprocess as sp
 import sys
 from time import sleep
 
 try:
+	if not "--use-gi" in sys.argv:
+		raise ImportError("")
 	from gi.repository import Colord
 	from gi.repository import Gio
 except ImportError:
@@ -17,6 +21,9 @@ else:
 
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import xdg_data_home
+
+from util_os import which
+from util_str import safe_str
 
 if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
 	from config import get_data_path
@@ -89,6 +96,27 @@ def get_default_profile(device_id):
 	Get default profile filename for device
 	
 	"""
+	if not Colord:
+		colormgr = which("colormgr")
+		if not colormgr:
+			return
+		try:
+			p = sp.Popen([safe_str(colormgr), "device-get-default-profile",
+						  device_id],
+						 stdout=sp.PIPE, stderr=sp.PIPE)
+			stdout, stderr = sp.communicate()
+		except Exception, exception:
+			raise CDError(safe_str(exception))
+		else:
+			if stderr.strip():
+				raise CDError(stderr)
+			match = re.search(":\s+([^\r\n]+\.ic[cm])", stdout, re.I)
+			if match:
+				return match.groups()[0]
+			else:
+				raise CDError("Couldn't get default profile for device ID %r" %
+							  device_id)
+		
 	client = client_connect()
 
 	# Connect to existing device

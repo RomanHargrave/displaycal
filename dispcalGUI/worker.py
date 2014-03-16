@@ -3367,8 +3367,9 @@ class Worker(object):
 		argyll_install = self._install_profile_argyll(profile_path,
 													  capture_output,
 													  skip_scripts, silent)
-		if sys.platform not in ("darwin", "win32") and not getcfg("dry_run"):
-			device_id = self.get_device_id(quirk=True)
+		device_id = self.get_device_id(quirk=True)
+		if (self.argyll_version < [1, 6] and
+			sys.platform not in ("darwin", "win32") and not getcfg("dry_run")):
 			if device_id and colord.Colord:
 				try:
 					client = colord.client_connect()

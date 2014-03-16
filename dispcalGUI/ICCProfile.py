@@ -520,7 +520,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			else:
 				# Linux
 				# Try colord
-				if colord.Colord:
+				if colord:
 					try:
 						profile = _colord_get_display_profile(display_no)
 					except colord.CDError, exception:
