@@ -140,16 +140,26 @@ class CoordinateType(list):
 			self[i][0] = vmin + colormath.specialpow(self[i][1] / 255.0, power) * (vmax - vmin)
 
 
+class PolyBox(plot.PolyLine):
+
+	def __init__(self, x, y, w, h, **attr):
+		plot.PolyLine.__init__(self, [(x, y), (x + w, y), (x + w, y + h),
+									  (x, y + h), (x, y)], **attr)
+
+
 class LUTCanvas(plot.PlotCanvas):
 
 	def __init__(self, *args, **kwargs):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
 		self.canvas.Unbind(wx.EVT_LEAVE_WINDOW)
+		self.HandCursor = wx.StockCursor(wx.CURSOR_CROSS)
+		self.GrabHandCursor = wx.StockCursor(wx.CURSOR_SIZING)
 		self.SetBackgroundColour(BGCOLOUR)
 		self.SetEnableAntiAliasing(True)
 		self.SetEnableHiRes(True)
 		self.SetEnableCenterLines(True)
 		self.SetEnableDiagonals('Bottomleft-Topright')
+		self.SetEnableDrag(True)
 		self.SetEnableGrid(False)
 		self.SetEnablePointLabel(True)
 		self.SetForegroundColour(FGCOLOUR)
@@ -158,11 +168,10 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetFontSizeTitle(FONTSIZE_LARGE)
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
-		self.SetXSpec(5)
-		self.SetYSpec(5)
 		self.SetPointLabelFunc(self.DrawPointLabel)
 		self.worker = Worker()
 		self.errors = []
+		self.resetzoom()
 
 	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, 
 				r=True, g=True, b=True):
@@ -177,7 +186,6 @@ class LUTCanvas(plot.PlotCanvas):
 		Plot = plot.PolyLine
 		Plot._attributes["width"] = 1
 
-		lines = []
 		linear_points = []
 		
 		axis_y = 255.0
@@ -185,6 +193,14 @@ class LUTCanvas(plot.PlotCanvas):
 			axis_x = 100.0
 		else:
 			axis_x = 255.0
+		self.axis_x, self.axis_y = (0, axis_x), (0, axis_y)
+		if not self.last_draw:
+			self.center_x = axis_x / 2.0
+			self.center_y = axis_y / 2.0
+		self.proportional = False
+		self.spec_x = self.spec_y = 5
+
+		lines = [PolyBox(0, 0, axis_x, axis_y, colour=GRIDCOLOUR, width=1)]
 		
 		self.point_grid = [{}, {}, {}]
 
@@ -372,7 +388,7 @@ class LUTCanvas(plot.PlotCanvas):
 				legend += ['G']
 			if b:
 				legend += ['B']
-		if colour:
+		if colour and points:
 			suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 						points == (linear if detect_increments else 
 									linear_points) else '')
@@ -395,13 +411,11 @@ class LUTCanvas(plot.PlotCanvas):
 										  linear_points) else '')
 				lines += [Plot(b_points, legend='B' + suffix, colour='#0080FF')]
 
-		if not lines:
-			lines += [Plot([])]
-
-		self.Draw(plot.PlotGraphics(lines, title, " ".join([xLabel,
-														    lang.getstr("in")]), 
-									" ".join([yLabel, lang.getstr("out")])), 
-				  xAxis=(0, axis_x), yAxis=(0, axis_y))
+		self._DrawCanvas(plot.PlotGraphics(lines, title,
+										   " ".join([xLabel,
+													 lang.getstr("in")]), 
+										   " ".join([yLabel,
+													 lang.getstr("out")])))
 
 	def DrawPointLabel(self, dc, mDataDict):
 		"""
@@ -416,6 +430,136 @@ class LUTCanvas(plot.PlotCanvas):
 		
 		sx, sy = mDataDict["scaledXY"]  # Scaled x, y of closest point
 		dc.DrawRectangle(sx - 3, sy - 3, 7, 7)  # 7x7 square centered on point
+        
+	def GetClosestPoints(self, pntXY, pointScaled= True):
+		"""Returns list with
+			[curveNumber, legend, index of closest point, pointXY, scaledXY, distance]
+			list for each curve.
+			Returns [] if no curves are being plotted.
+			
+			x, y in user coords
+			if pointScaled == True based on screen coords
+			if pointScaled == False based on user coords
+		"""
+		if self.last_draw == None:
+			#no graph available
+			return []
+		graphics, xAxis, yAxis= self.last_draw
+		l = []
+		for curveNum,obj in enumerate(graphics):
+			#check there are points in the curve
+			if len(obj.points) == 0 or isinstance(obj, PolyBox):
+				continue  #go to next obj
+			#[curveNumber, legend, index of closest point, pointXY, scaledXY, distance]
+			cn = [curveNum]+ [obj.getLegend()]+ obj.getClosestPoint( pntXY, pointScaled)
+			l.append(cn)
+		return l
+
+	def OnMouseDoubleClick(self, event):
+		self.resetzoom()
+		if self.last_draw:
+			self.center()
+            
+	def OnMouseLeftDown(self,event):
+		self._zoomCorner1[0], self._zoomCorner1[1]= self._getXY(event)
+		self._screenCoordinates = plot._Numeric.array(event.GetPosition())
+		if self._dragEnabled:
+			self.SetCursor(self.GrabHandCursor)
+			self.canvas.CaptureMouse()
+
+	def OnMouseLeftUp(self, event):
+		if self._dragEnabled:
+			self.SetCursor(self.HandCursor)
+			if self.canvas.HasCapture():
+				self.canvas.ReleaseMouse()
+				self._set_center()
+	
+	def _DrawCanvas(self, graphics):
+		""" Draw proportionally correct, center and zoom """
+		w = float(self.GetSize()[0] or 1)
+		h = float(self.GetSize()[1] or 1)
+		if w > 45:
+			w -= 45
+		if h > 20:
+			h -= 20
+		ratio = [w / h,
+				 h / w]
+		axis_x, axis_y = self.axis_x, self.axis_y
+		if self.proportional:
+			if ratio[0] > ratio[1]:
+				self.SetXSpec(self.spec_x * ratio[0])
+			else:
+				self.SetXSpec(self.spec_x)
+			if ratio[0] > 1:
+				axis_x=tuple([v * ratio[0] for v in axis_x])
+			if ratio[1] > ratio[0]:
+				self.SetYSpec(self.spec_y * ratio[1])
+			else:
+				self.SetYSpec(self.spec_y)
+			if ratio[1] > 1:
+				axis_y=tuple([v * ratio[1] for v in axis_y])
+		else:
+			self.SetXSpec(self.spec_x)
+			self.SetYSpec(self.spec_y)
+		x, y = self.center_x, self.center_y
+		w = (axis_x[1] - axis_x[0]) * self._zoomfactor
+		h = (axis_y[1] - axis_y[0]) * self._zoomfactor
+		axis_x = (x - w / 2, x + w / 2)
+		axis_y = (y - h / 2, y + h / 2)
+		self.Draw(graphics, axis_x, axis_y)
+	
+	def _set_center(self):
+		""" Set center position from current X and Y axis """
+		axis_x = self.GetXCurrentRange()
+		axis_y = self.GetYCurrentRange()
+		if axis_x[0] < 0:
+			if axis_x[1] < 0:
+				x = axis_x[0] + (abs(axis_x[0]) - abs(axis_x[1])) / 2.0
+			else:
+				x = axis_x[0] + (abs(axis_x[1]) + abs(axis_x[0])) / 2.0
+		else:
+			x = axis_x[0] + (abs(axis_x[1]) - abs(axis_x[0])) / 2.0
+		if axis_y[0] < 0:
+			if axis_y[1] < 0:
+				y = axis_y[0] + (abs(axis_y[0]) - abs(axis_y[1])) / 2.0
+			else:
+				y = axis_y[0] + (abs(axis_y[1]) + abs(axis_y[0])) / 2.0
+		else:
+			y = axis_y[0] + (abs(axis_y[1]) - abs(axis_y[0])) / 2.0
+		self.center_x, self.center_y = x, y
+	
+	def center(self):
+		""" Center the current graphic """
+		min_x, max_x = self.GetXMaxRange()
+		min_y, max_y = self.GetYMaxRange()
+		if self.proportional:
+			self.axis_x = self.axis_y = (min(min_x, min_y), max(max_x, max_y))
+		else:
+			self.axis_x, self.axis_y = (min_x, max_x), (min_y, max_y)
+		self.center_x = 0 + sum((min_x, max_x)) / 2
+		self.center_y = 0 + sum((min_y, max_y)) / 2
+		self.erase_pointlabel()
+		self._DrawCanvas(self.last_draw[0])
+	
+	def erase_pointlabel(self):
+		if self.GetEnablePointLabel() and self.last_PointLabel:
+			# Erase point label
+			self._drawPointLabel(self.last_PointLabel)
+			self.last_PointLabel = None
+
+	def resetzoom(self):
+		self.center_x = 0
+		self.center_y = 0
+		self._zoomfactor = 1.0
+	
+	def zoom(self, direction=1):
+		_zoomfactor = .025 * direction
+		if (self._zoomfactor + _zoomfactor > 0 and
+			self._zoomfactor + _zoomfactor <= 5):
+			self._zoomfactor += _zoomfactor
+			self._set_center()
+			self.erase_pointlabel()
+			self._DrawCanvas(self.last_draw[0])
 
 
 class LUTFrame(wx.Frame):
@@ -460,9 +604,9 @@ class LUTFrame(wx.Frame):
 		
 		self.plot_mode_select = wx.Choice(self.box_panel, -1, size=(-1, -1), 
 										  choices=[])
-		self.plot_mode_select.SetMaxFontSize(11)
 		hsizer.Add(self.plot_mode_select, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHOICE, self.DrawLUT, id=self.plot_mode_select.GetId())
+		self.Bind(wx.EVT_CHOICE, self.plot_mode_select_handler,
+				  id=self.plot_mode_select.GetId())
 
 		self.rendering_intent_select = wx.Choice(self.box_panel, -1,
 												 choices=[lang.getstr("gamap.intents.a"),
@@ -635,6 +779,14 @@ class LUTFrame(wx.Frame):
 		
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
+
+		children = self.GetAllChildren()
+
+		for child in children:
+			if isinstance(child, wx.Choice):
+				child.SetMaxFontSize(11)
+			child.Bind(wx.EVT_KEY_DOWN, self.key_handler)
+			child.Bind(wx.EVT_MOUSEWHEEL, self.OnWheel)
 		
 		self.display_no = -1
 		self.display_rects = get_display_rects()
@@ -727,6 +879,46 @@ class LUTFrame(wx.Frame):
 													   ".sh", ".ti1",
 													   ".ti3", ".wrl",
 													   ".wrz"])
+
+	def key_handler(self, event):
+		# AltDown
+		# CmdDown
+		# ControlDown
+		# GetKeyCode
+		# GetModifiers
+		# GetPosition
+		# GetRawKeyCode
+		# GetRawKeyFlags
+		# GetUniChar
+		# GetUnicodeKey
+		# GetX
+		# GetY
+		# HasModifiers
+		# KeyCode
+		# MetaDown
+		# Modifiers
+		# Position
+		# RawKeyCode
+		# RawKeyFlags
+		# ShiftDown
+		# UnicodeKey
+		# X
+		# Y
+		key = event.GetKeyCode()
+		if (event.ControlDown() or event.CmdDown()): # CTRL (Linux/Mac/Windows) / CMD (Mac)
+			if key == 83 and self.profile: # S
+				self.SaveFile()
+				return
+			else:
+				event.Skip()
+		elif key in (43, wx.WXK_NUMPAD_ADD):
+			# + key zoom in
+			self.client.zoom(-1)
+		elif key in (45, wx.WXK_NUMPAD_SUBTRACT):
+			# - key zoom out
+			self.client.zoom(1)
+		else:
+			event.Skip()
 	
 	def direction_select_handler(self, event):
 		self.toggle_clut_handler(event)
@@ -973,6 +1165,11 @@ class LUTFrame(wx.Frame):
 					self.gTRC.append([Y, v])
 				elif i == 2:
 					self.bTRC.append([Z, v])
+	
+	def plot_mode_select_handler(self, event):
+		self.client.resetzoom()
+		self.DrawLUT()
+		wx.CallAfter(self.client.center)
 	
 	def reload_vcgt_handler(self, event):
 		cmd, args = self.worker.prepare_dispwin(True)
@@ -1273,8 +1470,11 @@ class LUTFrame(wx.Frame):
 			xy = self.client._getXY(event)
 		else:
 			xy = event
-		self.UpdatePointLabel(xy)
 		if isinstance(event, wx.MouseEvent):
+			if not event.LeftIsDown():
+				self.UpdatePointLabel(xy)
+			else:
+				self.client.erase_pointlabel()
 			event.Skip() # Go to next handler
 
 	def OnMove(self, event=None):
@@ -1294,6 +1494,15 @@ class LUTFrame(wx.Frame):
 			setcfg("size.lut_viewer.h", h)
 		if event:
 			event.Skip()
+	
+	def OnWheel(self, event):
+		xy = wx.GetMousePosition()
+		if self.client.last_draw:
+			if event.WheelRotation < 0:
+				direction = 1.0
+			else:
+				direction = -1.0
+			self.client.zoom(direction)
 
 	def SaveFile(self, event=None):
 		"""Saves the file to the type specified in the extension. If no file

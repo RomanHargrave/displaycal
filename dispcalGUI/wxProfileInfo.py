@@ -48,10 +48,6 @@ class GamutCanvas(LUTCanvas):
 		self.SetEnableTitle(False)
 		self.SetFontSizeAxis(FONTSIZE_SMALL)
 		self.SetFontSizeLegend(FONTSIZE_SMALL)
-		self.spec_x = 8
-		self.spec_y = 8
-		self.SetXSpec(self.spec_x)
-		self.SetYSpec(self.spec_y)
 		self.pcs_data = []
 		self.profiles = {}
 		self.colorspace = "a*b*"
@@ -60,58 +56,6 @@ class GamutCanvas(LUTCanvas):
 		self.order = ""
 		self.reset()
 		self.resetzoom()
-		self.HandCursor = wx.StockCursor(wx.CURSOR_CROSS)
-		self.GrabHandCursor = wx.StockCursor(wx.CURSOR_SIZING)
-	
-	def _DrawCanvas(self, graphics):
-		""" Draw proportionally correct, center and zoom """
-		w = float(self.GetSize()[0] or 1)
-		h = float(self.GetSize()[1] or 1)
-		if w > 45:
-			w -= 45
-		if h > 20:
-			h -= 20
-		ratio = [w / h,
-				 h / w]
-		axis_x, axis_y = self.axis, self.axis
-		if ratio[0] > ratio[1]:
-			self.SetXSpec(self.spec_x * ratio[0])
-		else:
-			self.SetXSpec(self.spec_x)
-		if ratio[0] > 1:
-			axis_x=tuple([v * ratio[0] for v in self.axis])
-		if ratio[1] > ratio[0]:
-			self.SetYSpec(self.spec_y * ratio[1])
-		else:
-			self.SetYSpec(self.spec_y)
-		if ratio[1] > 1:
-			axis_y=tuple([v * ratio[1] for v in self.axis])
-		x, y = self.center_x, self.center_y
-		w = (axis_x[1] - axis_x[0]) * self._zoomfactor
-		h = (axis_y[1] - axis_y[0]) * self._zoomfactor
-		axis_x = (x - w / 2, x + w / 2)
-		axis_y = (y - h / 2, y + h / 2)
-		self.Draw(graphics, axis_x, axis_y)
-	
-	def _set_center(self):
-		""" Set center position from current X and Y axis """
-		axis_x = self.GetXCurrentRange()
-		axis_y = self.GetYCurrentRange()
-		if axis_x[0] < 0:
-			if axis_x[1] < 0:
-				x = axis_x[0] + (abs(axis_x[0]) - abs(axis_x[1])) / 2.0
-			else:
-				x = axis_x[0] + (abs(axis_x[1]) + abs(axis_x[0])) / 2.0
-		else:
-			x = axis_x[0] + (abs(axis_x[1]) - abs(axis_x[0])) / 2.0
-		if axis_y[0] < 0:
-			if axis_y[1] < 0:
-				y = axis_y[0] + (abs(axis_y[0]) - abs(axis_y[1])) / 2.0
-			else:
-				y = axis_y[0] + (abs(axis_y[1]) + abs(axis_y[0])) / 2.0
-		else:
-			y = axis_y[0] + (abs(axis_y[1]) - abs(axis_y[0])) / 2.0
-		self.center_x, self.center_y = x, y
 
 	def DrawCanvas(self, title=None, colorspace=None, whitepoint=None,
 				   center=False, show_outline=True):
@@ -251,6 +195,8 @@ class GamutCanvas(LUTCanvas):
 		elif self.colorspace == "u*v*":
 			# Not used, hard to present gamut projection appropriately in 2D
 			# because blue tones 'cave in' towards the center
+			self.spec_x = 8
+			self.spec_y = 8
 			label_x = "u*"
 			label_y = "v*"
 			max_x = 50.0
@@ -259,14 +205,18 @@ class GamutCanvas(LUTCanvas):
 			min_y = -50.0
 			step = 50
 		elif self.colorspace == "DIN99":
+			self.spec_x = 8
+			self.spec_y = 8
 			label_x = "a99"
 			label_y = "b99"
 			max_x = 50.0
 			max_y = 50.0
 			min_x = -50.0
 			min_y = -50.0
-			step = 50
+			step = 25
 		elif self.colorspace in ("DIN99b", "DIN99c", "DIN99d"):
+			self.spec_x = 8
+			self.spec_y = 8
 			if self.colorspace == "DIN99c":
 				label_x = "a99c"
 				label_y = "b99c"
@@ -277,8 +227,10 @@ class GamutCanvas(LUTCanvas):
 			max_y = 65.0
 			min_x = -65.0
 			min_y = -65.0
-			step = 50
+			step = 25
 		else:
+			self.spec_x = 8
+			self.spec_y = 8
 			label_x = "a*"
 			label_y = "b*"
 			max_x = 130.0
@@ -411,7 +363,7 @@ class GamutCanvas(LUTCanvas):
 		max_abs_y = max(abs(min_y), max_y)
 
 		if center:
-			self.axis = (min(min_x, min_y), max(max_x, max_y))
+			self.axis_x = self.axis_y = (min(min_x, min_y), max(max_x, max_y))
 			self.center_x = 0 + (min_x + max_x) / 2
 			self.center_y = 0 + (min_y + max_y) / 2
 		self.ratio = [max(max_abs_x, max_abs_y) /
@@ -423,36 +375,10 @@ class GamutCanvas(LUTCanvas):
 
 		if polys:
 			self._DrawCanvas(plot.PlotGraphics(polys, title, label_x, label_y))
-
-	def OnMouseDoubleClick(self, event):
-		self.resetzoom()
-		if self.GetEnableDrag() and self.last_draw:
-			self.center()
-
-	def OnMouseLeftUp(self, event):
-		if self._dragEnabled:
-			self.SetCursor(self.HandCursor)
-			if self.canvas.HasCapture():
-				self.canvas.ReleaseMouse()
-				self._set_center()
-	
-	def center(self):
-		""" Center the current graphic """
-		min_x, max_x = self.GetXMaxRange()
-		min_y, max_y = self.GetYMaxRange()
-		self.axis = (min(min_x, min_y), max(max_x, max_y))
-		self.center_x = 0 + sum((min_x, max_x)) / 2
-		self.center_y = 0 + sum((min_y, max_y)) / 2
-		self._DrawCanvas(self.last_draw[0])
 	
 	def reset(self):
-		self.axis = -128, 128
+		self.axis_x = self.axis_y = -128, 128
 		self.ratio = 1.0, 1.0
-	
-	def resetzoom(self):
-		self.center_x = 0
-		self.center_y = 0
-		self._zoomfactor = 1.0
 
 	def set_pcs_data(self, i):
 		if len(self.pcs_data) < i + 1:
@@ -641,14 +567,6 @@ class GamutCanvas(LUTCanvas):
 		self.intent = intent
 		self.direction = direction
 		self.order = order
-	
-	def zoom(self, direction=1):
-		_zoomfactor = .025 * direction
-		if (self._zoomfactor + _zoomfactor > 0 and
-			self._zoomfactor + _zoomfactor <= 5):
-			self._zoomfactor += _zoomfactor
-			self._set_center()
-			self._DrawCanvas(self.last_draw[0])
 
 
 class GamutViewOptions(wx.Panel):
@@ -878,7 +796,6 @@ class GamutViewOptions(wx.Panel):
 		parent = self.Parent.Parent.Parent.Parent
 		parent.client.SetEnableCenterLines(False)
 		parent.client.SetEnableDiagonals(False)
-		parent.client.SetEnableDrag(True)
 		parent.client.SetEnableGrid(True)
 		parent.client.SetEnablePointLabel(False)
 		if self.direction_select.IsShown():
@@ -923,6 +840,7 @@ class GamutViewOptions(wx.Panel):
 					  6: "DIN99d"}.get(self.colorspace_select.GetSelection(),
 								   "a*b*")
 		parent = self.Parent.Parent.Parent.Parent
+		parent.client.proportional = True
 		parent.client.DrawCanvas("%s %s" % (colorspace,
 											lang.getstr("colorspace")),
 								 colorspace,
@@ -1219,11 +1137,8 @@ class ProfileInfoFrame(LUTFrame):
 			self.plot_mode_sizer.Hide(self.tooltip_btn)
 			self.client.SetEnableCenterLines(True)
 			self.client.SetEnableDiagonals('Bottomleft-Topright')
-			self.client.SetEnableDrag(False)
 			self.client.SetEnableGrid(False)
 			self.client.SetEnablePointLabel(True)
-			self.client.SetXSpec(5)
-			self.client.SetYSpec(5)
 			if ("vcgt" in self.profile.tags or
 				("rTRC" in self.profile.tags and
 				 "gTRC" in self.profile.tags and
@@ -1244,7 +1159,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.splitter.GetTopLeft().sizer.Layout()
 		self.splitter.GetTopLeft().Refresh()
 
-	def LoadProfile(self, profile):
+	def LoadProfile(self, profile, reset=True):
 		if not isinstance(profile, ICCP.ICCProfile):
 			try:
 				profile = ICCP.ICCProfile(profile)
@@ -1389,7 +1304,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.AutoSizeColumn(0)
 		self.resize_grid()
 		self.Layout()
-		self.DrawCanvas()
+		self.DrawCanvas(reset=reset)
 		self.Thaw()
 
 	def OnMotion(self, event):
@@ -1399,7 +1314,11 @@ class ProfileInfoFrame(LUTFrame):
 			xy = event
 		if self.plot_mode_select.GetSelection() < self.plot_mode_select.GetCount() - 1:
 			# Curves plot
-			self.UpdatePointLabel(xy)
+			if isinstance(event, wx.MouseEvent):
+				if not event.LeftIsDown():
+					self.UpdatePointLabel(xy)
+				else:
+					self.client.erase_pointlabel()
 		else:
 			# Gamut plot
 			if self.options_panel.GetCurrentPage().colorspace_select.GetSelection() == 0:
@@ -1491,7 +1410,7 @@ class ProfileInfoFrame(LUTFrame):
 			if self.grid.GetClientRect().Contains(self.grid.ScreenToClient(xy)):
 				self.grid.SetFocus()
 			event.Skip()
-		elif self.client.GetEnableDrag() and self.client.last_draw:
+		elif self.client.last_draw:
 			if event.WheelRotation < 0:
 				direction = 1.0
 			else:
@@ -1521,7 +1440,7 @@ class ProfileInfoFrame(LUTFrame):
 		Drag'n'drop handler for .cal/.icc/.icm files.
 		
 		"""
-		self.LoadProfile(path)
+		self.LoadProfile(path, reset=False)
 
 
 	def get_platform_window_size(self, defaultwidth=None, defaultheight=None,
@@ -1607,10 +1526,10 @@ class ProfileInfoFrame(LUTFrame):
 				return
 			else:
 				event.Skip()
-		elif key in (43, wx.WXK_NUMPAD_ADD) and self.client.GetEnableDrag():
+		elif key in (43, wx.WXK_NUMPAD_ADD):
 			# + key zoom in
 			self.client.zoom(-1)
-		elif key in (45, wx.WXK_NUMPAD_SUBTRACT) and self.client.GetEnableDrag():
+		elif key in (45, wx.WXK_NUMPAD_SUBTRACT):
 			# - key zoom out
 			self.client.zoom(1)
 		else:
@@ -1619,7 +1538,13 @@ class ProfileInfoFrame(LUTFrame):
 	def plot_mode_select_handler(self, event):
 		self.Freeze()
 		self.select_current_page()
-		self.DrawCanvas(reset=False)
+		reset = (self.plot_mode_select.GetSelection() ==
+				 self.plot_mode_select.GetCount() - 1)
+		if not reset:
+			self.client.resetzoom()
+		self.DrawCanvas(reset=reset)
+		if not reset:
+			wx.CallAfter(self.client.center)
 		self.Thaw()
 	
 	def redraw(self):
