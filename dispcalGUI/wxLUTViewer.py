@@ -1346,20 +1346,11 @@ class LUTFrame(wx.Frame):
 		self.Freeze()
 		curves = None
 		if self.profile:
-			yLabel = []
-			if self.toggle_red.GetValue():
-				yLabel.append("R")
-			if self.toggle_green.GetValue():
-				yLabel.append("G")
-			if self.toggle_blue.GetValue():
-				yLabel.append("B")
 			if self.plot_mode_select.GetSelection() == 0:
 				if 'vcgt' in self.profile.tags:
 					curves = self.profile.tags['vcgt']
 				else:
 					curves = None
-				self.xLabel = "".join(yLabel)
-				self.yLabel = "".join(yLabel)
 			elif (self.plot_mode_select.GetSelection() == 1 and
 				  isinstance(self.rTRC, (ICCP.CurveType, CoordinateType)) and
 				  isinstance(self.gTRC, (ICCP.CurveType, CoordinateType)) and
@@ -1388,11 +1379,22 @@ class LUTFrame(wx.Frame):
 						'entryCount': len(self.rTRC),
 						'entrySize': 2
 					}
-				if self.show_as_L.GetValue():
-					self.xLabel = "L*"
-				else:
-					self.xLabel = "Y"
-				self.yLabel = "".join(yLabel)
+		yLabel = []
+		if self.toggle_red.GetValue():
+			yLabel.append("R")
+		if self.toggle_green.GetValue():
+			yLabel.append("G")
+		if self.toggle_blue.GetValue():
+			yLabel.append("B")
+		if self.plot_mode_select.GetSelection() == 0:
+			self.xLabel = "".join(yLabel)
+		else:
+			if self.show_as_L.GetValue():
+				self.xLabel = "L*"
+			else:
+				self.xLabel = "Y"
+		self.yLabel = "".join(yLabel)
+				
 		self.toggle_red.Enable(bool(curves))
 		self.toggle_green.Enable(bool(curves))
 		self.toggle_blue.Enable(bool(curves))
