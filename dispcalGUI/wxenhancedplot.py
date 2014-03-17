@@ -1255,6 +1255,8 @@ class PlotCanvas(wx.Panel):
         ptx,pty,rectWidth,rectHeight= self._point2ClientCoord(p1, p2)
         # allow graph to overlap axis lines by adding units to width and height
         dc.SetClippingRegion(ptx*self._pointSize[0],pty*self._pointSize[1],rectWidth*self._pointSize[0]+2,rectHeight*self._pointSize[1]+1)
+        # Draw extras
+        self._drawExtras(dc, p1, p2, scale, shift)
         # Draw the lines and markers
         #start = _time.clock()
         graphics.draw(dc)
@@ -1723,23 +1725,27 @@ class PlotCanvas(wx.Panel):
                 dc.DrawLine(a1[0],a1[1],a2[0],a2[1])
                 text = 0    # axis values not drawn on right side
 
+    def _drawExtras(self, dc, p1, p2, scale, shift):
+        b1, b2 = self.last_draw[0].boundingBox()
+
         if self._centerLinesEnabled:
+            x, y = [b1[i] + (b2[i] - b1[i]) / 2.0 for i in xrange(2)]
+            x, y = self.PositionUserToScreen((x, y))
+            x, y = x * self._pointSize[0], y * self._pointSize[1]
             if self._centerLinesEnabled in ('Horizontal', True):
-                y1 = scale[1]*p1[1]+shift[1]
-                y2 = scale[1]*p2[1]+shift[1]
-                y = (y1 - y2) / 2.0 + y2
                 dc.DrawLine(scale[0] * p1[0] + shift[0], y, scale[0] * p2[0] + shift[0], y)
             if self._centerLinesEnabled in ('Vertical', True):
-                x1 = scale[0]*p1[0]+shift[0]
-                x2 = scale[0]*p2[0]+shift[0]
-                x = (x1 - x2) / 2.0 + x2
                 dc.DrawLine(x, scale[1] * p1[1] + shift[1], x, scale[1] * p2[1] + shift[1])
 
         if self._diagonalsEnabled:
+            x1, y1 = self.PositionUserToScreen(b1)
+            x1, y1 = x1 * self._pointSize[0], y1 * self._pointSize[1]
+            x2, y2 = self.PositionUserToScreen(b2)
+            x2, y2 = x2 * self._pointSize[0], y2 * self._pointSize[1]
             if self._diagonalsEnabled in ('Bottomleft-Topright', True):
-                dc.DrawLine(scale[0] * p1[0] + shift[0], scale[1] * p1[1] + shift[1], scale[0] * p2[0] + shift[0], scale[1] * p2[1] + shift[1])
+                dc.DrawLine(x1, y1, x2, y2)
             if self._diagonalsEnabled in ('Bottomright-Topleft', True):
-                dc.DrawLine(scale[0] * p1[0] + shift[0], scale[1] * p2[1] + shift[1], scale[0] * p2[0] + shift[0], scale[1] * p1[1] + shift[1])
+                dc.DrawLine(x1, y2, x2, y1)
 
     def _xticks(self, *args):
         if self._logscale[0]:
