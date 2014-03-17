@@ -1185,12 +1185,17 @@ class PlotCanvas(wx.Panel):
         # Get ticks and textExtents for axis if required
         if self._xSpec is not 'none':        
             xticks = self._xticks(xAxis[0], xAxis[1])
-            xTextExtent = dc.GetTextExtent(xticks[-1][1])# w h of x axis text last number on axis
         else:
             xticks = None
+        if xticks:
+            xTextExtent = dc.GetTextExtent(xticks[-1][1])# w h of x axis text last number on axis
+        else:
             xTextExtent= (0,0) # No text for ticks
         if self._ySpec is not 'none':
             yticks = self._yticks(yAxis[0], yAxis[1])
+        else:
+            yticks = None
+        if yticks:
             if self.getLogScale()[1]:
                 yTextExtent = dc.GetTextExtent('-2e-2')
             else:
@@ -1199,7 +1204,6 @@ class PlotCanvas(wx.Panel):
                 yTextExtent= (max(yTextExtentBottom[0],yTextExtentTop[0]),
                               max(yTextExtentBottom[1],yTextExtentTop[1]))
         else:
-            yticks = None
             yTextExtent= (0,0) # No text for ticks
 
         # TextExtents for Title and Axis Labels
