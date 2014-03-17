@@ -944,7 +944,6 @@ class ProfileInfoFrame(LUTFrame):
 										   style=wx.NO_BORDER)
 		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
 		self.tooltip_btn.SetToolTipString(lang.getstr("gamut_plot.tooltip"))
-		self.tooltip_btn.SetCursor(wx.StockCursor(wx.CURSOR_QUESTION_ARROW))
 		self.plot_mode_sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														wx.LEFT, border=8)
 

@@ -1742,7 +1742,6 @@ class MainFrame(BaseFrame):
 				  id=self.ambient_viewcond_adjust_cb.GetId())
 		self.ambient_viewcond_adjust_textctrl.Bind(
 			wx.EVT_KILL_FOCUS, self.ambient_viewcond_adjust_ctrl_handler)
-		self.ambient_viewcond_adjust_info.SetCursor(wx.StockCursor(wx.CURSOR_QUESTION_ARROW))
 		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler,
 				  id=self.ambient_measure_btn.GetId())
 
@@ -1816,7 +1815,6 @@ class MainFrame(BaseFrame):
 		# Profile name
 		self.Bind(wx.EVT_TEXT, self.profile_name_ctrl_handler, 
 				  id=self.profile_name_textctrl.GetId())
-		self.profile_name_info_btn.SetCursor(wx.StockCursor(wx.CURSOR_QUESTION_ARROW))
 		self.profile_save_path_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.profile_save_path_btn_handler, 
 				  id=self.profile_save_path_btn.GetId())
