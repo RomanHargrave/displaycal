@@ -115,7 +115,7 @@ import  wx
 
 # Needs Numeric or numarray or NumPy
 try:
-    import oldnumeric as _Numeric
+    import numpy as _Numeric
 except:
     try:
         import numarray as _Numeric  #if numarray is used it is renamed Numeric
@@ -130,6 +130,10 @@ except:
             Numeric Python site (http://numpy.scipy.org) for information on
             downloading source or binaries."""
             raise ImportError, "Numeric,numarray or NumPy not found. \n" + msg
+else:
+    _Numeric.Float = _Numeric.float
+    _Numeric.Float64 = _Numeric.float64
+    _Numeric.Int32 = _Numeric.int32
 
 
 
@@ -393,14 +397,14 @@ class PolyMarker(PolyPoints):
 
     def _triangle(self, dc, coords, size=1):
         shape= [(-2.5*size,1.44*size), (2.5*size,1.44*size), (0.0,-2.88*size)]
-        poly= _Numeric.repeat(coords,3)
+        poly= _Numeric.repeat(coords,3,0)
         poly.shape= (len(coords),3,2)
         poly += shape
         dc.DrawPolygonList(poly.astype(_Numeric.Int32))
 
     def _triangle_down(self, dc, coords, size=1):
         shape= [(-2.5*size,-1.44*size), (2.5*size,-1.44*size), (0.0,2.88*size)]
-        poly= _Numeric.repeat(coords,3)
+        poly= _Numeric.repeat(coords,3,0)
         poly.shape= (len(coords),3,2)
         poly += shape
         dc.DrawPolygonList(poly.astype(_Numeric.Int32))
