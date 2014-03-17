@@ -1288,7 +1288,8 @@ class Worker(object):
 		if ((self.instrument_place_on_screen_msg and
 			 "key to continue" in txt.lower()) or
 			(self.instrument_calibration_complete and
-			 "place instrument on spot" in txt.lower())):
+			 "place instrument on spot" in txt.lower() and
+			 self.progress_wnd is getattr(self, "terminal", None))):
 			self.instrument_place_on_screen_msg = False
 			if (self.cmdname == get_argyll_utilname("dispcal") and
 				sys.platform == "darwin"):
@@ -1342,7 +1343,7 @@ class Worker(object):
 	def check_spotread_result(self, txt):
 		""" Check if spotread returned a result """
 		if (self.cmdname == "spotread" and
-			getattr(self, "terminal", None) is None and
+			self.progress_wnd is not getattr(self, "terminal", None) and
 			"Result is XYZ:" in txt):
 			# Single spotread reading, we are done
 			wx.CallLater(1000, self.quit_terminate_cmd)
@@ -5295,7 +5296,7 @@ class Worker(object):
 		self.instrument_calibration_complete = False
 		self.instrument_place_on_screen_msg = False
 		self.instrument_sensor_position_msg = False
-		self.is_ambient_measuring = False
+		self.is_ambient_measuring = interactive_frame == "ambient"
 		self.lastcmdname = None
 		self.pauseable = pauseable
 		self.paused = False
