@@ -43,11 +43,19 @@ def getevttype(event):
 
 def handle_error(error, parent=None, silent=False):
 	""" Log an error string and show an error dialog. """
-	if debug:
-		error = safe_unicode(traceback.format_exc())
+	if isinstance(error, tuple):
+		# We got a tuple. Assume (etype, value, tb)
+		tbstr = "".join(traceback.format_exception(*error))
+		error = error[1]
 	else:
-		error = safe_unicode(error)
-	safe_print(error)
+		tbstr = traceback.format_exc()
+	if (debug or not isinstance(error, EnvironmentError) or
+				 not getattr(error, "filename", None)):
+		# Print a traceback if in debug mode, for non environment errors, and
+		# for environment errors not related to files
+		safe_print(tbstr)
+	else:
+		safe_print(error)
 	if not silent:
 		try:
 			from wxaddons import wx
@@ -64,7 +72,8 @@ def handle_error(error, parent=None, silent=False):
 					parent = None
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 								   parent.IsShownOnScreen() else None, 
-								   error, appname, wx.OK | wx.ICON_ERROR)
+								   safe_unicode(error), appname, wx.OK |
+																 wx.ICON_ERROR)
 			dlg.ShowModal()
 			dlg.Destroy()
 		except Exception, exception:

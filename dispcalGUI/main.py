@@ -30,11 +30,7 @@ from util_str import safe_unicode
 from wxaddons import wx
 
 def _excepthook(etype, value, tb):
-	if isinstance(value, EnvironmentError):
-		# Do not show a traceback for environment errors
-		handle_error(value)
-	else:
-		handle_error("".join(traceback.format_exception(etype, value, tb)))
+	handle_error((etype, value, tb))
 
 sys.excepthook = _excepthook
 
