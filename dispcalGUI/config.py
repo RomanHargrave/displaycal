@@ -111,6 +111,8 @@ else:
 		if not datahome_default in data_dirs:
 			data_dirs += [datahome_default]
 		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
+		data_dirs += [os.path.join(dir_, "argyllcms") for dir_ in
+					  xdg_data_dirs]
 		data_dirs += [os.path.join(dir_, "color", "argyll") for dir_ in
 					  xdg_data_dirs]
 		del dir_
