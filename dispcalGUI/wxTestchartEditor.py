@@ -59,7 +59,7 @@ class TestchartEditor(wx.Frame):
 			"I": lang.getstr("tc.I")
 		}
 		
-		self.worker = Worker()
+		self.worker = Worker(self)
 		self.worker.set_argyll_version("targen")
 		
 		if self.worker.argyll_version >= [1, 1, 0]:
