@@ -1152,6 +1152,7 @@ class LUTFrame(wx.Frame):
 		self.bTRC = CoordinateType()
 		for j, RGB in enumerate(RGB_triplets):
 			for i, v in enumerate(RGB):
+				v = min(v, 1.0)
 				v *= 255
 				X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], scale=100)
 				if direction in ("b", "if"):
