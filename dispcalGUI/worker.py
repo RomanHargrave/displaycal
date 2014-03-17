@@ -1060,6 +1060,7 @@ class Worker(object):
 		self.triggers = []
 		self.clear_argyll_info()
 		self.clear_cmd_output()
+		self._progress_wnd = None
 		self._pwdstr = ""
 	
 	def add_measurement_features(self, args, display=True):
@@ -1196,6 +1197,22 @@ class Worker(object):
 				 getcfg("measurement_mode") in ("l", "c", "g")) and
 				(self.get_instrument_name() != "Spyder4" or
 				 getcfg("measurement_mode") in ("l", "c")))
+	
+	@Property
+	def progress_wnd():
+		def fget(self):
+			if not self._progress_wnd:
+				if (getattr(self, "progress_start_timer", None) and
+					self.progress_start_timer.IsRunning()):
+					# Instantiate the progress dialog instantly on access
+					self.progress_start_timer.Notify()
+					self.progress_start_timer.Stop()
+			return self._progress_wnd
+		
+		def fset(self, progress_wnd):
+			self._progress_wnd = progress_wnd
+		
+		return locals()
 	
 	@Property
 	def pwd():
@@ -2133,8 +2150,8 @@ class Worker(object):
 		the basename. If False, no working dir will be used and file arguments
 		not changed.
 		"""
-		progress_dlg = getattr(self, "progress_wnd",
-							   getattr(wx.GetApp(), "progress_dlg", None))
+		progress_dlg = self._progress_wnd or getattr(wx.GetApp(),
+													 "progress_dlg", None)
 		if parent is None:
 			if progress_dlg and progress_dlg.IsShownOnScreen():
 				parent = progress_dlg
@@ -5052,7 +5069,7 @@ class Worker(object):
 		if getattr(self, "progress_dlg", None) and not resume:
 			self.progress_dlg.Destroy()
 			self.progress_dlg = None
-		if getattr(self, "progress_wnd", None) and \
+		if self._progress_wnd and \
 		   self.progress_wnd is getattr(self, "terminal", None):
 			self.terminal.stop_timer()
 			self.terminal.Hide()
