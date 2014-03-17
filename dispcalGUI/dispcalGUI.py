@@ -3403,6 +3403,8 @@ class MainFrame(BaseFrame):
 				self.worker.quit_terminate_cmd()
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
+			else:
+				show_result_dialog("\n".join(self.worker.output), self)
 			return
 		safe_print(lang.getstr("success"))
 		result = re.sub("[^\t\n\r\x20-\x7f]", "",
