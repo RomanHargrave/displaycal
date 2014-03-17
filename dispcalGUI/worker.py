@@ -2671,7 +2671,8 @@ class Worker(object):
 					     len(self.output) == i + 2) or
 					    ("Diagnostic:" in line and
 					     (len(self.output) == i + 1 or
-						  self.output[i + 1].startswith("usage:")))):
+						  self.output[i + 1].startswith("usage:"))) or
+						 "communications failure" in line.lower()):
 						# "test_crt returned error code 1" == user aborted
 						if (sys.platform == "win32" and
 							("config 1 failed (Operation not supported or "
