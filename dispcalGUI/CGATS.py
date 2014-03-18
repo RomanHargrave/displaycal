@@ -763,7 +763,8 @@ class CGATS(dict):
 	def export_vrml(self, filename, colorspace="RGB", RGB_black_offset=40,
 					normalize_RGB_white=False, compress=True):
 		if colorspace not in ("DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
-							  "LCH(uv)", "Lab", "Luv", "Lu'v'", "RGB", "xyY"):
+							  "LCH(uv)", "Lab", "Luv", "Lu'v'", "RGB", "xyY",
+							  "HSI", "HSL", "HSV"):
 			raise ValueError("export_vrml: Unknown colorspace %r" % colorspace)
 		data = self.queryv1("DATA")
 		if self.queryv1("ACCURATE_EXPECTED_VALUES") == "true":
@@ -1011,6 +1012,34 @@ Transform {
 				x, y, z = (entry["RGB_G"] - 50,
 						   entry["RGB_B"] - 50,
 						   entry["RGB_R"] - 50)
+			elif colorspace == "HSI":
+				H, S, z = colormath.RGB2HSI(entry["RGB_R"] / 100.0,
+											entry["RGB_G"] / 100.0,
+											entry["RGB_B"] / 100.0)
+				rad = H * 360 * math.pi / 180
+				x, y = S * z * math.cos(rad), S * z * math.sin(rad)
+				# Fudge device locations into Lab space
+				x, y, z = x * 100, y * 100, z * math.sqrt(3) * 100 - 50
+			elif colorspace == "HSL":
+				H, S, z = colormath.RGB2HSL(entry["RGB_R"] / 100.0,
+											entry["RGB_G"] / 100.0,
+											entry["RGB_B"] / 100.0)
+				rad = H * 360 * math.pi / 180
+				if z > .5:
+					S *= 1 - z
+				else:
+					S *= z
+				x, y = S * math.cos(rad), S * math.sin(rad)
+				# Fudge device locations into Lab space
+				x, y, z = x * 100, y * 100, z * math.sqrt(3) * 100 - 50
+			elif colorspace == "HSV":
+				H, S, z = colormath.RGB2HSV(entry["RGB_R"] / 100.0,
+											entry["RGB_G"] / 100.0,
+											entry["RGB_B"] / 100.0)
+				rad = H * 360 * math.pi / 180
+				x, y = S * z * math.cos(rad), S * z * math.sin(rad)
+				# Fudge device locations into Lab space
+				x, y, z = x * 50, y * 50, z * math.sqrt(3) * 100 - 50
 			elif colorspace == "Lab":
 				x, y, z = a, b, L - 50
 			elif colorspace in ("DIN99", "DIN99b"):

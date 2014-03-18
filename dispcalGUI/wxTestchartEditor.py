@@ -347,9 +347,16 @@ class TestchartEditor(wx.Frame):
 		hsizer.Add(self.tc_vrml_cie_colorspace_ctrl,
 				   flag=(wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL,
 				   border=border * 2)
-		self.tc_vrml_device = wx.CheckBox(panel, -1, lang.getstr("tc.vrml.device"), name = "tc_vrml_device")
+		self.tc_vrml_device = wx.CheckBox(panel, -1, "", name = "tc_vrml_device")
 		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_device.GetId())
 		hsizer.Add(self.tc_vrml_device, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
+		self.tc_vrml_device_colorspace_ctrl = wx.Choice(panel, -1,
+			choices=config.valid_values["tc_vrml_device_colorspace"])
+		self.Bind(wx.EVT_CHOICE, self.tc_vrml_handler,
+				  id=self.tc_vrml_device_colorspace_ctrl.GetId())
+		hsizer.Add(self.tc_vrml_device_colorspace_ctrl,
+				   flag=(wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL,
+				   border=border * 2)
 
 		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.vrml.black_offset")),
 								 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
@@ -1586,6 +1593,8 @@ class TestchartEditor(wx.Frame):
 			setcfg("tc_vrml_cie", int(l))
 			setcfg("tc_vrml_cie_colorspace",
 				   self.tc_vrml_cie_colorspace_ctrl.GetStringSelection())
+			setcfg("tc_vrml_device_colorspace",
+				   self.tc_vrml_device_colorspace_ctrl.GetStringSelection())
 		self.vrml_save_as_btn.Enable(hasattr(self, "ti1") and (d or l))
 
 	def tc_vrml_use_D50_handler(self, event):
@@ -1631,6 +1640,8 @@ class TestchartEditor(wx.Frame):
 		self.tc_vrml_cie.SetValue(bool(int(getcfg("tc_vrml_cie"))))
 		self.tc_vrml_cie_colorspace_ctrl.SetSelection(
 			config.valid_values["tc_vrml_cie_colorspace"].index(getcfg("tc_vrml_cie_colorspace")))
+		self.tc_vrml_device_colorspace_ctrl.SetSelection(
+			config.valid_values["tc_vrml_device_colorspace"].index(getcfg("tc_vrml_device_colorspace")))
 		self.tc_vrml_device.SetValue(bool(int(getcfg("tc_vrml_device"))))
 		self.tc_vrml_black_offset_intctrl.SetValue(getcfg("tc_vrml_black_offset"))
 		self.tc_vrml_use_D50_cb.SetValue(bool(getcfg("tc_vrml_use_D50")))
@@ -1951,7 +1962,10 @@ class TestchartEditor(wx.Frame):
 			if getcfg("tc_vrml_cie"):
 				vrml_types.append("c")
 			for vrml_type in vrml_types:
-				colorspace = "RGB" if vrml_type == "d" else getcfg("tc_vrml_cie_colorspace")
+				if vrml_type == "d":
+					colorspace = getcfg("tc_vrml_device_colorspace")
+				else:
+					colorspace = getcfg("tc_vrml_cie_colorspace")
 				wrlsuffix = " %s.wrl" % colorspace
 				if getcfg("vrml.compress"):
 					wrlsuffix = wrlsuffix.replace(".wrl", ".wrz")

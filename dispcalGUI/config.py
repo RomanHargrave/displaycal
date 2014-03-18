@@ -485,6 +485,7 @@ valid_values = {
 	"tc_vrml_use_D50": [0, 1],
 	"tc_vrml_cie_colorspace": ["DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
 							   "LCH(uv)", "Lab", "Luv", "Lu'v'", "xyY"],
+	"tc_vrml_device_colorspace": ["HSI", "HSL", "HSV", "RGB"],
 	"trc": ["240", "709", "l", "s"],
 	"trc.type": ["g", "G"],
 	"whitepoint.colortemp.locus": ["t", "T"]
@@ -697,6 +698,7 @@ defaults = {
 	"tc_vrml_black_offset": 40,
 	"tc_vrml_cie": 0,
 	"tc_vrml_cie_colorspace": "Lab",
+	"tc_vrml_device_colorspace": "RGB",
 	"tc_vrml_device": 1,
 	"tc_vrml_use_D50": 0,
 	"tc_white_patches": 4,
