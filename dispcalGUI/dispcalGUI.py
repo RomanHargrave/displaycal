@@ -2853,20 +2853,19 @@ class MainFrame(BaseFrame):
 		enable_gamap = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
 
+		enable_b2a_extra = self.get_profile_type() in ("x", "X")
+		b2a_smooth = enable_b2a_extra and bool(getcfg("profile.b2a.smooth"))
 		self.low_quality_b2a_cb.SetValue(enable_gamap and
 										 getcfg("profile.quality.b2a") in
-										 ("l", "n"))
-		self.low_quality_b2a_cb.Enable(enable_gamap)
+										 ("l", "n") and not b2a_smooth)
+		self.low_quality_b2a_cb.Enable(enable_gamap and not b2a_smooth)
 		
-		enable_b2a_extra = self.get_profile_type() in ("x", "X")
-		self.b2a_extra_cb.SetValue(enable_b2a_extra and
-								   bool(getcfg("profile.b2a.smooth")))
+		self.b2a_extra_cb.SetValue(b2a_smooth)
 		self.b2a_extra_cb.Enable(enable_b2a_extra)
 		self.b2a_size_ctrl.SetSelection(
 			config.valid_values["profile.b2a.smooth.size"].index(
 				getcfg("profile.b2a.smooth.size")))
-		self.b2a_size_ctrl.Enable(enable_b2a_extra and
-								  bool(getcfg("profile.b2a.smooth")))
+		self.b2a_size_ctrl.Enable(b2a_smooth)
 		
 
 		if hasattr(self, "gamapframe"):
@@ -3117,11 +3116,14 @@ class MainFrame(BaseFrame):
 					   bitmap=geticon(32, "dialog-warning"), log=False)
 
 	def profile_quality_b2a_ctrl_handler(self, event):
+		smooth = self.b2a_extra_cb.GetValue()
+		self.low_quality_b2a_cb.Enable(not smooth)
+		if smooth:
+			self.low_quality_b2a_cb.SetValue(False)
 		if self.low_quality_b2a_cb.GetValue():
 			v = "l"
 		else:
 			v = None
-		smooth = self.b2a_extra_cb.GetValue()
 		if (v != getcfg("profile.quality.b2a") or
 			smooth != getcfg("profile.b2a.smooth")):
 			self.profile_settings_changed()
@@ -7252,14 +7254,16 @@ class MainFrame(BaseFrame):
 		v = self.get_profile_type()
 		lut_type = v in ("l", "x", "X")
 		self.gamap_btn.Enable(lut_type)
+		
+		enable_b2a_extra = v in ("x", "X")
+		b2a_smooth = enable_b2a_extra and bool(getcfg("profile.b2a.smooth"))
 		self.low_quality_b2a_cb.SetValue(lut_type and
 										 getcfg("profile.quality.b2a") in
-										 ("l", "n"))
-		self.low_quality_b2a_cb.Enable(lut_type)
-		enable_b2a_extra = v in ("x", "X")
-		self.b2a_extra_cb.SetValue(enable_b2a_extra and
-								   bool(getcfg("profile.b2a.smooth")))
+										 ("l", "n") and not b2a_smooth)
+		self.low_quality_b2a_cb.Enable(lut_type and not b2a_smooth)
+		self.b2a_extra_cb.SetValue(b2a_smooth)
 		self.b2a_extra_cb.Enable(enable_b2a_extra)
+		self.b2a_size_ctrl.Enable(b2a_smooth)
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v in ("g", "G"):
 			self.profile_quality_ctrl.SetValue(3)
