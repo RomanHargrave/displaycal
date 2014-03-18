@@ -837,6 +837,12 @@ def getcfg(name, fallback=True):
 				else:
 					repl = "\\1"
 				value = re.sub(pattern, repl, value)
+			elif name == "measurement_mode":
+				# Map n and r measurement modes to canonical l and c
+				# - the inverse mapping happens per-instrument in
+				# Worker.add_measurement_features(). That way we can have
+				# compatibility with old and current Argyll CMS
+				value = {"n": "l", "r": "c"}.get(value, value)
 			return value
 	if hasdef and fallback:
 		value = defval
