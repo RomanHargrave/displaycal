@@ -595,6 +595,8 @@
 	"testchart.save_or_discard": "La carta de ajustes no ha sido guardado.",
 	"testchart.select": "Seleccionar",
 	"testchart.set": "Seleccione archivo carta de ajustes...",
+		"*testchart.sort_by_HSI": "Sort by HSI",
+		"*testchart.sort_by_HSL": "Sort by HSL",
 		"*testchart.sort_by_HSV": "Sort by HSV",
 		"*testchart.sort_by_L": "Sort by L*",
 		"*testchart.sort_by_RGB": "Sort by RGB",

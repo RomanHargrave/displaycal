@@ -627,6 +627,8 @@
 	"testchart.save_or_discard": "La grille de test n'a pas été enregistrée.",
 	"testchart.select": "Sélectionner",
 	"testchart.set": "Sélectionner un fichier de grille de test",
+	"testchart.sort_by_HSI": "Ordonner par HSI",
+	"testchart.sort_by_HSL": "Ordonner par HSL",
 	"testchart.sort_by_HSV": "Ordonner par HSV",
 	"testchart.sort_by_L": "Ordonner par L*",
 	"testchart.sort_by_RGB": "Ordonner par RGB",
