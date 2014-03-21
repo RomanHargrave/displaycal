@@ -3026,6 +3026,7 @@ class Worker(object):
 			xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
 			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
 							 use_cam_clipping=True)
+			threshold = clutres / 2
 			for a in xrange(clutres):
 				if self.thread_abort:
 					raise Info(lang.getstr("aborted"))
@@ -3053,7 +3054,7 @@ class Worker(object):
 							v = d, -128 + e * abmaxval, -128 + f * abmaxval
 						idata.append("%.6f %.6f %.6f" % tuple(v))
 						# Lookup CIE -> device values through profile using xicclu
-						if c < clutres / 2:
+						if a < threshold and b < threshold and c < threshold:
 							xicclu1(v)
 						else:
 							xicclu2(v)
@@ -3070,18 +3071,16 @@ class Worker(object):
 			odata1 = xicclu1.get()
 			odata2 = xicclu2.get()
 			j, k = 0, 0
-			for i in xrange(clutres ** 3):
-				if i % clutres:
-					n += 1
-				else:
-					n = 0
-				if n < clutres / 2:
-					v = odata1[j]
-					j += 1
-				else:
-					v = odata2[k]
-					k += 1
-				odata.append(v)
+			for a in xrange(clutres):
+				for b in xrange(clutres):
+					for c in xrange(clutres):
+						if a < threshold and b < threshold and c < threshold:
+							v = odata1[j]
+							j += 1
+						else:
+							v = odata2[k]
+							k += 1
+						odata.append(v)
 			numrows = len(odata)
 			if numrows != clutres ** 3:
 				raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
