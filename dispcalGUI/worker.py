@@ -2761,7 +2761,8 @@ class Worker(object):
 		if logfile:
 			logfile.write("Generating A2B0 table lookup input values...\n")
 		A2B0.clut = []
-		clutres = len(profile.tags.A2B1.clut[0])
+		if not clutres:
+			clutres = len(profile.tags.A2B0.clut[0])
 		if logfile:
 			logfile.write("cLUT grid res: %i\n" % clutres)
 		vrange = xrange(clutres)
@@ -3010,14 +3011,21 @@ class Worker(object):
 			logfile.write("\n")
 
 		step = 1.0 / (clutres - 1.0)
-		if source != "A2B" or tableno == 1:
+		do_lookup = True
+		if do_lookup:
 			# Generate inverse table lookup input values
 			if logfile:
 				logfile.write("Generating %s%i table lookup input values...\n" %
 							  (source, tableno))
 				logfile.write("cLUT grid res: %i\n" % clutres)
+				logfile.write("Looking up input values through %s%i table...\n" %
+							  (source, tableno))
 			idata = []
+			odata = []
 			abmaxval = 255 + (255 / 256.0)
+			xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
+			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
+							 use_cam_clipping=True)
 			for a in xrange(clutres):
 				if self.thread_abort:
 					raise Info(lang.getstr("aborted"))
@@ -3031,6 +3039,9 @@ class Worker(object):
 							##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
 							# Scale into device colorspace
 							v = m2.inverted() * XYZ
+							if bpc:
+								v = colormath.apply_bpc(v[0], v[1], v[2],
+														(0, 0, 0), XYZbp, XYZwp)
 							##print "%3.6f %3.6f %3.6f" % tuple(v)
 							##raw_input()
 							if intent == "a":
@@ -3041,19 +3052,36 @@ class Worker(object):
 							d = Linterp[1](d)
 							v = d, -128 + e * abmaxval, -128 + f * abmaxval
 						idata.append("%.6f %.6f %.6f" % tuple(v))
+						# Lookup CIE -> device values through profile using xicclu
+						if c < clutres / 2:
+							xicclu1(v)
+						else:
+							xicclu2(v)
 				if logfile:
 					logfile.write("\r%i%%" % round((a * b * c) /
 												   ((clutres - 1.0) ** 3) * 100))
+			xicclu1.exit()
+			xicclu2.exit()
 			if logfile:
 				logfile.write("\n")
 				logfile.write("Input black XYZ: %s\n" % idata[0])
 				logfile.write("Input white XYZ: %s\n" % idata[-1])
-				logfile.write("Looking up input values through %s%i table...\n" %
-							  (source, tableno))
 
-			# Lookup CIE -> device values through profile using xicclu
-			odata = self.xicclu(profile, idata, intent, direction, "n", pcs, 100,
-								logfile=logfile)
+			odata1 = xicclu1.get()
+			odata2 = xicclu2.get()
+			j, k = 0, 0
+			for i in xrange(clutres ** 3):
+				if i % clutres:
+					n += 1
+				else:
+					n = 0
+				if n < clutres / 2:
+					v = odata1[j]
+					j += 1
+				else:
+					v = odata2[k]
+					k += 1
+				odata.append(v)
 			numrows = len(odata)
 			if numrows != clutres ** 3:
 				raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
@@ -3070,7 +3098,7 @@ class Worker(object):
 		itable.clut = []
 		if logfile:
 			logfile.write("Filling cLUT...\n")
-		if source == "A2B" and tableno == 0:
+		if not do_lookup:
 			# Linearly scale RGB
 			for R in xrange(clutres):
 				if self.thread_abort:
@@ -3107,8 +3135,7 @@ class Worker(object):
 								  ("post", itable)]:
 				table.clut_writepng(fname + ".B2A%i.%s.CLUT.png" %
 									(tableno, suffix))
-		if ((source != "A2B" or tableno == 1) and
-			getcfg("profile.b2a.smooth.extra")):
+		if getcfg("profile.b2a.smooth.extra"):
 			# Apply extra smoothing to the cLUT
 			# Create a list of <clutres> number of 2D grids, each one with a
 			# size of (width x height) <clutres> x <clutres>
@@ -6365,7 +6392,7 @@ class Worker(object):
 	
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",
 			   pcs=None, scale=1, cwd=None, startupinfo=None, raw=False,
-			   logfile=None, use_icclu=False):
+			   logfile=None, use_icclu=False, use_cam_clipping=False):
 		"""
 		Call xicclu, feed input floats into stdin, return output floats.
 		
@@ -6375,133 +6402,158 @@ class Worker(object):
 		if 'raw' is true.
 		
 		"""
+		with Xicclu(profile, intent, direction, order, pcs, scale, cwd,
+					startupinfo, logfile, use_icclu, use_cam_clipping) as xicclu:
+			xicclu(idata)
+		return xicclu.get(raw)
+
+
+class Xicclu(Worker):
+	def __init__(self, profile, intent="r", direction="f", order="n",
+				 pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
+				 use_cam_clipping=False, logfile=None, worker=None):
+		Worker.__init__(self)
+		self.logfile = logfile
+		self.worker = worker
+		self.temp = False
 		utilname = "icclu" if use_icclu else "xicclu"
 		xicclu = get_argyll_util(utilname)
 		if not xicclu:
 			raise NotImplementedError(lang.getstr("argyll.util.not_found",
 												  utilname))
+		if not isinstance(profile, ICCP.ICCProfile):
+			profile = ICCP.ICCProfile(profile)
 		if not cwd:
 			cwd = self.create_tempdir()
 		if isinstance(cwd, Exception):
 			raise cwd
-		if not isinstance(profile, ICCP.ICCProfile):
-			profile = ICCP.ICCProfile(profile)
-		temp = False
 		if not profile.fileName:
 			fd, profile.fileName = tempfile.mkstemp(profile_ext, dir=cwd)
 			profile.write(os.fdopen(fd, "wb"))
 			profile.close()
-			temp = True
+			self.temp = True
 		profile_basename = os.path.basename(profile.fileName)
 		profile_path = os.path.join(cwd, profile_basename)
 		if not os.path.isfile(profile_path):
 			profile.write(profile_path)
-			temp = True
+			self.temp = True
 		if sys.platform == "win32":
 			profile_path = win32api.GetShortPathName(profile_path)
-		profile_path = safe_str(profile_path)
+		self.profile_path = safe_str(profile_path)
 		if sys.platform == "win32" and not startupinfo:
 			startupinfo = sp.STARTUPINFO()
 			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
 			startupinfo.wShowWindow = sp.SW_HIDE
-		idata = list(idata)  # Make a copy
-		if not logfile:
-			logfile = Files([self.recent, self.lastmsg])
-		try:
-			if not isinstance(idata, basestring):
-				for i, v in enumerate(idata):
-					if not isinstance(v, basestring):
-						for n in v:
-							if not isinstance(n, (float, int, long)):
-								raise TypeError("xicclu: Expecting list of "
-											    "strings or 3-tuples with "
-											    "floats")
-						idata[i] = " ".join([str(n) for n in v])
-			else:
-				idata = idata.splitlines()
-			numrows = len(idata)
-			chunklen = 1000
-			i = 0
-			xicclu = safe_str(xicclu)
-			cwd = safe_str(cwd)
-			args = [xicclu, "-s%s" % scale]
-			if (utilname == "xicclu" and raw and
-				"A2B0" in profile.tags and ("B2A0" in profile.tags or
-											direction == "if")):
+		xicclu = safe_str(xicclu)
+		cwd = safe_str(cwd)
+		args = [xicclu, "-s%s" % scale]
+		if utilname == "xicclu":
+			if "A2B0" in profile.tags and ("B2A0" in profile.tags or
+										   direction == "if"):
 				args.append("-a")
-			args.append("-f" + direction)
-			if profile.profileClass not in ("abst", "link"):
-				args.append("-i" + intent)
-				if order != "n":
-					args.append("-o" + order)
-			if pcs and profile.profileClass != "link":
-				args.append("-p" + pcs)
-			args.append(profile_path)
-			if debug or verbose > 1:
-				if cwd:
-					self.log(lang.getstr("working_dir"))
-					indent = "  "
-					for name in cwd.split(os.path.sep):
-						self.log(textwrap.fill(name + os.path.sep, 80, 
-											   expand_tabs=False, 
-											   replace_whitespace=False, 
-											   initial_indent=indent, 
-											   subsequent_indent=indent))
-						indent += " "
-					self.log("")
-				self.log(lang.getstr("commandline"))
-				printcmdline(xicclu if debug or verbose > 2 else
-							 os.path.basename(xicclu), args[1:], cwd=cwd)
+			if use_cam_clipping:
+				args.append("-b")
+		args.append("-f" + direction)
+		if profile.profileClass not in ("abst", "link"):
+			args.append("-i" + intent)
+			if order != "n":
+				args.append("-o" + order)
+		if pcs and profile.profileClass != "link":
+			args.append("-p" + pcs)
+		args.append(self.profile_path)
+		if debug or verbose > 1:
+			if cwd:
+				self.log(lang.getstr("working_dir"))
+				indent = "  "
+				for name in cwd.split(os.path.sep):
+					self.log(textwrap.fill(name + os.path.sep, 80, 
+										   expand_tabs=False, 
+										   replace_whitespace=False, 
+										   initial_indent=indent, 
+										   subsequent_indent=indent))
+					indent += " "
 				self.log("")
-			stdout = tempfile.SpooledTemporaryFile()
-			stderr = tempfile.SpooledTemporaryFile()
-			p = sp.Popen(args, stdin=sp.PIPE, stdout=stdout, stderr=stderr,
-						 cwd=cwd, startupinfo=startupinfo)
-			while True:
-				# Process in chunks to prevent broken pipe if input data is too
-				# large
-				if self.subprocess_abort or self.thread_abort:
-					if p.poll() is None:
-						p.stdin.close()
-						p.wait()
-					raise Info(lang.getstr("aborted"))
+			self.log(lang.getstr("commandline"))
+			printcmdline(xicclu if debug or verbose > 2 else
+						 os.path.basename(xicclu), args[1:], cwd=cwd)
+			self.log("")
+		self.stdout = tempfile.SpooledTemporaryFile()
+		self.stderr = tempfile.SpooledTemporaryFile()
+		self.subprocess = sp.Popen(args, stdin=sp.PIPE, stdout=self.stdout,
+								   stderr=self.stderr, cwd=cwd,
+								   startupinfo=startupinfo)
+	
+	def __call__(self, idata):
+		if not isinstance(idata, basestring):
+			idata = list(idata)  # Make a copy
+			for i, v in enumerate(idata):
+				if isinstance(v, (float, int, long)):
+					self([idata])
+					return
+				if not isinstance(v, basestring):
+					for n in v:
+						if not isinstance(n, (float, int, long)):
+							raise TypeError("xicclu: Expecting list of "
+											"strings or n-tuples with "
+											"floats")
+					idata[i] = " ".join([str(n) for n in v])
+		else:
+			idata = idata.splitlines()
+		numrows = len(idata)
+		chunklen = 1000
+		i = 0
+		p = self.subprocess
+		while True:
+			# Process in chunks to prevent broken pipe if input data is too
+			# large
+			if self.subprocess_abort or self.thread_abort:
 				if p.poll() is None:
-					# We don't use communicate() because it will end the
-					# process
-					try:
-						p.stdin.write("\n".join(idata[chunklen * i:
-													  chunklen * (i + 1)]) + "\n")
-						p.stdin.flush()
-					except IOError:
-						break
-				else:
-					# Error
-					break
-				if logfile:
-					logfile.write("\r%i%%" % min(round(chunklen * (i + 1) /
-													   float(numrows) * 100),
-												 100))
-				if chunklen * (i + 1) > numrows - 1:
-					break
-				i += 1
+					p.stdin.close()
+					p.wait()
+				raise Info(lang.getstr("aborted"))
 			if p.poll() is None:
-				p.stdin.close()
-			returncode = p.wait()
-			if returncode:
+				# We don't use communicate() because it will end the
+				# process
+				p.stdin.write("\n".join(idata[chunklen * i:
+											  chunklen * (i + 1)]) + "\n")
+				p.stdin.flush()
+			else:
 				# Error
-				stderr.seek(0)
-				raise IOError(stderr.read())
-			stdout.seek(0)
-			odata = stdout.readlines()
-		except:
-			raise
-		finally:
-			if logfile:
-				logfile.write("\n")
-			if temp:
-				os.remove(profile_path)
-				if self.tempdir and not os.listdir(self.tempdir):
-					self.wrapup(False)
+				break
+			if self.logfile:
+				self.logfile.write("\r%i%%" % min(round(chunklen * (i + 1) /
+												   float(numrows) * 100),
+											 100))
+			if chunklen * (i + 1) > numrows - 1:
+				break
+			i += 1
+	
+	def __enter__(self):
+		return self
+	
+	def __exit__(self, etype=None, value=None, tb=None):
+		self.exit()
+		if tb:
+			return False
+	
+	def exit(self):
+		p = self.subprocess
+		if p.poll() is None:
+			p.stdin.close()
+		if p.wait():
+			# Error
+			stderr.seek(0)
+			raise IOError(stderr.read())
+		if self.logfile:
+			self.logfile.write("\n")
+		if self.temp:
+			os.remove(self.profile_path)
+			if self.tempdir and not os.listdir(self.tempdir):
+				self.wrapup(False)
+	
+	def get(self, raw=False):
+		self.stdout.seek(0)
+		odata = self.stdout.readlines()
 		if raw:
 			return odata
 		parsed = []
@@ -6524,3 +6576,27 @@ class Worker(object):
 			parsed.append([float(n) for n in parts])
 			j += 1
 		return parsed
+	
+	@Property
+	def subprocess_abort():
+		def fget(self):
+			if self.worker:
+				return self.worker.subprocess_abort
+			return False
+		
+		def fset(self, v):
+			pass
+		
+		return locals()
+	
+	@Property
+	def thread_abort():
+		def fget(self):
+			if self.worker:
+				return self.worker.thread_abort
+			return False
+		
+		def fset(self, v):
+			pass
+		
+		return locals()
