@@ -2786,7 +2786,7 @@ class Worker(object):
 		for i, (X, Y, Z) in enumerate(odata):
 			if i % clutres == 0:
 				if self.thread_abort:
-					return False
+					raise Info(lang.getstr("aborted"))
 				A2B0.clut.append([])
 				if logfile:
 					logfile.write("\r%i%%" % round(i / (numrows - 1.0) * 100))
@@ -2989,7 +2989,7 @@ class Worker(object):
 		itable.input = [[], [], []]
 		for j in vrange:
 			if self.thread_abort:
-				return False
+				raise Info(lang.getstr("aborted"))
 			if profile.connectionColorSpace == "XYZ":
 				v = [rinterp[i](j / maxval) for i in xrange(3)]
 			else:
@@ -3020,7 +3020,7 @@ class Worker(object):
 			abmaxval = 255 + (255 / 256.0)
 			for a in xrange(clutres):
 				if self.thread_abort:
-					return False
+					raise Info(lang.getstr("aborted"))
 				for b in xrange(clutres):
 					for c in xrange(clutres):
 						d, e, f = [v * step for v in (a, b, c)]
@@ -3074,7 +3074,7 @@ class Worker(object):
 			# Linearly scale RGB
 			for R in xrange(clutres):
 				if self.thread_abort:
-					return False
+					raise Info(lang.getstr("aborted"))
 				for G in xrange(clutres):
 					itable.clut.append([])
 					for B in xrange(clutres):
@@ -3087,7 +3087,7 @@ class Worker(object):
 			for i, RGB in enumerate(odata):
 				if i % clutres == 0:
 					if self.thread_abort:
-						return False
+						raise Info(lang.getstr("aborted"))
 					itable.clut.append([])
 					if logfile:
 						logfile.write("\r%i%%" % round(i / (numrows - 1.0) * 100))
@@ -6461,6 +6461,9 @@ class Worker(object):
 				# Process in chunks to prevent broken pipe if input data is too
 				# large
 				if self.subprocess_abort or self.thread_abort:
+					if p.poll() is None:
+						p.stdin.close()
+						p.wait()
 					raise Info(lang.getstr("aborted"))
 				if p.poll() is None:
 					# We don't use communicate() because it will end the
