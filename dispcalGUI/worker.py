@@ -3023,6 +3023,8 @@ class Worker(object):
 			idata = []
 			odata = []
 			abmaxval = 255 + (255 / 256.0)
+			# Use CAM Jab for clipping for cLUT grid points after a given
+			# threshold
 			xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
 			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
 							 use_cam_clipping=True)
@@ -3054,9 +3056,8 @@ class Worker(object):
 							v = d, -128 + e * abmaxval, -128 + f * abmaxval
 						idata.append("%.6f %.6f %.6f" % tuple(v))
 						# Lookup CIE -> device values through profile using xicclu
-						if a < threshold and b < threshold and c < threshold:
-							xicclu1(v)
-						else:
+						xicclu1(v)
+						if a > threshold or b > threshold or c > threshold:
 							xicclu2(v)
 				if logfile:
 					logfile.write("\r%i%%" % round((a * b * c) /
@@ -3068,18 +3069,24 @@ class Worker(object):
 				logfile.write("Input black XYZ: %s\n" % idata[0])
 				logfile.write("Input white XYZ: %s\n" % idata[-1])
 
+			# Linearly interpolate the crossover to CAM Jab clipping region
 			odata1 = xicclu1.get()
 			odata2 = xicclu2.get()
 			j, k = 0, 0
+			r = clutres - 1.0 - threshold
 			for a in xrange(clutres):
 				for b in xrange(clutres):
 					for c in xrange(clutres):
-						if a < threshold and b < threshold and c < threshold:
-							v = odata1[j]
-							j += 1
-						else:
-							v = odata2[k]
+						v = odata1[j]
+						j += 1
+						if a > threshold or b > threshold or c > threshold:
+							d = max(a, b, c)
+							v2 = odata2[k]
 							k += 1
+							for i, n in enumerate(v):
+								v[i] *= (clutres - 1 - d) / r
+								v2[i] *= 1 - (clutres - 1 - d) / r
+								v[i] += v2[i]
 						odata.append(v)
 			numrows = len(odata)
 			if numrows != clutres ** 3:
