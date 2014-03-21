@@ -6403,7 +6403,8 @@ class Worker(object):
 		
 		"""
 		with Xicclu(profile, intent, direction, order, pcs, scale, cwd,
-					startupinfo, logfile, use_icclu, use_cam_clipping) as xicclu:
+					startupinfo, use_icclu, use_cam_clipping, logfile,
+					worker=self) as xicclu:
 			xicclu(idata)
 		return xicclu.get(raw)
 
@@ -6542,8 +6543,8 @@ class Xicclu(Worker):
 			p.stdin.close()
 		if p.wait():
 			# Error
-			stderr.seek(0)
-			raise IOError(stderr.read())
+			self.stderr.seek(0)
+			raise IOError(self.stderr.read())
 		if self.logfile:
 			self.logfile.write("\n")
 		if self.temp:
