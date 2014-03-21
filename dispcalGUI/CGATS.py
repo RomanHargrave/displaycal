@@ -1101,8 +1101,6 @@ Transform {
 					L, u, v = colormath.XYZ2Luv(X, Y, Z)
 					L, C, H = colormath.Luv2LCHuv(L, u, v)
 				x, y, z = H - 180, C - 100, L - 50
-			elif colorspace == "LCH(uv)":
-				x, y, z = C, H, L - 50
 			elif colorspace == "Luv":
 				L, u, v = colormath.XYZ2Luv(X, Y, Z)
 				x, y, z = u, v, L - 50
