@@ -6515,6 +6515,7 @@ class Xicclu(Worker):
 			# large
 			if self.subprocess_abort or self.thread_abort:
 				if p.poll() is None:
+					p.stdin.write("\n")
 					p.stdin.close()
 					p.wait()
 				raise Info(lang.getstr("aborted"))
@@ -6546,6 +6547,7 @@ class Xicclu(Worker):
 	def exit(self):
 		p = self.subprocess
 		if p.poll() is None:
+			p.stdin.write("\n")
 			p.stdin.close()
 		if p.wait():
 			# Error
