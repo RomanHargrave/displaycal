@@ -3061,9 +3061,10 @@ class Worker(object):
 						xicclu1(v)
 						if a > threshold or b > threshold or c > threshold:
 							xicclu2(v)
-				if logfile:
-					logfile.write("\r%i%%" % round((a * b * c) /
-												   ((clutres - 1.0) ** 3) * 100))
+					if logfile:
+						logfile.write("\r%i%%" % round(len(idata) /
+													   clutres ** 3.0 *
+													   100))
 			xicclu2.exit()
 			xicclu1.exit()
 			if logfile:
