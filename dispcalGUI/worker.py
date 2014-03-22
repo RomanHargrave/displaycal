@@ -3027,10 +3027,12 @@ class Worker(object):
 			# threshold
 			xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
 			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
-							 use_cam_clipping=True)
+							 cwd=xicclu1.tempdir, use_cam_clipping=True)
 			threshold = clutres / 2
 			for a in xrange(clutres):
 				if self.thread_abort:
+					xicclu2.exit()
+					xicclu1.exit()
 					raise Info(lang.getstr("aborted"))
 				for b in xrange(clutres):
 					for c in xrange(clutres):
@@ -3062,8 +3064,8 @@ class Worker(object):
 				if logfile:
 					logfile.write("\r%i%%" % round((a * b * c) /
 												   ((clutres - 1.0) ** 3) * 100))
-			xicclu1.exit()
 			xicclu2.exit()
+			xicclu1.exit()
 			if logfile:
 				logfile.write("\n")
 				logfile.write("Input black XYZ: %s\n" % idata[0])
