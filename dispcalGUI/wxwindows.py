@@ -1017,6 +1017,14 @@ class ProgressDialog(wx.Dialog):
 		if style & wx.PD_APP_MODAL:
 			self.MakeModal()
 	
+	def MakeModal(self, modal=True):
+		# wxPython 3.0 deprecates MakeModal, use the replacement implementation
+		# from http://wxpython.org/Phoenix/docs/html/MigrationGuide.html
+		if modal and not hasattr(self, '_disabler'):
+			self._disabler = wx.WindowDisabler(self)
+		if not modal and hasattr(self, '_disabler'):
+			del self._disabler
+	
 	def OnClose(self, event):
 		self.keepGoing = False
 		if hasattr(self, "cancel"):
