@@ -912,7 +912,8 @@ class ProgressDialog(wx.Dialog):
 				 handler=None, keyhandler=None, start_timer=True, pos=None,
 				 pauseable=False):
 		if style is None:
-			style = wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH
+			style = (wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
+					 wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH)
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
@@ -946,18 +947,31 @@ class ProgressDialog(wx.Dialog):
 		self.gauge = wx.Gauge(self, wx.ID_ANY, range=maximum, style=gauge_style)
 		self.sizer1.Add(self.gauge, flag=wx.EXPAND | wx.BOTTOM, border=margin)
 		
-		if style & wx.PD_ELAPSED_TIME:
-			self.sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+		if style & wx.PD_ELAPSED_TIME or style & wx.PD_REMAINING_TIME:
+			self.sizer3 = wx.FlexGridSizer(0, 2, 0, margin)
 			self.sizer1.Add(self.sizer3, flag=wx.ALIGN_CENTER)
+		
+		if style & wx.PD_ELAPSED_TIME:
 			self.sizer3.Add(wx.StaticText(self, -1,
 										  lang.getstr("elapsed_time")))
 			self.time = time()
-			self.elapsed_time = wx.StaticText(self, -1, "")
+			self.elapsed_time = wx.StaticText(self, -1, "--:--:--")
 			self.elapsed_time_handler(None)
-			self.sizer3.Add(self.elapsed_time, flag=wx.LEFT, border=margin)
+			self.sizer3.Add(self.elapsed_time)
 			self.elapsed_timer = wx.Timer(self)
 			self.Bind(wx.EVT_TIMER, self.elapsed_time_handler,
 					  self.elapsed_timer)
+		
+		if style & wx.PD_REMAINING_TIME:
+			self.sizer3.Add(wx.StaticText(self, -1,
+										  lang.getstr("remaining_time")))
+			self.time2 = time()
+			self.remaining_time = wx.StaticText(self, -1, u"––:––:––")
+			self.remaining_time_handler(None)
+			self.sizer3.Add(self.remaining_time)
+			self.remaining_timer = wx.Timer(self)
+			self.Bind(wx.EVT_TIMER, self.remaining_time_handler,
+					  self.remaining_timer)
 
 		if style & wx.PD_CAN_ABORT:
 			self.cancel = wx.Button(self, wx.ID_ANY, lang.getstr("cancel"))
@@ -1071,6 +1085,8 @@ class ProgressDialog(wx.Dialog):
 			self.msg.SetLabel(msg)
 			self.msg.Refresh()
 			self.msg.Update()
+		if hasattr(self, "time2"):
+			self.time2 = 0
 		self.gauge.Pulse()
 		return self.keepGoing, self.skip
 	
@@ -1085,6 +1101,12 @@ class ProgressDialog(wx.Dialog):
 			self.msg.SetLabel(msg)
 			self.msg.Refresh()
 			self.msg.Update()
+		if hasattr(self, "time2"):
+			if value < self.gauge.GetValue() or not self.gauge.GetValue():
+				self.time2 = time()
+			if value:
+				self.remaining = ((time() - self.time2) / value *
+								  (self.gauge.GetRange() - value))
 		self.gauge.SetValue(value)
 		return self.keepGoing, self.skip
 	
@@ -1093,6 +1115,14 @@ class ProgressDialog(wx.Dialog):
 	def elapsed_time_handler(self, event):
 		self.elapsed_time.Label = strftime("%H:%M:%S",
 										   gmtime(time() - self.time))
+	
+	def remaining_time_handler(self, event):
+		if self.time2 and self.gauge.GetValue():
+			self.remaining_time.Label = strftime("%H:%M:%S",
+												 gmtime(self.remaining))
+			self.remaining = max(self.remaining - 1, 0)
+		else:
+			self.remaining_time.Label = u"––:––:––"
 	
 	def key_handler(self, event):
 		pass
@@ -1110,11 +1140,15 @@ class ProgressDialog(wx.Dialog):
 		self.timer.Start(ms)
 		if hasattr(self, "elapsed_timer"):
 			self.elapsed_timer.Start(1000)
+		if hasattr(self, "remaining_timer"):
+			self.remaining_timer.Start(1000)
 	
 	def stop_timer(self):
 		self.timer.Stop()
 		if hasattr(self, "elapsed_timer"):
 			self.elapsed_timer.Stop()
+		if hasattr(self, "remaining_timer"):
+			self.remaining_timer.Stop()
 
 
 class SimpleBook(labelbook.FlatBookBase):

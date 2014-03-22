@@ -548,6 +548,7 @@
 	"ready": "Ready.",
 	"red": "Red",
 	"reference": "Reference",
+	"remaining_time": "Remaining time (ca.)",
 	"rendering_intent": "Rendering intent",
 	"report.calibrated": "Report on calibrated display device",
 	"report.uncalibrated": "Report on uncalibrated display device",
