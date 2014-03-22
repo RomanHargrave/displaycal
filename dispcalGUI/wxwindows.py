@@ -15,7 +15,8 @@ from options import debug
 from util_os import waccess
 from util_str import safe_unicode, wrap
 from wxaddons import (CustomEvent, FileDrop as _FileDrop, get_dc_font_size,
-					  get_platform_window_decoration_size, wx)
+					  get_platform_window_decoration_size, wx,
+					  BetterWindowDisabler)
 from wxfixes import GTKMenuItemGetFixedLabel
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
@@ -1018,10 +1019,10 @@ class ProgressDialog(wx.Dialog):
 			self.MakeModal()
 	
 	def MakeModal(self, modal=True):
-		# wxPython 3.0 deprecates MakeModal, use the replacement implementation
-		# from http://wxpython.org/Phoenix/docs/html/MigrationGuide.html
+		# wxPython 3.0 deprecates MakeModal, use a replacement implementation
+		# based on http://wxpython.org/Phoenix/docs/html/MigrationGuide.html
 		if modal and not hasattr(self, '_disabler'):
-			self._disabler = wx.WindowDisabler(self)
+			self._disabler = BetterWindowDisabler(self)
 		if not modal and hasattr(self, '_disabler'):
 			del self._disabler
 	

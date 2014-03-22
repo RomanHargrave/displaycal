@@ -2,6 +2,7 @@
 
 import os
 import sys
+import types
 
 from wxfixes import wx
 
@@ -23,15 +24,17 @@ def GetRealClientArea(self):
 wx.Display.GetRealClientArea = GetRealClientArea
 
 
-def GetAllChildren(self):
+def GetAllChildren(self, skip=None):
 	""" Get children of window and its subwindows """
-	children = self.GetChildren()
+	if not isinstance(skip, (list, tuple)):
+		skip = [skip]
+	children = filter(lambda child: child not in skip, self.GetChildren())
 	allchildren = []
 	for child in children:
 		allchildren += [child]
-		if hasattr(child, "GetAllChildren") and hasattr(child.GetAllChildren, 
+		if hasattr(child, "GetAllChildren") and hasattr(child.GetAllChildren,
 														"__call__"):
-			allchildren += child.GetAllChildren()
+			allchildren += child.GetAllChildren(skip)
 	return allchildren
 
 wx.Window.GetAllChildren = GetAllChildren
@@ -200,6 +203,43 @@ class CustomEvent(wx.PyEvent):
 
 	def GetWindow(self):
 		return self.window
+
+
+class BetterWindowDisabler(object):
+	
+	""" Also disables child windows instead of only top level windows. This is
+	actually needed under Mac OS X where disabling a top level window will
+	not prevent interaction with its children. """
+
+	def __init__(self, skip=None):
+		self._windows = []
+		if skip:
+			if not isinstance(skip, (list, tuple)):
+				skip = [skip]
+			toplevel = list(wx.GetTopLevelWindows())
+			for w in toplevel:
+				if w not in skip and "Inspection" not in "%s" % w:
+					self._windows.append(w)
+					for child in w.GetAllChildren(skip + toplevel):
+						self._windows.append(child)
+			def Enable(w, enable=True):
+				w._enabled = enable
+			def Disable(w):
+				w._enabled = False
+			for w in reversed(self._windows):
+				enabled = w.IsEnabled()
+				w.Disable()
+				w._Disable = w.Disable
+				w.Disable = types.MethodType(Disable, w, type(w))
+				w._Enable = w.Enable
+				w.Enable = types.MethodType(Enable, w, type(w))
+				w.Enable(enabled)
+
+	def __del__(self):
+		for w in self._windows:
+			w.Disable = w._Disable
+			w.Enable = w._Enable
+			w.Enable(w._enabled)
 
 
 class CustomGridCellEvent(CustomEvent):
