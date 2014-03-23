@@ -1274,9 +1274,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-information"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
-		dlg.Destroy()
 		if self.finished:
 			return
+		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1381,9 +1381,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-information"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
-		dlg.Destroy()
 		if self.finished:
 			return
+		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1410,9 +1410,9 @@ class Worker(object):
 								bitmap=geticon(32, "dialog-warning"))
 			self.progress_wnd.dlg = dlg
 			dlg_result = dlg.ShowModal()
-			dlg.Destroy()
 			if self.finished:
 				return
+			dlg.Destroy()
 			if dlg_result != wx.ID_OK:
 				self.progress_wnd.Resume()
 				if pause:
@@ -1438,9 +1438,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-information"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
-		dlg.Destroy()
 		if self.finished:
 			return
+		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1462,9 +1462,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-warning"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
-		dlg.Destroy()
 		if self.finished:
 			return
+		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
