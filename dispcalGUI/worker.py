@@ -1498,7 +1498,8 @@ class Worker(object):
 		self.errors = []
 		self.recent = FilteredStream(LineCache(maxlines=3), self.data_encoding, 
 									 discard=self.recent_discard,
-									 triggers=self.triggers)
+									 triggers=self.triggers +
+											  ["stopped at user request"])
 		self.retrycount = 0
 		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
 									  discard=self.lastmsg_discard,
@@ -4379,7 +4380,6 @@ class Worker(object):
 		elif (not getattr(self.progress_wnd, "paused", False) and
 			  getattr(self, "paused", False)):
 			self.paused = False
-			self.recent.clear()
 			self.safe_send(" ")
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
