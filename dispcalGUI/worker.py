@@ -1406,6 +1406,7 @@ class Worker(object):
 					 hasattr(self.progress_wnd, "pause_continue_handler"))
 			if pause:
 				self.progress_wnd.pause_continue_handler(True)
+				self.pause_continue()
 			self.progress_wnd.MakeModal(False)
 			dlg = ConfirmDialog(self.progress_wnd,
 								msg=lang.getstr("dialog.confirm_cancel"), 
@@ -4383,6 +4384,17 @@ class Worker(object):
 		self.check_retry_measurement(txt)
 		self.check_is_ambient_measuring(txt)
 		self.check_spotread_result(txt)
+	
+	def pause_continue(self):
+		if (getattr(self.progress_wnd, "paused", False) and
+			  not getattr(self, "paused", False)):
+			self.paused = True
+			self.safe_send("\x1b")
+		elif (not getattr(self.progress_wnd, "paused", False) and
+			  getattr(self, "paused", False)):
+			self.paused = False
+			self.recent.clear()
+			self.safe_send(" ")
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
 						display_manufacturer=None):
@@ -5072,15 +5084,7 @@ class Worker(object):
 						msg = (lang.getstr("webserver.waiting") +
 							   " " + webserver.groups()[0])
 				keepGoing, skip = self.progress_wnd.Pulse(msg)
-		if (getattr(self.progress_wnd, "paused", False) and
-			  not getattr(self, "paused", False)):
-			self.paused = True
-			self.safe_send("\x1b")
-		elif (not getattr(self.progress_wnd, "paused", False) and
-			  getattr(self, "paused", False)):
-			self.paused = False
-			self.recent.clear()
-			self.safe_send(" ")
+		self.pause_continue()
 		if (hasattr(self.progress_wnd, "pause_continue") and
 			"read stopped at user request!" in lastmsg):
 			self.progress_wnd.pause_continue.Enable()
