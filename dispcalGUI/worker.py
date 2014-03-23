@@ -4232,6 +4232,8 @@ class Worker(object):
 							  "r": 1,
 							  "s": 2,
 							  "a": 3}[getcfg("gamap_default_intent")]
+		elif "B2A0" in profile.tags and "B2A1" in profile.tags:
+			profile.intent = 0
 		# Calculate profile ID
 		profile.calculateID()
 		try:
