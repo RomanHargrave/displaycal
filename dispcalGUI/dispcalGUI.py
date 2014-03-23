@@ -118,7 +118,8 @@ from wxProfileInfo import ProfileInfoFrame
 from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
-from wxaddons import wx, CustomEvent, CustomGridCellEvent, FileDrop
+from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
+					  CustomGridCellEvent, FileDrop)
 from wxwindows import (AboutDialog, BaseFrame, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
 					   LogWindow, ProgressDialog,
@@ -5909,7 +5910,7 @@ class MainFrame(BaseFrame):
 								bitmap=geticon(32, "dialog-information"),
 								alt=share_profile,
 								style=wx.CAPTION | wx.CLOSE_BOX | 
-									  wx.FRAME_FLOAT_ON_PARENT)
+									  wx.STAY_ON_TOP)
 			if share_profile:
 				# Show share profile button
 				dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
@@ -6028,17 +6029,16 @@ class MainFrame(BaseFrame):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
-			self.Disable()
+			dlg._disabler = BetterWindowDisabler([dlg,
+												  getattr(self, "lut_viewer",
+														  None)] +
+												 self.profile_info.values())
 			dlg.profile = profile
 			dlg.profile_path = profile_path
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
 			dlg.OnCloseIntercept = self.profile_finish_close_handler
 			self.modaldlg = dlg
-			if sys.platform == "darwin":
-				# FRAME_FLOAT_ON_PARENT does not work on Mac,
-				# make sure we stay under our dialog
-				self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
 			wx.CallAfter(dlg.Show)
 		else:
 			if isinstance(result, Exception):
@@ -6080,12 +6080,7 @@ class MainFrame(BaseFrame):
 				# Load LUT curves from current display profile (if any, 
 				# and if it contains curves)
 				self.load_display_profile_cal(None)
-		self.Enable()
-		if sys.platform == "darwin":
-			# FRAME_FLOAT_ON_PARENT does not work on Mac,
-			# unbind automatic lowering
-			self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
-			self.Raise()
+		del self.modaldlg._disabler
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
 		# dereference it before we can delete the python attribute

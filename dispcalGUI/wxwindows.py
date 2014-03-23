@@ -914,7 +914,8 @@ class ProgressDialog(wx.Dialog):
 		if style is None:
 			style = (wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
 					 wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH)
-		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, title,
+						   style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
