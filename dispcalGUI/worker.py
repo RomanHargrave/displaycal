@@ -1267,7 +1267,6 @@ class Worker(object):
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
-		self.progress_wnd.MakeModal(False)
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.measure_ambient"), 
 							ok=lang.getstr("ok"), 
@@ -1278,7 +1277,6 @@ class Worker(object):
 		dlg.Destroy()
 		if self.finished:
 			return
-		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1373,7 +1371,6 @@ class Worker(object):
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
-		self.progress_wnd.MakeModal(False)
 		if self.get_instrument_name() == "ColorMunki":
 			lstr ="instrument.calibrate.colormunki"
 		else:
@@ -1387,7 +1384,6 @@ class Worker(object):
 		dlg.Destroy()
 		if self.finished:
 			return
-		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1407,7 +1403,6 @@ class Worker(object):
 			if pause:
 				self.progress_wnd.pause_continue_handler(True)
 				self.pause_continue()
-			self.progress_wnd.MakeModal(False)
 			dlg = ConfirmDialog(self.progress_wnd,
 								msg=lang.getstr("dialog.confirm_cancel"), 
 								ok=lang.getstr("yes"), 
@@ -1418,7 +1413,6 @@ class Worker(object):
 			dlg.Destroy()
 			if self.finished:
 				return
-			self.progress_wnd.MakeModal(True)
 			if dlg_result != wx.ID_OK:
 				self.progress_wnd.Resume()
 				if pause:
@@ -1437,7 +1431,6 @@ class Worker(object):
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
-		self.progress_wnd.MakeModal(False)
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.place_on_screen"), 
 							ok=lang.getstr("ok"), 
@@ -1448,7 +1441,6 @@ class Worker(object):
 		dlg.Destroy()
 		if self.finished:
 			return
-		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1463,7 +1455,6 @@ class Worker(object):
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
-		self.progress_wnd.MakeModal(False)
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.reposition_sensor"), 
 							ok=lang.getstr("ok"), 
@@ -1474,7 +1465,6 @@ class Worker(object):
 		dlg.Destroy()
 		if self.finished:
 			return
-		self.progress_wnd.MakeModal(True)
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -2332,11 +2322,7 @@ class Worker(object):
 						sudo_args += [cmd, "-?"]
 					while True:
 						dlg.pwd_txt_ctrl.SetFocus()
-						if parent and parent is progress_dlg:
-							progress_dlg.MakeModal(False)
 						result = dlg.ShowModal()
-						if parent and parent is progress_dlg:
-							progress_dlg.MakeModal(True)
 						pwd = dlg.pwd_txt_ctrl.GetValue()
 						if result != wx.ID_OK:
 							safe_print(lang.getstr("aborted"))
