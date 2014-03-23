@@ -5428,7 +5428,8 @@ class Worker(object):
 	def stop_progress(self):
 		if getattr(self, "progress_wnd", False):
 			if getattr(self.progress_wnd, "dlg", None):
-				self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
+				if self.progress_wnd.dlg.IsShownOnScreen():
+					self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
 				self.progress_wnd.dlg = None
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
