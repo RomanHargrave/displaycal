@@ -5441,7 +5441,7 @@ class Worker(object):
 		if getattr(self, "progress_wnd", False):
 			if getattr(self.progress_wnd, "dlg", None):
 				self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
-				del self.progress_wnd.dlg
+				self.progress_wnd.dlg = None
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
 			self.progress_wnd.Close()
