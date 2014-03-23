@@ -2269,11 +2269,13 @@ class Worker(object):
 						stdout = re.sub(".\x08", "", manproc.communicate()[0])
 						self.sudo_availoptions = {"E": bool(re.search("-E", stdout)),
 												  "l [command]": bool(re.search("-l(?:\[l\])?\s+\[command\]", stdout)),
-												  "n": bool(re.search("-n", stdout))}
+												  "n": bool(re.search("-n", stdout)),
+												  "K": bool(re.search("-K", stdout))}
 					else:
 						self.sudo_availoptions = {"E": False, 
 												  "l [command]": False, 
-												  "n": False}
+												  "n": False,
+												  "K": False}
 					if debug:
 						safe_print("[D] Available sudo options:", 
 								   ", ".join(filter(lambda option: self.sudo_availoptions[option], 
@@ -2316,7 +2318,7 @@ class Worker(object):
 					dlg.ok.SetDefault()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
-					sudo_args = ["-k", "-l", "-S"]
+					sudo_args = ["-l", "-S"]
 					if self.sudo_availoptions["l [command]"]:
 						sudo_args += [cmd, "-?"]
 					while True:
@@ -2326,6 +2328,11 @@ class Worker(object):
 						if result != wx.ID_OK:
 							safe_print(lang.getstr("aborted"))
 							return None
+						if self.sudo_availoptions["K"]:
+							# Mac OS X Snow Leopard and below do not support
+							# using -k or -K together with other options
+							sp.call([sudo, "-K"], stdout=sp.PIPE, 
+									stderr=sp.PIPE)
 						stdin = tempfile.SpooledTemporaryFile()
 						stdin.write(pwd.encode(enc, "replace") + os.linesep)
 						stdin.seek(0)
