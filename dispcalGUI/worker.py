@@ -3259,6 +3259,7 @@ class Worker(object):
 					if start > -1:
 						display_name = (display_name[:start] +
 										display_name[start + len(manufacturer):]).lstrip()
+						display_name = re.sub("^[^([{\w]+", "", display_name)
 			display.append(display_name)
 			return " ".join(display)
 		return ""
@@ -3289,7 +3290,7 @@ class Worker(object):
 					weight = len(chars)
 				if chars and weight >= maxweight:
 					# Weigh parts further to the right higher
-					display_name = part
+					display_name = re.sub("^[^([{\w]+", "", part)
 					maxweight = weight
 		return display_name
 	
