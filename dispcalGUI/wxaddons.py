@@ -221,7 +221,8 @@ class BetterWindowDisabler(object):
 				if w not in skip and "Inspection" not in "%s" % w:
 					self._windows.append(w)
 					for child in w.GetAllChildren(skip + toplevel):
-						self._windows.append(child)
+						if child:
+							self._windows.append(child)
 			def Enable(w, enable=True):
 				w._enabled = enable
 			def Disable(w):
@@ -237,9 +238,10 @@ class BetterWindowDisabler(object):
 
 	def __del__(self):
 		for w in self._windows:
-			w.Disable = w._Disable
-			w.Enable = w._Enable
-			w.Enable(w._enabled)
+			if w:
+				w.Disable = w._Disable
+				w.Enable = w._Enable
+				w.Enable(w._enabled)
 
 
 class CustomGridCellEvent(CustomEvent):
