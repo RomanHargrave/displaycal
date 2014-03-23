@@ -5908,9 +5908,7 @@ class MainFrame(BaseFrame):
 								ok=lang.getstr("profile.install"), 
 								cancel=lang.getstr("profile.do_not_install"), 
 								bitmap=geticon(32, "dialog-information"),
-								alt=share_profile,
-								style=wx.CAPTION | wx.CLOSE_BOX | 
-									  wx.STAY_ON_TOP)
+								alt=share_profile)
 			if share_profile:
 				# Show share profile button
 				dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
@@ -6039,6 +6037,8 @@ class MainFrame(BaseFrame):
 			dlg.preview = preview
 			dlg.OnCloseIntercept = self.profile_finish_close_handler
 			self.modaldlg = dlg
+			# Make sure we stay under our dialog
+			self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
 			wx.CallAfter(dlg.Show)
 		else:
 			if isinstance(result, Exception):
@@ -6081,6 +6081,9 @@ class MainFrame(BaseFrame):
 				# and if it contains curves)
 				self.load_display_profile_cal(None)
 		del self.modaldlg._disabler
+		# Unbind automatic lowering
+		self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
+		self.Raise()
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
 		# dereference it before we can delete the python attribute
