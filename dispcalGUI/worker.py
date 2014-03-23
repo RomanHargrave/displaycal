@@ -1415,8 +1415,6 @@ class Worker(object):
 				return
 			if dlg_result != wx.ID_OK:
 				self.progress_wnd.Resume()
-				if pause:
-					self.progress_wnd.pause_continue_handler()
 				return
 		self.subprocess_abort = True
 		self.thread_abort = True
