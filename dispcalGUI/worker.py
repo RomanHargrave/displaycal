@@ -5431,14 +5431,10 @@ class Worker(object):
 		if getattr(self, "progress_wnd", False):
 			if getattr(self.progress_wnd, "dlg", None):
 				self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
-				# Reparent the dialog so closing the progress window does not
-				# destroy the dialog which is still referenced in another
-				# function call
-				self.progress_wnd.dlg.Reparent(self.owner)
 				self.progress_wnd.dlg = None
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
-			self.progress_wnd.Close()
+			self.progress_wnd.Hide()
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """

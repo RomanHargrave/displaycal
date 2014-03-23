@@ -1095,7 +1095,10 @@ class ProgressDialog(wx.Dialog):
 		self.keepGoing = True
 		if hasattr(self, "cancel"):
 			self.cancel.Enable()
-		self.pause_continue.Enable()
+		if self.paused:
+			self.pause_continue_handler()
+		else:
+			self.pause_continue.Enable()
 	
 	def Update(self, value, msg=None):
 		if msg and msg != self.msg.Label:
