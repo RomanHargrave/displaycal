@@ -1274,9 +1274,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-information"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
 		if self.finished:
 			return
-		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1381,9 +1381,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-information"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
 		if self.finished:
 			return
-		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1410,9 +1410,9 @@ class Worker(object):
 								bitmap=geticon(32, "dialog-warning"))
 			self.progress_wnd.dlg = dlg
 			dlg_result = dlg.ShowModal()
+			dlg.Destroy()
 			if self.finished:
 				return
-			dlg.Destroy()
 			if dlg_result != wx.ID_OK:
 				self.progress_wnd.Resume()
 				if pause:
@@ -1438,9 +1438,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-information"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
 		if self.finished:
 			return
-		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -1462,9 +1462,9 @@ class Worker(object):
 							bitmap=geticon(32, "dialog-warning"))
 		self.progress_wnd.dlg = dlg
 		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
 		if self.finished:
 			return
-		dlg.Destroy()
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
@@ -5431,6 +5431,10 @@ class Worker(object):
 		if getattr(self, "progress_wnd", False):
 			if getattr(self.progress_wnd, "dlg", None):
 				self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
+				# Reparent the dialog so closing the progress window does not
+				# destroy the dialog which is still referenced in another
+				# function call
+				self.progress_wnd.dlg.Reparent(self.owner)
 				self.progress_wnd.dlg = None
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
