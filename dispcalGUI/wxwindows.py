@@ -1409,7 +1409,7 @@ class TwoWaySplitter(FourWaySplitter):
 			totw = width - barSize - 2*border
 			self._splitx = max((self._fhor*totw)/10000, self._minimum_pane_size)
 			self._splity = height
-			rightw = totw - self._splitx
+			rightw = max(totw - self._splitx, 0)
 			if win0:
 				win0.SetDimensions(0, 0, self._splitx, self._splity)
 				win0.Show()
