@@ -1398,7 +1398,7 @@ class Worker(object):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 	
 	def abort_subprocess(self, confirm=False):
-		""" Abort the current subprocess """
+		""" Abort the current subprocess or thread """
 		if confirm and getattr(self, "progress_wnd", None):
 			if getattr(self.progress_wnd, "dlg", None):
 				return
@@ -5097,7 +5097,7 @@ class Worker(object):
 			elif not getattr(self, "thread_abort", False):
 				if debug:
 					safe_print('[D] thread_abort')
-				self.thread_abort = True
+				self.abort_subprocess(True)
 		if self.finished is True:
 			return
 		if (not self.activated and self.progress_wnd.IsShownOnScreen() and
