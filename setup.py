@@ -8,6 +8,7 @@ from distutils.util import change_root, get_platform
 from hashlib import sha1
 from subprocess import call, Popen
 from time import gmtime, strftime, timezone
+from xml.dom import minidom
 import codecs
 import glob
 import math
@@ -22,8 +23,9 @@ if sys.platform == "win32":
 
 sys.path.insert(0, "dispcalGUI")
 
-from util_os import which
+from util_os import fs_enc, which
 from util_str import strtr
+import wexpect
 
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
@@ -88,7 +90,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"VERSION_MAC": re.sub("(?:\.0){2}$", "", version_mac),
 		"VERSION_WIN": re.sub("(?:\.0){2}$", "", version_win),
 		"VERSION_SRC": re.sub("(?:\.0){2}$", "", version_src),
-		"URL": "http://%s/" % domain,
+		"URL": "http://%s/" % domain.lower(),
 		"WX_MINVERSION": ".".join(str(n) for n in wx_minversion),
 		"YEAR": strftime("%Y", gmtime())}
 	mapping.update(iterable or {})
@@ -163,6 +165,8 @@ def setup():
 	purge = "purge" in sys.argv[1:]
 	purge_dist = "purge_dist" in sys.argv[1:]
 	use_setuptools = "--use-setuptools" in sys.argv[1:]
+	zeroinstall = "0install" in sys.argv[1:]
+	stability = "testing"
 	
 	argv = list(sys.argv[1:])
 	for i, arg in enumerate(reversed(argv)):
@@ -171,8 +175,11 @@ def setup():
 		if len(arg) == 2:
 			if arg[0] == "--force-arch":
 				arch = arg[1]
-			elif arg[0] == "--cfg":
-				setup_cfg = arg[1]
+			elif arg[0] in ("--cfg", "--stability"):
+				if arg[0] == "--cfg":
+					setup_cfg = arg[1]
+				else:
+					stability = arg[1]
 				sys.argv = sys.argv[:n] + sys.argv[n + 1:]
 		elif arg[0] == "-h" or arg[0].startswith("--help"):
 			help = True
@@ -394,8 +401,7 @@ def setup():
 						  "dispcalGUI.changes", "dispcalGUI.dsc",
 						  "dispcalGUI.spec", 
 						  os.path.join("obs-autopackage-deploy",
-									   "dispcalGUI.spec"), 
-						  os.path.join("0install", "dispcalGUI.xml")):
+									   "dispcalGUI.spec")):
 			if not dry_run:
 				tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 				if tmpl_name == "debian.copyright":
@@ -408,6 +414,9 @@ def setup():
 			sys.argv.remove("buildservice")
 			if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 				return
+
+	if zeroinstall:
+		sys.argv.remove("0install")
 
 	if bdist_appdmg:
 		i = sys.argv.index("bdist_appdmg")
@@ -561,7 +570,8 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	if not bdist_lipa or sys.argv[1:]:
+	if (not bdist_lipa and not zeroinstall) or sys.argv[1:]:
+		print sys.argv[1:]
 		from setup import setup
 		setup()
 	
@@ -770,6 +780,180 @@ def setup():
 						os.path.join(pydir, "misc", "%s.pyi.spec" % name)])
 		if retcode != 0:
 			sys.exit(retcode)
+
+	if zeroinstall:
+		# Create/update 0install feeds
+		from setup import get_data, get_scripts
+		scripts = sorted(get_scripts())
+		for tmpl_name in ("argyllcms.xml", "dispcalGUI.xml",
+						  "dispcalGUI-win32.xml", "numpy.xml", "wmi.xml",
+						  "wxpython.xml"):
+			dist_path = os.path.join(pydir, "dist", "0install", tmpl_name)
+			create = not os.path.isfile(dist_path)
+			if create:
+				tmpl_path = os.path.join(pydir, "misc", "0install",
+										 tmpl_name)
+				replace_placeholders(tmpl_path, dist_path, lastmod_time)
+			if tmpl_name.startswith("dispcalGUI"):
+				with open(dist_path) as dist_file:
+					xml = dist_file.read()
+					domtree = minidom.parseString(xml)
+				# Get interface
+				interface = domtree.getElementsByTagName("interface")[0]
+				# Get main group
+				group = domtree.getElementsByTagName("group")[0]
+				if create:
+					# Remove dummy implementation
+					for implementation in domtree.getElementsByTagName("implementation"):
+						implementation.parentNode.removeChild(implementation)
+					# Add languages
+					langs = [os.path.splitext(lang)[0] for lang in
+							 os.listdir(os.path.join(name, "lang"))]
+					group.setAttribute("langs", " ".join(langs))
+					# Add commands and entry-points
+					runner = domtree.createElement("runner")
+					if tmpl_name.endswith("-win32.xml"):
+						runner.setAttribute("command", "run-win")
+					runner.setAttribute("interface",
+										"http://repo.roscidus.com/python/python")
+					runner.setAttribute("version",
+										"%i.%i..!3.0" % py_minversion)
+					for script, desc in scripts:
+						# Add command to group
+						cmd = domtree.createElement("command")
+						cmdname = "run"
+						if script != name:
+							cmdname += "-" + script.replace(name + "-",
+															"")
+						cmd.setAttribute("name", cmdname)
+						cmd.setAttribute("path", script + ".pyw")
+						if script.endswith("-apply-profiles"):
+							arg = domtree.createElement("arg")
+							arg.appendChild(domtree.createTextNode("--force"))
+							cmd.appendChild(arg)
+						cmd.appendChild(runner.cloneNode(True))
+						group.appendChild(cmd)
+						# Add entry-point to interface
+						entry_point = domtree.createElement("entry-point")
+						entry_point.setAttribute("command", cmdname)
+						entry_point.setAttribute("binary-name", script)
+						cfg = RawConfigParser()
+						desktopbasename = "%s.desktop" % script
+						if script.endswith("-apply-profiles"):
+							desktopbasename = "z-" + desktopbasename
+						cfg.read(os.path.join(pydir, "misc",
+											  desktopbasename))
+						for option, tagname in (("Name", "name"),
+												("GenericName", "summary"),
+												("Comment", "description")):
+							for lang in [None] + langs:
+								if lang:
+									suffix = "[%s]" % lang
+								else:
+									suffix = ""
+								option = "%s%s" % (option, suffix)
+								if cfg.has_option("Desktop Entry", option):
+									value = cfg.get("Desktop Entry",
+													option).decode("UTF-8")
+									if value:
+										tag = domtree.createElement(tagname)
+										if not lang:
+											lang = "en"
+										tag.setAttribute("xml:lang", lang)
+										tag.appendChild(domtree.createTextNode(value))
+										entry_point.appendChild(tag)
+						for ext, mime_type in (("ico", "image/vnd.microsoft.icon"),
+											   ("png", "image/png")):
+							icon = domtree.createElement("icon")
+							if ext == "ico":
+								subdir = ""
+							else:
+								subdir = "256x256/"
+							icon.setAttribute("href",
+											  "http://%s/theme/icons/%s%s.%s" %
+											  (domain.lower(), subdir,
+											   script, ext))
+							icon.setAttribute("type", mime_type)
+							entry_point.appendChild(icon)
+						interface.appendChild(entry_point)
+				# Add implementation if it does not exist yet, update otherwise
+				match = None
+				for implementation in domtree.getElementsByTagName("implementation"):
+					match = (implementation.getAttribute("version") == version and
+							 implementation.getAttribute("stability") == stability)
+					if match:
+						break
+				if not match:
+					implementation = domtree.createElement("implementation")
+					implementation.setAttribute("version", version)
+					implementation.setAttribute("released",
+												strftime("%Y-%m-%d", 
+														 gmtime(lastmod_time)))
+					implementation.setAttribute("stability", stability)
+					digest = domtree.createElement("manifest-digest")
+					implementation.appendChild(digest)
+					archive = domtree.createElement("archive")
+					implementation.appendChild(archive)
+				else:
+					digest = implementation.getElementsByTagName("manifest-digest")[0]
+					for attrname, value in digest.attributes.items():
+						# Remove existing hashes
+						digest.removeAttribute(attrname)
+					archive = implementation.getElementsByTagName("archive")[0]
+				archive_name = "%s-%s.tar.gz" % (name, version)
+				archive_path = os.path.join(pydir, "dist", archive_name)
+				# Update digest
+				hashes = []
+				for algorythm in ("sha1new", "sha256", "sha256new"):
+					p = Popen(["0install", "digest",
+							   archive_path.encode(fs_enc), "-m=" + algorythm],
+							  stdout=sp.PIPE, cwd=pydir)
+					stdout, stderr = p.communicate()
+					hash = stdout.strip()
+					if not hash:
+						raise SystemExit(p.wait())
+					if hash in hashes:
+						break
+					hashes.append(hash)
+					if hash.startswith("sha1new="):
+						implementation.setAttribute("id", hash)
+					digest.setAttribute(*hash.split("="))
+				# Update archive
+				if stability == "stable":
+					folder = ""
+				else:
+					folder = "&folder=snapshot"
+				archive.setAttribute("extract", "%s-%s" % (name, version))
+				archive.setAttribute("href",
+									 "http://%s/download.php?version=%s&suffix=.tar.gz%s" %
+									 (domain.lower(), version, folder))
+				archive.setAttribute("size", "%s" % os.stat(archive_path).st_size)
+				archive.setAttribute("type", "application/x-compressed-tar")
+				group.appendChild(implementation)
+				# Update feed
+				with open(dist_path, "wb") as dist_file:
+					xml = domtree.toprettyxml(encoding="utf-8")
+					xml = re.sub(r"\n\s+\n", "\n", xml)
+					xml = re.sub(r"\n\s*([^<]+)\n\s*", r"\1", xml)
+					dist_file.write(xml)
+				# Sign feed
+				zeropublish = which("0publish") or which("0publish.exe")
+				passphrase_path = os.path.join(pydir, "gpg", "passphrase.txt")
+				if os.path.isfile(passphrase_path):
+					with open(passphrase_path) as passphrase_file:
+						passphrase = passphrase_file.read().strip()
+					p = wexpect.spawn(zeropublish.encode(fs_enc),
+									  ["-x", dist_path.encode(fs_enc)])
+					p.expect(":")
+					p.logfile_read = sys.stdout
+					p.send(passphrase)
+					p.send("\n")
+					try:
+						p.expect(wexpect.EOF, timeout=3)
+					except:
+						p.terminate()
+				else:
+					call(["0publish", "-x", dist_path.encode(fs_enc)])
 
 
 if __name__ == "__main__":

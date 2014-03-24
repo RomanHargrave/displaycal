@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/wmi.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<name>WMI</name>
+	<summary xml:lang="en">Windows Management Instrumentation</summary>
+	<description xml:lang="en">Windows Management Instrumentation (WMI) is Microsoft's implementation of Web-Based Enterprise Management (WBEM), an industry initiative to provide a Common Information Model (CIM) for pretty much any information about a computer system.
+
+The Python WMI module is a lightweight wrapper on top of the pywin32 extensions, and hides some of the messy plumbing needed to get Python to talk to the WMI API. It's pure Python and should work with any version of Python from 2.1 onwards (list comprehensions) and any recent version of pywin32.</description>
+	<homepage>http://timgolden.me.uk/python/wmi/index.html</homepage>
+	<group arch="Windows-*" license="MIT License">
+		<environment name="PYTHONPATH" insert="." />
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+			<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+				<version not-before="2.7" before="3.0" />
+			</requires>
+		</implementation>
+	</group>
+</interface>

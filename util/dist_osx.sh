@@ -6,10 +6,7 @@
 version=`python -c "from dispcalGUI import meta;print meta.version"`
 
 # Source tarball
-./setup.py sdist --use-distutils 2>&1 | tee dispcalGUI-$version.sdist.log
-
-# 0install
-util/dist_0install.sh
+./setup.py sdist 0install --stability=stable --use-distutils 2>&1 | tee dispcalGUI-$version.sdist.log
 
 # App bundle & dmg
 ./setup.py bdist_standalone 2>&1 | tee dispcalGUI-$version.bdist_standalone_osx.log

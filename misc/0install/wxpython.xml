@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/wxpython.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>wxPython</name>
+	<summary xml:lang="en">GUI toolkit for the Python programming language</summary>
+	<description xml:lang="en">wxPython is a GUI toolkit for the Python programming language. It allows Python programmers to create programs with a robust, highly functional graphical user interface, simply and easily. It is implemented as a Python extension module (native code) that wraps the popular wxWidgets cross platform GUI library, which is written in C++.</description>
+	<homepage>http://wxpython.org/</homepage>
+	<package-implementation package="wxPython" distributions="RPM" />
+	<package-implementation package="python-wxgtk2.8" distributions="Debian" />
+	<package-implementation package="python-wxgtk2.9" distributions="Debian" />
+	<package-implementation package="python-wxgtk3.0" distributions="Debian" />
+	<package-implementation package="dev-python/wxpython" distributions="Gentoo" />
+	<package-implementation package="wxpython" distributions="Arch" />
+	<package-implementation package="wxpython" distributions="Ports" />
+	<package-implementation package="py24-wxpython-2.8" distributions="Ports" />
+	<package-implementation package="py25-wxpython-2.8" distributions="Ports" />
+	<package-implementation package="py26-wxpython-2.8" distributions="Ports" />
+	<package-implementation package="py27-wxpython-2.8" distributions="Ports" />
+	<package-implementation package="py27-wxpython-3.0" distributions="Ports" />
+	<package-implementation package="py24-wxpython-2.8" distributions="MacPorts" />
+	<package-implementation package="py25-wxpython-2.8" distributions="MacPorts" />
+	<package-implementation package="py26-wxpython-2.8" distributions="MacPorts" />
+	<package-implementation package="py27-wxpython-2.8" distributions="MacPorts" />
+	<package-implementation package="py27-wxpython-3.0" distributions="MacPorts" />
+	<group license="wxPython License">
+		<environment name="PYTHONPATH" insert="." />
+		<group arch="MacOSX-*">
+			<environment name="DYLD_FALLBACK_LIBRARY_PATH" insert="." />
+			<implementation arch="MacOSX-*" version="0.0.0.0" released="2011-07-25" stability="stable">
+				<!-- Mac OS X PPC/x86 -->
+				<requires interface="http://repo.roscidus.com/python/python" version="2.6..!2.7">
+					<version not-before="2.6" before="2.7" />
+				</requires>
+				<environment name="PYTHONPATH" insert="wx-2.8-mac-unicode" />
+			</implementation>
+			<implementation arch="MacOSX-*" version="0.0.0.0" released="2013-12-29" stability="stable">
+				<!-- Mac OS X x86_64 -->
+				<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+					<version not-before="2.7" before="3.0" />
+				</requires>
+				<environment name="PYTHONPATH" insert="wx-3.0-osx_cocoa" />
+			</implementation>
+		</group>
+		<group arch="Windows-*">
+			<implementation version="0.0.0.0" released="2012-07-24" stability="stable">
+				<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+					<version not-before="2.7" before="3.0" />
+				</requires>
+				<environment name="PYTHONPATH" insert="wx-0.0.0.0-msw" />
+			</implementation>
+		</group>
+	</group>
+</interface>

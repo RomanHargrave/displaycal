@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/numpy.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>NumPy</name>
+	<summary xml:lang="en">The fundamental package for scientific computing with Python</summary>
+	<description xml:lang="en">NumPy is the fundamental package for scientific computing with Python. It contains among other things:
+
+    A powerful N-dimensional array object,
+    sophisticated (broadcasting) functions,
+    tools for integrating C/C++ and Fortran code,
+    useful linear algebra, Fourier transform, and random number capabilities.
+
+Besides its obvious scientific uses, NumPy can also be used as an efficient multi-dimensional container of generic data. Arbitrary data-types can be defined. This allows NumPy to seamlessly and speedily integrate with a wide variety of databases.</description>
+	<homepage>http://www.numpy.org/</homepage>
+	<package-implementation package="numpy" distributions="RPM" />
+	<package-implementation package="python-numpy" distributions="Debian" />
+	<package-implementation package="dev-python/numpy" distributions="Gentoo" />
+	<package-implementation package="python2-numpy" distributions="Arch" />
+	<package-implementation package="numpy" distributions="Darwin" />
+	<package-implementation package="numpy" distributions="Ports" />
+	<package-implementation package="py26-numpy" distributions="Ports" />
+	<package-implementation package="py27-numpy" distributions="Ports" />
+	<package-implementation package="py32-numpy" distributions="Ports" />
+	<package-implementation package="py33-numpy" distributions="Ports" />
+	<package-implementation package="py34-numpy" distributions="Ports" />
+	<package-implementation package="py26-numpy" distributions="MacPorts" />
+	<package-implementation package="py27-numpy" distributions="MacPorts" />
+	<package-implementation package="py32-numpy" distributions="MacPorts" />
+	<package-implementation package="py33-numpy" distributions="MacPorts" />
+	<package-implementation package="py34-numpy" distributions="MacPorts" />
+	<group license="NumPy License">
+		<environment name="PYTHONPATH" insert="." />
+		<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+			<!-- Mac OS X PPC/x86 -->
+			<requires interface="http://repo.roscidus.com/python/python" version="2.6..!2.7">
+				<version not-before="2.6" before="2.7" />
+			</requires>
+		</implementation>
+		<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+			<!-- Mac OS X x86_64 -->
+			<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+				<version not-before="2.7" before="3.0" />
+			</requires>
+		</implementation>
+		<implementation arch="Windows-*" version="0.0.0" released="0000-00-00" stability="stable">
+			<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+				<version not-before="2.7" before="3.0" />
+			</requires>
+		</implementation>
+	</group>
+</interface>
