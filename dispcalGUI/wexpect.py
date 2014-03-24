@@ -2115,14 +2115,14 @@ class Wtty:
         evt = PyINPUT_RECORDType(KEY_EVENT)
         evt.KeyDown = True
         evt.Char = char
+        if char in ("\n", "\r"):
+            evt.VirtualKeyCode = 0x0d  # VK_RETURN
         evt.RepeatCount = 1
         return evt    
     
     def write(self, s):
         """Writes input into the child consoles input buffer."""
     
-        if s[-1] == '\n':
-            s = s[:-1]
         if len(s) == 0:
             return 0
         records = [self.createKeyEvent(c) for c in unicode(s)]
