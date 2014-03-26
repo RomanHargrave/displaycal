@@ -14,6 +14,7 @@
 Besides its obvious scientific uses, NumPy can also be used as an efficient multi-dimensional container of generic data. Arbitrary data-types can be defined. This allows NumPy to seamlessly and speedily integrate with a wide variety of databases.</description>
 	<homepage>http://www.numpy.org/</homepage>
 	<package-implementation package="numpy" distributions="RPM" />
+	<package-implementation package="python-numpy" distributions="RPM" />
 	<package-implementation package="python-numpy" distributions="Debian" />
 	<package-implementation package="dev-python/numpy" distributions="Gentoo" />
 	<package-implementation package="python2-numpy" distributions="Arch" />

@@ -785,9 +785,19 @@ def setup():
 		# Create/update 0install feeds
 		from setup import get_data, get_scripts
 		scripts = sorted(get_scripts())
+		# Get archive digest
+		extract = "%s-%s" % (name, version)
+		archive_name = extract + ".tar.gz"
+		archive_path = os.path.join(pydir, "dist", archive_name)
+		p = Popen(["0install", "digest", archive_path.encode(fs_enc), extract],
+				  stdout=sp.PIPE, cwd=pydir)
+		stdout, stderr = p.communicate()
+		hash = stdout.strip()
+		if not hash:
+			raise SystemExit(p.wait())
 		for tmpl_name in ("argyllcms.xml", "dispcalGUI.xml",
-						  "dispcalGUI-win32.xml", "numpy.xml", "wmi.xml",
-						  "wxpython.xml"):
+						  "dispcalGUI-mac.xml", "dispcalGUI-win32.xml",
+						  "numpy.xml", "wmi.xml", "wxpython.xml"):
 			dist_path = os.path.join(pydir, "dist", "0install", tmpl_name)
 			create = not os.path.isfile(dist_path)
 			if create:
@@ -801,135 +811,127 @@ def setup():
 				# Get interface
 				interface = domtree.getElementsByTagName("interface")[0]
 				# Get main group
-				group = domtree.getElementsByTagName("group")[0]
-				if create:
-					# Remove dummy implementation
-					for implementation in domtree.getElementsByTagName("implementation"):
-						implementation.parentNode.removeChild(implementation)
-					# Add languages
-					langs = [os.path.splitext(lang)[0] for lang in
-							 os.listdir(os.path.join(name, "lang"))]
-					group.setAttribute("langs", " ".join(langs))
-					# Add commands and entry-points
-					runner = domtree.createElement("runner")
-					if tmpl_name.endswith("-win32.xml"):
-						runner.setAttribute("command", "run-win")
-					runner.setAttribute("interface",
-										"http://repo.roscidus.com/python/python")
-					runner.setAttribute("version",
-										"%i.%i..!3.0" % py_minversion)
-					for script, desc in scripts:
-						# Add command to group
-						cmd = domtree.createElement("command")
-						cmdname = "run"
-						if script != name:
-							cmdname += "-" + script.replace(name + "-",
-															"")
-						cmd.setAttribute("name", cmdname)
-						cmd.setAttribute("path", script + ".pyw")
-						if script.endswith("-apply-profiles"):
-							arg = domtree.createElement("arg")
-							arg.appendChild(domtree.createTextNode("--force"))
-							cmd.appendChild(arg)
-						cmd.appendChild(runner.cloneNode(True))
-						group.appendChild(cmd)
-						# Add entry-point to interface
-						entry_point = domtree.createElement("entry-point")
-						entry_point.setAttribute("command", cmdname)
-						entry_point.setAttribute("binary-name", script)
-						cfg = RawConfigParser()
-						desktopbasename = "%s.desktop" % script
-						if script.endswith("-apply-profiles"):
-							desktopbasename = "z-" + desktopbasename
-						cfg.read(os.path.join(pydir, "misc",
-											  desktopbasename))
-						for option, tagname in (("Name", "name"),
-												("GenericName", "summary"),
-												("Comment", "description")):
-							for lang in [None] + langs:
-								if lang:
-									suffix = "[%s]" % lang
+				group0 = domtree.getElementsByTagName("group")[0]
+				# Add languages
+				langs = [os.path.splitext(lang)[0] for lang in
+						 os.listdir(os.path.join(name, "lang"))]
+				group0.setAttribute("langs", " ".join(langs))
+				# Get architecture groups
+				groups = filter(lambda group: group.hasAttribute("arch"),
+								domtree.getElementsByTagName("group"))
+				# Update groups
+				for i, group in enumerate(groups):
+					if create:
+						# Remove dummy implementations
+						for implementation in group.getElementsByTagName("implementation"):
+							if implementation.getAttribute("released") == "0000-00-00":
+								implementation.parentNode.removeChild(implementation)
+						# Add commands and entry-points
+						runner = domtree.createElement("runner")
+						if group.getAttribute("arch").startswith("Windows-"):
+							runner.setAttribute("command", "run-win")
+						runner.setAttribute("interface",
+											"http://repo.roscidus.com/python/python")
+						runner.setAttribute("version",
+											"%i.%i..!3.0" % py_minversion)
+						for script, desc in scripts:
+							# Add command to group
+							cmd = domtree.createElement("command")
+							cmdname = "run"
+							if script != name:
+								cmdname += "-" + script.replace(name + "-",
+																"")
+							cmd.setAttribute("name", cmdname)
+							cmd.setAttribute("path", script + ".pyw")
+							if script.endswith("-apply-profiles"):
+								arg = domtree.createElement("arg")
+								arg.appendChild(domtree.createTextNode("--force"))
+								cmd.appendChild(arg)
+							cmd.appendChild(runner.cloneNode(True))
+							group.appendChild(cmd)
+							# Add entry-points to interface
+							if i > 0:
+								continue
+							entry_point = domtree.createElement("entry-point")
+							entry_point.setAttribute("command", cmdname)
+							entry_point.setAttribute("binary-name", script)
+							cfg = RawConfigParser()
+							desktopbasename = "%s.desktop" % script
+							if script.endswith("-apply-profiles"):
+								desktopbasename = "z-" + desktopbasename
+							cfg.read(os.path.join(pydir, "misc",
+												  desktopbasename))
+							for option, tagname in (("Name", "name"),
+													("GenericName", "summary"),
+													("Comment", "description")):
+								for lang in [None] + langs:
+									if lang:
+										suffix = "[%s]" % lang
+									else:
+										suffix = ""
+									option = "%s%s" % (option, suffix)
+									if cfg.has_option("Desktop Entry", option):
+										value = cfg.get("Desktop Entry",
+														option).decode("UTF-8")
+										if value:
+											tag = domtree.createElement(tagname)
+											if not lang:
+												lang = "en"
+											tag.setAttribute("xml:lang", lang)
+											tag.appendChild(domtree.createTextNode(value))
+											entry_point.appendChild(tag)
+							for ext, mime_type in (("ico", "image/vnd.microsoft.icon"),
+												   ("png", "image/png")):
+								icon = domtree.createElement("icon")
+								if ext == "ico":
+									subdir = ""
 								else:
-									suffix = ""
-								option = "%s%s" % (option, suffix)
-								if cfg.has_option("Desktop Entry", option):
-									value = cfg.get("Desktop Entry",
-													option).decode("UTF-8")
-									if value:
-										tag = domtree.createElement(tagname)
-										if not lang:
-											lang = "en"
-										tag.setAttribute("xml:lang", lang)
-										tag.appendChild(domtree.createTextNode(value))
-										entry_point.appendChild(tag)
-						for ext, mime_type in (("ico", "image/vnd.microsoft.icon"),
-											   ("png", "image/png")):
-							icon = domtree.createElement("icon")
-							if ext == "ico":
-								subdir = ""
-							else:
-								subdir = "256x256/"
-							icon.setAttribute("href",
-											  "http://%s/theme/icons/%s%s.%s" %
-											  (domain.lower(), subdir,
-											   script, ext))
-							icon.setAttribute("type", mime_type)
-							entry_point.appendChild(icon)
-						interface.appendChild(entry_point)
-				# Add implementation if it does not exist yet, update otherwise
-				match = None
-				for implementation in domtree.getElementsByTagName("implementation"):
-					match = (implementation.getAttribute("version") == version and
-							 implementation.getAttribute("stability") == stability)
-					if match:
-						break
-				if not match:
-					implementation = domtree.createElement("implementation")
-					implementation.setAttribute("version", version)
-					implementation.setAttribute("released",
-												strftime("%Y-%m-%d", 
-														 gmtime(lastmod_time)))
-					implementation.setAttribute("stability", stability)
-					digest = domtree.createElement("manifest-digest")
-					implementation.appendChild(digest)
-					archive = domtree.createElement("archive")
-					implementation.appendChild(archive)
-				else:
-					digest = implementation.getElementsByTagName("manifest-digest")[0]
-					for attrname, value in digest.attributes.items():
-						# Remove existing hashes
-						digest.removeAttribute(attrname)
-					archive = implementation.getElementsByTagName("archive")[0]
-				archive_name = "%s-%s.tar.gz" % (name, version)
-				archive_path = os.path.join(pydir, "dist", archive_name)
-				# Update digest
-				hashes = []
-				for algorythm in ("sha1new", "sha256", "sha256new"):
-					p = Popen(["0install", "digest",
-							   archive_path.encode(fs_enc), "-m=" + algorythm],
-							  stdout=sp.PIPE, cwd=pydir)
-					stdout, stderr = p.communicate()
-					hash = stdout.strip()
-					if not hash:
-						raise SystemExit(p.wait())
-					if hash in hashes:
-						break
-					hashes.append(hash)
-					if hash.startswith("sha1new="):
-						implementation.setAttribute("id", hash)
+									subdir = "256x256/"
+								icon.setAttribute("href",
+												  "http://%s/theme/icons/%s%s.%s" %
+												  (domain.lower(), subdir,
+												   script, ext))
+								icon.setAttribute("type", mime_type)
+								entry_point.appendChild(icon)
+							interface.appendChild(entry_point)
+					# Add implementation if it does not exist yet, update otherwise
+					match = None
+					for implementation in group.getElementsByTagName("implementation"):
+						match = (implementation.getAttribute("version") == version and
+								 implementation.getAttribute("stability") == stability)
+						if match:
+							break
+					if not match:
+						implementation = domtree.createElement("implementation")
+						implementation.setAttribute("version", version)
+						implementation.setAttribute("released",
+													strftime("%Y-%m-%d", 
+															 gmtime(lastmod_time)))
+						implementation.setAttribute("stability", stability)
+						digest = domtree.createElement("manifest-digest")
+						implementation.appendChild(digest)
+						archive = domtree.createElement("archive")
+						implementation.appendChild(archive)
+					else:
+						digest = implementation.getElementsByTagName("manifest-digest")[0]
+						for attrname, value in digest.attributes.items():
+							# Remove existing hashes
+							digest.removeAttribute(attrname)
+						archive = implementation.getElementsByTagName("archive")[0]
+					implementation.setAttribute("id", hash)
 					digest.setAttribute(*hash.split("="))
-				# Update archive
-				if stability == "stable":
-					folder = ""
-				else:
-					folder = "&folder=snapshot"
-				archive.setAttribute("extract", "%s-%s" % (name, version))
-				archive.setAttribute("href",
-									 "http://%s/download.php?version=%s&suffix=.tar.gz%s" %
-									 (domain.lower(), version, folder))
-				archive.setAttribute("size", "%s" % os.stat(archive_path).st_size)
-				archive.setAttribute("type", "application/x-compressed-tar")
-				group.appendChild(implementation)
+					# Update archive
+					if stability == "stable":
+						folder = ""
+					else:
+						folder = "&folder=snapshot"
+					archive.setAttribute("extract", extract)
+					archive.setAttribute("href",
+										 "http://%s/download.php?version=%s&suffix=.tar.gz%s" %
+										 (domain.lower(), version, folder))
+					archive.setAttribute("size", "%s" % os.stat(archive_path).st_size)
+					archive.setAttribute("type", "application/x-compressed-tar")
+					group.appendChild(implementation)
 				# Update feed
 				with open(dist_path, "wb") as dist_file:
 					xml = domtree.toprettyxml(encoding="utf-8")
