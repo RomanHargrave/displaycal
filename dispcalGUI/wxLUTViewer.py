@@ -1586,7 +1586,7 @@ class LUTFrame(wx.Frame):
 			# Show closest point (when enbled)
 			# Make up dict with info for the point label
 			dlst = self.client.GetClosestPoint(xy, pointScaled=True)
-			if dlst != []:
+			if dlst != [] and hasattr(self.client, "point_grid"):
 				curveNum, legend, pIndex, pointXY, scaledXY, distance = dlst
 				legend = legend.split(", ")
 				R, G, B = (self.client.point_grid[0].get(pointXY[0],
