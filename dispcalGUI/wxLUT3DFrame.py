@@ -180,7 +180,7 @@ class LUT3DFrame(BaseFrame):
 	def encoding_output_ctrl_handler(self, event):
 		encoding = self.encoding_ab[self.encoding_output_ctrl.GetSelection()]
 		if getcfg("3dlut.format") == "madVR" and encoding != "t":
-			profile = getattr(self, "output_profile")
+			profile = getattr(self, "output_profile", None)
 			if (profile and "meta" in profile.tags and
 				isinstance(profile.tags.meta, ICCP.DictType) and
 				"EDID_model" in profile.tags.meta):
