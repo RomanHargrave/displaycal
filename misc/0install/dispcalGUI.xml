@@ -19,6 +19,14 @@ ${DESC}</description>
 		</requires>
 		<requires interface="${URL}0install/numpy.xml" />
 		<requires importance="recommended" interface="${URL}0install/argyllcms.xml" />
+		<command name="install-standalone-tools-icons" path="util/standalone-tools-icons.py">
+			<arg>install</arg>
+			<runner interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0" />
+		</command>
+		<command name="uninstall-standalone-tools-icons" path="util/standalone-tools-icons.py">
+			<arg>uninstall</arg>
+			<runner interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0" />
+		</command>
 		<implementation released="0000-00-00" version="0.0.0.0">
 		</implementation>
 	</group>
