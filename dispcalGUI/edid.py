@@ -34,7 +34,7 @@ else:
 
 import config
 from log import log, safe_print
-from util_str import make_ascii_printable
+from util_str import make_ascii_printable, strtr
 if sys.platform == "win32":
 	import util_win
 
@@ -221,19 +221,20 @@ def parse_manufacturer_id(block):
 
 def get_manufacturer_name(manufacturer_id):
 	""" Try and get a nice descriptive string for our manufacturer id.
-	This uses pnp.ids which will be looked for in several places.
-	If it can't find the file, it simply returns the manufacturer id.
+	This uses either hwdb or pnp.ids which will be looked for in several places.
+	If it can't find the file, it returns None.
 	
 	Examples:
 	SAM -> Samsung Electric Company
 	NEC -> NEC Corporation
 	
-	pnp.ids can be created from Excel data available from Microsoft:
+	hwdb/pnp.ids can be created from Excel data available from Microsoft:
 	http://www.microsoft.com/whdc/system/pnppwr/pnp/pnpid.mspx
 	
 	"""
 	if not pnpidcache:
-		paths = ["/usr/share/hwdata/pnp.ids",  # hwdata, e.g. Red Hat
+		paths = ["/usr/lib/udev/hwdb.d/20-acpi-vendor.hwdb",  # systemd
+				 "/usr/share/hwdata/pnp.ids",  # hwdata, e.g. Red Hat
 				 "/usr/share/misc/pnp.ids",  # pnputils, e.g. Debian
 				 "/usr/share/libgnome-desktop/pnp.ids"]  # fallback gnome-desktop
 		if sys.platform in ("darwin", "win32"):
@@ -245,20 +246,35 @@ def get_manufacturer_name(manufacturer_id):
 				except IOError:
 					pass
 				else:
+					id, name = None, None
 					try:
 						for line in pnp_ids:
-							try:
-								# Strip leading/trailing whitespace
-								# (non-breaking spaces too)
-								id, name = line.strip(string.whitespace + 
-													  u"\u00a0").split(None, 1)
-							except ValueError:
-								continue
+							if path.endswith("hwdb"):
+								if line.strip().startswith("acpi:"):
+									id = line.split(":")[1][:3]
+									continue
+								elif line.strip().startswith("ID_VENDOR_FROM_DATABASE"):
+									name = line.split("=", 1)[1].strip()
+								else:
+									continue
+								if not id or not name or id in pnpidcache:
+									continue
+							else:
+								try:
+									# Strip leading/trailing whitespace
+									# (non-breaking spaces too)
+									id, name = line.strip(string.whitespace + 
+														  u"\u00a0").split(None,
+																		   1)
+								except ValueError:
+									continue
 							pnpidcache[id] = name
 					except OSError:
-						pass
-					pnp_ids.close()
-	return pnpidcache.get(manufacturer_id, manufacturer_id)
+						continue
+					finally:
+						pnp_ids.close()
+					break
+	return pnpidcache.get(manufacturer_id)
 
 
 def edid_get_bit(value, bit):
@@ -276,6 +292,22 @@ def edid_decode_fraction(high, low):
 	for i in xrange(0, 10):
 		result += edid_get_bit(high, i) * math.pow(2, i - 10)
 	return result
+
+
+def edid_parse_string(desc):
+	# Return value should match colord's cd_edid_parse_string in cd-edid.c
+	# Remember: In C, NULL terminates a string, so do the same here
+	# Replace newline with NULL, then strip anything after first NULL byte
+	# (if any), then strip trailing whitespace
+	desc = strtr(desc[:13], {"\n": "\0", "\r": "\0"}).split("\0")[0].rstrip()
+	if desc:
+		# Replace all non-printable chars with NULL
+		# Afterwards, the amount of NULL bytes is the number of replaced chars
+		desc = make_ascii_printable(desc, subst="\0")
+		if desc.count("\0") <= 4:
+			# Only use string if max 4 replaced chars 
+			# Replace any NULL chars with dashes to make a printable string
+			return desc.replace("\0", "-")
 
 
 def parse_edid(edid):
@@ -319,6 +351,8 @@ def parse_edid(edid):
 								   edid_get_bits(ord(edid[LO_BW_XY]), 0, 1))
 	
 	result = locals()
+	if not manufacturer:
+		del result["manufacturer"]
 	
 	text_types = {BLOCK_TYPE_SERIAL_ASCII: "serial_ascii",
 				  BLOCK_TYPE_ASCII: "ascii",
@@ -332,18 +366,9 @@ def parse_edid(edid):
 			continue
 		text_type = text_types.get(block[BLOCK_TYPE])
 		if text_type:
-			# Strip all leading/trailing whitespace and NULL chars, then
-			# replace all non-printable chars with NULL
-			desc = make_ascii_printable(
-				block[BLOCK_CONTENTS[0]:BLOCK_CONTENTS[1]].strip(
-					"\0" + string.whitespace), subst="\0")
-			# Filter out bogus strings
-			if desc.count("\0") <= 4 < len(desc):
-				# Replace any NULL chars with dashes to make a printable string
-				# also replace whitespace with space
-				result[text_type] = desc.translate(
-					string.maketrans("\0" + string.whitespace, 
-									 "-" + (" " * len(string.whitespace))))
+			desc = edid_parse_string(block[BLOCK_CONTENTS[0]:BLOCK_CONTENTS[1]])
+			if desc is not None:
+				result[text_type] = desc
 		elif block[BLOCK_TYPE] == BLOCK_TYPE_COLOR_POINT:
 			for i in (5, 10):
 				# 2nd white point index in range 1...255

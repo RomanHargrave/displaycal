@@ -74,7 +74,7 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
 	import util_win
 import colord
-from util_os import getenvu, is_superuser, putenvu, quote_args, which
+from util_os import getenvu, is_superuser, putenvu, quote_args, which, whereis
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
@@ -3182,13 +3182,16 @@ class Worker(object):
 		profile.tags["B2A%i" % tableno] = itable
 		return True
 	
-	def get_device_id(self, quirk=True):
+	def get_device_id(self, quirk=True, use_serial_32=True,
+					  truncate_edid_strings=False):
 		""" Get org.freedesktop.ColorManager device key """
 		if config.get_display_name() in ("Web", "Untethered", "madVR"):
 			return None
 		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 											getcfg("display.number") - 1))]
-		return colord.device_id_from_edid(edid, quirk=quirk)
+		return colord.device_id_from_edid(edid, quirk=quirk,
+										  use_serial_32=use_serial_32,
+										  truncate_edid_strings=truncate_edid_strings)
 
 	def get_display(self):
 		""" Get the currently configured display number.
@@ -3419,19 +3422,35 @@ class Worker(object):
 													  capture_output,
 													  skip_scripts, silent)
 		device_id = self.get_device_id(quirk=True)
-		if (self.argyll_version < [1, 6] and
-			sys.platform not in ("darwin", "win32") and not getcfg("dry_run")):
-			if device_id and colord.Colord:
-				try:
-					client = colord.client_connect()
-					device = colord.device_connect(client, device_id)
-				except colord.CDError:
-					device_id = self.get_device_id(quirk=False)
-				# FIXME: This can block, so should really be run in separate
-				# thread with progress dialog in 'indeterminate' mode
-				result = self._install_profile_colord(profile_path, device_id)
+		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
+			(self.argyll_version < [1, 6] or not whereis("libcolordcompat"))):
+			if device_id:
+				# Try a range of possible device IDs
+				device_ids = [device_id,
+							  self.get_device_id(quirk=True,
+												 truncate_edid_strings=True),
+							  self.get_device_id(quirk=True,
+												 use_serial_32=False),
+							  self.get_device_id(quirk=True,
+												 use_serial_32=False,
+												 truncate_edid_strings=True),
+							  self.get_device_id(quirk=False),
+							  self.get_device_id(quirk=False,
+												 truncate_edid_strings=True),
+							  self.get_device_id(quirk=False,
+												 use_serial_32=False),
+							  self.get_device_id(quirk=False,
+												 use_serial_32=False,
+												 truncate_edid_strings=True)]
+				for device_id in device_ids:
+					# FIXME: This can block, so should really be run in separate
+					# thread with progress dialog in 'indeterminate' mode
+					result = self._install_profile_colord(profile_path,
+														  device_id)
+					if result is True:
+						break
 				colord_install = result
-			if (not device_id or not colord.Colord or
+			if (not device_id or
 				isinstance(result, Exception) or not result):
 				gcm_import = bool(which("gcm-import"))
 				if (isinstance(result, Exception) or not result) and gcm_import:
@@ -5629,8 +5648,9 @@ class Worker(object):
 															 str(edid.get("product_id") or "")))
 							display_manufacturer = edid.get("manufacturer")
 							profile.setDeviceModelDescription(display_name)
-							profile.setDeviceManufacturerDescription(
-								display_manufacturer)
+							if display_manufacturer:
+								profile.setDeviceManufacturerDescription(
+									display_manufacturer)
 							(gamut_volume,
 							 gamut_coverage) = self.create_gamut_views(profile_path)
 							self.update_profile(profile, ti3=str(ti3),

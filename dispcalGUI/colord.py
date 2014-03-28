@@ -58,17 +58,17 @@ def device_connect(client, device_id):
 	return device
 
 
-def device_id_from_edid(edid, quirk=True, use_unused_edid_keys=False):
+def device_id_from_edid(edid, quirk=True, use_serial_32=True,
+						truncate_edid_strings=False):
 	""" Assemble device key from EDID """
-	# https://gitorious.org/colord/master/blobs/master/doc/device-and-profile-naming-spec.txt
-	incomplete = False
+	# https://github.com/hughsie/colord/blob/master/doc/device-and-profile-naming-spec.txt
+	# Should match device ID returned by gcm_session_get_output_id in
+	# gnome-settings-daemon/plugins/color/gsd-color-state.c
+	# and Edid::deviceId in colord-kde/colord-kded/Edid.cpp respectively
 	parts = ["xrandr"]
-	if use_unused_edid_keys:
-		# Not currently used by colord
-		edid_keys = ["manufacturer", "monitor_name", "ascii", "serial_ascii",
-					 "serial_32"]
-	else:
-		edid_keys = ["manufacturer", "monitor_name", "serial_ascii"]
+	edid_keys = ["manufacturer", "monitor_name", "serial_ascii"]
+	if use_serial_32:
+		edid_keys += ["serial_32"]
 	for name in edid_keys:
 		value = edid.get(name)
 		if value:
@@ -78,17 +78,13 @@ def device_id_from_edid(edid, quirk=True, use_unused_edid_keys=False):
 			elif name == "manufacturer":
 				if quirk:
 					value = quirk_manufacturer(value)
-				if value == edid.get("manufacturer_id"):
-					# Skip manufacturer if it couldn't be expanded
-					continue
+			elif isinstance(value, basestring) and truncate_edid_strings:
+				# Older versions of colord used only the first 12 bytes
+				value = value[:12]
 			parts.append(str(value))
-		elif name == "manufacturer":
-			# Do not allow the manufacturer to be missing or empty
-			# TODO: Should fall back to xrandr name in that case
-			incomplete = True
-			break
-	if not incomplete:
+	if len(parts) > 1:
 		return "-".join(parts)
+	# TODO: Should fall back to xrandr name
 
 
 def get_default_profile(device_id):
@@ -99,10 +95,11 @@ def get_default_profile(device_id):
 	if not Colord:
 		colormgr = which("colormgr")
 		if not colormgr:
-			return
+			raise CDError("colormgr helper program not found")
+
+		# Find device object path
 		try:
-			p = sp.Popen([safe_str(colormgr), "device-get-default-profile",
-						  device_id],
+			p = sp.Popen([safe_str(colormgr), "get-devices", "display"],
 						 stdout=sp.PIPE, stderr=sp.PIPE)
 			stdout, stderr = p.communicate()
 		except Exception, exception:
@@ -110,7 +107,29 @@ def get_default_profile(device_id):
 		else:
 			if stderr.strip():
 				raise CDError(stderr)
-			match = re.search(":\s+([^\r\n]+\.ic[cm])", stdout, re.I)
+			device = None
+			for block in stdout.strip().split("\n\n"):
+				match = re.search(":\s*%s" % re.escape(device_id), block)
+				if match:
+					# Device object path is the first line of the block
+					device = block.strip().splitlines()[0].split(":", 1)[1].strip()
+					break
+			if not device:
+				raise CDError("Could not find object path for device ID %s" %
+							  device_id)
+		
+		# Get default profile
+		try:
+			p = sp.Popen([safe_str(colormgr), "device-get-default-profile",
+						  device],
+						 stdout=sp.PIPE, stderr=sp.PIPE)
+			stdout, stderr = p.communicate()
+		except Exception, exception:
+			raise CDError(safe_str(exception))
+		else:
+			if stderr.strip():
+				raise CDError(stderr)
+			match = re.search(":\s*([^\r\n]+\.ic[cm])", stdout, re.I)
 			if match:
 				return match.groups()[0]
 			else:
@@ -150,10 +169,6 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 						  (recommended not below 2 secs)
 	
 	"""
-	client = client_connect()
-
-	# Connect to existing device
-	device = device_connect(client, device_id)
 
 	# Copy profile
 	if not profile_installname:
@@ -164,16 +179,41 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 	if isinstance(profile_installname, unicode):
 		profile_installname = profile_installname.encode('UTF-8')
 
+	if Colord:
+		client = client_connect()
+	else:
+		colormgr = which("colormgr")
+		if not colormgr:
+			raise CDError("colormgr helper program not found")
+
+		profile = None
+
 	# Query colord for newly added profile
 	for i in xrange(int(timeout / .5)):
 		try:
-			profile = client.find_profile_by_filename_sync(profile_installname,
-														   cancellable)
-			if profile:
-				break
+			if Colord:
+				profile = client.find_profile_by_filename_sync(profile_installname,
+															   cancellable)
+			else:
+				p = sp.Popen([safe_str(colormgr), "get-profiles"],
+							 stdout=sp.PIPE, stderr=sp.PIPE)
+				stdout, stderr = p.communicate()
 		except Exception, exception:
 			# Profile not found
 			pass
+		else:
+			if not Colord:
+				if stderr.strip():
+					raise CDError(stderr)
+				for block in stdout.strip().split("\n\n"):
+					match = re.search(":\s*%s" % re.escape(profile_installname),
+									  block)
+					if match:
+						# Profile object path is the first line of the block
+						profile = block.strip().splitlines()[0].split(":", 1)[1].strip()
+						break
+		if profile:
+			break
 		# Give colord time to pick up the profile
 		sleep(.5)
 
@@ -181,21 +221,66 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 		raise CDError("Querying for profile %r returned no result for %s secs" %
 					  (profile_installname, timeout))
 
-	# Connect to profile
-	if not profile.connect_sync(cancellable):
-		raise CDError("Could not connect to profile")
+	if Colord:
+		# Connect to profile
+		if not profile.connect_sync(cancellable):
+			raise CDError("Could not connect to profile")
 
-	# Add profile to device
-	try:
-		device.add_profile_sync(Colord.DeviceRelation.HARD, profile, cancellable)
-	except Exception, exception:
-		# Profile may already have been added
-		pass
+		# Connect to existing device
+		device = device_connect(client, device_id)
 
-	# Make profile default for device
-	if not device.make_profile_default_sync(profile, cancellable):
-		raise CDError("Could not make profile %r default for device ID %s" %
-					  (profile.get_filename(), device_id))
+		# Add profile to device
+		try:
+			device.add_profile_sync(Colord.DeviceRelation.HARD, profile, cancellable)
+		except Exception, exception:
+			# Profile may already have been added
+			pass
+
+		# Make profile default for device
+		if not device.make_profile_default_sync(profile, cancellable):
+			raise CDError("Could not make profile %r default for device ID %s" %
+						  (profile.get_filename(), device_id))
+	else:
+		# Find device object path
+		try:
+			p = sp.Popen([safe_str(colormgr), "get-devices", "display"],
+						 stdout=sp.PIPE, stderr=sp.PIPE)
+			stdout, stderr = p.communicate()
+		except Exception, exception:
+			raise CDError(safe_str(exception))
+		else:
+			if stderr.strip():
+				raise CDError(stderr)
+			device = None
+			for block in stdout.strip().split("\n\n"):
+				match = re.search(":\s*%s" % re.escape(device_id), block)
+				if match:
+					# Device object path is the first line of the block
+					device = block.strip().splitlines()[0].split(":", 1)[1].strip()
+					break
+			if not device:
+				raise CDError("Could not find object path for device ID %s" %
+							  device_id)
+
+		# Add profile to device
+		# (Ignore stderr as profile may already have been added)
+		try:
+			p = sp.Popen([safe_str(colormgr), "device-add-profile",
+						  device, profile], stdout=sp.PIPE, stderr=sp.PIPE)
+			stdout, stderr = p.communicate()
+		except Exception, exception:
+			raise CDError(safe_str(exception))
+
+		# Make profile default for device
+		try:
+			p = sp.Popen([safe_str(colormgr), "device-make-profile-default",
+						  device, profile], stdout=sp.PIPE, stderr=sp.PIPE)
+			stdout, stderr = p.communicate()
+		except Exception, exception:
+			raise CDError(safe_str(exception))
+		else:
+			if stderr.strip():
+				raise CDError(stderr)
 
 
 def quirk_manufacturer(manufacturer):

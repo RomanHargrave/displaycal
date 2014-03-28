@@ -277,3 +277,15 @@ def which(executable, paths = None):
 			except Exception, exception:
 				pass
 	return None
+
+
+def whereis(filename):
+	try:
+		p = sp.Popen(["whereis", filename], stdout=sp.PIPE)
+		stdout, stderr = p.communicate()
+	except:
+		return
+	else:
+		result = stdout.split(":", 1).pop().strip()
+		if result:
+			return result

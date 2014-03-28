@@ -362,16 +362,31 @@ def _colord_get_display_profile(display_no=0):
 	except (TypeError, ValueError):
 		return None
 	if edid:
-		device_id = colord.device_id_from_edid(edid, quirk=True)
-		if device_id:
-			try:
-				profile_path = colord.get_default_profile(device_id)
-			except colord.CDError:
-				# Try unmodified vendor name
-				device_id = colord.device_id_from_edid(edid, quirk=False)
-				profile_path = colord.get_default_profile(device_id)
-			if profile_path:
-				return ICCProfile(profile_path)
+		# Try a range of possible device IDs
+		device_ids = [colord.device_id_from_edid(edid, quirk=True),
+					  colord.device_id_from_edid(edid, quirk=True,
+												 truncate_edid_strings=True),
+					  colord.device_id_from_edid(edid, quirk=True,
+												 use_serial_32=False),
+					  colord.device_id_from_edid(edid, quirk=True,
+												 use_serial_32=False,
+												 truncate_edid_strings=True),
+					  colord.device_id_from_edid(edid, quirk=False),
+					  colord.device_id_from_edid(edid, quirk=False,
+												 truncate_edid_strings=True),
+					  colord.device_id_from_edid(edid, quirk=False,
+												 use_serial_32=False),
+					  colord.device_id_from_edid(edid, quirk=False,
+												 use_serial_32=False,
+												 truncate_edid_strings=True)]
+		for device_id in device_ids:
+			if device_id:
+				try:
+					profile_path = colord.get_default_profile(device_id)
+				except colord.CDError:
+					continue
+				if profile_path:
+					return ICCProfile(profile_path)
 	return None
 
 
@@ -3565,7 +3580,7 @@ class ICCProfile:
 				info[name] = ""
 				info["    Manufacturer"] = "0x%s %s" % (
 					binascii.hexlify(tag.manufacturer).upper(),
-					edid.get_manufacturer_name(edid.parse_manufacturer_id(tag.manufacturer)))
+					edid.get_manufacturer_name(edid.parse_manufacturer_id(tag.manufacturer)) or "")
 				info["    Model"] = "0x%s" % binascii.hexlify(tag.model).upper()
 			elif isinstance(tag, MeasurementType):
 				info[name] = ""
@@ -3790,8 +3805,6 @@ class ICCProfile:
 		# OpenICC keys (some shared with GCM)
 		self.tags.meta.update((("prefix", ",".join(prefixes)),
 							   ("EDID_mnft", edid["manufacturer_id"]),
-							   ("EDID_manufacturer",
-								colord.quirk_manufacturer(edid["manufacturer"])),
 							   ("EDID_mnft_id", struct.unpack(">H",
 															  edid["edid"][8:10])[0]),
 							   ("EDID_model_id", edid["product_id"]),
@@ -3806,6 +3819,9 @@ class ICCProfile:
 							   ("EDID_blue_y", edid["blue_y"]),
 							   ("EDID_white_x", edid["white_x"]),
 							   ("EDID_white_y", edid["white_y"])))
+		manufacturer = edid.get("manufacturer")
+		if manufacturer:
+			self.tags.meta["EDID_manufacturer"] = colord.quirk_manufacturer(manufacturer)
 		if "gamma" in edid:
 			self.tags.meta["EDID_gamma"] = edid["gamma"]
 		monitor_name = edid.get("monitor_name", edid.get("ascii"))
@@ -3813,6 +3829,8 @@ class ICCProfile:
 			self.tags.meta["EDID_model"] = monitor_name
 		if edid.get("serial_ascii"):
 			self.tags.meta["EDID_serial"] = edid["serial_ascii"]
+		elif edid.get("serial_32"):
+			self.tags.meta["EDID_serial"] = str(edid["serial_32"])
 		# GCM keys
 		self.tags.meta["EDID_md5"] = edid["hash"]
 	
