@@ -457,6 +457,16 @@ class LUT3DFrame(BaseFrame):
 							self.show_encoding_controls()
 							self.enable_encoding_controls()
 							self.show_bt1886_controls()
+							if ("rTRC" in profile.tags and
+								"gTRC" in profile.tags and
+								"bTRC" in profile.tags and profile.tags.rTRC is
+								profile.tags.gTRC is profile.tags.bTRC and
+								isinstance(profile.tags.rTRC, ICCP.CurveType)):
+								# Use BT.1886 gamma mapping for SMPTE 240M /
+								# Rec. 709 TRC
+								tf = profile.tags.rTRC.get_transfer_function()
+								setcfg("3dlut.apply_bt1886_gamma_mapping",
+									  int(tf[0][1] in (-240, -709)))
 							self.apply_bt1886_cb.SetValue(bool(getcfg("3dlut.apply_bt1886_gamma_mapping")))
 							enable_bt1886_gamma = self.apply_bt1886_cb.GetValue()
 							self.bt1886_gamma_ctrl.Enable(enable_bt1886_gamma)
