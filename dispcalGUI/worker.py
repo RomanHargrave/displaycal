@@ -62,7 +62,7 @@ if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
-from meta import name as appname, version
+from meta import domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from trash import trash
@@ -3954,7 +3954,15 @@ class Worker(object):
 					# Running from source, or 0install/Listaller install
 					icon = os.path.join(pydir, "theme", "icons", "256x256",
 										appname + "-apply-profiles.png")
-					executable = pyw
+					# Check if this is a 0install implementation, in which
+					# case we wanto to call 0launch with the appropriate
+					# command
+					if re.match("sha\d+(?:new)?\W", os.path.basename(pydir)):
+						executable = ("0launch --command=run-apply-profiles "
+									  "http://%s/0install/dispcalGUI.xml" %
+									  domain.lower())
+					else:
+						executable = pyw
 				else:
 					# Regular install
 					icon = appname + "-apply-profiles"
