@@ -2156,15 +2156,18 @@ class Worker(object):
 			return False
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
 		self.cmdname = cmdname
-		if cmdname == get_argyll_utilname("dispwin"):
-			if "-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
-												  not "-I" in args and
-												  mac_ver()[0] >= '10.6'):
-				# Mac OS X 10.6 and up needs root privileges if loading/clearing 
-				# calibration
-				# In all other cases, root is only required if installing a
-				# profile to a system location
-				asroot = True
+		if (not "-?" in args and
+			(cmdname == get_argyll_utilname("dispwin") and
+			 ("-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
+												 not "-I" in args and
+												 mac_ver()[0] >= '10.6'))) or
+			(cmdname == get_argyll_utilname("dispcal") and
+			 sys.platform == "darwin" and mac_ver()[0] >= '10.6')):
+			# Mac OS X 10.6 and up needs root privileges if loading/clearing 
+			# calibration and seemingly for calibration aswell
+			# In all other cases, root is only required if installing a
+			# profile to a system location
+			asroot = True
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
@@ -5610,6 +5613,14 @@ class Worker(object):
 			result = self.exec_cmd(cmd, args, capture_output=capture_output)
 		else:
 			result = cmd
+		if (sys.platform == "darwin" and mac_ver()[0] >= "10.6" and
+			not getcfg("dry_run")):
+			# We need to take ownership of any files created by sudo dispcal
+			# otherwise we cannot move or remove them!
+			self.exec_cmd("chown", ["-R", getpass.getuser().decode(fs_enc),
+									self.tempdir],
+						  capture_output=capture_output, skip_scripts=True,
+						  asroot=True)
 		if not isinstance(result, Exception) and result:
 			dst_pathname = os.path.join(getcfg("profile.save_path"), 
 										getcfg("profile.name.expanded"), 
