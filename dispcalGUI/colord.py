@@ -188,6 +188,9 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 	if not profile_installname:
 		profile_installname = os.path.join(xdg_data_home, 'icc',
 										   os.path.basename(profile_filename))
+	profile_installdir = os.path.dirname(profile_installname)
+	if not os.path.isdir(profile_installdir):
+		os.makedirs(profile_installdir)
 	shutil.copyfile(profile_filename, profile_installname)
 	
 	if isinstance(profile_installname, unicode):
