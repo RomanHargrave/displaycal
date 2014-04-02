@@ -3446,8 +3446,7 @@ class Worker(object):
 												 use_serial_32=False,
 												 truncate_edid_strings=True)]
 				for device_id in device_ids:
-					# FIXME: This can block, so should really be run in separate
-					# thread with progress dialog in 'indeterminate' mode
+					# NOTE: This can block
 					result = self._install_profile_colord(profile_path,
 														  device_id)
 					if result is True:

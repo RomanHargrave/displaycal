@@ -6068,10 +6068,13 @@ class MainFrame(BaseFrame):
 			else:
 				safe_print("-" * 80)
 				safe_print(lang.getstr("profile.install"))
-				result = self.worker.install_profile(profile_path=self.modaldlg.profile_path, 
-													 skip_scripts=self.modaldlg.skip_scripts)
-				if isinstance(result, Exception):
-					show_result_dialog(result, parent=self.modaldlg)
+				self.worker.interactive = False
+				self.worker.start(self.profile_finish_consumer,
+								  self.worker.install_profile,
+								  wkwargs={"profile_path": self.modaldlg.profile_path, 
+										   "skip_scripts": self.modaldlg.skip_scripts},
+								  progress_msg=lang.getstr("profile.install"),
+								  stop_timers=False)
 		elif self.modaldlg.preview:
 			if getcfg("calibration.file"):
 				# Load LUT curves from last used .cal file
@@ -6080,6 +6083,11 @@ class MainFrame(BaseFrame):
 				# Load LUT curves from current display profile (if any, 
 				# and if it contains curves)
 				self.load_display_profile_cal(None)
+			self.profile_finish_consumer()
+	
+	def profile_finish_consumer(self, result=None):
+		if isinstance(result, Exception):
+			show_result_dialog(result, parent=self.modaldlg)
 		del self.modaldlg._disabler
 		# Unbind automatic lowering
 		self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
