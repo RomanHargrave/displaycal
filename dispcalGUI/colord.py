@@ -33,6 +33,9 @@ if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
 				   'vendor_names': {}}
 
 
+prefix = "/org/freedesktop/ColorManager/"
+
+
 def client_connect():
 	""" Connect to colord """
 	client = Colord.Client.new()
@@ -98,25 +101,7 @@ def get_default_profile(device_id):
 			raise CDError("colormgr helper program not found")
 
 		# Find device object path
-		try:
-			p = sp.Popen([safe_str(colormgr), "get-devices", "display"],
-						 stdout=sp.PIPE, stderr=sp.PIPE)
-			stdout, stderr = p.communicate()
-		except Exception, exception:
-			raise CDError(safe_str(exception))
-		else:
-			if stderr.strip():
-				raise CDError(stderr)
-			device = None
-			for block in stdout.strip().split("\n\n"):
-				match = re.search(":\s*%s" % re.escape(device_id), block)
-				if match:
-					# Device object path is the first line of the block
-					device = block.strip().splitlines()[0].split(":", 1)[1].strip()
-					break
-			if not device:
-				raise CDError("Could not find object path for device ID %s" %
-							  device_id)
+		device = get_object_path(device_id, "devices", "display")
 		
 		# Get default profile
 		try:
@@ -154,6 +139,35 @@ def get_default_profile(device_id):
 	if not isinstance(filename, unicode):
 		filename = filename.decode('UTF-8')
 	return filename
+
+
+def get_object_path(search, object_type, object_subtype=None):
+	colormgr = which("colormgr")
+	if not colormgr:
+		raise CDError("colormgr helper program not found")
+	args = ["get-%s" % object_type]
+	if object_subtype:
+		args.append(object_subtype)
+	try:
+		p = sp.Popen([safe_str(colormgr)] + args, stdout=sp.PIPE,
+					 stderr=sp.PIPE)
+		stdout, stderr = p.communicate()
+	except Exception, exception:
+		raise CDError(safe_str(exception))
+	else:
+		if stderr.strip():
+			raise CDError(stderr)
+		object_path = None
+		oprefix = prefix + object_type + "/"
+		for block in stdout.strip().split(oprefix):
+			match = re.search(":\s*%s" % re.escape(search), block)
+			if match:
+				# Object path is the first line of the block
+				object_path = oprefix + block.strip().splitlines()[0].strip()
+				break
+		if not object_path:
+			raise CDError("Could not find object path for %s" % search)
+	return object_path
 
 
 def install_profile(device_id, profile_filename, profile_installname=None,
@@ -195,23 +209,10 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 				profile = client.find_profile_by_filename_sync(profile_installname,
 															   cancellable)
 			else:
-				p = sp.Popen([safe_str(colormgr), "get-profiles"],
-							 stdout=sp.PIPE, stderr=sp.PIPE)
-				stdout, stderr = p.communicate()
+				profile = get_object_path(profile_installname, "profiles")
 		except Exception, exception:
 			# Profile not found
 			pass
-		else:
-			if not Colord:
-				if stderr.strip():
-					raise CDError(stderr)
-				for block in stdout.strip().split("\n\n"):
-					match = re.search(":\s*%s" % re.escape(profile_installname),
-									  block)
-					if match:
-						# Profile object path is the first line of the block
-						profile = block.strip().splitlines()[0].split(":", 1)[1].strip()
-						break
 		if profile:
 			break
 		# Give colord time to pick up the profile
@@ -242,25 +243,7 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 						  (profile.get_filename(), device_id))
 	else:
 		# Find device object path
-		try:
-			p = sp.Popen([safe_str(colormgr), "get-devices", "display"],
-						 stdout=sp.PIPE, stderr=sp.PIPE)
-			stdout, stderr = p.communicate()
-		except Exception, exception:
-			raise CDError(safe_str(exception))
-		else:
-			if stderr.strip():
-				raise CDError(stderr)
-			device = None
-			for block in stdout.strip().split("\n\n"):
-				match = re.search(":\s*%s" % re.escape(device_id), block)
-				if match:
-					# Device object path is the first line of the block
-					device = block.strip().splitlines()[0].split(":", 1)[1].strip()
-					break
-			if not device:
-				raise CDError("Could not find object path for device ID %s" %
-							  device_id)
+		device = get_object_path(device_id, "devices", "display")
 
 		# Add profile to device
 		# (Ignore stderr as profile may already have been added)
