@@ -6061,6 +6061,7 @@ class MainFrame(BaseFrame):
 			result = wx.ID_CANCEL
 		else:
 			result = event.GetId()
+		del self.modaldlg._disabler
 		if result == wx.ID_OK:
 			if config.get_display_name() in ("Web", "Untethered", "madVR"):
 				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
@@ -6069,10 +6070,19 @@ class MainFrame(BaseFrame):
 				safe_print("-" * 80)
 				safe_print(lang.getstr("profile.install"))
 				self.worker.interactive = False
+				if (getcfg("profile.install_scope") in ("l", "n") and
+					not self.worker.auth_timestamp):
+					result = self.worker.authenticate("dispwin",
+													  lang.getstr("profile.install"),
+													  self.modaldlg)
+					if result not in (True, None):
+						self.profile_finish_consumer(result)
+						return
 				self.worker.start(self.profile_finish_consumer,
 								  self.worker.install_profile,
 								  wkwargs={"profile_path": self.modaldlg.profile_path, 
 										   "skip_scripts": self.modaldlg.skip_scripts},
+								  parent=self.modaldlg,
 								  progress_msg=lang.getstr("profile.install"),
 								  stop_timers=False)
 		elif self.modaldlg.preview:
@@ -6088,7 +6098,6 @@ class MainFrame(BaseFrame):
 	def profile_finish_consumer(self, result=None):
 		if isinstance(result, Exception):
 			show_result_dialog(result, parent=self.modaldlg)
-		del self.modaldlg._disabler
 		# Unbind automatic lowering
 		self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
 		self.Raise()

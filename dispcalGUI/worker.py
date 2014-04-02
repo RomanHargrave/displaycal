@@ -1052,7 +1052,7 @@ class Worker(object):
 		self.options_targen = []
 		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
-		self.sudo_availoptions = None
+		self.sudo_availoptions = {}
 		self.auth_timestamp = 0
 		self.sessionlogfiles = {}
 		self.tempdir = None
@@ -1170,6 +1170,122 @@ class Worker(object):
 			instrument_features.get("skip_sensor_cal") and
 			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args)):
 			args += ["-N"]
+		return True
+	
+	def authenticate(self, cmd, title=appname, parent=None):
+		""" Athenticate (using sudo) for a given command """
+		if sys.platform == "win32":
+			return
+		sudo = which("sudo")
+		if not sudo:
+			return EnvironmentError("sudo")
+		# Determine available sudo options
+		if not self.sudo_availoptions:
+			man = which("man")
+			if man:
+				manproc = sp.Popen([man, "sudo"], stdout=sp.PIPE, 
+									stderr=sp.PIPE)
+				# Strip formatting
+				stdout = re.sub(".\x08", "", manproc.communicate()[0])
+				self.sudo_availoptions = {"E": bool(re.search("-E", stdout)),
+										  "l [command]": bool(re.search("-l(?:\[l\])?\s+\[command\]", stdout)),
+										  "n": bool(re.search("-n", stdout)),
+										  "K": bool(re.search("-K", stdout))}
+			else:
+				self.sudo_availoptions = {"E": False, 
+										  "l [command]": False, 
+										  "n": False,
+										  "K": False}
+			if debug:
+				safe_print("[D] Available sudo options:", 
+						   ", ".join(filter(lambda option: self.sudo_availoptions[option], 
+											self.sudo_availoptions.keys())))
+		# Set sudo args based on available options
+		if self.sudo_availoptions["l [command]"]:
+			sudo_args = ["-l",
+						 "-n" if self.sudo_availoptions["n"] else "-S",
+						 cmd, "-?"]
+		else:
+			sudo_args = ["-l", "-S"]
+		# Set stdin based on -n option availability
+		if "-S" in sudo_args:
+			stdin = tempfile.SpooledTemporaryFile()
+			stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
+			stdin.seek(0)
+		else:
+			stdin = None
+		sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, stdout=sp.PIPE, 
+							stderr=sp.PIPE)
+		stdout, stderr = sudoproc.communicate()
+		if stdin and not stdin.closed:
+			stdin.close()
+		pwd = self.pwd
+		if not stdout.strip() or not pwd:
+			# ask for password
+			progress_dlg = self._progress_wnd or getattr(wx.GetApp(),
+														 "progress_dlg", None)
+			if parent is None:
+				if progress_dlg and progress_dlg.IsShownOnScreen():
+					parent = progress_dlg
+				else:
+					parent = self.owner
+			dlg = ConfirmDialog(
+				parent, title=title, 
+				msg=lang.getstr("dialog.enter_password"), 
+				ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
+				bitmap=geticon(32, "lock"))
+			dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, pwd, 
+										   size=(320, -1), 
+										   style=wx.TE_PASSWORD | 
+												 wx.TE_PROCESS_ENTER)
+			dlg.pwd_txt_ctrl.Bind(wx.EVT_TEXT_ENTER, 
+								  lambda event: dlg.EndModal(wx.ID_OK))
+			dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			dlg.ok.SetDefault()
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			sudo_args = ["-l", "-S"]
+			if self.sudo_availoptions["l [command]"]:
+				sudo_args += [cmd, "-?"]
+			while True:
+				dlg.pwd_txt_ctrl.SetFocus()
+				result = dlg.ShowModal()
+				pwd = dlg.pwd_txt_ctrl.GetValue()
+				if result != wx.ID_OK:
+					safe_print(lang.getstr("aborted"))
+					return False
+				if self.sudo_availoptions["K"]:
+					# Mac OS X Snow Leopard and below do not support
+					# using -k or -K together with other options
+					sp.call([sudo, "-K"], stdout=sp.PIPE, 
+							stderr=sp.PIPE)
+				stdin = tempfile.SpooledTemporaryFile()
+				stdin.write(pwd.encode(enc, "replace") + os.linesep)
+				stdin.seek(0)
+				sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, 
+									stdout=sp.PIPE, stderr=sp.PIPE)
+				stdout, stderr = sudoproc.communicate()
+				if not stdin.closed:
+					stdin.close()
+				if stdout.strip():
+					# password was accepted
+					self.auth_timestamp = time()
+					self.pwd = pwd
+					break
+				else:
+					errstr = unicode(stderr, enc, "replace")
+					errstr = "\n".join([re.sub("^[^:]+:\s*", "", line)
+										for line in errstr.splitlines()])
+					if not silent:
+						safe_print(errstr)
+					else:
+						log(errstr)
+					dlg.message.SetLabel(errstr)
+					dlg.pwd_txt_ctrl.SetValue("")
+					dlg.sizer0.SetSizeHints(dlg)
+					dlg.sizer0.Layout()
+			dlg.Destroy()
 		return True
 	
 	def instrument_can_use_ccxx(self):
@@ -2131,22 +2247,15 @@ class Worker(object):
 		re-running the command which are created by default.
 		silent (if True) skips most output and also most error dialogs 
 		(except unexpected failures)
-		parent sets the parent window for any message dialogs.
+		parent sets the parent window for auth dialog (if asroot is True).
 		asroot (if True) on Linux runs the command using sudo.
 		log_output (if True) logs any output if capture_output is also set.
-		title = Title for sudo dialog
+		title = Title for auth dialog (if asroot is True)
 		working_dir = Working directory. If None, will be determined from
 		absulte path of last argument and last argument will be set to only 
 		the basename. If False, no working dir will be used and file arguments
 		not changed.
 		"""
-		progress_dlg = self._progress_wnd or getattr(wx.GetApp(),
-													 "progress_dlg", None)
-		if parent is None:
-			if progress_dlg and progress_dlg.IsShownOnScreen():
-				parent = progress_dlg
-			else:
-				parent = self.owner
 		if not capture_output:
 			capture_output = not sys.stdout.isatty()
 		self.clear_cmd_output()
@@ -2259,113 +2368,22 @@ class Worker(object):
 				# Vista and later
 				pass
 			else:
+				if not self.auth_timestamp:
+					if hasattr(self, "thread") and self.thread.isAlive():
+						# Careful: We can only show the auth dialog if running
+						# in the main GUI thread!
+						return Error("Authentication requested in non-GUI thread")
+					result = self.authenticate(cmd, title, parent)
+					if result is False:
+						return None
+					elif isinstance(result, Exception):
+						return result
 				sudo = which("sudo")
 		if sudo:
-			if not self.pwd:
-				# Determine available sudo options
-				if not self.sudo_availoptions:
-					man = which("man")
-					if man:
-						manproc = sp.Popen([man, "sudo"], stdout=sp.PIPE, 
-											stderr=sp.PIPE)
-						# Strip formatting
-						stdout = re.sub(".\x08", "", manproc.communicate()[0])
-						self.sudo_availoptions = {"E": bool(re.search("-E", stdout)),
-												  "l [command]": bool(re.search("-l(?:\[l\])?\s+\[command\]", stdout)),
-												  "n": bool(re.search("-n", stdout)),
-												  "K": bool(re.search("-K", stdout))}
-					else:
-						self.sudo_availoptions = {"E": False, 
-												  "l [command]": False, 
-												  "n": False,
-												  "K": False}
-					if debug:
-						safe_print("[D] Available sudo options:", 
-								   ", ".join(filter(lambda option: self.sudo_availoptions[option], 
-													self.sudo_availoptions.keys())))
-				# Set sudo args based on available options
-				if self.sudo_availoptions["l [command]"]:
-					sudo_args = ["-l",
-								 "-n" if self.sudo_availoptions["n"] else "-S",
-								 cmd, "-?"]
-				else:
-					sudo_args = ["-l", "-S"]
-				# Set stdin based on -n option availability
-				if "-S" in sudo_args:
-					stdin = tempfile.SpooledTemporaryFile()
-					stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
-					stdin.seek(0)
-				else:
-					stdin = None
-				sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, stdout=sp.PIPE, 
-									stderr=sp.PIPE)
-				stdout, stderr = sudoproc.communicate()
-				if stdin and not stdin.closed:
-					stdin.close()
-				pwd = self.pwd
-				if not stdout.strip() or not pwd:
-					# ask for password
-					dlg = ConfirmDialog(
-						parent, title=title, 
-						msg=lang.getstr("dialog.enter_password"), 
-						ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
-						bitmap=geticon(32, "lock"))
-					dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, pwd, 
-												   size=(320, -1), 
-												   style=wx.TE_PASSWORD | 
-														 wx.TE_PROCESS_ENTER)
-					dlg.pwd_txt_ctrl.Bind(wx.EVT_TEXT_ENTER, 
-										  lambda event: dlg.EndModal(wx.ID_OK))
-					dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, 
-								   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-					dlg.ok.SetDefault()
-					dlg.sizer0.SetSizeHints(dlg)
-					dlg.sizer0.Layout()
-					sudo_args = ["-l", "-S"]
-					if self.sudo_availoptions["l [command]"]:
-						sudo_args += [cmd, "-?"]
-					while True:
-						dlg.pwd_txt_ctrl.SetFocus()
-						result = dlg.ShowModal()
-						pwd = dlg.pwd_txt_ctrl.GetValue()
-						if result != wx.ID_OK:
-							safe_print(lang.getstr("aborted"))
-							return None
-						if self.sudo_availoptions["K"]:
-							# Mac OS X Snow Leopard and below do not support
-							# using -k or -K together with other options
-							sp.call([sudo, "-K"], stdout=sp.PIPE, 
-									stderr=sp.PIPE)
-						stdin = tempfile.SpooledTemporaryFile()
-						stdin.write(pwd.encode(enc, "replace") + os.linesep)
-						stdin.seek(0)
-						sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, 
-											stdout=sp.PIPE, stderr=sp.PIPE)
-						stdout, stderr = sudoproc.communicate()
-						if not stdin.closed:
-							stdin.close()
-						if stdout.strip():
-							# password was accepted
-							self.auth_timestamp = time()
-							self.pwd = pwd
-							break
-						else:
-							errstr = unicode(stderr, enc, "replace")
-							errstr = "\n".join([re.sub("^[^:]+:\s*", "", line)
-												for line in errstr.splitlines()])
-							if not silent:
-								safe_print(errstr)
-							else:
-								log(errstr)
-							dlg.message.SetLabel(errstr)
-							dlg.pwd_txt_ctrl.SetValue("")
-							dlg.sizer0.SetSizeHints(dlg)
-							dlg.sizer0.Layout()
-					dlg.Destroy()
 			cmdline.insert(0, sudo)
 			if (cmdname == get_argyll_utilname("dispwin")
 				and sys.platform != "darwin"
-				and self.sudo_availoptions["E"]
+				and self.sudo_availoptions.get("E")
 				and getcfg("sudo.preserve_environment")):
 				# Preserve environment so $DISPLAY is set
 				cmdline.insert(1, "-E")
