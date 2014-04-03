@@ -1172,7 +1172,7 @@ class Worker(object):
 			args += ["-N"]
 		return True
 	
-	def authenticate(self, cmd, title=appname, parent=None):
+	def authenticate(self, cmd, title=appname, parent=None, silent=False):
 		""" Athenticate (using sudo) for a given command """
 		if sys.platform == "win32":
 			return
@@ -2373,7 +2373,7 @@ class Worker(object):
 						# Careful: We can only show the auth dialog if running
 						# in the main GUI thread!
 						return Error("Authentication requested in non-GUI thread")
-					result = self.authenticate(cmd, title, parent)
+					result = self.authenticate(cmd, title, parent, silent)
 					if result is False:
 						return None
 					elif isinstance(result, Exception):
