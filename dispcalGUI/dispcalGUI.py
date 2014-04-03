@@ -6024,6 +6024,8 @@ class MainFrame(BaseFrame):
 							 id=self.install_profile_network.GetId())
 					dlg.sizer3.Add(self.install_profile_network, 
 								   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+			else:
+				setcfg("profile.install_scope", "u")
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
