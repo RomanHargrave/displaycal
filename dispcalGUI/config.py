@@ -1020,9 +1020,9 @@ def makecfgdir(which="user", worker=None):
 			try:
 				os.makedirs(confighome)
 			except Exception, exception:
-				from debughelpers import handle_error
-				handle_error(u"Warning - could not create configuration directory "
-							 "'%s': %s" % (confighome, safe_unicode(exception)))
+				from log import safe_print
+				safe_print(u"Warning - could not create configuration directory "
+						   "'%s': %s" % (confighome, safe_unicode(exception)))
 				return False
 	elif not os.path.exists(config_sys):
 		try:
@@ -1039,9 +1039,9 @@ def makecfgdir(which="user", worker=None):
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:
-			from debughelpers import handle_error
-			handle_error(u"Warning - could not create configuration directory "
-						 "'%s': %s" % (config_sys, safe_unicode(exception)))
+			from log import safe_print
+			safe_print(u"Warning - could not create configuration directory "
+					   "'%s': %s" % (config_sys, safe_unicode(exception)))
 			return False
 	return True
 
@@ -1138,9 +1138,9 @@ def writecfg(which="user", worker=None):
 			cfgfile.write("\n".join(lines))
 			cfgfile.close()
 		except Exception, exception:
-			from debughelpers import handle_error
-			handle_error(u"Warning - could not write user configuration file "
-						 "'%s': %s" % (cfgfilename, safe_unicode(exception)))
+			from log import safe_print
+			safe_print(u"Warning - could not write user configuration file "
+					   "'%s': %s" % (cfgfilename, safe_unicode(exception)))
 			return False
 	else:
 		# system-wide config - only stores essentials ie. Argyll directory
@@ -1169,9 +1169,9 @@ def writecfg(which="user", worker=None):
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:
-			from debughelpers import handle_error
-			handle_error(u"Warning - could not write system-wide configuration file "
-						 "'%s': %s" % (cfgfilename2, safe_unicode(exception)))
+			from log import safe_print
+			safe_print(u"Warning - could not write system-wide configuration file "
+					   "'%s': %s" % (cfgfilename2, safe_unicode(exception)))
 			return False
 	return True
 
