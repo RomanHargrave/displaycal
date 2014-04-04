@@ -3976,10 +3976,9 @@ class Worker(object):
 				pyw = os.path.normpath(os.path.join(pydir, "..",
 													appname +
 													"-apply-profiles.pyw"))
+				icon = appname + "-apply-profiles"
 				if os.path.exists(pyw):
 					# Running from source, or 0install/Listaller install
-					icon = os.path.join(pydir, "theme", "icons", "256x256",
-										appname + "-apply-profiles.png")
 					# Check if this is a 0install implementation, in which
 					# case we wanto to call 0launch with the appropriate
 					# command
@@ -3988,10 +3987,11 @@ class Worker(object):
 									  "http://%s/0install/dispcalGUI.xml" %
 									  domain.lower())
 					else:
+						icon = os.path.join(pydir, "theme", "icons", "256x256",
+											appname + "-apply-profiles.png")
 						executable = pyw
 				else:
 					# Regular install
-					icon = appname + "-apply-profiles"
 					executable = appname + "-apply-profiles"
 				desktopfile.write('Icon=%s\n' % icon.encode("UTF-8"))
 				desktopfile.write('Exec=%s\n' % executable.encode("UTF-8"))

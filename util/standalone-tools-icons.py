@@ -11,7 +11,6 @@ import sys
 
 
 appname = "dispcalGUI"
-icons = "theme/icons/256x256"
 feeduri = "http://dispcalgui.hoech.net/0install/%s.xml" % appname
 
 
@@ -23,23 +22,26 @@ def installer(action="install"):
 		tmpdir = mkdtemp()
 	for desktopfilename in glob(os.path.join(root, "misc", "%s-*.desktop" %
 														   appname)):
+		desktopbasename = os.path.basename(desktopfilename)
+		scriptname = re.sub("\.desktop$", "", desktopbasename)
 		if action == "install":
 			with open(desktopfilename) as desktopfile:
 				contents = desktopfile.read()
-			desktopbasename = os.path.basename(desktopfilename)
-			cmd = re.sub("^%s-" % appname, "run-", desktopbasename)
-			cmd = re.sub("\.desktop$", "", cmd)
-			for pattern, repl in (("Exec=.+",
+			cmd = re.sub("^%s-" % appname, "run-", scriptname)
+			for pattern, repl in [("Exec=.+",
 								   "Exec=0launch --command=%s -- %s %%f" %
-								   (cmd, feeduri)),
-								  ("(Icon=)(.+)",
-								   r"\1%s/\2.png" %
-								   "/".join([root, appname, icons]))):
+								   (cmd, feeduri))]:
 				contents = re.sub(pattern, repl, contents)
 			tmpfilename = os.path.join(tmpdir, desktopbasename)
 			with open(tmpfilename, "w") as tmpfile:
 				tmpfile.write(contents)
 			try:
+				for size in [16, 22, 24, 32, 48, 256]:
+					call(["xdg-icon-resource", action, "--noupdate",
+						  "--novendor", "--size", str(size),
+						  os.path.join([root, appname, "theme", "icons",
+										"%sx%s" % (size, size),
+										scriptname + ".png"])])
 				call(["xdg-desktop-menu", action, "--noupdate", "--novendor",
 						 tmpfilename])
 			except EnvironmentError, exception:
@@ -48,6 +50,9 @@ def installer(action="install"):
 			finally:
 				os.unlink(tmpfilename)
 		else:
+			for size in [16, 22, 24, 32, 48, 256]:
+				call(["xdg-icon-resource", action, "--noupdate",
+					  "--size", str(size), scriptname])])
 			call(["xdg-desktop-menu", action, "--noupdate", desktopfilename])
 	if action == "install":
 		try:
@@ -55,6 +60,7 @@ def installer(action="install"):
 		except Exception, exception:
 			import warnings
 			warnings.warn(exception, Warning)
+	call(["xdg-icon-resource", "forceupdate"])
 	call(["xdg-desktop-menu", "forceupdate"])
 
 
