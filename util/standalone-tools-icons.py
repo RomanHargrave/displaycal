@@ -31,9 +31,9 @@ def installer(action="install"):
 					for size in [16, 22, 24, 32, 48, 256]:
 						call(["xdg-icon-resource", action, "--noupdate",
 							  "--novendor", "--size", str(size),
-							  os.path.join([root, appname, "theme", "icons",
-											"%sx%s" % (size, size),
-											scriptname + ".png"])])
+							  os.path.join(root, appname, "theme", "icons",
+										   "%sx%s" % (size, size),
+										   scriptname + ".png")])
 				except EnvironmentError, exception:
 					exception.filename = "xdg-icon-resource"
 					raise exception
