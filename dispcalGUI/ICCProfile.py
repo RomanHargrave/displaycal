@@ -383,8 +383,13 @@ def _colord_get_display_profile(display_no=0):
 			if device_id:
 				try:
 					profile_path = colord.get_default_profile(device_id)
-				except colord.CDError:
+				except colord.CDObjectQueryError:
+					# Device ID was not found, try next one
 					continue
+				except colord.CDError:
+					# There was another error, no point in trying other
+					# device IDs
+					break
 				if profile_path:
 					return ICCProfile(profile_path)
 	return None

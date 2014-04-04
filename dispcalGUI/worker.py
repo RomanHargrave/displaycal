@@ -3446,6 +3446,7 @@ class Worker(object):
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
 			(self.argyll_version < [1, 6] or not whereis("libcolordcompat"))):
 			if device_id:
+				result = False
 				# Try a range of possible device IDs
 				device_ids = [device_id,
 							  self.get_device_id(quirk=True,
@@ -3464,11 +3465,16 @@ class Worker(object):
 												 use_serial_32=False,
 												 truncate_edid_strings=True)]
 				for device_id in device_ids:
-					# NOTE: This can block
-					result = self._install_profile_colord(profile_path,
-														  device_id)
-					if result is True:
-						break
+					if device_id:
+						# NOTE: This can block
+						result = self._install_profile_colord(profile_path,
+															  device_id)
+						if isinstance(result, colord.CDObjectQueryError):
+							# Device ID was not found, try next one
+							continue
+						else:
+							# Either returned ok or there was another error
+							break
 				colord_install = result
 			if (not device_id or
 				isinstance(result, Exception) or not result):

@@ -156,7 +156,7 @@ def get_object_path(search, object_type, object_subtype=None):
 		raise CDError(safe_str(exception))
 	else:
 		if stderr.strip():
-			raise CDError(stderr)
+			raise CDObjectQueryError(stderr)
 		object_path = None
 		oprefix = prefix + object_type + "/"
 		for block in stdout.strip().split(oprefix):
@@ -166,7 +166,7 @@ def get_object_path(search, object_type, object_subtype=None):
 				object_path = oprefix + block.strip().splitlines()[0].strip()
 				break
 		if not object_path:
-			raise CDError("Could not find object path for %s" % search)
+			raise CDObjectNotFoundError("Could not find object path for %s" % search)
 	return object_path
 
 
@@ -222,8 +222,8 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 		sleep(.5)
 
 	if not profile:
-		raise CDError("Querying for profile %r returned no result for %s secs" %
-					  (profile_installname, timeout))
+		raise CDTimeout("Querying for profile %r returned no result for %s secs" %
+						(profile_installname, timeout))
 
 	if Colord:
 		# Connect to profile
@@ -298,6 +298,18 @@ def quirk_manufacturer(manufacturer):
 
 
 class CDError(Exception):
+	pass
+
+
+class CDObjectQueryError(CDError):
+	pass
+
+
+class CDObjectNotFoundError(CDObjectQueryError):
+	pass
+
+
+class CDTimeout(CDError):
 	pass
 
 
