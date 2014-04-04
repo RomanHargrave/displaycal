@@ -5,12 +5,8 @@ import os
 import sys
 
 from encoding import get_encoding, get_encodings
-from encodedstdio import encodestdio
 
 original_codepage = None
-
-if sys.stdout.isatty():
-	encodestdio()
 
 enc, fs_enc = get_encodings()
 
