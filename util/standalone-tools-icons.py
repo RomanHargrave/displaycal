@@ -20,7 +20,7 @@ def installer(action="install"):
 	root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 	if action == "install":
 		tmpdir = mkdtemp()
-	tmpfilename = None
+	tmpfilenames = []
 	try:
 		for desktopfilename in glob(os.path.join(root, "misc", "%s-*.desktop" %
 															   appname)):
@@ -45,6 +45,7 @@ def installer(action="install"):
 									   (cmd, feeduri))]:
 					contents = re.sub(pattern, repl, contents)
 				tmpfilename = os.path.join(tmpdir, desktopbasename)
+				tmpfilenames.append(tmpfilename)
 				with open(tmpfilename, "w") as tmpfile:
 					tmpfile.write(contents)
 				try:
@@ -70,8 +71,9 @@ def installer(action="install"):
 	finally:
 		if action == "install":
 			try:
-				if tmpfilename and os.path.isfile(tmpfilename):
-					os.unlink(tmpfilename)
+				for tmpfilename in tmpfilenames:
+					if tmpfilename and os.path.isfile(tmpfilename):
+						os.unlink(tmpfilename)
 				os.rmdir(tmpdir)
 			except Exception, exception:
 				import warnings
