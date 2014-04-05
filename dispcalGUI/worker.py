@@ -2589,37 +2589,51 @@ class Worker(object):
 						if self.measure_cmd:
 							keyhit_strs = [" or Q to ",
 										  "8\) Exit"]
+							self.log("%s: Starting interaction with subprocess" %
+									 appname)
 							while self.subprocess.isalive():
 								self.subprocess.expect(keyhit_strs + ["Current",
 														r" \d+ of \d+",
 														wexpect.EOF],
 													   timeout=None)
 								if self.subprocess.after in (wexpect.EOF, None):
+									self.log("%s: Reached exit condition %r (OK)" %
+											 (appname, self.subprocess.after))
 									break
 								if filter(lambda keyhit_str:
 											  re.search(keyhit_str,
 														self.subprocess.after),
 											  keyhit_strs):
 									# Wait for the keypress
+									self.log("%s: Waiting for send buffer" %
+											 appname)
 									while not self.send_buffer:
 										if not self.subprocess.isalive():
+											self.log("%s: Subprocess no longer alive (OK)" %
+													 appname)
 											break
 										sleep(.05)
 								if (self.send_buffer and
 									self.subprocess.isalive()):
+									self.log("%s: Sending buffer: %r" %
+											 (appname, self.send_buffer))
 									self._safe_send(self.send_buffer)
 									self.send_buffer = None
 						else:
+							self.log("%s: Waiting for EOF" % appname)
 							self.subprocess.expect(wexpect.EOF, 
 												   timeout=None)
 					if self.subprocess.after not in (wexpect.EOF, 
 													 wexpect.TIMEOUT):
+						self.log("%s: Waiting for EOF" % appname)
 						self.subprocess.expect(wexpect.EOF, timeout=None)
 					# We need to call isalive() to set the exitstatus.
 					# We can't use wait() because it might block in the
 					# case of a timeout
+					self.log("%s: Checking subprocess status" % appname)
 					while self.subprocess.isalive():
 						sleep(.1)
+					self.log("%s: Subprocess no longer alive (OK)" % appname)
 					self.retcode = self.subprocess.exitstatus
 				else:
 					try:
@@ -5210,6 +5224,7 @@ class Worker(object):
 				safe_print('User requested abort')
 			try:
 				if self.measure_cmd and hasattr(self.subprocess, "send"):
+					self.log("%s: Trying to end subprocess gracefully..." % appname)
 					try:
 						if self.subprocess.after == "Current":
 							# Stop measurement
@@ -5223,13 +5238,14 @@ class Worker(object):
 								break
 							sleep(.5)
 					except Exception, exception:
-						self.logger.exception("Exception")
+						self.log("%s: Exception in quit_terminate_command: %s" %
+								 (appname, exception))
 				if getattr(self, "subprocess", None) and \
 				   (hasattr(self.subprocess, "poll") and 
 					self.subprocess.poll() is None) or \
 				   (hasattr(self.subprocess, "isalive") and 
 					self.subprocess.isalive()):
-					self.logger.info("Trying to terminate subprocess...")
+					self.log("%s: Trying to terminate subprocess..." % appname)
 					self.subprocess.terminate()
 					ts = time()
 					while getattr(self, "subprocess", None) and \
@@ -5241,10 +5257,12 @@ class Worker(object):
 					if getattr(self, "subprocess", None) and \
 					   hasattr(self.subprocess, "isalive") and \
 					   self.subprocess.isalive():
-						self.logger.info("Trying to terminate subprocess forcefully...")
+						self.log("%s: Trying to terminate subprocess forcefully..." %
+								 appname)
 						self.subprocess.terminate(force=True)
 			except Exception, exception:
-				self.logger.exception("Exception")
+				self.log("%s: Exception in quit_terminate_command: %s" %
+						 (appname, exception))
 			if debug:
 				safe_print('[D] end try')
 		elif debug:
