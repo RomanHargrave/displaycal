@@ -470,7 +470,7 @@ class MeasureFrame(InvincibleFrame):
 			n = get_argyll_display_number(geometry)
 			if n is not None:
 				# Save Argyll display index to configuration
-				setcfg("display.number", i + 1)
+				setcfg("display.number", n + 1)
 
 	def size_handler(self, event):
 		if debug: safe_print("[D] measureframe_size_handler")
