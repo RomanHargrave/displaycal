@@ -1772,9 +1772,16 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 			return
 		recordsCount = uInt32Number(tagData[8:12])
 		recordSize = uInt32Number(tagData[12:16]) # 12
+		if recordSize != 12:
+			safe_print("Warning (non-critical): '%s' invalid record length "
+					   "(expected 12, got %s)" % (tagData[:4], recordSize))
+			if recordSize < 12:
+				recordSize = 12
 		records = tagData[16:16 + recordSize * recordsCount]
 		for count in xrange(recordsCount):
 			record = records[:recordSize]
+			if len(record) < 12:
+				continue
 			recordLanguageCode = record[:2]
 			recordCountryCode = record[2:4]
 			recordLength = uInt32Number(record[4:8])
