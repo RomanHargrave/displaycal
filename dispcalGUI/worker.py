@@ -58,8 +58,7 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exe_ext, fs_enc, getcfg, geticon,
 					get_data_path, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, profile_ext, pydir, setcfg, writecfg)
-if sys.platform not in ("darwin", "win32"):
-	from defaultpaths import iccprofiles_home, iccprofiles_display_home
+from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 from meta import domain, name as appname, version
@@ -5003,6 +5002,18 @@ class Worker(object):
 							# -S option is broken on Linux with current Argyll 
 							# releases
 							args += ["-S" + getcfg("profile.install_scope")]
+					else:
+						# Make sure user profile dir exists
+						# (e.g. on Mac OS X 10.9 Mavericks, it does not by
+						# default)
+						for profile_dir in reversed(iccprofiles_home):
+							if os.path.isdir(profile_dir):
+								break
+						if not os.path.isdir(profile_dir):
+							try:
+								os.makedirs(profile_dir)
+							except OSError, exception:
+								return exception, None
 					args += ["-I"]
 					if (sys.platform in ("win32", "darwin") or 
 						fs_enc.upper() not in ("UTF8", "UTF-8")) and \

@@ -122,7 +122,7 @@ else:
 						expandvarsu("$HOME/.color/icc")]
 if sys.platform in ("darwin", "win32"):
 	iccprofiles_display = iccprofiles
-	iccprofiles_display = iccprofiles_home
+	iccprofiles_display_home = iccprofiles_home
 else:
 	iccprofiles_display = [os.path.join(dir_, "devices", "display") 
 						   for dir_ in iccprofiles]
