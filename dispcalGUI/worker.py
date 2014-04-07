@@ -5177,7 +5177,7 @@ class Worker(object):
 				self.abort_subprocess(True)
 		if self.finished is True:
 			return
-		if (wx.GetApp().IsActive() and self.progress_wnd.IsShownOnScreen() and
+		if (self.progress_wnd.IsShownOnScreen() and
 			not self.progress_wnd.IsActive() and
 			(not getattr(self.progress_wnd, "dlg", None) or
 			 not self.progress_wnd.dlg.IsShownOnScreen())):
