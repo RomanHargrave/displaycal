@@ -2181,6 +2181,9 @@ class Worker(object):
 											   silent=True)
 						if isinstance(result, Exception):
 							safe_print(result)
+						elif result is None:
+							lut_access += [None]
+							continue
 						# Check if LUT == test.cal
 						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-V", 
 														 test_cal], 
@@ -2189,6 +2192,9 @@ class Worker(object):
 											   silent=True)
 						if isinstance(result, Exception):
 							safe_print(result)
+						elif result is None:
+							lut_access += [None]
+							continue
 						retcode = -1
 						for line in self.output:
 							if line.find("IS loaded") >= 0:
