@@ -2283,6 +2283,14 @@ class Worker(object):
 			# applying calibration during measurements)
 			# In all other cases, root is only required if installing a
 			# profile to a system location
+			if (not "-I" in args and not self.calibration_loading_supported):
+				# Loading/clearing calibration seems to be unpredictable on
+				# Mac OS X 10.6 and newer - don't actually do it, pretend
+				# we were successful
+				if "-V" in args:
+					self.output.append("IS loaded")
+				self.retcode = 0
+				return True
 			asroot = True
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
@@ -5778,6 +5786,10 @@ class Worker(object):
 				setcfg("calibration.file", dst_pathname + ".cal")
 				setcfg("last_cal_or_icc_path", dst_pathname + ".cal")
 		return result
+	
+	@property
+	def calibration_loading_supported(self):
+		return sys.platform != "darwin" or mac_ver()[0] < "10.6"
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
 					 check_missing_fields=False, function="f", pcs="l",

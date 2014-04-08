@@ -1580,12 +1580,15 @@ class MainFrame(BaseFrame):
 														   and edid["blue_y"]))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays) and
 			not config.get_display_name() in ("Web", "Untethered", "madVR"))
+		calibration_loading_supported = self.worker.calibration_loading_supported
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered"))
+			not config.get_display_name() in ("Web", "Untethered") and
+			calibration_loading_supported)
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered"))
+			not config.get_display_name() in ("Web", "Untethered") and
+			calibration_loading_supported)
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
@@ -1614,7 +1617,8 @@ class MainFrame(BaseFrame):
 			self.lut_viewer.update_controls()
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
 									   not config.get_display_name() in
-									   ("Web", "Untethered"))
+									   ("Web", "Untethered") and
+									   calibration_loading_supported)
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
 											   config.get_display_name() != "Untethered")
@@ -5613,24 +5617,28 @@ class MainFrame(BaseFrame):
 			dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
 						   border=border)
 			border = 4
-		dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
-								   lang.getstr("calibration.embed"))
-		def embed_cal_ctrl_handler(event):
-			embed_cal = dlg.embed_cal_ctrl.GetValue()
-			dlg.reset_cal_ctrl.Enable(embed_cal)
-			if not embed_cal:
-				dlg.reset_cal_ctrl.SetValue(True)
-		if can_use_current_cal or cal:
-			dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
-		dlg.embed_cal_ctrl.SetValue(bool(can_use_current_cal or cal))
-		dlg.sizer3.Add(dlg.embed_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
-					   border=border)
+		if self.worker.calibration_loading_supported:
+			dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
+									   lang.getstr("calibration.embed"))
+			def embed_cal_ctrl_handler(event):
+				embed_cal = dlg.embed_cal_ctrl.GetValue()
+				dlg.reset_cal_ctrl.Enable(embed_cal)
+				if not embed_cal:
+					dlg.reset_cal_ctrl.SetValue(True)
+			if can_use_current_cal or cal:
+				dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
+			dlg.embed_cal_ctrl.SetValue(bool(can_use_current_cal or cal))
+			dlg.sizer3.Add(dlg.embed_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
+						   border=border)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		result = dlg.ShowModal()
 		if can_use_current_cal or cal:
 			reset_cal = dlg.reset_cal_ctrl.GetValue()
-		embed_cal = dlg.embed_cal_ctrl.GetValue()
+		if self.worker.calibration_loading_supported:
+			embed_cal = dlg.embed_cal_ctrl.GetValue()
+		else:
+			embed_cal = True
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			self.update_profile_name_timer.Start(1000)
@@ -5679,9 +5687,8 @@ class MainFrame(BaseFrame):
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
 			if is_ccxx_testchart():
-				# Reset calibration before measuring CCXX testchart
-				self.reset_cal()
-				apply_calibration = False
+				# Use linear calibration for measuring CCXX testchart
+				apply_calibration = get_data_path("linear.cal")
 			else:
 				apply_calibration = self.current_cal_choice()
 			if apply_calibration != wx.ID_CANCEL:
@@ -5914,7 +5921,7 @@ class MainFrame(BaseFrame):
 				dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
 				dlg.Bind(wx.EVT_BUTTON, self.profile_share_handler,
 						 id=dlg.alt.GetId())
-			if preview and has_cal:
+			if preview and has_cal and self.worker.calibration_loading_supported():
 				# Show calibration preview checkbox
 				self.preview = wx.CheckBox(dlg, -1, 
 										   lang.getstr("calibration.preview"))
