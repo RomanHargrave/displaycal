@@ -2586,48 +2586,45 @@ class Worker(object):
 						if debug >= 9 or (test and not "-?" in args):
 							self.subprocess.interact()
 					self.subprocess.logfile_read = Files(logfiles)
-					if self.subprocess.isalive():
-						if self.measure_cmd:
-							keyhit_strs = [" or Q to ",
-										  "8\) Exit"]
-							self.log("%s: Starting interaction with subprocess" %
-									 appname)
-							while self.subprocess.isalive():
-								self.subprocess.expect(keyhit_strs + ["Current",
-														r" \d+ of \d+",
-														wexpect.EOF],
-													   timeout=None)
-								if self.subprocess.after in (wexpect.EOF, None):
-									self.log("%s: Reached exit condition %r (OK)" %
-											 (appname, self.subprocess.after))
-									break
-								if filter(lambda keyhit_str:
-											  re.search(keyhit_str,
-														self.subprocess.after),
-											  keyhit_strs):
-									# Wait for the keypress
-									self.log("%s: Waiting for send buffer" %
-											 appname)
-									while not self.send_buffer:
-										if not self.subprocess.isalive():
-											self.log("%s: Subprocess no longer alive (OK)" %
-													 appname)
-											break
-										sleep(.05)
-								if (self.send_buffer and
-									self.subprocess.isalive()):
-									self.log("%s: Sending buffer: %r" %
-											 (appname, self.send_buffer))
-									self._safe_send(self.send_buffer)
-									self.send_buffer = None
-						else:
-							self.log("%s: Waiting for EOF" % appname)
-							self.subprocess.expect(wexpect.EOF, 
-												   timeout=None)
-					if self.subprocess.after not in (wexpect.EOF, 
-													 wexpect.TIMEOUT):
+					if self.measure_cmd:
+						keyhit_strs = [" or Q to ", "8\) Exit"]
+						patterns = keyhit_strs + ["Current", r" \d+ of \d+"]
+						self.log("%s: Starting interaction with subprocess" %
+								 appname)
+					else:
+						patterns = []
 						self.log("%s: Waiting for EOF" % appname)
-						self.subprocess.expect(wexpect.EOF, timeout=None)
+					while self.subprocess.isalive():
+						# NOTE: Using a timeout of None can block indefinitely
+						# and prevent expect() from ever returning!
+						self.subprocess.expect(patterns + [wexpect.EOF,
+														   wexpect.TIMEOUT],
+											   timeout=1)
+						if self.subprocess.after is wexpect.EOF:
+							self.log("%s: Reached EOF (OK)" % appname)
+							break
+						elif self.subprocess.after is wexpect.TIMEOUT:
+							continue
+						elif self.measure_cmd:
+							if filter(lambda keyhit_str:
+										  re.search(keyhit_str,
+													self.subprocess.after),
+										  keyhit_strs):
+								# Wait for the keypress
+								self.log("%s: Waiting for send buffer" %
+										 appname)
+								while not self.send_buffer:
+									if not self.subprocess.isalive():
+										self.log("%s: Subprocess no longer alive (OK)" %
+												 appname)
+										break
+									sleep(.05)
+							if (self.send_buffer and
+								self.subprocess.isalive()):
+								self.log("%s: Sending buffer: %r" %
+										 (appname, self.send_buffer))
+								self._safe_send(self.send_buffer)
+								self.send_buffer = None
 					# We need to call isalive() to set the exitstatus.
 					# We can't use wait() because it might block in the
 					# case of a timeout
