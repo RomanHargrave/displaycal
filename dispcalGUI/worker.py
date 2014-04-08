@@ -1441,7 +1441,7 @@ class Worker(object):
 				self.instrument_calibration_complete = False
 				self.instrument_place_on_screen()
 			else:
-				if self.subprocess.isalive():
+				if self.isalive():
 					if debug or test:
 						safe_print('Sending SPACE key')
 					self.safe_send(" ")
@@ -4393,6 +4393,14 @@ class Worker(object):
 					else:
 						return False
 		return results
+	
+	def isalive(self):
+		""" Check if subprocess is still alive """
+		return (getattr(self, "subprocess", None) and
+				((hasattr(self.subprocess, "poll") and 
+				  self.subprocess.poll() is None) or
+				 (hasattr(self.subprocess, "isalive") and 
+				  self.subprocess.isalive())))
 
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
@@ -5242,11 +5250,7 @@ class Worker(object):
 		"""
 		if debug:
 			safe_print('[D] safe_quit')
-		if getattr(self, "subprocess", None) and \
-		   (hasattr(self.subprocess, "poll") and 
-			self.subprocess.poll() is None) or \
-		   (hasattr(self.subprocess, "isalive") and 
-			self.subprocess.isalive()):
+		if self.isalive():
 			if debug or test:
 				safe_print('User requested abort')
 			try:
@@ -5267,26 +5271,22 @@ class Worker(object):
 					except Exception, exception:
 						self.log("%s: Exception in quit_terminate_command: %s" %
 								 (appname, exception))
-				if getattr(self, "subprocess", None) and \
-				   (hasattr(self.subprocess, "poll") and 
-					self.subprocess.poll() is None) or \
-				   (hasattr(self.subprocess, "isalive") and 
-					self.subprocess.isalive()):
+				if self.isalive():
 					self.log("%s: Trying to terminate subprocess..." % appname)
 					self.subprocess.terminate()
-					ts = time()
-					while getattr(self, "subprocess", None) and \
-					   hasattr(self.subprocess, "isalive") and \
-					   self.subprocess.isalive():
-						if time() > ts + 3:
-							break
-						sleep(.25)
-					if getattr(self, "subprocess", None) and \
-					   hasattr(self.subprocess, "isalive") and \
-					   self.subprocess.isalive():
-						self.log("%s: Trying to terminate subprocess forcefully..." %
-								 appname)
-						self.subprocess.terminate(force=True)
+					if sys.platform != "win32":
+						ts = time()
+						while self.isalive():
+							if time() > ts + 3:
+								break
+							sleep(.25)
+						if self.isalive():
+							self.log("%s: Trying to terminate subprocess forcefully..." %
+									 appname)
+							if isinstance(self.subprocess, sp.Popen):
+								self.subprocess.kill()
+							else:
+								self.subprocess.terminate(force=True)
 			except Exception, exception:
 				self.log("%s: Exception in quit_terminate_command: %s" %
 						 (appname, exception))
