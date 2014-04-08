@@ -21,7 +21,8 @@ names = [
 	"tiffgamut",
 	"txt2ti3",
 	"i1d3ccss",
-	"viewgam"
+	"viewgam",
+	"oeminst"
 ]
 
 # Argyll CMS tools optionally used by dispcalGUI

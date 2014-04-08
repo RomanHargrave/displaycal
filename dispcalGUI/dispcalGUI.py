@@ -6911,25 +6911,29 @@ class MainFrame(BaseFrame):
 			return
 		result = None
 		i1d3 = False
-		i1d3ccss = get_argyll_util("i1d3ccss")
-		if i1d3ccss and choice == wx.ID_OK:
-			# Automatically import X-Rite .edr files
-			result = self.worker.import_edr()
-			if not isinstance(result, Exception):
-				if result is None:
-					# Cancelled
-					return
-				i1d3 = result
+		i1d3ccss = None
 		spyd4 = False
-		spyd4en = get_argyll_util("spyd4en")
-		if spyd4en and choice == wx.ID_OK:
-			# Automatically import Spyder4 calibrations
-			result = self.worker.import_spyd4cal()
-			if not isinstance(result, Exception):
-				if result is None:
-					# Cancelled
-					return
-				spyd4 = result
+		spyd4en = None
+		oeminst = get_argyll_util("oeminst")
+		importers = [oeminst]
+		if not oeminst:
+			i1d3ccss = get_argyll_util("i1d3ccss")
+			importers.append(i1d3ccss)
+			spyd4en = get_argyll_util("spyd4en")
+			importers.append(spyd4en)
+		importers = filter(lambda importer: importer, importers)
+		if choice == wx.ID_OK:
+			# Automatically import OEM files
+			for importer in importers:
+				result = self.worker.import_colorimeter_corrections(importer)
+				if not isinstance(result, Exception):
+					if result is None:
+						# Cancelled
+						return
+				if ".ccss" in "".join(self.worker.output):
+					i1d3 = result
+				if "spyd4cal.bin" in "".join(self.worker.output):
+					spyd4 = result
 		# Import iColorDisplay device corrections or let the user choose
 		defaultDir = ""
 		defaultFile = ""
@@ -6949,7 +6953,7 @@ class MainFrame(BaseFrame):
 		if defaultDir and os.path.isdir(defaultDir):
 			# iColorDisplay found
 			defaultFile = "DeviceCorrections.txt"
-		elif i1d3ccss and not i1d3:
+		elif (oeminst or i1d3ccss) and not i1d3:
 			# Look for *.edr files
 			if sys.platform == "win32":
 				defaultDir = os.path.join(getenvu("PROGRAMFILES", ""), 
@@ -6967,7 +6971,7 @@ class MainFrame(BaseFrame):
 												"ColorMunki Display"))
 				if paths:
 					defaultDir = paths[-1]
-		elif spyd4en and not spyd4:
+		elif (oeminst or spyd4en) and not spyd4:
 			# Look for dccmtr.dll
 			if sys.platform == "win32":
 				paths = glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
@@ -6992,7 +6996,7 @@ class MainFrame(BaseFrame):
 								defaultDir=defaultDir,
 								defaultFile=defaultFile,
 								wildcard=lang.getstr("filetype.any") + 
-										 "|*.edr;*.exe;*.txt", 
+										 "|*.cab;*.edr;*.exe;*.txt", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
@@ -7000,19 +7004,20 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 		icd = False
 		if path and os.path.exists(path):
+			filename, ext = os.path.splitext(path)
 			type = None
-			if path.lower().endswith(".txt"):
-				type = ".txt"
+			if ext.lower() == ".txt":
+				type = "icd"
 			else:
 				icolordisplay = "icolordisplay" in os.path.basename(path).lower()
-				if path.lower().endswith(".dmg"):
+				if ext.lower() == ".dmg":
 					if icolordisplay:
 						# TODO: We have a iColorDisplay disk image,
 						# try mounting it
 						pass
-				elif i1d3ccss and path.lower().endswith(".edr"):
+				elif i1d3ccss and ext.lower() == ".edr":
 					type = "xrite"
-				elif path.lower().endswith(".exe"):
+				elif ext.lower() in (".cab", ".exe"):
 					if icolordisplay:
 						# TODO: We have a iColorDisplay installer,
 						# try opening it as lzma archive
@@ -7026,7 +7031,7 @@ class MainFrame(BaseFrame):
 					elif spyd4en and "spyder4" in os.path.basename(path).lower():
 						# Assume Spyder4
 						type = "spyder4"
-			if type == ".txt":
+			if type == "icd":
 				if not getcfg("dry_run"):
 					# Assume iColorDisplay DeviceCorrections.txt
 					ccmx_dir = config.get_argyll_data_dir()
@@ -7050,6 +7055,13 @@ class MainFrame(BaseFrame):
 			elif type == "spyder4":
 				# Import spyd4cal.bin
 				result = spyd4 = self.worker.import_spyd4cal([path])
+			elif oeminst:
+				result = self.worker.import_colorimeter_corrections(oeminst,
+																	[path])
+				if ".ccss" in "".join(self.worker.output):
+					i1d3 = result
+				if "spyd4cal.bin" in "".join(self.worker.output):
+					spyd4 = result
 			else:
 				result = Error(lang.getstr("error.file_type_unsupported"))
 		if isinstance(result, Exception):
