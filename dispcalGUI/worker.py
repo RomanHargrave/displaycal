@@ -3426,7 +3426,7 @@ class Worker(object):
 	
 	def has_lut_access(self):
 		display_no = min(len(self.lut_access), getcfg("display.number")) - 1
-		return display_no > -1 and self.lut_access[display_no]
+		return display_no > -1 and bool(self.lut_access[display_no])
 	
 	def has_separate_lut_access(self):
 		""" Return True if separate LUT access is possible and needed. """
