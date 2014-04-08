@@ -2274,6 +2274,7 @@ class Worker(object):
 			(cmdname == get_argyll_utilname("dispwin") and
 			 ("-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
 												 not "-I" in args and
+												 not "-s" in args and
 												 mac_ver()[0] >= '10.6'))) or
 			(cmdname in (get_argyll_utilname("dispcal"),
 						 get_argyll_utilname("dispread")) and
@@ -2283,7 +2284,9 @@ class Worker(object):
 			# applying calibration during measurements)
 			# In all other cases, root is only required if installing a
 			# profile to a system location
-			if (not "-I" in args and not self.calibration_loading_supported):
+			if (cmdname == get_argyll_utilname("dispwin") and
+				not "-I" in args and not "-s" in args and
+				not self.calibration_loading_supported):
 				# Loading/clearing calibration seems to be unpredictable on
 				# Mac OS X 10.6 and newer - don't actually do it, pretend
 				# we were successful
