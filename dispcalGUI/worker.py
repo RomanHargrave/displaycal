@@ -4447,13 +4447,15 @@ class Worker(object):
 						return False
 		return results
 	
-	def isalive(self):
+	def isalive(self, subprocess=None):
 		""" Check if subprocess is still alive """
-		return (getattr(self, "subprocess", None) and
-				((hasattr(self.subprocess, "poll") and 
-				  self.subprocess.poll() is None) or
-				 (hasattr(self.subprocess, "isalive") and 
-				  self.subprocess.isalive())))
+		if not subprocess:
+			subprocess = getattr(self, "subprocess", None)
+		return (subprocess and
+				((hasattr(subprocess, "poll") and 
+				  subprocess.poll() is None) or
+				 (hasattr(subprocess, "isalive") and 
+				  subprocess.isalive())))
 
 	def is_working(self):
 		""" Check if the Worker instance is busy. Return True or False. """
@@ -5303,20 +5305,21 @@ class Worker(object):
 		"""
 		if debug:
 			safe_print('[D] safe_quit')
-		if self.isalive():
+		subprocess = getattr(self, "subprocess", None)
+		if self.isalive(subprocess):
 			if debug or test:
 				safe_print('User requested abort')
 			try:
-				if self.measure_cmd and hasattr(self.subprocess, "send"):
+				if self.measure_cmd and hasattr(subprocess, "send"):
 					self.log("%s: Trying to end subprocess gracefully..." % appname)
 					try:
-						if self.subprocess.after == "Current":
+						if subprocess.after == "Current":
 							# Stop measurement
 							self.safe_send(" ")
 							sleep(1)
 						ts = time()
-						while getattr(self, "subprocess", None) and \
-						   self.subprocess.isalive():
+						while (self.isalive(subprocess) and
+							   self.subprocess == subprocess):
 							self.safe_send("\x1b")
 							if time() > ts + 9:
 								break
@@ -5324,40 +5327,40 @@ class Worker(object):
 					except Exception, exception:
 						self.log("%s: Exception in quit_terminate_command: %s" %
 								 (appname, exception))
-				if self.isalive():
+				if self.isalive(subprocess):
 					self.log("%s: Trying to terminate subprocess..." % appname)
-					self.subprocess.terminate()
+					subprocess.terminate()
 					if sys.platform != "win32":
 						ts = time()
-						while self.isalive():
+						while self.isalive(subprocess):
 							if time() > ts + 3:
 								break
 							sleep(.25)
-						if self.isalive():
+						if self.isalive(subprocess):
 							self.log("%s: Trying to terminate subprocess forcefully..." %
 									 appname)
-							if isinstance(self.subprocess, sp.Popen):
-								self.subprocess.kill()
+							if isinstance(subprocess, sp.Popen):
+								subprocess.kill()
 							else:
-								self.subprocess.terminate(force=True)
+								subprocess.terminate(force=True)
 			except Exception, exception:
 				self.log("%s: Exception in quit_terminate_command: %s" %
 						 (appname, exception))
 			if debug:
 				safe_print('[D] end try')
 		elif debug:
-			safe_print('[D] subprocess: %r' % getattr(self, "subprocess", None))
+			safe_print('[D] subprocess: %r' % subprocess)
 			safe_print('[D] subprocess_abort: %r' % getattr(self, "subprocess_abort", 
 													 False))
-			if getattr(self, "subprocess", None):
-				safe_print('[D] subprocess has poll: %r' % hasattr(self.subprocess, 
+			if subprocess:
+				safe_print('[D] subprocess has poll: %r' % hasattr(subprocess, 
 															"poll"))
-				if hasattr(self.subprocess, "poll"):
-					safe_print('[D] subprocess.poll(): %r' % self.subprocess.poll())
-				safe_print('[D] subprocess has isalive: %r' % hasattr(self.subprocess, 
+				if hasattr(subprocess, "poll"):
+					safe_print('[D] subprocess.poll(): %r' % subprocess.poll())
+				safe_print('[D] subprocess has isalive: %r' % hasattr(subprocess, 
 															   "isalive"))
-				if hasattr(self.subprocess, "isalive"):
-					safe_print('[D] subprocess.isalive(): %r' % self.subprocess.isalive())
+				if hasattr(subprocess, "isalive"):
+					safe_print('[D] subprocess.isalive(): %r' % subprocess.isalive())
 	
 	def report(self, report_calibrated=True):
 		""" Report on calibrated or uncalibrated display device response """
