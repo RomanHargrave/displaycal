@@ -5928,7 +5928,7 @@ class MainFrame(BaseFrame):
 				dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
 				dlg.Bind(wx.EVT_BUTTON, self.profile_share_handler,
 						 id=dlg.alt.GetId())
-			if preview and has_cal and self.worker.calibration_loading_supported():
+			if preview and has_cal and self.worker.calibration_loading_supported:
 				# Show calibration preview checkbox
 				self.preview = wx.CheckBox(dlg, -1, 
 										   lang.getstr("calibration.preview"))
