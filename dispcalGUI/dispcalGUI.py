@@ -204,8 +204,7 @@ def app_uptodate(parent=None):
 					 msg=lang.getstr("update_check.uptodate",
 									 appname),
 					 ok=lang.getstr("ok"), 
-					 bitmap=geticon(32, "dialog-information"), show=False,
-					 print_=True)
+					 bitmap=geticon(32, "dialog-information"), show=False)
 	update_check = wx.CheckBox(dlg, -1, 
 							   lang.getstr("update_check.onstartup"))
 	update_check.SetValue(getcfg("update_check"))
@@ -228,8 +227,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 						ok=lang.getstr("go_to_website"), 
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), 
-						log=True,
-						print_=True)
+						log=True)
 	if chglog:
 		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500, 300))
 		htmlwnd.SetStandardFonts()
@@ -5423,7 +5421,7 @@ class MainFrame(BaseFrame):
 			if stderr and stderr.strip():
 				InfoDialog(self, msg=safe_unicode(stderr.strip()), 
 						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-error"), print_=True)
+						   bitmap=geticon(32, "dialog-error"))
 		else:
 			self.call_pending_function()
 	

@@ -250,12 +250,10 @@ class BaseInteractiveDialog(wx.Dialog):
 	
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 show=True, log=True, print_=False, 
+				 show=True, log=True, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70):
-		if print_:
-			safe_print(msg, log=False)
 		if log:
-			log_(msg)
+			safe_print(msg)
 		if parent:
 			pos = list(pos)
 			i = 0
@@ -460,11 +458,11 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
-				 size=(400, -1), alt=None, log=False, print_=False, 
+				 size=(400, -1), alt=None, log=False, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
-									   log=log, print_=print_, style=style,
+									   log=log, style=style,
 									   nowrap=nowrap, wrap=wrap)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
@@ -756,9 +754,9 @@ class InfoDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 show=True, log=True, print_=False):
+				 show=True, log=True):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
-									   bitmap, pos, size, show, log, print_)
+									   bitmap, pos, size, show, log)
 
 
 class InvincibleFrame(wx.Frame):

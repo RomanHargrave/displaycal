@@ -1171,7 +1171,7 @@ class Worker(object):
 			args += ["-N"]
 		return True
 	
-	def authenticate(self, cmd, title=appname, parent=None, silent=False):
+	def authenticate(self, cmd, title=appname, parent=None):
 		""" Athenticate (using sudo) for a given command """
 		if sys.platform == "win32":
 			return
@@ -1292,10 +1292,7 @@ class Worker(object):
 					msg = lang.getstr("dialog.enter_password")
 					errstr = p.before.strip().decode(enc, "replace")
 					if errstr:
-						if not silent:
-							safe_print(errstr)
-						else:
-							log(errstr)
+						safe_print(errstr)
 						msg = "\n\n".join([errstr, msg])
 					dlg.message.SetLabel(msg)
 					dlg.message.Wrap(dlg.GetSize()[0] - 32 - 12 * 2)
@@ -2419,7 +2416,7 @@ class Worker(object):
 						# Careful: We can only show the auth dialog if running
 						# in the main GUI thread!
 						return Error("Authentication requested in non-GUI thread")
-					result = self.authenticate(cmd, title, parent, silent)
+					result = self.authenticate(cmd, title, parent)
 					if result is False:
 						safe_print(lang.getstr("aborted"))
 						return None
@@ -2749,8 +2746,7 @@ class Worker(object):
 					stdout.close()
 					if len(self.output) and log_output:
 						if not interact:
-							logfn = log if silent else safe_print
-							self.log("".join(self.output).strip(), logfn)
+							self.log("".join(self.output).strip())
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
@@ -6756,7 +6752,7 @@ class Xicclu(Worker):
 			line = line.strip()
 			if line.startswith("["):
 				if j > 0 and (debug or verbose > 3):
-					self.log(j - 1, odata[j - 1], line)
+					self.log("%s %s %s" % (j - 1, odata[j - 1], line))
 				continue
 			elif not "->" in line:
 				if line and (debug or verbose > 3):
