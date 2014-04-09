@@ -4064,7 +4064,8 @@ class Worker(object):
 					# Check if this is a 0install implementation, in which
 					# case we wanto to call 0launch with the appropriate
 					# command
-					if re.match("sha\d+(?:new)?\W", os.path.basename(pydir)):
+					if re.match("sha\d+(?:new)?\W",
+								os.path.basename(os.apth.dirname(pydir))):
 						executable = ("0launch --command=run-apply-profiles "
 									  "http://%s/0install/dispcalGUI.xml" %
 									  domain.lower())
