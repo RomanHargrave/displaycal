@@ -1178,6 +1178,8 @@ class Worker(object):
 		sudo = which("sudo")
 		if not sudo:
 			return EnvironmentError("sudo")
+		if not os.path.isabs(cmd):
+			cmd = which(cmd)
 		# Determine available sudo options
 		if not self.sudo_availoptions:
 			man = which("man")
@@ -2544,7 +2546,7 @@ class Worker(object):
 					stdout = sp.PIPE
 				if sudo:
 					stdin = tempfile.SpooledTemporaryFile()
-					stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
+					stdin.write(self.pwd.encode(enc, "replace") + os.linesep)
 					stdin.seek(0)
 				elif sys.stdin.isatty():
 					stdin = None
@@ -2611,17 +2613,31 @@ class Worker(object):
 					else:
 						patterns = []
 						self.log("%s: Waiting for EOF" % appname)
+					loop = 0
 					while self.subprocess.isalive():
+						if loop < 1 and sudo:
+							curpatterns = [":"] + patterns
+						else:
+							curpatterns = patterns
 						# NOTE: Using a timeout of None can block indefinitely
 						# and prevent expect() from ever returning!
-						self.subprocess.expect(patterns + [wexpect.EOF,
-														   wexpect.TIMEOUT],
+						self.subprocess.expect(curpatterns + [wexpect.EOF,
+															  wexpect.TIMEOUT],
 											   timeout=1)
 						if self.subprocess.after is wexpect.EOF:
 							self.log("%s: Reached EOF (OK)" % appname)
 							break
 						elif self.subprocess.after is wexpect.TIMEOUT:
 							continue
+						elif (self.subprocess.after == ":" and loop < 1 and
+							  sudo and
+							  len(self.subprocess.before.splitlines()) == 1):
+							# Argyll dispcal/dispread will always have
+							# "Setting up the instrument" as first line,
+							# so we can assume it's sudo asking for the
+							# password if we only have one line
+							self._safe_send(self.pwd.encode(enc, "replace") +
+											os.linesep)
 						elif self.measure_cmd:
 							if filter(lambda keyhit_str:
 										  re.search(keyhit_str,
@@ -2642,6 +2658,7 @@ class Worker(object):
 										 (appname, self.send_buffer))
 								self._safe_send(self.send_buffer)
 								self.send_buffer = None
+						loop += 1
 					# We need to call isalive() to set the exitstatus.
 					# We can't use wait() because it might block in the
 					# case of a timeout
