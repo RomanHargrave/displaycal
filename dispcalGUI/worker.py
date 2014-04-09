@@ -2418,6 +2418,10 @@ class Worker(object):
 				cmdline.insert(1, "-E")
 			if not interact:
 				cmdline.insert(1, "-S")
+			else:
+				# Use a designated prompt
+				cmdline.insert(1, "Password:")
+				cmdline.insert(1, "-p")
 		if working_dir and working_basename and not skip_scripts:
 			try:
 				cmdfilename = os.path.join(working_dir, working_basename + 
@@ -2623,9 +2627,11 @@ class Worker(object):
 						patterns = []
 						self.log("%s: Waiting for EOF" % appname)
 					loop = 0
+					pwdsent = False
+					authfailed = False
 					while self.subprocess.isalive():
 						if loop < 1 and sudo:
-							curpatterns = [":"] + patterns
+							curpatterns = ["Password:"] + patterns
 						else:
 							curpatterns = patterns
 						# NOTE: Using a timeout of None can block indefinitely
@@ -2638,15 +2644,16 @@ class Worker(object):
 							break
 						elif self.subprocess.after is wexpect.TIMEOUT:
 							continue
-						elif (self.subprocess.after == ":" and loop < 1 and
-							  sudo and
-							  len(self.subprocess.before.splitlines()) == 1):
-							# Argyll dispcal/dispread will always have
-							# "Setting up the instrument" as first line,
-							# so we can assume it's sudo asking for the
-							# password if we only have one line
-							self._safe_send(self.pwd.encode(enc, "replace") +
-											os.linesep)
+						elif (self.subprocess.after == "Password:" and
+							  loop < 1 and sudo):
+							if pwdsent:
+								self.subprocess.sendeof()
+								authfailed = True
+							else:
+								self._safe_send(self.pwd.encode(enc, "replace") +
+												os.linesep)
+								pwdsent = True
+							continue
 						elif self.measure_cmd:
 							if filter(lambda keyhit_str:
 										  re.search(keyhit_str,
@@ -2676,6 +2683,8 @@ class Worker(object):
 						sleep(.1)
 					self.log("%s: Subprocess no longer alive (OK)" % appname)
 					self.retcode = self.subprocess.exitstatus
+					if authfailed:
+						return Error(lang.getstr("auth.failed"))
 				else:
 					try:
 						self.subprocess = sp.Popen(" ".join(cmdline) if shell else
