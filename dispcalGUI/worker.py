@@ -1279,6 +1279,8 @@ class Worker(object):
 						if not p.terminate(force=True):
 							safe_print("Warning: Couldn't terminate timed-out "
 									   "sudo subprocess")
+					else:
+						safe_print(p.before.strip().decode(enc, "replace"))
 					return False
 				p.send(pwd + os.linesep)
 				p.expect(["Password:", wexpect.EOF, wexpect.TIMEOUT],
