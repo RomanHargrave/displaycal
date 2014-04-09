@@ -2751,7 +2751,8 @@ class Worker(object):
 		finally:
 			if (sudo and cmdname not in ("chown",
 										 get_argyll_utilname("dispwin")) and
-				working_dir and working_dir == self.tempdir):
+				working_dir and working_dir == self.tempdir and
+				os.listdir(working_dir)):
 				# We need to take ownership of any files created by commands
 				# run via sudo otherwise we cannot move or remove them from
 				# the temporary directory!
