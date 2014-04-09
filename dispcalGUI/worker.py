@@ -2651,7 +2651,7 @@ class Worker(object):
 								authfailed = True
 							else:
 								self._safe_send(self.pwd.encode(enc, "replace") +
-												os.linesep)
+												os.linesep, obfuscate=True)
 								pwdsent = True
 							continue
 						elif self.measure_cmd:
@@ -5384,10 +5384,14 @@ class Worker(object):
 		self.send_buffer = bytes
 		return True
 	
-	def _safe_send(self, bytes, retry=3):
+	def _safe_send(self, bytes, retry=3, obfuscate=False):
 		""" Safely send a keystroke to the current subprocess """
 		for i in xrange(0, retry):
-			self.logger.info("Sending key(s) %r (%i)" % (bytes, i + 1))
+			if obfuscate:
+				logbytes = "***"
+			else:
+				logbytes = bytes
+			self.logger.info("Sending key(s) %r (%i)" % (logbytes, i + 1))
 			try:
 				wrote = self.subprocess.send(bytes)
 			except Exception, exception:
