@@ -1220,7 +1220,7 @@ class Worker(object):
 		# Set stdin based on -n option availability
 		if "-S" in sudo_args:
 			stdin = tempfile.SpooledTemporaryFile()
-			stdin.write((self.pwd or "").encode(enc, "replace") + os.linesep)
+			stdin.write(self.pwd.encode(enc, "replace") + os.linesep)
 			stdin.seek(0)
 		else:
 			stdin = None
@@ -1255,46 +1255,64 @@ class Worker(object):
 			dlg.ok.SetDefault()
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
-			sudo_args = ["-l", "-S"]
+			sudo_args = ["-l"]
 			if self.sudo_availoptions["l [command]"]:
 				sudo_args += [cmd, "-?"]
-			while True:
+			if self.sudo_availoptions["K"]:
+				# Make sure sudo will actually ask for a password
+				sp.call([sudo, "-K"], stdout=sp.PIPE, 
+						stderr=sp.PIPE)
+			try:
+				p = wexpect.spawn(sudo, ["-p", "Password:"] + sudo_args)
+			except Exception, exception:
+				return Error("Could not launch sudo: %s" % exception)
+			p.expect(["Password:", wexpect.EOF, wexpect.TIMEOUT], timeout=10)
+			while p.after == "Password:":
 				dlg.pwd_txt_ctrl.SetFocus()
 				result = dlg.ShowModal()
 				pwd = dlg.pwd_txt_ctrl.GetValue()
 				if result != wx.ID_OK:
+					p.sendeof()
+					p.expect([wexpect.EOF, wexpect.TIMEOUT], timeout=10)
+					if p.after is wexpect.TIMEOUT:
+						safe_print("Warning: sudo timed out")
+						if not p.terminate(force=True):
+							safe_print("Warning: Couldn't terminate timed-out "
+									   "sudo subprocess")
 					return False
-				if self.sudo_availoptions["K"]:
-					# Mac OS X Snow Leopard and below do not support
-					# using -k or -K together with other options
-					sp.call([sudo, "-K"], stdout=sp.PIPE, 
-							stderr=sp.PIPE)
-				stdin = tempfile.SpooledTemporaryFile()
-				stdin.write(pwd.encode(enc, "replace") + os.linesep)
-				stdin.seek(0)
-				sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, 
-									stdout=sp.PIPE, stderr=sp.PIPE)
-				stdout, stderr = sudoproc.communicate()
-				if not stdin.closed:
-					stdin.close()
-				if stdout.strip():
-					# password was accepted
-					self.auth_timestamp = time()
-					self.pwd = pwd
-					break
+				p.send(pwd + os.linesep)
+				p.expect(["Password:", wexpect.EOF, wexpect.TIMEOUT],
+						 timeout=10)
+				if p.after is wexpect.EOF:
+					if p.exitstatus == 0:
+						# Password was accepted
+						self.auth_timestamp = time()
+						self.pwd = pwd
 				else:
-					errstr = unicode(stderr, enc, "replace")
-					errstr = "\n".join([re.sub("^[^:]+:\s*", "", line)
-										for line in errstr.splitlines()])
-					if not silent:
-						safe_print(errstr)
-					else:
-						log(errstr)
-					dlg.message.SetLabel(errstr)
+					msg = lang.getstr("dialog.enter_password")
+					errstr = p.before.strip().decode(enc, "replace")
+					if errstr:
+						if not silent:
+							safe_print(errstr)
+						else:
+							log(errstr)
+						msg = "\n\n".join([errstr, msg])
+					dlg.message.SetLabel(msg)
+					dlg.message.Wrap(dlg.GetSize()[0] - 32 - 12 * 2)
 					dlg.pwd_txt_ctrl.SetValue("")
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
 			dlg.Destroy()
+			if p.after is wexpect.TIMEOUT:
+				safe_print("Error: sudo timed out")
+				if not p.terminate(force=True):
+					safe_print("Warning: Couldn't terminate timed-out sudo "
+							   "subprocess")
+				return UnloggedError("sudo timed out")
+			if not self.auth_timestamp:
+				return Error(p.before.strip().decode(enc, "replace") or
+							 ("sudo exited prematurely with status %s" %
+							  p.exitstatus))
 		return True
 	
 	def instrument_can_use_ccxx(self):
