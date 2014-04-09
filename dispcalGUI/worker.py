@@ -1263,7 +1263,6 @@ class Worker(object):
 				result = dlg.ShowModal()
 				pwd = dlg.pwd_txt_ctrl.GetValue()
 				if result != wx.ID_OK:
-					safe_print(lang.getstr("aborted"))
 					return False
 				if self.sudo_availoptions["K"]:
 					# Mac OS X Snow Leopard and below do not support
@@ -2404,6 +2403,7 @@ class Worker(object):
 						return Error("Authentication requested in non-GUI thread")
 					result = self.authenticate(cmd, title, parent, silent)
 					if result is False:
+						safe_print(lang.getstr("aborted"))
 						return None
 					elif isinstance(result, Exception):
 						return result
