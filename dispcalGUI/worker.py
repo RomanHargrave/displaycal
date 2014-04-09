@@ -1177,9 +1177,18 @@ class Worker(object):
 			return
 		sudo = which("sudo")
 		if not sudo:
-			return EnvironmentError("sudo")
+			return Error(lang.getstr("file.missing", "sudo"))
+		ocmd = cmd
 		if not os.path.isabs(cmd):
-			cmd = which(cmd)
+			paths = getenvu("PATH", os.defpath).split(os.pathsep)
+			argyll_dir = (getcfg("argyll.dir") or "").rstrip(os.path.sep)
+			if argyll_dir:
+				if argyll_dir in paths:
+					paths.remove(argyll_dir)
+				paths = [argyll_dir] + paths
+			cmd = which(cmd, paths)
+		if not cmd or not os.path.isfile(cmd):
+			return Error(lang.getstr("file.missing", ocmd))
 		# Determine available sudo options
 		if not self.sudo_availoptions:
 			man = which("man")
