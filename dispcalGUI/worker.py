@@ -1282,7 +1282,8 @@ class Worker(object):
 				p.expect(["Password:", wexpect.EOF, wexpect.TIMEOUT],
 						 timeout=10)
 				if p.after is wexpect.EOF:
-					if p.exitstatus == 0:
+					# We need to call isalive() to set the exitstatus
+					if not p.isalive() and p.exitstatus == 0:
 						# Password was accepted
 						self.auth_timestamp = time()
 						self.pwd = pwd
@@ -1305,6 +1306,8 @@ class Worker(object):
 							   "subprocess")
 				return UnloggedError("sudo timed out")
 			if not self.auth_timestamp:
+				# We need to call isalive() to set the exitstatus
+				p.isalive()
 				return Error(p.before.strip().decode(enc, "replace") or
 							 ("sudo exited prematurely with status %s" %
 							  p.exitstatus))
