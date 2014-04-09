@@ -1180,13 +1180,9 @@ class Worker(object):
 			return Error(lang.getstr("file.missing", "sudo"))
 		ocmd = cmd
 		if not os.path.isabs(cmd):
-			paths = getenvu("PATH", os.defpath).split(os.pathsep)
-			argyll_dir = (getcfg("argyll.dir") or "").rstrip(os.path.sep)
-			if argyll_dir:
-				if argyll_dir in paths:
-					paths.remove(argyll_dir)
-				paths = [argyll_dir] + paths
-			cmd = which(cmd, paths)
+			cmd = get_argyll_util(ocmd)
+			if not cmd:
+				cmd = which(ocmd)
 		if not cmd or not os.path.isfile(cmd):
 			return Error(lang.getstr("file.missing", ocmd))
 		# Determine available sudo options
