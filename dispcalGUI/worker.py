@@ -1564,7 +1564,9 @@ class Worker(object):
 	def abort_subprocess(self, confirm=False):
 		""" Abort the current subprocess or thread """
 		if confirm and getattr(self, "progress_wnd", None):
-			if getattr(self.progress_wnd, "dlg", None):
+			if (getattr(self.progress_wnd, "dlg", None) and
+				self.progress_wnd.dlg.IsShownOnScreen() and
+				not isinstance(self.progress_wnd.dlg, DummyDialog)):
 				return
 			pause = (not getattr(self.progress_wnd, "paused", False) and
 					 hasattr(self.progress_wnd, "pause_continue_handler"))
