@@ -2434,6 +2434,9 @@ class Worker(object):
 				cmdline.insert(1, "-E")
 			if not interact:
 				cmdline.insert(1, "-S")
+				# Set empty string as password prompt to hide it from stderr
+				cmdline.insert(1, "")
+				cmdline.insert(1, "-p")
 			else:
 				# Use a designated prompt
 				cmdline.insert(1, "Password:")
