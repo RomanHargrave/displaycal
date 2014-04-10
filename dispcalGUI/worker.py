@@ -12,6 +12,7 @@ import sys
 import tempfile
 import textwrap
 import traceback
+from UserString import UserString
 from encodings.aliases import aliases
 from hashlib import md5
 from time import sleep, strftime, time
@@ -991,6 +992,96 @@ class LineCache():
 					  self.cache[-1:])[-self.maxlines - 1:]
 
 
+class StringWithLengthOverride(UserString):
+
+	""" Allow defined behavior in comparisons and when evaluating length """
+
+	def __init__(self, seq, length=None):
+		UserString.__init__(self, seq)
+		if length is None:
+			length = len(seq)
+		self.length = length
+
+	def __len__(self):
+		return self.length
+
+
+class Sudo(object):
+
+	""" Determine if a command can be run via sudo """
+
+	def __init__(self):
+		self.availoptions = {}
+		self.sudo = which("sudo")
+		if self.sudo:
+			# Determine available sudo options
+			man = which("man")
+			if man:
+				manproc = sp.Popen([man, "sudo"], stdout=sp.PIPE, 
+									stderr=sp.PIPE)
+				# Strip formatting
+				stdout = re.sub(".\x08", "", manproc.communicate()[0])
+				self.availoptions = {"E": bool(re.search("-E", stdout)),
+									 "l [command]":
+									 bool(re.search("-l(?:\[l\])?\W?.*?command\W",
+													stdout)),
+									 "n": bool(re.search("-n", stdout)),
+									 "K": bool(re.search("-K", stdout))}
+			if debug:
+				safe_print("[D] Available sudo options:", 
+						   ", ".join(filter(lambda option: self.availoptions[option], 
+											self.availoptions.keys())))
+
+	def __len__(self):
+		return int(bool(self.sudo))
+
+	def __str__(self):
+		return str(self.sudo or "")
+
+	def __unicode__(self):
+		return unicode(self.sudo or "")
+
+	def is_allowed(self, args=None, pwd=""):
+		"""
+		Check if a command is allowed via sudo. Return either a string
+		listing allowed and forbidden commands, or the fully-qualified path of
+		the command along with any arguments, or an error message in case the 
+		command is not allowed.
+		
+		The returned string is a custom class that will always return length 0
+		if the command is not allowed (even if the actual string length is
+		non-zero), thus allowing for easy boolean comparisons.
+		
+		"""
+		if self.sudo:
+			# Set sudo args based on available options
+			if self.availoptions.get("l [command]") and args:
+				sudo_args = ["-l",
+							 "-n" if self.availoptions.get("n") else "-S",
+							 ] + args
+			else:
+				sudo_args = ["-l", "-S"]
+			# Set stdin based on -n option availability
+			if "-S" in sudo_args:
+				stdin = tempfile.SpooledTemporaryFile()
+				stdin.write(pwd.encode(enc, "replace") + os.linesep)
+				stdin.seek(0)
+			else:
+				stdin = None
+			sudoproc = sp.Popen([self.sudo] + sudo_args, stdin=stdin,
+								stdout=sp.PIPE, stderr=sp.PIPE)
+			stdout, stderr = [std.strip() for std in sudoproc.communicate()]
+			if stdin and not stdin.closed:
+				stdin.close()
+			if stdout:
+				std = stdout
+			else:
+				std = stderr
+		else:
+			std, stdout = lang.getstr("file.missing", "sudo"), ""
+		return StringWithLengthOverride(std, len(stdout))
+
+
 class WPopen(sp.Popen):
 	
 	def __init__(self, *args, **kwargs):
@@ -1078,7 +1169,7 @@ class Worker(object):
 		self.options_targen = []
 		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
-		self.sudo_availoptions = {}
+		self.sudo = None
 		self.auth_timestamp = 0
 		self.sessionlogfiles = {}
 		self.tempdir = None
@@ -1199,12 +1290,35 @@ class Worker(object):
 		return True
 	
 	def authenticate(self, cmd, title=appname, parent=None):
-		""" Athenticate (using sudo) for a given command """
+		"""
+		Athenticate (using sudo) for a given command
+		
+		The return value will either be True (authentication successful and
+		command allowed), False (in case of the user cancelling the password
+		dialog) or an error.
+		
+		"""
+		# Authentication using sudo is pretty convoluted if dealing with
+		# platform and configuration differences. Here's what we do:
+		# If no password was previously available, or if the requested command
+		# cannot be run via sudo regardless of password (we check this with
+		# sudo -l <command>), we ask for a password. This is done by first
+		# clearing any cached credentials (sudo -K) so that sudo is guaranteed
+		# to ask for a password if a command is run through it, then we spawn
+		# sudo true (with true being the standard GNU utility that always
+		# has an exit status of 0) and expect the password prompt. The user
+		# is then given the opportunity to enter a password, which is then fed
+		# to sudo. If sudo exits with a status of 0, the password must have
+		# been accepted, but we still don't know for sure if our command is
+		# allowed, so we run sudo -l <command> again to determine if it is
+		# indeed allowed.
 		if sys.platform == "win32":
 			return
-		sudo = which("sudo")
-		if not sudo:
-			return Error(lang.getstr("file.missing", "sudo"))
+		self.auth_timestamp = 0
+		if not self.sudo:
+			self.sudo = Sudo()
+			if not self.sudo:
+				return Error(lang.getstr("file.missing", "sudo"))
 		ocmd = cmd
 		if not os.path.isabs(cmd):
 			cmd = get_argyll_util(ocmd)
@@ -1212,49 +1326,8 @@ class Worker(object):
 				cmd = which(ocmd)
 		if not cmd or not os.path.isfile(cmd):
 			return Error(lang.getstr("file.missing", ocmd))
-		# Determine available sudo options
-		if not self.sudo_availoptions:
-			man = which("man")
-			if man:
-				manproc = sp.Popen([man, "sudo"], stdout=sp.PIPE, 
-									stderr=sp.PIPE)
-				# Strip formatting
-				stdout = re.sub(".\x08", "", manproc.communicate()[0])
-				self.sudo_availoptions = {"E": bool(re.search("-E", stdout)),
-										  "l [command]": bool(re.search("-l(?:\[l\])?\s+\[command\]", stdout)),
-										  "n": bool(re.search("-n", stdout)),
-										  "K": bool(re.search("-K", stdout))}
-			else:
-				self.sudo_availoptions = {"E": False, 
-										  "l [command]": False, 
-										  "n": False,
-										  "K": False}
-			if debug:
-				safe_print("[D] Available sudo options:", 
-						   ", ".join(filter(lambda option: self.sudo_availoptions[option], 
-											self.sudo_availoptions.keys())))
-		# Set sudo args based on available options
-		if self.sudo_availoptions["l [command]"]:
-			sudo_args = ["-l",
-						 "-n" if self.sudo_availoptions["n"] else "-S",
-						 cmd, "-?"]
-		else:
-			sudo_args = ["-l", "-S"]
-		# Set stdin based on -n option availability
-		if "-S" in sudo_args:
-			stdin = tempfile.SpooledTemporaryFile()
-			stdin.write(self.pwd.encode(enc, "replace") + os.linesep)
-			stdin.seek(0)
-		else:
-			stdin = None
-		sudoproc = sp.Popen([sudo] + sudo_args, stdin=stdin, stdout=sp.PIPE, 
-							stderr=sp.PIPE)
-		stdout, stderr = sudoproc.communicate()
-		if stdin and not stdin.closed:
-			stdin.close()
-		pwd = self.pwd
-		if not stdout.strip() or not pwd:
-			# ask for password
+		pwd = self.pwd 
+		if not pwd or not self.sudo.is_allowed([cmd, "-?"], pwd):
 			progress_dlg = self._progress_wnd or getattr(wx.GetApp(),
 														 "progress_dlg", None)
 			if parent is None:
@@ -1279,18 +1352,21 @@ class Worker(object):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			sudo_args = ["-l"]
-			if self.sudo_availoptions["l [command]"]:
+			if self.sudo.availoptions.get("l [command]"):
 				sudo_args += [cmd, "-?"]
-			if self.sudo_availoptions["K"]:
+			if self.sudo.availoptions.get("K"):
 				# Make sure sudo will actually ask for a password
-				sp.call([sudo, "-K"], stdout=sp.PIPE, 
+				sp.call([safe_str(self.sudo), "-K"], stdout=sp.PIPE, 
 						stderr=sp.PIPE)
 			try:
-				p = wexpect.spawn(sudo, ["-p", "Password:"] + sudo_args)
+				p = wexpect.spawn(safe_str(self.sudo), ["-p", "Password:",
+														"true"])
 			except Exception, exception:
 				return Error("Could not launch sudo: %s" % exception)
 			self.expect_timeout(["Password:", wexpect.EOF], 10, subprocess=p)
-			while p.after == "Password:":
+			# We need to call isalive() to set the exitstatus
+			while p.isalive() and p.after == "Password:":
+				# Ask for password
 				dlg.pwd_txt_ctrl.SetFocus()
 				result = dlg.ShowModal()
 				pwd = dlg.pwd_txt_ctrl.GetValue()
@@ -1308,13 +1384,7 @@ class Worker(object):
 				p.send(pwd + os.linesep)
 				self.expect_timeout(["Password:", wexpect.EOF], 10,
 									subprocess=p)
-				if p.after is wexpect.EOF:
-					# We need to call isalive() to set the exitstatus
-					if not p.isalive() and p.exitstatus == 0:
-						# Password was accepted
-						self.auth_timestamp = time()
-						self.pwd = pwd
-				else:
+				if p.after == "Password:":
 					msg = lang.getstr("dialog.enter_password")
 					errstr = p.before.strip().decode(enc, "replace")
 					if errstr:
@@ -1332,12 +1402,16 @@ class Worker(object):
 					safe_print("Warning: Couldn't terminate timed-out sudo "
 							   "subprocess")
 				return UnloggedError("sudo timed out")
-			if not self.auth_timestamp:
-				# We need to call isalive() to set the exitstatus
-				p.isalive()
+			if p.exitstatus != 0:
 				return Error(p.before.strip().decode(enc, "replace") or
 							 ("sudo exited prematurely with status %s" %
 							  p.exitstatus))
+			# Password was accepted, check if command is allowed
+			if self.sudo.is_allowed([cmd, "-?"], pwd):
+				self.auth_timestamp = time()
+				self.pwd = pwd
+			else:
+				return Error(is_allowed)
 		return True
 	
 	def instrument_can_use_ccxx(self):
@@ -2454,12 +2528,12 @@ class Worker(object):
 						return None
 					elif isinstance(result, Exception):
 						return result
-				sudo = which("sudo")
+				sudo = unicode(self.sudo)
 		if sudo:
 			cmdline.insert(0, sudo)
 			if (cmdname == get_argyll_utilname("dispwin")
 				and sys.platform != "darwin"
-				and self.sudo_availoptions.get("E")
+				and self.sudo.availoptions.get("E")
 				and getcfg("sudo.preserve_environment")):
 				# Preserve environment so $DISPLAY is set
 				cmdline.insert(1, "-E")
