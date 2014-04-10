@@ -3758,7 +3758,8 @@ class Worker(object):
 					elif result2 is False:
 						if not self.errors:
 							self.log(lang.getstr("aborted"))
-							result = False
+							if not isinstance(result, Exception) and result:
+								result = False
 						else:
 							result2 = Error("".join(self.errors))
 					if isinstance(result, Exception) and result2:
