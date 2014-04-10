@@ -1409,7 +1409,8 @@ class Worker(object):
 							 ("sudo exited prematurely with status %s" %
 							  p.exitstatus))
 			# Password was accepted, check if command is allowed
-			if self.sudo.is_allowed([cmd, "-?"], pwd):
+			is_allowed = self.sudo.is_allowed([cmd, "-?"], pwd)
+			if is_allowed:
 				self.auth_timestamp = time()
 				self.pwd = pwd
 			else:
