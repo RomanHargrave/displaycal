@@ -51,14 +51,16 @@ def trash(paths):
 		trashroot = os.path.join(getenvu("XDG_DATA_HOME",
 		   os.path.join(expanduseru("~"), ".local", "share")), "Trash")
 		trashinfo = os.path.join(trashroot, "info")
-		if os.path.isdir(trashroot):
-			# modern Linux distros
+		# Older Linux distros and Mac OS X
+		trashcan = os.path.join(expanduseru("~"), ".Trash")
+		if sys.platform != "darwin" and not os.path.isdir(trashcan):
+			# Modern Linux distros
 			trashcan = os.path.join(trashroot, "files")
-		else:
-			# older Linux distros and Mac OS X
-			trashcan = os.path.join(expanduseru("~"), ".Trash")
 		if not os.path.isdir(trashcan):
-			raise TrashcanUnavailableError("Not a directory: '%s'" % trashcan)
+			try:
+				os.makedirs(trashcan)
+			except OSError:
+				raise TrashcanUnavailableError("Not a directory: '%s'" % trashcan)
 		for path in paths:
 			if os.path.isdir(trashcan):
 				n = 1
