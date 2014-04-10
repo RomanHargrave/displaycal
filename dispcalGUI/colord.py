@@ -156,7 +156,7 @@ def get_object_path(search, object_type):
 	else:
 		if stderr.strip():
 			raise CDObjectQueryError(stderr)
-		object_path = stdout.strip().splitlines()[0].strip()
+		object_path = stdout.strip().splitlines()[0].split(":", 1)[-1].strip()
 		if not object_path:
 			raise CDObjectNotFoundError("Could not find object path for %s" % search)
 	return object_path
