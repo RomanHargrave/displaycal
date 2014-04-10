@@ -108,19 +108,19 @@ def get_default_profile(device_id):
 		try:
 			p = sp.Popen([safe_str(colormgr), "device-get-default-profile",
 						  device],
-						 stdout=sp.PIPE, stderr=sp.PIPE)
+						 stdout=sp.PIPE, stderr=sp.STDOUT)
 			stdout, stderr = p.communicate()
 		except Exception, exception:
 			raise CDError(safe_str(exception))
 		else:
+			errmsg = "Couldn't get default profile for device %s" % device_id
 			if p.returncode != 0:
-				raise CDError(stderr.strip() or stdout.strip())
+				raise CDError(stdout.strip() or errmsg)
 			match = re.search(":\s*([^\r\n]+\.ic[cm])", stdout, re.I)
 			if match:
 				return match.groups()[0]
 			else:
-				raise CDError("Couldn't get default profile for device ID %r" %
-							  device_id)
+				raise CDError(errmsg)
 		
 	client = client_connect()
 
@@ -149,16 +149,17 @@ def get_object_path(search, object_type):
 	args = ["find-%s" % object_type, search]
 	try:
 		p = sp.Popen([safe_str(colormgr)] + args, stdout=sp.PIPE,
-					 stderr=sp.PIPE)
+					 stderr=sp.STDOUT)
 		stdout, stderr = p.communicate()
 	except Exception, exception:
 		raise CDError(safe_str(exception))
 	else:
+		errmsg = "Could not find object path for %s" % search
 		if p.returncode != 0:
-			raise CDObjectQueryError(stderr.strip() or stdout.strip())
+			raise CDObjectQueryError(stdout.strip() or errmsg)
 		object_path = stdout.strip().splitlines()[0].split(":", 1)[-1].strip()
 		if not object_path:
-			raise CDObjectNotFoundError("Could not find object path for %s" % search)
+			raise CDObjectNotFoundError(errmsg)
 	return object_path
 
 
@@ -220,6 +221,9 @@ def install_profile(device_id, profile, profile_installname=None,
 		raise CDTimeout("Querying for profile %r returned no result for %s secs" %
 						(profile_id, timeout))
 
+	errmsg = "Could not make profile %s default for device %s" % (profile_id,
+																  device_id)
+
 	if Colord:
 		# Connect to profile
 		if not profile.connect_sync(cancellable):
@@ -237,8 +241,7 @@ def install_profile(device_id, profile, profile_installname=None,
 
 		# Make profile default for device
 		if not device.make_profile_default_sync(profile, cancellable):
-			raise CDError("Could not make profile %r default for device ID %s" %
-						  (profile.get_filename(), device_id))
+			raise CDError(errmsg)
 	else:
 		# Find device object path
 		device = get_object_path(device_id, "device")
@@ -275,13 +278,13 @@ def install_profile(device_id, profile, profile_installname=None,
 		if logfn:
 			logfn("")
 		try:
-			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
 			stdout, stderr = p.communicate()
 		except Exception, exception:
 			raise CDError(safe_str(exception))
 		else:
 			if p.returncode != 0:
-				raise CDError(stderr.strip() or stdout.strip())
+				raise CDError(stdout.strip() or errmsg)
 		if logfn and stdout.strip():
 			logfn(stdout.strip())
 
