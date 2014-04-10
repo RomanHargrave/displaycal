@@ -1262,14 +1262,14 @@ class Worker(object):
 				p = wexpect.spawn(sudo, ["-p", "Password:"] + sudo_args)
 			except Exception, exception:
 				return Error("Could not launch sudo: %s" % exception)
-			p.expect(["Password:", wexpect.EOF, wexpect.TIMEOUT], timeout=10)
+			self.expect_timeout(["Password:", wexpect.EOF], 10, subprocess=p)
 			while p.after == "Password:":
 				dlg.pwd_txt_ctrl.SetFocus()
 				result = dlg.ShowModal()
 				pwd = dlg.pwd_txt_ctrl.GetValue()
 				if result != wx.ID_OK:
 					p.sendeof()
-					p.expect([wexpect.EOF, wexpect.TIMEOUT], timeout=10)
+					self.expect_timeout([wexpect.EOF], 10, subprocess=p)
 					if p.after is wexpect.TIMEOUT:
 						safe_print("Warning: sudo timed out")
 						if not p.terminate(force=True):
@@ -1279,8 +1279,8 @@ class Worker(object):
 						safe_print(p.before.strip().decode(enc, "replace"))
 					return False
 				p.send(pwd + os.linesep)
-				p.expect(["Password:", wexpect.EOF, wexpect.TIMEOUT],
-						 timeout=10)
+				self.expect_timeout(["Password:", wexpect.EOF], 10,
+									subprocess=p)
 				if p.after is wexpect.EOF:
 					# We need to call isalive() to set the exitstatus
 					if not p.isalive() and p.exitstatus == 0:
@@ -2820,6 +2820,33 @@ class Worker(object):
 						return UnloggedError(errmsg.strip())
 			return False
 		return True
+	
+	def expect_timeout(self, patterns, timeout=-1, child_timeout=1,
+					   subprocess=None):
+		"""
+		wexpect.spawn.expect with better timeout handling.
+		
+		The default expect can block up to timeout seconds if the child is
+		already dead. To prevent this, we run expect in a loop until a pattern
+		is matched, timeout is reached or an exception occurs. The max time an
+		expect call will block if the child is already dead can be set with the
+		child_timeout parameter.
+		
+		"""
+		if not subprocess:
+			subprocess = self.subprocess
+		if timeout == -1:
+			timeout = subprocess.timeout
+		patterns = list(patterns)
+		if not wexpect.TIMEOUT in patterns:
+			patterns.append(wexpect.TIMEOUT)
+		start = time()
+		while True:
+			result = subprocess.expect(patterns, timeout=child_timeout)
+			if (subprocess.after is not wexpect.TIMEOUT or
+				time() - start >= timeout):
+				break
+		return result
 	
 	def flush(self):
 		pass
