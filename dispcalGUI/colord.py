@@ -113,8 +113,8 @@ def get_default_profile(device_id):
 		except Exception, exception:
 			raise CDError(safe_str(exception))
 		else:
-			if stderr.strip():
-				raise CDError(stderr)
+			if p.returncode != 0:
+				raise CDError(stderr.strip() or stdout.strip())
 			match = re.search(":\s*([^\r\n]+\.ic[cm])", stdout, re.I)
 			if match:
 				return match.groups()[0]
@@ -154,8 +154,8 @@ def get_object_path(search, object_type):
 	except Exception, exception:
 		raise CDError(safe_str(exception))
 	else:
-		if stderr.strip():
-			raise CDObjectQueryError(stderr)
+		if p.returncode != 0:
+			raise CDObjectQueryError(stderr.strip() or stdout.strip())
 		object_path = stdout.strip().splitlines()[0].split(":", 1)[-1].strip()
 		if not object_path:
 			raise CDObjectNotFoundError("Could not find object path for %s" % search)
@@ -252,7 +252,7 @@ def install_profile(device_id, profile, profile_installname=None,
 		cmd = safe_str(colormgr)
 
 		# Add profile to device
-		# (Ignore stderr as profile may already have been added)
+		# (Ignore returncode as profile may already have been added)
 		args = [cmd, "device-add-profile", device, profile]
 		printcmdline(args[0], args[1:], fn=logfn)
 		if logfn:
@@ -264,6 +264,8 @@ def install_profile(device_id, profile, profile_installname=None,
 			raise CDError(safe_str(exception))
 		if logfn and stdout.strip():
 			logfn(stdout.strip())
+		if logfn and stderr.strip():
+			logfn(stderr.strip())
 
 		if logfn:
 			logfn("")
@@ -280,8 +282,8 @@ def install_profile(device_id, profile, profile_installname=None,
 		except Exception, exception:
 			raise CDError(safe_str(exception))
 		else:
-			if stderr.strip():
-				raise CDError(stderr)
+			if p.returncode != 0:
+				raise CDError(stderr.strip() or stdout.strip())
 		if logfn and stdout.strip():
 			logfn(stdout.strip())
 
