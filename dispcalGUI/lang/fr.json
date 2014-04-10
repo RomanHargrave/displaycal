@@ -482,6 +482,7 @@
 	"profile.created": "Le profil a été créé avec succès.",
 	"profile.current": "Profil courant",
 	"profile.do_not_install": "Ne pas installer le profil",
+		"*profile.import.success": "The profile has been imported. You may need to manually assign and activate it under “Color” system settings.",
 	"profile.info": "Information du profil",
 	"profile.info.show": "Afficher l'information du profil",
 	"profile.install": "Installer le profil",

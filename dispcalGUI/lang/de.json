@@ -480,6 +480,7 @@
 	"profile.created": "Das Profil wurde erstellt.",
 	"profile.current": "Aktuelles Profil",
 	"profile.do_not_install": "Profil nicht installieren",
+	"profile.import.success": "Das Profil wurde importiert. Sie müssen es eventuell manuell in den Systemeinstellungen „Farbe“ zuweisen und aktivieren.",
 	"profile.info": "Profilinformationen",
 	"profile.info.show": "Profilinformationen zeigen",
 	"profile.install": "Profil installieren",

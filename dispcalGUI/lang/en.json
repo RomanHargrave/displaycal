@@ -487,6 +487,7 @@
 	"profile.created": "The profile has been successfully created.",
 	"profile.current": "Current profile",
 	"profile.do_not_install": "Don't install profile",
+	"profile.import.success": "The profile has been imported. You may need to manually assign and activate it under “Color” system settings.",
 	"profile.info": "Profile information",
 	"profile.info.show": "Show profile information",
 	"profile.install": "Install profile",

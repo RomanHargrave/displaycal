@@ -2,6 +2,7 @@
 
 # stdlib
 from __future__ import with_statement
+from binascii import hexlify
 import getpass
 import math
 import os
@@ -3668,44 +3669,44 @@ class Worker(object):
 		argyll_install = self._install_profile_argyll(profile_path,
 													  capture_output,
 													  skip_scripts, silent)
+		profile = None
+		try:
+			profile = ICCP.ICCProfile(profile_path)
+		except (IOError, ICCP.ICCProfileInvalidError), exception:
+			return exception
 		device_id = self.get_device_id(quirk=True)
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
 			(self.argyll_version < [1, 6] or not whereis("libcolordcompat"))):
 			if device_id:
-				try:
-					profile = ICCP.ICCProfile(profile_path)
-				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					result = exception
-				else:
-					result = False
-					# Try a range of possible device IDs
-					device_ids = [device_id,
-								  self.get_device_id(quirk=True,
-													 truncate_edid_strings=True),
-								  self.get_device_id(quirk=True,
-													 use_serial_32=False),
-								  self.get_device_id(quirk=True,
-													 use_serial_32=False,
-													 truncate_edid_strings=True),
-								  self.get_device_id(quirk=False),
-								  self.get_device_id(quirk=False,
-													 truncate_edid_strings=True),
-								  self.get_device_id(quirk=False,
-													 use_serial_32=False),
-								  self.get_device_id(quirk=False,
-													 use_serial_32=False,
-													 truncate_edid_strings=True)]
-					for device_id in device_ids:
-						if device_id:
-							# NOTE: This can block
-							result = self._install_profile_colord(profile,
-																  device_id)
-							if isinstance(result, colord.CDObjectQueryError):
-								# Device ID was not found, try next one
-								continue
-							else:
-								# Either returned ok or there was another error
-								break
+				result = False
+				# Try a range of possible device IDs
+				device_ids = [device_id,
+							  self.get_device_id(quirk=True,
+												 truncate_edid_strings=True),
+							  self.get_device_id(quirk=True,
+												 use_serial_32=False),
+							  self.get_device_id(quirk=True,
+												 use_serial_32=False,
+												 truncate_edid_strings=True),
+							  self.get_device_id(quirk=False),
+							  self.get_device_id(quirk=False,
+												 truncate_edid_strings=True),
+							  self.get_device_id(quirk=False,
+												 use_serial_32=False),
+							  self.get_device_id(quirk=False,
+												 use_serial_32=False,
+												 truncate_edid_strings=True)]
+				for device_id in device_ids:
+					if device_id:
+						# NOTE: This can block
+						result = self._install_profile_colord(profile,
+															  device_id)
+						if isinstance(result, colord.CDObjectQueryError):
+							# Device ID was not found, try next one
+							continue
+						else:
+							# Either returned ok or there was another error
+							break
 				colord_install = result
 			if (not device_id or
 				isinstance(result, Exception) or not result):
@@ -3751,8 +3752,19 @@ class Worker(object):
 				if getcfg("profile.load_on_login"):
 					result = self._install_profile_loader_xdg(silent)
 				if gcm_import:
-					self._install_profile_gcm(profile_path)
-			if not isinstance(result, Exception) and result and not gcm_import:
+					result2 = self._install_profile_gcm(profile)
+					if result2 is True:
+						result2 = Info(lang.getstr("profile.import.success"))
+					elif result2 is False:
+						if not self.errors:
+							self.log(lang.getstr("aborted"))
+						else:
+							result2 = Error("".join(self.errors))
+					if isinstance(result, Exception) and result2:
+						result = result.__class__("\n\n".join([safe_unicode(v)
+															   for v in (result,
+																		 result2)]))
+			if not isinstance(result, Exception) and result:
 				if verbose >= 1: self.log(lang.getstr("success"))
 				if sys.platform == "darwin" and False:  # NEVER
 					# If installing the profile by just copying it to the
@@ -3903,8 +3915,21 @@ class Worker(object):
 			return exception
 		return True
 	
-	def _install_profile_gcm(self, profile_path):
+	def _install_profile_gcm(self, profile):
 		""" Install profile using gcm-import """
+		if which("colormgr"):
+			# Check if profile already exists in database
+			try:
+				colord.get_object_path("icc-" + hexlify(profile.ID), "profile")
+			except colord.CDObjectQueryError:
+				# Profile not in database
+				pass
+			except colord.CDError, exception:
+				self.log(exception)
+			else:
+				# Profile already in database, nothing to do
+				return None
+		profile_path = profile.fileName
 		# Remove old profile so gcm-import can work
 		profilename = os.path.basename(profile_path)
 		for dirname in iccprofiles_home:
@@ -3919,7 +3944,7 @@ class Worker(object):
 			self._progress_wnd.dlg = DummyDialog()
 		# Run gcm-import
 		cmd, args = which("gcm-import"), [profile_path]
-		self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
+		return self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
 	
 	def _install_profile_oy(self, profile_path, profile_name=None,
 							capture_output=False, skip_scripts=False,
