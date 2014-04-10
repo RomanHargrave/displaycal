@@ -264,8 +264,6 @@ def install_profile(device_id, profile, profile_installname=None,
 			raise CDError(safe_str(exception))
 		if logfn and stdout.strip():
 			logfn(stdout.strip())
-		if logfn and stderr.strip():
-			logfn(stderr.strip())
 
 		if logfn:
 			logfn("")
