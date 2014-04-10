@@ -1564,9 +1564,9 @@ class Worker(object):
 	def abort_subprocess(self, confirm=False):
 		""" Abort the current subprocess or thread """
 		if confirm and getattr(self, "progress_wnd", None):
-			if (getattr(self.progress_wnd, "dlg", None) and
-				self.progress_wnd.dlg.IsShownOnScreen() and
-				not isinstance(self.progress_wnd.dlg, DummyDialog)):
+			prev_dlg = getattr(self.progress_wnd, "dlg", None)
+			if (prev_dlg and prev_dlg.IsShownOnScreen() and
+				not isinstance(prev_dlg, DummyDialog)):
 				return
 			pause = (not getattr(self.progress_wnd, "paused", False) and
 					 hasattr(self.progress_wnd, "pause_continue_handler"))
@@ -1580,6 +1580,8 @@ class Worker(object):
 								bitmap=geticon(32, "dialog-warning"))
 			self.progress_wnd.dlg = dlg
 			dlg_result = dlg.ShowModal()
+			if isinstance(prev_dlg, DummyDialog):
+				self.progress_wnd.dlg = prev_dlg
 			dlg.Destroy()
 			if self.finished:
 				return
