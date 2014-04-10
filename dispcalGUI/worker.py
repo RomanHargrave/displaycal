@@ -5407,19 +5407,27 @@ class Worker(object):
 				if self.isalive(subprocess):
 					self.log("%s: Trying to terminate subprocess..." % appname)
 					subprocess.terminate()
-					if sys.platform != "win32":
+					ts = time()
+					while self.isalive(subprocess):
+						if time() > ts + 3:
+							break
+						sleep(.25)
+					if sys.platform != "win32" and self.isalive(subprocess):
+						self.log("%s: Trying to terminate subprocess forcefully..." %
+								 appname)
+						if isinstance(subprocess, sp.Popen):
+							subprocess.kill()
+						else:
+							subprocess.terminate(force=True)
 						ts = time()
 						while self.isalive(subprocess):
 							if time() > ts + 3:
 								break
 							sleep(.25)
-						if self.isalive(subprocess):
-							self.log("%s: Trying to terminate subprocess forcefully..." %
-									 appname)
-							if isinstance(subprocess, sp.Popen):
-								subprocess.kill()
-							else:
-								subprocess.terminate(force=True)
+					if self.isalive(subprocess):
+						self.log("...warning: couldn't terminate subprocess.")
+					else:
+						self.log("...subprocess terminated.")
 			except Exception, exception:
 				self.log("%s: Exception in quit_terminate_command: %s" %
 						 (appname, exception))
