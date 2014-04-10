@@ -801,6 +801,33 @@ class Warn(UserWarning):
 	pass
 
 
+class DummyDialog(object):
+
+	def __init__(self, *args, **kwargs):
+		self.is_shown_on_screen = True
+
+	def Close(self):
+		pass
+
+	def Destroy(self):
+		pass
+
+	def EndModal(self, id=-1):
+		return id
+
+	def Hide(self):
+		pass
+
+	def IsShownOnScreen(self):
+		return self.is_shown_on_screen
+
+	def Show(self, show=True):
+		self.is_shown_on_screen = show
+
+	def ShowModal(self):
+		pass
+
+
 class FilteredStream():
 	
 	""" Wrap a stream and filter all lines written to it. """
@@ -3811,6 +3838,8 @@ class Worker(object):
 					trash([profile_install_path])
 				except Exception, exception:
 					self.log(exception)
+		if self._progress_wnd and not getattr(self._progress_wnd, "dlg", None):
+			self._progress_wnd.dlg = DummyDialog()
 		# Run gcm-import
 		cmd, args = which("gcm-import"), [profile_path]
 		self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
