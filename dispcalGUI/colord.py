@@ -24,6 +24,7 @@ if sys.platform not in ("darwin", "win32"):
 
 from util_os import which
 from util_str import safe_str
+import localization as lang
 
 if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
 	from config import get_data_path
@@ -250,6 +251,7 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 		
 		if logfn:
 			logfn("-" * 80)
+			logfn(lang.getstr("commandline"))
 
 		from worker import printcmdline
 
@@ -259,15 +261,25 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 		# (Ignore stderr as profile may already have been added)
 		args = [cmd, "device-add-profile", device, profile]
 		printcmdline(args[0], args[1:], fn=logfn)
+		if logfn:
+			logfn("")
 		try:
-			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
+			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
 			stdout, stderr = p.communicate()
 		except Exception, exception:
 			raise CDError(safe_str(exception))
+		if logfn and stdout.strip():
+			logfn(stdout.strip())
+
+		if logfn:
+			logfn("")
+			logfn(lang.getstr("commandline"))
 
 		# Make profile default for device
 		args = [cmd, "device-make-profile-default", device, profile]
 		printcmdline(args[0], args[1:], fn=logfn)
+		if logfn:
+			logfn("")
 		try:
 			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
 			stdout, stderr = p.communicate()
@@ -276,6 +288,8 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 		else:
 			if stderr.strip():
 				raise CDError(stderr)
+		if logfn and stdout.strip():
+			logfn(stdout.strip())
 
 
 def quirk_manufacturer(manufacturer):
