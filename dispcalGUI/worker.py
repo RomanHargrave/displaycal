@@ -3646,7 +3646,7 @@ class Worker(object):
 				if gcm_import:
 					self._install_profile_gcm(profile_path)
 			if not isinstance(result, Exception) and result and not gcm_import:
-				if verbose >= 1: safe_print(lang.getstr("success"))
+				if verbose >= 1: self.log(lang.getstr("success"))
 				if sys.platform == "darwin" and False:  # NEVER
 					# If installing the profile by just copying it to the
 					# right location, tell user to select it manually
@@ -3656,7 +3656,7 @@ class Worker(object):
 				result = Info(msg)
 		else:
 			if result is not None and not getcfg("dry_run"):
-				if verbose >= 1: safe_print(lang.getstr("failure"))
+				if verbose >= 1: self.log(lang.getstr("failure"))
 				result = Error(lang.getstr("profile.install.error"))
 		return result
 	
@@ -3698,7 +3698,7 @@ class Worker(object):
 						util_win.enable_per_user_profiles(True,
 														  getcfg("display.number") - 1)
 					except Exception, exception:
-						safe_print("util_win.enable_per_user_profiles(True, %s): %s" %
+						self.log("util_win.enable_per_user_profiles(True, %s): %s" %
 								   (getcfg("display.number") - 1,
 									safe_unicode(exception)))
 			cmd, args = self.prepare_dispwin(None, profile_path, True)
@@ -3751,10 +3751,10 @@ class Worker(object):
 						try:
 							retcode, output, errors = osascript(applescript)
 						except Exception, exception:
-							safe_print(exception)
+							self.log(exception)
 						else:
 							if errors.strip():
-								safe_print("osascript error: %s" % errors)
+								self.log("osascript error: %s" % errors)
 							else:
 								result = True
 						break
@@ -3775,10 +3775,10 @@ class Worker(object):
 						try:
 							retcode, output, errors = osascript(applescript)
 						except Exception, exception:
-							safe_print(exception)
+							self.log(exception)
 						else:
 							if errors.strip():
-								safe_print("osascript error: %s" % errors)
+								self.log("osascript error: %s" % errors)
 							else:
 								result = True
 					else:
@@ -3790,9 +3790,9 @@ class Worker(object):
 	def _install_profile_colord(self, profile_path, device_id):
 		""" Install profile using colord """
 		try:
-			colord.install_profile(device_id, profile_path)
+			colord.install_profile(device_id, profile_path, logfn=self.log)
 		except Exception, exception:
-			safe_print(exception)
+			self.log(exception)
 			return exception
 		return True
 	
@@ -3807,12 +3807,10 @@ class Worker(object):
 				try:
 					trash([profile_install_path])
 				except Exception, exception:
-					safe_print(exception)
+					self.log(exception)
 		# Run gcm-import
 		cmd, args = which("gcm-import"), [profile_path]
-		args = " ".join('"%s"' % arg for arg in args)
-		safe_print('%s %s &' % (cmd, args))
-		sp.call(('%s %s &' % (cmd,  args)).encode(fs_enc), shell=True)
+		self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
 	
 	def _install_profile_oy(self, profile_path, profile_name=None,
 							capture_output=False, skip_scripts=False,
@@ -3853,7 +3851,7 @@ class Worker(object):
 				try:
 					os.makedirs(dirname)
 				except Exception, exception:
-					safe_print(exception)
+					self.log(exception)
 					result = False
 			if result is not False:
 				profile_install_path = os.path.join(dirname,
@@ -3862,7 +3860,7 @@ class Worker(object):
 					shutil.copyfile(profile_path, 
 									profile_install_path)
 				except Exception, exception:
-					safe_print(exception)
+					self.log(exception)
 					result = False
 		if not isinstance(result, Exception) and result is not False:
 			cmd = which("oyranos-monitor")
@@ -3900,7 +3898,7 @@ class Worker(object):
 					# delete v0.1b loader
 					os.remove(loader_v01b)
 				except Exception, exception:
-					safe_print(u"Warning - could not remove old "
+					self.log(u"Warning - could not remove old "
 							   u"v0.1b calibration loader '%s': %s" 
 							   % tuple(safe_unicode(s) for s in 
 									   (loader_v01b, exception)))
@@ -3911,7 +3909,7 @@ class Worker(object):
 					# delete v02.b/v0.2.1b loader
 					os.remove(loader_v02b)
 				except Exception, exception:
-					safe_print(u"Warning - could not remove old "
+					self.log(u"Warning - could not remove old "
 							   u"v0.2b calibration loader '%s': %s" 
 							   % tuple(safe_unicode(s) for s in 
 									   (loader_v02b, exception)))
@@ -3922,7 +3920,7 @@ class Worker(object):
 					# delete v0.5.5.8 user loader
 					os.remove(loader_v0558)
 				except Exception, exception:
-					safe_print(u"Warning - could not remove old "
+					self.log(u"Warning - could not remove old "
 							   u"v0.2b calibration loader '%s': %s" 
 							   % tuple(safe_unicode(s) for s in 
 									   (loader_v02b, exception)))
@@ -3934,7 +3932,7 @@ class Worker(object):
 					# delete v0.5.5.8 system loader
 					os.remove(loader_v0558)
 				except Exception, exception:
-					safe_print(u"Warning - could not remove old "
+					self.log(u"Warning - could not remove old "
 							   u"v0.2b calibration loader '%s': %s" 
 							   % tuple(safe_unicode(s) for s in 
 									   (loader_v02b, exception)))
@@ -4019,7 +4017,7 @@ class Worker(object):
 				try:
 					os.remove(autostart_lnkname)
 				except Exception, exception:
-					safe_print(autostart_lnkname, exception)
+					self.log(autostart_lnkname, exception)
 		if autostart_home:
 			autostart_home_lnkname = os.path.join(autostart_home, 
 												  name + ".lnk")
@@ -4027,7 +4025,7 @@ class Worker(object):
 				try:
 					os.remove(autostart_home_lnkname)
 				except Exception, exception:
-					safe_print(autostart_home_lnkname, exception)
+					self.log(autostart_home_lnkname, exception)
 		return True
 	
 	def _install_profile_loader_xdg(self, silent=False):

@@ -171,7 +171,7 @@ def get_object_path(search, object_type, object_subtype=None):
 
 
 def install_profile(device_id, profile_filename, profile_installname=None,
-					timeout=2):
+					timeout=2, logfn=None):
 	"""
 	Install profile for device
 	
@@ -247,20 +247,29 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 	else:
 		# Find device object path
 		device = get_object_path(device_id, "devices", "display")
+		
+		if logfn:
+			logfn("-" * 80)
+
+		from worker import printcmdline
+
+		cmd = safe_str(colormgr)
 
 		# Add profile to device
 		# (Ignore stderr as profile may already have been added)
+		args = [cmd, "device-add-profile", device, profile]
+		printcmdline(args[0], args[1:], fn=logfn)
 		try:
-			p = sp.Popen([safe_str(colormgr), "device-add-profile",
-						  device, profile], stdout=sp.PIPE, stderr=sp.PIPE)
+			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
 			stdout, stderr = p.communicate()
 		except Exception, exception:
 			raise CDError(safe_str(exception))
 
 		# Make profile default for device
+		args = [cmd, "device-make-profile-default", device, profile]
+		printcmdline(args[0], args[1:], fn=logfn)
 		try:
-			p = sp.Popen([safe_str(colormgr), "device-make-profile-default",
-						  device, profile], stdout=sp.PIPE, stderr=sp.PIPE)
+			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE)
 			stdout, stderr = p.communicate()
 		except Exception, exception:
 			raise CDError(safe_str(exception))
