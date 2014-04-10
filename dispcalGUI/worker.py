@@ -1268,7 +1268,7 @@ class Worker(object):
 				result = dlg.ShowModal()
 				pwd = dlg.pwd_txt_ctrl.GetValue()
 				if result != wx.ID_OK:
-					p.sendeof()
+					p.sendcontrol("C")
 					self.expect_timeout([wexpect.EOF], 10, subprocess=p)
 					if p.after is wexpect.TIMEOUT:
 						safe_print("Warning: sudo timed out")
