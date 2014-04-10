@@ -641,7 +641,7 @@ defaults = {
 	"profile.b2a.smooth.extra": 1,
 	"profile.b2a.smooth.size": 33,
 	"profile.save_path": storage, # directory
-	"profile.type": "s",
+	"profile.type": "S",
 	"profile.update": 0,
 	"profile_loader.error.show_msg": 1,
 	"profile_loader.verify_calibration": 0,
