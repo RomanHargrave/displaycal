@@ -52,6 +52,7 @@
 	"argyll.instrument.driver.missing": "Le pilote d'Argyll CMS pour votre périphérique de mesure ne semble pas installé ou installé incorrectement. Veuillez vérifier si votre périphérique de mesure apparaît dans le gestionnaire de périphériques de Windows sous « Argyll LibUSB-1.0A devices » et (ré-)installez le pilote si nécessaire. Veuillez consulter la documentation pour les instructions d'installation.",
 	"argyll.util.not_found": "Exécutable Argyll CMS « %s » introuvable.",
 	"as_measured": "Tel que mesuré",
+	"auth": "Authentification",
 	"auth.failed": "Échec de l'authentification.",
 	"auto": "Automatique",
 	"autostart_remove_old": "Suppression de l'ancienne entrée de démarrage automatique",

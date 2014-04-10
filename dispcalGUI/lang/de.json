@@ -46,6 +46,7 @@
 	"argyll.instrument.driver.missing": "Eventuell ist der Argyll-CMS-Treiber für Ihr Messgarät nicht oder nicht korrekt installiert. Bitte überprüfen Sie, ob Ihr Messgerät im Windows-Gerätemanager unter „Argyll LibUSB-1.0A devices“ angezeigt wird und installieren Sie ggf. den Argyll-CMS-Treiber. Folgen Sie dazu der Anleitung in der Dokumentation.",
 	"argyll.util.not_found": "Argyll CMS „%s“ Hilfsprogramm nicht gefunden!",
 	"as_measured": "Wie gemessen",
+	"auth": "Authentifizierung",
 	"auth.failed": "Authentifizierung fehlgeschlagen.",
 	"auto": "Automatisch",
 	"autostart_remove_old": "Entferne alten Autostart-Eintrag",

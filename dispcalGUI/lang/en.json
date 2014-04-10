@@ -52,6 +52,7 @@
 	"argyll.instrument.driver.missing": "The Argyll CMS driver for your measurement device seems not to be installed or installed incorrectly. Please check if your measurement device is shown in Windows' device manager under „Argyll LibUSB-1.0A devices“ and (re-)install the driver if necessary. Please read the documentation for installation instructions.",
 	"argyll.util.not_found": "Argyll CMS “%s” executable not found!",
 	"as_measured": "As measured",
+	"auth": "Authentification",
 	"auth.failed": "Authentification failed.",
 	"auto": "Auto",
 	"autostart_remove_old": "Removing old autostart entry",

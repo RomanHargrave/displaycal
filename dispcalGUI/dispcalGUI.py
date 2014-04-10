@@ -6081,9 +6081,6 @@ class MainFrame(BaseFrame):
 				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
 								   parent=self.modaldlg)
 			else:
-				safe_print("-" * 80)
-				safe_print(lang.getstr("profile.install"))
-				self.worker.interactive = False
 				if (getcfg("profile.install_scope") in ("l", "n") and
 					not self.worker.auth_timestamp):
 					result = self.worker.authenticate("dispwin",
@@ -6092,6 +6089,9 @@ class MainFrame(BaseFrame):
 					if result not in (True, None):
 						self.profile_finish_consumer(result)
 						return
+				safe_print("-" * 80)
+				safe_print(lang.getstr("profile.install"))
+				self.worker.interactive = False
 				self.worker.start(self.profile_finish_consumer,
 								  self.worker.install_profile,
 								  wkwargs={"profile_path": self.modaldlg.profile_path, 

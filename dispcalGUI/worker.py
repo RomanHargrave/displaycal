@@ -1314,6 +1314,7 @@ class Worker(object):
 		# indeed allowed.
 		if sys.platform == "win32":
 			return
+		safe_print(lang.getstr("auth"))
 		self.auth_timestamp = 0
 		if not self.sudo:
 			self.sudo = Sudo()
@@ -1380,6 +1381,7 @@ class Worker(object):
 									   "sudo subprocess")
 					else:
 						safe_print(p.before.strip().decode(enc, "replace"))
+					safe_print(lang.getstr("aborted"))
 					return False
 				p.send(pwd + os.linesep)
 				self.expect_timeout(["Password:", wexpect.EOF], 10,
@@ -2524,7 +2526,6 @@ class Worker(object):
 						return Error("Authentication requested in non-GUI thread")
 					result = self.authenticate(cmd, title, parent)
 					if result is False:
-						safe_print(lang.getstr("aborted"))
 						return None
 					elif isinstance(result, Exception):
 						return result

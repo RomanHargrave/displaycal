@@ -33,6 +33,7 @@
 	"argyll.instrument.driver.missing": "El controlador Argyll CMS para su instrumento de medición parece no estar instalado o está instalado incorrectamente. Por favor compruebe que su instruemento de medición se muestra en Windows' gestor de perifericos debajo de „Argyll LibUSB-1.0A devices“ y (re-)instalar el controlador si es necesario. Por favor lea la documentacion para instrucciones de instalación.",
 	"argyll.util.not_found": "El ejecutable de Argyll CMS “%s” no se encuentra!",
 	"as_measured": "Nativo",
+	"auth": "Autentificacion",
 	"auth.failed": "Autentificacion fallida.",
 	"auto": "Auto",
 	"autostart_remove_old": "Removiendo la entrada antigua de autoinicio",
