@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import with_statement
+from binascii import hexlify
 import os
 import re
-import shutil
 import subprocess as sp
 import sys
 from time import sleep
@@ -102,7 +102,7 @@ def get_default_profile(device_id):
 			raise CDError("colormgr helper program not found")
 
 		# Find device object path
-		device = get_object_path(device_id, "devices", "display")
+		device = get_object_path(device_id, "device")
 		
 		# Get default profile
 		try:
@@ -142,13 +142,11 @@ def get_default_profile(device_id):
 	return filename
 
 
-def get_object_path(search, object_type, object_subtype=None):
+def get_object_path(search, object_type):
 	colormgr = which("colormgr")
 	if not colormgr:
 		raise CDError("colormgr helper program not found")
-	args = ["get-%s" % object_type]
-	if object_subtype:
-		args.append(object_subtype)
+	args = ["find-%s" % object_type, search]
 	try:
 		p = sp.Popen([safe_str(colormgr)] + args, stdout=sp.PIPE,
 					 stderr=sp.PIPE)
@@ -158,20 +156,13 @@ def get_object_path(search, object_type, object_subtype=None):
 	else:
 		if stderr.strip():
 			raise CDObjectQueryError(stderr)
-		object_path = None
-		oprefix = prefix + object_type + "/"
-		for block in stdout.strip().split(oprefix):
-			match = re.search(":\s*%s" % re.escape(search), block)
-			if match:
-				# Object path is the first line of the block
-				object_path = oprefix + block.strip().splitlines()[0].strip()
-				break
+		object_path = stdout.strip().splitlines()[0].strip()
 		if not object_path:
 			raise CDObjectNotFoundError("Could not find object path for %s" % search)
 	return object_path
 
 
-def install_profile(device_id, profile_filename, profile_installname=None,
+def install_profile(device_id, profile, profile_installname=None,
 					timeout=2, logfn=None):
 	"""
 	Install profile for device
@@ -185,14 +176,18 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 	
 	"""
 
-	# Copy profile
+	if profile.ID == "\0" * 16:
+		profile.calculateID()
+	profile_id = "icc-" + hexlify(profile.ID)
+
+	# Write profile to destination
 	if not profile_installname:
 		profile_installname = os.path.join(xdg_data_home, 'icc',
-										   os.path.basename(profile_filename))
+										   os.path.basename(profile.fileName))
 	profile_installdir = os.path.dirname(profile_installname)
 	if not os.path.isdir(profile_installdir):
 		os.makedirs(profile_installdir)
-	shutil.copyfile(profile_filename, profile_installname)
+	profile.write(profile_installname)
 	
 	if isinstance(profile_installname, unicode):
 		profile_installname = profile_installname.encode('UTF-8')
@@ -210,10 +205,9 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 	for i in xrange(int(timeout / .5)):
 		try:
 			if Colord:
-				profile = client.find_profile_by_filename_sync(profile_installname,
-															   cancellable)
+				profile = client.find_profile_sync(profile_id, cancellable)
 			else:
-				profile = get_object_path(profile_installname, "profiles")
+				profile = get_object_path(profile_id, "profile")
 		except Exception, exception:
 			# Profile not found
 			pass
@@ -224,7 +218,7 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 
 	if not profile:
 		raise CDTimeout("Querying for profile %r returned no result for %s secs" %
-						(profile_installname, timeout))
+						(profile_id, timeout))
 
 	if Colord:
 		# Connect to profile
@@ -247,7 +241,7 @@ def install_profile(device_id, profile_filename, profile_installname=None,
 						  (profile.get_filename(), device_id))
 	else:
 		# Find device object path
-		device = get_object_path(device_id, "devices", "display")
+		device = get_object_path(device_id, "device")
 		
 		if logfn:
 			logfn("-" * 80)

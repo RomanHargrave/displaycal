@@ -3672,35 +3672,40 @@ class Worker(object):
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
 			(self.argyll_version < [1, 6] or not whereis("libcolordcompat"))):
 			if device_id:
-				result = False
-				# Try a range of possible device IDs
-				device_ids = [device_id,
-							  self.get_device_id(quirk=True,
-												 truncate_edid_strings=True),
-							  self.get_device_id(quirk=True,
-												 use_serial_32=False),
-							  self.get_device_id(quirk=True,
-												 use_serial_32=False,
-												 truncate_edid_strings=True),
-							  self.get_device_id(quirk=False),
-							  self.get_device_id(quirk=False,
-												 truncate_edid_strings=True),
-							  self.get_device_id(quirk=False,
-												 use_serial_32=False),
-							  self.get_device_id(quirk=False,
-												 use_serial_32=False,
-												 truncate_edid_strings=True)]
-				for device_id in device_ids:
-					if device_id:
-						# NOTE: This can block
-						result = self._install_profile_colord(profile_path,
-															  device_id)
-						if isinstance(result, colord.CDObjectQueryError):
-							# Device ID was not found, try next one
-							continue
-						else:
-							# Either returned ok or there was another error
-							break
+				try:
+					profile = ICCP.ICCProfile(profile_path)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					result = exception
+				else:
+					result = False
+					# Try a range of possible device IDs
+					device_ids = [device_id,
+								  self.get_device_id(quirk=True,
+													 truncate_edid_strings=True),
+								  self.get_device_id(quirk=True,
+													 use_serial_32=False),
+								  self.get_device_id(quirk=True,
+													 use_serial_32=False,
+													 truncate_edid_strings=True),
+								  self.get_device_id(quirk=False),
+								  self.get_device_id(quirk=False,
+													 truncate_edid_strings=True),
+								  self.get_device_id(quirk=False,
+													 use_serial_32=False),
+								  self.get_device_id(quirk=False,
+													 use_serial_32=False,
+													 truncate_edid_strings=True)]
+					for device_id in device_ids:
+						if device_id:
+							# NOTE: This can block
+							result = self._install_profile_colord(profile,
+																  device_id)
+							if isinstance(result, colord.CDObjectQueryError):
+								# Device ID was not found, try next one
+								continue
+							else:
+								# Either returned ok or there was another error
+								break
 				colord_install = result
 			if (not device_id or
 				isinstance(result, Exception) or not result):
@@ -3889,10 +3894,10 @@ class Worker(object):
 		self.wrapup(False)
 		return result
 	
-	def _install_profile_colord(self, profile_path, device_id):
+	def _install_profile_colord(self, profile, device_id):
 		""" Install profile using colord """
 		try:
-			colord.install_profile(device_id, profile_path, logfn=self.log)
+			colord.install_profile(device_id, profile, logfn=self.log)
 		except Exception, exception:
 			self.log(exception)
 			return exception
