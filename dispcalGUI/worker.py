@@ -1021,12 +1021,11 @@ class Sudo(object):
 									stderr=sp.PIPE)
 				# Strip formatting
 				stdout = re.sub(".\x08", "", manproc.communicate()[0])
-				self.availoptions = {"E": bool(re.search("-E", stdout)),
+				self.availoptions = {"E": bool(re.search("-E\W", stdout)),
 									 "l [command]":
-									 bool(re.search("-l(?:\[l\])?\W?.*?command\W",
+									 bool(re.search("-l\W(?:.*?\W)?command\W",
 													stdout)),
-									 "n": bool(re.search("-n", stdout)),
-									 "K": bool(re.search("-K", stdout))}
+									 "K": bool(re.search("-K\W", stdout))}
 			if debug:
 				safe_print("[D] Available sudo options:", 
 						   ", ".join(filter(lambda option: self.availoptions[option], 
@@ -1054,24 +1053,17 @@ class Sudo(object):
 		
 		"""
 		if self.sudo:
+			sudo_args = ["-l", "-S"]
 			# Set sudo args based on available options
 			if self.availoptions.get("l [command]") and args:
-				sudo_args = ["-l",
-							 "-n" if self.availoptions.get("n") else "-S",
-							 ] + args
-			else:
-				sudo_args = ["-l", "-S"]
-			# Set stdin based on -n option availability
-			if "-S" in sudo_args:
-				stdin = tempfile.SpooledTemporaryFile()
-				stdin.write(pwd.encode(enc, "replace") + os.linesep)
-				stdin.seek(0)
-			else:
-				stdin = None
+				sudo_args += args
+			stdin = tempfile.SpooledTemporaryFile()
+			stdin.write(pwd.encode(enc, "replace") + os.linesep)
+			stdin.seek(0)
 			sudoproc = sp.Popen([self.sudo] + sudo_args, stdin=stdin,
 								stdout=sp.PIPE, stderr=sp.PIPE)
 			stdout, stderr = [std.strip() for std in sudoproc.communicate()]
-			if stdin and not stdin.closed:
+			if not stdin.closed:
 				stdin.close()
 			if stdout:
 				std = stdout
