@@ -4345,24 +4345,6 @@ class Worker(object):
 								   skip_scripts=skip_scripts)
 		else:
 			result = cmd
-		# Get profile max and avg err to be later added to metadata
-		# Argyll outputs the following:
-		# Profile check complete, peak err = x.xxxxxx, avg err = x.xxxxxx, RMS = x.xxxxxx
-		peak = None
-		avg = None
-		rms = None
-		for line in self.output:
-			if line.startswith("Profile check complete"):
-				peak = re.search("peak err = (\d+(?:\.\d+))", line)
-				avg = re.search("avg err = (\d+(?:\.\d+))", line)
-				rms = re.search("RMS = (\d+(?:\.\d+))", line)
-				if peak:
-					peak = peak.groups()[0]
-				if avg:
-					avg = avg.groups()[0]
-				if rms:
-					rms = rms.groups()[0]
-				break
 		if (os.path.isfile(args[-1] + ".ti3.backup") and
 			os.path.isfile(args[-1] + ".ti3")):
 			# Restore backed up TI3
@@ -4379,6 +4361,8 @@ class Worker(object):
 				chrm = ICCP.ChromaticityType(blob.read())
 		else:
 			chrm = None
+		bpc_applied = False
+		profchanged = False
 		if not isinstance(result, Exception) and result:
 			profile_path = args[-1] + profile_ext
 			try:
@@ -4386,11 +4370,89 @@ class Worker(object):
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 			else:
-				if (profile.profileClass == "mntr" and
-					profile.colorSpace == "RGB" and "A2B0" in profile.tags and
-					getcfg("profile.b2a.smooth") and
-					getcfg("profile.type") in ("x", "X")):
-					result = self.update_profile_B2A(profile)
+				if ("rTRC" in profile.tags and
+					"gTRC" in profile.tags and
+					"bTRC" in profile.tags and
+					isinstance(profile.tags.rTRC, ICCP.CurveType) and
+					isinstance(profile.tags.gTRC, ICCP.CurveType) and
+					isinstance(profile.tags.bTRC, ICCP.CurveType) and
+					getcfg("profile.black_point_compensation") and
+					len(profile.tags.rTRC) > 1 and
+					len(profile.tags.gTRC) > 1 and
+					len(profile.tags.bTRC) > 1):
+					for component in ("r", "g", "b"):
+						self.log("%s: Applying black point compensation to "
+								 "%sTRC" % (appname, component))
+						profile.tags["%sTRC" % component].apply_bpc()
+					bpc_applied = True
+					profchanged = True
+				if "A2B0" in profile.tags:
+					bpc_applied = False
+					if (profile.colorSpace == "RGB" and
+						profile.connectionColorSpace == "XYZ" and
+						getcfg("profile.b2a.smooth")):
+						if getcfg("profile.black_point_compensation"):
+							if "A2B1" in profile.tags:
+								table = "A2B1"
+							else:
+								table = "A2B0"
+							if isinstance(profile.tags[table], ICCP.LUT16Type):
+								self.log("%s: Applying black point "
+										 "compensation to %s table" % (appname,
+																	   table))
+								profile.tags[table].apply_bpc()
+								bpc_applied = True
+								profchanged = True
+							else:
+								self.log("%s: Can't apply black point "
+										 "compensation to non-LUT16Type %s "
+										 "table" % (appname, table))
+						result = self.update_profile_B2A(profile)
+						if not isinstance(result, Exception) and result:
+							profchanged = True
+			if profchanged:
+				if "bkpt" in profile.tags and bpc_applied:
+					# We need to update the blackpoint tag
+					try:
+						odata = self.xicclu(profile, (0, 0, 0), intent="a",
+											pcs="x")
+						if len(odata) != 1 or len(odata[0]) != 3:
+							raise ValueError("Blackpoint is invalid: %s" %
+											 odata)
+					except Exception, exception:
+						self.log(exception)
+					else:
+						(profile.tags.bkpt.X,
+						 profile.tags.bkpt.Y,
+						 profile.tags.bkpt.Z) = odata[0]
+				# We need to write the changed profile
+				try:
+					profile.write()
+				except Exception, exception:
+					return exception
+				if bpc_applied:
+					# We need to re-do profile self check
+					self.exec_cmd(get_argyll_util("profcheck"),
+								  [args[-1] + ".ti3", args[-1] + profile_ext],
+								  capture_output=True, skip_scripts=True)
+		# Get profile max and avg err to be later added to metadata
+		# Argyll outputs the following:
+		# Profile check complete, peak err = x.xxxxxx, avg err = x.xxxxxx, RMS = x.xxxxxx
+		peak = None
+		avg = None
+		rms = None
+		for line in self.output:
+			if line.startswith("Profile check complete"):
+				peak = re.search("(?:peak err|max\.) = (\d+(?:\.\d+))", line)
+				avg = re.search("avg(?: err|\.) = (\d+(?:\.\d+))", line)
+				rms = re.search("RMS = (\d+(?:\.\d+))", line)
+				if peak:
+					peak = peak.groups()[0]
+				if avg:
+					avg = avg.groups()[0]
+				if rms:
+					rms = rms.groups()[0]
+				break
 		if not isinstance(result, Exception) and result:
 			(gamut_volume,
 			 gamut_coverage) = self.create_gamut_views(profile_path)
@@ -4817,11 +4879,6 @@ class Worker(object):
 							   else "NO")
 			ti3[0].add_keyword("SMOOTH_B2A_SIZE",
 							   getcfg("profile.b2a.smooth.size"))
-			if getcfg("profile.black_point_compensation"):
-				# Backup TI3
-				ti3.write(inoutfile + ".ti3.backup")
-				# Apply black point compensation
-				ti3[0].apply_bpc()
 			ti3.write()
 		return cmd, args
 

@@ -2823,9 +2823,7 @@ class MainFrame(BaseFrame):
 		self.interactive_display_adjustment_cb.SetValue(not update_cal and 
 			bool(int(getcfg("calibration.interactive_display_adjustment"))))
 
-		self.black_point_compensation_cb.Enable(not update_cal)
-		self.black_point_compensation_cb.SetValue(
-			bool(int(getcfg("profile.black_point_compensation"))))
+		self.update_bpc()
 
 		self.testchart_ctrl.Enable(enable_profile)
 		if self.set_default_testchart() is None:
@@ -2920,6 +2918,12 @@ class MainFrame(BaseFrame):
 			defaults["calibration.black_point_rate.enabled"])
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
+	
+	def update_bpc(self):
+		enable_bpc = self.get_profile_type() != "l"
+		self.black_point_compensation_cb.Enable(enable_bpc)
+		self.black_point_compensation_cb.SetValue(enable_bpc and
+			bool(int(getcfg("profile.black_point_compensation"))))
 	
 	def update_drift_compensation_ctrls(self):
 		self.calpanel.Freeze()
@@ -4678,10 +4682,14 @@ class MainFrame(BaseFrame):
 		bt1886 = None
 		if apply_bt1886:
 			# TRC BT.1886-like
-			if "bkpt" in oprof.tags:
-				XYZbp = oprof.tags.bkpt.pcs.values()
-			else:
-				XYZbp = (0, 0, 0)
+			try:
+				odata = self.worker.xicclu(oprof, (0, 0, 0), pcs="x")
+				if len(odata) != 1 or len(odata[0]) != 3:
+					raise ValueError("Blackpoint is invalid: %s" % odata)
+			except Exception, exception:
+				show_result_dialog(exception, self.reportframe)
+				return
+			XYZbp = odata[0]
 			gamma = getcfg("measurement_report.bt1886_gamma")
 			if getcfg("measurement_report.bt1886_gamma_type") == "b":
 				# Convert effective to technical gamma
@@ -7297,6 +7305,20 @@ class MainFrame(BaseFrame):
 		self.gamap_btn.Enable(lut_type)
 		
 		enable_b2a_extra = v in ("x", "X")
+		if enable_b2a_extra:
+			if (getcfg("profile.black_point_compensation.backup", False)
+				is None):
+				if getcfg("profile.black_point_compensation"):
+					setcfg("profile.black_point_compensation.backup",
+						   getcfg("profile.black_point_compensation"))
+				# Disable black point compensation for LUT profiles
+				setcfg("profile.black_point_compensation", 0)
+		elif (getcfg("profile.black_point_compensation.backup", False)
+			  is not None):
+			setcfg("profile.black_point_compensation",
+				   getcfg("profile.black_point_compensation.backup"))
+			setcfg("profile.black_point_compensation.backup", None)
+		self.update_bpc()
 		b2a_smooth = enable_b2a_extra and bool(getcfg("profile.b2a.smooth"))
 		self.low_quality_b2a_cb.SetValue(lut_type and
 										 getcfg("profile.quality.b2a") in

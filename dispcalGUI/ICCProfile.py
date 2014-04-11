@@ -937,7 +937,17 @@ class LUT16Type(ICCProfileTag):
 		self._g = (tagData and uInt8Number(tagData[10])) or 0  # cLUT grid res
 		self._n = (tagData and uInt16Number(tagData[48:50])) or 0  # Input channel entries count
 		self._m = (tagData and uInt16Number(tagData[50:52])) or 0  # Output channel entries count
-	
+
+	def apply_bpc(self, bp_out=(0, 0, 0)):
+		bp = [v / 65535.0 for v in self.clut[0][0]]
+		wp = [v / 65535.0 for v in self.clut[-1][-1]]
+		if bp != list(bp_out):
+			for block in self.clut:
+				for i, row in enumerate(block):
+					X, Y, Z = [v / 65535.0 for v in row]
+					XYZ = colormath.apply_bpc(X, Y, Z, bp, bp_out, wp)
+					block[i] = [int(round(max(v, 0) * 65535.0)) for v in XYZ]
+
 	@Property
 	def clut():
 		def fget(self):
@@ -1282,15 +1292,16 @@ class CurveType(ICCProfileTag, list):
 		list.append(self, object)
 		self._transfer_function = {}
 	
-	def apply_bpc(self):
+	def apply_bpc(self, bp_out=0):
 		if len(self) < 2:
 			return
-		bp_in = colormath.xyY2XYZ(.333, .333, self[0] / 65535.0)
-		wp_out = colormath.xyY2XYZ(.333, .333, self[-1] / 65535.0)
-		for i, v in enumerate(self):
-			X, Y, Z = colormath.xyY2XYZ(.333, .333, v / 65535.0)
-			self[i] = int(round(colormath.apply_bpc(X, Y, Z, bp_in, (0, 0, 0),
-													wp_out)[1] * 65535.0))
+		bp_in = self[0] / 65535.0
+		wp_out = self[-1] / 65535.0
+		if bp_in != bp_out:
+			for i, v in enumerate(self):
+				self[i] = int(round(((wp_out - bp_out) * v / 65535.0 - wp_out *
+									 (bp_in - bp_out)) / (wp_out - bp_in) *
+									65535))
 	
 	def extend(self, iterable):
 		list.extend(self, iterable)

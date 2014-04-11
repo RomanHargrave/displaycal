@@ -22,7 +22,8 @@ names = [
 	"txt2ti3",
 	"i1d3ccss",
 	"viewgam",
-	"oeminst"
+	"oeminst",
+	"profcheck"
 ]
 
 # Argyll CMS tools optionally used by dispcalGUI
