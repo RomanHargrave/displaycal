@@ -2768,6 +2768,7 @@ class Worker(object):
 							if pwdsent:
 								self.subprocess.sendcontrol("C")
 								authfailed = True
+								self.auth_timestamp = 0
 							else:
 								self._safe_send(self.pwd.encode(enc, "replace") +
 												os.linesep, obfuscate=True)
