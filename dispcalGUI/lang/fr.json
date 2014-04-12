@@ -673,6 +673,7 @@
 	"verify_extended.ti1": "Grille de test étendue de vérification du profil",
 	"vga": "VGA",
 	"video.icc": "Vidéo",
+		"*view.3d": "3D view",
 	"warning": "Attention",
 	"warning.already_exists": "Le fichier « %s » existe déjà à l'emplacement choisi et sera écrasé. Voulez-vous continuer ?",
 	"warning.autostart_system": "Le répertoire d'autodémarrage système n'a pu être déterminé.",

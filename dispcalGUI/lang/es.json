@@ -639,6 +639,7 @@
 	"verify_extended.ti1": "Carta de ajustes de verificacion de perfil extendida",
 	"vga": "VGA",
 	"video.icc": "Video",
+		"*view.3d": "3D view",
 	"warning": "Cuidado",
 	"warning.already_exists": "El archivo “%s” ya existe en la localizacion escogida y será sobreescrito. Desea continuar?",
 	"warning.autostart_system": "El directorio de autoarranque del sistema no se pudo determinar.",

@@ -675,6 +675,7 @@
 	"verify_extended.ti1": "Erweiterte Profilüberprüfungs-Testform",
 		"*vga": "VGA",
 	"video.icc": "Video",
+	"view.3d": "3D-Ansicht",
 	"warning": "Warnung",
 	"warning.already_exists": "Die Datei „%s“ existiert bereits am gewählten Ort und wird überschrieben. Wollen Sie wirklich fortfahren?",
 	"warning.autostart_system": "Das systemweite Autostart-Verzeichnis konnte nicht ermittelt werden.",

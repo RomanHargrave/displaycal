@@ -9,16 +9,18 @@ import tempfile
 
 from config import (defaults, fs_enc, get_argyll_display_number, get_data_path,
 					get_display_profile, get_display_rects, getbitmap, getcfg,
-					geticon, setcfg, writecfg)
+					geticon, profile_ext, setcfg, writecfg)
 from log import safe_print
 from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
+from util_os import launch_file
 from util_str import safe_unicode, universal_newlines, wrap
 from worker import (Error, check_set_argyll_bin, get_argyll_util,
-					show_result_dialog)
+					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
+from wxVRML2X3D import vrmlfile2x3dhtmlfile
 from wxwindows import (BitmapBackgroundPanelText, FileDrop, InfoDialog,
 					   SimpleBook, TwoWaySplitter)
 import colormath
@@ -957,6 +959,16 @@ class ProfileInfoFrame(LUTFrame):
 		self.save_plot_btn.Disable()
 		self.plot_mode_sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														  wx.LEFT, border=8)
+		
+		self.view_3d_btn = wx.BitmapButton(p1, -1, geticon(16, "3D"),
+										   style=wx.NO_BORDER)
+		self.view_3d_btn.SetBackgroundColour(BGCOLOUR)
+		self.view_3d_btn.Bind(wx.EVT_BUTTON, self.view_3d)
+		self.view_3d_btn.SetToolTipString(lang.getstr("view.3d"))
+		self.view_3d_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.view_3d_btn.Disable()
+		self.plot_mode_sizer.Add(self.view_3d_btn, flag=wx.ALIGN_CENTER_VERTICAL |
+														wx.LEFT, border=12)
 
 		self.client = GamutCanvas(p1)
 		p1.sizer.Add(self.client, 1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT |
@@ -1109,6 +1121,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.splitter.SetExpanded(0)
 		
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
+		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, self.OnSashPosChanging)
@@ -1129,11 +1142,14 @@ class ProfileInfoFrame(LUTFrame):
 		if self.plot_mode_select.GetSelection() == self.plot_mode_select.GetCount() - 1:
 			# Gamut plot
 			self.plot_mode_sizer.Show(self.tooltip_btn)
+			self.plot_mode_sizer.Show(self.view_3d_btn)
 			self.options_panel.GetCurrentPage().DrawCanvas(reset=reset)
 			self.save_plot_btn.Enable()
+			self.view_3d_btn.Enable()
 		else:
 			# Curves plot
 			self.plot_mode_sizer.Hide(self.tooltip_btn)
+			self.plot_mode_sizer.Hide(self.view_3d_btn)
 			self.client.SetEnableCenterLines(True)
 			self.client.SetEnableDiagonals('Bottomleft-Topright')
 			self.client.SetEnableGrid(False)
@@ -1305,6 +1321,10 @@ class ProfileInfoFrame(LUTFrame):
 		self.Layout()
 		self.DrawCanvas(reset=reset)
 		self.Thaw()
+	
+	def OnClose(self, event):
+		self.worker.wrapup(False)
+		event.Skip()
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):
@@ -1571,7 +1591,54 @@ class ProfileInfoFrame(LUTFrame):
 			# Curves plot
 			self.options_panel.SetSelection(1)
 		self.splitter.GetTopLeft().Layout()
-
+	
+	def view_3d(self, event):
+		profile = self.profile
+		if not profile:
+			vrmlfile2x3dhtmlfile(view=True)
+		else:
+			if profile.fileName and os.path.isfile(profile.fileName):
+				profile_path = profile.fileName
+			else:
+				result = self.worker.create_tempdir()
+				if isinstance(result, Exception):
+					show_result_dialog(result, self)
+					return
+				desc = profile.getDescription()
+				profile_path = os.path.join(self.worker.tempdir,
+											make_argyll_compatible_path(desc) +
+											profile_ext)
+				profile.write(profile_path)
+			filename, ext = os.path.splitext(profile_path)
+			htmlpath = filename + ".x3d.html"
+			if os.path.isfile(htmlpath):
+				# The X3D HTML file seems to already exist
+				launch_file(htmlpath)
+			else:
+				for vrmlext in (".vrml", ".vrml.gz", ".wrl", ".wrl.gz", ".wrz"):
+					vrmlpath = filename + vrmlext
+					if os.path.isfile(vrmlpath):
+						break
+				if os.path.isfile(vrmlpath):
+					self.view_3d_consumer(True, None, vrmlpath, htmlpath)
+				else:
+					# Create VRML file
+					self.worker.start(self.view_3d_consumer,
+									  self.worker.calculate_gamut,
+									  cargs=(filename, None, htmlpath),
+									  wargs=(profile_path, False),
+									  progress_msg=lang.getstr("gamut.view.create"))
+	
+	def view_3d_consumer(self, result, filename, vrmlpath, htmlpath):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		else:
+			if filename:
+				if getcfg("vrml.compress"):
+					vrmlpath = filename + ".wrz"
+				else:
+					vrmlpath = filename + ".wrl"
+			vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, view=True)
 
 class ProfileInfoGrid(wx.grid.Grid):
 

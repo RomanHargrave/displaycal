@@ -61,6 +61,7 @@ Name: "{group}\Curve Viewer"; Filename: {app}\dispcalGUI-curve-viewer.exe; IconF
 Name: "{group}\Profile Info"; Filename: {app}\dispcalGUI-profile-info.exe; IconFilename: {app}\dispcalGUI-profile-info.exe; 
 Name: "{group}\Synthetic Profile Creator"; Filename: {app}\dispcalGUI-synthprofile.exe; IconFilename: {app}\dispcalGUI-synthprofile.exe; 
 Name: "{group}\Testchart Editor"; Filename: {app}\dispcalGUI-testchart-editor.exe; IconFilename: {app}\dispcalGUI-testchart-editor.exe; 
+Name: "{group}\VRML to X3D converter"; Filename: {app}\dispcalGUI-VRML-to-X3D-converter.exe; IconFilename: {app}\dispcalGUI-VRML-to-X3D-converter.exe; 
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\dispcalGUI-uninstall.ico; Tasks: ; Languages: 
 Name: {commondesktop}\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: desktopicon; IconFilename: {app}\dispcalGUI.exe
 Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: quicklaunchicon; IconFilename: {app}\dispcalGUI.exe

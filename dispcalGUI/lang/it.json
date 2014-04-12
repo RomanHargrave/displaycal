@@ -639,6 +639,7 @@
 		"*verify_extended.ti1": "Extended profile verification testchart",
 		"*vga": "VGA",
 		"*video.icc": "Video",
+		"*view.3d": "3D view",
 	"warning": "Attenzione",
 	"warning.already_exists": "Il file “%s” già esiste nella posizione scelta e sarà sovrascritto. Continuare?",
 		"*warning.autostart_system": "The system-wide autostart directory could not be determined.",

@@ -5872,7 +5872,7 @@ class Worker(object):
 			except:
 				pass
 	
-	def calculate_gamut(self, profile_path):
+	def calculate_gamut(self, profile_path, intersections=True):
 		"""
 		Calculate gamut, volume, and coverage % against sRGB and Adobe RGB.
 		
@@ -5909,7 +5909,7 @@ class Worker(object):
 		wrlfilename = name + ".wrl"
 		tmpfilenames = [gamfilename, wrlfilename]
 		for key, src in (("srgb", "sRGB"), ("adobe-rgb", "ClayRGB1998")):
-			if not isinstance(result, Exception) and result:
+			if not isinstance(result, Exception) and result and intersections:
 				# Create gamut view and intersection
 				src_path = get_data_path("ref/%s.gam" % src)
 				if not src_path:

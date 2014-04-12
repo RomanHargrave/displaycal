@@ -64,7 +64,8 @@ def main(module=None):
 				   "curve-viewer": [],
 				   "profile-info": [],
 				   "synthprofile": ["xrc/synthicc.xrc"],
-				   "testchart-editor": []}
+				   "testchart-editor": [],
+				   "VRML-to-X3D-converter": []}
 		if module not in mod2res:
 			module = None
 		for filename in mod2res[module]:
@@ -235,6 +236,9 @@ def main(module=None):
 				from wxSynthICCFrame import main as main
 			elif module == "testchart-editor":
 				from wxTestchartEditor import main as main
+				accepts_filename_argument = True
+			elif module == "VRML-to-X3D-converter":
+				from wxVRML2X3D import main as main
 				accepts_filename_argument = True
 			else:
 				from dispcalGUI import main as main
