@@ -146,21 +146,21 @@ def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath):
 
 
 def x3dom2html(x3dom, title="Untitled",
-			   runtime_uri="http://www.x3dom.org/x3dom/release/x3dom.js"):
+			   runtime_uri="http://www.x3dom.org/x3dom/release"):
 	""" Convert X3D to HTML """
 	return """<!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="utf-8" />
 		<title>%(title)s</title>
-		<script src="%(runtime_uri)s"></script>
+		<link rel="stylesheet" href="%(runtime_uri)s/x3dom.css">
+		<script src="%(runtime_uri)s/x3dom.js"></script>
 		<style>
 		* {
 			color: #fff;
 		}
 		html, body {
 			background: linear-gradient(#111, #333);
-			font-family: sans-serif;
 			height: 100%%;
 			margin: 0;
 			padding: 0;
@@ -168,8 +168,7 @@ def x3dom2html(x3dom, title="Untitled",
 			text-align: center;
 		}
 		x3d {
-			cursor: move;
-			display: block;
+			border: 0;
 		}
 		#no_x3dom {
 			display: none;
