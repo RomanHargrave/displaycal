@@ -3,8 +3,9 @@
 from __future__ import with_statement
 import os
 import re
+import urllib2
 
-
+from defaultpaths import cache
 from options import verbose, debug
 from safe_print import safe_print as _safe_print
 from util_io import GzipFileProper
@@ -127,7 +128,7 @@ def vrml2x3dom(vrml):
 	return tag
 
 
-def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath):
+def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, embed=False):
 	"""
 	Convert VRML file located at vrmlpath to HTML and write to htmlpath
 	
@@ -140,21 +141,59 @@ def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath):
 	with cls(vrmlpath, "r") as vrmlfile:
 		vrml = vrmlfile.read()
 	filename, ext = os.path.splitext(vrmlpath)
-	html = x3dom2html(vrml2x3dom(vrml), title=os.path.basename(filename))
+	html = x3dom2html(vrml2x3dom(vrml), title=os.path.basename(filename),
+					  embed=embed)
 	with open(htmlpath, "w") as htmlfile:
 		htmlfile.write(html)
 
 
 def x3dom2html(x3dom, title="Untitled",
-			   runtime_uri="http://www.x3dom.org/x3dom/release"):
+			   runtime_uri="http://www.x3dom.org/x3dom/release", embed=False):
 	""" Convert X3D to HTML """
+	style = '<link rel="stylesheet" href="%s/x3dom.css">' % runtime_uri
+	script = '<script src="%s/x3dom.js"></script>' % runtime_uri
+	if embed:
+		# Strip protocol
+		runtime_path = re.sub("^\w+://", "", runtime_uri)
+		# domain.com -> com.domain
+		runtime_path = re.sub("^(?:www\.)?(\w+)((?:\.\w+)+)", "\\2.\\1",
+							  runtime_path)[1:]
+		# com.domain/path -> com.domain.path
+		runtime_path = re.sub("^([^/]+)/", "\\1.", runtime_path)
+		for resource in ("x3dom.css", "x3dom.js"):
+			cachedir = os.path.join(cache,
+									os.path.join(*runtime_path.split("/")))
+			if not os.path.isdir(cachedir):
+				_safe_print("Creating cache directory:", cachedir)
+				os.makedirs(cachedir)
+			cachefilename = os.path.join(cachedir, resource)
+			body = ""
+			if os.path.isfile(cachefilename):
+				_safe_print("Using cached file:", cachefilename)
+				with open(cachefilename, "rb") as cachefile:
+					body = cachefile.read()
+			if not body.strip():
+				uri = "/".join([runtime_uri, resource])
+				_safe_print("Requesting:", uri)
+				response = urllib2.urlopen(uri)
+				body = response.read()
+				response.close()
+			if body.strip():
+				if resource == "x3dom.css":
+					style = "<style>%s</style>" % body
+				else:
+					script = "<script>%s</script>" % body
+				if not os.path.isfile(cachefilename):
+					with open(cachefilename, "wb") as cachefile:
+						cachefile.write(body)
+			else:
+				_safe_print("Error: Empty document:", resource)
 	return """<!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="utf-8" />
 		<title>%(title)s</title>
-		<link rel="stylesheet" href="%(runtime_uri)s/x3dom.css">
-		<script src="%(runtime_uri)s/x3dom.js"></script>
+		%(style)s
 		<style>
 		* {
 			color: #fff;
@@ -174,6 +213,7 @@ def x3dom2html(x3dom, title="Untitled",
 			display: none;
 		}
 		</style>
+		%(script)s
 	</head>
 	<body>
 		<noscript><p>Please enable JavaScript</p></noscript>
@@ -191,6 +231,7 @@ def x3dom2html(x3dom, title="Untitled",
 		setsize();
 		</script>
 	</body>
-</html>""" % {"title": title, "runtime_uri": runtime_uri,
+</html>""" % {"title": title, "style": style, "script": script,
+			  "runtime_uri": runtime_uri,
 			  "html":"\n".join(["\t" * 3 + line for line in
 								str(x3dom).splitlines()])}

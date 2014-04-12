@@ -723,7 +723,8 @@ defaults = {
 	"whitepoint.colortemp": 5000,
 	"whitepoint.colortemp.locus": "t",
 	"whitepoint.x": 0.345741,
-	"whitepoint.y": 0.358666
+	"whitepoint.y": 0.358666,
+	"x3dom.embed": 0
 }
 lcode, lenc = locale.getdefaultlocale()
 if lcode:

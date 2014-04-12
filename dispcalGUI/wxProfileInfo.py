@@ -1595,7 +1595,7 @@ class ProfileInfoFrame(LUTFrame):
 	def view_3d(self, event):
 		profile = self.profile
 		if not profile:
-			vrmlfile2x3dhtmlfile(view=True)
+			vrmlfile2x3dhtmlfile(embed=getcfg("x3dom.embed"), view=True)
 		else:
 			profile_path = None
 			if profile.fileName and os.path.isfile(profile.fileName):
@@ -1642,7 +1642,8 @@ class ProfileInfoFrame(LUTFrame):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		else:
-			vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, view=True)
+			vrmlfile2x3dhtmlfile(vrmlpath, htmlpath,
+								 embed=getcfg("x3dom.embed"), view=True)
 
 class ProfileInfoGrid(wx.grid.Grid):
 
