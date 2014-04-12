@@ -2766,7 +2766,7 @@ class Worker(object):
 						elif (self.subprocess.after == "Password:" and
 							  loop < 1 and sudo):
 							if pwdsent:
-								self.subprocess.sendeof()
+								self.subprocess.sendcontrol("C")
 								authfailed = True
 							else:
 								self._safe_send(self.pwd.encode(enc, "replace") +
