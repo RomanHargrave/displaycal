@@ -195,11 +195,9 @@ def x3dom2html(x3dom, title="Untitled",
 		<title>%(title)s</title>
 		%(style)s
 		<style>
-		* {
-			color: #fff;
-		}
 		html, body {
 			background: linear-gradient(#111, #333);
+			color: #fff;
 			height: 100%%;
 			margin: 0;
 			padding: 0;
@@ -209,23 +207,138 @@ def x3dom2html(x3dom, title="Untitled",
 		x3d {
 			border: 0;
 		}
-		#no_x3dom {
+		#x3dom_error {
 			display: none;
+			position: absolute;
+			width: 100%%;
+		}
+		#x3dom_toolbar {
+			background: rgba(16, 16, 16, .75);
+			bottom: -30px;
+			display: none;
+			padding: 5px 0;
+			position: absolute;
+			transition: all .5s linear;
+			width: 100%%;
+		}
+		.button, .options {
+			background: linear-gradient(#ccc, #999);
+			border: 0;
+			border-bottom: 1px outset #999;
+			border-left: 1px solid #999;
+			border-top: 1px outset #999;
+			color: #000;
+			cursor: default;
+			display: inline-block;
+			line-height: 14px;
+			padding: 3px;
+			position: relative;
+			text-shadow: 1px 1px #ccc;
+			transition: all .125s linear;
+			width: 14ex;
+		}
+		.button:first-child, .options {
+			border-bottom-left-radius: 5px;
+			border-left: 1px outset #999;
+			border-top-left-radius: 5px;
+		}
+		.button:last-child, .options {
+			border-bottom-right-radius: 5px;
+			border-right: 1px outset #999;
+			border-top-right-radius: 5px;
+		}
+		.options {
+			border-bottom-right-radius: 0;
+			display: none;
+		}
+		.options div {
+			border-radius: 3px;
+			padding: 3px;
+		}
+		.options div:hover {
+			background: rgba(16, 16, 16, .75);
+			color: #fff;
+			text-shadow: 1px 1px #000;
+		}
+		.button:hover .options {
+			bottom: -1px;
+			display: block;
+			left: -1px;
+			position: absolute;
+		}
+		.selected:after {
+			color: #666;
+			content: ' \\25bc';
+			font-size: 10px;
 		}
 		</style>
 		%(script)s
+		<script>
+			if (window.x3dom) {
+				x3dom.runtime.ready = function () {
+					if (!document.getElementsByTagName('canvas').length) {
+						document.getElementById('x3dom_error').innerHTML = 'X3DOM did not create a canvas. Please check the console for errors.';
+						document.getElementById('x3dom_error').style.display = 'block';
+					}
+					else {
+						window.x3d_runtime = document.getElementById('x3d').runtime;
+						document.getElementById('x3dom_toolbar').style.display = 'block';
+						document.getElementById('x3dom_toolbar').style.bottom = 0;
+						x3d_runtime.fitAll()
+					}
+				}
+			}
+			function setSelected(element) {
+				element.parentNode.parentNode.getElementsByClassName('selected')[0].innerHTML = element.innerHTML;
+			}
+			function setViewMode(mode, element) {
+				x3d_runtime.getActiveBindable('NavigationInfo').setAttribute('explorationMode', mode);
+				setSelected(element);
+			}
+			function setViewpoint(viewpoint, element) {
+				x3d_runtime.showAll(viewpoint);
+			}
+		</script>
 	</head>
 	<body>
 		<noscript><p>Please enable JavaScript</p></noscript>
-		<p id="no_x3dom">The <a href="%(runtime_uri)s">X3DOM Runtime</a> seems to have failed loading. Please make sure you have internet connectivity.</p>
-		<x3d id="canvas" showStat="false" showLog="false" x="0px" y="0px">
+		<p id="x3dom_error"></p>
+		<x3d id="x3d" showStat="false" showLog="false" x="0px" y="0px">
 %(html)s
 		</x3d>
+		<div id="x3dom_toolbar">
+			<div class="button">
+				<div class="selected">Rotate</div>
+				<div class="options">
+					<div onclick="setViewMode('all', this)">Rotate</div>
+					<div onclick="setViewMode('pan', this)">Pan</div>
+					<div onclick="setViewMode('zoom', this)">Zoom</div>
+				</div>
+			</div><!--
+			--><div class="button" onclick="x3d_runtime.togglePoints(); this.innerHTML = this.innerHTML == 'Points' ? 'Solid' : 'Points'">Solid</div><!--
+			--><div class="button">
+				<div class="selected">Viewpoint</div>
+				<div class="options">
+					<div onclick="setViewpoint('negZ', this)">Top</div>
+					<div onclick="setViewpoint('posZ', this)">Bottom</div>
+					<div onclick="setViewpoint('negY', this)">Front</div>
+					<div onclick="setViewpoint('posY', this)">Back</div>
+					<div onclick="setViewpoint('posX', this)">Left</div>
+					<div onclick="setViewpoint('negX', this)">Right</div>
+				</div>
+			</div><!--
+			--><div class="button" onclick="x3d_runtime.fitAll()">Center &amp; fit</div><!--
+			--><div class="button" onclick="x3d_runtime.resetView()">Reset</div><!--
+			--><div class="button" onclick="window.open(x3d_runtime.getScreenshot())">Screenshot</div>
+		</div>
 		<script>
-		if (!window.x3dom) document.getElementById('no_x3dom').style.display = 'block';
+		if (!window.x3dom) {
+			document.getElementById('x3dom_error').innerHTML = 'X3DOM has failed loading. Please check the console for errors.';
+			document.getElementById('x3dom_error').style.display = 'block';
+		}
 		function setsize() {
-			document.getElementById('canvas').setAttribute('width', document.body.offsetWidth);
-			document.getElementById('canvas').setAttribute('height', document.body.offsetHeight);
+			document.getElementById('x3d').setAttribute('width', document.body.offsetWidth);
+			document.getElementById('x3d').setAttribute('height', document.body.offsetHeight);
 		};
 		window.addEventListener('resize', setsize);
 		setsize();
