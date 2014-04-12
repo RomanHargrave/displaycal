@@ -14,7 +14,7 @@ from log import safe_print
 from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
-from util_os import launch_file
+from util_os import launch_file, waccess
 from util_str import safe_unicode, universal_newlines, wrap
 from worker import (Error, check_set_argyll_bin, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
@@ -1597,9 +1597,11 @@ class ProfileInfoFrame(LUTFrame):
 		if not profile:
 			vrmlfile2x3dhtmlfile(view=True)
 		else:
+			profile_path = None
 			if profile.fileName and os.path.isfile(profile.fileName):
 				profile_path = profile.fileName
-			else:
+			if not profile_path or not waccess(os.path.dirname(profile_path),
+											   os.W_OK):
 				result = self.worker.create_tempdir()
 				if isinstance(result, Exception):
 					show_result_dialog(result, self)
@@ -1630,14 +1632,16 @@ class ProfileInfoFrame(LUTFrame):
 									  progress_msg=lang.getstr("gamut.view.create"))
 	
 	def view_3d_consumer(self, result, filename, vrmlpath, htmlpath):
+		if filename:
+			if getcfg("vrml.compress"):
+				vrmlpath = filename + ".wrz"
+			else:
+				vrmlpath = filename + ".wrl"
+		if not os.path.isfile(vrmlpath):
+			result = Error("".join(self.worker.errors))
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		else:
-			if filename:
-				if getcfg("vrml.compress"):
-					vrmlpath = filename + ".wrz"
-				else:
-					vrmlpath = filename + ".wrl"
 			vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, view=True)
 
 class ProfileInfoGrid(wx.grid.Grid):
