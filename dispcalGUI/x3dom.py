@@ -3,12 +3,20 @@
 from __future__ import with_statement
 import os
 import re
+import string
 import urllib2
 
 from defaultpaths import cache
 from options import verbose, debug
-from safe_print import safe_print as _safe_print
+from log import safe_print as _safe_print
 from util_io import GzipFileProper
+from util_str import StrList
+from worker import Error
+import localization as lang
+
+
+class VRMLParseError(Error):
+	pass
 
 
 class Tag(object):
@@ -25,7 +33,11 @@ class Tag(object):
 		html = ["<%s" % self.tagname]
 		attrs = []
 		for key, value in self.attributes.iteritems():
-			value = value.strip()
+			value = value.strip().replace("<",
+										  "&lt;").replace(">",
+														  "&gt;").replace("&",
+																		  "&amp;").replace('"',
+																						   "&quot;")
 			if value in ("FALSE", "TRUE"):
 				value = value.lower()
 			attrs.append('%s="%s"' % (key, value))
@@ -47,7 +59,10 @@ class Tag(object):
 
 def _attrchk(attribute, token, tag, indent):
 	if attribute:
-		safe_print(indent, "attribute %r %r" % (token, tag.attributes[token]))
+		if verbose > 1 or debug:
+			if tag.attributes.get(token):
+				safe_print(indent, "attribute %r %r" % (token,
+														tag.attributes[token]))
 		attribute = False
 	return attribute
 
@@ -57,10 +72,11 @@ def safe_print(*args, **kwargs):
 		_safe_print(*args, **kwargs)
 
 
-def vrml2x3dom(vrml):
+def vrml2x3dom(vrml, worker=None):
 	""" Convert VRML to X3D """
 	tag = Tag("scene", DEF="scene")
 	token = ""
+	valid_token_chars = string.ascii_letters + string.digits + "_"
 	attribute = False
 	quote = 0
 	listing = False
@@ -71,11 +87,33 @@ def vrml2x3dom(vrml):
 	# Remove commas
 	vrml = re.sub(",\s*", " ", vrml)
 	indent = ""
-	for c in vrml:
-		if c == "{":
+	maxi = len(vrml) - 1.0
+	lastprogress = 0
+	for i, c in enumerate(vrml):
+		curprogress = int(i / maxi * 100)
+		if worker:
+			if curprogress > lastprogress:
+				worker.lastmsg.write("%i%%\n" % curprogress)
+			if getattr(worker, "thread_abort", False):
+				return False
+		if curprogress > lastprogress:
+			lastprogress = curprogress
+			if curprogress < 100:
+				end = None
+			else:
+				end = "\n"
+			_safe_print.write("\r%i%%" % curprogress, end=end)
+		if ord(c) < 32 and c not in "\n\r\t":
+			raise VRMLParseError("Parse error: Got invalid character %r" % c)
+		elif c == "{":
 			safe_print(indent, "start tag %r" % token)
 			indent += "  "
 			attribute = False
+			if token:
+				if token[0] not in string.ascii_letters:
+					raise VRMLParseError("Invalid token", token)
+			else:
+				raise VRMLParseError("Parse error: Empty token")
 			child = Tag(token)
 			tag.append_child(child)
 			tag = child
@@ -84,7 +122,10 @@ def vrml2x3dom(vrml):
 			attribute = _attrchk(attribute, token, tag, indent)
 			indent = indent[:-2]
 			safe_print(indent, "end tag %r" % tag.tagname)
-			tag = tag.parent
+			if tag.parent:
+				tag = tag.parent
+			else:
+				raise VRMLParseError("Parse error: Stray '}'")
 			token = ""
 		elif c == "[":
 			if token:
@@ -110,13 +151,18 @@ def vrml2x3dom(vrml):
 					token = ""
 			else:
 				if not token in tag.attributes:
-					tag.attributes[token] = ""
+					tag.attributes[token] = StrList()
 				if not (c.strip() or tag.attributes[token]):
 					continue
 				tag.attributes[token] += c
 		elif c not in (" ", "\n", "\r", "\t"):
-			token += c
+			if c in valid_token_chars:
+				token += c
+			else:
+				raise VRMLParseError("Parse error: Got invalid character %r" % c)
 		elif token:
+			if token[0] not in string.ascii_letters:
+				raise VRMLParseError("Parse error: Invalid token", token)
 			if token == "children":
 				token = ""
 			elif c in (" ", "\t"):
@@ -124,11 +170,11 @@ def vrml2x3dom(vrml):
 					attribute = True
 					if token in tag.attributes:
 						# Overwrite existing attribute
-						tag.attributes[token] = ""
+						tag.attributes[token] = StrList()
 	return tag
 
 
-def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, embed=False):
+def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, embed=False, worker=None):
 	"""
 	Convert VRML file located at vrmlpath to HTML and write to htmlpath
 	
@@ -138,13 +184,31 @@ def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, embed=False):
 		cls = GzipFileProper
 	else:
 		cls = open
-	with cls(vrmlpath, "r") as vrmlfile:
+	with cls(vrmlpath, "rb") as vrmlfile:
 		vrml = vrmlfile.read()
+	if worker:
+		worker.recent.write("%s %s\n" % (lang.getstr("converting"),
+										 os.path.basename(vrmlpath)))
+	_safe_print(lang.getstr("converting"), vrmlpath)
 	filename, ext = os.path.splitext(vrmlpath)
-	html = x3dom2html(vrml2x3dom(vrml), title=os.path.basename(filename),
-					  embed=embed)
-	with open(htmlpath, "w") as htmlfile:
+	try:
+		x3d = vrml2x3dom(vrml, worker)
+		if not x3d:
+			_safe_print(lang.getstr("aborted"))
+			return False
+		html = x3dom2html(x3d, title=os.path.basename(filename),
+						  embed=embed)
+	except KeyboardInterrupt:
+		x3d = False
+	except VRMLParseError, exception:
+		return exception
+	except Exception, exception:
+		import traceback
+		_safe_print(traceback.format_exc())
+		return exception
+	with open(htmlpath, "wb") as htmlfile:
 		htmlfile.write(html)
+	return True
 
 
 def x3dom2html(x3dom, title="Untitled",
@@ -344,7 +408,7 @@ def x3dom2html(x3dom, title="Untitled",
 		setsize();
 		</script>
 	</body>
-</html>""" % {"title": title, "style": style, "script": script,
+</html>""" % {"title": title.encode("UTF-8"), "style": style, "script": script,
 			  "runtime_uri": runtime_uri,
 			  "html":"\n".join(["\t" * 3 + line for line in
-								str(x3dom).splitlines()])}
+								str(x3dom).decode("UTF-8", "replace").replace(u"\ufffd", "").encode("UTF-8").splitlines()])}

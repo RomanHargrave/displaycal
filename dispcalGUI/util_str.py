@@ -105,6 +105,26 @@ subst.update({u"\u00a6": u"|",
 			  u"\u2264": u"<=",
 			  u"\u2265": u"=>",})
 
+
+class StrList(list):
+	
+	""" It's a list. It's a string. It's a list of strings that behaves like a
+	string! And like a list."""
+
+	def __init__(self, seq=tuple()):
+		list.__init__(self, seq)
+
+	def __iadd__(self, text):
+		self.append(text)
+		return self
+
+	def __getattr__(self, attr):
+		return getattr(str(self), attr)
+
+	def __str__(self):
+		return "".join(self)
+
+
 def asciize(obj):
 	"""
 	Turn several unicode chars into an ASCII representation.

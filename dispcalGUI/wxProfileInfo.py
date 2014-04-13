@@ -1595,7 +1595,8 @@ class ProfileInfoFrame(LUTFrame):
 	def view_3d(self, event):
 		profile = self.profile
 		if not profile:
-			vrmlfile2x3dhtmlfile(embed=getcfg("x3dom.embed"), view=True)
+			vrmlfile2x3dhtmlfile(embed=getcfg("x3dom.embed"), view=True,
+								 worker=self.worker)
 		else:
 			profile_path = None
 			if profile.fileName and os.path.isfile(profile.fileName):
@@ -1629,7 +1630,8 @@ class ProfileInfoFrame(LUTFrame):
 									  self.worker.calculate_gamut,
 									  cargs=(filename, None, htmlpath),
 									  wargs=(profile_path, False),
-									  progress_msg=lang.getstr("gamut.view.create"))
+									  progress_msg=lang.getstr("gamut.view.create"),
+									  continue_next=True)
 	
 	def view_3d_consumer(self, result, filename, vrmlpath, htmlpath):
 		if filename:
@@ -1643,7 +1645,8 @@ class ProfileInfoFrame(LUTFrame):
 			show_result_dialog(result, self)
 		else:
 			vrmlfile2x3dhtmlfile(vrmlpath, htmlpath,
-								 embed=getcfg("x3dom.embed"), view=True)
+								 embed=getcfg("x3dom.embed"), view=True,
+								 worker=self.worker)
 
 class ProfileInfoGrid(wx.grid.Grid):
 
