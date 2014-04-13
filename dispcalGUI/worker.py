@@ -1637,6 +1637,7 @@ class Worker(object):
 			prev_dlg = getattr(self.progress_wnd, "dlg", None)
 			if (prev_dlg and prev_dlg.IsShownOnScreen() and
 				not isinstance(prev_dlg, DummyDialog)):
+				self.abort_requested = False
 				return
 			pause = (not getattr(self.progress_wnd, "paused", False) and
 					 hasattr(self.progress_wnd, "pause_continue_handler"))
@@ -1657,6 +1658,7 @@ class Worker(object):
 				return
 			if dlg_result != wx.ID_OK:
 				self.progress_wnd.Resume()
+				self.abort_requested = False
 				return
 		self.subprocess_abort = True
 		self.thread_abort = True
@@ -5471,16 +5473,9 @@ class Worker(object):
 		if (hasattr(self.progress_wnd, "pause_continue") and
 			"read stopped at user request!" in lastmsg):
 			self.progress_wnd.pause_continue.Enable()
-		if not keepGoing:
-			if getattr(self, "subprocess", None) and \
-			   not getattr(self, "subprocess_abort", False):
-				if debug:
-					safe_print('[D] calling quit_terminate_cmd')
-				self.abort_subprocess(True)
-			elif not getattr(self, "thread_abort", False):
-				if debug:
-					safe_print('[D] thread_abort')
-				self.abort_subprocess(True)
+		if not keepGoing and not getattr(self, "abort_requested", False):
+			self.abort_requested = True
+			self.abort_subprocess(True)
 		if self.finished is True:
 			return
 		if (self.progress_wnd.IsShownOnScreen() and
@@ -5756,6 +5751,7 @@ class Worker(object):
 		self.paused = False
 		self.resume = resume
 		self.subprocess_abort = False
+		self.abort_requested = False
 		self.starttime = time()
 		self.thread_abort = False
 		if self.interactive:
