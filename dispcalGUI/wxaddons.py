@@ -285,6 +285,6 @@ class FileDrop(wx.FileDropTarget):
 
 		if len(self._files):
 			for key in self._files:
-				self.drophandlers[key](self._files[key])
+				wx.CallAfter(self.drophandlers[key], self._files[key])
 		elif self.unsupported_handler:
-			self.unsupported_handler()
+			wx.CallAfter(self.unsupported_handler)
