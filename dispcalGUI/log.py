@@ -13,7 +13,7 @@ from config import isapp, logdir
 from meta import name as appname
 from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO
-from util_str import safe_str, safe_unicode, universal_newlines
+from util_str import safe_str, safe_unicode
 import config
 
 logging.raiseExceptions = 0
@@ -56,7 +56,7 @@ class Log():
 		if fn is None and logging.getLogger(appname).handlers:
 			fn = logging.getLogger(appname).info
 		if fn:
-			for line in universal_newlines(msg).split("\n"):
+			for line in msg.replace("\r\n", "\n").replace("\r", "").split("\n"):
 				fn(line)
 		if "wx" in sys.modules:
 			from wxaddons import wx
@@ -91,7 +91,7 @@ class LogFile():
 			handler.flush()
 
 	def write(self, msg):
-		for line in universal_newlines(msg.rstrip()).split("\n"):
+		for line in msg.rstrip().replace("\r\n", "\n").replace("\r", "").split("\n"):
 			self._logger.info(line)
 
 
