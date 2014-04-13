@@ -576,6 +576,7 @@ class GamutViewOptions(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 		self.SetBackgroundColour(BGCOLOUR)
+		self.SetForegroundColour(FGCOLOUR)
 		self.sizer = wx.FlexGridSizer(0, 3, 4)
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(2)
