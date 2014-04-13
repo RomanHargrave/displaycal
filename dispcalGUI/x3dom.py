@@ -10,7 +10,7 @@ from defaultpaths import cache
 from options import verbose, debug
 from log import safe_print as _safe_print
 from util_io import GzipFileProper
-from util_str import StrList
+from util_str import StrList, safe_str, safe_unicode
 from worker import Error
 import localization as lang
 
@@ -25,12 +25,19 @@ class Tag(object):
 
 	def __init__(self, tagname, **attributes):
 		self.parent = None
-		self.tagname = tagname[0].lower() + tagname[1:]
+		self.tagname = tagname
 		self.children = []
 		self.attributes = attributes
 
 	def __str__(self):
-		html = ["<%s" % self.tagname]
+		if self.parent:
+			xml = []
+		else:
+			# Root element
+			xml = ['<?xml version="1.0" encoding="UTF-8"?>\n',
+				   '<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.0//EN" "http://www.web3d.org/specifications/x3d-3.0.dtd">\n']
+		
+		xml.append("<%s" % self.tagname)
 		attrs = []
 		for key, value in self.attributes.iteritems():
 			value = value.strip().replace("<",
@@ -42,15 +49,15 @@ class Tag(object):
 				value = value.lower()
 			attrs.append('%s="%s"' % (key, value))
 		if attrs:
-			html.append(" " + " ".join(attrs))
-		html.append(">")
+			xml.append(" " + " ".join(attrs))
+		xml.append(">")
 		if self.children:
-			html.append("\n")
+			xml.append("\n")
 			for child in self.children:
 				for line in str(child).splitlines():
-					html.append("\t" + line + "\n")
-		html.append("</%s>\n" % self.tagname)
-		return "".join(html)
+					xml.append("\t" + line + "\n")
+		xml.append("</%s>\n" % self.tagname)
+		return "".join(xml)
 
 	def append_child(self, child):
 		child.parent = self
@@ -74,7 +81,12 @@ def safe_print(*args, **kwargs):
 
 def vrml2x3dom(vrml, worker=None):
 	""" Convert VRML to X3D """
-	tag = Tag("scene", DEF="scene")
+	x3d = Tag("X3D",  **{"xmlns:xsd": "http://www.w3.org/2001/XMLSchema-instance",
+						 "profile": "Full",
+						 "version": "3.0",
+						 "xsd:noNamespaceSchemaLocation": "http://www.web3d.org/specifications/x3d-3.0.xsd"})
+	tag = Tag("Scene")
+	x3d.append_child(tag)
 	token = ""
 	valid_token_chars = string.ascii_letters + string.digits + "_"
 	attribute = False
@@ -171,12 +183,12 @@ def vrml2x3dom(vrml, worker=None):
 					if token in tag.attributes:
 						# Overwrite existing attribute
 						tag.attributes[token] = StrList()
-	return tag
+	return x3d
 
 
-def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, embed=False, worker=None):
+def vrmlfile2x3dfile(vrmlpath, x3dpath, embed=False, html=True, worker=None):
 	"""
-	Convert VRML file located at vrmlpath to HTML and write to htmlpath
+	Convert VRML file located at vrmlpath to HTML and write to x3dpath
 	
 	"""
 	filename, ext = os.path.splitext(vrmlpath)
@@ -190,68 +202,110 @@ def vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, embed=False, worker=None):
 		worker.recent.write("%s %s\n" % (lang.getstr("converting"),
 										 os.path.basename(vrmlpath)))
 	_safe_print(lang.getstr("converting"), vrmlpath)
-	filename, ext = os.path.splitext(vrmlpath)
+	filename, ext = os.path.splitext(x3dpath)
 	try:
 		x3d = vrml2x3dom(vrml, worker)
 		if not x3d:
 			_safe_print(lang.getstr("aborted"))
 			return False
-		html = x3dom2html(x3d, title=os.path.basename(filename),
-						  embed=embed)
+		if not embed or not html:
+			_safe_print("Writing", x3dpath)
+			with open(x3dpath, "wb") as x3dfile:
+				x3dfile.write(str(x3d))
+			x3d = x3dpath
+		if html:
+			html = x3d2html(x3d, title=os.path.basename(filename),
+							embed=embed)
+			_safe_print("Writing", x3dpath + ".html")
+			with open(x3dpath + ".html", "wb") as htmlfile:
+				htmlfile.write(html)
 	except KeyboardInterrupt:
 		x3d = False
 	except VRMLParseError, exception:
+		return exception
+	except EnvironmentError, exception:
 		return exception
 	except Exception, exception:
 		import traceback
 		_safe_print(traceback.format_exc())
 		return exception
-	with open(htmlpath, "wb") as htmlfile:
-		htmlfile.write(html)
 	return True
 
 
-def x3dom2html(x3dom, title="Untitled",
-			   runtime_uri="http://www.x3dom.org/x3dom/release", embed=False):
-	""" Convert X3D to HTML """
-	style = '<link rel="stylesheet" href="%s/x3dom.css">' % runtime_uri
-	script = '<script src="%s/x3dom.js"></script>' % runtime_uri
+def x3d2html(x3d, title="Untitled",
+			 runtime_uri="http://www.x3dom.org/x3dom/release", embed=False):
+	"""
+	Convert X3D to HTML
+	
+	If embed is False (default), x3d needs to be a path to a .x3d file,
+	otherwise it should be a X3D document
+	
+	"""
 	if embed:
-		# Strip protocol
-		runtime_path = re.sub("^\w+://", "", runtime_uri)
-		# domain.com -> com.domain
-		runtime_path = re.sub("^(?:www\.)?(\w+)((?:\.\w+)+)", "\\2.\\1",
-							  runtime_path)[1:]
-		# com.domain/path -> com.domain.path
-		runtime_path = re.sub("^([^/]+)/", "\\1.", runtime_path)
-		for resource in ("x3dom.css", "x3dom.js"):
-			cachedir = os.path.join(cache,
-									os.path.join(*runtime_path.split("/")))
-			if not os.path.isdir(cachedir):
-				_safe_print("Creating cache directory:", cachedir)
-				os.makedirs(cachedir)
-			cachefilename = os.path.join(cachedir, resource)
-			body = ""
-			if os.path.isfile(cachefilename):
-				_safe_print("Using cached file:", cachefilename)
-				with open(cachefilename, "rb") as cachefile:
-					body = cachefile.read()
-			if not body.strip():
-				uri = "/".join([runtime_uri, resource])
-				_safe_print("Requesting:", uri)
-				response = urllib2.urlopen(uri)
-				body = response.read()
-				response.close()
-			if body.strip():
+		# Strip XML declaration and doctype
+		html = re.sub("<[?!][^>]*>\s*", "", str(x3d))
+		# Get children of scene
+		html = re.sub("\s*</?(X3D|Scene)(?:\s+[^>]*)?>\s*", "", html)
+		# Convert uppercase letters at start of tag name to lowercase
+		html = re.sub("(</?[A-Z]+)", lambda match: match.groups()[0].lower(),
+					  html)
+		# Indent
+		html = "\n".join(["\t" * 3 + line for line in html.splitlines()])
+	else:
+		html = ('<inline url="%s" mapDEFToID="true" nameSpaceName="scene"></inline>' %
+				os.path.basename(safe_unicode(x3d).encode("UTF-8")))
+	# Strip protocol
+	runtime_path = re.sub("^\w+://", "", runtime_uri)
+	# domain.com -> com.domain
+	runtime_path = re.sub("^(?:www\.)?(\w+)((?:\.\w+)+)", "\\2.\\1",
+						  runtime_path)[1:]
+	# com.domain/path -> com.domain.path
+	runtime_path = re.sub("^([^/]+)/", "\\1.", runtime_path)
+	cachedir = os.path.join(cache,
+							os.path.join(*runtime_path.split("/")))
+	if not os.path.isdir(cachedir):
+		_safe_print("Creating cache directory:", cachedir)
+		os.makedirs(cachedir)
+	local_runtime_path = "file:///" + safe_unicode(cachedir).encode("UTF-8").lstrip("/").replace(os.path.sep, "/")
+	style = '<link rel="stylesheet" href="%s/x3dom.css">' % local_runtime_path
+	script = """<script src="%s/x3dom.js"></script>
+		<script>
+			if (!window.x3dom) {
+				document.getElementById('x3d').setAttribute('swfpath', '%s/x3dom.swf');
+				document.write('<link rel="stylesheet" href="%s/x3dom.css"><script src="%s/x3dom.js"><\/script>');
+				
+			}
+		</script>""" % (local_runtime_path, runtime_uri,
+			runtime_uri, runtime_uri)
+	for resource in ("x3dom.css", "x3dom.js", "x3dom.swf"):
+		cachefilename = os.path.join(cachedir, resource)
+		body = ""
+		if os.path.isfile(cachefilename):
+			_safe_print("Using cached file:", cachefilename)
+			with open(cachefilename, "rb") as cachefile:
+				body = cachefile.read()
+		if not body.strip():
+			uri = "/".join([runtime_uri, resource])
+			_safe_print("Requesting:", uri)
+			response = urllib2.urlopen(uri)
+			body = response.read()
+			response.close()
+		else:
+			uri = cachefilename
+		if body.strip():
+			if embed and resource != "x3dom.swf":
 				if resource == "x3dom.css":
 					style = "<style>%s</style>" % body
 				else:
 					script = "<script>%s</script>" % body
-				if not os.path.isfile(cachefilename):
-					with open(cachefilename, "wb") as cachefile:
-						cachefile.write(body)
-			else:
-				_safe_print("Error: Empty document:", resource)
+			if not os.path.isfile(cachefilename):
+				with open(cachefilename, "wb") as cachefile:
+					cachefile.write(body)
+		else:
+			_safe_print("Error: Empty document:", uri)
+			if os.path.isfile(cachefilename):
+				_safe_print("Removing", cachefilename)
+				os.remove(cachefilename)
 	return """<!DOCTYPE html>
 <html>
 	<head>
@@ -336,39 +390,14 @@ def x3dom2html(x3dom, title="Untitled",
 			font-size: 10px;
 		}
 		</style>
-		%(script)s
-		<script>
-			if (window.x3dom) {
-				x3dom.runtime.ready = function () {
-					if (!document.getElementsByTagName('canvas').length) {
-						document.getElementById('x3dom_error').innerHTML = 'X3DOM did not create a canvas. Please check the console for errors.';
-						document.getElementById('x3dom_error').style.display = 'block';
-					}
-					else {
-						window.x3d_runtime = document.getElementById('x3d').runtime;
-						document.getElementById('x3dom_toolbar').style.display = 'block';
-						document.getElementById('x3dom_toolbar').style.bottom = 0;
-						x3d_runtime.fitAll()
-					}
-				}
-			}
-			function setSelected(element) {
-				element.parentNode.parentNode.getElementsByClassName('selected')[0].innerHTML = element.innerHTML;
-			}
-			function setViewMode(mode, element) {
-				x3d_runtime.getActiveBindable('NavigationInfo').setAttribute('explorationMode', mode);
-				setSelected(element);
-			}
-			function setViewpoint(viewpoint, element) {
-				x3d_runtime.showAll(viewpoint);
-			}
-		</script>
 	</head>
 	<body>
 		<noscript><p>Please enable JavaScript</p></noscript>
 		<p id="x3dom_error"></p>
-		<x3d id="x3d" showStat="false" showLog="false" x="0px" y="0px">
-%(html)s
+		<x3d id="x3d" showStat="false" showLog="false" swfpath="%(local_runtime_path)s/x3dom.swf" x="0px" y="0px">
+			<scene>
+				%(html)s
+			</scene>
 		</x3d>
 		<div id="x3dom_toolbar">
 			<div class="button">
@@ -395,20 +424,43 @@ def x3dom2html(x3dom, title="Untitled",
 			--><div class="button" onclick="x3d_runtime.resetView()">Reset</div><!--
 			--><div class="button" onclick="window.open(x3d_runtime.getScreenshot())">Screenshot</div>
 		</div>
+		%(script)s
 		<script>
-		if (!window.x3dom) {
-			document.getElementById('x3dom_error').innerHTML = 'X3DOM has failed loading. Please check the console for errors.';
-			document.getElementById('x3dom_error').style.display = 'block';
-		}
-		function setsize() {
-			document.getElementById('x3d').setAttribute('width', document.body.offsetWidth);
-			document.getElementById('x3d').setAttribute('height', document.body.offsetHeight);
-		};
-		window.addEventListener('resize', setsize);
-		setsize();
+			if (window.x3dom) {
+				x3dom.runtime.ready = function () {
+					if (!document.getElementsByTagName('canvas').length) {
+						document.getElementById('x3dom_error').innerHTML = 'X3DOM did not create a canvas. Please check the console for errors.';
+						document.getElementById('x3dom_error').style.display = 'block';
+					}
+					else {
+						window.x3d_runtime = document.getElementById('x3d').runtime;
+						document.getElementById('x3dom_toolbar').style.display = 'block';
+						document.getElementById('x3dom_toolbar').style.bottom = 0;
+					}
+				}
+			}
+			else {
+				document.getElementById('x3dom_error').innerHTML = 'X3DOM has failed loading. Please check the console for errors.';
+				document.getElementById('x3dom_error').style.display = 'block';
+			}
+			function setSelected(element) {
+				element.parentNode.parentNode.getElementsByClassName('selected')[0].innerHTML = element.innerHTML;
+			}
+			function setViewMode(mode, element) {
+				x3d_runtime.getActiveBindable('NavigationInfo').setAttribute('explorationMode', mode);
+				setSelected(element);
+			}
+			function setViewpoint(viewpoint, element) {
+				x3d_runtime.showAll(viewpoint);
+			}
+			function setsize() {
+				document.getElementById('x3d').setAttribute('width', document.body.offsetWidth);
+				document.getElementById('x3d').setAttribute('height', document.body.offsetHeight);
+			};
+			window.addEventListener('resize', setsize);
+			setsize();
 		</script>
 	</body>
 </html>""" % {"title": title.encode("UTF-8"), "style": style, "script": script,
-			  "runtime_uri": runtime_uri,
-			  "html":"\n".join(["\t" * 3 + line for line in
-								str(x3dom).decode("UTF-8", "replace").replace(u"\ufffd", "").encode("UTF-8").splitlines()])}
+			  "runtime_uri": runtime_uri, "local_runtime_path": local_runtime_path,
+			  "html": html}

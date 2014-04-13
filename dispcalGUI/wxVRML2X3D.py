@@ -16,19 +16,22 @@ import x3dom
 def main(vrmlpath=None):
 	if "--help" in sys.argv[1:]:
 		safe_print("Usage: %s [--embed] [--no-gui] [--view] [FILE]" % sys.argv[0])
-		safe_print("Convert VRML file to X3D embedded in HTML")
-		safe_print("The output is written to FILENAME.x3d.html")
+		safe_print("Convert VRML file to X3D")
+		safe_print("The output is written to FILENAME.x3d")
 		safe_print("")
-		safe_print("  --embed    Embed X3DOM runtime instead of referencing it")
-		safe_print("  --no-gui   Don't show GUI (terminal mode)")
-		safe_print("  --view     View the generated HTML file (if --no-gui)")
-		safe_print("  FILE       Filename of VRML file to convert")
+		safe_print("  --embed      Embed X3D in HTML instead of referencing it")
+		safe_print("  --no-gui     Don't show GUI (terminal mode)")
+		safe_print("  --no-html    Don't generate HTML file")
+		safe_print("  --view       View the generated file (if --no-gui)")
+		safe_print("  FILE         Filename of VRML file to convert")
 		return
 	config.initcfg()
 	lang.init()
+	embed = "--embed" in sys.argv
+	html = not "--no-html" in sys.argv[1:]
+	view = "--view=X3D" in sys.argv[1:]
 	if "--no-gui" in sys.argv[1:]:
-		vrmlfile2x3dhtmlfile(vrmlpath, embed="--embed" in sys.argv,
-							 view="--view" in sys.argv)
+		vrmlfile2x3dfile(vrmlpath, embed=embed, view=view)
 	else:
 		app = wx.App(0)
 		frame = wx.Frame(None, wx.ID_ANY, lang.getstr("vrml_to_x3d_converter"),
@@ -49,15 +52,17 @@ def main(vrmlpath=None):
 							  style=wx.NO_BORDER)
 		btn.SetToolTipString(lang.getstr("file.select"))
 		btn.Bind(wx.EVT_BUTTON, lambda event:
-								vrmlfile2x3dhtmlfile(None,
-													 embed="--embed" in sys.argv,
-													 view=True,
-													 worker=worker))
+								vrmlfile2x3dfile(None,
+												 embed=embed,
+												 html=html,
+												 view=True,
+												 worker=worker))
 		droptarget = FileDrop()
-		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dhtmlfile(vrmlpath,
-																  embed="--embed" in sys.argv,
-																  view=True,
-																  worker=worker)
+		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dfile(vrmlpath,
+															  embed=embed,
+															  html=html,
+															  view=True,
+															  worker=worker)
 		droptarget.drophandlers = {
 			".vrml": vrml_drop_handler,
 			".vrml.gz": vrml_drop_handler,
@@ -76,16 +81,15 @@ def main(vrmlpath=None):
 		frame.SetMaxSize(frame.GetSize())
 		frame.Show()
 		if vrmlpath:
-			wx.CallAfter(vrmlfile2x3dhtmlfile, vrmlpath,
-						 embed="--embed" in sys.argv, view=True,
-						 worker=worker)
+			wx.CallAfter(vrmlfile2x3dfile, vrmlpath,  embed=embed,
+						 html=html, view=True, worker=worker)
 		app.MainLoop()
 
 
-def vrmlfile2x3dhtmlfile(vrmlpath=None, htmlpath=None, embed=False, view=False,
-						 worker=None):
+def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, embed=False, html=True,
+					 view=False, worker=None):
 	""" Convert VRML to HTML. Output is written to <vrmlfilename>.x3d.html
-	unless you set htmlpath to desired output path, or False to be prompted
+	unless you set x3dpath to desired output path, or False to be prompted
 	for an output path. """
 	while not vrmlpath or not os.path.isfile(vrmlpath):
 		if "--no-gui" in sys.argv[1:]:
@@ -112,52 +116,56 @@ def vrmlfile2x3dhtmlfile(vrmlpath=None, htmlpath=None, embed=False, view=False,
 		config.setcfg("last_vrml_path", vrmlpath)
 		config.writecfg()
 	filename, ext = os.path.splitext(vrmlpath)
-	if htmlpath is None:
-		htmlpath = filename + ".x3d.html"
-	if htmlpath:
-		dirname = os.path.dirname(htmlpath)
-	while not htmlpath or not waccess(dirname, os.W_OK):
+	if x3dpath is None:
+		x3dpath = filename + ".x3d"
+	if x3dpath:
+		dirname = os.path.dirname(x3dpath)
+	while not x3dpath or not waccess(dirname, os.W_OK):
 		if "--no-gui" in sys.argv[1:]:
-			if not htmlpath:
+			if not x3dpath:
 				safe_print("No HTML output filename given.")
 			else:
 				safe_print("%r is not writable." % dirname)
 			sys.exit(1)
 		if not wx.GetApp():
 			app = wx.App(0)
-		if htmlpath:
-			defaultDir, defaultFile = os.path.split(htmlpath)
+		if x3dpath:
+			defaultDir, defaultFile = os.path.split(x3dpath)
 		else:
-			defaultFile = os.path.basename(filename) + ".x3d.html"
+			defaultFile = os.path.basename(filename) + ".x3d"
 		dlg = wx.FileDialog(None, lang.getstr("error.access_denied.write",
 											  dirname),
 							defaultDir=defaultDir, 
 							defaultFile=defaultFile, 
-							wildcard=lang.getstr("filetype.html") +
-									 "|*.html", 
+							wildcard=lang.getstr("filetype.x3d") +
+									 "|*.x3d", 
 							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
-		htmlpath = dlg.GetPath()
-		dirname = os.path.dirname(htmlpath)
+		x3dpath = dlg.GetPath()
+		dirname = os.path.dirname(x3dpath)
+	if html:
+		finalpath = x3dpath + ".html"
+	else:
+		finalpath = x3dpath
 	if worker:
 		worker.clear_cmd_output()
 		worker.start(lambda result:
 					 show_result_dialog(result, wx.GetApp().GetTopWindow())
 					 if isinstance(result, Exception)
-					 else result and view and launch_file(htmlpath),
-					 x3dom.vrmlfile2x3dhtmlfile,
-					 wargs=(vrmlpath, htmlpath, embed, worker),
+					 else result and view and launch_file(finalpath),
+					 x3dom.vrmlfile2x3dfile,
+					 wargs=(vrmlpath, x3dpath, embed, html, worker),
 					 progress_title=lang.getstr("vrml_to_x3d_converter"),
 					 resume=worker.progress_wnd and
 							worker.progress_wnd.IsShownOnScreen())
 	else:
-		result = x3dom.vrmlfile2x3dhtmlfile(vrmlpath, htmlpath, embed)
+		result = x3dom.vrmlfile2x3dfile(vrmlpath, x3dpath, embed, html)
 		if not isinstance(result, Exception) and result and view:
-			launch_file(htmlpath)
+			launch_file(finalpath)
 		else:
 			sys.exit(1)
 

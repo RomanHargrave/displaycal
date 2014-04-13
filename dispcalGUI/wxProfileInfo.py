@@ -7,9 +7,10 @@ import os
 import sys
 import tempfile
 
-from config import (defaults, fs_enc, get_argyll_display_number, get_data_path,
+from config import (btn_width_correction, defaults, fs_enc,
+					get_argyll_display_number, get_data_path,
 					get_display_profile, get_display_rects, getbitmap, getcfg,
-					geticon, profile_ext, setcfg, writecfg)
+					geticon, get_verified_path, profile_ext, setcfg, writecfg)
 from log import safe_print
 from meta import name as appname
 from options import debug
@@ -20,9 +21,9 @@ from worker import (Error, check_set_argyll_bin, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
-from wxVRML2X3D import vrmlfile2x3dhtmlfile
-from wxwindows import (BitmapBackgroundPanelText, FileDrop, InfoDialog,
-					   SimpleBook, TwoWaySplitter)
+from wxVRML2X3D import vrmlfile2x3dfile
+from wxwindows import (BitmapBackgroundPanelText, ConfirmDialog,
+					   FileDrop, InfoDialog, SimpleBook, TwoWaySplitter)
 import colormath
 import config
 import wxenhancedplot as plot
@@ -1596,9 +1597,54 @@ class ProfileInfoFrame(LUTFrame):
 	def view_3d(self, event):
 		profile = self.profile
 		if not profile:
-			vrmlfile2x3dhtmlfile(embed=getcfg("x3dom.embed"), view=True,
-								 worker=self.worker)
-		else:
+			defaultDir, defaultFile = get_verified_path("last_icc_path")
+			dlg = wx.FileDialog(self, lang.getstr("profile.choose"), 
+								defaultDir=defaultDir, defaultFile=defaultFile, 
+								wildcard=lang.getstr("filetype.icc") +
+										 "|*.icc;*.icm", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			path = dlg.GetPath()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
+			try:
+				profile = ICCP.ICCProfile(path)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				show_result_dialog(exception, self)
+			if profile:
+				setcfg("last_icc_path", path)
+				setcfg("last_cal_or_icc_path", path)
+			else:
+				show_result_dialog(Error(lang.getstr("profile.invalid")), self)
+		if profile:
+			dlg = ConfirmDialog(self, title=lang.getstr("view.3d"),
+								msg=lang.getstr("format.select"),
+								ok=lang.getstr("HTML"),
+								cancel=lang.getstr("cancel"),
+								alt="VRML",
+								bitmap=geticon(32, appname +
+												   "-VRML-to-X3D-converter"))
+			dlg.x3d = wx.Button(dlg, -1, "X3D")
+			dlg.x3d.SetInitialSize((dlg.x3d.GetSize()[0] + btn_width_correction,
+									-1))
+			dlg.sizer2.Insert(3, dlg.x3d)
+			dlg.sizer2.Insert(3, (12, 12))
+			dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id=dlg.x3d.GetId())
+			dlg.Fit()
+			result = dlg.ShowModal()
+			if result == wx.ID_CANCEL:
+				return
+			elif result == wx.ID_OK:
+				x3d = True
+				html = True
+			elif result == dlg.x3d.GetId():
+				x3d = True
+				html = False
+			else:
+				x3d = False
+				html = False
 			profile_path = None
 			if profile.fileName and os.path.isfile(profile.fileName):
 				profile_path = profile.fileName
@@ -1614,27 +1660,33 @@ class ProfileInfoFrame(LUTFrame):
 											profile_ext)
 				profile.write(profile_path)
 			filename, ext = os.path.splitext(profile_path)
-			htmlpath = filename + ".x3d.html"
-			if os.path.isfile(htmlpath):
-				# The X3D HTML file seems to already exist
-				launch_file(htmlpath)
-			else:
-				for vrmlext in (".vrml", ".vrml.gz", ".wrl", ".wrl.gz", ".wrz"):
-					vrmlpath = filename + vrmlext
-					if os.path.isfile(vrmlpath):
-						break
+			x3dpath = filename + ".x3d"
+			for vrmlext in (".vrml", ".vrml.gz", ".wrl", ".wrl.gz", ".wrz"):
+				vrmlpath = filename + vrmlext
 				if os.path.isfile(vrmlpath):
-					self.view_3d_consumer(True, None, vrmlpath, htmlpath)
+					break
+			if html:
+				finalpath = x3dpath + ".html"
+			elif x3d:
+				finalpath = x3dpath
+			else:
+				finalpath = vrmlpath
+			if os.path.isfile(finalpath):
+				launch_file(finalpath)
+			else:
+				if os.path.isfile(vrmlpath):
+					self.view_3d_consumer(True, None, vrmlpath, x3d, x3dpath,
+										  html)
 				else:
 					# Create VRML file
 					self.worker.start(self.view_3d_consumer,
 									  self.worker.calculate_gamut,
-									  cargs=(filename, None, htmlpath),
+									  cargs=(filename, None, x3d, x3dpath, html),
 									  wargs=(profile_path, False),
 									  progress_msg=lang.getstr("gamut.view.create"),
 									  continue_next=True)
 	
-	def view_3d_consumer(self, result, filename, vrmlpath, htmlpath):
+	def view_3d_consumer(self, result, filename, vrmlpath, x3d, x3dpath, html):
 		if filename:
 			if getcfg("vrml.compress"):
 				vrmlpath = filename + ".wrz"
@@ -1644,10 +1696,12 @@ class ProfileInfoFrame(LUTFrame):
 			result = Error("".join(self.worker.errors))
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
+		elif x3d:
+			vrmlfile2x3dfile(vrmlpath, x3dpath,
+							 embed=getcfg("x3dom.embed"), html=html, view=True,
+							 worker=self.worker)
 		else:
-			vrmlfile2x3dhtmlfile(vrmlpath, htmlpath,
-								 embed=getcfg("x3dom.embed"), view=True,
-								 worker=self.worker)
+			launch_file(vrmlpath)
 
 class ProfileInfoGrid(wx.grid.Grid):
 
