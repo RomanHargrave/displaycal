@@ -34,7 +34,7 @@ class Tag(object):
 			xml = []
 		else:
 			# Root element
-			xml = ['<?xml version="1.0" encoding="UTF-8"?>\n',
+			xml = ["<?xml version='1.0' encoding='UTF-8'?>\n",
 				   '<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.0//EN" "http://www.web3d.org/specifications/x3d-3.0.dtd">\n']
 		
 		xml.append("<%s" % self.tagname)
@@ -43,11 +43,11 @@ class Tag(object):
 			value = value.strip().replace("<",
 										  "&lt;").replace(">",
 														  "&gt;").replace("&",
-																		  "&amp;").replace('"',
-																						   "&quot;")
+																		  "&amp;").replace("'",
+																						   "&#39;")
 			if value in ("FALSE", "TRUE"):
 				value = value.lower()
-			attrs.append('%s="%s"' % (key, value))
+			attrs.append("%s='%s'" % (key, value))
 		if attrs:
 			xml.append(" " + " ".join(attrs))
 		xml.append(">")
@@ -82,7 +82,7 @@ def safe_print(*args, **kwargs):
 def vrml2x3dom(vrml, worker=None):
 	""" Convert VRML to X3D """
 	x3d = Tag("X3D",  **{"xmlns:xsd": "http://www.w3.org/2001/XMLSchema-instance",
-						 "profile": "Full",
+						 "profile": "Immersive",
 						 "version": "3.0",
 						 "xsd:noNamespaceSchemaLocation": "http://www.web3d.org/specifications/x3d-3.0.xsd"})
 	tag = Tag("Scene")
@@ -155,18 +155,19 @@ def vrml2x3dom(vrml, worker=None):
 				else:
 					attribute = _attrchk(attribute, token, tag, indent)
 					token = ""
-			elif c == '"':
-				quote += 1
-				if quote == 2:
-					attribute = _attrchk(attribute, token, tag, indent)
-					quote = 0
-					token = ""
 			else:
 				if not token in tag.attributes:
 					tag.attributes[token] = StrList()
 				if not (c.strip() or tag.attributes[token]):
 					continue
-				tag.attributes[token] += c
+				if c == '"':
+					quote += 1
+				if c != '"' or tag.tagname != "FontStyle" or token != "style":
+					tag.attributes[token] += c
+				if quote == 2:
+					attribute = _attrchk(attribute, token, tag, indent)
+					quote = 0
+					token = ""
 		elif c not in (" ", "\n", "\r", "\t"):
 			if c in valid_token_chars:
 				token += c
