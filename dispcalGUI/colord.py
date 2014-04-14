@@ -164,7 +164,7 @@ def get_object_path(search, object_type):
 
 
 def install_profile(device_id, profile, profile_installname=None,
-					timeout=2, logfn=None):
+					timeout=5, logfn=None):
 	"""
 	Install profile for device
 	
@@ -203,7 +203,7 @@ def install_profile(device_id, profile, profile_installname=None,
 		profile = None
 
 	# Query colord for newly added profile
-	for i in xrange(int(timeout / .5)):
+	for i in xrange(int(timeout / 1.0)):
 		try:
 			if Colord:
 				profile = client.find_profile_sync(profile_id, cancellable)
@@ -215,7 +215,7 @@ def install_profile(device_id, profile, profile_installname=None,
 		if profile:
 			break
 		# Give colord time to pick up the profile
-		sleep(.5)
+		sleep(1)
 
 	if not profile:
 		raise CDTimeout("Querying for profile %r returned no result for %s secs" %
