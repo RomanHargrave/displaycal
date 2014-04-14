@@ -379,7 +379,7 @@ def _colord_get_display_profile(display_no=0):
 					  colord.device_id_from_edid(edid, quirk=False,
 												 use_serial_32=False,
 												 truncate_edid_strings=True)]
-		for device_id in device_ids:
+		for device_id in set(device_ids):
 			if device_id:
 				try:
 					profile_path = colord.get_default_profile(device_id)

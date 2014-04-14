@@ -3699,7 +3699,7 @@ class Worker(object):
 							  self.get_device_id(quirk=False,
 												 use_serial_32=False,
 												 truncate_edid_strings=True)]
-				for device_id in device_ids:
+				for device_id in set(device_ids):
 					if device_id:
 						# NOTE: This can block
 						result = self._install_profile_colord(profile,
