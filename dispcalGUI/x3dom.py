@@ -209,12 +209,11 @@ def vrmlfile2x3dfile(vrmlpath, x3dpath, embed=False, html=True, worker=None):
 		if not x3d:
 			_safe_print(lang.getstr("aborted"))
 			return False
-		if not embed or not html:
+		if not html:
 			_safe_print("Writing", x3dpath)
 			with open(x3dpath, "wb") as x3dfile:
 				x3dfile.write(str(x3d))
-			x3d = x3dpath
-		if html:
+		else:
 			html = x3d2html(x3d, title=os.path.basename(filename),
 							embed=embed)
 			_safe_print("Writing", x3dpath + ".html")
@@ -234,15 +233,16 @@ def vrmlfile2x3dfile(vrmlpath, x3dpath, embed=False, html=True, worker=None):
 
 
 def x3d2html(x3d, title="Untitled",
-			 runtime_uri="http://www.x3dom.org/x3dom/release", embed=False):
+			 runtime_uri="http://www.x3dom.org/x3dom/release", embed=False,
+			 x3dembed=True):
 	"""
 	Convert X3D to HTML
 	
-	If embed is False (default), x3d needs to be a path to a .x3d file,
-	otherwise it should be a X3D document
+	If embed is True, the X3DOM runtime will be embedded in the HTML
+	(increases filesize considerably)
 	
 	"""
-	if embed:
+	if x3dembed:
 		# Strip XML declaration and doctype
 		html = re.sub("<[?!][^>]*>\s*", "", str(x3d))
 		# Get children of scene
@@ -251,7 +251,7 @@ def x3d2html(x3d, title="Untitled",
 		html = re.sub("(</?[A-Z]+)", lambda match: match.groups()[0].lower(),
 					  html)
 		# Indent
-		html = "\n".join(["\t" * 3 + line for line in html.splitlines()])
+		html = "\n".join(["\t" * 2 + line for line in html.splitlines()]).lstrip()
 	else:
 		html = ('<inline url="%s" mapDEFToID="true" nameSpaceName="scene"></inline>' %
 				os.path.basename(safe_unicode(x3d).encode("UTF-8")))
@@ -340,6 +340,11 @@ def x3d2html(x3d, title="Untitled",
 			transition: all .5s linear;
 			width: 100%%;
 		}
+		.button {
+			display: inline-block;
+			height: 14px;
+			padding: 3px 0;
+		}
 		.button, .options {
 			background: linear-gradient(#ccc, #999);
 			border: 0;
@@ -348,9 +353,7 @@ def x3d2html(x3d, title="Untitled",
 			border-top: 1px outset #999;
 			color: #000;
 			cursor: default;
-			display: inline-block;
 			line-height: 14px;
-			padding: 3px;
 			position: relative;
 			text-shadow: 1px 1px #ccc;
 			transition: all .125s linear;
@@ -369,10 +372,12 @@ def x3d2html(x3d, title="Untitled",
 		.options {
 			border-bottom-right-radius: 0;
 			display: none;
+			padding: 1px 0;
 		}
 		.options div {
 			border-radius: 3px;
-			padding: 3px;
+			margin: 0 1px;
+			padding: 2px;
 		}
 		.options div:hover {
 			background: rgba(16, 16, 16, .75);

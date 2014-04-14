@@ -17,9 +17,9 @@ def main(vrmlpath=None):
 	if "--help" in sys.argv[1:]:
 		safe_print("Usage: %s [--embed] [--no-gui] [--view] [FILE]" % sys.argv[0])
 		safe_print("Convert VRML file to X3D")
-		safe_print("The output is written to FILENAME.x3d")
+		safe_print("The output is written to FILENAME.x3d(.html)")
 		safe_print("")
-		safe_print("  --embed      Embed X3D in HTML instead of referencing it")
+		safe_print("  --embed      Embed X3DOM runtime in HTML instead of referencing it")
 		safe_print("  --no-gui     Don't show GUI (terminal mode)")
 		safe_print("  --no-html    Don't generate HTML file")
 		safe_print("  --view       View the generated file (if --no-gui)")
