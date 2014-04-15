@@ -31,7 +31,7 @@ def main(vrmlpath=None):
 	html = not "--no-html" in sys.argv[1:]
 	view = "--view=X3D" in sys.argv[1:]
 	if "--no-gui" in sys.argv[1:]:
-		vrmlfile2x3dfile(vrmlpath, embed=embed, view=view)
+		vrmlfile2x3dfile(vrmlpath, html=html, embed=embed, view=view)
 	else:
 		app = wx.App(0)
 		frame = wx.Frame(None, wx.ID_ANY, lang.getstr("vrml_to_x3d_converter"),
@@ -53,14 +53,14 @@ def main(vrmlpath=None):
 		btn.SetToolTipString(lang.getstr("file.select"))
 		btn.Bind(wx.EVT_BUTTON, lambda event:
 								vrmlfile2x3dfile(None,
-												 embed=embed,
 												 html=html,
+												 embed=embed,
 												 view=True,
 												 worker=worker))
 		droptarget = FileDrop()
 		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dfile(vrmlpath,
-															  embed=embed,
 															  html=html,
+															  embed=embed,
 															  view=True,
 															  worker=worker)
 		droptarget.drophandlers = {
@@ -86,7 +86,7 @@ def main(vrmlpath=None):
 		app.MainLoop()
 
 
-def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, embed=False, html=True,
+def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 					 view=False, worker=None):
 	""" Convert VRML to HTML. Output is written to <vrmlfilename>.x3d.html
 	unless you set x3dpath to desired output path, or False to be prompted
@@ -158,12 +158,12 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, embed=False, html=True,
 					 if isinstance(result, Exception)
 					 else result and view and launch_file(finalpath),
 					 x3dom.vrmlfile2x3dfile,
-					 wargs=(vrmlpath, x3dpath, embed, html, worker),
+					 wargs=(vrmlpath, x3dpath, html, embed, worker),
 					 progress_title=lang.getstr("vrml_to_x3d_converter"),
 					 resume=worker.progress_wnd and
 							worker.progress_wnd.IsShownOnScreen())
 	else:
-		result = x3dom.vrmlfile2x3dfile(vrmlpath, x3dpath, embed, html)
+		result = x3dom.vrmlfile2x3dfile(vrmlpath, x3dpath, html, embed)
 		if not isinstance(result, Exception) and result and view:
 			launch_file(finalpath)
 		else:
