@@ -5869,8 +5869,8 @@ class Worker(object):
 			except:
 				pass
 	
-	def calculate_gamut(self, profile_path, intent="r",
-						compare_standard_gamuts=True):
+	def calculate_gamut(self, profile_path, intent="r", direction="f",
+						order="n", compare_standard_gamuts=True):
 		"""
 		Calculate gamut, volume, and coverage % against sRGB and Adobe RGB.
 		
@@ -5883,8 +5883,16 @@ class Worker(object):
 		else:
 			profile_paths = [profile_path]
 		outname = os.path.splitext(profile_paths[0])[0]
+		mods = []
 		if intent != "r":
-			outname += " [%s]" % intent.upper()
+			mods.append(intent)
+		if direction != "f":
+			mods.append(direction)
+		if order != "n":
+			mods.append(order)
+		if mods:
+			outname += " " + "".join(["[%s]" % mod.upper()
+									  for mod in mods])
 		gamut_volume = None
 		gamut_coverage = {}
 		# Create profile gamut and vrml
@@ -5898,7 +5906,8 @@ class Worker(object):
 				profile_path = win32api.GetShortPathName(profile_path)
 				profile_paths[i] = profile_path
 			result = self.exec_cmd(get_argyll_util("iccgamut"),
-								   ["-v", "-w", "-i" + intent, profile_path],
+								   ["-v", "-w", "-i" + intent, "-f" + direction,
+									"-o" + order, profile_path],
 								   capture_output=True,
 								   skip_scripts=True)
 			if not isinstance(result, Exception) and result:
@@ -5935,14 +5944,16 @@ class Worker(object):
 					src_path = src
 					src = os.path.splitext(os.path.basename(src))[0]
 				else:
-					if intent != "r":
-						src += " [%s]" % intent.upper()
+					if mods:
+						src += " " + "".join(["[%s]" % mod.upper()
+											  for mod in mods])
 					src_path = get_data_path("ref/%s.gam" % src)
 				if not src_path:
 					continue
 				outfilename = outname + " vs " + src
-				if intent != "r":
-					outfilename += " [%s]" % intent.upper()
+				if mods:
+					outfilename += " " + "".join(["[%s]" % mod.upper()
+												  for mod in mods])
 				outfilename += ".wrl"
 				tmpfilenames.append(outfilename)
 				result = self.exec_cmd(get_argyll_util("viewgam"),

@@ -806,26 +806,17 @@ class GamutViewOptions(wx.Panel):
 
 	def DrawCanvas(self, profile_no=None, reset=True):
 		# Gamut plot
-		parent = self.Parent.Parent.Parent.Parent
+		parent = self.TopLevelParent
 		parent.client.SetEnableCenterLines(False)
 		parent.client.SetEnableDiagonals(False)
 		parent.client.SetEnableGrid(True)
 		parent.client.SetEnablePointLabel(False)
-		if self.direction_select.IsShown():
-			direction = {0: "f",
-						 1: "ib"}.get(self.direction_select.GetSelection())
-		else:
-			direction = "f"
-		order = {True: "n",
-				 False: "r"}.get(("B2A0" in parent.profile.tags or
-								  "A2B0" in parent.profile.tags) and
-								 self.toggle_clut.GetValue())
 		try:
 			parent.client.setup([self.comparison_profile,
 								 parent.profile],
 								profile_no,
 								intent=self.intent,
-								direction=direction, order=order)
+								direction=self.direction, order=self.order)
 		except Exception, exception:
 			show_result_dialog(exception, parent)
 		if reset:
@@ -848,9 +839,17 @@ class GamutViewOptions(wx.Panel):
 		self.comparison_profile_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.DrawCanvas(0, reset=False)
 
+	@property
+	def direction(self):
+		if self.direction_select.IsShown():
+			return {0: "f",
+					1: "ib"}.get(self.direction_select.GetSelection())
+		else:
+			return "f"
+
 	def draw(self, center=False):
 		colorspace = self.colorspace
-		parent = self.Parent.Parent.Parent.Parent
+		parent = self.TopLevelParent
 		parent.client.proportional = True
 		parent.client.DrawCanvas("%s %s" % (colorspace,
 											lang.getstr("colorspace")),
@@ -865,7 +864,7 @@ class GamutViewOptions(wx.Panel):
 	
 	def generic_select_handler(self, event):
 		self.whitepoint_bmp.Show(self.whitepoint_select.GetSelection() > 0)
-		parent = self.Parent.Parent.Parent.Parent
+		parent = self.TopLevelParent
 		if parent.client.profiles:
 			self.draw(center=event.GetId() == self.colorspace_select.GetId())
 		else:
@@ -889,6 +888,14 @@ class GamutViewOptions(wx.Panel):
 				2: "p",
 				3: "s"}.get(self.rendering_intent_select.GetSelection())
 
+	@property
+	def order(self):
+		parent = self.TopLevelParent
+		return {True: "n",
+				False: "r"}.get(("B2A0" in parent.profile.tags or
+								 "A2B0" in parent.profile.tags) and
+								self.toggle_clut.GetValue())
+
 	def rendering_intent_select_handler(self, event):
 		self.DrawCanvas(reset=False)
 
@@ -896,7 +903,7 @@ class GamutViewOptions(wx.Panel):
 		self.DrawCanvas(reset=False)
 
 	def toggle_clut_handler(self, event):
-		parent = self.Parent.Parent.Parent.Parent
+		parent = self.TopLevelParent
 		self.Freeze()
 		self.direction_select.Show("B2A0" in parent.profile.tags and
 								   "A2B0" in parent.profile.tags and
@@ -1699,13 +1706,24 @@ class ProfileInfoFrame(LUTFrame):
 					comparison_profile_path = os.path.join(self.worker.tempdir,
 														   make_argyll_compatible_path(os.path.basename(comparison_profile_path)))
 					comparison_profile.write(comparison_profile_path)
+			mods = []
 			intent = self.gamut_view_options.intent
 			if intent != "r":
-				filename += " [%s]" % intent.upper()
+				mods.append(intent)
+			direction = self.gamut_view_options.direction[-1]
+			if direction != "f":
+				mods.append(direction)
+			order = self.gamut_view_options.order
+			if order != "n":
+				mods.append(order)
+			if mods:
+				filename += " " + "".join(["[%s]" % mod.upper()
+										   for mod in mods])
 			if comparison_profile_path:
 				filename += " vs " + os.path.splitext(os.path.basename(comparison_profile_path))[0]
-				if intent != "r":
-					filename += " [%s]" % intent.upper()
+				if mods:
+					filename += " " + "".join(["[%s]" % mod.upper()
+											   for mod in mods])
 			for vrmlext in (".vrml", ".vrml.gz", ".wrl", ".wrl.gz", ".wrz"):
 				vrmlpath = filename + vrmlext
 				if os.path.isfile(vrmlpath):
@@ -1741,9 +1759,8 @@ class ProfileInfoFrame(LUTFrame):
 									  self.worker.calculate_gamut,
 									  cargs=(colorspace, filename, None, x3d,
 											 x3dpath, html),
-									  wargs=(profile_paths, ),
-									  wkwargs={"intent": intent,
-											   "compare_standard_gamuts": False},
+									  wargs=(profile_paths, intent, direction,
+											 order, False),
 									  progress_msg=lang.getstr("gamut.view.create"),
 									  continue_next=True)
 	
