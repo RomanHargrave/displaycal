@@ -744,24 +744,18 @@ class GamutViewOptions(wx.Panel):
 				pass
 			else:
 				self.comparison_profiles[profile.getDescription()] = profile
-		comparison_profiles = self.comparison_profiles[2:]
-		def cmp(x, y):
-			if x.lower() > y.lower():
-				return 1
-			if x.lower() < y.lower():
-				return -1
-			return 0
-		comparison_profiles.sort(cmp)
-		self.comparison_profiles = self.comparison_profiles[:2]
-		self.comparison_profiles.update(comparison_profiles)
 		self.comparison_profile_select = wx.Choice(self, -1,
 												   size=(150, -1), 
-												   choices=self.comparison_profiles.keys()[:2] +
-														   comparison_profiles.keys())
+												   choices=[])
+		self.comparison_profiles_sort()
 		self.options_sizer.Add(self.comparison_profile_select, 
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profile_select.Bind(wx.EVT_CHOICE,
 											self.comparison_profile_select_handler)
+		droptarget = FileDrop({".icc": self.comparison_profile_drop_handler,
+							   ".icm": self.comparison_profile_drop_handler},
+							  parent=self.TopLevelParent)
+		self.comparison_profile_select.SetDropTarget(droptarget)
 		self.comparison_profile_select.SetSelection(1)
 		
 		# Rendering intent select
@@ -834,11 +828,30 @@ class GamutViewOptions(wx.Panel):
 	def comparison_profile(self):
 		return self.comparison_profiles.values()[self.comparison_profile_select.GetSelection()]
 
+	def comparison_profile_drop_handler(self, path):
+		try:
+			profile = ICCP.ICCProfile(path)
+		except Exception, exception:
+			show_result_dialog(exception, self.TopLevelParent)
+		else:
+			basename = os.path.basename(profile.fileName)
+			self.comparison_profiles[basename] = profile
+			self.comparison_profiles_sort()
+			self.comparison_profile_select.SetSelection(self.comparison_profiles.keys().index(basename))
+			self.comparison_profile_select_handler(None)
+
 	def comparison_profile_select_handler(self, event):
 		self.comparison_whitepoint_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.comparison_whitepoint_legend.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.comparison_profile_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.DrawCanvas(0, reset=False)
+
+	def comparison_profiles_sort(self):
+		comparison_profiles = self.comparison_profiles[2:]
+		comparison_profiles.sort(cmp, key=lambda s: s.lower())
+		self.comparison_profiles = self.comparison_profiles[:2]
+		self.comparison_profiles.update(comparison_profiles)
+		self.comparison_profile_select.SetItems(self.comparison_profiles.keys())
 
 	@property
 	def direction(self):
