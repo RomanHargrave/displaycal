@@ -702,48 +702,20 @@ class GamutViewOptions(wx.Panel):
 		self.options_sizer.Add(self.comparison_profile_label,
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profiles = OrderedDict([(lang.getstr("calibration.file.none"),
-												 None),
-												("sRGB",
-												 ICCP.ICCProfile(get_data_path("ref/sRGB.icm")))])
-		for path in get_data_path("ref", "ic[cm]"):
-			profile = ICCP.ICCProfile(path)
-			self.comparison_profiles[profile.getDescription()] = profile
-		for path in ["AdobeRGB1998.icc",
-					 "ECI-RGB.V1.0.icc",
-					 "eciRGB_v2.icc",
-					 "GRACoL2006_Coated1v2.icc",
-					 "ISOcoated.icc",
-					 "ISOcoated_v2_eci.icc",
-					 "ISOcofcoated.icc",
-					 "ISOcofuncoated.icc",
-					 "ISOnewspaper26v4.icc",
-					 "ISOuncoated.icc",
-					 "ISOuncoatedyellowish.icc",
-					 "ISOwebcoated.icc",
-					 "LStar-RGB.icc",
-					 "LStar-RGB-v2.icc",
-					 "PSO_Coated_NPscreen_ISO12647_eci.icc",
-					 "PSO_Coated_v2_300_Glossy_laminate_eci.icc",
-					 "PSO_Coated_v2_300_Matte_laminate_eci.icc",
-					 "PSO_INP_Paper_eci.icc",
-					 "PSO_LWC_Improved_eci.icc",
-					 "PSO_LWC_Standard_eci.icc",
-					 "PSO_MFC_Paper_eci.icc",
-					 "PSO_Uncoated_ISO12647_eci.icc",
-					 "PSO_Uncoated_NPscreen_ISO12647_eci.icc",
-					 "PSO_SNP_Paper_eci.icc",
-					 "PSR_LWC_PLUS_V2_PT.icc",
-					 "PSR_LWC_STD_V2_PT.icc",
-					 "PSR_SC_STD_V2_PT.icc",
-					 "SC_paper_eci.icc",
-					 "SWOP2006_Coated3v2.icc",
-					 "SWOP2006_Coated5v2.icc"]:
-			try:
-				profile = ICCP.ICCProfile(path)
-			except IOError:
-				pass
-			else:
-				self.comparison_profiles[profile.getDescription()] = profile
+												 None)])
+		srgb = None
+		try:
+			srgb = ICCP.ICCProfile(get_data_path("ref/sRGB.icm"))
+		except EnvironmentError:
+			pass
+		except Exception, exception:
+			safe_print(exception)
+		if srgb:
+			self.comparison_profiles[os.path.basename(srgb.fileName)] = srgb
+		for profile in config.get_standard_profiles():
+			basename = os.path.basename(profile.fileName)
+			if basename not in self.comparison_profiles:
+				self.comparison_profiles[basename] = profile
 		self.comparison_profile_select = wx.Choice(self, -1,
 												   size=(150, -1), 
 												   choices=[])
@@ -756,7 +728,9 @@ class GamutViewOptions(wx.Panel):
 							   ".icm": self.comparison_profile_drop_handler},
 							  parent=self.TopLevelParent)
 		self.comparison_profile_select.SetDropTarget(droptarget)
-		self.comparison_profile_select.SetSelection(1)
+		if srgb:
+			self.comparison_profile_select.SetSelection(1)
+			self.comparison_profile_select.SetToolTipString(srgb.fileName)
 		
 		# Rendering intent select
 		self.options_sizer.Add((0, 0))

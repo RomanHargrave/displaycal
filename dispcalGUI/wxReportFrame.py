@@ -332,7 +332,13 @@ class ReportFrame(BaseFrame):
 					wildcard = "\.(cie|ti1|ti3)$"
 				else:
 					wildcard = "\.(icc|icm)$"
-				kwargs["history"] = get_data_path("ref", wildcard)
+				if which == "simulation_profile":
+					history = config.get_standard_profiles(True)
+				else:
+					history = get_data_path("ref", wildcard)
+				kwargs["history"] = sorted(history,
+										   key=lambda path:
+											   os.path.basename(path).lower())
 			setattr(self, "%s_ctrl" % which,
 					FileBrowse(self.panel, -1, **kwargs))
 			getattr(self, "%s_ctrl" % which).SetMaxFontSize(11)
