@@ -216,6 +216,19 @@ class BetterWindowDisabler(object):
 		if skip:
 			if not isinstance(skip, (list, tuple)):
 				skip = [skip]
+		self.skip = skip
+		self.id = id(self)
+		self.disable()
+
+	def __del__(self):
+		self.enable()
+		
+	def disable(self):
+		self.enable(False)
+	
+	def enable(self, enable=True):
+		if not enable:
+			skip = self.skip
 			toplevel = list(wx.GetTopLevelWindows())
 			for w in toplevel:
 				if w not in skip and "Inspection" not in "%s" % w:
@@ -228,6 +241,9 @@ class BetterWindowDisabler(object):
 			def Disable(w):
 				w._enabled = False
 			for w in reversed(self._windows):
+				if hasattr(w, "_disabler_id"):
+					continue
+				w._disabler_id = self.id
 				enabled = w.IsEnabled()
 				w.Disable()
 				w._Disable = w.Disable
@@ -235,13 +251,18 @@ class BetterWindowDisabler(object):
 				w._Enable = w.Enable
 				w.Enable = types.MethodType(Enable, w, type(w))
 				w.Enable(enabled)
-
-	def __del__(self):
+			return
 		for w in self._windows:
 			if w:
-				w.Disable = w._Disable
-				w.Enable = w._Enable
-				w.Enable(w._enabled)
+				if getattr(w, "_disabler_id", None) != self.id:
+					continue
+				if hasattr(w, "_Disable"):
+					w.Disable = w._Disable
+				if hasattr(w, "_Enable"):
+					w.Enable = w._Enable
+				if hasattr(w, "_enabled"):
+					w.Enable(w._enabled)
+				del w._disabler_id
 
 
 class CustomGridCellEvent(CustomEvent):
