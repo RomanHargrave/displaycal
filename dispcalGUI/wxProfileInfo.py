@@ -414,7 +414,8 @@ class GamutCanvas(LUTCanvas):
 			if profile_no is not None and i != profile_no:
 				continue
 
-			if not profile or profile.profileClass == "link":
+			if (not profile or profile.profileClass == "link" or
+				profile.connectionColorSpace not in ("Lab", "XYZ")):
 				self.set_pcs_data(i)
 				self.profiles[i] = None
 				continue

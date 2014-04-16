@@ -1061,36 +1061,15 @@ class LUTFrame(wx.Frame):
 													   profile.getDescription()])))
 			return
 
-		channels = {'XYZ': 3,
-					'Lab': 3,
-					'Luv': 3,
-					'YCbr': 3,
-					'Yxy': 3,
-					'RGB': 3,
-					'GRAY': 1,
-					'HSV': 3,
-					'HLS': 3,
-					'CMYK': 4,
-					'CMY': 3,
-					'2CLR': 2,
-					'3CLR': 3,
-					'4CLR': 4,
-					'5CLR': 5,
-					'6CLR': 6,
-					'7CLR': 7,
-					'8CLR': 8,
-					'9CLR': 9,
-					'ACLR': 10,
-					'BCLR': 11,
-					'CCLR': 12,
-					'DCLR': 13,
-					'ECLR': 14,
-					'FCLR': 15}.get(profile.colorSpace)
-
-		if not channels:
+		if (profile.colorSpace != "RGB" or
+			profile.connectionColorSpace not in ("Lab", "XYZ")):
+			if profile.colorSpace != "RGB":
+				unsupported_colorspace = profile.colorSpace
+			else:
+				unsupported_colorspace = profile.connectionColorSpace
 			self.client.errors.append(Error(lang.getstr("profile.unsupported",
 														(profile.profileClass,
-														 profile.colorSpace))))
+														 unsupported_colorspace))))
 			return
 		
 		if "B2A0" in profile.tags:
