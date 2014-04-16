@@ -892,8 +892,8 @@ class GamutViewOptions(wx.Panel):
 	def order(self):
 		parent = self.TopLevelParent
 		return {True: "n",
-				False: "r"}.get(("B2A0" in parent.profile.tags or
-								 "A2B0" in parent.profile.tags) and
+				False: "r"}.get(not ("B2A0" in parent.profile.tags or
+									 "A2B0" in parent.profile.tags) or
 								self.toggle_clut.GetValue())
 
 	def rendering_intent_select_handler(self, event):
