@@ -841,6 +841,10 @@ class GamutViewOptions(wx.Panel):
 			self.comparison_profile_select_handler(None)
 
 	def comparison_profile_select_handler(self, event):
+		if self.comparison_profile_select.GetSelection() > 0:
+			self.comparison_profile_select.SetToolTipString(self.comparison_profile.fileName)
+		else:
+			self.comparison_profile_select.SetToolTip(None)
 		self.comparison_whitepoint_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.comparison_whitepoint_legend.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.comparison_profile_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
