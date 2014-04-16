@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 import re
 import subprocess as sp
 import math
@@ -15,6 +16,7 @@ from log import safe_print
 from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
+from util_io import GzipFileProper
 from util_os import launch_file, waccess
 from util_str import safe_unicode, universal_newlines, wrap
 from worker import (Error, check_set_argyll_bin, get_argyll_util,
@@ -29,6 +31,7 @@ import config
 import wxenhancedplot as plot
 import localization as lang
 import ICCProfile as ICCP
+import x3dom
 
 BGCOLOUR = "#333333"
 FGCOLOUR = "#999999"
@@ -638,7 +641,7 @@ class GamutViewOptions(wx.Panel):
 		self.colorspace_select = wx.Choice(self, -1,
 												 size=(150, -1), 
 												 choices=["CIE a*b*",
-														  #"CIE u*v*",
+														  "CIE u*v*",
 														  "CIE u'v'",
 														  "CIE xy",
 														  "DIN99",
@@ -698,33 +701,39 @@ class GamutViewOptions(wx.Panel):
 		self.options_sizer.Add(self.comparison_profile_label,
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profiles = OrderedDict([(lang.getstr("calibration.file.none"),
-												 None)])
-		for name in ["sRGB", "ClayRGB1998", "ProPhoto", "Rec601_525_60",
-					 "Rec601_625_50", "Rec709", "SMPTE240M", "SMPTE431_P3"]:
-			path = get_data_path("ref/%s.icm" % name)
-			if path:
-				profile = ICCP.ICCProfile(path)
-				self.comparison_profiles[profile.getDescription()] = profile
+												 None),
+												("sRGB",
+												 ICCP.ICCProfile(get_data_path("ref/sRGB.icm")))])
+		for path in get_data_path("ref", "ic[cm]"):
+			profile = ICCP.ICCProfile(path)
+			self.comparison_profiles[profile.getDescription()] = profile
 		for path in ["AdobeRGB1998.icc",
 					 "ECI-RGB.V1.0.icc",
 					 "eciRGB_v2.icc",
 					 "GRACoL2006_Coated1v2.icc",
 					 "ISOcoated.icc",
 					 "ISOcoated_v2_eci.icc",
-					 #"ISOnewspaper26v4.icc",
-					 #"ISOuncoated.icc",
-					 #"ISOuncoatedyellowish.icc",
+					 "ISOcofcoated.icc",
+					 "ISOcofuncoated.icc",
+					 "ISOnewspaper26v4.icc",
+					 "ISOuncoated.icc",
+					 "ISOuncoatedyellowish.icc",
 					 "ISOwebcoated.icc",
 					 "LStar-RGB.icc",
 					 "LStar-RGB-v2.icc",
-					 "PSO_Coated_300_NPscreen_ISO12647_eci.icc",
 					 "PSO_Coated_NPscreen_ISO12647_eci.icc",
+					 "PSO_Coated_v2_300_Glossy_laminate_eci.icc",
+					 "PSO_Coated_v2_300_Matte_laminate_eci.icc",
+					 "PSO_INP_Paper_eci.icc",
 					 "PSO_LWC_Improved_eci.icc",
 					 "PSO_LWC_Standard_eci.icc",
 					 "PSO_MFC_Paper_eci.icc",
-					 #"PSO_Uncoated_ISO12647_eci.icc",
-					 #"PSO_Uncoated_NPscreen_ISO12647_eci.icc",
-					 #"PSO_SNP_Paper_eci.icc",
+					 "PSO_Uncoated_ISO12647_eci.icc",
+					 "PSO_Uncoated_NPscreen_ISO12647_eci.icc",
+					 "PSO_SNP_Paper_eci.icc",
+					 "PSR_LWC_PLUS_V2_PT.icc",
+					 "PSR_LWC_STD_V2_PT.icc",
+					 "PSR_SC_STD_V2_PT.icc",
 					 "SC_paper_eci.icc",
 					 "SWOP2006_Coated3v2.icc",
 					 "SWOP2006_Coated5v2.icc"]:
@@ -812,13 +821,10 @@ class GamutViewOptions(wx.Panel):
 								  "A2B0" in parent.profile.tags) and
 								 self.toggle_clut.GetValue())
 		try:
-			parent.client.setup([self.comparison_profiles.values()[self.comparison_profile_select.GetSelection()],
+			parent.client.setup([self.comparison_profile,
 								 parent.profile],
 								profile_no,
-								intent={0: "a",
-										1: "r",
-										2: "p",
-										3: "s"}.get(self.rendering_intent_select.GetSelection()),
+								intent=self.intent,
 								direction=direction, order=order)
 		except Exception, exception:
 			show_result_dialog(exception, parent)
@@ -827,7 +833,15 @@ class GamutViewOptions(wx.Panel):
 			parent.client.resetzoom()
 		wx.CallAfter(self.draw, center=reset)
 		wx.CallAfter(parent.handle_errors)
-	
+
+	@property
+	def colorspace(self):
+		return self.get_colorspace()
+
+	@property
+	def comparison_profile(self):
+		return self.comparison_profiles.values()[self.comparison_profile_select.GetSelection()]
+
 	def comparison_profile_select_handler(self, event):
 		self.comparison_whitepoint_bmp.Show(self.comparison_profile_select.GetSelection() > 0)
 		self.comparison_whitepoint_legend.Show(self.comparison_profile_select.GetSelection() > 0)
@@ -835,14 +849,7 @@ class GamutViewOptions(wx.Panel):
 		self.DrawCanvas(0, reset=False)
 
 	def draw(self, center=False):
-		colorspace = {0: "a*b*",
-					  1: "u'v'",
-					  2: "xy",
-					  3: "DIN99",
-					  4: "DIN99b",
-					  5: "DIN99c",
-					  6: "DIN99d"}.get(self.colorspace_select.GetSelection(),
-								   "a*b*")
+		colorspace = self.colorspace
 		parent = self.Parent.Parent.Parent.Parent
 		parent.client.proportional = True
 		parent.client.DrawCanvas("%s %s" % (colorspace,
@@ -863,6 +870,24 @@ class GamutViewOptions(wx.Panel):
 			self.draw(center=event.GetId() == self.colorspace_select.GetId())
 		else:
 			self.DrawCanvas()
+	
+	def get_colorspace(self, dimensions=2):
+		return {0: "a*b*" if dimensions == 2 else "Lab",
+				1: "u*v*" if dimensions == 2 else "Luv",
+				2: "u'v'" if dimensions == 2 else "Lu'v'",
+				3: "xy" if dimensions == 2 else "xyY",
+				4: "DIN99",
+				5: "DIN99b",
+				6: "DIN99c",
+				7: "DIN99d"}.get(self.colorspace_select.GetSelection(),
+								 "a*b*" if dimensions == 2 else "Lab")
+
+	@property
+	def intent(self):
+		return {0: "a",
+				1: "r",
+				2: "p",
+				3: "s"}.get(self.rendering_intent_select.GetSelection())
 
 	def rendering_intent_select_handler(self, event):
 		self.DrawCanvas(reset=False)
@@ -1660,41 +1685,92 @@ class ProfileInfoFrame(LUTFrame):
 											profile_ext)
 				profile.write(profile_path)
 			filename, ext = os.path.splitext(profile_path)
-			x3dpath = filename + ".x3d"
+			comparison_profile = self.gamut_view_options.comparison_profile
+			comparison_profile_path = None
+			if comparison_profile:
+				comparison_profile_path = comparison_profile.fileName
+				if (comparison_profile_path and
+					not waccess(os.path.dirname(comparison_profile_path),
+								os.W_OK)):
+					result = self.worker.create_tempdir()
+					if isinstance(result, Exception):
+						show_result_dialog(result, self)
+						return
+					comparison_profile_path = os.path.join(self.worker.tempdir,
+														   make_argyll_compatible_path(os.path.basename(comparison_profile_path)))
+					comparison_profile.write(comparison_profile_path)
+			intent = self.gamut_view_options.intent
+			if intent != "r":
+				filename += " [%s]" % intent.upper()
+			if comparison_profile_path:
+				filename += " vs " + os.path.splitext(os.path.basename(comparison_profile_path))[0]
+				if intent != "r":
+					filename += " [%s]" % intent.upper()
 			for vrmlext in (".vrml", ".vrml.gz", ".wrl", ".wrl.gz", ".wrz"):
 				vrmlpath = filename + vrmlext
 				if os.path.isfile(vrmlpath):
 					break
+			outfilename = filename
+			colorspace = self.gamut_view_options.get_colorspace(3)
+			if colorspace != "Lab":
+				outfilename += " " + colorspace
+			safe_print(outfilename)
+			vrmloutpath = outfilename + vrmlext
+			x3dpath = outfilename + ".x3d"
 			if html:
 				finalpath = x3dpath + ".html"
 			elif x3d:
 				finalpath = x3dpath
 			else:
-				finalpath = vrmlpath
+				finalpath = vrmloutpath
 			if os.path.isfile(finalpath):
 				launch_file(finalpath)
 			else:
-				if os.path.isfile(vrmlpath):
-					self.view_3d_consumer(True, None, vrmlpath, x3d, x3dpath,
-										  html)
+				if os.path.isfile(vrmloutpath):
+					self.view_3d_consumer(True, None, None, vrmloutpath,
+										  x3d, x3dpath, html)
+				elif os.path.isfile(vrmlpath):
+					self.view_3d_consumer(True, colorspace, None, vrmlpath,
+										  x3d, x3dpath, html)
 				else:
 					# Create VRML file
+					profile_paths = [profile_path]
+					if comparison_profile_path:
+						profile_paths.append(comparison_profile_path)
 					self.worker.start(self.view_3d_consumer,
 									  self.worker.calculate_gamut,
-									  cargs=(filename, None, x3d, x3dpath, html),
-									  wargs=(profile_path, False),
+									  cargs=(colorspace, filename, None, x3d,
+											 x3dpath, html),
+									  wargs=(profile_paths, ),
+									  wkwargs={"intent": intent,
+											   "compare_standard_gamuts": False},
 									  progress_msg=lang.getstr("gamut.view.create"),
 									  continue_next=True)
 	
-	def view_3d_consumer(self, result, filename, vrmlpath, x3d, x3dpath, html):
+	def view_3d_consumer(self, result, colorspace, filename, vrmlpath, x3d,
+						 x3dpath, html):
 		if filename:
 			if getcfg("vrml.compress"):
 				vrmlpath = filename + ".wrz"
 			else:
 				vrmlpath = filename + ".wrl"
+		if os.path.isfile(vrmlpath) and colorspace not in ("Lab", None):
+			filename, ext = os.path.splitext(vrmlpath)
+			if ext.lower() in (".gz", ".wrz"):
+				cls = GzipFileProper
+			else:
+				cls = open
+			with cls(vrmlpath, "rb") as vrmlfile:
+				vrml = vrmlfile.read()
+			vrml = x3dom.update_vrml(vrml, colorspace)
+			vrmlpath = filename + " " + colorspace + ext
+			with cls(vrmlpath, "wb") as vrmlfile:
+				vrmlfile.write(vrml)
 		if not os.path.isfile(vrmlpath):
-			result = Error("".join(self.worker.errors))
+			result = Error("".join(self.worker.errors).strip() or
+						   lang.getstr("file.missing", vrmlpath))
 		if isinstance(result, Exception):
+			self.worker.stop_progress()
 			show_result_dialog(result, self)
 		elif x3d:
 			vrmlfile2x3dfile(vrmlpath, x3dpath,

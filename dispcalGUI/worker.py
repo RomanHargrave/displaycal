@@ -5869,7 +5869,8 @@ class Worker(object):
 			except:
 				pass
 	
-	def calculate_gamut(self, profile_path, intersections=True):
+	def calculate_gamut(self, profile_path, intent="r",
+						compare_standard_gamuts=True):
 		"""
 		Calculate gamut, volume, and coverage % against sRGB and Adobe RGB.
 		
@@ -5877,41 +5878,72 @@ class Worker(object):
 		coverage (dict) as tuple.
 		
 		"""
-		outname = os.path.splitext(profile_path)[0]
+		if isinstance(profile_path, list):
+			profile_paths = profile_path
+		else:
+			profile_paths = [profile_path]
+		outname = os.path.splitext(profile_paths[0])[0]
+		if intent != "r":
+			outname += " [%s]" % intent.upper()
 		gamut_volume = None
 		gamut_coverage = {}
 		# Create profile gamut and vrml
-		if (sys.platform == "win32" and
-			re.search("[^\x20-\x7e]", os.path.basename(profile_path))):
-			# Avoid problems with encoding
-			profile_path = win32api.GetShortPathName(profile_path)
-		result = self.exec_cmd(get_argyll_util("iccgamut"),
-							   ["-v", "-w", "-ir", profile_path],
-							   capture_output=True,
-							   skip_scripts=True)
-		if not isinstance(result, Exception) and result:
-			# iccgamut output looks like this:
-			# Header:
-			#  <...>
-			#
-			# Total volume of gamut is xxxxxx.xxxxxx cubic colorspace units
-			for line in self.output:
-				match = re.search("(\d+(?:\.\d+)?)\s+cubic\s+colorspace\s+"
-								  "units", line)
-				if match:
-					gamut_volume = float(match.groups()[0]) / ICCP.GAMUT_VOLUME_SRGB
-					break
-		name = os.path.splitext(profile_path)[0]
+		for i, profile_path in enumerate(profile_paths):
+			if not profile_path:
+				safe_print("Warning: calculate_gamut(): No profile path %i" % i)
+				continue
+			if (sys.platform == "win32" and
+				re.search("[^\x20-\x7e]", os.path.basename(profile_path))):
+				# Avoid problems with encoding
+				profile_path = win32api.GetShortPathName(profile_path)
+				profile_paths[i] = profile_path
+			result = self.exec_cmd(get_argyll_util("iccgamut"),
+								   ["-v", "-w", "-i" + intent, profile_path],
+								   capture_output=True,
+								   skip_scripts=True)
+			if not isinstance(result, Exception) and result:
+				# iccgamut output looks like this:
+				# Header:
+				#  <...>
+				#
+				# Total volume of gamut is xxxxxx.xxxxxx cubic colorspace units
+				for line in self.output:
+					match = re.search("(\d+(?:\.\d+)?)\s+cubic\s+colorspace\s+"
+									  "units", line)
+					if match:
+						gamut_volume = float(match.groups()[0]) / ICCP.GAMUT_VOLUME_SRGB
+						break
+			else:
+				break
+		name = os.path.splitext(profile_paths[0])[0]
 		gamfilename = name + ".gam"
 		wrlfilename = name + ".wrl"
 		tmpfilenames = [gamfilename, wrlfilename]
-		for key, src in (("srgb", "sRGB"), ("adobe-rgb", "ClayRGB1998")):
-			if not isinstance(result, Exception) and result and intersections:
+		if compare_standard_gamuts:
+			comparison_gamuts = [("srgb", "sRGB"),
+								 ("adobe-rgb", "ClayRGB1998")]
+		else:
+			comparison_gamuts = []
+		for profile_path in profile_paths[1:]:
+			filename, ext = os.path.splitext(profile_path)
+			comparison_gamuts.append((filename.lower().replace(" ", "-"),
+									  filename + ".gam"))
+		for key, src in comparison_gamuts:
+			if not isinstance(result, Exception) and result:
 				# Create gamut view and intersection
-				src_path = get_data_path("ref/%s.gam" % src)
+				if os.path.isabs(src):
+					src_path = src
+					src = os.path.splitext(os.path.basename(src))[0]
+				else:
+					if intent != "r":
+						src += " [%s]" % intent.upper()
+					src_path = get_data_path("ref/%s.gam" % src)
 				if not src_path:
 					continue
-				outfilename = outname + (" vs %s.wrl" % src)
+				outfilename = outname + " vs " + src
+				if intent != "r":
+					outfilename += " [%s]" % intent.upper()
+				outfilename += ".wrl"
 				tmpfilenames.append(outfilename)
 				result = self.exec_cmd(get_argyll_util("viewgam"),
 									   ["-cw", "-t.75", "-s", src_path, "-cn",
@@ -5946,20 +5978,46 @@ class Worker(object):
 				else:
 					filename = tmpfilename
 				try:
+					def tweak_vrml(vrml):
+						# Set viewpoint further away
+						vrml = re.sub("(Viewpoint\s*\{)[^}]+\}",
+									  r"\1 position 0 0 340 }", vrml)
+						# Fix label color for -a* axis
+						label = re.search(r'Transform\s*\{\s*translation\s+[+\-0-9.]+\s*[+\-0-9.]+\s*[+\-0-9.]+\s+children\s*\[\s*Shape\s*\{\s*geometry\s+Text\s*\{\s*string\s*\["-a\*"\]\s*fontStyle\s+FontStyle\s*\{[^}]*\}\s*\}\s*appearance\s+Appearance\s*\{\s*material\s+Material\s*{[^}]*\}\s*\}\s*\}\s*\]\s*\}', vrml)
+						if label:
+							label = label.group()
+							vrml = vrml.replace(label,
+												re.sub(r"(diffuseColor)\s+[+\-0-9.]+\s+[+\-0-9.]+\s+[+\-0-9.]+",
+													   r"\1 0.0 1.0 0.0",
+													   label))
+						# Add range to axes
+						vrml = re.sub(r'(string\s*\[")(\+?)(L\*)("\])',
+									  r'\1\3", "\2\0$\4', vrml)
+						vrml = re.sub(r'(string\s*\[")([+\-]?)(a\*)("\])',
+									  r'\1\3", "\2\0$\4', vrml)
+						vrml = re.sub(r'(string\s*\[")([+\-]?)(b\*)("\])',
+									  r'\1\3 \2\0$\4', vrml)
+						vrml = vrml.replace("\0$", "100")
+						return vrml
 					if getcfg("vrml.compress"):
 						# Compress gam and wrl files using gzip
-						if filename.endswith(".wrl"):
-							filename = filename[:-4] + ".wrz"
-						else:
-							filename = filename + ".gz"
-						with GzipFileProper(tmpfilename + ".gz", "wb") as gz:
+						with GzipFileProper(filename + ".gz", "wb") as gz:
 							# Always use original filename with '.gz' extension,
 							# that way the filename in the header will be correct
 							with open(tmpfilename, "rb") as infile:
-								gz.write(infile.read())
+								gz.write(tweak_vrml(infile.read()))
 						# Remove uncompressed file
 						os.remove(tmpfilename)
-						tmpfilename = tmpfilename + ".gz"
+						tmpfilename = filename + ".gz"
+					else:
+						with open(tmpfilename, "rb") as infile:
+							vrml = infile.read()
+						with open(tmpfilename, "wb") as outfile:
+							outfile.write(tweak_vrml(vrml))
+					if filename.endswith(".wrl"):
+						filename = filename[:-4] + ".wrz"
+					else:
+						filename = filename + ".gz"
 					if tmpfilename != filename:
 						# Rename the file if filename is different
 						if os.path.exists(filename):

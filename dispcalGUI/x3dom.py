@@ -12,6 +12,7 @@ from log import safe_print as _safe_print
 from util_io import GzipFileProper
 from util_str import StrList, safe_str, safe_unicode
 from worker import Error
+import colormath
 import localization as lang
 
 
@@ -538,9 +539,247 @@ def _attrchk(attribute, token, tag, indent):
 	return attribute
 
 
+def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
+				  offsety=0, offsetz=0, maxx=100, maxy=100, maxz=100):
+	return """# Z axis
+		Transform {
+			translation %(offsetx).1f %(offsety).1f %(offsetz).1f
+			children [
+				Shape {
+					geometry Box { size 2.0 2.0 %(maxz).1f }
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+		# Z axis label
+		Transform {
+			translation %(offsetx).1f %(offsety).1f %(zlabelz).1f
+			children [
+				Shape {
+					geometry Text {
+						string ["%(zlabel)s"]
+						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+					}
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+		# X axis
+		Transform {
+			translation %(xaxisx).1f %(offsety).1f %(xyaxisz).1f
+			children [
+				Shape {
+					geometry Box { size %(maxx).1f 2.0 2.0 }
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+		# X axis label
+		Transform {
+			translation %(xlabelx).1f %(xlabely).1f %(xyaxisz).1f
+			children [
+				Shape {
+					geometry Text {
+						string ["%(xlabel)s"]
+						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+					}
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+		# Y axis
+		Transform {
+			translation %(offsetx).1f %(yaxisy).1f %(xyaxisz).1f
+			children [
+				Shape {
+					geometry Box { size 2.0 %(maxy).1f 2.0 }
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+		# Y axis label
+		Transform {
+			translation %(ylabelx).1f %(ylabely).1f %(xyaxisz).1f
+			children [
+				Shape {
+					geometry Text {
+						string ["%(ylabel)s"]
+						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+					}
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+		# Zero
+		Transform {
+			translation %(zerox).1f %(zeroy).1f %(zeroz).1f
+			children [
+				Shape {
+					geometry Text {
+						string ["0"]
+						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+					}
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}""" % dict(locals().items() +
+					{"xaxisx": maxx / 2.0 + offsetx,
+					 "yaxisy": maxy / 2.0 + offsety,
+					 "xyaxisz": offsetz - maxz / 2.0,
+					 "zlabelz": maxz / 2.0 + offsetz + 5,
+					 "xlabelx": maxx + offsetx + 5,
+					 "xlabely": offsety - 5,
+					 "ylabelx": offsetx - 5,
+					 "ylabely": maxy + offsety + 5,
+					 "zerox": offsetx - 10,
+					 "zeroy": offsety - 10,
+					 "zeroz": offsetz - maxz / 2.0 - 5}.items())
+
+
 def safe_print(*args, **kwargs):
 	if verbose > 1 or debug:
 		_safe_print(*args, **kwargs)
+
+
+def update_vrml(vrml, colorspace):
+	""" Update color and axes in VRML """
+	offsetx, offsety = 0, 0
+	maxz = scale = 100
+	maxxy = 200
+	if colorspace.startswith("DIN99"):
+		scale = 1.0
+	elif colorspace == "Lu'v'":
+		offsetx, offsety = -.3, -.3
+		scale = maxxy / .6
+	elif colorspace == "xyY":
+		offsetx, offsety = -.4, -.4
+		scale = maxxy / .8
+	def update_xyz(xyz):
+		x, y, z = [float(v) for v in xyz.split()]
+		a, b, L = x, y, z + 50
+		X, Y, Z = colormath.Lab2XYZ(L, a, b, scale=100)
+		if colorspace.startswith("DIN99"):
+			if colorspace == "DIN99":
+				z, x, y = colormath.Lab2DIN99(L, a, b)
+			elif colorspace == "DIN99b":
+				z, x, y = colormath.Lab2DIN99b(L, a, b)
+			elif colorspace == "DIN99c":
+				z, x, y = colormath.XYZ2DIN99c(X, Y, Z)
+			else:
+				z, x, y = colormath.XYZ2DIN99d(X, Y, Z)
+			x, y, z = x * scale, y * scale, z / 100.0 * maxz
+		elif colorspace == "Luv":
+			z, x, y = colormath.XYZ2Luv(X, Y, Z)
+		elif colorspace == "Lu'v'":
+			L, u_, v_ = colormath.XYZ2Lu_v_(X, Y, Z)
+			x, y, z = ((u_ + offsetx) * scale,
+					   (v_ + offsety) * scale,
+					   L / 100.0 * maxz)
+		elif colorspace == "xyY":
+			x, y, Y = colormath.XYZ2xyY(X, Y, Z)
+			x, y, z = ((x + offsetx) * scale,
+					   (y + offsety) * scale,
+					   Y / 100.0 * maxz)
+		z -= maxz / 2.0
+		return " ".join(["%.6f" % v for v in (x, y, z)])
+	# Update point lists
+	for item in re.findall(r"point\s*\[[^\]]+\]", vrml):
+		item = item[:-1].rstrip()
+		# Remove comments
+		points = re.sub("#[^\n\r]*", "", item)
+		# Get actual points
+		points = re.match("point\s*\[(.+)", points, re.S).groups()[0]
+		points = points.strip().split(",")
+		for i, xyz in enumerate(points):
+			xyz = xyz.strip()
+			if xyz:
+				points[i] = update_xyz(xyz)
+		vrml = vrml.replace(item, "point [%s%s" %
+								  (os.linesep, 
+								   ("," +
+									os.linesep).join(points).rstrip()))
+	# Update spheres
+	spheres = re.findall(r'Transform\s*\{\s*translation\s+[+\-0-9.]+\s*[+\-0-9.]+\s*[+\-0-9.]+\s+children\s*\[\s*Shape\s*\{\s*geometry\s+Sphere\s*\{[^}]*\}\s*appearance\s+Appearance\s*\{\s*material\s+Material\s*\{[^}]*\}\s*\}\s*\}\s*\]\s*\}', vrml)
+	for i, sphere in enumerate(spheres):
+		coords = re.search(r"translation\s+([+\-0-9.]+\s+[+\-0-9.]+\s+[+\-0-9.]+)",
+						   sphere)
+		if coords:
+			vrml = vrml.replace(sphere,
+								sphere.replace(coords.group(),
+											   "translation " +
+											   update_xyz(coords.groups()[0])))
+	if colorspace.startswith("DIN99"):
+		# Remove * from L*a*b* and add range
+
+		# Pristine Argyll CMS VRML
+		vrml = re.sub(r'(string\s*\[")(\+?)(L)\*("\])', r'\1\3", "\2\0$\4', vrml)
+		vrml = vrml.replace("\0$", "100")
+		vrml = re.sub(r'(string\s*\[")([+\-]?)(a)\*("\])',
+					  r'\1\3", "\2\0$\4', vrml)
+		vrml = re.sub(r'(string\s*\[")([+\-]?)(b)\*("\])',
+					  r'\1\3 \2\0$\4', vrml)
+
+		# dispcalGUI tweaked VRML created by worker.Worker.calculate_gamut()
+		vrml = re.sub(r'(string\s*\["a)\*",\s*"([+\-]?)\d+("\])',
+					  r'\1", "\2\0$\3', vrml)
+		vrml = re.sub(r'(string\s*\["b)\*\s+([+\-]?)\d+("\])',
+					  r'\1 \2\0$\3', vrml)
+
+		vrml = vrml.replace("\0$", "%i" % round(100.0 / scale))
+
+		# Add colorspace information
+		vrml = re.sub(r"(Viewpoint\s*\{[^}]+\})",
+					  r"""\1
+Transform {
+translation %.6f %.6f %.6f
+children [
+Shape {
+	geometry Text {
+		string ["%s"]
+		fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+	}
+	appearance Appearance {
+		material Material { diffuseColor 0.7 0.7 0.7 }
+	}
+}
+]
+}""" % (maxz + offsetx, maxz + offsety, -maxz / 2.0, colorspace), vrml)
+	elif colorspace == "Luv":
+		# Replace a* b* labels with u* v*
+		vrml = re.sub(r'(string\s*\["[+\-]?)a(\*)',
+					  r"\1u\2", vrml)
+		vrml = re.sub(r'(string\s*\["[+\-]?)b(\*)',
+					  r"\1v\2", vrml)
+	elif colorspace in ("Lu'v'", "xyY"):
+		# Remove axes
+		vrml = re.sub(r'Transform\s*\{\s*translation\s+[+\-0-9.]+\s*[+\-0-9.]+\s*[+\-0-9.]+\s+children\s*\[\s*Shape\s*\{\s*geometry\s+Box\s*\{[^}]*\}\s*appearance\s+Appearance\s*\{\s*material\s+Material\s*\{[^}]*\}\s*\}\s*\}\s*\]\s*\}', "", vrml)
+		# Remove axis labels
+		vrml = re.sub(r'Transform\s*\{\s*translation\s+[+\-0-9.]+\s*[+\-0-9.]+\s*[+\-0-9.]+\s+children\s*\[\s*Shape\s*\{\s*geometry\s+Text\s*\{\s*string\s*\[[^\]]*\]\s*fontStyle\s+FontStyle\s*\{[^}]*\}\s*\}\s*appearance\s+Appearance\s*\{\s*material\s+Material\s*{[^}]*\}\s*\}\s*\}\s*\]\s*\}', "", vrml)
+		# Add new axes + labels
+		if colorspace == "Lu'v'":
+			xlabel, ylabel, zlabel = "u' 0.6", "v' 0.6", "L* 100"
+		else:
+			xlabel, ylabel, zlabel = "x 0.8", "y 0.8", "Y 100"
+		vrml = re.sub(r"(Viewpoint\s*\{[^}]+\})",
+					  r"\1\n" + get_vrml_axes(xlabel, ylabel, zlabel,
+											  offsetx * scale, offsety * scale,
+											  0, maxxy, maxxy, maxz),
+					  vrml)
+	return vrml
 
 
 def vrml2x3dom(vrml, worker=None):
@@ -632,9 +871,10 @@ def vrml2x3dom(vrml, worker=None):
 									tag.attributes[token][-1] != " "):
 						tag.attributes[token] += c
 				if quote == 2:
-					attribute = _attrchk(attribute, token, tag, indent)
+					if not listing:
+						attribute = _attrchk(attribute, token, tag, indent)
+						token = ""
 					quote = 0
-					token = ""
 		elif c not in (" ", "\n", "\r", "\t"):
 			if c in valid_token_chars:
 				token += c
