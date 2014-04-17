@@ -11,7 +11,7 @@ import math, os, re, sys
 
 import colormath
 import x3dom
-from safe_print import safe_print
+from log import safe_print
 from util_io import GzipFileProper, StringIOu as StringIO
 
 
@@ -800,12 +800,12 @@ class CGATS(dict):
 											 self.type)
 		return context
 	
-	def export_vrml(self, filename, colorspace="RGB", RGB_black_offset=40,
-					normalize_RGB_white=False, compress=True):
+	def export_3d(self, filename, colorspace="RGB", RGB_black_offset=40,
+				  normalize_RGB_white=False, compress=True, format="VRML"):
 		if colorspace not in ("DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
 							  "LCH(uv)", "Lab", "Luv", "Lu'v'", "RGB", "xyY",
 							  "HSI", "HSL", "HSV"):
-			raise ValueError("export_vrml: Unknown colorspace %r" % colorspace)
+			raise ValueError("export_3d: Unknown colorspace %r" % colorspace)
 		data = self.queryv1("DATA")
 		if self.queryv1("ACCURATE_EXPECTED_VALUES") == "true":
 			cat = "Bradford"
@@ -1206,16 +1206,24 @@ Transform {
 			fov = 45
 			z = 340
 		# Use a very narrow field of view for LCH, Lu'v' and xyY
-		vrml = vrml % {"children": children,
-					   "axes": axes,
-					   "fov": fov / 180.0 * math.pi,
-					   "z": z}
+		out = vrml % {"children": children,
+					  "axes": axes,
+					  "fov": fov / 180.0 * math.pi,
+					  "z": z}
+		if format != "VRML":
+			safe_print("Generating", format)
+			x3d = x3dom.vrml2x3dom(out)
+			if format == "HTML":
+				out = x3d.html(title=os.path.basename(filename))
+			else:
+				out = x3d.x3d()
 		if compress:
 			writer = GzipFileProper
 		else:
 			writer = open
-		with writer(filename, 'w') as vrmlfile:
-			vrmlfile.write(vrml)
+		safe_print("Writing", filename)
+		with writer(filename, 'w') as outfile:
+			outfile.write(out)
 	
 	@property
 	def NUMBER_OF_FIELDS(self):

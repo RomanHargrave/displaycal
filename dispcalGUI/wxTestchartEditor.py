@@ -30,7 +30,6 @@ from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin,
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import (ConfirmDialog, FileBrowseBitmapButtonWithChoiceHistory,
 					   InfoDialog)
-from wxVRML2X3D import vrmlfile2x3dfile
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
@@ -1936,37 +1935,17 @@ class TestchartEditor(wx.Frame):
 		return False
 	
 	def tc_view_3d(self, event):
-		view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
-		if view_3d_format == "HTML":
-			x3d = True
-			html = True
-		elif view_3d_format == "X3D":
-			x3d = True
-			html = False
+		if (not (self.worker.tempdir and
+				 self.ti1.filename.startswith(self.worker.tempdir)) and
+			waccess(os.path.dirname(self.ti1.filename), os.W_OK)):
+			paths = self.tc_save_3d(os.path.splitext(self.ti1.filename)[0],
+									regenerate=False)
 		else:
-			x3d = False
-			html = False
-		if self.ti1.filename and waccess(os.path.dirname(self.ti1.filename),
-										 os.W_OK):
-			vrmlpaths = self.tc_vrml_save(self.ti1.filename, regenerate=False)
-		else:
-			vrmlpaths = self.tc_vrml_save_as_handler(None)
-		for vrmlpath in vrmlpaths:
-			x3dpath = os.path.splitext(vrmlpath)[0] + ".x3d"
-			if html:
-				finalpath = x3dpath + ".html"
-			elif x3d:
-				finalpath = x3dpath
-			else:
-				finalpath = vrmlpath
-			if (x3d or html) and not os.path.exists(finalpath):
-				vrmlfile2x3dfile(vrmlpath, x3dpath,
-								 embed=getcfg("x3dom.embed"), html=html,
-								 view=True)
-			else:
-				launch_file(finalpath)
+			paths = self.tc_save_3d_as_handler(None)
+		for path in paths:
+			launch_file(path)
 
-	def tc_vrml_save_as_handler(self, event):
+	def tc_save_3d_as_handler(self, event):
 		path = None
 		paths = []
 		if (hasattr(self, "ti1") and self.ti1.filename and
@@ -1975,15 +1954,21 @@ class TestchartEditor(wx.Frame):
 			defaultFile = os.path.splitext(os.path.basename(self.ti1.filename))[0]
 		else:
 			defaultDir = get_verified_path("last_vrml_path")[0]
-			defaultFile = os.path.basename(config.defaults["last_vrml_path"])
-		wildcard = lang.getstr("filetype.vrml") + "|*.wrl"
-		vrmlext = ".wrl"
-		if getcfg("vrml.compress"):
-			vrmlext = ".wrz"
-			wildcard = wildcard.replace(".wrl", vrmlext)
+			defaultFile = os.path.basename(getcfg("last_vrml_path"))
+		view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
+		if view_3d_format == "HTML":
+			formatext = ".html"
+		elif view_3d_format == "VRML":
+			if getcfg("vrml.compress"):
+				formatext = ".wrz"
+			else:
+				formatext = ".wrl"
+		else:
+			formatext = ".x3d"
 		dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"),
 							defaultDir=defaultDir, defaultFile=defaultFile,
-							wildcard=wildcard,
+							wildcard=lang.getstr("view.3d") + "|*" +
+									 formatext,
 							style=wx.SAVE | wx.OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
@@ -1996,30 +1981,32 @@ class TestchartEditor(wx.Frame):
 								   self)
 				return []
 			filename, ext = os.path.splitext(path)
-			if ext.lower() != vrmlext:
-				path += vrmlext
+			if ext.lower() != formatext:
+				path += formatext
 			setcfg("last_vrml_path", path)
-			paths = self.tc_vrml_save(path)
+			paths = self.tc_save_3d(filename)
 		return paths
 	
-	def tc_vrml_save(self, path, regenerate=True):
+	def tc_save_3d(self, filename, regenerate=True):
 		paths = []
+		view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
+		if view_3d_format == "VRML":
+			if getcfg("vrml.compress"):
+				formatext = ".wrz"
+			else:
+				formatext = ".wrl"
+		else:
+			formatext = ".x3d"
+			if view_3d_format == "HTML":
+				formatext += ".html"
 		if getcfg("tc_vrml_device") or getcfg("tc_vrml_cie"):
-			opath = path
-			vrml_types = []
+			colorspaces = []
 			if getcfg("tc_vrml_device"):
-				vrml_types.append("d")
+				colorspaces.append(getcfg("tc_vrml_device_colorspace"))
 			if getcfg("tc_vrml_cie"):
-				vrml_types.append("c")
-			for vrml_type in vrml_types:
-				if vrml_type == "d":
-					colorspace = getcfg("tc_vrml_device_colorspace")
-				else:
-					colorspace = getcfg("tc_vrml_cie_colorspace")
-				wrlsuffix = " %s.wrl" % colorspace
-				if getcfg("vrml.compress"):
-					wrlsuffix = wrlsuffix.replace(".wrl", ".wrz")
-				path = os.path.splitext(opath)[0] + wrlsuffix
+				colorspaces.append(getcfg("tc_vrml_cie_colorspace"))
+			for colorspace in colorspaces:
+				path = filename + " " + colorspace + formatext
 				if os.path.exists(path):
 					if regenerate:
 						dlg = ConfirmDialog(self,
@@ -2036,13 +2023,15 @@ class TestchartEditor(wx.Frame):
 						paths.append(path)
 						continue
 				try:
-					self.ti1[0].export_vrml(path,
-											colorspace,
-											RGB_black_offset=getcfg("tc_vrml_black_offset"),
-											normalize_RGB_white=getcfg("tc_vrml_use_D50"),
-											compress=getcfg("vrml.compress"))
+					self.ti1[0].export_3d(path,
+										  colorspace,
+										  RGB_black_offset=getcfg("tc_vrml_black_offset"),
+										  normalize_RGB_white=getcfg("tc_vrml_use_D50"),
+										  compress=formatext == ".wrz",
+										  format=view_3d_format)
 				except Exception, exception:
-					handle_error(u"Warning - VRML file could not be saved: " + safe_unicode(exception), parent = self)
+					handle_error(u"Warning - 3D file could not be saved: " +
+								 safe_unicode(exception), parent=self)
 				else:
 					paths.append(path)
 		return paths
