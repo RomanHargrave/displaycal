@@ -995,6 +995,13 @@ class ProfileInfoFrame(LUTFrame):
 		self.view_3d_btn.Disable()
 		self.plot_mode_sizer.Add(self.view_3d_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														wx.LEFT, border=12)
+		self.view_3d_format_ctrl = wx.Choice(p1, -1, choices=["HTML",
+															  "VRML",
+															  "X3D"])
+		self.view_3d_format_ctrl.SetSelection(0)
+		self.plot_mode_sizer.Add(self.view_3d_format_ctrl,
+								 flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+								 border=8)
 
 		self.client = GamutCanvas(p1)
 		p1.sizer.Add(self.client, 1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT |
@@ -1169,6 +1176,7 @@ class ProfileInfoFrame(LUTFrame):
 			# Gamut plot
 			self.plot_mode_sizer.Show(self.tooltip_btn)
 			self.plot_mode_sizer.Show(self.view_3d_btn)
+			self.plot_mode_sizer.Show(self.view_3d_format_ctrl)
 			self.options_panel.GetCurrentPage().DrawCanvas(reset=reset)
 			self.save_plot_btn.Enable()
 			self.view_3d_btn.Enable()
@@ -1176,6 +1184,7 @@ class ProfileInfoFrame(LUTFrame):
 			# Curves plot
 			self.plot_mode_sizer.Hide(self.tooltip_btn)
 			self.plot_mode_sizer.Hide(self.view_3d_btn)
+			self.plot_mode_sizer.Hide(self.view_3d_format_ctrl)
 			self.client.SetEnableCenterLines(True)
 			self.client.SetEnableDiagonals('Bottomleft-Topright')
 			self.client.SetEnableGrid(False)
@@ -1643,27 +1652,11 @@ class ProfileInfoFrame(LUTFrame):
 			else:
 				show_result_dialog(Error(lang.getstr("profile.invalid")), self)
 		if profile:
-			dlg = ConfirmDialog(self, title=lang.getstr("view.3d"),
-								msg=lang.getstr("format.select"),
-								ok=lang.getstr("HTML"),
-								cancel=lang.getstr("cancel"),
-								alt="VRML",
-								bitmap=geticon(32, appname +
-												   "-VRML-to-X3D-converter"))
-			dlg.x3d = wx.Button(dlg, -1, "X3D")
-			dlg.x3d.SetInitialSize((dlg.x3d.GetSize()[0] + btn_width_correction,
-									-1))
-			dlg.sizer2.Insert(3, dlg.x3d)
-			dlg.sizer2.Insert(3, (12, 12))
-			dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id=dlg.x3d.GetId())
-			dlg.Fit()
-			result = dlg.ShowModal()
-			if result == wx.ID_CANCEL:
-				return
-			elif result == wx.ID_OK:
+			view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
+			if view_3d_format == "HTML":
 				x3d = True
 				html = True
-			elif result == dlg.x3d.GetId():
+			elif view_3d_format == "X3D":
 				x3d = True
 				html = False
 			else:

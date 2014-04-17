@@ -23,13 +23,14 @@ from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
 from ordereddict import OrderedDict
 from util_io import StringIOu as StringIO
-from util_os import waccess
+from util_os import launch_file, waccess
 from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_util, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import (ConfirmDialog, FileBrowseBitmapButtonWithChoiceHistory,
 					   InfoDialog)
+from wxVRML2X3D import vrmlfile2x3dfile
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
@@ -335,8 +336,24 @@ class TestchartEditor(wx.Frame):
 		# diagnostic VRML files
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag = wx.ALL & ~(wx.BOTTOM | wx.TOP), border = 12 + border)
-		self.tc_vrml_label = wx.StaticText(panel, -1, lang.getstr("tc.vrml"), name = "tc_vrml_label")
-		hsizer.Add(self.tc_vrml_label, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
+
+		self.vrml_save_as_btn = wx.BitmapButton(panel, -1, geticon(16, "3D"),
+												style=wx.NO_BORDER)
+		self.vrml_save_as_btn.SetToolTipString(lang.getstr("view.3d"))
+		self.vrml_save_as_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.vrml_save_as_btn.Disable()
+		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
+				 id=self.vrml_save_as_btn.GetId())
+		hsizer.Add(self.vrml_save_as_btn, flag=(wx.ALL & ~wx.LEFT) |
+											   wx.ALIGN_CENTER_VERTICAL,
+				   border=border * 2)
+		self.view_3d_format_ctrl = wx.Choice(panel, -1, choices=["HTML",
+																 "VRML",
+																 "X3D"])
+		self.view_3d_format_ctrl.SetSelection(0)
+		hsizer.Add(self.view_3d_format_ctrl, flag=(wx.ALL & ~wx.LEFT) |
+												  wx.ALIGN_CENTER_VERTICAL,
+				   border=border * 2)
 		self.tc_vrml_cie = wx.CheckBox(panel, -1, "", name = "tc_vrml_cie", style = wx.RB_GROUP)
 		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_cie.GetId())
 		hsizer.Add(self.tc_vrml_cie, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
@@ -410,12 +427,6 @@ class TestchartEditor(wx.Frame):
 		self.export_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_export_handler, id = self.export_btn.GetId())
 		hsizer.Add(self.export_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-
-		self.vrml_save_as_btn = wx.Button(panel, -1, lang.getstr("tc.vrml.save_as"))
-		self.vrml_save_as_btn.SetInitialSize((self.vrml_save_as_btn.GetSize()[0] + btn_width_correction, -1))
-		self.vrml_save_as_btn.Disable()
-		self.Bind(wx.EVT_BUTTON, self.tc_vrml_save_as_handler, id = self.vrml_save_as_btn.GetId())
-		hsizer.Add(self.vrml_save_as_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		self.clear_btn = wx.Button(panel, -1, lang.getstr("testchart.discard"), name = "tc_clear")
 		self.clear_btn.SetInitialSize((self.clear_btn.GetSize()[0] + btn_width_correction, -1))
@@ -1910,7 +1921,6 @@ class TestchartEditor(wx.Frame):
 			except Exception, exception:
 				handle_error(u"Error - testchart could not be saved: " + safe_unicode(exception), parent = self)
 			else:
-				self.tc_vrml_save(path)
 				if path != getcfg(self.cfg):
 					dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
 					result = dlg.ShowModal()
@@ -1924,9 +1934,41 @@ class TestchartEditor(wx.Frame):
 					self.save_btn.Disable()
 				return True
 		return False
+	
+	def tc_view_3d(self, event):
+		view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
+		if view_3d_format == "HTML":
+			x3d = True
+			html = True
+		elif view_3d_format == "X3D":
+			x3d = True
+			html = False
+		else:
+			x3d = False
+			html = False
+		if self.ti1.filename and waccess(os.path.dirname(self.ti1.filename),
+										 os.W_OK):
+			vrmlpaths = self.tc_vrml_save(self.ti1.filename, regenerate=False)
+		else:
+			vrmlpaths = self.tc_vrml_save_as_handler(None)
+		for vrmlpath in vrmlpaths:
+			x3dpath = os.path.splitext(vrmlpath)[0] + ".x3d"
+			if html:
+				finalpath = x3dpath + ".html"
+			elif x3d:
+				finalpath = x3dpath
+			else:
+				finalpath = vrmlpath
+			if (x3d or html) and not os.path.exists(finalpath):
+				vrmlfile2x3dfile(vrmlpath, x3dpath,
+								 embed=getcfg("x3dom.embed"), html=html,
+								 view=True)
+			else:
+				launch_file(finalpath)
 
 	def tc_vrml_save_as_handler(self, event):
 		path = None
+		paths = []
 		if (hasattr(self, "ti1") and self.ti1.filename and
 			os.path.isfile(self.ti1.filename)):
 			defaultDir = os.path.dirname(self.ti1.filename)
@@ -1952,14 +1994,16 @@ class TestchartEditor(wx.Frame):
 				show_result_dialog(Error(lang.getstr("error.access_denied.write",
 													 path)),
 								   self)
-				return
+				return []
 			filename, ext = os.path.splitext(path)
 			if ext.lower() != vrmlext:
 				path += vrmlext
 			setcfg("last_vrml_path", path)
-			self.tc_vrml_save(path)
+			paths = self.tc_vrml_save(path)
+		return paths
 	
-	def tc_vrml_save(self, path):
+	def tc_vrml_save(self, path, regenerate=True):
+		paths = []
 		if getcfg("tc_vrml_device") or getcfg("tc_vrml_cie"):
 			opath = path
 			vrml_types = []
@@ -1977,15 +2021,19 @@ class TestchartEditor(wx.Frame):
 					wrlsuffix = wrlsuffix.replace(".wrl", ".wrz")
 				path = os.path.splitext(opath)[0] + wrlsuffix
 				if os.path.exists(path):
-					dlg = ConfirmDialog(self,
-										msg=lang.getstr("dialog.confirm_overwrite",
-														(path)),
-										ok=lang.getstr("overwrite"),
-										cancel=lang.getstr("cancel"),
-										bitmap=geticon(32, "dialog-warning"))
-					result = dlg.ShowModal()
-					dlg.Destroy()
+					if regenerate:
+						dlg = ConfirmDialog(self,
+											msg=lang.getstr("dialog.confirm_overwrite",
+															(path)),
+											ok=lang.getstr("overwrite"),
+											cancel=lang.getstr("cancel"),
+											bitmap=geticon(32, "dialog-warning"))
+						result = dlg.ShowModal()
+						dlg.Destroy()
+					else:
+						result = wx.ID_CANCEL
 					if result != wx.ID_OK:
+						paths.append(path)
 						continue
 				try:
 					self.ti1[0].export_vrml(path,
@@ -1995,6 +2043,9 @@ class TestchartEditor(wx.Frame):
 											compress=getcfg("vrml.compress"))
 				except Exception, exception:
 					handle_error(u"Warning - VRML file could not be saved: " + safe_unicode(exception), parent = self)
+				else:
+					paths.append(path)
+		return paths
 
 	def tc_check_save_ti1(self, clear = True):
 		if hasattr(self, "ti1"):
