@@ -11,12 +11,11 @@ from options import verbose, debug
 from log import safe_print as _safe_print
 from util_io import GzipFileProper
 from util_str import StrList, safe_str, safe_unicode
-from worker import Error
 import colormath
 import localization as lang
 
 
-class VRMLParseError(Error):
+class VRMLParseError(Exception):
 	pass
 
 
@@ -540,7 +539,7 @@ def _attrchk(attribute, token, tag, indent):
 
 
 def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
-				  offsety=0, offsetz=0, maxx=100, maxy=100, maxz=100):
+				  offsety=0, offsetz=0, maxx=100, maxy=100, maxz=100, zero=True):
 	return """# Z axis
 		Transform {
 			translation %(offsetx).1f %(offsety).1f %(offsetz).1f
@@ -555,7 +554,7 @@ def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
 		}
 		# Z axis label
 		Transform {
-			translation %(offsetx).1f %(offsety).1f %(zlabelz).1f
+			translation %(zlabelx).1f %(zlabely).1f %(zlabelz).1f
 			children [
 				Shape {
 					geometry Text {
@@ -628,7 +627,7 @@ def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
 			children [
 				Shape {
 					geometry Text {
-						string ["0"]
+						string ["%(zerolabel)s"]
 						fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
 					}
 					appearance Appearance {
@@ -640,11 +639,14 @@ def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
 					{"xaxisx": maxx / 2.0 + offsetx,
 					 "yaxisy": maxy / 2.0 + offsety,
 					 "xyaxisz": offsetz - maxz / 2.0,
+					 "zlabelx": offsetx - 10,
+					 "zlabely": offsety - 10,
 					 "zlabelz": maxz / 2.0 + offsetz + 5,
 					 "xlabelx": maxx + offsetx + 5,
 					 "xlabely": offsety - 5,
 					 "ylabelx": offsetx - 5,
 					 "ylabely": maxy + offsety + 5,
+					 "zerolabel": "0" if zero else "",
 					 "zerox": offsetx - 10,
 					 "zeroy": offsety - 10,
 					 "zeroz": offsetz - maxz / 2.0 - 5}.items())
@@ -745,18 +747,18 @@ def update_vrml(vrml, colorspace):
 		vrml = re.sub(r"(Viewpoint\s*\{[^}]+\})",
 					  r"""\1
 Transform {
-translation %.6f %.6f %.6f
-children [
-Shape {
-	geometry Text {
-		string ["%s"]
-		fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
-	}
-	appearance Appearance {
-		material Material { diffuseColor 0.7 0.7 0.7 }
-	}
-}
-]
+	translation %.6f %.6f %.6f
+	children [
+		Shape {
+			geometry Text {
+				string ["%s"]
+				fontStyle FontStyle { family "SANS" style "BOLD" size 10.0 }
+			}
+			appearance Appearance {
+				material Material { diffuseColor 0.7 0.7 0.7 }
+			}
+		}
+	]
 }""" % (maxz + offsetx, maxz + offsety, -maxz / 2.0, colorspace), vrml)
 	elif colorspace == "Luv":
 		# Replace a* b* labels with u* v*

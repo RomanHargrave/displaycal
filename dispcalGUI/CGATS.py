@@ -10,7 +10,7 @@ from __future__ import with_statement
 import math, os, re, sys
 
 import colormath
-
+import x3dom
 from safe_print import safe_print
 from util_io import GzipFileProper, StringIOu as StringIO
 
@@ -812,11 +812,10 @@ class CGATS(dict):
 		else:
 			cat = "XYZ scaling"
 		radius = 15.0 / (len(data) ** (1.0 / 3.0))
+		scale = 1.0
 		if colorspace.startswith("DIN99"):
-			if colorspace == "DIN99":
-				radius /= 3.0
-			else:
-				radius /= 2.25
+			scale = 2.5
+		radius /= scale
 		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
 		if white:
 			white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
@@ -847,7 +846,7 @@ Transform {
 			position 0 0 %(z)s
 		}
 
-		#%(axes)s
+		%(axes)s
 %(children)s
 	]
 }
@@ -863,47 +862,92 @@ Transform {
 			]
 		}
 """
-		if colorspace != "Lab" and not colorspace.startswith("DIN99"):
-			axes = ""
+		axes = ""
+		if (colorspace not in ("Lab", "Luv") and
+			not colorspace.startswith("DIN99")):
+			if colorspace in ("Lu'v'", "xyY"):
+				maxz = scale = 100
+				maxxy = 200
+				radius /= 2.0
+				if colorspace == "Lu'v'":
+					xlabel, ylabel, zlabel = "u' 0.6", "v' 0.6", "L* 100"
+					offsetx, offsety = -.3, -.3
+					scale = maxxy / .6
+				else:
+					xlabel, ylabel, zlabel = "x 0.8", "y 0.8", "Y 100"
+					offsetx, offsety = -.4, -.4
+					scale = maxxy / .8
+				axes = x3dom.get_vrml_axes(xlabel, ylabel, zlabel,
+										   offsetx * scale, offsety * scale,
+										   0, maxxy, maxxy, maxz)
+			elif colorspace in ("LCH(ab)", "LCH(uv)"):
+				if colorspace == "LCH(ab)":
+					xlabel, ylabel, zlabel = "H(ab)", "C(ab)", "L*"
+				else:
+					xlabel, ylabel, zlabel = "H(uv)", "C(uv)", "L*"
+				axes = x3dom.get_vrml_axes(xlabel, ylabel, zlabel,
+										   -180, -100, 0, 360, 200, 100, False)
 		else:
 			if colorspace.startswith("DIN99"):
-				if colorspace == "DIN99":
-					values = {"wh": .75,
-							  "ab": 40.0,
-							  "aboffset": 20.0,
-							  "fontsize": 4.0,
-							  "ap": 41.0,
-							  "an": 44.0,
-							  "Ln": 1.2,
-							  "bp0": 1.2,
-							  "bp1": 41.2,
-							  "bn0": 1.2,
-							  "bn1": 43.2}
-				else:
-					values = {"wh": 1.0,
-							  "ab": 50.0,
-							  "aboffset": 25.0,
-							  "fontsize": 5.0,
-							  "ap": 51.0,
-							  "an": 54.0,
-							  "Ln": 1.5,
-							  "bp0": 1.5,
-							  "bp1": 51.5,
-							  "bn0": 1.5,
-							  "bn1": 53.5}
+				axes += """Transform {
+			translation 50.0 50.0 -50.0
+			children [
+				Shape {
+					geometry Text {
+						string ["%s"]
+						fontStyle FontStyle { family "SANS" style "BOLD" size %.1f }
+					}
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7 }
+					}
+				}
+			]
+		}
+""" % (colorspace, 10.0 / scale)
+				(pxlabel,
+				 nxlabel,
+				 pylabel,
+				 nylabel,
+				 pllabel) = ('"a", "+50"',
+							 '"a", "-50"',
+							 '"b +50"',
+							 '"b -50"',
+							 '"L", "+100"')
+				xyscale = 2.0
 			else:
-				values = {"wh": 2.0,
-						  "ab": 100.0,
-						  "aboffset": 50.0,
-						  "fontsize": 10.0,
-						  "ap": 102.0,
-						  "an": 108.0,
-						  "Ln": 3.0,
-						  "bp0": 3.0,
-						  "bp1": 103.0,
-						  "bn0": 3.0,
-						  "bn1": 107.0}
-			axes = """# L* axis
+				if colorspace == "Luv":
+					x = "u"
+					y = "v"
+				else:
+					x = "a"
+					y = "b"
+				(pxlabel,
+				 nxlabel,
+				 pylabel,
+				 nylabel,
+				 pllabel) = ('"%s*", "+100"' % x,
+							 '"%s*", "-100"' % x,
+							 '"%s* +100"' % y,
+							 '"%s* -100"' % y,
+							 '"L*", "+100"')
+				xyscale = 1.0
+			values = {"wh": 2.0 / scale,
+					  "ab": 100.0 / xyscale,
+					  "aboffset": 50.0 / xyscale,
+					  "fontsize": 10.0 / scale,
+					  "ap": 102.0 / xyscale,
+					  "an": 108.0 / xyscale,
+					  "Ln": 3.0,
+					  "bp0": 3.0,
+					  "bp1": 103.0 / xyscale,
+					  "bn0": 3.0,
+					  "bn1": 107.0 / xyscale,
+					  "pxlabel": pxlabel,
+					  "nxlabel": nxlabel,
+					  "pylabel": pylabel,
+					  "nylabel": nylabel,
+					  "pllabel": pllabel}
+			axes += """# L* axis
 		Transform {
 			translation 0.0 0.0 0.0
 			children [
@@ -921,7 +965,7 @@ Transform {
 			children [
 				Shape {
 					geometry Text {
-						string ["L"]
+						string [%(pllabel)s]
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
@@ -930,7 +974,7 @@ Transform {
 				}
 			]
 		}
-		# +a axis
+		# +x axis
 		Transform {
 			translation %(aboffset).1f 0.0 -50.0
 			children [
@@ -942,13 +986,13 @@ Transform {
 				}
 			]
 		}
-		# +a axis label
+		# +x axis label
 		Transform {
 			translation %(ap).1f -%(wh).1f -50.0
 			children [
 				Shape {
 					geometry Text {
-						string ["+a"]
+						string [%(pxlabel)s]
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
@@ -957,7 +1001,7 @@ Transform {
 				}
 			]
 		}
-		# -a axis
+		# -x axis
 		Transform {
 			translation -%(aboffset).1f 0.0 -50.0
 			children [
@@ -969,13 +1013,13 @@ Transform {
 				}
 			]
 		}
-		# -a axis label
+		# -x axis label
 		Transform {
 			translation -%(an).1f -%(wh).1f -50.0
 			children [
 				Shape {
 					geometry Text {
-						string ["-a"]
+						string [%(nxlabel)s]
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
@@ -984,7 +1028,7 @@ Transform {
 				}
 			]
 		}
-		# +b axis
+		# +y axis
 		Transform {
 			translation 0.0 %(aboffset).1f -50.0
 			children [
@@ -996,13 +1040,13 @@ Transform {
 				}
 			]
 		}
-		# +b axis label
+		# +y axis label
 		Transform {
 			translation -%(bp0).1f %(bp1).1f -50.0
 			children [
 				Shape {
 					geometry Text {
-						string ["+b"]
+						string [%(pylabel)s]
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
@@ -1011,7 +1055,7 @@ Transform {
 				}
 			]
 		}
-		# -b axis
+		# -y axis
 		Transform {
 			translation 0.0 -%(aboffset).1f -50.0
 			children [
@@ -1023,17 +1067,32 @@ Transform {
 				}
 			]
 		}
-		# -b axis label
+		# -y axis label
 		Transform {
 			translation -%(bn0).1f -%(bn1).1f -50.0
 			children [
 				Shape {
 					geometry Text {
-						string ["-b"]
+						string [%(nylabel)s]
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
 						material Material { diffuseColor 0.0 0.0 1.0}
+					}
+				}
+			]
+		}
+		# Zero
+		Transform {
+			translation -%(Ln).1f -%(wh).1f -55.0
+			children [
+				Shape {
+					geometry Text {
+						string ["0"]
+						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
+					}
+					appearance Appearance {
+						material Material { diffuseColor 0.7 0.7 0.7}
 					}
 				}
 			]
@@ -1106,13 +1165,13 @@ Transform {
 				x, y, z = u, v, L - 50
 			elif colorspace == "Lu'v'":
 				L, u_, v_ = colormath.XYZ2Lu_v_(X, Y, Z)
-				x, y, z = ((u_ - white_u_ - .0625) * 500,
-						   (v_ - white_v_ + .15625) * 500, L * 5 - 50)
+				x, y, z = ((u_ + offsetx) * scale,
+						   (v_ + offsety) * scale, L / 100.0 * maxz - 50)
 			elif colorspace == "xyY":
 				x, y, Y = colormath.XYZ2xyY(X, Y, Z)
-				x, y, z = ((x - white_x) * 400,
-						   (y - white_y - .0625) * 400,
-						   Y * 4 - 50)
+				x, y, z = ((x + offsetx) * scale,
+						   (y + offsety) * scale,
+						   Y / 100.0 * maxz - 50)
 			if RGB_black_offset != 40:
 				# Keep reference hue and saturation
 				# Lab to sRGB using reference black offset of 40 like Argyll CMS
@@ -1137,16 +1196,12 @@ Transform {
 									 "radius": radius})
 		children = "".join(children)
 		# Choose z based on colorspace
-		if colorspace in ("LCH(ab)", "LCH(uv)", "Lu'v'", "xyY"):
+		if colorspace in ("LCH(ab)", "LCH(uv)"):
 			fov = 45 / 8.0
 			z = 3400
 		elif colorspace.startswith("DIN99"):
-			if colorspace == "DIN99":
-				fov = 45 / 2.0
-				z = 270
-			else:
-				fov = 45 / 1.75
-				z = 300
+			fov = 45 / 2.0
+			z = 290
 		else:
 			fov = 45
 			z = 340
