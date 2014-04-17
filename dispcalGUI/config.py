@@ -366,7 +366,7 @@ def runtimeconfig(pyfile):
 	
 	"""
 	from log import setup_logging
-	setup_logging()
+	setup_logging(logdir)
 	if debug or verbose >= 1:
 		from log import safe_print
 	if debug:

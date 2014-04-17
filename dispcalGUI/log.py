@@ -9,12 +9,10 @@ import re
 import sys
 from time import localtime, strftime, time
 
-from config import isapp, logdir
 from meta import name as appname
 from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO
 from util_str import safe_str, safe_unicode
-import config
 
 logging.raiseExceptions = 0
 
@@ -76,7 +74,7 @@ log = Log()
 
 class LogFile():
 	
-	def __init__(self, filename, logdir=logdir):
+	def __init__(self, filename, logdir):
 		self._logger = get_file_logger(md5(safe_str(filename,
 													"UTF-8")).hexdigest(),
 									   logdir=logdir, filename=filename)
@@ -104,7 +102,7 @@ class SafeLogger(SafePrinter):
 	"""
 	
 	def __init__(self, log=True, print_=hasattr(sys.stdout, "isatty") and 
-										sys.stdout.isatty() and not isapp):
+										sys.stdout.isatty()):
 		SafePrinter.__init__(self)
 		self.log = log
 		self.print_ = print_
@@ -121,7 +119,10 @@ safe_print = SafeLogger()
 
 
 def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
-					logdir=logdir, filename=None):
+					logdir=None, filename=None):
+	global _logdir
+	if logdir is None:
+		logdir = _logdir
 	logger = logging.getLogger(name)
 	logger.propagate = 0
 	logger.setLevel(level)
@@ -220,10 +221,12 @@ def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
 	return logger
 
 
-def setup_logging():
+def setup_logging(logdir):
 	"""
 	Setup the logging facility.
 	"""
+	global _logdir
+	_logdir = logdir
 	logger = get_file_logger(appname, logging.DEBUG, "midnight", 5)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")
