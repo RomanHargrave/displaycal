@@ -1654,8 +1654,6 @@ class Worker(object):
 			if isinstance(prev_dlg, DummyDialog):
 				self.progress_wnd.dlg = prev_dlg
 			dlg.Destroy()
-			if self.finished:
-				return
 			if dlg_result != wx.ID_OK:
 				self.progress_wnd.Resume()
 				self.abort_requested = False
@@ -1722,7 +1720,6 @@ class Worker(object):
 		self.argyll_version = [0, 0, 0]
 		self.argyll_version_string = "0.0.0"
 		self._displays = []
-		self.cmdname = None
 		self.display_edid = []
 		self.display_manufacturers = []
 		self.display_names = []
@@ -1735,6 +1732,8 @@ class Worker(object):
 		"""
 		Clear any output from the last run command.
 		"""
+		self.cmd = None
+		self.cmdname = None
 		self.retcode = -1
 		self.output = []
 		self.errors = []
@@ -2397,6 +2396,7 @@ class Worker(object):
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("aborted"))
 			return False
+		self.cmd = cmd
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
 		self.cmdname = cmdname
 		if (not "-?" in args and
@@ -5599,6 +5599,35 @@ class Worker(object):
 															   "isalive"))
 				if hasattr(subprocess, "isalive"):
 					safe_print('[D] subprocess.isalive(): %r' % subprocess.isalive())
+		subprocess_isalive = self.isalive(subprocess)
+		if (subprocess_isalive or
+			(hasattr(self, "thread") and not self.thread.isAlive())):
+			# We don't normally need this as closing of the progress window is
+			# handled by _generic_consumer(), but there are two cases where it
+			# is desirable to have this 'safety net':
+			# 1. The user aborted a running task, but we couldn't terminate the
+			#    associated subprocess. In that case, we have a lingering
+			#    subprocess which is problematic but we can't do anything about
+			#    it. Atleast we need to give control back to the user by closing
+			#    the progress window so he can interact with the application
+			#    and doesn't have to resort to forecfully terminate it.
+			# 2. We started a thread with continue_next=True, which then exited
+			#    without returning an error, yet not the result we were looking
+			#    for, so we never started the next thread with resume=True, but
+			#    we forgot to call stop_progress() exlicitly. This should never
+			#    happen if we design our result consumer correctly to handle
+			#    this particular case, but we need to make sure the user can
+			#    close the progress window in case we mess up.
+			wx.CallAfter(self.stop_progress)
+			if subprocess_isalive:
+				wx.CallAfter(show_result_dialog,
+							 Warning("Couldn't terminate %s. Please try to end "
+									 "it manually before continuing to use %s. " 
+									 "If you can not terminate %s, restarting "
+									 "%s may also help. Apologies for the "
+									 "inconvenience." %
+									 (self.cmd, appname, self.cmd, appanme)),
+							 self.owner)
 	
 	def report(self, report_calibrated=True):
 		""" Report on calibrated or uncalibrated display device response """
@@ -5839,6 +5868,8 @@ class Worker(object):
 			self.progress_wnd.stop_timer()
 			self.progress_wnd.MakeModal(False)
 			self.progress_wnd.Hide()
+			self.subprocess_abort = False
+			self.thread_abort = False
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """

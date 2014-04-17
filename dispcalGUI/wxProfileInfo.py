@@ -19,7 +19,7 @@ from ordereddict import OrderedDict
 from util_io import GzipFileProper
 from util_os import launch_file, waccess
 from util_str import safe_unicode, universal_newlines, wrap
-from worker import (Error, check_set_argyll_bin, get_argyll_util,
+from worker import (Error, UnloggedError, check_set_argyll_bin, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
@@ -1776,8 +1776,10 @@ class ProfileInfoFrame(LUTFrame):
 			with cls(vrmlpath, "wb") as vrmlfile:
 				vrmlfile.write(vrml)
 		if not os.path.isfile(vrmlpath):
-			result = Error("".join(self.worker.errors).strip() or
-						   lang.getstr("file.missing", vrmlpath))
+			if self.worker.errors:
+				result = UnloggedError("".join(self.worker.errors).strip())
+			else:
+				result = Error(lang.getstr("file.missing", vrmlpath))
 		if isinstance(result, Exception):
 			self.worker.stop_progress()
 			show_result_dialog(result, self)
