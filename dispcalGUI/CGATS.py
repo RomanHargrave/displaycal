@@ -814,8 +814,11 @@ class CGATS(dict):
 		radius = 15.0 / (len(data) ** (1.0 / 3.0))
 		scale = 1.0
 		if colorspace.startswith("DIN99"):
-			scale = 2.5
-		radius /= scale
+			if colorspace == "DIN99":
+				scale = 100.0 / 40
+			else:
+				scale = 100.0 / 50
+			radius /= scale
 		white = data.queryi1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
 		if white:
 			white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
@@ -890,7 +893,7 @@ Transform {
 		else:
 			if colorspace.startswith("DIN99"):
 				axes += """Transform {
-			translation 50.0 50.0 -50.0
+			translation %.1f %.1f -50.0
 			children [
 				Shape {
 					geometry Text {
@@ -903,17 +906,16 @@ Transform {
 				}
 			]
 		}
-""" % (colorspace, 10.0 / scale)
+""" % (100 / scale, 100 / scale, colorspace, 10.0 / scale)
 				(pxlabel,
 				 nxlabel,
 				 pylabel,
 				 nylabel,
-				 pllabel) = ('"a", "+50"',
-							 '"a", "-50"',
-							 '"b +50"',
-							 '"b -50"',
+				 pllabel) = ('"a", "+%i"' % (100 / scale),
+							 '"a", "-%i"' % (100 / scale),
+							 '"b +%i"' % (100 / scale),
+							 '"b -%i"' % (100 / scale),
 							 '"L", "+100"')
-				xyscale = 2.0
 			else:
 				if colorspace == "Luv":
 					x = "u"
@@ -930,18 +932,17 @@ Transform {
 							 '"%s* +100"' % y,
 							 '"%s* -100"' % y,
 							 '"L*", "+100"')
-				xyscale = 1.0
 			values = {"wh": 2.0 / scale,
-					  "ab": 100.0 / xyscale,
-					  "aboffset": 50.0 / xyscale,
+					  "ab": 100.0 / scale,
+					  "aboffset": 50.0 / scale,
 					  "fontsize": 10.0 / scale,
-					  "ap": 102.0 / xyscale,
-					  "an": 108.0 / xyscale,
+					  "ap": 102.0 / scale,
+					  "an": 108.0 / scale,
 					  "Ln": 3.0,
 					  "bp0": 3.0,
-					  "bp1": 103.0 / xyscale,
+					  "bp1": 103.0 / scale,
 					  "bn0": 3.0,
-					  "bn1": 107.0 / xyscale,
+					  "bn1": 107.0 / scale,
 					  "pxlabel": pxlabel,
 					  "nxlabel": nxlabel,
 					  "pylabel": pylabel,
@@ -1099,6 +1100,8 @@ Transform {
 		}
 """ % values
 		children = []
+		sqrt3_100 = math.sqrt(3) * 100
+		sqrt3_50 = math.sqrt(3) * 50
 		for entry in data.itervalues():
 			X, Y, Z = colormath.adapt(entry["XYZ_X"],
 									  entry["XYZ_Y"],
@@ -1118,7 +1121,7 @@ Transform {
 				rad = H * 360 * math.pi / 180
 				x, y = S * z * math.cos(rad), S * z * math.sin(rad)
 				# Fudge device locations into Lab space
-				x, y, z = x * 100, y * 100, z * math.sqrt(3) * 100 - 50
+				x, y, z = x * sqrt3_100, y * sqrt3_100, z * sqrt3_100 - sqrt3_50
 			elif colorspace == "HSL":
 				H, S, z = colormath.RGB2HSL(entry["RGB_R"] / 100.0,
 											entry["RGB_G"] / 100.0,
@@ -1130,7 +1133,7 @@ Transform {
 					S *= z
 				x, y = S * math.cos(rad), S * math.sin(rad)
 				# Fudge device locations into Lab space
-				x, y, z = x * 100, y * 100, z * math.sqrt(3) * 100 - 50
+				x, y, z = x * sqrt3_100, y * sqrt3_100, z * sqrt3_100 - sqrt3_50
 			elif colorspace == "HSV":
 				H, S, z = colormath.RGB2HSV(entry["RGB_R"] / 100.0,
 											entry["RGB_G"] / 100.0,
@@ -1138,7 +1141,7 @@ Transform {
 				rad = H * 360 * math.pi / 180
 				x, y = S * z * math.cos(rad), S * z * math.sin(rad)
 				# Fudge device locations into Lab space
-				x, y, z = x * 50, y * 50, z * math.sqrt(3) * 100 - 50
+				x, y, z = x * sqrt3_50, y * sqrt3_50, z * sqrt3_100 - sqrt3_50
 			elif colorspace == "Lab":
 				x, y, z = a, b, L - 50
 			elif colorspace in ("DIN99", "DIN99b"):
@@ -1195,17 +1198,15 @@ Transform {
 									 "B": B + .05,
 									 "radius": radius})
 		children = "".join(children)
-		# Choose z based on colorspace
+		# Choose viewpoint fov and z position based on colorspace
+		fov = 45
+		z = 340
 		if colorspace in ("LCH(ab)", "LCH(uv)"):
-			fov = 45 / 8.0
-			z = 3400
+			# Use a very narrow field of view for LCH
+			fov /= 16.0
+			z *= 16
 		elif colorspace.startswith("DIN99"):
-			fov = 45 / 2.0
-			z = 290
-		else:
-			fov = 45
-			z = 340
-		# Use a very narrow field of view for LCH, Lu'v' and xyY
+			fov /= scale
 		out = vrml % {"children": children,
 					  "axes": axes,
 					  "fov": fov / 180.0 * math.pi,
