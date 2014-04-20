@@ -215,7 +215,14 @@ def setup():
 			svnversion = p.communicate()[0]
 			svnversion = strtr(svnversion.strip().split(":")[-1], 
 							   ["M", "P", "S"])
-			svnversion = svnversion_parse(svnversion)
+			svnbasefilename = os.path.join(pydir, "VERSION_BASE")
+			if os.path.isfile(svnbasefilename):
+				with open(svnbasefilename) as svnbasefile:
+					svnbase = int("".join(svnbasefile.read().strip().split(".")),
+								  10)
+				svnversion = int(svnversion)
+				svnversion += svnbase
+			svnversion = svnversion_parse(str(svnversion))
 			svnbase = svnversion
 		
 		print "Trying to get SVN information..."
@@ -298,6 +305,8 @@ def setup():
 			if svnversion:
 				if mod:
 					svnversion = svnversion_bump(svnversion)
+				else:
+					print "Version", ".".join(svnversion)
 				versionpy.write("VERSION = (%s)\n" % ", ".join(svnversion))
 				versionpy.write("VERSION_BASE = (%s)\n" % ", ".join(svnbase))
 				versionpy.write("VERSION_STRING = %r\n" % ".".join(svnversion))
