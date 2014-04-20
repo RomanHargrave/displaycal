@@ -1175,6 +1175,13 @@ class Worker(object):
 		self.tempdir = None
 		self.thread_abort = False
 		self.triggers = []
+		self.recent = FilteredStream(LineCache(maxlines=3), self.data_encoding, 
+									 discard=self.recent_discard,
+									 triggers=self.triggers +
+											  ["stopped at user request"])
+		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
+									  discard=self.lastmsg_discard,
+									  triggers=self.triggers)
 		self.clear_argyll_info()
 		self.clear_cmd_output()
 		self._progress_wnd = None
@@ -1744,14 +1751,9 @@ class Worker(object):
 		self.retcode = -1
 		self.output = []
 		self.errors = []
-		self.recent = FilteredStream(LineCache(maxlines=3), self.data_encoding, 
-									 discard=self.recent_discard,
-									 triggers=self.triggers +
-											  ["stopped at user request"])
+		self.recent.clear()
 		self.retrycount = 0
-		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
-									  discard=self.lastmsg_discard,
-									  triggers=self.triggers)
+		self.lastmsg.clear()
 		self.send_buffer = None
 		if not hasattr(self, "logger") or (self.interactive and self.owner and
 										   isinstance(self.logger,
@@ -2984,6 +2986,8 @@ class Worker(object):
 			self.stop_progress()
 		self.subprocess_abort = False
 		self.thread_abort = False
+		self.recent.clear()
+		self.lastmsg.clear()
 		wx.CallAfter(consumer, result, *args, **kwargs)
 	
 	def generate_A2B0(self, profile, clutres=None, logfile=None):
