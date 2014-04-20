@@ -333,7 +333,14 @@ class ReportFrame(BaseFrame):
 				else:
 					wildcard = "\.(icc|icm)$"
 				if which == "simulation_profile":
-					history = config.get_standard_profiles(True)
+					history = []
+					standard_profiles = config.get_standard_profiles(True)
+					basenames = []
+					for path in standard_profiles:
+						basename = os.path.basename(path)
+						if not basename in basenames:
+							basenames.append(basename)
+							history.append(path)
 				else:
 					history = get_data_path("ref", wildcard)
 				kwargs["history"] = sorted(history,
