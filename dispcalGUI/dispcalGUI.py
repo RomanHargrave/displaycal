@@ -1948,11 +1948,9 @@ class MainFrame(BaseFrame):
 			"allow_skip_sensor_cal",
 			"argyll.dir",
 			"argyll.version",
-			"calibration.black_output_offset.backup",
 			"calibration.black_point_rate.enabled",
 			"calibration.file.previous",
 			"calibration.update",
-			"calibration.use_video_lut.backup",
 			"colorimeter_correction_matrix_file",
 			"comport.number",
 			"copyright",
@@ -1978,7 +1976,6 @@ class MainFrame(BaseFrame):
 			"lut_viewer.show",
 			"lut_viewer.show_actual_lut",
 			"measurement_mode",
-			"measurement_mode.backup",
 			"measurement_mode.projector",
 			"measurement.name.expanded",
 			"measurement.play_sound",
@@ -2021,9 +2018,6 @@ class MainFrame(BaseFrame):
 			"tc_vrml_cie_colorspace",
 			"tc_vrml_device",
 			"tc.show",
-			"testchart.file.backup",
-			"trc.backup",
-			"trc.type.backup",
 			"untethered.measure.auto",
 			"update_check"
 		]
@@ -2044,10 +2038,16 @@ class MainFrame(BaseFrame):
 												   item in include]) and \
 				   (len(exclude) == 0 or not (False in [name.find(item) != 0 for 
 														item in exclude])):
+					if name.endswith(".backup"):
+						if name == "measurement_mode.backup":
+							setcfg("measurement_mode",
+								   getcfg("measurement_mode.backup"))
+						default = None
+					else:
+						default = defaults[name]
 					if verbose >= 3:
-						safe_print("Restoring %s to %s" % (name, 
-														   defaults[name]))
-					setcfg(name, defaults[name])
+						safe_print("Restoring %s to %s" % (name, default))
+					setcfg(name, default)
 		for name in override:
 			if (len(include) == 0 or False in [name.find(item) != 0 for item in 
 											   include]) and \
@@ -9072,8 +9072,8 @@ class MainFrame(BaseFrame):
 					# restore defaults
 					self.restore_defaults_handler(
 						include=("profile", "gamap_"), 
-						exclude=("profile.update", "profile.name",
-								 "gamap_default_intent"))
+						exclude=("profile.b2a.smooth.extra", "profile.update",
+								 "profile.name", "gamap_default_intent"))
 					for o in options_colprof:
 						if o[0] == "q":
 							setcfg("profile.quality", o[1])
