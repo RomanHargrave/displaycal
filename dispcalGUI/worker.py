@@ -4112,6 +4112,9 @@ class Worker(object):
 		else:
 			cmd = os.path.join(pydir, "dispcalGUI-apply-profiles.exe")
 		try:
+			if hasattr(self, "thread") and self.thread.isAlive():
+				# If running in a thread, need to call pythoncom.CoInitialize
+				pythoncom.CoInitialize()
 			scut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink, None,
 											  pythoncom.CLSCTX_INPROC_SERVER, 
 											  shell.IID_IShellLink)
