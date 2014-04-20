@@ -4235,81 +4235,79 @@ class Worker(object):
 		desktopfile_path = os.path.join(autostart_home, 
 										name + ".desktop")
 		system_desktopfile_path = os.path.join(autostart, name + ".desktop")
-		if not os.path.exists(system_desktopfile_path) and \
-		   not os.path.exists(desktopfile_path):
-			try:
-				# Create user loader, even if we later try to 
-				# move it to the system-wide location so that atleast 
-				# the user loader is present if the move to the system 
-				# dir fails
-				if not os.path.exists(autostart_home):
-					os.makedirs(autostart_home)
-				desktopfile = open(desktopfile_path, "w")
-				desktopfile.write('[Desktop Entry]\n')
-				desktopfile.write('Version=1.0\n')
-				desktopfile.write('Encoding=UTF-8\n')
-				desktopfile.write('Type=Application\n')
-				desktopfile.write('Name=%s\n' % (appname + 
-												 ' ICC Profile Loader').encode("UTF-8"))
-				desktopfile.write('Comment=%s\n' % 
-								  lang.getstr("calibrationloader.description", 
-											  lcode="en").encode("UTF-8"))
-				if lang.getcode() != "en":
-					desktopfile.write(('Comment[%s]=%s\n' % 
-									   (lang.getcode(),
-										lang.getstr("calibrationloader.description"))).encode("UTF-8"))
-				pyw = os.path.normpath(os.path.join(pydir, "..",
-													appname +
-													"-apply-profiles.pyw"))
-				icon = appname + "-apply-profiles"
-				if os.path.exists(pyw):
-					# Running from source, or 0install/Listaller install
-					# Check if this is a 0install implementation, in which
-					# case we want to call 0launch with the appropriate
-					# command
-					if re.match("sha\d+(?:new)?",
-								os.path.basename(os.path.dirname(pydir))):
-						executable = ("0launch --command=run-apply-profiles "
-									  "http://%s/0install/dispcalGUI.xml" %
-									  domain.lower())
-					else:
-						icon = os.path.join(pydir, "theme", "icons", "256x256",
-											appname + "-apply-profiles.png")
-						executable = pyw
+		try:
+			# Create user loader, even if we later try to 
+			# move it to the system-wide location so that atleast 
+			# the user loader is present if the move to the system 
+			# dir fails
+			if not os.path.exists(autostart_home):
+				os.makedirs(autostart_home)
+			desktopfile = open(desktopfile_path, "w")
+			desktopfile.write('[Desktop Entry]\n')
+			desktopfile.write('Version=1.0\n')
+			desktopfile.write('Encoding=UTF-8\n')
+			desktopfile.write('Type=Application\n')
+			desktopfile.write('Name=%s\n' % (appname + 
+											 ' ICC Profile Loader').encode("UTF-8"))
+			desktopfile.write('Comment=%s\n' % 
+							  lang.getstr("calibrationloader.description", 
+										  lcode="en").encode("UTF-8"))
+			if lang.getcode() != "en":
+				desktopfile.write(('Comment[%s]=%s\n' % 
+								   (lang.getcode(),
+									lang.getstr("calibrationloader.description"))).encode("UTF-8"))
+			pyw = os.path.normpath(os.path.join(pydir, "..",
+												appname +
+												"-apply-profiles.pyw"))
+			icon = appname + "-apply-profiles"
+			if os.path.exists(pyw):
+				# Running from source, or 0install/Listaller install
+				# Check if this is a 0install implementation, in which
+				# case we want to call 0launch with the appropriate
+				# command
+				if re.match("sha\d+(?:new)?",
+							os.path.basename(os.path.dirname(pydir))):
+					executable = ("0launch --command=run-apply-profiles "
+								  "http://%s/0install/dispcalGUI.xml" %
+								  domain.lower())
 				else:
-					# Regular install
-					executable = appname + "-apply-profiles"
-				desktopfile.write('Icon=%s\n' % icon.encode("UTF-8"))
-				desktopfile.write('Exec=%s\n' % executable.encode("UTF-8"))
-				desktopfile.write('Terminal=false\n')
-				desktopfile.close()
-			except Exception, exception:
-				if not silent:
-					result = Warning(lang.getstr("error.autostart_creation", 
-											     desktopfile_path) + "\n\n" + 
-								     safe_unicode(exception))
+					icon = os.path.join(pydir, "theme", "icons", "256x256",
+										appname + "-apply-profiles.png")
+					executable = pyw
 			else:
-				if getcfg("profile.install_scope") == "l" and autostart:
-					# Move system-wide loader
-					if (self.exec_cmd("mkdir", 
-											 ["-p", autostart], 
-											 capture_output=True, 
-											 low_contrast=False, 
-											 skip_scripts=True, 
-											 silent=True, 
-											 asroot=True) is not True or 
-						self.exec_cmd("mv", 
-											 ["-f", 
-											  desktopfile_path, 
-											  system_desktopfile_path], 
-											 capture_output=True, 
-											 low_contrast=False, 
-											 skip_scripts=True, 
-											 silent=True, 
-											 asroot=True) is not True) and \
-					   not silent:
-						result = Warning(lang.getstr("error.autostart_creation", 
-												     system_desktopfile_path))
+				# Regular install
+				executable = appname + "-apply-profiles"
+			desktopfile.write('Icon=%s\n' % icon.encode("UTF-8"))
+			desktopfile.write('Exec=%s\n' % executable.encode("UTF-8"))
+			desktopfile.write('Terminal=false\n')
+			desktopfile.close()
+		except Exception, exception:
+			if not silent:
+				result = Warning(lang.getstr("error.autostart_creation", 
+											 desktopfile_path) + "\n\n" + 
+								 safe_unicode(exception))
+		else:
+			if getcfg("profile.install_scope") == "l" and autostart:
+				# Move system-wide loader
+				if (self.exec_cmd("mkdir", 
+										 ["-p", autostart], 
+										 capture_output=True, 
+										 low_contrast=False, 
+										 skip_scripts=True, 
+										 silent=True, 
+										 asroot=True) is not True or 
+					self.exec_cmd("mv", 
+										 ["-f", 
+										  desktopfile_path, 
+										  system_desktopfile_path], 
+										 capture_output=True, 
+										 low_contrast=False, 
+										 skip_scripts=True, 
+										 silent=True, 
+										 asroot=True) is not True) and \
+				   not silent:
+					result = Warning(lang.getstr("error.autostart_creation", 
+												 system_desktopfile_path))
 		return result
 	
 	def instrument_supports_ccss(self):
