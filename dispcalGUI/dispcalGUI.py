@@ -1259,6 +1259,24 @@ class MainFrame(BaseFrame):
 		
 		self.profile_name_info_btn.SetToolTipString(
 			wrap(self.profile_name_info(), 72))
+
+		self.Freeze()
+		wx.CallAfter(self.set_size)
+
+	def set_size(self):
+		if not self.IsFrozen():
+			self.Freeze()
+		self.SetMinSize((0, 0))
+		size = (min(self.GetDisplay().ClientArea[2], 
+					max(self.GetMinSize()[0], 
+					    self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
+				-1)
+		self.SetMaxSize((-1, -1))
+		self.SetSize(size)
+		self.SetMinSize((size[0], self.GetSize()[1] - 
+								  self.calpanel.GetSize()[1] + 64))
+		if self.IsFrozen():
+			self.Thaw()
 	
 	def update_profile_type_ctrl(self):
 		""" Populate the profile type control with available choices
