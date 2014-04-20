@@ -3740,9 +3740,10 @@ class Worker(object):
 				else:
 					result = argyll_install
 		if not isinstance(result, Exception) and result:
-			if getcfg("profile.install_scope") == "l":
+			if (getcfg("profile.install_scope") == "l" and
+				sys.platform != "darwin"):
 				# We need a system-wide config file to store the path to 
-				# the Argyll binaries
+				# the Argyll binaries for the profile loader
 				result = config.makecfgdir("system", self)
 				if result:
 					result = config.writecfg("system", self)
