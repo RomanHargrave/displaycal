@@ -3709,7 +3709,7 @@ class Worker(object):
 							  self.get_device_id(quirk=False,
 												 use_serial_32=False,
 												 truncate_edid_strings=True)]
-				for device_id in set(device_ids):
+				for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
 					if device_id:
 						# NOTE: This can block
 						result = self._install_profile_colord(profile,
@@ -3924,6 +3924,7 @@ class Worker(object):
 	
 	def _install_profile_colord(self, profile, device_id):
 		""" Install profile using colord """
+		self.log("%s: Trying device ID %r" % (appname, device_id))
 		try:
 			colord.install_profile(device_id, profile, logfn=self.log)
 		except Exception, exception:
