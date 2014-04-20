@@ -1134,7 +1134,7 @@
                   </object>
                   <orient>wxVERTICAL</orient>
                 </object>
-                <style>wxVSCROLL|wxTAB_TRAVERSAL</style>
+                <style>wxHSCROLL|wxVSCROLL|wxTAB_TRAVERSAL</style>
               </object>
               <option>1</option>
               <flag>wxEXPAND</flag>
