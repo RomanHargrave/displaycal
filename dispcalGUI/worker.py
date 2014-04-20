@@ -2251,7 +2251,10 @@ class Worker(object):
 						# under Mac OS X, but it doesn't hurt to always
 						# include it
 						edid = get_edid(i, display_name)
-					except (TypeError, ValueError, WMIError):
+					except (EnvironmentError, TypeError, ValueError,
+							WMIError), exception:
+						if isinstance(exception, EnvironmentError):
+							safe_print(exception)
 						edid = {}
 					self.display_edid.append(edid)
 					if edid:
