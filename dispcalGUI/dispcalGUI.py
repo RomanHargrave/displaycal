@@ -7660,6 +7660,12 @@ class MainFrame(BaseFrame):
 				result = Error(lang.getstr("profile.required_tags_missing",
 										   " %s ".join(["A2B0", "A2B1"]) %
 										   lang.getstr("or")))
+			elif (("A2B0" in profile.tags and
+				   not isinstance(profile.tags.A2B0, ICCP.LUT16Type)) or
+				  ("A2B1" in profile.tags and
+				   not isinstance(profile.tags.A2B1, ICCP.LUT16Type))):
+				result = Error(lang.getstr("profile.required_tags_missing",
+										   "LUT16Type"))
 			elif profile.connectionColorSpace != "XYZ":
 				result = Error(lang.getstr("profile.unsupported",
 										   (profile.connectionColorSpace,
@@ -7703,6 +7709,9 @@ class MainFrame(BaseFrame):
 				profile.setDescription(os.path.basename(filename))
 				profile.calculateID()
 				profile.write(profile_save_path)
+		else:
+			show_result_dialog(lang.getstr("error.profile.file_not_created"),
+							   self)
 
 	def create_profile_handler(self, event, path=None, skip_ti3_check=False):
 		""" Create profile from existing measurements """

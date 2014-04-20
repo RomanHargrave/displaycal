@@ -4633,6 +4633,9 @@ class Worker(object):
 		tables = [1]
 		# Add perceptual tables if not present
 		if "A2B0" in profile.tags and not "A2B1" in profile.tags:
+			if not isinstance(profile.tags.A2B0, ICCP.LUT16Type):
+				self.log("%s: Can't process non-LUT16Type A2B0 table" % appname)
+				return []
 			try:
 				# Copy A2B0
 				logfiles.write("Generating A2B1 by copying A2B0\n")
@@ -4669,6 +4672,11 @@ class Worker(object):
 			if "A2B%i" % tableno in profile.tags:
 				if ("B2A%i" % tableno in profile.tags and
 					profile.tags["B2A%i" % tableno] in results):
+					continue
+				if not isinstance(profile.tags["A2B%i" % tableno],
+								  ICCP.LUT16Type):
+					self.log("%s: Can't process non-LUT16Type A2B%i table" %
+							 (appname, tableno))
 					continue
 				# Invert A2B
 				source = "A2B"
