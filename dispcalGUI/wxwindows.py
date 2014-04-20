@@ -8,7 +8,7 @@ import sys
 import config
 from config import (btn_width_correction, defaults, getbitmap, getcfg, geticon, 
 					get_verified_path, setcfg)
-from debughelpers import getevtobjname, getevttype
+from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
 from options import debug
@@ -492,7 +492,10 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 	def OnClose(self, event):
 		if hasattr(self, "OnCloseIntercept"):
-			self.OnCloseIntercept(event)
+			try:
+				self.OnCloseIntercept(event)
+			except Exception, exception:
+				handle_error(exception, self)
 			return
 		if event.GetEventObject() == self:
 			id = wx.ID_CANCEL

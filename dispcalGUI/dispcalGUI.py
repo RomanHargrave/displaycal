@@ -6080,7 +6080,6 @@ class MainFrame(BaseFrame):
 			result = wx.ID_CANCEL
 		else:
 			result = event.GetId()
-		del self.modaldlg._disabler
 		if result == wx.ID_OK:
 			if config.get_display_name() in ("Web", "Untethered", "madVR"):
 				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
@@ -6091,7 +6090,8 @@ class MainFrame(BaseFrame):
 													  lang.getstr("profile.install"),
 													  self.modaldlg)
 					if result not in (True, None):
-						self.profile_finish_consumer(result)
+						if isinstance(result, Exception):
+							show_result_dialog(result, parent=self.modaldlg)
 						return
 				safe_print("-" * 80)
 				safe_print(lang.getstr("profile.install"))
@@ -6103,22 +6103,26 @@ class MainFrame(BaseFrame):
 								  parent=self.modaldlg,
 								  progress_msg=lang.getstr("profile.install"),
 								  stop_timers=False)
-		elif self.modaldlg.preview:
-			if getcfg("calibration.file"):
-				# Load LUT curves from last used .cal file
-				self.load_cal(silent=True)
-			else:
-				# Load LUT curves from current display profile (if any, 
-				# and if it contains curves)
-				self.load_display_profile_cal(None)
+		else:
+			if self.modaldlg.preview:
+				if getcfg("calibration.file"):
+					# Load LUT curves from last used .cal file
+					self.load_cal(silent=True)
+				else:
+					# Load LUT curves from current display profile (if any, 
+					# and if it contains curves)
+					self.load_display_profile_cal(None)
 			self.profile_finish_consumer()
 	
 	def profile_finish_consumer(self, result=None):
 		if isinstance(result, Exception):
 			show_result_dialog(result, parent=self.modaldlg)
+			if not isinstance(result, (Info, Warning)):
+				return
 		# Unbind automatic lowering
 		self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
 		self.Raise()
+		del self.modaldlg._disabler
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
 		# dereference it before we can delete the python attribute
