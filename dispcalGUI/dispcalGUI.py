@@ -5347,8 +5347,7 @@ class MainFrame(BaseFrame):
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
-		if (sys.platform == "darwin" and mac_ver()[0] >= "10.6" and
-			not self.worker.auth_timestamp):
+		if sys.platform == "darwin" and mac_ver()[0] >= "10.6":
 			result = self.worker.authenticate("dispread")
 			if isinstance(result, Exception) or not result:
 				if result:
@@ -6087,8 +6086,7 @@ class MainFrame(BaseFrame):
 				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
 								   parent=self.modaldlg)
 			else:
-				if (getcfg("profile.install_scope") in ("l", "n") and
-					not self.worker.auth_timestamp):
+				if getcfg("profile.install_scope") in ("l", "n"):
 					result = self.worker.authenticate("dispwin",
 													  lang.getstr("profile.install"),
 													  self.modaldlg)
