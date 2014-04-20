@@ -1195,18 +1195,17 @@ class Sudo(object):
 			return StringWithLengthOverride("Could not run %s %s: %s" %
 											(self.sudo, " ".join(sudo_args),
 											 exception), 0)
+		self._expect_timeout(["Password:", wexpect.EOF], 10)
 		# We need to call isalive() to set the exitstatus
-		while p.isalive():
-			if p.after in ("Password:", wexpect.TIMEOUT):
+		while p.isalive() and p.after == "Password:":
+			p.send(pwd + os.linesep)
+			self._expect_timeout(["Password:", wexpect.EOF], 10)
+			if p.after == "Password:":
 				# Password was not accepted
 				self._terminate()
 				return StringWithLengthOverride(p.before.strip().decode(enc,
 																		"replace"),
 												0)
-			self._expect_timeout(["Password:", wexpect.EOF], 10)
-			if p.after == "Password:":
-				p.send(pwd + os.linesep)
-			self._expect_timeout(["Password:", wexpect.EOF], 10)
 		if p.after is wexpect.TIMEOUT:
 			safe_print("Error: sudo timed out")
 			if not p.terminate(force=True):
