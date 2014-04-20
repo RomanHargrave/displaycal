@@ -51,10 +51,11 @@ class Log():
 		Optionally use function 'fn' instead of logging.info.
 		
 		"""
+		msg = msg.replace("\r\n", "\n").replace("\r", "")
 		if fn is None and logging.getLogger(appname).handlers:
 			fn = logging.getLogger(appname).info
 		if fn:
-			for line in msg.replace("\r\n", "\n").replace("\r", "").split("\n"):
+			for line in msg.split("\n"):
 				fn(line)
 		if "wx" in sys.modules:
 			from wxaddons import wx
