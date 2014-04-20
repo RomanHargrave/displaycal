@@ -132,10 +132,17 @@ def check_argyll_bin(paths=None):
 		cur_dir = os.path.dirname(exe)
 		if prev_dir:
 			if cur_dir != prev_dir:
-				if verbose: safe_print("Warning - the Argyll executables are "
-									   "scattered. They should be in the same "
-									   "directory.")
-				return False
+				if name in argyll_optional:
+					if verbose: safe_print("Warning: Optional Argyll "
+										   "executable %s is not in the same "
+										   "directory as the main executables "
+										   "(%s)." % (exe, prev_dir))
+				else:
+					if verbose: safe_print("Error: Main Argyll "
+										   "executable %s is not in the same "
+										   "directory as the other executables "
+										   "(%s)." % (exe, prev_dir))
+					return False
 		else:
 			prev_dir = cur_dir
 	if verbose >= 3: safe_print("Argyll binary directory:", cur_dir)
@@ -149,7 +156,7 @@ def check_argyll_bin(paths=None):
 					paths.remove(argyll_dir)
 				paths = [argyll_dir] + paths
 		safe_print("[D] Searchpath:\n  ", "\n  ".join(paths))
-	argyll_dir = os.path.dirname(cur_dir)
+	argyll_dir = os.path.dirname(prev_dir)
 	if (os.path.isdir(os.path.join(argyll_dir, "ref")) and
 		not argyll_dir in config.data_dirs):
 		config.data_dirs.append(argyll_dir)
