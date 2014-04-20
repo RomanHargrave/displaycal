@@ -1146,13 +1146,15 @@ class PlotCanvas(wx.Panel):
         elif self._pointSize != (1.0, 1.0):
             self._pointSize = (1.0, 1.0)
             self._setSize()
-        if sys.platform in ("darwin", "win32") or not isinstance(dc, wx.GCDC):
+        if (sys.platform in ("darwin", "win32") or
+            not isinstance(dc, wx.GCDC) or wx.VERSION >= (2, 9)):
             self._fontScale = sum(self._pointSize) / 2.0
         else:
             # on Linux, we need to correct the font size by a certain factor if wx.GCDC is used,
             # to make text the same size as if wx.GCDC weren't used
+            screenppi = map(float, wx.ScreenDC().GetPPI())
             ppi = dc.GetPPI()
-            self._fontScale = (96.0 / ppi[0] * self._pointSize[0] + 96.0 / ppi[1] * self._pointSize[1]) / 2.0
+            self._fontScale = (screenppi[0] / ppi[0] * self._pointSize[0] + screenppi[1] / ppi[1] * self._pointSize[1]) / 2.0
         graphics._pointSize = self._pointSize
             
         dc.SetTextForeground(self.GetForegroundColour())
