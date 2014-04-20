@@ -44,7 +44,7 @@ import threading
 import traceback
 import urllib
 from hashlib import md5
-from time import strftime, strptime, struct_time
+from time import sleep, strftime, strptime, struct_time
 from zlib import crc32
 
 # 3rd party modules
@@ -120,7 +120,8 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent, FileDrop)
-from wxwindows import (AboutDialog, BaseFrame, ConfirmDialog,
+from wxwindows import (AboutDialog, BaseFrame, BitmapBackgroundPanel,
+					   BitmapBackgroundPanelText, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
 					   LogWindow, ProgressDialog,
 					   TooltipWindow)
@@ -766,16 +767,7 @@ class MainFrame(BaseFrame):
 
 	""" Display calibrator main application window. """
 	
-	def __init__(self):
-		# Startup messages
-		if verbose >= 1:
-			safe_print(lang.getstr("startup"))
-		if sys.platform != "darwin":
-			if not autostart:
-				safe_print(lang.getstr("warning.autostart_system"))
-			if not autostart_home:
-				safe_print(lang.getstr("warning.autostart_user"))
-		
+	def __init__(self, worker):
 		# Check for required resource files and get pre-canned testcharts
 		self.dist_testcharts = []
 		self.dist_testchart_names = []
@@ -788,30 +780,19 @@ class MainFrame(BaseFrame):
 			elif ext.lower() == ".ti1":
 				self.dist_testcharts += [path]
 				self.dist_testchart_names += [os.path.basename(path)]
-			wx.GetApp().progress_dlg.Pulse()
 		if missing:
-			raise ResourceError(safe_str(lang.getstr("resources.notfound.warning") + "\n" +
-								"\n".join(missing)))
-		wx.GetApp().progress_dlg.Pulse()
-		
-		# Create main worker instance
-		wx.GetApp().progress_dlg.Pulse()
-		self.worker = Worker(None)
-		wx.GetApp().progress_dlg.Pulse()
-		self.worker.enumerate_displays_and_ports(enumerate_ports=getcfg("enumerate_ports.auto"))
-		wx.GetApp().progress_dlg.Pulse()
+			wx.CallAfter(show_result_dialog,
+						 lang.getstr("resources.notfound.warning") +
+						 "\n" + safe_unicode("\n".join(missing)), self)
 		
 		# Initialize GUI
-		if verbose >= 1:
-			safe_print(lang.getstr("initializing_gui"))
-		wx.GetApp().progress_dlg.Pulse(lang.getstr("initializing_gui"))
-		wx.GetApp().progress_dlg.stop_timer()
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "main.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, None, "mainframe")
 		self.PostCreate(pre)
+		self.worker = worker
 		self.worker.owner = self
 		self.init_frame()
 		self.init_defaults()
@@ -853,8 +834,6 @@ class MainFrame(BaseFrame):
 			safe_print(lang.getstr("ready"))
 		
 		self.log()
-		wx.GetApp().progress_dlg.stop_timer()
-		wx.GetApp().progress_dlg.Close()
 		
 		# Check for updates if configured
 		if getcfg("update_check"):
@@ -9638,19 +9617,76 @@ class MainApp(wx.App):
 		##if debug:
 			##safe_print("[D]", lang.getstr("!language_name"), wx_lang, 
 					   ##self.locale.GetLocale())
-		self.progress_dlg = ProgressDialog(msg=lang.getstr("startup"), 
-										   handler=self.startup_progress_handler,
-										   style=wx.PD_SMOOTH & ~wx.PD_CAN_ABORT,
-										   pos=(getcfg("position.x") + 50, 
-												getcfg("position.y") + 50))
-		self.progress_dlg.MakeModal(False)
-		self.frame = MainFrame()
-		self.SetTopWindow(self.frame)
-		self.frame.Show()
+		self.progress_dlg = StartupFrame()
 		return True
+
+
+class StartupFrame(wx.Frame):
+
+	def __init__(self):
+		wx.Frame.__init__(self, None, title="%s %s: %s" %
+											(appname, version,
+											 lang.getstr("startup")),
+						  style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER |
+														   wx.RESIZE_BOX | 
+														   wx.MAXIMIZE_BOX))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.SetSizer(self.sizer)
+		# Splash panel
+		self.splash = BitmapBackgroundPanel(self)
+		self.splash.scalebitmap = (False, ) * 2
+		self.splash.SetBitmap(getbitmap("theme/header"))
+		self.splash.SetMinSize((600, 60))
+		self.sizer.Add(self.splash)
+		# Message panel
+		self.msg = BitmapBackgroundPanelText(self)
+		self.msg.drawline = False
+		self.msg.SetForegroundColour("#333333")
+		self.msg.SetBitmap(getbitmap("theme/gradient"))
+		font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
+					   wx.FONTWEIGHT_NORMAL)
+		self.msg.SetFont(font)
+		self.msg.SetLabel(lang.getstr("startup"))
+		self.msg.SetMinSize((600, 32))
+		self.sizer.Add(self.msg)
+		self.SetClientSize((600, 92))
+		self.Layout()
+		self.Center()
+		self.Show()
+		# We need to use CallLater instead of CallAfter otherwise dialogs
+		# will not show while the main frame is not yet initialized
+		wx.CallLater(1, self.startup)
+
+	def startup(self):
+		self.worker = Worker()
+		self.worker.enumerate_displays_and_ports(enumerate_ports=getcfg("enumerate_ports.auto"))
+		if verbose >= 1:
+			safe_print(lang.getstr("initializing_gui"))
+		self.Pulse(lang.getstr("initializing_gui"))
+		# Use CallLater so the label has a chance to update
+		wx.CallLater(1, self.setup_frame)
+
+	def setup_frame(self):
+		app = wx.GetApp()
+		app.frame = MainFrame(self.worker)
+		app.SetTopWindow(app.frame)
+		app.frame.Show()
+		self.Close()
+
+	def Pulse(self, msg=None):
+		if msg and msg != self.msg._label:
+			self.splash.Refresh()
+			self.splash.Update()
+			self.msg.SetLabel(msg)
+			self.msg.Refresh()
+			self.msg.Update()
+		return True, False
 	
-	def startup_progress_handler(self, event):
-		self.progress_dlg.Pulse()
+	def Update(self, value, msg=None):
+		return self.Pulse(msg)
+
+	UpdatePulse = Pulse
 
 
 class MeasurementFileCheckSanityDialog(ConfirmDialog):
@@ -10062,6 +10098,14 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 def main():
 	initcfg()
 	lang.init()
+	# Startup messages
+	if verbose >= 1:
+		safe_print(lang.getstr("startup"))
+	if sys.platform != "darwin":
+		if not autostart:
+			safe_print(lang.getstr("warning.autostart_system"))
+		if not autostart_home:
+			safe_print(lang.getstr("warning.autostart_user"))
 	app = MainApp(redirect=False)  # Don't redirect stdin/stdout
 	app.MainLoop()
 

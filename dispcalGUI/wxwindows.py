@@ -416,6 +416,8 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	def __init__(self, *args, **kwargs):
 		BitmapBackgroundPanel.__init__(self, *args, **kwargs)
 		self._label = ""
+		self.drawline = True
+		self.textshadowcolor = wx.Colour(214, 214, 214)
 	
 	def _set_font(self, dc):
 		try:
@@ -435,10 +437,11 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
-		pen = wx.Pen(wx.Colour(0x66, 0x66, 0x66), 1, wx.SOLID)
-		pen.SetCap(wx.CAP_BUTT)
-		dc.SetPen(pen)
-		dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
+		if self.drawline:
+			pen = wx.Pen(wx.Colour(0x66, 0x66, 0x66), 1, wx.SOLID)
+			pen.SetCap(wx.CAP_BUTT)
+			dc.SetPen(pen)
+			dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
 		dc = self._set_font(dc)
 		w1, h1 = self.GetTextExtent(self.GetLabel())
 		w2, h2 = dc.GetTextExtent(self.GetLabel())
@@ -446,8 +449,9 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		h = (max(h1, h2) - min(h1, h2)) / 2.0 + min(h1, h2)
 		x, y = (self.GetSize()[0] / 2.0 - w / 2.0,
 				self.GetSize()[1] / 2.0 - h / 2.0)
-		dc.SetTextForeground(wx.Colour(214, 214, 214))
-		dc.DrawText(self.GetLabel(), x + 1, y + 1)
+		if self.textshadowcolor:
+			dc.SetTextForeground(self.textshadowcolor)
+			dc.DrawText(self.GetLabel(), x + 1, y + 1)
 		dc.SetTextForeground(self.GetForegroundColour())
 		dc.DrawText(self.GetLabel(), x, y)
 
