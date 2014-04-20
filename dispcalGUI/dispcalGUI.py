@@ -1054,10 +1054,10 @@ class MainFrame(BaseFrame):
 		
 		"""
 		self.Bind(wx.EVT_IDLE, self.frame_enableresize_handler)
-		size = self.GetSize()
+		minwidth = self.GetMinSize()[0]
 		self.Freeze()
-		self.SetMinSize((self.GetMinSize()[0], 0))
-		self.SetMaxSize((size[0], fullheight))
+		self.SetMinSize((minwidth, 0))
+		self.SetMaxSize((max(minwidth, self.GetSize()[0]), fullheight))
 		self.calpanel.SetMaxSize((-1, virtualheight))
 		self.calpanel.SetMinSize((-1, 64))
 		self.calpanel.SetMaxSize((-1, height))
