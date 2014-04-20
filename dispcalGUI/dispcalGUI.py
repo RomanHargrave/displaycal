@@ -6092,6 +6092,7 @@ class MainFrame(BaseFrame):
 					if result not in (True, None):
 						if isinstance(result, Exception):
 							show_result_dialog(result, parent=self.modaldlg)
+						self.modaldlg.Raise()
 						return
 				safe_print("-" * 80)
 				safe_print(lang.getstr("profile.install"))
@@ -6118,6 +6119,7 @@ class MainFrame(BaseFrame):
 		if isinstance(result, Exception):
 			show_result_dialog(result, parent=self.modaldlg)
 			if not isinstance(result, (Info, Warning)):
+				self.modaldlg.Raise()
 				return
 		# Unbind automatic lowering
 		self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
