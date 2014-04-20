@@ -4085,11 +4085,30 @@ class Worker(object):
 			autostart_home_lnkname = os.path.join(autostart_home, 
 												  name + ".lnk")
 		loader_args = []
-		if os.path.basename(sys.executable) in ("python.exe", 
-												"pythonw.exe"):
+		if os.path.basename(sys.executable).lower() in ("python.exe", 
+														"pythonw.exe"):
 			cmd = sys.executable
-			loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
-																 "dispcalGUI-apply-profiles"))]
+			pyw = os.path.normpath(os.path.join(pydir, "..",
+												appname +
+												"-apply-profiles.pyw"))
+			if os.path.exists(pyw):
+				# Running from source or 0install
+				# Check if this is a 0install implementation, in which
+				# case we want to call 0launch with the appropriate
+				# command
+				if re.match("sha\d+(?:new)?",
+							os.path.basename(os.path.dirname(pydir))):
+					cmd = which("0launch.exe") or "0launch"
+					loader_args += ["--command=run-apply-profiles",
+									"http://%s/0install/dispcalGUI.xml" %
+									domain.lower()]
+				else:
+					# Running from source
+					loader_args += [u'"%s"' % pyw]
+			else:
+				# Regular install
+				loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
+																	 "dispcalGUI-apply-profiles"))]
 		else:
 			cmd = os.path.join(pydir, "dispcalGUI-apply-profiles.exe")
 		try:
@@ -4097,7 +4116,8 @@ class Worker(object):
 											  pythoncom.CLSCTX_INPROC_SERVER, 
 											  shell.IID_IShellLink)
 			scut.SetPath(cmd)
-			scut.SetWorkingDirectory(pydir)
+			if len(loader_args) == 1:
+				scut.SetWorkingDirectory(pydir)
 			if isexe:
 				scut.SetIconLocation(exe, 0)
 			else:
@@ -4242,9 +4262,9 @@ class Worker(object):
 				if os.path.exists(pyw):
 					# Running from source, or 0install/Listaller install
 					# Check if this is a 0install implementation, in which
-					# case we wanto to call 0launch with the appropriate
+					# case we want to call 0launch with the appropriate
 					# command
-					if re.match("sha\d+(?:new)?\W",
+					if re.match("sha\d+(?:new)?",
 								os.path.basename(os.path.dirname(pydir))):
 						executable = ("0launch --command=run-apply-profiles "
 									  "http://%s/0install/dispcalGUI.xml" %
