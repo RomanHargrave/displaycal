@@ -1658,10 +1658,11 @@ def main(profile=None):
 	app.frame.update_controls()
 	if profile and profile.startswith("-"):
 		profile = None
+	display_no = get_argyll_display_number(app.frame.get_display()[1])
+	setcfg("display.number", display_no + 1)
 	if profile:
 		app.frame.drop_handler(profile)
 	else:
-		display_no = get_argyll_display_number(app.frame.get_display()[1])
 		app.frame.load_lut(get_display_profile(display_no))
 	app.frame.Show()
 	app.MainLoop()
