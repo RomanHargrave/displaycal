@@ -349,7 +349,11 @@ class TestchartEditor(wx.Frame):
 		self.view_3d_format_ctrl = wx.Choice(panel, -1, choices=["HTML",
 																 "VRML",
 																 "X3D"])
-		self.view_3d_format_ctrl.SetSelection(0)
+		self.view_3d_format_ctrl.SetStringSelection(getcfg("3d.format"))
+		self.view_3d_format_ctrl.Bind(wx.EVT_CHOICE,
+									  lambda event:
+									  setcfg("3d.format",
+											 event.GetEventObject().GetStringSelection()))
 		hsizer.Add(self.view_3d_format_ctrl, flag=(wx.ALL & ~wx.LEFT) |
 												  wx.ALIGN_CENTER_VERTICAL,
 				   border=border * 2)

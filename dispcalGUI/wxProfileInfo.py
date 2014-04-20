@@ -998,7 +998,11 @@ class ProfileInfoFrame(LUTFrame):
 		self.view_3d_format_ctrl = wx.Choice(p1, -1, choices=["HTML",
 															  "VRML",
 															  "X3D"])
-		self.view_3d_format_ctrl.SetSelection(0)
+		self.view_3d_format_ctrl.SetStringSelection(getcfg("3d.format"))
+		self.view_3d_format_ctrl.Bind(wx.EVT_CHOICE,
+									  lambda event:
+									  setcfg("3d.format",
+											 event.GetEventObject().GetStringSelection()))
 		self.plot_mode_sizer.Add(self.view_3d_format_ctrl,
 								 flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
 								 border=8)

@@ -448,6 +448,7 @@ valid_ranges = {
 }
 
 valid_values = {
+	"3d.format": ["HTML", "VRML", "X3D"],
 	"3dlut.bitdepth.input": [8, 10, 12, 14, 16],
 	"3dlut.bitdepth.output": [8, 10, 12, 14, 16],
 	"3dlut.bt1886_gamma_type": ["b", "B"],
@@ -493,6 +494,7 @@ valid_values = {
 }
 
 defaults = {
+	"3d.format": "HTML",
 	"3dlut.apply_bt1886_gamma_mapping": 1,
 	"3dlut.bitdepth.input": 10,
 	"3dlut.bitdepth.output": 10,
