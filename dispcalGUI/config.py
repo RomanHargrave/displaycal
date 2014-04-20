@@ -75,7 +75,7 @@ if sys.platform == "win32":
 		# Lib\site-packages\dispcalGUI can be found
 		# (e.g. Scripts\dispcalGUI-apply-profiles)
 		data_dirs += [exedir]
-	btn_width_correction = 20
+	btn_width_correction = 0
 	script_ext = ".cmd"
 	scale_adjustment_factor = 1.0
 	config_sys = os.path.join(commonappdata[0], appname)
@@ -89,7 +89,7 @@ if sys.platform == "win32":
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:
-	btn_width_correction = 10
+	btn_width_correction = 0
 	if sys.platform == "darwin":
 		script_ext = ".command"
 		mac_create_app = True
