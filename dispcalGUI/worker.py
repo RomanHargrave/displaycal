@@ -1033,7 +1033,8 @@ class Sudo(object):
 									 "l [command]":
 									 bool(re.search("-l\W(?:.*?\W)?command\W",
 													stdout)),
-									 "K": bool(re.search("-K\W", stdout))}
+									 "K": bool(re.search("-K\W", stdout)),
+									 "k": bool(re.search("-k\W", stdout))}
 			if debug:
 				safe_print("[D] Available sudo options:", 
 						   ", ".join(filter(lambda option: self.availoptions[option], 
@@ -1047,39 +1048,187 @@ class Sudo(object):
 
 	def __unicode__(self):
 		return unicode(self.sudo or "")
+	
+	def _expect_timeout(self, patterns, timeout=-1, child_timeout=1):
+		"""
+		wexpect.spawn.expect with better timeout handling.
+		
+		The default expect can block up to timeout seconds if the child is
+		already dead. To prevent this, we run expect in a loop until a pattern
+		is matched, timeout is reached or an exception occurs. The max time an
+		expect call will block if the child is already dead can be set with the
+		child_timeout parameter.
+		
+		"""
+		if timeout == -1:
+			timeout = self.subprocess.timeout
+		patterns = list(patterns)
+		if not wexpect.TIMEOUT in patterns:
+			patterns.append(wexpect.TIMEOUT)
+		start = time()
+		while True:
+			result = self.subprocess.expect(patterns, timeout=child_timeout)
+			if (self.subprocess.after is not wexpect.TIMEOUT or
+				time() - start >= timeout):
+				break
+		return result
+
+	def _terminate(self):
+		""" Terminate running sudo subprocess """
+		self.subprocess.sendcontrol("C")
+		self._expect_timeout([wexpect.EOF], 10)
+		if self.subprocess.after is wexpect.TIMEOUT:
+			safe_print("Warning: sudo timed out")
+			if not self.subprocess.terminate(force=True):
+				safe_print("Warning: Couldn't terminate timed-out "
+						   "sudo subprocess")
+		else:
+			safe_print(self.subprocess.before.strip().decode(enc, "replace"))
+
+	def authenticate(self, args, title, parent=None):
+		"""
+		Athenticate for a given command
+		
+		The return value will be a tuple (auth_succesful, password).
+		
+		auth_succesful will be a custom class that will always have length 0 if
+		authentication was not successful or the command is not allowed (even
+		if the actual string length is non-zero), thus allowing for easy
+		boolean comparisons.
+		
+		"""
+		# Authentication using sudo is pretty convoluted if dealing with
+		# platform and configuration differences. Ask for a password by first
+		# clearing any cached credentials (sudo -K) so that sudo is guaranteed
+		# to ask for a password if a command is run through it, then we spawn
+		# sudo true (with true being the standard GNU utility that always
+		# has an exit status of 0) and expect the password prompt. The user
+		# is then given the opportunity to enter a password, which is then fed
+		# to sudo. If sudo exits with a status of 0, the password must have
+		# been accepted, but we still don't know for sure if our command is
+		# allowed, so we run sudo -l <command> to determine if it is
+		# indeed allowed.
+		pwd = ""
+		dlg = ConfirmDialog(
+			parent, title=title, 
+			msg=lang.getstr("dialog.enter_password"), 
+			ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
+			bitmap=geticon(32, "lock"))
+		dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, pwd, 
+									   size=(320, -1), 
+									   style=wx.TE_PASSWORD | 
+											 wx.TE_PROCESS_ENTER)
+		dlg.pwd_txt_ctrl.Bind(wx.EVT_TEXT_ENTER, 
+							  lambda event: dlg.EndModal(wx.ID_OK))
+		dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, 
+					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		dlg.ok.SetDefault()
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		# Remove cached credentials
+		self.kill()
+		sudo_args = ["-p", "Password:", "true"]
+		try:
+			p = self.subprocess = wexpect.spawn(safe_str(self.sudo), sudo_args)
+		except Exception, exception:
+				return StringWithLengthOverride("Could not run %s %s: %s" %
+												(self.sudo, " ".join(sudo_args),
+												 exception), 0), pwd
+		self._expect_timeout(["Password:", wexpect.EOF], 10)
+		# We need to call isalive() to set the exitstatus
+		while p.isalive() and p.after == "Password:":
+			# Ask for password
+			dlg.pwd_txt_ctrl.SetFocus()
+			result = dlg.ShowModal()
+			pwd = dlg.pwd_txt_ctrl.GetValue()
+			if result != wx.ID_OK:
+				self._terminate()
+				return False, pwd
+			p.send(pwd + os.linesep)
+			self._expect_timeout(["Password:", wexpect.EOF], 10)
+			if p.after == "Password:":
+				msg = lang.getstr("dialog.enter_password")
+				errstr = p.before.strip().decode(enc, "replace")
+				if errstr:
+					safe_print(errstr)
+					msg = "\n\n".join([errstr, msg])
+				dlg.message.SetLabel(msg)
+				dlg.message.Wrap(dlg.GetSize()[0] - 32 - 12 * 2)
+				dlg.pwd_txt_ctrl.SetValue("")
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
+		dlg.Destroy()
+		if p.after is wexpect.TIMEOUT:
+			safe_print("Error: sudo timed out")
+			if not p.terminate(force=True):
+				safe_print("Warning: Couldn't terminate timed-out sudo "
+						   "subprocess")
+			return StringWithLengthOverride("sudo timed out", 0), pwd
+		if p.exitstatus != 0:
+			return StringWithLengthOverride(p.before.strip().decode(enc,
+																	"replace") or
+											("sudo exited prematurely with "
+											 "status %s" % p.exitstatus), 0), pwd
+		# Password was accepted, check if command is allowed
+		return self.is_allowed(args, pwd), pwd
 
 	def is_allowed(self, args=None, pwd=""):
 		"""
 		Check if a command is allowed via sudo. Return either a string
 		listing allowed and forbidden commands, or the fully-qualified path of
 		the command along with any arguments, or an error message in case the 
-		command is not allowed.
+		command is not allowed, or False if the password was not accepted.
 		
-		The returned string is a custom class that will always return length 0
+		The returned error is a custom class that will always have length 0
 		if the command is not allowed (even if the actual string length is
 		non-zero), thus allowing for easy boolean comparisons.
 		
 		"""
-		if self.sudo:
-			sudo_args = ["-l", "-S"]
-			# Set sudo args based on available options
-			if self.availoptions.get("l [command]") and args:
-				sudo_args += args
-			stdin = tempfile.SpooledTemporaryFile()
-			stdin.write(pwd.encode(enc, "replace") + os.linesep)
-			stdin.seek(0)
-			sudoproc = sp.Popen([self.sudo] + sudo_args, stdin=stdin,
-								stdout=sp.PIPE, stderr=sp.PIPE)
-			stdout, stderr = [std.strip() for std in sudoproc.communicate()]
-			if not stdin.closed:
-				stdin.close()
-			if stdout:
-				std = stdout
-			else:
-				std = stderr
-		else:
-			std, stdout = lang.getstr("file.missing", "sudo"), ""
-		return StringWithLengthOverride(std, len(stdout))
+		sudo_args = ["-p", "Password:", "-l"]
+		# Set sudo args based on available options
+		if self.availoptions.get("l [command]") and args:
+			sudo_args += args
+		try:
+			p = self.subprocess = wexpect.spawn(safe_str(self.sudo),
+												sudo_args)
+		except Exception, exception:
+			return StringWithLengthOverride("Could not run %s %s: %s" %
+											(self.sudo, " ".join(sudo_args),
+											 exception), 0)
+		# We need to call isalive() to set the exitstatus
+		while p.isalive():
+			if p.after in ("Password:", wexpect.TIMEOUT):
+				# Password was not accepted
+				self._terminate()
+				return StringWithLengthOverride(p.before.strip().decode(enc,
+																		"replace"),
+												0)
+			self._expect_timeout(["Password:", wexpect.EOF], 10)
+			if p.after == "Password:":
+				p.send(pwd + os.linesep)
+			self._expect_timeout(["Password:", wexpect.EOF], 10)
+		if p.after is wexpect.TIMEOUT:
+			safe_print("Error: sudo timed out")
+			if not p.terminate(force=True):
+				safe_print("Warning: Couldn't terminate timed-out sudo "
+						   "subprocess")
+			return StringWithLengthOverride("sudo timed out", 0)
+		if p.exitstatus != 0:
+			return StringWithLengthOverride(p.before.strip().decode(enc,
+																	"replace") or
+											("sudo exited prematurely with "
+											 "status %s" % p.exitstatus), 0)
+		return p.before.strip().decode(enc, "replace")
+
+	def kill(self):
+		""" Remove cached credentials """
+		kill_arg = None
+		if self.availoptions.get("K"):
+			kill_arg = "-K"
+		elif self.availoptions.get("k"):
+			kill_arg = "-k"
+		if kill_arg:
+			sp.call([safe_str(self.sudo), kill_arg])
 
 
 class WPopen(sp.Popen):
@@ -1305,23 +1454,8 @@ class Worker(object):
 		dialog) or an error.
 		
 		"""
-		# Authentication using sudo is pretty convoluted if dealing with
-		# platform and configuration differences. Here's what we do:
-		# If no password was previously available, or if the requested command
-		# cannot be run via sudo regardless of password (we check this with
-		# sudo -l <command>), we ask for a password. This is done by first
-		# clearing any cached credentials (sudo -K) so that sudo is guaranteed
-		# to ask for a password if a command is run through it, then we spawn
-		# sudo true (with true being the standard GNU utility that always
-		# has an exit status of 0) and expect the password prompt. The user
-		# is then given the opportunity to enter a password, which is then fed
-		# to sudo. If sudo exits with a status of 0, the password must have
-		# been accepted, but we still don't know for sure if our command is
-		# allowed, so we run sudo -l <command> again to determine if it is
-		# indeed allowed.
-		if sys.platform == "win32":
+		if sys.platform == "win32" or os.geteuid() == 0:
 			return
-		safe_print(lang.getstr("auth"))
 		self.auth_timestamp = 0
 		if not self.sudo:
 			self.sudo = Sudo()
@@ -1334,8 +1468,13 @@ class Worker(object):
 				cmd = which(ocmd)
 		if not cmd or not os.path.isfile(cmd):
 			return Error(lang.getstr("file.missing", ocmd))
-		pwd = self.pwd 
-		if not pwd or not self.sudo.is_allowed([cmd, "-?"], pwd):
+		pwd = self.pwd
+		args = [cmd, "-?"]
+		if not pwd or not self.sudo.is_allowed(args, pwd):
+			# If no password was previously available, or if the requested
+			# command cannot be run via sudo regardless of password (we check
+			# this with sudo -l <command>), we ask for a password.
+			safe_print(lang.getstr("auth"))
 			progress_dlg = self._progress_wnd or getattr(wx.GetApp(),
 														 "progress_dlg", None)
 			if parent is None:
@@ -1343,85 +1482,15 @@ class Worker(object):
 					parent = progress_dlg
 				else:
 					parent = self.owner
-			dlg = ConfirmDialog(
-				parent, title=title, 
-				msg=lang.getstr("dialog.enter_password"), 
-				ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
-				bitmap=geticon(32, "lock"))
-			dlg.pwd_txt_ctrl = wx.TextCtrl(dlg, -1, pwd, 
-										   size=(320, -1), 
-										   style=wx.TE_PASSWORD | 
-												 wx.TE_PROCESS_ENTER)
-			dlg.pwd_txt_ctrl.Bind(wx.EVT_TEXT_ENTER, 
-								  lambda event: dlg.EndModal(wx.ID_OK))
-			dlg.sizer3.Add(dlg.pwd_txt_ctrl, 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			dlg.ok.SetDefault()
-			dlg.sizer0.SetSizeHints(dlg)
-			dlg.sizer0.Layout()
-			sudo_args = ["-l"]
-			if self.sudo.availoptions.get("l [command]"):
-				sudo_args += [cmd, "-?"]
-			if self.sudo.availoptions.get("K"):
-				# Make sure sudo will actually ask for a password
-				sp.call([safe_str(self.sudo), "-K"], stdout=sp.PIPE, 
-						stderr=sp.PIPE)
-			try:
-				p = wexpect.spawn(safe_str(self.sudo), ["-p", "Password:",
-														"true"])
-			except Exception, exception:
-				return Error("Could not launch sudo: %s" % exception)
-			self.expect_timeout(["Password:", wexpect.EOF], 10, subprocess=p)
-			# We need to call isalive() to set the exitstatus
-			while p.isalive() and p.after == "Password:":
-				# Ask for password
-				dlg.pwd_txt_ctrl.SetFocus()
-				result = dlg.ShowModal()
-				pwd = dlg.pwd_txt_ctrl.GetValue()
-				if result != wx.ID_OK:
-					p.sendcontrol("C")
-					self.expect_timeout([wexpect.EOF], 10, subprocess=p)
-					if p.after is wexpect.TIMEOUT:
-						safe_print("Warning: sudo timed out")
-						if not p.terminate(force=True):
-							safe_print("Warning: Couldn't terminate timed-out "
-									   "sudo subprocess")
-					else:
-						safe_print(p.before.strip().decode(enc, "replace"))
-					safe_print(lang.getstr("aborted"))
-					return False
-				p.send(pwd + os.linesep)
-				self.expect_timeout(["Password:", wexpect.EOF], 10,
-									subprocess=p)
-				if p.after == "Password:":
-					msg = lang.getstr("dialog.enter_password")
-					errstr = p.before.strip().decode(enc, "replace")
-					if errstr:
-						safe_print(errstr)
-						msg = "\n\n".join([errstr, msg])
-					dlg.message.SetLabel(msg)
-					dlg.message.Wrap(dlg.GetSize()[0] - 32 - 12 * 2)
-					dlg.pwd_txt_ctrl.SetValue("")
-					dlg.sizer0.SetSizeHints(dlg)
-					dlg.sizer0.Layout()
-			dlg.Destroy()
-			if p.after is wexpect.TIMEOUT:
-				safe_print("Error: sudo timed out")
-				if not p.terminate(force=True):
-					safe_print("Warning: Couldn't terminate timed-out sudo "
-							   "subprocess")
-				return UnloggedError("sudo timed out")
-			if p.exitstatus != 0:
-				return Error(p.before.strip().decode(enc, "replace") or
-							 ("sudo exited prematurely with status %s" %
-							  p.exitstatus))
-			# Password was accepted, check if command is allowed
-			is_allowed = self.sudo.is_allowed([cmd, "-?"], pwd)
-			if is_allowed:
-				self.auth_timestamp = time()
+			result, pwd = self.sudo.authenticate(args, title, parent)
+			if result:
 				self.pwd = pwd
+			elif result is False:
+				safe_print(lang.getstr("aborted"))
+				return False
 			else:
-				return Error(is_allowed)
+				return Error(result)
+		self.auth_timestamp = time()
 		return True
 	
 	def instrument_can_use_ccxx(self):
@@ -2436,6 +2505,8 @@ class Worker(object):
 				self.retcode = 0
 				return True
 			asroot = True
+		if asroot:
+			silent = False
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
@@ -2506,19 +2577,15 @@ class Worker(object):
 				# Avoid problems with encoding
 				working_dir = win32api.GetShortPathName(working_dir)
 		sudo = None
-		# Run commands through wexpect.spawn instead of subprocess.Popen if
-		# all of these conditions apply:
-		# - command is dispcal, dispread or spotread
-		# - arguments are not empty
-		# - actual user interaction in a terminal is not needed OR
-		#   we are on Windows and running without a console
 		measure_cmds = (get_argyll_utilname("dispcal"), 
 						get_argyll_utilname("dispread"), 
 						get_argyll_utilname("spotread"))
 		process_cmds = (get_argyll_utilname("collink"),
 						get_argyll_utilname("colprof"),
 						get_argyll_utilname("targen"))
-		interact = args and not "-?" in args and cmdname in measure_cmds + process_cmds
+		# Run commands through wexpect.spawn instead of subprocess.Popen if
+		# any of these conditions apply
+		use_pty = args and not "-?" in args and cmdname in measure_cmds + process_cmds
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
@@ -2539,6 +2606,9 @@ class Worker(object):
 						return result
 				sudo = unicode(self.sudo)
 		if sudo:
+			if not use_pty:
+				# Sudo may need a tty depending on configuration
+				use_pty = True
 			cmdline.insert(0, sudo)
 			if (cmdname == get_argyll_utilname("dispwin")
 				and sys.platform != "darwin"
@@ -2546,7 +2616,7 @@ class Worker(object):
 				and getcfg("sudo.preserve_environment")):
 				# Preserve environment so $DISPLAY is set
 				cmdline.insert(1, "-E")
-			if not interact:
+			if not use_pty:
 				cmdline.insert(1, "-S")
 				# Set empty string as password prompt to hide it from stderr
 				cmdline.insert(1, "")
@@ -2679,7 +2749,7 @@ class Worker(object):
 				startupinfo.wShowWindow = sp.SW_HIDE
 			else:
 				startupinfo = None
-			if not interact:
+			if not use_pty:
 				if silent:
 					stderr = sp.STDOUT
 				else:
@@ -2727,7 +2797,7 @@ class Worker(object):
 				logfiles += [stdout, self.recent, self.lastmsg, self]
 			tries = 1
 			while tries > 0:
-				if interact:
+				if use_pty:
 					if self.argyll_version >= [1, 2] and USE_WPOPEN and \
 					   os.environ.get("ARGYLL_NOT_INTERACTIVE"):
 						self.subprocess = WPopen(" ".join(cmdline) if shell else
@@ -2855,21 +2925,21 @@ class Worker(object):
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
 								self.errors += [line.decode(enc, "replace")]
-					if tries > 0 and not interact:
+					if tries > 0 and not use_pty:
 						stderr = tempfile.SpooledTemporaryFile()
-				if capture_output or interact:
+				if capture_output or use_pty:
 					stdout.seek(0)
 					self.output = [re.sub("^\.{4,}\s*$", "", 
 										  line.decode(enc, "replace")) 
 								   for line in stdout.readlines()]
 					stdout.close()
 					if len(self.output) and log_output:
-						if not interact:
+						if not use_pty:
 							self.log("".join(self.output).strip())
 						if display_output and self.owner and \
 						   hasattr(self.owner, "infoframe"):
 							wx.CallAfter(self.owner.infoframe.Show)
-					if tries > 0 and not interact:
+					if tries > 0 and not use_pty:
 						stdout = tempfile.SpooledTemporaryFile()
 				if not silent and len(self.errors):
 					errstr = "".join(self.errors).strip()
@@ -2902,9 +2972,9 @@ class Worker(object):
 		if debug and not silent:
 			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
-			if interact and verbose >= 1 and not silent:
+			if use_pty and verbose >= 1 and not silent:
 				safe_print(lang.getstr("aborted"))
-			if interact and len(self.output):
+			if use_pty and len(self.output):
 				for i, line in enumerate(self.output):
 					if "Calibrate failed with 'User hit Abort Key' (No device error)" in line:
 						break
@@ -2938,33 +3008,6 @@ class Worker(object):
 						return UnloggedError(errmsg.strip())
 			return False
 		return True
-	
-	def expect_timeout(self, patterns, timeout=-1, child_timeout=1,
-					   subprocess=None):
-		"""
-		wexpect.spawn.expect with better timeout handling.
-		
-		The default expect can block up to timeout seconds if the child is
-		already dead. To prevent this, we run expect in a loop until a pattern
-		is matched, timeout is reached or an exception occurs. The max time an
-		expect call will block if the child is already dead can be set with the
-		child_timeout parameter.
-		
-		"""
-		if not subprocess:
-			subprocess = self.subprocess
-		if timeout == -1:
-			timeout = subprocess.timeout
-		patterns = list(patterns)
-		if not wexpect.TIMEOUT in patterns:
-			patterns.append(wexpect.TIMEOUT)
-		start = time()
-		while True:
-			result = subprocess.expect(patterns, timeout=child_timeout)
-			if (subprocess.after is not wexpect.TIMEOUT or
-				time() - start >= timeout):
-				break
-		return result
 	
 	def flush(self):
 		pass
