@@ -1256,9 +1256,6 @@ class MainFrame(BaseFrame):
 				chart = lang.getstr(chart)
 				if not chart in self.default_testchart_names:
 					self.default_testchart_names += [chart]
-		
-		self.profile_name_info_btn.SetToolTipString(
-			wrap(self.profile_name_info(), 72))
 
 		self.Freeze()
 		wx.CallAfter(self.set_size)
@@ -1815,6 +1812,9 @@ class MainFrame(BaseFrame):
 		# Profile name
 		self.Bind(wx.EVT_TEXT, self.profile_name_ctrl_handler, 
 				  id=self.profile_name_textctrl.GetId())
+		self.profile_name_info_btn.Bind(wx.EVT_BUTTON,
+										self.profile_name_info_btn_handler)
+		self.profile_name_info_btn.SetToolTipString(lang.getstr("profile.name"))
 		self.profile_save_path_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.profile_save_path_btn_handler, 
 				  id=self.profile_save_path_btn.GetId())

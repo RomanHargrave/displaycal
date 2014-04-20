@@ -1362,6 +1362,7 @@ class TooltipWindow(InvincibleFrame):
 			self.sizer1.Add(self.bitmap, flag=wx.RIGHT, border=margin)
 
 		self.message = wx.StaticText(self.panel, -1, util_str.wrap(msg, wrap))
+		self.message.SetMaxFontSize()
 		self.sizer1.Add(self.message)
 
 		self.sizer0.SetSizeHints(self)

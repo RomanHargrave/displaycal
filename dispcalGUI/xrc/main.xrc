@@ -1074,7 +1074,7 @@
                                 <border>8</border>
                               </object>
                               <object class="sizeritem">
-                                <object class="wxStaticBitmap" name="profile_name_info_btn">
+                                <object class="wxBitmapButton" name="profile_name_info_btn">
                                   <bitmap>../theme/icons/16x16/dialog-information.png</bitmap>
                                   <style>wxNO_BORDER</style>
                                 </object>
