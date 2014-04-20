@@ -5555,6 +5555,11 @@ class Worker(object):
 				self.progress_wnd.Show()
 			self.progress_wnd.start_timer()
 		else:
+			style = wx.PD_APP_MODAL | wx.PD_SMOOTH | wx.PD_ELAPSED_TIME
+			if self.show_remaining_time:
+				style |= wx.PD_REMAINING_TIME
+			if self.cancelable:
+				style |= wx.PD_CAN_ABORT
 			# Set maximum to 101 to prevent the 'cancel' changing to 'close'
 			# when 100 is reached
 			self.progress_dlg = ProgressDialog(progress_title, progress_msg, 
@@ -5562,7 +5567,8 @@ class Worker(object):
 											   parent=parent, 
 											   handler=self.progress_handler,
 											   keyhandler=self.terminal_key_handler,
-											   pauseable=pauseable)
+											   pauseable=pauseable,
+											   style=style)
 			self.progress_wnd = self.progress_dlg
 		self.progress_wnd.original_msg = progress_msg
 	
@@ -5773,7 +5779,7 @@ class Worker(object):
 			  wkwargs=None, progress_title=appname, progress_msg="", 
 			  parent=None, progress_start=100, resume=False, 
 			  continue_next=False, stop_timers=True, interactive_frame="",
-			  pauseable=False):
+			  pauseable=False, cancelable=True, show_remaining_time=True):
 		"""
 		Start a worker process.
 		
@@ -5807,8 +5813,9 @@ class Worker(object):
 			self.owner.stop_timers()
 		if not parent:
 			parent = self.owner
-		if progress_start < 100:
-			progress_start = 100
+		if progress_start < 1:
+			# Can't be zero!
+			progress_start = 1
 		self.activated = False
 		self.cmdrun = False
 		self.finished = False
@@ -5819,6 +5826,8 @@ class Worker(object):
 		self.lastcmdname = None
 		self.pauseable = pauseable
 		self.paused = False
+		self.cancelable = cancelable
+		self.show_remaining_time = show_remaining_time
 		self.resume = resume
 		self.subprocess_abort = False
 		self.abort_requested = False

@@ -2168,7 +2168,12 @@ class TestchartEditor(wx.Frame):
 			return False
 		safe_print(lang.getstr("testchart.read"))
 		self.worker.interactive = False
-		self.worker.start(self.tc_load_cfg_from_ti1_finish, self.tc_load_cfg_from_ti1_worker, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.read"), parent = self, progress_start = 500)
+		self.worker.start(self.tc_load_cfg_from_ti1_finish,
+						  self.tc_load_cfg_from_ti1_worker,
+						  wargs=(), wkwargs={},
+						  progress_msg=lang.getstr("testchart.read"),
+						  parent=self, progress_start=500, cancelable=False,
+						  show_remaining_time=False)
 
 	def tc_load_cfg_from_ti1_worker(self):
 		white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None

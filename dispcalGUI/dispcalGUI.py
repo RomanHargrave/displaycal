@@ -4248,7 +4248,8 @@ class MainFrame(BaseFrame):
 								   "params": params,
 								   "files": files},
 						  progress_msg=lang.getstr("profile.share"),
-						  stop_timers=False)
+						  stop_timers=False, cancelable=False,
+						  show_remaining_time=False)
 
 	def profile_share_consumer(self, result, parent=None):
 		""" This function receives the response from the profile upload """
@@ -6389,7 +6390,8 @@ class MainFrame(BaseFrame):
 						  wargs=(self, domain, "GET",
 								 "/colorimetercorrections/index.php", params),
 						  progress_msg=lang.getstr("colorimeter_correction.web_check"),
-						  stop_timers=False)
+						  stop_timers=False, cancelable=False,
+						  show_remaining_time=False)
 	
 	def create_colorimeter_correction_handler(self, event=None):
 		"""
@@ -6861,7 +6863,8 @@ class MainFrame(BaseFrame):
 							  upload_colorimeter_correction, 
 							  wargs=(self, params),
 							  progress_msg=lang.getstr("colorimeter_correction.upload"),
-							  stop_timers=False)
+							  stop_timers=False, cancelable=False,
+							  show_remaining_time=False)
 	
 	def upload_colorimeter_correction_handler(self, event):
 		""" Let user choose a ccss/ccmx file to upload """
