@@ -471,6 +471,8 @@ class MeasureFrame(InvincibleFrame):
 				setcfg("display.number", n + 1)
 
 	def size_handler(self, event):
+		if not self.IsShownOnScreen():
+			return
 		if debug: safe_print("[D] measureframe_size_handler")
 		display_client_size = self.get_display()[2][2:]
 		size = self.GetSize()
