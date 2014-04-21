@@ -2793,7 +2793,8 @@ class Worker(object):
 												   linesep_in="\n", 
 												   triggers=[])))
 				logfiles += [stdout]
-				if hasattr(self, "thread") and self.thread.isAlive():
+				if (hasattr(self, "thread") and self.thread.isAlive() and 
+					cmdname in measure_cmds + process_cmds):
 					logfiles += [self.recent, self.lastmsg, self]
 			tries = 1
 			while tries > 0:
