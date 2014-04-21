@@ -457,7 +457,8 @@ class TestchartEditor(wx.Frame):
 			hsizer.Add(getattr(self, name),
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 		
-		self.saturation_sweeps_custom_btn = wx.Button(panel, -1, lang.getstr("color.custom"))
+		self.saturation_sweeps_custom_btn = wx.Button(panel, -1, "=",
+													  size=(30, -1))
 		self.saturation_sweeps_custom_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_add_saturation_sweeps_handler,
 				  id=self.saturation_sweeps_custom_btn.GetId())
@@ -500,10 +501,6 @@ class TestchartEditor(wx.Frame):
 				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 		hsizer.Add((50, 1))
 
-		hsizer.Add(wx.StaticText(panel, -1,
-								 lang.getstr("testchart.change_patch_order")),
-				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
-				   border=border)
 		patch_order_choices = []
 		for lstr in ("testchart.sort_RGB_gray_to_top",
 					 "testchart.sort_RGB_white_to_top",
@@ -518,6 +515,7 @@ class TestchartEditor(wx.Frame):
 		self.change_patch_order_ctrl = wx.Choice(panel, -1,
 												 choices=patch_order_choices)
 		self.change_patch_order_ctrl.SetSelection(0)
+		self.change_patch_order_ctrl.SetToolTipString(lang.getstr("testchart.change_patch_order"))
 		hsizer.Add(self.change_patch_order_ctrl,
 				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 
