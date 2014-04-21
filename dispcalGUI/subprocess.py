@@ -3,6 +3,7 @@
 # end up with a version that supports the terminate() method (introduced in
 # Python 2.6)
 
+import os
 import sys
 
 from subprocess26 import *
@@ -31,9 +32,11 @@ class Popen(_Popen):
 		except EnvironmentError, exception:
 			if not exception.filename:
 				if isinstance(args[0], basestring):
-					exception.filename = args[0].split()[0]
+					cmd = args[0].split()[0]
 				else:
-					exception.filename = args[0][0]
+					cmd = args[0][0]
+				if not os.path.isfile(cmd) or not os.access(cmd, os.X_OK):
+					exception.filename = cmd
 			raise
 
 
