@@ -165,12 +165,6 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 			if self._bCollapsed:
 				return
 
-		borderPen = wx.BLACK_PEN
-		borderPen.SetWidth(1)
-		dc.SetPen(borderPen)
-		dc.DrawLine(0, size.y, size.x, size.y)
-		dc.DrawPoint(0, size.y)
-
 		clientSize = 0
 		bUseYcoord = (style & INB_RIGHT or style & INB_LEFT)
 
