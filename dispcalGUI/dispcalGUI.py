@@ -7126,7 +7126,7 @@ class MainFrame(BaseFrame):
 			setcfg("display.number", display_no + 1)
 			if load_lut:
 				profile = get_display_profile(display_no)
-			self.profile_info_btn.Enable(bool(profile))
+				self.profile_info_btn.Enable(bool(profile))
 		if self.display_lut_link_ctrl.IsShown():
 			self.display_lut_link_ctrl_handler(CustomEvent(
 				wx.EVT_BUTTON.evtType[0], self.display_lut_link_ctrl), 
