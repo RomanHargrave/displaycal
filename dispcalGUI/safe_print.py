@@ -5,6 +5,7 @@ import os
 import sys
 
 from encoding import get_encoding, get_encodings
+from util_str import safe_str
 
 original_codepage = None
 
@@ -61,10 +62,7 @@ class SafePrinter():
 		strargs = []
 		for arg in args:
 			if not isinstance(arg, basestring):
-				try:
-					arg = str(arg)
-				except:
-					arg = repr(arg)
+				arg = safe_str(arg)
 			elif isinstance(arg, unicode) and encoding:
 				arg = arg.encode(encoding, "replace")
 			strargs += [arg]
