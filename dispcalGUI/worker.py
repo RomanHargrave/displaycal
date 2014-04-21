@@ -2480,14 +2480,14 @@ class Worker(object):
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
 		self.cmdname = cmdname
 		if (not "-?" in args and
-			(cmdname == get_argyll_utilname("dispwin") and
-			 ("-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
-												 not "-I" in args and
-												 not "-s" in args and
-												 mac_ver()[0] >= '10.6'))) or
-			(cmdname in (get_argyll_utilname("dispcal"),
-						 get_argyll_utilname("dispread")) and
-			 sys.platform == "darwin" and mac_ver()[0] >= '10.6')):
+			((cmdname == get_argyll_utilname("dispwin") and
+			  ("-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
+												  not "-I" in args and
+												  not "-s" in args and
+												  mac_ver()[0] >= '10.6'))) or
+			 (cmdname in (get_argyll_utilname("dispcal"),
+						  get_argyll_utilname("dispread")) and
+			  sys.platform == "darwin" and mac_ver()[0] >= '10.6'))):
 			# Mac OS X 10.6 and up needs root privileges if loading/clearing 
 			# calibration and seemingly for calibration aswell (also if
 			# applying calibration during measurements)
