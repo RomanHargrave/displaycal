@@ -1257,7 +1257,6 @@ class MainFrame(BaseFrame):
 				if not chart in self.default_testchart_names:
 					self.default_testchart_names += [chart]
 
-		self.Freeze()
 		wx.CallAfter(self.set_size)
 
 	def set_size(self):
