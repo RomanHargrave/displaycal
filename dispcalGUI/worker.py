@@ -2775,7 +2775,8 @@ class Worker(object):
 				stderr = StringIO()
 				stdout = StringIO()
 				logfiles = []
-				if (self.interactive and getattr(self, "terminal", None)):
+				if (hasattr(self, "thread") and self.thread.isAlive() and
+					self.interactive and getattr(self, "terminal", None)):
 					logfiles.append(FilteredStream(self.terminal,
 												   discard="",
 												   triggers=self.triggers))
@@ -2793,7 +2794,9 @@ class Worker(object):
 												   discard="",
 												   linesep_in="\n", 
 												   triggers=[])))
-				logfiles += [stdout, self.recent, self.lastmsg, self]
+				logfiles += [stdout]
+				if hasattr(self, "thread") and self.thread.isAlive():
+					logfiles += [self.recent, self.lastmsg, self]
 			tries = 1
 			while tries > 0:
 				if use_pty:
@@ -5966,6 +5969,7 @@ class Worker(object):
 			self.progress_wnd.Hide()
 			self.subprocess_abort = False
 			self.thread_abort = False
+			self.interactive = False
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
