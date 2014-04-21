@@ -2763,8 +2763,6 @@ class Worker(object):
 					stdin = tempfile.SpooledTemporaryFile()
 					stdin.write(self.pwd.encode(enc, "replace") + os.linesep)
 					stdin.seek(0)
-				elif sys.stdin.isatty():
-					stdin = None
 				else:
 					stdin = sp.PIPE
 			else:
@@ -2903,7 +2901,7 @@ class Worker(object):
 						return Error("\n".join([safe_unicode(v) for v in
 												(cmd, exception)]))
 					self.retcode = self.subprocess.wait()
-					if stdin and not getattr(stdin, "closed", True):
+					if stdin != sp.PIPE and not getattr(stdin, "closed", True):
 						stdin.close()
 				if self.is_working() and self.subprocess_abort and \
 				   self.retcode == 0:
