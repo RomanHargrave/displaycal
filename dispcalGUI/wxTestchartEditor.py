@@ -37,6 +37,16 @@ except ImportError:
 from wxMeasureFrame import get_default_size
 
 
+if sys.platform == "darwin":
+	FONTSIZE_LARGE = 11
+	FONTSIZE_MEDIUM = 11
+	FONTSIZE_SMALL = 10
+else:
+	FONTSIZE_LARGE = 10
+	FONTSIZE_MEDIUM = 8
+	FONTSIZE_SMALL = 8
+
+
 def swap_dict_keys_values(mydict):
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
 
@@ -531,6 +541,9 @@ class TestchartEditor(wx.Frame):
 		self.grid.select_in_progress = False
 		self.sizer.Add(self.grid, 1, flag = wx.ALL | wx.EXPAND, border = 12 + border)
 		self.grid.CreateGrid(0, 0)
+		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
+					   wx.FONTWEIGHT_NORMAL)
+		self.grid.SetDefaultCellFont(font)
 		self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.tc_grid_cell_change_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.tc_grid_label_left_click_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.tc_grid_label_left_dclick_handler)
