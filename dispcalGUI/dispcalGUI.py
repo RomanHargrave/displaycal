@@ -1095,8 +1095,9 @@ class MainFrame(BaseFrame):
 		# (related to the selected window manager under Linux, for example).
 		wx.CallLater(100, self.SetMinSize, (min(self.GetDisplay().ClientArea[2],
 												self.GetMinSize()[0]), 
-											self.GetSize()[1] - 
-											self.calpanel.GetSize()[1] + 64))
+											min(self.GetSize()[1] - 
+												self.calpanel.GetSize()[1] + 64,
+												self.GetMaxSize()[1])))
 		wx.CallLater(150, self.SetMaxSize, (-1, -1))
 		self.Unbind(wx.EVT_IDLE)
 		if event:
