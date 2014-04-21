@@ -667,9 +667,6 @@ class FlatShadedButton(GradientButton):
 				 name="gradientbutton", bgcolour=None, fgcolour=None):
 		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
 								style, validator, name)
-		if sys.platform != "win32":
-			self.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-									 wx.FONTWEIGHT_NORMAL))
 		self._setcolours(bgcolour, fgcolour)
 	
 	def _setcolours(self, bgcolour=None, fgcolour=None):
