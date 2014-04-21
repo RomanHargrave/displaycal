@@ -118,8 +118,9 @@ class BaseFrame(wx.Frame):
 					event = CustomEvent(event.GetEventType(), 
 										event.GetEventObject(), 
 										self.last_focused_ctrl)
-		if hasattr(event.GetEventObject(), "GetId") and \
-		   callable(event.GetEventObject().GetId):
+		if (hasattr(event.GetEventObject(), "GetId") and
+			callable(event.GetEventObject().GetId) and
+			event.GetEventObject().IsShownOnScreen()):
 		   	if debug:
 					safe_print("[D] Setting last focused control to %s " %
 							   event.GetEventObject())
