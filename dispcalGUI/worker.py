@@ -1315,14 +1315,14 @@ class Worker(object):
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
-		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?|Password:", re.I)
+		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
 		self.sudo = None
 		self.auth_timestamp = 0
 		self.sessionlogfiles = {}
 		self.tempdir = None
 		self.thread_abort = False
-		self.triggers = []
+		self.triggers = ["Password:"]
 		self.recent = FilteredStream(LineCache(maxlines=3), self.data_encoding, 
 									 discard=self.recent_discard,
 									 triggers=self.triggers +
