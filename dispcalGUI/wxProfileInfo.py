@@ -8,7 +8,7 @@ import os
 import sys
 import tempfile
 
-from config import (btn_width_correction, defaults, fs_enc,
+from config import (defaults, fs_enc,
 					get_argyll_display_number, get_data_path,
 					get_display_profile, get_display_rects, getbitmap, getcfg,
 					geticon, get_verified_path, profile_ext, setcfg, writecfg)

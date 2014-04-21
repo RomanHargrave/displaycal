@@ -13,7 +13,7 @@ import config
 import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ, XYZ2RGB as argyll_XYZ2RGB
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
-from config import (btn_width_correction, defaults, getcfg, geticon, 
+from config import (defaults, getcfg, geticon, 
 					get_current_profile, get_data_path,
 					get_total_patches, get_verified_path, hascfg, setcfg,
 					writecfg)
@@ -409,30 +409,25 @@ class TestchartEditor(wx.Frame):
 		self.sizer.Add(hsizer, flag = (wx.ALL & ~wx.BOTTOM) | wx.ALIGN_CENTER, border = 12)
 
 		self.preview_btn = wx.Button(panel, -1, lang.getstr("testchart.create"), name = "tc_create")
-		self.preview_btn.SetInitialSize((self.preview_btn.GetSize()[0] + btn_width_correction, -1))
 		self.Bind(wx.EVT_BUTTON, self.tc_preview_handler, id = self.preview_btn.GetId())
 		hsizer.Add(self.preview_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		self.save_btn = wx.Button(panel, -1, lang.getstr("testchart.save"))
-		self.save_btn.SetInitialSize((self.save_btn.GetSize()[0] + btn_width_correction, -1))
 		self.save_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_save_handler, id = self.save_btn.GetId())
 		hsizer.Add(self.save_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		self.save_as_btn = wx.Button(panel, -1, lang.getstr("testchart.save_as"))
-		self.save_as_btn.SetInitialSize((self.save_as_btn.GetSize()[0] + btn_width_correction, -1))
 		self.save_as_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_save_as_handler, id = self.save_as_btn.GetId())
 		hsizer.Add(self.save_as_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		self.export_btn = wx.Button(panel, -1, lang.getstr("export"), name = "tc_export")
-		self.export_btn.SetInitialSize((self.export_btn.GetSize()[0] + btn_width_correction, -1))
 		self.export_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_export_handler, id = self.export_btn.GetId())
 		hsizer.Add(self.export_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		self.clear_btn = wx.Button(panel, -1, lang.getstr("testchart.discard"), name = "tc_clear")
-		self.clear_btn.SetInitialSize((self.clear_btn.GetSize()[0] + btn_width_correction, -1))
 		self.clear_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_clear_handler, id = self.clear_btn.GetId())
 		hsizer.Add(self.clear_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
@@ -491,7 +486,6 @@ class TestchartEditor(wx.Frame):
 					   border=12)
 
 		self.add_ti3_btn = wx.Button(panel, -1, lang.getstr("testchart.add_ti3_patches"))
-		self.add_ti3_btn.SetInitialSize((self.add_ti3_btn.GetSize()[0] + btn_width_correction, -1))
 		self.add_ti3_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_add_ti3_handler,
 				  id=self.add_ti3_btn.GetId())
@@ -2052,7 +2046,6 @@ class TestchartEditor(wx.Frame):
 					dlg.sizer2.Hide(0)
 				if os.path.exists(self.ti1.filename):
 					dlg.save_as = wx.Button(dlg, -1, lang.getstr("testchart.save_as"))
-					dlg.save_as.SetInitialSize((dlg.save_as.GetSize()[0] + btn_width_correction, -1))
 					ID_SAVE_AS = dlg.save_as.GetId()
 					dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id = ID_SAVE_AS)
 					dlg.sizer2.Add((12, 12))
@@ -2060,7 +2053,6 @@ class TestchartEditor(wx.Frame):
 				else:
 					ID_SAVE_AS = wx.ID_OK
 				dlg.discard = wx.Button(dlg, -1, lang.getstr("testchart.discard"))
-				dlg.discard.SetInitialSize((dlg.discard.GetSize()[0] + btn_width_correction, -1))
 				ID_DISCARD = dlg.discard.GetId()
 				dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id = ID_DISCARD)
 				dlg.sizer2.Add((12, 12))

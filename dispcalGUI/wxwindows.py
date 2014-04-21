@@ -6,7 +6,7 @@ import os
 import sys
 
 import config
-from config import (btn_width_correction, defaults, getbitmap, getcfg, geticon, 
+from config import (defaults, getbitmap, getcfg, geticon, 
 					get_verified_path, setcfg)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
@@ -296,8 +296,6 @@ class BaseInteractiveDialog(wx.Dialog):
 		btnwidth = 80
 
 		self.ok = wx.Button(self, wx.ID_OK, ok)
-		self.ok.SetInitialSize((self.ok.GetSize()[0] + btn_width_correction, 
-		   -1))
 		self.sizer2.Add(self.ok)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_OK)
 
@@ -475,15 +473,11 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 		if alt:
 			self.alt = wx.Button(self, -1, alt)
-			self.alt.SetInitialSize((self.alt.GetSize()[0] + 
-			   btn_width_correction, -1))
 			self.sizer2.Prepend((margin, margin))
 			self.sizer2.Prepend(self.alt)
 			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.alt.GetId())
 
 		self.cancel = wx.Button(self, wx.ID_CANCEL, cancel)
-		self.cancel.SetInitialSize((self.cancel.GetSize()[0] + 
-		   btn_width_correction, -1))
 		self.sizer2.Prepend((margin, margin))
 		self.sizer2.Prepend(self.cancel)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)

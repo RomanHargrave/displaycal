@@ -6,7 +6,7 @@ import sys
 
 import config
 import localization as lang
-from config import (btn_width_correction, defaults, getcfg, geticon, 
+from config import (defaults, getcfg, geticon, 
 					get_argyll_display_number, get_display_number, 
 					get_display_rects, scale_adjustment_factor, setcfg,
 					writecfg)
@@ -201,8 +201,6 @@ class MeasureFrame(InvincibleFrame):
 												 wx.ALIGN_CENTER_HORIZONTAL | 
 												 wx.ALL, border=10)
 		self.measurebutton.SetMaxFontSize(11)
-		self.measurebutton.SetInitialSize((self.measurebutton.GetSize()[0] + 
-										   btn_width_correction, -1))
 
 		min_size = max(self.sizer.GetMinSize())
 		# Make sure the min size is quadratic and large enough to accomodate 

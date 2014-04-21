@@ -53,7 +53,7 @@ import demjson
 
 # Config
 import config
-from config import (autostart, autostart_home, btn_width_correction, build, 
+from config import (autostart, autostart_home, build, 
 					script_ext, defaults, enc, 
 					exe, fs_enc, getbitmap, geticon, 
 					get_ccxx_testchart, get_current_profile,
@@ -9746,8 +9746,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.Bind(wx.EVT_BUTTON, dlg.invert_selection_handler, id=dlg.alt.GetId())
 
 		dlg.select_all_btn = wx.Button(dlg, -1, lang.getstr("deselect_all"))
-		dlg.select_all_btn.SetInitialSize((dlg.select_all_btn.GetSize()[0] + 
-										   btn_width_correction, -1))
 		dlg.sizer2.Insert(2, (margin, margin))
 		dlg.sizer2.Insert(2, dlg.select_all_btn)
 		dlg.Bind(wx.EVT_BUTTON, dlg.select_all_handler,
