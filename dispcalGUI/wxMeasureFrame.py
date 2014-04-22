@@ -264,7 +264,7 @@ class MeasureFrame(InvincibleFrame):
 			setcfg("dimensions.measureframe", self.get_dimensions())
 			if self.Parent and hasattr(self.Parent, "get_set_display"):
 				self.Parent.get_set_display()
-		wx.CallAfter(wx.Frame.Show, self, show)
+		wx.Frame.Show(self, show)
 
 	def Hide(self):
 		self.Show(False)
@@ -341,7 +341,7 @@ class MeasureFrame(InvincibleFrame):
 			measureframe_pos[1] = display_client_rect[1]
 		if debug: safe_print("[D]  measureframe_pos:", measureframe_pos)
 		setcfg("dimensions.measureframe", ",".join(strlist((x, y, scale))))
-		wx.CallAfter(self.SetPosition, measureframe_pos)
+		self.SetPosition(measureframe_pos)
 
 	def zoomin_handler(self, event):
 		if debug: safe_print("[D] measureframe_zoomin_handler")
