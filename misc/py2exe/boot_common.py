@@ -14,9 +14,6 @@
 # If the logfile cannot be opened for *any* reason, we have no choice
 # but silently ignore the error.
 #
-# It remains to be seen if the 'a' flag for opening the logfile is a
-# good choice, or 'w' would be better.
-#
 # More elaborate explanation on why this is needed:
 #
 # The sys.stdout and sys.stderr that GUI programs get (from Windows) are
@@ -51,19 +48,9 @@ if sys.frozen == "windows_exe":
         def write(self, text, alert=sys._MessageBox, fname=sys.executable + '.log'):
             if self._file is None and self._error is None:
                 try:
-                    self._file = open(fname, 'a')
+                    self._file = open(fname, 'w')
                 except Exception, details:
                     self._error = details
-                    import atexit
-                    atexit.register(alert, 0,
-                                    "The logfile '%s' could not be opened:\n %s" % \
-                                    (fname, details),
-                                    "Errors occurred")
-                else:
-                    import atexit
-                    atexit.register(alert, 0,
-                                    "See the logfile '%s' for details" % fname,
-                                    "Errors occurred")
             if self._file is not None:
                 self._file.write(text)
                 self._file.flush()

@@ -1,0 +1,12 @@
+--- C:/Python27/Lib/site-packages/py2exe/build_exe.py.bak	Sat Aug 30 18:56:46 2008
++++ E:/User Files/Id/Softwareentwicklung/dispcalGUI/trunk/misc/py2exe/build_exe.py	Sun Jan 26 03:56:21 2014
+@@ -790,7 +790,8 @@
+         # Build an executable for the target
+         # template is the exe-stub to use, and arcname is the zipfile
+         # containing the python modules.
+-        from py2exe_util import add_resource, add_icon
++        from py2exe_util import add_resource
++        from icon import add_icon
+         ext = os.path.splitext(template)[1]
+         exe_base = target.get_dest_base()
+         exe_path = os.path.join(self.dist_dir, exe_base + ext)
