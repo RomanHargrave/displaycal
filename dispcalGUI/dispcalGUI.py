@@ -5347,12 +5347,6 @@ class MainFrame(BaseFrame):
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
-		if sys.platform == "darwin" and mac_ver()[0] >= "10.6":
-			result = self.worker.authenticate("dispread")
-			if isinstance(result, Exception) or not result:
-				if result:
-					show_result_dialog(result, self)
-				return
 		writecfg()
 		if pending_function_kwargs.get("wrapup", True):
 			self.worker.wrapup(False)
