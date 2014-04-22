@@ -97,8 +97,9 @@ class BaseFrame(wx.Frame):
 		if debug and hasattr(self, "last_focused_ctrl"):
 				safe_print("[D] Last focused control: %s" %
 						   self.last_focused_ctrl)
-		if hasattr(self, "last_focused_ctrl") and self.last_focused_ctrl and \
-		   self.last_focused_ctrl != event.GetEventObject():
+		if (hasattr(self, "last_focused_ctrl") and self.last_focused_ctrl and
+			self.last_focused_ctrl != event.GetEventObject() and
+			self.last_focused_ctrl.IsShownOnScreen()):
 			catchup_event = wx.FocusEvent(wx.EVT_KILL_FOCUS.evtType[0], 
 										  self.last_focused_ctrl.GetId())
 			if debug:
