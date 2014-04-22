@@ -128,7 +128,6 @@ class MeasureFrame(InvincibleFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
 		self.Bind(wx.EVT_MOVE, self.move_handler, self)
-		self.Bind(wx.EVT_SIZE, self.size_handler, self)
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.GridSizer(3, 1)
 		self.panel.SetSizer(self.sizer)
@@ -202,11 +201,6 @@ class MeasureFrame(InvincibleFrame):
 												 wx.ALL, border=10)
 		self.measurebutton.SetMaxFontSize(11)
 
-		min_size = max(self.sizer.GetMinSize())
-		# Make sure the min size is quadratic and large enough to accomodate 
-		# all controls
-		self.SetMinSize((min_size, min_size))
-		self.SetMaxSize((20000, 20000))
 		self.display_no = wx.Display.GetFromWindow(self)
 		self.display_rects = get_display_rects()
 
@@ -307,7 +301,7 @@ class MeasureFrame(InvincibleFrame):
 		if debug: safe_print("[D]  display_client_rect:", display_client_rect)
 		display_client_size = display_client_rect[2:]
 		if debug: safe_print("[D]  display_client_size:", display_client_size)
-		measureframe_min_size = list(self.GetMinSize())
+		measureframe_min_size = [max(self.sizer.GetMinSize())] * 2
 		if debug: safe_print("[D]  measureframe_min_size:", measureframe_min_size)
 		default_measureframe_size = get_default_size()
 		size = [min(display_client_size[0], 
@@ -323,7 +317,10 @@ class MeasureFrame(InvincibleFrame):
 		if max(size) >= max(display_client_size):
 			scale = 50
 		if debug: safe_print("[D]  measureframe_size:", size)
+		self.SetMaxSize((-1, -1))
+		self.SetMinSize(size)
 		self.SetSize(size)
+		self.SetMaxSize(size)
 		display_rect = display[1]
 		if debug: safe_print("[D]  display_rect:", display_rect)
 		display_size = display_rect[2:]
@@ -469,27 +466,6 @@ class MeasureFrame(InvincibleFrame):
 			if n is not None:
 				# Save Argyll display index to configuration
 				setcfg("display.number", n + 1)
-
-	def size_handler(self, event):
-		if not self.IsShownOnScreen():
-			return
-		if debug: safe_print("[D] measureframe_size_handler")
-		display_client_size = self.get_display()[2][2:]
-		size = self.GetSize()
-		if debug:
-			safe_print("[D]  display_client_size:", display_client_size)
-			safe_print("[D]  measureframe_size:", size)
-			measureframe_pos = self.GetScreenPosition()
-			safe_print("[D]  measureframe_pos:", measureframe_pos)
-		if min(size) < min(display_client_size) - 50 and \
-		   size[0] != size[1]:
-			if sys.platform != "win32":
-				wx.CallAfter(self.SetSize, (min(size), 
-											min(size)))
-			else:
-				self.SetSize((min(size), min(size)))
-			if debug: wx.CallAfter(self.get_dimensions)
-		event.Skip()
 
 	def get_dimensions(self):
 		"""
