@@ -2479,31 +2479,19 @@ class Worker(object):
 		self.cmd = cmd
 		cmdname = os.path.splitext(os.path.basename(cmd))[0]
 		self.cmdname = cmdname
-		if (not "-?" in args and
-			((cmdname == get_argyll_utilname("dispwin") and
-			  ("-Sl" in args or "-Sn" in args or (sys.platform == "darwin" and
-												  not "-I" in args and
-												  not "-s" in args and
-												  mac_ver()[0] >= '10.6'))) or
-			 (cmdname in (get_argyll_utilname("dispcal"),
-						  get_argyll_utilname("dispread")) and
-			  sys.platform == "darwin" and mac_ver()[0] >= '10.6'))):
-			# Mac OS X 10.6 and up needs root privileges if loading/clearing 
-			# calibration and seemingly for calibration aswell (also if
-			# applying calibration during measurements)
-			# In all other cases, root is only required if installing a
-			# profile to a system location
-			if (cmdname == get_argyll_utilname("dispwin") and
-				not "-I" in args and not "-s" in args and
-				not self.calibration_loading_supported):
-				# Loading/clearing calibration seems to be unpredictable on
-				# Mac OS X 10.6 and newer - don't actually do it, pretend
-				# we were successful
+		if not "-?" in args and cmdname == get_argyll_utilname("dispwin"):
+			if "-I" in args or "-U" in args:
+				if "-Sl" in args or "-Sn" in args:
+					# Root is required if installing a profile to a system
+					# location
+					asroot = True
+			elif not ("-s" in args or self.calibration_loading_supported):
+				# Loading/clearing calibration not supported
+				# Don't actually do it, pretend we were successful
 				if "-V" in args:
 					self.output.append("IS loaded")
 				self.retcode = 0
 				return True
-			asroot = True
 		if asroot:
 			silent = False
 		working_basename = None
@@ -6273,6 +6261,8 @@ class Worker(object):
 	
 	@property
 	def calibration_loading_supported(self):
+		# Loading/clearing calibration seems to have undesirable side-effects
+		# on Mac OS X 10.6 and newer
 		return sys.platform != "darwin" or mac_ver()[0] < "10.6"
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
