@@ -525,12 +525,12 @@ def get_current_profile_path():
 		try:
 			profile = ICCP.ICCProfile(profile_path)
 		except Exception, exception:
-			return
+			safe_print(exception)
 	else:
 		try:
 			profile = ICCP.get_display_profile(getcfg("display.number") - 1)
 		except Exception, exception:
-			return
+			safe_print(exception)
 	if profile:
 		return profile.fileName
 
@@ -3598,8 +3598,7 @@ class Worker(object):
 		try:
 			profile = ICCP.get_display_profile(display_no)
 		except Exception, exception:
-			safe_print("Error - couldn't get profile for display %s" % 
-					   display_no)
+			safe_print(exception)
 		else:
 			if profile and profile.fileName:
 				arg = profile.fileName

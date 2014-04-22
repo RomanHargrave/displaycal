@@ -357,10 +357,7 @@ def Property(func):
 
 
 def _colord_get_display_profile(display_no=0):
-	try:
-		edid = get_edid(display_no)
-	except (TypeError, ValueError):
-		return None
+	edid = get_edid(display_no)
 	if edid:
 		# Try a range of possible device IDs
 		device_ids = [colord.device_id_from_edid(edid, quirk=True),
@@ -386,12 +383,9 @@ def _colord_get_display_profile(display_no=0):
 				except colord.CDObjectQueryError:
 					# Device ID was not found, try next one
 					continue
-				except colord.CDError:
-					# There was another error, no point in trying other
-					# device IDs
-					break
 				if profile_path:
 					return ICCProfile(profile_path)
+				break
 	return None
 
 
@@ -535,8 +529,10 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 								   'return POSIX path of displayProfile',
 							   'end tell']
 				retcode, output, errors = osascript(applescript)
-				if not errors.strip() and output.strip():
+				if retcode == 0 and output.strip():
 					profile = ICCProfile(output.strip("\n").decode(fs_enc))
+				elif errors.strip():
+					raise IOError(errors.strip())
 			else:
 				# Linux
 				# Try colord
