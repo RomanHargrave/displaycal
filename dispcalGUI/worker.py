@@ -4144,8 +4144,9 @@ class Worker(object):
 				# command
 				if re.match("sha\d+(?:new)?",
 							os.path.basename(os.path.dirname(pydir))):
-					cmd = which("0launch.exe") or "0launch"
-					loader_args += ["--command=run-apply-profiles",
+					cmd = which("0install-win.exe") or "0install-win.exe"
+					loader_args += ["run", "--no-wait", "--offline",
+									"--command=run-apply-profiles",
 									"http://%s/0install/dispcalGUI.xml" %
 									domain.lower()]
 				else:
@@ -4313,7 +4314,8 @@ class Worker(object):
 				# command
 				if re.match("sha\d+(?:new)?",
 							os.path.basename(os.path.dirname(pydir))):
-					executable = ("0launch --command=run-apply-profiles "
+					executable = ("0launch --offline "
+								  "--command=run-apply-profiles "
 								  "http://%s/0install/dispcalGUI.xml" %
 								  domain.lower())
 				else:
