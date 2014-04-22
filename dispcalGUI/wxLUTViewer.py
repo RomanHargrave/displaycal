@@ -19,8 +19,8 @@ from options import debug
 from util_decimal import float2dec
 from util_os import waccess
 from util_str import safe_unicode
-from worker import (Error, Worker, get_argyll_util, make_argyll_compatible_path,
-					show_result_dialog)
+from worker import (Error, UnloggedError, Worker, get_argyll_util,
+					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import FileDrop, wx
 from wxMeasureFrame import MeasureFrame
 from wxwindows import InfoDialog
@@ -1161,7 +1161,7 @@ class LUTFrame(wx.Frame):
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 			elif not result:
-				show_result_dialog(Error("".join(self.worker.errors)),
+				show_result_dialog(UnloggedError("".join(self.worker.errors)),
 								   self)
 			else:
 				self.load_lut(get_display_profile())
