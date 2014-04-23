@@ -755,6 +755,24 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
 			"description": desc
 		}) for script, desc in scripts]
+		console_scripts = [name + "-VRML-to-X3D-converter"]
+		for console_script in console_scripts:
+			console_script_path = os.path.join(basedir, "scripts",
+											   console_script + "-console")
+			if not os.path.isfile(console_script_path):
+				shutil.copy(os.path.join(basedir, "scripts", console_script),
+							console_script_path)
+		attrs["console"] = [Target(**{
+			"script": os.path.join(basedir, "scripts", script + "-console"),
+			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
+												os.path.splitext(os.path.basename(script))[0] +
+												".ico"))],
+			"other_resources": [(24, 1, manifest_xml)],
+			"copyright": u"© %s %s" % (strftime("%Y"), author),
+			"description": desc
+		}) for script, desc in filter(lambda (script, desc):
+									  script in console_scripts,
+									  scripts)]
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
