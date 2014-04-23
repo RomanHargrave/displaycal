@@ -220,16 +220,94 @@
 		</div>
 
 		<div id="download">
-			<h2>Get dispcalGUI</h2>
-			
-			<p><em>Please note: <a href="http://argyllcms.com">Argyll CMS</a> is a separate download.</em></p>
+			<h2>Get dispcalGUI via Zero Install (recommended)</h2>
 
 			<ul>
 				<li>
+					<h3>Brief introduction to Zero Install</h3>
+					<div>
+						<p><a href="http://0install.net">Zero Install</a> is a decentralised cross-platform software installation system. The benefits you get from Zero Install are:</p>
+						<ul>
+							<li><strong>Easy installation and updating.</strong> Just drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window to add it to your list of applications. Zero Install automatically handles everything else, and keeps the software up-to-date.</li>
+							<li><strong>Easily switch between software versions</strong> from within Zero Install, without affecting other components on the system.</li>
+							<li><strong>No administrator rights needed</strong> to add or update software.</li>
+						</ul>
+						<p class="footnote">Note: Under Linux installing/updating some of the dependencies through the distributions' package management mechanisms may require administrative privileges.</p>
+						<p class="footnote">Note: Under Windows, you may have to manually install an Argyll CMS specific driver for your measurement device. Refer to the <a href="#quickstart">Quickstart Guide</a> for details.</p>
+					</div>
+				</li>
+				<li>
 					<h3>For Linux</h3>
 					<div>
-						<p>Native packages for several distributions are available via <a href="https://build.opensuse.org">openSUSE Build Service</a>:</p>
+						<ol>
+							<li>Install the <strong>0install</strong> or <strong>zeroinstall-injector</strong> package from your distribution. In case it is not available, there are pre-compiled <a href="http://0install.net/tools/0install.xml">generic binaries</a>. Download the appropriate archive for your system, unpack it, <code>cd</code> to the extracted folder in a terminal, and run <code>sudo ./install.sh local</code> to install to /usr/local, or <code>./install.sh home</code> to install to your home directory (you may have to add ~/bin to your PATH variable in that case). You'll need libcurl installed (most systems have it by default).</li>
+							<li>Choose the <strong>0install</strong> entry from the applications menu (older versions of Zero Install will have an “Add New Program” entry instead).</li>
+							<li>Drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window.</li>
+						</ol>
+						<p class="footnote">Note on dispcalGUI's standalone tools under Linux (3D LUT maker, curve viewer, profile information, synthetic profile creator, testchart editor, VRML to X3D converter): An application icon entry will only be created for dispcalGUI itself. This is currently a limitation of Zero Install under Linux. You can manually install icon entries for the standalone tools by running the following in a terminal:</p>
+						<pre class="footnote"><code>0launch --command=install-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
+						<p class="footnote">And you may uninstall them again with:</p>
+						<pre class="footnote"><code>0launch --command=uninstall-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
+						<p class="footnote">Note on the Argyll CMS dependency: By default, an official version from ArgyllCMS.com will be used unless the distribution-packaged version is newer, but you can switch to a distribution-packaged version anytime (see <a href="#zeroinstall-updating">“Updating or switching between software versions”</a> below).</p>
+					</div>
+				</li>
+				<li>
+					<h3>For Mac OS X</h3>
+					<div>
+						<ol>
+							<li>Download and install <a href="http://downloads.sourceforge.net/project/zero-install/0install/1.16/ZeroInstall.pkg">Zero Install for Mac OS X</a>
+							(<strong>Important:</strong> For the time being, install this tried-and-tested version <strong>1.16</strong>, not the newer 2.5 release which does not seem to work correctly under Mac OS X!).</li>
+							<li>Download the <a href="http://sourceforge.net/projects/dispcalgui/files/0install/dispcalGUI-0install.dmg/download">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</li>
+						</ol>
+					</div>
+				</li>
+				<li>
+					<h3>For Windows</h3>
+					<div>
+						<ol>
+							<li>Download and install <a href="http://0install.de/downloads/">Zero Install for Windows</a>.</li>
+							<li>Choose the <strong>Zero Install</strong> entry from the start page under Windows 8, or the respective subfolder of the programs folder in the start menu under Windows 7 and earlier, and switch to the “My Applications” tab in the window that opens.</li>
+							<li>Drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window.</li>
+							<li>To add/remove program icons to your start page (Windows 8) or start menu (Windows 7 and earlier in a subfolder “Graphics” under “All programs”), click the button with the small wrench icon.</li>
+						</ol>
+					</div>
+				</li>
+				<li>
+					<h3 id="zeroinstall-updating">Updating or switching between software versions</h3>
+					<div>
 						<ul>
+							<li>
+								<h4>Linux</h4>
+								<p>Choose the <strong>0install</strong> entry from the applications menu (older versions of Zero Install will have a “Manage Programs” entry instead). In the window that opens, right-click the dispcalGUI icon and select “Choose versions” (with older versions of Zero Install, you have to click the small “Update or change version” icon below the “Run” button instead). You can then click the “Refresh all” button to update, or click the small button to the right of an entry and select “Show versions”.</p>
+								<p>To select a specific software version, click on the version entry and set the rating to “preferred” (note that this will prevent updates being downloaded for the selected software until you manually change to a different version or reset the rating).</p>
+							</li>
+							<li>
+								<h4>Mac OS X</h4>
+								<p>Run the <strong>0install Launcher</strong>. In the window that opens, click the “Refresh all” button to update, or click the small button to the right of an entry and select “Show versions”.</p>
+								<p>To select a specific software version, click on the version entry and set the rating to “preferred” (note that this will prevent updates being downloaded for the selected software until you manually change to a different version or reset the rating).</p>
+							</li>
+							<li>
+								<h4>Windows</h4>
+								<p>Choose the <strong>Zero Install</strong> entry from the start page under Windows 8, or the respective subfolder of the programs folder in the start menu under Windows 7 and earlier, and switch to the “My Applications” tab in the window that opens. Click the small “down” arrow inside the “Start” button to the right of the dispcalGUI entry and choose “Update” or “Select version”.</p>
+								<p>To select a specific software version, click on the “change” link next to an item, then click on the version entry and set the rating to “preferred” (note that this will prevent updates being downloaded for the selected software until you manually change to a different version or reset the rating).</p>
+							</li>
+						</ul>
+					</div>
+				</li>
+			</ul>
+			
+			<p>Please continue with the <a href="#quickstart">Quickstart Guide</a>.</p>
+
+			<h2>Get dispcalGUI (conventional installation)</h2>
+
+			<p><em>Please note: <a href="http://argyllcms.com">Argyll CMS</a> is a separate download unless you use a dispcalGUI for Linux native RPM package. I recommend to use the official Argyll CMS binaries from <a href="http://argyllcms.com">argyllcms.com</a>.</em></p>
+
+			<ul>
+				<li>
+					<h3 id="packages">For Linux</h3>
+					<div>
+						<p>Native packages for several distributions are available via <a href="https://build.opensuse.org">openSUSE Build Service</a>:</p>
+						<ul class="packages">
 							<li>
 								<span>Arch</span>
 								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/i686/dispcalGUI.pkg.tar.xz">x86</a> | 
@@ -391,18 +469,21 @@
 								<a href="http://dispcalgui.hoech.net/download/xUbuntu_13.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 							<li>
-								<span>Ubuntu 13.10 (Raring)</span>
+								<span>Ubuntu 13.10 (Saucy)</span>
 								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/i386/dispcalGUI.deb">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/amd64/dispcalGUI.deb">x86_64</a></span>
+							</li>
+							<li>
+								<span>Ubuntu 14.04 (Trusty)</span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/i386/dispcalGUI.deb">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 						</ul>
 
 						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
 
-						<p>In all other cases, you can try one of these universal installs that should work on a multitude of distributions:</p>
+						<p>In all other cases, you can try this universal install that should work on a multitude of distributions (if you use it, please uninstall any already installed version of dispcalGUI first to avoid file conflicts):</p>
 						<p><a href="http://dispcalGUI.hoech.net/download/dispcalGUI.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
-						<p><a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">0install feed (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
-						<p>To use the 0install feed, you need <a href="http://0install.net">0install</a> (“zero install”). This should be available through the package manager of your distribution.</p>
 					</div>
 				</li>
 				<li>
@@ -441,10 +522,10 @@
 
 			<ol>
 				<li>
-					<p><a href="#download">Get</a> and <a href="#install">install</a> the latest release of dispcalGUI. It is recommended to first remove all previous versions.</p>
+					<p><a href="#download">Get the latest release of dispcalGUI</a>. It is recommended to first remove all previous versions unless you used Zero Install to get them.</p>
 				</li>
 				<li>
-					<p>Download and unpack Argyll CMS: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</p>
+					<p><strong>If you use Zero Install you can skip this step.</strong> Download and unpack Argyll CMS: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS X</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</p>
 					<h3>If you want to use the HCFR colorimeter under Mac OS X...</h3>
 					<div class="toggle">
 						<p>Follow the instructions under “<a href="http://argyllcms.com/doc/Installing_OSX.html">installing Argyll CMS on Mac OS X</a>” in the Argyll CMS documentation.</p>
@@ -455,7 +536,7 @@
 					<h3>If your measurement device is a i1 Display Pro, ColorMunki Display or Spyder 4...</h3>
 					<div class="toggle">
 						<p>You'll want to import the colorimeter corrections that are part of the i1 Profiler or ColorMunki Display software package, which can be used to better match the instrument to a particular type of display.</p>
-						<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the i1 Profiler or ColorMunki Display software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the software's setup executable. Select the <a href="http://www.xrite.com/product_overview.aspx?ID=1513&Action=Support">ColorMunki Display PC (Windows) Setup</a> or <a href="http://www.xrite.com/product_overview.aspx?ID=1454&Action=Support">i1 Profiler PC (Windows) Setup</a> regardless of your actual operating system (both files contain the same set of colorimeter corrections, the ColorMunki software is a slightly smaller download).</p>
+						<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the i1 Profiler or ColorMunki Display software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the software's setup executable. Select the <a href="http://www.xrite.com/product_overview.aspx?ID=1513&amp;Action=Support">ColorMunki Display PC (Windows) Setup</a> or <a href="http://www.xrite.com/product_overview.aspx?ID=1454&amp;Action=Support">i1 Profiler PC (Windows) Setup</a> regardless of your actual operating system (both files contain the same set of colorimeter corrections, the ColorMunki software is a slightly smaller download).</p>
 						<p>If your measurement device is a Spyder 4, you'll also want to <a href="#install-spyder4-measurement-modes">enable additional measurement modes</a> for that particular instrument.</p>
 					</div>
 					<div style="height: .25em;"></div>
@@ -568,11 +649,11 @@
 					<h3>Additional requirements for using the source code</h3>
 
 					<div>
-						<p>You can <a href="#install">skip</a> this section if you downloaded a package, installer, ZIP archive or disk image of dispcalGUI for your operating system and do not want to run or compile from source.</p>
+						<p>You can <a href="#install">skip</a> this section if you downloaded a package, installer, ZIP archive or disk image of dispcalGUI for your operating system and do not want to run from source.</p>
 
 						<h4>All platforms:</h4>
 						<ul>
-							<li><a href="http://python.org/">Python</a> &gt;= v2.5 &lt;= v2.7.x (2.7.x is the recommended version. Mac OS X users: If you want to compile dispcalGUI from source, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
+							<li><a href="http://python.org/">Python</a> &gt;= v2.5 &lt;= v2.7.x (2.7.x is the recommended version. Mac OS X users: If you want to compile dispcalGUI's C extension module, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
 							<li><a href="http://numpy.scipy.org/">NumPy</a></li>
 							<li><a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> toolkit</li>
 						</ul>
@@ -586,10 +667,10 @@
 				</div>
 
 				<div id="requirements-source-compile">
-					<h3>Additional requirements for compiling</h3>
+					<h3>Additional requirements for compiling the C extension module</h3>
 
 					<div>
-						<p>You can <a href="#install">skip</a> this section if you downloaded a python package of dispcalGUI for your operating system and do not want to compile from source.</p>
+						<p>Normally you can <a href="#install">skip</a> this section as the source code contains pre-compiled versions of the C extension module that dispcalGUI uses.</p>
 
 						<h4>Linux:</h4>
 						<ul>
@@ -611,19 +692,15 @@
 				</div>
 
 				<div id="requirements-source-run">
-					<h3 id="runsource">Running directly from source without installation</h3>
-
+					<h3 id="runsource">Running directly from source</h3>
 					<div>
-						<p>One-time setup instructions:</p>
+						<p>After satisfying all <a href="#requirements-source">additional requirements for using the source code</a>, you can simply run any of the included <code>.pyw</code> files from a terminal, e.g. <code>python2 dispcalGUI.pyw</code>, or install the software so you can access it via your desktop's application menu with <code>python2 setup.py install</code>. Run <code>python2 setup.py --help</code> to view available options.</p>
 
-						<ol>
-							<li>Open a shell.</li>
-							<li><code>cd</code> into the source directory (e.g. <code>dispcalGUI-${VERSION}</code> or <code>dispcalgui</code>).</li>
-							<li>If you use a version from the SVN repository, run <code>python setup.py</code> to create the version file.</li>
-							<li>Run <code>python setup.py build_ext -i</code> to build the extension modules (you may be able to skip this step on Linux and Mac OS X as the source already includes compiled versions of the extension modules)</li>
-						</ol>
+						<p>One-time setup instructions for source code checked out from SVN:</p>
 
-						<p>You can then run <code>python dispcalGUI.pyw</code> (or launch it by double-clicking).</p>
+						<p>Run <code>python2 setup.py</code> to create the version file so you don't see the update popup at launch.</p>
+					
+						<p>If the pre-compiled extension module that is included in the sources does not work for you (in that case you'll notice that the movable measurement window's size does not closely match the size of the borderless window generated by Argyll CMS during display measurements) or you want to re-build it unconditionally, run <code>python2 setup.py build_ext -i</code> to re-build it from scratch (you need to satisfy the <a href="#requirements-source-compile">requirements for compiling the C extension module</a> first).</p>
 					</div>
 				</div>
 			</div>
@@ -756,7 +833,7 @@
 				<h3>Source code (all platforms)</h3>
 
 				<div>
-					<p>See the “Prerequisites” section to <a href="#runsource">run directly from source without installation</a>.</p>
+					<p>See the “Prerequisites” section to <a href="#runsource">run directly from source</a>.</p>
 
 					<p>Starting with dispcalGUI 0.2.5b, you can use standard distutils/setuptools commands with setup.py to build, install, and create packages. <code>sudo python setup.py install</code> will compile the extension modules and do a standard installation. Run <code>python setup.py --help</code> or <code>python setup.py --help-commands</code> for more information. A few additional commands and options which are not part of distutils or setuptools (and thus do not appear in the help) are also available:</p>
 
@@ -815,7 +892,7 @@
 			<h3>Instrument-specific setup</h3>
 			
 			<p><strong>If your measurement device is a i1 Display Pro, ColorMunki Display or Spyder 4</strong>, you'll want to import the colorimeter corrections that are part of the i1 Profiler or ColorMunki Display software package, which can be used to better match the instrument to a particular type of display.</p>
-			<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the i1 Profiler or ColorMunki Display software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the software's setup executable. Select the <a href="http://www.xrite.com/product_overview.aspx?ID=1513&Action=Support">ColorMunki Display PC (Windows) Setup</a> or <a href="http://www.xrite.com/product_overview.aspx?ID=1454&Action=Support">i1 Profiler PC (Windows) Setup</a> regardless of your actual operating system (both files contain the same set of colorimeter corrections, the ColorMunki software is a slightly smaller download).</p>
+			<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the i1 Profiler or ColorMunki Display software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the software's setup executable. Select the <a href="http://www.xrite.com/product_overview.aspx?ID=1513&amp;Action=Support">ColorMunki Display PC (Windows) Setup</a> or <a href="http://www.xrite.com/product_overview.aspx?ID=1454&amp;Action=Support">i1 Profiler PC (Windows) Setup</a> regardless of your actual operating system (both files contain the same set of colorimeter corrections, the ColorMunki software is a slightly smaller download).</p>
 			
 			<p><strong>The full range of measurement modes for the Spyder 4 are only available if they are imported from the Spyder 4 software.</strong></p>
 
@@ -1428,7 +1505,7 @@
 
 
 					<dt id="import-correction-matrices">Import colorimeter corrections from other display profiling software...</dt>
-						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler, ColorMunki Display and Spyder 4 softwares are supported. If they are installed or the CD / disk image is mounted, the correct file(s) can in most cases be imported automatically, otherwise please select the applicable Windows setup executable (<a href="http://www.xrite.com/product_overview.aspx?ID=1513&Action=Support">ColorMunki Display PC (Windows) Setup</a>, <a href="http://support.datacolor.com/index.php?/Knowledgebase/List/Index/88/windows">Spyder 4 Setup for Windows</a>, <a href="http://www.xrite.com/product_overview.aspx?ID=1454&Action=Support">i1 Profiler PC (Windows) Setup</a>) regardless of your actual operating system. Please note: The colorimeter corrections imported from Spyder 4 software are only usable with the Spyder 4 and need to be selected in the measurement mode dropdown instead of the colorimeter corrections dropdown.</dd>
+						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler, ColorMunki Display and Spyder 4 softwares are supported. If they are installed or the CD / disk image is mounted, the correct file(s) can in most cases be imported automatically, otherwise please select the applicable Windows setup executable (<a href="http://www.xrite.com/product_overview.aspx?ID=1513&amp;Action=Support">ColorMunki Display PC (Windows) Setup</a>, <a href="http://support.datacolor.com/index.php?/Knowledgebase/List/Index/88/windows">Spyder 4 Setup for Windows</a>, <a href="http://www.xrite.com/product_overview.aspx?ID=1454&amp;Action=Support">i1 Profiler PC (Windows) Setup</a>) regardless of your actual operating system. Please note: The colorimeter corrections imported from Spyder 4 software are only usable with the Spyder 4 and need to be selected in the measurement mode dropdown instead of the colorimeter corrections dropdown.</dd>
 
 
 					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
@@ -1511,7 +1588,7 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 				<dd><strong>Solution:</strong> Go to your Argyll_VX.X.X\bin directory, and right-click the exe file from the error message. Select “Properties”, and then if there is a text on the “General” tab under security “This file came from another computer and might be blocked”, click “Unblock”.</dd>
 
 				<dt id="issue-win-photoshop-monprofdefect"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</dt>
-				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “Use profile regardless” and “Ignore profile”, you may choose “Use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a Lab LUT profile.</dd>
+				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “Use profile regardless” and “Ignore profile”, you may choose “Use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a L*a*b* LUT profile.</dd>
 
 				<dt id="issue-win-uac-cal-reset"><span>MS Windows Vista:</span> The calibration gets unloaded when a User Access Control prompt is shown</dt>
 				<dd><strong>Solution:</strong> (Intel and Intel/AMD hybrid graphics users please see <a href="#issue-win-intel-cal-reset">“The Calibration gets unloaded after login/resume/User Access Control prompt”</a> first) This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
@@ -1620,6 +1697,22 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			<h2>To-Do / planned features (in no particular order)</h2>
 
 			<ul>
+				<li>On first launch, guide user through basic setup using a wizard (postpone dispcalGUI update check until after wizard has run?): Check Argyll CMS availability, if not available or outdated, offer automatic download &amp; installation (consider 0install/native Linux distribution packages?); install instrument drivers if necessary (Windows – how?), check available instruments and instrument capabilities, do instrument specific first launch stuff (import OEM files, choose/create colorimeter correction if applicable).</li>
+				<li>When an instrument is first selected:
+					<ul>
+						<li>Check if OEM files from the vendor software have already been imported (if applicable); if not, offer to do it.</li>
+						<li>Check colorimeter corrections if applicable (from respective vendor software and online database, skip the latter if a spectro is available), in case of no usable specific or generic correction, offer to create one if possible, preferably using spectro measurements as reference, EDID as user-selectable fallback? (Need to sanity-check EDID red/green/blue/white xy coordinates in that case! Possibly against sRGB and AdobeRGB as the most commonly cited gamuts for standard gamut and wide-gamut displays? As some cheaper panels and many of those found in Laptops/Notebooks are sometimes very limited in gamut, additionally a special “low-gamut RGB” may be needed)</li>
+						<li>Users need to be made aware of the implications their colorimeter correction choice has, e.g.
+							<ul>
+								<li>When using a correction created from spectral reference measurements of the specific display (user needs a spectro): Usually very good accuracy/match to user's specific display/instrument combination</li>
+								<li>When using a vendor-supplied generic correction: Good (?) (e.g. i1 DisplayPro, ColorMunki Display) to poor (?) (e.g. i1 Display 1/2/LT, Huey, ColorHug) accuracy/match to user's specific display/instrument combination, in case of CCSS considered preferable to corrections supplied by other users because of lab-grade equipment (high spectral resolution) used by vendor.</li>
+								<li>When using a correction supplied by another user for the same display/instrument combination: Good (?) (e.g. i1 DisplayPro, ColorMunki Display, DTP94) to poor (?) (e.g. i1 Display 1/2/LT, Huey, ColorHug) accuracy/match to user's specific display/instrument combination</li>
+								<li>When using EDID of the specific display as reference: Moderate (?) to poor (?) accuracy/match to user's specific display/instrument combination (could be ok match, could be awful, but should in most cases still be able to fix problems like e.g. ColorHug red sensitivity so may be ok as last resort)</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li>When trying to import colorimeter corrections or enable the Spyder 2, have automatic mode download the vendor software if needed.</li>
 				<li>(Long-term) improve UI.</li>
 				<li><del>Better interface to <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a></del> (implemented in v0.8.1.0+)</li>
 				<li><del>Measure and report on screen homogenity / evenness of illumination</del></li>
@@ -1649,7 +1742,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Andrew Hunter, Yulian Martsenkov, Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, <a onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</span></p>
+			<p>Recent donors: Scott Miller, John Navarro, Stephen Wall, Andrej Schmitt, Olivier Besner Morin, Christian Ramharter, Dieter Pongratz, Andrew Hunter, Yulian Martsenkov, <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1665,6 +1758,89 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="changelog-${VERSION}">${ISODATE} ${ISOTIME} (UTC) ${VERSION}</dt>
 					<dd>
 						<h3>${VERSION}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>
+								<p><strong>New profiling option “smooth B2A tables” for XYZ LUT profiles.</strong> This should improve the smoothness of the relative colorimetric gamut mapping. Enabling this option will also generate a simple but effective perceptual mapping (which will be almost identical to the colorimetric mapping, but map the black point) if no other advanced gamut mapping options have been chosen.</p>
+								<p>See below example images for the result you can expect (note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this).</p>
+								<div style="overflow: hidden; padding: 1.4em 0;">
+									<div style="text-align: center;">
+										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p>Original “granger rainbow” image</p>
+									</div>
+									<div style="float: left; margin: 0 15px 0 22px; width: 200px">
+										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p>Default colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile)</span></p>
+									</div>
+									<div style="float: left; margin: 0 15px; width: 200px">
+										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p>“Smooth” colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
+									</div>
+									<div style="float: left; margin: 0 15px; width: 200px">
+										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p>“Smooth” perceptual rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
+									</div>
+								</div>
+								<p>For the test, the image has been converted from sRGB to the display profile. Note that the sRGB blue in the image is actually out of gamut for the specific display used, which made the test particularly challenging (the edges visible in the blue gradient for the rendering are a result of the color being out of gamut, and the gamut mapping thus hitting the less smooth gamut boundaries).</p>
+								<p><em>Technical discussion:</em> “smooth B2A tables” works by inverting the already present A2B colorimetric table, making use of Argyll CMS to do clipping in CAM Jab for saturated colors. A new cLUT, cLUT matrix and cLUT device channel curves are then generated. The matrix and device channel curves scale and transform the input values to distribute them across the cLUT grid points, trying to make good use of the limited number of points. Additional smoothing is then applied to the cLUT (this can be disabled by editing dispcalGUI.ini and adding a line <code>profile.b2a.smooth.extra = 0</code>). Diagnostic PNG images are created for each of the B2A cLUT tables (pre/post/post smoothing). This approach is relatively straightforward, but seems very effective in creating a smooth yet accurate mapping. There is a drawback though, if the native device gamut boundary is bumpy, the error at the gamut boundary and thus the max error can go up. In most cases, I feel this will be acceptable, and the smoothness and often also increased in-gamut accuracy should make up for the potential higher max error. If you're interested, you can check the error of the B2A table vs the A2B table by running (in a terminal) <code>invprofcheck -k -h -w -e</code> on the profile, and compare it to the error of a profile where “smooth B2A tables” was not used. Comments and feedback welcome as always.</p>
+							</li>
+							<li>Synthetic ICC profiles can be created with DICOM or BT.1886 tone response curve, with or without black offset, and can either be RGB (curves + matrix) or gray (curves only).</li>
+							<li>Expanded the color space choices for profile gamut views with L*u*v* and DIN99 family colorspaces.</li>
+							<li>Expanded the color space choices for diagnostic 3D views of testcharts with HSI, HSL, DIN99 family, LCH(ab), LCH(uv), L*u*v*, Lu'v' and xyY colorspaces. To differentiate the LCH(ab) and LCH(uv) views from L*a*b* and L*u*v* respectively, a layout where the hue angle increases along the horizontal and chroma along the vertical axis is used.</li>
+							<li><strong>3D views of profile gamuts and testcharts</strong> can be created as VRML, X3D, or X3D in HTML with embedded viewer for WebGL-enabled browsers.</li>
+							<li><strong>VRML to X3D standalone converter.</strong> Output options are X3D (XML) and X3D in HTML. The HTML files generated by default use the <a href="http://www.x3dom.org/">X3DOM</a> runtime to implement a viewer, which requires a WebGL-enabled browser. The converter can be run from a terminal without GUI. Run it with the <code>--help</code> argument to view the list of options.</li>
+							<li>Rendering intent and direction selector for curve viewer tone response curve plot. Also changed layout of controls slightly.</li>
+							<li>LUT checkbox to profile info gamut view (if the profile is a LUT profile and contains both LUT and matrix tags). This allows inspecting the gamut characterized by the LUT versus the one defined by the matrix.</li>
+							<li>Show estimated remaining time in the progress dialog if applicable. Note that it is not always particularly accurate, and for operations consisting of multiple steps (e.g. calibration &amp; profiling), the shown estimate is for the current (sub-)step only.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Slightly adjusted presets:
+								<ul>
+									<li>Changed “madVR” and “Video” presets to use Rec. 1886 as calibration target.</li>
+									<li>Changed “Prepress” and “Softproof” presets to use full black point hue correction during calibration.</li>
+									<li>Disabled interactive display adjustment for “Laptop” preset.</li>
+									<li>Set profile type for those presets that defaulted to curves + matrix to single curve + matrix.</li>
+								</ul>
+							</li>
+							<li>Changed profile black point compensation option to map the black point to zero more reliably. This means black point compensation can no longer be used for L*a*b* LUT profiles, and will only be applied to the LUT part of XYZ LUT profiles if the new “smooth B2A tables” profiling option is used.</li>
+							<li>Changed 3D LUT and measurement report settings to automatically enable/disable Rec. 1886 gamma mapping if the source profile has/doesn't have a known “camera” transfer function (e.g. SMPTE 240M or Rec. 709).</li>
+							<li>Unlocked calibration Rec. 1886 gamma controls to bring them in line with the 3D LUT and measurement report offerings.</li>
+							<li>Set BT.1886 gamma mapping defaults to gamma 2.4 absolute to match the recommendation.</li>
+							<li>Show error message in case of ambient measurement failing due to instrument communications failure.</li>
+							<li>Curve viewer: Enable dragging and zooming.</li>
+							<li>Profile information comparison profile selection, measurement report simulation profile selection: The list of automatically recognized profiles (if they are installed) has been extended to the full range of <a href="http://www.eci.org/">ECI</a> offset, gravure and newsprint profiles as well as their basICColor equivalents (available on <a href="http://www.colormanagement.org">colormanagement.org</a>) and an increased range of RGB working space profiles. Other profiles can be added by dragging-and-dropping them on the profile list.</li>
+							<li>Never center the display adjustment and untethered measurement windows on the screen, or show them at their parent window coordinates if no previous coordinates were stored in the configuration (always use default coordinates of topleft screen corner in that case).</li>
+							<li>In the case of essential resource files missing (e.g. broken installation or deleted application files), show a more informative error message.</li>
+							<li>Diagnostic 3D views of testcharts are no longer created automatically. You have to click the “3D” button.</li>
+							<li>Slightly increased the logging verbosity.</li>
+							<li>Linux: No longer use GObject Introspection to interface with colord. It could in rare cases cause hard to diagnose problems with wxPython. Rely on colord support in Argyll CMS 1.6 and newer instead (with a fallback to colormgr for profile queries or if libcolordcompat.so is not available for profile installation).</li>
+							<li>Linux: Deal with distribution-specific differences for the location of Argyll CMS reference files (currently supported are <code>XDG_DATA_DIRS</code>/argyllcms/ref, <code>XDG_DATA_DIRS</code>/color/argyll and <code>XDG_DATA_DIRS</code>/color/argyll/ref).</li>
+							<li>Linux: Use udev hwdb instead of pnp.ids for looking up PNP ID to manufacturer name if available.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Unhandled exception when trying to start measurements on a display that was added/enabled while dispcalGUI was already running.</li>
+							<li>In case of untethered measurements, correctly detect and react to recurring need for intermittent instrument calibration.</li>
+							<li>Re-enabled the ability to generate some 3D LUT formats from existing DeviceLink profiles.</li>
+							<li>Don't allow leading dashes in profile filename which might trick the Argyll CMS tools into mistaking parts of it as an option parameter.</li>
+							<li>Refresh display measurement mode was not correctly restored from saved settings.</li>
+							<li>Moving the measurement window between displays resulted in an error and did not update the display configuration (regression of r1737).</li>
+							<li>Linux: Make curve viewer and profile information compatible with wxPython 3.0.</li>
+							<li>Linux: When the trash directory was not already present, files couldn't be moved to the trash.</li>
+							<li>Linux: System-wide profile installation should now also work if sudo is configured to require a TTY.</li>
+							<li>Linux/colord interface: Leave out manufacturer name part of device ID if the PNP ID wasn't found in the database.</li>
+							<li>Linux/colord interface: Deal with potential differences in device ID depending on installed colord version and desktop environment.</li>
+							<li>Linux, Mac OS X: In rare cases, a worker thread could reach an infinitely blocked state.</li>
+							<li>Mac OS X: Standalone tools (broken due to internal symlinks pointing to wrong locations).</li>
+							<li>Mac OS X: Create user profile directory if it does not exist when trying to install a profile (fixes inability to install a profile if the user profile directory does not exist).</li>
+							<li><strong>Mac OS X 10.6 and newer: Calibration loading/clearing is now disabled</strong> due to undesirable side-effects (loading calibration from the current display profile could make it necessary to manually restore the display profile by opening system preferences → display → color and loading or clearing a calibration could have side-effects on calibration and profiling measurements).</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-1.7.5.7">2014-02-09 22:55 (UTC) 1.7.5.7</dt>
+					<dd>
+						<h3>1.7.5.7</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Unique icons for all standalone tools.</li>
@@ -1688,6 +1864,8 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>Always automatically add a file type extension to the filename in the curve/gamut saving dialog (fixes “unsupported filetype” error when trying to save under Mac OS X without manually adding the extension to the filename).</li>
 							<li>Calibration preview for calibration &amp; profile from “&lt;current&gt;” setting no longer switches between .cal and .icm file created in that same run.</li>
 						</ul>
+					</dd>
+
 				<dt id="changelog-1.7.1.6">2014-01-19 10:02 (UTC) 1.7.1.6</dt>
 					<dd>
 						<h3>1.7.1.6</h3>
@@ -2123,7 +2301,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<li>GUI spring-cleaning: Re-arranged some controls and replaced radiobuttons and read-only combo-boxes with choice controls instead. Only the controls related to a selected choice are shown.</li>
 							<li>Default calibration black point correction to automatic.</li>
 							<li>Replaced previous 19-patch colorimeter correction testchart with smaller 4-patch version (just red, green, blue at 100% each and white, as is the default with Argyll CMS 1.3.6).</li>
-							<li>Linux packages: Added Argyll CMS to dependencies. Please note: If you want the latest Argyll features or run into problems, it is recommemded to download the standalone Argyll binaries from argyllcms.com as the distribution repositories often only contain older Argyll CMS releases.</li>
+							<li>Linux packages: Added Argyll CMS to dependencies. Please note: If you want the latest Argyll features or run into problems, it is recommended to download the standalone Argyll binaries from argyllcms.com as the distribution repositories often only contain older Argyll CMS releases.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
 						<ul>

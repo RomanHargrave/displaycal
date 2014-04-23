@@ -45,9 +45,9 @@ jQuery(function ($) {
 	$maketoggle('#download h3', 'div');
 	
 	/* Linux downloads combo */
-	$('#download div > ul').before('<div><a class="button" href="https://build.opensuse.org/package/show?package=dispcalGUI&project=home%3Afhoech">Select a package... ▼</a></div>').wrap('<div style="position: relative" />')/*.css({'position': 'absolute', 'z-index': 999})*/.hide();
+	$('#download div > ul.packages').before('<div><a class="button" href="https://build.opensuse.org/package/show?package=dispcalGUI&project=home%3Afhoech">Select a package... ▼</a></div>').wrap('<div style="position: relative" />')/*.css({'position': 'absolute', 'z-index': 999})*/.hide();
 	$('#download div > div > a.button').mousedown(function () {
-		$('#download div > div > ul').slideToggle();
+		$('#download div > div > ul.packages').slideToggle();
 		return false;
 	}).click(function () {
 		return false;
@@ -74,8 +74,8 @@ jQuery(function ($) {
 	/* Issues toggle */
 	$maketoggle('#issues dt', '#issues dd');
 	
-	/* Issues toggle on link click */
-	$('a[href^="#issue-"]').click(function() {
+	/* toggle on link click */
+	$('a[href^="#"]:not([href^="#install-"])').click(function() {
 		if (!$($(this).attr('href')).hasClass('expanded')) $($(this).attr('href')).click();
 		return true;
 	});

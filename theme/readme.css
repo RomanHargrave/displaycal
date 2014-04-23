@@ -577,7 +577,7 @@ sup {
 
 .button,
 #download > ul > li,
-#download div ul,
+#download div ul.packages,
 #quickstart > ol > li,
 #quickstart > ol > li h3,
 #install-windows-driver h4,
@@ -599,7 +599,7 @@ sup {
 
 .ie_lte_8 .button,
 .ie_lte_8 #download > ul > li,
-.ie_lte_8 #download div ul,
+.ie_lte_8 #download div ul.packages,
 .ie_lte_8 #quickstart > ol > li,
 .ie_lte_8 #quickstart > ol > li h3,
 .ie_lte_8 #install-windows-driver h4,
@@ -679,13 +679,13 @@ sup {
 	margin-left: 32px;
 }
 #download > ul,
-#download div ul,
+#download div ul.packages,
 #install-windows-driver ul {
 	list-style: none;
 	margin-left: 0;
 }
 .button,
-#download div ul,
+#download div ul.packages,
 #quickstart > ol > li h3,
 #install-windows-driver h4,
 #install-windows-driver h5 {
@@ -698,7 +698,7 @@ sup {
 }
 @media handheld, projection, screen, tv {
 	.button,
-	#download div ul,
+	#download div ul.packages,
 	#quickstart > ol > li h3,
 	#install-windows-driver h4,
 	#install-windows-driver h5 {
@@ -714,7 +714,7 @@ sup {
 		line-height: 22px;
 	}
 }
-#download div ul {
+#download div ul.packages {
 	background-color: #fff;
 
 	-moz-box-shadow: 0 1px 3px rgba(0, 0, 0, .125);
@@ -733,7 +733,7 @@ sup {
 	padding: 0;
 	min-width: 580px;
 }
-#download div ul > li {
+#download div ul.packages > li {
 	height: 22px;
 	overflow: hidden;
 	padding: .1em .3em;
@@ -741,12 +741,12 @@ sup {
 	max-width: 290px;
 	min-width: 290px;
 }
-#download div ul > li:nth-child(odd) {
+#download div ul.packages > li:nth-child(odd) {
 	background: rgba(255, 255, 255, .25);
 }
-#download div ul > li span {
+#download div ul.packages > li span {
 }
-#download div ul > li span:first-child {
+#download div ul.packages > li span:first-child {
 	float: right;
 	min-width: 200px;
 	text-align: left;
