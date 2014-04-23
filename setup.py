@@ -8,7 +8,6 @@ from distutils.util import change_root, get_platform
 from hashlib import sha1
 from subprocess import call, Popen
 from time import gmtime, strftime, timezone
-from xml.dom import minidom
 import codecs
 import glob
 import math
@@ -788,6 +787,7 @@ def setup():
 			sys.exit(retcode)
 
 	if zeroinstall:
+		from xml.dom import minidom
 		# Create/update 0install feeds
 		from setup import get_data, get_scripts
 		scripts = sorted(get_scripts())
