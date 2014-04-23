@@ -8895,7 +8895,7 @@ class MainFrame(BaseFrame):
 						if display_name in (edid.get("monitor_name", False),
 											self.worker.display_names[i]):
 							display_name_indexes.append(i)
-						if edid_md5 == edid.get("monitor_name", False):
+						if edid_md5 == edid.get("hash", False):
 							edid_md5_indexes.append(i)
 					if len(display_name_indexes) == 1:
 						display_index = display_name_indexes[0]
