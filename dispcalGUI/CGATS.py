@@ -1223,7 +1223,7 @@ Transform {
 		else:
 			writer = open
 		safe_print("Writing", filename)
-		with writer(filename, 'w') as outfile:
+		with writer(filename, "wb") as outfile:
 			outfile.write(out)
 	
 	@property
