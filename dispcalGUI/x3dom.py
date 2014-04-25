@@ -6,7 +6,9 @@ import re
 import string
 import urllib2
 
-from defaultpaths import cache
+from config import get_data_path
+from defaultpaths import cache as cachepath
+from meta import domain
 from options import verbose, debug
 from log import safe_print as _safe_print
 from util_io import GzipFileProper
@@ -73,444 +75,111 @@ class Tag(object):
 		child.parent = self
 		self.children.append(child)
 
-	def html(self, title="Untitled", xhtml=False, embed_x3dom_runtime=False,
-			 x3dom_runtime_baseuri="http://www.x3dom.org/x3dom/release"):
+	def html(self, title="Untitled", xhtml=False, embed=False, force=False,
+			 cache=True):
 		"""
 		Convert X3D to HTML
 		
 		This will generate HTML5 by default unless you set xhtml=True.
 		
-		If embed_x3dom_runtime is True, the X3DOM runtime will be embedded in
+		If embed is True, the X3DOM runtime and X3D viewer will be embedded in
 		the HTML (increases filesize considerably)
 		
 		"""
-		# Get children of scene
-		html = re.sub("\s*</?(X3D|Scene)(?:\s+[^>]*)?>\s*", "",
-					  self.markup(xhtml, True))
+		# Get children of X3D document
+		x3d_html = re.sub("\s*</?X3D(?:\s+[^>]*)?>\s*", "",
+						  self.markup(xhtml, True))
 		if not xhtml:
 			# Convert uppercase letters at start of tag name to lowercase
-			html = re.sub("(</?[A-Z]+)", lambda match: match.groups()[0].lower(),
-						  html)
+			x3d_html = re.sub("(</?[0-9A-Z]+)",
+							  lambda match: match.groups()[0].lower(), x3d_html)
 		# Indent
-		html = "\n".join(["\t" * 2 + line for line in html.splitlines()]).lstrip()
-		# Strip protocol
-		runtime_path = re.sub("^\w+://", "", x3dom_runtime_baseuri)
-		# domain.com -> com.domain
-		runtime_path = re.sub("^(?:www\.)?(\w+)((?:\.\w+)+)", "\\2.\\1",
-							  runtime_path)[1:]
-		# com.domain/path -> com.domain.path
-		runtime_path = re.sub("^([^/]+)/", "\\1.", runtime_path)
-		cachedir = os.path.join(cache,
-								os.path.join(*runtime_path.split("/")))
-		if not os.path.isdir(cachedir):
-			_safe_print("Creating cache directory:", cachedir)
-			os.makedirs(cachedir)
-		local_runtime_path = "file:///" + safe_unicode(cachedir).encode("UTF-8").lstrip("/").replace(os.path.sep, "/")
-		style = '<link rel="stylesheet" href="%s/x3dom.css" />' % local_runtime_path
-		script = """<script src="%s/x3dom.js"></script>
-		<script>
-			if (!window.x3dom) {
-				var stylesheet = document.createElement('link');
-				stylesheet.setAttribute('rel', 'stylesheet');
-				stylesheet.setAttribute('href', '%s/x3dom.css');
-				document.getElementsByTagName('head')[0].insertBefore(stylesheet, document.getElementsByTagName('style')[0]);
-				document.getElementById('x3d').setAttribute('swfpath', '%s/x3dom.swf');
-				document.write('<script src="%s/x3dom.js"><\/script>');
-				
-			}
-		</script>""" % (local_runtime_path, x3dom_runtime_baseuri,
-				x3dom_runtime_baseuri, x3dom_runtime_baseuri)
-		for resource in ("x3dom.css", "x3dom.js", "x3dom.swf"):
-			cachefilename = os.path.join(cachedir, resource)
+		x3d_html = "\n".join(["\t" * 2 + line
+							  for line in x3d_html.splitlines()]).lstrip()
+
+		# Collect resources
+		def get_resource(url, source=True):
+			baseurl, basename = os.path.split(url)
+			# Strip protocol
+			cache_uri = re.sub("^\w+://", "", baseurl)
+			# Strip www
+			cache_uri = re.sub("^(?:www\.)?", "", cache_uri)
+			# domain.com -> com.domain
+			domain, path = cache_uri.split("/", 1)
+			cache_uri = "/".join([".".join(reversed(domain.split("."))), path])
+			# com.domain/path -> com.domain.path
+			cache_uri = re.sub("^([^/]+)/", "\\1.", cache_uri)
+			cachedir = os.path.join(cachepath,
+									os.path.join(*cache_uri.split("/")))
+			if not os.path.isdir(cachedir):
+				_safe_print("Creating cache directory:", cachedir)
+				os.makedirs(cachedir)
+			cachefilename = os.path.join(cachedir, basename)
 			body = ""
-			if os.path.isfile(cachefilename):
+			if not force and os.path.isfile(cachefilename):
 				_safe_print("Using cached file:", cachefilename)
 				with open(cachefilename, "rb") as cachefile:
 					body = cachefile.read()
 			if not body.strip():
-				uri = "/".join([x3dom_runtime_baseuri, resource])
-				_safe_print("Requesting:", uri)
-				response = urllib2.urlopen(uri)
+				_safe_print("Requesting:", url)
+				response = urllib2.urlopen(url)
 				body = response.read()
 				response.close()
-			else:
-				uri = cachefilename
+			if not body.strip():
+				# Fallback to local copy
+				url = get_data_path("x3d-viewer/" + basename)
+				if not url:
+					_safe_print("Error: Resource not found:", basename)
+					return
+				with open(url, "rb") as resource_file:
+					body = resource_file.read()
 			if body.strip():
-				if embed_x3dom_runtime and resource != "x3dom.swf":
-					if resource == "x3dom.css":
-						style = "<style>%s</style>" % body
-					else:
-						script = "<script>%s</script>" % body
-				if not os.path.isfile(cachefilename):
+				if cache and not os.path.isfile(cachefilename):
 					with open(cachefilename, "wb") as cachefile:
 						cachefile.write(body)
+				if source and not basename.endswith(".swf"):
+					if basename.endswith(".css"):
+						return "<style>%s</style>" % body
+					elif basename.endswith(".js"):
+						return "<script>%s" % body
+					else:
+						return body
+				else:
+					return "file:///" + safe_unicode(cachefilename).encode("UTF-8").lstrip("/").replace(os.path.sep, "/")
 			else:
-				_safe_print("Error: Empty document:", uri)
+				_safe_print("Error: Empty document:", url)
 				if os.path.isfile(cachefilename):
 					_safe_print("Removing", cachefilename)
 					os.remove(cachefilename)
-		html = """<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<title>%(title)s</title>
-		%(style)s
-		<style>
-		a {
-			color: inherit;
-		}
-		html, body {
-			height: 100%%;
-			margin: 0;
-			padding: 0;
-			overflow: hidden;
-		}
-		body {
-			background: #111;
-			background: linear-gradient(#111, #333);
-			color: #fff;
-			font-family: sans-serif;
-			font-size: 12px;
-			text-align: center;
-		}
-		x3d, #x3dom-x3d-object {
-			border: 0;
-			height: 100%% !important;
-			width: 100%% !important;
-		}
-		#x3dom_error {
-			color: #ff4500;
-			padding: 5px 0;
-			top: -100%%;
-		}
-		#x3dom_error, #x3dom_logdiv {
-			background: rgba(16, 16, 16, .75);
-			border: 0;
-			display: block !important;
-			font-size: 12px;
-			height: auto;
-			position: absolute;
-			transition: all .5s ease;
-			width: 100%%;
-		}
-		#x3dom_logdiv {
-			bottom: -100%%;
-			max-height: 25%%;
-			padding: 5px 0 0;
-			text-align: left;
-		}
-		#x3dom_logdiv p {
-			padding: 0 5px;
-		}
-		#x3dom_logdiv p:last-child {
-			padding-bottom: 35px;
-		}
-		#x3dom_toolbar {
-			bottom: -30px;
-			padding: 5px 0;
-			position: absolute;
-			transition: all .5s ease;
-			width: 100%%;
-			z-index: 9999;
-		}
-		.button {
-			display: inline-block;
-			height: 14px;
-			padding: 3px 0;
-		}
-		.button, .options {
-			background: #ccc;
-			background: linear-gradient(#ccc, #999);
-			border: 0;
-			border-bottom: 1px outset #999;
-			border-left: 1px solid #999;
-			border-top: 1px outset #999;
-			color: #000;
-			cursor: default;
-			line-height: 14px;
-			min-width: 15ex;
-			position: relative;
-			text-shadow: 1px 1px #ccc;
-			transition: all .125s linear;
-			-moz-user-select: none;
-			-webkit-user-select: none;
-			-ms-user-select: none; 
-			user-select: none;
-			white-space: nowrap;
-		}
-		.button:first-child, .options {
-			border-bottom-left-radius: 5px;
-			border-left: 1px outset #999;
-			border-top-left-radius: 5px;
-		}
-		.button:last-child, .options {
-			border-bottom-right-radius: 5px;
-			border-right: 1px outset #999;
-			border-top-right-radius: 5px;
-		}
-		.mousedown:hover {
-			background: linear-gradient(#999, #666);
-			border-color: #666;
-		}
-		.options {
-			border-bottom-right-radius: 0;
-			display: none;
-			padding: 1px 0;
-		}
-		.options div {
-			border-radius: 3px;
-			margin: 0 1px;
-			padding: 2px 5px;
-		}
-		.options div.checked,
-		.options div.unchecked {
-			text-align: left;
-		}
-		.options div.checked:before,
-		.options div.unchecked:before,
-		.selected:before {
-			content: '\\2022\\00a0';
-		}
-		.options div.unchecked:before,
-		.selected:before {
-			opacity: 0;
-		}
-		.options div:hover {
-			background: rgba(16, 16, 16, .75);
-			color: #fff;
-			text-shadow: 1px 1px #000;
-		}
-		.button:hover .options {
-			bottom: -1px;
-			display: block;
-			left: -1px;
-			position: absolute;
-		}
-		.selected {
-			display: inline-block;
-			padding: 0 6px;
-			text-align: left;
-			width: 100%%;
-		}
-		.selected:after {
-			color: #666;
-			content: '\\25bc';
-			font-size: 10px;
-			position: absolute;
-			right: 10px;
-			text-align: right;
-			top: 3px;
-		}
-		</style>
-	</head>
-	<body>
-		<noscript><p>Please enable JavaScript</p></noscript>
-		<x3d id="x3d" showStat="false" showLog="false" swfpath="%(local_runtime_path)s/x3dom.swf" x="0px" y="0px">
-			<scene>
-				%(html)s
-			</scene>
-		</x3d>
-		<p id="x3dom_error"></p>
-		<div id="x3dom_toolbar">
-			<div class="button">
-				<div class="selected">Rotate</div>
-				<div class="options">
-					<div class="checked" onclick="setViewMode('all', this)">Rotate</div>
-					<div class="unchecked" onclick="setViewMode('pan', this)">Pan</div>
-					<div class="unchecked" onclick="setViewMode('zoom', this)">Zoom</div>
-				</div>
-			</div><!--
-			--><div class="button">
-				<div class="selected">Default</div>
-				<div class="options">
-					<div class="unchecked" onclick="setRenderMode('lines', this)">Lines</div>
-					<div class="unchecked" onclick="setRenderMode('points', this)">Points</div>
-					<div class="checked" onclick="setRenderMode(1, this)">Default</div>
-					<div class="unchecked" onclick="setRenderMode(.9, this)">Fade 10%%</div>
-					<div class="unchecked" onclick="setRenderMode(.8, this)">Fade 20%%</div>
-					<div class="unchecked" onclick="setRenderMode(.7, this)">Fade 30%%</div>
-					<div class="unchecked" onclick="setRenderMode(.6, this)">Fade 40%%</div>
-					<div class="unchecked" onclick="setRenderMode(.5, this)">Fade 50%%</div>
-					<div class="unchecked" onclick="setRenderMode(.4, this)">Fade 60%%</div>
-					<div class="unchecked" onclick="setRenderMode(.3, this)">Fade 70%%</div>
-				</div>
-			</div><!--
-			--><div class="button">
-				<div class="selected">Lights</div>
-				<div class="options" id="x3dom_toolbar_lights">
-					<div class="checked" onclick="toggleLights('headlight', this)">Headlight</div>
-				</div>
-			</div><!--
-			--><div class="button">
-				<div class="selected">Viewpoint</div>
-				<div class="options">
-					<div class="unchecked" onclick="setViewpoint('negZ')">Top</div>
-					<div class="unchecked" onclick="setViewpoint('posZ')">Bottom</div>
-					<div class="unchecked" onclick="setViewpoint('negY')">Front</div>
-					<div class="unchecked" onclick="setViewpoint('posY')">Back</div>
-					<div class="unchecked" onclick="setViewpoint('posX')">Left</div>
-					<div class="unchecked" onclick="setViewpoint('negX')">Right</div>
-				</div>
-			</div><!--
-			--><div class="button" onclick="x3d_runtime.fitAll()">Center &amp; fit</div><!--
-			--><div class="button" onclick="x3d_runtime.resetView()">Reset</div><!--
-			--><div class="button" onclick="window.open(x3d_runtime.getScreenshot())">Screenshot</div><!--
-			--><div class="button" onclick="toggleLog()">Toggle log</div>
-		</div>
-		%(script)s
-		<script>
-			var x3d_runtime, x3d_rendermode;
-			function setOpacity(opacity) {
-				var nodes = document.getElementById('x3d').getElementsByTagName('material');
-				for (var i = 0; i < nodes.length; i ++) {
-					_opacity = nodes[i].getAttribute('_opacity');
-					if (_opacity == null) {
-						transparency = nodes[i].getAttribute('transparency');
-						if (transparency == null) transparency = 0;
-						_opacity = 1 - transparency;
-						nodes[i].setAttribute('_opacity', _opacity.toString());
-					}
-					nodes[i].setAttribute('transparency', (1 - parseFloat(_opacity) * opacity).toString());
-				}
-			}
-			function setRenderMode(mode, element) {
-				if (mode != x3d_rendermode) {
-					switch (x3d_rendermode) {
-						case 'lines':
-							x3d_runtime.togglePoints(true);
-							break;
-						case 'points':
-							x3d_runtime.togglePoints();
-							break;
-					}
-					x3d_rendermode = mode;
-					switch (mode) {
-						case 'lines':
-							if (x3d_runtime.togglePoints(true) == 1)
-								x3d_runtime.togglePoints(true);
-							setOpacity(1);
-							break;
-						case 'points':
-							x3d_runtime.togglePoints();
-							setOpacity(1);
-							break;
-						default:
-							setOpacity(mode);
-					}
-					element && setSelected(element);
-				}
-			}
-			function setSelected(element) {
-				var siblings = element.parentNode.getElementsByTagName('div');
-				element.parentNode.parentNode.getElementsByClassName('selected')[0].innerHTML = element.innerHTML;
-				for (var i = 0; i < siblings.length; i ++) siblings[i].setAttribute('class', 'unchecked');
-				element.setAttribute('class', 'checked');
-			}
-			function setViewMode(mode, element) {
-				x3d_runtime.getActiveBindable('NavigationInfo').setAttribute('explorationMode', mode);
-				element && setSelected(element);
-			}
-			function setViewpoint(viewpoint) {
-				x3d_runtime.showAll(viewpoint);
-			}
-			function setup() {
-				if (window.x3dom) {
-					var buttons = document.getElementsByClassName('button');
-					for (var i = 0; i < buttons.length; i ++) {
-						buttons[i].addEventListener('mousedown', function () {
-							var cls = this.getAttribute('class');
-							this.setAttribute('class', cls + ' mousedown');
-						});
-					}
-					document.addEventListener('mouseup', function () {
-						var elements = document.getElementsByClassName('mousedown'), cls;
-						for (var i = 0; i < elements.length; i ++) {
-							cls = elements[i].getAttribute('class').replace(/ mousedown$/, '');
-							elements[i].setAttribute('class', cls);
-						}
-					});
-					function fixMethod(cls, methodName, args, fix) {
-						var method = cls[methodName].toString();
-						method = method.replace(/^\\(?\\s*function\\s*\\([^)]*\\)\\s*{/, '');
-						method = method.replace(/}\\s*\\)?$/, '');
-						args.push(fix(method));
-						cls[methodName] = Function.apply(Function, args);
-					}
-					// Fix lighting clamping
-					fixMethod(x3dom.shader.DynamicShader.prototype, 'generateFragmentShader', ['gl', 'properties'], function (method) {
-						for (var i = 0; i < 3; i ++) {
-							method = method.replace(/(ambient|diffuse|specular)\\s*=\\s*clamp\\(\\1,\\s*0.0,\\s*1.0\\)/, '$1 = max($1, 0.0)');
-							method = method.replace(/clamp\\((ambient\\s*\\+\\sdiffuse),\\s*0.0,\\s*1.0\\)/, 'max($1, 0.0)');
-						}
-						return method;
-					});
-					// Fix fontsize clamping and text positioning
-					fixMethod(x3dom.Texture.prototype, 'updateText', [], function (method) {
-						// Fix fontsize clamping
-						method = method.replace(/\\s*if\\s*\\(font_size\\s*>\\s*\\d+\\.\\d+\\)\\s*font_size\\s*=\\s*\\d+\\.\\d+\\s*;\\n?/, '');
-						// Fix text positioning
-						method = method.replace(/this\.node\._mesh\._positions\[0\]\s*=\s*\[[^\]]+\]/,
-												'this.node._mesh._positions[0] = [-w + w / 2, -h + h / 2, 0, w + w / 2, -h + h / 2, 0, w + w / 2, h + h / 2, 0, -w + w / 2, h + h / 2, 0]');
-						return method;
-					});
-					//
-					x3dom.runtime.ready = function () {
-						// Add light toggles for existing lights
-						var lights = ['directional', 'point', 'spot'];
-						for (var i = 0; i < lights.length; i ++) {
-							if (document.getElementById('x3d').getElementsByTagName(lights[i] + 'Light').length) {
-								document.getElementById('x3dom_toolbar_lights').innerHTML += '<div class="checked" onclick="toggleLights(\\'' + lights[i] + 'Light\\', this)">' + lights[i][0].toUpperCase() + lights[i].substr(1) + '</div>';
-							}
-						}
-						//
-						document.getElementById('x3dom_toolbar').style.bottom = 0;
-						x3d_runtime = document.getElementById('x3d').runtime;
-						if (x3d_runtime.canvas.backend == 'flash' && !x3d_runtime.canvas.isFlashReady) toggleLog();
-					}
-				}
-				else {
-					document.getElementById('x3dom_error').innerHTML = 'ERROR: X3DOM has failed loading. Please check the console for details.';
-					document.getElementById('x3dom_error').style.top = 0;
-				}
-			}
-			function toggleLights(which, control) {
-				var lights, backup;
-				if (which == 'headlight') {
-					backup = x3d_runtime.getActiveBindable('NavigationInfo').getAttribute('headlight') == 'false';
-					x3dom.debug.logInfo('Toggling ' + which + ' = ' + (backup ? 'true' : 'false'));
-					x3d_runtime.getActiveBindable('NavigationInfo').setAttribute('headlight', backup ? 'true' : 'false');
-				}
-				else {
-					lights = document.getElementById('x3d').getElementsByTagName(which);
-					if (!lights.length) x3dom.debug.logError('Cannot toggle ' + which + ': There are no ' + which + ' nodes');
-					for (var i = 0; i < lights.length; i ++) {
-						backup = lights[i].getAttribute('_intensity');
-						x3dom.debug.logInfo('Toggling ' + which + ' ' + i + ' intensity = ' + (backup ? backup : '0'));
-						if (backup) {
-							lights[i].setAttribute('intensity', lights[i].getAttribute('_intensity'));
-							lights[i].removeAttribute('_intensity');
-						}
-						else {
-							lights[i].setAttribute('_intensity', lights[i].getAttribute('intensity'));
-							lights[i].setAttribute('intensity', '0');
-						}
-					}
-				}
-				control && control.setAttribute('class', backup ? 'checked' : 'unchecked');
-			}
-			function toggleLog(show) {
-				if (show == window.undefined) show = x3dom.debug.logContainer.style.bottom[0] != '0';
-				x3dom.debug.logContainer.style.bottom = show !== false ? 0 : '-100%%';
-				if (x3d_runtime.canvas.backend == 'flash') x3d_runtime.canvas.canvas.setAttribute('wmode', show !== false ? 'opaque' : 'direct');
-			}
-
-			setup();
-		</script>
-	</body>
-</html>""" % {"title": title.encode("UTF-8"), "style": style,
-				  "script": script,
-				  "x3dom_runtime_baseuri": x3dom_runtime_baseuri,
-				  "local_runtime_path": local_runtime_path, "html": html}
+		# Get HTML template from cache or online
+		html = get_resource("http://%s/x3d-viewer/release/x3d-viewer.html" %
+							domain.lower(), True)
+		if cache or embed:
+			# Update resources in HTML
+			restags = re.findall("<[^>]+\s+data-fallback-\w+=[^>]*>", html)
+			for restag in restags:
+				attrname = re.search(r"\s+data-fallback-(\w+)=",
+									 restag).groups()[0]
+				url = re.search(r"\s+%s=([\"'])(.+?)\1" % attrname,
+								restag).groups()[1]
+				if url.endswith(".swf") and not cache:
+					continue
+				resource = get_resource(url, embed)
+				if not resource:
+					continue
+				if embed and not url.endswith(".swf"):
+					html = html.replace(restag, resource)
+				else:
+					updated_restag = re.sub(r"(\s+data-fallback-%s=)([\"']).+?\2"
+											% attrname, r"\1\2%s\2" % resource,
+											restag)
+					html = html.replace(restag, updated_restag)
+		# Update title
+		html = re.sub("(<title>)[^<]*(</title>)",
+					  r"\1%s\2" % safe_unicode(title).encode("UTF-8"), html)
+		# Insert X3D
+		html = html.replace("</x3d>", "\t" + x3d_html + "\n\t\t</x3d>")
+		# Finish
 		if xhtml:
 			html = "<?xml version='1.0' encoding='UTF-8'?>\n" + html
 			html = re.sub("\s*/>", " />", html)
@@ -896,8 +565,8 @@ def vrml2x3dom(vrml, worker=None):
 	return x3d
 
 
-def vrmlfile2x3dfile(vrmlpath, x3dpath, html=True, embed_x3dom_runtime=False,
-					 worker=None):
+def vrmlfile2x3dfile(vrmlpath, x3dpath, html=True, embed=False, force=False,
+					 cache=True, worker=None):
 	"""
 	Convert VRML file located at vrmlpath to HTML and write to x3dpath
 	
@@ -925,7 +594,7 @@ def vrmlfile2x3dfile(vrmlpath, x3dpath, html=True, embed_x3dom_runtime=False,
 				x3dfile.write(x3d.x3d())
 		else:
 			html = x3d.html(title=os.path.basename(filename),
-							embed_x3dom_runtime=embed_x3dom_runtime)
+							embed=embed, force=force, cache=cache)
 			_safe_print("Writing", x3dpath + ".html")
 			with open(x3dpath + ".html", "wb") as htmlfile:
 				htmlfile.write(html)

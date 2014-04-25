@@ -1783,6 +1783,7 @@ class ProfileInfoFrame(LUTFrame):
 		elif x3d:
 			vrmlfile2x3dfile(vrmlpath, x3dpath,
 							 embed=getcfg("x3dom.embed"), html=html, view=True,
+							 force=False, cache=getcfg("x3dom.cache"),
 							 worker=self.worker)
 		else:
 			launch_file(vrmlpath)

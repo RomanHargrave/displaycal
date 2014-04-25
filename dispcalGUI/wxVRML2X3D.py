@@ -19,7 +19,13 @@ def main(vrmlpath=None):
 		safe_print("Convert VRML file to X3D")
 		safe_print("The output is written to FILENAME.x3d(.html)")
 		safe_print("")
-		safe_print("  --embed      Embed X3DOM runtime in HTML instead of referencing it")
+		safe_print("  --embed      Embed viewer components in HTML instead of "
+				   "referencing them")
+		safe_print("  --force      Force fresh download of viewer components")
+		safe_print("  --no-cache   Don't use viewer components cache (only "
+				   "uses existing cache if")
+		safe_print("               embedding components, can be overridden "
+				   "with --force)")
 		safe_print("  --no-gui     Don't show GUI (terminal mode)")
 		safe_print("  --no-html    Don't generate HTML file")
 		safe_print("  --view       View the generated file (if --no-gui)")
@@ -27,11 +33,14 @@ def main(vrmlpath=None):
 		return
 	config.initcfg()
 	lang.init()
+	cache = not "--no-cache" in sys.argv[1:]
 	embed = "--embed" in sys.argv
+	force = "--force" in sys.argv
 	html = not "--no-html" in sys.argv[1:]
-	view = "--view=X3D" in sys.argv[1:]
+	view = "--view" in sys.argv[1:]
 	if "--no-gui" in sys.argv[1:]:
-		vrmlfile2x3dfile(vrmlpath, html=html, embed=embed, view=view)
+		vrmlfile2x3dfile(vrmlpath, html=html, embed=embed, view=view,
+						 force=force, cache=cache)
 	else:
 		app = wx.App(0)
 		frame = wx.Frame(None, wx.ID_ANY, lang.getstr("vrml_to_x3d_converter"),
@@ -56,12 +65,16 @@ def main(vrmlpath=None):
 												 html=html,
 												 embed=embed,
 												 view=True,
+												 force=force,
+												 cache=cache,
 												 worker=worker))
 		droptarget = FileDrop()
 		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dfile(vrmlpath,
 															  html=html,
 															  embed=embed,
 															  view=True,
+															  force=force,
+															  cache=cache,
 															  worker=worker)
 		droptarget.drophandlers = {
 			".vrml": vrml_drop_handler,
@@ -81,13 +94,13 @@ def main(vrmlpath=None):
 		frame.SetMaxSize(frame.GetSize())
 		frame.Show()
 		if vrmlpath:
-			wx.CallAfter(vrmlfile2x3dfile, vrmlpath,  embed=embed,
-						 html=html, view=True, worker=worker)
+			wx.CallAfter(vrmlfile2x3dfile, vrmlpath, html=html, embed=embed,
+						 view=True, force=force, cache=cache, worker=worker)
 		app.MainLoop()
 
 
 def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
-					 view=False, worker=None):
+					 view=False, force=False, cache=True, worker=None):
 	""" Convert VRML to HTML. Output is written to <vrmlfilename>.x3d.html
 	unless you set x3dpath to desired output path, or False to be prompted
 	for an output path. """
@@ -158,12 +171,14 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 					 if isinstance(result, Exception)
 					 else result and view and launch_file(finalpath),
 					 x3dom.vrmlfile2x3dfile,
-					 wargs=(vrmlpath, x3dpath, html, embed, worker),
+					 wargs=(vrmlpath, x3dpath, html, embed, force, cache,
+							worker),
 					 progress_title=lang.getstr("vrml_to_x3d_converter"),
 					 resume=worker.progress_wnd and
 							worker.progress_wnd.IsShownOnScreen())
 	else:
-		result = x3dom.vrmlfile2x3dfile(vrmlpath, x3dpath, html, embed)
+		result = x3dom.vrmlfile2x3dfile(vrmlpath, x3dpath, html, embed, force,
+										cache, None)
 		if not isinstance(result, Exception) and result and view:
 			launch_file(finalpath)
 		else:

@@ -1,0 +1,145 @@
+a {
+	color: inherit;
+}
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+body {
+	background: #111;
+	background: linear-gradient(#111, #333);
+	color: #fff;
+	font-family: sans-serif;
+	font-size: 12px;
+	text-align: center;
+}
+x3d, #x3dom-x3d-object {
+	border: 0;
+	height: 100% !important;
+	width: 100% !important;
+}
+#x3d_viewer_error {
+	color: #ff4500;
+	padding: 5px 0;
+	top: -100%;
+}
+#x3d_viewer_error, #x3dom_logdiv {
+	background: rgba(16, 16, 16, .75);
+	border: 0;
+	display: block !important;
+	font-size: 12px;
+	height: auto;
+	position: absolute;
+	transition: all .5s ease;
+	width: 100%;
+}
+#x3dom_logdiv {
+	bottom: -100%;
+	max-height: 25%;
+	padding: 5px 0 0;
+	text-align: left;
+}
+#x3dom_logdiv p {
+	padding: 0 5px;
+}
+#x3dom_logdiv p:last-child {
+	padding-bottom: 35px;
+}
+#x3d_viewer_toolbar {
+	bottom: -30px;
+	padding: 5px 0;
+	position: absolute;
+	transition: all .5s ease;
+	width: 100%;
+	z-index: 9999;
+}
+.button {
+	display: inline-block;
+	height: 14px;
+	padding: 3px 0;
+}
+.button, .options {
+	background: #ccc;
+	background: linear-gradient(#ccc, #999);
+	border: 0;
+	border-bottom: 1px outset #999;
+	border-left: 1px solid #999;
+	border-top: 1px outset #999;
+	color: #000;
+	cursor: default;
+	line-height: 14px;
+	min-width: 15ex;
+	position: relative;
+	text-shadow: 1px 1px #ccc;
+	transition: all .125s linear;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none; 
+	user-select: none;
+	white-space: nowrap;
+}
+.button:first-child, .options {
+	border-bottom-left-radius: 5px;
+	border-left: 1px outset #999;
+	border-top-left-radius: 5px;
+}
+.button:last-child, .options {
+	border-bottom-right-radius: 5px;
+	border-right: 1px outset #999;
+	border-top-right-radius: 5px;
+}
+.mousedown:hover {
+	background: linear-gradient(#999, #666);
+	border-color: #666;
+}
+.options {
+	border-bottom-right-radius: 0;
+	display: none;
+	padding: 1px 0;
+}
+.options div {
+	border-radius: 3px;
+	margin: 0 1px;
+	padding: 2px 5px;
+}
+.options div.checked,
+.options div.unchecked {
+	text-align: left;
+}
+.options div.checked:before,
+.options div.unchecked:before,
+.selected:before {
+	content: '\2022\00a0';
+}
+.options div.unchecked:before,
+.selected:before {
+	opacity: 0;
+}
+.options div:hover {
+	background: rgba(16, 16, 16, .75);
+	color: #fff;
+	text-shadow: 1px 1px #000;
+}
+.button:hover .options {
+	bottom: -1px;
+	display: block;
+	left: -1px;
+	position: absolute;
+}
+.selected {
+	display: inline-block;
+	padding: 0 6px;
+	text-align: left;
+	width: 100%;
+}
+.selected:after {
+	color: #666;
+	content: '\25bc';
+	font-size: 10px;
+	position: absolute;
+	right: 10px;
+	text-align: right;
+	top: 3px;
+}
