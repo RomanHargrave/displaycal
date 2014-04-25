@@ -346,20 +346,11 @@ class TestchartEditor(wx.Frame):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag = wx.ALL & ~(wx.BOTTOM | wx.TOP), border = 12 + border)
 
-		self.vrml_save_as_btn = wx.BitmapButton(panel, -1, geticon(16, "3D"),
-												style=wx.NO_BORDER)
-		self.vrml_save_as_btn.SetToolTipString(lang.getstr("view.3d"))
-		self.vrml_save_as_btn.SetBitmapDisabled(geticon(16, "empty"))
-		self.vrml_save_as_btn.Disable()
-		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
-				 id=self.vrml_save_as_btn.GetId())
-		hsizer.Add(self.vrml_save_as_btn, flag=(wx.ALL & ~wx.LEFT) |
-											   wx.ALIGN_CENTER_VERTICAL,
-				   border=border * 2)
 		self.view_3d_format_ctrl = wx.Choice(panel, -1, choices=["HTML",
 																 "VRML",
 																 "X3D"])
 		self.view_3d_format_ctrl.SetStringSelection(getcfg("3d.format"))
+		self.view_3d_format_ctrl.SetToolTipString(lang.getstr("tc.3d"))
 		self.view_3d_format_ctrl.Bind(wx.EVT_CHOICE,
 									  lambda event:
 									  setcfg("3d.format",
@@ -368,20 +359,24 @@ class TestchartEditor(wx.Frame):
 												  wx.ALIGN_CENTER_VERTICAL,
 				   border=border * 2)
 		self.tc_vrml_cie = wx.CheckBox(panel, -1, "", name = "tc_vrml_cie", style = wx.RB_GROUP)
+		self.tc_vrml_cie.SetToolTipString(lang.getstr("tc.3d"))
 		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_cie.GetId())
 		hsizer.Add(self.tc_vrml_cie, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
 		self.tc_vrml_cie_colorspace_ctrl = wx.Choice(panel, -1,
 			choices=config.valid_values["tc_vrml_cie_colorspace"])
+		self.tc_vrml_cie_colorspace_ctrl.SetToolTipString(lang.getstr("tc.3d"))
 		self.Bind(wx.EVT_CHOICE, self.tc_vrml_handler,
 				  id=self.tc_vrml_cie_colorspace_ctrl.GetId())
 		hsizer.Add(self.tc_vrml_cie_colorspace_ctrl,
 				   flag=(wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL,
 				   border=border * 2)
 		self.tc_vrml_device = wx.CheckBox(panel, -1, "", name = "tc_vrml_device")
+		self.tc_vrml_device.SetToolTipString(lang.getstr("tc.3d"))
 		self.Bind(wx.EVT_CHECKBOX, self.tc_vrml_handler, id = self.tc_vrml_device.GetId())
 		hsizer.Add(self.tc_vrml_device, flag = (wx.ALL & ~wx.LEFT) | wx.ALIGN_CENTER_VERTICAL, border = border * 2)
 		self.tc_vrml_device_colorspace_ctrl = wx.Choice(panel, -1,
 			choices=config.valid_values["tc_vrml_device_colorspace"])
+		self.tc_vrml_device_colorspace_ctrl.SetToolTipString(lang.getstr("tc.3d"))
 		self.Bind(wx.EVT_CHOICE, self.tc_vrml_handler,
 				  id=self.tc_vrml_device_colorspace_ctrl.GetId())
 		hsizer.Add(self.tc_vrml_device_colorspace_ctrl,
@@ -413,6 +408,15 @@ class TestchartEditor(wx.Frame):
 				  id=self.tc_vrml_compress_cb.GetId())
 		hsizer.Add(self.tc_vrml_compress_cb, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
 				   border=border)
+		self.vrml_save_as_btn = wx.BitmapButton(panel, -1, geticon(16, "3D"))
+		self.vrml_save_as_btn.SetToolTipString(lang.getstr("tc.3d"))
+		self.vrml_save_as_btn.SetBitmapDisabled(geticon(16, "empty"))
+		self.vrml_save_as_btn.Disable()
+		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
+				 id=self.vrml_save_as_btn.GetId())
+		hsizer.Add(self.vrml_save_as_btn, flag=(wx.ALL & ~wx.LEFT) |
+											   wx.ALIGN_CENTER_VERTICAL,
+				   border=border * 2)
 
 		# buttons
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
