@@ -2519,8 +2519,8 @@ class MainFrame(BaseFrame):
 				if base_id:
 					# Set measurement mode according to base ID
 					if self.worker.get_instrument_name() == "ColorHug":
-						mode = {1: "R",
-								2: "F"}.get(base_id)
+						mode = {1: "F",
+								2: "R"}.get(base_id)
 					elif self.worker.get_instrument_name() == "ColorMunki Smile":
 						mode = {1: "f"}.get(base_id)
 					elif self.worker.get_instrument_name() == "Colorimtre HCFR":
@@ -6621,8 +6621,8 @@ class MainFrame(BaseFrame):
 				colorimeter_ti3[0].add_keyword("DISPLAY_TYPE_BASE_ID",
 											   {"c": 2,
 												"l": 1,
-												"R": 1,
-												"F": 2,
+												"R": 2,
+												"F": 1,
 												"f": 1,
 												"g": 3}.get(getcfg("measurement_mode"),
 															1))
