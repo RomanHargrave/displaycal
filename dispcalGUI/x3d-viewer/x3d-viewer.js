@@ -77,11 +77,12 @@ var x3d_viewer = {
 				args.push(fix(method));
 				cls[methodName] = Function.apply(Function, args);
 			}
-			// Fix lighting clamping
+			// Fix lighting clamping and transparency gamma
 			fixMethod(x3dom.shader.DynamicShader.prototype, 'generateFragmentShader', ['gl', 'properties'], function (method) {
 				for (var i = 0; i < 3; i ++) {
 					method = method.replace(/(ambient|diffuse|specular)\s*=\s*clamp\(\1,\s*0.0,\s*1.0\)/, '$1 = max($1, 0.0)');
 					method = method.replace(/clamp\((ambient\s*\+\sdiffuse),\s*0.0,\s*1.0\)/, 'max($1, 0.0)');
+					method = method.replace(/(color\.a\s*=\s*1\.0\s*-\s*)transparency(\s*;)/, '$1pow(transparency, 2.2)$2');
 				}
 				return method;
 			});
