@@ -603,7 +603,7 @@
 	"tc.single": "Échantillons de canal unique",
 	"tc.single.perchannel": "par canal",
 	"tc.t": "Échantillonnage incrémentiel du point éloigné",
-	"tc.vrml": "Créer un fichier de diagnostic VRML",
+	"tc.3d": "Créer un fichier de diagnostic 3D",
 	"tc.vrml.black_offset": "Décalage du noir RGB (L*)",
 	"tc.vrml.device": "Emplacements des périphériques",
 	"tc.vrml.lab": "Emplacements des Lab",

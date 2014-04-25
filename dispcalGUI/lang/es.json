@@ -571,7 +571,7 @@
 	"tc.single": "Parches de un canal",
 	"tc.single.perchannel": "Por canal",
 	"tc.t": "Punto de ejemplo lejano incremental",
-	"tc.vrml": "Crear archivo VRML de diagnostico",
+	"tc.3d": "Crear archivo 3D de diagnostico",
 		"*tc.vrml.black_offset": "RGB black offset (L*)",
 	"tc.vrml.device": "Localizacion de dispositivos",
 	"tc.vrml.lab": "Localizaciones Lab",

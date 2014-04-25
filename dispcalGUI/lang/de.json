@@ -607,7 +607,7 @@
 	"tc.single": "Einzelkanal-Felder",
 	"tc.single.perchannel": "pro Kanal",
 	"tc.t": "Inkrementelle Ferne-Punkte-Abtastung",
-	"tc.vrml": "VRML-Datei zur Diagnose erstellen",
+	"tc.3d": "3D-Datei zur Diagnose erstellen",
 	"tc.vrml.black_offset": "RGB Schwarz-Offset (L*)",
 	"tc.vrml.device": "Geräte-Farborte",
 	"tc.vrml.lab": "Lab-Farborte",

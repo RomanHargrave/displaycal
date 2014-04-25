@@ -614,7 +614,7 @@
 	"tc.single": "Single channel patches",
 	"tc.single.perchannel": "per channel",
 	"tc.t": "Incremental far point sampling",
-	"tc.vrml": "Create diagnostic VRML file",
+	"tc.3d": "Create diagnostic 3D file",
 	"tc.vrml.black_offset": "RGB black offset (L*)",
 	"tc.vrml.device": "Device locations",
 	"tc.vrml.lab": "Lab locations",

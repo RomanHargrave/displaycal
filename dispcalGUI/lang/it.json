@@ -571,7 +571,7 @@
 	"tc.single": "Campioni su singolo canale",
 	"tc.single.perchannel": "per canale",
 	"tc.t": "Campionamento con punto remoto incrementale",
-	"tc.vrml": "Creazione del file VRML diagnostico VRML",
+	"tc.3d": "Creazione del file VRML diagnostico 3D",
 		"*tc.vrml.black_offset": "RGB black offset (L*)",
 	"tc.vrml.device": "Posizioni del dispositivo",
 	"tc.vrml.lab": "Posizioni del Lab",
