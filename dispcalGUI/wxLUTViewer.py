@@ -7,9 +7,8 @@ import subprocess as sp
 import sys
 import tempfile
 
-from numpy import interp
-
 from argyll_cgats import cal_to_fake_profile, vcgt_to_cal
+from colormath import interp
 from config import (fs_enc, get_argyll_display_number, get_display_profile,
 					get_display_rects, getcfg, geticon, get_verified_path,
 					setcfg)
