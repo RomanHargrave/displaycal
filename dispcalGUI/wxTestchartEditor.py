@@ -2127,6 +2127,7 @@ class TestchartEditor(wx.Frame):
 
 		if path is None:
 			path = getcfg(self.cfg)
+		path = safe_unicode(path)
 		try:
 			filename, ext = os.path.splitext(path)
 			if ext.lower() not in (".icc", ".icm"):

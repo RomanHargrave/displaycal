@@ -7034,7 +7034,7 @@ class Xicclu(Worker):
 			profile.write(os.fdopen(fd, "wb"))
 			profile.close()
 			self.temp = True
-		profile_basename = os.path.basename(profile.fileName)
+		profile_basename = safe_unicode(os.path.basename(profile.fileName))
 		profile_path = os.path.join(cwd, profile_basename)
 		if not os.path.isfile(profile_path):
 			profile.write(profile_path)

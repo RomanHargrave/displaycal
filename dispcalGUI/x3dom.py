@@ -571,6 +571,7 @@ def vrmlfile2x3dfile(vrmlpath, x3dpath, html=True, embed=False, force=False,
 	Convert VRML file located at vrmlpath to HTML and write to x3dpath
 	
 	"""
+	vrmlpath, x3dpath = [safe_unicode(path) for path in (vrmlpath, x3dpath)]
 	filename, ext = os.path.splitext(vrmlpath)
 	if ext.lower() in (".gz", ".wrz"):
 		cls = GzipFileProper
