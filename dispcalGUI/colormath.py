@@ -285,6 +285,11 @@ def interp(x, xp, fp, left=None, right=None):
 	interp(0, [0, 0], [0, 1]) will return 0
 	
 	"""
+	if not isinstance(x, (int, long, float, complex)):
+		yi = []
+		for n in x:
+			yi.append(interp(n, xp, fp, left, right))
+		return yi
 	if x in xp:
 		return fp[xp.index(x)]
 	elif x < xp[0]:
