@@ -5877,7 +5877,7 @@ class MainFrame(BaseFrame):
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = config.get_display_name() == "Untethered"
 		setcfg("calibration.file.previous", None)
-		continue_next = consumer is not self.just_measure_finish
+		continue_next = bool(consumer)
 		if not consumer:
 			consumer = self.just_measure_finish
 		self.worker.start_measurement(consumer, apply_calibration,
@@ -6569,20 +6569,20 @@ class MainFrame(BaseFrame):
 		Atleast one of the ti3 files must be a measured with a spectrometer.
 		
 		"""
-		parent = self if event else None
-		dlg = ConfirmDialog(parent,
-							msg=lang.getstr("colorimeter_correction.create.info"), 
-							ok=lang.getstr("colorimeter_correction.create"), 
-							cancel=lang.getstr("cancel"), 
-							alt=lang.getstr("measure.testchart"), 
-							bitmap=geticon(32, "dialog-information"))
-		dlg.alt.Enable(bool(self.worker.displays) and 
-					   bool(self.worker.instruments))
-		if event:
+		parent = self if not paths else None
+		if not paths:
+			dlg = ConfirmDialog(parent,
+								msg=lang.getstr("colorimeter_correction.create.info"), 
+								ok=lang.getstr("colorimeter_correction.create"), 
+								cancel=lang.getstr("cancel"), 
+								alt=lang.getstr("measure.testchart"), 
+								bitmap=geticon(32, "dialog-information"))
+			dlg.alt.Enable(bool(self.worker.displays) and 
+						   bool(self.worker.instruments))
 			result = dlg.ShowModal()
+			dlg.Destroy()
 		else:
 			result = wx.ID_OK
-		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			return
 		elif result != wx.ID_OK:
@@ -6602,26 +6602,26 @@ class MainFrame(BaseFrame):
 		spectral = False
 		for n in (0, 1):
 			path = None
-			if reference_ti3:
-				defaultDir, defaultFile = get_verified_path("last_colorimeter_ti3_path")
-				msg = lang.getstr("measurement_file.choose.colorimeter")
-			else:
-				defaultDir, defaultFile = get_verified_path("last_reference_ti3_path")
-				msg = lang.getstr("measurement_file.choose.reference")
-			dlg = wx.FileDialog(parent, 
-								msg,
-								defaultDir=defaultDir,
-								defaultFile=defaultFile,
-								wildcard=lang.getstr("filetype.ti3") +
-										 "|*.ti3;*.icm;*.icc", 
-								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-			dlg.Center(wx.BOTH)
-			if event:
+			if not paths:
+				if reference_ti3:
+					defaultDir, defaultFile = get_verified_path("last_colorimeter_ti3_path")
+					msg = lang.getstr("measurement_file.choose.colorimeter")
+				else:
+					defaultDir, defaultFile = get_verified_path("last_reference_ti3_path")
+					msg = lang.getstr("measurement_file.choose.reference")
+				dlg = wx.FileDialog(parent, 
+									msg,
+									defaultDir=defaultDir,
+									defaultFile=defaultFile,
+									wildcard=lang.getstr("filetype.ti3") +
+											 "|*.ti3;*.icm;*.icc", 
+									style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+				dlg.Center(wx.BOTH)
 				if dlg.ShowModal() == wx.ID_OK:
 					path = dlg.GetPath()
+				dlg.Destroy()
 			else:
 				path = paths[n]
-			dlg.Destroy()
 			if path:
 				try:
 					if os.path.splitext(path.lower())[1] in (".icm", ".icc"):
@@ -6695,18 +6695,18 @@ class MainFrame(BaseFrame):
 						setcfg("last_reference_ti3_path", path)
 						if cgats.queryv1("SPECTRAL_BANDS"):
 							spectral = True
-							# Ask if user wants to create CCSS
-							dlg = ConfirmDialog(parent, 
-												msg=lang.getstr("create_ccss_or_ccmx"), 
-												ok=lang.getstr("CCSS"), 
-												cancel=lang.getstr("cancel"), 
-												alt=lang.getstr("CCMX"),
-												bitmap=geticon(32, "dialog-information"))
-							if event:
+							if not paths:
+								# Ask if user wants to create CCSS
+								dlg = ConfirmDialog(parent, 
+													msg=lang.getstr("create_ccss_or_ccmx"), 
+													ok=lang.getstr("CCSS"), 
+													cancel=lang.getstr("cancel"), 
+													alt=lang.getstr("CCMX"),
+													bitmap=geticon(32, "dialog-information"))
 								result = dlg.ShowModal()
+								dlg.Destroy()
 							else:
 								result = wx.ID_OK
-							dlg.Destroy()
 							if result == wx.ID_OK:
 								break
 							elif result == wx.ID_CANCEL:
@@ -6855,103 +6855,105 @@ class MainFrame(BaseFrame):
 		if target_instrument:
 			description = "%s (%s)" % (description, target_instrument)
 		args = []
-		# Allow use to alter description, display and instrument
-		dlg = ConfirmDialog(
-			parent, 
-			msg=lang.getstr("colorimeter_correction.create.details"), 
-			ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
-			bitmap=geticon(32, "dialog-question"))
-		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-		dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
-											   description, 
-											   size=(400, -1))
-		dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-		if not display:
-			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display")), 1, 
+		tech = []
+		if not paths:
+			# Allow use to alter description, display and instrument
+			dlg = ConfirmDialog(
+				parent, 
+				msg=lang.getstr("colorimeter_correction.create.details"), 
+				ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
+				bitmap=geticon(32, "dialog-question"))
+			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
 						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
-											   self.worker.get_display_name(True,
-																			True), 
-											   size=(400, -1))
-			dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
+			dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
+												   description, 
+												   size=(400, -1))
+			dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
 						   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-		if not manufacturer:
-			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display.manufacturer")), 1, 
+			if not display:
+				dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display")), 1, 
+							   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+				dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
+												   self.worker.get_display_name(True,
+																				True), 
+												   size=(400, -1))
+				dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
+							   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+			if not manufacturer:
+				dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display.manufacturer")), 1, 
+							   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+				dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
+														self.worker.get_display_edid().get("manufacturer", ""), 
+														size=(400, -1))
+				dlg.sizer3.Add(dlg.manufacturer_txt_ctrl, 1, 
+							   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+			dlg.sizer4 = wx.FlexGridSizer(2, 3, 0, 8)
+			dlg.sizer4.AddGrowableCol(0, 1)
+			dlg.sizer4.AddGrowableCol(1, 1)
+			dlg.sizer4.AddGrowableCol(2, 1)
+			dlg.sizer3.Add(dlg.sizer4, 1, flag=wx.EXPAND)
+			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
 						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
-													self.worker.get_display_edid().get("manufacturer", ""), 
-													size=(400, -1))
-			dlg.sizer3.Add(dlg.manufacturer_txt_ctrl, 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-		dlg.sizer4 = wx.FlexGridSizer(2, 3, 0, 8)
-		dlg.sizer4.AddGrowableCol(0, 1)
-		dlg.sizer4.AddGrowableCol(1, 1)
-		dlg.sizer4.AddGrowableCol(2, 1)
-		dlg.sizer3.Add(dlg.sizer4, 1, flag=wx.EXPAND)
-		dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-		dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("backlight")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-		dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("panel.type")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-		# Display technology
-		dlg.display_tech_ctrl = wx.Choice(dlg, -1,
-										  choices=["LCD", "CRT",
-												   "Plasma", "Projector"])
-		dlg.display_tech_ctrl.SetSelection(0)
-		dlg.sizer4.Add(dlg.display_tech_ctrl,
-					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-		def display_tech_handler(event):
-			tech = dlg.display_tech_ctrl.GetStringSelection()
-			illumination = dlg.illumination_ctrl.GetStringSelection()
-			separate_illumination = ("LCD", "DLP", "LCoS")
-			dlg.illumination_ctrl.Enable(tech in separate_illumination)
-			if tech in ("DLP", "LCoS") and illumination == "CCFL":
-				dlg.illumination_ctrl.SetStringSelection("UHP")
-			dlg.panel_type_ctrl.Enable(tech == "LCD")
-		dlg.Bind(wx.EVT_CHOICE, display_tech_handler, 
-				 id=dlg.display_tech_ctrl.GetId())
-		# Display illumination/backlight
-		dlg.illumination_ctrl = wx.Choice(dlg, -1,
-										  choices=["CCFL",
-												   "White LED",
-												   "RGB LED"])
-		dlg.illumination_ctrl.SetSelection(0)
-		dlg.sizer4.Add(dlg.illumination_ctrl,
-					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-		# Panel type
-		dlg.panel_type_ctrl = wx.Choice(dlg, -1,
-										choices=["IPS",
-												 "Wide Gamut IPS",
-												 "PVA",
-												 "Wide Gamut PVA",
-												 "TN"])
-		dlg.panel_type_ctrl.SetSelection(1)
-		dlg.sizer4.Add(dlg.panel_type_ctrl,
-					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-		dlg.description_txt_ctrl.SetFocus()
-		dlg.sizer0.SetSizeHints(dlg)
-		dlg.sizer0.Layout()
-		dlg.Center()
-		if event:
+			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("backlight")), 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("panel.type")), 1, 
+						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			# Display technology
+			dlg.display_tech_ctrl = wx.Choice(dlg, -1,
+											  choices=["LCD", "CRT",
+													   "Plasma", "Projector"])
+			dlg.display_tech_ctrl.SetSelection(0)
+			dlg.sizer4.Add(dlg.display_tech_ctrl,
+						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+			def display_tech_handler(event):
+				tech = dlg.display_tech_ctrl.GetStringSelection()
+				illumination = dlg.illumination_ctrl.GetStringSelection()
+				separate_illumination = ("LCD", "DLP", "LCoS")
+				dlg.illumination_ctrl.Enable(tech in separate_illumination)
+				if tech in ("DLP", "LCoS") and illumination == "CCFL":
+					dlg.illumination_ctrl.SetStringSelection("UHP")
+				dlg.panel_type_ctrl.Enable(tech == "LCD")
+			dlg.Bind(wx.EVT_CHOICE, display_tech_handler, 
+					 id=dlg.display_tech_ctrl.GetId())
+			# Display illumination/backlight
+			dlg.illumination_ctrl = wx.Choice(dlg, -1,
+											  choices=["CCFL",
+													   "White LED",
+													   "RGB LED"])
+			dlg.illumination_ctrl.SetSelection(0)
+			dlg.sizer4.Add(dlg.illumination_ctrl,
+						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+			# Panel type
+			dlg.panel_type_ctrl = wx.Choice(dlg, -1,
+											choices=["IPS",
+													 "Wide Gamut IPS",
+													 "PVA",
+													 "Wide Gamut PVA",
+													 "TN"])
+			dlg.panel_type_ctrl.SetSelection(1)
+			dlg.sizer4.Add(dlg.panel_type_ctrl,
+						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+			dlg.description_txt_ctrl.SetFocus()
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			dlg.Center()
 			result = dlg.ShowModal()
+			description = safe_str(dlg.description_txt_ctrl.GetValue().strip(),
+								   "UTF-8")
+			if not display:
+				display = dlg.display_txt_ctrl.GetValue()
+			for ctrl in (dlg.display_tech_ctrl, dlg.illumination_ctrl,
+						 dlg.panel_type_ctrl):
+				if ctrl.IsEnabled() and ctrl.GetStringSelection():
+					tech.append(ctrl.GetStringSelection())
+			if not manufacturer:
+				manufacturer = dlg.manufacturer_txt_ctrl.GetValue()
+			dlg.Destroy()
 		else:
 			result = wx.ID_OK
-		description = safe_str(dlg.description_txt_ctrl.GetValue().strip(),
-							   "UTF-8")
-		if not event:
 			description += " AUTO"
 		args += ["-E", description]
-		if not display:
-			display = dlg.display_txt_ctrl.GetValue()
 		args += ["-I", safe_str(display.strip(), "UTF-8")]
-		tech = []
-		for ctrl in (dlg.display_tech_ctrl, dlg.illumination_ctrl,
-					 dlg.panel_type_ctrl):
-			if ctrl.IsEnabled() and ctrl.GetStringSelection():
-				tech.append(ctrl.GetStringSelection())
 		if reference_ti3 and not colorimeter_ti3:
 			args += ["-T", safe_str(" ".join(tech), "UTF-8")]
 		if result != wx.ID_OK:
@@ -6997,14 +6999,12 @@ class MainFrame(BaseFrame):
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "REFERENCE"\nREFERENCE "%s"\\1' %
 							   reference_ti3[0].get("TARGET_INSTRUMENT"), cgats)
-			if not re.search('\nTECHNOLOGY\s+".+?"\n', cgats):
+			if not re.search('\nTECHNOLOGY\s+".+?"\n', cgats) and tech:
 				# By default, CCMX files don't contain technology string
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "TECHNOLOGY"\nTECHNOLOGY "%s"\\1' %
 							   safe_str(" ".join(tech), "UTF-8"), cgats)
 			manufacturer_id = None
-			if not manufacturer:
-				manufacturer = dlg.manufacturer_txt_ctrl.GetValue()
 			if manufacturer:
 				if not pnpidcache:
 					# Populate pnpidcache
@@ -7027,7 +7027,7 @@ class MainFrame(BaseFrame):
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
-			if event:
+			if not paths:
 				if (colorimeter_correction_check_overwrite(self, cgats)):
 					self.upload_colorimeter_correction(cgats)
 			else:
