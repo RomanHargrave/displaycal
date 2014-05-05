@@ -252,6 +252,7 @@
 	"display.manufacturer": "Display device manufacturer",
 	"display.primary": "(Primary)",
 	"display.properties": "Display device properties",
+	"display.reset.info": "Please reset the display device to factory defaults, then adjust its brightness to a comfortable level.",
 	"display.settings": "Display device settings",
 	"display.tech": "Display technology",
 	"display_detected": "A change in the display device configuration has been detected.",

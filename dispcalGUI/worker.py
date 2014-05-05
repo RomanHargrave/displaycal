@@ -1342,6 +1342,11 @@ class Worker(object):
 		if not get_arg("-c", args):
 			args += ["-c%s" % getcfg("comport.number")]
 		measurement_mode = getcfg("measurement_mode")
+		if measurement_mode == "auto":
+			if self.get_instrument_name() == "ColorHug":
+				measurement_mode = "R"
+			else:
+				measurement_mode = "l"
 		instrument_features = self.get_instrument_features()
 		if (measurement_mode and (measurement_mode != "p" or
 								  self.get_instrument_name() == "ColorHug") and
@@ -1507,16 +1512,17 @@ class Worker(object):
 		# Spyder 4 (only generic LCD and refresh measurement modes)
 		return (self.argyll_version >= [1, 3, 0] and
 				not self.get_instrument_features().get("spectral") and
-				(self.get_instrument_name() != "ColorHug" or
-				 getcfg("measurement_mode") in ("F", "R")) and
-				(self.get_instrument_name() != "ColorMunki Smile" or
-				 getcfg("measurement_mode") == "f") and
-				(self.get_instrument_name() != "Colorimtre HCFR" or  # Missing é is NOT a typo
-				 getcfg("measurement_mode") == "R") and
-				(self.get_instrument_name() != "DTP94" or
-				 getcfg("measurement_mode") in ("l", "c", "g")) and
-				(self.get_instrument_name() != "Spyder4" or
-				 getcfg("measurement_mode") in ("l", "c")))
+				(getcfg("measurement_mode") == "auto" or
+				 ((self.get_instrument_name() != "ColorHug" or
+				   getcfg("measurement_mode") in ("F", "R")) and
+				  (self.get_instrument_name() != "ColorMunki Smile" or
+				   getcfg("measurement_mode") == "f") and
+				  (self.get_instrument_name() != "Colorimtre HCFR" or  # Missing é is NOT a typo
+				   getcfg("measurement_mode") == "R") and
+				  (self.get_instrument_name() != "DTP94" or
+				   getcfg("measurement_mode") in ("l", "c", "g")) and
+				  (self.get_instrument_name() != "Spyder4" or
+				   getcfg("measurement_mode") in ("l", "c")))))
 	
 	@Property
 	def progress_wnd():
@@ -6499,8 +6505,6 @@ class Worker(object):
 					data[igray_idx[i] + 
 						 white_added_count]["RGB_" + channel] = rgb[n]
 				odata[igray_idx[i]] = cie
-		
-		self.wrapup(False)
 
 		# write output ti3
 		ofile = StringIO()

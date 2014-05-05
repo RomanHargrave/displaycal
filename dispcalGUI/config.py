@@ -465,7 +465,7 @@ valid_values = {
 	# for description of per-instrument supported modes
 	"measurement_mode": [None, "B", "F", "L", "R", "a", "b", "c", "e", "f", "g",
 						 "l", "m", "n", "o", "p", "r", "x", "1", "2", "3", "4", 
-						 "5", "6", "7", "8", "9"],
+						 "5", "6", "7", "8", "9", "auto"],
 	"gamap_default_intent": ["a", "r", "p", "s"],
 	"gamap_perceptual_intent": intents,
 	"gamap_saturation_intent": intents,

@@ -43,6 +43,7 @@ import subprocess as sp
 import threading
 import traceback
 import urllib
+import urllib2
 from hashlib import md5
 from time import sleep, strftime, strptime, struct_time
 from zlib import crc32
@@ -360,15 +361,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	if isinstance(result, Exception):
 		show_result_dialog(result, parent)
 		return
-	descriptor = re.search('\nDESCRIPTOR\s+"(.+?)"\n', cgats)
-	if descriptor:
-		descriptor = descriptor.groups()[0]
-	description = safe_unicode(descriptor or 
-							   lang.getstr("unnamed"), "UTF-8")
-	name = re.sub(r"[\\/:*?\"<>|]+", "_", 
-				  make_argyll_compatible_path(description))[:255]
-	path = os.path.join(config.get_argyll_data_dir(), 
-						"%s.%s" % (name, cgats[:7].strip().lower()))
+	path = get_cgats_path(cgats)
 	if os.path.isfile(path):
 		dlg = ConfirmDialog(parent,
 							msg=lang.getstr("dialog.confirm_overwrite", path), 
@@ -390,7 +383,18 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 		setcfg("colorimeter_correction_matrix_file", ":" + path)
 	parent.update_colorimeter_correction_matrix_ctrl_items(True)
 	return True
-	
+
+
+def get_cgats_path(cgats):
+	descriptor = re.search('\nDESCRIPTOR\s+"(.+?)"\n', cgats)
+	if descriptor:
+		descriptor = descriptor.groups()[0]
+	description = safe_unicode(descriptor or 
+							   lang.getstr("unnamed"), "UTF-8")
+	name = re.sub(r"[\\/:*?\"<>|]+", "_", 
+				  make_argyll_compatible_path(description))[:255]
+	return os.path.join(config.get_argyll_data_dir(), 
+						"%s.%s" % (name, cgats[:7].strip().lower()))
 
 
 def upload_colorimeter_correction(parent=None, params=None):
@@ -2213,8 +2217,9 @@ class MainFrame(BaseFrame):
 			measurement_modes[instrument_type].extend([lang.getstr("projector"),
 													   lang.getstr("measurement_mode.lcd.white_led"),
 													   lang.getstr("measurement_mode.factory"),
-													   lang.getstr("measurement_mode.raw")])
-			measurement_modes_ab[instrument_type].extend(["p", "e", "F", "R"])
+													   lang.getstr("measurement_mode.raw"),
+													   lang.getstr("auto")])
+			measurement_modes_ab[instrument_type].extend(["p", "e", "F", "R", "auto"])
 		elif (instrument_name == "DTP94" and
 			  self.worker.argyll_version >= [1, 5, 0]):
 			# Argyll CMS 1.5.x introduces new measurement mode
@@ -2285,7 +2290,10 @@ class MainFrame(BaseFrame):
 			min(self.measurement_modes_ba[instrument_type].get(measurement_mode, 
 															   1), 
 				len(measurement_modes[instrument_type]) - 1))
-		setcfg("measurement_mode", (self.get_measurement_mode() or "l")[0])
+		measurement_mode = self.get_measurement_mode() or "l"
+		if measurement_mode != "auto":
+			measurement_mode = measurement_mode[0]
+		setcfg("measurement_mode", measurement_mode)
 		self.measurement_mode_ctrl.Enable(
 			bool(self.worker.instruments) and 
 			len(measurement_modes[instrument_type]) > 1 and
@@ -2295,9 +2303,39 @@ class MainFrame(BaseFrame):
 	def update_colorimeter_correction_matrix_ctrl(self):
 		""" Show or hide the colorimeter correction matrix controls """
 		self.calpanel.Freeze()
+		v = self.get_measurement_mode()
+		enable = v != "auto" or self.worker.get_instrument_name() != "ColorHug"
+		if not enable:
+			self.whitepoint_ctrl.SetSelection(0)
+			setcfg("whitepoint.colortemp", None)
+			setcfg("whitepoint.x", None)
+			setcfg("whitepoint.y", None)
+			self.whitepoint_colortemp_locus_ctrl.Show()
+			self.whitepoint_colortemp_textctrl.Hide()
+			self.whitepoint_x_textctrl.Hide()
+			self.whitepoint_x_label.Hide()
+			self.whitepoint_y_textctrl.Hide()
+			self.whitepoint_y_label.Hide()
+			self.whitepoint_measure_btn.Hide()
+			self.luminance_ctrl.SetSelection(0)
+			self.luminance_textctrl.Hide()
+			self.luminance_textctrl_label.Hide()
+			setcfg("calibration.luminance", None)
+			self.black_luminance_ctrl.SetSelection(0)
+			self.black_luminance_textctrl.Hide()
+			self.black_luminance_textctrl_label.Hide()
+			setcfg("calibration.black_luminance", None)
+			self.interactive_display_adjustment_cb.SetValue(False)
+			setcfg("calibration.interactive_display_adjustment", 0)
+		if not getcfg("calibration.update"):
+			self.whitepoint_ctrl.Enable(enable)
+			self.luminance_ctrl.Enable(enable)
+			self.black_luminance_ctrl.Enable(enable)
+			self.interactive_display_adjustment_cb.Enable(enable)
 		instrument_features = self.worker.get_instrument_features()
 		show_control = (self.worker.instrument_can_use_ccxx() and
-						not is_ccxx_testchart())
+						not is_ccxx_testchart() and
+						getcfg("measurement_mode") != "auto")
 		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_ctrl, show_control)
 		self.colorimeter_correction_matrix_label.GetContainingSizer().Show(
@@ -2506,8 +2544,9 @@ class MainFrame(BaseFrame):
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
 		setcfg("measurement_mode_unlocked", 1)
-		if self.worker.instrument_can_use_ccxx() and len(ccmx) > 1 and ccmx[1]:
-			tooltip = ccmx[1]
+		use_ccmx = (self.worker.instrument_can_use_ccxx() and len(ccmx) > 1 and
+					ccmx[1])
+		if use_ccmx and getcfg("measurement_mode") != "auto":
 			try:
 				cgats = CGATS.CGATS(ccmx[1])
 			except (IOError, CGATS.CGATSError), exception:
@@ -2537,6 +2576,8 @@ class MainFrame(BaseFrame):
 					setcfg("measurement_mode", mode)
 					setcfg("measurement_mode_unlocked", 0)
 					self.update_measurement_mode()
+		if use_ccmx:
+			tooltip = ccmx[1]
 		else:
 			tooltip = ""
 		self.update_main_controls()
@@ -4528,12 +4569,16 @@ class MainFrame(BaseFrame):
 			self.setup_measurement(self.verify_calibration)
 
 	def verify_calibration(self):
+		if self.measure_auto(self.verify_calibration):
+			return
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("calibration.verify")
 		safe_print(progress_msg)
 		self.worker.interactive = False
 		self.worker.start(self.result_consumer, self.worker.verify_calibration, 
-						  progress_msg=progress_msg, pauseable=True)
+						  progress_msg=progress_msg, pauseable=True,
+						  resume=bool(getattr(self, "measure_auto_after",
+											  None)))
 	
 	def select_profile(self, parent=None, check_profile_class=True, msg=None,
 					   ignore_current_profile=False,
@@ -5247,6 +5292,8 @@ class MainFrame(BaseFrame):
 
 	def report(self, report_calibrated=True):
 		if check_set_argyll_bin():
+			if self.measure_auto(self.report, report_calibrated):
+				return
 			safe_print("-" * 80)
 			if report_calibrated:
 				progress_msg = lang.getstr("report.calibrated")
@@ -5256,7 +5303,10 @@ class MainFrame(BaseFrame):
 			self.worker.interactive = False
 			self.worker.start(self.result_consumer, self.worker.report, 
 							  wkwargs={"report_calibrated": report_calibrated},
-							  progress_msg=progress_msg, pauseable=True)
+							  progress_msg=progress_msg, pauseable=True,
+							  resume=bool(getattr(self,
+												  "measure_auto_after",
+												  None)))
 	
 	def result_consumer(self, result):
 		""" Generic result consumer. Shows the info window on success
@@ -5306,6 +5356,8 @@ class MainFrame(BaseFrame):
 
 	def just_calibrate(self):
 		""" Just calibrate, optionally creating a fast matrix shaper profile """
+		if self.measure_auto(self.just_calibrate):
+			return
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
 		if getcfg("calibration.interactive_display_adjustment") and \
@@ -5316,7 +5368,10 @@ class MainFrame(BaseFrame):
 			# No interactive adjustment, show progress dialog
 			self.worker.interactive = False
 		self.worker.start_calibration(self.just_calibrate_finish, remove=True,
-									  progress_msg=lang.getstr("calibration"))
+									  progress_msg=lang.getstr("calibration"),
+									  resume=bool(getattr(self,
+														  "measure_auto_after",
+														  None)))
 	
 	def just_calibrate_finish(self, result):
 		start_timers = True
@@ -5467,6 +5522,8 @@ class MainFrame(BaseFrame):
 
 	def calibrate_and_profile(self):
 		""" Start calibration measurements """
+		if self.measure_auto(self.calibrate_and_profile):
+			return
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate_and_profile").replace("&&", 
 																	   "&"))
@@ -5481,7 +5538,10 @@ class MainFrame(BaseFrame):
 			self.worker.interactive = False
 		self.worker.start_calibration(self.calibrate_finish,
 									  progress_msg=lang.getstr("calibration"), 
-									  continue_next=True)
+									  continue_next=True,
+									  resume=bool(getattr(self,
+														  "measure_auto_after",
+														  None)))
 	
 	def calibrate_finish(self, result):
 		""" Start characterization measurements """
@@ -5666,6 +5726,101 @@ class MainFrame(BaseFrame):
 		if getcfg("testchart.file.backup", False):
 			self.set_testchart(getcfg("testchart.file.backup"))
 			setcfg("testchart.file.backup", None)
+
+	def measure_auto(self, measure_auto_after, *measure_auto_after_args):
+		""" Automatically create a CCMX with EDID reference """
+		if (getcfg("measurement_mode") == "auto" and
+			not getattr(self, "measure_auto_after", None)):
+			if not self.worker.get_display_edid():
+				self.measure_auto_finish(Error("EDID not available"))
+				return True
+			self.measure_auto_after = measure_auto_after
+			self.measure_auto_after_args = measure_auto_after_args
+			if not is_ccxx_testchart():
+				setcfg("testchart.file.backup", getcfg("testchart.file"))
+				self.set_testchart(get_ccxx_testchart())
+			self.just_measure(get_data_path("linear.cal"),
+							  self.measure_auto_finish)
+			return True
+
+	def measure_auto_finish(self, result):
+		ti3_path = os.path.join(self.worker.tempdir or "",
+								getcfg("profile.name.expanded") + ".ti3")
+		self.restore_testchart()
+		if isinstance(result, Exception) or not result:
+			self.measure_auto_after = None
+			if isinstance(result, Exception):
+				wx.CallAfter(show_result_dialog, result, self)
+			self.Show()
+			self.worker.stop_progress()
+		else:
+			edid = self.worker.get_display_edid()
+			defaultFile = edid.get("monitor_name",
+								   edid.get("ascii",
+											str(edid["product_id"]))) + profile_ext
+			profile_path = os.path.join(self.worker.tempdir, defaultFile)
+			profile = ICCP.ICCProfile.from_edid(edid)
+			try:
+				profile.write(profile_path)
+			except Exception, exception:
+				self.measure_auto_finish(exception)
+				return
+			if self.worker.get_instrument_name() == "ColorHug":
+				# Get the factory calibration so we can do luminance scaling
+				luminance = None
+				for line in self.worker.output:
+					if line.lower().startswith("serial number:"):
+						serial = line.split(":", 1)[-1].strip()
+						calibration = "calibration-%s.ti3" % serial
+						path = os.path.join(config.get_argyll_data_dir(),
+											calibration)
+						if not os.path.isfile(path):
+							safe_print("Retrieving factory calibration for "
+									   "ColorHug", serial)
+							url = ("https://raw.githubusercontent.com/hughski"
+								   "/colorhug-calibration/master/data/" +
+								   calibration)
+							try:
+								response = urllib2.urlopen(url)
+							except Exception, exception:
+								self.measure_auto_finish(exception)
+								return
+							body = response.read()
+							response.close()
+							if body.strip().startswith("CTI3"):
+								safe_print("Successfully retrieved", url)
+								try:
+									with open(path, "wb") as calibrationfile:
+										calibrationfile.write(body)
+								except Exception, exception:
+									safe_print(exception)
+							else:
+								safe_print("Got unexpected answer from %s:" %
+										   url)
+								safe_print(body)
+						if os.path.isfile(path):
+							safe_print("Using factory calibration", path)
+							try:
+								cgats = CGATS.CGATS(path)
+							except (IOError, CGATS.CGATSError), exception:
+								safe_print(exception)
+							else:
+								white = cgats.queryi1({"RGB_R": 1,
+													   "RGB_G": 1,
+													   "RGB_B": 1})
+								if white:
+									luminance = white["XYZ_Y"]
+									safe_print("Using luminance %.2f from "
+											   "factory calibration" %
+											   luminance)
+			if self.create_colorimeter_correction_handler(None, [profile_path,
+																 ti3_path],
+														  luminance=luminance):
+				self.measure_auto_after(*self.measure_auto_after_args)
+			else:
+				self.Show()
+				self.worker.stop_progress()
+			self.measure_auto_after = None
 	
 	def measure_handler(self, event=None):
 		if is_ccxx_testchart():
@@ -5714,15 +5869,23 @@ class MainFrame(BaseFrame):
 		else:
 			self.update_profile_name_timer.Start(1000)
 
-	def just_measure(self, apply_calibration):
+	def just_measure(self, apply_calibration, consumer=None):
+		if self.measure_auto(self.just_measure, apply_calibration):
+			return
 		safe_print("-" * 80)
 		safe_print(lang.getstr("measure"))
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = config.get_display_name() == "Untethered"
 		setcfg("calibration.file.previous", None)
-		self.worker.start_measurement(self.just_measure_finish, apply_calibration,
+		continue_next = consumer is not self.just_measure_finish
+		if not consumer:
+			consumer = self.just_measure_finish
+		self.worker.start_measurement(consumer, apply_calibration,
 									  progress_msg=lang.getstr("measuring.characterization"), 
-									  continue_next=False)
+									  continue_next=continue_next,
+									  resume=bool(getattr(self,
+														  "measure_auto_after",
+														  None)))
 	
 	def just_measure_finish(self, result):
 		if not isinstance(result, Exception) and result:
@@ -5768,6 +5931,8 @@ class MainFrame(BaseFrame):
 
 	def just_profile(self, apply_calibration):
 		""" Start characterization measurements """
+		if self.measure_auto(self.just_profile, apply_calibration):
+			return
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.profile"))
 		self.worker.dispread_after_dispcal = False
@@ -5775,7 +5940,10 @@ class MainFrame(BaseFrame):
 		setcfg("calibration.file.previous", None)
 		self.worker.start_measurement(self.just_profile_finish, apply_calibration,
 									  progress_msg=lang.getstr("measuring.characterization"), 
-									  continue_next=config.get_display_name() != "Untethered")
+									  continue_next=config.get_display_name() != "Untethered",
+									  resume=bool(getattr(self,
+														  "measure_auto_after",
+														  None)))
 	
 	def just_profile_finish(self, result):
 		""" Build profile from characterization measurements """
@@ -6149,7 +6317,9 @@ class MainFrame(BaseFrame):
 			profile = self.modaldlg.profile
 		else:
 			profile = self.select_profile(check_profile_class=False,
-										  prefer_current_profile=True)
+										  prefer_current_profile=True,
+										  ignore_current_profile=event.GetEventObject()
+																 is not self.profile_info_btn)
 		if not profile:
 			return
 		if profile.ID == "\0" * 16:
@@ -6391,14 +6561,16 @@ class MainFrame(BaseFrame):
 						  stop_timers=False, cancelable=False,
 						  show_remaining_time=False)
 	
-	def create_colorimeter_correction_handler(self, event=None):
+	def create_colorimeter_correction_handler(self, event=None, paths=None,
+											  luminance=None):
 		"""
 		Create a CCSS or CCMX file from one or more .ti3 files
 		
 		Atleast one of the ti3 files must be a measured with a spectrometer.
 		
 		"""
-		dlg = ConfirmDialog(self,
+		parent = self if event else None
+		dlg = ConfirmDialog(parent,
 							msg=lang.getstr("colorimeter_correction.create.info"), 
 							ok=lang.getstr("colorimeter_correction.create"), 
 							cancel=lang.getstr("cancel"), 
@@ -6406,7 +6578,10 @@ class MainFrame(BaseFrame):
 							bitmap=geticon(32, "dialog-information"))
 		dlg.alt.Enable(bool(self.worker.displays) and 
 					   bool(self.worker.instruments))
-		result = dlg.ShowModal()
+		if event:
+			result = dlg.ShowModal()
+		else:
+			result = wx.ID_OK
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			return
@@ -6433,7 +6608,7 @@ class MainFrame(BaseFrame):
 			else:
 				defaultDir, defaultFile = get_verified_path("last_reference_ti3_path")
 				msg = lang.getstr("measurement_file.choose.reference")
-			dlg = wx.FileDialog(self, 
+			dlg = wx.FileDialog(parent, 
 								msg,
 								defaultDir=defaultDir,
 								defaultFile=defaultFile,
@@ -6441,8 +6616,11 @@ class MainFrame(BaseFrame):
 										 "|*.ti3;*.icm;*.icc", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
-			if dlg.ShowModal() == wx.ID_OK:
-				path = dlg.GetPath()
+			if event:
+				if dlg.ShowModal() == wx.ID_OK:
+					path = dlg.GetPath()
+			else:
+				path = paths[n]
 			dlg.Destroy()
 			if path:
 				try:
@@ -6518,13 +6696,16 @@ class MainFrame(BaseFrame):
 						if cgats.queryv1("SPECTRAL_BANDS"):
 							spectral = True
 							# Ask if user wants to create CCSS
-							dlg = ConfirmDialog(self, 
+							dlg = ConfirmDialog(parent, 
 												msg=lang.getstr("create_ccss_or_ccmx"), 
 												ok=lang.getstr("CCSS"), 
 												cancel=lang.getstr("cancel"), 
 												alt=lang.getstr("CCMX"),
 												bitmap=geticon(32, "dialog-information"))
-							result = dlg.ShowModal()
+							if event:
+								result = dlg.ShowModal()
+							else:
+								result = wx.ID_OK
 							dlg.Destroy()
 							if result == wx.ID_OK:
 								break
@@ -6602,14 +6783,18 @@ class MainFrame(BaseFrame):
 					return
 			reference_ti3.queryi1("DATA").DATA = reference_new.DATA
 			colorimeter_ti3.queryi1("DATA").DATA = colorimeter_new.DATA
-			# If the reference comes from EDID, normalize luminance to Y=100
+			# If the reference comes from EDID, normalize luminance
 			if reference_ti3.queryv1("DATA_SOURCE") == "EDID":
 				white = colorimeter_ti3.queryi1("DATA").queryi1({"RGB_R": 100,
 																 "RGB_G": 100,
 																 "RGB_B": 100})
-				white = " ".join([str(v) for v in (white["XYZ_X"],
-												   white["XYZ_Y"],
-												   white["XYZ_Z"])])
+				if luminance:
+					scale = luminance / 100.0
+				else:
+					scale = 1.0
+				white = " ".join([str(v) for v in (white["XYZ_X"] * scale,
+												   white["XYZ_Y"] * scale,
+												   white["XYZ_Z"] * scale)])
 				colorimeter_ti3.queryi1("DATA").LUMINANCE_XYZ_CDM2 = white
 			# Add display base ID
 			if not colorimeter_ti3.queryv1("DISPLAY_TYPE_BASE_ID"):
@@ -6626,6 +6811,8 @@ class MainFrame(BaseFrame):
 												"f": 1,
 												"g": 3}.get(getcfg("measurement_mode"),
 															1))
+				safe_print("Added DISPLAY_TYPE_BASE_ID %r" %
+						   colorimeter_ti3[0].DISPLAY_TYPE_BASE_ID)
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
@@ -6670,7 +6857,7 @@ class MainFrame(BaseFrame):
 		args = []
 		# Allow use to alter description, display and instrument
 		dlg = ConfirmDialog(
-			self, 
+			parent, 
 			msg=lang.getstr("colorimeter_correction.create.details"), 
 			ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
 			bitmap=geticon(32, "dialog-question"))
@@ -6748,8 +6935,15 @@ class MainFrame(BaseFrame):
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		dlg.Center()
-		result = dlg.ShowModal()
-		args += ["-E", safe_str(dlg.description_txt_ctrl.GetValue().strip(), "UTF-8")]
+		if event:
+			result = dlg.ShowModal()
+		else:
+			result = wx.ID_OK
+		description = safe_str(dlg.description_txt_ctrl.GetValue().strip(),
+							   "UTF-8")
+		if not event:
+			description += " AUTO"
+		args += ["-E", description]
 		if not display:
 			display = dlg.display_txt_ctrl.GetValue()
 		args += ["-I", safe_str(display.strip(), "UTF-8")]
@@ -6833,8 +7027,14 @@ class MainFrame(BaseFrame):
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
-			if (colorimeter_correction_check_overwrite(self, cgats)):
-				self.upload_colorimeter_correction(cgats)
+			if event:
+				if (colorimeter_correction_check_overwrite(self, cgats)):
+					self.upload_colorimeter_correction(cgats)
+			else:
+				path = get_cgats_path(cgats)
+				with open(path, "wb") as cgatsfile:
+					cgatsfile.write(cgats)
+				setcfg("colorimeter_correction_matrix_file", ":" + path)
 		elif result is not None:
 			InfoDialog(self,
 					   msg=lang.getstr("colorimeter_correction.create.failure") +
@@ -6842,6 +7042,7 @@ class MainFrame(BaseFrame):
 					   ok=lang.getstr("cancel"), 
 					   bitmap=geticon(32, "dialog-error"))
 		self.worker.wrapup(False)
+		return True
 	
 	def upload_colorimeter_correction(self, cgats):
 		""" Ask the user if he wants to upload a colorimeter correction
@@ -7286,6 +7487,9 @@ class MainFrame(BaseFrame):
 				setcfg("calibration.black_point_correction", bkpt_corr)
 				self.update_controls(update_profile_name=False)
 		self.update_profile_name()
+		if v == "auto":
+			wx.CallAfter(show_result_dialog,
+						 UnloggedInfo(lang.getstr("display.reset.info")), self)
 	
 	def black_point_correction_choice_dialog_handler(self, event):
 		setcfg("calibration.black_point_correction_choice.show", 
@@ -8614,7 +8818,9 @@ class MainFrame(BaseFrame):
 				self.tcframe.tc_load_cfg_from_ti1()
 		if is_ccxx_testchart():
 			measurement_mode = None
-			if (self.worker.get_instrument_name() == "ColorHug"
+			if getcfg("measurement_mode") == "auto":
+				pass
+			elif (self.worker.get_instrument_name() == "ColorHug"
 				and getcfg("measurement_mode") not in ("F", "R")):
 				# Automatically set factory measurement mode if not already
 				# factory or raw measurement mode
@@ -8984,7 +9190,7 @@ class MainFrame(BaseFrame):
 						if o[0] == "q":
 							setcfg("calibration.quality", o[1])
 							continue
-						if o[0] == "y":
+						if o[0] == "y" and getcfg("measurement_mode") != "auto":
 							setcfg("measurement_mode", o[1])
 							continue
 						if o[0] in ("t", "T"):
