@@ -4449,6 +4449,11 @@ class Worker(object):
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 			else:
+				process_A2B = ("A2B0" in profile.tags and
+							   profile.colorSpace == "RGB" and
+							   profile.connectionColorSpace == "XYZ" and
+							   (getcfg("profile.b2a.smooth") or
+								getcfg("profile.quality.b2a") in ("l", "n")))
 				if ("rTRC" in profile.tags and
 					"gTRC" in profile.tags and
 					"bTRC" in profile.tags and
@@ -4456,6 +4461,7 @@ class Worker(object):
 					isinstance(profile.tags.gTRC, ICCP.CurveType) and
 					isinstance(profile.tags.bTRC, ICCP.CurveType) and
 					getcfg("profile.black_point_compensation") and
+					(not "A2B0" in profile.tags or process_A2B) and
 					len(profile.tags.rTRC) > 1 and
 					len(profile.tags.gTRC) > 1 and
 					len(profile.tags.bTRC) > 1):
@@ -4465,27 +4471,25 @@ class Worker(object):
 						profile.tags["%sTRC" % component].apply_bpc()
 					bpc_applied = True
 					profchanged = True
-				if "A2B0" in profile.tags:
+				if process_A2B:
 					bpc_applied = False
-					if (profile.colorSpace == "RGB" and
-						profile.connectionColorSpace == "XYZ" and
-						getcfg("profile.b2a.smooth")):
-						if getcfg("profile.black_point_compensation"):
-							if "A2B1" in profile.tags:
-								table = "A2B1"
-							else:
-								table = "A2B0"
-							if isinstance(profile.tags[table], ICCP.LUT16Type):
-								self.log("%s: Applying black point "
-										 "compensation to %s table" % (appname,
-																	   table))
-								profile.tags[table].apply_bpc()
-								bpc_applied = True
-								profchanged = True
-							else:
-								self.log("%s: Can't apply black point "
-										 "compensation to non-LUT16Type %s "
-										 "table" % (appname, table))
+					if getcfg("profile.black_point_compensation"):
+						if "A2B1" in profile.tags:
+							table = "A2B1"
+						else:
+							table = "A2B0"
+						if isinstance(profile.tags[table], ICCP.LUT16Type):
+							self.log("%s: Applying black point "
+									 "compensation to %s table" % (appname,
+																   table))
+							profile.tags[table].apply_bpc()
+							bpc_applied = True
+							profchanged = True
+						else:
+							self.log("%s: Can't apply black point "
+									 "compensation to non-LUT16Type %s "
+									 "table" % (appname, table))
+					if getcfg("profile.b2a.smooth"):
 						result = self.update_profile_B2A(profile)
 						if not isinstance(result, Exception) and result:
 							profchanged = True

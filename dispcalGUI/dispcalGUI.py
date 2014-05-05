@@ -2960,7 +2960,10 @@ class MainFrame(BaseFrame):
 		self.calpanel.Thaw()
 	
 	def update_bpc(self):
-		enable_bpc = self.get_profile_type() != "l"
+		enable_bpc = (self.get_profile_type() in ("s", "S") or
+					  (self.get_profile_type() != "l" and
+					   (getcfg("profile.b2a.smooth") or
+						getcfg("profile.quality.b2a") in ("l", "n"))))
 		self.black_point_compensation_cb.Enable(enable_bpc)
 		self.black_point_compensation_cb.SetValue(enable_bpc and
 			bool(int(getcfg("profile.black_point_compensation"))))
@@ -3177,6 +3180,7 @@ class MainFrame(BaseFrame):
 		setcfg("profile.quality.b2a", v)
 		setcfg("profile.b2a.smooth", int(smooth))
 		self.b2a_size_ctrl.Enable(smooth)
+		self.update_bpc()
 	
 	def b2a_size_ctrl_handler(self, event):
 		setcfg("profile.b2a.smooth.size",
