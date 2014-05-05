@@ -23,7 +23,7 @@ if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import xdg_data_home
 
 from util_os import which
-from util_str import safe_str
+from util_str import safe_str, safe_unicode
 import localization as lang
 
 if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
@@ -118,7 +118,7 @@ def get_default_profile(device_id):
 				raise CDError(stdout.strip() or errmsg)
 			match = re.search(":\s*([^\r\n]+\.ic[cm])", stdout, re.I)
 			if match:
-				return match.groups()[0]
+				return safe_unicode(match.groups()[0])
 			else:
 				raise CDError(errmsg)
 		
