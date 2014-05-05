@@ -2296,8 +2296,7 @@ class MainFrame(BaseFrame):
 		setcfg("measurement_mode", measurement_mode)
 		self.measurement_mode_ctrl.Enable(
 			bool(self.worker.instruments) and 
-			len(measurement_modes[instrument_type]) > 1 and
-			bool(getcfg("measurement_mode_unlocked")))
+			len(measurement_modes[instrument_type]) > 1)
 		self.measurement_mode_ctrl.Thaw()
 	
 	def update_colorimeter_correction_matrix_ctrl(self):
@@ -2364,7 +2363,8 @@ class MainFrame(BaseFrame):
 			del self.ccmx_mapping[key]
 	
 	def update_colorimeter_correction_matrix_ctrl_items(self, force=False,
-														warn_on_mismatch=False):
+														warn_on_mismatch=False,
+														update_measurement_mode=True):
 		"""
 		Show the currently selected correction matrix and list all files
 		in ccmx directories below
@@ -2540,10 +2540,6 @@ class MainFrame(BaseFrame):
 										   self.ccmx_cached_descriptors[ccmx[1]])
 			else:
 				items[1] += " (%s)" % lang.getstr("colorimeter_correction.file.none")
-		setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
-		self.colorimeter_correction_matrix_ctrl.SetItems(items)
-		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
-		setcfg("measurement_mode_unlocked", 1)
 		use_ccmx = (self.worker.instrument_can_use_ccxx() and len(ccmx) > 1 and
 					ccmx[1])
 		if use_ccmx and getcfg("measurement_mode") != "auto":
@@ -2573,9 +2569,16 @@ class MainFrame(BaseFrame):
 				elif refresh == "YES":
 					mode = "c"
 				if mode:
-					setcfg("measurement_mode", mode)
-					setcfg("measurement_mode_unlocked", 0)
-					self.update_measurement_mode()
+					if (update_measurement_mode or
+						mode == getcfg("measurement_mode")):
+						setcfg("measurement_mode", mode)
+						self.update_measurement_mode()
+					else:
+						ccmx = ["", ""]
+						index = 0
+		setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
+		self.colorimeter_correction_matrix_ctrl.SetItems(items)
+		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
 		if use_ccmx:
 			tooltip = ccmx[1]
 		else:
@@ -2592,8 +2595,7 @@ class MainFrame(BaseFrame):
 
 		self.measurement_mode_ctrl.Enable(
 			not update_cal and bool(self.worker.instruments) and 
-			len(self.measurement_mode_ctrl.GetItems()) > 1 and
-			bool(getcfg("measurement_mode_unlocked")))
+			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
 		update_profile = self.calibration_update_cb.GetValue() and is_profile()
 		enable_profile = not update_profile and not is_ccxx_testchart()
@@ -7450,6 +7452,7 @@ class MainFrame(BaseFrame):
 		# ColorMunki projector mode is an actual special sensor dial position
 		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
 		self.update_colorimeter_correction_matrix_ctrl()
+		self.update_colorimeter_correction_matrix_ctrl_items(update_measurement_mode=False)
 		if (v and (((not "c" in v or "p" in v) and
 					float(self.get_black_point_correction()) > 0) or
 				   ("c" in v and
