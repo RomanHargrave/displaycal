@@ -4802,12 +4802,13 @@ class Worker(object):
 				   continue_next=continue_next, pauseable=True)
 	
 	def start_calibration(self, consumer, remove=False, progress_msg="",
-						  continue_next=False):
+						  resume=False, continue_next=False):
 		""" Start a calibration and use a progress dialog for progress
 		information """
 		self.start(consumer, self.calibrate, wkwargs={"remove": remove},
-				   progress_msg=progress_msg, continue_next=continue_next,
-				   interactive_frame="adjust", pauseable=True)
+				   progress_msg=progress_msg, resume=resume,
+				   continue_next=continue_next, interactive_frame="adjust",
+				   pauseable=True)
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
