@@ -3015,8 +3015,11 @@ class Worker(object):
 		try:
 			result = delayedResult.get()
 		except Exception, exception:
-			result = Error(u"Error - delayedResult.get() failed: " + 
-						   safe_unicode(traceback.format_exc()))
+			if hasattr(exception, "originalTraceback"):
+				self.log(exception.originalTraceback)
+			else:
+				self.log(traceback.format_exc())
+			result = exception
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
 		self.finished = True
