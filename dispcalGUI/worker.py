@@ -5576,7 +5576,15 @@ class Worker(object):
 		if (self.progress_wnd.IsShownOnScreen() and
 			not self.progress_wnd.IsActive() and
 			(not getattr(self.progress_wnd, "dlg", None) or
-			 not self.progress_wnd.dlg.IsShownOnScreen())):
+			 not self.progress_wnd.dlg.IsShownOnScreen()) and
+			wx.GetApp().GetTopWindow() and
+			wx.GetApp().GetTopWindow().IsShownOnScreen() and
+			(wx.GetApp().IsActive() or (sys.platform == "darwin" and
+										not self.activated))):
+			for window in wx.GetTopLevelWindows():
+				if (window and window is not self.progress_wnd and
+					isinstance(window, wx.Dialog) and window.IsShownOnScreen()):
+					return
 		   	self.activated = True
 			self.progress_wnd.Raise()
 
