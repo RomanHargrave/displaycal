@@ -223,10 +223,23 @@ def app_uptodate(parent=None):
 
 def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 	""" Show a dialog confirming application update, with cancel option """
+	zeroinstall = (os.path.exists(os.path.normpath(os.path.join(pydir, "..",
+																appname +
+																".pyw"))) and
+				   re.match("sha\d+(?:new)?",
+							os.path.basename(os.path.dirname(pydir))) and
+				   (which("0install-win.exe") or which("0install")))
+	if zeroinstall or sys.platform in ("darwin", "win32"):
+		ok = lang.getstr("update_now")
+		alt = lang.getstr("go_to_website")
+	else:
+		ok = lang.getstr("go_to_website")
+		alt = None
+	newversion = ".".join(str(n) for n in newversion_tuple)
 	dlg = ConfirmDialog(parent,
 						msg=lang.getstr("update_check.new_version", 
-						   ".".join(str(n) for n in newversion_tuple)), 
-						ok=lang.getstr("go_to_website"), 
+										newversion), 
+						ok=ok, alt=alt,
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), 
 						log=True)
@@ -245,11 +258,46 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 	dlg.sizer0.SetSizeHints(dlg)
 	dlg.sizer0.Layout()
 	dlg.Center()
-	if dlg.ShowModal() == wx.ID_OK:
-		launch_file("http://" + domain)
+	result = dlg.ShowModal()
 	dlg.Destroy()
 	if parent and getattr(parent, "menuitem_app_auto_update_check", None):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
+	if result == wx.ID_OK and (zeroinstall or
+							   sys.platform in ("darwin", "win32")):
+		if parent and hasattr(parent, "worker"):
+			worker = parent.worker
+		else:
+			worker = Worker()
+		if zeroinstall:
+			if parent:
+				parent.Close()
+			else:
+				wx.GetApp().ExitMainLoop()
+			if sys.platform == "win32":
+				kwargs = dict(stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+				kwargs["startupinfo"] = sp.STARTUPINFO()
+				kwargs["startupinfo"].dwFlags |= sp.STARTF_USESHOWWINDOW
+				kwargs["startupinfo"].wShowWindow = sp.SW_HIDE
+			else:
+				kwargs = {}
+			sp.Popen([zeroinstall.encode(fs_enc), "run", "--refresh",
+					  "--not-before", newversion, "http://%s/0install/%s.xml" %
+												  (domain.lower(), appname)],
+					 **kwargs)
+		elif sys.platform == "win32":
+			worker.start(worker.process_download, worker.download,
+						 ckwargs={"exit": True},
+						 wargs=("http://%s/download/%s-%s-Setup.exe" %
+								(domain.lower(), appname, newversion), ),
+						 progress_msg=lang.getstr("update_download"))
+		else:
+			worker.start(worker.process_download, worker.download,
+						 ckwargs={"exit": True},
+						 wargs=("http://%s/download/%s-%s.dmg" %
+								(domain.lower(), appname, newversion), ),
+						 progress_msg=lang.getstr("update_download"))
+	elif result != wx.ID_CANCEL:
+		launch_file("http://" + domain)
 
 
 def colorimeter_correction_web_check_choose(resp, parent=None):

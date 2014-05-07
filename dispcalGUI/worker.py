@@ -13,6 +13,7 @@ import sys
 import tempfile
 import textwrap
 import traceback
+import urllib2
 from UserString import UserString
 from encodings.aliases import aliases
 from hashlib import md5
@@ -75,7 +76,8 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
 	import util_win
 import colord
-from util_os import getenvu, is_superuser, putenvu, quote_args, which, whereis
+from util_os import (expanduseru, getenvu, is_superuser, launch_file, putenvu,
+					 quote_args, which, whereis)
 from util_str import safe_basestring, safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
@@ -6779,6 +6781,64 @@ class Worker(object):
 		if debug:
 			safe_print(ti1)
 		return ti1, ti3v
+
+	def download(self, uri):
+		download_dir = os.path.join(expanduseru("~"), "Downloads")
+		if not os.path.isdir(download_dir):
+			os.makedirs(download_dir)
+		try:
+			response = urllib2.urlopen(uri)
+		except urllib2.URLError, exception:
+			return exception
+		uri = response.geturl()
+		download_path = os.path.join(download_dir, os.path.basename(uri))
+		total_size = response.info().getheader('Content-Length').strip()
+		total_size = int(total_size)
+		if (not os.path.isfile(download_path) or
+			os.stat(download_path).st_size != total_size):
+			chunk_size = 8192
+			bytes_so_far = 0
+			bytes = []
+
+			while True:
+				if self.thread_abort:
+					return False
+
+				chunk = response.read(chunk_size)
+
+				if not chunk:
+					break
+
+				bytes_so_far += len(chunk)
+
+				bytes.append(chunk)
+
+				percent = float(bytes_so_far) / total_size
+				percent = round(percent * 100, 2)
+				self.recent.write("\r%i%% (%i / %i KiB)" %
+								  (percent, bytes_so_far / 1024.0,
+								   total_size / 1024.0))
+
+			response.close()
+			if not bytes:
+				return Error(lang.getstr("update_fail_empty_response", uri))
+			if bytes_so_far != total_size:
+				return Error(lang.getstr("update_fail_wrong_size",
+										 (total_size, bytes_so_far)))
+			with open(download_path, "wb") as download_file:
+				download_file.write("".join(bytes))
+		return download_path
+
+	def process_download(self, result, exit=False):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self.owner)
+		elif result:
+			if exit:
+				if self.owner:
+					self.owner.Close()
+				else:
+					wx.GetApp().ExitMainLoop()
+			launch_file(result)
 
 	def verify_calibration(self):
 		""" Verify the current calibration """
