@@ -5508,7 +5508,7 @@ class Worker(object):
 		if re.match("\\s*\\d+%", lastmsg):
 			# colprof
 			try:
-				percentage = int(self.lastmsg.read().strip("%"))
+				percentage = int(self.lastmsg.read().split("%")[0])
 			except ValueError:
 				pass
 		elif re.match("Patch \\d+ of \\d+", lastmsg, re.I):
@@ -6796,6 +6796,7 @@ class Worker(object):
 		total_size = int(total_size)
 		if (not os.path.isfile(download_path) or
 			os.stat(download_path).st_size != total_size):
+			self.recent.write(lang.getstr("update_download"))
 			chunk_size = 8192
 			bytes_so_far = 0
 			bytes = []
@@ -6815,9 +6816,9 @@ class Worker(object):
 
 				percent = float(bytes_so_far) / total_size
 				percent = round(percent * 100, 2)
-				self.recent.write("\r%i%% (%i / %i KiB)" %
-								  (percent, bytes_so_far / 1024.0,
-								   total_size / 1024.0))
+				self.lastmsg.write("\r%i%% (%i / %i KiB)" %
+								   (percent, bytes_so_far / 1024.0,
+								    total_size / 1024.0))
 
 			response.close()
 			if not bytes:
