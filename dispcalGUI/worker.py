@@ -76,7 +76,7 @@ elif sys.platform == "win32":
 	import util_win
 import colord
 from util_os import getenvu, is_superuser, putenvu, quote_args, which, whereis
-from util_str import safe_str, safe_unicode
+from util_str import safe_basestring, safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
@@ -4792,6 +4792,7 @@ class Worker(object):
 		return not getattr(self, "finished", True)
 	
 	def log(self, msg, fn=safe_print):
+		msg = safe_basestring(msg)
 		fn(msg)
 		if self.sessionlogfile:
 			self.sessionlogfile.write(msg + "\n")
