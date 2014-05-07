@@ -4013,9 +4013,7 @@ class MainFrame(BaseFrame):
 			if getcfg("dry_run"):
 				return
 		for i, line in enumerate(self.worker.output):
-			if line.startswith("spotread: Error"):
-				show_result_dialog(Error(line.strip()), self)
-			elif line.startswith("spotread: Warning"):
+			if line.startswith("spotread: Warning"):
 				show_result_dialog(Warn(line.strip()), self)
 	
 	def profile_share_get_meta_error(self, profile):
