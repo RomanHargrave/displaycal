@@ -177,7 +177,7 @@ def getbitmap(name):
 			bitmaps[name].SetMaskColour("black")
 		else:
 			path = None
-			if parts[-1] == appname:
+			if parts[-1].startswith(appname):
 				path = get_data_path(os.path.join(parts[-2], "apps", parts[-1]) + ".png")
 			if not path:
 				path = get_data_path(os.path.sep.join(parts) + ".png")

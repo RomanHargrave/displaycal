@@ -453,6 +453,7 @@ def setup():
 		package_data[name] += ["theme/icons/22x22/*.png",
 							   "theme/icons/24x24/*.png",
 							   "theme/icons/48x48/*.png",
+							   "theme/icons/128x128/*.png",
 							   "theme/icons/256x256/*.png"]
 	if sys.platform == "win32" and not do_py2exe:
 		package_data[name] += ["theme/icons/*.ico"]
@@ -539,7 +540,7 @@ def setup():
 							if os.path.isfile(fname):
 								data_files += [(entry[0], [fname])]
 		for dname in ("10x10", "16x16", "22x22", "24x24", "32x32", "48x48",
-					  "72x72", "256x256"):
+					  "72x72", "128x128", "256x256"):
 			# Only the 10x10, 16x16, 32x32 and 72x72 icons are used exclusively
 			# by the app, the other sizes of the app icon are used for the 
 			# desktop entry under Linux
