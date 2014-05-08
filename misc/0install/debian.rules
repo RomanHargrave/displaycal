@@ -1,0 +1,88 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+export DH_COMPAT=4
+
+export DH_PYCENTRAL=include-links dh_pycentral
+
+CFLAGS = -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
+
+# The DESTDIR Has To Be Exactly  /usr/src/packages/BUILD/debian/<nameOfPackage>
+export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}
+export python_version=`python -c "import sys;print sys.version[:3]"`
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+
+	# --- end custom part for compiling
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+
+	# Add here commands to clean up after the build process.
+	make clean || true
+	# --- end custom part for cleaning up
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Add here commands to install the package
+	PYTHONPATH=. python${python_version} util/0install_desktop.py "${DEB_BUILD_ROOT}/usr/share"
+	# --- end custom part for installing
+
+# Build architecture-independent files here.
+binary-indep: build install
+	# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+#	dh_installdebconf
+#	dh_installdocs
+#	dh_installexamples
+	dh_installmenu
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_installinit
+#	dh_installcron
+#	dh_installman
+	dh_installinfo
+#	dh_undocumented
+	dh_installchangelogs
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_perl
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

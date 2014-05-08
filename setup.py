@@ -5,7 +5,7 @@ from __future__ import with_statement
 from ConfigParser import RawConfigParser
 from distutils.sysconfig import get_python_lib
 from distutils.util import change_root, get_platform
-from hashlib import sha1
+from hashlib import md5, sha1
 from subprocess import call, Popen
 from time import gmtime, strftime, timezone
 import codecs
@@ -153,6 +153,7 @@ def setup():
 	bdist_deb = "bdist_deb" in sys.argv[1:]
 	bdist_lipa = "bdist_lipa" in sys.argv[1:]
 	bdist_pyi = "bdist_pyi" in sys.argv[1:]
+	buildservice = "buildservice" in sys.argv[1:]
 	setup_cfg = None
 	dry_run = "-n" in sys.argv[1:] or "--dry-run" in sys.argv[1:]
 	help = False
@@ -393,32 +394,11 @@ def setup():
 
 	if (("sdist" in sys.argv[1:] or 
 		 "install" in sys.argv[1:] or 
-		 "bdist_deb" in sys.argv[1:] or 
-		 "buildservice" in sys.argv[1:]) and 
+		 "bdist_deb" in sys.argv[1:]) and 
 		not help):
-		# Create control files
-		post = open(os.path.join(pydir, "util",
-								 "rpm_postinstall.sh"), "r").read().strip()
-		postun = open(os.path.join(pydir, "util",
-								   "rpm_postuninstall.sh"), "r").read().strip()
-		for tmpl_name in ("PKGBUILD", "debian.changelog", "debian.control",
-						  "debian.copyright", "debian.rules",
-						  "dispcalGUI.changes", "dispcalGUI.dsc",
-						  "dispcalGUI.spec", 
-						  os.path.join("obs-autopackage-deploy",
-									   "dispcalGUI.spec")):
-			if not dry_run:
-				tmpl_path = os.path.join(pydir, "misc", tmpl_name)
-				if tmpl_name == "debian.copyright":
-					tmpl_name = "copyright"
-				replace_placeholders(tmpl_path,
-									 os.path.join(pydir, "dist", tmpl_name),
-									 lastmod_time, {"POST": post,
-													"POSTUN": postun})
-		if "buildservice" in sys.argv[1:]:
-			sys.argv.remove("buildservice")
-			if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
-				return
+		buildservice = True
+	if "buildservice" in sys.argv[1:]:
+		sys.argv.remove("buildservice")
 
 	if zeroinstall:
 		sys.argv.remove("0install")
@@ -575,15 +555,48 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	if (not bdist_lipa and not zeroinstall) or sys.argv[1:]:
+	if (not bdist_lipa and not zeroinstall and not buildservice) or sys.argv[1:]:
 		print sys.argv[1:]
 		from setup import setup
 		setup()
 	
-	if bdist_appdmg and not dry_run and not help:
+	if dry_run or help:
+		return
+
+	if buildservice:
+		# Create control files
+		mapping = {"POST": open(os.path.join(pydir, "util",
+											 "rpm_postinstall.sh"),
+								"r").read().strip(),
+				   "POSTUN": open(os.path.join(pydir, "util",
+											   "rpm_postuninstall.sh"),
+								  "r").read().strip()}
+		tgz = os.path.join(pydir, "dist", "%s-%s.tar.gz" % (name, version))
+		if os.path.isfile(tgz):
+			with open(tgz, "rb") as tgzfile:
+				mapping["MD5"] = md5(tgzfile.read()).hexdigest()
+		for tmpl_name in ("PKGBUILD", "debian.changelog", "debian.control",
+						  "debian.copyright", "debian.rules",
+						  "dispcalGUI.changes", "dispcalGUI.dsc",
+						  "dispcalGUI.spec", 
+						  os.path.join("0install", "PKGBUILD"),
+						  os.path.join("0install", "debian.control"),
+						  os.path.join("0install", "debian.rules"),
+						  os.path.join("0install", "dispcalGUI.dsc"),
+						  os.path.join("0install", "dispcalGUI.spec"),
+						  os.path.join("obs-autopackage-deploy",
+									   "dispcalGUI.spec")):
+			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
+			if tmpl_name == "debian.copyright":
+				tmpl_name = "copyright"
+			replace_placeholders(tmpl_path,
+								 os.path.join(pydir, "dist", tmpl_name),
+								 lastmod_time, mapping)
+	
+	if bdist_appdmg:
 		create_appdmg()
 
-	if bdist_deb and not help:
+	if bdist_deb:
 		# Read setup.cfg
 		cfg = RawConfigParser()
 		cfg.read(os.path.join(pydir, "setup.cfg"))
@@ -677,9 +690,6 @@ def setup():
 			retcode = call(["./debian/rules", "binary"], cwd=target_dir)
 			if retcode != 0:
 				sys.exit(retcode)
-	
-	if dry_run or help:
-		return
 
 	if setup_cfg or ("bdist_msi" in sys.argv[1:] and use_setuptools):
 		shutil.copy2(os.path.join(pydir, "setup.cfg.backup"), 

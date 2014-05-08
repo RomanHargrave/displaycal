@@ -1,0 +1,26 @@
+# Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
+
+pkgname=dispcalgui
+_pkgname=${PACKAGE}
+pkgver=${VERSION}
+pkgrel=1
+pkgdesc="${SUMMARY}"
+arch=('any')
+url="${URL}"
+license=('GPL3')
+makedepends=('python2>=${PY_MINVERSION}')
+depends=('python2>=${PY_MINVERSION}' 'wxpython>=${WX_MINVERSION}' 'python2-numpy' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils' 'zeroinstall-injector')
+optdepends=('argyllcms: calibration & profiling support')
+install=${pkgname}.install
+
+source=("${URL}download/${_pkgname}-${pkgver}.tar.gz")
+
+md5sums=('${MD5}')
+
+package() {
+	cd "${srcdir}/${_pkgname}-${pkgver}"
+
+	PYTHONPATH=. python2 util/0install_desktop.py "$pkgdir/usr/share"
+}
+
+# vim:set ts=2 sw=2 et:
