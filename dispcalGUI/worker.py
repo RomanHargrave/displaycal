@@ -1657,8 +1657,6 @@ class Worker(object):
 				self.instrument_place_on_screen()
 			else:
 				if self.isalive():
-					if debug or test:
-						safe_print('Sending SPACE key')
 					self.safe_send(" ")
 	
 	def check_instrument_sensor_position(self, txt):
@@ -1718,8 +1716,6 @@ class Worker(object):
 			self.abort_subprocess()
 			return False
 		self.progress_wnd.Pulse(lang.getstr("please_wait"))
-		if debug or test:
-			safe_print('Sending SPACE key')
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 	
@@ -1796,8 +1792,6 @@ class Worker(object):
 			self.abort_subprocess()
 			return False
 		if not isinstance(self.progress_wnd, UntetheredFrame):
-			if debug or test:
-				safe_print('Sending SPACE key')
 			self.safe_send(" ")
 	
 	def instrument_reposition_sensor(self):
@@ -1819,8 +1813,6 @@ class Worker(object):
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
-		if debug or test:
-			safe_print('Sending SPACE key')
 		self.safe_send(" ")
 	
 	def clear_argyll_info(self):
