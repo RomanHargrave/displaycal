@@ -90,7 +90,7 @@ from log import log, logbuffer, safe_print
 from meta import (author, name as appname, domain, version, VERSION_BASE)
 from options import debug, test, verbose
 from ordereddict import OrderedDict
-from trash import trash, TrashcanUnavailableError
+from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_http import encode_multipart_formdata
 from util_io import StringIOu as StringIO
@@ -9647,6 +9647,7 @@ class MainFrame(BaseFrame):
 					trashcan = lang.getstr("trashcan.windows")
 				else:
 					trashcan = lang.getstr("trashcan.linux")
+				orphan_related_files = delete_related_files
 				try:
 					if (sys.platform == "darwin" and 
 						len(delete_related_files) + 1 == len(dircontents) and 
@@ -9668,6 +9669,10 @@ class MainFrame(BaseFrame):
 												 orphan_related_files), 
 								   ok=lang.getstr("ok"), 
 								   bitmap=geticon(32, "dialog-error"))
+				except TrashAborted, exception:
+					if exception.args[0] == -1:
+						# Whole operation was aborted
+						return
 				except TrashcanUnavailableError, exception:
 					InfoDialog(self, 
 							   msg=lang.getstr("error.trashcan_unavailable", 

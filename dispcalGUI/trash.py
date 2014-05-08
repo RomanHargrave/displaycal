@@ -5,22 +5,53 @@ import os
 
 if sys.platform == "win32":
 	from win32com.shell import shell, shellcon
+	import pythoncom
 	import win32api
 
 	def recycle(path):
 		path = os.path.join(win32api.GetShortPathName(os.path.split(path)[0]), 
 			os.path.split(path)[1])
-		retcode, aborted = shell.SHFileOperation((0, 
-		   shellcon.FO_DELETE, path, "", shellcon.FOF_ALLOWUNDO | 
-		   shellcon.FOF_NOCONFIRMATION | shellcon.FOF_RENAMEONCOLLISION | 
-		   shellcon.FOF_SILENT, None, None))
-		return retcode == 0
+		if len(path) > 259:
+			path = win32api.GetShortPathName(path)
+			if path.startswith("\\\\?\\") and len(path) < 260:
+				path = path[4:]
+		if (hasattr(shell, "CLSID_FileOperation") and
+			hasattr(shell, "IID_IFileOperation")):
+			# Vista and later
+			fo = pythoncom.CoCreateInstance(shell.CLSID_FileOperation, None, 
+											pythoncom.CLSCTX_ALL,
+											shell.IID_IFileOperation)
+			fo.SetOperationFlags(shellcon.FOF_ALLOWUNDO | 
+								 shellcon.FOF_NOCONFIRMATION |
+								 shellcon.FOF_RENAMEONCOLLISION | 
+								 shellcon.FOF_SILENT)
+			try:
+				item = shell.SHCreateItemFromParsingName(path, None,
+														 shell.IID_IShellItem)
+				fo.DeleteItem(item)
+				success = fo.PerformOperations() is None
+				aborted = fo.GetAnyOperationsAborted()
+			except pythoncom.com_error, exception:
+				raise TrashAborted(-1)
+		else:
+			# XP
+			retcode, aborted = shell.SHFileOperation((0, 
+			   shellcon.FO_DELETE, path, "", shellcon.FOF_ALLOWUNDO | 
+			   shellcon.FOF_NOCONFIRMATION | shellcon.FOF_RENAMEONCOLLISION | 
+			   shellcon.FOF_SILENT, None, None))
+			success = retcode == 0
+		if aborted:
+			raise TrashAborted(aborted)
+		return success and not aborted
 else:
 	from time import strftime
 	from urllib import quote
 	import shutil
 
 from util_os import getenvu, expanduseru
+
+class TrashAborted(Exception):
+	pass
 
 class TrashcanUnavailableError(Exception):
 	pass
