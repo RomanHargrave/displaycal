@@ -6,16 +6,16 @@ pkgver=${VERSION}
 pkgrel=1
 pkgdesc="${SUMMARY}"
 arch=('i686' 'x86_64')
-url="http://dispcalgui.hoech.net/"
+url="${URL}"
 license=('GPL3')
 makedepends=('libx11' 'libxinerama' 'libxrandr' 'libxxf86vm')
-depends=('python2>=2.5' 'wxpython>=2.8.6' 'python2-numpy' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils')
+depends=('python2>=${PY_MINVERSION}' 'wxpython>=${WX_MINVERSION}' 'python2-numpy' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils')
 optdepends=('argyllcms: calibration & profiling support')
 install=${pkgname}.install
 
-source=("http://dispcalgui.hoech.net/download/${_pkgname}-${pkgver}.tar.gz")
+source=("${URL}download/${_pkgname}-${pkgver}.tar.gz")
 
-md5sums=('ffffffffffffffffffffffffffffffff')
+md5sums=('${MD5}')
 
 build() {
     cd "${srcdir}/${_pkgname}-${pkgver}"

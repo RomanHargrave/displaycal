@@ -29,7 +29,7 @@ Version:        ${VERSION}
 Release:        0
 Source0:        http://%{name}.hoech.net/download/%{name}-%version.tar.gz
 Source1:        copyright
-Url:            http://dispcalgui.hoech.net/
+Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %if 0%{?mandriva_version} > 0
 Group:          Graphics
