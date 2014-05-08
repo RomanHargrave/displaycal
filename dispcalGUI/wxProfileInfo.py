@@ -17,7 +17,7 @@ from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
 from util_io import GzipFileProper
-from util_os import launch_file, waccess
+from util_os import launch_file, make_win32_compatible_long_path, waccess
 from util_str import safe_unicode, universal_newlines, wrap
 from worker import (Error, UnloggedError, check_set_argyll_bin, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
@@ -1715,13 +1715,14 @@ class ProfileInfoFrame(LUTFrame):
 											   for mod in mods])
 			for vrmlext in (".vrml", ".vrml.gz", ".wrl", ".wrl.gz", ".wrz"):
 				vrmlpath = filename + vrmlext
+				if sys.platform == "win32":
+					vrmlpath = make_win32_compatible_long_path(vrmlpath)
 				if os.path.isfile(vrmlpath):
 					break
 			outfilename = filename
 			colorspace = self.gamut_view_options.get_colorspace(3)
 			if colorspace != "Lab":
 				outfilename += " " + colorspace
-			safe_print(outfilename)
 			vrmloutpath = outfilename + vrmlext
 			x3dpath = outfilename + ".x3d"
 			if html:
@@ -1730,6 +1731,10 @@ class ProfileInfoFrame(LUTFrame):
 				finalpath = x3dpath
 			else:
 				finalpath = vrmloutpath
+			if sys.platform == "win32":
+				vrmloutpath = make_win32_compatible_long_path(vrmloutpath)
+				x3dpath = make_win32_compatible_long_path(x3dpath)
+				finalpath = make_win32_compatible_long_path(finalpath)
 			if os.path.isfile(finalpath):
 				launch_file(finalpath)
 			else:

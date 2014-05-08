@@ -76,8 +76,9 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
 	import util_win
 import colord
-from util_os import (expanduseru, getenvu, is_superuser, launch_file, putenvu,
-					 quote_args, which, whereis)
+from util_os import (expanduseru, getenvu, is_superuser, launch_file,
+					 make_win32_compatible_long_path, putenvu, quote_args,
+					 which, whereis)
 from util_str import safe_basestring, safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
@@ -2555,22 +2556,25 @@ class Worker(object):
 						wx.CallAfter(self.owner.infoframe.Show)
 					return UnloggedInfo(lang.getstr("dry_run.info"))
 		cmdline = [cmd] + args
-		if working_dir:
-			for i, item in enumerate(cmdline):
-				if i > 0 and (item.find(os.path.sep) > -1 and 
-							  os.path.dirname(item) == working_dir):
-					# Strip the path from all items in the working dir
-					if sys.platform == "win32" and \
-					   re.search("[^\x20-\x7e]", 
-								 os.path.basename(item)) and os.path.exists(item):
+		for i, item in enumerate(cmdline):
+			if i > 0 and item.find(os.path.sep) > -1:
+				if sys.platform == "win32":
+					item = make_win32_compatible_long_path(item)
+					if (re.search("[^\x20-\x7e]", 
+								  os.path.basename(item)) and
+								  os.path.exists(item)):
 						# Avoid problems with encoding
-						item = win32api.GetShortPathName(item) 
-					cmdline[i] = os.path.basename(item)
-			if (sys.platform == "win32" and 
-				re.search("[^\x20-\x7e]", working_dir) and 
-				os.path.exists(working_dir)):
-				# Avoid problems with encoding
-				working_dir = win32api.GetShortPathName(working_dir)
+						item = win32api.GetShortPathName(item)
+				if working_dir and os.path.dirname(cmdline[i]) == working_dir:
+					# Strip the path from all items in the working dir
+					item = os.path.basename(item)
+				if item != cmdline[i]:
+					cmdline[i] = item
+		if (working_dir and sys.platform == "win32" and 
+			re.search("[^\x20-\x7e]", working_dir) and 
+			os.path.exists(working_dir)):
+			# Avoid problems with encoding
+			working_dir = win32api.GetShortPathName(working_dir)
 		sudo = None
 		measure_cmds = (get_argyll_utilname("dispcal"), 
 						get_argyll_utilname("dispread"), 
@@ -6044,11 +6048,6 @@ class Worker(object):
 			if not profile_path:
 				safe_print("Warning: calculate_gamut(): No profile path %i" % i)
 				continue
-			if (sys.platform == "win32" and
-				re.search("[^\x20-\x7e]", os.path.basename(profile_path))):
-				# Avoid problems with encoding
-				profile_path = win32api.GetShortPathName(profile_path)
-				profile_paths[i] = profile_path
 			result = self.exec_cmd(get_argyll_util("iccgamut"),
 								   ["-v", "-w", "-i" + intent, "-f" + direction,
 									"-o" + order, profile_path],
@@ -6154,16 +6153,21 @@ class Worker(object):
 									  r'\1\3 \2\0$\4', vrml)
 						vrml = vrml.replace("\0$", "100")
 						return vrml
+					gzfilename = filename + ".gz"
+					if sys.platform == "win32":
+						filename = make_win32_compatible_long_path(filename)
+						gzfilename = make_win32_compatible_long_path(gzfilename)
+						tmpfilename = make_win32_compatible_long_path(tmpfilename)
 					if getcfg("vrml.compress"):
 						# Compress gam and wrl files using gzip
-						with GzipFileProper(filename + ".gz", "wb") as gz:
+						with GzipFileProper(gzfilename, "wb") as gz:
 							# Always use original filename with '.gz' extension,
 							# that way the filename in the header will be correct
 							with open(tmpfilename, "rb") as infile:
 								gz.write(tweak_vrml(infile.read()))
 						# Remove uncompressed file
 						os.remove(tmpfilename)
-						tmpfilename = filename + ".gz"
+						tmpfilename = gzfilename
 					else:
 						with open(tmpfilename, "rb") as infile:
 							vrml = infile.read()
@@ -6172,7 +6176,7 @@ class Worker(object):
 					if filename.endswith(".wrl"):
 						filename = filename[:-4] + ".wrz"
 					else:
-						filename = filename + ".gz"
+						filename = gzfilename
 					if tmpfilename != filename:
 						# Rename the file if filename is different
 						if os.path.exists(filename):
@@ -6934,6 +6938,8 @@ class Worker(object):
 						if ext_filter is None or ext.lower() in ext_filter:
 							src = os.path.join(self.tempdir, basename)
 							dst = os.path.join(os.path.dirname(dst_path), basename)
+							if sys.platform == "win32":
+								dst = make_win32_compatible_long_path(dst)
 							if os.path.exists(dst):
 								if os.path.isdir(dst):
 									if verbose >= 2:

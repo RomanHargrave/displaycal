@@ -16,6 +16,117 @@ from encoding import get_encodings
 
 fs_enc = get_encodings()[1]
 
+if sys.platform == "win32":
+	# Add support for long paths (> 260 chars)
+	import __builtin__
+	import win32api
+
+	__builtin__._open = __builtin__.open
+
+	def open(path, *args, **kwargs):
+		return __builtin__._open(make_win32_compatible_long_path(path), *args,
+								 **kwargs)
+
+	__builtin__.open = open
+
+
+	os._access = os.access
+
+	def access(path, mode):
+		return os._access(make_win32_compatible_long_path(path), mode)
+
+	os.access = access
+
+
+	os.path._exists = os.path.exists
+
+	def exists(path):
+		return os.path._exists(make_win32_compatible_long_path(path))
+
+	os.path.exists = exists
+
+
+	os.path._isdir = os.path.isdir
+
+	def isdir(path):
+		return os.path._isdir(make_win32_compatible_long_path(path))
+
+	os.path.isdir = isdir
+
+
+	os.path._isfile = os.path.isfile
+
+	def isfile(path):
+		return os.path._isfile(make_win32_compatible_long_path(path))
+
+	os.path.isfile = isfile
+
+
+	os._listdir = os.listdir
+
+	def listdir(path):
+		return os._listdir(make_win32_compatible_long_path(path))
+
+	os.listdir = listdir
+
+
+	os._lstat = os.lstat
+
+	def lstat(path):
+		return os._lstat(make_win32_compatible_long_path(path))
+
+	os.lstat = lstat
+
+
+	os._mkdir = os.mkdir
+
+	def mkdir(path, mode=0777):
+		return os._mkdir(make_win32_compatible_long_path(path, 247), mode)
+
+	os.mkdir = mkdir
+
+
+	os._makedirs = os.makedirs
+
+	def makedirs(path, mode=0777):
+		return os._makedirs(make_win32_compatible_long_path(path, 247), mode)
+
+	os.makedirs = makedirs
+
+
+	os._remove = os.remove
+
+	def remove(path):
+		return os._remove(make_win32_compatible_long_path(path))
+
+	os.remove = remove
+
+
+	os._rename = os.rename
+
+	def rename(src, dst):
+		src, dst = [make_win32_compatible_long_path(path) for path in
+					(src, dst)]
+		return os._rename(src, dst)
+
+	os.rename = rename
+
+
+	os._stat = os.stat
+
+	def stat(path):
+		return os._stat(make_win32_compatible_long_path(path))
+
+	os.stat = stat
+
+
+	win32api._GetShortPathName = win32api.GetShortPathName
+
+	def GetShortPathName(path):
+		return win32api._GetShortPathName(make_win32_compatible_long_path(path))
+
+	win32api.GetShortPathName = GetShortPathName
+
 
 def quote_args(args):
 	""" Quote commandline arguments where needed. It quotes all arguments that 
@@ -199,6 +310,13 @@ def listdir_re(path, rex = None):
 		rex = re.compile(rex, re.IGNORECASE)
 		files = filter(rex.search, files)
 	return files
+
+
+def make_win32_compatible_long_path(path, maxpath=259):
+	if (sys.platform == "win32" and len(path) > maxpath and
+		not path.startswith("\\\\?\\")):
+		path = "\\\\?\\" + path
+	return path
 
 
 def movefile(src, dst, overwrite=True):

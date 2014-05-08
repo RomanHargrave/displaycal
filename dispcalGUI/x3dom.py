@@ -12,7 +12,7 @@ from meta import domain
 from options import verbose, debug
 from log import safe_print as _safe_print
 from util_io import GzipFileProper
-from util_str import StrList, safe_str, safe_unicode
+from util_str import StrList, safe_unicode
 import colormath
 import localization as lang
 
@@ -571,7 +571,6 @@ def vrmlfile2x3dfile(vrmlpath, x3dpath, html=True, embed=False, force=False,
 	Convert VRML file located at vrmlpath to HTML and write to x3dpath
 	
 	"""
-	vrmlpath, x3dpath = [safe_unicode(path) for path in (vrmlpath, x3dpath)]
 	filename, ext = os.path.splitext(vrmlpath)
 	if ext.lower() in (".gz", ".wrz"):
 		cls = GzipFileProper

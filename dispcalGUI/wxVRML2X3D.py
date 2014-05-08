@@ -5,7 +5,8 @@ import sys
 
 from meta import name as appname
 from safe_print import safe_print
-from util_os import launch_file, waccess
+from util_os import launch_file, make_win32_compatible_long_path, waccess
+from util_str import safe_unicode
 from worker import Worker, show_result_dialog
 from wxaddons import FileDrop, wx
 import config
@@ -160,8 +161,15 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 			return
 		x3dpath = dlg.GetPath()
 		dirname = os.path.dirname(x3dpath)
+	vrmlpath, x3dpath = [safe_unicode(path) for path in (vrmlpath, x3dpath)]
+	if sys.platform == "win32":
+		vrmlpath = make_win32_compatible_long_path(vrmlpath)
+		x3dpath = make_win32_compatible_long_path(x3dpath)
 	if html:
 		finalpath = x3dpath + ".html"
+		if sys.platform == "win32":
+			finalpath = make_win32_compatible_long_path(finalpath)
+			x3dpath = finalpath[:-5]
 	else:
 		finalpath = x3dpath
 	if worker:
