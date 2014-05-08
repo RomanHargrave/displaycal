@@ -1752,8 +1752,27 @@ class Worker(object):
 				return
 		self.subprocess_abort = True
 		self.thread_abort = True
-		delayedresult.startWorker(lambda result: None, 
+		delayedresult.startWorker(self.quit_terminate_consumer, 
 								  self.quit_terminate_cmd)
+
+	def quit_terminate_consumer(self, delayedResult):
+		try:
+			result = delayedResult.get()
+		except Exception, exception:
+			if hasattr(exception, "originalTraceback"):
+				self.log(exception.originalTraceback, fn=log)
+			else:
+				self.log(traceback.format_exc(), fn=log)
+			result = UnloggedError(exception)
+		if isinstance(result, Exception):
+			show_result_dialog(result, getattr(self, "progress_wnd", None))
+			result = False
+		if not result:
+			self.subprocess_abort = False
+			self.thread_abort = False
+			self.abort_requested = False
+			if hasattr(self, "progress_wnd"):
+				self.progress_wnd.Resume()
 	
 	def instrument_place_on_screen(self):
 		""" Show a dialog asking user to place the instrument on the screen
@@ -5735,7 +5754,8 @@ class Worker(object):
 			#    happen if we design our result consumer correctly to handle
 			#    this particular case, but we need to make sure the user can
 			#    close the progress window in case we mess up.
-			wx.CallAfter(self.stop_progress)
+			if hasattr(self, "thread") and not self.thread.isAlive():
+				wx.CallAfter(self.stop_progress)
 			if subprocess_isalive:
 				wx.CallAfter(show_result_dialog,
 							 Warning("Couldn't terminate %s. Please try to end "
@@ -5743,8 +5763,9 @@ class Worker(object):
 									 "If you can not terminate %s, restarting "
 									 "%s may also help. Apologies for the "
 									 "inconvenience." %
-									 (self.cmd, appname, self.cmd, appanme)),
+									 (self.cmd, appname, self.cmd, appname)),
 							 self.owner)
+		return not subprocess_isalive
 	
 	def report(self, report_calibrated=True):
 		""" Report on calibrated or uncalibrated display device response """
