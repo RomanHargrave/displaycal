@@ -3047,7 +3047,7 @@ class Worker(object):
 				self.log(exception.originalTraceback)
 			else:
 				self.log(traceback.format_exc())
-			result = exception
+			result = UnloggedError(exception)
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
 		self.finished = True
