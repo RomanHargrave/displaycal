@@ -2833,7 +2833,7 @@ class Worker(object):
 					loop = 0
 					pwdsent = False
 					authfailed = False
-					while self.subprocess.isalive():
+					while 1:
 						if loop < 1 and sudo:
 							curpatterns = ["Password:"] + patterns
 						else:
@@ -2847,6 +2847,8 @@ class Worker(object):
 							self.log("%s: Reached EOF (OK)" % appname)
 							break
 						elif self.subprocess.after is wexpect.TIMEOUT:
+							if not self.subprocess.isalive():
+								break
 							continue
 						elif (self.subprocess.after == "Password:" and
 							  loop < 1 and sudo):
@@ -2858,6 +2860,8 @@ class Worker(object):
 								self._safe_send(self.pwd.encode(enc, "replace") +
 												os.linesep, obfuscate=True)
 								pwdsent = True
+							if not self.subprocess.isalive():
+								break
 							continue
 						elif self.measure_cmd:
 							if filter(lambda keyhit_str:
@@ -2879,6 +2883,8 @@ class Worker(object):
 										 (appname, self.send_buffer))
 								self._safe_send(self.send_buffer)
 								self.send_buffer = None
+						if not self.subprocess.isalive():
+							break
 						loop += 1
 					# We need to call isalive() to set the exitstatus.
 					# We can't use wait() because it might block in the
