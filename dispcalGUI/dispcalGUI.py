@@ -846,6 +846,13 @@ class MainFrame(BaseFrame):
 		self.PostCreate(pre)
 		self.worker = worker
 		self.worker.owner = self
+		result = self.worker.create_tempdir()
+		if isinstance(result, Exception):
+			safe_print(result)
+		if sys.platform == "win32":
+			self.maxprofilenamelength = 254 - len(self.worker.tempdir or "")
+		else:
+			self.maxprofilenamelength = 255
 		self.init_frame()
 		self.init_defaults()
 		self.init_infoframe()
@@ -7825,13 +7832,13 @@ class MainFrame(BaseFrame):
 											 event.GetEventType(), 
 											 getevttype(event)))
 		oldval = self.profile_name_textctrl.GetValue()
-		if not self.check_profile_name() or len(oldval) > 255:
+		if not self.check_profile_name() or len(oldval) > self.maxprofilenamelength:
 			wx.Bell()
 			x = self.profile_name_textctrl.GetInsertionPoint()
 			if oldval == "":
 				newval = defaults.get("profile.name", "")
 			else:
-				newval = re.sub(r"[\\/:*?\"<>|]+", "", oldval).lstrip("-")[:255]
+				newval = re.sub(r"[\\/:*?\"<>|]+", "", oldval).lstrip("-")[:self.maxprofilenamelength]
 			self.profile_name_textctrl.ChangeValue(newval)
 			self.profile_name_textctrl.SetInsertionPoint(x - (len(oldval) - 
 															  len(newval)))
@@ -8519,10 +8526,10 @@ class MainFrame(BaseFrame):
 			profile_name = re.sub("\0+", "", profile_name)
 
 		# Get rid of characters considered invalid for filenames and shorten
-		# to a length of max 255 chars
+		# to a length of <maxprofilenamelength> chars
 		# Also strip leading dashes which might trick Argyll tools into
 		# mistaking parts of the profile name as an option parameter
-		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name).lstrip("-")[:255]
+		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name).lstrip("-")[:self.maxprofilenamelength]
 
 	def update_profile_name(self, event=None):
 		profile_name = self.create_profile_name()
