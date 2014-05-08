@@ -12,6 +12,7 @@ import subprocess as sp
 import sys
 import tempfile
 import textwrap
+import threading
 import traceback
 import urllib2
 from UserString import UserString
@@ -5656,15 +5657,19 @@ class Worker(object):
 		reacting
 		
 		"""
-		if debug:
-			safe_print('[D] safe_quit')
+		# If running wexpect.spawn in a thread under Windows, writing to
+		# sys.stdout from another thread can fail sporadically with IOError 9
+		# 'Bad file descriptor', so don't use sys.stdout
+		if threading.currentThread().name != "MainThread":
+			logfn = log
+		else:
+			logfn = safe_print
 		subprocess = getattr(self, "subprocess", None)
 		if self.isalive(subprocess):
-			if debug or test:
-				safe_print('User requested abort')
 			try:
 				if self.measure_cmd and hasattr(subprocess, "send"):
-					self.log("%s: Trying to end subprocess gracefully..." % appname)
+					self.log("%s: Trying to end subprocess gracefully..." % appname,
+							 fn=logfn)
 					try:
 						if subprocess.after == "Current":
 							# Stop measurement
@@ -5678,10 +5683,12 @@ class Worker(object):
 								break
 							sleep(.5)
 					except Exception, exception:
+						self.log(traceback.format_exc(), fn=logfn)
 						self.log("%s: Exception in quit_terminate_command: %s" %
-								 (appname, exception))
+								 (appname, exception),  fn=logfn)
 				if self.isalive(subprocess):
-					self.log("%s: Trying to terminate subprocess..." % appname)
+					self.log("%s: Trying to terminate subprocess..." % appname,
+							 fn=logfn)
 					subprocess.terminate()
 					ts = time()
 					while self.isalive(subprocess):
@@ -5690,7 +5697,7 @@ class Worker(object):
 						sleep(.25)
 					if sys.platform != "win32" and self.isalive(subprocess):
 						self.log("%s: Trying to terminate subprocess forcefully..." %
-								 appname)
+								 appname, fn=logfn)
 						if isinstance(subprocess, sp.Popen):
 							subprocess.kill()
 						else:
@@ -5701,27 +5708,14 @@ class Worker(object):
 								break
 							sleep(.25)
 					if self.isalive(subprocess):
-						self.log("...warning: couldn't terminate subprocess.")
+						self.log("...warning: couldn't terminate subprocess.",
+								 fn=logfn)
 					else:
-						self.log("...subprocess terminated.")
+						self.log("...subprocess terminated.", fn=logfn)
 			except Exception, exception:
+				self.log(traceback.format_exc(), fn=logfn)
 				self.log("%s: Exception in quit_terminate_command: %s" %
-						 (appname, exception))
-			if debug:
-				safe_print('[D] end try')
-		elif debug:
-			safe_print('[D] subprocess: %r' % subprocess)
-			safe_print('[D] subprocess_abort: %r' % getattr(self, "subprocess_abort", 
-													 False))
-			if subprocess:
-				safe_print('[D] subprocess has poll: %r' % hasattr(subprocess, 
-															"poll"))
-				if hasattr(subprocess, "poll"):
-					safe_print('[D] subprocess.poll(): %r' % subprocess.poll())
-				safe_print('[D] subprocess has isalive: %r' % hasattr(subprocess, 
-															   "isalive"))
-				if hasattr(subprocess, "isalive"):
-					safe_print('[D] subprocess.isalive(): %r' % subprocess.isalive())
+						 (appname, exception), fn=logfn)
 		subprocess_isalive = self.isalive(subprocess)
 		if (subprocess_isalive or
 			(hasattr(self, "thread") and not self.thread.isAlive())):
