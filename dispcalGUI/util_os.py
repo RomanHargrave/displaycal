@@ -314,7 +314,7 @@ def listdir_re(path, rex = None):
 
 def make_win32_compatible_long_path(path, maxpath=259):
 	if (sys.platform == "win32" and len(path) > maxpath and
-		not path.startswith("\\\\?\\")):
+		os.path.isabs(path) and not path.startswith("\\\\?\\")):
 		path = "\\\\?\\" + path
 	return path
 
