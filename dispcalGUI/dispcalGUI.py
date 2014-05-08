@@ -9874,7 +9874,6 @@ class MainFrame(BaseFrame):
 			self.start_timers()
 		self.enable_menus()
 		wx.Frame.Show(self, show)
-		self.Raise()
 		if not wx.GetApp().IsActive():
 			self.RequestUserAttention()
 
