@@ -18,8 +18,6 @@ CFLAGS += -O2
 endif
 
 # The DESTDIR Has To Be Exactly  /usr/src/packages/BUILD/debian/<nameOfPackage>
-export name=${PACKAGE}
-export version=${VERSION}
 export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}
 export install_prefix=/usr
 export install_exec_prefix=/usr
