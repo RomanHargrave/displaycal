@@ -87,7 +87,8 @@ from colormath import (CIEDCCT2xyY, planckianCT2xyY, xyY2CCT, XYZ2CCT, XYZ2Lab,
 from debughelpers import ResourceError, getevtobjname, getevttype, handle_error
 from edid import pnpidcache, get_manufacturer_name
 from log import log, logbuffer, safe_print
-from meta import (author, name as appname, domain, version, VERSION_BASE)
+from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
+				  version)
 from options import debug, test, verbose
 from ordereddict import OrderedDict
 from trash import trash, TrashAborted, TrashcanUnavailableError
@@ -159,7 +160,15 @@ def app_update_check(parent=None, silent=False):
 	""" Check for application update. Show an error dialog if a failure
 	occurs. """
 	safe_print(lang.getstr("update_check"))
-	resp = http_request(parent, domain, "GET", "/VERSION",
+	if VERSION > VERSION_BASE:
+		# Snapshot
+		version_file = "SNAPSHOT_VERSION"
+		readme_file = "SNAPSHOT_README.html"
+	else:
+		# Stable
+		version_file = "VERSION"
+		readme_file = "README.html"
+	resp = http_request(parent, domain, "GET", "/" + version_file,
 						failure_msg=lang.getstr("update_check.fail"),
 						silent=silent)
 	if resp is False:
@@ -178,7 +187,7 @@ def app_update_check(parent=None, silent=False):
 			return
 	if newversion_tuple > VERSION_BASE:
 		# Get changelog
-		resp = http_request(parent, domain, "GET", "/README.html",
+		resp = http_request(parent, domain, "GET", "/" + readme_file,
 							silent=silent)
 		if resp:
 			readme = resp.read()
@@ -268,6 +277,12 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 			worker = parent.worker
 		else:
 			worker = Worker()
+		if VERSION > VERSION_BASE:
+			# Snapshot
+			folder = "/snapshot"
+		else:
+			# Stable
+			folder = ""
 		if zeroinstall:
 			if parent:
 				parent.Close()
@@ -287,14 +302,14 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 		elif sys.platform == "win32":
 			worker.start(worker.process_download, worker.download,
 						 ckwargs={"exit": True},
-						 wargs=("http://%s/download/%s-%s-Setup.exe" %
-								(domain.lower(), appname, newversion), ),
+						 wargs=("http://%s/download%s/%s-%s-Setup.exe" %
+								(domain.lower(), folder, appname, newversion),),
 						 progress_msg=lang.getstr("update_download"))
 		else:
 			worker.start(worker.process_download, worker.download,
 						 ckwargs={"exit": True},
-						 wargs=("http://%s/download/%s-%s.dmg" %
-								(domain.lower(), appname, newversion), ),
+						 wargs=("http://%s/download%s/%s-%s.dmg" %
+								(domain.lower(), folder, appname, newversion),),
 						 progress_msg=lang.getstr("update_download"))
 	elif result != wx.ID_CANCEL:
 		launch_file("http://" + domain)
