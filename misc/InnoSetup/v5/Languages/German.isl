@@ -304,6 +304,7 @@ UninstallProgram=%1 entfernen
 LaunchProgram=%1 starten
 AssocFileExtension=&Registriere %1 mit der %2-Dateierweiterung
 AssocingFileExtension=%1 wird mit der %2-Dateierweiterung registriert...
+UninstallStringEmpty=Die vorherige installierte Version von %1 konnte nicht entfernt werden, weil die Pfadangabe zum Deinstallations-Programm fehlt. Bitte entfernen Sie die vorherige Version manuell.
 
 CalibrationLoading=Kalibrierung bei Anmeldung laden:
 CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profil-Lader (hohe Qualität)

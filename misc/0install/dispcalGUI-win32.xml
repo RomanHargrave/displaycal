@@ -19,6 +19,12 @@ ${DESC}</description>
 		<requires interface="${URL}0install/numpy.xml" />
 		<requires interface="${URL}0install/wmi.xml" />
 		<requires importance="recommended" interface="${URL}0install/argyllcms.xml" />
+		<command name="set-calibration-loading">
+			<arg>-c</arg>
+			<arg>import sys; from dispcalGUI import util_win; util_win.calibration_management_isenabled() or util_win.enable_calibration_management() if '--os' in sys.argv[1:] else not util_win.calibration_management_isenabled() or util_win.disable_calibration_management();</arg>
+			<runner interface="http://repo.roscidus.com/python/python" version="2.5..!3.0" command="run-win" />
+			<working-dir src="." />
+		</command>
 		<implementation released="0000-00-00" version="0.0.0.0">
 		</implementation>
 	</group>

@@ -433,35 +433,36 @@ def setup():
 			sys.argv.remove("--onefile")
 
 	if inno and sys.platform == "win32":
-		inno_template_path = os.path.join(pydir, "misc", "%s-Setup-%s.iss" % 
-										  (name, ("pyi" if bdist_pyi else 
-												  bdist_cmd)))
-		inno_template = open(inno_template_path, "r")
-		inno_script = inno_template.read().decode("UTF-8", "replace") % {
-			"AppCopyright": u"© %s %s" % (strftime("%Y"), author),
-			"AppVerName": version,
-			"AppPublisher": author,
-			"AppPublisherURL": "http://" + domain,
-			"AppSupportURL": "http://" + domain,
-			"AppUpdatesURL": "http://" + domain,
-			"VersionInfoVersion": ".".join(map(str, version_tuple)),
-			"VersionInfoTextVersion": version,
-			"AppVersion": version,
-			"Platform": get_platform(),
-			"PythonVersion": sys.version[:3],
-			}
-		inno_template.close()
-		inno_path = os.path.join("dist", 
-								 os.path.basename(inno_template_path).replace(
-									bdist_cmd, "%s.%s-py%s" % 
-									(bdist_cmd, get_platform(), 
-									 sys.version[:3])))
-		if not dry_run:
-			if not os.path.exists("dist"):
-				os.makedirs("dist")
-			inno_file = open(inno_path, "w")
-			inno_file.write(inno_script.encode("MBCS", "replace"))
-			inno_file.close()
+		for tmpl_type in ("pyi" if bdist_pyi else bdist_cmd, "0install"):
+			inno_template_path = os.path.join(pydir, "misc", "%s-Setup-%s.iss" % 
+											  (name, tmpl_type))
+			inno_template = open(inno_template_path, "r")
+			inno_script = inno_template.read().decode("UTF-8", "replace") % {
+				"AppCopyright": u"© %s %s" % (strftime("%Y"), author),
+				"AppVerName": version,
+				"AppPublisher": author,
+				"AppPublisherURL": "http://" + domain,
+				"AppSupportURL": "http://" + domain,
+				"AppUpdatesURL": "http://" + domain,
+				"VersionInfoVersion": ".".join(map(str, version_tuple)),
+				"VersionInfoTextVersion": version,
+				"AppVersion": version,
+				"Platform": get_platform(),
+				"PythonVersion": sys.version[:3],
+				"URL": "http://%s/" % domain.lower(),
+				}
+			inno_template.close()
+			inno_path = os.path.join("dist", 
+									 os.path.basename(inno_template_path).replace(
+										bdist_cmd, "%s.%s-py%s" % 
+										(bdist_cmd, get_platform(), 
+										 sys.version[:3])))
+			if not dry_run:
+				if not os.path.exists("dist"):
+					os.makedirs("dist")
+				inno_file = open(inno_path, "w")
+				inno_file.write(inno_script.encode("MBCS", "replace"))
+				inno_file.close()
 		sys.argv.remove("inno")
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
