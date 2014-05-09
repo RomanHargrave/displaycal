@@ -156,16 +156,18 @@ def swap_dict_keys_values(mydict):
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
 
 
-def app_update_check(parent=None, silent=False):
+def app_update_check(parent=None, silent=False, snapshot=False):
 	""" Check for application update. Show an error dialog if a failure
 	occurs. """
-	safe_print(lang.getstr("update_check"))
-	if VERSION > VERSION_BASE:
+	if snapshot:
 		# Snapshot
+		curversion_tuple = VERSION
 		version_file = "SNAPSHOT_VERSION"
 		readme_file = "SNAPSHOT_README.html"
 	else:
 		# Stable
+		safe_print(lang.getstr("update_check"))
+		curversion_tuple = VERSION_BASE
 		version_file = "VERSION"
 		readme_file = "README.html"
 	resp = http_request(parent, domain, "GET", "/" + version_file,
@@ -185,7 +187,7 @@ def app_update_check(parent=None, silent=False):
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"), log=False)
 			return
-	if newversion_tuple > VERSION_BASE:
+	if newversion_tuple > curversion_tuple:
 		# Get changelog
 		resp = http_request(parent, domain, "GET", "/" + readme_file,
 							silent=silent)
@@ -202,7 +204,10 @@ def app_update_check(parent=None, silent=False):
 				chglog = re.sub("<h3>.+?</h3>", "", chglog)
 				chglog = re.sub("<h\d>(.+?)</h\d>", 
 								"<p><strong>\\1</strong></p>", chglog)
-		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog)
+		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
+					 snapshot)
+	elif not snapshot and VERSION > VERSION_BASE:
+		app_update_check(parent, silent, True)
 	elif not silent:
 		wx.CallAfter(app_uptodate, parent)
 	else:
@@ -230,7 +235,8 @@ def app_uptodate(parent=None):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 
 
-def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
+def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
+					   snapshot=False):
 	""" Show a dialog confirming application update, with cancel option """
 	zeroinstall = (os.path.exists(os.path.normpath(os.path.join(pydir, "..",
 																appname +
@@ -277,7 +283,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None):
 			worker = parent.worker
 		else:
 			worker = Worker()
-		if VERSION > VERSION_BASE:
+		if snapshot:
 			# Snapshot
 			folder = "/snapshot"
 		else:
