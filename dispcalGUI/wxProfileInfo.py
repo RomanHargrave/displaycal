@@ -1148,14 +1148,13 @@ class ProfileInfoFrame(LUTFrame):
 		self.SetSaneGeometry(
 			getcfg("position.profile_info.x"),
 			getcfg("position.profile_info.y"),
-			getcfg("size.profile_info.w") + border * 2,
+			defaults["size.profile_info.split.w"] + border * 2,
 			getcfg("size.profile_info.h") + titlebar + border)
 		self.SetMinSize((defaults["size.profile_info.w"] + border * 2,
 						 defaults["size.profile_info.h"] + titlebar + border))
-		self.splitter.SetSplitSize((getcfg("size.profile_info.split.w") + border * 2,
+		self.splitter.SetSplitSize((defaults["size.profile_info.split.w"] + border * 2,
 									self.GetSize()[1]))
 		self.splitter.SetExpandedSize(self.GetSize())
-		self.splitter.SetExpanded(0)
 		
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
@@ -1274,10 +1273,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.title_txt.SetLabel(profile.getDescription())
 		border, titlebar = get_platform_window_decoration_size()
 		titlewidth = self.title_txt.GetTextExtent(self.title_txt.GetLabel())[0] + 30
-		if titlewidth > defaults["size.profile_info.w"]:
-			defaults["size.profile_info.w"] = titlewidth
-		if titlewidth > defaults["size.profile_info.split.w"]:
-			defaults["size.profile_info.split.w"] = titlewidth
 		if titlewidth + border * 2 > self.GetMinSize()[0]:
 			self.SetMinSize((titlewidth + border * 2,
 							 defaults["size.profile_info.h"] + titlebar + border))
