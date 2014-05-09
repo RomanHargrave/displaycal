@@ -243,7 +243,8 @@ def main(module=None):
 			else:
 				from dispcalGUI import main as main
 			if accepts_filename_argument:
-				main(*sys.argv[max(len(sys.argv) - 1, 1):])
+				main(*[safe_unicode(arg) for arg in
+					   sys.argv[max(len(sys.argv) - 1, 1):]])
 			else:
 				main()
 	except Exception, exception:
