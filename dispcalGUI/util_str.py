@@ -267,7 +267,7 @@ def safe_basestring(obj):
 	
 	"""
 	if isinstance(obj, EnvironmentError):
-		# There are three possible variations of EnvironmentError instances:
+		# There are four possible variations of EnvironmentError instances:
 		# - instance with 'errno', 'strerror', 'filename' and 'args' attributes
 		#   (created by EnvironmentError with three arguments)
 		#   NOTE: The 'args' attribute will contain only the first two arguments
@@ -275,15 +275,27 @@ def safe_basestring(obj):
 		#   (created by EnvironmentError with two arguments)
 		# - instance with just 'args' attribute
 		#   (created by EnvironmentError with one or more than three arguments)
-		args = [safe_unicode(arg) for arg in obj.args]
+		# - urllib2.URLError with empty 'args' attribute but 'reason' and
+		#   'filename' attributes
+		if hasattr(obj, "reason"):
+			if isinstance(obj.reason, basestring):
+				obj.args = (obj.reason, )
+			else:
+				obj.args = obj.reason
+		error = []
+		if obj.errno is not None:
+			error.append("[Errno %s]" % obj.errno)
+		if obj.strerror is not None:
+			if obj.filename is not None:
+				error.append(obj.strerror + ":")
+			else:
+				error.append(obj.strerror)
+		if not error:
+			error = list(obj.args)
 		if obj.filename is not None:
-			obj = "[Errno %s] %s: %s" % (args[0], args[1], safe_unicode(obj.filename))
-		elif obj.strerror is not None:
-			obj = "[Errno %s] %s" % (args[0], args[1])
-		elif obj.errno is not None:
-			obj = "[Errno %s]" % args[0]
-		else:
-			obj = " ".join(args)
+			error.append(obj.filename)
+		error = [safe_unicode(arg) for arg in error]
+		obj = " ".join(error)
 	if not isinstance(obj, basestring):
 		try:
 			obj = unicode(obj)
