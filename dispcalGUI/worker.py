@@ -2574,8 +2574,12 @@ class Worker(object):
 					item = make_win32_compatible_long_path(item)
 					if (re.search("[^\x20-\x7e]", 
 								  os.path.basename(item)) and
-								  os.path.exists(item)):
-						# Avoid problems with encoding
+								  os.path.exists(item) and
+								  i < len(cmdline) - 1):
+						# Avoid problems with encoding under Windows by using
+						# GetShortPathName, but be careful with the last
+						# parameter which may be used as the basename for the
+						# output file
 						item = win32api.GetShortPathName(item)
 				if working_dir and os.path.dirname(cmdline[i]) == working_dir:
 					# Strip the path from all items in the working dir
