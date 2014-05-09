@@ -134,7 +134,7 @@ class Tag(object):
 				with open(url, "rb") as resource_file:
 					body = resource_file.read()
 			if body.strip():
-				if cache and not os.path.isfile(cachefilename):
+				if cache and (force or not os.path.isfile(cachefilename)):
 					with open(cachefilename, "wb") as cachefile:
 						cachefile.write(body)
 				if source and not basename.endswith(".swf"):
