@@ -17,7 +17,7 @@ AppSupportURL=%(AppSupportURL)s
 AppUpdatesURL=%(AppUpdatesURL)s
 LicenseFile=..\LICENSE.txt
 OutputDir=.
-OutputBaseFilename=dispcalGUI-Setup-0install
+OutputBaseFilename=dispcalGUI-0install-Setup
 SetupIconFile=..\dispcalGUI\theme\icons\dispcalGUI.ico
 Compression=lzma/Max
 SolidCompression=true
@@ -50,9 +50,6 @@ Name: runentry; Description: {cm:LaunchProgram,dispcalGUI};
 
 [Files]
 Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly;
-
-[Icons]
-Name: "{commonstartup}\dispcalGUI Profile Loader"; Filename: 0install-win.exe; Parameters: run --command=run-apply-profiles -- %(URL)s0install/dispcalGUI.xml; Tasks: calibrationloadinghandledbydispcalgui;
 
 [Run]
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden;
@@ -125,6 +122,7 @@ begin
 		if not Exec(ZeroInstall, 'integrate --add=icons --machine --refresh %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		if IsTaskSelected('calibrationloadinghandledbydispcalgui') then begin
+			CreateShellLink(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'), 'dispcalGUI Profile Loader', ZeroInstall, 'run --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 			if not Exec(ZeroInstall, 'run --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
