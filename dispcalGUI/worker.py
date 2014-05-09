@@ -1319,7 +1319,7 @@ class Worker(object):
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
-		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|[Tt]arget) (?:Brightness|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
+		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|Initial|[Tt]arget) (?:Br(?:ightness)?|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
 		self.sudo = None
 		self.auth_timestamp = 0
