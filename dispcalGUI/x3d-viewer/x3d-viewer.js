@@ -95,6 +95,10 @@ var x3d_viewer = {
 										'this.node._mesh._positions[0] = [-w + w / 2, -h + h / 2, 0, w + w / 2, -h + h / 2, 0, w + w / 2, h + h / 2, 0, -w + w / 2, h + h / 2, 0]');
 				return method;
 			});
+			// Set gamma correction to none
+			var environment = document.createElement('environment');
+			environment.setAttribute('gammaCorrectionDefault', 'none');
+			document.getElementsByTagName('scene')[0].appendChild(environment);
 			//
 			x3dom.runtime.ready = function () {
 				var lights = ['directional', 'point', 'spot'],
