@@ -4209,8 +4209,8 @@ class Worker(object):
 			scut.SetPath(cmd)
 			if len(loader_args) == 1:
 				scut.SetWorkingDirectory(pydir)
-			if isexe:
-				scut.SetIconLocation(exe, 0)
+			if cmd != sys.executable:
+				scut.SetIconLocation(cmd, 0)
 			else:
 				scut.SetIconLocation(get_data_path(os.path.join("theme",
 																"icons", 
