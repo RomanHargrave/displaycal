@@ -25,7 +25,7 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>${VERSION}</h2>
+					<h2>${VERSION_SHORT}</h2>
 					<p>${ISODATE} ${ISOTIME} UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
@@ -228,53 +228,177 @@
 					<div>
 						<p><a href="http://0install.net">Zero Install</a> is a decentralised cross-platform software installation system. The benefits you get from Zero Install are:</p>
 						<ul>
-							<li><strong>Easy installation and updating.</strong> Just drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window to add it to your list of applications. Zero Install automatically handles everything else, and keeps the software up-to-date.</li>
-							<li><strong>Easily switch between software versions</strong> from within Zero Install, without affecting other components on the system.</li>
-							<li><strong>No administrator rights needed</strong> to add or update software.</li>
+							<li><strong>Always up-to-date.</strong> Zero Install automatically keeps all software updated.</li>
+							<li><strong>Easily switch between software versions</strong> from within Zero Install if desired.</li>
+							<li><strong>No administrator rights needed</strong> to add or update software (*).</li>
 						</ul>
-						<p class="footnote">Note: Under Linux installing/updating some of the dependencies through the distributions' package management mechanisms may require administrative privileges.</p>
-						<p class="footnote">Note: Under Windows, you may have to manually install an Argyll CMS specific driver for your measurement device. Refer to the <a href="#quickstart">Quickstart Guide</a> for details.</p>
+						<p class="footnote">* Note: Installing/updating Zero Install itself or software dependencies through the operating system's mechanisms may require administrative privileges.</p>
 					</div>
 				</li>
 				<li>
 					<h3>For Linux</h3>
 					<div>
+						<p>Native packages for several distributions are available via <a href="https://build.opensuse.org">openSUSE Build Service</a>:</p>
+						<ul class="packages">
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/any/dispcalGUI.pkg.tar.xz">Arch</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/noarch/dispcalGUI.rpm">CentOS 6</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Debian_5.0/all/dispcalGUI.deb">Debian 5 (Lenny)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Debian_6.0/all/dispcalGUI.deb">Debian 6 (Squeezy)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Debian_7.0/all/dispcalGUI.deb">Debian 7 (Wheezy)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_16/noarch/dispcalGUI.rpm">Fedora 16</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_17/noarch/dispcalGUI.rpm">Fedora 17</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_18/noarch/dispcalGUI.rpm">Fedora 18</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_19/noarch/dispcalGUI.rpm">Fedora 19</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_20/noarch/dispcalGUI.rpm">Fedora 20</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2009.1/noarch/dispcalGUI.rpm">Mandriva 2009.1</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010/noarch/dispcalGUI.rpm">Mandriva 2010</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010.1/noarch/dispcalGUI.rpm">Mandriva 2010.1</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2011/noarch/dispcalGUI.rpm">Mandriva 2011</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.1/noarch/dispcalGUI.rpm">openSUSE 12.1</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.2/noarch/dispcalGUI.rpm">openSUSE 12.2</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.3/noarch/dispcalGUI.rpm">openSUSE 12.3</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/noarch/dispcalGUI.rpm">openSUSE 13.1</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/noarch/dispcalGUI.rpm">openSUSE Factory</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Tumbleweed/noarch/dispcalGUI.rpm">openSUSE Tumbleweed</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-6/noarch/dispcalGUI.rpm">RedHat RHEL 6</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/all/dispcalGUI.deb">Ubuntu 10.04 (Lucid)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.10/all/dispcalGUI.deb">Ubuntu 10.10 (Maverick)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.04/all/dispcalGUI.deb">Ubuntu 11.04 (Natty)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.10/all/dispcalGUI.deb">Ubuntu 11.10 (Oneiric)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/all/dispcalGUI.deb">Ubuntu 12.04 (Precise)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/all/dispcalGUI.deb">Ubuntu 12.10 (Quantal)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.04/all/dispcalGUI.deb">Ubuntu 13.04 (Raring)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/all/dispcalGUI.deb">Ubuntu 13.10 (Saucy)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/all/dispcalGUI.deb">Ubuntu 14.04 (Trusty)</a></span>
+							</li>
+						</ul>
+
+						<p class="footnote">Note on the Argyll CMS dependency: By default, an official version from ArgyllCMS.com will be used unless the distribution-packaged version is newer, but you can switch to a distribution-packaged version anytime (see <a href="#zeroinstall-updating">“Updating or switching between software versions”</a> below).</p>
+
+						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
+
+						<p>In all other cases, please try the instructions below or one of the <a href="#standalone">standalone installations</a>.</p>
+						
+						<h4>Alternate installation method</h4>
+						
+						<p>If your distribution is not listed above, please follow these instructions:</p>
+						
 						<ol>
 							<li>Install the <strong>0install</strong> or <strong>zeroinstall-injector</strong> package from your distribution. In case it is not available, there are pre-compiled <a href="http://0install.net/tools/0install.xml">generic binaries</a>. Download the appropriate archive for your system, unpack it, <code>cd</code> to the extracted folder in a terminal, and run <code>sudo ./install.sh local</code> to install to /usr/local, or <code>./install.sh home</code> to install to your home directory (you may have to add ~/bin to your PATH variable in that case). You'll need libcurl installed (most systems have it by default).</li>
 							<li>Choose the <strong>0install</strong> entry from the applications menu (older versions of Zero Install will have an “Add New Program” entry instead).</li>
 							<li>Drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window.</li>
 						</ol>
-						<p class="footnote">Note on dispcalGUI's standalone tools under Linux (3D LUT maker, curve viewer, profile information, synthetic profile creator, testchart editor, VRML to X3D converter): An application icon entry will only be created for dispcalGUI itself. This is currently a limitation of Zero Install under Linux. You can manually install icon entries for the standalone tools by running the following in a terminal:</p>
+						<p class="footnote">Note on dispcalGUI's standalone tools under Linux (3D LUT maker, curve viewer, profile information, synthetic profile creator, testchart editor, VRML to X3D converter): If using the alternate installation method, an application icon entry will only be created for dispcalGUI itself. This is currently a limitation of Zero Install under Linux. You can manually install icon entries for the standalone tools by running the following in a terminal:</p>
 						<pre class="footnote"><code>0launch --command=install-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
 						<p class="footnote">And you may uninstall them again with:</p>
 						<pre class="footnote"><code>0launch --command=uninstall-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
-						<p class="footnote">Note on the Argyll CMS dependency: By default, an official version from ArgyllCMS.com will be used unless the distribution-packaged version is newer, but you can switch to a distribution-packaged version anytime (see <a href="#zeroinstall-updating">“Updating or switching between software versions”</a> below).</p>
 					</div>
 				</li>
 				<li>
 					<h3>For Mac OS X</h3>
 					<div>
-						<ol>
-							<li>Download and install <a href="http://downloads.sourceforge.net/project/zero-install/0install/1.16/ZeroInstall.pkg">Zero Install for Mac OS X</a>
-							(<strong>Important:</strong> For the time being, install this tried-and-tested version <strong>1.16</strong>, not the newer 2.5 release which does not seem to work correctly under Mac OS X!).</li>
-							<li>Download the <a href="http://sourceforge.net/projects/dispcalgui/files/0install/dispcalGUI-0install.dmg/download">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</li>
-						</ol>
+						<p>Download the <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install.dmg">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</p>
 					</div>
 				</li>
 				<li>
 					<h3>For Windows</h3>
 					<div>
-						<ol>
-							<li>Download and install <a href="http://0install.de/downloads/">Zero Install for Windows</a>.</li>
-							<li>Choose the <strong>Zero Install</strong> entry from the start page under Windows 8, or the respective subfolder of the programs folder in the start menu under Windows 7 and earlier, and switch to the “My Applications” tab in the window that opens.</li>
-							<li>Drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window.</li>
-							<li>To add/remove program icons to your start page (Windows 8) or start menu (Windows 7 and earlier in a subfolder “Graphics” under “All programs”), click the button with the small wrench icon.</li>
-						</ol>
+						<p>Download and install the <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install-Setup.exe">dispcalGUI Zero Install Setup</a>.</p>
 					</div>
 				</li>
 				<li>
-					<h3 id="zeroinstall-updating">Updating or switching between software versions</h3>
+					<h3 id="zeroinstall-updating">Manually updating or switching between software versions</h3>
 					<div>
+						<p>Updates are normally applied automatically. If you want to manually update or switch between software versions, please follow the instructions below.</p>
 						<ul>
 							<li>
 								<h4>Linux</h4>
@@ -298,7 +422,7 @@
 			
 			<p>Please continue with the <a href="#quickstart">Quickstart Guide</a>.</p>
 
-			<h2>Get dispcalGUI (conventional installation)</h2>
+			<h2 id="standalone">Get dispcalGUI standalone (not guaranteed to be the latest version!)</h2>
 
 			<p><em>Please note: <a href="http://argyllcms.com">Argyll CMS</a> is a separate download unless you use a dispcalGUI for Linux native RPM package. I recommend to use the official Argyll CMS binaries from <a href="http://argyllcms.com">argyllcms.com</a>.</em></p>
 
@@ -434,6 +558,11 @@
 								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP2/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>SUSE Linux Enterprise 11 SP3</span>
+								<span><a href="http://dispcalgui.hoech.net/download/SLE_11_SP3/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP3/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>Ubuntu 10.04 (Lucid)</span>
 								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/i386/dispcalGUI.deb">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/amd64/dispcalGUI.deb">x86_64</a></span>
@@ -490,7 +619,7 @@
 					<h3>For Mac OS X (10.4 or newer)</h3>
 					<div>
 						<p>
-							<a href="http://dispcalGUI.hoech.net/download/dispcalGUI.dmg">Disk image</a>
+							<a href="http://dispcalGUI.hoech.net/download/standalone/dispcalGUI.dmg">Disk image</a>
 						</p>
 					</div>
 				</li>
@@ -498,7 +627,7 @@
 					<h3>For Windows (XP or newer)</h3>
 					<div>
 						<p>
-							<a href="http://dispcalGUI.hoech.net/download/dispcalGUI-Setup.exe">Installer (recommended)</a> or <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-win32.zip">ZIP archive</a>
+							<a href="http://dispcalGUI.hoech.net/download/standalone/dispcalGUI-Setup.exe">Installer (recommended)</a> or <a href="http://dispcalGUI.hoech.net/download/standalone/dispcalGUI-win32.zip">ZIP archive</a>
 						</p>
 					</div>
 				</li>
@@ -1753,11 +1882,43 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- ${ISODATE} ${ISOTIME} (UTC) ${VERSION} -->
+			<!-- ${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} -->
 			<dl>
-				<dt id="changelog-${VERSION}">${ISODATE} ${ISOTIME} (UTC) ${VERSION}</dt>
+				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT}</dt>
 					<dd>
-						<h3>${VERSION}</h3>
+						<h3>${VERSION_SHORT}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><strong>“Auto” measurement mode for the ColorHug.</strong> This will automatically create a colorimeter correction with the reference based on <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></acronym> as part of the normal measurement process. This is a work-around for the red primary shift problem that some ColorHug users are experiencing (note that this will make ColorHug measurements closely match the gamut boundaries defined by the primaries and whitepoint from EDID). This mode should only be used as a last resort if no colorimeter correction with reference measurements from a spectrometer or other known accurate instrument can be obtained.</li>
+							<li><strong>Auto-update functionality.</strong> Apply updates from within dispcalGUI under Mac OS X and Windows, or if using Zero Install.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><strong>Improved Zero Install integration.</strong> Installation is now as simple as a standalone installation.</li>
+							<li>Switched “Smooth B2A tables” off and “Low quality B2A tables” back on for the madVR preset to save some time during profile generation.</li>
+							<li>The HTML-embedded X3D viewer will now by default try and load its components from the web, with a fallback to a locally cached copy (if available) and not anymore the other way around. This means generated HTML files will automatically use updated viewer components when an internet connection is available.</li>
+							<li>Choosing “Profile information” from the “File” menu will now always present a file dialog to pick a profile and no longer use the profile currently selected in the main window (this functionality is still available via the small blue “Info” button next to the settings dropdown).</li>
+							<li>Show profile information with right pane expanded by default.</li>
+							<li>Don't lock measurement mode for colorimeter corrections, instead set colorimeter correction to none if an incompatible measurement mode is selected.</li>
+							<li>Allow black point compensation if “low quality B2A tables” is enabled.</li>
+							<li>Windows: Limit profile name length so that the length of the path of the temporary directory plus the length of the profile name does not exceed 254 characters (which is the maximum useable length for Argyll CMS tools where an extension with a length of four characters is added automatically).</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>When using the ColorHug in “Factory” or “Raw” measurement mode in dispcalGUI (r1378 or later) with a colorimeter correction that was created with Argyll CMS 1.5 or later, the measurement mode was being locked to the wrong mode (a colorimeter correction created in “Factory” mode would lock to “Raw” and vice versa).</li>
+							<li>Transpareny rendering in the HTML-embedded X3D viewer: Transparency is now gamma-corrected.</li>
+							<li>Tone response curves plot: Removed the very slight interpolation offset error at zero input (around +0.5 RGB on a 0-255 scale for a synthetic 16-bit tone response curve following a gamma of 2.2 with no black offset) for tone response curves that have zero output at non-zero input.</li>
+							<li>Trying to open files with unicode characters in their filename or path in the standalone testchart editor, curve viewer, profile information, or VRML to X3D converter application from the commandline, via the desktop's “open with” functionality, or by assigning a supported filetype to be opened with the respective application failed (dragging and dropping the file onto the respective application window worked fine).</li>
+							<li>Correctly reflect in the GUI if black point compensation can be applied. Black point compensation is available for curves + matrix profiles and XYZLUT profiles with either “low quality B2A tables” or “smooth B2A tables” enabled.</li>
+							<li>Linux: Fixed a problem with unicode when querying colord for the current display profile (regression of r1832).</li>
+							<li>Windows: Report could not be saved after finishing display uniformity measurements due to the file dialog not receiving mouse clicks or keyboard input.</li>
+							<li>Windows: Work-around python issues with long pathnames (>= 260 characters).</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-2.0">2014-04-23 00:43 (UTC) 2.0</dt>
+					<dd>
+						<h3>2.0</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>

@@ -45,7 +45,6 @@ jQuery(function ($) {
 	$maketoggle('#download h3', 'div');
 	
 	/* Linux downloads combo */
-	$('#download div > ul.packages').before('<div><a class="button" href="https://build.opensuse.org/package/show?package=dispcalGUI&project=home%3Afhoech">Select a package... ▼</a></div>').wrap('<div style="position: relative" />')/*.css({'position': 'absolute', 'z-index': 999})*/.hide();
 	$('#download div > div > a.button').mousedown(function () {
 		$('#download div > div > ul.packages').slideToggle();
 		return false;
