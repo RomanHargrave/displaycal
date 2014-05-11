@@ -315,7 +315,7 @@ UninstallProgram=Uninstall %1
 LaunchProgram=Launch %1
 AssocFileExtension=&Associate %1 with the %2 file extension
 AssocingFileExtension=Associating %1 with the %2 file extension...
-UninstallStringEmpty=The previously installed version of %1 could not be removed because the path entry of the uninstallation program is empty. Please remove the previous version manually.
+AskRemove=Do you want to remove %1?
 
 CalibrationLoading=Calibration loading on login:
 CalibrationLoadingHandledByDispcalGUI=Let dispcalGUI handle calibration loading (high quality)
