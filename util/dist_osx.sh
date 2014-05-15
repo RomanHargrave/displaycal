@@ -6,7 +6,17 @@
 version=`python -c "from dispcalGUI import meta;print meta.version"`
 
 # Source tarball
-./setup.py sdist 0install --stability=stable --use-distutils 2>&1 | tee dispcalGUI-$version.sdist.log
+# COPYFILE_DISABLE=1   Prevent extended file attributes (metadata) being added
+#                      as "dotunderscore" (._<filename>) files to the tarball.
+#                      If those files are present in the archive, a digest
+#                      calculated under Mac OS X will not match one calculated
+#                      under other systems because the digest will be calculated
+#                      from extracted archive contents and Mac OS X tar will add
+#                      dotunderscore files back as file attributes while other
+#                      systems will see the additional dotunderscore files.
+COPYFILE_DISABLE=1 ./setup.py sdist --use-distutils 2>&1 | tee dispcalGUI-$version.sdist.log
+tar tf dist/dispcalGUI-$version.tar.gz | grep "\._" && { echo "WARNING: DOTUNDERSCORE FILES FOUND IN ARCHIVE"; exit 1; }
+./setup.py 0install --stability=stable 2>&1 | tee dispcalGUI-$version.sdist.log
 
 # App bundle & dmg
 ./setup.py bdist_standalone 2>&1 | tee dispcalGUI-$version.bdist_standalone_osx.log
