@@ -30,11 +30,16 @@ def zeroinstall_desktop(datadir="/usr/share"):
 									 scriptname + ".png"), icondir)
 		with open(desktopfilename) as desktopfile:
 			contents = desktopfile.read()
-		cmd = re.sub("^%s" % appname, "run", scriptname)
+		if scriptname == appname:
+			cmd = ""
+		else:
+			cmd = re.sub("^%s" % appname, " --command=run", scriptname)
 		for pattern, repl in [("Exec=.+",
-							   "Exec=/usr/bin/0launch --command=%s -- %s %%f" %
+							   "Exec=0launch%s -- %s %%f" %
 							   (cmd, feeduri))]:
 			contents = re.sub(pattern, repl, contents)
+		if scriptname == appname:
+			desktopbasename = ("zeroinstall-" + desktopbasename).lower()
 		with open(os.path.join(appdir, desktopbasename), "w") as desktopfile:
 			desktopfile.write(contents)
 
