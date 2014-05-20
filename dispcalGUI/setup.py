@@ -134,7 +134,8 @@ plist_dict = {"CFBundleDevelopmentRegion": "English",
 			  "CFBundleShortVersionString": version,
 			  "CFBundleSignature": "????",
 			  "CFBundleVersion": ".".join(map(str, version_tuple)),
-			  "NSHumanReadableCopyright": u"© %s %s" % (strftime("%Y"), author)}
+			  "NSHumanReadableCopyright": u"© %s %s" % (strftime("%Y"), author),
+			  "LSMinimumSystemVersion": "10.5"}
 
 
 class Target:
