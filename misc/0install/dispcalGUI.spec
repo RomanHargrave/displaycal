@@ -75,7 +75,7 @@ PYTHONPATH=. %{__python} util/0install_desktop.py "%{buildroot}%{_datadir}"
 	desktopfilenames=`%{__python} -c "import glob
 import os
 print ' '.join([os.path.splitext(os.path.basename(path))[0] for path in
-				glob.glob('misc/%{name}*.desktop')])"`
+				glob.glob('%{buildroot}%{_datadir}/applications/*.desktop')])"`
 	for desktopfilename in $desktopfilenames ; do
 		%suse_update_desktop_file $desktopfilename 2DGraphics
 	done
