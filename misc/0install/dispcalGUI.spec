@@ -54,7 +54,11 @@ Requires:       zeroinstall-injector
 Group:          Applications/Multimedia
 Requires:       numpy >= %{numpy_version}
 Requires:       wxPython >= %{wx_minversion}
+%if 0%{?fedora_version} < 19
+Requires:       zeroinstall-injector
+%else
 Requires:       0install
+%endif
 %endif
 %endif
 %endif
