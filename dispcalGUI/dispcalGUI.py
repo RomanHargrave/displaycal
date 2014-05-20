@@ -3036,8 +3036,8 @@ class MainFrame(BaseFrame):
 		self.calpanel.Thaw()
 	
 	def update_bpc(self):
-		enable_bpc = (self.get_profile_type() in ("s", "S") or
-					  (self.get_profile_type() != "l" and
+		enable_bpc = (self.get_profile_type() in ("g", "G", "s", "S") or
+					  (self.get_profile_type() in ("x", "X") and
 					   (getcfg("profile.b2a.smooth") or
 						getcfg("profile.quality.b2a") in ("l", "n"))))
 		self.black_point_compensation_cb.Enable(enable_bpc)
