@@ -1,5 +1,8 @@
 @echo off
 
+REM Make sure __version__.py is current
+python setup.py
+
 for /F usebackq %%a in (`python -c "import sys;print sys.version[:3]"`) do (
 	set python_version=%%a
 )
@@ -13,7 +16,7 @@ for /F usebackq %%a in (`python -c "from dispcalGUI.meta import version_tuple;pr
 )
 
 REM Source tarball
-if not exist dist\%version%\dispcalGUI-%version%.tar.gz (
+if not exist dist\dispcalGUI-%version%.tar.gz (
 	python setup.py sdist 0install --stability=stable --format=gztar --use-distutils 2>&1 | tee dispcalGUI-%version%.sdist.log
 )
 
@@ -23,7 +26,7 @@ if not exist dist\py2exe.win32-py%python_version%\dispcalGUI-%version% (
 )
 
 REM Standalone executable - Setup
-if not exist dist\%version%\dispcalGUI-%version%-Setup.exe (
+if not exist dist\dispcalGUI-%version%-Setup.exe (
 	"C:\Program Files (x86)\Inno Setup 5\Compil32.exe" /cc dist/dispcalGUI-Setup-py2exe.win32-py%python_version%.iss
 )
 
@@ -60,4 +63,5 @@ if "%~1"=="bdist_wininst" (
 	)
 )
 
+REM Cleanup
 python util\tidy_dist.py

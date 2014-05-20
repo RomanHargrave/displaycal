@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Make sure __version__.py is current
+./setup.py
+
 distname=`python -c "import platform; print '%s %s %s' % getattr(platform, 'linux_distribution', platform.dist)()"`
 dist=`python -c "import platform; print ('%s_%s_%s' % getattr(platform, 'linux_distribution', platform.dist)()).lower()"`
 platform=`uname -m`
@@ -10,3 +13,6 @@ version=`python -c "from dispcalGUI import meta;print meta.version"`
 # RPM
 log=dispcalGUI-$version-$dist.$platform.bdist_rpm.log
 $python setup.py bdist_rpm --cfg=fedora --distribution-name="$distname" --force-arch=$platform --python=$python --use-distutils 2>&1 | tee "$log"
+
+# Cleanup
+util/tidy_dist.py
