@@ -78,6 +78,7 @@ def installer(action="install"):
 			except Exception, exception:
 				import warnings
 				warnings.warn(exception, Warning)
+	call(["touch", "--no-create", prefix + "/share/icons/hicolor"])
 	call(["xdg-icon-resource", "forceupdate"])
 	call(["xdg-desktop-menu", "forceupdate"])
 

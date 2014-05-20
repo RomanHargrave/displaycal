@@ -1,5 +1,6 @@
 #!/bin/sh
 
 # Update icon cache and menu
-which xdg-desktop-menu > /dev/null 2>&1 && xdg-desktop-menu forceupdate || true
-which xdg-icon-resource > /dev/null 2>&1 && xdg-icon-resource forceupdate || true
+/bin/touch --no-create %{_datadir}/icons/hicolor &> /dev/null || true
+which xdg-desktop-menu &> /dev/null && xdg-desktop-menu forceupdate || true
+which xdg-icon-resource &> /dev/null && xdg-icon-resource forceupdate || true

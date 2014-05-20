@@ -298,6 +298,8 @@ def postinstall(prefix=None):
 		# Linux/Unix
 		if prefix is None:
 			prefix = sys.prefix
+		if which("touch"):
+			call(["touch", "--no-create", prefix + "/share/icons/hicolor"])
 		if which("xdg-icon-resource"):
 			##print "installing icon resources..."
 			##for size in [16, 22, 24, 32, 48, 256]:
