@@ -397,6 +397,9 @@ def setup():
 		 "bdist_deb" in sys.argv[1:]) and 
 		not help):
 		buildservice = True
+		replace_placeholders(os.path.join(pydir, "misc", "debian.copyright"),
+							 os.path.join(pydir, "dist", "copyright"),
+							 lastmod_time)
 	if "buildservice" in sys.argv[1:]:
 		sys.argv.remove("buildservice")
 
@@ -577,9 +580,8 @@ def setup():
 			with open(tgz, "rb") as tgzfile:
 				mapping["MD5"] = md5(tgzfile.read()).hexdigest()
 		for tmpl_name in ("PKGBUILD", "debian.changelog", "debian.control",
-						  "debian.copyright", "debian.rules",
-						  "dispcalGUI.changes", "dispcalGUI.dsc",
-						  "dispcalGUI.spec", 
+						  "debian.rules", "dispcalGUI.changes",
+						  "dispcalGUI.dsc", "dispcalGUI.spec", 
 						  os.path.join("0install", "PKGBUILD"),
 						  os.path.join("0install", "debian.control"),
 						  os.path.join("0install", "debian.rules"),
@@ -588,8 +590,6 @@ def setup():
 						  os.path.join("obs-autopackage-deploy",
 									   "dispcalGUI.spec")):
 			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
-			if tmpl_name == "debian.copyright":
-				tmpl_name = "copyright"
 			replace_placeholders(tmpl_path,
 								 os.path.join(pydir, "dist", tmpl_name),
 								 lastmod_time, mapping)
