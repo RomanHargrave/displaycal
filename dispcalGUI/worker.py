@@ -8,6 +8,7 @@ import math
 import os
 import re
 import shutil
+import string
 import subprocess as sp
 import sys
 import tempfile
@@ -64,6 +65,7 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					is_ccxx_testchart, profile_ext, pydir, setcfg, writecfg)
 from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
+from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 from meta import domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
@@ -118,6 +120,11 @@ keycodes = {wx.WXK_NUMPAD0: ord("0"),
 			wx.WXK_NUMPAD_DIVIDE: ord("/"),
 			wx.WXK_NUMPAD_MULTIPLY: ord("*"),
 			wx.WXK_NUMPAD_SUBTRACT: ord("-")}
+
+
+technology_strings = JSONDict()
+technology_strings["u"] = "Unknown"
+technology_strings.path = "technology_strings.json"
 
 
 def Property(func):
@@ -1315,6 +1322,7 @@ class Worker(object):
 		self.interactive = False
 		self.lastcmdname = None
 		self.lastmsg_discard = re.compile("[\\*\\.]+")
+		self.measurement_modes = {}
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
@@ -3697,6 +3705,116 @@ class Worker(object):
 			features["sensor_cal"] = True
 			features["skip_sensor_cal"] = False
 		return features
+	
+	def get_instrument_measurement_modes(self, instrument_id=None,
+										 skip_ccxx_modes=True):
+		""" Enumerate measurement modes supported by the instrument """
+		if not instrument_id:
+			features = self.get_instrument_features()
+			instrument_id = features.get("id", self.get_instrument_name())
+		if instrument_id:
+			measurement_modes = self.measurement_modes.get(instrument_id,
+														   OrderedDict())
+			if not measurement_modes:
+				result = self.exec_cmd(get_argyll_util("spotread"), ["-?"],
+									   capture_output=True, skip_scripts=True,
+									   silent=True, log_output=False)
+				if isinstance(result, Exception):
+					safe_print(result)
+					return
+				if test:
+					self.output.extend("""Measure spot values, Version 1.7.0_beta
+Author: Graeme W. Gill, licensed under the GPL Version 2 or later
+Diagnostic: Usage requested
+usage: spotread [-options] [logfile]
+ -v                   Verbose mode
+ -s                   Print spectrum for each reading
+ -S                   Plot spectrum for each reading
+ -c listno            Set communication port from the following list (default 1)
+    1 = 'COM13 (Klein K-10)'
+    2 = 'COM1'
+    3 = 'COM3'
+    4 = 'COM4'
+ -t                   Use transmission measurement mode
+ -e                   Use emissive measurement mode (absolute results)
+ -eb                  Use display white brightness relative measurement mode
+ -ew                  Use display white point relative chromatically adjusted mode
+ -p                   Use telephoto measurement mode (absolute results)
+ -pb                  Use projector white brightness relative measurement mode
+ -pw                  Use projector white point relative chromatically adjusted mode
+ -a                   Use ambient measurement mode (absolute results)
+ -f                   Use ambient flash measurement mode (absolute results)
+ -y F                  K-10: Factory Default [Default,CB1]
+    c                  K-10: Default CRT File
+    P                  K-10: Klein DLP Lux
+    E                  K-10: Klein SMPTE C
+    b                  K-10: TVL XVM245
+    d                  K-10: Klein LED Bk LCD
+    m                  K-10: Klein Plasma
+    p                  K-10: DLP Screen
+    o                  K-10: TVL LEM150
+    O                  K-10: Sony EL OLED
+    z                  K-10: Eizo CG LCD
+    L                  K-10: FSI 2461W
+    h                  K-10: HP DreamColor 2
+    1                  K-10: LCD CCFL Wide Gamut IPS (LCD2690WUXi)
+    l|c                Other: l = LCD, c = CRT
+ -I illum             Set simulated instrument illumination using FWA (def -i illum):
+                       M0, M1, M2, A, C, D50, D50M2, D65, F5, F8, F10 or file.sp]
+ -i illum             Choose illuminant for computation of CIE XYZ from spectral data & FWA:
+                       A, C, D50 (def.), D50M2, D65, F5, F8, F10 or file.sp
+ -Q observ            Choose CIE Observer for spectral data or CCSS instrument:
+                      1931_2 (def), 1964_10, S&B 1955_2, shaw, J&V 1978_2
+                      (Choose FWA during operation)
+ -F filter            Set filter configuration (if aplicable):
+    n                  None
+    p                  Polarising filter
+    6                  D65
+    u                  U.V. Cut
+ -E extrafilterfile   Apply extra filter compensation file
+ -x                   Display Yxy instead of Lab
+ -h                   Display LCh instead of Lab
+ -V                   Show running average and std. devation from ref.
+ -T                   Display correlated color temperatures and CRI
+ -N                   Disable auto calibration of instrument
+ -O                   Do one cal. or measure and exit
+ -H                   Start in high resolution spectrum mode (if available)
+ -X file.ccmx         Apply Colorimeter Correction Matrix
+ -Y r|n               Override refresh, non-refresh display mode
+ -Y R:rate            Override measured refresh rate with rate Hz
+ -Y A                 Use non-adaptive integration time mode (if available).
+ -W n|h|x             Override serial port flow control: n = none, h = HW, x = Xon/Xoff
+ -D [level]           Print debug diagnostics to stderr
+ logfile              Optional file to save reading results as text""".splitlines())
+				measurement_modes_follow = False
+				for line in self.output:
+					line = line.strip()
+					if line.startswith("-y "):
+						line = line.lstrip("-y ")
+						measurement_modes_follow = True
+					elif line.startswith("-"):
+						measurement_modes_follow = False
+					parts = [v.strip() for v in line.split(None, 1)]
+					if measurement_modes_follow and len(parts) == 2:
+						measurement_mode, desc = parts
+						if (measurement_mode not in
+							(string.digits[1:] + string.ascii_letters)):
+							# Ran out of selectors
+							continue
+						measurement_mode_instrument_id, desc = desc.split(":",
+																		  1)
+						desc = desc.strip()
+						if measurement_mode_instrument_id == instrument_id:
+							# Found a mode for our instrument
+							if (re.sub(r"\s*\(.*?\)$", "", desc) in
+								technology_strings.values() + [""] and
+								skip_ccxx_modes):
+								# This mode is supplied via CCMX/CCSS, skip
+								continue
+							desc = re.sub(r"\s*(?:File|\[[^\]]*\])", "", desc)
+							measurement_modes[measurement_mode] = desc
+				self.measurement_modes[instrument_id] = measurement_modes
+			return measurement_modes
 	
 	def get_instrument_name(self):
 		""" Return name of currently configured instrument """

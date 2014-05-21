@@ -106,9 +106,10 @@ from worker import (Error, Info, UnloggedInfo, Warn,
 					check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
 					check_ti3_criteria2, get_argyll_util, get_options_from_cal,
+					get_argyll_version,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path, parse_argument_string,
-					set_argyll_bin, show_result_dialog)
+					set_argyll_bin, show_result_dialog, technology_strings)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -2311,6 +2312,14 @@ class MainFrame(BaseFrame):
 			# Argyll CMS 1.5.x introduces new measurement mode
 			measurement_modes[instrument_type].extend([lang.getstr("measurement_mode.raw")])
 			measurement_modes_ab[instrument_type].append("R")
+		elif instrument_name == "K-10":
+			measurement_modes[instrument_type] = []
+			measurement_modes_ab[instrument_type] = []
+			for mode, desc in self.worker.get_instrument_measurement_modes().iteritems():
+				measurement_modes[instrument_type].append(lang.getstr(desc))
+				measurement_modes_ab[instrument_type].append(mode)
+			if not measurement_mode in measurement_modes_ab[instrument_type]:
+				measurement_mode = "F"
 		instrument_features = self.worker.get_instrument_features()
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
@@ -6935,7 +6944,8 @@ class MainFrame(BaseFrame):
 		if target_instrument:
 			description = "%s (%s)" % (description, target_instrument)
 		args = []
-		tech = []
+		tech = {"NO": "LCD"}.get(reference_ti3.queryv1("DISPLAY_TYPE_REFRESH"),
+								"Unknown")
 		if not paths:
 			# Allow use to alter description, display and instrument
 			dlg = ConfirmDialog(
@@ -6967,51 +6977,13 @@ class MainFrame(BaseFrame):
 														size=(400, -1))
 				dlg.sizer3.Add(dlg.manufacturer_txt_ctrl, 1, 
 							   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-			dlg.sizer4 = wx.FlexGridSizer(2, 3, 0, 8)
-			dlg.sizer4.AddGrowableCol(0, 1)
-			dlg.sizer4.AddGrowableCol(1, 1)
-			dlg.sizer4.AddGrowableCol(2, 1)
-			dlg.sizer3.Add(dlg.sizer4, 1, flag=wx.EXPAND)
-			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("backlight")), 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-			dlg.sizer4.Add(wx.StaticText(dlg, -1, lang.getstr("panel.type")), 1, 
+			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
 						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 			# Display technology
 			dlg.display_tech_ctrl = wx.Choice(dlg, -1,
-											  choices=["LCD", "CRT",
-													   "Plasma", "Projector"])
-			dlg.display_tech_ctrl.SetSelection(0)
-			dlg.sizer4.Add(dlg.display_tech_ctrl,
-						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			def display_tech_handler(event):
-				tech = dlg.display_tech_ctrl.GetStringSelection()
-				illumination = dlg.illumination_ctrl.GetStringSelection()
-				separate_illumination = ("LCD", "DLP", "LCoS")
-				dlg.illumination_ctrl.Enable(tech in separate_illumination)
-				if tech in ("DLP", "LCoS") and illumination == "CCFL":
-					dlg.illumination_ctrl.SetStringSelection("UHP")
-				dlg.panel_type_ctrl.Enable(tech == "LCD")
-			dlg.Bind(wx.EVT_CHOICE, display_tech_handler, 
-					 id=dlg.display_tech_ctrl.GetId())
-			# Display illumination/backlight
-			dlg.illumination_ctrl = wx.Choice(dlg, -1,
-											  choices=["CCFL",
-													   "White LED",
-													   "RGB LED"])
-			dlg.illumination_ctrl.SetSelection(0)
-			dlg.sizer4.Add(dlg.illumination_ctrl,
-						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			# Panel type
-			dlg.panel_type_ctrl = wx.Choice(dlg, -1,
-											choices=["IPS",
-													 "Wide Gamut IPS",
-													 "PVA",
-													 "Wide Gamut PVA",
-													 "TN"])
-			dlg.panel_type_ctrl.SetSelection(1)
-			dlg.sizer4.Add(dlg.panel_type_ctrl,
+											  choices=sorted(technology_strings.values()))
+			dlg.display_tech_ctrl.SetStringSelection(tech)
+			dlg.sizer3.Add(dlg.display_tech_ctrl,
 						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			dlg.description_txt_ctrl.SetFocus()
 			dlg.sizer0.SetSizeHints(dlg)
@@ -7022,10 +6994,9 @@ class MainFrame(BaseFrame):
 								   "UTF-8")
 			if not display:
 				display = dlg.display_txt_ctrl.GetValue()
-			for ctrl in (dlg.display_tech_ctrl, dlg.illumination_ctrl,
-						 dlg.panel_type_ctrl):
-				if ctrl.IsEnabled() and ctrl.GetStringSelection():
-					tech.append(ctrl.GetStringSelection())
+			if (dlg.display_tech_ctrl.IsEnabled() and
+				dlg.display_tech_ctrl.GetStringSelection()):
+				tech = dlg.display_tech_ctrl.GetStringSelection()
 			if not manufacturer:
 				manufacturer = dlg.manufacturer_txt_ctrl.GetValue()
 			dlg.Destroy()
@@ -7034,8 +7005,14 @@ class MainFrame(BaseFrame):
 			description += " AUTO"
 		args += ["-E", description]
 		args += ["-I", safe_str(display.strip(), "UTF-8")]
-		if reference_ti3 and not colorimeter_ti3:
-			args += ["-T", safe_str(" ".join(tech), "UTF-8")]
+		ccxxmake_version = get_argyll_version("ccxxmake")
+		if reference_ti3 and (not colorimeter_ti3 or
+							  ccxxmake_version >= [1, 7]):
+			if ccxxmake_version >= [1, 7]:
+				args += ["-t", dict((v, k) for k, v in
+									technology_strings.iteritems())[tech]]
+			else:
+				args += ["-T", safe_str(tech, "UTF-8")]
 		if result != wx.ID_OK:
 			return
 		# Prepare our files
@@ -7083,7 +7060,7 @@ class MainFrame(BaseFrame):
 				# By default, CCMX files don't contain technology string
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "TECHNOLOGY"\nTECHNOLOGY "%s"\\1' %
-							   safe_str(" ".join(tech), "UTF-8"), cgats)
+							   safe_str(tech, "UTF-8"), cgats)
 			manufacturer_id = None
 			if manufacturer:
 				if not pnpidcache:
@@ -9021,6 +8998,7 @@ class MainFrame(BaseFrame):
 									   argyll_version, displays, comports):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
+			self.worker.measurement_modes = {}
 			self.update_measurement_modes()
 			if comports == self.worker.instruments:
 				self.update_colorimeter_correction_matrix_ctrl()

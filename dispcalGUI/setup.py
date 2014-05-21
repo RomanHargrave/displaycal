@@ -84,6 +84,7 @@ config = {"data": ["tests/*.icc"],
 								  "report/*.css",
 								  "report/*.html",
 								  "report/*.js",
+								  "technology_strings.json",
 								  "test.cal",
 								  "theme/*.png",
 								  "theme/icons/10x10/*.png",
@@ -956,6 +957,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					"pnp.ids",
 					"quirk.json",
 					"linear.cal",
+					"technology_strings.json",
 					"test.cal"
 				]:
 					path = os.path.join(data, fname)

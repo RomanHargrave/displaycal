@@ -14,6 +14,7 @@ vendors = [
 	"GretagMacbeth",
 	"Hughski",
 	"JETI",
+	"Klein",
 	"X-Rite",
 	"Xrite"
 ]
