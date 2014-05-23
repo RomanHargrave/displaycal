@@ -3721,7 +3721,6 @@ class Worker(object):
 									   silent=True, log_output=False)
 				if isinstance(result, Exception):
 					safe_print(result)
-					return
 				if test:
 					self.output.extend("""Measure spot values, Version 1.7.0_beta
 Author: Graeme W. Gill, licensed under the GPL Version 2 or later
@@ -3815,6 +3814,7 @@ usage: spotread [-options] [logfile]
 							measurement_modes[measurement_mode] = desc
 				self.measurement_modes[instrument_id] = measurement_modes
 			return measurement_modes
+		return {}
 	
 	def get_instrument_name(self):
 		""" Return name of currently configured instrument """
