@@ -129,7 +129,7 @@ begin
 		if not Exec(ZeroInstall, 'integrate --machine %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		if IsTaskSelected('calibrationloadinghandledbydispcalgui') then begin
-			CreateShellLink(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'), 'dispcalGUI Profile Loader', ZeroInstall, 'run --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
+			CreateShellLink(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'), 'dispcalGUI Profile Loader', ZeroInstall, 'run --no-wait --offline --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 			if not Exec(ZeroInstall, 'run --batch --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
