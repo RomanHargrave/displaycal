@@ -457,7 +457,9 @@ class LUT3DFrame(BaseFrame):
 							self.show_encoding_controls()
 							self.enable_encoding_controls()
 							self.show_bt1886_controls()
-							if ("rTRC" in profile.tags and
+							if (getcfg("3dlut.%s.profile" % which) !=
+								profile.fileName and
+								"rTRC" in profile.tags and
 								"gTRC" in profile.tags and
 								"bTRC" in profile.tags and profile.tags.rTRC is
 								profile.tags.gTRC is profile.tags.bTRC and
