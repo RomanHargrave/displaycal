@@ -3064,7 +3064,13 @@ class Worker(object):
 				self.output = output
 				self.retcode = retcode
 			if getattr(self, "patterngenerator", None):
-				del self.patterngenerator
+				try:
+					del self.patterngenerator
+				except Exception, exception:
+					safe_print("%s: Warning - could not de-reference pattern "
+							   "generator: %s" % (appname,
+												  safe_unicode(exception)))
+					self.patterngenerator = None
 		if debug and not silent:
 			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
@@ -5888,10 +5894,6 @@ usage: spotread [-options] [logfile]
 			logfn = log
 		else:
 			logfn = safe_print
-		if getattr(self, "patterngenerator", None):
-			self.log("%s: Trying to shut down pattern generator..." % appname,
-					 fn=logfn)
-			self.patterngenerator.shutdown()
 		subprocess = getattr(self, "subprocess", None)
 		if self.isalive(subprocess):
 			try:
@@ -5974,6 +5976,14 @@ usage: spotread [-options] [logfile]
 									 "inconvenience." %
 									 (self.cmd, appname, self.cmd, appname)),
 							 self.owner)
+		if getattr(self, "patterngenerator", None):
+			self.log("%s: Trying to shut down pattern generator..." % appname,
+					 fn=logfn)
+			try:
+				self.patterngenerator.shutdown()
+			except Exception, exception:
+				self.log("%s: %s" % (appname, safe_unicode(exception)),
+						 fn=logfn)
 		return not subprocess_isalive
 	
 	def report(self, report_calibrated=True):
