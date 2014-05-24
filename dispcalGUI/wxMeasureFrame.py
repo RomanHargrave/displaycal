@@ -304,6 +304,7 @@ class MeasureFrame(InvincibleFrame):
 		measureframe_min_size = [max(self.sizer.GetMinSize())] * 2
 		if debug: safe_print("[D]  measureframe_min_size:", measureframe_min_size)
 		default_measureframe_size = get_default_size()
+		defaults["size.measureframe"] = default_measureframe_size
 		size = [min(display_client_size[0], 
 								 default_measureframe_size * scale), 
 							 min(display_client_size[1], 

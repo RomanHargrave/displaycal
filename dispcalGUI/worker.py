@@ -89,7 +89,6 @@ from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
-from wxMeasureFrame import get_default_size
 from wxUntetheredFrame import UntetheredFrame
 import wx.lib.delayedresult as delayedresult
 
@@ -1745,6 +1744,9 @@ class Worker(object):
 	
 	def abort_subprocess(self, confirm=False):
 		""" Abort the current subprocess or thread """
+		if getattr(self, "abort_requested", False):
+			return
+		self.abort_requested = True
 		if confirm and getattr(self, "progress_wnd", None):
 			prev_dlg = getattr(self.progress_wnd, "dlg", None)
 			if (prev_dlg and prev_dlg.IsShownOnScreen() and
@@ -2871,7 +2873,7 @@ class Worker(object):
 					# Wait for connection - blocking
 					self.patterngenerator.wait()
 					if self.patterngenerator.listening:
-						wx.CallAfter(self.patterngenerator_send, (.5, ) * 3)
+						self.patterngenerator_send((.5, ) * 3)
 					else:
 						# User aborted before connection was established
 						return False
@@ -5069,15 +5071,6 @@ usage: spotread [-options] [logfile]
 		if not txt:
 			return
 		self.logger.info("%r" % txt)
-		# Send colors to pattern generator
-		if (getattr(self, "patterngenerator", None) and
-			self.patterngenerator.listening):
-			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
-							txt)
-			if rgb:
-				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
-				self.patterngenerator_send(rgb)
-		# Parse
 		self.check_instrument_calibration(txt)
 		self.check_instrument_place_on_screen(txt)
 		self.check_instrument_sensor_position(txt)
@@ -5087,10 +5080,16 @@ usage: spotread [-options] [logfile]
 
 	def patterngenerator_send(self, rgb):
 		""" Send RGB color to pattern generator """
+		if getattr(self, "abort_requested", False):
+			return
 		x, y, size = [float(v) for v in
 					  getcfg("dimensions.measureframe").split(",")]
-		size = size * get_default_size()
-		display_size = wx.Display(0).Geometry[2:]
+		size = size * defaults["size.measureframe"]
+		match = re.search("@ -?\d+, -?\d+, (\d+)x(\d+)", getcfg("displays"))
+		if match:
+			display_size = [int(item) for item in match.groups()]
+		else:
+			display_size = 1920, 1080
 		w, h = [min(size / v, 1.0) for v in display_size]
 		x = (display_size[0] - size) * x / display_size[0]
 		y = (display_size[1] - size) * y / display_size[1]
@@ -5101,7 +5100,11 @@ usage: spotread [-options] [logfile]
 		else:
 			# Constant APL
 			bgrgb = (.4, .4, .4)
-		self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
+		try:
+			self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
+		except socket.error, exception:
+			self.log("%s: %s" % (appname, safe_unicode(exception)))
+			wx.CallAfter(self.abort_subprocess)
 	
 	def pause_continue(self):
 		if (getattr(self.progress_wnd, "paused", False) and
@@ -5813,7 +5816,6 @@ usage: spotread [-options] [logfile]
 			"read stopped at user request!" in lastmsg):
 			self.progress_wnd.pause_continue.Enable()
 		if not keepGoing and not getattr(self, "abort_requested", False):
-			self.abort_requested = True
 			self.abort_subprocess(True)
 		if self.finished is True:
 			return
@@ -7321,6 +7323,15 @@ usage: spotread [-options] [logfile]
 		return result
 	
 	def write(self, txt):
+		# Send colors to pattern generator
+		if (getattr(self, "patterngenerator", None) and
+			self.patterngenerator.listening):
+			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
+							txt)
+			if rgb:
+				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
+				self.patterngenerator_send(rgb)
+		# Parse
 		wx.CallAfter(self.parse, txt)
 	
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",

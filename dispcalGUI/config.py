@@ -668,6 +668,7 @@ defaults = {
 	"size.info.h": 384,
 	"size.lut3dframe.w": 512,
 	"size.lut3dframe.h": 384,
+	"size.measureframe": 300,
 	"size.profile_info.w": 432,
 	"size.profile_info.split.w": 960,
 	"size.profile_info.h": 524,
