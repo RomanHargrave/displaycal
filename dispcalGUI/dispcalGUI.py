@@ -1652,15 +1652,15 @@ class MainFrame(BaseFrame):
 														   and edid["blue_x"]
 														   and edid["blue_y"]))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered", "madVR"))
+			not config.get_display_name() in config.virtual_displays)
 		calibration_loading_supported = self.worker.calibration_loading_supported
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered") and
+			not config.get_display_name() in config.untethered_displays and
 			calibration_loading_supported)
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in ("Web", "Untethered") and
+			not config.get_display_name() in config.untethered_displays and
 			calibration_loading_supported)
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
@@ -1690,17 +1690,20 @@ class MainFrame(BaseFrame):
 			self.lut_viewer.update_controls()
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
 									   not config.get_display_name() in
-									   ("Web", "Untethered") and
+									   config.untethered_displays and
 									   calibration_loading_supported)
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
-											   config.get_display_name() != "Untethered")
+											   config.get_display_name() not in
+											   config.non_argyll_displays)
 		self.menuitem_report_uncalibrated.Enable(bool(self.worker.displays) and 
 												 bool(self.worker.instruments) and
-												 config.get_display_name() != "Untethered")
+												 config.get_display_name() not in
+												config.non_argyll_displays)
 		self.menuitem_calibration_verify.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments) and
-												config.get_display_name() != "Untethered")
+												config.get_display_name() not in
+												config.non_argyll_displays)
 		self.menuitem_measurement_report.Enable(bool(self.worker.displays) and 
 											bool(self.worker.instruments))
 		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
@@ -2694,12 +2697,14 @@ class MainFrame(BaseFrame):
 								  bool(self.worker.displays) and 
 								  True in self.worker.lut_access and 
 								  bool(self.worker.instruments) and
-								  config.get_display_name() != "Untethered")
+								  config.get_display_name() not in
+								  config.uncalibratable_displays)
 		self.calibrate_and_profile_btn.Enable(enable_profile and 
 											  bool(self.worker.displays) and 
 											  True in self.worker.lut_access and 
 											  bool(self.worker.instruments) and
-											  config.get_display_name() != "Untethered")
+											  config.get_display_name() not in
+											  config.uncalibratable_displays)
 		self.profile_btn.Enable(enable_profile and not update_cal and 
 								bool(self.worker.displays) and 
 								bool(self.worker.instruments))
@@ -3187,7 +3192,7 @@ class MainFrame(BaseFrame):
 	def do_not_use_video_lut_handler(self, event):
 		do_not_use_video_lut = self.menuitem_do_not_use_video_lut.IsChecked()
 		display_name = config.get_display_name()
-		recommended = {"madVR": True}.get(display_name, False)
+		recommended = display_name in config.patterngenerators
 		if do_not_use_video_lut != recommended:
 			dlg = ConfirmDialog(self,
 								msg=lang.getstr("calibration.do_not_use_video_lut.warning"),  
@@ -3201,7 +3206,7 @@ class MainFrame(BaseFrame):
 				return
 		setcfg("calibration.use_video_lut", 
 			   int(not do_not_use_video_lut))
-		if display_name != "madVR":
+		if display_name not in config.patterngenerators:
 			setcfg("calibration.use_video_lut.backup", None)
 
 	def allow_skip_sensor_cal_handler(self, event):
@@ -4588,7 +4593,7 @@ class MainFrame(BaseFrame):
 					skip_scripts=False, silent=False, title=appname):
 		""" 'Install' (load) a calibration from a calibration file or
 		profile """
-		if config.get_display_name() in ("Web", "Untethered", "madVR"):
+		if config.get_display_name() in config.virtual_displays:
 			return True
 		# Install using dispwin
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
@@ -5499,7 +5504,8 @@ class MainFrame(BaseFrame):
 		self.HideAll()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
-		if (config.get_display_name() in ("Web", "Untethered", "madVR") or
+		if ((config.get_display_name() in config.virtual_displays and
+			 config.get_display_name() != "Resolve") or
 			getcfg("dry_run")):
 			self.call_pending_function()
 		elif sys.platform in ("darwin", "win32") or isexe:
@@ -5713,7 +5719,7 @@ class MainFrame(BaseFrame):
 		Return wx.ID_CANCEL if whole operation should be cancelled
 		
 		"""
-		if config.get_display_name() == "Untethered":
+		if config.get_display_name() in config.uncalibratable_displays:
 			return False
 		cal = getcfg("calibration.file")
 		if cal:
@@ -6332,7 +6338,7 @@ class MainFrame(BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			if config.get_display_name() in ("Web", "Untethered", "madVR"):
+			if config.get_display_name() in config.virtual_displays:
 				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
 								   parent=self.modaldlg)
 			else:
@@ -7390,7 +7396,7 @@ class MainFrame(BaseFrame):
 			self.lut_viewer_load_lut(profile=profile)
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
-		if config.get_display_name() == "madVR":
+		if config.get_display_name() in config.patterngenerators:
 			if getcfg("calibration.use_video_lut.backup", False) is None:
 				setcfg("calibration.use_video_lut.backup",
 					   getcfg("calibration.use_video_lut"))

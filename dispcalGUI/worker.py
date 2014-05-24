@@ -7,6 +7,7 @@ import getpass
 import math
 import os
 import re
+import socket
 import shutil
 import string
 import subprocess as sp
@@ -70,6 +71,7 @@ from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 from meta import domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
+from patterngenerators import ResolveCMPatternGeneratorServer
 from trash import trash
 from util_io import Files, GzipFileProper, StringIOu as StringIO
 from util_list import intlist
@@ -87,6 +89,7 @@ from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
+from wxMeasureFrame import get_default_size
 from wxUntetheredFrame import UntetheredFrame
 import wx.lib.delayedresult as delayedresult
 
@@ -679,11 +682,12 @@ def get_options_from_ti3(ti3):
 	return get_options_from_args(dispcal_args, colprof_args)
 
 
-def get_arg(argmatch, args):
+def get_arg(argmatch, args, whole=False):
 	""" Return first found entry beginning with the argmatch string or None """
-	for arg in args:
-		if arg.startswith(argmatch):
-			return arg
+	for i, arg in enumerate(args):
+		if (whole and arg == argmatch) or (not whole and
+										   arg.startswith(argmatch)):
+			return i, arg
 
 
 def make_argyll_compatible_path(path):
@@ -1321,13 +1325,13 @@ class Worker(object):
 		self.finished = True
 		self.interactive = False
 		self.lastcmdname = None
-		self.lastmsg_discard = re.compile("[\\*\\.]+")
+		self.lastmsg_discard = re.compile("[\\*\\.]+|Current RGB .+")
 		self.measurement_modes = {}
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
-		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|Initial|[Tt]arget) (?:Br(?:ightness)?|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
+		self.recent_discard = re.compile("^\\s*(?:Adjusted )?(Current|Initial|[Tt]arget) (?:Br(?:ightness)?|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma|RGB) .+|^Gamma curve .+|^Display adjustment menu:|^Press|^\\d\\).+|^(?:1%|Black|Red|Green|Blue|White)\\s+=.+|^\\s*patch \\d+ of \\d+.*|^\\s*point \\d+.*|^\\s*Added \\d+/\\d+|[\\*\\.]+|\\s*\\d*%?", re.I)
 		self.subprocess_abort = False
 		self.sudo = None
 		self.auth_timestamp = 0
@@ -1395,9 +1399,21 @@ class Worker(object):
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
+				if config.get_display_name() == "Resolve":
+					# Move Argyll test window to lower right corner and make it
+					# very small
+					dimensions_measureframe = "1,1,0.01"
+				else:
+					dimensions_measureframe = getcfg("dimensions.measureframe")
 				args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
-						 getcfg("dimensions.measureframe")]
-			if getcfg("measure.darken_background") and not get_arg("-F", args):
+						 dimensions_measureframe]
+			farg = get_arg("-F", args)
+			if config.get_display_name() == "Resolve":
+				if farg:
+					# Remove -F (darken background) as we relay colors to
+					# Resolve
+					args = args[:farg[0]] + args[farg[0] + 1:]
+			elif getcfg("measure.darken_background") and not farg:
 				args += ["-F"]
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args):
@@ -1651,7 +1667,7 @@ class Worker(object):
 				start_new_thread(mac_app_activate, (1, appname if isapp 
 													else "Python"))
 			if (self.instrument_calibration_complete or
-				((config.get_display_name() == "Web" or
+				((config.get_display_name() in config.untethered_displays or
 				  getcfg("measure.darken_background")) and
 				 (not self.dispread_after_dispcal or
 				  self.cmdname == "dispcal"))):
@@ -2383,14 +2399,21 @@ class Worker(object):
 					self.display_edid.append({})
 					self.display_manufacturers.append("")
 					self.display_names.append("madVR")
+				# Resolve
+				displays.append("Resolve")
+				self.display_edid.append({})
+				self.display_manufacturers.append("DaVinci")
+				self.display_names.append("Resolve")
+				# Untethered
 				displays.append("Untethered")
 				self.display_edid.append({})
 				self.display_manufacturers.append("")
 				self.display_names.append("Untethered")
+				#
 				self.displays = displays
 				setcfg("displays", os.pathsep.join(displays))
-				# Filter out Untethered
-				displays = displays[:-1]
+				# Filter out Resolve and Untethered
+				displays = displays[:-2]
 				if self.argyll_version >= [1, 6, 0]:
 					# Filter out madVR
 					displays = displays[:-1]
@@ -2464,6 +2487,8 @@ class Worker(object):
 				if self.argyll_version >= [1, 6, 0]:
 					# madVR
 					lut_access.append(True)
+				# Resolve
+				lut_access.append(True)
 				# Untethered
 				lut_access.append(False)
 				self.lut_access = lut_access
@@ -2523,6 +2548,34 @@ class Worker(object):
 				return True
 		if asroot:
 			silent = False
+		measure_cmds = (get_argyll_utilname("dispcal"), 
+						get_argyll_utilname("dispread"), 
+						get_argyll_utilname("spotread"))
+		process_cmds = (get_argyll_utilname("collink"),
+						get_argyll_utilname("colprof"),
+						get_argyll_utilname("targen"))
+		# Run commands through wexpect.spawn instead of subprocess.Popen if
+		# any of these conditions apply
+		use_pty = args and not "-?" in args and cmdname in measure_cmds + process_cmds
+		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
+		use_patterngenerator = (self.measure_cmd and
+								config.get_display_name() ==
+								"Resolve")
+		if use_patterngenerator:
+			# Run a dummy command so we can grab the RGB numbers for
+			# the pattern generator from the output
+			carg = get_arg("-C", args, True)
+			if carg:
+				index = min(carg[0] + 1, len(args) - 1)
+				args[index] += " && "
+			else:
+				args.insert(0, "-C")
+				args.insert(1, "")
+				index = 1
+			if sys.platform == "win32":
+				args[index] += "echo. && echo Current RGB "
+			else:
+				args[index] += "echo '\nCurrent RGB '"
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
@@ -2600,16 +2653,6 @@ class Worker(object):
 			# Avoid problems with encoding
 			working_dir = win32api.GetShortPathName(working_dir)
 		sudo = None
-		measure_cmds = (get_argyll_utilname("dispcal"), 
-						get_argyll_utilname("dispread"), 
-						get_argyll_utilname("spotread"))
-		process_cmds = (get_argyll_utilname("collink"),
-						get_argyll_utilname("colprof"),
-						get_argyll_utilname("targen"))
-		# Run commands through wexpect.spawn instead of subprocess.Popen if
-		# any of these conditions apply
-		use_pty = args and not "-?" in args and cmdname in measure_cmds + process_cmds
-		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		if asroot and ((sys.platform != "win32" and os.geteuid() != 0) or 
 					   (sys.platform == "win32" and 
 					    sys.getwindowsversion() >= (6, ))):
@@ -2818,6 +2861,20 @@ class Worker(object):
 				if (hasattr(self, "thread") and self.thread.isAlive() and 
 					cmdname in measure_cmds + process_cmds):
 					logfiles += [self.recent, self.lastmsg, self]
+				logfiles = Files(logfiles)
+				if use_patterngenerator:
+					self.patterngenerator = ResolveCMPatternGeneratorServer(
+						port=getcfg("patterngenerator.resolve.port"),
+						bits=getcfg("patterngenerator.resolve.bits"),
+						use_video_levels=getcfg("patterngenerator.resolve.use_video_levels"),
+						logfile=logfiles)
+					# Wait for connection - blocking
+					self.patterngenerator.wait()
+					if self.patterngenerator.listening:
+						self.patterngenerator_send((.5, ) * 3)
+					else:
+						# User aborted before connection was established
+						return False
 			tries = 1
 			if use_pty:
 				data_encoding = enc
@@ -2837,17 +2894,17 @@ class Worker(object):
 						# Minimum Windows version: XP or Server 2003
 						if (sys.platform == "win32" and
 							sys.getwindowsversion() < (5, 1)):
-							return Error(lang.getstr("windows.version.unsupported"))
+							raise Error(lang.getstr("windows.version.unsupported"))
 						try:
 							self.subprocess = wexpect.spawn(cmdline[0],
 															cmdline[1:], 
 															**kwargs)
 						except wexpect.ExceptionPexpect, exception:
 							self.retcode = -1
-							return Error(safe_unicode(exception))
+							raise Error(safe_unicode(exception))
 						if debug >= 9 or (test and not "-?" in args):
 							self.subprocess.interact()
-					self.subprocess.logfile_read = Files(logfiles)
+					self.subprocess.logfile_read = logfiles
 					if self.measure_cmd:
 						keyhit_strs = [" or Q to ", "8\) Exit"]
 						patterns = keyhit_strs + ["Current", r" \d+ of \d+"]
@@ -2921,7 +2978,7 @@ class Worker(object):
 					self.log("%s: Subprocess no longer alive (OK)" % appname)
 					self.retcode = self.subprocess.exitstatus
 					if authfailed:
-						return Error(lang.getstr("auth.failed"))
+						raise Error(lang.getstr("auth.failed"))
 				else:
 					try:
 						self.subprocess = sp.Popen(" ".join(cmdline) if shell else
@@ -2931,8 +2988,8 @@ class Worker(object):
 												   startupinfo=startupinfo)
 					except Exception, exception:
 						self.retcode = -1
-						return Error("\n".join([safe_unicode(v) for v in
-												(cmd, exception)]))
+						raise Error("\n".join([safe_unicode(v) for v in
+											   (cmd, exception)]))
 					self.retcode = self.subprocess.wait()
 					if stdin != sp.PIPE and not getattr(stdin, "closed", True):
 						stdin.close()
@@ -2979,6 +3036,8 @@ class Worker(object):
 				if not silent and len(self.errors):
 					errstr = "".join(self.errors).strip()
 					self.log(errstr)
+		except (Error, socket.error), exception:
+			return exception
 		except Exception, exception:
 			if debug:
 				safe_print('[D] working_dir:', working_dir)
@@ -3004,6 +3063,8 @@ class Worker(object):
 				self.errors = errors
 				self.output = output
 				self.retcode = retcode
+			if getattr(self, "patterngenerator", None):
+				del self.patterngenerator
 		if debug and not silent:
 			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
@@ -3531,7 +3592,7 @@ class Worker(object):
 	def get_device_id(self, quirk=True, use_serial_32=True,
 					  truncate_edid_strings=False):
 		""" Get org.freedesktop.ColorManager device key """
-		if config.get_display_name() in ("Web", "Untethered", "madVR"):
+		if config.get_display_name() in config.virtual_displays:
 			return None
 		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 											getcfg("display.number") - 1))]
@@ -3551,6 +3612,8 @@ class Worker(object):
 			return "madvr"
 		if config.get_display_name() == "Untethered":
 			return "0"
+		if config.get_display_name() == "Resolve":
+			return "1"
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 
@@ -3829,15 +3892,14 @@ usage: spotread [-options] [logfile]
 	
 	def has_separate_lut_access(self):
 		""" Return True if separate LUT access is possible and needed. """
+		# Filter out Untethered and Resolve
+		lut_access = self.lut_access[:-2]
 		if self.argyll_version >= [1, 6, 0]:
-			# filter out Web @ localhost, madVR and Untethered
-			lut_access = self.lut_access[:-3]
-		elif self.argyll_version >= [1, 4, 0]:
-			# filter out Web @ localhost and Untethered
-			lut_access = self.lut_access[:-2]
-		else:
-			# filter out Untethered
-			lut_access = self.lut_access[:-1]
+			# Filter out madVR
+			lut_access = lut_access[:-1]
+		if self.argyll_version >= [1, 4, 0]:
+			# Filter out Web @ localhost
+			lut_access = lut_access[:-1]
 		return (len(self.displays) > 1 and False in lut_access and True in 
 				lut_access)
 	
@@ -5007,6 +5069,24 @@ usage: spotread [-options] [logfile]
 		self.check_retry_measurement(txt)
 		self.check_is_ambient_measuring(txt)
 		self.check_spotread_result(txt)
+
+	def patterngenerator_send(self, rgb):
+		""" Send RGB color to pattern generator """
+		x, y, size = [float(v) for v in
+					  getcfg("dimensions.measureframe").split(",")]
+		size = size * get_default_size()
+		display_size = wx.Display(0).Geometry[2:]
+		w, h = [min(size / v, 1.0) for v in display_size]
+		x = (display_size[0] - size) * x / display_size[0]
+		y = (display_size[1] - size) * y / display_size[1]
+		x, y, w, h = [max(v, 0) for v in (x, y, w, h)]
+		size = min(sum((w, h)) / 2.0, 1.0)
+		if getcfg("measure.darken_background"):
+			bgrgb = (0, 0, 0)
+		else:
+			# Constant APL
+			bgrgb = (.4, .4, .4)
+		self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
 	
 	def pause_continue(self):
 		if (getattr(self.progress_wnd, "paused", False) and
@@ -5799,6 +5879,10 @@ usage: spotread [-options] [logfile]
 			logfn = log
 		else:
 			logfn = safe_print
+		if getattr(self, "patterngenerator", None):
+			self.log("%s: Trying to shut down pattern generator..." % appname,
+					 fn=logfn)
+			self.patterngenerator.shutdown()
 		subprocess = getattr(self, "subprocess", None)
 		if self.isalive(subprocess):
 			try:
@@ -7218,6 +7302,15 @@ usage: spotread [-options] [logfile]
 		return result
 	
 	def write(self, txt):
+		# Send colors to pattern generator
+		if (getattr(self, "patterngenerator", None) and
+			self.patterngenerator.listening):
+			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
+							txt)
+			if rgb:
+				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
+				self.patterngenerator_send(rgb)
+		# Parse
 		wx.CallAfter(self.parse, txt)
 	
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",

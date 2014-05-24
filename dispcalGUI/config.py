@@ -143,6 +143,16 @@ resfiles = [
 
 bitmaps = {}
 
+uncalibratable_displays = ("Untethered", )
+
+patterngenerators = ("madVR", "Resolve")
+
+non_argyll_displays = uncalibratable_displays + ("Resolve", )
+
+untethered_displays = non_argyll_displays + ("Web", )
+
+virtual_displays = untethered_displays + ("madVR", )
+
 def getbitmap(name):
 	"""
 	Create (if necessary) and return a named bitmap.
@@ -257,7 +267,7 @@ def get_display_number(display_no):
 	except IndexError:
 		return 0
 	else:
-		if display in ("Web @ localhost", "Untethered", "madVR"):
+		if display.split("@")[0].strip() in virtual_displays:
 			return 0
 		for i in xrange(wx.Display.GetCount()):
 			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
@@ -473,6 +483,7 @@ valid_values = {
 	"gamap_out_viewcond": ["mt", "mb", "md", "jm", "jd"],
 	"measure.uniformity.show_detail": [0, 1],
 	"measurement_report.bt1886_gamma_type": ["b", "B"],
+	"patterngenerator.resolve.use_video_levels": [0, 1],
 	"profile.black_point_compensation": [0, 1],
 	"profile.install_scope": ["l", "u"],
 	"profile.quality": ["l", "m", "h", "u"],
@@ -595,6 +606,9 @@ defaults = {
 	"measure.darken_background": 0,
 	"measure.darken_background.show_warning": 1,
 	"measure.uniformity.show_detail": 0,
+	"patterngenerator.resolve.bits": 10,
+	"patterngenerator.resolve.port": 20002,
+	"patterngenerator.resolve.use_video_levels": 0,
 	"position.x": 50,
 	"position.y": 50,
 	"position.info.x": 50,
@@ -897,7 +911,7 @@ def get_current_profile(include_display_profile=False):
 def get_display_profile(display_no=None):
 	if display_no is None:
 		display_no = max(getcfg("display.number") - 1, 0)
-	if get_display_name(display_no) in ("Web", "Untethered", "madVR"):
+	if get_display_name(display_no) in virtual_displays:
 		return None
 	import ICCProfile as ICCP
 	try:

@@ -32,7 +32,7 @@ def update_preset(name):
 	t_a2b = {"t": colormath.CIEDCCT2XYZ, "T": colormath.planckianCT2XYZ}
 	trc = None
 	for option in options_dispcal:
-		if option[0] == "g":
+		if option[0] in ("g", "G"):
 			trc = trc_a2b.get(option[1:])
 			if not trc:
 				try:
@@ -62,6 +62,10 @@ def update_preset(name):
 			(prof.tags.wtpt.X,
 			 prof.tags.wtpt.Y,
 			 prof.tags.wtpt.Z) = colormath.xyY2XYZ(x, y)
+	for option in options_colprof:
+		if option[0] == "M":
+			print "Updating device model description..."
+			prof.setDeviceModelDescription(option[2:].strip('"'))
 	if "CIED" in prof.tags:
 		print "Removing 'CIED'..."
 		del prof.tags["CIED"]

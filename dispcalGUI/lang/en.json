@@ -561,6 +561,7 @@
 	"report.calibrated": "Report on calibrated display device",
 	"report.uncalibrated": "Report on uncalibrated display device",
 	"report.uniformity": "Measure display device uniformity...",
+	"resolve.icc": "Resolve",
 	"resources.notfound.error": "Fatal error: A required file has not been found:",
 	"resources.notfound.warning": "Warning: Some required files have not been found:",
 	"restore_defaults": "Restore defaults",
