@@ -2871,7 +2871,7 @@ class Worker(object):
 					# Wait for connection - blocking
 					self.patterngenerator.wait()
 					if self.patterngenerator.listening:
-						self.patterngenerator_send((.5, ) * 3)
+						wx.CallAfter(self.patterngenerator_send, (.5, ) * 3)
 					else:
 						# User aborted before connection was established
 						return False
@@ -5063,6 +5063,15 @@ usage: spotread [-options] [logfile]
 		if not txt:
 			return
 		self.logger.info("%r" % txt)
+		# Send colors to pattern generator
+		if (getattr(self, "patterngenerator", None) and
+			self.patterngenerator.listening):
+			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
+							txt)
+			if rgb:
+				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
+				self.patterngenerator_send(rgb)
+		# Parse
 		self.check_instrument_calibration(txt)
 		self.check_instrument_place_on_screen(txt)
 		self.check_instrument_sensor_position(txt)
@@ -7302,15 +7311,6 @@ usage: spotread [-options] [logfile]
 		return result
 	
 	def write(self, txt):
-		# Send colors to pattern generator
-		if (getattr(self, "patterngenerator", None) and
-			self.patterngenerator.listening):
-			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
-							txt)
-			if rgb:
-				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
-				self.patterngenerator_send(rgb)
-		# Parse
 		wx.CallAfter(self.parse, txt)
 	
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",
