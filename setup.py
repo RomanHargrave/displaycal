@@ -78,6 +78,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 							os.stat(tmpl_path).st_mtime)),
 		"SUMMARY": description,
 		"DESC": longdesc,
+		"APPDATADESC": "<p>\n\t\t\t" + longdesc.replace("\n", "\n\t\t\t").replace(".\n", ".\n\t\t</p>\n\t\t<p>\n") + "\n\t\t</p>",
 		"MAINTAINER": author,
 		"MAINTAINER_EMAIL": author_email,
 		"MAINTAINER_EMAIL_SHA1": sha1(author_email).hexdigest(),
@@ -148,6 +149,7 @@ def setup():
 	elif "py2exe" in sys.argv[1:]:
 		bdist_cmd = "py2exe"
 
+	appdata = "appdata" in sys.argv[1:]
 	arch = None
 	bdist_appdmg = "bdist_appdmg" in sys.argv[1:]
 	bdist_deb = "bdist_deb" in sys.argv[1:]
@@ -392,11 +394,22 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
+	if ((appdata or 
+		 "install" in sys.argv[1:]) and 
+		not help and not dry_run):
+		tmpl_name = name + ".appdata.xml"
+		replace_placeholders(os.path.join(pydir, "misc", tmpl_name),
+							 os.path.join(pydir, "dist", tmpl_name),
+							 lastmod_time)
+	if appdata:
+		sys.argv.remove("appdata")
+
 	if (("sdist" in sys.argv[1:] or 
 		 "install" in sys.argv[1:] or 
 		 "bdist_deb" in sys.argv[1:]) and 
 		not help):
 		buildservice = True
+	if buildservice and not dry_run:
 		replace_placeholders(os.path.join(pydir, "misc", "debian.copyright"),
 							 os.path.join(pydir, "dist", "copyright"),
 							 lastmod_time)
@@ -559,7 +572,8 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	if (not bdist_lipa and not zeroinstall and not buildservice) or sys.argv[1:]:
+	if (not bdist_lipa and not zeroinstall and not buildservice and
+		not appdata) or sys.argv[1:]:
 		print sys.argv[1:]
 		from setup import setup
 		setup()

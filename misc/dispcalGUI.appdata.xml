@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright ${YEAR} Florian Höch <dispcalGUI _at_ hoech.net> -->
+<application>
+	<id type="desktop">dispcalGUI.desktop</id>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0+</project_license>
+	<name>dispcalGUI</name>
+	<description>
+		${APPDATADESC}
+	</description>
+	<screenshots>
+		<screenshot type="default" width="1024" height="576">http://dispcalgui.hoech.net/screenshots/dispcalGUI-screenshot-GNOME-1024x576.png</screenshot>
+	</screenshots>
+	<url type="homepage">http://dispcalgui.hoech.net/</url>
+	<updatecontact>dispcalGUI _at_ hoech.net</updatecontact>
+</application>

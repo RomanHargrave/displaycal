@@ -484,6 +484,9 @@ def setup():
 			data_files += [(os.path.join(data, "lib"), [sys.executable])]
 		elif sys.platform != "darwin":
 			# Linux
+			data_files.append((os.path.join(os.path.dirname(data), "appdata"),
+							   [os.path.join(pydir, "..", "dist", 
+											 name + ".appdata.xml")]))
 			data_files += [(os.path.join(os.path.dirname(data), 
 										 "applications"), 
 							[os.path.join(pydir, "..", "misc", name + 
