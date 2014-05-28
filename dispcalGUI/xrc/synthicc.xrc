@@ -393,6 +393,13 @@
                       <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
                     </object>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="bpc_ctrl">
+                        <label>black_point_compensation</label>
+                      </object>
+                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>20</border>
+                    </object>
                   </object>
                 </object>
                 <object class="spacer">

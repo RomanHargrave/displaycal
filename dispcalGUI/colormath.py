@@ -2029,32 +2029,20 @@ class BT1886(object):
 
 	""" BT.1886 like transfer function """
 
-	def __init__(self, matrix, XYZbp, gamma, absolute=False):
-		""" Setup BT.1886 """
+	def __init__(self, matrix, XYZbp, gamma):
+		""" Setup the bt1886_info for the given target """
 		self.bwd_matrix = matrix.inverted()
 		self.fwd_matrix = matrix
 		self.gamma = gamma
 
-		Lab = XYZ2Lab(*[v * 100 for v in XYZbp])
+		Lab = XYZ2Lab(*XYZbp)
 
 		self.outL = Lab[0]  # For bp blend
-		self.tab = list(Lab)
-		if absolute:
-			# Setup BT.1886 for an absolute power target
-			# L* correction needed
-			self.ingo = 0.0  # Non-linear Y that makes out black point
-			self.outsc = 1.0  # Scale to restore 1 -> 1
-		else:
-			# Setup BT.1886 for the given target
-			# a* b* correction needed
-			self.tab[0] = 0  # 0 because bt1886 maps L to target
+		self.tab = Lab[1:]  # a* b* correction needed
 
-			if XYZbp[1] < 0:
-				XYZbp[1] = 0.0
-
-			bkipow = math.pow(XYZbp[1], 1.0 / self.gamma)
-			self.ingo = bkipow / (1.0 - bkipow)  # non-linear Y that makes out black point
-			self.outsc = pow(1.0 - bkipow, self.gamma)  # Scale to restore 1 -> 1
+		bkipow = math.pow(XYZbp[1], 1.0 / self.gamma)
+		self.ingo = bkipow / (1.0 - bkipow)  # non-linear Y that makes out black point
+		self.outsc = pow(1.0 - bkipow, self.gamma)  # Scale to restore 1 -> 1
 
 	def apply(self, X, Y, Z):
 		"""
@@ -2095,7 +2083,7 @@ class BT1886(object):
 		out = list(XYZ2Lab(*[v * 100 for v in out]))
 
 		logging.debug("bt1886 Lab after Y adj. %f %f %f" % (out[0], out[1],
-															out[2]))
+															  out[2]))
 
 		# Blend ab to required black point offset self.tab[] as L approaches black.
 		vv = (out[0] - self.outL) / (100.0 - self.outL)  # 0 at bp, 1 at wp
@@ -2106,12 +2094,11 @@ class BT1886(object):
 		elif vv > 1.0:
 			vv = 1.0
 		vv = math.pow(vv, 40.0)
-		out[0] += vv * self.tab[0]
-		out[1] += vv * self.tab[1]
-		out[2] += vv * self.tab[2]
+		out[1] += vv * self.tab[0]
+		out[2] += vv * self.tab[1]
 
 		logging.debug("bt1886 Lab after wp adj. %f %f %f" % (out[0], out[1],
-															 out[2]))
+															   out[2]))
 
 		out = Lab2XYZ(*out)
 
