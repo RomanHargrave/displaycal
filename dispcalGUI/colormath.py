@@ -266,9 +266,16 @@ def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50", weight=False):
 	bp_in = list(bp_in)
 	bp_out = list(bp_out)
 	for i, v in enumerate(XYZ):
-		if weight and v > 0:
-			bp_in[i] *= (bp_in[i] / v)
-			bp_out[i] *= (bp_out[i] / v)
+		if weight and bp_in[i] != bp_out[i]:
+			vv = (v - bp_in[i]) / (1.0 - bp_in[i])  # 0 at bp, 1 at wp
+			vv = 1.0 - vv
+			if vv < 0.0:
+				vv = 0.0
+			elif vv > 1.0:
+				vv = 1.0
+			vv = math.pow(vv, .5 / max(bp_in[i], bp_out[i]))
+			bp_in[i] *= vv
+			bp_out[i] *= vv
 		XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
 	return XYZ
 
