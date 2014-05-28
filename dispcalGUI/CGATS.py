@@ -1418,7 +1418,7 @@ Transform {
 						item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"] = X, Y, Z
 		return n
 	
-	def apply_bpc(self, weight=False):
+	def apply_bpc(self, bp_out=(0, 0, 0), weight=False):
 		"""
 		Apply black point compensation.
 		
@@ -1432,6 +1432,7 @@ Transform {
 		n = 0
 		for dataset in self.query("DATA").itervalues():
 			if dataset.type.strip() == "CAL":
+				is_Lab = False
 				labels = ("RGB_R", "RGB_G", "RGB_B")
 				data = dataset.queryi(labels)
 
@@ -1448,8 +1449,15 @@ Transform {
 				for label in labels:
 					black.append(black1[label])
 					white.append(white1[label])
+				max_v = 1.0
 			else:
-				labels = ("XYZ_X", "XYZ_Y", "XYZ_Z")
+				is_Lab = "_LAB" in (dataset.queryv1("COLOR_REP") or "")
+				if is_Lab:
+					labels = ("LAB_L", "LAB_A", "LAB_B")
+					index = 0  # Index of L* in labels
+				else:
+					labels = ("XYZ_X", "XYZ_Y", "XYZ_Z")
+					index = 1  # Index of Y in labels
 				data = dataset.queryi(("RGB_R", "RGB_G", "RGB_B") + labels)
 
 				# Get blacks
@@ -1462,24 +1470,43 @@ Transform {
 
 				black = [0, 0, 0]
 				for i in blacks:
-					if blacks[i]["XYZ_Y"] > black[1]:
+					if blacks[i][labels[index]] > black[index]:
 						for j, label in enumerate(labels):
 							black[j] = blacks[i][label]
+				if is_Lab:
+					black = colormath.Lab2XYZ(*black)
 
 				white = [0, 0, 0]
 				for i in whites:
-					if whites[i]["XYZ_Y"] > white[1]:
+					if whites[i][labels[index]] > white[index]:
 						for j, label in enumerate(labels):
 							white[j] = whites[i][label]
+				if is_Lab:
+					max_v = 100.0
+					white = colormath.Lab2XYZ(*white)
+				else:
+					max_v = white[1]
+					black = [v / max_v for v in black]
+					white = [v / max_v for v in white]
 
 			# Apply black point compensation
 			n += 1
 			for i in data:
-				XYZ = data[i].queryv1(labels)
-				XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black,
-										  (0, 0, 0), white, weight)
+				values = data[i].queryv1(labels).values()
+				if is_Lab:
+					values = colormath.Lab2XYZ(*values)
+				else:
+					values = [v / max_v for v in values]
+				values = colormath.apply_bpc(values[0], values[1], values[2], black,
+											bp_out, white, weight)
+				values = [v * max_v for v in values]
+				if is_Lab:
+					values = colormath.XYZ2Lab(*values)
 				for j, label in enumerate(labels):
-					data[i][label] = max(0.0, XYZ[j])
+					if is_Lab and j > 0:
+						data[i][label] = values[j]
+					else:
+						data[i][label] = max(0.0, values[j])
 
 		return n
 	

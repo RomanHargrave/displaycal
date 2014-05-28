@@ -793,7 +793,7 @@ class LUTFrame(wx.Frame):
 	def apply_bpc_handler(self, event):
 		cal = vcgt_to_cal(self.profile)
 		cal.filename = self.profile.fileName or ""
-		cal.apply_bpc(True)
+		cal.apply_bpc(weight=True)
 		self.LoadProfile(cal_to_fake_profile(cal))
 
 	def drop_handler(self, path):
