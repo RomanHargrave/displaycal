@@ -1037,8 +1037,9 @@ class LUTFrame(wx.Frame):
 				x, xp, y, yp = [], [], [], []
 				# First, get actual values
 				for i, Y in enumerate(trc[sig]):
-					xp.append(i / (len(trc[sig]) - 1.0) * 255)
-					yp.append(Y / 65535.0 * 100)
+					if not i or Y > trc[sig][i - 1]:
+						xp.append(i / (len(trc[sig]) - 1.0) * 255)
+						yp.append(Y / 65535.0 * 100)
 				# Second, interpolate to given size and use the same Y axis 
 				# for all channels
 				for i in xrange(size):
