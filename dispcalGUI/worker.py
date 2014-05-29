@@ -1523,6 +1523,41 @@ class Worker(object):
 				return Error(result)
 		self.auth_timestamp = time()
 		return True
+
+	def blend_profile_blackpoint(self, profile1, profile2, trc=None,
+								 trc_account_for_black_offset=True):
+		"""
+		Blend profile1 blackpoint to profile2 blackpoint, optionally changing
+		the TRC.
+		
+		profile1 has to be a matrix profile
+		
+		"""
+		odata = self.xicclu(profile2, (0, 0, 0), pcs="x")
+		if len(odata) != 1 or len(odata[0]) != 3:
+			raise ValueError("Blackpoint is invalid: %s" % odata)
+		XYZbp = odata[0]
+		rXYZ = profile1.tags.rXYZ.values()
+		gXYZ = profile1.tags.gXYZ.values()
+		bXYZ = profile1.tags.bXYZ.values()
+		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+								   [rXYZ[1], gXYZ[1], bXYZ[1]],
+								   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+		XYZbp = mtx.inverted() * XYZbp
+		#tprof = ICCP.ICCProfile(profile1.data)
+		#tprof.tags.rTRC.set_trc(1.0, size=1)
+		#tprof.tags.gTRC = tprof.tags.bTRC = tprof.tags.rTRC
+		#odata = self.xicclu(tprof, XYZbp, direction="if", pcs="x")
+		#XYZbp = odata[0]
+		for i, channel in enumerate(("r", "g", "b")):
+			if trc:
+				profile1.tags[channel + "TRC"] = ICCP.CurveType()
+				if trc_account_for_black_offset:
+					vmin = 0
+				else:
+					vmin = XYZbp[1] * 65535
+				profile1.tags[channel + "TRC"].set_trc(trc, vmin=vmin)
+			profile1.tags[channel + "TRC"].apply_bpc(XYZbp[i], True)
 	
 	def instrument_can_use_ccxx(self):
 		"""
@@ -1890,7 +1925,7 @@ class Worker(object):
 					 apply_cal=True, intent="r", format="3dl",
 					 size=17, input_bits=10, output_bits=12, maxval=1.0,
 					 input_encoding="n", output_encoding="n",
-					 bt1886_gamma=None, bt1886_gamma_type="b",
+					 trc_gamma=None, trc_gamma_type="b",
 					 save_link_icc=True):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
@@ -1941,6 +1976,10 @@ class Worker(object):
 				 profile_out_ext) = os.path.splitext(profile_out_basename)
 				profile_out_basename = "%s (2)%s" % (profile_out_filename,
 													 profile_out_ext)
+			if trc_gamma and trc_gamma_type in ("g", "G"):
+				# Gamma with black offset
+				self.blend_profile_blackpoint(profile_in, profile_out,
+											  trc_gamma, trc_gamma_type == "g")
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 			profile_out.fileName = os.path.join(cwd, profile_out_basename)
@@ -1997,8 +2036,8 @@ class Worker(object):
 					args += ["-3e"]
 				args += ["-e%s" % input_encoding]
 				args += ["-E%s" % output_encoding]
-				if bt1886_gamma:
-					args += ["-I%s:%s" % (bt1886_gamma_type, bt1886_gamma)]
+				if trc_gamma and trc_gamma_type in ("b", "B"):
+					args += ["-I%s:%s" % (trc_gamma_type, trc_gamma)]
 				if apply_cal:
 					# Apply the calibration when building our device link
 					# i.e. use collink -a parameter (apply calibration curves

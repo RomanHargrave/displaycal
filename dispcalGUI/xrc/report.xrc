@@ -123,14 +123,24 @@
                 <object class="sizeritem">
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
-                      <object class="wxCheckBox" name="apply_bt1886_cb">
-                        <label>apply_bt1886_gamma_mapping</label>
+                      <object class="wxCheckBox" name="apply_trc_cb">
+                        <label>apply_trc</label>
                       </object>
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxComboBox" name="bt1886_gamma_ctrl">
+                      <object class="wxChoice" name="trc_type_ctrl">
+                        <content>
+                          <item>trc.rec1886</item>
+                          <item>trc.gamma</item>
+                        </content>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxComboBox" name="trc_gamma_ctrl">
                         <size>75,-1</size>
                         <content>
                           <item>2.2</item>
@@ -141,7 +151,7 @@
                       <border>8</border>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxChoice" name="bt1886_gamma_type_ctrl">
+                      <object class="wxChoice" name="trc_gamma_type_ctrl">
                         <content>
                           <item/>
                         </content>

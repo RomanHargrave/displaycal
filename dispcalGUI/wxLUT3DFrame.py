@@ -53,12 +53,13 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
-											 self.encoding_output_ctrl_handler)
-		self.apply_bt1886_cb.Bind(wx.EVT_CHECKBOX, self.apply_bt1886_ctrl_handler)
-		self.bt1886_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
-									self.bt1886_gamma_ctrl_handler)
-		self.bt1886_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
-										 self.bt1886_gamma_type_ctrl_handler)
+									   self.encoding_output_ctrl_handler)
+		self.apply_trc_cb.Bind(wx.EVT_CHECKBOX, self.apply_trc_ctrl_handler)
+		self.trc_type_ctrl.Bind(wx.EVT_CHOICE, self.trc_type_ctrl_handler)
+		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
+								 self.trc_gamma_ctrl_handler)
+		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
+									  self.trc_gamma_type_ctrl_handler)
 		self.rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
 										self.rendering_intent_ctrl_handler)
 		self.lut3d_format_ctrl.Bind(wx.EVT_CHOICE,
@@ -114,11 +115,12 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl.Enable(enable)
 		self.abstract_profile_desc.Enable(enable)
 	
-	def apply_bt1886_ctrl_handler(self, event):
-		v = self.apply_bt1886_cb.GetValue()
-		self.bt1886_gamma_ctrl.Enable(v)
-		self.bt1886_gamma_type_ctrl.Enable(v)
-		setcfg("3dlut.apply_bt1886_gamma_mapping", int(v))
+	def apply_trc_ctrl_handler(self, event):
+		v = self.apply_trc_cb.GetValue()
+		self.trc_type_ctrl.Enable(v)
+		self.trc_gamma_ctrl.Enable(v)
+		self.trc_gamma_type_ctrl.Enable(v)
+		setcfg("3dlut.apply_trc", int(v))
 		config.writecfg()
 	
 	def apply_cal_ctrl_handler(self, event):
@@ -129,25 +131,30 @@ class LUT3DFrame(BaseFrame):
 	def abstract_drop_unsupported_handler(self):
 		self.drop_unsupported("abstract")
 
-	def bt1886_gamma_ctrl_handler(self, event):
+	def trc_gamma_ctrl_handler(self, event):
 		try:
-			v = float(self.bt1886_gamma_ctrl.GetValue().replace(",", "."))
-			if (v < config.valid_ranges["3dlut.bt1886_gamma"][0] or
-				v > config.valid_ranges["3dlut.bt1886_gamma"][1]):
+			v = float(self.trc_gamma_ctrl.GetValue().replace(",", "."))
+			if (v < config.valid_ranges["3dlut.trc_gamma"][0] or
+				v > config.valid_ranges["3dlut.trc_gamma"][1]):
 				raise ValueError()
 		except ValueError:
 			wx.Bell()
-			self.bt1886_gamma_ctrl.SetValue(str(getcfg("3dlut.bt1886_gamma")))
+			self.trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
 		else:
-			if str(v) != self.bt1886_gamma_ctrl.GetValue():
-				self.bt1886_gamma_ctrl.SetValue(str(v))
-			setcfg("3dlut.bt1886_gamma", v)
+			if str(v) != self.trc_gamma_ctrl.GetValue():
+				self.trc_gamma_ctrl.SetValue(str(v))
+			setcfg("3dlut.trc_gamma", v)
 			config.writecfg()
 		event.Skip()
 
-	def bt1886_gamma_type_ctrl_handler(self, event):
-		setcfg("3dlut.bt1886_gamma_type",
-			   self.bt1886_gamma_types_ab[self.bt1886_gamma_type_ctrl.GetSelection()])
+	def trc_type_ctrl_handler(self, event):
+		v = self.trc_type_ctrl.GetSelection()
+		if event:
+			setcfg("3dlut.trc_type", v)
+
+	def trc_gamma_type_ctrl_handler(self, event):
+		setcfg("3dlut.trc_gamma_type",
+			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
 		config.writecfg()
 
 	def input_drop_unsupported_handler(self):
@@ -290,11 +297,14 @@ class LUT3DFrame(BaseFrame):
 					 getcfg("3dlut.output.profile.apply_cal"))
 		input_encoding = getcfg("3dlut.encoding.input")
 		output_encoding = getcfg("3dlut.encoding.output")
-		if getcfg("3dlut.apply_bt1886_gamma_mapping"):
-			bt1886_gamma = getcfg("3dlut.bt1886_gamma")
+		if getcfg("3dlut.apply_trc"):
+			trc_gamma = getcfg("3dlut.trc_gamma")
 		else:
-			bt1886_gamma = None
-		bt1886_gamma_type = getcfg("3dlut.bt1886_gamma_type")
+			trc_gamma = None
+		trc_gamma_type = getcfg("3dlut.trc_gamma_type")
+		if getcfg("3dlut.trc_type"):
+			trc_gamma_type = {"B": "G",
+							  "b": "g"}.get(trc_gamma_type, trc_gamma_type)
 		intent = getcfg("3dlut.rendering_intent")
 		format = getcfg("3dlut.format")
 		size = getcfg("3dlut.size")
@@ -308,8 +318,8 @@ class LUT3DFrame(BaseFrame):
 									 output_bits=output_bits,
 									 input_encoding=input_encoding,
 									 output_encoding=output_encoding,
-									 bt1886_gamma=bt1886_gamma,
-									 bt1886_gamma_type=bt1886_gamma_type)
+									 trc_gamma=trc_gamma,
+									 trc_gamma_type=trc_gamma_type)
 		except Exception, exception:
 			return exception
 	
@@ -436,7 +446,7 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_desc.Hide()
 							self.apply_cal_cb.Hide()
 							self.show_encoding_controls(False)
-							self.show_bt1886_controls(False)
+							self.show_trc_controls(False)
 							self.rendering_intent_label.Hide()
 							self.rendering_intent_ctrl.Hide()
 							self.panel.GetSizer().Layout()
@@ -456,7 +466,7 @@ class LUT3DFrame(BaseFrame):
 							self.apply_cal_cb.Show()
 							self.show_encoding_controls()
 							self.enable_encoding_controls()
-							self.show_bt1886_controls()
+							self.show_trc_controls()
 							if (getcfg("3dlut.%s.profile" % which) !=
 								profile.fileName and
 								"rTRC" in profile.tags and
@@ -467,12 +477,12 @@ class LUT3DFrame(BaseFrame):
 								# Use BT.1886 gamma mapping for SMPTE 240M /
 								# Rec. 709 TRC
 								tf = profile.tags.rTRC.get_transfer_function()
-								setcfg("3dlut.apply_bt1886_gamma_mapping",
+								setcfg("3dlut.apply_trc",
 									  int(tf[0][1] in (-240, -709)))
-							self.apply_bt1886_cb.SetValue(bool(getcfg("3dlut.apply_bt1886_gamma_mapping")))
-							enable_bt1886_gamma = self.apply_bt1886_cb.GetValue()
-							self.bt1886_gamma_ctrl.Enable(enable_bt1886_gamma)
-							self.bt1886_gamma_type_ctrl.Enable(enable_bt1886_gamma)
+							self.apply_trc_cb.SetValue(bool(getcfg("3dlut.apply_trc")))
+							enable_trc_gamma = self.apply_trc_cb.GetValue()
+							self.trc_gamma_ctrl.Enable(enable_trc_gamma)
+							self.trc_gamma_type_ctrl.Enable(enable_trc_gamma)
 							self.rendering_intent_label.Show()
 							self.rendering_intent_ctrl.Show()
 							# Update controls related to output profile
@@ -548,10 +558,15 @@ class LUT3DFrame(BaseFrame):
 			getattr(self, "%s_profile_ctrl"
 						  % which).SetDropTarget(getattr(self, "%s_droptarget"
 														 % which))
+
+		items = []
+		for item in self.trc_type_ctrl.Items:
+			items.append(lang.getstr(item))
+		self.trc_type_ctrl.SetItems(items)
 		
-		self.bt1886_gamma_types_ab = {0: "b", 1: "B"}
-		self.bt1886_gamma_types_ba = {"b": 0, "B": 1}
-		self.bt1886_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
+		self.trc_gamma_types_ab = {0: "b", 1: "B"}
+		self.trc_gamma_types_ba = {"b": 0, "B": 1}
+		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 											  lang.getstr("trc.type.absolute")])
 		
 		self.rendering_intents_ab = {}
@@ -623,8 +638,9 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl_handler(None)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.output_profile_ctrl_handler(None)
-		self.bt1886_gamma_ctrl.SetValue(str(getcfg("3dlut.bt1886_gamma")))
-		self.bt1886_gamma_type_ctrl.SetSelection(self.bt1886_gamma_types_ba[getcfg("3dlut.bt1886_gamma_type")])
+		self.trc_type_ctrl.SetSelection(getcfg("3dlut.trc_type"))
+		self.trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
+		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("3dlut.trc_gamma_type")])
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
 		format = getcfg("3dlut.format")
 		if format == "madVR" and self.worker.argyll_version < [1, 6]:
@@ -649,11 +665,11 @@ class LUT3DFrame(BaseFrame):
 		self.panel.GetSizer().Layout()
 		self.Thaw()
 
-	def show_bt1886_controls(self, show=True):
+	def show_trc_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]
-		self.apply_bt1886_cb.Show(show)
-		self.bt1886_gamma_ctrl.Show(show)
-		self.bt1886_gamma_type_ctrl.Show(show)
+		self.apply_trc_cb.Show(show)
+		self.trc_gamma_ctrl.Show(show)
+		self.trc_gamma_type_ctrl.Show(show)
 	
 	def show_encoding_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]

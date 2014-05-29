@@ -4,7 +4,7 @@
 	"!language": "English",
 	"!language_name": "ENGLISH",
 	"apply": "Apply",
-	"apply_bt1886_gamma_mapping": "Apply BT.1886 gamma mapping",
+	"apply_trc": "Apply tone response curve",
 	"3dlut.bitdepth.input": "3D LUT input bitdepth",
 	"3dlut.bitdepth.output": "3D LUT output bitdepth",
 	"3dlut.create": "Create 3D LUT...",

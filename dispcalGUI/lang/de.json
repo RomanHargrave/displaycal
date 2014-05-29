@@ -4,7 +4,7 @@
 	"!language": "Deutsch",
 	"!language_name": "GERMAN",
 	"apply": "Anwenden",
-	"apply_bt1886_gamma_mapping": "BT.1886 Gamma-Mapping anwenden",
+	"apply_trc": "Tonwertkurve anwenden",
 	"3dlut.bitdepth.input": "3D LUT Eingabe-Bittiefe",
 	"3dlut.bitdepth.output": "3D LUT Ausgabe-Bittiefe",
 	"3dlut.create": "3D LUT erstellen...",

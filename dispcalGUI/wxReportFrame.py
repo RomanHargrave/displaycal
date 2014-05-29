@@ -53,11 +53,12 @@ class ReportFrame(BaseFrame):
 		self.use_simulation_profile_as_output_cb.Bind(wx.EVT_CHECKBOX,
 													  self.use_simulation_profile_as_output_handler)
 		self.enable_3dlut_cb.Bind(wx.EVT_CHECKBOX, self.enable_3dlut_handler)
-		self.apply_bt1886_cb.Bind(wx.EVT_CHECKBOX, self.apply_bt1886_ctrl_handler)
-		self.bt1886_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
-									self.bt1886_gamma_ctrl_handler)
-		self.bt1886_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
-										 self.bt1886_gamma_type_ctrl_handler)
+		self.apply_trc_cb.Bind(wx.EVT_CHECKBOX, self.apply_trc_ctrl_handler)
+		self.trc_type_ctrl.Bind(wx.EVT_CHOICE, self.trc_type_ctrl_handler)
+		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
+								 self.trc_gamma_ctrl_handler)
+		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
+									  self.trc_gamma_type_ctrl_handler)
 		self.simulate_whitepoint_cb.Bind(wx.EVT_CHECKBOX,
 										 self.simulate_whitepoint_ctrl_handler)
 		self.simulate_whitepoint_relative_cb.Bind(wx.EVT_CHECKBOX,
@@ -100,31 +101,36 @@ class ReportFrame(BaseFrame):
 		if event:
 			event.Skip()
 	
-	def apply_bt1886_ctrl_handler(self, event):
-		v = self.apply_bt1886_cb.GetValue()
-		setcfg("measurement_report.apply_bt1886_gamma_mapping", int(v))
+	def apply_trc_ctrl_handler(self, event):
+		v = self.apply_trc_cb.GetValue()
+		setcfg("measurement_report.apply_trc", int(v))
 		config.writecfg()
 		self.update_main_controls()
 
-	def bt1886_gamma_ctrl_handler(self, event):
+	def trc_gamma_ctrl_handler(self, event):
 		try:
-			v = float(self.bt1886_gamma_ctrl.GetValue().replace(",", "."))
-			if (v < config.valid_ranges["measurement_report.bt1886_gamma"][0] or
-				v > config.valid_ranges["measurement_report.bt1886_gamma"][1]):
+			v = float(self.trc_gamma_ctrl.GetValue().replace(",", "."))
+			if (v < config.valid_ranges["measurement_report.trc_gamma"][0] or
+				v > config.valid_ranges["measurement_report.trc_gamma"][1]):
 				raise ValueError()
 		except ValueError:
 			wx.Bell()
-			self.bt1886_gamma_ctrl.SetValue(str(getcfg("measurement_report.bt1886_gamma")))
+			self.trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
 		else:
-			if str(v) != self.bt1886_gamma_ctrl.GetValue():
-				self.bt1886_gamma_ctrl.SetValue(str(v))
-			setcfg("measurement_report.bt1886_gamma", v)
+			if str(v) != self.trc_gamma_ctrl.GetValue():
+				self.trc_gamma_ctrl.SetValue(str(v))
+			setcfg("measurement_report.trc_gamma", v)
 			config.writecfg()
 		event.Skip()
 
-	def bt1886_gamma_type_ctrl_handler(self, event):
-		setcfg("measurement_report.bt1886_gamma_type",
-			   self.bt1886_gamma_types_ab[self.bt1886_gamma_type_ctrl.GetSelection()])
+	def trc_type_ctrl_handler(self, event):
+		v = self.trc_type_ctrl.GetSelection()
+		if event:
+			setcfg("measurement_report.trc_type", v)
+
+	def trc_gamma_type_ctrl_handler(self, event):
+		setcfg("measurement_report.trc_gamma_type",
+			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
 		config.writecfg()
 	
 	def chart_btn_handler(self, event):
@@ -372,10 +378,15 @@ class ReportFrame(BaseFrame):
 													 % which)
 			getattr(self, "%s_ctrl"
 						  % which).SetDropTarget(droptarget)
+
+		items = []
+		for item in self.trc_type_ctrl.Items:
+			items.append(lang.getstr(item))
+		self.trc_type_ctrl.SetItems(items)
 		
-		self.bt1886_gamma_types_ab = {0: "b", 1: "B"}
-		self.bt1886_gamma_types_ba = {"b": 0, "B": 1}
-		self.bt1886_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
+		self.trc_gamma_types_ab = {0: "b", 1: "B"}
+		self.trc_gamma_types_ba = {"b": 0, "B": 1}
+		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 											  lang.getstr("trc.type.absolute")])
 	
 	def simulate_whitepoint_ctrl_handler(self, event):
@@ -405,8 +416,9 @@ class ReportFrame(BaseFrame):
 		""" Update controls with values from the configuration """
 		self.simulation_profile_ctrl.SetPath(getcfg("measurement_report.simulation_profile"))
 		self.set_profile("simulation", silent=True)
-		self.bt1886_gamma_ctrl.SetValue(str(getcfg("measurement_report.bt1886_gamma")))
-		self.bt1886_gamma_type_ctrl.SetSelection(self.bt1886_gamma_types_ba[getcfg("measurement_report.bt1886_gamma_type")])
+		self.trc_type_ctrl.SetSelection(getcfg("measurement_report.trc_type"))
+		self.trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
+		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("measurement_report.trc_gamma_type")])
 		self.devlink_profile_ctrl.SetPath(getcfg("measurement_report.devlink_profile"))
 		self.set_profile("devlink", silent=True)
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
@@ -446,12 +458,13 @@ class ReportFrame(BaseFrame):
 							  ICCP.XYZType) and
 				   isinstance(self.simulation_profile.tags.get("bXYZ"),
 							  ICCP.XYZType))
-		self.apply_bt1886_cb.Enable(enable1 and enable5)
+		self.apply_trc_cb.Enable(enable1 and enable5)
 		enable6 = (enable1 and enable5 and
-				   bool(getcfg("measurement_report.apply_bt1886_gamma_mapping")))
-		self.apply_bt1886_cb.SetValue(enable6)
-		self.bt1886_gamma_ctrl.Enable(enable6)
-		self.bt1886_gamma_type_ctrl.Enable(enable6)
+				   bool(getcfg("measurement_report.apply_trc")))
+		self.apply_trc_cb.SetValue(enable6)
+		self.trc_type_ctrl.Enable(enable6)
+		self.trc_gamma_ctrl.Enable(enable6)
+		self.trc_gamma_type_ctrl.Enable(enable6)
 		self.simulate_whitepoint_cb.Enable((enable1 and not enable2) or
 										   (color in ("LAB", "XYZ") and
 											chart_has_white))
@@ -474,15 +487,15 @@ class ReportFrame(BaseFrame):
 		self.output_profile_label.Enable((color in ("LAB", "RGB", "XYZ") or
 										  enable1) and
 										 (not enable1 or not enable2 or
-										 self.apply_bt1886_cb.GetValue()))
+										 self.apply_trc_cb.GetValue()))
 		self.output_profile_ctrl.Enable((color in ("LAB", "RGB", "XYZ") or
 										 enable1) and
 										(not enable1 or not enable2 or
-										self.apply_bt1886_cb.GetValue()))
+										self.apply_trc_cb.GetValue()))
 		self.output_profile_desc.Enable((color in ("LAB", "RGB", "XYZ") or
 										 enable1) and
 										(not enable1 or not enable2 or
-										self.apply_bt1886_cb.GetValue()))
+										self.apply_trc_cb.GetValue()))
 		output_profile = (bool(getcfg("measurement_report.output_profile")) and
 						  os.path.isfile(getcfg("measurement_report.output_profile")))
 		self.measure_btn.Enable(((enable1 and enable2 and (not enable6 or
@@ -520,7 +533,7 @@ class ReportFrame(BaseFrame):
 				isinstance(sim_profile.tags.rTRC, ICCP.CurveType)):
 				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
 				tf = sim_profile.tags.rTRC.get_transfer_function()
-				setcfg("measurement_report.apply_bt1886_gamma_mapping",
+				setcfg("measurement_report.apply_trc",
 					  int(tf[0][1] in (-240, -709)))
 		config.writecfg()
 		self.update_main_controls()

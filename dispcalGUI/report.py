@@ -101,10 +101,16 @@ def update(report_path, pack=True):
 			 '"FF_profile_whitepoint_normalized"\s*value="(.+?)"\s\/>', 0),
 			("${SIMULATION_PROFILE}",
 			 'SIMULATION_PROFILE\s*=\s*"(.+?)"[;,]', 0),
-			("${BT_1886_GAMMA}",
+			("${TRC_GAMMA}",
 			 'BT_1886_GAMMA\s*=\s*(.+?)[;,]', 0),
-			("${BT_1886_GAMMA_TYPE}",
+			("${TRC_GAMMA}",
+			 'TRC_GAMMA\s*=\s*(.+?)[;,]', 0),
+			("${TRC_GAMMA_TYPE}",
 			 'BT_1886_GAMMA_TYPE\s*=\s*"(.+?)"[;,]', 0),
+			("${TRC_GAMMA_TYPE}",
+			 'TRC_GAMMA_TYPE\s*=\s*"(.+?)"[;,]', 0),
+			("${TRC_TYPE}",
+			 'TRC_TYPE\s*=\s*"(.+?)"[;,]', 0),
 			("${WHITEPOINT_SIMULATION}",
 			 'WHITEPOINT_SIMULATION\s*=\s*(.+?)[;,]', 0),
 			("${WHITEPOINT_SIMULATION_RELATIVE}",
@@ -127,14 +133,19 @@ def update(report_path, pack=True):
 						 "${CAL_RGBLEVELS}": "null",
 						 "${GRAYSCALE}": "null",
 						 "${BLACKPOINT}": "-1 -1 -1",
-						 "${BT_1886_GAMMA}": "null",
+						 "${TRC_GAMMA}": "null",
 						 "${WHITEPOINT_SIMULATION}": "false",
 						 "${WHITEPOINT_SIMULATION_RELATIVE}": "false"}
 	
 	for placeholder, pattern, flags in data:
 		result = re.search(pattern, orig_report_html, flags)
 		if result or not placeholders2data.get(placeholder):
-			placeholders2data[placeholder] = result.groups()[0] if result else ""
+			if (placeholder == "${TRC_TYPE}" and not result and
+				"${TRC_GAMMA}" in placeholders2data):
+				default = "BT.1886"
+			else:
+				default = ""
+			placeholders2data[placeholder] = result.groups()[0] if result else default
 	
 	# backup original report
 	shutil.copy2(report_path, "%s.%s" % (report_path, 

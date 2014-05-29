@@ -4,7 +4,7 @@
 	"!language": "Français",
 	"!language_name": "FRENCH",
 	"apply": "Appliquer",
-	"apply_bt1886_gamma_mapping": "Appliquer le mappage de gamma BT.1886",
+	"apply_trc": "Appliquer le mappage de gamma",
 	"3dlut.bitdepth.input": "Résolution d'entrée de la table de correspondance 3D",
 	"3dlut.bitdepth.output": "Résolution de sortie de la table de correspondance 3D",
 	"3dlut.create": "Créer une table de correspondance 3D...",

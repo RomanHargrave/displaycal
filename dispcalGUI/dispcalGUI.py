@@ -2009,11 +2009,12 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 			if result != wx.ID_OK: return
 		skip = [
-			"3dlut.apply_bt1886_gamma_mapping",
+			"3dlut.apply_trc",
 			"3dlut.bitdepth.input",
 			"3dlut.bitdepth.output",
-			"3dlut.bt1886_gamma",
-			"3dlut.bt1886_gamma_type",
+			"3dlut.trc_gamma",
+			"3dlut.trc_gamma_type",
+			"3dlut.trc_type",
 			"3dlut.encoding.input",
 			"3dlut.encoding.input.backup",
 			"3dlut.encoding.output",
@@ -4810,15 +4811,15 @@ class MainFrame(BaseFrame):
 				mprof = sim_profile
 			else:
 				mprof = profile
-		apply_bt1886 = (use_sim and
-						getcfg("measurement_report.apply_bt1886_gamma_mapping") and
-						mprof.colorSpace == "RGB" and
-						isinstance(mprof.tags.get("rXYZ"), ICCP.XYZType) and
-						isinstance(mprof.tags.get("gXYZ"), ICCP.XYZType) and
-						isinstance(mprof.tags.get("bXYZ"), ICCP.XYZType))
+		apply_trc = (use_sim and
+					 getcfg("measurement_report.apply_trc") and
+					 mprof.colorSpace == "RGB" and
+					 isinstance(mprof.tags.get("rXYZ"), ICCP.XYZType) and
+					 isinstance(mprof.tags.get("gXYZ"), ICCP.XYZType) and
+					 isinstance(mprof.tags.get("bXYZ"), ICCP.XYZType))
 		bt1886 = None
-		if apply_bt1886:
-			# TRC BT.1886-like
+		if apply_trc:
+			# TRC BT.1886-like or gamma with black offset
 			try:
 				odata = self.worker.xicclu(oprof, (0, 0, 0), pcs="x")
 				if len(odata) != 1 or len(odata[0]) != 3:
@@ -4827,17 +4828,28 @@ class MainFrame(BaseFrame):
 				show_result_dialog(exception, self.reportframe)
 				return
 			XYZbp = odata[0]
-			gamma = getcfg("measurement_report.bt1886_gamma")
-			if getcfg("measurement_report.bt1886_gamma_type") == "b":
-				# Convert effective to technical gamma
-				gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1])
-			rXYZ = mprof.tags.rXYZ.values()
-			gXYZ = mprof.tags.gXYZ.values()
-			bXYZ = mprof.tags.bXYZ.values()
-			mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
-									   [rXYZ[1], gXYZ[1], bXYZ[1]],
-									   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-			bt1886 = colormath.BT1886(mtx, XYZbp, gamma)
+			gamma = getcfg("measurement_report.trc_gamma")
+			gamma_type = getcfg("measurement_report.trc_gamma_type")
+			if getcfg("measurement_report.trc_type"):
+				# Gamma with black offset
+				try:
+					self.worker.blend_profile_blackpoint(mprof, oprof, gamma,
+														 gamma_type == "b")
+				except Exception, exception:
+					show_result_dialog(exception, self.reportframe)
+					return
+			else:
+				# TRC BT.1886-like
+				if gamma_type == "b":
+					# Get technical gamma needed to achieve effective gamma
+					gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1])
+				rXYZ = mprof.tags.rXYZ.values()
+				gXYZ = mprof.tags.gXYZ.values()
+				bXYZ = mprof.tags.bXYZ.values()
+				mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+										   [rXYZ[1], gXYZ[1], bXYZ[1]],
+										   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+				bt1886 = colormath.BT1886(mtx, XYZbp, gamma)
 
 		if sim_profile:
 			sim_intent = ("a"
@@ -4934,12 +4946,12 @@ class MainFrame(BaseFrame):
 		# setup for measurement
 		self.setup_measurement(self.measurement_report, ti1, profile, sim_profile, 
 							   intent, sim_intent, devlink, ti3_ref, sim_ti3,
-							   save_path, chart, gray, apply_bt1886,
+							   save_path, chart, gray, apply_trc,
 							   colormanaged)
 
 	def measurement_report(self, ti1, profile, sim_profile, intent, sim_intent,
 						   devlink, ti3_ref, sim_ti3, save_path, chart, gray,
-						   apply_bt1886, colormanaged):
+						   apply_trc, colormanaged):
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("measurement_report")
 		safe_print(progress_msg)
@@ -4998,14 +5010,14 @@ class MainFrame(BaseFrame):
 						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
 								 profile, sim_profile, intent, sim_intent,
 								 devlink, ti3_ref, sim_ti3, save_path, chart,
-								 gray, apply_bt1886),
+								 gray, apply_trc),
 						  wargs=(ti1_path, cal_path, colormanaged),
 						  progress_msg=progress_msg, pauseable=True)
 	
 	def measurement_report_consumer(self, result, ti3_path, profile, sim_profile,
 									intent, sim_intent, devlink, ti3_ref,
 									sim_ti3, save_path, chart, gray,
-									apply_bt1886):
+									apply_trc):
 		
 		if not isinstance(result, Exception) and result:
 			# get item 0 of the ti3 to strip the CAL part from the measured data
@@ -5250,6 +5262,11 @@ class MainFrame(BaseFrame):
 		if not sim_profile and use_sim and use_sim_as_output:
 			sim_profile = profile
 		
+		if getcfg("measurement_report.trc_type"):
+			trc_type = ''
+		else:
+			trc_type = "BT.1886"
+
 		placeholders2data = {"${PLANCKIAN}": 'checked="checked"' if planckian 
 											 else "",
 							 "${DISPLAY}": self.display_ctrl.GetStringSelection().replace(" " +
@@ -5267,10 +5284,11 @@ class MainFrame(BaseFrame):
 							 "${PROFILE_WHITEPOINT_NORMALIZED}": "%f %f %f" % 
 																 wtpt_profile_norm,
 							 "${SIMULATION_PROFILE}": sim_profile.getDescription() if sim_profile else '',
-							 "${BT_1886_GAMMA}": str(getcfg("measurement_report.bt1886_gamma")
-													 if apply_bt1886 else 'null'),
-							 "${BT_1886_GAMMA_TYPE}": str(getcfg("measurement_report.bt1886_gamma_type")
-														  if apply_bt1886 else ''),
+							 "${TRC_GAMMA}": str(getcfg("measurement_report.trc_gamma")
+												 if apply_trc else 'null'),
+							 "${TRC_GAMMA_TYPE}": str(getcfg("measurement_report.trc_gamma_type")
+													  if apply_trc else ''),
+							 "${TRC_TYPE}": trc_type if apply_trc else '',
 							 "${WHITEPOINT_SIMULATION}": str(sim_intent == "a").lower(),
 							 "${WHITEPOINT_SIMULATION_RELATIVE}": str(sim_intent == "a" and
 																	  intent == "r").lower(),
