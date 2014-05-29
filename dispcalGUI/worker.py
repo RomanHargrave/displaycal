@@ -4756,7 +4756,7 @@ usage: spotread [-options] [logfile]
 						result = self.update_profile_B2A(profile)
 						if not isinstance(result, Exception) and result:
 							profchanged = True
-			if profchanged:
+			if profchanged and not isinstance(result, Exception) and result:
 				if "bkpt" in profile.tags and bpc_applied:
 					# We need to update the blackpoint tag
 					try:
