@@ -5138,7 +5138,12 @@ usage: spotread [-options] [logfile]
 			bgrgb = (0, 0, 0)
 		else:
 			# Constant APL
-			bgrgb = (.4, .4, .4)
+			rgbl = sum([v * size for v in rgb])
+			bgrgb = [(1.0 - v * size) * (1.0 - size) for v in rgb]
+			bgrgbl = sum(bgrgb)
+			desired_apl = .4
+			apl = desired_apl * 3
+			bgrgb = [(apl - max(rgbl - apl, 0.0)) / bgrgbl * v for v in bgrgb]
 		try:
 			self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
 		except socket.error, exception:
