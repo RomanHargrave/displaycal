@@ -263,19 +263,21 @@ def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50", weight=False):
 	"""
 	wp_out = get_whitepoint(wp_out)
 	XYZ = [X, Y, Z]
-	bp_in = list(bp_in)
-	bp_out = list(bp_out)
+	if weight:
+		L = XYZ2Lab(*[v * 100 for v in (X, Y, Z)])[0]
+		bp_in_Lab = XYZ2Lab(*[v * 100 for v in bp_in])
+		bp_out_Lab = XYZ2Lab(*[v * 100 for v in bp_out])
+		vv = (L - bp_in_Lab[0]) / (100.0 - bp_in_Lab[0])  # 0 at bp, 1 at wp
+		vv = 1.0 - vv
+		if vv < 0.0:
+			vv = 0.0
+		elif vv > 1.0:
+			vv = 1.0
+		vv = math.pow(vv, min(40.0, 80.0 / (max(bp_in_Lab[0],
+												bp_out_Lab[0]) or 1.0)))
+		bp_in = Lab2XYZ(*[v * vv for v in bp_in_Lab])
+		bp_out = Lab2XYZ(*[v * vv for v in bp_out_Lab])
 	for i, v in enumerate(XYZ):
-		if weight and bp_in[i] != bp_out[i]:
-			vv = (v - bp_in[i]) / (1.0 - bp_in[i])  # 0 at bp, 1 at wp
-			vv = 1.0 - vv
-			if vv < 0.0:
-				vv = 0.0
-			elif vv > 1.0:
-				vv = 1.0
-			vv = math.pow(vv, .5 / max(bp_in[i], bp_out[i]))
-			bp_in[i] *= vv
-			bp_out[i] *= vv
 		XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
 	return XYZ
 
