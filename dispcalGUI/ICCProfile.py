@@ -934,14 +934,15 @@ class LUT16Type(ICCProfileTag):
 		self._n = (tagData and uInt16Number(tagData[48:50])) or 0  # Input channel entries count
 		self._m = (tagData and uInt16Number(tagData[50:52])) or 0  # Output channel entries count
 
-	def apply_bpc(self, bp_out=(0, 0, 0)):
+	def apply_bpc(self, bp_out=(0, 0, 0), weight=False):
 		bp = [v / 65535.0 for v in self.clut[0][0]]
 		wp = [v / 65535.0 for v in self.clut[-1][-1]]
 		if bp != list(bp_out):
 			for block in self.clut:
 				for i, row in enumerate(block):
 					X, Y, Z = [v / 65535.0 for v in row]
-					XYZ = colormath.apply_bpc(X, Y, Z, bp, bp_out, wp)
+					XYZ = colormath.apply_bpc(X, Y, Z, bp, bp_out, wp,
+											  weight=weight)
 					block[i] = [int(round(max(v, 0) * 65535.0)) for v in XYZ]
 
 	@Property
@@ -1288,16 +1289,18 @@ class CurveType(ICCProfileTag, list):
 		list.append(self, object)
 		self._transfer_function = {}
 	
-	def apply_bpc(self, bp_out=0):
+	def apply_bpc(self, black_Y_out=0, weight=False):
 		if len(self) < 2:
 			return
-		bp_in = self[0] / 65535.0
-		wp_out = self[-1] / 65535.0
-		if bp_in != bp_out:
-			for i, v in enumerate(self):
-				self[i] = int(round(((wp_out - bp_out) * v / 65535.0 - wp_out *
-									 (bp_in - bp_out)) / (wp_out - bp_in) *
-									65535))
+		D50_xyY = colormath.XYZ2xyY(*colormath.get_whitepoint("D50"))
+		bp_in = colormath.xyY2XYZ(D50_xyY[0], D50_xyY[1], self[0] / 65535.0)
+		bp_out = colormath.xyY2XYZ(D50_xyY[0], D50_xyY[1], black_Y_out)
+		wp_out = colormath.xyY2XYZ(D50_xyY[0], D50_xyY[1], self[-1] / 65535.0)
+		for i, v in enumerate(self):
+			X, Y, Z = colormath.xyY2XYZ(D50_xyY[0], D50_xyY[1], v / 65535.0)
+			self[i] = int(round(colormath.apply_bpc(X, Y, Z, bp_in, bp_out,
+													wp_out, weight)[1] *
+								65535.0))
 	
 	def extend(self, iterable):
 		list.extend(self, iterable)
