@@ -3114,6 +3114,11 @@ class Worker(object):
 				self.retcode = retcode
 			if getattr(self, "patterngenerator", None):
 				try:
+					# Send fullscreen black to prevent plasma burn-in
+					self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
+				except Exception, exception:
+					safe_print(exception)
+				try:
 					del self.patterngenerator
 				except Exception, exception:
 					safe_print("%s: Warning - could not de-reference pattern "
