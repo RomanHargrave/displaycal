@@ -5142,7 +5142,7 @@ usage: spotread [-options] [logfile]
 		y = (display_size[1] - size) * y / display_size[1]
 		x, y, w, h = [max(v, 0) for v in (x, y, w, h)]
 		size = min(sum((w, h)) / 2.0, 1.0)
-		if getcfg("measure.darken_background"):
+		if getcfg("measure.darken_background") or size == 1.0:
 			bgrgb = (0, 0, 0)
 		else:
 			# Constant APL
