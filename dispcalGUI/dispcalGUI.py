@@ -4850,6 +4850,11 @@ class MainFrame(BaseFrame):
 										   [rXYZ[1], gXYZ[1], bXYZ[1]],
 										   [rXYZ[2], gXYZ[2], bXYZ[2]]])
 				bt1886 = colormath.BT1886(mtx, XYZbp, gamma)
+				# Make sure the profile has the expected Rec. 709 TRC
+				# for BT.1886
+				for i, channel in enumerate(("r", "g", "b")):
+					if channel + "TRC" in mprof.tags:
+						mprof.tags[channel + "TRC"].set_trc(-709)
 
 		if sim_profile:
 			sim_intent = ("a"

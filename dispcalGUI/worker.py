@@ -1976,10 +1976,18 @@ class Worker(object):
 				 profile_out_ext) = os.path.splitext(profile_out_basename)
 				profile_out_basename = "%s (2)%s" % (profile_out_filename,
 													 profile_out_ext)
-			if trc_gamma and trc_gamma_type in ("g", "G"):
-				# Gamma with black offset
-				self.blend_profile_blackpoint(profile_in, profile_out,
-											  trc_gamma, trc_gamma_type == "g")
+			if trc_gamma:
+				if trc_gamma_type in ("g", "G"):
+					# Gamma with black offset
+					self.blend_profile_blackpoint(profile_in, profile_out,
+												  trc_gamma,
+												  trc_gamma_type == "g")
+				else:
+					# Make sure the profile has the expected Rec. 709 TRC
+					# for BT.1886
+					for i, channel in enumerate(("r", "g", "b")):
+						if channel + "TRC" in profile_in.tags:
+							profile_in.tags[channel + "TRC"].set_trc(-709)
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 			profile_out.fileName = os.path.join(cwd, profile_out_basename)
