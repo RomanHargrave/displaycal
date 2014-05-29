@@ -2053,6 +2053,7 @@ class BT1886(object):
 			# L* correction needed
 			self.ingo = 0.0  # Non-linear Y that makes out black point
 			self.outsc = 1.0  # Scale to restore 1 -> 1
+			self.blendpow = min(40.0, 80.0 / (self.outL or 1.0))
 		else:
 			# Setup BT.1886 for the given target
 			# a* b* correction needed
@@ -2064,6 +2065,8 @@ class BT1886(object):
 			bkipow = math.pow(XYZbp[1], 1.0 / self.gamma)
 			self.ingo = bkipow / (1.0 - bkipow)  # non-linear Y that makes out black point
 			self.outsc = pow(1.0 - bkipow, self.gamma)  # Scale to restore 1 -> 1
+			self.blendpow = 40.0
+		self.absolute = absolute
 
 	def apply(self, X, Y, Z):
 		"""
@@ -2107,14 +2110,17 @@ class BT1886(object):
 															out[2]))
 
 		# Blend ab to required black point offset self.tab[] as L approaches black.
-		vv = (out[0] - self.outL) / (100.0 - self.outL)  # 0 at bp, 1 at wp
+		if self.absolute:
+			vv = out[0] / 100.0
+		else:
+			vv = (out[0] - self.outL) / (100.0 - self.outL)  # 0 at bp, 1 at wp
 		vv = 1.0 - vv
 
 		if vv < 0.0:
 			vv = 0.0
 		elif vv > 1.0:
 			vv = 1.0
-		vv = math.pow(vv, 40.0)
+		vv = math.pow(vv, self.blendpow)
 		out[0] += vv * self.tab[0]
 		out[1] += vv * self.tab[1]
 		out[2] += vv * self.tab[2]
