@@ -22,6 +22,7 @@ else:
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import xdg_data_home
 
+from log import safe_print
 from util_os import which
 from util_str import safe_str, safe_unicode
 import localization as lang
@@ -35,6 +36,7 @@ if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
 
 
 prefix = "/org/freedesktop/ColorManager/"
+device_ids = {}
 
 
 def client_connect():
@@ -69,6 +71,26 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 	# Should match device ID returned by gcm_session_get_output_id in
 	# gnome-settings-daemon/plugins/color/gsd-color-state.c
 	# and Edid::deviceId in colord-kde/colord-kded/Edid.cpp respectively
+	if "hash" in edid:
+		device_id = device_ids.get(edid["hash"])
+		if device_id:
+			return device_id
+		elif sys.platform not in ("darwin", "win32"):
+			try:
+				device = find("device-by-property", ["OutputEdidMd5",
+													 edid["hash"]])
+			except CDError, exception:
+				pass
+			except CDObjectQueryError, exception:
+				safe_print(exception)
+			else:
+				device_id = re.search(r":\s*(xrandr-[^\r\n]+)", device)
+				if device_id:
+					device_id = device_id.groups()[0]
+					device_ids[edid["hash"]] = device_id
+					return device_id
+	else:
+		return	
 	parts = ["xrandr"]
 	edid_keys = ["manufacturer", "monitor_name", "serial_ascii"]
 	if use_serial_32:
@@ -87,8 +109,33 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 				value = value[:12]
 			parts.append(str(value))
 	if len(parts) > 1:
-		return "-".join(parts)
+		device_id = "-".join(parts)
+	device_ids[edid["hash"]] = device_id
+	return device_id
 	# TODO: Should fall back to xrandr name
+
+
+def find(what, search):
+	colormgr = which("colormgr")
+	if not colormgr:
+		raise CDError("colormgr helper program not found")
+	if not isinstance(search, list):
+		search = [search]
+	args = ["find-%s" % what] + search
+	try:
+		p = sp.Popen([safe_str(colormgr)] + args, stdout=sp.PIPE,
+					 stderr=sp.STDOUT)
+		stdout, stderr = p.communicate()
+	except Exception, exception:
+		raise CDError(safe_str(exception))
+	else:
+		errmsg = "Could not find %s for %s" % (what, search)
+		if p.returncode != 0:
+			raise CDObjectQueryError(stdout.strip() or errmsg)
+		result = stdout.strip()
+		if not result:
+			raise CDObjectNotFoundError(errmsg)
+	return result
 
 
 def get_default_profile(device_id):
@@ -143,24 +190,12 @@ def get_default_profile(device_id):
 
 
 def get_object_path(search, object_type):
-	colormgr = which("colormgr")
-	if not colormgr:
-		raise CDError("colormgr helper program not found")
-	args = ["find-%s" % object_type, search]
-	try:
-		p = sp.Popen([safe_str(colormgr)] + args, stdout=sp.PIPE,
-					 stderr=sp.STDOUT)
-		stdout, stderr = p.communicate()
-	except Exception, exception:
-		raise CDError(safe_str(exception))
-	else:
-		errmsg = "Could not find object path for %s" % search
-		if p.returncode != 0:
-			raise CDObjectQueryError(stdout.strip() or errmsg)
-		object_path = stdout.strip().splitlines()[0].split(":", 1)[-1].strip()
-		if not object_path:
-			raise CDObjectNotFoundError(errmsg)
-	return object_path
+	result = find(object_type, search)
+	if result:
+		result = result.splitlines()[0].split(":", 1)[-1].strip()
+	if not result:
+		raise CDObjectNotFoundError("Could not find object path for %s" % search)
+	return result
 
 
 def install_profile(device_id, profile, profile_installname=None,
