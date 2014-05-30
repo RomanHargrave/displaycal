@@ -1145,6 +1145,21 @@ class LUTFrame(wx.Frame):
 					self.gTRC.append([Y, v])
 				elif i == 2:
 					self.bTRC.append([Z, v])
+
+	def move_handler(self, event):
+		if not self.IsShownOnScreen():
+			return
+		display_no, geometry, client_area = self.get_display()
+		if display_no != self.display_no:
+			self.display_no = display_no
+			# Translate from wx display index to Argyll display index
+			n = get_argyll_display_number(geometry)
+			if n is not None:
+				# Save Argyll display index to configuration
+				setcfg("display.number", n + 1)
+				# Load profile
+				self.load_lut(get_display_profile(n))
+		event.Skip()
 	
 	def plot_mode_select_handler(self, event):
 		self.client.resetzoom()
@@ -1442,7 +1457,6 @@ class LUTFrame(wx.Frame):
 		wx.CallLater(125, self.UpdatePointLabel, pointXY)
 
 	def OnClose(self, event):
-		config.writecfg()
 		if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 			self.worker.wrapup(False)
 		wx.GetApp().ExitMainLoop()
@@ -1658,7 +1672,9 @@ def main(profile=None):
 	app.frame.update_controls()
 	if profile and profile.startswith("-"):
 		profile = None
-	display_no = get_argyll_display_number(app.frame.get_display()[1])
+	app.frame.display_no, geometry, client_area = app.frame.get_display()
+	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
+	display_no = get_argyll_display_number(geometry)
 	setcfg("display.number", display_no + 1)
 	if profile:
 		app.frame.drop_handler(profile)
