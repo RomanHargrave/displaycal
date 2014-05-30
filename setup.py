@@ -29,13 +29,17 @@ import wexpect
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
 
-def create_appdmg():
+def create_appdmg(zeroinstall=False):
+	if zeroinstall:
+		dmgname = name + "-0install"
+		srcdir = "0install"
+	else:
+		dmgname = name + "-" + version
+		srcdir = "py2app.%s-py%s" % (get_platform(), sys.version[:3])
 	retcode = call(["hdiutil", "create", os.path.join(pydir, "dist", 
-													  "%s-%s.dmg" % 
-													  (name, version)), 
-					"-volname", name, "-srcfolder", 
-					os.path.join(pydir, "dist", "py2app.%s-py%s" % 
-					(get_platform(), sys.version[:3]), name + "-" + version)])
+													  dmgname + ".dmg"), 
+					"-volname", dmgname, "-srcfolder", 
+					os.path.join(pydir, "dist", srcdir, dmgname)])
 	if retcode != 0:
 		sys.exit(retcode)
 
@@ -79,6 +83,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"SUMMARY": description,
 		"DESC": longdesc,
 		"APPDATADESC": "<p>\n\t\t\t" + longdesc.replace("\n", "\n\t\t\t").replace(".\n", ".\n\t\t</p>\n\t\t<p>\n") + "\n\t\t</p>",
+		"AUTHOR": author,
 		"MAINTAINER": author,
 		"MAINTAINER_EMAIL": author_email,
 		"MAINTAINER_EMAIL_SHA1": sha1(author_email).hexdigest(),
@@ -607,9 +612,6 @@ def setup():
 			replace_placeholders(tmpl_path,
 								 os.path.join(pydir, "dist", tmpl_name),
 								 lastmod_time, mapping)
-	
-	if bdist_appdmg:
-		create_appdmg()
 
 	if bdist_deb:
 		# Read setup.cfg
@@ -987,6 +989,87 @@ def setup():
 						p.terminate()
 				else:
 					call(["0publish", "-x", dist_path.encode(fs_enc)])
+		# Create 0install app bundles
+		bundletemplate = os.path.join("0install", "template.app", "Contents")
+		bundletemplatepath = os.path.join(pydir, bundletemplate)
+		if os.path.isdir(bundletemplatepath):
+			p = Popen(["0install", "-V"], stdout=sp.PIPE)
+			stdout, stderr = p.communicate()
+			zeroinstall_version = re.search(r" (\d(?:\.\d+)+)", stdout)
+			if zeroinstall_version:
+				zeroinstall_version = zeroinstall_version.groups()[0]
+			if zeroinstall_version < "2.7":
+				zeroinstall_version = "2.7"
+			feeduri = "http://%s/0install/%s.xml" % (domain.lower(), name)
+			dist_dir = os.path.join(pydir, "dist", "0install",
+									name + "-0install")
+			for script, desc in scripts + [("0install-launcher",
+											"0install Launcher"),
+										   ("0install-cache-manager",
+											"0install Cache Manager")]:
+				if script.endswith("-apply-profiles"):
+					continue
+				bundlename = re.sub("^%s " % name, "", desc).strip()
+				bundledistpath = os.path.join(dist_dir, bundlename + ".app",
+											  "Contents")
+				replace_placeholders(os.path.join(bundletemplatepath,
+												  "Info.plist"),
+									 os.path.join(bundledistpath,
+												  "Info.plist"), lastmod_time,
+									 {"NAME": bundlename,
+									  "EXECUTABLE": script,
+									  "ID": ".".join(reversed(domain.split("."))).replace(name,
+																						  script)})
+				if script.startswith(name):
+					run = "0launch%s -- %s" % (re.sub("^%s" % name,
+													  " --command=run", script),
+											   feeduri)
+				else:
+					run = {"0install-launcher": "0launch --gui " + feeduri,
+						   "0install-cache-manager": "0store manage"}.get(script)
+				replace_placeholders(os.path.join(bundletemplatepath, "MacOS",
+												  "template"),
+									 os.path.join(bundledistpath,
+												  "MacOS", script),
+									 lastmod_time,
+									 {"EXEC": run,
+									  "ZEROINSTALL_VERSION": zeroinstall_version})
+				os.chmod(os.path.join(bundledistpath, "MacOS", script), 0755)
+				for binary in ("0python", "notify"):
+					shutil.copy2(os.path.join(bundletemplatepath, "MacOS",
+											  binary),
+								 os.path.join(bundledistpath,
+											  "MacOS", binary))
+				resdir = os.path.join(bundledistpath, "Resources")
+				if not os.path.isdir(resdir):
+					os.mkdir(resdir)
+				if script.startswith(name):
+					iconsrc = os.path.join(pydir, name, "theme", "icons",
+										   script + ".icns")
+				else:
+					iconsrc = os.path.join(pydir, "0install",
+										   "ZeroInstall.icns")
+				icondst = os.path.join(resdir, script + ".icns")
+				if os.path.isfile(iconsrc) and not os.path.isfile(icondst):
+					shutil.copy2(iconsrc, icondst)
+			# README as .webloc file (link to homepage)
+			with codecs.open(os.path.join(dist_dir, "README.webloc"), "w",
+							 "UTF-8") as readme:
+				readme.write("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>URL</key>
+	<string>http://%s/</string>
+</dict>
+</plist>
+""" % domain.lower())
+			# Copy LICENSE.txt
+			shutil.copy2(os.path.join(pydir, "LICENSE.txt"),
+						 os.path.join(dist_dir, "LICENSE.txt"))
+	
+	if bdist_appdmg:
+		create_appdmg(zeroinstall)
 
 
 if __name__ == "__main__":
