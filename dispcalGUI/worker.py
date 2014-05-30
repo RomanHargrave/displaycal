@@ -4085,25 +4085,23 @@ usage: spotread [-options] [logfile]
 					result = self._install_profile_loader_xdg(silent)
 				if gcm_import:
 					result2 = self._install_profile_gcm(profile)
-					if result2 is True:
-						result2 = Info(lang.getstr("profile.import.success"))
-					elif result2 is False:
+					if result2 is False:
 						if not self.errors:
 							self.log(lang.getstr("aborted"))
 							if not isinstance(result, Exception) and result:
 								result = False
 						else:
-							result2 = Error("".join(self.errors))
-					if isinstance(result, Exception) and result2:
-						result = result.__class__("\n\n".join([safe_unicode(v)
-															   for v in (result,
-																		 result2)]))
+							result = Error("".join(self.errors))
+					elif isinstance(result2, Exception):
+						result = result2
 			if not isinstance(result, Exception) and result:
 				if verbose >= 1: self.log(lang.getstr("success"))
 				if sys.platform == "darwin" and False:  # NEVER
 					# If installing the profile by just copying it to the
 					# right location, tell user to select it manually
 					msg = lang.getstr("profile.install.osx_manual_select")
+				elif gcm_import:
+					msg = lang.getstr("profile.import.success")
 				else:
 					msg = lang.getstr("profile.install.success")
 				result = Info(msg)
