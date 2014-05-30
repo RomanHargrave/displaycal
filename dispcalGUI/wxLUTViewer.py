@@ -429,7 +429,7 @@ class LUTCanvas(plot.PlotCanvas):
 		
 		sx, sy = mDataDict["scaledXY"]  # Scaled x, y of closest point
 		dc.DrawRectangle(sx - 3, sy - 3, 7, 7)  # 7x7 square centered on point
-        
+
 	def GetClosestPoints(self, pntXY, pointScaled= True):
 		"""Returns list with
 			[curveNumber, legend, index of closest point, pointXY, scaledXY, distance]
@@ -458,7 +458,7 @@ class LUTCanvas(plot.PlotCanvas):
 		self.resetzoom()
 		if self.last_draw:
 			self.center()
-            
+
 	def OnMouseLeftDown(self,event):
 		self._zoomCorner1[0], self._zoomCorner1[1]= self._getXY(event)
 		self._screenCoordinates = plot._Numeric.array(event.GetPosition())
@@ -1007,7 +1007,7 @@ class LUTFrame(wx.Frame):
 
 		if (intent == "r" and (not ("B2A0" in self.profile.tags or
 									"A2B0" in self.profile.tags) or
-						       not self.toggle_clut.GetValue()) and
+							   not self.toggle_clut.GetValue()) and
 			isinstance(self.profile.tags.get("rTRC"), ICCP.CurveType) and
 			isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
 			isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType)):
@@ -1178,7 +1178,7 @@ class LUTFrame(wx.Frame):
 				profile = ICCP.ICCProfile(profile)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
-									     "\n" + profile), self)
+										 "\n" + profile), self)
 				return
 		self.profile = profile
 		self.rTRC = profile.tags.get("rTRC")
@@ -1390,7 +1390,7 @@ class LUTFrame(wx.Frame):
 		self.save_plot_btn.Enable(bool(curves))
 		if hasattr(self, "reload_vcgt_btn"):
 			self.reload_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
-									    bool(self.profile))
+										bool(self.profile))
 			self.reload_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		if hasattr(self, "apply_bpc_btn"):
 			enable_bpc = (not(self.plot_mode_select.GetSelection()) and
@@ -1668,4 +1668,4 @@ def main(profile=None):
 	app.MainLoop()
 
 if __name__ == '__main__':
-    main(*sys.argv[max(len(sys.argv) - 1, 1):])
+	main(*sys.argv[max(len(sys.argv) - 1, 1):])
