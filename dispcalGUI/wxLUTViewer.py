@@ -1208,7 +1208,7 @@ class LUTFrame(wx.Frame):
 		self.cbox_sizer.Layout()
 		self.box_sizer.Layout()
 		self.DrawLUT()
-		self.handle_errors()
+		wx.CallAfter(self.handle_errors)
 
 	def add_tone_values(self, legend):
 		if not self.profile:
