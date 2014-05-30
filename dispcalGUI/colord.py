@@ -79,10 +79,10 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 			try:
 				device = find("device-by-property", ["OutputEdidMd5",
 													 edid["hash"]])
-			except CDError, exception:
-				pass
 			except CDObjectQueryError, exception:
 				safe_print(exception)
+			except CDError, exception:
+				pass
 			else:
 				device_id = re.search(r":\s*(xrandr-[^\r\n]+)", device)
 				if device_id:
