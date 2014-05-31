@@ -1698,8 +1698,7 @@ class Worker(object):
 				sys.platform == "darwin"):
 				# On the Mac dispcal's test window
 				# hides the cursor and steals focus
-				start_new_thread(mac_app_activate, (1, appname if isapp 
-													else "Python"))
+				start_new_thread(mac_app_activate, (1, wx.GetApp().AppName))
 			if (self.instrument_calibration_complete or
 				((config.get_display_name() in config.untethered_displays or
 				  getcfg("measure.darken_background")) and
