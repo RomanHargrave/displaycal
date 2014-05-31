@@ -1428,11 +1428,11 @@ class MainFrame(BaseFrame):
 		if sys.platform != "darwin":
 			file_.AppendSeparator()
 		self.menuitem_prefs = file_.Append(
-			-1, "&" + "menuitem.set_argyll_bin")
+			wx.ID_PREFERENCES, "&" + "menuitem.set_argyll_bin")
 		self.Bind(wx.EVT_MENU, self.set_argyll_bin_handler, self.menuitem_prefs)
 		if sys.platform != "darwin":
 			file_.AppendSeparator()
-		self.menuitem_quit = file_.Append(-1, "&menuitem.quit\tCtrl+Q")
+		self.menuitem_quit = file_.Append(wx.ID_EXIT, "&menuitem.quit\tCtrl+Q")
 		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 
 		options = self.menubar.GetMenu(self.menubar.FindMenu("menu.options"))
@@ -9922,10 +9922,7 @@ class MainFrame(BaseFrame):
 
 class MainApp(wx.App):
 	def OnInit(self):
-		if sys.platform == "darwin" and not isapp:
-			self.SetAppName("Python")
-		else:
-			self.SetAppName(appname)
+		self.SetAppName(appname)
 		##wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("!language_name"), 
 						  ##wx.LANGUAGE_ENGLISH)
 		##self.locale = wx.Locale(wx_lang)

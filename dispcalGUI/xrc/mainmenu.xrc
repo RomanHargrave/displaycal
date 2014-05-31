@@ -158,8 +158,8 @@
     <object class="wxMenu" name="menu.language">
       <label>menu.language</label>
     </object>
-    <object class="wxMenu" name="menu.help">
-      <object class="wxMenuItem" name="menu.about">
+    <object class="wxMenu" name="wxID_HELP">
+      <object class="wxMenuItem" name="wxID_ABOUT">
         <label>menu.about</label>
       </object>
       <object class="wxMenuItem" name="readme">
