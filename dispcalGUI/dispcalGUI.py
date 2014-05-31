@@ -8979,6 +8979,10 @@ class MainFrame(BaseFrame):
 
 	def set_argyll_bin_handler(self, event):
 		""" Set Argyll CMS binary executables directory """
+		if (getattr(self.worker, "thread", None) and
+			self.worker.thread.isAlive()):
+			wx.Bell()
+			return
 		if set_argyll_bin():
 			self.check_update_controls() or self.update_menus()
 			if len(self.worker.displays):
@@ -9907,6 +9911,10 @@ class MainFrame(BaseFrame):
 		self.SetFocus()
 
 	def OnClose(self, event=None):
+		if (getattr(self.worker, "thread", None) and
+			self.worker.thread.isAlive()):
+			self.worker.abort_subprocess(True)
+			return
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not hasattr(self, "tcframe") or self.tcframe.tc_close_handler():
 			writecfg()
