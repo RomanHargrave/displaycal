@@ -9930,7 +9930,6 @@ class MainFrame(BaseFrame):
 
 class MainApp(wx.App):
 	def OnInit(self):
-		self.SetAppName(appname)
 		##wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("!language_name"), 
 						  ##wx.LANGUAGE_ENGLISH)
 		##self.locale = wx.Locale(wx_lang)
