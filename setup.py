@@ -1046,10 +1046,13 @@ def setup():
 													  "MacOS")):
 					if binary == "template":
 						continue
-					shutil.copy2(os.path.join(bundletemplatepath, "MacOS",
-											  binary),
-								 os.path.join(bundledistpath,
-											  "MacOS", binary))
+					src = os.path.join(bundletemplatepath, "MacOS", binary)
+					dst = os.path.join(bundledistpath, "MacOS", binary)
+					if os.path.islink(src):
+						linkto = os.readlink(src)
+						os.symlink(linkto, dst)
+					else:
+						shutil.copy2(src, dst)
 				resdir = os.path.join(bundledistpath, "Resources")
 				if not os.path.isdir(resdir):
 					os.mkdir(resdir)
