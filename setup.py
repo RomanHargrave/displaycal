@@ -421,16 +421,6 @@ def setup():
 	if "buildservice" in sys.argv[1:]:
 		sys.argv.remove("buildservice")
 
-	if zeroinstall:
-		sys.argv.remove("0install")
-
-	if bdist_appdmg:
-		i = sys.argv.index("bdist_appdmg")
-		sys.argv = sys.argv[:i] + sys.argv[i + 1:]
-		if len(sys.argv) == 1:
-			create_appdmg()
-			return
-
 	if bdist_deb:
 		bdist_args = ["bdist_rpm"]
 		if not arch:
@@ -577,8 +567,14 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
+	if zeroinstall:
+		sys.argv.remove("0install")
+
+	if bdist_appdmg:
+		sys.argv.remove("bdist_appdmg")
+
 	if (not bdist_lipa and not zeroinstall and not buildservice and
-		not appdata) or sys.argv[1:]:
+		not appdata and not bdist_appdmg) or sys.argv[1:]:
 		print sys.argv[1:]
 		from setup import setup
 		setup()
