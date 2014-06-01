@@ -31,12 +31,10 @@ def mac_app_activate(delay=0, mac_app_name="Finder"):
 	
 	"""
 	applescript = [
-		'on appIsRunning(appName)',
-			'tell application "System Events" to (name of processes) contains '
-			'appName',
-		'end appIsRunning',
-		'if appIsRunning("%s") then' % mac_app_name,
-			'tell app "%s" to activate' % mac_app_name,
+		'if app "%s" is running then' % mac_app_name,
+			# Use 'run script' to prevent the app activating upon script
+			# compilation even if not running
+			'run script "tell app \"%s\" to activate"' % mac_app_name,
 		'end if'
 	]
 	if delay:
@@ -50,11 +48,7 @@ def mac_terminal_do_script(script=None, do=True):
 	
 	"""
 	applescript = [
-		'on appIsRunning(appName)',
-			'tell application "System Events" to (name of processes) contains '
-			'appName',
-		'end appIsRunning',
-		'if appIsRunning("Terminal") then',
+		'if app "Terminal" is running then',
 			'tell app "Terminal"',
 				'activate',
 				'do script ""',  # Terminal is already running, open a new 
