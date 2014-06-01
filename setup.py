@@ -1050,7 +1050,10 @@ def setup():
 					dst = os.path.join(bundledistpath, "MacOS", binary)
 					if os.path.islink(src):
 						linkto = os.readlink(src)
-						os.symlink(linkto, dst)
+						if os.path.islink(dst) and os.readlink(dst) != linkto:
+							os.remove(dst)
+						if not os.path.islink(dst):
+							os.symlink(linkto, dst)
 					else:
 						shutil.copy2(src, dst)
 				resdir = os.path.join(bundledistpath, "Resources")
