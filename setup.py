@@ -1012,8 +1012,12 @@ def setup():
 											"0install Cache Manager")]:
 				if script.endswith("-apply-profiles"):
 					continue
-				bundlename = re.sub("^%s " % name, "", desc).strip()
-				bundledistpath = os.path.join(dist_dir, bundlename + ".app",
+				desc = re.sub("^%s " % name, "", desc).strip()
+				if script == "0install-launcher":
+					bundlename = name
+				else:
+					bundlename = desc
+				bundledistpath = os.path.join(dist_dir, desc + ".app",
 											  "Contents")
 				replace_placeholders(os.path.join(bundletemplatepath,
 												  "Info.plist"),
