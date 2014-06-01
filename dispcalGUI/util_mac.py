@@ -34,7 +34,7 @@ def mac_app_activate(delay=0, mac_app_name="Finder"):
 		'if app "%s" is running then' % mac_app_name,
 			# Use 'run script' to prevent the app activating upon script
 			# compilation even if not running
-			'run script "tell app \"%s\" to activate"' % mac_app_name,
+			r'run script "tell app \"%s\" to activate"' % mac_app_name,
 		'end if'
 	]
 	if delay:
