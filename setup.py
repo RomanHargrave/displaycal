@@ -863,8 +863,11 @@ def setup():
 						runner = domtree.createElement("runner")
 						if group.getAttribute("arch").startswith("Windows-"):
 							runner.setAttribute("command", "run-win")
-						runner.setAttribute("interface",
-											"http://repo.roscidus.com/python/python")
+						if group.getAttribute("arch").startswith("MacOSX"):
+							python = "http://%s/0install/python.xml" % domain.lower()
+						else:
+							python = "http://repo.roscidus.com/python/python"
+						runner.setAttribute("interface", python)
 						runner.setAttribute("version",
 											"%i.%i..!3.0" % py_minversion)
 						for script, desc in scripts:
@@ -1035,7 +1038,10 @@ def setup():
 									 {"EXEC": run,
 									  "ZEROINSTALL_VERSION": zeroinstall_version})
 				os.chmod(os.path.join(bundledistpath, "MacOS", script), 0755)
-				for binary in ("0python", "notify"):
+				for binary in os.listdir(os.path.join(bundletemplatepath,
+													  "MacOS")):
+					if binary == "template":
+						continue
 					shutil.copy2(os.path.join(bundletemplatepath, "MacOS",
 											  binary),
 								 os.path.join(bundledistpath,

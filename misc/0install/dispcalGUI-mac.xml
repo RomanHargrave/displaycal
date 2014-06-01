@@ -10,7 +10,7 @@ ${DESC}</description>
 	<category>Graphics</category>
 	<feed-for interface="${URL}0install/dispcalGUI.xml" />
 	<group arch="MacOSX-*" license="GPL v3 (GNU General Public License)" main="dispcalGUI.pyw">
-		<requires interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0">
+		<requires interface="${URL}0install/python.xml" version="${PY_MINVERSION}..!3.0">
 			<version before="3.0" not-before="${PY_MINVERSION}" />
 		</requires>
 		<requires interface="${URL}0install/wxpython.xml" version="${WX_MINVERSION}..">
