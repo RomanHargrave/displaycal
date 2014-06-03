@@ -19,9 +19,9 @@ if pyver < py_minversion or pyver > py_maxversion:
 						".".join(str(n) for n in py_maxversion),
 					    sys.version.split()[0]))
 
-from config import (autostart_home, datahome, enc, exe, exe_ext, exedir, 
-					exename, get_data_path,fs_enc, isapp, isexe, pydir,
-					pyname, pypath, resfiles, runtype)
+from config import (autostart_home, confighome, datahome, enc, exe, exe_ext,
+					exedir, exename, get_data_path,fs_enc, isapp, isexe,
+					logdir, pydir, pyname, pypath, resfiles, runtype)
 from debughelpers import ResourceError, handle_error
 from log import log, safe_print
 from meta import build, name as appname, version
@@ -160,23 +160,6 @@ def main(module=None):
 							   % unicode(stdout.read(), enc, "replace"))
 				handle_error(msg)
 		else:
-			if sys.platform == "darwin" and ("--admin" not in sys.argv[1:] 
-											 and 80 not in posix.getgroups()):
-				# GID 80 is the admin group on Mac OS X
-				# Argyll dispwin/dispcal need admin (not root) privileges
-				import subprocess as sp
-				if isapp:
-					# PyInstaller: executable is app-specific
-					# py2app: executable is always the same, differentiation
-					# occurs in Resources/main.py
-					cmd = u"'%s'" % (exe if exename.startswith(appname)
-									 else os.path.join(exedir, appname))
-				else:
-					cmd = u"'%s' '%s'" % (exe, pypath)
-				sp.Popen(['osascript', '-e', 
-						  'do shell script "%s --admin" with administrator privileges' 
-						 % cmd.encode(fs_enc)])
-				sys.exit(0)
 			# Create main data dir if it does not exist
 			if not os.path.exists(datahome):
 				try:
@@ -184,6 +167,20 @@ def main(module=None):
 				except Exception, exception:
 					handle_error("Warning - could not create directory '%s'" % 
 								 datahome)
+			elif sys.platform == "darwin":
+				# Check & fix permissions if necessary
+				import getpass
+				user = getpass.getuser().decode(fs_enc)
+				script = []
+				for directory in (confighome, datahome, logdir):
+					if (os.path.isdir(directory) and
+						not os.access(directory, os.W_OK)):
+						script.append("chown -R '%s' '%s'" % (user, directory))
+				if script:
+					import subprocess as sp
+					sp.Popen(['osascript', '-e', 
+							  'do shell script "%s" with administrator privileges' 
+							  % ";".join(script).encode(fs_enc)])
 			if sys.platform not in ("darwin", "win32"):
 				# Linux: Try and fix v0.2.1b calibration loader, because 
 				# calibrationloader.sh is no longer present in v0.2.2b+
