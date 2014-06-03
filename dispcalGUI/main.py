@@ -178,9 +178,9 @@ def main(module=None):
 						script.append("chown -R '%s' '%s'" % (user, directory))
 				if script:
 					import subprocess as sp
-					sp.Popen(['osascript', '-e', 
-							  'do shell script "%s" with administrator privileges' 
-							  % ";".join(script).encode(fs_enc)])
+					sp.call(['osascript', '-e', 
+							 'do shell script "%s" with administrator privileges' 
+							 % ";".join(script).encode(fs_enc)])
 			if sys.platform not in ("darwin", "win32"):
 				# Linux: Try and fix v0.2.1b calibration loader, because 
 				# calibrationloader.sh is no longer present in v0.2.2b+
