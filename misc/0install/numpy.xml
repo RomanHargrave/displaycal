@@ -45,7 +45,7 @@ Besides its obvious scientific uses, NumPy can also be used as an efficient mult
 			</requires>
 		</implementation>
 		<implementation arch="Windows-*" version="0.0.0" released="0000-00-00" stability="stable">
-			<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+			<requires interface="${URL}0install/python.xml" version="2.7..!3.0">
 				<version not-before="2.7" before="3.0" />
 			</requires>
 		</implementation>

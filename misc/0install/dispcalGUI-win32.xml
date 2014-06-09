@@ -10,7 +10,7 @@ ${DESC}</description>
 	<category>Graphics</category>
 	<feed-for interface="${URL}0install/dispcalGUI.xml" />
 	<group arch="Windows-*" license="GPL v3 (GNU General Public License)" main="dispcalGUI.pyw">
-		<requires interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0">
+		<requires interface="${URL}0install/python.xml" version="${PY_MINVERSION}..!3.0">
 			<version before="3.0" not-before="${PY_MINVERSION}" />
 		</requires>
 		<requires interface="${URL}0install/wxpython.xml" version="${WX_MINVERSION}..">
@@ -22,7 +22,7 @@ ${DESC}</description>
 		<command name="set-calibration-loading">
 			<arg>-c</arg>
 			<arg>import sys; from dispcalGUI import util_win; util_win.calibration_management_isenabled() or util_win.enable_calibration_management() if '--os' in sys.argv[1:] else not util_win.calibration_management_isenabled() or util_win.disable_calibration_management();</arg>
-			<runner interface="http://repo.roscidus.com/python/python" version="2.5..!3.0" command="run-win" />
+			<runner interface="${URL}0install/python.xml" version="2.5..!3.0" command="run-win" />
 			<working-dir src="." />
 		</command>
 		<implementation released="0000-00-00" version="0.0.0.0">

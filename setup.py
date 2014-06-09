@@ -859,10 +859,10 @@ def setup():
 						runner = domtree.createElement("runner")
 						if group.getAttribute("arch").startswith("Windows-"):
 							runner.setAttribute("command", "run-win")
-						if group.getAttribute("arch").startswith("MacOSX"):
-							python = "http://%s/0install/python.xml" % domain.lower()
-						else:
+						if group.getAttribute("arch").startswith("Linux"):
 							python = "http://repo.roscidus.com/python/python"
+						else:
+							python = "http://%s/0install/python.xml" % domain.lower()
 						runner.setAttribute("interface", python)
 						runner.setAttribute("version",
 											"%i.%i..!3.0" % py_minversion)
