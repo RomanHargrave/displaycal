@@ -659,7 +659,7 @@ def uInt16Number(binaryString):
 
 
 def uInt16Number_tohex(num):
-	return struct.pack(">H", num)
+	return struct.pack(">H", int(round(num)))
 
 
 def uInt32Number(binaryString):
@@ -667,7 +667,7 @@ def uInt32Number(binaryString):
 
 
 def uInt32Number_tohex(num):
-	return struct.pack(">I", num)
+	return struct.pack(">I", int(round(num)))
 
 
 def uInt64Number(binaryString):
@@ -675,7 +675,7 @@ def uInt64Number(binaryString):
 
 
 def uInt64Number_tohex(num):
-	return struct.pack(">Q", num)
+	return struct.pack(">Q", int(round(num)))
 
 
 def uInt8Number(binaryString):
@@ -683,7 +683,7 @@ def uInt8Number(binaryString):
 
 
 def uInt8Number_tohex(num):
-	return struct.pack(">H", num)[1]
+	return struct.pack(">H", int(round(num)))[1]
 
 
 def videoCardGamma(tagData, tagSignature):
@@ -943,7 +943,7 @@ class LUT16Type(ICCProfileTag):
 					X, Y, Z = [v / 65535.0 for v in row]
 					XYZ = colormath.apply_bpc(X, Y, Z, bp, bp_out, wp,
 											  weight=weight)
-					block[i] = [int(round(max(v, 0) * 65535.0)) for v in XYZ]
+					block[i] = [max(v, 0) * 65535.0 for v in XYZ]
 
 	@Property
 	def clut():
@@ -1058,12 +1058,12 @@ class LUT16Type(ICCProfileTag):
 				lut = OrderedDict()
 				maxv = len(entries) - 1.0
 				for i, entry in enumerate(entries):
-					lut[int(round(entry / 65535.0 * maxv))] = int(round(i / maxv * 65535))
+					lut[entry / 65535.0 * maxv] = i / maxv * 65535
 				xp = lut.keys()
 				fp = lut.values()
 				for i in xrange(len(entries)):
 					if not i in lut:
-						lut[i] = int(round(colormath.interp(i, xp, fp)))
+						lut[i] = colormath.interp(i, xp, fp)
 				lut.sort()
 				channel[e] = lut.values()
 	
@@ -1298,9 +1298,8 @@ class CurveType(ICCProfileTag, list):
 		wp_out = colormath.xyY2XYZ(D50_xyY[0], D50_xyY[1], self[-1] / 65535.0)
 		for i, v in enumerate(self):
 			X, Y, Z = colormath.xyY2XYZ(D50_xyY[0], D50_xyY[1], v / 65535.0)
-			self[i] = int(round(colormath.apply_bpc(X, Y, Z, bp_in, bp_out,
-													wp_out, weight)[1] *
-								65535.0))
+			self[i] = colormath.apply_bpc(X, Y, Z, bp_in, bp_out,
+										  wp_out, weight)[1] * 65535.0
 	
 	def extend(self, iterable):
 		list.extend(self, iterable)
@@ -1425,7 +1424,7 @@ class CurveType(ICCProfileTag, list):
 		self.set_trc(-709, size)
 		for i, v in enumerate(self):
 			X, Y, Z = colormath.xyY2XYZ(x, y, v / 65535.0)
-			self[i] = int(round(bt1886.apply(X, Y, Z)[1] * 65535.0))
+			self[i] = bt1886.apply(X, Y, Z)[1] * 65535.0
 	
 	def set_dicom_trc(self, black_Y=0, white_Y=100, size=None):
 		"""
@@ -1454,7 +1453,7 @@ class CurveType(ICCProfileTag, list):
 												 (float(v) / (size - 1)) *
 												 (white_jndi -
 												  black_jndi))) / white_dicomY
-			self.append(int(round(vmin + v * (65535 - vmin))))
+			self.append(vmin + v * (65535 - vmin))
 	
 	def set_trc(self, power=2.2, size=None, vmin=0, vmax=65535):
 		"""
@@ -1475,7 +1474,7 @@ class CurveType(ICCProfileTag, list):
 				size = 1024
 		self[:] = []
 		for i in xrange(0, size):
-			self.append(int(round(vmin + colormath.specialpow(float(i) / (size - 1), power) * (vmax - vmin))))
+			self.append(vmin + colormath.specialpow(float(i) / (size - 1), power) * (vmax - vmin))
 	
 	def sort(self, cmp=None, key=None, reverse=False):
 		list.sort(self, cmp, key, reverse)
@@ -2371,7 +2370,7 @@ class VideoCardGammaTableType(VideoCardGammaType):
 			step = float(length - 1) / (len(self.data[i]) - 1)
 			interpolation = CRInterpolation(resized.data[i])
 			for j in xrange(0, len(self.data[i])):
-				self.data[i][j] = int(round(interpolation(j * step)))
+				self.data[i][j] = interpolation(j * step)
 	
 	def smooth_avg(self, passes=1, window=None):
 		"""
@@ -2398,7 +2397,7 @@ class VideoCardGammaTableType(VideoCardGammaType):
 							windowsize = 0
 							for k, weight in enumerate(tmpwindow):
 								windowsize += float(weight) * windowslice[k]
-							v = int(round(windowsize / sum(tmpwindow)))
+							v = windowsize / sum(tmpwindow)
 							break
 						else:
 							tmpwindow = tmpwindow[1:-1]

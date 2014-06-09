@@ -3253,7 +3253,7 @@ class Worker(object):
 			# Apply black point compensation
 			XYZ = colormath.apply_bpc(X, Y, Z, XYZbp, (0, 0, 0), XYZwp)
 			XYZ = [v / XYZwp[1] for v in XYZ]
-			A2B0.clut[-1].append([int(round(max(v * 32768, 0))) for v in XYZ])
+			A2B0.clut[-1].append([max(v * 32768, 0) for v in XYZ])
 		if logfile:
 			logfile.write("\n")
 		profile.tags.A2B0 = A2B0
@@ -3463,7 +3463,7 @@ class Worker(object):
 					if i == 0:
 						# L*
 						v[0] = rLinterp[i](v[0] * maxL)
-				itable.input[i].append(int(round(v[i] * 65535)))
+				itable.input[i].append(v[i] * 65535)
 			if logfile and j % math.floor(maxval / 100.0) == 0:
 				logfile.write("\r%i%%" % round(j / maxval * 100))
 		if logfile:
@@ -3574,7 +3574,7 @@ class Worker(object):
 				for G in xrange(clutres):
 					itable.clut.append([])
 					for B in xrange(clutres):
-						itable.clut[-1].append([int(round(v * step * 65535))
+						itable.clut[-1].append([v * step * 65535
 												for v in (R, G, B)])
 					if logfile:
 						logfile.write("\r%i%%" % round((R * G * B) /
@@ -3592,7 +3592,7 @@ class Worker(object):
 					RGB = 0, 0, 0
 				elif i == numrows - 1.0:
 					RGB = 1, 1, 1
-				itable.clut[-1].append([int(round(v * 65535)) for v in RGB])
+				itable.clut[-1].append([v * 65535 for v in RGB])
 		if logfile:
 			logfile.write("\n")
 		
@@ -3629,8 +3629,7 @@ class Worker(object):
 										RGB[k].append(RGBn[k])
 						grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
 				for j, row in enumerate(grid):
-					itable.clut[i * clutres + j] = [[int(round(v))
-													 for v in RGB]
+					itable.clut[i * clutres + j] = [[v for v in RGB]
 													for RGB in row]
 			if getcfg("profile.b2a.smooth.diagpng") and profile.fileName:
 				itable.clut_writepng(fname + ".B2A%i.post.CLUT.extrasmooth.png" %
@@ -3642,7 +3641,7 @@ class Worker(object):
 		maxval = numentries - 1.0
 		for i in xrange(len(itable.output)):
 			for j in xrange(numentries):
-				itable.output[i].append(int(round(j / maxval * 65535)))
+				itable.output[i].append(j / maxval * 65535)
 		
 		# Update profile
 		profile.tags["B2A%i" % tableno] = itable

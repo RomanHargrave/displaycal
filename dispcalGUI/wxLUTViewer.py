@@ -1289,9 +1289,9 @@ class LUTFrame(wx.Frame):
 				if isinstance(self.rTRC, ICCP.CurveType):
 					self.trc = ICCP.CurveType()
 					for i in xrange(len(self.rTRC)):
-						self.trc.append(int(round((self.rTRC[i] +
-												   self.gTRC[i] +
-												   self.bTRC[i]) / 3.0)))
+						self.trc.append((self.rTRC[i] +
+										 self.gTRC[i] +
+										 self.bTRC[i]) / 3.0)
 				else:
 					self.trc = CoordinateType()
 					for i in xrange(len(self.rTRC)):
