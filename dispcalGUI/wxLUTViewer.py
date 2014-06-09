@@ -1669,13 +1669,13 @@ def main(profile=None):
 	app = LUTViewer(0)
 	app.frame.worker.enumerate_displays_and_ports(check_lut_access=False,
 												  enumerate_ports=False)
-	app.frame.update_controls()
 	if profile and profile.startswith("-"):
 		profile = None
 	app.frame.display_no, geometry, client_area = app.frame.get_display()
 	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
 	display_no = get_argyll_display_number(geometry)
 	setcfg("display.number", display_no + 1)
+	app.frame.update_controls()
 	if profile:
 		app.frame.drop_handler(profile)
 	else:
