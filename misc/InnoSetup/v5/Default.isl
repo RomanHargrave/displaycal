@@ -316,6 +316,8 @@ LaunchProgram=Launch %1
 AssocFileExtension=&Associate %1 with the %2 file extension
 AssocingFileExtension=Associating %1 with the %2 file extension...
 AskRemove=Do you want to remove %1?
+SelectVersion=Select version
+ChangeIntegration=Change desktop integration
 
 CalibrationLoading=Calibration loading on login:
 CalibrationLoadingHandledByDispcalGUI=Let dispcalGUI handle calibration loading (high quality)

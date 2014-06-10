@@ -124,11 +124,18 @@ begin
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
 		ZeroInstall := Get_ZeroInstall_InstallLocation() + '\0install-win.exe';
+		ForceDirectories(ExpandConstant('{group}'));
+		CreateShellLink(ExpandConstant('{group}\dispcalGUI.lnk'), 'dispcalGUI', ZeroInstall, 'run --no-wait %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
+		CreateShellLink(ExpandConstant('{group}\' + CustomMessage('SelectVersion') + '.lnk'), CustomMessage('SelectVersion'), ZeroInstall, 'run --gui --no-wait %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
+		CreateShellLink(ExpandConstant('{group}\' + CustomMessage('ChangeIntegration') + '.lnk'), CustomMessage('ChangeIntegration'), ZeroInstall, 'integrate %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 		if not Exec(ZeroInstall, 'add --batch %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
 			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
-		if not Exec(ZeroInstall, 'integrate --machine %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+		Sleep(1000);
+		if not Exec(ZeroInstall, 'integrate %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
+		Sleep(1000);
 		if IsTaskSelected('calibrationloadinghandledbydispcalgui') then begin
+			ForceDirectories(ExpandConstant('{commonstartup}'));
 			CreateShellLink(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'), 'dispcalGUI Profile Loader', ZeroInstall, 'run --no-wait --offline --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 			if not Exec(ZeroInstall, 'run --batch --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
@@ -154,6 +161,9 @@ var
 	UninstallString: string;
 begin
 	if CurUninstallStep=usUninstall then begin
+		DeleteFile(ExpandConstant('{group}\dispcalGUI.lnk'));
+		DeleteFile(ExpandConstant('{group}\' + CustomMessage('SelectVersion') + '.lnk'));
+		DeleteFile(ExpandConstant('{group}\' + CustomMessage('ChangeIntegration') + '.lnk'));
 		if ZeroInstall_IsInstalled() then begin
 			ZeroInstall := Get_ZeroInstall_InstallLocation() + '\0install-win.exe';
 			if not Exec(ZeroInstall, 'remove --batch %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
@@ -161,10 +171,11 @@ begin
 			if not Exec(ZeroInstall, 'remove --batch --machine %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
-		RemoveDir(ExpandConstant('{commonprograms}\Graphics'));
 		DeleteFile(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'));
 	end;
 	if CurUninstallStep=usDone then begin
+		RemoveDir(ExpandConstant('{userprograms}\Graphics'));
+		RemoveDir(ExpandConstant('{commonprograms}\Graphics'));
 		if ZeroInstall_IsInstalled() then begin
 			UninstallString := Get_ZeroInstall_InstallLocation() + '\unins000.exe';
 			if SuppressibleMsgBox(FmtMessage(CustomMessage('AskRemove'), ['Zero Install']), mbConfirmation, MB_YESNO, IDNO) = IDYES then
