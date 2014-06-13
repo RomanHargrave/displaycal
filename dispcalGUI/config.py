@@ -343,6 +343,7 @@ def get_data_path(relpath, rex=None):
 			else:
 				curpath = dir_
 		if os.path.exists(curpath):
+			curpath = os.path.normpath(curpath)
 			if os.path.isdir(curpath):
 				try:
 					filelist = listdir_re(curpath, rex)
