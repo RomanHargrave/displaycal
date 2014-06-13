@@ -10,6 +10,11 @@ except ImportError:
 	# Python < 2.6
 	pass
 
+env_errors = (EnvironmentError, )
+if sys.platform == "win32":
+	import pywintypes
+	env_errors = env_errors + (pywintypes.error, )
+
 from encoding import get_encodings
 
 fs_enc = get_encodings()[1]
@@ -266,8 +271,8 @@ def safe_basestring(obj):
 	string(obj), or repr(obj), whichever succeeds first.
 	
 	"""
-	if isinstance(obj, EnvironmentError):
-		# There are four possible variations of EnvironmentError instances:
+	if isinstance(obj, env_errors):
+		# Possible variations of environment-type errors:
 		# - instance with 'errno', 'strerror', 'filename' and 'args' attributes
 		#   (created by EnvironmentError with three arguments)
 		#   NOTE: The 'args' attribute will contain only the first two arguments
@@ -277,22 +282,24 @@ def safe_basestring(obj):
 		#   (created by EnvironmentError with one or more than three arguments)
 		# - urllib2.URLError with empty 'args' attribute but 'reason' and
 		#   'filename' attributes
+		# - pywintypes.error with 'funcname', 'message', 'strerror', 'winerror'
+		#   and 'args' attributes
 		if hasattr(obj, "reason"):
 			if isinstance(obj.reason, basestring):
 				obj.args = (obj.reason, )
 			else:
 				obj.args = obj.reason
 		error = []
-		if obj.errno is not None:
+		if getattr(obj, "errno", None) is not None:
 			error.append("[Errno %s]" % obj.errno)
-		if obj.strerror is not None:
-			if obj.filename is not None:
+		if getattr(obj, "strerror", None) is not None:
+			if getattr(obj, "filename", None) is not None:
 				error.append(obj.strerror + ":")
 			else:
 				error.append(obj.strerror)
 		if not error:
 			error = list(obj.args)
-		if obj.filename is not None:
+		if getattr(obj, "filename", None) is not None:
 			error.append(obj.filename)
 		error = [safe_unicode(arg) for arg in error]
 		obj = " ".join(error)
