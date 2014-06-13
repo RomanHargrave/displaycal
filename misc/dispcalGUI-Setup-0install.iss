@@ -128,12 +128,10 @@ begin
 		CreateShellLink(ExpandConstant('{group}\dispcalGUI.lnk'), 'dispcalGUI', ZeroInstall, 'run --no-wait %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 		CreateShellLink(ExpandConstant('{group}\' + CustomMessage('SelectVersion') + '.lnk'), CustomMessage('SelectVersion'), ZeroInstall, 'run --gui --no-wait %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 		CreateShellLink(ExpandConstant('{group}\' + CustomMessage('ChangeIntegration') + '.lnk'), CustomMessage('ChangeIntegration'), ZeroInstall, 'integrate %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
-		if not Exec(ZeroInstall, 'add --batch %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
-			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
-		Sleep(1000);
 		if not Exec(ZeroInstall, 'integrate %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
-		Sleep(1000);
+		if not Exec(ZeroInstall, 'add --batch %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
+			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
 		if IsTaskSelected('calibrationloadinghandledbydispcalgui') then begin
 			ForceDirectories(ExpandConstant('{commonstartup}'));
 			CreateShellLink(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'), 'dispcalGUI Profile Loader', ZeroInstall, 'run --no-wait --offline --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
