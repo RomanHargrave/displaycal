@@ -977,6 +977,7 @@ def setup():
 					xml = re.sub(r"\n\s*([^<]+)\n\s*", r"\1", xml)
 					dist_file.write(xml)
 				# Sign feed
+				print "Signing", dist_path
 				zeropublish = which("0publish") or which("0publish.exe")
 				passphrase_path = os.path.join(pydir, "gpg", "passphrase.txt")
 				if os.path.isfile(passphrase_path):
@@ -985,7 +986,6 @@ def setup():
 					p = wexpect.spawn(zeropublish.encode(fs_enc),
 									  ["-x", dist_path.encode(fs_enc)])
 					p.expect(":")
-					p.logfile_read = sys.stdout
 					p.send(passphrase)
 					p.send("\n")
 					try:
