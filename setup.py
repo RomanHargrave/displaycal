@@ -825,6 +825,7 @@ def setup():
 		if not hash:
 			raise SystemExit(p.wait())
 		for tmpl_name in ("argyllcms.xml", "dispcalGUI.xml",
+						  "dispcalGUI-linux.xml",
 						  "dispcalGUI-mac.xml", "dispcalGUI-win32.xml",
 						  "numpy.xml", "wmi.xml", "wxpython.xml"):
 			dist_path = os.path.join(pydir, "dist", "0install", tmpl_name)
@@ -839,15 +840,17 @@ def setup():
 					domtree = minidom.parseString(xml)
 				# Get interface
 				interface = domtree.getElementsByTagName("interface")[0]
-				# Get main group
-				group0 = domtree.getElementsByTagName("group")[0]
-				# Add languages
+				# Get languages
 				langs = [os.path.splitext(lang)[0] for lang in
 						 os.listdir(os.path.join(name, "lang"))]
-				group0.setAttribute("langs", " ".join(langs))
 				# Get architecture groups
 				groups = filter(lambda group: group.hasAttribute("arch"),
 								domtree.getElementsByTagName("group"))
+				if groups:
+					# Get main group
+					group0 = groups[0]
+					# Add languages
+					group0.setAttribute("langs", " ".join(langs))
 				# Update groups
 				for i, group in enumerate(groups):
 					if create:
@@ -881,51 +884,6 @@ def setup():
 								cmd.appendChild(arg)
 							cmd.appendChild(runner.cloneNode(True))
 							group.appendChild(cmd)
-							# Add entry-points to interface
-							if i > 0:
-								continue
-							entry_point = domtree.createElement("entry-point")
-							entry_point.setAttribute("command", cmdname)
-							entry_point.setAttribute("binary-name", script)
-							cfg = RawConfigParser()
-							desktopbasename = "%s.desktop" % script
-							if script.endswith("-apply-profiles"):
-								desktopbasename = "z-" + desktopbasename
-							cfg.read(os.path.join(pydir, "misc",
-												  desktopbasename))
-							for option, tagname in (("Name", "name"),
-													("GenericName", "summary"),
-													("Comment", "description")):
-								for lang in [None] + langs:
-									if lang:
-										suffix = "[%s]" % lang
-									else:
-										suffix = ""
-									option = "%s%s" % (option, suffix)
-									if cfg.has_option("Desktop Entry", option):
-										value = cfg.get("Desktop Entry",
-														option).decode("UTF-8")
-										if value:
-											tag = domtree.createElement(tagname)
-											if not lang:
-												lang = "en"
-											tag.setAttribute("xml:lang", lang)
-											tag.appendChild(domtree.createTextNode(value))
-											entry_point.appendChild(tag)
-							for ext, mime_type in (("ico", "image/vnd.microsoft.icon"),
-												   ("png", "image/png")):
-								icon = domtree.createElement("icon")
-								if ext == "ico":
-									subdir = ""
-								else:
-									subdir = "256x256/"
-								icon.setAttribute("href",
-												  "http://%s/theme/icons/%s%s.%s" %
-												  (domain.lower(), subdir,
-												   script, ext))
-								icon.setAttribute("type", mime_type)
-								entry_point.appendChild(icon)
-							interface.appendChild(entry_point)
 					# Add implementation if it does not exist yet, update otherwise
 					match = None
 					for implementation in group.getElementsByTagName("implementation"):
@@ -964,6 +922,54 @@ def setup():
 					archive.setAttribute("size", "%s" % os.stat(archive_path).st_size)
 					archive.setAttribute("type", "application/x-compressed-tar")
 					group.appendChild(implementation)
+				if create:
+					for script, desc in scripts:
+						# Add entry-points to interface
+						entry_point = domtree.createElement("entry-point")
+						cmdname = "run"
+						if script != name:
+							cmdname += "-" + script.replace(name + "-", "")
+						entry_point.setAttribute("command", cmdname)
+						entry_point.setAttribute("binary-name", script)
+						cfg = RawConfigParser()
+						desktopbasename = "%s.desktop" % script
+						if script.endswith("-apply-profiles"):
+							desktopbasename = "z-" + desktopbasename
+						cfg.read(os.path.join(pydir, "misc",
+											  desktopbasename))
+						for option, tagname in (("Name", "name"),
+												("GenericName", "summary"),
+												("Comment", "description")):
+							for lang in [None] + langs:
+								if lang:
+									suffix = "[%s]" % lang
+								else:
+									suffix = ""
+								option = "%s%s" % (option, suffix)
+								if cfg.has_option("Desktop Entry", option):
+									value = cfg.get("Desktop Entry",
+													option).decode("UTF-8")
+									if value:
+										tag = domtree.createElement(tagname)
+										if not lang:
+											lang = "en"
+										tag.setAttribute("xml:lang", lang)
+										tag.appendChild(domtree.createTextNode(value))
+										entry_point.appendChild(tag)
+						for ext, mime_type in (("ico", "image/vnd.microsoft.icon"),
+											   ("png", "image/png")):
+							icon = domtree.createElement("icon")
+							if ext == "ico":
+								subdir = ""
+							else:
+								subdir = "256x256/"
+							icon.setAttribute("href",
+											  "http://%s/theme/icons/%s%s.%s" %
+											  (domain.lower(), subdir,
+											   script, ext))
+							icon.setAttribute("type", mime_type)
+							entry_point.appendChild(icon)
+						interface.appendChild(entry_point)
 				# Update feed
 				with open(dist_path, "wb") as dist_file:
 					xml = domtree.toprettyxml(encoding="utf-8")

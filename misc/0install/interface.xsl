@@ -68,7 +68,7 @@
 								</xsl:for-each>
 							</div>
 						</xsl:when>
-						<xsl:when test="//zi:implementation[@main] | //zi:group[@main] | //zi:command[@name='run'] | //zi:package-implementation[@main]">
+						<xsl:when test="//zi:implementation[@main] | //zi:group[@main] | //zi:command[@name='run'] | //zi:package-implementation[@main] | //zi:entry-point">
 							<p>
 								To add this program to your Applications menu,
 								choose <strong>Zero Install (0install)</strong>

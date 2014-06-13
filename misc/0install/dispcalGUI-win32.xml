@@ -7,7 +7,6 @@
 ${DESC}</description>
 	<homepage>${URL}</homepage>
 	<icon href="${URL}theme/icons/256x256/dispcalGUI.png" type="image/png" />
-	<category>Graphics</category>
 	<feed-for interface="${URL}0install/dispcalGUI.xml" />
 	<group arch="Windows-*" license="GPL v3 (GNU General Public License)" main="dispcalGUI.pyw">
 		<requires interface="${URL}0install/python.xml" version="${PY_MINVERSION}..!3.0">

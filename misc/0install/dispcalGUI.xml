@@ -7,27 +7,7 @@
 ${DESC}</description>
 	<homepage>${URL}</homepage>
 	<icon href="${URL}theme/icons/256x256/dispcalGUI.png" type="image/png" />
-	<category>Graphics</category>
+	<feed arch="Linux-*" src="${URL}0install/dispcalGUI-linux.xml" />
 	<feed arch="MacOSX-*" src="${URL}0install/dispcalGUI-mac.xml" />
 	<feed arch="Windows-*" src="${URL}0install/dispcalGUI-win32.xml" />
-	<group arch="Linux-*" license="GPL v3 (GNU General Public License)" main="dispcalGUI.pyw">
-		<requires interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0">
-			<version before="3.0" not-before="${PY_MINVERSION}" />
-		</requires>
-		<requires interface="${URL}0install/wxpython.xml" version="${WX_MINVERSION}..">
-			<version not-before="${WX_MINVERSION}" />
-		</requires>
-		<requires interface="${URL}0install/numpy.xml" />
-		<requires importance="recommended" interface="${URL}0install/argyllcms.xml" />
-		<command name="install-standalone-tools-icons" path="util/standalone-tools-icons.py">
-			<arg>install</arg>
-			<runner interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0" />
-		</command>
-		<command name="uninstall-standalone-tools-icons" path="util/standalone-tools-icons.py">
-			<arg>uninstall</arg>
-			<runner interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0" />
-		</command>
-		<implementation released="0000-00-00" version="0.0.0.0">
-		</implementation>
-	</group>
 </interface>
