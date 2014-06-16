@@ -26,13 +26,14 @@ if sys.platform == "darwin":
 	from thread import start_new_thread
 elif sys.platform == "win32":
 	from ctypes import windll
-	from win32com.shell import shell
-	import pythoncom
-	import win32con
+	import _winreg
 
 # 3rd party
 if sys.platform == "win32":
+	from win32com.shell import shell
+	import pythoncom
 	import win32api
+	import win32con
 elif sys.platform != "darwin":
 	try:
 		import dbus
@@ -84,7 +85,9 @@ import colord
 from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 					 make_win32_compatible_long_path, putenvu, quote_args,
 					 which, whereis)
-from util_str import safe_basestring, safe_str, safe_unicode
+if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+	from util_os import win64_disable_file_system_redirection
+from util_str import safe_basestring, safe_str, safe_unicode, universal_newlines
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
@@ -2546,7 +2549,7 @@ class Worker(object):
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
-				 title=appname, shell=False, working_dir=None, dry_run=False):
+				 title=appname, working_dir=None, dry_run=False):
 		"""
 		Execute a command.
 		
@@ -2932,11 +2935,10 @@ class Worker(object):
 				if use_pty:
 					if self.argyll_version >= [1, 2] and USE_WPOPEN and \
 					   os.environ.get("ARGYLL_NOT_INTERACTIVE"):
-						self.subprocess = WPopen(" ".join(cmdline) if shell else
-												 cmdline, stdin=sp.PIPE, 
+						self.subprocess = WPopen(cmdline, stdin=sp.PIPE, 
 												 stdout=tempfile.SpooledTemporaryFile(), 
 												 stderr=sp.STDOUT, 
-												 shell=shell, cwd=working_dir, 
+												 cwd=working_dir, 
 												 startupinfo=startupinfo)
 					else:
 						# Minimum Windows version: XP or Server 2003
@@ -3029,15 +3031,21 @@ class Worker(object):
 						raise Error(lang.getstr("auth.failed"))
 				else:
 					try:
-						self.subprocess = sp.Popen(" ".join(cmdline) if shell else
-												   cmdline, stdin=stdin, 
-												   stdout=stdout, stderr=stderr, 
-												   shell=shell, cwd=working_dir, 
-												   startupinfo=startupinfo)
+						if (asroot and sys.platform == "win32" and
+							sys.getwindowsversion() >= (6, )):
+							shell.ShellExecuteEx(lpVerb="runas",
+												 lpFile=cmd,
+												 lpParameters=" ".join(quote_args(args)))
+							return True
+						else:
+							self.subprocess = sp.Popen(cmdline, stdin=stdin,
+													   stdout=stdout,
+													   stderr=stderr,
+													   cwd=working_dir, 
+													   startupinfo=startupinfo)
 					except Exception, exception:
 						self.retcode = -1
-						raise Error("\n".join([safe_unicode(v) for v in
-											   (cmd, exception)]))
+						raise Error(safe_unicode(exception))
 					self.retcode = self.subprocess.wait()
 					if stdin != sp.PIPE and not getattr(stdin, "closed", True):
 						stdin.close()
@@ -4108,6 +4116,91 @@ usage: spotread [-options] [logfile]
 				if verbose >= 1: self.log(lang.getstr("failure"))
 				result = Error(lang.getstr("profile.install.error"))
 		return result
+	
+	def install_argyll_instrument_drivers(self, uninstall=False):
+		""" (Un-)install the Argyll CMS instrument drivers under Windows """
+		if not uninstall:
+			usbinfpath = get_data_path("usb/ArgyllCMS.inf")
+			if not usbinfpath:
+				return Error(lang.getstr("file.missing", "usb/ArgyllCMS.inf"))
+		if sys.getwindowsversion() >= (6, ):
+			# Windows Vista and newer
+			with win64_disable_file_system_redirection():
+				pnputil = which("PnPutil.exe")
+				if not pnputil:
+					return Error(lang.getstr("file.missing", "PnPutil.exe"))
+				if uninstall:
+					result = self.exec_cmd(pnputil, ["-e"], capture_output=True,
+										   log_output=False, silent=True,
+										   skip_scripts=True)
+					if not result:
+						return Error(lang.getstr("argyll.instrument.drivers.uninstall.failure"))
+					elif isinstance(result, Exception):
+						return result
+					output = universal_newlines("".join(self.output))
+					for entry in output.split("\n\n"):
+						entry = [line.split(":", 1)[-1].strip()
+								 for line in entry.split("\n")]
+						for value in entry:
+							if value == "ArgyllCMS":
+								result = self.exec_cmd(pnputil,
+													   ["-f", "-d", entry[0]],
+													   capture_output=True,
+													   skip_scripts=True,
+													   asroot=True)
+					return result
+				else:
+					return self.exec_cmd(pnputil, ["-i", "-a", usbinfpath],
+										 capture_output=True, skip_scripts=True,
+										 asroot=True)
+		else:
+			# Windows XP
+			#subkey = "\\".join(["Software", "Microsoft", "Windows", 
+								#"CurrentVersion"])
+			#try:
+				#key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey, 0,
+									  #_winreg.KEY_READ |
+									  #_winreg.KEY_QUERY_VALUE |
+									  #_winreg.KEY_SET_VALUE)
+				#newvalue = value = _winreg.QueryValueEx(key, "DevicePath")[0]
+				#if uninstall:
+					## No real uninstallation possible. Just remove all paths
+					## ending in '\argyllcms.inf'
+					#paths = []
+					#for path in value.split(os.pathsep):
+						#path = os.path.normpath(path)
+						#if not path.lower().endswith(r"\argyllcms.inf"):
+							#paths.append(path)
+					#newvalue = os.pathsep.join(paths)
+				#elif not usbinfpath.lower() in value.lower().split(os.pathsep):
+					#newvalue = value + os.pathsep + usbinfpath
+				#if newvalue != value:
+					#_winreg.SetValueEx(key, "DevicePath", 0,
+									   #_winreg.REG_EXPAND_SZ, newvalue)
+			#except Exception, exception:
+				#return exception
+			if uninstall:
+				# Uninstallation not supported
+				pass
+			else:
+				sections = ["LIBUSB0_DEV"]
+				#with open(usbinfpath, "rb") as usbinf:
+					#sections += re.findall(r"\[(\w+_Devices)\]", usbinf.read())
+				working_dir, infbasename = os.path.split(usbinfpath)
+				result = True
+				for section in sections:
+					result = self.exec_cmd(which("rundll32.exe"),
+										   ["setupapi,InstallHinfSection",
+											section, "132",
+											os.path.join(".", infbasename)],
+										   capture_output=True,
+										   skip_scripts=True,
+										   working_dir=working_dir)
+					if isinstance(result, Exception) or not result:
+						break
+				if not result:
+					result = Error(lang.getstr("argyll.instrument.drivers.install.failure"))
+			return result
 	
 	def _install_profile_argyll(self, profile_path, capture_output=False,
 								skip_scripts=False, silent=False):

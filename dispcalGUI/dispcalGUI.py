@@ -1563,6 +1563,24 @@ class MainFrame(BaseFrame):
 			tools.FindItem("3dlut.create"))
 		self.Bind(wx.EVT_MENU, self.lut3d_create_handler, 
 				  self.menuitem_lut3d_create)
+		self.menuitem_install_argyll_instrument_drivers = tools.FindItemById(
+			tools.FindItem("argyll.instrument.drivers.install"))
+		self.menuitem_uninstall_argyll_instrument_drivers = tools.FindItemById(
+			tools.FindItem("argyll.instrument.drivers.uninstall"))
+		if sys.platform == "win32":
+			# Windows may need an Argyll CMS instrument driver
+			self.Bind(wx.EVT_MENU, self.install_argyll_instrument_drivers, 
+					  self.menuitem_install_argyll_instrument_drivers)
+		else:
+			# Other OS do not need an Argyll CMS instrument driver
+			tools.RemoveItem(self.menuitem_install_argyll_instrument_drivers)
+		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+			# Windows Vista and newer can uninstall Argyll CMS instrument driver
+			self.Bind(wx.EVT_MENU, self.uninstall_argyll_instrument_drivers, 
+					  self.menuitem_uninstall_argyll_instrument_drivers)
+		else:
+			# Other OS cannot uninstall Argyll CMS instrument driver
+			tools.RemoveItem(self.menuitem_uninstall_argyll_instrument_drivers)
 		self.menuitem_enable_spyder2 = tools.FindItemById(
 			tools.FindItem("enable_spyder2"))
 		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, 
@@ -1681,6 +1699,8 @@ class MainFrame(BaseFrame):
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
+		if sys.platform == "win32":
+			self.menuitem_install_argyll_instrument_drivers.Enable(bool(get_data_path("usb/ArgyllCMS.inf")))
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
 		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
 										   spyder2_firmware_exists)
@@ -4408,6 +4428,16 @@ class MainFrame(BaseFrame):
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
 			dlg.ShowModalThenDestroy(parent)
+	
+	def install_argyll_instrument_drivers(self, event=None, uninstall=False):
+		self.worker.start(lambda result: show_result_dialog(result, self)
+										 if isinstance(result, Exception)
+										 else 0,
+						  self.worker.install_argyll_instrument_drivers,
+						  wargs=(uninstall, ))
+	
+	def uninstall_argyll_instrument_drivers(self, event=None):
+		self.install_argyll_instrument_drivers(uninstall=True)
 
 	def install_profile_handler(self, event=None, profile_path=None):
 		""" Install a profile. Show an error dialog if the profile is

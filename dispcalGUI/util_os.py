@@ -407,3 +407,30 @@ def whereis(filename):
 		result = stdout.split(":", 1).pop().strip()
 		if result:
 			return result
+
+
+if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+	class win64_disable_file_system_redirection:
+
+		# http://code.activestate.com/recipes/578035-disable-file-system-redirector/
+
+		r"""
+		Disable Windows File System Redirection.
+
+		When a 32 bit program runs on a 64 bit Windows the paths to
+		C:\Windows\System32 automatically get redirected to the 32 bit version
+		(C:\Windows\SysWow64), if you really do need to access the contents of
+		System32, you need to disable the file system redirection first.
+		
+		"""
+
+		_disable = ctypes.windll.kernel32.Wow64DisableWow64FsRedirection
+		_revert = ctypes.windll.kernel32.Wow64RevertWow64FsRedirection
+
+		def __enter__(self):
+			self.old_value = ctypes.c_long()
+			self.success = self._disable(ctypes.byref(self.old_value))
+
+		def __exit__(self, type, value, traceback):
+			if self.success:
+				self._revert(self.old_value)
