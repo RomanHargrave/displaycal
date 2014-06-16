@@ -112,7 +112,7 @@ td.bar {
 	padding: 0;
 	text-align: left;
 }
-td.patch {
+td.patch, td.sample_id {
 	border-left: none;
 	border-right: none;
 	padding: 0;
@@ -132,12 +132,12 @@ td.patch + td.patch > .patch {
 .overview tr.last-row td.patch {
 	border-bottom: 1px solid silver;
 }
-div.patch {
+div.patch, div.sample_id {
 	padding: .125em .25em .125em 0;
 	width: 1.75em;
 }
-td.patch.sample_id,
-div.patch.sample_id {
+td.sample_id,
+div.sample_id {
 	width: auto;
 }
 .ok {
