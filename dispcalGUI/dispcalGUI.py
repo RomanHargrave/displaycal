@@ -5250,21 +5250,8 @@ class MainFrame(BaseFrame):
 		# gather data for report
 		
 		instrument = self.comport_ctrl.GetStringSelection()
-		measurement_mode = self.get_measurement_mode()
-		mode = []
-		if measurement_mode:
-			if "c" in measurement_mode:
-				mode += [lang.getstr("measurement_mode.refresh")]
-			elif "l" in measurement_mode:
-				mode += [lang.getstr("measurement_mode.lcd")]
-			if "p" in measurement_mode:
-				mode += [lang.getstr("projector")]
-			if "V" in measurement_mode:
-				mode += [lang.getstr("measurement_mode.adaptive")]
-			if "H" in measurement_mode:
-				mode += [lang.getstr("measurement_mode.highres")]
-		if mode:
-			instrument += " (%s)" % "/".join(mode)
+		measurement_mode = self.measurement_mode_ctrl.GetStringSelection()
+		instrument += u" \u2014 " + measurement_mode
 		
 		ccmx = "None"
 		if self.worker.instrument_can_use_ccxx():
