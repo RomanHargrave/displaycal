@@ -7188,17 +7188,21 @@ usage: spotread [-options] [logfile]
 		return ti1, ti3v
 
 	def download(self, uri):
-		download_dir = os.path.join(expanduseru("~"), "Downloads")
-		if not os.path.isdir(download_dir):
-			os.makedirs(download_dir)
 		try:
 			response = urllib2.urlopen(uri)
 		except urllib2.URLError, exception:
 			return exception
+		total_size = response.info().getheader("Content-Length")
+		try:
+			total_size = int(total_size)
+			if not total_size:
+				raise ValueError()
+		except (TypeError, ValueError):
+			return Error(lang.getstr("update_fail_wrong_size",
+									 ("<%s>" % lang.getstr("unknown"), ) * 2))
 		uri = response.geturl()
+		download_dir = os.path.join(expanduseru("~"), "Downloads")
 		download_path = os.path.join(download_dir, os.path.basename(uri))
-		total_size = response.info().getheader('Content-Length').strip()
-		total_size = int(total_size)
 		if (not os.path.isfile(download_path) or
 			os.stat(download_path).st_size != total_size):
 			self.recent.write(lang.getstr("update_download"))
@@ -7231,6 +7235,8 @@ usage: spotread [-options] [logfile]
 			if bytes_so_far != total_size:
 				return Error(lang.getstr("update_fail_wrong_size",
 										 (total_size, bytes_so_far)))
+			if not os.path.isdir(download_dir):
+				os.makedirs(download_dir)
 			with open(download_path, "wb") as download_file:
 				download_file.write("".join(bytes))
 		return download_path
