@@ -54,9 +54,10 @@ if isexe and os.getenv("_MEIPASS2"):
 pyfile = (exe if isexe else (os.path.isfile(sys.argv[0]) and sys.argv[0]) or
 		  os.path.join(os.path.dirname(__file__), "main.py"))
 pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
+# Mac OS X: isapp should only be true for standalone, not 0install
 isapp = sys.platform == "darwin" and \
 		exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
-		os.path.isfile(os.path.join(exedir, appname))
+		os.path.exists(os.path.join(exedir, "..", "Resources", "xrc"))
 if isapp:
 	pyname, pyext = os.path.splitext(exe.split(os.path.sep)[-4])
 	pydir = os.path.normpath(os.path.join(exedir, "..", "Resources"))
