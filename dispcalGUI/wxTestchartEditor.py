@@ -105,7 +105,6 @@ class TestchartEditor(wx.Frame):
 			p2.SetSizer(p2.sizer)
 
 			splitter.SetMinimumPaneSize(20)
-			splitter.SplitHorizontally(p1, p2, -150)
 			# splitter end
 
 			panel = self.panel = p1
@@ -558,6 +557,7 @@ class TestchartEditor(wx.Frame):
 
 		# preview area
 		if tc_use_alternate_preview:
+			splitter.SplitHorizontally(p1, p2, self.sizer.GetMinSize()[1])
 			hsizer = wx.StaticBoxSizer(wx.StaticBox(p2, -1, lang.getstr("preview")), wx.VERTICAL)
 			p2.sizer.Add(hsizer, 1, flag = wx.ALL | wx.ALIGN_CENTER | wx.EXPAND, border = 12)
 			preview = self.preview = wx.ScrolledWindow(p2, -1, style = wx.VSCROLL)
@@ -837,6 +837,7 @@ class TestchartEditor(wx.Frame):
 		if hasattr(self, "preview"):
 			safe_margin = 5
 			scrollbarwidth = 20
+			self.patchsizer.SetRows(0)
 			self.patchsizer.SetCols((self.preview.GetSize()[0] - scrollbarwidth - safe_margin) / 20)
 		if self.IsShownOnScreen() and not self.IsMaximized() and not self.IsIconized():
 			w, h = self.GetSize()
