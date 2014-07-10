@@ -1563,13 +1563,16 @@ def gam_fit(gf, v):
 		rv += 100.0 * -gamma
 		gamma = 1e-4
 
-	tt = math.pow(gf.roo, 1.0 / gamma)
-	b = tt / (1.0 - tt)  # Offset
-	a = math.pow(1.0 - tt, gamma)  # Gain
+	t1 = math.pow(gf.bp, 1.0 / gamma);
+	t2 = math.pow(gf.wp, 1.0 / gamma);
+	b = t1 / (t2 - t1)  # Offset
+	a = math.pow(t2 - t1, gamma)  # Gain
 
-	tt = a * math.pow(0.5 + b, gamma)
-	tt = tt - gf.thyr
-	rv += tt * tt
+	# Comput 50% output for this technical gamma
+	# (All values are without output offset being added in)
+	t1 = a * math.pow(0.5 + b, gamma)
+	t1 = t1 - gf.thyr
+	rv += t1 * t1
 	
 	return rv
 
@@ -1983,7 +1986,7 @@ def powell(di, cp, s, ftol, maxit, func, fdata, prog=None, pdata=None):
 	return False  # Failed due to execessive iterations
 
 
-def xicc_tech_gamma(egamma, off):
+def xicc_tech_gamma(egamma, off, outoffset=0.0):
 	# Adapted from ArgyllCMS xicc.c
 
 	"""
@@ -1998,8 +2001,11 @@ def xicc_tech_gamma(egamma, off):
 	if off <= 0.0:
 		return egamma
 
-	gf.thyr = math.pow(0.5, egamma)  # Advetised 50% target
-	gf.roo = off
+	# We set up targets without outo being added
+	outo = off * outoffset  # Offset acounted for in output
+	gf.bp = off - outo  # Black value for 0 % input
+	gf.wp = 1.0 - outo  # White value for 100% input
+	gf.thyr = math.pow(0.5, egamma) - outo  # Advetised 50% target
 
 	op[0] = egamma
 	sa[0] = 0.1
@@ -2013,9 +2019,10 @@ def xicc_tech_gamma(egamma, off):
 class gam_fits(object):
 	# Adapted from ArgyllCMS xicc/xicc.c
 
-	def __init__(self, thyr=.2, roo=0):
+	def __init__(self, wp=1.0, thyr=.2, bp=0.0):
+		self.wp = wp  # 100% input target
 		self.thyr = thyr  # 50% input target
-		self.roo = roo  # 0% input target
+		self.bp = bp  # 0% input target
 
 
 class Interp(object):
@@ -2038,42 +2045,45 @@ class BT1886(object):
 
 	""" BT.1886 like transfer function """
 
-	def __init__(self, matrix, XYZbp, gamma, absolute=False):
-		""" Setup BT.1886 """
+	def __init__(self, matrix, XYZbp, outoffset=0.0, gamma=2.4):
+		""" Setup BT.1886 for the given target """
 		self.bwd_matrix = matrix.inverted()
 		self.fwd_matrix = matrix
 		self.gamma = gamma
 
 		Lab = XYZ2Lab(*[v * 100 for v in XYZbp])
 
-		self.outL = Lab[0]  # For bp blend
+		# For bp blend
+		self.outL = Lab[0]
+		# a* b* correction needed
 		self.tab = list(Lab)
-		if absolute:
-			# Setup BT.1886 for an absolute power target
-			# L* correction needed
-			self.ingo = 0.0  # Non-linear Y that makes out black point
-			self.outsc = 1.0  # Scale to restore 1 -> 1
-			self.blendpow = min(40.0, 80.0 / (self.outL or 1.0))
-		else:
-			# Setup BT.1886 for the given target
-			# a* b* correction needed
-			self.tab[0] = 0  # 0 because bt1886 maps L to target
+		self.tab[0] = 0  # 0 because bt1886 maps L to target
 
-			if XYZbp[1] < 0:
-				XYZbp[1] = 0.0
+		if XYZbp[1] < 0:
+			XYZbp[1] = 0.0
 
-			bkipow = math.pow(XYZbp[1], 1.0 / self.gamma)
-			self.ingo = bkipow / (1.0 - bkipow)  # non-linear Y that makes out black point
-			self.outsc = pow(1.0 - bkipow, self.gamma)  # Scale to restore 1 -> 1
-			self.blendpow = 40.0
-		self.absolute = absolute
+		# Offset acounted for in output
+		self.outo = XYZbp[1] * outoffset
+		# Balance of offset accounted for in input
+		ino = XYZbp[1] - self.outo
+
+		 # Input offset black to 1/pow
+		bkipow = math.pow(ino, 1.0 / self.gamma)
+		# Input offset white to 1/pow
+		wtipow = math.pow(1.0 - self.outo, 1.0 / self.gamma)
+		# non-linear Y that makes input offset proportion of black point
+		self.ingo = bkipow / (wtipow - bkipow)
+		# Scale to make input of 1 map to 1.0 - self.outo
+		self.outsc = pow(wtipow - bkipow, self.gamma)
 
 	def apply(self, X, Y, Z):
 		"""
 		Apply BT.1886 black offset and gamma curve to the XYZ out of the input profile.
 		Do this in the colorspace defined by the input profile matrix lookup,
 		so it will be relative XYZ. We assume that BT.1886 does a Rec709 to gamma
-		viewing adjustment, irrespective of the source profile transfer curve.
+		viewing adjustment, on top of any source profile transfer curve
+		(i.e. BT.1886 viewing adjustment is assumed to be the mismatch between
+		Rec709 curve and the output offset pure 2.4 gamma curve)
 		
 		"""
 
@@ -2092,11 +2102,15 @@ class BT1886(object):
 			else:
 				vv = 1.099 * math.pow(vv, 0.45) - 0.099
 			
-			# Apply input offset & re-scale, and then gamma of 2.4/custom gamma
+			# Apply input offset
 			vv = vv + self.ingo
-			
+
+			# Apply power and scale
 			if vv > 0.0:
 				vv = self.outsc * math.pow(vv, self.gamma)
+
+			# Apply output portion of offset
+			vv += self.outo
 
 			out[j] = vv
 
@@ -2110,17 +2124,14 @@ class BT1886(object):
 															out[2]))
 
 		# Blend ab to required black point offset self.tab[] as L approaches black.
-		if self.absolute:
-			vv = out[0] / 100.0
-		else:
-			vv = (out[0] - self.outL) / (100.0 - self.outL)  # 0 at bp, 1 at wp
+		vv = (out[0] - self.outL) / (100.0 - self.outL)  # 0 at bp, 1 at wp
 		vv = 1.0 - vv
 
 		if vv < 0.0:
 			vv = 0.0
 		elif vv > 1.0:
 			vv = 1.0
-		vv = math.pow(vv, self.blendpow)
+		vv = math.pow(vv, 40.0)
 		out[0] += vv * self.tab[0]
 		out[1] += vv * self.tab[1]
 		out[2] += vv * self.tab[2]

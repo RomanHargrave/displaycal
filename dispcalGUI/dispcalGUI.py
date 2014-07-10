@@ -2034,7 +2034,6 @@ class MainFrame(BaseFrame):
 			"3dlut.bitdepth.output",
 			"3dlut.trc_gamma",
 			"3dlut.trc_gamma_type",
-			"3dlut.trc_type",
 			"3dlut.encoding.input",
 			"3dlut.encoding.input.backup",
 			"3dlut.encoding.output",
@@ -4860,31 +4859,23 @@ class MainFrame(BaseFrame):
 			XYZbp = odata[0]
 			gamma = getcfg("measurement_report.trc_gamma")
 			gamma_type = getcfg("measurement_report.trc_gamma_type")
-			if getcfg("measurement_report.trc_type"):
-				# Gamma with black offset
-				try:
-					self.worker.blend_profile_blackpoint(mprof, oprof, gamma,
-														 gamma_type == "b")
-				except Exception, exception:
-					show_result_dialog(exception, self.reportframe)
-					return
-			else:
-				# TRC BT.1886-like
-				if gamma_type == "b":
-					# Get technical gamma needed to achieve effective gamma
-					gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1])
-				rXYZ = mprof.tags.rXYZ.values()
-				gXYZ = mprof.tags.gXYZ.values()
-				bXYZ = mprof.tags.bXYZ.values()
-				mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
-										   [rXYZ[1], gXYZ[1], bXYZ[1]],
-										   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-				bt1886 = colormath.BT1886(mtx, XYZbp, gamma)
-				# Make sure the profile has the expected Rec. 709 TRC
-				# for BT.1886
-				for i, channel in enumerate(("r", "g", "b")):
-					if channel + "TRC" in mprof.tags:
-						mprof.tags[channel + "TRC"].set_trc(-709)
+			# TRC BT.1886-like
+			outoffset = getcfg("measurement_report.trc_output_offset")
+			if gamma_type == "b":
+				# Get technical gamma needed to achieve effective gamma
+				gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
+			rXYZ = mprof.tags.rXYZ.values()
+			gXYZ = mprof.tags.gXYZ.values()
+			bXYZ = mprof.tags.bXYZ.values()
+			mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+									   [rXYZ[1], gXYZ[1], bXYZ[1]],
+									   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+			bt1886 = colormath.BT1886(mtx, XYZbp, outoffset, gamma)
+			# Make sure the profile has the expected Rec. 709 TRC
+			# for BT.1886
+			for i, channel in enumerate(("r", "g", "b")):
+				if channel + "TRC" in mprof.tags:
+					mprof.tags[channel + "TRC"].set_trc(-709)
 
 		if sim_profile:
 			sim_intent = ("a"
@@ -5284,10 +5275,12 @@ class MainFrame(BaseFrame):
 		if not sim_profile and use_sim and use_sim_as_output:
 			sim_profile = profile
 		
-		if getcfg("measurement_report.trc_type"):
-			trc_type = ''
+		if (getcfg("measurement_report.trc_gamma") != 2.4 or
+			getcfg("measurement_report.trc_gamma_type") != "B" or
+			getcfg("measurement_report.trc_output_offset")):
+			trc = ''
 		else:
-			trc_type = "BT.1886"
+			trc = "BT.1886"
 
 		placeholders2data = {"${PLANCKIAN}": 'checked="checked"' if planckian 
 											 else "",
@@ -5310,7 +5303,9 @@ class MainFrame(BaseFrame):
 												 if apply_trc else 'null'),
 							 "${TRC_GAMMA_TYPE}": str(getcfg("measurement_report.trc_gamma_type")
 													  if apply_trc else ''),
-							 "${TRC_TYPE}": trc_type if apply_trc else '',
+							 "${TRC_OUTPUT_OFFSET}": str(getcfg("measurement_report.trc_output_offset")
+														 if apply_trc else 0),
+							 "${TRC}": trc if apply_trc else '',
 							 "${WHITEPOINT_SIMULATION}": str(sim_intent == "a").lower(),
 							 "${WHITEPOINT_SIMULATION_RELATIVE}": str(sim_intent == "a" and
 																	  intent == "r").lower(),

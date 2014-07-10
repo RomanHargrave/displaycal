@@ -63,9 +63,13 @@ class SynthICCFrame(BaseFrame):
 													 (color, handler)),
 						  getattr(self, "%s_%s" % (color, component)))
 		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
-		self.trc_textctrl.Bind(wx.EVT_COMBOBOX, self.trc_textctrl_handler)
-		self.trc_textctrl.Bind(wx.EVT_TEXT, self.trc_textctrl_handler)
-		self.trc_type_ctrl.Bind(wx.EVT_CHOICE, self.trc_type_ctrl_handler)
+		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX, self.trc_gamma_ctrl_handler)
+		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS, self.trc_gamma_ctrl_handler)
+		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE, self.trc_gamma_type_ctrl_handler)
+		self.black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
+										   self.black_output_offset_ctrl_handler)
+		self.black_output_offset_intctrl.Bind(wx.EVT_TEXT,
+											  self.black_output_offset_ctrl_handler)
 		self.colorspace_rgb_ctrl.Bind(wx.EVT_RADIOBUTTON,
 									  self.colorspace_ctrl_handler)
 		self.colorspace_gray_ctrl.Bind(wx.EVT_RADIOBUTTON,
@@ -119,8 +123,19 @@ class SynthICCFrame(BaseFrame):
 		v = self.black_luminance_ctrl.GetValue()
 		setcfg("synthprofile.black_luminance", v)
 		if not bool(v):
-			self.trc_type_ctrl.SetSelection(self.trc_types_ba["G"])
-		self.trc_type_ctrl.Enable(bool(v))
+			self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["G"])
+		self.trc_gamma_type_ctrl.Enable(bool(v))
+
+	def black_output_offset_ctrl_handler(self, event):
+		if event.GetId() == self.black_output_offset_intctrl.GetId():
+			self.black_output_offset_ctrl.SetValue(
+				self.black_output_offset_intctrl.GetValue())
+		else:
+			self.black_output_offset_intctrl.SetValue(
+				self.black_output_offset_ctrl.GetValue())
+		v = self.black_output_offset_ctrl.GetValue() / 100.0
+		setcfg("synthprofile.trc_output_offset", v)
+		self.update_trc_control()
 	
 	def blue_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("blue")
@@ -248,6 +263,7 @@ class SynthICCFrame(BaseFrame):
 			elif gamma == -1886:
 				# Rec. 1886
 				self.trc_ctrl.SetSelection(4)
+				self.trc_ctrl_handler()
 			elif gamma == -240:
 				# SMPTE 240M
 				self.trc_ctrl.SetSelection(5)
@@ -257,8 +273,8 @@ class SynthICCFrame(BaseFrame):
 			else:
 				# Gamma
 				self.trc_ctrl.SetSelection(0)
-				self.trc_textctrl.SetValue(str(gamma))
-			self.trc_ctrl_handler()
+				setcfg("synthprofile.trc_gamma", gamma)
+			self.update_trc_controls()
 			self._updating_ctrls = False
 	
 	def profile_ctrl_handler(self, event):
@@ -276,11 +292,11 @@ class SynthICCFrame(BaseFrame):
 	def save_as_btn_handler(self, event):
 		XYZ = self.get_XYZ()
 		try:
-			gamma = float(self.trc_textctrl.Value)
+			gamma = float(self.trc_gamma_ctrl.Value)
 		except ValueError:
 			wx.Bell()
 			gamma = 2.2
-			self.trc_textctrl.Value = str(gamma)
+			self.trc_gamma_ctrl.Value = str(gamma)
 		# Black Y scaled to 0..1 range
 		black_Y = (getcfg("synthprofile.black_luminance") /
 				   getcfg("synthprofile.luminance"))
@@ -333,20 +349,14 @@ class SynthICCFrame(BaseFrame):
 			# Absolute luminance values!
 			TRC.set_dicom_trc(getcfg("synthprofile.black_luminance"),
 							  getcfg("synthprofile.luminance"))
-		elif self.trc_ctrl.GetSelection() == 4:
-			# Rec. 1886
-			if getcfg("synthprofile.trc_type") == "g":
-				gamma = colormath.xicc_tech_gamma(gamma, black_Y)
-			TRC.set_bt1886_trc(black_Y, gamma)
-		elif getcfg("synthprofile.black_luminance"):
-			# Allow black offset
-			if getcfg("synthprofile.trc_type") == "g":
-				vmin = 0
-			else:
-				vmin = black_Y * 65535
-			TRC.set_trc(trc, 1024, vmin=vmin)
-			if black_Y and not vmin:
-				TRC.apply_bpc(black_Y, weight=True)
+		elif self.trc_ctrl.GetSelection() in (0, 4):
+			# Gamma with output offset or Rec. 1886
+			outoffset = getcfg("synthprofile.trc_output_offset")
+			if getcfg("synthprofile.trc_gamma_type") == "g":
+				gamma = colormath.xicc_tech_gamma(gamma, black_Y, outoffset)
+			TRC.set_bt1886_trc(black_Y, outoffset, gamma)
+		elif black_Y:
+			TRC.set_trc(trc, 1024, vmin=black_Y * 65535)
 		elif not TRC:
 			TRC.set_trc(trc, 1)
 		for tagname in ("lumi", "bkpt"):
@@ -424,39 +434,86 @@ class SynthICCFrame(BaseFrame):
 		self.trc_ctrl.SetItems(items)
 		self.trc_ctrl.SetSelection(0)
 		
-		self.trc_types_ab = {0: "g", 1: "G"}
-		self.trc_types_ba = {"g": 0, "G": 1}
-		self.trc_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
-									 lang.getstr("trc.type.absolute")])
+		self.trc_gamma_types_ab = {0: "g", 1: "G"}
+		self.trc_gamma_types_ba = {"g": 0, "G": 1}
+		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
+										   lang.getstr("trc.type.absolute")])
 	
 	def trc_ctrl_handler(self, event=None):
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
-		self.panel.Freeze()
 		i = self.trc_ctrl.GetSelection()
 		if i == 4:
-			self.trc_textctrl.SetValue("2.4")
-		self.trc_textctrl.Show(i in (0, 4))
-		self.trc_type_ctrl.Show(i in (0, 4))
-		self.panel.GetSizer().Layout()
-		self.panel.Thaw()
+			# BT.1886
+			setcfg("synthprofile.trc_gamma", 2.4)
+			setcfg("synthprofile.trc_gamma_type", "G")
+			setcfg("synthprofile.trc_output_offset", 0.0)
+			config.writecfg()
+			if not self._updating_ctrls:
+				self.update_trc_controls()
 
-	def trc_type_ctrl_handler(self, event):
-		setcfg("synthprofile.trc_type",
-			   self.trc_types_ab[self.trc_type_ctrl.GetSelection()])
+	def trc_gamma_type_ctrl_handler(self, event):
+		setcfg("synthprofile.trc_gamma_type",
+			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
 		config.writecfg()
+		self.update_trc_control()
 	
-	def trc_textctrl_handler(self, event=None):
+	def trc_gamma_ctrl_handler(self, event=None):
 		if not self._updating_ctrls:
-			self.preset_ctrl.SetSelection(0)
+			try:
+				v = float(self.trc_gamma_ctrl.GetValue().replace(",", "."))
+				if (v < config.valid_ranges["gamma"][0] or
+					v > config.valid_ranges["gamma"][1]):
+					raise ValueError()
+			except ValueError:
+				wx.Bell()
+				self.trc_gamma_ctrl.SetValue(str(getcfg("synthprofile.trc_gamma")))
+			else:
+				if str(v) != self.trc_gamma_ctrl.GetValue():
+					self.trc_gamma_ctrl.SetValue(str(v))
+				setcfg("synthprofile.trc_gamma",
+					   float(self.trc_gamma_ctrl.GetValue()))
+				config.writecfg()
+				self.preset_ctrl.SetSelection(0)
+				self.update_trc_control()
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
 		self.luminance_ctrl.SetValue(getcfg("synthprofile.luminance"))
 		self.black_luminance_ctrl.SetValue(getcfg("synthprofile.black_luminance"))
 		self.black_luminance_ctrl_handler(None)
-		self.trc_type_ctrl.SetSelection(self.trc_types_ba[getcfg("synthprofile.trc_type")])
-		self.trc_ctrl_handler()
+		self.update_trc_controls()
+
+	def update_trc_control(self):
+		i = self.trc_ctrl.GetSelection()
+		if i in (0, 4):
+			if (getcfg("synthprofile.trc_gamma_type") == "G" and
+				getcfg("synthprofile.trc_output_offset") == 0 and
+				getcfg("synthprofile.trc_gamma") == 2.4):
+				self.trc_ctrl.SetSelection(4)  # BT.1886
+			else:
+				self.trc_ctrl.SetSelection(0)  # Gamma
+
+	def update_trc_controls(self):
+		i = self.trc_ctrl.GetSelection()
+		self.panel.Freeze()
+		self.update_trc_control()
+		self.trc_gamma_ctrl.SetValue(str(getcfg("synthprofile.trc_gamma")))
+		self.trc_gamma_ctrl.Show(i in (0, 4))
+		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("synthprofile.trc_gamma_type")])
+		self.trc_gamma_type_ctrl.Show(i in (0, 4))
+		if i in (0, 4):
+			outoffset = int(getcfg("synthprofile.trc_output_offset") * 100)
+		else:
+			outoffset = 100
+		self.black_output_offset_label.Enable(i in (0, 4))
+		self.black_output_offset_ctrl.SetValue(outoffset)
+		self.black_output_offset_ctrl.Enable(i in (0, 4))
+		self.black_output_offset_intctrl.SetValue(outoffset)
+		self.black_output_offset_intctrl.Enable(i in (0, 4))
+		self.black_output_offset_intctrl_label.Enable(i in (0, 4))
+		self.panel.GetSizer().Layout()
+		self.panel.Thaw()
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")

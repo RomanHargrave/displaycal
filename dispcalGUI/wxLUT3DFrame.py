@@ -55,11 +55,17 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
 									   self.encoding_output_ctrl_handler)
 		self.apply_trc_cb.Bind(wx.EVT_CHECKBOX, self.apply_trc_ctrl_handler)
-		self.trc_type_ctrl.Bind(wx.EVT_CHOICE, self.trc_type_ctrl_handler)
+		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
+		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
+								 self.trc_gamma_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
 								 self.trc_gamma_ctrl_handler)
 		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
 									  self.trc_gamma_type_ctrl_handler)
+		self.black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
+										   self.black_output_offset_ctrl_handler)
+		self.black_output_offset_intctrl.Bind(wx.EVT_TEXT,
+											  self.black_output_offset_ctrl_handler)
 		self.rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
 										self.rendering_intent_ctrl_handler)
 		self.lut3d_format_ctrl.Bind(wx.EVT_CHOICE,
@@ -115,13 +121,18 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl.Enable(enable)
 		self.abstract_profile_desc.Enable(enable)
 	
-	def apply_trc_ctrl_handler(self, event):
+	def apply_trc_ctrl_handler(self, event=None):
 		v = self.apply_trc_cb.GetValue()
-		self.trc_type_ctrl.Enable(v)
+		self.trc_ctrl.Enable(v)
 		self.trc_gamma_ctrl.Enable(v)
 		self.trc_gamma_type_ctrl.Enable(v)
-		setcfg("3dlut.apply_trc", int(v))
-		config.writecfg()
+		if event:
+			setcfg("3dlut.apply_trc", int(v))
+			config.writecfg()
+		self.black_output_offset_label.Enable(v)
+		self.black_output_offset_ctrl.Enable(v)
+		self.black_output_offset_intctrl.Enable(v)
+		self.black_output_offset_intctrl_label.Enable(v)
 	
 	def apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
@@ -130,6 +141,19 @@ class LUT3DFrame(BaseFrame):
 
 	def abstract_drop_unsupported_handler(self):
 		self.drop_unsupported("abstract")
+
+	def black_output_offset_ctrl_handler(self, event):
+		if event.GetId() == self.black_output_offset_intctrl.GetId():
+			self.black_output_offset_ctrl.SetValue(
+				self.black_output_offset_intctrl.GetValue())
+		else:
+			self.black_output_offset_intctrl.SetValue(
+				self.black_output_offset_ctrl.GetValue())
+		v = self.black_output_offset_ctrl.GetValue() / 100.0
+		if v > 0:
+			self.trc_ctrl.SetSelection(1)  # Gamma
+		setcfg("3dlut.trc_output_offset", v)
+		self.update_trc_control()
 
 	def trc_gamma_ctrl_handler(self, event):
 		try:
@@ -145,17 +169,23 @@ class LUT3DFrame(BaseFrame):
 				self.trc_gamma_ctrl.SetValue(str(v))
 			setcfg("3dlut.trc_gamma", v)
 			config.writecfg()
+			self.update_trc_control()
 		event.Skip()
 
-	def trc_type_ctrl_handler(self, event):
-		v = self.trc_type_ctrl.GetSelection()
-		if event:
-			setcfg("3dlut.trc_type", v)
+	def trc_ctrl_handler(self, event):
+		if self.trc_ctrl.GetSelection() == 0:
+			# BT.1886
+			setcfg("3dlut.trc_gamma", 2.4)
+			setcfg("3dlut.trc_gamma_type", "B")
+			setcfg("3dlut.trc_output_offset", 0.0)
+			config.writecfg()
+			self.update_trc_controls()
 
 	def trc_gamma_type_ctrl_handler(self, event):
 		setcfg("3dlut.trc_gamma_type",
 			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
 		config.writecfg()
+		self.update_trc_control()
 
 	def input_drop_unsupported_handler(self):
 		self.drop_unsupported("input")
@@ -302,9 +332,7 @@ class LUT3DFrame(BaseFrame):
 		else:
 			trc_gamma = None
 		trc_gamma_type = getcfg("3dlut.trc_gamma_type")
-		if getcfg("3dlut.trc_type"):
-			trc_gamma_type = {"B": "G",
-							  "b": "g"}.get(trc_gamma_type, trc_gamma_type)
+		outoffset = getcfg("3dlut.trc_output_offset")
 		intent = getcfg("3dlut.rendering_intent")
 		format = getcfg("3dlut.format")
 		size = getcfg("3dlut.size")
@@ -319,7 +347,8 @@ class LUT3DFrame(BaseFrame):
 									 input_encoding=input_encoding,
 									 output_encoding=output_encoding,
 									 trc_gamma=trc_gamma,
-									 trc_gamma_type=trc_gamma_type)
+									 trc_gamma_type=trc_gamma_type,
+									 trc_output_offset=outoffset)
 		except Exception, exception:
 			return exception
 	
@@ -480,9 +509,7 @@ class LUT3DFrame(BaseFrame):
 								setcfg("3dlut.apply_trc",
 									  int(tf[0][1] in (-240, -709)))
 							self.apply_trc_cb.SetValue(bool(getcfg("3dlut.apply_trc")))
-							enable_trc_gamma = self.apply_trc_cb.GetValue()
-							self.trc_gamma_ctrl.Enable(enable_trc_gamma)
-							self.trc_gamma_type_ctrl.Enable(enable_trc_gamma)
+							self.apply_trc_ctrl_handler()
 							self.rendering_intent_label.Show()
 							self.rendering_intent_ctrl.Show()
 							# Update controls related to output profile
@@ -560,9 +587,9 @@ class LUT3DFrame(BaseFrame):
 														 % which))
 
 		items = []
-		for item in self.trc_type_ctrl.Items:
+		for item in self.trc_ctrl.Items:
 			items.append(lang.getstr(item))
-		self.trc_type_ctrl.SetItems(items)
+		self.trc_ctrl.SetItems(items)
 		
 		self.trc_gamma_types_ab = {0: "b", 1: "B"}
 		self.trc_gamma_types_ba = {"b": 0, "B": 1}
@@ -638,9 +665,7 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl_handler(None)
 		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.output_profile_ctrl_handler(None)
-		self.trc_type_ctrl.SetSelection(getcfg("3dlut.trc_type"))
-		self.trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
-		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("3dlut.trc_gamma_type")])
+		self.update_trc_controls()
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
 		format = getcfg("3dlut.format")
 		if format == "madVR" and self.worker.argyll_version < [1, 6]:
@@ -653,6 +678,22 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_bitdepth_input_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.input")])
 		self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
 		self.show_bitdepth_controls()
+
+	def update_trc_control(self):
+		if (getcfg("3dlut.trc_gamma_type") == "B" and
+			getcfg("3dlut.trc_output_offset") == 0 and
+			getcfg("3dlut.trc_gamma") == 2.4):
+			self.trc_ctrl.SetSelection(0)  # BT.1886
+		else:
+			self.trc_ctrl.SetSelection(1)  # Gamma
+
+	def update_trc_controls(self):
+		self.update_trc_control()
+		self.trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
+		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("3dlut.trc_gamma_type")])
+		outoffset = int(getcfg("3dlut.trc_output_offset") * 100)
+		self.black_output_offset_ctrl.SetValue(outoffset)
+		self.black_output_offset_intctrl.SetValue(outoffset)
 	
 	def show_bitdepth_controls(self):
 		self.Freeze()
@@ -670,6 +711,11 @@ class LUT3DFrame(BaseFrame):
 		self.apply_trc_cb.Show(show)
 		self.trc_gamma_ctrl.Show(show)
 		self.trc_gamma_type_ctrl.Show(show)
+		show = show and self.worker.argyll_version >= [1, 7]
+		self.black_output_offset_label.Show(show)
+		self.black_output_offset_ctrl.Show(show)
+		self.black_output_offset_intctrl.Show(show)
+		self.black_output_offset_intctrl_label.Show(show)
 	
 	def show_encoding_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]

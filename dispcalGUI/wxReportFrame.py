@@ -54,11 +54,17 @@ class ReportFrame(BaseFrame):
 													  self.use_simulation_profile_as_output_handler)
 		self.enable_3dlut_cb.Bind(wx.EVT_CHECKBOX, self.enable_3dlut_handler)
 		self.apply_trc_cb.Bind(wx.EVT_CHECKBOX, self.apply_trc_ctrl_handler)
-		self.trc_type_ctrl.Bind(wx.EVT_CHOICE, self.trc_type_ctrl_handler)
+		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
+		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
+								 self.trc_gamma_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
 								 self.trc_gamma_ctrl_handler)
 		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
 									  self.trc_gamma_type_ctrl_handler)
+		self.black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
+										   self.black_output_offset_ctrl_handler)
+		self.black_output_offset_intctrl.Bind(wx.EVT_TEXT,
+											  self.black_output_offset_ctrl_handler)
 		self.simulate_whitepoint_cb.Bind(wx.EVT_CHECKBOX,
 										 self.simulate_whitepoint_ctrl_handler)
 		self.simulate_whitepoint_relative_cb.Bind(wx.EVT_CHECKBOX,
@@ -107,6 +113,17 @@ class ReportFrame(BaseFrame):
 		config.writecfg()
 		self.update_main_controls()
 
+	def black_output_offset_ctrl_handler(self, event):
+		if event.GetId() == self.black_output_offset_intctrl.GetId():
+			self.black_output_offset_ctrl.SetValue(
+				self.black_output_offset_intctrl.GetValue())
+		else:
+			self.black_output_offset_intctrl.SetValue(
+				self.black_output_offset_ctrl.GetValue())
+		v = self.black_output_offset_ctrl.GetValue() / 100.0
+		setcfg("measurement_report.trc_output_offset", v)
+		self.update_trc_control()
+
 	def trc_gamma_ctrl_handler(self, event):
 		try:
 			v = float(self.trc_gamma_ctrl.GetValue().replace(",", "."))
@@ -121,17 +138,23 @@ class ReportFrame(BaseFrame):
 				self.trc_gamma_ctrl.SetValue(str(v))
 			setcfg("measurement_report.trc_gamma", v)
 			config.writecfg()
+			self.update_trc_control()
 		event.Skip()
 
-	def trc_type_ctrl_handler(self, event):
-		v = self.trc_type_ctrl.GetSelection()
-		if event:
-			setcfg("measurement_report.trc_type", v)
+	def trc_ctrl_handler(self, event):
+		if self.trc_ctrl.GetSelection() == 0:
+			# BT.1886
+			setcfg("measurement_report.trc_gamma", 2.4)
+			setcfg("measurement_report.trc_gamma_type", "B")
+			setcfg("measurement_report.trc_output_offset", 0.0)
+			config.writecfg()
+			self.update_trc_controls()
 
 	def trc_gamma_type_ctrl_handler(self, event):
 		setcfg("measurement_report.trc_gamma_type",
 			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
 		config.writecfg()
+		self.update_trc_control()
 	
 	def chart_btn_handler(self, event):
 		if self.Parent:
@@ -380,9 +403,9 @@ class ReportFrame(BaseFrame):
 						  % which).SetDropTarget(droptarget)
 
 		items = []
-		for item in self.trc_type_ctrl.Items:
+		for item in self.trc_ctrl.Items:
 			items.append(lang.getstr(item))
-		self.trc_type_ctrl.SetItems(items)
+		self.trc_ctrl.SetItems(items)
 		
 		self.trc_gamma_types_ab = {0: "b", 1: "B"}
 		self.trc_gamma_types_ba = {"b": 0, "B": 1}
@@ -416,14 +439,28 @@ class ReportFrame(BaseFrame):
 		""" Update controls with values from the configuration """
 		self.simulation_profile_ctrl.SetPath(getcfg("measurement_report.simulation_profile"))
 		self.set_profile("simulation", silent=True)
-		self.trc_type_ctrl.SetSelection(getcfg("measurement_report.trc_type"))
-		self.trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
-		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("measurement_report.trc_gamma_type")])
+		self.update_trc_controls()
 		self.devlink_profile_ctrl.SetPath(getcfg("measurement_report.devlink_profile"))
 		self.set_profile("devlink", silent=True)
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
 		self.set_profile("output", silent=True)
 		self.set_testchart(getcfg("measurement_report.chart"))
+
+	def update_trc_control(self):
+		if (getcfg("measurement_report.trc_gamma_type") == "B" and
+			getcfg("measurement_report.trc_output_offset") == 0 and
+			getcfg("measurement_report.trc_gamma") == 2.4):
+			self.trc_ctrl.SetSelection(0)  # BT.1886
+		else:
+			self.trc_ctrl.SetSelection(1)  # Gamma
+
+	def update_trc_controls(self):
+		self.update_trc_control()
+		self.trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
+		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("measurement_report.trc_gamma_type")])
+		outoffset = int(getcfg("measurement_report.trc_output_offset") * 100)
+		self.black_output_offset_ctrl.SetValue(outoffset)
+		self.black_output_offset_intctrl.SetValue(outoffset)
 	
 	def set_testchart(self, path):
 		self.chart_ctrl.SetPath(path)
@@ -462,9 +499,13 @@ class ReportFrame(BaseFrame):
 		enable6 = (enable1 and enable5 and
 				   bool(getcfg("measurement_report.apply_trc")))
 		self.apply_trc_cb.SetValue(enable6)
-		self.trc_type_ctrl.Enable(enable6)
+		self.trc_ctrl.Enable(enable6)
 		self.trc_gamma_ctrl.Enable(enable6)
 		self.trc_gamma_type_ctrl.Enable(enable6)
+		self.black_output_offset_label.Enable(enable6)
+		self.black_output_offset_ctrl.Enable(enable6)
+		self.black_output_offset_intctrl.Enable(enable6)
+		self.black_output_offset_intctrl_label.Enable(enable6)
 		self.simulate_whitepoint_cb.Enable((enable1 and not enable2) or
 										   (color in ("LAB", "XYZ") and
 											chart_has_white))

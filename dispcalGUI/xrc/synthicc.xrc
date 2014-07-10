@@ -355,7 +355,7 @@
                     <object class="sizeritem">
                       <object class="wxChoice" name="trc_ctrl">
                         <content>
-                          <item>trc.gamma</item>
+                          <item>custom</item>
                           <item>trc.dicom</item>
                           <item>trc.lstar</item>
                           <item>trc.rec709</item>
@@ -368,7 +368,7 @@
                       <flag>wxALIGN_CENTRE</flag>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxComboBox" name="trc_textctrl">
+                      <object class="wxComboBox" name="trc_gamma_ctrl">
                         <size>75, -1</size>
                         <content>
                           <item>1.0</item>
@@ -389,10 +389,52 @@
                       <border>8</border>
                     </object>
                     <object class="sizeritem">
-                      <object class="wxChoice" name="trc_type_ctrl"/>
+                      <object class="wxChoice" name="trc_gamma_type_ctrl"/>
                       <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
                     </object>
+                  </object>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="black_output_offset_label">
+                    <label>calibration.black_output_offset</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxSlider" name="black_output_offset_ctrl">
+                        <size>128,-1</size>
+                        <min>0</min>
+                        <max>100</max>
+                        <XRCED>
+                          <events>EVT_SLIDER</events>
+                        </XRCED>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>4</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxSpinCtrl" name="black_output_offset_intctrl">
+                        <size>65,-1</size>
+                        <min>0</min>
+                        <max>100</max>
+                        <XRCED>
+                          <events>EVT_TEXT</events>
+                        </XRCED>
+                      </object>
+                      <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>4</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="black_output_offset_intctrl_label">
+                        <label>%</label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
                   </object>
                 </object>
                 <object class="spacer">

@@ -109,8 +109,10 @@ def update(report_path, pack=True):
 			 'BT_1886_GAMMA_TYPE\s*=\s*"(.+?)"[;,]', 0),
 			("${TRC_GAMMA_TYPE}",
 			 'TRC_GAMMA_TYPE\s*=\s*"(.+?)"[;,]', 0),
-			("${TRC_TYPE}",
-			 'TRC_TYPE\s*=\s*"(.+?)"[;,]', 0),
+			("${TRC_OUTPUT_OFFSET}",
+			 'TRC_OUTPUT_OFFSET\s*=\s*(.+?)[;,]', 0),
+			("${TRC}",
+			 'TRC\s*=\s*"(.+?)"[;,]', 0),
 			("${WHITEPOINT_SIMULATION}",
 			 'WHITEPOINT_SIMULATION\s*=\s*(.+?)[;,]', 0),
 			("${WHITEPOINT_SIMULATION_RELATIVE}",
@@ -134,13 +136,14 @@ def update(report_path, pack=True):
 						 "${GRAYSCALE}": "null",
 						 "${BLACKPOINT}": "-1 -1 -1",
 						 "${TRC_GAMMA}": "null",
+						 "${TRC_OUTPUT_OFFSET}": "0",
 						 "${WHITEPOINT_SIMULATION}": "false",
 						 "${WHITEPOINT_SIMULATION_RELATIVE}": "false"}
 	
 	for placeholder, pattern, flags in data:
 		result = re.search(pattern, orig_report_html, flags)
 		if result or not placeholders2data.get(placeholder):
-			if (placeholder == "${TRC_TYPE}" and not result and
+			if (placeholder == "${TRC}" and not result and
 				"${TRC_GAMMA}" in placeholders2data):
 				default = "BT.1886"
 			else:

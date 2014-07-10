@@ -1927,7 +1927,7 @@ class Worker(object):
 					 apply_cal=True, intent="r", format="3dl",
 					 size=17, input_bits=10, output_bits=12, maxval=1.0,
 					 input_encoding="n", output_encoding="n",
-					 trc_gamma=None, trc_gamma_type="b",
+					 trc_gamma=None, trc_gamma_type="b", trc_output_offset=0.0,
 					 save_link_icc=True):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
@@ -1979,17 +1979,11 @@ class Worker(object):
 				profile_out_basename = "%s (2)%s" % (profile_out_filename,
 													 profile_out_ext)
 			if trc_gamma:
-				if trc_gamma_type in ("g", "G"):
-					# Gamma with black offset
-					self.blend_profile_blackpoint(profile_in, profile_out,
-												  trc_gamma,
-												  trc_gamma_type == "g")
-				else:
-					# Make sure the profile has the expected Rec. 709 TRC
-					# for BT.1886
-					for i, channel in enumerate(("r", "g", "b")):
-						if channel + "TRC" in profile_in.tags:
-							profile_in.tags[channel + "TRC"].set_trc(-709)
+				# Make sure the profile has the expected Rec. 709 TRC
+				# for BT.1886
+				for i, channel in enumerate(("r", "g", "b")):
+					if channel + "TRC" in profile_in.tags:
+						profile_in.tags[channel + "TRC"].set_trc(-709)
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 			profile_out.fileName = os.path.join(cwd, profile_out_basename)
@@ -2035,11 +2029,14 @@ class Worker(object):
 			if not collink:
 				raise NotImplementedError(lang.getstr("argyll.util.not_found",
 													  "collink"))
+			collink_version = get_argyll_version("collink")
 			args = ["-v", "-qh", "-G", "-i%s" % intent, "-r65", "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args += ["-p", "abstract.icc"]
 			if self.argyll_version >= [1, 6]:
+				if collink_version >= [1, 7]:
+					args += ["-b"]  # Use RGB->RGB forced black point hack
 				if format == "madVR":
 					args += ["-3m"]
 				elif format == "eeColor" and not test:
@@ -2047,7 +2044,12 @@ class Worker(object):
 				args += ["-e%s" % input_encoding]
 				args += ["-E%s" % output_encoding]
 				if trc_gamma and trc_gamma_type in ("b", "B"):
-					args += ["-I%s:%s" % (trc_gamma_type, trc_gamma)]
+					if collink_version >= [1, 7]:
+						args += ["-I%s:%s:%s" % (trc_gamma_type,
+												 trc_output_offset,
+												 trc_gamma)]
+					else:
+						args += ["-I%s:%s" % (trc_gamma_type, trc_gamma)]
 				if apply_cal:
 					# Apply the calibration when building our device link
 					# i.e. use collink -a parameter (apply calibration curves

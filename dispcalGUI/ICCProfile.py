@@ -1403,7 +1403,7 @@ class CurveType(ICCProfileTag, list):
 		list.reverse(self)
 		self._transfer_function = {}
 	
-	def set_bt1886_trc(self, black_Y=0, gamma=2.2, absolute=False, size=None):
+	def set_bt1886_trc(self, black_Y=0, outoffset=0.0, gamma=2.4, size=None):
 		"""
 		Set the response to the BT. 1886 curve
 		
@@ -1420,7 +1420,7 @@ class CurveType(ICCProfileTag, list):
 		wXYZ = colormath.RGB2XYZ(1.0, 1.0, 1.0)
 		x, y = colormath.XYZ2xyY(*wXYZ)[:2]
 		XYZbp = colormath.xyY2XYZ(x, y, black_Y)
-		bt1886 = colormath.BT1886(mtx, XYZbp, gamma, absolute)
+		bt1886 = colormath.BT1886(mtx, XYZbp, outoffset, gamma)
 		self.set_trc(-709, size)
 		for i, v in enumerate(self):
 			X, Y, Z = colormath.xyY2XYZ(x, y, v / 65535.0)
