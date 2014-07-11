@@ -165,9 +165,6 @@
       <label>menu.language</label>
     </object>
     <object class="wxMenu" name="wxID_HELP">
-      <object class="wxMenuItem" name="wxID_ABOUT">
-        <label>menu.about</label>
-      </object>
       <object class="wxMenuItem" name="readme">
         <label>readme</label>
       </object>
