@@ -244,6 +244,7 @@
 	"dialog.install_profile": "Do you want to install the profile “%s” and make it the default for display “%s”?",
 	"dialog.linear_cal_info": "Linear calibration curves will be used. Do you want to continue?",
 	"dialog.load_cal": "Load settings",
+	"dialog.select_argyll_version": "Version %s of Argyll CMS was found. The currently selected version is %s. Do you want to use the newer version?",
 	"dialog.set_argyll_bin": "Please locate the directory where the Argyll CMS executables reside.",
 	"dialog.set_profile_save_path": "Create profile directory “%s” here:",
 	"dialog.set_testchart": "Choose testchart file",

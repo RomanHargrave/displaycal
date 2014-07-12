@@ -531,7 +531,7 @@ defaults = {
 	"3dlut.size": 17,
 	"allow_skip_sensor_cal": 0,
 	"argyll.debug": 0,
-	"argyll.dir": expanduseru("~"), # directory
+	"argyll.dir": None,
 	"argyll.version": "0.0.0",
 	"drift_compensation.blacklevel": 0,
 	"drift_compensation.whitelevel": 0,
@@ -1232,7 +1232,7 @@ def writecfg(which="user", worker=None):
 			safe_print(u"Warning - could not write user configuration file "
 					   "'%s': %s" % (cfgfilename, safe_unicode(exception)))
 			return False
-	else:
+	elif getcfg("argyll.dir"):
 		# system-wide config - only stores essentials ie. Argyll directory
 		cfgfilename1 = os.path.join(confighome, appname + ".local.ini")
 		cfgfilename2 = os.path.join(config_sys, appname + ".ini")

@@ -8998,7 +8998,7 @@ class MainFrame(BaseFrame):
 			self.worker.thread.isAlive()):
 			wx.Bell()
 			return
-		if set_argyll_bin():
+		if set_argyll_bin(self):
 			self.check_update_controls() or self.update_menus()
 			if len(self.worker.displays):
 				if getcfg("calibration.file"):

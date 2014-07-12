@@ -238,6 +238,7 @@
 	"dialog.install_profile": "Voulez-vous installer le profil « %s » et en faire le profil par défaut pour l'écran « %s » ?",
 	"dialog.linear_cal_info": "Les courbes de calibrage linéaires seront utilisées. Voulez-vous continuer ?",
 	"dialog.load_cal": "Charger les réglages",
+		"*dialog.select_argyll_version": "Version %s of Argyll CMS was found. The currently selected version is %s. Do you want to use the newer version?",
 	"dialog.set_argyll_bin": "Veuillez indiquer le répertoire dans lequel se trouvent les exécutables d'Argyll CMS.",
 	"dialog.set_profile_save_path": "Créer le répertoire du profil « %s » ici :",
 	"dialog.set_testchart": "Sélectionner un fichier de grille de test",

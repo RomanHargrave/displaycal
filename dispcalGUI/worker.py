@@ -247,11 +247,11 @@ def check_file_isfile(filename, missing_msg=None, notfile_msg=None,
 	return True
 
 
-def check_set_argyll_bin():
+def check_set_argyll_bin(paths=None):
 	"""
 	Check if Argyll binaries can be found, otherwise let the user choose.
 	"""
-	if check_argyll_bin():
+	if check_argyll_bin(paths):
 		return True
 	else:
 		return set_argyll_bin()
@@ -497,20 +497,20 @@ def get_argyll_utilname(name, paths=None):
 	return exe
 
 
-def get_argyll_version(name, silent=False):
+def get_argyll_version(name, silent=False, paths=None):
 	"""
 	Determine version of a certain Argyll utility.
 	
 	"""
-	argyll_version_string = get_argyll_version_string(name, silent)
+	argyll_version_string = get_argyll_version_string(name, silent, paths)
 	return parse_argyll_version_string(argyll_version_string)
 
 
-def get_argyll_version_string(name, silent=False):
+def get_argyll_version_string(name, silent=False, paths=None):
 	argyll_version_string = "0.0.0"
-	if (silent and check_argyll_bin()) or (not silent and 
-										   check_set_argyll_bin()):
-		cmd = get_argyll_util(name)
+	if (silent and check_argyll_bin(paths)) or (not silent and 
+												check_set_argyll_bin(paths)):
+		cmd = get_argyll_util(name, paths)
 		if sys.platform == "win32":
 			startupinfo = sp.STARTUPINFO()
 			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
@@ -747,7 +747,39 @@ def set_argyll_bin(parent=None):
 	""" Set the directory containing the Argyll CMS binary executables """
 	if parent and not parent.IsShownOnScreen():
 		parent = None # do not center on parent if not visible
-	defaultPath = os.path.join(*get_verified_path("argyll.dir"))
+	# Check if Argyll version on PATH is newer than configured Argyll version
+	paths = getenvu("PATH", os.defpath).split(os.pathsep)
+	argyll_version_string = get_argyll_version_string("dispwin", True, paths)
+	argyll_version = parse_argyll_version_string(argyll_version_string)
+	argyll_version_string_cfg = get_argyll_version_string("dispwin", True)
+	argyll_version_cfg = parse_argyll_version_string(argyll_version_string_cfg)
+	# Don't prompt for 1.2.3_foo if current version is 1.2.3
+	# but prompt for 1.2.3 if current version is 1.2.3_foo
+	if ((argyll_version > argyll_version_cfg and
+		 not argyll_version_string.startswith(argyll_version_string_cfg)) or
+		(argyll_version < argyll_version_cfg and
+		 argyll_version_string_cfg.startswith(argyll_version_string))):
+		argyll_dir = os.path.dirname(get_argyll_util("dispwin", paths) or "")
+		dlg = ConfirmDialog(parent,
+							msg=lang.getstr("dialog.select_argyll_version",
+											(argyll_version_string,
+											 argyll_version_string_cfg)),
+							ok=lang.getstr("ok"),
+							cancel=lang.getstr("cancel"),
+							alt=lang.getstr("browse"),
+							bitmap=geticon(32, "dialog-question"))
+		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
+		if dlg_result == wx.ID_OK:
+			setcfg("argyll.dir", None)
+			writecfg()
+			return True
+		if dlg_result == wx.ID_CANCEL:
+			return False
+	else:
+		argyll_dir = None
+	defaultPath = os.path.join(*get_verified_path("argyll.dir",
+												  path=argyll_dir))
 	dlg = wx.DirDialog(parent, lang.getstr("dialog.set_argyll_bin"), 
 					   defaultPath=defaultPath, style=wx.DD_DIR_MUST_EXIST)
 	dlg.Center(wx.BOTH)
