@@ -122,15 +122,17 @@ class SynthICCFrame(BaseFrame):
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
 		setcfg("synthprofile.black_luminance", v)
-		if not bool(v):
-			self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["G"])
-		self.trc_gamma_type_ctrl.Enable(bool(v))
-		black_output_offset_enable = (self.trc_ctrl.GetSelection() in (0, 4) and
-									  bool(v))
-		self.black_output_offset_label.Enable(black_output_offset_enable)
-		self.black_output_offset_ctrl.Enable(black_output_offset_enable)
-		self.black_output_offset_intctrl.Enable(black_output_offset_enable)
-		self.black_output_offset_intctrl_label.Enable(black_output_offset_enable)
+		self.panel.Freeze()
+		i = self.trc_ctrl.GetSelection()
+		self.trc_gamma_type_ctrl.Show(i in (0, 4) and bool(v))
+		black_output_offset_show = (i in (0, 4) and
+									bool(v))
+		self.black_output_offset_label.Show(black_output_offset_show)
+		self.black_output_offset_ctrl.Show(black_output_offset_show)
+		self.black_output_offset_intctrl.Show(black_output_offset_show)
+		self.black_output_offset_intctrl_label.Show(black_output_offset_show)
+		self.panel.GetSizer().Layout()
+		self.panel.Thaw()
 
 	def black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.black_output_offset_intctrl.GetId():
@@ -502,10 +504,12 @@ class SynthICCFrame(BaseFrame):
 	def update_trc_controls(self):
 		i = self.trc_ctrl.GetSelection()
 		self.panel.Freeze()
+		self.trc_gamma_label.Show(i in (0, 4))
 		self.trc_gamma_ctrl.SetValue(str(getcfg("synthprofile.trc_gamma")))
 		self.trc_gamma_ctrl.Show(i in (0, 4))
 		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("synthprofile.trc_gamma_type")])
-		self.trc_gamma_type_ctrl.Show(i in (0, 4))
+		self.panel.GetSizer().Layout()
+		self.panel.Thaw()
 		if i in (0, 4):
 			outoffset = int(getcfg("synthprofile.trc_output_offset") * 100)
 		else:
@@ -513,8 +517,6 @@ class SynthICCFrame(BaseFrame):
 		self.black_output_offset_ctrl.SetValue(outoffset)
 		self.black_output_offset_intctrl.SetValue(outoffset)
 		self.black_luminance_ctrl_handler(None)
-		self.panel.GetSizer().Layout()
-		self.panel.Thaw()
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")
