@@ -3520,17 +3520,7 @@ class MainFrame(BaseFrame):
 				self.black_output_offset_ctrl.GetValue())
 		v = self.get_black_output_offset()
 		if float(v) > 0 and self.trc_ctrl.GetSelection() == 3:
-			self.restore_trc_backup()
-			if getcfg("calibration.black_output_offset.backup", False):
-				setcfg("calibration.black_output_offset.backup", None)
-			self.calpanel.Freeze()
 			self.trc_ctrl.SetSelection(0)
-			self.trc_gamma_label.Show()
-			self.trc_textctrl.Show()
-			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
-			self.calpanel.Layout()
-			self.calpanel.Refresh()
-			self.calpanel.Thaw()
 		if float(v) != getcfg("calibration.black_output_offset"):
 			self.cal_changed()
 		setcfg("calibration.black_output_offset", v)
@@ -3942,9 +3932,11 @@ class MainFrame(BaseFrame):
 									   getevttype(event)))
 		v = self.get_trc_type()
 		if v != getcfg("trc.type"):
+			setcfg("trc.type", v)
+			if v != "G" and self.trc_ctrl.GetSelection() == 3:
+				self.trc_ctrl.SetSelection(0)
 			self.cal_changed()
-		setcfg("trc.type", v)
-		self.update_profile_name()
+			self.update_profile_name()
 
 	def trc_ctrl_handler(self, event, cal_changed=True):
 		if event.GetId() == self.trc_textctrl.GetId() and (
@@ -3960,17 +3952,19 @@ class MainFrame(BaseFrame):
 		if event.GetId() == self.trc_ctrl.GetId():
 			if self.trc_ctrl.GetSelection() == 3:
 				# BT.1886
-				setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
+				if not getcfg("trc.backup", False):
+					setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
+					setcfg("trc.type.backup", getcfg("trc.type"))
+					setcfg("calibration.black_output_offset.backup",
+						   getcfg("calibration.black_output_offset"))
 				self.trc_textctrl.SetValue("2.4")
-				setcfg("trc.type.backup", getcfg("trc.type"))
 				setcfg("trc.type", "G")
 				self.trc_type_ctrl.SetSelection(1)
-				setcfg("calibration.black_output_offset.backup",
-					   getcfg("calibration.black_output_offset"))
 				setcfg("calibration.black_output_offset", 0)
 				self.black_output_offset_ctrl.SetValue(0)
 				self.black_output_offset_intctrl.SetValue(0)
-			else:
+			elif (self.trc_ctrl.GetSelection() != 0 or
+				  (getcfg("trc") == 2.4 and getcfg("trc.type") == "G")):
 				self.restore_trc_backup()
 				if getcfg("calibration.black_output_offset.backup", False):
 					setcfg("calibration.black_output_offset",
@@ -3987,11 +3981,14 @@ class MainFrame(BaseFrame):
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
 					raise ValueError()
-				if str(v) != self.trc_textctrl.GetValue():
-					self.trc_textctrl.SetValue(str(v))
 			except ValueError:
 				wx.Bell()
 				self.trc_textctrl.SetValue(str(getcfg("trc")))
+			else:
+				if str(v) != self.trc_textctrl.GetValue():
+					self.trc_textctrl.SetValue(str(v))
+				if self.trc_ctrl.GetSelection() == 3 and v != 2.4:
+					self.trc_ctrl.SetSelection(0)
 			if event.GetId() == self.trc_ctrl.GetId():
 				self.trc_textctrl.SetFocus()
 				self.trc_textctrl.SelectAll()
