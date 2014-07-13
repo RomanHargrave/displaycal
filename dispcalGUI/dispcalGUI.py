@@ -3041,6 +3041,15 @@ class MainFrame(BaseFrame):
 		self.panel.Thaw()
 
 		self.updatingctrls = False
+
+	def update_trc_control(self):
+		if self.trc_ctrl.GetSelection() in (0, 3):
+			if (getcfg("trc.type") == "G" and
+				getcfg("calibration.black_output_offset") == 0 and
+				getcfg("trc") == 2.4):
+				self.trc_ctrl.SetSelection(3)  # BT.1886
+			else:
+				self.trc_ctrl.SetSelection(0)  # Gamma
 	
 	def update_black_output_offset_ctrl(self):
 		self.black_output_offset_ctrl.SetValue(
@@ -3523,6 +3532,7 @@ class MainFrame(BaseFrame):
 			self.cal_changed()
 		setcfg("calibration.black_output_offset", v)
 		self.update_profile_name()
+		self.update_trc_control()
 	
 	def ambient_measure_handler(self, event):
 		""" Start measuring ambient illumination """
@@ -3935,6 +3945,7 @@ class MainFrame(BaseFrame):
 				self.trc_ctrl.SetSelection(0)
 			self.cal_changed()
 			self.update_profile_name()
+			self.update_trc_control()
 
 	def trc_ctrl_handler(self, event, cal_changed=True):
 		if event.GetId() == self.trc_textctrl.GetId() and (
@@ -3985,8 +3996,6 @@ class MainFrame(BaseFrame):
 			else:
 				if str(v) != self.trc_textctrl.GetValue():
 					self.trc_textctrl.SetValue(str(v))
-				if self.trc_ctrl.GetSelection() == 3 and v != 2.4:
-					self.trc_ctrl.SetSelection(0)
 			if event.GetId() == self.trc_ctrl.GetId():
 				self.trc_textctrl.SetFocus()
 				self.trc_textctrl.SelectAll()
@@ -4004,6 +4013,7 @@ class MainFrame(BaseFrame):
 		setcfg("trc", trc)
 		if cal_changed:
 			self.update_profile_name()
+		self.update_trc_control()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
 		if (trc in ("240", "709", "s") and not
