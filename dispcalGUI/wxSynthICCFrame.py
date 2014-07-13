@@ -125,6 +125,12 @@ class SynthICCFrame(BaseFrame):
 		if not bool(v):
 			self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["G"])
 		self.trc_gamma_type_ctrl.Enable(bool(v))
+		black_output_offset_enable = (self.trc_ctrl.GetSelection() in (0, 4) and
+									  bool(v))
+		self.black_output_offset_label.Enable(black_output_offset_enable)
+		self.black_output_offset_ctrl.Enable(black_output_offset_enable)
+		self.black_output_offset_intctrl.Enable(black_output_offset_enable)
+		self.black_output_offset_intctrl_label.Enable(black_output_offset_enable)
 
 	def black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.black_output_offset_intctrl.GetId():
@@ -449,8 +455,8 @@ class SynthICCFrame(BaseFrame):
 			setcfg("synthprofile.trc_gamma_type", "G")
 			setcfg("synthprofile.trc_output_offset", 0.0)
 			config.writecfg()
-			if not self._updating_ctrls:
-				self.update_trc_controls()
+		if not self._updating_ctrls:
+			self.update_trc_controls()
 
 	def trc_gamma_type_ctrl_handler(self, event):
 		setcfg("synthprofile.trc_gamma_type",
@@ -481,12 +487,11 @@ class SynthICCFrame(BaseFrame):
 		""" Update controls with values from the configuration """
 		self.luminance_ctrl.SetValue(getcfg("synthprofile.luminance"))
 		self.black_luminance_ctrl.SetValue(getcfg("synthprofile.black_luminance"))
-		self.black_luminance_ctrl_handler(None)
+		self.update_trc_control()
 		self.update_trc_controls()
 
 	def update_trc_control(self):
-		i = self.trc_ctrl.GetSelection()
-		if i in (0, 4):
+		if self.trc_ctrl.GetSelection() in (0, 4):
 			if (getcfg("synthprofile.trc_gamma_type") == "G" and
 				getcfg("synthprofile.trc_output_offset") == 0 and
 				getcfg("synthprofile.trc_gamma") == 2.4):
@@ -497,7 +502,6 @@ class SynthICCFrame(BaseFrame):
 	def update_trc_controls(self):
 		i = self.trc_ctrl.GetSelection()
 		self.panel.Freeze()
-		self.update_trc_control()
 		self.trc_gamma_ctrl.SetValue(str(getcfg("synthprofile.trc_gamma")))
 		self.trc_gamma_ctrl.Show(i in (0, 4))
 		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("synthprofile.trc_gamma_type")])
@@ -506,12 +510,9 @@ class SynthICCFrame(BaseFrame):
 			outoffset = int(getcfg("synthprofile.trc_output_offset") * 100)
 		else:
 			outoffset = 100
-		self.black_output_offset_label.Enable(i in (0, 4))
 		self.black_output_offset_ctrl.SetValue(outoffset)
-		self.black_output_offset_ctrl.Enable(i in (0, 4))
 		self.black_output_offset_intctrl.SetValue(outoffset)
-		self.black_output_offset_intctrl.Enable(i in (0, 4))
-		self.black_output_offset_intctrl_label.Enable(i in (0, 4))
+		self.black_luminance_ctrl_handler(None)
 		self.panel.GetSizer().Layout()
 		self.panel.Thaw()
 	
