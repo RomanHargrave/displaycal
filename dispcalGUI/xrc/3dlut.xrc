@@ -138,10 +138,6 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="wxChoice" name="trc_ctrl">
-                        <content>
-                          <item>trc.rec1886</item>
-                          <item>custom</item>
-                        </content>
                       </object>
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>

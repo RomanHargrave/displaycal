@@ -403,7 +403,7 @@ class ReportFrame(BaseFrame):
 						  % which).SetDropTarget(droptarget)
 
 		items = []
-		for item in self.trc_ctrl.Items:
+		for item in ("trc.rec1886", "custom"):
 			items.append(lang.getstr(item))
 		self.trc_ctrl.SetItems(items)
 		
