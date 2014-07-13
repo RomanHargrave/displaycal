@@ -598,6 +598,7 @@ class LUT3DFrame(BaseFrame):
 		
 		self.rendering_intents_ab = {}
 		self.rendering_intents_ba = {}
+		self.rendering_intent_ctrl.Clear()
 		for i, ri in enumerate(config.valid_values["3dlut.rendering_intent"]):
 			self.rendering_intent_ctrl.Append(lang.getstr("gamap.intents." + ri))
 			self.rendering_intents_ab[i] = ri
@@ -605,6 +606,7 @@ class LUT3DFrame(BaseFrame):
 		
 		self.lut3d_formats_ab = {}
 		self.lut3d_formats_ba = {}
+		self.lut3d_format_ctrl.Clear()
 		for i, format in enumerate(config.valid_values["3dlut.format"]):
 			if format != "madVR" or self.worker.argyll_version >= [1, 6]:
 				self.lut3d_format_ctrl.Append(lang.getstr("3dlut.format.%s" % format))
@@ -613,6 +615,7 @@ class LUT3DFrame(BaseFrame):
 		
 		self.lut3d_size_ab = {}
 		self.lut3d_size_ba = {}
+		self.lut3d_size_ctrl.Clear()
 		for i, size in enumerate(config.valid_values["3dlut.size"]):
 			self.lut3d_size_ctrl.Append("%sx%sx%s" % ((size, ) * 3))
 			self.lut3d_size_ab[i] = size
@@ -620,6 +623,8 @@ class LUT3DFrame(BaseFrame):
 		
 		self.lut3d_bitdepth_ab = {}
 		self.lut3d_bitdepth_ba = {}
+		self.lut3d_bitdepth_input_ctrl.Clear()
+		self.lut3d_bitdepth_output_ctrl.Clear()
 		for i, bitdepth in enumerate(config.valid_values["3dlut.bitdepth.input"]):
 			self.lut3d_bitdepth_input_ctrl.Append(str(bitdepth))
 			self.lut3d_bitdepth_output_ctrl.Append(str(bitdepth))
