@@ -2902,9 +2902,9 @@ class MainFrame(BaseFrame):
 		self.black_luminance_textctrl.ChangeValue(
 			"%.6f" % getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Show(
-			not update_cal and bool(getcfg("calibration.black_luminance", False)))
+			bool(getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(
-			not update_cal and bool(getcfg("calibration.black_luminance", False)))
+			bool(getcfg("calibration.black_luminance", False)))
 		
 		self.blacklevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.blacklevel")))
