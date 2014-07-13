@@ -2816,16 +2816,14 @@ class MainFrame(BaseFrame):
 						 can_update_cal(filename + ".cal"))
 		if not enable_update:
 			setcfg("calibration.update", 0)
+		update_cal = getcfg("calibration.update")
 		self.calibration_update_cb.Enable(enable_update)
-		self.calibration_update_cb.SetValue(
-			bool(getcfg("calibration.update")))
-
-		update_cal = self.calibration_update_cb.GetValue()
+		self.calibration_update_cb.SetValue(bool(update_cal))
 
 		if not update_cal or not profile_exists:
-			setcfg("profile.update", "0")
+			setcfg("profile.update", 0)
 
-		update_profile = self.calibration_update_cb.GetValue() and profile_exists
+		update_profile = update_cal and profile_exists
 		enable_profile = not(update_profile)
 		
 		if update_ccmx_items:
