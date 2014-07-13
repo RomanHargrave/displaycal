@@ -2917,6 +2917,9 @@ class MainFrame(BaseFrame):
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.SetSelection(0)
 			self.trc_type_ctrl.Hide()
+		else:
+			self.trc_type_ctrl.Show(bool(getcfg("show_advanced_calibration_options")))
+			self.trc_type_ctrl.Enable(not update_cal)
 		if trc == "l":
 			self.trc_ctrl.SetSelection(1)
 		elif trc == "709":
@@ -2927,11 +2930,10 @@ class MainFrame(BaseFrame):
 			self.trc_ctrl.SetSelection(5)
 		elif bt1886:
 			self.trc_ctrl.SetSelection(3)
-			self.trc_gamma_label.Show()
+			self.trc_gamma_label.Show(bool(getcfg("show_advanced_calibration_options")))
 			self.trc_textctrl.SetValue(str(trc))
-			self.trc_textctrl.Show()
+			self.trc_textctrl.Show(bool(getcfg("show_advanced_calibration_options")))
 			self.trc_type_ctrl.SetSelection(1)
-			self.trc_type_ctrl.Show()
 		elif trc:
 			self.trc_ctrl.SetSelection(0)
 			self.trc_gamma_label.Show()
@@ -2941,8 +2943,6 @@ class MainFrame(BaseFrame):
 			self.trc_type_ctrl.SetSelection(
 				self.trc_types_ba.get(getcfg("trc.type"), 
 				self.trc_types_ba.get(defaults["trc.type"])))
-			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
-			self.trc_type_ctrl.Enable(not update_cal)
 
 		self.ambient_viewcond_adjust_cb.SetValue(
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
@@ -3978,10 +3978,11 @@ class MainFrame(BaseFrame):
 					setcfg("calibration.black_output_offset.backup", None)
 					self.update_black_output_offset_ctrl()
 		if self.trc_ctrl.GetSelection() in (0, 3):
-			self.trc_gamma_label.Show()
-			self.trc_textctrl.Show()
-			self.trc_type_ctrl.Show(self.trc_ctrl.GetSelection() == 3 or
+			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 0 or
 									getcfg("show_advanced_calibration_options"))
+			self.trc_gamma_label.Show(show_gamma_ctrls)
+			self.trc_textctrl.Show(show_gamma_ctrls)
+			self.trc_type_ctrl.Show(bool(getcfg("show_advanced_calibration_options")))
 			try:
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
@@ -6581,6 +6582,8 @@ class MainFrame(BaseFrame):
 					 #self.black_luminance_textctrl,
 					 #self.black_luminance_textctrl_label,
 					 #self.blacklevel_drift_compensation,
+					 self.trc_gamma_label,
+					 self.trc_textctrl,
 					 self.trc_type_ctrl,
 					 self.ambient_viewcond_adjust_cb,
 					 self.ambient_viewcond_adjust_textctrl,
@@ -6596,12 +6599,11 @@ class MainFrame(BaseFrame):
 					 self.black_point_rate_label,
 					 self.black_point_rate_ctrl,
 					 self.black_point_rate_floatctrl):
-			if (ctrl is not self.trc_type_ctrl or
-				self.trc_ctrl.GetSelection() in (0, 3)):
-				ctrl.GetContainingSizer().Show(ctrl,
-											   (ctrl is self.trc_type_ctrl and
-												self.trc_ctrl.GetSelection() == 3) or
-											   show_advanced_calibration_options)
+			ctrl.GetContainingSizer().Show(ctrl,
+										   (ctrl in (self.trc_gamma_label,
+													 self.trc_textctrl) and
+											self.trc_ctrl.GetSelection() == 0) or
+										   show_advanced_calibration_options)
 		self.black_point_correction_auto_handler()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
