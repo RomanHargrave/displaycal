@@ -140,6 +140,13 @@
                       <border>8</border>
                     </object>
                     <object class="sizeritem">
+                      <object class="wxStaticText" name="trc_gamma_label">
+                        <label>trc.gamma</label>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
                       <object class="wxComboBox" name="trc_gamma_ctrl">
                         <size>75,-1</size>
                         <content>

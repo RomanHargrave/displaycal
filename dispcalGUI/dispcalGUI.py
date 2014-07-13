@@ -1317,7 +1317,7 @@ class MainFrame(BaseFrame):
 		self.black_luminance_ctrl.SetItems([lang.getstr("as_measured"),
 											lang.getstr("custom")])
 		
-		self.trc_ctrl.SetItems([lang.getstr("trc.gamma"),
+		self.trc_ctrl.SetItems([lang.getstr("custom"),
 								lang.getstr("trc.lstar"),
 								lang.getstr("trc.rec709"),
 								lang.getstr("trc.rec1886"),
@@ -2913,6 +2913,7 @@ class MainFrame(BaseFrame):
 		bt1886 = (trc == 2.4 and getcfg("trc.type") == "G" and
 				  getcfg("calibration.black_output_offset") == 0)
 		if trc in ("l", "709", "240", "s"):
+			self.trc_gamma_label.Hide()
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.SetSelection(0)
 			self.trc_type_ctrl.Hide()
@@ -2926,12 +2927,14 @@ class MainFrame(BaseFrame):
 			self.trc_ctrl.SetSelection(5)
 		elif bt1886:
 			self.trc_ctrl.SetSelection(3)
+			self.trc_gamma_label.Show()
 			self.trc_textctrl.SetValue(str(trc))
 			self.trc_textctrl.Show()
 			self.trc_type_ctrl.SetSelection(1)
 			self.trc_type_ctrl.Show()
 		elif trc:
 			self.trc_ctrl.SetSelection(0)
+			self.trc_gamma_label.Show()
 			self.trc_textctrl.SetValue(str(trc))
 			self.trc_textctrl.Show()
 			self.trc_textctrl.Enable(not update_cal)
@@ -3522,6 +3525,7 @@ class MainFrame(BaseFrame):
 				setcfg("calibration.black_output_offset.backup", None)
 			self.calpanel.Freeze()
 			self.trc_ctrl.SetSelection(0)
+			self.trc_gamma_label.Show()
 			self.trc_textctrl.Show()
 			self.trc_type_ctrl.Show(getcfg("show_advanced_calibration_options"))
 			self.calpanel.Layout()
@@ -3974,6 +3978,7 @@ class MainFrame(BaseFrame):
 					setcfg("calibration.black_output_offset.backup", None)
 					self.update_black_output_offset_ctrl()
 		if self.trc_ctrl.GetSelection() in (0, 3):
+			self.trc_gamma_label.Show()
 			self.trc_textctrl.Show()
 			self.trc_type_ctrl.Show(self.trc_ctrl.GetSelection() == 3 or
 									getcfg("show_advanced_calibration_options"))
@@ -3990,6 +3995,7 @@ class MainFrame(BaseFrame):
 				self.trc_textctrl.SetFocus()
 				self.trc_textctrl.SelectAll()
 		else:
+			self.trc_gamma_label.Hide()
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.Hide()
 		self.calpanel.Layout()

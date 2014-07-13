@@ -617,14 +617,20 @@
                             <border>8</border>
                           </object>
                           <object class="sizeritem">
+                            <object class="wxStaticText" name="trc_gamma_label">
+                              <label>trc.gamma</label>
+                            </object>
+                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>8</border>
+                          </object>
+                          <object class="sizeritem">
                             <object class="wxComboBox" name="trc_textctrl">
                               <size>75,-1</size>
                               <XRCED>
                                 <events>EVT_COMBOBOX|EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <flag>wxALIGN_CENTRE_VERTICAL</flag>
                           </object>
                           <object class="sizeritem">
                             <object class="wxChoice" name="trc_type_ctrl">
