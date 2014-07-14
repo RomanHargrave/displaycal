@@ -46,6 +46,7 @@
 	"argyll.instrument.driver.missing": "Eventuell ist der Argyll-CMS-Treiber für Ihr Messgarät nicht oder nicht korrekt installiert. Bitte überprüfen Sie, ob Ihr Messgerät im Windows-Gerätemanager unter „Argyll LibUSB-1.0A devices“ angezeigt wird und installieren Sie ggf. den Argyll-CMS-Treiber. Folgen Sie dazu der Anleitung in der Dokumentation.",
 	"argyll.instrument.drivers.install": "Argyll CMS Messgeräte-Treiber installieren...",
 	"argyll.instrument.drivers.install.failure": "Installation der Argyll CMS Messgeräte-Treiber fehlgeschlagen.",
+	"argyll.instrument.drivers.install.restart": "Zur Installation der Argyll-CMS-Messgeräte-Treiber müssen Sie das Erzwingen der Treibersignatur deaktivieren. Dazu muss ein System-Neustart durchgeführt werden. Wählen Sie auf der Seite, die daraufhin erscheint, die Option „Problembehandlung“, dann „Erweiterte Optionen“, „Starteinstellungen“ und schließlich „Neu starten“. Beim Neustart wählen Sie in den Startoptionen „Erzwingen der Treibersignatur deaktivieren“. Nach dem Neustart wählen Sie den Menüpunkt „Argyll CMS Messgeräte-Treiber installieren...“ erneut, um die Treiber zu installlieren.",
 	"argyll.instrument.drivers.uninstall": "Argyll CMS Messgeräte-Treiber deinstallieren...",
 	"argyll.instrument.drivers.uninstall.failure": "Deinstallation der Argyll CMS Messgeräte-Treiber fehlgeschlagen.",
 	"argyll.instrument.drivers.uninstall.success": "Deinstallation der Argyll CMS Messgeräte-Treiber abgeschlossen.",

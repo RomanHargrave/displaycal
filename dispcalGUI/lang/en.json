@@ -52,6 +52,7 @@
 	"argyll.instrument.driver.missing": "The Argyll CMS driver for your measurement device seems not to be installed or installed incorrectly. Please check if your measurement device is shown in Windows' device manager under „Argyll LibUSB-1.0A devices“ and (re-)install the driver if necessary. Please read the documentation for installation instructions.",
 	"argyll.instrument.drivers.install": "Install Argyll CMS instrument drivers...",
 	"argyll.instrument.drivers.install.failure": "Installation of Argyll CMS instrument drivers failed.",
+	"argyll.instrument.drivers.install.restart": "You need to disable Driver Signature Enforcement to install the Argyll CMS instrument drivers. For this purpose, the system needs to be restarted. Select “Troubleshoot” on the page that will appear, then “Advanced Options”, “Startup Settings” and finally “Restart”. On startup, select “Disable Driver Signature Enforcement”. After the restart, choose “Install Argyll CMS instrument drivers...” in the menu again to install the drivers.",
 	"argyll.instrument.drivers.uninstall": "Uninstall Argyll CMS instrument drivers...",
 	"argyll.instrument.drivers.uninstall.failure": "Uninstallation of Argyll CMS instrument drivers failed.",
 	"argyll.instrument.drivers.uninstall.success": "Uninstallation of Argyll CMS instrument drivers complete.",

@@ -44,6 +44,8 @@ import threading
 import traceback
 import urllib
 import urllib2
+if sys.platform == "win32":
+	import _winreg
 from hashlib import md5
 from time import sleep, strftime, strptime, struct_time
 from zlib import crc32
@@ -4444,6 +4446,30 @@ class MainFrame(BaseFrame):
 			dlg.ShowModalThenDestroy(parent)
 	
 	def install_argyll_instrument_drivers(self, event=None, uninstall=False):
+		if sys.getwindowsversion() >= (6, 2):
+			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+								  r"SYSTEM\CurrentControlSet\Control", 0,
+								  _winreg.KEY_READ |
+								  _winreg.KEY_QUERY_VALUE)
+			try:
+				value = _winreg.QueryValueEx(key, "SystemStartOptions")[0]
+			except WindowsError:
+				value = ""
+			if (not "TESTSIGNING" in value and
+				not "DISABLE_INTEGRITY_CHECKS" in value):
+				dlg = ConfirmDialog(self,
+									msg=lang.getstr("argyll.instrument.drivers.install.restart"),
+									ok=lang.getstr("ok"),
+									cancel=lang.getstr("cancel"),
+									bitmap=geticon(32, "dialog-information"))
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result != wx.ID_OK:
+					return False
+				self.worker.exec_cmd(which("shutdown.exe"),
+									 ["/r", "/o", "/t", "0"],
+									 capture_output=True, skip_scripts=True)
+				return
 		self.worker.start(lambda result: show_result_dialog(result, self)
 										 if isinstance(result, Exception)
 										 else 0,
