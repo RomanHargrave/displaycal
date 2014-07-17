@@ -7521,7 +7521,8 @@ usage: spotread [-options] [logfile]
 	
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",
 			   pcs=None, scale=1, cwd=None, startupinfo=None, raw=False,
-			   logfile=None, use_icclu=False, use_cam_clipping=False):
+			   logfile=None, use_icclu=False, use_cam_clipping=False,
+			   get_clip=False):
 		"""
 		Call xicclu, feed input floats into stdin, return output floats.
 		
@@ -7535,7 +7536,7 @@ usage: spotread [-options] [logfile]
 					startupinfo, use_icclu, use_cam_clipping, logfile,
 					worker=self) as xicclu:
 			xicclu(idata)
-		return xicclu.get(raw)
+		return xicclu.get(raw, get_clip)
 
 
 class Xicclu(Worker):
@@ -7683,7 +7684,7 @@ class Xicclu(Worker):
 			if self.tempdir and not os.listdir(self.tempdir):
 				self.wrapup(False)
 	
-	def get(self, raw=False):
+	def get(self, raw=False, get_clip=False):
 		self.stdout.seek(0)
 		odata = self.stdout.readlines()
 		if raw:
@@ -7703,9 +7704,12 @@ class Xicclu(Worker):
 			elif debug or verbose > 3:
 				self.log(line)
 			parts = line.split("->")[-1].strip().split()
-			if parts.pop() == "(clip)":
+			clip = parts.pop() == "(clip)"
+			if clip:
 				parts.pop()
 			parsed.append([float(n) for n in parts])
+			if get_clip and clip:
+				parsed[-1].append(clip)
 			j += 1
 		return parsed
 	
