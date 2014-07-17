@@ -7,7 +7,7 @@ import sys
 if sys.stdout.isatty():
 	if sys.platform == "win32":
 		try:
-			from win32console import GetConsoleCP, GetConsoleOutputCP
+			from win32console import GetConsoleCP, GetConsoleOutputCP, GetOEMCP
 		except ImportError:
 			pass
 
@@ -26,10 +26,13 @@ def get_encoding(stream):
 				enc = locale.getlocale()[1]
 			if not enc:
 				try:
+					# GetConsoleCP and GetConsoleOutputCP return zero if
+					# we're not running as console executable. Fall back
+					# to GetOEMCP
 					if stream is (sys.stdin):
-						enc = aliases.get(str(GetConsoleCP()))
+						enc = aliases.get(str(GetConsoleCP() or GetOEMCP()))
 					else:
-						enc = aliases.get(str(GetConsoleOutputCP()))
+						enc = aliases.get(str(GetConsoleOutputCP() or GetOEMCP()))
 				except:
 					pass
 	enc = enc or getattr(stream, "encoding", None) or \
