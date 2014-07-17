@@ -1349,7 +1349,7 @@ class Worker(object):
 		"""
 		self.owner = owner # owner should be a wxFrame or similar
 		if sys.platform == "win32":
-			self.data_encoding = aliases.get(str(windll.kernel32.GetConsoleOutputCP()), 
+			self.data_encoding = aliases.get(str(windll.kernel32.GetACP()), 
 											 "ascii")
 		else:
 			self.data_encoding = enc
@@ -2920,6 +2920,8 @@ class Worker(object):
 			else:
 				kwargs = dict(timeout=5, cwd=working_dir,
 							  env=os.environ)
+				if sys.platform == "win32":
+					kwargs["codepage"] = windll.kernel32.GetACP()
 				stderr = StringIO()
 				stdout = StringIO()
 				logfiles = []
@@ -2961,10 +2963,6 @@ class Worker(object):
 						# User aborted before connection was established
 						return False
 			tries = 1
-			if use_pty:
-				data_encoding = enc
-			else:
-				data_encoding = fs_enc
 			while tries > 0:
 				if use_pty:
 					if self.argyll_version >= [1, 2] and USE_WPOPEN and \
@@ -3104,14 +3102,14 @@ class Worker(object):
 							   line.find("User Aborted") < 0 and \
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
-								self.errors += [line.decode(data_encoding,
+								self.errors += [line.decode(self.data_encoding,
 															"replace")]
 					if tries > 0 and not use_pty:
 						stderr = tempfile.SpooledTemporaryFile()
 				if capture_output or use_pty:
 					stdout.seek(0)
 					self.output = [re.sub("^\.{4,}\s*$", "", 
-										  line.decode(data_encoding,
+										  line.decode(self.data_encoding,
 													  "replace")) 
 								   for line in stdout.readlines()]
 					stdout.close()
