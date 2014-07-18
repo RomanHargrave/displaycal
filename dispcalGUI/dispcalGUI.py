@@ -4506,22 +4506,11 @@ class MainFrame(BaseFrame):
 									 capture_output=True, skip_scripts=True,
 									 working_dir=False)
 				return
-		if launch_devman:
-			winxp = sys.getwindowsversion() < (6,)
-			if winxp:
-				cmd = "start"
-				args = ["mmc", "devmgmt.msc"]
-			else:
-				cmd = "mmc"
-				args = ["devmgmt.msc"]
-			self.worker.exec_cmd(cmd, args, capture_output=True,
-								 skip_scripts=True, asroot=not winxp,
-								 shell=winxp, working_dir=False)
 		self.worker.start(lambda result: show_result_dialog(result, self)
 										 if isinstance(result, Exception)
 										 else 0,
 						  self.worker.install_argyll_instrument_drivers,
-						  wargs=(uninstall, ))
+						  wargs=(uninstall, launch_devman))
 	
 	def uninstall_argyll_instrument_drivers(self, event=None):
 		self.install_argyll_instrument_drivers(uninstall=True)

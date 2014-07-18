@@ -4150,13 +4150,24 @@ usage: spotread [-options] [logfile]
 				result = Error(lang.getstr("profile.install.error"))
 		return result
 	
-	def install_argyll_instrument_drivers(self, uninstall=False):
+	def install_argyll_instrument_drivers(self, uninstall=False,
+										  launch_devman=False):
 		""" (Un-)install the Argyll CMS instrument drivers under Windows """
+		winxp = sys.getwindowsversion() < (6,)
+		if launch_devman:
+			if winxp:
+				cmd = "start"
+				args = ["mmc", "devmgmt.msc"]
+			else:
+				cmd = "mmc"
+				args = ["devmgmt.msc"]
+			self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True,
+						  asroot=not winxp, shell=winxp, working_dir=False)
 		if not uninstall:
 			usbinfpath = get_data_path("usb/ArgyllCMS.inf")
 			if not usbinfpath:
 				return Error(lang.getstr("file.missing", "usb/ArgyllCMS.inf"))
-		if sys.getwindowsversion() >= (6, ):
+		if not winxp:
 			# Windows Vista and newer
 			with win64_disable_file_system_redirection():
 				pnputil = which("PnPutil.exe")
