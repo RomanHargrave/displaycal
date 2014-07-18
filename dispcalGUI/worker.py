@@ -5972,6 +5972,7 @@ usage: spotread [-options] [logfile]
 		if percentage:
 			if "Setting up the instrument" in msg or \
 			   "Commencing device calibration" in msg or \
+			   "Commencing display calibration" in msg or \
 			   "Calibration complete" in msg:
 				self.recent.clear()
 				msg = ""
