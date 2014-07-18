@@ -4457,52 +4457,58 @@ class MainFrame(BaseFrame):
 			dlg.ShowModalThenDestroy(parent)
 	
 	def install_argyll_instrument_drivers(self, event=None, uninstall=False):
-		if not uninstall:
-			dlg = ConfirmDialog(self,
-								title=lang.getstr("argyll.instrument.drivers.install"),
-								msg=lang.getstr("argyll.instrument.drivers.install.confirm"),
-								ok=lang.getstr("ok"),
-								cancel=lang.getstr("cancel"),
-								bitmap=geticon(32, "dialog-information"))
-			dlg.launch_devman = wx.CheckBox(dlg, -1, lang.getstr("device_manager.launch"))
-			dlg.sizer3.Add(dlg.launch_devman, flag=wx.TOP | wx.ALIGN_LEFT,
-						   border=12)
-			dlg.sizer0.SetSizeHints(dlg)
-			dlg.sizer0.Layout()
-			result = dlg.ShowModal()
-			launch_devman = dlg.launch_devman.IsChecked()
-			dlg.Destroy()
-			if result != wx.ID_OK:
-				return
-			if sys.getwindowsversion() >= (6, 2):
-				key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-									  r"SYSTEM\CurrentControlSet\Control", 0,
-									  _winreg.KEY_READ |
-									  _winreg.KEY_QUERY_VALUE)
-				try:
-					value = _winreg.QueryValueEx(key, "SystemStartOptions")[0]
-				except WindowsError:
-					value = ""
-				if (not "TESTSIGNING" in value and
-					not "DISABLE_INTEGRITY_CHECKS" in value):
-					dlg = ConfirmDialog(self,
-										title=lang.getstr("argyll.instrument.drivers.install"),
-										msg=lang.getstr("argyll.instrument.drivers.install.restart"),
-										ok=lang.getstr("ok"),
-										cancel=lang.getstr("cancel"),
-										bitmap=geticon(32, "dialog-warning"))
-					result = dlg.ShowModal()
-					dlg.Destroy()
-					if result != wx.ID_OK:
-						return
-					self.worker.exec_cmd(which("shutdown.exe"),
-										 ["/r", "/o", "/t", "0"],
-										 capture_output=True, skip_scripts=True)
+		if uninstall:
+			title = "argyll.instrument.drivers.uninstall"
+			msg = "argyll.instrument.drivers.uninstall.confirm"
+		else:
+			title = "argyll.instrument.drivers.install"
+			msg = "argyll.instrument.drivers.install.confirm"
+		dlg = ConfirmDialog(self,
+							title=lang.getstr(title),
+							msg=lang.getstr(msg),
+							ok=lang.getstr("ok"),
+							cancel=lang.getstr("cancel"),
+							bitmap=geticon(32, "dialog-information"))
+		dlg.launch_devman = wx.CheckBox(dlg, -1, lang.getstr("device_manager.launch"))
+		dlg.launch_devman.SetValue(uninstall)
+		dlg.sizer3.Add(dlg.launch_devman, flag=wx.TOP | wx.ALIGN_LEFT,
+					   border=12)
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		result = dlg.ShowModal()
+		launch_devman = dlg.launch_devman.IsChecked()
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		if not uninstall and sys.getwindowsversion() >= (6, 2):
+			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+								  r"SYSTEM\CurrentControlSet\Control", 0,
+								  _winreg.KEY_READ |
+								  _winreg.KEY_QUERY_VALUE)
+			try:
+				value = _winreg.QueryValueEx(key, "SystemStartOptions")[0]
+			except WindowsError:
+				value = ""
+			if (not "TESTSIGNING" in value and
+				not "DISABLE_INTEGRITY_CHECKS" in value):
+				dlg = ConfirmDialog(self,
+									title=lang.getstr("argyll.instrument.drivers.install"),
+									msg=lang.getstr("argyll.instrument.drivers.install.restart"),
+									ok=lang.getstr("ok"),
+									cancel=lang.getstr("cancel"),
+									bitmap=geticon(32, "dialog-warning"))
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result != wx.ID_OK:
 					return
-			if launch_devman:
-				self.worker.exec_cmd("mmc", ["devmgmt.msc"],
-									 capture_output=True,
-									 skip_scripts=True, asroot=True)
+				self.worker.exec_cmd(which("shutdown.exe"),
+									 ["/r", "/o", "/t", "0"],
+									 capture_output=True, skip_scripts=True)
+				return
+		if launch_devman:
+			self.worker.exec_cmd("mmc", ["devmgmt.msc"],
+								 capture_output=True,
+								 skip_scripts=True, asroot=True)
 		self.worker.start(lambda result: show_result_dialog(result, self)
 										 if isinstance(result, Exception)
 										 else 0,
