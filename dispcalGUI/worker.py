@@ -1779,7 +1779,7 @@ class Worker(object):
 		""" Check if spotread returned a result """
 		if (self.cmdname == "spotread" and
 			self.progress_wnd is not getattr(self, "terminal", None) and
-			"Result is XYZ:" in txt):
+			("Result is XYZ:" in txt or "Result is Y:" in txt)):
 			# Single spotread reading, we are done
 			wx.CallLater(1000, self.quit_terminate_cmd)
 	
