@@ -1365,7 +1365,7 @@ class Worker(object):
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
-		self.recent_discard = re.compile(r"^Adjust .+? Press space when done\.\s*|^\s*(?:[/\\]\s+)?(?:Adjusted )?(Current|Initial|[Tt]arget) (?:Br(?:ightness)?|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma|RGB|\d(?:\.\d+)?).*|^Gamma curve .+|^Display adjustment menu:|^Press|^\d\).+|^(?:1%|Black|Red|Green|Blue|White|Grey)\s+=.+|^\s*patch \d+ of \d+.*|^\s*point \d+.*|^\s*Added \d+/\d+|[\*\.]+|\s*\d*%?", re.I)
+		self.recent_discard = re.compile(r"^Display type is .+|^Doing (?:some initial|check) measurements|^Adjust .+? Press space when done\.\s*|^\s*(?:[/\\]\s+)?(?:Adjusted )?(Current|Initial|[Tt]arget) (?:Br(?:ightness)?|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma|RGB|\d(?:\.\d+)?).*|^Gamma curve .+|^Display adjustment menu:|^Press|^\d\).+|^(?:1%|Black|Red|Green|Blue|White|Grey)\s+=.+|^\s*patch \d+ of \d+.*|^\s*point \d+.*|^\s*Added \d+/\d+|[\*\.]+|\s*\d*%?", re.I)
 		self.subprocess_abort = False
 		self.sudo = None
 		self.auth_timestamp = 0
