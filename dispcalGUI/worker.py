@@ -30,7 +30,7 @@ elif sys.platform == "win32":
 
 # 3rd party
 if sys.platform == "win32":
-	from win32com.shell import shell
+	from win32com.shell import shell as win32com_shell
 	import pythoncom
 	import win32api
 	import win32con
@@ -2583,7 +2583,7 @@ class Worker(object):
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
-				 title=appname, working_dir=None, dry_run=False):
+				 title=appname, shell=False, working_dir=None, dry_run=False):
 		"""
 		Execute a command.
 		
@@ -2969,7 +2969,7 @@ class Worker(object):
 					   os.environ.get("ARGYLL_NOT_INTERACTIVE"):
 						self.subprocess = WPopen(cmdline, stdin=sp.PIPE, 
 												 stdout=tempfile.SpooledTemporaryFile(), 
-												 stderr=sp.STDOUT, 
+												 stderr=sp.STDOUT, shell=shell,
 												 cwd=working_dir, 
 												 startupinfo=startupinfo)
 					else:
@@ -3065,14 +3065,15 @@ class Worker(object):
 					try:
 						if (asroot and sys.platform == "win32" and
 							sys.getwindowsversion() >= (6, )):
-							shell.ShellExecuteEx(lpVerb="runas",
-												 lpFile=cmd,
-												 lpParameters=" ".join(quote_args(args)))
+							win32com_shell.ShellExecuteEx(lpVerb="runas",
+														  lpFile=cmd,
+														  lpParameters=" ".join(quote_args(args)))
 							return True
 						else:
 							self.subprocess = sp.Popen(cmdline, stdin=stdin,
 													   stdout=stdout,
 													   stderr=stderr,
+													   shell=shell,
 													   cwd=working_dir, 
 													   startupinfo=startupinfo)
 					except Exception, exception:
@@ -4566,9 +4567,9 @@ usage: spotread [-options] [logfile]
 			if hasattr(self, "thread") and self.thread.isAlive():
 				# If running in a thread, need to call pythoncom.CoInitialize
 				pythoncom.CoInitialize()
-			scut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink, None,
+			scut = pythoncom.CoCreateInstance(win32com_shell.CLSID_ShellLink, None,
 											  pythoncom.CLSCTX_INPROC_SERVER, 
-											  shell.IID_IShellLink)
+											  win32com_shell.IID_IShellLink)
 			scut.SetPath(cmd)
 			if len(loader_args) == 1:
 				scut.SetWorkingDirectory(pydir)

@@ -4507,10 +4507,16 @@ class MainFrame(BaseFrame):
 									 working_dir=False)
 				return
 		if launch_devman:
-			self.worker.exec_cmd("mmc", ["devmgmt.msc"],
-								 capture_output=True,
-								 skip_scripts=True, asroot=True,
-								 working_dir=False)
+			winxp = sys.getwindowsversion() < (6,)
+			if winxp:
+				cmd = "start"
+				args = ["mmc", "devmgmt.msc"]
+			else:
+				cmd = "mmc"
+				args = ["devmgmt.msc"]
+			self.worker.exec_cmd(cmd, args, capture_output=True,
+								 skip_scripts=True, asroot=not winxp,
+								 shell=winxp, working_dir=False)
 		self.worker.start(lambda result: show_result_dialog(result, self)
 										 if isinstance(result, Exception)
 										 else 0,
