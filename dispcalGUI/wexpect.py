@@ -2128,12 +2128,9 @@ class Wtty:
         records = [self.createKeyEvent(c) for c in unicode(s)]
         self.switchTo()
         try:
-            consinfo = self.__consout.GetConsoleScreenBufferInfo()
-            startCo = consinfo['CursorPosition']
             wrote = self.__consin.WriteConsoleInput(records)
             while self.__consin.PeekConsoleInput(8) != ():
                 time.sleep(0)
-            self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, len(s), startCo)
         except Exception, e:
             log(e, '_exceptions')
             self.switchBack()
