@@ -4503,7 +4503,8 @@ class MainFrame(BaseFrame):
 					return
 				self.worker.exec_cmd(which("shutdown.exe"),
 									 ["/r", "/o", "/t", "0"],
-									 capture_output=True, skip_scripts=True)
+									 capture_output=True, skip_scripts=True,
+									 working_dir=False)
 				return
 		if launch_devman:
 			self.worker.exec_cmd("mmc", ["devmgmt.msc"],
