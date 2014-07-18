@@ -4508,7 +4508,8 @@ class MainFrame(BaseFrame):
 		if launch_devman:
 			self.worker.exec_cmd("mmc", ["devmgmt.msc"],
 								 capture_output=True,
-								 skip_scripts=True, asroot=True)
+								 skip_scripts=True, asroot=True,
+								 working_dir=False)
 		self.worker.start(lambda result: show_result_dialog(result, self)
 										 if isinstance(result, Exception)
 										 else 0,
