@@ -41,6 +41,8 @@
 	"adaptive_mode_unavailable": "Adaptive mode is only available with Argyll CMS 1.1.0 RC3 or newer.",
 	"allow_skip_sensor_cal": "Allow skipping of spectrometer self-calibration",
 	"ambient.measure": "Measure ambient",
+	"ambient.measure.light_level.missing": "Didn't get a light level reading.",
+	"ambient.measure.color.unsupported": "%s: The color of ambient light could not be determined using this instrument because its ambient sensor seems to be monochromatic (only got a light level reading).",
 	"ambient.set": "Do you also want to set the ambient light level to the measured value?",
 	"app.confirm_restore_defaults": "Do you really want to discard your changes and restore defaults?",
 	"app.restart_request": "Please restart the application.",

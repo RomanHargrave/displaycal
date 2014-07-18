@@ -35,6 +35,8 @@
 	"adaptive_mode_unavailable": "Der adaptive Modus ist erst mit Argyll CMS 1.1.0 RC3 oder neuer verfügbar.",
 	"allow_skip_sensor_cal": "Überspringen der Spectrometer-Kalibrierung erlauben",
 	"ambient.measure": "Umgebungslicht messen",
+	"ambient.measure.light_level.missing": "Es wurde kein Helligkeitswert zurückgegeben.",
+	"ambient.measure.color.unsupported": "%s: Die Farbe des Umgebungslichts konnte mit diesem Messgerät nicht ermittelt werden, da es scheinbar nur einen monochromen Umgebungslichtsensor besitzt (es wurde nur ein Helligkeitswert zurückgegeben).",
 	"ambient.set": "Möchten sie auch die Umgebungshelligkeit auf den gemessenen Wert setzen?",
 	"app.confirm_restore_defaults": "Wollen Sie wirklich Ihre Einstellungen verwerfen und die Standardeinstellungen wiederherstellen?",
 	"app.restart_request": "Bitte starten Sie die Anwendung neu.",

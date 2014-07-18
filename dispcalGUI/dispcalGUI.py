@@ -3584,44 +3584,55 @@ class MainFrame(BaseFrame):
 		else:
 			K = re.search("Daylight temperature += (\d+(?:\.\d+)?)K", 
 						  result, re.I)
+		Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
+						result)
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
 		set_whitepoint = event_id == self.whitepoint_measure_btn.GetId()
 		set_ambient = event_id == self.ambient_measure_btn.GetId()
-		if set_whitepoint and not set_ambient and bool(getcfg("show_advanced_calibration_options")):
+		if (set_whitepoint and not set_ambient and lux and
+			getcfg("show_advanced_calibration_options")):
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
 								ok=lang.getstr("yes"), 
 								cancel=lang.getstr("no"), 
 								bitmap=geticon(32, "dialog-question"))
 			set_ambient = dlg.ShowModal() == wx.ID_OK
 			dlg.Destroy()
-		if set_ambient and not set_whitepoint:
-			dlg = ConfirmDialog(self, msg=lang.getstr("whitepoint.set"), 
-								ok=lang.getstr("yes"), 
-								cancel=lang.getstr("no"), 
-								bitmap=geticon(32, "dialog-question"))
-			set_whitepoint = dlg.ShowModal() == wx.ID_OK
-			dlg.Destroy()
-		if set_whitepoint:
-			if K and len(K.groups()) == 1:
-				self.whitepoint_colortemp_textctrl.SetValue(K.groups()[0])
-			Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
-							result)
-			if Yxy and len(Yxy.groups()) == 3:
-				Y, x, y = Yxy.groups()
-				self.whitepoint_x_textctrl.SetValue(x)
-				self.whitepoint_y_textctrl.SetValue(y)
-				if not getcfg("whitepoint.colortemp", False):
-					self.whitepoint_ctrl.SetSelection(2)
-					self.whitepoint_ctrl_handler(
-						CustomEvent(wx.EVT_CHOICE.evtType[0], 
-									self.whitepoint_ctrl))
 		if set_ambient:
-			if lux and len(lux.groups()) == 1:
+			if lux:
 				self.ambient_viewcond_adjust_textctrl.SetValue(lux.groups()[0])
 				self.ambient_viewcond_adjust_cb.SetValue(True)
 				self.ambient_viewcond_adjust_ctrl_handler(
 						CustomEvent(wx.EVT_CHECKBOX.evtType[0], 
 									self.ambient_viewcond_adjust_cb))
+			else:
+				show_result_dialog(Error(lang.getstr("ambient.measure.light_level.missing")),
+								   self)
+			if not set_whitepoint and (K or Yxy):
+				dlg = ConfirmDialog(self, msg=lang.getstr("whitepoint.set"), 
+									ok=lang.getstr("yes"), 
+									cancel=lang.getstr("no"), 
+									bitmap=geticon(32, "dialog-question"))
+				set_whitepoint = dlg.ShowModal() == wx.ID_OK
+				dlg.Destroy()
+		if set_whitepoint:
+			if not K and not Yxy:
+				# Monochrome reading?
+				show_result_dialog(Error(lang.getstr("ambient.measure.color.unsupported",
+													 self.comport_ctrl.GetStringSelection())),
+								   self)
+				return
+			if K:
+				if not Yxy:
+					self.whitepoint_ctrl.SetSelection(1)
+				self.whitepoint_colortemp_textctrl.SetValue(K.groups()[0])
+			if Yxy:
+				if not K:
+					self.whitepoint_ctrl.SetSelection(2)
+				Y, x, y = Yxy.groups()
+				self.whitepoint_x_textctrl.SetValue(x)
+				self.whitepoint_y_textctrl.SetValue(y)
+			self.whitepoint_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
+													 self.whitepoint_ctrl))
 
 	def ambient_viewcond_adjust_ctrl_handler(self, event):
 		if event.GetId() == self.ambient_viewcond_adjust_textctrl.GetId() and \
