@@ -500,6 +500,7 @@ class ReportFrame(BaseFrame):
 				   bool(getcfg("measurement_report.apply_trc")))
 		self.apply_trc_cb.SetValue(enable6)
 		self.trc_ctrl.Enable(enable6)
+		self.trc_gamma_label.Enable(enable6)
 		self.trc_gamma_ctrl.Enable(enable6)
 		self.trc_gamma_type_ctrl.Enable(enable6)
 		self.black_output_offset_label.Enable(enable6)
