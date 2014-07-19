@@ -135,6 +135,7 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="wxChoice" name="trc_ctrl">
+                        <enabled>0</enabled>
                       </object>
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
@@ -142,6 +143,7 @@
                     <object class="sizeritem">
                       <object class="wxStaticText" name="trc_gamma_label">
                         <label>trc.gamma</label>
+                        <enabled>0</enabled>
                       </object>
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
@@ -153,6 +155,7 @@
                           <item>2.2</item>
                           <item>2.4</item>
                         </content>
+                        <enabled>0</enabled>
                       </object>
                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
@@ -160,8 +163,9 @@
                     <object class="sizeritem">
                       <object class="wxChoice" name="trc_gamma_type_ctrl">
                         <content>
-                          <item/>
+                          <item></item>
                         </content>
+                        <enabled>0</enabled>
                       </object>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
@@ -171,6 +175,7 @@
                 <object class="sizeritem">
                   <object class="wxStaticText" name="black_output_offset_label">
                     <label>calibration.black_output_offset</label>
+                    <enabled>0</enabled>
                     <hidden>1</hidden>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -183,6 +188,7 @@
                         <size>128,-1</size>
                         <min>0</min>
                         <max>100</max>
+                        <enabled>0</enabled>
                         <hidden>1</hidden>
                         <XRCED>
                           <events>EVT_SLIDER</events>
@@ -196,6 +202,7 @@
                         <size>65,-1</size>
                         <min>0</min>
                         <max>100</max>
+                        <enabled>0</enabled>
                         <hidden>1</hidden>
                         <XRCED>
                           <events>EVT_TEXT</events>
@@ -207,6 +214,7 @@
                     <object class="sizeritem">
                       <object class="wxStaticText" name="black_output_offset_intctrl_label">
                         <label>%</label>
+                        <enabled>0</enabled>
                         <hidden>1</hidden>
                       </object>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>

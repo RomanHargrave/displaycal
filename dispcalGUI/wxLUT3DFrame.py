@@ -124,6 +124,7 @@ class LUT3DFrame(BaseFrame):
 	def apply_trc_ctrl_handler(self, event=None):
 		v = self.apply_trc_cb.GetValue()
 		self.trc_ctrl.Enable(v)
+		self.trc_gamma_label.Enable(v)
 		self.trc_gamma_ctrl.Enable(v)
 		self.trc_gamma_type_ctrl.Enable(v)
 		if event:
