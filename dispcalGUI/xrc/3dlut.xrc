@@ -31,7 +31,6 @@
                   <flag>wxLEFT|wxEXPAND</flag>
                   <border>4</border>
                 </object>
-                
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="abstract_profile_cb">
                     <label>3dlut.use_abstract_profile</label>
@@ -54,7 +53,6 @@
                   <flag>wxLEFT|wxEXPAND</flag>
                   <border>4</border>
                 </object>
-                
                 <object class="sizeritem">
                   <object class="wxStaticText" name="output_profile_label">
                     <label>output.profile</label>
@@ -92,7 +90,6 @@
                   <flag>wxBOTTOM|wxLEFT|wxEXPAND</flag>
                   <border>4</border>
                 </object>
-                
                 <object class="spacer"/>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="apply_cal_cb">
@@ -185,6 +182,7 @@
                         <size>128,-1</size>
                         <min>0</min>
                         <max>100</max>
+                        <hidden>1</hidden>
                         <XRCED>
                           <events>EVT_SLIDER</events>
                         </XRCED>
@@ -197,6 +195,7 @@
                         <size>65,-1</size>
                         <min>0</min>
                         <max>100</max>
+                        <hidden>1</hidden>
                         <XRCED>
                           <events>EVT_TEXT</events>
                         </XRCED>
@@ -207,6 +206,7 @@
                     <object class="sizeritem">
                       <object class="wxStaticText" name="black_output_offset_intctrl_label">
                         <label>%</label>
+                        <hidden>1</hidden>
                       </object>
                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                     </object>
