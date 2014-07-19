@@ -4306,8 +4306,10 @@ usage: spotread [-options] [logfile]
 												  skip_scripts=skip_scripts, 
 												  silent=silent,
 												  title=lang.getstr("profile.install"))
+					output = list(self.output)
 					args.insert(0, "-Sl")
 				else:
+					output = None
 					result = True
 				if not isinstance(result, Exception) and result:
 					result = self.exec_cmd(cmd, args, capture_output, 
@@ -4319,7 +4321,7 @@ usage: spotread [-options] [logfile]
 				result = cmd
 		if not isinstance(result, Exception) and result is not None:
 			result = False
-			for line in self.output:
+			for line in output or self.output:
 				if "Installed" in line:
 					if (sys.platform == "darwin" and "-Sl" in args and
 					    intlist(mac_ver()[0].split(".")) < [10, 6]):

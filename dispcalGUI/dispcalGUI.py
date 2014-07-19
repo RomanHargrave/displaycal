@@ -6372,7 +6372,7 @@ class MainFrame(BaseFrame):
 				(sys.platform == "win32" and 
 				 sys.getwindowsversion() >= (6, ) and 
 				 self.worker.argyll_version > 
-				 [1, 1, 1] and is_superuser()) or test:
+				 [1, 1, 1]) or test:
 				# Linux, OSX or Vista and later
 				# NOTE: System install scope is currently not implemented
 				# correctly in dispwin 1.1.0, but a patch is trivial and
