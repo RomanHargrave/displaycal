@@ -101,6 +101,7 @@
                 <object class="sizeritem">
                   <object class="wxStaticText" name="encoding_input_label">
                     <label>3dlut.encoding.input</label>
+                    <hidden>1</hidden>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                   <border>8</border>
@@ -108,12 +109,14 @@
                 <object class="sizeritem">
                   <object class="wxChoice" name="encoding_input_ctrl">
                     <selection>4</selection>
+                    <hidden>1</hidden>
                   </object>
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="encoding_output_label">
                     <label>3dlut.encoding.output</label>
+                    <hidden>1</hidden>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                   <border>8</border>
@@ -121,6 +124,7 @@
                 <object class="sizeritem">
                   <object class="wxChoice" name="encoding_output_ctrl">
                     <selection>4</selection>
+                    <hidden>1</hidden>
                   </object>
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>

@@ -393,7 +393,7 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		config.writecfg()
 		self.setup_encoding_ctrl(format)
-		self.enable_encoding_controls()
+		self.update_encoding_controls()
 		self.enable_size_controls()
 		self.show_bitdepth_controls()
 		self.lut3d_create_btn.Enable(format != "madVR" or
@@ -495,7 +495,7 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_desc.Show()
 							self.apply_cal_cb.Show()
 							self.show_encoding_controls()
-							self.enable_encoding_controls()
+							self.update_encoding_controls()
 							self.show_trc_controls()
 							if (getcfg("3dlut.%s.profile" % which) !=
 								profile.fileName and
@@ -541,6 +541,7 @@ class LUT3DFrame(BaseFrame):
 			if which == "input":
 				getattr(self, "%s_profile_ctrl" %
 							  which).SetPath(getcfg("3dlut.%s.profile" % which))
+				self.update_encoding_controls()
 			else:
 				getattr(self, "%s_profile_desc" % which).SetLabel("")
 				if not silent:
@@ -730,7 +731,7 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_output_label.Show(show)
 		self.encoding_output_ctrl.Show(show)
 	
-	def enable_encoding_controls(self):
+	def update_encoding_controls(self):
 		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
 		self.encoding_input_ctrl.Enable(getcfg("3dlut.format") != "madVR")
 		if getcfg("3dlut.format") == "eeColor":
