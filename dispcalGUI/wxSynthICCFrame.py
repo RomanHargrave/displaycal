@@ -84,11 +84,11 @@ class SynthICCFrame(BaseFrame):
 		self.save_as_btn.Disable()
 		
 		self.setup_language()
+		
+		self.update_layout()
 		self.update_controls()
 		
 		self.save_btn.Hide()
-		
-		self.update_layout()
 		
 		config.defaults.update({
 			"position.synthiccframe.x": self.GetDisplay().ClientArea[0] + 40,
