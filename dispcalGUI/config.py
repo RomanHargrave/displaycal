@@ -1232,7 +1232,7 @@ def writecfg(which="user", worker=None):
 			safe_print(u"Warning - could not write user configuration file "
 					   "'%s': %s" % (cfgfilename, safe_unicode(exception)))
 			return False
-	elif getcfg("argyll.dir"):
+	else:
 		# system-wide config - only stores essentials ie. Argyll directory
 		cfgfilename1 = os.path.join(confighome, appname + ".local.ini")
 		cfgfilename2 = os.path.join(config_sys, appname + ".ini")
@@ -1242,9 +1242,10 @@ def writecfg(which="user", worker=None):
 			cfgfilename = cfgfilename1
 		try:
 			cfgfile = open(cfgfilename, "wb")
-			cfgfile.write("\n".join(["[Default]",
-									 "%s = %s" % ("argyll.dir", 
-												  getcfg("argyll.dir"))]))
+			if getcfg("argyll.dir"):
+				cfgfile.write("\n".join(["[Default]",
+										 "%s = %s" % ("argyll.dir", 
+													  getcfg("argyll.dir"))]))
 			cfgfile.close()
 			if sys.platform != "win32":
 				# on Linux and OS X, we write the file to the users's config dir
