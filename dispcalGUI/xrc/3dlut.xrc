@@ -171,6 +171,7 @@
                 <object class="sizeritem">
                   <object class="wxStaticText" name="black_output_offset_label">
                     <label>calibration.black_output_offset</label>
+                    <hidden>1</hidden>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                   <border>8</border>
