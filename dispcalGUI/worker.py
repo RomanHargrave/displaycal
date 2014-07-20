@@ -3153,11 +3153,12 @@ class Worker(object):
 				self.output = output
 				self.retcode = retcode
 			if getattr(self, "patterngenerator", None):
-				try:
-					# Send fullscreen black to prevent plasma burn-in
-					self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
-				except Exception, exception:
-					safe_print(exception)
+				if self.patterngenerator.listening:
+					try:
+						# Send fullscreen black to prevent plasma burn-in
+						self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
+					except Exception, exception:
+						safe_print(exception)
 				try:
 					del self.patterngenerator
 				except Exception, exception:
@@ -6180,6 +6181,9 @@ usage: spotread [-options] [logfile]
 			except Exception, exception:
 				self.log("%s: %s" % (appname, safe_unicode(exception)),
 						 fn=logfn)
+			else:
+				self.log("%s: Pattern generator successfully shut down." %
+						 appname, fn=logfn)
 		return not subprocess_isalive
 	
 	def report(self, report_calibrated=True):
