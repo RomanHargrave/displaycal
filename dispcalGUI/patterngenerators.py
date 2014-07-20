@@ -4,6 +4,7 @@ from socket import (AF_INET, SHUT_RDWR, SOCK_STREAM, error, gethostbyname,
 					gethostname, socket, timeout)
 import struct
 
+import localization as lang
 
 class ResolveCMPatternGeneratorServer(object):
 
@@ -22,8 +23,9 @@ class ResolveCMPatternGeneratorServer(object):
 		self.socket.listen(1)
 		self.listening = True
 		if self.logfile:
-			self.logfile.write("Waiting for connection on %s:%s" %
-							   (gethostbyname(gethostname()), self.port))
+			self.logfile.write(lang.getstr("connection.waiting") +
+							   (" %s:%s\n" % (gethostbyname(gethostname()),
+											  self.port)))
 		while self.listening:
 			try:
 				self.conn, addr = self.socket.accept()
@@ -32,7 +34,7 @@ class ResolveCMPatternGeneratorServer(object):
 			break
 		if self.listening:
 			if self.logfile:
-				self.logfile.write("Connection established")
+				self.logfile.write(lang.getstr("connection.established") + "\n")
 
 	def __del__(self):
 		self.shutdown()

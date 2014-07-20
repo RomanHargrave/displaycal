@@ -797,7 +797,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 					 lang.getstr("please_wait"),
 					 lang.getstr("aborting")) or msg == " " * 4 or
 			 "error" in msg.lower() or "failed" in msg.lower() or
-			 msg.startswith(lang.getstr("webserver.waiting"))) and
+			 msg.startswith(lang.getstr("webserver.waiting")) or
+			 msg.startswith(lang.getstr("connection.waiting"))) and
 			msg != self.lastmsg):
 			self.lastmsg = msg
 			self.Freeze()
@@ -1022,8 +1023,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		if not txt:
 			return
 		self.logger.info("%r" % txt)
-		if "Setting up the instrument" in txt:
-			self.Pulse(lang.getstr("instrument.initializing"))
+		self.Pulse(txt)
 		
 		if "/ Current" in txt:
 			indicator = getbitmap("theme/icons/10x10/record")
