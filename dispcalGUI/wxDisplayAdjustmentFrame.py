@@ -6,9 +6,12 @@ Interactive display calibration UI
 
 """
 
+from encodings.aliases import aliases
 import os
 import re
 import sys
+if sys.platform == "win32":
+	from ctypes import windll
 
 from wxaddons import wx
 from lib.agw import labelbook
@@ -16,10 +19,11 @@ from lib.agw.fmresources import *
 from lib.agw.pygauge import PyGauge
 
 from config import get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg
+from config import enc
 from log import get_file_logger
 from meta import name as appname
 from ordereddict import OrderedDict
-from util_str import wrap
+from util_str import safe_unicode, wrap
 from wxwindows import FlatShadedButton, numpad_keycodes
 import config
 import localization as lang
@@ -746,6 +750,11 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
 		# Final initialization steps
+		if sys.platform == "win32":
+			self.data_encoding = aliases.get(str(windll.kernel32.GetACP()), 
+											 "ascii")
+		else:
+			self.data_encoding = enc
 		self.logger = get_file_logger("adjust")
 		self._setup(True)
 		
@@ -792,24 +801,26 @@ class DisplayAdjustmentFrame(wx.Frame):
 		event.Skip()
 
 	def Pulse(self, msg=""):
-		if ((msg in (lang.getstr("instrument.initializing"),
-					 lang.getstr("instrument.calibrating"),
-					 lang.getstr("please_wait"),
-					 lang.getstr("aborting")) or msg == " " * 4 or
-			 "error" in msg.lower() or "failed" in msg.lower() or
-			 msg.startswith(lang.getstr("webserver.waiting")) or
-			 msg.startswith(lang.getstr("connection.waiting"))) and
-			msg != self.lastmsg):
-			self.lastmsg = msg
-			self.Freeze()
-			for txt in self.lb.GetCurrentPage().txt.itervalues():
-				txt.checkmark.GetContainingSizer().Hide(txt.checkmark)
-				txt.SetLabel(" ")
-			txt = self.lb.GetCurrentPage().txt.values()[0]
-			if txt.GetLabel() != wrap(msg, 46):
-				txt.SetLabel(wrap(msg, 46))
-				txt.SetForegroundColour(FGCOLOUR)
-			self.Thaw()
+		if msg:
+			msg = safe_unicode(msg, self.data_encoding)
+			if ((msg in (lang.getstr("instrument.initializing"),
+						 lang.getstr("instrument.calibrating"),
+						 lang.getstr("please_wait"),
+						 lang.getstr("aborting")) or msg == " " * 4 or
+				 "error" in msg.lower() or "failed" in msg.lower() or
+				 msg.startswith(lang.getstr("webserver.waiting")) or
+				 msg.startswith(lang.getstr("connection.waiting"))) and
+				msg != self.lastmsg):
+				self.lastmsg = msg
+				self.Freeze()
+				for txt in self.lb.GetCurrentPage().txt.itervalues():
+					txt.checkmark.GetContainingSizer().Hide(txt.checkmark)
+					txt.SetLabel(" ")
+				txt = self.lb.GetCurrentPage().txt.values()[0]
+				if txt.GetLabel() != wrap(msg, 46):
+					txt.SetLabel(wrap(msg, 46))
+					txt.SetForegroundColour(FGCOLOUR)
+				self.Thaw()
 		return self.keepGoing, False
 	
 	def Resume(self):
