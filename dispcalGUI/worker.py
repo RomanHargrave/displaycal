@@ -772,7 +772,6 @@ def set_argyll_bin(parent=None):
 		dlg.Destroy()
 		if dlg_result == wx.ID_OK:
 			setcfg("argyll.dir", None)
-			writecfg()
 			return True
 		if dlg_result == wx.ID_CANCEL:
 			return False
@@ -793,7 +792,6 @@ def set_argyll_bin(parent=None):
 				if verbose >= 3:
 					safe_print("Setting Argyll binary directory:", path)
 				setcfg("argyll.dir", path)
-				writecfg()
 				break
 			else:
 				not_found = []
@@ -6235,6 +6233,7 @@ usage: spotread [-options] [logfile]
 		self.argyll_version_string = argyll_version_string
 		if cfg:
 			setcfg("argyll.version", argyll_version_string)
+			writecfg()
 		self.argyll_version = parse_argyll_version_string(argyll_version_string)
 	
 	def set_terminal_cgats(self, cgats_filename):
