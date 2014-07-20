@@ -953,6 +953,7 @@ class TestchartEditor(wx.Frame):
 
 	def tc_single_channel_patches_handler(self, event = None):
 		if event:
+			event.Skip()
 			event = CustomEvent(event.GetEventType(), event.GetEventObject())
 		if event and event.GetEventType() == wx.EVT_TEXT.evtType[0]:
 			wx.CallLater(3000, self.tc_single_channel_patches_handler2, event) # 3 seconds delay to allow user to finish keying in a value before it is validated
@@ -970,6 +971,7 @@ class TestchartEditor(wx.Frame):
 
 	def tc_gray_handler(self, event = None):
 		if event:
+			event.Skip()
 			event = CustomEvent(event.GetEventType(), event.GetEventObject())
 		if event and event.GetEventType() == wx.EVT_TEXT.evtType[0]:
 			wx.CallLater(3000, self.tc_gray_handler2, event) # 3 seconds delay to allow user to finish keying in a value before it is validated
@@ -1046,6 +1048,7 @@ class TestchartEditor(wx.Frame):
 
 	def tc_multi_steps_handler(self, event = None):
 		if event:
+			event.Skip()
 			event = CustomEvent(event.GetEventType(), event.GetEventObject())
 		if event and event.GetEventType() == wx.EVT_TEXT.evtType[0]:
 			wx.CallLater(3000, self.tc_multi_steps_handler2, event) # 3 seconds delay to allow user to finish keying in a value before it is validated

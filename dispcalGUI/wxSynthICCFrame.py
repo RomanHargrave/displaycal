@@ -466,7 +466,7 @@ class SynthICCFrame(BaseFrame):
 		config.writecfg()
 		self.update_trc_control()
 	
-	def trc_gamma_ctrl_handler(self, event=None):
+	def trc_gamma_ctrl_handler(self, event):
 		if not self._updating_ctrls:
 			try:
 				v = float(self.trc_gamma_ctrl.GetValue().replace(",", "."))
@@ -484,6 +484,7 @@ class SynthICCFrame(BaseFrame):
 				config.writecfg()
 				self.preset_ctrl.SetSelection(0)
 				self.update_trc_control()
+		event.Skip()
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
