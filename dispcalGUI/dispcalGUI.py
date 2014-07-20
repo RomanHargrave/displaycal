@@ -2720,13 +2720,15 @@ class MainFrame(BaseFrame):
 
 		self.calibrate_btn.Enable(not is_ccxx_testchart() and
 								  bool(self.worker.displays) and 
-								  True in self.worker.lut_access and 
+								  config.get_display_name()
+								  not in config.uncalibratable_displays and 
 								  bool(self.worker.instruments) and
 								  config.get_display_name() not in
 								  config.uncalibratable_displays)
 		self.calibrate_and_profile_btn.Enable(enable_profile and 
 											  bool(self.worker.displays) and 
-											  True in self.worker.lut_access and 
+											  config.get_display_name() not in
+											  config.uncalibratable_displays and 
 											  bool(self.worker.instruments) and
 											  config.get_display_name() not in
 											  config.uncalibratable_displays)
@@ -5888,28 +5890,24 @@ class MainFrame(BaseFrame):
 			dlg.sizer3.Add(dlg.reset_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
 						   border=border)
 			border = 4
-		if self.worker.calibration_loading_supported:
-			dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
-									   lang.getstr("calibration.embed"))
-			def embed_cal_ctrl_handler(event):
-				embed_cal = dlg.embed_cal_ctrl.GetValue()
-				dlg.reset_cal_ctrl.Enable(embed_cal)
-				if not embed_cal:
-					dlg.reset_cal_ctrl.SetValue(True)
-			if can_use_current_cal or cal:
-				dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
-			dlg.embed_cal_ctrl.SetValue(bool(can_use_current_cal or cal))
-			dlg.sizer3.Add(dlg.embed_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
-						   border=border)
+		dlg.embed_cal_ctrl = wx.CheckBox(dlg, -1, 
+								   lang.getstr("calibration.embed"))
+		def embed_cal_ctrl_handler(event):
+			embed_cal = dlg.embed_cal_ctrl.GetValue()
+			dlg.reset_cal_ctrl.Enable(embed_cal)
+			if not embed_cal:
+				dlg.reset_cal_ctrl.SetValue(True)
+		if can_use_current_cal or cal:
+			dlg.embed_cal_ctrl.Bind(wx.EVT_CHECKBOX, embed_cal_ctrl_handler)
+		dlg.embed_cal_ctrl.SetValue(bool(can_use_current_cal or cal))
+		dlg.sizer3.Add(dlg.embed_cal_ctrl, flag=wx.TOP | wx.ALIGN_LEFT, 
+					   border=border)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		result = dlg.ShowModal()
 		if can_use_current_cal or cal:
 			reset_cal = dlg.reset_cal_ctrl.GetValue()
-		if self.worker.calibration_loading_supported:
-			embed_cal = dlg.embed_cal_ctrl.GetValue()
-		else:
-			embed_cal = True
+		embed_cal = dlg.embed_cal_ctrl.GetValue()
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			self.update_profile_name_timer.Start(1000)

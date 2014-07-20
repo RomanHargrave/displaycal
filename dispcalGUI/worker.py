@@ -2573,7 +2573,7 @@ class Worker(object):
 					# madVR
 					lut_access.append(True)
 				# Resolve
-				lut_access.append(True)
+				lut_access.append(False)
 				# Untethered
 				lut_access.append(False)
 				self.lut_access = lut_access
