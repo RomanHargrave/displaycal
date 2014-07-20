@@ -3054,6 +3054,22 @@ class MainFrame(BaseFrame):
 				self.trc_ctrl.SetSelection(3)  # BT.1886
 			else:
 				self.trc_ctrl.SetSelection(0)  # Gamma
+
+	def show_gamma_controls(self):
+		self.calpanel.Freeze()
+		if self.trc_ctrl.GetSelection() in (0, 3):
+			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 0 or
+									getcfg("show_advanced_calibration_options"))
+			self.trc_gamma_label.Show(show_gamma_ctrls)
+			self.trc_textctrl.Show(show_gamma_ctrls)
+			self.trc_type_ctrl.Show(bool(getcfg("show_advanced_calibration_options")))
+		else:
+			self.trc_gamma_label.Hide()
+			self.trc_textctrl.Hide()
+			self.trc_type_ctrl.Hide()
+		self.calpanel.Layout()
+		self.calpanel.Refresh()
+		self.calpanel.Thaw()
 	
 	def update_black_output_offset_ctrl(self):
 		self.black_output_offset_ctrl.SetValue(
@@ -3972,11 +3988,13 @@ class MainFrame(BaseFrame):
 			safe_print("[D] trc_ctrl_handler called for ID %s %s event type %s "
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
-		self.calpanel.Freeze()
 		if event.GetId() == self.trc_ctrl.GetId():
+			bt1886 = (getcfg("trc.type") == "G" and
+					  getcfg("calibration.black_output_offset") == 0 and
+					  getcfg("trc") == 2.4)
 			if self.trc_ctrl.GetSelection() == 3:
 				# BT.1886
-				if not getcfg("trc.backup", False):
+				if not bt1886 and not getcfg("trc.backup", False):
 					setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
 					setcfg("trc.type.backup", getcfg("trc.type"))
 					setcfg("calibration.black_output_offset.backup",
@@ -3987,20 +4005,14 @@ class MainFrame(BaseFrame):
 				setcfg("calibration.black_output_offset", 0)
 				self.black_output_offset_ctrl.SetValue(0)
 				self.black_output_offset_intctrl.SetValue(0)
-			elif (self.trc_ctrl.GetSelection() != 0 or
-				  (getcfg("trc") == 2.4 and getcfg("trc.type") == "G")):
+			elif (self.trc_ctrl.GetSelection() != 0 or bt1886):
 				self.restore_trc_backup()
-				if getcfg("calibration.black_output_offset.backup", False):
+				if getcfg("calibration.black_output_offset.backup"):
 					setcfg("calibration.black_output_offset",
 						   getcfg("calibration.black_output_offset.backup"))
 					setcfg("calibration.black_output_offset.backup", None)
 					self.update_black_output_offset_ctrl()
 		if self.trc_ctrl.GetSelection() in (0, 3):
-			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 0 or
-									getcfg("show_advanced_calibration_options"))
-			self.trc_gamma_label.Show(show_gamma_ctrls)
-			self.trc_textctrl.Show(show_gamma_ctrls)
-			self.trc_type_ctrl.Show(bool(getcfg("show_advanced_calibration_options")))
 			try:
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
@@ -4014,13 +4026,6 @@ class MainFrame(BaseFrame):
 			if event.GetId() == self.trc_ctrl.GetId():
 				self.trc_textctrl.SetFocus()
 				self.trc_textctrl.SelectAll()
-		else:
-			self.trc_gamma_label.Hide()
-			self.trc_textctrl.Hide()
-			self.trc_type_ctrl.Hide()
-		self.calpanel.Layout()
-		self.calpanel.Refresh()
-		self.calpanel.Thaw()
 		trc = self.get_trc()
 		if cal_changed:
 			if trc != str(getcfg("trc")):
@@ -4028,7 +4033,9 @@ class MainFrame(BaseFrame):
 		setcfg("trc", trc)
 		if cal_changed:
 			self.update_profile_name()
-		self.update_trc_control()
+		if event.GetId() != self.trc_ctrl.GetId():
+			self.update_trc_control()
+		self.show_gamma_controls()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
 		if (trc in ("240", "709", "s") and not
@@ -4050,11 +4057,11 @@ class MainFrame(BaseFrame):
 			dlg.ShowModalThenDestroy()
 	
 	def restore_trc_backup(self):
-		if getcfg("trc.backup", False):
+		if getcfg("trc.backup"):
 			setcfg("trc", getcfg("trc.backup"))
 			setcfg("trc.backup", None)
 			self.trc_textctrl.SetValue(str(getcfg("trc")))
-		if getcfg("trc.type.backup", False):
+		if getcfg("trc.type.backup"):
 			setcfg("trc.type", getcfg("trc.type.backup"))
 			setcfg("trc.type.backup", None)
 			self.trc_type_ctrl.SetSelection(
