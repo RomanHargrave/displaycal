@@ -818,6 +818,7 @@ class LUTFrame(wx.Frame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
+		self.show_actual_lut_cb.SetValue(False)
 		self.LoadProfile(profile)
 
 	def drop_unsupported_handler(self):
