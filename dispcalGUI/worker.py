@@ -905,10 +905,9 @@ class FilteredStream():
 				"read failed due to the sensor being in the wrong position",
 				"Ambient filter should be removed"] + INST_CAL_MSGS
 	
-	substitutions = {" peqDE ": " DE to previous pass ",
-					 r"\^\[": "",  # ESC key on Linux/OSX
+	substitutions = {r"\^\[": "",  # ESC key on Linux/OSX
 					 "patch ": "Patch ",
-					 re.compile("Point (\\d+ Delta E)", re.I): " point \\1"}
+					 re.compile(r"Point \d+", re.I): ""}
 	
 	def __init__(self, stream, data_encoding=None, file_encoding=None,
 				 errors="replace", discard=None, linesep_in="\r\n", 
