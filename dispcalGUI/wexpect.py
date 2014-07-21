@@ -2403,6 +2403,9 @@ class Wtty:
     def interact(self):
         """Displays the child console for interaction."""
     
+        if not self.isalive():
+            return
+        
         self.switchTo()
         try:
             ShowWindow(GetConsoleWindow(), SW_SHOW)
