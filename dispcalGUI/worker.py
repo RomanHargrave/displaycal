@@ -5623,6 +5623,30 @@ usage: spotread [-options] [logfile]
 						return result, None
 				if not result:
 					return Error(lang.getstr("calibration.load_error")), None
+				# Make sure it's 256 entries (e.g. Mac OS X 10.9 has 1024)
+				cgats = CGATS.CGATS(cal)
+				data = cgats.queryv1("DATA")
+				sets = cgats.queryv1("NUMBER_OF_SETS")
+				if data and sets != 256:
+					rgb = {"I": [], "R": [], "G": [], "B": []}
+					for entry in data.itervalues():
+						for column in ("I", "R", "G", "B"):
+							rgb[column].append(entry["RGB_" + column])
+					interp = {}
+					for column in ("R", "G", "B"):
+						interp[column] = colormath.Interp(rgb["I"], rgb[column])
+					resized = CGATS.CGATS()
+					data.parent.DATA = resized
+					resized.key = 'DATA'
+					resized.parent = data.parent
+					resized.root = cgats
+					resized.type = 'DATA'
+					for i in xrange(256):
+						entry = {"RGB_I": i / 255.0}
+						for column in ("R", "G", "B"):
+							entry["RGB_" + column] = interp[column](entry["RGB_I"])
+						resized.add_data(entry)
+					cgats.write()
 			else:
 				cal = apply_calibration # can be .cal or .icc / .icm
 			calcopy = inoutfile + ".cal"
