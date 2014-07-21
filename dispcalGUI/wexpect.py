@@ -1947,7 +1947,8 @@ class Wtty:
         self.__otid = 0
         self.__switch = True
         self.__childProcess = None
-        self.codepage = codepage
+        self.codepage = (codepage or windll.kernel32.GetConsoleOutputCP() or
+                         windll.kernel32.GetOEMCP())
         self.console = False
         self.lastRead = 0
         self.lastReadData = ""
@@ -2033,7 +2034,6 @@ class Wtty:
             pyargs.insert(0, '-S')  # skip 'import site'
         pid = GetCurrentProcessId()
         tid = win32api.GetCurrentThreadId()
-        cp = self.codepage or windll.kernel32.GetACP()
         # If we are running 'frozen', expect python.exe in the same directory
         # as the packed executable.
         # py2exe: The python executable can be included via setup script by 
@@ -2044,7 +2044,7 @@ class Wtty:
                                         ' '.join(pyargs), 
                                         "import sys; sys.path = %s + sys.path;"
                                         "args = %s; import wexpect;"
-                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (("%r" % spath).replace('"', r'\"'), ("%r" % args).replace('"', r'\"'), pid, tid, cp, logdir))
+                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (("%r" % spath).replace('"', r'\"'), ("%r" % args).replace('"', r'\"'), pid, tid, self.codepage, logdir))
                      
         log(commandLine)
         self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
@@ -2454,9 +2454,9 @@ class ConsoleReader:
         self.logdir = logdir
         log('=' * 80, 'consolereader', logdir)
         log("OEM code page: %s" % windll.kernel32.GetOEMCP(), 'consolereader', logdir)
-        log("ANSI code page: %s" % windll.kernel32.GetACP(), 'consolereader', logdir)
-        log("Console output code page: %s" % windll.kernel32.GetConsoleOutputCP(), 'consolereader', logdir)
-        if cp:
+        consolecp = windll.kernel32.GetConsoleOutputCP()
+        log("Console output code page: %s" % consolecp, 'consolereader', logdir)
+        if consolecp != cp:
             log("Setting console output code page to %s" % cp, 'consolereader', logdir)
             try:
                 SetConsoleOutputCP(cp)

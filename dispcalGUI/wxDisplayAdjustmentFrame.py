@@ -750,11 +750,6 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
 		# Final initialization steps
-		if sys.platform == "win32":
-			self.data_encoding = aliases.get(str(windll.kernel32.GetACP()), 
-											 "ascii")
-		else:
-			self.data_encoding = enc
 		self.logger = get_file_logger("adjust")
 		self._setup(True)
 		
@@ -802,7 +797,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 
 	def Pulse(self, msg=""):
 		if msg:
-			msg = safe_unicode(msg, self.data_encoding)
+			msg = safe_unicode(msg, enc)
 			if ((msg in (lang.getstr("instrument.initializing"),
 						 lang.getstr("instrument.calibrating"),
 						 lang.getstr("please_wait"),

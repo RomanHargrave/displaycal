@@ -1346,11 +1346,6 @@ class Worker(object):
 		Create and return a new worker instance.
 		"""
 		self.owner = owner # owner should be a wxFrame or similar
-		if sys.platform == "win32":
-			self.data_encoding = aliases.get(str(windll.kernel32.GetACP()), 
-											 "ascii")
-		else:
-			self.data_encoding = enc
 		self.cmdrun = False
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
@@ -1371,11 +1366,11 @@ class Worker(object):
 		self.tempdir = None
 		self.thread_abort = False
 		self.triggers = ["Password:"]
-		self.recent = FilteredStream(LineCache(maxlines=3), self.data_encoding, 
+		self.recent = FilteredStream(LineCache(maxlines=3), enc, 
 									 discard=self.recent_discard,
 									 triggers=self.triggers +
 											  ["stopped at user request"])
-		self.lastmsg = FilteredStream(LineCache(), self.data_encoding, 
+		self.lastmsg = FilteredStream(LineCache(), enc, 
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
 		self.clear_argyll_info()
@@ -2918,8 +2913,6 @@ class Worker(object):
 			else:
 				kwargs = dict(timeout=5, cwd=working_dir,
 							  env=os.environ)
-				if sys.platform == "win32":
-					kwargs["codepage"] = windll.kernel32.GetACP()
 				stderr = StringIO()
 				stdout = StringIO()
 				logfiles = []
@@ -2938,8 +2931,7 @@ class Worker(object):
 						linebuffered_logfiles.append(self.sessionlogfile)
 					logfiles.append(LineBufferedStream(
 									FilteredStream(Files(linebuffered_logfiles),
-												   self.data_encoding,
-												   discard="",
+												   enc, discard="",
 												   linesep_in="\n", 
 												   triggers=[])))
 				logfiles += [stdout]
@@ -3101,15 +3093,13 @@ class Worker(object):
 							   line.find("User Aborted") < 0 and \
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
-								self.errors += [line.decode(self.data_encoding,
-															"replace")]
+								self.errors += [line.decode(enc, "replace")]
 					if tries > 0 and not use_pty:
 						stderr = tempfile.SpooledTemporaryFile()
 				if capture_output or use_pty:
 					stdout.seek(0)
 					self.output = [re.sub("^\.{4,}\s*$", "", 
-										  line.decode(self.data_encoding,
-													  "replace")) 
+										  line.decode(enc, "replace")) 
 								   for line in stdout.readlines()]
 					stdout.close()
 					if len(self.output) and log_output:
@@ -5116,8 +5106,7 @@ usage: spotread [-options] [logfile]
 			linebuffered_logfiles.append(self.sessionlogfile)
 		logfiles = Files([LineBufferedStream(
 							FilteredStream(Files(linebuffered_logfiles),
-										   self.data_encoding,
-										   discard="",
+										   enc, discard="",
 										   linesep_in="\n", 
 										   triggers=[])), self.recent,
 							self.lastmsg])
