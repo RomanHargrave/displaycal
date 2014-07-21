@@ -2055,7 +2055,7 @@ class Wtty:
         """Releases from the current console and attatches
         to the childs."""
         
-        if not self.__switch:
+        if not self.__switch or not self.__oproc_isalive():
             return
         
         if attached:
@@ -2069,7 +2069,7 @@ class Wtty:
         """Releases from the current console and attaches 
         to the parents."""
 
-        if not self.__switch:
+        if not self.__switch or not self.__oproc_isalive():
             return
         
         if self.console:
@@ -2311,6 +2311,12 @@ class Wtty:
                 
                 if not self.isalive() or timeout <= 0:
                     self.switchBack()
+                    if not self.isalive():
+                        try:
+                            TerminateProcess(self.__oproc, 0)
+                        except pywintypes.error, e:
+                            log(e, '_exceptions')
+                            log('Could not terminate ConsoleReader after child exited.')
                     return ''
                 
                 time.sleep(0.001)
@@ -2421,6 +2427,9 @@ class Wtty:
         
         return GetExitCodeProcess(self.__childProcess) == STILL_ACTIVE
     
+    def __oproc_isalive(self):
+        return GetExitCodeProcess(self.__oproc) == STILL_ACTIVE
+    
     ###Broken###
     def sendintr(self):
         """Sends the sigint signal to the child."""
@@ -2481,7 +2490,7 @@ class ConsoleReader:
                 consinfo = consout.GetConsoleScreenBufferInfo()
                 cursorPos = consinfo['CursorPosition']
                 
-                if GetExitCodeProcess(parent) != STILL_ACTIVE or GetExitCodeProcess(self.__childProcess) != STILL_ACTIVE:
+                if GetExitCodeProcess(self.__childProcess) != STILL_ACTIVE:
                     time.sleep(.1)
                     try:
                         TerminateProcess(self.__childProcess, 0)
@@ -2492,6 +2501,8 @@ class ConsoleReader:
                         # calling sys.exit
                         if e.args[0] != winerror.ERROR_ACCESS_DENIED:
                             log(e, 'consolereader_exceptions', logdir)
+                
+                if GetExitCodeProcess(parent) != STILL_ACTIVE:
                     sys.exit()
                 
                 if cursorPos.Y > maxconsoleY and not paused:
