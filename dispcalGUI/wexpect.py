@@ -2129,8 +2129,6 @@ class Wtty:
         self.switchTo()
         try:
             wrote = self.__consin.WriteConsoleInput(records)
-            while self.__consin.PeekConsoleInput(8) != ():
-                time.sleep(0)
         except Exception, e:
             log(e, '_exceptions')
             self.switchBack()
