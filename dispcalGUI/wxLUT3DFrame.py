@@ -716,6 +716,8 @@ class LUT3DFrame(BaseFrame):
 	def show_trc_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]
 		self.apply_trc_cb.Show(show)
+		self.trc_ctrl.Show(show)
+		self.trc_gamma_label.Show(show)
 		self.trc_gamma_ctrl.Show(show)
 		self.trc_gamma_type_ctrl.Show(show)
 		show = show and self.worker.argyll_version >= [1, 7]
