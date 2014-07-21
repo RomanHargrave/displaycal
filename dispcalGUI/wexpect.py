@@ -97,7 +97,7 @@ try:
             import winerror
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
-        screenbufferfillchar = u'\4'
+        screenbufferfillchar = u' '
         maxconsoleY = 8000
 except ImportError, e:
     raise ImportError (str(e) + """
@@ -2191,13 +2191,14 @@ class Wtty:
     
         strlist = []
         for i, c in enumerate(s):
-            if c == screenbufferfillchar:
-                if (self.totalRead - self.lastRead + i + 1) % 80 == 0:
-                    strlist.append('\r\n')
+            if (c == screenbufferfillchar and
+                (self.totalRead - self.lastRead + i + 1) % 80 == 0):
+                strlist.append('\r\n')
             else:
                 strlist.append(c)
 
-        s = ''.join(strlist)
+        s = '\r\n'.join([line.rstrip(screenbufferfillchar) for line in
+                         ''.join(strlist).split('\r\n')])
         try:
             return s.encode(str(self.codepage), 'replace')
         except LookupError:
@@ -2240,7 +2241,7 @@ class Wtty:
         raw = ''.join(rawlist)
         s = self.parseData(raw)
         for i, line in enumerate(reversed(rawlist)):
-            if line.endswith(screenbufferfillchar):
+            if line.endswith(screenbufferfillchar) and len(line) == 80:
                 # Record the Y offset where the most recent line break was detected
                 self.__bufferY += len(rawlist) - i
                 break
