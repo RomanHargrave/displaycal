@@ -1686,6 +1686,10 @@ class spawn_windows (spawn_unix, object):
             self.wtty.terminate_child()
         except:
             pass
+        try:
+            self.wtty.terminate()
+        except:
+            pass
             
     def _spawn(self,command,args=[]):
         """This starts the given command in a child process. This does all the
@@ -2101,6 +2105,11 @@ class Wtty:
         """Returns a handle to the child process."""
     
         return self.__childProcess
+     
+    def terminate(self):
+        """Terminate the ConsoleReader process."""
+        
+        win32api.TerminateProcess(self.__oproc, 1)
      
     def terminate_child(self):
         """Terminate the child process."""
