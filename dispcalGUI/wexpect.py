@@ -2311,7 +2311,7 @@ class Wtty:
                 
                 if not self.isalive() or timeout <= 0:
                     self.switchBack()
-                    if not self.isalive():
+                    if not self.isalive() and self.__oproc_isalive():
                         try:
                             TerminateProcess(self.__oproc, 0)
                         except pywintypes.error, e:
@@ -2489,24 +2489,17 @@ class ConsoleReader:
             parent = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION , 0, int(pid))
             paused = False
    
-            while True:
-                consinfo = consout.GetConsoleScreenBufferInfo()
-                cursorPos = consinfo['CursorPosition']
-                
-                if GetExitCodeProcess(self.__childProcess) != STILL_ACTIVE:
+            while GetExitCodeProcess(self.__childProcess) == STILL_ACTIVE:
+                if GetExitCodeProcess(parent) != STILL_ACTIVE: 
                     time.sleep(.1)
                     try:
                         TerminateProcess(self.__childProcess, 0)
                     except pywintypes.error, e:
-                        # 'Access denied' happens always? Perhaps if not 
-                        # running as admin (or UAC enabled under Vista/7). 
-                        # Don't log. Child process will exit regardless when 
-                        # calling sys.exit
-                        if e.args[0] != winerror.ERROR_ACCESS_DENIED:
-                            log(e, 'consolereader_exceptions', logdir)
-                
-                if GetExitCodeProcess(parent) != STILL_ACTIVE:
+                        log(e, 'consolereader_exceptions', logdir)
                     sys.exit()
+                
+                consinfo = consout.GetConsoleScreenBufferInfo()
+                cursorPos = consinfo['CursorPosition']
                 
                 if cursorPos.Y > maxconsoleY and not paused:
                     #log('ConsoleReader.__init__: cursorPos %s' 
@@ -2522,6 +2515,9 @@ class ConsoleReader:
                     self.resumeThread()
                     paused = False
                                     
+                time.sleep(.1)
+
+            while GetExitCodeProcess(parent) == STILL_ACTIVE:   
                 time.sleep(.1)
         except Exception, e:
             log(e, 'consolereader_exceptions', logdir)
