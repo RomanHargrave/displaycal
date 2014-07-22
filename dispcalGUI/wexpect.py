@@ -2445,14 +2445,10 @@ class Wtty:
     def sendintr(self):
         """Sends the sigint signal to the child."""
         
-        raise ExceptionPexpect ('sendintr() is currently not supported')
-        
         self.switchTo()
         try:
             time.sleep(.15)
-            win32api.SetConsoleCtrlHandler(None, True)
-            time.sleep(.15)
-            win32api.GenerateConsoleCtrlEvent(0, 0)
+            win32api.GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, self.pid)
             time.sleep(.25)
         except:
             self.switchBack()
@@ -2484,7 +2480,7 @@ class ConsoleReader:
                 
                 si = GetStartupInfo()
                 self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
-                                                                             0, None, None, si)
+                                                                             CREATE_NEW_PROCESS_GROUP, None, None, si)
             except Exception, e:
                 log(e, 'consolereader_exceptions', logdir)
                 time.sleep(.1)
