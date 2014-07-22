@@ -2915,13 +2915,7 @@ class MainFrame(BaseFrame):
 		bt1886 = (trc == 2.4 and getcfg("trc.type") == "G" and
 				  getcfg("calibration.black_output_offset") == 0)
 		if trc in ("l", "709", "240", "s"):
-			self.trc_gamma_label.Hide()
-			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.SetSelection(0)
-			self.trc_type_ctrl.Hide()
-		else:
-			self.trc_type_ctrl.Show(bool(getcfg("show_advanced_calibration_options")))
-			self.trc_type_ctrl.Enable(not update_cal)
 		if trc == "l":
 			self.trc_ctrl.SetSelection(1)
 		elif trc == "709":
@@ -2932,19 +2926,15 @@ class MainFrame(BaseFrame):
 			self.trc_ctrl.SetSelection(5)
 		elif bt1886:
 			self.trc_ctrl.SetSelection(3)
-			self.trc_gamma_label.Show(bool(getcfg("show_advanced_calibration_options")))
 			self.trc_textctrl.SetValue(str(trc))
-			self.trc_textctrl.Show(bool(getcfg("show_advanced_calibration_options")))
 			self.trc_type_ctrl.SetSelection(1)
 		elif trc:
 			self.trc_ctrl.SetSelection(0)
-			self.trc_gamma_label.Show()
 			self.trc_textctrl.SetValue(str(trc))
-			self.trc_textctrl.Show()
-			self.trc_textctrl.Enable(not update_cal)
 			self.trc_type_ctrl.SetSelection(
 				self.trc_types_ba.get(getcfg("trc.type"), 
 				self.trc_types_ba.get(defaults["trc.type"])))
+		self.show_gamma_controls()
 
 		self.ambient_viewcond_adjust_cb.SetValue(
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
@@ -3056,7 +3046,6 @@ class MainFrame(BaseFrame):
 				self.trc_ctrl.SetSelection(0)  # Gamma
 
 	def show_gamma_controls(self):
-		self.calpanel.Freeze()
 		if self.trc_ctrl.GetSelection() in (0, 3):
 			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 0 or
 									getcfg("show_advanced_calibration_options"))
@@ -3067,9 +3056,6 @@ class MainFrame(BaseFrame):
 			self.trc_gamma_label.Hide()
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.Hide()
-		self.calpanel.Layout()
-		self.calpanel.Refresh()
-		self.calpanel.Thaw()
 	
 	def update_black_output_offset_ctrl(self):
 		self.black_output_offset_ctrl.SetValue(
@@ -4035,7 +4021,11 @@ class MainFrame(BaseFrame):
 			self.update_profile_name()
 		if event.GetId() != self.trc_ctrl.GetId():
 			self.update_trc_control()
+		self.calpanel.Freeze()
 		self.show_gamma_controls()
+		self.calpanel.Layout()
+		self.calpanel.Refresh()
+		self.calpanel.Thaw()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
 		if (trc in ("240", "709", "s") and not
@@ -6654,9 +6644,6 @@ class MainFrame(BaseFrame):
 					 #self.black_luminance_textctrl,
 					 #self.black_luminance_textctrl_label,
 					 #self.blacklevel_drift_compensation,
-					 self.trc_gamma_label,
-					 self.trc_textctrl,
-					 self.trc_type_ctrl,
 					 self.ambient_viewcond_adjust_cb,
 					 self.ambient_viewcond_adjust_textctrl,
 					 self.ambient_viewcond_adjust_textctrl_label,
@@ -6671,11 +6658,9 @@ class MainFrame(BaseFrame):
 					 self.black_point_rate_label,
 					 self.black_point_rate_ctrl,
 					 self.black_point_rate_floatctrl):
-			ctrl.GetContainingSizer().Show(ctrl,
-										   (ctrl in (self.trc_gamma_label,
-													 self.trc_textctrl) and
-											self.trc_ctrl.GetSelection() == 0) or
-										   show_advanced_calibration_options)
+			ctrl.GetContainingSizer().Show(ctrl, show_advanced_calibration_options)
+		if event:
+			self.show_gamma_controls()
 		self.black_point_correction_auto_handler()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
