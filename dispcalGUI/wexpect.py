@@ -1940,7 +1940,6 @@ class Wtty:
         self.__buffer = StringIO()
         self.__bufferY = 0
         self.__currentReadCo = PyCOORDType(0, 0)
-        self.__consSize = [80, 16000]
         self.__parentPid = 0
         self.__oproc = 0
         self.conpid = 0
@@ -2139,14 +2138,16 @@ class Wtty:
     def getPoint(self, offset):
         """Converts an offset to a point represented as a tuple."""
         
-        x = offset % self.__consSize[0]
-        y = offset / self.__consSize[0]
+        consinfo = self.__consout.GetConsoleScreenBufferInfo()
+        x = offset % consinfo['Size'].X
+        y = offset / consinfo['Size'].X
         return (x, y)
    
     def getOffset(self, x, y):
         """Converts a tuple-point to an offset."""
         
-        return x + y * self.__consSize[0]
+        consinfo = self.__consout.GetConsoleScreenBufferInfo()
+        return x + y * consinfo['Size'].X
    
     def readConsole(self, startCo, endCo):
         """Reads the console area from startCo to endCo and returns it
@@ -2187,10 +2188,11 @@ class Wtty:
         newlines or blanks, depending on if there written over
         characters or screen-buffer-fill characters."""
     
+        consinfo = self.__consout.GetConsoleScreenBufferInfo()
         strlist = []
         for i, c in enumerate(s):
             if (c == screenbufferfillchar and
-                (self.totalRead - self.lastRead + i + 1) % 80 == 0):
+                (self.totalRead - self.lastRead + i + 1) % consinfo['Size'].X == 0):
                 strlist.append('\r\n')
             else:
                 strlist.append(c)
@@ -2234,12 +2236,12 @@ class Wtty:
         raw = self.readConsole(self.__currentReadCo, cursorPos)
         rawlist = []
         while raw:
-            rawlist.append(raw[:self.__consSize[0]])
-            raw = raw[self.__consSize[0]:]
+            rawlist.append(raw[:consinfo['Size'].X])
+            raw = raw[consinfo['Size'].X:]
         raw = ''.join(rawlist)
         s = self.parseData(raw)
         for i, line in enumerate(reversed(rawlist)):
-            if line.endswith(screenbufferfillchar) and len(line) == 80:
+            if line.endswith(screenbufferfillchar) and len(line) == consinfo['Size'].X:
                 # Record the Y offset where the most recent line break was detected
                 self.__bufferY += len(rawlist) - i
                 break
@@ -2337,12 +2339,12 @@ class Wtty:
         self.__consout.SetConsoleCursorPosition(orig)
         self.__currentReadCo.X = 0
         self.__currentReadCo.Y = 0
-        writelen = self.__consSize[0] * self.__consSize[1]
+        consinfo = self.__consout.GetConsoleScreenBufferInfo()
+        writelen = consinfo['Size'].X * consinfo['Size'].Y
         self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, writelen, orig)
         
         self.__bufferY = 0
         self.__buffer.truncate(0)
-        #consinfo = self.__consout.GetConsoleScreenBufferInfo()
         #cursorPos = consinfo['CursorPosition']
         #log('refreshConsole: cursorPos %s' % cursorPos)
         
