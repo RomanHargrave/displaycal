@@ -2472,6 +2472,7 @@ class ConsoleReader:
             try:
                 consout = self.getConsoleOut()
                 self.initConsole(consout)
+                SetConsoleTitle(path)
                 
                 si = GetStartupInfo()
                 self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
@@ -2516,6 +2517,10 @@ class ConsoleReader:
                     paused = False
                                     
                 time.sleep(.1)
+
+            SetConsoleTitle(path + ' (terminated)')
+            cursorinfo = consout.GetConsoleCursorInfo()
+            consout.SetConsoleCursorInfo(cursorinfo[0], 0)  # Hide cursor
 
             while GetExitCodeProcess(parent) == STILL_ACTIVE:   
                 time.sleep(.1)
