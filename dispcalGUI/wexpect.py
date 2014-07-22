@@ -97,7 +97,6 @@ try:
             import winerror
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
-        screenbufferfillchar = u' '
         maxconsoleY = 8000
 except ImportError, e:
     raise ImportError (str(e) + """
@@ -2200,13 +2199,11 @@ class Wtty:
         consinfo = self.__consout.GetConsoleScreenBufferInfo()
         strlist = []
         for i, c in enumerate(s):
-            if (c == screenbufferfillchar and
-                (self.totalRead - self.lastRead + i + 1) % consinfo['Size'].X == 0):
+            strlist.append(c)
+            if (self.totalRead - self.lastRead + i + 1) % consinfo['Size'].X == 0:
                 strlist.append('\r\n')
-            else:
-                strlist.append(c)
 
-        s = '\r\n'.join([line.rstrip(screenbufferfillchar) for line in
+        s = '\r\n'.join([line.rstrip(u' ') for line in
                          ''.join(strlist).split('\r\n')])
         try:
             return s.encode(str(self.codepage), 'replace')
@@ -2250,7 +2247,7 @@ class Wtty:
         raw = ''.join(rawlist)
         s = self.parseData(raw)
         for i, line in enumerate(reversed(rawlist)):
-            if line.endswith(screenbufferfillchar) and len(line) == consinfo['Size'].X:
+            if len(line) == consinfo['Size'].X:
                 # Record the Y offset where the most recent line break was detected
                 self.__bufferY += len(rawlist) - i
                 break
@@ -2350,7 +2347,7 @@ class Wtty:
         self.__currentReadCo.Y = 0
         consinfo = self.__consout.GetConsoleScreenBufferInfo()
         writelen = consinfo['Size'].X * consinfo['Size'].Y
-        self.__consout.FillConsoleOutputCharacter(screenbufferfillchar, writelen, orig)
+        self.__consout.FillConsoleOutputCharacter(u' ', writelen, orig)
         
         self.__bufferY = 0
         self.__buffer.truncate(0)
@@ -2560,7 +2557,7 @@ class ConsoleReader:
         size = PyCOORDType(80, 16000)
         consout.SetConsoleScreenBufferSize(size)
         pos = PyCOORDType(0, 0)
-        consout.FillConsoleOutputCharacter(screenbufferfillchar, size.X * size.Y, pos)   
+        consout.FillConsoleOutputCharacter(u' ', size.X * size.Y, pos)   
     
     def suspendThread(self):
         """Pauses the main thread of the child process."""
