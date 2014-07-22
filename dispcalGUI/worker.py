@@ -74,7 +74,7 @@ from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import ResolveCMPatternGeneratorServer
 from trash import trash
-from util_io import Files, GzipFileProper, StringIOu as StringIO
+from util_io import EncodedWriter, Files, GzipFileProper, StringIOu as StringIO
 from util_list import intlist
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
@@ -2912,8 +2912,8 @@ class Worker(object):
 			else:
 				kwargs = dict(timeout=5, cwd=working_dir,
 							  env=os.environ)
-				stderr = StringIO()
-				stdout = StringIO()
+				stderr = None
+				stdout = EncodedWriter(StringIO(), None, enc)
 				logfiles = []
 				if (hasattr(self, "thread") and self.thread.isAlive() and
 					self.interactive and getattr(self, "terminal", None)):
@@ -3076,7 +3076,7 @@ class Worker(object):
 					self.retcode = -1
 				self.subprocess = None
 				tries -= 1
-				if not silent:
+				if not silent and stderr:
 					stderr.seek(0)
 					errors = stderr.readlines()
 					if not capture_output or stderr is not stdout:

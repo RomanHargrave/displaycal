@@ -9,6 +9,35 @@ from time import time
 from safe_print import safe_print
 from util_str import universal_newlines
 
+
+class EncodedWriter(object):
+
+	"""
+	Decode data with data_encoding and encode it with file_encoding before
+	writing it to file_obj.
+	
+	Either data_encoding or file_encoding can be None.
+	
+	"""
+
+	def __init__(self, file_obj, data_encoding=None, file_encoding=None,
+				 errors="replace"):
+		self.file = file_obj
+		self.data_encoding = data_encoding
+		self.file_encoding = file_encoding
+		self.errors = errors
+
+	def __getattr__(self, name):
+		return getattr(self.file, name)
+
+	def write(self, data):
+		if self.data_encoding and not isinstance(data, unicode):
+			data = data.decode(self.data_encoding, self.errors)
+		if self.file_encoding and isinstance(data, unicode):
+			data = data.encode(self.file_encoding, self.errors)
+		self.file.write(data)
+
+
 class Files():
 
 	"""
