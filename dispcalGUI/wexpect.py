@@ -2499,32 +2499,36 @@ class ConsoleReader:
             paused = False
    
             while GetExitCodeProcess(self.__childProcess) == STILL_ACTIVE:
-                if GetExitCodeProcess(parent) != STILL_ACTIVE: 
-                    time.sleep(.1)
-                    try:
-                        TerminateProcess(self.__childProcess, 0)
-                    except pywintypes.error, e:
-                        log(e, 'consolereader_exceptions', logdir)
-                    sys.exit()
-                
-                consinfo = consout.GetConsoleScreenBufferInfo()
-                cursorPos = consinfo['CursorPosition']
-                
-                if cursorPos.Y > maxconsoleY and not paused:
-                    #log('ConsoleReader.__init__: cursorPos %s' 
-                               #% cursorPos, 'consolereader', logdir)
-                    #log('suspendThread', 'consolereader', logdir)
-                    self.suspendThread()
-                    paused = True
+                try:
+                    if GetExitCodeProcess(parent) != STILL_ACTIVE: 
+                        time.sleep(.1)
+                        try:
+                            TerminateProcess(self.__childProcess, 0)
+                        except pywintypes.error, e:
+                            log(e, 'consolereader_exceptions', logdir)
+                        sys.exit()
                     
-                if cursorPos.Y <= maxconsoleY and paused:
-                    #log('ConsoleReader.__init__: cursorPos %s' 
-                               #% cursorPos, 'consolereader', logdir)
-                    #log('resumeThread', 'consolereader', logdir)
-                    self.resumeThread()
-                    paused = False
-                                    
-                time.sleep(.1)
+                    consinfo = consout.GetConsoleScreenBufferInfo()
+                    cursorPos = consinfo['CursorPosition']
+                    
+                    if cursorPos.Y > maxconsoleY and not paused:
+                        #log('ConsoleReader.__init__: cursorPos %s' 
+                                   #% cursorPos, 'consolereader', logdir)
+                        #log('suspendThread', 'consolereader', logdir)
+                        self.suspendThread()
+                        paused = True
+                        
+                    if cursorPos.Y <= maxconsoleY and paused:
+                        #log('ConsoleReader.__init__: cursorPos %s' 
+                                   #% cursorPos, 'consolereader', logdir)
+                        #log('resumeThread', 'consolereader', logdir)
+                        self.resumeThread()
+                        paused = False
+                                        
+                    time.sleep(.1)
+                except KeyboardInterrupt:
+                    # Only let child react to CTRL+C, ignore in ConsoleReader
+                    pass
 
             SetConsoleTitle(path + ' (terminated)')
             cursorinfo = consout.GetConsoleCursorInfo()
