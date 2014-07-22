@@ -2441,7 +2441,6 @@ class Wtty:
     def __oproc_isalive(self):
         return GetExitCodeProcess(self.__oproc) == STILL_ACTIVE
     
-    ###Broken###
     def sendintr(self):
         """Sends the sigint signal to the child."""
         
