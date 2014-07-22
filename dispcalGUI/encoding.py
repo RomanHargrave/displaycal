@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from encodings.aliases import aliases
 import locale
 import sys
 
-if sys.stdout.isatty():
-	if sys.platform == "win32":
-		try:
-			from win32console import GetConsoleCP, GetConsoleOutputCP, GetOEMCP
-		except ImportError:
-			pass
-
+if sys.platform == "win32":
+	from ctypes import windll
 
 def get_encoding(stream):
 	""" Return stream encoding. """
@@ -30,9 +24,11 @@ def get_encoding(stream):
 					# we're not running as console executable. Fall back
 					# to GetOEMCP
 					if stream is (sys.stdin):
-						enc = aliases.get(str(GetConsoleCP() or GetOEMCP()))
+						enc = "cp%i" % (windll.kernel32.GetConsoleCP() or
+										windll.kernel32.GetOEMCP())
 					else:
-						enc = aliases.get(str(GetConsoleOutputCP() or GetOEMCP()))
+						enc = "cp%i" % (windll.kernel32.GetConsoleOutputCP() or
+										windll.kernel32.GetOEMCP())
 				except:
 					pass
 	enc = enc or getattr(stream, "encoding", None) or \

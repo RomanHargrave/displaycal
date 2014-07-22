@@ -6,7 +6,6 @@ Interactive display calibration UI
 
 """
 
-from encodings.aliases import aliases
 import os
 import re
 import sys

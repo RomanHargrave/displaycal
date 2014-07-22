@@ -18,7 +18,6 @@ import threading
 import traceback
 import urllib2
 from UserString import UserString
-from encodings.aliases import aliases
 from hashlib import md5
 from time import sleep, strftime, time
 if sys.platform == "darwin":
