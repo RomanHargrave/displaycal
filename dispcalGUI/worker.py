@@ -1344,6 +1344,10 @@ class Worker(object):
 		Create and return a new worker instance.
 		"""
 		self.owner = owner # owner should be a wxFrame or similar
+		if sys.platform == "win32":
+			self.pty_encoding = "cp%i" % windll.kernel32.GetACP()
+		else:
+			self.pty_encoding = enc
 		self.cmdrun = False
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
@@ -1364,11 +1368,11 @@ class Worker(object):
 		self.tempdir = None
 		self.thread_abort = False
 		self.triggers = ["Password:"]
-		self.recent = FilteredStream(LineCache(maxlines=3), enc, 
+		self.recent = FilteredStream(LineCache(maxlines=3), self.pty_encoding, 
 									 discard=self.recent_discard,
 									 triggers=self.triggers +
 											  ["stopped at user request"])
-		self.lastmsg = FilteredStream(LineCache(), enc, 
+		self.lastmsg = FilteredStream(LineCache(), self.pty_encoding, 
 									  discard=self.lastmsg_discard,
 									  triggers=self.triggers)
 		self.clear_argyll_info()
@@ -2892,6 +2896,7 @@ class Worker(object):
 			else:
 				startupinfo = None
 			if not use_pty:
+				data_encoding = enc
 				if silent:
 					stderr = sp.STDOUT
 				else:
@@ -2909,10 +2914,13 @@ class Worker(object):
 				else:
 					stdin = sp.PIPE
 			else:
+				data_encoding = self.pty_encoding
 				kwargs = dict(timeout=5, cwd=working_dir,
 							  env=os.environ)
+				if sys.platform == "win32":
+					kwargs["codepage"] = windll.kernel32.GetACP()
 				stderr = None
-				stdout = EncodedWriter(StringIO(), None, enc)
+				stdout = EncodedWriter(StringIO(), None, data_encoding)
 				logfiles = []
 				if (hasattr(self, "thread") and self.thread.isAlive() and
 					self.interactive and getattr(self, "terminal", None)):
@@ -2929,7 +2937,8 @@ class Worker(object):
 						linebuffered_logfiles.append(self.sessionlogfile)
 					logfiles.append(LineBufferedStream(
 									FilteredStream(Files(linebuffered_logfiles),
-												   enc, discard="",
+												   data_encoding,
+												   discard="",
 												   linesep_in="\n", 
 												   triggers=[])))
 				logfiles += [stdout]
@@ -3091,13 +3100,15 @@ class Worker(object):
 							   line.find("User Aborted") < 0 and \
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
-								self.errors += [line.decode(enc, "replace")]
+								self.errors += [line.decode(data_encoding,
+															"replace")]
 					if tries > 0 and not use_pty:
 						stderr = tempfile.SpooledTemporaryFile()
 				if capture_output or use_pty:
 					stdout.seek(0)
 					self.output = [re.sub("^\.{4,}\s*$", "", 
-										  line.decode(enc, "replace")) 
+										  line.decode(data_encoding,
+													  "replace")) 
 								   for line in stdout.readlines()]
 					stdout.close()
 					if len(self.output) and log_output:
