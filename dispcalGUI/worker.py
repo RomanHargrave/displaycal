@@ -537,10 +537,12 @@ def get_current_profile_path():
 	profile = None
 	profile_path = getcfg("calibration.file")
 	if profile_path:
-		try:
-			profile = ICCP.ICCProfile(profile_path)
-		except Exception, exception:
-			safe_print(exception)
+		filename, ext = os.path.splitext(profile_path)
+		if ext.lower() in (".icc", ".icm"):
+			try:
+				profile = ICCP.ICCProfile(profile_path)
+			except Exception, exception:
+				safe_print(exception)
 	else:
 		try:
 			profile = ICCP.get_display_profile(getcfg("display.number") - 1)
