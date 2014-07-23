@@ -57,6 +57,8 @@ def main(module=None):
 		safe_print("%s %s (%s)" % (platform.system(), platform.version(), dist))
 	safe_print("Python " + sys.version)
 	safe_print("wxPython " + wx.version())
+	safe_print("Encoding: " + enc)
+	safe_print("File system encoding: " + fs_enc)
 	try:
 		# Check for required resource files
 		mod2res = {None: resfiles,
