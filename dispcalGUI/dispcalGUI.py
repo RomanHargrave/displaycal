@@ -1424,16 +1424,16 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_MENU, self.profile_save_path_btn_handler, menuitem)
 		self.menuitem_profile_info = file_.FindItemById(file_.FindItem("profile.info"))
 		self.Bind(wx.EVT_MENU, self.profile_info_handler, self.menuitem_profile_info)
-		if sys.platform != "darwin":
+		if sys.platform != "darwin" or wx.VERSION >= (2, 9):
 			file_.AppendSeparator()
 		self.menuitem_prefs = file_.Append(
-			-1 if wx.VERSION < (3, ) else wx.ID_PREFERENCES,
+			-1 if wx.VERSION < (2, 9) else wx.ID_PREFERENCES,
 			"&" + "menuitem.set_argyll_bin")
 		self.Bind(wx.EVT_MENU, self.set_argyll_bin_handler, self.menuitem_prefs)
-		if sys.platform != "darwin":
+		if sys.platform != "darwin" or wx.VERSION >= (2, 9):
 			file_.AppendSeparator()
 		self.menuitem_quit = file_.Append(
-			-1 if wx.VERSION < (3, ) else wx.ID_EXIT, "&menuitem.quit\tCtrl+Q")
+			-1 if wx.VERSION < (2, 9) else wx.ID_EXIT, "&menuitem.quit\tCtrl+Q")
 		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 
 		options = self.menubar.GetMenu(self.menubar.FindMenu("menu.options"))
@@ -1623,7 +1623,7 @@ class MainFrame(BaseFrame):
 
 		help = self.menubar.GetMenu(self.menubar.FindMenu("menu.help"))
 		self.menuitem_about = help.Insert(0,
-			-1 if wx.VERSION < (3, ) else wx.ID_ABOUT, "&menu.about")
+			-1 if wx.VERSION < (2, 9) else wx.ID_ABOUT, "&menu.about")
 		self.Bind(wx.EVT_MENU, self.aboutdialog_handler, self.menuitem_about)
 		self.menuitem_readme = help.FindItemById(help.FindItem("readme"))
 		self.menuitem_readme.Enable(isinstance(get_data_path("README.html"), 
