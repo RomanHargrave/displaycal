@@ -299,9 +299,6 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 				wx.GetApp().ExitMainLoop()
 			if sys.platform == "win32":
 				kwargs = dict(stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
-				kwargs["startupinfo"] = sp.STARTUPINFO()
-				kwargs["startupinfo"].dwFlags |= sp.STARTF_USESHOWWINDOW
-				kwargs["startupinfo"].wShowWindow = sp.SW_HIDE
 			else:
 				kwargs = {}
 			sp.Popen([zeroinstall.encode(fs_enc), "run", "--refresh",
