@@ -2981,6 +2981,10 @@ class Worker(object):
 						except wexpect.ExceptionPexpect, exception:
 							self.retcode = -1
 							raise Error(safe_unicode(exception))
+						if sys.platform == "win32":
+							# As Windows' console always hard wraps at the
+							# rightmost column, increase the buffer width
+							self.subprocess.setwinsize(16000, 132)
 						if debug >= 9 or (test and not "-?" in args):
 							self.subprocess.interact()
 					self.subprocess.logfile_read = logfiles
