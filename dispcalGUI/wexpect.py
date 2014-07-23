@@ -2207,7 +2207,7 @@ class Wtty:
         s = '\r\n'.join([line.rstrip(u' ') for line in
                          ''.join(strlist).split('\r\n')])
         try:
-            return s.encode(str(self.codepage), 'replace')
+            return s.encode("cp%i" % self.codepage, 'replace')
         except LookupError:
             return s.encode(getattr(sys.stdout, 'encoding', None) or 
                             sys.getdefaultencoding(), 'replace')
