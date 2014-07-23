@@ -1951,6 +1951,7 @@ class Wtty:
         self.__childProcess = None
         self.codepage = (codepage or windll.kernel32.GetConsoleOutputCP() or
                          windll.kernel32.GetOEMCP())
+        log("Code page: %s" % self.codepage)
         self.console = False
         self.lastRead = 0
         self.lastReadData = ""
