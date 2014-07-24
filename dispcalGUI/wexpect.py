@@ -2302,17 +2302,22 @@ class Wtty:
           
         self.switchTo()  
           
+        consinfo = self.__consout.GetConsoleScreenBufferInfo()
+        cursorPos = consinfo['CursorPosition']
+        reset = False
         try:  
             while True:
                 #Wait for child process to be paused
-                if self.__currentReadCo.Y > maxconsoleY:
+                if cursorPos.Y > maxconsoleY:
+                    reset = True
                     time.sleep(.2)
             
                 start = time.clock()
                 s = self.readConsoleToCursor()
                 
-                if self.__currentReadCo.Y > maxconsoleY:
+                if reset:
                     self.refreshConsole()
+                    reset = False
                 
                 if len(s) != 0:
                     self.switchBack()
@@ -2340,20 +2345,26 @@ class Wtty:
     
     def refreshConsole(self):
         """Clears the console after pausing the child and
-        reading all the data currently on the console."""
+        reading all the data currently on the console.
+        The last line before clearing becomes the first line after clearing."""
     
+        consinfo = self.__consout.GetConsoleScreenBufferInfo()
+        cursorPos = consinfo['CursorPosition']
+        startCo = PyCOORDType(0, cursorPos.Y)
+        self.totalRead = 0
+        raw = self.readConsole(startCo, cursorPos)
         orig = PyCOORDType(0, 0)
         self.__consout.SetConsoleCursorPosition(orig)
-        self.__currentReadCo.X = 0
-        self.__currentReadCo.Y = 0
-        consinfo = self.__consout.GetConsoleScreenBufferInfo()
         writelen = consinfo['Size'].X * consinfo['Size'].Y
         self.__consout.FillConsoleOutputCharacter(u' ', writelen, orig)
+        self.__consout.WriteConsoleOutputCharacter(raw, orig)
+        cursorPos.Y = 0
+        self.__consout.SetConsoleCursorPosition(cursorPos)
+        self.__currentReadCo = cursorPos
         
         self.__bufferY = 0
         self.__buffer.truncate(0)
-        #cursorPos = consinfo['CursorPosition']
-        #log('refreshConsole: cursorPos %s' % cursorPos)
+        self.__buffer.write(raw)
         
     
     def setecho(self, state):
@@ -2494,6 +2505,8 @@ class ConsoleReader:
             parent = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION , 0, int(pid))
             paused = False
    
+            cursorinfo = consout.GetConsoleCursorInfo()
+
             while GetExitCodeProcess(self.__childProcess) == STILL_ACTIVE:
                 try:
                     if GetExitCodeProcess(parent) != STILL_ACTIVE: 
@@ -2513,6 +2526,9 @@ class ConsoleReader:
                         #log('suspendThread', 'consolereader', logdir)
                         self.suspendThread()
                         paused = True
+                        SetConsoleTitle(path + ' (suspended)')
+                        # Hide cursor
+                        consout.SetConsoleCursorInfo(cursorinfo[0], 0)
                         
                     if cursorPos.Y <= maxconsoleY and paused:
                         #log('ConsoleReader.__init__: cursorPos %s' 
@@ -2520,6 +2536,10 @@ class ConsoleReader:
                         #log('resumeThread', 'consolereader', logdir)
                         self.resumeThread()
                         paused = False
+                        SetConsoleTitle(path)
+                        # Show cursor
+                        consout.SetConsoleCursorInfo(cursorinfo[0],
+                                                     cursorinfo[1])
                                         
                     time.sleep(.1)
                 except KeyboardInterrupt:
@@ -2527,7 +2547,6 @@ class ConsoleReader:
                     pass
 
             SetConsoleTitle(path + ' (terminated)')
-            cursorinfo = consout.GetConsoleCursorInfo()
             consout.SetConsoleCursorInfo(cursorinfo[0], 0)  # Hide cursor
 
             while GetExitCodeProcess(parent) == STILL_ACTIVE:   
