@@ -2510,7 +2510,6 @@ class ConsoleReader:
             while GetExitCodeProcess(self.__childProcess) == STILL_ACTIVE:
                 try:
                     if GetExitCodeProcess(parent) != STILL_ACTIVE: 
-                        time.sleep(.1)
                         try:
                             TerminateProcess(self.__childProcess, 0)
                         except pywintypes.error, e:
@@ -2553,7 +2552,6 @@ class ConsoleReader:
                 time.sleep(.1)
         except Exception, e:
             log(e, 'consolereader_exceptions', logdir)
-            time.sleep(.1)
     
     def handler(self, sig):       
         log(sig, 'consolereader', logdir)
