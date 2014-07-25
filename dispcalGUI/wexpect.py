@@ -97,7 +97,6 @@ try:
             import winerror
         except ImportError, e:
             raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
-        maxconsoleY = 8000
 except ImportError, e:
     raise ImportError (str(e) + """
 
@@ -2304,6 +2303,7 @@ class Wtty:
           
         consinfo = self.__consout.GetConsoleScreenBufferInfo()
         cursorPos = consinfo['CursorPosition']
+        maxconsoleY = consinfo['Size'].Y / 2
         reset = False
         try:  
             while True:
@@ -2518,6 +2518,7 @@ class ConsoleReader:
                     
                     consinfo = consout.GetConsoleScreenBufferInfo()
                     cursorPos = consinfo['CursorPosition']
+                    maxconsoleY = consinfo['Size'].Y / 2
                     
                     if cursorPos.Y > maxconsoleY and not paused:
                         #log('ConsoleReader.__init__: cursorPos %s' 
