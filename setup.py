@@ -394,7 +394,9 @@ def setup():
 			replace_placeholders(os.path.join(pydir, "misc", 
 											  "README.template.html"),
 								 os.path.join(pydir, "README.html"),
-								 lastmod_time)
+								 lastmod_time,
+								 {"STABILITY": "Beta" if stability != "stable"
+											   else ""})
 		sys.argv.remove("readme")
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return

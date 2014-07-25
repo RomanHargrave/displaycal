@@ -1037,7 +1037,10 @@ class MainFrame(BaseFrame):
 		# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 		# segfault under Arch Linux when setting the window title
 		safe_print("")
-		self.SetTitle("%s %s" % (appname, version))
+		title = "%s %s" % (appname, version)
+		if VERSION > VERSION_BASE:
+			title += " Beta"
+		self.SetTitle(title)
 		self.SetMaxSize((-1, -1))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
@@ -10021,9 +10024,11 @@ class MainApp(wx.App):
 class StartupFrame(wx.Frame):
 
 	def __init__(self):
-		wx.Frame.__init__(self, None, title="%s %s: %s" %
-											(appname, version,
-											 lang.getstr("startup")),
+		title = "%s %s" % (appname, version)
+		if VERSION > VERSION_BASE:
+			title += " Beta"
+		wx.Frame.__init__(self, None, title="%s: %s" % (title,
+														lang.getstr("startup")),
 						  style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER |
 														   wx.RESIZE_BOX | 
 														   wx.MAXIMIZE_BOX))

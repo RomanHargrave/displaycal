@@ -24,7 +24,7 @@ from config import (autostart_home, confighome, datahome, enc, exe, exe_ext,
 					logdir, pydir, pyname, pypath, resfiles, runtype)
 from debughelpers import ResourceError, handle_error
 from log import log, safe_print
-from meta import build, name as appname, version
+from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
 from options import debug, verbose
 from util_str import safe_unicode
 from wxaddons import wx
@@ -38,6 +38,9 @@ sys.excepthook = _excepthook
 def main(module=None):
 	log("=" * 80)
 	if verbose >= 1:
+		version = VERSION_STRING
+		if VERSION > VERSION_BASE:
+			 version += " Beta"
 		safe_print(pyname + runtype, version, build)
 	if sys.platform == "darwin":
 		safe_print("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
