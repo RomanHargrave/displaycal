@@ -1908,7 +1908,8 @@ class spawn_windows (spawn_unix, object):
             return True
         else:
             self.exitstatus = GetExitCodeProcess(self.wtty.getchild())
-            self.status = (self.pid, self.exitstatus << 8)  # left-shift exit status by 8 bits like os.waitpid
+            # left-shift exit status by 8 bits like os.waitpid
+            self.status = self.exitstatus << 8
             self.terminated = True
             return False
 
