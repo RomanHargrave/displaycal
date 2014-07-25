@@ -281,7 +281,7 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
         return child_result
 
 def spawn(command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None,
-          codepage=None):
+          codepage=None, columns=None, rows=None):
     log('=' * 80)
     log('Buffer size: %s' % maxread)
     if searchwindowsize:
@@ -296,7 +296,7 @@ def spawn(command, args=[], timeout=30, maxread=2000, searchwindowsize=None, log
     log('Spawning %s' % join_args([command] + args))
     if sys.platform == 'win32':
         return spawn_windows(command, args, timeout, maxread, searchwindowsize, logfile, cwd, env,
-                             codepage)
+                             codepage, columns, rows)
     else:
         return spawn_unix(command, args, timeout, maxread, searchwindowsize, logfile, cwd, env)
         
@@ -1631,7 +1631,7 @@ class spawn_windows (spawn_unix, object):
     and control child applications. """
 
     def __init__(self, command, args=[], timeout=30, maxread=60000, searchwindowsize=None, logfile=None, cwd=None, env=None,
-                 codepage=None):
+                 codepage=None, columns=None, rows=None):
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -1667,6 +1667,8 @@ class spawn_windows (spawn_unix, object):
         self.cwd = cwd
         self.env = env
         self.codepage = codepage
+        self.columns = columns
+        self.rows = rows
 
         # allow dummy instances for subclasses that may not use command or args.
         if command is None:
@@ -1732,7 +1734,8 @@ class spawn_windows (spawn_unix, object):
         #assert self.pid is None, 'The pid member should be None.'
         #assert self.command is not None, 'The command member should not be None.'
 
-        self.wtty = Wtty(timeout=self.timeout, codepage=self.codepage)        
+        self.wtty = Wtty(timeout=self.timeout, codepage=self.codepage,
+                         columns=self.columns, rows=self.rows)        
     
         if self.cwd is not None:
             os.chdir(self.cwd)
@@ -1938,7 +1941,7 @@ class spawn_windows (spawn_unix, object):
 
 class Wtty:
 
-    def __init__(self, timeout=30, codepage=None):
+    def __init__(self, timeout=30, codepage=None, columns=None, rows=None):
         self.__buffer = StringIO()
         self.__bufferY = 0
         self.__currentReadCo = PyCOORDType(0, 0)
@@ -1951,6 +1954,8 @@ class Wtty:
         self.codepage = (codepage or windll.kernel32.GetConsoleOutputCP() or
                          windll.kernel32.GetOEMCP())
         log("Code page: %s" % self.codepage)
+        self.columns = columns
+        self.rows = rows
         self.console = False
         self.lastRead = 0
         self.lastReadData = ""
@@ -2046,7 +2051,7 @@ class Wtty:
                                         ' '.join(pyargs), 
                                         "import sys; sys.path = %s + sys.path;"
                                         "args = %s; import wexpect;"
-                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, logdir=%r)" % (("%r" % spath).replace('"', r'\"'), ("%r" % args).replace('"', r'\"'), pid, tid, self.codepage, logdir))
+                                        "wexpect.ConsoleReader(wexpect.join_args(args), %i, %i, cp=%i, c=%s, r=%s, logdir=%r)" % (("%r" % spath).replace('"', r'\"'), ("%r" % args).replace('"', r'\"'), pid, tid, self.codepage, self.columns, self.rows, logdir))
                      
         log(commandLine)
         self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
@@ -2468,7 +2473,7 @@ class Wtty:
     
 class ConsoleReader:
    
-    def __init__(self, path, pid, tid, env = None, cp=None, logdir=None):
+    def __init__(self, path, pid, tid, env=None, cp=None, c=None, r=None, logdir=None):
         self.logdir = logdir
         log('=' * 80, 'consolereader', logdir)
         log("OEM code page: %s" % windll.kernel32.GetOEMCP(), 'consolereader', logdir)
@@ -2486,7 +2491,7 @@ class ConsoleReader:
         try:
             try:
                 consout = self.getConsoleOut()
-                self.initConsole(consout)
+                self.initConsole(consout, c, r)
                 SetConsoleTitle(path)
                 
                 si = GetStartupInfo()
@@ -2569,10 +2574,10 @@ class ConsoleReader:
                                        
         return PyConsoleScreenBufferType(consout)
         
-    def initConsole(self, consout):     
+    def initConsole(self, consout, c=None, r=None):     
         rect = PySMALL_RECTType(0, 0, 79, 24)
         consout.SetConsoleWindowInfo(True, rect)
-        size = PyCOORDType(80, 16000)
+        size = PyCOORDType(c or 80, r or 16000)
         consout.SetConsoleScreenBufferSize(size)
         pos = PyCOORDType(0, 0)
         consout.FillConsoleOutputCharacter(u' ', size.X * size.Y, pos)   
