@@ -2230,6 +2230,14 @@ class Wtty:
         #log('=' * 80)
         #log('cursor: %r, current: %r' % (cursorPos, self.__currentReadCo))
 
+        if cursorPos.Y < self.__currentReadCo.Y:
+            # Has the child cleared the screen buffer?
+            self.__buffer.seek(0)
+            self.__buffer.truncate()
+            self.__bufferY = 0
+            self.__currentReadCo.X = 0
+            self.__currentReadCo.Y = 0
+
         isSameX = cursorPos.X == self.__currentReadCo.X
         isSameY = cursorPos.Y == self.__currentReadCo.Y
         isSamePos = isSameX and isSameY
