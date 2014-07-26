@@ -7442,7 +7442,7 @@ class MainFrame(BaseFrame):
 							paths += glob.glob(os.path.join(getenvu("PROGRAMW6432"),
 														    "7-zip"))
 						else:
-							sevenzip_name = "7za"
+							sevenzip_name = "7z"
 							paths = None
 						sevenzip = which(sevenzip_name, paths=paths)
 						if sevenzip:
