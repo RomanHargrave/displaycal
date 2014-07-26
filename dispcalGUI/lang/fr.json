@@ -156,7 +156,7 @@
 	"colorimeter_correction.create.success": "Correction créée.",
 	"colorimeter_correction.file.none": "Aucune",
 	"colorimeter_correction.import": "Importer les corrections du colorimètre d'un autre logiciel de profilage d'écrans...",
-	"colorimeter_correction.import.auto_manual": "Si vous voulez importer automatiquement des corrections de colorimètre, vous devez soit avoir déjà installé le logiciel du vendeur de votre instrument, soit insérer son support d'installation, puis choisir « Auto ». Si vous avez un installateur de logiciel que vous n'avez pas encore exécuté, ou que vous voulez sélectionner un fichier vous-même, choisissez « Sélectionner un fichier ».",
+		"*colorimeter_correction.import.auto_manual": "If you want to automatically import colorimeter corrections, choose “Auto”. If you want to select a file yourself, choose “Select file”.",
 	"colorimeter_correction.import.choose": "Veuillez choisir le fichier de correction de colorimètre à importer :",
 	"colorimeter_correction.import.failure": "Aucune correction de colorimètre n'a pu être importée.",
 	"colorimeter_correction.import.success": "Les corrections du colorimètre ont été importées depuis les logiciels suivants :\n\n%s",

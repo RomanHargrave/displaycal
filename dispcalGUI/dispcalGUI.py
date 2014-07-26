@@ -103,7 +103,7 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
-from worker import (Error, Info, UnloggedInfo, Warn,
+from worker import (Error, Info, UnloggedError, UnloggedInfo, Warn,
 					Worker, check_create_dir,
 					check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
@@ -310,13 +310,13 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 						 ckwargs={"exit": True},
 						 wargs=("http://%s/download%s/%s-%s-Setup.exe" %
 								(domain.lower(), folder, appname, newversion),),
-						 progress_msg=lang.getstr("update_download"))
+						 progress_msg=lang.getstr("download"))
 		else:
 			worker.start(worker.process_download, worker.download,
 						 ckwargs={"exit": True},
 						 wargs=("http://%s/download%s/%s-%s.dmg" %
 								(domain.lower(), folder, appname, newversion),),
-						 progress_msg=lang.getstr("update_download"))
+						 progress_msg=lang.getstr("download"))
 	elif result != wx.ID_CANCEL:
 		launch_file("http://" + domain)
 
@@ -7299,6 +7299,7 @@ class MainFrame(BaseFrame):
 		i1d3ccss = None
 		spyd4 = False
 		spyd4en = None
+		icd = False
 		oeminst = get_argyll_util("oeminst")
 		importers = [oeminst]
 		if not oeminst:
@@ -7319,63 +7320,57 @@ class MainFrame(BaseFrame):
 					i1d3 = result
 				if "spyd4cal.bin" in "".join(self.worker.output):
 					spyd4 = result
-		# Import iColorDisplay device corrections or let the user choose
 		defaultDir = ""
 		defaultFile = ""
-		path = None
+		paths = []
 		# Look for iColorDisplay
 		if sys.platform == "win32":
-			defaultDir = os.path.join(getenvu("PROGRAMFILES", ""), "Quato", 
-									  "iColorDisplay")
+			paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
+											"Quato", "iColorDisplay",
+											"DeviceCorrections.txt"))
 		elif sys.platform == "darwin":
-			paths = glob.glob(os.path.join(os.path.sep, "Applications", 
-										   "iColorDisplay*.app"))
+			paths += glob.glob(os.path.join(os.path.sep, "Applications", 
+										   "iColorDisplay*.app",
+										   "DeviceCorrections.txt"))
 			paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
 											"iColorDisplay*", 
-											"iColorDisplay*.app"))
-			if paths:
-				defaultDir = paths[-1]
-		if defaultDir and os.path.isdir(defaultDir):
-			# iColorDisplay found
-			defaultFile = "DeviceCorrections.txt"
-		elif (oeminst or i1d3ccss) and not i1d3:
+											"iColorDisplay*.app",
+											"DeviceCorrections.txt"))
+		if (oeminst or i1d3ccss) and not i1d3:
 			# Look for *.edr files
 			if sys.platform == "win32":
-				defaultDir = os.path.join(getenvu("PROGRAMFILES", ""), 
-										  "X-Rite", "Devices", "i1d3", 
-										  "Calibrations")
+				paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+												"X-Rite", "Devices", "i1d3", 
+												"Calibrations", "*.edr"))
 			elif sys.platform == "darwin":
-				paths = glob.glob(os.path.join(os.path.sep, "Library", 
+				paths += glob.glob(os.path.join(os.path.sep, "Library", 
 											   "Application Support", "X-Rite", 
 											   "Devices", "i1d3xrdevice", 
 											   "Contents", "Resources", 
-											   "Calibrations"))
+											   "Calibrations", "*.edr"))
 				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-												"i1Profiler"))
+												"i1Profiler", "*.exe"))
 				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-												"ColorMunki Display"))
-				if paths:
-					defaultDir = paths[-1]
-		elif (oeminst or spyd4en) and not spyd4:
+												"ColorMunki Display", "*.exe"))
+		if (oeminst or spyd4en) and not spyd4:
 			# Look for dccmtr.dll
 			if sys.platform == "win32":
-				paths = glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+				paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 											   "Datacolor", "Spyder4*", 
 											   "dccmtr.dll"))
 			elif sys.platform == "darwin":
 				# Look for setup.exe on CD-ROM
-				paths = glob.glob(os.path.join(os.path.sep, "Volumes", 
+				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
 											   "Datacolor", "Data",
 											   "setup.exe"))
 				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
 												"Datacolor_ISO", "Data",
 												"setup.exe"))
-			if paths:
-				defaultDir, defaultFile = os.path.split(paths[-1])
-		if defaultDir and os.path.isdir(defaultDir):
-			if choice == wx.ID_OK:
-				path = os.path.join(defaultDir, defaultFile)
-		if (not path or not os.path.isfile(path)) and not (i1d3 or spyd4):
+		if choice == wx.ID_OK:
+			# Automatic
+			pass
+		elif (not paths or
+			  not os.path.isfile(paths[-1])) and not (i1d3 or spyd4):
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction.import.choose"),
 								defaultDir=defaultDir,
@@ -7385,14 +7380,23 @@ class MainFrame(BaseFrame):
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
-				path = dlg.GetPath()
+				paths = [dlg.GetPath()]
 			dlg.Destroy()
-		icd = False
+		self.worker.interactive = False
+		self.worker.start(self.import_colorimeter_correction_consumer,
+						  self.import_colorimeter_correction_producer,
+						  wargs=(result, i1d3, i1d3ccss, spyd4, spyd4en, icd,
+								 oeminst, paths, choice == wx.ID_OK),
+						  progress_msg=lang.getstr("colorimeter_correction.import"))
+	
+	def import_colorimeter_correction(self, result, i1d3, i1d3ccss, spyd4,
+									  spyd4en, icd, oeminst, path):
+		""" Import colorimter correction(s) from path """
 		if path and os.path.exists(path):
 			filename, ext = os.path.splitext(path)
-			type = None
+			kind = None
 			if ext.lower() == ".txt":
-				type = "icd"
+				kind = "icd"
 			else:
 				icolordisplay = "icolordisplay" in os.path.basename(path).lower()
 				if ext.lower() == ".dmg":
@@ -7401,30 +7405,57 @@ class MainFrame(BaseFrame):
 						# try mounting it
 						pass
 				elif i1d3ccss and ext.lower() == ".edr":
-					type = "xrite"
+					kind = "xrite"
 				elif ext.lower() in (".cab", ".exe"):
 					if icolordisplay:
-						# TODO: We have a iColorDisplay installer,
-						# try opening it as lzma archive
-						pass
+						kind = "icd"
+						if sys.platform == "win32":
+							sevenzip_name = "7z.exe"
+							paths = glob.glob(os.path.join(getenvu("PROGRAMFILES"),
+														   "7-zip"))
+							paths += glob.glob(os.path.join(getenvu("PROGRAMW6432"),
+														    "7-zip"))
+						else:
+							sevenzip_name = "7za"
+							paths = None
+						sevenzip = which(sevenzip_name, paths=paths)
+						if sevenzip:
+							if not getcfg("dry_run"):
+								# Extract from NSIS installer
+								temp = self.worker.create_tempdir()
+								if isinstance(temp, Exception):
+									result = temp
+								else:
+									result = self.worker.exec_cmd(sevenzip,
+																  ["e", path,
+																   "DeviceCorrections.txt"],
+																  capture_output=True,
+																  skip_scripts=True,
+																  working_dir=temp)
+									if (result and
+										not isinstance(result, Exception)):
+										path = os.path.join(temp,
+															"DeviceCorrections.txt")
+						else:
+							result = Error(lang.getstr("file.missing", sevenzip_name))
 					elif i1d3ccss and ("colormunki" in
 									   os.path.basename(path).lower() or
 									   "i1profiler" in
 									   os.path.basename(path).lower()):
 						# Assume X-Rite installer
-						type = "xrite"
+						kind = "xrite"
 					elif spyd4en and "spyder4" in os.path.basename(path).lower():
 						# Assume Spyder4
-						type = "spyder4"
-			if type == "icd":
-				if not getcfg("dry_run"):
+						kind = "spyder4"
+			if kind == "icd":
+				if (not getcfg("dry_run") and result and
+					not isinstance(result, Exception)):
 					# Assume iColorDisplay DeviceCorrections.txt
 					ccmx_dir = config.get_argyll_data_dir()
 					if not os.path.exists(ccmx_dir):
 						result = check_create_dir(ccmx_dir)
 						if isinstance(result, Exception):
-							show_result_dialog(result, self)
-							return
+							return result, i1d3, spyd4, icd
 					safe_print(lang.getstr("colorimeter_correction.import"))
 					safe_print(path)
 					try:
@@ -7434,13 +7465,13 @@ class MainFrame(BaseFrame):
 						result = Error(lang.getstr("file.invalid"))
 					else:
 						result = icd = True
-			elif type == "xrite":
+			elif kind == "xrite":
 				# Import .edr
 				result = i1d3 = self.worker.import_edr([path])
-			elif type == "spyder4":
+			elif kind == "spyder4":
 				# Import spyd4cal.bin
 				result = spyd4 = self.worker.import_spyd4cal([path])
-			elif oeminst:
+			elif oeminst and not icolordisplay:
 				result = self.worker.import_colorimeter_corrections(oeminst,
 																	[path])
 				if ".ccss" in "".join(self.worker.output):
@@ -7448,30 +7479,71 @@ class MainFrame(BaseFrame):
 				if "spyd4cal.bin" in "".join(self.worker.output):
 					spyd4 = result
 			else:
-				result = Error(lang.getstr("error.file_type_unsupported"))
+				result = Error(lang.getstr("error.file_type_unsupported") +
+							   "\n" + path)
+		return result, i1d3, spyd4, icd
+	
+	def import_colorimeter_correction_producer(self, result, i1d3, i1d3ccss,
+											   spyd4, spyd4en, icd, oeminst,
+											   paths, auto=False):
+		""" Import colorimetercorrections from paths """
+		for path in paths:
+			(result,
+			 i1d3,
+			 spyd4,
+			 icd) = self.import_colorimeter_correction(result, i1d3, i1d3ccss,
+													   spyd4, spyd4en, icd,
+													   oeminst, path)
+		paths = []
+		for name, imported, importer in (("i1d3", i1d3, oeminst or i1d3ccss),
+										 ("spyd4", spyd4, oeminst or spyd4en),
+										 ("icd", icd, True)):
+			if not imported and importer and auto:
+				# Automatic download
+				result = self.worker.download("http://%s/%s" % (domain.lower(),
+																name))
+				if isinstance(result, Exception):
+					break
+				elif result:
+					paths.append(result)
+				else:
+					# Cancelled
+					result = None
+					break
+		if not isinstance(result, Exception) and result:
+			for path in paths:
+				(result,
+				 i1d3,
+				 spyd4,
+				 icd) = self.import_colorimeter_correction(result, i1d3,
+														   i1d3ccss, spyd4,
+														   spyd4en, icd,
+														   oeminst, path)
+		return result, i1d3, spyd4, icd
+	
+	def import_colorimeter_correction_consumer(self, results):
+		result, i1d3, spyd4, icd = results
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
-		elif result:
-			if spyd4en:
-				self.update_measurement_modes()
+		imported = []
+		if i1d3 and not isinstance(i1d3, Exception):
+			imported.append("i1 Profiler/ColorMunki Display")
+		if spyd4 and not isinstance(spyd4, Exception):
+			imported.append("Spyder4")
+			self.update_measurement_modes()
+		if icd and not isinstance(icd, Exception):
+			imported.append("iColor Display")
+		if imported:
 			self.update_colorimeter_correction_matrix_ctrl_items(True)
-			imported = []
-			if i1d3:
-				imported.append("i1 Profiler/ColorMunki Display")
-			if spyd4:
-				imported.append("Spyder4")
-			if icd:
-				imported.append("iColor Display")
 			InfoDialog(self,
 					   msg=lang.getstr("colorimeter_correction.import.success",
 									   "\n".join(imported)), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
 		elif result is not None:
-			InfoDialog(self,
-					   msg=lang.getstr("colorimeter_correction.import.failure"), 
-					   ok=lang.getstr("cancel"), 
-					   bitmap=geticon(32, "dialog-error"))
+			error = ("".join(self.worker.errors) or
+					 lang.getstr("colorimeter_correction.import.failure"))
+			show_result_dialog(UnloggedError(error), self)
 
 	def display_ctrl_handler(self, event, load_lut=True,
 							 update_ccmx_items=True):

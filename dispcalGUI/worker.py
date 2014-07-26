@@ -7270,19 +7270,25 @@ usage: spotread [-options] [logfile]
 		except urllib2.URLError, exception:
 			return exception
 		total_size = response.info().getheader("Content-Length")
-		try:
-			total_size = int(total_size)
-			if not total_size:
-				raise ValueError()
-		except (TypeError, ValueError):
-			return Error(lang.getstr("update_fail_wrong_size",
-									 ("<%s>" % lang.getstr("unknown"), ) * 2))
+		if total_size is not None:
+			try:
+				total_size = int(total_size)
+			except (TypeError, ValueError):
+				return Error(lang.getstr("download_fail_wrong_size",
+										 ("<%s>" % lang.getstr("unknown"), ) * 2))
 		uri = response.geturl()
+		filename = os.path.basename(uri)
+		contentdispo = response.info().getheader("Content-Disposition")
+		if contentdispo:
+			filename = re.search('filename="([^"]+)"', contentdispo)
+			if filename:
+				filename = filename.groups()[0]
 		download_dir = os.path.join(expanduseru("~"), "Downloads")
-		download_path = os.path.join(download_dir, os.path.basename(uri))
+		download_path = os.path.join(download_dir, filename)
 		if (not os.path.isfile(download_path) or
-			os.stat(download_path).st_size != total_size):
-			self.recent.write(lang.getstr("update_download"))
+			(total_size is not None and
+			 os.stat(download_path).st_size != total_size)):
+			self.recent.write(lang.getstr("download") + " " + filename)
 			chunk_size = 8192
 			bytes_so_far = 0
 			bytes = []
@@ -7300,17 +7306,20 @@ usage: spotread [-options] [logfile]
 
 				bytes.append(chunk)
 
-				percent = float(bytes_so_far) / total_size
-				percent = round(percent * 100, 2)
-				self.lastmsg.write("\r%i%% (%i / %i KiB)" %
-								   (percent, bytes_so_far / 1024.0,
-								    total_size / 1024.0))
+				if total_size:
+					percent = float(bytes_so_far) / total_size
+					percent = round(percent * 100, 2)
+					self.lastmsg.write("\r%i%% (%i / %i KiB)" %
+									   (percent, bytes_so_far / 1024.0,
+										total_size / 1024.0))
+				else:
+					self.lastmsg.write("\r%i KiB" % (bytes_so_far / 1024.0))
 
 			response.close()
 			if not bytes:
-				return Error(lang.getstr("update_fail_empty_response", uri))
-			if bytes_so_far != total_size:
-				return Error(lang.getstr("update_fail_wrong_size",
+				return Error(lang.getstr("download_fail_empty_response", uri))
+			if total_size is not None and bytes_so_far != total_size:
+				return Error(lang.getstr("download_fail_wrong_size",
 										 (total_size, bytes_so_far)))
 			if not os.path.isdir(download_dir):
 				os.makedirs(download_dir)
