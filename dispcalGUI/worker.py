@@ -4005,29 +4005,28 @@ usage: spotread [-options] [logfile]
 		return (len(self.displays) > 1 and False in lut_access and True in 
 				lut_access)
 	
-	def import_colorimeter_corrections(self, cmd, args=None):
+	def import_colorimeter_corrections(self, cmd, args=None, asroot=False):
 		""" Import colorimeter corrections. cmd can be 'i1d3ccss', 'spyd4en'
 		or 'oeminst' """
 		if not args:
 			args = []
-		needroot = sys.platform != "win32"
-		if (is_superuser() or needroot) and not "-Sl" in args:
+		if (is_superuser() or asroot) and not "-Sl" in args:
 			# If we are root or need root privs anyway, install to local
 			# system scope
 			args.insert(0, "-Sl")
 		return self.exec_cmd(cmd, ["-v"] + args, capture_output=True, 
 							 skip_scripts=True, silent=False,
-							 asroot=needroot)
+							 asroot=asroot)
 	
-	def import_edr(self, args=None):
+	def import_edr(self, args=None, asroot=False):
 		""" Import X-Rite .edr files """
 		return self.import_colorimeter_corrections(get_argyll_util("i1d3ccss"),
-												   args)
+												   args, asroot)
 	
-	def import_spyd4cal(self, args=None):
+	def import_spyd4cal(self, args=None, asroot=False):
 		""" Import Spyder4 calibrations to spy4cal.bin """
 		return self.import_colorimeter_corrections(get_argyll_util("spyd4en"),
-												   args)
+												   args, asroot)
 
 	def install_profile(self, profile_path, capture_output=True,
 						skip_scripts=False, silent=False):

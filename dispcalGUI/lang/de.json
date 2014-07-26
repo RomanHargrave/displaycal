@@ -398,6 +398,8 @@
 	"initial": "Start",
 	"initializing_gui": "Initialisiere GUI...",
 	"install_display_profile": "Anzeigegeräteprofil installieren...",
+	"install_local_system": "Systemweit installieren",
+	"install_user": "Nur für aktuellen Benutzer installieren",
 	"instrument": "Messgerät",
 	"instrument.calibrate": "Setzen Sie das Messgerät auf einen dunklen, nichtreflektierenden Untergrund oder auf eine eventuell zum Messgerät-Zubehör gehörende Kalibrierplatte und drücken Sie dann OK, um das Messgerät zu eichen.",
 	"instrument.calibrate.colormunki": "Drehen Sie den ColorMunki-Sensor in die Kalibrierposition und drücken Sie dann OK, um das Messgerät zu eichen.",

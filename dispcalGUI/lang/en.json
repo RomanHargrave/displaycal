@@ -404,6 +404,8 @@
 	"initial": "Initial",
 	"initializing_gui": "Initializing GUI...",
 	"install_display_profile": "Install display device profile...",
+	"install_local_system": "Install system-wide",
+	"install_user": "Install for current user only",
 	"instrument": "Instrument",
 	"instrument.calibrate": "Place the instrument on a dark, matte surface or onto its calibration plate and press OK to calibrate the instrument.",
 	"instrument.calibrate.colormunki": "Set the ColorMunki sensor to calibration position and press OK to calibrate the instrument.",

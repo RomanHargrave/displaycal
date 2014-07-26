@@ -454,6 +454,39 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 	return True
 
 
+def get_argyll_data_files(scope, wildcard):
+	"""
+	Get paths of Argyll data files.
+	
+	scope should be a string containing "l" (local system) and/or "u" (user)
+	
+	"""
+	data_files = []
+	if sys.platform != "darwin":
+		if "l" in scope:
+			for commonappdata in config.commonappdata:
+				data_files += glob.glob(os.path.join(commonappdata, "color",
+													 wildcard))
+				data_files += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+													 wildcard))
+		if "u" in scope:
+			data_files += glob.glob(os.path.join(config.appdata, "color",
+												 wildcard))
+	else:
+		if "l" in scope:
+			data_files += glob.glob(os.path.join(config.library, "color",
+												 wildcard))
+			data_files += glob.glob(os.path.join(config.library, "ArgyllCMS",
+												 wildcard))
+		if "u" in scope:
+			data_files += glob.glob(os.path.join(config.library_home, "color",
+												 wildcard))
+	if "u" in scope:
+		data_files += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
+											 wildcard))
+	return data_files
+
+
 def get_cgats_path(cgats):
 	descriptor = re.search('\nDESCRIPTOR\s+"(.+?)"\n', cgats)
 	if descriptor:
@@ -2494,39 +2527,8 @@ class MainFrame(BaseFrame):
 		if len(ccmx) > 1 and not os.path.isfile(ccmx[1]):
 			ccmx = ccmx[:1]
 		if force or not getattr(self, "ccmx_cached_paths", None):
-			ccmx_paths = []
-			ccss_paths = []
-			if sys.platform != "darwin":
-				for commonappdata in config.commonappdata:
-					ccmx_paths += glob.glob(os.path.join(commonappdata, "color",
-														 "*.ccmx"))
-					ccmx_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
-														 "*.ccmx"))
-					ccss_paths += glob.glob(os.path.join(commonappdata, "color",
-														 "*.ccss"))
-					ccss_paths += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
-														 "*.ccss"))
-				ccmx_paths += glob.glob(os.path.join(config.appdata, "color",
-													 "*.ccmx"))
-				ccss_paths += glob.glob(os.path.join(config.appdata, "color",
-													 "*.ccss"))
-			else:
-				ccmx_paths += glob.glob(os.path.join(config.library, "color",
-													 "*.ccmx"))
-				ccmx_paths += glob.glob(os.path.join(config.library, "ArgyllCMS",
-													 "*.ccmx"))
-				ccmx_paths += glob.glob(os.path.join(config.library_home, "color",
-													 "*.ccmx"))
-				ccss_paths += glob.glob(os.path.join(config.library, "color",
-													 "*.ccss"))
-				ccss_paths += glob.glob(os.path.join(config.library, "ArgyllCMS",
-													 "*.ccss"))
-				ccss_paths += glob.glob(os.path.join(config.library_home, "color",
-													 "*.ccss"))
-			ccmx_paths += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
-												 "*.ccmx"))
-			ccss_paths += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
-												 "*.ccss"))
+			ccmx_paths = get_argyll_data_files("lu", "*.ccmx")
+			ccss_paths = get_argyll_data_files("lu", "*.ccss")
 			ccmx_paths.sort(key=os.path.basename)
 			ccss_paths.sort(key=os.path.basename)
 			self.ccmx_cached_paths = ccmx_paths + ccss_paths
@@ -7291,9 +7293,21 @@ class MainFrame(BaseFrame):
 							cancel=lang.getstr("cancel"),
 							bitmap=geticon(32, "dialog-question"),
 							alt=lang.getstr("file.select"))
+		dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
+										  style=wx.RB_GROUP)
+		dlg.install_user.SetValue(True)
+		dlg.sizer3.Add(dlg.install_user, flag=wx.TOP | wx.ALIGN_LEFT, border=8)
+		dlg.install_systemwide = wx.RadioButton(dlg, -1,
+												lang.getstr("install_local_system"))
+		dlg.sizer3.Add(dlg.install_systemwide, flag=wx.TOP | wx.ALIGN_LEFT,
+					   border=4)
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
 		choice = dlg.ShowModal()
 		if choice == wx.ID_CANCEL:
 			return
+		asroot = dlg.install_systemwide.GetValue()
+		dlg.Destroy()
 		result = None
 		i1d3 = False
 		i1d3ccss = None
@@ -7308,17 +7322,29 @@ class MainFrame(BaseFrame):
 			spyd4en = get_argyll_util("spyd4en")
 			importers.append(spyd4en)
 		importers = filter(lambda importer: importer, importers)
+		if asroot and importers:
+			result = self.worker.authenticate(oeminst or i1d3ccss or spyd4en,
+											  lang.getstr("colorimeter_correction.import"),
+											  self)
+			if result not in (True, None):
+				if isinstance(result, Exception):
+					show_result_dialog(result, self)
+				return
 		if choice == wx.ID_OK:
 			# Automatically import OEM files
 			for importer in importers:
-				result = self.worker.import_colorimeter_corrections(importer)
+				ccss = get_argyll_data_files("l", "*.ccss")
+				result = self.worker.import_colorimeter_corrections(importer,
+																	asroot=asroot)
 				if not isinstance(result, Exception):
 					if result is None:
 						# Cancelled
 						return
-				if ".ccss" in "".join(self.worker.output):
+				if (".ccss" in "".join(self.worker.output) or
+					get_argyll_data_files("l", "*.ccss") != ccss):
 					i1d3 = result
-				if "spyd4cal.bin" in "".join(self.worker.output):
+				if ("spyd4cal.bin" in "".join(self.worker.output) or
+					get_argyll_data_files("l", "spyd4cal.bin")):
 					spyd4 = result
 		defaultDir = ""
 		defaultFile = ""
@@ -7386,11 +7412,11 @@ class MainFrame(BaseFrame):
 		self.worker.start(self.import_colorimeter_correction_consumer,
 						  self.import_colorimeter_correction_producer,
 						  wargs=(result, i1d3, i1d3ccss, spyd4, spyd4en, icd,
-								 oeminst, paths, choice == wx.ID_OK),
+								 oeminst, paths, choice == wx.ID_OK, asroot),
 						  progress_msg=lang.getstr("colorimeter_correction.import"))
 	
 	def import_colorimeter_correction(self, result, i1d3, i1d3ccss, spyd4,
-									  spyd4en, icd, oeminst, path):
+									  spyd4en, icd, oeminst, path, asroot):
 		""" Import colorimter correction(s) from path """
 		if path and os.path.exists(path):
 			filename, ext = os.path.splitext(path)
@@ -7427,7 +7453,8 @@ class MainFrame(BaseFrame):
 									result = temp
 								else:
 									result = self.worker.exec_cmd(sevenzip,
-																  ["e", path,
+																  ["e", "-y",
+																   path,
 																   "DeviceCorrections.txt"],
 																  capture_output=True,
 																  skip_scripts=True,
@@ -7436,6 +7463,8 @@ class MainFrame(BaseFrame):
 										not isinstance(result, Exception)):
 										path = os.path.join(temp,
 															"DeviceCorrections.txt")
+									else:
+										self.worker.wrapup(False)
 						else:
 							result = Error(lang.getstr("file.missing", sevenzip_name))
 					elif i1d3ccss and ("colormunki" in
@@ -7465,18 +7494,30 @@ class MainFrame(BaseFrame):
 						result = Error(lang.getstr("file.invalid"))
 					else:
 						result = icd = True
+						self.worker.wrapup(False)
 			elif kind == "xrite":
 				# Import .edr
-				result = i1d3 = self.worker.import_edr([path])
+				if asroot:
+					ccss = get_argyll_data_files("l", "*.ccss")
+				result = i1d3 = self.worker.import_edr([path], asroot=asroot)
+				if asroot:
+					result = i1d3 = get_argyll_data_files("l", "*.ccss") != ccss
 			elif kind == "spyder4":
 				# Import spyd4cal.bin
-				result = spyd4 = self.worker.import_spyd4cal([path])
+				result = spyd4 = self.worker.import_spyd4cal([path],
+															 asroot=asroot)
+				if asroot:
+					result = spyd4 = get_argyll_data_files("l", "spyd4cal.bin")
 			elif oeminst and not icolordisplay:
+				ccss = get_argyll_data_files("l", "*.ccss")
 				result = self.worker.import_colorimeter_corrections(oeminst,
-																	[path])
-				if ".ccss" in "".join(self.worker.output):
+																	[path],
+																	asroot)
+				if (".ccss" in "".join(self.worker.output) or
+					get_argyll_data_files("l", "*.ccss") != ccss):
 					i1d3 = result
-				if "spyd4cal.bin" in "".join(self.worker.output):
+				if ("spyd4cal.bin" in "".join(self.worker.output) or
+					get_argyll_data_files("l", "spyd4cal.bin")):
 					spyd4 = result
 			else:
 				result = Error(lang.getstr("error.file_type_unsupported") +
@@ -7485,7 +7526,7 @@ class MainFrame(BaseFrame):
 	
 	def import_colorimeter_correction_producer(self, result, i1d3, i1d3ccss,
 											   spyd4, spyd4en, icd, oeminst,
-											   paths, auto=False):
+											   paths, auto, asroot):
 		""" Import colorimetercorrections from paths """
 		for path in paths:
 			(result,
@@ -7493,7 +7534,7 @@ class MainFrame(BaseFrame):
 			 spyd4,
 			 icd) = self.import_colorimeter_correction(result, i1d3, i1d3ccss,
 													   spyd4, spyd4en, icd,
-													   oeminst, path)
+													   oeminst, path, asroot)
 		paths = []
 		for name, imported, importer in (("i1d3", i1d3, oeminst or i1d3ccss),
 										 ("spyd4", spyd4, oeminst or spyd4en),
@@ -7518,7 +7559,8 @@ class MainFrame(BaseFrame):
 				 icd) = self.import_colorimeter_correction(result, i1d3,
 														   i1d3ccss, spyd4,
 														   spyd4en, icd,
-														   oeminst, path)
+														   oeminst, path,
+														   asroot)
 		return result, i1d3, spyd4, icd
 	
 	def import_colorimeter_correction_consumer(self, results):
