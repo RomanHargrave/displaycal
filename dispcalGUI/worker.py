@@ -7287,7 +7287,7 @@ usage: spotread [-options] [logfile]
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):
-			self.recent.write(lang.getstr("download") + " " + filename)
+			self.recent.write(lang.getstr("download") + " " + filename + "\n")
 			chunk_size = 8192
 			bytes_so_far = 0
 			bytes = []
