@@ -7456,9 +7456,23 @@ class MainFrame(BaseFrame):
 				icolordisplay = "icolordisplay" in os.path.basename(path).lower()
 				if ext.lower() == ".dmg":
 					if icolordisplay:
-						# TODO: We have a iColorDisplay disk image,
-						# try mounting it
-						pass
+						kind = "icd"
+						result = self.worker.exec_cmd(which("hdiutil"),
+													  ["attach", path],
+													  capture_output=True,
+													  skip_scripts=True)
+						if result and not isinstance(result, Exception):
+							for path in glob.glob(os.path.join(os.path.sep,
+															   "Volumes",
+															   "iColorDisplay*",
+															   "iColorDisplay*.app",
+															   "Contents",
+															   "Resources",
+															   "DeviceCorrections.txt")):
+								break
+							else:
+								result = Error(lang.getstr("file.missing",
+														   "DeviceCorrections.txt"))
 				elif i1d3ccss and ext.lower() == ".edr":
 					kind = "xrite"
 				elif ext.lower() in (".cab", ".exe"):
@@ -7570,6 +7584,8 @@ class MainFrame(BaseFrame):
 										 ("icd", icd, True)):
 			if not imported and importer and auto:
 				# Automatic download
+				if name == "icd" and sys.platform == "darwin":
+					name += ".dmg"
 				result = self.worker.download("http://%s/%s" % (domain.lower(),
 																name))
 				if isinstance(result, Exception):
