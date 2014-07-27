@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/7z.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<name>7-Zip Command-line</name>
+	<summary xml:lang="en">File archiver with a high compression ratio</summary>
+	<description xml:lang="en">7-Zip is a file archiver with a high compression ratio. The program supports 7z, ZIP, CAB, RAR, ARJ, LZH, CHM, GZIP, BZIP2, Z, TAR, CPIO, ISO, MSI, WIM, NSIS, RPM and DEB formats. This is the command-line portion of 7-Zip.</description>
+	<homepage>http://www.7-zip.org/</homepage>
+	<group arch="Windows-*" license="LGPL (GNU Lesser General Public License)">
+		<environment name="PATH" insert="." />
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+		</implementation>
+	</group>
+</interface>

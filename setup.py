@@ -826,7 +826,7 @@ def setup():
 		hash = stdout.strip()
 		if not hash:
 			raise SystemExit(p.wait())
-		for tmpl_name in ("argyllcms.xml", "dispcalGUI.xml",
+		for tmpl_name in ("7z.xml", "argyllcms.xml", "dispcalGUI.xml",
 						  "dispcalGUI-linux.xml",
 						  "dispcalGUI-mac.xml", "dispcalGUI-win32.xml",
 						  "numpy.xml", "wmi.xml", "wxpython.xml"):
