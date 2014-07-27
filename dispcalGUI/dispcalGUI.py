@@ -3134,48 +3134,58 @@ class MainFrame(BaseFrame):
 	def enable_spyder2_handler(self, event):
 		self.update_menus()
 		if check_set_argyll_bin():
-			cmd, args = get_argyll_util("spyd2en"), ["-v"]
-			if sys.platform in ("darwin", "win32"):
-				# Look for Spyder.lib/CVSpyder.dll ourself because spyd2en will 
-				# only try some fixed paths
-				if sys.platform == "darwin":
-					wildcard = os.path.join(os.path.sep, "Applications", 
-											"Spyder2*", "Spyder2*.app", 
-											"Contents", "MacOSClassic", 
-											"Spyder.lib")
-				else:
-					wildcard = os.path.join(getenvu("PROGRAMFILES", ""), 
-											"ColorVision", "Spyder2*", 
-											"CVSpyder.dll")
-				safe_print(u"Looking for install at '%s'" % wildcard)
-				for path in glob.glob(wildcard):
-					args += [path]
-					break
-			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-										  skip_scripts=True, silent=False,
-										  asroot=self.worker.argyll_version < [1, 2, 0] or 
-												 (sys.platform == "darwin" and mac_ver()[0] >= '10.6'),
-										  title=lang.getstr("enable_spyder2"))
-			if not isinstance(result, Exception) and result:
-				InfoDialog(self, msg=lang.getstr("enable_spyder2_success"), 
-						   ok=lang.getstr("ok"), 
-						   bitmap=geticon(32, "dialog-information"),
-						   log=False)
-				self.update_menus()
-			else:
-				if isinstance(result, Exception):
-					show_result_dialog(result, self)
-					if getcfg("dry_run"):
-						return
-				# prompt for installer executable
-				dlg = ConfirmDialog(self, 
-									msg=lang.getstr("locate_spyder2_setup"), 
-									ok=lang.getstr("continue"), 
-									cancel=lang.getstr("cancel"), 
-									bitmap=geticon(32, "dialog-information"))
-				result = dlg.ShowModal()
-				if result != wx.ID_OK:
+			dlg = ConfirmDialog(self,
+								msg=lang.getstr("enable_spyder2"),
+								ok=lang.getstr("auto"),
+								cancel=lang.getstr("cancel"),
+								bitmap=geticon(32, "dialog-question"),
+								alt=lang.getstr("file.select"))
+			needroot = self.worker.argyll_version < [1, 2, 0]
+			dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
+											  style=wx.RB_GROUP)
+			dlg.install_user.Enable(not needroot)
+			dlg.install_user.SetValue(not needroot)
+			dlg.sizer3.Add(dlg.install_user, flag=wx.TOP | wx.ALIGN_LEFT, border=8)
+			dlg.install_systemwide = wx.RadioButton(dlg, -1,
+													lang.getstr("install_local_system"))
+			dlg.install_user.Enable(not needroot)
+			dlg.install_systemwide.SetValue(needroot)
+			dlg.sizer3.Add(dlg.install_systemwide, flag=wx.TOP | wx.ALIGN_LEFT,
+						   border=4)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			choice = dlg.ShowModal()
+			if choice == wx.ID_CANCEL:
+				return
+			asroot = dlg.install_systemwide.GetValue()
+			dlg.Destroy()
+			if asroot:
+				result = self.worker.authenticate(get_argyll_util("spyd2en"),
+												  lang.getstr("enable_spyder2"),
+												  self)
+				if result not in (True, None):
+					if isinstance(result, Exception):
+						show_result_dialog(result, self)
 					return
+			if choice == wx.ID_OK:
+				# Auto
+				path = None
+				if sys.platform in ("darwin", "win32"):
+					# Look for Spyder.lib/CVSpyder.dll ourself because spyd2en 
+					# will only try some fixed paths
+					if sys.platform == "darwin":
+						wildcard = os.path.join(os.path.sep, "Applications", 
+												"Spyder2*", "Spyder2*.app", 
+												"Contents", "MacOSClassic", 
+												"Spyder.lib")
+					else:
+						wildcard = os.path.join(getenvu("PROGRAMFILES", ""), 
+												"ColorVision", "Spyder2*", 
+												"CVSpyder.dll")
+					for path in glob.glob(wildcard):
+						break
+			else:
+				# Prompt for installer executable
 				defaultDir, defaultFile = expanduseru("~"), ""
 				dlg = wx.FileDialog(self, lang.getstr("file.select"),
 									defaultDir=defaultDir, 
@@ -3186,35 +3196,54 @@ class MainFrame(BaseFrame):
 				result = dlg.ShowModal()
 				path = dlg.GetPath()
 				dlg.Destroy()
-				if result == wx.ID_OK:
-					if not os.path.exists(path):
-						InfoDialog(self, msg=lang.getstr("file.missing", path), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"))
-						return
-					cmd, args = get_argyll_util("spyd2en"), ["-v", path]
-					result = self.worker.exec_cmd(cmd, args, 
-												  capture_output=True, 
-												  skip_scripts=True, 
-												  silent=False,
-												  asroot=self.worker.argyll_version < [1, 2, 0] or 
-														 (sys.platform == "darwin" and mac_ver()[0] >= '10.6'),
-												  title=lang.getstr("enable_spyder2"))
-					if not isinstance(result, Exception) and result:
-						InfoDialog(self, 
-								   msg=lang.getstr("enable_spyder2_success"), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-information"),
-								   log=False)
-						self.update_menus()
-					else:
-						if isinstance(result, Exception):
-							show_result_dialog(result, self)
-						InfoDialog(self, 
-								   msg=lang.getstr("enable_spyder2_failure"), 
-								   ok=lang.getstr("ok"), 
-								   bitmap=geticon(32, "dialog-error"),
-								   log=False)
+				if result != wx.ID_OK:
+					return
+			self.worker.start(self.enable_spyder2_consumer,
+							  self.enable_spyder2_producer,
+							  wargs=(path, asroot),
+							  progress_msg=lang.getstr("enable_spyder2"))
+	
+	def enable_spyder2(self, path, asroot):
+		cmd, args = get_argyll_util("spyd2en"), ["-v"]
+		if asroot and self.worker.argyll_version >= [1, 2, 0]:
+			args += ["-Sl"]
+		if path:
+			args += [path]
+		result = self.worker.exec_cmd(cmd, args, 
+									  capture_output=True, 
+									  skip_scripts=True, 
+									  silent=False,
+									  asroot=asroot,
+									  title=lang.getstr("enable_spyder2"))
+		if asroot and sys.platform == "win32":
+			# Wait for async process
+			sleep(1)
+			result = get_argyll_data_files("l", "spyd2PLD.bin")
+		return result
+	
+	def enable_spyder2_producer(self, path, asroot):
+		if not path:
+			result = self.enable_spyder2(path, asroot)
+			if result and not isinstance(result, Exception):
+				return result
+			if getcfg("dry_run"):
+				return
+			path = self.worker.download("http://%s/spyd2" % domain.lower())
+			if isinstance(path, Exception):
+				return path
+			elif not path:
+				# Cancelled
+				return
+		return self.enable_spyder2(path, asroot)
+	
+	def enable_spyder2_consumer(self, result):
+		if not isinstance(result, Exception) and result:
+			result = UnloggedInfo(lang.getstr("enable_spyder2_success"))
+			self.update_menus()
+		elif result is False:
+			result = UnloggedError("".join(self.worker.errors))
+		if result:
+			show_result_dialog(result, self)
 
 	def extra_args_handler(self, event):
 		if not hasattr(self, "extra_args"):
