@@ -357,7 +357,7 @@ class SynthICCFrame(BaseFrame):
 			# Absolute luminance values!
 			TRC.set_dicom_trc(getcfg("synthprofile.black_luminance"),
 							  getcfg("synthprofile.luminance"))
-		elif self.trc_ctrl.GetSelection() in (0, 4):
+		elif self.trc_ctrl.GetSelection() in (0, 4) and black_Y:
 			# Gamma with output offset or Rec. 1886
 			outoffset = getcfg("synthprofile.trc_output_offset")
 			if getcfg("synthprofile.trc_gamma_type") == "g":
