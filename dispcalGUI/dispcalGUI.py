@@ -7481,9 +7481,9 @@ class MainFrame(BaseFrame):
 						if sys.platform == "win32":
 							sevenzip_name = "7z.exe"
 							paths = getenvu("PATH", os.defpath).split(os.pathsep)
-							paths += glob.glob(os.path.join(getenvu("PROGRAMFILES"),
+							paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
 														    "7-zip"))
-							paths += glob.glob(os.path.join(getenvu("PROGRAMW6432"),
+							paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
 														    "7-zip"))
 						else:
 							sevenzip_name = "7z"
