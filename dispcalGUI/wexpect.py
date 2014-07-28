@@ -2319,6 +2319,7 @@ class Wtty:
         cursorPos = consinfo['CursorPosition']
         maxconsoleY = consinfo['Size'].Y / 2
         reset = False
+        eof = False
         try:  
             while True:
                 #Wait for child process to be paused
@@ -2337,15 +2338,21 @@ class Wtty:
                     self.switchBack()
                     return s
                 
-                if not self.isalive() or timeout <= 0:
+                if eof or timeout <= 0:
                     self.switchBack()
-                    if not self.isalive() and self.__oproc_isalive():
+                    if eof and self.__oproc_isalive():
                         try:
                             TerminateProcess(self.__oproc, 0)
                         except pywintypes.error, e:
                             log(e, '_exceptions')
                             log('Could not terminate ConsoleReader after child exited.')
                     return ''
+                
+                if not self.isalive():
+                    eof = True
+                    # Child has already terminated, but there may still be
+                    # output coming in with a slight delay
+                    time.sleep(.1)
                 
                 time.sleep(0.001)
                 end = time.clock()
