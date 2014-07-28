@@ -6018,6 +6018,8 @@ usage: spotread [-options] [logfile]
 			keepGoing, skip = self.progress_wnd.Update(math.ceil(percentage), 
 													   msg + "\n" + 
 													   lastmsg)
+		elif re.match("\d+(?:\.\d+)? (?:[KM]iB)", lastmsg, re.I):
+			keepGoing, skip = self.progress_wnd.Pulse("\n".join([msg, lastmsg]))
 		else:
 			if getattr(self.progress_wnd, "lastmsg", "") == msg or not msg:
 				keepGoing, skip = self.progress_wnd.Pulse()
@@ -7291,6 +7293,8 @@ usage: spotread [-options] [logfile]
 			chunk_size = 8192
 			bytes_so_far = 0
 			bytes = []
+			unit = "Bytes"
+			unit_size = 1
 
 			while True:
 				if self.thread_abort:
@@ -7305,14 +7309,22 @@ usage: spotread [-options] [logfile]
 
 				bytes.append(chunk)
 
+				if bytes_so_far > 1024 and unit_size < 1024:
+					unit = "KiB"
+					unit_size = 1024.0
+				elif bytes_so_far > 1048576 and unit_size < 1048576:
+					unit = "MiB"
+					unit_size = 1048576.0
+
 				if total_size:
 					percent = float(bytes_so_far) / total_size
 					percent = round(percent * 100, 2)
-					self.lastmsg.write("\r%i%% (%i / %i KiB)" %
-									   (percent, bytes_so_far / 1024.0,
-										total_size / 1024.0))
+					self.lastmsg.write("\r%i%% (%i / %i %s)" %
+									   (percent, bytes_so_far / unit_size,
+										total_size / unit_size, unit))
 				else:
-					self.lastmsg.write("\r%i KiB" % (bytes_so_far / 1024.0))
+					self.lastmsg.write("\r%i %s" % (bytes_so_far / unit_size,
+													unit))
 
 			response.close()
 			if not bytes:
