@@ -7587,6 +7587,8 @@ class MainFrame(BaseFrame):
 				# Automatic download
 				if name == "icd" and sys.platform == "darwin":
 					name += ".dmg"
+				self.worker.recent.clear()
+				self.worker.lastmsg.clear()
 				result = self.worker.download("http://%s/%s" % (domain.lower(),
 																name))
 				if isinstance(result, Exception):
