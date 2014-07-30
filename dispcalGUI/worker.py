@@ -7319,11 +7319,11 @@ usage: spotread [-options] [logfile]
 				if total_size:
 					percent = float(bytes_so_far) / total_size
 					percent = round(percent * 100, 2)
-					self.lastmsg.write("\r%i%% (%i / %i %s)" %
+					self.lastmsg.write("\r%i%% (%.1f / %.1f %s)" %
 									   (percent, bytes_so_far / unit_size,
 										total_size / unit_size, unit))
 				else:
-					self.lastmsg.write("\r%i %s" % (bytes_so_far / unit_size,
+					self.lastmsg.write("\r%.1f %s" % (bytes_so_far / unit_size,
 													unit))
 
 			response.close()
