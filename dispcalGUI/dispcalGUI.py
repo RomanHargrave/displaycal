@@ -7390,6 +7390,64 @@ class MainFrame(BaseFrame):
 		dlg.Destroy()
 		if choice == wx.ID_CANCEL:
 			return
+		if choice == wx.ID_OK:
+			# Automatic
+			paths = []
+			# Look for iColorDisplay
+			if sys.platform == "win32":
+				paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
+												"Quato", "iColorDisplay",
+												"DeviceCorrections.txt"))
+			elif sys.platform == "darwin":
+				paths += glob.glob(os.path.join(os.path.sep, "Applications", 
+											   "iColorDisplay*.app",
+											   "DeviceCorrections.txt"))
+				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+												"iColorDisplay*", 
+												"iColorDisplay*.app",
+												"DeviceCorrections.txt"))
+			if (oeminst or i1d3ccss) and not i1d3:
+				# Look for *.edr files
+				if sys.platform == "win32":
+					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+													"X-Rite", "Devices", "i1d3", 
+													"Calibrations", "*.edr"))
+				elif sys.platform == "darwin":
+					paths += glob.glob(os.path.join(os.path.sep, "Library", 
+												   "Application Support", "X-Rite", 
+												   "Devices", "i1d3xrdevice", 
+												   "Contents", "Resources", 
+												   "Calibrations", "*.edr"))
+					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+													"i1Profiler", "*.exe"))
+					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+													"ColorMunki Display", "*.exe"))
+			if (oeminst or spyd4en) and not spyd4:
+				# Look for dccmtr.dll
+				if sys.platform == "win32":
+					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+												   "Datacolor", "Spyder4*", 
+												   "dccmtr.dll"))
+				elif sys.platform == "darwin":
+					# Look for setup.exe on CD-ROM
+					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+												   "Datacolor", "Data",
+												   "setup.exe"))
+					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+													"Datacolor_ISO", "Data",
+													"setup.exe"))
+		else:
+			dlg = wx.FileDialog(self, 
+								lang.getstr("colorimeter_correction.import.choose"),
+								wildcard=lang.getstr("filetype.any") + 
+										 "|*.cab;*.edr;*.exe;*.txt", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			choice2 = dlg.ShowModal()
+			paths = [dlg.GetPath()]
+			dlg.Destroy()
+			if choice2 != wx.ID_OK:
+				return
 		if asroot:
 			result = self.worker.authenticate(oeminst or i1d3ccss or spyd4en,
 											  lang.getstr("colorimeter_correction.import"),
@@ -7398,7 +7456,7 @@ class MainFrame(BaseFrame):
 				if isinstance(result, Exception):
 					show_result_dialog(result, self)
 				return
-		if oeminst or i1d3ccss or spyd4en and choice == wx.ID_OK:
+		if (oeminst or i1d3ccss or spyd4en) and choice == wx.ID_OK:
 			# Automatically import OEM files
 			for importer in filter(lambda importer: importer, [oeminst,
 															   i1d3ccss,
@@ -7421,68 +7479,6 @@ class MainFrame(BaseFrame):
 					spyd4 = result
 				if importer == oeminst:
 					break
-		defaultDir = ""
-		defaultFile = ""
-		paths = []
-		# Look for iColorDisplay
-		if sys.platform == "win32":
-			paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
-											"Quato", "iColorDisplay",
-											"DeviceCorrections.txt"))
-		elif sys.platform == "darwin":
-			paths += glob.glob(os.path.join(os.path.sep, "Applications", 
-										   "iColorDisplay*.app",
-										   "DeviceCorrections.txt"))
-			paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-											"iColorDisplay*", 
-											"iColorDisplay*.app",
-											"DeviceCorrections.txt"))
-		if (oeminst or i1d3ccss) and not i1d3:
-			# Look for *.edr files
-			if sys.platform == "win32":
-				paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
-												"X-Rite", "Devices", "i1d3", 
-												"Calibrations", "*.edr"))
-			elif sys.platform == "darwin":
-				paths += glob.glob(os.path.join(os.path.sep, "Library", 
-											   "Application Support", "X-Rite", 
-											   "Devices", "i1d3xrdevice", 
-											   "Contents", "Resources", 
-											   "Calibrations", "*.edr"))
-				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-												"i1Profiler", "*.exe"))
-				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-												"ColorMunki Display", "*.exe"))
-		if (oeminst or spyd4en) and not spyd4:
-			# Look for dccmtr.dll
-			if sys.platform == "win32":
-				paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
-											   "Datacolor", "Spyder4*", 
-											   "dccmtr.dll"))
-			elif sys.platform == "darwin":
-				# Look for setup.exe on CD-ROM
-				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-											   "Datacolor", "Data",
-											   "setup.exe"))
-				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-												"Datacolor_ISO", "Data",
-												"setup.exe"))
-		if choice == wx.ID_OK:
-			# Automatic
-			pass
-		elif (not paths or
-			  not os.path.isfile(paths[-1])) and not (i1d3 or spyd4):
-			dlg = wx.FileDialog(self, 
-								lang.getstr("colorimeter_correction.import.choose"),
-								defaultDir=defaultDir,
-								defaultFile=defaultFile,
-								wildcard=lang.getstr("filetype.any") + 
-										 "|*.cab;*.edr;*.exe;*.txt", 
-								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-			dlg.Center(wx.BOTH)
-			if dlg.ShowModal() == wx.ID_OK:
-				paths = [dlg.GetPath()]
-			dlg.Destroy()
 		self.worker.interactive = False
 		self.worker.start(self.import_colorimeter_correction_consumer,
 						  self.import_colorimeter_correction_producer,
