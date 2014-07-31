@@ -3134,18 +3134,26 @@ class MainFrame(BaseFrame):
 	def enable_spyder2_handler(self, event):
 		self.update_menus()
 		if check_set_argyll_bin():
+			msg = lang.getstr("oem.import.auto")
+			if sys.platform == "win32":
+				msg = " ".join([lang.getstr("oem.import.auto_windows"),
+								msg])
 			dlg = ConfirmDialog(self,
-								msg=lang.getstr("enable_spyder2"),
+								title=lang.getstr("enable_spyder2"),
+								msg=msg,
 								ok=lang.getstr("auto"),
 								cancel=lang.getstr("cancel"),
-								bitmap=geticon(32, "dialog-question"),
+								bitmap=geticon(32, "dialog-information"),
 								alt=lang.getstr("file.select"))
+			dlg.sizer3.Add(wx.StaticLine(dlg, -1), flag=wx.EXPAND | wx.TOP,
+						   border=16)
 			needroot = self.worker.argyll_version < [1, 2, 0]
 			dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
 											  style=wx.RB_GROUP)
 			dlg.install_user.Enable(not needroot)
 			dlg.install_user.SetValue(not needroot)
-			dlg.sizer3.Add(dlg.install_user, flag=wx.TOP | wx.ALIGN_LEFT, border=8)
+			dlg.sizer3.Add(dlg.install_user, flag=wx.TOP | wx.ALIGN_LEFT,
+						   border=16)
 			dlg.install_systemwide = wx.RadioButton(dlg, -1,
 													lang.getstr("install_local_system"))
 			dlg.install_user.Enable(not needroot)
@@ -7316,27 +7324,10 @@ class MainFrame(BaseFrame):
 							 Spyder4 (import to spyd4cal.bin via Argyll CMS 1.3.6)
 		
 		"""
-		dlg = ConfirmDialog(self, title=lang.getstr("colorimeter_correction.import"),
-							msg=lang.getstr("colorimeter_correction.import.auto_manual"),
-							ok=lang.getstr("auto"),
-							cancel=lang.getstr("cancel"),
-							bitmap=geticon(32, "dialog-question"),
-							alt=lang.getstr("file.select"))
-		dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
-										  style=wx.RB_GROUP)
-		dlg.install_user.SetValue(True)
-		dlg.sizer3.Add(dlg.install_user, flag=wx.TOP | wx.ALIGN_LEFT, border=8)
-		dlg.install_systemwide = wx.RadioButton(dlg, -1,
-												lang.getstr("install_local_system"))
-		dlg.sizer3.Add(dlg.install_systemwide, flag=wx.TOP | wx.ALIGN_LEFT,
-					   border=4)
-		dlg.sizer0.SetSizeHints(dlg)
-		dlg.sizer0.Layout()
-		choice = dlg.ShowModal()
-		if choice == wx.ID_CANCEL:
-			return
-		asroot = dlg.install_systemwide.GetValue()
-		dlg.Destroy()
+		msg = " ".join([lang.getstr("oem.import.auto"),
+						lang.getstr("oem.import.auto.download_selection")])
+		if sys.platform == "win32":
+			msg = " ".join([lang.getstr("oem.import.auto_windows"), msg])
 		result = None
 		i1d3 = False
 		i1d3ccss = None
@@ -7344,14 +7335,62 @@ class MainFrame(BaseFrame):
 		spyd4en = None
 		icd = False
 		oeminst = get_argyll_util("oeminst")
-		importers = [oeminst]
+		importers = []
 		if not oeminst:
 			i1d3ccss = get_argyll_util("i1d3ccss")
-			importers.append(i1d3ccss)
 			spyd4en = get_argyll_util("spyd4en")
-			importers.append(spyd4en)
-		importers = filter(lambda importer: importer, importers)
-		if asroot and importers:
+		dlg = ConfirmDialog(self, title=lang.getstr("colorimeter_correction.import"),
+							msg=msg,
+							ok=lang.getstr("auto"),
+							cancel=lang.getstr("cancel"),
+							bitmap=geticon(32, "dialog-information"),
+							alt=lang.getstr("file.select"))
+		dlg.sizer3.Add((1, 8))
+		for (name, desc, instruments,
+			 importer) in [("i1d3", "i1 Profiler",
+							("i1 DisplayPro, ColorMunki Display",
+							  "Spyder4"), i1d3ccss or oeminst),
+							("icd", "iColor Display",
+							 ("DTP94", "i1 Display 2", "Spyder2",
+							  "Spyder3"), True),
+							("spyd4", "Spyder4", ("Spyder4", ), spyd4en or
+																oeminst)]:
+			if importer:
+				for instrument in instruments:
+					if instrument not in desc:
+						desc += " (%s)" % ", ".join(instruments)
+						break
+				setattr(dlg, name, wx.CheckBox(dlg, -1, desc))
+				for instrument in instruments:
+					if instrument in self.worker.instruments:
+						getattr(dlg, name).SetValue(True)
+						break
+				dlg.sizer3.Add(getattr(dlg, name), flag=wx.TOP |
+														wx.ALIGN_LEFT,
+								   border=8)
+		dlg.sizer3.Add(wx.StaticLine(dlg, -1), flag=wx.EXPAND | wx.TOP,
+					   border=16)
+		dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
+										  style=wx.RB_GROUP)
+		dlg.install_user.SetValue(True)
+		dlg.sizer3.Add(dlg.install_user, flag=wx.TOP | wx.ALIGN_LEFT, border=16)
+		dlg.install_systemwide = wx.RadioButton(dlg, -1,
+												lang.getstr("install_local_system"))
+		dlg.sizer3.Add(dlg.install_systemwide, flag=wx.TOP | wx.ALIGN_LEFT,
+					   border=4)
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		choice = dlg.ShowModal()
+		for name, importer in [("i1d3", i1d3ccss or oeminst),
+							   ("icd", True),
+							   ("spyd4", spyd4en or oeminst)]:
+			if importer and getattr(dlg, name).GetValue():
+				importers.append((name, importer))
+		asroot = dlg.install_systemwide.GetValue()
+		dlg.Destroy()
+		if choice == wx.ID_CANCEL:
+			return
+		if asroot:
 			result = self.worker.authenticate(oeminst or i1d3ccss or spyd4en,
 											  lang.getstr("colorimeter_correction.import"),
 											  self)
@@ -7359,10 +7398,13 @@ class MainFrame(BaseFrame):
 				if isinstance(result, Exception):
 					show_result_dialog(result, self)
 				return
-		if choice == wx.ID_OK:
+		if oeminst or i1d3ccss or spyd4en and choice == wx.ID_OK:
 			# Automatically import OEM files
-			for importer in importers:
-				ccss = get_argyll_data_files("l", "*.ccss")
+			for importer in filter(lambda importer: importer, [oeminst,
+															   i1d3ccss,
+															   spyd4en]):
+				if asroot and sys.platform == "win32":
+					ccss = get_argyll_data_files("l", "*.ccss")
 				result = self.worker.import_colorimeter_corrections(importer,
 																	asroot=asroot)
 				if not isinstance(result, Exception):
@@ -7370,11 +7412,15 @@ class MainFrame(BaseFrame):
 						# Cancelled
 						return
 				if (".ccss" in "".join(self.worker.output) or
-					get_argyll_data_files("l", "*.ccss") != ccss):
+					(asroot and sys.platform == "win32" and
+					 get_argyll_data_files("l", "*.ccss") != ccss)):
 					i1d3 = result
 				if ("spyd4cal.bin" in "".join(self.worker.output) or
-					get_argyll_data_files("l", "spyd4cal.bin")):
+					(asroot and sys.platform == "win32" and
+					 get_argyll_data_files("l", "spyd4cal.bin"))):
 					spyd4 = result
+				if importer == oeminst:
+					break
 		defaultDir = ""
 		defaultFile = ""
 		paths = []
@@ -7441,7 +7487,8 @@ class MainFrame(BaseFrame):
 		self.worker.start(self.import_colorimeter_correction_consumer,
 						  self.import_colorimeter_correction_producer,
 						  wargs=(result, i1d3, i1d3ccss, spyd4, spyd4en, icd,
-								 oeminst, paths, choice == wx.ID_OK, asroot),
+								 oeminst, paths, choice == wx.ID_OK, asroot,
+								 importers),
 						  progress_msg=lang.getstr("colorimeter_correction.import"))
 	
 	def import_colorimeter_correction(self, result, i1d3, i1d3ccss, spyd4,
@@ -7541,27 +7588,30 @@ class MainFrame(BaseFrame):
 						self.worker.wrapup(False)
 			elif kind == "xrite":
 				# Import .edr
-				if asroot:
+				if asroot and sys.platform == "win32":
 					ccss = get_argyll_data_files("l", "*.ccss")
 				result = i1d3 = self.worker.import_edr([path], asroot=asroot)
-				if asroot:
+				if asroot and sys.platform == "win32":
 					result = i1d3 = get_argyll_data_files("l", "*.ccss") != ccss
 			elif kind == "spyder4":
 				# Import spyd4cal.bin
 				result = spyd4 = self.worker.import_spyd4cal([path],
 															 asroot=asroot)
-				if asroot:
+				if asroot and sys.platform == "win32":
 					result = spyd4 = get_argyll_data_files("l", "spyd4cal.bin")
 			elif oeminst and not icolordisplay:
-				ccss = get_argyll_data_files("l", "*.ccss")
+				if asroot and sys.platform == "win32":
+					ccss = get_argyll_data_files("l", "*.ccss")
 				result = self.worker.import_colorimeter_corrections(oeminst,
 																	[path],
 																	asroot)
 				if (".ccss" in "".join(self.worker.output) or
-					get_argyll_data_files("l", "*.ccss") != ccss):
+					(asroot and sys.platform == "win32" and
+					 get_argyll_data_files("l", "*.ccss") != ccss)):
 					i1d3 = result
 				if ("spyd4cal.bin" in "".join(self.worker.output) or
-					get_argyll_data_files("l", "spyd4cal.bin")):
+					(asroot and sys.platform == "win32" and
+					 get_argyll_data_files("l", "spyd4cal.bin"))):
 					spyd4 = result
 			else:
 				result = Error(lang.getstr("error.file_type_unsupported") +
@@ -7570,7 +7620,7 @@ class MainFrame(BaseFrame):
 	
 	def import_colorimeter_correction_producer(self, result, i1d3, i1d3ccss,
 											   spyd4, spyd4en, icd, oeminst,
-											   paths, auto, asroot):
+											   paths, auto, asroot, importers):
 		""" Import colorimetercorrections from paths """
 		for path in paths:
 			(result,
@@ -7580,10 +7630,9 @@ class MainFrame(BaseFrame):
 													   spyd4, spyd4en, icd,
 													   oeminst, path, asroot)
 		paths = []
-		for name, imported, importer in (("i1d3", i1d3, oeminst or i1d3ccss),
-										 ("spyd4", spyd4, oeminst or spyd4en),
-										 ("icd", icd, True)):
-			if not imported and importer and auto:
+		for name, importer in importers:
+			imported = locals().get(name, False)
+			if not imported and auto:
 				# Automatic download
 				if name == "icd" and sys.platform == "darwin":
 					name += ".dmg"
