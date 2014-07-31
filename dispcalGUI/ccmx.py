@@ -78,7 +78,9 @@ def convert_devicecorrections_to_ccmx(path, target_dir):
 		values = {'DateTime': time.strftime('%a %b %d %H:%M:%S %Y'),
 				  'Originator': "Quato iColorDisplay"}
 		for key in ('Name', 'Device', 'Display', 'ReferenceDevice', 'MatrixXYZ'):
-			value = devcorrection[key]
+			value = devcorrection.get(key)
+			if value is None:
+				break
 			if key == 'MatrixXYZ':
 				# The first three numbers in the matrix are irrelevant for our 
 				# purposes (see format example above).
@@ -87,6 +89,8 @@ def convert_devicecorrections_to_ccmx(path, target_dir):
 															   matrix[3:6], 
 															   matrix[6:9])])
 			values[key] = value
+		if value is None:
+			continue
 		with codecs.open(os.path.join(target_dir, name + '.ccmx'), 'w', 
 						 'utf8') as ccmx:
 			ccmx.write(CCMX_TEMPLATE % values)
