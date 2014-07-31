@@ -7,7 +7,7 @@ XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 
 Package: ${DEBPACKAGE}
 Architecture: all
-Depends: ${shlibs:Depends}, ${python:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), zeroinstall-injector
+Depends: ${shlibs:Depends}, ${python:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), libxss1, p7zip, zeroinstall-injector
 Recommends: argyll
 Description: ${SUMMARY}
 ${DESC}

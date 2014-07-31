@@ -31,6 +31,7 @@ Source0:        http://%{name}.hoech.net/download/%{name}-%version.tar.gz
 Source1:        copyright
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+Requires:       p7zip
 %if 0%{?mandriva_version} > 0
 Group:          Graphics
 BuildRequires:  gcc
@@ -68,6 +69,7 @@ BuildRequires:  python2-devel
 BuildRequires:  udev
 Requires:       argyllcms
 Requires:       numpy >= %{numpy_version}
+Requires:       p7zip-plugins
 Requires:       wxPython >= %{wx_minversion}
 %endif
 %endif
