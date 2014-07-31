@@ -9315,7 +9315,8 @@ class MainFrame(BaseFrame):
 			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
 													self.worker.enumerate_displays_and_ports, 
 													cargs=(argyll_bin_dir, argyll_version, 
-														   displays, comports), 
+														   displays, comports,
+														   event), 
 													wargs=(silent, ),
 													wkwargs={"enumerate_ports":
 															 enumerate_ports})
@@ -9324,10 +9325,11 @@ class MainFrame(BaseFrame):
 													 enumerate_ports=enumerate_ports)
 			return self.check_update_controls_consumer(True, argyll_bin_dir,
 													   argyll_version, displays, 
-													   comports)
+													   comports, event)
 	
 	def check_update_controls_consumer(self, result, argyll_bin_dir,
-									   argyll_version, displays, comports):
+									   argyll_version, displays, comports,
+									   event=None):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
 			self.worker.measurement_modes = {}
@@ -9377,6 +9379,24 @@ class MainFrame(BaseFrame):
 		if comports != self.worker.instruments:
 			self.update_comports()
 			if verbose >= 1: safe_print(lang.getstr("comport_detected"))
+			if event:
+				# Check if we should import colorimeter corrections
+				ccmx_instruments = self.ccmx_instruments.values()
+				i1d3 = ("i1 DisplayPro, ColorMunki Display" in
+						self.worker.instruments and
+						not "" in ccmx_instruments)
+				icd = (("DTP94" in self.worker.instruments and
+						not "DTP94" in ccmx_instruments) or
+					   ("i1 Display 2" in self.worker.instruments and
+					    not "i1 Display 2" in ccmx_instruments) or
+					   ("Spyder2" in self.worker.instruments and
+					    not "Spyder2" in ccmx_instruments) or
+					   ("Spyder3" in self.worker.instruments and
+					    not "Spyder3" in ccmx_instruments))
+				spyd4 = ("Spyder4" in self.worker.instruments and
+						 not self.worker.spyder4_cal_exists())
+			if i1d3 or icd or spyd4:
+				self.import_colorimeter_correction_handler(None)
 		if displays != self.worker.displays or \
 		   comports != self.worker.instruments:
 			if self.IsShownOnScreen():
