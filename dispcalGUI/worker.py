@@ -207,7 +207,7 @@ def check_cal_isfile(cal=None, missing_msg=None, notfile_msg=None,
 		if not missing_msg:
 			missing_msg = lang.getstr("error.calibration.file_missing", cal)
 		if not notfile_msg:
-			notfile_msg = lang.getstr("error.calibration.file_notfile", cal)
+			notfile_msg = lang.getstr("file_notfile", cal)
 	return check_file_isfile(cal, missing_msg, notfile_msg, silent)
 
 
@@ -221,7 +221,7 @@ def check_profile_isfile(profile_path=None, missing_msg=None,
 			missing_msg = lang.getstr("error.profile.file_missing", 
 									  profile_path)
 		if not notfile_msg:
-			notfile_msg = lang.getstr("error.profile.file_notfile", 
+			notfile_msg = lang.getstr("file_notfile", 
 									  profile_path)
 	return check_file_isfile(profile_path, missing_msg, notfile_msg, silent)
 
@@ -5335,7 +5335,7 @@ usage: spotread [-options] [logfile]
 			return Error(lang.getstr("error.measurement.file_missing", 
 									 inoutfile + ".ti3")), None
 		if not os.path.isfile(inoutfile + ".ti3"):
-			return Error(lang.getstr("error.measurement.file_notfile", 
+			return Error(lang.getstr("file_notfile", 
 									 inoutfile + ".ti3")), None
 		#
 		cmd = get_argyll_util("colprof")

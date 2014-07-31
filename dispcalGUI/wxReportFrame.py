@@ -349,6 +349,7 @@ class ReportFrame(BaseFrame):
 				wildcard = (lang.getstr("filetype.ti1_ti3_txt") + 
 							"|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt")
 			msg = {"chart": "measurement_report_choose_chart_or_reference",
+				   "devlink_profile": "devicelink_profile",
 				   "output_profile": "measurement_report_choose_profile"}.get(which, which)
 			kwargs = dict(toolTip=lang.getstr(msg).rstrip(":"),
 						  dialogTitle=lang.getstr(msg), 

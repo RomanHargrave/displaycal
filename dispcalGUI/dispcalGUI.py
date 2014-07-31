@@ -7838,7 +7838,7 @@ class MainFrame(BaseFrame):
 				ok = lang.getstr("calibration.turn_on_black_point_correction")
 			else:
 				ok = lang.getstr("calibration.turn_off_black_point_correction")
-			title = "calibration.black_point_correction_choice_dialogtitle"
+			title = "calibration.black_point_correction"
 			msg = "calibration.black_point_correction_choice"
 			cancel = "calibration.keep_black_point_correction"
 			dlg = ConfirmDialog(self, title=lang.getstr(title), 

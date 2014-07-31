@@ -425,12 +425,12 @@ class TestchartEditor(wx.Frame):
 		self.Bind(wx.EVT_BUTTON, self.tc_preview_handler, id = self.preview_btn.GetId())
 		hsizer.Add(self.preview_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
-		self.save_btn = wx.Button(panel, -1, lang.getstr("testchart.save"))
+		self.save_btn = wx.Button(panel, -1, lang.getstr("save"))
 		self.save_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_save_handler, id = self.save_btn.GetId())
 		hsizer.Add(self.save_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
-		self.save_as_btn = wx.Button(panel, -1, lang.getstr("testchart.save_as"))
+		self.save_as_btn = wx.Button(panel, -1, lang.getstr("save_as"))
 		self.save_as_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_save_as_handler, id = self.save_as_btn.GetId())
 		hsizer.Add(self.save_as_btn, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
@@ -1902,7 +1902,7 @@ class TestchartEditor(wx.Frame):
 			else:
 				defaultDir = get_verified_path("last_ti1_path")[0]
 				defaultFile = os.path.basename(config.defaults["last_ti1_path"])
-			dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = lang.getstr("filetype.ti1") + "|*.ti1", style = wx.SAVE | wx.OVERWRITE_PROMPT)
+			dlg = wx.FileDialog(self, lang.getstr("save_as"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = lang.getstr("filetype.ti1") + "|*.ti1", style = wx.SAVE | wx.OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
 				path = dlg.GetPath()
@@ -1982,7 +1982,7 @@ class TestchartEditor(wx.Frame):
 				formatext = ".wrl"
 		else:
 			formatext = ".x3d"
-		dlg = wx.FileDialog(self, lang.getstr("testchart.save_as"),
+		dlg = wx.FileDialog(self, lang.getstr("save_as"),
 							defaultDir=defaultDir, defaultFile=defaultFile,
 							wildcard=lang.getstr("view.3d") + "|*" +
 									 formatext,
@@ -2057,14 +2057,14 @@ class TestchartEditor(wx.Frame):
 		if hasattr(self, "ti1"):
 			if self.ti1.root.modified or not os.path.exists(self.ti1.filename):
 				if os.path.exists(self.ti1.filename):
-					ok = lang.getstr("testchart.save")
+					ok = lang.getstr("save")
 				else:
-					ok = lang.getstr("testchart.save_as")
+					ok = lang.getstr("save_as")
 				dlg = ConfirmDialog(self, msg = lang.getstr("testchart.save_or_discard"), ok = ok, cancel = lang.getstr("cancel"), bitmap = geticon(32, "dialog-warning"))
 				if self.IsBeingDeleted():
 					dlg.sizer2.Hide(0)
 				if os.path.exists(self.ti1.filename):
-					dlg.save_as = wx.Button(dlg, -1, lang.getstr("testchart.save_as"))
+					dlg.save_as = wx.Button(dlg, -1, lang.getstr("save_as"))
 					ID_SAVE_AS = dlg.save_as.GetId()
 					dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id = ID_SAVE_AS)
 					dlg.sizer2.Add((12, 12))

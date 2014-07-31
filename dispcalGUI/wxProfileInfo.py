@@ -18,7 +18,7 @@ from options import debug
 from ordereddict import OrderedDict
 from util_io import GzipFileProper
 from util_os import launch_file, make_win32_compatible_long_path, waccess
-from util_str import safe_unicode, universal_newlines, wrap
+from util_str import safe_unicode, strtr, universal_newlines, wrap
 from worker import (Error, UnloggedError, check_set_argyll_bin, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
@@ -1297,19 +1297,28 @@ class ProfileInfoFrame(LUTFrame):
 		for i, line in enumerate(lines):
 			line = list(line)
 			indent = re.match("\s+", line[0])
+			for j, v in enumerate(line):
+				if v.endswith("_"):
+					continue
+				key = re.sub("[^0-9a-z]+", "_",
+							 strtr(line[j],
+								   {u"\u0394E": "Delta E"}).lower().strip(), 0,
+							 re.I).strip("_")
+				val = lang.getstr(key)
+				if key != val:
+					line[j] = val
 			if indent:
 				#if i + 1 < len(lines) and lines[i + 1][0].startswith(" "):
 					#marker = u" ├  "
 				#else:
 					#marker = u" └  "
-				line[0] = indent.group() + lang.getstr(line[0].strip())
+				line[0] = indent.group() + line[0].strip()
 			elif line[0]:
 				#if i + 1 < len(lines) and lines[i + 1][0].startswith(" "):
 					#marker = u"▼ "
 				#else:
 					#marker = u"► "
-				line[0] = lang.getstr(line[0])
-			line[1] = lang.getstr(line[1])
+				pass
 			rows.append(line)
 		
 		rows.append(("", ""))

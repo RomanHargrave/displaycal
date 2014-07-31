@@ -9,12 +9,14 @@ import textwrap
 
 import ppdir
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, root)
 
 from dispcalGUI import demjson
 from dispcalGUI import jsondict
 from dispcalGUI import ordereddict
 from dispcalGUI.safe_print import safe_print
+from dispcalGUI.util_os import listdir_re
 
 
 def quote(obj):
@@ -24,7 +26,8 @@ def quote(obj):
 		return repr(obj)
 
 
-def jsonmerge(infilename1, infilename2, outfilename):
+def langmerge(infilename1, infilename2, outfilename):
+	safe_print("Syncing", infilename1, "to", infilename2)
 	dictin1 = jsondict.JSONDict(infilename1)
 	dictin1.load()
 	dictin2 = jsondict.JSONDict(infilename2)
@@ -35,7 +38,8 @@ def jsonmerge(infilename1, infilename2, outfilename):
 		if not key in dictin1:
 			dictin1[key] = value
 			added.append(key.encode("UTF-8"))
-			safe_print("Added: '%s' '%s'" % (key, value))
+			if not "*" + key in dictin1:
+				safe_print("Added: '%s' '%s'" % (key, value))
 	
 	merged = ordereddict.OrderedDict()
 	merged["*"] = "Note to translators: Keys which are not yet translated are marked with a leading asterisk (*) and are indented with two tabs instead of one. Please remove the asterisk when translated."
@@ -47,7 +51,7 @@ def jsonmerge(infilename1, infilename2, outfilename):
 	for key in sorted(dictin1.keys()):
 		if key not in dictin2 and not key.startswith("*"):
 			if not "ORPHANED KEY-VALUE PAIRS" in merged:
-				merged["ORPHANED KEY-VALUE PAIRS"] = "Note to translators: Key-value pairs below this point may no longer be used (but there are exceptions, all keys from ICCProfile.ICCProfile.get_info will be listed as orphaned). You may consider removing them."
+				merged["ORPHANED KEY-VALUE PAIRS"] = "Note to translators: Key-value pairs below this point are no longer used. You may consider removing them."
 			merged[key.encode("UTF-8")] = dictin1[key].encode("UTF-8")
 			safe_print("Orphan: '%s' '%s'" % (key, dictin1[key]))
 	
@@ -60,16 +64,21 @@ def jsonmerge(infilename1, infilename2, outfilename):
 	formatted = outstream.read()
 	for key in added:
 		formatted = formatted.replace('"%s"' % key, '\t"*%s"' % key)
+	safe_print("writing", outfilename)
 	outfile = open(outfilename, "wb")
 	outfile.write(formatted.replace(" " * 4, "\t"))
 	outfile.close()
 
 
 if __name__ == "__main__":
-	if sys.argv[1:] and not "-h" in sys.argv[1:] and not "--help" in sys.argv[1:]:
-		jsonmerge(*sys.argv[1:])
+	if "-h" in sys.argv[1:] or "--help" in sys.argv[1:]:
+		safe_print("Usage: %s" % os.path.basename(sys.argv[0]))
+		safe_print("Synchronizes translations to en.json")
 	else:
-		print "Usage: %s infilename1 infilename2 outfilename" % os.path.basename(sys.argv[0])
-		print textwrap.fill("Merges file1 with file2 (adds all keys from file2"
-							" not present in file1) and writes to outfile", 
-							width=80)
+		for langfile in listdir_re(os.path.join(root, "dispcalGUI", "lang"),
+								   r"^\w+\.json$"):
+			if langfile != "en.json":
+				langmerge(os.path.join("lang", langfile),
+						  os.path.join("lang", "en.json"),
+						  os.path.join(root, "dispcalGUI", "lang", langfile))
+				safe_print("")
