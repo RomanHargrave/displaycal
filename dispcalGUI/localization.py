@@ -3,6 +3,7 @@
 import __builtin__
 import locale
 import os
+import re
 
 import demjson
 
@@ -84,10 +85,25 @@ def getstr(id_str, strvars=None, lcode=None):
 	if lcode in ldict and id_str in ldict[lcode]:
 		lstr = ldict[lcode][id_str]
 		if strvars is not None:
-			if type(strvars) not in (list, tuple):
-				strvars = (strvars, )
-			if lstr.count("%s") == len(strvars):
-				lstr %= tuple(safe_unicode(s) for s in strvars)
+			if not isinstance(strvars, (list, tuple)):
+				strvars = [strvars]
+			fmt = re.findall(r"%\d?(?:\.d+)?[deEfFgGiorsxX]", lstr)
+			if len(fmt) == len(strvars):
+				if not isinstance(strvars, list):
+					strvars = list(strvars)
+				for i, s in enumerate(strvars):
+					if fmt[i].endswith("s"):
+						s = safe_unicode(s)
+					elif not fmt[i].endswith("r"):
+						try:
+							if fmt[i][-1] in "dioxX":
+								s = int(s)
+							else:
+								s = float(s)
+						except ValueError:
+							s = 0
+					strvars[i] = s
+				lstr %= tuple(strvars)
 		return lstr
 	else:
 		return id_str
