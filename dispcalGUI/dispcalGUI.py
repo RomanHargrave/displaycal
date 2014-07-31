@@ -7495,6 +7495,7 @@ class MainFrame(BaseFrame):
 			kind = None
 			if ext.lower() == ".txt":
 				kind = "icd"
+				result = True
 			else:
 				icolordisplay = "icolordisplay" in os.path.basename(path).lower()
 				if ext.lower() == ".dmg":
