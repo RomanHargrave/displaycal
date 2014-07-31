@@ -7382,8 +7382,8 @@ class MainFrame(BaseFrame):
 		dlg.sizer0.Layout()
 		choice = dlg.ShowModal()
 		for name, importer in [("i1d3", i1d3ccss or oeminst),
-							   ("icd", True),
-							   ("spyd4", spyd4en or oeminst)]:
+							   ("spyd4", spyd4en or oeminst),
+							   ("icd", True)]:
 			if importer and getattr(dlg, name).GetValue():
 				importers.append((name, importer))
 		asroot = dlg.install_systemwide.GetValue()
@@ -7576,13 +7576,24 @@ class MainFrame(BaseFrame):
 					safe_print(lang.getstr("colorimeter_correction.import"))
 					safe_print(path)
 					try:
-						ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
-					except (EnvironmentError, UnicodeDecodeError,
+						imported, skipped = ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
+						if imported == 0:
+							raise ValueError()
+					except (UnicodeDecodeError,
 							demjson.JSONDecodeError), exception:
 						result = Error(lang.getstr("file.invalid"))
+					except EnvironmentError, exception:
+						result = exception
+					except ValueError:
+						result = False
 					else:
 						result = icd = True
 						self.worker.wrapup(False)
+						if skipped > 0:
+							result = Warn(lang.getstr("colorimeter_correction.import.partial_warning",
+													  ("iColor Display",
+													   skipped,
+													   imported + skipped)))
 			elif kind == "xrite":
 				# Import .edr
 				if asroot and sys.platform == "win32":

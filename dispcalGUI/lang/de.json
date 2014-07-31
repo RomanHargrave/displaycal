@@ -222,6 +222,7 @@
 	"colorimeter_correction.import": "Colorimeter-Korrekturen von anderer Anzeigegeräteprofilierungs-Software importieren...",
 	"colorimeter_correction.import.choose": "Bitte wählen Sie eine Datei mit Colorimeter-Korrekturen aus:",
 	"colorimeter_correction.import.failure": "Es konnte keine Colorimeter-Korrektur importiert werden.",
+	"colorimeter_correction.import.partial_warning": "Nicht alle Colorimeter-Korrekturen konnten von %s importiert werden. %i von %i Einträge mussten übersprungen werden.",
 	"colorimeter_correction.import.success": "Colorimeter-Korrekturen wurden erfolgreich von folgenden Softwares importiert:\n\n%s",
 	"colorimeter_correction.instrument_mismatch": "Die gewählte Colorimeter-Korrektur ist nicht für das gewählte Messgerät geeignet.",
 	"colorimeter_correction.upload": "Colorimeter-Korrektur hochladen...",

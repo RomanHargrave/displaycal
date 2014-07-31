@@ -222,6 +222,7 @@
 	"colorimeter_correction.import": "Importar correciones de colorimetro desde otros programas de calibracion de pantallas...",
 	"colorimeter_correction.import.choose": "Por favor seleccione el archivo de correccion de colorimetro a importar:",
 	"colorimeter_correction.import.failure": "No se pueden importar las correciones de colorimetro.",
+		"*colorimeter_correction.import.partial_warning": "Not all colorimeter corrections could be imported from %s. %i of %i entries had to be skipped.",
 	"colorimeter_correction.import.success": "Las correciones de colorimetro han sido importadas con exito de los siguientes programas:\n\n%s",
 		"*colorimeter_correction.instrument_mismatch": "The selected colorimeter correction is not suitable for the selected instrument.",
 	"colorimeter_correction.upload": "Subir correcion de colorimetro...",

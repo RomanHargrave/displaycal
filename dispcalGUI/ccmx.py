@@ -74,6 +74,8 @@ def convert_devicecorrections_to_ccmx(path, target_dir):
 	# Parse JSON
 	devcorrections = demjson.decode(devcorrections_data)
 	# Convert to ccmx
+	imported = 0
+	skipped = 0
 	for name, devcorrection in devcorrections.iteritems():
 		values = {'DateTime': time.strftime('%a %b %d %H:%M:%S %Y'),
 				  'Originator': "Quato iColorDisplay"}
@@ -90,10 +92,13 @@ def convert_devicecorrections_to_ccmx(path, target_dir):
 															   matrix[6:9])])
 			values[key] = value
 		if value is None:
+			skipped += 1
 			continue
+		imported += 1
 		with codecs.open(os.path.join(target_dir, name + '.ccmx'), 'w', 
 						 'utf8') as ccmx:
 			ccmx.write(CCMX_TEMPLATE % values)
+	return imported, skipped
 
 
 if __name__ == '__main__':

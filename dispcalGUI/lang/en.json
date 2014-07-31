@@ -223,6 +223,7 @@
 	"colorimeter_correction.import.choose": "Please choose the colorimeter correction file to import:",
 	"colorimeter_correction.import.failure": "No colorimeter corrections could be imported.",
 	"colorimeter_correction.import.success": "Colorimeter corrections have been successfully imported from the following softwares:\n\n%s",
+	"colorimeter_correction.import.partial_warning": "Not all colorimeter corrections could be imported from %s. %i of %i entries had to be skipped.",
 	"colorimeter_correction.instrument_mismatch": "The selected colorimeter correction is not suitable for the selected instrument.",
 	"colorimeter_correction.upload": "Upload colorimeter correction...",
 	"colorimeter_correction.upload.confirm": "Do you want to upload the colorimeter correction to the online database (recommended)? Any uploaded files will be assumed to have been placed in the public domain, so that they can be used freely.",
