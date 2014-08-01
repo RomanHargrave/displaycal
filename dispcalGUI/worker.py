@@ -1468,7 +1468,12 @@ class Worker(object):
 					safe_print("%s:" % ccmx, exception)
 					instrument = None
 				else:
-					instrument = get_canonical_instrument_name(str(cgats.queryv1("INSTRUMENT") or "").replace("eye-one display", "i1 Display"))
+					instrument = get_canonical_instrument_name(
+						str(cgats.queryv1("INSTRUMENT") or ""),
+						{"DTP94-LCD mode": "DTP94",
+						 "eye-one display": "i1 Display",
+						 "Spyder 2 LCD": "Spyder2",
+						 "Spyder 3": "Spyder3"})
 				if ((instrument and
 					 self.get_instrument_name().lower().replace(" ", "") in
 					 instrument.lower().replace(" ", "")) or

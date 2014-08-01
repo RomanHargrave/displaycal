@@ -2563,8 +2563,10 @@ class MainFrame(BaseFrame):
 				self.ccmx_cached_descriptors[path] = desc
 				self.ccmx_instruments[path] = get_canonical_instrument_name(
 					str(cgats.queryv1("INSTRUMENT") or
-									  "").replace("eye-one display",
-												  "i1 Display"))
+									  ""), {"DTP94-LCD mode": "DTP94",
+											"eye-one display": "i1 Display",
+											"Spyder 2 LCD": "Spyder2",
+											"Spyder 3": "Spyder3"})
 				key = "%s\0%s" % (self.ccmx_instruments[path],
 								  str(cgats.queryv1("DISPLAY") or ""))
 				if (not self.ccmx_mapping.get(key) or
@@ -2613,8 +2615,10 @@ class MainFrame(BaseFrame):
 					self.ccmx_cached_descriptors[ccmx[1]] = desc
 					self.ccmx_instruments[ccmx[1]] = get_canonical_instrument_name(
 						str(cgats.queryv1("INSTRUMENT") or
-										  "").replace("eye-one display",
-													  "i1 Display"))
+										  ""), {"DTP94-LCD mode": "DTP94",
+												"eye-one display": "i1 Display",
+												"Spyder 2 LCD": "Spyder2",
+												"Spyder 3": "Spyder3"})
 					key = "%s\0%s" % (self.ccmx_instruments[ccmx[1]],
 									  str(cgats.queryv1("DISPLAY") or ""))
 					self.ccmx_mapping[key] = ccmx[1]
@@ -7362,7 +7366,8 @@ class MainFrame(BaseFrame):
 						break
 				setattr(dlg, name, wx.CheckBox(dlg, -1, desc))
 				for instrument in instruments:
-					if instrument in self.worker.instruments:
+					if (instrument in self.worker.instruments and
+						not instrument in self.ccmx_instruments.itervalues()):
 						getattr(dlg, name).SetValue(True)
 						break
 				dlg.sizer3.Add(getattr(dlg, name), flag=wx.TOP |
@@ -9381,7 +9386,7 @@ class MainFrame(BaseFrame):
 			if verbose >= 1: safe_print(lang.getstr("comport_detected"))
 			if event:
 				# Check if we should import colorimeter corrections
-				ccmx_instruments = self.ccmx_instruments.values()
+				ccmx_instruments = self.ccmx_instruments.itervalues()
 				i1d3 = ("i1 DisplayPro, ColorMunki Display" in
 						self.worker.instruments and
 						not "" in ccmx_instruments)
