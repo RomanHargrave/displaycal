@@ -3135,7 +3135,8 @@ class MainFrame(BaseFrame):
 			   int(self.calibration_update_cb.GetValue() and is_profile()))
 		self.update_controls()
 
-	def enable_spyder2_handler(self, event):
+	def enable_spyder2_handler(self, event,
+							   import_colorimeter_corrections=False):
 		self.update_menus()
 		if check_set_argyll_bin():
 			msg = lang.getstr("oem.import.auto")
@@ -3171,14 +3172,6 @@ class MainFrame(BaseFrame):
 				return
 			asroot = dlg.install_systemwide.GetValue()
 			dlg.Destroy()
-			if asroot:
-				result = self.worker.authenticate(get_argyll_util("spyd2en"),
-												  lang.getstr("enable_spyder2"),
-												  self)
-				if result not in (True, None):
-					if isinstance(result, Exception):
-						show_result_dialog(result, self)
-					return
 			if choice == wx.ID_OK:
 				# Auto
 				path = None
@@ -3210,10 +3203,20 @@ class MainFrame(BaseFrame):
 				dlg.Destroy()
 				if result != wx.ID_OK:
 					return
+			if asroot:
+				result = self.worker.authenticate(get_argyll_util("spyd2en"),
+												  lang.getstr("enable_spyder2"),
+												  self)
+				if result not in (True, None):
+					if isinstance(result, Exception):
+						show_result_dialog(result, self)
+					return
 			self.worker.start(self.enable_spyder2_consumer,
 							  self.enable_spyder2_producer,
+							  cargs=(import_colorimeter_corrections, ),
 							  wargs=(path, asroot),
 							  progress_msg=lang.getstr("enable_spyder2"))
+			return (event and None) or True
 	
 	def enable_spyder2(self, path, asroot):
 		cmd, args = get_argyll_util("spyd2en"), ["-v"]
@@ -3248,7 +3251,7 @@ class MainFrame(BaseFrame):
 				return
 		return self.enable_spyder2(path, asroot)
 	
-	def enable_spyder2_consumer(self, result):
+	def enable_spyder2_consumer(self, result, import_colorimeter_corrections):
 		if not isinstance(result, Exception) and result:
 			result = UnloggedInfo(lang.getstr("enable_spyder2_success"))
 			self.update_menus()
@@ -3256,6 +3259,8 @@ class MainFrame(BaseFrame):
 			result = UnloggedError("".join(self.worker.errors))
 		if result:
 			show_result_dialog(result, self)
+		if import_colorimeter_corrections:
+			self.import_colorimeter_correction_handler(None)
 
 	def extra_args_handler(self, event):
 		if not hasattr(self, "extra_args"):
@@ -9398,9 +9403,13 @@ class MainFrame(BaseFrame):
 					    not "Spyder2" in ccmx_instruments) or
 					   ("Spyder3" in self.worker.instruments and
 					    not "Spyder3" in ccmx_instruments))
+				spyd2 = ("Spyder2" in self.worker.instruments and
+						 not self.worker.spyder2_firmware_exists())
 				spyd4 = ("Spyder4" in self.worker.instruments and
 						 not self.worker.spyder4_cal_exists())
-			if i1d3 or icd or spyd4:
+			if spyd2:
+				spyd2 = self.enable_spyder2_handler(None, i1d3 or icd or spyd4)
+			if not spyd2 and (i1d3 or icd or spyd4):
 				self.import_colorimeter_correction_handler(None)
 		if displays != self.worker.displays or \
 		   comports != self.worker.instruments:
