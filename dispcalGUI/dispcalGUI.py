@@ -7371,8 +7371,14 @@ class MainFrame(BaseFrame):
 						break
 				setattr(dlg, name, wx.CheckBox(dlg, -1, desc))
 				for instrument in instruments:
-					if (instrument in self.worker.instruments and
-						not instrument in self.ccmx_instruments.itervalues()):
+					if instruments == ("i1 DisplayPro, ColorMunki Display",
+									   "Spyder4"):
+						check = "" in self.ccmx_instruments.itervalues()
+					elif instruments == ("Spyder4", ):
+						check = self.worker.spyder4_cal_exists()
+					else:
+						check = instrument in self.ccmx_instruments.itervalues()
+					if instrument in self.worker.instruments and not check:
 						getattr(dlg, name).SetValue(True)
 						break
 				dlg.sizer3.Add(getattr(dlg, name), flag=wx.TOP |
