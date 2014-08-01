@@ -2976,9 +2976,11 @@ class MainFrame(BaseFrame):
 		self.black_luminance_textctrl.ChangeValue(
 			"%.6f" % getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Show(
-			bool(getcfg("calibration.black_luminance", False)))
+			bool(getcfg("show_advanced_calibration_options") and
+				 getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(
-			bool(getcfg("calibration.black_luminance", False)))
+			bool(getcfg("show_advanced_calibration_options") and
+				 getcfg("calibration.black_luminance", False)))
 		
 		self.blacklevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.blacklevel")))
@@ -3774,7 +3776,8 @@ class MainFrame(BaseFrame):
 		if event.GetId() == self.black_luminance_textctrl.GetId() and (
 		   self.black_luminance_ctrl.GetSelection() != 1 or 
 		   str(float(getcfg("calibration.black_luminance"))) == 
-		   self.black_luminance_textctrl.GetValue()):
+		   self.black_luminance_textctrl.GetValue() or
+		   not self.black_luminance_ctrl.IsShown()):
 			event.Skip()
 			return
 		if debug:
@@ -6718,8 +6721,8 @@ class MainFrame(BaseFrame):
 				   int(show_advanced_calibration_options))
 		self.calpanel.Freeze()
 		self.menuitem_show_advanced_calibration_options.Check(show_advanced_calibration_options)
-		for ctrl in (#self.black_luminance_label,
-					 #self.black_luminance_ctrl,
+		for ctrl in (self.black_luminance_label,
+					 self.black_luminance_ctrl,
 					 #self.black_luminance_textctrl,
 					 #self.black_luminance_textctrl_label,
 					 #self.blacklevel_drift_compensation,
@@ -6738,6 +6741,10 @@ class MainFrame(BaseFrame):
 					 self.black_point_rate_ctrl,
 					 self.black_point_rate_floatctrl):
 			ctrl.GetContainingSizer().Show(ctrl, show_advanced_calibration_options)
+		self.black_luminance_textctrl.Show(show_advanced_calibration_options and
+										   bool(getcfg("calibration.black_luminance", False)))
+		self.black_luminance_textctrl_label.Show(show_advanced_calibration_options and
+												 bool(getcfg("calibration.black_luminance", False)))
 		if event:
 			self.show_gamma_controls()
 		self.black_point_correction_auto_handler()
