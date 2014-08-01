@@ -680,6 +680,16 @@ class GamapFrame(BaseFrame):
 				   id=self.gamap_out_viewcond_ctrl.GetId())
 		self.Bind(wx.EVT_CHOICE, self.gamap_default_intent_handler, 
 				   id=self.gamap_default_intent_ctrl.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
+				  id=self.low_quality_b2a_cb.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
+				  id=self.b2a_hires_cb.GetId())
+		for v in config.valid_values["profile.b2a.hires.size"]:
+			self.b2a_size_ctrl.Append("%sx%sx%s" % ((v, ) * 3))
+		self.Bind(wx.EVT_CHOICE, self.b2a_size_ctrl_handler, 
+				  id=self.b2a_size_ctrl.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
+				  id=self.b2a_smooth_cb.GetId())
 
 		self.viewconds_ab = OrderedDict()
 		self.viewconds_ba = {}
@@ -700,6 +710,10 @@ class GamapFrame(BaseFrame):
 
 	def OnClose(self, event):
 		self.Hide()
+	
+	def b2a_size_ctrl_handler(self, event):
+		setcfg("profile.b2a.hires.size",
+			   config.valid_values["profile.b2a.hires.size"][self.b2a_size_ctrl.GetSelection()])
 
 	def gamap_profile_handler(self, event=None):
 		v = self.gamap_profile.GetPath()
@@ -724,16 +738,22 @@ class GamapFrame(BaseFrame):
 						self.gamap_src_viewcond_ctrl.SetStringSelection(
 							lang.getstr("gamap.viewconds.mt"))
 					self.gamap_src_viewcond_handler()
-		self.gamap_perceptual_cb.Enable()
+		enable_gamap = getcfg("profile.type") in ("l", "x", "X")
+		self.gamap_perceptual_cb.Enable(enable_gamap)
 		self.gamap_perceptual_intent_ctrl.Enable(self.gamap_perceptual_cb.GetValue())
-		self.gamap_saturation_cb.Enable()
+		self.gamap_saturation_cb.Enable(enable_gamap)
 		self.gamap_saturation_intent_ctrl.Enable(self.gamap_saturation_cb.GetValue())
 		c = self.gamap_perceptual_cb.GetValue() or \
 			self.gamap_saturation_cb.GetValue()
 		self.gamap_profile.Enable(c)
 		self.gamap_src_viewcond_ctrl.Enable(p and c)
 		self.gamap_out_viewcond_ctrl.Enable(p and c)
-		self.gamap_default_intent_ctrl.Enable(p and c)
+		if not ((p and c) or getcfg("profile.b2a.hires")):
+			setcfg("gamap_default_intent", "p")
+		self.gamap_default_intent_ctrl.SetSelection(self.default_intent_ba[getcfg("gamap_default_intent")])
+		self.gamap_default_intent_ctrl.Enable((p and c) or
+											   (getcfg("profile.b2a.hires") and
+												enable_gamap))
 		if v != getcfg("gamap_profile") and self.Parent and \
 		   hasattr(self.Parent, "profile_settings_changed"):
 			self.Parent.profile_settings_changed()
@@ -795,6 +815,37 @@ class GamapFrame(BaseFrame):
 			self.Parent and hasattr(self.Parent, "profile_settings_changed")):
 			self.Parent.profile_settings_changed()
 		setcfg("gamap_default_intent", self.default_intent_ab[v])
+
+	def profile_quality_b2a_ctrl_handler(self, event):
+		if (event.GetId() == self.low_quality_b2a_cb.GetId() and
+			self.low_quality_b2a_cb.GetValue()):
+			self.b2a_hires_cb.Enable(False)
+		else:
+			self.b2a_hires_cb.Enable(getcfg("profile.type") in ("x", "X"))
+		hires = self.b2a_hires_cb.GetValue()
+		self.low_quality_b2a_cb.Enable(not hires)
+		if hires:
+			if event.GetId() == self.b2a_smooth_cb.GetId():
+				setcfg("profile.b2a.hires.smooth",
+					   int(self.b2a_smooth_cb.GetValue()))
+			else:
+				self.b2a_smooth_cb.SetValue(bool(getcfg("profile.b2a.hires.smooth")))
+		else:
+			self.b2a_smooth_cb.SetValue(False)
+		if self.low_quality_b2a_cb.GetValue():
+			v = "l"
+		else:
+			v = None
+		if (v != getcfg("profile.quality.b2a") or
+			hires != getcfg("profile.b2a.hires")) and self.Parent:
+			self.Parent.profile_settings_changed()
+		setcfg("profile.quality.b2a", v)
+		setcfg("profile.b2a.hires", int(hires))
+		self.b2a_size_ctrl.Enable(hires)
+		self.b2a_smooth_cb.Enable(hires)
+		self.gamap_profile_handler()
+		if self.Parent:
+			self.Parent.update_bpc()
 	
 	def setup_language(self):
 		"""
@@ -850,12 +901,35 @@ class GamapFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
+
+		# B2A quality
+		enable_gamap = getcfg("profile.type") in ("l", "x", "X")
+		enable_b2a_extra = getcfg("profile.type") in ("x", "X")
+		b2a_hires = enable_b2a_extra and bool(getcfg("profile.b2a.hires"))
+		self.low_quality_b2a_cb.SetValue(enable_gamap and
+										 getcfg("profile.quality.b2a") in
+										 ("l", "n") and not b2a_hires)
+		self.low_quality_b2a_cb.Enable(enable_gamap and not b2a_hires)
+		self.b2a_hires_cb.SetValue(b2a_hires)
+		self.b2a_hires_cb.Enable(enable_b2a_extra and not
+								 self.low_quality_b2a_cb.GetValue())
+		self.b2a_size_ctrl.SetSelection(
+			config.valid_values["profile.b2a.hires.size"].index(
+				getcfg("profile.b2a.hires.size")))
+		self.b2a_size_ctrl.Enable(b2a_hires)
+		self.b2a_smooth_cb.SetValue(b2a_hires and
+									bool(getcfg("profile.b2a.hires.smooth")))
+		self.b2a_smooth_cb.Enable(b2a_hires)
+
+		# CIECAM02
 		self.gamap_profile.SetPath(getcfg("gamap_profile"))
-		self.gamap_perceptual_cb.SetValue(getcfg("gamap_perceptual"))
+		self.gamap_perceptual_cb.SetValue(enable_gamap and
+										  bool(getcfg("gamap_perceptual")))
 		self.gamap_perceptual_intent_ctrl.SetStringSelection(
 			self.intents_ab.get(getcfg("gamap_perceptual_intent"), 
 			self.intents_ab.get(defaults["gamap_perceptual_intent"])))
-		self.gamap_saturation_cb.SetValue(getcfg("gamap_saturation"))
+		self.gamap_saturation_cb.SetValue(enable_gamap and
+										  bool(getcfg("gamap_saturation")))
 		self.gamap_saturation_intent_ctrl.SetStringSelection(
 			self.intents_ab.get(getcfg("gamap_saturation_intent"), 
 			self.intents_ab.get(defaults["gamap_saturation_intent"])))
@@ -865,7 +939,7 @@ class GamapFrame(BaseFrame):
 		self.gamap_out_viewcond_ctrl.SetStringSelection(
 			self.viewconds_ab.get(getcfg("gamap_out_viewcond"), 
 			self.viewconds_ab.get(defaults.get("gamap_out_viewcond"))))
-		self.gamap_default_intent_ctrl.SetSelection(self.default_intent_ba[getcfg("gamap_default_intent")])
+
 		self.gamap_profile_handler()
 
 
@@ -1485,10 +1559,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("create_profile_from_edid"))
 		self.Bind(wx.EVT_MENU, self.create_profile_from_edid, 
 				  self.menuitem_create_profile_from_edid)
-		self.menuitem_profile_smooth_b2a = options.FindItemById(
-			options.FindItem("profile.b2a.smooth"))
-		self.Bind(wx.EVT_MENU, self.profile_smooth_b2a_handler, 
-				  self.menuitem_profile_smooth_b2a)
+		self.menuitem_profile_hires_b2a = options.FindItemById(
+			options.FindItem("profile.b2a.hires"))
+		self.Bind(wx.EVT_MENU, self.profile_hires_b2a_handler, 
+				  self.menuitem_profile_hires_b2a)
 		self.menuitem_install_display_profile = options.FindItemById(
 			options.FindItem("install_display_profile"))
 		self.Bind(wx.EVT_MENU, self.select_install_profile_handler, 
@@ -1929,14 +2003,6 @@ class MainFrame(BaseFrame):
 		# Profile quality
 		self.Bind(wx.EVT_SLIDER, self.profile_quality_ctrl_handler, 
 				  id=self.profile_quality_ctrl.GetId())
-		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
-				  id=self.low_quality_b2a_cb.GetId())
-		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
-				  id=self.b2a_extra_cb.GetId())
-		for v in config.valid_values["profile.b2a.smooth.size"]:
-			self.b2a_size_ctrl.Append("%sx%sx%s" % ((v, ) * 3))
-		self.Bind(wx.EVT_CHOICE, self.b2a_size_ctrl_handler, 
-				  id=self.b2a_size_ctrl.GetId())
 
 		# Profile type
 		self.Bind(wx.EVT_CHOICE, self.profile_type_ctrl_handler, 
@@ -3007,20 +3073,6 @@ class MainFrame(BaseFrame):
 
 		enable_gamap = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
-
-		enable_b2a_extra = self.get_profile_type() in ("x", "X")
-		b2a_smooth = enable_b2a_extra and bool(getcfg("profile.b2a.smooth"))
-		self.low_quality_b2a_cb.SetValue(enable_gamap and
-										 getcfg("profile.quality.b2a") in
-										 ("l", "n") and not b2a_smooth)
-		self.low_quality_b2a_cb.Enable(enable_gamap and not b2a_smooth)
-		
-		self.b2a_extra_cb.SetValue(b2a_smooth)
-		self.b2a_extra_cb.Enable(enable_b2a_extra)
-		self.b2a_size_ctrl.SetSelection(
-			config.valid_values["profile.b2a.smooth.size"].index(
-				getcfg("profile.b2a.smooth.size")))
-		self.b2a_size_ctrl.Enable(b2a_smooth)
 		
 
 		if hasattr(self, "gamapframe"):
@@ -3097,7 +3149,7 @@ class MainFrame(BaseFrame):
 	def update_bpc(self):
 		enable_bpc = (self.get_profile_type() in ("g", "G", "s", "S") or
 					  (self.get_profile_type() in ("x", "X") and
-					   (getcfg("profile.b2a.smooth") or
+					   (getcfg("profile.b2a.hires") or
 						getcfg("profile.quality.b2a") in ("l", "n"))))
 		self.black_point_compensation_cb.Enable(enable_bpc)
 		self.black_point_compensation_cb.SetValue(enable_bpc and
@@ -3341,27 +3393,6 @@ class MainFrame(BaseFrame):
 			InfoDialog(self, msg=lang.getstr("quality.ultra.warning"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-warning"), log=False)
-
-	def profile_quality_b2a_ctrl_handler(self, event):
-		smooth = self.b2a_extra_cb.GetValue()
-		self.low_quality_b2a_cb.Enable(not smooth)
-		if smooth:
-			self.low_quality_b2a_cb.SetValue(False)
-		if self.low_quality_b2a_cb.GetValue():
-			v = "l"
-		else:
-			v = None
-		if (v != getcfg("profile.quality.b2a") or
-			smooth != getcfg("profile.b2a.smooth")):
-			self.profile_settings_changed()
-		setcfg("profile.quality.b2a", v)
-		setcfg("profile.b2a.smooth", int(smooth))
-		self.b2a_size_ctrl.Enable(smooth)
-		self.update_bpc()
-	
-	def b2a_size_ctrl_handler(self, event):
-		setcfg("profile.b2a.smooth.size",
-			   config.valid_values["profile.b2a.smooth.size"][self.b2a_size_ctrl.GetSelection()])
 
 	def profile_quality_ctrl_handler(self, event):
 		if debug:
@@ -7923,14 +7954,6 @@ class MainFrame(BaseFrame):
 				   getcfg("profile.black_point_compensation.backup"))
 			setcfg("profile.black_point_compensation.backup", None)
 		self.update_bpc()
-		b2a_smooth = enable_b2a_extra and bool(getcfg("profile.b2a.smooth"))
-		self.low_quality_b2a_cb.SetValue(lut_type and
-										 getcfg("profile.quality.b2a") in
-										 ("l", "n") and not b2a_smooth)
-		self.low_quality_b2a_cb.Enable(lut_type and not b2a_smooth)
-		self.b2a_extra_cb.SetValue(b2a_smooth)
-		self.b2a_extra_cb.Enable(enable_b2a_extra)
-		self.b2a_size_ctrl.Enable(b2a_smooth)
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v in ("g", "G"):
 			self.profile_quality_ctrl.SetValue(3)
@@ -7939,6 +7962,8 @@ class MainFrame(BaseFrame):
 		if v != getcfg("profile.type"):
 			self.profile_settings_changed()
 		setcfg("profile.type", v)
+		if hasattr(self, "gamapframe"):
+			self.gamapframe.update_controls()
 		self.update_profile_name()
 		self.set_default_testchart(force=True)
 		self.check_testchart_patches_amount
@@ -8257,7 +8282,7 @@ class MainFrame(BaseFrame):
 		return lang.getstr("profile.name.placeholders") + "\n\n" + \
 			   "\n".join(info)
 	
-	def profile_smooth_b2a_handler(self, event):
+	def profile_hires_b2a_handler(self, event):
 		profile = self.select_profile(ignore_current_profile=True)
 		if profile:
 			if not ("A2B0" in profile.tags or "A2B1" in profile.tags):
@@ -8280,13 +8305,13 @@ class MainFrame(BaseFrame):
 				show_result_dialog(result, self)
 			else:
 				self.interactive = False
-				##self.profile_smooth_b2a_consumer(self.worker.update_profile_B2A(profile), profile)
-				self.worker.start(self.profile_smooth_b2a_consumer,
+				##self.profile_hires_b2a_consumer(self.worker.update_profile_B2A(profile), profile)
+				self.worker.start(self.profile_hires_b2a_consumer,
 								  self.worker.update_profile_B2A,
 								  cargs=(profile, ),
 								  wargs=(profile, ))
 
-	def profile_smooth_b2a_consumer(self, result, profile):
+	def profile_hires_b2a_consumer(self, result, profile):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result:
@@ -9716,7 +9741,7 @@ class MainFrame(BaseFrame):
 					# restore defaults
 					self.restore_defaults_handler(
 						include=("profile", "gamap_"), 
-						exclude=("profile.b2a.smooth.extra", "profile.update",
+						exclude=("profile.update",
 								 "profile.name", "gamap_default_intent"))
 					for o in options_colprof:
 						if o[0] == "q":
@@ -9756,15 +9781,25 @@ class MainFrame(BaseFrame):
 					setcfg("profile.black_point_compensation", 1)
 				elif 'USE_BLACK_POINT_COMPENSATION "NO"' in ti3_lines:
 					setcfg("profile.black_point_compensation", 0)
+				if 'HIRES_B2A "YES"' in ti3_lines:
+					setcfg("profile.b2a.hires", 1)
+				elif 'HIRES_B2A "NO"' in ti3_lines:
+					setcfg("profile.b2a.hires", 0)
 				if 'SMOOTH_B2A "YES"' in ti3_lines:
-					setcfg("profile.b2a.smooth", 1)
+					if not 'HIRES_B2A "NO"' in ti3_lines:
+						setcfg("profile.b2a.hires", 1)
+					setcfg("profile.b2a.hires.smooth", 1)
 				elif 'SMOOTH_B2A "NO"' in ti3_lines:
-					setcfg("profile.b2a.smooth", 0)
+					if not 'HIRES_B2A "YES"' in ti3_lines:
+						setcfg("profile.b2a.hires", 0)
+					setcfg("profile.b2a.hires.smooth", 0)
 				if 'BEGIN_DATA_FORMAT' in ti3_lines:
 					cfgend = ti3_lines.index('BEGIN_DATA_FORMAT')
 					cfgpart = CGATS.CGATS("\n".join(ti3_lines[:cfgend]))
 					for keyword, cfgname in {"SMOOTH_B2A_SIZE":
-											 "profile.b2a.smooth.size"}.iteritems():
+											 "profile.b2a.hires.size",
+											 "HIRES_B2A_SIZE":
+											 "profile.b2a.hires.size"}.iteritems():
 						cfgvalue = cfgpart.queryv1(keyword)
 						if cfgvalue is not None:
 							setcfg(cfgname, cfgvalue)

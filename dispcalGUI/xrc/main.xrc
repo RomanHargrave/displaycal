@@ -981,26 +981,6 @@
                                 <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                 <border>20</border>
                               </object>
-                              <object class="sizeritem">
-                                <object class="wxCheckBox" name="low_quality_b2a_cb">
-                                  <label>profile.quality.b2a.low</label>
-                                  <tooltip>profile.quality.b2a.low.info</tooltip>
-                                </object>
-                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>20</border>
-                              </object>
-                              <object class="sizeritem">
-                                <object class="wxCheckBox" name="b2a_extra_cb">
-                                  <label>profile.b2a.smooth</label>
-                                </object>
-                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>20</border>
-                              </object>
-                              <object class="sizeritem">
-                                <object class="wxChoice" name="b2a_size_ctrl">
-                                </object>
-                                <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                              </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
                             <flag>wxTOP|wxBOTTOM</flag>

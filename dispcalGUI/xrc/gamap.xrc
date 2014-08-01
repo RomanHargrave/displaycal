@@ -11,20 +11,83 @@
               <object class="wxBoxSizer">
                 <orient>wxHORIZONTAL</orient>
                 <object class="sizeritem">
-                  <object class="wxStaticText">
-                    <label>gamap.profile</label>
+                  <object class="wxCheckBox" name="low_quality_b2a_cb">
+                    <label>profile.quality.b2a.low</label>
+                    <tooltip>profile.quality.b2a.low.info</tooltip>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>20</border>
+                </object>
+              </object>
+              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="b2a_hires_cb">
+                    <label>profile.b2a.hires</label>
                   </object>
                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="gamap_profile">
-                    <message>gamap.profile</message>
-                    <wildcard>filetype.icc|*.icc;*.icm</wildcard>
-                    <XRCED>
-                      <events>EVT_FILEPICKER_CHANGED</events>
-                    </XRCED>
+                  <object class="wxChoice" name="b2a_size_ctrl">
                   </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="b2a_smooth_cb">
+                    <label>profile.b2a.smooth</label>
+                  </object>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+              </object>
+              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
+              <object class="wxFlexGridSizer">
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>gamap.default_intent</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxChoice" name="gamap_default_intent_ctrl">
+                  </object>
+                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <cols>2</cols>
+                <rows>0</rows>
+                <vgap>8</vgap>
+                <growablecols>1</growablecols>
+              </object>
+              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxStaticLine">
+                    <size>8,-1</size>
+                  </object>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="gamu_mapping_ciecam02_label">
+                    <label>gamut_mapping.ciecam02</label>
+                  </object>
+                  <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>2</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticLine"/>
                   <option>1</option>
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -73,6 +136,31 @@
               <border>12</border>
             </object>
             <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>gamap.profile</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>8</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxFilePickerCtrl" name="gamap_profile">
+                    <message>gamap.profile</message>
+                    <wildcard>filetype.icc|*.icc;*.icm</wildcard>
+                    <XRCED>
+                      <events>EVT_FILEPICKER_CHANGED</events>
+                    </XRCED>
+                  </object>
+                  <option>1</option>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+              </object>
+              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>12</border>
+            </object>
+            <object class="sizeritem">
               <object class="wxFlexGridSizer">
                 <object class="sizeritem">
                   <object class="wxStaticText">
@@ -104,28 +192,6 @@
                 <growablecols>1</growablecols>
               </object>
               <flag>wxALL|wxEXPAND</flag>
-              <border>12</border>
-            </object>
-            <object class="sizeritem">
-              <object class="wxFlexGridSizer">
-                <object class="sizeritem">
-                  <object class="wxStaticText">
-                    <label>gamap.default_intent</label>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>8</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxChoice" name="gamap_default_intent_ctrl">
-                  </object>
-                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                </object>
-                <cols>2</cols>
-                <rows>0</rows>
-                <vgap>8</vgap>
-                <growablecols>1</growablecols>
-              </object>
-              <flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
               <border>12</border>
             </object>
           </object>

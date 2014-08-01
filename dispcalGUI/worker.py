@@ -3645,14 +3645,14 @@ class Worker(object):
 		if logfile:
 			logfile.write("\n")
 		
-		if getcfg("profile.b2a.smooth.diagpng") and profile.fileName:
+		if getcfg("profile.b2a.hires.diagpng") and profile.fileName:
 			# Generate diagnostic images
 			fname, ext = os.path.splitext(profile.fileName)
 			for suffix, table in [("pre", profile.tags["B2A%i" % tableno]),
 								  ("post", itable)]:
 				table.clut_writepng(fname + ".B2A%i.%s.CLUT.png" %
 									(tableno, suffix))
-		if getcfg("profile.b2a.smooth.extra"):
+		if getcfg("profile.b2a.hires.smooth"):
 			# Apply extra smoothing to the cLUT
 			# Create a list of <clutres> number of 2D grids, each one with a
 			# size of (width x height) <clutres> x <clutres>
@@ -3680,7 +3680,7 @@ class Worker(object):
 				for j, row in enumerate(grid):
 					itable.clut[i * clutres + j] = [[v for v in RGB]
 													for RGB in row]
-			if getcfg("profile.b2a.smooth.diagpng") and profile.fileName:
+			if getcfg("profile.b2a.hires.diagpng") and profile.fileName:
 				itable.clut_writepng(fname + ".B2A%i.post.CLUT.extrasmooth.png" %
 									 tableno)
 
@@ -4871,7 +4871,7 @@ usage: spotread [-options] [logfile]
 				process_A2B = ("A2B0" in profile.tags and
 							   profile.colorSpace == "RGB" and
 							   profile.connectionColorSpace == "XYZ" and
-							   (getcfg("profile.b2a.smooth") or
+							   (getcfg("profile.b2a.hires") or
 								getcfg("profile.quality.b2a") in ("l", "n")))
 				if ("rTRC" in profile.tags and
 					"gTRC" in profile.tags and
@@ -4908,7 +4908,7 @@ usage: spotread [-options] [logfile]
 							self.log("%s: Can't apply black point "
 									 "compensation to non-LUT16Type %s "
 									 "table" % (appname, table))
-					if getcfg("profile.b2a.smooth"):
+					if getcfg("profile.b2a.hires"):
 						result = self.update_profile_B2A(profile)
 						if not isinstance(result, Exception) and result:
 							profchanged = True
@@ -5096,14 +5096,12 @@ usage: spotread [-options] [logfile]
 				profile.tags.meta["ACCURACY_dE76_rms"] = rms
 		profile.set_gamut_metadata(gamut_volume, gamut_coverage)
 		# Set default rendering intent
-		if ((getcfg("gamap_perceptual") and "B2A0" in profile.tags) or
-			(getcfg("gamap_saturation") and "B2A2" in profile.tags)):
+		if ("B2A0" in profile.tags and ("B2A1" in profile.tags or
+										"B2A2" in profile.tags)):
 			profile.intent = {"p": 0,
 							  "r": 1,
 							  "s": 2,
 							  "a": 3}[getcfg("gamap_default_intent")]
-		elif "B2A0" in profile.tags and "B2A1" in profile.tags:
-			profile.intent = 0
 		# Calculate profile ID
 		profile.calculateID()
 		try:
@@ -5114,7 +5112,7 @@ usage: spotread [-options] [logfile]
 	
 	def update_profile_B2A(self, profile):
 		# Use reverse A2B interpolation to generate B2A table
-		clutres = getcfg("profile.b2a.smooth.size")
+		clutres = getcfg("profile.b2a.hires.size")
 		linebuffered_logfiles = []
 		if sys.stdout.isatty():
 			linebuffered_logfiles.append(safe_print)
@@ -5366,7 +5364,7 @@ usage: spotread [-options] [logfile]
 				if getcfg("gamap_out_viewcond"):
 					args += ["-d" + getcfg("gamap_out_viewcond")]
 			b2a_q = getcfg("profile.quality.b2a")
-			if (getcfg("profile.b2a.smooth") and
+			if (getcfg("profile.b2a.hires") and
 				getcfg("profile.type") in ("x", "X") and
 				not (gamap and getcfg("gamap_profile"))):
 				# Disable B2A creation in colprof, B2A is handled
@@ -5417,12 +5415,15 @@ usage: spotread [-options] [logfile]
 			ti3[0].add_keyword("USE_BLACK_POINT_COMPENSATION",
 							   "YES" if getcfg("profile.black_point_compensation")
 							   else "NO")
-			# Smooth B2A
-			ti3[0].add_keyword("SMOOTH_B2A",
-							   "YES" if getcfg("profile.b2a.smooth")
+			# Hires B2A with optional smoothing
+			ti3[0].add_keyword("HIRES_B2A",
+							   "YES" if getcfg("profile.b2a.hires")
 							   else "NO")
-			ti3[0].add_keyword("SMOOTH_B2A_SIZE",
-							   getcfg("profile.b2a.smooth.size"))
+			ti3[0].add_keyword("HIRES_B2A_SIZE",
+							   getcfg("profile.b2a.hires.size"))
+			ti3[0].add_keyword("SMOOTH_B2A",
+							   "YES" if getcfg("profile.b2a.hires.smooth")
+							   else "NO")
 			ti3.write()
 		return cmd, args
 
