@@ -9660,6 +9660,7 @@ class MainFrame(BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
+			black_point_correction = False
 			if options_dispcal or options_colprof:
 				if debug:
 					safe_print("[D] options_dispcal:", options_dispcal)
@@ -9741,9 +9742,8 @@ class MainFrame(BaseFrame):
 							setcfg("calibration.ambient_viewcond_adjust.lux", o[1:])
 							continue
 						if o[0] == "k":
-							setcfg("calibration.black_point_correction.auto",
-								   int(stripzeros(o[1:]) < 0))
 							if stripzeros(o[1:]) >= 0:
+								black_point_correction = True
 								setcfg("calibration.black_point_correction",
 									   o[1:])
 							continue
@@ -9790,6 +9790,8 @@ class MainFrame(BaseFrame):
 							if "w" in o[1:]:
 								setcfg("drift_compensation.whitelevel", 1)
 							continue
+					if not black_point_correction:
+						setcfg("calibration.black_point_correction.auto", 1)
 				if not ccmx:
 					ccxx = (glob.glob(os.path.join(os.path.dirname(path), "*.ccmx")) or
 							glob.glob(os.path.join(os.path.dirname(path), "*.ccss")))
@@ -10022,9 +10024,8 @@ class MainFrame(BaseFrame):
 						settings += [
 							lang.getstr("calibration.black_output_offset")]
 					elif line[0] == "BLACK_POINT_CORRECTION":
-						setcfg("calibration.black_point_correction.auto",
-							   int(stripzeros(value) < 0))
 						if stripzeros(value) >= 0:
+							black_point_correction = True
 							setcfg("calibration.black_point_correction", 
 								   stripzeros(value))
 							self.worker.options_dispcal += [
@@ -10043,6 +10044,8 @@ class MainFrame(BaseFrame):
 						self.worker.options_dispcal += [
 							"-q" + getcfg("calibration.quality")]
 						settings += [lang.getstr("calibration.quality")]
+			if not black_point_correction:
+				setcfg("calibration.black_point_correction.auto", 1)
 
 			setcfg("calibration.file", path)
 			self.update_controls(update_profile_name=update_profile_name)
