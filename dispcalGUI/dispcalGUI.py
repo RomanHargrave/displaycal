@@ -991,14 +991,14 @@ class MainFrame(BaseFrame):
 		self.show_advanced_calibration_options_handler()
 		self.setup_language()
 		self.update_displays(update_ccmx_items=False)
+		self.update_comports()
+		self.update_controls(update_ccmx_items=False)
 		BaseFrame.update_layout(self)
 		# Add the header bitmap after layout so it won't stretch the window 
 		# further than necessary
 		self.headerbitmap = self.panel.FindWindowByName("headerbitmap")
 		self.headerbitmap.SetBitmap(getbitmap("theme/header"))
 		self.calpanel.SetScrollRate(2, 2)
-		self.update_comports()
-		self.update_controls(update_ccmx_items=False)
 		self.SetSaneGeometry(int(getcfg("position.x")), 
 							 int(getcfg("position.y")))
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -1426,7 +1426,8 @@ class MainFrame(BaseFrame):
 		self.black_luminance_ctrl.SetItems([lang.getstr("as_measured"),
 											lang.getstr("custom")])
 		
-		self.trc_ctrl.SetItems([lang.getstr("custom"),
+		self.trc_ctrl.SetItems([lang.getstr("as_measured"),
+								lang.getstr("custom"),
 								lang.getstr("trc.lstar"),
 								lang.getstr("trc.rec709"),
 								lang.getstr("trc.rec1886"),
@@ -2121,7 +2122,8 @@ class MainFrame(BaseFrame):
 		self.calpanel.Layout()
 		self.panel.Layout()
 
-	def restore_defaults_handler(self, event=None, include=(), exclude=()):
+	def restore_defaults_handler(self, event=None, include=(), exclude=(),
+								 override=None):
 		if event:
 			dlg = ConfirmDialog(self, 
 								msg=lang.getstr("app.confirm_restore_defaults"), 
@@ -2226,7 +2228,7 @@ class MainFrame(BaseFrame):
 			"untethered.measure.auto",
 			"update_check"
 		]
-		override = {
+		override_default = {
 			"calibration.black_luminance": None,
 			"calibration.file": None,
 			"calibration.luminance": None,
@@ -2237,6 +2239,9 @@ class MainFrame(BaseFrame):
 			"whitepoint.x": None,
 			"whitepoint.y": None
 		}
+		if override:
+			override_default.update(override)
+		override = override_default
 		for name in defaults:
 			if name not in skip and name not in override:
 				if (len(include) == 0 or False in [name.find(item) != 0 for 
@@ -2514,35 +2519,7 @@ class MainFrame(BaseFrame):
 	def update_colorimeter_correction_matrix_ctrl(self):
 		""" Show or hide the colorimeter correction matrix controls """
 		self.calpanel.Freeze()
-		v = self.get_measurement_mode()
-		enable = v != "auto" or self.worker.get_instrument_name() != "ColorHug"
-		if not enable:
-			self.whitepoint_ctrl.SetSelection(0)
-			setcfg("whitepoint.colortemp", None)
-			setcfg("whitepoint.x", None)
-			setcfg("whitepoint.y", None)
-			self.whitepoint_colortemp_locus_ctrl.Show()
-			self.whitepoint_colortemp_textctrl.Hide()
-			self.whitepoint_x_textctrl.Hide()
-			self.whitepoint_x_label.Hide()
-			self.whitepoint_y_textctrl.Hide()
-			self.whitepoint_y_label.Hide()
-			self.whitepoint_measure_btn.Hide()
-			self.luminance_ctrl.SetSelection(0)
-			self.luminance_textctrl.Hide()
-			self.luminance_textctrl_label.Hide()
-			setcfg("calibration.luminance", None)
-			self.black_luminance_ctrl.SetSelection(0)
-			self.black_luminance_textctrl.Hide()
-			self.black_luminance_textctrl_label.Hide()
-			setcfg("calibration.black_luminance", None)
-			self.interactive_display_adjustment_cb.SetValue(False)
-			setcfg("calibration.interactive_display_adjustment", 0)
-		if not getcfg("calibration.update"):
-			self.whitepoint_ctrl.Enable(enable)
-			self.luminance_ctrl.Enable(enable)
-			self.black_luminance_ctrl.Enable(enable)
-			self.interactive_display_adjustment_cb.Enable(enable)
+		self.enable_adjustment_controls()
 		instrument_features = self.worker.get_instrument_features()
 		show_control = (self.worker.instrument_can_use_ccxx() and
 						not is_ccxx_testchart() and
@@ -2782,7 +2759,7 @@ class MainFrame(BaseFrame):
 			not update_cal and bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
-		update_profile = self.calibration_update_cb.GetValue() and is_profile()
+		update_profile = update_cal and is_profile()
 		enable_profile = not update_profile and not is_ccxx_testchart()
 
 		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
@@ -2790,14 +2767,18 @@ class MainFrame(BaseFrame):
 		self.ambient_measure_btn.Enable(bool(self.worker.instruments) and
 										not update_cal)
 
-		self.calibrate_btn.Enable(not is_ccxx_testchart() and
+		enable_cal = (self.interactive_display_adjustment_cb.GetValue() or
+					  self.trc_ctrl.GetSelection() > 0)
+		self.calibrate_btn.Enable(enable_cal and
+								  not is_ccxx_testchart() and
 								  bool(self.worker.displays) and 
 								  config.get_display_name()
 								  not in config.uncalibratable_displays and 
 								  bool(self.worker.instruments) and
 								  config.get_display_name() not in
 								  config.uncalibratable_displays)
-		self.calibrate_and_profile_btn.Enable(enable_profile and 
+		self.calibrate_and_profile_btn.Enable(enable_cal and
+											  enable_profile and 
 											  bool(self.worker.displays) and 
 											  config.get_display_name() not in
 											  config.uncalibratable_displays and 
@@ -2905,15 +2886,13 @@ class MainFrame(BaseFrame):
 		if update_ccmx_items:
 			self.update_colorimeter_correction_matrix_ctrl_items()
 
-		self.whitepoint_ctrl.Enable(not update_cal)
+		self.enable_adjustment_controls()
 		self.whitepoint_colortemp_textctrl.Enable(not update_cal)
 		self.whitepoint_colortemp_locus_ctrl.Enable(not update_cal)
 		self.whitepoint_x_textctrl.Enable(not update_cal)
 		self.whitepoint_y_textctrl.Enable(not update_cal)
 		self.whitepoint_measure_btn.Enable(not update_cal)
-		self.luminance_ctrl.Enable(not update_cal)
 		self.luminance_textctrl.Enable(not update_cal)
-		self.black_luminance_ctrl.Enable(not update_cal)
 		self.black_luminance_textctrl.Enable(not update_cal)
 		self.trc_ctrl.Enable(not update_cal)
 		self.trc_textctrl.Enable(not update_cal)
@@ -2991,24 +2970,27 @@ class MainFrame(BaseFrame):
 		if trc in ("l", "709", "240", "s"):
 			self.trc_type_ctrl.SetSelection(0)
 		if trc == "l":
-			self.trc_ctrl.SetSelection(1)
-		elif trc == "709":
 			self.trc_ctrl.SetSelection(2)
-		elif trc == "240":
-			self.trc_ctrl.SetSelection(4)
-		elif trc == "s":
-			self.trc_ctrl.SetSelection(5)
-		elif bt1886:
+		elif trc == "709":
 			self.trc_ctrl.SetSelection(3)
+		elif trc == "240":
+			self.trc_ctrl.SetSelection(5)
+		elif trc == "s":
+			self.trc_ctrl.SetSelection(6)
+		elif bt1886:
+			self.trc_ctrl.SetSelection(4)
 			self.trc_textctrl.SetValue(str(trc))
 			self.trc_type_ctrl.SetSelection(1)
-		elif trc:
-			self.trc_ctrl.SetSelection(0)
-			self.trc_textctrl.SetValue(str(trc))
+		else:
+			if trc:
+				self.trc_ctrl.SetSelection(1)
+				self.trc_textctrl.SetValue(str(trc))
+			else:
+				self.trc_ctrl.SetSelection(0)
 			self.trc_type_ctrl.SetSelection(
 				self.trc_types_ba.get(getcfg("trc.type"), 
 				self.trc_types_ba.get(defaults["trc.type"])))
-		self.show_gamma_controls()
+		self.show_trc_controls()
 
 		self.ambient_viewcond_adjust_cb.SetValue(
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
@@ -3097,25 +3079,51 @@ class MainFrame(BaseFrame):
 		self.updatingctrls = False
 
 	def update_trc_control(self):
-		if self.trc_ctrl.GetSelection() in (0, 3):
+		if self.trc_ctrl.GetSelection() in (1, 4):
 			if (getcfg("trc.type") == "G" and
 				getcfg("calibration.black_output_offset") == 0 and
 				getcfg("trc") == 2.4):
-				self.trc_ctrl.SetSelection(3)  # BT.1886
+				self.trc_ctrl.SetSelection(4)  # BT.1886
 			else:
-				self.trc_ctrl.SetSelection(0)  # Gamma
+				self.trc_ctrl.SetSelection(1)  # Gamma
 
-	def show_gamma_controls(self):
-		if self.trc_ctrl.GetSelection() in (0, 3):
-			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 0 or
-									getcfg("show_advanced_calibration_options"))
+	def show_trc_controls(self):
+		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
+		if self.trc_ctrl.GetSelection() in (1, 4):
+			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 1 or
+									(self.trc_ctrl.GetSelection() > 1 and
+									 show_advanced_calibration_options))
 			self.trc_gamma_label.Show(show_gamma_ctrls)
 			self.trc_textctrl.Show(show_gamma_ctrls)
-			self.trc_type_ctrl.Show(bool(getcfg("show_advanced_calibration_options")))
+			self.trc_type_ctrl.Show(show_advanced_calibration_options)
 		else:
 			self.trc_gamma_label.Hide()
 			self.trc_textctrl.Hide()
 			self.trc_type_ctrl.Hide()
+		for ctrl in (self.ambient_viewcond_adjust_cb,
+					 self.ambient_viewcond_adjust_textctrl,
+					 self.ambient_viewcond_adjust_textctrl_label,
+					 self.ambient_viewcond_adjust_info,
+					 self.ambient_measure_btn,
+					 self.black_output_offset_label,
+					 self.black_output_offset_ctrl,
+					 self.black_output_offset_intctrl,
+					 self.black_output_offset_intctrl_label,
+					 self.black_point_correction_label,
+					 self.black_point_correction_auto_cb,
+					 self.black_point_rate_label,
+					 self.black_point_rate_ctrl,
+					 self.black_point_rate_floatctrl):
+			ctrl.GetContainingSizer().Show(ctrl,
+										   self.trc_ctrl.GetSelection() > 0 and
+										   show_advanced_calibration_options)
+		for ctrl in (
+					 self.calibration_quality_label,
+					 self.calibration_quality_ctrl,
+					 self.calibration_quality_info):
+			ctrl.GetContainingSizer().Show(ctrl,
+										   self.trc_ctrl.GetSelection() > 0)
+		self.black_point_correction_auto_handler()
 	
 	def update_black_output_offset_ctrl(self):
 		self.black_output_offset_ctrl.SetValue(
@@ -3354,6 +3362,43 @@ class MainFrame(BaseFrame):
 		setcfg("allow_skip_sensor_cal", 
 			   int(self.menuitem_allow_skip_sensor_cal.IsChecked()))
 
+	def enable_adjustment_controls(self):
+		update_cal = getcfg("calibration.update")
+		colorhug_auto = (self.get_measurement_mode() == "auto" and
+						 self.worker.get_instrument_name() == "ColorHug")
+		enable = (not update_cal and not colorhug_auto and
+				  (self.interactive_display_adjustment_cb.GetValue() or
+				   self.trc_ctrl.GetSelection() > 0))
+		if not enable:
+			self.whitepoint_ctrl.SetSelection(0)
+			setcfg("whitepoint.colortemp", None)
+			setcfg("whitepoint.x", None)
+			setcfg("whitepoint.y", None)
+			self.whitepoint_colortemp_textctrl.Hide()
+			self.whitepoint_colortemp_label.Hide()
+			self.whitepoint_x_textctrl.Hide()
+			self.whitepoint_x_label.Hide()
+			self.whitepoint_y_textctrl.Hide()
+			self.whitepoint_y_label.Hide()
+			self.whitepoint_measure_btn.Hide()
+			self.luminance_ctrl.SetSelection(0)
+			self.luminance_textctrl.Hide()
+			self.luminance_textctrl_label.Hide()
+			setcfg("calibration.luminance", None)
+			self.black_luminance_ctrl.SetSelection(0)
+			self.black_luminance_textctrl.Hide()
+			self.black_luminance_textctrl_label.Hide()
+			setcfg("calibration.black_luminance", None)
+			self.interactive_display_adjustment_cb.SetValue(False)
+			setcfg("calibration.interactive_display_adjustment", 0)
+		self.whitepoint_ctrl.Enable(enable)
+		self.whitepoint_colortemp_locus_label.Show(enable)
+		self.whitepoint_colortemp_locus_ctrl.Show(enable)
+		self.luminance_ctrl.Enable(enable)
+		self.black_luminance_ctrl.Enable(enable)
+		self.interactive_display_adjustment_cb.Enable(not update_cal and
+													  not colorhug_auto)
+
 	def enable_argyll_debug_handler(self, event):
 		if not getcfg("argyll.debug"):
 			dlg = ConfirmDialog(self, msg=lang.getstr("argyll.debug.warning1"),  
@@ -3530,6 +3575,13 @@ class MainFrame(BaseFrame):
 		v = int(self.interactive_display_adjustment_cb.GetValue())
 		if v != getcfg("calibration.interactive_display_adjustment"):
 			self.profile_settings_changed()
+			self.calpanel.Freeze()
+			self.enable_adjustment_controls()
+			self.calpanel.Layout()
+			self.calpanel.Refresh()
+			self.calpanel.Thaw()
+			self.update_main_controls()
+			self.update_profile_name()
 		setcfg("calibration.interactive_display_adjustment", v)
 
 	def black_point_compensation_ctrl_handler(self, event):
@@ -3546,7 +3598,8 @@ class MainFrame(BaseFrame):
 		else:
 			auto = getcfg("calibration.black_point_correction.auto")
 			self.black_point_correction_auto_cb.SetValue(bool(auto))
-		show = bool(getcfg("show_advanced_calibration_options")) and not auto
+		show = (self.trc_ctrl.GetSelection() > 0 and
+				bool(getcfg("show_advanced_calibration_options")) and not auto)
 		self.calpanel.Freeze()
 		self.black_point_correction_ctrl.Show(show)
 		self.black_point_correction_intctrl.Show(show)
@@ -3613,8 +3666,8 @@ class MainFrame(BaseFrame):
 			self.black_output_offset_intctrl.SetValue(
 				self.black_output_offset_ctrl.GetValue())
 		v = self.get_black_output_offset()
-		if float(v) > 0 and self.trc_ctrl.GetSelection() == 3:
-			self.trc_ctrl.SetSelection(0)
+		if float(v) > 0 and self.trc_ctrl.GetSelection() == 4:  # BT.1886
+			self.trc_ctrl.SetSelection(1)  # Gamma
 		if float(v) != getcfg("calibration.black_output_offset"):
 			self.cal_changed()
 		setcfg("calibration.black_output_offset", v)
@@ -4040,15 +4093,15 @@ class MainFrame(BaseFrame):
 		v = self.get_trc_type()
 		if v != getcfg("trc.type"):
 			setcfg("trc.type", v)
-			if v != "G" and self.trc_ctrl.GetSelection() == 3:
-				self.trc_ctrl.SetSelection(0)
+			if v != "G" and self.trc_ctrl.GetSelection() == 4:  # BT.1886
+				self.trc_ctrl.SetSelection(1)  # Gamma
 			self.cal_changed()
 			self.update_profile_name()
 			self.update_trc_control()
 
 	def trc_ctrl_handler(self, event, cal_changed=True):
 		if event.GetId() == self.trc_textctrl.GetId() and (
-		   self.trc_ctrl.GetSelection() not in (0, 3) or stripzeros(getcfg("trc")) == 
+		   self.trc_ctrl.GetSelection() not in (1, 4) or stripzeros(getcfg("trc")) == 
 		   stripzeros(self.trc_textctrl.GetValue())):
 			event.Skip()
 			return
@@ -4060,7 +4113,7 @@ class MainFrame(BaseFrame):
 			bt1886 = (getcfg("trc.type") == "G" and
 					  getcfg("calibration.black_output_offset") == 0 and
 					  getcfg("trc") == 2.4)
-			if self.trc_ctrl.GetSelection() == 3:
+			if self.trc_ctrl.GetSelection() == 4:
 				# BT.1886
 				if not bt1886 and not getcfg("trc.backup", False):
 					setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
@@ -4073,14 +4126,14 @@ class MainFrame(BaseFrame):
 				setcfg("calibration.black_output_offset", 0)
 				self.black_output_offset_ctrl.SetValue(0)
 				self.black_output_offset_intctrl.SetValue(0)
-			elif (self.trc_ctrl.GetSelection() != 0 or bt1886):
+			elif (self.trc_ctrl.GetSelection() > 1 or bt1886):
 				self.restore_trc_backup()
 				if getcfg("calibration.black_output_offset.backup"):
 					setcfg("calibration.black_output_offset",
 						   getcfg("calibration.black_output_offset.backup"))
 					setcfg("calibration.black_output_offset.backup", None)
 					self.update_black_output_offset_ctrl()
-		if self.trc_ctrl.GetSelection() in (0, 3):
+		if self.trc_ctrl.GetSelection() in (1, 4):
 			try:
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
@@ -4104,10 +4157,13 @@ class MainFrame(BaseFrame):
 		if event.GetId() != self.trc_ctrl.GetId():
 			self.update_trc_control()
 		self.calpanel.Freeze()
-		self.show_gamma_controls()
+		self.enable_adjustment_controls()
+		self.show_trc_controls()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
+		self.update_scrollbars()
+		self.update_main_controls()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
 		if (trc in ("240", "709", "s") and not
@@ -5609,7 +5665,7 @@ class MainFrame(BaseFrame):
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not getcfg("profile.update") and (not getcfg("calibration.update") or 
-											 is_profile()):
+											 is_profile()) and getcfg("trc"):
 			update_profile = getcfg("calibration.update") and is_profile()
 			if update_profile:
 				msg = lang.getstr("calibration.update_profile_choice")
@@ -5647,6 +5703,7 @@ class MainFrame(BaseFrame):
 			return
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate"))
+		setcfg("calibration.continue_next", 0)
 		if getcfg("calibration.interactive_display_adjustment") and \
 		   not getcfg("calibration.update"):
 			# Interactive adjustment, do not show progress dialog
@@ -5671,7 +5728,7 @@ class MainFrame(BaseFrame):
 				start_timers = False
 				wx.CallAfter(self.profile_finish, True, 
 							 success_msg=lang.getstr("calibration.complete"))
-			else:
+			elif getcfg("trc"):
 				wx.CallAfter(self.load_cal, silent=True)
 				wx.CallAfter(InfoDialog, self, 
 							 msg=lang.getstr("calibration.complete"), 
@@ -5815,6 +5872,7 @@ class MainFrame(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("button.calibrate_and_profile").replace("&&", 
 																	   "&"))
+		setcfg("calibration.continue_next", 1)
 		self.worker.dispcal_create_fast_matrix_shaper = False
 		self.worker.dispread_after_dispcal = True
 		if getcfg("calibration.interactive_display_adjustment") and \
@@ -5837,7 +5895,7 @@ class MainFrame(BaseFrame):
 		if not isinstance(result, Exception) and result:
 			wx.CallAfter(self.update_calibration_file_ctrl)
 			self.worker.start_measurement(self.calibrate_and_profile_finish,
-										  apply_calibration=True, 
+										  apply_calibration=bool(getcfg("trc")), 
 										  progress_msg=lang.getstr("measuring.characterization"), 
 										  resume=True, continue_next=True)
 		else:
@@ -6722,32 +6780,15 @@ class MainFrame(BaseFrame):
 		self.calpanel.Freeze()
 		self.menuitem_show_advanced_calibration_options.Check(show_advanced_calibration_options)
 		for ctrl in (self.black_luminance_label,
-					 self.black_luminance_ctrl,
-					 #self.black_luminance_textctrl,
-					 #self.black_luminance_textctrl_label,
-					 #self.blacklevel_drift_compensation,
-					 self.ambient_viewcond_adjust_cb,
-					 self.ambient_viewcond_adjust_textctrl,
-					 self.ambient_viewcond_adjust_textctrl_label,
-					 self.ambient_viewcond_adjust_info,
-					 self.ambient_measure_btn,
-					 self.black_output_offset_label,
-					 self.black_output_offset_ctrl,
-					 self.black_output_offset_intctrl,
-					 self.black_output_offset_intctrl_label,
-					 self.black_point_correction_label,
-					 self.black_point_correction_auto_cb,
-					 self.black_point_rate_label,
-					 self.black_point_rate_ctrl,
-					 self.black_point_rate_floatctrl):
-			ctrl.GetContainingSizer().Show(ctrl, show_advanced_calibration_options)
+					 self.black_luminance_ctrl):
+			ctrl.GetContainingSizer().Show(ctrl,
+										   show_advanced_calibration_options)
 		self.black_luminance_textctrl.Show(show_advanced_calibration_options and
 										   bool(getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(show_advanced_calibration_options and
 												 bool(getcfg("calibration.black_luminance", False)))
 		if event:
-			self.show_gamma_controls()
-		self.black_point_correction_auto_handler()
+			self.show_trc_controls()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
@@ -8717,6 +8758,9 @@ class MainFrame(BaseFrame):
 				mode += lang.getstr("default")
 			profile_name = profile_name.replace("%im", mode)
 
+		trc = self.get_trc()
+		do_cal = self.interactive_display_adjustment_cb.GetValue() or trc
+
 		# Whitepoint
 		if "%wp" in profile_name:
 			whitepoint = self.get_whitepoint()
@@ -8729,14 +8773,15 @@ class MainFrame(BaseFrame):
 						whitepoint += "K"
 				else:
 					whitepoint = "x ".join(whitepoint.split(",")) + "y"
-			profile_name = profile_name.replace("%wp", whitepoint or "\0")
+			profile_name = profile_name.replace("%wp", (do_cal and whitepoint) or
+													   "\0")
 
 		# Luminance
 		if "%cb" in profile_name:
 			luminance = self.get_luminance()
 			profile_name = profile_name.replace("%cb", 
 												"\0" if 
-												luminance is None
+												luminance is None or not do_cal
 												else luminance + u"cdm²")
 
 		# Black luminance
@@ -8745,6 +8790,7 @@ class MainFrame(BaseFrame):
 			profile_name = profile_name.replace("%cB", 
 												"\0" if 
 												black_luminance is None
+												or not do_cal
 												else black_luminance + u"cdm²")
 
 		# TRC / black output offset
@@ -8753,7 +8799,6 @@ class MainFrame(BaseFrame):
 
 		# TRC
 		if "%cg" in profile_name:
-			trc = self.get_trc()
 			trc_type = self.get_trc_type()
 			bt1886 = (trc == "2.4" and trc_type == "G" and
 					  black_output_offset == "0")
@@ -8767,18 +8812,20 @@ class MainFrame(BaseFrame):
 								  "709": "Rec. 709", 
 								  "s": "sRGB", 
 								  "240": "SMPTE240M"})
-			profile_name = profile_name.replace("%cg", trc)
+			profile_name = profile_name.replace("%cg", trc or "\0")
 
 		# Ambient adjustment
 		if "%ca" in profile_name:
 			ambient = self.get_ambient()
 			profile_name = profile_name.replace("%ca", "\0" if ambient is None
+															   or not trc
 													   else ambient + "lx")
 
 		# Black output offset
 		if "%cf" in profile_name:
 			f = int(float(black_output_offset) * 100)
-			profile_name = profile_name.replace("%cf", "%i%%" % f)
+			profile_name = profile_name.replace("%cf", ("%i%%" % f) if trc
+													   else "\0")
 
 		# Black point correction / rate
 		if "%ck" in profile_name or "%cA" in profile_name:
@@ -8790,12 +8837,13 @@ class MainFrame(BaseFrame):
 			profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and 
 														k < 100 else "") + 
 													   (lang.getstr("neutral") if 
-														k > 0 else "\0").lower())
+														k > 0 else "\0").lower()
+													   if trc else "\0")
 
 		# Black point rate
 		if "%cA" in profile_name:
 			black_point_rate = self.get_black_point_rate()
-			if black_point_rate and float(black_point_correction) < 1:
+			if black_point_rate and float(black_point_correction) < 1 and trc:
 				profile_name = profile_name.replace("%cA", black_point_rate)
 			else:
 				profile_name = profile_name.replace("%cA", "\0")
@@ -8805,7 +8853,7 @@ class MainFrame(BaseFrame):
 			calibration_quality = self.get_calibration_quality()
 			profile_quality = getcfg("profile.quality")
 			aspects = {
-				"c": calibration_quality,
+				"c": calibration_quality if trc else "",
 				"p": profile_quality
 			}
 			msgs = {
@@ -8813,15 +8861,17 @@ class MainFrame(BaseFrame):
 				"h": "S", 
 				"m": "M", 
 				"l": "F", 
-				"v": "VF"
+				"v": "VF",
+				"": "\0"
 			}
 			quality = {}
 			if "%cq" in profile_name:
 				quality["c"] = msgs[aspects["c"]]
 			if "%pq" in profile_name:
 				quality["p"] = msgs[aspects["p"]]
-			if len(quality) == 2 and quality["c"] == quality["p"]:
-				profile_name = re.sub("%cq\W*%pq", quality["c"], profile_name)
+			if len(quality) == 2 and (quality["c"] == quality["p"] or
+									  quality["c"] == "\0"):
+				profile_name = re.sub("%cq\W*%pq", quality["p"], profile_name)
 			for q in quality:
 				profile_name = profile_name.replace("%%%sq" % q, quality[q])
 
@@ -9026,19 +9076,19 @@ class MainFrame(BaseFrame):
 			return "g"
 
 	def get_trc(self):
-		if self.trc_ctrl.GetSelection() in (0, 3):
+		if self.trc_ctrl.GetSelection() in (1, 4):
 			return str(stripzeros(self.trc_textctrl.GetValue().replace(",", 
 																	   ".")))
-		elif self.trc_ctrl.GetSelection() == 1:
-			return "l"
 		elif self.trc_ctrl.GetSelection() == 2:
+			return "l"
+		elif self.trc_ctrl.GetSelection() == 3:
 			return "709"
-		elif self.trc_ctrl.GetSelection() == 4:
-			return "240"
 		elif self.trc_ctrl.GetSelection() == 5:
+			return "240"
+		elif self.trc_ctrl.GetSelection() == 6:
 			return "s"
 		else:
-			raise ValueError("Invalid TRC selection")
+			return ""
 
 	def get_calibration_quality(self):
 		return self.quality_ab[self.calibration_quality_ctrl.GetValue()]
@@ -9615,19 +9665,20 @@ class MainFrame(BaseFrame):
 				ccxxsetting = getcfg("colorimeter_correction_matrix_file").split(":", 1)[0]
 				ccmx = None
 				# Parse options
+				# Restore defaults
+				self.restore_defaults_handler(
+					include=("calibration", 
+							 "drift_compensation", 
+							 "measure.darken_background", 
+							 "trc", 
+							 "whitepoint"), 
+					exclude=("calibration.black_point_correction_choice.show", 
+							 "calibration.update", 
+							 "calibration.use_video_lut",
+							 "measure.darken_background.show_warning", 
+							 "trc.should_use_viewcond_adjust.show_msg"),
+					override={"trc": ""} if not options_dispcal else None)
 				if options_dispcal:
-					# Restore defaults
-					self.restore_defaults_handler(
-						include=("calibration", 
-								 "drift_compensation", 
-								 "measure.darken_background", 
-								 "trc", 
-								 "whitepoint"), 
-						exclude=("calibration.black_point_correction_choice.show", 
-								 "calibration.update", 
-								 "calibration.use_video_lut",
-								 "measure.darken_background.show_warning", 
-								 "trc.should_use_viewcond_adjust.show_msg"))
 					self.worker.options_dispcal = ["-" + arg for arg 
 												   in options_dispcal]
 					for o in options_dispcal:
@@ -9838,9 +9889,9 @@ class MainFrame(BaseFrame):
 				else:
 					msg = lang.getstr("settings_loaded.profile")
 
-				if not silent:
-					InfoDialog(self, msg=msg + "\n" + path, ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-information"))
+				#if not silent:
+					#InfoDialog(self, msg=msg + "\n" + path, ok=lang.getstr("ok"), 
+							   #bitmap=geticon(32, "dialog-information"))
 				return
 			elif ext.lower() in (".icc", ".icm"):
 				sel = self.calibration_file_ctrl.GetSelection()
@@ -10004,7 +10055,7 @@ class MainFrame(BaseFrame):
 				msg = lang.getstr("no_settings")
 			else:
 				msg = lang.getstr("settings_loaded", ", ".join(settings))
-			if not silent:
+			if not silent and len(settings) == 0:
 				InfoDialog(self, msg=msg + "\n" + path, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-information"))

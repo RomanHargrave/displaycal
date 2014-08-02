@@ -380,7 +380,7 @@
                     <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                   </object>
                   <object class="spacer">
-                    <size>1,12</size>
+                    <size>1,4</size>
                   </object>
                   <object class="sizeritem">
                     <object class="wxBoxSizer">
@@ -407,7 +407,21 @@
                       </object>
                     </object>
                     <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                    <border>4</border>
+                    <border>12</border>
+                  </object>
+                  <object class="sizeritem">
+                    <object class="wxCheckBox" name="interactive_display_adjustment_cb">
+                      <label>calibration.interactive_display_adjustment</label>
+                      <checked>1</checked>
+                      <XRCED>
+                        <events>EVT_CHECKBOX</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>18</border>
+                  </object>
+                  <object class="spacer">
+                    <size>1,8</size>
                   </object>
                   <object class="sizeritem">
                     <object class="wxFlexGridSizer">
@@ -604,13 +618,6 @@
                           <orient>wxHORIZONTAL</orient>
                           <object class="sizeritem">
                             <object class="wxChoice" name="trc_ctrl">
-                              <content>
-                                <item>trc.gamma</item>
-                                <item>trc.lstar</item>
-                                <item>trc.rec709</item>
-                                <item>trc.smpte240m</item>
-                                <item>trc.srgb</item>
-                              </content>
                               <selection>0</selection>
                             </object>
                             <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -857,17 +864,6 @@
                             </object>
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
-                          </object>
-                          <object class="sizeritem">
-                            <object class="wxCheckBox" name="interactive_display_adjustment_cb">
-                              <label>calibration.interactive_display_adjustment</label>
-                              <checked>1</checked>
-                              <XRCED>
-                                <events>EVT_CHECKBOX</events>
-                              </XRCED>
-                            </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>10</border>
                           </object>
                           <object class="spacer">
                             <size>24,1</size>

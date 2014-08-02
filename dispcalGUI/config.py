@@ -503,7 +503,7 @@ valid_values = {
 	"tc_vrml_cie_colorspace": ["DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
 							   "LCH(uv)", "Lab", "Luv", "Lu'v'", "xyY"],
 	"tc_vrml_device_colorspace": ["HSI", "HSL", "HSV", "RGB"],
-	"trc": ["240", "709", "l", "s"],
+	"trc": ["240", "709", "l", "s", ""],
 	"trc.type": ["g", "G"],
 	"whitepoint.colortemp.locus": ["t", "T"]
 }
@@ -545,6 +545,7 @@ defaults = {
 	"calibration.black_point_correction_choice.show": 1,
 	"calibration.black_point_rate": 4.0,
 	"calibration.black_point_rate.enabled": 0,
+	"calibration.continue_next": 0,
 	"calibration.file": None,
 	"calibration.file.previous": None,
 	"calibration.interactive_display_adjustment": 1,

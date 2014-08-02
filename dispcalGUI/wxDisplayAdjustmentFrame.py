@@ -713,7 +713,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 								   self.measurement_play_sound_handler)
 		self.btnsizer.Add(get_panel(self, (12, 12)), flag=wx.EXPAND)
 		self.calibration_btn = self.create_gradient_button(getbitmap("theme/icons/10x10/skip"),
-														   " " + lang.getstr("calibration.start"),
+														   "",
 														   name="calibration_btn")
 		self.calibration_btn.Bind(wx.EVT_BUTTON, self.continue_to_calibration)
 		self.calibration_btn.Disable()
@@ -853,6 +853,14 @@ class DisplayAdjustmentFrame(wx.Frame):
 		else:
 			self.lb.disabled_pages = (0, 3)
 			self.lb.SetSelection(1)
+		if getcfg("trc"):
+			self.calibration_btn.SetLabel(" " + lang.getstr("calibration.start"))
+		elif getcfg("calibration.continue_next"):
+			self.calibration_btn.SetLabel(" " + lang.getstr("calibration.skip"))
+		else:
+			self.calibration_btn.SetLabel(" " + lang.getstr("finish"))
+		del self.calibration_btn._lastBestSize
+		self.calibration_btn.GetContainingSizer().Layout()
 		# Update black luminance page description
 		self.lb.GetPage(0).update_desc()
 		# Update white luminance page description
@@ -930,7 +938,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 		return panel
 	
 	def continue_to_calibration(self, event=None):
-		self.abort_and_send("7")
+		if getcfg("trc"):
+			self.abort_and_send("7")
+		else:
+			self.abort_and_send("8")
 	
 	def create_start_interactive_adjustment_button(self, icon="play",
 												   enable=False,

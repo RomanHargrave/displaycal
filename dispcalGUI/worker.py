@@ -5445,7 +5445,8 @@ usage: spotread [-options] [logfile]
 		if isinstance(result, Exception):
 			return result, None
 		if calibrate:
-			args += ["-q" + getcfg("calibration.quality")]
+			if getcfg("trc"):
+				args += ["-q" + getcfg("calibration.quality")]
 			profile_save_path = self.create_tempdir()
 			if not profile_save_path or isinstance(profile_save_path, Exception):
 				return profile_save_path, None
@@ -5538,18 +5539,19 @@ usage: spotread [-options] [logfile]
 			luminance = getcfg("calibration.luminance", False)
 			if luminance:
 				args += ["-b%s" % luminance]
-			args += ["-" + getcfg("trc.type") + str(getcfg("trc"))]
-			args += ["-f%s" % getcfg("calibration.black_output_offset")]
-			if bool(int(getcfg("calibration.ambient_viewcond_adjust"))):
-				args += ["-a%s" % 
-						 getcfg("calibration.ambient_viewcond_adjust.lux")]
-			if not getcfg("calibration.black_point_correction.auto"):
-				args += ["-k%s" % getcfg("calibration.black_point_correction")]
-			if defaults["calibration.black_point_rate.enabled"] and \
-			   float(getcfg("calibration.black_point_correction")) < 1:
-				black_point_rate = getcfg("calibration.black_point_rate")
-				if black_point_rate:
-					args += ["-A%s" % black_point_rate]
+			if getcfg("trc"):
+				args += ["-" + getcfg("trc.type") + str(getcfg("trc"))]
+				args += ["-f%s" % getcfg("calibration.black_output_offset")]
+				if bool(int(getcfg("calibration.ambient_viewcond_adjust"))):
+					args += ["-a%s" % 
+							 getcfg("calibration.ambient_viewcond_adjust.lux")]
+				if not getcfg("calibration.black_point_correction.auto"):
+					args += ["-k%s" % getcfg("calibration.black_point_correction")]
+				if defaults["calibration.black_point_rate.enabled"] and \
+				   float(getcfg("calibration.black_point_correction")) < 1:
+					black_point_rate = getcfg("calibration.black_point_rate")
+					if black_point_rate:
+						args += ["-A%s" % black_point_rate]
 			black_luminance = getcfg("calibration.black_luminance", False)
 			if black_luminance:
 				args += ["-B%f" % black_luminance]
@@ -6674,7 +6676,7 @@ usage: spotread [-options] [logfile]
 			result = self.exec_cmd(cmd, args, capture_output=capture_output)
 		else:
 			result = cmd
-		if not isinstance(result, Exception) and result:
+		if not isinstance(result, Exception) and result and getcfg("trc"):
 			dst_pathname = os.path.join(getcfg("profile.save_path"), 
 										getcfg("profile.name.expanded"), 
 										getcfg("profile.name.expanded"))
@@ -6753,7 +6755,7 @@ usage: spotread [-options] [logfile]
 							   safe_unicode(result2))
 			else:
 				result = result2
-		elif not isinstance(result, Exception) and result:
+		elif not isinstance(result, Exception) and result and getcfg("trc"):
 			setcfg("last_cal_path", dst_pathname + ".cal")
 			setcfg("calibration.file.previous", getcfg("calibration.file"))
 			if (getcfg("profile.update") or
