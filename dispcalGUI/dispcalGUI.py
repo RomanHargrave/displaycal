@@ -9445,10 +9445,11 @@ class MainFrame(BaseFrame):
 						 not self.worker.spyder2_firmware_exists())
 				spyd4 = ("Spyder4" in self.worker.instruments and
 						 not self.worker.spyder4_cal_exists())
-			if spyd2:
-				spyd2 = self.enable_spyder2_handler(None, i1d3 or icd or spyd4)
-			if not spyd2 and (i1d3 or icd or spyd4):
-				self.import_colorimeter_correction_handler(None)
+				if spyd2:
+					spyd2 = self.enable_spyder2_handler(None,
+														i1d3 or icd or spyd4)
+				if not spyd2 and (i1d3 or icd or spyd4):
+					self.import_colorimeter_correction_handler(None)
 		if displays != self.worker.displays or \
 		   comports != self.worker.instruments:
 			if self.IsShownOnScreen():
