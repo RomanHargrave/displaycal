@@ -3595,6 +3595,7 @@ class MainFrame(BaseFrame):
 			auto = self.black_point_correction_auto_cb.GetValue()
 			setcfg("calibration.black_point_correction.auto", int(auto))
 			self.cal_changed()
+			self.update_profile_name()
 		else:
 			auto = getcfg("calibration.black_point_correction.auto")
 			self.black_point_correction_auto_cb.SetValue(bool(auto))
@@ -8834,11 +8835,13 @@ class MainFrame(BaseFrame):
 		# Black point correction
 		if "%ck" in profile_name:
 			k = int(float(black_point_correction) * 100)
+			auto = self.black_point_correction_auto_cb.GetValue()
 			profile_name = profile_name.replace("%ck", (str(k) + "% " if k > 0 and 
 														k < 100 else "") + 
 													   (lang.getstr("neutral") if 
 														k > 0 else "\0").lower()
-													   if trc else "\0")
+													   if trc and not auto
+													   else "\0")
 
 		# Black point rate
 		if "%cA" in profile_name:
