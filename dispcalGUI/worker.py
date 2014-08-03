@@ -2598,7 +2598,8 @@ class Worker(object):
 		low_contrast (if True) sets low contrast shell colors while the 
 		command is run.
 		skip_scripts (if True) skips the creation of shell scripts that allow 
-		re-running the command which are created by default.
+		re-running the command. Note that this is also controlled by a global 
+		config option and scripts will only be created if it evaluates to False.
 		silent (if True) skips most output and also most error dialogs 
 		(except unexpected failures)
 		parent sets the parent window for auth dialog (if asroot is True).
@@ -2778,7 +2779,8 @@ class Worker(object):
 				# Use a designated prompt
 				cmdline.insert(1, "Password:")
 				cmdline.insert(1, "-p")
-		if working_dir and working_basename and not skip_scripts:
+		if (working_dir and working_basename and not skip_scripts and
+			not getcfg("skip_scripts")):
 			try:
 				cmdfilename = os.path.join(working_dir, working_basename + 
 										   "." + cmdname + script_ext)
