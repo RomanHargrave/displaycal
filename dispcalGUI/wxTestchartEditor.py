@@ -1126,10 +1126,7 @@ class TestchartEditor(wx.Frame):
 	def tc_enable_add_precond_controls(self):
 		tc_algo = getcfg("tc_algo")
 		add_preconditioned_enable = (hasattr(self, "ti1") and
-									 bool(getcfg("tc_precond_profile")) and
-									 (tc_algo in ("I", "Q", "R", "t") or
-									  (tc_algo == "" and
-									   getcfg("tc_adaption") == 1)))
+									 bool(getcfg("tc_precond_profile")))
 		self.saturation_sweeps_intctrl.Enable(add_preconditioned_enable)
 		for color in ("R", "G", "B", "C", "M", "Y"):
 			getattr(self, "saturation_sweeps_%s_btn" % color).Enable(
@@ -1587,6 +1584,8 @@ class TestchartEditor(wx.Frame):
 
 	def tc_precond_handler(self, event = None):
 		setcfg("tc_precond", int(self.tc_precond.GetValue()))
+		self.tc_adaption_slider.SetValue(100 if getcfg("tc_precond") else 10)
+		self.tc_adaption_handler(self.tc_adaption_slider)
 		self.tc_algo_handler()
 
 	def tc_precond_profile_handler(self, event = None):
