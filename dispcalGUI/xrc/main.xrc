@@ -430,7 +430,7 @@
                           <label>whitepoint</label>
                         </object>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>12</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
@@ -443,8 +443,11 @@
                               </content>
                               <selection>0</selection>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
+                          </object>
+                          <object class="spacer">
+                            <size>8,1</size>
                           </object>
                           <object class="sizeritem">
                             <object class="wxComboBox" name="whitepoint_colortemp_textctrl">
@@ -453,8 +456,8 @@
                                 <events>EVT_COMBOBOX|EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="whitepoint_colortemp_label">
@@ -471,10 +474,9 @@
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxChoice" name="whitepoint_colortemp_locus_ctrl">
-                            </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <object class="wxChoice" name="whitepoint_colortemp_locus_ctrl"/>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="whitepoint_x_textctrl">
@@ -483,8 +485,8 @@
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="whitepoint_x_label">
@@ -500,8 +502,8 @@
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="whitepoint_y_label">
@@ -519,15 +521,14 @@
                           </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="luminance_label">
                           <label>calibration.luminance</label>
                         </object>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>12</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
@@ -539,8 +540,11 @@
                               </content>
                               <selection>0</selection>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
+                          </object>
+                          <object class="spacer">
+                            <size>8,1</size>
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="luminance_textctrl">
@@ -549,8 +553,8 @@
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="luminance_textctrl_label">
@@ -561,15 +565,14 @@
                           </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="black_luminance_label">
                           <label>calibration.black_luminance</label>
                         </object>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>12</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
@@ -581,8 +584,11 @@
                               </content>
                               <selection>0</selection>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
+                          </object>
+                          <object class="spacer">
+                            <size>8,1</size>
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="black_luminance_textctrl">
@@ -591,8 +597,8 @@
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="black_luminance_textctrl_label">
@@ -603,31 +609,29 @@
                           </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="trc_label">
                           <label>trc</label>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                        <border>12</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
-                          <orient>wxHORIZONTAL</orient>
                           <object class="sizeritem">
                             <object class="wxChoice" name="trc_ctrl">
                               <selection>0</selection>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="trc_gamma_label">
                               <label>trc.gamma</label>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>8</border>
                           </object>
                           <object class="sizeritem">
@@ -637,22 +641,24 @@
                                 <events>EVT_COMBOBOX|EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
+                          </object>
+                          <object class="spacer">
+                            <size>8,1</size>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxChoice" name="trc_type_ctrl">
-                            </object>
-                            <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <object class="wxChoice" name="trc_type_ctrl"/>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
+                          <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="spacer"/>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
-                          <orient>wxHORIZONTAL</orient>
                           <object class="sizeritem">
                             <object class="wxCheckBox" name="ambient_viewcond_adjust_cb">
                               <label>calibration.ambient_viewcond_adjust</label>
@@ -671,8 +677,8 @@
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>0</border>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="ambient_viewcond_adjust_textctrl_label">
@@ -694,22 +700,22 @@
                             <object class="wxButton" name="ambient_measure_btn">
                               <label>measure</label>
                             </object>
-                            <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>4</border>
                           </object>
+                          <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>4</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="black_output_offset_label">
                           <label>calibration.black_output_offset</label>
                         </object>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>12</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
-                          <orient>wxHORIZONTAL</orient>
                           <object class="sizeritem">
                             <object class="wxSlider" name="black_output_offset_ctrl">
                               <size>128,-1</size>
@@ -719,7 +725,7 @@
                                 <events>EVT_SLIDER</events>
                               </XRCED>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -731,7 +737,7 @@
                                 <events>EVT_TEXT</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -740,16 +746,16 @@
                             </object>
                             <flag>wxALIGN_CENTRE_VERTICAL</flag>
                           </object>
+                          <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>3</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="black_point_correction_label">
                           <label>calibration.black_point_correction</label>
                         </object>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>12</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
@@ -770,7 +776,7 @@
                                 <events>EVT_SLIDER</events>
                               </XRCED>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -782,7 +788,7 @@
                                 <events>EVT_TEXT</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -808,7 +814,7 @@
                                 <events>EVT_SLIDER</events>
                               </XRCED>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -823,7 +829,7 @@
                                 <events>EVT_TEXT</events>
                               </XRCED>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="spacer">
@@ -831,19 +837,17 @@
                           </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>2</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="calibration_quality_label">
                           <label>calibration.speed</label>
                         </object>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>12</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxBoxSizer">
-                          <orient>wxHORIZONTAL</orient>
                           <object class="sizeritem">
                             <object class="wxSlider" name="calibration_quality_ctrl">
                               <size>75,-1</size>
@@ -854,7 +858,7 @@
                                 <events>EVT_SLIDER</events>
                               </XRCED>
                             </object>
-                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -868,9 +872,9 @@
                           <object class="spacer">
                             <size>24,1</size>
                           </object>
+                          <orient>wxHORIZONTAL</orient>
                         </object>
-                        <flag>wxTOP|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>3</border>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
                       </object>
                       <cols>2</cols>
                       <rows>0</rows>
@@ -914,7 +918,7 @@
                               <label>profile.quality</label>
                             </object>
                             <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <border>12</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
@@ -987,7 +991,7 @@
                               <label>testchart.file</label>
                             </object>
                             <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <border>12</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
@@ -1040,7 +1044,7 @@
                               <label>profile.name</label>
                             </object>
                             <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                            <border>12</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
