@@ -3364,10 +3364,10 @@ class MainFrame(BaseFrame):
 	def enable_adjustment_controls(self):
 		update_cal = getcfg("calibration.update")
 		auto = self.get_measurement_mode() == "auto"
-		enable = (not update_cal and not auto and
-				  (self.interactive_display_adjustment_cb.GetValue() or
-				   self.trc_ctrl.GetSelection() > 0))
-		if auto:
+		do_cal = (self.interactive_display_adjustment_cb.GetValue() or
+				  self.trc_ctrl.GetSelection() > 0)
+		enable = (not update_cal and not auto and do_cal)
+		if auto or not do_cal:
 			self.whitepoint_ctrl.SetSelection(0)
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", None)
