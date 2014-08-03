@@ -1868,13 +1868,6 @@ class MainFrame(BaseFrame):
 		
 		self.set_child_ctrls_as_attrs(self)
 
-		# Make the height of the last row in the calibration settings sizer
-		# match the other rows
-		self.calibration_quality_ctrl.ContainingSizer.Add((1,
-														   self.trc_ctrl.Size[1]),
-														  flag=wx.TOP | wx.BOTTOM,
-														  border=4)
-
 		# Settings file controls
 		# ======================
 		
@@ -3142,6 +3135,13 @@ class MainFrame(BaseFrame):
 					 self.calibration_quality_info):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   self.trc_ctrl.GetSelection() > 0)
+		# Make the height of the last row in the calibration settings sizer
+		# match the other rows
+		if self.trc_ctrl.GetSelection() > 0:
+			minheight = self.trc_ctrl.Size[1] + 8
+		else:
+			minheight = 0
+		self.calibration_quality_ctrl.ContainingSizer.SetMinSize((0, minheight))
 		self.black_point_correction_auto_handler()
 	
 	def update_black_output_offset_ctrl(self):
