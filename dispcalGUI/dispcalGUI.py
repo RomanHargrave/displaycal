@@ -1868,6 +1868,13 @@ class MainFrame(BaseFrame):
 		
 		self.set_child_ctrls_as_attrs(self)
 
+		# Make the height of the last row in the calibration settings sizer
+		# match the other rows
+		self.calibration_quality_ctrl.ContainingSizer.Add((1,
+														   self.trc_ctrl.Size[1]),
+														  flag=wx.TOP | wx.BOTTOM,
+														  border=4)
+
 		# Settings file controls
 		# ======================
 		
