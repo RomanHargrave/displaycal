@@ -1584,7 +1584,8 @@ class TestchartEditor(wx.Frame):
 
 	def tc_precond_handler(self, event = None):
 		setcfg("tc_precond", int(self.tc_precond.GetValue()))
-		self.tc_adaption_slider.SetValue(100 if getcfg("tc_precond") else 10)
+		self.tc_adaption_slider.SetValue((1 if getcfg("tc_precond")
+										  else defaults["tc_adaption"]) * 100)
 		self.tc_adaption_handler(self.tc_adaption_slider)
 		self.tc_algo_handler()
 
