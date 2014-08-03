@@ -3363,12 +3363,11 @@ class MainFrame(BaseFrame):
 
 	def enable_adjustment_controls(self):
 		update_cal = getcfg("calibration.update")
-		colorhug_auto = (self.get_measurement_mode() == "auto" and
-						 self.worker.get_instrument_name() == "ColorHug")
-		enable = (not update_cal and not colorhug_auto and
+		auto = self.get_measurement_mode() == "auto"
+		enable = (not update_cal and not auto and
 				  (self.interactive_display_adjustment_cb.GetValue() or
 				   self.trc_ctrl.GetSelection() > 0))
-		if not enable:
+		if auto:
 			self.whitepoint_ctrl.SetSelection(0)
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", None)
@@ -3398,7 +3397,7 @@ class MainFrame(BaseFrame):
 		self.luminance_ctrl.Enable(enable)
 		self.black_luminance_ctrl.Enable(enable)
 		self.interactive_display_adjustment_cb.Enable(not update_cal and
-													  not colorhug_auto)
+													  not auto)
 
 	def enable_argyll_debug_handler(self, event):
 		if not getcfg("argyll.debug"):
