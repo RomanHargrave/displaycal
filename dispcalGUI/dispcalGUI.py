@@ -3393,7 +3393,8 @@ class MainFrame(BaseFrame):
 		self.whitepoint_ctrl.Enable(enable)
 		for ctrl in (self.whitepoint_colortemp_locus_label,
 					 self.whitepoint_colortemp_locus_ctrl):
-			ctrl.Show(self.whitepoint_ctrl.GetSelection() in (0, 1) and enable)
+			ctrl.Show(self.whitepoint_ctrl.GetSelection() in (0, 1) and
+					  not auto and do_cal)
 		self.luminance_ctrl.Enable(enable)
 		self.black_luminance_ctrl.Enable(enable)
 		self.interactive_display_adjustment_cb.Enable(not update_cal and
