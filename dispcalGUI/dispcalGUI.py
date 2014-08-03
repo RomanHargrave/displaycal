@@ -2904,7 +2904,6 @@ class MainFrame(BaseFrame):
 		self.black_point_correction_auto_cb.Enable(not update_cal)
 		self.black_point_correction_ctrl.Enable(not update_cal)
 		self.black_point_correction_intctrl.Enable(not update_cal)
-		self.black_point_correction_auto_handler()
 		self.update_black_point_rate_ctrl()
 		self.update_drift_compensation_ctrls()
 		self.interactive_display_adjustment_cb.Enable(not update_cal)
@@ -3392,8 +3391,9 @@ class MainFrame(BaseFrame):
 			self.interactive_display_adjustment_cb.SetValue(False)
 			setcfg("calibration.interactive_display_adjustment", 0)
 		self.whitepoint_ctrl.Enable(enable)
-		self.whitepoint_colortemp_locus_label.Show(enable)
-		self.whitepoint_colortemp_locus_ctrl.Show(enable)
+		for ctrl in (self.whitepoint_colortemp_locus_label,
+					 self.whitepoint_colortemp_locus_ctrl):
+			ctrl.Show(self.whitepoint_ctrl.GetSelection() in (0, 1) and enable)
 		self.luminance_ctrl.Enable(enable)
 		self.black_luminance_ctrl.Enable(enable)
 		self.interactive_display_adjustment_cb.Enable(not update_cal and
