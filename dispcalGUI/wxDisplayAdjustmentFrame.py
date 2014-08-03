@@ -1007,10 +1007,9 @@ class DisplayAdjustmentFrame(wx.Frame):
 				key_num = chr(keycode)
 				pagenum = dict(zip(self.pagenum_2_argyll_key_num.values(),
 								   self.pagenum_2_argyll_key_num.keys())).get(key_num)
-				if getcfg("measurement_mode") != "c" or pagenum not in self.lb.disabled_pages:
-					if pagenum is not None and not self.is_measuring:
-						self.lb.SetSelection(pagenum)
-						self.start_interactive_adjustment()
+				if pagenum not in self.lb.disabled_pages and not self.is_measuring:
+					self.lb.SetSelection(pagenum)
+					self.start_interactive_adjustment()
 			elif keycode in (ord("\x1b"), ord("7"), ord("8"), ord("Q"), ord("q")):
 				if not getcfg("trc") and keycode == ord("7"):
 					# Ignore
