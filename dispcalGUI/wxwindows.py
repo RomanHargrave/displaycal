@@ -230,6 +230,25 @@ class BaseFrame(wx.Frame):
 				safe_print(child.__class__, child.Name)
 			if isinstance(child, (wx.StaticText, wx.Control, 
 								  floatspin.FloatSpin)):
+				if (isinstance(child, wx.Choice) and wx.VERSION < (2, 9) and
+					sys.platform not in ("darwin", "win32") and
+					child.MinSize[1] == -1):
+					# wx.Choice with wxPython < 2.9 under Gnome 3 Adwaita theme
+					# has varying height. We can't easily check for Gnome 3 or
+					# Adwaita, so simply always set wx.Choice height to
+					# wx.ComboBox height with wxPython < 2.9 under Linux
+					if not hasattr(self, "_comboboxheight"):
+						combobox = wx.ComboBox(self, -1)
+						self._comboboxheight = combobox.Size[1]
+						combobox.Destroy()
+					size = child.MinSize[0], self._comboboxheight
+					newchild = wx.Choice(child.Parent, child.Id, size=size,
+										 choices=child.Items,
+										 style=child.WindowStyle,
+										 name=child.Name)
+					child.GetContainingSizer().Replace(child, newchild)
+					child.Destroy()
+					child = newchild
 				child.SetMaxFontSize(11)
 				if sys.platform == "darwin" or debug:
 					# Work around ComboBox issues on Mac OS X
