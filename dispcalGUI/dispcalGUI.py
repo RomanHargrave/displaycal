@@ -6108,9 +6108,9 @@ class MainFrame(BaseFrame):
 			except Exception, exception:
 				self.measure_auto_finish(exception)
 				return
+			luminance = None
 			if self.worker.get_instrument_name() == "ColorHug":
 				# Get the factory calibration so we can do luminance scaling
-				luminance = None
 				for line in self.worker.output:
 					if line.lower().startswith("serial number:"):
 						serial = line.split(":", 1)[-1].strip()
