@@ -1451,14 +1451,25 @@ class MainFrame(BaseFrame):
 
 		wx.CallAfter(self.set_size)
 
-	def set_size(self):
+	def set_size(self, set_height=False):
 		if not self.IsFrozen():
 			self.Freeze()
 		self.SetMinSize((0, 0))
+		if set_height:
+			if sys.platform not in ("darwin", "win32"):
+				# Linux
+				safety_margin = 45
+			else:
+				safety_margin = 20
+			height = min(self.GetDisplay().ClientArea[3] - safety_margin,
+							 self.GetSize()[1] - self.calpanel.GetSize()[1] +
+							 self.calpanel.GetSizer().GetMinSize()[1])
+		else:
+			height = -1
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0], 
 					    self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
-				-1)
+				height)
 		self.SetMaxSize((-1, -1))
 		self.SetSize(size)
 		self.SetMinSize((size[0], self.GetSize()[1] - 
@@ -2354,6 +2365,8 @@ class MainFrame(BaseFrame):
 		self.update_scrollbars()
 	
 	def update_scrollbars(self):
+		if self.IsShown():
+			self.set_size(True)
 		self.Freeze()
 		self.calpanel.SetVirtualSize(self.calpanel.GetBestVirtualSize())
 		self.Thaw()
@@ -2534,7 +2547,7 @@ class MainFrame(BaseFrame):
 			self.colorimeter_correction_web_btn, show_control)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
-		self.update_scrollbars()
+		wx.CallAfter(self.update_scrollbars)
 	
 	def delete_colorimeter_correction_matrix_ctrl_item(self, path):
 		if path in self.ccmx_cached_paths:
