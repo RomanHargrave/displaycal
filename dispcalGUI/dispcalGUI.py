@@ -3390,6 +3390,7 @@ class MainFrame(BaseFrame):
 			setcfg("calibration.black_luminance", None)
 			self.interactive_display_adjustment_cb.SetValue(False)
 			setcfg("calibration.interactive_display_adjustment", 0)
+			wx.CallAfter(self.profile_settings_changed)
 		self.whitepoint_ctrl.Enable(enable)
 		for ctrl in (self.whitepoint_colortemp_locus_label,
 					 self.whitepoint_colortemp_locus_ctrl):
