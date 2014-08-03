@@ -1012,7 +1012,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 						self.lb.SetSelection(pagenum)
 						self.start_interactive_adjustment()
 			elif keycode in (ord("\x1b"), ord("7"), ord("8"), ord("Q"), ord("q")):
-				if self.keyhandler:
+				if not getcfg("trc") and keycode == ord("7"):
+					# Ignore
+					pass
+				elif self.keyhandler:
 					self.keyhandler(event)
 				elif self.has_worker_subprocess():
 					self.worker.safe_send(chr(keycode))
