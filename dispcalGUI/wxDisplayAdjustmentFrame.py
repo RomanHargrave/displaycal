@@ -869,7 +869,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 		# Set size
 		min_h = (72 + 8) * (self.lb.GetPageCount() - len(self.lb.disabled_pages)) + 2 - 8
 		if init:
-			self.lb.SetMinSize((400, min_h))
+			self.lb.SetMinSize((418, min_h))
 		self.lb.SetMinSize((self.lb.GetMinSize()[0],
 							max(self.lb.GetMinSize()[1], min_h)))
 		self.lb.GetCurrentPage().Fit()
