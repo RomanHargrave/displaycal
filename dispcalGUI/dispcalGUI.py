@@ -5572,14 +5572,16 @@ class MainFrame(BaseFrame):
 	def load_cal(self, cal=None, silent=False):
 		""" Load a calibration from a .cal file or ICC profile. Defaults
 		to currently configured file if cal parameter is not given. """
+		load_vcgt = getcfg("calibration.autoload") or cal
 		if not cal:
 			cal = getcfg("calibration.file")
 		if cal:
 			if check_set_argyll_bin():
-				if verbose >= 1:
+				if verbose >= 1 and load_vcgt:
 					safe_print(lang.getstr("calibration.loading"))
 					safe_print(cal)
-				if self.install_cal(capture_output=True, cal=cal, 
+				if not load_vcgt or \
+					self.install_cal(capture_output=True, cal=cal, 
 									skip_scripts=True, silent=silent,
 									title=lang.getstr("calibration.load_from_cal_or_profile")) is True:
 					if (cal.lower().endswith(".icc") or 
@@ -5592,10 +5594,10 @@ class MainFrame(BaseFrame):
 					else:
 						profile = cal_to_fake_profile(cal)
 					self.lut_viewer_load_lut(profile=profile)
-					if verbose >= 1 and silent:
+					if verbose >= 1 and silent and load_vcgt:
 						safe_print(lang.getstr("success"))
 					return True
-				if verbose >= 1:
+				if verbose >= 1 and load_vcgt:
 					safe_print(lang.getstr("failure"))
 		return False
 
@@ -5627,23 +5629,26 @@ class MainFrame(BaseFrame):
 				safe_print(lang.getstr("failure"))
 		return False
 
-	def load_display_profile_cal(self, event=None):
+	def load_display_profile_cal(self, event=None, lut_viewer_load_lut=True):
 		""" Load calibration (vcgt) from current display profile """
 		profile = get_display_profile()
 		if check_set_argyll_bin():
-			if verbose >= 1:
+			if verbose >= 1 and (getcfg("calibration.autoload") or event):
 				safe_print(
 					lang.getstr("calibration.loading_from_display_profile"))
 				if profile and profile.fileName:
 					safe_print(profile.fileName)
-			if self.install_cal(capture_output=True, cal=True, 
+			if (not getcfg("calibration.autoload") and not event) or \
+				self.install_cal(capture_output=True, cal=True, 
 								skip_scripts=True, silent=not (getcfg("dry_run") and event),
 								title=lang.getstr("calibration.load_from_display_profile")) is True:
-				self.lut_viewer_load_lut(profile=profile)
-				if verbose >= 1:
+				if lut_viewer_load_lut:
+					self.lut_viewer_load_lut(profile=profile)
+				if verbose >= 1 and (getcfg("calibration.autoload") or event):
 					safe_print(lang.getstr("success"))
 				return True
-			if verbose >= 1 and not getcfg("dry_run"):
+			if (verbose >= 1 and not getcfg("dry_run") and
+				(getcfg("calibration.autoload") or event)):
 				safe_print(lang.getstr("failure"))
 		return False
 
@@ -6281,6 +6286,9 @@ class MainFrame(BaseFrame):
 		if is_ccxx_testchart():
 			# Restore calibration after measuring CCXX testcahrt
 			self.load_cal(silent=True) or self.load_display_profile_cal()
+			if not getcfg("calibration.autoload"):
+				# Reload display profile into videoLUT
+				self.load_display_profile_cal(True, False)
 		self.restore_measurement_mode()
 		self.restore_testchart()
 	
@@ -6635,10 +6643,13 @@ class MainFrame(BaseFrame):
 				if getcfg("calibration.file"):
 					# Load LUT curves from last used .cal file
 					self.load_cal(silent=True)
+					if not getcfg("calibration.autoload"):
+						# Reload display profile into videoLUT
+						self.load_display_profile_cal(True, False)
 				else:
 					# Load LUT curves from current display profile (if any, 
 					# and if it contains curves)
-					self.load_display_profile_cal(None)
+					self.load_display_profile_cal(True)
 			self.profile_finish_consumer()
 	
 	def profile_finish_consumer(self, result=None):
@@ -9896,7 +9907,7 @@ class MainFrame(BaseFrame):
 				if ext.lower() in (".icc", ".icm"):
 					if load_vcgt:
 						# load calibration into lut
-						self.load_cal(cal=path, silent=True)
+						self.load_cal(silent=True)
 					if options_dispcal and options_colprof:
 						return
 					elif options_dispcal:
@@ -9910,7 +9921,7 @@ class MainFrame(BaseFrame):
 						msg = lang.getstr("settings_loaded.cal")
 					else:
 						# load calibration into lut
-						self.load_cal(cal=path, silent=True)
+						self.load_cal(silent=True)
 						msg = lang.getstr("settings_loaded.cal_and_lut")
 				else:
 					msg = lang.getstr("settings_loaded.profile")
@@ -9936,9 +9947,6 @@ class MainFrame(BaseFrame):
 					# (maybe because the user renamed the file)
 					idx = index_fallback_ignorecase(self.recent_cals, cal)
 					self.calibration_file_ctrl.SetSelection(idx)
-				if load_vcgt:
-					# load calibration into lut
-					self.load_cal(cal=path, silent=True)
 				if not silent:
 					InfoDialog(self, msg=lang.getstr("no_settings") + 
 										 "\n" + path, 

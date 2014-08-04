@@ -537,6 +537,7 @@ defaults = {
 	"drift_compensation.whitelevel": 0,
 	"calibration.ambient_viewcond_adjust": 0,
 	"calibration.ambient_viewcond_adjust.lux": 500.0,
+	"calibration.autoload": 0,
 	"calibration.black_luminance": 0.000001,
 	"calibration.black_output_offset": 1.0,
 	"calibration.black_output_offset.backup": 1.0,
