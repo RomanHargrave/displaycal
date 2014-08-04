@@ -588,7 +588,7 @@
                             <border>4</border>
                           </object>
                           <object class="spacer">
-                            <size>8,1</size>
+                            <size>8,0</size>
                           </object>
                           <object class="sizeritem">
                             <object class="wxTextCtrl" name="black_luminance_textctrl">
@@ -870,7 +870,7 @@
                             <border>4</border>
                           </object>
                           <object class="spacer">
-                            <size>24,1</size>
+                            <size>24,0</size>
                           </object>
                           <orient>wxHORIZONTAL</orient>
                         </object>
