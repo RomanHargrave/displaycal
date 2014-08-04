@@ -49,7 +49,6 @@ Name: spanish; MessagesFile: ..\misc\InnoSetup\v5\Languages\Spanish.isl;
 [Tasks]
 Name: calibrationloadinghandledbydispcalgui; Description: {cm:CalibrationLoadingHandledByDispcalGUI}; Flags: exclusive; GroupDescription: {cm:CalibrationLoading};
 Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledByOS}; Flags: exclusive unchecked; GroupDescription: {cm:CalibrationLoading}; MinVersion: 0,6.1.7600;
-Name: runentry; Description: {cm:LaunchProgram,dispcalGUI};
 
 [Files]
 Source: ..\dispcalGUI\theme\icons\dispcalGUI-uninstall.ico; DestDir: {app};
@@ -62,6 +61,7 @@ Name: {group}\README; Filename: %(URL)s;
 
 [Run]
 Filename: %(URL)s; Description: {code:Get_RunEntryShellExec_Message|README}; Flags: nowait postinstall shellexec skipifsilent;
+Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --not-before=%(AppVersion)s %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden;
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden;
 
@@ -85,15 +85,23 @@ begin
 	Result := RemoveQuotes(UninstallString);
 end;
 
-function ZeroInstall_IsInstalled: boolean;
-begin
-	Result := RegKeyExists(HKLM, 'SOFTWARE\Zero Install') or RegKeyExists(HKCU, 'SOFTWARE\Zero Install');
-end;
-
 function Get_ZeroInstall_InstallLocation: string;
 begin
 	if not RegQueryStringValue(HKLM, 'SOFTWARE\Zero Install', 'InstallLocation', Result) then
 		RegQueryStringValue(HKCU, 'SOFTWARE\Zero Install', 'InstallLocation', Result);
+end;
+
+function Get_ZeroInstall_Exe: string;
+begin
+	Result := Get_ZeroInstall_InstallLocation() + '\0install-win.exe';
+end;
+
+function ZeroInstall_IsInstalled: boolean;
+var
+	ExePath: string;
+begin
+	ExePath := Get_ZeroInstall_Exe();
+	Result := (ExePath <> '') and FileExists(ExePath);
 end;
 
 procedure InitializeWizard();
@@ -113,40 +121,31 @@ var
 begin
 	if CurStep=ssInstall then begin
 		if not ZeroInstall_IsInstalled() then begin
-			if not Exec(ExpandConstant('{tmp}\zero-install.exe'), '/SP- /SILENT /NOCANCEL', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(ExpandConstant('{tmp}\zero-install.exe'), '/SP- /SILENT /NORESTART', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
 			if not ZeroInstall_IsInstalled() then
 				Abort();
 		end;
 		UninstallString := Get_UninstallString(ExpandConstant('{#emit SetupSetting("AppId")}'));
 		if UninstallString <> '' then begin
-			if not Exec(UninstallString, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(UninstallString, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
-		ZeroInstall := Get_ZeroInstall_InstallLocation() + '\0install-win.exe';
+		ZeroInstall := Get_ZeroInstall_Exe();
 		ForceDirectories(ExpandConstant('{group}'));
 		CreateShellLink(ExpandConstant('{group}\dispcalGUI.lnk'), 'dispcalGUI', ZeroInstall, 'run --no-wait %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 		CreateShellLink(ExpandConstant('{group}\' + CustomMessage('SelectVersion') + '.lnk'), CustomMessage('SelectVersion'), ZeroInstall, 'run --gui --no-wait %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
 		CreateShellLink(ExpandConstant('{group}\' + CustomMessage('ChangeIntegration') + '.lnk'), CustomMessage('ChangeIntegration'), ZeroInstall, 'integrate %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
-		if not Exec(ZeroInstall, 'integrate %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+		if not Exec(ZeroInstall, 'integrate --refresh %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
-		if not Exec(ZeroInstall, 'add --batch %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
-			SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
 		if IsTaskSelected('calibrationloadinghandledbydispcalgui') then begin
 			ForceDirectories(ExpandConstant('{commonstartup}'));
 			CreateShellLink(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'), 'dispcalGUI Profile Loader', ZeroInstall, 'run --no-wait --offline --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml', '', '', 0, SW_SHOWNORMAL);
-			if not Exec(ZeroInstall, 'run --batch --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(ZeroInstall, 'run --batch --not-before=%(AppVersion)s --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
 		if IsTaskSelected('calibrationloadinghandledbyos') then begin
-			if not Exec(ZeroInstall, 'run --batch --command=set-calibration-loading -- %(URL)s0install/dispcalGUI.xml --os', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
-				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
-		end;
-	end;
-	if (CurStep=ssDone) and not WizardSilent() then begin
-		if IsTaskSelected('runentry') then begin
-			ZeroInstall := Get_ZeroInstall_InstallLocation() + '\0install-win.exe';
-			if not ExecAsOriginalUser(ZeroInstall, 'run %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewNoWait, ErrorCode) then
+			if not Exec(ZeroInstall, 'run --batch --not-before=%(AppVersion)s --command=set-calibration-loading -- %(URL)s0install/dispcalGUI.xml --os', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
 	end;
@@ -163,20 +162,16 @@ begin
 		DeleteFile(ExpandConstant('{group}\' + CustomMessage('SelectVersion') + '.lnk'));
 		DeleteFile(ExpandConstant('{group}\' + CustomMessage('ChangeIntegration') + '.lnk'));
 		if ZeroInstall_IsInstalled() then begin
-			ZeroInstall := Get_ZeroInstall_InstallLocation() + '\0install-win.exe';
-			if not Exec(ZeroInstall, 'remove --batch %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
-				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
-			if not Exec(ZeroInstall, 'remove --batch --machine %(URL)s0install/dispcalGUI.xml', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then
+			ZeroInstall := Get_ZeroInstall_Exe();
+			if not Exec(ZeroInstall, 'remove --batch %(URL)s0install/dispcalGUI.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
 		DeleteFile(ExpandConstant('{commonstartup}\dispcalGUI Profile Loader.lnk'));
 	end;
 	if CurUninstallStep=usDone then begin
-		RemoveDir(ExpandConstant('{userprograms}\Graphics'));
-		RemoveDir(ExpandConstant('{commonprograms}\Graphics'));
 		if ZeroInstall_IsInstalled() then begin
 			UninstallString := Get_ZeroInstall_InstallLocation() + '\unins000.exe';
-			if SuppressibleMsgBox(FmtMessage(CustomMessage('AskRemove'), ['Zero Install']), mbConfirmation, MB_YESNO, IDNO) = IDYES then
+			if (UninstallString <> '') and (SuppressibleMsgBox(FmtMessage(CustomMessage('AskRemove'), ['Zero Install']), mbConfirmation, MB_YESNO, IDNO) = IDYES) then
 				Exec(UninstallString, '', '', SW_SHOW, ewNoWait, ErrorCode);
 		end;
 	end;
