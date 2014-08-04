@@ -1307,7 +1307,7 @@ class MainFrame(BaseFrame):
 		
 		"""
 		if not self.worker.is_working():
-			self.load_cal_handler(True, path)
+			self.load_cal_handler(None, path)
 
 	def ti1_drop_handler(self, path):
 		"""
@@ -9629,12 +9629,10 @@ class MainFrame(BaseFrame):
 					return
 			ti3_lines = [line.strip() for line in cal]
 			cal.close()
-			if event:
-				setcfg("last_cal_or_icc_path", path)
+			setcfg("last_cal_or_icc_path", path)
 			update_ccmx_items = True
 			if ext.lower() in (".icc", ".icm"):
-				if event:
-					setcfg("last_icc_path", path)
+				setcfg("last_icc_path", path)
 				(options_dispcal, 
 				 options_colprof) = get_options_from_profile(profile)
 				# Get and set the display
@@ -9958,8 +9956,7 @@ class MainFrame(BaseFrame):
 
 			# Old .cal file without ARGYLL_DISPCAL_ARGS section
 			
-			if event:
-				setcfg("last_cal_path", path)
+			setcfg("last_cal_path", path)
 
 			# Restore defaults
 			self.restore_defaults_handler(
