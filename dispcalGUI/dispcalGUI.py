@@ -207,6 +207,9 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 				chglog = re.sub("<h3>.+?</h3>", "", chglog)
 				chglog = re.sub("<h\d>(.+?)</h\d>", 
 								"<p><strong>\\1</strong></p>", chglog)
+				chglog = re.sub('<sup><a .+?>.+?</a></sup>', "", chglog)
+				chglog = re.sub('<a (?:.+? )?href="#[^"]+">(.+?)</a>', "\\1",
+								chglog)
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
 					 snapshot)
 	elif not snapshot and VERSION > VERSION_BASE:
@@ -265,6 +268,8 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500, 300))
 		htmlwnd.SetStandardFonts()
 		htmlwnd.SetPage(chglog)
+		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
+					 lambda event: launch_file(event.GetLinkInfo().Href))
 		dlg.sizer3.Add(htmlwnd, 1, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=12)
 	update_check = wx.CheckBox(dlg, -1, 
 							   lang.getstr("update_check.onstartup"))
