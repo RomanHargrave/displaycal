@@ -257,9 +257,12 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 		ok = lang.getstr("go_to_website")
 		alt = None
 	newversion = ".".join(str(n) for n in newversion_tuple)
+	newversion_desc = newversion
+	if snapshot:
+		newversion_desc += " Beta"
 	dlg = ConfirmDialog(parent,
 						msg=lang.getstr("update_check.new_version", 
-										newversion), 
+										newversion_desc), 
 						ok=ok, alt=alt,
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), 
