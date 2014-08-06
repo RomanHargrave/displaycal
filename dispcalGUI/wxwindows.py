@@ -481,23 +481,25 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 			dc.SetPen(pen)
 			dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
 		dc = self._set_font(dc)
-		w1, h1 = self.GetTextExtent(self.GetLabel())
-		w2, h2 = dc.GetTextExtent(self.GetLabel())
-		if self.label_x is None:
-			w = (max(w1, w2) - min(w1, w2)) / 2.0 + min(w1, w2)
-			x = self.GetSize()[0] / 2.0 - w / 2.0
-		else:
-			x = self.label_x
-		if self.label_y is None:
+		label = self.Label.splitlines()
+		for i, line in enumerate(label):
+			w1, h1 = self.GetTextExtent(line)
+			w2, h2 = dc.GetTextExtent(line)
+			if self.label_x is None:
+				w = (max(w1, w2) - min(w1, w2)) / 2.0 + min(w1, w2)
+				x = self.GetSize()[0] / 2.0 - w / 2.0
+			else:
+				x = self.label_x
 			h = (max(h1, h2) - min(h1, h2)) / 2.0 + min(h1, h2)
-			y = self.GetSize()[1] / 2.0 - h / 2.0
-		else:
-			y = self.label_y
-		if self.textshadowcolor:
-			dc.SetTextForeground(self.textshadowcolor)
-			dc.DrawText(self.GetLabel(), x + 1, y + 1)
-		dc.SetTextForeground(self.GetForegroundColour())
-		dc.DrawText(self.GetLabel(), x, y)
+			if self.label_y is None:
+				y = self.GetSize()[1] / 2.0 - h / 2.0
+			else:
+				y = self.label_y + h * i
+			if self.textshadowcolor:
+				dc.SetTextForeground(self.textshadowcolor)
+				dc.DrawText(line, x + 1, y + 1)
+			dc.SetTextForeground(self.GetForegroundColour())
+			dc.DrawText(line, x, y)
 
 
 class ConfirmDialog(BaseInteractiveDialog):
