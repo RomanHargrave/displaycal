@@ -1306,10 +1306,9 @@ class ProfileInfoFrame(LUTFrame):
 			for j, v in enumerate(line):
 				if v.endswith("_"):
 					continue
-				key = re.sub("[^0-9a-z]+", "_",
+				key = re.sub("[^0-9A-Za-z]+", "_",
 							 strtr(line[j],
-								   {u"\u0394E": "Delta E"}).lower().strip(), 0,
-							 re.I).strip("_")
+								   {u"\u0394E": "Delta E"}).lower().strip(), 0).strip("_")
 				val = lang.getstr(key)
 				if key != val:
 					line[j] = val
