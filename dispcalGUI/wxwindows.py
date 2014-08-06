@@ -403,6 +403,7 @@ class BitmapBackgroundPanel(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 		self._bitmap = None
+		self.repeat_sub_bitmap_h = None
 		self.scalebitmap = (True, False)
 		self.scalequality = wx.IMAGE_QUALITY_NORMAL
 		self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
@@ -441,6 +442,14 @@ class BitmapBackgroundPanel(wx.Panel):
 													 else img.GetSize()[1],
 													 quality=self.scalequality))
 			dc.DrawBitmap(bmp, 0, 0)
+			if self.repeat_sub_bitmap_h:
+				sub_bmp = bmp.GetSubBitmap(self.repeat_sub_bitmap_h)
+				sub_img = sub_bmp.ConvertToImage()
+				sub_img = sub_img.Rescale(self.GetSize()[0] -
+										  bmp.GetSize()[0],
+										  bmp.GetSize()[1],
+										  quality=self.scalequality)
+				dc.DrawBitmap(sub_img.ConvertToBitmap(), bmp.GetSize()[0], 0)
 
 
 class BitmapBackgroundPanelText(BitmapBackgroundPanel):

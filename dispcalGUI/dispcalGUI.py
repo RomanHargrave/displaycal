@@ -509,11 +509,13 @@ def get_cgats_path(cgats):
 						"%s.%s" % (name, cgats[:7].strip().lower()))
 
 
-def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40):
+def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
+			   repeat_sub_bitmap_h=(214, 0, 8, 60)):
 	header = BitmapBackgroundPanelText(parent, size=size)
 	header.drawline = False
 	header.label_x = x
 	header.label_y = y
+	header.repeat_sub_bitmap_h = repeat_sub_bitmap_h
 	header.scalebitmap = (False, ) * 2
 	header.textshadowcolor = "#336699"
 	header.SetForegroundColour("#FFFFFF")
@@ -1216,7 +1218,7 @@ class MainFrame(BaseFrame):
 			self.FindWindowByName("separator").SetMinSize((-1, 1))
 			self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
 														   size=(-1, 15))
-			bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 4096, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
+			bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
 			self.buttonpanelheader.SetBitmap(bitmap)
 			sizer.Insert(sizer.GetItemIndex(self.buttonpanel),
 						 self.buttonpanelheader, flag=wx.EXPAND)
@@ -10297,7 +10299,7 @@ class MainFrame(BaseFrame):
 		items = []
 		items += [get_header(self.aboutdialog, getbitmap("theme/header-about"),
 							 label=wrap(lang.getstr("header"), 32),
-							 size=(320, 120), x=8)]
+							 size=(320, 120), x=8, repeat_sub_bitmap_h=None)]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		items += [wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
 																	   author))]
