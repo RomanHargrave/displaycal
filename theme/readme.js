@@ -100,7 +100,7 @@ jQuery(function ($) {
 	});
 	
 	/* Indent after br */
-	$('#content br').after('<span class="indent"></span>')
+	$('#content p > br').after('<span class="indent"></span>')
 	
 	/* Teaser */
 	var interval = setInterval(function () {
