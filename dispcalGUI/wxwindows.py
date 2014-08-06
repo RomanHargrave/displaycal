@@ -464,6 +464,14 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		font.SetPointSize(get_dc_font_size(font.GetPointSize(), dc))
 		dc.SetFont(font)
 		return dc
+ 	
+	def GetLabel(self):
+		return self.Label
+
+	Label = ""
+	
+	def SetLabel(self, label):
+		self.Label = label
 	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
