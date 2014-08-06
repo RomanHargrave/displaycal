@@ -518,6 +518,7 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.repeat_sub_bitmap_h = repeat_sub_bitmap_h
 	header.scalebitmap = (False, ) * 2
 	header.textshadowcolor = "#336699"
+	header.SetBackgroundColour("#336699")
 	header.SetForegroundColour("#FFFFFF")
 	header.SetBitmap(bitmap or getbitmap("theme/header"))
 	font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT) 
