@@ -2128,6 +2128,8 @@ def get_gradient_panel(parent, label, x=16):
 	gradientpanel.linecolor = wx.Colour(0x99, 0x99, 0x99)
 	gradientpanel.SetForegroundColour("#333333")
 	gradientpanel.SetBitmap(getbitmap("theme/gradient"))
+	font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT) 
+	gradientpanel.SetFont(font)
 	gradientpanel.SetLabel(label)
 	return gradientpanel
 
