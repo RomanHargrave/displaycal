@@ -28,8 +28,9 @@ from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_util, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
-from wxwindows import (ConfirmDialog, FileBrowseBitmapButtonWithChoiceHistory,
-					   InfoDialog)
+from wxwindows import (CustomGrid, ConfirmDialog,
+					   FileBrowseBitmapButtonWithChoiceHistory,
+					   InfoDialog, get_gradient_panel)
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
@@ -540,9 +541,23 @@ class TestchartEditor(wx.Frame):
 
 
 		# grid
-		self.grid = wx.grid.Grid(panel, -1, size = (-1, 150), style = wx.BORDER_STATIC)
+		self.grid = CustomGrid(panel, -1, size = (-1, 150))
+		self.grid.DisableDragColSize()
+		self.grid.EnableGridLines(False)
+		self.grid.SetCellHighlightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
+		self.grid.SetCellHighlightPenWidth(0)
+		self.grid.SetCellHighlightROPenWidth(0)
+		self.grid.SetColLabelSize(23)
+		self.grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+		self.grid.SetLabelBackgroundColour(wx.Colour(240, 240, 240))
+		self.grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+		self.grid.SetScrollRate(0, 5)
+		self.grid.alternate_cell_background_color = "#F9F9F9"
+		self.grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
+		self.grid.draw_horizontal_grid_lines = False
+		self.grid.draw_vertical_grid_lines = False
 		self.grid.select_in_progress = False
-		self.sizer.Add(self.grid, 1, flag = wx.ALL | wx.EXPAND, border = 12 + border)
+		self.sizer.Add(self.grid, 1, flag=wx.TOP | wx.EXPAND, border=12)
 		self.grid.CreateGrid(0, 0)
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
@@ -558,9 +573,12 @@ class TestchartEditor(wx.Frame):
 		# preview area
 		if tc_use_alternate_preview:
 			splitter.SplitHorizontally(p1, p2, self.sizer.GetMinSize()[1])
-			hsizer = wx.StaticBoxSizer(wx.StaticBox(p2, -1, lang.getstr("preview")), wx.VERTICAL)
-			p2.sizer.Add(hsizer, 1, flag = wx.ALL | wx.ALIGN_CENTER | wx.EXPAND, border = 12)
+			hsizer = wx.BoxSizer(wx.VERTICAL)
+			gradientpanel = get_gradient_panel(p2, lang.getstr("preview"))
+			p2.sizer.Add(gradientpanel, flag=wx.EXPAND)
+			p2.sizer.Add(hsizer, 1, flag=wx.EXPAND)
 			preview = self.preview = wx.ScrolledWindow(p2, -1, style = wx.VSCROLL)
+			preview.SetBackgroundColour("#333333")
 			preview.Bind(wx.EVT_ENTER_WINDOW, self.tc_set_default_status, id = preview.GetId())
 			hsizer.Add(preview, 1, wx.EXPAND)
 			preview.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -617,6 +635,26 @@ class TestchartEditor(wx.Frame):
 			files = self.droptarget._filenames
 			InfoDialog(self, msg = lang.getstr("error.file_type_unsupported") +
 								 "\n\n" + "\n".join(files), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
+
+	def resize_grid(self):
+		num_cols = self.grid.GetNumberCols()
+		if not num_cols:
+			return
+		grid_w = self.grid.GetSize()[0] - 20
+		col_w = round(grid_w / (num_cols))
+		last_col_w = grid_w - col_w * (num_cols - 1)
+		self.grid.SetRowLabelSize(col_w)
+		for i in xrange(num_cols):
+			if i == 3:
+				w = 20
+			elif i == num_cols - 2:
+				w = last_col_w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+			else:
+				w = col_w
+			self.grid.SetColSize(i, w)
+		self.grid.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+							 0)
+		self.grid.ForceRefresh()
 
 	def tc_grid_cell_left_click_handler(self, event):
 		event.Skip()
@@ -834,6 +872,7 @@ class TestchartEditor(wx.Frame):
 		event.Skip()
 
 	def tc_size_handler(self, event = None):
+		wx.CallAfter(self.resize_grid)
 		if hasattr(self, "preview"):
 			safe_margin = 5
 			scrollbarwidth = 20
@@ -877,7 +916,7 @@ class TestchartEditor(wx.Frame):
 	def tc_grid_cell_change_handler(self, event, save_check=True):
 		data = self.ti1[0]["DATA"]
 		sample = data[event.GetRow()]
-		label = self.grid.GetColLabelValue(event.GetCol())
+		label = self.label_b2a.get(self.grid.GetColLabelValue(event.GetCol()))
 		value = self.grid.GetCellValue(event.GetRow(), event.GetCol()).replace(",", ".")
 		value_set = False
 		try:
@@ -914,7 +953,7 @@ class TestchartEditor(wx.Frame):
 				sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"] = [component * 100.0 for component in XYZ]
 				for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
 					for col in range(self.grid.GetNumberCols()):
-						if self.grid.GetColLabelValue(col) == label:
+						if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
 							value_set = True
 			elif label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
@@ -926,7 +965,7 @@ class TestchartEditor(wx.Frame):
 				sample["RGB_R"], sample["RGB_G"], sample["RGB_B"] = [component * 100.0 for component in RGB]
 				for label in ("RGB_R", "RGB_G", "RGB_B"):
 					for col in range(self.grid.GetNumberCols()):
-						if self.grid.GetColLabelValue(col) == label:
+						if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
 							value_set = True
 			self.tc_grid_setcolorlabel(event.GetRow())
@@ -2064,14 +2103,14 @@ class TestchartEditor(wx.Frame):
 				if self.IsBeingDeleted():
 					dlg.sizer2.Hide(0)
 				if os.path.exists(self.ti1.filename):
-					dlg.save_as = wx.Button(dlg, -1, lang.getstr("save_as"))
+					dlg.save_as = wx.Button(dlg.buttonpanel, -1, lang.getstr("save_as"))
 					ID_SAVE_AS = dlg.save_as.GetId()
 					dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id = ID_SAVE_AS)
 					dlg.sizer2.Add((12, 12))
 					dlg.sizer2.Add(dlg.save_as)
 				else:
 					ID_SAVE_AS = wx.ID_OK
-				dlg.discard = wx.Button(dlg, -1, lang.getstr("testchart.discard"))
+				dlg.discard = wx.Button(dlg.buttonpanel, -1, lang.getstr("testchart.discard"))
 				ID_DISCARD = dlg.discard.GetId()
 				dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id = ID_DISCARD)
 				dlg.sizer2.Add((12, 12))
@@ -2128,6 +2167,13 @@ class TestchartEditor(wx.Frame):
 
 		self.cfg = cfg or "testchart.file"
 		self.target = target or self.Parent
+
+		self.label_b2a = {"R": "RGB_R",
+						  "G": "RGB_G",
+						  "B": "RGB_B",
+						  "X": "XYZ_X",
+						  "Y": "XYZ_Y",
+						  "Z": "XYZ_Z"}
 
 		if path is None:
 			path = getcfg(self.cfg)
@@ -2575,7 +2621,8 @@ class TestchartEditor(wx.Frame):
 			for i in data_format:
 				if data_format[i] in ("RGB_R", "RGB_G", "RGB_B"):
 					grid.AppendCols(1)
-					grid.SetColLabelValue(grid.GetNumberCols() - 1, data_format[i])
+					grid.SetColLabelValue(grid.GetNumberCols() - 1,
+										  data_format[i].split("_")[-1])
 			grid.AppendCols(1)
 			grid.SetColLabelValue(grid.GetNumberCols() - 1, "")
 			colwidth = 100
@@ -2593,7 +2640,7 @@ class TestchartEditor(wx.Frame):
 			for i in data:
 				sample = data[i]
 				for j in range(grid.GetNumberCols()):
-					label = grid.GetColLabelValue(j)
+					label = self.label_b2a.get(grid.GetColLabelValue(j))
 					if label in ("RGB_R", "RGB_G", "RGB_B"):
 						grid.SetCellValue(i, j, str(sample[label]))
 				self.tc_grid_setcolorlabel(i, data)
@@ -2603,11 +2650,12 @@ class TestchartEditor(wx.Frame):
 				self.patchsizer.Layout()
 				self.preview.sizer.Layout()
 				self.preview.FitInside()
-				self.preview.SetScrollRate(20, 20)
+				self.preview.SetScrollRate(0, 20)
 				self.preview.Thaw()
 
 			self.tc_set_default_status()
 			if verbose >= 1: safe_print(lang.getstr("success"))
+			self.resize_grid()
 		if self.Parent and hasattr(self.Parent, "start_timers"):
 			self.Parent.start_timers()
 	
@@ -2624,7 +2672,7 @@ class TestchartEditor(wx.Frame):
 			data.add_data(newdata[i], row + 1 + i)
 			for label in ("RGB_R", "RGB_G", "RGB_B"):
 				for col in range(self.grid.GetNumberCols()):
-					if self.grid.GetColLabelValue(col) == label:
+					if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
 						self.grid.SetCellValue(row + 1 + i, col,
 											   str(round(float(newdata[i][label]),
 														 4)))
@@ -2655,6 +2703,7 @@ class TestchartEditor(wx.Frame):
 		if data is None:
 			data = self.ti1.queryv1("DATA")
 		sample = data[row]
+		grid.SetCellRenderer(row, col, wx.grid.GridCellStringRenderer())
 		style, colour, labeltext, labelcolour = self.tc_getcolorlabel(sample)
 		grid.SetCellBackgroundColour(row, col, colour)
 		grid.SetCellValue(row, col, labeltext)

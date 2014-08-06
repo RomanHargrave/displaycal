@@ -5,6 +5,7 @@ import sys
 import types
 
 from wxfixes import wx
+from wx.lib.buttons import ThemedGenButton
 
 def GetRealClientArea(self):
 	""" Return the real (non-overlapping) client area of a display """
@@ -264,6 +265,9 @@ class BetterWindowDisabler(object):
 					w.Enable = w._Enable
 				if hasattr(w, "_enabled"):
 					w.Enable(w._enabled)
+					if isinstance(w, ThemedGenButton):
+						w.Refresh()
+						w.Update()
 				del w._disabler_id
 
 

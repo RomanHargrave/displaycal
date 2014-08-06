@@ -7,116 +7,85 @@
           <object class="wxBoxSizer">
             <orient>wxVERTICAL</orient>
             <object class="sizeritem">
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
-                <object class="sizeritem">
-                  <object class="wxScrolledWindow" name="header">
-                    <object class="wxStaticBitmap" name="headerbitmap">
-                      <bitmap stock_id="wxART_MISSING_IMAGE"/>
-                    </object>
-                    <size>480,60</size>
-                    <style>wxVSCROLL</style>
+              <object class="wxPanel" name="headerpanel">
+                <object class="wxBoxSizer">
+                  <object class="spacer">
+                    <size>12,1</size>
                   </object>
-                  <option>1</option>
-                  <minsize>480,60</minsize>
+                  <object class="sizeritem">
+                    <object class="wxStaticText" name="calibration_file_label">
+                      <label>calibration.file</label>
+                      <fg>#FFFFFF</fg>
+                      <bg>#336699</bg>
+                    </object>
+                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>8</border>
+                  </object>
+                  <object class="sizeritem">
+                    <object class="wxChoice" name="calibration_file_ctrl">
+                      <bg>#336699</bg>
+                    </object>
+                    <option>1</option>
+                    <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>16</border>
+                  </object>
+                  <object class="sizeritem">
+                    <object class="wxBitmapButton" name="calibration_file_btn">
+                      <bitmap>../theme/icons/16x16/document-open.png</bitmap>
+                      <bg>#336699</bg>
+                      <tooltip>calibration.load</tooltip>
+                      <style>wxNO_BORDER</style>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>8</border>
+                  </object>
+                  <object class="sizeritem">
+                    <object class="wxBitmapButton" name="delete_calibration_btn">
+                      <bitmap>../theme/icons/16x16/edit-delete.png</bitmap>
+                      <bg>#336699</bg>
+                      <tooltip>delete</tooltip>
+                      <style>wxNO_BORDER</style>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>8</border>
+                  </object>
+                  <object class="sizeritem">
+                    <object class="wxBitmapButton" name="install_profile_btn">
+                      <bitmap>../theme/icons/16x16/install.png</bitmap>
+                      <bg>#336699</bg>
+                      <tooltip>profile.install</tooltip>
+                      <style>wxNO_BORDER</style>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>8</border>
+                  </object>
+                  <object class="sizeritem">
+                    <object class="wxBitmapButton" name="profile_info_btn">
+                      <bitmap>../theme/icons/16x16/info.png</bitmap>
+                      <bg>#336699</bg>
+                      <tooltip>profile.info</tooltip>
+                      <style>wxNO_BORDER</style>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>16</border>
+                  </object>
+                  <orient>wxHORIZONTAL</orient>
                 </object>
+                <bg>#336699</bg>
               </object>
-              <flag>wxEXPAND</flag>
-            </object>
-            <object class="sizeritem">
-              <object class="wxFlexGridSizer">
-                <cols>2</cols>
-                <rows>0</rows>
-                <growablecols>1</growablecols>
-                <object class="sizeritem">
-                  <object class="wxStaticText" name="calibration_file_label">
-                    <label>calibration.file</label>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>8</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxBoxSizer">
-                    <orient>wxHORIZONTAL</orient>
-                    <object class="sizeritem">
-                      <object class="wxChoice" name="calibration_file_ctrl">
-                      </object>
-                      <option>1</option>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxBitmapButton" name="calibration_file_btn">
-                        <bitmap>../theme/icons/16x16/document-open.png</bitmap>
-                        <tooltip>calibration.load</tooltip>
-                        <style>wxNO_BORDER</style>
-                        <XRCED>
-                          <events>EVT_BUTTON</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxBitmapButton" name="delete_calibration_btn">
-                        <bitmap>../theme/icons/16x16/edit-delete.png</bitmap>
-                        <tooltip>delete</tooltip>
-                        <style>wxNO_BORDER</style>
-                        <XRCED>
-                          <events>EVT_BUTTON</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxBitmapButton" name="install_profile_btn">
-                        <bitmap>../theme/icons/16x16/install.png</bitmap>
-                        <tooltip>profile.install</tooltip>
-                        <style>wxNO_BORDER</style>
-                        <XRCED>
-                          <events>EVT_BUTTON</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxBitmapButton" name="profile_info_btn">
-                        <bitmap>../theme/icons/16x16/info.png</bitmap>
-                        <tooltip>profile.info</tooltip>
-                        <style>wxNO_BORDER</style>
-                        <XRCED>
-                          <events>EVT_BUTTON</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                    </object>
-                  </object>
-                  <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>8</border>
-                </object>
-                <object class="spacer"/>
-                <object class="sizeritem">
-                  <object class="wxBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxCheckBox" name="calibration_update_cb">
-                        <label>calibration.update</label>
-                        <XRCED>
-                          <events>EVT_CHECKBOX</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
-                  </object>
-                  <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>4</border>
-                </object>
-              </object>
-              <flag>wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-              <border>18</border>
+              <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
             </object>
             <object class="sizeritem">
               <object class="wxScrolledWindow" name="calpanel">
@@ -132,7 +101,7 @@
                                   <size>8,-1</size>
                                 </object>
                                 <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>8</border>
+                                <border>6</border>
                               </object>
                               <object class="sizeritem">
                                 <object class="wxStaticText" name="display_box_label">
@@ -144,11 +113,12 @@
                               <object class="sizeritem">
                                 <object class="wxStaticLine"/>
                                 <option>1</option>
-                                <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>2</border>
                               </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
-                            <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -208,9 +178,8 @@
                               <orient>wxHORIZONTAL</orient>
                             </object>
                             <flag>wxLEFT|wxEXPAND</flag>
-                            <border>18</border>
+                            <border>16</border>
                           </object>
-                          <orient>wxVERTICAL</orient>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
@@ -227,11 +196,12 @@
                               <orient>wxHORIZONTAL</orient>
                             </object>
                             <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-                            <border>18</border>
+                            <border>16</border>
                           </object>
+                          <orient>wxVERTICAL</orient>
                         </object>
                         <option>1</option>
-                        <flag>wxBOTTOM|wxRIGHT|wxEXPAND</flag>
+                        <flag>wxBOTTOM|wxEXPAND</flag>
                         <border>2</border>
                       </object>
                       <object class="sizeritem">
@@ -249,11 +219,11 @@
                                 <object class="wxStaticLine"/>
                                 <option>1</option>
                                 <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>8</border>
+                                <border>6</border>
                               </object>
                               <orient>wxHORIZONTAL</orient>
                             </object>
-                            <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
@@ -297,7 +267,7 @@
                             </object>
                             <option>1</option>
                             <flag>wxRIGHT|wxEXPAND</flag>
-                            <border>14</border>
+                            <border>12</border>
                           </object>
                           <orient>wxVERTICAL</orient>
                           <object class="sizeritem">
@@ -316,7 +286,7 @@
                               <orient>wxHORIZONTAL</orient>
                             </object>
                             <flag>wxRIGHT|wxEXPAND</flag>
-                            <border>18</border>
+                            <border>16</border>
                           </object>
                         </object>
                         <flag>wxBOTTOM</flag>
@@ -324,8 +294,7 @@
                       </object>
                       <orient>wxHORIZONTAL</orient>
                     </object>
-                    <flag>wxTOP|wxEXPAND</flag>
-                    <border>4</border>
+                    <flag>wxEXPAND</flag>
                   </object>
                   <object class="sizeritem">
                     <object class="wxBoxSizer">
@@ -336,7 +305,7 @@
                               <label>colorimeter_correction_matrix_file</label>
                             </object>
                             <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>18</border>
+                            <border>16</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxChoice" name="colorimeter_correction_matrix_ctrl">
@@ -390,7 +359,7 @@
                           <size>8,-1</size>
                         </object>
                         <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>6</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="calibration_settings_label">
@@ -403,22 +372,38 @@
                         <object class="wxStaticLine"/>
                         <option>1</option>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>6</border>
                       </object>
                     </object>
                     <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                     <border>12</border>
                   </object>
                   <object class="sizeritem">
-                    <object class="wxCheckBox" name="interactive_display_adjustment_cb">
-                      <label>calibration.interactive_display_adjustment</label>
-                      <checked>1</checked>
-                      <XRCED>
-                        <events>EVT_CHECKBOX</events>
-                      </XRCED>
+                    <object class="wxBoxSizer">
+                      <orient>wxHORIZONTAL</orient>
+                      <object class="sizeritem">
+                        <object class="wxCheckBox" name="interactive_display_adjustment_cb">
+                          <label>calibration.interactive_display_adjustment</label>
+                          <checked>1</checked>
+                          <XRCED>
+                            <events>EVT_CHECKBOX</events>
+                          </XRCED>
+                        </object>
+                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                        <border>16</border>
+                      </object>
+                      <object class="sizeritem">
+                        <object class="wxCheckBox" name="calibration_update_cb">
+                          <label>calibration.update</label>
+                          <XRCED>
+                            <events>EVT_CHECKBOX</events>
+                          </XRCED>
+                        </object>
+                        <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                      </object>
                     </object>
-                    <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                    <border>18</border>
+                    <flag>wxLEFT|wxRIGHT</flag>
+                    <border>16</border>
                   </object>
                   <object class="spacer">
                     <size>1,8</size>
@@ -513,8 +498,10 @@
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxButton" name="whitepoint_measure_btn">
-                              <label>measure</label>
+                            <object class="wxBitmapButton" name="whitepoint_measure_btn">
+                              <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
+                              <style>wxNO_BORDER</style>
+                              <tooltip>measure</tooltip>
                             </object>
                             <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>8</border>
@@ -687,18 +674,14 @@
                             <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
-                          <object class="sizeritem">
-                            <object class="wxStaticBitmap" name="ambient_viewcond_adjust_info">
-                              <bitmap>../theme/icons/16x16/dialog-information.png</bitmap>
-                              <tooltip>calibration.ambient_viewcond_adjust.info</tooltip>
-                              <style>wxNO_BORDER</style>
-                            </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>8</border>
+                          <object class="spacer">
+                            <size>8,1</size>
                           </object>
                           <object class="sizeritem">
-                            <object class="wxButton" name="ambient_measure_btn">
-                              <label>measure</label>
+                            <object class="wxBitmapButton" name="ambient_measure_btn">
+                              <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
+                              <style>wxNO_BORDER</style>
+                              <tooltip>measure</tooltip>
                             </object>
                             <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
@@ -880,7 +863,7 @@
                       <rows>0</rows>
                     </object>
                     <flag>wxLEFT|wxRIGHT</flag>
-                    <border>18</border>
+                    <border>16</border>
                   </object>
                   <object class="sizeritem">
                     <object class="wxBoxSizer">
@@ -889,7 +872,7 @@
                           <size>8,-1</size>
                         </object>
                         <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>6</border>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="profile_settings_label">
@@ -902,12 +885,12 @@
                         <object class="wxStaticLine"/>
                         <option>1</option>
                         <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>8</border>
+                        <border>6</border>
                       </object>
                       <orient>wxHORIZONTAL</orient>
                     </object>
                     <flag>wxTOP|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                    <border>12</border>
+                    <border>10</border>
                   </object>
                   <object class="sizeritem">
                     <object class="wxBoxSizer">
@@ -945,6 +928,14 @@
                                 <border>20</border>
                               </object>
                               <object class="sizeritem">
+                                <object class="wxCheckBox" name="black_point_compensation_cb">
+                                  <label>black_point_compensation</label>
+                                  <tooltip>black_point_compensation.info</tooltip>
+                                </object>
+                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <border>20</border>
+                              </object>
+                              <object class="sizeritem">
                                 <object class="wxStaticText" name="profile_type_label">
                                   <label>profile.type</label>
                                 </object>
@@ -958,8 +949,10 @@
                                 <border>8</border>
                               </object>
                               <object class="sizeritem">
-                                <object class="wxButton" name="gamap_btn">
-                                  <label>profile.advanced_gamap</label>
+                                <object class="wxBitmapButton" name="gamap_btn">
+                                  <bitmap>../theme/icons/16x16/applications-system.png</bitmap>
+                                  <tooltip>profile.advanced_gamap</tooltip>
+                                  <style>wxNO_BORDER</style>
                                   <XRCED>
                                     <events>EVT_BUTTON</events>
                                   </XRCED>
@@ -969,22 +962,6 @@
                             </object>
                             <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>2</border>
-                          </object>
-                          <object class="spacer"/>
-                          <object class="sizeritem">
-                            <object class="wxBoxSizer">
-                              <object class="sizeritem">
-                                <object class="wxCheckBox" name="black_point_compensation_cb">
-                                  <label>black_point_compensation</label>
-                                  <tooltip>black_point_compensation.info</tooltip>
-                                </object>
-                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>20</border>
-                              </object>
-                              <orient>wxHORIZONTAL</orient>
-                            </object>
-                            <flag>wxTOP|wxBOTTOM</flag>
-                            <border>5</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="testchart_label">
@@ -1094,29 +1071,29 @@
                           </object>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
-                              <orient>wxHORIZONTAL</orient>
                               <object class="sizeritem">
                                 <object class="wxStaticText" name="profile_name">
                                   <label>?</label>
                                 </object>
-                                <flag>wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                 <border>4</border>
                               </object>
+                              <orient>wxHORIZONTAL</orient>
                             </object>
-                            <flag>wxTOP|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>4</border>
+                            <flag>wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>12</border>
                           </object>
                           <cols>2</cols>
                           <rows>0</rows>
                           <growablecols>1</growablecols>
                         </object>
-                        <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                        <flag>wxTOP|wxEXPAND</flag>
                         <border>5</border>
                       </object>
                       <orient>wxVERTICAL</orient>
                     </object>
                     <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-                    <border>13</border>
+                    <border>16</border>
                   </object>
                   <orient>wxVERTICAL</orient>
                 </object>
@@ -1126,44 +1103,55 @@
               <flag>wxEXPAND</flag>
             </object>
             <object class="sizeritem">
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
-                <object class="sizeritem">
-                  <object class="wxButton" name="calibrate_btn">
-                    <label>button.calibrate</label>
-                    <XRCED>
-                      <events>EVT_BUTTON</events>
-                    </XRCED>
+              <object class="wxPanel" name="separator">
+                <size>-1,0</size>
+                <bg>#999999</bg>
+              </object>
+              <flag>wxEXPAND</flag>
+            </object>
+            <object class="sizeritem">
+              <object class="wxPanel" name="buttonpanel">
+                <object class="wxBoxSizer">
+                  <orient>wxHORIZONTAL</orient>
+                  <object class="spacer">
+                    <option>1</option>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                </object>
-                <object class="spacer">
-                  <size>16,1</size>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxButton" name="calibrate_and_profile_btn">
-                    <label>button.calibrate_and_profile</label>
-                    <XRCED>
-                      <events>EVT_BUTTON</events>
-                    </XRCED>
+                  <object class="sizeritem">
+                    <object class="wxButton" name="calibrate_btn">
+                      <label>button.calibrate</label>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>14</border>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                </object>
-                <object class="spacer">
-                  <size>16,1</size>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxButton" name="profile_btn">
-                    <label>button.profile</label>
-                    <XRCED>
-                      <events>EVT_BUTTON</events>
-                    </XRCED>
+                  <object class="sizeritem">
+                    <object class="wxButton" name="calibrate_and_profile_btn">
+                      <label>button.calibrate_and_profile</label>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>14</border>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <object class="sizeritem">
+                    <object class="wxButton" name="profile_btn">
+                      <label>button.profile</label>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxBOTTOM|wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>14</border>
+                  </object>
+                  <object class="spacer">
+                    <option>1</option>
+                  </object>
                 </object>
               </object>
-              <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE</flag>
-              <border>16</border>
+              <flag>wxEXPAND</flag>
             </object>
           </object>
         </object>

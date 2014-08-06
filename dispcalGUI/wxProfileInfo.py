@@ -24,7 +24,8 @@ from worker import (Error, UnloggedError, check_set_argyll_bin, get_argyll_util,
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
 from wxVRML2X3D import vrmlfile2x3dfile
-from wxwindows import (BitmapBackgroundPanelText, ConfirmDialog,
+from wxwindows import (BitmapBackgroundPanelText, CustomGrid,
+					   CustomRowLabelRenderer, ConfirmDialog,
 					   FileDrop, InfoDialog, SimpleBook, TwoWaySplitter)
 import colormath
 import config
@@ -1107,9 +1108,14 @@ class ProfileInfoFrame(LUTFrame):
 		p2.SetSizer(p2.sizer)
 		self.splitter.AppendWindow(p2)
 		
-		self.grid = ProfileInfoGrid(p2, -1)
+		self.grid = CustomGrid(p2, -1)
+		self.grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
+		self.grid.alternate_cell_background_color = self.grid.alternate_row_label_background_color
+		self.grid.draw_horizontal_grid_lines = False
+		self.grid.draw_vertical_grid_lines = False
+		self.grid.draw_row_labels = False
 		self.grid.CreateGrid(0, 2)
-		self.grid.SetCellHighlightColour(gridbgcolor)
+		self.grid.SetCellHighlightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
@@ -1126,7 +1132,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.EnableEditing(False)
 		self.grid.EnableGridLines(False)
 		self.grid.Bind(wx.grid.EVT_GRID_COL_SIZE, self.resize_grid)
-		p2.sizer.Add(self.grid, 1, flag=wx.EXPAND, border=12)
+		p2.sizer.Add(self.grid, 1, flag=wx.EXPAND)
 		
 		drophandlers = {
 			".icc": self.drop_handler,
@@ -1327,14 +1333,10 @@ class ProfileInfoFrame(LUTFrame):
 			self.grid.DeleteRows(0, self.grid.GetNumberRows())
 		self.grid.AppendRows(len(rows))
 		labelcolor = wx.Colour(0x80, 0x80, 0x80)
-		altcolor = wx.Colour(230, 230, 230)
 		namedcolor = False
 		for i, (label, value) in enumerate(rows):
 			self.grid.SetCellValue(i, 0, " " + label)
-			if i % 2:
-				self.grid.SetCellBackgroundColour(i, 0, altcolor)
-				self.grid.SetCellBackgroundColour(i, 1, altcolor)
-			if label == lang.getstr(ICCP.tags["ncl2"]):
+			if label == lang.getstr("named_colors"):
 				namedcolor = True
 			elif label.strip() and label.lstrip() == label:
 				namedcolor = False
@@ -1353,9 +1355,10 @@ class ProfileInfoFrame(LUTFrame):
 												color.groups()[1].strip().split()],
 											  **dict(scale=255))
 				labelbgcolor = wx.Colour(*[int(round(v)) for v in color])
+				self.grid.SetRowLabelRenderer(i,
+											  CustomRowLabelRenderer(labelbgcolor))
 			else:
 				labelbgcolor = self.grid.GetCellBackgroundColour(i, 0)
-			self.grid.SetRowLabelRenderer(i, ProfileInfoRowLabelRenderer(labelbgcolor))
 			self.grid.SetCellTextColour(i, 0, labelcolor)
 			self.grid.SetCellValue(i, 1, value)
 		
@@ -1796,75 +1799,6 @@ class ProfileInfoFrame(LUTFrame):
 							 worker=self.worker)
 		else:
 			launch_file(vrmlpath)
-
-class ProfileInfoGrid(wx.grid.Grid):
-
-	def __init__(self, *args, **kwargs):
-		wx.grid.Grid.__init__(self, *args, **kwargs)
-		self.GetGridRowLabelWindow().Bind(wx.EVT_PAINT, self._onPaintRowLabels)
-		
-		self._rowRenderers = {}
-
-	def _getRowTopBottom(self, row):
-		r = 0
-		top = 0
-		while r < row:
-			top += self.GetRowSize(r)
-			r += 1
-		bottom = top + self.GetRowSize(row) - 1
-		return top, bottom
-
-	def _onPaintRowLabels(self, evt):
-		window = evt.GetEventObject()
-		dc = wx.PaintDC(window)
-
-		if getattr(self, "CalcRowLabelsExposed", None):
-			# wxPython >= 2.8.10
-			rows = self.CalcRowLabelsExposed(window.GetUpdateRegion())
-			if rows == [-1]:
-				return
-		else:
-			# wxPython < 2.8.10
-			rows = xrange(self.GetNumberRows())
-			if not rows:
-				return
-
-		x, y = self.CalcUnscrolledPosition((0,0))
-		pt = dc.GetDeviceOrigin()
-		dc.SetDeviceOrigin(pt.x, pt.y-y)
-		for row in rows:
-			top, bottom = self._getRowTopBottom(row)
-			rect = wx.Rect()
-			rect.top = top
-			rect.bottom = bottom
-			rect.x = 0
-			rect.width = self.GetRowLabelSize()
-
-			renderer = self._rowRenderers.get(row, None) or \
-					   ProfileInfoRowLabelRenderer(self.GetLabelBackgroundColour(row, 0))
-			renderer.Draw(self, dc, rect, row)
-        
-	def SetRowLabelRenderer(self, row, renderer):
-		"""
-		Register a renderer to be used for drawing the label for the
-		given row.
-		"""
-		if renderer is None:
-			if row in self._rowRenderers:
-				del self._rowRenderers[row]
-		else:
-			self._rowRenderers[row] = renderer
-
-
-class ProfileInfoRowLabelRenderer(object):
-
-	def __init__(self, bgcolor):
-		self._bgcolor = bgcolor
-
-	def Draw(self, grid, dc, rect, row):
-		dc.SetBrush(wx.Brush(self._bgcolor))
-		dc.SetPen(wx.TRANSPARENT_PEN)
-		dc.DrawRectangleRect(rect)
 
 
 class ProfileInfoViewer(wx.App):

@@ -129,7 +129,9 @@ from wxwindows import (AboutDialog, BaseFrame, BitmapBackgroundPanel,
 					   BitmapBackgroundPanelText, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
 					   LogWindow, ProgressDialog,
-					   TooltipWindow)
+					   TooltipWindow, get_gradient_panel)
+if sys.platform == "win32":
+	from wx.lib.buttons import ThemedGenButton
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
@@ -507,6 +509,19 @@ def get_cgats_path(cgats):
 						"%s.%s" % (name, cgats[:7].strip().lower()))
 
 
+def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40):
+	header = BitmapBackgroundPanelText(parent, size=size)
+	header.drawline = False
+	header.label_x = x
+	header.label_y = y
+	header.scalebitmap = (False, ) * 2
+	header.textshadowcolor = "#336699"
+	header.SetForegroundColour("#FFFFFF")
+	header.SetBitmap(bitmap or getbitmap("theme/header"))
+	header.SetLabel(label or lang.getstr("header"))
+	return header
+
+
 def upload_colorimeter_correction(parent=None, params=None):
 	""" Upload colorimeter correction to online database """
 	path = "/colorimetercorrections/index.php"
@@ -672,6 +687,13 @@ class GamapFrame(BaseFrame):
 		self.panel = self.FindWindowByName("panel")
 		
 		self.set_child_ctrls_as_attrs(self)
+
+		child = self.gamut_mapping_ciecam02_label
+		gradientpanel = get_gradient_panel(child.Parent, child.Label)
+		gradientpanel.label_x = 12
+		sizer = child.ContainingSizer
+		sizer.Clear(True)
+		sizer.Add(gradientpanel, 1)
 
 		# Bind event handlers
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_perceptual_cb_handler, 
@@ -1002,10 +1024,6 @@ class MainFrame(BaseFrame):
 		self.update_comports()
 		self.update_controls(update_ccmx_items=False)
 		BaseFrame.update_layout(self)
-		# Add the header bitmap after layout so it won't stretch the window 
-		# further than necessary
-		self.headerbitmap = self.panel.FindWindowByName("headerbitmap")
-		self.headerbitmap.SetBitmap(getbitmap("theme/header"))
 		self.calpanel.SetScrollRate(2, 2)
 		self.SetSaneGeometry(int(getcfg("position.x")), 
 							 int(getcfg("position.y")))
@@ -1178,11 +1196,29 @@ class MainFrame(BaseFrame):
 		# Header
 		# Its width also determines the initial min width of the main window
 		# after SetSizeHints and Layout
-		self.header = self.FindWindowByName("header")
-		self.header.SetScrollRate(0, 0)
+		self.header = get_header(self.panel)
+		self.headerpanel = self.FindWindowByName("headerpanel")
+		self.headerpanel.ContainingSizer.Insert(0, self.header, flag=wx.EXPAND)
+		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(68, 32))
+		self.header_btm.SetBitmap(getbitmap("theme/header-btm"))
+		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP)
 		
 		# Calibration settings panel
 		self.calpanel = self.FindWindowByName("calpanel")
+		
+		# Button panel
+		self.buttonpanel = self.FindWindowByName("buttonpanel")
+		sizer = self.buttonpanel.ContainingSizer
+		if hasattr(sizer, "GetItemIndex"):
+			# wxPython 2.8.12+
+			self.FindWindowByName("separator").SetMinSize((-1, 1))
+			self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
+														   size=(-1, 15))
+			bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 4096, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
+			self.buttonpanelheader.SetBitmap(bitmap)
+			sizer.Insert(sizer.GetItemIndex(self.buttonpanel),
+						 self.buttonpanelheader, flag=wx.EXPAND)
+			self.buttonpanel.SetBackgroundColour("#DFDFDF")
 		
 		self.profile_info = {}
 	
@@ -1876,6 +1912,16 @@ class MainFrame(BaseFrame):
 		
 		self.set_child_ctrls_as_attrs(self)
 
+		for child in (self.display_box_label, self.instrument_box_label,
+					  self.calibration_settings_label,
+					  self.profile_settings_label):
+			gradientpanel = get_gradient_panel(child.Parent, child.Label)
+			if child == self.instrument_box_label:
+				gradientpanel.label_x = 0
+			sizer = child.ContainingSizer
+			sizer.Clear(True)
+			sizer.Add(gradientpanel, 1, flag=wx.BOTTOM, border=8)
+
 		# Settings file controls
 		# ======================
 		
@@ -2049,6 +2095,20 @@ class MainFrame(BaseFrame):
 
 		# Main buttons
 		# ============
+
+		if sys.platform == "win32":
+			for btn_name in ("calibrate_btn", "calibrate_and_profile_btn",
+							 "profile_btn"):
+				btn = getattr(self, btn_name)
+				# wx.Button does not look correct when a custom background color is
+				# set because the button label background inherits the button
+				# background. Replace with ThemedGenButton which does not have
+				# that issue
+				subst = ThemedGenButton(btn.Parent, label=btn.Label, name=btn.Name)
+				subst.SetBackgroundColour(btn.Parent.BackgroundColour)
+				setattr(self, btn_name, subst)
+				btn.ContainingSizer.Replace(btn, subst)
+				btn.Destroy()
 		
 		self.Bind(wx.EVT_BUTTON, self.calibrate_btn_handler, 
 				  id=self.calibrate_btn.GetId())
@@ -2056,6 +2116,7 @@ class MainFrame(BaseFrame):
 				  id=self.calibrate_and_profile_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.profile_btn_handler, 
 				  id=self.profile_btn.GetId())
+		self.calibrate_and_profile_btn.SetDefault()
 
 	def set_language_handler(self, event):
 		"""
@@ -2086,6 +2147,7 @@ class MainFrame(BaseFrame):
 				setcfg("lang", lcode)
 				writecfg()
 				self.panel.Freeze()
+				self.header.SetLabel(lang.getstr("header"))
 				self.setup_language()
 				if hasattr(self, "gamapframe"):
 					self.gamapframe.panel.Freeze()
@@ -2919,7 +2981,6 @@ class MainFrame(BaseFrame):
 		self.trc_textctrl.Enable(not update_cal)
 		self.trc_type_ctrl.Enable(not update_cal)
 		self.ambient_viewcond_adjust_cb.Enable(not update_cal)
-		self.ambient_viewcond_adjust_info.Enable(not update_cal)
 		self.black_output_offset_ctrl.Enable(not update_cal)
 		self.black_output_offset_intctrl.Enable(not update_cal)
 		self.black_point_correction_auto_cb.Enable(not update_cal)
@@ -3123,7 +3184,6 @@ class MainFrame(BaseFrame):
 		for ctrl in (self.ambient_viewcond_adjust_cb,
 					 self.ambient_viewcond_adjust_textctrl,
 					 self.ambient_viewcond_adjust_textctrl_label,
-					 self.ambient_viewcond_adjust_info,
 					 self.ambient_measure_btn,
 					 self.black_output_offset_label,
 					 self.black_output_offset_ctrl,
@@ -3239,8 +3299,6 @@ class MainFrame(BaseFrame):
 								cancel=lang.getstr("cancel"),
 								bitmap=geticon(32, "dialog-information"),
 								alt=lang.getstr("file.select"))
-			dlg.sizer3.Add(wx.StaticLine(dlg, -1), flag=wx.EXPAND | wx.TOP,
-						   border=16)
 			needroot = self.worker.argyll_version < [1, 2, 0]
 			dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
 											  style=wx.RB_GROUP)
@@ -7504,8 +7562,6 @@ class MainFrame(BaseFrame):
 				dlg.sizer3.Add(getattr(dlg, name), flag=wx.TOP |
 														wx.ALIGN_LEFT,
 								   border=8)
-		dlg.sizer3.Add(wx.StaticLine(dlg, -1), flag=wx.EXPAND | wx.TOP,
-					   border=16)
 		dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
 										  style=wx.RB_GROUP)
 		dlg.install_user.SetValue(True)
@@ -10237,8 +10293,9 @@ class MainFrame(BaseFrame):
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
 		items = []
-		items += [wx.StaticBitmap(self.aboutdialog, -1, 
-								  getbitmap("theme/header-about"))]
+		items += [get_header(self.aboutdialog, getbitmap("theme/header-about"),
+							 label=wrap(lang.getstr("header"), 32),
+							 size=(320, 120), x=8)]
 		items += [wx.StaticText(self.aboutdialog, -1, "")]
 		items += [wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
 																	   author))]
@@ -10432,19 +10489,19 @@ class StartupFrame(wx.Frame):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 		# Splash panel
-		self.splash = BitmapBackgroundPanel(self)
-		self.splash.scalebitmap = (False, ) * 2
-		self.splash.SetBitmap(getbitmap("theme/header"))
+		self.splash = get_header(self)
 		self.splash.SetMinSize((600, 60))
 		self.sizer.Add(self.splash)
 		# Message panel
 		self.msg = BitmapBackgroundPanelText(self)
 		self.msg.drawline = False
-		self.msg.SetForegroundColour("#333333")
-		self.msg.SetBitmap(getbitmap("theme/gradient"))
-		font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL)
-		self.msg.SetFont(font)
+		self.msg.label_x = 80
+		self.msg.label_y = 4
+		self.msg.scalebitmap = (False, ) * 2
+		self.msg.textshadowcolor = "#336699"
+		self.msg.SetForegroundColour("#FFFFFF")
+		self.msg.SetBackgroundColour("#336699")
+		self.msg.SetBitmap(getbitmap("theme/header-btm"))
 		self.msg.SetLabel(lang.getstr("startup"))
 		self.msg.SetMinSize((600, 32))
 		self.sizer.Add(self.msg)
@@ -10473,7 +10530,7 @@ class StartupFrame(wx.Frame):
 		self.Close()
 
 	def Pulse(self, msg=None):
-		if msg and msg != self.msg._label:
+		if msg and msg != self.msg.Label:
 			self.splash.Refresh()
 			self.splash.Update()
 			self.msg.SetLabel(msg)
@@ -10518,7 +10575,8 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
 		dlg.Bind(wx.EVT_BUTTON, dlg.invert_selection_handler, id=dlg.alt.GetId())
 
-		dlg.select_all_btn = wx.Button(dlg, -1, lang.getstr("deselect_all"))
+		dlg.select_all_btn = wx.Button(dlg.buttonpanel, -1,
+									   lang.getstr("deselect_all"))
 		dlg.sizer2.Insert(2, (margin, margin))
 		dlg.sizer2.Insert(2, dlg.select_all_btn)
 		dlg.Bind(wx.EVT_BUTTON, dlg.select_all_handler,

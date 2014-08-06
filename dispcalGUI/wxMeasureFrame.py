@@ -200,6 +200,8 @@ class MeasureFrame(InvincibleFrame):
 												 wx.ALIGN_CENTER_HORIZONTAL | 
 												 wx.ALL, border=10)
 		self.measurebutton.SetMaxFontSize(11)
+		self.measurebutton.SetDefault()
+		self.measurebutton.SetFocus()
 
 		self.display_no = wx.Display.GetFromWindow(self)
 		self.display_rects = get_display_rects()

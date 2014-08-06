@@ -3,6 +3,7 @@
 from time import gmtime, strftime, time
 import math
 import os
+import string
 import sys
 
 import config
@@ -187,8 +188,8 @@ class BaseFrame(wx.Frame):
 		
 		# Controls and labels
 		for child in self.GetAllChildren():
-			if (isinstance(child, wx.StaticText) or 
-				isinstance(child, wx.Control)):
+			if isinstance(child, (wx.StaticText, wx.Control,
+								  BitmapBackgroundPanelText)):
 				if not hasattr(child, "_Label"):
 					# Backup un-translated label
 					label = child._Label = child.Label
@@ -197,6 +198,8 @@ class BaseFrame(wx.Frame):
 					label = child._Label
 				translated = lang.getstr(label)
 				if translated != label:
+					if isinstance(child, wx.Button):
+						translated = translated.replace("&", "&&")
 					child.Label = translated
 				if child.ToolTip:
 					if not hasattr(child, "_ToolTipString"):
@@ -284,6 +287,9 @@ class BaseInteractiveDialog(wx.Dialog):
 				i += 1
 			pos = tuple(pos)
 		wx.Dialog.__init__(self, parent, id, title, pos, size, style)
+		if sys.platform == "win32":
+			bgcolor = self.BackgroundColour
+			self.SetBackgroundColour("#FFFFFF")
 		self.SetPosition(pos)  # yes, this is needed
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
@@ -301,8 +307,17 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.sizer3 = wx.FlexGridSizer(0, 1)
 		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | 
 		   wx.RIGHT | wx.LEFT, border = margin)
-		self.sizer0.Add(self.sizer2, flag = wx.ALIGN_RIGHT | wx.ALL, 
-		   border = margin)
+		self.buttonpanel = wx.Panel(self)
+		self.buttonpanel.SetSizer(wx.BoxSizer(wx.VERTICAL))
+		self.buttonpanel.Sizer.Add(self.sizer2, 1, flag=wx.ALIGN_RIGHT | wx.ALL, 
+								   border=margin)
+		if sys.platform == "win32":
+			self.buttonpanel_line = wx.Panel(self, size=(-1,1))
+			self.buttonpanel_line.SetBackgroundColour("#CCCCCC")
+			self.sizer0.Add(self.buttonpanel_line, flag=wx.TOP | wx.EXPAND,
+							border=margin)
+			self.buttonpanel.SetBackgroundColour(bgcolor)
+		self.sizer0.Add(self.buttonpanel, flag=wx.EXPAND)
 
 		if bitmap:
 			self.bitmap = wx.StaticBitmap(self, -1, bitmap, size=(32, 32))
@@ -316,7 +331,7 @@ class BaseInteractiveDialog(wx.Dialog):
 
 		btnwidth = 80
 
-		self.ok = wx.Button(self, wx.ID_OK, ok)
+		self.ok = wx.Button(self.buttonpanel, wx.ID_OK, ok)
 		self.sizer2.Add(self.ok)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_OK)
 
@@ -434,8 +449,10 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 
 	def __init__(self, *args, **kwargs):
 		BitmapBackgroundPanel.__init__(self, *args, **kwargs)
-		self._label = ""
+		self.label_x = None
+		self.label_y = None
 		self.drawline = True
+		self.linecolor = wx.Colour(0x66, 0x66, 0x66)
 		self.textshadowcolor = wx.Colour(214, 214, 214)
 	
 	def _set_font(self, dc):
@@ -448,26 +465,26 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		dc.SetFont(font)
 		return dc
 	
-	def GetLabel(self):
-		return self._label
-	
-	def SetLabel(self, label):
-		self._label = label
-	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
 		if self.drawline:
-			pen = wx.Pen(wx.Colour(0x66, 0x66, 0x66), 1, wx.SOLID)
+			pen = wx.Pen(self.linecolor, 1, wx.SOLID)
 			pen.SetCap(wx.CAP_BUTT)
 			dc.SetPen(pen)
 			dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
 		dc = self._set_font(dc)
 		w1, h1 = self.GetTextExtent(self.GetLabel())
 		w2, h2 = dc.GetTextExtent(self.GetLabel())
-		w = (max(w1, w2) - min(w1, w2)) / 2.0 + min(w1, w2)
-		h = (max(h1, h2) - min(h1, h2)) / 2.0 + min(h1, h2)
-		x, y = (self.GetSize()[0] / 2.0 - w / 2.0,
-				self.GetSize()[1] / 2.0 - h / 2.0)
+		if self.label_x is None:
+			w = (max(w1, w2) - min(w1, w2)) / 2.0 + min(w1, w2)
+			x = self.GetSize()[0] / 2.0 - w / 2.0
+		else:
+			x = self.label_x
+		if self.label_y is None:
+			h = (max(h1, h2) - min(h1, h2)) / 2.0 + min(h1, h2)
+			y = self.GetSize()[1] / 2.0 - h / 2.0
+		else:
+			y = self.label_y
 		if self.textshadowcolor:
 			dc.SetTextForeground(self.textshadowcolor)
 			dc.DrawText(self.GetLabel(), x + 1, y + 1)
@@ -493,12 +510,12 @@ class ConfirmDialog(BaseInteractiveDialog):
 		margin = 12
 
 		if alt:
-			self.alt = wx.Button(self, -1, alt)
+			self.alt = wx.Button(self.buttonpanel, -1, alt)
 			self.sizer2.Prepend((margin, margin))
 			self.sizer2.Prepend(self.alt)
 			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.alt.GetId())
 
-		self.cancel = wx.Button(self, wx.ID_CANCEL, cancel)
+		self.cancel = wx.Button(self.buttonpanel, wx.ID_CANCEL, cancel)
 		self.sizer2.Prepend((margin, margin))
 		self.sizer2.Prepend(self.cancel)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
@@ -766,6 +783,388 @@ class FlatShadedButton(GradientButton):
 		self._bitmap = bitmap
 		self.Refresh()
 
+class CustomGrid(wx.grid.Grid):
+
+	def __init__(self, *args, **kwargs):
+		wx.grid.Grid.__init__(self, *args, **kwargs)
+		self.GetGridCornerLabelWindow().Bind(wx.EVT_PAINT, self.OnPaintCornerLabel)
+		self.GetGridColLabelWindow().Bind(wx.EVT_PAINT, self.OnPaintColLabels)
+		self.GetGridRowLabelWindow().Bind(wx.EVT_PAINT, self.OnPaintRowLabels)
+		self.SetDefaultEditor(CustomCellEditor())
+		self.SetDefaultRenderer(CustomCellRenderer())
+
+		self.linecolor = wx.Colour(0x99, 0x99, 0x99)
+		self.SetForegroundColour("#333333")
+		self.headerbitmap = getbitmap("theme/gradient")
+		self._default_col_label_renderer = CustomColLabelRenderer()
+		self._default_row_label_renderer = CustomRowLabelRenderer()
+		self._col_label_renderers = {}
+		self._row_label_renderers = {}
+		self.alternate_cell_background_color = None
+		self.alternate_col_label_background_color = None
+		self.alternate_row_label_background_color = None
+		self.draw_col_labels = True
+		self.draw_row_labels = True
+		self.draw_horizontal_grid_lines = True
+		self.draw_vertical_grid_lines = True
+
+	def GetColLeftRight(self, col):
+		c = 0
+		left = 0
+		while c < col:
+			left += self.GetColSize(c)
+			c += 1
+		right = left + self.GetColSize(col) - 1
+		return left, right
+
+	def GetRowTopBottom(self, row):
+		r = 0
+		top = 0
+		while r < row:
+			top += self.GetRowSize(r)
+			r += 1
+		bottom = top + self.GetRowSize(row) - 1
+		return top, bottom
+
+	def OnPaintColLabels(self, evt):
+		window = evt.GetEventObject()
+		dc = wx.PaintDC(window)
+
+		if getattr(self, "CalcColLabelsExposed", None):
+			# wxPython >= 2.8.10
+			cols = self.CalcColLabelsExposed(window.GetUpdateRegion())
+			if cols == [-1]:
+				return
+		else:
+			# wxPython < 2.8.10
+			cols = xrange(self.GetNumberCols())
+			if not cols:
+				return
+
+		for col in cols:
+			left, right = self.GetColLeftRight(col)
+			rect = wx.Rect()
+			rect.left = left
+			rect.right = right
+			rect.y = 0
+			rect.height = self.GetColLabelSize()
+
+			renderer = self._col_label_renderers.get(col,
+													 self._default_col_label_renderer)
+
+			renderer.Draw(self, dc, rect, col)
+
+	def OnPaintCornerLabel(self, evt):
+		window = evt.GetEventObject()
+		dc = wx.PaintDC(window)
+
+		rect = wx.Rect()
+		rect.width = self.GetRowLabelSize()
+		rect.height = self.GetColLabelSize()
+		rect.x = 0
+		rect.y = 0
+		self._default_col_label_renderer.Draw(self, dc, rect)
+
+	def OnPaintRowLabels(self, evt):
+		window = evt.GetEventObject()
+		dc = wx.PaintDC(window)
+
+		if getattr(self, "CalcRowLabelsExposed", None):
+			# wxPython >= 2.8.10
+			rows = self.CalcRowLabelsExposed(window.GetUpdateRegion())
+			if rows == [-1]:
+				return
+		else:
+			# wxPython < 2.8.10
+			rows = xrange(self.GetNumberRows())
+			if not rows:
+				return
+
+		x, y = self.CalcUnscrolledPosition((0,0))
+		pt = dc.GetDeviceOrigin()
+		dc.SetDeviceOrigin(pt.x, pt.y-y)
+		for row in rows:
+			top, bottom = self.GetRowTopBottom(row)
+			rect = wx.Rect()
+			rect.top = top
+			rect.bottom = bottom
+			rect.x = 0
+			rect.width = self.GetRowLabelSize()
+
+			renderer = self._row_label_renderers.get(row,
+													 self._default_row_label_renderer)
+
+			renderer.Draw(self, dc, rect, row)
+        
+	def SetColLabelRenderer(self, row, renderer):
+		"""
+		Register a renderer to be used for drawing the label for the
+		given column.
+		"""
+		if renderer is None:
+			if col in self._col_label_renderers:
+				del self._col_label_renderers[col]
+		else:
+			self._col_label_renderers[col] = renderer
+        
+	def SetRowLabelRenderer(self, row, renderer):
+		"""
+		Register a renderer to be used for drawing the label for the
+		given row.
+		"""
+		if renderer is None:
+			if row in self._row_label_renderers:
+				del self._row_label_renderers[row]
+		else:
+			self._row_label_renderers[row] = renderer
+
+
+class CustomCellEditor(wx.grid.PyGridCellEditor):
+
+	def __init__(self):
+		wx.grid.PyGridCellEditor.__init__(self)
+
+	def Create(self, parent, id, evtHandler):
+		"""
+		Called to create the control, which must derive from wx.Control.
+		"""
+		self._tc = wx.TextCtrl(parent, id, "", style=wx.TE_CENTRE)
+		self._tc.SetInsertionPoint(0)
+		self.SetControl(self._tc)
+
+		if evtHandler:
+			self._tc.PushEventHandler(evtHandler)
+
+	def SetSize(self, rect):
+		"""
+		Called to position/size the edit control within the cell rectangle.
+		If you don't fill the cell (the rect) then be sure to override
+		PaintBackground and do something meaningful there.
+		"""
+		self._tc.SetDimensions(rect.x, rect.y, rect.width+2, rect.height+2,
+							   wx.SIZE_ALLOW_MINUS_ONE)
+
+	def Show(self, show, attr):
+		"""
+		Show or hide the edit control.  You can use the attr (if not None)
+		to set colours or fonts for the control.
+		"""
+		super(self.__class__, self).Show(show, attr)
+
+	def PaintBackground(self, dc, rect, attr=None):
+		"""
+		Draws the part of the cell not occupied by the edit control.  The
+		base  class version just fills it with background colour from the
+		attribute.  In this class the edit control fills the whole cell so
+		don't do anything at all in order to reduce flicker.
+		"""
+
+	def BeginEdit(self, row, col, grid):
+		"""
+		Fetch the value from the table and prepare the edit control
+		to begin editing.  Set the focus to the edit control.
+		"""
+		self.startValue = grid.GetTable().GetValue(row, col)
+		self._tc.SetValue(self.startValue)
+		self._tc.SetInsertionPointEnd()
+		self._tc.SetFocus()
+
+		self._tc.SetSelection(0, self._tc.GetLastPosition())
+
+	def EndEdit(self, row, col, grid, value=None):
+		"""
+		Complete the editing of the current cell. Returns True if the value
+		has changed.  If necessary, the control may be destroyed.
+		"""
+		changed = False
+
+		val = self._tc.GetValue()
+		
+		if val != self.startValue:
+			changed = True
+			grid.GetTable().SetValue(row, col, val) # update the table
+
+		self.startValue = ''
+		self._tc.SetValue('')
+		return changed
+
+	def Reset(self):
+		"""
+		Reset the value in the control back to its starting value.
+		"""
+		self._tc.SetValue(self.startValue)
+		self._tc.SetInsertionPointEnd()
+
+	def IsAcceptedKey(self, evt):
+		"""
+		Return True to allow the given key to start editing: the base class
+		version only checks that the event has no modifiers.  F2 is special
+		and will always start the editor.
+		"""
+		return (not (evt.ControlDown() or evt.AltDown()) and
+				evt.GetKeyCode() != wx.WXK_SHIFT)
+
+	def StartingKey(self, evt):
+		"""
+		If the editor is enabled by pressing keys on the grid, this will be
+		called to let the editor do something about that first key if desired.
+		"""
+		key = evt.GetKeyCode()
+		ch = None
+		if key in [ wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2, wx.WXK_NUMPAD3, 
+					wx.WXK_NUMPAD4, wx.WXK_NUMPAD5, wx.WXK_NUMPAD6, wx.WXK_NUMPAD7, 
+					wx.WXK_NUMPAD8, wx.WXK_NUMPAD9
+					]:
+
+			ch = ch = chr(ord('0') + key - wx.WXK_NUMPAD0)
+
+		elif key < 256 and key >= 0 and chr(key) in string.printable:
+			ch = chr(key)
+
+		if ch is not None:
+			# For this example, replace the text.  Normally we would append it.
+			#self._tc.AppendText(ch)
+			self._tc.SetValue(ch)
+			self._tc.SetInsertionPointEnd()
+		else:
+			evt.Skip()
+
+	def StartingClick(self):
+		"""
+		If the editor is enabled by clicking on the cell, this method will be
+		called to allow the editor to simulate the click on the control if
+		needed.
+		"""
+
+	def Destroy(self):
+		"""final cleanup"""
+		super(self.__class__, self).Destroy()
+
+	def Clone(self):
+		"""
+		Create a new object which is the copy of this one
+		*Must Override*
+		"""
+		return self.__class__()
+
+
+class CustomCellRenderer(wx.grid.PyGridCellRenderer):
+
+	def Clone(self):
+		return self.__class__()
+
+	def Draw(self, grid, attr, dc, rect, row, col, isSelected):
+		if isSelected:
+			if grid.Parent.FindFocus() == grid:
+				color = grid.GetCellHighlightColour()
+			else:
+				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
+			textcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+		else:
+			if row % 2 == 0 and grid.alternate_cell_background_color:
+				color = grid.alternate_cell_background_color
+			else:
+				color = grid.GetDefaultCellBackgroundColour()
+			textcolor = grid.GetCellTextColour(row, col)
+		dc.SetBrush(wx.Brush(color))
+		dc.SetPen(wx.TRANSPARENT_PEN)
+		dc.DrawRectangleRect(rect)
+		pen = wx.Pen(grid.GetGridLineColour())
+		dc.SetPen(pen)
+		if getattr(grid, "draw_horizontal_grid_lines", True):
+			dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2], rect[1] + rect[3] - 1)
+		if getattr(grid, "draw_vertical_grid_lines", True):
+			dc.DrawLine(rect[0] + rect[2] - 1, rect[1], rect[0] + rect[2] - 1, rect[3])
+		dc.SetFont(grid.GetCellFont(row, col))
+		dc.SetTextForeground(textcolor)
+		align = grid.GetCellAlignment(row, col)
+		if align[1] == wx.ALIGN_CENTER:
+			align = align[0], wx.ALIGN_CENTER_VERTICAL
+		dc.DrawLabel(grid.GetCellValue(row, col), rect,
+					 align[0] | align[1])
+
+	def GetBestSize(self, grid, attr, dc, row, col):
+		dc.SetFont(grid.GetCellFont(row, col))
+		return dc.GetTextExtent(grid.GetCellValue(row, col))
+
+
+class CustomColLabelRenderer(object):
+
+	def __init__(self, bgcolor=None):
+		self.bgcolor = bgcolor
+
+	def Draw(self, grid, dc, rect, col=-1):
+		if self.bgcolor:
+			color = self.bgcolor
+		else:
+			if col % 2 == 0 and grid.alternate_col_label_background_color:
+				color = grid.alternate_col_label_background_color
+			else:
+				color = grid.GetLabelBackgroundColour()
+		if grid.headerbitmap:
+			img = grid.headerbitmap.ConvertToImage()
+			bmp = wx.BitmapFromImage(img.Rescale(grid.GetSize()[0],
+												 img.GetSize()[1],
+												 quality=wx.IMAGE_QUALITY_NORMAL))
+			dc.DrawBitmap(bmp, rect[0], 0)
+			pen = wx.Pen(grid.linecolor, 1, wx.SOLID)
+			pen.SetCap(wx.CAP_BUTT)
+			dc.SetPen(pen)
+			dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2],
+						rect[1] + rect[3] - 1)
+		else:
+			dc.SetBrush(wx.Brush(color))
+			dc.SetPen(wx.TRANSPARENT_PEN)
+			dc.DrawRectangleRect(rect)
+			pen = wx.Pen(grid.GetGridLineColour())
+			dc.SetPen(pen)
+			if getattr(grid, "draw_horizontal_grid_lines", True):
+				dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2],
+							rect[1] + rect[3] - 1)
+			if getattr(grid, "draw_vertical_grid_lines", True):
+				dc.DrawLine(rect[0] + rect[2] - 1, rect[1],
+							rect[0] + rect[2] - 1, rect[3])
+		if getattr(grid, "draw_col_labels", True) and col > -1:
+			dc.SetFont(grid.GetLabelFont())
+			dc.SetTextForeground(grid.GetLabelTextColour())
+			align = grid.GetColLabelAlignment()
+			if align[1] == wx.ALIGN_CENTER:
+				align = align[0], wx.ALIGN_CENTER_VERTICAL
+			dc.DrawLabel(" %s " % grid.GetColLabelValue(col), rect,
+						 align[0] | align[1])
+
+
+class CustomRowLabelRenderer(object):
+
+	def __init__(self, bgcolor=None):
+		self.bgcolor = bgcolor
+
+	def Draw(self, grid, dc, rect, row):
+		if self.bgcolor:
+			color = self.bgcolor
+		else:
+			if row % 2 == 0 and grid.alternate_row_label_background_color:
+				color = grid.alternate_row_label_background_color
+			else:
+				color = grid.GetLabelBackgroundColour()
+		dc.SetBrush(wx.Brush(color))
+		dc.SetPen(wx.TRANSPARENT_PEN)
+		dc.DrawRectangleRect(rect)
+		pen = wx.Pen(grid.GetGridLineColour())
+		dc.SetPen(pen)
+		if getattr(grid, "draw_horizontal_grid_lines", True):
+			dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2], rect[1] + rect[3] - 1)
+		if getattr(grid, "draw_vertical_grid_lines", True):
+			dc.DrawLine(rect[0] + rect[2] - 1, rect[1], rect[0] + rect[2] - 1, rect[3])
+		if getattr(grid, "draw_row_labels", True):
+			dc.SetFont(grid.GetLabelFont())
+			dc.SetTextForeground(grid.GetLabelTextColour())
+			align = grid.GetRowLabelAlignment()
+			if align[1] == wx.ALIGN_CENTER:
+				align = align[0], wx.ALIGN_CENTER_VERTICAL
+			dc.DrawLabel(" %s " % grid.GetRowLabelValue(row), rect,
+						 align[0] | align[1])
+
 
 class InfoDialog(BaseInteractiveDialog):
 
@@ -932,6 +1331,9 @@ class ProgressDialog(wx.Dialog):
 			style = (wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
 					 wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH)
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
+		if sys.platform == "win32":
+			bgcolor = self.BackgroundColour
+			self.SetBackgroundColour("#FFFFFF")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
@@ -951,8 +1353,17 @@ class ProgressDialog(wx.Dialog):
 		self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | 
 		   wx.RIGHT | wx.LEFT, border = margin)
-		self.sizer0.Add(self.sizer2, flag = wx.ALIGN_RIGHT | wx.ALL, 
-		   border = margin)
+		self.buttonpanel = wx.Panel(self)
+		self.buttonpanel.SetSizer(wx.BoxSizer(wx.VERTICAL))
+		self.buttonpanel.Sizer.Add(self.sizer2, 1, flag=wx.ALIGN_RIGHT | wx.ALL, 
+								   border=margin)
+		if sys.platform == "win32":
+			self.buttonpanel_line = wx.Panel(self, size=(-1,1))
+			self.buttonpanel_line.SetBackgroundColour("#CCCCCC")
+			self.sizer0.Add(self.buttonpanel_line, flag=wx.TOP | wx.EXPAND,
+							border=margin)
+			self.buttonpanel.SetBackgroundColour(bgcolor)
+		self.sizer0.Add(self.buttonpanel, flag=wx.EXPAND)
 
 		self.msg = wx.StaticText(self, -1, "")
 		self.sizer1.Add(self.msg, flag=wx.EXPAND | wx.BOTTOM, border=margin)
@@ -989,11 +1400,13 @@ class ProgressDialog(wx.Dialog):
 			self.sizer3.Add(self.remaining_time)
 
 		if style & wx.PD_CAN_ABORT:
-			self.cancel = wx.Button(self, wx.ID_ANY, lang.getstr("cancel"))
+			self.cancel = wx.Button(self.buttonpanel, wx.ID_ANY,
+									lang.getstr("cancel"))
 			self.sizer2.Add(self.cancel)
 			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.cancel.GetId())
 
-		self.pause_continue = wx.Button(self, wx.ID_ANY, lang.getstr("pause"))
+		self.pause_continue = wx.Button(self.buttonpanel, wx.ID_ANY,
+										lang.getstr("pause"))
 		self.sizer2.Prepend((margin, margin))
 		self.sizer2.Prepend(self.pause_continue)
 		self.Bind(wx.EVT_BUTTON, self.pause_continue_handler,
@@ -1707,6 +2120,16 @@ class TwoWaySplitter(FourWaySplitter):
 	
 	def SetSplitSize(self, size):
 		self._splitsize = size
+
+
+def get_gradient_panel(parent, label, x=16):
+	gradientpanel = BitmapBackgroundPanelText(parent, size=(-1, 23))
+	gradientpanel.label_x = x
+	gradientpanel.linecolor = wx.Colour(0x99, 0x99, 0x99)
+	gradientpanel.SetForegroundColour("#333333")
+	gradientpanel.SetBitmap(getbitmap("theme/gradient"))
+	gradientpanel.SetLabel(label)
+	return gradientpanel
 
 
 def test():

@@ -72,15 +72,15 @@
             </object>
             <object class="sizeritem">
               <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
                 <object class="sizeritem">
                   <object class="wxStaticLine">
                     <size>8,-1</size>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>4</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxStaticText" name="gamu_mapping_ciecam02_label">
+                  <object class="wxStaticText" name="gamut_mapping_ciecam02_label">
                     <label>gamut_mapping.ciecam02</label>
                   </object>
                   <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -89,10 +89,12 @@
                 <object class="sizeritem">
                   <object class="wxStaticLine"/>
                   <option>1</option>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>4</border>
                 </object>
+                <orient>wxHORIZONTAL</orient>
               </object>
-              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <flag>wxTOP|wxEXPAND</flag>
               <border>12</border>
             </object>
             <object class="sizeritem">

@@ -6,6 +6,7 @@ Interactive display calibration UI
 
 """
 
+import math
 import os
 import re
 import sys
@@ -18,7 +19,8 @@ from config import (getbitmap, getcfg, geticon, get_data_path, get_icon_bundle,
 from log import get_file_logger, safe_print
 from meta import name as appname
 from options import debug, test, verbose
-from wxwindows import BitmapBackgroundPanel, FlatShadedButton, numpad_keycodes
+from wxwindows import (BitmapBackgroundPanel, CustomGrid, FlatShadedButton,
+					   numpad_keycodes)
 import CGATS
 import colormath
 import config
@@ -130,21 +132,30 @@ class UntetheredFrame(wx.Frame):
 		sizer.Add(self.finish_btn, 0, wx.RIGHT, border=8)
 		panelsizer.Add(sizer, 0, wx.BOTTOM | wx.EXPAND, border=8)
 		
-		self.grid = wx.grid.Grid(self, -1, size=(536, 256))
-		self.grid.CreateGrid(0, 8)
+		self.grid = CustomGrid(self, -1, size=(536, 256))
+		self.grid.DisableDragColSize()
+		self.grid.DisableDragRowSize()
+		self.grid.SetScrollRate(0, 5)
+		self.grid.SetCellHighlightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
+		self.grid.SetCellHighlightROPenWidth(0)
+		self.grid.SetColLabelSize(23)
+		self.grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+		self.grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+		self.grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
+		self.grid.alternate_cell_background_color = self.grid.alternate_row_label_background_color
+		self.grid.draw_horizontal_grid_lines = False
+		self.grid.draw_vertical_grid_lines = False
+		self.grid.CreateGrid(0, 9)
 		self.grid.SetRowLabelSize(62)
-		for i in xrange(8):
+		for i in xrange(9):
 			if i in (3, 4):
 				size = 20
 			else:
 				size = 62
 			self.grid.SetColSize(i, size)
-		for i, label in enumerate(["R", "G", "B", "", "", "L*", "a*", "b*"]):
+		for i, label in enumerate(["R", "G", "B", "", "", "L*", "a*", "b*", ""]):
 			self.grid.SetColLabelValue(i, label)
-		gridbgcolor = wx.Colour(234, 234, 234)
-		if sys.version_info >= (2, 6):
-			self.grid.SetCellHighlightColour(gridbgcolor)
-			self.grid.SetCellHighlightROPenWidth(0)
+		gridbgcolor = wx.Colour(240, 240, 240)
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
 		self.grid.SetDefaultCellTextColour(BGCOLOUR)
@@ -154,9 +165,8 @@ class UntetheredFrame(wx.Frame):
 		self.grid.SetDefaultRowSize(20)
 		self.grid.SetLabelBackgroundColour(gridbgcolor)
 		self.grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
-		self.grid.EnableDragColSize()
 		self.grid.EnableEditing(False)
-		self.grid.EnableGridLines(True)
+		self.grid.EnableGridLines(False)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
 					   self.grid_left_click_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK,
@@ -188,6 +198,7 @@ class UntetheredFrame(wx.Frame):
 		# Event handlers
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
+		self.Bind(wx.EVT_SIZE, self.OnResize, self)
 		self.timer = wx.Timer(self)
 		if handler:
 			self.Bind(wx.EVT_TIMER, handler, self.timer)
@@ -230,6 +241,10 @@ class UntetheredFrame(wx.Frame):
 				setcfg("position.progress.x", x)
 				setcfg("position.progress.y", y)
 
+	def OnResize(self, event):
+		wx.CallAfter(self.resize_grid)
+		event.Skip()
+
 	def Pulse(self, msg=""):
 		if msg == lang.getstr("instrument.initializing"):
 			self.label_RGB.SetLabel(msg)
@@ -255,6 +270,7 @@ class UntetheredFrame(wx.Frame):
 		self.measure_btn._bitmap = geticon(10, {True: "play",
 												False: "pause"}.get(enable))
 		self.measure_btn.Enable(enable or enable_measure_button)
+		self.measure_btn.SetDefault()
 	
 	def finish_btn_handler(self, event):
 		self.finish_btn.Disable()
@@ -440,6 +456,8 @@ class UntetheredFrame(wx.Frame):
 					value = int(round(float(str(row["RGB_%s" % label] * 2.55))))
 					self.grid.SetCellValue(row.SAMPLE_ID - 1, j, "%i" % value)
 					RGB.append(value)
+				self.grid.SetCellRenderer(row.SAMPLE_ID - 1, 3,
+										  wx.grid.GridCellStringRenderer())
 				self.grid.SetCellBackgroundColour(row.SAMPLE_ID - 1, 3,
 												  wx.Colour(*RGB))
 		if "Connecting to the instrument" in txt:
@@ -508,6 +526,8 @@ class UntetheredFrame(wx.Frame):
 					Lab, color = self.get_Lab_RGB()
 					for i in query:
 						row = query[i]
+						self.grid.SetCellRenderer(query[i].SAMPLE_ID - 1, 4,
+												  wx.grid.GridCellStringRenderer())
 						self.grid.SetCellBackgroundColour(query[i].SAMPLE_ID - 1,
 														  4, wx.Colour(*color))
 						for j in xrange(3):
@@ -558,6 +578,26 @@ class UntetheredFrame(wx.Frame):
 	
 	def reset(self):
 		self._setup()
+
+	def resize_grid(self):
+		num_cols = self.grid.GetNumberCols()
+		if not num_cols:
+			return
+		grid_w = self.grid.GetSize()[0] - 40
+		col_w = round(grid_w / (num_cols - 1))
+		last_col_w = grid_w - col_w * (num_cols - 2)
+		self.grid.SetRowLabelSize(col_w)
+		for i in xrange(num_cols):
+			if i in (3, 4):
+				w = 20
+			elif i == num_cols - 1:
+				w = last_col_w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+			else:
+				w = col_w
+			self.grid.SetColSize(i, w)
+		self.grid.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+							 0 - wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y))
+		self.grid.ForceRefresh()
 	
 	def _setup(self):
 		self.logger.info("-" * 80)
