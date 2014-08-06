@@ -1134,7 +1134,7 @@ class LUTFrame(wx.Frame):
 			for i, v in enumerate(RGB):
 				v = min(v, 1.0)
 				v *= 255
-				X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], scale=100)
+				X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], **{"scale": 100})
 				if direction in ("b", "if"):
 					X = Z = Y
 				elif intent == "a":
