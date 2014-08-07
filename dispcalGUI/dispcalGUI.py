@@ -1443,7 +1443,7 @@ class MainFrame(BaseFrame):
 						   self.buttonpanelheader.Size[1] + 1) or 0) +
 						 self.buttonpanel.Sizer.MinSize[1])
 		else:
-			height = -1
+			height = self.ClientSize[1]
 		borders_lr = self.Size[0] - self.ClientSize[0]
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0],
