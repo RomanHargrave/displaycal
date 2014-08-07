@@ -3004,15 +3004,9 @@ class MainFrame(BaseFrame):
 				getcfg("whitepoint.colortemp.locus"), 
 			self.whitepoint_colortemp_loci_ba.get(
 				defaults["whitepoint.colortemp.locus"])))
-
-		self.luminance_textctrl.ChangeValue(
-			str(getcfg("calibration.luminance")))
 		
 		self.whitelevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.whitelevel")))
-
-		self.black_luminance_textctrl.ChangeValue(
-			"%.6f" % getcfg("calibration.black_luminance"))
 		
 		self.blacklevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.blacklevel")))
@@ -3482,6 +3476,8 @@ class MainFrame(BaseFrame):
 			self.luminance_ctrl.SetSelection(1)
 		else:
 			self.luminance_ctrl.SetSelection(0)
+		self.luminance_textctrl.ChangeValue(
+			str(getcfg("calibration.luminance")))
 		self.luminance_textctrl.Show(bool(getcfg("calibration.luminance", 
 												 False)))
 		self.luminance_textctrl_label.Show(bool(getcfg("calibration.luminance", 
@@ -3491,6 +3487,8 @@ class MainFrame(BaseFrame):
 			self.black_luminance_ctrl.SetSelection(1)
 		else:
 			self.black_luminance_ctrl.SetSelection(0)
+		self.black_luminance_textctrl.ChangeValue(
+			"%.6f" % getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Show(
 			bool(getcfg("show_advanced_calibration_options") and
 				 getcfg("calibration.black_luminance", False)))
