@@ -1027,7 +1027,7 @@ class MainFrame(BaseFrame):
 		self.update_displays(update_ccmx_items=False)
 		self.update_comports()
 		self.update_controls(update_ccmx_items=False)
-		BaseFrame.update_layout(self)
+		self.set_size(True, True)
 		self.calpanel.SetScrollRate(2, 2)
 		self.SetSaneGeometry(int(getcfg("position.x")), 
 							 int(getcfg("position.y")))
@@ -1497,11 +1497,7 @@ class MainFrame(BaseFrame):
 				if not chart in self.default_testchart_names:
 					self.default_testchart_names += [chart]
 
-		wx.CallAfter(self.set_size, fit_width=True)
-
 	def set_size(self, set_height=False, fit_width=False):
-		if self.IsMaximized() or self.IsIconized():
-			return
 		if not self.IsFrozen():
 			self.Freeze()
 		self.SetMinSize((0, 0))
@@ -1521,8 +1517,9 @@ class MainFrame(BaseFrame):
 					    self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
 				height)
 		self.SetMaxSize((-1, -1))
-		self.SetSize((size[0] if fit_width else max(size[0], self.GetSize()[0]),
-					  size[1]))
+		if not self.IsMaximized() and not self.IsIconized():
+			self.SetSize((size[0] if fit_width else max(size[0], self.GetSize()[0]),
+						  size[1]))
 		self.SetMinSize((size[0], self.GetSize()[1] - 
 								  self.calpanel.GetSize()[1] + 64))
 		if self.IsFrozen():
@@ -2206,8 +2203,7 @@ class MainFrame(BaseFrame):
 	
 	def update_layout(self):
 		""" Update main window layout. """
-		self.calpanel.Layout()
-		self.panel.Layout()
+		self.set_size(False, True)
 
 	def restore_defaults_handler(self, event=None, include=(), exclude=(),
 								 override=None):
@@ -2439,10 +2435,10 @@ class MainFrame(BaseFrame):
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
+		if self.IsShown():
+			self.set_size()
 	
 	def update_scrollbars(self):
-		if self.IsShown():
-			self.set_size(True)
 		self.Freeze()
 		self.calpanel.SetVirtualSize(self.calpanel.GetBestVirtualSize())
 		self.Thaw()
@@ -2605,7 +2601,7 @@ class MainFrame(BaseFrame):
 			len(measurement_modes[instrument_type]) > 1)
 		self.measurement_mode_ctrl.Thaw()
 	
-	def update_colorimeter_correction_matrix_ctrl(self):
+	def update_colorimeter_correction_matrix_ctrl(self, event=None):
 		""" Show or hide the colorimeter correction matrix controls """
 		self.calpanel.Freeze()
 		self.update_adjustment_controls()
@@ -2623,7 +2619,10 @@ class MainFrame(BaseFrame):
 			self.colorimeter_correction_web_btn, show_control)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
-		wx.CallAfter(self.update_scrollbars)
+		if self.IsShown():
+			wx.CallAfter(self.update_scrollbars)
+			if event:
+				wx.CallAfter(self.set_size, True)
 	
 	def delete_colorimeter_correction_matrix_ctrl_item(self, path):
 		if path in self.ccmx_cached_paths:
@@ -7509,7 +7508,7 @@ class MainFrame(BaseFrame):
 		if self.comport_ctrl.GetSelection() > -1:
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
-		self.update_colorimeter_correction_matrix_ctrl()
+		self.update_colorimeter_correction_matrix_ctrl(True)
 		self.update_colorimeter_correction_matrix_ctrl_items()
 	
 	def import_colorimeter_correction_handler(self, event):
@@ -9543,7 +9542,7 @@ class MainFrame(BaseFrame):
 			self.worker.measurement_modes = {}
 			self.update_measurement_modes()
 			if comports == self.worker.instruments:
-				self.update_colorimeter_correction_matrix_ctrl()
+				self.update_colorimeter_correction_matrix_ctrl(True)
 			self.update_black_point_rate_ctrl()
 			self.update_drift_compensation_ctrls()
 			self.update_profile_type_ctrl()
