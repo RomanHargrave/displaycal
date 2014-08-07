@@ -434,21 +434,19 @@ class BitmapBackgroundPanel(wx.Panel):
 		if bmp:
 			if True in self.scalebitmap:
 				img = bmp.ConvertToImage()
-				bmp = wx.BitmapFromImage(img.Rescale(self.GetSize()[0]
-													 if self.scalebitmap[0]
-													 else img.GetSize()[0],
-													 self.GetSize()[1]
-													 if self.scalebitmap[1]
-													 else img.GetSize()[1],
-													 quality=self.scalequality))
+				img.Rescale(self.GetSize()[0] if self.scalebitmap[0]
+							else img.GetSize()[0],
+							self.GetSize()[1]  if self.scalebitmap[1]
+							else img.GetSize()[1], quality=self.scalequality)
+				bmp = img.ConvertToBitmap()
 			dc.DrawBitmap(bmp, 0, 0)
 			if self.repeat_sub_bitmap_h:
 				sub_bmp = bmp.GetSubBitmap(self.repeat_sub_bitmap_h)
 				sub_img = sub_bmp.ConvertToImage()
-				sub_img = sub_img.Rescale(self.GetSize()[0] -
-										  bmp.GetSize()[0],
-										  bmp.GetSize()[1],
-										  quality=self.scalequality)
+				sub_img.Rescale(self.GetSize()[0] -
+								bmp.GetSize()[0],
+								bmp.GetSize()[1],
+								quality=self.scalequality)
 				dc.DrawBitmap(sub_img.ConvertToBitmap(), bmp.GetSize()[0], 0)
 
 
@@ -1122,10 +1120,9 @@ class CustomColLabelRenderer(object):
 				color = grid.GetLabelBackgroundColour()
 		if grid.headerbitmap:
 			img = grid.headerbitmap.ConvertToImage()
-			bmp = wx.BitmapFromImage(img.Rescale(grid.GetSize()[0],
-												 img.GetSize()[1],
-												 quality=wx.IMAGE_QUALITY_NORMAL))
-			dc.DrawBitmap(bmp, rect[0], 0)
+			img.Rescale(grid.GetSize()[0], img.GetSize()[1],
+						quality=wx.IMAGE_QUALITY_NORMAL)
+			dc.DrawBitmap(img.ConvertToBitmap(), rect[0], 0)
 			pen = wx.Pen(grid.linecolor, 1, wx.SOLID)
 			pen.SetCap(wx.CAP_BUTT)
 			dc.SetPen(pen)
