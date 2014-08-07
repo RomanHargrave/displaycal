@@ -3671,6 +3671,7 @@ class MainFrame(BaseFrame):
 														  getevttype(event)))
 		v = int(self.interactive_display_adjustment_cb.GetValue())
 		if v != getcfg("calibration.interactive_display_adjustment"):
+			setcfg("calibration.interactive_display_adjustment", v)
 			self.profile_settings_changed()
 			self.calpanel.Freeze()
 			self.update_adjustment_controls()
@@ -3679,7 +3680,6 @@ class MainFrame(BaseFrame):
 			self.calpanel.Thaw()
 			self.update_main_controls()
 			self.update_profile_name()
-		setcfg("calibration.interactive_display_adjustment", v)
 
 	def black_point_compensation_ctrl_handler(self, event):
 		v = int(self.black_point_compensation_cb.GetValue())
