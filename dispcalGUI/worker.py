@@ -6122,8 +6122,10 @@ usage: spotread [-options] [logfile]
 		# If running wexpect.spawn in a thread under Windows, writing to
 		# sys.stdout from another thread can fail sporadically with IOError 9
 		# 'Bad file descriptor', so don't use sys.stdout
+		# Careful: Python 2.5 Producer objects don't have a name attribute
 		if (hasattr(self, "thread") and self.thread.isAlive() and
-			threading.currentThread().name != self.thread.name):
+			(not hasattr(threading.currentThread(), "name") or
+			 threading.currentThread().name != self.thread.name)):
 			logfn = log
 		else:
 			logfn = safe_print
