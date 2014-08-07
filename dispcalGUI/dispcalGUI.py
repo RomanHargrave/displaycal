@@ -9769,7 +9769,12 @@ class MainFrame(BaseFrame):
 					safe_print("[D] options_colprof:", options_colprof)
 				ccxxsetting = getcfg("colorimeter_correction_matrix_file").split(":", 1)[0]
 				ccmx = None
-				# Parse options
+				# Check if TRC was set
+				trc = False
+				if options_dispcal:
+					for o in options_dispcal:
+						if o[0] in ("g", "G"):
+							trc = True
 				# Restore defaults
 				self.restore_defaults_handler(
 					include=("calibration", 
@@ -9782,7 +9787,8 @@ class MainFrame(BaseFrame):
 							 "calibration.use_video_lut",
 							 "measure.darken_background.show_warning", 
 							 "trc.should_use_viewcond_adjust.show_msg"),
-					override={"trc": ""} if not options_dispcal else None)
+					override={"trc": ""} if not trc else None)
+				# Parse options
 				if options_dispcal:
 					self.worker.options_dispcal = ["-" + arg for arg 
 												   in options_dispcal]
