@@ -1181,7 +1181,6 @@ class MainFrame(BaseFrame):
 		self.SetMaxSize((-1, -1))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
-		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 		self.Bind(wx.EVT_SIZE, self.OnResize, self)
 		self.droptarget = FileDrop()
 		self.droptarget.drophandlers = {
@@ -10393,9 +10392,6 @@ class MainFrame(BaseFrame):
 			self.start_timers()
 		self.enable_menus()
 		wx.Frame.Show(self, show)
-
-	def OnShow(self, event):
-		self.SetFocus()
 
 	def OnClose(self, event=None):
 		if (getattr(self.worker, "thread", None) and
