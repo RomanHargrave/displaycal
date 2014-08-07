@@ -22,6 +22,12 @@ if wx.VERSION < wx_minversion:
 	app.MainLoop()
 	sys.exit()
 import wx.grid
+from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
+
+
+def Property(func):
+	return property(**func())
+
 
 wx.BitmapButton._SetBitmapLabel = wx.BitmapButton.SetBitmapLabel
 
@@ -204,3 +210,116 @@ class ScrolledWindow(wx._ScrolledWindow):
 			self.Scroll(new_vs_x, new_vs_y)
 
 wx.ScrolledWindow = ScrolledWindow
+
+
+class ThemedGenButton(_ThemedGenButton):
+
+	"""
+	A themed generic button, based on wx.lib.buttons.ThemedGenButton.
+
+	Fixes wx.lib.buttons.ThemedGenButton sometimes not reflecting enabled
+	state correctly as well as not taking into account background color when
+	pressed, and mimics a default button under Windows more closely by
+	not drawing a focus outline and not shifting the label when pressed.
+	
+	Also implements state for SetDefault.
+
+	"""
+
+	_reallyenabled = True
+	labelDelta = 1
+
+	def __init__(self, *args, **kwargs):
+		self.bezelWidth = 2
+		self.hasFocus = False
+		self.up = True
+		self.useFocusInd = True
+		_ThemedGenButton.__init__(self, *args, **kwargs)
+		self._default = False
+
+	def Disable(self):
+		self.Enable(False)
+
+	def DrawBezel(self, dc, x1, y1, x2, y2):
+		rect = wx.Rect(x1, y1, x2, y2)
+		if self.up:
+			state = 0
+		else:
+			state = wx.CONTROL_PRESSED | wx.CONTROL_SELECTED
+		if not self.IsEnabled():
+			state = wx.CONTROL_DISABLED
+		elif self._default:
+			state |= wx.CONTROL_ISDEFAULT
+		pt = self.ScreenToClient(wx.GetMousePosition())
+		if self.GetClientRect().Contains(pt):
+			state |= wx.CONTROL_CURRENT
+		wx.RendererNative.Get().DrawPushButton(self, dc, rect, state)
+
+	def DrawLabel(self, dc, width, height, dx=0, dy=0):
+		dc.SetFont(self.GetFont())
+		if self.Enabled:
+			dc.SetTextForeground(self.ForegroundColour)
+		else:
+			dc.SetTextForeground(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT))
+		label = self.Label
+		tw, th = dc.GetTextExtent(label)
+		if sys.platform != "win32" and not self.up:
+			dx = dy = self.labelDelta
+		dc.DrawText(label, (width-tw)/2+dx, (height-th)/2+dy)
+
+	def Enable(self, enable=True):
+		if enable != self.Enabled:
+			self.Enabled = enable
+			wx.PyControl.Enable(self, enable)
+			self.Refresh()
+
+	@Property
+	def Enabled():
+		def fget(self):
+			return self._reallyenabled
+		
+		def fset(self, enabled):
+			self._reallyenabled = enabled
+		
+		return locals()
+
+	def IsEnabled(self):
+		return self.Enabled
+
+	def OnLeftDown(self, event):
+		if not self.Enabled:
+			return
+		self.up = False
+		self.CaptureMouse()
+		self.SetFocus()
+		self.useFocusInd = False
+		self.Refresh()
+		event.Skip()
+
+	def OnGainFocus(self, event):
+		self.hasFocus = True
+		self.useFocusInd = bool(self.bezelWidth)
+		self.Refresh()
+		self.Update()
+
+	def OnPaint(self, event):
+		(width, height) = self.GetClientSizeTuple()
+		x1 = y1 = 0
+		x2 = width-1
+		y2 = height-1
+
+		dc = wx.PaintDC(self)
+		brush = self.GetBackgroundBrush(dc)
+		if brush is not None:
+			brush.SetColour(self.BackgroundColour)
+			dc.SetBackground(brush)
+			dc.Clear()
+
+		self.DrawBezel(dc, x1, y1, x2, y2)
+		self.DrawLabel(dc, width, height)
+		if self.hasFocus and self.useFocusInd:
+			self.DrawFocusIndicator(dc, width, height)
+
+	def SetDefault(self):
+		self._default = True
+		_ThemedGenButton.SetDefault(self)

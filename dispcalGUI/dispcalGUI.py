@@ -125,13 +125,12 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent, FileDrop)
+from wxfixes import ThemedGenButton
 from wxwindows import (AboutDialog, BaseFrame, BitmapBackgroundPanel,
 					   BitmapBackgroundPanelText, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
 					   LogWindow, ProgressDialog,
 					   TooltipWindow, get_gradient_panel)
-if sys.platform == "win32":
-	from wx.lib.buttons import ThemedGenButton
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
@@ -2121,7 +2120,6 @@ class MainFrame(BaseFrame):
 				  id=self.calibrate_and_profile_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.profile_btn_handler, 
 				  id=self.profile_btn.GetId())
-		self.calibrate_and_profile_btn.SetDefault()
 
 	def set_language_handler(self, event):
 		"""
