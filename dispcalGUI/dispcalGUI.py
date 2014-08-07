@@ -1517,11 +1517,12 @@ class MainFrame(BaseFrame):
 		else:
 			height = -1
 		size = (min(self.GetDisplay().ClientArea[2], 
-					max((self.GetMinSize() if fit_width else self.GetSize())[0],
+					max(self.GetMinSize()[0],
 					    self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
 				height)
 		self.SetMaxSize((-1, -1))
-		self.SetSize(size)
+		self.SetSize((size[0] if fit_width else max(size[0], self.GetSize()[0]),
+					  size[1]))
 		self.SetMinSize((size[0], self.GetSize()[1] - 
 								  self.calpanel.GetSize()[1] + 64))
 		if self.IsFrozen():
