@@ -335,6 +335,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.sizer2.Add(self.ok)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_OK)
 
+		self.buttonpanel.Layout()
 		self.sizer0.SetSizeHints(self)
 		self.sizer0.Layout()
 		if parent and parent.IsIconized():
@@ -536,6 +537,8 @@ class ConfirmDialog(BaseInteractiveDialog):
 		self.sizer2.Prepend((margin, margin))
 		self.sizer2.Prepend(self.cancel)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
+		
+		self.buttonpanel.Layout()
 		
 		self.Fit()
 
@@ -1428,6 +1431,8 @@ class ProgressDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.pause_continue_handler,
 				  id=self.pause_continue.GetId())
 		self.pause_continue.Show(pauseable)
+
+		self.buttonpanel.Layout()
 		
 		# Use an accelerator table for 0-9, a-z, numpad
 		keycodes = range(48, 58) + range(97, 123) + numpad_keycodes

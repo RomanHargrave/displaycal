@@ -10682,6 +10682,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 
 		dlg.sizer3.Add(grid, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 
+		dlg.buttonpanel.Layout()
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 

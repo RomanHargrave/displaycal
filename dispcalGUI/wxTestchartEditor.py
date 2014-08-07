@@ -2101,7 +2101,7 @@ class TestchartEditor(wx.Frame):
 					ok = lang.getstr("save_as")
 				dlg = ConfirmDialog(self, msg = lang.getstr("testchart.save_or_discard"), ok = ok, cancel = lang.getstr("cancel"), bitmap = geticon(32, "dialog-warning"))
 				if self.IsBeingDeleted():
-					dlg.sizer2.Hide(0)
+					dlg.buttonpanel.Hide(0)
 				if os.path.exists(self.ti1.filename):
 					dlg.save_as = wx.Button(dlg.buttonpanel, -1, lang.getstr("save_as"))
 					ID_SAVE_AS = dlg.save_as.GetId()
@@ -2115,6 +2115,7 @@ class TestchartEditor(wx.Frame):
 				dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id = ID_DISCARD)
 				dlg.sizer2.Add((12, 12))
 				dlg.sizer2.Add(dlg.discard)
+				dlg.buttonpanel.Layout()
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
 				result = dlg.ShowModal()
