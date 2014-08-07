@@ -2132,7 +2132,7 @@ class MainFrame(BaseFrame):
 				if hasattr(self, "profile_name_tooltip_window"):
 					self.profile_name_tooltip_window.Destroy()
 					del self.profile_name_tooltip_window
-				self.Raise()
+				wx.CallAfter(self.Raise)
 				break
 	
 	def update_layout(self):
