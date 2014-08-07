@@ -2607,7 +2607,7 @@ class MainFrame(BaseFrame):
 	def update_colorimeter_correction_matrix_ctrl(self):
 		""" Show or hide the colorimeter correction matrix controls """
 		self.calpanel.Freeze()
-		self.enable_adjustment_controls()
+		self.update_adjustment_controls()
 		instrument_features = self.worker.get_instrument_features()
 		show_control = (self.worker.instrument_can_use_ccxx() and
 						not is_ccxx_testchart() and
@@ -2974,12 +2974,13 @@ class MainFrame(BaseFrame):
 		if update_ccmx_items:
 			self.update_colorimeter_correction_matrix_ctrl_items()
 
-		self.enable_adjustment_controls()
+		self.update_measurement_mode()
+
+		self.update_adjustment_controls()
 		self.whitepoint_colortemp_textctrl.Enable(not update_cal)
 		self.whitepoint_colortemp_locus_ctrl.Enable(not update_cal)
 		self.whitepoint_x_textctrl.Enable(not update_cal)
 		self.whitepoint_y_textctrl.Enable(not update_cal)
-		self.whitepoint_measure_btn.Enable(not update_cal)
 		self.luminance_textctrl.Enable(not update_cal)
 		self.black_luminance_textctrl.Enable(not update_cal)
 		self.trc_ctrl.Enable(not update_cal)
@@ -2993,59 +2994,25 @@ class MainFrame(BaseFrame):
 		self.black_point_correction_intctrl.Enable(not update_cal)
 		self.update_black_point_rate_ctrl()
 		self.update_drift_compensation_ctrls()
-		self.interactive_display_adjustment_cb.Enable(not update_cal)
 
 		self.testchart_btn.Enable(enable_profile)
 		self.create_testchart_btn.Enable(enable_profile)
 		self.profile_type_ctrl.Enable(enable_profile)
 
-		self.update_measurement_mode()
-
-		self.whitepoint_colortemp_textctrl.SetValue(
-			str(stripzeros(getcfg("whitepoint.colortemp"))))
 		self.whitepoint_colortemp_locus_ctrl.SetSelection(
 			self.whitepoint_colortemp_loci_ba.get(
 				getcfg("whitepoint.colortemp.locus"), 
 			self.whitepoint_colortemp_loci_ba.get(
 				defaults["whitepoint.colortemp.locus"])))
-		if getcfg("whitepoint.colortemp", False):
-			self.whitepoint_ctrl.SetSelection(1)
-		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
-			self.whitepoint_x_textctrl.ChangeValue(str(getcfg("whitepoint.x")))
-			self.whitepoint_y_textctrl.ChangeValue(str(getcfg("whitepoint.y")))
-			self.whitepoint_ctrl.SetSelection(2)
-		else:
-			self.whitepoint_ctrl.SetSelection(0)
-		self.whitepoint_ctrl_handler(
-			CustomEvent(wx.EVT_CHOICE.evtType[0], 
-			self.whitepoint_ctrl), False)
 
-		if getcfg("calibration.luminance", False):
-			self.luminance_ctrl.SetSelection(1)
-		else:
-			self.luminance_ctrl.SetSelection(0)
 		self.luminance_textctrl.ChangeValue(
 			str(getcfg("calibration.luminance")))
-		self.luminance_textctrl.Show(bool(getcfg("calibration.luminance", 
-												 False)))
-		self.luminance_textctrl_label.Show(bool(getcfg("calibration.luminance", 
-													   False)))
 		
 		self.whitelevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.whitelevel")))
 
-		if getcfg("calibration.black_luminance", False):
-			self.black_luminance_ctrl.SetSelection(1)
-		else:
-			self.black_luminance_ctrl.SetSelection(0)
 		self.black_luminance_textctrl.ChangeValue(
 			"%.6f" % getcfg("calibration.black_luminance"))
-		self.black_luminance_textctrl.Show(
-			bool(getcfg("show_advanced_calibration_options") and
-				 getcfg("calibration.black_luminance", False)))
-		self.black_luminance_textctrl_label.Show(
-			bool(getcfg("show_advanced_calibration_options") and
-				 getcfg("calibration.black_luminance", False)))
 		
 		self.blacklevel_drift_compensation.SetValue(
 			bool(getcfg("drift_compensation.blacklevel")))
@@ -3109,9 +3076,6 @@ class MainFrame(BaseFrame):
 									defaults["calibration.quality"]))
 		self.calibration_quality_ctrl.SetValue(q)
 		self.set_calibration_quality_label(self.quality_ab[q])
-
-		self.interactive_display_adjustment_cb.SetValue(not update_cal and 
-			bool(int(getcfg("calibration.interactive_display_adjustment"))))
 
 		self.update_bpc()
 
@@ -3452,14 +3416,24 @@ class MainFrame(BaseFrame):
 		setcfg("allow_skip_sensor_cal", 
 			   int(self.menuitem_allow_skip_sensor_cal.IsChecked()))
 
-	def enable_adjustment_controls(self):
+	def update_adjustment_controls(self):
 		update_cal = getcfg("calibration.update")
 		auto = self.get_measurement_mode() == "auto"
-		do_cal = (self.interactive_display_adjustment_cb.GetValue() or
-				  self.trc_ctrl.GetSelection() > 0)
+		do_cal = bool(getcfg("calibration.interactive_display_adjustment",
+							 False) or getcfg("trc", False))
 		enable = (not update_cal and not auto and do_cal)
+		for option in ("whitepoint.colortemp", "whitepoint.x",
+					   "whitepoint.y", "calibration.luminance",
+					   "calibration.black_luminance",
+					   "calibration.interactive_display_adjustment"):
+			backup = getcfg("%s.backup" % option, False)
+			if auto and backup is None:
+				# Backup current settings
+				setcfg("%s.backup" % option, getcfg(option, False))
+			elif not auto and backup is not None:
+				setcfg(option, getcfg("%s.backup" % option))
+				setcfg("%s.backup" % option, None)
 		if auto or not do_cal:
-			self.whitepoint_ctrl.SetSelection(0)
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
@@ -3474,22 +3448,55 @@ class MainFrame(BaseFrame):
 			self.luminance_textctrl.Hide()
 			self.luminance_textctrl_label.Hide()
 			setcfg("calibration.luminance", None)
-			self.black_luminance_ctrl.SetSelection(0)
 			self.black_luminance_textctrl.Hide()
 			self.black_luminance_textctrl_label.Hide()
 			setcfg("calibration.black_luminance", None)
-			self.interactive_display_adjustment_cb.SetValue(False)
 			setcfg("calibration.interactive_display_adjustment", 0)
-			wx.CallAfter(self.profile_settings_changed)
 		self.whitepoint_ctrl.Enable(enable)
-		for ctrl in (self.whitepoint_colortemp_locus_label,
-					 self.whitepoint_colortemp_locus_ctrl):
-			ctrl.Show(self.whitepoint_ctrl.GetSelection() in (0, 1) and
-					  not auto and do_cal)
 		self.luminance_ctrl.Enable(enable)
 		self.black_luminance_ctrl.Enable(enable)
 		self.interactive_display_adjustment_cb.Enable(not update_cal and
 													  not auto)
+
+		self.interactive_display_adjustment_cb.SetValue(not update_cal and 
+			bool(int(getcfg("calibration.interactive_display_adjustment"))))
+		self.whitepoint_colortemp_textctrl.SetValue(
+			str(stripzeros(getcfg("whitepoint.colortemp"))))
+		if getcfg("whitepoint.colortemp", False):
+			self.whitepoint_ctrl.SetSelection(1)
+		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
+			self.whitepoint_x_textctrl.ChangeValue(str(getcfg("whitepoint.x")))
+			self.whitepoint_y_textctrl.ChangeValue(str(getcfg("whitepoint.y")))
+			self.whitepoint_ctrl.SetSelection(2)
+		else:
+			self.whitepoint_ctrl.SetSelection(0)
+		self.whitepoint_ctrl_handler(
+			CustomEvent(wx.EVT_CHOICE.evtType[0], 
+			self.whitepoint_ctrl), False)
+		for ctrl in (self.whitepoint_colortemp_locus_label,
+					 self.whitepoint_colortemp_locus_ctrl):
+			ctrl.Show(self.whitepoint_ctrl.GetSelection() in (0, 1) and
+					  not auto and do_cal)
+
+		if getcfg("calibration.luminance", False):
+			self.luminance_ctrl.SetSelection(1)
+		else:
+			self.luminance_ctrl.SetSelection(0)
+		self.luminance_textctrl.Show(bool(getcfg("calibration.luminance", 
+												 False)))
+		self.luminance_textctrl_label.Show(bool(getcfg("calibration.luminance", 
+													   False)))
+
+		if getcfg("calibration.black_luminance", False):
+			self.black_luminance_ctrl.SetSelection(1)
+		else:
+			self.black_luminance_ctrl.SetSelection(0)
+		self.black_luminance_textctrl.Show(
+			bool(getcfg("show_advanced_calibration_options") and
+				 getcfg("calibration.black_luminance", False)))
+		self.black_luminance_textctrl_label.Show(
+			bool(getcfg("show_advanced_calibration_options") and
+				 getcfg("calibration.black_luminance", False)))
 
 	def enable_argyll_debug_handler(self, event):
 		if not getcfg("argyll.debug"):
@@ -3668,7 +3675,7 @@ class MainFrame(BaseFrame):
 		if v != getcfg("calibration.interactive_display_adjustment"):
 			self.profile_settings_changed()
 			self.calpanel.Freeze()
-			self.enable_adjustment_controls()
+			self.update_adjustment_controls()
 			self.calpanel.Layout()
 			self.calpanel.Refresh()
 			self.calpanel.Thaw()
@@ -4250,7 +4257,7 @@ class MainFrame(BaseFrame):
 		if event.GetId() != self.trc_ctrl.GetId():
 			self.update_trc_control()
 		self.calpanel.Freeze()
-		self.enable_adjustment_controls()
+		self.update_adjustment_controls()
 		self.show_trc_controls()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
