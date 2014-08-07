@@ -4228,7 +4228,7 @@ class MainFrame(BaseFrame):
 				self.black_output_offset_intctrl.SetValue(0)
 			elif (self.trc_ctrl.GetSelection() > 1 or bt1886):
 				self.restore_trc_backup()
-				if getcfg("calibration.black_output_offset.backup"):
+				if getcfg("calibration.black_output_offset.backup") is not None:
 					setcfg("calibration.black_output_offset",
 						   getcfg("calibration.black_output_offset.backup"))
 					setcfg("calibration.black_output_offset.backup", None)
@@ -7927,7 +7927,7 @@ class MainFrame(BaseFrame):
 				setcfg("calibration.use_video_lut.backup",
 					   getcfg("calibration.use_video_lut"))
 				setcfg("calibration.use_video_lut", 0)
-		elif getcfg("calibration.use_video_lut.backup", False):
+		elif getcfg("calibration.use_video_lut.backup", False) is not None:
 			setcfg("calibration.use_video_lut",
 				   getcfg("calibration.use_video_lut.backup"))
 			setcfg("calibration.use_video_lut.backup", None)
