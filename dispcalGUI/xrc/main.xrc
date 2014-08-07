@@ -23,7 +23,6 @@
                   </object>
                   <object class="sizeritem">
                     <object class="wxChoice" name="calibration_file_ctrl">
-                      <bg>#336699</bg>
                     </object>
                     <option>1</option>
                     <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
