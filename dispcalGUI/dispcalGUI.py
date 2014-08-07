@@ -1245,99 +1245,27 @@ class MainFrame(BaseFrame):
 			x, y = self.GetScreenPosition()
 			setcfg("position.x", x)
 			setcfg("position.y", y)
-		display_client_rect = self.GetDisplay().ClientArea
-		if hasattr(self, "calpanel") and (not hasattr(self, 
-													  "display_client_rect") or 
-										  self.display_client_rect != 
-										  display_client_rect):
-			# We just moved to this workspace
-			size = self.GetSize()
-			if sys.platform not in ("darwin", "win32"):
-				# Linux
-				safety_margin = 45
-			else:
-				safety_margin = 20
-			vsize = self.calpanel.GetVirtualSize()
-			fullheight = size[1] - self.calpanel.GetSize()[1] + vsize[1]
-			maxheight = None
-			if size[1] > display_client_rect[3] - safety_margin:
-				# Our full height is too tall for that workspace, adjust
-				vsize = self.calpanel.GetSize()
-				maxheight = vsize[1] - (size[1] - display_client_rect[3] + 
-										safety_margin)
-			elif not hasattr(self, "display_client_rect"):
-				# Our full height fits on that workspace
-				maxheight = vsize[1]
-			self.display_client_rect = display_client_rect
-			if maxheight:
-				newheight = size[1] - self.calpanel.GetSize()[1] + maxheight
-				if debug:
-					safe_print("[D] Calibration settings virtual height:", 
-							   vsize[1])
-					safe_print("[D] Calibration settings height after adjust:", 
-							   maxheight)
-					safe_print("[D] Main window height after adjust:", 
-							   newheight)
-				wx.CallAfter(self.frame_fit, fullheight, vsize[1], maxheight, 
-							 newheight)
-			if event:
-				event.Skip()
-
-	def frame_fit(self, fullheight, virtualheight, height, newheight):
-		"""
-		Fit the main window to a new size.
-		
-		Used internally by OnMove to make sure the window fits into available 
-		(usable, not covered by e.g. taskbars) screen space.
-		
-		"""
-		self.Bind(wx.EVT_IDLE, self.frame_enableresize_handler)
-		minwidth = self.GetMinSize()[0]
-		self.Freeze()
-		self.SetMinSize((minwidth, 0))
-		self.SetMaxSize((max(minwidth, self.GetSize()[0]), fullheight))
-		self.calpanel.SetMaxSize((-1, virtualheight))
-		self.calpanel.SetMinSize((-1, 64))
-		self.calpanel.SetMaxSize((-1, height))
-		self.calpanel.SetSize((-1, height))
-		if debug:
-			safe_print("[D] Main window sizer min height after adjust:", 
-					   self.GetSizer().GetMinSize()[1])
-			safe_print("[D] Main window sizer height after adjust:", 
-					   self.GetSizer().GetSize()[1])
-		self.SetMinSize((min(self.GetDisplay().ClientArea[2], 
-							 self.GetMinSize()[0]), newheight))
-		# We add a margin on the right side for the vertical scrollbar
-		size = (min(self.GetDisplay().ClientArea[2], 
-					max(self.GetMinSize()[0], 
-						self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
-				newheight)
-		self.SetMaxSize(size)
-		self.SetSize(size)
-		self.Thaw()
-		wx.CallLater(100, self.calpanel.SetMaxSize, (-1, -1))
-
-	def frame_enableresize_handler(self, event=None):
-		"""
-		Enable resizing after fitting the main window to a new size.
-		
-		Used internally by frame_fit.
-		
-		"""
-		# frame_fit sets a static max size and min size = size, so after
-		# that operation we can no longer resize the window. This is fixed
-		# here by setting another min size and no max size.
-		# The CallLater logic implemented in frame_fit and here is rather
-		# arcane, but needed to circumvent the issue where the size set by 
-		# frame_fit is immediately scrapped under certain circumstances
-		# (related to the selected window manager under Linux, for example).
-		wx.CallLater(100, self.SetMinSize, (min(self.GetDisplay().ClientArea[2],
-												self.GetMinSize()[0]), 
-											min(self.GetSize()[1] - 
-												self.calpanel.GetSize()[1] + 64,
-												self.GetMaxSize()[1])))
-		wx.CallLater(150, self.SetMaxSize, (-1, -1))
-		self.Unbind(wx.EVT_IDLE)
+			display_client_rect = self.GetDisplay().ClientArea
+			if (not hasattr(self, "display_client_rect") or 
+				self.display_client_rect != display_client_rect):
+				# We just moved to this workspace
+				if sys.platform not in ("darwin", "win32"):
+					# Linux
+					safety_margin = 45
+				else:
+					safety_margin = 20
+				borders_tb = self.Size[1] - self.ClientSize[1] or safety_margin
+				resize = False
+				if self.ClientSize[1] + borders_tb > display_client_rect[3]:
+					# Our full height is too tall for that workspace, adjust
+					resize = True
+				elif self.Size[1] < (self.Size[1] - self.calpanel.Size[1] +
+									 self.calpanel.VirtualSize[1]):
+					# Our full height fits on that workspace
+					resize = True
+				self.display_client_rect = display_client_rect
+				if resize:
+					wx.CallAfter(self.set_size, True)
 		if event:
 			event.Skip()
 	
@@ -1507,19 +1435,26 @@ class MainFrame(BaseFrame):
 				safety_margin = 45
 			else:
 				safety_margin = 20
-			height = min(self.GetDisplay().ClientArea[3] - safety_margin,
-							 self.GetSize()[1] - self.calpanel.GetSize()[1] +
-							 self.calpanel.GetSizer().GetMinSize()[1])
+			borders_tb = self.Size[1] - self.ClientSize[1] or safety_margin
+			height = min(self.GetDisplay().ClientArea[3] - borders_tb,
+						 self.header.Size[1] +
+						 self.headerpanel.Sizer.MinSize[1] +
+						 self.calpanel.Sizer.MinSize[1] +
+						 ((getattr(self, "buttonpanelheader", None) and
+						   self.buttonpanelheader.Size[1] + 1) or 0) +
+						 self.buttonpanel.Sizer.MinSize[1])
 		else:
 			height = -1
+		borders_lr = self.Size[0] - self.ClientSize[0]
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0],
 					    self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
 				height)
 		self.SetMaxSize((-1, -1))
 		if not self.IsMaximized() and not self.IsIconized():
-			self.SetSize((size[0] if fit_width else max(size[0], self.GetSize()[0]),
-						  size[1]))
+			self.SetClientSize(((size[0] if fit_width
+								 else max(size[0], self.Size[0])) - borders_lr,
+								size[1]))
 		self.SetMinSize((size[0], self.GetSize()[1] - 
 								  self.calpanel.GetSize()[1] + 64))
 		if self.IsFrozen():
@@ -4261,6 +4196,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
+		self.set_size(True)
 		self.update_main_controls()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
@@ -6902,6 +6838,8 @@ class MainFrame(BaseFrame):
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
+		if event:
+			self.set_size(True)
 	
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():
