@@ -10477,6 +10477,7 @@ class StartupFrame(wx.Frame):
 		app.frame = MainFrame(self.worker)
 		app.SetTopWindow(app.frame)
 		app.frame.Show()
+		wx.CallAfter(app.frame.Raise)
 		self.Close()
 
 	def Pulse(self, msg=None):
