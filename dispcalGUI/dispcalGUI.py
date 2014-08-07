@@ -1497,9 +1497,11 @@ class MainFrame(BaseFrame):
 				if not chart in self.default_testchart_names:
 					self.default_testchart_names += [chart]
 
-		wx.CallAfter(self.set_size)
+		wx.CallAfter(self.set_size, fit_width=True)
 
-	def set_size(self, set_height=False):
+	def set_size(self, set_height=False, fit_width=False):
+		if self.IsMaximized() or self.IsIconized():
+			return
 		if not self.IsFrozen():
 			self.Freeze()
 		self.SetMinSize((0, 0))
@@ -1515,7 +1517,7 @@ class MainFrame(BaseFrame):
 		else:
 			height = -1
 		size = (min(self.GetDisplay().ClientArea[2], 
-					max(self.GetMinSize()[0], 
+					max((self.GetMinSize() if fit_width else self.GetSize())[0],
 					    self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
 				height)
 		self.SetMaxSize((-1, -1))
