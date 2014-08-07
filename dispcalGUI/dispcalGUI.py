@@ -4177,8 +4177,10 @@ class MainFrame(BaseFrame):
 				if str(v) != self.trc_textctrl.GetValue():
 					self.trc_textctrl.SetValue(str(v))
 			if event.GetId() == self.trc_ctrl.GetId():
-				self.trc_textctrl.SetFocus()
-				self.trc_textctrl.SelectAll()
+				# Have to use CallAfter, otherwise only part of the text will
+				# be selected (wxPython bug?)
+				wx.CallAfter(self.trc_textctrl.SetFocus)
+				wx.CallAfter(self.trc_textctrl.SelectAll)
 		trc = self.get_trc()
 		if cal_changed:
 			if trc != str(getcfg("trc")):
