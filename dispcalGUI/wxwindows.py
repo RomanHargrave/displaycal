@@ -260,6 +260,8 @@ class BaseFrame(wx.Frame):
 											   style=child.WindowStyle,
 											   name=child.Name)
 					newchild.BackgroundColour = child.BackgroundColour
+					if child.ToolTipString:
+						newchild.SetToolTipString(child.ToolTipString)
 					child.GetContainingSizer().Replace(child, newchild)
 					child.Destroy()
 					child = newchild
