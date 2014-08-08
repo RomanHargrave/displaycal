@@ -46,7 +46,6 @@ class ReportFrame(BaseFrame):
 		# Bind event handlers
 		self.fields_ctrl.Bind(wx.EVT_CHOICE,
 							  self.fields_ctrl_handler)
-		self.chart_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.chart_btn.Bind(wx.EVT_BUTTON, self.chart_btn_handler)
 		self.simulation_profile_cb.Bind(wx.EVT_CHECKBOX,
 									  self.use_simulation_profile_ctrl_handler)

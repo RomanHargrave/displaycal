@@ -18,7 +18,7 @@ from util_str import safe_unicode, wrap
 from wxaddons import (CustomEvent, FileDrop as _FileDrop, get_dc_font_size,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler)
-from wxfixes import GTKMenuItemGetFixedLabel
+from wxfixes import GenBitmapButton, GTKMenuItemGetFixedLabel
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -249,6 +249,17 @@ class BaseFrame(wx.Frame):
 										 choices=child.Items,
 										 style=child.WindowStyle,
 										 name=child.Name)
+					child.GetContainingSizer().Replace(child, newchild)
+					child.Destroy()
+					child = newchild
+				elif (isinstance(child, wx.BitmapButton) and
+					  sys.platform in ("darwin", "win32")):
+					newchild = GenBitmapButton(child.Parent, child.Id, 
+											   bitmap=child.BitmapLabel,
+											   size=child.Size,
+											   style=child.WindowStyle,
+											   name=child.Name)
+					newchild.BackgroundColour = child.BackgroundColour
 					child.GetContainingSizer().Replace(child, newchild)
 					child.Destroy()
 					child = newchild
@@ -641,9 +652,8 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 
 	def createBrowseButton(self):
 		"""Create the browse-button control"""
-		button = wx.BitmapButton(self, -1, geticon(16, "document-open"), 
+		button = GenBitmapButton(self, -1, geticon(16, "document-open"), 
 								 style=wx.NO_BORDER)
-		button.SetBitmapDisabled(geticon(16, "empty"))
 		button.SetToolTipString(self.toolTip)
 		button.Bind(wx.EVT_BUTTON, self.OnBrowse)
 		return button
@@ -1240,13 +1250,13 @@ class LogWindow(InvincibleFrame):
 		self.sizer.Add(self.log_txt, 1, flag=wx.ALL | wx.EXPAND, border=4)
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(self.btnsizer)
-		self.save_as_btn = wx.BitmapButton(self.panel, -1, 
+		self.save_as_btn = GenBitmapButton(self.panel, -1, 
 										   geticon(16, "media-floppy"), 
 										   style = wx.NO_BORDER)
 		self.save_as_btn.Bind(wx.EVT_BUTTON, self.OnSaveAs)
 		self.save_as_btn.SetToolTipString(lang.getstr("save_as"))
 		self.btnsizer.Add(self.save_as_btn, flag=wx.ALL, border=4)
-		self.clear_btn = wx.BitmapButton(self.panel, -1, 
+		self.clear_btn = GenBitmapButton(self.panel, -1, 
 										 geticon(16, "edit-delete"), 
 										 style = wx.NO_BORDER)
 		self.clear_btn.Bind(wx.EVT_BUTTON, self.OnClear)

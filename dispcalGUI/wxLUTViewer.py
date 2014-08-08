@@ -23,6 +23,10 @@ from worker import (Error, UnloggedError, Worker, get_argyll_util,
 from wxaddons import FileDrop, wx
 from wxMeasureFrame import MeasureFrame
 from wxwindows import InfoDialog
+if sys.platform in ("darwin", "win32"):
+	from wxfixes import GenBitmapButton as BitmapButton
+else:
+	BitmapButton = wx.BitmapButton
 import colormath
 import config
 import wxenhancedplot as plot
@@ -637,50 +641,46 @@ class LUTFrame(wx.Frame):
 		
 		self.box_sizer.Add((0, 0))
 
-		self.reload_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
-											 geticon(16, "stock_refresh"),
-											 style=wx.NO_BORDER)
+		self.reload_vcgt_btn = BitmapButton(self.box_panel, -1,
+											geticon(16, "stock_refresh"),
+											style=wx.NO_BORDER)
 		self.reload_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.reload_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 													   wx.RIGHT, border=16)
 		self.reload_vcgt_btn.Bind(wx.EVT_BUTTON, self.reload_vcgt_handler)
 		self.reload_vcgt_btn.SetToolTipString(
 			lang.getstr("calibration.load_from_display_profile"))
-		self.reload_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.reload_vcgt_btn.Disable()
 		
-		self.apply_bpc_btn = wx.BitmapButton(self.box_panel, -1,
-											 geticon(16, "black_point"),
-											 style=wx.NO_BORDER)
+		self.apply_bpc_btn = BitmapButton(self.box_panel, -1,
+										  geticon(16, "black_point"),
+										  style=wx.NO_BORDER)
 		self.apply_bpc_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 													 wx.RIGHT, border=16)
 		self.apply_bpc_btn.Bind(wx.EVT_BUTTON, self.apply_bpc_handler)
 		self.apply_bpc_btn.SetToolTipString(lang.getstr("black_point_compensation"))
-		self.apply_bpc_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.apply_bpc_btn.Disable()
 
-		self.install_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
-												geticon(16, "install"),
-												style=wx.NO_BORDER)
+		self.install_vcgt_btn = BitmapButton(self.box_panel, -1,
+											 geticon(16, "install"),
+											 style=wx.NO_BORDER)
 		self.install_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.install_vcgt_btn,
 							flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=16)
 		self.install_vcgt_btn.Bind(wx.EVT_BUTTON, self.install_vcgt_handler)
 		self.install_vcgt_btn.SetToolTipString(lang.getstr("apply_cal"))
-		self.install_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.install_vcgt_btn.Disable()
 
-		self.save_vcgt_btn = wx.BitmapButton(self.box_panel, -1,
-											 geticon(16, "media-floppy"),
-											 style=wx.NO_BORDER)
+		self.save_vcgt_btn = BitmapButton(self.box_panel, -1,
+										  geticon(16, "media-floppy"),
+										  style=wx.NO_BORDER)
 		self.save_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.save_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 													 wx.RIGHT, border=20)
 		self.save_vcgt_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
 		self.save_vcgt_btn.SetToolTipString(lang.getstr("save_as") + " " +
 											"(*.cal)")
-		self.save_vcgt_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.save_vcgt_btn.Disable()
 		
 		self.show_as_L = wx.CheckBox(self.box_panel, -1, u"L* \u2192")
@@ -747,16 +747,15 @@ class LUTFrame(wx.Frame):
 
 		self.box_sizer.Add((0, 32))
 
-		self.save_plot_btn = wx.BitmapButton(self.box_panel, -1,
-											 geticon(16, "media-floppy"),
-											 style=wx.NO_BORDER)
+		self.save_plot_btn = BitmapButton(self.box_panel, -1,
+										  geticon(16, "media-floppy"),
+										  style=wx.NO_BORDER)
 		self.save_plot_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 													 wx.LEFT, border=16)
 		self.save_plot_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
 		self.save_plot_btn.SetToolTipString(lang.getstr("save_as") + " " +
 											"(*.bmp, *.xbm, *.xpm, *.jpg, *.png)")
-		self.save_plot_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.save_plot_btn.Disable()
 
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)

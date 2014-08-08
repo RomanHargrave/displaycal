@@ -9,6 +9,10 @@ from util_os import launch_file, make_win32_compatible_long_path, waccess
 from util_str import safe_unicode
 from worker import Worker, show_result_dialog
 from wxaddons import FileDrop, wx
+if sys.platform in ("darwin", "win32"):
+	from wxfixes import GenBitmapButton as BitmapButton
+else:
+	BitmapButton = wx.BitmapButton
 import config
 import localization as lang
 import x3dom
@@ -57,9 +61,9 @@ def main(vrmlpath=None):
 		sizer.Add(panel)
 		panelsizer = wx.BoxSizer(wx.HORIZONTAL)
 		panel.SetSizer(panelsizer)
-		btn = wx.BitmapButton(panel, wx.ID_ANY,
-							  config.geticon(256, "document-open"), 
-							  style=wx.NO_BORDER)
+		btn = BitmapButton(panel, wx.ID_ANY,
+						   config.geticon(256, "document-open"), 
+						   style=wx.NO_BORDER)
 		btn.SetToolTipString(lang.getstr("file.select"))
 		btn.Bind(wx.EVT_BUTTON, lambda event:
 								vrmlfile2x3dfile(None,

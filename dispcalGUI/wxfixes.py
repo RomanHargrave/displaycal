@@ -22,6 +22,7 @@ if wx.VERSION < wx_minversion:
 	app.MainLoop()
 	sys.exit()
 import wx.grid
+from wx.lib.buttons import GenBitmapButton as _GenBitmapButton
 from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
 
 
@@ -212,7 +213,139 @@ class ScrolledWindow(wx._ScrolledWindow):
 wx.ScrolledWindow = ScrolledWindow
 
 
-class ThemedGenButton(_ThemedGenButton):
+class GenButton(object):
+
+	"""
+	A generic button, based on wx.lib.buttons.GenButton.
+	
+	Fixes wx.lib.buttons.ThemedGenButton not taking into account backgroun
+	color when pressed.
+	
+	"""
+
+	def __init__(self):
+		self.bezelWidth = 2
+		self.hasFocus = False
+		self.up = True
+		self.useFocusInd = True
+
+	def OnPaint(self, event):
+		(width, height) = self.GetClientSizeTuple()
+		x1 = y1 = 0
+		x2 = width-1
+		y2 = height-1
+
+		dc = wx.PaintDC(self)
+		brush = self.GetBackgroundBrush(dc)
+		if brush is not None:
+			brush.SetColour(self.BackgroundColour)
+			dc.SetBackground(brush)
+			dc.Clear()
+
+		self.DrawBezel(dc, x1, y1, x2, y2)
+		self.DrawLabel(dc, width, height)
+		if self.hasFocus and self.useFocusInd:
+			self.DrawFocusIndicator(dc, width, height)
+
+
+class GenBitmapButton(GenButton, _GenBitmapButton):
+
+	"""
+	A generic bitmap button, based on wx.lib.buttons.GenBitmapButton.
+	
+	Fixes wx.lib.buttons.GenBitmapButton not taking into account backgroun
+	color when pressed.
+	
+	"""
+
+	def __init__(self, *args, **kwargs):
+		GenButton.__init__(self)
+		_GenBitmapButton.__init__(self, *args, **kwargs)
+
+	@Property
+	def BitmapFocus():
+		def fget(self):
+			return self.GetBitmapFocus()
+
+		def fset(self, bitmap):
+			self.SetBitmapFocus(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapDisabled():
+		def fget(self):
+			return self.GetBitmapDisabled()
+
+		def fset(self, bitmap):
+			self.SetBitmapDisabled(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapSelected():
+		def fget(self):
+			return self.GetBitmapSelected()
+
+		def fset(self, bitmap):
+			self.SetBitmapSelected(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapLabel():
+		def fget(self):
+			return self.GetBitmapLabel()
+
+		def fset(self, bitmap):
+			self.SetBitmapLabel(self, bitmap)
+
+		return locals()
+
+	def DrawLabel(self, dc, width, height, dx=0, dy=0):
+		bmp = self.BitmapLabel
+		if self.BitmapDisabled and not self.IsEnabled():
+			bmp = self.BitmapDisabled
+		if self.BitmapFocus and self.hasFocus:
+			bmp = self.BitmapFocus
+		if self.BitmapSelected and not self.up:
+			bmp = self.BitmapSelected
+		bw, bh = bmp.GetWidth(), bmp.GetHeight()
+		hasMask = bmp.GetMask() != None
+		dc.DrawBitmap(bmp, (width-bw)/2+dx, (height-bh)/2+dy, hasMask)
+
+	def SetBitmapLabel(self, bitmap, createOthers=True):
+		"""
+		Set the bitmap to display normally.
+		This is the only one that is required. If
+		createOthers is True, then the other bitmaps
+		will be generated on the fly.  Currently,
+		only the disabled bitmap is generated.
+		"""
+		self.bmpLabel = bitmap
+		if bitmap is not None and createOthers:
+			image = bitmap.ConvertToImage()
+
+			# Disabled
+			if image.HasMask():
+				image.InitAlpha()
+			if image.HasAlpha():
+				alphabuffer = image.GetAlphaBuffer()
+				for i, byte in enumerate(alphabuffer):
+					if byte > "\0":
+						alphabuffer[i] = chr(int(round(ord(byte) * .3)))
+			self.SetBitmapDisabled(image.ConvertToBitmap())
+
+			# Selected
+			image = bitmap.ConvertToImage()
+			databuffer = image.GetDataBuffer()
+			for i, byte in enumerate(databuffer):
+				if byte > "\0":
+					databuffer[i] = chr(int(round(ord(byte) * .5)))
+			self.SetBitmapSelected(image.ConvertToBitmap())
+
+
+class ThemedGenButton(GenButton, _ThemedGenButton):
 
 	"""
 	A themed generic button, based on wx.lib.buttons.ThemedGenButton.
@@ -230,10 +363,7 @@ class ThemedGenButton(_ThemedGenButton):
 	labelDelta = 1
 
 	def __init__(self, *args, **kwargs):
-		self.bezelWidth = 2
-		self.hasFocus = False
-		self.up = True
-		self.useFocusInd = True
+		GenButton.__init__(self)
 		_ThemedGenButton.__init__(self, *args, **kwargs)
 		self._default = False
 
@@ -301,24 +431,6 @@ class ThemedGenButton(_ThemedGenButton):
 		self.useFocusInd = bool(self.bezelWidth)
 		self.Refresh()
 		self.Update()
-
-	def OnPaint(self, event):
-		(width, height) = self.GetClientSizeTuple()
-		x1 = y1 = 0
-		x2 = width-1
-		y2 = height-1
-
-		dc = wx.PaintDC(self)
-		brush = self.GetBackgroundBrush(dc)
-		if brush is not None:
-			brush.SetColour(self.BackgroundColour)
-			dc.SetBackground(brush)
-			dc.Clear()
-
-		self.DrawBezel(dc, x1, y1, x2, y2)
-		self.DrawLabel(dc, width, height)
-		if self.hasFocus and self.useFocusInd:
-			self.DrawFocusIndicator(dc, width, height)
 
 	def SetDefault(self):
 		self._default = True

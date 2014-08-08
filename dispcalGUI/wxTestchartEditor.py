@@ -31,6 +31,10 @@ from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import (CustomGrid, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory,
 					   InfoDialog, get_gradient_panel)
+if sys.platform in ("darwin", "win32"):
+	from wxfixes import GenBitmapButton as BitmapButton
+else:
+	BitmapButton = wx.BitmapButton
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:
@@ -410,7 +414,6 @@ class TestchartEditor(wx.Frame):
 				   border=border)
 		self.vrml_save_as_btn = wx.BitmapButton(panel, -1, geticon(16, "3D"))
 		self.vrml_save_as_btn.SetToolTipString(lang.getstr("tc.3d"))
-		self.vrml_save_as_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.vrml_save_as_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
 				 id=self.vrml_save_as_btn.GetId())

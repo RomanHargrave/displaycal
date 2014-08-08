@@ -27,6 +27,10 @@ from wxVRML2X3D import vrmlfile2x3dfile
 from wxwindows import (BitmapBackgroundPanelText, CustomGrid,
 					   CustomRowLabelRenderer, ConfirmDialog,
 					   FileDrop, InfoDialog, SimpleBook, TwoWaySplitter)
+if sys.platform in ("darwin", "win32"):
+	from wxfixes import GenBitmapButton as BitmapButton
+else:
+	BitmapButton = wx.BitmapButton
 import colormath
 import config
 import wxenhancedplot as plot
@@ -976,23 +980,21 @@ class ProfileInfoFrame(LUTFrame):
 		self.plot_mode_sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														wx.LEFT, border=8)
 
-		self.save_plot_btn = wx.BitmapButton(p1, -1,
-											 geticon(16, "media-floppy"),
-											 style=wx.NO_BORDER)
+		self.save_plot_btn = BitmapButton(p1, -1,
+										  geticon(16, "media-floppy"),
+										  style=wx.NO_BORDER)
 		self.save_plot_btn.SetBackgroundColour(BGCOLOUR)
 		self.save_plot_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
 		self.save_plot_btn.SetToolTipString(lang.getstr("save_as"))
-		self.save_plot_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.save_plot_btn.Disable()
 		self.plot_mode_sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														  wx.LEFT, border=8)
 		
-		self.view_3d_btn = wx.BitmapButton(p1, -1, geticon(16, "3D"),
-										   style=wx.NO_BORDER)
+		self.view_3d_btn = BitmapButton(p1, -1, geticon(16, "3D"),
+										style=wx.NO_BORDER)
 		self.view_3d_btn.SetBackgroundColour(BGCOLOUR)
 		self.view_3d_btn.Bind(wx.EVT_BUTTON, self.view_3d)
 		self.view_3d_btn.SetToolTipString(lang.getstr("view.3d"))
-		self.view_3d_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.view_3d_btn.Disable()
 		self.plot_mode_sizer.Add(self.view_3d_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														wx.LEFT, border=12)

@@ -1868,13 +1868,10 @@ class MainFrame(BaseFrame):
 				  id=self.calibration_file_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.load_cal_handler, 
 				  id=self.calibration_file_btn.GetId())
-		self.delete_calibration_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.delete_calibration_handler, 
 				  id=self.delete_calibration_btn.GetId())
-		self.install_profile_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.install_profile_handler, 
 				  id=self.install_profile_btn.GetId())
-		self.profile_info_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.profile_info_handler, 
 				  id=self.profile_info_btn.GetId())
 
@@ -1895,7 +1892,6 @@ class MainFrame(BaseFrame):
 				  id=self.comport_ctrl.GetId())
 		self.Bind(wx.EVT_CHOICE, self.measurement_mode_ctrl_handler, 
 				  id=self.measurement_mode_ctrl.GetId())
-		self.detect_displays_and_ports_btn.SetBitmapDisabled(getbitmap("32x16/empty"))
 		self.Bind(wx.EVT_BUTTON, self.check_update_controls, 
 				  id=self.detect_displays_and_ports_btn.GetId())
 		
@@ -1997,10 +1993,8 @@ class MainFrame(BaseFrame):
 		# Testchart file
 		self.Bind(wx.EVT_CHOICE, self.testchart_ctrl_handler, 
 				  id=self.testchart_ctrl.GetId())
-		self.testchart_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.testchart_btn_handler, 
 				  id=self.testchart_btn.GetId())
-		self.create_testchart_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.create_testchart_btn_handler, 
 				  id=self.create_testchart_btn.GetId())
 
@@ -2027,7 +2021,6 @@ class MainFrame(BaseFrame):
 		self.profile_name_info_btn.Bind(wx.EVT_BUTTON,
 										self.profile_name_info_btn_handler)
 		self.profile_name_info_btn.SetToolTipString(lang.getstr("profile.name"))
-		self.profile_save_path_btn.SetBitmapDisabled(geticon(16, "empty"))
 		self.Bind(wx.EVT_BUTTON, self.profile_save_path_btn_handler, 
 				  id=self.profile_save_path_btn.GetId())
 

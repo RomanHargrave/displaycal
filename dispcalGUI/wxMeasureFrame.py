@@ -18,6 +18,10 @@ from util_list import floatlist, strlist
 from util_str import safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, InvincibleFrame
+if sys.platform in ("darwin", "win32"):
+	from wxfixes import GenBitmapButton as BitmapButton
+else:
+	BitmapButton = wx.BitmapButton
 try:
 	import RealDisplaySizeMM as RDSMM
 except ImportError, exception:
@@ -136,27 +140,27 @@ class MeasureFrame(InvincibleFrame):
 		self.sizer.Add(self.hsizer, flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL | 
 										 wx.ALIGN_TOP, border=10)
 
-		self.zoommaxbutton = wx.BitmapButton(self.panel, -1, 
-											 geticon(32, "zoom-best-fit"), 
-											 style=wx.NO_BORDER)
+		self.zoommaxbutton = BitmapButton(self.panel, -1, 
+										  geticon(32, "zoom-best-fit"), 
+										  style=wx.NO_BORDER)
 		self.Bind(wx.EVT_BUTTON, self.zoommax_handler, self.zoommaxbutton)
 		self.hsizer.Add(self.zoommaxbutton, flag=wx.ALIGN_CENTER)
 		self.zoommaxbutton.SetToolTipString(lang.getstr("measureframe.zoommax"))
 
 		self.hsizer.Add((2, 1))
 
-		self.zoominbutton = wx.BitmapButton(self.panel, -1, 
-											geticon(32, "zoom-in"), 
-											style=wx.NO_BORDER)
+		self.zoominbutton = BitmapButton(self.panel, -1, 
+										 geticon(32, "zoom-in"), 
+										 style=wx.NO_BORDER)
 		self.Bind(wx.EVT_BUTTON, self.zoomin_handler, self.zoominbutton)
 		self.hsizer.Add(self.zoominbutton, flag=wx.ALIGN_CENTER)
 		self.zoominbutton.SetToolTipString(lang.getstr("measureframe.zoomin"))
 
 		self.hsizer.Add((2, 1))
 
-		self.zoomnormalbutton = wx.BitmapButton(self.panel, -1, 
-												geticon(32, "zoom-original"), 
-												style=wx.NO_BORDER)
+		self.zoomnormalbutton = BitmapButton(self.panel, -1, 
+											 geticon(32, "zoom-original"), 
+											 style=wx.NO_BORDER)
 		self.Bind(wx.EVT_BUTTON, self.zoomnormal_handler, self.zoomnormalbutton)
 		self.hsizer.Add(self.zoomnormalbutton, flag=wx.ALIGN_CENTER)
 		self.zoomnormalbutton.SetToolTipString(lang.getstr("measureframe."
@@ -164,16 +168,16 @@ class MeasureFrame(InvincibleFrame):
 
 		self.hsizer.Add((2, 1))
 
-		self.zoomoutbutton = wx.BitmapButton(self.panel, -1, 
-											 geticon(32, "zoom-out"), 
-											 style=wx.NO_BORDER)
+		self.zoomoutbutton = BitmapButton(self.panel, -1, 
+										  geticon(32, "zoom-out"), 
+										  style=wx.NO_BORDER)
 		self.Bind(wx.EVT_BUTTON, self.zoomout_handler, self.zoomoutbutton)
 		self.hsizer.Add(self.zoomoutbutton, flag=wx.ALIGN_CENTER)
 		self.zoomoutbutton.SetToolTipString(lang.getstr("measureframe.zoomout"))
 
-		self.centerbutton = wx.BitmapButton(self.panel, -1, 
-											geticon(32, "window-center"), 
-											style=wx.NO_BORDER)
+		self.centerbutton = BitmapButton(self.panel, -1, 
+										 geticon(32, "window-center"), 
+										 style=wx.NO_BORDER)
 		self.Bind(wx.EVT_BUTTON, self.center_handler, self.centerbutton)
 		self.sizer.Add(self.centerbutton, flag=wx.ALIGN_CENTER | wx.LEFT | 
 											   wx.RIGHT, border=10)
