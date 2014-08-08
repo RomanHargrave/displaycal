@@ -1114,7 +1114,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.draw_vertical_grid_lines = False
 		self.grid.draw_row_labels = False
 		self.grid.CreateGrid(0, 2)
-		self.grid.SetCellHighlightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
@@ -1362,6 +1361,7 @@ class ProfileInfoFrame(LUTFrame):
 		
 		self.grid.AutoSizeColumn(0)
 		self.resize_grid()
+		self.grid.ClearSelection()
 		self.Layout()
 		self.DrawCanvas(reset=reset)
 		self.Thaw()
@@ -1557,33 +1557,7 @@ class ProfileInfoFrame(LUTFrame):
 			focus = self.FindFocus()
 			if focus and self.grid in (focus, focus.GetParent(),
 									   focus.GetGrandParent()):
-				if key == 65: # A
-					self.grid.SelectAll()
-					return
-				elif key in (67, 88): # C / X
-					clip = []
-					cells = self.grid.GetSelection()
-					i = -1
-					start_col = self.grid.GetNumberCols()
-					for cell in cells:
-						row = cell[0]
-						col = cell[1]
-						if i < row:
-							clip += [[]]
-							i = row
-						if col < start_col:
-							start_col = col
-						while len(clip[-1]) - 1 < col:
-							clip[-1] += [""]
-						clip[-1][col] = self.grid.GetCellValue(row, col)
-					for i, row in enumerate(clip):
-						clip[i] = "\t".join(row[start_col:])
-					clipdata = wx.TextDataObject()
-					clipdata.SetText("\n".join(clip))
-					wx.TheClipboard.Open()
-					wx.TheClipboard.SetData(clipdata)
-					wx.TheClipboard.Close()
-					return
+				event.Skip()
 			if key == 83 and self.profile: # S
 				self.SaveFile()
 				return

@@ -544,7 +544,6 @@ class TestchartEditor(wx.Frame):
 		self.grid = CustomGrid(panel, -1, size = (-1, 150))
 		self.grid.DisableDragColSize()
 		self.grid.EnableGridLines(False)
-		self.grid.SetCellHighlightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetColLabelSize(23)
@@ -556,7 +555,6 @@ class TestchartEditor(wx.Frame):
 		self.grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
 		self.grid.draw_horizontal_grid_lines = False
 		self.grid.draw_vertical_grid_lines = False
-		self.grid.select_in_progress = False
 		self.sizer.Add(self.grid, 1, flag=wx.TOP | wx.EXPAND, border=12)
 		self.grid.CreateGrid(0, 0)
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
@@ -565,9 +563,7 @@ class TestchartEditor(wx.Frame):
 		self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.tc_grid_cell_change_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.tc_grid_label_left_click_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.tc_grid_label_left_dclick_handler)
-		self.grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.tc_grid_cell_left_click_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_RANGE_SELECT, self.tc_grid_range_select_handler)
-		self.grid.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.tc_grid_cell_select_handler)
 		self.grid.DisableDragRowSize()
 
 		# preview area
@@ -656,33 +652,14 @@ class TestchartEditor(wx.Frame):
 							 0)
 		self.grid.ForceRefresh()
 
-	def tc_grid_cell_left_click_handler(self, event):
-		event.Skip()
-
-	def tc_grid_cell_select_handler(self, event):
-		if debug: safe_print("[D] tc_grid_cell_select_handler")
-		row, col = event.GetRow(), event.GetCol()
-		if event.Selecting():
-			pass
-		self.grid.SelectBlock(row, col, row, col)
-		self.tc_grid_anchor_row = row
-		event.Skip()
-
 	def tc_grid_range_select_handler(self, event):
 		if debug: safe_print("[D] tc_grid_range_select_handler")
-		if not self.grid.select_in_progress:
+		if not self.grid._select_in_progress:
 			wx.CallAfter(self.tc_set_default_status)
 		event.Skip()
 
 	def tc_grid_label_left_click_handler(self, event):
-		row, col = event.GetRow(), event.GetCol()
-		if row == -1 and col > -1: # col label clicked
-			self.grid.SetFocus()
-			self.grid.SetGridCursor(max(self.grid.GetGridCursorRow(), 0), col)
-			self.grid.MakeCellVisible(max(self.grid.GetGridCursorRow(), 0), col)
-		elif col == -1 and row > -1: # row label clicked
-			if self.tc_grid_select_row_handler(row, event.ShiftDown(), event.ControlDown() or event.CmdDown()):
-				return
+		wx.CallAfter(self.tc_set_default_status)
 		event.Skip()
 
 	def tc_grid_label_left_dclick_handler(self, event):
@@ -706,48 +683,6 @@ class TestchartEditor(wx.Frame):
 			}
 			self.tc_add_data(row, [newdata])
 		event.Skip()
-
-	def tc_grid_select_row_handler(self, row, shift = False, ctrl = False):
-		if debug: safe_print("[D] tc_grid_select_row_handler")
-		self.grid.SetFocus()
-		if not shift and not ctrl:
-			self.grid.SetGridCursor(row, max(self.grid.GetGridCursorCol(), 0))
-			self.grid.MakeCellVisible(row, max(self.grid.GetGridCursorCol(), 0))
-			self.grid.SelectRow(row)
-			self.tc_grid_anchor_row = row
-		if self.grid.IsSelection():
-			if shift:
-				self.grid.select_in_progress = True
-				rows = self.grid.GetSelectionRows()
-				sel = range(min(self.tc_grid_anchor_row, row), max(self.tc_grid_anchor_row, row))
-				desel = []
-				add = []
-				for i in rows:
-					if i not in sel:
-						desel += [i]
-				for i in sel:
-					if i not in rows:
-						add += [i]
-				if len(desel) >= len(add):
-					# in this case deselecting rows will take as long or longer than selecting, so use SelectRow to speed up the operation
-					self.grid.SelectRow(row)
-				else:
-					for i in desel:
-						self.grid.DeselectRow(i)
-				for i in add:
-					self.grid.SelectRow(i, True)
-				self.grid.select_in_progress = False
-				return False
-			elif ctrl:
-				if self.grid.IsInSelection(row, 0):
-					self.grid.select_in_progress = True
-					self.grid.DeselectRow(row)
-					self.grid.select_in_progress = False
-					self.tc_set_default_status()
-					return True
-				else:
-					self.grid.SelectRow(row, True)
-		return False
 
 	def tc_key_handler(self, event):
 		# AltDown
@@ -787,73 +722,6 @@ class TestchartEditor(wx.Frame):
 						else:
 							self.tc_delete_rows(rows)
 						return
-				elif key == 65: # A
-					self.grid.SelectAll()
-					return
-				elif key in (67, 88): # C / X
-					clip = []
-					cells = self.grid.GetSelection()
-					i = -1
-					start_col = self.grid.GetNumberCols()
-					for cell in cells:
-						row = cell[0]
-						col = cell[1]
-						if i < row:
-							clip += [[]]
-							i = row
-						if col < start_col:
-							start_col = col
-						while len(clip[-1]) - 1 < col:
-							clip[-1] += [""]
-						clip[-1][col] = self.grid.GetCellValue(row, col)
-					for i, row in enumerate(clip):
-						clip[i] = "\t".join(row[start_col:])
-					clipdata = wx.TextDataObject()
-					clipdata.SetText("\n".join(clip))
-					wx.TheClipboard.Open()
-					wx.TheClipboard.SetData(clipdata)
-					wx.TheClipboard.Close()
-					return
-				elif key == 86: # V
-					do = wx.TextDataObject()
-					wx.TheClipboard.Open()
-					success = wx.TheClipboard.GetData(do)
-					wx.TheClipboard.Close()
-					if success:
-						txt = StringIO(do.GetText())
-						lines = txt.readlines()
-						txt.close()
-						for i, line in enumerate(lines):
-							lines[i] = re.sub(" +", "\t", line).split("\t")
-						# translate from selected cells into a grid with None values for not selected cells
-						grid = []
-						cells = self.grid.GetSelection()
-						i = -1
-						start_col = self.grid.GetNumberCols()
-						for cell in cells:
-							row = cell[0]
-							col = cell[1]
-							# Skip read-only cells
-							if (self.grid.IsReadOnly(row, col) or
-								not self.grid.GetColLabelValue(col)):
-								continue
-							if i < row:
-								grid += [[]]
-								i = row
-							if col < start_col:
-								start_col = col
-							while len(grid[-1]) - 1 < col:
-								grid[-1] += [None]
-							grid[-1][col] = cell
-						for i, row in enumerate(grid):
-							grid[i] = row[start_col:]
-						# 'paste' values from clipboard
-						for i, row in enumerate(grid):
-							for j, cell in enumerate(row):
-								if cell != None and len(lines) > i and len(lines[i]) > j and self.grid.GetColLabelValue(j):
-									self.grid.SetCellValue(cell[0], cell[1], lines[i][j])
-									self.tc_grid_cell_change_handler(CustomGridCellEvent(wx.grid.EVT_GRID_CELL_CHANGE.evtType[0], self.grid, cell[0], cell[1]))
-					return
 			if key == 83: # S
 				if (hasattr(self, "ti1")):
 					if event.ShiftDown() or event.AltDown() or not os.path.exists(self.ti1.filename):
@@ -2169,9 +2037,9 @@ class TestchartEditor(wx.Frame):
 		self.cfg = cfg or "testchart.file"
 		self.target = target or self.Parent
 
-		self.label_b2a = {"R": "RGB_R",
-						  "G": "RGB_G",
-						  "B": "RGB_B",
+		self.label_b2a = {"R %": "RGB_R",
+						  "G %": "RGB_G",
+						  "B %": "RGB_B",
 						  "X": "XYZ_X",
 						  "Y": "XYZ_Y",
 						  "Z": "XYZ_Z"}
@@ -2623,7 +2491,7 @@ class TestchartEditor(wx.Frame):
 				if data_format[i] in ("RGB_R", "RGB_G", "RGB_B"):
 					grid.AppendCols(1)
 					grid.SetColLabelValue(grid.GetNumberCols() - 1,
-										  data_format[i].split("_")[-1])
+										  data_format[i].split("_")[-1] + " %")
 			grid.AppendCols(1)
 			grid.SetColLabelValue(grid.GetNumberCols() - 1, "")
 			colwidth = 100
@@ -2704,7 +2572,6 @@ class TestchartEditor(wx.Frame):
 		if data is None:
 			data = self.ti1.queryv1("DATA")
 		sample = data[row]
-		grid.SetCellRenderer(row, col, wx.grid.GridCellStringRenderer())
 		style, colour, labeltext, labelcolour = self.tc_getcolorlabel(sample)
 		grid.SetCellBackgroundColour(row, col, colour)
 		grid.SetCellValue(row, col, labeltext)
@@ -2864,7 +2731,8 @@ class TestchartEditor(wx.Frame):
 		if hasattr(patch, "patch"):
 			patch = patch.patch
 		sample = patch.sample
-		self.tc_grid_select_row_handler(sample.key, event.ShiftDown(), event.ControlDown() or event.CmdDown())
+		self.grid.select_row(sample.key, event.ShiftDown(),
+							 event.ControlDown() or event.CmdDown())
 		return
 
 	def tc_delete_rows(self, rows):

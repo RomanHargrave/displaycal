@@ -136,7 +136,6 @@ class UntetheredFrame(wx.Frame):
 		self.grid.DisableDragColSize()
 		self.grid.DisableDragRowSize()
 		self.grid.SetScrollRate(0, 5)
-		self.grid.SetCellHighlightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetColLabelSize(23)
 		self.grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
@@ -334,7 +333,10 @@ class UntetheredFrame(wx.Frame):
 			if row == -1 and col > -1: # col label clicked
 				pass
 			elif row > -1: # row clicked
-				self.update(row)
+				if not (event.CmdDown() or event.ControlDown() or
+						event.ShiftDown()):
+					self.update(row)
+				event.Skip()
 	
 	def has_worker_subprocess(self):
 		return bool(getattr(self, "worker", None) and
@@ -354,32 +356,7 @@ class UntetheredFrame(wx.Frame):
 		if keycode is not None:
 			if event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
 				if event.ControlDown() or event.CmdDown():
-					# CTRL (Linux/Mac/Windows) / CMD (Mac)
-					if keycode == 65: # A
-						self.grid.SelectAll()
-					elif keycode in (67, 88): # C / X
-						clip = []
-						cells = self.grid.GetSelection()
-						i = -1
-						start_col = self.grid.GetNumberCols()
-						for cell in cells:
-							row = cell[0]
-							col = cell[1]
-							if i < row:
-								clip += [[]]
-								i = row
-							if col < start_col:
-								start_col = col
-							while len(clip[-1]) - 1 < col:
-								clip[-1] += [""]
-							clip[-1][col] = self.grid.GetCellValue(row, col)
-						for i, row in enumerate(clip):
-							clip[i] = "\t".join(row[start_col:])
-						clipdata = wx.TextDataObject()
-						clipdata.SetText("\n".join(clip))
-						wx.TheClipboard.Open()
-						wx.TheClipboard.SetData(clipdata)
-						wx.TheClipboard.Close()
+					event.Skip()
 				elif keycode in (wx.WXK_UP, wx.WXK_NUMPAD_UP):
 					self.back_btn_handler(None)
 				elif keycode in (wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN):
@@ -456,8 +433,6 @@ class UntetheredFrame(wx.Frame):
 					value = int(round(float(str(row["RGB_%s" % label] * 2.55))))
 					self.grid.SetCellValue(row.SAMPLE_ID - 1, j, "%i" % value)
 					RGB.append(value)
-				self.grid.SetCellRenderer(row.SAMPLE_ID - 1, 3,
-										  wx.grid.GridCellStringRenderer())
 				self.grid.SetCellBackgroundColour(row.SAMPLE_ID - 1, 3,
 												  wx.Colour(*RGB))
 		if "Connecting to the instrument" in txt:
@@ -526,8 +501,6 @@ class UntetheredFrame(wx.Frame):
 					Lab, color = self.get_Lab_RGB()
 					for i in query:
 						row = query[i]
-						self.grid.SetCellRenderer(query[i].SAMPLE_ID - 1, 4,
-												  wx.grid.GridCellStringRenderer())
 						self.grid.SetCellBackgroundColour(query[i].SAMPLE_ID - 1,
 														  4, wx.Colour(*color))
 						for j in xrange(3):

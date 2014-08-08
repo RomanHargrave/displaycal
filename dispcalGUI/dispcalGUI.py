@@ -127,7 +127,8 @@ from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent, FileDrop)
 from wxfixes import ThemedGenButton
 from wxwindows import (AboutDialog, BaseFrame, BitmapBackgroundPanel,
-					   BitmapBackgroundPanelText, ConfirmDialog,
+					   BitmapBackgroundPanelText, ConfirmDialog, CustomGrid,
+					   CustomCellBoolRenderer,
 					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
 					   LogWindow, ProgressDialog,
 					   TooltipWindow, get_gradient_panel)
@@ -10562,16 +10563,25 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.mods = {}
 		dlg.force = force
 
-		dlg.grid = wx.grid.Grid(dlg, -1, size=(981, 240),
-								style=wx.BORDER_SIMPLE)
+		dlg.grid = CustomGrid(dlg, -1, size=(981, 240), style=wx.BORDER_THEME)
 		grid = dlg.grid
+		grid.DisableDragRowSize()
+		grid.SetCellHighlightPenWidth(0)
+		grid.SetCellHighlightROPenWidth(0)
+		grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+		grid.SetLabelBackgroundColour(wx.Colour(240, 240, 240))
+		grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+		grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
+		grid.alternate_cell_background_color = "#F9F9F9"
+		grid.draw_horizontal_grid_lines = False
+		grid.draw_vertical_grid_lines = False
 		grid.CreateGrid(0, 15)
 		grid.SetColLabelSize(50)
 		grid.SetRowLabelSize(60)
-		attr = wx.grid.GridCellAttr()
-		attr.SetReadOnly(True) 
 		for i in xrange(grid.GetNumberCols()):
 			if i in (4, 5) or i > 8:
+				attr = wx.grid.GridCellAttr()
+				attr.SetReadOnly(True) 
 				grid.SetColAttr(i, attr)
 			if i == 0:
 				size = 22
@@ -10591,15 +10601,15 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 								   u"\u0394H*00\nRGB-XYZ"]):
 			grid.SetColLabelValue(i, label)
 		attr = wx.grid.GridCellAttr()
-		attr.SetEditor(wx.grid.GridCellBoolEditor())
-		attr.SetRenderer(wx.grid.GridCellBoolRenderer())
+		attr.SetReadOnly(True)
+		attr.SetRenderer(CustomCellBoolRenderer())
 		grid.SetColAttr(0, attr)
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
 		grid.SetDefaultCellFont(font)
 		grid.SetDefaultRowSize(20)
-		grid.EnableDragColSize()
-		grid.EnableGridLines(True)
+		grid.DisableDragColSize()
+		grid.EnableGridLines(False)
 
 		black = ti3.queryi1({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
 		if black:
@@ -10638,8 +10648,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		grid.Bind(wx.EVT_KEY_DOWN, dlg.key_handler)
 		grid.Bind(wx.grid.EVT_GRID_CELL_CHANGE, dlg.cell_change_handler)
 		grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, dlg.cell_click_handler)
-		grid.Bind(wx.grid.EVT_GRID_SELECT_CELL, dlg.cell_select_handler)
-		grid.Bind(wx.grid.EVT_GRID_EDITOR_CREATED, dlg.editor_created_handler)
 
 		dlg.sizer3.Add(grid, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 
@@ -10656,9 +10664,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 	def cell_change_handler(self, event):
 		dlg = self
 		grid = dlg.grid
-		if event.Col == 0:
-			self.check_select_status()
-		else:
+		if event.Col > 0:
 			try:
 				value = float(grid.GetCellValue(event.Row, event.Col).replace(",", "."))
 			except ValueError:
@@ -10717,13 +10723,12 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 
 	def cell_click_handler(self, event):
 		if event.Col == 0:
-			wx.CallLater(100, self.toggle_cb)
-		event.Skip()
-
-	def cell_select_handler(self, event):
-		dlg = self
-		if event.Col == 0:
-			wx.CallAfter(dlg.grid.EnableCellEditControl)
+			if self.grid.GetCellValue(event.Row, event.Col):
+				value = ""
+			else:
+				value = "1"
+			self.grid.SetCellValue(event.Row, event.Col, value)
+			self.check_select_status()
 		event.Skip()
 	
 	def check_enable_ok(self):
@@ -10750,14 +10755,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 			dlg.select_all_btn.SetLabel(lang.getstr("deselect_all"))
 		else:
 			dlg.select_all_btn.SetLabel(lang.getstr("select_all"))
-
-	def editor_created_handler(self, event):
-		dlg = self
-		if event.Col == 0:
-			dlg.grid.cb = event.Control
-			dlg.grid.cb.WindowStyle |= wx.WANTS_CHARS
-			dlg.grid.cb.Bind(wx.EVT_KEY_DOWN, dlg.key_handler)
-		event.Skip()
 	
 	def invert_selection_handler(self, event):
 		dlg = self
@@ -10775,94 +10772,13 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 
 	def key_handler(self, event):
 		dlg = self
-		if event.KeyCode == wx.WXK_UP:
-			if dlg.grid.GridCursorRow > 0:
-				dlg.grid.DisableCellEditControl()
-				dlg.grid.MoveCursorUp(False)
-		elif event.KeyCode == wx.WXK_DOWN:
-			if dlg.grid.GridCursorRow < dlg.grid.NumberRows -1:
-				dlg.grid.DisableCellEditControl()
-				dlg.grid.MoveCursorDown(False)
-		elif event.KeyCode == wx.WXK_LEFT:
-			if dlg.grid.GridCursorCol > 0:
-				dlg.grid.DisableCellEditControl()
-				dlg.grid.MoveCursorLeft(False)
-		elif event.KeyCode == wx.WXK_RIGHT:
-			if dlg.grid.GridCursorCol < dlg.grid.NumberCols - 1:
-				dlg.grid.DisableCellEditControl()
-				dlg.grid.MoveCursorRight(False)
-		elif event.KeyCode == wx.WXK_SPACE:
-			if dlg.grid.GridCursorRow == 0:
-				wx.CallLater(100, dlg.toggle_cb)
+		if event.KeyCode == wx.WXK_SPACE:
+			if dlg.grid.GridCursorCol == 0:
+				dlg.cell_click_handler(CustomGridCellEvent(wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
+														   dlg.grid,
+														   dlg.grid.GridCursorRow,
+														   dlg.grid.GridCursorCol))
 		else:
-			if event.ControlDown() or event.CmdDown():
-				keycode = event.KeyCode
-				# CTRL (Linux/Mac/Windows) / CMD (Mac)
-				if keycode == 65: # A
-					dlg.grid.SelectAll()
-					return
-				elif keycode in (67, 88): # C / X
-					clip = []
-					cells = dlg.grid.GetSelection()
-					i = -1
-					start_col = dlg.grid.GetNumberCols()
-					for cell in cells:
-						row = cell[0]
-						col = cell[1]
-						if i < row:
-							clip += [[]]
-							i = row
-						if col < start_col:
-							start_col = col
-						while len(clip[-1]) - 1 < col:
-							clip[-1] += [""]
-						clip[-1][col] = dlg.grid.GetCellValue(row, col)
-					# Skip first col with the checkbox
-					if start_col == 0:
-						start_col = 1
-					for i, row in enumerate(clip):
-						clip[i] = "\t".join(row[start_col:])
-					clipdata = wx.TextDataObject()
-					clipdata.SetText("\n".join(clip))
-					wx.TheClipboard.Open()
-					wx.TheClipboard.SetData(clipdata)
-					wx.TheClipboard.Close()
-					return
-				elif keycode == 86: # V
-					do = wx.TextDataObject()
-					wx.TheClipboard.Open()
-					success = wx.TheClipboard.GetData(do)
-					wx.TheClipboard.Close()
-					if success:
-						txt = StringIO(do.GetText())
-						lines = txt.readlines()
-						txt.close()
-						for i, line in enumerate(lines):
-							lines[i] = re.sub("\s+", "\t", line).split("\t")
-						# translate from selected cells into a grid with None values for not selected cells
-						grid = []
-						cells = dlg.grid.GetSelection()
-						i = -1
-						for cell in cells:
-							row = cell[0]
-							col = cell[1]
-							# Skip read-only cells
-							if (dlg.grid.IsReadOnly(row, col) or
-								not dlg.grid.GetColLabelValue(col)):
-								continue
-							if i < row:
-								grid += [[]]
-								i = row
-							grid[-1].append(cell)
-						# 'paste' values from clipboard
-						for i, row in enumerate(grid):
-							for j, cell in enumerate(row):
-								if (cell != None and len(lines) > i and
-									len(lines[i]) > j):
-									dlg.grid.SetCellValue(cell[0], cell[1], lines[i][j])
-									dlg.cell_change_handler(CustomGridCellEvent(wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
-																				dlg.grid, cell[0], cell[1]))
-					return
 			event.Skip()
 	
 	def mark_cell(self, row, col, ok=False):
@@ -10882,14 +10798,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		for index in xrange(dlg.grid.GetNumberRows()):
 			dlg.grid.SetCellValue(index, 0, value)
 		self.check_select_status(not value, value)
-
-	def toggle_cb(self):
-		dlg = self
-		if hasattr(dlg.grid, "cb"):
-			# Click on the cell border does not cause the editor to be
-			# created
-			dlg.grid.cb.Value = not dlg.grid.cb.Value
-		wx.CallLater(100, dlg.grid.DisableCellEditControl)
 	
 	def update_row(self, row, RGB, XYZ, delta, sRGB_delta, delta_to_sRGB):
 		dlg = self
