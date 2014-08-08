@@ -1064,7 +1064,10 @@ class MainFrame(BaseFrame):
 		
 		# Check for updates if configured
 		if getcfg("update_check"):
-			self.app_update_check_handler(None, silent=True)
+			# Give time for the main window to gain focus before checking for
+			# update, otherwise the main window may steal the update
+			# confirmation dialog's focus which looks weird
+			wx.CallLater(50, self.app_update_check_handler, None, silent=True)
 	
 	def log(self):
 		""" Put log buffer contents into the log window. """
