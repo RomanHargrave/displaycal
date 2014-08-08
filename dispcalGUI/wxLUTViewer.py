@@ -23,10 +23,7 @@ from worker import (Error, UnloggedError, Worker, get_argyll_util,
 from wxaddons import FileDrop, wx
 from wxMeasureFrame import MeasureFrame
 from wxwindows import InfoDialog
-if sys.platform in ("darwin", "win32"):
-	from wxfixes import GenBitmapButton as BitmapButton
-else:
-	BitmapButton = wx.BitmapButton
+from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
 import wxenhancedplot as plot

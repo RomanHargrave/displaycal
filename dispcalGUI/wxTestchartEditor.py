@@ -31,10 +31,7 @@ from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
 from wxwindows import (CustomGrid, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory,
 					   InfoDialog, get_gradient_panel)
-if sys.platform in ("darwin", "win32"):
-	from wxfixes import GenBitmapButton as BitmapButton
-else:
-	BitmapButton = wx.BitmapButton
+from wxfixes import GenBitmapButton as BitmapButton
 try:
 	import wx.lib.agw.floatspin as floatspin
 except ImportError:

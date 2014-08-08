@@ -27,10 +27,7 @@ from wxVRML2X3D import vrmlfile2x3dfile
 from wxwindows import (BitmapBackgroundPanelText, CustomGrid,
 					   CustomRowLabelRenderer, ConfirmDialog,
 					   FileDrop, InfoDialog, SimpleBook, TwoWaySplitter)
-if sys.platform in ("darwin", "win32"):
-	from wxfixes import GenBitmapButton as BitmapButton
-else:
-	BitmapButton = wx.BitmapButton
+from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
 import wxenhancedplot as plot

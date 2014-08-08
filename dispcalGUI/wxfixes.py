@@ -261,6 +261,9 @@ class GenBitmapButton(GenButton, _GenBitmapButton):
 	def __init__(self, *args, **kwargs):
 		GenButton.__init__(self)
 		_GenBitmapButton.__init__(self, *args, **kwargs)
+		self.hover = False
+		self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseEnter)
+		self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
 
 	@Property
 	def BitmapFocus():
@@ -279,6 +282,16 @@ class GenBitmapButton(GenButton, _GenBitmapButton):
 
 		def fset(self, bitmap):
 			self.SetBitmapDisabled(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapHover():
+		def fget(self):
+			return self.GetBitmapHover()
+
+		def fset(self, bitmap):
+			self.SetBitmapHover(self, bitmap)
 
 		return locals()
 
@@ -306,13 +319,37 @@ class GenBitmapButton(GenButton, _GenBitmapButton):
 		bmp = self.BitmapLabel
 		if self.BitmapDisabled and not self.IsEnabled():
 			bmp = self.BitmapDisabled
-		if self.BitmapFocus and self.hasFocus:
-			bmp = self.BitmapFocus
-		if self.BitmapSelected and not self.up:
+		elif self.BitmapSelected and not self.up:
 			bmp = self.BitmapSelected
+		elif self.BitmapHover and self.hover:
+			bmp = self.BitmapHover
+		elif self.BitmapFocus and self.hasFocus:
+			bmp = self.BitmapFocus
 		bw, bh = bmp.GetWidth(), bmp.GetHeight()
 		hasMask = bmp.GetMask() != None
 		dc.DrawBitmap(bmp, (width-bw)/2+dx, (height-bh)/2+dy, hasMask)
+
+	def GetBitmapHover(self):
+		return self.bmpHover
+
+	def OnMouseEnter(self, event):
+		if not self.IsEnabled():
+			return
+		if not self.hover:
+			self.hover = True
+			self.Refresh()
+		event.Skip()
+
+	def OnMouseLeave(self, event):
+		if not self.IsEnabled():
+			return
+		if self.hover:
+			self.hover = False
+			self.Refresh()
+		event.Skip()
+
+	def SetBitmapHover(self, bitmap):
+		self.bmpHover = bitmap
 
 	def SetBitmapLabel(self, bitmap, createOthers=True):
 		"""
@@ -324,9 +361,8 @@ class GenBitmapButton(GenButton, _GenBitmapButton):
 		"""
 		self.bmpLabel = bitmap
 		if bitmap is not None and createOthers:
-			image = bitmap.ConvertToImage()
-
 			# Disabled
+			image = bitmap.ConvertToImage()
 			if image.HasMask():
 				image.InitAlpha()
 			if image.HasAlpha():
@@ -336,12 +372,24 @@ class GenBitmapButton(GenButton, _GenBitmapButton):
 						alphabuffer[i] = chr(int(round(ord(byte) * .3)))
 			self.SetBitmapDisabled(image.ConvertToBitmap())
 
-			# Selected
+			# Hover
 			image = bitmap.ConvertToImage()
+			if image.HasMask():
+				image.InitAlpha()
 			databuffer = image.GetDataBuffer()
 			for i, byte in enumerate(databuffer):
 				if byte > "\0":
-					databuffer[i] = chr(int(round(ord(byte) * .5)))
+					databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
+			self.SetBitmapHover(image.ConvertToBitmap())
+
+			# Selected
+			image = bitmap.ConvertToImage()
+			if image.HasMask():
+				image.InitAlpha()
+			databuffer = image.GetDataBuffer()
+			for i, byte in enumerate(databuffer):
+				if byte > "\0":
+					databuffer[i] = chr(int(round(ord(byte) * .6)))
 			self.SetBitmapSelected(image.ConvertToBitmap())
 
 

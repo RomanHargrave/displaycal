@@ -9,10 +9,7 @@ from util_os import launch_file, make_win32_compatible_long_path, waccess
 from util_str import safe_unicode
 from worker import Worker, show_result_dialog
 from wxaddons import FileDrop, wx
-if sys.platform in ("darwin", "win32"):
-	from wxfixes import GenBitmapButton as BitmapButton
-else:
-	BitmapButton = wx.BitmapButton
+from wxfixes import GenBitmapButton as BitmapButton
 import config
 import localization as lang
 import x3dom

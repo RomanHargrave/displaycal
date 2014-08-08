@@ -18,10 +18,7 @@ from util_list import floatlist, strlist
 from util_str import safe_unicode
 from wxaddons import wx
 from wxwindows import ConfirmDialog, InfoDialog, InvincibleFrame
-if sys.platform in ("darwin", "win32"):
-	from wxfixes import GenBitmapButton as BitmapButton
-else:
-	BitmapButton = wx.BitmapButton
+from wxfixes import GenBitmapButton as BitmapButton
 try:
 	import RealDisplaySizeMM as RDSMM
 except ImportError, exception:

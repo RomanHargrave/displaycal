@@ -252,16 +252,15 @@ class BaseFrame(wx.Frame):
 					child.GetContainingSizer().Replace(child, newchild)
 					child.Destroy()
 					child = newchild
-				elif (isinstance(child, wx.BitmapButton) and
-					  sys.platform in ("darwin", "win32")):
+				elif isinstance(child, wx.BitmapButton):
 					newchild = GenBitmapButton(child.Parent, child.Id, 
 											   bitmap=child.BitmapLabel,
 											   size=child.Size,
 											   style=child.WindowStyle,
 											   name=child.Name)
 					newchild.BackgroundColour = child.BackgroundColour
-					if child.ToolTipString:
-						newchild.SetToolTipString(child.ToolTipString)
+					if child.ToolTip:
+						newchild.SetToolTipString(child.ToolTip.Tip)
 					child.GetContainingSizer().Replace(child, newchild)
 					child.Destroy()
 					child = newchild
