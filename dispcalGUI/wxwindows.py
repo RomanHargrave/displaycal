@@ -1323,12 +1323,16 @@ class CustomCellBoolRenderer(CustomCellRenderer):
 	def __init__(self, *args, **kwargs):
 		CustomCellRenderer.__init__(self, *args, **kwargs)
 		self._bitmap = geticon(16, "checkmark")
+		self._bitmap_unchecked = geticon(16, "x")
 
 	def DrawLabel(self, grid, dc, rect, row, col):
 		if grid.GetCellValue(row, col):
-			x = rect[0] + int((rect[2] - self._bitmap.Size[0]) / 2.0)
-			y = rect[1] + int((rect[3] - self._bitmap.Size[1]) / 2.0)
-			dc.DrawBitmap(self._bitmap, x, y)
+			bitmap = self._bitmap
+		else:
+			bitmap = self._bitmap_unchecked
+		x = rect[0] + int((rect[2] - self._bitmap.Size[0]) / 2.0)
+		y = rect[1] + int((rect[3] - self._bitmap.Size[1]) / 2.0)
+		dc.DrawBitmap(bitmap, x, y)
 
 	def GetBestSize(self, grid, attr, dc, row, col):
 		return self._bitmap.Size
