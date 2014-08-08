@@ -617,6 +617,16 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 	return resp
 
 
+def install_scope_handler(event=None, dlg=None):
+	dlg = dlg or event.EventObject.TopLevelParent
+	auth_needed = dlg.install_systemwide.GetValue()
+	if hasattr(dlg.ok, "SetAuthNeeded"):
+		dlg.ok.SetAuthNeeded(auth_needed)
+		if hasattr(dlg, "alt"):
+			dlg.alt.SetAuthNeeded(auth_needed)
+	dlg.buttonpanel.Layout()
+
+
 class ExtraArgsFrame(BaseFrame):
 
 	""" Extra commandline arguments window. """
@@ -3200,6 +3210,10 @@ class MainFrame(BaseFrame):
 													lang.getstr("install_local_system"))
 			dlg.install_user.Enable(not needroot)
 			dlg.install_systemwide.SetValue(needroot)
+			dlg.install_user.Bind(wx.EVT_RADIOBUTTON, install_scope_handler)
+			dlg.install_systemwide.Bind(wx.EVT_RADIOBUTTON,
+										install_scope_handler)
+			install_scope_handler(dlg=dlg)
 			dlg.sizer3.Add(dlg.install_systemwide, flag=wx.TOP | wx.ALIGN_LEFT,
 						   border=4)
 			dlg.sizer0.SetSizeHints(dlg)
@@ -4638,6 +4652,8 @@ class MainFrame(BaseFrame):
 		dlg.launch_devman.SetValue(uninstall)
 		dlg.sizer3.Add(dlg.launch_devman, flag=wx.TOP | wx.ALIGN_LEFT,
 					   border=12)
+		if hasattr(dlg.ok, "SetAuthNeeded"):
+			dlg.ok.SetAuthNeeded(True)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
 		result = dlg.ShowModal()
@@ -6466,6 +6482,7 @@ class MainFrame(BaseFrame):
 								cancel=lang.getstr("profile.do_not_install"), 
 								bitmap=geticon(32, "dialog-information"),
 								alt=share_profile)
+			self.modaldlg = dlg
 			if share_profile:
 				# Show share profile button
 				dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
@@ -6581,6 +6598,7 @@ class MainFrame(BaseFrame):
 							 id=self.install_profile_network.GetId())
 					dlg.sizer3.Add(self.install_profile_network, 
 								   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+				self.install_profile_scope_handler(None)
 			else:
 				setcfg("profile.install_scope", "u")
 			dlg.sizer0.SetSizeHints(dlg)
@@ -6595,7 +6613,6 @@ class MainFrame(BaseFrame):
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
 			dlg.OnCloseIntercept = self.profile_finish_close_handler
-			self.modaldlg = dlg
 			# Make sure we stay under our dialog
 			self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
 			wx.CallAfter(dlg.Show)
@@ -6838,12 +6855,17 @@ class MainFrame(BaseFrame):
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():
 			setcfg("profile.install_scope", "l")
+			if hasattr(self.modaldlg.ok, "SetAuthNeeded"):
+				self.modaldlg.ok.SetAuthNeeded(True)
 		elif sys.platform == "darwin" and \
 			 os.path.isdir("/Network/Library/ColorSync/Profiles") and \
 			 self.install_profile_network.GetValue():
 			setcfg("profile.install_scope", "n")
 		elif self.install_profile_user.GetValue():
 			setcfg("profile.install_scope", "u")
+			if hasattr(self.modaldlg.ok, "SetAuthNeeded"):
+				self.modaldlg.ok.SetAuthNeeded(False)
+		self.modaldlg.buttonpanel.Layout()
 	
 	def start_timers(self, wrapup=False):
 		if wrapup:
@@ -7510,6 +7532,10 @@ class MainFrame(BaseFrame):
 		dlg.sizer3.Add(dlg.install_user, flag=wx.TOP | wx.ALIGN_LEFT, border=16)
 		dlg.install_systemwide = wx.RadioButton(dlg, -1,
 												lang.getstr("install_local_system"))
+		dlg.install_user.Bind(wx.EVT_RADIOBUTTON, install_scope_handler)
+		dlg.install_systemwide.Bind(wx.EVT_RADIOBUTTON,
+									install_scope_handler)
+		install_scope_handler(dlg=dlg)
 		dlg.sizer3.Add(dlg.install_systemwide, flag=wx.TOP | wx.ALIGN_LEFT,
 					   border=4)
 		dlg.sizer0.SetSizeHints(dlg)
