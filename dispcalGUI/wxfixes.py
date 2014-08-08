@@ -146,6 +146,41 @@ def GridGetSelection(self):
 wx.grid.Grid.GetSelection = GridGetSelection
 
 
+def set_bitmap_labels(btn):
+	bitmap = btn.BitmapLabel
+
+	# Disabled
+	image = bitmap.ConvertToImage()
+	if image.HasMask():
+		image.InitAlpha()
+	if image.HasAlpha():
+		alphabuffer = image.GetAlphaBuffer()
+		for i, byte in enumerate(alphabuffer):
+			if byte > "\0":
+				alphabuffer[i] = chr(int(round(ord(byte) * .3)))
+	btn.SetBitmapDisabled(image.ConvertToBitmap())
+
+	# Hover
+	image = bitmap.ConvertToImage()
+	if image.HasMask():
+		image.InitAlpha()
+	databuffer = image.GetDataBuffer()
+	for i, byte in enumerate(databuffer):
+		if byte > "\0":
+			databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
+	btn.SetBitmapHover(image.ConvertToBitmap())
+
+	# Selected
+	image = bitmap.ConvertToImage()
+	if image.HasMask():
+		image.InitAlpha()
+	databuffer = image.GetDataBuffer()
+	for i, byte in enumerate(databuffer):
+		if byte > "\0":
+			databuffer[i] = chr(int(round(ord(byte) * .6)))
+	btn.SetBitmapSelected(image.ConvertToBitmap())
+
+
 wx._ScrolledWindow = wx.ScrolledWindow
 
 class ScrolledWindow(wx._ScrolledWindow):
@@ -248,149 +283,11 @@ class GenButton(object):
 			self.DrawFocusIndicator(dc, width, height)
 
 
-class GenBitmapButton(GenButton, _GenBitmapButton):
-
-	"""
-	A generic bitmap button, based on wx.lib.buttons.GenBitmapButton.
-	
-	Fixes wx.lib.buttons.GenBitmapButton not taking into account backgroun
-	color when pressed.
-	
-	"""
+class GenBitmapButton(wx.BitmapButton):
 
 	def __init__(self, *args, **kwargs):
-		GenButton.__init__(self)
-		_GenBitmapButton.__init__(self, *args, **kwargs)
-		self.hover = False
-		self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseEnter)
-		self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
-
-	@Property
-	def BitmapFocus():
-		def fget(self):
-			return self.GetBitmapFocus()
-
-		def fset(self, bitmap):
-			self.SetBitmapFocus(self, bitmap)
-
-		return locals()
-
-	@Property
-	def BitmapDisabled():
-		def fget(self):
-			return self.GetBitmapDisabled()
-
-		def fset(self, bitmap):
-			self.SetBitmapDisabled(self, bitmap)
-
-		return locals()
-
-	@Property
-	def BitmapHover():
-		def fget(self):
-			return self.GetBitmapHover()
-
-		def fset(self, bitmap):
-			self.SetBitmapHover(self, bitmap)
-
-		return locals()
-
-	@Property
-	def BitmapSelected():
-		def fget(self):
-			return self.GetBitmapSelected()
-
-		def fset(self, bitmap):
-			self.SetBitmapSelected(self, bitmap)
-
-		return locals()
-
-	@Property
-	def BitmapLabel():
-		def fget(self):
-			return self.GetBitmapLabel()
-
-		def fset(self, bitmap):
-			self.SetBitmapLabel(self, bitmap)
-
-		return locals()
-
-	def DrawLabel(self, dc, width, height, dx=0, dy=0):
-		bmp = self.BitmapLabel
-		if self.BitmapDisabled and not self.IsEnabled():
-			bmp = self.BitmapDisabled
-		elif self.BitmapSelected and not self.up:
-			bmp = self.BitmapSelected
-		elif self.BitmapHover and self.hover:
-			bmp = self.BitmapHover
-		elif self.BitmapFocus and self.hasFocus:
-			bmp = self.BitmapFocus
-		bw, bh = bmp.GetWidth(), bmp.GetHeight()
-		hasMask = bmp.GetMask() != None
-		dc.DrawBitmap(bmp, (width-bw)/2+dx, (height-bh)/2+dy, hasMask)
-
-	def GetBitmapHover(self):
-		return self.bmpHover
-
-	def OnMouseEnter(self, event):
-		if not self.IsEnabled():
-			return
-		if not self.hover:
-			self.hover = True
-			self.Refresh()
-		event.Skip()
-
-	def OnMouseLeave(self, event):
-		if not self.IsEnabled():
-			return
-		if self.hover:
-			self.hover = False
-			self.Refresh()
-		event.Skip()
-
-	def SetBitmapHover(self, bitmap):
-		self.bmpHover = bitmap
-
-	def SetBitmapLabel(self, bitmap, createOthers=True):
-		"""
-		Set the bitmap to display normally.
-		This is the only one that is required. If
-		createOthers is True, then the other bitmaps
-		will be generated on the fly.  Currently,
-		only the disabled bitmap is generated.
-		"""
-		self.bmpLabel = bitmap
-		if bitmap is not None and createOthers:
-			# Disabled
-			image = bitmap.ConvertToImage()
-			if image.HasMask():
-				image.InitAlpha()
-			if image.HasAlpha():
-				alphabuffer = image.GetAlphaBuffer()
-				for i, byte in enumerate(alphabuffer):
-					if byte > "\0":
-						alphabuffer[i] = chr(int(round(ord(byte) * .3)))
-			self.SetBitmapDisabled(image.ConvertToBitmap())
-
-			# Hover
-			image = bitmap.ConvertToImage()
-			if image.HasMask():
-				image.InitAlpha()
-			databuffer = image.GetDataBuffer()
-			for i, byte in enumerate(databuffer):
-				if byte > "\0":
-					databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
-			self.SetBitmapHover(image.ConvertToBitmap())
-
-			# Selected
-			image = bitmap.ConvertToImage()
-			if image.HasMask():
-				image.InitAlpha()
-			databuffer = image.GetDataBuffer()
-			for i, byte in enumerate(databuffer):
-				if byte > "\0":
-					databuffer[i] = chr(int(round(ord(byte) * .6)))
-			self.SetBitmapSelected(image.ConvertToBitmap())
+		wx.BitmapButton.__init__(self, *args, **kwargs)
+		set_bitmap_labels(self)
 
 
 class ThemedGenButton(GenButton, _ThemedGenButton):

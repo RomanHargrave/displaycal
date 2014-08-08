@@ -18,7 +18,7 @@ from util_str import safe_unicode, wrap
 from wxaddons import (CustomEvent, FileDrop as _FileDrop, get_dc_font_size,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler)
-from wxfixes import GenBitmapButton, GTKMenuItemGetFixedLabel
+from wxfixes import GenBitmapButton, GTKMenuItemGetFixedLabel, set_bitmap_labels
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -253,17 +253,7 @@ class BaseFrame(wx.Frame):
 					child.Destroy()
 					child = newchild
 				elif isinstance(child, wx.BitmapButton):
-					newchild = GenBitmapButton(child.Parent, child.Id, 
-											   bitmap=child.BitmapLabel,
-											   size=child.Size,
-											   style=child.WindowStyle,
-											   name=child.Name)
-					newchild.BackgroundColour = child.BackgroundColour
-					if child.ToolTip:
-						newchild.SetToolTipString(child.ToolTip.Tip)
-					child.GetContainingSizer().Replace(child, newchild)
-					child.Destroy()
-					child = newchild
+					set_bitmap_labels(child)
 				child.SetMaxFontSize(11)
 				if sys.platform == "darwin" or debug:
 					# Work around ComboBox issues on Mac OS X
