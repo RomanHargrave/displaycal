@@ -2385,12 +2385,32 @@ class TwoWaySplitter(FourWaySplitter):
 		self._splitsize = size
 
 
+bitmaps = {}
+
 def get_gradient_panel(parent, label, x=16):
 	gradientpanel = BitmapBackgroundPanelText(parent, size=(-1, 23))
 	gradientpanel.label_x = x
-	gradientpanel.linecolor = wx.Colour(0x99, 0x99, 0x99)
-	gradientpanel.SetForegroundColour("#333333")
-	gradientpanel.SetBitmap(getbitmap("theme/gradient"))
+	gradientpanel.linecolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+	gradientpanel.textshadowcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+	gradientpanel.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_CAPTIONTEXT))
+	bitmap = bitmaps.get("gradient_panel")
+	if not bitmap:
+		bitmap = getbitmap("theme/gradient")
+		bgcolor = gradientpanel.BackgroundColour
+		image = bitmap.ConvertToImage()
+		if not image.HasAlpha():
+			image.InitAlpha()
+		alphabuffer = image.GetAlphaBuffer()
+		for i, byte in enumerate(alphabuffer):
+			if byte > "\0":
+				alphabuffer[i] = chr(int(round(ord(byte) * .75)))
+		databuffer = image.GetDataBuffer()
+		for i, byte in enumerate(databuffer):
+			if byte > "\0":
+				databuffer[i] = chr(int(round(ord(byte) * (bgcolor[i % 3] / 255.0))))
+		bitmap = image.ConvertToBitmap()
+		bitmaps["gradient_panel"] = bitmap
+	gradientpanel.SetBitmap(bitmap)
 	font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT) 
 	gradientpanel.SetFont(font)
 	gradientpanel.SetLabel(label)
