@@ -1083,7 +1083,11 @@ class TestchartEditor(wx.Frame):
 							self.saturation_sweeps_custom_B_ctrl.GetValue() / 100.0)}[event.GetId()]
 			maxv = self.saturation_sweeps_intctrl.GetValue()
 			newdata = []
-			row = self.grid.GetSelectionRows()[-1]
+			rows = self.grid.GetSelectionRows()
+			if rows:
+				row = rows[-1]
+			else:
+				row = self.grid.GetNumberRows() - 1
 			for i in xrange(maxv):
 				saturation = 1.0 / (maxv - 1) * i
 				RGB, xyY = colormath.RGBsaturation(R, G, B, 1.0 / (maxv - 1) * i,
@@ -1099,6 +1103,7 @@ class TestchartEditor(wx.Frame):
 					"XYZ_Z": Z * 100
 				})
 			self.tc_add_data(row, newdata)
+			self.grid.select_row(row + len(newdata))
 	
 	def tc_add_ti3_handler(self, event):
 		try:
@@ -1222,7 +1227,11 @@ class TestchartEditor(wx.Frame):
 			else:
 				cie = "XYZ"
 			newdata = []
-			row = self.grid.GetSelectionRows()[-1]
+			rows = self.grid.GetSelectionRows()
+			if rows:
+				row = rows[-1]
+			else:
+				row = self.grid.GetNumberRows() - 1
 			for i in dataset.DATA:
 				if cie == "Lab":
 					(dataset.DATA[i]["XYZ_X"],
@@ -1247,6 +1256,7 @@ class TestchartEditor(wx.Frame):
 					entry[label] = round(dataset.DATA[i][label], 4)
 				newdata.append(entry)
 			self.tc_add_data(row, newdata)
+			self.grid.select_row(row + len(newdata))
 	
 	def tc_add_ti3(self, chart, img=None, use_gamut=True, profile=None):
 		if img:
