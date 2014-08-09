@@ -825,7 +825,8 @@ class CustomGrid(wx.grid.Grid):
 
 		self.linecolor = wx.Colour(0x99, 0x99, 0x99)
 		self.SetForegroundColour("#333333")
-		self.headerbitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 22))
+		self.headerbitmap = None
+		self.rendernative = True
 		self._default_col_label_renderer = CustomColLabelRenderer()
 		self._default_row_label_renderer = CustomRowLabelRenderer()
 		self._col_label_renderers = {}
@@ -1369,6 +1370,9 @@ class CustomColLabelRenderer(object):
 			dc.SetPen(pen)
 			dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2],
 						rect[1] + rect[3] - 1)
+		elif grid.rendernative:
+			render = wx.RendererNative.Get()
+			render.DrawHeaderButton(grid, dc, rect)
 		else:
 			dc.SetBrush(wx.Brush(color))
 			dc.SetPen(wx.TRANSPARENT_PEN)
