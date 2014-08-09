@@ -8274,25 +8274,15 @@ class MainFrame(BaseFrame):
 				removed.insert(0, data.pop(dlg.suspicious_items[index]))
 			for item in removed:
 				safe_print("Removed patch #%i from TI3: %s" % (item.key, item))
-			for index, (RGB, XYZ) in dlg.mods.iteritems():
+			for index, fields in dlg.mods.iteritems():
 				if index not in indexes:
 					item = dlg.suspicious_items[index]
-					oldRGB = []
-					for i, label in enumerate("RGB"):
-						oldRGB.append(item["RGB_%s" % label])
-					if RGB != oldRGB:
-						for i, label in enumerate("RGB"):
-							item["RGB_%s" % label] = RGB[i]
-					safe_print(u"Updated patch #%s in TI3: RGB %.4f %.4f %.4f \u2192 %.4f %.4f %.4f" % 
-							   tuple([item.SAMPLE_ID] + oldRGB + RGB))
-					oldXYZ = []
-					for i, label in enumerate("XYZ"):
-						oldXYZ.append(item["XYZ_%s" % label])
-					if XYZ != oldXYZ:
-						for i, label in enumerate("XYZ"):
-							item["XYZ_%s" % label] = XYZ[i]
-					safe_print(u"Updated patch #%s in TI3: XYZ %.4f %.4f %.4f \u2192 %.4f %.4f %.4f" % 
-							   tuple([item.SAMPLE_ID] + oldXYZ + XYZ))
+					for field, value in fields.iteritems():
+						old = item[field]
+						if old != value:
+							item[field] = value
+							safe_print(u"Updated patch #%s in TI3: %s %.4f \u2192 %.4f" % 
+									   (item.SAMPLE_ID, field, old, value))
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
 			return False
@@ -10665,18 +10655,17 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg = self
 		grid = dlg.grid
 		if event.Col > 0:
+			item = dlg.suspicious_items[event.Row]
+			label = "_RGB__XYZ"[event.Col]
+			if event.Col < 6:
+				label = "RGB_%s" % label
+			else:
+				label = "XYZ_%s" % label
 			try:
 				value = float(grid.GetCellValue(event.Row, event.Col).replace(",", "."))
 			except ValueError:
 				wx.Bell()
-				item = dlg.suspicious_items[event.Row]
-				label = "_RGB__XYZ"[event.Col]
-				if event.Col < 6:
-					label = "RGB_%s" % label
-				else:
-					label = "XYZ_%s" % label
-				grid.SetCellValue(event.Row, event.Col,
-									  "%.4f" % item[label])
+				grid.SetCellValue(event.Row, event.Col, "%.4f" % item[label])
 			else:
 				if event.Col < 4: 
 					value = max(min(value, 100), 0)
@@ -10687,7 +10676,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 				XYZ = []
 				for i in (6, 7, 8):
 					XYZ.append(float(grid.GetCellValue(event.Row, i)))
-				dlg.mods[event.Row] = (RGB, XYZ)
 				# Update row
 				(sRGBLab, Lab, delta_to_sRGB,
 				 criteria1,
@@ -10713,6 +10701,13 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 				dlg.update_row(event.Row, RGB, XYZ, delta, sRGB_delta,
 							   delta_to_sRGB)
 
+				if item[label] != value:
+					if not dlg.mods.get(event.Row):
+						dlg.mods[event.Row] = {}
+					dlg.mods[event.Row][label] = value
+
+				dlg.ok.Enable(not dlg.force or bool(dlg.mods))
+
 				# This workaround is needed to update cell colours
 				cells = grid.GetSelectedCells()
 				grid.SelectAll()
@@ -10731,14 +10726,6 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 			self.check_select_status()
 		event.Skip()
 	
-	def check_enable_ok(self):
-		dlg = self
-		for index in xrange(dlg.grid.GetNumberRows()):
-			if dlg.grid.GetCellValue(index, 0) == "":
-				dlg.ok.Enable()
-				return
-		dlg.ok.Enable(not dlg.force)
-	
 	def check_select_status(self, has_false_values=None, has_true_values=None):
 		dlg = self
 		if None in (has_false_values, has_true_values):
@@ -10747,10 +10734,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 					has_false_values = True
 				else:
 					has_true_values = True
-		if has_false_values:
-			dlg.ok.Enable()
-		else:
-			dlg.ok.Enable(not self.force)
+		dlg.ok.Enable(has_false_values or not self.force or bool(dlg.mods))
 		if has_true_values:
 			dlg.select_all_btn.SetLabel(lang.getstr("deselect_all"))
 		else:
