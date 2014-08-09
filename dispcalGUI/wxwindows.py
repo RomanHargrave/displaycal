@@ -823,10 +823,20 @@ class CustomGrid(wx.grid.Grid):
 		self.SetDefaultRenderer(CustomCellRenderer())
 		self.SetRowLabelAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
-		self.linecolor = wx.Colour(0x99, 0x99, 0x99)
+		self.linecolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
 		self.SetForegroundColour("#333333")
-		self.headerbitmap = None
-		self.rendernative = True
+		if sys.platform == "darwin":
+			# wxMac draws a too short native header
+			bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 22))
+			if wx.VERSION >= (2, 8, 9, 1):
+				image = bitmap.ConvertToImage()
+				image = image.AdjustChannels(1.2, 1.2, 1.2)
+				bitmap = image.ConvertToBitmap()
+			self.headerbitmap = bitmap
+			self.rendernative = False
+		else:
+			self.headerbitmap = None
+			self.rendernative = True
 		self._default_col_label_renderer = CustomColLabelRenderer()
 		self._default_row_label_renderer = CustomRowLabelRenderer()
 		self._col_label_renderers = {}
