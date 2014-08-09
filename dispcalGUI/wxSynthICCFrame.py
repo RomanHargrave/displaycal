@@ -85,8 +85,8 @@ class SynthICCFrame(BaseFrame):
 		
 		self.setup_language()
 		
-		self.update_layout()
 		self.update_controls()
+		self.update_layout()
 		
 		self.save_btn.Hide()
 		
@@ -122,7 +122,7 @@ class SynthICCFrame(BaseFrame):
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
 		setcfg("synthprofile.black_luminance", v)
-		self.panel.Freeze()
+		self.Freeze()
 		i = self.trc_ctrl.GetSelection()
 		self.trc_gamma_type_ctrl.Show(i in (0, 4) and bool(v))
 		black_output_offset_show = (i in (0, 4) and
@@ -132,7 +132,8 @@ class SynthICCFrame(BaseFrame):
 		self.black_output_offset_intctrl.Show(black_output_offset_show)
 		self.black_output_offset_intctrl_label.Show(black_output_offset_show)
 		self.panel.GetSizer().Layout()
-		self.panel.Thaw()
+		self.update_layout()
+		self.Thaw()
 
 	def black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.black_output_offset_intctrl.GetId():

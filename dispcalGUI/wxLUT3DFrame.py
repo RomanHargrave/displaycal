@@ -480,6 +480,7 @@ class LUT3DFrame(BaseFrame):
 							self.rendering_intent_label.Hide()
 							self.rendering_intent_ctrl.Hide()
 							self.panel.GetSizer().Layout()
+							self.update_layout()
 							self.Thaw()
 					else:
 						if which == "input":
@@ -516,6 +517,7 @@ class LUT3DFrame(BaseFrame):
 							# Update controls related to output profile
 							self.set_profile("output", silent=silent)
 							self.panel.GetSizer().Layout()
+							self.update_layout()
 							self.Thaw()
 						elif which == "output":
 							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
@@ -711,6 +713,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_bitdepth_output_label.Show(output_show)
 		self.lut3d_bitdepth_output_ctrl.Show(output_show)
 		self.panel.GetSizer().Layout()
+		self.update_layout()
 		self.Thaw()
 
 	def show_trc_controls(self, show=True):
