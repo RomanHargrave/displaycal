@@ -1357,6 +1357,8 @@ class CustomColLabelRenderer(object):
 				color = grid.alternate_col_label_background_color
 			else:
 				color = grid.GetLabelBackgroundColour()
+				if color.Alpha() < 255:
+					color.Set(color.Red(), color.Green(), color.Blue())
 		if grid.headerbitmap:
 			img = grid.headerbitmap.ConvertToImage()
 			img.Rescale(rect[2], rect[3], quality=wx.IMAGE_QUALITY_NORMAL)
@@ -1408,6 +1410,8 @@ class CustomRowLabelRenderer(object):
 				color = grid.alternate_row_label_background_color
 			else:
 				color = grid.GetLabelBackgroundColour()
+				if color.Alpha() < 255:
+					color.Set(color.Red(), color.Green(), color.Blue())
 		dc.SetBrush(wx.Brush(color))
 		dc.SetPen(wx.TRANSPARENT_PEN)
 		dc.DrawRectangleRect(rect)
