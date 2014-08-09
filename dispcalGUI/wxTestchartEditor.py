@@ -1963,14 +1963,14 @@ class TestchartEditor(wx.Frame):
 	def tc_check_save_ti1(self, clear = True):
 		if hasattr(self, "ti1"):
 			if self.ti1.root.modified or not os.path.exists(self.ti1.filename):
-				if os.path.exists(self.ti1.filename):
+				if self.save_btn.Enabled:
 					ok = lang.getstr("save")
 				else:
 					ok = lang.getstr("save_as")
 				dlg = ConfirmDialog(self, msg = lang.getstr("testchart.save_or_discard"), ok = ok, cancel = lang.getstr("cancel"), bitmap = geticon(32, "dialog-warning"))
 				if self.IsBeingDeleted():
 					dlg.buttonpanel.Hide(0)
-				if os.path.exists(self.ti1.filename):
+				if self.save_btn.Enabled:
 					dlg.save_as = wx.Button(dlg.buttonpanel, -1, lang.getstr("save_as"))
 					ID_SAVE_AS = dlg.save_as.GetId()
 					dlg.Bind(wx.EVT_BUTTON, dlg.OnClose, id = ID_SAVE_AS)
