@@ -9,6 +9,10 @@ import pywintypes
 import win32api
 import winerror
 
+if not hasattr(ctypes, "c_bool"):
+	# Python 2.5
+	ctypes.c_bool = ctypes.c_int
+
 # http://msdn.microsoft.com/en-us/library/dd183569%28v=vs.85%29.aspx
 DISPLAY_DEVICE_ACTIVE = 0x1  # DISPLAY_DEVICE_ACTIVE specifies whether a monitor is presented as being "on" by the respective GDI view.
 							 # Windows Vista: EnumDisplayDevices will only enumerate monitors that can be presented as being "on."
