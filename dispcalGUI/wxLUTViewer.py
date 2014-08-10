@@ -152,6 +152,11 @@ class LUTCanvas(plot.PlotCanvas):
 	def __init__(self, *args, **kwargs):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
 		self.canvas.Unbind(wx.EVT_LEAVE_WINDOW)
+		self.Unbind(wx.EVT_SCROLL_THUMBTRACK)
+		self.Unbind(wx.EVT_SCROLL_PAGEUP)
+		self.Unbind(wx.EVT_SCROLL_PAGEDOWN)
+		self.Unbind(wx.EVT_SCROLL_LINEUP)
+		self.Unbind(wx.EVT_SCROLL_LINEDOWN)
 		self.HandCursor = wx.StockCursor(wx.CURSOR_CROSS)
 		self.GrabHandCursor = wx.StockCursor(wx.CURSOR_SIZING)
 		self.SetBackgroundColour(BGCOLOUR)
