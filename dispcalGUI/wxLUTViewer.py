@@ -1693,6 +1693,8 @@ class LUTViewer(wx.App):
 
 def main(profile=None):
 	config.initcfg()
+	# Backup display config
+	cfg_display = getcfg("display.number")
 	lang.init()
 	lang.update_defaults()
 	app = LUTViewer(0)
@@ -1711,6 +1713,8 @@ def main(profile=None):
 		app.frame.load_lut(get_display_profile(display_no))
 	app.frame.Show()
 	app.MainLoop()
+	setcfg("display.number", cfg_display)
+	config.writecfg()
 
 if __name__ == '__main__':
 	main(*sys.argv[max(len(sys.argv) - 1, 1):])
