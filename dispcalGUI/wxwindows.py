@@ -441,7 +441,6 @@ class BitmapBackgroundPanel(wx.Panel):
 		dc.SetBackgroundMode(wx.SOLID)
 		dc.Clear()
 		dc.SetTextForeground(self.GetForegroundColour())
-		dc.SetTextBackground(bgcolor)
 		bmp = self._bitmap
 		if bmp:
 			if self.alpha < 1.0 or self.blend:
@@ -530,6 +529,7 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
+		dc.SetBackgroundMode(wx.TRANSPARENT)
 		dc = self._set_font(dc)
 		label = self.Label.splitlines()
 		for i, line in enumerate(label):
