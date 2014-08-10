@@ -24,7 +24,7 @@ from worker import (Error, UnloggedError, check_set_argyll_bin, get_argyll_util,
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
 from wxVRML2X3D import vrmlfile2x3dfile
-from wxwindows import (BitmapBackgroundPanelText, CustomGrid,
+from wxwindows import (BitmapBackgroundPanelText, CustomCheckBox, CustomGrid,
 					   CustomRowLabelRenderer, ConfirmDialog,
 					   FileDrop, InfoDialog, SimpleBook, TwoWaySplitter)
 from wxfixes import GenBitmapButton as BitmapButton
@@ -659,7 +659,7 @@ class GamutViewOptions(wx.Panel):
 		# Colorspace outline
 		self.options_sizer.Add((0, 0))
 		self.options_sizer.Add((0, 0))
-		self.draw_gamut_outline_cb = wx.CheckBox(self, -1,
+		self.draw_gamut_outline_cb = CustomCheckBox(self, -1,
 												 lang.getstr("colorspace.show_outline"))
 		self.draw_gamut_outline_cb.Bind(wx.EVT_CHECKBOX,
 										self.draw_gamut_outline_handler)
@@ -757,7 +757,7 @@ class GamutViewOptions(wx.Panel):
 		self.options_sizer.Add((0, 0))
 		
 		# LUT toggle
-		self.toggle_clut = wx.CheckBox(self, -1, "LUT")
+		self.toggle_clut = CustomCheckBox(self, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		self.toggle_clut.SetMaxFontSize(11)
 		self.options_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL)
@@ -1057,35 +1057,35 @@ class ProfileInfoFrame(LUTFrame):
 		
 		hsizer.Add((16, 0))
 		
-		self.show_as_L = wx.CheckBox(self.lut_view_options, -1, u"L* \u2192")
+		self.show_as_L = CustomCheckBox(self.lut_view_options, -1, u"L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
 		self.show_as_L.SetValue(True)
 		hsizer.Add(self.show_as_L,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.show_as_L.GetId())
 		
-		self.toggle_red = wx.CheckBox(self.lut_view_options, -1, "R")
+		self.toggle_red = CustomCheckBox(self.lut_view_options, -1, "R")
 		self.toggle_red.SetForegroundColour(FGCOLOUR)
 		self.toggle_red.SetValue(True)
 		hsizer.Add(self.toggle_red,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_red.GetId())
 		
-		self.toggle_green = wx.CheckBox(self.lut_view_options, -1, "G")
+		self.toggle_green = CustomCheckBox(self.lut_view_options, -1, "G")
 		self.toggle_green.SetForegroundColour(FGCOLOUR)
 		self.toggle_green.SetValue(True)
 		hsizer.Add(self.toggle_green,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_green.GetId())
 		
-		self.toggle_blue = wx.CheckBox(self.lut_view_options, -1, "B")
+		self.toggle_blue = CustomCheckBox(self.lut_view_options, -1, "B")
 		self.toggle_blue.SetForegroundColour(FGCOLOUR)
 		self.toggle_blue.SetValue(True)
 		hsizer.Add(self.toggle_blue,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_blue.GetId())
 		
-		self.toggle_clut = wx.CheckBox(self.lut_view_options, -1, "LUT")
+		self.toggle_clut = CustomCheckBox(self.lut_view_options, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		hsizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
 												   wx.LEFT, border=16)

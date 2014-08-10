@@ -22,7 +22,7 @@ from worker import (Error, UnloggedError, Worker, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import FileDrop, wx
 from wxMeasureFrame import MeasureFrame
-from wxwindows import BitmapBackgroundPanelText, InfoDialog
+from wxwindows import BitmapBackgroundPanelText, CustomCheckBox, InfoDialog
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
@@ -700,7 +700,7 @@ class LUTFrame(wx.Frame):
 											"(*.cal)")
 		self.save_vcgt_btn.Disable()
 		
-		self.show_as_L = wx.CheckBox(self.box_panel, -1, u"L* \u2192")
+		self.show_as_L = CustomCheckBox(self.box_panel, -1, u"L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
 		self.show_as_L.SetMaxFontSize(11)
 		self.show_as_L.SetValue(True)
@@ -709,7 +709,7 @@ class LUTFrame(wx.Frame):
 							border=4)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.show_as_L.GetId())
 		
-		self.toggle_red = wx.CheckBox(self.box_panel, -1, "R")
+		self.toggle_red = CustomCheckBox(self.box_panel, -1, "R")
 		self.toggle_red.SetForegroundColour(FGCOLOUR)
 		self.toggle_red.SetMaxFontSize(11)
 		self.toggle_red.SetValue(True)
@@ -718,7 +718,7 @@ class LUTFrame(wx.Frame):
 		
 		self.cbox_sizer.Add((4, 0))
 		
-		self.toggle_green = wx.CheckBox(self.box_panel, -1, "G")
+		self.toggle_green = CustomCheckBox(self.box_panel, -1, "G")
 		self.toggle_green.SetForegroundColour(FGCOLOUR)
 		self.toggle_green.SetMaxFontSize(11)
 		self.toggle_green.SetValue(True)
@@ -727,14 +727,14 @@ class LUTFrame(wx.Frame):
 		
 		self.cbox_sizer.Add((4, 0))
 		
-		self.toggle_blue = wx.CheckBox(self.box_panel, -1, "B")
+		self.toggle_blue = CustomCheckBox(self.box_panel, -1, "B")
 		self.toggle_blue.SetForegroundColour(FGCOLOUR)
 		self.toggle_blue.SetMaxFontSize(11)
 		self.toggle_blue.SetValue(True)
 		self.cbox_sizer.Add(self.toggle_blue, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_blue.GetId())
 		
-		self.toggle_clut = wx.CheckBox(self.box_panel, -1, "LUT")
+		self.toggle_clut = CustomCheckBox(self.box_panel, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		self.toggle_clut.SetMaxFontSize(11)
 		self.cbox_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
@@ -752,7 +752,7 @@ class LUTFrame(wx.Frame):
 				  
 		self.box_sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
 
-		self.show_actual_lut_cb = wx.CheckBox(self.box_panel, -1,
+		self.show_actual_lut_cb = CustomCheckBox(self.box_panel, -1,
 											  lang.getstr("calibration.show_actual_lut"))
 		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
 		self.show_actual_lut_cb.SetMaxFontSize(11)

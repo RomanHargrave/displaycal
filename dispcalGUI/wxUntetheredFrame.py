@@ -19,8 +19,8 @@ from config import (getbitmap, getcfg, geticon, get_data_path, get_icon_bundle,
 from log import get_file_logger, safe_print
 from meta import name as appname
 from options import debug, test, verbose
-from wxwindows import (BitmapBackgroundPanel, CustomGrid, FlatShadedButton,
-					   numpad_keycodes)
+from wxwindows import (BitmapBackgroundPanel, CustomCheckBox, CustomGrid,
+					   FlatShadedButton, numpad_keycodes)
 import CGATS
 import colormath
 import config
@@ -93,7 +93,7 @@ class UntetheredFrame(wx.Frame):
 		self.next_btn.Bind(wx.EVT_BUTTON, self.next_btn_handler)
 		sizer.Add(self.next_btn, 0, wx.LEFT, border=8)
 		sizer.Add((12, 1), 1)
-		self.measure_auto_cb = wx.CheckBox(self.panel, wx.ID_ANY,
+		self.measure_auto_cb = CustomCheckBox(self.panel, wx.ID_ANY,
 										   lang.getstr("auto"))
 		self.measure_auto_cb.SetForegroundColour(FGCOLOUR)
 		self.measure_auto_cb.Bind(wx.EVT_CHECKBOX, self.measure_auto_ctrl_handler)
