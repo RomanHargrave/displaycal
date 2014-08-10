@@ -22,7 +22,7 @@ from worker import (Error, UnloggedError, Worker, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import FileDrop, wx
 from wxMeasureFrame import MeasureFrame
-from wxwindows import InfoDialog
+from wxwindows import BitmapBackgroundPanelText, InfoDialog
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
@@ -574,8 +574,6 @@ class LUTFrame(wx.Frame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-curve-viewer"))
 		
-		self.CreateStatusBar(1)
-		
 		self.profile = None
 		self.xLabel = lang.getstr("in")
 		self.yLabel = lang.getstr("out")
@@ -589,6 +587,13 @@ class LUTFrame(wx.Frame):
 		self.box_panel = wx.Panel(self)
 		self.box_panel.SetBackgroundColour(BGCOLOUR)
 		self.sizer.Add(self.box_panel, flag=wx.EXPAND)
+		
+		self.status = BitmapBackgroundPanelText(self, size=(-1, 48))
+		self.status.label_y = 8
+		self.status.textshadow = False
+		self.status.SetBackgroundColour(BGCOLOUR)
+		self.status.SetForegroundColour(FGCOLOUR)
+		self.sizer.Add(self.status, flag=wx.EXPAND)
 		
 		self.box_sizer = wx.FlexGridSizer(0, 3)
 		self.box_sizer.AddGrowableCol(0)
@@ -726,23 +731,21 @@ class LUTFrame(wx.Frame):
 		self.box_sizer.Add((0, 6))
 		self.box_sizer.Add((0, 6))
 
-		self.box_sizer.Add((0, 32))
+		self.box_sizer.Add((0, 20))
 
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 				  
-		self.box_sizer.Add(hsizer,
-						   flag=wx.ALIGN_CENTER | wx.BOTTOM, border=8)
+		self.box_sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
 
 		self.show_actual_lut_cb = wx.CheckBox(self.box_panel, -1,
 											  lang.getstr("calibration.show_actual_lut"))
 		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
 		self.show_actual_lut_cb.SetMaxFontSize(11)
-		hsizer.Add(self.show_actual_lut_cb, flag=wx.ALIGN_CENTER |
-						   wx.BOTTOM, border=8)
+		hsizer.Add(self.show_actual_lut_cb, flag=wx.ALIGN_CENTER)
 		self.Bind(wx.EVT_CHECKBOX, self.show_actual_lut_handler,
 				  id=self.show_actual_lut_cb.GetId())
 
-		self.box_sizer.Add((0, 32))
+		self.box_sizer.Add((0, 20))
 
 		self.save_plot_btn = BitmapButton(self.box_panel, -1,
 										  geticon(16, "media-floppy"),
@@ -1239,25 +1242,25 @@ class LUTFrame(wx.Frame):
 					if 'B' in colorants:
 						unique.append(self.client.b_unique)
 					unique = min(unique)
-					legend[-1] += " %.1f%% (%i/%i) @ 8 Bit" % (unique / 
+					legend[-1] += " %.1f%% (%i/%i)" % (unique / 
 													   (self.client.entryCount / 
 														100.0), unique, 
 													   self.client.entryCount)
 				else:
 					if 'R' in colorants:
-						legend[-1] += " %.1f%% (%i/%i) @ 8 Bit" % (self.client.r_unique / 
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.r_unique / 
 														   (self.client.entryCount / 
 															100.0), 
 														   self.client.r_unique, 
 														   self.client.entryCount)
 					if 'G' in colorants:
-						legend[-1] += " %.1f%% (%i/%i) @ 8 Bit" % (self.client.g_unique / 
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.g_unique / 
 														   (self.client.entryCount / 
 															100.0), 
 														   self.client.g_unique, 
 														   self.client.entryCount)
 					if 'B' in colorants:
-						legend[-1] += " %.1f%% (%i/%i) @ 8 Bit" % (self.client.b_unique / 
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.b_unique / 
 														   (self.client.entryCount / 
 															100.0), 
 														   self.client.b_unique, 
@@ -1266,9 +1269,9 @@ class LUTFrame(wx.Frame):
 				unique.append(self.client.r_unique)
 				unique.append(self.client.g_unique)
 				unique.append(self.client.b_unique)
-				if not 0 in unique:
+				if not 0 in unique and not "R=G=B" in colorants:
 					unique = min(unique)
-					legend[-1] += ", %s %.1f%% (%i/%i) @ 8 Bit" % (lang.getstr("grayscale"), 
+					legend[-1] += ", %s %.1f%% (%i/%i)" % (lang.getstr("grayscale"), 
 														   unique / 
 														   (self.client.entryCount / 
 															100.0), unique, 
@@ -1439,9 +1442,13 @@ class LUTFrame(wx.Frame):
 			self.client.last_PointLabel = None
 		else:
 			pointXY = (127.5, 127.5)
+		if self.profile and self.profile.getDescription():
+			title = u" \u2014 ".join([lang.getstr("calibration.lut_viewer.title"),
+									  self.profile.getDescription()])
+		else:
+			title = lang.getstr("calibration.lut_viewer.title")
+		self.SetTitle(title)
 		wx.CallAfter(self.client.DrawLUT, curves,
-					 title=self.profile.getDescription() if 
-					 self.profile else None, 
 					 xLabel=self.xLabel,
 					 yLabel=self.yLabel,
 					 r=self.toggle_red.GetValue() if 
@@ -1570,6 +1577,10 @@ class LUTFrame(wx.Frame):
 		else:
 			res= self.client._Buffer.SaveFile(fileName, extensions.get(fType, ".png"))
 		return res
+
+	def SetStatusText(self, text):
+		self.status.Label = text
+		self.status.Refresh()
 	
 	def UpdatePointLabel(self, xy):
 		if self.client.GetEnablePointLabel():
@@ -1628,7 +1639,8 @@ class LUTFrame(wx.Frame):
 						y = colormath.Lab2XYZ(y, 0, 0)[1] * 100
 					legend.append(rgb + "Gamma %.2f" % (math.log(y / axis_y) / math.log(pointXY[0] / 255.0)))
 				self.add_tone_values(legend)
-				self.SetStatusText(", ".join(legend))
+				legend = [", ".join(legend[:-1])] + [legend[-1]]
+				self.SetStatusText("\n".join(legend))
 				# Make up dictionary to pass to DrawPointLabel
 				mDataDict= {"curveNum": curveNum, "legend": legend, 
 							"pIndex": pIndex, "pointXY": pointXY, 

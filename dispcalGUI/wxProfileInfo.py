@@ -918,8 +918,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-profile-info"))
 		
-		self.CreateStatusBar(1)
-		
 		self.profile = None
 		self.xLabel = lang.getstr("in")
 		self.yLabel = lang.getstr("out")
@@ -927,24 +925,9 @@ class ProfileInfoFrame(LUTFrame):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 		
-		self.title_panel = BitmapBackgroundPanelText(self)
-		self.title_panel.SetForegroundColour(TEXTCOLOUR)
-		self.title_panel.SetBitmap(getbitmap("theme/gradient"))
-		self.sizer.Add(self.title_panel, flag=wx.EXPAND)
-		
-		self.title_sizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.title_panel.SetSizer(self.title_sizer)
-		
-		self.title_txt = self.title_panel
-		font = wx.Font(FONTSIZE_LARGE, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL)
-		self.title_txt.SetFont(font)
-		self.title_sizer.Add((0, 32))
-		
-		gridbgcolor = wx.Colour(234, 234, 234)
-		
 		self.splitter = TwoWaySplitter(self, -1, agwStyle = wx.SP_LIVE_UPDATE | wx.SP_NOSASH)
-		self.splitter.SetBackgroundColour(wx.Colour(204, 204, 204))
+		self.splitter.SetBackgroundColour(wx.Colour(*[int(v * .85) for v in
+													  self.splitter.BackgroundColour]))
 		self.sizer.Add(self.splitter, 1, flag=wx.EXPAND)
 		
 		p1 = wx.Panel(self.splitter)
@@ -964,8 +947,8 @@ class ProfileInfoFrame(LUTFrame):
 		self.plot_mode_select = wx.Choice(p1, -1, choices=[lang.getstr("vcgt"),
 														   lang.getstr("[rgb]TRC"),
 														   lang.getstr("gamut")])
-		self.plot_mode_sizer.Add(self.plot_mode_select, flag=wx.ALIGN_CENTER_VERTICAL |
-															 wx.LEFT, border=20)
+		self.plot_mode_sizer.Add(self.plot_mode_select,
+								 flag=wx.ALIGN_CENTER_VERTICAL)
 		self.plot_mode_select.Bind(wx.EVT_CHOICE, self.plot_mode_select_handler)
 		self.plot_mode_select.SetSelection(2)
 		self.plot_mode_select.Disable()
@@ -987,14 +970,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.plot_mode_sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														  wx.LEFT, border=8)
 		
-		self.view_3d_btn = BitmapButton(p1, -1, geticon(16, "3D"),
-										style=wx.NO_BORDER)
-		self.view_3d_btn.SetBackgroundColour(BGCOLOUR)
-		self.view_3d_btn.Bind(wx.EVT_BUTTON, self.view_3d)
-		self.view_3d_btn.SetToolTipString(lang.getstr("view.3d"))
-		self.view_3d_btn.Disable()
-		self.plot_mode_sizer.Add(self.view_3d_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-														wx.LEFT, border=12)
 		self.view_3d_format_ctrl = wx.Choice(p1, -1, choices=["HTML",
 															  "VRML",
 															  "X3D"])
@@ -1005,7 +980,15 @@ class ProfileInfoFrame(LUTFrame):
 											 event.GetEventObject().GetStringSelection()))
 		self.plot_mode_sizer.Add(self.view_3d_format_ctrl,
 								 flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
-								 border=8)
+								 border=20)
+		self.view_3d_btn = BitmapButton(p1, -1, geticon(16, "3D"),
+										style=wx.NO_BORDER)
+		self.view_3d_btn.SetBackgroundColour(BGCOLOUR)
+		self.view_3d_btn.Bind(wx.EVT_BUTTON, self.view_3d)
+		self.view_3d_btn.SetToolTipString(lang.getstr("view.3d"))
+		self.view_3d_btn.Disable()
+		self.plot_mode_sizer.Add(self.view_3d_btn, flag=wx.ALIGN_CENTER_VERTICAL |
+														wx.LEFT, border=8)
 
 		self.client = GamutCanvas(p1)
 		p1.sizer.Add(self.client, 1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT |
@@ -1013,7 +996,14 @@ class ProfileInfoFrame(LUTFrame):
 		
 		self.options_panel = SimpleBook(p1)
 		self.options_panel.SetBackgroundColour(BGCOLOUR)
-		p1.sizer.Add(self.options_panel, flag=wx.EXPAND | wx.BOTTOM, border=12)
+		p1.sizer.Add(self.options_panel, flag=wx.EXPAND | wx.BOTTOM, border=8)
+		
+		self.status = BitmapBackgroundPanelText(p1, size=(-1, 40))
+		self.status.label_y = 0
+		self.status.textshadow = False
+		self.status.SetBackgroundColour(BGCOLOUR)
+		self.status.SetForegroundColour(FGCOLOUR)
+		p1.sizer.Add(self.status, flag=wx.EXPAND)
 		
 		# Gamut view options
 		self.gamut_view_options = GamutViewOptions(p1)
@@ -1102,7 +1092,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.lut_view_options_sizer.Add((0, 0))
 		
 		p2 = wx.Panel(self.splitter)
-		p2.SetBackgroundColour(gridbgcolor)
 		p2.sizer = wx.BoxSizer(wx.VERTICAL)
 		p2.SetSizer(p2.sizer)
 		self.splitter.AppendWindow(p2)
@@ -1116,13 +1105,11 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.CreateGrid(0, 2)
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
-		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
-		self.grid.SetDefaultCellTextColour(TEXTCOLOUR)
+		self.grid.SetDefaultCellBackgroundColour(self.grid.GetLabelBackgroundColour())
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
 		self.grid.SetDefaultCellFont(font)
 		self.grid.SetDefaultRowSize(20)
-		self.grid.SetLabelBackgroundColour(gridbgcolor)
 		self.grid.SetRowLabelSize(20)
 		self.grid.SetColLabelSize(0)
 		self.grid.DisableDragRowSize()
@@ -1136,10 +1123,6 @@ class ProfileInfoFrame(LUTFrame):
 			".icc": self.drop_handler,
 			".icm": self.drop_handler
 		}
-		droptarget = FileDrop(drophandlers, parent=self)
-		self.title_panel.SetDropTarget(droptarget)
-		droptarget = FileDrop(drophandlers, parent=self)
-		self.title_txt.SetDropTarget(droptarget)
 		droptarget = FileDrop(drophandlers, parent=self)
 		self.client.SetDropTarget(droptarget)
 		droptarget = FileDrop(drophandlers, parent=self)
@@ -1274,16 +1257,8 @@ class ProfileInfoFrame(LUTFrame):
 		self.select_current_page()
 		self.plot_mode_select.Enable()
 		
-		self.title_txt.SetLabel(profile.getDescription())
-		border, titlebar = get_platform_window_decoration_size()
-		titlewidth = self.title_txt.GetTextExtent(self.title_txt.GetLabel())[0] + 30
-		if titlewidth + border * 2 > self.GetMinSize()[0]:
-			self.SetMinSize((titlewidth + border * 2,
-							 defaults["size.profile_info.h"] + titlebar + border))
-			if titlewidth + border * 2 > self.GetSize()[0]:
-				self.SetSize((self.get_platform_window_size()[0],
-							  self.GetSize()[1]))
-				self.splitter.SetExpandedSize(self.get_platform_window_size())
+		self.SetTitle(u" \u2014 ".join([lang.getstr("profile.info"),
+										profile.getDescription()]))
 		
 		rows = [("", "")]
 		lines = []
@@ -1329,10 +1304,20 @@ class ProfileInfoFrame(LUTFrame):
 		if self.grid.GetNumberRows():
 			self.grid.DeleteRows(0, self.grid.GetNumberRows())
 		self.grid.AppendRows(len(rows))
-		labelcolor = wx.Colour(0x80, 0x80, 0x80)
+		labelcolor = self.grid.GetLabelTextColour()
+		alpha = 102
 		namedcolor = False
 		for i, (label, value) in enumerate(rows):
 			self.grid.SetCellValue(i, 0, " " + label)
+			bgcolor = self.grid.GetCellBackgroundColour(i, 0)
+			bgblend = (255 - alpha) / 255.0
+			blend = alpha / 255.0
+			textcolor = wx.Colour(int(round(bgblend * bgcolor.Red() +
+											blend * labelcolor.Red())),
+								  int(round(bgblend * bgcolor.Green() +
+											blend * labelcolor.Green())),
+								  int(round(bgblend * bgcolor.Blue() +
+											blend * labelcolor.Blue())))
 			if label == lang.getstr("named_colors"):
 				namedcolor = True
 			elif label.strip() and label.lstrip() == label:
@@ -1354,9 +1339,7 @@ class ProfileInfoFrame(LUTFrame):
 				labelbgcolor = wx.Colour(*[int(round(v)) for v in color])
 				self.grid.SetRowLabelRenderer(i,
 											  CustomRowLabelRenderer(labelbgcolor))
-			else:
-				labelbgcolor = self.grid.GetCellBackgroundColour(i, 0)
-			self.grid.SetCellTextColour(i, 0, labelcolor)
+			self.grid.SetCellTextColour(i, 0, textcolor)
 			self.grid.SetCellValue(i, 1, value)
 		
 		self.grid.AutoSizeColumn(0)

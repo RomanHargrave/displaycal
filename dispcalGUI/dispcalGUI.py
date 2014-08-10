@@ -512,12 +512,11 @@ def get_cgats_path(cgats):
 def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 			   repeat_sub_bitmap_h=(214, 0, 8, 60)):
 	header = BitmapBackgroundPanelText(parent, size=size)
-	header.drawline = False
 	header.label_x = x
 	header.label_y = y
 	header.repeat_sub_bitmap_h = repeat_sub_bitmap_h
 	header.scalebitmap = (False, ) * 2
-	header.textshadowcolor = "#336699"
+	header.textshadow = False
 	header.SetBackgroundColour("#336699")
 	header.SetForegroundColour("#FFFFFF")
 	header.SetBitmap(bitmap or getbitmap("theme/header"))
@@ -1228,14 +1227,27 @@ class MainFrame(BaseFrame):
 		sizer = self.buttonpanel.ContainingSizer
 		if hasattr(sizer, "GetItemIndex"):
 			# wxPython 2.8.12+
-			self.FindWindowByName("separator").SetMinSize((-1, 1))
+			separator = wx.Panel(self.panel, size=(-1, 1))
+			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+			sizer.Insert(sizer.GetItemIndex(self.buttonpanel), separator,
+						 flag=wx.EXPAND)
 			self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
 														   size=(-1, 15))
-			bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
-			self.buttonpanelheader.SetBitmap(bitmap)
+			bmp = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
+			image = bmp.ConvertToImage()
+			databuffer = image.GetDataBuffer()
+			for i, byte in enumerate(databuffer):
+				if byte > "\0":
+					databuffer[i] = chr(int(round(ord(byte) * (255.0 / 223.0))))
+			bmp = image.ConvertToBitmap()
+			self.buttonpanelheader.SetBitmap(bmp)
 			sizer.Insert(sizer.GetItemIndex(self.buttonpanel),
 						 self.buttonpanelheader, flag=wx.EXPAND)
-			self.buttonpanel.SetBackgroundColour("#DFDFDF")
+			bgcolor = self.buttonpanel.BackgroundColour
+			self.buttonpanel.SetBackgroundColour(wx.Colour(*[int(v * .93)
+															 for v in bgcolor]))
+			self.buttonpanelheader.SetBackgroundColour(self.buttonpanel.BackgroundColour)
+			self.buttonpanelheader.blend = True
 		
 		self.profile_info = {}
 	
@@ -10459,11 +10471,10 @@ class StartupFrame(wx.Frame):
 		self.sizer.Add(self.splash)
 		# Message panel
 		self.msg = BitmapBackgroundPanelText(self)
-		self.msg.drawline = False
 		self.msg.label_x = 80
 		self.msg.label_y = 4
 		self.msg.scalebitmap = (False, ) * 2
-		self.msg.textshadowcolor = "#336699"
+		self.msg.textshadow = False
 		self.msg.SetForegroundColour("#FFFFFF")
 		self.msg.SetBackgroundColour("#336699")
 		self.msg.SetBitmap(getbitmap("theme/header-btm"))
@@ -10532,10 +10543,10 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.sizer4 = wx.BoxSizer(wx.HORIZONTAL)
 		dlg.sizer3.Add(dlg.sizer4)
 		dlg.message_col1 = wx.StaticText(dlg, -1, msg_col1)
-		dlg.message_col1.Wrap(470)
+		dlg.message_col1.Wrap(450)
 		dlg.sizer4.Add(dlg.message_col1, flag=wx.RIGHT, border = 20)
 		dlg.message_col2 = wx.StaticText(dlg, -1, msg_col2)
-		dlg.message_col2.Wrap(470)
+		dlg.message_col2.Wrap(450)
 		dlg.sizer4.Add(dlg.message_col2, flag=wx.LEFT, border = 20)
 
 		dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
@@ -10553,21 +10564,21 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.mods = {}
 		dlg.force = force
 
-		dlg.grid = CustomGrid(dlg, -1, size=(981, 240), style=wx.BORDER_THEME)
+		dlg.grid = CustomGrid(dlg, -1, size=(940, 240), style=wx.BORDER_THEME)
 		grid = dlg.grid
 		grid.DisableDragRowSize()
 		grid.SetCellHighlightPenWidth(0)
 		grid.SetCellHighlightROPenWidth(0)
 		grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
-		grid.SetLabelBackgroundColour(wx.Colour(240, 240, 240))
+		grid.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X), 0)
 		grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
-		grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
-		grid.alternate_cell_background_color = "#F9F9F9"
+		grid.SetScrollRate(0, 5)
 		grid.draw_horizontal_grid_lines = False
 		grid.draw_vertical_grid_lines = False
 		grid.CreateGrid(0, 15)
 		grid.SetColLabelSize(50)
-		grid.SetRowLabelSize(60)
+		grid.SetRowLabelSize(50)
+		w = 50
 		for i in xrange(grid.GetNumberCols()):
 			if i in (4, 5) or i > 8:
 				attr = wx.grid.GridCellAttr()
@@ -10578,9 +10589,12 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 			elif i in (4, 5):
 				size = 20
 			elif i > 8:
-				size = 80
+				size = 75
 			else:
 				size = 60
+			if i == grid.GetNumberCols() - 1:
+				size = grid.Size[0] - w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+			w += size
 			grid.SetColSize(i, size)
 		for i, label in enumerate(["", "R %", "G %", "B %", "", "", "X", "Y", "Z",
 								   u"\u0394E*00\nXYZ A/B",

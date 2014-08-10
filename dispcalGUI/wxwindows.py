@@ -293,7 +293,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent, id, title, pos, size, style)
 		if sys.platform == "win32":
 			bgcolor = self.BackgroundColour
-			self.SetBackgroundColour("#FFFFFF")
+			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 		self.SetPosition(pos)  # yes, this is needed
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
@@ -317,7 +317,7 @@ class BaseInteractiveDialog(wx.Dialog):
 								   border=margin)
 		if sys.platform == "win32":
 			self.buttonpanel_line = wx.Panel(self, size=(-1,1))
-			self.buttonpanel_line.SetBackgroundColour("#CCCCCC")
+			self.buttonpanel_line.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 			self.sizer0.Add(self.buttonpanel_line, flag=wx.TOP | wx.EXPAND,
 							border=margin)
 			self.buttonpanel.SetBackgroundColour(bgcolor)
@@ -401,6 +401,8 @@ class BitmapBackgroundBitmapButton(wx.BitmapButton):
 		dc.DrawBitmap(self.GetBitmapLabel(), 0, 0)
 
 
+bitmaps = {}
+
 class BitmapBackgroundPanel(wx.Panel):
 	
 	""" A panel with a background bitmap """
@@ -408,6 +410,10 @@ class BitmapBackgroundPanel(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 		self._bitmap = None
+		self.alpha = 1.0
+		self.blend = False
+		self.drawborderbtm = False
+		self.drawbordertop = False
 		self.repeat_sub_bitmap_h = None
 		self.scalebitmap = (True, False)
 		self.scalequality = wx.IMAGE_QUALITY_NORMAL
@@ -429,14 +435,38 @@ class BitmapBackgroundPanel(wx.Panel):
 		self.Refresh()
 	
 	def _draw(self, dc):
-		bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
+		bgcolor = self.BackgroundColour
+		bbr = wx.Brush(bgcolor, wx.SOLID)
 		dc.SetBackground(bbr)
 		dc.SetBackgroundMode(wx.SOLID)
 		dc.Clear()
 		dc.SetTextForeground(self.GetForegroundColour())
-		dc.SetTextBackground(self.GetBackgroundColour())
+		dc.SetTextBackground(bgcolor)
 		bmp = self._bitmap
 		if bmp:
+			if self.alpha < 1.0 or self.blend:
+				key = (id(bmp), bgcolor, self.alpha)
+				bmp = bitmaps.get(key)
+				if not bmp:
+					bmp = self._bitmap
+					image = bmp.ConvertToImage()
+					if self.alpha < 1.0:
+						if not image.HasAlpha():
+							image.InitAlpha()
+						alphabuffer = image.GetAlphaBuffer()
+						for i, byte in enumerate(alphabuffer):
+							if byte > "\0":
+								alphabuffer[i] = chr(int(round(ord(byte) *
+															   self.alpha)))
+					if self.blend:
+						databuffer = image.GetDataBuffer()
+						for i, byte in enumerate(databuffer):
+							if byte > "\0":
+								databuffer[i] = chr(int(round(ord(byte) *
+															  (bgcolor[i % 3] /
+															   255.0))))
+					bmp = image.ConvertToBitmap()
+					bitmaps[key] = bmp
 			if True in self.scalebitmap:
 				img = bmp.ConvertToImage()
 				img.Rescale(self.GetSize()[0] if self.scalebitmap[0]
@@ -453,6 +483,16 @@ class BitmapBackgroundPanel(wx.Panel):
 								bmp.GetSize()[1],
 								quality=self.scalequality)
 				dc.DrawBitmap(sub_img.ConvertToBitmap(), bmp.GetSize()[0], 0)
+		if self.drawbordertop:
+			pen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT), 1, wx.SOLID)
+			pen.SetCap(wx.CAP_BUTT)
+			dc.SetPen(pen)
+			dc.DrawLine(0, 0, self.GetSize()[0], 0)
+		if self.drawborderbtm:
+			pen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW), 1, wx.SOLID)
+			pen.SetCap(wx.CAP_BUTT)
+			dc.SetPen(pen)
+			dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
 
 
 class BitmapBackgroundPanelText(BitmapBackgroundPanel):
@@ -463,9 +503,8 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		BitmapBackgroundPanel.__init__(self, *args, **kwargs)
 		self.label_x = None
 		self.label_y = None
-		self.drawline = True
-		self.linecolor = wx.Colour(0x66, 0x66, 0x66)
-		self.textshadowcolor = wx.Colour(214, 214, 214)
+		self.textalpha = 1.0
+		self.textshadow = True
 	
 	def _set_font(self, dc):
 		try:
@@ -487,11 +526,6 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
-		if self.drawline:
-			pen = wx.Pen(self.linecolor, 1, wx.SOLID)
-			pen.SetCap(wx.CAP_BUTT)
-			dc.SetPen(pen)
-			dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
 		dc = self._set_font(dc)
 		label = self.Label.splitlines()
 		for i, line in enumerate(label):
@@ -507,10 +541,22 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 				y = self.GetSize()[1] / 2.0 - h / 2.0
 			else:
 				y = self.label_y + h * i
-			if self.textshadowcolor:
-				dc.SetTextForeground(self.textshadowcolor)
+			if self.textshadow:
+				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+				dc.SetTextForeground(color)
 				dc.DrawText(line, x + 1, y + 1)
-			dc.SetTextForeground(self.GetForegroundColour())
+			color = self.GetForegroundColour()
+			if self.textalpha < 1:
+				bgcolor = self.BackgroundColour
+				bgblend = (1.0 - self.textalpha)
+				blend = self.textalpha
+				color = wx.Colour(int(round(bgblend * bgcolor.Red() +
+											blend * color.Red())),
+								  int(round(bgblend * bgcolor.Green() +
+											blend * color.Green())),
+								  int(round(bgblend * bgcolor.Blue() +
+											blend * color.Blue())))
+			dc.SetTextForeground(color)
 			dc.DrawText(line, x, y)
 
 
@@ -816,15 +862,12 @@ class CustomGrid(wx.grid.Grid):
 		self.GetGridCornerLabelWindow().Bind(wx.EVT_PAINT, self.OnPaintCornerLabel)
 		self.GetGridColLabelWindow().Bind(wx.EVT_PAINT, self.OnPaintColLabels)
 		self.GetGridRowLabelWindow().Bind(wx.EVT_PAINT, self.OnPaintRowLabels)
-		self.SetCellHighlightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.SetDefaultCellAlignment(wx.ALIGN_LEFT, wx.ALIGN_CENTER)
 		self.SetDefaultCellBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 		self.SetDefaultEditor(CustomCellEditor())
 		self.SetDefaultRenderer(CustomCellRenderer())
 		self.SetRowLabelAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
-		self.linecolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-		self.SetForegroundColour("#333333")
 		if sys.platform == "darwin":
 			# wxMac draws a too short native header
 			bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 22))
@@ -842,13 +885,14 @@ class CustomGrid(wx.grid.Grid):
 		self._col_label_renderers = {}
 		self._row_label_renderers = {}
 		self._select_in_progress = False
-		self.alternate_cell_background_color = None
-		self.alternate_col_label_background_color = None
-		self.alternate_row_label_background_color = None
+		self.alternate_cell_background_color = True
+		self.alternate_col_label_background_color = False
+		self.alternate_row_label_background_color = True
 		self.draw_col_labels = True
 		self.draw_row_labels = True
 		self.draw_horizontal_grid_lines = True
 		self.draw_vertical_grid_lines = True
+		self.selection_alpha = .8
 
 	def GetColLeftRight(self, col):
 		c = 0
@@ -1254,6 +1298,10 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 
 class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 
+	def __init__(self, *args, **kwargs):
+		wx.grid.PyGridCellRenderer.__init__(self, *args, **kwargs)
+		self.specialbitmap = getbitmap("theme/checkerboard-10x10x2-333-444")
+
 	def Clone(self):
 		return self.__class__()
 
@@ -1268,51 +1316,51 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 		is_default_bgcolor = bgcolor == grid.GetDefaultCellBackgroundColour()
 		is_read_only = grid.IsReadOnly(row, col)
 		if is_default_bgcolor:
+			if (is_read_only or not grid.IsEditable()) and col_label:
+				bgcolor = grid.GetLabelBackgroundColour()
 			if row % 2 == 0 and grid.alternate_cell_background_color:
-				bgcolor = grid.alternate_cell_background_color
-				if not isinstance(bgcolor, wx.Colour):
-					bgcolor_str = bgcolor
-					bgcolor = wx.Colour()
-					if hasattr(wx.Colour, "SetFromString"):
-						bgcolor.SetFromString(bgcolor_str)
-					else:
-						bgcolor.SetFromName(bgcolor_str)
-			elif not (is_read_only and col_label):
-				bgcolor.Set(bgcolor.Red(), bgcolor.Green(), bgcolor.Blue())
-		if is_read_only and col_label:
-			bgcolor.Set(bgcolor.Red() * .95, bgcolor.Green() * .95,
-						bgcolor.Blue() * .95)
+				bgcolor = wx.Colour(*[int(v * .98) for v in bgcolor])
+			elif bgcolor.Alpha() < 255:
+				# Make sure it's opaque
+				bgcolor = wx.Colour(bgcolor.Red(), bgcolor.Green(),
+									bgcolor.Blue())
 		if isSelected and is_default_bgcolor and col_label:
+			color = grid.GetSelectionBackground()
 			focus = grid.Parent.FindFocus()
-			if focus and grid in (focus, focus.GetParent(),
-								  focus.GetGrandParent()):
-				color = grid.GetCellHighlightColour()
-			else:
-				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
-			alpha = grid.GetCellHighlightColour().Alpha()
+			if not focus or grid not in (focus, focus.GetParent(),
+										 focus.GetGrandParent()):
+				rgb = int((color.Red() + color.Green() + color.Blue()) / 3.0)
+				color = wx.Colour(rgb, rgb, rgb)
+			alpha = grid.selection_alpha * 255 or grid.GetSelectionBackground().Alpha()
 			# Blend with bg color
 			if alpha < 255:
 				# Alpha blending
 				bgblend = (255 - alpha) / 255.0
 				blend = alpha / 255.0
-				color.Set(int(round(bgblend * bgcolor.Red() +
-									blend * color.Red())),
-						  int(round(bgblend * bgcolor.Green() +
-									blend * color.Green())),
-						  int(round(bgblend * bgcolor.Blue() +
-									blend * color.Blue())))
+				color = wx.Colour(int(round(bgblend * bgcolor.Red() +
+											blend * color.Red())),
+								  int(round(bgblend * bgcolor.Green() +
+											blend * color.Green())),
+								  int(round(bgblend * bgcolor.Blue() +
+											blend * color.Blue())))
 			else:
 				# Multiply
-				color.Set(int(round(bgcolor.Red() / 255.0 * color.Red())),
-						  int(round(bgcolor.Green() / 255.0 * color.Green())),
-						  int(round(bgcolor.Blue() / 255.0 * color.Blue())))
-			textcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+				color = wx.Colour(int(round(bgcolor.Red() / 255.0 * color.Red())),
+								  int(round(bgcolor.Green() / 255.0 * color.Green())),
+								  int(round(bgcolor.Blue() / 255.0 * color.Blue())))
+			textcolor = grid.GetSelectionForeground()
 		else:
 			color = bgcolor
 			textcolor = grid.GetCellTextColour(row, col)
-		dc.SetBrush(wx.Brush(color))
-		dc.SetPen(wx.TRANSPARENT_PEN)
-		dc.DrawRectangleRect(rect)
+		if bgcolor.Get(True) == (0, 0, 0, 0):
+			# Special
+			image = self.specialbitmap.ConvertToImage()
+			image.Rescale(rect[2], rect[3])
+			dc.DrawBitmap(image.ConvertToBitmap(), rect[0], rect[1])
+		else:
+			dc.SetBrush(wx.Brush(color))
+			dc.SetPen(wx.TRANSPARENT_PEN)
+			dc.DrawRectangleRect(rect)
 		dc.SetFont(grid.GetCellFont(row, col))
 		dc.SetTextForeground(textcolor)
 		self.DrawLabel(grid, dc, orect, row, col)
@@ -1363,17 +1411,18 @@ class CustomColLabelRenderer(object):
 		if self.bgcolor:
 			color = self.bgcolor
 		else:
+			color = grid.GetLabelBackgroundColour()
 			if col % 2 == 0 and grid.alternate_col_label_background_color:
-				color = grid.alternate_col_label_background_color
-			else:
-				color = grid.GetLabelBackgroundColour()
-				if color.Alpha() < 255:
-					color.Set(color.Red(), color.Green(), color.Blue())
+				color = wx.Colour(*[int(v * .98) for v in color])
+			elif color.Alpha() < 255:
+				# Make sure it's opaque
+				color = wx.Colour(color.Red(), color.Green(), color.Blue())
 		if grid.headerbitmap:
 			img = grid.headerbitmap.ConvertToImage()
 			img.Rescale(rect[2], rect[3], quality=wx.IMAGE_QUALITY_NORMAL)
 			dc.DrawBitmap(img.ConvertToBitmap(), rect[0], 0)
-			pen = wx.Pen(grid.linecolor, 1, wx.SOLID)
+			pen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW), 1,
+						 wx.SOLID)
 			pen.SetCap(wx.CAP_BUTT)
 			dc.SetPen(pen)
 			dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2],
@@ -1412,12 +1461,12 @@ class CustomRowLabelRenderer(object):
 		if self.bgcolor:
 			color = self.bgcolor
 		else:
+			color = grid.GetLabelBackgroundColour()
 			if row % 2 == 0 and grid.alternate_row_label_background_color:
-				color = grid.alternate_row_label_background_color
-			else:
-				color = grid.GetLabelBackgroundColour()
-				if color.Alpha() < 255:
-					color.Set(color.Red(), color.Green(), color.Blue())
+				color = wx.Colour(*[int(v * .98) for v in color])
+			elif color.Alpha() < 255:
+				# Make sure it's opaque
+				color = wx.Colour(color.Red(), color.Green(), color.Blue())
 		dc.SetBrush(wx.Brush(color))
 		dc.SetPen(wx.TRANSPARENT_PEN)
 		dc.DrawRectangleRect(rect)
@@ -1604,7 +1653,7 @@ class ProgressDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
 		if sys.platform == "win32":
 			bgcolor = self.BackgroundColour
-			self.SetBackgroundColour("#FFFFFF")
+			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
@@ -1630,7 +1679,7 @@ class ProgressDialog(wx.Dialog):
 								   border=margin)
 		if sys.platform == "win32":
 			self.buttonpanel_line = wx.Panel(self, size=(-1,1))
-			self.buttonpanel_line.SetBackgroundColour("#CCCCCC")
+			self.buttonpanel_line.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 			self.sizer0.Add(self.buttonpanel_line, flag=wx.TOP | wx.EXPAND,
 							border=margin)
 			self.buttonpanel.SetBackgroundColour(bgcolor)
@@ -2165,10 +2214,6 @@ class TwoWaySplitter(FourWaySplitter):
 		dc.DrawRectangle(splitx, 0, sashwidth, height)
 		
 		dc.DrawBitmap(self._sashbitmap, splitx, height / 2 - sashheight / 2, True)
-		
-		dc.SetPen(wx.Pen(wx.Colour(178, 178, 178), 1))
-		dc.DrawLine(splitx, 0, splitx, height)
-		dc.DrawLine(splitx + self._GetSashSize() - 1, 0, splitx + self._GetSashSize() - 1, height)
 	
 	def GetExpandedSize(self):
 		return self._expandedsize
@@ -2394,31 +2439,16 @@ class TwoWaySplitter(FourWaySplitter):
 	def SetSplitSize(self, size):
 		self._splitsize = size
 
-
-bitmaps = {}
-
 def get_gradient_panel(parent, label, x=16):
 	gradientpanel = BitmapBackgroundPanelText(parent, size=(-1, 23))
+	gradientpanel.alpha = .75
+	gradientpanel.blend = True
+	gradientpanel.drawborderbtm = True
 	gradientpanel.label_x = x
-	gradientpanel.linecolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-	gradientpanel.textshadowcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
-	gradientpanel.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_CAPTIONTEXT))
+	gradientpanel.textalpha = .8
 	bitmap = bitmaps.get("gradient_panel")
 	if not bitmap:
 		bitmap = getbitmap("theme/gradient")
-		bgcolor = gradientpanel.BackgroundColour
-		image = bitmap.ConvertToImage()
-		if not image.HasAlpha():
-			image.InitAlpha()
-		alphabuffer = image.GetAlphaBuffer()
-		for i, byte in enumerate(alphabuffer):
-			if byte > "\0":
-				alphabuffer[i] = chr(int(round(ord(byte) * .75)))
-		databuffer = image.GetDataBuffer()
-		for i, byte in enumerate(databuffer):
-			if byte > "\0":
-				databuffer[i] = chr(int(round(ord(byte) * (bgcolor[i % 3] / 255.0))))
-		bitmap = image.ConvertToBitmap()
 		bitmaps["gradient_panel"] = bitmap
 	gradientpanel.SetBitmap(bitmap)
 	font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT) 

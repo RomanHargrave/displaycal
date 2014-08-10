@@ -1102,13 +1102,6 @@
               <flag>wxEXPAND</flag>
             </object>
             <object class="sizeritem">
-              <object class="wxPanel" name="separator">
-                <size>-1,0</size>
-                <bg>#999999</bg>
-              </object>
-              <flag>wxEXPAND</flag>
-            </object>
-            <object class="sizeritem">
               <object class="wxPanel" name="buttonpanel">
                 <object class="wxBoxSizer">
                   <orient>wxHORIZONTAL</orient>

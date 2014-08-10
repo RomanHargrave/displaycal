@@ -140,8 +140,6 @@ class UntetheredFrame(wx.Frame):
 		self.grid.SetColLabelSize(23)
 		self.grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 		self.grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
-		self.grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
-		self.grid.alternate_cell_background_color = self.grid.alternate_row_label_background_color
 		self.grid.draw_horizontal_grid_lines = False
 		self.grid.draw_vertical_grid_lines = False
 		self.grid.CreateGrid(0, 9)
@@ -149,20 +147,21 @@ class UntetheredFrame(wx.Frame):
 		for i in xrange(9):
 			if i in (3, 4):
 				size = 20
+				if i == 4:
+					attr = wx.grid.GridCellAttr()
+					attr.SetBackgroundColour(wx.Colour(0, 0, 0, 0))
+					self.grid.SetColAttr(i, attr)
 			else:
 				size = 62
 			self.grid.SetColSize(i, size)
 		for i, label in enumerate(["R", "G", "B", "", "", "L*", "a*", "b*", ""]):
 			self.grid.SetColLabelValue(i, label)
-		gridbgcolor = wx.Colour(240, 240, 240)
 		self.grid.SetCellHighlightPenWidth(0)
-		self.grid.SetDefaultCellBackgroundColour(gridbgcolor)
-		self.grid.SetDefaultCellTextColour(BGCOLOUR)
+		self.grid.SetDefaultCellBackgroundColour(self.grid.GetLabelBackgroundColour())
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
 		self.grid.SetDefaultCellFont(font)
 		self.grid.SetDefaultRowSize(20)
-		self.grid.SetLabelBackgroundColour(gridbgcolor)
 		self.grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
 		self.grid.EnableEditing(False)
 		self.grid.EnableGridLines(False)
@@ -569,7 +568,7 @@ class UntetheredFrame(wx.Frame):
 				w = col_w
 			self.grid.SetColSize(i, w)
 		self.grid.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
-							 0 - wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y))
+							 0)
 		self.grid.ForceRefresh()
 	
 	def _setup(self):

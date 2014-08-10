@@ -548,11 +548,8 @@ class TestchartEditor(wx.Frame):
 		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetColLabelSize(23)
 		self.grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
-		self.grid.SetLabelBackgroundColour(wx.Colour(240, 240, 240))
 		self.grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
 		self.grid.SetScrollRate(0, 5)
-		self.grid.alternate_cell_background_color = "#F9F9F9"
-		self.grid.alternate_row_label_background_color = wx.Colour(230, 230, 230)
 		self.grid.draw_horizontal_grid_lines = False
 		self.grid.draw_vertical_grid_lines = False
 		self.sizer.Add(self.grid, 1, flag=wx.TOP | wx.EXPAND, border=12)
@@ -587,6 +584,7 @@ class TestchartEditor(wx.Frame):
 
 		# status
 		status = wx.StatusBar(self, -1)
+		status.SetStatusStyles([wx.SB_FLAT])
 		self.SetStatusBar(status)
 
 		# layout
