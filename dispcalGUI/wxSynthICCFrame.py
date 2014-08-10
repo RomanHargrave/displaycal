@@ -361,9 +361,8 @@ class SynthICCFrame(BaseFrame):
 		elif self.trc_ctrl.GetSelection() in (0, 4) and black_Y:
 			# Gamma with output offset or Rec. 1886
 			outoffset = getcfg("synthprofile.trc_output_offset")
-			if getcfg("synthprofile.trc_gamma_type") == "g":
-				gamma = colormath.xicc_tech_gamma(gamma, black_Y, outoffset)
-			TRC.set_bt1886_trc(black_Y, outoffset, gamma)
+			TRC.set_bt1886_trc(black_Y, outoffset, gamma,
+							   getcfg("synthprofile.trc_gamma_type"))
 		elif black_Y:
 			TRC.set_trc(trc, 1024, vmin=black_Y * 65535)
 		elif not TRC:

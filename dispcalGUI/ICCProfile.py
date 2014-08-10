@@ -1403,7 +1403,8 @@ class CurveType(ICCProfileTag, list):
 		list.reverse(self)
 		self._transfer_function = {}
 	
-	def set_bt1886_trc(self, black_Y=0, outoffset=0.0, gamma=2.4, size=None):
+	def set_bt1886_trc(self, black_Y=0, outoffset=0.0, gamma=2.4,
+					   gamma_type="B", size=None):
 		"""
 		Set the response to the BT. 1886 curve
 		
@@ -1411,6 +1412,9 @@ class CurveType(ICCProfileTag, list):
 		level of the display.
 		
 		"""
+		if gamma_type in ("b", "g"):
+			# Get technical gamma needed to achieve effective gamma
+			gamma = colormath.xicc_tech_gamma(gamma, black_Y, outoffset)
 		rXYZ = colormath.RGB2XYZ(1.0, 0, 0)
 		gXYZ = colormath.RGB2XYZ(0, 1.0, 0)
 		bXYZ = colormath.RGB2XYZ(0, 0, 1.0)
@@ -3334,6 +3338,36 @@ class ICCProfile:
 				profile.tags[tagname].set_trc(gamma, 1)
 		profile.calculateID()
 		return profile
+	
+	def set_bt1886_trc(self, XYZbp, outoffset=0.0, gamma=2.4, gamma_type="B",
+					   size=None):
+		if gamma_type in ("b", "g"):
+			# Get technical gamma needed to achieve effective gamma
+			gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
+		rXYZ = self.tags.rXYZ.values()
+		gXYZ = self.tags.gXYZ.values()
+		bXYZ = self.tags.bXYZ.values()
+		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+								   [rXYZ[1], gXYZ[1], bXYZ[1]],
+								   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+		bt1886 = colormath.BT1886(mtx, XYZbp, outoffset, gamma)
+		values = OrderedDict()
+		for i, channel in enumerate(("r", "g", "b")):
+			self.tags[channel + "TRC"] = CurveType()
+			self.tags[channel + "TRC"].set_trc(-709, size)
+			for j, v in enumerate(self.tags[channel + "TRC"]):
+				if not values.get(j):
+					values[j] = []
+				values[j].append(v / 65535.0)
+		for i, (r, g, b) in values.iteritems():
+			X, Y, Z = mtx * (r, g, b)
+			values[i] = bt1886.apply(X, Y, Z)
+		for i, XYZ in values.iteritems():
+			rgb = mtx.inverted() * XYZ
+			for j, channel in enumerate(("r", "g", "b")):
+				self.tags[channel + "TRC"][i] = min(rgb[j] * 65535, 65535)
+		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
+		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
 	
 	def set_localizable_desc(self, tagname, description, languagecode="en",
 							 countrycode="US"):

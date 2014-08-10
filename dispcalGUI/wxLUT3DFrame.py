@@ -723,7 +723,6 @@ class LUT3DFrame(BaseFrame):
 		self.trc_gamma_label.Show(show)
 		self.trc_gamma_ctrl.Show(show)
 		self.trc_gamma_type_ctrl.Show(show)
-		show = show and self.worker.argyll_version >= [1, 7]
 		self.black_output_offset_label.Show(show)
 		self.black_output_offset_ctrl.Show(show)
 		self.black_output_offset_intctrl.Show(show)

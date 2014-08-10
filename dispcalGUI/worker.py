@@ -1561,11 +1561,10 @@ class Worker(object):
 		self.auth_timestamp = time()
 		return True
 
-	def blend_profile_blackpoint(self, profile1, profile2, trc=None,
-								 trc_account_for_black_offset=True):
+	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
+								 gamma=2.4, gamma_type="B", size=None):
 		"""
-		Blend profile1 blackpoint to profile2 blackpoint, optionally changing
-		the TRC.
+		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
 		profile1 has to be a matrix profile
 		
@@ -1574,27 +1573,21 @@ class Worker(object):
 		if len(odata) != 1 or len(odata[0]) != 3:
 			raise ValueError("Blackpoint is invalid: %s" % odata)
 		XYZbp = odata[0]
-		rXYZ = profile1.tags.rXYZ.values()
-		gXYZ = profile1.tags.gXYZ.values()
-		bXYZ = profile1.tags.bXYZ.values()
-		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
-								   [rXYZ[1], gXYZ[1], bXYZ[1]],
-								   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-		XYZbp = mtx.inverted() * XYZbp
-		#tprof = ICCP.ICCProfile(profile1.data)
-		#tprof.tags.rTRC.set_trc(1.0, size=1)
-		#tprof.tags.gTRC = tprof.tags.bTRC = tprof.tags.rTRC
-		#odata = self.xicclu(tprof, XYZbp, direction="if", pcs="x")
-		#XYZbp = odata[0]
-		for i, channel in enumerate(("r", "g", "b")):
-			if trc:
-				profile1.tags[channel + "TRC"] = ICCP.CurveType()
-				if trc_account_for_black_offset:
-					vmin = 0
-				else:
-					vmin = XYZbp[1] * 65535
-				profile1.tags[channel + "TRC"].set_trc(trc, vmin=vmin)
-			profile1.tags[channel + "TRC"].apply_bpc(XYZbp[i], True)
+		self.log(appname + ": Applying BT.1886-like TRC to " +
+				 os.path.basename(profile1.fileName))
+		self.log(appname + ": Black XYZ (normalized 0..100) = %.6f %.6f %.6f" %
+				 tuple([v * 100 for v in XYZbp]))
+		self.log(appname + ": Black Lab = %.6f %.6f %.6f" %
+				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
+		self.log(appname + ": Output offset = %.2f%%" % (outoffset * 100))
+		if gamma_type in ("b", "g"):
+			# Get technical gamma needed to achieve effective gamma
+			self.log(appname + ": Effective gamma = %.2f" % gamma)
+			tgamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
+		else:
+			tgamma = gamma
+		self.log(appname + ": Technical gamma = %.2f" % tgamma)
+		profile1.set_bt1886_trc(XYZbp, outoffset, gamma, gamma_type, size)
 	
 	def instrument_can_use_ccxx(self):
 		"""
@@ -1961,7 +1954,7 @@ class Worker(object):
 					 apply_cal=True, intent="r", format="3dl",
 					 size=17, input_bits=10, output_bits=12, maxval=1.0,
 					 input_encoding="n", output_encoding="n",
-					 trc_gamma=None, trc_gamma_type="b", trc_output_offset=0.0,
+					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
@@ -2012,17 +2005,18 @@ class Worker(object):
 				 profile_out_ext) = os.path.splitext(profile_out_basename)
 				profile_out_basename = "%s (2)%s" % (profile_out_filename,
 													 profile_out_ext)
-			if trc_gamma:
-				# Make sure the profile has the expected Rec. 709 TRC
-				# for BT.1886
-				for i, channel in enumerate(("r", "g", "b")):
-					if channel + "TRC" in profile_in.tags:
-						profile_in.tags[channel + "TRC"].set_trc(-709)
-			profile_in.fileName = os.path.join(cwd, profile_in_basename)
-			profile_in.write()
 			profile_out.fileName = os.path.join(cwd, profile_out_basename)
 			profile_out.write()
 			profile_out_cal_path = os.path.splitext(profile_out.fileName)[0] + ".cal"
+			
+			manufacturer = profile_out.getDeviceManufacturerDescription()
+			model = profile_out.getDeviceModelDescription()
+			device_manufacturer = profile_out.device["manufacturer"]
+			device_model = profile_out.device["model"]
+			mmod = profile_out.tags.get("mmod")
+			
+			self.sessionlogfile = LogFile(name, cwd)
+			self.sessionlogfiles[name] = self.sessionlogfile
 			
 			# Apply calibration?
 			if apply_cal:
@@ -2051,26 +2045,48 @@ class Worker(object):
 													  profile_out_basename,
 													  profile_out.fileName],
 										   capture_output=True,
-										   skip_scripts=True)
+										   skip_scripts=True,
+										   sessionlogfile=self.sessionlogfile)
 					if isinstance(result, Exception) and not getcfg("dry_run"):
 						raise result
 					elif not result:
 						raise Error("\n\n".join([lang.getstr("apply_cal.error"),
 												 "\n".join(self.errors)]))
+					profile_out = ICCP.ICCProfile(profile_out.fileName)
+
+			# Deal with applying TRC
+			collink_version = get_argyll_version("collink")
+			if trc_gamma:
+				if collink_version >= [1, 7] or not trc_output_offset:
+					# Make sure the profile has the expected Rec. 709 TRC
+					# for BT.1886
+					self.log(appname + ": Applying Rec. 709 TRC to " +
+							 os.path.basename(profile_in.fileName))
+					for i, channel in enumerate(("r", "g", "b")):
+						if channel + "TRC" in profile_in.tags:
+							profile_in.tags[channel + "TRC"].set_trc(-709)
+				else:
+					# Argyll CMS prior to 1.7 beta development code 2014-07-10
+					# does not support output offset, alter the source profile
+					# instead (note that accuracy is limited due to 16-bit
+					# encoding used in ICC profile, collink 1.7 can use full
+					# floating point processing and will be more precise)
+					self.blend_profile_blackpoint(profile_in, profile_out,
+												  trc_output_offset, trc_gamma,
+												  trc_gamma_type)
+			profile_in.fileName = os.path.join(cwd, profile_in_basename)
+			profile_in.write()
 
 			# Now build the device link
 			collink = get_argyll_util("collink")
 			if not collink:
 				raise NotImplementedError(lang.getstr("argyll.util.not_found",
 													  "collink"))
-			collink_version = get_argyll_version("collink")
 			args = ["-v", "-qh", "-G", "-i%s" % intent, "-r65", "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args += ["-p", "abstract.icc"]
 			if self.argyll_version >= [1, 6]:
-				if collink_version >= [1, 7]:
-					args += ["-b"]  # Use RGB->RGB forced black point hack
 				if format == "madVR":
 					args += ["-3m"]
 				elif format == "eeColor" and not test:
@@ -2079,10 +2095,11 @@ class Worker(object):
 				args += ["-E%s" % output_encoding]
 				if trc_gamma and trc_gamma_type in ("b", "B"):
 					if collink_version >= [1, 7]:
+						args += ["-b"]  # Use RGB->RGB forced black point hack
 						args += ["-I%s:%s:%s" % (trc_gamma_type,
 												 trc_output_offset,
 												 trc_gamma)]
-					else:
+					elif not trc_output_offset:
 						args += ["-I%s:%s" % (trc_gamma_type, trc_gamma)]
 				if apply_cal:
 					# Apply the calibration when building our device link
@@ -2102,16 +2119,14 @@ class Worker(object):
 				profile_link = ICCP.ICCProfile(link_filename)
 				profile_link.setDescription(name)
 				profile_link.setCopyright(getcfg("copyright"))
-				manufacturer = profile_out.getDeviceManufacturerDescription()
 				if manufacturer:
 					profile_link.setDeviceManufacturerDescription(manufacturer)
-				model = profile_out.getDeviceModelDescription()
 				if model:
 					profile_link.setDeviceModelDescription(model)
-				profile_link.device["manufacturer"] = profile_out.device["manufacturer"]
-				profile_link.device["model"] = profile_out.device["model"]
-				if "mmod" in profile_out.tags:
-					profile_link.tags.mmod = profile_out.tags.mmod
+				profile_link.device["manufacturer"] = device_manufacturer
+				profile_link.device["model"] = device_model
+				if mmod:
+					profile_link.tags.mmod = mmod
 				profile_link.calculateID()
 				profile_link.write(filename + profile_ext)
 
@@ -2585,7 +2600,8 @@ class Worker(object):
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
-				 title=appname, shell=False, working_dir=None, dry_run=False):
+				 title=appname, shell=False, working_dir=None, dry_run=False,
+				 sessionlogfile=None):
 		"""
 		Execute a command.
 		
@@ -2682,7 +2698,10 @@ class Worker(object):
 			working_dir = None
 		if (working_basename and working_dir == self.tempdir and not silent
 			and log_output and not getcfg("dry_run")):
-			self.sessionlogfile = LogFile(working_basename, working_dir)
+			if sessionlogfile:
+				self.sessionlogfile = sessionlogfile
+			else:
+				self.sessionlogfile = LogFile(working_basename, working_dir)
 			self.sessionlogfiles[working_basename] = self.sessionlogfile
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
