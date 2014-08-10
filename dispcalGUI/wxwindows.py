@@ -2451,8 +2451,7 @@ def get_gradient_panel(parent, label, x=16):
 		bitmap = getbitmap("theme/gradient")
 		bitmaps["gradient_panel"] = bitmap
 	gradientpanel.SetBitmap(bitmap)
-	font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT) 
-	gradientpanel.SetFont(font)
+	gradientpanel.SetMaxFontSize(11)
 	gradientpanel.SetLabel(label)
 	return gradientpanel
 
