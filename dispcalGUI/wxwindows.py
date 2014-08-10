@@ -1176,261 +1176,101 @@ class CustomGrid(wx.grid.Grid):
 		return False
 
 
-class CustomCheckBox(wx.PyControl):
-	# Based on http://wiki.wxpython.org/CreatingCustomControls
+class CustomCheckBox(wx.Panel):
+
 	"""
-	A custom class that replicates some of the functionality of wx.CheckBox,
-	while being completely owner-drawn with a nice check bitmaps.
+	A custom checkbox where the label is independent from the checkbox itself.
+	
+	Works around wxMac not taking into account text (foreground) color on
+	a default checkbox label.
+	
 	"""
 
 	def __init__(self, parent, id=wx.ID_ANY, label="", pos=wx.DefaultPosition,
 				 size=wx.DefaultSize, style=wx.NO_BORDER,
 				 validator=wx.DefaultValidator, name="CustomCheckBox"):
-		# wx.PyControl is just like its wxWidgets counterparts
-        # except that it allows some of the more common C++ virtual method
-        # to be overridden in Python derived class. For CustomCheckBox, we
-        # basically need to override DoGetBestSize and AcceptsFocusFromKeyboard
-		wx.PyControl.__init__(self, parent, id, pos, size, style, validator, name)
-
-		# By default, we start unchecked
-		self._checked = False
-
-		# Set the spacing between the check bitmap and the label to 3 by default.
-		# This can be changed using SetSpacing later.
-		self._spacing = 3
-		
-		# Checkbox, just used to get best size
-		self._cb = wx.CheckBox(parent, -1, label, pos, size, style)
-		self._cb.Hide()
-
-		# I assume at the beginning we are not focused
-		self._hasFocus = False
-
-		# Not pressed
-		self.up = True
-
-		# Ok, set the wx.PyControl label, its initial size (formerly known an
-		# SetBestFittingSize), and inherit the attributes from the standard
-		# wx.CheckBox
-		self.SetLabel(label)
-		self.SetInitialSize(size)
-		self.InheritAttributes()
-
-		# Bind the events related to our control: first of all, we use a
-		# combination of wx.BufferedPaintDC and an empty handler for
-		# wx.EVT_ERASE_BACKGROUND (see later) to reduce flicker
-		self.Bind(wx.EVT_PAINT, self.OnPaint)
-		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
-
-		# Then we want to monitor user clicks, so that we can switch our
-		# state between checked and unchecked
-		self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
-		self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
-
-		# We want also to react to keyboard keys, namely the
-		# space bar that can toggle our checked state
-		self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
-
-		# Then, we react to focus event, because we want to draw a small
-		# dotted rectangle around the text if we have focus
-		# This might be improved!!!
-		self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
-		self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
-
-	def OnPaint(self, event):
-		""" Handles the wx.EVT_PAINT event for CustomCheckBox. """
-
-		# If you want to reduce flicker, a good starting point is to
-		# use wx.BufferedPaintDC.
-		dc = wx.BufferedPaintDC(self)
-
-		# It is advisable that you don't overcrowd the OnPaint event
-		# (or any other event) with a lot of code, so let's do the
-		# actual drawing in the Draw() method, passing the newly
-		# initialized wx.BufferedPaintDC
-		self.Draw(dc)
-
-	def Draw(self, dc):
-		"""
-		Actually performs the drawing operations, for the bitmap and
-		for the text, positioning them centered vertically.
-		"""
-
-		# Get the actual client size of ourselves
-		width, height = self.GetClientSize()
-
-		if not width or not height:
-			# Nothing to do, we still don't have dimensions!
-			return
-
-		# Initialize the wx.BufferedPaintDC, assigning a background
-		# colour and a foreground colour (to draw the text)
-		backColour = self.Parent.GetBackgroundColour()
-		backBrush = wx.Brush(backColour, wx.SOLID)
-		dc.SetBackground(backBrush)
-		dc.Clear()
-
-		if self.IsEnabled():
-			dc.SetTextForeground(self.GetForegroundColour())
+		wx.Panel.__init__(self, parent, id, pos, size, style, name)
+		self.BackgroundColour = parent.BackgroundColour
+		self.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
+		self._cb = wx.CheckBox(self, -1)
+		self.Sizer.Add(self._cb, flag=wx.ALIGN_CENTER_VERTICAL)
+		if sys.platform == "darwin":
+			self._label = wx.StaticText(self, -1, "")
+			self.Sizer.Add(self._label, 1, wx.ALIGN_CENTER_VERTICAL)
+			self._label.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+			self._label.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+			self._up = True
 		else:
-			dc.SetTextForeground(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT))
+			self._label = self._cb
+		self._label.Label = label
 
-		dc.SetFont(self.GetFont())
+	def Bind(self, event_id, handler):
+		self._cb.Bind(event_id, handler)
 
-		# Get the text label for the checkbox
-		label = self.GetLabel()
+	def Disable(self):
+		self.Enable(False)
 
-		# Measure the text extent
-		textWidth, textHeight = dc.GetTextExtent(label)
+	def Enable(self, enable=True):
+		self._cb.Enable(enable)
+		if self._label is not self._cb:
+			color = self.ForegroundColour
+			if not enable:
+				bgcolor = self.Parent.BackgroundColour
+				bgblend = .5
+				blend = .5
+				color = wx.Colour(int(round(bgblend * bgcolor.Red() +
+											blend * color.Red())),
+								  int(round(bgblend * bgcolor.Green() +
+											blend * color.Green())),
+								  int(round(bgblend * bgcolor.Blue() +
+											blend * color.Blue())))
+			self._label.ForegroundColour = color
 
-		# Use native renderer
-		render = wx.RendererNative.Get()
+	@Property
+	def Enabled():
+		def fget(self):
+			return self.IsEnabled()
 
-		# Determine visual appearance of checkbox
-		flags = 0
-		if self._checked:
-			flags |= wx.CONTROL_CHECKED
-		if not self.Enabled:
-			flags |= wx.CONTROL_DISABLED
-		else:
-			if self._hasFocus or not self.up:
-				flags |= wx.CONTROL_FOCUSED
-			if not self.up and sys.platform != "darwin":
-				# Pressed state has the same visual as checked under wxMac,
-				# ok to use on other platforms
-				flags |= wx.CONTROL_PRESSED
+		def fset(self, enable=True):
+			self.Enable(enable)
 
-		# Draw the checkbox
-		rect = wx.Rect(0, 0, self.Size[0] - textWidth, self.Size[1])
-		render.DrawCheckBox(self, dc, rect, flags)
+		return locals()
 
-		# Draw the text
-		rect = wx.Rect(self.Size[0] - textWidth, 0,
-					   self.Size[0] - (self.Size[0] - textWidth),
-					   self.Size[1])
-		dc.DrawLabel(label, rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-
-	def OnEraseBackground(self, event):
-		""" Handles the wx.EVT_ERASE_BACKGROUND event for CustomCheckBox. """
-
-		# This is intentionally empty, because we are using the combination
-		# of wx.BufferedPaintDC + an empty OnEraseBackground event to
-		# reduce flicker
-		pass
-
+	def IsEnabled(self):
+		return self._cb.Enabled
 
 	def OnLeftDown(self, event):
-		if not self.IsEnabled():
+		if not self.Enabled:
 			return
-		self.up = False
-		self.CaptureMouse()
-		self.SetFocus()
-		self.Refresh()
+		self._up = False
+		self._cb.SetFocus()
 		event.Skip()
 
 	def OnLeftUp(self, event):
-		if not self.IsEnabled() or not self.HasCapture():
+		if not self.Enabled:
 			return
-		if self.HasCapture():
-			self.ReleaseMouse()
-			if not self.up and self.ClientRect.Contains(event.GetPosition()):
-				# if the checkbox was down when the mouse was released...
-				self.SendCheckBoxEvent()
-			self.up = True
-			if self:
-				# in case the checkbox was destroyed in the eventhandler
-				self.Refresh()
-				event.Skip()
+		if not self._up and self.ClientRect.Contains(event.GetPosition()):
+			# if the checkbox was down when the mouse was released...
+			self.SendCheckBoxEvent()
+		self._up = True
 
 	def SendCheckBoxEvent(self):
-		""" Actually sends the wx.wxEVT_COMMAND_CHECKBOX_CLICKED event. """
+		""" Actually sends the event to the checkbox. """
 		
-		self._checked = not self.IsChecked()
+		self.Value = not self.Value
 		checkEvent = wx.CommandEvent(wx.wxEVT_COMMAND_CHECKBOX_CLICKED,
-		                             self.GetId())
-		checkEvent.SetInt(int(self._checked))
+									 self._cb.GetId())
+		checkEvent.SetInt(int(self.Value))
 
-		# Set the originating object for the event (ourselves)
-		checkEvent.SetEventObject(self)
+		# Set the originating object for the event (the checkbox)
+		checkEvent.SetEventObject(self._cb)
 
 		# Watch for a possible listener of this event that will catch it and
 		# eventually process it
-		self.GetEventHandler().ProcessEvent(checkEvent)
+		self._cb.GetEventHandler().ProcessEvent(checkEvent)
 
-		# Refresh ourselves: the bitmap has changed
-		self.Refresh()
-
-	def OnKeyUp(self, event):
-		""" Handles the wx.EVT_KEY_UP event for CustomCheckBox. """
-
-		if event.GetKeyCode() == wx.WXK_SPACE:
-			# The spacebar has been pressed: toggle our state
-			self.SendCheckBoxEvent()
-			event.Skip()
-			return
-
-		event.Skip()
-
-	def OnSetFocus(self, event):
-		""" Handles the wx.EVT_SET_FOCUS event for CustomCheckBox. """
-
-		self._hasFocus = True
-
-		# We got focus, and we want a dotted rectangle to be painted
-		# around the checkbox label, so we refresh ourselves
-		self.Refresh()
-
-	def OnKillFocus(self, event):
-		""" Handles the wx.EVT_KILL_FOCUS event for CustomCheckBox. """
-
-		self._hasFocus = False
-
-		# We lost focus, and we want a dotted rectangle to be cleared
-		# around the checkbox label, so we refresh ourselves
-		self.Refresh()
-
-	def AcceptsFocusFromKeyboard(self):
-		"""Overridden base class virtual."""
-
-		# We can accept focus from keyboard, obviously
-		return True
-
-	def AcceptsFocus(self):
-		""" Overridden base class virtual. """
-
-		# It seems to me that wx.CheckBox does not accept focus with mouse
-		# but please correct me if I am wrong!
-		return False
-
-	def GetDefaultAttributes(self):
-		"""
-		Overridden base class virtual.  By default we should use
-		the same font/colour attributes as the native wx.CheckBox.
-		"""
-
-		return wx.CheckBox.GetClassDefaultAttributes()
-
-	def ShouldInheritColours(self):
-		"""
-		Overridden base class virtual.  If the parent has non-default
-		colours then we want this control to inherit them.
-		"""
-
-		return True
-
-	def DoGetBestSize(self):
-		"""
-		Overridden base class virtual.  Determines the best size of the control
-		based on the label size, the bitmap size and the current font.
-		"""
-
-		best = self._cb.GetBestSize()
-
-		# Cache the best size so it doesn't need to be calculated again,
-		# at least until some properties of the window change
-		self.CacheBestSize(best)
-
-		return best
+	def SetMaxFontSize(self, pointsize=11):
+		self._label.SetMaxFontSize(pointsize)
 
 	def GetValue(self):
 		"""
@@ -1438,7 +1278,7 @@ class CustomCheckBox(wx.PyControl):
 		otherwise.
 		"""
 
-		return self._checked
+		return self._cb.Value
 
 	def IsChecked(self):
 		"""
@@ -1447,7 +1287,7 @@ class CustomCheckBox(wx.PyControl):
 		otherwise.
 		"""
 
-		return self._checked
+		return self._cb.Value
 
 	def SetValue(self, state):
 		"""
@@ -1455,21 +1295,22 @@ class CustomCheckBox(wx.PyControl):
 		wx.wxEVT_COMMAND_CHECKBOX_CLICKED event to get emitted.
 		"""
 
-		self._checked = state
-		self.Refresh()
+		self._cb.Value = state
 
 	def GetLabel(self):
-		return self._label
+		return self._label.Label
 
 	def SetLabel(self, label):
-		self._label = label
-		self._cb.SetLabel(label)
-		self.Refresh()
+		self._label.Label = label
+
+	def SetForegroundColour(self, color):
+		wx.Panel.SetForegroundColour(self, color)
+		self._label.ForegroundColour = color
 
 	@Property
 	def Label():
 		def fget(self):
-			return self._label
+			return self.GetLabel()
 
 		def fset(self, label):
 			self.SetLabel(label)
@@ -1479,10 +1320,20 @@ class CustomCheckBox(wx.PyControl):
 	@Property
 	def Value():
 		def fget(self):
-			return self._checked
+			return self.GetValue()
 
 		def fset(self, state):
 			self.SetValue(state)
+
+		return locals()
+
+	@Property
+	def ForegroundColour():
+		def fget(self):
+			return self.GetForegroundColour()
+
+		def fset(self, color):
+			self.SetForegroundColour(color)
 
 		return locals()
 

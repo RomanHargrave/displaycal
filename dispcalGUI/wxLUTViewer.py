@@ -707,14 +707,14 @@ class LUTFrame(wx.Frame):
 		self.cbox_sizer.Add(self.show_as_L, flag=wx.ALIGN_CENTER_VERTICAL |
 												 wx.RIGHT,
 							border=4)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.show_as_L.GetId())
+		self.show_as_L.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.toggle_red = CustomCheckBox(self.box_panel, -1, "R")
 		self.toggle_red.SetForegroundColour(FGCOLOUR)
 		self.toggle_red.SetMaxFontSize(11)
 		self.toggle_red.SetValue(True)
 		self.cbox_sizer.Add(self.toggle_red, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_red.GetId())
+		self.toggle_red.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.cbox_sizer.Add((4, 0))
 		
@@ -723,7 +723,7 @@ class LUTFrame(wx.Frame):
 		self.toggle_green.SetMaxFontSize(11)
 		self.toggle_green.SetValue(True)
 		self.cbox_sizer.Add(self.toggle_green, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_green.GetId())
+		self.toggle_green.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.cbox_sizer.Add((4, 0))
 		
@@ -732,15 +732,14 @@ class LUTFrame(wx.Frame):
 		self.toggle_blue.SetMaxFontSize(11)
 		self.toggle_blue.SetValue(True)
 		self.cbox_sizer.Add(self.toggle_blue, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_blue.GetId())
+		self.toggle_blue.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.toggle_clut = CustomCheckBox(self.box_panel, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		self.toggle_clut.SetMaxFontSize(11)
 		self.cbox_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
 												   wx.LEFT, border=16)
-		self.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler,
-				  id=self.toggle_clut.GetId())
+		self.toggle_clut.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler)
 
 		self.box_sizer.Add((0, 6))
 		self.box_sizer.Add((0, 6))
@@ -757,8 +756,8 @@ class LUTFrame(wx.Frame):
 		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
 		self.show_actual_lut_cb.SetMaxFontSize(11)
 		hsizer.Add(self.show_actual_lut_cb, flag=wx.ALIGN_CENTER)
-		self.Bind(wx.EVT_CHECKBOX, self.show_actual_lut_handler,
-				  id=self.show_actual_lut_cb.GetId())
+		self.show_actual_lut_cb.Bind(wx.EVT_CHECKBOX,
+									 self.show_actual_lut_handler)
 
 		self.box_sizer.Add((0, 20))
 

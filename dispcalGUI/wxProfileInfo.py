@@ -1062,35 +1062,34 @@ class ProfileInfoFrame(LUTFrame):
 		self.show_as_L.SetValue(True)
 		hsizer.Add(self.show_as_L,
 										flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.show_as_L.GetId())
+		self.show_as_L.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.toggle_red = CustomCheckBox(self.lut_view_options, -1, "R")
 		self.toggle_red.SetForegroundColour(FGCOLOUR)
 		self.toggle_red.SetValue(True)
 		hsizer.Add(self.toggle_red,
 										flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_red.GetId())
+		self.toggle_red.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.toggle_green = CustomCheckBox(self.lut_view_options, -1, "G")
 		self.toggle_green.SetForegroundColour(FGCOLOUR)
 		self.toggle_green.SetValue(True)
 		hsizer.Add(self.toggle_green,
 										flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_green.GetId())
+		self.toggle_green.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.toggle_blue = CustomCheckBox(self.lut_view_options, -1, "B")
 		self.toggle_blue.SetForegroundColour(FGCOLOUR)
 		self.toggle_blue.SetValue(True)
 		hsizer.Add(self.toggle_blue,
 										flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHECKBOX, self.DrawLUT, id=self.toggle_blue.GetId())
+		self.toggle_blue.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.toggle_clut = CustomCheckBox(self.lut_view_options, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
 		hsizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL |
 												   wx.LEFT, border=16)
-		self.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler,
-				  id=self.toggle_clut.GetId())
+		self.toggle_clut.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler)
 		
 		self.lut_view_options_sizer.Add((0, 0))
 		
