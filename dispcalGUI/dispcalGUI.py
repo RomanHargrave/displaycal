@@ -520,8 +520,7 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.SetBackgroundColour("#336699")
 	header.SetForegroundColour("#FFFFFF")
 	header.SetBitmap(bitmap or getbitmap("theme/header"))
-	font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT) 
-	header.SetFont(font)
+	header.SetMaxFontSize(11)
 	header.SetLabel(label or lang.getstr("header"))
 	return header
 
