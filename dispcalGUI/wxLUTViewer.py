@@ -186,6 +186,7 @@ class LUTCanvas(plot.PlotCanvas):
 		Plot = plot.PolyLine
 		Plot._attributes["width"] = 1
 
+		maxv = 65535
 		linear_points = []
 		
 		axis_y = 255.0
@@ -238,12 +239,13 @@ class LUTCanvas(plot.PlotCanvas):
 							self.point_grid[i][n] = y
 			else:
 				irange = range(0, vcgt['entryCount'])
+				maxv = math.pow(256, vcgt['entrySize']) - 1
 				for i in irange:
 					j = i * (axis_y / (vcgt['entryCount'] - 1))
 					if not detect_increments:
 						linear_points += [[j, j]]
 					if r:
-						n = float(data[0][i]) / (math.pow(256, vcgt['entrySize']) - 1) * axis_x
+						n = float(data[0][i]) / maxv * axis_x
 						if not detect_increments or not r_points or \
 						   i == vcgt['entryCount'] - 1 or n != i:
 							if detect_increments and n != i and \
@@ -259,7 +261,7 @@ class LUTCanvas(plot.PlotCanvas):
 								r_points += [[j, n]]
 								self.point_grid[0][j] = n
 					if g:
-						n = float(data[1][i]) / (math.pow(256, vcgt['entrySize']) - 1) * axis_x
+						n = float(data[1][i]) / maxv * axis_x
 						if not detect_increments or not g_points or \
 						   i == vcgt['entryCount'] - 1 or n != i:
 							if detect_increments and n != i and \
@@ -275,7 +277,7 @@ class LUTCanvas(plot.PlotCanvas):
 								g_points += [[j, n]]
 								self.point_grid[1][j] = n
 					if b:
-						n = float(data[2][i]) / (math.pow(256, vcgt['entrySize']) - 1) * axis_x
+						n = float(data[2][i]) / maxv * axis_x
 						if not detect_increments or not b_points or \
 						   i == vcgt['entryCount'] - 1 or n != i:
 							if detect_increments and n != i and \
@@ -388,27 +390,37 @@ class LUTCanvas(plot.PlotCanvas):
 				legend += ['G']
 			if b:
 				legend += ['B']
+		linear_points = [(i, int(round(v / axis_y * maxv))) for i, v in
+						 linear_points]
 		if colour and points:
+			points_quantized = [(i, int(round(v / axis_y * maxv))) for i, v in
+								points]
 			suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-						points == (linear if detect_increments else 
-									linear_points) else '')
+						points_quantized == (linear if detect_increments 
+											 else linear_points) else '')
 			lines += [Plot(points, legend='='.join(legend) + suffix, 
 						   colour=colour)]
 		if colour != 'white':
 			if r and colour not in ('yellow', 'magenta'):
+				points_quantized = [(i, int(round(v / axis_y * maxv)))
+									for i, v in r_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-							r_points == (linear if detect_increments else 
-										  linear_points) else '')
+							points_quantized == (linear if detect_increments 
+												 else linear_points) else '')
 				lines += [Plot(r_points, legend='R' + suffix, colour='red')]
 			if g and colour not in ('yellow', 'cyan'):
+				points_quantized = [(i, int(round(v / axis_y * maxv)))
+									for i, v in g_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-							g_points == (linear if detect_increments else 
-										  linear_points) else '')
+							points_quantized == (linear if detect_increments 
+												 else linear_points) else '')
 				lines += [Plot(g_points, legend='G' + suffix, colour='green')]
 			if b and colour not in ('cyan', 'magenta'):
+				points_quantized = [(i, int(round(v / axis_y * maxv)))
+									for i, v in b_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-							b_points == (linear if detect_increments else 
-										  linear_points) else '')
+							points_quantized == (linear if detect_increments 
+												 else linear_points) else '')
 				lines += [Plot(b_points, legend='B' + suffix, colour='#0080FF')]
 
 		self._DrawCanvas(plot.PlotGraphics(lines, title,
