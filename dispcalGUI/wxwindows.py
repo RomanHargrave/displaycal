@@ -1868,7 +1868,7 @@ class ProgressDialog(wx.Dialog):
 		
 		if style & wx.PD_ELAPSED_TIME or style & wx.PD_REMAINING_TIME:
 			self.sizer3 = wx.FlexGridSizer(0, 2, 0, margin)
-			self.sizer1.Add(self.sizer3, flag=wx.ALIGN_CENTER)
+			self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT)
 			self.time = time()
 		
 		if style & wx.PD_ELAPSED_TIME:
