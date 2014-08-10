@@ -150,7 +150,7 @@
 	"calibration.reset_success": "Curvas de calibración reseteadas correctamente.",
 	"calibration.resetting": "Reseteando curvas de calibración a valores por defecto...",
 	"calibration.settings": "Valores de calibración",
-	"calibration.show_actual_lut": "Mostrar curvas de calibracion actual de la tabla de gama de la tarjeta grafica",
+	"calibration.show_actual_lut": "Mostrar curvas de calibracion actual de la tarjeta grafica",
 	"calibration.show_lut": "Mostrar curvas",
 		"*calibration.skip": "Continue on to profiling",
 	"calibration.speed": "Velocidad de la calibración",

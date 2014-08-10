@@ -150,7 +150,7 @@
 	"calibration.reset_success": "Grafikkarten-Gammatabelle zurückgesetzt.",
 	"calibration.resetting": "Setze Grafikkarten-Gammatabelle zurück...",
 	"calibration.settings": "Kalibrierungseinstellungen",
-	"calibration.show_actual_lut": "Tatsächliche Kalibrierungskurven aus der Grafikkarten-Gammatabelle zeigen",
+	"calibration.show_actual_lut": "Tatsächliche Kalibrierungskurven aus der Grafikkarte zeigen",
 	"calibration.show_lut": "Kurven zeigen",
 	"calibration.skip": "Weiter zur Profilierung",
 	"calibration.speed": "Kalibrierungsgeschwindigkeit",
