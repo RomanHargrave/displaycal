@@ -1292,9 +1292,11 @@ class CustomCheckBox(wx.PyControl):
 		if not self.Enabled:
 			flags |= wx.CONTROL_DISABLED
 		else:
-			if self.HasFocus():
+			if self._hasFocus or not self.up:
 				flags |= wx.CONTROL_FOCUSED
-			if not self.up:
+			if not self.up and sys.platform != "darwin":
+				# Pressed state has the same visual as checked under wxMac,
+				# ok to use on other platforms
 				flags |= wx.CONTROL_PRESSED
 
 		# Draw the checkbox
