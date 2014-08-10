@@ -1199,8 +1199,9 @@ class CustomCheckBox(wx.PyControl):
 		# This can be changed using SetSpacing later.
 		self._spacing = 3
 		
-		# Checkbox size
-		self._boxsize = 16, 16
+		# Checkbox, just used to get best size
+		self._cb = wx.CheckBox(parent, -1, label, pos, size, style)
+		self._cb.Hide()
 
 		# I assume at the beginning we are not focused
 		self._hasFocus = False
@@ -1300,12 +1301,13 @@ class CustomCheckBox(wx.PyControl):
 				flags |= wx.CONTROL_PRESSED
 
 		# Draw the checkbox
-		rect = wx.Rect(0, 0, self._boxsize[0], height)
+		rect = wx.Rect(0, 0, self.Size[0] - textWidth, self.Size[1])
 		render.DrawCheckBox(self, dc, rect, flags)
 
 		# Draw the text
-		rect = wx.Rect(self._boxsize[0] + self._spacing, 0,
-					   width - self._boxsize[0] - self._spacing, height)
+		rect = wx.Rect(self.Size[0] - textWidth, 0,
+					   self.Size[0] - (self.Size[0] - textWidth),
+					   self.Size[1])
 		dc.DrawLabel(label, rect, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
 	def OnEraseBackground(self, event):
@@ -1422,32 +1424,7 @@ class CustomCheckBox(wx.PyControl):
 		based on the label size, the bitmap size and the current font.
 		"""
 
-		# Retrieve our properties: the text label, the font
-		label = self.GetLabel()
-		font = self.GetFont()
-
-		if not font:
-			# No font defined? So use the default GUI font provided by the system
-			font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-
-		# Set up a wx.ClientDC. When you don't have a dc available (almost
-		# always you don't have it if you are not inside a wx.EVT_PAINT event),
-		# use a wx.ClientDC (or a wx.MemoryDC) to measure text extents
-		dc = wx.ClientDC(self)
-		dc.SetFont(font)
-
-		# Measure our label
-		textWidth, textHeight = dc.GetTextExtent(label)
-
-		# Ok, we're almost done: the total width of the control is simply
-		# the sum of the box width, the spacing and the text width,
-		# while the height is the maximum value between the text width and
-		# the box height
-		safetymargin = 3
-		totalWidth = self._boxsize[0] + self._spacing + textWidth + safetymargin
-		totalHeight = max(textHeight, self._boxsize[1])
-
-		best = wx.Size(totalWidth, totalHeight)
+		best = self._cb.GetBestSize()
 
 		# Cache the best size so it doesn't need to be calculated again,
 		# at least until some properties of the window change
@@ -1481,14 +1458,31 @@ class CustomCheckBox(wx.PyControl):
 		self._checked = state
 		self.Refresh()
 
+	def GetLabel(self):
+		return self._label
+
+	def SetLabel(self, label):
+		self._label = label
+		self._cb.SetLabel(label)
+		self.Refresh()
+
+	@Property
+	def Label():
+		def fget(self):
+			return self._label
+
+		def fset(self, label):
+			self.SetLabel(label)
+
+		return locals()
+
 	@Property
 	def Value():
 		def fget(self):
 			return self._checked
 
 		def fset(self, state):
-			self._checked = state
-			self.Refresh()
+			self.SetValue(state)
 
 		return locals()
 
