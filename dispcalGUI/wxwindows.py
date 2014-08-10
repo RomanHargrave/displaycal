@@ -505,14 +505,18 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		self.label_y = None
 		self.textalpha = 1.0
 		self.textshadow = True
+		self.use_gcdc = False
 	
 	def _set_font(self, dc):
-		try:
-			dc = wx.GCDC(dc)
-		except Exception, exception:
-			pass
 		font = self.GetFont()
-		font.SetPointSize(get_dc_font_size(font.GetPointSize(), dc))
+		if self.use_gcdc:
+			# NOTE: Drawing text to wx.GCDC has problems with unicode chars
+			# being replaced with boxes under wxGTK
+			try:
+				dc = wx.GCDC(dc)
+			except Exception, exception:
+				pass
+			font.SetPointSize(get_dc_font_size(font.GetPointSize(), dc))
 		dc.SetFont(font)
 		return dc
  	
