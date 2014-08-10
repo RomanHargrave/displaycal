@@ -998,7 +998,8 @@ class ProfileInfoFrame(LUTFrame):
 		self.options_panel.SetBackgroundColour(BGCOLOUR)
 		p1.sizer.Add(self.options_panel, flag=wx.EXPAND | wx.BOTTOM, border=8)
 		
-		self.status = BitmapBackgroundPanelText(p1, size=(-1, 40))
+		h = p1.GetTextExtent("Ig")[1]
+		self.status = BitmapBackgroundPanelText(p1, size=(-1, h * 2 + 10))
 		self.status.label_y = 0
 		self.status.textshadow = False
 		self.status.SetBackgroundColour(BGCOLOUR)

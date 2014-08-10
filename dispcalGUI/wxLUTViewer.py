@@ -600,7 +600,8 @@ class LUTFrame(wx.Frame):
 		self.box_panel.SetBackgroundColour(BGCOLOUR)
 		self.sizer.Add(self.box_panel, flag=wx.EXPAND)
 		
-		self.status = BitmapBackgroundPanelText(self, size=(-1, 48))
+		h = self.box_panel.GetTextExtent("Ig")[1]
+		self.status = BitmapBackgroundPanelText(self, size=(-1, h * 2 + 18))
 		self.status.label_y = 8
 		self.status.textshadow = False
 		self.status.SetBackgroundColour(BGCOLOUR)
