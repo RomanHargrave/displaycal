@@ -1395,12 +1395,18 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		Complete the editing of the current cell. Returns True if the value
 		has changed.  If necessary, the control may be destroyed.
 		"""
-		changed = False
+		if wx.VERSION >= (2, 9):
+			changed = None
+		else:
+			changed = False
 
 		val = self._tc.GetValue()
 		
 		if val != self.startValue:
-			changed = True
+			if wx.VERSION >= 2.9:
+				changed = val
+			else:
+				changed = True
 			grid.GetTable().SetValue(row, col, val) # update the table
 
 		self.startValue = ''
