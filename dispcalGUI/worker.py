@@ -4591,7 +4591,7 @@ usage: spotread [-options] [logfile]
 				if re.match("sha\d+(?:new)?",
 							os.path.basename(os.path.dirname(pydir))):
 					cmd = which("0install-win.exe") or "0install-win.exe"
-					loader_args += ["run", "--no-wait", "--offline",
+					loader_args += ["run", "--batch", "--no-wait", "--offline",
 									"--command=run-apply-profiles",
 									"http://%s/0install/dispcalGUI.xml" %
 									domain.lower()]
@@ -4760,7 +4760,7 @@ usage: spotread [-options] [logfile]
 				# command
 				if re.match("sha\d+(?:new)?",
 							os.path.basename(os.path.dirname(pydir))):
-					executable = ("0launch --offline "
+					executable = ("0launch --console --offline "
 								  "--command=run-apply-profiles "
 								  "http://%s/0install/dispcalGUI.xml" %
 								  domain.lower())
