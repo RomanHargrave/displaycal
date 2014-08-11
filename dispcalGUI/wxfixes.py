@@ -160,7 +160,7 @@ def set_bitmap_labels(btn):
 				alphabuffer[i] = chr(int(round(ord(byte) * .3)))
 	btn.SetBitmapDisabled(image.ConvertToBitmap())
 
-	# Hover
+	# Focus/Hover
 	image = bitmap.ConvertToImage()
 	if image.HasMask():
 		image.InitAlpha()
@@ -168,7 +168,9 @@ def set_bitmap_labels(btn):
 	for i, byte in enumerate(databuffer):
 		if byte > "\0":
 			databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
-	btn.SetBitmapHover(image.ConvertToBitmap())
+	bmp = image.ConvertToBitmap()
+	btn.SetBitmapFocus(bmp)
+	btn.SetBitmapHover(bmp)
 
 	# Selected
 	image = bitmap.ConvertToImage()
