@@ -16,11 +16,11 @@ AppPublisherURL=%(AppPublisherURL)s
 AppReadmeFile=%(URL)s
 AppSupportURL=%(AppSupportURL)s
 AppUpdatesURL=%(AppUpdatesURL)s
-DefaultDirName={pf}\dispcalGUI
+DefaultDirName={userpf}\dispcalGUI
 DefaultGroupName=dispcalGUI
 LicenseFile=..\LICENSE.txt
 OutputDir=.
-OutputBaseFilename=dispcalGUI-0install-Setup
+OutputBaseFilename=dispcalGUI-0install-Setup-per-user
 SetupIconFile=..\dispcalGUI\theme\icons\dispcalGUI.ico
 Compression=lzma/Max
 SolidCompression=true
@@ -38,6 +38,7 @@ MinVersion=0,5.1.2600
 DisableDirPage=yes
 UsePreviousGroup=False
 DisableProgramGroupPage=yes
+PrivilegesRequired=lowest
 
 [Languages]
 Name: english; MessagesFile: ..\misc\InnoSetup\v5\Default.isl;
@@ -46,34 +47,21 @@ Name: german; MessagesFile: ..\misc\InnoSetup\v5\Languages\German.isl;
 Name: italian; MessagesFile: ..\misc\InnoSetup\v5\Languages\Italian.isl;
 Name: spanish; MessagesFile: ..\misc\InnoSetup\v5\Languages\Spanish.isl;
 
-[Tasks]
-Name: calibrationloadinghandledbydispcalgui; Description: {cm:CalibrationLoadingHandledByDispcalGUI}; Flags: exclusive; GroupDescription: {cm:CalibrationLoading};
-Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledByOS}; Flags: exclusive unchecked; GroupDescription: {cm:CalibrationLoading}; MinVersion: 0,6.1.7600;
-
 [Files]
 Source: ..\dispcalGUI\theme\icons\dispcalGUI-uninstall.ico; DestDir: {app};
-Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly;
 
 [Icons]
-Name: {group}\dispcalGUI; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --no-wait %(URL)s0install/dispcalGUI.xml";
 Name: {group}\{cm:SelectVersion}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --gui --no-wait %(URL)s0install/dispcalGUI.xml";
 Name: {group}\{cm:ChangeIntegration}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate %(URL)s0install/dispcalGUI.xml";
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\dispcalGUI-uninstall.ico;
 Name: {group}\LICENSE; Filename: %(URL)sLICENSE.txt;
 Name: {group}\README; Filename: %(URL)s;
-Name: {commonstartup}\dispcalGUI Profile Loader; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --offline --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml"; Tasks: calibrationloadinghandledbydispcalgui;
+Name: {userstartup}\dispcalGUI Profile Loader; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --offline --command=run-apply-profiles %(URL)s0install/dispcalGUI.xml";
 
 [Run]
 Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --refresh %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: runasoriginaluser
 Filename: %(URL)s; Description: {code:Get_RunEntryShellExec_Message|README}; Flags: nowait postinstall shellexec skipifsilent;
 Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --not-before=%(AppVersion)s %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden;
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --not-before=%(AppVersion)s --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydispcalgui;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --not-before=%(AppVersion)s --command=set-calibration-loading -- %(URL)s0install/dispcalGUI.xml --os"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbyos;
-
-[Dirs]
-Name: {commonappdata}\dispcalGUI; Permissions: users-modify;
 
 [Code]
 function Get_RunEntryShellExec_Message(Value: string): string;
@@ -115,7 +103,7 @@ procedure InitializeWizard();
 begin
 	if not ZeroInstall_IsInstalled() then begin
 		ITD_Init;
-		ITD_AddFile('http://0install.de/files/zero-install.exe', ExpandConstant('{tmp}\zero-install.exe'));
+		ITD_AddFile('http://0install.de/files/zero-install-per-user.exe', ExpandConstant('{tmp}\zero-install-per-user.exe'));
 		ITD_DownloadAfter(wpReady);
 	end;
 end;
@@ -124,19 +112,13 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
 	ErrorCode: integer;
 	ZeroInstall: string;
-	UninstallString: string;
 begin
 	if CurStep=ssInstall then begin
 		if not ZeroInstall_IsInstalled() then begin
-			if not Exec(ExpandConstant('{tmp}\zero-install.exe'), '/SP- /SILENT /NORESTART', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(ExpandConstant('{tmp}\zero-install-per-user.exe'), '/SP- /SILENT /NORESTART', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
 			if not ZeroInstall_IsInstalled() then
 				Abort();
-		end;
-		UninstallString := Get_UninstallString(ExpandConstant('{#emit SetupSetting("AppId")}'));
-		if UninstallString <> '' then begin
-			if not Exec(UninstallString, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
-				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
 	end;
 end;
