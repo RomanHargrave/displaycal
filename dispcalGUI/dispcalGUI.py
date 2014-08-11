@@ -1275,17 +1275,19 @@ class MainFrame(BaseFrame):
 				# We just moved to this workspace
 				if sys.platform not in ("darwin", "win32"):
 					# Linux
-					safety_margin = 45
+					safety_margin = 40
 				else:
 					safety_margin = 20
-				borders_tb = self.Size[1] - self.ClientSize[1] or safety_margin
 				resize = False
-				if self.ClientSize[1] + borders_tb > display_client_rect[3]:
-					# Our full height is too tall for that workspace, adjust
+				if (self.Size[0] > display_client_rect[2] or
+					self.Size[1] > display_client_rect[3] - safety_margin):
+					# Our size is too large for that workspace, adjust
 					resize = True
-				elif self.Size[1] < (self.Size[1] - self.calpanel.Size[1] +
-									 self.calpanel.VirtualSize[1]):
-					# Our full height fits on that workspace
+				elif (self.Size[0] < (self.Size[0] - self.calpanel.Size[0] +
+									  self.calpanel.VirtualSize[0]) or
+					  self.Size[1] < (self.Size[1] - self.calpanel.Size[1] +
+									  self.calpanel.VirtualSize[1])):
+					# Our full size fits on that workspace
 					resize = True
 				self.display_client_rect = display_client_rect
 				if resize:
@@ -1456,11 +1458,12 @@ class MainFrame(BaseFrame):
 		if set_height:
 			if sys.platform not in ("darwin", "win32"):
 				# Linux
-				safety_margin = 45
+				safety_margin = 40
 			else:
 				safety_margin = 20
-			borders_tb = self.Size[1] - self.ClientSize[1] or safety_margin
-			height = min(self.GetDisplay().ClientArea[3] - borders_tb,
+			borders_tb = self.Size[1] - self.ClientSize[1]
+			height = min(self.GetDisplay().ClientArea[3] - borders_tb -
+						 safety_margin,
 						 self.header.Size[1] +
 						 self.headerpanel.Sizer.MinSize[1] +
 						 self.calpanel.Sizer.MinSize[1] +
