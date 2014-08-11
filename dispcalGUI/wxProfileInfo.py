@@ -201,7 +201,7 @@ class GamutCanvas(LUTCanvas):
 			min_y = 0
 			step = .1
 		elif self.colorspace == "u*v*":
-			# Not used, hard to present gamut projection appropriately in 2D
+			# Hard to present gamut projection appropriately in 2D
 			# because blue tones 'cave in' towards the center
 			self.spec_x = 8
 			self.spec_y = 8
@@ -256,8 +256,7 @@ class GamutCanvas(LUTCanvas):
 						  "DIN99c": lambda X, Y, Z: colormath.XYZ2DIN99c(*[v * 100 for v in X, Y, Z])[1:],
 						  "DIN99d": lambda X, Y, Z: colormath.XYZ2DIN99d(*[v * 100 for v in X, Y, Z])[1:]}[self.colorspace]
 
-		if show_outline and self.colorspace in ("a*b*", "DIN99", "DIN99b",
-												"DIN99c", "DIN99d"):
+		if show_outline and self.colorspace in ("a*b*", "DIN99", "DIN99b"):
 			polys.append(plot.PolySpline([convert2coords(*colormath.Lab2XYZ(0, a, b))
 										  for a, b in optimalcolors],
 										 colour=wx.Colour(102, 102, 102, 153),
@@ -1369,33 +1368,35 @@ class ProfileInfoFrame(LUTFrame):
 					self.client.erase_pointlabel()
 		else:
 			# Gamut plot
-			if self.options_panel.GetCurrentPage().colorspace_select.GetSelection() == 0:
+			page = self.options_panel.GetCurrentPage()
+			if (page.colorspace in ("a*b*", "u*v*") or
+				page.colorspace.startswith("DIN99")):
 				format = "%.2f %.2f"
 			else:
 				format = "%.4f %.4f"
-			page = self.options_panel.GetCurrentPage()
-			colorspace_no = page.colorspace_select.GetSelection()
 			whitepoint_no = page.whitepoint_select.GetSelection()
 			if whitepoint_no > 0:
-				if colorspace_no == 0:
-					# a*b*
+				if page.colorspace == "a*b*":
 					x, y, Y = colormath.Lab2xyY(100.0, xy[0], xy[1])
-				elif colorspace_no == 1:
-					# u' v'
+				elif page.colorspace == "u*v*":
+					X, Y, Z = colormath.Luv2XYZ(100.0, xy[0], xy[1])
+					x, y = colormath.XYZ2xyY(X, Y, Z)[:2]
+				elif page.colorspace == "u'v'":
 					x, y = colormath.u_v_2xy(xy[0], xy[1])
-				elif colorspace_no in (3, 4, 5, 6):
+				elif page.colorspace.startswith("DIN99"):
 					# DIN99
 					L99 = colormath.Lab2DIN99(100, 0, 0)[0]
-					if colorspace_no == 4:
+					if page.colorspace == "DIN99b":
 						# DIN99b
 						a, b = colormath.DIN99b2Lab(L99, xy[0], xy[1])[1:]
-					elif colorspace_no == 5:
+					elif page.colorspace == "DIN99c":
 						# DIN99c
 						a, b = colormath.DIN99c2Lab(L99, xy[0], xy[1])[1:]
-					elif colorspace_no == 6:
+					elif page.colorspace == "DIN99d":
 						# DIN99d
 						a, b = colormath.DIN99d2Lab(L99, xy[0], xy[1])[1:]
 					else:
+						# DIN99
 						a, b = colormath.DIN992Lab(L99, xy[0], xy[1])[1:]
 					x, y = colormath.Lab2xyY(100.0, a, b)[:2]
 				else:
