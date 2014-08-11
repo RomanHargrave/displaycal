@@ -6696,9 +6696,51 @@ class MainFrame(BaseFrame):
 	def profile_finish_consumer(self, result=None):
 		if isinstance(result, Exception):
 			show_result_dialog(result, parent=self.modaldlg)
-			if not isinstance(result, (Info, Warning)):
+			if not getcfg("dry_run") and not isinstance(result, (Info, Warning)):
 				self.modaldlg.Raise()
 				return
+		else:
+			# Check all profile install methods
+			argyll_install, colord_install, oy_install, loader_install = result
+			allgood = (argyll_install in (None, True) and
+					   colord_install in (None, True) and
+					   oy_install in (None, True) and
+					   loader_install in (None, True))
+			if allgood:
+				msg = lang.getstr("profile.install.success")
+				icon = "dialog-information"
+			else:
+				msg = lang.getstr("profile.install.warning")
+				icon = "dialog-warning"
+			dlg = InfoDialog(self.modaldlg, msg=msg, ok=lang.getstr("ok"), 
+							 bitmap=geticon(32, icon), show=False)
+			if not allgood:
+				sizer = wx.FlexGridSizer(0, 2, 8, 8)
+				dlg.sizer3.Add(sizer, 1, flag=wx.TOP, border=12)
+				for name, result in (("Argyll CMS", argyll_install),
+									 ("colord", colord_install),
+									 ("Oyranos", oy_install),
+									 (lang.getstr("profile_loader"),
+									  loader_install)):
+					if result is not None:
+						if result is True:
+							icon = "checkmark"
+							result = lang.getstr("ok")
+						elif isinstance(result, Warning):
+							icon = "dialog-warning"
+						else:
+							icon = "x"
+							if not result:
+								result = lang.getstr("failure")
+						result = wrap(safe_unicode(result))
+						sizer.Add(wx.StaticBitmap(dlg, -1, geticon(16, icon)),
+								  flag=wx.TOP, border=4)
+						sizer.Add(wx.StaticText(dlg, -1, ": ".join([name,
+																	result])))
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
+			dlg.ok.SetDefault()
+			dlg.ShowModalThenDestroy(self.modaldlg)
 		# Unbind automatic lowering
 		self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
 		self.Raise()

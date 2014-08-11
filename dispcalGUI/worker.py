@@ -4058,13 +4058,12 @@ usage: spotread [-options] [logfile]
 						skip_scripts=False, silent=False):
 		""" Install a profile by copying it to an appropriate location and
 		registering it with the system """
-		result = True
-		colord_install = False
-		gcm_import = False
-		oy_install = False
+		colord_install = None
+		oy_install = None
 		argyll_install = self._install_profile_argyll(profile_path,
 													  capture_output,
 													  skip_scripts, silent)
+		loader_install = None
 		profile = None
 		try:
 			profile = ICCP.ICCProfile(profile_path)
@@ -4073,7 +4072,7 @@ usage: spotread [-options] [logfile]
 		device_id = self.get_device_id(quirk=True)
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
 			(self.argyll_version < [1, 6] or not whereis("libcolordcompat.so.*") or
-			 isinstance(argyll_install, Exception) or not argyll_install) and
+			 argyll_install is not True) and
 			which("colormgr")):
 			if device_id:
 				result = False
@@ -4106,14 +4105,19 @@ usage: spotread [-options] [logfile]
 							# Either returned ok or there was another error
 							break
 				colord_install = result
-			if (not device_id or
-				isinstance(result, Exception) or not result):
+			if not device_id or result is not True:
 				gcm_import = bool(which("gcm-import"))
-				if (isinstance(result, Exception) or not result) and gcm_import:
-					# Fall back to gcm-import if colord profile install failed
-					result = gcm_import
-		if (not isinstance(result, Exception) and result and
-			which("oyranos-monitor") and
+				if gcm_import:
+					self._install_profile_gcm(profile)
+					# gcm-import doesn't seem to return a useful exit code or
+					# stderr output, so check for our profile
+					profilename = os.path.basename(profile.fileName)
+					for dirname in iccprofiles_home:
+						profile_install_path = os.path.join(dirname, profilename)
+						if os.path.isfile(profile_install_path):
+							colord_install = Warn(lang.getstr("profile.import.success"))
+							break
+		if (which("oyranos-monitor") and
 			self.check_display_conf_oy_compat(getcfg("display.number"))):
 			if device_id:
 				profile_name = re.sub("[- ]", "_", device_id.lower()) + ".icc"
@@ -4123,59 +4127,61 @@ usage: spotread [-options] [logfile]
 											  capture_output, skip_scripts,
 											  silent)
 			oy_install = result
-		if not isinstance(result, Exception) and result:
-			if isinstance(argyll_install, Exception) or not argyll_install:
-				# Fedora's Argyll cannot install profiles using dispwin
-				# Check if profile installation via colord or oyranos-monitor
-				# was successful and continue
-				if not isinstance(colord_install, Exception) and colord_install:
-					result = colord_install
-				elif not isinstance(oy_install, Exception) and oy_install:
-					result = oy_install
-				else:
-					result = argyll_install
-		if not isinstance(result, Exception) and result:
-			if (getcfg("profile.install_scope") == "l" and
-				sys.platform != "darwin"):
+		if (argyll_install is not True and
+			((colord_install and not isinstance(colord_install,
+												colord.CDError)) or
+			 oy_install is True)):
+			# Ignore Argyll install errors if colord or Oyranos install was
+			# succesful
+			argyll_install = None
+		# Check if atleast one of our profile install methods did return a
+		# result that is not an error
+		for result in (argyll_install, colord_install, oy_install):
+			check = result is True or isinstance(result, Warning)
+			if check:
+				break
+		# Only go on to create profile loader if profile loading on login
+		# isn't disabled in the config file, and we are not under Mac OS X
+		# (no loader required  there), and if atleast one of our profile
+		# install methods did return a result that is not an error
+		if (getcfg("profile.load_on_login") and sys.platform != "darwin" and
+			check):
+			# Create profile loader. Failing to create it is a critical error 
+			# under Windows if calibration loading isn't handled by the OS
+			# (this is checked), and also under Linux if colord profile install
+			# failed (colord handles loading otherwise)
+			check = (sys.platform == "win32" or
+					 (not colord_install or isinstance(colord_install,
+													   colord.CDError)))
+			if (getcfg("profile.install_scope") == "l"):
 				# We need a system-wide config file to store the path to 
 				# the Argyll binaries for the profile loader
-				result = config.makecfgdir("system", self)
-				if result:
-					result = config.writecfg("system", self)
-				if not result:
+				if (not config.makecfgdir("system", self) or
+					(not config.writecfg("system", self) and check)):
+					# If the system-wide config dir could not be created,
+					# or the system-wide config file could not be written,
+					# error out if under Windows or if under Linux but
+					# colord profile install failed
 					return Error(lang.getstr("error.autostart_system"))
 			if sys.platform == "win32":
-				if getcfg("profile.load_on_login"):
-					result = self._install_profile_loader_win32(silent)
-			elif sys.platform != "darwin":
-				if getcfg("profile.load_on_login"):
-					result = self._install_profile_loader_xdg(silent)
-				if gcm_import:
-					result2 = self._install_profile_gcm(profile)
-					if result2 is False:
-						if not self.errors:
-							self.log(lang.getstr("aborted"))
-							if not isinstance(result, Exception) and result:
-								result = False
-						else:
-							result = Error("".join(self.errors))
-					elif isinstance(result2, Exception):
-						result = result2
-			if not isinstance(result, Exception) and result:
-				if verbose >= 1: self.log(lang.getstr("success"))
-				if sys.platform == "darwin" and False:  # NEVER
-					# If installing the profile by just copying it to the
-					# right location, tell user to select it manually
-					msg = lang.getstr("profile.install.osx_manual_select")
-				elif gcm_import:
-					msg = lang.getstr("profile.import.success")
-				else:
-					msg = lang.getstr("profile.install.success")
-				result = Info(msg)
-		else:
-			if result is not None and not getcfg("dry_run"):
-				if verbose >= 1: self.log(lang.getstr("failure"))
-				result = Error(lang.getstr("profile.install.error"))
+				loader_install = self._install_profile_loader_win32(silent)
+			else:
+				loader_install = self._install_profile_loader_xdg(silent)
+			if loader_install is not True and check:
+				return loader_install
+		# Check if atleast one of our profile install methods succeeded without
+		# error or warning
+		for result in (argyll_install, colord_install, oy_install):
+			if result and not isinstance(result, Exception):
+				return argyll_install, colord_install, oy_install, loader_install
+		# All profile install methods either failed or returned an error
+		# or warning. Get the last error or warning.
+		for result in (oy_install, colord_install, argyll_install):
+			if result:
+				break
+		if not result:
+			# This should never happen
+			result = Error(lang.getstr("profile.install.error"))
 		return result
 	
 	def install_argyll_instrument_drivers(self, uninstall=False,
@@ -4400,6 +4406,8 @@ usage: spotread [-options] [logfile]
 					else:
 						result = True
 					break
+			if not result and self.errors:
+				result = Error("".join(self.errors).strip())
 		self.wrapup(False)
 		return result
 	
@@ -4427,22 +4435,13 @@ usage: spotread [-options] [logfile]
 			else:
 				# Profile already in database, nothing to do
 				return None
-		profile_path = profile.fileName
-		# Remove old profile so gcm-import can work
-		profilename = os.path.basename(profile_path)
-		for dirname in iccprofiles_home:
-			profile_install_path = os.path.join(dirname, profilename)
-			if os.path.isfile(profile_install_path) and \
-			   profile_install_path != profile_path:
-				try:
-					trash([profile_install_path])
-				except Exception, exception:
-					self.log(exception)
 		if self._progress_wnd and not getattr(self._progress_wnd, "dlg", None):
 			self._progress_wnd.dlg = DummyDialog()
 		# Run gcm-import
-		cmd, args = which("gcm-import"), [profile_path]
-		return self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
+		cmd, args = which("gcm-import"), [profile.fileName]
+		# gcm-import does not seem to return a useful exit code (it's always 1)
+		# or stderr output
+		self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
 	
 	def _install_profile_oy(self, profile_path, profile_name=None,
 							capture_output=False, skip_scripts=False,
@@ -4508,6 +4507,8 @@ usage: spotread [-options] [logfile]
 											  ##silent=silent,
 											  ##asroot=True,
 											  ##working_dir=False)
+		if not result and self.errors:
+			result = Error("".join(self.errors).strip())
 		return result
 	
 	def _install_profile_loader_win32(self, silent=False):
@@ -4630,7 +4631,7 @@ usage: spotread [-options] [logfile]
 					except Exception, exception:
 						if not silent:
 							result = Warning(lang.getstr("error.autostart_creation", 
-													     autostart) + "\n\n" + 
+													     autostart) + "\n" + 
 										     safe_unicode(exception))
 						# Now try user scope
 				else:
@@ -4651,7 +4652,7 @@ usage: spotread [-options] [logfile]
 					except Exception, exception:
 						if not silent:
 							result = Warning(lang.getstr("error.autostart_creation", 
-													     autostart_home) + "\n\n" + 
+													     autostart_home) + "\n" + 
 										     safe_unicode(exception))
 			else:
 				if not silent:
@@ -4659,7 +4660,7 @@ usage: spotread [-options] [logfile]
 		except Exception, exception:
 			if not silent:
 				result = Warning(lang.getstr("error.autostart_creation", 
-										     autostart_home) + "\n\n" + 
+										     autostart_home) + "\n" + 
 							     safe_unicode(exception))
 		return result
 	
@@ -4778,7 +4779,7 @@ usage: spotread [-options] [logfile]
 		except Exception, exception:
 			if not silent:
 				result = Warning(lang.getstr("error.autostart_creation", 
-											 desktopfile_path) + "\n\n" + 
+											 desktopfile_path) + "\n" + 
 								 safe_unicode(exception))
 		else:
 			if getcfg("profile.install_scope") == "l" and autostart:
