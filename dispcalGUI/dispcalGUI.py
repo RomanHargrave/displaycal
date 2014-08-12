@@ -6697,7 +6697,7 @@ class MainFrame(BaseFrame):
 			if not getcfg("dry_run") and not isinstance(result, (Info, Warning)):
 				self.modaldlg.Raise()
 				return
-		else:
+		elif result:
 			# Check all profile install methods
 			argyll_install, colord_install, oy_install, loader_install = result
 			allgood = (argyll_install in (None, True) and
