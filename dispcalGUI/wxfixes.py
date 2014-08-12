@@ -161,16 +161,18 @@ def set_bitmap_labels(btn):
 	btn.SetBitmapDisabled(image.ConvertToBitmap())
 
 	# Focus/Hover
-	image = bitmap.ConvertToImage()
-	if image.HasMask():
-		image.InitAlpha()
-	databuffer = image.GetDataBuffer()
-	for i, byte in enumerate(databuffer):
-		if byte > "\0":
-			databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
-	bmp = image.ConvertToBitmap()
-	btn.SetBitmapFocus(bmp)
-	btn.SetBitmapHover(bmp)
+	if sys.platform != "darwin":
+		# wxMac applies hover state also to disabled buttons...
+		image = bitmap.ConvertToImage()
+		if image.HasMask():
+			image.InitAlpha()
+		databuffer = image.GetDataBuffer()
+		for i, byte in enumerate(databuffer):
+			if byte > "\0":
+				databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
+		bmp = image.ConvertToBitmap()
+		btn.SetBitmapFocus(bmp)
+		btn.SetBitmapHover(bmp)
 
 	# Selected
 	image = bitmap.ConvertToImage()
