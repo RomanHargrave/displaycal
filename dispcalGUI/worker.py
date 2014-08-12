@@ -4435,6 +4435,23 @@ usage: spotread [-options] [logfile]
 			else:
 				# Profile already in database, nothing to do
 				return None
+		# gcm-import will check if the profile is already in the database
+		# (based on profile ID), but will fail to overwrite a profile with the
+		# same name. We need to remove those profiles so gcm-import can work.
+		profilename = os.path.basename(profile.fileName)
+		for dirname in iccprofiles_home:
+			profile_install_path = os.path.join(dirname, profilename)
+			if os.path.isfile(profile_install_path) and \
+			   profile_install_path != profile.fileName:
+				try:
+					trash([profile_install_path])
+				except Exception, exception:
+					self.log(exception)
+				else:
+					# Give colord time to recognize that the profile was
+					# removed, otherwise gcm-import may complain if it's
+					# a profile that was already in the database
+					sleep(3)
 		if self._progress_wnd and not getattr(self._progress_wnd, "dlg", None):
 			self._progress_wnd.dlg = DummyDialog()
 		# Run gcm-import
