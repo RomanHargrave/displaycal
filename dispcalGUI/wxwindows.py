@@ -375,7 +375,15 @@ class BaseInteractiveDialog(wx.Dialog):
 			id = event.GetId()
 		self.EndModal(id)
 
+	def Show(self, show=True):
+		self.set_position()
+		return wx.Dialog.Show(self, show)
+
 	def ShowModal(self):
+		self.set_position()
+		return wx.Dialog.ShowModal(self)
+
+	def set_position(self):
 		if self.Parent and self.Parent.IsIconized():
 			self.Parent.Restore()
 		if not getattr(self, "pos", None) or self.pos == (-1, -1):
@@ -384,7 +392,6 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.Center(wx.HORIZONTAL)
 		elif self.pos[1] == -1:
 			self.Center(wx.VERTICAL)
-		return wx.Dialog.ShowModal(self)
 
 
 class BitmapBackgroundBitmapButton(wx.BitmapButton):
