@@ -6631,7 +6631,7 @@ class MainFrame(BaseFrame):
 			dlg.OnCloseIntercept = self.profile_finish_close_handler
 			# Make sure we stay under our dialog
 			self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
-			wx.CallAfter(dlg.Show)
+			dlg.Show()
 		else:
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
