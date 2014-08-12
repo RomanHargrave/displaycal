@@ -347,16 +347,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.buttonpanel.Layout()
 		self.sizer0.SetSizeHints(self)
 		self.sizer0.Layout()
-		if parent and parent.IsIconized():
-			parent.Restore()
-		if not pos or pos == (-1, -1):
-			self.Center(wx.BOTH)
-		elif pos[0] == -1:
-			self.Center(wx.HORIZONTAL)
-		elif pos[1] == -1:
-			self.Center(wx.VERTICAL)
-		if not wx.GetApp().IsActive() and wx.GetApp().GetTopWindow():
-			wx.CallAfter(wx.GetApp().GetTopWindow().RequestUserAttention)
+		self.pos = pos
 		if show:
 			self.ok.SetDefault()
 			self.ShowModalThenDestroy(parent)
@@ -374,7 +365,8 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.Destroy()
 
 	def OnShow(self, event):
-		self.SetFocus()
+		if not wx.GetApp().IsActive() and wx.GetApp().GetTopWindow():
+			wx.GetApp().GetTopWindow().RequestUserAttention()
 
 	def OnClose(self, event):
 		if event.GetEventObject() == self:
@@ -382,6 +374,17 @@ class BaseInteractiveDialog(wx.Dialog):
 		else:
 			id = event.GetId()
 		self.EndModal(id)
+
+	def ShowModal(self):
+		if self.Parent and self.Parent.IsIconized():
+			self.Parent.Restore()
+		if not getattr(self, "pos", None) or self.pos == (-1, -1):
+			self.Center(wx.BOTH)
+		elif self.pos[0] == -1:
+			self.Center(wx.HORIZONTAL)
+		elif self.pos[1] == -1:
+			self.Center(wx.VERTICAL)
+		return wx.Dialog.ShowModal(self)
 
 
 class BitmapBackgroundBitmapButton(wx.BitmapButton):
