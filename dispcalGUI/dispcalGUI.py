@@ -270,7 +270,8 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 						bitmap=geticon(32, "dialog-information"), 
 						log=True)
 	if chglog:
-		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500, 300))
+		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500, 300),
+									 style=wx.BORDER_THEME)
 		htmlwnd.SetStandardFonts()
 		htmlwnd.SetPage(chglog)
 		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
