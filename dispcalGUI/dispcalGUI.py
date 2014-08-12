@@ -6528,9 +6528,6 @@ class MainFrame(BaseFrame):
 					if not getattr(self, "lut_viewer", None):
 						self.init_lut_viewer(profile=profile, 
 											 show=getcfg("lut_viewer.show"))
-				if ext not in (".icc", ".icm") or \
-				   getcfg("calibration.file") != profile_path:
-					self.preview_handler(preview=True)
 			else:
 				dlg.sizer3.Add((0, 8))
 			self.show_profile_info = wx.CheckBox(dlg, -1,
