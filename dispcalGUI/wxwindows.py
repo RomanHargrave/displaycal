@@ -883,7 +883,7 @@ class CustomGrid(wx.grid.Grid):
 		self.GetGridRowLabelWindow().Bind(wx.EVT_PAINT, self.OnPaintRowLabels)
 		self.SetDefaultCellAlignment(wx.ALIGN_LEFT, wx.ALIGN_CENTER)
 		self.SetDefaultCellBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
-		self.SetDefaultEditor(CustomCellEditor())
+		self.SetDefaultEditor(CustomCellEditor(self))
 		self.SetDefaultRenderer(CustomCellRenderer())
 		self.SetRowLabelAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
@@ -1025,6 +1025,11 @@ class CustomGrid(wx.grid.Grid):
 																	cell[0],
 																	cell[1]))
 				return
+		if ((event.KeyCode == wx.WXK_RETURN or
+			 event.KeyCode == wx.WXK_NUMPAD_ENTER) and self.IsEditable() and
+			 not self.IsCurrentCellReadOnly()):
+			self.EnableCellEditControl()
+			return
 		event.Skip()
 
 	def OnLabelLeftClick(self, event):
@@ -1350,14 +1355,16 @@ class CustomCheckBox(wx.Panel):
 
 class CustomCellEditor(wx.grid.PyGridCellEditor):
 
-	def __init__(self):
+	def __init__(self, grid):
 		wx.grid.PyGridCellEditor.__init__(self)
+		self._grid = grid
 
 	def Create(self, parent, id, evtHandler):
 		"""
 		Called to create the control, which must derive from wx.Control.
 		"""
 		self._tc = wx.TextCtrl(parent, id, "", style=wx.TE_CENTRE)
+		self._tc.Bind(wx.EVT_CHAR_HOOK, self._tc_keydown)
 		self._tc.SetInsertionPoint(0)
 		self.SetControl(self._tc)
 
@@ -1481,6 +1488,13 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		*Must Override*
 		"""
 		return self.__class__()
+
+	def _tc_keydown(self, event):
+		if (event.KeyCode == wx.WXK_RETURN or
+			event.KeyCode == wx.WXK_NUMPAD_ENTER):
+			self._grid.DisableCellEditControl()
+		else:
+			event.Skip()
 
 
 class CustomCellRenderer(wx.grid.PyGridCellRenderer):
