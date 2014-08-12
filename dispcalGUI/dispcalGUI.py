@@ -6732,7 +6732,7 @@ class MainFrame(BaseFrame):
 								result = lang.getstr("failure")
 						result = wrap(safe_unicode(result))
 						sizer.Add(wx.StaticBitmap(dlg, -1, geticon(16, icon)),
-								  flag=wx.TOP, border=4)
+								  flag=wx.TOP, border=2)
 						sizer.Add(wx.StaticText(dlg, -1, ": ".join([name,
 																	result])))
 				dlg.sizer0.SetSizeHints(dlg)
