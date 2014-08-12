@@ -1443,8 +1443,13 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		version only checks that the event has no modifiers.  F2 is special
 		and will always start the editor.
 		"""
-		return (not (evt.ControlDown() or evt.AltDown()) and
-				evt.GetKeyCode() != wx.WXK_SHIFT)
+		key = evt.GetKeyCode()
+		return (not (evt.CmdDown() or evt.ControlDown() or evt.AltDown()) and
+				(key in [wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2,
+						 wx.WXK_NUMPAD3, wx.WXK_NUMPAD4, wx.WXK_NUMPAD5,
+						 wx.WXK_NUMPAD6, wx.WXK_NUMPAD7, wx.WXK_NUMPAD8,
+						 wx.WXK_NUMPAD9] or (key < 256 and key >= 0 and
+											 chr(key) in string.printable)))
 
 	def StartingKey(self, evt):
 		"""
@@ -1458,7 +1463,7 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 					wx.WXK_NUMPAD8, wx.WXK_NUMPAD9
 					]:
 
-			ch = ch = chr(ord('0') + key - wx.WXK_NUMPAD0)
+			ch = chr(ord('0') + key - wx.WXK_NUMPAD0)
 
 		elif key < 256 and key >= 0 and chr(key) in string.printable:
 			ch = chr(key)
