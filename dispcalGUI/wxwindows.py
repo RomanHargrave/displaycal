@@ -1699,6 +1699,8 @@ class CustomColLabelRenderer(object):
 		self.bgcolor = bgcolor
 
 	def Draw(self, grid, dc, rect, col=-1):
+		if not grid.GetNumberCols():
+			return
 		orect = rect
 		if col == grid.GetNumberCols() - 1:
 			# Last column
