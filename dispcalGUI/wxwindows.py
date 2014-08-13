@@ -1600,47 +1600,60 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 			dc.DrawBitmap(image.ConvertToBitmap(), rect[0], rect[1])
 		else:
 			if (isSelected or isCursor) and col_label:
-				try:
-					dc = wx.GCDC(dc)
-				except:
-					pass
+				if sys.platform in ("darwin", "win32"):
+					try:
+						dc = wx.GCDC(dc)
+					except:
+						pass
 				dc.SetBrush(wx.Brush(bgcolor))
 				dc.SetPen(wx.TRANSPARENT_PEN)
 				dc.DrawRectangleRect(rect)
 				dc.SetBrush(wx.Brush(color))
 				rect = orect
-				if not rowselect:
-					w = 60 + rect[3] * 2
-					if rect.Width > w:
-						rect.Left += (rect.Width - w) / 2.0
-						rect.Width = w
+				if isinstance(dc, wx.GCDC):
+					if not rowselect:
+						w = 60 + rect[3] * 2
+						if rect.Width > w:
+							rect.Left += (rect.Width - w) / 2.0
+							rect.Width = w
+					draw = dc.DrawEllipse
+					offset = 1
+				else:
+					draw = dc.DrawRectangle
+					offset = 0
 				x, y, w, h = rect
 				if (not rowselect or
 					col == 0 or not grid.GetColLabelValue(col - 1)):
-					dc.DrawEllipse(x + 1, y + 1, h - 2, h - 2)
+					draw(x + offset, y + offset, h - offset * 2, h - offset * 2)
 				else:
-					dc.DrawRectangle(x, y + 1, h / 2.0, h - 2)
+					dc.DrawRectangle(x, y + offset, h / 2.0, h - offset * 2)
 				if (not rowselect or
 					col == grid.GetNumberCols() - 1 or
 					not grid.GetColLabelValue(col + 1)):
-					dc.DrawEllipse(x + w - h, y + 1, h - 2, h - 2)
+					draw(x + w - h, y + offset, h - offset * 2, h - offset * 2)
 				else:
-					dc.DrawRectangle(x + w - h / 2.0, y + 1, h / 2.0 , h - 2)
-				dc.DrawRectangle(x + h / 2.0, y + 1, w - h, h - 2)
+					dc.DrawRectangle(x + w - h / 2.0, y + offset, h / 2.0,
+									 h - offset * 2)
+				dc.DrawRectangle(x + h / 2.0, y + offset, w - h, h - offset * 2)
 				if not isSelected and isCursor:
 					dc.SetBrush(wx.Brush(bgcolor))
 					if (not rowselect or
 						col == 0 or not grid.GetColLabelValue(col - 1)):
-						dc.DrawEllipse(x + 3, y + 3, h - 6, h - 6)
+						draw(x + offset + 2, y + offset + 2,
+							 h - (offset + 2) * 2, h - (offset + 2) * 2)
 					else:
-						dc.DrawRectangle(x, y + 3, h / 2.0, h - 6)
+						dc.DrawRectangle(x, y + offset + 2, h / 2.0,
+										 h - (offset + 2) * 2)
 					if (not rowselect or
 						col == grid.GetNumberCols() - 1 or
 						not grid.GetColLabelValue(col + 1)):
-						dc.DrawEllipse(x + w - h + 2, y + 3, h - 6, h - 6)
+						draw(x + w - h + 2, y + offset + 2,
+							 h - (offset + 2) * 2, h - (offset + 2) * 2)
 					else:
-						dc.DrawRectangle(x + w - h / 2.0, y + 3, h / 2.0 , h - 6)
-					dc.DrawRectangle(x + h / 2.0, y + 3, w - h, h - 6)
+						dc.DrawRectangle(x + w - h / 2.0, y + offset + 2,
+										 h / 2.0, h - (offset + 2) * 2)
+					dc.DrawRectangle(x + h / 2.0, y + offset + 2, w - h,
+									 h - (offset + 2) * 2)
 			else:
 				dc.SetBrush(wx.Brush(color))
 				dc.SetPen(wx.TRANSPARENT_PEN)
