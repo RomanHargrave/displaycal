@@ -803,9 +803,9 @@ class TestchartEditor(wx.Frame):
 		except ValueError, exception:
 			wx.Bell()
 			if label in self.ti1[0]["DATA_FORMAT"].values():
-				strval = str(sample[label])
+				strval = "%.6f" % sample[label]
 				if "." in strval:
-					strval = strval.rstrip(".0")
+					strval = strval.rstrip("0").rstrip(".")
 			else:
 				strval = ""
 		else:

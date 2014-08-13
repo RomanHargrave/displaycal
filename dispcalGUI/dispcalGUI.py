@@ -10729,7 +10729,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 				wx.Bell()
 				strval = "%.4f" % item[label]
 				if "." in strval:
-					strval = strval.rstrip(".0")
+					strval = strval.rstrip("0").rstrip(".")
 				grid.SetCellValue(event.Row, event.Col,
 								  re.sub("^0+(?!\.)", "", strval) or "0")
 			else:
