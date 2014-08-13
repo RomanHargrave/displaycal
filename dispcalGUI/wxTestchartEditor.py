@@ -92,9 +92,10 @@ class TestchartEditor(wx.Frame):
 
 		if tc_use_alternate_preview:
 			# splitter
-			splitter = self.splitter = wx.SplitterWindow(self, -1, style = wx.SP_LIVE_UPDATE | wx.SP_3D)
-			self.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGED, self.tc_sash_handler, splitter)
-			self.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, self.tc_sash_handler, splitter)
+			splitter = self.splitter = wx.SplitterWindow(self, -1, style = wx.SP_LIVE_UPDATE | wx.SP_3DSASH)
+			if wx.VERSION < (2, 9):
+				self.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGED, self.tc_sash_handler, splitter)
+				self.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, self.tc_sash_handler, splitter)
 
 			p1 = wx.Panel(splitter)
 			p1.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -106,7 +107,7 @@ class TestchartEditor(wx.Frame):
 			p2.sizer = wx.BoxSizer(wx.VERTICAL)
 			p2.SetSizer(p2.sizer)
 
-			splitter.SetMinimumPaneSize(20)
+			splitter.SetMinimumPaneSize(23)
 			# splitter end
 
 			panel = self.panel = p1
@@ -542,7 +543,7 @@ class TestchartEditor(wx.Frame):
 
 		# grid
 		self.sizer.Add((-1, 12))
-		self.grid = CustomGrid(panel, -1, size = (-1, 150))
+		self.grid = CustomGrid(panel, -1, size=(-1, 100))
 		self.grid.DisableDragColSize()
 		self.grid.EnableGridLines(False)
 		self.grid.SetCellHighlightPenWidth(0)
@@ -571,6 +572,11 @@ class TestchartEditor(wx.Frame):
 
 		# preview area
 		if tc_use_alternate_preview:
+			self.sizer.SetSizeHints(self)
+			self.sizer.Layout()
+			self.sizer.SetMinSize((self.sizer.MinSize[0],
+								   self.sizer.MinSize[1] + 1))
+			p1.SetMinSize(self.sizer.MinSize)
 			splitter.SplitHorizontally(p1, p2, self.sizer.GetMinSize()[1])
 			hsizer = wx.BoxSizer(wx.VERTICAL)
 			gradientpanel = get_gradient_panel(p2, lang.getstr("preview"))
@@ -585,7 +591,6 @@ class TestchartEditor(wx.Frame):
 
 			self.patchsizer = wx.GridSizer(0, 0)
 			preview.sizer.Add(self.patchsizer)
-			preview.SetMinSize((-1, 100))
 			panel.Bind(wx.EVT_ENTER_WINDOW, self.tc_set_default_status, id = panel.GetId())
 			panel = p2
 
@@ -601,10 +606,13 @@ class TestchartEditor(wx.Frame):
 		self.SetStatusBar(status)
 
 		# layout
-		self.sizer.SetSizeHints(self)
-		self.sizer.Layout()
 		if tc_use_alternate_preview:
-			self.SetMinSize((self.GetMinSize()[0], self.GetMinSize()[1] + 150))
+			self.SetMinSize((self.GetMinSize()[0], self.GetMinSize()[1] +
+												   splitter.SashSize +
+												   p2.sizer.MinSize[1] + 100))
+		else:
+			self.sizer.SetSizeHints(self)
+			self.sizer.Layout()
 		
 		defaults.update({
 			"position.tcgen.x": self.GetDisplay().ClientArea[0] + 40,
