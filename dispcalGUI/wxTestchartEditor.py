@@ -2538,6 +2538,7 @@ class TestchartEditor(wx.Frame):
 				self.preview.Freeze()
 
 			grid = self.grid
+			grid.BeginBatch()
 			data_format = self.ti1.queryv1("DATA_FORMAT")
 			for i in data_format:
 				if data_format[i] in ("RGB_R", "RGB_G", "RGB_B"):
@@ -2577,10 +2578,12 @@ class TestchartEditor(wx.Frame):
 			self.tc_set_default_status()
 			if verbose >= 1: safe_print(lang.getstr("success"))
 			self.resize_grid()
+			grid.EndBatch()
 		if self.Parent and hasattr(self.Parent, "start_timers"):
 			self.Parent.start_timers()
 	
 	def tc_add_data(self, row, newdata):
+		self.grid.BeginBatch()
 		self.grid.InsertRows(row + 1, len(newdata))
 		data = self.ti1.queryv1("DATA")
 		if hasattr(self, "preview"):
@@ -2600,6 +2603,7 @@ class TestchartEditor(wx.Frame):
 			self.tc_grid_setcolorlabel(row + 1 + i, data)
 			if hasattr(self, "preview"):
 				self.tc_add_patch(row + 1 + i, data[row + 1 + i])
+		self.grid.EndBatch()
 		self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
 		self.tc_set_default_status()
 		self.tc_save_check()
@@ -2788,7 +2792,7 @@ class TestchartEditor(wx.Frame):
 		return
 
 	def tc_delete_rows(self, rows):
-		self.grid.Freeze()
+		self.grid.BeginBatch()
 		if hasattr(self, "preview"):
 			self.preview.Freeze()
 		rows.sort()
@@ -2810,7 +2814,7 @@ class TestchartEditor(wx.Frame):
 		self.grid.SelectRow(row)
 		self.grid.SetGridCursor(row, 0)
 		self.grid.MakeCellVisible(row, 0)
-		self.grid.Thaw()
+		self.grid.EndBatch()
 		self.tc_save_check()
 		if hasattr(self, "preview"):
 			self.preview.Layout()

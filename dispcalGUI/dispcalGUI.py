@@ -10666,6 +10666,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 			white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
 		dlg.white = white
 		dlg.suspicious_items = []
+		grid.BeginBatch()
 		for i, (prev, item, delta, sRGB_delta, prev_delta_to_sRGB,
 				delta_to_sRGB) in enumerate(suspicious):
 			for cur in (prev, item):
@@ -10690,6 +10691,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 					else:
 						dlg.update_row(row, RGB, XYZ, delta, sRGB_delta,
 									   delta_to_sRGB)
+		grid.EndBatch()
 
 		grid.Bind(wx.EVT_KEY_DOWN, dlg.key_handler)
 		grid.Bind(wx.grid.EVT_GRID_CELL_CHANGE, dlg.cell_change_handler)

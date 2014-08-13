@@ -1023,6 +1023,7 @@ class CustomGrid(wx.grid.Grid):
 					for i, row in enumerate(grid):
 						grid[i] = row[start_col:]
 					# 'Paste' values from clipboard
+					self.BeginBatch()
 					for i, row in enumerate(grid):
 						for j, cell in enumerate(row):
 							if (cell is not None and len(lines) > i and
@@ -1033,6 +1034,7 @@ class CustomGrid(wx.grid.Grid):
 																	self,
 																	cell[0],
 																	cell[1]))
+					self.EndBatch()
 				return
 		elif self.IsEditable() and not self.IsCurrentCellReadOnly():
 			if isinstance(self.GetCellEditor(self.GetGridCursorRow(),
@@ -1051,6 +1053,7 @@ class CustomGrid(wx.grid.Grid):
 					ch = safe_unicode(chr(keycode))
 				if ch is not None or keycode in (wx.WXK_BACK, wx.WXK_DELETE):
 					changed = 0
+					self.BeginBatch()
 					for row, col in self.GetSelection():
 						if row > -1 and col > -1 and not self.IsReadOnly(row, col):
 							if (self._overwrite_cell_values or
@@ -1069,6 +1072,7 @@ class CustomGrid(wx.grid.Grid):
 																row,
 																col))
 							changed += 1
+					self.EndBatch()
 					self._overwrite_cell_values = False
 					if not changed:
 						wx.Bell()
