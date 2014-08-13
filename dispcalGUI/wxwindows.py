@@ -1044,10 +1044,9 @@ class CustomGrid(wx.grid.Grid):
 							   wx.WXK_NUMPAD6, wx.WXK_NUMPAD7, wx.WXK_NUMPAD8,
 							   wx.WXK_NUMPAD9]:
 					ch = chr(ord('0') + keycode - wx.WXK_NUMPAD0)
-				elif keycode == wx.WXK_NUMPAD_DECIMAL:
+				elif keycode in (wx.WXK_NUMPAD_DECIMAL,
+								 wx.WXK_NUMPAD_SEPARATOR):
 					ch = "."
-				elif event.UnicodeKey:
-					ch = unichr(event.UnicodeKey)
 				elif keycode < 256 and keycode >= 32:
 					ch = safe_unicode(chr(keycode))
 				if ch is not None or keycode in (wx.WXK_BACK, wx.WXK_DELETE):
