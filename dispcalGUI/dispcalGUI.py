@@ -10635,7 +10635,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 			else:
 				size = 60
 			if i == grid.GetNumberCols() - 1:
-				size = grid.Size[0] - w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+				size = grid.ClientSize[0] - w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
 			w += size
 			grid.SetColSize(i, size)
 		for i, label in enumerate(["", "R %", "G %", "B %", "", "", "X", "Y", "Z",
@@ -10717,15 +10717,24 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 				label = "RGB_%s" % label
 			else:
 				label = "XYZ_%s" % label
+			strval = "0" + grid.GetCellValue(event.Row,
+											 event.Col).replace(",", ".")
 			try:
-				value = float(grid.GetCellValue(event.Row, event.Col).replace(",", "."))
+				value = float(strval)
+				if (label[:3] == "RGB" or label == "XYZ_Y") and value > 100:
+					raise ValueError("Value %r is invalid" % value)
+				elif value < 0:
+					raise ValueError("Negative value %r is invalid" % value)
 			except ValueError:
 				wx.Bell()
-				grid.SetCellValue(event.Row, event.Col, "%.4f" % item[label])
+				strval = "%.4f" % item[label]
+				if "." in strval:
+					strval = strval.rstrip(".0")
+				grid.SetCellValue(event.Row, event.Col,
+								  re.sub("^0+(?!\.)", "", strval) or "0")
 			else:
-				if event.Col < 4: 
-					value = max(min(value, 100), 0)
-				grid.SetCellValue(event.Row, event.Col, str(value))
+				grid.SetCellValue(event.Row, event.Col,
+								  re.sub("^0+(?!\.)", "", strval) or "0")
 				RGB = []
 				for i in (1, 2, 3):
 					RGB.append(float(grid.GetCellValue(event.Row, i)))
@@ -10765,12 +10774,11 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 				dlg.ok.Enable(not dlg.force or bool(dlg.mods))
 
 				# This workaround is needed to update cell colours
-				cells = grid.GetSelectedCells()
+				cells = grid.GetSelection()
 				grid.SelectAll()
 				grid.ClearSelection()
-				if cells:
-					grid.SelectBlock(cells[0][0], cells[0][1],
-									 cells[-1][0], cells[-1][0])
+				for row, col in cells:
+					grid.SelectBlock(row, col, row, col, True)
 
 	def cell_click_handler(self, event):
 		if event.Col == 0:

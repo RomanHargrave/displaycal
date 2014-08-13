@@ -541,6 +541,10 @@ class TestchartEditor(wx.Frame):
 
 
 		# grid
+		separator_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+		separator = wx.Panel(panel, size=(-1, 1))
+		separator.BackgroundColour = separator_color
+		self.sizer.Add(separator, flag=wx.TOP | wx.EXPAND, border=12)
 		self.grid = CustomGrid(panel, -1, size = (-1, 150))
 		self.grid.DisableDragColSize()
 		self.grid.EnableGridLines(False)
@@ -552,7 +556,7 @@ class TestchartEditor(wx.Frame):
 		self.grid.SetScrollRate(0, 5)
 		self.grid.draw_horizontal_grid_lines = False
 		self.grid.draw_vertical_grid_lines = False
-		self.sizer.Add(self.grid, 1, flag=wx.TOP | wx.EXPAND, border=12)
+		self.sizer.Add(self.grid, 1, flag=wx.EXPAND)
 		self.grid.CreateGrid(0, 0)
 		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
 					   wx.FONTWEIGHT_NORMAL)
@@ -562,6 +566,10 @@ class TestchartEditor(wx.Frame):
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.tc_grid_label_left_dclick_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_RANGE_SELECT, self.tc_grid_range_select_handler)
 		self.grid.DisableDragRowSize()
+		if sys.platform not in ("darwin", "win32"):
+			separator = wx.Panel(panel, size=(-1, 1))
+			separator.BackgroundColour = separator_color
+			self.sizer.Add(separator, flag=wx.EXPAND)
 
 		# preview area
 		if tc_use_alternate_preview:
@@ -783,21 +791,25 @@ class TestchartEditor(wx.Frame):
 		data = self.ti1[0]["DATA"]
 		sample = data[event.GetRow()]
 		label = self.label_b2a.get(self.grid.GetColLabelValue(event.GetCol()))
-		value = self.grid.GetCellValue(event.GetRow(), event.GetCol()).replace(",", ".")
+		strval = "0" + self.grid.GetCellValue(event.GetRow(),
+											  event.GetCol()).replace(",", ".")
 		value_set = False
 		try:
-			value = float(value)
+			value = float(strval)
+			if value > 100:
+				raise ValueError("RGB value %r%% is invalid" % value)
+			elif value < 0:
+				raise ValueError("Negative RGB value %r%% is invalid" % value)
 		except ValueError, exception:
+			wx.Bell()
 			if label in self.ti1[0]["DATA_FORMAT"].values():
-				value = sample[label]
+				strval = str(sample[label])
+				if "." in strval:
+					strval = strval.rstrip(".0")
 			else:
-				value = ""
+				strval = ""
 		else:
 			if label in ("RGB_R", "RGB_G", "RGB_B"):
-				if value > 100:
-					value = 100.0
-				elif value < 0:
-					value = 0.0
 				sample[label] = value
 				# If the same RGB combo is already in the ti1, use its XYZ
 				# TODO: Implement proper lookup when using precond profile
@@ -842,7 +854,8 @@ class TestchartEditor(wx.Frame):
 				self.tc_patch_setcolorlabel(patch)
 				patch.Refresh()
 		if not value_set:
-			self.grid.SetCellValue(event.GetRow(), event.GetCol(), CGATS.rcut(value, sample.parent.vmaxlen))
+			self.grid.SetCellValue(event.GetRow(), event.GetCol(),
+								   re.sub("^0+(?!\.)", "", strval) or "0")
 
 	def tc_white_patches_handler(self, event = None):
 		setcfg("tc_white_patches", self.tc_white_patches.GetValue())

@@ -1103,6 +1103,8 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.draw_horizontal_grid_lines = False
 		self.grid.draw_vertical_grid_lines = False
 		self.grid.draw_row_labels = False
+		self.grid.show_cursor_outline = False
+		self.grid.style = ""
 		self.grid.CreateGrid(0, 2)
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
@@ -1111,6 +1113,7 @@ class ProfileInfoFrame(LUTFrame):
 					   wx.FONTWEIGHT_NORMAL)
 		self.grid.SetDefaultCellFont(font)
 		self.grid.SetDefaultRowSize(20)
+		self.grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
 		self.grid.SetRowLabelSize(20)
 		self.grid.SetColLabelSize(0)
 		self.grid.DisableDragRowSize()

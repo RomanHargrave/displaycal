@@ -875,6 +875,8 @@ class CustomGrid(wx.grid.Grid):
 
 	def __init__(self, *args, **kwargs):
 		wx.grid.Grid.__init__(self, *args, **kwargs)
+		self.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnCellLeftClick)
+		self.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnCellLeftClick)
 		self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 		self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.OnCellSelect)
 		self.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.OnLabelLeftClick)
@@ -887,21 +889,18 @@ class CustomGrid(wx.grid.Grid):
 		self.SetDefaultRenderer(CustomCellRenderer())
 		self.SetRowLabelAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
+		self.headerbitmap = None
 		if sys.platform == "darwin":
 			# wxMac draws a too short native header
-			bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 22))
-			if wx.VERSION >= (2, 8, 9, 1):
-				image = bitmap.ConvertToImage()
-				image = image.AdjustChannels(1.2, 1.2, 1.2)
-				bitmap = image.ConvertToBitmap()
-			self.headerbitmap = bitmap
 			self.rendernative = False
+			self.style = "Mavericks"
 		else:
-			self.headerbitmap = None
 			self.rendernative = True
+			self.style = ""
 		self._default_col_label_renderer = CustomColLabelRenderer()
 		self._default_row_label_renderer = CustomRowLabelRenderer()
 		self._col_label_renderers = {}
+		self._overwrite_cell_values = True
 		self._row_label_renderers = {}
 		self._select_in_progress = False
 		self.alternate_cell_background_color = True
@@ -911,7 +910,8 @@ class CustomGrid(wx.grid.Grid):
 		self.draw_row_labels = True
 		self.draw_horizontal_grid_lines = True
 		self.draw_vertical_grid_lines = True
-		self.selection_alpha = .8
+		self.selection_alpha = 1.0
+		self.show_cursor_outline = True
 
 	def GetColLeftRight(self, col):
 		c = 0
@@ -931,16 +931,27 @@ class CustomGrid(wx.grid.Grid):
 		bottom = top + self.GetRowSize(row) - 1
 		return top, bottom
 
+	def OnCellLeftClick(self, event):
+		if (event.CmdDown() or event.ControlDown() or event.ShiftDown() or
+			not isinstance(self.GetCellEditor(self.GetGridCursorRow(),
+											   self.GetGridCursorCol()),
+							CustomCellEditor)):
+			event.Skip()
+		else:
+			self.SetGridCursor(event.Row, event.Col)
+			self.SelectBlock(event.Row, event.Col, event.Row, event.Col)
+
 	def OnCellSelect(self, event):
 		row, col = event.GetRow(), event.GetCol()
-		self.SelectBlock(row, col, row, col)
 		self._anchor_row = row
+		self._overwrite_cell_values = True
+		self.Refresh()
 		event.Skip()
 
 	def OnKeyDown(self, event):
+		keycode = event.KeyCode
 		if event.CmdDown() or event.ControlDown():
 			# CTRL (Linux/Mac/Windows) / CMD (Mac)
-			keycode = event.KeyCode
 			if keycode == 65:
 				# A
 				self.SelectAll()
@@ -982,9 +993,7 @@ class CustomGrid(wx.grid.Grid):
 				success = wx.TheClipboard.GetData(do)
 				wx.TheClipboard.Close()
 				if success:
-					txt = StringIO(do.GetText())
-					lines = txt.readlines()
-					txt.close()
+					lines = do.GetText().splitlines()
 					for i, line in enumerate(lines):
 						lines[i] = re.sub(" +", "\t", line).split("\t")
 					# Translate from selected cells into a grid with None values
@@ -1025,11 +1034,46 @@ class CustomGrid(wx.grid.Grid):
 																	cell[0],
 																	cell[1]))
 				return
-		if ((event.KeyCode == wx.WXK_RETURN or
-			 event.KeyCode == wx.WXK_NUMPAD_ENTER) and self.IsEditable() and
-			 not self.IsCurrentCellReadOnly()):
-			self.EnableCellEditControl()
-			return
+		elif self.IsEditable() and not self.IsCurrentCellReadOnly():
+			if isinstance(self.GetCellEditor(self.GetGridCursorRow(),
+											 self.GetGridCursorCol()),
+						  CustomCellEditor):
+				ch = None
+				if keycode in [wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2,
+							   wx.WXK_NUMPAD3, wx.WXK_NUMPAD4, wx.WXK_NUMPAD5,
+							   wx.WXK_NUMPAD6, wx.WXK_NUMPAD7, wx.WXK_NUMPAD8,
+							   wx.WXK_NUMPAD9]:
+					ch = chr(ord('0') + keycode - wx.WXK_NUMPAD0)
+				elif keycode < 256 and keycode >= 32:
+					ch = chr(keycode)
+				if ch is not None or keycode in (wx.WXK_BACK, wx.WXK_DELETE):
+					changed = 0
+					for row, col in self.GetSelection():
+						if row > -1 and col > -1 and not self.IsReadOnly(row, col):
+							if (self._overwrite_cell_values or
+								keycode == wx.WXK_DELETE):
+								value = ""
+							else:
+								value = self.GetCellValue(row, col)
+							if keycode == wx.WXK_BACK:
+								value = value[:-1]
+							elif keycode != wx.WXK_DELETE:
+								value += ch
+							self.SetCellValue(row, col, value)
+							self.ProcessEvent(wx.grid.GridEvent(-1,
+																wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
+																self,
+																row,
+																col))
+							changed += 1
+					self._overwrite_cell_values = False
+					if not changed:
+						wx.Bell()
+					return
+			elif (event.KeyCode == wx.WXK_RETURN or
+				  event.KeyCode == wx.WXK_NUMPAD_ENTER):
+				self.EnableCellEditControl()
+				return
 		event.Skip()
 
 	def OnLabelLeftClick(self, event):
@@ -1358,18 +1402,16 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 	def __init__(self, grid):
 		wx.grid.PyGridCellEditor.__init__(self)
 		self._grid = grid
+		self._cell_renderer = CustomCellRenderer()
 
 	def Create(self, parent, id, evtHandler):
 		"""
 		Called to create the control, which must derive from wx.Control.
 		"""
-		self._tc = wx.TextCtrl(parent, id, "", style=wx.TE_CENTRE)
-		self._tc.Bind(wx.EVT_CHAR_HOOK, self._tc_keydown)
-		self._tc.SetInsertionPoint(0)
-		self.SetControl(self._tc)
-
-		if evtHandler:
-			self._tc.PushEventHandler(evtHandler)
+		safe_print("CustomCellEditor.Create(%r, %r, %r) was called. This "
+				   "should not happen, but is unlikely an issue." %
+				   (parent, id, evtHandler))
+		self.SetControl(wx.StaticText(parent, -1, ""))
 
 	def SetSize(self, rect):
 		"""
@@ -1377,7 +1419,9 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		If you don't fill the cell (the rect) then be sure to override
 		PaintBackground and do something meaningful there.
 		"""
-		self._tc.SetDimensions(rect.x, rect.y, rect.width+2, rect.height+2,
+		safe_print("CustomCellEditor.SetSize(%r) was called. This should not "
+				   "happen, but is unlikely an issue." % rect)
+		self.Control.SetDimensions(rect.x, rect.y, rect.width, rect.height,
 							   wx.SIZE_ALLOW_MINUS_ONE)
 
 	def Show(self, show, attr):
@@ -1385,6 +1429,8 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		Show or hide the edit control.  You can use the attr (if not None)
 		to set colours or fonts for the control.
 		"""
+		safe_print("CustomCellEditor.Show(%r, %r) was called. This should "
+				   "not happen, but is unlikely an issue." % (show, attr))
 		super(self.__class__, self).Show(show, attr)
 
 	def PaintBackground(self, dc, rect, attr=None):
@@ -1394,48 +1440,39 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		attribute.  In this class the edit control fills the whole cell so
 		don't do anything at all in order to reduce flicker.
 		"""
+		self._cell_renderer.Draw(self._grid, attr, dc, rect,
+								 self._grid.GetGridCursorRow(),
+								 self._grid.GetGridCursorCol(), True)
 
 	def BeginEdit(self, row, col, grid):
 		"""
 		Fetch the value from the table and prepare the edit control
 		to begin editing.  Set the focus to the edit control.
 		"""
-		self.startValue = grid.GetTable().GetValue(row, col)
-		self._tc.SetValue(self.startValue)
-		self._tc.SetInsertionPointEnd()
-		self._tc.SetFocus()
-
-		self._tc.SetSelection(0, self._tc.GetLastPosition())
+		safe_print("CustomCellEditor.BeginEdit(%r, %r, %r) was called. This "
+				   "should not happen, but is unlikely an issue." %
+				   (row, col, grid))
 
 	def EndEdit(self, row, col, grid, value=None):
 		"""
 		Complete the editing of the current cell. Returns True if the value
 		has changed.  If necessary, the control may be destroyed.
 		"""
+		safe_print("CustomCellEditor.EndEdit(%r, %r, %r, %r) was called. This "
+				   "should not happen, but is unlikely an issue." %
+				   (row, col, grid, value))
 		if wx.VERSION >= (2, 9):
 			changed = None
 		else:
 			changed = False
-
-		val = self._tc.GetValue()
-		
-		if val != self.startValue:
-			if wx.VERSION >= 2.9:
-				changed = val
-			else:
-				changed = True
-			grid.GetTable().SetValue(row, col, val) # update the table
-
-		self.startValue = ''
-		self._tc.SetValue('')
 		return changed
 
 	def Reset(self):
 		"""
 		Reset the value in the control back to its starting value.
 		"""
-		self._tc.SetValue(self.startValue)
-		self._tc.SetInsertionPointEnd()
+		safe_print("CustomCellEditor.Reset() was called. This should "
+				   "not happen, but is unlikely an issue.")
 
 	def IsAcceptedKey(self, evt):
 		"""
@@ -1443,38 +1480,16 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		version only checks that the event has no modifiers.  F2 is special
 		and will always start the editor.
 		"""
-		key = evt.GetKeyCode()
-		return (not (evt.CmdDown() or evt.ControlDown() or evt.AltDown()) and
-				(key in [wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2,
-						 wx.WXK_NUMPAD3, wx.WXK_NUMPAD4, wx.WXK_NUMPAD5,
-						 wx.WXK_NUMPAD6, wx.WXK_NUMPAD7, wx.WXK_NUMPAD8,
-						 wx.WXK_NUMPAD9] or (key < 256 and key >= 0 and
-											 chr(key) in string.printable)))
+		return False
 
 	def StartingKey(self, evt):
 		"""
 		If the editor is enabled by pressing keys on the grid, this will be
 		called to let the editor do something about that first key if desired.
 		"""
-		key = evt.GetKeyCode()
-		ch = None
-		if key in [ wx.WXK_NUMPAD0, wx.WXK_NUMPAD1, wx.WXK_NUMPAD2, wx.WXK_NUMPAD3, 
-					wx.WXK_NUMPAD4, wx.WXK_NUMPAD5, wx.WXK_NUMPAD6, wx.WXK_NUMPAD7, 
-					wx.WXK_NUMPAD8, wx.WXK_NUMPAD9
-					]:
-
-			ch = chr(ord('0') + key - wx.WXK_NUMPAD0)
-
-		elif key < 256 and key >= 0 and chr(key) in string.printable:
-			ch = chr(key)
-
-		if ch is not None:
-			# For this example, replace the text.  Normally we would append it.
-			#self._tc.AppendText(ch)
-			self._tc.SetValue(ch)
-			self._tc.SetInsertionPointEnd()
-		else:
-			evt.Skip()
+		safe_print("CustomCellEditor.StartingKey(%r) was called. This should "
+				   "not happen, but is unlikely an issue." % evt)
+		evt.Skip()
 
 	def StartingClick(self):
 		"""
@@ -1494,13 +1509,6 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 		"""
 		return self.__class__()
 
-	def _tc_keydown(self, event):
-		if (event.KeyCode == wx.WXK_RETURN or
-			event.KeyCode == wx.WXK_NUMPAD_ENTER):
-			self._grid.DisableCellEditControl()
-		else:
-			event.Skip()
-
 
 class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 
@@ -1515,7 +1523,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 		orect = rect
 		if col == grid.GetNumberCols() - 1:
 			# Last column
-			w = grid.Size[0] - rect[0]
+			w = grid.ClientSize[0] - rect[0]
 			rect = wx.Rect(rect[0], rect[1], w, rect[3])
 		bgcolor = grid.GetCellBackgroundColour(row, col)
 		col_label = grid.GetColLabelValue(col)
@@ -1530,43 +1538,109 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 				# Make sure it's opaque
 				bgcolor = wx.Colour(bgcolor.Red(), bgcolor.Green(),
 									bgcolor.Blue())
-		if isSelected and is_default_bgcolor and col_label:
+		special = bgcolor.Get(True) == (0, 0, 0, 0)
+		mavericks = getattr(grid, "style", None) == "Mavericks"
+		if (not special and mavericks and bgcolor.Red() < 255):
+			# Use Mavericks-like color scheme
+			newcolor = [int(round(min(bgcolor.Get()[i] * (v / 102.0), 255)))
+						for i, v in enumerate((98, 100, 102))]
+			bgcolor.Set(*newcolor)
+		rowselect = grid.GetSelectionMode() == wx.grid.Grid.wxGridSelectRows
+		isCursor = (grid.show_cursor_outline and
+					((row, col) == (grid.GetGridCursorRow(),
+									grid.GetGridCursorCol()) or
+					 (rowselect and row == grid.GetGridCursorRow())))
+		if (isSelected or isCursor) and is_default_bgcolor and col_label:
 			color = grid.GetSelectionBackground()
+			if isSelected:
+				textcolor = grid.GetSelectionForeground()
+			else:
+				textcolor = grid.GetCellTextColour(row, col)
 			focus = grid.Parent.FindFocus()
 			if not focus or grid not in (focus, focus.GetParent(),
 										 focus.GetGrandParent()):
-				rgb = int((color.Red() + color.Green() + color.Blue()) / 3.0)
-				color = wx.Colour(rgb, rgb, rgb)
-			alpha = grid.selection_alpha * 255 or grid.GetSelectionBackground().Alpha()
-			# Blend with bg color
-			if alpha < 255:
-				# Alpha blending
-				bgblend = (255 - alpha) / 255.0
-				blend = alpha / 255.0
-				color = wx.Colour(int(round(bgblend * bgcolor.Red() +
-											blend * color.Red())),
-								  int(round(bgblend * bgcolor.Green() +
-											blend * color.Green())),
-								  int(round(bgblend * bgcolor.Blue() +
-											blend * color.Blue())))
+				if mavericks or sys.platform == "darwin":
+					# Use Mavericks-like color scheme
+					color = wx.Colour(202, 202, 202)
+					if isSelected:
+						textcolor = wx.Colour(51, 51, 51)
+				else:
+					rgb = int((color.Red() + color.Green() + color.Blue()) / 3.0)
+					color = wx.Colour(rgb, rgb, rgb)
+			elif mavericks or sys.platform == "darwin":
+				# Use Mavericks-like color scheme
+				color = wx.Colour(44, 93, 205)
+				if isSelected:
+					textcolor = wx.WHITE
 			else:
-				# Multiply
-				color = wx.Colour(int(round(bgcolor.Red() / 255.0 * color.Red())),
-								  int(round(bgcolor.Green() / 255.0 * color.Green())),
-								  int(round(bgcolor.Blue() / 255.0 * color.Blue())))
-			textcolor = grid.GetSelectionForeground()
+				alpha = (grid.selection_alpha * 255 or
+						 grid.GetSelectionBackground().Alpha())
+				# Blend with bg color
+				if alpha < 255:
+					# Alpha blending
+					bgblend = (255 - alpha) / 255.0
+					blend = alpha / 255.0
+					color = wx.Colour(int(round(bgblend * bgcolor.Red() +
+												blend * color.Red())),
+									  int(round(bgblend * bgcolor.Green() +
+												blend * color.Green())),
+									  int(round(bgblend * bgcolor.Blue() +
+												blend * color.Blue())))
 		else:
 			color = bgcolor
 			textcolor = grid.GetCellTextColour(row, col)
-		if bgcolor.Get(True) == (0, 0, 0, 0):
+		if special:
 			# Special
 			image = self.specialbitmap.ConvertToImage()
 			image.Rescale(rect[2], rect[3])
 			dc.DrawBitmap(image.ConvertToBitmap(), rect[0], rect[1])
 		else:
-			dc.SetBrush(wx.Brush(color))
-			dc.SetPen(wx.TRANSPARENT_PEN)
-			dc.DrawRectangleRect(rect)
+			if (isSelected or isCursor) and col_label:
+				try:
+					dc = wx.GCDC(dc)
+				except:
+					pass
+				dc.SetBrush(wx.Brush(bgcolor))
+				dc.SetPen(wx.TRANSPARENT_PEN)
+				dc.DrawRectangleRect(rect)
+				dc.SetBrush(wx.Brush(color))
+				rect = orect
+				if not rowselect:
+					w = 60 + rect[3] * 2
+					if rect.Width > w:
+						rect.Left += (rect.Width - w) / 2.0
+						rect.Width = w
+				x, y, w, h = rect
+				if (not rowselect or
+					col == 0 or not grid.GetColLabelValue(col - 1)):
+					dc.DrawEllipse(x + 1, y + 1, h - 2, h - 2)
+				else:
+					dc.DrawRectangle(x, y + 1, h / 2.0, h - 2)
+				if (not rowselect or
+					col == grid.GetNumberCols() - 1 or
+					not grid.GetColLabelValue(col + 1)):
+					dc.DrawEllipse(x + w - h, y + 1, h - 2, h - 2)
+				else:
+					dc.DrawRectangle(x + w - h / 2.0, y + 1, h / 2.0 , h - 2)
+				dc.DrawRectangle(x + h / 2.0, y + 1, w - h, h - 2)
+				if not isSelected and isCursor:
+					dc.SetBrush(wx.Brush(bgcolor))
+					if (not rowselect or
+						col == 0 or not grid.GetColLabelValue(col - 1)):
+						dc.DrawEllipse(x + 3, y + 3, h - 6, h - 6)
+					else:
+						dc.DrawRectangle(x, y + 3, h / 2.0, h - 6)
+					if (not rowselect or
+						col == grid.GetNumberCols() - 1 or
+						not grid.GetColLabelValue(col + 1)):
+						dc.DrawEllipse(x + w - h + 2, y + 3, h - 6, h - 6)
+					else:
+						dc.DrawRectangle(x + w - h / 2.0, y + 3, h / 2.0 , h - 6)
+					dc.DrawRectangle(x + h / 2.0, y + 3, w - h, h - 6)
+			else:
+				dc.SetBrush(wx.Brush(color))
+				dc.SetPen(wx.TRANSPARENT_PEN)
+				dc.DrawRectangleRect(rect)
 		dc.SetFont(grid.GetCellFont(row, col))
 		dc.SetTextForeground(textcolor)
 		self.DrawLabel(grid, dc, orect, row, col)
@@ -1612,17 +1686,10 @@ class CustomColLabelRenderer(object):
 		orect = rect
 		if col == grid.GetNumberCols() - 1:
 			# Last column
-			w = grid.Size[0] - rect[0]
+			w = grid.ClientSize[0] - rect[0]
 			rect = wx.Rect(rect[0], rect[1], w, rect[3])
-		if self.bgcolor:
-			color = self.bgcolor
-		else:
-			color = grid.GetLabelBackgroundColour()
-			if col % 2 == 0 and grid.alternate_col_label_background_color:
-				color = wx.Colour(*[int(v * .98) for v in color])
-			elif color.Alpha() < 255:
-				# Make sure it's opaque
-				color = wx.Colour(color.Red(), color.Green(), color.Blue())
+		mavericks = (getattr(grid, "style", None) == "Mavericks" or
+					 sys.platform == "darwin")
 		if grid.headerbitmap:
 			img = grid.headerbitmap.ConvertToImage()
 			img.Rescale(rect[2], rect[3], quality=wx.IMAGE_QUALITY_NORMAL)
@@ -1637,12 +1704,25 @@ class CustomColLabelRenderer(object):
 			render = wx.RendererNative.Get()
 			render.DrawHeaderButton(grid, dc, rect)
 		else:
+			if self.bgcolor:
+				color = self.bgcolor
+			else:
+				if mavericks:
+					# Use Mavericks-like color scheme
+					color = wx.Colour(255, 255, 255)
+				else:
+					color = grid.GetLabelBackgroundColour()
+				if col % 2 == 0 and grid.alternate_col_label_background_color:
+					color = wx.Colour(*[int(v * .98) for v in color])
+				elif color.Alpha() < 255:
+					# Make sure it's opaque
+					color = wx.Colour(color.Red(), color.Green(), color.Blue())
 			dc.SetBrush(wx.Brush(color))
 			dc.SetPen(wx.TRANSPARENT_PEN)
 			dc.DrawRectangleRect(rect)
 			pen = wx.Pen(grid.GetGridLineColour())
 			dc.SetPen(pen)
-			if getattr(grid, "draw_horizontal_grid_lines", True):
+			if getattr(grid, "draw_horizontal_grid_lines", True) or mavericks:
 				dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2],
 							rect[1] + rect[3] - 1)
 			if getattr(grid, "draw_vertical_grid_lines", True):
@@ -1650,7 +1730,12 @@ class CustomColLabelRenderer(object):
 							rect[0] + rect[2] - 1, rect[3])
 		if getattr(grid, "draw_col_labels", True) and col > -1:
 			dc.SetFont(grid.GetLabelFont())
-			dc.SetTextForeground(grid.GetLabelTextColour())
+			if mavericks:
+				# Use Mavericks-like color scheme
+				color = wx.Colour(80, 100, 120)
+			else:
+				color = grid.GetLabelTextColour()
+			dc.SetTextForeground(color)
 			align = grid.GetColLabelAlignment()
 			if align[1] == wx.ALIGN_CENTER:
 				align = align[0], wx.ALIGN_CENTER_VERTICAL
@@ -1673,6 +1758,11 @@ class CustomRowLabelRenderer(object):
 			elif color.Alpha() < 255:
 				# Make sure it's opaque
 				color = wx.Colour(color.Red(), color.Green(), color.Blue())
+			if getattr(grid, "style", None) == "Mavericks" and color.Red() < 255:
+				# Use Mavericks-like color scheme
+				newcolor = [int(round(color.Get()[i] * (v / 102.0)))
+							for i, v in enumerate((98, 100, 102))]
+				color.Set(*newcolor)
 		dc.SetBrush(wx.Brush(color))
 		dc.SetPen(wx.TRANSPARENT_PEN)
 		dc.DrawRectangleRect(rect)

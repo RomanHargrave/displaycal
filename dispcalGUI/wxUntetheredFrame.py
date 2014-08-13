@@ -68,13 +68,17 @@ class UntetheredFrame(wx.Frame):
 		self.label_XYZ.SetForegroundColour(FGCOLOUR)
 		panelsizer.Add(self.label_XYZ, 0, wx.TOP | wx.RIGHT | wx.EXPAND,
 					   border=8)
+		if sys.platform == "darwin":
+			style = wx.BORDER_THEME
+		else:
+			style = wx.BORDER_SIMPLE
 		self.panel_RGB = BitmapBackgroundPanel(self.panel, size=(256, 256),
-											   style=wx.BORDER_SIMPLE)
+											   style=style)
 		self.panel_RGB.scalebitmap = (True, True)
 		self.panel_RGB.SetBitmap(getbitmap("theme/checkerboard-32x32x5-333-444"))
 		panelsizer.Add(self.panel_RGB, 1, wx.LEFT | wx.EXPAND, border=8)
 		self.panel_XYZ = BitmapBackgroundPanel(self.panel, size=(256, 256),
-											   style=wx.BORDER_SIMPLE)
+											   style=style)
 		self.panel_XYZ.scalebitmap = (True, True)
 		self.panel_XYZ.SetBitmap(getbitmap("theme/checkerboard-32x32x5-333-444"))
 		panelsizer.Add(self.panel_XYZ, 1, wx.RIGHT | wx.EXPAND, border=8)
@@ -142,6 +146,7 @@ class UntetheredFrame(wx.Frame):
 		self.grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
 		self.grid.draw_horizontal_grid_lines = False
 		self.grid.draw_vertical_grid_lines = False
+		self.grid.style = ""
 		self.grid.CreateGrid(0, 9)
 		self.grid.SetRowLabelSize(62)
 		for i in xrange(9):
@@ -354,9 +359,7 @@ class UntetheredFrame(wx.Frame):
 			keycode = self.id_to_keycode.get(event.GetId())
 		if keycode is not None:
 			if event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
-				if event.ControlDown() or event.CmdDown():
-					event.Skip()
-				elif keycode in (wx.WXK_UP, wx.WXK_NUMPAD_UP):
+				if keycode in (wx.WXK_UP, wx.WXK_NUMPAD_UP):
 					self.back_btn_handler(None)
 				elif keycode in (wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN):
 					self.next_btn_handler(None)
@@ -374,6 +377,8 @@ class UntetheredFrame(wx.Frame):
 					if self.index > -1:
 						self.grid.MovePageUp()
 						self.update(self.grid.GetGridCursorRow())
+				elif event.ControlDown() or event.CmdDown():
+					event.Skip()
 				return
 			elif self.has_worker_subprocess() and keycode < 255:
 				if keycode == 27 or chr(keycode) == "Q":
