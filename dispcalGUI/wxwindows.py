@@ -944,12 +944,12 @@ class CustomGrid(wx.grid.Grid):
 			event.Skip()
 		else:
 			self.SetGridCursor(event.Row, event.Col)
-			self.SelectBlock(event.Row, event.Col, event.Row, event.Col)
 
 	def OnCellSelect(self, event):
 		row, col = event.GetRow(), event.GetCol()
 		self._anchor_row = row
 		self._overwrite_cell_values = True
+		self.SelectBlock(event.Row, event.Col, event.Row, event.Col)
 		self.Refresh()
 		event.Skip()
 
