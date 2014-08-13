@@ -875,6 +875,10 @@ class CustomGrid(wx.grid.Grid):
 
 	def __init__(self, *args, **kwargs):
 		wx.grid.Grid.__init__(self, *args, **kwargs)
+		self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+		self.Bind(wx.EVT_SIZE, self.OnResize)
+		self.Bind(wx.grid.EVT_GRID_ROW_SIZE, self.OnResize)
+		self.Bind(wx.grid.EVT_GRID_COL_SIZE, self.OnResize)
 		self.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnCellLeftClick)
 		self.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnCellLeftClick)
 		self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
@@ -886,7 +890,8 @@ class CustomGrid(wx.grid.Grid):
 		self.SetDefaultCellAlignment(wx.ALIGN_LEFT, wx.ALIGN_CENTER)
 		self.SetDefaultCellBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 		self.SetDefaultEditor(CustomCellEditor(self))
-		self.SetDefaultRenderer(CustomCellRenderer())
+		self._default_cell_renderer = CustomCellRenderer()
+		self.SetDefaultRenderer(self._default_cell_renderer)
 		self.SetRowLabelAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
 		self.headerbitmap = None
@@ -1083,6 +1088,10 @@ class CustomGrid(wx.grid.Grid):
 				return
 		event.Skip()
 
+	def OnKillFocus(self, event):
+		self.Refresh()
+		event.Skip()
+
 	def OnLabelLeftClick(self, event):
 		row, col = event.GetRow(), event.GetCol()
 		if row == -1 and col > -1:
@@ -1166,6 +1175,16 @@ class CustomGrid(wx.grid.Grid):
 													 self._default_row_label_renderer)
 
 			renderer.Draw(self, dc, rect, row)
+
+	def OnResize(self, event):
+		for row, col in self.GetSelection():
+			cell_renderer = self.GetCellRenderer(row, col)
+			if (isinstance(cell_renderer, CustomCellRenderer) and
+				cell_renderer._selectionbitmaps):
+				# On resize, we need to tell any CustomCellRenderer that its
+				# bitmaps are no longer valid and are garbage collected
+				cell_renderer._selectionbitmaps = {}
+		event.Skip()
         
 	def SetColLabelRenderer(self, row, renderer):
 		"""
@@ -1522,6 +1541,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 	def __init__(self, *args, **kwargs):
 		wx.grid.PyGridCellRenderer.__init__(self, *args, **kwargs)
 		self.specialbitmap = getbitmap("theme/checkerboard-10x10x2-333-444")
+		self._selectionbitmaps = {}
 
 	def Clone(self):
 		return self.__class__()
@@ -1603,60 +1623,76 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 			dc.DrawBitmap(image.ConvertToBitmap(), rect[0], rect[1])
 		else:
 			if (isSelected or isCursor) and col_label:
-				if sys.platform in ("darwin", "win32"):
-					try:
-						dc = wx.GCDC(dc)
-					except:
-						pass
 				dc.SetBrush(wx.Brush(bgcolor))
 				dc.SetPen(wx.TRANSPARENT_PEN)
 				dc.DrawRectangleRect(rect)
-				dc.SetBrush(wx.Brush(color))
 				rect = orect
-				if isinstance(dc, wx.GCDC):
-					if not rowselect:
-						w = 60 + rect[3] * 2
-						if rect.Width > w:
-							rect.Left += (rect.Width - w) / 2.0
-							rect.Width = w
-					draw = dc.DrawEllipse
-					offset = 1
-				else:
-					draw = dc.DrawRectangle
-					offset = 0
-				x, y, w, h = rect
-				if (not rowselect or
-					col == 0 or not grid.GetColLabelValue(col - 1)):
-					draw(x + offset, y + offset, h - offset * 2, h - offset * 2)
-				else:
-					dc.DrawRectangle(x, y + offset, h / 2.0, h - offset * 2)
-				if (not rowselect or
-					col == grid.GetNumberCols() - 1 or
-					not grid.GetColLabelValue(col + 1)):
-					draw(x + w - h, y + offset, h - offset * 2, h - offset * 2)
-				else:
-					dc.DrawRectangle(x + w - h / 2.0, y + offset, h / 2.0,
-									 h - offset * 2)
-				dc.DrawRectangle(x + h / 2.0, y + offset, w - h, h - offset * 2)
-				if not isSelected and isCursor:
+				if not rowselect:
+					w = 60 + rect[3] * 2
+					if rect.Width > w:
+						rect.Left += (rect.Width - w) / 2.0
+						rect.Width = w
+				offset = 1  # Selection offset from cell boundary
+				cb = 2  # Cursor border
+				left = (not rowselect or
+						col == 0 or not grid.GetColLabelValue(col - 1))
+				right = (not rowselect or
+						 col == grid.GetNumberCols() - 1 or
+						 not grid.GetColLabelValue(col + 1))
+				# We could use wx.GCDC, but it is buggy under wxGTK
+				# (grid doesn't refresh properly when scrolling).
+				# Implement our own supersampling antialiasing method
+				# using wx.MemoryDC and cached bitmaps.
+				# This has the drawback that it may use a lot of memory if
+				# a grid has many cells with different dimensions or color
+				# properties, but we make sure that old bitmaps are garbage
+				# collected if the grid or rows/cols are resized by binding
+				# resize events in CustomGrid initialization.
+				key = rect[2:] + bgcolor.Get() + color.Get() + (left, right,
+																not isSelected
+																and isCursor)
+				if not self._selectionbitmaps.get(key):
+					scale = 4.0  # Supersampling factor
+					offset *= scale
+					cb *= scale
+					x, y, w, h = 0, 0, rect[2] * scale, rect[3] * scale
+					self._selectionbitmaps[key] = wx.EmptyBitmap(w, h)
+					paintdc = dc
+					dc = mdc = wx.MemoryDC(self._selectionbitmaps[key])
 					dc.SetBrush(wx.Brush(bgcolor))
-					if (not rowselect or
-						col == 0 or not grid.GetColLabelValue(col - 1)):
-						draw(x + offset + 2, y + offset + 2,
-							 h - (offset + 2) * 2, h - (offset + 2) * 2)
-					else:
-						dc.DrawRectangle(x, y + offset + 2, h / 2.0,
-										 h - (offset + 2) * 2)
-					if (not rowselect or
-						col == grid.GetNumberCols() - 1 or
-						not grid.GetColLabelValue(col + 1)):
-						draw(x + w - h + 2, y + offset + 2,
-							 h - (offset + 2) * 2, h - (offset + 2) * 2)
-					else:
-						dc.DrawRectangle(x + w - h / 2.0, y + offset + 2,
-										 h / 2.0, h - (offset + 2) * 2)
-					dc.DrawRectangle(x + h / 2.0, y + offset + 2, w - h,
-									 h - (offset + 2) * 2)
+					dc.SetPen(wx.TRANSPARENT_PEN)
+					dc.DrawRectangle(x, y, w, h)
+					dc.SetBrush(wx.Brush(color))
+					dc.SetPen(wx.TRANSPARENT_PEN)
+					draw = dc.DrawRoundedRectangle
+					draw(x + offset, y + offset, w - offset * 2,
+						 h - offset * 2, h / 2.0 - offset)
+					if not left:
+						dc.DrawRectangle(x, y + offset, h / 2.0,
+										 h - offset * 2)
+					if not right:
+						dc.DrawRectangle(x + w - h / 2.0, y + offset, h / 2.0,
+										 h - offset * 2)
+					if not isSelected and isCursor:
+						dc.SetBrush(wx.Brush(bgcolor))
+						draw(x + offset + cb, y + offset + cb,
+							 w - (offset + cb) * 2, h - (offset + cb) * 2,
+							 h / 2.0 - (offset + cb))
+						if not left:
+							dc.DrawRectangle(x, y + offset + cb, h / 2.0,
+											 h - (offset + cb) * 2)
+						if not right:
+							dc.DrawRectangle(x + w - h / 2.0, y + offset + cb,
+											 h / 2.0, h - (offset + cb) * 2)
+					mdc.SelectObject(wx.NullBitmap)
+					dc = paintdc
+					img = self._selectionbitmaps[key].ConvertToImage()
+					# Scale down to original size ("antialiasing")
+					img.Rescale(rect[2], rect[3])
+					self._selectionbitmaps[key] = img.ConvertToBitmap()
+				bmp = self._selectionbitmaps.get(key)
+				if bmp:
+					dc.DrawBitmap(bmp, rect[0], rect[1])
 			else:
 				dc.SetBrush(wx.Brush(color))
 				dc.SetPen(wx.TRANSPARENT_PEN)
