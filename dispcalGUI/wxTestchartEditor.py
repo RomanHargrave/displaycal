@@ -541,10 +541,7 @@ class TestchartEditor(wx.Frame):
 
 
 		# grid
-		separator_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-		separator = wx.Panel(panel, size=(-1, 1))
-		separator.BackgroundColour = separator_color
-		self.sizer.Add(separator, flag=wx.TOP | wx.EXPAND, border=12)
+		self.sizer.Add((-1, 12))
 		self.grid = CustomGrid(panel, -1, size = (-1, 150))
 		self.grid.DisableDragColSize()
 		self.grid.EnableGridLines(False)
@@ -566,7 +563,8 @@ class TestchartEditor(wx.Frame):
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.tc_grid_label_left_dclick_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_RANGE_SELECT, self.tc_grid_range_select_handler)
 		self.grid.DisableDragRowSize()
-		if sys.platform not in ("darwin", "win32"):
+		if tc_use_alternate_preview:
+			separator_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
 			separator = wx.Panel(panel, size=(-1, 1))
 			separator.BackgroundColour = separator_color
 			self.sizer.Add(separator, flag=wx.EXPAND)
@@ -589,6 +587,13 @@ class TestchartEditor(wx.Frame):
 			preview.sizer.Add(self.patchsizer)
 			preview.SetMinSize((-1, 100))
 			panel.Bind(wx.EVT_ENTER_WINDOW, self.tc_set_default_status, id = panel.GetId())
+			panel = p2
+
+		if sys.platform not in ("darwin", "win32"):
+			separator_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+			separator = wx.Panel(panel, size=(-1, 1))
+			separator.BackgroundColour = separator_color
+			panel.Sizer.Add(separator, flag=wx.EXPAND)
 
 		# status
 		status = wx.StatusBar(self, -1)
@@ -1682,6 +1687,9 @@ class TestchartEditor(wx.Frame):
 			grid.DeleteRows(0, grid.GetNumberRows())
 		if grid.GetNumberCols() > 0:
 			grid.DeleteCols(0, grid.GetNumberCols())
+		grid.Refresh()
+		self.separator.Hide()
+		self.sizer.Layout()
 		if hasattr(self, "preview"):
 			self.preview.Freeze()
 			self.patchsizer.Clear(True)
@@ -2500,6 +2508,21 @@ class TestchartEditor(wx.Frame):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result:
+			if not hasattr(self, "separator"):
+				# We add this here because of a wxGTK 2.8 quirk where the
+				# vertical scrollbar otherwise has a 1px horizontal
+				# line at the top otherwise.
+				separator_color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+				self.separator = wx.Panel(self.panel, size=(-1, 1))
+				self.separator.BackgroundColour = separator_color
+				index = len(self.sizer.Children) - 1
+				if (sys.platform not in ("darwin", "win32") or
+					tc_use_alternate_preview):
+					index -= 1
+				self.sizer.Insert(index, self.separator, flag=wx.EXPAND)
+			else:
+				self.separator.Show()
+			self.sizer.Layout()
 			if verbose >= 1: safe_print(lang.getstr("tc.preview.create"))
 			data = self.ti1.queryv1("DATA")
 
