@@ -1555,7 +1555,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 		orect = rect
 		if col == grid.GetNumberCols() - 1:
 			# Last column
-			w = grid.Size[0] - rect[0]
+			w = max(grid.ClientSize[0] - rect[0], rect[2])
 			rect = wx.Rect(rect[0], rect[1], w, rect[3])
 		bgcolor = grid.GetCellBackgroundColour(row, col)
 		col_label = grid.GetColLabelValue(col)
@@ -1749,7 +1749,7 @@ class CustomColLabelRenderer(object):
 		orect = rect
 		if col == grid.GetNumberCols() - 1:
 			# Last column
-			w = grid.Size[0] - rect[0]
+			w = max(grid.ClientSize[0] - rect[0], rect[2])
 			rect = wx.Rect(rect[0], rect[1], w, rect[3])
 		mavericks = (getattr(grid, "style", None) == "Mavericks" or
 					 sys.platform == "darwin")
