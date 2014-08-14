@@ -146,16 +146,6 @@ import wx.html
 import wx.lib.hyperlink
 
 
-if sys.platform == "darwin":
-	FONTSIZE_LARGE = 11
-	FONTSIZE_MEDIUM = 11
-	FONTSIZE_SMALL = 10
-else:
-	FONTSIZE_LARGE = 10
-	FONTSIZE_MEDIUM = 8
-	FONTSIZE_SMALL = 8
-
-
 def swap_dict_keys_values(mydict):
 	""" Swap dictionary keys and values """
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
@@ -10512,16 +10502,8 @@ class StartupFrame(wx.Frame):
 		self.splash.SetMinSize((600, 60))
 		self.sizer.Add(self.splash)
 		# Message panel
-		self.msg = BitmapBackgroundPanelText(self)
-		self.msg.label_x = 80
-		self.msg.label_y = 4
-		self.msg.scalebitmap = (False, ) * 2
-		self.msg.textshadow = False
-		self.msg.SetForegroundColour("#FFFFFF")
-		self.msg.SetBackgroundColour("#336699")
-		self.msg.SetBitmap(getbitmap("theme/header-btm"))
-		self.msg.SetLabel(lang.getstr("startup"))
-		self.msg.SetMinSize((600, 32))
+		self.msg = get_header(self, getbitmap("theme/header-btm"),
+							  lang.getstr("startup"), (600, 32), 80, 4, None)
 		self.sizer.Add(self.msg)
 		self.SetClientSize((600, 92))
 		self.Layout()
@@ -10606,21 +10588,25 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.mods = {}
 		dlg.force = force
 
-		dlg.grid = CustomGrid(dlg, -1, size=(940, 240), style=wx.BORDER_THEME)
+		dlg.grid = CustomGrid(dlg, -1, size=(940, 200), style=wx.BORDER_THEME)
 		grid = dlg.grid
 		grid.DisableDragRowSize()
 		grid.SetCellHighlightPenWidth(0)
 		grid.SetCellHighlightROPenWidth(0)
 		grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
-		grid.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X), 0)
+		grid.SetMargins(0, 0)
 		grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
-		grid.SetScrollRate(0, 5)
+		grid.SetScrollRate(5, 5)
 		grid.draw_horizontal_grid_lines = False
 		grid.draw_vertical_grid_lines = False
 		grid.CreateGrid(0, 15)
-		grid.SetColLabelSize(50)
-		grid.SetRowLabelSize(50)
-		w = 50
+		grid.SetColLabelSize(int(round(self.grid.GetDefaultRowSize() * 2.4)))
+		dc = wx.MemoryDC(wx.EmptyBitmap(1, 1))
+		dc.SetFont(grid.GetLabelFont())
+		w, h = dc.GetTextExtent("99%s" % dlg.ti3.DATA[dlg.ti3.NUMBER_OF_SETS -
+													  1].SAMPLE_ID)
+		grid.SetRowLabelSize(max(w, grid.GetDefaultRowSize()))
+		w, h = dc.GetTextExtent("9999999999")
 		for i in xrange(grid.GetNumberCols()):
 			if i in (4, 5) or i > 8:
 				attr = wx.grid.GridCellAttr()
@@ -10629,14 +10615,9 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 			if i == 0:
 				size = 22
 			elif i in (4, 5):
-				size = 20
-			elif i > 8:
-				size = 75
+				size = self.grid.GetDefaultRowSize()
 			else:
-				size = 60
-			if i == grid.GetNumberCols() - 1:
-				size = grid.ClientSize[0] - w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
-			w += size
+				size = w
 			grid.SetColSize(i, size)
 		for i, label in enumerate(["", "R %", "G %", "B %", "", "", "X", "Y", "Z",
 								   u"\u0394E*00\nXYZ A/B",
@@ -10650,10 +10631,10 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		attr.SetReadOnly(True)
 		attr.SetRenderer(CustomCellBoolRenderer())
 		grid.SetColAttr(0, attr)
-		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL)
-		grid.SetDefaultCellFont(font)
-		grid.SetDefaultRowSize(20)
+		font = grid.GetDefaultCellFont()
+		if font.PointSize > 11:
+			font.PointSize = 11
+			grid.SetDefaultCellFont(font)
 		grid.DisableDragColSize()
 		grid.EnableGridLines(False)
 
@@ -10833,8 +10814,8 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 	
 	def mark_cell(self, row, col, ok=False):
 		grid = self.grid
-		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL if ok else wx.FONTWEIGHT_BOLD)
+		font = grid.GetCellFont(row, col)
+		font.SetWeight(wx.FONTWEIGHT_NORMAL if ok else wx.FONTWEIGHT_BOLD)
 		grid.SetCellFont(row, col, font)
 		grid.SetCellTextColour(row, col, grid.GetDefaultCellTextColour() if ok
 										 else wx.Colour(204, 0, 0))

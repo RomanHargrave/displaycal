@@ -29,15 +29,6 @@ import localization as lang
 BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
 FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 
-if sys.platform == "darwin":
-	FONTSIZE_LARGE = 11
-	FONTSIZE_MEDIUM = 11
-	FONTSIZE_SMALL = 10
-else:
-	FONTSIZE_LARGE = 10
-	FONTSIZE_MEDIUM = 8
-	FONTSIZE_SMALL = 8
-
 
 class UntetheredFrame(wx.Frame):
 
@@ -141,7 +132,7 @@ class UntetheredFrame(wx.Frame):
 		self.grid.DisableDragRowSize()
 		self.grid.SetScrollRate(0, 5)
 		self.grid.SetCellHighlightROPenWidth(0)
-		self.grid.SetColLabelSize(23)
+		self.grid.SetColLabelSize(self.grid.GetDefaultRowSize())
 		self.grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 		self.grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
 		self.grid.draw_horizontal_grid_lines = False
@@ -151,7 +142,7 @@ class UntetheredFrame(wx.Frame):
 		self.grid.SetRowLabelSize(62)
 		for i in xrange(9):
 			if i in (3, 4):
-				size = 20
+				size = self.grid.GetDefaultRowSize()
 				if i == 4:
 					attr = wx.grid.GridCellAttr()
 					attr.SetBackgroundColour(wx.Colour(0, 0, 0, 0))
@@ -163,10 +154,10 @@ class UntetheredFrame(wx.Frame):
 			self.grid.SetColLabelValue(i, label)
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetDefaultCellBackgroundColour(self.grid.GetLabelBackgroundColour())
-		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL)
-		self.grid.SetDefaultCellFont(font)
-		self.grid.SetDefaultRowSize(20)
+		font = self.grid.GetDefaultCellFont()
+		if font.PointSize > 11:
+			font.PointSize = 11
+			self.grid.SetDefaultCellFont(font)
 		self.grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
 		self.grid.EnableEditing(False)
 		self.grid.EnableGridLines(False)
@@ -560,13 +551,13 @@ class UntetheredFrame(wx.Frame):
 		num_cols = self.grid.GetNumberCols()
 		if not num_cols:
 			return
-		grid_w = self.grid.GetSize()[0] - 40
+		grid_w = self.grid.GetSize()[0] - self.grid.GetDefaultRowSize() * 2
 		col_w = round(grid_w / (num_cols - 1))
 		last_col_w = grid_w - col_w * (num_cols - 2)
 		self.grid.SetRowLabelSize(col_w)
 		for i in xrange(num_cols):
 			if i in (3, 4):
-				w = 20
+				w = self.grid.GetDefaultRowSize()
 			elif i == num_cols - 1:
 				w = last_col_w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
 			else:

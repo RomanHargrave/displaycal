@@ -39,16 +39,6 @@ except ImportError:
 from wxMeasureFrame import get_default_size
 
 
-if sys.platform == "darwin":
-	FONTSIZE_LARGE = 11
-	FONTSIZE_MEDIUM = 11
-	FONTSIZE_SMALL = 10
-else:
-	FONTSIZE_LARGE = 10
-	FONTSIZE_MEDIUM = 8
-	FONTSIZE_SMALL = 8
-
-
 def swap_dict_keys_values(mydict):
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
 
@@ -548,7 +538,7 @@ class TestchartEditor(wx.Frame):
 		self.grid.EnableGridLines(False)
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
-		self.grid.SetColLabelSize(23)
+		self.grid.SetColLabelSize(self.grid.GetDefaultRowSize())
 		self.grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 		self.grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
 		self.grid.SetScrollRate(0, 5)
@@ -556,9 +546,10 @@ class TestchartEditor(wx.Frame):
 		self.grid.draw_vertical_grid_lines = False
 		self.sizer.Add(self.grid, 1, flag=wx.EXPAND)
 		self.grid.CreateGrid(0, 0)
-		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL)
-		self.grid.SetDefaultCellFont(font)
+		font = self.grid.GetDefaultCellFont()
+		if font.PointSize > 11:
+			font.PointSize = 11
+			self.grid.SetDefaultCellFont(font)
 		self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.tc_grid_cell_change_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.tc_grid_label_left_click_handler)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_DCLICK, self.tc_grid_label_left_dclick_handler)
@@ -655,13 +646,12 @@ class TestchartEditor(wx.Frame):
 		num_cols = self.grid.GetNumberCols()
 		if not num_cols:
 			return
-		grid_w = self.grid.GetSize()[0] - 20
-		col_w = round(grid_w / (num_cols))
-		last_col_w = grid_w - col_w * (num_cols - 1)
-		self.grid.SetRowLabelSize(col_w)
+		grid_w = self.grid.GetSize()[0] - self.grid.GetRowLabelSize() - self.grid.GetDefaultRowSize()
+		col_w = round(grid_w / (num_cols - 1))
+		last_col_w = grid_w - col_w * (num_cols - 2)
 		for i in xrange(num_cols):
 			if i == 3:
-				w = 20
+				w = self.grid.GetDefaultRowSize()
 			elif i == num_cols - 2:
 				w = last_col_w - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
 			else:
@@ -761,10 +751,10 @@ class TestchartEditor(wx.Frame):
 	def tc_size_handler(self, event = None):
 		wx.CallAfter(self.resize_grid)
 		if hasattr(self, "preview"):
-			safe_margin = 5
-			scrollbarwidth = 20
+			safe_margin = 0
+			scrollbarwidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
 			self.patchsizer.SetRows(0)
-			self.patchsizer.SetCols((self.preview.GetSize()[0] - scrollbarwidth - safe_margin) / 20)
+			self.patchsizer.SetCols((self.preview.GetSize()[0] - scrollbarwidth - safe_margin) / self.grid.GetDefaultRowSize())
 		if self.IsShownOnScreen() and not self.IsMaximized() and not self.IsIconized():
 			w, h = self.GetSize()
 			setcfg("size.tcgen.w", w)
@@ -2547,13 +2537,13 @@ class TestchartEditor(wx.Frame):
 										  data_format[i].split("_")[-1] + " %")
 			grid.AppendCols(1)
 			grid.SetColLabelValue(grid.GetNumberCols() - 1, "")
-			colwidth = 100
-			for i in range(grid.GetNumberCols() - 1):
-				grid.SetColSize(i, colwidth)
-			grid.SetColSize(grid.GetNumberCols() - 1, 20)
+			grid.SetColSize(grid.GetNumberCols() - 1, self.grid.GetDefaultRowSize())
 			self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
 			grid.AppendRows(self.tc_amount)
-			grid.SetRowLabelSize(colwidth)
+			dc = wx.MemoryDC(wx.EmptyBitmap(1, 1))
+			dc.SetFont(grid.GetLabelFont())
+			w, h = dc.GetTextExtent("99%s" % self.ti1.queryv1("NUMBER_OF_SETS"))
+			grid.SetRowLabelSize(max(w, grid.GetDefaultRowSize()))
 			attr = wx.grid.GridCellAttr()
 			attr.SetAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 			attr.SetReadOnly()
@@ -2617,7 +2607,7 @@ class TestchartEditor(wx.Frame):
 			patch = wx.Panel(self.preview, -1)
 			patch.Bind(wx.EVT_ENTER_WINDOW, self.tc_mouseover_handler, id = patch.GetId())
 			patch.Bind(wx.EVT_LEFT_DOWN, self.tc_mouseclick_handler, id = patch.GetId())
-			patch.SetMinSize((20,20))
+			patch.SetMinSize((self.grid.GetDefaultRowSize(), ) * 2)
 			patch.sample = sample
 			self.patchsizer.Insert(before, patch)
 			self.tc_patch_setcolorlabel(patch)

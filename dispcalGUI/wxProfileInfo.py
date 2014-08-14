@@ -40,12 +40,8 @@ FGCOLOUR = "#999999"
 TEXTCOLOUR = "#333333"
 
 if sys.platform == "darwin":
-	FONTSIZE_LARGE = 11
-	FONTSIZE_MEDIUM = 11
 	FONTSIZE_SMALL = 10
 else:
-	FONTSIZE_LARGE = 10
-	FONTSIZE_MEDIUM = 8
 	FONTSIZE_SMALL = 8
 
 
@@ -925,8 +921,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.SetSizer(self.sizer)
 		
 		self.splitter = TwoWaySplitter(self, -1, agwStyle = wx.SP_LIVE_UPDATE | wx.SP_NOSASH)
-		self.splitter.SetBackgroundColour(wx.Colour(*[int(v * .85) for v in
-													  self.splitter.BackgroundColour]))
 		self.sizer.Add(self.splitter, 1, flag=wx.EXPAND)
 		
 		p1 = wx.Panel(self.splitter)
@@ -1109,12 +1103,12 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.SetCellHighlightPenWidth(0)
 		self.grid.SetCellHighlightROPenWidth(0)
 		self.grid.SetDefaultCellBackgroundColour(self.grid.GetLabelBackgroundColour())
-		font = wx.Font(FONTSIZE_MEDIUM, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, 
-					   wx.FONTWEIGHT_NORMAL)
-		self.grid.SetDefaultCellFont(font)
-		self.grid.SetDefaultRowSize(20)
+		font = self.grid.GetDefaultCellFont()
+		if font.PointSize > 11:
+			font.PointSize = 11
+			self.grid.SetDefaultCellFont(font)
 		self.grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
-		self.grid.SetRowLabelSize(20)
+		self.grid.SetRowLabelSize(self.grid.GetDefaultRowSize())
 		self.grid.SetColLabelSize(0)
 		self.grid.DisableDragRowSize()
 		self.grid.EnableDragColSize()

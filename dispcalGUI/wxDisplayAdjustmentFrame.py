@@ -445,12 +445,10 @@ class DisplayAdjustmentPanel(wx.Panel):
 		self.SetForegroundColour(FGCOLOUR)
 		self.SetSizer(wx.BoxSizer(wx.VERTICAL))
 		self.title_txt = wx.StaticText(self, wx.ID_ANY, title)
-		if sys.platform == "darwin":
-			fontsize = 11
-		else:
-			fontsize = 10
-		self.title_txt.SetFont(wx.Font(fontsize, wx.FONTFAMILY_DEFAULT,
-							   wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+		font = self.title_txt.GetFont()
+		font.SetPointSize(font.PointSize + 1)
+		font.SetWeight(wx.FONTWEIGHT_BOLD)
+		self.title_txt.SetFont(font)
 		self.title_txt.SetForegroundColour(FGCOLOUR)
 		self.GetSizer().Add(self.title_txt)
 		self.sizer = wx.FlexGridSizer(0, 2, 0, 0)

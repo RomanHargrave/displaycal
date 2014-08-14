@@ -17,7 +17,8 @@ from options import debug
 from util_io import StringIOu as StringIO
 from util_os import waccess
 from util_str import safe_unicode, wrap
-from wxaddons import (CustomEvent, FileDrop as _FileDrop, get_dc_font_size,
+from wxaddons import (CustomEvent, FileDrop as _FileDrop,
+					  adjust_font_size_for_gcdc, get_dc_font_size,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler)
 from wxfixes import GenBitmapButton, GTKMenuItemGetFixedLabel, set_bitmap_labels
@@ -794,6 +795,7 @@ class FlatShadedButton(GradientButton):
 		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
 								style, validator, name)
 		self._setcolours(bgcolour, fgcolour)
+		self.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
 	
 	def _setcolours(self, bgcolour=None, fgcolour=None):
 		self.SetTopStartColour(bgcolour or wx.Colour(0x22, 0x22, 0x22))
@@ -1121,6 +1123,9 @@ class CustomGrid(wx.grid.Grid):
 			if not cols:
 				return
 
+		x, y = self.CalcUnscrolledPosition((0,0))
+		pt = dc.GetDeviceOrigin()
+		dc.SetDeviceOrigin(pt.x-x, pt.y)
 		for col in cols:
 			left, right = self.GetColLeftRight(col)
 			rect = wx.Rect()
@@ -1550,7 +1555,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 		orect = rect
 		if col == grid.GetNumberCols() - 1:
 			# Last column
-			w = grid.ClientSize[0] - rect[0]
+			w = grid.Size[0] - rect[0]
 			rect = wx.Rect(rect[0], rect[1], w, rect[3])
 		bgcolor = grid.GetCellBackgroundColour(row, col)
 		col_label = grid.GetColLabelValue(col)
@@ -1744,7 +1749,7 @@ class CustomColLabelRenderer(object):
 		orect = rect
 		if col == grid.GetNumberCols() - 1:
 			# Last column
-			w = grid.ClientSize[0] - rect[0]
+			w = grid.Size[0] - rect[0]
 			rect = wx.Rect(rect[0], rect[1], w, rect[3])
 		mavericks = (getattr(grid, "style", None) == "Mavericks" or
 					 sys.platform == "darwin")
@@ -1781,7 +1786,7 @@ class CustomColLabelRenderer(object):
 			pen = wx.Pen(grid.GetGridLineColour())
 			dc.SetPen(pen)
 			if getattr(grid, "draw_horizontal_grid_lines", True) or mavericks:
-				dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2],
+				dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2] - 1,
 							rect[1] + rect[3] - 1)
 			if getattr(grid, "draw_vertical_grid_lines", True):
 				dc.DrawLine(rect[0] + rect[2] - 1, rect[1],
@@ -1827,9 +1832,11 @@ class CustomRowLabelRenderer(object):
 		pen = wx.Pen(grid.GetGridLineColour())
 		dc.SetPen(pen)
 		if getattr(grid, "draw_horizontal_grid_lines", True):
-			dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2], rect[1] + rect[3] - 1)
+			dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2] - 1,
+						rect[1] + rect[3] - 1)
 		if getattr(grid, "draw_vertical_grid_lines", True):
-			dc.DrawLine(rect[0] + rect[2] - 1, rect[1], rect[0] + rect[2] - 1, rect[3])
+			dc.DrawLine(rect[0] + rect[2] - 1, rect[1], rect[0] + rect[2] - 1,
+						rect[3])
 		if getattr(grid, "draw_row_labels", True):
 			dc.SetFont(grid.GetLabelFont())
 			dc.SetTextForeground(grid.GetLabelTextColour())
@@ -2544,7 +2551,7 @@ class TwoWaySplitter(FourWaySplitter):
 		:param `dc`: an instance of `wx.DC`.
 		"""
 
-		backColour = self.GetBackgroundColour()
+		backColour = wx.Colour(*[int(v * .85) for v in self.BackgroundColour])
 		dc.SetBrush(wx.Brush(backColour, wx.SOLID))
 		dc.SetPen(wx.Pen(backColour))
 		dc.Clear()
