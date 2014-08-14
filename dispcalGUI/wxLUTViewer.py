@@ -1215,6 +1215,12 @@ class LUTFrame(wx.Frame):
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
 										 "\n" + profile), self)
 				return
+		if profile.getDescription():
+			title = u" \u2014 ".join([lang.getstr("calibration.lut_viewer.title"),
+									  profile.getDescription()])
+		else:
+			title = lang.getstr("calibration.lut_viewer.title")
+		self.SetTitle(title)
 		self.profile = profile
 		self.rTRC = profile.tags.get("rTRC")
 		self.gTRC = profile.tags.get("gTRC")
@@ -1462,12 +1468,6 @@ class LUTFrame(wx.Frame):
 			self.client.last_PointLabel = None
 		else:
 			pointXY = (127.5, 127.5)
-		if self.profile and self.profile.getDescription():
-			title = u" \u2014 ".join([lang.getstr("calibration.lut_viewer.title"),
-									  self.profile.getDescription()])
-		else:
-			title = lang.getstr("calibration.lut_viewer.title")
-		self.SetTitle(title)
 		wx.CallAfter(self.client.DrawLUT, curves,
 					 xLabel=self.xLabel,
 					 yLabel=self.yLabel,
