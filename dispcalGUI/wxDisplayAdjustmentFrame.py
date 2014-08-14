@@ -908,9 +908,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 		self.lb.SetMinSize((self.lb.GetMinSize()[0],
 							max(self.lb.GetCurrentPage().GetSize()[1], min_h)))
 		self.Fit()
-		self.Layout()
-		self.SetSize((self.GetSize()[0], self.GetSize()[1]))
-		self.SetMinSize(self.GetSize())
+		self.Sizer.SetSizeHints(self)
+		self.Sizer.Layout()
 		
 		# Set position
 		x = getcfg("position.progress.x")
