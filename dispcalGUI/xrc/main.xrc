@@ -440,22 +440,22 @@
                                 <events>EVT_COMBOBOX|EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="whitepoint_colortemp_label">
                               <label>K</label>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>4</border>
+                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>8</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="whitepoint_colortemp_locus_label">
                               <label>reference</label>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>4</border>
+                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>8</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxChoice" name="whitepoint_colortemp_locus_ctrl"/>
@@ -473,15 +473,15 @@
                                 <events>EVT_KILL_FOCUS</events>
                               </XRCED>
                             </object>
-                            <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                            <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                             <border>4</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxStaticText" name="whitepoint_x_label">
                               <label>x</label>
                             </object>
-                            <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>4</border>
+                            <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                            <border>8</border>
                           </object>
                           <object class="sizeritem">
                             <object class="FloatSpin" name="whitepoint_y_textctrl">
