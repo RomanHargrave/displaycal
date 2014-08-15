@@ -16,6 +16,7 @@
 #   copy/paste/select all keyboard shortcuts not working)
 # - Do default action if return key is pressed (currently only works if the
 #   default item is a button)
+# - Fix children not reflecting enbled state under wxMac
 #
 # TODO List/Caveats
 #
@@ -177,6 +178,9 @@ or no range::
     SetRange(min_val=None, max_val=None)  # [ , ]
 
 """
+
+def Property(func):
+    return property(**func())
 
 
 #----------------------------------------------------------------------
@@ -398,6 +402,7 @@ class FloatSpin(wx.PyControl):
         self._spinbutton = None
         self._textctrl = None
         self._spinctrl_bestsize = wx.Size(-999, -999)
+        self._enabled = True
 
         # start Philip Semanchuk addition
         # The textbox & spin button are drawn slightly differently 
@@ -584,6 +589,36 @@ class FloatSpin(wx.PyControl):
         eventOut.SetPosition(int(self._value + 0.5))
         eventOut.SetEventObject(self)
         self.GetEventHandler().ProcessEvent(eventOut)
+
+
+    def Disable(self):
+        self.Enable(False)
+
+
+    def Enable(self, enable=True):
+        """ Enable the child controls. This is needed under wxMac """
+
+        wx.PyControl.Enable(self, enable)
+        self._enabled = enable
+        
+        if self._textctrl:
+            self._textctrl.Enable(enable)
+        self._spinbutton.Enable(enable)
+
+
+    @Property
+    def Enabled():
+        def fget(self):
+            return self._enabled
+
+        def fset(self, enable=True):
+            self.Enable(enable)
+
+        return locals()
+
+
+    def IsEnabled(self):
+        return self._enabled
 
 
     def OnSpinMouseDown(self, event):
