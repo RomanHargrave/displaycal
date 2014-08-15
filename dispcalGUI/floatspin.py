@@ -737,7 +737,7 @@ class FloatSpin(wx.PyControl):
                     child.SetFocus()
                     break
 
-        elif keycode == wx.WXK_RETURN:
+        elif keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
 
             default = self.TopLevelParent.DefaultItem
             if (default.Enabled and default.IsShown() and
