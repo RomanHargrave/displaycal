@@ -22,11 +22,14 @@ def stripzeros(n):
 	(1.0 becomes 1, 1.234567890 becomes 1.23456789).
 	
 	"""
-	n = str(n)
-	if n.find(".") < 0:
-		n += "."
+	if isinstance(n, (float, int)):
+		n = "%.10f" % n
+	else:
+		n = str(n)
+	if "." in n:
+		n = n.rstrip("0").rstrip(".")
 	try:
-		n = decimal.Decimal(n.rstrip("0"))
+		n = decimal.Decimal(n)
 	except decimal.InvalidOperation, exception:
 		pass
 	return n

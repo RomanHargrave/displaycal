@@ -1932,9 +1932,9 @@ class MainFrame(BaseFrame):
 			wx.EVT_KILL_FOCUS, self.whitepoint_ctrl_handler)
 		self.Bind(wx.EVT_CHOICE, self.whitepoint_colortemp_locus_ctrl_handler, 
 				  id=self.whitepoint_colortemp_locus_ctrl.GetId())
-		self.whitepoint_x_textctrl.Bind(wx.EVT_KILL_FOCUS, 
+		self.whitepoint_x_textctrl.Bind(floatspin.EVT_FLOATSPIN, 
 										self.whitepoint_ctrl_handler)
-		self.whitepoint_y_textctrl.Bind(wx.EVT_KILL_FOCUS, 
+		self.whitepoint_y_textctrl.Bind(floatspin.EVT_FLOATSPIN, 
 										self.whitepoint_ctrl_handler)
 		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler, 
 				  id=self.whitepoint_measure_btn.GetId())
@@ -1942,7 +1942,7 @@ class MainFrame(BaseFrame):
 		# White luminance
 		self.Bind(wx.EVT_CHOICE, self.luminance_ctrl_handler, 
 				  id=self.luminance_ctrl.GetId())
-		self.luminance_textctrl.Bind(wx.EVT_KILL_FOCUS, 
+		self.luminance_textctrl.Bind(floatspin.EVT_FLOATSPIN, 
 									 self.luminance_ctrl_handler)
 		self.Bind(wx.EVT_CHECKBOX, self.whitelevel_drift_compensation_handler, 
 				  id=self.whitelevel_drift_compensation.GetId())
@@ -1950,7 +1950,7 @@ class MainFrame(BaseFrame):
 		# Black luminance
 		self.Bind(wx.EVT_CHOICE, self.black_luminance_ctrl_handler, 
 				  id=self.black_luminance_ctrl.GetId())
-		self.black_luminance_textctrl.Bind(wx.EVT_KILL_FOCUS, 
+		self.black_luminance_textctrl.Bind(floatspin.EVT_FLOATSPIN, 
 										   self.black_luminance_ctrl_handler)
 		self.Bind(wx.EVT_CHECKBOX, self.blacklevel_drift_compensation_handler, 
 				  id=self.blacklevel_drift_compensation.GetId())
@@ -1970,7 +1970,7 @@ class MainFrame(BaseFrame):
 		self.Bind(wx.EVT_CHECKBOX, self.ambient_viewcond_adjust_ctrl_handler, 
 				  id=self.ambient_viewcond_adjust_cb.GetId())
 		self.ambient_viewcond_adjust_textctrl.Bind(
-			wx.EVT_KILL_FOCUS, self.ambient_viewcond_adjust_ctrl_handler)
+			floatspin.EVT_FLOATSPIN, self.ambient_viewcond_adjust_ctrl_handler)
 		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler,
 				  id=self.ambient_measure_btn.GetId())
 
@@ -2984,8 +2984,8 @@ class MainFrame(BaseFrame):
 
 		self.ambient_viewcond_adjust_cb.SetValue(
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
-		self.ambient_viewcond_adjust_textctrl.ChangeValue(
-			str(getcfg("calibration.ambient_viewcond_adjust.lux")))
+		self.ambient_viewcond_adjust_textctrl.SetValue(
+			getcfg("calibration.ambient_viewcond_adjust.lux"))
 		self.ambient_viewcond_adjust_textctrl.Enable(
 			not update_cal and 
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
@@ -3406,8 +3406,8 @@ class MainFrame(BaseFrame):
 		if getcfg("whitepoint.colortemp", False):
 			self.whitepoint_ctrl.SetSelection(1)
 		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
-			self.whitepoint_x_textctrl.ChangeValue(str(getcfg("whitepoint.x")))
-			self.whitepoint_y_textctrl.ChangeValue(str(getcfg("whitepoint.y")))
+			self.whitepoint_x_textctrl.SetValue(getcfg("whitepoint.x"))
+			self.whitepoint_y_textctrl.SetValue(getcfg("whitepoint.y"))
 			self.whitepoint_ctrl.SetSelection(2)
 		else:
 			self.whitepoint_ctrl.SetSelection(0)
@@ -3423,8 +3423,7 @@ class MainFrame(BaseFrame):
 			self.luminance_ctrl.SetSelection(1)
 		else:
 			self.luminance_ctrl.SetSelection(0)
-		self.luminance_textctrl.ChangeValue(
-			str(getcfg("calibration.luminance")))
+		self.luminance_textctrl.SetValue(getcfg("calibration.luminance"))
 		self.luminance_textctrl.Show(bool(getcfg("calibration.luminance", 
 												 False)))
 		self.luminance_textctrl_label.Show(bool(getcfg("calibration.luminance", 
@@ -3434,8 +3433,8 @@ class MainFrame(BaseFrame):
 			self.black_luminance_ctrl.SetSelection(1)
 		else:
 			self.black_luminance_ctrl.SetSelection(0)
-		self.black_luminance_textctrl.ChangeValue(
-			"%.6f" % getcfg("calibration.black_luminance"))
+		self.black_luminance_textctrl.SetValue(
+			getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Show(
 			bool(getcfg("show_advanced_calibration_options") and
 				 getcfg("calibration.black_luminance", False)))
@@ -3782,7 +3781,7 @@ class MainFrame(BaseFrame):
 			dlg.Destroy()
 		if set_ambient:
 			if lux:
-				self.ambient_viewcond_adjust_textctrl.SetValue(lux.groups()[0])
+				self.ambient_viewcond_adjust_textctrl.SetValue(float(lux.groups()[0]))
 				self.ambient_viewcond_adjust_cb.SetValue(True)
 				self.ambient_viewcond_adjust_ctrl_handler(
 						CustomEvent(wx.EVT_CHECKBOX.evtType[0], 
@@ -3812,15 +3811,15 @@ class MainFrame(BaseFrame):
 				if not K:
 					self.whitepoint_ctrl.SetSelection(2)
 				Y, x, y = Yxy.groups()
-				self.whitepoint_x_textctrl.SetValue(x)
-				self.whitepoint_y_textctrl.SetValue(y)
+				self.whitepoint_x_textctrl.SetValue(float(x))
+				self.whitepoint_y_textctrl.SetValue(float(y))
 			self.whitepoint_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
 													 self.whitepoint_ctrl))
 
 	def ambient_viewcond_adjust_ctrl_handler(self, event):
 		if event.GetId() == self.ambient_viewcond_adjust_textctrl.GetId() and \
 		   (not self.ambient_viewcond_adjust_cb.GetValue() or 
-			str(float(getcfg("calibration.ambient_viewcond_adjust.lux"))) == 
+			getcfg("calibration.ambient_viewcond_adjust.lux") == 
 			self.ambient_viewcond_adjust_textctrl.GetValue()):
 			event.Skip()
 			return
@@ -3837,26 +3836,20 @@ class MainFrame(BaseFrame):
 				self.ambient_viewcond_adjust_cb.SetValue(False)
 		if self.ambient_viewcond_adjust_cb.GetValue():
 			self.ambient_viewcond_adjust_textctrl.Enable()
-			value = self.ambient_viewcond_adjust_textctrl.GetValue()
-			if value:
-				try:
-					v = float(value.replace(",", "."))
-					if v < 0.000001 or v > sys.maxint:
-						raise ValueError()
-					self.ambient_viewcond_adjust_textctrl.ChangeValue(str(v))
-				except ValueError:
+			v = self.ambient_viewcond_adjust_textctrl.GetValue()
+			if v:
+				if v < 0.000001 or v > sys.maxint:
 					wx.Bell()
-					self.ambient_viewcond_adjust_textctrl.ChangeValue(
-						str(getcfg("calibration.ambient_viewcond_adjust.lux")))
+					self.ambient_viewcond_adjust_textctrl.SetValue(
+						getcfg("calibration.ambient_viewcond_adjust.lux"))
 			if event.GetId() == self.ambient_viewcond_adjust_cb.GetId():
 				self.ambient_viewcond_adjust_textctrl.SetFocus()
-				self.ambient_viewcond_adjust_textctrl.SelectAll()
 		else:
 			self.ambient_viewcond_adjust_textctrl.Disable()
 		v1 = int(self.ambient_viewcond_adjust_cb.GetValue())
 		v2 = self.ambient_viewcond_adjust_textctrl.GetValue()
 		if v1 != getcfg("calibration.ambient_viewcond_adjust") or \
-		   v2 != str(getcfg("calibration.ambient_viewcond_adjust.lux", False)):
+		   v2 != getcfg("calibration.ambient_viewcond_adjust.lux", False):
 			self.cal_changed()
 		setcfg("calibration.ambient_viewcond_adjust", v1)
 		setcfg("calibration.ambient_viewcond_adjust.lux", v2)
@@ -3873,7 +3866,7 @@ class MainFrame(BaseFrame):
 	def black_luminance_ctrl_handler(self, event):
 		if event.GetId() == self.black_luminance_textctrl.GetId() and (
 		   self.black_luminance_ctrl.GetSelection() != 1 or 
-		   str(float(getcfg("calibration.black_luminance"))) == 
+		   getcfg("calibration.black_luminance") == 
 		   self.black_luminance_textctrl.GetValue() or
 		   not self.black_luminance_ctrl.IsShown()):
 			event.Skip()
@@ -3889,19 +3882,16 @@ class MainFrame(BaseFrame):
 			self.black_luminance_textctrl.Show()
 			self.black_luminance_textctrl_label.Show()
 			try:
-				v = float(self.black_luminance_textctrl.GetValue().replace(",", 
-																		   "."))
+				v = self.black_luminance_textctrl.GetValue()
 				if v < 0.000001 or v > 100000:
 					raise ValueError()
-				self.black_luminance_textctrl.ChangeValue("%.6f" % v)
 			except ValueError:
 				wx.Bell()
-				self.black_luminance_textctrl.ChangeValue(
-					"%.6f" % getcfg("calibration.black_luminance"))
+				self.black_luminance_textctrl.SetValue(
+					getcfg("calibration.black_luminance"))
 			if (event.GetId() == self.black_luminance_ctrl.GetId() and
 				self.black_luminance_ctrl.GetSelection() == 1):
 				self.black_luminance_textctrl.SetFocus()
-				self.black_luminance_textctrl.SelectAll()
 		else:
 			self.black_luminance_textctrl.Hide()
 			self.black_luminance_textctrl_label.Hide()
@@ -3919,7 +3909,7 @@ class MainFrame(BaseFrame):
 	def luminance_ctrl_handler(self, event):
 		if event.GetId() == self.luminance_textctrl.GetId() and (
 		   self.luminance_ctrl.GetSelection() != 1 or 
-		   str(float(getcfg("calibration.luminance"))) == 
+		   getcfg("calibration.luminance") == 
 		   self.luminance_textctrl.GetValue()):
 			event.Skip()
 			return
@@ -3934,18 +3924,16 @@ class MainFrame(BaseFrame):
 			self.luminance_textctrl.Show()
 			self.luminance_textctrl_label.Show()
 			try:
-				v = float(self.luminance_textctrl.GetValue().replace(",", "."))
+				v = self.luminance_textctrl.GetValue()
 				if v < 0.000001 or v > 100000:
 					raise ValueError()
-				self.luminance_textctrl.ChangeValue(str(v))
 			except ValueError:
 				wx.Bell()
-				self.luminance_textctrl.ChangeValue(
-					str(getcfg("calibration.luminance")))
+				self.luminance_textctrl.SetValue(
+					getcfg("calibration.luminance"))
 			if (event.GetId() == self.luminance_ctrl.GetId() and
 				self.luminance_ctrl.GetSelection() == 1):
 				self.luminance_textctrl.SetFocus()
-				self.luminance_textctrl.SelectAll()
 		else:
 			self.luminance_textctrl.Hide()
 			self.luminance_textctrl_label.Hide()
@@ -3986,14 +3974,12 @@ class MainFrame(BaseFrame):
 			return
 		if event.GetId() == self.whitepoint_x_textctrl.GetId() and (
 		   self.whitepoint_ctrl.GetSelection() != 2 or 
-		   str(float(getcfg("whitepoint.x"))) == 
-		   self.whitepoint_x_textctrl.GetValue()):
+		   getcfg("whitepoint.x") == self.whitepoint_x_textctrl.GetValue()):
 			event.Skip()
 			return
 		if event.GetId() == self.whitepoint_y_textctrl.GetId() and (
 		   self.whitepoint_ctrl.GetSelection() != 2 or 
-		   str(float(getcfg("whitepoint.y"))) == 
-		   self.whitepoint_y_textctrl.GetValue()):
+		   getcfg("whitepoint.y") == self.whitepoint_y_textctrl.GetValue()):
 			event.Skip()
 			return
 		if debug:
@@ -4013,28 +3999,22 @@ class MainFrame(BaseFrame):
 			self.whitepoint_y_textctrl.Show()
 			self.whitepoint_y_label.Show()
 			try:
-				v = float(self.whitepoint_x_textctrl.GetValue().replace(",", 
-																		"."))
+				v = self.whitepoint_x_textctrl.GetValue()
 				if v < 0 or v > 1:
 					raise ValueError()
-				self.whitepoint_x_textctrl.ChangeValue(str(v))
 			except ValueError:
 				wx.Bell()
-				self.whitepoint_x_textctrl.ChangeValue(
-					str(getcfg("whitepoint.x")))
+				self.whitepoint_x_textctrl.SetValue(getcfg("whitepoint.x"))
 			try:
-				v = float(self.whitepoint_y_textctrl.GetValue().replace(",", 
-																		"."))
+				v = self.whitepoint_y_textctrl.GetValue()
 				if v < 0 or v > 1:
 					raise ValueError()
-				self.whitepoint_y_textctrl.ChangeValue(str(v))
 			except ValueError:
 				wx.Bell()
-				self.whitepoint_y_textctrl.ChangeValue(
-					str(getcfg("whitepoint.y")))
-			x = self.whitepoint_x_textctrl.GetValue().replace(",", ".")
-			y = self.whitepoint_y_textctrl.GetValue().replace(",", ".")
-			k = xyY2CCT(float(x), float(y), 1.0)
+				self.whitepoint_y_textctrl.SetValue(getcfg("whitepoint.y"))
+			x = self.whitepoint_x_textctrl.GetValue()
+			y = self.whitepoint_y_textctrl.GetValue()
+			k = xyY2CCT(x, y, 1.0)
 			if k:
 				self.whitepoint_colortemp_textctrl.SetValue(
 					str(stripzeros(math.ceil(k))))
@@ -4042,8 +4022,8 @@ class MainFrame(BaseFrame):
 				self.whitepoint_colortemp_textctrl.SetValue("")
 			if cal_changed:
 				if not getcfg("whitepoint.colortemp") and \
-				   float(x) == getcfg("whitepoint.x") and \
-				   float(y) == getcfg("whitepoint.y"):
+				   x == getcfg("whitepoint.x") and \
+				   y == getcfg("whitepoint.y"):
 					cal_changed = False
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", x)
@@ -4052,7 +4032,6 @@ class MainFrame(BaseFrame):
 				self.whitepoint_ctrl.GetSelection() == 2 and
 				not self.updatingctrls):
 				self.whitepoint_x_textctrl.SetFocus()
-				self.whitepoint_x_textctrl.SelectAll()
 		elif self.whitepoint_ctrl.GetSelection() == 1:
 			self.whitepoint_colortemp_locus_label.Show()
 			self.whitepoint_colortemp_locus_ctrl.Show()
@@ -4115,13 +4094,11 @@ class MainFrame(BaseFrame):
 				# Daylight locus
 				xyY = CIEDCCT2xyY(getcfg("whitepoint.colortemp"))
 			if xyY:
-				self.whitepoint_x_textctrl.ChangeValue(
-					str(stripzeros(round(xyY[0], 6))))
-				self.whitepoint_y_textctrl.ChangeValue(
-					str(stripzeros(round(xyY[1], 6))))
+				self.whitepoint_x_textctrl.SetValue(round(xyY[0], 4))
+				self.whitepoint_y_textctrl.SetValue(round(xyY[1], 6))
 			else:
-				self.whitepoint_x_textctrl.ChangeValue("")
-				self.whitepoint_y_textctrl.ChangeValue("")
+				self.whitepoint_x_textctrl.SetValue(0)
+				self.whitepoint_y_textctrl.SetValue(0)
 		if cal_changed and not self.updatingctrls:
 			self.cal_changed()
 			self.update_profile_name()
@@ -9085,8 +9062,7 @@ class MainFrame(BaseFrame):
 	def get_ambient(self):
 		if self.ambient_viewcond_adjust_cb.GetValue():
 			return str(stripzeros(
-				self.ambient_viewcond_adjust_textctrl.GetValue().replace(",", 
-																		 ".")))
+				self.ambient_viewcond_adjust_textctrl.GetValue()))
 		return None
 	
 	def get_instrument_type(self):
@@ -9127,14 +9103,14 @@ class MainFrame(BaseFrame):
 				self.whitepoint_colortemp_textctrl.GetValue().replace(",", 
 																	  ".")))
 		elif self.whitepoint_ctrl.GetSelection() == 2:
-			x = self.whitepoint_x_textctrl.GetValue().replace(",", ".")
+			x = self.whitepoint_x_textctrl.GetValue()
 			try:
-				x = round(float(x), 6)
+				x = round(x, 4)
 			except ValueError:
 				pass
-			y = self.whitepoint_y_textctrl.GetValue().replace(",", ".")
+			y = self.whitepoint_y_textctrl.GetValue()
 			try:
-				y = round(float(y), 6)
+				y = round(y, 4)
 			except ValueError:
 				pass
 			return str(stripzeros(x)) + "," + str(stripzeros(y))
@@ -9149,15 +9125,14 @@ class MainFrame(BaseFrame):
 		if self.luminance_ctrl.GetSelection() == 0:
 			return None
 		else:
-			return str(stripzeros(
-				self.luminance_textctrl.GetValue().replace(",", ".")))
+			return str(stripzeros(self.luminance_textctrl.GetValue()))
 
 	def get_black_luminance(self):
 		if self.black_luminance_ctrl.GetSelection() == 0:
 			return None
 		else:
 			return str(stripzeros(
-				self.black_luminance_textctrl.GetValue().replace(",", ".")))
+				self.black_luminance_textctrl.GetValue()))
 
 	def get_black_output_offset(self):
 		return str(Decimal(self.black_output_offset_ctrl.GetValue()) / 100)
@@ -10081,8 +10056,8 @@ class MainFrame(BaseFrame):
 						k = XYZ2CCT(XYZ[0], XYZ[1], XYZ[2])
 						if not lang.getstr("whitepoint") in settings:
 							setcfg("whitepoint.colortemp", None)
-							setcfg("whitepoint.x", stripzeros(round(x, 6)))
-							setcfg("whitepoint.y", stripzeros(round(y, 6)))
+							setcfg("whitepoint.x", round(x, 6))
+							setcfg("whitepoint.y", round(y, 6))
 							self.worker.options_dispcal += [
 								"-w%s,%s" % (getcfg("whitepoint.x"), 
 											 getcfg("whitepoint.y"))]
