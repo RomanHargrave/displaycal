@@ -3419,7 +3419,7 @@ class ICCProfile:
 		XYZbp = [v / white_cdm2 for v in XYZbp]
 		rgbbp = mtx * XYZbp
 		# Optimize for uInt16Number encoding
-		rgbbp = [round(v * 65535) / 65535 for v in rgbbp]
+		rgbbp = [round(max(v, 0) * 65535) / 65535 for v in rgbbp]
 		minv = values[0]
 		maxX = (1.0 - rgbbp[0]) / (values[-1] - minv)
 		maxY = (1.0 - rgbbp[1]) / (values[-1] - minv)

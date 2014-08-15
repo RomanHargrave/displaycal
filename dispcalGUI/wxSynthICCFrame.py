@@ -437,7 +437,7 @@ class SynthICCFrame(BaseFrame):
 									   [rXYZ[2], gXYZ[2], bXYZ[2]]])
 			rgbblack = mtx.inverted() * black
 			# Optimize for uInt16Number encoding
-			rgbblack = [round(v * 65535) / 65535 for v in rgbblack]
+			rgbblack = [round(max(v, 0) * 65535) / 65535 for v in rgbblack]
 			for i, channel in enumerate("rgb"):
 				TRC = profile.tags["%sTRC" % channel]
 				TRC.set_trc(trc, 1024, vmin=rgbblack[i] * 65535)
