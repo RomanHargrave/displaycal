@@ -14,6 +14,8 @@
 #   work under wxGTK
 # - If CMD or CTRL are held, don't block keycodes that are not allowed (fixes
 #   copy/paste/select all keyboard shortcuts not working)
+# - Do default action if return key is pressed (currently only works if the
+#   default item is a button)
 #
 # TODO List/Caveats
 #
@@ -280,7 +282,7 @@ class FloatTextCtrl(wx.TextCtrl):
         self._parent = parent
         self._value = value
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
-        self.Bind(wx.EVT_KEY_DOWN, self.OnChar)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_SET_FOCUS, self.OnFocus)
         self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
 
@@ -299,15 +301,15 @@ class FloatTextCtrl(wx.TextCtrl):
             self._parent = None
 
 
-    def OnChar(self, event):
+    def OnKeyDown(self, event):
         """
-        Handles the ``wx.EVT_CHAR`` event for :class:`FloatTextCtrl`.
+        Handles the ``wx.EVT_KEYDOWN`` event for :class:`FloatTextCtrl`.
 
         :param `event`: a :class:`KeyEvent` event to be processed.
         """
 
         if self._parent:
-            self._parent.OnChar(event)
+            self._parent.OnKeyDown(event)
 
 
     def OnFocus(self, event):
@@ -431,10 +433,18 @@ class FloatSpin(wx.PyControl):
         if height == -1:
             height = best_size.GetHeight()
 
-        self._validkeycode = [43, 44, 45, 46, 69, 101, 127, 314]
+        self._validkeycode = [43, 44, 45, 46, 69, 101]
         self._validkeycode.extend(range(48, 58))
-        self._validkeycode.extend([wx.WXK_RETURN, wx.WXK_TAB, wx.WXK_BACK,
-                                   wx.WXK_LEFT, wx.WXK_RIGHT])
+        self._validkeycode.extend([wx.WXK_BACK, wx.WXK_DELETE, wx.WXK_LEFT,
+                                   wx.WXK_RIGHT,
+                                   wx.WXK_NUMPAD0, wx.WXK_NUMPAD1,
+                                   wx.WXK_NUMPAD2, wx.WXK_NUMPAD3,
+                                   wx.WXK_NUMPAD4, wx.WXK_NUMPAD5,
+                                   wx.WXK_NUMPAD6, wx.WXK_NUMPAD7,
+                                   wx.WXK_NUMPAD8, wx.WXK_NUMPAD9,
+                                   wx.WXK_NUMPAD_ADD, wx.WXK_NUMPAD_DECIMAL,
+                                   wx.WXK_NUMPAD_SEPARATOR,
+                                   wx.WXK_NUMPAD_SUBTRACT])
 
         self._spinbutton = wx.SpinButton(self, wx.ID_ANY, wx.DefaultPosition,
                                          size=(-1, height),
@@ -649,9 +659,9 @@ class FloatSpin(wx.PyControl):
         event.Skip()
 
 
-    def OnChar(self, event):
+    def OnKeyDown(self, event):
         """
-        Handles the ``wx.EVT_CHAR`` event for :class:`FloatSpin`.
+        Handles the ``wx.EVT_KEYDOWN`` event for :class:`FloatSpin`.
 
         :param `event`: a :class:`KeyEvent` event to be processed.
 
@@ -726,6 +736,14 @@ class FloatSpin(wx.PyControl):
                         continue
                     child.SetFocus()
                     break
+
+        elif keycode == wx.WXK_RETURN:
+
+            default = self.TopLevelParent.DefaultItem
+            if (default.Enabled and default.IsShown() and
+                isinstance(default, wx.Button)):
+                default.ProcessEvent(wx.PyCommandEvent(wx.EVT_BUTTON.typeId,
+                                                       default.GetId()))
 
         else:
             if (not event.CmdDown() and not event.ControlDown() and
