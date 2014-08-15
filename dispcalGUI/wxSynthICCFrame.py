@@ -60,6 +60,8 @@ class SynthICCFrame(BaseFrame):
 						  getattr(self, "%s_%s_ctrl_handler" % (color,
 																handler)),
 						  getattr(self, "%s_%s" % (color, component)))
+		self.black_point_cb.Bind(wx.EVT_CHECKBOX,
+								 self.black_point_enable_handler)
 		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX, self.trc_gamma_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS, self.trc_gamma_ctrl_handler)
@@ -139,18 +141,12 @@ class SynthICCFrame(BaseFrame):
 		v = round(v / increment) * increment
 		self.black_luminance_ctrl.SetValue(v)
 
-		increment = min_Y
-		min_inc = 1.0 / (10.0 ** self.black_Y.GetDigits())
-		if increment < min_inc:
-			increment = min_inc
-		self.black_Y.SetIncrement(increment)
-
 		old = getcfg("synthprofile.black_luminance")
 		setcfg("synthprofile.black_luminance", v)
 		if event:
 			self.black_xy_ctrl_handler(None)
-		for component in "XYZxy":
-			getattr(self, "black_%s" % component).Enable(v > 0)
+		self.black_point_cb.Enable(v > 0)
+		self.black_point_enable_handler(None)
 		if (v != old and (old == 0 or v == 0)) or event is True:
 			self.Freeze()
 			i = self.trc_ctrl.GetSelection()
@@ -175,6 +171,12 @@ class SynthICCFrame(BaseFrame):
 		setcfg("synthprofile.trc_output_offset", v)
 		self.update_trc_control()
 
+	def black_point_enable_handler(self, event):
+		v = getcfg("synthprofile.black_luminance")
+		for component in "XYZxy":
+			getattr(self, "black_%s" % component).Enable(v > 0 and
+				self.black_point_cb.Value)
+
 	def black_XYZ_ctrl_handler(self, event):
 		luminance = getcfg("synthprofile.luminance")
 		XYZ = []
@@ -183,8 +185,11 @@ class SynthICCFrame(BaseFrame):
 			if component == "Y":
 				self.black_luminance_ctrl.SetValue(XYZ[-1] * luminance)
 				self.black_luminance_ctrl_handler(None)
-				XYZ[-1] = self.black_luminance_ctrl.GetValue() / luminance
-				getattr(self, "black_Y").SetValue(XYZ[-1] * 100)
+				if not XYZ[-1]:
+					XYZ = [0, 0, 0]
+					for i in xrange(3):
+						getattr(self, "black_%s" % "XYZ"[i]).SetValue(0)
+					break
 		for i, v in enumerate(colormath.XYZ2xyY(*XYZ)[:2]):
 			getattr(self, "black_%s" % "xy"[i]).SetValue(v)
 
@@ -227,12 +232,16 @@ class SynthICCFrame(BaseFrame):
 	def get_XYZ(self):
 		""" Get XYZ in 0..1 range """
 		XYZ = {}
+		black_Y = (getcfg("synthprofile.black_luminance") /
+				   getcfg("synthprofile.luminance"))
 		for color in ("white", "red", "green", "blue", "black"):
 			for component in "XYZ":
 				v = getattr(self, "%s_%s" % (color,
 											 component)).GetValue() / 100.0
 				if color == "black":
 					key = "k"
+					if not self.black_point_cb.Value:
+						v = XYZ["w%s" % component] * black_Y
 				else:
 					key = color[0]
 				XYZ[key + component] = v
@@ -252,22 +261,31 @@ class SynthICCFrame(BaseFrame):
 		setcfg("synthprofile.luminance", v)
 		self.black_luminance_ctrl_handler(event)
 	
-	def parse_XYZ(self, name):
+	def parse_XYZ(self, name, set_blackpoint=False):
+		if not set_blackpoint:
+			set_blackpoint = not self.black_point_cb.Value
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
 		XYZ = {}
+		# Black Y scaled to 0..1 range
+		black_Y = (getcfg("synthprofile.black_luminance") /
+				   getcfg("synthprofile.luminance"))
 		for component in "XYZ":
 			v = getattr(self, "%s_%s" % (name, component)).GetValue()
 			XYZ[component] = v
+			if name == "white" and set_blackpoint:
+				getattr(self, "black_%s" % (component)).SetValue(v * black_Y)
 		if "X" in XYZ and "Y" in XYZ and "Z" in XYZ:
 			xyY = colormath.XYZ2xyY(XYZ["X"], XYZ["Y"], XYZ["Z"])
 			for i, component in enumerate("xy"):
 				getattr(self, "%s_%s" % (name, component)).SetValue(xyY[i])
-				if name == "white":
+				if name == "white" and set_blackpoint:
 					getattr(self, "black_%s" % (component)).SetValue(xyY[i])
 		self.enable_save_as_btn()
 	
-	def parse_xy(self, name):
+	def parse_xy(self, name=None, set_blackpoint=False):
+		if not set_blackpoint:
+			set_blackpoint = not self.black_point_cb.Value
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
 		xy = {}
@@ -275,13 +293,23 @@ class SynthICCFrame(BaseFrame):
 			for component in "xy":
 				v = getattr(self, "%s_%s" % (color, component)).GetValue()
 				xy[color[0] + component] = v
-		wXYZ = colormath.xyY2XYZ(xy["wx"], xy["wy"], 1.0)
-		# Black Y scaled to 0..1 range
-		black_Y = (getcfg("synthprofile.black_luminance") /
-				   getcfg("synthprofile.luminance"))
-		for i, component in enumerate("XYZ"):
-			getattr(self, "white_%s" % component).SetValue(wXYZ[i] * 100)
-			getattr(self, "black_%s" % component).SetValue(wXYZ[i] * black_Y)
+		if name == "white":
+			wXYZ = colormath.xyY2XYZ(xy["wx"], xy["wy"], 1.0)
+		else:
+			wXYZ = []
+			for component in "XYZ":
+				wXYZ.append(getattr(self, "white_%s" % component).GetValue() /
+							100.0)
+		if name == "white":
+			# Black Y scaled to 0..1 range
+			black_Y = (getcfg("synthprofile.black_luminance") /
+					   getcfg("synthprofile.luminance"))
+			for i, component in enumerate("XYZ"):
+				getattr(self, "white_%s" % component).SetValue(wXYZ[i] * 100)
+				if set_blackpoint:
+					getattr(self, "black_%s" % component).SetValue(wXYZ[i] *
+																   black_Y *
+																   100)
 		has_rgb_xy = True
 		# Calculate RGB to XYZ matrix from chromaticities and white
 		try:
@@ -316,7 +344,7 @@ class SynthICCFrame(BaseFrame):
 			self._updating_ctrls = True
 			for i, component in enumerate("XYZ"):
 				getattr(self, "white_%s" % component).SetValue(white[i] * 100)
-			self.parse_XYZ("white")
+			self.parse_XYZ("white", True)
 			for color in ("red", "green", "blue"):
 				for i, component in enumerate("xy"):
 					getattr(self, "%s_%s" % (color, component)).SetValue(locals()[color][i])
@@ -450,7 +478,7 @@ class SynthICCFrame(BaseFrame):
 		for tagname in ("lumi", "bkpt"):
 			if tagname == "lumi":
 				# Absolute
-				X, Y, Z = [v * getcfg("synthprofile.luminance")
+				X, Y, Z = [(v / XYZ["wY"]) * getcfg("synthprofile.luminance")
 						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
 			else:
 				X, Y, Z = (XYZ["kX"], XYZ["kY"], XYZ["kZ"])
@@ -600,6 +628,7 @@ class SynthICCFrame(BaseFrame):
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")
+		self.parse_xy()
 	
 	def white_xy_ctrl_handler(self, event):
 		self.parse_xy("white")
