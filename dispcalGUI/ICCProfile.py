@@ -1430,7 +1430,7 @@ class CurveType(ICCProfileTag, list):
 			X, Y, Z = colormath.xyY2XYZ(x, y, v / 65535.0)
 			self[i] = bt1886.apply(X, Y, Z)[1] * 65535.0
 	
-	def set_dicom_trc(self, black_Y=0, white_Y=100, size=None):
+	def set_dicom_trc(self, black_cdm2=.05, white_cdm2=100, size=None):
 		"""
 		Set the response to the DICOM Grayscale Standard Display Function
 		
@@ -1440,24 +1440,29 @@ class CurveType(ICCProfileTag, list):
 		"""
 		# See http://medical.nema.org/Dicom/2011/11_14pu.pdf
 		# Luminance levels depend on the start level of 0.05 cd/m2
-		black_Y += .05
-		black_jndi = colormath.DICOM(black_Y, True) if black_Y else 0
-		white_jndi = colormath.DICOM(white_Y, True) if white_Y else 1023
-		black_dicomY = math.pow(10, colormath.DICOM(black_jndi)) if black_jndi else 0
+		# and end level of 4000 cd/m2
+		if black_cdm2 < .05 or black_cdm2 >= white_cdm2:
+			raise ValueError("The black level of %f cd/m2 is out of range "
+							 "for DICOM. Valid range begins at 0.05 cd/m2." %
+							 black_cdm2)
+		if white_cdm2 > 4000 or white_cdm2 <= black_cdm2:
+			raise ValueError("The white level of %f cd/m2 is out of range "
+							 "for DICOM. Valid range is up to 4000 cd/m2." %
+							 white_cdm2)
+		black_jndi = colormath.DICOM(black_cdm2, True)
+		white_jndi = colormath.DICOM(white_cdm2, True)
 		white_dicomY = math.pow(10, colormath.DICOM(white_jndi))
-		vmin = 0 ##-black_dicomY / white_dicomY * 65535
 		if not size:
 			size = len(self)
 		if size < 2:
 			size = 1024
 		self[:] = []
-		for v in xrange(size):
-			if black_jndi or (v and white_jndi - black_jndi):
-				v = math.pow(10, colormath.DICOM(black_jndi +
-												 (float(v) / (size - 1)) *
-												 (white_jndi -
-												  black_jndi))) / white_dicomY
-			self.append(vmin + v * (65535 - vmin))
+		for i in xrange(size):
+			v = math.pow(10, colormath.DICOM(black_jndi +
+											 (float(i) / (size - 1)) *
+											 (white_jndi -
+											  black_jndi))) / white_dicomY
+			self.append(v * 65535)
 	
 	def set_trc(self, power=2.2, size=None, vmin=0, vmax=65535):
 		"""
@@ -3338,6 +3343,10 @@ class ICCProfile:
 				profile.tags[tagname].set_trc(gamma, 1)
 		profile.calculateID()
 		return profile
+
+	def set_blackpoint(self, XYZbp):
+		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
+		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
 	
 	def set_bt1886_trc(self, XYZbp, outoffset=0.0, gamma=2.4, gamma_type="B",
 					   size=None):
@@ -3366,8 +3375,65 @@ class ICCProfile:
 			rgb = mtx.inverted() * XYZ
 			for j, channel in enumerate(("r", "g", "b")):
 				self.tags[channel + "TRC"][i] = min(rgb[j] * 65535, 65535)
-		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
-		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
+		self.set_blackpoint(XYZbp)
+	
+	def set_dicom_trc(self, XYZbp, white_cdm2=100, size=1024):
+		"""
+		Set the response to the DICOM Grayscale Standard Display Function
+		
+		This response is special in that it depends on the actual black
+		and white level of the display.
+		
+		XYZbp   Black point in absolute XYZ, Y range 0..white_cdm2
+		
+		"""
+		# See http://medical.nema.org/Dicom/2011/11_14pu.pdf
+		# Luminance levels depend on the start level of 0.05 cd/m2
+		# and end level of 4000 cd/m2
+		if XYZbp[1] < .05 or XYZbp[1] >= white_cdm2:
+			raise ValueError("The black level of %f cd/m2 is out of range "
+							 "for DICOM. Valid range begins at 0.05 cd/m2." %
+							 XYZbp[1])
+		if white_cdm2 > 4000 or white_cdm2 <= XYZbp[1]:
+			raise ValueError("The white level of %f cd/m2 is out of range "
+							 "for DICOM. Valid range is up to 4000 cd/m2." %
+							 white_cdm2)
+		black_jndi = colormath.DICOM(XYZbp[1], True)
+		white_jndi = colormath.DICOM(white_cdm2, True)
+		white_dicomY = math.pow(10, colormath.DICOM(white_jndi))
+		rXYZ = self.tags.rXYZ.values()
+		gXYZ = self.tags.gXYZ.values()
+		bXYZ = self.tags.bXYZ.values()
+		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+								   [rXYZ[1], gXYZ[1], bXYZ[1]],
+								   [rXYZ[2], gXYZ[2], bXYZ[2]]]).inverted()
+		if size < 2:
+			size = 1024
+		values = []
+		for i in xrange(size):
+			v = math.pow(10, colormath.DICOM(black_jndi +
+											 (float(i) / (size - 1)) *
+											 (white_jndi -
+											  black_jndi))) / white_dicomY
+			values.append(v)
+		XYZbp = [v / white_cdm2 for v in XYZbp]
+		rgbbp = mtx * XYZbp
+		# Optimize for uInt16Number encoding
+		rgbbp = [round(v * 65535) / 65535 for v in rgbbp]
+		minv = values[0]
+		maxX = (1.0 - rgbbp[0]) / (values[-1] - minv)
+		maxY = (1.0 - rgbbp[1]) / (values[-1] - minv)
+		maxZ = (1.0 - rgbbp[2]) / (values[-1] - minv)
+		for channel in "rgb":
+			self.tags["%sTRC" % channel] = CurveType()
+		for i in xrange(size):
+			rgb = (rgbbp[0] + (values[i] - minv) * maxX,
+				   rgbbp[1] + (values[i] - minv) * maxY,
+				   rgbbp[2] + (values[i] - minv) * maxZ)
+			for j in xrange(3):
+				self.tags["%sTRC" % "rgb"[j]].append(min(rgb[j] * 65535,
+														 65535))
+		self.set_blackpoint(XYZbp)
 	
 	def set_localizable_desc(self, tagname, description, languagecode="en",
 							 countrycode="US"):

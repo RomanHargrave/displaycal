@@ -16,10 +16,7 @@ import localization as lang
 import worker
 from wxaddons import FileDrop
 from wxwindows import BaseFrame, InfoDialog, wx
-try:
-	import wx.lib.agw.floatspin as floatspin
-except ImportError:
-	import floatspin
+import floatspin
 import xh_floatspin
 
 from wx import xrc
@@ -53,14 +50,15 @@ class SynthICCFrame(BaseFrame):
 
 		# Bind event handlers
 		self.preset_ctrl.Bind(wx.EVT_CHOICE, self.preset_ctrl_handler)
-		for color in ("red", "green", "blue", "white"):
+		for color in ("red", "green", "blue", "white", "black"):
 			for component in "XYZxy":
 				if component in "xy":
 					handler = "xy"
 				else:
 					handler = "XYZ"
-				self.Bind(wx.EVT_TEXT, getattr(self, "%s_%s_ctrl_handler" %
-													 (color, handler)),
+				self.Bind(floatspin.EVT_FLOATSPIN,
+						  getattr(self, "%s_%s_ctrl_handler" % (color,
+																handler)),
 						  getattr(self, "%s_%s" % (color, component)))
 		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX, self.trc_gamma_ctrl_handler)
@@ -121,19 +119,50 @@ class SynthICCFrame(BaseFrame):
 	
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
+		white_Y = getcfg("synthprofile.luminance")
+		min_Y = ICCP.s15Fixed16Number("\0\0\0\1") * 100
+		increment = ICCP.s15Fixed16Number(ICCP.s15Fixed16Number_tohex(min_Y / white_Y))
+		if increment < min_Y:
+			increment = min_Y * (white_Y / 100.0)
+		min_inc = 1.0 / (10.0 ** self.black_luminance_ctrl.GetDigits())
+		if increment < min_inc:
+			increment = min_inc
+		self.black_luminance_ctrl.SetIncrement(increment)
+		fmt = "%%.%if" % self.black_luminance_ctrl.GetDigits()
+		if fmt % v > fmt % 0 and fmt % v < fmt % increment:
+			if event:
+				v = increment
+			else:
+				v = 0
+		elif fmt % v == fmt % 0:
+			v = 0
+		v = round(v / increment) * increment
+		self.black_luminance_ctrl.SetValue(v)
+
+		increment = min_Y
+		min_inc = 1.0 / (10.0 ** self.black_Y.GetDigits())
+		if increment < min_inc:
+			increment = min_inc
+		self.black_Y.SetIncrement(increment)
+
+		old = getcfg("synthprofile.black_luminance")
 		setcfg("synthprofile.black_luminance", v)
-		self.Freeze()
-		i = self.trc_ctrl.GetSelection()
-		self.trc_gamma_type_ctrl.Show(i in (0, 4) and bool(v))
-		black_output_offset_show = (i in (0, 4) and
-									bool(v))
-		self.black_output_offset_label.Show(black_output_offset_show)
-		self.black_output_offset_ctrl.Show(black_output_offset_show)
-		self.black_output_offset_intctrl.Show(black_output_offset_show)
-		self.black_output_offset_intctrl_label.Show(black_output_offset_show)
-		self.panel.GetSizer().Layout()
-		self.update_layout()
-		self.Thaw()
+		if event:
+			self.black_xy_ctrl_handler(None)
+		for component in "XYZxy":
+			getattr(self, "black_%s" % component).Enable(v > 0)
+		if (v != old and (old == 0 or v == 0)) or event is True:
+			self.Freeze()
+			i = self.trc_ctrl.GetSelection()
+			self.trc_gamma_type_ctrl.Show(i in (0, 4) and bool(v))
+			black_output_offset_show = (i in (0, 4) and bool(v))
+			self.black_output_offset_label.Show(black_output_offset_show)
+			self.black_output_offset_ctrl.Show(black_output_offset_show)
+			self.black_output_offset_intctrl.Show(black_output_offset_show)
+			self.black_output_offset_intctrl_label.Show(black_output_offset_show)
+			self.panel.GetSizer().Layout()
+			self.update_layout()
+			self.Thaw()
 
 	def black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.black_output_offset_intctrl.GetId():
@@ -145,6 +174,31 @@ class SynthICCFrame(BaseFrame):
 		v = self.black_output_offset_ctrl.GetValue() / 100.0
 		setcfg("synthprofile.trc_output_offset", v)
 		self.update_trc_control()
+
+	def black_XYZ_ctrl_handler(self, event):
+		luminance = getcfg("synthprofile.luminance")
+		XYZ = []
+		for component in "XYZ":
+			XYZ.append(getattr(self, "black_%s" % component).GetValue() / 100.0)
+			if component == "Y":
+				self.black_luminance_ctrl.SetValue(XYZ[-1] * luminance)
+				self.black_luminance_ctrl_handler(None)
+				XYZ[-1] = self.black_luminance_ctrl.GetValue() / luminance
+				getattr(self, "black_Y").SetValue(XYZ[-1] * 100)
+		for i, v in enumerate(colormath.XYZ2xyY(*XYZ)[:2]):
+			getattr(self, "black_%s" % "xy"[i]).SetValue(v)
+
+	def black_xy_ctrl_handler(self, event):
+		# Black Y scaled to 0..1 range
+		Y = (getcfg("synthprofile.black_luminance") /
+			 getcfg("synthprofile.luminance"))
+		xy = []
+		for component in "xy":
+			xy.append(getattr(self, "black_%s" % component).GetValue() or 1.0 /
+																		  3)
+			getattr(self, "black_%s" % component).SetValue(xy[-1])
+		for i, v in enumerate(colormath.xyY2XYZ(*xy + [Y])):
+			getattr(self, "black_%s" % "XYZ"[i]).SetValue(v * 100)
 	
 	def blue_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("blue")
@@ -171,20 +225,20 @@ class SynthICCFrame(BaseFrame):
 		self.save_as_btn.Enable(bool(self.get_XYZ()))
 	
 	def get_XYZ(self):
+		""" Get XYZ in 0..1 range """
 		XYZ = {}
-		for color in ("white", "red", "green", "blue"):
+		for color in ("white", "red", "green", "blue", "black"):
 			for component in "XYZ":
-				try:
-					XYZ[color[0] + component] = float(getattr(self,
-															  "%s_%s" %
-															  (color, component)).Value.replace(",", ".")) / 100.0
-				except ValueError:
-					pass
-		if ("wX" in XYZ and "wY" in XYZ and "wZ" in XYZ and
+				v = getattr(self, "%s_%s" % (color,
+											 component)).GetValue() / 100.0
+				if color == "black":
+					key = "k"
+				else:
+					key = color[0]
+				XYZ[key + component] = v
+		if (XYZ["wX"] and XYZ["wY"] and XYZ["wZ"] and
 			(self.colorspace_gray_ctrl.Value or
-			 ("rX" in XYZ and "rY" in XYZ and "rZ" in XYZ and
-			  "gX" in XYZ and "gY" in XYZ and "gZ" in XYZ and
-			  "bX" in XYZ and "bY" in XYZ and "bZ" in XYZ))):
+			 (XYZ["rX"] and XYZ["gY"] and XYZ["bZ"]))):
 			return XYZ
 	
 	def green_XYZ_ctrl_handler(self, event):
@@ -196,21 +250,21 @@ class SynthICCFrame(BaseFrame):
 	def luminance_ctrl_handler(self, event):
 		v = self.luminance_ctrl.GetValue()
 		setcfg("synthprofile.luminance", v)
+		self.black_luminance_ctrl_handler(event)
 	
 	def parse_XYZ(self, name):
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
 		XYZ = {}
 		for component in "XYZ":
-			try:
-				XYZ[component] = float(getattr(self, "%s_%s" %
-									   (name, component)).Value.replace(",", "."))
-			except ValueError:
-				pass
+			v = getattr(self, "%s_%s" % (name, component)).GetValue()
+			XYZ[component] = v
 		if "X" in XYZ and "Y" in XYZ and "Z" in XYZ:
 			xyY = colormath.XYZ2xyY(XYZ["X"], XYZ["Y"], XYZ["Z"])
 			for i, component in enumerate("xy"):
-				getattr(self, "%s_%s" % (name, component)).ChangeValue(str(xyY[i]))
+				getattr(self, "%s_%s" % (name, component)).SetValue(xyY[i])
+				if name == "white":
+					getattr(self, "black_%s" % (component)).SetValue(xyY[i])
 		self.enable_save_as_btn()
 	
 	def parse_xy(self, name):
@@ -219,34 +273,39 @@ class SynthICCFrame(BaseFrame):
 		xy = {}
 		for color in ("white", "red", "green", "blue"):
 			for component in "xy":
-				try:
-					xy[color[0] + component] = float(getattr(self,
-															 "%s_%s" %
-															 (color, component)).Value.replace(",", "."))
-				except ValueError:
-					pass
-		if "wx" in xy and "wy" in xy:
-			wXYZ = colormath.xyY2XYZ(xy["wx"], xy["wy"], 1.0)
+				v = getattr(self, "%s_%s" % (color, component)).GetValue()
+				xy[color[0] + component] = v
+		wXYZ = colormath.xyY2XYZ(xy["wx"], xy["wy"], 1.0)
+		# Black Y scaled to 0..1 range
+		black_Y = (getcfg("synthprofile.black_luminance") /
+				   getcfg("synthprofile.luminance"))
+		for i, component in enumerate("XYZ"):
+			getattr(self, "white_%s" % component).SetValue(wXYZ[i] * 100)
+			getattr(self, "black_%s" % component).SetValue(wXYZ[i] * black_Y)
+		has_rgb_xy = True
+		# Calculate RGB to XYZ matrix from chromaticities and white
+		try:
+			mtx = colormath.rgb_to_xyz_matrix(xy["rx"], xy["ry"],
+											  xy["gx"], xy["gy"],
+											  xy["bx"], xy["by"],
+											  wXYZ)
+		except ZeroDivisionError:
+			# Singular matrix
+			has_rgb_xy = False
+		rgb = {"r": (1.0, 0.0, 0.0),
+			   "g": (0.0, 1.0, 0.0),
+			   "b": (0.0, 0.0, 1.0)}
+		XYZ = {}
+		for color in ("red", "green", "blue"):
+			if has_rgb_xy:
+				# Calculate XYZ for primaries
+				v = mtx * rgb[color[0]]
+			if not has_rgb_xy:
+				v = (0, 0, 0)
+			XYZ[color[0]] = v
 			for i, component in enumerate("XYZ"):
-				getattr(self, "white_%s" % component).ChangeValue(str(wXYZ[i] * 100))
-			has_rgb_xy = ("rx" in xy and "ry" in xy and
-						  "gx" in xy and "gy" in xy and
-						  "bx" in xy and "by" in xy)
-			if name != "white" and has_rgb_xy:
-				# Calculate RGB to XYZ matrix from chromaticities and white
-				mtx = colormath.rgb_to_xyz_matrix(xy["rx"], xy["ry"],
-												  xy["gx"], xy["gy"],
-												  xy["bx"], xy["by"], wXYZ)
-				rgb = {"r": (1.0, 0.0, 0.0),
-					   "g": (0.0, 1.0, 0.0),
-					   "b": (0.0, 0.0, 1.0)}
-				XYZ = {}
-				for color in ("red", "green", "blue"):
-					# Calculate XYZ for primaries
-					XYZ[color[0]] = mtx * rgb[color[0]]
-					for i, component in enumerate("XYZ"):
-						getattr(self, "%s_%s" %
-								(color, component)).ChangeValue(str(XYZ[color[0]][i] * 100))
+				getattr(self, "%s_%s" %
+						(color, component)).SetValue(XYZ[color[0]][i] * 100)
 		self.enable_save_as_btn()
 	
 	def preset_ctrl_handler(self, event):
@@ -256,10 +315,12 @@ class SynthICCFrame(BaseFrame):
 			white = colormath.get_whitepoint(white)
 			self._updating_ctrls = True
 			for i, component in enumerate("XYZ"):
-				getattr(self, "white_%s" % component).SetValue(str(white[i] * 100))
+				getattr(self, "white_%s" % component).SetValue(white[i] * 100)
+			self.parse_XYZ("white")
 			for color in ("red", "green", "blue"):
 				for i, component in enumerate("xy"):
-					getattr(self, "%s_%s" % (color, component)).SetValue(str(locals()[color][i]))
+					getattr(self, "%s_%s" % (color, component)).SetValue(locals()[color][i])
+			self.parse_xy(None)
 			if gamma == -1023:
 				# DICOM
 				self.trc_ctrl.SetSelection(1)
@@ -306,9 +367,8 @@ class SynthICCFrame(BaseFrame):
 			wx.Bell()
 			gamma = 2.2
 			self.trc_gamma_ctrl.Value = str(gamma)
-		# Black Y scaled to 0..1 range
-		black_Y = (getcfg("synthprofile.black_luminance") /
-				   getcfg("synthprofile.luminance"))
+		white = XYZ["wX"], XYZ["wY"], XYZ["wZ"]
+		black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
 		if self.trc_ctrl.GetSelection() == 0:
 			# Gamma
 			trc = gamma
@@ -341,7 +401,6 @@ class SynthICCFrame(BaseFrame):
 											   trc,
 											   defaultFile,
 											   getcfg("copyright"))
-			TRC = profile.tags.rTRC = profile.tags.gTRC = profile.tags.bTRC
 		else:
 			# Grayscale profile
 			profile = ICCP.ICCProfile()
@@ -351,30 +410,50 @@ class SynthICCFrame(BaseFrame):
 			(profile.tags.wtpt.X,
 			 profile.tags.wtpt.Y,
 			 profile.tags.wtpt.Z) = (XYZ["wX"], XYZ["wY"], XYZ["wZ"])
-			TRC = profile.tags.rTRC = profile.tags.gTRC = profile.tags.bTRC = \
-				  profile.tags.kTRC = ICCP.CurveType()
+		profile.tags.rTRC = ICCP.CurveType()
+		profile.tags.gTRC = ICCP.CurveType()
+		profile.tags.bTRC = ICCP.CurveType()
 		if self.trc_ctrl.GetSelection() == 1:
 			# DICOM
 			# Absolute luminance values!
-			TRC.set_dicom_trc(getcfg("synthprofile.black_luminance"),
-							  getcfg("synthprofile.luminance"))
-		elif self.trc_ctrl.GetSelection() in (0, 4) and black_Y:
-			# Gamma with output offset or Rec. 1886
+			try:
+				profile.set_dicom_trc([v * getcfg("synthprofile.luminance")
+									   for v in black],
+									  getcfg("synthprofile.luminance"))
+			except ValueError, exception:
+				show_result_dialog(exception, self)
+				return
+		elif self.trc_ctrl.GetSelection() in (0, 4) and black != (0, 0, 0):
+			# Gamma with output offset or Rec. 1886-like
 			outoffset = getcfg("synthprofile.trc_output_offset")
-			TRC.set_bt1886_trc(black_Y, outoffset, gamma,
-							   getcfg("synthprofile.trc_gamma_type"))
-		elif black_Y:
-			TRC.set_trc(trc, 1024, vmin=black_Y * 65535)
-		elif not TRC:
-			TRC.set_trc(trc, 1)
+			profile.set_bt1886_trc(black, outoffset, gamma,
+								   getcfg("synthprofile.trc_gamma_type"))
+		elif black != (0, 0, 0):
+			rXYZ = profile.tags.rXYZ.values()
+			gXYZ = profile.tags.gXYZ.values()
+			bXYZ = profile.tags.bXYZ.values()
+			mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+									   [rXYZ[1], gXYZ[1], bXYZ[1]],
+									   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+			rgbblack = mtx.inverted() * black
+			# Optimize for uInt16Number encoding
+			rgbblack = [round(v * 65535) / 65535 for v in rgbblack]
+			for i, channel in enumerate("rgb"):
+				TRC = profile.tags["%sTRC" % channel]
+				TRC.set_trc(trc, 1024, vmin=rgbblack[i] * 65535)
+		else:
+			for channel in "rgb":
+				profile.tags["%sTRC" % channel].set_trc(trc, 1)
+		if not self.colorspace_rgb_ctrl.Value:
+			# Grayscale profile
+			profile.tags.kTRC = profile.tags.gTRC
 		for tagname in ("lumi", "bkpt"):
 			if tagname == "lumi":
 				# Absolute
 				X, Y, Z = [v * getcfg("synthprofile.luminance")
 						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
 			else:
-				x, y = colormath.XYZ2xyY(XYZ["wX"], XYZ["wY"], XYZ["wZ"])[:2]
-				X, Y, Z = colormath.xyY2XYZ(x, y, black_Y)
+				X, Y, Z = (XYZ["kX"], XYZ["kY"], XYZ["kZ"])
 			profile.tags[tagname] = ICCP.XYZType()
 			(profile.tags[tagname].X,
 			 profile.tags[tagname].Y,
@@ -517,7 +596,7 @@ class SynthICCFrame(BaseFrame):
 			outoffset = 100
 		self.black_output_offset_ctrl.SetValue(outoffset)
 		self.black_output_offset_intctrl.SetValue(outoffset)
-		self.black_luminance_ctrl_handler(None)
+		self.black_luminance_ctrl_handler(True)
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")
