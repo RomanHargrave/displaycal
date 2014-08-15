@@ -886,7 +886,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 			page = self.lb.GetPage(pagenum)
 			page.SetSize((w, -1))
 			page.desc.SetLabel(page.desc.GetLabel().replace("\n", " "))
-			page.desc.Wrap(w)
+			page.desc.Wrap(w - 12)
 			bitmaps = {"black_level": {CRT: "luminance",
 									   not CRT: "black_level"},
 					   "luminance": {CRT: "contrast",
