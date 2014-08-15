@@ -219,8 +219,11 @@ class BaseFrame(wx.Frame):
 	
 	def update_layout(self):
 		""" Update main window layout. """
-		self.GetSizer().SetSizeHints(self)
-		self.GetSizer().Layout()
+		if not self.IsIconized() and not self.IsMaximized():
+			self.GetSizer().SetSizeHints(self)
+			self.GetSizer().Layout()
+		elif self.IsMaximized():
+			self.MinClientSize = self.Sizer.MinSize
 	
 	def set_child_ctrls_as_attrs(self, parent=None):
 		"""
