@@ -799,7 +799,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 						 lang.getstr("instrument.calibrating"),
 						 lang.getstr("please_wait"),
 						 lang.getstr("aborting")) or msg == " " * 4 or
-				 "error" in msg.lower() or "failed" in msg.lower() or
+				 ": error -" in msg.lower() or "failed" in msg.lower() or
 				 msg.startswith(lang.getstr("webserver.waiting")) or
 				 msg.startswith(lang.getstr("connection.waiting"))) and
 				msg != self.lastmsg):
@@ -857,9 +857,10 @@ class DisplayAdjustmentFrame(wx.Frame):
 			self.calibration_btn.SetLabel(" " + lang.getstr("calibration.skip"))
 		else:
 			self.calibration_btn.SetLabel(" " + lang.getstr("finish"))
-		del self.adjustment_btn._lastBestSize
-		del self.sound_on_off_btn._lastBestSize
-		del self.calibration_btn._lastBestSize
+		for btn in (self.adjustment_btn, self.sound_on_off_btn,
+					self.calibration_btn):
+			if hasattr(btn, "_lastBestSize"):
+				del btn._lastBestSize
 		self.calibration_btn.GetContainingSizer().Layout()
 		# Update black luminance page description
 		self.lb.GetPage(0).update_desc()
