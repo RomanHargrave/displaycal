@@ -857,6 +857,8 @@ class DisplayAdjustmentFrame(wx.Frame):
 			self.calibration_btn.SetLabel(" " + lang.getstr("calibration.skip"))
 		else:
 			self.calibration_btn.SetLabel(" " + lang.getstr("finish"))
+		del self.adjustment_btn._lastBestSize
+		del self.sound_on_off_btn._lastBestSize
 		del self.calibration_btn._lastBestSize
 		self.calibration_btn.GetContainingSizer().Layout()
 		# Update black luminance page description
