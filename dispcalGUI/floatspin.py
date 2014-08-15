@@ -5,9 +5,15 @@
 # Andrea Gavana, @ 16 Nov 2005
 # Latest Revision: 03 Jan 2014, 23.00 GMT
 #
-# Modifications for dispcalGUI: Select text on focus, always accept "," as
-# decimal point, only call SyncSpinToText if TextCtrl value has actually
-# changed, and make sure to set to min/max if not in range
+# Modifications for dispcalGUI:
+# - Select text on focus
+# - Always accept "," (comma) as decimal point
+# - Only call SyncSpinToText if TextCtrl value has actually changed
+# - Set value to min/max if not in range
+# - Use a different method for tab traversal because the original code didn't
+#   work under wxGTK
+# - If CMD or CTRL are held, don't block keycodes that are not allowed (fixes
+#   copy/paste/select all keyboard shortcuts not working)
 #
 # TODO List/Caveats
 #
@@ -274,7 +280,7 @@ class FloatTextCtrl(wx.TextCtrl):
         self._parent = parent
         self._value = value
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
-        self.Bind(wx.EVT_CHAR, self.OnChar)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnChar)
         self.Bind(wx.EVT_SET_FOCUS, self.OnFocus)
         self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
 
@@ -706,16 +712,24 @@ class FloatSpin(wx.PyControl):
 
         elif keycode == wx.WXK_TAB:
 
-            new_event = wx.NavigationKeyEvent()
-            new_event.SetEventObject(self.GetParent())
-            new_event.SetDirection(not event.ShiftDown())
-            # CTRL-TAB changes the (parent) window, i.e. switch notebook page
-            new_event.SetWindowChange(event.ControlDown())
-            new_event.SetCurrentFocus(self)
-            self.GetParent().GetEventHandler().ProcessEvent(new_event)
+            # The origianl event code doesn't work under wxGTK
+            focusnext = False
+            children = self.Parent.Children
+            if event.ShiftDown():
+                children = reversed(children)
+            for child in children:
+                if child is self:
+                    focusnext = True
+                elif (child.AcceptsFocus() and child.Enabled and
+                      child.IsShown() and focusnext):
+                    if isinstance(child, wx.RadioButton) and not child.Value:
+                        continue
+                    child.SetFocus()
+                    break
 
         else:
-            if keycode not in self._validkeycode:
+            if (not event.CmdDown() and not event.ControlDown() and
+                keycode not in self._validkeycode):
                 return
 
             event.Skip()
