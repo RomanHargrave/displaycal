@@ -1387,6 +1387,7 @@ class CustomCheckBox(wx.Panel):
 		self.BackgroundColour = parent.BackgroundColour
 		self.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
 		self._cb = wx.CheckBox(self, -1)
+		self._enabled = True
 		self.Sizer.Add(self._cb, flag=wx.ALIGN_CENTER_VERTICAL)
 		if sys.platform == "darwin":
 			self._label = wx.StaticText(self, -1, "")
@@ -1405,6 +1406,7 @@ class CustomCheckBox(wx.Panel):
 		self.Enable(False)
 
 	def Enable(self, enable=True):
+		self._enabled = enable
 		self._cb.Enable(enable)
 		if self._label is not self._cb:
 			color = self.ForegroundColour
@@ -1431,7 +1433,7 @@ class CustomCheckBox(wx.Panel):
 		return locals()
 
 	def IsEnabled(self):
-		return self._cb.Enabled
+		return self._enabled
 
 	def OnLeftDown(self, event):
 		if not self.Enabled:
