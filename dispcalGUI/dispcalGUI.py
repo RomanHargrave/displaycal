@@ -132,10 +132,7 @@ from wxwindows import (AboutDialog, BaseFrame, BitmapBackgroundPanel,
 					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
 					   LogWindow, ProgressDialog,
 					   TooltipWindow, get_gradient_panel)
-try:
-	import wx.lib.agw.floatspin as floatspin
-except ImportError:
-	import floatspin
+import floatspin
 import xh_floatspin
 
 # wxPython

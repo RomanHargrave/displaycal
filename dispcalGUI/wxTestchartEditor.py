@@ -32,10 +32,7 @@ from wxwindows import (CustomGrid, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory,
 					   InfoDialog, get_gradient_panel)
 from wxfixes import GenBitmapButton as BitmapButton
-try:
-	import wx.lib.agw.floatspin as floatspin
-except ImportError:
-	import floatspin
+import floatspin
 from wxMeasureFrame import get_default_size
 
 

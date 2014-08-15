@@ -30,10 +30,7 @@ from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
 import localization as lang
 import util_str
 
-try:
-	import wx.lib.agw.floatspin as floatspin
-except ImportError:
-	import floatspin
+import floatspin
 import wx.lib.filebrowsebutton as filebrowse
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
