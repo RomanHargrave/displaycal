@@ -1534,6 +1534,7 @@ class PlotCanvas(wx.Panel):
         dcs.EndDrawing()
 
         dc = wx.ClientDC( self.canvas )
+        dc = wx.BufferedDC(dc, self._Buffer)
         #this will erase if called twice
         dc.Blit(0, 0, width, height, dcs, 0, 0, self._logicalFunction)
         if sys.platform == "darwin":
