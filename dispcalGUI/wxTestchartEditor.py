@@ -2125,8 +2125,8 @@ class TestchartEditor(wx.Frame):
 
 		white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None
 		black_patches = self.ti1.queryv1("BLACK_COLOR_PATCHES") or None
-		single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
-		gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or 0
+		single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or None
+		gray_patches = self.ti1.queryv1("COMP_GREY_STEPS") or None
 		multi_bcc_steps = self.ti1.queryv1("MULTI_DIM_BCC_STEPS") or 0
 		multi_steps = self.ti1.queryv1("MULTI_DIM_STEPS") or multi_bcc_steps
 		fullspread_patches = self.ti1.queryv1("NUMBER_OF_SETS")
@@ -2190,6 +2190,14 @@ class TestchartEditor(wx.Frame):
 							multi["B"] += [patch[2]]
 
 				if single_channel_patches is None:
+					single_channel_patches = min(len(R), len(G), len(B))
+				if gray_patches is None:
+					gray_patches = len(gray_channel)
+				if multi_steps is None:
+					multi_steps = 0
+
+				if single_channel_patches is None:
+					# NEVER (old code, needs work for demphasis/gamma, remove?)
 					R_inc = self.tc_get_increments(R, vmaxlen)
 					G_inc = self.tc_get_increments(G, vmaxlen)
 					B_inc = self.tc_get_increments(B, vmaxlen)
@@ -2265,6 +2273,7 @@ class TestchartEditor(wx.Frame):
 					fullspread_patches += 3 # black always in SINGLE_DIM_STEPS
 
 				if gray_patches is None:
+					# NEVER (old code, needs work for demphasis/gamma, remove?)
 					RGB_inc = self.tc_get_increments(gray_channel, vmaxlen)
 					if debug:
 						safe_print("[D] RGB_inc:")
@@ -2314,6 +2323,7 @@ class TestchartEditor(wx.Frame):
 					fullspread_patches += 2 # black and white always in COMP_GREY_STEPS
 
 				if multi_steps is None:
+					# NEVER (old code, needs work for demphasis/gamma, remove?)
 					R_inc = self.tc_get_increments(multi["R"], vmaxlen)
 					G_inc = self.tc_get_increments(multi["G"], vmaxlen)
 					B_inc = self.tc_get_increments(multi["B"], vmaxlen)
