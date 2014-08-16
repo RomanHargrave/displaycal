@@ -151,7 +151,6 @@ class LUTCanvas(plot.PlotCanvas):
 
 	def __init__(self, *args, **kwargs):
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
-		self.canvas.Unbind(wx.EVT_LEAVE_WINDOW)
 		self.Unbind(wx.EVT_SCROLL_THUMBTRACK)
 		self.Unbind(wx.EVT_SCROLL_PAGEUP)
 		self.Unbind(wx.EVT_SCROLL_PAGEDOWN)
@@ -442,11 +441,38 @@ class LUTCanvas(plot.PlotCanvas):
 		mDataDict - Dictionary of data that you want to use for the pointLabel
 		
 		"""
-		dc.SetPen(wx.Pen(wx.BLACK))
-		dc.SetBrush(wx.Brush( wx.BLACK, wx.SOLID ) )
+		if not self.last_draw:
+			return
+		graphics, xAxis, yAxis= self.last_draw
+		# sizes axis to axis type, create lower left and upper right corners of plot
+		if xAxis == None or yAxis == None:
+			# One or both axis not specified in Draw
+			p1, p2 = graphics.boundingBox()     # min, max points of graphics
+			if xAxis == None:
+				xAxis = self._axisInterval(self._xSpec, p1[0], p2[0]) # in user units
+			if yAxis == None:
+				yAxis = self._axisInterval(self._ySpec, p1[1], p2[1])
+			# Adjust bounding box for axis spec
+			p1[0],p1[1] = xAxis[0], yAxis[0]     # lower left corner user scale (xmin,ymin)
+			p2[0],p2[1] = xAxis[1], yAxis[1]     # upper right corner user scale (xmax,ymax)
+		else:
+			# Both axis specified in Draw
+			p1= plot._Numeric.array([xAxis[0], yAxis[0]])    # lower left corner user scale (xmin,ymin)
+			p2= plot._Numeric.array([xAxis[1], yAxis[1]])     # upper right corner user scale (xmax,ymax)
+		ptx,pty,rectWidth,rectHeight= self._point2ClientCoord(p1, p2)
+		# allow graph to overlap axis lines by adding units to width and height
+		dc.SetClippingRegion(ptx,pty,rectWidth+2,rectHeight+2)
+
+		if sys.platform == "darwin":
+			color = wx.WHITE
+		else:
+			color = wx.BLACK
+		dc.SetPen(wx.Pen(color, 1, wx.DOT))
+		dc.SetBrush(wx.Brush( color, wx.SOLID ) )
 		
 		sx, sy = mDataDict["scaledXY"]  # Scaled x, y of closest point
-		dc.DrawRectangle(sx - 3, sy - 3, 7, 7)  # 7x7 square centered on point
+		dc.DrawLine(0, sy, ptx+rectWidth+2, sy)
+		dc.DrawLine(sx, 0, sx, pty+rectHeight+2)
 
 	def GetClosestPoints(self, pntXY, pointScaled= True):
 		"""Returns list with
@@ -478,6 +504,7 @@ class LUTCanvas(plot.PlotCanvas):
 			self.center()
 
 	def OnMouseLeftDown(self,event):
+		self.erase_pointlabel()
 		self._zoomCorner1[0], self._zoomCorner1[1]= self._getXY(event)
 		self._screenCoordinates = plot._Numeric.array(event.GetPosition())
 		if self._dragEnabled:
@@ -490,6 +517,8 @@ class LUTCanvas(plot.PlotCanvas):
 			if self.canvas.HasCapture():
 				self.canvas.ReleaseMouse()
 				self._set_center()
+		self.TopLevelParent.ProcessEvent(wx.MoveEvent(event.GetPosition(),
+													  self.Id))
 	
 	def _DrawCanvas(self, graphics):
 		""" Draw proportionally correct, center and zoom """
@@ -1463,11 +1492,8 @@ class LUTFrame(wx.Frame):
 		if hasattr(self, "box_sizer"):
 			self.box_sizer.Layout()
 		if self.client.last_PointLabel != None:
-			pointXY = self.client.last_PointLabel["pointXY"]
 			self.client._drawPointLabel(self.client.last_PointLabel) #erase old
 			self.client.last_PointLabel = None
-		else:
-			pointXY = (127.5, 127.5)
 		wx.CallAfter(self.client.DrawLUT, curves,
 					 xLabel=self.xLabel,
 					 yLabel=self.yLabel,
@@ -1478,7 +1504,6 @@ class LUTFrame(wx.Frame):
 					 b=self.toggle_blue.GetValue() if 
 					   hasattr(self, "toggle_blue") else False)
 		self.Thaw()
-		wx.CallLater(125, self.UpdatePointLabel, pointXY)
 
 	def OnClose(self, event):
 		if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
@@ -1487,12 +1512,8 @@ class LUTFrame(wx.Frame):
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):
-			xy = self.client._getXY(event)
-		else:
-			xy = event
-		if isinstance(event, wx.MouseEvent):
 			if not event.LeftIsDown():
-				self.UpdatePointLabel(xy)
+				self.UpdatePointLabel(self.client._getXY(event))
 			else:
 				self.client.erase_pointlabel()
 			event.Skip() # Go to next handler
