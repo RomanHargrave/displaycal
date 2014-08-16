@@ -517,8 +517,8 @@ class LUTCanvas(plot.PlotCanvas):
 			if self.canvas.HasCapture():
 				self.canvas.ReleaseMouse()
 				self._set_center()
-		self.TopLevelParent.ProcessEvent(wx.MoveEvent(event.GetPosition(),
-													  self.Id))
+		if hasattr(self.TopLevelParent, "OnMotion"):
+			self.TopLevelParent.OnMotion(event)
 	
 	def _DrawCanvas(self, graphics):
 		""" Draw proportionally correct, center and zoom """
