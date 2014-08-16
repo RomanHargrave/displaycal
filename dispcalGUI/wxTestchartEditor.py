@@ -628,6 +628,8 @@ class TestchartEditor(wx.Frame):
 
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.tc_destroy_handler)
 
+		self.tc_update_controls()
+		self.tc_check()
 		wx.CallAfter(self.tc_load_cfg_from_ti1, None, path, cfg, target)
 
 	def ti1_drop_handler(self, path):
@@ -2068,6 +2070,19 @@ class TestchartEditor(wx.Frame):
 						  "Y": "XYZ_Y",
 						  "Z": "XYZ_Z"}
 
+		if not self.tc_check_save_ti1():
+			return
+
+		safe_print(lang.getstr("testchart.read"))
+		self.worker.interactive = False
+		self.worker.start(self.tc_load_cfg_from_ti1_finish,
+						  self.tc_load_cfg_from_ti1_worker,
+						  wargs=(path, ), wkwargs={},
+						  progress_msg=lang.getstr("testchart.read"),
+						  parent=self, progress_start=500, cancelable=False,
+						  show_remaining_time=False)
+
+	def tc_load_cfg_from_ti1_worker(self, path):
 		if path is None:
 			path = getcfg(self.cfg)
 		path = safe_unicode(path)
@@ -2098,35 +2113,16 @@ class TestchartEditor(wx.Frame):
 																								   path) + 
 																					   "\n" + 
 																					   lang.getstr(safe_str(exception)))
-				InfoDialog(self,
-						   msg=msg,
-						   ok=lang.getstr("ok"),
-						   bitmap=geticon(32, "dialog-error"))
-				return False
+				return Error(msg)
 			else:
-				if not self.tc_check_save_ti1():
-					return
 				if ext.lower() not in (".ti1", ".ti2") and ti1_1:
 					ti1_1.add_keyword("ACCURATE_EXPECTED_VALUES", "true")
 				ti1.root.setmodified(False)
 				self.ti1 = ti1
-				# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
-				# segfault under Arch Linux when setting the window title
-				safe_print("")
-				self.SetTitle(lang.getstr("testchart.edit").rstrip(".") + ": " + os.path.basename(ti1.filename))
 		except Exception, exception:
-			InfoDialog(self, msg = lang.getstr("error.testchart.read", path) + "\n\n" + safe_unicode(exception), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
-			return False
-		safe_print(lang.getstr("testchart.read"))
-		self.worker.interactive = False
-		self.worker.start(self.tc_load_cfg_from_ti1_finish,
-						  self.tc_load_cfg_from_ti1_worker,
-						  wargs=(), wkwargs={},
-						  progress_msg=lang.getstr("testchart.read"),
-						  parent=self, progress_start=500, cancelable=False,
-						  show_remaining_time=False)
+			return Error(lang.getstr("error.testchart.read", path) + "\n\n" +
+						 safe_unicode(exception))
 
-	def tc_load_cfg_from_ti1_worker(self):
 		white_patches = self.ti1.queryv1("WHITE_COLOR_PATCHES") or None
 		black_patches = self.ti1.queryv1("BLACK_COLOR_PATCHES") or None
 		single_channel_patches = self.ti1.queryv1("SINGLE_DIM_STEPS") or 0
@@ -2410,7 +2406,13 @@ class TestchartEditor(wx.Frame):
 				gamma, dark_emphasis)
 
 	def tc_load_cfg_from_ti1_finish(self, result):
-		if result:
+		if isinstance(result, tuple):
+			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
+			# segfault under Arch Linux when setting the window title
+			safe_print("")
+			self.SetTitle(lang.getstr("testchart.edit").rstrip(".") + ": " +
+						  os.path.basename(self.ti1.filename))
+
 			safe_print(lang.getstr("success"))
 			(white_patches, black_patches, single_channel_patches, gray_patches,
 			 multi_steps, multi_bcc_steps, fullspread_patches, gamma,
@@ -2457,10 +2459,10 @@ class TestchartEditor(wx.Frame):
 			return True
 		else:
 			safe_print(lang.getstr("aborted"))
-			self.tc_update_controls()
-			self.tc_check()
 			if self.Parent and hasattr(self.Parent, "start_timers"):
 				self.Parent.start_timers()
+			if isinstance(result, Exception):
+				show_result_dialog(result, self)
 
 	def tc_get_increments(self, channel, vmaxlen = 4):
 		channel.sort()
