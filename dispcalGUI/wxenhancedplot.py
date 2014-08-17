@@ -749,7 +749,7 @@ class PlotCanvas(wx.Panel):
                 self.pageSetupData.SetMarginBottomRight(data.GetMarginBottomRight())
                 self.pageSetupData.SetMarginTopLeft(data.GetMarginTopLeft())
                 self.pageSetupData.SetPrintData(data.GetPrintData())
-                self.print_data=wx.PrintData(data.GetPrintData()) # updates print_data
+                self._print_data=wx.PrintData(data.GetPrintData()) # updates print_data
         finally:
             dlg.Destroy()
                 
@@ -762,7 +762,7 @@ class PlotCanvas(wx.Panel):
         out = PlotPrintout(self)
         print_ok = printer.Print(self.parent, out)
         if print_ok:
-            self.print_data = wx.PrintData(printer.GetPrintDialogData().GetPrintData())
+            self._print_data = wx.PrintData(printer.GetPrintDialogData().GetPrintData())
         out.Destroy()
 
     def PrintPreview(self):
