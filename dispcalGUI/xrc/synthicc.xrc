@@ -387,7 +387,7 @@
                         <size>75, -1</size>
                         <min_val>0</min_val>
                         <max_val>100.0</max_val>
-                        <increment>0.00152587890625</increment>
+                        <increment>0.0015259021896696422</increment>
                         <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>

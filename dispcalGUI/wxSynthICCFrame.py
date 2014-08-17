@@ -122,8 +122,8 @@ class SynthICCFrame(BaseFrame):
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
 		white_Y = getcfg("synthprofile.luminance")
-		min_Y = ICCP.s15Fixed16Number("\0\0\0\1") * 100
-		increment = ICCP.s15Fixed16Number(ICCP.s15Fixed16Number_tohex(min_Y / white_Y))
+		min_Y = (1 / 65535.0) * 100
+		increment = (1 / 65535.0) * white_Y
 		if increment < min_Y:
 			increment = min_Y * (white_Y / 100.0)
 		min_inc = 1.0 / (10.0 ** self.black_luminance_ctrl.GetDigits())
