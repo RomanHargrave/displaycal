@@ -284,6 +284,7 @@ class FloatTextCtrl(wx.TextCtrl):
         wx.TextCtrl.__init__(self, parent, id, value, pos, size, style, validator, name)
 
         self._parent = parent
+        self._selection = (0, 0)
         self._value = value
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
@@ -318,6 +319,7 @@ class FloatTextCtrl(wx.TextCtrl):
 
     def OnFocus(self, event):
         self._value = self.Value
+        self.RestoreSelection()
         event.Skip()
 
 
@@ -331,11 +333,24 @@ class FloatTextCtrl(wx.TextCtrl):
          when focus is lost.
          """
 
+        self._selection = self.GetSelection()
         if self._parent and self.Value != self._value:
             self._parent.SyncSpinToText(True)
         self.SetSelection(0, 0)
 
         event.Skip()
+
+    def RestoreSelection(self):
+        """
+        Restores the selection under Mac OS X, selects all under other platforms
+        (consistent with default wx.TextCtrl behaviour)
+        
+        """
+
+        if "__WXMAC__" in wx.PlatformInfo:
+            self.SetSelection(*self._selection)
+        else:
+            self.SelectAll()
 
 
 #---------------------------------------------------------------------------- #
@@ -515,6 +530,7 @@ class FloatSpin(wx.PyControl):
             self.Bind(wx.EVT_SPIN_UP, self.OnSpinUp)
             self.Bind(wx.EVT_SPIN_DOWN, self.OnSpinDown)
             self._spinbutton.Bind(wx.EVT_LEFT_DOWN, self.OnSpinMouseDown)
+            self._spinbutton.Bind(wx.EVT_LEFT_UP, self.OnSpinMouseUp)
             
         self._textctrl.Bind(wx.EVT_TEXT_ENTER, self.OnTextEnter)
         self._textctrl.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
@@ -643,6 +659,26 @@ class FloatSpin(wx.PyControl):
         event.Skip()
 
 
+    def OnSpinMouseUp(self, event):
+        """
+        Handles the ``wx.EVT_LEFT_UP`` event for :class:`FloatSpin`.
+
+        :param `event`: a :class:`MouseEvent` event to be processed.
+
+        :note: This method works on the underlying :class:`SpinButton`.
+        """
+
+        if self._textctrl:
+            if "__WXMSW__" in wx.PlatformInfo:
+                self._textctrl.SetFocus()
+                self._textctrl.SelectAll()
+            elif not "__WXMAC__" in wx.PlatformInfo:
+                self._textctrl.SetFocus()
+                self._textctrl.SetSelection(0, 0)
+
+        event.Skip()
+
+
     def OnSpinUp(self, event):
         """
         Handles the ``wx.EVT_SPIN_UP`` event for :class:`FloatSpin`.
@@ -656,9 +692,11 @@ class FloatSpin(wx.PyControl):
         if self.InRange(self._value + self._increment*self._spinmodifier):
 
             self._value = self._value + self._increment*self._spinmodifier
-        else:
+        elif self._max is not None:
             self._value = self._max
         self.SetValue(self._value)
+        if "__WXMAC__" in wx.PlatformInfo:
+            self._textctrl.SelectAll()
         self.DoSendEvent()
 
 
@@ -675,9 +713,11 @@ class FloatSpin(wx.PyControl):
         if self.InRange(self._value - self._increment*self._spinmodifier):
 
             self._value = self._value - self._increment*self._spinmodifier
-        else:
+        elif self._min is not None:
             self._value = self._min
         self.SetValue(self._value)
+        if "__WXMAC__" in wx.PlatformInfo:
+            self._textctrl.SelectAll()
         self.DoSendEvent()
 
 
@@ -748,16 +788,20 @@ class FloatSpin(wx.PyControl):
         elif keycode == wx.WXK_SPACE:
 
             self.SetValue(self._value)
+            if self._textctrl:
+                self._textctrl.SelectAll()
             event.Skip(False)
 
         elif keycode == wx.WXK_ESCAPE:
 
             self.SetToDefaultValue()
+            if self._textctrl:
+                self._textctrl.SelectAll()
             self.DoSendEvent()
 
         elif keycode == wx.WXK_TAB:
 
-            # The origianl event code doesn't work under wxGTK
+            # The original event code doesn't work under wxGTK
             focusnext = False
             children = self.Parent.Children
             if event.ShiftDown():
@@ -808,12 +852,19 @@ class FloatSpin(wx.PyControl):
 
         if event.GetWheelRotation() > 0:
             self.SetValue(self._value + self._increment*modifier)
-            self.DoSendEvent()
 
         else:
 
             self.SetValue(self._value - self._increment*modifier)
-            self.DoSendEvent()
+
+        if self._textctrl:
+            if "__WXMAC__" in wx.PlatformInfo:
+                self._textctrl.SelectAll()
+            else:
+                self._textctrl.SetFocus()
+                self._textctrl.SetSelection(0, 0)
+
+        self.DoSendEvent()
 
 
     def OnSize(self, event):
@@ -1133,7 +1184,6 @@ class FloatSpin(wx.PyControl):
 
         if self._textctrl:
             self._textctrl.SetFocus()
-            self._textctrl.SelectAll()
 
         event.Skip()
 
@@ -1145,9 +1195,6 @@ class FloatSpin(wx.PyControl):
         :param `event`: a :class:`FocusEvent` event to be processed.
         """
 
-        if self._textctrl:
-            self._textctrl.SetSelection(0, 0)
-        #self.SyncSpinToText(True)
         event.Skip()
 
 
