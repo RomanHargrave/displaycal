@@ -284,7 +284,7 @@ class FloatTextCtrl(wx.TextCtrl):
         wx.TextCtrl.__init__(self, parent, id, value, pos, size, style, validator, name)
 
         self._parent = parent
-        self._selection = (0, 0)
+        self._selection = (-1, -1)
         self._value = value
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
@@ -347,7 +347,7 @@ class FloatTextCtrl(wx.TextCtrl):
         
         """
 
-        if "__WXMAC__" in wx.PlatformInfo:
+        if "__WXMAC__" in wx.PlatformInfo and self._selection != (-1, -1):
             self.SetSelection(*self._selection)
         else:
             self.SelectAll()
@@ -483,8 +483,7 @@ class FloatSpin(wx.PyControl):
         if agwStyle & FS_READONLY:
             txtstyle = txtstyle | wx.TE_READONLY
 
-        self._textctrl = FloatTextCtrl(self, wx.ID_ANY, str(self._value),
-                                       wx.DefaultPosition,
+        self._textctrl = FloatTextCtrl(self, wx.ID_ANY, "", wx.DefaultPosition,
                                        (width-self._spinbutton.GetSize().GetWidth(), height),
                                        txtstyle)
 
@@ -526,7 +525,6 @@ class FloatSpin(wx.PyControl):
         self._spinbutton.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
 
         self.Bind(wx.EVT_SET_FOCUS, self.OnFocus)
-        self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
         # start Philip Semanchuk move
@@ -1200,16 +1198,6 @@ class FloatSpin(wx.PyControl):
 
         if self._textctrl:
             self._textctrl.SetFocus()
-
-        event.Skip()
-
-
-    def OnKillFocus(self, event):
-        """
-        Handles the ``wx.EVT_KILL_FOCUS`` event for :class:`FloatSpin`.
-
-        :param `event`: a :class:`FocusEvent` event to be processed.
-        """
 
         event.Skip()
 
