@@ -110,8 +110,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_X">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -132,8 +132,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_Z">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -176,8 +176,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_X">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -187,7 +187,7 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_Y">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
+                        <min_val>-99</min_val>
                         <max_val>100.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
@@ -198,8 +198,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_Z">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -242,8 +242,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_X">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -253,7 +253,7 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_Y">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
+                        <min_val>-99</min_val>
                         <max_val>100.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
@@ -264,8 +264,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_Z">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -308,8 +308,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_X">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -319,7 +319,7 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_Y">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
+                        <min_val>-99</min_val>
                         <max_val>100.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
@@ -330,8 +330,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_Z">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -374,8 +374,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_X">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.0001</increment>
                         <digits>4</digits>
                       </object>
@@ -396,8 +396,8 @@
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_Z">
                         <size>75, -1</size>
-                        <min_val>-3276800</min_val>
-                        <max_val>3276700.0</max_val>
+                        <min_val>-99</min_val>
+                        <max_val>999.0</max_val>
                         <increment>0.0001</increment>
                         <digits>4</digits>
                       </object>
