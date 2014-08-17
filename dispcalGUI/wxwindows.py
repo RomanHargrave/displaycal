@@ -101,18 +101,22 @@ class BaseFrame(wx.Frame):
 
 	def focus_handler(self, event):
 		if debug and hasattr(self, "last_focused_ctrl"):
-				safe_print("[D] Last focused control: %s" %
-						   self.last_focused_ctrl)
+				safe_print("[D] Last focused control: ID %s %s %s" %
+						   (self.last_focused_ctrl.GetId(),
+							self.last_focused_ctrl.GetName(),
+							self.last_focused_ctrl.__class__))
 		if (hasattr(self, "last_focused_ctrl") and self.last_focused_ctrl and
+			not isinstance(self.last_focused_ctrl, floatspin.FloatTextCtrl) and
 			self.last_focused_ctrl != event.GetEventObject() and
 			self.last_focused_ctrl.IsShownOnScreen()):
 			catchup_event = wx.FocusEvent(wx.EVT_KILL_FOCUS.evtType[0], 
 										  self.last_focused_ctrl.GetId())
 			if debug:
-				safe_print("[D] Last focused control ID %s %s processing "
+				safe_print("[D] Last focused control ID %s %s %s processing "
 						   "catchup event type %s %s" % 
 						   (self.last_focused_ctrl.GetId(), 
 							self.last_focused_ctrl.GetName(), 
+							self.last_focused_ctrl.__class__, 
 							catchup_event.GetEventType(), 
 							getevttype(catchup_event)))
 			if self.last_focused_ctrl.ProcessEvent(catchup_event):
@@ -129,22 +133,27 @@ class BaseFrame(wx.Frame):
 			callable(event.GetEventObject().GetId) and
 			event.GetEventObject().IsShownOnScreen()):
 		   	if debug:
-					safe_print("[D] Setting last focused control to %s " %
-							   event.GetEventObject())
+					safe_print("[D] Setting last focused control to ID %s %s %s"
+							   % (event.GetEventObject().GetId(),
+								  getevtobjname(event, self),
+								  event.GetEventObject().__class__))
 			self.last_focused_ctrl = event.GetEventObject()
 		if debug:
 			if hasattr(event, "GetWindow") and event.GetWindow():
-				safe_print("[D] Focus moving from control ID %s %s to %s %s, "
+				safe_print("[D] Focus moving from control ID %s %s %s to %s %s %s, "
 						   "event type %s %s" % (event.GetWindow().GetId(), 
 												 event.GetWindow().GetName(), 
-												 event.GetId(), 
+												 event.GetWindow().__class__,
+												 event.GetEventObject().GetId(), 
 												 getevtobjname(event, self), 
+												 event.GetEventObject().__class__,
 												 event.GetEventType(), 
 												 getevttype(event)))
 			else:
-				safe_print("[D] Focus moving to control ID %s %s, event type "
-						   "%s %s" % (event.GetId(), 
+				safe_print("[D] Focus moving to control ID %s %s %s, event type "
+						   "%s %s" % (event.GetEventObject().GetId(), 
 									  getevtobjname(event, self), 
+									  event.GetEventObject().__class__,
 									  event.GetEventType(), getevttype(event)))
 		event.Skip()
 	
