@@ -643,6 +643,7 @@ class FloatSpin(wx.PyControl):
 
         self._spinmodifier = modifier
 
+        self._ignore_spin_event = False
         event.Skip()
 
 
@@ -860,7 +861,6 @@ class FloatSpin(wx.PyControl):
                 self._textctrl.SetFocus()
                 self._textctrl.SetSelection(0, 0)
 
-        self._ignore_spin_event = False
         self.DoSendEvent()
 
 
