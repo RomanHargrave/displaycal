@@ -799,7 +799,7 @@ class FloatSpin(wx.PyControl):
         elif keycode == wx.WXK_TAB:
 
             # The original event code doesn't work under wxGTK
-            children = get_all_focusable_children(self.TopLevelParent)
+            children = get_all_keyboard_focusable_children(self.TopLevelParent)
             if event.ShiftDown():
                 children = list(reversed(children))
             for i, child in enumerate(children):
@@ -1846,19 +1846,19 @@ def _string2exact(s):
 
     return i, exp
 
-def get_all_focusable_children(parent):
+def get_all_keyboard_focusable_children(parent):
     """ Get all focusable children of parent """
     children = []
-    parent_tab_traversal = ((isinstance(parent, (wx.Panel, wx.PyPanel)) and
-                             parent.WindowStyle & wx.TAB_TRAVERSAL) or
-                            isinstance(parent, (wx.Control, wx.PyControl)))
     for child in parent.Children:
-        if (parent_tab_traversal and child.AcceptsFocus() and child.Enabled and
-            child.IsShown()):
-            if not isinstance(child, wx.RadioButton) or child.Value:
-                children.append(child)
-        elif (((isinstance(child, (wx.Panel, wx.PyPanel)) and
-                child.WindowStyle & wx.TAB_TRAVERSAL) or
-               isinstance(child, (wx.Control, wx.PyControl))) and child.Children):
-            children.extend(get_all_focusable_children(child))
+        if child.Enabled and child.IsShownOnScreen():
+            child_tab_traversal = (isinstance(child, (wx.Panel, wx.PyPanel)) and
+                                   child.WindowStyle & wx.TAB_TRAVERSAL)
+            child_iscontrol = isinstance(child, (wx.Control, wx.PyControl))
+            if (child_tab_traversal or
+                (child_iscontrol and
+                 not child.AcceptsFocusFromKeyboard())) and child.Children:
+                children.extend(get_all_keyboard_focusable_children(child))
+            elif child_iscontrol and child.AcceptsFocusFromKeyboard():
+                if not isinstance(child, wx.RadioButton) or child.Value:
+                    children.append(child)
     return children
