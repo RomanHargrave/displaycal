@@ -661,9 +661,21 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			del namedarguments['name']
 		filebrowse.FileBrowseButton.__init__(self, *arguments, **namedarguments)
 		self.SetName(name)
+		self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+		if "__WXGTK__" in wx.PlatformInfo and wx.VERSION < (2, 9):
+			self.textControl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+			self.browseButton.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
-	def AcceptsFocusFromKeyboard(self):
-		return False
+	def OnSetFocus(self, event):
+		if event.EventObject is self:
+			floatspin.focus_next_keyboard_focusable_control(self)
+		event.Skip()
+
+	def OnKeyDown(self, event):
+		if event.KeyCode == wx.WXK_TAB:
+			floatspin.focus_next_keyboard_focusable_control(event.EventObject)
+		else:
+			event.Skip()
 	
 	def Disable(self):
 		self.Enable(False)

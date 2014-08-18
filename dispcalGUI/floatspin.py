@@ -472,6 +472,7 @@ class FloatSpin(wx.PyControl):
                                          style=wx.SP_ARROW_KEYS | wx.SP_VERTICAL |
                                          wx.SP_WRAP)
         self._spinbutton.SetRange(-2 ** 32 / 2.0, 2 ** 32 / 2.0 - 1)
+        self._spinbutton.AcceptsFocusFromKeyboard = lambda: False
 
         txtstyle = wx.TE_NOHIDESEL | wx.TE_PROCESS_ENTER
 
@@ -799,15 +800,7 @@ class FloatSpin(wx.PyControl):
         elif keycode == wx.WXK_TAB:
 
             # The original event code doesn't work under wxGTK
-            children = get_all_keyboard_focusable_children(self.TopLevelParent)
-            if event.ShiftDown():
-                children = list(reversed(children))
-            for i, child in enumerate(children):
-                if child is self:
-                    for sibling in children[i + 1:] + children[:i]:
-                        sibling.SetFocus()
-                        break
-                    break
+            focus_next_keyboard_focusable_control(event.EventObject)
 
         elif keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
 
@@ -1847,18 +1840,50 @@ def _string2exact(s):
     return i, exp
 
 def get_all_keyboard_focusable_children(parent):
-    """ Get all focusable children of parent """
+    """
+    Get all keyboard focusable children of parent
+    
+    """
+
     children = []
-    for child in parent.Children:
-        if child.Enabled and child.IsShownOnScreen():
-            child_tab_traversal = (isinstance(child, (wx.Panel, wx.PyPanel)) and
-                                   child.WindowStyle & wx.TAB_TRAVERSAL)
-            child_iscontrol = isinstance(child, (wx.Control, wx.PyControl))
-            if (child_tab_traversal or
-                (child_iscontrol and
-                 not child.AcceptsFocusFromKeyboard())) and child.Children:
-                children.extend(get_all_keyboard_focusable_children(child))
-            elif child_iscontrol and child.AcceptsFocusFromKeyboard():
-                if not isinstance(child, wx.RadioButton) or child.Value:
-                    children.append(child)
+    try:
+        iter(parent.Children)
+        # Under Mac OS X panels may have non-iterator children
+    except:
+        pass
+    else:
+        for child in parent.Children:
+            if child.Enabled and child.IsShownOnScreen():
+                if child.AcceptsFocusFromKeyboard():
+                    if not isinstance(child, wx.RadioButton) or child.Value:
+                        children.append(child)
+                if child.Children:
+                    children.extend(get_all_keyboard_focusable_children(child))
     return children
+
+def focus_next_keyboard_focusable_control(control):
+    """
+    Focus the next control in tab order that can gain focus.
+    
+    If the shift key is held down, tab order is reversed.
+    
+    """
+
+    # Find the last panel in the hierarchy of parents
+    parent = control.Parent
+    focusparent = None
+    while parent:
+        if isinstance(parent, (wx.Panel, wx.PyPanel)):
+            focusparent = parent
+        parent = parent.Parent
+    if focusparent:
+        children = get_all_keyboard_focusable_children(focusparent)
+        if wx.GetKeyState(wx.WXK_SHIFT):
+            children = list(reversed(children))
+        for i, child in enumerate(children):
+            if child is control:
+                for next in children[i + 1:] + children[:i]:
+                    if next is not child.Parent:
+                        next.SetFocus()
+                        break
+                break
