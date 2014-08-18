@@ -4282,13 +4282,20 @@ class MainFrame(BaseFrame):
 				else:
 					# Check for EDID metadata
 					metadata = profile.tags.meta
+					if "EDID_mnft" in metadata:
+						# Check and correct manufacturer if necessary
+						manufacturer = get_manufacturer_name(metadata["EDID_mnft"])
+						if manufacturer:
+							manufacturer = colord.quirk_manufacturer(manufacturer)
+							if (not "EDID_manufacturer" in metadata or
+								metadata["EDID_manufacturer"] != manufacturer):
+								metadata["EDID_manufacturer"] = manufacturer
 					if (not "EDID_model_id" in metadata or
 						(not "EDID_model" in metadata and
 						 metadata["EDID_model_id"] == "0") or
 						not "EDID_mnft_id" in metadata or
 						not "EDID_mnft" in metadata or
 						not "EDID_manufacturer" in metadata or
-						metadata["EDID_manufacturer"] == metadata["EDID_mnft"] or
 						not "OPENICC_automatic_generated" in metadata):
 						return lang.getstr("profile.share.meta_missing")
 		else:
