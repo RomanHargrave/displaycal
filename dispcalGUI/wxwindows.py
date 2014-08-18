@@ -238,7 +238,11 @@ class BaseFrame(wx.Frame):
 			self.GetSizer().Layout()
 			self.Sizer.SetMinSize((-1, -1))
 			self._layout = True
+		if hasattr(self, "ClientToWindowSize"):
+			# wxPython 2.8.12
+			self.SetMinSize(self.ClientToWindowSize(minsize))
 		else:
+			# wxPython >= 2.9
 			self.MinClientSize = minsize
 	
 	def set_child_ctrls_as_attrs(self, parent=None):
