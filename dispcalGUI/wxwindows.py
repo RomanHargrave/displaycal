@@ -747,10 +747,6 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		box = wx.BoxSizer(wx.HORIZONTAL)
 
 		self.textControl = self.createTextControl()
-		if self.history:
-			history = self.history
-			self.history = []
-			self.SetHistory(history)
 		if sys.platform == "darwin" and wx.VERSION > (2, 9):
 			# Prevent 1px cut-off at left-hand side
 			box.Add((1, 1))
@@ -759,6 +755,10 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 
 		self.browseButton = self.createBrowseButton()
 		box.Add(self.browseButton, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 8)
+		if self.history:
+			history = self.history
+			self.history = []
+			self.SetHistory(history)
 
 		self.SetAutoLayout(True)
 		self.SetSizer(box)
