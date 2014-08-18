@@ -15,9 +15,8 @@ import localization as lang
 import worker
 from worker import check_set_argyll_bin
 from wxaddons import FileDrop
-from wxwindows import (BaseFrame, ConfirmDialog,
-					   FileBrowseBitmapButtonWithChoiceHistory as FileBrowse,
-					   InfoDialog, wx)
+from wxwindows import (BaseFrame, ConfirmDialog, InfoDialog, wx)
+import xh_filebrowsebutton
 
 from wx import xrc
 
@@ -29,6 +28,7 @@ class LUT3DFrame(BaseFrame):
 	def __init__(self, parent=None):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "3dlut.xrc")))
+		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, parent, "lut3dframe")
 		self.PostCreate(pre)
@@ -558,8 +558,8 @@ class LUT3DFrame(BaseFrame):
 		
 		# Create the file picker ctrls dynamically to get translated strings
 		for which in ("input", "abstract", "output"):
-			origpickerctrl = self.FindWindowByName("%s_profile_ctrl" % which)
-			hsizer = origpickerctrl.GetContainingSizer()
+			setattr(self, "%s_profile_ctrl" % which,
+					self.FindWindowByName("%s_profile_ctrl" % which))
 			msg = {"input": lang.getstr("3dlut.input.profile"),
 				   "abstract": lang.getstr("3dlut.use_abstract_profile"),
 				   "output": lang.getstr("output.profile")}[which]
@@ -573,14 +573,13 @@ class LUT3DFrame(BaseFrame):
 						  name="%s_profile_ctrl" % which)
 			if which not in ("abstract", "output"):
 				kwargs["history"] = get_data_path("ref", "\.(icc|icm)$")
-			setattr(self, "%s_profile_ctrl" % which,
-					FileBrowse(self.panel, -1, **kwargs))
-			getattr(self, "%s_profile_ctrl" %
-						  which).SetMaxFontSize(11)
-			hsizer.Replace(origpickerctrl,
-						   getattr(self, "%s_profile_ctrl" % which))
-			origpickerctrl.Destroy()
-			hsizer.Layout()
+			ctrl = getattr(self, "%s_profile_ctrl" % which)
+			for name, value in kwargs.iteritems():
+				if name == "history":
+					ctrl.SetHistory(value)
+				else:
+					setattr(ctrl, name, value)
+			ctrl.SetMaxFontSize(11)
 			# Drop targets
 			setattr(self, "%s_droptarget" % which, FileDrop())
 			getattr(self, "%s_droptarget" % which).drophandlers = {".icc": getattr(self, "%s_drop_handler" % which),

@@ -20,8 +20,9 @@
                   <object class="wxBoxSizer">
                     <orient>wxHORIZONTAL</orient>
                     <object class="sizeritem">
-                      <object class="wxFilePickerCtrl" name="chart_ctrl">
+                      <object class="FileBrowseButtonWithHistory" name="chart_ctrl">
                         <message>measurement_report_choose_chart_or_reference</message>
+                        <toolTip>measurement_report_choose_chart_or_reference</toolTip>
                         <wildcard>filetype.ti1_ti3_txt|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt</wildcard>
                       </object>
                       <option>1</option>
@@ -85,8 +86,9 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="simulation_profile_ctrl">
+                  <object class="FileBrowseButtonWithHistory" name="simulation_profile_ctrl">
                     <message>simulation_profile</message>
+                    <toolTip>simulation_profile</toolTip>
                     <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
@@ -219,8 +221,9 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="devlink_profile_ctrl">
+                  <object class="FileBrowseButtonWithHistory" name="devlink_profile_ctrl">
                     <message>devicelink_profile</message>
+                    <toolTip>devicelink_profile</toolTip>
                     <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
@@ -243,8 +246,9 @@
                 <object class="sizeritem">
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
-                      <object class="wxFilePickerCtrl" name="output_profile_ctrl">
+                      <object class="FileBrowseButtonWithHistory" name="output_profile_ctrl">
                         <message>measurement_report_choose_profile</message>
+                        <toolTip>measurement_report_choose_profile</toolTip>
                         <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                       </object>
                       <option>1</option>

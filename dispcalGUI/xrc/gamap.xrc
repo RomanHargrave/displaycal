@@ -148,8 +148,9 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="gamap_profile">
+                  <object class="FileBrowseButtonWithHistory" name="gamap_profile">
                     <message>gamap.profile</message>
+                    <toolTip>gamap.profile</toolTip>
                     <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                     <XRCED>
                       <events>EVT_FILEPICKER_CHANGED</events>

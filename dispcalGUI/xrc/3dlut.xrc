@@ -17,8 +17,9 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="input_profile_ctrl">
+                  <object class="FileBrowseButtonWithHistory" name="input_profile_ctrl">
                     <message>profile.input</message>
+                    <toolTip>3dlut.input.profile</toolTip>
                     <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
@@ -39,8 +40,9 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="abstract_profile_ctrl">
+                  <object class="FileBrowseButtonWithHistory" name="abstract_profile_ctrl">
                     <message>profile.abstract</message>
+                    <toolTip>3dlut.use_abstract_profile</toolTip>
                     <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
@@ -63,8 +65,9 @@
                 <object class="sizeritem">
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
-                      <object class="wxFilePickerCtrl" name="output_profile_ctrl">
-                        <message>gamap.profile</message>
+                      <object class="FileBrowseButtonWithHistory" name="output_profile_ctrl">
+                        <message>output.profile</message>
+                        <toolTip>output.profile</toolTip>
                         <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                       </object>
                       <option>1</option>

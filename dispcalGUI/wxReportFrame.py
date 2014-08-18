@@ -15,9 +15,8 @@ import localization as lang
 import worker
 from wxTestchartEditor import TestchartEditor
 from wxaddons import FileDrop
-from wxwindows import (BaseFrame,
-					   FileBrowseBitmapButtonWithChoiceHistory as FileBrowse,
-					   InfoDialog, wx)
+from wxwindows import (BaseFrame, InfoDialog, wx)
+import xh_filebrowsebutton
 
 from wx import xrc
 
@@ -29,6 +28,7 @@ class ReportFrame(BaseFrame):
 	def __init__(self, parent=None):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "report.xrc")))
+		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, parent, "reportframe")
 		self.PostCreate(pre)
@@ -340,8 +340,8 @@ class ReportFrame(BaseFrame):
 		# Create the file picker ctrls dynamically to get translated strings
 		for which in ("chart", "simulation_profile", "devlink_profile",
 					  "output_profile"):
-			origpickerctrl = self.FindWindowByName("%s_ctrl" % which)
-			hsizer = origpickerctrl.GetContainingSizer()
+			setattr(self, "%s_ctrl" % which,
+					self.FindWindowByName("%s_ctrl" % which))
 			if which.endswith("_profile"):
 				wildcard = lang.getstr("filetype.icc")  + "|*.icc;*.icm"
 			else:
@@ -375,13 +375,13 @@ class ReportFrame(BaseFrame):
 				kwargs["history"] = sorted(history,
 										   key=lambda path:
 											   os.path.basename(path).lower())
-			setattr(self, "%s_ctrl" % which,
-					FileBrowse(self.panel, -1, **kwargs))
-			getattr(self, "%s_ctrl" % which).SetMaxFontSize(11)
-			hsizer.Replace(origpickerctrl,
-						   getattr(self, "%s_ctrl" % which))
-			origpickerctrl.Destroy()
-			hsizer.Layout()
+			ctrl = getattr(self, "%s_ctrl" % which)
+			for name, value in kwargs.iteritems():
+				if name == "history":
+					ctrl.SetHistory(value)
+				else:
+					setattr(ctrl, name, value)
+			ctrl.SetMaxFontSize(11)
 			# Drop targets
 			setattr(self, "%s_droptarget" % which, FileDrop())
 			droptarget = getattr(self, "%s_droptarget" % which)

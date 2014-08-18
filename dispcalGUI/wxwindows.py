@@ -650,6 +650,9 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			del namedarguments['name']
 		filebrowse.FileBrowseButton.__init__(self, *arguments, **namedarguments)
 		self.SetName(name)
+
+	def AcceptsFocusFromKeyboard(self):
+		return False
 	
 	def Disable(self):
 		self.Enable(False)
@@ -770,7 +773,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		toolTip = (self.history[selectionIndex] if selectionIndex > -1 else
 				   self.toolTip)
 		control.SetToolTipString(toolTip)
-		control.Enable(control.Enabled and self.history != [""])
+		control.Enable(self.browseButton.Enabled and self.history != [""])
 
 
 class FileDrop(_FileDrop):

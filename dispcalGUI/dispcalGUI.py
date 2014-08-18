@@ -128,11 +128,10 @@ from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 from wxfixes import ThemedGenButton
 from wxwindows import (AboutDialog, BaseFrame, BitmapBackgroundPanel,
 					   BitmapBackgroundPanelText, ConfirmDialog, CustomGrid,
-					   CustomCellBoolRenderer,
-					   FileBrowseBitmapButtonWithChoiceHistory, InfoDialog,
-					   LogWindow, ProgressDialog,
-					   TooltipWindow, get_gradient_panel)
+					   CustomCellBoolRenderer, InfoDialog, LogWindow,
+					   ProgressDialog, TooltipWindow, get_gradient_panel)
 import floatspin
+import xh_filebrowsebutton
 import xh_floatspin
 
 # wxPython
@@ -678,6 +677,7 @@ class GamapFrame(BaseFrame):
 	def __init__(self, parent):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "gamap.xrc")))
+		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, parent, "gamapframe")
 		self.PostCreate(pre)
@@ -886,18 +886,12 @@ class GamapFrame(BaseFrame):
 		BaseFrame.setup_language(self)
 		
 		# Create the profile picker ctrl dynamically to get translated strings
-		origpickerctrl = self.FindWindowByName("gamap_profile")
-		hsizer = origpickerctrl.GetContainingSizer()
-		self.gamap_profile = FileBrowseBitmapButtonWithChoiceHistory(
-			self.panel, -1, toolTip=lang.getstr("gamap.profile"),
-			dialogTitle=lang.getstr("gamap.profile"),
-			fileMask=lang.getstr("filetype.icc") + "|*.icc;*.icm",
-			changeCallback=self.gamap_profile_handler,
-			history=get_data_path("ref", "\.(icm|icc)$"),
-			name="gamap_profile")
+		self.gamap_profile = self.FindWindowByName("gamap_profile")
+		self.gamap_profile.dialogTitle = lang.getstr("gamap.profile")
+		self.gamap_profile.fileMask = lang.getstr("filetype.icc") + "|*.icc;*.icm"
+		self.gamap_profile.changeCallback = self.gamap_profile_handler
+		self.gamap_profile.SetHistory(get_data_path("ref", "\.(icm|icc)$"))
 		self.gamap_profile.SetMaxFontSize(11)
-		hsizer.Replace(origpickerctrl, self.gamap_profile)
-		origpickerctrl.Destroy()
 		
 		intents = ["a", "aa", "aw", "la", "ms", "p", "r", "s"]
 		if (self.Parent and hasattr(self.Parent, "worker") and
