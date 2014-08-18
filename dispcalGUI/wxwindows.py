@@ -230,7 +230,7 @@ class BaseFrame(wx.Frame):
 		""" Update main window layout. """
 		minsize, clientsize = self.Sizer.MinSize, self.ClientSize
 		if ((minsize[0] > clientsize[0] or minsize[1] > clientsize[1] or not
-			 getattr(self, "_layout")) and not self.IsIconized() and
+			 getattr(self, "_layout", False)) and not self.IsIconized() and
 			not self.IsMaximized()):
 			self.Sizer.SetMinSize((max(minsize[0], clientsize[0]),
 								   max(minsize[1], clientsize[1])))
