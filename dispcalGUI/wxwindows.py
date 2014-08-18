@@ -261,14 +261,7 @@ class BaseFrame(wx.Frame):
 						combobox = wx.ComboBox(self, -1)
 						self._comboboxheight = combobox.Size[1]
 						combobox.Destroy()
-					size = child.MinSize[0], self._comboboxheight
-					newchild = wx.Choice(child.Parent, child.Id, size=size,
-										 choices=child.Items,
-										 style=child.WindowStyle,
-										 name=child.Name)
-					child.GetContainingSizer().Replace(child, newchild)
-					child.Destroy()
-					child = newchild
+					child.MinSize = child.MinSize[0], self._comboboxheight
 				elif isinstance(child, wx.BitmapButton):
 					set_bitmap_labels(child)
 				child.SetMaxFontSize(11)
