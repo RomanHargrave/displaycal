@@ -428,12 +428,12 @@ class BitmapBackgroundBitmapButton(wx.BitmapButton):
 
 bitmaps = {}
 
-class BitmapBackgroundPanel(wx.Panel):
+class BitmapBackgroundPanel(wx.PyPanel):
 	
 	""" A panel with a background bitmap """
 
 	def __init__(self, *args, **kwargs):
-		wx.Panel.__init__(self, *args, **kwargs)
+		wx.PyPanel.__init__(self, *args, **kwargs)
 		self._bitmap = None
 		self.alpha = 1.0
 		self.blend = False
@@ -445,6 +445,12 @@ class BitmapBackgroundPanel(wx.Panel):
 		self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
+
+	def AcceptsFocus(self):
+		return False
+
+	def AcceptsFocusFromKeyboard(self):
+		return False
 	
 	def GetBitmap(self):
 		return self._bitmap

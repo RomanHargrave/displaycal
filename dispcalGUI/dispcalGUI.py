@@ -1214,7 +1214,7 @@ class MainFrame(BaseFrame):
 		sizer = self.buttonpanel.ContainingSizer
 		if hasattr(sizer, "GetItemIndex"):
 			# wxPython 2.8.12+
-			separator = wx.Panel(self.panel, size=(-1, 1))
+			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
 			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
 			sizer.Insert(sizer.GetItemIndex(self.buttonpanel), separator,
 						 flag=wx.EXPAND)
