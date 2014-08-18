@@ -799,18 +799,14 @@ class FloatSpin(wx.PyControl):
         elif keycode == wx.WXK_TAB:
 
             # The original event code doesn't work under wxGTK
-            focusnext = False
-            children = self.Parent.Children
+            children = get_all_focusable_children(self.TopLevelParent)
             if event.ShiftDown():
-                children = reversed(children)
-            for child in children:
+                children = list(reversed(children))
+            for i, child in enumerate(children):
                 if child is self:
-                    focusnext = True
-                elif (child.AcceptsFocus() and child.Enabled and
-                      child.IsShown() and focusnext):
-                    if isinstance(child, wx.RadioButton) and not child.Value:
-                        continue
-                    child.SetFocus()
+                    for sibling in children[i + 1:] + children[:i]:
+                        sibling.SetFocus()
+                        break
                     break
 
         elif keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
@@ -1849,3 +1845,20 @@ def _string2exact(s):
         i = -i
 
     return i, exp
+
+def get_all_focusable_children(parent):
+    """ Get all focusable children of parent """
+    children = []
+    parent_tab_traversal = ((isinstance(parent, (wx.Panel, wx.PyPanel)) and
+                             parent.WindowStyle & wx.TAB_TRAVERSAL) or
+                            isinstance(parent, (wx.Control, wx.PyControl)))
+    for child in parent.Children:
+        if (parent_tab_traversal and child.AcceptsFocus() and child.Enabled and
+            child.IsShown()):
+            if not isinstance(child, wx.RadioButton) or child.Value:
+                children.append(child)
+        elif (((isinstance(child, (wx.Panel, wx.PyPanel)) and
+                child.WindowStyle & wx.TAB_TRAVERSAL) or
+               isinstance(child, (wx.Control, wx.PyControl))) and child.Children):
+            children.extend(get_all_focusable_children(child))
+    return children
