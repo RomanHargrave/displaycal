@@ -229,15 +229,17 @@ class BaseFrame(wx.Frame):
 	def update_layout(self):
 		""" Update main window layout. """
 		minsize, clientsize = self.Sizer.MinSize, self.ClientSize
-		if ((minsize[0] > clientsize[0] or minsize[1] > clientsize[1] or not
-			 getattr(self, "_layout", False)) and not self.IsIconized() and
-			not self.IsMaximized()):
-			self.Sizer.SetMinSize((max(minsize[0], clientsize[0]),
-								   max(minsize[1], clientsize[1])))
-			self.GetSizer().SetSizeHints(self)
-			self.GetSizer().Layout()
-			self.Sizer.SetMinSize((-1, -1))
-			self._layout = True
+		if not self.IsIconized() and not self.IsMaximized():
+			if ((minsize[0] > clientsize[0] or minsize[1] > clientsize[1] or not
+				 getattr(self, "_layout", False))):
+				self.Sizer.SetMinSize((max(minsize[0], clientsize[0]),
+									   max(minsize[1], clientsize[1])))
+				self.GetSizer().SetSizeHints(self)
+				self.GetSizer().Layout()
+				self.Sizer.SetMinSize((-1, -1))
+				self._layout = True
+			else:
+				self.Layout()
 		if hasattr(self, "ClientToWindowSize"):
 			# wxPython 2.8.12
 			self.SetMinSize(self.ClientToWindowSize(minsize))
