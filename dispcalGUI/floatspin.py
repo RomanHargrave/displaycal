@@ -805,7 +805,7 @@ class FloatSpin(wx.PyControl):
         elif keycode in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
 
             default = self.TopLevelParent.DefaultItem
-            if (default and default.Enabled and default.IsShown() and
+            if (default and default.Enabled and default.IsShownOnScreen() and
                 isinstance(default, wx.Button)):
                 default.ProcessEvent(wx.PyCommandEvent(wx.EVT_BUTTON.typeId,
                                                        default.GetId()))
