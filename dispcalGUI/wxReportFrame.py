@@ -346,7 +346,7 @@ class ReportFrame(BaseFrame):
 				wildcard = lang.getstr("filetype.icc")  + "|*.icc;*.icm"
 			else:
 				wildcard = (lang.getstr("filetype.ti1_ti3_txt") + 
-							"|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt")
+							"|*.cgats;*.cie;*.gam;*.ti1;*.ti2;*.ti3;*.txt")
 			msg = {"chart": "measurement_report_choose_chart_or_reference",
 				   "devlink_profile": "devicelink_profile",
 				   "output_profile": "measurement_report_choose_profile"}.get(which, which)
@@ -358,7 +358,7 @@ class ReportFrame(BaseFrame):
 						  name="%s_ctrl" % which)
 			if which not in ("devlink_profile", "output_profile"):
 				if which == "chart":
-					wildcard = "\.(cie|ti1|ti3)$"
+					wildcard = "\.(cie|gam|ti1|ti3)$"
 				else:
 					wildcard = "\.(icc|icm)$"
 				if which == "simulation_profile":
