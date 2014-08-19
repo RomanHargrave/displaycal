@@ -1157,9 +1157,11 @@ class TestchartEditor(wx.Frame):
 			finally:
 				wx.Log.SetLogLevel(llevel)
 			if test:
-				dlg = ConfirmDialog(self, msg=lang.getstr("gamut"),
+				dlg = ConfirmDialog(self,
+									title=lang.getstr("testchart.add_ti3_patches"),
+									msg=lang.getstr("gamut"),
 									ok="L*a*b*", alt="RGB",
-									bitmap=geticon(32, "dialog-question"))
+									bitmap=geticon(32, "dispcalGUI-testchart-editor"))
 				result = dlg.ShowModal()
 				if result == wx.ID_CANCEL:
 					return
@@ -1707,10 +1709,11 @@ class TestchartEditor(wx.Frame):
 	def tc_export_handler(self, event):
 		if not hasattr(self, "ti1"):
 			return
-		dlg = ConfirmDialog(self, msg=lang.getstr("testchart.export.repeat_patch"),
+		dlg = ConfirmDialog(self, title=lang.getstr("export"),
+							msg=lang.getstr("testchart.export.repeat_patch"),
 							ok=lang.getstr("ok"),
 							cancel=lang.getstr("cancel"),
-							bitmap=geticon(32, "dialog-question"))
+							bitmap=geticon(32, "dispcalGUI-testchart-editor"))
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
 					   border=12)

@@ -4309,7 +4309,8 @@ class MainFrame(BaseFrame):
 		ignore = not profile or self.profile_share_get_meta_error(profile)
 		kwargs = {"ignore_current_profile": ignore,
 				  "prefer_current_profile": isinstance(event.EventObject,
-													   wx.Button)}
+													   wx.Button),
+				  "title": lang.getstr("profile.share")}
 		profile = self.select_profile(**kwargs)
 		if not profile:
 			return
@@ -4368,10 +4369,10 @@ class MainFrame(BaseFrame):
 			description += ", " + instrument
 		description += ", " + strftime("%Y-%m-%d", profile.dateTime.timetuple())
 		dlg = ConfirmDialog(
-			getattr(self, "modaldlg", self), 
+			getattr(self, "modaldlg", self), title=lang.getstr("profile.share"),
 			msg=lang.getstr("profile.share.enter_info"), 
 			ok=lang.getstr("upload"), cancel=lang.getstr("cancel"), 
-			bitmap=geticon(32, "dialog-information"), alt=lang.getstr("save"),
+			bitmap=geticon(32, "dispcalGUI-profile-info"), alt=lang.getstr("save"),
 			wrap=100)
 		# Description field
 		boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
@@ -4967,8 +4968,8 @@ class MainFrame(BaseFrame):
 						  resume=bool(getattr(self, "measure_auto_after",
 											  None)))
 	
-	def select_profile(self, parent=None, check_profile_class=True, msg=None,
-					   ignore_current_profile=False,
+	def select_profile(self, parent=None, title=appname, msg=None,
+					   check_profile_class=True, ignore_current_profile=False,
 					   prefer_current_profile=False):
 		"""
 		Selects the currently configured profile or display profile. Falls
@@ -4984,11 +4985,11 @@ class MainFrame(BaseFrame):
 		else:
 			profile = get_current_profile(include_display_profile=True)
 			if profile and not prefer_current_profile:
-				dlg = ConfirmDialog(self, msg=msg,
+				dlg = ConfirmDialog(self, title=title, msg=msg,
 									ok=lang.getstr("profile.current"),
 									cancel=lang.getstr("cancel"),
 									alt=lang.getstr("browse"),
-									bitmap=geticon(32, "dialog-question"))
+									bitmap=geticon(32, "dispcalGUI-profile-info"))
 				result = dlg.ShowModal()
 				if result == wx.ID_CANCEL:
 					return
@@ -6485,7 +6486,7 @@ class MainFrame(BaseFrame):
 								title=lang.getstr("profile.install"),
 								ok=lang.getstr("profile.install"), 
 								cancel=lang.getstr("profile.do_not_install"), 
-								bitmap=geticon(32, "dialog-information"),
+								bitmap=geticon(32, "dispcalGUI-profile-info"),
 								alt=share_profile)
 			self.modaldlg = dlg
 			if share_profile:
@@ -6758,7 +6759,8 @@ class MainFrame(BaseFrame):
 			# Use the profile that was requested to be installed
 			profile = self.modaldlg.profile
 		else:
-			profile = self.select_profile(check_profile_class=False,
+			profile = self.select_profile(title=lang.getstr("profile.info"),
+										  check_profile_class=False,
 										  prefer_current_profile=True,
 										  ignore_current_profile=event.GetEventObject()
 																 is not self.profile_info_btn)
@@ -7134,7 +7136,7 @@ class MainFrame(BaseFrame):
 													ok=lang.getstr("CCSS"), 
 													cancel=lang.getstr("cancel"), 
 													alt=lang.getstr("CCMX"),
-													bitmap=geticon(32, "dialog-information"))
+													bitmap=geticon(32, "dialog-question"))
 								result = dlg.ShowModal()
 								dlg.Destroy()
 							else:
@@ -7295,7 +7297,7 @@ class MainFrame(BaseFrame):
 				parent, 
 				msg=lang.getstr("colorimeter_correction.create.details"), 
 				ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
-				bitmap=geticon(32, "dialog-question"))
+				bitmap=geticon(32, "dialog-information"))
 			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
 						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 			dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
@@ -8430,7 +8432,8 @@ class MainFrame(BaseFrame):
 			   "\n".join(info)
 	
 	def profile_hires_b2a_handler(self, event):
-		profile = self.select_profile(ignore_current_profile=True)
+		profile = self.select_profile(title=lang.getstr("profile.b2a.hires"),
+									  ignore_current_profile=True)
 		if profile:
 			if not ("A2B0" in profile.tags or "A2B1" in profile.tags):
 				result = Error(lang.getstr("profile.required_tags_missing",

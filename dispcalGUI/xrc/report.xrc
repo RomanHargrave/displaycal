@@ -22,7 +22,7 @@
                     <object class="sizeritem">
                       <object class="FileBrowseButtonWithHistory" name="chart_ctrl">
                         <message>measurement_report_choose_chart_or_reference</message>
-                        <toolTip>measurement_report_choose_chart_or_reference</toolTip>
+                        <toolTip>testchart_or_reference</toolTip>
                         <wildcard>filetype.ti1_ti3_txt|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt</wildcard>
                       </object>
                       <option>1</option>
@@ -248,7 +248,7 @@
                     <object class="sizeritem">
                       <object class="FileBrowseButtonWithHistory" name="output_profile_ctrl">
                         <message>measurement_report_choose_profile</message>
-                        <toolTip>measurement_report_choose_profile</toolTip>
+                        <toolTip>output.profile</toolTip>
                         <wildcard>filetype.icc|*.icc;*.icm</wildcard>
                       </object>
                       <option>1</option>

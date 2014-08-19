@@ -316,7 +316,10 @@ class BaseInteractiveDialog(wx.Dialog):
 			bgcolor = self.BackgroundColour
 			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 		self.SetPosition(pos)  # yes, this is needed
-		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		if parent and parent.Icon and parent.Icon.IsOk():
+			self.Icon = parent.Icon
+		else:
+			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 
@@ -2157,7 +2160,10 @@ class ProgressDialog(wx.Dialog):
 		if sys.platform == "win32":
 			bgcolor = self.BackgroundColour
 			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
-		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		if parent and parent.Icon and parent.Icon.IsOk():
+			self.Icon = parent.Icon
+		else:
+			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
 			self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -2437,7 +2443,10 @@ class SimpleTerminal(InvincibleFrame):
 				 keyhandler=None, start_timer=True):
 		wx.Frame.__init__(self, parent, id, title, 
 								style=wx.DEFAULT_FRAME_STYLE)
-		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		if parent and parent.Icon and parent.Icon.IsOk():
+			self.Icon = parent.Icon
+		else:
+			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -2595,7 +2604,10 @@ class TooltipWindow(InvincibleFrame):
 				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW, wrap=70):
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
-		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		if parent and parent.Icon and parent.Icon.IsOk():
+			self.Icon = parent.Icon
+		else:
+			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
 		margin = 12
 		
