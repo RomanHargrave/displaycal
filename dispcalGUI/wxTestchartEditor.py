@@ -570,16 +570,37 @@ class TestchartEditor(wx.Frame):
 			gradientpanel = get_gradient_panel(p2, lang.getstr("preview"))
 			p2.sizer.Add(gradientpanel, flag=wx.EXPAND)
 			p2.sizer.Add(hsizer, 1, flag=wx.EXPAND)
-			preview = self.preview = wx.ScrolledWindow(p2, -1, style = wx.VSCROLL)
-			preview.SetBackgroundColour("#333333")
-			preview.Bind(wx.EVT_ENTER_WINDOW, self.tc_set_default_status, id = preview.GetId())
+			preview = CustomGrid(p2, -1, size=(-1, 100))
+			preview.DisableDragColSize()
+			preview.DisableDragRowSize()
+			preview.EnableEditing(False)
+			preview.EnableGridLines(False)
+			preview.SetCellHighlightPenWidth(0)
+			preview.SetCellHighlightROPenWidth(0)
+			preview.SetColLabelSize(self.grid.GetDefaultRowSize())
+			preview.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+			preview.SetLabelTextColour("#CCCCCC")
+			preview.SetScrollRate(0, 5)
+			preview._default_col_label_renderer.bgcolor = "#333333"
+			preview._default_row_label_renderer.bgcolor = "#333333"
+			preview.alternate_cell_background_color = False
+			preview.alternate_row_label_background_color = False
+			preview.draw_horizontal_grid_lines = False
+			preview.draw_vertical_grid_lines = False
+			preview.rendernative = False
+			preview.style = ""
+			preview.CreateGrid(0, 0)
+			font = preview.GetDefaultCellFont()
+			if font.PointSize > 11:
+				font.PointSize = 11
+				preview.SetDefaultCellFont(font)
+			preview.SetLabelFont(font)
+			preview.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.tc_mouseclick_handler)
+			self.preview = preview
+			preview.SetDefaultCellBackgroundColour("#333333")
+			preview.SetLabelBackgroundColour("#333333")
 			hsizer.Add(preview, 1, wx.EXPAND)
-			preview.sizer = wx.BoxSizer(wx.VERTICAL)
-			preview.SetSizer(preview.sizer)
 
-			self.patchsizer = wx.GridSizer(0, 0)
-			preview.sizer.Add(self.patchsizer)
-			panel.Bind(wx.EVT_ENTER_WINDOW, self.tc_set_default_status, id = panel.GetId())
 			panel = p2
 
 		if sys.platform not in ("darwin", "win32"):
@@ -597,7 +618,7 @@ class TestchartEditor(wx.Frame):
 		if tc_use_alternate_preview:
 			self.SetMinSize((self.GetMinSize()[0], self.GetMinSize()[1] +
 												   splitter.SashSize +
-												   p2.sizer.MinSize[1] + 100))
+												   p2.sizer.MinSize[1]))
 		else:
 			self.sizer.SetSizeHints(self)
 			self.sizer.Layout()
@@ -659,10 +680,23 @@ class TestchartEditor(wx.Frame):
 		self.grid.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 							 0)
 		self.grid.ForceRefresh()
+		if hasattr(self, "preview"):
+			num_cols = self.preview.GetNumberCols()
+			if not num_cols:
+				return
+			grid_w = (self.preview.GetSize()[0] -
+					  self.preview.GetRowLabelSize() -
+					  wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X))
+			col_w = round(grid_w / num_cols)
+			for i in xrange(num_cols):
+				self.preview.SetColSize(i, col_w)
+			self.preview.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+								    0)
+			self.preview.ForceRefresh()
 
 	def tc_grid_range_select_handler(self, event):
 		if debug: safe_print("[D] tc_grid_range_select_handler")
-		if not self.grid._select_in_progress:
+		if not self.grid.GetBatchCount():
 			wx.CallAfter(self.tc_set_default_status)
 		event.Skip()
 
@@ -749,11 +783,6 @@ class TestchartEditor(wx.Frame):
 
 	def tc_size_handler(self, event = None):
 		wx.CallAfter(self.resize_grid)
-		if hasattr(self, "preview"):
-			safe_margin = 0
-			scrollbarwidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
-			self.patchsizer.SetRows(0)
-			self.patchsizer.SetCols((self.preview.GetSize()[0] - scrollbarwidth - safe_margin) / self.grid.GetDefaultRowSize())
 		if self.IsShownOnScreen() and not self.IsMaximized() and not self.IsIconized():
 			w, h = self.GetSize()
 			setcfg("size.tcgen.w", w)
@@ -848,13 +877,9 @@ class TestchartEditor(wx.Frame):
 						if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
 							value_set = True
-			self.tc_grid_setcolorlabel(event.GetRow())
+			self.tc_grid_setcolorlabel(event.GetRow(), data)
 			if save_check:
 				self.tc_save_check()
-			if hasattr(self, "preview"):
-				patch = self.patchsizer.GetItem(event.GetRow()).GetWindow()
-				self.tc_patch_setcolorlabel(patch)
-				patch.Refresh()
 		if not value_set:
 			self.grid.SetCellValue(event.GetRow(), event.GetCol(),
 								   re.sub("^0+(?!\.)", "", strval) or "0")
@@ -1677,6 +1702,42 @@ class TestchartEditor(wx.Frame):
 		self.worker.interactive = False
 		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.create"), parent = self, progress_start = 500)
 
+	def tc_preview_update(self, startindex):
+		if not hasattr(self, "preview"):
+			return
+		numcols = self.preview.GetNumberCols()
+		startrow = startindex / numcols
+		startcol = startindex % numcols
+		i = 0
+		row = startrow
+		numrows = self.preview.GetNumberRows()
+		neededrows = math.ceil(float(self.grid.GetNumberRows()) / numcols) - numrows
+		if neededrows > 0:
+			self.preview.AppendRows(neededrows)
+		while True:
+			if row == startrow:
+				cols = xrange(startcol, numcols)
+			else:
+				cols = xrange(numcols)
+			for col in cols:
+				if startindex + i < self.grid.GetNumberRows():
+					color = self.grid.GetCellBackgroundColour(startindex + i, 3)
+					textcolor = self.grid.GetCellTextColour(startindex + i, 3)
+					value = self.grid.GetCellValue(startindex + i, 3)
+				else:
+					color = self.preview.GetDefaultCellBackgroundColour()
+					textcolor = self.preview.GetDefaultCellTextColour()
+					value = ""
+				self.preview.SetCellBackgroundColour(row, col, color)
+				self.preview.SetCellTextColour(row, col, textcolor)
+				self.preview.SetCellValue(row, col, value)
+				i += 1
+			row += 1
+			if startindex + i >= self.grid.GetNumberRows():
+				break
+		if row < self.preview.GetNumberRows():
+			self.preview.DeleteRows(row, self.preview.GetNumberRows() - row)
+
 	def tc_clear_handler(self, event):
 		self.tc_check_save_ti1()
 
@@ -1690,12 +1751,11 @@ class TestchartEditor(wx.Frame):
 		self.separator.Hide()
 		self.sizer.Layout()
 		if hasattr(self, "preview"):
-			self.preview.Freeze()
-			self.patchsizer.Clear(True)
-			self.preview.Layout()
-			self.preview.FitInside()
-			self.preview.SetScrollbars(20, 20, 0, 0)
-			self.preview.Thaw()
+			if self.preview.GetNumberRows() > 0:
+				self.preview.DeleteRows(0, self.preview.GetNumberRows())
+			if self.preview.GetNumberCols() > 0:
+				self.preview.DeleteCols(0, self.preview.GetNumberCols())
+			self.preview.Refresh()
 		if clear_ti1:
 			if hasattr(self, "ti1"):
 				del self.ti1
@@ -2537,7 +2597,13 @@ class TestchartEditor(wx.Frame):
 			data = self.ti1.queryv1("DATA")
 
 			if hasattr(self, "preview"):
-				self.preview.Freeze()
+				self.preview.BeginBatch()
+				w = self.grid.GetDefaultRowSize()
+				numcols = (self.sizer.Size[0] -
+						   wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)) / w
+				self.preview.AppendCols(numcols)
+				for i in xrange(numcols):
+					self.preview.SetColLabelValue(i, str(i + 1))
 
 			grid = self.grid
 			grid.BeginBatch()
@@ -2568,14 +2634,12 @@ class TestchartEditor(wx.Frame):
 					if label in ("RGB_R", "RGB_G", "RGB_B"):
 						grid.SetCellValue(i, j, str(sample[label]))
 				self.tc_grid_setcolorlabel(i, data)
-				self.tc_add_patch(i, sample)
+			self.tc_preview_update(0)
 
 			if hasattr(self, "preview"):
-				self.patchsizer.Layout()
-				self.preview.sizer.Layout()
-				self.preview.FitInside()
-				self.preview.SetScrollRate(0, 20)
-				self.preview.Thaw()
+				w, h = dc.GetTextExtent("99%s" % self.preview.GetNumberRows())
+				self.preview.SetRowLabelSize(max(w, grid.GetDefaultRowSize()))
+				self.preview.EndBatch()
 
 			self.tc_set_default_status()
 			if verbose >= 1: safe_print(lang.getstr("success"))
@@ -2589,7 +2653,7 @@ class TestchartEditor(wx.Frame):
 		self.grid.InsertRows(row + 1, len(newdata))
 		data = self.ti1.queryv1("DATA")
 		if hasattr(self, "preview"):
-			self.preview.Freeze()
+			self.preview.BeginBatch()
 		data_format = self.ti1.queryv1("DATA_FORMAT")
 		for i in xrange(len(newdata)):
 			for label in data_format.itervalues():
@@ -2603,26 +2667,13 @@ class TestchartEditor(wx.Frame):
 											   str(round(float(newdata[i][label]),
 														 4)))
 			self.tc_grid_setcolorlabel(row + 1 + i, data)
-			if hasattr(self, "preview"):
-				self.tc_add_patch(row + 1 + i, data[row + 1 + i])
+		self.tc_preview_update(row + 1)
 		self.grid.EndBatch()
 		self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
 		self.tc_set_default_status()
 		self.tc_save_check()
 		if hasattr(self, "preview"):
-			self.preview.Layout()
-			self.preview.FitInside()
-			self.preview.Thaw()
-
-	def tc_add_patch(self, before, sample):
-		if hasattr(self, "preview"):
-			patch = wx.Panel(self.preview, -1)
-			patch.Bind(wx.EVT_ENTER_WINDOW, self.tc_mouseover_handler, id = patch.GetId())
-			patch.Bind(wx.EVT_LEFT_DOWN, self.tc_mouseclick_handler, id = patch.GetId())
-			patch.SetMinSize((self.grid.GetDefaultRowSize(), ) * 2)
-			patch.sample = sample
-			self.patchsizer.Insert(before, patch)
-			self.tc_patch_setcolorlabel(patch)
+			self.preview.EndBatch()
 
 	def tc_grid_setcolorlabel(self, row, data=None):
 		grid = self.grid
@@ -2636,6 +2687,18 @@ class TestchartEditor(wx.Frame):
 		if labelcolour:
 			grid.SetCellTextColour(row, col, labelcolour)
 		self.grid.Refresh()
+		if hasattr(self, "preview"):
+			style, colour, labeltext, labelcolour = self.tc_getcolorlabel(sample)
+			numcols = self.preview.GetNumberCols()
+			row = sample.key / numcols
+			col = sample.key % numcols
+			if row > self.preview.GetNumberRows() - 1:
+				self.preview.AppendRows(1)
+			self.preview.SetCellBackgroundColour(row, col, colour)
+			self.preview.SetCellValue(row, col, labeltext)
+			if labelcolour:
+				self.preview.SetCellTextColour(row, col, labelcolour)
+			self.preview.Refresh()
 
 	def tc_getcolorlabel(self, sample):
 		scale = 2.55
@@ -2742,69 +2805,40 @@ class TestchartEditor(wx.Frame):
 			labelcolour = None
 		return style, colour, labeltext, labelcolour
 
-	def tc_patch_setcolorlabel(self, patch):
-		if hasattr(self, "preview"):
-			sample = patch.sample
-			style, colour, labeltext, labelcolour = self.tc_getcolorlabel(sample)
-			patch.SetBackgroundColour(colour)
-			if style:
-				patch.SetWindowStyle(style)
-			if labeltext:
-				if not hasattr(patch, "label"):
-					label = patch.label = wx.StaticText(patch, -1, "")
-					label.SetMaxFontSize(11)
-					label.patch = patch
-					label.Bind(wx.EVT_ENTER_WINDOW, self.tc_mouseover_handler, id = label.GetId())
-					label.Bind(wx.EVT_LEFT_DOWN, self.tc_mouseclick_handler, id = label.GetId())
-				else:
-					label = patch.label
-				label.SetLabel(labeltext)
-				label.SetForegroundColour(labelcolour)
-				label.Center()
-			else:
-				if hasattr(patch, "label"):
-					patch.label.Destroy()
-					del patch.label
-
 	def tc_set_default_status(self, event = None):
 		if hasattr(self, "tc_amount"):
 			statustxt = "%s: %s" % (lang.getstr("tc.patches.total"), self.tc_amount)
 			sel = self.grid.GetSelectionRows()
 			if sel:
 				statustxt += " / %s: %s" % (lang.getstr("tc.patches.selected"), len(sel))
+				index = self.grid.GetGridCursorRow()
+				if index > -1:
+					colour = self.grid.GetCellBackgroundColour(index, 3)
+					patchinfo = u" \u2014 %s %s: R=%s G=%s B=%s" % (lang.getstr("tc.patch"),
+																	index + 1, colour[0],
+																	colour[1], colour[2])
+					statustxt += patchinfo
 			self.SetStatusText(statustxt)
 
-	def tc_mouseover_handler(self, event):
-		patch = self.preview.FindWindowById(event.GetId())
-		if hasattr(patch, "patch"):
-			patch = patch.patch
-		colour = patch.GetBackgroundColour()
-		sample = patch.sample
-		patchinfo = "%s %s: R=%s G=%s B=%s" % (lang.getstr("tc.patch"), sample.key + 1, colour[0], colour[1], colour[2])
-		self.SetStatusText("%s: %s / %s" % (lang.getstr("tc.patches.total"), self.tc_amount, patchinfo))
-		event.Skip()
-
 	def tc_mouseclick_handler(self, event):
-		patch = self.preview.FindWindowById(event.GetId())
-		if hasattr(patch, "patch"):
-			patch = patch.patch
-		sample = patch.sample
-		self.grid.select_row(sample.key, event.ShiftDown(),
+		if not getattr(self, "ti1", None):
+			return
+		index = event.Row * self.preview.GetNumberCols() + event.Col
+		if index > self.ti1.queryv1("NUMBER_OF_SETS") - 1:
+			return
+		self.grid.select_row(index, event.ShiftDown(),
 							 event.ControlDown() or event.CmdDown())
 		return
 
 	def tc_delete_rows(self, rows):
 		self.grid.BeginBatch()
 		if hasattr(self, "preview"):
-			self.preview.Freeze()
+			self.preview.BeginBatch()
 		rows.sort()
 		rows.reverse()
 		self.grid.DeleteRows(rows[-1], len(rows))
 		if hasattr(self, "preview"):
-			for row in rows:
-				patch = self.patchsizer.GetItem(row).GetWindow()
-				if self.patchsizer.Detach(patch):
-					patch.Destroy()
+			self.tc_preview_update(rows[-1])
 		data = self.ti1.queryv1("DATA")
 		if rows[0] != len(data) - 1:
 			data.moveby1(rows[-1] + len(rows), -len(rows))
@@ -2819,9 +2853,7 @@ class TestchartEditor(wx.Frame):
 		self.grid.EndBatch()
 		self.tc_save_check()
 		if hasattr(self, "preview"):
-			self.preview.Layout()
-			self.preview.FitInside()
-			self.preview.Thaw()
+			self.preview.EndBatch()
 		self.tc_set_default_status()
 
 def main(testchart=None):
