@@ -135,6 +135,7 @@ import xh_filebrowsebutton
 import xh_floatspin
 
 # wxPython
+from wx import aui
 from wx import xrc
 from wx.lib import delayedresult
 from wx.lib.art import flagart
@@ -4304,7 +4305,12 @@ class MainFrame(BaseFrame):
 	def profile_share_handler(self, event):
 		""" Share ICC profile via http://icc.opensuse.org """
 		# Select profile
-		profile = self.select_profile()
+		profile = get_current_profile(include_display_profile=True)
+		ignore = not profile or self.profile_share_get_meta_error(profile)
+		kwargs = {"ignore_current_profile": ignore,
+				  "prefer_current_profile": isinstance(event.EventObject,
+													   wx.Button)}
+		profile = self.select_profile(**kwargs)
 		if not profile:
 			return
 		
@@ -4368,12 +4374,13 @@ class MainFrame(BaseFrame):
 			bitmap=geticon(32, "dialog-information"), alt=lang.getstr("save"),
 			wrap=100)
 		# Description field
-		dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+												  lang.getstr("description")),
+									 wx.HORIZONTAL)
+		dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 		dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
 											   description)
-		dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
-					   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+		boxsizer.Add(dlg.description_txt_ctrl, 1, flag=wx.ALL, border=4)
 		# Display properties
 		boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 												  lang.getstr("display.properties")),
@@ -4418,14 +4425,17 @@ class MainFrame(BaseFrame):
 		dlg.connection_ctrl.SetSelection(index)
 		gridsizer.Add(dlg.connection_ctrl, 1, flag=wx.RIGHT | wx.ALIGN_LEFT |
 					  wx.ALIGN_CENTER_VERTICAL, border=8)
-		display_settings_tabs = wx.Notebook(dlg, -1)
+		if sys.platform == "darwin":
+			display_settings_tabs = wx.Notebook(dlg, -1)
+		else:
+			display_settings_tabs = aui.AuiNotebook(dlg, -1, style=aui.AUI_NB_TOP)
 		# Column layout
 		display_settings = ((# 1st tab
 							 lang.getstr("osd") + ": " +
 							 lang.getstr("settings.basic"), # Tab title
 							 2, # Number of columns
 							 (# 1st (left) column
-							  (("preset", 100),
+							  (("preset", 150),
 							   ("brightness", 50),
 							   ("contrast", 50),
 							   ("trc.gamma", 50),
@@ -4433,7 +4443,7 @@ class MainFrame(BaseFrame):
 							   ("hue", 50)),
 							  # 2nd (right) column
 							  (("", 0),
-							   ("whitepoint.colortemp", 75),
+							   ("whitepoint.colortemp", 125),
 							   ("whitepoint", 50),
 							   ("saturation", 50)))),
 							(# 2nd tab
@@ -4449,6 +4459,8 @@ class MainFrame(BaseFrame):
 		display_settings_ctrls = []
 		for tab_num, settings in enumerate(display_settings):
 			panel = wx.Panel(display_settings_tabs, -1)
+			if isinstance(display_settings_tabs, aui.AuiNotebook):
+				panel.BackgroundColour = dlg.BackgroundColour
 			panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
 			gridsizer = wx.FlexGridSizer(0, settings[1] * 2, 4, 12)
 			panel.GetSizer().Add(gridsizer, 1, wx.ALL | wx.EXPAND, border=8)
@@ -4502,6 +4514,14 @@ class MainFrame(BaseFrame):
 						gridsizer.Add(ctrls[ctrl_index], 1, 
 									   flag=wx.ALIGN_CENTER_VERTICAL |
 											wx.ALIGN_LEFT | wx.RIGHT, border=4)
+			if isinstance(display_settings_tabs, aui.AuiNotebook):
+				if sys.platform == "darwin":
+					display_settings_tabs.SetTabCtrlHeight(int(round(display_settings_tabs.GetTabCtrlHeight() * 1.2)))
+				height = display_settings_tabs.GetHeightForPageHeight(panel.Sizer.MinSize[1])
+			else:
+				height = -1
+			display_settings_tabs.SetMinSize((dlg.sizer3.MinSize[0] - 16,
+											  height))
 		box_gridsizer.Add(display_settings_tabs, 1, 
 					   flag=wx.TOP | wx.ALIGN_LEFT, border=8)
 		# License field
@@ -4528,11 +4548,12 @@ class MainFrame(BaseFrame):
 		##sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT |
 				   ##wx.ALIGN_CENTER_VERTICAL)
 		# Link to ICC Profile Taxi service
-		dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
-													  label="icc.opensuse.org", 
-													  URL="http://icc.opensuse.org"),
-					   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.TOP,
-					   border=12)
+		hyperlink = wx.lib.hyperlink.HyperLinkCtrl(dlg.buttonpanel, -1,
+												   label="icc.opensuse.org", 
+												   URL="http://icc.opensuse.org")
+		dlg.sizer2.Insert(0, hyperlink, flag=wx.ALIGN_LEFT |
+											 wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+						  border=dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] - hyperlink.Size[0])
 		dlg.description_txt_ctrl.SetFocus()
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
