@@ -1052,7 +1052,6 @@ class CustomGrid(wx.grid.Grid):
 		self._col_label_renderers = {}
 		self._overwrite_cell_values = True
 		self._row_label_renderers = {}
-		self._select_in_progress = False
 		self.alternate_cell_background_color = True
 		self.alternate_col_label_background_color = False
 		self.alternate_row_label_background_color = True
@@ -1334,7 +1333,7 @@ class CustomGrid(wx.grid.Grid):
 				cell_renderer._selectionbitmaps = {}
 		event.Skip()
         
-	def SetColLabelRenderer(self, row, renderer):
+	def SetColLabelRenderer(self, renderer):
 		"""
 		Register a renderer to be used for drawing the label for the
 		given column.
@@ -1372,14 +1371,15 @@ class CustomGrid(wx.grid.Grid):
 		self.SetFocus()
 		if not shift and not ctrl:
 			self.SetGridCursor(row, max(self.GetGridCursorCol(), 0))
-			self.MakeCellVisible(row, max(self.GetGridCursorCol(), 0))
 			self.SelectRow(row)
 			self._anchor_row = row
+		self.MakeCellVisible(row, max(self.GetGridCursorCol(), 0))
 		if self.IsSelection():
 			if shift:
-				self._select_in_progress = True
+				self.BeginBatch()
 				rows = self.GetSelectionRows()
-				sel = range(min(self._anchor_row, row), max(self._anchor_row, row))
+				sel = range(min(self._anchor_row, row),
+							max(self._anchor_row, row) + 1)
 				desel = []
 				add = []
 				for i in rows:
@@ -1396,13 +1396,11 @@ class CustomGrid(wx.grid.Grid):
 						self.DeselectRow(i)
 				for i in add:
 					self.SelectRow(i, True)
-				self._select_in_progress = False
+				self.EndBatch()
 				return False
 			elif ctrl:
 				if self.IsInSelection(row, 0):
-					self._select_in_progress = True
 					self.DeselectRow(row)
-					self._select_in_progress = False
 					return True
 				else:
 					self.SelectRow(row, True)
