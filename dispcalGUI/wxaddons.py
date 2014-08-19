@@ -97,18 +97,17 @@ def GridGetSelectedRowsFromSelection(self):
 	by chosing individual cells.
 	
 	"""
-	sel = self.GetSelection()
 	numcols = self.GetNumberCols()
 	rows = []
 	i = -1
-	for cell in sel:
+	for cell in self.GetSelection():
 		row, col = cell
 		if row > i:
 			i = row
 			rownumcols = 0
 		rownumcols += 1
 		if rownumcols == numcols:
-			rows += [row]
+			rows.append(row)
 	return rows
 
 wx.grid.Grid.GetSelectedRowsFromSelection = GridGetSelectedRowsFromSelection
@@ -118,14 +117,12 @@ def GridGetSelectionRows(self):
 	"""
 	Return the selected rows, even if not all cells in a row are selected.
 	"""
-	sel = self.GetSelection()
 	rows = []
 	i = -1
-	for cell in sel:
-		row, col = cell
+	for row, col in self.GetSelection():
 		if row > i:
 			i = row
-			rows += [row]
+			rows.append(row)
 	return rows
 
 wx.grid.Grid.GetSelectionRows = GridGetSelectionRows

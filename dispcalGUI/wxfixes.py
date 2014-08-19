@@ -113,33 +113,24 @@ def GridGetSelection(self):
 	# rows
 	rows = self.GetSelectedRows()
 	for row in rows:
-		if row > -1 and row < numrows:
-			for i in range(numcols):
-				if not (row, i) in sel:
-					sel += [(row, i)]
+		for i in xrange(numcols):
+			sel.append((row, i))
 	# cols
 	cols = self.GetSelectedCols()
 	for col in cols:
-		if col > -1 and col < numcols:
-			for i in range(numrows):
-				if not (i, col) in sel:
-					sel += [(i, col)]
+		for i in xrange(numrows):
+			sel.append((i, col))
 	# block
 	tl = self.GetSelectionBlockTopLeft()
 	br = self.GetSelectionBlockBottomRight()
 	if tl and br:
-		for n in range(min(len(tl), len(br))):
-			for i in range(tl[n][0], br[n][0] + 1): # rows
-				if i > -1 and i < numrows:
-					for j in range(tl[n][1], br[n][1] + 1): # cols
-						if j > -1 and j < numcols and not (i, j) in sel:
-							sel += [(i, j)]
+		for n in xrange(min(len(tl), len(br))):
+			for i in xrange(tl[n][0], br[n][0] + 1): # rows
+				for j in xrange(tl[n][1], br[n][1] + 1): # cols
+					sel.append((i, j))
 	# single selected cells
-	cells = self.GetSelectedCells()
-	for cell in cells:
-		if not -1 in cell and cell[0] < numrows and cell[1] < numcols and \
-		   cell not in sel:
-			sel += [cell]
+	sel.extend(self.GetSelectedCells())
+	sel = list(set(sel))
 	sel.sort()
 	return sel
 
