@@ -6051,8 +6051,11 @@ usage: spotread [-options] [logfile]
 		if getattr(self.progress_wnd, "original_msg", None) and \
 		   msg != self.progress_wnd.original_msg:
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
-			# segfault under Arch Linux when setting the window title
-			safe_print("")
+			# segfault under Arch Linux when setting the window title.
+			# This has a chance of throwing a IOError: [Errno 9] Bad file
+			# descriptor under Windows, so check for wxGTK
+			if "__WXGTK__" in wx.PlatformInfo:
+				safe_print("")
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
 			self.progress_wnd.original_msg = None
 		if percentage:
@@ -6120,7 +6123,10 @@ usage: spotread [-options] [logfile]
 			self.progress_wnd.MakeModal(True)
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 			# segfault under Arch Linux when setting the window title
-			safe_print("")
+			# This has a chance of throwing a IOError: [Errno 9] Bad file
+			# descriptor under Windows, so check for wxGTK
+			if "__WXGTK__" in wx.PlatformInfo:
+				safe_print("")
 			self.progress_wnd.SetTitle(progress_title)
 			self.progress_wnd.Update(0, progress_msg)
 			if hasattr(self.progress_wnd, "pause_continue"):
