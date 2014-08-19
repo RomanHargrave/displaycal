@@ -87,8 +87,8 @@ def get_default_size():
 				# use assumed ppi
 				display_size_mm = (display_size[0] / ppi_def * 25.4, 
 								   display_size[1] / ppi_def * 25.4)
-		display_sizes += [display_size]
-		display_sizes_mm += [display_size_mm]
+		display_sizes.append(display_size)
+		display_sizes_mm.append(display_size_mm)
 	if sum(mm[0] for mm in display_sizes_mm) / \
 				 len(display_sizes_mm) == display_sizes_mm[0][0] and \
 	   sum(mm[1] for mm in display_sizes_mm) / \

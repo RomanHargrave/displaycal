@@ -76,7 +76,7 @@ def trash(paths):
 			if not os.path.exists(path):
 				raise IOError("No such file or directory: " + path)
 			if recycle(path):
-				deleted += [path]
+				deleted.append(path)
 	else:
 		# http://freedesktop.org/wiki/Specifications/trash-spec
 		trashroot = os.path.join(getenvu("XDG_DATA_HOME",
@@ -119,5 +119,5 @@ def trash(paths):
 					# shutil.rmtree(path)
 				# else:
 					# os.remove(path)
-			deleted += [path]
+			deleted.append(path)
 	return deleted

@@ -94,7 +94,7 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 	parts = ["xrandr"]
 	edid_keys = ["manufacturer", "monitor_name", "serial_ascii"]
 	if use_serial_32:
-		edid_keys += ["serial_32"]
+		edid_keys.append("serial_32")
 	for name in edid_keys:
 		value = edid.get(name)
 		if value:

@@ -161,7 +161,7 @@ def extract_cal_from_ti3(ti3_data):
 							  # always a minimum of 7 characters
 			cal = True
 		if cal:
-			cal_lines += [line]
+			cal_lines.append(line)
 			if line == 'END_DATA':
 				break
 	if isinstance(ti3, file):
@@ -196,7 +196,7 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 								  #always a minimum of 7 characters
 				cal_found = True
 			if cal_found:
-				cal_lines += [line]
+				cal_lines.append(line)
 				if line == 'DEVICE_CLASS "DISPLAY"':
 					options_dispcal = get_options_from_profile(profile)[0]
 					if options_dispcal:
@@ -204,11 +204,11 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 						b = profile.tags.lumi.Y
 						for o in options_dispcal:
 							if o[0] == "y":
-								cal_lines += ['KEYWORD "DEVICE_TYPE"']
+								cal_lines.append('KEYWORD "DEVICE_TYPE"')
 								if o[1] == "c":
-									cal_lines += ['DEVICE_TYPE "CRT"']
+									cal_lines.append('DEVICE_TYPE "CRT"')
 								else:
-									cal_lines += ['DEVICE_TYPE "LCD"']
+									cal_lines.append('DEVICE_TYPE "LCD"')
 								continue
 							if o[0] in ("t", "T"):
 								continue
@@ -231,27 +231,27 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 										except decimal.InvalidOperation, \
 											   exception:
 											continue
-								cal_lines += ['KEYWORD "TARGET_GAMMA"']
-								cal_lines += ['TARGET_GAMMA "%s"' % trc]
+								cal_lines.append('KEYWORD "TARGET_GAMMA"')
+								cal_lines.append('TARGET_GAMMA "%s"' % trc)
 								continue
 							if o[0] == "f":
-								cal_lines += ['KEYWORD '
-									'"DEGREE_OF_BLACK_OUTPUT_OFFSET"']
-								cal_lines += [
+								cal_lines.append('KEYWORD '
+									'"DEGREE_OF_BLACK_OUTPUT_OFFSET"')
+								cal_lines.append(
 									'DEGREE_OF_BLACK_OUTPUT_OFFSET "%s"' % 
-									o[1:]]
+									o[1:])
 								continue
 							if o[0] == "k":
-								cal_lines += ['KEYWORD '
-									'"BLACK_POINT_CORRECTION"']
-								cal_lines += [
-									'BLACK_POINT_CORRECTION "%s"' % o[1:]]
+								cal_lines.append('KEYWORD '
+									'"BLACK_POINT_CORRECTION"')
+								cal_lines.append(
+									'BLACK_POINT_CORRECTION "%s"' % o[1:])
 								continue
 							if o[0] == "B":
-								cal_lines += ['KEYWORD '
-									'"TARGET_BLACK_BRIGHTNESS"']
-								cal_lines += [
-									'TARGET_BLACK_BRIGHTNESS "%s"' % o[1:]]
+								cal_lines.append('KEYWORD '
+									'"TARGET_BLACK_BRIGHTNESS"')
+								cal_lines.append(
+									'TARGET_BLACK_BRIGHTNESS "%s"' % o[1:])
 								continue
 							if o[0] == "q":
 								if o[1] == "l":
@@ -260,12 +260,12 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 									q = "medium"
 								else:
 									q = "high"
-								cal_lines += ['KEYWORD "QUALITY"']
-								cal_lines += ['QUALITY "%s"' % q]
+								cal_lines.append('KEYWORD "QUALITY"')
+								cal_lines.append('QUALITY "%s"' % q)
 								continue
 						if not whitepoint:
-							cal_lines += ['KEYWORD "NATIVE_TARGET_WHITE"']
-							cal_lines += ['NATIVE_TARGET_WHITE ""']
+							cal_lines.append('KEYWORD "NATIVE_TARGET_WHITE"')
+							cal_lines.append('NATIVE_TARGET_WHITE ""')
 		if cal_lines:
 			if target_filename:
 				try:

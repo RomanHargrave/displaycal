@@ -135,7 +135,7 @@ def quote_args(args):
 	for arg in args:
 		if re.search("[\^!$%&()[\]{}=;'+,`~\s]", arg):
 			arg = '"' + arg + '"'
-		args_out += [arg]
+		args_out.append(arg)
 	return args_out
 
 

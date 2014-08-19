@@ -31,7 +31,7 @@ def GetAllChildren(self, skip=None):
 	children = filter(lambda child: child not in skip, self.GetChildren())
 	allchildren = []
 	for child in children:
-		allchildren += [child]
+		allchildren.append(child)
 		if hasattr(child, "GetAllChildren") and hasattr(child.GetAllChildren,
 														"__call__"):
 			allchildren += child.GetAllChildren(skip)

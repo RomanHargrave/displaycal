@@ -247,7 +247,7 @@ class LUTCanvas(plot.PlotCanvas):
 				for i in irange:
 					j = i * (axis_y / (vcgt['entryCount'] - 1))
 					if not detect_increments:
-						linear_points += [[j, j]]
+						linear_points.append([j, j])
 					if r:
 						n = float(data[0][i]) / maxv * axis_x
 						if not detect_increments or not r_points or \
@@ -255,14 +255,14 @@ class LUTCanvas(plot.PlotCanvas):
 							if detect_increments and n != i and \
 							   len(r_points) == 1 and i > 1 and \
 							   r_points[-1][0] == r_points[-1][1]:
-								r_points += [[i - 1, i - 1]]
+								r_points.append([i - 1, i - 1])
 							if xLabel == "L*":
 								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
 							if xLabel in ("L*", "Y"):
-								r_points += [[n, j]]
+								r_points.append([n, j])
 								self.point_grid[0][n] = j
 							else:
-								r_points += [[j, n]]
+								r_points.append([j, n])
 								self.point_grid[0][j] = n
 					if g:
 						n = float(data[1][i]) / maxv * axis_x
@@ -271,14 +271,14 @@ class LUTCanvas(plot.PlotCanvas):
 							if detect_increments and n != i and \
 							   len(g_points) == 1 and i > 1 and \
 							   g_points[-1][0] == g_points[-1][1]:
-								g_points += [[i - 1, i - 1]]
+								g_points.append([i - 1, i - 1])
 							if xLabel == "L*":
 								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
 							if xLabel in ("L*", "Y"):
-								g_points += [[n, j]]
+								g_points.append([n, j])
 								self.point_grid[1][n] = j
 							else:
-								g_points += [[j, n]]
+								g_points.append([j, n])
 								self.point_grid[1][j] = n
 					if b:
 						n = float(data[2][i]) / maxv * axis_x
@@ -287,14 +287,14 @@ class LUTCanvas(plot.PlotCanvas):
 							if detect_increments and n != i and \
 							   len(b_points) == 1 and i > 1 and \
 							   b_points[-1][0] == b_points[-1][1]:
-								b_points += [[i - 1, i - 1]]
+								b_points.append([i - 1, i - 1])
 							if xLabel == "L*":
 								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
 							if xLabel in ("L*", "Y"):
-								b_points += [[n, j]]
+								b_points.append([n, j])
 								self.point_grid[2][n] = j
 							else:
-								b_points += [[j, n]]
+								b_points.append([j, n])
 								self.point_grid[2][j] = n
 		else: # formula
 			irange = range(0, 256)
@@ -306,7 +306,7 @@ class LUTCanvas(plot.PlotCanvas):
 				# float2dec(v) fixes miniscule deviations in the calculated gamma
 				# n = float2dec(n, 8)
 				if not detect_increments:
-					linear_points += [[i, (i)]]
+					linear_points.append([i, (i)])
 				if r:
 					vmin = float2dec(vcgt["redMin"] * axis_x)
 					v = float2dec(math.pow(step * i / 100.0, vcgt["redGamma"]))
@@ -315,10 +315,10 @@ class LUTCanvas(plot.PlotCanvas):
 					if xLabel == "L*":
 						n = colormath.XYZ2Lab(0, float(n) / axis_x * 100, 0)[0] * (axis_x / 100.0)
 					if xLabel in ("L*", "Y"):
-						r_points += [[n, i]]
+						r_points.append([n, i])
 						self.point_grid[0][n] = i
 					else:
-						r_points += [[i, n]]
+						r_points.append([i, n])
 						self.point_grid[0][i] = n
 				if g:
 					vmin = float2dec(vcgt["greenMin"] * axis_x)
@@ -328,10 +328,10 @@ class LUTCanvas(plot.PlotCanvas):
 					if xLabel == "L*":
 						n = colormath.XYZ2Lab(0, float(n) / axis_x * 100, 0)[0] * (axis_x / 100.0)
 					if xLabel in ("L*", "Y"):
-						g_points += [[n, i]]
+						g_points.append([n, i])
 						self.point_grid[1][n] = i
 					else:
-						g_points += [[i, n]]
+						g_points.append([i, n])
 						self.point_grid[1][i] = n
 				if b:
 					vmin = float2dec(vcgt["blueMin"] * axis_x)
@@ -341,10 +341,10 @@ class LUTCanvas(plot.PlotCanvas):
 					if xLabel == "L*":
 						n = colormath.XYZ2Lab(0, float(n) / axis_x * 100, 0)[0] * (axis_x / 100.0)
 					if xLabel in ("L*", "Y"):
-						b_points += [[n, i]]
+						b_points.append([n, i])
 						self.point_grid[2][n] = i
 					else:
-						b_points += [[i, n]]
+						b_points.append([i, n])
 						self.point_grid[2][i] = n
 
 		#for n in sorted(self.point_grid[0].keys()):
@@ -369,31 +369,31 @@ class LUTCanvas(plot.PlotCanvas):
 		if r and g and b and r_points == g_points == b_points:
 			colour = 'white'
 			points = r_points
-			legend += ['R']
-			legend += ['G']
-			legend += ['B']
+			legend.append('R')
+			legend.append('G')
+			legend.append('B')
 		elif r and g and r_points == g_points:
 			colour = 'yellow'
 			points = r_points
-			legend += ['R']
-			legend += ['G']
+			legend.append('R')
+			legend.append('G')
 		elif r and b and r_points == b_points:
 			colour = 'magenta'
 			points = b_points
-			legend += ['R']
-			legend += ['B']
+			legend.append('R')
+			legend.append('B')
 		elif g and b and g_points == b_points:
 			colour = 'cyan'
 			points = b_points
-			legend += ['G']
-			legend += ['B']
+			legend.append('G')
+			legend.append('B')
 		else:
 			if r:
-				legend += ['R']
+				legend.append('R')
 			if g:
-				legend += ['G']
+				legend.append('G')
 			if b:
-				legend += ['B']
+				legend.append('B')
 		linear_points = [(i, int(round(v / axis_y * maxv))) for i, v in
 						 linear_points]
 		if colour and points:
@@ -402,8 +402,8 @@ class LUTCanvas(plot.PlotCanvas):
 			suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 						points_quantized == (linear if detect_increments 
 											 else linear_points) else '')
-			lines += [Plot(points, legend='='.join(legend) + suffix, 
-						   colour=colour)]
+			lines.append(Plot(points, legend='='.join(legend) + suffix, 
+							  colour=colour))
 		if colour != 'white':
 			if r and colour not in ('yellow', 'magenta'):
 				points_quantized = [(i, int(round(v / axis_y * maxv)))
@@ -411,21 +411,21 @@ class LUTCanvas(plot.PlotCanvas):
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							points_quantized == (linear if detect_increments 
 												 else linear_points) else '')
-				lines += [Plot(r_points, legend='R' + suffix, colour='red')]
+				lines.append(Plot(r_points, legend='R' + suffix, colour='red'))
 			if g and colour not in ('yellow', 'cyan'):
 				points_quantized = [(i, int(round(v / axis_y * maxv)))
 									for i, v in g_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							points_quantized == (linear if detect_increments 
 												 else linear_points) else '')
-				lines += [Plot(g_points, legend='G' + suffix, colour='green')]
+				lines.append(Plot(g_points, legend='G' + suffix, colour='green'))
 			if b and colour not in ('cyan', 'magenta'):
 				points_quantized = [(i, int(round(v / axis_y * maxv)))
 									for i, v in b_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							points_quantized == (linear if detect_increments 
 												 else linear_points) else '')
-				lines += [Plot(b_points, legend='B' + suffix, colour='#0080FF')]
+				lines.append(Plot(b_points, legend='B' + suffix, colour='#0080FF'))
 
 		self._DrawCanvas(plot.PlotGraphics(lines, title,
 										   " ".join([xLabel,

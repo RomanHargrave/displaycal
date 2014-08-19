@@ -2222,35 +2222,35 @@ class TestchartEditor(wx.Frame):
 					if patch[0] == patch[1] == patch[2] == 255: # white
 						white_patches += 1
 						if 255 not in gray_channel:
-							gray_channel += [255]
+							gray_channel.append(255)
 					elif patch[0] == patch[1] == patch[2] == 0: # black
 						black_patches += 1
 						if 0 not in R and 0 not in G and 0 not in B:
-							R += [0]
-							G += [0]
-							B += [0]
+							R.append(0)
+							G.append(0)
+							B.append(0)
 						if 0 not in gray_channel:
-							gray_channel += [0]
+							gray_channel.append(0)
 					elif patch[2] == patch[1] == 0 and patch[0] not in R: # red
-						R += [patch[0]]
+						R.append(patch[0])
 					elif patch[0] == patch[2] == 0 and patch[1] not in G: # green
-						G += [patch[1]]
+						G.append(patch[1])
 					elif patch[0] == patch[1] == 0 and patch[2] not in B: # blue
-						B += [patch[2]]
+						B.append(patch[2])
 					elif patch[0] == patch[1] == patch[2]: # gray
 						if patch[0] not in gray_channel:
-							gray_channel += [patch[0]]
+							gray_channel.append(patch[0])
 					elif multi_steps == 0:
 						multi_steps = None
 					if debug >= 9: safe_print("[D]", strpatch)
 					if strpatch not in uniqueRGB:
-						uniqueRGB += [strpatch]
+						uniqueRGB.append(strpatch)
 						if patch[0] not in multi["R"]:
-							multi["R"] += [patch[0]]
+							multi["R"].append(patch[0])
 						if patch[1] not in multi["G"]:
-							multi["G"] += [patch[1]]
+							multi["G"].append(patch[1])
 						if patch[2] not in multi["B"]:
-							multi["B"] += [patch[2]]
+							multi["B"].append(patch[2])
 
 				if single_channel_patches is None:
 					single_channel_patches = min(len(R), len(G), len(B))

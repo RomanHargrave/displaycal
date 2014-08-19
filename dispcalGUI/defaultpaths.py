@@ -101,7 +101,7 @@ else:
 					   getenvu("XDG_CONFIG_DIRS", 
 							   xdg_config_dir_default).split(os.pathsep)]
 	if not xdg_config_dir_default in xdg_config_dirs:
-		xdg_config_dirs += [xdg_config_dir_default]
+		xdg_config_dirs.append(xdg_config_dir_default)
 	xdg_data_home_default = expandvarsu("$HOME/.local/share")
 	library_home = appdata = xdg_data_home = getenvu("XDG_DATA_HOME", xdg_data_home_default)
 	xdg_data_dirs_default = "/usr/local/share:/usr/share:/var/lib"
@@ -110,7 +110,7 @@ else:
 							 xdg_data_dirs_default).split(os.pathsep)]
 	for dir_ in xdg_data_dirs_default.split(os.pathsep):
 		if not dir_ in xdg_data_dirs:
-			xdg_data_dirs += [dir_]
+			xdg_data_dirs.append(dir_)
 	commonappdata = xdg_data_dirs
 	library = commonappdata[0]
 	autostart = None
@@ -124,7 +124,7 @@ else:
 	iccprofiles = []
 	for dir_ in xdg_data_dirs:
 		if os.path.exists(dir_):
-			iccprofiles += [os.path.join(dir_, "color", "icc")]
+			iccprofiles.append(os.path.join(dir_, "color", "icc"))
 	iccprofiles.append("/var/lib/color")
 	iccprofiles_home = [os.path.join(xdg_data_home, "color", "icc"), 
 						os.path.join(xdg_data_home, "icc"), 

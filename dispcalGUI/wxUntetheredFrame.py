@@ -182,7 +182,7 @@ class UntetheredFrame(wx.Frame):
 			accels = []
 			for id, keycode in self.id_to_keycode.iteritems():
 				self.Bind(wx.EVT_MENU, self.key_handler, id=id)
-				accels += [(wx.ACCEL_NORMAL, keycode, id)]
+				accels.append((wx.ACCEL_NORMAL, keycode, id))
 			self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		else:
 			self.Bind(wx.EVT_CHAR_HOOK, self.key_handler)

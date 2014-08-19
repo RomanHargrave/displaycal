@@ -76,17 +76,16 @@ if sys.platform == "win32":
 		# subfolders of the executable directory which are not in 
 		# Lib\site-packages\dispcalGUI can be found
 		# (e.g. Scripts\dispcalGUI-apply-profiles)
-		data_dirs += [exedir]
+		data_dirs.append(exedir)
 	script_ext = ".cmd"
 	scale_adjustment_factor = 1.0
 	config_sys = os.path.join(commonappdata[0], appname)
 	confighome = os.path.join(appdata, appname)
 	datahome = os.path.join(appdata, appname)
 	logdir = os.path.join(datahome, "logs")
-	data_dirs += [datahome]
-	data_dirs += [os.path.join(dir_, appname) for dir_ in commonappdata]
-	del dir_
-	data_dirs += [os.path.join(commonprogramfiles, appname)]
+	data_dirs.append(datahome)
+	data_dirs.extend(os.path.join(dir_, appname) for dir_ in commonappdata)
+	data_dirs.append(os.path.join(commonprogramfiles, appname))
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:
@@ -99,7 +98,7 @@ else:
 		datahome = os.path.join(appdata, appname)
 		logdir = os.path.join(expanduseru("~"), "Library", 
 							  "Logs", appname)
-		data_dirs += [datahome, os.path.join(commonappdata[0], appname)]
+		data_dirs.extend([datahome, os.path.join(commonappdata[0], appname)])
 	else:
 		script_ext = ".sh"
 		scale_adjustment_factor = 1.0
@@ -108,15 +107,14 @@ else:
 		datahome = os.path.join(xdg_data_home, appname)
 		datahome_default = os.path.join(xdg_data_home_default, appname)
 		logdir = os.path.join(datahome, "logs")
-		data_dirs += [datahome]
+		data_dirs.append(datahome)
 		if not datahome_default in data_dirs:
-			data_dirs += [datahome_default]
-		data_dirs += [os.path.join(dir_, appname) for dir_ in xdg_data_dirs]
-		data_dirs += [os.path.join(dir_, "argyllcms") for dir_ in
-					  xdg_data_dirs]
-		data_dirs += [os.path.join(dir_, "color", "argyll") for dir_ in
-					  xdg_data_dirs]
-		del dir_
+			data_dirs.append(datahome_default)
+		data_dirs.extend(os.path.join(dir_, appname) for dir_ in xdg_data_dirs)
+		data_dirs.extend(os.path.join(dir_, "argyllcms") for dir_ in
+						 xdg_data_dirs)
+		data_dirs.extend(os.path.join(dir_, "color", "argyll") for dir_ in
+						 xdg_data_dirs)
 	exe_ext = ""
 	profile_ext = ".icc"
 
@@ -355,8 +353,8 @@ def get_data_path(relpath, rex=None):
 				else:
 					for filename in filelist:
 						if not filename in intersection:
-							intersection += [filename]
-							paths += [os.path.join(curpath, filename)]
+							intersection.append(filename)
+							paths.append(os.path.join(curpath, filename))
 			else:
 				return curpath
 	if paths:
@@ -1039,12 +1037,12 @@ def get_total_patches(white_patches=None, black_patches=None,
 		if multi_bcc_steps > 1:
 			multi_bcc_step = multi_step
 			for i in range(multi_bcc_steps):
-				multi_values += [str(multi_bcc_step  * i)]
+				multi_values.append(str(multi_bcc_step  * i))
 			for i in range(multi_bcc_steps * 2 - 1):
-				multi_bcc_values += [str(multi_bcc_step / 2.0  * i)]
+				multi_bcc_values.append(str(multi_bcc_step / 2.0  * i))
 		else:
 			for i in range(multi_steps):
-				multi_values += [str(multi_step * i)]
+				multi_values.append(str(multi_step * i))
 		if single_channel_patches > 1:
 			single_channel_step = 255.0 / (single_channel_patches - 1)
 			for i in range(single_channel_patches):

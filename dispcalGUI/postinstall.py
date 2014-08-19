@@ -68,8 +68,8 @@ if sys.platform == "win32":
 					installed_files = []
 					if os.path.exists(recordfile_name):
 						recordfile = open(recordfile_name, "r")
-						installed_files += [line.rstrip("\n") for line in 
-											recordfile]
+						installed_files.extend(line.rstrip("\n") for line in 
+											   recordfile)
 						recordfile.close()
 					try:
 						path.decode("ASCII")
@@ -80,7 +80,7 @@ if sys.platform == "win32":
 						# short path as 7-bit string (while still being a 
 						# valid path)
 						path = win32api.GetShortPathName(path)
-					installed_files += [path]
+					installed_files.append(path)
 					recordfile = open(recordfile_name, "w")
 					recordfile.write("\n".join(installed_files))
 					recordfile.close()

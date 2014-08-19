@@ -979,7 +979,7 @@ class LUT16Type(ICCProfileTag):
 		ihdr = ["IHDR"]
 		# IHDR: width, height
 		w, h = len(self.clut[0]), len(self.clut)
-		ihdr += [uInt32Number_tohex(w), uInt32Number_tohex(h)]
+		ihdr.extend([uInt32Number_tohex(w), uInt32Number_tohex(h)])
 		# IHDR: Bit depth 16
 		ihdr.append(uInt8Number_tohex(16))
 		# IHDR: Color type 2 (truecolor)
@@ -999,7 +999,7 @@ class LUT16Type(ICCProfileTag):
 			# Add a scanline, filter type 0
 			scanlines.append(["\0"])
 			for RGB in block:
-				scanlines[-1] += [uInt16Number_tohex(v) for v in RGB]
+				scanlines[-1].extend(uInt16Number_tohex(v) for v in RGB)
 		imgdata = "".join(["".join(scanline)
 						   for scanline in scanlines])
 		imgdata = zlib.compress(imgdata, 9)
@@ -1143,12 +1143,12 @@ class LUT16Type(ICCProfileTag):
 					   uInt16Number_tohex(len(self.input and self.input[0])),
 					   uInt16Number_tohex(len(self.output and self.output[0]))]
 			for entries in self.input:
-				tagData += [uInt16Number_tohex(v) for v in entries]
+				tagData.extend(uInt16Number_tohex(v) for v in entries)
 			for block in self.clut:
 				for entries in block:
-					tagData += [uInt16Number_tohex(v) for v in entries]
+					tagData.extend(uInt16Number_tohex(v) for v in entries)
 			for entries in self.output:
-				tagData += [uInt16Number_tohex(v) for v in entries]
+				tagData.extend(uInt16Number_tohex(v) for v in entries)
 			return "".join(tagData)
 		
 		def fset(self, tagData):
@@ -2145,37 +2145,37 @@ class VideoCardGammaType(ICCProfileTag, ADict):
 			irange = range(0, vcgt['entryCount'])
 			for i in irange:
 				j = i * (255.0 / (vcgt['entryCount'] - 1))
-				linear_points += [[j, j]]
+				linear_points.append([j, j])
 				if r:
 					n = float(data[0][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
-					r_points += [[j, n]]
+					r_points.append([j, n])
 				if g:
 					n = float(data[1][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
-					g_points += [[j, n]]
+					g_points.append([j, n])
 				if b:
 					n = float(data[2][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
-					b_points += [[j, n]]
+					b_points.append([j, n])
 		else: # formula
 			irange = range(0, 256)
 			step = 100.0 / 255.0
 			for i in irange:
 				# float2dec(v) fixes miniscule deviations in the calculated gamma
-				linear_points += [[i, (i)]]
+				linear_points.append([i, (i)])
 				if r:
 					vmin = float2dec(vcgt["redMin"] * 255)
 					v = float2dec(math.pow(step * i / 100.0, vcgt["redGamma"]))
 					vmax = float2dec(vcgt["redMax"] * 255)
-					r_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
+					r_points.append([i, float2dec(vmin + v * (vmax - vmin), 8)])
 				if g:
 					vmin = float2dec(vcgt["greenMin"] * 255)
 					v = float2dec(math.pow(step * i / 100.0, vcgt["greenGamma"]))
 					vmax = float2dec(vcgt["greenMax"] * 255)
-					g_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
+					g_points.append([i, float2dec(vmin + v * (vmax - vmin), 8)])
 				if b:
 					vmin = float2dec(vcgt["blueMin"] * 255)
 					v = float2dec(math.pow(step * i / 100.0, vcgt["blueGamma"]))
 					vmax = float2dec(vcgt["blueMax"] * 255)
-					b_points += [[i, float2dec(vmin + v * (vmax - vmin), 8)]]
+					b_points.append([i, float2dec(vmin + v * (vmax - vmin), 8)])
 		return r_points, g_points, b_points, linear_points
 
 	def printNormalizedValues(self, amount=None, digits=12):
@@ -2240,9 +2240,10 @@ class VideoCardGammaFormulaType(VideoCardGammaType):
 		rgb = AODict([("red", []), ("green", []), ("blue", [])])
 		for i in xrange(0, amount):
 			for key in rgb:
-				rgb[key] += [float(self[key + "Min"]) + math.pow(step * i / 1.0, 
-								float(self[key + "Gamma"])) * 
-							 float(self[key + "Max"] - self[key + "Min"])]
+				rgb[key].append(float(self[key + "Min"]) +
+								math.pow(step * i / 1.0,
+										 float(self[key + "Gamma"])) * 
+								float(self[key + "Max"] - self[key + "Min"]))
 		return zip(*rgb.values())
 	
 	def getTableType(self, entryCount=256, entrySize=2):
@@ -2320,7 +2321,7 @@ class VideoCardGammaTableType(VideoCardGammaType):
 			values = []
 			for i, value in enumerate(all):
 				if i == 0 or (i + 1) % step < 1 or i + 1 == self.entryCount:
-					values += [value]
+					values.append(value)
 		return values
 	
 	def getFormulaType(self):
@@ -2586,7 +2587,7 @@ class XYZType(ICCProfileTag, XYZNumber):
 	
 		def fget(self):
 			tagData = ["XYZ ", "\0" * 4]
-			tagData += [self.tohex()]
+			tagData.append(self.tohex())
 			return "".join(tagData)
 		
 		def fset(self, tagData):
@@ -3100,9 +3101,9 @@ class ICCProfile:
 			flags += 1
 		if not self.independent:
 			flags += 2
-		header += [uInt32Number_tohex(flags),
-				   self.device["manufacturer"][:4].rjust(4, "\0") if self.device["manufacturer"] else "\0" * 4,
-				   self.device["model"][:4].rjust(4, "\0") if self.device["model"] else "\0" * 4]
+		header.extend([uInt32Number_tohex(flags),
+					   self.device["manufacturer"][:4].rjust(4, "\0") if self.device["manufacturer"] else "\0" * 4,
+					   self.device["model"][:4].rjust(4, "\0") if self.device["model"] else "\0" * 4])
 		deviceAttributes = 0
 		for name, bit in {"reflective": 1,
 						  "glossy": 2,
@@ -3110,12 +3111,12 @@ class ICCProfile:
 						  "color": 8}.iteritems():
 			if not self.device["attributes"][name]:
 				deviceAttributes += bit
-		header += [uInt64Number_tohex(deviceAttributes),
-				   uInt32Number_tohex(self.intent),
-				   self.illuminant.tohex(),
-				   self.creator[:4].ljust(4, " ") if self.creator else "\0" * 4,
-				   self.ID[:16].ljust(16, "\0"),
-				   self._data[100:128] if len(self._data[100:128]) == 28 else "\0" * 28]
+		header.extend([uInt64Number_tohex(deviceAttributes),
+					   uInt32Number_tohex(self.intent),
+					   self.illuminant.tohex(),
+					   self.creator[:4].ljust(4, " ") if self.creator else "\0" * 4,
+					   self.ID[:16].ljust(16, "\0"),
+					   self._data[100:128] if len(self._data[100:128]) == 28 else "\0" * 28])
 		return "".join(header)
 	
 	@property
@@ -3643,8 +3644,8 @@ class ICCProfile:
 						values = [v / 100.0 for v in values]
 					XYZxy = [" ".join("%6.2f" % v for v in colorant.values())]
 					if values != [0, 0, 0]:
-						XYZxy += ["(xy %s)" % " ".join("%6.4f" % v for v in
-													   colormath.XYZ2xyY(*values)[:2])]
+						XYZxy.append("(xy %s)" % " ".join("%6.4f" % v for v in
+														  colormath.XYZ2xyY(*values)[:2]))
 					info["    %s %s" % (colorant_name,
 									    "".join(colorant.keys()))] = " ".join(XYZxy)
 			elif isinstance(tag, CurveType):
@@ -3809,8 +3810,8 @@ class ICCProfile:
 					" ".join("%6.4f" % v for v in tag.illuminant.xyY[:2]))
 				XYZxy = [" ".join("%6.2f" % v for v in tag.surround.values())]
 				if tag.surround.values() != [0, 0, 0]:
-					XYZxy += ["(xy %s)" % " ".join("%6.4f" % v for v in
-												   tag.surround.xyY[:2])]
+					XYZxy.append("(xy %s)" % " ".join("%6.4f" % v for v in
+													  tag.surround.xyY[:2]))
 				info["    Surround XYZ"] = " ".join(XYZxy)
 			elif isinstance(tag, XYZType):
 				if sig == "lumi":
@@ -3835,7 +3836,7 @@ class ICCProfile:
 										  tag.ir.values())]
 						if tag.ir.values() != [0, 0, 0]:
 							xy = " ".join("%6.4f" % v for v in tag.ir.xyY[:2])
-							color += ["(xy %s)" % xy]
+							color.append("(xy %s)" % xy)
 							cct, delta = colormath.xy_CCT_delta(*tag.ir.xyY[:2])
 						else:
 							cct = None
@@ -3853,7 +3854,7 @@ class ICCProfile:
 										  tag.pcs.values())]
 						if tag.pcs.values() != [0, 0, 0]:
 							xy = " ".join("%6.4f" % v for v in tag.pcs.xyY[:2])
-							color += ["(xy %s)" % xy]
+							color.append("(xy %s)" % xy)
 						info["    PCS-relative XYZ"] = " ".join(color)
 						cct, delta = colormath.xy_CCT_delta(*tag.pcs.xyY[:2])
 						if cct:

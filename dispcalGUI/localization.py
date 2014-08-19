@@ -24,7 +24,7 @@ def init(set_wx_locale=False):
 	"""
 	langdirs = []
 	for dir_ in data_dirs:
-		langdirs += [os.path.join(dir_, "lang")]
+		langdirs.append(os.path.join(dir_, "lang"))
 	for langdir in langdirs:
 		if os.path.exists(langdir) and os.path.isdir(langdir):
 			try:

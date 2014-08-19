@@ -81,7 +81,7 @@ class AboutDialog(wx.Dialog):
 	def add_items(self, items):
 		self.closebtn = wx.Button(self, -1, lang.getstr("ok"))
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.closebtn.GetId())
-		items += [self.closebtn, (1, 16)]
+		items.extend([self.closebtn, (1, 16)])
 		pointsize = 10
 		for item in items:
 			if isinstance(item, wx.Window):
@@ -1115,7 +1115,7 @@ class CustomGrid(wx.grid.Grid):
 					row = cell[0]
 					col = cell[1]
 					if i < row:
-						clip += [[]]
+						clip.append([])
 						i = row
 						offset = 0
 					# Skip cols without label
@@ -1125,7 +1125,7 @@ class CustomGrid(wx.grid.Grid):
 					if col - offset < start_col:
 						start_col = col - offset
 					while len(clip[-1]) - 1 < col - offset:
-						clip[-1] += [""]
+						clip[-1].append("")
 					clip[-1][col - offset] = self.GetCellValue(row, col)
 				for i, row in enumerate(clip):
 					clip[i] = "\t".join(row[start_col:])
@@ -1155,7 +1155,7 @@ class CustomGrid(wx.grid.Grid):
 						row = cell[0]
 						col = cell[1]
 						if i < row:
-							grid += [[]]
+							grid.append([])
 							i = row
 							offset = 0
 						# Skip read-only cells and cols without label
@@ -1167,7 +1167,7 @@ class CustomGrid(wx.grid.Grid):
 						if col - offset < start_col:
 							start_col = col - offset
 						while len(grid[-1]) - 1 < col - offset:
-							grid[-1] += [None]
+							grid[-1].append(None)
 						grid[-1][col - offset] = cell
 					for i, row in enumerate(grid):
 						grid[i] = row[start_col:]
@@ -1384,10 +1384,10 @@ class CustomGrid(wx.grid.Grid):
 				add = []
 				for i in rows:
 					if i not in sel:
-						desel += [i]
+						desel.append(i)
 				for i in sel:
 					if i not in rows:
-						add += [i]
+						add.append(i)
 				if len(desel) >= len(add):
 					# in this case deselecting rows will take as long or longer than selecting, so use SelectRow to speed up the operation
 					self.SelectRow(row)
@@ -2250,7 +2250,7 @@ class ProgressDialog(wx.Dialog):
 		accels = []
 		for id, keycode in self.id_to_keycode.iteritems():
 			self.Bind(wx.EVT_MENU, keyhandler or self.key_handler, id=id)
-			accels += [(wx.ACCEL_NORMAL, keycode, id)]
+			accels.append((wx.ACCEL_NORMAL, keycode, id))
 		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		
 		text_extent = self.msg.GetTextExtent("E")

@@ -982,10 +982,10 @@ class MainFrame(BaseFrame):
 			path, ext = (get_data_path(os.path.sep.join(filename.split("/"))), 
 				os.path.splitext(filename)[1])
 			if (not path or not os.path.isfile(path)):
-				missing += [filename]
+				missing.append(filename)
 			elif ext.lower() == ".ti1":
-				self.dist_testcharts += [path]
-				self.dist_testchart_names += [os.path.basename(path)]
+				self.dist_testcharts.append(path)
+				self.dist_testchart_names.append(os.path.basename(path))
 		if missing:
 			wx.CallAfter(show_result_dialog,
 						 lang.getstr("resources.notfound.warning") +
@@ -1391,7 +1391,7 @@ class MainFrame(BaseFrame):
 			lstr = lang.getstr(os.path.basename(cal))
 			if cal == getcfg("calibration.file") and getcfg("settings.changed"):
 				lstr = "* " + lstr
-			settings += [lstr]
+			settings.append(lstr)
 		self.calibration_file_ctrl.SetItems(settings)
 		
 		self.whitepoint_ctrl.SetItems([lang.getstr("as_measured"),
@@ -1432,7 +1432,7 @@ class MainFrame(BaseFrame):
 			for chart in testcharts.values():
 				chart = lang.getstr(chart)
 				if not chart in self.default_testchart_names:
-					self.default_testchart_names += [chart]
+					self.default_testchart_names.append(chart)
 
 	def set_size(self, set_height=False, fit_width=False):
 		if not self.IsFrozen():
@@ -2339,8 +2339,8 @@ class MainFrame(BaseFrame):
 		self.calpanel.Freeze()
 		self.displays = []
 		for item in self.worker.displays:
-			self.displays += [item.replace("[PRIMARY]", 
-										   lang.getstr("display.primary"))]
+			self.displays.append(item.replace("[PRIMARY]", 
+											  lang.getstr("display.primary")))
 			self.displays[-1] = lang.getstr(self.displays[-1])
 		self.display_ctrl.SetItems(self.displays)
 		self.display_ctrl.Enable(len(self.worker.displays) > 1)
@@ -2479,8 +2479,8 @@ class MainFrame(BaseFrame):
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			# Projector mode introduced in Argyll 1.1.0 Beta
-			measurement_modes[instrument_type] += [lang.getstr("projector")]
-			measurement_modes_ab[instrument_type] += ["p"]
+			measurement_modes[instrument_type].append(lang.getstr("projector"))
+			measurement_modes_ab[instrument_type].append("p")
 		if instrument_features.get("adaptive_mode") and (
 		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
 		   self.worker.argyll_version[0:3] == [1, 1, 0] and
@@ -2835,7 +2835,7 @@ class MainFrame(BaseFrame):
 				recent_cals = []
 				for recent_cal in self.recent_cals:
 					if recent_cal not in self.presets:
-						recent_cals += [recent_cal]
+						recent_cals.append(recent_cal)
 				setcfg("recent_cals", os.pathsep.join(recent_cals))
 				self.calibration_file_ctrl.Append(
 					lang.getstr(os.path.basename(cal)))
@@ -3273,9 +3273,9 @@ class MainFrame(BaseFrame):
 	def enable_spyder2(self, path, asroot):
 		cmd, args = get_argyll_util("spyd2en"), ["-v"]
 		if asroot and self.worker.argyll_version >= [1, 2, 0]:
-			args += ["-Sl"]
+			args.append("-Sl")
 		if path:
-			args += [path]
+			args.append(path)
 		result = self.worker.exec_cmd(cmd, args, 
 									  capture_output=True, 
 									  skip_scripts=True, 
@@ -5377,7 +5377,7 @@ class MainFrame(BaseFrame):
 				cal_entrycount = vcgt['entryCount']
 				for i in range(0, cal_entrycount):
 					for j in range(0, 3):
-						rgb[j] += [float(vcgt['data'][j][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255]
+						rgb[j].append(float(vcgt['data'][j][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255)
 			else:
 				# formula
 				step = 100.0 / 255.0
@@ -5387,7 +5387,7 @@ class MainFrame(BaseFrame):
 						vmin = float2dec(vcgt[name + "Min"] * 255)
 						v = float2dec(math.pow(step * i / 100.0, vcgt[name + "Gamma"]))
 						vmax = float2dec(vcgt[name + "Max"] * 255)
-						rgb[j] += [float2dec(vmin + v * (vmax - vmin), 8)]
+						rgb[j].append(float2dec(vmin + v * (vmax - vmin), 8))
 			cal_rgblevels = [len(set(round(n) for n in channel)) for channel in rgb]
 		else:
 			# Assume linear with all steps
@@ -7348,16 +7348,16 @@ class MainFrame(BaseFrame):
 		else:
 			result = wx.ID_OK
 			description += " AUTO"
-		args += ["-E", description]
-		args += ["-I", safe_str(display.strip(), "UTF-8")]
+		args.extend(["-E", description])
+		args.extend(["-I", safe_str(display.strip(), "UTF-8")])
 		ccxxmake_version = get_argyll_version("ccxxmake")
 		if reference_ti3 and (not colorimeter_ti3 or
 							  ccxxmake_version >= [1, 7]):
 			if ccxxmake_version >= [1, 7]:
-				args += ["-t", dict((v, k) for k, v in
-									technology_strings.iteritems())[tech]]
+				args.extend(["-t", dict((v, k) for k, v in
+										technology_strings.iteritems())[tech]])
 			else:
-				args += ["-T", safe_str(tech, "UTF-8")]
+				args.extend(["-T", safe_str(tech, "UTF-8")])
 		if result != wx.ID_OK:
 			return
 		# Prepare our files
@@ -8424,10 +8424,10 @@ class MainFrame(BaseFrame):
 				"%ck	" + lang.getstr("calibration.black_point_correction")]
 		if defaults["calibration.black_point_rate.enabled"]:
 			info.append("%cA	" + lang.getstr("calibration.black_point_rate"))
-		info += ["%cq	" + lang.getstr("calibration.speed"),
-				 "%pq	" + lang.getstr("profile.quality"),
-				 "%pt	" + lang.getstr("profile.type"),
-				 "%tpa	" + lang.getstr("testchart.info")]
+		info.extend(["%cq	" + lang.getstr("calibration.speed"),
+					 "%pq	" + lang.getstr("profile.quality"),
+					 "%pt	" + lang.getstr("profile.type"),
+					 "%tpa	" + lang.getstr("testchart.info")])
 		return lang.getstr("profile.name.placeholders") + "\n\n" + \
 			   "\n".join(info)
 	
@@ -9453,18 +9453,18 @@ class MainFrame(BaseFrame):
 			else:
 				for testchart_name in testcharts:
 					if testchart_name not in testchart_names:
-						testchart_names += [testchart_name]
-						self.testcharts += [os.pathsep.join((testchart_name, 
-															 testchart_dir))]
+						testchart_names.append(testchart_name)
+						self.testcharts.append(os.pathsep.join((testchart_name, 
+																testchart_dir)))
 		default_testcharts = get_data_path("ti1", "\.(?:icc|icm|ti1|ti3)$")
 		if isinstance(default_testcharts, list):
 			for testchart in default_testcharts:
 				testchart_dir = os.path.dirname(testchart)
 				testchart_name = os.path.basename(testchart)
 				if testchart_name not in testchart_names:
-					testchart_names += [testchart_name]
-					self.testcharts += [os.pathsep.join((testchart_name, 
-														 testchart_dir))]
+					testchart_names.append(testchart_name)
+					self.testcharts.append(os.pathsep.join((testchart_name, 
+															testchart_dir)))
 		self.testcharts = natsort(self.testcharts)
 		self.testchart_names = []
 		i = 0
@@ -9472,7 +9472,7 @@ class MainFrame(BaseFrame):
 			chart = chart.split(os.pathsep)
 			chart.reverse()
 			self.testcharts[i] = os.path.join(*chart)
-			self.testchart_names += [lang.getstr(chart[-1])]
+			self.testchart_names.append(lang.getstr(chart[-1]))
 			i += 1
 		return self.testchart_names
 
@@ -9645,7 +9645,7 @@ class MainFrame(BaseFrame):
 					recent_cals = []
 					for recent_cal in self.recent_cals:
 						if recent_cal not in self.presets:
-							recent_cals += [recent_cal]
+							recent_cals.append(recent_cal)
 					setcfg("recent_cals", os.pathsep.join(recent_cals))
 					self.calibration_file_ctrl.Delete(sel)
 					cal = getcfg("calibration.file") or ""
@@ -10060,13 +10060,13 @@ class MainFrame(BaseFrame):
 						measurement_mode = value.lower()[0]
 						if measurement_mode in ("c", "l"):
 							setcfg("measurement_mode", measurement_mode)
-							self.worker.options_dispcal += ["-y" + 
-															measurement_mode]
+							self.worker.options_dispcal.append("-y" + 
+															   measurement_mode)
 					elif line[0] == "NATIVE_TARGET_WHITE":
 						setcfg("whitepoint.colortemp", None)
 						setcfg("whitepoint.x", None)
 						setcfg("whitepoint.y", None)
-						settings += [lang.getstr("whitepoint")]
+						settings.append(lang.getstr("whitepoint"))
 					elif line[0] == "TARGET_WHITE_XYZ":
 						XYZ = value.split()
 						i = 0
@@ -10083,15 +10083,15 @@ class MainFrame(BaseFrame):
 							setcfg("whitepoint.colortemp", None)
 							setcfg("whitepoint.x", round(x, 6))
 							setcfg("whitepoint.y", round(y, 6))
-							self.worker.options_dispcal += [
+							self.worker.options_dispcal.append(
 								"-w%s,%s" % (getcfg("whitepoint.x"), 
-											 getcfg("whitepoint.y"))]
-							settings += [lang.getstr("whitepoint")]
+											 getcfg("whitepoint.y")))
+							settings.append(lang.getstr("whitepoint"))
 						setcfg("calibration.luminance", 
 							   stripzeros(round(Y * 100, 3)))
-						self.worker.options_dispcal += [
-							"-b%s" % getcfg("calibration.luminance")]
-						settings += [lang.getstr("calibration.luminance")]
+						self.worker.options_dispcal.append(
+							"-b%s" % getcfg("calibration.luminance"))
+						settings.append(lang.getstr("calibration.luminance"))
 					elif line[0] == "TARGET_GAMMA":
 						setcfg("trc", None)
 						if value in ("L_STAR", "REC709", "SMPTE240M", "sRGB"):
@@ -10115,37 +10115,37 @@ class MainFrame(BaseFrame):
 								setcfg("trc", value)
 							except ValueError:
 								continue
-						self.worker.options_dispcal += [
-							"-" + getcfg("trc.type") + str(getcfg("trc"))]
-						settings += [lang.getstr("trc")]
+						self.worker.options_dispcal.append(
+							"-" + getcfg("trc.type") + str(getcfg("trc")))
+						settings.append(lang.getstr("trc"))
 					elif line[0] == "DEGREE_OF_BLACK_OUTPUT_OFFSET":
 						setcfg("calibration.black_output_offset", 
 							   stripzeros(value))
-						self.worker.options_dispcal += [
-							"-f%s" % getcfg("calibration.black_output_offset")]
-						settings += [
-							lang.getstr("calibration.black_output_offset")]
+						self.worker.options_dispcal.append(
+							"-f%s" % getcfg("calibration.black_output_offset"))
+						settings.append(
+							lang.getstr("calibration.black_output_offset"))
 					elif line[0] == "BLACK_POINT_CORRECTION":
 						if stripzeros(value) >= 0:
 							black_point_correction = True
 							setcfg("calibration.black_point_correction", 
 								   stripzeros(value))
-							self.worker.options_dispcal += [
+							self.worker.options_dispcal.append(
 								"-k%s" % 
-								getcfg("calibration.black_point_correction")]
-						settings += [
-							lang.getstr("calibration.black_point_correction")]
+								getcfg("calibration.black_point_correction"))
+						settings.append(
+							lang.getstr("calibration.black_point_correction"))
 					elif line[0] == "TARGET_BLACK_BRIGHTNESS":
 						setcfg("calibration.black_luminance", 
 							   stripzeros(value))
-						self.worker.options_dispcal += [
-							"-B%s" % getcfg("calibration.black_luminance")]
-						settings += [lang.getstr("calibration.black_luminance")]
+						self.worker.options_dispcal.append(
+							"-B%s" % getcfg("calibration.black_luminance"))
+						settings.append(lang.getstr("calibration.black_luminance"))
 					elif line[0] == "QUALITY":
 						setcfg("calibration.quality", value.lower()[0])
-						self.worker.options_dispcal += [
-							"-q" + getcfg("calibration.quality")]
-						settings += [lang.getstr("calibration.quality")]
+						self.worker.options_dispcal.append(
+							"-q" + getcfg("calibration.quality"))
+						settings.append(lang.getstr("calibration.quality"))
 			if not black_point_correction:
 				setcfg("calibration.black_point_correction.auto", 1)
 
@@ -10211,9 +10211,9 @@ class MainFrame(BaseFrame):
 				if self.related_files:
 					for related_file in self.related_files:
 						if self.related_files[related_file]:
-							delete_related_files += [
+							delete_related_files.append(
 								os.path.join(os.path.dirname(cal), 
-											 related_file)]
+											 related_file))
 				if sys.platform == "darwin":
 					trashcan = lang.getstr("trashcan.mac")
 				elif sys.platform == "win32":
@@ -10273,7 +10273,7 @@ class MainFrame(BaseFrame):
 				recent_cals = []
 				for recent_cal in self.recent_cals:
 					if recent_cal not in self.presets:
-						recent_cals += [recent_cal]
+						recent_cals.append(recent_cal)
 				setcfg("recent_cals", os.pathsep.join(recent_cals))
 				update_colorimeter_correction_matrix_ctrl_items = False
 				update_testcharts = False
@@ -10302,29 +10302,29 @@ class MainFrame(BaseFrame):
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
 		items = []
-		items += [get_header(self.aboutdialog, getbitmap("theme/header-about"),
-							 label=wrap(lang.getstr("header"), 32),
-							 size=(320, 120), x=8, repeat_sub_bitmap_h=None)]
-		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
-																	   author))]
-		items += [wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
-																   build))]
-		items += [wx.lib.hyperlink.HyperLinkCtrl(
+		items.append(get_header(self.aboutdialog, getbitmap("theme/header-about"),
+								label=wrap(lang.getstr("header"), 32),
+								size=(320, 120), x=8, repeat_sub_bitmap_h=None))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
+																	   author)))
+		items.append(wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
+																	 build)))
+		items.append(wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label=domain, 
-			URL="http://%s" % domain)]
-		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.StaticText(
-			self.aboutdialog, -1, u"Argyll CMS © Graeme Gill")]
-		items += [wx.StaticText(
+			URL="http://%s" % domain))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(
+			self.aboutdialog, -1, u"Argyll CMS © Graeme Gill"))
+		items.append(wx.StaticText(
 			self.aboutdialog, -1, u"%s" % 
-								  self.worker.argyll_version_string)]
-		items += [wx.lib.hyperlink.HyperLinkCtrl(
+								  self.worker.argyll_version_string))
+		items.append(wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label="ArgyllCMS.com", 
-			URL="http://www.argyllcms.com")]
-		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.StaticText(self.aboutdialog, -1, 
-								u"%s:" % lang.getstr("translations"))]
+			URL="http://www.argyllcms.com"))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog, -1, 
+								   u"%s:" % lang.getstr("translations")))
 		lauthors = {}
 		for lcode in lang.ldict:
 			lauthor = lang.ldict[lcode].get("!author", "")
@@ -10332,34 +10332,34 @@ class MainFrame(BaseFrame):
 			if lauthor and language:
 				if not lauthors.get(lauthor):
 					lauthors[lauthor] = []
-				lauthors[lauthor] += [language]
+				lauthors[lauthor].append(language)
 		lauthors = [(lauthors[lauthor], lauthor) for lauthor in lauthors]
 		lauthors.sort()
 		for langs, lauthor in lauthors:
-			items += [wx.StaticText(self.aboutdialog, -1, 
-									"%s - %s" % (", ".join(langs), lauthor))]
-		items += [wx.StaticText(self.aboutdialog, -1, "")]
+			items.append(wx.StaticText(self.aboutdialog, -1, 
+									   "%s - %s" % (", ".join(langs), lauthor)))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		match = re.match("([^(]+)\s*(\([^(]+\))?\s*(\[[^[]+\])?", sys.version)
 		if match:
 			pyver_long = match.groups()
 		else:
 			pyver_long = [sys.version]
-		items += [wx.StaticText(self.aboutdialog, -1, 
-								"Python " + pyver_long[0].strip())]
+		items.append(wx.StaticText(self.aboutdialog, -1, 
+								   "Python " + pyver_long[0].strip()))
 		if len(pyver_long) > 1:
 			for part in pyver_long[1:]:
 				if part:
-					items += [wx.StaticText(self.aboutdialog, -1, part)]
-		items += [wx.lib.hyperlink.HyperLinkCtrl(
+					items.append(wx.StaticText(self.aboutdialog, -1, part))
+		items.append(wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label="python.org", 
-			URL="http://www.python.org")]
-		items += [wx.StaticText(self.aboutdialog, -1, "")]
-		items += [wx.StaticText(self.aboutdialog, -1, "wxPython " + 
-													  wx.version())]
-		items += [wx.lib.hyperlink.HyperLinkCtrl(
+			URL="http://www.python.org"))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog, -1, "wxPython " + 
+														 wx.version()))
+		items.append(wx.lib.hyperlink.HyperLinkCtrl(
 			self.aboutdialog, -1, label="wxPython.org", 
-			URL="http://www.wxpython.org")]
-		items += [wx.StaticText(self.aboutdialog, -1, "")]
+			URL="http://www.wxpython.org"))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.Layout()
 		self.aboutdialog.Center()

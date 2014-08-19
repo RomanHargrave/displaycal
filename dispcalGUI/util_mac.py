@@ -13,7 +13,7 @@ def get_osascript_args(applescript):
 		applescript = applescript.splitlines()
 	args = []
 	for line in applescript:
-		args += ['-e', line]
+		args.extend(['-e', line])
 	return args
 
 
@@ -61,11 +61,11 @@ def mac_terminal_do_script(script=None, do=True):
 		'end if'
 	]
 	if script:
-		applescript += [
+		applescript.extend([
 			'tell app "Terminal"',
 				'do script "%s" in first window' % script.replace('"', '\\"'),
 			'end tell'
-		]
+		])
 	return get_osascript_args_or_run(applescript, script and do)
 
 

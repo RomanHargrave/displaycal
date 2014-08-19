@@ -1385,9 +1385,9 @@ class Worker(object):
 	def add_measurement_features(self, args, display=True):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
-			args += ["-d" + self.get_display()]
+			args.append("-d" + self.get_display())
 		if not get_arg("-c", args):
-			args += ["-c%s" % getcfg("comport.number")]
+			args.append("-c%s" % getcfg("comport.number"))
 		measurement_mode = getcfg("measurement_mode")
 		if measurement_mode == "auto":
 			if self.get_instrument_name() == "ColorHug":
@@ -1406,12 +1406,12 @@ class Worker(object):
 																   {})
 					measurement_mode = measurement_mode_map.get(measurement_mode[0],
 																measurement_mode)
-				args += ["-y" + measurement_mode[0]]
+				args.append("-y" + measurement_mode[0])
 		if getcfg("measurement_mode.projector") and \
 		   instrument_features.get("projector_mode") and \
 		   self.argyll_version >= [1, 1, 0] and not get_arg("-p", args):
 			# Projector mode, Argyll >= 1.1.0 Beta
-			args += ["-p"]
+			args.append("-p")
 		if instrument_features.get("adaptive_mode"):
 			if getcfg("measurement_mode.adaptive"):
 				if ((self.argyll_version[0:3] > [1, 1, 0] or
@@ -1422,11 +1422,11 @@ class Worker(object):
 					 self.argyll_version[0:3] < [1, 5, 0] and
 					 not get_arg("-V", args)):
 					# Adaptive measurement mode, Argyll >= 1.1.0 RC3
-					args += ["-V"]
+					args.append("-V")
 			else:
 				if self.argyll_version[0:3] >= [1, 5, 0]:
 					# Disable adaptive measurement mode
-					args += ["-YA"]
+					args.append("-YA")
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
@@ -1436,8 +1436,8 @@ class Worker(object):
 					dimensions_measureframe = "1,1,0.01"
 				else:
 					dimensions_measureframe = getcfg("dimensions.measureframe")
-				args += [("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
-						 dimensions_measureframe]
+				args.append(("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
+							dimensions_measureframe)
 			farg = get_arg("-F", args)
 			if config.get_display_name() == "Resolve":
 				if farg:
@@ -1445,10 +1445,10 @@ class Worker(object):
 					# Resolve
 					args = args[:farg[0]] + args[farg[0] + 1:]
 			elif getcfg("measure.darken_background") and not farg:
-				args += ["-F"]
+				args.append("-F")
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args):
-			args += ["-H"]
+			args.append("-H")
 		if (self.instrument_can_use_ccxx() and
 		    not is_ccxx_testchart() and not get_arg("-X", args)):
 			# Use colorimeter correction?
@@ -1495,12 +1495,12 @@ class Worker(object):
 						result = check_file_isfile(ccmxcopy)
 						if isinstance(result, Exception):
 							return result
-					args += ["-X"]
-					args += [os.path.basename(ccmxcopy)]
+					args.append("-X")
+					args.append(os.path.basename(ccmxcopy))
 		if (display and (getcfg("drift_compensation.blacklevel") or 
 						 getcfg("drift_compensation.whitelevel")) and
 			self.argyll_version >= [1, 3, 0] and not get_arg("-I", args)):
-			args += ["-I"]
+			args.append("-I")
 			if getcfg("drift_compensation.blacklevel"):
 				args[-1] += "b"
 			if getcfg("drift_compensation.whitelevel"):
@@ -1510,7 +1510,7 @@ class Worker(object):
 		if (getcfg("allow_skip_sensor_cal") and
 			instrument_features.get("skip_sensor_cal") and
 			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args)):
-			args += ["-N"]
+			args.append("-N")
 		return True
 	
 	def authenticate(self, cmd, title=appname, parent=None):
@@ -2085,27 +2085,27 @@ class Worker(object):
 			args = ["-v", "-qh", "-G", "-i%s" % intent, "-r65", "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
-				args += ["-p", "abstract.icc"]
+				args.extend(["-p", "abstract.icc"])
 			if self.argyll_version >= [1, 6]:
 				if format == "madVR":
-					args += ["-3m"]
+					args.append("-3m")
 				elif format == "eeColor" and not test:
-					args += ["-3e"]
-				args += ["-e%s" % input_encoding]
-				args += ["-E%s" % output_encoding]
+					args.append("-3e")
+				args.append("-e%s" % input_encoding)
+				args.append("-E%s" % output_encoding)
 				if trc_gamma and trc_gamma_type in ("b", "B"):
 					if collink_version >= [1, 7]:
-						args += ["-b"]  # Use RGB->RGB forced black point hack
-						args += ["-I%s:%s:%s" % (trc_gamma_type,
-												 trc_output_offset,
-												 trc_gamma)]
+						args.append("-b")  # Use RGB->RGB forced black point hack
+						args.append("-I%s:%s:%s" % (trc_gamma_type,
+													trc_output_offset,
+													trc_gamma))
 					elif not trc_output_offset:
-						args += ["-I%s:%s" % (trc_gamma_type, trc_gamma)]
+						args.append("-I%s:%s" % (trc_gamma_type, trc_gamma))
 				if apply_cal:
 					# Apply the calibration when building our device link
 					# i.e. use collink -a parameter (apply calibration curves
 					# to link output and append linear)
-					args += ["-a", profile_out_cal_path]
+					args.extend(["-a", profile_out_cal_path])
 			if getcfg("extra_args.collink").strip():
 				args += parse_argument_string(getcfg("extra_args.collink"))
 			result = self.exec_cmd(collink, args + [profile_in_basename,
@@ -2229,11 +2229,11 @@ class Worker(object):
 			lut.append(["# OUTPUT RANGE: %i" % output_bits])
 			lut.append([])
 			for i in xrange(0, size):
-				lut[-1] += ["%i" % int(round(i * step * (math.pow(2, input_bits) - 1)))]
+				lut[-1].append("%i" % int(round(i * step * (math.pow(2, input_bits) - 1))))
 			for RGB_triplet in RGB_out:
 				lut.append([])
 				for component in (0, 1, 2):
-					lut[-1] += [("%i" % int(round(RGB_triplet[component] * maxval))).rjust(pad, " ")]
+					lut[-1].append(("%i" % int(round(RGB_triplet[component] * maxval))).rjust(pad, " "))
 		elif format == "cube":
 			if maxval is None:
 				maxval = 1.0
@@ -2246,7 +2246,7 @@ class Worker(object):
 			for RGB_triplet in RGB_out:
 				lut.append([])
 				for component in (0, 1, 2):
-					lut[-1] += ["%.6f" % (RGB_triplet[component] * maxval)]
+					lut[-1].append("%.6f" % (RGB_triplet[component] * maxval))
 		elif format == "spi3d":
 			if maxval is None:
 				maxval = 1.0
@@ -2256,7 +2256,7 @@ class Worker(object):
 			for i, RGB_triplet in enumerate(RGB_out):
 				lut.append([str(index) for index in RGB_indexes[i]])
 				for component in (0, 1, 2):
-					lut[-1] += ["%.6f" % (RGB_triplet[component] * maxval)]
+					lut[-1].append("%.6f" % (RGB_triplet[component] * maxval))
 		elif format == "eeColor":
 			if maxval is None:
 				maxval = 1.0
@@ -2264,7 +2264,7 @@ class Worker(object):
 			for i, RGB_triplet in enumerate(RGB_out):
 				lut.append(["%.6f" % (float(component) * maxval) for component in RGB_in[i].split()])
 				for component in (0, 1, 2):
-					lut[-1] += ["%.6f" % (RGB_triplet[component] * maxval)]
+					lut[-1].append("%.6f" % (RGB_triplet[component] * maxval))
 			linesep = "\r\n"
 		elif format == "mga":
 			lut = [["#HEADER"],
@@ -2287,7 +2287,7 @@ class Worker(object):
 			for i, RGB_triplet in enumerate(RGB_out):
 				lut.append(["%i" % i])
 				for component in (0, 1, 2):
-					lut[-1] += [("%i" % int(round(RGB_triplet[component] * maxval)))]
+					lut[-1].append(("%i" % int(round(RGB_triplet[component] * maxval))))
 			valsep = "\t"
 		lut.append([])
 		for i, line in enumerate(lut):
@@ -2544,7 +2544,7 @@ class Worker(object):
 						if isinstance(result, Exception):
 							safe_print(result)
 						elif result is None:
-							lut_access += [None]
+							lut_access.append(None)
 							continue
 						# Check if LUT == test.cal
 						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-V", 
@@ -2555,7 +2555,7 @@ class Worker(object):
 						if isinstance(result, Exception):
 							safe_print(result)
 						elif result is None:
-							lut_access += [None]
+							lut_access.append(None)
 							continue
 						retcode = -1
 						for line in self.output:
@@ -2570,7 +2570,7 @@ class Worker(object):
 											   silent=True)
 						if isinstance(result, Exception):
 							safe_print(result)
-						lut_access += [retcode == 0]
+						lut_access.append(retcode == 0)
 						if verbose >= 1 and not silent:
 							if retcode == 0:
 								safe_print(lang.getstr("success"))
@@ -2582,7 +2582,7 @@ class Worker(object):
 								lang.getstr("success" if retcode == 0 else
 											"failure"))
 				else:
-					lut_access += [None] * len(displays)
+					lut_access.extend([None] * len(displays))
 				if self.argyll_version >= [1, 4, 0]:
 					# Web @ localhost
 					lut_access.append(False)
@@ -2972,10 +2972,10 @@ class Worker(object):
 												   discard="",
 												   linesep_in="\n", 
 												   triggers=[])))
-				logfiles += [stdout]
+				logfiles.append(stdout)
 				if (hasattr(self, "thread") and self.thread.isAlive() and 
 					cmdname in measure_cmds + process_cmds):
-					logfiles += [self.recent, self.lastmsg, self]
+					logfiles.extend([self.recent, self.lastmsg, self])
 				logfiles = Files(logfiles)
 				if use_patterngenerator:
 					self.patterngenerator = ResolveCMPatternGeneratorServer(
@@ -3131,8 +3131,8 @@ class Worker(object):
 							   line.find("User Aborted") < 0 and \
 							   line.find("XRandR 1.2 is faulty - falling back "
 										 "to older extensions") < 0:
-								self.errors += [line.decode(data_encoding,
-															"replace")]
+								self.errors.append(line.decode(data_encoding,
+															   "replace"))
 					if tries > 0 and not use_pty:
 						stderr = tempfile.SpooledTemporaryFile()
 				if capture_output or use_pty:
@@ -4609,17 +4609,18 @@ usage: spotread [-options] [logfile]
 				if re.match("sha\d+(?:new)?",
 							os.path.basename(os.path.dirname(pydir))):
 					cmd = which("0install-win.exe") or "0install-win.exe"
-					loader_args += ["run", "--batch", "--no-wait", "--offline",
-									"--command=run-apply-profiles",
-									"http://%s/0install/dispcalGUI.xml" %
-									domain.lower()]
+					loader_args.extend(["run", "--batch", "--no-wait",
+										"--offline",
+										"--command=run-apply-profiles",
+										"http://%s/0install/dispcalGUI.xml" %
+										domain.lower()])
 				else:
 					# Running from source
-					loader_args += [u'"%s"' % pyw]
+					loader_args.append(u'"%s"' % pyw)
 			else:
 				# Regular install
-				loader_args += [u'"%s"' % get_data_path(os.path.join("scripts", 
-																	 "dispcalGUI-apply-profiles"))]
+				loader_args.append(u'"%s"' % get_data_path(os.path.join("scripts", 
+																		"dispcalGUI-apply-profiles")))
 		else:
 			cmd = os.path.join(pydir, "dispcalGUI-apply-profiles.exe")
 		try:
@@ -5382,9 +5383,9 @@ usage: spotread [-options] [logfile]
 		#
 		cmd = get_argyll_util("colprof")
 		args = []
-		args += ["-v"] # verbose
-		args += ["-q" + getcfg("profile.quality")]
-		args += ["-a" + getcfg("profile.type")]
+		args.append("-v") # verbose
+		args.append("-q" + getcfg("profile.quality"))
+		args.append("-a" + getcfg("profile.type"))
 		if getcfg("profile.type") in ["l", "x", "X"]:
 			if getcfg("gamap_saturation"):
 				gamap = "S"
@@ -5393,15 +5394,15 @@ usage: spotread [-options] [logfile]
 			else:
 				gamap = None
 			if gamap and getcfg("gamap_profile"):
-				args += ["-" + gamap]
-				args += [getcfg("gamap_profile")]
-				args += ["-t" + getcfg("gamap_perceptual_intent")]
+				args.append("-" + gamap)
+				args.append(getcfg("gamap_profile"))
+				args.append("-t" + getcfg("gamap_perceptual_intent"))
 				if gamap == "S":
-					args += ["-T" + getcfg("gamap_saturation_intent")]
+					args.append("-T" + getcfg("gamap_saturation_intent"))
 				if getcfg("gamap_src_viewcond"):
-					args += ["-c" + getcfg("gamap_src_viewcond")]
+					args.append("-c" + getcfg("gamap_src_viewcond"))
 				if getcfg("gamap_out_viewcond"):
-					args += ["-d" + getcfg("gamap_out_viewcond")]
+					args.append("-d" + getcfg("gamap_out_viewcond"))
 			b2a_q = getcfg("profile.quality.b2a")
 			if (getcfg("profile.b2a.hires") and
 				getcfg("profile.type") in ("x", "X") and
@@ -5410,9 +5411,9 @@ usage: spotread [-options] [logfile]
 				# by A2B inversion code
 				b2a_q = "n"
 			if b2a_q and b2a_q != getcfg("profile.quality"):
-				args += ["-b" + b2a_q]
-		args += ["-C"]
-		args += [getcfg("copyright").encode("ASCII", "asciize")]
+				args.append("-b" + b2a_q)
+		args.append("-C")
+		args.append(getcfg("copyright").encode("ASCII", "asciize"))
 		if getcfg("extra_args.colprof").strip():
 			args += parse_argument_string(getcfg("extra_args.colprof"))
 		options_dispcal = None
@@ -5426,9 +5427,9 @@ usage: spotread [-options] [logfile]
 														  display_manufacturer, 
 														  write=False))
 		self.options_colprof = list(args)
-		args += ["-D"]
-		args += [profile_name]
-		args += [inoutfile]
+		args.append("-D")
+		args.append(profile_name)
+		args.append(inoutfile)
 		# Add dispcal and colprof arguments to ti3
 		ti3 = add_options_to_ti3(inoutfile + ".ti3", options_dispcal, 
 								 self.options_colprof)
@@ -5477,15 +5478,15 @@ usage: spotread [-options] [logfile]
 		"""
 		cmd = get_argyll_util("dispcal")
 		args = []
-		args += ["-v2"] # verbose
+		args.append("-v2") # verbose
 		if getcfg("argyll.debug"):
-			args += ["-D6"]
+			args.append("-D6")
 		result = self.add_measurement_features(args)
 		if isinstance(result, Exception):
 			return result, None
 		if calibrate:
 			if getcfg("trc"):
-				args += ["-q" + getcfg("calibration.quality")]
+				args.append("-q" + getcfg("calibration.quality"))
 			profile_save_path = self.create_tempdir()
 			if not profile_save_path or isinstance(profile_save_path, Exception):
 				return profile_save_path, None
@@ -5497,7 +5498,7 @@ usage: spotread [-options] [logfile]
 									 make_argyll_compatible_path(getcfg("profile.name.expanded")))
 			if getcfg("profile.update") or \
 			   self.dispcal_create_fast_matrix_shaper:
-				args += ["-o"]
+				args.append("-o")
 			if getcfg("calibration.update") and not dry_run:
 				cal = getcfg("calibration.file")
 				calcopy = os.path.join(inoutfile + ".cal")
@@ -5559,12 +5560,12 @@ usage: spotread [-options] [logfile]
 							return result, None
 						if not result:
 							return None, None
-				args += ["-u"]
+				args.append("-u")
 		if calibrate or verify:
 			if calibrate and not \
 			   getcfg("calibration.interactive_display_adjustment"):
 				# Skip interactive display adjustment
-				args += ["-m"]
+				args.append("-m")
 			whitepoint_colortemp = getcfg("whitepoint.colortemp", False)
 			whitepoint_x = getcfg("whitepoint.x", False)
 			whitepoint_y = getcfg("whitepoint.y", False)
@@ -5572,40 +5573,40 @@ usage: spotread [-options] [logfile]
 				whitepoint = getcfg("whitepoint.colortemp.locus")
 				if whitepoint_colortemp:
 					whitepoint += str(whitepoint_colortemp)
-				args += ["-" + whitepoint]
+				args.append("-" + whitepoint)
 			else:
-				args += ["-w%s,%s" % (whitepoint_x, whitepoint_y)]
+				args.append("-w%s,%s" % (whitepoint_x, whitepoint_y))
 			luminance = getcfg("calibration.luminance", False)
 			if luminance:
-				args += ["-b%s" % luminance]
+				args.append("-b%s" % luminance)
 			if getcfg("trc"):
-				args += ["-" + getcfg("trc.type") + str(getcfg("trc"))]
-				args += ["-f%s" % getcfg("calibration.black_output_offset")]
+				args.append("-" + getcfg("trc.type") + str(getcfg("trc")))
+				args.append("-f%s" % getcfg("calibration.black_output_offset"))
 				if bool(int(getcfg("calibration.ambient_viewcond_adjust"))):
-					args += ["-a%s" % 
-							 getcfg("calibration.ambient_viewcond_adjust.lux")]
+					args.append("-a%s" % 
+								getcfg("calibration.ambient_viewcond_adjust.lux"))
 				if not getcfg("calibration.black_point_correction.auto"):
-					args += ["-k%s" % getcfg("calibration.black_point_correction")]
+					args.append("-k%s" % getcfg("calibration.black_point_correction"))
 				if defaults["calibration.black_point_rate.enabled"] and \
 				   float(getcfg("calibration.black_point_correction")) < 1:
 					black_point_rate = getcfg("calibration.black_point_rate")
 					if black_point_rate:
-						args += ["-A%s" % black_point_rate]
+						args.append("-A%s" % black_point_rate)
 			black_luminance = getcfg("calibration.black_luminance", False)
 			if black_luminance:
-				args += ["-B%f" % black_luminance]
+				args.append("-B%f" % black_luminance)
 			if verify:
 				if calibrate and type(verify) == int:
-					args += ["-e%s" % verify]  # Verify final computed curves
+					args.append("-e%s" % verify)  # Verify final computed curves
 				elif self.argyll_version >= [1, 6]:
-					args += ["-z"]  # Verify current curves
+					args.append("-z")  # Verify current curves
 				else:
-					args += ["-E"]  # Verify current curves
+					args.append("-E")  # Verify current curves
 		if getcfg("extra_args.dispcal").strip():
 			args += parse_argument_string(getcfg("extra_args.dispcal"))
 		self.options_dispcal = list(args)
 		if calibrate:
-			args += [inoutfile]
+			args.append(inoutfile)
 		return cmd, args
 
 	def prepare_dispread(self, apply_calibration=True):
@@ -5795,15 +5796,15 @@ usage: spotread [-options] [logfile]
 				# Assume option to previous arg
 				arg = dispcal_extra_args[i - 1]
 			if arg[:2] in dispcal_override_args:
-				self.options_dispcal += [dispcal_extra_args[i]]
+				self.options_dispcal.append(dispcal_extra_args[i])
 		result = self.add_measurement_features(self.options_dispcal)
 		if isinstance(result, Exception):
 			return result, None
 		cmd = get_argyll_util("dispread")
 		args = []
-		args += ["-v"] # verbose
+		args.append("-v") # verbose
 		if getcfg("argyll.debug"):
-			args += ["-D6"]
+			args.append("-D6")
 		result = self.add_measurement_features(args)
 		if isinstance(result, Exception):
 			return result, None
@@ -5818,12 +5819,12 @@ usage: spotread [-options] [logfile]
 					if (isinstance(result, Exception) and
 						not isinstance(result, UnloggedInfo)):
 						return result, None
-				args += ["-K"]
+				args.append("-K")
 			else:
-				args += ["-k"]
-			args += [cal]
+				args.append("-k")
+			args.append(cal)
 		if self.get_instrument_features().get("spectral"):
-			args += ["-s"]
+			args.append("-s")
 		if getcfg("extra_args.dispread").strip():
 			args += parse_argument_string(getcfg("extra_args.dispread"))
 		self.options_dispread = list(args)
@@ -5848,28 +5849,28 @@ usage: spotread [-options] [logfile]
 		"""
 		cmd = get_argyll_util("dispwin")
 		args = []
-		args += ["-v"]
+		args.append("-v")
 		if getcfg("argyll.debug"):
 			if self.argyll_version >= [1, 3, 1]:
-				args += ["-D6"]
+				args.append("-D6")
 			else:
-				args += ["-E6"]
-		args += ["-d" + self.get_display()]
+				args.append("-E6")
+		args.append("-d" + self.get_display())
 		if sys.platform != "darwin" or cal is False:
 			# Mac OS X 10.7 Lion needs root privileges when clearing 
 			# calibration
-			args += ["-c"]
+			args.append("-c")
 		if cal is True:
-			args += [self.get_dispwin_display_profile_argument(
-						max(0, min(len(self.displays), 
-								   getcfg("display.number")) - 1))]
+			args.append(self.get_dispwin_display_profile_argument(
+							max(0, min(len(self.displays), 
+									   getcfg("display.number")) - 1)))
 		elif cal:
 			result = check_cal_isfile(cal)
 			if isinstance(result, Exception):
 				return result, None
 			if not result:
 				return None, None
-			args += [cal]
+			args.append(cal)
 		else:
 			if cal is None:
 				if not profile_path:
@@ -5905,7 +5906,7 @@ usage: spotread [-options] [logfile]
 						  self.argyll_version > [1, 1, 1])):
 							# -S option is broken on Linux with current Argyll 
 							# releases
-							args += ["-S" + getcfg("profile.install_scope")]
+							args.append("-S" + getcfg("profile.install_scope"))
 					else:
 						# Make sure user profile dir exists
 						# (e.g. on Mac OS X 10.9 Mavericks, it does not by
@@ -5918,7 +5919,7 @@ usage: spotread [-options] [logfile]
 								os.makedirs(profile_dir)
 							except OSError, exception:
 								return exception, None
-					args += ["-I"]
+					args.append("-I")
 					if (sys.platform in ("win32", "darwin") or 
 						fs_enc.upper() not in ("UTF8", "UTF-8")) and \
 					   re.search("[^\x20-\x7e]", 
@@ -5940,7 +5941,7 @@ usage: spotread [-options] [logfile]
 														profile_ext)
 						shutil.copyfile(profile_path, profile_tmp_path)
 						profile_path = profile_tmp_path
-				args += [profile_path]
+				args.append(profile_path)
 		return cmd, args
 
 	def prepare_targen(self):
@@ -5960,52 +5961,52 @@ usage: spotread [-options] [logfile]
 		inoutfile = os.path.join(path, "temp")
 		cmd = get_argyll_util("targen")
 		args = []
-		args += ['-v']
-		args += ['-d3']
-		args += ['-e%s' % getcfg("tc_white_patches")]
+		args.append('-v')
+		args.append('-d3')
+		args.append('-e%s' % getcfg("tc_white_patches"))
 		if self.argyll_version >= [1, 6]:
-			args += ['-B%s' % getcfg("tc_black_patches")]
-		args += ['-s%s' % getcfg("tc_single_channel_patches")]
-		args += ['-g%s' % getcfg("tc_gray_patches")]
-		args += ['-m%s' % getcfg("tc_multi_steps")]
+			args.append('-B%s' % getcfg("tc_black_patches"))
+		args.append('-s%s' % getcfg("tc_single_channel_patches"))
+		args.append('-g%s' % getcfg("tc_gray_patches"))
+		args.append('-m%s' % getcfg("tc_multi_steps"))
 		if self.argyll_version >= [1, 6, 0]:
-			args += ['-b%s' % getcfg("tc_multi_bcc_steps")]
+			args.append('-b%s' % getcfg("tc_multi_bcc_steps"))
 		tc_algo = getcfg("tc_algo")
 		if getcfg("tc_fullspread_patches") > 0:
-			args += ['-f%s' % config.get_total_patches()]
+			args.append('-f%s' % config.get_total_patches())
 			if tc_algo:
-				args += ['-' + tc_algo]
+				args.append('-' + tc_algo)
 			if tc_algo in ("i", "I"):
-				args += ['-a%s' % getcfg("tc_angle")]
+				args.append('-a%s' % getcfg("tc_angle"))
 			if tc_algo == "":
-				args += ['-A%s' % getcfg("tc_adaption")]
+				args.append('-A%s' % getcfg("tc_adaption"))
 			if self.argyll_version >= [1, 3, 3]:
-				args += ['-N%s' % getcfg("tc_neutral_axis_emphasis")]
+				args.append('-N%s' % getcfg("tc_neutral_axis_emphasis"))
 			if (self.argyll_version == [1, 1, "RC1"] or
 				self.argyll_version >= [1, 1]):
-				args += ['-G']
+				args.append('-G')
 		else:
-			args += ['-f0']
+			args.append('-f0')
 		if getcfg("tc_precond") and getcfg("tc_precond_profile"):
-			args += ['-c']
-			args += [getcfg("tc_precond_profile")]
+			args.append('-c')
+			args.append(getcfg("tc_precond_profile"))
 		if getcfg("tc_filter"):
-			args += ['-F%s,%s,%s,%s' % (getcfg("tc_filter_L"), 
-										getcfg("tc_filter_a"), 
-										getcfg("tc_filter_b"), 
-										getcfg("tc_filter_rad"))]
+			args.append('-F%s,%s,%s,%s' % (getcfg("tc_filter_L"), 
+										   getcfg("tc_filter_a"), 
+										   getcfg("tc_filter_b"), 
+										   getcfg("tc_filter_rad")))
 		if (self.argyll_version >= [1, 6, 2] and
 			("-c" in args or self.argyll_version >= [1, 6, 3])):
-			args += ['-V%s' % (1 + getcfg("tc_dark_emphasis") * 3)]
+			args.append('-V%s' % (1 + getcfg("tc_dark_emphasis") * 3))
 		if self.argyll_version == [1, 1, "RC2"] or self.argyll_version >= [1, 1]:
-			args += ['-p%s' % getcfg("tc_gamma")]
+			args.append('-p%s' % getcfg("tc_gamma"))
 		if getcfg("extra_args.targen").strip():
 			# Disallow -d and -D as the testchart editor only supports
 			# video RGB (-d3)
 			args += filter(lambda arg: not arg.lower().startswith("-d"),
 						   parse_argument_string(getcfg("extra_args.targen")))
 		self.options_targen = list(args)
-		args += [inoutfile]
+		args.append(inoutfile)
 		return cmd, args
 
 	def progress_handler(self, event):
@@ -6274,9 +6275,9 @@ usage: spotread [-options] [logfile]
 			return cmd
 		if args:
 			if report_calibrated:
-				args += ["-r"]
+				args.append("-r")
 			else:
-				args += ["-R"]
+				args.append("-R")
 		return self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True)
 	
 	def reset_cal(self):
@@ -6335,13 +6336,13 @@ usage: spotread [-options] [logfile]
 		searchpaths = []
 		if self.argyll_version >= [1, 5, 0]:
 			if sys.platform != "darwin":
-				searchpaths += [os.path.join(dir_, "ArgyllCMS", name)
-								for dir_ in paths]
+				searchpaths.extend(os.path.join(dir_, "ArgyllCMS", name)
+								   for dir_ in paths)
 			else:
-				searchpaths += [os.path.join(dir_, "ArgyllCMS", name)
-								for dir_ in [defaultpaths.appdata,
-											 defaultpaths.library]]
-		searchpaths += [os.path.join(dir_, "color", name) for dir_ in paths]
+				searchpaths.extend(os.path.join(dir_, "ArgyllCMS", name)
+								   for dir_ in [defaultpaths.appdata,
+												defaultpaths.library])
+		searchpaths.extend(os.path.join(dir_, "color", name) for dir_ in paths)
 		for searchpath in searchpaths:
 			if os.path.isfile(searchpath):
 				return True
@@ -7427,7 +7428,7 @@ usage: spotread [-options] [logfile]
 			cmd = get_argyll_util("dispread")
 			args = ["-v"]
 			if config.get_display_name() == "madVR" and colormanaged:
-				args += ["-V"]
+				args.append("-V")
 			if cal_path:
 				if (self.argyll_version >= [1, 3, 3] and
 					(not self.has_lut_access() or
@@ -7439,10 +7440,10 @@ usage: spotread [-options] [logfile]
 						if (isinstance(result, Exception) and
 							not isinstance(result, UnloggedInfo)):
 							return result, None
-					args += ["-K"]
+					args.append("-K")
 				else:
-					args += ["-k"]
-				args += [cal_path]
+					args.append("-k")
+				args.append(cal_path)
 			if getcfg("extra_args.dispread").strip():
 				args += parse_argument_string(getcfg("extra_args.dispread"))
 		result = self.add_measurement_features(args,
@@ -7450,7 +7451,7 @@ usage: spotread [-options] [logfile]
 		if isinstance(result, Exception):
 			return result
 		if config.get_display_name() != "Untethered":
-			args += [os.path.splitext(ti1_path)[0]]
+			args.append(os.path.splitext(ti1_path)[0])
 		return self.exec_cmd(cmd, args, skip_scripts=True)
 
 	def wrapup(self, copy=True, remove=True, dst_path=None, ext_filter=None):

@@ -102,18 +102,18 @@ config = {"data": ["tests/*.icc"],
 
 def add_lib_excludes(key, excludebits):
 	for exclude in excludebits:
-		config["excludes"][key] += [name + ".lib" + exclude,
-									"lib" + exclude]
+		config["excludes"][key].extend([name + ".lib" + exclude,
+										"lib" + exclude])
 	for exclude in ("32", "64"):
 		for pycompat in ("25", "26", "27"):
 			if (key == "win32" and
 				(pycompat == sys.version[0] + sys.version[2] or
 				 exclude == excludebits[0])):
 				continue
-			config["excludes"][key] += [name + ".lib%s.python%s" %
-										(exclude, pycompat),
-										name + ".lib%s.python%s.RealDisplaySizeMM" %
-										(exclude, pycompat)]
+			config["excludes"][key].extend([name + ".lib%s.python%s" %
+											(exclude, pycompat),
+											name + ".lib%s.python%s.RealDisplaySizeMM" %
+											(exclude, pycompat)])
 
 
 add_lib_excludes("darwin", ["64" if bits == "32" else "32"])
@@ -256,8 +256,8 @@ def get_data(tgt_dir, key, pkgname=None, subkey=None, excludes=None):
 	data = []
 	for pth in files:
 		if not filter(lambda exclude: fnmatch(pth, exclude), excludes or []):
-			data += [(os.path.normpath(os.path.join(tgt_dir, os.path.dirname(pth))),
-					  glob.glob(os.path.join(src_dir, pth)))]
+			data.append((os.path.normpath(os.path.join(tgt_dir, os.path.dirname(pth))),
+						 glob.glob(os.path.join(src_dir, pth))))
 	return data
 
 
@@ -279,8 +279,8 @@ def get_scripts(excludes=None):
 		cfg.read(desktopfile)
 		script = cfg.get("Desktop Entry", "Exec")
 		if not filter(lambda exclude: fnmatch(script, exclude), excludes or []):
-			scripts += [(script,
-						 cfg.get("Desktop Entry", "Name").decode("UTF-8"))]
+			scripts.append((script,
+							cfg.get("Desktop Entry", "Name").decode("UTF-8")))
 	return scripts
 
 
@@ -452,13 +452,13 @@ def setup():
 			  do_py2exe else []
 	}
 	if sdist and sys.platform in ("darwin", "win32"):
-		package_data[name] += ["theme/icons/22x22/*.png",
-							   "theme/icons/24x24/*.png",
-							   "theme/icons/48x48/*.png",
-							   "theme/icons/128x128/*.png",
-							   "theme/icons/256x256/*.png"]
+		package_data[name].extend(["theme/icons/22x22/*.png",
+								   "theme/icons/24x24/*.png",
+								   "theme/icons/48x48/*.png",
+								   "theme/icons/128x128/*.png",
+								   "theme/icons/256x256/*.png"])
 	if sys.platform == "win32" and not do_py2exe:
-		package_data[name] += ["theme/icons/*.ico"]
+		package_data[name].append("theme/icons/*.ico")
 	# Scripts
 	scripts = get_scripts()
 	# Doc files
@@ -481,24 +481,24 @@ def setup():
 		data_files += get_data(data, "data")
 		data_files += get_data(data, "xtra_package_data", name, sys.platform)
 		if sys.platform == "win32":
-			data_files += [(os.path.join(data, "lib"), [sys.executable])]
+			data_files.extend([(os.path.join(data, "lib"), [sys.executable])])
 		elif sys.platform != "darwin":
 			# Linux
 			data_files.append((os.path.join(os.path.dirname(data), "appdata"),
 							   [os.path.join(pydir, "..", "dist", 
 											 name + ".appdata.xml")]))
-			data_files += [(os.path.join(os.path.dirname(data), 
-										 "applications"), 
-							[os.path.join(pydir, "..", "misc", name + 
-												".desktop")] +
-							glob.glob(os.path.join(pydir, "..", "misc",
-												   name + "-*.desktop")))]
-			data_files += [(autostart if os.geteuid() == 0 or prefix.startswith("/")
-							else autostart_home, 
-							[os.path.join(pydir, "..", "misc", 
-										  "z-%s-apply-profiles.desktop" % name)])]
-			data_files += [(os.path.join(os.path.dirname(data), "man", "man1"), 
-							glob.glob(os.path.join(pydir, "..", "man", "*.1")))]
+			data_files.append((os.path.join(os.path.dirname(data), 
+											"applications"), 
+							   [os.path.join(pydir, "..", "misc", name + 
+											 ".desktop")] +
+							   glob.glob(os.path.join(pydir, "..", "misc",
+													  name + "-*.desktop"))))
+			data_files.append((autostart if os.geteuid() == 0 or prefix.startswith("/")
+							   else autostart_home, 
+							   [os.path.join(pydir, "..", "misc", 
+											 "z-%s-apply-profiles.desktop" % name)]))
+			data_files.append((os.path.join(os.path.dirname(data), "man", "man1"), 
+							   glob.glob(os.path.join(pydir, "..", "man", "*.1"))))
 			if not skip_instrument_conf_files:
 				# device configuration / permission stuff
 				if is_rpm_build:
@@ -506,44 +506,41 @@ def setup():
 					# locations. This allows us compatibility with Argyll
 					# packages which may also contain same udev rules / hotplug
 					# scripts, thus avoiding file conflicts
-					data_files += [(os.path.join(data, "usb"), [os.path.join(
-									pydir, "..", "misc", "45-Argyll.rules")])]
-					data_files += [(os.path.join(data, "usb"), [os.path.join(
-									pydir, "..", "misc", "55-Argyll.rules")])]
-					data_files += [(os.path.join(data, "usb"), [os.path.join(
-									pydir, "..", "misc", "Argyll")])]
-					data_files += [(os.path.join(data, "usb"), [os.path.join(
-									pydir, "..", "misc", "Argyll.usermap")])]
+					data_files.append((os.path.join(data, "usb"), [os.path.join(
+									   pydir, "..", "misc", "45-Argyll.rules")]))
+					data_files.append((os.path.join(data, "usb"), [os.path.join(
+									   pydir, "..", "misc", "55-Argyll.rules")]))
+					data_files.append((os.path.join(data, "usb"), [os.path.join(
+									   pydir, "..", "misc", "Argyll")]))
+					data_files.append((os.path.join(data, "usb"), [os.path.join(
+									   pydir, "..", "misc", "Argyll.usermap")]))
 				else:
 					devconf_files = []
 					if os.path.isdir("/etc/udev/rules.d"):
 						if glob.glob("/dev/bus/usb/*/*"):
 							# USB and serial instruments using udev, where udev 
 							# already creates /dev/bus/usb/00X/00X devices
-							devconf_files += [
+							devconf_files.append(
 								("/etc/udev/rules.d", [os.path.join(
-									pydir, "..", "misc", "55-Argyll.rules")])
-							]
+									pydir, "..", "misc", "55-Argyll.rules")]))
 						else:
 							# USB using udev, where there are NOT /dev/bus/usb/00X/00X 
 							# devices
-							devconf_files += [
+							devconf_files.append(
 								("/etc/udev/rules.d", [os.path.join(
-									pydir, "..", "misc", "45-Argyll.rules")])
-							]
+									pydir, "..", "misc", "45-Argyll.rules")]))
 					else:
 						if os.path.isdir("/etc/hotplug"):
 							# USB using hotplug and Serial using udev
 							# (older versions of Linux)
-							devconf_files += [
+							devconf_files.append(
 								("/etc/hotplug/usb", [os.path.join(pydir, "..", "misc", 
 																   fname) for fname in 
-													  ["Argyll", "Argyll.usermap"]])
-							]
+													  ["Argyll", "Argyll.usermap"]]))
 					for entry in devconf_files:
 						for fname in entry[1]:
 							if os.path.isfile(fname):
-								data_files += [(entry[0], [fname])]
+								data_files.extend([(entry[0], [fname])])
 		for dname in ("10x10", "16x16", "22x22", "24x24", "32x32", "48x48",
 					  "72x72", "128x128", "256x256"):
 			# Only the 10x10, 16x16, 32x32 and 72x72 icons are used exclusively
@@ -560,12 +557,12 @@ def setup():
 				elif sys.platform not in ("darwin", "win32"):
 					desktopicons.append(iconpath)
 			if icons:
-				data_files += [(os.path.join(data, "theme", "icons", dname), 
-							   icons)]
+				data_files.append((os.path.join(data, "theme", "icons", dname), 
+								   icons))
 			if desktopicons:
-				data_files += [(os.path.join(os.path.dirname(data), "icons", 
+				data_files.append((os.path.join(os.path.dirname(data), "icons", 
 											 "hicolor", dname, "apps"), 
-							   desktopicons)]
+								   desktopicons))
 
 	sources = [os.path.join(name, "RealDisplaySizeMM.c")]
 	if sys.platform == "win32":
@@ -595,7 +592,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				if o == '' and p.poll() != None:
 					break
 				if o[0:4] == 'gcc ':
-					lines += [o]
+					lines.append(o)
 				print o.rstrip()
 			if len(lines):
 				os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.3'
@@ -620,28 +617,25 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 	if not setuptools or sys.platform != "win32":
 		# wxPython windows installer doesn't add egg-info entry, so
 		# a dependency check from pkg_resources would always fail
-		requires += [
-			"wxPython (>= %s)" % ".".join(str(n) for n in wx_minversion)
-		]
+		requires.append(
+			"wxPython (>= %s)" % ".".join(str(n) for n in wx_minversion))
 	if sys.platform == "win32":
-		requires += [
-			"pywin32 (>= 213.0)"
-		]
+		requires.append("pywin32 (>= 213.0)")
 
 	packages = [name, "%s.lib" % name, "%s.lib.agw" % name]
 	if sdist:
 		# For source desributions we want all libraries
 		for tmpbits in ("32", "64"):
 			for pycompat in ("25", "26", "27"):
-				packages += ["%s.lib%s" % (name, tmpbits),
-							 "%s.lib%s.python%s" % (name, tmpbits, pycompat)]
+				packages.extend(["%s.lib%s" % (name, tmpbits),
+								 "%s.lib%s.python%s" % (name, tmpbits, pycompat)])
 	elif sys.platform == "darwin":
 		# On Mac OS X we only want the universal binaries
-		packages += ["%s.lib%s" % (name, bits)]
+		packages.append("%s.lib%s" % (name, bits))
 	else:
 		# On Linux/Windows we want separate libraries
-		packages += ["%s.lib%s" % (name, bits),
-					 "%s.lib%s.python%s%s" % ((name, bits) + sys.version_info[:2])]
+		packages.extend(["%s.lib%s" % (name, bits),
+						 "%s.lib%s.python%s%s" % ((name, bits) + sys.version_info[:2])])
 		
 
 	attrs = {
@@ -706,18 +700,18 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		attrs["install_requires"] = install_requires
 		attrs["zip_safe"] = False
 	else:
-		attrs["scripts"] += [os.path.join("scripts", script)
-							 for script, desc in
-							 filter(lambda (script, desc):
-									script != name + "-apply-profiles" or
-									sys.platform != "darwin",
-									scripts)]
+		attrs["scripts"].extend(os.path.join("scripts", script)
+								for script, desc in
+								filter(lambda (script, desc):
+									   script != name + "-apply-profiles" or
+									   sys.platform != "darwin",
+									   scripts))
 	
 	if bdist_bbfreeze:
 		attrs["setup_requires"] = ["bbfreeze"]
 
 	if "bdist_wininst" in sys.argv[1:]:
-		attrs["scripts"] += [os.path.join("util", name + "_postinstall.py")]
+		attrs["scripts"].append(os.path.join("util", name + "_postinstall.py"))
 		
 	if do_py2app:
 		mainpy = os.path.join(basedir, "main.py")
@@ -993,7 +987,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				if path in visited:
 					continue
 				else:
-					visited += [path]
+					visited.append(path)
 				if dry_run:
 					print path
 					continue
@@ -1007,7 +1001,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					print "   ", exception
 				else:
 					print "removed", path
-					removed += [path]
+					removed.append(path)
 			while path != os.path.dirname(path):
 				# remove parent directories if empty
 				# could also use os.removedirs(path) but we want some status 
@@ -1018,7 +1012,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 						if path in visited:
 							continue
 						else:
-							visited += [path]
+							visited.append(path)
 						if dry_run:
 							print path
 							continue
@@ -1029,7 +1023,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 							print "   ", exception
 						else:
 							print "removed", path
-							removed += [path]
+							removed.append(path)
 					else:
 						break
 
@@ -1045,59 +1039,59 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		# using the information available from setup.
 		manifest_in = ["# This file will be re-generated by setup.py - do not"
 					   "edit"]
-		manifest_in += ["include LICENSE.txt", "include MANIFEST", 
-						"include MANIFEST.in", "include README.html", 
-						"include *.pyw", "include use-distutils"]
-		manifest_in += ["include " + os.path.basename(sys.argv[0])]
-		manifest_in += ["include " + 
-						os.path.splitext(os.path.basename(sys.argv[0]))[0] + 
-						".cfg"]
+		manifest_in.extend(["include LICENSE.txt", "include MANIFEST", 
+							"include MANIFEST.in", "include README.html", 
+							"include *.pyw", "include use-distutils"])
+		manifest_in.append("include " + os.path.basename(sys.argv[0]))
+		manifest_in.append("include " + 
+						   os.path.splitext(os.path.basename(sys.argv[0]))[0] + 
+						   ".cfg")
 		for datadir, datafiles in attrs.get("data_files", []):
 			for datafile in datafiles:
-				manifest_in += ["include " + (
-								relpath(os.path.sep.join(datafile.split("/")), 
-										basedir) or datafile)]
+				manifest_in.append("include " + (
+								   relpath(os.path.sep.join(datafile.split("/")), 
+										   basedir) or datafile))
 		for extmod in attrs.get("ext_modules", []):
-			manifest_in += ["include " + os.path.sep.join(src.split("/")) 
-							for src in extmod.sources]
+			manifest_in.extend("include " + os.path.sep.join(src.split("/")) 
+							   for src in extmod.sources)
 		for pkg in attrs.get("packages", []):
 			pkg = os.path.join(*pkg.split("."))
 			pkgdir = os.path.sep.join(attrs.get("package_dir", 
 												{}).get(pkg, pkg).split("/"))
-			manifest_in += ["include " + os.path.join(pkgdir, "*.py")]
-			manifest_in += ["include " + os.path.join(pkgdir, "*.pyd")]
-			manifest_in += ["include " + os.path.join(pkgdir, "*.so")]
+			manifest_in.append("include " + os.path.join(pkgdir, "*.py"))
+			manifest_in.append("include " + os.path.join(pkgdir, "*.pyd"))
+			manifest_in.append("include " + os.path.join(pkgdir, "*.so"))
 			for obj in attrs.get("package_data", {}).get(pkg, []):
-				manifest_in += ["include " + os.path.sep.join([pkgdir] + 
-															  obj.split("/"))]
+				manifest_in.append("include " + os.path.sep.join([pkgdir] + 
+																 obj.split("/")))
 		for pymod in attrs.get("py_modules", []):
-			manifest_in += ["include " + os.path.join(*pymod.split("."))]
-		manifest_in += ["include " + 
-						os.path.join(name, "theme", "theme-info.txt")]
-		manifest_in += ["recursive-include %s %s %s" % 
-						(os.path.join(name, "theme", "icons"), 
-						"*.icns", "*.ico")]
-		manifest_in += ["recursive-include %s %s" % ("autopackage", "*")]
-		manifest_in += ["include " + os.path.join("man", "*.1")]
-		manifest_in += ["recursive-include %s %s" % ("misc", "*")]
+			manifest_in.append("include " + os.path.join(*pymod.split(".")))
+		manifest_in.append("include " + 
+						   os.path.join(name, "theme", "theme-info.txt"))
+		manifest_in.append("recursive-include %s %s %s" % 
+						   (os.path.join(name, "theme", "icons"), 
+						   "*.icns", "*.ico"))
+		manifest_in.append("recursive-include %s %s" % ("autopackage", "*"))
+		manifest_in.append("include " + os.path.join("man", "*.1"))
+		manifest_in.append("recursive-include %s %s" % ("misc", "*"))
 		if skip_instrument_conf_files:
-			manifest_in += [
+			manifest_in.extend([
 				"exclude misc/Argyll",
 				"exclude misc/*.rules",
 				"exclude misc/*.usermap",
-			]
-		manifest_in += ["include " + os.path.join("screenshots", "*.png")]
-		manifest_in += ["include " + os.path.join("scripts", "*")]
-		manifest_in += ["include " + os.path.join("tests", "*")]
-		manifest_in += ["recursive-include %s %s" % ("theme", "*")]
-		manifest_in += ["recursive-include %s %s" % ("util", 
-													 "*.cmd *.py *.sh")]
+			])
+		manifest_in.append("include " + os.path.join("screenshots", "*.png"))
+		manifest_in.append("include " + os.path.join("scripts", "*"))
+		manifest_in.append("include " + os.path.join("tests", "*"))
+		manifest_in.append("recursive-include %s %s" % ("theme", "*"))
+		manifest_in.append("recursive-include %s %s" % ("util", 
+														"*.cmd *.py *.sh"))
 		if sys.platform == "win32" and not setuptools:
 			# Only needed under Windows
-			manifest_in += ["global-exclude .svn/*"]
-		manifest_in += ["global-exclude *~"]
-		manifest_in += ["global-exclude *.backup"]
-		manifest_in += ["global-exclude *.bak"]
+			manifest_in.append("global-exclude .svn/*")
+		manifest_in.append("global-exclude *~")
+		manifest_in.append("global-exclude *.backup")
+		manifest_in.append("global-exclude *.bak")
 		if not dry_run:
 			manifest = open("MANIFEST.in", "w")
 			manifest.write("\n".join(manifest_in))

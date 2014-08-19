@@ -395,22 +395,22 @@ class CGATS(dict):
 		result = []
 		data = None
 		if self.type == 'SAMPLE':
-			result += [' '.join([str(self[item]) for item in 
-						self.parent.parent['DATA_FORMAT'].values()])]
+			result.append(' '.join(str(self[item]) for item in 
+								   self.parent.parent['DATA_FORMAT'].values()))
 		elif self.type == 'DATA':
 			data = self
 		elif self.type == 'DATA_FORMAT':
-			result += [' '.join(self.values())]
+			result.append(' '.join(self.values()))
 		else:
 			if self.datetime:
-				result += [self.datetime]
+				result.append(self.datetime)
 			if self.type == 'SECTION':
-				result += ['BEGIN_' + self.key]
+				result.append('BEGIN_' + self.key)
 			elif self.parent and self.parent.type == 'ROOT':
-				result += [self.type.ljust(7)]	# Make sure CGATS file 
+				result.append(self.type.ljust(7))	# Make sure CGATS file 
 												# identifiers are always 
 												# a minimum of 7 characters
-				result += ['']
+				result.append('')
 			for key in self:
 				value = self[key]
 				if key == 'DATA':
@@ -418,44 +418,44 @@ class CGATS(dict):
 				elif type(value) in (float, int, str, unicode):
 					if key not in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
 						if type(key) == int:
-							result += [str(value)]
+							result.append(str(value))
 						else:
 							if 'KEYWORDS' in self and \
 								key in self['KEYWORDS'].values():
-								result += ['KEYWORD "%s"' % key]
-								result += ['%s "%s"' % (key, value)]
+								result.append('KEYWORD "%s"' % key)
+								result.append('%s "%s"' % (key, value))
 							elif type(value) in (int, float):
-								result += ['%s %s' % (key, value)]
+								result.append('%s %s' % (key, value))
 							else:
-								result += ['%s "%s"' % (key, value)]
+								result.append('%s "%s"' % (key, value))
 				elif key not in ('DATA_FORMAT', 'KEYWORDS'):
 					if (value.type == 'SECTION' and result[-1:] and 
 						result[-1:][0][-1] != '\n'):
-						result += ['']
-					result += [str(value)]
+						result.append('')
+					result.append(str(value))
 			if self.type == 'SECTION':
-				result += ['END_' + self.key]
+				result.append('END_' + self.key)
 			if self.type == 'SECTION' or data:
-				result += ['']
+				result.append('')
 		if data and data.parent['DATA_FORMAT']:
 			if 'KEYWORDS' in data.parent:
 				for item in data.parent['DATA_FORMAT'].values():
 					if item in data.parent['KEYWORDS'].values():
-						result += ['KEYWORD "%s"' % item]
-			result += ['NUMBER_OF_FIELDS %s' % len(data.parent['DATA_FORMAT'])]
-			result += ['BEGIN_DATA_FORMAT']
-			result += [' '.join(data.parent['DATA_FORMAT'].values())]
-			result += ['END_DATA_FORMAT']
-			result += ['']
-			result += ['NUMBER_OF_SETS %s' % (len(data))]
-			result += ['BEGIN_DATA']
+						result.append('KEYWORD "%s"' % item)
+			result.append('NUMBER_OF_FIELDS %s' % len(data.parent['DATA_FORMAT']))
+			result.append('BEGIN_DATA_FORMAT')
+			result.append(' '.join(data.parent['DATA_FORMAT'].values()))
+			result.append('END_DATA_FORMAT')
+			result.append('')
+			result.append('NUMBER_OF_SETS %s' % (len(data)))
+			result.append('BEGIN_DATA')
 			for key in data:
-				result += [' '.join([rpad(data[key][item], 
-										  data.vmaxlen + 
-										  (1 if data[key][item] < 0 else 0)) 
-									 for item in 
-									 data.parent['DATA_FORMAT'].values()])]
-			result += ['END_DATA']
+				result.append(' '.join([rpad(data[key][item], 
+											 data.vmaxlen + 
+											 (1 if data[key][item] < 0 else 0)) 
+										for item in 
+										data.parent['DATA_FORMAT'].values()]))
+			result.append('END_DATA')
 		return '\n'.join(result)
 
 	def add_keyword(self, keyword, value=None):
