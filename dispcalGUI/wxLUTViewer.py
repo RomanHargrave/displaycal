@@ -173,7 +173,7 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
 		self.SetPointLabelFunc(self.DrawPointLabel)
-		self.worker = Worker(self.Parent)
+		self.worker = Worker(self.TopLevelParent)
 		self.errors = []
 		self.resetzoom()
 
