@@ -580,6 +580,7 @@ class TestchartEditor(wx.Frame):
 			preview.SetCellHighlightROPenWidth(0)
 			preview.SetColLabelSize(self.grid.GetDefaultRowSize())
 			preview.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+			preview.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
 			preview.SetLabelTextColour("#CCCCCC")
 			preview.SetScrollRate(0, 5)
 			preview._default_col_label_renderer.bgcolor = "#333333"
