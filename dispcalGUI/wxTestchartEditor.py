@@ -570,6 +570,7 @@ class TestchartEditor(wx.Frame):
 			gradientpanel = get_gradient_panel(p2, lang.getstr("preview"))
 			p2.sizer.Add(gradientpanel, flag=wx.EXPAND)
 			p2.sizer.Add(hsizer, 1, flag=wx.EXPAND)
+			p2.BackgroundColour = "#333333"
 			preview = CustomGrid(p2, -1, size=(-1, 100))
 			preview.DisableDragColSize()
 			preview.DisableDragRowSize()

@@ -1707,10 +1707,10 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 
 	def Draw(self, grid, attr, dc, rect, row, col, isSelected):
 		orect = rect
-		if col == grid.GetNumberCols() - 1:
-			# Last column
-			w = max(grid.ClientSize[0] - rect[0], rect[2])
-			rect = wx.Rect(rect[0], rect[1], w, rect[3])
+		#if col == grid.GetNumberCols() - 1:
+			## Last column
+			#w = max(grid.ClientSize[0] - rect[0], rect[2])
+			#rect = wx.Rect(rect[0], rect[1], w, rect[3])
 		bgcolor = grid.GetCellBackgroundColour(row, col)
 		col_label = grid.GetColLabelValue(col)
 		is_default_bgcolor = bgcolor == grid.GetDefaultCellBackgroundColour()
@@ -1939,7 +1939,8 @@ class CustomColLabelRenderer(object):
 			dc.DrawRectangleRect(rect)
 			pen = wx.Pen(grid.GetGridLineColour())
 			dc.SetPen(pen)
-			if getattr(grid, "draw_horizontal_grid_lines", True) or mavericks:
+			if getattr(grid, "draw_horizontal_grid_lines", True) or (mavericks and
+																	 not self.bgcolor):
 				dc.DrawLine(rect[0], rect[1] + rect[3] - 1, rect[0] + rect[2] - 1,
 							rect[1] + rect[3] - 1)
 			if getattr(grid, "draw_vertical_grid_lines", True):
@@ -1947,7 +1948,7 @@ class CustomColLabelRenderer(object):
 							rect[0] + rect[2] - 1, rect[3])
 		if getattr(grid, "draw_col_labels", True) and col > -1:
 			dc.SetFont(grid.GetLabelFont())
-			if mavericks:
+			if mavericks and not self.bgcolor:
 				# Use Mavericks-like color scheme
 				color = wx.Colour(80, 100, 120)
 			else:
