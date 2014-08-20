@@ -1052,6 +1052,7 @@ class CustomGrid(wx.grid.Grid):
 		self._col_label_renderers = {}
 		self._overwrite_cell_values = True
 		self._row_label_renderers = {}
+		self._cells_exposed_cache = []
 		self.alternate_cell_background_color = True
 		self.alternate_col_label_background_color = False
 		self.alternate_row_label_background_color = True
@@ -1093,6 +1094,7 @@ class CustomGrid(wx.grid.Grid):
 		row, col = event.GetRow(), event.GetCol()
 		self._anchor_row = row
 		self._overwrite_cell_values = True
+		self._cells_exposed_cache = []
 		self.SelectBlock(event.Row, event.Col, event.Row, event.Col)
 		self.Refresh()
 		event.Skip()
@@ -1328,7 +1330,12 @@ class CustomGrid(wx.grid.Grid):
 			renderer.Draw(self, dc, rect, row)
 
 	def OnResize(self, event):
-		for row, col in self.GetSelection():
+		if getattr(self, "CalcCellsExposed", None):
+			region = wx.Region(*self.ClientRect.Get())
+			self._cells_exposed_cache = self.CalcCellsExposed(region)
+		elif not self._cells_exposed_cache:
+			self._cells_exposed_cache = self.GetSelection()
+		for row, col in self._cells_exposed_cache:
 			cell_renderer = self.GetCellRenderer(row, col)
 			if (isinstance(cell_renderer, CustomCellRenderer) and
 				cell_renderer._selectionbitmaps):
