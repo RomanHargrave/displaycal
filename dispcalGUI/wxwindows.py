@@ -1202,9 +1202,12 @@ class CustomGrid(wx.grid.Grid):
 					ch = safe_unicode(chr(keycode))
 				if ch is not None or keycode in (wx.WXK_BACK, wx.WXK_DELETE):
 					changed = 0
-					self.BeginBatch()
-					for row, col in self.GetSelection():
+					batch = False
+					for i, (row, col) in enumerate(self.GetSelection()):
 						if row > -1 and col > -1 and not self.IsReadOnly(row, col):
+							if changed and not batch:
+								self.BeginBatch()
+								batch = True
 							if (self._overwrite_cell_values or
 								keycode == wx.WXK_DELETE):
 								value = ""
@@ -1221,7 +1224,8 @@ class CustomGrid(wx.grid.Grid):
 																row,
 																col))
 							changed += 1
-					self.EndBatch()
+					if batch:
+						self.EndBatch()
 					self._overwrite_cell_values = False
 					if not changed:
 						wx.Bell()

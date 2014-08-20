@@ -711,7 +711,7 @@ class TestchartEditor(wx.Frame):
 			wp = self.ti1.queryv1("APPROX_WHITE_POINT")
 			if wp:
 				wp = [float(v) for v in wp.split()]
-				wp = [CGATS.rpad((v / wp[1]) * 100.0, data.vmaxlen) for v in wp]
+				wp = [(v / wp[1]) * 100.0 for v in wp]
 			else:
 				wp = colormath.get_standard_illuminant("D65", scale=100)
 			newdata = {
@@ -720,7 +720,7 @@ class TestchartEditor(wx.Frame):
 				"RGB_G": 100.0,
 				"RGB_B": 100.0,
 				"XYZ_X": wp[0],
-				"XYZ_Y": 100,
+				"XYZ_Y": 100.0,
 				"XYZ_Z": wp[2]
 			}
 			self.tc_add_data(row, [newdata])
@@ -860,11 +860,12 @@ class TestchartEditor(wx.Frame):
 				# Fall back to default D65-ish values
 				XYZ = argyll_RGB2XYZ(*[component / 100.0 for component in (sample["RGB_R"], sample["RGB_G"], sample["RGB_B"])])
 				sample["XYZ_X"], sample["XYZ_Y"], sample["XYZ_Z"] = [component * 100.0 for component in XYZ]
-				for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
-					for col in range(self.grid.GetNumberCols()):
-						if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
-							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
-							value_set = True
+				# FIXME: Should this be removed? There are no XYZ fields in the editor 
+				#for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
+					#for col in range(self.grid.GetNumberCols()):
+						#if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
+							#self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
+							#value_set = True
 			elif label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
 				# FIXME: Should this be removed? There are no XYZ fields in the editor 
 				if value < 0:
@@ -878,7 +879,7 @@ class TestchartEditor(wx.Frame):
 							self.grid.SetCellValue(event.GetRow(), col, str(round(sample[label], 4)))
 							value_set = True
 			self.tc_grid_setcolorlabel(event.GetRow(), data)
-			if save_check:
+			if not self.grid.GetBatchCount() and save_check:
 				self.tc_save_check()
 		if not value_set:
 			self.grid.SetCellValue(event.GetRow(), event.GetCol(),
@@ -2655,11 +2656,18 @@ class TestchartEditor(wx.Frame):
 		if hasattr(self, "preview"):
 			self.preview.BeginBatch()
 		data_format = self.ti1.queryv1("DATA_FORMAT")
+		data.moveby1(row + 1, len(newdata))
 		for i in xrange(len(newdata)):
+			dataset = CGATS.CGATS()
 			for label in data_format.itervalues():
 				if not label in newdata[i]:
 					newdata[i][label] = 0.0
-			data.add_data(newdata[i], row + 1 + i)
+				dataset[label] = newdata[i][label]
+			dataset.key = row + 1 + i
+			dataset.parent = data
+			dataset.root = data.root
+			dataset.type = 'SAMPLE'
+			data[dataset.key] = dataset
 			for label in ("RGB_R", "RGB_G", "RGB_B"):
 				for col in range(self.grid.GetNumberCols()):
 					if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
