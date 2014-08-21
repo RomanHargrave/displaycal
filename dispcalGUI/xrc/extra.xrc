@@ -18,7 +18,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxTextCtrl" name="extra_args_dispcal_ctrl">
-                    <size>320,-1</size>
+                    <size>480,-1</size>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -31,7 +31,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxTextCtrl" name="extra_args_dispread_ctrl">
-                    <size>320,-1</size>
+                    <size>480,-1</size>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -44,7 +44,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxTextCtrl" name="extra_args_spotread_ctrl">
-                    <size>320,-1</size>
+                    <size>480,-1</size>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -57,7 +57,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxTextCtrl" name="extra_args_colprof_ctrl">
-                    <size>320,-1</size>
+                    <size>480,-1</size>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -70,7 +70,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxTextCtrl" name="extra_args_collink_ctrl">
-                    <size>320,-1</size>
+                    <size>480,-1</size>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -83,7 +83,7 @@
                 </object>
                 <object class="sizeritem">
                   <object class="wxTextCtrl" name="extra_args_targen_ctrl">
-                    <size>320,-1</size>
+                    <size>480,-1</size>
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
@@ -165,7 +165,6 @@
               <border>12</border>
             </object>
           </object>
-          <size>400, -1</size>
         </object>
         <option>1</option>
         <flag>wxEXPAND</flag>

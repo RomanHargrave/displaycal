@@ -2147,6 +2147,9 @@ class MainFrame(BaseFrame):
 				self.panel.Freeze()
 				self.header.SetLabel(lang.getstr("header"))
 				self.setup_language()
+				if hasattr(self, "extra_args"):
+					self.extra_args.Sizer.SetSizeHints(self.extra_args)
+					self.extra_args.Sizer.Layout()
 				if hasattr(self, "gamapframe"):
 					self.gamapframe.panel.Freeze()
 					self.gamapframe.setup_language()
