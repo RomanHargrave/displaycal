@@ -613,7 +613,7 @@ def DIN99bcdLCH2Lab(L99, C99, H99, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
 	H99 -= deg
 	L, a, b = DIN99familyLHCG2Lab(L99, H99, C99, G, 1.0, l1, l2, deg, f1)
 	if x:
-		X, Y, Z = [v * 100 for v in Lab2XYZ(L, a, b, whitepoint)]
+		X, Y, Z = Lab2XYZ(L, a, b, whitepoint, scale=100)
 		X = (X + x * Z) / (1 + x)
 		L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
 	return L, a, b
@@ -737,12 +737,12 @@ def Lab2DIN99b(L, a, b, kE=1.0):
 
 
 def Lab2DIN99c(L, a, b, kE=1.0, whitepoint=None):
-	X, Y, Z = [v * 100 for v in Lab2XYZ(L, a, b, whitepoint)]
+	X, Y, Z = Lab2XYZ(L, a, b, whitepoint, scale=100)
 	return XYZ2DIN99c(X, Y, Z, whitepoint)
 
 
 def Lab2DIN99d(L, a, b, kE=1.0, whitepoint=None):
-	X, Y, Z = [v * 100 for v in Lab2XYZ(L, a, b, whitepoint)]
+	X, Y, Z = Lab2XYZ(L, a, b, whitepoint, scale=100)
 	return XYZ2DIN99d(X, Y, Z, whitepoint)
 
 
