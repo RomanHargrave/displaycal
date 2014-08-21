@@ -82,8 +82,8 @@ elif sys.platform == "win32":
 	import util_win
 import colord
 from util_os import (expanduseru, getenvu, is_superuser, launch_file,
-					 make_win32_compatible_long_path, putenvu, quote_args,
-					 which, whereis)
+					 make_win32_compatible_long_path, quote_args, which,
+					 whereis)
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 from util_str import safe_basestring, safe_str, safe_unicode, universal_newlines
@@ -2908,15 +2908,46 @@ class Worker(object):
 				# Argyll tools will no longer respond to keys
 				if debug:
 					safe_print("[D] Setting ARGYLL_NOT_INTERACTIVE 1")
-				putenvu("ARGYLL_NOT_INTERACTIVE", "1")
+				os.environ["ARGYLL_NOT_INTERACTIVE"] = "1"
 			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
 				del os.environ["ARGYLL_NOT_INTERACTIVE"]
 			if debug:
 				safe_print("[D] argyll_version", self.argyll_version)
 				safe_print("[D] ARGYLL_NOT_INTERACTIVE", 
 						   os.environ.get("ARGYLL_NOT_INTERACTIVE"))
+			if self.measure_cmd:
+				for name, version in (("MIN_DISPLAY_UPDATE_DELAY_MS", [1, 5]),
+									  ("DISPLAY_SETTLE_TIME_MULT", [1, 7])):
+					backup = os.getenv("ARGYLL_%s_BACKUP" % name)
+					value = None
+					if (getcfg("measure.override_%s" % name.lower()) and
+						self.argyll_version >= version):
+						if not backup:
+							# Backup current value if any
+							current = os.getenv("ARGYLL_%s" % name)
+							if current:
+								os.environ["ARGYLL_%s_BACKUP" % name] = current
+						else:
+							current = backup
+						if current:
+							safe_print("%s: Overriding ARGYLL_%s %s" %
+									   (appname, name, current))
+						# Override
+						value = str(getcfg("measure.%s" % name.lower()))
+						safe_print("%s: Setting ARGYLL_%s %s" % (appname,
+																 name, value))
+					elif backup:
+						value = backup
+						del os.environ["ARGYLL_%s_BACKUP" % name]
+						safe_print("%s: Restoring ARGYLL_%s %s" % (appname,
+																   name, value))
+					elif "ARGYLL_%s" % name in os.environ:
+						safe_print("%s: ARGYLL_%s" % (appname, name),
+								   os.getenv("ARGYLL_%s" % name))
+					if value:
+						os.environ["ARGYLL_%s" % name] = value
 			if sys.platform not in ("darwin", "win32"):
-				putenvu("ENABLE_COLORHUG", "1")
+				os.environ["ENABLE_COLORHUG"] = "1"
 			if sys.platform == "win32":
 				startupinfo = sp.STARTUPINFO()
 				startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW

@@ -94,6 +94,76 @@
               <flag>wxALL|wxEXPAND</flag>
               <border>12</border>
             </object>
+            <object class="sizeritem">
+              <object class="wxBoxSizer">
+                <orient>wxHORIZONTAL</orient>
+                <object class="sizeritem">
+                  <object class="wxStaticLine">
+                    <size>8,-1</size>
+                  </object>
+                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>6</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText" name="environment_label">
+                    <label>environment</label>
+                  </object>
+                  <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>2</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticLine"/>
+                  <option>1</option>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>6</border>
+                </object>
+              </object>
+              <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+            </object>
+            <object class="sizeritem">
+              <object class="wxFlexGridSizer">
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="override_min_display_update_delay_ms">
+                    <label>measure.override_min_display_update_delay_ms</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>4</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxSpinCtrl" name="min_display_update_delay_ms">
+                    <size>85,-1</size>
+                  </object>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxStaticText">
+                    <label>ms</label>
+                  </object>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxCheckBox" name="override_display_settle_time_mult">
+                    <label>measure.override_display_settle_time_mult</label>
+                  </object>
+                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                  <border>4</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="FloatSpin" name="display_settle_time_mult">
+                    <size>85,-1</size>
+                    <digits>6</digits>
+                  </object>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="spacer"/>
+                <cols>3</cols>
+                <growablecols>2</growablecols>
+                <hgap>4</hgap>
+                <vgap>8</vgap>
+              </object>
+              <flag>wxALL|wxEXPAND</flag>
+              <border>12</border>
+            </object>
           </object>
           <size>400, -1</size>
         </object>

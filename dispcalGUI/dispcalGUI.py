@@ -621,6 +621,7 @@ class ExtraArgsFrame(BaseFrame):
 	def __init__(self, parent):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "extra.xrc")))
+		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		pre = wx.PreFrame()
 		self.res.LoadOnFrame(pre, parent, "extra_args")
 		self.PostCreate(pre)
@@ -629,6 +630,21 @@ class ExtraArgsFrame(BaseFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.set_child_ctrls_as_attrs(self)
+
+		child = self.environment_label
+		gradientpanel = get_gradient_panel(child.Parent, child.Label)
+		gradientpanel.label_x = 12
+		sizer = child.ContainingSizer
+		sizer.Clear(True)
+		sizer.Add(gradientpanel, 1)
+
+		min_val, max_val = config.valid_ranges["measure.min_display_update_delay_ms"]
+		self.min_display_update_delay_ms.SetRange(min_val, max_val)
+
+		min_val, max_val = config.valid_ranges["measure.display_settle_time_mult"]
+		self.display_settle_time_mult.SetDigits(len(str(stripzeros(min_val)).split(".")[-1]))
+		self.display_settle_time_mult.SetIncrement(min_val)
+		self.display_settle_time_mult.SetRange(min_val, max_val)
 
 		# Bind event handlers
 		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
@@ -643,10 +659,17 @@ class ExtraArgsFrame(BaseFrame):
 				   id=self.extra_args_collink_ctrl.GetId())
 		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
 				   id=self.extra_args_targen_ctrl.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.extra_args_handler, 
+				   id=self.override_min_display_update_delay_ms.GetId())
+		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
+				   id=self.min_display_update_delay_ms.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.extra_args_handler, 
+				   id=self.override_display_settle_time_mult.GetId())
+		self.Bind(floatspin.EVT_FLOATSPIN, self.extra_args_handler, 
+				   id=self.display_settle_time_mult.GetId())
 		
 		self.setup_language()
 		self.update_controls()
-		self.update_layout()
 
 	def OnClose(self, event):
 		self.Hide()
@@ -657,10 +680,19 @@ class ExtraArgsFrame(BaseFrame):
 				   self.extra_args_spotread_ctrl.GetId(): "extra_args.spotread",
 				   self.extra_args_colprof_ctrl.GetId(): "extra_args.colprof",
 				   self.extra_args_collink_ctrl.GetId(): "extra_args.collink",
-				   self.extra_args_targen_ctrl.GetId(): "extra_args.targen"}
+				   self.extra_args_targen_ctrl.GetId(): "extra_args.targen",
+				   self.override_min_display_update_delay_ms.GetId(): "measure.override_min_display_update_delay_ms",
+				   self.min_display_update_delay_ms.GetId(): "measure.min_display_update_delay_ms",
+				   self.override_display_settle_time_mult.GetId(): "measure.override_display_settle_time_mult",
+				   self.display_settle_time_mult.GetId(): "measure.display_settle_time_mult"}
 		pref = mapping.get(event.GetId())
 		if pref:
-			setcfg(pref, self.FindWindowById(event.GetId()).Value)
+			ctrl = self.FindWindowById(event.GetId())
+			value = ctrl.GetValue()
+			if ctrl.Name.startswith("override_"):
+				self.update_display_ctrl(ctrl.Name[9:], value)
+				value = int(value)
+			setcfg(pref, value)
 	
 	def update_controls(self):
 		self.extra_args_dispcal_ctrl.ChangeValue(getcfg("extra_args.dispcal"))
@@ -669,6 +701,31 @@ class ExtraArgsFrame(BaseFrame):
 		self.extra_args_colprof_ctrl.ChangeValue(getcfg("extra_args.colprof"))
 		self.extra_args_collink_ctrl.ChangeValue(getcfg("extra_args.collink"))
 		self.extra_args_targen_ctrl.ChangeValue(getcfg("extra_args.targen"))
+		for name in ("min_display_update_delay_ms",
+					 "display_settle_time_mult"):
+			value = bool(getcfg("measure.override_%s" % name))
+			getattr(self, "override_%s" % name).SetValue(value)
+			self.update_display_ctrl(name, value)
+		self.override_display_settle_time_mult.Show(getcfg("argyll.version") >= "1.7")
+		self.display_settle_time_mult.Show(getcfg("argyll.version") >= "1.7")
+		self.Sizer.SetSizeHints(self)
+		self.Sizer.Layout()
+
+	def update_display_ctrl(self, name, enable):
+		spinctrl = getattr(self, name)
+		spinctrl.Enable(enable)
+		spinvalue = getcfg("measure.%s" % name)
+		if not enable:
+			# Restore previous environment variable value
+			backup = os.getenv("ARGYLL_%s_BACKUP" % name.upper())
+			current = os.getenv("ARGYLL_%s" % name.upper())
+			if backup or current:
+				valuetype = type(defaults["measure.%s" % name])
+				try:
+					spinvalue = valuetype(backup or current)
+				except (TypeError, ValueError):
+					pass
+		spinctrl.SetValue(spinvalue)
 
 
 class GamapFrame(BaseFrame):
@@ -9545,6 +9602,8 @@ class MainFrame(BaseFrame):
 			if hasattr(self, "aboutdialog"):
 				if self.aboutdialog.IsShownOnScreen():
 					self.aboutdialog_handler(None)
+			if hasattr(self, "extra_args"):
+				self.extra_args.update_controls()
 			if hasattr(self, "gamapframe"):
 				visible = self.gamapframe.IsShownOnScreen()
 				self.gamapframe.Close()
