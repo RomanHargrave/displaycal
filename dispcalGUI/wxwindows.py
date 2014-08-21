@@ -1052,7 +1052,6 @@ class CustomGrid(wx.grid.Grid):
 		self._col_label_renderers = {}
 		self._overwrite_cell_values = True
 		self._row_label_renderers = {}
-		self._cells_exposed_cache = []
 		self.alternate_cell_background_color = True
 		self.alternate_col_label_background_color = False
 		self.alternate_row_label_background_color = True
@@ -1062,6 +1061,61 @@ class CustomGrid(wx.grid.Grid):
 		self.draw_vertical_grid_lines = True
 		self.selection_alpha = 1.0
 		self.show_cursor_outline = True
+
+	if not hasattr(wx.grid.Grid, "CalcCellsExposed"):
+		# wxPython < 2.8.10
+		def CalcCellsExposed(self, region):
+			rows = self.CalcRowLabelsExposed(region)
+			cols = self.CalcColLabelsExposed(region)
+			cells = []
+			for row in rows:
+				for col in cols:
+					if row > -1 and col > -1:
+						cells.append((row, col))
+			return cells
+
+	if not hasattr(wx.grid.Grid, "CalcColLabelsExposed"):
+		# wxPython < 2.8.10
+		def CalcColLabelsExposed(self, region):
+			x, y = self.CalcUnscrolledPosition((0,0))
+			ri = wx.RegionIterator(region)
+			cols = []
+			while ri:
+				rect = ri.GetRect()
+				rect.Offset((x,0))
+				colPos = self.GetColPos(self.XToCol(rect.left))
+				while colPos < self.GetNumberCols() and colPos >= 0:
+					col = self.GetColAt(colPos)
+					cl, cr = self.GetColLeftRight(col)
+					if cr < rect.left:
+						continue
+					if cl > rect.right:
+						break
+					cols.append(col)
+					colPos += 1
+				ri.Next()
+			return cols
+
+	if not hasattr(wx.grid.Grid, "CalcRowLabelsExposed"):
+		# wxPython < 2.8.10
+		def CalcRowLabelsExposed(self, region):
+			x, y = self.CalcUnscrolledPosition((0,0))
+			ri = wx.RegionIterator(region)
+			rows = []
+			while ri:
+				rect = ri.GetRect()
+				rect.Offset((0,y))
+				row = self.YToRow(rect.top)
+				while row < self.GetNumberRows() and row >= 0:
+					rt, rb = self.GetRowTopBottom(row)
+					if rb < rect.top:
+						continue
+					if rt > rect.bottom:
+						break
+					rows.append(row)
+					row += 1
+				ri.Next()
+			return rows
 
 	def GetColLeftRight(self, col):
 		c = 0
@@ -1094,7 +1148,6 @@ class CustomGrid(wx.grid.Grid):
 		row, col = event.GetRow(), event.GetCol()
 		self._anchor_row = row
 		self._overwrite_cell_values = True
-		self._cells_exposed_cache = []
 		self.SelectBlock(event.Row, event.Col, event.Row, event.Col)
 		self.Refresh()
 		event.Skip()
@@ -1260,16 +1313,9 @@ class CustomGrid(wx.grid.Grid):
 		window = evt.GetEventObject()
 		dc = wx.PaintDC(window)
 
-		if getattr(self, "CalcColLabelsExposed", None):
-			# wxPython >= 2.8.10
-			cols = self.CalcColLabelsExposed(window.GetUpdateRegion())
-			if cols == [-1]:
-				return
-		else:
-			# wxPython < 2.8.10
-			cols = xrange(self.GetNumberCols())
-			if not cols:
-				return
+		cols = self.CalcColLabelsExposed(window.GetUpdateRegion())
+		if cols == [-1]:
+			return
 
 		x, y = self.CalcUnscrolledPosition((0,0))
 		pt = dc.GetDeviceOrigin()
@@ -1302,16 +1348,9 @@ class CustomGrid(wx.grid.Grid):
 		window = evt.GetEventObject()
 		dc = wx.PaintDC(window)
 
-		if getattr(self, "CalcRowLabelsExposed", None):
-			# wxPython >= 2.8.10
-			rows = self.CalcRowLabelsExposed(window.GetUpdateRegion())
-			if rows == [-1]:
-				return
-		else:
-			# wxPython < 2.8.10
-			rows = xrange(self.GetNumberRows())
-			if not rows:
-				return
+		rows = self.CalcRowLabelsExposed(window.GetUpdateRegion())
+		if rows == [-1]:
+			return
 
 		x, y = self.CalcUnscrolledPosition((0,0))
 		pt = dc.GetDeviceOrigin()
@@ -1330,12 +1369,8 @@ class CustomGrid(wx.grid.Grid):
 			renderer.Draw(self, dc, rect, row)
 
 	def OnResize(self, event):
-		if getattr(self, "CalcCellsExposed", None):
-			region = wx.Region(*self.ClientRect.Get())
-			self._cells_exposed_cache = self.CalcCellsExposed(region)
-		elif not self._cells_exposed_cache:
-			self._cells_exposed_cache = self.GetSelection()
-		for row, col in self._cells_exposed_cache:
+		region = wx.Region(*self.ClientRect.Get())
+		for row, col in self.CalcCellsExposed(region):
 			cell_renderer = self.GetCellRenderer(row, col)
 			if (isinstance(cell_renderer, CustomCellRenderer) and
 				cell_renderer._selectionbitmaps):
