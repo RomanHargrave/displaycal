@@ -1189,6 +1189,11 @@ def xyY2Lab(x, y, Y=1.0, whitepoint=None):
 	return XYZ2Lab(X, Y, Z, whitepoint)
 
 
+def xyY2Lu_v_(x, y, Y=1.0, whitepoint=None):
+	X, Y, Z = xyY2XYZ(x, y, Y)
+	return XYZ2Lu_v_(X, Y, Z, whitepoint)
+
+
 def xyY2RGB(x, y, Y, rgb_space=None, scale=1.0, round_=False, clamp=True):
 	""" Convert from xyY to RGB """
 	X, Y, Z = xyY2XYZ(x, y, Y)
