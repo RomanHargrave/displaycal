@@ -1316,6 +1316,7 @@ def XYZ2CCT(X, Y, Z):
 
 
 def XYZ2DIN99(X, Y, Z, whitepoint=None):
+	X, Y, Z = (max(v, 0) for v in (X, Y, Z))
 	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
 	return Lab2DIN99(L, a, b)
 
