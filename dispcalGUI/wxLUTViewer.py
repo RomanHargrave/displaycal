@@ -499,7 +499,11 @@ class LUTCanvas(plot.PlotCanvas):
 		return l
 
 	def OnMouseDoubleClick(self, event):
-		self.resetzoom()
+		if self.last_draw:
+			boundingbox = self.last_draw[0].boundingBox()
+		else:
+			boundingbox = None
+		self.resetzoom(boundingbox=boundingbox)
 		if self.last_draw:
 			self.center()
 
@@ -531,22 +535,34 @@ class LUTCanvas(plot.PlotCanvas):
 		ratio = [w / h,
 				 h / w]
 		axis_x, axis_y = self.axis_x, self.axis_y
+		spec_x = self.spec_x
+		spec_y = self.spec_y
+		if self._zoomfactor < 1:
+			while spec_x * self._zoomfactor < self.spec_x / 2.0:
+				spec_x *= 2
+			while spec_y * self._zoomfactor < self.spec_y / 2.0:
+				spec_y *= 2
+		else:
+			while spec_x * self._zoomfactor > self.spec_x * 2:
+				spec_x /= 2
+			while spec_y * self._zoomfactor > self.spec_y * 2:
+				spec_y /= 2
 		if self.proportional:
 			if ratio[0] > ratio[1]:
-				self.SetXSpec(self.spec_x * ratio[0])
+				self.SetXSpec(spec_x * self._zoomfactor * ratio[0])
 			else:
-				self.SetXSpec(self.spec_x)
+				self.SetXSpec(spec_x * self._zoomfactor)
 			if ratio[0] > 1:
 				axis_x=tuple([v * ratio[0] for v in axis_x])
 			if ratio[1] > ratio[0]:
-				self.SetYSpec(self.spec_y * ratio[1])
+				self.SetYSpec(spec_y * self._zoomfactor * ratio[1])
 			else:
-				self.SetYSpec(self.spec_y)
+				self.SetYSpec(spec_y * self._zoomfactor)
 			if ratio[1] > 1:
 				axis_y=tuple([v * ratio[1] for v in axis_y])
 		else:
-			self.SetXSpec(self.spec_x)
-			self.SetYSpec(self.spec_y)
+			self.SetXSpec(spec_x * self._zoomfactor)
+			self.SetYSpec(spec_y * self._zoomfactor)
 		x, y = self.center_x, self.center_y
 		w = (axis_x[1] - axis_x[0]) * self._zoomfactor
 		h = (axis_y[1] - axis_y[0]) * self._zoomfactor
@@ -574,18 +590,22 @@ class LUTCanvas(plot.PlotCanvas):
 			y = axis_y[0] + (abs(axis_y[1]) - abs(axis_y[0])) / 2.0
 		self.center_x, self.center_y = x, y
 	
-	def center(self):
+	def center(self, boundingbox=None):
 		""" Center the current graphic """
-		min_x, max_x = self.GetXMaxRange()
-		min_y, max_y = self.GetYMaxRange()
-		if self.proportional:
-			self.axis_x = self.axis_y = (min(min_x, min_y), max(max_x, max_y))
+		if boundingbox:
+			# Min, max points of graphics
+			p1, p2 = boundingbox
+			# In user units
+			min_x, max_x = self._axisInterval(self._xSpec, p1[0], p2[0])
+			min_y, max_y = self._axisInterval(self._ySpec, p1[1], p2[1])
 		else:
-			self.axis_x, self.axis_y = (min_x, max_x), (min_y, max_y)
-		self.center_x = 0 + sum((min_x, max_x)) / 2
-		self.center_y = 0 + sum((min_y, max_y)) / 2
-		self.erase_pointlabel()
-		self._DrawCanvas(self.last_draw[0])
+			min_x, max_x = self.GetXMaxRange()
+			min_y, max_y = self.GetYMaxRange()
+		self.center_x = 0 + sum((min_x, max_x)) / 2.0
+		self.center_y = 0 + sum((min_y, max_y)) / 2.0
+		if not boundingbox:
+			self.erase_pointlabel()
+			self._DrawCanvas(self.last_draw[0])
 	
 	def erase_pointlabel(self):
 		if self.GetEnablePointLabel() and self.last_PointLabel:
@@ -593,10 +613,36 @@ class LUTCanvas(plot.PlotCanvas):
 			self._drawPointLabel(self.last_PointLabel)
 			self.last_PointLabel = None
 
-	def resetzoom(self):
+	def resetzoom(self, boundingbox=None):
 		self.center_x = 0
 		self.center_y = 0
 		self._zoomfactor = 1.0
+		if boundingbox:
+			# Min, max points of graphics
+			p1, p2 = boundingbox
+			# In user units
+			min_x, max_x = self._axisInterval(self._xSpec, p1[0], p2[0])
+			min_y, max_y = self._axisInterval(self._ySpec, p1[1], p2[1])
+			max_abs_x = abs(min_x) + max_x
+			max_abs_y = abs(min_y) + max_y
+			max_abs_axis_x = (abs(self.axis_x[0]) + self.axis_x[1])
+			max_abs_axis_y = (abs(self.axis_y[0]) + self.axis_y[1])
+			w = float(self.GetSize()[0] or 1)
+			h = float(self.GetSize()[1] or 1)
+			if w > 45:
+				w -= 45
+			if h > 20:
+				h -= 20
+			ratio = [w / h,
+					 h / w]
+			if ratio[0] > 1:
+				max_abs_axis_x *= ratio[0]
+			if ratio[1] > 1:
+				max_abs_axis_y *= ratio[1]
+			if max_abs_x / max_abs_y > max_abs_axis_x / max_abs_axis_y:
+				self._zoomfactor = max_abs_x / max_abs_axis_x
+			else:
+				self._zoomfactor = max_abs_y / max_abs_axis_y
 	
 	def zoom(self, direction=1):
 		_zoomfactor = .025 * direction

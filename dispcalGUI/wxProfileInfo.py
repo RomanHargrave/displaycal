@@ -221,8 +221,6 @@ class GamutCanvas(LUTCanvas):
 			  (0.734690, 0.265310)]
 
 		if self.colorspace == "xy":
-			self.spec_x = 8
-			self.spec_y = 8
 			label_x = "x"
 			label_y = "y"
 			if show_outline:
@@ -232,14 +230,12 @@ class GamutCanvas(LUTCanvas):
 				polys.append(plot.PolyLine([xy[0], xy[-1]],
 										   colour=wx.Colour(102, 102, 102, 153),
 										   width=1.75))
-			max_x = 0.84
-			max_y = 0.84
-			min_x = 0
-			min_y = 0
+			max_x = 0.75
+			max_y = 0.85
+			min_x = -.05
+			min_y = -.05
 			step = .1
 		elif self.colorspace == "u'v'":
-			self.spec_x = 6
-			self.spec_y = 6
 			label_x = "u'"
 			label_y = "v'"
 			if show_outline:
@@ -250,26 +246,22 @@ class GamutCanvas(LUTCanvas):
 				polys.append(plot.PolyLine([uv[0], uv[-1]],
 										   colour=wx.Colour(102, 102, 102, 153),
 										   width=1.75))
-			max_x = 0.6
+			max_x = 0.625
 			max_y = 0.6
-			min_x = 0
-			min_y = 0
+			min_x = -.025
+			min_y = -.025
 			step = .1
 		elif self.colorspace == "u*v*":
 			# Hard to present gamut projection appropriately in 2D
 			# because blue tones 'cave in' towards the center
-			self.spec_x = 8
-			self.spec_y = 8
 			label_x = "u*"
 			label_y = "v*"
-			max_x = 50.0
-			max_y = 50.0
-			min_x = -50.0
-			min_y = -50.0
+			max_x = 150.0
+			max_y = 150.0
+			min_x = -150.0
+			min_y = -150.0
 			step = 50
 		elif self.colorspace == "DIN99":
-			self.spec_x = 8
-			self.spec_y = 8
 			label_x = "a99"
 			label_y = "b99"
 			max_x = 50.0
@@ -278,8 +270,6 @@ class GamutCanvas(LUTCanvas):
 			min_y = -50.0
 			step = 25
 		elif self.colorspace in ("DIN99b", "DIN99c", "DIN99d"):
-			self.spec_x = 8
-			self.spec_y = 8
 			if self.colorspace == "DIN99c":
 				label_x = "a99c"
 				label_y = "b99c"
@@ -292,14 +282,12 @@ class GamutCanvas(LUTCanvas):
 			min_y = -65.0
 			step = 25
 		else:
-			self.spec_x = 8
-			self.spec_y = 8
 			label_x = "a*"
 			label_y = "b*"
-			max_x = 130.0
-			max_y = 146.0
-			min_x = -166.0
-			min_y = -136.0
+			max_x = 150.0
+			max_y = 150.0
+			min_x = -150.0
+			min_y = -150.0
 			step = 50
 		
 		convert2coords = {"a*b*": lambda X, Y, Z: colormath.XYZ2Lab(*[v * 100 for v in X, Y, Z])[1:],
@@ -425,27 +413,31 @@ class GamutCanvas(LUTCanvas):
 										 size=s,
 										 marker=marker,
 										 width=w))
-		
-		max_abs_x = max(abs(min_x), max_x)
-		max_abs_y = max(abs(min_y), max_y)
 
 		if center:
 			self.axis_x = self.axis_y = (min(min_x, min_y), max(max_x, max_y))
-			self.center_x = 0 + (min_x + max_x) / 2
-			self.center_y = 0 + (min_y + max_y) / 2
-		self.ratio = [max(max_abs_x, max_abs_y) /
-					  max(max_abs_x, max_abs_y)] * 2
-		if colorspace == "ab" or colorspace.startswith("DIN99"):
-			ab_range = max(abs(min_x), abs(min_y)) + max(max_x, max_y)
-			self.spec_x = ab_range / step
-			self.spec_y = ab_range / step
+		xy_range = max(abs(min_x), abs(min_y)) + max(max_x, max_y)
+		self.spec_x = xy_range / step
+		self.spec_y = xy_range / step
 
 		if polys:
-			self._DrawCanvas(plot.PlotGraphics(polys, title, label_x, label_y))
+			graphics = plot.PlotGraphics(polys, title, label_x, label_y)
+			p1, p2 = graphics.boundingBox()
+			spacer = plot.PolyMarker([(p1[0] - xy_range / 20.0,
+									   p1[1] - xy_range / 20.0),
+									  (p2[0] + xy_range / 20.0,
+									   p2[1] + xy_range / 20.0)],
+									  colour=wx.Colour(0x33, 0x33, 0x33),
+									  size=0)
+			graphics.objects.append(spacer)
+			boundingbox = spacer.boundingBox()
+			if center:
+				self.resetzoom(boundingbox)
+				self.center(boundingbox)
+			self._DrawCanvas(graphics)
 	
 	def reset(self):
 		self.axis_x = self.axis_y = -128, 128
-		self.ratio = 1.0, 1.0
 
 	def set_pcs_data(self, i):
 		if len(self.pcs_data) < i + 1:
