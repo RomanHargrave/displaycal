@@ -1967,10 +1967,10 @@ class TestchartEditor(wx.Frame):
 		if (hasattr(self, "ti1") and self.ti1.filename and
 			os.path.isfile(self.ti1.filename)):
 			defaultDir = os.path.dirname(self.ti1.filename)
-			defaultFile = os.path.splitext(os.path.basename(self.ti1.filename))[0]
+			defaultFile = self.ti1.filename
 		else:
 			defaultDir = get_verified_path("last_vrml_path")[0]
-			defaultFile = os.path.basename(getcfg("last_vrml_path"))
+			defaultFile = getcfg("last_vrml_path")
 		view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
 		if view_3d_format == "HTML":
 			formatext = ".html"
@@ -1981,6 +1981,7 @@ class TestchartEditor(wx.Frame):
 				formatext = ".wrl"
 		else:
 			formatext = ".x3d"
+		defaultFile = os.path.splitext(os.path.basename(defaultFile))[0] + formatext
 		dlg = wx.FileDialog(self, lang.getstr("save_as"),
 							defaultDir=defaultDir, defaultFile=defaultFile,
 							wildcard=lang.getstr("view.3d") + "|*" +
