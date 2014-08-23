@@ -1774,7 +1774,7 @@ class ProfileInfoFrame(LUTFrame):
 									  wargs=(profile_paths, intent, direction,
 											 order, False),
 									  progress_msg=lang.getstr("gamut.view.create"),
-									  continue_next=True)
+									  continue_next=x3d)
 	
 	def view_3d_consumer(self, result, colorspace, filename, vrmlpath, x3d,
 						 x3dpath, html):
