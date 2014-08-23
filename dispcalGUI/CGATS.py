@@ -395,7 +395,10 @@ class CGATS(dict):
 		result = []
 		data = None
 		if self.type == 'SAMPLE':
-			result.append(' '.join(str(self[item]) for item in 
+			result.append(' '.join(rpad(self[item], 
+										self.parent.vmaxlen + 
+										(1 if self[item] < 0 else 0))
+								   for item in 
 								   self.parent.parent['DATA_FORMAT'].values()))
 		elif self.type == 'DATA':
 			data = self
