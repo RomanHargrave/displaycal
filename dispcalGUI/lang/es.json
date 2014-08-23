@@ -834,6 +834,7 @@
 	"testchart.read": "Leyendo carta de ajustes...",
 	"testchart.save_or_discard": "La carta de ajustes no ha sido guardado.",
 	"testchart.select": "Seleccionar",
+		"*testchart.separate_fixed_points": "Add the following fixed points in a separate step:",
 	"testchart.set": "Seleccione archivo carta de ajustes...",
 		"*testchart.sort_RGB_gray_to_top": "Sort RGB gray to top",
 		"*testchart.sort_RGB_white_to_top": "Sort RGB white to top",

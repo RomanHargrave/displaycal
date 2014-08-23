@@ -834,6 +834,7 @@
 	"testchart.read": "Lecture de la grille de test...",
 	"testchart.save_or_discard": "La grille de test n'a pas été enregistrée.",
 	"testchart.select": "Sélectionner",
+		"*testchart.separate_fixed_points": "Add the following fixed points in a separate step:",
 	"testchart.set": "Sélectionner un fichier de grille de test",
 	"testchart.sort_RGB_gray_to_top": "Ordonner le gris RGB vers le haut",
 	"testchart.sort_RGB_white_to_top": "Ordonner le blanc RGB vers le haut",

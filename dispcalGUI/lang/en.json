@@ -834,6 +834,7 @@
 	"testchart.read": "Reading testchart...",
 	"testchart.save_or_discard": "The testchart has not been saved.",
 	"testchart.select": "Select",
+	"testchart.separate_fixed_points": "Please choose the patches to add in a separate step.",
 	"testchart.set": "Choose testchart file...",
 	"testchart.sort_RGB_gray_to_top": "Sort RGB gray to top",
 	"testchart.sort_RGB_white_to_top": "Sort RGB white to top",

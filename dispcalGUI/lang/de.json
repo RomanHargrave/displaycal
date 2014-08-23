@@ -834,6 +834,7 @@
 	"testchart.read": "Lese Testform...",
 	"testchart.save_or_discard": "Die Testform wurde nicht gesichert.",
 	"testchart.select": "Auswählen",
+	"testchart.separate_fixed_points": "Bitte wählen Sie die Felder, die in einem separaten Arbeitsschritt hinzugefügt werden sollen.",
 	"testchart.set": "Testform auswählen...",
 	"testchart.sort_RGB_gray_to_top": "RGB-Grau nach oben",
 	"testchart.sort_RGB_white_to_top": "RGB-Weiß nach oben",

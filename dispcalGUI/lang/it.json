@@ -834,6 +834,7 @@
 	"testchart.read": "Lettura testchart...",
 	"testchart.save_or_discard": "Il testchart non è stato salvato.",
 	"testchart.select": "Selezionare",
+		"*testchart.separate_fixed_points": "Add the following fixed points in a separate step:",
 	"testchart.set": "Scegli il file di testchart...",
 		"*testchart.sort_RGB_gray_to_top": "Sort RGB gray to top",
 		"*testchart.sort_RGB_white_to_top": "Sort RGB white to top",

@@ -1691,19 +1691,48 @@ class TestchartEditor(wx.Frame):
 	def tc_preview_handler(self, event = None):
 		if self.worker.is_working():
 			return
+
+		fullspread_patches = getcfg("tc_fullspread_patches")
+		single_patches = getcfg("tc_single_channel_patches")
+		gray_patches = getcfg("tc_gray_patches")
+		multidim_patches = getcfg("tc_multi_steps")
+		multidim_bcc_patches = getcfg("tc_multi_bcc_steps")
+		wkwargs = {}
+		if fullspread_patches and (single_patches > 2 or gray_patches > 2 or
+								   multidim_patches > 2 or
+								   multidim_bcc_patches) and wx.GetKeyState(wx.WXK_SHIFT):
+			dlg = ConfirmDialog(self, -1, lang.getstr("testchart.create"),
+								lang.getstr("testchart.separate_fixed_points"),
+								ok=lang.getstr("ok"),
+								cancel=lang.getstr("cancel"),
+								bitmap=geticon(32, "dispcalGUI-testchart-editor"))
+			dlg.sizer3.Add((1, 4))
+			for name in ("single", "gray", "multidim"):
+				if (locals()[name + "_patches"] > 2 or
+					(name == "multidim" and multidim_bcc_patches)):
+					setattr(dlg, name, wx.CheckBox(dlg, -1,
+												   lang.getstr("tc." + name)))
+					dlg.sizer3.Add(getattr(dlg, name), 1, flag=wx.TOP, border=4)
+					getattr(dlg, name).Value = True
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			choice = dlg.ShowModal()
+			for name in ("single", "gray", "multidim"):
+				if hasattr(dlg, name):
+					wkwargs[name] = getattr(dlg, name).Value
+			dlg.Destroy()
+			if choice == wx.ID_CANCEL:
+				return
+
 		if not self.tc_check_save_ti1():
 			return
 		if not check_set_argyll_bin():
 			return
-		# if sys.platform == "win32":
-			# sp.call("cls", shell = True)
-		# else:
-			# sp.call('clear', shell = True)
+
 		safe_print("-" * 80)
 		safe_print(lang.getstr("testchart.create"))
-		#self.tc_create()
 		self.worker.interactive = False
-		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = {}, progress_msg = lang.getstr("testchart.create"), parent = self, progress_start = 500)
+		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = wkwargs, progress_msg = lang.getstr("testchart.create"), parent = self, progress_start = 500)
 
 	def tc_preview_update(self, startindex):
 		if not hasattr(self, "preview"):
@@ -2554,8 +2583,113 @@ class TestchartEditor(wx.Frame):
 					increments[inc] += 1
 		return increments
 
-	def tc_create(self):
+	def tc_create(self, gray=False, multidim=False, single=False):
+		"""
+		Create testchart using targen.
+		
+		Setting gray, multidim or single to True will ad those patches
+		in a separate step if any number of iterative patches are to be
+		generated as well.
+		
+		"""
 		writecfg()
+		fullspread_patches = getcfg("tc_fullspread_patches")
+		white_patches = getcfg("tc_white_patches")
+		black_patches = getcfg("tc_black_patches")
+		single_patches = getcfg("tc_single_channel_patches")
+		gray_patches = getcfg("tc_gray_patches")
+		multidim_patches = getcfg("tc_multi_steps")
+		multidim_bcc_patches = getcfg("tc_multi_bcc_steps")
+		extra_args = getcfg("extra_args.targen")
+		result = True
+		fixed_ti1 = None
+		if fullspread_patches > 0 and (gray or multidim or single):
+			# Generate fixed points first so they don't punch "holes" into the
+			# OFPS distribution
+			setcfg("tc_white_patches", 0)
+			setcfg("tc_black_patches", 0)
+			if not single:
+				setcfg("tc_single_channel_patches", 0)
+			if not gray:
+				setcfg("tc_gray_patches", 0)
+			if not multidim:
+				setcfg("tc_multi_steps", 0)
+				setcfg("tc_multi_bcc_steps", 0)
+			setcfg("tc_fullspread_patches", 0)
+			setcfg("extra_args.targen", "")
+			result = self.tc_create_ti1()
+		if fullspread_patches > 0 and (gray or multidim or single):
+			setcfg("tc_white_patches", white_patches)
+			setcfg("tc_black_patches", black_patches)
+			if single:
+				setcfg("tc_single_channel_patches", 2)
+			else:
+				setcfg("tc_single_channel_patches", single_patches)
+			if gray:
+				setcfg("tc_gray_patches", 2)
+			else:
+				setcfg("tc_gray_patches", gray_patches)
+			if multidim:
+				setcfg("tc_multi_steps", 2)
+				setcfg("tc_multi_bcc_steps", 0)
+			else:
+				setcfg("tc_multi_steps", multidim_patches)
+				setcfg("tc_multi_bcc_steps", multidim_bcc_patches)
+			setcfg("tc_fullspread_patches", fullspread_patches)
+			setcfg("extra_args.targen", extra_args)
+			fixed_ti1 = result
+		if not isinstance(result, Exception) and result:
+			result = self.tc_create_ti1()
+			if isinstance(result, CGATS.CGATS):
+				if fixed_ti1:
+					if gray:
+						result[0].add_keyword("COMP_GREY_STEPS", gray_patches)
+					if multidim:
+						result[0].add_keyword("MULTI_DIM_STEPS",
+											  multidim_patches)
+						if multidim_bcc_patches:
+							result[0].add_keyword("MULTI_DIM_BCC_STEPS",
+												  multidim_bcc_patches)
+					if single:
+						result[0].add_keyword("SINGLE_DIM_STEPS",
+											  single_patches)
+					fixed_data = fixed_ti1.queryv1("DATA")
+					data = result.queryv1("DATA")
+					data_format = result.queryv1("DATA_FORMAT")
+					# Get only RGB data
+					data.parent.DATA_FORMAT = CGATS.CGATS()
+					data.parent.DATA_FORMAT.key = "DATA_FORMAT"
+					data.parent.DATA_FORMAT.parent = data
+					data.parent.DATA_FORMAT.root = data.root
+					data.parent.DATA_FORMAT.type = "DATA_FORMAT"
+					for i, label in enumerate(("RGB_R", "RGB_G", "RGB_B")):
+						data.parent.DATA_FORMAT[i] = label
+					fixed_data.parent.DATA_FORMAT = data.parent.DATA_FORMAT
+					rgbdata = str(data)
+					# Restore DATA_FORMAT
+					data.parent.DATA_FORMAT = data_format
+					# Collect all fixed point datasets not in data
+					fixed_data.vmaxlen = data.vmaxlen
+					fixed_datasets = []
+					for i, dataset in fixed_data.iteritems():
+						if not str(dataset) in rgbdata:
+							fixed_datasets.append(dataset)
+					if fixed_datasets:
+						# Insert fixed point datasets after first patch
+						data.moveby1(1, len(fixed_datasets))
+						for i, dataset in enumerate(fixed_datasets):
+							dataset.key = i + 1
+							dataset.parent = data
+							dataset.root = data.root
+							data[dataset.key] = dataset
+				self.ti1 = result
+		setcfg("tc_single_channel_patches", single_patches)
+		setcfg("tc_gray_patches", gray_patches)
+		setcfg("tc_multi_steps", multidim_patches)
+		setcfg("tc_multi_bcc_steps", multidim_bcc_patches)
+		return result
+
+	def tc_create_ti1(self):
 		cmd, args = self.worker.prepare_targen()
 		if not isinstance(cmd, Exception):
 			result = self.worker.exec_cmd(cmd, args, low_contrast = False, skip_scripts = True, silent = False, parent = self)
@@ -2570,7 +2704,7 @@ class TestchartEditor(wx.Frame):
 				result = check_file_isfile(path, silent = False)
 				if not isinstance(result, Exception) and result:
 					try:
-						self.ti1 = CGATS.CGATS(path)
+						result = CGATS.CGATS(path)
 						safe_print(lang.getstr("success"))
 					except Exception, exception:
 						return Error(u"Error - testchart file could not be read: " + safe_unicode(exception))
