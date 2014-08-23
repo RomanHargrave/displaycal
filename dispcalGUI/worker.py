@@ -3057,6 +3057,7 @@ class Worker(object):
 					loop = 0
 					pwdsent = False
 					authfailed = False
+					eof = False
 					while 1:
 						if loop < 1 and sudo:
 							curpatterns = ["Password:"] + patterns
@@ -3072,7 +3073,11 @@ class Worker(object):
 							break
 						elif self.subprocess.after is wexpect.TIMEOUT:
 							if not self.subprocess.isalive():
-								break
+								self.log("%s: Subprocess no longer alive (timeout)" %
+										 appname)
+								if eof:
+									break
+								eof = True
 							continue
 						elif (self.subprocess.after == "Password:" and
 							  loop < 1 and sudo):
@@ -3097,7 +3102,7 @@ class Worker(object):
 										 appname)
 								while not self.send_buffer:
 									if not self.subprocess.isalive():
-										self.log("%s: Subprocess no longer alive (OK)" %
+										self.log("%s: Subprocess no longer alive (unknown reason)" %
 												 appname)
 										break
 									sleep(.05)
@@ -3113,10 +3118,11 @@ class Worker(object):
 					# We need to call isalive() to set the exitstatus.
 					# We can't use wait() because it might block in the
 					# case of a timeout
-					self.log("%s: Checking subprocess status" % appname)
-					while self.subprocess.isalive():
-						sleep(.1)
-					self.log("%s: Subprocess no longer alive (OK)" % appname)
+					if self.subprocess.isalive():
+						self.log("%s: Checking subprocess status" % appname)
+						while self.subprocess.isalive():
+							sleep(.1)
+						self.log("%s: Subprocess no longer alive (OK)" % appname)
 					self.retcode = self.subprocess.exitstatus
 					if authfailed:
 						raise Error(lang.getstr("auth.failed"))
