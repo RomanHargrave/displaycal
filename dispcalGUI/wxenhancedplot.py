@@ -1816,12 +1816,17 @@ class PlotCanvas(wx.Panel):
             grid = factor * 10.**power
         if self._useScientificNotation and (power > 4 or power < -4):
             format = '%+7.1e'        
-        elif power >= 0:
-            digits = max(1, int(power))
-            format = '%' + `digits`+'.0f'
         else:
-            digits = -int(power)
-            format = '%'+`digits+2`+'.'+`digits`+'f'
+            if ideal > int(ideal):
+                fdigits = len(str(round(ideal, 4)).split('.')[-1][:4].rstrip('0'))
+            else:
+                fdigits = 0
+            if power >= 0:
+                digits = max(1, int(power))
+                format = '%' + `digits`+'.'+`fdigits`+'f'
+            else:
+                digits = -int(power)
+                format = '%'+`digits+2`+'.'+`fdigits`+'f'
         ticks = []
         t = -grid*_Numeric.floor(-lower/grid)
         while t <= upper:
