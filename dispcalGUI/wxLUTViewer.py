@@ -572,6 +572,8 @@ class LUTCanvas(plot.PlotCanvas):
 	
 	def _set_center(self):
 		""" Set center position from current X and Y axis """
+		if not self.last_draw:
+			return
 		axis_x = self.GetXCurrentRange()
 		axis_y = self.GetYCurrentRange()
 		if axis_x[0] < 0:
@@ -901,7 +903,7 @@ class LUTFrame(wx.Frame):
 				InfoDialog(self, msg=lang.getstr("error.file.open", path), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
-				return
+				profile = None
 		else:
 			try:
 				profile = ICCP.ICCProfile(path)
@@ -910,7 +912,7 @@ class LUTFrame(wx.Frame):
 									 "\n" + path, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
-				return
+				profile = None
 		self.show_actual_lut_cb.SetValue(False)
 		self.current_cal = profile
 		self.LoadProfile(profile)
@@ -1277,19 +1279,19 @@ class LUTFrame(wx.Frame):
 				self.load_lut(get_display_profile())
 
 	def LoadProfile(self, profile):
+		if profile and not isinstance(profile, ICCP.ICCProfile):
+			try:
+				profile = ICCP.ICCProfile(profile)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				show_result_dialog(Error(lang.getstr("profile.invalid") + 
+										 "\n" + profile), self)
+				profile = None
 		if not profile:
 			profile = ICCP.ICCProfile()
 			profile._data = "\0" * 128
 			profile._tags.desc = ICCP.TextDescriptionType("", "desc")
 			profile.size = len(profile.data)
 			profile.is_loaded = True
-		elif not isinstance(profile, ICCP.ICCProfile):
-			try:
-				profile = ICCP.ICCProfile(profile)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				show_result_dialog(Error(lang.getstr("profile.invalid") + 
-										 "\n" + profile), self)
-				return
 		if profile.getDescription():
 			title = u" \u2014 ".join([lang.getstr("calibration.lut_viewer.title"),
 									  profile.getDescription()])

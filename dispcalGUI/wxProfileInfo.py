@@ -414,11 +414,11 @@ class GamutCanvas(LUTCanvas):
 										 marker=marker,
 										 width=w))
 
+		xy_range = max(abs(min_x), abs(min_y)) + max(max_x, max_y)
 		if center:
 			self.axis_x = self.axis_y = (min(min_x, min_y), max(max_x, max_y))
-		xy_range = max(abs(min_x), abs(min_y)) + max(max_x, max_y)
-		self.spec_x = xy_range / step
-		self.spec_y = xy_range / step
+			self.spec_x = xy_range / step
+			self.spec_y = xy_range / step
 
 		if polys:
 			graphics = plot.PlotGraphics(polys, title, label_x, label_y)
@@ -430,8 +430,8 @@ class GamutCanvas(LUTCanvas):
 									  colour=wx.Colour(0x33, 0x33, 0x33),
 									  size=0)
 			graphics.objects.append(spacer)
-			boundingbox = spacer.boundingBox()
 			if center:
+				boundingbox = spacer.boundingBox()
 				self.resetzoom(boundingbox)
 				self.center(boundingbox)
 			self._DrawCanvas(graphics)
@@ -813,6 +813,7 @@ class GamutViewOptions(wx.Panel):
 		self.toggle_clut.SetMaxFontSize(11)
 		self.options_sizer.Add(self.toggle_clut, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.toggle_clut.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler)
+		self.toggle_clut.Hide()
 		
 		# Direction selection
 		self.direction_select = wx.Choice(self, -1,
@@ -823,6 +824,7 @@ class GamutViewOptions(wx.Panel):
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
 		self.direction_select.SetSelection(0)
+		self.direction_select.Hide()
 
 		self.sizer.Add((0, 0))
 
@@ -937,7 +939,8 @@ class GamutViewOptions(wx.Panel):
 	def order(self):
 		parent = self.TopLevelParent
 		return {True: "n",
-				False: "r"}.get(not ("B2A0" in parent.profile.tags or
+				False: "r"}.get(bool(parent.profile) and 
+								not ("B2A0" in parent.profile.tags or
 									 "A2B0" in parent.profile.tags) or
 								self.toggle_clut.GetValue())
 
@@ -950,7 +953,8 @@ class GamutViewOptions(wx.Panel):
 	def toggle_clut_handler(self, event):
 		parent = self.TopLevelParent
 		self.Freeze()
-		self.direction_select.Show("B2A0" in parent.profile.tags and
+		self.direction_select.Show(bool(parent.profile) and 
+								   "B2A0" in parent.profile.tags and
 								   "A2B0" in parent.profile.tags and
 								   self.toggle_clut.GetValue())
 		self.DrawCanvas(reset=False)
@@ -1260,6 +1264,7 @@ class ProfileInfoFrame(LUTFrame):
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
 									     "\n" + profile), self)
+				self.DrawCanvas(reset=reset)
 				return
 		self.profile = profile
 		self.rTRC = profile.tags.get("rTRC")
