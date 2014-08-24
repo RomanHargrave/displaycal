@@ -1415,6 +1415,10 @@ class ProfileInfoFrame(LUTFrame):
 		self.Thaw()
 	
 	def OnClose(self, event):
+		if (getattr(self.worker, "thread", None) and
+			self.worker.thread.isAlive()):
+			self.worker.abort_subprocess(True)
+			return
 		self.worker.wrapup(False)
 		event.Skip()
 

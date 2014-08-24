@@ -2132,6 +2132,10 @@ class TestchartEditor(wx.Frame):
 		return True
 
 	def tc_close_handler(self, event = None):
+		if (getattr(self.worker, "thread", None) and
+			self.worker.thread.isAlive()):
+			self.worker.abort_subprocess(True)
+			return
 		if (not event or self.IsShownOnScreen()) and self.tc_check_save_ti1(False):
 			setcfg("tc.saturation_sweeps",
 				   self.saturation_sweeps_intctrl.GetValue())

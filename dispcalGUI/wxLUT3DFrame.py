@@ -102,6 +102,10 @@ class LUT3DFrame(BaseFrame):
 			self.Center()
 	
 	def OnClose(self, event=None):
+		if (getattr(self.worker, "thread", None) and
+			self.worker.thread.isAlive()):
+			self.worker.abort_subprocess(True)
+			return
 		if (self.IsShownOnScreen() and not self.IsMaximized() and
 			not self.IsIconized()):
 			x, y = self.GetScreenPosition()
