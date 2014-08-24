@@ -6009,8 +6009,12 @@ class MainFrame(BaseFrame):
 		self.worker.interactive = False
 		if not isinstance(result, Exception) and result:
 			wx.CallAfter(self.update_calibration_file_ctrl)
+			if getcfg("trc"):
+				cal = True
+			else:
+				cal = get_data_path("linear.cal")
 			self.worker.start_measurement(self.calibrate_and_profile_finish,
-										  apply_calibration=bool(getcfg("trc")), 
+										  apply_calibration=cal, 
 										  progress_msg=lang.getstr("measuring.characterization"), 
 										  resume=True, continue_next=True)
 		else:
