@@ -840,7 +840,8 @@ class TestchartEditor(wx.Frame):
 			elif value < 0:
 				raise ValueError("Negative RGB value %r%% is invalid" % value)
 		except ValueError, exception:
-			wx.Bell()
+			if not self.grid.GetBatchCount():
+				wx.Bell()
 			if label in self.ti1[0]["DATA_FORMAT"].values():
 				strval = "%.6f" % sample[label]
 				if "." in strval:
