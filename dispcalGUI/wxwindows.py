@@ -1123,8 +1123,7 @@ class CustomGrid(wx.grid.Grid):
 				ri.Next()
 			return rows
 
-	def GetColLeftRight(self, col):
-		c = 0
+	def GetColLeftRight(self, col, c=0):
 		left = 0
 		while c < col:
 			left += self.GetColSize(c)
@@ -1132,8 +1131,7 @@ class CustomGrid(wx.grid.Grid):
 		right = left + self.GetColSize(col) - 1
 		return left, right
 
-	def GetRowTopBottom(self, row):
-		r = 0
+	def GetRowTopBottom(self, row, r=0):
 		top = 0
 		while r < row:
 			top += self.GetRowSize(r)
@@ -1326,8 +1324,14 @@ class CustomGrid(wx.grid.Grid):
 		x, y = self.CalcUnscrolledPosition((0,0))
 		pt = dc.GetDeviceOrigin()
 		dc.SetDeviceOrigin(pt.x-x, pt.y)
-		for col in cols:
-			left, right = self.GetColLeftRight(col)
+		leftoffset = 0
+		for i, col in enumerate(cols):
+			left, right = self.GetColLeftRight(col, cols[0] if i > 0 else 0)
+			if i > 0:
+				left += leftoffset
+				right += leftoffset
+			else:
+				leftoffset = left
 			rect = wx.Rect()
 			rect.left = left
 			rect.right = right
@@ -1361,8 +1365,14 @@ class CustomGrid(wx.grid.Grid):
 		x, y = self.CalcUnscrolledPosition((0,0))
 		pt = dc.GetDeviceOrigin()
 		dc.SetDeviceOrigin(pt.x, pt.y-y)
-		for row in rows:
-			top, bottom = self.GetRowTopBottom(row)
+		topoffset = 0
+		for i, row in enumerate(rows):
+			top, bottom = self.GetRowTopBottom(row, rows[0] if i > 0 else 0)
+			if i > 0:
+				top += topoffset
+				bottom += topoffset
+			else:
+				topoffset = top
 			rect = wx.Rect()
 			rect.top = top
 			rect.bottom = bottom
