@@ -291,6 +291,12 @@ class BaseFrame(wx.Frame):
 						child.Bind(wx.EVT_SET_FOCUS, self.focus_handler)
 				if not hasattr(self, child.Name):
 					setattr(self, child.Name, child)
+			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+				isinstance(child, wx.Panel)):
+				# No need to enable double buffering under Linux and Mac OS X.
+				# Under Windows, enabling double buffering on the panel seems
+				# to work best to reduce flicker.
+				child.SetDoubleBuffered(True)
 
 
 class BaseInteractiveDialog(wx.Dialog):
@@ -514,7 +520,7 @@ class BitmapBackgroundPanel(wx.PyPanel):
 							else img.GetSize()[1], quality=self.scalequality)
 				bmp = img.ConvertToBitmap()
 			dc.DrawBitmap(bmp, 0, 0)
-			if self.repeat_sub_bitmap_h:
+			if self.repeat_sub_bitmap_h and self.Size[0] > bmp.Size[0]:
 				sub_bmp = bmp.GetSubBitmap(self.repeat_sub_bitmap_h)
 				sub_img = sub_bmp.ConvertToImage()
 				sub_img.Rescale(self.GetSize()[0] -

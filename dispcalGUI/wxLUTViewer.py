@@ -881,6 +881,12 @@ class LUTFrame(wx.Frame):
 				child.SetMaxFontSize(11)
 			child.Bind(wx.EVT_KEY_DOWN, self.key_handler)
 			child.Bind(wx.EVT_MOUSEWHEEL, self.OnWheel)
+			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+				isinstance(child, wx.Panel)):
+				# No need to enable double buffering under Linux and Mac OS X.
+				# Under Windows, enabling double buffering on the panel seems
+				# to work best to reduce flicker.
+				child.SetDoubleBuffered(True)
 		
 		self.display_no = -1
 		self.display_rects = get_display_rects()

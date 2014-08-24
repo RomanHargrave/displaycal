@@ -199,6 +199,13 @@ class UntetheredFrame(wx.Frame):
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
 		# Final initialization steps
+		for child in self.GetAllChildren():
+			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+				isinstance(child, wx.Panel)):
+				# No need to enable double buffering under Linux and Mac OS X.
+				# Under Windows, enabling double buffering on the panel seems
+				# to work best to reduce flicker.
+				child.SetDoubleBuffered(True)
 		self.logger = get_file_logger("untethered")
 		self._setup()
 		

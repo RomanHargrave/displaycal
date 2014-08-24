@@ -645,6 +645,12 @@ class TestchartEditor(wx.Frame):
 			if hasattr(child, "SetFont"):
 				child.SetMaxFontSize(11)
 			child.Bind(wx.EVT_KEY_DOWN, self.tc_key_handler)
+			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+				isinstance(child, wx.Panel)):
+				# No need to enable double buffering under Linux and Mac OS X.
+				# Under Windows, enabling double buffering on the panel seems
+				# to work best to reduce flicker.
+				child.SetDoubleBuffered(True)
 		self.Bind(wx.EVT_MOVE, self.tc_move_handler)
 		self.Bind(wx.EVT_SIZE, self.tc_size_handler, self)
 		self.Bind(wx.EVT_MAXIMIZE, self.tc_size_handler, self)
