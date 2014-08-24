@@ -2316,9 +2316,9 @@ class ProgressDialog(wx.Dialog):
 			accels.append((wx.ACCEL_NORMAL, keycode, id))
 		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		
-		text_extent = self.msg.GetTextExtent("E")
-		w, h = (text_extent[0] * 80, 
-				text_extent[1] * 4)
+		self.msg.Label = "\n".join(["E" * 80] * 4)
+		w, h = self.msg.Size
+		self.msg.WindowStyle |= wx.ST_NO_AUTORESIZE
 		self.msg.SetMinSize((w, h))
 		self.msg.SetSize((w, h))
 		self.Fit()
@@ -2403,6 +2403,7 @@ class ProgressDialog(wx.Dialog):
 	def Pulse(self, msg=None):
 		if msg and msg != self.msg.Label:
 			self.msg.SetLabel(msg)
+			self.msg.Wrap(self.msg.ContainingSizer.Size[0])
 			self.msg.Refresh()
 			self.msg.Update()
 		if getattr(self, "time2", 0):
@@ -2425,6 +2426,7 @@ class ProgressDialog(wx.Dialog):
 	def Update(self, value, msg=None):
 		if msg and msg != self.msg.Label:
 			self.msg.SetLabel(msg)
+			self.msg.Wrap(self.msg.ContainingSizer.Size[0])
 			self.msg.Refresh()
 			self.msg.Update()
 		if hasattr(self, "time2"):
