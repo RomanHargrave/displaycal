@@ -9957,7 +9957,7 @@ class MainFrame(BaseFrame):
 							if "w" in o[1:]:
 								setcfg("drift_compensation.whitelevel", 1)
 							continue
-					if not black_point_correction:
+					if trc and not black_point_correction:
 						setcfg("calibration.black_point_correction.auto", 1)
 				if not ccmx:
 					ccxx = (glob.glob(os.path.join(os.path.dirname(path), "*.ccmx")) or
