@@ -135,7 +135,15 @@ import xh_filebrowsebutton
 import xh_floatspin
 
 # wxPython
-from wx import aui
+try:
+	# Only wx.lib.aui.AuiNotebook looks reasonable across _all_ platforms.
+	# Other tabbed book controls like wx.Notebook or wx.aui.AuiNotebook are
+	# impossible to get to look right under GTK because there's no way to
+	# set the correct background color for the pages.
+	from wx.lib.agw import aui
+except ImportError:
+	# Fall back to wx.aui under ancient wxPython versions
+	from wx import aui
 from wx import xrc
 from wx.lib import delayedresult
 from wx.lib.art import flagart
@@ -4490,6 +4498,7 @@ class MainFrame(BaseFrame):
 			display_settings_tabs = wx.Notebook(dlg, -1)
 		else:
 			display_settings_tabs = aui.AuiNotebook(dlg, -1, style=aui.AUI_NB_TOP)
+			display_settings_tabs._agwFlags = aui.AUI_NB_TOP
 		# Column layout
 		display_settings = ((# 1st tab
 							 lang.getstr("osd") + ": " +
@@ -4520,8 +4529,6 @@ class MainFrame(BaseFrame):
 		display_settings_ctrls = []
 		for tab_num, settings in enumerate(display_settings):
 			panel = wx.Panel(display_settings_tabs, -1)
-			if isinstance(display_settings_tabs, aui.AuiNotebook):
-				panel.BackgroundColour = dlg.BackgroundColour
 			panel.SetSizer(wx.BoxSizer(wx.VERTICAL))
 			gridsizer = wx.FlexGridSizer(0, settings[1] * 2, 4, 12)
 			panel.GetSizer().Add(gridsizer, 1, wx.ALL | wx.EXPAND, border=8)
