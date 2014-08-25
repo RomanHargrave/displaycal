@@ -882,7 +882,8 @@ class LUTFrame(wx.Frame):
 			child.Bind(wx.EVT_KEY_DOWN, self.key_handler)
 			child.Bind(wx.EVT_MOUSEWHEEL, self.OnWheel)
 			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
-				isinstance(child, wx.Panel)):
+				isinstance(child, wx.Panel) and
+				not isinstance(child, LUTCanvas)):
 				# No need to enable double buffering under Linux and Mac OS X.
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.

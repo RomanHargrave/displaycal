@@ -983,7 +983,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.splitter = TwoWaySplitter(self, -1, agwStyle = wx.SP_LIVE_UPDATE | wx.SP_NOSASH)
 		self.sizer.Add(self.splitter, 1, flag=wx.EXPAND)
 		
-		p1 = wx.Panel(self.splitter)
+		p1 = wx.Panel(self.splitter, name="canvaspanel")
 		p1.SetBackgroundColour(BGCOLOUR)
 		p1.sizer = wx.BoxSizer(wx.VERTICAL)
 		p1.SetSizer(p1.sizer)
@@ -1066,7 +1066,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.options_panel.AddPage(self.gamut_view_options, "")
 		
 		# Curve view options
-		self.lut_view_options = wx.Panel(p1)
+		self.lut_view_options = wx.Panel(p1, name="lut_view_options")
 		self.lut_view_options.SetBackgroundColour(BGCOLOUR)
 		self.lut_view_options_sizer = self.box_sizer = wx.FlexGridSizer(0, 3, 4, 4)
 		self.lut_view_options_sizer.AddGrowableCol(0)
@@ -1146,7 +1146,7 @@ class ProfileInfoFrame(LUTFrame):
 		
 		self.lut_view_options_sizer.Add((0, 0))
 		
-		p2 = wx.Panel(self.splitter)
+		p2 = wx.Panel(self.splitter, name="gridpanel")
 		p2.sizer = wx.BoxSizer(wx.VERTICAL)
 		p2.SetSizer(p2.sizer)
 		self.splitter.AppendWindow(p2)
@@ -1218,7 +1218,9 @@ class ProfileInfoFrame(LUTFrame):
 			child.Bind(wx.EVT_KEY_DOWN, self.key_handler)
 			child.Bind(wx.EVT_MOUSEWHEEL, self.OnWheel)
 			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
-				isinstance(child, wx.Panel)):
+				isinstance(child, wx.Panel) and
+				not isinstance(child, (LUTCanvas, TwoWaySplitter)) and
+				not isinstance(child.Parent, TwoWaySplitter)):
 				# No need to enable double buffering under Linux and Mac OS X.
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.
