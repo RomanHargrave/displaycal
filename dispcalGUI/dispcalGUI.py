@@ -126,10 +126,11 @@ from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent, FileDrop)
 from wxfixes import ThemedGenButton
-from wxwindows import (AboutDialog, BaseFrame, BitmapBackgroundPanel,
-					   BitmapBackgroundPanelText, ConfirmDialog, CustomGrid,
-					   CustomCellBoolRenderer, InfoDialog, LogWindow,
-					   ProgressDialog, TooltipWindow, get_gradient_panel)
+from wxwindows import (AboutDialog, AuiBetterTabArt, BaseFrame,
+					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
+					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
+					   InfoDialog, LogWindow, ProgressDialog, TooltipWindow,
+					   get_gradient_panel)
 import floatspin
 import xh_filebrowsebutton
 import xh_floatspin
@@ -4445,16 +4446,21 @@ class MainFrame(BaseFrame):
 		# Description field
 		boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 												  lang.getstr("description")),
-									 wx.HORIZONTAL)
+									 wx.VERTICAL)
 		dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+		if sys.platform not in ("darwin", "win32"):
+			boxsizer.Add((1, 4))
 		dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
 											   description)
-		boxsizer.Add(dlg.description_txt_ctrl, 1, flag=wx.ALL, border=4)
+		boxsizer.Add(dlg.description_txt_ctrl, 1, flag=wx.ALL | wx.EXPAND,
+					 border=4)
 		# Display properties
 		boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 												  lang.getstr("display.properties")),
 									 wx.VERTICAL)
 		dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+		if sys.platform not in ("darwin", "win32"):
+			boxsizer.Add((1, 4))
 		box_gridsizer = wx.FlexGridSizer(0, 1)
 		boxsizer.Add(box_gridsizer, 1, flag=wx.ALL, border=4)
 		# Display panel surface type, connection
@@ -4499,6 +4505,14 @@ class MainFrame(BaseFrame):
 		else:
 			display_settings_tabs = aui.AuiNotebook(dlg, -1, style=aui.AUI_NB_TOP)
 			display_settings_tabs._agwFlags = aui.AUI_NB_TOP
+			try:
+				art = AuiBetterTabArt()
+				if sys.platform == "win32":
+					art.SetDefaultColours(aui.StepColour(dlg.BackgroundColour, 96))
+				display_settings_tabs.SetArtProvider(art)
+			except Exception, exception:
+				safe_print(exception)
+				pass
 		# Column layout
 		display_settings = ((# 1st tab
 							 lang.getstr("osd") + ": " +
@@ -4583,8 +4597,8 @@ class MainFrame(BaseFrame):
 									   flag=wx.ALIGN_CENTER_VERTICAL |
 											wx.ALIGN_LEFT | wx.RIGHT, border=4)
 			if isinstance(display_settings_tabs, aui.AuiNotebook):
-				if sys.platform == "darwin":
-					display_settings_tabs.SetTabCtrlHeight(int(round(display_settings_tabs.GetTabCtrlHeight() * 1.2)))
+				if sys.platform != "win32":
+					display_settings_tabs.SetTabCtrlHeight(display_settings_tabs.GetTabCtrlHeight() + 2)
 				height = display_settings_tabs.GetHeightForPageHeight(panel.Sizer.MinSize[1])
 			else:
 				height = -1
@@ -4697,12 +4711,17 @@ class MainFrame(BaseFrame):
 							 bitmap=geticon(32, "dialog-information"),
 							 show=False)
 			# Link to ICC Profile Taxi service
-			dlg.sizer3.Add(wx.lib.hyperlink.HyperLinkCtrl(dlg, -1,
-														  label="icc.opensuse.org", 
-														  URL="http://icc.opensuse.org"),
-						   flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL |
-								wx.TOP,
-						   border=12)
+			hyperlink = wx.lib.hyperlink.HyperLinkCtrl(dlg.buttonpanel, -1,
+													   label="icc.opensuse.org", 
+													   URL="http://icc.opensuse.org")
+			border = (dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] -
+					  hyperlink.Size[0])
+			if border < 24:
+				border = 24
+			dlg.sizer2.Insert(0, hyperlink, flag=wx.ALIGN_LEFT |
+												 wx.ALIGN_CENTER_VERTICAL |
+												 wx.RIGHT, border=border)
+			dlg.sizer2.Insert(0, (44, 1))
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
