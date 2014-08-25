@@ -639,8 +639,8 @@ class ConfirmDialog(BaseInteractiveDialog):
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
 		
 		self.buttonpanel.Layout()
-		
-		self.Fit()
+		self.sizer0.SetSizeHints(self)
+		self.sizer0.Layout()
 
 	def OnClose(self, event):
 		if hasattr(self, "OnCloseIntercept"):
