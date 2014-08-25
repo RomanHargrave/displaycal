@@ -5057,6 +5057,7 @@ class MainFrame(BaseFrame):
 									cancel=lang.getstr("cancel"),
 									alt=lang.getstr("browse"),
 									bitmap=geticon(32, "dispcalGUI-profile-info"))
+				dlg.ok.SetDefault()
 				result = dlg.ShowModal()
 				if result == wx.ID_CANCEL:
 					return
