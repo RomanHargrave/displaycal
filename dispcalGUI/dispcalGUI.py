@@ -9793,6 +9793,7 @@ class MainFrame(BaseFrame):
 			cal.close()
 			setcfg("last_cal_or_icc_path", path)
 			update_ccmx_items = True
+			set_size = True
 			if ext.lower() in (".icc", ".icm"):
 				setcfg("last_icc_path", path)
 				(options_dispcal, 
@@ -9843,6 +9844,8 @@ class MainFrame(BaseFrame):
 							# No need to update ccmx items in update_controls,
 							# as comport_ctrl_handler took care of it
 							update_ccmx_items = False
+							# comport_ctrl_handler already called set_size
+							set_size = False
 							break
 			else:
 				try:
@@ -10073,6 +10076,8 @@ class MainFrame(BaseFrame):
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)
+				if set_size:
+					self.set_size(True)
 				writecfg()
 
 				if ext.lower() in (".icc", ".icm"):
