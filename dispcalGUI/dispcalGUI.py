@@ -6516,6 +6516,8 @@ class MainFrame(BaseFrame):
 												  load_vcgt=False)
 						else:
 							setcfg("calibration.file", profile_path)
+							setcfg("3dlut.output.profile", profile_path)
+							setcfg("measurement_report.output_profile", profile_path)
 							self.update_controls(update_profile_name=False)
 				if "meta" in profile.tags:
 					for key in ("avg", "max", "rms"):
@@ -10035,6 +10037,9 @@ class MainFrame(BaseFrame):
 							setcfg("gamap_saturation_intent", o[1:])
 							continue
 				setcfg("calibration.file", path)
+				if ext.lower() in (".icc", ".icm"):
+					setcfg("3dlut.output.profile", path)
+					setcfg("measurement_report.output_profile", path)
 				if "CTI3" in ti3_lines:
 					if debug:
 						safe_print("[D] load_cal_handler testchart.file:", path)
