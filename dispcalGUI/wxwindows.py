@@ -2631,8 +2631,8 @@ class ProgressDialog(wx.Dialog):
 		self.msg.WindowStyle |= wx.ST_NO_AUTORESIZE
 		self.msg.SetMinSize((w, h))
 		self.msg.SetSize((w, h))
-		self.Fit()
-		self.SetMinSize(self.GetSize())
+		self.sizer0.SetSizeHints(self)
+		self.sizer0.Layout()
 		self.msg.SetLabel(msg.replace("&", "&&"))
 		
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
