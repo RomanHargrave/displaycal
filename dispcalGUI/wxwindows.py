@@ -2531,6 +2531,11 @@ class ProgressDialog(wx.Dialog):
 		if sys.platform == "win32":
 			bgcolor = self.BackgroundColour
 			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+			if sys.getwindowsversion() >= (6, ):
+				# No need to enable double buffering under Linux and Mac OS X.
+				# Under Windows, enabling double buffering on the panel seems
+				# to work best to reduce flicker.
+				self.SetDoubleBuffered(True)
 		if parent and parent.Icon and parent.Icon.IsOk():
 			self.Icon = parent.Icon
 		else:
