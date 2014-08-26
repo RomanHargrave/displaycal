@@ -14,8 +14,7 @@ import config
 import localization as lang
 import worker
 from worker import check_set_argyll_bin
-from wxaddons import FileDrop
-from wxwindows import (BaseFrame, ConfirmDialog, InfoDialog, wx)
+from wxwindows import (BaseFrame, ConfirmDialog, FileDrop, InfoDialog, wx)
 import xh_filebrowsebutton
 
 from wx import xrc
@@ -43,6 +42,20 @@ class LUT3DFrame(BaseFrame):
 
 		self.worker = worker.Worker(self)
 		self.worker.set_argyll_version("collink")
+
+		for which in ("input", "abstract", "output"):
+			ctrl = self.FindWindowByName("%s_profile_ctrl" % which)
+			setattr(self, "%s_profile_ctrl" % which, ctrl)
+			ctrl.changeCallback = getattr(self, "%s_profile_ctrl_handler" % 
+												which)
+			if which not in ("abstract", "output"):
+				ctrl.SetHistory(get_data_path("ref", "\.(icc|icm)$"))
+			ctrl.SetMaxFontSize(11)
+			# Drop targets
+			droptarget = FileDrop(self,
+								  {".icc": getattr(self, "%s_drop_handler" % which),
+								   ".icm": getattr(self, "%s_drop_handler" % which)})
+			ctrl.SetDropTarget(droptarget)
 
 		# Bind event handlers
 		self.abstract_profile_cb.Bind(wx.EVT_CHECKBOX,
@@ -144,9 +157,6 @@ class LUT3DFrame(BaseFrame):
 			   int(self.apply_cal_cb.GetValue()))
 		config.writecfg()
 
-	def abstract_drop_unsupported_handler(self):
-		self.drop_unsupported("abstract")
-
 	def black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.black_output_offset_intctrl.GetId():
 			self.black_output_offset_ctrl.SetValue(
@@ -191,20 +201,6 @@ class LUT3DFrame(BaseFrame):
 			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
 		config.writecfg()
 		self.update_trc_control()
-
-	def input_drop_unsupported_handler(self):
-		self.drop_unsupported("input")
-		
-	def output_drop_unsupported_handler(self):
-		self.drop_unsupported("output")
-	
-	def drop_unsupported(self, which):
-		if not self.worker.is_working():
-			files = getattr(self, "%s_droptarget" % which)._filenames
-			InfoDialog(self, msg=lang.getstr("error.file_type_unsupported") +
-							 "\n\n" + "\n".join(files),
-					   ok=lang.getstr("ok"),
-					   bitmap=geticon(32, "dialog-error"))
 
 	def abstract_drop_handler(self, path):
 		if not self.worker.is_working():
@@ -560,38 +556,17 @@ class LUT3DFrame(BaseFrame):
 	def setup_language(self):
 		BaseFrame.setup_language(self)
 		
-		# Create the file picker ctrls dynamically to get translated strings
 		for which in ("input", "abstract", "output"):
-			setattr(self, "%s_profile_ctrl" % which,
-					self.FindWindowByName("%s_profile_ctrl" % which))
 			msg = {"input": lang.getstr("3dlut.input.profile"),
 				   "abstract": lang.getstr("3dlut.use_abstract_profile"),
 				   "output": lang.getstr("output.profile")}[which]
 			kwargs = dict(toolTip=msg.rstrip(":"),
 						  dialogTitle=msg,
 						  fileMask=lang.getstr("filetype.icc")
-								   + "|*.icc;*.icm",
-						  changeCallback=getattr(self,
-												 "%s_profile_ctrl_handler" % 
-												 which),
-						  name="%s_profile_ctrl" % which)
-			if which not in ("abstract", "output"):
-				kwargs["history"] = get_data_path("ref", "\.(icc|icm)$")
+								   + "|*.icc;*.icm")
 			ctrl = getattr(self, "%s_profile_ctrl" % which)
 			for name, value in kwargs.iteritems():
-				if name == "history":
-					ctrl.SetHistory(value)
-				else:
-					setattr(ctrl, name, value)
-			ctrl.SetMaxFontSize(11)
-			# Drop targets
-			setattr(self, "%s_droptarget" % which, FileDrop())
-			getattr(self, "%s_droptarget" % which).drophandlers = {".icc": getattr(self, "%s_drop_handler" % which),
-																   ".icm": getattr(self, "%s_drop_handler" % which)}
-			getattr(self, "%s_droptarget" % which).unsupported_handler = getattr(self, "%s_drop_unsupported_handler" % which)
-			getattr(self, "%s_profile_ctrl"
-						  % which).SetDropTarget(getattr(self, "%s_droptarget"
-														 % which))
+				setattr(ctrl, name, value)
 
 		items = []
 		for item in ("trc.rec1886", "custom"):

@@ -124,13 +124,13 @@ from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
-					  CustomGridCellEvent, FileDrop)
+					  CustomGridCellEvent)
 from wxfixes import ThemedGenButton
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseFrame,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
-					   InfoDialog, LogWindow, ProgressDialog, TooltipWindow,
-					   get_gradient_panel)
+					   FileDrop, InfoDialog, LogWindow, ProgressDialog,
+					   TooltipWindow, get_gradient_panel)
 import floatspin
 import xh_filebrowsebutton
 import xh_floatspin
@@ -763,6 +763,17 @@ class GamapFrame(BaseFrame):
 		sizer.Clear(True)
 		sizer.Add(gradientpanel, 1)
 
+		self.gamap_profile = self.FindWindowByName("gamap_profile")
+		self.gamap_profile.changeCallback = self.gamap_profile_handler
+		self.gamap_profile.SetHistory(get_data_path("ref", "\.(icm|icc)$"))
+		self.gamap_profile.SetMaxFontSize(11)
+		self.droptarget = FileDrop(self)
+		self.droptarget.drophandlers = {
+			".icc": self.drop_handler,
+			".icm": self.drop_handler
+		}
+		self.gamap_profile.SetDropTarget(self.droptarget)
+
 		# Bind event handlers
 		self.Bind(wx.EVT_CHECKBOX, self.gamap_perceptual_cb_handler, 
 				   id=self.gamap_perceptual_cb.GetId())
@@ -812,6 +823,10 @@ class GamapFrame(BaseFrame):
 	def b2a_size_ctrl_handler(self, event):
 		setcfg("profile.b2a.hires.size",
 			   config.valid_values["profile.b2a.hires.size"][self.b2a_size_ctrl.GetSelection()])
+
+	def drop_handler(self, path):
+		self.gamap_profile.SetPath(path)
+		self.gamap_profile_handler()
 
 	def gamap_profile_handler(self, event=None):
 		v = self.gamap_profile.GetPath()
@@ -952,13 +967,8 @@ class GamapFrame(BaseFrame):
 		"""
 		BaseFrame.setup_language(self)
 		
-		# Create the profile picker ctrl dynamically to get translated strings
-		self.gamap_profile = self.FindWindowByName("gamap_profile")
 		self.gamap_profile.dialogTitle = lang.getstr("gamap.profile")
 		self.gamap_profile.fileMask = lang.getstr("filetype.icc") + "|*.icc;*.icm"
-		self.gamap_profile.changeCallback = self.gamap_profile_handler
-		self.gamap_profile.SetHistory(get_data_path("ref", "\.(icm|icc)$"))
-		self.gamap_profile.SetMaxFontSize(11)
 		
 		intents = ["a", "aa", "aw", "la", "ms", "p", "r", "s"]
 		if (self.Parent and hasattr(self.Parent, "worker") and
@@ -1243,7 +1253,7 @@ class MainFrame(BaseFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_SIZE, self.OnResize, self)
-		self.droptarget = FileDrop()
+		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
 			".cal": self.cal_drop_handler,
 			".icc": self.cal_drop_handler,
@@ -1251,7 +1261,6 @@ class MainFrame(BaseFrame):
 			".ti1": self.ti1_drop_handler,
 			".ti3": self.ti3_drop_handler
 		}
-		self.droptarget.unsupported_handler = self.drop_unsupported_handler
 
 		# Main panel
 		self.panel = self.FindWindowByName("panel")
@@ -1379,20 +1388,6 @@ class MainFrame(BaseFrame):
 		"""
 		if not self.worker.is_working():
 			self.create_profile_handler(None, path)
-
-	def drop_unsupported_handler(self):
-		"""
-		Drag'n'drop handler for unsupported files. 
-		
-		Shows an error message.
-		
-		"""
-		if not self.worker.is_working():
-			files = self.droptarget._filenames
-			InfoDialog(self, msg=lang.getstr("error.file_type_unsupported") +
-								 "\n\n" + "\n".join(files), 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
 
 	def init_gamapframe(self):
 		"""

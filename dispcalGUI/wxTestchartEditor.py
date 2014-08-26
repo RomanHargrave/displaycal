@@ -27,9 +27,9 @@ from util_os import launch_file, waccess
 from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_util, show_result_dialog)
-from wxaddons import CustomEvent, CustomGridCellEvent, FileDrop, wx
+from wxaddons import CustomEvent, CustomGridCellEvent, wx
 from wxwindows import (CustomGrid, ConfirmDialog,
-					   FileBrowseBitmapButtonWithChoiceHistory,
+					   FileBrowseBitmapButtonWithChoiceHistory, FileDrop,
 					   InfoDialog, get_gradient_panel)
 from wxfixes import GenBitmapButton as BitmapButton
 import floatspin
@@ -66,7 +66,7 @@ class TestchartEditor(wx.Frame):
 
 		self.tc_algos_ba = swap_dict_keys_values(self.tc_algos_ab)
 		
-		self.droptarget = FileDrop()
+		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
 			".cgats": self.ti1_drop_handler,
 			".icc": self.ti1_drop_handler,
@@ -75,7 +75,6 @@ class TestchartEditor(wx.Frame):
 			".ti3": self.ti1_drop_handler,
 			".txt": self.ti1_drop_handler
 		}
-		self.droptarget.unsupported_handler = self.drop_unsupported_handler
 
 		if tc_use_alternate_preview:
 			# splitter
@@ -303,6 +302,12 @@ class TestchartEditor(wx.Frame):
 				  id=self.tc_precond_profile_current_btn.GetId())
 		hsizer.Add(self.tc_precond_profile_current_btn, 0,
 				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
+		self.precond_droptarget = FileDrop(self)
+		self.precond_droptarget.drophandlers = {
+			".icc": self.precond_profile_drop_handler,
+			".icm": self.precond_profile_drop_handler
+		}
+		self.tc_precond_profile.SetDropTarget(self.precond_droptarget)
 
 		# limit samples to lab sphere
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -661,14 +666,12 @@ class TestchartEditor(wx.Frame):
 		self.tc_check()
 		wx.CallAfter(self.tc_load_cfg_from_ti1, None, path, cfg, target)
 
+	def precond_profile_drop_handler(self, path):
+		self.tc_precond_profile.SetPath(path)
+		self.tc_precond_profile_handler()
+
 	def ti1_drop_handler(self, path):
 		self.tc_load_cfg_from_ti1(None, path)
-
-	def drop_unsupported_handler(self):
-		if not self.worker.is_working():
-			files = self.droptarget._filenames
-			InfoDialog(self, msg = lang.getstr("error.file_type_unsupported") +
-								 "\n\n" + "\n".join(files), ok = lang.getstr("ok"), bitmap = geticon(32, "dialog-error"))
 
 	def resize_grid(self):
 		num_cols = self.grid.GetNumberCols()

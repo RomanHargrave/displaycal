@@ -10,17 +10,6 @@
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
                 <object class="sizeritem">
-                  <object class="wxStaticText" name="profile_ctrl_label">
-                    <label>profile</label>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>10</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxFilePickerCtrl" name="profile_ctrl"/>
-                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                </object>
-                <object class="sizeritem">
                   <object class="wxStaticText" name="preset_ctrl_label">
                     <label>preset</label>
                   </object>
@@ -188,7 +177,7 @@
                       <object class="FloatSpin" name="red_Y">
                         <size>75, -1</size>
                         <min_val>-99</min_val>
-                        <max_val>100.0</max_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -254,7 +243,7 @@
                       <object class="FloatSpin" name="green_Y">
                         <size>75, -1</size>
                         <min_val>-99</min_val>
-                        <max_val>100.0</max_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>
@@ -320,7 +309,7 @@
                       <object class="FloatSpin" name="blue_Y">
                         <size>75, -1</size>
                         <min_val>-99</min_val>
-                        <max_val>100.0</max_val>
+                        <max_val>999.0</max_val>
                         <increment>0.01</increment>
                         <digits>2</digits>
                       </object>

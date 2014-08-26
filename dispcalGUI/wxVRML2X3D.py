@@ -8,8 +8,9 @@ from safe_print import safe_print
 from util_os import launch_file, make_win32_compatible_long_path, waccess
 from util_str import safe_unicode
 from worker import Worker, show_result_dialog
-from wxaddons import FileDrop, wx
+from wxaddons import wx
 from wxfixes import GenBitmapButton as BitmapButton
+from wxwindows import FileDrop
 import config
 import localization as lang
 import x3dom
@@ -70,7 +71,7 @@ def main(vrmlpath=None):
 												 force=force,
 												 cache=cache,
 												 worker=worker))
-		droptarget = FileDrop()
+		droptarget = FileDrop(frame)
 		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dfile(vrmlpath,
 															  html=html,
 															  embed=embed,
@@ -85,10 +86,6 @@ def main(vrmlpath=None):
 			".wrl.gz": vrml_drop_handler,
 			".wrz": vrml_drop_handler
 		}
-		droptarget.unsupported_handler = lambda: show_result_dialog(lang.getstr("error.file_type_unsupported") +
-																	"\n\n" +
-																	"\n".join(droptarget._filenames),
-																	frame)
 		btn.SetDropTarget(droptarget)
 		panelsizer.Add(btn, flag=wx.ALL, border=12)
 		frame.Fit()

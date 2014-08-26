@@ -777,9 +777,9 @@ class GamutViewOptions(wx.Panel):
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.comparison_profile_select.Bind(wx.EVT_CHOICE,
 											self.comparison_profile_select_handler)
-		droptarget = FileDrop({".icc": self.comparison_profile_drop_handler,
-							   ".icm": self.comparison_profile_drop_handler},
-							  parent=self.TopLevelParent)
+		droptarget = FileDrop(self.TopLevelParent,
+							  {".icc": self.comparison_profile_drop_handler,
+							   ".icm": self.comparison_profile_drop_handler})
 		self.comparison_profile_select.SetDropTarget(droptarget)
 		if srgb:
 			self.comparison_profile_select.SetSelection(1)
@@ -1181,9 +1181,9 @@ class ProfileInfoFrame(LUTFrame):
 			".icc": self.drop_handler,
 			".icm": self.drop_handler
 		}
-		droptarget = FileDrop(drophandlers, parent=self)
+		droptarget = FileDrop(self, drophandlers)
 		self.client.SetDropTarget(droptarget)
-		droptarget = FileDrop(drophandlers, parent=self)
+		droptarget = FileDrop(self, drophandlers)
 		self.grid.SetDropTarget(droptarget)
 
 		self.splitter.SetMinimumPaneSize(defaults["size.profile_info.w"] - self.splitter._GetSashSize())

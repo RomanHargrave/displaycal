@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import math
 import os
 import sys
 
@@ -14,8 +15,7 @@ import colormath
 import config
 import localization as lang
 import worker
-from wxaddons import FileDrop
-from wxwindows import BaseFrame, InfoDialog, wx
+from wxwindows import BaseFrame, FileDrop, InfoDialog, wx
 import floatspin
 import xh_floatspin
 
@@ -47,6 +47,14 @@ class SynthICCFrame(BaseFrame):
 		# Presets
 		presets = [""] + sorted(colormath.rgb_spaces.keys())
 		self.preset_ctrl.SetItems(presets)
+
+		self.worker = worker.Worker(self)
+
+		# Drop targets
+		self.droptarget = FileDrop(self)
+		self.droptarget.drophandlers = {".icc": self.drop_handler,
+										".icm": self.drop_handler}
+		self.panel.SetDropTarget(self.droptarget)
 
 		# Bind event handlers
 		self.preset_ctrl.Bind(wx.EVT_CHOICE, self.preset_ctrl_handler)
@@ -221,10 +229,45 @@ class SynthICCFrame(BaseFrame):
 		self.update_layout()
 	
 	def drop_handler(self, path):
-		pass
-	
-	def drop_unsupported_handler(self):
-		pass
+		try:
+			profile = ICCP.ICCProfile(path)
+		except (IOError, ICCP.ICCProfileInvalidError), exception:
+			show_result_dialog(Error(lang.getstr("profile.invalid")), self)
+		else:
+			if (profile.colorSpace != "RGB" or
+				profile.connectionColorSpace not in ("Lab", "XYZ")):
+				show_result_dialog(Error(lang.getstr("profile.unsupported",
+													 (profile.profileClass,
+													  profile.colorSpace))),
+								   self)
+				return
+			rgb = [(1, 1, 1), (1, 0, 0), (0, 1, 0), (0, 0, 1), (0, 0, 0)]
+			for i in xrange(256):
+				rgb.append((1.0 / 255 * i, 1.0 / 255 * i, 1.0 / 255 * i))
+			try:
+				colors = self.worker.xicclu(profile, rgb, intent="a")
+			except Exception, exception:
+				show_result_dialog(exception, self)
+			else:
+				for i, color in enumerate(("white", "red", "green", "blue",
+										   "black")):
+					for j, component in enumerate("XYZ"):
+						getattr(self, "%s_%s" %
+								(color, component)).SetValue(colors[i][j] /
+															 colors[0][1] * 100)
+					self.parse_XYZ(color)
+				self.black_XYZ_ctrl_handler(None)
+				trc = ICCP.CurveType()
+				for XYZ in colors[5:]:
+					trc.append(XYZ[1] / colors[0][1] * 65535)
+				transfer_function = trc.get_transfer_function()
+				if transfer_function and transfer_function[1] >= .95:
+					# Use detected transfer function
+					self.set_trc(round(transfer_function[0][1], 2))
+				else:
+					# Use 50% gamma value
+					self.set_trc(round(math.log(colors[132][1]) /
+									   math.log(128.0 / 255), 2))
 	
 	def enable_save_as_btn(self):
 		self.save_as_btn.Enable(bool(self.get_XYZ()))
@@ -349,34 +392,34 @@ class SynthICCFrame(BaseFrame):
 				for i, component in enumerate("xy"):
 					getattr(self, "%s_%s" % (color, component)).SetValue(locals()[color][i])
 			self.parse_xy(None)
-			if gamma == -1023:
-				# DICOM
-				self.trc_ctrl.SetSelection(1)
-			elif gamma == -3.0:
-				# L*
-				self.trc_ctrl.SetSelection(2)
-			elif gamma == -709:
-				# Rec. 709
-				self.trc_ctrl.SetSelection(3)
-			elif gamma == -1886:
-				# Rec. 1886
-				self.trc_ctrl.SetSelection(4)
-				self.trc_ctrl_handler()
-			elif gamma == -240:
-				# SMPTE 240M
-				self.trc_ctrl.SetSelection(5)
-			elif gamma == -2.4:
-				# sRGB
-				self.trc_ctrl.SetSelection(6)
-			else:
-				# Gamma
-				self.trc_ctrl.SetSelection(0)
-				setcfg("synthprofile.trc_gamma", gamma)
-			self.update_trc_controls()
+			self.set_trc(gamma)
 			self._updating_ctrls = False
-	
-	def profile_ctrl_handler(self, event):
-		pass
+
+	def set_trc(self, gamma):
+		if gamma == -1023:
+			# DICOM
+			self.trc_ctrl.SetSelection(1)
+		elif gamma == -3.0:
+			# L*
+			self.trc_ctrl.SetSelection(2)
+		elif gamma == -709:
+			# Rec. 709
+			self.trc_ctrl.SetSelection(3)
+		elif gamma == -1886:
+			# Rec. 1886
+			self.trc_ctrl.SetSelection(4)
+			self.trc_ctrl_handler()
+		elif gamma == -240:
+			# SMPTE 240M
+			self.trc_ctrl.SetSelection(5)
+		elif gamma == -2.4:
+			# sRGB
+			self.trc_ctrl.SetSelection(6)
+		else:
+			# Gamma
+			self.trc_ctrl.SetSelection(0)
+			setcfg("synthprofile.trc_gamma", gamma)
+		self.update_trc_controls()
 	
 	def profile_name_ctrl_handler(self, event):
 		self.enable_save_as_btn()
@@ -516,32 +559,6 @@ class SynthICCFrame(BaseFrame):
 	
 	def setup_language(self):
 		BaseFrame.setup_language(self)
-		
-		# Create the file picker ctrls dynamically to get translated strings
-		if sys.platform in ("darwin", "win32"):
-			origpickerctrl = self.FindWindowByName("profile_ctrl")
-			sizer = origpickerctrl.GetContainingSizer()
-			self.profile_ctrl = wx.FilePickerCtrl(self.panel, -1, "",
-												  message=lang.getstr("profile"), 
-												  wildcard=lang.getstr("filetype.icc")
-												  + "|*.icc;*.icm",
-												  name="profile_ctrl")
-			self.profile_ctrl.PickerCtrl.Label = lang.getstr("browse")
-			self.profile_ctrl.PickerCtrl.SetMaxFontSize(11)
-			sizer.Replace(origpickerctrl, self.profile_ctrl)
-			origpickerctrl.Destroy()
-			sizer.Layout()
-		self.profile_ctrl.Bind(wx.EVT_FILEPICKER_CHANGED,
-							   self.profile_ctrl_handler)
-		self.profile_ctrl_label.Hide()
-		self.profile_ctrl.Hide()
-
-		# Drop targets
-		self.droptarget = FileDrop()
-		self.droptarget.drophandlers = {".icc": self.drop_handler,
-										".icm": self.drop_handler}
-		self.droptarget.unsupported_handler = self.drop_unsupported_handler
-		self.profile_ctrl.SetDropTarget(self.droptarget)
 		
 		items = []
 		for item in self.trc_ctrl.Items:

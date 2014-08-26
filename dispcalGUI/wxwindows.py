@@ -1122,9 +1122,9 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 
 class FileDrop(_FileDrop):
 	
-	def __init__(self, *args, **kwargs):
-		self.parent = kwargs.pop("parent")
-		_FileDrop.__init__(self, *args, **kwargs)
+	def __init__(self, parent, drophandlers=None):
+		self.parent = parent
+		_FileDrop.__init__(self, drophandlers)
 		self.unsupported_handler = self.drop_unsupported_handler
 
 	def drop_unsupported_handler(self):
@@ -1134,11 +1134,13 @@ class FileDrop(_FileDrop):
 		Shows an error message.
 		
 		"""
-		files = self._filenames
-		InfoDialog(self.parent, msg=lang.getstr("error.file_type_unsupported") +
-									"\n\n" + "\n".join(files), 
-				   ok=lang.getstr("ok"), 
-				   bitmap=geticon(32, "dialog-error"))
+		if (not hasattr(self.parent, "worker") or
+			not self.parent.worker.is_working()):
+			files = self._filenames
+			InfoDialog(self.parent, msg=lang.getstr("error.file_type_unsupported") +
+										"\n\n" + "\n".join(files), 
+					   ok=lang.getstr("ok"), 
+					   bitmap=geticon(32, "dialog-error"))
 
 
 class FlatShadedButton(GradientButton):

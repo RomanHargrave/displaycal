@@ -14,8 +14,7 @@ import config
 import localization as lang
 import worker
 from wxTestchartEditor import TestchartEditor
-from wxaddons import FileDrop
-from wxwindows import (BaseFrame, InfoDialog, wx)
+from wxwindows import (BaseFrame, FileDrop, InfoDialog, wx)
 import xh_filebrowsebutton
 
 from wx import xrc
@@ -42,6 +41,45 @@ class ReportFrame(BaseFrame):
 
 		self.worker = worker.Worker(self)
 		self.worker.set_argyll_version("xicclu")
+
+		for which in ("chart", "simulation_profile", "devlink_profile",
+					  "output_profile"):
+			ctrl = self.FindWindowByName("%s_ctrl" % which)
+			setattr(self, "%s_ctrl" % which, ctrl)
+			ctrl.changeCallback = getattr(self, "%s_ctrl_handler" % which)
+			if which not in ("devlink_profile", "output_profile"):
+				if which == "chart":
+					wildcard = "\.(cie|gam|ti1|ti3)$"
+				else:
+					wildcard = "\.(icc|icm)$"
+				if which == "simulation_profile":
+					history = []
+					standard_profiles = config.get_standard_profiles(True)
+					basenames = []
+					for path in standard_profiles:
+						basename = os.path.basename(path)
+						if not basename in basenames:
+							basenames.append(basename)
+							history.append(path)
+				else:
+					history = get_data_path("ref", wildcard)
+				history = sorted(history, key=lambda path:
+											  os.path.basename(path).lower())
+				ctrl.SetHistory(history)
+			ctrl.SetMaxFontSize(11)
+			# Drop targets
+			handler = getattr(self, "%s_drop_handler" % which)
+			if which.endswith("_profile"):
+				drophandlers = {".icc": handler,
+								".icm": handler}
+			else:
+				drophandlers = {".cgats": handler,
+								".cie": handler,
+								".ti1": handler,
+								".ti2": handler,
+								".ti3": handler,
+								".txt": handler}
+			ctrl.SetDropTarget(FileDrop(self, drophandlers))
 
 		# Bind event handlers
 		self.fields_ctrl.Bind(wx.EVT_CHOICE,
@@ -228,9 +266,6 @@ class ReportFrame(BaseFrame):
 		if not self.worker.is_working():
 			self.chart_ctrl.SetPath(path)
 			self.chart_ctrl_handler(True)
-
-	def chart_drop_unsupported_handler(self):
-		self.drop_unsupported("chart")
 	
 	def devlink_profile_ctrl_handler(self, event):
 		self.set_profile("devlink")
@@ -239,17 +274,6 @@ class ReportFrame(BaseFrame):
 		if not self.worker.is_working():
 			self.devlink_profile_ctrl.SetPath(path)
 			self.set_profile("devlink")
-		
-	def devlink_profile_drop_unsupported_handler(self):
-		self.drop_unsupported("devlink_profile")
-	
-	def drop_unsupported(self, which):
-		if not self.worker.is_working():
-			files = getattr(self, "%s_droptarget" % which)._filenames
-			InfoDialog(self, msg=lang.getstr("error.file_type_unsupported") +
-							 "\n\n" + "\n".join(files),
-					   ok=lang.getstr("ok"),
-					   bitmap=geticon(32, "dialog-error"))
 	
 	def enable_3dlut_handler(self, event):
 		setcfg("3dlut.madVR.enable", int(self.enable_3dlut_cb.GetValue()))
@@ -275,9 +299,6 @@ class ReportFrame(BaseFrame):
 		if not self.worker.is_working():
 			self.output_profile_ctrl.SetPath(path)
 			self.set_profile("output")
-		
-	def output_profile_drop_unsupported_handler(self):
-		self.drop_unsupported("output_profile")
 	
 	def set_profile(self, which, profile_path=None, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
@@ -337,11 +358,8 @@ class ReportFrame(BaseFrame):
 	def setup_language(self):
 		BaseFrame.setup_language(self)
 		
-		# Create the file picker ctrls dynamically to get translated strings
 		for which in ("chart", "simulation_profile", "devlink_profile",
 					  "output_profile"):
-			setattr(self, "%s_ctrl" % which,
-					self.FindWindowByName("%s_ctrl" % which))
 			if which.endswith("_profile"):
 				wildcard = lang.getstr("filetype.icc")  + "|*.icc;*.icm"
 			else:
@@ -352,55 +370,10 @@ class ReportFrame(BaseFrame):
 				   "output_profile": "measurement_report_choose_profile"}.get(which, which)
 			kwargs = dict(toolTip=lang.getstr(msg).rstrip(":"),
 						  dialogTitle=lang.getstr(msg), 
-						  fileMask=wildcard,
-						  changeCallback=getattr(self, "%s_ctrl_handler" % 
-													   which),
-						  name="%s_ctrl" % which)
-			if which not in ("devlink_profile", "output_profile"):
-				if which == "chart":
-					wildcard = "\.(cie|gam|ti1|ti3)$"
-				else:
-					wildcard = "\.(icc|icm)$"
-				if which == "simulation_profile":
-					history = []
-					standard_profiles = config.get_standard_profiles(True)
-					basenames = []
-					for path in standard_profiles:
-						basename = os.path.basename(path)
-						if not basename in basenames:
-							basenames.append(basename)
-							history.append(path)
-				else:
-					history = get_data_path("ref", wildcard)
-				kwargs["history"] = sorted(history,
-										   key=lambda path:
-											   os.path.basename(path).lower())
+						  fileMask=wildcard)
 			ctrl = getattr(self, "%s_ctrl" % which)
 			for name, value in kwargs.iteritems():
-				if name == "history":
-					ctrl.SetHistory(value)
-				else:
-					setattr(ctrl, name, value)
-			ctrl.SetMaxFontSize(11)
-			# Drop targets
-			setattr(self, "%s_droptarget" % which, FileDrop())
-			droptarget = getattr(self, "%s_droptarget" % which)
-			handler = getattr(self, "%s_drop_handler" % which)
-			if which.endswith("_profile"):
-				droptarget.drophandlers = {".icc": handler,
-										   ".icm": handler}
-			else:
-				droptarget.drophandlers = {".cgats": handler,
-										   ".cie": handler,
-										   ".ti1": handler,
-										   ".ti2": handler,
-										   ".ti3": handler,
-										   ".txt": handler}
-			droptarget.unsupported_handler = getattr(self,
-													 "%s_drop_unsupported_handler"
-													 % which)
-			getattr(self, "%s_ctrl"
-						  % which).SetDropTarget(droptarget)
+				setattr(ctrl, name, value)
 
 		items = []
 		for item in ("trc.rec1886", "custom"):
@@ -431,9 +404,6 @@ class ReportFrame(BaseFrame):
 		if not self.worker.is_working():
 			self.simulation_profile_ctrl.SetPath(path)
 			self.set_profile("simulation")
-
-	def simulation_profile_drop_unsupported_handler(self):
-		self.drop_unsupported("simulation_profile")
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """

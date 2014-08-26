@@ -20,9 +20,10 @@ from util_os import waccess
 from util_str import safe_unicode
 from worker import (Error, UnloggedError, Worker, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
-from wxaddons import FileDrop, wx
+from wxaddons import wx
 from wxMeasureFrame import MeasureFrame
-from wxwindows import BitmapBackgroundPanelText, CustomCheckBox, InfoDialog
+from wxwindows import (BitmapBackgroundPanelText, CustomCheckBox, FileDrop,
+					   InfoDialog)
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
@@ -856,13 +857,12 @@ class LUTFrame(wx.Frame):
 
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
 		
-		self.droptarget = FileDrop()
+		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
 			".cal": self.drop_handler,
 			".icc": self.drop_handler,
 			".icm": self.drop_handler
 		}
-		self.droptarget.unsupported_handler = self.drop_unsupported_handler
 		self.client.SetDropTarget(self.droptarget)
 		
 		self.SetSaneGeometry(
@@ -923,19 +923,6 @@ class LUTFrame(wx.Frame):
 		self.show_actual_lut_cb.SetValue(False)
 		self.current_cal = profile
 		self.LoadProfile(profile)
-
-	def drop_unsupported_handler(self):
-		"""
-		Drag'n'drop handler for unsupported files. 
-		
-		Shows an error message.
-		
-		"""
-		files = self.droptarget._filenames
-		InfoDialog(self, msg=lang.getstr("error.file_type_unsupported") +
-							 "\n\n" + "\n".join(files), 
-				   ok=lang.getstr("ok"), 
-				   bitmap=geticon(32, "dialog-error"))
 	
 	get_display = MeasureFrame.__dict__["get_display"]
 	
