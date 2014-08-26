@@ -241,7 +241,7 @@ class SynthICCFrame(BaseFrame):
 													  profile.colorSpace))),
 								   self)
 				return
-			rgb = [(1, 1, 1), (1, 0, 0), (0, 1, 0), (0, 0, 1), (0, 0, 0)]
+			rgb = [(1, 1, 1), (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
 			for i in xrange(256):
 				rgb.append((1.0 / 255 * i, 1.0 / 255 * i, 1.0 / 255 * i))
 			try:
@@ -255,13 +255,18 @@ class SynthICCFrame(BaseFrame):
 					luminance = 100
 				setcfg("synthprofile.luminance", luminance)
 				self.luminance_ctrl.SetValue(luminance)
-				for i, color in enumerate(("white", "red", "green", "blue",
-										   "black")):
+				for i, color in enumerate(("white", "black")):
 					for j, component in enumerate("XYZ"):
 						getattr(self, "%s_%s" %
 								(color, component)).SetValue(colors[i][j] /
 															 colors[0][1] * 100)
 					self.parse_XYZ(color)
+				for i, color in enumerate(("red", "green", "blue")):
+					xyY = colormath.XYZ2xyY(*colors[2 + i])
+					for j, component in enumerate("xy"):
+						getattr(self, "%s_%s" %
+								(color, component)).SetValue(xyY[j])
+				self.parse_xy(None)
 				self.black_XYZ_ctrl_handler(None)
 				trc = ICCP.CurveType()
 				for XYZ in colors[5:]:
