@@ -249,6 +249,12 @@ class SynthICCFrame(BaseFrame):
 			except Exception, exception:
 				show_result_dialog(exception, self)
 			else:
+				if "lumi" in profile.tags:
+					luminance = profile.tags.lumi.Y
+				else:
+					luminance = 100
+				setcfg("synthprofile.luminance", luminance)
+				self.luminance_ctrl.SetValue(luminance)
 				for i, color in enumerate(("white", "red", "green", "blue",
 										   "black")):
 					for j, component in enumerate("XYZ"):
@@ -263,11 +269,13 @@ class SynthICCFrame(BaseFrame):
 				transfer_function = trc.get_transfer_function()
 				if transfer_function and transfer_function[1] >= .95:
 					# Use detected transfer function
-					self.set_trc(round(transfer_function[0][1], 2))
+					gamma = transfer_function[0][1]
 				else:
 					# Use 50% gamma value
-					self.set_trc(round(math.log(colors[132][1]) /
-									   math.log(128.0 / 255), 2))
+					gamma = math.log(colors[132][1]) / math.log(128.0 / 255)
+				self.set_trc(round(gamma, 2))
+				setcfg("synthprofile.trc_gamma_type", "g")
+				self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["g"])
 	
 	def enable_save_as_btn(self):
 		self.save_as_btn.Enable(bool(self.get_XYZ()))
