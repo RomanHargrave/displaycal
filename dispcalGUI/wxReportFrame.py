@@ -522,6 +522,7 @@ class ReportFrame(BaseFrame):
 								  output_profile)) and
 								 bool(getcfg("measurement_report.chart")) and
 								 os.path.isfile(getcfg("measurement_report.chart")))
+		self.update_layout()
 	
 	def use_devlink_profile_ctrl_handler(self, event):
 		setcfg("3dlut.madVR.enable", 0)
