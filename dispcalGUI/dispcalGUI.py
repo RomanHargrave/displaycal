@@ -10265,6 +10265,10 @@ class MainFrame(BaseFrame):
 				InfoDialog(self, msg=msg + "\n" + path, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-information"))
+				if (load_vcgt and getattr(self, "lut_viewer", None) and
+					sys.platform == "win32"):
+					# Needed under Windows when using double buffering
+					self.lut_viewer.Refresh()
 
 	def delete_calibration_handler(self, event):
 		cal = getcfg("calibration.file")
