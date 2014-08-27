@@ -10035,7 +10035,7 @@ class MainFrame(BaseFrame):
 							setcfg("gamap_saturation_intent", o[1:])
 							continue
 				setcfg("calibration.file", path)
-				if ext.lower() in (".icc", ".icm"):
+				if ext.lower() in (".icc", ".icm") and path not in self.presets:
 					setcfg("3dlut.output.profile", path)
 					setcfg("measurement_report.output_profile", path)
 				if "CTI3" in ti3_lines:
