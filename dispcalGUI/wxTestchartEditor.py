@@ -1997,8 +1997,20 @@ class TestchartEditor(wx.Frame):
 		if (not (self.worker.tempdir and
 				 self.ti1.filename.startswith(self.worker.tempdir)) and
 			waccess(os.path.dirname(self.ti1.filename), os.W_OK)):
+			regenerate = self.ti1.modified
 			paths = self.tc_save_3d(os.path.splitext(self.ti1.filename)[0],
-									regenerate=False)
+									regenerate=regenerate)
+			if (not regenerate and self.ti1.filename and
+				os.path.isfile(self.ti1.filename)):
+				# Check if the testchart is newer than the 3D file(s)
+				ti1_mtime = os.stat(self.ti1.filename).st_mtime
+				for path in paths:
+					if os.stat(path).st_mtime < ti1_mtime:
+						regenerate = True
+						break
+				if regenerate:
+					paths = self.tc_save_3d(os.path.splitext(self.ti1.filename)[0],
+											regenerate=True)
 		else:
 			paths = self.tc_save_3d_as_handler(None)
 		for path in paths:
