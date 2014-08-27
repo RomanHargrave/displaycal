@@ -1427,7 +1427,7 @@ class TestchartEditor(wx.Frame):
 				finally:
 					wx.Log.SetLogLevel(llevel)
 					self.worker.wrapup(False)
-				if img.Width > w or img.Height > h:
+				if img.Width != w or img.Height != h:
 					img.Rescale(w, h, quality)
 				# Select RGB colors and fill chart
 				chart = ["TI1    ",
@@ -1446,6 +1446,10 @@ class TestchartEditor(wx.Frame):
 		
 		try:
 			chart = CGATS.CGATS(chart)
+			if not chart.queryv1("DATA_FORMAT"):
+				raise CGATS.CGATSError(lang.getstr("error.testchart.missing_fields",
+												   (chart.filename,
+													"DATA_FORMAT")))
 		except (IOError, CGATS.CGATSError), exception:
 			return exception
 		finally:

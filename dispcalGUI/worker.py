@@ -6876,7 +6876,9 @@ usage: spotread [-options] [logfile]
 				cgats = CGATS.CGATS(cgats, True)
 			else:
 				# Always make a copy and do not alter a passed in CGATS instance!
+				cgats_filename = cgats.filename
 				cgats = CGATS.CGATS(str(cgats))
+				cgats.filename = cgats_filename
 			if 0 in cgats:
 				# only look at the first section
 				cgats[0].filename = cgats.filename
