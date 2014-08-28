@@ -2028,7 +2028,7 @@ class TestchartEditor(wx.Frame):
 		else:
 			defaultDir = get_verified_path("last_vrml_path")[0]
 			defaultFile = getcfg("last_vrml_path")
-		view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
+		view_3d_format = getcfg("3d.format")
 		if view_3d_format == "HTML":
 			formatext = ".html"
 		elif view_3d_format == "VRML":
@@ -2063,7 +2063,7 @@ class TestchartEditor(wx.Frame):
 	
 	def tc_save_3d(self, filename, regenerate=True):
 		paths = []
-		view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
+		view_3d_format = getcfg("3d.format")
 		if view_3d_format == "VRML":
 			if getcfg("vrml.compress"):
 				formatext = ".wrz"
