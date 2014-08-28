@@ -19,8 +19,9 @@ from ordereddict import OrderedDict
 from util_io import GzipFileProper
 from util_os import launch_file, make_win32_compatible_long_path, waccess
 from util_str import safe_unicode, strtr, universal_newlines, wrap
-from worker import (Error, UnloggedError, check_set_argyll_bin, get_argyll_util,
-					make_argyll_compatible_path, show_result_dialog)
+from worker import (Error, Info, UnloggedError, check_set_argyll_bin,
+					get_argyll_util, make_argyll_compatible_path,
+					show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
 from wxVRML2X3D import vrmlfile2x3dfile
@@ -1006,9 +1007,13 @@ class ProfileInfoFrame(LUTFrame):
 		self.plot_mode_select.SetSelection(2)
 		self.plot_mode_select.Disable()
 		
-		self.tooltip_btn = wx.StaticBitmap(p1, -1, geticon(16, "dialog-information"),
-										   style=wx.NO_BORDER)
+		self.tooltip_btn = BitmapButton(p1, -1, geticon(16, "dialog-information"),
+										style=wx.NO_BORDER)
 		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
+		self.tooltip_btn.Bind(wx.EVT_BUTTON,
+							  lambda event:
+							  show_result_dialog(Info(event.EventObject.ToolTip.Tip),
+												 self))
 		self.tooltip_btn.SetToolTipString(lang.getstr("gamut_plot.tooltip"))
 		self.plot_mode_sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														wx.LEFT, border=8)

@@ -18,7 +18,7 @@ from options import debug
 from util_decimal import float2dec
 from util_os import waccess
 from util_str import safe_unicode
-from worker import (Error, UnloggedError, Worker, get_argyll_util,
+from worker import (Error, Info, UnloggedError, Worker, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxMeasureFrame import MeasureFrame
@@ -718,10 +718,14 @@ class LUTFrame(wx.Frame):
 		self.Bind(wx.EVT_CHOICE, self.plot_mode_select_handler,
 				  id=self.plot_mode_select.GetId())
 		
-		self.tooltip_btn = wx.StaticBitmap(panel, -1,
-										   geticon(16, "dialog-information"),
-										   style=wx.NO_BORDER)
+		self.tooltip_btn = BitmapButton(panel, -1,
+										geticon(16, "dialog-information"),
+										style=wx.NO_BORDER)
 		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
+		self.tooltip_btn.Bind(wx.EVT_BUTTON,
+							  lambda event:
+							  show_result_dialog(Info(event.EventObject.ToolTip.Tip),
+												 self))
 		self.tooltip_btn.SetToolTipString(lang.getstr("gamut_plot.tooltip"))
 		panel.Sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL)
 
