@@ -13,7 +13,7 @@ import config
 import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ, XYZ2RGB as argyll_XYZ2RGB
 from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
-from config import (defaults, getcfg, geticon, 
+from config import (defaults, getbitmap, getcfg, geticon, 
 					get_current_profile, get_data_path,
 					get_total_patches, get_verified_path, hascfg, setcfg,
 					writecfg)
@@ -340,17 +340,24 @@ class TestchartEditor(wx.Frame):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(hsizer, flag = wx.ALL & ~(wx.BOTTOM | wx.TOP), border = 12 + border)
 
-		self.view_3d_format_ctrl = wx.Choice(panel, -1, choices=["HTML",
-																 "VRML",
-																 "X3D"])
-		self.view_3d_format_ctrl.SetStringSelection(getcfg("3d.format"))
-		self.view_3d_format_ctrl.SetToolTipString(lang.getstr("tc.3d"))
-		self.view_3d_format_ctrl.Bind(wx.EVT_CHOICE,
-									  lambda event:
-									  setcfg("3d.format",
-											 event.GetEventObject().GetStringSelection()))
-		hsizer.Add(self.view_3d_format_ctrl, flag=(wx.ALL & ~wx.LEFT) |
-												  wx.ALIGN_CENTER_VERTICAL,
+		self.vrml_save_as_btn = wx.BitmapButton(panel, -1, geticon(16, "3D"))
+		self.vrml_save_as_btn.SetToolTipString(lang.getstr("tc.3d"))
+		self.vrml_save_as_btn.Disable()
+		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
+				 id=self.vrml_save_as_btn.GetId())
+		hsizer.Add(self.vrml_save_as_btn, flag=wx.RIGHT |
+											   wx.ALIGN_CENTER_VERTICAL,
+				   border=1)
+		self.view_3d_format_btn = BitmapButton(panel, -1,
+											   getbitmap("theme/dropdown-arrow"))
+		self.view_3d_format_btn.MinSize = (-1, self.vrml_save_as_btn.Size[1])
+		self.view_3d_format_btn.Bind(wx.EVT_BUTTON, self.view_3d_format_popup)
+		self.view_3d_format_btn.Bind(wx.EVT_CONTEXT_MENU,
+									 self.view_3d_format_popup)
+		self.view_3d_format_btn.SetToolTipString(lang.getstr("tc.3d"))
+		self.view_3d_format_btn.Disable()
+		hsizer.Add(self.view_3d_format_btn, flag=(wx.ALL & ~wx.LEFT) |
+												 wx.ALIGN_CENTER_VERTICAL,
 				   border=border * 2)
 		self.tc_vrml_cie = wx.CheckBox(panel, -1, "", name = "tc_vrml_cie", style = wx.RB_GROUP)
 		self.tc_vrml_cie.SetToolTipString(lang.getstr("tc.3d"))
@@ -402,14 +409,6 @@ class TestchartEditor(wx.Frame):
 				  id=self.tc_vrml_compress_cb.GetId())
 		hsizer.Add(self.tc_vrml_compress_cb, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
 				   border=border)
-		self.vrml_save_as_btn = wx.BitmapButton(panel, -1, geticon(16, "3D"))
-		self.vrml_save_as_btn.SetToolTipString(lang.getstr("tc.3d"))
-		self.vrml_save_as_btn.Disable()
-		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
-				 id=self.vrml_save_as_btn.GetId())
-		hsizer.Add(self.vrml_save_as_btn, flag=(wx.ALL & ~wx.LEFT) |
-											   wx.ALIGN_CENTER_VERTICAL,
-				   border=border * 2)
 
 		# buttons
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -1603,6 +1602,7 @@ class TestchartEditor(wx.Frame):
 			setcfg("tc_vrml_device_colorspace",
 				   self.tc_vrml_device_colorspace_ctrl.GetStringSelection())
 		self.vrml_save_as_btn.Enable(hasattr(self, "ti1") and (d or l))
+		self.view_3d_format_btn.Enable(hasattr(self, "ti1") and (d or l))
 
 	def tc_vrml_use_D50_handler(self, event):
 		setcfg("tc_vrml_use_D50",
@@ -3030,6 +3030,28 @@ class TestchartEditor(wx.Frame):
 		if hasattr(self, "preview"):
 			self.preview.EndBatch()
 		self.tc_set_default_status()
+
+	def view_3d_format_popup(self, event):
+		menu = wx.Menu()
+
+		item_selected = False
+		for file_format in config.valid_values["3d.format"]:
+			item = menu.AppendRadioItem(-1, file_format)
+			item.Check(file_format == getcfg("3d.format"))
+			self.Bind(wx.EVT_MENU, self.view_3d_format_handler, id=item.Id)
+
+		self.PopupMenu(menu)
+		for item in menu.MenuItems:
+			self.Unbind(wx.EVT_MENU, id=item.Id)
+		menu.Destroy()
+
+	def view_3d_format_handler(self, event):
+		for item in event.EventObject.MenuItems:
+			if item.IsChecked():
+				setcfg("3d.format", item.GetItemLabelText())
+
+		self.tc_view_3d(None)
+
 
 def main(testchart=None):
 	config.initcfg()
