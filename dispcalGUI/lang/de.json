@@ -483,7 +483,7 @@
 	"gamut.view.create": "Generiere Gamut-Ansichten...",
 	"gamut.volume": "Farbraumvolumen",
 	"gamut_mapping.ciecam02": "CIECAM02 Gamut-Mapping",
-	"gamut_plot.tooltip": "Klicken und ziehen Sie die Maus im Diagramm, um den Ausschnitt zu verschieben,\noder zoomen Sie mit dem Mausrad und den +/- Tasten. Doppelklick setzt die Ansicht zurück.",
+	"gamut_plot.tooltip": "Klicken und ziehen Sie die Maus im Diagramm, um den Ausschnitt zu verschieben, oder zoomen Sie mit dem Mausrad und den +/- Tasten. Doppelklick setzt die Ansicht zurück.",
 	"generic_name_value_data": "Generische Wertetabelle",
 	"geometry": "Messgeometrie",
 	"glossy": "Glänzend",

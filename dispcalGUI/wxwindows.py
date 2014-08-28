@@ -534,7 +534,7 @@ class BaseFrame(wx.Frame):
 						tooltipstr = child._ToolTipString
 					translated = lang.getstr(tooltipstr)
 					if translated != tooltipstr:
-						child.SetToolTipString(wrap(translated, 72))
+						child.SetToolTipString(translated)
 	
 	def update_layout(self):
 		""" Update main window layout. """

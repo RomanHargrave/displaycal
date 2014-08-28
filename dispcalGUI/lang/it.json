@@ -483,7 +483,7 @@
 		"*gamut.view.create": "Generating gamut views...",
 		"*gamut.volume": "Gamut volume",
 		"*gamut_mapping.ciecam02": "CIECAM02 gamut mapping",
-		"*gamut_plot.tooltip": "Click and drag the mouse inside the plot to move the viewport,\nor zoom with the mouse wheel and +/- keys. Double-click resets the viewport.",
+		"*gamut_plot.tooltip": "Click and drag the mouse inside the plot to move the viewport, or zoom with the mouse wheel and +/- keys. Double-click resets the viewport.",
 		"*generic_name_value_data": "Generic name-value data",
 		"*geometry": "Geometry",
 		"*glossy": "Glossy",
