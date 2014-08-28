@@ -341,18 +341,30 @@ class TestchartEditor(wx.Frame):
 		self.sizer.Add(hsizer, flag = wx.ALL & ~(wx.BOTTOM | wx.TOP), border = 12 + border)
 
 		self.vrml_save_as_btn = wx.BitmapButton(panel, -1, geticon(16, "3D"))
+		if sys.platform == "darwin":
+			# Work-around bitmap cutoff on left and right side
+			w = self.vrml_save_as_btn.Size[0] + 4
+		else:
+			w = -1
+		self.vrml_save_as_btn.MinSize = (w, -1)
 		self.vrml_save_as_btn.SetToolTipString(lang.getstr("tc.3d"))
 		self.vrml_save_as_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
 				 id=self.vrml_save_as_btn.GetId())
 		self.vrml_save_as_btn.Bind(wx.EVT_CONTEXT_MENU,
 								   self.view_3d_format_popup)
-		hsizer.Add(self.vrml_save_as_btn, flag=wx.RIGHT |
+		hsizer.Add(self.vrml_save_as_btn, flag=wx.TOP | wx.BOTTOM |
 											   wx.ALIGN_CENTER_VERTICAL,
-				   border=1)
-		self.view_3d_format_btn = BitmapButton(panel, -1,
-											   getbitmap("theme/dropdown-arrow"))
-		self.view_3d_format_btn.MinSize = (-1, self.vrml_save_as_btn.Size[1])
+				   border=border * 2)
+		hsizer.Add((1, 1))
+		self.view_3d_format_btn = wx.BitmapButton(panel, -1,
+												  getbitmap("theme/dropdown-arrow"))
+		if sys.platform == "darwin":
+			# Work-around bitmap cutoff on left and right side
+			w = self.view_3d_format_btn.Size[0] + 4
+		else:
+			w = -1
+		self.view_3d_format_btn.MinSize = (w, self.vrml_save_as_btn.Size[1])
 		self.view_3d_format_btn.Bind(wx.EVT_BUTTON, self.view_3d_format_popup)
 		self.view_3d_format_btn.Bind(wx.EVT_CONTEXT_MENU,
 									 self.view_3d_format_popup)
