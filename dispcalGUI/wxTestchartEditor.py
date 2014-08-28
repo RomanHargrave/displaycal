@@ -345,6 +345,8 @@ class TestchartEditor(wx.Frame):
 		self.vrml_save_as_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_view_3d,
 				 id=self.vrml_save_as_btn.GetId())
+		self.vrml_save_as_btn.Bind(wx.EVT_CONTEXT_MENU,
+								   self.view_3d_format_popup)
 		hsizer.Add(self.vrml_save_as_btn, flag=wx.RIGHT |
 											   wx.ALIGN_CENTER_VERTICAL,
 				   border=1)
