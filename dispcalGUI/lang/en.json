@@ -150,7 +150,7 @@
 	"calibration.reset_success": "Video card gamma table successfully reset.",
 	"calibration.resetting": "Resetting video card gamma table to linear...",
 	"calibration.settings": "Calibration settings",
-	"calibration.show_actual_lut": "Show actual calibration curves from video card",
+	"calibration.show_actual_lut": "Show calibration curves from video card",
 	"calibration.show_lut": "Show curves",
 	"calibration.skip": "Continue on to profiling",
 	"calibration.speed": "Calibration speed",

@@ -1014,34 +1014,38 @@ class ProfileInfoFrame(LUTFrame):
 														wx.LEFT, border=8)
 
 		self.save_plot_btn = BitmapButton(p1, -1,
-										  geticon(16, "media-floppy"),
+										  geticon(16, "camera-photo"),
 										  style=wx.NO_BORDER)
 		self.save_plot_btn.SetBackgroundColour(BGCOLOUR)
 		self.save_plot_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
-		self.save_plot_btn.SetToolTipString(lang.getstr("save_as"))
+		self.save_plot_btn.SetToolTipString(lang.getstr("save_as") + " " +
+											"(*.bmp, *.xbm, *.xpm, *.jpg, *.png)")
 		self.save_plot_btn.Disable()
 		self.plot_mode_sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														  wx.LEFT, border=8)
 		
-		self.view_3d_format_ctrl = wx.Choice(p1, -1, choices=["HTML",
-															  "VRML",
-															  "X3D"])
-		self.view_3d_format_ctrl.SetStringSelection(getcfg("3d.format"))
-		self.view_3d_format_ctrl.Bind(wx.EVT_CHOICE,
-									  lambda event:
-									  setcfg("3d.format",
-											 event.GetEventObject().GetStringSelection()))
-		self.plot_mode_sizer.Add(self.view_3d_format_ctrl,
-								 flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
-								 border=20)
 		self.view_3d_btn = BitmapButton(p1, -1, geticon(16, "3D"),
 										style=wx.NO_BORDER)
 		self.view_3d_btn.SetBackgroundColour(BGCOLOUR)
 		self.view_3d_btn.Bind(wx.EVT_BUTTON, self.view_3d)
+		self.view_3d_btn.Bind(wx.EVT_CONTEXT_MENU, self.view_3d_format_popup)
 		self.view_3d_btn.SetToolTipString(lang.getstr("view.3d"))
 		self.view_3d_btn.Disable()
 		self.plot_mode_sizer.Add(self.view_3d_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-														wx.LEFT, border=8)
+														wx.LEFT, border=12)
+		self.view_3d_format_btn = BitmapButton(p1, -1,
+											   getbitmap("theme/dropdown-arrow"),
+											   style=wx.NO_BORDER)
+		self.view_3d_format_btn.MinSize = (-1, self.view_3d_btn.Size[1])
+		self.view_3d_format_btn.SetBackgroundColour(BGCOLOUR)
+		self.view_3d_format_btn.Bind(wx.EVT_BUTTON, self.view_3d_format_popup)
+		self.view_3d_format_btn.Bind(wx.EVT_CONTEXT_MENU,
+									 self.view_3d_format_popup)
+		self.view_3d_format_btn.SetToolTipString(lang.getstr("view.3d"))
+		self.view_3d_format_btn.Disable()
+		self.plot_mode_sizer.Add(self.view_3d_format_btn,
+								 flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+								 border=4)
 
 		self.client = GamutCanvas(p1)
 		p1.sizer.Add(self.client, 1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT |
@@ -1086,8 +1090,8 @@ class ProfileInfoFrame(LUTFrame):
 														  lang.getstr("gamap.intents.r"),
 														  lang.getstr("gamap.intents.p"),
 														  lang.getstr("gamap.intents.s")])
-		hsizer.Add(self.rendering_intent_select, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
-				   border=10)
+		hsizer.Add((10, self.rendering_intent_select.Size[1]))
+		hsizer.Add(self.rendering_intent_select, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.rendering_intent_select.Bind(wx.EVT_CHOICE,
 										  self.rendering_intent_select_handler)
 		self.rendering_intent_select.SetSelection(1)
@@ -1113,8 +1117,8 @@ class ProfileInfoFrame(LUTFrame):
 		self.show_as_L = CustomCheckBox(self.lut_view_options, -1, u"L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
 		self.show_as_L.SetValue(True)
-		hsizer.Add(self.show_as_L,
-										flag=wx.ALIGN_CENTER_VERTICAL)
+		hsizer.Add(self.show_as_L, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+				   border=4)
 		self.show_as_L.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
 		self.toggle_red = CustomCheckBox(self.lut_view_options, -1, "R")
@@ -1124,12 +1128,16 @@ class ProfileInfoFrame(LUTFrame):
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.toggle_red.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
+		hsizer.Add((4, 0))
+		
 		self.toggle_green = CustomCheckBox(self.lut_view_options, -1, "G")
 		self.toggle_green.SetForegroundColour(FGCOLOUR)
 		self.toggle_green.SetValue(True)
 		hsizer.Add(self.toggle_green,
 										flag=wx.ALIGN_CENTER_VERTICAL)
 		self.toggle_green.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
+		
+		hsizer.Add((4, 0))
 		
 		self.toggle_blue = CustomCheckBox(self.lut_view_options, -1, "B")
 		self.toggle_blue.SetForegroundColour(FGCOLOUR)
@@ -1218,9 +1226,7 @@ class ProfileInfoFrame(LUTFrame):
 			child.Bind(wx.EVT_KEY_DOWN, self.key_handler)
 			child.Bind(wx.EVT_MOUSEWHEEL, self.OnWheel)
 			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
-				isinstance(child, wx.Panel) and
-				not isinstance(child, (LUTCanvas, TwoWaySplitter)) and
-				not isinstance(child.Parent, TwoWaySplitter)):
+				isinstance(child, wx.Panel)):
 				# No need to enable double buffering under Linux and Mac OS X.
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.
@@ -1230,17 +1236,16 @@ class ProfileInfoFrame(LUTFrame):
 		self.SetStatusText('')
 		if self.plot_mode_select.GetSelection() == self.plot_mode_select.GetCount() - 1:
 			# Gamut plot
-			self.plot_mode_sizer.Show(self.tooltip_btn)
 			self.plot_mode_sizer.Show(self.view_3d_btn)
-			self.plot_mode_sizer.Show(self.view_3d_format_ctrl)
+			self.plot_mode_sizer.Show(self.view_3d_format_btn)
 			self.options_panel.GetCurrentPage().DrawCanvas(reset=reset)
 			self.save_plot_btn.Enable()
 			self.view_3d_btn.Enable()
+			self.view_3d_format_btn.Enable()
 		else:
 			# Curves plot
-			self.plot_mode_sizer.Hide(self.tooltip_btn)
 			self.plot_mode_sizer.Hide(self.view_3d_btn)
-			self.plot_mode_sizer.Hide(self.view_3d_format_ctrl)
+			self.plot_mode_sizer.Hide(self.view_3d_format_btn)
 			self.client.SetEnableCenterLines(True)
 			self.client.SetEnableDiagonals('Bottomleft-Topright')
 			self.client.SetEnableGrid(False)
@@ -1691,7 +1696,7 @@ class ProfileInfoFrame(LUTFrame):
 			else:
 				show_result_dialog(Error(lang.getstr("profile.invalid")), self)
 		if profile:
-			view_3d_format = self.view_3d_format_ctrl.GetStringSelection()
+			view_3d_format = getcfg("3d.format")
 			if view_3d_format == "HTML":
 				x3d = True
 				html = True
@@ -1827,6 +1832,27 @@ class ProfileInfoFrame(LUTFrame):
 							 worker=self.worker)
 		else:
 			launch_file(vrmlpath)
+
+	def view_3d_format_popup(self, event):
+		menu = wx.Menu()
+
+		item_selected = False
+		for file_format in config.valid_values["3d.format"]:
+			item = menu.AppendRadioItem(-1, file_format)
+			item.Check(file_format == getcfg("3d.format"))
+			self.Bind(wx.EVT_MENU, self.view_3d_format_handler, id=item.Id)
+
+		self.PopupMenu(menu)
+		for item in menu.MenuItems:
+			self.Unbind(wx.EVT_MENU, id=item.Id)
+		menu.Destroy()
+
+	def view_3d_format_handler(self, event):
+		for item in event.EventObject.MenuItems:
+			if item.IsChecked():
+				setcfg("3d.format", item.GetItemLabelText())
+
+		self.view_3d(None)
 
 
 class ProfileInfoViewer(wx.App):

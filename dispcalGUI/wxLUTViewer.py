@@ -20,7 +20,7 @@ from util_os import waccess
 from util_str import safe_unicode
 from worker import (Error, UnloggedError, Worker, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
-from wxaddons import wx
+from wxaddons import get_platform_window_decoration_size, wx
 from wxMeasureFrame import MeasureFrame
 from wxwindows import (BitmapBackgroundPanelText, CustomCheckBox, FileDrop,
 					   InfoDialog)
@@ -167,6 +167,7 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetEnableDrag(True)
 		self.SetEnableGrid(False)
 		self.SetEnablePointLabel(True)
+		self.SetEnableTitle(False)
 		self.SetForegroundColour(FGCOLOUR)
 		self.SetFontSizeAxis(FONTSIZE_SMALL)
 		self.SetFontSizeLegend(FONTSIZE_SMALL)
@@ -174,6 +175,11 @@ class LUTCanvas(plot.PlotCanvas):
 		self.SetGridColour(GRIDCOLOUR)
 		self.setLogScale((False,False))
 		self.SetPointLabelFunc(self.DrawPointLabel)
+		self.canvas.BackgroundColour = BGCOLOUR
+		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+			# Enable/disable double buffering on-the-fly to make pointlabel work
+			self.canvas.Bind(wx.EVT_ENTER_WINDOW, self._disabledoublebuffer)
+			self.canvas.Bind(wx.EVT_LEAVE_WINDOW, self._enabledoublebuffer)
 		self.worker = Worker(self.TopLevelParent)
 		self.errors = []
 		self.resetzoom()
@@ -499,6 +505,22 @@ class LUTCanvas(plot.PlotCanvas):
 			l.append(cn)
 		return l
 
+	def _disabledoublebuffer(self, event):
+		window = self
+		while window:
+			if not isinstance(window,  wx.TopLevelWindow):
+				window.SetDoubleBuffered(False)
+			window = window.Parent
+		event.Skip()
+
+	def _enabledoublebuffer(self, event):
+		window = self
+		while window:
+			if not isinstance(window,  wx.TopLevelWindow):
+				window.SetDoubleBuffered(True)
+			window = window.Parent
+		event.Skip()
+
 	def OnMouseDoubleClick(self, event):
 		if self.last_draw:
 			boundingbox = self.last_draw[0].boundingBox()
@@ -675,6 +697,51 @@ class LUTFrame(wx.Frame):
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
+
+		panel = wx.Panel(self)
+		panel.SetBackgroundColour(BGCOLOUR)
+		self.sizer.Add(panel, flag=wx.EXPAND)
+		panel.SetSizer(wx.FlexGridSizer(0, 5, 0, 8))
+		panel.Sizer.AddGrowableCol(0)
+		panel.Sizer.AddGrowableCol(4)
+
+		panel.Sizer.Add((1,1))
+		panel.Sizer.Add((1,12))
+		panel.Sizer.Add((1,12))
+		panel.Sizer.Add((1,12))
+		panel.Sizer.Add((1,1))
+
+		panel.Sizer.Add((1,1))
+
+		self.plot_mode_select = wx.Choice(panel, -1, size=(-1, -1), choices=[])
+		panel.Sizer.Add(self.plot_mode_select, flag=wx.ALIGN_CENTER_VERTICAL)
+		self.Bind(wx.EVT_CHOICE, self.plot_mode_select_handler,
+				  id=self.plot_mode_select.GetId())
+		
+		self.tooltip_btn = wx.StaticBitmap(panel, -1,
+										   geticon(16, "dialog-information"),
+										   style=wx.NO_BORDER)
+		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
+		self.tooltip_btn.SetToolTipString(lang.getstr("gamut_plot.tooltip"))
+		panel.Sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL)
+
+		self.save_plot_btn = BitmapButton(panel, -1,
+										  geticon(16, "camera-photo"),
+										  style=wx.NO_BORDER)
+		self.save_plot_btn.SetBackgroundColour(BGCOLOUR)
+		panel.Sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL)
+		self.save_plot_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
+		self.save_plot_btn.SetToolTipString(lang.getstr("save_as") + " " +
+											"(*.bmp, *.xbm, *.xpm, *.jpg, *.png)")
+		self.save_plot_btn.Disable()
+
+		panel.Sizer.Add((1,1))
+
+		panel.Sizer.Add((1,1))
+		panel.Sizer.Add((1,4))
+		panel.Sizer.Add((1,4))
+		panel.Sizer.Add((1,4))
+		panel.Sizer.Add((1,1))
 		
 		self.client = LUTCanvas(self)
 		self.sizer.Add(self.client, 1, wx.EXPAND)
@@ -693,7 +760,7 @@ class LUTFrame(wx.Frame):
 		self.status.SetForegroundColour(FGCOLOUR)
 		self.sizer.Add(self.status, flag=wx.EXPAND)
 		
-		self.box_sizer = wx.FlexGridSizer(0, 3)
+		self.box_sizer = wx.FlexGridSizer(0, 3, 4, 4)
 		self.box_sizer.AddGrowableCol(0)
 		self.box_sizer.AddGrowableCol(2)
 		self.box_panel.SetSizer(self.box_sizer)
@@ -703,21 +770,15 @@ class LUTFrame(wx.Frame):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 				  
 		self.box_sizer.Add(hsizer,
-						   flag=wx.ALIGN_CENTER | wx.BOTTOM, border=8)
-		
-		self.plot_mode_select = wx.Choice(self.box_panel, -1, size=(-1, -1), 
-										  choices=[])
-		hsizer.Add(self.plot_mode_select, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.Bind(wx.EVT_CHOICE, self.plot_mode_select_handler,
-				  id=self.plot_mode_select.GetId())
+						   flag=wx.ALIGN_CENTER | wx.BOTTOM | wx.TOP, border=4)
 
 		self.rendering_intent_select = wx.Choice(self.box_panel, -1,
 												 choices=[lang.getstr("gamap.intents.a"),
 														  lang.getstr("gamap.intents.r"),
 														  lang.getstr("gamap.intents.p"),
 														  lang.getstr("gamap.intents.s")])
-		hsizer.Add(self.rendering_intent_select, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
-				   border=10)
+		hsizer.Add((10, self.rendering_intent_select.Size[1]))
+		hsizer.Add(self.rendering_intent_select, flag=wx.ALIGN_CENTER_VERTICAL)
 		self.rendering_intent_select.Bind(wx.EVT_CHOICE,
 										  self.rendering_intent_select_handler)
 		self.rendering_intent_select.SetSelection(1)
@@ -730,23 +791,34 @@ class LUTFrame(wx.Frame):
 		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
 		self.direction_select.SetSelection(0)
 
+		self.show_actual_lut_cb = CustomCheckBox(self.box_panel, -1,
+											  lang.getstr("calibration.show_actual_lut"))
+		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
+		self.show_actual_lut_cb.SetMaxFontSize(11)
+		hsizer.Add(self.show_actual_lut_cb, flag=wx.ALIGN_CENTER |
+												 wx.ALIGN_CENTER_VERTICAL)
+		self.show_actual_lut_cb.Bind(wx.EVT_CHECKBOX,
+									 self.show_actual_lut_handler)
+
 		self.box_sizer.Add((0, 0))
 		
 		self.box_sizer.Add((0, 0))
 		
 		self.cbox_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.box_sizer.Add(self.cbox_sizer, 
-						   flag=wx.ALL | wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL, 
-						   border=8)
+						   flag=wx.ALIGN_CENTER | wx.ALIGN_CENTER_VERTICAL |
+								wx.TOP, border=4)
 		
 		self.box_sizer.Add((0, 0))
+		
+		self.cbox_sizer.Add((16, 0))
 
 		self.reload_vcgt_btn = BitmapButton(self.box_panel, -1,
 											geticon(16, "stock_refresh"),
 											style=wx.NO_BORDER)
 		self.reload_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.reload_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													   wx.RIGHT, border=16)
+													   wx.RIGHT, border=12)
 		self.reload_vcgt_btn.Bind(wx.EVT_BUTTON, self.reload_vcgt_handler)
 		self.reload_vcgt_btn.SetToolTipString(
 			lang.getstr("calibration.load_from_display_profile"))
@@ -757,7 +829,7 @@ class LUTFrame(wx.Frame):
 										  style=wx.NO_BORDER)
 		self.apply_bpc_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													 wx.RIGHT, border=16)
+													 wx.RIGHT, border=12)
 		self.apply_bpc_btn.Bind(wx.EVT_BUTTON, self.apply_bpc_handler)
 		self.apply_bpc_btn.SetToolTipString(lang.getstr("black_point_compensation"))
 		self.apply_bpc_btn.Disable()
@@ -767,7 +839,7 @@ class LUTFrame(wx.Frame):
 											 style=wx.NO_BORDER)
 		self.install_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.install_vcgt_btn,
-							flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=16)
+							flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=12)
 		self.install_vcgt_btn.Bind(wx.EVT_BUTTON, self.install_vcgt_handler)
 		self.install_vcgt_btn.SetToolTipString(lang.getstr("apply_cal"))
 		self.install_vcgt_btn.Disable()
@@ -824,37 +896,6 @@ class LUTFrame(wx.Frame):
 												   wx.LEFT, border=16)
 		self.toggle_clut.Bind(wx.EVT_CHECKBOX, self.toggle_clut_handler)
 
-		self.box_sizer.Add((0, 6))
-		self.box_sizer.Add((0, 6))
-		self.box_sizer.Add((0, 6))
-
-		self.box_sizer.Add((0, 20))
-
-		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-				  
-		self.box_sizer.Add(hsizer, flag=wx.ALIGN_CENTER)
-
-		self.show_actual_lut_cb = CustomCheckBox(self.box_panel, -1,
-											  lang.getstr("calibration.show_actual_lut"))
-		self.show_actual_lut_cb.SetForegroundColour(FGCOLOUR)
-		self.show_actual_lut_cb.SetMaxFontSize(11)
-		hsizer.Add(self.show_actual_lut_cb, flag=wx.ALIGN_CENTER)
-		self.show_actual_lut_cb.Bind(wx.EVT_CHECKBOX,
-									 self.show_actual_lut_handler)
-
-		self.box_sizer.Add((0, 20))
-
-		self.save_plot_btn = BitmapButton(self.box_panel, -1,
-										  geticon(16, "media-floppy"),
-										  style=wx.NO_BORDER)
-		self.save_plot_btn.SetBackgroundColour(BGCOLOUR)
-		self.cbox_sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													 wx.LEFT, border=16)
-		self.save_plot_btn.Bind(wx.EVT_BUTTON, self.SaveFile)
-		self.save_plot_btn.SetToolTipString(lang.getstr("save_as") + " " +
-											"(*.bmp, *.xbm, *.xpm, *.jpg, *.png)")
-		self.save_plot_btn.Disable()
-
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
 		
 		self.droptarget = FileDrop(self)
@@ -865,11 +906,14 @@ class LUTFrame(wx.Frame):
 		}
 		self.client.SetDropTarget(self.droptarget)
 		
+		border, titlebar = get_platform_window_decoration_size()
+		self.MinSize = (config.defaults["size.lut_viewer.w"] + border * 2,
+						config.defaults["size.lut_viewer.h"] + titlebar + border)
 		self.SetSaneGeometry(
 			getcfg("position.lut_viewer.x"), 
 			getcfg("position.lut_viewer.y"), 
-			getcfg("size.lut_viewer.w"), 
-			getcfg("size.lut_viewer.h"))
+			getcfg("size.lut_viewer.w") + border * 2, 
+			getcfg("size.lut_viewer.h") + titlebar + border)
 		
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -882,8 +926,7 @@ class LUTFrame(wx.Frame):
 			child.Bind(wx.EVT_KEY_DOWN, self.key_handler)
 			child.Bind(wx.EVT_MOUSEWHEEL, self.OnWheel)
 			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
-				isinstance(child, wx.Panel) and
-				not isinstance(child, LUTCanvas)):
+				isinstance(child, wx.Panel)):
 				# No need to enable double buffering under Linux and Mac OS X.
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.
@@ -1573,10 +1616,14 @@ class LUTFrame(wx.Frame):
 		if self.IsShownOnScreen() and not \
 		   self.IsMaximized() and not self.IsIconized():
 			w, h = self.GetSize()
-			setcfg("size.lut_viewer.w", w)
-			setcfg("size.lut_viewer.h", h)
+			border, titlebar = get_platform_window_decoration_size()
+			setcfg("size.lut_viewer.w", w - border * 2)
+			setcfg("size.lut_viewer.h", h - titlebar - border)
 		if event:
 			event.Skip()
+			if sys.platform == "win32":
+				# Needed under Windows when using double buffering
+				self.Refresh()
 	
 	def OnWheel(self, event):
 		xy = wx.GetMousePosition()

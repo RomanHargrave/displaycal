@@ -150,7 +150,7 @@
 	"calibration.reset_success": "Les courbes de la table de correspondance ont été réinitialisées avec succès.",
 	"calibration.resetting": "Réinitialisation linéaire des courbes de la table de correspondance...",
 	"calibration.settings": "Réglages du calibrage",
-	"calibration.show_actual_lut": "Afficher les courbes de calibrage actuelles de la carte vidéo",
+	"calibration.show_actual_lut": "Afficher les courbes de calibrage de la carte vidéo",
 	"calibration.show_lut": "Afficher les courbes",
 		"*calibration.skip": "Continue on to profiling",
 	"calibration.speed": "Vitesse du calibrage",

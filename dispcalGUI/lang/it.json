@@ -150,7 +150,7 @@
 	"calibration.reset_success": "Le curve calibrazione sono state ripristinate con successo.",
 	"calibration.resetting": "Ripristino delle curve calibrazione a lineari in corso...",
 	"calibration.settings": "Impostazioni per la calibrazione",
-		"*calibration.show_actual_lut": "Show actual calibration curves from video card",
+		"*calibration.show_actual_lut": "Show calibration curves from video card",
 		"*calibration.show_lut": "Show curves",
 		"*calibration.skip": "Continue on to profiling",
 	"calibration.speed": "Velocità calibrazione",
