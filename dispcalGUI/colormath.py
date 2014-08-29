@@ -273,7 +273,7 @@ def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50", weight=False):
 			vv = 0.0
 		elif vv > 1.0:
 			vv = 1.0
-		vv = math.pow(vv, min(40.0, 80.0 / (max(bp_in_Lab[0],
+		vv = math.pow(vv, min(40.0, 40.0 / (max(bp_in_Lab[0],
 												bp_out_Lab[0]) or 1.0)))
 		bp_in = Lab2XYZ(*[v * vv for v in bp_in_Lab])
 		bp_out = Lab2XYZ(*[v * vv for v in bp_out_Lab])
