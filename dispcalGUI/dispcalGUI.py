@@ -4363,6 +4363,11 @@ class MainFrame(BaseFrame):
 						not "EDID_manufacturer" in metadata or
 						not "OPENICC_automatic_generated" in metadata):
 						return lang.getstr("profile.share.meta_missing")
+					if ("B2A0" in profile.tags and
+						isinstance(profile.tags.B2A0, ICCP.LUT16Type) and
+						profile.tags.B2A0.input_entries_count < 1024):
+						# 1024 is the Argyll value for a medium quality profile
+						return lang.getstr("profile.share.b2a_resolution_too_low")
 		else:
 			return lang.getstr("profile.share.meta_missing")
 	

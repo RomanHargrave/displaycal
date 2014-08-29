@@ -711,6 +711,7 @@
 	"profile.settings": "Opciones de perfilado",
 	"profile.share": "Subido perfil...",
 	"profile.share.avg_dE_too_high": "El perfil muestra un valor delta E demasiado alto (actual = %s, umbral = %s).",
+		"*profile.share.b2a_resolution_too_low": "The resolution of the profile's PCS to device tables is too low.",
 	"profile.share.enter_info": "Puede compartir su perfil con otros usuarios via el servicio OpenSUSE “ICC Profile Taxi”.\n\nPor favor proporcione una descripcion significativa e introduzca las propiedades de la pantalla mas abajo. Leer ajustes de la pantalla del menu OSD de la misma y aplicar solo las ajustes aplicables a la pantalla que se alteraron de las que trae por defecto.\nEjemplo: Para la mayor parte de las pantallas, estos son los nombres de los preajustes escogidos, brillo, contraste, color temperatura y/o ganancia del punto blanco RGB, asi como la gamma. En portatiles and ultraligeros, habitualmente solo el brillo. Si ha cambiado ajustes adicionales mientras calibraba su pantalla, introduzcalas si es posible.",
 	"profile.share.meta_missing": "El perfil no contiene la meta informacion necesaria.",
 	"profile.share.success": "Perfil subido satisfactoriamente.",

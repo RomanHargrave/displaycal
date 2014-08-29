@@ -711,6 +711,7 @@
 	"profile.settings": "Impostazioni per la creazione del profilo",
 		"*profile.share": "Upload profile...",
 		"*profile.share.avg_dE_too_high": "The profile yields a too high delta E (actual = %s, threshold = %s).",
+		"*profile.share.b2a_resolution_too_low": "The resolution of the profile's PCS to device tables is too low.",
 		"*profile.share.enter_info": "You may share your profile with other users via the OpenSUSE “ICC Profile Taxi” service.\n\nPlease provide a meaningful description and enter display device properties below. Read display device settings from your display device's OSD and only enter settings applicable to your display device which have changed from defaults.\nExample: For most display devices, these are the name of the chosen preset, brightness, contrast, color temperature and/or whitepoint RGB gains, as well as gamma. On laptops and notebooks, usually only the brightness. If you have changed additional settings while calibrating your display device, enter them too if possible.",
 		"*profile.share.meta_missing": "The profile does not contain the necessary meta information.",
 		"*profile.share.success": "Profile uploaded successfully.",

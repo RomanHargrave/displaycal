@@ -711,6 +711,7 @@
 	"profile.settings": "Réglages de la caractérisation",
 	"profile.share": "Charger le profil...",
 	"profile.share.avg_dE_too_high": "Le profil produit un delta E trop élevé (actuel = %s, seuil = %s).",
+		"*profile.share.b2a_resolution_too_low": "The resolution of the profile's PCS to device tables is too low.",
 	"profile.share.enter_info": "Vous pouvez partager votre profil avec les autres utilisateurs via le service OpenSUSE « ICC Profile Taxi ».\n\nVeuillez fournir une description significative et entrer les propriétés du périphérique d'affichage ci-dessous. Consultez les réglages du périphérique d'affichage depuis l'OSD de votre périphérique d'affichage et n'entrez que les réglages applicables à votre périphérique d'affichage qui ont changé par rapport aux valeurs par défaut.\nExemple : pour la plupart des périphériques d'affichage, il s'agit du nom de la présélection choisie, luminosité, contraste, température des couleurs et/ou niveaux RVB du point blanc, ainsi que le gamma. Sur les portables et notebooks, généralement uniquement la luminosité. Si vous avez modifié des réglages supplémentaires au cours du calibrage de votre périphérique d'affichage, entrez-les également si possible.",
 	"profile.share.meta_missing": "Le profil ne contient pas la méta-information nécessaire.",
 	"profile.share.success": "Profil chargé.",

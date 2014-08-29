@@ -711,6 +711,7 @@
 	"profile.settings": "Profilierungseinstellungen",
 	"profile.share": "Profil hochladen...",
 	"profile.share.avg_dE_too_high": "Das Profil weist ein zu hohes Delta E auf (ist = %s, Schwellenwert = %s).",
+	"profile.share.b2a_resolution_too_low": "Die Bezugsfarbraum-zu-Gerätefarbraum-Tabellen des Profils sind zu niedrig aufgelöst.",
 	"profile.share.enter_info": "Sie können Ihr Profil mit anderen Nutzern über den OpenSUSE „ICC Profile Taxi“-Service teilen.\n\nBitte geben Sie dazu eine aussagekräftige Beschreibung und die zutreffenden Anzeigegeräteeigenschaften an. Lesen Sie die Anzeigegeräteeinstellungen vom On-Screen-Menü ihres Anzeigegerätes ab und tragen nur die für ihr Anzeigerät zutreffenden Einstellungen ein, die von Standardeinstellungen abweichen.\nEin Beispiel: Für die meisten Anzeigeräte sind das der Name der gewählten Voreinstellung, Helligkeit, Kontrast, Farbtemperatur und/oder Weißpunkt-RGB-Werte, sowie Gamma. Bei Laptops und Notebooks in der Regel nur die Helligkeit. Falls Sie bei der Kalibrierung ihres Anzeigegerätes weitere Einstellungen gemacht haben, tragen Sie auch diese ein falls möglich.",
 	"profile.share.meta_missing": "Das Profil enthält nicht die notwendigen Meta-Informationen.",
 	"profile.share.success": "Profil erfolgreich hochgeladen.",
