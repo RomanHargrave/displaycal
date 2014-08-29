@@ -822,7 +822,7 @@ class LUTFrame(wx.Frame):
 											style=wx.NO_BORDER)
 		self.reload_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.reload_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													   wx.RIGHT, border=12)
+													   wx.RIGHT, border=8)
 		self.reload_vcgt_btn.Bind(wx.EVT_BUTTON, self.reload_vcgt_handler)
 		self.reload_vcgt_btn.SetToolTipString(
 			lang.getstr("calibration.load_from_display_profile"))
@@ -833,7 +833,7 @@ class LUTFrame(wx.Frame):
 										  style=wx.NO_BORDER)
 		self.apply_bpc_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL |
-													 wx.RIGHT, border=12)
+													 wx.RIGHT, border=8)
 		self.apply_bpc_btn.Bind(wx.EVT_BUTTON, self.apply_bpc_handler)
 		self.apply_bpc_btn.SetToolTipString(lang.getstr("black_point_compensation"))
 		self.apply_bpc_btn.Disable()
@@ -843,7 +843,7 @@ class LUTFrame(wx.Frame):
 											 style=wx.NO_BORDER)
 		self.install_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.install_vcgt_btn,
-							flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=12)
+							flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=8)
 		self.install_vcgt_btn.Bind(wx.EVT_BUTTON, self.install_vcgt_handler)
 		self.install_vcgt_btn.SetToolTipString(lang.getstr("apply_cal"))
 		self.install_vcgt_btn.Disable()
