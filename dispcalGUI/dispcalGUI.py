@@ -6464,10 +6464,6 @@ class MainFrame(BaseFrame):
 										getcfg("profile.name.expanded"), 
 										getcfg("profile.name.expanded"))
 				profile_path = profile_save_path + profile_ext
-			if not success_msg:
-				success_msg = lang.getstr("dialog.install_profile", 
-										  (os.path.basename(profile_path), 
-										   self.display_ctrl.GetStringSelection()))
 			self.cal = profile_path
 			profile = None
 			filename, ext = os.path.splitext(profile_path)
@@ -6561,9 +6557,26 @@ class MainFrame(BaseFrame):
 										  ICCP.GAMUT_VOLUME_SRGB /
 										  gamut_volumes[key] * 100,
 										  name))
+			if config.get_display_name() in config.virtual_displays:
+				installable = False
+				title = appname
+				ok = lang.getstr("3dlut.create")
+				cancel = lang.getstr("cancel")
+			else:
+				installable = True
+				title = lang.getstr("profile.install")
+				ok = lang.getstr("profile.install")
+				cancel = lang.getstr("profile.do_not_install")
+			if not success_msg:
+				if installable:
+					success_msg = lang.getstr("dialog.install_profile", 
+											  (os.path.basename(profile_path), 
+											   self.display_ctrl.GetStringSelection()))
+				else:
+					success_msg = ""
 			if extra:
 				extra = ",".join(extra).replace(":,", ":").replace(",,", "\n")
-				success_msg = "\n\n".join([success_msg, extra])
+				success_msg = "\n\n".join([success_msg, extra]).strip()
 			# Always load calibration curves
 			self.load_cal(cal=profile_path, silent=True)
 			# Check profile metadata
@@ -6571,9 +6584,9 @@ class MainFrame(BaseFrame):
 			if not self.profile_share_get_meta_error(profile):
 				share_profile = lang.getstr("profile.share")
 			dlg = ConfirmDialog(self, msg=success_msg, 
-								title=lang.getstr("profile.install"),
-								ok=lang.getstr("profile.install"), 
-								cancel=lang.getstr("profile.do_not_install"), 
+								title=title,
+								ok=ok, 
+								cancel=cancel, 
 								bitmap=geticon(32, "dispcalGUI-profile-info"),
 								alt=share_profile)
 			self.modaldlg = dlg
@@ -6620,78 +6633,82 @@ class MainFrame(BaseFrame):
 			if id in self.profile_info:
 				self.show_profile_info.SetValue(
 					self.profile_info[id].IsShownOnScreen())
-			if sys.platform != "darwin" or test:
-				self.profile_load_on_login = wx.CheckBox(dlg, -1, 
-					lang.getstr("profile.load_on_login"))
-				self.profile_load_on_login.SetValue(
-					bool(getcfg("profile.load_on_login") or
-						 (sys.platform == "win32" and
-						  sys.getwindowsversion() >= (6, 1) and
-						  util_win.calibration_management_isenabled())))
-				dlg.Bind(wx.EVT_CHECKBOX, self.profile_load_on_login_handler, 
-						 id=self.profile_load_on_login.GetId())
-				dlg.sizer3.Add(self.profile_load_on_login, 
-							   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
-				dlg.sizer3.Add((1, 4))
-				if sys.platform == "win32" and sys.getwindowsversion() >= (6, 1):
-					self.profile_load_by_os = wx.CheckBox(dlg, -1, 
-						lang.getstr("profile.load_on_login.handled_by_os"))
-					self.profile_load_by_os.SetValue(
-						bool(util_win.calibration_management_isenabled()))
-					dlg.Bind(wx.EVT_CHECKBOX, self.profile_load_by_os_handler, 
-							 id=self.profile_load_by_os.GetId())
-					dlg.sizer3.Add(self.profile_load_by_os, 
-								   flag=wx.LEFT | wx.ALIGN_LEFT, border=16)
+			if installable:
+				if sys.platform != "darwin" or test:
+					self.profile_load_on_login = wx.CheckBox(dlg, -1, 
+						lang.getstr("profile.load_on_login"))
+					self.profile_load_on_login.SetValue(
+						bool(getcfg("profile.load_on_login") or
+							 (sys.platform == "win32" and
+							  sys.getwindowsversion() >= (6, 1) and
+							  util_win.calibration_management_isenabled())))
+					dlg.Bind(wx.EVT_CHECKBOX,
+							 self.profile_load_on_login_handler, 
+							 id=self.profile_load_on_login.GetId())
+					dlg.sizer3.Add(self.profile_load_on_login, 
+								   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 					dlg.sizer3.Add((1, 4))
-					self.profile_load_on_login_handler()
-			if ((sys.platform == "darwin" or (sys.platform != "win32" and 
-											  self.worker.argyll_version >= 
-											  [1, 1, 0])) and 
-				(os.geteuid() == 0 or which("sudo"))) or \
-				(sys.platform == "win32" and 
-				 sys.getwindowsversion() >= (6, ) and 
-				 self.worker.argyll_version > 
-				 [1, 1, 1]) or test:
-				# Linux, OSX or Vista and later
-				# NOTE: System install scope is currently not implemented
-				# correctly in dispwin 1.1.0, but a patch is trivial and
-				# should be in the next version
-				# 2010-06-18: Do not offer system install in dispcalGUI when
-				# installing via GCM or oyranos FIXME: oyranos-monitor can't 
-				# be run via sudo
-				self.install_profile_user = wx.RadioButton(
-					dlg, -1, lang.getstr("profile.install_user"), 
-					style=wx.RB_GROUP)
-				self.install_profile_user.SetValue(
-					getcfg("profile.install_scope") == "u")
-				dlg.Bind(wx.EVT_RADIOBUTTON, 
-						 self.install_profile_scope_handler, 
-						 id=self.install_profile_user.GetId())
-				dlg.sizer3.Add(self.install_profile_user, 
-							   flag=wx.TOP | wx.ALIGN_LEFT, border=8)
-				self.install_profile_systemwide = wx.RadioButton(
-					dlg, -1, lang.getstr("profile.install_local_system"))
-				self.install_profile_systemwide.SetValue(
-					getcfg("profile.install_scope") == "l")
-				dlg.Bind(wx.EVT_RADIOBUTTON, 
-						 self.install_profile_scope_handler, 
-						 id=self.install_profile_systemwide.GetId())
-				dlg.sizer3.Add(self.install_profile_systemwide, 
-							   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-				if sys.platform == "darwin" and \
-				   os.path.isdir("/Network/Library/ColorSync/Profiles"):
-					self.install_profile_network = wx.RadioButton(
-						dlg, -1, lang.getstr("profile.install_network"))
-					self.install_profile_network.SetValue(
-						getcfg("profile.install_scope") == "n")
+					if (sys.platform == "win32" and
+						sys.getwindowsversion() >= (6, 1)):
+						self.profile_load_by_os = wx.CheckBox(dlg, -1, 
+							lang.getstr("profile.load_on_login.handled_by_os"))
+						self.profile_load_by_os.SetValue(
+							bool(util_win.calibration_management_isenabled()))
+						dlg.Bind(wx.EVT_CHECKBOX,
+								 self.profile_load_by_os_handler, 
+								 id=self.profile_load_by_os.GetId())
+						dlg.sizer3.Add(self.profile_load_by_os, 
+									   flag=wx.LEFT | wx.ALIGN_LEFT, border=16)
+						dlg.sizer3.Add((1, 4))
+						self.profile_load_on_login_handler()
+				if ((sys.platform == "darwin" or (sys.platform != "win32" and 
+												  self.worker.argyll_version >= 
+												  [1, 1, 0])) and 
+					(os.geteuid() == 0 or which("sudo"))) or \
+					(sys.platform == "win32" and 
+					 sys.getwindowsversion() >= (6, ) and 
+					 self.worker.argyll_version > 
+					 [1, 1, 1]) or test:
+					# Linux, OSX or Vista and later
+					# NOTE: System install scope is currently not implemented
+					# correctly in dispwin 1.1.0, but a patch is trivial and
+					# should be in the next version
+					# 2010-06-18: Do not offer system install in dispcalGUI when
+					# installing via GCM or oyranos FIXME: oyranos-monitor can't 
+					# be run via sudo
+					self.install_profile_user = wx.RadioButton(
+						dlg, -1, lang.getstr("profile.install_user"), 
+						style=wx.RB_GROUP)
+					self.install_profile_user.SetValue(
+						getcfg("profile.install_scope") == "u")
 					dlg.Bind(wx.EVT_RADIOBUTTON, 
 							 self.install_profile_scope_handler, 
-							 id=self.install_profile_network.GetId())
-					dlg.sizer3.Add(self.install_profile_network, 
+							 id=self.install_profile_user.GetId())
+					dlg.sizer3.Add(self.install_profile_user, 
+								   flag=wx.TOP | wx.ALIGN_LEFT, border=8)
+					self.install_profile_systemwide = wx.RadioButton(
+						dlg, -1, lang.getstr("profile.install_local_system"))
+					self.install_profile_systemwide.SetValue(
+						getcfg("profile.install_scope") == "l")
+					dlg.Bind(wx.EVT_RADIOBUTTON, 
+							 self.install_profile_scope_handler, 
+							 id=self.install_profile_systemwide.GetId())
+					dlg.sizer3.Add(self.install_profile_systemwide, 
 								   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-				self.install_profile_scope_handler(None)
-			else:
-				setcfg("profile.install_scope", "u")
+					if sys.platform == "darwin" and \
+					   os.path.isdir("/Network/Library/ColorSync/Profiles"):
+						self.install_profile_network = wx.RadioButton(
+							dlg, -1, lang.getstr("profile.install_network"))
+						self.install_profile_network.SetValue(
+							getcfg("profile.install_scope") == "n")
+						dlg.Bind(wx.EVT_RADIOBUTTON, 
+								 self.install_profile_scope_handler, 
+								 id=self.install_profile_network.GetId())
+						dlg.sizer3.Add(self.install_profile_network, 
+									   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+					self.install_profile_scope_handler(None)
+				else:
+					setcfg("profile.install_scope", "u")
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
@@ -6730,8 +6747,8 @@ class MainFrame(BaseFrame):
 			result = event.GetId()
 		if result == wx.ID_OK:
 			if config.get_display_name() in config.virtual_displays:
-				show_result_dialog(Info(lang.getstr("profile.install.virtual.unsupported")),
-								   parent=self.modaldlg)
+				self.profile_finish_consumer(False)
+				self.lut3d_create_handler(None)
 			else:
 				if getcfg("profile.install_scope") in ("l", "n"):
 					result = self.worker.authenticate("dispwin",
