@@ -1398,10 +1398,12 @@ class Worker(object):
 		if (measurement_mode and (measurement_mode != "p" or
 								  self.get_instrument_name() == "ColorHug") and
 			not get_arg("-y", args) and
-			not "specbos" in self.get_instrument_name()):
+			self.get_instrument_name() != "specbos 1201"):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
 				# Only ColorHug supports -yp parameter
+				# The specbos 1201 (unlike 1211) doesn't support measurement
+				# mode selection
 				if self.argyll_version >= [1, 5, 0]:
 					measurement_mode_map = instrument_features.get("measurement_mode_map",
 																   {})
