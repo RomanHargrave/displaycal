@@ -616,7 +616,7 @@
                 <cols>2</cols>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
-                <growablerows>14</growablerows>
+                <growablerows>13</growablerows>
               </object>
               <option>1</option>
               <flag>wxALL|wxEXPAND</flag>

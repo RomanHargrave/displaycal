@@ -295,33 +295,25 @@
                   <border>8</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxChoice" name="lut3d_bitdepth_output_ctrl">
-                        <selection>4</selection>
-                      </object>
-                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                    </object>
-                    <object class="spacer">
-                      <size>8, 1</size>
-                      <option>1</option>
-                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxButton" name="lut3d_create_btn">
-                        <label>3dlut.create</label>
-                      </object>
-                      <flag>wxALIGN_RIGHT|wxALIGN_BOTTOM</flag>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxChoice" name="lut3d_bitdepth_output_ctrl">
+                    <selection>4</selection>
                   </object>
-                  <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxButton" name="lut3d_create_btn">
+                    <label>3dlut.create</label>
+                  </object>
+                  <flag>wxALIGN_RIGHT|wxALIGN_BOTTOM</flag>
                 </object>
                 <cols>2</cols>
                 <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
+                <growablerows>16</growablerows>
               </object>
+              <option>1</option>
               <flag>wxALL|wxEXPAND</flag>
               <border>12</border>
             </object>
