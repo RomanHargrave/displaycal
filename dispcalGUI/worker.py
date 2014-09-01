@@ -5501,6 +5501,14 @@ usage: spotread [-options] [logfile]
 			ti3[0].add_keyword("SMOOTH_B2A",
 							   "YES" if getcfg("profile.b2a.hires.smooth")
 							   else "NO")
+			# Display update delay
+			if getcfg("measure.override_min_display_update_delay_ms"):
+				ti3[0].add_keyword("MIN_DISPLAY_UPDATE_DELAY_MS",
+								   getcfg("measure.min_display_update_delay_ms"))
+			# Display settle time multiplier
+			if getcfg("measure.override_display_settle_time_mult"):
+				ti3[0].add_keyword("DISPLAY_SETTLE_TIME_MULT",
+								   getcfg("measure.display_settle_time_mult"))
 			ti3.write()
 		return cmd, args
 

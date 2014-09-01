@@ -3104,6 +3104,8 @@ class MainFrame(BaseFrame):
 		enable_gamap = self.get_profile_type() in ("l", "x", "X")
 		self.gamap_btn.Enable(enable_profile and enable_gamap)
 		
+		if getattr(self, "extra_args", None):
+			self.extra_args.update_controls()
 
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
@@ -9813,6 +9815,9 @@ class MainFrame(BaseFrame):
 			setcfg("last_cal_or_icc_path", path)
 			update_ccmx_items = True
 			set_size = True
+			display_match = False
+			instrument_id = None
+			instrument_match = False
 			if ext.lower() in (".icc", ".icm"):
 				setcfg("last_icc_path", path)
 				(options_dispcal, 
@@ -9848,6 +9853,7 @@ class MainFrame(BaseFrame):
 						display_index = None
 					if display_index is not None:
 						# Found it
+						display_match = True
 						setcfg("display.number", display_index + 1)
 						self.get_set_display()
 				# Get and set the instrument
@@ -9858,6 +9864,7 @@ class MainFrame(BaseFrame):
 					for i, instrument in enumerate(self.worker.instruments):
 						if instrument.lower() == instrument_id:
 							# Found it
+							instrument_match = True
 							setcfg("comport.number", i + 1)
 							self.update_comports()
 							# No need to update ccmx items in update_controls,
@@ -9915,6 +9922,7 @@ class MainFrame(BaseFrame):
 								if (display_name.lower() == o[1:] and
 									getcfg("display.number") != i + 1):
 									# Found it
+									display_match = True
 									setcfg("display.number", i + 1)
 									self.get_set_display()
 									break
@@ -10088,8 +10096,40 @@ class MainFrame(BaseFrame):
 					for keyword, cfgname in {"SMOOTH_B2A_SIZE":
 											 "profile.b2a.hires.size",
 											 "HIRES_B2A_SIZE":
-											 "profile.b2a.hires.size"}.iteritems():
+											 "profile.b2a.hires.size",
+											 "MIN_DISPLAY_UPDATE_DELAY_MS":
+											 "measure.min_display_update_delay_ms",
+											 "DISPLAY_SETTLE_TIME_MULT":
+											 "measure.display_settle_time_mult"}.iteritems():
 						cfgvalue = cfgpart.queryv1(keyword)
+						if keyword in ("MIN_DISPLAY_UPDATE_DELAY_MS",
+									   "DISPLAY_SETTLE_TIME_MULT"):
+							backup = getcfg("measure.override_%s.backup" %
+											keyword.lower(), False)
+							if (cfgvalue is not None and display_match and
+								(instrument_match or not instrument_id)):
+								# Only set display update delay if a matching
+								# display/instrument stored in profile meta
+								# tag or no instrument ID (i.e. a preset)
+								if backup is None:
+									setcfg("measure.override_%s.backup" %
+										   keyword.lower(),
+										   getcfg("measure.override_" +
+												  keyword.lower()))
+									setcfg("measure.%s.backup" %
+										   keyword.lower(),
+										   getcfg("measure." +
+												  keyword.lower()))
+								setcfg("measure.override_" + keyword.lower(), 1)
+							elif backup is not None:
+								setcfg("measure.override_" +
+									   keyword.lower(), backup)
+								cfgvalue = getcfg("measure.%s.backup" %
+												  keyword.lower())
+								setcfg("measure.override_%s.backup" %
+									   keyword.lower(), None)
+								setcfg("measure.%s.backup" %
+									   keyword.lower(), None)
 						if cfgvalue is not None:
 							setcfg(cfgname, cfgvalue)
 				self.update_controls(
