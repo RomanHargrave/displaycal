@@ -1397,7 +1397,8 @@ class Worker(object):
 		instrument_features = self.get_instrument_features()
 		if (measurement_mode and (measurement_mode != "p" or
 								  self.get_instrument_name() == "ColorHug") and
-			not get_arg("-y", args)):
+			not get_arg("-y", args) and
+			not "specbos" in self.get_instrument_name()):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
 				# Only ColorHug supports -yp parameter
