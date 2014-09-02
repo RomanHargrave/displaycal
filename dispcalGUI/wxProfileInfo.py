@@ -1010,10 +1010,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.tooltip_btn = BitmapButton(p1, -1, geticon(16, "dialog-information"),
 										style=wx.NO_BORDER)
 		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
-		self.tooltip_btn.Bind(wx.EVT_BUTTON,
-							  lambda event:
-							  show_result_dialog(UnloggedInfo(event.EventObject.ToolTip.Tip),
-												 self))
+		self.tooltip_btn.Bind(wx.EVT_BUTTON, self.tooltip_handler)
 		self.tooltip_btn.SetToolTipString(lang.getstr("gamut_plot.tooltip"))
 		self.plot_mode_sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL |
 														wx.LEFT, border=8)

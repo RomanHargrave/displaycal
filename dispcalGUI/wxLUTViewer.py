@@ -23,7 +23,7 @@ from worker import (Error, UnloggedError, UnloggedInfo, Worker, get_argyll_util,
 from wxaddons import get_platform_window_decoration_size, wx
 from wxMeasureFrame import MeasureFrame
 from wxwindows import (BitmapBackgroundPanelText, CustomCheckBox, FileDrop,
-					   InfoDialog)
+					   InfoDialog, TooltipWindow)
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
@@ -722,10 +722,7 @@ class LUTFrame(wx.Frame):
 										geticon(16, "dialog-information"),
 										style=wx.NO_BORDER)
 		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
-		self.tooltip_btn.Bind(wx.EVT_BUTTON,
-							  lambda event:
-							  show_result_dialog(UnloggedInfo(event.EventObject.ToolTip.Tip),
-												 self))
+		self.tooltip_btn.Bind(wx.EVT_BUTTON, self.tooltip_handler)
 		self.tooltip_btn.SetToolTipString(lang.getstr("gamut_plot.tooltip"))
 		panel.Sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL)
 
@@ -1072,6 +1069,16 @@ class LUTFrame(wx.Frame):
 			self.trc = None
 			self.DrawLUT()
 			self.handle_errors()
+
+	def tooltip_handler(self, event):
+		if not hasattr(self, "tooltip_window"):
+			self.tooltip_window = TooltipWindow(self,
+												msg=event.EventObject.ToolTip.Tip,
+												title=event.EventObject.TopLevelParent.Title,
+												bitmap=geticon(32, "dialog-information"))
+		else:
+			self.tooltip_window.Show()
+			self.tooltip_window.Raise()
 
 	def show_actual_lut_handler(self, event):
 		setcfg("lut_viewer.show_actual_lut", 
