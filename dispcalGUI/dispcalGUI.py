@@ -2603,7 +2603,7 @@ class MainFrame(BaseFrame):
 			len(measurement_modes[instrument_type]) > 1)
 		self.measurement_mode_ctrl.Thaw()
 	
-	def update_colorimeter_correction_matrix_ctrl(self, event=None):
+	def update_colorimeter_correction_matrix_ctrl(self):
 		""" Show or hide the colorimeter correction matrix controls """
 		self.calpanel.Freeze()
 		self.update_adjustment_controls()
@@ -2622,8 +2622,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		if self.IsShown():
-			if event:
-				wx.CallAfter(self.set_size, True)
+			wx.CallAfter(self.set_size, True)
 			wx.CallAfter(self.update_scrollbars)
 	
 	def delete_colorimeter_correction_matrix_ctrl_item(self, path):
@@ -7620,7 +7619,7 @@ class MainFrame(BaseFrame):
 		if self.comport_ctrl.GetSelection() > -1:
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
-		self.update_colorimeter_correction_matrix_ctrl(True)
+		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items()
 	
 	def import_colorimeter_correction_handler(self, event):
@@ -9650,7 +9649,7 @@ class MainFrame(BaseFrame):
 			self.worker.measurement_modes = {}
 			self.update_measurement_modes()
 			if comports == self.worker.instruments:
-				self.update_colorimeter_correction_matrix_ctrl(True)
+				self.update_colorimeter_correction_matrix_ctrl()
 			self.update_black_point_rate_ctrl()
 			self.update_drift_compensation_ctrls()
 			self.update_profile_type_ctrl()
