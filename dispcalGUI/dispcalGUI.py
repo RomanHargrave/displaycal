@@ -125,7 +125,7 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
-from wxfixes import ThemedGenButton
+from wxfixes import ThemedGenButton, set_bitmap_labels
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseFrame,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
@@ -8093,6 +8093,7 @@ class MainFrame(BaseFrame):
 				pass
 		else:
 			self.display_lut_link_ctrl.SetBitmapLabel(bitmap_unlink)
+		set_bitmap_labels(self.display_lut_link_ctrl)
 		if lut_no < 0:
 			try:
 				lut_no = self.display_lut_ctrl.Items.index(self.display_ctrl.Items[getcfg("display_lut.number") - 1])
