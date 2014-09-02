@@ -2396,7 +2396,7 @@ class MainFrame(BaseFrame):
 				self.update_controls()
 			self.settings_discard_changes(keep_changed_state=True)
 
-	def update_displays(self, update_ccmx_items=False):
+	def update_displays(self, update_ccmx_items=False, set_height=False):
 		""" Update the display selector controls. """
 		if debug:
 			safe_print("[D] update_displays")
@@ -2436,9 +2436,9 @@ class MainFrame(BaseFrame):
 		self.get_set_display(update_ccmx_items)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
-		self.update_scrollbars()
 		if self.IsShown():
-			self.set_size()
+			self.set_size(set_height)
+		self.update_scrollbars()
 	
 	def update_scrollbars(self):
 		self.Freeze()
@@ -2622,9 +2622,9 @@ class MainFrame(BaseFrame):
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		if self.IsShown():
-			wx.CallAfter(self.update_scrollbars)
 			if event:
 				wx.CallAfter(self.set_size, True)
+			wx.CallAfter(self.update_scrollbars)
 	
 	def delete_colorimeter_correction_matrix_ctrl_item(self, path):
 		if path in self.ccmx_cached_paths:
@@ -3392,7 +3392,7 @@ class MainFrame(BaseFrame):
 	def use_separate_lut_access_handler(self, event):
 		setcfg("use_separate_lut_access", 
 			   int(self.menuitem_use_separate_lut_access.IsChecked()))
-		self.update_displays()
+		self.update_displays(set_height=True)
 
 	def do_not_use_video_lut_handler(self, event):
 		do_not_use_video_lut = self.menuitem_do_not_use_video_lut.IsChecked()
@@ -4247,8 +4247,8 @@ class MainFrame(BaseFrame):
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
-		self.update_scrollbars()
 		self.set_size(True)
+		self.update_scrollbars()
 		self.update_main_controls()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
@@ -7006,9 +7006,9 @@ class MainFrame(BaseFrame):
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
-		self.update_scrollbars()
 		if event:
 			self.set_size(True)
+		self.update_scrollbars()
 	
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():
