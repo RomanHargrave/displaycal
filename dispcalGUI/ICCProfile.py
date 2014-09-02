@@ -2314,7 +2314,8 @@ class VideoCardGammaTableType(VideoCardGammaType):
 	def getNormalizedValues(self, amount=None):
 		if amount is None:
 			amount = self.entryCount
-		values = zip(*[[entry / 65535.0 for entry in channel] for channel in self.data])
+		maxValue = math.pow(256, self.entrySize) - 1
+		values = zip(*[[entry / maxValue for entry in channel] for channel in self.data])
 		if amount <= self.entryCount:
 			step = self.entryCount / float(amount - 1)
 			all = values
