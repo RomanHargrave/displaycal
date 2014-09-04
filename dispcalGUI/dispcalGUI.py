@@ -10653,14 +10653,21 @@ class StartupFrame(wx.Frame):
 		title = "%s %s" % (appname, version)
 		if VERSION > VERSION_BASE:
 			title += " Beta"
-		if sys.platform != "darwin":
-			window_style = wx.NO_BORDER
-		else:
-			window_style = wx.CAPTION
 		wx.Frame.__init__(self, None, title="%s: %s" % (title,
 														lang.getstr("startup")),
-						  style=wx.NO_BORDER)
+						  style=wx.FRAME_SHAPED | wx.NO_BORDER)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+
+		# Setup shape. Required to get rid of window shadow under Ubuntu.
+		self.mask_bmp = getbitmap("theme/splash-mask")
+		if wx.Platform == "__WXGTK__":
+			# wxGTK requires that the window be created before you can
+			# set its shape, so delay the call to SetWindowShape until
+			# this event.
+			self.Bind(wx.EVT_WINDOW_CREATE, self.SetWindowShape)
+		else:
+			# On wxMSW and wxMac the window has already been created.
+			self.SetWindowShape()
 
 		# Setup splash screen
 		self.splash_bmp = getbitmap("theme/splash")
@@ -10771,6 +10778,10 @@ class StartupFrame(wx.Frame):
 			if self.IsShown():
 				self.Draw(wx.ClientDC(self))
 		return True, False
+
+	def SetWindowShape(self, *evt):
+		r = wx.RegionFromBitmap(self.mask_bmp)
+		self.hasShape = self.SetShape(r)
 
 	UpdatePulse = Pulse
 
