@@ -10713,7 +10713,7 @@ class StartupFrame(wx.Frame):
 		if self.IsShown() and self._alpha < 255:
 			self._alpha += 15
 			self.SetTransparent(self._alpha)
-			if sys.platform not in ("darwin", "win32") and wx.VERSION >= (2, 9):
+			if sys.platform not in ("darwin", "win32"):
 				self.Refresh()
 				self.Update()
 			wx.CallLater(1, self.startup)
@@ -10733,7 +10733,7 @@ class StartupFrame(wx.Frame):
 		if self.IsShown() and self._alpha > 0:
 			self._alpha -= 15
 			self.SetTransparent(self._alpha)
-			if sys.platform not in ("darwin", "win32") and wx.VERSION >= (2, 9):
+			if sys.platform not in ("darwin", "win32"):
 				self.Refresh()
 				self.Update()
 			wx.CallLater(1, self.setup_frame_finish, app)
