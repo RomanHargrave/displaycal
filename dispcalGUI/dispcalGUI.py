@@ -10658,7 +10658,7 @@ class StartupFrame(wx.Frame):
 						  style=wx.FRAME_SHAPED | wx.NO_BORDER)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
-		if wx.VERSION > (2, 8, 12):
+		if wx.VERSION >= (2, 8, 12, 1):
 			# Setup shape. Required to get rid of window shadow under Ubuntu.
 			# Note that shaped windows seem to be broken (won't show at all)
 			# with wxGTK 2.8.12.0 and possibly earlier.
