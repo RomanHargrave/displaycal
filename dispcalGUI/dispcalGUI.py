@@ -10713,6 +10713,9 @@ class StartupFrame(wx.Frame):
 		if self.IsShown() and self._alpha < 255:
 			self._alpha += 15
 			self.SetTransparent(self._alpha)
+			if sys.platform not in ("darwin", "win32") and wx.VERSION >= (2, 9):
+				self.Refresh()
+				self.Update()
 			wx.CallLater(1, self.startup)
 			return
 		self.worker.enumerate_displays_and_ports(enumerate_ports=getcfg("enumerate_ports.auto"))
@@ -10730,6 +10733,9 @@ class StartupFrame(wx.Frame):
 		if self.IsShown() and self._alpha > 0:
 			self._alpha -= 15
 			self.SetTransparent(self._alpha)
+			if sys.platform not in ("darwin", "win32") and wx.VERSION >= (2, 9):
+				self.Refresh()
+				self.Update()
 			wx.CallLater(1, self.setup_frame_finish, app)
 			return
 		app.SetTopWindow(app.frame)
@@ -10752,7 +10758,7 @@ class StartupFrame(wx.Frame):
 			x = y = 0
 		dc.DrawBitmap(self.splash_bmp, x, y)
 		rect = wx.Rect(0, int(self.splash_bmp.Size[1] * 0.75),
-					   self.splash_bmp.Size[0], 16)
+					   self.splash_bmp.Size[0], 40)
 		dc.SetFont(self.GetFont())
 		dc.SetTextForeground("#CCCCCC")
 		dc.DrawLabel(self._msg, rect, wx.ALIGN_CENTER | wx.ALIGN_TOP)
@@ -10765,9 +10771,6 @@ class StartupFrame(wx.Frame):
 			if self.IsShown():
 				self.Draw(wx.ClientDC(self))
 		return True, False
-	
-	def Update(self, value, msg=None):
-		return self.Pulse(msg)
 
 	UpdatePulse = Pulse
 
