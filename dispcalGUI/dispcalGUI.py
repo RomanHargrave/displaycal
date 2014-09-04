@@ -10653,6 +10653,10 @@ class StartupFrame(wx.Frame):
 		title = "%s %s" % (appname, version)
 		if VERSION > VERSION_BASE:
 			title += " Beta"
+		if sys.platform != "darwin":
+			window_style = wx.NO_BORDER
+		else:
+			window_style = wx.CAPTION
 		wx.Frame.__init__(self, None, title="%s: %s" % (title,
 														lang.getstr("startup")),
 						  style=wx.NO_BORDER)
@@ -10665,21 +10669,37 @@ class StartupFrame(wx.Frame):
 											self.splash_bmp.Size[0] / 2.0),
 										int(clientarea[3] / 2.0 -
 											self.splash_bmp.Size[1] / 2.0))
-
-		# Backup a copy of the screen area we're going to draw on
-		dc = wx.ScreenDC()
-		self._bufferbitmap = wx.EmptyBitmap(self.splash_bmp.Size[0],
-											self.splash_bmp.Size[1])
-		self._buffereddc = wx.MemoryDC(self._bufferbitmap)
-		self._buffereddc.Blit(0, 0, self.splash_bmp.Size[0],
-							  self.splash_bmp.Size[1], dc, self.splash_x,
-							  self.splash_y)
-
-		self.SetClientSize(self.splash_bmp.Size)
-		self.SetPosition((self.splash_x, self.splash_y))
 		self.Pulse("\n".join([lang.getstr("welcome_back"
 							  if hascfg("recent_cals")
 							  else "welcome"), lang.getstr("startup")]))
+
+		self._bufferbitmap = wx.EmptyBitmap(self.splash_bmp.Size[0],
+											self.splash_bmp.Size[1])
+		self._buffereddc = wx.MemoryDC(self._bufferbitmap)
+		self.worker = Worker()
+		# Grab a bitmap of the screen area we're going to draw on
+		if sys.platform != "darwin":
+			dc = wx.ScreenDC()
+			# Grabbing from ScreenDC is not supported under Mac OS X
+			self._buffereddc.Blit(0, 0, self.splash_bmp.Size[0],
+								  self.splash_bmp.Size[1], dc, self.splash_x,
+								  self.splash_y)
+		elif not isinstance(self.worker.create_tempdir(), Exception):
+			# Use screencapture utility under Mac OS X
+			if self.worker.exec_cmd(which("screencapture"),
+									["-x", "-R%i,%i,%i,%i" %
+									 (self.splash_x, self.splash_y,
+									  self.splash_bmp.Size[0],
+									  self.splash_bmp.Size[1]),
+									  "screencap.png"], capture_output=True,
+									skip_scripts=True, silent=True):
+				bmp = wx.Bitmap(os.path.join(self.worker.tempdir,
+											 "screencap.png"))
+				if bmp.IsOk():
+					self._buffereddc.DrawBitmap(bmp, 0, 0)
+				self.worker.wrapup(False)
+		self.SetClientSize(self.splash_bmp.Size)
+		self.SetPosition((self.splash_x, self.splash_y))
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.SetTransparent(0)
 		self._alpha = 0
@@ -10690,12 +10710,11 @@ class StartupFrame(wx.Frame):
 		wx.CallLater(1, self.startup)
 
 	def startup(self):
-		if self._alpha < 255:
+		if self.IsShown() and self._alpha < 255:
 			self._alpha += 15
 			self.SetTransparent(self._alpha)
 			wx.CallLater(1, self.startup)
 			return
-		self.worker = Worker()
 		self.worker.enumerate_displays_and_ports(enumerate_ports=getcfg("enumerate_ports.auto"))
 		if verbose >= 1:
 			safe_print(lang.getstr("initializing_gui"))
@@ -10708,7 +10727,7 @@ class StartupFrame(wx.Frame):
 		self.setup_frame_finish(app)
 
 	def setup_frame_finish(self, app):
-		if self._alpha > 0:
+		if self.IsShown() and self._alpha > 0:
 			self._alpha -= 15
 			self.SetTransparent(self._alpha)
 			wx.CallLater(1, self.setup_frame_finish, app)
@@ -10723,14 +10742,22 @@ class StartupFrame(wx.Frame):
 
 	def Draw(self, dc):
 		dc.SetBackgroundMode(wx.TRANSPARENT)
-		dc.Blit(0, 0, self.splash_bmp.Size[0],
-				self.splash_bmp.Size[1], self._buffereddc, 0, 0)
-		dc.DrawBitmap(self.splash_bmp, 0, 0)
+		if isinstance(dc, wx.ScreenDC):
+			dc.StartDrawingOnTop()
+			x, y = self.splash_x, self.splash_y
+		else:
+			if hasattr(self, "_buffereddc"):
+				dc.Blit(0, 0, self.splash_bmp.Size[0],
+						self.splash_bmp.Size[1], self._buffereddc, 0, 0)
+			x = y = 0
+		dc.DrawBitmap(self.splash_bmp, x, y)
 		rect = wx.Rect(0, int(self.splash_bmp.Size[1] * 0.75),
 					   self.splash_bmp.Size[0], 16)
 		dc.SetFont(self.GetFont())
 		dc.SetTextForeground("#CCCCCC")
 		dc.DrawLabel(self._msg, rect, wx.ALIGN_CENTER | wx.ALIGN_TOP)
+		if isinstance(dc, wx.ScreenDC):
+			dc.EndDrawingOnTop()
 
 	def Pulse(self, msg=None):
 		if msg:
