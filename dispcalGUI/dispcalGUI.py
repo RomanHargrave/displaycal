@@ -10658,16 +10658,19 @@ class StartupFrame(wx.Frame):
 						  style=wx.FRAME_SHAPED | wx.NO_BORDER)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
-		# Setup shape. Required to get rid of window shadow under Ubuntu.
-		self.mask_bmp = getbitmap("theme/splash-mask")
-		if wx.Platform == "__WXGTK__":
-			# wxGTK requires that the window be created before you can
-			# set its shape, so delay the call to SetWindowShape until
-			# this event.
-			self.Bind(wx.EVT_WINDOW_CREATE, self.SetWindowShape)
-		else:
-			# On wxMSW and wxMac the window has already been created.
-			self.SetWindowShape()
+		if wx.VERSION > (2, 8, 12):
+			# Setup shape. Required to get rid of window shadow under Ubuntu.
+			# Note that shaped windows seem to be broken (won't show at all)
+			# with wxGTK 2.8.12.0 and possibly earlier.
+			self.mask_bmp = getbitmap("theme/splash-mask")
+			if wx.Platform == "__WXGTK__":
+				# wxGTK requires that the window be created before you can
+				# set its shape, so delay the call to SetWindowShape until
+				# this event.
+				self.Bind(wx.EVT_WINDOW_CREATE, self.SetWindowShape)
+			else:
+				# On wxMSW and wxMac the window has already been created.
+				self.SetWindowShape()
 
 		# Setup splash screen
 		self.splash_bmp = getbitmap("theme/splash")
