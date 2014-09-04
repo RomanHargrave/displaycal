@@ -2340,10 +2340,6 @@ class Worker(object):
 			lut_access = []
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
-			if getattr(wx.GetApp(), "progress_dlg", None) and \
-			   wx.GetApp().progress_dlg.IsShownOnScreen():
-				wx.GetApp().progress_dlg.Pulse(
-					lang.getstr("enumerating_displays_and_comports"))
 			instruments = []
 			if enumerate_ports:
 				cmd = get_argyll_util("dispcal")
@@ -2434,10 +2430,6 @@ class Worker(object):
 					if not iname in instruments:
 						instruments.append(iname)
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
-			if getattr(wx.GetApp(), "progress_dlg", None) and \
-			   wx.GetApp().progress_dlg.IsShownOnScreen():
-				wx.GetApp().progress_dlg.Pulse(
-					lang.getstr("success"))
 			if instruments != self.instruments:
 				self.instruments = instruments
 				setcfg("instruments", os.pathsep.join(instruments))
@@ -2530,10 +2522,6 @@ class Worker(object):
 					for i, disp in enumerate(displays):
 						if verbose >= 1 and not silent:
 							safe_print(lang.getstr("checking_lut_access", (i + 1)))
-						if getattr(wx.GetApp(), "progress_dlg", None) and \
-						   wx.GetApp().progress_dlg.IsShownOnScreen():
-							wx.GetApp().progress_dlg.Pulse(
-								lang.getstr("checking_lut_access", (i + 1)))
 						test_cal = get_data_path("test.cal")
 						if not test_cal:
 							safe_print(lang.getstr("file.missing", "test.cal"))
@@ -2579,11 +2567,6 @@ class Worker(object):
 								safe_print(lang.getstr("success"))
 							else:
 								safe_print(lang.getstr("failure"))
-						if getattr(wx.GetApp(), "progress_dlg", None) and \
-						   wx.GetApp().progress_dlg.IsShownOnScreen():
-							wx.GetApp().progress_dlg.Pulse(
-								lang.getstr("success" if retcode == 0 else
-											"failure"))
 				else:
 					lut_access.extend([None] * len(displays))
 				if self.argyll_version >= [1, 4, 0]:

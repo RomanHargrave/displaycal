@@ -61,7 +61,7 @@ from config import (autostart, autostart_home, build,
 					exe, fs_enc, getbitmap, geticon, 
 					get_ccxx_testchart, get_current_profile,
 					get_display_profile, get_data_path, getcfg,
-					get_verified_path, is_ccxx_testchart, is_profile,
+					get_verified_path, hascfg, is_ccxx_testchart, is_profile,
 					initcfg, isapp, isexe, profile_ext,
 					pydir, resfiles, setcfg,
 					writecfg)
@@ -516,7 +516,7 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.textshadow = False
 	header.SetBackgroundColour("#336699")
 	header.SetForegroundColour("#FFFFFF")
-	header.SetBitmap(bitmap or getbitmap("theme/header"))
+	header.SetBitmap(bitmap or getbitmap("theme/header").GetSubBitmap((0, 0, 222, 60)))
 	header.SetMaxFontSize(11)
 	header.SetLabel(label or lang.getstr("header"))
 	return header
@@ -1272,9 +1272,10 @@ class MainFrame(BaseFrame):
 		self.header = get_header(self.panel)
 		self.headerpanel = self.FindWindowByName("headerpanel")
 		self.headerpanel.ContainingSizer.Insert(0, self.header, flag=wx.EXPAND)
-		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(68, 32))
-		self.header_btm.SetBitmap(getbitmap("theme/header-btm"))
-		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP)
+		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(80, -1))
+		self.header_btm.SetBitmap(getbitmap("theme/header").GetSubBitmap((0, 60, 80, 120)))
+		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP |
+															   wx.EXPAND)
 		
 		# Calibration settings panel
 		self.calpanel = self.FindWindowByName("calpanel")
@@ -10468,9 +10469,9 @@ class MainFrame(BaseFrame):
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
 		items = []
-		items.append(get_header(self.aboutdialog, getbitmap("theme/header-about"),
+		items.append(get_header(self.aboutdialog, getbitmap("theme/header"),
 								label=wrap(lang.getstr("header"), 32),
-								size=(320, 120), x=8, repeat_sub_bitmap_h=None))
+								size=(320, 120), repeat_sub_bitmap_h=(214, 0, 8, 180)))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
 																	   author)))
@@ -10654,52 +10655,88 @@ class StartupFrame(wx.Frame):
 			title += " Beta"
 		wx.Frame.__init__(self, None, title="%s: %s" % (title,
 														lang.getstr("startup")),
-						  style=wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER |
-														   wx.RESIZE_BOX | 
-														   wx.MAXIMIZE_BOX))
+						  style=wx.NO_BORDER)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.SetSizer(self.sizer)
-		# Splash panel
-		self.splash = get_header(self)
-		self.splash.SetMinSize((600, 60))
-		self.sizer.Add(self.splash)
-		# Message panel
-		self.msg = get_header(self, getbitmap("theme/header-btm"),
-							  lang.getstr("startup"), (600, 32), 80, 4, None)
-		self.sizer.Add(self.msg)
-		self.SetClientSize((600, 92))
-		self.Layout()
-		self.Center()
+
+		# Setup splash screen
+		self.splash_bmp = getbitmap("theme/splash")
+		clientarea = self.GetDisplay().ClientArea
+		self.splash_x, self.splash_y = (int(clientarea[2] / 2.0 -
+											self.splash_bmp.Size[0] / 2.0),
+										int(clientarea[3] / 2.0 -
+											self.splash_bmp.Size[1] / 2.0))
+
+		# Backup a copy of the screen area we're going to draw on
+		dc = wx.ScreenDC()
+		self._bufferbitmap = wx.EmptyBitmap(self.splash_bmp.Size[0],
+											self.splash_bmp.Size[1])
+		self._buffereddc = wx.MemoryDC(self._bufferbitmap)
+		self._buffereddc.Blit(0, 0, self.splash_bmp.Size[0],
+							  self.splash_bmp.Size[1], dc, self.splash_x,
+							  self.splash_y)
+
+		self.SetClientSize(self.splash_bmp.Size)
+		self.SetPosition((self.splash_x, self.splash_y))
+		self.Pulse("\n".join([lang.getstr("welcome_back"
+							  if hascfg("recent_cals")
+							  else "welcome"), lang.getstr("startup")]))
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+		self.SetTransparent(0)
+		self._alpha = 0
 		self.Show()
+
 		# We need to use CallLater instead of CallAfter otherwise dialogs
 		# will not show while the main frame is not yet initialized
 		wx.CallLater(1, self.startup)
 
 	def startup(self):
+		if self._alpha < 255:
+			self._alpha += 15
+			self.SetTransparent(self._alpha)
+			wx.CallLater(1, self.startup)
+			return
 		self.worker = Worker()
 		self.worker.enumerate_displays_and_ports(enumerate_ports=getcfg("enumerate_ports.auto"))
 		if verbose >= 1:
 			safe_print(lang.getstr("initializing_gui"))
-		self.Pulse(lang.getstr("initializing_gui"))
 		# Use CallLater so the label has a chance to update
 		wx.CallLater(1, self.setup_frame)
 
 	def setup_frame(self):
 		app = wx.GetApp()
 		app.frame = MainFrame(self.worker)
+		self.setup_frame_finish(app)
+
+	def setup_frame_finish(self, app):
+		if self._alpha > 0:
+			self._alpha -= 15
+			self.SetTransparent(self._alpha)
+			wx.CallLater(1, self.setup_frame_finish, app)
+			return
 		app.SetTopWindow(app.frame)
 		app.frame.Show()
 		wx.CallAfter(app.frame.Raise)
 		self.Close()
 
+	def OnPaint(self, event):
+		self.Draw(wx.BufferedPaintDC(self))
+
+	def Draw(self, dc):
+		dc.SetBackgroundMode(wx.TRANSPARENT)
+		dc.Blit(0, 0, self.splash_bmp.Size[0],
+				self.splash_bmp.Size[1], self._buffereddc, 0, 0)
+		dc.DrawBitmap(self.splash_bmp, 0, 0)
+		rect = wx.Rect(0, int(self.splash_bmp.Size[1] * 0.75),
+					   self.splash_bmp.Size[0], 16)
+		dc.SetFont(self.GetFont())
+		dc.SetTextForeground("#CCCCCC")
+		dc.DrawLabel(self._msg, rect, wx.ALIGN_CENTER | wx.ALIGN_TOP)
+
 	def Pulse(self, msg=None):
-		if msg and msg != self.msg.Label:
-			self.splash.Refresh()
-			self.splash.Update()
-			self.msg.SetLabel(msg)
-			self.msg.Refresh()
-			self.msg.Update()
+		if msg:
+			self._msg = msg
+			if self.IsShown():
+				self.Draw(wx.ClientDC(self))
 		return True, False
 	
 	def Update(self, value, msg=None):
