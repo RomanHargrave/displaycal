@@ -645,7 +645,7 @@ class ExtraArgsFrame(BaseFrame):
 		gradientpanel.label_x = 12
 		sizer = child.ContainingSizer
 		sizer.Clear(True)
-		sizer.Add(gradientpanel, 1)
+		sizer.Add(gradientpanel, 1, flag=wx.TOP, border=4)
 
 		min_val, max_val = config.valid_ranges["measure.min_display_update_delay_ms"]
 		self.min_display_update_delay_ms.SetRange(min_val, max_val)
@@ -761,7 +761,7 @@ class GamapFrame(BaseFrame):
 		gradientpanel.label_x = 12
 		sizer = child.ContainingSizer
 		sizer.Clear(True)
-		sizer.Add(gradientpanel, 1)
+		sizer.Add(gradientpanel, 1, flag=wx.TOP, border=4)
 
 		self.gamap_profile = self.FindWindowByName("gamap_profile")
 		self.gamap_profile.changeCallback = self.gamap_profile_handler
@@ -1276,6 +1276,9 @@ class MainFrame(BaseFrame):
 		self.header_btm.SetBitmap(getbitmap("theme/header").GetSubBitmap((0, 60, 80, 120)))
 		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP |
 															   wx.EXPAND)
+		separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
+		separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+		self.panel.Sizer.Insert(2, separator, flag=wx.EXPAND)
 		
 		# Calibration settings panel
 		self.calpanel = self.FindWindowByName("calpanel")
@@ -1510,7 +1513,7 @@ class MainFrame(BaseFrame):
 			height = min(self.GetDisplay().ClientArea[3] - borders_tb -
 						 safety_margin,
 						 self.header.Size[1] +
-						 self.headerpanel.Sizer.MinSize[1] +
+						 self.headerpanel.Sizer.MinSize[1] + 1 +
 						 self.calpanel.Sizer.MinSize[1] +
 						 ((getattr(self, "buttonpanelheader", None) and
 						   self.buttonpanelheader.Size[1] + 1) or 0) +
@@ -1929,9 +1932,11 @@ class MainFrame(BaseFrame):
 			gradientpanel = get_gradient_panel(child.Parent, child.Label)
 			if child == self.instrument_box_label:
 				gradientpanel.label_x = 0
+			if child in (self.display_box_label, self.instrument_box_label):
+				gradientpanel.drawbordertop = False
 			sizer = child.ContainingSizer
 			sizer.Clear(True)
-			sizer.Add(gradientpanel, 1, flag=wx.BOTTOM, border=8)
+			sizer.Add(gradientpanel, 1)
 
 		# Settings file controls
 		# ======================
@@ -10774,6 +10779,14 @@ class StartupFrame(wx.Frame):
 		rect = wx.Rect(0, int(self.splash_bmp.Size[1] * 0.75),
 					   self.splash_bmp.Size[0], 40)
 		dc.SetFont(self.GetFont())
+		dc.SetTextForeground("#101010")
+		dc.DrawLabel(self._msg, wx.Rect(rect.x, rect.y + 2, rect.width,
+										rect.height), wx.ALIGN_CENTER |
+													  wx.ALIGN_TOP)
+		dc.SetTextForeground(wx.BLACK)
+		dc.DrawLabel(self._msg, wx.Rect(rect.x, rect.y + 1, rect.width,
+										rect.height), wx.ALIGN_CENTER |
+													  wx.ALIGN_TOP)
 		dc.SetTextForeground("#CCCCCC")
 		dc.DrawLabel(self._msg, rect, wx.ALIGN_CENTER | wx.ALIGN_TOP)
 		if isinstance(dc, wx.ScreenDC):

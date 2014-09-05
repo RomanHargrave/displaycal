@@ -762,6 +762,8 @@ class BitmapBackgroundPanel(wx.PyPanel):
 		self._bitmap = None
 		self.alpha = 1.0
 		self.blend = False
+		self.borderbtmcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+		self.bordertopcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 		self.drawborderbtm = False
 		self.drawbordertop = False
 		self.repeat_sub_bitmap_h = None
@@ -839,12 +841,12 @@ class BitmapBackgroundPanel(wx.PyPanel):
 								quality=self.scalequality)
 				dc.DrawBitmap(sub_img.ConvertToBitmap(), bmp.GetSize()[0], 0)
 		if self.drawbordertop:
-			pen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT), 1, wx.SOLID)
+			pen = wx.Pen(self.bordertopcolor, 1, wx.SOLID)
 			pen.SetCap(wx.CAP_BUTT)
 			dc.SetPen(pen)
 			dc.DrawLine(0, 0, self.GetSize()[0], 0)
 		if self.drawborderbtm:
-			pen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW), 1, wx.SOLID)
+			pen = wx.Pen(self.borderbtmcolor, 1, wx.SOLID)
 			pen.SetCap(wx.CAP_BUTT)
 			dc.SetPen(pen)
 			dc.DrawLine(0, self.GetSize()[1] - 1, self.GetSize()[0], self.GetSize()[1] - 1)
@@ -860,6 +862,7 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		self.label_y = None
 		self.textalpha = 1.0
 		self.textshadow = True
+		self.textshadowcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 		self.use_gcdc = False
 	
 	def _set_font(self, dc):
@@ -902,8 +905,7 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 			else:
 				y = self.label_y + h * i
 			if self.textshadow:
-				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
-				dc.SetTextForeground(color)
+				dc.SetTextForeground(self.textshadowcolor)
 				dc.DrawText(line, x + 1, y + 1)
 			color = self.GetForegroundColour()
 			if self.textalpha < 1:
@@ -3335,18 +3337,28 @@ class TwoWaySplitter(FourWaySplitter):
 		self._splitsize = size
 
 def get_gradient_panel(parent, label, x=16):
-	gradientpanel = BitmapBackgroundPanelText(parent, size=(-1, 23))
+	gradientpanel = BitmapBackgroundPanelText(parent, size=(-1, 31))
 	gradientpanel.alpha = .75
 	gradientpanel.blend = True
-	gradientpanel.drawborderbtm = True
+	gradientpanel.bordertopcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+	gradientpanel.drawbordertop = True
 	gradientpanel.label_x = x
 	gradientpanel.textalpha = .8
 	bitmap = bitmaps.get("gradient_panel")
 	if not bitmap:
-		bitmap = getbitmap("theme/gradient")
+		bitmap = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
+		image = bitmap.ConvertToImage()
+		databuffer = image.GetDataBuffer()
+		for i, byte in enumerate(databuffer):
+			if byte > "\0":
+				databuffer[i] = chr(int(round(ord(byte) * (255.0 / 223.0))))
+		bitmap = image.ConvertToBitmap()
 		bitmaps["gradient_panel"] = bitmap
 	gradientpanel.SetBitmap(bitmap)
 	gradientpanel.SetMaxFontSize(11)
+	font = gradientpanel.Font
+	font.SetWeight(wx.BOLD)
+	gradientpanel.Font = font
 	gradientpanel.SetLabel(label)
 	return gradientpanel
 
