@@ -9657,7 +9657,7 @@ class MainFrame(BaseFrame):
 		else:
 			# Use configured value
 			enumerate_ports = getcfg("enumerate_ports.auto")
-		if False:
+		if event or silent:
 			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
 													self.worker.enumerate_displays_and_ports, 
 													cargs=(argyll_bin_dir, argyll_version, 
@@ -10763,13 +10763,16 @@ class StartupFrame(wx.Frame):
 				self.Update()
 			wx.CallLater(1, self.startup)
 			return
-		self.worker.enumerate_displays_and_ports(enumerate_ports=getcfg("enumerate_ports.auto"))
+		check_set_argyll_bin()
+		delayedresult.startWorker(self.setup_frame, 
+								  self.worker.enumerate_displays_and_ports,
+								  wkwargs={"enumerate_ports":
+										   getcfg("enumerate_ports.auto"),
+										   "silent": True})
+
+	def setup_frame(self, result):
 		if verbose >= 1:
 			safe_print(lang.getstr("initializing_gui"))
-		# Use CallLater so the label has a chance to update
-		wx.CallLater(1, self.setup_frame)
-
-	def setup_frame(self):
 		app = wx.GetApp()
 		app.frame = MainFrame(self.worker)
 		self.setup_frame_finish(app)
