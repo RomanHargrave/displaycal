@@ -96,6 +96,9 @@
               <flag>wxTOP|wxEXPAND</flag>
               <border>16</border>
             </object>
+            <object class="spacer">
+              <size>1,12</size>
+            </object>
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
                 <object class="sizeritem">
@@ -133,8 +136,11 @@
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
               </object>
-              <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+              <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
               <border>16</border>
+            </object>
+            <object class="spacer">
+              <size>1,4</size>
             </object>
             <object class="sizeritem">
               <object class="wxBoxSizer">
@@ -159,8 +165,11 @@
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
               </object>
-              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
               <border>16</border>
+            </object>
+            <object class="spacer">
+              <size>1,4</size>
             </object>
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
@@ -193,7 +202,7 @@
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
               </object>
-              <flag>wxALL|wxEXPAND</flag>
+              <flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
               <border>16</border>
             </object>
           </object>

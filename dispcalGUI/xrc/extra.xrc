@@ -113,6 +113,9 @@
               </object>
               <flag>wxEXPAND</flag>
             </object>
+            <object class="spacer">
+              <size>1,12</size>
+            </object>
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
                 <object class="sizeritem">
@@ -154,7 +157,7 @@
                 <hgap>4</hgap>
                 <vgap>8</vgap>
               </object>
-              <flag>wxALL|wxEXPAND</flag>
+              <flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
               <border>16</border>
             </object>
           </object>
