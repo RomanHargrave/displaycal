@@ -326,9 +326,13 @@ def get_data_path(relpath, rex=None):
 		(isinstance(os.path.altsep, basestring) and
 		 relpath.endswith(os.path.altsep))):
 		return None
+	dirs = list(data_dirs)
+	argyll_dir = getcfg("argyll.dir")
+	if argyll_dir and os.path.isdir(os.path.join(argyll_dir, "..", "ref")):
+		dirs.append(os.path.dirname(argyll_dir))
 	intersection = []
 	paths = []
-	for dir_ in data_dirs:
+	for dir_ in dirs:
 		curpath = os.path.join(dir_, relpath)
 		if (dir_.endswith("/argyll") and (relpath + "/").startswith("ref/") and
 			not os.path.exists(curpath)):
