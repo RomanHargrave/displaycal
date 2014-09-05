@@ -10657,8 +10657,12 @@ class StartupFrame(wx.Frame):
 														lang.getstr("startup")),
 						  style=wx.FRAME_SHAPED | wx.NO_BORDER)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
-
-		if wx.VERSION >= (2, 8, 12, 1):
+		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+			# No need to enable double buffering under Linux and Mac OS X.
+			# Under Windows, enabling double buffering on the panel seems
+			# to work best to reduce flicker.
+			self.SetDoubleBuffered(True)
+		elif wx.VERSION >= (2, 8, 12, 1):
 			# Setup shape. Required to get rid of window shadow under Ubuntu.
 			# Note that shaped windows seem to be broken (won't show at all)
 			# with wxGTK 2.8.12.0 and possibly earlier.
