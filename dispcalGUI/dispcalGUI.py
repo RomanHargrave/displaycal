@@ -1558,6 +1558,8 @@ class MainFrame(BaseFrame):
 								  self.calpanel.GetSize()[1] + 64))
 		if self.IsFrozen():
 			self.Thaw()
+		if self.IsShown():
+			self.calpanel.Layout()
 	
 	def update_profile_type_ctrl(self):
 		""" Populate the profile type control with available choices
