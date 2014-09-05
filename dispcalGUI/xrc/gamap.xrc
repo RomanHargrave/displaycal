@@ -20,7 +20,10 @@
                 </object>
               </object>
               <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
-              <border>12</border>
+              <border>16</border>
+            </object>
+            <object class="spacer">
+              <size>1,12</size>
             </object>
             <object class="sizeritem">
               <object class="wxBoxSizer">
@@ -45,8 +48,11 @@
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
               </object>
-              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
-              <border>12</border>
+              <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>16</border>
+            </object>
+            <object class="spacer">
+              <size>1,8</size>
             </object>
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
@@ -67,35 +73,28 @@
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
               </object>
-              <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
-              <border>12</border>
+              <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+              <border>16</border>
             </object>
             <object class="sizeritem">
               <object class="wxBoxSizer">
                 <object class="sizeritem">
-                  <object class="wxStaticLine">
-                    <size>8,-1</size>
+                  <object class="wxStaticBitmap" name="gamut_mapping_ciecam02_shadow">
+                    <bitmap>../theme/shadow-bordertop.png</bitmap>
                   </object>
-                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>4</border>
+                  <flag>wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="gamut_mapping_ciecam02_label">
                     <label>gamut_mapping.ciecam02</label>
                   </object>
-                  <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>2</border>
+                  <flag>wxLEFT</flag>
+                  <border>16</border>
                 </object>
-                <object class="sizeritem">
-                  <object class="wxStaticLine"/>
-                  <option>1</option>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>4</border>
-                </object>
-                <orient>wxHORIZONTAL</orient>
+                <orient>wxVERTICAL</orient>
               </object>
               <flag>wxTOP|wxEXPAND</flag>
-              <border>12</border>
+              <border>16</border>
             </object>
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
@@ -135,7 +134,7 @@
                 <growablecols>1</growablecols>
               </object>
               <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-              <border>12</border>
+              <border>16</border>
             </object>
             <object class="sizeritem">
               <object class="wxBoxSizer">
@@ -161,7 +160,7 @@
                 </object>
               </object>
               <flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
-              <border>12</border>
+              <border>16</border>
             </object>
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
@@ -195,7 +194,7 @@
                 <growablecols>1</growablecols>
               </object>
               <flag>wxALL|wxEXPAND</flag>
-              <border>12</border>
+              <border>16</border>
             </object>
           </object>
         </object>

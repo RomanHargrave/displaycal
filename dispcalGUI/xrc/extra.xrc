@@ -92,33 +92,26 @@
                 <growablecols>1</growablecols>
               </object>
               <flag>wxALL|wxEXPAND</flag>
-              <border>12</border>
+              <border>16</border>
             </object>
             <object class="sizeritem">
               <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
+                <orient>wxVERTICAL</orient>
                 <object class="sizeritem">
-                  <object class="wxStaticLine">
-                    <size>8,-1</size>
+                  <object class="wxStaticBitmap" name="environment_shadow">
+                    <bitmap>../theme/shadow-bordertop.png</bitmap>
                   </object>
-                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>6</border>
+                  <flag>wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="environment_label">
                     <label>environment</label>
                   </object>
-                  <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>2</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxStaticLine"/>
-                  <option>1</option>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>6</border>
+                  <flag>wxLEFT</flag>
+                  <border>16</border>
                 </object>
               </object>
-              <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+              <flag>wxEXPAND</flag>
             </object>
             <object class="sizeritem">
               <object class="wxFlexGridSizer">
@@ -162,7 +155,7 @@
                 <vgap>8</vgap>
               </object>
               <flag>wxALL|wxEXPAND</flag>
-              <border>12</border>
+              <border>16</border>
             </object>
           </object>
         </object>

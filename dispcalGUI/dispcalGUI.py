@@ -623,6 +623,28 @@ def install_scope_handler(event=None, dlg=None):
 	dlg.buttonpanel.Layout()
 
 
+def resize_bmp(event):
+	ctrl = event.EventObject
+	if not ctrl.IsFrozen():
+		if hasattr(ctrl, "_bmp"):
+			bmp = ctrl._bmp
+		else:
+			bmp = ctrl.GetBitmap()
+			ctrl._bmp = bmp
+		ctrl.Freeze()
+		ctrl.MinSize = ctrl._bmp.GetSize()
+		ctrl.ContainingSizer.Layout()
+		w = ctrl.ContainingSizer.Size[0]
+		if getattr(ctrl, "_width", -1) != w:
+			img = bmp.ConvertToImage()
+			img.Rescale(w, img.GetSize()[1])
+			bmp = img.ConvertToBitmap()
+			ctrl._width = w
+			ctrl.SetBitmap(bmp)
+		ctrl.Thaw()
+		event.Skip()
+
+
 class ExtraArgsFrame(BaseFrame):
 
 	""" Extra commandline arguments window. """
@@ -641,11 +663,12 @@ class ExtraArgsFrame(BaseFrame):
 		self.set_child_ctrls_as_attrs(self)
 
 		child = self.environment_label
-		gradientpanel = get_gradient_panel(child.Parent, child.Label)
-		gradientpanel.label_x = 12
-		sizer = child.ContainingSizer
-		sizer.Clear(True)
-		sizer.Add(gradientpanel, 1, flag=wx.TOP, border=4)
+		font = child.Font
+		font.SetWeight(wx.BOLD)
+		child.Font = font
+
+		child = self.environment_shadow
+		child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		min_val, max_val = config.valid_ranges["measure.min_display_update_delay_ms"]
 		self.min_display_update_delay_ms.SetRange(min_val, max_val)
@@ -757,11 +780,12 @@ class GamapFrame(BaseFrame):
 		self.set_child_ctrls_as_attrs(self)
 
 		child = self.gamut_mapping_ciecam02_label
-		gradientpanel = get_gradient_panel(child.Parent, child.Label)
-		gradientpanel.label_x = 12
-		sizer = child.ContainingSizer
-		sizer.Clear(True)
-		sizer.Add(gradientpanel, 1, flag=wx.TOP, border=4)
+		font = child.Font
+		font.SetWeight(wx.BOLD)
+		child.Font = font
+
+		child = self.gamut_mapping_ciecam02_shadow
+		child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		self.gamap_profile = self.FindWindowByName("gamap_profile")
 		self.gamap_profile.changeCallback = self.gamap_profile_handler
@@ -1929,14 +1953,14 @@ class MainFrame(BaseFrame):
 		for child in (self.display_box_label, self.instrument_box_label,
 					  self.calibration_settings_label,
 					  self.profile_settings_label):
-			gradientpanel = get_gradient_panel(child.Parent, child.Label)
-			if child == self.instrument_box_label:
-				gradientpanel.label_x = 0
-			if child in (self.display_box_label, self.instrument_box_label):
-				gradientpanel.drawbordertop = False
-			sizer = child.ContainingSizer
-			sizer.Clear(True)
-			sizer.Add(gradientpanel, 1)
+			font = child.Font
+			font.SetWeight(wx.BOLD)
+			child.Font = font
+
+		for child in (self.display_shadow, self.instrument_shadow,
+					  self.calibration_settings_shadow,
+					  self.profile_settings_shadow):
+			child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		# Settings file controls
 		# ======================

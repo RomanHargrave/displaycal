@@ -93,29 +93,22 @@
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
-                                <object class="wxStaticLine">
-                                  <size>8,-1</size>
+                                <object class="wxStaticBitmap" name="display_shadow">
+                                  <bitmap>../theme/shadow.png</bitmap>
                                 </object>
-                                <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>6</border>
+                                <flag>wxEXPAND</flag>
                               </object>
                               <object class="sizeritem">
                                 <object class="wxStaticText" name="display_box_label">
                                   <label>display</label>
                                 </object>
-                                <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>2</border>
+                                <flag>wxLEFT</flag>
+                                <border>16</border>
                               </object>
-                              <object class="sizeritem">
-                                <object class="wxStaticLine"/>
-                                <option>1</option>
-                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>2</border>
-                              </object>
-                              <orient>wxHORIZONTAL</orient>
+                              <orient>wxVERTICAL</orient>
                             </object>
-                            <flag>wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>4</border>
+                            <flag>wxBOTTOM|wxEXPAND</flag>
+                            <border>10</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
@@ -205,22 +198,20 @@
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
+                                <object class="wxStaticBitmap" name="instrument_shadow">
+                                  <bitmap>../theme/shadow.png</bitmap>
+                                </object>
+                                <flag>wxEXPAND</flag>
+                              </object>
+                              <object class="sizeritem">
                                 <object class="wxStaticText" name="instrument_box_label">
                                   <label>instrument</label>
                                 </object>
-                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>2</border>
                               </object>
-                              <object class="sizeritem">
-                                <object class="wxStaticLine"/>
-                                <option>1</option>
-                                <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                <border>6</border>
-                              </object>
-                              <orient>wxHORIZONTAL</orient>
+                              <orient>wxVERTICAL</orient>
                             </object>
-                            <flag>wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                            <border>4</border>
+                            <flag>wxBOTTOM|wxEXPAND</flag>
+                            <border>10</border>
                           </object>
                           <object class="sizeritem">
                             <object class="wxBoxSizer">
@@ -349,29 +340,25 @@
                   </object>
                   <object class="sizeritem">
                     <object class="wxBoxSizer">
-                      <orient>wxHORIZONTAL</orient>
+                      <orient>wxVERTICAL</orient>
                       <object class="sizeritem">
-                        <object class="wxStaticLine">
-                          <size>8,-1</size>
+                        <object class="wxStaticBitmap" name="calibration_settings_shadow">
+                          <bitmap>../theme/shadow-bordertop.png</bitmap>
                         </object>
-                        <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>6</border>
+                        <flag>wxEXPAND</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="calibration_settings_label">
                           <label>calibration.settings</label>
                         </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>2</border>
+                        <flag>wxLEFT</flag>
+                        <border>16</border>
                       </object>
-                      <object class="sizeritem">
-                        <object class="wxStaticLine"/>
-                        <option>1</option>
-                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>6</border>
+                      <object class="spacer">
+                        <size>1,4</size>
                       </object>
                     </object>
-                    <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                    <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
                     <border>12</border>
                   </object>
                   <object class="sizeritem">
@@ -884,28 +871,24 @@
                   <object class="sizeritem">
                     <object class="wxBoxSizer">
                       <object class="sizeritem">
-                        <object class="wxStaticLine">
-                          <size>8,-1</size>
+                        <object class="wxStaticBitmap" name="profile_settings_shadow">
+                          <bitmap>../theme/shadow-bordertop.png</bitmap>
                         </object>
-                        <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>6</border>
+                        <flag>wxEXPAND</flag>
                       </object>
                       <object class="sizeritem">
                         <object class="wxStaticText" name="profile_settings_label">
                           <label>profile.settings</label>
                         </object>
-                        <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>2</border>
+                        <flag>wxLEFT</flag>
+                        <border>16</border>
                       </object>
-                      <object class="sizeritem">
-                        <object class="wxStaticLine"/>
-                        <option>1</option>
-                        <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                        <border>6</border>
+                      <object class="spacer">
+                        <size>1,4</size>
                       </object>
-                      <orient>wxHORIZONTAL</orient>
+                      <orient>wxVERTICAL</orient>
                     </object>
-                    <flag>wxTOP|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                    <flag>wxTOP|wxEXPAND</flag>
                     <border>10</border>
                   </object>
                   <object class="sizeritem">
