@@ -8,15 +8,14 @@ import string
 import struct
 import sys
 if sys.platform == "win32":
-	wmi_connection = None
+	wmi = None
 	if sys.getwindowsversion() >= (6, ):
 		# Use WMI for Vista/Win7
+		import pythoncom
 		try:
 			import wmi
 		except:
 			pass
-		else:
-			wmi_connection = wmi.WMI(namespace="WMI")
 	else:
 		# Use registry as fallback for Win2k/XP/2003
 		import _winreg
@@ -96,12 +95,17 @@ def get_edid(display_no=0, display_name=None):
 		if not device:
 			return {}
 		id = device.DeviceID.split("\\")[1]
+		wmi_connection = None
+		if wmi:
+			pythoncom.CoInitialize()
+			wmi_connection = wmi.WMI(namespace="WMI")
 		if wmi_connection:
 			# Use WMI for Vista/Win7
 			# http://msdn.microsoft.com/en-us/library/Aa392707
 			try:
 				msmonitors = wmi_connection.WmiMonitorDescriptorMethods()
 			except Exception, exception:
+				pythoncom.CoUninitialize()
 				raise WMIError(exception)
 			for msmonitor in msmonitors:
 				if msmonitor.InstanceName.split("\\")[1] == id:
@@ -113,6 +117,7 @@ def get_edid(display_no=0, display_name=None):
 					else:
 						edid = "".join(chr(i) for i in edid[0])
 					break
+			pythoncom.CoUninitialize()
 		elif sys.getwindowsversion() < (6, ):
 			# Use registry as fallback for Win2k/XP/2003
 			# http://msdn.microsoft.com/en-us/library/ff546173%28VS.85%29.aspx
@@ -160,6 +165,8 @@ def get_edid(display_no=0, display_name=None):
 					except WindowsError:
 						# No EDID entry
 						pass
+		else:
+			raise WMIError("No WMI connection")
 	elif sys.platform == "darwin":
 		# Get EDID via ioreg
 		p = sp.Popen(["ioreg", "-c", "IODisplay", "-S", "-w0"], stdout=sp.PIPE)
