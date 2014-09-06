@@ -25,7 +25,7 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>${VERSION_SHORT}</h2>
+					<h2>${VERSION_SHORT} ${STABILITY}</h2>
 					<p>${ISODATE} ${ISOTIME} UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
@@ -119,7 +119,7 @@
 				</li>
 				<li><a href="#install">Installation</a></li>
 				<li><a href="#concept">Basic concept of display calibration</a></li>
-				<li><a href="#widegamut">A note about colorimeters, wide-gamut displays and dispcalGUI</a></li>
+				<li><a href="#colorimeter-corrections">A note about colorimeters, displays and dispcalGUI</a></li>
 				<li><a href="#usage">Usage</a>
 					<ul>
 						<li><a href="#usage">General usage</a></li>
@@ -158,12 +158,13 @@
 
 			<p>dispcalGUI is a graphical user interface for the display calibration and profiling tools of <a href="http://argyllcms.com">Argyll CMS</a>, an open source color management system by Graeme Gill.</p>
 
-			<p>Calibrate and characterize your display devices using one of the <a href="#instruments">many supported hardware sensors</a>, with support for multi-display setups and a variety of available settings like customizable whitepoint, luminance, black level, tone response curve as well as the option to create matrix and look-up-table ICC profiles, with optional gamut mapping. Other features include:</p>
+			<p>Calibrate and characterize your display devices using one of the <a href="#instruments">many supported hardware sensors</a>, with support for multi-display setups and a variety of available settings like customizable whitepoint, luminance, tone response curve as well as the option to create matrix and look-up-table ICC profiles, with optional gamut mapping, as well as some proprietary 3D LUT formats. Other features include:</p>
 
 			<ul>
-				<li>Support of colorimeter correction for wide-gamut screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (the latter only for specific colorimeters i.e. i1 Display Pro, ColorMunki Display and Spyder 4).</li>
+				<li>Support of colorimeter correction for different screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (the latter only for specific colorimeters i.e. i1 Display Pro, ColorMunki Display and Spyder 4).</li>
 				<li>Profile verification: Check the quality of profiles via measurements. Also supports custom CGATS files (e.g. FOGRA, GRACoL/IDEAlliance, SWOP) and using of reference profiles to obtain test values.</li>
 				<li>Test chart editor: Create charts with any amount of color patches, easy copy &amp; paste from CGATS, CSV files (only tab-delimited) and spreadsheet applications.</li>
+				<li>Create synthetic ICC (matrix) profiles with custom primaries, white- and blackpoint as well as tone response.</li>
 			</ul>
 
 			<div id="screenshots">
@@ -220,12 +221,13 @@
 		</div>
 
 		<div id="download">
-			<h2>Get dispcalGUI via Zero Install (recommended)</h2>
+			<h2>Get dispcalGUI and Argyll CMS via Zero Install (recommended)</h2>
 
 			<ul>
 				<li>
 					<h3>Brief introduction to Zero Install</h3>
 					<div>
+						<p>(<strong>Note:</strong> Usually you do not have to install Zero Install separately, it is handled automatically by the dispcalGUI downloads linked below. The following paragraph is only informational.)</p>
 						<p><a href="http://0install.net">Zero Install</a> is a decentralised cross-platform software installation system. The benefits you get from Zero Install are:</p>
 						<ul>
 							<li><strong>Always up-to-date.</strong> Zero Install automatically keeps all software updated.</li>
@@ -242,11 +244,15 @@
 						<ul class="packages">
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/any/dispcalGUI.pkg.tar.xz">Arch</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/any/dispcalGUI.pkg.tar.xz">Arch Linux</a> <em>(please see note below)</em></span>
 							</li>
 							<li>
 								<span></span>
 								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/noarch/dispcalGUI.rpm">CentOS 6</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-7/noarch/dispcalGUI.rpm">CentOS 7</a></span>
 							</li>
 							<li>
 								<span></span>
@@ -326,6 +332,10 @@
 							</li>
 							<li>
 								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-7/noarch/dispcalGUI.rpm">RedHat RHEL 7</a></span>
+							</li>
+							<li>
+								<span></span>
 								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/all/dispcalGUI.deb">Ubuntu 10.04 (Lucid)</a></span>
 							</li>
 							<li>
@@ -362,11 +372,21 @@
 							</li>
 						</ul>
 
-						<p class="footnote">Note on the Argyll CMS dependency: By default, an official version from ArgyllCMS.com will be used unless the distribution-packaged version is newer, but you can switch to a distribution-packaged version anytime (see <a href="#zeroinstall-updating">“Updating or switching between software versions”</a> below).</p>
+						<div>
+							<em>Arch Linux note:</em> The zeroinstall-injector 2.6.1 package in AUR is broken. Get a working version here:
+						</div>
+						<div>
+							<a href="http://download.opensuse.org/repositories/home:/fhoech:/0install/Arch_Extra/i686/zeroinstall-injector-2.6.2-1-i686.pkg.tar.xz" title="Zero Install 2.6.2 for Arch Linux (x86)">x86</a> |
+							<a href="http://download.opensuse.org/repositories/home:/fhoech:/0install/Arch_Extra/x86_64/zeroinstall-injector-2.6.2-1-x86_64.pkg.tar.xz" title="Zero Install 2.6.2 for Arch Linux (x86_64)">x86_64</a>
+						</div>
+						
+						<p>Please note:</p>
+						<ul>
+							<li><strong>The version number in the package name does not necessarily reflect the dispcalGUI version</strong>.</li>
+							<li><strong>An official Argyll CMS version from ArgyllCMS.com will be used by default</strong> unless the distribution-packaged version is newer, but you can switch to a distribution-packaged version anytime (see <a href="#zeroinstall-updating">“Updating or switching between software versions”</a> below).</li>
+						</ul>
 
-						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
-
-						<p>In all other cases, please try the instructions below or one of the <a href="#standalone">standalone installations</a>.</p>
+						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly. In all other cases, please try the instructions below or one of the <a href="#standalone">standalone installations</a>.</p>
 						
 						<h4>Alternate installation method</h4>
 						
@@ -377,22 +397,22 @@
 							<li>Choose the <strong>0install</strong> entry from the applications menu (older versions of Zero Install will have an “Add New Program” entry instead).</li>
 							<li>Drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window.</li>
 						</ol>
-						<p class="footnote">Note on dispcalGUI's standalone tools under Linux (3D LUT maker, curve viewer, profile information, synthetic profile creator, testchart editor, VRML to X3D converter): If using the alternate installation method, an application icon entry will only be created for dispcalGUI itself. This is currently a limitation of Zero Install under Linux. You can manually install icon entries for the standalone tools by running the following in a terminal:</p>
-						<pre class="footnote"><code>0launch --command=install-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
-						<p class="footnote">And you may uninstall them again with:</p>
-						<pre class="footnote"><code>0launch --command=uninstall-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
+						<p>Note on dispcalGUI's standalone tools under Linux (3D LUT maker, curve viewer, profile information, synthetic profile creator, testchart editor, VRML to X3D converter): If using the alternate installation method, an application icon entry will only be created for dispcalGUI itself. This is currently a limitation of Zero Install under Linux. You can manually install icon entries for the standalone tools by running the following in a terminal:</p>
+						<pre><code>0launch --command=install-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
+						<p>And you may uninstall them again with:</p>
+						<pre><code>0launch --command=uninstall-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
 					</div>
 				</li>
 				<li>
-					<h3>For Mac OS X</h3>
+					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
 						<p>Download the <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install.dmg">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</p>
 					</div>
 				</li>
 				<li>
-					<h3>For Windows</h3>
+					<h3>For Windows (XP or newer)</h3>
 					<div>
-						<p>Download and install the <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install-Setup.exe">dispcalGUI Zero Install Setup</a>.</p>
+						<p>Download and install the dispcalGUI Zero Install Setup: <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install-Setup.exe">Administrator install</a> | <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install-Setup-per-user.exe">Per-user install</a>.</p>
 					</div>
 				</li>
 				<li>
@@ -422,7 +442,7 @@
 			
 			<p>Please continue with the <a href="#quickstart">Quickstart Guide</a>.</p>
 
-			<h2 id="standalone">Get dispcalGUI standalone (not guaranteed to be the latest version!)</h2>
+			<h2 id="standalone">Get dispcalGUI standalone</h2>
 
 			<p><em>Please note: <a href="http://argyllcms.com">Argyll CMS</a> is a separate download unless you use a dispcalGUI for Linux native RPM package. I recommend to use the official Argyll CMS binaries from <a href="http://argyllcms.com">argyllcms.com</a>.</em></p>
 
@@ -433,7 +453,7 @@
 						<p>Native packages for several distributions are available via <a href="https://build.opensuse.org">openSUSE Build Service</a>:</p>
 						<ul class="packages">
 							<li>
-								<span>Arch</span>
+								<span>Arch Linux</span>
 								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/i686/dispcalGUI.pkg.tar.xz">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/Arch_Extra/x86_64/dispcalGUI.pkg.tar.xz">x86_64</a></span>
 							</li>
@@ -441,6 +461,11 @@
 								<span>CentOS 6</span>
 								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/i686/dispcalGUI.rpm">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
+								<span>CentOS 7</span>
+								<span>
+								<a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-7/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Debian 5 (Lenny)</span>
@@ -543,6 +568,11 @@
 								<a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-6/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>RedHat RHEL 7</span>
+								<span>
+								<a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-7/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>SUSE Linux Enterprise 11</span>
 								<span><a href="http://dispcalgui.hoech.net/download/SLE_11/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/SLE_11/x86_64/dispcalGUI.rpm">x86_64</a></span>
@@ -616,7 +646,7 @@
 					</div>
 				</li>
 				<li>
-					<h3>For Mac OS X (10.4 or newer)</h3>
+					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
 						<p>
 							<a href="http://dispcalGUI.hoech.net/download/standalone/dispcalGUI.dmg">Disk image</a>
@@ -651,46 +681,24 @@
 
 			<ol>
 				<li>
-					<p><a href="#download">Get the latest release of dispcalGUI</a>. It is recommended to first remove all previous versions unless you used Zero Install to get them.</p>
-				</li>
-				<li>
 					<p><strong>If you use Zero Install you can skip this step.</strong> Download and unpack Argyll CMS: <a href="http://argyllcms.com/downloadlinux.html">Linux</a> | <a href="http://argyllcms.com/downloadmac.html">Mac OS X</a> | <a href="http://argyllcms.com/downloadwin.html">Windows</a>. Put the extracted directory (Argyll_VX.X.X) in a convenient place on your harddisk.</p>
-					<h3>If you want to use the HCFR colorimeter under Mac OS X...</h3>
-					<div class="toggle">
-						<p>Follow the instructions under “<a href="http://argyllcms.com/doc/Installing_OSX.html">installing Argyll CMS on Mac OS X</a>” in the Argyll CMS documentation.</p>
-					</div>
 				</li>
 				<li>
 					<p>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</p>
-					<h3>If your measurement device is a i1 Display Pro, ColorMunki Display or Spyder 4...</h3>
-					<div class="toggle">
-						<p>You'll want to import the colorimeter corrections that are part of the i1 Profiler or ColorMunki Display software package, which can be used to better match the instrument to a particular type of display.</p>
-						<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the i1 Profiler or ColorMunki Display software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the software's setup executable. Select the <a href="http://www.xrite.com/product_overview.aspx?ID=1513&amp;Action=Support">ColorMunki Display PC (Windows) Setup</a> or <a href="http://www.xrite.com/product_overview.aspx?ID=1454&amp;Action=Support">i1 Profiler PC (Windows) Setup</a> regardless of your actual operating system (both files contain the same set of colorimeter corrections, the ColorMunki software is a slightly smaller download).</p>
-						<p>If your measurement device is a Spyder 4, you'll also want to <a href="#install-spyder4-measurement-modes">enable additional measurement modes</a> for that particular instrument.</p>
-					</div>
-					<div style="height: .25em;"></div>
-					<h3>If your measurement device is a Spyder 2...</h3>
-					<div class="toggle">
-						<p>The Spyder 2 needs the vendor firmware pattern to function.</p>
-						<p>Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Tools” menu. If the Spyder 2 software is installed or its installation media is inserted, the Spyder 2 can be enabled automatically, otherwise you will have to manually select the Spyder 2 software's setup executable. Select the <a href="http://support.datacolor.com/index.php?/Knowledgebase/Article/View/1445/88/spyder2express-236---win">Spyder 2 Setup for Windows</a> regardless of your actual operating system.</p>
-					</div>
-					<div style="height: .25em;"></div>
-					<div id="install-spyder4-measurement-modes">
-					<h3>If your measurement device is a Spyder 4...</h3>
-					<div class="toggle">
-						<p>The full range of measurement modes for the Spyder 4 are only available if they are imported from the Spyder 4 software.</p>
-						<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the Spyder 4 software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the Spyder 4 software's setup executable. Select the <a href="http://support.datacolor.com/index.php?/Knowledgebase/List/Index/88/windows">Spyder 4 Setup for Windows</a> (choose one of Elite, Express, HD or Pro) regardless of your actual operating system.</p>
-					</div>
-					</div>
 				</li>
 				<li>
+					<p class="info"><strong>Windows only:</strong> If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug, you need to install an Argyll-specific driver before continuing. Select “Install Argyll CMS instrument drivers...” from the “Tools” menu. See also <a href="#install-windows-driver">“Instrument driver installation under Windows”.</a></p>
+					<p class="info"><strong>Mac OS X only:</strong> If you want to use the HCFR colorimeter, follow the instructions in the “HCFR Colorimeter” section under “<a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a>” in the Argyll CMS documentation before continuing.</p>
 					<p>Connect your measurement device to your computer.</p>
-					<p class="info"><em>Windows only:</em> If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro or Huey, you need to install an Argyll-specific driver. See <a href="#install-windows-driver">“Driver installation under Windows”.</a></p>
-					<p>Click the small icon with the swirling arrows <img src="theme/refresh_lr.png" alt="" /> in between the “Display device” and “Instrument” controls to detect connected displays devices and instruments. The detected instrument(s) should show up in the “Instrument” dropdown.</p>
-					<p class="info"><em>Linux only:</em> If you cannot access your instrument, first try unplugging and reconnecting it, or a reboot. If that doesn't help, read “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>”.</p>
+				</li>
+				<li>
+					<p>Click the small icon with the swirling arrows <img src="theme/refresh_lr.png" alt="" /> in between the “Display device” and “Instrument” controls to detect connected display devices and instruments. The detected instrument(s) should show up in the “Instrument” dropdown.</p>
+					<p class="info"><strong>If your measurement device is a Spyder 2</strong>, a popup dialog will show which will let you enable the device. This is required to be able to use the Spyder 2 with Argyll CMS and dispcalGUI.</p>
+					<p class="info"><strong>If your measurement device is a i1 Display 2, i1 Display Pro, ColorMunki Display, DTP94, Spyder 2, Spyder 3 or Spyder 4</strong>, a popup dialog will show and allow you to import generic <a href="#colorimeter-corrections">colorimeter corrections</a> from the vendor software which may help measurement accuracy on the type of display you're using. After importing, they are available under the “Correction” dropdown, where you can choose one that fits the type of display you have, or leave it at “Auto” if there is no match. <em>Note:</em> Importing from the Spyder 4 software enables additional measurement modes for that instrument.</p>
 				</li>
 				<li>
 					<p>Refer to the <a href="#concept">documentation</a> for <a href="#usage">usage instructions</a>.</p>
+					<p class="info"><em>Linux only:</em> If you cannot access your instrument, first try unplugging and reconnecting it, or a reboot. If that doesn't help, read “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>”.</p>
 				</li>
 			</ol>
 		</div>
@@ -701,7 +709,7 @@
 			<div>
 				<h3>General system requirements</h3>
 				<ul>
-					<li>A recent Linux, Mac OS X (10.4 or newer) or Windows (XP/Server 2003 or newer) operating system.</li>
+					<li>A recent Linux, Mac OS X (10.5 or newer) or Windows (XP/Server 2003 or newer) operating system.</li>
 					<li>A graphics card with at least 24 bits per pixel (true color) support and the desktop set up to use this color depth.</li>
 				</ul>
 			</div>
@@ -726,6 +734,7 @@
 					<li>HP Advanced Profiling Solution (treated as i1 Display 2)</li>
 					<li>HP DreamColor (treated as i1 Display 2)</li>
 					<li>Hughski ColorHug (experimental only, does not work reliably on all platforms, especially on Mac OS X. Linux support since Argyll CMS 1.3.6, Windows support with newest ColorHug firmware since Argyll CMS 1.5.0)</li>
+					<li>Klein K10-A (new in Argyll CMS 1.7.0 beta)</li>
 					<li>Lacie Blue Eye (treated as i1 Display 2)</li>
 					<li>Sequel Imaging MonacoOPTIX (treated as i1 Display 1)</li>
 					<li>X-Rite ColorMunki Create (treated as i1 Display 2)</li>
@@ -740,20 +749,21 @@
 
 				<h4>Spectrometers</h4>
 				<ul>
-					<li>JETI specbos 1211/1201 (new in Argyll CMS 1.6.0 beta)</li>
+					<li>JETI specbos 1211/1201 (since Argyll CMS 1.6.0 beta)</li>
 					<li>X-Rite ColorMunki Design, ColorMunki Photo (since Argyll CMS 1.1.0)</li>
 					<li>X-Rite/GretagMacbeth i1 Monitor (since Argyll CMS 1.0.3)</li>
 					<li>X-Rite/GretagMacbeth i1 Pro</li>
+					<li>X-Rite i1 Pro 2 (since Argyll CMS 1.5.0)</li>
 					<li>X-Rite/GretagMacbeth Spectrolino</li>
 				</ul>
 
 				<p>Note that the <em>i1 Display Pro</em> and <em>i1 Pro</em> are very different instruments despite their naming similarities.</p>
 
-				<p>Also there are currently (2011-09-02) four instruments (or rather, packages) under the ColorMunki brand, two of which are spectrometers, and two are colorimeters:</p>
+				<p>Also there are currently (2014-05-20) five instruments (or rather, packages) under the ColorMunki brand, two of which are spectrometers, and three are colorimeters (not all of them being recent offerings, but you should be able to find them used in case they are no longer sold new):</p>
 				<ul>
 					<li>The <em>ColorMunki Design</em> and <em>ColorMunki Photo</em> spectrometers differ only in the functionality of the bundled vendor software. There are no differences between the instruments when used with Argyll CMS and dispcalGUI.</li>
 					<li>The <em>ColorMunki Display</em> colorimeter is a less expensive version of the i1 Display Pro colorimeter. It comes bundled with a simpler vendor software and has longer measurement times compared to the i1 Display Pro. Apart from that, the instrument appears to be virtually identical.</li>
-					<li>The <em>ColorMunki Create</em> colorimeter is the same instrument as the i1 Display 2.</li>
+					<li>The <em>ColorMunki Create</em> and <em>ColorMunki Smile</em> colorimeters are similar hardware as the i1 Display 2 (with the ColorMunki Smile no longer having a built-in correction for CRT but for white LED backlit LCD instead).</li>
 				</ul>
 			</div>
 
@@ -768,6 +778,7 @@
 					<li>X-Rite ColorMunki</li>
 					<li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro</li>
 					<li>X-Rite/GretagMacbeth Spectrolino</li>
+					<li>X-Rite i1 Pro 2</li>
 				</ul>
 
 				<p>Be aware you may still be forced to do a sensor calibration if the instrument requires it. Also, please look at the possible <a href="#issue-samplereadfail">caveats</a>.</p>
@@ -839,62 +850,28 @@
 		<div id="install">
 			<h2>Installation</h2>
 
-			<p>It is recommended to first remove all previous versions.</p>
+			<p>It is recommended to first remove all previous versions unless you used Zero Install to get them.</p>
 			
 			<div id="install-windows-driver">
-				<h3>Driver installation under Windows</h3>
-				<div class="toggle">
-					<ul>
-						<li>
-							<h4>If you already have drivers for your measurement device installed...</h4>
-							<p>Read “Adding Argyll drivers to existing drivers” (if you are using vendor drivers) or “Updating Argyll drivers” (if you use a prior version of the Argyll drivers) under “<a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>” in the Argyll CMS documentation.</p>
-						</li>
-						<li>
-							<h4>If this is a fresh install...</h4>
-							<ol>
-								<li>
-									<ul>
-										<li><h5>If you are using Windows 8...</h5>
-											<ol>
-												<li>Go to “Settings” (hover the lower right corner of the screen, then click the gear icon).</li>
-												<li>Select “Power” (the on/off icon).</li>
-												<li>Hold the SHIFT key down and click “Restart”.</li>
-												<li>Select “Troubleshoot → “Advanced Options” → “Startup Settings” → “Restart”.</li>
-												<li>After reboot, select “Disable Driver Signature Enforcement” (number 7 on the list).</li>
-												<li>Open the desktop, then go to “Settings” (hover the lower right corner of the screen, then click the gear icon) → “Control Panel” → “Hardware and Sound” → “Device Manager”.</li>
-												<li>Locate the instrument in the device list. It may be underneath one of the top level items (usually “Other devices”).</li>
-												<li>Right click on the instrument and select “Update Driver Software...”.</li>
-												<li>Select “Browse my computer for driver software”.</li>
-												<li>Select “Let me pick from a list of device drivers on my computer” and then “Next”.</li>
-												<li>Select “Have disk...” then “Browse...”.</li>
-											</ol>
-										</li>
-										<li><h5>If you are using Windows Vista/7...</h5>
-											<ol>
-												<li>A “Found new hardware” dialog should appear.</li>
-												<li>Select “Locate and install driver software (recommended)”.</li>
-												<li>If a “User Account Control” window pops up, select “Continue”.</li>
-												<li>Select “Don't search online”.</li>
-												<li>Select “I don't have the disc, show me other options”.</li>
-												<li>Select “Browse my computer for driver software (advanced)”.</li>
-											</ol>
-										</li>
-										<li><h5>If you are using Windows XP...</h5>
-											<ol>
-												<li>A “Found new hardware” dialog should appear.</li>
-												<li>In the window “Can Windows connect to Windows Update to search for software?” select “No, not this time” and “Next”.</li>
-												<li>Select “Install from a list or specific location (advanced)” then “Next”.</li>
-												<li>Select “Search for the best driver in these locations”, “Include this location in the search” and “Browse...”.</li>
-											</ol>
-										</li>
-									</ul>
-								</li>
-								<li>Locate the “libusbw” (Argyll CMS up to 1.1.1), “libusb1” (Argyll CMS up to 1.4.0) or “usb” (Argyll CMS 1.5.0 and newer) subdirectory in your Argyll_VX.X.X directory (you may also need to select the .inf file that corresponds to your device, then select “Open” and “OK”). Select “Next”.</li>
-								<li>If a “Windows Security” dialog pops up, select “Install this driver software anyway”.</li>
-								<li>A window stating the successful installation of the driver should show. Click “Finish”/“Close”.</li>
-							</ol>
-						</li>
-					</ul>
+				<h3>Instrument driver installation under Windows</h3>
+
+				<div>
+					<p class="info">You only need to install the Argyll-specific driver if your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug.</p>
+
+					<div class="info">If you are using Windows 8, you need to <strong>disable driver signature enforcement</strong> before you can install the driver:
+
+					<ol>
+						<li>Go to “Settings” (hover the lower right corner of the screen, then click the gear icon).</li>
+						<li>Select “Power” (the on/off icon).</li>
+						<li>Hold the SHIFT key down and click “Restart”.</li>
+						<li>Select “Troubleshoot → “Advanced Options” → “Startup Settings” → “Restart”.</li>
+						<li>After reboot, select “Disable Driver Signature Enforcement” (number 7 on the list).</li>
+					</ol></div>
+
+					<p>To install the Argyll-specific driver that is needed to use some instruments, launch dispcalGUI and select “Install Argyll CMS instrument drivers...” from the “Tools” menu.</p>
+					
+					<p>To switch between the Argyll CMS and vendor drivers, launch Windows' Device Manager and locate the instrument in the device list. It may be underneath one of the top level items.
+					Right click on the instrument and select “Update Driver Software...”, then choose “Browse my computer for driver software”, “Let me pick from a list of device drivers on my computer” and finally select the Argyll driver for your instrument from the list.</p>
 				</div>
 			</div>
 
@@ -944,7 +921,7 @@
 
 				<div>
 					<p>Launch the installer which will guide you trough the required setup steps.</p>
-					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display or i1 Display Pro, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Driver installation under Windows”.</a></p>
+					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
 				</div>
 			</div>
 
@@ -954,7 +931,7 @@
 
 				<div>
 					<p>Unpack and then simply run dispcalGUI from the created folder.</p>
-					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display or i1 Display Pro, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Driver installation under Windows”.</a></p>
+					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
 				</div>
 			</div>
 
@@ -969,21 +946,27 @@
 					<h4>Additional setup commands</h4>
 					<div class="info">
 						<dl>
+							<dt><code>0install</code></dt>
+								<dd>Create/update 0install feeds and create Mac OS X application bundles to run those feeds.</dd>
+							<dt><code>appdata</code></dt>
+								<dd>Create/update <a href="http://people.freedesktop.org/~hughsient/appdata/">AppData</a> file.</dd>
 							<dt><code>bdist_appdmg</code> (Mac OS X only)</dt>
-								<dd>Creates a DMG of a previously created (by the py2app or bdist_standalone commands) application bundle.</dd>
+								<dd>Creates a DMG of previously created (by the py2app or bdist_standalone commands) application bundles, or if used together with the <code>0install</code> command.</dd>
 							<dt><code>bdist_deb</code> (Linux/Debian-based)</dt>
 								<dd>Create an installable Debian (.deb) package, much like the standard distutils command bdist_rpm for RPM packages. Prerequisites:
 								You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example). Under Ubuntu, running utils/dist_ubuntu.sh will automatically use the correct setup.cfg. If you are using Ubuntu 11.04 or any other debian-based distribution which has Python 2.7 as default, you need to edit /usr/lib/python2.7/distutils/command/bdist_rpm.py, and change the line <code>install_cmd = ('%s install <span style="color: #c00">-O1</span> --root=$RPM_BUILD_ROOT '</code> to <code>install_cmd = ('%s install --root=$RPM_BUILD_ROOT '</code> by removing the <code><span style="color: #c00">-O1</span></code> flag. Also, you need to change /usr/lib/rpm/brp-compress to do nothing (e.g. change the file contents to <code>exit 0</code>, but don't forget to create a backup copy first) otherwise you will get errors when building.</dd>
+							<dt><code>bdist_lipa</code></dt>
+								<dd>Create a <a href="http://listaller.tenstral.net/">Listaller</a> package.</dd>
 							<dt><code>bdist_pyi</code></dt>
 								<dd>An alternative to <code>bdist_standalone</code>, which uses <a href="http://www.pyinstaller.org/">PyInstaller</a> instead of bbfreeze/py2app/py2exe.</dd>
 							<dt><code>bdist_standalone</code></dt>
-								<dd>Creates a standalone executable that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, older versions of py2app (before 0.4) are not able to access files inside python “egg” files (which are basically ZIP-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing those older py2app versions from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files. This is no longer an issue with py2app 0.4 and later.</dd>
+								<dd>Creates a standalone application that does not require a Python installation. Uses bbfreeze on Linux, py2app on Mac OS X and py2exe on Windows. setup.py will try and automatically download/install these packages for you if they are not yet installed and if not using the --use-distutils switch. Note: On Mac OS X, older versions of py2app (before 0.4) are not able to access files inside python “egg” files (which are basically ZIP-compressed folders). Setuptools, which is needed by py2app, will normally be installed in “egg” form, thus preventing those older py2app versions from accessing its contents. To fix this, you need to remove any installed setuptools-&lt;version&gt;-py&lt;python-version&gt;.egg files from your Python installation's site-packages directory (normally found under <code>/Library/Frameworks/Python.framework/Versions/Current/lib</code>). Then, run <code>sudo python util/ez_setup.py -Z setuptools</code> which will install setuptools unpacked, thus allowing py2app to acces all its files. This is no longer an issue with py2app 0.4 and later.</dd>
 							<dt><code>buildservice</code></dt>
 								<dd>Creates control files for openSUSE Build Service (also happens implicitly when invoking <code>sdist</code>).</dd>
 							<dt><code>finalize_msi</code> (Windows only)</dt>
 								<dd>Adds icons and start menu shortcuts to the MSI installer previously created with <code>bdist_msi</code>. Successful MSI creation needs a <a href="http://bugs.python.org/file15898/msilib_make_short.diff">patched msilib</a> (<a href="http://bugs.python.org/issue1128">additional</a> <a href="http://bugs.python.org/issue7639">information</a>).</dd>
 							<dt><code>inno</code> (Windows only)</dt>
-								<dd>Creates an Inno Setup install script for an executable created with the <code>py2exe</code> or <code>bdist_standalone</code> commands.</dd>
+								<dd>Creates <a href="http://www.jrsoftware.org/isinfo.php">Inno Setup</a> scripts which can be used to compile setup executables for standalone applications generated by the <code>py2exe</code> or <code>bdist_standalone</code> commands and for 0install.</dd>
 							<dt><code>purge</code></dt>
 								<dd>Removes the <code>build</code> and <code>dispcalGUI.egg-info</code> directories including their contents.</dd>
 							<dt><code>purge_dist</code></dt>
@@ -1006,6 +989,8 @@
 								<dd>Skip installation of udev rules and hotplug scripts.</dd>
 							<dt><code>--skip-postinstall</code></dt>
 								<dd>Skip post-installation on Linux (an entry in the desktop menu will still be created, but may not become visible until logging out and back in or rebooting) and Windows (no shortcuts in the start menu will be created at all).</dd>
+							<dt><code>-stability=stable|testing|developer|buggy|insecure</code></dt>
+								<dd>Set the stability for the implementation that is added/updated via the <code>0install</code> command.</dd>
 							<dt><code>--use-distutils</code></dt>
 								<dd>Force setup to use distutils (default) instead of setuptools. This is useful in combination with the bdist* commands, because it will avoid an artificial dependency on setuptools. This is actually a switch, use it once and the choice is remembered until you specify the <code>--use-setuptools</code> switch (see next paragraph).</dd>
 							<dt><code>--use-setuptools</code></dt>
@@ -1020,21 +1005,17 @@
 		<div id="install-2">
 			<h3>Instrument-specific setup</h3>
 			
-			<p><strong>If your measurement device is a i1 Display Pro, ColorMunki Display or Spyder 4</strong>, you'll want to import the colorimeter corrections that are part of the i1 Profiler or ColorMunki Display software package, which can be used to better match the instrument to a particular type of display.</p>
-			<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the i1 Profiler or ColorMunki Display software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the software's setup executable. Select the <a href="http://www.xrite.com/product_overview.aspx?ID=1513&amp;Action=Support">ColorMunki Display PC (Windows) Setup</a> or <a href="http://www.xrite.com/product_overview.aspx?ID=1454&amp;Action=Support">i1 Profiler PC (Windows) Setup</a> regardless of your actual operating system (both files contain the same set of colorimeter corrections, the ColorMunki software is a slightly smaller download).</p>
-			
-			<p><strong>The full range of measurement modes for the Spyder 4 are only available if they are imported from the Spyder 4 software.</strong></p>
-
-			<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu. If the Spyder 4 software is installed or its installation media is inserted, the colorimeter corrections can be imported automatically, otherwise you will have to manually select the setup executable. Select the <a href="http://support.datacolor.com/index.php?/Knowledgebase/List/Index/88/windows">Spyder 4 Setup for Windows</a> (choose one of Elite, Express, HD or Pro) regardless of your actual operating system.</p>
+			<p><strong>If your measurement device is a i1 Display 2, i1 Display Pro, ColorMunki Display, DTP94, Spyder 2, Spyder 3 or Spyder 4</strong>, you'll want to import the colorimeter corrections that are part of the vendor software packages, which can be used to better match the instrument to a particular type of display. <em>Note:</em> The full range of measurement modes for the Spyder 4 are also only available if they are imported from the Spyder 4 software.</p>
+			<p>Choose “Import colorimeter corrections from other display profiling software...” from dispcalGUI's “Tools” menu.</p>
 	
-			<p><strong>If your measurement device is a Spyder 2</strong>, choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Tools” menu. If you don't have the spyder software installed or its location cannot be determined, you will be prompted to manually select the setup executable. Select the <a href="http://support.datacolor.com/index.php?/Knowledgebase/Article/View/1445/88/spyder2express-236---win">Spyder 2 Setup for Windows</a> regardless of your actual operating system.</p>
+			<p><strong>If your measurement device is a Spyder 2</strong>, you need to enable it to be able to use it with Argyll CMS and dispcalGUI. Choose “Enable Spyder 2 colorimeter...” from dispcalGUI's “Tools” menu.</p>
 
 		</div>
 
 		<div id="concept">
 			<h2>Basic concept of display calibration and profiling</h2>
 
-			<p>If you have previous experience, <a href="#widegamut">skip ahead</a>. If you are new to display 
+			<p>If you have previous experience, <a href="#colorimeter-corrections">skip ahead</a>. If you are new to display 
 			calibration, here is a quick outline of the basic concept.</p>
 
 			<p>First, the display behavior is measured and adjusted to meet 
@@ -1055,8 +1036,7 @@
 			still need to be used together to get correct results. This can lead to some ambiguity, 
 			because loading the calibration curves from the profile is generally the 
 			responsibility of a third party utility or the OS, while applications using 
-			the profile to do color transforms usually rely on the calibration being already 
-			loaded. Currently, the only OS that 
+			the profile to do color transforms usually don't know or care about the calibration (they don't need to). Currently, the only OS that 
 			applies calibration curves out-of-the-box is Mac OS X (under <a href="#issue-win7-autoloadcalibration">Windows 7 you can enable it</a>, but it's off by default)—for other OS's, dispcalGUI takes care of creating an appropriate loader.</p>
 
 			<p>Even non-color-managed applications will benefit from a loaded 
@@ -1071,11 +1051,11 @@
 			get a strong tendency towards neon.</p>
 		</div>
 
-		<div id="widegamut">
-			<h2>A note about colorimeters, wide-gamut displays and dispcalGUI</h2>
+		<div id="colorimeter-corrections">
+			<h2>A note about colorimeters, displays and dispcalGUI</h2>
 
-			<p>Colorimeters need a correction in hardware or software to obtain correct measurements from wide-gamut displays (please also see <a href="http://argyllcms.com/doc/WideGamutColmters.html">“Wide Gamut Displays and Colorimeters”</a> on the Argyll CMS website for more information). The latter is supported when using Argyll CMS &gt;= 1.3.0, so if you own a wide-gamut display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction in hardware), you can apply a correction that has been calculated from spectrometer measurements to help better measure such a screen.<br />
-			You need a spectrometer in the first place to do the necessary measurements to create such a correction, or you may query dispcalGUI's <a href="http://dispcalgui.hoech.net/colorimetercorrections">Colorimeter Corrections Database</a>, and there's also a <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed colorimeter correction files on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most colorimeters.<br />
+			<p>Colorimeters need a correction in hardware or software to obtain correct measurements from different types of displays (please also see <a href="http://argyllcms.com/doc/WideGamutColmters.html">“Wide Gamut Displays and Colorimeters”</a> on the Argyll CMS website for more information). The latter is supported when using Argyll CMS &gt;= 1.3.0, so if you own a display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction in hardware), you can apply a correction that has been calculated from spectrometer measurements to help better measure such a screen.<br />
+			You need a spectrometer in the first place to do the necessary measurements to create such a correction, or you may query dispcalGUI's <a href="http://dispcalgui.hoech.net/colorimetercorrections">Colorimeter Corrections Database</a>, and there's also a <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed colorimeter correction files on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most older colorimeters (with the exception of the DTP94), newer devices like the i1 Display Pro/ColorMunki Display and possibly the Spyder 4 seem to be less affected by this.<br />
 			Starting with dispcalGUI 0.6.8, you can also <a href="#import-correction-matrices">import generic corrections</a> from some profiling softwares by choosing the corresponding item in the “Tools” menu.</p>
 
 			<p>If you buy a screen bundled with a colorimeter, the instrument may have been matched to the screen in some way already, so you may not need a software correction in that case.</p>
@@ -1093,15 +1073,14 @@
 
 			<div id="settingsfile">
 				<h3>Settings file</h3>
-				<p>Here, you can load a calibration (<code>.cal</code>) or ICC profile (<code>.icc</code> / <code>.icm</code>) file from a previous 
+				<p>Here, you can load a preset, or a calibration (<code>.cal</code>) or ICC profile (<code>.icc</code> / <code>.icm</code>) file from a previous 
 				run. This will set options to 
-				those stored in the file and also load
-				calibration curves (if any) into the video card. If the file contains only a subset of settings, you will get a message showing which settings were loaded.</p>
+				those stored in the file. If the file contains only a subset of settings, the other options will be reset to defaults.</p>
 
 				<p>If a calibration file or profile is loaded in this way, its name will
 				show up here to indicate that the settings reflect those in the file.
 				Also, if a calibration is present it can be used as the base when “Just Profiling”.<br />
-				The chosen settings file will stay as long as you do not change any of the 
+				The chosen settings file will stay selected as long as you do not change any of the 
 				calibration or profiling settings, with one exception: When a <code>.cal</code> file with the same base name as the settings file
 				exists in the same directory, adjusting the quality and profiling controls will not cause unloading of the settings file. This allows you to use an existing calibration with new profiling settings for “Just Profiling”, or to update an existing calibration with different quality and/or profiling settings. If you change settings in other situations, the file will get unloaded (but current settings will be retained—unloading just happens to remind you that the settings no longer match those in the file), and current display profile's calibration curves will be restored (if present, otherwise they will reset to linear).</p>
 
@@ -1117,21 +1096,21 @@
 
 				<p>Starting with dispcalGUI v0.2.5b, predefined settings for several use cases are selectable in the settings dropdown. I strongly recommend to NOT view these presets as the solitary “correct” settings you absolutely should use unmodified if your use case matches their description. Rather view them as starting points, from where you can work towards your own, optimized (in terms of your requirements, hardware, surroundings, and personal preference) settings.</p>
 
-				<h4>Why has a default gamma of 2.2 been chosen for the presets?</h4>
+				<h4>Why has a default gamma of 2.2 been chosen for some presets?</h4>
 
-				<p>Many displays, be it CRT or LCD type, have a default response characteristic close to a gamma of approx. 2.2-2.4 (for CRTs, this is the actual native behaviour; and LCDs typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the video card's gamma tables via calibration curves will not be as strong as if a target response farther away from the display's native response had been chosen.</p>
+				<p>Many displays, be it CRT, LCD, Plasma or OLED, have a default response characteristic close to a gamma of approx. 2.2-2.4 (for CRTs, this is the actual native behaviour; and other technologies typically try to mimic CRTs). A target response curve for calibration that is reasonably close to the native response of a display should help to minimize calibration artifacts like banding, because the adjustments needed to the video card's gamma tables via calibration curves will not be as strong as if a target response farther away from the display's native response had been chosen.</p>
 				<p>Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.2 for other reasons. You can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info.</p>
 			</div>
 
 			<div id="display_instrument">
 				<h3>Choosing the display to calibrate and the measurement device</h3>
 
-				<p>After connecting the instrument, click the small icon with the swirling arrows <img src="theme/refresh_lr.png" alt="" /> in between the “Display device” and “Instrument” controls to detect connected displays devices and instruments.</p>
+				<p>After connecting the instrument, click the small icon with the swirling arrows <img src="theme/refresh_lr.png" alt="" /> in between the “Display device” and “Instrument” controls to detect connected display devices and instruments.</p>
 				
 				<h4 id="settings_measurement_modes">Choosing a measurement mode</h4>
 				
-				<p>Some instruments may support different measurement modes for different types of display devices. In general, there are three base measurement modes: “LCD”, “Refresh” (e.g. CRT and Plasma are refresh-type displays) and “Projector” (the latter is only available if supported by the instrument). Some instruments like the Spyder 4 and ColorHug support additional measurement modes, where a mode is coupled with a predefined colorimeter correction (in that case, you should set the <a href="#settings_colorimeter_correction">colorimeter correction</a> dropdown to “None” / “Off”).<br />
-				Variations of these measurement modes may be available depending on the instrument: “Adaptive” measurement mode for spectrometers uses varying integration times to increase accuracy of dark readings, but may be more inconsistent overall. “HiRes” turns on high resolution spectral mode for spectrometers like the i1 Pro, which may increase the accuracy of measurements.</p>
+				<p>Some instruments may support different measurement modes for different types of display devices. In general, there are three base measurement modes: “LCD”, “Refresh” (e.g. CRT and Plasma are refresh-type displays) and “Projector” (the latter is only available if supported by the instrument). Some instruments like the Spyder 4 and ColorHug support additional measurement modes, where a mode is coupled with a predefined colorimeter correction (in that case, the <a href="#settings_colorimeter_correction">colorimeter correction</a> dropdown will automatically hide).<br />
+				Variations of these measurement modes may be available depending on the instrument: “Adaptive” measurement mode for spectrometers uses varying integration times (always used by colorimeters) to increase accuracy of dark readings. “HiRes” turns on high resolution spectral mode for spectrometers like the i1 Pro, which may increase the accuracy of measurements.</p>
 
 				<h4 id="settings_drift_compensation">Drift compensation during measurements (only available if using Argyll CMS &gt;= 1.3.0)</h4>
 				
@@ -1139,9 +1118,9 @@
 
 				<p>Black level drift compensation tries to counter measurement deviations caused by black calibration drift of a warming up measurement device. For this purpose, a black test patch is measured periodically, which increases the overall time needed for measurements. Many colorimeters are temperature stabilised, in which case black level drift compensation should not be needed, but spectrometers like the i1 Pro or ColorMunki Design/Photo are not temperature compensated.</p>
 
-				<h4 id="settings_colorimeter_correction">Choosing a colorimeter correction for a particular (wide-gamut) display</h4>
+				<h4 id="settings_colorimeter_correction">Choosing a colorimeter correction for a particular display</h4>
 
-				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#widegamut">“A note about colorimeters, wide-gamut displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online <a href="http://dispcalgui.hoech.net/colorimetercorrections/">Colorimeter Corrections Database</a> for a match of your display/instrument combination (click the small globe next to the correction dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
+				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#colorimeter-corrections">“A note about colorimeters, displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online <a href="http://dispcalgui.hoech.net/colorimetercorrections/">Colorimeter Corrections Database</a> for a match of your display/instrument combination (click the small globe next to the correction dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
 
 				<p>Please note this option is only available if using Argyll CMS &gt;= 1.3.0 and a colorimeter.</p>
 			</div>
@@ -1150,6 +1129,9 @@
 				<h3>Calibration settings</h3>
 
 				<dl>
+					<dt>Interactive display adjustment</dt>
+						<dd>Turning this off skips straight to calibration or profiling measurements instead of giving you the opportunity to alter the display's controls first. You will normally want to keep this checked, to be able to use the controls to get closer to the chosen target characteristics.</dd>
+
 					<dt id="settings_calibration_white_point">White point</dt>
 						<dd>
 							<p>Allows setting the target white point locus to the equivalent of a daylight or black body spectrum of the given temperature in degrees Kelvin, or as chromaticity co-ordinates. By default the white point target will be the native white of the display, and it's color temperature and delta E to the daylight spectrum locus will be shown during monitor adjustment, and adjustments will be recommended to put the display white point directly on the Daylight locus. If a daylight color temperature is given, then this will become the target of the adjustment, and the recommended adjustments will be those needed to make the monitor white point meet the target. Typical  values might be 5000 for matching printed output, or 6500, which gives a brighter, bluer look. A white point temperature different to that native to the display may limit the maximum brightness possible.</p>
@@ -1168,6 +1150,8 @@
 
 					<dt id="settings_calibration_black_level">Black level</dt>
 						<dd>
+							<p>(To see this setting, go into the “Options” menu, and enable “Show advanced calibration options”)</p>
+
 							<p>Can be used to set the target brightness of black in cd/m<sup>2</sup> and is useful for e.g. matching two different screens with different native blacks to one another, by measuring the black levels on both (i.e. in the “Tools” menu, choose “Report on uncalibrated display”) and then entering the highest measured value. Normally you may want to use native black level though, to maximize contrast ratio. Setting too high a value may also give strange results as it interacts with trying to achieve the target “advertised” tone curve shape. Using a black output offset of 100% tries to minimize such problems.</p>
 						</dd>
 
@@ -1193,10 +1177,10 @@
 						<dd>
 							<p>(To see this setting, go into the “Options” menu, and enable “Show advanced calibration options”)</p>
 
-							<p>As explained for the tone curve settings, often colors are encoded in a situation with viewing conditions that are quite different to the viewing conditions of a typical display, with the expectation that this difference in viewing conditions will be allowed for in the way the display is calibrated. The ambient light level option is a way of doing this. By default calibration will not make any allowances for viewing conditions, but will calibrate to the specified response curve, but if the ambient light level is entered or measured (which you may also do during the interactive display controls portion of the calibration), an appropriate viewing conditions adjustment will be performed. For a gamma value or sRGB, the original viewing conditions will be assumed to be that of the sRGB standard viewing conditions, while for REC 709 and SMPTE 240M they will be assumed to be television studio viewing conditions.<br />
+							<p>As explained for the tone curve settings, often colors are encoded in a situation with viewing conditions that are quite different to the viewing conditions of a typical display, with the expectation that this difference in viewing conditions will be allowed for in the way the display is calibrated. The ambient light level option is a way of doing this. By default calibration will not make any allowances for viewing conditions, but will calibrate to the specified response curve, but if the ambient light level is entered or measured, an appropriate viewing conditions adjustment will be performed. For a gamma value or sRGB, the original viewing conditions will be assumed to be that of the sRGB standard viewing conditions, while for REC 709 and SMPTE 240M they will be assumed to be television studio viewing conditions.<br />
 							By specifying or measuring the ambient lighting for your display, a viewing conditions adjustment based on the CIECAM02 color appearance model will be made for the brightness of your display and the contrast it makes with your ambient light levels.</p>
 
-							<p>Please note your measurement device needs ambient measuring capability (e.g. like the i1 Pro or i1 Display 2 with their respective ambient measurement heads) to measure the ambient light level.</p>
+							<p>Please note your measurement device needs ambient measuring capability (e.g. like the i1 Pro or i1 Display with their respective ambient measurement heads) to measure the ambient light level.</p>
 						</dd>
 
 					<dt id="settings_calibration_black_output_offset">Black output offset</dt>
@@ -1217,7 +1201,7 @@
 							<p>(To see this setting, go into the “Options” menu, and enable “Show advanced calibration options”)</p>
 
 							<p>Normally dispcal will attempt to make all colors down the neutral axis (R=G=B) have the same hue as the chosen white point. Near the black point, red, green or blue can only be added, not subtracted from zero, so the process of making the near black colors have the desired hue, will lighten them to some extent. For a device with a good contrast ratio or a black point that has nearly the same hue as the white, this is not a problem. If the device contrast ratio is not so good, and the black hue is noticeably different to that of the chosen white point (which is often the case for LCD type displays), this could have a noticeably detrimental effect on an already limited contrast ratio. Here the amount of black point hue correction can be controlled.<br />
-							By default a factor of 100% will be used, which is usually good for CRT and also by default a factor of 0% is used for LCD type displays, but you can override these with a custom value between 0% (no correction) to 100% (full correction).</p>
+							By default a factor of 100% will be used, which is usually good for “Refresh”-type displays like CRT or Plasma and also by default a factor of 0% is used for LCD type displays, but you can override these with a custom value between 0% (no correction) to 100% (full correction), or enable automatically setting it based on the measured black level of the display.</p>
 
 							<p>If less than full correction is chosen, then the resulting calibration curves will have the target white point down most of the curve, but will then cross over to the native or compromise black point.</p>
 						</dd>
@@ -1230,12 +1214,11 @@
 						</dd>
 
 					<dt id="settings_calibration_quality">Calibration speed</dt>
-						<dd>							
+						<dd>
+							<p>(This setting will not apply and be hidden when the tone curve is set to “As measured”)</p>
+						
 							<p>Determines how much time and effort to go to in calibrating the display. The lower the speed, the more test readings will be done, the more refinement passes will be done, the tighter will be the accuracy tolerance, and the more detailed will be the calibration of the display. The result will ultimately be limited by the accuracy of the instrument, the repeatability of the display and instrument, and the resolution of the video card gamma table entries and digital or analogue output (RAMDAC).</p>
 						</dd>
-
-					<dt>Interactive display adjustment</dt>
-						<dd>Turning this off skips straight to calibration measurements instead of giving you the opportunity to alter the display's controls first. You will normally want to keep this checked, to be able to use the controls to get closer to the chosen target characteristics.</dd>
 				</dl>
 			</div>		
 
@@ -1243,6 +1226,73 @@
 				<h3>Profiling settings</h3>
 
 				<dl>
+					<dt>Profile quality</dt>
+						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>), it sets the main lookup table size, and hence quality in the resulting profile. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
+
+					<dt id="settings_profiling_profile_type">Profile type</dt>
+						<dd>
+							<p>Generally you can differentiate between two types of profiles: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based and matrix based.</p>
+
+							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[2]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
+
+							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> type profiles, or certain variations of them).
+							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created.<br />
+							L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> L*a*b* encoding range (Note: Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS &gt;= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll CMS versions).<br />
+							As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped matrix (which I'd recommend), ie. blue-red-green instead of red-green-blue, so it will be obvious if an application uses the (deliberately wrong) matrix instead of the (correct) LUT because the colors will look very wrong (e.g. everything that should be red will be blue, green will be red, blue will be green, yellow will be purple etc).</p>
+
+							<p id="difference_lutcurves_lutprofile">Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based profiles (which contain three-dimensional LUTs) might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> (calibration) curves (one-dimensional LUTs), but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based and matrix-based profiles may include calibration curves which can be loaded into a video card's gamma table hardware.</p>
+						</dd>
+
+					<dt id="settings_profiling_gamutmapping">Advanced gamut mapping options</dt>
+						<dd>
+							<p>You can choose any of the following options after selecting a LUT profile type and clicking “Advanced...”. <em>Note:</em> The options “Low quality <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables” and “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table” are mutually exclusive.</p>
+							
+							<h4>Low quality <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables</h4>
+							<p>Choose this option if the profile is only going to be used with inverse device-to-<acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> gamut mapping to create a DeviceLink or 3D LUT (dispcalGUI always uses inverse device-to-<acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> gamut mapping when creating a DeviceLink/3D LUT). This will reduce the processing time needed to create the <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables. <strong>Don't</strong> choose this option if you want to install or otherwise use the profile.</p>
+
+							<h4>Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table</h4>
+							<p>To use this option, you have to select a XYZ LUT profile type. This option increases the effective resolution of the <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> to device colorimetric color lookup table by using a matrix to fill the whole grid with the values obtained by inverting the device-to-<acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> table, as well as optionally applies smoothing. If no <a href="#settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</a> has been enabled for the perceptual intent, a simple but effective perceptual table (which is almost identical to the colorimetric table, but maps the black point to zero) will also be generated.</p>
+							<p>You can also set the interpolated lookup table size. The default 33x33x33 resulution will provide a good balance between smoothness and accuracy. Lowering the resolution can increase smoothness (at the potential expense of some accuracy), while increasing resolution may make the resulting profile potentially more accurate (at the expense of some smoothness). Note that computation will need a lot of memory (&gt;= 4 GB of RAM recommended to prevent swapping to harddisk) especially at higher resolutions.</p>
+							<p>See below example images for the result you can expect, where the original image has been converted from sRGB to the display profile. Note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this. Also note that the sRGB blue in the image is actually out of gamut for the specific display used, and the edges visible in the blue gradient for the rendering are a result of the color being out of gamut, and the gamut mapping thus hitting the less smooth gamut boundaries.</p>
+							<div style="overflow: hidden; padding: 1.4em 0;">
+								<div style="text-align: center;">
+									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p>Original “granger rainbow” image</p>
+								</div>
+								<div style="float: left; margin: 0 15px 0 22px; width: 200px">
+									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p>Default colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile)</span></p>
+								</div>
+								<div style="float: left; margin: 0 15px; width: 200px">
+									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p>“Smooth” colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
+								</div>
+								<div style="float: left; margin: 0 15px; width: 200px">
+									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p>“Smooth” perceptual rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
+								</div>
+							</div>
+							
+							<h4>Default rendering intent for profile</h4>
+							<p>Sets the default rendering intent. In theory applications could use this, in practice they don't, so changing this setting probably won't have any effect whatsoever.</p>
+							
+							<h4 id="settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</h4>
+							<p>Normally, profiles created by dispcalGUI only incorporate the colorimetric rendering intent, which means colors outside the display's gamut will be clipped to the next in-gamut color. LUT-type profiles can also have gamut mapping by implementing perceptual and/or saturation rendering intents. You can choose if and which of those you want by specifying a source profile and marking the appropriate checkboxes. Note that a input, output, display or device colororspace profile should be specified as source, not a non-device colorspace, device link, abstract or named color profile. You can also choose viewing conditions which describe the intended use of both the source and the display profile that is to be generated. An appropriate source viewing condition is chosen automatically based on the source profile type.</p>
+
+							<p>For more information on why a source gamut is needed, see “<a href="http://argyllcms.com/doc/iccgamutmapping.html">About ICC profiles and Gamut Mapping</a>” in the Argyll CMS documentation.</p>
+
+							<p>One strategy for getting the best perceptual results with display profiles is as follows: Select a CMYK profile as source for gamut mapping. Then, when converting from another RGB profile to the display profile, use relative colorimetric intent, and if converting from a CMYK profile, use the perceptual intent.<br />
+							Another approach which especially helps limited-gamut displays is to choose one of the larger (gamut-wise) source profiles you usually work with for gamut mapping, and then always use perceptual intent when converting to the display profile.</p>
+
+							<p>Please note that not all applications support setting a rendering intent for display profiles and might default to colorimetric (e.g. Photoshop normally uses relative colorimetric with black point compensation, but can use different intents via custom soft proofing settings).</p>
+						</dd>
+
+					<dt id="settings_profiling_bpc">Black point compensation</dt>
+						<dd>
+							<p>(Note: This option has no effect if just calibrating and creating a simple curves + matrix profile directly from the calibration data without additional profiling measurements)</p>
+							<p>This effectively prevents black crush when using the profile, but at the expense of accuracy. It is generally best to only use this option with a curves + matrix profile type. For LUT profiles, more sophisticated options exist (i.e. <a href="#settings_profiling_gamutmapping">advanced gamut mapping options</a> and enable either “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables” or “Gamut mapping for perceptual intent”, which can be used to create a perceptual table that maps the black point).</p>
+						</dd>
+
 					<dt id="testchart_file">Testchart file</dt>
 						<dd>You can choose the test patches used when profiling the display here. The default ones are automatically chosen based on profile quality and type, but you can also use and create your own using the built-in testchart editor (click on the colored patches next to the testchart file selector or choose “Edit testchart...” from the “File” menu to launch it).</dd>
 
@@ -1250,7 +1300,9 @@
 						<dd>
 							<p>The provided default testcharts should work well in most situations, but allowing you to create custom charts ensures maximum flexibility when characterizing a display and can improve profiling accuracy and efficiency. See also <a href="#optimizecharts">optimizing testcharts</a>.</p>
 
-							<p>You can enter the amount of patches to be generated for each patch type (white, gray, single channel, iterative and multidimensional cube steps). The iterative algorythm can be tuned if more than zero patches are to be generated. What follows is a quick description of the several available iterative algorythms, with “device space” meaning in this case RGB coordinates, and “perceptual space” meaning the (assumed) XYZ numbers of those RGB coordinates. The assumed XYZ numbers can be influenced by providing a previous profile, thus allowing optimized test point placement.</p>
+							<h4>Testchart generation options</h4>
+
+							<p>You can enter the amount of patches to be generated for each patch type (white, black, gray, single channel, iterative and multidimensional cube steps). The iterative algorythm can be tuned if more than zero patches are to be generated. What follows is a quick description of the several available iterative algorythms, with “device space” meaning in this case RGB coordinates, and “perceptual space” meaning the (assumed) XYZ numbers of those RGB coordinates. The assumed XYZ numbers can be influenced by providing a previous profile, thus allowing optimized test point placement.</p>
 
 							<ul>
 								<li>Optimized Farthest Point Sampling (OFPS) will optimize the point locations to minimize the distance from any point in device space to the nearest sample point</li>
@@ -1267,7 +1319,33 @@
 
 							<p>For the body centered grid distributions, the angle parameter sets the overall angle that the grid distribution has.</p>
 
+							<p>The “Gamma” parameter sets a power-like (to avoid the excessive compression that a real power function would apply) value applied to all of the device values after they are generated. A value greater than 1.0 will cause a tighter spacing of test values near device value 0.0, while a value less than 1.0 will cause a tighter spacing near device value 1.0. Note that the device model used to create the expected patch values will not take into account the applied power, nor will the more complex full spread algorithms correctly take into account the power.</p>
+
+							<p>The neutral axis emphasis parameter allows changing the degree to which the patch distribution should emphasise the neutral axis. Since the neutral axis is regarded as the most visually critical area of the color space, it can help maximize the quality of the resulting profile to place more measurement patches in this region. This emphasis is only effective for perceptual patch distributions, and for the default OFPS distribution if the adaptation parameter is set to a high value. It is also most effective when a preconditioning profile is provided, since this is the only way that neutral can be determined. The default value of 50% provides an effect about twice the emphasis of the CIE94 Delta E formula.</p>
+
+							<p>The dark region emphasis parameter allows changing the degree to which the patch distribution should emphasis dark region of the device response. Display devices used for video or film reproduction are typically viewed in dark viewing environments with no strong white reference, and typically employ a range of brightness levels in different scenes. This often means that the devices dark region response is of particular importance, so increasing the relative number of sample points in the dark region may improve the balance of accuracy of the resulting profile for video or film reproduction. This emphasis is only effective for perceptual patch distributions where a preconditioning profile is provided. The default value of 0% provides no emphasis of the dark regions. A value somewhere around 15% - 30% is a good place to start for video profile use. A scaled down version of this parameter will be passed on to the profiler. Note that increasing the proportion of dark patches will typically lengthen the time that an instrument takes to read the whole chart. Emphasizing the dark region characterization will reduce the accuracy of measuring and modelling the lighter regions, given a fixed number of test points and profile quality/grid resolution. The parameter will also be used in an analogous way to the “Gamma” value in changing the distribution of single channel, grayscale and multidimensional steps.</p>
+
 							<p>The “Limit samples to sphere” option is used to define an L*a*b* sphere to filter the test points through. Only test points within the sphere (defined by it's center and radius) will be in the generated testchart. This can be good for targeting supplemental test points at a troublesome area of a device. The accuracy of the L*a*b* target will be best when a reasonably accurate preconditioning profile for the device is chosen. Note that the actual number of points generated can be hard to predict, and will depend on the type of generation used. If the OFPS, device and perceptual space random and device space filling quasi-random methods are used, then the target number of points will be achieved. All other means of generating points will generate a smaller number of test points than expected. For this reason, the device space filling quasi-random method is probably the easiest to use.</p>
+
+							<h4>Generating diagnostic 3D views of testcharts</h4>
+							
+							<p>You can generate 3D views in several formats. The default HTML format should be viewable in a modern WebGL-enabled browser. You can choose the colorspace(s) you want to view the results in and also control wether to use RGB black offset (which will lighten up dark colors so they are better visible) and wether you want white to be neutral. All of these options are purely visual and will not influence the actual test patches.</p>
+
+							<h4>Other functions</h4>
+							
+							<p>If generating any number of iterative patches as well as single channel, gray or multidimensional patches, you can add the single channel, gray and multidimensional patches in a separate step by holding the shift key while clicking on “Create testchart”. This prevents those patches affecting the iterative patch distribution, with the drawback of making the patch distribution less even. This is an experimental feature.</p>
+							
+							<p>You are also able to:</p>
+
+							<ul>
+								<li>Export patches as TIFF or PNG files, and set how often each patch should be repeated after you click the “Export” button (black patches will be repeated according to the “Max” value, and white patches according to the “Min” value, and patches in between according to their lightness in L* scaled to a value between “Min” and “Max”).</li>
+								<li>Add saturation sweeps which are often used in a video or film context to check color saturation. A preconditioning profile needs to be used to enable this.</li>
+								<li>Add reference patches from measurement files in CGATS format, from named color ICC profiles, or by analyzing TIFF, JPEG or PNG images. A preconditioning profile needs to be used to enable this.</li>
+								<li>Sort patches by various color criteria (warning: this will interfere with the Argyll CMS 1.6.0 or newer patch order
+	optimisation which minimizes measurement times, so manual sorting should only be used for visual inspection of testcharts, or if required to optimize the patch order for untethered measurements in automatic mode where it is useful to maximize the lightness difference from patch to patch so the automatism has an easier time detecting changes).</li>
+							</ul>
+
+							<h4>Patch editor</h4>
 
 							<p>Controls for the spreadsheet-like patch editor are as follows:</p>
 							<ul>
@@ -1277,40 +1355,6 @@
 								<li>CTRL-C/CTRL-V/CTRL-A = copy/paste/select all</li>
 							</ul>
 							<p>If you want to insert a certain amount of patches generated in a spreadsheet application (as RGB coordinates in the range 0.0-100.0 per channel), the easiest way to do this is probably to copy the values from the spreadsheet app, entering the testchart editor, generating a corresponding amount of patches and then overwriting them by doing CTRL-A, CTRL-V.</p>
-						</dd>
-
-					<dt>Profile quality</dt>
-						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>), it sets the main lookup table size, and hence quality in the resulting profile. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
-
-					<dt id="settings_profiling_profile_type">Profile type</dt>
-						<dd>
-							<p>Generally you can differentiate between two types of profiles: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based and matrix based.</p>
-
-							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[2]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS</acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
-
-							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> type profiles, or certain variations of them).
-							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created.<br />
-							L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS</acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> L*a*b* encoding range (Note: Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS &gt;= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll CMS versions).<br />
-							As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped matrix (which I'd recommend), ie. blue-red-green instead of red-green-blue, so it will be obvious if an application uses the (deliberately wrong) matrix instead of the (correct) LUT because the colors will look very wrong (e.g. everything that should be red will be blue, green will be red, blue will be green, yellow will be purple etc).</p>
-
-							<p id="difference_lutcurves_lutprofile">Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based profiles (which contain three-dimensional LUTs) might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> (calibration) curves (one-dimensional LUTs), but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based and matrix-based profiles may include calibration curves which can be loaded into a video card's gamma table hardware.</p>
-						</dd>
-
-					<dt id="settings_profiling_gamutmapping">Advanced gamut mapping options</dt>
-						<dd>
-							<p>Normally, profiles created by dispcalGUI only incorporate the colorimetric rendering intent, which means colors outside the display's gamut will be clipped to the next in-gamut color. LUT-type profiles can also have gamut mapping by implementing perceptual and/or saturation rendering intents. You can choose if and which of those you want after clicking “Advanced...”, by specifying a source profile and marking the appropriate checkboxes. Note that a input, output, display or device colororspace profile should be specified as source, not a non-device colorspace, device link, abstract or named color profile. You can also choose viewing conditions which describe the intended use of both the source and the display profile that is to be generated. An appropriate source viewing condition is chosen automatically based on the source profile type.</p>
-
-							<p>For more information on why a source gamut is needed, see “<a href="http://argyllcms.com/doc/iccgamutmapping.html">About ICC profiles and Gamut Mapping</a>” in the Argyll CMS documentation.</p>
-
-							<p>One strategy for getting the best perceptual results with display profiles is as follows: Select a CMYK profile as source for gamut mapping. Then, when converting from another RGB profile to the display profile, use relative colorimetric intent, and if converting from a CMYK profile, use the perceptual intent.<br />
-							Another approach which especially helps limited-gamut displays is to choose one of the larger (gamut-wise) source profiles you usually work with for gamut mapping, and then always use perceptual intent when converting to the display profile.</p>
-
-							<p>Please note that not all applications support setting a rendering intent for display profiles and might default to colorimetric (e.g. Photoshop normally uses relative colorimetric with black point compensation, but can use different intents via custom soft proofing settings).</p>
-						</dd>
-
-					<dt id="settings_profiling_bpc">Black point compensation</dt>
-						<dd>
-							<p>This effectively prevents black crush when using the profile, but at the expense of accuracy. (Note: This option has no effect if just calibrating and creating a simple curves + matrix profile directly from the calibration data without additional profiling measurements)</p>
 						</dd>
 
 					<dt>Profile name</dt>
@@ -1328,17 +1372,19 @@
 
 							<p>During calibration &amp; profiling the following files will be created:</p>
 
-							<p><samp><span title="Calibrate and profile, then install profile afterwards">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.all.sh</span><br />
+							<p><samp><span title="Log of the generation of the 3D representation of the profile colorspace vs. Adobe RGB (useful for troubleshooting)">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay vs ClayRGB1998.log</span><br />
+							<span title="3D representation of the profile colorspace vs. Adobe RGB as compressed VRML file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay vs ClayRGB1998.wrz</span><br />
+							<span title="Log of the generation of the 3D representation of the profile colorspace vs. sRGB (useful for troubleshooting)">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay vs sRGB.log</span><br />
+							<span title="3D representation of the profile colorspace vs. sRGB as compressed VRML file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay vs sRGB.wrz</span><br />
 							<span title="Contains calibration curves and most settings used for calibration">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.cal</span><br />
-							<span title="Create a profile from the .ti3 measurement file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.colprof.sh</span><br />
-							<span title="Calibrate and create .cal file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispcal.sh</span><br />
-							<span title="Create a .ti3 file by measuring the .ti1 patches, first loading the .cal file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispread.sh</span><br />
-							<span title="Install the profile">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.dispwin.sh</span><br />
+							<span title="Gamut of the profile colorspace as compressed CGATS file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.gam.gz</span><br />
 							<span title="The end result, a display profile">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.icc</span><br />
+							<span title="Log of the generation of the display profile (useful for troubleshooting)">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.log</span><br />
 							<span title="Contains the measurement patches used to create the .ti3 measurement file">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.ti1</span><br />
-							<span title="Contains the measured display response">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.ti3</span></samp></p>
+							<span title="Contains the measured display response">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.ti3</span><br />
+							<span title="3D representation of the profile colorspace">~/.local/share/dispcalGUI/storage/mydisplay/mydisplay.wrz</span></samp></p>
 
-							<p>(the <code>.sh</code> files can be used to re-run without <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> but same settings from a shell)</p>
+							<p>Any used colorimeter correction file will also be copied to the profile folder.</p>
 						</dd>
 				</dl>
 			</div>
@@ -1356,7 +1402,7 @@
 
 				<h4 id="adjusting">Adjusting a display before calibration</h4>
 
-				<p>If you clicked “Calibrate” or “Calibrate &amp; profile” and have not turned off “Interactive display adjustment”, you will be presented with the interactive display adjustment window which contains several options to help you bring a display's characteristics closer to the chosen target values. Depending on wheter you have a CRT- or LCD-type display, I will try to give some recommendations here which options to adjust, and which to skip.</p>
+				<p>If you clicked “Calibrate” or “Calibrate &amp; profile” and have not turned off “Interactive display adjustment”, you will be presented with the interactive display adjustment window which contains several options to help you bring a display's characteristics closer to the chosen target values. Depending on wheter you have a “Refresh”- or LCD-type display, I will try to give some recommendations here which options to adjust, and which to skip.</p>
 
 				<h5>Adjusting a LCD display</h5>
 
@@ -1373,12 +1419,12 @@
 						</dd>
 				</dl>
 
-				<h5>Adjusting a CRT display</h5>
+				<h5>Adjusting a “Refresh”-type display like CRT or Plasma</h5>
 
 				<dl>
 					<dt>Black level</dt>
 						<dd>
-							On CRTs, this adjustment is done using the “brightness” control. You may reduce or increase the brightness of your screen until the desired black level is reached (i.e. the bar ends at the marked center position).
+							On “Refresh”-type displays, this adjustment is usually done using the “brightness” control. You may reduce or increase the brightness of your screen until the desired black level is reached (i.e. the bar ends at the marked center position).
 						</dd>
 					<dt>White point</dt>
 						<dd>
@@ -1386,7 +1432,7 @@
 						</dd>
 					<dt>White level</dt>
 						<dd>
-							Continue with the white level adjustment. On CRTs this is done using the “contrast” control. If you have set a target white level, you may reduce or increase contrast until the desired value is reached (i.e. the bar ends at the marked center position). If you haven't set a target, simply adjust the screen to a visually pleasing level that doesn't cause eye strain.
+							Continue with the white level adjustment. On “Refresh”-type displays this is usually done using the “contrast” control. If you have set a target white level, you may reduce or increase contrast until the desired value is reached (i.e. the bar ends at the marked center position). If you haven't set a target, simply adjust the screen to a visually pleasing level that doesn't cause eye strain.
 						</dd>
 					<dt>Black point</dt>
 						<dd>
@@ -1394,21 +1440,21 @@
 						</dd>
 				</dl>
 
-				<h5>Finishing adjustments (CRT/LCD) and starting calibration/characterisation</h5>
+				<h5>Finishing adjustments and starting calibration/characterisation</h5>
 
 				<p>After the adjustments, you can run a check on all the settings by choosing the last option from the left-hand menu to verify the achieved values. If adjusting one setting adversely affected another, you can then simply repeat the respective option as necessary until the target parameters are met.</p>
 
-				<p>Finally, select “Continue on to calibration” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted help to adjust the display and don't want/need calibration curves to be created, you can also choose to exit by closing the interactive display adjustment window and then select “Profile only” from the main window.<br />
+				<p>Finally, select “Continue on to calibration/profiling” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted help to adjust the display and don't want/need calibration curves to be created, you can also choose to exit by closing the interactive display adjustment window and then select “Profile only” from the main window.<br />
 				If you originally selected “Calibrate &amp; profile” and fulfil the requirements for <a href="#requirements-unattended">unattended calibration &amp; profiling</a>, the characterisation measurements for the profiling process should start automatically after calibration is finished. Otherwise, you may be forced to take the instrument off the screen to do a sensor self-calibration before starting the profiling measurements.</p>
 				
 				<h5 id="optimizecharts">Optimizing testcharts for improved profiling accuracy and efficiency</h5>
 				
-				<p>A good way to generate a custom testchart to improve profiling is to use one of the default testcharts as base, altering the parameters as necessary and desired. Especially the use of an existing display profile to precondition generated test patches for improved profiling performance is recommended. You could go about this in the following way:</p>
+				<p>A good way to generate a custom testchart to improve profiling is to use one of the default testcharts “optimized for ...” as base, altering the parameters as necessary and desired. Especially the use of an existing display profile to precondition generated test patches for improved profiling performance is recommended. You could go about this in the following way:</p>
 				
 				<ul>
 					<li>When calibrating, choose “just calibrate” and the option to create a fast curves + matrix profile.</li>
 					<li>After calibration, select a testchart to use as base (preferably one of the optimized ones) and bring up the testchart editor.</li>
-					<li>Place a check in the “preconditioning profile” checkbox and click on “current profile”. It should automatically select the curves + matrix profile that was created during calibration. Make sure adaptation is set to a high level (e.g. 100%)</li>
+					<li>Next to “Preconditioning profile” click on “current profile”. It should automatically select the curves + matrix profile that was created during calibration. Then place a check in the checkbox. Make sure adaptation is set to a high level (e.g. 100%)</li>
 					<li>If desired, adjust the number of patches and make sure the iterative patches amount is not zero.</li>
 					<li>Create the chart and save it. Click “yes” when asked to select the newly generated chart.</li>
 					<li>Start the profiling measurements (e.g. click “profile only”).</li>
@@ -1432,7 +1478,7 @@
 				<p>Untethered mode is another option to measure and profile a remote display that is not connected via standard means (calibration is not supported). To use untethered mode, the testchart that should be used needs to be optimized, then exported as image files (via the testchart editor) and those image files need to be displayed on the device that should be measured, in successive order. The procedure is as follows:</p>
 				<ul>
 					<li>Select the desired testchart, then open the testchart editor.</li>
-					<li>Click “Optimize for untethered in auto mode”, then export the testchart.</li>
+					<li>Select “Optimize for untethered in auto mode” from the sorting options dropdown, click “Apply”, then export the testchart.</li>
 					<li>Burn the images to a DVD, copy them on an USB stick or use any other available means to get them to display onto the device that should be measured.</li>
 					<li>In dispcalGUI's display dropdown, select “Untethered” (the last option).</li>
 					<li>Show the first image on the remote display, and attach the instrument. Then select “Profile only”.</li>
@@ -1505,14 +1551,24 @@
 					<dt>Use separate video card gamma table acccess</dt>
 						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video card gamma table hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally dispcalGUI will automatically detect if separate video card gamma table access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
 
+					<dt>Do not use  video card gamma table to apply calibration</dt>
+						<dd>Calibration will be applied to the test values for each measurement instead of being loaded into the video card gamma table, and also included in measurement data files, so that the profiler can include it as a vcgt tag in the resulting profile. This is <strong>not</strong> normally the best way to profile a calibrated display, since the frame buffer may have lower precision than the video card gamma table. This is the way calibration should be applied if madVR is being used to display the test patches.</dd>
+
 					<dt>Allow skipping of spectrometer self-calibration</dt>
 						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip the sensor calibration for characterization measurements if they are run directly after display calibration measurements (unattended calibration &amp; profiling). <em>NOTE</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
 
 					<dt>Show advanced calibration options</dt>
 						<dd>Enabling this menu option will show some additional controls for advanced users in the main window.</dd>
 
-					<dt>Set additional commandline arguments...</dt>
-						<dd>Allows you to set additional options for dispcal, dispread, spotread and colprof in the same way you would specify them on the commandline.</dd>
+					<dt id="additional-commandline-arguments">Set additional commandline arguments...</dt>
+						<dd>
+							<p>Allows you to set additional options for dispcal, dispread, spotread and colprof in the same way you would specify them on the commandline, as well as override the minimum display update delay (requires Argyll CMS 1.5 or newer) and display settle time multiplier (requires Argyll CMS 1.7 Beta or newer).</p>
+
+							<p>Normally a delay of 200 milliseconds is allowed between changing a patch color on a display, and reading the color with an instrument, although some instruments (ie. i1 Display Pro/ColorMunki Display, i1 Pro, ColorMunki Design/Photo) will automatically measure and set an appropriate delay during instrument calibration. In rare situations this delay may not be sufficient (i.e. some TVs with extensive image processing features turned on), and a larger delay can be set, e.g. a 400 milliseconds minimum delay.</p>
+
+							<p>The display technology type determines how long is allowed between when a patch color change appears on the display, and when that change has settled down, and as actually complete within measurement tolerance. A CRT or Plasma display for instance, can have quite a long settling delay due to the decay characteristics of the phosphor used, while an LCD can also have a noticeable settling delay due to the liquid crystal response time and any response time enhancement circuitry (instruments without a display technology type selection such as spectrometers assume a worst case).<br />
+							The display settle time multiplier allows the rise and fall times of the model to be scaled to extend or reduce the settling time. For instance, a value of 2.0 would double the settling time, while a value of 0.5 would halve it.</p>
+						</dd>
 
 					<dt>Enable Argyll CMS diagnostic output</dt>
 						<dd>When checked, outputs diagnostic information for measurements. Useful for debugging. Warning: Very verbose.</dd>
@@ -1550,7 +1606,7 @@
 						
 						<h5>HowTo—Common scenarios</h5>
 
-						<p>In all cases, make sure to select the profile you want to evaluate under “target profile” (for evaluating 3D LUTs and DeviceLink profiles, this setting has only significance if BT.1886 gamma mapping was used).</p>
+						<p>In all cases, make sure to select the profile you want to evaluate under “target profile” (for evaluating 3D LUTs and DeviceLink profiles, this setting has only significance if a Rec. 1886 or custom gamma tone response curve was applied).</p>
 						
 						<p>Also there are two sets of verification charts in different sizes, one for general use (verify) and one for Rec. 709 video (verify-video). The “small” and “extended” versions can be used for a quick to moderate check to see if a display should be re-profiled, or if the used profile/3D LUT is any good to begin with. The “large” and “xl” versions can be used for a more thorough check. Also, you can create your own customized verification charts with the testchart editor.</p>
 
@@ -1580,7 +1636,7 @@
 									<strong>Enable madVR 3D LUT</strong> (if using the madVR display device/madTPG under Windows). This allows you to check how well a madVR 3D LUT transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with a DeviceLink profile.
 								</li>
 								<li>
-									<strong>Apply BT.1886 gamma mapping</strong>. If you are evaluating a 3D LUT or DeviceLink profile, choose the same settings here as during 3D LUT/DeviceLink creation (and also make sure the same target profile is set, because its blackpoint is used for the BT.1886 mapping).
+									<strong>Apply tone response curve</strong>. If you are evaluating a 3D LUT or DeviceLink profile, choose the same settings here as during 3D LUT/DeviceLink creation (and also make sure the same target profile is set, because it is used to map the blackpoint).
 								</li>
 								<li>
 									<strong>DeviceLink profile</strong>. This allows you to check how well the DeviceLink transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with the “Enable madVR 3D LUT” setting.
@@ -1603,7 +1659,7 @@
 
 						<p>In both cases, you should check that atleast the nominal tolerances are not exceeded. For a bit “extra safety margin”, look at the recommended values instead.</p>
 
-						<p>Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from repeatable wrong measurements will usually still verify well against other wrong measurements from the same instrument if they don't fluctuate too much) or does not cope with your display well (which is especially true for <a href="#widegamut">colorimeters and wide-gamut screens</a>, as such combinations need a <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed colorimeter correction files on the Argyll CMS website">correction</a> in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays which use white LEDs), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
+						<p>Note that both tests are “closed-loop” and will not tell you an “absolute” truth in terms of “color quality” or “color accuracy” as they may not show if your instrument is faulty/measures wrong (a profile created from repeatable wrong measurements will usually still verify well against other wrong measurements from the same instrument if they don't fluctuate too much) or does not cope with your display well (which is especially true for <a href="#colorimeter-corrections">colorimeters and wide-gamut screens</a>, as such combinations need a <a href="http://argyllcms.com/doc/ccmxs.html" title="List of contributed colorimeter correction files on the Argyll CMS website">correction</a> in hardware or software to obtain accurate results—this problem does not exist with spectrometers, which do not need a correction for wide-gamut, but have lately been discovered to have issues measuring the correct brightness of some LED backlit displays which use white LEDs), or if colors on your screen match an actual colored object next to it (like a print). It is perfectly possible to obtain good verification results but the actual visual performance being sub-par. It is always wise to combine such measurements with a test of the actual visual appearance via a “known good” reference, like a print or proof (although it should not be forgotten that those also have tolerances, and illumination also plays a big role when assessing visual results). Keep all that in mind when admiring (or pulling your hair out over) verification results :)</p>
 
 						<h4>How are profiles evaluated against the measured values?</h4>
 
@@ -1632,9 +1688,14 @@
 					<dt>Measure display device uniformity...</dt>
 						<dd>Measure the display at several points to evaluate evenness of illumination and chroma errors. The results are shown after all patches are measured, and include the luminance difference, delta C, which is the chrominance difference, CCT (correlated color temperature), and CDT (closest daylight temperature) or CPT (closest planckian temperature) depending on the selection for the whitepoint locus in the main window. Differences are computed in comparison to the center point, which is used as reference.</dd>
 
+					<dt>Check measurement file...</dt>
+						<dd>This checks a measurement file for suspicious (erroneous) readings. An sRGB-like display is assumed, so this option will not work well if the display response is not so close to sRGB, and may report false positives.</dd>
+
+					<dt>Automatically check measurements</dt>
+						<dd>This automatically checks measurements for suspicious (erroneous) readings. An sRGB-like display is assumed, so this option will not work well if the display response is not so close to sRGB, and may report false positives.</dd>
 
 					<dt id="import-correction-matrices">Import colorimeter corrections from other display profiling software...</dt>
-						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler, ColorMunki Display and Spyder 4 softwares are supported. If they are installed or the CD / disk image is mounted, the correct file(s) can in most cases be imported automatically, otherwise please select the applicable Windows setup executable (<a href="http://www.xrite.com/product_overview.aspx?ID=1513&amp;Action=Support">ColorMunki Display PC (Windows) Setup</a>, <a href="http://support.datacolor.com/index.php?/Knowledgebase/List/Index/88/windows">Spyder 4 Setup for Windows</a>, <a href="http://www.xrite.com/product_overview.aspx?ID=1454&amp;Action=Support">i1 Profiler PC (Windows) Setup</a>) regardless of your actual operating system. Please note: The colorimeter corrections imported from Spyder 4 software are only usable with the Spyder 4 and need to be selected in the measurement mode dropdown instead of the colorimeter corrections dropdown.</dd>
+						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler, ColorMunki Display and Spyder 4 softwares are supported. If they are installed or the CD / disk image is mounted, the correct file(s) can in most cases be imported directly, otherwise they can be downloaded automatically. Please note: The colorimeter corrections imported from Spyder 4 software are only usable with the Spyder 4 and need to be selected in the measurement mode dropdown instead of the colorimeter corrections dropdown.</dd>
 
 
 					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
@@ -1650,17 +1711,23 @@
 						<dd>Create a synthetic ICC profile by entering XYZ or chromaticity coordinates for R, G, B and white, and by choosing a tone response curve.</dd>
 
 					<dt id="create-3dlut">Create 3D LUT...</dt>
-						<dd>Create display correction 3D LUTs for use in movie post-processing applications that don't have ICC support. Currently supported are Autodesk/Kodak (<code>.3dl</code>), Iridas (<code>.cube</code>), eeColor, madVR (<code>.3dlut</code>, Pandora (<code>.mga</code>) and Sony Imageworks (<code>.spi3d</code>) formats.</dd>
+						<dd>Create display correction 3D LUTs for use in movie post-processing applications that don't have ICC support. Currently supported are Autodesk/Kodak (<code>.3dl</code>), Iridas (<code>.cube</code>), eeColor (<code>.txt</code>), madVR (<code>.3dlut</code>), Pandora (<code>.mga</code>) and Sony Imageworks (<code>.spi3d</code>) formats.</dd>
+
+					<dt id="install-argyll-instrument-drivers">Install Argyll CMS instrument drivers... (Windows only)</dt>
+						<dd>Install the Argyll CMS instrument drivers that are needed by some instruments.</dd>
+
+					<dt id="uninstall-argyll-instrument-drivers">Uninstall Argyll CMS instrument drivers... (Windows Vista and newer only)</dt>
+						<dd>Uninstall the Argyll CMS instrument drivers.</dd>
 
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
 The purchaser of a Spyder 2 instrument should have received a copy of this firmware along with their instrument from the original vendor, as part of the instrument setup files.<br />
-On Microsoft Windows or Mac OS X, if the vendors software has been installed on the users machine, the firmware pattern can usually be located from there. If the vendors software have not been installed, or the user does not wish to install it, or no vendors software are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. If your Linux system is not running automount, or your automount is setup to mount CDROM's somewhere other than /media, /mnt/cdrom, /media/cdrom or /cdrom, then you will have to mount the CDROM manually, and select the path to the CDROM setup/setup.exe file, or download and select <a href="http://support.datacolor.com/index.php?/Knowledgebase/Article/View/1445/88/spyder2express-236---win">Spyder 2 Setup for Windows</a> regardless of your actual operating system.</dd>
+On Microsoft Windows or Mac OS X, if the vendors software has been installed on the users machine, the firmware pattern can usually automatically be located from there. If the vendors software have not been installed, or the user does not wish to install it, or no vendors software are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. In case no firmware files are found, the necessary binary can be downloaded automatically.</dd>
 
 					<dt id="curveviewer">Show curves</dt>
 						<dd>Shows/hides the curve viewer, which graphs calibration and profile tone response curves and also shows the percentage and amount of tone values for calibration curves.</dd>
 
-					<dt>Show actual calibration curves from video card gamma table</dt>
+					<dt>Show actual calibration curves from video card</dt>
 						<dd>When this is enabled in the curve viewer window, it will show the actual calibration curves from the video card gamma table instead of showing the curves of the currently active profile. (only available if using Argyll CMS 1.1.0 or newer)</dd>
 
 					<dt>Show log window</dt>
@@ -1685,22 +1752,18 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 				<li><a href="#issue-redgreenswapped">General: Wacky image colors (swapped colors)</a></li>
 				<li><a href="#issue-samplereadfail">General: Measurements are failing if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</a></li>
 				<li><a href="#issue-win-madvr">MS Windows/madVR: “The process &lt;dispcal.exe|dispread.exe&gt; has stopped working” / “Calibration / profiling has not been finished”</a></li>
-				<li><a href="#issue-win-process-startfail">Windows: “The process &lt;dispcal.exe|dispread.exe|...&gt; could not be started.”</a></li>
+				<li><a href="#issue-win-process-startfail">Windows: “The process &lt;dispcal.exe|dispread.exe|coloprof.exe|...&gt; could not be started.”</a></li>
 				<li><a href="#issue-win-photoshop-monprofdefect">Photoshop: “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</a></li>
 				<li><a href="#issue-win-uac-cal-reset">MS Windows Vista: The calibration gets unloaded when a User Access Control prompt is shown</a></li>
 				<li><a href="#issue-win-intel-cal-reset">MS Windows with Intel graphics: The Calibration gets unloaded after login/resume/User Access Control prompt</a></li>
 				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and 7: The display profile isn't used if it was installed for the current user</a></li>
-				<li><a href="#issue-win-spyder2">MS Windows: Enabling the Spyder 2 colorimeter might fail when not running as administrator</a></li>
-				<li><a href="#issue-win-install-systemwide">MS Windows: Installing a display profile system-wide might fail when not running as administrator</a></li>
 				<li><a href="#issue-win64-driversigenforcement">MS Windows Vista and 7, 64-bit: Driver signature enforcement prevents the installation of unsigned Argyll USB drivers</a></li>
 				<li><a href="#issue-win7-autoloadcalibration">MS Windows 7: Calibration does not load automatically on login when not using the dispcalGUI Profile Loader</a></li>
 				<li><a href="#issue-winxp-multidisplay">MS Windows XP, multiple displays: One profile is used by all displays connected to a graphics card</a></li>
 				<li><a href="#issue-mac-dispcalgui-damaged">Mac OS X: dispcalGUI.app is damaged and can't be opened.</a></li>
 				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
 				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</a></li>
-				<li><a href="#issue-linux-kdeqt">Linux (KDE): The application does not look native</a></li>
 				<li><a href="#issue-linux-libmtp">Linux: Instrument not working correctly/constantly disconnecting (conflict with libmtp)</a></li>
-				<li><a href="#issue-english">General: Some text is still in english, even though another language is selected</a></li>
 			</ul>
 
 			<dl>
@@ -1713,8 +1776,8 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 				<dt id="issue-win-madvr"><span>MS Windows/madVR:</span> “The process &lt;dispcal.exe|dispread.exe&gt; has stopped working” / “Calibration / profiling has not been finished”</dt>
 				<dd><strong>Solution:</strong> Copy the file madHcNet32.dll from your madVR folder to the Argyll CMS binaries folder (e.g. Argyll_VX.X.X\bin).</dd>
 
-				<dt id="issue-win-process-startfail"><span>Windows:</span> “The process &lt;dispcal.exe|dispread.exe|...&gt; could not be started.”</dt>
-				<dd><strong>Solution:</strong> Go to your Argyll_VX.X.X\bin directory, and right-click the exe file from the error message. Select “Properties”, and then if there is a text on the “General” tab under security “This file came from another computer and might be blocked”, click “Unblock”.</dd>
+				<dt id="issue-win-process-startfail"><span>Windows:</span> “The process &lt;dispcal.exe|dispread.exe|coloprof.exe|...&gt; could not be started.”</dt>
+				<dd><strong>Solution:</strong> If you downloaded Argyll CMS manually, go to your Argyll_VX.X.X\bin directory, and right-click the exe file from the error message. Select “Properties”, and then if there is a text on the “General” tab under security “This file came from another computer and might be blocked”, click “Unblock”. Sometimes also over-zealous Antivirus or 3rd-party Firewall solutions cause such errors, and you may have to add exceptions for all involved programs (which may include all the Argyll CMS executables and if you're using Zero Install also python.exe which you'll find in a subdirectory under C:\ProgramData\0install.net\implementations) or (temporarily) disable the Antivirus/Firewall.</dd>
 
 				<dt id="issue-win-photoshop-monprofdefect"><span>Photoshop:</span> “The monitor profile […] appears to be defective. Please rerun your monitor calibration software.”</dt>
 				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “Use profile regardless” and “Ignore profile”, you may choose “Use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a L*a*b* LUT profile.</dd>
@@ -1731,17 +1794,11 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="issue-win-user-profile-not-used"><span>MS Windows Vista and 7:</span> The display profile isn't used if it was installed for the current user</dt>
 				<dd><strong>Solution:</strong> Open the Windows start menu, select “Control Panel”, then “Color Management” (you may have to select “Classic View” under Vista and anything other than “Category View” under Windows 7 to see it). Under the “Devices” tab, select your display device, then tick “Use my settings for this device”.</dd>
 
-				<dt id="issue-win-spyder2"><span>MS Windows:</span> Enabling the Spyder 2 colorimeter might fail when not running as administrator</dt>
-				<dd><strong>Solution:</strong> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</dd>
-
-				<dt id="issue-win-install-systemwide"><span>MS Windows:</span> Installing a display profile system-wide might fail when not running as administrator</dt>
-				<dd><strong>Solution:</strong> Run dispcalGUI as admin. Right-click dispcalGUI's icon and choose “Run as administrator...”</dd>
-
 				<dt id="issue-win64-driversigenforcement"><span>MS Windows Vista and 7, 64-bit:</span> Driver signature enforcement prevents the installation of unsigned Argyll USB drivers</dt>
 				<dd><strong>Solution:</strong> Please upgrade to Argyll CMS 1.2.0 or later. For prior versions, signing the Argyll drivers or disabling driver signature enforcement altogether on each boot was needed to successfully use the drivers. <strong>Such workarounds are no longer needed with recent versions of Argyll CMS</strong> which include drivers that will work out-of-the-box (if you already have drivers for your measurement device installed, see “Updating Argyll drivers” under “<a href="http://argyllcms.com/doc/Installing_MSWindows.html">Installing Argyll CMS on Microsoft Windows</a>” in the Argyll CMS documentation if you use a prior version of the Argyll drivers, or “Adding Argyll drivers to existing drivers” if you are using vendor drivers).</dd>
 
 				<dt id="issue-win7-autoloadcalibration"><span>MS Windows 7:</span> Calibration does not load automatically on login when not using the dispcalGUI Profile Loader</dt>
-				<dd><strong>Solution:</strong> Open the Windows start menu, select “Control Panel”, then “Color Management” (you may have to select something other than “Category View” to see it). Select the “Advanced” tab, then “Change system defaults...”, and finally tick the “Use Windows display calibration” checkbox.</dd>
+				<dd><strong>Solution:</strong> Open the Windows start menu, select “Control Panel”, then “Color Management” (you may have to select something other than “Category View” to see it). Select the “Advanced” tab, then “Change system defaults...”, and finally tick the “Use Windows display calibration” checkbox. <strong>Note</strong> that the quality of Windows' built-in calibration loading is <strong>inferior</strong> in quality compared to the dispcalGUI profile loader and may introduce inaccuracies and artifacts.</dd>
 
 				<dt id="issue-winxp-multidisplay"><span>MS Windows XP, multiple displays:</span> One profile is used by all displays connected to a graphics card</dt>
 				<dd><strong>Solution:</strong> The underlying issue is that Windows XP assigns color profiles per (logical) graphics card, not per output. Most XP graphics drivers present only one logical card to the OS even if the card itself has multiple outputs. There are several possible solutions to this problem:
@@ -1756,21 +1813,15 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dd><strong>Solution:</strong> Go to the “Security &amp; Privacy” settings in System Preferences and set “Allow applications downloaded from” (under the “General” tab) to the “Anywhere” setting. After you have successfully launched dispcalGUI, you can change the setting back to a more secure option and dispcalGUI will continue to run properly.</dd>
 
 				<dt id="issue-mac-pscursor"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush)</dt>
-				<dd><strong>Solution:</strong> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
+				<dd><strong>Solution:</strong> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table” or “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
 
 				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</dt>
-				<dd><strong>Solution:</strong> Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Note on X11 multi-monitor setups” / “Fixing access to Video LUTs” therein. Under Windows, please also see the solution posted under “<a href="#issue-win-user-profile-not-used">The display profile isn't used if it was installed for the current user</a>” if you are using Windows 7 and make sure you have a recent driver for your video card installed.</dd>
-
-				<dt id="issue-linux-kdeqt"><span>Linux (KDE):</span> The application does not look native</dt>
-				<dd><strong>Solution:</strong> You can use the <a href="http://code.google.com/p/gtk-qt-engine/">GTK-Qt Theme Engine</a> for native KDE look. Most Linux distributions offer ready-made packages through their packaging systems, search for “gtk-qt”. Another alternative is <a href="http://kde-apps.org/content/show.php/gtk-kde4?content=74689">gtk-kde4</a>. Also, some themes come in versions for both KDE (Qt) and GTK.</dd>
+				<dd><strong>Solution:</strong> Make sure you have not selected a display that doesn't support calibration (i.e. “Web @ localhost” or “Untethered”) and that you have enabled “Interactive display adjustment” or set the tone curve to a different value than “As measured”. Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Note on X11 multi-monitor setups” / “Fixing access to Video LUTs” therein. Under Windows, please also see the solution posted under “<a href="#issue-win-user-profile-not-used">The display profile isn't used if it was installed for the current user</a>” if you are using Windows 7 and make sure you have a recent driver for your video card installed.</dd>
 
 				<dt id="issue-linux-libmtp"><span>Linux:</span> Instrument not working correctly/constantly disconnecting (conflict with libmtp)</dt>
 				<dd><strong>Solution:</strong> There is a bug on some systems with libmtp that causes instruments to continuously switch between connected and disconnected state.
 				This seems to be a <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=626010">bug in libmtp-runtime</a>.
 				You can work around it by renaming <code>/lib/udev/mtp-probe</code> or updating to libmtp 1.0.6 where the issue should be fixed.</dd>
-
-				<dt id="issue-english"><span>General:</span> Some text is still in english, even though another language is selected in the menu</dt>
-				<dd><strong>Solution:</strong> All output from the Argyll CMS utilities is always english, and on Mac OS X, also the menuitems in the application menu. This is currently not changeable.</dd>
 			</dl>
 		</div>
 
@@ -1826,10 +1877,22 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			<h2>To-Do / planned features (in no particular order)</h2>
 
 			<ul>
-				<li>On first launch, guide user through basic setup using a wizard (postpone dispcalGUI update check until after wizard has run?): Check Argyll CMS availability, if not available or outdated, offer automatic download &amp; installation (consider 0install/native Linux distribution packages?); install instrument drivers if necessary (Windows – how?), check available instruments and instrument capabilities, do instrument specific first launch stuff (import OEM files, choose/create colorimeter correction if applicable).</li>
+				<li>On first launch, guide user through basic setup using a wizard (postpone dispcalGUI update check until after wizard has run?):
+					<ul>
+						<li><del>Check Argyll CMS availability, if not available or outdated, offer automatic download &amp; installation (consider 0install/native Linux distribution packages?)</del> (use 0install/native distribution packages, other users can download manually for now)</li>
+						<li>Windows only: Install instrument drivers if necessary (probably need to check if already installed)</li>
+						<li>Check available instruments and instrument capabilities</li>
+						<li>Do instrument specific first launch stuff:
+							<ul>
+								<li>Import OEM files</li>
+								<li>Choose/create colorimeter correction if applicable</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
 				<li>When an instrument is first selected:
 					<ul>
-						<li>Check if OEM files from the vendor software have already been imported (if applicable); if not, offer to do it.</li>
+						<li><del>Check if OEM files from the vendor software have already been imported (if applicable); if not, offer to do it.</del> (implemented in v2.1.1.3 Beta and newer, after detecting instruments)</li>
 						<li>Check colorimeter corrections if applicable (from respective vendor software and online database, skip the latter if a spectro is available), in case of no usable specific or generic correction, offer to create one if possible, preferably using spectro measurements as reference, EDID as user-selectable fallback? (Need to sanity-check EDID red/green/blue/white xy coordinates in that case! Possibly against sRGB and AdobeRGB as the most commonly cited gamuts for standard gamut and wide-gamut displays? As some cheaper panels and many of those found in Laptops/Notebooks are sometimes very limited in gamut, additionally a special “low-gamut RGB” may be needed)</li>
 						<li>Users need to be made aware of the implications their colorimeter correction choice has, e.g.
 							<ul>
@@ -1841,7 +1904,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						</li>
 					</ul>
 				</li>
-				<li>When trying to import colorimeter corrections or enable the Spyder 2, have automatic mode download the vendor software if needed.</li>
+				<li><del>When trying to import colorimeter corrections or enable the Spyder 2, have automatic mode download the vendor software if needed.</del> (implemented in v2.1.1.2 Beta and newer)</li>
 				<li>(Long-term) improve UI.</li>
 				<li><del>Better interface to <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a></del> (implemented in v0.8.1.0+)</li>
 				<li><del>Measure and report on screen homogenity / evenness of illumination</del></li>
@@ -1871,7 +1934,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Scott Miller, John Navarro, Stephen Wall, Andrej Schmitt, Olivier Besner Morin, Christian Ramharter, Dieter Pongratz, Andrew Hunter, Yulian Martsenkov, <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</span></p>
+			<p>Recent donors: Tomislav Stojanović, Michel Mougey, Tim Oberbillig, Peter Clarke, Lionel Davey, Christian-Aurel Buru, James Hainis, Nejib Boubaker, Tomislav Stojanović, Scott Miller, John Navarro, Stephen Wall, Andrej Schmitt, Olivier Besner Morin, Christian Ramharter, Dieter Pongratz, <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Andrew Hunter, Yulian Martsenkov, Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1882,11 +1945,79 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- ${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} -->
+			<!-- ${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY} -->
 			<dl>
-				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT}</dt>
+				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
-						<h3>${VERSION_SHORT}</h3>
+						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><strong>Argyll CMS 1.7 beta compatibility:</strong> Klein K10-A support (requires <a href="http://www.avsforum.com/forum/139-display-calibration/1471169-madvr-argyllcms-61.html?styleid=129#post24742730">Argyll CMS 1.7 beta test 2014-05-21</a> or newer) and updated technology strings for colorimeter correction creation. When creating 3D LUTs with Rec. 1886 or custom tone response curve, force RGB source 0 0 0 to map to RGB destination 0 0 0 (requires Argyll CMS 1.7 beta development code 2014-07-10 or newer).</li>
+							<li>Enable black output offset instead of all-input offset for 3D LUTs, measurement report and synthetic profile creation (based on Argyll CMS 1.7 beta development code 2014-07-12, thanks to Graeme Gill). Note that for 3D LUTs, if using output offset ideally Argyll CMS 1.7 should be used aswell once it becomes available since the current implementation in dispcalGUI that enables output offset when used with Argyll CMS 1.6.3 or older has limited 16-bit precision for the black point mapping (due to the implementation altering the source profile TRC on-the-fly in that case, and the ICCv2 16-bit encoding used for the TRC tags in the source profile), while Argyll CMS 1.7 will enable full floating point processing (due to the black point mapping then taking place internally in <code>collink</code>, and dispcalGUI not having to alter the source profile TRC beforehand).</li>
+							<li>Black point can be specified in XYZ or chromaticity coordinates when creating a synthetic ICC profile.</li>
+							<li>When dropping an existing profile onto the synthetic ICC profile creation window, set whitepoint, primaries, blackpoint and tone response curve (average) according to the profile.</li>
+							<li><strong>Support for the Resolve 10.1 (and newer) CM pattern generator.</strong> See also <a href="https://sourceforge.net/p/dispcalgui/wiki/3D%20LUT%20creation%20workflow%20for%20Resolve/">3D LUT creation workflow for Resolve</a> on the <a href="https://sourceforge.net/p/dispcalgui/wiki/browse_pages/">dispcalGUI Wiki</a>.</li>
+							<li>Enable interactive display adjustment without creating calibration curves by setting “Tone curve” to “As measured”. This also causes all calibration setting placeholders in the profile name to be ignored.</li>
+							<li>Added options to override the minimum display update delay (requires Argyll CMS 1.5 or newer) and display settle time multiplier (requires Argyll CMS 1.7 Beta or newer). These options can be found in the <a href="#additional-commandline-arguments">“Set additional commandline arguments...”</a> window accessible from the “Options” menu. Note that these two settings (unlike the additional commandline parameters) are stored in the profile, and will be restored when the profile is selected again under “Settings”.</li>
+							<li>Testchart editor: If generating any number of iterative patches as well as single channel, gray or multidimensional patches, it is possible to add the single channel, gray and multidimensional patches in a separate step by holding the shift key while clicking on “Create testchart”. This prevents those patches affecting the iterative patch distribution, with the drawback of making the patch distribution less even. This is an experimental feature.</li>
+							<li>Windows: Simplified Argyll CMS instrument driver installation by adding a respective menu item to the “Tools” menu.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Visual overhaul.</li>
+							<li>Calibration curves are no longer automatically loaded into the video card gamma table when loading a settings file. To manually load calibration curves into the video card gamma table, choose “Load calibration curves from calibration file or profile...” in the “Options” menu (Linux and Windows only), or install a profile, or use the “Preview calibration” checkbox (Linux and Windows only) in the profile installation dialog. The previous behavior can be restored by editing dispcalGUI.ini and adding a line <code>calibration.autoload = 1</code>.</li>
+							<li>Split “Smooth B2A tables” into “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table” and “Smoothing” options and moved them to advanced gamut mapping options.</li>
+							<li>Renamed “Apply BT.1886 gamma mapping” to “Apply tone response curve”.</li>
+							<li>Always override the source profile tone response curve when using “Apply tone response curve” (3D LUT creation and measurement report) so the result will be correct for the chosen parameters regardless of source profile tone response curve.</li>
+							<li>Removed black point compensation option from synthetic profile creation window.</li>
+							<li>Changing the black level or black point Y value when creating a synthetic ICC profile now rounds up or down to make it a multiple of the 16-bit encoding precision used in ICC v2 profiles (which is roughly 0.00153 when normalized to 0..100).</li>
+							<li>Re-enabled moving the standalone curve viewer between displays updating the graph according to the display it is currently on.</li>
+							<li>Always append the measurement mode to the instrument string in the measurement report.</li>
+							<li>Confirm quitting the application (via the application menu “Quit” item or the associated keyboard shortcut) if a task is still running (in practice this only affects Mac OS X as the menu is not accessible on other platforms while a task is running).</li>
+							<li>When selecting “Locate Argyll CMS executables...” in the menu to switch to a different Argyll CMS version, automatically detect if a newer version is on the search path and offer to use it right away without having to manually browse to the location.</li>
+							<li>Renamed “Gamma” entry in calibration tone response curve dropdown to “Custom” to emphasize that it is a curve with custom gamma exponent and other parameters.</li>
+							<li>When switching calibration tone response curve from Rec. 1886 to custom, restore the previous gamma and black output offset parameters (or defaults in case a preset was used).</li>
+							<li>Show an error message if trying to measure the ambient light color with an instrument which only has a monochrome ambient sensor (e.g. Spyder 3 and 4 Elite or Pro).</li>
+							<li>Importing colorimeter corrections and enabling the Spyder 2 is now truly automatic (necessary files are downloaded if not present on the local system).</li>
+							<li>Made black level control an advanced calibration option.</li>
+							<li>Loading a profile that does not contain calibration settings sets all calibration options to “As measured”.</li>
+							<li>When creating or loading a profile (except presets), it is now automatically set as the current profile in the measurement report and 3D LUT creation windows.</li>
+							<li>Enabled interactive display adjustment for the madVR and Resolve presets and altered them to not do video card gamma table calibration by default.</li>
+							<li>All presets that create LUT profiles use optimized testcharts.</li>
+							<li>When a virtual display is selected, don't offer profile installation but 3D LUT creation instead.</li>
+							<li>ReadMe: Completed testchart editor documentation.</li>
+							<li>Testchart editor: Always enable “Add saturation sweeps” and “Add reference patches...” controls when a preconditioning profile is set, regardless of selected patch distribution and adaptation.</li>
+							<li>Testchart editor: When enabling/disabling the preconditioning profile, set adaptation to 100%/10% respectively.</li>
+							<li>Testchart editor: Greatly improved the speed of inserting patches into large testcharts with thousands of patches.</li>
+							<li>Linux, profile installation: Try to install the profile using all available systems regardless if one of them fails to install the profile. Only report profile installation as failed if all available systems failed to install the profile. Report specific failures when profile installation only partly succeeds.</li>
+							<li>Linux, profile installation: Try colormgr as fallback (if available) if profile installation using Argyll 1.6+ failed.</li>
+							<li>Linux: Use the EDID MD5 to find the device ID (this only works with colord versions released after 26. Apr. 2013).</li>
+							<li>Mac OS X: No longer require administrator privileges if running from a non-administrator user account.</li>
+							<li>Windows Vista and newer: Enable system-wide profile and OEM files installation without the need to run the whole application as administrator. The UAC shield icon is shown on buttons if an action requires administrator privileges.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>The “Apply BT.1886 gamma mapping” checkbox in the 3D LUT creation window did re-enable itself when clicking on “Create 3D LUT” if Rec709.icm was selected as source profile.</li>
+							<li>Synthetic ICC profile creation: Setting gamma to absolute or relative when not using Rec. 1886 now actually makes a difference (previously the end result was always an absolute curve).</li>
+							<li>“Show actual calibration curves from video card” could not be enabled in the standalone curve viewer if the previously selected display did not allow video LUT access.</li>
+							<li>Measuring the ambient light level with an instrument which only has a monochrome ambient sensor (e.g. Spyder 3 and 4 Elite or Pro).</li>
+							<li>If loading a settings file created with automatic black point hue correction, that setting was not restored and the default value of no correction was used.</li>
+							<li>When doing a “Profile only” and using the current calibration from the video card gamma table, Argyll CMS expects 256 entries. Interpolate on-the-fly if the number of entries in the video card gamma table is not 256 (this currently only affects Mac OS X 10.9 and newer where the table contains 1024 entries).</li>
+							<li>If the display manufacturer string recorded in a profile was the same as the three-letter manufacturer ID string (e.g. NEC), the profile could not be uploaded to the <a href="http://icc.opensuse.org">openSUSE ICC Profile Taxi</a> service due to a bogus “missing metadata” error message (regression of r1422).</li>
+							<li>Profile information window: Color coordinates in the status bar were wrong if the selected colorspace was not a*b* (bug introduced in dispcalGUI 2.0).</li>
+							<li>The specbos 1201 was not working due to not supporting measurement mode selection.</li>
+							<li>When getting normalized vcgt tag values, scaling was off if the vcgt wasn't 16-bit. This prevented e.g. the measurement report from working with certain 3rd-party display profiles.</li>
+							<li>Cosmetic: Correct padding of the patch number in the measurement report summary (fixes missing padding when multiple patches are evaluated for a single criterion).</li>
+							<li>Trivial: Tab order of controls (top-down, left-right).</li>
+							<li>Testchart editor: IndexError if trying to add saturation sweeps or reference patches when no cells are selected.</li>
+							<li>Linux, profile installation: Do not regard a missing colormgr as error.</li>
+							<li>Mac OS X: Selecting “About”, “Locate Argyll CMS executables...” (preferences) and “Quit” in the application menu does something again (this stopped working with the move to wxPython 3.0 GUI library in dispcalGUI 2.0).</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-2.1">2014-05-11 19:00 (UTC) 2.1</dt>
+					<dd>
+						<h3>2.1</h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><strong>“Auto” measurement mode for the ColorHug.</strong> This will automatically create a colorimeter correction with the reference based on <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></acronym> as part of the normal measurement process. This is a work-around for the red primary shift problem that some ColorHug users are experiencing (note that this will make ColorHug measurements closely match the gamut boundaries defined by the primaries and whitepoint from EDID). This mode should only be used as a last resort if no colorimeter correction with reference measurements from a spectrometer or other known accurate instrument can be obtained.</li>
@@ -3360,6 +3491,8 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 					<dd>User Account Control — <a href="http://en.wikipedia.org/wiki/User_Account_Control">en.wikipedia.org/wiki/User_Account_Control</a></dd>
 				<dt id="definition_EDID">[10] EDID</dt>
 					<dd>Extended Display Identification Data — <a href="http://en.wikipedia.org/wiki/EDID">en.wikipedia.org/wiki/EDID</a></dd>
+				<dt id="definition_PCS">[11] EDID</dt>
+					<dd>Profile Connection Space — <a href="http://en.wikipedia.org/wiki/ICC_profile">en.wikipedia.org/wiki/ICC_profile</a></dd>
 			</dl>
 		</div>
 
