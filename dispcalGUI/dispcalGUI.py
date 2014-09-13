@@ -3104,7 +3104,7 @@ class MainFrame(BaseFrame):
 		self.calibration_quality_ctrl.SetValue(q)
 		self.set_calibration_quality_label(self.quality_ab[q])
 
-		self.update_bpc()
+		self.update_bpc(enable_profile)
 
 		self.testchart_ctrl.Enable(enable_profile)
 		if self.set_default_testchart() is None:
@@ -3241,11 +3241,12 @@ class MainFrame(BaseFrame):
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 	
-	def update_bpc(self):
-		enable_bpc = (self.get_profile_type() in ("g", "G", "s", "S") or
-					  (self.get_profile_type() in ("x", "X") and
-					   (getcfg("profile.b2a.hires") or
-						getcfg("profile.quality.b2a") in ("l", "n"))))
+	def update_bpc(self, enable_profile=True):
+		enable_bpc = ((self.get_profile_type() in ("g", "G", "s", "S") or
+					   (self.get_profile_type() in ("x", "X") and
+						(getcfg("profile.b2a.hires") or
+						 getcfg("profile.quality.b2a") in ("l", "n")))) and
+					  enable_profile)
 		self.black_point_compensation_cb.Enable(enable_bpc)
 		self.black_point_compensation_cb.SetValue(enable_bpc and
 			bool(int(getcfg("profile.black_point_compensation"))))
