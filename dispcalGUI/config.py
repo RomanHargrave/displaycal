@@ -867,6 +867,8 @@ def getcfg(name, fallback=True):
 				   value.split(os.path.sep)[-2:-1] == ["ti1"]):
 					value = os.path.join(*value.split(os.path.sep)[-2:])
 					value = get_data_path(value)
+				elif hasdef:
+					value = None
 				if not value and hasdef:
 					value = defval
 				if debug:
