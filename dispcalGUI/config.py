@@ -117,6 +117,12 @@ else:
 						 xdg_data_dirs)
 	exe_ext = ""
 	profile_ext = ".icc"
+# Search directories on PATH for data directories so Argyll reference files
+# can be found automatically if Argyll directory not explicitly configured
+for dir_ in getenvu("PATH", "").split(os.pathsep):
+	dir_parent = os.path.dirname(dir_)
+	if os.path.exists(os.path.join(dir_parent, "ref")):
+		data_dirs.append(dir_parent)
 
 storage = os.path.join(datahome, "storage")
 
