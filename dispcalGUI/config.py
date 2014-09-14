@@ -398,8 +398,8 @@ def runtimeconfig(pyfile):
 			safe_print("[D] dirname(os.path.abspath(sys.argv[0])):", 
 					   os.path.dirname(os.path.abspath(sys.argv[0])))
 			safe_print("[D] pydir parent:", pydir_parent)
-		if os.path.dirname(os.path.abspath(sys.argv[0])) == pydir_parent and \
-		   pydir_parent not in data_dirs:
+		if (os.path.dirname(os.path.abspath(sys.argv[0])).decode(fs_enc) ==
+			pydir_parent and pydir_parent not in data_dirs):
 			# Add the parent directory of the package directory to our list
 			# of data directories if it is the directory containing the 
 			# currently run script (e.g. when running from source)
