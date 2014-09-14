@@ -10732,27 +10732,16 @@ class StartupFrame(wx.Frame):
 								  self.splash_y)
 		elif not isinstance(self.worker.create_tempdir(), Exception):
 			# Use screencapture utility under Mac OS X
-			splashdimensions = (self.splash_x, self.splash_y,
-							    self.splash_bmp.Size[0],
-							    self.splash_bmp.Size[1])
-			if mac_ver()[0] >= "10.9":
-				# Under 10.9 we can specify screen region as arguments
-				extra_args = ["-R%i,%i,%i,%i" % splashdimensions]
-			else:
-				extra_args = []
-			bmp_path = os.path.join(self.worker.tempdir, "screencap.png")
 			if self.worker.exec_cmd(which("screencapture"),
-									extra_args + ["-x", "screencap.png"],
-									capture_output=True, skip_scripts=True,
-									silent=True) and os.path.isfile(bmp_path):
-				bmp = wx.Bitmap(bmp_path)
+									["-x", "-R%i,%i,%i,%i" %
+									 (self.splash_x, self.splash_y,
+									  self.splash_bmp.Size[0],
+									  self.splash_bmp.Size[1]),
+									  "screencap.png"], capture_output=True,
+									skip_scripts=True, silent=True):
+				bmp = wx.Bitmap(os.path.join(self.worker.tempdir,
+											 "screencap.png"))
 				if bmp.IsOk():
-					if (mac_ver()[0] < "10.9" and
-						bmp.Size[0] >= self.splash_x + self.splash_bmp.Size[0] and
-						bmp.Size[1] >= self.splash_y + self.splash_bmp.Size[1]):
-						# Pre 10.9 we have to get the splashscreen region
-						# from the full screenshot bitmap
-						bmp = bmp.GetSubBitmap(splashdimensions)
 					self._buffereddc.DrawBitmap(bmp, 0, 0)
 				self.worker.wrapup(False)
 		self.SetClientSize(self.splash_bmp.Size)
