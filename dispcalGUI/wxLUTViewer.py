@@ -1103,7 +1103,7 @@ class LUTFrame(wx.Frame):
 			(self.worker.argyll_version[0:3] > [1, 1, 0] or
 			 (self.worker.argyll_version[0:3] == [1, 1, 0] and
 			  not "Beta" in self.worker.argyll_version_string)) and
-			not config.get_display_name() in config.untethered_displays):
+			not config.is_untethered_display()):
 			tmp = self.worker.create_tempdir()
 			if isinstance(tmp, Exception):
 				show_result_dialog(tmp, self)
@@ -1801,11 +1801,9 @@ class LUTFrame(wx.Frame):
 		self.show_actual_lut_cb.Enable((self.worker.argyll_version[0:3] > [1, 1, 0] or
 										(self.worker.argyll_version[0:3] == [1, 1, 0] and
 										 not "Beta" in self.worker.argyll_version_string)) and
-									   not config.get_display_name() in
-									   config.untethered_displays)
+									   not config.is_untethered_display())
 		self.show_actual_lut_cb.SetValue(bool(getcfg("lut_viewer.show_actual_lut")) and
-										 not config.get_display_name() in
-										 config.untethered_displays)
+										 not config.is_untethered_display())
 	
 	@property
 	def worker(self):

@@ -1729,7 +1729,7 @@ class Worker(object):
 				# hides the cursor and steals focus
 				start_new_thread(mac_app_activate, (1, wx.GetApp().AppName))
 			if (self.instrument_calibration_complete or
-				((config.get_display_name() in config.untethered_displays or
+				((config.is_untethered_display() or
 				  getcfg("measure.darken_background")) and
 				 (not self.dispread_after_dispcal or
 				  self.cmdname == "dispcal"))):
@@ -2351,7 +2351,7 @@ class Worker(object):
 			if (argyll_bin_dir != self.argyll_bin_dir):
 				self.argyll_bin_dir = argyll_bin_dir
 				safe_print(self.argyll_bin_dir)
-			result = self.exec_cmd(cmd, ["-?"], capture_output=True, 
+			result = self.exec_cmd(cmd, ["-dcc:?", "-?"], capture_output=True, 
 								   skip_scripts=True, silent=True, 
 								   log_output=False)
 			if isinstance(result, Exception):
@@ -2391,6 +2391,7 @@ class Worker(object):
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
 						if arg == "-d":
+							# Standard displays
 							match = re.findall("(.+?),? at (-?\d+), (-?\d+), "
 											   "width (\d+), height (\d+)", 
 											   value)
@@ -2402,6 +2403,14 @@ class Worker(object):
 								displays.append(display)
 								self.display_rects.append(
 									wx.Rect(*[int(item) for item in match[0][1:]]))
+						elif arg == "-dcc[:n]":
+							# Chromecast
+							match = re.findall(r"(.+)", value)
+							if len(match):
+								displays.append("Chromecast %s: %s" %
+												(line[0],
+												 safe_unicode(safe_str(match[0], enc),
+															  "UTF-8")))
 						elif arg == "-c":
 							if ((re.match("/dev/tty\w?\d+$", value) or
 								 re.match("COM\d+$", value)) and 
@@ -2443,6 +2452,11 @@ class Worker(object):
 					# EnumDisplayMonitors
 					monitors = util_win.get_real_display_devices_info()
 				for i, display in enumerate(displays):
+					if display.startswith("Chromecast "):
+						self.display_edid.append({})
+						self.display_manufacturers.append("Google")
+						self.display_names.append(display.split(":", 1)[1].strip())
+						continue
 					display_name = displays[i].split("@")[0].strip()
 					# Make sure we have nice descriptions
 					desc = []
@@ -2516,6 +2530,9 @@ class Worker(object):
 				if check_lut_access:
 					dispwin = get_argyll_util("dispwin")
 					for i, disp in enumerate(displays):
+						if disp.startswith("Chromecast "):
+							lut_access.append(None)
+							continue
 						if verbose >= 1 and not silent:
 							safe_print(lang.getstr("checking_lut_access", (i + 1)))
 						test_cal = get_data_path("test.cal")
@@ -3739,7 +3756,7 @@ class Worker(object):
 	def get_device_id(self, quirk=True, use_serial_32=True,
 					  truncate_edid_strings=False):
 		""" Get org.freedesktop.ColorManager device key """
-		if config.get_display_name() in config.virtual_displays:
+		if config.is_virtual_display():
 			return None
 		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 											getcfg("display.number") - 1))]
@@ -3753,14 +3770,17 @@ class Worker(object):
 		Returned is the Argyll CMS dispcal/dispread -d argument
 		
 		"""
-		if config.get_display_name() == "Web":
+		display_name = config.get_display_name()
+		if display_name == "Web":
 			return "web:%i" % getcfg("webserver.portnumber")
-		if config.get_display_name() == "madVR":
+		if display_name == "madVR":
 			return "madvr"
-		if config.get_display_name() == "Untethered":
+		if display_name == "Untethered":
 			return "0"
-		if config.get_display_name() == "Resolve":
+		if display_name == "Resolve":
 			return "1"
+		if display_name.startswith("Chromecast "):
+			return "cc:%s" % display_name.split(":")[0].split(None, 1)[1]
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 

@@ -148,15 +148,44 @@ resfiles = [
 
 bitmaps = {}
 
-uncalibratable_displays = ("Untethered", )
+uncalibratable_displays = ("Untethered$", )
 
-patterngenerators = ("madVR", "Resolve")
+patterngenerators = ("madVR$", "Resolve$")
 
-non_argyll_displays = uncalibratable_displays + ("Resolve", )
+non_argyll_displays = uncalibratable_displays + ("Resolve$", )
 
-untethered_displays = non_argyll_displays + ("Web", )
+untethered_displays = non_argyll_displays + ("Web$", "Chromecast ")
 
-virtual_displays = untethered_displays + ("madVR", )
+virtual_displays = untethered_displays + ("madVR$", )
+
+
+def is_special_display(display_no=None, tests=virtual_displays):
+	display_name = get_display_name(display_no)
+	for test in tests:
+		if re.match(test, display_name):
+			return True
+	return False
+
+
+def is_uncalibratable_display(display_no=None):
+	return is_special_display(display_no, uncalibratable_displays)
+
+
+def is_patterngenerator(display_no=None):
+	return is_special_display(display_no, patterngenerators)
+
+
+def is_non_argyll_display(display_no=None):
+	return is_special_display(display_no, non_argyll_displays)
+
+
+def is_untethered_display(display_no=None):
+	return is_special_display(display_no, untethered_displays)
+
+
+def is_virtual_display(display_no=None):
+	return is_special_display(display_no, virtual_displays)
+
 
 def getbitmap(name):
 	"""
@@ -266,14 +295,14 @@ def get_argyll_display_number(geometry):
 
 def get_display_number(display_no):
 	""" Translate from Argyll display index to wx display index """
+	if is_virtual_display(display_no):
+		return 0
 	from wxaddons import wx
 	try:
 		display = getcfg("displays").split(os.pathsep)[display_no]
 	except IndexError:
 		return 0
 	else:
-		if display.split("@")[0].strip() in virtual_displays:
-			return 0
 		for i in xrange(wx.Display.GetCount()):
 			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
 			if display.find("@ " + geometry) > -1:
@@ -951,7 +980,7 @@ def get_current_profile(include_display_profile=False):
 def get_display_profile(display_no=None):
 	if display_no is None:
 		display_no = max(getcfg("display.number") - 1, 0)
-	if get_display_name(display_no) in virtual_displays:
+	if is_virtual_display(display_no):
 		return None
 	import ICCProfile as ICCP
 	try:

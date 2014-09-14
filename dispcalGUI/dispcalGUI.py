@@ -1878,15 +1878,15 @@ class MainFrame(BaseFrame):
 														   and edid["blue_x"]
 														   and edid["blue_y"]))
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays) and
-			not config.get_display_name() in config.virtual_displays)
+			not config.is_virtual_display())
 		calibration_loading_supported = self.worker.calibration_loading_supported
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in config.untethered_displays and
+			not config.is_untethered_display() and
 			calibration_loading_supported)
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and
-			not config.get_display_name() in config.untethered_displays and
+			not config.is_untethered_display() and
 			calibration_loading_supported)
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
@@ -1917,21 +1917,17 @@ class MainFrame(BaseFrame):
 		if hasattr(self, "lut_viewer"):
 			self.lut_viewer.update_controls()
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
-									   not config.get_display_name() in
-									   config.untethered_displays and
+									   not config.is_untethered_display() and
 									   calibration_loading_supported)
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
-											   config.get_display_name() not in
-											   config.non_argyll_displays)
+											   not config.is_non_argyll_display())
 		self.menuitem_report_uncalibrated.Enable(bool(self.worker.displays) and 
 												 bool(self.worker.instruments) and
-												 config.get_display_name() not in
-												config.non_argyll_displays)
+												 not config.is_non_argyll_display())
 		self.menuitem_calibration_verify.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments) and
-												config.get_display_name() not in
-												config.non_argyll_displays)
+												not config.is_non_argyll_display())
 		self.menuitem_measurement_report.Enable(bool(self.worker.displays) and 
 											bool(self.worker.instruments))
 		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
@@ -2893,19 +2889,13 @@ class MainFrame(BaseFrame):
 		self.calibrate_btn.Enable(enable_cal and
 								  not is_ccxx_testchart() and
 								  bool(self.worker.displays) and 
-								  config.get_display_name()
-								  not in config.uncalibratable_displays and 
-								  bool(self.worker.instruments) and
-								  config.get_display_name() not in
-								  config.uncalibratable_displays)
+								  not config.is_uncalibratable_display() and 
+								  bool(self.worker.instruments))
 		self.calibrate_and_profile_btn.Enable(enable_cal and
 											  enable_profile and 
 											  bool(self.worker.displays) and 
-											  config.get_display_name() not in
-											  config.uncalibratable_displays and 
-											  bool(self.worker.instruments) and
-											  config.get_display_name() not in
-											  config.uncalibratable_displays)
+											  not config.is_uncalibratable_display() and 
+											  bool(self.worker.instruments))
 		self.profile_btn.Enable(enable_profile and not update_cal and 
 								bool(self.worker.displays) and 
 								bool(self.worker.instruments))
@@ -3428,9 +3418,8 @@ class MainFrame(BaseFrame):
 
 	def do_not_use_video_lut_handler(self, event):
 		do_not_use_video_lut = self.menuitem_do_not_use_video_lut.IsChecked()
-		display_name = config.get_display_name()
-		recommended = display_name in config.patterngenerators
-		if do_not_use_video_lut != recommended:
+		is_patterngenerator = config.is_patterngenerator()
+		if do_not_use_video_lut != is_patterngenerator:
 			dlg = ConfirmDialog(self,
 								msg=lang.getstr("calibration.do_not_use_video_lut.warning"),  
 								ok=lang.getstr("yes"), 
@@ -3439,11 +3428,11 @@ class MainFrame(BaseFrame):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result != wx.ID_OK:
-				self.menuitem_do_not_use_video_lut.Check(recommended)
+				self.menuitem_do_not_use_video_lut.Check(is_patterngenerator)
 				return
 		setcfg("calibration.use_video_lut", 
 			   int(not do_not_use_video_lut))
-		if display_name not in config.patterngenerators:
+		if not is_patterngenerator:
 			setcfg("calibration.use_video_lut.backup", None)
 
 	def allow_skip_sensor_cal_handler(self, event):
@@ -5007,7 +4996,7 @@ class MainFrame(BaseFrame):
 					skip_scripts=False, silent=False, title=appname):
 		""" 'Install' (load) a calibration from a calibration file or
 		profile """
-		if config.get_display_name() in config.virtual_displays:
+		if config.is_virtual_display():
 			return True
 		# Install using dispwin
 		cmd, args = self.worker.prepare_dispwin(cal, profile_path, False)
@@ -5930,7 +5919,7 @@ class MainFrame(BaseFrame):
 		self.HideAll()
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
-		if ((config.get_display_name() in config.virtual_displays and
+		if ((config.is_virtual_display() and
 			 config.get_display_name() != "Resolve") or
 			getcfg("dry_run")):
 			self.call_pending_function()
@@ -6150,7 +6139,7 @@ class MainFrame(BaseFrame):
 		Return wx.ID_CANCEL if whole operation should be cancelled
 		
 		"""
-		if config.get_display_name() in config.uncalibratable_displays:
+		if config.is_uncalibratable_display():
 			return False
 		cal = getcfg("calibration.file")
 		if cal:
@@ -6596,7 +6585,7 @@ class MainFrame(BaseFrame):
 										  ICCP.GAMUT_VOLUME_SRGB /
 										  gamut_volumes[key] * 100,
 										  name))
-			if config.get_display_name() in config.virtual_displays:
+			if config.is_virtual_display():
 				installable = False
 				title = appname
 				ok = lang.getstr("3dlut.create")
@@ -6785,7 +6774,7 @@ class MainFrame(BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			if config.get_display_name() in config.virtual_displays:
+			if config.is_virtual_display():
 				self.profile_finish_consumer(False)
 				self.lut3d_create_handler(None)
 			else:
@@ -8070,7 +8059,7 @@ class MainFrame(BaseFrame):
 			self.lut_viewer_load_lut(profile=profile)
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
-		if config.get_display_name() in config.patterngenerators:
+		if config.is_patterngenerator():
 			if getcfg("calibration.use_video_lut.backup", False) is None:
 				setcfg("calibration.use_video_lut.backup",
 					   getcfg("calibration.use_video_lut"))
