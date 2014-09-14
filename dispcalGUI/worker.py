@@ -3241,7 +3241,7 @@ class Worker(object):
 						break
 					if ((": Error" in line and
 					     not "failed with 'User Aborted'" in line and
-					     not "test_crt returned error code 1" in line) or
+					     not "returned error code 1" in line) or
 					    (line.startswith("Failed to") and
 					     not "Failed to meet target" in line) or
 					    ("Requested ambient light capability" in line and
@@ -3250,7 +3250,7 @@ class Worker(object):
 					     (len(self.output) == i + 1 or
 						  self.output[i + 1].startswith("usage:"))) or
 						 "communications failure" in line.lower()):
-						# "test_crt returned error code 1" == user aborted
+						# "returned error code 1" == user aborted
 						if (sys.platform == "win32" and
 							("config 1 failed (Operation not supported or "
 							 "unimplemented on this platform) (Permissions ?)")
