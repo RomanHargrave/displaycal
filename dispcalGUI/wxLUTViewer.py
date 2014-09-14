@@ -404,7 +404,9 @@ class LUTCanvas(plot.PlotCanvas):
 		linear_points = [(i, int(round(v / axis_y * maxv))) for i, v in
 						 linear_points]
 		if colour and points:
-			points_quantized = [(i, int(round(v / axis_y * maxv))) for i, v in
+			# Note: We need to make sure each point is a float because it
+			# might be a decimal.Decimal, which can't be divided by floats!
+			points_quantized = [(i, int(round(float(v) / axis_y * maxv))) for i, v in
 								points]
 			suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 						points_quantized == (linear if detect_increments 
@@ -413,21 +415,27 @@ class LUTCanvas(plot.PlotCanvas):
 							  colour=colour))
 		if colour != 'white':
 			if r and colour not in ('yellow', 'magenta'):
-				points_quantized = [(i, int(round(v / axis_y * maxv)))
+				# Note: We need to make sure each point is a float because it
+				# might be a decimal.Decimal, which can't be divided by floats!
+				points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
 									for i, v in r_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							points_quantized == (linear if detect_increments 
 												 else linear_points) else '')
 				lines.append(Plot(r_points, legend='R' + suffix, colour='red'))
 			if g and colour not in ('yellow', 'cyan'):
-				points_quantized = [(i, int(round(v / axis_y * maxv)))
+				# Note: We need to make sure each point is a float because
+				# it might be a decimal.Decimal, which can't be divided by floats!
+				points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
 									for i, v in g_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							points_quantized == (linear if detect_increments 
 												 else linear_points) else '')
 				lines.append(Plot(g_points, legend='G' + suffix, colour='green'))
 			if b and colour not in ('cyan', 'magenta'):
-				points_quantized = [(i, int(round(v / axis_y * maxv)))
+				# Note: We need to make sure each point is a float because
+				# it might be a decimal.Decimal, which can't be divided by floats!
+				points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
 									for i, v in b_points]
 				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
 							points_quantized == (linear if detect_increments 
