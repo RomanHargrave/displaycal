@@ -1374,14 +1374,18 @@ class LUTFrame(wx.Frame):
 			else:
 				curves.append(lang.getstr('[rgb]TRC'))
 		selection = self.plot_mode_select.GetSelection()
+		center = False
 		if curves and (selection < 0 or selection > len(curves) - 1):
 			selection = 0
+			center = True
 		self.plot_mode_select.SetItems(curves)
 		self.plot_mode_select.Enable(len(curves) > 1)
 		self.plot_mode_select.SetSelection(selection)
 		self.cbox_sizer.Layout()
 		self.box_sizer.Layout()
 		self.DrawLUT()
+		if center:
+			wx.CallAfter(self.client.center)
 		wx.CallAfter(self.handle_errors)
 
 	def add_tone_values(self, legend):
