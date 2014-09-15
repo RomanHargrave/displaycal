@@ -111,6 +111,8 @@ class ReportFrame(BaseFrame):
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
 		
+		self.measure_btn.SetDefault()
+		
 		self.setup_language()
 		self.update_controls()
 		self.update_layout()
