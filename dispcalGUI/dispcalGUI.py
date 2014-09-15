@@ -8075,7 +8075,9 @@ class MainFrame(BaseFrame):
 			self.update_colorimeter_correction_matrix_ctrl_items()
 		self.update_main_controls()
 		if getattr(self, "reportframe", None):
-			self.reportframe.update_main_controls()
+			self.reportframe.update_controls()
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.update_controls()
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -9842,6 +9844,9 @@ class MainFrame(BaseFrame):
 			instrument_match = False
 			if ext.lower() in (".icc", ".icm"):
 				setcfg("last_icc_path", path)
+				if path not in self.presets:
+					setcfg("3dlut.output.profile", path)
+					setcfg("measurement_report.output_profile", path)
 				(options_dispcal, 
 				 options_colprof) = get_options_from_profile(profile)
 				# Get and set the display
@@ -10089,9 +10094,6 @@ class MainFrame(BaseFrame):
 							setcfg("gamap_saturation_intent", o[1:])
 							continue
 				setcfg("calibration.file", path)
-				if ext.lower() in (".icc", ".icm") and path not in self.presets:
-					setcfg("3dlut.output.profile", path)
-					setcfg("measurement_report.output_profile", path)
 				if "CTI3" in ti3_lines:
 					if debug:
 						safe_print("[D] load_cal_handler testchart.file:", path)

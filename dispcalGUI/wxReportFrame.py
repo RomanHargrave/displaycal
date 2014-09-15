@@ -407,6 +407,7 @@ class ReportFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
+		self.panel.Freeze()
 		self.simulation_profile_ctrl.SetPath(getcfg("measurement_report.simulation_profile"))
 		self.set_profile("simulation", silent=True)
 		self.update_trc_controls()
@@ -415,6 +416,7 @@ class ReportFrame(BaseFrame):
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
 		self.set_profile("output", silent=True)
 		self.set_testchart(getcfg("measurement_report.chart"))
+		self.panel.Thaw()
 
 	def update_trc_control(self):
 		if (getcfg("measurement_report.trc_gamma_type") == "B" and

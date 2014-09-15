@@ -643,14 +643,15 @@ class LUT3DFrame(BaseFrame):
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
+		self.panel.Freeze()
 		self.lut3d_create_btn.Disable()
 		self.input_profile_ctrl.SetPath(getcfg("3dlut.input.profile"))
+		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.input_profile_ctrl_handler(None)
 		enable = bool(getcfg("3dlut.use_abstract_profile"))
 		self.abstract_profile_cb.SetValue(enable)
 		self.abstract_profile_ctrl.SetPath(getcfg("3dlut.abstract.profile"))
 		self.abstract_profile_ctrl_handler(None)
-		self.output_profile_ctrl.SetPath(getcfg("3dlut.output.profile"))
 		self.output_profile_ctrl_handler(None)
 		self.update_trc_controls()
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
@@ -665,6 +666,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_bitdepth_input_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.input")])
 		self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
 		self.show_bitdepth_controls()
+		self.panel.Thaw()
 
 	def update_trc_control(self):
 		if (getcfg("3dlut.trc_gamma_type") == "B" and
