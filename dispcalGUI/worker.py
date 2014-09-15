@@ -539,12 +539,10 @@ def get_current_profile_path():
 			try:
 				profile = ICCP.ICCProfile(profile_path)
 			except Exception, exception:
-				safe_print(exception)
+				safe_print("ICCP.ICCProfile(%r):" % profile_path, 
+						   exception)
 	else:
-		try:
-			profile = ICCP.get_display_profile(getcfg("display.number") - 1)
-		except Exception, exception:
-			safe_print(exception)
+		profile = config.get_display_profile()
 	if profile:
 		return profile.fileName
 
