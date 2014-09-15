@@ -150,7 +150,7 @@ bitmaps = {}
 
 uncalibratable_displays = ("Untethered$", )
 
-patterngenerators = ("madVR$", "Resolve$")
+patterngenerators = ("madVR$", "Resolve$", "Chromecast ")
 
 non_argyll_displays = uncalibratable_displays + ("Resolve$", )
 
