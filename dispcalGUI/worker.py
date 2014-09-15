@@ -2922,11 +2922,10 @@ class Worker(object):
 					value = None
 					if (getcfg("measure.override_%s" % name.lower()) and
 						self.argyll_version >= version):
-						if not backup:
+						if backup is None:
 							# Backup current value if any
-							current = os.getenv("ARGYLL_%s" % name)
-							if current:
-								os.environ["ARGYLL_%s_BACKUP" % name] = current
+							current = os.getenv("ARGYLL_%s" % name, "")
+							os.environ["ARGYLL_%s_BACKUP" % name] = current
 						else:
 							current = backup
 						if current:
@@ -2936,11 +2935,15 @@ class Worker(object):
 						value = str(getcfg("measure.%s" % name.lower()))
 						safe_print("%s: Setting ARGYLL_%s %s" % (appname,
 																 name, value))
-					elif backup:
+					elif backup is not None:
 						value = backup
 						del os.environ["ARGYLL_%s_BACKUP" % name]
-						safe_print("%s: Restoring ARGYLL_%s %s" % (appname,
-																   name, value))
+						if value:
+							safe_print("%s: Restoring ARGYLL_%s %s" % (appname,
+																	   name,
+																	   value))
+						elif "ARGYLL_%s" % name in os.environ:
+							del os.environ["ARGYLL_%s" % name]
 					elif "ARGYLL_%s" % name in os.environ:
 						safe_print("%s: ARGYLL_%s" % (appname, name),
 								   os.getenv("ARGYLL_%s" % name))
