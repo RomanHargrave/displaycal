@@ -8,6 +8,7 @@ import string
 import struct
 import sys
 if sys.platform == "win32":
+	from threading import _MainThread, currentThread
 	wmi = None
 	if sys.getwindowsversion() >= (6, ):
 		# Use WMI for Vista/Win7
@@ -96,8 +97,10 @@ def get_edid(display_no=0, display_name=None):
 			return {}
 		id = device.DeviceID.split("\\")[1]
 		wmi_connection = None
+		not_main_thread = currentThread().__class__ is not _MainThread
 		if wmi:
-			pythoncom.CoInitialize()
+			if not_main_thread:
+				pythoncom.CoInitialize()
 			wmi_connection = wmi.WMI(namespace="WMI")
 		if wmi_connection:
 			# Use WMI for Vista/Win7
@@ -105,7 +108,8 @@ def get_edid(display_no=0, display_name=None):
 			try:
 				msmonitors = wmi_connection.WmiMonitorDescriptorMethods()
 			except Exception, exception:
-				pythoncom.CoUninitialize()
+				if not_main_thread:
+					pythoncom.CoUninitialize()
 				raise WMIError(exception)
 			for msmonitor in msmonitors:
 				if msmonitor.InstanceName.split("\\")[1] == id:
@@ -117,7 +121,8 @@ def get_edid(display_no=0, display_name=None):
 					else:
 						edid = "".join(chr(i) for i in edid[0])
 					break
-			pythoncom.CoUninitialize()
+			if not_main_thread:
+				pythoncom.CoUninitialize()
 		elif sys.getwindowsversion() < (6, ):
 			# Use registry as fallback for Win2k/XP/2003
 			# http://msdn.microsoft.com/en-us/library/ff546173%28VS.85%29.aspx

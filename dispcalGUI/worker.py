@@ -25,6 +25,7 @@ if sys.platform == "darwin":
 	from thread import start_new_thread
 elif sys.platform == "win32":
 	from ctypes import windll
+	from threading import _MainThread, currentThread
 	import _winreg
 
 # 3rd party
@@ -4662,10 +4663,11 @@ usage: spotread [-options] [logfile]
 																		"dispcalGUI-apply-profiles")))
 		else:
 			cmd = os.path.join(pydir, "dispcalGUI-apply-profiles.exe")
+		not_main_thread = currentThread().__class__ is not _MainThread
+		if not_main_thread:
+			# If running in a thread, need to call pythoncom.CoInitialize
+			pythoncom.CoInitialize()
 		try:
-			if hasattr(self, "thread") and self.thread.isAlive():
-				# If running in a thread, need to call pythoncom.CoInitialize
-				pythoncom.CoInitialize()
 			scut = pythoncom.CoCreateInstance(win32com_shell.CLSID_ShellLink, None,
 											  pythoncom.CLSCTX_INPROC_SERVER, 
 											  win32com_shell.IID_IShellLink)
@@ -4719,6 +4721,10 @@ usage: spotread [-options] [logfile]
 				result = Warning(lang.getstr("error.autostart_creation", 
 										     autostart_home) + "\n" + 
 							     safe_unicode(exception))
+		finally:
+			if not_main_thread:
+				# If running in a thread, need to call pythoncom.CoUninitialize
+				pythoncom.CoUninitialize()
 		return result
 	
 	def _uninstall_profile_loader_win32(self):
