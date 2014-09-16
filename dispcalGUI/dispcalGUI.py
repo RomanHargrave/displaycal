@@ -5920,7 +5920,8 @@ class MainFrame(BaseFrame):
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
 		if ((config.is_virtual_display() and
-			 config.get_display_name() != "Resolve") or
+			 config.get_display_name() != "Resolve" and
+			 not config.get_display_name().startswith("Chromecast ")) or
 			getcfg("dry_run")):
 			self.call_pending_function()
 		elif sys.platform in ("darwin", "win32") or isexe:
