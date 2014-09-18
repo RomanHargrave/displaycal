@@ -3,6 +3,7 @@
 from copy import copy
 from hashlib import md5
 import binascii
+import ctypes
 import datetime
 import locale
 import math
@@ -23,9 +24,7 @@ else:
 
 if sys.platform == "win32":
 	try:
-		import pywintypes
-		import win32api
-		## import win32gui
+		import win32gui
 	except ImportError:
 		pass
 
@@ -483,25 +482,37 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
-		if not "win32api" in sys.modules: ## or not "win32gui" in sys.modules:
+		if not "win32gui" in sys.modules:
 			raise ImportError("pywin32 not available")
 		# The ordering will work as long as Argyll continues using
 		# EnumDisplayMonitors
 		monitors = util_win.get_real_display_devices_info()
 		moninfo = monitors[display_no]
-		# via GetICMProfile - not dynamic, will not reflect runtime changes
-		## dc = win32gui.CreateDC("DISPLAY", moninfo["Device"], None)
-		## filename = win32api.GetICMProfile(dc)
-		## win32gui.ReleaseDC(None, dc)
-		# via win32api & registry
-		device = util_win.get_active_display_device(moninfo["Device"])
-		if device:
-			monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
-			# current user
-			profile = _winreg_get_display_profile(monkey, True)
-			if not profile:
-				# system
-				profile = _winreg_get_display_profile(monkey)
+		if True:
+			# via GetICMProfile
+			buflen = ctypes.c_int()
+			dc = win32gui.CreateDC(moninfo["Device"], None, None)
+			try:
+				ctypes.windll.gdi32.GetICMProfileW(dc, ctypes.byref(buflen),
+												   None)
+				if buflen.value:
+					buf = ctypes.create_unicode_buffer(u'\0' * buflen.value)
+					if ctypes.windll.gdi32.GetICMProfileW(dc,
+														  ctypes.byref(buflen),
+														  ctypes.byref(buf)):
+						profile = ICCProfile(buf.value)
+			finally:
+				win32gui.DeleteDC(dc)
+		else:
+			# via registry - NEVER
+			device = util_win.get_active_display_device(moninfo["Device"])
+			if device:
+				monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
+				# current user
+				profile = _winreg_get_display_profile(monkey, True)
+				if not profile:
+					# system
+					profile = _winreg_get_display_profile(monkey)
 	elif "--admin" not in sys.argv[1:] or mac_ver()[0] >= "10.6":
 		# We set --admin on Mac OS X when using osascript to run as admin
 		# under a standard account. In this case any attempt to access the
