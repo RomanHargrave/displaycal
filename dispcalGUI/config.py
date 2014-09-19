@@ -397,11 +397,7 @@ def get_data_path(relpath, rex=None):
 			else:
 				return curpath
 	if paths:
-		paths = [os.pathsep.join(reversed(os.path.split(path))) for path in
-				 paths]
-		paths.sort()
-		paths = [os.path.join(*reversed(path.split(os.pathsep))) for path in
-				 paths]
+		paths.sort(key=lambda path: os.path.basename(path).lower())
 	return None if len(paths) == 0 else paths
 
 
