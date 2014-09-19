@@ -121,7 +121,7 @@ else:
 # can be found automatically if Argyll directory not explicitly configured
 for dir_ in getenvu("PATH", "").split(os.pathsep):
 	dir_parent = os.path.dirname(dir_)
-	if os.path.exists(os.path.join(dir_parent, "ref")):
+	if os.path.isdir(os.path.join(dir_parent, "ref")):
 		data_dirs.append(dir_parent)
 
 storage = os.path.join(datahome, "storage")
