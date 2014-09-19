@@ -1035,12 +1035,12 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		if self.history and index > -1:
 			tempValue = self.history[index]
 		else:
-			tempValue = None
+			tempValue = ""
 		self.history = value
 		control.Clear()
 		for path in value:
 			control.Append(os.path.basename(path))
-		if tempValue:
+		if tempValue is not None:
 			self.history.append(tempValue)
 			control.Append(os.path.basename(tempValue))
 		self.setupControl(selectionIndex, control)
