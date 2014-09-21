@@ -5988,8 +5988,8 @@ class MainFrame(BaseFrame):
 			returncode = p.returncode
 		return returncode, stderr
 
-	def measureframe_consumer(self, result):
-		returncode, stderr = result
+	def measureframe_consumer(self, delayedResult):
+		returncode, stderr = delayedResult.get()
 		if returncode != -1:
 			config.initcfg()
 			self.get_set_display()
