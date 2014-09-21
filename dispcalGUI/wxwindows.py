@@ -442,9 +442,10 @@ class BaseFrame(wx.Frame):
 				sleep(.1)
 				continue
 			safe_print(lang.getstr("app.client.connect", addrport))
-			threading.Thread(target=self.message_handler, args=(conn, )).start()
+			threading.Thread(target=self.message_handler,
+							 args=(conn, addrport)).start()
 
-	def message_handler(self, conn):
+	def message_handler(self, conn, addrport):
 		""" Handle messages sent via socket """
 		from wexpect import split_command_line
 		while self and self.listening:
@@ -468,8 +469,7 @@ class BaseFrame(wx.Frame):
 							line = safe_unicode(line, "UTF-8")
 							self._processmsg = True
 							safe_print(lang.getstr("app.incoming_message",
-												   conn.getpeername() +
-												   (line, )))
+												   addrport + (line, )))
 							data = split_command_line(line)
 							wx.CallAfter(self.finish_processing, data, conn)
 							while self and self._processmsg:
@@ -483,7 +483,7 @@ class BaseFrame(wx.Frame):
 						safe_print(exception)
 				if not incoming:
 					break
-		safe_print(lang.getstr("app.client.disconnect", conn.getpeername()))
+		safe_print(lang.getstr("app.client.disconnect", addrport))
 		conn.close()
 
 	def process_data(self, data):
