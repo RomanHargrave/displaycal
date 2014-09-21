@@ -5930,9 +5930,9 @@ class MainFrame(BaseFrame):
 		elif sys.platform in ("darwin", "win32") or isexe:
 			self.measureframe.Show()
 		else:
-			wx.CallAfter(self.measureframe_subprocess)
+			wx.CallAfter(self.start_measureframe_subprocess)
 	
-	def measureframe_subprocess(self):
+	def start_measureframe_subprocess(self):
 		args = u'"%s" -c "%s"' % (exe, "import sys;"
 									   "sys.path.insert(0, %r);"
 									   "import wxMeasureFrame;"
@@ -5970,6 +5970,10 @@ class MainFrame(BaseFrame):
 				args = "DISPLAY=%s:%s.%s %s" % (x_hostname, x_display,
 												getcfg("display.number") - 1,
 												args)
+		delayedresult.startWorker(self.measureframe_consumer,
+								  self.measureframe_subprocess, wargs=(args, ))
+
+	def measureframe_subprocess(self, args):
 		returncode = -1
 		try:
 			p = sp.Popen(args.encode(fs_enc), 
@@ -5982,6 +5986,11 @@ class MainFrame(BaseFrame):
 			stdout, stderr = p.communicate()
 			del self._measureframe_subprocess
 			returncode = p.returncode
+		return returncode, stderr
+
+	def measureframe_consumer(self, result):
+		returncode, stderr = result
+		if returncode != -1:
 			config.initcfg()
 			self.get_set_display()
 		if returncode != 255:
