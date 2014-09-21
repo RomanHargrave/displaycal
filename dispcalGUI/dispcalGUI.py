@@ -645,6 +645,11 @@ def resize_bmp(event):
 		event.Skip()
 
 
+class Dummy(object):
+	""" Useful if we need an object to attach arbitrary attributes."""
+	pass
+
+
 class ExtraArgsFrame(BaseFrame):
 
 	""" Extra commandline arguments window. """
@@ -5984,8 +5989,8 @@ class MainFrame(BaseFrame):
 		else:
 			self._measureframe_subprocess = p
 			stdout, stderr = p.communicate()
+			returncode = self._measureframe_subprocess.returncode
 			del self._measureframe_subprocess
-			returncode = p.returncode
 		return returncode, stderr
 
 	def measureframe_consumer(self, delayedResult):
@@ -7063,12 +7068,16 @@ class MainFrame(BaseFrame):
 		elif data[0] == "measure":
 			# Start measurement
 			if getattr(self, "pending_function", None):
-				if hasattr(self, "_measureframe_subprocess"):
-					self._measureframe_subprocess.terminate()
+				if isinstance(getattr(self, "_measureframe_subprocess", None),
+							  sp.Popen):
+					p = self._measureframe_subprocess
+					self._measureframe_subprocess = Dummy()
+					self._measureframe_subprocess.returncode = 255
+					p.terminate()
 				else:
 					self.worker.wrapup(False)
 					self.HideAll()
-				self.call_pending_function()
+					self.call_pending_function()
 			else:
 				response = "fail"
 		elif data[0] == "measurement-report":
